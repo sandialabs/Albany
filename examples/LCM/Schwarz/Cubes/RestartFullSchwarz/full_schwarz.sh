@@ -93,12 +93,15 @@ for (( step=0; step<$1; step++ )); do
        ##################################################################
 
        #################  POST-DTK RUN PROCESSING FOR CUBE0  ############
-       #here, we replace the dirichlet_field in cube0_in_load"$step"_schwarz"$schwarz_iter".exo 
-       #with the dirichlet_field in target_cube0_out_load"$step"_schwarz"$schwarz_iter".exo
        echo "      Starting post-DTK run for cube0 processing..."
        source_file=target_cube0_out_load"$step"_schwarz"$schwarz_iter".exo
        target_file=cube0_in_load"$step"_schwarz"$schwarz_iter".exo
+       #here, we replace the dirichlet_field in cube0_in_load"$step"_schwarz"$schwarz_iter".exo 
+       #with the dirichlet_field in target_cube0_out_load"$step"_schwarz"$schwarz_iter".exo
        matlab -nodesktop -nosplash -r "replace_nodal_field('$target_file', '$source_file', [1,2,3], [1,2,3]);quit;"
+       #here, we replace the disp field in cube0_in_load"$step"_schwarz"$schwarz_iter".exo
+       #with the dirichlet_field in target_cube0_out_load"$step"_schwarz"$schwarz_iter".exo for restarts
+       matlab -nodesktop -nosplash -r "replace_nodal_field('$target_file', '$source_file', [4,5,6], [1,2,3]);quit;"
        echo "      ...post-DTK cube0 run done."
        ##################################################################
      fi
@@ -128,11 +131,14 @@ for (( step=0; step<$1; step++ )); do
 
      #################  POST-DTK RUN PROCESSING FOR CUBE1  ############
      echo "      Starting post-DTK run for cube1 processing..."
-     #here, we replace the dirichlet_field in cube1_in_load"$step"_schwarz"$schwarz_iter".exo 
-     #with the dirichlet_field in target_cube1_out_load"$step"_schwarz"$schwarz_iter".exo
      source_file=target_cube1_out_load"$step"_schwarz"$schwarz_iter".exo
      target_file=cube1_in_load"$step"_schwarz"$schwarz_iter".exo
+     #here, we replace the dirichlet_field in cube1_in_load"$step"_schwarz"$schwarz_iter".exo 
+     #with the dirichlet_field in target_cube1_out_load"$step"_schwarz"$schwarz_iter".exo
      matlab -nodesktop -nosplash -r "replace_nodal_field('$target_file', '$source_file', [1,2,3], [1,2,3]);quit;"
+     #here, we replace the disp field in cube1_in_load"$step"_schwarz"$schwarz_iter".exo
+     #with the dirichlet_field in target_cube1_out_load"$step"_schwarz"$schwarz_iter".exo for restarts
+     matlab -nodesktop -nosplash -r "replace_nodal_field('$target_file', '$source_file', [4,5,6], [1,2,3]);quit;"
      echo "      ...post-DTK cube1 run done."
      ##################################################################
 
