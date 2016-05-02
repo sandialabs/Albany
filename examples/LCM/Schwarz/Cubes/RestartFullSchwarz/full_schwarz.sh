@@ -10,6 +10,10 @@
 #cube0_restart.xml  
 #cube1_restart.xml  
 #norm_displacements.m
+#replace_nodal_field.m 
+
+
+#TODO: convert norm_displacements.m and replace_nodal_field.m to python to try to speed up code to avoid matlab retarts. 
 
 if [ ! $3 ] ; then
     echo "This function requires 3 arguments: # load steps (int), Schwarz convergence tolerance (double), max number Schwarz iters (int)";
