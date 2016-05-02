@@ -63,9 +63,6 @@ for (( step=0; step<$1; step++ )); do
      
      #extract first snapshot from cube0_in.exo and cube1_in.exo.
      #the latter is required for the first DTK transfer step.
-     #FIXME: by doing the following, we are using a 0 initial guess for Newton's method for all load steps.
-     #it makes more sense to take the converged solution from the previous load step for $step > 0
-     #code needs to be modified to do this.
      ncks -d time_step,$step cube0_in.exo cube0_in_load"$step"_schwarz"$schwarz_iter".exo
      ncks -d time_step,$step cube1_in.exo cube1_in_load"$step"_schwarz"$schwarz_iter".exo
 
