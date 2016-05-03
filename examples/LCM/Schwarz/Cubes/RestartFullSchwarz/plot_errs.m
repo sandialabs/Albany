@@ -1,8 +1,7 @@
 
-close all; clear all; 
 
+function [num_schwarz_iter, errs] = plot_errs(num_load_steps) 
 
-num_load_steps = 11; 
 
 for i=1:num_load_steps
     error_filenames = strcat('error_load',num2str(i-1),'_filenames'); 

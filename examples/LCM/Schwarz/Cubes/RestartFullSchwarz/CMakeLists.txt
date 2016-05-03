@@ -17,8 +17,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_schwarz_cube1_target.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_schwarz_cube1_target.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_schwarz_cube0_target.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_schwarz_cube0_target.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/full_schwarz.sh
-               ${CMAKE_CURRENT_BINARY_DIR}/full_schwarz.sh COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/full_schwarz_python.sh
+               ${CMAKE_CURRENT_BINARY_DIR}/full_schwarz_python.sh COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/preprocess.sh
                ${CMAKE_CURRENT_BINARY_DIR}/preprocess.sh COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/process_errors.sh
@@ -29,12 +29,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/initcleanup.sh
                ${CMAKE_CURRENT_BINARY_DIR}/initcleanup.sh COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runalbany.sh
                ${CMAKE_CURRENT_BINARY_DIR}/runalbany.sh COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/norm_displacements.m
-               ${CMAKE_CURRENT_BINARY_DIR}/norm_displacements.m COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plot_errs.m
-               ${CMAKE_CURRENT_BINARY_DIR}/plot_errs.m COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/replace_nodal_field.m
-               ${CMAKE_CURRENT_BINARY_DIR}/replace_nodal_field.m COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/norm_displacements.py
+               ${CMAKE_CURRENT_BINARY_DIR}/norm_displacements.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plot_errs.py
+               ${CMAKE_CURRENT_BINARY_DIR}/plot_errs.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/replace_nodal_field.py
+               ${CMAKE_CURRENT_BINARY_DIR}/replace_nodal_field.py COPYONLY)
 
 #create symlink to AlbanyT
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink

@@ -192,3 +192,10 @@ for (( step=0; step<$1; step++ )); do
    done #while loop
    echo "...finished load step $step run!" 
 done #load step loop 
+
+echo "Beginning error processing..." 
+bash process_errors.sh $1
+echo "...error processing done." 
+echo "Beginning error plotting..."
+python plot_errs.py --num_load_steps $1  
+echo "...error plotting done."
