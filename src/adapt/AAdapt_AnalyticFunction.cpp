@@ -961,7 +961,7 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, 
 
 
  // u0=35, eta0 = 0.252, a = 6.371229E+6 m, etas = 1, etat = 0.2, T0=288K, Gamma = 0.005 K/m, deltaT = 4.8E+5 K, Rd = 287.0 J/kg.K, g=9.80616 m/s^2
- // u = u0 * cos(etav)^3/2 * sin(2 si )^2 , etav = (eta-eta0), eta0=0.252
+ // u = u0 * cos(etav)^3/2 * sin(2 si )^2 , etav = (eta-eta0)*Pi/2, eta0=0.252
 
 // Tvg = T0 eta^(Rd Gamma /g) (if eta>etat)  = T0 eta^(Rd Gamma/g) + deltaT (etat-eta)^5 (if eta<etat) 
  // T = Tavg + (3/4) * eta * pi u0 /Rd * sin(etav) cos(etav)^1/2 * ( 
@@ -986,7 +986,7 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, 
     const double cosEtav = std::cos((Eta-Eta0)*PI/2.0);  
 
     //Velx
-    solution[offset++] = uu0 * std::pow(cosEtav,1.5) * std::pow(sin2Theta,2.0) ; // u; // U0*(1-z*z);
+    solution[offset++] = uu0 * std::pow(cosEtav,1.5) * std::pow(sin2Theta,2.0) ; // u; 
     solution[offset++] = v; // U1*(1-x*x);
 
     //Temperature
