@@ -166,7 +166,7 @@ Albany::PoissonsEquationProblem::constructEvaluators(
 //                              "Data Layout Usage in Mechanics problems assume vecDim = numDim");
 
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   ATO::Utils<EvalT, PHAL::AlbanyTraits> atoUtils(dl);
+   ATO::Utils<EvalT, PHAL::AlbanyTraits> atoUtils(dl,numDim);
 
 
 
@@ -271,7 +271,7 @@ Albany::PoissonsEquationProblem::constructEvaluators(
           fm0.template registerEvaluator<EvalT>(ev);
       
           //if(some input stuff)
-          atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName, elementBlockName, dl->qp_vector, numDim);
+          atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName, elementBlockName, dl->qp_vector);
 
         } else
         if( blockParams.isSublist("Mixture") ){
@@ -305,7 +305,7 @@ Albany::PoissonsEquationProblem::constructEvaluators(
             fm0.template registerEvaluator<EvalT>(ev);
         
             //if(some input stuff)
-            atoUtils.SaveCellStateField(fm0, stateMgr, outName, elementBlockName, dl->qp_vector, numDim);
+            atoUtils.SaveCellStateField(fm0, stateMgr, outName, elementBlockName, dl->qp_vector);
           }
 
           //-- create mixture --//
@@ -406,7 +406,7 @@ Albany::PoissonsEquationProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     
       //if(some input stuff)
-      atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName, elementBlockName, dl->qp_vector, numDim);
+      atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName, elementBlockName, dl->qp_vector);
     }
   }
 
@@ -464,7 +464,7 @@ Albany::PoissonsEquationProblem::constructEvaluators(
 
       //if(some input stuff)
       atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName+"_Weighted", 
-                                  elementBlockName, layout, numDim);
+                                  elementBlockName, layout);
     }
   }
   /*******************************************************************************/

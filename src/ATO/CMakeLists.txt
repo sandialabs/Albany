@@ -12,8 +12,12 @@ SET(SOURCES
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TensorPNormResponse.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_HomogenizedConstantsResponse.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_VectorResidual.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ResidualStrain.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Stress.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ScaleVector.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_BodyForce.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_CreateField.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_AddForce.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TopologyWeighting.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TopologyFieldWeighting.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Mixture.cpp
@@ -50,10 +54,18 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_HomogenizedConstantsResponse.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_VectorResidual_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_VectorResidual.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ResidualStrain.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ResidualStrain_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Stress_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Stress.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ScaleVector_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ScaleVector.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_BodyForce_Def.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_BodyForce.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_CreateField.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_CreateField_Def.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_AddForce_Def.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_AddForce.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TopologyWeighting_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TopologyWeighting.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TopologyFieldWeighting_Def.hpp

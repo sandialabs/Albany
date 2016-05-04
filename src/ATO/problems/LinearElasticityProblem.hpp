@@ -116,6 +116,8 @@ namespace Albany {
 #include "PHAL_Source.hpp"
 #include "Strain.hpp"
 #include "ATO_Stress.hpp"
+#include "ATO_BodyForce.hpp"
+#include "ATO_AddForce.hpp"
 #include "ATO_TopologyFieldWeighting.hpp"
 #include "ATO_TopologyWeighting.hpp"
 #include "PHAL_SaveStateField.hpp"
@@ -170,12 +172,14 @@ Albany::LinearElasticityProblem::constructEvaluators(
                               "Data Layout Usage in Mechanics problems assume vecDim = numDim");
 
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   ATO::Utils<EvalT, PHAL::AlbanyTraits> atoUtils(dl);
+   ATO::Utils<EvalT, PHAL::AlbanyTraits> atoUtils(dl, numDim);
 
 
 
    std::string stressName("Stress");
    std::string strainName("Strain");
+
+   std::string bodyForceName("Body Force");
 
 
    Teuchos::ArrayRCP<std::string> dof_names(1);
@@ -191,9 +195,6 @@ Albany::LinearElasticityProblem::constructEvaluators(
 
    fm0.template registerEvaluator<EvalT>
        (evalUtils.constructGatherSolutionEvaluator_noTransient(/*is_vector_dof=*/ true, dof_names));
-
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructScatterResidualEvaluator(/*is_vector_dof=*/ true, resid_names));
 
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructGatherCoordinateVectorEvaluator());
@@ -244,192 +245,29 @@ Albany::LinearElasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
 
     //if(some input stuff)
-    atoUtils.SaveCellStateField(fm0, stateMgr, strainName, elementBlockName, dl->qp_tensor, numDim);
+    atoUtils.SaveCellStateField(fm0, stateMgr, strainName, elementBlockName, dl->qp_tensor);
   }
 
 
-  { // Linear elasticity stress
-    RCP<ParameterList> p = rcp(new ParameterList(stressName));
-
-    //Input
-    p->set<std::string>("Strain Name", strainName);
-    p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
-
-    if( params->isType<int>("Add Cell Problem Forcing") )
-      p->set<int>("Cell Forcing Column",params->get<int>("Add Cell Problem Forcing") );
-
-    // check for multiple element block specs
-    Teuchos::ParameterList& configParams = params->sublist("Configuration");
-
-    if( configParams.isSublist("Element Blocks") ){
-      Teuchos::ParameterList& blocksParams = configParams.sublist("Element Blocks");
-      int nblocks = blocksParams.get<int>("Number of Element Blocks");
-      bool blockFound = false;
-      for(int ib=0; ib<nblocks; ib++){
-        Teuchos::ParameterList& blockParams = blocksParams.sublist(Albany::strint("Element Block", ib));
-        std::string blockName = blockParams.get<std::string>("Name");
-        if( blockName != elementBlockName ) continue;
-        blockFound = true;
-
-        // user can specify a material or a mixture
-        if( blockParams.isSublist("Material") ){
-          // parse material
-          Teuchos::ParameterList& materialParams = blockParams.sublist("Material",false);
-          if( materialParams.isSublist("Homogenized Constants") ){
-            Teuchos::ParameterList& homogParams = p->sublist("Homogenized Constants",false);
-            homogParams.setParameters(materialParams.sublist("Homogenized Constants",true));
-            p->set<Albany::StateManager*>("State Manager", &stateMgr);
-            p->set<Teuchos::RCP<Albany::Layouts> >("Data Layout", dl);
-          } else {
-            p->set<double>("Elastic Modulus", materialParams.get<double>("Elastic Modulus"));
-            p->set<double>("Poissons Ratio",  materialParams.get<double>("Poissons Ratio"));
-          }
-          //Output
-          p->set<std::string>("Stress Name", stressName);
-
-          ev = rcp(new ATO::Stress<EvalT,AlbanyTraits>(*p));
-          fm0.template registerEvaluator<EvalT>(ev);
-      
-          // state the strain in the state manager so for ATO
-          p = stateMgr.registerStateVariable(stressName,dl->qp_tensor, dl->dummy, 
-                                             elementBlockName, "scalar", 0.0, false, false);
-          ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-          fm0.template registerEvaluator<EvalT>(ev);
-      
-          //if(some input stuff)
-          atoUtils.SaveCellStateField(fm0, stateMgr, stressName, elementBlockName, dl->qp_tensor, numDim);
-
-        } else
-        if( blockParams.isSublist("Mixture") ){
-          // parse mixture
-          Teuchos::ParameterList& mixtureParams = blockParams.sublist("Mixture",false);
-          int nmats = mixtureParams.get<int>("Number of Materials");
-
-          //-- create individual materials --//
-          for(int imat=0; imat<nmats; imat++){
-            RCP<ParameterList> pmat = rcp(new ParameterList(*p));
-            Teuchos::ParameterList& materialParams = mixtureParams.sublist(Albany::strint("Material", imat));
-            if( materialParams.isSublist("Homogenized Constants") ){
-              Teuchos::ParameterList& homogParams = pmat->sublist("Homogenized Constants",false);
-              homogParams.setParameters(materialParams.sublist("Homogenized Constants",true));
-              pmat->set<Albany::StateManager*>("State Manager", &stateMgr);
-              pmat->set<Teuchos::RCP<Albany::Layouts> >("Data Layout", dl);
-            } else {
-              pmat->set<double>("Elastic Modulus", materialParams.get<double>("Elastic Modulus"));
-              pmat->set<double>("Poissons Ratio",  materialParams.get<double>("Poissons Ratio"));
-            }
-            //Output
-            std::string outName = Albany::strint(stressName, imat);
-            pmat->set<std::string>("Stress Name", outName);
-  
-            ev = rcp(new ATO::Stress<EvalT,AlbanyTraits>(*pmat));
-            fm0.template registerEvaluator<EvalT>(ev);
-        
-            // state the strain in the state manager so for ATO
-            pmat = stateMgr.registerStateVariable(outName,dl->qp_tensor, dl->dummy, 
-                                                  elementBlockName, "scalar", 0.0, false, false);
-            ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*pmat));
-            fm0.template registerEvaluator<EvalT>(ev);
-        
-            //if(some input stuff)
-            atoUtils.SaveCellStateField(fm0, stateMgr, outName, elementBlockName, dl->qp_tensor, numDim);
-          }
-
-          //-- create mixture --//
-          TEUCHOS_TEST_FOR_EXCEPTION( !mixtureParams.isSublist("Mixed Fields"), std::logic_error,
-                                  "'Mixture' requested but no 'Fields' defined"  << std::endl <<
-                                  "Add 'Fields' list");
-          {
-            Teuchos::ParameterList& fieldsParams = mixtureParams.sublist("Mixed Fields",false);
-            int nfields = fieldsParams.get<int>("Number of Mixed Fields");
-
-
-            //-- create individual mixture field evaluators --//
-            for(int ifield=0; ifield<nfields; ifield++){
-              Teuchos::ParameterList& fieldParams = fieldsParams.sublist(Albany::strint("Mixed Field", ifield));
-              std::string fieldName = fieldParams.get<std::string>("Field Name");
-
-              RCP<ParameterList> p = rcp(new ParameterList(fieldName + " Mixed Field"));
-
-              std::string fieldLayout = fieldParams.get<std::string>("Field Layout");
-              p->set<std::string>("Field Layout", fieldLayout);
-
-              std::string mixtureRule = fieldParams.get<std::string>("Rule Type");
-
-              // currently only SIMP-type mixture is implemented
-              Teuchos::ParameterList& simpParams = fieldParams.sublist(mixtureRule);
+  // Linear elasticity stress
+  //
+  atoUtils.constructStressEvaluators( params, fm0, stateMgr, elementBlockName, stressName, strainName );
  
-              Teuchos::RCP<ATO::TopologyArray> 
-                topologyArray = params->get<Teuchos::RCP<ATO::TopologyArray> >("Topologies");
-              p->set<Teuchos::RCP<ATO::TopologyArray> > ("Topologies", topologyArray);
-
-              // topology and function indices
-              p->set<Teuchos::Array<int> >("Topology Indices", 
-                                           simpParams.get<Teuchos::Array<int> >("Topology Indices"));
-              p->set<Teuchos::Array<int> >("Function Indices", 
-                                           simpParams.get<Teuchos::Array<int> >("Function Indices"));
-
-              // constituent var names
-              Teuchos::Array<int> matIndices = simpParams.get<Teuchos::Array<int> >("Material Indices");
-              int nMats = matIndices.size();
-              Teuchos::Array<int> topoIndices = simpParams.get<Teuchos::Array<int> >("Topology Indices");
-              int nTopos = topoIndices.size();
-              TEUCHOS_TEST_FOR_EXCEPTION(nMats != nTopos+1, std::logic_error, std::endl <<
-                                        "For SIMP Mixture, 'Materials' list must be 1 longer than 'Topologies' list"
-                                        << std::endl);
-              Teuchos::Array<std::string> constituentNames(nMats);
-              for(int imat=0; imat<nmats; imat++){
-                std::string constituentName = Albany::strint(fieldName, matIndices[imat]);
-                constituentNames[imat] = constituentName;
-              }
-              p->set<Teuchos::Array<std::string> >("Constituent Variable Names", constituentNames);
-              
-              // mixture var name
-              p->set<std::string>("Mixture Variable Name",fieldName);
-
-              // basis functions
-              p->set<std::string>("BF Name", "BF");
-    
-              ev = rcp(new ATO::Mixture<EvalT,AlbanyTraits>(*p,dl));
-              fm0.template registerEvaluator<EvalT>(ev);
-            }
-          }
-        } else
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                                  "'Material' or 'Mixture' not specified for '" 
-                                  << elementBlockName << "'");
-      }
-      TEUCHOS_TEST_FOR_EXCEPTION(!blockFound, std::logic_error,
-                                 "Material definition for block named '" << elementBlockName << "' not found");
-    } else {
-
-      if( params->isSublist("Homogenized Constants") ){
-        Teuchos::ParameterList& homogParams = p->sublist("Homogenized Constants",false);
-        homogParams.setParameters(params->sublist("Homogenized Constants",true));
-        p->set<Albany::StateManager*>("State Manager", &stateMgr);
-        p->set<Teuchos::RCP<Albany::Layouts> >("Data Layout", dl);
-      } else {
-        p->set<double>("Elastic Modulus", params->get<double>("Elastic Modulus"));
-        p->set<double>("Poissons Ratio",  params->get<double>("Poissons Ratio"));
-      }
-    
-      //Output
-      p->set<std::string>("Stress Name", stressName);
-
-      ev = rcp(new ATO::Stress<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
   
-      // state the strain in the state manager so for ATO
-      p = stateMgr.registerStateVariable(stressName,dl->qp_tensor, dl->dummy, 
-                                         elementBlockName, "scalar", 0.0, false, false);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-  
-      //if(some input stuff)
-      atoUtils.SaveCellStateField(fm0, stateMgr, stressName, elementBlockName, dl->qp_tensor, numDim);
-    }
-
+  // Body forces
+  //
+  atoUtils.constructBodyForceEvaluators( params, fm0, stateMgr, elementBlockName, bodyForceName );
+ 
+  // Residual Strains
+  //
+  std::string residStressName("Not Set");
+  if( params->isSublist("Residual Strain") ){
+//    residForceName = params->sublist("Residual Strain").get<std::string>("Field Name");
+    residStressName = "Residual Stress";
+    atoUtils.constructResidualStressEvaluators( params, fm0, stateMgr, elementBlockName, residStressName );
   }
+ 
+
   /*******************************************************************************/
   /** Begin topology weighting ***************************************************/
   /*******************************************************************************/
@@ -484,7 +322,7 @@ Albany::LinearElasticityProblem::constructEvaluators(
 
       //if(some input stuff)
       atoUtils.SaveCellStateField(fm0, stateMgr, fieldName+"_Weighted", 
-                                  elementBlockName, layout, numDim);
+                                  elementBlockName, layout);
     }
   }
   /*******************************************************************************/
@@ -507,12 +345,73 @@ Albany::LinearElasticityProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
 
     //Output
-    p->set<std::string>("Residual Name", "Displacement Residual");
+    p->set<std::string>("Residual Name", resid_names[0]);
     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
 
     ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+  if( params->isSublist("Body Force") )
+  {
+    RCP<ParameterList> p = rcp(new ParameterList("Body Forces"));
+    if( params->isType<Teuchos::RCP<ATO::TopologyArray> > ("Topologies") )
+      p->set<std::string>("Force Name", bodyForceName+"_Weighted");
+    else 
+      p->set<std::string>("Force Name", bodyForceName);
+    p->set< RCP<DataLayout> >("Force Data Layout", dl->qp_vector);
+    p->set<std::string>("Weighted BF Name", "wBF");
+    p->set< RCP<DataLayout> >("Weighted BF Data Layout", dl->node_qp_scalar);
+    p->set<std::string>("In Residual Name", resid_names[0]);
+    p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
+    resid_names[0] += " with Body Force";
+    p->set<std::string>("Out Residual Name", resid_names[0]);
+    p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
+    p->set<bool>("Negative",true);
+    ev = rcp(new ATO::AddForce<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  if( params->isSublist("Residual Strain") ){
+    {
+      //Compute divergence of the residual stress
+      RCP<ParameterList> p = rcp(new ParameterList("Residual Stress Divergence"));
+
+      p->set<bool>("Disable Transient", true);
+
+      //Input
+      if( params->isType<Teuchos::RCP<ATO::TopologyArray> > ("Topologies") )
+        p->set<std::string>("Stress Name", residStressName+"_Weighted");
+      else 
+        p->set<std::string>("Stress Name", residStressName);
+      p->set< RCP<DataLayout> >("QP Tensor Data Layout", dl->qp_tensor);
+  
+      p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+  
+      //Output
+      p->set<std::string>("Residual Name", "Residual Force");
+      p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
+
+      ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+    {
+      RCP<ParameterList> p = rcp(new ParameterList("Add Residual Force"));
+      p->set<std::string>("Force Name", "Residual Force");
+      p->set< RCP<DataLayout> >("Force Data Layout", dl->node_vector);
+      p->set<std::string>("In Residual Name", resid_names[0]);
+      p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
+      resid_names[0] += " with Residual Force";
+      p->set<std::string>("Out Residual Name", resid_names[0]);
+      p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
+      ev = rcp(new ATO::AddForce<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+  }
+
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructScatterResidualEvaluator(/*is_vector_dof=*/ true, resid_names));
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);

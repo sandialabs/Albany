@@ -112,13 +112,6 @@ evaluateFields(typename Traits::EvalData workset)
     for(int cell=0; cell<numCells; cell++){
       for(int qp=0; qp<numQPs; qp++){
 
-//        double topoVal = 0.0;
-//        for(int node=0; node<numNodes; node++)
-//          topoVal += topo(cell,node)*BF(cell,node,qp);
-//        ScalarT P = topology->Penalize(functionIndex,topoVal);
-//        for(int i=0; i<numDims; i++)
-//          weightedVar(cell,qp,i) = P*unWeightedVar(cell,qp,i);
-
         for(int i=0; i<nTopos; i++){
           ScalarT topoVal = 0.0;
           for(int node=0; node<numNodes; node++)
@@ -138,9 +131,6 @@ evaluateFields(typename Traits::EvalData workset)
             unityRemainder -= P[k];
         for(int i=0; i<numDims; i++)
            mixtureVar(cell,qp,i) += unityRemainder*constituentVar[lastMat](cell,qp,i);
-
-
-
 
       }
     }
@@ -178,15 +168,6 @@ evaluateFields(typename Traits::EvalData workset)
   if( size == 5 ){
     for(int cell=0; cell<numCells; cell++){
       for(int qp=0; qp<numQPs; qp++){
-
-//        double topoVal = 0.0;
-//        for(int node=0; node<numNodes; node++)
-//          topoVal += topo(cell,node)*BF(cell,node,qp);
-//        ScalarT P = topology->Penalize(functionIndex,topoVal);
-//        for(int i=0; i<numDims; i++)
-//          for(int j=0; j<numDims; j++)
-//            for(int k=0; k<numDims; k++)
-//              weightedVar(cell,qp,i,j,k) = P*unWeightedVar(cell,qp,i,j,k);
 
         for(int i=0; i<nTopos; i++){
           ScalarT topoVal = 0.0;
