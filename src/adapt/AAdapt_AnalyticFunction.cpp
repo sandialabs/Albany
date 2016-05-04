@@ -78,10 +78,10 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
     F = Teuchos::rcp(new AAdapt::AerasXZHydrostaticMountain(neq, numDim, data));
 
  else if(name == "Aeras Hydrostatic Baroclinic Instabilities")
-    F = Teuchos::rcp(new AAdapt::AerasHydrostaticBaroclinicInstabilities(neq, numDim, data));
+    F = Teuchos::rcp(new AAdapt::AerasHydrostaticBaroclinicInstabilitiesUnperturbed(neq, numDim, data));
 
- else if(name == "Aeras Hydrostatic Baroclinic Instabilities2")
-    F = Teuchos::rcp(new AAdapt::AerasHydrostaticBaroclinicInstabilities2(neq, numDim, data));
+ else if(name == "Aeras Hydrostatic Baroclinic Instabilities Perturbed")
+    F = Teuchos::rcp(new AAdapt::AerasHydrostaticBaroclinicInstabilitiesPerturbed(neq, numDim, data));
 
  else if(name == "Aeras Hydrostatic Pure Advection 1")
     F = Teuchos::rcp(new AAdapt::AerasHydrostaticPureAdvection1(neq, numDim, data));
@@ -890,14 +890,14 @@ void AAdapt::AerasXZHydrostaticMountain::compute(double* x, const double* X) {
 }
 
 //*****************************************************************************
-AAdapt::AerasHydrostaticBaroclinicInstabilities::AerasHydrostaticBaroclinicInstabilities(int neq_, int numDim_, Teuchos::Array<double> data_)
+AAdapt::AerasHydrostaticBaroclinicInstabilitiesUnperturbed::AerasHydrostaticBaroclinicInstabilitiesUnperturbed(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((numDim != 3),
                              std::logic_error,
-                             "Error! Invalid call of Aeras Hydrostatic Baroclinic Instabilities Model " << neq
+                             "Error! Invalid call of Aeras Hydrostatic Baroclinic Instabilities Unperturbed Model " << neq
                              << " " << numDim << std::endl);
 }
-void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, const double* X) { //Note (V.Kumar) : still working on ...........
+void AAdapt::AerasHydrostaticBaroclinicInstabilitiesUnperturbed::compute(double* solution, const double* X) { //Note (V.Kumar) : still working on ...........
   const int numLevels  = (int) data[0];
   const int numTracers = (int) data[1];
   const double SP0     =       data[2];
@@ -910,7 +910,7 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, 
     q0[nt] = data[6 + nt];
   }
 
-  //printf(".....inside Baroclinic Instabilities\n"); 
+  //printf(".....inside Baroclinic Instabilities Unperturbed\n"); 
 
   std::vector<double> Pressure(numLevels);
   std::vector<double> Pi(numLevels);
@@ -961,7 +961,7 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, 
 
 
  // u0=35, eta0 = 0.252, a = 6.371229E+6 m, etas = 1, etat = 0.2, T0=288K, Gamma = 0.005 K/m, deltaT = 4.8E+5 K, Rd = 287.0 J/kg.K, g=9.80616 m/s^2
- // u = u0 * cos(etav)^3/2 * sin(2 si )^2 , etav = (eta-eta0)*Pi/2, eta0=0.252
+ // u = u0 * cos(etav)^3/2 * sin(2 si )^2 , etav = (eta-eta0)*PI/2, eta0=0.252
 
 // Tvg = T0 eta^(Rd Gamma /g) (if eta>etat)  = T0 eta^(Rd Gamma/g) + deltaT (etat-eta)^5 (if eta<etat) 
  // T = Tavg + (3/4) * eta * pi u0 /Rd * sin(etav) cos(etav)^1/2 * ( 
@@ -978,6 +978,7 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, 
 
   int offset = 0;
   //Surface Pressure
+  //IKT, 5/4/16: In the Jablonowski paper, initial pressure is 10^5 Pa, whereas we use 101325
   solution[offset++] = SP0;
   
   for (int i=0; i<numLevels; ++i) {
@@ -986,13 +987,15 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, 
     const double cosEtav = std::cos((Eta-Eta0)*PI/2.0);  
 
     //Velx
-    solution[offset++] = uu0 * std::pow(cosEtav,1.5) * std::pow(sin2Theta,2.0) ; // u; 
-    solution[offset++] = v; // U1*(1-x*x);
+    solution[offset++] = uu0 * std::pow(cosEtav,1.5) * std::pow(sin2Theta,2.0) ; // u;
+    //IKT, 5/4/16: I think v-solution should be 0 for this problem... 
+    solution[offset++] = v; // v
 
     //Temperature
+    //IKT, 5/4/16: do we know Eta will always be < Etas? 
     const double Tavg =  Eta<Etat ? TT0 * std::pow(Eta, Rd*Gamma/g) + deltaT * std::pow(Etat - Eta, 5) : TT0 * std::pow(Eta, Rd*Gamma/g);
     const double TT0 = (3.0/4.0) * ((Eta*PI*uu0)/Rd) * sinEtav * std::pow(cosEtav, 0.5); 
-    const double TT1 = (-2 * std::pow(sinTheta,6) * (std::pow(cosTheta, 2) + 1/3.0) + 10.0/63.0) * 2.0 * uu0* std::pow(cosEtav,1.5); 
+    const double TT1 = (-2.0 * std::pow(sinTheta,6) * (std::pow(cosTheta, 2) + 1.0/3.0) + 10.0/63.0) * 2.0 * uu0* std::pow(cosEtav,1.5); 
     const double TT2 = ((8.0/5.0) * std::pow(cosTheta,3) * (std::pow(sinTheta, 2) + 2.0/3.0) - PI/4.0) * a * Omega; 
 
     solution[offset++] = Tavg + TT0 * (TT1 + TT2); //T0;
@@ -1009,14 +1012,14 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, 
 }
 
 //*****************************************************************************
-AAdapt::AerasHydrostaticBaroclinicInstabilities2::AerasHydrostaticBaroclinicInstabilities2(int neq_, int numDim_, Teuchos::Array<double> data_)
+AAdapt::AerasHydrostaticBaroclinicInstabilitiesPerturbed::AerasHydrostaticBaroclinicInstabilitiesPerturbed(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_), printedHybrid(false) {
   TEUCHOS_TEST_FOR_EXCEPTION((numDim != 3),
                              std::logic_error,
-                             "Error! Invalid call of Aeras Hydrostatic Baroclinic Instabilities Model " << neq
+                             "Error! Invalid call of Aeras Hydrostatic Baroclinic Instabilities Perturbed Model " << neq
                              << " " << numDim << std::endl);
 }
-void AAdapt::AerasHydrostaticBaroclinicInstabilities2::compute(double* solution, const double* X) {
+void AAdapt::AerasHydrostaticBaroclinicInstabilitiesPerturbed::compute(double* solution, const double* X) {
 
   const int numLevels  = (int) data[0];
   const int numTracers = (int) data[1];
@@ -1042,7 +1045,7 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities2::compute(double* solution,
     q0[nt] = data[6 + nt];
   }
 
-  //printf(".....inside Baroclinic Instabilities 2\n");
+  //printf(".....inside Baroclinic Instabilities Perturbed\n");
 
   std::vector<double> Pressure(numLevels);
   std::vector<double> Pi(numLevels);

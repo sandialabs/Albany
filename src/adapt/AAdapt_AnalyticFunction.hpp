@@ -193,9 +193,9 @@ class AerasXScalarAdvection : public AnalyticFunction {
     Teuchos::Array<double> data;
 };
 
-class AerasHydrostaticBaroclinicInstabilities : public AnalyticFunction {
+class AerasHydrostaticBaroclinicInstabilitiesUnperturbed : public AnalyticFunction {
   public:
-    AerasHydrostaticBaroclinicInstabilities(int neq_, int numDim_, Teuchos::Array<double> data_);
+    AerasHydrostaticBaroclinicInstabilitiesUnperturbed(int neq_, int numDim_, Teuchos::Array<double> data_);
     void compute(double* x, const double* X);
   private:
     const int numDim; // size of coordinate vector X
@@ -203,9 +203,9 @@ class AerasHydrostaticBaroclinicInstabilities : public AnalyticFunction {
     Teuchos::Array<double> data;
 };
 
-class AerasHydrostaticBaroclinicInstabilities2 : public AnalyticFunction {
+class AerasHydrostaticBaroclinicInstabilitiesPerturbed : public AnalyticFunction {
   public:
-    AerasHydrostaticBaroclinicInstabilities2(int neq_, int numDim_, Teuchos::Array<double> data_);
+    AerasHydrostaticBaroclinicInstabilitiesPerturbed(int neq_, int numDim_, Teuchos::Array<double> data_);
     void compute(double* x, const double* X);
   private:
     const int numDim; // size of coordinate vector X

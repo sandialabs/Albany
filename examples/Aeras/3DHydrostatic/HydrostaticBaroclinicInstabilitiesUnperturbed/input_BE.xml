@@ -11,7 +11,7 @@
       <!--Parameter name="Viscosity" type="double" value="1.0E9"/-->
     </ParameterList>
     <ParameterList name="Initial Condition">
-       <Parameter name="Function" type="string" value="Aeras Hydrostatic Baroclinic Instabilities"/>
+       <Parameter name="Function" type="string" value="Aeras Hydrostatic Baroclinic Instabilities Unperturbed"/>
        <Parameter name="Function Data" type="Array(double)" value="{3, 1, 101325.0, 30.0, 0.0, 300.0, 0.333}"/>
     </ParameterList>
     <ParameterList name="Response Functions">
