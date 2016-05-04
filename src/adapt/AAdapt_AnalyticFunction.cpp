@@ -77,11 +77,11 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
  else if(name == "Aeras XZ Hydrostatic Mountain")
     F = Teuchos::rcp(new AAdapt::AerasXZHydrostaticMountain(neq, numDim, data));
 
+ else if(name == "Aeras Hydrostatic Baroclinic Instabilities Unperturbed")
+    F = Teuchos::rcp(new AAdapt::AerasHydrostaticBaroclinicInstabilitiesUnperturbed(neq, numDim, data));
+
  else if(name == "Aeras Hydrostatic Baroclinic Instabilities")
     F = Teuchos::rcp(new AAdapt::AerasHydrostaticBaroclinicInstabilities(neq, numDim, data));
-
- else if(name == "Aeras Hydrostatic Baroclinic Instabilities2")
-    F = Teuchos::rcp(new AAdapt::AerasHydrostaticBaroclinicInstabilities2(neq, numDim, data));
 
  else if(name == "Aeras Hydrostatic Pure Advection 1")
     F = Teuchos::rcp(new AAdapt::AerasHydrostaticPureAdvection1(neq, numDim, data));
@@ -890,14 +890,14 @@ void AAdapt::AerasXZHydrostaticMountain::compute(double* x, const double* X) {
 }
 
 //*****************************************************************************
-AAdapt::AerasHydrostaticBaroclinicInstabilities::AerasHydrostaticBaroclinicInstabilities(int neq_, int numDim_, Teuchos::Array<double> data_)
+AAdapt::AerasHydrostaticBaroclinicInstabilitiesUnperturbed::AerasHydrostaticBaroclinicInstabilitiesUnperturbed(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION((numDim != 3),
                              std::logic_error,
-                             "Error! Invalid call of Aeras Hydrostatic Baroclinic Instabilities Model " << neq
+                             "Error! Invalid call of Aeras Hydrostatic Baroclinic Instabilities Unperturbed Model " << neq
                              << " " << numDim << std::endl);
 }
-void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, const double* X) { //Note (V.Kumar) : still working on ...........
+void AAdapt::AerasHydrostaticBaroclinicInstabilitiesUnperturbed::compute(double* solution, const double* X) { //Note (V.Kumar) : still working on ...........
   const int numLevels  = (int) data[0];
   const int numTracers = (int) data[1];
   const double SP0     =       data[2];
@@ -910,7 +910,7 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, 
     q0[nt] = data[6 + nt];
   }
 
-  //printf(".....inside Baroclinic Instabilities\n"); 
+  //printf(".....inside Baroclinic Instabilities Unperturbed\n"); 
 
   std::vector<double> Pressure(numLevels);
   std::vector<double> Pi(numLevels);
@@ -961,7 +961,7 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, 
 
 
  // u0=35, eta0 = 0.252, a = 6.371229E+6 m, etas = 1, etat = 0.2, T0=288K, Gamma = 0.005 K/m, deltaT = 4.8E+5 K, Rd = 287.0 J/kg.K, g=9.80616 m/s^2
- // u = u0 * cos(etav)^3/2 * sin(2 si )^2 , etav = (eta-eta0), eta0=0.252
+ // u = u0 * cos(etav)^3/2 * sin(2 si )^2 , etav = (eta-eta0)*PI/2, eta0=0.252
 
 // Tvg = T0 eta^(Rd Gamma /g) (if eta>etat)  = T0 eta^(Rd Gamma/g) + deltaT (etat-eta)^5 (if eta<etat) 
  // T = Tavg + (3/4) * eta * pi u0 /Rd * sin(etav) cos(etav)^1/2 * ( 
@@ -978,6 +978,7 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, 
 
   int offset = 0;
   //Surface Pressure
+  //IKT, 5/4/16: In the Jablonowski paper, initial pressure is 10^5 Pa, whereas we use 101325
   solution[offset++] = SP0;
   
   for (int i=0; i<numLevels; ++i) {
@@ -986,13 +987,15 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, 
     const double cosEtav = std::cos((Eta-Eta0)*PI/2.0);  
 
     //Velx
-    solution[offset++] = uu0 * std::pow(cosEtav,1.5) * std::pow(sin2Theta,2.0) ; // u; // U0*(1-z*z);
-    solution[offset++] = v; // U1*(1-x*x);
+    solution[offset++] = uu0 * std::pow(cosEtav,1.5) * std::pow(sin2Theta,2.0) ; // u;
+    //IKT, 5/4/16: I think v-solution should be 0 for this problem... 
+    solution[offset++] = v; // v
 
     //Temperature
+    //IKT, 5/4/16: do we know Eta will always be < Etas? 
     const double Tavg =  Eta<Etat ? TT0 * std::pow(Eta, Rd*Gamma/g) + deltaT * std::pow(Etat - Eta, 5) : TT0 * std::pow(Eta, Rd*Gamma/g);
     const double TT0 = (3.0/4.0) * ((Eta*PI*uu0)/Rd) * sinEtav * std::pow(cosEtav, 0.5); 
-    const double TT1 = (-2 * std::pow(sinTheta,6) * (std::pow(cosTheta, 2) + 1/3.0) + 10.0/63.0) * 2.0 * uu0* std::pow(cosEtav,1.5); 
+    const double TT1 = (-2.0 * std::pow(sinTheta,6) * (std::pow(cosTheta, 2) + 1.0/3.0) + 10.0/63.0) * 2.0 * uu0* std::pow(cosEtav,1.5); 
     const double TT2 = ((8.0/5.0) * std::pow(cosTheta,3) * (std::pow(sinTheta, 2) + 2.0/3.0) - PI/4.0) * a * Omega; 
 
     solution[offset++] = Tavg + TT0 * (TT1 + TT2); //T0;
@@ -1009,20 +1012,30 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, 
 }
 
 //*****************************************************************************
-AAdapt::AerasHydrostaticBaroclinicInstabilities2::AerasHydrostaticBaroclinicInstabilities2(int neq_, int numDim_, Teuchos::Array<double> data_)
+AAdapt::AerasHydrostaticBaroclinicInstabilities::AerasHydrostaticBaroclinicInstabilities(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_), printedHybrid(false) {
   TEUCHOS_TEST_FOR_EXCEPTION((numDim != 3),
                              std::logic_error,
                              "Error! Invalid call of Aeras Hydrostatic Baroclinic Instabilities Model " << neq
                              << " " << numDim << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION((data.size() != 3),
+                             std::logic_error,
+                             "Error! Invalid call of Aeras Hydrostatic Baroclinic Instabilities Model: Function Data array must have size 3; " 
+                             << "you have provided an array of size " << data.size() << std::endl);
 }
-void AAdapt::AerasHydrostaticBaroclinicInstabilities2::compute(double* solution, const double* X) {
+void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, const double* X) {
 
   const int numLevels  = (int) data[0];
   const int numTracers = (int) data[1];
+  const bool perturbation = (bool) data[2]; 
   const double Ptop = 219.4067;
   const double SP0 =  1e5;     // = p0
   const double u0  =  35.0;     //
+
+  if (perturbation) 
+    std::cout << "Setting IC for PERTURBED baroclinic instabilities test case." << std::endl; 
+  else 
+    std::cout << "Setting IC for UNPERTURBED baroclinic instabilities test case." << std::endl; 
 
   //From Homme, 26 levels ASP baroclinic TC (see file cami-26.ascii):
   //A[top] = 0.00219406700000001 = eta_top = p_top/p0,
@@ -1030,13 +1043,17 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities2::compute(double* solution,
 
   const double Eta0 = 0.252, Etas=1.0, Etat=0.2, TT0=288.0,
 		       Gamma = 0.005, deltaT = 4.8E+5, Rd = 287.04;
+  const double radius                 = 10.0;// radius of the perturbation
+  const double perturbation_amplitude =  1.0;// amplitude of u perturbation 1 m/s
+  const double perturbation_longitude = 20.0;// longitudinal position, 20E
+  const double perturbation_latitude  = 40.0;// latitudinal position, 40N
 
   std::vector<double> q0(numTracers);
   for (int nt = 0; nt<numTracers; ++nt) {
     q0[nt] = data[6 + nt];
   }
 
-  //printf(".....inside Baroclinic Instabilities 2\n");
+  //printf(".....inside Baroclinic Instabilities\n");
 
   std::vector<double> Pressure(numLevels);
   std::vector<double> Pi(numLevels);
@@ -1146,7 +1163,25 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities2::compute(double* solution,
     const double cosEtav = std::cos((Eta-Eta0)*constPi/2.0);
 
     //Velocities
-    solution[offset++] = u0 * std::pow(cosEtav,1.5) * std::pow(sin2Theta,2.0) ;
+
+    double uwind = u0 * std::pow(cosEtav,1.5) * std::pow(sin2Theta,2.0) ;
+    if(perturbation){
+    	const double pertlon = perturbation_longitude*constPi/180.0,
+    			     pertlat = perturbation_latitude*constPi/180.0;
+        //phi_vertical = (eta - eta0) *0.5d0*constPi;
+        //u_lat = (COS(phi_vertical))**1.5d0 * 4.d0 * u0 * (sin(rot_lat))**2 * (cos(rot_lat))**2
+        //u_wind = u_lat
+
+        const double sin_tmp = std::sin(pertlat)*std::sin(theta);
+        const double cos_tmp = std::cos(pertlat)*std::cos(theta);
+
+        const double r = std::acos( sin_tmp + cos_tmp*std::cos(lambda - pertlon) );//    ! great circle distance
+        const double u_perturb = perturbation_amplitude*std::exp( - (r*radius)*(r*radius) );
+
+    	uwind += u_perturb;
+    }
+
+    solution[offset++] = uwind;
     solution[offset++] = 0.0;
 
     //homme lines
@@ -1174,13 +1209,37 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities2::compute(double* solution,
                   u0 * (COS(phi_vertical))**1.5d0  +                                                       &
                   (8.d0/5.d0*(COS(rot_lat))**3 * ((SIN(rot_lat))**2 + 2.d0/3.d0) - pi/4.d0)*a_omega*0.5d0 )
   END FUNCTION t_deviation
-     */
+...
+    perturb_lon = perturbation_longitude*deg2rad
+    perturb_lat = perturbation_latitude*deg2rad
 
-    //Temperature
-    //const double Tavg =  Eta<Etat ? TT0 * std::pow(Eta, Rd*Gamma/g) + deltaT * std::pow(Etat - Eta, 5) : TT0 * std::pow(Eta, Rd*Gamma/g);
-    //const double tt0 = (3.0/4.0) * ((Eta*constPi*u0)/Rd) * sinEtav * std::pow(cosEtav, 0.5);
-    //const double tt1 = (-2 * std::pow(sinTheta,6) * (std::pow(cosTheta, 2) + 1/3.0) + 10.0/63.0) * 2.0 * u0* std::pow(cosEtav,1.5);
-    //const double tt2 = ((8.0/5.0) * std::pow(cosTheta,3) * (std::pow(sinTheta, 2) + 2.0/3.0) - constPi/4.0) * a * omega;
+    phi_vertical = (eta - eta0) *0.5d0*pi
+    u_lat = (COS(phi_vertical))**1.5d0 * 4.d0 * u0 * (sin(rot_lat))**2 * (cos(rot_lat))**2
+    u_wind = u_lat
+
+    IF (lperturb) THEN
+
+       sin_tmp = SIN(perturb_lat)*SIN(rot_lat)
+       cos_tmp = COS(perturb_lat)*COS(rot_lat)
+
+       r = ACOS( sin_tmp + cos_tmp*COS(rot_lon-perturb_lon) )    ! great circle distance
+       u_perturb = perturbation_amplitude*EXP(- (r*radius)**2 )
+       u_lat     = u_perturb + u_lat
+    ENDIF
+...
+       u_wind = u_lat
+...
+  END FUNCTION u_wind
+
+  REAL(r8) FUNCTION v_wind(lon,lat,eta,lperturb,rotation_angle)
+...
+    perturb_lon = perturbation_longitude*deg2rad
+    perturb_lat = perturbation_latitude*deg2rad
+...
+       v_wind = 0.0d0
+...
+  END FUNCTION v_wind
+     */
 
     double Tavg =  TT0 * std::pow(Eta, Rd*Gamma/g);
     if( Eta <= Etat ) Tavg += deltaT * std::pow(Etat - Eta, 5.0);

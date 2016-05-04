@@ -231,6 +231,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::DistParamDeriv>(
 	return Teuchos::null;
 }
 
+#ifndef AERAS_IMPLICIT_HS
 template <>
 Teuchos::RCP<const PHX::FieldTag>
 HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
@@ -489,6 +490,8 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     p->set<std::string>("Weighted Gradient BF Name",            "wGrad BF");
     p->set<string>("BF Name",                    "BF");
     p->set<string>("Gradient BF Name",           "Grad BF");
+    p->set<std::string>("Lambda Coord Nodal Name", "Lat Nodal");
+    p->set<std::string>("Theta Coord Nodal Name", "Long Nodal");
 
     p->set<string>("Scatter Field Name", "Compute And Scatter Jacobian");
 
@@ -526,4 +529,5 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
 
   return Teuchos::null;
 }
+#endif
 }

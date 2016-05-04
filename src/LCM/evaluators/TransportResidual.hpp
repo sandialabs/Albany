@@ -47,6 +47,18 @@ namespace LCM {
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
+    
+    ///
+    /// Stress field
+    ///
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress_;
+    
+    // velocity gradient (Lagrangian)
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> vel_grad_;
+    
+    // Temporal container used to store P : F_dot
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> term1_;
+    
     ///
     /// Scalar field for transport variable
     ///
@@ -117,7 +129,7 @@ namespace LCM {
     /// Output residual
     ///
     PHX::MDField<ScalarT,Cell,Node> residual_;
-
+    
     ///
     ///  Feature flags
     ///
@@ -129,6 +141,9 @@ namespace LCM {
     bool have_species_coupling_;
     bool have_stabilization_;
     bool have_contact_;
+    bool have_mechanics_;
+    
+    std::string SolutionType_;
 
     ///
     /// Data structure dimensions

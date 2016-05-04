@@ -21,6 +21,8 @@ ComputeAndScatterJacBase(const Teuchos::ParameterList& p,
   wBF           (p.get<std::string>  ("Weighted BF Name"),  dl->node_qp_scalar),
   GradBF        (p.get<std::string>  ("Gradient BF Name"),  dl->node_qp_gradient),
   wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient),
+  lambda_nodal  (p.get<std::string>  ("Lambda Coord Nodal Name"), dl->node_scalar),
+  theta_nodal   (p.get<std::string>  ("Theta Coord Nodal Name"), dl->node_scalar),
   worksetSize(dl->node_scalar             ->dimension(0)),
   numNodes   (dl->node_scalar             ->dimension(1)),
   numDims    (dl->node_qp_gradient        ->dimension(3)),
@@ -50,6 +52,8 @@ ComputeAndScatterJacBase(const Teuchos::ParameterList& p,
   this->addDependentField(wBF);
   this->addDependentField(GradBF);
   this->addDependentField(wGradBF);
+  this->addDependentField(lambda_nodal);
+  this->addDependentField(theta_nodal);
 
   this->addEvaluatedField(*scatter_operation);
 
@@ -71,6 +75,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(GradBF,fm);
   this->utils.setFieldData(wGradBF,fm);
+  this->utils.setFieldData(lambda_nodal,fm);
+  this->utils.setFieldData(theta_nodal,fm);
 }
 
 
@@ -434,10 +440,9 @@ evaluateFields(typename Traits::EvalData workset)
   ST mc = workset.m_coeff;
 
   std::cout <<"Workset coefficients: j = "<< workset.j_coeff << ", m = " <<workset.m_coeff << ", n = " <<workset.n_coeff << "\n";
-  bool buildMass = ( ( workset.j_coeff == 0 )&&( workset.m_coeff == 1.0 )&&( workset.n_coeff == 0 ) )
-		         ||( ( workset.j_coeff == 0 )&&( workset.m_coeff == -1.0 )&&( workset.n_coeff == 0 ) );
 
-  bool buildLaplace = ( workset.j_coeff == 0 )&&( workset.m_coeff == 0 )&&( workset.n_coeff == 1.0 );
+  bool buildMass = ( ( workset.j_coeff == 0.0 )&&( workset.m_coeff != 0.0 )&&( workset.n_coeff == 0.0 ) );
+  bool buildLaplace = ( workset.j_coeff == 0.0 )&&( workset.m_coeff == 0.0 )&&( workset.n_coeff == 1.0 );
 
   std::cout << "buildMass, buildLaplace " << buildMass << ", " << buildLaplace << "\n";
 
@@ -500,6 +505,12 @@ evaluateFields(typename Traits::EvalData workset)
 
 ////////////////////////////////////////////////////////
   if( buildLaplace ){
+
+	  int numn = this->numNodes;
+		Intrepid2::FieldContainer_Kokkos<ST, PHX::Layout, PHX::Device>  KK(numn*3, numn*2), KT(numn*2, numn*3),
+				                                                        GR(numn*3, numn*3), L(numn*2, numn*2),
+																	    GRKK(numn*3,numn*2), KTGRKK(numn*2,numn*2);
+
 	  for (int cell=0; cell < workset.numCells; ++cell ) {
 	      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
@@ -512,6 +523,69 @@ evaluateFields(typename Traits::EvalData workset)
 	        }
 	      }
 
+//Build a submatrix (local matrix) for Laplace. For any particular cell:
+//The matrix acts on vector (u1 v1 u2 v2 u3 v3 ... uNumNodes vNumNodes)
+//and returns (WGrad(u1) WGrad(v1) WGrad(u2) WGrad(v2) ...), that is, the output vector is ordered
+//the same way as the input vector. After this matrix is built,
+//if we are filling Laplace matrix's row corresponding to node N for u vector, then we need row
+//2N from the local matrix. In other words, this Laplace operator takes u and v from all nodes on
+//a certain level and produces weak Laplace for them. If we fix a nodal value for u,
+//then Laplace at this nodal value for u depends on local matrix' row 2N. For v at node
+//N it should be row 2N+1.
+
+//The local matrix is K^T*WeakGrad*K. Here K is a transform from lon/lat velocity
+//to xyz velocity, WeakGrad calculates a weak Laplace op (grad*grad) for each (x, or y, or z)
+//component, and K^T is equivalent to K^{inverse}.
+
+//The biggest effort is to find how to insert values of the local matrix to the big matrix.
+
+	      KK.initialize();
+	      GR.initialize();
+	      for (int node=0; node<this->numNodes; node++){
+
+	    	  ST
+			  lam = this -> lambda_nodal(cell, node),
+			  th = this -> theta_nodal(cell, node);
+
+	    	  const ST
+			  k11 = -sin(lam),
+			  k12 = -sin(th)*cos(lam),
+			  k21 =  cos(lam),
+			  k22 = -sin(th)*sin(lam),
+			  k32 =  cos(th);
+
+	    	  KK(node*3, node*2) = k11;
+	    	  KK(node*3, node*2+1) = k12;
+	    	  KK(node*3+1, node*2) = k21;
+	    	  KK(node*3+1, node*2+1) = k22;
+	    	  KK(node*3+2, node*2+1) = k32;
+	      }
+
+	      for(int no = 0; no < this->numNodes; no++){
+	    	  for (int mo = 0; mo< this->numNodes; mo++) {
+	    		  ST val = 0;
+	    		  for(int qp = 0; qp < this->numNodes; qp++){
+	    			  val += this->GradBF(cell,no,qp,0)*this->GradBF(cell,mo,qp,0)*this->wBF(cell,qp,qp)
+	      		          +  this->GradBF(cell,no,qp,1)*this->GradBF(cell,mo,qp,1)*this->wBF(cell,qp,qp);
+	    		  }
+	    		  GR(no*3,mo*3) = val;
+	    		  GR(no*3+1,mo*3+1) = val;
+	    		  GR(no*3+2,mo*3+2) = val;
+	    	  }
+	      }
+
+	      //now let's multiply everything
+	      GRKK.initialize();
+	      for(int ii = 0; ii < 3*numn; ii++)
+	    	  for (int jj = 0; jj < 2*numn; jj++)
+	    		  for(int cc = 0; cc < 3*numn; cc++)
+	    			  GRKK(ii,jj) += GR(ii,cc)*KK(cc,jj);
+	      KTGRKK.initialize();
+	      for(int ii = 0; ii < 2*numn; ii++)
+	    	  for (int jj = 0; jj < 2*numn; jj++)
+	    		  for(int cc = 0; cc < 3*numn; cc++)
+	    			  KTGRKK(ii,jj) += KK(cc,ii)*GRKK(cc,jj);
+
 	      for (int node = 0; node < this->numNodes; ++node) {
 
 	        const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
@@ -521,15 +595,16 @@ evaluateFields(typename Traits::EvalData workset)
 
 	        for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
 
-	        	//rowT is LID in row map for vector x=all variables
-	        	//so rowT here is a row index corresponding to pressure eqn at (node, cell)
+	           /*
+	           //OG Disabling Laplace for surface pressure.
+	           //rowT is LID in row map for vector x=all variables
+	           //so rowT here is a row index corresponding to pressure eqn at (node, cell)
 		       rowT = eqID[n];
 
 		       //loop over nodes on the same level
 		       for (unsigned int m=0; m< this->numNodes; m++) {
 
 		    	  const int col_ = colT[m*neq];//= nodeID[m][n];
-                  //const int row_ = nodeID[node][n];
 		    	  //at this point we know node, cell, m
 
 		    	  ST val = 0;
@@ -540,28 +615,49 @@ evaluateFields(typename Traits::EvalData workset)
 		    	  val *= this->sqrtHVcoef;
 		    	  JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col_,1), Teuchos::arrayView(&val,1));
 	           }
+	           */
 	        }
 	        eq += this->numNodeVar;
+
 
 	        for (int level = 0; level < this->numLevels; level++) {
 	          //dealing with velocity
 
 	          for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
-
 	            for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-	            /*
-	              //const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
+
 	              rowT = eqID[n];
-	              if (valptr.hasFastAccess()) {
-	                  //Sum Jacobian entries
-	                  for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-	                    ST val = valptr.fastAccessDx(i);
-	                    if (val != 0.0) {
-	                      JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
-	                    }
-	                  }
-	              }*/
-	            }
+	              for (unsigned int m=0; m< this->numNodes; m++) {
+
+	            	  //filling u values
+	            	  if(dim == 0){
+
+	            		  //filling dependency on u values
+	            		  const int col1_ = nodeID[m][n];
+	            		  ST val = this->sqrtHVcoef * KTGRKK(node*2,m*2);
+	            		  JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col1_,1), Teuchos::arrayView(&val,1));
+
+	            		  //filling dependency on v values, so, it is eqn n+1
+	            		  const int col2_ = nodeID[m][n+1];
+	            		  val = this->sqrtHVcoef * KTGRKK(node*2,m*2+1);
+	            		  JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col2_,1), Teuchos::arrayView(&val,1));
+	            	  }
+
+	            	  //filling v values
+	            	  if(dim == 1){
+
+	            		  //filling dependencies on u values. The current eqn is n, so, we need to look at n-1 level IDs.
+	            		  const int col1_ = nodeID[m][n-1];
+	            		  ST val = this->sqrtHVcoef * KTGRKK(node*2+1,m*2);
+	            		  JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col1_,1), Teuchos::arrayView(&val,1));
+
+	            		  //filling dependencies on v values.
+	            		  const int col2_ = nodeID[m][n];
+	            		  val = this->sqrtHVcoef * KTGRKK(node*2+1,m*2+1);
+	            		  JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col2_,1), Teuchos::arrayView(&val,1));
+	            	  }
+	              }
+	            }//dim loop
 	          }
 
 	          //dealing with temperature

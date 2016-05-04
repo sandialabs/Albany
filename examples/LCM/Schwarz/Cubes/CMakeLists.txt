@@ -4,6 +4,7 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
+add_subdirectory(RestartFullSchwarz)
 # Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.e
                ${CMAKE_CURRENT_BINARY_DIR}/cube0.e COPYONLY)

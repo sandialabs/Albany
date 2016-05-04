@@ -54,16 +54,22 @@ CP::applySlipIncrement(
     Intrepid2::Tensor<ArgT, NumDimT> & Lp_np1,
     Intrepid2::Tensor<ArgT, NumDimT> & Fp_np1)
 {
-  Intrepid2::Index const num_slip = slip_n.get_dimension();
-  Intrepid2::Index const num_dim = Fp_n.get_dimension();
+  Intrepid2::Index const
+  num_slip = slip_n.get_dimension();
 
-  Intrepid2::Tensor<ArgT, NumDimT> exp_L_dt(num_dim);
+  Intrepid2::Index const
+  num_dim = Fp_n.get_dimension();
+
+  // 
+  // calculate plastic velocity gradient
+  //
+  Intrepid2::Tensor<ArgT, NumDimT>
+  exp_L_dt(num_dim);
 
   Lp_np1.fill(Intrepid2::ZEROS);
-  for (int s(0); s < num_slip; ++s) {
 
-    // calculate plastic velocity gradient
-    if(dt > 0){
+  if(dt > 0){
+    for (int s(0); s < num_slip; ++s) {
       Lp_np1 += (slip_np1[s] - slip_n[s])/dt * slip_systems[s].projector_;
     }
   }
@@ -91,10 +97,12 @@ CP::updateHardness(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     DataT dt,
     Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<DataT, NumSlipT> const & hardness_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & hardness_np1)
+    Intrepid2::Vector<DataT, NumSlipT> const & state_hardening_n,
+    Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
+    Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance)
 {
-  Intrepid2::Index const num_slip = rate_slip.get_dimension();
+  Intrepid2::Index const
+  num_slip = rate_slip.get_dimension();
 
   if(num_slip == 0) {
     return;
@@ -111,7 +119,13 @@ CP::updateHardness(
   hardening = *phardening;
  
   hardening.createLatentMatrix(slip_systems);
-  hardening.harden(slip_systems, dt, rate_slip, hardness_n, hardness_np1);
+  hardening.harden(
+      slip_systems, 
+      dt, 
+      rate_slip, 
+      state_hardening_n, 
+      state_hardening_np1, 
+      slip_resistance);
 
   return;
 
@@ -129,7 +143,7 @@ void
 CP::updateSlip(
     std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
     DataT dt,
-    Intrepid2::Vector<ArgT, NumSlipT> const & hardness,
+    Intrepid2::Vector<ArgT, NumSlipT> const & slip_resistance,
     Intrepid2::Vector<ArgT, NumSlipT> const & shear,
     Intrepid2::Vector<DataT, NumSlipT> const & slip_n,
     Intrepid2::Vector<ArgT, NumSlipT> & slip_np1)
@@ -139,12 +153,19 @@ CP::updateSlip(
   for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys) {
 
     // Material properties
-    DataT const tauC = slip_systems[slip_sys].tau_critical_;
-    DataT const m = slip_systems[slip_sys].exponent_rate_;
-    DataT const g0 = slip_systems[slip_sys].rate_slip_reference_;
+    DataT const
+    tauC = slip_systems[slip_sys].tau_critical_;
+
+    DataT const
+    m = slip_systems[slip_sys].exponent_rate_;
+
+    DataT const
+    g0 = slip_systems[slip_sys].rate_slip_reference_;
 
     // Compute slip increment
-    ArgT const temp = shear[slip_sys] / (tauC + hardness[slip_sys]);
+    ArgT const
+    temp = shear[slip_sys] / slip_resistance[slip_sys];
+
     slip_np1[slip_sys] = slip_n[slip_sys] + 
       dt * g0 * std::pow(std::fabs(temp), m-1) * temp;
 
@@ -169,26 +190,47 @@ CP::computeStress(
     Intrepid2::Tensor<ArgT, NumDimT> & S,
     Intrepid2::Vector<ArgT, NumSlipT> & shear)
 {
-  Intrepid2::Index const num_dim = F.get_dimension();
-  Intrepid2::Index const num_slip = shear.get_dimension();
+  Intrepid2::Index const
+  num_dim = F.get_dimension();
 
-  Intrepid2::Tensor<ArgT, NumDimT> Fe(num_dim);
-  Intrepid2::Tensor<ArgT, NumDimT> Ee(num_dim);
-  Intrepid2::Tensor<ArgT, NumDimT> Ce(num_dim);
+  Intrepid2::Index const
+  num_slip = shear.get_dimension();
+
+  Intrepid2::Tensor<ArgT, NumDimT>
+  defgrad_elastic(num_dim);
+
+  Intrepid2::Tensor<ArgT, NumDimT>
+  strain_elastic(num_dim);
+
+  Intrepid2::Tensor<ArgT, NumDimT>
+  deformation_elastic(num_dim);
 
   // Saint Venant–Kirchhoff model
-  Fe = F * Intrepid2::inverse(Fp);
-  Ce = Intrepid2::transpose(Fe) * Fe;
-  Ee = 0.5 * (Ce - Intrepid2::identity<ArgT, NumDimT>(num_dim));
-  S = Intrepid2::dotdot(C, Ee);
-  sigma = (1.0 / Intrepid2::det(Fe)) * Fe * S * Intrepid2::transpose(Fe);
+  if (Intrepid2::det(Fp) == 0.0)
+  {
+    std::cout << "Singular plastic deformation gradient" << std::endl;
+    std::cout << std::setprecision(4) << Fp << std::endl;
+  }
+  defgrad_elastic = F * Intrepid2::inverse(Fp);
+
+  deformation_elastic = Intrepid2::transpose(defgrad_elastic) * defgrad_elastic;
+
+  strain_elastic = 
+    0.5 * (deformation_elastic - Intrepid2::identity<ArgT, NumDimT>(num_dim));
+
+  S = Intrepid2::dotdot(C, strain_elastic);
+
+  sigma = 1.0 / Intrepid2::det(defgrad_elastic) * 
+    defgrad_elastic * S * Intrepid2::transpose(defgrad_elastic);
+
   CP::confirmTensorSanity<NumDimT>(
       sigma,
       "Cauchy stress in CrystalPlasticityNLS::computeStress()");
 
   // Compute resolved shear stresses
   for (int s(0); s < num_slip; ++s) {
-    shear[s] = Intrepid2::dotdot(slip_systems[s].projector_, Ce * S);
+    shear[s] = 
+      Intrepid2::dotdot(slip_systems[s].projector_, deformation_elastic * S);
   }
 }
 
@@ -206,13 +248,14 @@ CP::computeCubicElasticityTensor(
     Intrepid2::Tensor4<ArgT, NumDimT> & C)
 {
 
-  Intrepid2::Index const num_dims = C.get_dimension();
+  Intrepid2::Index const
+  num_dim = C.get_dimension();
 
   C.fill(Intrepid2::ZEROS);
 
-  for (Intrepid2::Index dim_i = 0; dim_i < num_dims; ++dim_i) {
+  for (Intrepid2::Index dim_i = 0; dim_i < num_dim; ++dim_i) {
     C(dim_i, dim_i, dim_i, dim_i) = c11;
-    for (Intrepid2::Index dim_j = dim_i + 1; dim_j < num_dims; ++dim_j) {
+    for (Intrepid2::Index dim_j = dim_i + 1; dim_j < num_dim; ++dim_j) {
       C(dim_i, dim_i, dim_j, dim_j) = c12;
       C(dim_j, dim_j, dim_i, dim_i) = C(dim_i, dim_i, dim_j, dim_j);
       C(dim_i, dim_j, dim_i, dim_j) = c44;
@@ -232,17 +275,21 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::CrystalPlasticityNLS(
       Intrepid2::Tensor4<ArgT, NumDimT> const & C,
       std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
       Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
-      Intrepid2::Vector<RealType, NumSlipT> const & hardness_n,
+      Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
       Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
       Intrepid2::Tensor<ArgT, NumDimT> const & F_np1,
       RealType dt)
   :
-      C_(C), slip_systems_(slip_systems), Fp_n_(Fp_n), hardness_n_(hardness_n),
+      C_(C),
+      slip_systems_(slip_systems),
+      Fp_n_(Fp_n),
+      state_hardening_n_(state_hardening_n),
       slip_n_(slip_n),
-      F_np1_(F_np1), dt_(dt)
+      F_np1_(F_np1),
+      dt_(dt)
 {
   num_dim_ = Fp_n_.get_dimension();
-  num_slip_ = hardness_n_.get_dimension();
+  num_slip_ = state_hardening_n_.get_dimension();
 }
 
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
@@ -270,23 +317,45 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
   CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>, ArgT>::failed;
 
   // Tensor mechanical state variables
-  Intrepid2::Tensor<T, NumDimT> Fp_np1(num_dim_);
-  Intrepid2::Tensor<T, NumDimT> Lp_np1(num_dim_);
-  Intrepid2::Tensor<T, NumDimT> sigma_np1(num_dim_);
-  Intrepid2::Tensor<T, NumDimT> S_np1(num_dim_);
+  Intrepid2::Tensor<T, NumDimT>
+  Fp_np1(num_dim_);
+
+  Intrepid2::Tensor<T, NumDimT>
+  Lp_np1(num_dim_);
+
+  Intrepid2::Tensor<T, NumDimT>
+  sigma_np1(num_dim_);
+
+  Intrepid2::Tensor<T, NumDimT>
+  S_np1(num_dim_);
 
   // Slip system state variables
-  Intrepid2::Vector<T, NumSlipT> hardness_np1(num_slip_);
-  Intrepid2::Vector<T, NumSlipT> slip_np1(num_slip_);
-  Intrepid2::Vector<T, NumSlipT> slip_computed(num_slip_);
-  Intrepid2::Vector<T, NumSlipT> shear_np1(num_slip_);
-  Intrepid2::Vector<T, NumSlipT> rate_slip(num_slip_);
-  RealType norm_slip_residual_;
+  Intrepid2::Vector<T, NumSlipT>
+  state_hardening_np1(num_slip_);
+
+  Intrepid2::Vector<T, NumSlipT>
+  slip_resistance(num_slip_);
+
+  Intrepid2::Vector<T, NumSlipT>
+  slip_np1(num_slip_);
+
+  Intrepid2::Vector<T, NumSlipT>
+  slip_computed(num_slip_);
+
+  Intrepid2::Vector<T, NumSlipT>
+  shear_np1(num_slip_);
+
+  Intrepid2::Vector<T, NumSlipT>
+  rate_slip(num_slip_);
+
+  RealType
+  norm_slip_residual_;
 
   auto const
   num_unknowns = x.get_dimension();
 
-  Intrepid2::Vector<T, N> residual(num_unknowns);
+  Intrepid2::Vector<T, N>
+  residual(num_unknowns);
 
   // Return immediately if something failed catastrophically.
   if (failed == true) {
@@ -336,19 +405,20 @@ CP::CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>::gradient(
       S_np1,
       shear_np1);
 
-  // Compute hardness_np1
+  // Compute state_hardening_np1
   CP::updateHardness<NumDimT, NumSlipT>(
       slip_systems_,
       dt_,
       rate_slip,
-      hardness_n_,
-      hardness_np1);
+      state_hardening_n_,
+      state_hardening_np1,
+      slip_resistance);
 
   // Compute slips
   CP::updateSlip<NumDimT, NumSlipT>(
       slip_systems_,
       dt_,
-      hardness_np1,
+      slip_resistance,
       shear_np1,
       slip_n_,
       slip_computed);
@@ -383,17 +453,21 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::ResidualSlipHardnessNLS(
       Intrepid2::Tensor4<ArgT, NumDimT> const & C,
       std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
       Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
-      Intrepid2::Vector<RealType, NumSlipT> const & hardness_n,
+      Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
       Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
       Intrepid2::Tensor<ArgT, NumDimT> const & F_np1,
       RealType dt)
   :
-      C_(C), slip_systems_(slip_systems), Fp_n_(Fp_n), hardness_n_(hardness_n),
+      C_(C),
+      slip_systems_(slip_systems),
+      Fp_n_(Fp_n),
+      state_hardening_n_(state_hardening_n),
       slip_n_(slip_n),
-      F_np1_(F_np1), dt_(dt)
+      F_np1_(F_np1),
+      dt_(dt)
 {
   num_dim_ = Fp_n_.get_dimension();
-  num_slip_ = hardness_n_.get_dimension();
+  num_slip_ = state_hardening_n_.get_dimension();
 }
 
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
@@ -415,25 +489,51 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
     Intrepid2::Vector<T, N> const & x) const
 {
   // Tensor mechanical state variables
-  Intrepid2::Tensor<T, NumDimT> Fp_np1(num_dim_);
-  Intrepid2::Tensor<T, NumDimT> Lp_np1(num_dim_);
-  Intrepid2::Tensor<T, NumDimT> sigma_np1(num_dim_);
-  Intrepid2::Tensor<T, NumDimT> S_np1(num_dim_);
+  Intrepid2::Tensor<T, NumDimT>
+  Fp_np1(num_dim_);
+
+  Intrepid2::Tensor<T, NumDimT>
+  Lp_np1(num_dim_);
+
+  Intrepid2::Tensor<T, NumDimT>
+  sigma_np1(num_dim_);
+
+  Intrepid2::Tensor<T, NumDimT>
+  S_np1(num_dim_);
 
   // Slip system state variables
-  Intrepid2::Vector<T, NumSlipT> hardness_np1(num_slip_);
-  Intrepid2::Vector<T, NumSlipT> hardness_computed(num_slip_);
-  Intrepid2::Vector<T, NumSlipT> slip_np1(num_slip_);
-  Intrepid2::Vector<T, NumSlipT> slip_computed(num_slip_);
-  Intrepid2::Vector<T, NumSlipT> shear_np1(num_slip_);
-  Intrepid2::Vector<T, NumSlipT> slip_residual(num_slip_);
-  Intrepid2::Vector<T, NumSlipT> rate_slip(num_slip_);
-  RealType norm_slip_residual_;
+  Intrepid2::Vector<T, NumSlipT>
+  state_hardening_np1(num_slip_);
+
+  Intrepid2::Vector<T, NumSlipT>
+  state_hardening_computed(num_slip_);
+
+  Intrepid2::Vector<T, NumSlipT>
+  slip_resistance(num_slip_);
+
+  Intrepid2::Vector<T, NumSlipT>
+  slip_np1(num_slip_);
+
+  Intrepid2::Vector<T, NumSlipT>
+  slip_computed(num_slip_);
+
+  Intrepid2::Vector<T, NumSlipT>
+  shear_np1(num_slip_);
+
+  Intrepid2::Vector<T, NumSlipT>
+  slip_residual(num_slip_);
+
+  Intrepid2::Vector<T, NumSlipT>
+  rate_slip(num_slip_);
+
+  RealType
+  norm_slip_residual_;
 
   auto const
   num_unknowns = x.get_dimension();
 
-  Intrepid2::Vector<T, N> residual(num_unknowns);
+  Intrepid2::Vector<T, N>
+  residual(num_unknowns);
 
   Intrepid2::Tensor<T, NumDimT> const
   F_np1_peeled = LCM::peel_tensor<EvalT, T, N, NumDimT>()(F_np1_);
@@ -443,7 +543,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
 
   for (int i = 0; i< num_slip_; ++i){
     slip_np1[i] = x[i];
-    hardness_np1[i] = x[i + num_slip_];
+    state_hardening_np1[i] = x[i + num_slip_];
   }
 
   if(dt_ > 0.0){
@@ -473,26 +573,28 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
       S_np1,
       shear_np1);
 
-  // Compute hardness_np1
+  // Compute state_hardening_np1
   CP::updateHardness<NumDimT, NumSlipT>(
       slip_systems_,
       dt_,
       rate_slip,
-      hardness_n_,
-      hardness_computed);
+      state_hardening_n_,
+      state_hardening_computed,
+      slip_resistance);
 
   // Compute slips
   CP::updateSlip<NumDimT, NumSlipT>(
       slip_systems_,
       dt_,
-      hardness_computed,
+      slip_resistance,
       shear_np1,
       slip_n_,
       slip_computed);
 
   for (int i = 0; i< num_slip_; ++i){
     residual[i] = slip_np1[i] - slip_computed[i];
-    residual[i + num_slip_] = hardness_np1[i] - hardness_computed[i];
+    residual[i + num_slip_] = 
+        state_hardening_np1[i] - state_hardening_computed[i];
   }
   
   return residual;
@@ -521,7 +623,9 @@ CP::LinearMinusRecoveryHardening<NumDimT, NumSlipT, DataT, ArgT>::
 createLatentMatrix(
   std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems)
 {
-  Intrepid2::Index const num_slip_sys = slip_systems.size();
+  Intrepid2::Index const
+  num_slip_sys = slip_systems.size();
+
   latent_matrix.set_dimension(num_slip_sys);
   latent_matrix.fill(Intrepid2::ONES);
 
@@ -539,38 +643,50 @@ harden(
   std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
   DataT dt,
   Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-  Intrepid2::Vector<DataT, NumSlipT> const & hardness_n,
-  Intrepid2::Vector<ArgT, NumSlipT> & hardness_np1)
+  Intrepid2::Vector<DataT, NumSlipT> const & state_hardening_n,
+  Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
+  Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance)
 {
-  Intrepid2::Index const num_slip_sys = hardness_n.get_dimension();
+  Intrepid2::Index const
+  num_slip_sys = state_hardening_n.get_dimension();
 
-  Intrepid2::Vector<ArgT, NumSlipT> rate_slip_abs(num_slip_sys);
+  Intrepid2::Vector<ArgT, NumSlipT>
+  rate_slip_abs(num_slip_sys);
+
   for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys) {
     rate_slip_abs(slip_sys) = std::fabs(rate_slip(slip_sys));
   }
 
   Intrepid2::Vector<ArgT, NumSlipT> const 
-    driver_hardening = latent_matrix * rate_slip_abs;
+  driver_hardening = latent_matrix * rate_slip_abs;
 
-  for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys) {
+  for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys)
+  {
+    RealType const
+    H = slip_systems[slip_sys].H_;
 
-    RealType const H = slip_systems[slip_sys].H_;
-    RealType const Rd = slip_systems[slip_sys].Rd_;  
+    RealType const
+    Rd = slip_systems[slip_sys].Rd_; 
+
+    RealType const
+    stress_critical = slip_systems[slip_sys].tau_critical_;
 
     if (Rd > 0.0) {
       RealType const 
-        effective_slip_n = -1.0/Rd * std::log(1.0 - Rd/H * hardness_n[slip_sys]);
-      hardness_np1[slip_sys] = H / Rd * (1.0 - 
+      effective_slip_n = -1.0/Rd * std::log(1.0 - Rd/H * state_hardening_n[slip_sys]);
+
+      state_hardening_np1[slip_sys] = H / Rd * (1.0 - 
         std::exp(-Rd * (effective_slip_n + dt * driver_hardening[slip_sys])));  
     }
     else {
-      hardness_np1[slip_sys] = 
-        hardness_n[slip_sys] + H * dt * driver_hardening[slip_sys];
+      state_hardening_np1[slip_sys] = 
+        state_hardening_n[slip_sys] + H * dt * driver_hardening[slip_sys];
     }
 
-//    hardness_np1[slip_sys] = hardness_n[slip_sys] +
-//      dt * (H - Rd * (hardness_n[slip_sys])) * driver_hardening[slip_sys];
+//    state_hardening_np1[slip_sys] = state_hardening_n[slip_sys] +
+//      dt * (H - Rd * (state_hardening_n[slip_sys])) * driver_hardening[slip_sys];
 
+    slip_resistance[slip_sys] = stress_critical + state_hardening_np1[slip_sys];
   } 
 
   return;
@@ -586,8 +702,11 @@ CP::SaturationHardening<NumDimT, NumSlipT, DataT, ArgT>::
 createLatentMatrix(
   std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems)
 {
-  Intrepid2::Index const num_slip_sys = slip_systems.size();
+  Intrepid2::Index const
+  num_slip_sys = slip_systems.size();
+
   latent_matrix.set_dimension(num_slip_sys);
+  latent_matrix.fill(Intrepid2::ZEROS);
 
   for (int slip_sys_i(0); slip_sys_i < num_slip_sys; ++slip_sys_i) {
 
@@ -616,50 +735,62 @@ harden(
   std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
   DataT dt,
   Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-  Intrepid2::Vector<DataT, NumSlipT> const & hardness_n,
-  Intrepid2::Vector<ArgT, NumSlipT> & hardness_np1)
+  Intrepid2::Vector<DataT, NumSlipT> const & state_hardening_n,
+  Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
+  Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance)
 {
-  Intrepid2::Index const num_slip_sys = hardness_n.get_dimension();
+  Intrepid2::Index const
+  num_slip_sys = state_hardening_n.get_dimension();
 
-  Intrepid2::Vector<ArgT, NumSlipT> rate_slip_abs(num_slip_sys);
+  Intrepid2::Vector<ArgT, NumSlipT>
+  rate_slip_abs(num_slip_sys);
+
   for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys) {
     rate_slip_abs(slip_sys) = std::fabs(rate_slip(slip_sys));
   }
 
   Intrepid2::Vector<ArgT, NumSlipT> const 
-    driver_hardening = latent_matrix * rate_slip_abs;
+  driver_hardening = latent_matrix * rate_slip_abs;
 
-  for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys) {
+  for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys)
+  {
+    DataT const
+    rate_slip_reference = slip_systems[slip_sys].rate_slip_reference_;
 
-    DataT const rate_slip_reference = 
-      slip_systems[slip_sys].rate_slip_reference_;
-    DataT const stress_saturation_initial = 
-      slip_systems[slip_sys].stress_saturation_initial_;
-    DataT const rate_hardening = 
-      slip_systems[slip_sys].rate_hardening_;
-    DataT const resistance_slip_initial = 
-      slip_systems[slip_sys].resistance_slip_initial_;
-    DataT const exponent_saturation = 
-      slip_systems[slip_sys].exponent_saturation_;  
+    DataT const
+    stress_saturation_initial = slip_systems[slip_sys].stress_saturation_initial_;
 
-    ArgT effective_slip_rate{0.0};
+    DataT const
+    rate_hardening = slip_systems[slip_sys].rate_hardening_;
+
+    DataT const
+    resistance_slip_initial = slip_systems[slip_sys].resistance_slip_initial_;
+
+    DataT const
+    exponent_saturation = slip_systems[slip_sys].exponent_saturation_;  
+
+    ArgT
+    effective_slip_rate{0.0};
 
     // calculate effective slip increment
     for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys) {
       effective_slip_rate += fabs(rate_slip[slip_sys]);
     }
 
-    ArgT stress_saturation{stress_saturation_initial};
+    ArgT
+    stress_saturation{stress_saturation_initial};
 
     if (exponent_saturation > 0.0) {
       stress_saturation = stress_saturation_initial * std::pow(
         effective_slip_rate / rate_slip_reference, exponent_saturation);
     }
 
-    hardness_np1[slip_sys] = hardness_n[slip_sys] + dt * rate_hardening *
-      (stress_saturation - hardness_n[slip_sys] - resistance_slip_initial) / 
-      (stress_saturation - resistance_slip_initial) * driver_hardening[slip_sys];
+    state_hardening_np1[slip_sys] = state_hardening_n[slip_sys] +
+      dt * rate_hardening * driver_hardening[slip_sys] *
+      (stress_saturation - state_hardening_n[slip_sys]) / 
+      (stress_saturation - resistance_slip_initial);
 
+    slip_resistance[slip_sys] = state_hardening_np1[slip_sys];
   } 
 
   return;
@@ -675,9 +806,48 @@ CP::DislocationDensityHardening<NumDimT, NumSlipT, DataT, ArgT>::
 createLatentMatrix(
   std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems)
 {
-  Intrepid2::Index const num_slip_sys = slip_systems.size();
+  Intrepid2::Index const
+  num_dim = slip_systems[0].s_.get_dimension();
+
+  Intrepid2::Index const
+  num_slip_sys = slip_systems.size();
+
   latent_matrix.set_dimension(num_slip_sys);
   latent_matrix.fill(Intrepid2::ZEROS);
+
+  // std::cout << "latent_matrix" << std::endl;
+
+  for (int slip_sys_i(0); slip_sys_i < num_slip_sys; ++slip_sys_i)
+  {
+    Intrepid2::Vector<RealType, CP::MAX_DIM>
+    normal_i(num_dim);
+
+    normal_i = slip_systems[slip_sys_i].n_;
+
+    for (int slip_sys_j(0); slip_sys_j < num_slip_sys; ++slip_sys_j)
+    {
+      Intrepid2::Vector<RealType, CP::MAX_DIM>
+      direction_j(num_dim);
+
+      direction_j = slip_systems[slip_sys_j].s_;
+
+      Intrepid2::Vector<RealType, CP::MAX_DIM>
+      normal_j(num_dim);
+
+      normal_j = slip_systems[slip_sys_j].n_;
+
+      Intrepid2::Vector<RealType, CP::MAX_DIM>
+      transverse_j(num_dim);
+
+      transverse_j = Intrepid2::unit(Intrepid2::cross(normal_j, direction_j));
+
+      latent_matrix(slip_sys_i, slip_sys_j) = 
+          std::abs(Intrepid2::dot(normal_i, transverse_j));
+
+      // std::cout << std::setprecision(3) << latent_matrix(slip_sys_i, slip_sys_j) << " ";
+    }
+    // std::cout << std::endl;
+  }
 
   return;
 }
@@ -693,13 +863,83 @@ harden(
   std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
   DataT dt,
   Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-  Intrepid2::Vector<DataT, NumSlipT> const & hardness_n,
-  Intrepid2::Vector<ArgT, NumSlipT> & hardness_np1)
+  Intrepid2::Vector<DataT, NumSlipT> const & state_hardening_n,
+  Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
+  Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance)
 {
-  Intrepid2::Index const num_slip_sys = hardness_n.get_dimension();
+  Intrepid2::Index const
+  num_slip_sys = state_hardening_n.get_dimension();
+
+  //
+  // Compute the effective dislocation density at step n
+  //
+  RealType
+  sum_densities_n{0.0};
+
+  Intrepid2::Vector<DataT, NumSlipT>
+  densities_forest(num_slip_sys);
+
+  densities_forest = latent_matrix * state_hardening_n;
+
+  // std::cout << "densities_forest: " << densities_forest << std::endl;
+
+  Intrepid2::Tensor<DataT, NumSlipT>
+  aux_matrix(num_slip_sys);
+
+  for (int slip_sys_i(0); slip_sys_i < num_slip_sys; ++slip_sys_i)
+  {
+    for (int slip_sys_j(0); slip_sys_j < num_slip_sys; ++slip_sys_j)
+    {
+      aux_matrix(slip_sys_i, slip_sys_j) =
+          std::sqrt(1.0 - std::pow(latent_matrix(slip_sys_i, slip_sys_j), 2));
+    }
+  }
+
+  Intrepid2::Vector<RealType, CP::MAX_SLIP>
+  densities_parallel(num_slip_sys);
+
+  densities_parallel = aux_matrix * state_hardening_n;
+
+  // std::cout << "densities_parallel: " << densities_parallel << std::endl;
+
+  //
+  // Update dislocation densities
+  //
+  for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys)
+  {
+    DataT const
+    generation = 
+        slip_systems[slip_sys].c_generation_ * 
+        std::sqrt(densities_forest[slip_sys]);
+
+    DataT const
+    annihilation =
+        slip_systems[slip_sys].c_annihilation_ * state_hardening_n[slip_sys];
+
+    state_hardening_np1[slip_sys] = state_hardening_n[slip_sys];
+
+    if (generation > annihilation)
+    {
+    state_hardening_np1[slip_sys] += 
+        dt * (generation - annihilation) * std::abs(rate_slip[slip_sys]);
+    }
+
+    // std::cout << "state_hardening_np1_" << slip_sys << ": ";
+    // std::cout << state_hardening_np1[slip_sys] << std::endl;
+  }
   
-  for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys) {
-    hardness_np1[slip_sys] = hardness_n[slip_sys];
+  //
+  // Compute the slip resistance
+  //
+  for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys)
+  {
+    slip_resistance[slip_sys] = 
+        slip_systems[slip_sys].factor_geometry_dislocation_ *
+        slip_systems[slip_sys].modulus_shear_ * 
+        slip_systems[slip_sys].magnitude_burgers_ *
+        std::sqrt(densities_parallel[slip_sys]);
+
+    // std::cout << "slip_resistance_" << slip_sys << ": " << slip_resistance[slip_sys] << std::endl;
   }
 }
 
@@ -713,7 +953,9 @@ CP::NoHardening<NumDimT, NumSlipT, DataT, ArgT>::
 createLatentMatrix(
   std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems)
 {
-  Intrepid2::Index const num_slip_sys = slip_systems.size();
+  Intrepid2::Index const
+  num_slip_sys = slip_systems.size();
+
   latent_matrix.set_dimension(num_slip_sys);
   latent_matrix.fill(Intrepid2::ZEROS);
 
@@ -731,12 +973,16 @@ harden(
   std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
   DataT dt,
   Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-  Intrepid2::Vector<DataT, NumSlipT> const & hardness_n,
-  Intrepid2::Vector<ArgT, NumSlipT> & hardness_np1)
+  Intrepid2::Vector<DataT, NumSlipT> const & state_hardening_n,
+  Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
+  Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance)
 {
-  Intrepid2::Index const num_slip_sys = hardness_n.get_dimension();
+  Intrepid2::Index const
+  num_slip_sys = state_hardening_n.get_dimension();
   
-  for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys) {
-    hardness_np1[slip_sys] = hardness_n[slip_sys];
+  for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys)
+  {
+    state_hardening_np1[slip_sys] = state_hardening_n[slip_sys];
+    slip_resistance[slip_sys] = state_hardening_np1[slip_sys];
   }
 }

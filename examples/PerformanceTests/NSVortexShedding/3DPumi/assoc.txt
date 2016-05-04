@@ -1,0 +1,19 @@
+element block region 1
+3 1
+node set inlet 1
+2 2
+node set outlet 1
+2 4
+node set sides 4
+2 11
+2 12
+2 1
+2 3
+node set cylinders 7
+2 6
+2 8
+2 5
+2 10
+2 9
+2 7
+2 13

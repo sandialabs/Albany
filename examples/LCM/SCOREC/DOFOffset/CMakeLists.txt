@@ -21,7 +21,7 @@ set(testName "SCOREC_${testRoot}")
 
 # 3. Create the test with this name and standard executable
 # Only run tests in 64 bit mode (they should fail everywhere else ??)
-IF (ALBANY_64BIT_INT)
+IF (ALBANY_64BIT_INT AND NOT ALBANY_EPETRA)
   IF(ENABLE_MESHMODEL)
     IF(ALBANY_IFPACK2)
       add_test(NAME ${testName}_Ifpack2_Tpetra COMMAND ${AlbanyT.exe} inputIfpack2.xml)
