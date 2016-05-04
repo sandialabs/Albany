@@ -77,11 +77,11 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
  else if(name == "Aeras XZ Hydrostatic Mountain")
     F = Teuchos::rcp(new AAdapt::AerasXZHydrostaticMountain(neq, numDim, data));
 
- else if(name == "Aeras Hydrostatic Baroclinic Instabilities")
+ else if(name == "Aeras Hydrostatic Baroclinic Instabilities Unperturbed")
     F = Teuchos::rcp(new AAdapt::AerasHydrostaticBaroclinicInstabilitiesUnperturbed(neq, numDim, data));
 
- else if(name == "Aeras Hydrostatic Baroclinic Instabilities Perturbed")
-    F = Teuchos::rcp(new AAdapt::AerasHydrostaticBaroclinicInstabilitiesPerturbed(neq, numDim, data));
+ else if(name == "Aeras Hydrostatic Baroclinic Instabilities")
+    F = Teuchos::rcp(new AAdapt::AerasHydrostaticBaroclinicInstabilities(neq, numDim, data));
 
  else if(name == "Aeras Hydrostatic Pure Advection 1")
     F = Teuchos::rcp(new AAdapt::AerasHydrostaticPureAdvection1(neq, numDim, data));
@@ -1012,20 +1012,30 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilitiesUnperturbed::compute(double*
 }
 
 //*****************************************************************************
-AAdapt::AerasHydrostaticBaroclinicInstabilitiesPerturbed::AerasHydrostaticBaroclinicInstabilitiesPerturbed(int neq_, int numDim_, Teuchos::Array<double> data_)
+AAdapt::AerasHydrostaticBaroclinicInstabilities::AerasHydrostaticBaroclinicInstabilities(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_), printedHybrid(false) {
   TEUCHOS_TEST_FOR_EXCEPTION((numDim != 3),
                              std::logic_error,
-                             "Error! Invalid call of Aeras Hydrostatic Baroclinic Instabilities Perturbed Model " << neq
+                             "Error! Invalid call of Aeras Hydrostatic Baroclinic Instabilities Model " << neq
                              << " " << numDim << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION((data.size() != 3),
+                             std::logic_error,
+                             "Error! Invalid call of Aeras Hydrostatic Baroclinic Instabilities Model: Function Data array must have size 3; " 
+                             << "you have provided an array of size " << data.size() << std::endl);
 }
-void AAdapt::AerasHydrostaticBaroclinicInstabilitiesPerturbed::compute(double* solution, const double* X) {
+void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, const double* X) {
 
   const int numLevels  = (int) data[0];
   const int numTracers = (int) data[1];
+  const bool perturbation = (bool) data[2]; 
   const double Ptop = 219.4067;
   const double SP0 =  1e5;     // = p0
   const double u0  =  35.0;     //
+
+  if (perturbation) 
+    std::cout << "Setting IC for PERTURBED baroclinic instabilities test case." << std::endl; 
+  else 
+    std::cout << "Setting IC for UNPERTURBED baroclinic instabilities test case." << std::endl; 
 
   //From Homme, 26 levels ASP baroclinic TC (see file cami-26.ascii):
   //A[top] = 0.00219406700000001 = eta_top = p_top/p0,
@@ -1038,14 +1048,12 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilitiesPerturbed::compute(double* s
   const double perturbation_longitude = 20.0;// longitudinal position, 20E
   const double perturbation_latitude  = 40.0;// latitudinal position, 40N
 
-  bool perturbation = true;
-
   std::vector<double> q0(numTracers);
   for (int nt = 0; nt<numTracers; ++nt) {
     q0[nt] = data[6 + nt];
   }
 
-  //printf(".....inside Baroclinic Instabilities Perturbed\n");
+  //printf(".....inside Baroclinic Instabilities\n");
 
   std::vector<double> Pressure(numLevels);
   std::vector<double> Pi(numLevels);
