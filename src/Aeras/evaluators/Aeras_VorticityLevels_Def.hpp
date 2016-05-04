@@ -39,7 +39,7 @@ VorticityLevels(Teuchos::ParameterList& p,
 
   this->setName("Aeras::VorticityLevels"+PHX::typeAsString<EvalT>());
 
-  std::cout << "In Vorticity, name = " << this->getName() << "\n";
+  //std::cout << "In Vorticity, name = " << this->getName() << "\n";
   //std::cout<< "Aeras::VorticityLevels: " << numNodes << " " << numDims << " " << numQPs << " " << numLevels << std::endl;
 }
 

@@ -53,6 +53,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> source_;
   PHX::MDField<ScalarT,Cell,QuadPoint> phi_;
   PHX::MDField<ScalarT,Cell,QuadPoint> psi_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porosity_;
   PHX::MDField<ScalarT,Cell,QuadPoint> energyDot_;
   PHX::MDField<ScalarT,Cell,QuadPoint> laser_source_;
   PHX::MDField<ScalarT,Dummy> time;
@@ -64,6 +65,10 @@ private:
   unsigned int num_dims_;
   unsigned int num_nodes_;
   unsigned int workset_size_;
+  
+  ScalarT Initial_porosity;
+  ScalarT porosity_function1;
+  ScalarT porosity_function2;
 
   bool enable_transient_;
   std::string Temperature_Name_;

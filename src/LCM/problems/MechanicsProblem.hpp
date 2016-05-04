@@ -838,7 +838,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           false,
           dof_names,
           dof_names_dot,
-          Teuchos::null));
+          Teuchos::null,
+          offset));
     } else {
       fm0.template registerEvaluator<EvalT>
       (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
@@ -2755,6 +2756,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Scalar Variable Name", "Temperature");
     p->set<std::string>("Scalar Gradient Variable Name",
         "Temperature Gradient");
+    if (have_mech_eq_)
+        {
+            p->set<std::string>("Velocity Gradient Variable Name",
+                    "Velocity Gradient");
+            p->set<std::string>("Stress Name", firstPK);
+            p->set<bool>("Have Mechanics", true);
+        }
     p->set<std::string>("Weights Name", "Weights");
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<std::string>("Weighted BF Name", "wBF");
@@ -2764,6 +2772,15 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Scalar Dot Name", "Temperature Dot");
     p->set<std::string>("Transient Coefficient Name",
         "Thermal Transient Coefficient");
+    
+    if (SolutionType == Albany::SolutionMethodType::Continuation)
+        {
+            p->set<std::string>("Solution Method Type", "Continuation");
+        }
+        else
+        {
+            p->set<std::string>("Solution Method Type", "No Continuation");
+        }
 
     // Diffusion
     p->set<bool>("Have Diffusion", true);

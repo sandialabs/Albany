@@ -28,6 +28,7 @@ PhaseResidual(const Teuchos::ParameterList& p,
   time              (p.get<std::string>("Time Name"), dl->workset_scalar),
   psi_              (p.get<std::string>("Psi Name"), dl->qp_scalar),
   phi_              (p.get<std::string>("Phi Name"), dl->qp_scalar),
+  porosity_         (p.get<std::string>("Porosity Name"),dl->qp_scalar),
   energyDot_        (p.get<std::string>("Energy Rate Name"), dl->qp_scalar),
   deltaTime         (p.get<std::string>("Delta Time Name"), dl->workset_scalar),
   residual_         (p.get<std::string>("Residual Name"), dl->node_scalar)
@@ -43,11 +44,17 @@ PhaseResidual(const Teuchos::ParameterList& p,
   this->addDependentField(laser_source_);
   this->addDependentField(phi_);
   this->addDependentField(psi_);
+  this->addDependentField(porosity_);
   this->addDependentField(energyDot_);
   this->addDependentField(time);
   this->addDependentField(deltaTime);
 
   this->addEvaluatedField(residual_);
+  
+  
+  Teuchos::ParameterList* cond_list = p.get<Teuchos::ParameterList*>("Porosity Parameter List");
+  
+  Initial_porosity = cond_list->get("Value", 0.0);
   
   std::vector<PHX::Device::size_type> dims;
   w_grad_bf_.fieldTag().dataLayout().dimensions(dims);
@@ -82,6 +89,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(deltaTime,fm);
   this->utils.setFieldData(phi_,fm);
   this->utils.setFieldData(psi_,fm);
+  this->utils.setFieldData(porosity_,fm);
   this->utils.setFieldData(energyDot_,fm);
   this->utils.setFieldData(residual_,fm);
 }
@@ -110,7 +118,43 @@ evaluateFields(typename Traits::EvalData workset)
 
     // diffusive term
     FST::scalarMultiplyDataData<ScalarT> (term1_, k_, T_grad_);
-    FST::integrate<ScalarT>(residual_, term1_, w_grad_bf_, Intrepid2::COMP_CPP, false);
+    // FST::integrate<ScalarT>(residual_, term1_, w_grad_bf_, Intrepid2::COMP_CPP, false);
+    //Using for loop to calculate the residual 
+
+    
+    // zero out residual
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int node = 0; node < num_nodes_; ++node) {
+        residual_(cell,node) = 0.0;
+      }
+    }
+
+//    for (int cell = 0; cell < workset.numCells; ++cell) {
+//      for (int qp = 0; qp < num_qps_; ++qp) {
+//        for (int node = 0; node < num_nodes_; ++node) {
+//          for (int i = 0; i < num_dims_; ++i) {
+//             residual_(cell,node) += w_grad_bf_(cell,node,qp,i) * term1_(cell,qp,i);
+//          }
+//        }
+//      }
+//    }
+   
+    
+    
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int qp = 0; qp < num_qps_; ++qp) {
+        for (int node = 0; node < num_nodes_; ++node) {
+            porosity_function1 = pow(((1.0 - porosity_(cell,qp))/(1.0 - Initial_porosity)),2);
+            porosity_function2 = (1.0 - Initial_porosity)/(1.0 - porosity_(cell,qp));
+            //In the model that is currently used, the Y-axis corresponds to the depth direction. Hence the term porosity
+            //function1 is multiplied with the second term. 
+            residual_(cell,node) += porosity_function2*(
+                       w_grad_bf_(cell,node,qp,0) * term1_(cell,qp,0)
+                     + porosity_function1* w_grad_bf_(cell,node,qp,1) * term1_(cell,qp,1)
+                     + w_grad_bf_(cell,node,qp,2) * term1_(cell,qp,2));
+        }
+      }
+    }
 
     // heat source from laser 
     PHAL::scale(laser_source_, -1.0);

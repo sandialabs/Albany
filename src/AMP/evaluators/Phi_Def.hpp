@@ -19,12 +19,9 @@ namespace AMP {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 Phi<EvalT, Traits>::
-Phi(Teuchos::ParameterList& p,
-                         const Teuchos::RCP<Albany::Layouts>& dl) :
-  T_          (p.get<std::string>("Temperature Name"),
-               dl->qp_scalar),
-  phi_        (p.get<std::string>("Phi Name"),
-               dl->qp_scalar)
+Phi(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
+  T_          (p.get<std::string>("Temperature Name"),dl->qp_scalar),
+  phi_        (p.get<std::string>("Phi Name"),dl->qp_scalar)
 {
 
   this->addDependentField(T_);

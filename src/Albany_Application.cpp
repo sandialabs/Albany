@@ -1478,7 +1478,7 @@ computeGlobalJacobianImplT(const double alpha,
   }
 #endif
 #endif
-
+  
   //scale Jacobian 
   if (scaleBCdofs == false && scale != 1.0) { 
     jacT->fillComplete();
@@ -1566,7 +1566,7 @@ computeGlobalJacobianImplT(const double alpha,
   GOAL::computeHierarchicBCs(t, (*this), xT, fT, jacT);
 #endif
   jacT->fillComplete();
-
+  
   //Apply scaling to residual and Jacobian 
   if (scaleBCdofs == true) {
     if (Teuchos::nonnull(fT))

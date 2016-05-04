@@ -1,266 +1,855 @@
 #!/usr/bin/python
 '''
-LCM_postprocess.py input.e output.e
+LCM_postprocess.py input.e [output.e]
 
 creates usable output from LCM calculations
 '''
 
+#
+# Imported modules
+#
 import sys
 import os
+import xml.etree.ElementTree as et
 from exodus import exodus
 from exodus import copy_mesh
 import numpy as np
 import matplotlib.pyplot as plt
-
-def postprocess(inFileName, outFileName):
-
-    debug = 0
-
-    # set i/o units 
-    inFile = exodus(inFileName,"r")
-    if os.path.isfile(outFileName):
-      cmdLine = "rm %s" % outFileName
-      os.system(cmdLine)
-    outFile = copy_mesh(inFileName, outFileName)
-
-
-    # get number of dimensions
-    num_dims = inFile.num_dimensions()
-
-    print "Dimensions"
-    print num_dims
-
-
-    # get times
-    times = inFile.get_times()
-    print "Print the times"
-    print times[0], times[-1]
-
-
-    # get list of nodal variables
-    node_var_names= inFile.get_node_variable_names()
-    print "Printing the names of the nodal variables"
-    print node_var_names
-
-
-    # get list of element variables
-    elem_var_names = inFile.get_element_variable_names()
-    num_variables_unique = 0
-    names_variable_unique = []
-    print "Printing the names of the element variables"
-    for name in elem_var_names:
-        new_name = True
-        for name_unique in names_variable_unique:
-          if (name.startswith(name_unique+"_")):
-            new_name = False
-        if (new_name == True):
-          indices = [int(s) for s in name if s.isdigit()]
-          names_variable_unique.append(name[0:name.find(str(indices[0]))-1])
-    print names_variable_unique
-
-
-    # get number of element blocks and block ids
-    block_ids = inFile.get_elem_blk_ids()
-    num_blocks = inFile.num_blks()
+from matplotlib import rcParams
+from scipy.linalg import *
 
 
 
+#
+# Local classes
+#
+class objDomain(object):
 
-    # create any global variables
+    def __init__(self, **kwargs):
+
+        self.blocks = dict()
+        self.variables = []
+
+        for (key, value) in kwargs.items():
+            setattr(self, key, value)
+    #         self.variables.append(key)
+
+    # def __setattr__(self, name, value, variable = False):
+
+    #     super(objDomain).__setattr__(name, value)
+    #     if variable == True:
+    #         self.variables.append(name)
 
 
-    # figure out number of integration points
-    num_points = 0
-    for name in elem_var_names:
-      if (name.startswith("Weights_")):
-          num_points += 1
 
-    # check that "Weights" exist as an element variable
-    if (num_points == 0):
-      raise Exception("The weights field is not available...try again.")
-          
-    print "Number of Integration points"
-    print num_points
+class objBlock(object):
 
-    # write times to outFile
+    def __init__(self, **kwargs):
+
+        self.elements = dict()
+
+        for (key, value) in kwargs.items():
+            setattr(self, key, value)
+
+
+
+class objElement(object):
+
+    def __init__(self, **kwargs):
+
+        self.points = dict()
+
+        for (key, value) in kwargs.items():
+            setattr(self, key, value)
+
+
+
+class objPoint(object):
+
+    def __init__(self, **kwargs):
+
+        for (key, value) in kwargs.items():
+            setattr(self, key, value)
+
+
+
+#
+# Local functions
+#
+
+
+
+def readInputFile(fileInput, namesVariable = ''):
+
+    returnDict = {}
+
+    for name in namesVariable:
+
+        # get number of dimensions
+        if name == 'num_dims':
+            returnDict[name] = fileInput.num_dimensions()
+
+        # Get number of elements
+        elif name == 'num_elements': 
+            returnDict[name] = dict([(id,fileInput.num_elems_in_blk(id)) for id in fileInput.get_elem_blk_ids()])
+
+        # Get output times
+        elif name == 'times':
+            returnDict[name] = fileInput.get_times()
+
+        # Get list of nodal variables
+        elif name == 'node_var_names':
+            returnDict[name] = fileInput.get_node_variable_names()
+
+        # Get list of element variables
+        elif name == 'elem_var_names':
+            returnDict[name] = fileInput.get_element_variable_names()
+
+            num_variables_unique = 0
+            names_variable_unique = []
+
+        # Get the unique variable names (deal with integration points and arrays)
+        elif name == 'names_variable_unique':
+           
+            for nameElementVariable in fileInput.get_element_variable_names():
+                new_name = True
+                for name_unique in names_variable_unique:
+                  if (nameElementVariable.startswith(name_unique+"_")):
+                    new_name = False
+                if (new_name == True):
+                  indices = [int(s) for s in nameElementVariable if s.isdigit()]
+                  names_variable_unique.append(nameElementVariable[0:nameElementVariable.find(str(indices[0]))-1])
+
+            returnDict[name]= names_variable_unique
+
+        # Get number of element blocks and block ids
+        elif name == 'block_ids':
+            returnDict[name] = fileInput.get_elem_blk_ids()
+
+        elif name == 'num_blocks':
+            returnDict[name] = fileInput.num_blks()
+
+        # Calculate number of integration points
+        elif name == 'num_points':
+            num_points = 0
+            for nameElementVariable in fileInput.get_element_variable_names():
+              if (nameElementVariable.startswith("Weights_")):
+                  num_points += 1
+
+            # Check that "Weights" exist as an element variable
+            if (num_points == 0):
+              raise Exception("The weights field is not available...try again.")
+
+            returnDict[name] = num_points
+
+    return returnDict
+
+# end def readInputFile(fileInput, **kwargs):
+
+
+
+
+def readXml(nameFileBase, **kwargs):
+    
+    tree = et.parse(nameFileBase+'_Material.xml')
+    root = tree.getroot()
+
+    for child in root:
+
+        if child.attrib['name'] == 'ElementBlocks':
+
+            namesMaterial = dict()
+
+            for block in child:
+
+                nameBlock = block.attrib['name']
+
+                for parameter in block:
+
+                    if parameter.attrib['name'] == 'material':
+
+                        nameMaterial = parameter.attrib['value']
+
+                namesMaterial[nameBlock] = nameMaterial
+
+    for keyArg in kwargs:
+
+        if keyArg == 'orientations':
+
+            orientations = kwargs[keyArg]
+
+            for child in root:
+
+                if child.attrib['name'] == 'Materials':
+
+                    for material in child:
+
+                        nameMaterial = material.attrib['name']
+
+                        for plist in material:
+
+                            if plist.attrib['name'] == 'Crystal Elasticity':
+
+                                orientation = np.zeros((3,3))
+
+                                for parameter in plist:
+
+                                    nameParamter = parameter.attrib['name']
+
+                                    if nameParamter.split()[0] == 'Basis':
+
+                                        orientation[int(nameParamter.split()[2])-1][:] = \
+                                            np.fromstring(
+                                                parameter.attrib['value'].translate(None,'{}'),
+                                                sep = ',')
+
+                        for key, value in namesMaterial.items():
+
+                            if value == nameMaterial:
+
+                                orientations[key] = orientation
+
+# end def readXml(nameFileInput):
+
+
+
+
+def setWeightsVolumes(fileInput, domain):
+
+    for keyBlock in domain.blocks:
+
+        for indexPoint in range(domain.blocks[keyBlock].num_points):
+
+            keyWeight = 'Weights_' + str(indexPoint + 1)
+
+            values_weights = fileInput.get_element_variable_values(
+                keyBlock, 
+                keyWeight, 
+                1)
+
+            for keyElement in domain.blocks[keyBlock].elements:
+
+                domain.blocks[keyBlock].elements[keyElement].points[indexPoint].weight = values_weights[keyElement]
+
+        for keyElement in domain.blocks[keyBlock].elements:
+
+            domain.blocks[keyBlock].elements[keyElement].volume = \
+                np.sum([domain.blocks[keyBlock].elements[keyElement].points[x].weight for x in
+                    domain.blocks[keyBlock].elements[keyElement].points])
+
+        domain.blocks[keyBlock].volume = np.sum([domain.blocks[keyBlock].elements[x].volume for x in
+            domain.blocks[keyBlock].elements])
+
+    domain.volume = np.sum([domain.blocks[x].volume for x in domain.blocks])
+
+# end setWeightsVolumes(fileInput, domain):
+
+
+
+def setValuesTensor(fileInput, nameVariable, domain):
+
+    num_dims = domain.num_dims
+
+    times = fileInput.get_times()
+
+    setattr(
+        domain, 
+        nameVariable,
+        dict([(step, np.zeros((num_dims, num_dims))) for step in times]))
+
+    # Note: exodus function get_element_variable_values returns values by block,    
+    # so outer loop over block
+
+    for keyBlock in domain.blocks:
+
+        block = domain.blocks[keyBlock]
+
+        setattr(
+            block, 
+            nameVariable,
+            dict([(step, np.zeros((num_dims, num_dims))) for step in times]))
+
+        for keyElement in block.elements:
+
+            element = block.elements[keyElement]
+
+            setattr(
+                element, 
+                nameVariable,
+                dict([(step, np.zeros((num_dims, num_dims))) for step in times]))
+
+            for keyPoint in element.points:
+
+                point = element.points[keyPoint]
+
+                setattr(
+                    point, 
+                    nameVariable,
+                    dict([(step, np.zeros((num_dims, num_dims))) for step in times]))
+                
+        for step in range(len(times)):
+
+            for dim_i in range(num_dims):
+
+                for dim_j in range(num_dims):
+
+                    index_dim = num_dims * dim_i + dim_j + 1
+
+                    for indexPoint in range(block.num_points):
+
+                        indexVariable = indexPoint * num_dims**2 + index_dim
+
+                        keyVariable = nameVariable + '_{:02d}'.format(indexVariable)
+
+                        valuesBlock = fileInput.get_element_variable_values(
+                            keyBlock, 
+                            keyVariable, 
+                            step + 1)
+
+                        for keyElement in block.elements:
+
+                            element = block.elements[keyElement]
+
+                            point = element.points[indexPoint]
+
+                            getattr(point, nameVariable)[times[step]][dim_i, dim_j] = valuesBlock[keyElement]
+
+
+                    for keyElement in block.elements:
+
+                        element = block.elements[keyElement]
+
+                        for keyPoint in element.points:
+
+                            point = element.points[keyPoint]
+
+                            getattr(element, nameVariable)[times[step]][dim_i, dim_j] += \
+                                getattr(point, nameVariable)[times[step]][dim_i, dim_j] * \
+                                point.weight / element.volume
+
+                        getattr(block, nameVariable)[times[step]][dim_i, dim_j] += \
+                            getattr(element, nameVariable)[times[step]][dim_i, dim_j] * \
+                            element.volume / block.volume
+
+                    getattr(domain, nameVariable)[times[step]][dim_i, dim_j] += \
+                        getattr(block, nameVariable)[times[step]][dim_i, dim_j] * \
+                        block.volume / domain.volume
+
+# end def setValuesTensor(fileInput, nameVariable, domain):  
+
+
+
+
+def plotInversePoleFigure(**kwargs):
+
+    #
+    # Read data 
+    #
+    if 'nameFileInput' in kwargs:
+
+        nameFileInput = kwargs['nameFileInput']
+        nameFileBase = nameFileInput.split('.')[0]
+        orientations = np.loadtxt(nameFileInput)
+
+    elif 'domain' in kwargs:
+
+        domain = kwargs['domain']
+
+        if 'time' in kwargs:
+            time = kwargs['time']
+        else:
+            time = 0.0
+        nameFileBase = str(time)
+
+        listOrientations = []
+
+        for keyBlock in domain.blocks:
+            block = domain.blocks[keyBlock]
+            for keyElement in block.elements:
+                element = block.elements[keyElement]
+                listOrientations.append(element.orientation[time].flatten())
+        orientations = np.array(listOrientations)
+    else:
+
+        raise TypeError('Need either nameFileInput or orientations keyword args')
+
+    #
+    # Compute IPF quantities
+    #
+    RD = abs(orientations[:, 0:3])
+    TD = abs(orientations[:, 3:6])
+    ND = abs(orientations[:, 6:9])
+
+    #
+    # Create axes 
+    #
+    HKL = np.ones(3)
+    XX = np.zeros(103)
+    YY = np.zeros(103)
+
+    for x in range(101):
+
+        HKL[0] = -1 / 100. * (1 + x) + 1 / 100.
+        HKL[1] = 1
+        HKL[2] = 1
+        
+        HKL /= np.linalg.norm(HKL)        
+        XX[x] = HKL[1] / (1 + HKL[2])
+        YY[x] = -HKL[0] / (1 + HKL[2])
+        
+    XX[102] = XX[0]
+    YY[102] = 0
+
+    #
+    # Convert orientations to ipf space 
+    #
+    X_RD = np.zeros(len(orientations))
+    Y_RD = np.zeros(len(orientations))
+    for x in range(len(orientations)):
+        A = sorted(RD[x,:])    
+        X_RD[x] = A[1] / (1 + A[2])
+        Y_RD[x] = A[0] / (1 + A[2])
+
+    X_TD = np.zeros(len(orientations))
+    Y_TD = np.zeros(len(orientations))
+    for x in range(len(orientations)):
+        A = sorted(TD[x,:])    
+        X_TD[x] = A[1] / (1 + A[2])
+        Y_TD[x] = A[0] / (1 + A[2])
+        
+    X_ND = np.zeros(len(orientations))
+    Y_ND = np.zeros(len(orientations))
+    for x in range(len(orientations)):
+        A = sorted(ND[x,:])    
+        X_ND[x] = A[1] / (1 + A[2])
+        Y_ND[x] = A[0] / (1 + A[2])                        
+                                                                            
+    #
+    # Create figures  
+    #
+    plt.rc('text', usetex = True)
+    plt.rc('font', family = 'serif', size = 22)
+
+    fig = plt.figure(figsize = (15,4))
+
+    ax1 = fig.add_subplot(131)
+    ax2 = fig.add_subplot(132)
+    ax3 = fig.add_subplot(133)
+
+    fig.suptitle('Inverse pole figures', fontsize = 14, fontweight = 'bold')
+
+    plt.subplot(1, 3, 1)
+    plt.plot(X_RD, Y_RD, 'ro')
+    plt.plot(XX, YY, 'k', linewidth = 1)
+    plt.gca().set_aspect('equal', adjustable = 'box')
+    plt.axis('off')
+    ax1.text(0.2, -0.05, 'RD', fontsize = 16)
+    ax1.text(-0.03, -0.03, r'$[001]$', fontsize = 15)
+    ax1.text(0.38, -0.03, r'$[011]$', fontsize = 15)
+    ax1.text(0.34, 0.375, r'$[\bar111]$', fontsize = 15)
+
+    plt.subplot(1, 3, 2)
+    plt.plot(X_TD, Y_TD, 'bo')
+    plt.plot(XX, YY, 'k', linewidth = 1)
+    plt.gca().set_aspect('equal', adjustable = 'box')
+    plt.axis('off')
+    ax2.text(0.2, -0.05, 'TD', fontsize = 16)
+    ax2.text(-0.03, -0.03, r'$[001]$', fontsize = 15)
+    ax2.text(0.38, -0.03, r'$[011]$', fontsize = 15)
+    ax2.text(0.34, 0.375, r'$[\bar111]$', fontsize = 15)
+
+    plt.subplot(1, 3, 3)
+    plt.plot(X_ND, Y_ND, 'go')
+    plt.plot(XX, YY, 'k', linewidth = 1)
+    plt.gca().set_aspect('equal', adjustable = 'box')
+    plt.axis('off')
+    ax3.text(0.2, -0.05, 'ND', fontsize = 16)
+    ax3.text(-0.03, -0.03, r'$[001]$', fontsize = 15)
+    ax3.text(0.38, -0.03, r'$[011]$', fontsize = 15)
+    ax3.text(0.34, 0.375, r'$[\bar111]$', fontsize = 15)
+
+    plt.savefig(nameFileBase + '_IPF.pdf')
+    plt.close(fig)
+
+# end plotInversePoleFigure(**kwargs):
+
+
+
+def writeData(domain, nameFileData, precision = 8):
+
+    file = open(nameFileData, 'w')
+
+    strFormat = '%.'+str(precision)+'e'
+
+    file.write('Deformation Gradient\n')
+    for step in domain.F:
+        domain.F[step].tofile(file, sep = ' ', format = strFormat)
+        file.write('\n')
+
+    file.write('Cauchy Stress\n')
+    for step in domain.Cauchy_Stress:
+        domain.Cauchy_Stress[step].tofile(file, sep = ' ', format = strFormat)
+        file.write('\n')
+
+    file.close()
+
+# end def writeData(data, nameFileData)
+
+
+
+
+def writeExodusFile(domain, fileInput, nameFileOutput):
+
+    times = domain.times
+    num_dims = domain.num_dims
+
+    if os.path.isfile(nameFileOutput):
+        cmdLine = "rm %s" % nameFileOutput
+        os.system(cmdLine)
+    fileOutput = fileInput.copy(nameFileOutput)
+
+    # write times to fileOutput
     for step in range(len(times)):
-      outFile.put_time(step+1,times[step])
+       fileOutput.put_time(step + 1, times[step])
 
+    #
     # write out displacement vector
-    dx = []
-    dy = []
-    dz = []
-
-    outFile.set_node_variable_number(int(3))
-    outFile.put_node_variable_name('displacement_x', 1)
-    outFile.put_node_variable_name('displacement_y', 2)
-    outFile.put_node_variable_name('displacement_z', 3)
+    #
+    fileOutput.set_node_variable_number(int(3))
+    fileOutput.put_node_variable_name('displacement_x', 1)
+    fileOutput.put_node_variable_name('displacement_y', 2)
+    fileOutput.put_node_variable_name('displacement_z', 3)
 
     for step in range(len(times)):
 
-      dx = inFile.get_node_variable_values('displacement_x',step+1)
-      dy = inFile.get_node_variable_values('displacement_y',step+1)
-      dz = inFile.get_node_variable_values('displacement_z',step+1)
+        fileOutput.put_node_variable_values(
+            'displacement_x',
+            step + 1,
+            fileInput.get_node_variable_values('displacement_x',step+1))
 
-      outFile.put_node_variable_values('displacement_x',step+1,dx)
-      outFile.put_node_variable_values('displacement_y',step+1,dy)
-      outFile.put_node_variable_values('displacement_z',step+1,dz)
+        fileOutput.put_node_variable_values(
+            'displacement_y',
+            step + 1,
+            fileInput.get_node_variable_values('displacement_y',step+1))
 
+        fileOutput.put_node_variable_values(
+            'displacement_z',
+            step + 1,
+            fileInput.get_node_variable_values('displacement_z',step+1))
 
+    #
     # create variables in output file
+    #
+    fileOutput.set_element_variable_number(2 * num_dims**2)
 
-    outFile.set_element_variable_number(int(18))
-    outFile.put_element_variable_name('stress_cauchy_11', 1)
-    outFile.put_element_variable_name('stress_cauchy_12', 2)
-    outFile.put_element_variable_name('stress_cauchy_13', 3)
-    outFile.put_element_variable_name('stress_cauchy_21', 4)
-    outFile.put_element_variable_name('stress_cauchy_22', 5)
-    outFile.put_element_variable_name('stress_cauchy_23', 6)
-    outFile.put_element_variable_name('stress_cauchy_31', 7)
-    outFile.put_element_variable_name('stress_cauchy_32', 8)
-    outFile.put_element_variable_name('stress_cauchy_33', 9)
-    outFile.put_element_variable_name('F_11', 10)
-    outFile.put_element_variable_name('F_12', 11)
-    outFile.put_element_variable_name('F_13', 12)
-    outFile.put_element_variable_name('F_21', 13)
-    outFile.put_element_variable_name('F_22', 14)
-    outFile.put_element_variable_name('F_23', 15)
-    outFile.put_element_variable_name('F_31', 16)
-    outFile.put_element_variable_name('F_32', 17)
-    outFile.put_element_variable_name('F_33', 18)
+    for dim_i in range(num_dims):
+
+        for dim_j in range(num_dims):
+
+            nameStress = 'Cauchy_Stress_' + str(dim_i + 1) + str(dim_j + 1)
+
+            fileOutput.put_element_variable_name(
+                nameStress, 
+                dim_i * num_dims + dim_j + 1)
+
+            nameDefGrad = 'F_' + str(dim_i + 1) + str(dim_j + 1)
+
+            fileOutput.put_element_variable_name(
+                nameDefGrad, 
+                num_dims**2 + dim_i * num_dims + dim_j + 1)
+
+            for keyBlock in domain.blocks:
+
+                block = domain.blocks[keyBlock]
+
+                for step in range(len(times)):
+
+                    fileOutput.put_element_variable_values(
+                        keyBlock,
+                        nameStress,
+                        step + 1,
+                        [block.elements[keyElement].Cauchy_Stress[times[step]][dim_i][dim_j] for keyElement in block.elements])
+
+                    fileOutput.put_element_variable_values(
+                        keyBlock,
+                        nameDefGrad,
+                        step + 1,
+                        [block.elements[keyElement].F[times[step]][dim_i][dim_j] for keyElement in block.elements])
+
+    fileOutput.close()
+
+# end def writeExodusFile(nameFileOutput):
+
+
+
+
+def plotStressStrain(domain):
+
+    num_dims = domain.num_dims
+    times = domain.times
+
+    rcParams.update({'figure.autolayout': True})
+
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='serif', size=22)
+
+    fig = plt.figure()
+
+    strain_domain = dict()
+
+    for keyStep in times:
+        
+        strain_domain[keyStep] = 0.5 * logm(np.inner(domain.F[keyStep].T, domain.F[keyStep].T))
+
+    setattr(domain, 'Log_Strain', strain_domain)
+
+    for keyBlock in domain.blocks:
+
+        block = domain.blocks[keyBlock]
+
+        strain_block = dict()
+
+        for keyStep in times:
+
+            strain_block[keyStep] = 0.5 * logm(np.inner(block.F[keyStep].T, block.F[keyStep].T))
+
+        setattr(block, 'Log_Strain', strain_block)
+
+
+    for dim_i in range(num_dims):
+
+        for dim_j in range(num_dims):
+
+            fig.clf()
+            plt.hold(True)
+
+            plt.plot(
+                [domain.Log_Strain[keyStep][dim_i][dim_j] for keyStep in times],
+                [domain.Cauchy_Stress[keyStep][(dim_i, dim_j)] for keyStep in times],
+                marker = 'o')
+
+            strLegend = ['Domain']
+
+            for keyBlock in domain.blocks:
+
+                block = domain.blocks[keyBlock]
+
+                plt.plot(
+                    [block.Log_Strain[keyStep][dim_i][dim_j] for keyStep in times],
+                    [block.Cauchy_Stress[keyStep][(dim_i, dim_j)] for keyStep in times],
+                    linestyle = ':')
+
+                strLegend.append('Block ' + str(keyBlock))
+
+
+            plt.xlabel('Logarithmic Strain $\epsilon_{'+ str(dim_i + 1) + str(dim_j + 1) +'}$')
+            plt.ylabel('Cauchy Stress $\sigma_{'+ str(dim_i + 1) + str(dim_j + 1) +'}$ (MPa)')
+            plt.legend(strLegend, loc = 'upper left', fontsize = 15)
+
+            plt.savefig('stress_strain_'+ str(dim_i + 1) + str(dim_j + 1) +'.pdf')
+
+# end def plotStressStrain(domain):
+
+
+
+
+def postprocess(nameFileInput, **kwargs):
+
+    debug = 1
+
+
+    # Set i/o units 
+    nameFileBase = nameFileInput.split('.')[0]
+    nameFileExtension = nameFileInput.split('.')[-1]
 
 
 
     #
-    # search through variables, find desired quantities, and output them
+    # Get values of whole domain variables
     #
-    for name in names_variable_unique:
+    print 'Reading input file...'
+
+    fileInput = exodus(nameFileInput,"r")
+    
+    inputValues = readInputFile(
+        fileInput,
+        namesVariable = [
+            'num_dims', 
+            'num_elements', 
+            'times', 
+            'elem_var_names', 
+            'names_variable_unique', 
+            'block_ids', 
+            'num_points'])
+
+    num_dims = inputValues['num_dims']
+    num_elements = inputValues['num_elements']
+    times = inputValues['times']
+    elem_var_names = inputValues['elem_var_names']
+    names_variable_unique = inputValues['names_variable_unique']
+    block_ids = inputValues['block_ids']
+    num_points = inputValues['num_points']
+
+
+
+    #
+    # Create the mesh stucture
+    #
+    print 'Creating domain object...'
+
+    domain = objDomain(
+        num_dims = num_dims,
+        num_elements = np.sum(num_elements.values()),
+        times = times)
+
+    for block_id in block_ids:
+
+        domain.blocks[block_id] = objBlock(
+            num_elements = num_elements[block_id],
+            num_points = num_points)
+        # TODO: change line above to line below
+        # num_points =  = num_points[block_id]
+
+        for indexElement in range(num_elements[block_id]):
+
+            domain.blocks[block_id].elements[indexElement] = objElement()
+
+            for indexPoint in range(num_points):
+
+                domain.blocks[block_id].elements[indexElement].points[indexPoint] = objPoint()
+
+
+
+    #
+    # Get material data
+    #
+    print 'Retrieving material data...'
+
+    orientations = dict()
+
+    readXml(
+        nameFileBase, 
+        orientations = orientations)
+    
+    for block_id in block_ids:
+        nameBlock = fileInput.get_elem_blk_name(block_id)
+        domain.blocks[block_id].orientation = orientations[nameBlock]
+
+
+
+    print 'Compiling output data...'
+    
+    #
+    # Record the integration point weights and block volumes
+    #
+    setWeightsVolumes(fileInput, domain)
+    
+    if debug != 0:
+        print 'Volume: ', domain.volume
+
+    #
+    # Average the quantities of interest
+    #
+    for nameVariable in names_variable_unique:
 
         #
-        # handle the cauchy stress
+        # Handle the cauchy stress
         #
-        if (name == 'Cauchy_Stress'):
+        if (nameVariable == 'Cauchy_Stress'):
 
-            for step in range(len(times)):
+            print nameVariable
 
-                for block in block_ids:
-
-                    stress_cauchy = []
-
-                    for dim_i in range(num_dims):
-
-                        for dim_j in range(num_dims):
-
-                            index_dim = num_dims * dim_i + dim_j + 1
-
-                            stress_cauchy_component = []
-
-                            for point in range(num_points):
-
-                                key_weights = 'Weights_' + str(point + 1)
-
-                                values_weights = inFile.get_element_variable_values(
-                                    block, key_weights, step + 1)
-
-                                index_pt = point * num_dims**2 + index_dim
-
-                                if index_pt < 10:
-                                    str_index = '0' + str(index_pt)
-                                else:
-                                    str_index = str(index_pt)
-
-                                key_stress = 'Cauchy_Stress_' + str_index
-
-                                values_stress = \
-                                    inFile.get_element_variable_values(block, key_stress, step+1)
-                            
-                                stress_cauchy_component.extend(
-                                    [x*y for (x,y) in zip(values_stress, values_weights)])
-
-                            if debug != 0:
-                                print 'stress_cauchy_'+str(dim_i+1)+str(dim_j+1)
-                                print np.sum(stress_cauchy_component)
-
-                            # output the volume-averaged quantity
-                            outFile.put_element_variable_values(
-                                block,'stress_cauchy_'+str(dim_i+1)+str(dim_j+1),step+1,np.sum(stress_cauchy_component)*np.ones(len(stress_cauchy_component)))
-
-                            stress_cauchy.append(stress_cauchy_component)
-
-                    if debug != 0:
-                        print 'Cauchy_Stress', np.shape(stress_cauchy)
-                        print stress_cauchy
-
-                # end for step in range(len(times)):
-
-            # end if (name == 'Cauchy_Stress'):
+            setValuesTensor(fileInput, nameVariable, domain)
 
         #
-        # handle the deformation gradient
+        # Handle the deformation gradient
         #
-        if (name == 'F'):
+        elif (nameVariable == 'F'):
 
-            for step in range(len(times)):
+            print nameVariable
 
-                for block in block_ids:
+            setValuesTensor(fileInput, nameVariable, domain)
 
-                    defgrad = []
 
-                    for dim_i in range(num_dims):
 
-                        for dim_j in range(num_dims):
+    #
+    # Calculate the deformed orientations
+    #
+    print 'Computing deformed orientations...'
 
-                            index_dim = num_dims * dim_i + dim_j + 1
+    for keyBlock in domain.blocks:
 
-                            defgrad_component = []
+        block = domain.blocks[keyBlock]
 
-                            for point in range(num_points):
+        for keyElement in block.elements:
 
-                                key_weights = 'Weights_' + str(point + 1)
+            element = block.elements[keyElement]
 
-                                values_weights = inFile.get_element_variable_values(
-                                    block, key_weights, step + 1)
+            element.R = dict()
+            element.U = dict()
+            element.orientation = dict()
 
-                                index_pt = point * num_dims**2 + index_dim
+            for step in times:
 
-                                if index_pt < 10:
-                                    str_index = '0' + str(index_pt)
-                                else:
-                                    str_index = str(index_pt)
+                element.R[step], element.U[step] = polar(element.F[step])
 
-                                key_defgrad = 'F_' + str_index
+                element.orientation[step] = np.inner(element.R[step], block.orientation.T)
 
-                                values_defgrad = \
-                                    inFile.get_element_variable_values(block, key_defgrad, step+1)
-                            
-                                defgrad_component.extend(
-                                    [x*y for (x,y) in zip(values_defgrad, values_weights)])
 
-                            if debug != 0:
-                                print 'defgrad_'+str(dim_i+1)+str(dim_j+1)
-                                print np.sum(defgrad_component)
+    #
+    # Plot the inverse pole figures
+    #
+    print 'Plotting inverse pole figures...'
 
-                            # output the volume-averaged quantity
-                            outFile.put_element_variable_values(
-                                block,'F_'+str(dim_i+1)+str(dim_j+1),step+1,np.sum(defgrad_component)*np.ones(len(defgrad_component)))
+    for step in times:
 
-                            defgrad.append(defgrad_component)
+        plotInversePoleFigure(domain = domain, time = step) 
 
-                    if debug != 0:
-                        print 'defgrad', np.shape(defgrad)
-                        print defgrad
 
-                # end for step in range(len(times)):
 
-            # end if (name == 'F'):
+    #
+    # Write data to exodus output file
+    #
+    print 'Writing data to exodus file...'
 
-        # end for name in names_variable_unique:
+    if 'nameFileOutput' in kwargs:
+        nameFileOutput = kwargs['nameFileOutput']
+    else:
+        nameFileOutput = nameFileBase + '_Postprocess.' + nameFileExtension
+    
+    writeExodusFile(domain, fileInput, nameFileOutput)
 
-    outFile.close()
+    fileInput.close()
 
-    # end def postprocess(inFileName, outFileName):
+
+
+    #
+    # Plot stress-strain data
+    #
+    print 'Plotting stress-strain data...'
+
+    plotStressStrain(domain)
+
+
+
+    #
+    # Return topology and data
+    #
+    return domain
+
+# end def postprocess(nameFileInput, nameFileOutput):
+
+
+
 
 if __name__ == '__main__':
-    inFileName = sys.argv[1]
-    outFileName = sys.argv[2]
-    postprocess(inFileName, outFileName)
+
+    nameFileInput = sys.argv[1]
+
+    if len(sys.argv) == 2:
+
+        domain = postprocess(nameFileInput, nameFileOutput = sys.argv[2])
+
+    else:
+
+        domain = postprocess(nameFileInput)

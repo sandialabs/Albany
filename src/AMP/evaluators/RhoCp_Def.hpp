@@ -17,15 +17,14 @@ namespace AMP {
 //**********************************************************************
 template<typename EvalT, typename Traits>
 RhoCp<EvalT, Traits>::
-RhoCp(Teuchos::ParameterList& p,
-                         const Teuchos::RCP<Albany::Layouts>& dl) :
-  coord_      (p.get<std::string>("Coordinate Name"),
-               dl->qp_vector),
-  rho_cp_     (p.get<std::string>("Rho Cp Name"),
-               dl->qp_scalar)
+RhoCp(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
+  coord_      (p.get<std::string>("Coordinate Name"),dl->qp_vector),
+  porosity_   (p.get<std::string>("Porosity Name"),dl->qp_scalar),
+  rho_cp_     (p.get<std::string>("Rho Cp Name"),dl->qp_scalar)
 {
 
   this->addDependentField(coord_);
+  this->addDependentField(porosity_);
   this->addEvaluatedField(rho_cp_);
  
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
@@ -63,6 +62,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(coord_,fm);
+  this->utils.setFieldData(porosity_,fm);
   this->utils.setFieldData(rho_cp_,fm);
 }
 
@@ -78,7 +78,9 @@ evaluateFields(typename Traits::EvalData workset)
   // specific heat function
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-      rho_cp_(cell,qp) = constant_value_;
+//              rho_cp_(cell,qp) = constant_value_;
+       rho_cp_(cell,qp) = constant_value_*(1.0 - porosity_(cell,qp));
+
     }
   }
 
