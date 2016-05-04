@@ -78,6 +78,8 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     void splitFields(Teuchos::Array<Teuchos::Array<std::string> >& fieldLayout);
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
+    const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() const;
+
 
     std::vector<Teuchos::RCP<PUMIQPData<double, 1> > > scalarValue_states;
     std::vector<Teuchos::RCP<PUMIQPData<double, 2> > > qpscalar_states;

@@ -113,7 +113,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     //! Get sideSet discretizations map
     const SideSetDiscretizationsType& getSideSetDiscretizations () const
     {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Functionality not supported by APF discretization.\n");
+      //Warning: returning empty SideSetDiscretization for now.
       return sideSetDiscretizations;
     }
 
@@ -167,6 +167,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     // Retrieve mesh struct
     Teuchos::RCP<Albany::APFMeshStruct> getAPFMeshStruct() {return meshStruct;}
+    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const {return meshStruct;}
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return meshStruct->hasRestartSolution;}

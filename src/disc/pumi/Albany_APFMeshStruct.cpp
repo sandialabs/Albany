@@ -414,6 +414,15 @@ Albany::APFMeshStruct::getMeshSpecs()
   return meshSpecs;
 }
 
+const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
+Albany::APFMeshStruct::getMeshSpecs() const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
+       std::logic_error,
+       "meshSpecs accessed, but it has not been constructed" << std::endl);
+  return meshSpecs;
+}
+
 int Albany::APFMeshStruct::computeWorksetSize(const int worksetSizeMax,
                                                      const int ebSizeMax) const
 {

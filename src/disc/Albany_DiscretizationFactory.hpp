@@ -70,6 +70,13 @@ class DiscretizationFactory {
 
     Teuchos::RCP<Albany::AbstractDiscretization>
     createDiscretization(unsigned int num_equations,
+                         const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                         const AbstractFieldContainer::FieldContainerRequirements& req,
+                         const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
+
+
+    Teuchos::RCP<Albany::AbstractDiscretization>
+    createDiscretization(unsigned int num_equations,
                          const std::map<int,std::vector<std::string> >& sideSetEquations,
                          const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
@@ -97,6 +104,10 @@ class DiscretizationFactory {
 
     //! Private to prohibit copying
     DiscretizationFactory& operator=(const DiscretizationFactory&);
+
+    const std::map<int,std::vector<std::string> > empty_side_set_equations;
+    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > empty_side_set_sis;
+    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements> empty_side_set_req;
 
   protected:
 

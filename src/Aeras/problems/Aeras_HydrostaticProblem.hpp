@@ -56,6 +56,7 @@
 
 #include "Aeras_Eta.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 #include "Aeras/responses/Aeras_LayeredResponseUtilities.hpp"

@@ -6,6 +6,7 @@
 
 #include "HMCProblem.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #ifdef ALBANY_ATO
 #include "ATO_TopoTools.hpp"

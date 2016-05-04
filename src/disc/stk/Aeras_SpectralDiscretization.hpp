@@ -366,7 +366,7 @@ namespace Aeras
     //! Get sideSet discretizations map
     const SideSetDiscretizationsType& getSideSetDiscretizations () const
     {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Functionality not supported by Aeras discretization.\n");
+      //Warning, returning an empty sideSetDiscretizations. 
       return sideSetDiscretizations;
     }
 
@@ -448,6 +448,9 @@ namespace Aeras
 #endif
     //Tpetra analog
     void setResidualFieldT(const Tpetra_Vector& residualT);
+
+    //Retrieve mesh struct
+    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const {return stkMeshStruct;}
 
     // Retrieve mesh struct
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> getSTKMeshStruct()

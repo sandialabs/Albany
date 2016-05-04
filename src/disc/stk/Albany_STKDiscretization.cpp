@@ -987,7 +987,7 @@ Albany::STKDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
   // Setting the residual on the side set meshes
   for (auto it : sideSetDiscretizations)
   {
-    const Tpetra_CrsMatrix& P = *ov_projectors.at(it.first);
+    const Tpetra_CrsMatrix& P = *ov_projectorsT.at(it.first);
     Tpetra_Vector ss_residualT (it.second->getOverlapMapT());
     P.apply(residualT,ss_residualT);
     it.second->setResidualFieldT(ss_residualT);

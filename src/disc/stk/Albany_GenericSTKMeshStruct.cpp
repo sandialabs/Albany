@@ -1485,6 +1485,10 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
       "Request exodus output to given file name. Requires SEACAS build");
   validPL->set<std::string>("Exodus Solution Name", "",
       "Name of solution output vector written to Exodus file. Requires SEACAS build");
+  validPL->set<std::string>("Exodus SolutionDot Name", "",
+      "Name of solution output vector written to Exodus file. Requires SEACAS build");
+  validPL->set<std::string>("Exodus SolutionDotDot Name", "",
+      "Name of solution output vector written to Exodus file. Requires SEACAS build");
   validPL->set<std::string>("Exodus Residual Name", "",
       "Name of residual output vector written to Exodus file. Requires SEACAS build");
 #ifdef ALBANY_DTK
@@ -1505,8 +1509,8 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
       "Number of samples in Longitude direction for NetCDF output. Default is 100.");
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
-  validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
-  validPL->set<std::string>("Cubature Rule", "", "Integration rule sent to Intrepid: GAUSS, GAUSS_RADAU_LEFT, GAUSS_RADAU_RIGHT, GAUSS_LOBATTO");
+  validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid2");
+  validPL->set<std::string>("Cubature Rule", "", "Integration rule sent to Intrepid2: GAUSS, GAUSS_RADAU_LEFT, GAUSS_RADAU_RIGHT, GAUSS_LOBATTO");
   validPL->set<int>("Workset Size", 50, "Upper bound on workset (bucket) size");
   validPL->set<bool>("Use Automatic Aura", false, "Use automatic aura with BulkData");
   validPL->set<bool>("Interleaved Ordering", true, "Flag for interleaved or blocked unknown ordering");
@@ -1525,6 +1529,10 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
                      "Fields to pick up from the restart file when restarting");
   validPL->set<Teuchos::Array<std::string> >("Solution Vector Components", defaultFields,
       "Names and layout of solution output vector written to Exodus file. Requires SEACAS build");
+  validPL->set<Teuchos::Array<std::string> >("SolutionDot Vector Components", defaultFields,
+      "Names and layout of solution_dot output vector written to Exodus file. Requires SEACAS build");
+  validPL->set<Teuchos::Array<std::string> >("SolutionDotDot Vector Components", defaultFields,
+      "Names and layout of solution_dotdot output vector written to Exodus file. Requires SEACAS build");
   validPL->set<Teuchos::Array<std::string> >("Residual Vector Components", defaultFields,
       "Names and layout of residual output vector written to Exodus file. Requires SEACAS build");
 
@@ -1532,7 +1540,7 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<bool>("Transfer Solution to Coordinates", false, "Copies the solution vector to the coordinates for output");
 
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
-  validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the composite tet 10 basis in Intrepid");
+  validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the composite tet 10 basis in Intrepid2");
 
   validPL->sublist("Required Fields Info", false, "Info for the creation of the required fields in the STK mesh");
 

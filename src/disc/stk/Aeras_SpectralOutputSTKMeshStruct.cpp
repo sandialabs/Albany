@@ -126,9 +126,8 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
           const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
           const Teuchos::RCP<Albany::StateInfoStruct>& sis,
           const unsigned int worksetSize,
-          const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/,
-          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /*side_set_sis*/)
-
+          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /*side_set_sis*/,
+          const std::map<std::string,Albany::AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";

@@ -57,7 +57,7 @@ namespace LCM {
 
     // Input:
     PHX::MDField<ScalarT,Cell,Vertex,Dim> coord;
-    PHX::MDField<ScalarT,Cell,Face,VecDim> faceAve;
+    PHX::MDField<ScalarT,Cell,Side,VecDim> faceAve;
     RealType yieldStrength;
     RealType fractureLimit;  // Fracture face if traction > this value
 
@@ -65,7 +65,7 @@ namespace LCM {
 
     //Output:
     // As we can't define a boolean field on a face, define as a scalar
-    PHX::MDField<ScalarT,Cell,Face> criteriaMet;
+    PHX::MDField<ScalarT,Cell,Side> criteriaMet;
 
     // This is in here to trick the code to run the evaluator - does absolutely nothing
     PHX::MDField<ScalarT,Cell,QuadPoint> temp;

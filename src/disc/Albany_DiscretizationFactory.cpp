@@ -266,6 +266,7 @@ Albany::DiscretizationFactory::createMeshSpecs()
 #if defined(ALBANY_AERAS) && defined(HAVE_STK)
   //IK, 2/9/15: if the method is Ioss Aeras or Exodus Aeras (corresponding to Aeras::SpectralDiscretization,
   //overwrite the meshSpecs of the meshStruct with an enriched one.
+  std::string& method = discParams->get("Method", "STK1D");
   if (method == "Ioss Aeras" || method == "Exodus Aeras" || method == "STK1D Aeras") {
     //get "Element Degree" from parameter list.  Default value is 1.
     int points_per_edge = discParams->get("Element Degree", 1) + 1;
@@ -416,6 +417,15 @@ Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::Parameter
                                " Exodus, Exodus Aeras, Cubit, PUMI, PUMI Hierarchic, Sim, Ascii," <<
                                " Ascii2D, Extruded" << std::endl);
   }
+}
+
+
+Teuchos::RCP<Albany::AbstractDiscretization>
+Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
+    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+    const AbstractFieldContainer::FieldContainerRequirements& req,
+    const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes) {
+  createDiscretization(neq, empty_side_set_equations, sis, empty_side_set_sis, req, empty_side_set_req, rigidBodyModes);
 }
 
 Teuchos::RCP<Albany::AbstractDiscretization>

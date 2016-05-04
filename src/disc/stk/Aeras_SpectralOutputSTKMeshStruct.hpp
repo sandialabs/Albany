@@ -41,7 +41,7 @@ namespace Aeras {
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize,
                   const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /*side_set_sis*/ = {},
-                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/ = {});
+                  const std::map<std::string,Albany::AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/ = {});
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return false; }
