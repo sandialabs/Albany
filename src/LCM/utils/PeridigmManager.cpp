@@ -476,10 +476,10 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       overlapGlobalNodeIds.insert(globalNodeId);
     }
   }
-  Teuchos::ArrayRCP<int> nodeIds(3*overlapGlobalNodeIds.size());
+  Teuchos::ArrayRCP<GO> nodeIds(3*overlapGlobalNodeIds.size());
   int index=0;
   for(std::set<int>::iterator it=overlapGlobalNodeIds.begin() ; it!=overlapGlobalNodeIds.end() ; it++){
-    int globalId = *it;
+    auto globalId = *it;
     nodeIds[index++] = 3*globalId;
     nodeIds[index++] = 3*globalId + 1;
     nodeIds[index++] = 3*globalId + 2;
