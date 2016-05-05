@@ -13,6 +13,7 @@
 #include "PHAL_FactoryTraits.hpp"
 
 #include "Albany_Utils.hpp"
+#include "Albany_BCUtils.hpp"
 
 
 QCAD::SchrodingerProblem::SchrodingerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,

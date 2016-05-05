@@ -651,8 +651,8 @@ void Albany::ExtrudedSTKMeshStruct::buildCellSideNodeNumerationMap (const std::s
   ISFT* side_to_cell_map   = basalMeshStruct->metaData->get_field<ISFT> (stk::topology::ELEM_RANK, "side_to_cell_map");
   IVFT* side_nodes_ids_map = basalMeshStruct->metaData->get_field<IVFT> (stk::topology::ELEM_RANK, "side_nodes_ids");
   int num_nodes = basalMeshStruct->bulkData->num_nodes(cells2D[0]);
-  GO* cell3D_id;
-  GO* side_nodes_ids;
+  int* cell3D_id;
+  int* side_nodes_ids;
   GO cell2D_GID, side3D_GID;
   const stk::mesh::Entity* cell2D_nodes;
   const stk::mesh::Entity* side3D_nodes;

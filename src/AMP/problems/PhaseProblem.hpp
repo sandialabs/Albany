@@ -17,7 +17,7 @@
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "Albany_ProblemUtils.hpp"
-
+#include "Albany_StateManager.hpp"
 #include "QCAD_MaterialDatabase.hpp"
 
 namespace Albany {
@@ -98,6 +98,7 @@ protected:
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"

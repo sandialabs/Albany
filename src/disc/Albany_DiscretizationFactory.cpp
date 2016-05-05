@@ -466,11 +466,27 @@ void
 Albany::DiscretizationFactory::setupInternalMeshStruct(
   unsigned int neq,
   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+  const AbstractFieldContainer::FieldContainerRequirements& req) 
+{
+  setupInternalMeshStruct(neq, sis, empty_side_set_sis, req, empty_side_set_req);
+}
+
+void
+Albany::DiscretizationFactory::setupInternalMeshStruct(
+  unsigned int neq,
+  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
   const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
   const AbstractFieldContainer::FieldContainerRequirements& req,
   const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req) {
   meshStruct->setFieldAndBulkData(commT, discParams, neq, req, sis,
                                   meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis, side_set_req);
+}
+
+Teuchos::RCP<Albany::AbstractDiscretization>
+Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
+  const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes) 
+{
+  return createDiscretizationFromInternalMeshStruct(empty_side_set_equations, rigidBodyModes);
 }
 
 Teuchos::RCP<Albany::AbstractDiscretization>
