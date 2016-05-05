@@ -10,3 +10,4 @@
 #include "PHAL_GatherScalarNodalParameter_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::GatherScalarNodalParameter)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::GatherScalarExtruded2DNodalParameter)

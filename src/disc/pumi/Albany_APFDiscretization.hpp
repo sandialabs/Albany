@@ -88,6 +88,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     //! Get connectivity map from elementGID to workset
     Albany::WsLIDList& getElemGIDws() { return elemGIDws; };
+    const Albany::WsLIDList& getElemGIDws() const { return elemGIDws; };
 
     //! Get map from (Ws, El, Local Node, Eqn) -> dof LID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
@@ -108,6 +109,27 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     //! Print coords for debugging
     void printCoords() const;
+
+    //! Get sideSet discretizations map
+    const SideSetDiscretizationsType& getSideSetDiscretizations () const
+    {
+      //Warning: returning empty SideSetDiscretization for now.
+      return sideSetDiscretizations;
+    }
+
+    //! Get the map side_id->side_set_elem_id
+    const std::map<std::string,std::map<GO,GO> >& getSideToSideSetCellMap () const
+    {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Functionality not supported by APF discretization.\n");
+      return sideToSideSetCellMap;
+    }
+
+    //! Get the map side_node_id->side_set_cell_node_id
+    const std::map<std::string,std::map<GO,std::vector<int>>>& getSideNodeNumerationMap () const
+    {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Functionality not supported by APF discretization.\n");
+      return sideNodeNumerationMap;
+    }
 
     //! Get number of spatial dimensions
     int getNumDim() const { return meshStruct->numDim; }
@@ -145,6 +167,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     // Retrieve mesh struct
     Teuchos::RCP<Albany::APFMeshStruct> getAPFMeshStruct() {return meshStruct;}
+    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const {return meshStruct;}
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return meshStruct->hasRestartSolution;}
@@ -349,7 +372,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     virtual void releaseMesh();
 
     void initTemperatureHack();
-    
+
     //! Some evaluators may want access to the underlying apf mesh elements.
     std::vector<std::vector<apf::MeshEntity*> >& getBuckets() {return buckets;}
 
@@ -480,6 +503,11 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     //! side sets stored as std::map(string ID, SideArray classes) per workset (std::vector across worksets)
     std::vector<Albany::SideSetList> sideSets;
+
+    // Side set discretizations related structures (not supported but needed for getters return values)
+    std::map<std::string,Teuchos::RCP<Albany::AbstractDiscretization> > sideSetDiscretizations;
+    std::map<std::string,std::map<GO,GO> >                              sideToSideSetCellMap;
+    std::map<std::string,std::map<GO,std::vector<int> > >               sideNodeNumerationMap;
 
     //! Connectivity array [workset, element, local-node, Eq] => LID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type wsElNodeEqID;

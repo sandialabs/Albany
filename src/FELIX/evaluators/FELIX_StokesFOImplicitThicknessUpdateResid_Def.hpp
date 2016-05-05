@@ -12,7 +12,7 @@
 #include "PHAL_Utilities.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+//#define OUTPUT_TO_SCREEN
 
 
 
@@ -22,18 +22,19 @@ namespace FELIX {
 template<typename EvalT, typename Traits>
 StokesFOImplicitThicknessUpdateResid<EvalT, Traits>::
 StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
-              const Teuchos::RCP<Albany::Layouts>& dl) :
-  wBF      (p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar),
-  gradBF  (p.get<std::string> ("Gradient BF Name"),dl->node_qp_gradient),
-  dH    (p.get<std::string> ("Thickness Increment Variable Name"), dl->node_scalar),
-  InputResidual    (p.get<std::string> ("Input Residual Name"), dl->node_vector),
-  Residual (p.get<std::string> ("Residual Name"), dl->node_vector)
+              const Teuchos::RCP<Albany::Layouts>& dl_full,
+              const Teuchos::RCP<Albany::Layouts>& dl_ice) :
+  wBF      (p.get<std::string> ("Weighted BF Name"), dl_full->node_qp_scalar),
+  gradBF  (p.get<std::string> ("Gradient BF Name"),dl_full->node_qp_gradient),
+  dH    (p.get<std::string> ("Thickness Increment Variable Name"), dl_full->node_scalar),
+  InputResidual    (p.get<std::string> ("Input Residual Name"), dl_ice->node_vector),
+  Residual (p.get<std::string> ("Residual Name"), dl_full->node_vector)
 {
 
   Teuchos::ParameterList* p_list =
       p.get<Teuchos::ParameterList*>("Physical Parameter List");
 
-  g = p_list->get("Gravity", 9.8);
+  g = p_list->get("Gravity Acceleration", 9.8);
   rho = p_list->get("Ice Density", 910.0);
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -52,13 +53,13 @@ StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
   numNodes = dims[1];
   numQPs   = dims[2];
 
-  dl->node_vector->dimensions(dims);
+  dl_full->node_vector->dimensions(dims);
   numVecDims  =dims[2];
 
 #ifdef OUTPUT_TO_SCREEN
 *out << " in FELIX StokesFOImplicitThicknessUpdate residual! " << std::endl;
-*out << " numQPs = " << numQPs << std::endl; 
-*out << " numNodes = " << numNodes << std::endl; 
+*out << " numQPs = " << numQPs << std::endl;
+*out << " numNodes = " << numNodes << std::endl;
 #endif
 }
 
@@ -122,7 +123,6 @@ template<typename EvalT, typename Traits>
 void StokesFOImplicitThicknessUpdateResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   typedef Intrepid2::FunctionSpaceTools FST; 
 

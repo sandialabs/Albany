@@ -39,6 +39,7 @@ class SideStruct {
 
   public:
 
+    GO side_GID; // the global id of the side in the mesh
     GO elem_GID; // the global id of the element containing the side
     int elem_LID; // the local id of the element containing the side
     int elem_ebIndex; // The index of the element block that contains the element
@@ -66,6 +67,8 @@ struct WorksetArray {
 
 class AbstractDiscretization {
   public:
+
+    typedef std::map<std::string,Teuchos::RCP<Albany::AbstractDiscretization> > SideSetDiscretizationsType;
 
     //! Constructor
     AbstractDiscretization() {};
@@ -190,6 +193,18 @@ class AbstractDiscretization {
     //! Print the coords for mesh debugging
     virtual void printCoords() const = 0;
 
+    //! Get sideSet discretizations map
+    virtual const SideSetDiscretizationsType& getSideSetDiscretizations () const = 0;
+
+    //! Get the map side_id->side_set_elem_id
+    virtual const std::map<std::string,std::map<GO,GO>>& getSideToSideSetCellMap () const = 0;
+
+    //! Get the map side_node_id->side_set_cell_node_id
+    virtual const std::map<std::string,std::map<GO,std::vector<int> > >& getSideNodeNumerationMap () const = 0;
+
+    //! Get MeshStruct
+    virtual Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const = 0;
+
     //! Get stateArrays
     virtual Albany::StateArrays& getStateArrays() = 0;
 
@@ -204,6 +219,7 @@ class AbstractDiscretization {
 
     //! Retrieve connectivity map from elementGID to workset
     virtual WsLIDList&  getElemGIDws() = 0;
+    virtual const WsLIDList&  getElemGIDws() const = 0;
 
 #if defined(ALBANY_EPETRA)
     //! Get solution vector from mesh database
@@ -264,7 +280,7 @@ class AbstractDiscretization {
     //! Write the solution to file. Must call writeSolutionT first.
     virtual void writeSolutionToFileT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
     virtual void writeSolutionMVToFile(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false) = 0;
-    
+
     //! update the mesh
     virtual void updateMesh(bool shouldTransferIPData = false) = 0;
 

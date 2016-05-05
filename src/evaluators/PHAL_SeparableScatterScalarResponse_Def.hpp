@@ -134,6 +134,64 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename Traits>
 void SeparableScatterScalarResponse<PHAL::AlbanyTraits::Jacobian, Traits>::
+evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData workset, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo)
+{
+  // Here we scatter the *local* response derivative
+  Teuchos::RCP<Tpetra_MultiVector> dgdxT = workset.overlapped_dgdxT;
+  Teuchos::RCP<Tpetra_MultiVector> dgdxdotT = workset.overlapped_dgdxdotT;
+  Teuchos::RCP<Tpetra_MultiVector> dgT;
+  if (dgdxT != Teuchos::null)
+    dgT = dgdxT;
+  else
+    dgT = dgdxdotT;
+
+  const int neq = workset.wsElNodeEqID[0][0].size();
+  const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
+  const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  int numLayers = layeredMeshNumbering.numLayers;
+  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+
+  if (workset.sideSets == Teuchos::null)
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets not properly specified on the mesh" << std::endl);
+
+  const Albany::SideSetList& ssList = *(workset.sideSets);
+  Albany::SideSetList::const_iterator it = ssList.find(sideset);
+
+  if (it != ssList.end()) {
+    const std::vector<Albany::SideStruct>& sideSet = it->second;
+
+    for (std::size_t iSide = 0; iSide < sideSet.size(); ++iSide) { // loop over the sides on this ws and name
+      // Get the data that corresponds to the side
+      const int elem_GID = sideSet[iSide].elem_GID;
+      const int elem_LID = sideSet[iSide].elem_LID;
+      const int elem_side = sideSet[iSide].side_local_id;
+      const CellTopologyData_Subcell& side =  cellTopo->side[elem_side];
+      int numSideNodes = side.topology->node_count;
+
+      const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
+      for (std::size_t res = 0; res < this->global_response.size(); res++) {
+        typename PHAL::Ref<ScalarT>::type val = this->local_response(elem_LID, res);
+        LO base_id, ilayer;
+        for (int i = 0; i < numSideNodes; ++i) {
+          std::size_t node = side.node[i];
+          LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
+          layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
+          for (unsigned int il_col=0; il_col<numLayers+1; il_col++) {
+            LO inode = layeredMeshNumbering.getId(base_id, il_col);
+            for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+              LO dof = solDOFManager.getLocalDOF(inode, eq_col);
+              int deriv = neq *this->numNodes+il_col*neq*numSideNodes + neq*i + eq_col;
+              dgT->sumIntoLocalValue(dof, res, val.dx(deriv));
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+template<typename Traits>
+void SeparableScatterScalarResponse<PHAL::AlbanyTraits::Jacobian, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response

@@ -31,6 +31,7 @@ namespace Albany {
 
     public:
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
+    const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() const;
 
 #ifdef ALBANY_STK_PERCEPT
     Teuchos::RCP<stk::percept::PerceptMesh> getPerceptMesh(){ return eMesh; }
@@ -49,6 +50,14 @@ namespace Albany {
 
     const Albany::DynamicDataArray<Albany::CellSpecs>::type& getMeshDynamicData() const
         { return meshDynamicData; }
+
+    // This routine builds two maps: side3D_id->cell2D_id, and side3D_node_lid->cell2D_node_lid.
+    // These maps are used because the side id may differ from the cell id and the nodes order
+    // in a 2D cell may not be the same as in the corresponding 3D side. The second map works
+    // as follows: map[3DsideGID][3Dside_local_node] = 2Dcell_local_node
+    void buildCellSideNodeNumerationMap (const std::string& sideSetName,
+                                         std::map<GO,GO>& sideMap,
+                                         std::map<GO,std::vector<int>>& sideNodeMap);
 
     protected:
     GenericSTKMeshStruct(
@@ -85,6 +94,43 @@ namespace Albany {
     //! Perform initial uniform refinement of the mesh
     void uniformRefineMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
 
+    //! Creates empty mesh structs if required (and not already present)
+    void initializeSideSetMeshStructs (const Teuchos::RCP<const Teuchos_Comm>& commT);
+
+    //! Completes the creation of the side set mesh structs (if of type SideSetSTKMeshStruct)
+    void finalizeSideSetMeshStructs(
+          const Teuchos::RCP<const Teuchos_Comm>& commT,
+          const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
+          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+          int worksetSize);
+
+    //! Loads from file input required fields not found in the mesh
+    void loadRequiredInputFields (const AbstractFieldContainer::FieldContainerRequirements& req,
+                                  const Teuchos::RCP<const Teuchos_Comm>& commT);
+
+    void loadField (const std::string& field_name, const Teuchos::ParameterList& params,
+                    const Tpetra_Import& importOperator, const std::vector<stk::mesh::Entity>& entities,
+                    const Teuchos::RCP<const Teuchos_Comm>& commT,
+                    bool node, bool scalar, bool layered);
+
+    void readScalarFileSerial (const std::string& fname, Teuchos::RCP<Tpetra_MultiVector>& contentVec,
+                               const Teuchos::RCP<const Tpetra_Map>& map,
+                               const Teuchos::RCP<const Teuchos_Comm>& comm) const;
+
+    void readVectorFileSerial (const std::string& fname, Teuchos::RCP<Tpetra_MultiVector>& contentVec,
+                               const Teuchos::RCP<const Tpetra_Map>& map,
+                               const Teuchos::RCP<const Teuchos_Comm>& comm) const;
+
+    void readLayeredScalarFileSerial (const std::string& fname, Teuchos::RCP<Tpetra_MultiVector>& contentVec,
+                                      const Teuchos::RCP<const Tpetra_Map>& map,
+                                      std::vector<double>& normalizedLayersCoords,
+                                      const Teuchos::RCP<const Teuchos_Comm>& comm) const;
+
+    void readLayeredVectorFileSerial (const std::string& fname, Teuchos::RCP<Tpetra_MultiVector>& contentVec,
+                                      const Teuchos::RCP<const Tpetra_Map>& map,
+                                      std::vector<double>& normalizedLayersCoords,
+                                      const Teuchos::RCP<const Teuchos_Comm>& comm) const;
+
     //! Perform initial adaptation input checking
     void checkInput(std::string option, std::string value, std::string allowed_values);
 
@@ -116,7 +162,6 @@ namespace Albany {
     bool requiresAutomaticAura;
 
     bool compositeTet;
-
   };
 
 }

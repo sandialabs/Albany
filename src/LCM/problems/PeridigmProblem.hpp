@@ -14,6 +14,7 @@
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
+#include "MaterialDatabase.h"
 
 // Interface to Peridigm peridynamics code
 #include "PeridigmManager.hpp"

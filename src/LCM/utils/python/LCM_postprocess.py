@@ -214,6 +214,190 @@ def readXml(nameFileBase, **kwargs):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def getDataLog(linesNorm):
+
+    #
+    # Get the lines for the converged and failed Newton steps
+    #    
+    linesConverged = [line for line in linesNorm if line.find('Converged') != -1]
+    linesFailed = [line for line in linesNorm if line.find('Failed') != -1]        
+
+    #
+    # Calculate the number of converged and failed Newton steps
+    #
+    numStepsConverged = len(linesConverged)
+    numStepsFailed = len(linesFailed)    
+
+    #
+    # Create a list for the converged and failed step numbers
+    #
+    iterationsConverged = [-1]
+    for line in linesConverged:
+        iterationsConverged.append(linesNorm.index(line,iterationsConverged[-1]+1))
+    
+    iterationsFailed = [-1]
+    for line in linesFailed:
+        iterationsFailed.append(linesNorm.index(line,iterationsFailed[-1]+1))
+
+    #
+    # Extract the data from the lines from the output log
+    #
+    listNormF = [float(line.split()[2]) for line in linesNorm]
+    
+    normF = [tuple(listNormF[iterationsConverged[i] + 1 : iterationsConverged[i + 1] + 1]) for i in range(numStepsConverged)]
+    normResidualFailed  = [tuple(listNormF[iterationsFailed[i] + 1 : iterationsFailed[i+1] + 1]) for i in range(numStepsFailed)]  
+
+    listNormDu = [float(line.split()[8]) for line in linesNorm]
+    
+    normDu = [tuple(listNormDu[iterationsConverged[i] + 1 : iterationsConverged[i + 1] + 1]) for i in range(numStepsConverged)]
+    normIncrementFailed = [tuple(listNormDu[iterationsFailed[i] + 1 : iterationsFailed[i + 1] + 1]) for i in range(numStepsFailed)]    
+
+    dataConverged = (normF, normDu)
+    dataFailed = (normResidualFailed, normIncrementFailed)
+
+    return dataConverged, dataFailed
+
+# end def getDataLog(linesNorm):
+
+
+
+
+def readFileLog(filename):
+
+    #
+    # Read the log file
+    #
+    file = open(filename, 'r')
+    lines = file.readlines()
+    file.close
+
+    #
+    # Extract lines that have residual norm information
+    #
+    linesNorm = [line for line in lines if line.find('||F||') != -1]
+
+    #
+    # Write the norm data to file
+    #
+    file = open('normF.dat', 'w')
+    file.writelines(linesNorm)
+    file.close
+
+    dataConverged, dataFailed = getDataLog(linesNorm)
+
+    normF, normDu = dataConverged
+    numStepsConverged = len(normF)
+    
+    normResidualFailed, normIncrementFailed = dataFailed
+    numStepsFailed = len(normResidualFailed)
+
+    #
+    # Loop through tuples of the data for plotting
+    #
+    for (dataResidual,dataIncrement,numSteps,label) in [(normF,normDu,numStepsConverged,'Converged'), (normResidualFailed,normIncrementFailed,numStepsFailed,'Failed')]:
+
+        stringLegend = ['Step '+str(i+1) for i in range(numSteps)]
+
+        #print 'Legend'
+        #print stringLegend
+
+        fig = plt.figure()
+        plt.hold(True)
+        for dataStep in dataResidual:
+            #print 'dataStep'
+            #print dataStep
+            if np.max(dataStep) > 0.0:
+                dataPlot = [point for point in dataStep if point > 0.0]
+                plt.plot(dataPlot)
+        plt.yscale('log')
+        plt.legend(stringLegend)
+    #    plt.show()
+        plt.savefig('normF_Step_'+label+'.pdf')
+        fig.clf()
+        
+        plt.hold(True)
+        for dataStep in dataResidual:
+            if np.max(dataStep) > 0.0:
+                dataPlot = [point for point in dataStep if point > 0.0]
+                plt.plot(dataPlot[:-1],dataPlot[1:])
+        plt.yscale('log')
+        plt.xscale('log')
+        plt.legend(stringLegend, loc = 'upper left')
+    #    plt.show()
+        plt.xlabel('$\| F_n \|$')
+        plt.ylabel('$\| F_{n+1} \|$')
+        plt.savefig('normF_Convergence_'+label+'.pdf')
+        fig.clf()
+        
+        plt.hold(True)
+        for dataStep in dataIncrement:
+            if np.max(dataStep) > 0.0:
+                dataPlot = [point for point in dataStep if point > 0.0]
+                plt.plot(dataPlot)
+        plt.yscale('log')
+        plt.legend(stringLegend)
+        plt.savefig('normDu_Step_'+label+'.pdf')
+    #    plt.show(fig)
+        fig.clf()
+        
+        plt.hold(True)
+        for dataStep in dataIncrement:
+            if np.max(dataStep) > 0.0:
+                dataPlot = [point for point in dataStep if point > 0.0]
+                plt.plot(dataPlot[1:-1],dataPlot[2:])
+        plt.yscale('log')
+        plt.xscale('log')
+        plt.legend(stringLegend, loc = 'upper left')
+        plt.xlabel('Increment $\Delta u_n$')
+        plt.ylabel('Increment $\Delta u_{n+1}$')
+    #    plt.show()
+        plt.savefig('normDu_Convergence_'+label+'.eps')    
+    
+    return dataConverged, dataFailed
+
+# end def readFileLog(filename):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def setWeightsVolumes(fileInput, domain):
 
     for keyBlock in domain.blocks:
@@ -336,6 +520,92 @@ def setValuesTensor(fileInput, nameVariable, domain):
                         block.volume / domain.volume
 
 # end def setValuesTensor(fileInput, nameVariable, domain):  
+
+
+
+def setValuesScalar(fileInput, nameVariable, domain):
+
+    times = fileInput.get_times()
+
+    setattr(
+        domain, 
+        nameVariable,
+        dict([(step, 0.0) for step in times]))
+
+    # Note: exodus function get_element_variable_values returns values by block,    
+    # so outer loop over block
+
+    for keyBlock in domain.blocks:
+
+        block = domain.blocks[keyBlock]
+
+        setattr(
+            block, 
+            nameVariable,
+            dict([(step, 0.0) for step in times]))
+
+        for keyElement in block.elements:
+
+            element = block.elements[keyElement]
+
+            setattr(
+                element, 
+                nameVariable,
+                dict([(step, 0.0) for step in times]))
+
+            for keyPoint in element.points:
+
+                point = element.points[keyPoint]
+
+                setattr(
+                    point, 
+                    nameVariable,
+                    dict([(step, 0.0) for step in times]))
+                
+        for step in range(len(times)):
+
+            for indexPoint in range(block.num_points):
+
+                indexVariable = indexPoint
+
+                keyVariable = nameVariable + '_{:1d}'.format(indexVariable + 1)
+
+                valuesBlock = fileInput.get_element_variable_values(
+                    keyBlock, 
+                    keyVariable, 
+                    step + 1)
+
+                for keyElement in block.elements:
+
+                    element = block.elements[keyElement]
+
+                    for keyPoint in element.points:
+
+                        point = element.points[keyPoint]
+
+                        getattr(point, nameVariable)[times[step]] = valuesBlock[keyElement]
+
+            for keyElement in block.elements:
+
+                element = block.elements[keyElement]
+
+                for keyPoint in element.points:
+
+                    point = element.points[keyPoint]
+
+                    getattr(element, nameVariable)[times[step]] += \
+                        getattr(point, nameVariable)[times[step]] * \
+                        point.weight / element.volume
+
+                getattr(block, nameVariable)[times[step]] += \
+                    getattr(element, nameVariable)[times[step]] * \
+                    element.volume / block.volume
+
+            getattr(domain, nameVariable)[times[step]] += \
+                getattr(block, nameVariable)[times[step]] * \
+                block.volume / domain.volume
+
+# end def setValuesScalar(fileInput, nameVariable, domain): 
 
 
 
@@ -540,7 +810,7 @@ def writeExodusFile(domain, fileInput, nameFileOutput):
     #
     # create variables in output file
     #
-    fileOutput.set_element_variable_number(2 * num_dims**2)
+    fileOutput.set_element_variable_number(2 * num_dims**2 + 2)
 
     for dim_i in range(num_dims):
 
@@ -575,6 +845,40 @@ def writeExodusFile(domain, fileInput, nameFileOutput):
                         nameDefGrad,
                         step + 1,
                         [block.elements[keyElement].F[times[step]][dim_i][dim_j] for keyElement in block.elements])
+
+    fileOutput.put_element_variable_name(
+        'Mises_Stress', 
+        2 * num_dims**2 + 1)
+
+    for keyBlock in domain.blocks:
+
+        block = domain.blocks[keyBlock]
+
+        for step in range(len(times)):
+
+            fileOutput.put_element_variable_values(
+                keyBlock,
+                'Mises_Stress',
+                step + 1,
+                [block.elements[keyElement].Mises_Stress[times[step]] for keyElement in block.elements])
+
+    fileOutput.put_element_variable_name(
+        'eqps', 
+        2 * num_dims**2 + 2)
+
+    for keyBlock in domain.blocks:
+
+        block = domain.blocks[keyBlock]
+
+        for step in range(len(times)):
+
+            fileOutput.put_element_variable_values(
+                keyBlock,
+                'eqps',
+                step + 1,
+                [block.elements[keyElement].eqps[times[step]] for keyElement in block.elements])
+
+            
 
     fileOutput.close()
 
@@ -770,6 +1074,90 @@ def postprocess(nameFileInput, **kwargs):
 
             setValuesTensor(fileInput, nameVariable, domain)
 
+        #
+        # Handle the equivalent plastic strain
+        #
+        elif (nameVariable == 'eqps'):
+
+            print nameVariable
+
+            setValuesScalar(fileInput, nameVariable, domain)
+
+
+
+
+    for keyBlock in domain.blocks:
+
+        block = domain.blocks[keyBlock]
+
+        for keyElement in block.elements:
+
+            element = block.elements[keyElement]
+
+            for keyPoint in element.points:
+
+                point = element.points[keyPoint]
+
+                setattr(
+                    point, 
+                    'Mises_Stress',
+                    dict([(step, 0.0) for step in times]))
+
+                for keyStep in times:
+
+                    stressCauchy = point.Cauchy_Stress[keyStep]
+
+                    stressDeviatoric = stressCauchy - 1. / 3. * np.trace(stressCauchy) * np.eye(3)
+
+                    Mises_Stress = np.sqrt(3. / 2. * np.sum(np.tensordot(stressDeviatoric, stressDeviatoric, axes = 2)))
+
+                    point.Mises_Stress[keyStep] = Mises_Stress
+
+            setattr(
+                element, 
+                'Mises_Stress',
+                dict([(step, 0.0) for step in times]))
+
+            for keyStep in times:
+
+                stressCauchy = element.Cauchy_Stress[keyStep]
+
+                stressDeviatoric = stressCauchy - 1. / 3. * np.trace(stressCauchy) * np.eye(3)
+
+                Mises_Stress = np.sqrt(3. / 2. * np.sum(np.tensordot(stressDeviatoric, stressDeviatoric, axes = 2)))
+
+                element.Mises_Stress[keyStep] = Mises_Stress
+
+        setattr(
+            block, 
+            'Mises_Stress',
+            dict([(step, 0.0) for step in times]))
+
+        for keyStep in times:
+
+            stressCauchy = block.Cauchy_Stress[keyStep]
+
+            stressDeviatoric = stressCauchy - 1. / 3. * np.trace(stressCauchy) * np.eye(3)
+
+            Mises_Stress = np.sqrt(3. / 2. * np.sum(np.tensordot(stressDeviatoric, stressDeviatoric, axes = 2)))
+
+            block.Mises_Stress[keyStep] = Mises_Stress
+
+    setattr(
+        domain, 
+        'Mises_Stress',
+        dict([(step, 0.0) for step in times]))
+
+    for keyStep in times:
+
+        stressCauchy = domain.Cauchy_Stress[keyStep]
+
+        stressDeviatoric = stressCauchy - 1. / 3. * np.trace(stressCauchy) * np.eye(3)
+
+        Mises_Stress = np.sqrt(3. / 2. * np.sum(np.tensordot(stressDeviatoric, stressDeviatoric, axes = 2)))
+
+        block.Mises_Stress[keyStep] = Mises_Stress
+
 
 
     #
@@ -831,6 +1219,8 @@ def postprocess(nameFileInput, **kwargs):
     plotStressStrain(domain)
 
 
+    dataConverged, dataFailed = readFileLog(nameFileBase + '_Log.out')
+
 
     #
     # Return topology and data
@@ -846,7 +1236,7 @@ if __name__ == '__main__':
 
     nameFileInput = sys.argv[1]
 
-    if len(sys.argv) == 2:
+    if len(sys.argv) == 3:
 
         domain = postprocess(nameFileInput, nameFileOutput = sys.argv[2])
 

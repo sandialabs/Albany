@@ -78,9 +78,13 @@
 #include "FELIX/problems/FELIX_StokesFO.hpp"
 #include "FELIX/problems/FELIX_StokesL1L2.hpp"
 #include "FELIX/problems/FELIX_Hydrology.hpp"
+#include "FELIX/problems/FELIX_Elliptic2D.hpp"
+
 #ifdef ALBANY_EPETRA
+#include "FELIX/problems/FELIX_StokesFOHydrology.hpp"
 #include "FELIX/problems/FELIX_StokesFOThickness.hpp"
 #endif
+
 #endif
 
 #ifdef ALBANY_AERAS
@@ -407,15 +411,22 @@ Albany::ProblemFactory::create()
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** FELIX Coupled FO H requires Epetra, recompile with -DENABLE_ALBANY_EPETRA_EXE ****\n");
 #endif
-    }
+  }
+  else if (method == "FELIX Coupled FO Hydrology 3D" ) {
+#ifdef ALBANY_EPETRA
+      strategy = rcp(new FELIX::StokesFOHydrology(problemParams, paramLib, 3));
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** FELIX Coupled FO Hydrology requires Epetra, recompile with -DENABLE_ALBANY_EPETRA_EXE ****\n");
+#endif
+  }
   else if (method == "FELIX Stokes L1L2 2D") {
     strategy = rcp(new FELIX::StokesL1L2(problemParams, paramLib, 2));
   }
   else if (method == "FELIX Hydrology 2D") {
     strategy = rcp(new FELIX::Hydrology(problemParams, paramLib, 2));
   }
-  else if (method == "FELIX Hydrology 1D") {
-    strategy = rcp(new FELIX::Hydrology(problemParams, paramLib, 1));
+  else if (method == "FELIX Elliptic 2D") {
+    strategy = rcp(new FELIX::Elliptic2D(problemParams, paramLib, 1));
   }
 #endif
 #ifdef ALBANY_AERAS

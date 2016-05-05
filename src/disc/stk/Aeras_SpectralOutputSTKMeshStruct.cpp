@@ -120,13 +120,14 @@ Aeras::SpectralOutputSTKMeshStruct::~SpectralOutputSTKMeshStruct()
 
 void
 Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
-                                               const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                               const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                               const unsigned int neq_,
-                                               const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
-                                               const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                                               const unsigned int worksetSize)
-
+          const Teuchos::RCP<const Teuchos_Comm>& commT,
+          const Teuchos::RCP<Teuchos::ParameterList>& params,
+          const unsigned int neq_,
+          const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
+          const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+          const unsigned int worksetSize,
+          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /*side_set_sis*/,
+          const std::map<std::string,Albany::AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
@@ -142,9 +143,6 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
 
   //FIXME?: assuming for now 1 element block
   unsigned int ebNo = 0;
-
-  typedef Albany::AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
-  typedef Albany::AbstractSTKFieldContainer::QPScalarFieldType ElemScalarFieldType;
 
   Albany::AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 

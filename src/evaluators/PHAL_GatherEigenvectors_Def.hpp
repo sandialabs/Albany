@@ -11,6 +11,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Albany_EigendataInfoStruct.hpp"
 
 namespace PHAL {
 
@@ -19,10 +20,10 @@ template<typename EvalT, typename Traits>
 GatherEigenvectors<EvalT,Traits>::
 GatherEigenvectors(const Teuchos::ParameterList& p,
                    const Teuchos::RCP<Albany::Layouts>& dl)
-{ 
+{
   char buf[200];
-  
-  std::string eigenvector_name_root = p.get<std::string>("Eigenvector field name root"); 
+
+  std::string eigenvector_name_root = p.get<std::string>("Eigenvector field name root");
   nEigenvectors = p.get<int>("Number of eigenvectors");
 
   eigenvector_Re.resize(nEigenvectors);
@@ -38,7 +39,7 @@ GatherEigenvectors(const Teuchos::ParameterList& p,
     eigenvector_Im[k] = fi;
     this->addEvaluatedField(eigenvector_Im[k]);
   }
-  
+
   this->setName("Gather Eigenvectors" );
 }
 
@@ -61,12 +62,12 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 void GatherEigenvectors<EvalT,Traits>::
 evaluateFields(typename Traits::EvalData workset)
-{ 
+{
   if(nEigenvectors == 0) return;
 
   if(workset.eigenDataPtr->eigenvectorRe != Teuchos::null) {
     if(workset.eigenDataPtr->eigenvectorIm != Teuchos::null) {
-  
+
       //Gather real and imaginary parts from workset Eigendata info structure
       const Epetra_MultiVector& e_r = *(workset.eigenDataPtr->eigenvectorRe);
       const Epetra_MultiVector& e_i = *(workset.eigenDataPtr->eigenvectorIm);
@@ -74,16 +75,16 @@ evaluateFields(typename Traits::EvalData workset)
       int numVecsToGather  = std::min(numVecsInWorkset, (int)nEigenvectors);
 
       for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-	const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
-    
-	for(std::size_t node =0; node < this->numNodes; ++node) {
-	  int offsetIntoVec = nodeID[node][0]; // neq==1 hardwired
+  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
 
-	  for (std::size_t k = 0; k < numVecsToGather; ++k) {
-	    (this->eigenvector_Re[k])(cell,node) = (*(e_r(k)))[offsetIntoVec];
-	    (this->eigenvector_Im[k])(cell,node) = (*(e_i(k)))[offsetIntoVec];
-	  }
-	}
+  for(std::size_t node =0; node < this->numNodes; ++node) {
+    int offsetIntoVec = nodeID[node][0]; // neq==1 hardwired
+
+    for (std::size_t k = 0; k < numVecsToGather; ++k) {
+      (this->eigenvector_Re[k])(cell,node) = (*(e_r(k)))[offsetIntoVec];
+      (this->eigenvector_Im[k])(cell,node) = (*(e_i(k)))[offsetIntoVec];
+    }
+  }
       }
     }
     else { // Only real parts of eigenvectors is given -- "gather" zeros into imaginary fields
@@ -94,16 +95,16 @@ evaluateFields(typename Traits::EvalData workset)
       int numVecsToGather  = std::min(numVecsInWorkset, (int)nEigenvectors);
 
       for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-	const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
-    
-	for(std::size_t node =0; node < this->numNodes; ++node) {
-	  int offsetIntoVec = nodeID[node][0]; // neq==1 hardwired
+  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
 
-	  for (std::size_t k = 0; k < numVecsToGather; ++k) {
-	    (this->eigenvector_Re[k])(cell,node) = (*(e_r(k)))[offsetIntoVec];
-	    (this->eigenvector_Im[k])(cell,node) = 0.0;
-	  }
-	}
+  for(std::size_t node =0; node < this->numNodes; ++node) {
+    int offsetIntoVec = nodeID[node][0]; // neq==1 hardwired
+
+    for (std::size_t k = 0; k < numVecsToGather; ++k) {
+      (this->eigenvector_Re[k])(cell,node) = (*(e_r(k)))[offsetIntoVec];
+      (this->eigenvector_Im[k])(cell,node) = 0.0;
+    }
+  }
       }
     }
   }

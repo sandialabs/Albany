@@ -80,8 +80,8 @@ namespace Albany {
     STKDiscretization(
        Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
        const Teuchos::RCP<const Teuchos_Comm>& commT,
-       const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
-
+       const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null,
+       const std::map<int,std::vector<std::string> >& sideSetEquations = std::map<int,std::vector<std::string> >());
 
     //! Destructor
     ~STKDiscretization();
@@ -136,8 +136,8 @@ namespace Albany {
     //! Get Tpetra Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
 
-#ifdef ALBANY_AERAS 
-    //! Get Tpetra implicit Jacobian graph (for Aeras) 
+#ifdef ALBANY_AERAS
+    //! Get Tpetra implicit Jacobian graph (for Aeras)
     Teuchos::RCP<const Tpetra_CrsGraph> getImplicitJacobianGraphT() const;
 #endif
 
@@ -147,8 +147,8 @@ namespace Albany {
 #endif
     //! Get Tpetra overlap Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const;
-#ifdef ALBANY_AERAS 
-    //! Get Tpetra implicit overlap Jacobian graph (for Aeras) 
+#ifdef ALBANY_AERAS
+    //! Get Tpetra implicit overlap Jacobian graph (for Aeras)
     Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const;
 #endif
 
@@ -178,6 +178,7 @@ namespace Albany {
 
     //! Get connectivity map from elementGID to workset
     WsLIDList& getElemGIDws() { return elemGIDws; };
+    const WsLIDList& getElemGIDws() const { return elemGIDws; };
 
     //! Get map from (Ws, El, Local Node) -> NodeLID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type& getWsElNodeEqID() const;
@@ -230,7 +231,7 @@ namespace Albany {
    void writeSolutionToFileT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);
    void writeSolutionMVToFile(const Tpetra_MultiVector& solnT, const double time, const bool overlapped = false);
 
-#if defined(ALBANY_EPETRA) 
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<Epetra_Vector> getSolutionField(const bool overlapped=false) const;
 #endif
     //Tpetra analog
@@ -251,6 +252,22 @@ namespace Albany {
 
     // Retrieve mesh struct
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> getSTKMeshStruct() {return stkMeshStruct;}
+    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const {return stkMeshStruct;}
+
+    const SideSetDiscretizationsType& getSideSetDiscretizations () const
+    {
+      return sideSetDiscretizations;
+    }
+
+    const std::map<std::string,std::map<GO,GO> >& getSideToSideSetCellMap () const
+    {
+      return sideToSideSetCellMap;
+    }
+
+    const std::map<std::string,std::map<GO,std::vector<int>>>& getSideNodeNumerationMap () const
+    {
+      return sideNodeNumerationMap;
+    }
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return stkMeshStruct->hasRestartSolution();}
@@ -281,6 +298,12 @@ namespace Albany {
 
     //! Locate nodal dofs in overlapping vectors using local indexing
     int getOverlapDOF(const int inode, const int eq) const;
+
+    //! Get global id of the stk entity
+    GO gid(const stk::mesh::Entity entity) const;
+
+    //! Locate nodal dofs using global indexing
+    GO getGlobalDOF(const GO inode, const int eq) const;
 
     Teuchos::RCP<LayeredMeshNumbering<LO> > getLayeredMeshNumbering() {return stkMeshStruct->layered_mesh_numbering;}
 
@@ -365,6 +388,8 @@ namespace Albany {
     void computeNodeSets();
     //! Process STK mesh for SideSets
     void computeSideSets();
+    //! Process STK mesh for NodeSets corresponding to SideSets
+    void computeNodeSetsFromSideSets();
     //! Call stk_io for creating exodus output file
     void setupExodusOutput();
     //! Call stk_io for creating NetCDF output file
@@ -384,14 +409,12 @@ namespace Albany {
 
     void writeCoordsToMatrixMarket() const;
 
+    void buildSideSetProjectors ();
+
     double previous_time_label;
 
   protected:
 
-    GO gid(const stk::mesh::Entity node) const;
-
-    //! Locate nodal dofs using global indexing
-    GO getGlobalDOF(const GO inode, const int eq) const;
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
@@ -443,6 +466,9 @@ namespace Albany {
 
     //! Number of equations (and unknowns) per node
     const unsigned int neq;
+
+    //! Equations that are defined only on some side sets of the mesh
+    std::map<int,std::vector<std::string> >   sideSetEquations;
 
     //! Number of elements on this processor
     unsigned int numMyElements;
@@ -499,6 +525,18 @@ namespace Albany {
     std::vector<double*>  toDelete;
 
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct;
+
+    // Sideset discretizations
+    std::map<std::string,Teuchos::RCP<Albany::AbstractDiscretization> > sideSetDiscretizations;
+    std::map<std::string,Teuchos::RCP<Albany::STKDiscretization> >      sideSetDiscretizationsSTK;
+    std::map<std::string,std::map<GO,GO> >                              sideToSideSetCellMap;
+    std::map<std::string,std::map<GO,std::vector<int> > >               sideNodeNumerationMap;
+    std::map<std::string,Teuchos::RCP<Tpetra_CrsMatrix> >               projectorsT;
+    std::map<std::string,Teuchos::RCP<Tpetra_CrsMatrix> >               ov_projectorsT;
+#ifdef ALBANY_EPETRA
+    std::map<std::string,Teuchos::RCP<Epetra_CrsMatrix> >               projectors;
+    std::map<std::string,Teuchos::RCP<Epetra_CrsMatrix> >               ov_projectors;
+#endif
 
     // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS

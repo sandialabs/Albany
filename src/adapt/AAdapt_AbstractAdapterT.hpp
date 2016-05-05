@@ -48,7 +48,7 @@ class AbstractAdapterT {
 
 
     ///
-    /// Each adapter must generate it's list of valid parameters
+    /// Each adapter must generate its list of valid parameters
     ///
     virtual Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const {
       return getGenericAdapterParams("Generic Adapter List");

@@ -44,7 +44,8 @@ namespace Albany {
                       const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
                       const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                       const unsigned int worksetSize,
-                      const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& side_set_sis = Teuchos::null){};
+                      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
+                      const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}){};
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return hasRestartSol; }
@@ -108,6 +109,7 @@ namespace Albany {
     bool hasRestartSol;
     double restartTime;
     Teuchos::RCP<Tpetra_Map> elem_mapT; //element map
+    LayeredMeshOrdering Ordering;
 
     protected:
 

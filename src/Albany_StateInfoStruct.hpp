@@ -73,6 +73,7 @@ typedef std::vector<StateArray> StateArrayVec;
     const Intrepid2::EIntrepidPLPoly cubatureRule;
     // polynomial order for higher order fields in GOAL
     int polynomialOrder;
+    std::map<std::string,Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > > sideSetMeshSpecs;
   };
 
 //! Container to get state info from StateManager to STK. Made into a struct so
@@ -86,7 +87,7 @@ struct StateStruct {
   StateStruct (const std::string& name_, MeshFieldEntity ent):
         name(name_), responseIDtoRequire(""), output(true),
   restartDataAvailable(false), saveOldState(false), meshPart(""),
-        pParentStateStruct(NULL), entity(ent)
+        pParentStateStruct(NULL), entity(ent), layered(false)
   {}
 
   StateStruct (const std::string& name_, MeshFieldEntity ent,
@@ -94,7 +95,7 @@ struct StateStruct {
                const std::string& meshPart_=""):
         name(name_), responseIDtoRequire(""), output(true), dim(dims),
         initType(type), restartDataAvailable(false), saveOldState(false),
-        meshPart(meshPart_), pParentStateStruct(NULL), entity(ent)
+        meshPart(meshPart_), pParentStateStruct(NULL), entity(ent), layered(false)
   {}
 
   void setInitType(const std::string& type) { initType = type; }
@@ -123,6 +124,7 @@ struct StateStruct {
   bool output;
   bool restartDataAvailable;
   bool saveOldState; // Bool that this state is to be copied into name+"_old"
+  bool layered;
   std::string meshPart;
   StateStruct *pParentStateStruct; // If this is a copy (name = parentName+"_old"), ptr to parent struct
 

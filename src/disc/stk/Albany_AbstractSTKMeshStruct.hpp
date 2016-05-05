@@ -39,14 +39,6 @@ namespace Albany {
 
   public:
 
-    virtual void setFieldAndBulkData(
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_, 
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize) {};
-
     msType meshSpecsType(){ return STK_MS; }
 
     Teuchos::RCP<stk::mesh::MetaData> metaData;
@@ -57,6 +49,7 @@ namespace Albany {
     std::map<std::string, stk::mesh::Part*> ssPartVec;  //Side Sets
 
     Teuchos::RCP<Albany::AbstractSTKFieldContainer> getFieldContainer(){return fieldContainer; }
+    const AbstractSTKFieldContainer::VectorFieldType* const getCoordinatesField() const { return fieldContainer->getCoordinatesField(); }
     AbstractSTKFieldContainer::VectorFieldType* getCoordinatesField(){ return fieldContainer->getCoordinatesField(); }
 
     int numDim;
@@ -110,6 +103,15 @@ namespace Albany {
     // Info for periodic BCs -- only for hand-coded STK meshes
     struct PeriodicBCStruct PBCStruct;
 
+    std::map<std::string,Teuchos::RCP<Albany::AbstractSTKMeshStruct> >  sideSetMeshStructs;
+
+    bool fieldAndBulkDataSet;
+
+    virtual void buildCellSideNodeNumerationMap (const std::string& sideSetName,
+                                                 std::map<GO,GO>& sideMap,
+                                                 std::map<GO,std::vector<int>>& sideNodeMap) = 0;
+
+    bool side_maps_present;
   protected:
 
     Teuchos::RCP<Albany::AbstractSTKFieldContainer> fieldContainer;

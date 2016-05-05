@@ -10,7 +10,7 @@
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 #include "ATO_TopoTools.hpp"
 #include "ATO_PenaltyModel.hpp"
-
+#include "Albany_StateManager.hpp"
 
 
 /** 

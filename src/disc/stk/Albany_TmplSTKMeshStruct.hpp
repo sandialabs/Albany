@@ -92,7 +92,9 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize);
+                  const unsigned int worksetSize,
+                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
+                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}); // empty map as default
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return false; }
@@ -102,11 +104,6 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
 
 
     private:
-
-    void readScalarFileSerial (std::string& fname, Tpetra_MultiVector& content, const Teuchos::RCP<const Teuchos_Comm>& comm) const;
-    void readVectorFileSerial (std::string& fname, Tpetra_MultiVector& contentVec, const Teuchos::RCP<const Teuchos_Comm>& comm) const;
-    void fillTpetraVec (Tpetra_Vector& vec, double value);
-    void fillTpetraMVec (Tpetra_MultiVector& mvec, const Teuchos::Array<double>& values);
 
     //! Build the mesh
     void buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
@@ -198,7 +195,9 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize);
+                  const unsigned int worksetSize,
+                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req);
 
   template<> Teuchos::RCP<const Teuchos::ParameterList> TmplSTKMeshStruct<0>::getValidDiscretizationParameters() const;
   template<> Teuchos::RCP<const Teuchos::ParameterList> TmplSTKMeshStruct<1>::getValidDiscretizationParameters() const;

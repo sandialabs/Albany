@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Sacado_ParameterRegistration.hpp" 
+#include "Sacado_ParameterRegistration.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Albany_Layouts.hpp"
@@ -18,16 +18,16 @@
 namespace FELIX {
 
 const double pi = 3.1415926535897932385;
- 
+
 //**********************************************************************
 template<typename EvalT, typename Traits>
 CismSurfaceGradFO<EvalT, Traits>::
 CismSurfaceGradFO(const Teuchos::ParameterList& p,
             const Teuchos::RCP<Albany::Layouts>& dl) :
-  dsdx_node    (p.get<std::string>   ("xgrad_surface_height Name"), dl->node_scalar),
-  dsdy_node    (p.get<std::string>   ("ygrad_surface_height Name"), dl->node_scalar),
-  BF          (p.get<std::string>   ("BF Name"), dl->node_qp_scalar),
-  gradS_qp      (p.get<std::string>   ("FELIX Surface Gradient QP Name"), dl->qp_gradient )
+  dsdx_node (p.get<std::string> ("CISM Surface Height Gradient X Variable Name"), dl->node_scalar),
+  dsdy_node (p.get<std::string> ("CISM Surface Height Gradient Y Variable Name"), dl->node_scalar),
+  BF        (p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar),
+  gradS_qp  (p.get<std::string> ("Surface Height Gradient QP Variable Name"), dl->qp_gradient )
 {
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -58,7 +58,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 template<typename EvalT,typename Traits>
-typename CismSurfaceGradFO<EvalT,Traits>::ScalarT& 
+typename CismSurfaceGradFO<EvalT,Traits>::ScalarT&
 CismSurfaceGradFO<EvalT,Traits>::getValue(const std::string &n)
 {
   return dummyParam;
@@ -71,13 +71,14 @@ evaluateFields(typename Traits::EvalData workset)
 {
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
-      gradS_qp(cell,qp,0) = dsdx_node(cell, 0) * BF(cell, 0, qp); 
-      gradS_qp(cell,qp,1) = dsdy_node(cell, 0) * BF(cell, 0, qp); 
+      gradS_qp(cell,qp,0) = dsdx_node(cell, 0) * BF(cell, 0, qp);
+      gradS_qp(cell,qp,1) = dsdy_node(cell, 0) * BF(cell, 0, qp);
       for (std::size_t node=1; node < numNodes; ++node) {
-        gradS_qp(cell,qp,0) += dsdx_node(cell, node) * BF(cell, node, qp); 
-        gradS_qp(cell,qp,1) += dsdy_node(cell, node) * BF(cell, node, qp); 
+        gradS_qp(cell,qp,0) += dsdx_node(cell, node) * BF(cell, node, qp);
+        gradS_qp(cell,qp,1) += dsdy_node(cell, node) * BF(cell, node, qp);
       }
     }
+  }
 }
-}
-}
+
+} // Namespace FELIX

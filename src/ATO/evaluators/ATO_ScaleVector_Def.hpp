@@ -7,6 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Layouts.hpp"
+#include "Albany_StateManager.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 

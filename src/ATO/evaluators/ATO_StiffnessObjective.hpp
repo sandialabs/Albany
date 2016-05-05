@@ -13,6 +13,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_ProblemUtils.hpp"
+#include "Albany_StateManager.hpp"
 #include "ATO_TopoTools.hpp"
 #include "ATO_PenaltyModel.hpp"
 

@@ -17,6 +17,8 @@
 #include "PHAL_ResponseFieldIntegralT.hpp"
 #include "PHAL_ResponseThermalEnergyT.hpp"
 #include "Adapt_ElementSizeField.hpp"
+#include "PHAL_ResponseSquaredL2Error.hpp"
+#include "PHAL_ResponseSquaredL2ErrorSide.hpp"
 #include "PHAL_SaveNodalField.hpp"
 #ifdef ALBANY_FELIX
   #include "FELIX_ResponseSurfaceVelocityMismatch.hpp"
@@ -102,9 +104,57 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   }
 
 #ifdef ALBANY_FELIX
-
+  else if (responseName == "Squared L2 Error Target ST")
+  {
+    RCP<PHAL::ResponseSquaredL2ErrorTargetST<EvalT,Traits>> res_ev =
+      rcp(new PHAL::ResponseSquaredL2ErrorTargetST<EvalT,Traits>(*p,dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+  else if (responseName == "Squared L2 Error Target MST")
+  {
+    RCP<PHAL::ResponseSquaredL2ErrorTargetMST<EvalT,Traits>> res_ev =
+      rcp(new PHAL::ResponseSquaredL2ErrorTargetMST<EvalT,Traits>(*p,dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+  else if (responseName == "Squared L2 Error Target PST")
+  {
+    RCP<PHAL::ResponseSquaredL2ErrorTargetPST<EvalT,Traits>> res_ev =
+      rcp(new PHAL::ResponseSquaredL2ErrorTargetPST<EvalT,Traits>(*p,dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+  else if (responseName == "Squared L2 Error Side Target ST")
+  {
+    RCP<PHAL::ResponseSquaredL2ErrorSideTargetST<EvalT,Traits>> res_ev =
+      rcp(new PHAL::ResponseSquaredL2ErrorSideTargetST<EvalT,Traits>(*p,dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+  else if (responseName == "Squared L2 Error Side Target MST")
+  {
+    RCP<PHAL::ResponseSquaredL2ErrorSideTargetMST<EvalT,Traits>> res_ev =
+      rcp(new PHAL::ResponseSquaredL2ErrorSideTargetMST<EvalT,Traits>(*p,dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+  else if (responseName == "Squared L2 Error Side Target PST")
+  {
+    RCP<PHAL::ResponseSquaredL2ErrorSideTargetPST<EvalT,Traits>> res_ev =
+      rcp(new PHAL::ResponseSquaredL2ErrorSideTargetPST<EvalT,Traits>(*p,dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
   else if (responseName == "Surface Velocity Mismatch")
   {
+    // No side data layouts have been passed to this class
     RCP<FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits> > res_ev =
       rcp(new FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits>(*p,dl));
     fm.template registerEvaluator<EvalT>(res_ev);
@@ -114,6 +164,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 
   else if (responseName == "Surface Mass Balance Mismatch")
   {
+    // No side data layouts have been passed to this class
     RCP<FELIX::ResponseSMBMismatch<EvalT,Traits> > res_ev =
       rcp(new FELIX::ResponseSMBMismatch<EvalT,Traits>(*p,dl));
     fm.template registerEvaluator<EvalT>(res_ev);

@@ -1,5 +1,5 @@
 //*****************************************************************//
-//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
@@ -20,7 +20,10 @@ namespace Albany {
    * \brief Struct to construct and hold DataLayouts
    */
   struct Layouts {
-    Layouts(int worksetSize, int  numVertices, int numNodes, int numQPts, int numDim, int vecDim=-1, int numFace=0);
+
+    Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numCellDim, int vecDim=-1, int numFace=0);
+    Layouts (int worksetSize, int numVertices, int numNodes, int numQPts, int numSideDim, int numSpaceDim, int numSides, int vecDim);
+
     //! Data Layout for scalar quantity that lives at nodes
     Teuchos::RCP<PHX::DataLayout> node_scalar;
     //! Data Layout for scalar quantity that lives at quad points
@@ -83,14 +86,16 @@ namespace Albany {
     Teuchos::RCP<PHX::DataLayout> face_tensor4;
     //! Data Layout for vector quantity that lives at vertices (coordinates) //FIXME: dont oords live at nodes, not vertices?
     Teuchos::RCP<PHX::DataLayout> vertices_vector;
+    Teuchos::RCP<PHX::DataLayout> qp_coords;
     //! Data Layout for length 3 quantity  that lives at nodes (shell coordinates)
     Teuchos::RCP<PHX::DataLayout> node_3vector;
-    //! Data Layout for scalar basis functions
+
     //! Data Layout for scalar basis functions
     Teuchos::RCP<PHX::DataLayout> node_qp_scalar;
     //! Data Layout for gradient basis functions
     Teuchos::RCP<PHX::DataLayout> node_qp_gradient;
     Teuchos::RCP<PHX::DataLayout> node_qp_vector; // Old, but incorrect name
+
     //! Data Layout for scalar quantity on workset
     Teuchos::RCP<PHX::DataLayout> workset_scalar;
     //! Data Layout for vector quantity on workset
@@ -122,10 +127,15 @@ namespace Albany {
 
     // For backward compatibility, and simplicitiy, we want to check if
     // the vector length is the same as the spatial dimension. This
-    // assumption is hardwired in mechanics problems and we want to 
+    // assumption is hardwired in mechanics problems and we want to
     // test that it is a valide assumption with this bool.
     bool vectorAndGradientLayoutsAreEquivalent;
+
+    // A flag to check whether this layouts structure belongs to a sideset
+    bool isSideLayouts;
+
+    std::map<std::string,Teuchos::RCP<Layouts>> side_layouts;
   };
 }
 
-#endif 
+#endif

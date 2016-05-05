@@ -14,12 +14,17 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_ProblemUtils.hpp"
 
+namespace Albany
+{
+class StateManager;
+}
+
 namespace Adapt {
-/** 
+/**
  * \brief Description
  */
   template<typename EvalT, typename Traits>
-  class ElementSizeFieldBase : 
+  class ElementSizeFieldBase :
     public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>
   {
@@ -27,11 +32,11 @@ namespace Adapt {
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
     ElementSizeFieldBase(Teuchos::ParameterList& p,
-		      const Teuchos::RCP<Albany::Layouts>& dl);
-  
+          const Teuchos::RCP<Albany::Layouts>& dl);
+
     void postRegistrationSetup(typename Traits::SetupData d,
-			       PHX::FieldManager<Traits>& vm);
-    
+             PHX::FieldManager<Traits>& vm);
+
     // These functions are defined in the specializations
     void preEvaluate(typename Traits::PreEvalData d) = 0;
     void postEvaluate(typename Traits::PostEvalData d) = 0;
@@ -44,7 +49,7 @@ namespace Adapt {
     Teuchos::RCP<const PHX::FieldTag> getResponseFieldTag() const {
       return size_field_tag;
     }
-    
+
   protected:
 
     typedef enum {NOTSCALED, SCALAR, VECTOR} ScalingType;
@@ -55,11 +60,11 @@ namespace Adapt {
 
     std::string scalingName;
     std::string className;
-    
+
     std::size_t numQPs;
     std::size_t numDims;
     std::size_t numVertices;
-    
+
     PHX::MDField<MeshScalarT,Cell,QuadPoint> qp_weights;
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
     PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec_vertices;
@@ -95,7 +100,7 @@ public:
 // **************************************************************
 
 // **************************************************************
-// Residual 
+// Residual
 // **************************************************************
 template<typename Traits>
 class ElementSizeField<PHAL::AlbanyTraits::Residual,Traits>

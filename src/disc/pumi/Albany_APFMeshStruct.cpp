@@ -233,7 +233,9 @@ Albany::APFMeshStruct::setFieldAndBulkData(
                   const unsigned int neq_,
                   const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize_)
+                  const unsigned int worksetSize_,
+                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /*side_set_sis*/,
+                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/)
 {
 
   using Albany::StateStruct;
@@ -405,6 +407,15 @@ Albany::APFMeshStruct::splitFields(Teuchos::Array<Teuchos::Array<std::string> >&
 
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
 Albany::APFMeshStruct::getMeshSpecs()
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
+       std::logic_error,
+       "meshSpecs accessed, but it has not been constructed" << std::endl);
+  return meshSpecs;
+}
+
+const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
+Albany::APFMeshStruct::getMeshSpecs() const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
        std::logic_error,

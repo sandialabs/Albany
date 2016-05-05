@@ -8,47 +8,52 @@
 
 #include "PHAL_Dimension.hpp"
 
-const char * Dim::name() const 
+const char * Dim::name() const
 { static const char n[] = "Dim" ; return n ; }
-const Dim & Dim::tag() 
+const Dim & Dim::tag()
 { static const Dim myself ; return myself ; }
 
-const char * VecDim::name() const 
+const char * VecDim::name() const
 { static const char n[] = "VecDim" ; return n ; }
-const VecDim & VecDim::tag() 
+const VecDim & VecDim::tag()
 { static const VecDim myself ; return myself ; }
 
-const char * QuadPoint::name() const 
+const char * LayerDim::name() const
+{ static const char n[] = "LayerDim" ; return n ; }
+const LayerDim & LayerDim::tag()
+{ static const LayerDim myself ; return myself ; }
+
+const char * QuadPoint::name() const
 { static const char n[] = "QuadPoint" ; return n ; }
-const QuadPoint & QuadPoint::tag() 
+const QuadPoint & QuadPoint::tag()
 { static const QuadPoint myself ; return myself ; }
 
-const char * Node::name() const 
+const char * Node::name() const
 { static const char n[] = "Node" ; return n ; }
-const Node & Node::tag() 
+const Node & Node::tag()
 { static const Node myself ; return myself ; }
 
-const char * Vertex::name() const 
+const char * Vertex::name() const
 { static const char n[] = "Vertex" ; return n ; }
-const Vertex & Vertex::tag() 
+const Vertex & Vertex::tag()
 { static const Vertex myself ; return myself ; }
 
-const char * Point::name() const 
+const char * Point::name() const
 { static const char n[] = "Point" ; return n ; }
-const Point & Point::tag() 
+const Point & Point::tag()
 { static const Point myself ; return myself ; }
 
-const char * Cell::name() const 
+const char * Cell::name() const
 { static const char n[] = "Cell" ; return n ; }
-const Cell & Cell::tag() 
+const Cell & Cell::tag()
 { static const Cell myself ; return myself ; }
 
-const char * Face::name() const
-{ static const char n[] = "Face" ; return n; }
-const Face & Face::tag()
-{static const Face myself ; return myself; }
+const char * Side::name() const
+{ static const char n[] = "Side" ; return n; }
+const Side & Side::tag()
+{static const Side myself ; return myself; }
 
-const char * Dummy::name() const 
+const char * Dummy::name() const
 { static const char n[] = "Dummy" ; return n ; }
-const Dummy & Dummy::tag() 
+const Dummy & Dummy::tag()
 { static const Dummy myself ; return myself ; }

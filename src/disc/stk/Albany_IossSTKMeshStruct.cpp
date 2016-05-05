@@ -42,7 +42,7 @@ void get_element_block_sizes(stk::io::StkMeshIoBroker &mesh_data,
   }
 }
 
-}
+} // Anonymous namespace
 
 Albany::IossSTKMeshStruct::IossSTKMeshStruct(
                                              const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -110,7 +110,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   mesh_data->add_mesh_database(file_name, mesh_type, stk::io::READ_MESH);
   mesh_data->create_input_mesh();
 
-  metaData = mesh_data->meta_data_rcp();
+  metaData = mesh_data->meta_data_rcp();//Teuchos::rcpFromRef(mesh_data->meta_data());
 
   // End of creating input mesh
 
@@ -175,18 +175,18 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 #endif
 
   const int cub      = params->get("Cubature Degree",3);
-  
+
   //Get Cubature Rule
   const std::string cub_rule_string = params->get("Cubature Rule", "GAUSS");
-  Intrepid2::EIntrepidPLPoly cub_rule;  
+  Intrepid2::EIntrepidPLPoly cub_rule;
   if (cub_rule_string == "GAUSS")
-    cub_rule = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS); 
-  else if (cub_rule_string == "GAUSS_RADAU_LEFT") 
-    cub_rule = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS_RADAU_LEFT); 
-  else if (cub_rule_string == "GAUSS_RADAU_RIGHT") 
-    cub_rule = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS_RADAU_RIGHT); 
+    cub_rule = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS);
+  else if (cub_rule_string == "GAUSS_RADAU_LEFT")
+    cub_rule = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS_RADAU_LEFT);
+  else if (cub_rule_string == "GAUSS_RADAU_RIGHT")
+    cub_rule = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS_RADAU_RIGHT);
   else if (cub_rule_string == "GAUSS_LOBATTO")
-    cub_rule = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS_LOBATTO); 
+    cub_rule = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS_LOBATTO);
   else
     TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
                                 "Invalid Cubature Rule: " << cub_rule_string << "; valid options are GAUSS, GAUSS_RADAU_LEFT, GAUSS_RADAU_RIGHT, and GAUSS_LOBATTO");
@@ -236,6 +236,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     const Ioss::Region& inputRegion = *(mesh_data->get_input_io_region());
     m_solutionFieldHistoryDepth = inputRegion.get_property("state_count").get_int();
   }
+
+  this->initializeSideSetMeshStructs(commT);
 }
 
 Albany::IossSTKMeshStruct::~IossSTKMeshStruct()
@@ -264,7 +266,9 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
           const unsigned int neq_,
           const AbstractFieldContainer::FieldContainerRequirements& req,
           const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-          const unsigned int worksetSize)
+          const unsigned int worksetSize,
+          const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+          const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
 {
   this->SetupFieldData(commT, neq_, req, sis, worksetSize);
 
@@ -282,7 +286,6 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
   int index = params->get("Restart Index",-1); // Default to no restart
   double res_time = params->get<double>("Restart Time",-1.0); // Default to no restart
   Ioss::Region& region = *(mesh_data->get_input_io_region());
-
   /*
    * The following code block reads a single mesh on PE 0, then distributes the mesh across
    * the other processors. stk_rebalance is used, which requires Zoltan
@@ -318,9 +321,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
         m_hasRestartSolution = true;
       }
       else {
-
         *out << "Neither restart index or time are set. Not reading solution data from exodus file"<< std::endl;
-
       }
     }
     else {
@@ -362,8 +363,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
       }
       else
       {
-        *out << "Neither restart index or time are set. We still read defined fields in case they are needed (e.g., parameters)."<< std::endl;
-//        *out << "Restart Index not set. Not reading solution from exodus (" << index << ")"<< std::endl;
+        *out << "Restart Index not set. Not reading solution from exodus (" << index << ")"<< std::endl;
       }
     }
 
@@ -404,402 +404,45 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
 
           }
     }
-  }
 
-#ifdef ALBANY_FELIX
-  // Load required fields
-  stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(metaData->universal_part()) & stk::mesh::Selector(metaData->locally_owned_part());
-
-  stk::mesh::Selector select_overlap_in_part = stk::mesh::Selector(metaData->universal_part()) & (stk::mesh::Selector(metaData->locally_owned_part()) | stk::mesh::Selector(metaData->globally_shared_part()));
-
-  std::vector<stk::mesh::Entity> nodes;
-  stk::mesh::get_selected_entities(select_overlap_in_part, bulkData->buckets(stk::topology::NODE_RANK), nodes);
-
-  std::vector<stk::mesh::Entity> elems;
-  stk::mesh::get_selected_entities(select_owned_in_part, bulkData->buckets(stk::topology::ELEM_RANK), elems);
-
-  GO numOwnedNodes(0);
-  GO numOwnedElems(0);
-  numOwnedNodes = stk::mesh::count_selected_entities(select_owned_in_part, bulkData->buckets(stk::topology::NODE_RANK));
-  numOwnedElems = stk::mesh::count_selected_entities(select_owned_in_part, bulkData->buckets(stk::topology::ELEM_RANK));
-
-  GO numGlobalVertices = 0;
-  GO numGlobalElements = 0;
-  Teuchos::reduceAll<int, GO>(*commT, Teuchos::REDUCE_SUM, 1, &numOwnedNodes, &numGlobalVertices);
-  Teuchos::reduceAll<int, GO>(*commT, Teuchos::REDUCE_SUM, 1, &numOwnedElems, &numGlobalElements);
-
-  if (commT->getRank() == 0)
-  {
-    *out << "Checking if requirements are already stored in the mesh. If not, we import them from ascii files.\n";
-  }
-
-  Teuchos::Array<GO> nodeIndices(nodes.size()), elemIndices(elems.size());
-  for (int i = 0; i < nodes.size(); ++i)
-    nodeIndices[i] = bulkData->identifier(nodes[i]) - 1;
-  for (int i = 0; i < elems.size(); ++i)
-    elemIndices[i] = bulkData->identifier(elems[i]) - 1;
-
-
-  // Creating the serial and parallel node maps
-  const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
-
-  Teuchos::RCP<const Tpetra_Map> nodes_map = Tpetra::createNonContigMapWithNode<LO, GO> (nodeIndices, commT, KokkosClassic::Details::getNode<KokkosNode>());
-  Teuchos::RCP<const Tpetra_Map> elems_map = Tpetra::createNonContigMapWithNode<LO, GO> (elemIndices, commT, KokkosClassic::Details::getNode<KokkosNode>());
-
-  int numMyNodes = (commT->getRank() == 0) ? numGlobalVertices : 0;
-  int numMyElements = (commT->getRank() == 0) ? numGlobalElements : 0;
-  Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyNodes, 0, commT));
-  Teuchos::RCP<const Tpetra_Map> serial_elems_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, commT));
-
-  // Creating the Tpetra_Import object (to transfer from serial to parallel vectors)
-  Tpetra_Import importOperatorNode (serial_nodes_map, nodes_map);
-  Tpetra_Import importOperatorElem (serial_elems_map, elems_map);
-
-  Teuchos::ParameterList* req_fields_info;
-  if (params->isSublist("Required Fields Info"))
-  {
-    req_fields_info = &params->sublist("Required Fields Info");
-
-    for (AbstractFieldContainer::FieldContainerRequirements::const_iterator it=req.begin(); it!=req.end(); ++it)
+    // Read global mesh variables
+    for (auto& it : fieldContainer->getMeshVectorStates())
     {
-      // Get the file name
-      std::string temp_str = *it + " File Name";
-      std::string fname = req_fields_info->get<std::string>(temp_str,"");
-
-      // Ge the file type (if not specified, assume Scalar)
-      temp_str = *it + " Field Type";
-      std::string ftype = req_fields_info->get<std::string>(temp_str,"");
-      if (ftype=="")
-      {
-        *out << "Warning! No field type specified for field " << *it << ". We skip it and hope is already present in the mesh...\n";
-        continue;
-      }
-
-
-      stk::mesh::Entity node, elem;
-      stk::mesh::EntityId nodeId, elemId;
-      int lid;
-      double* values;
-
-      typedef AbstractSTKFieldContainer::QPScalarFieldType  QPScalarFieldType;
-      typedef AbstractSTKFieldContainer::QPVectorFieldType  QPVectorFieldType;
-      typedef AbstractSTKFieldContainer::ScalarFieldType    ScalarFieldType;
-      typedef AbstractSTKFieldContainer::VectorFieldType    VectorFieldType;
-
-      // Depending on the field type, we need to use different pointers
-      if (ftype == "Node Scalar")
-      {
-        // Creating the serial and (possibly) parallel Tpetra service vectors
-        Tpetra_Vector serial_req_vec(serial_nodes_map);
-        Tpetra_Vector req_vec(nodes_map);
-
-        temp_str = *it + " Value";
-        if (req_fields_info->isParameter(temp_str))
-        {
-          *out << "Discarding other info about Node Scalar field " << *it << " and filling it with constant value " << req_fields_info->get<double>(temp_str) << "\n";
-          // For debug, we allow to fill the field with a given uniform value
-          fillTpetraVec (serial_req_vec,req_fields_info->get<double>(temp_str));
-        }
-        else if (fname!="")
-        {
-          *out << "Reading Node Scalar field " << *it << " from file " << fname << "\n";
-          // Read the input file and stuff it in the Tpetra vector
-          readScalarFileSerial (fname,serial_req_vec,commT);
-
-          temp_str = *it + " Scale Factor";
-          if (req_fields_info->isParameter(temp_str))
-          {
-            double scale_factor = req_fields_info->get<double>(temp_str);
-            serial_req_vec.scale (scale_factor);
-          }
-        }
-        else
-        {
-          bool found = false;
-          for (int i(0); i<missing.size(); ++i)
-          {
-            if (missing[i].field()->name()==*it)
-            {
-              *out << "No file name nor constant value specified for Node Scalar field " << *it << "; initializing it to 0.\n";
-              fillTpetraVec (serial_req_vec,0.);
-              found = true;
-              break;
-            }
-          }
-          if (!found)
-          {
-            *out << "Using mesh-stored values for Node Scalar field " << *it << " since no constant value nor filename has been specified\n";
-            continue;
-          }
-        }
-
-        // Fill the (possibly) parallel vector
-        req_vec.doImport(serial_req_vec,importOperatorNode,Tpetra::INSERT);
-
-        // Extracting the mesh field and the tpetra vector view
-        ScalarFieldType* field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, *it);
-
-        TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is 'Elem Scalar'?).\n");
-
-        Teuchos::ArrayRCP<const ST> req_vec_view = req_vec.get1dView();
-
-        //Now we have to stuff the vector in the mesh data
-        for (int i(0); i<nodes.size(); ++i)
-        {
-          nodeId = bulkData->identifier(nodes[i]) - 1;
-          lid    = nodes_map->getLocalElement((GO)(nodeId));
-
-          values = stk::mesh::field_data(*field, nodes[i]);
-          values[0] = req_vec_view[lid];
-        }
-      }
-      else if (ftype == "Elem Scalar")
-      {
-        // Creating the serial and (possibly) parallel Tpetra service vectors
-        Tpetra_Vector serial_req_vec(serial_elems_map);
-        Tpetra_Vector req_vec(elems_map);
-
-        temp_str = *it + " Value";
-        if (req_fields_info->isParameter(temp_str))
-        {
-          *out << "Discarding other info about Elem Scalar field " << *it << " and filling it with constant value " << req_fields_info->get<double>(temp_str) << "\n";
-          // For debug, we allow to fill the field with a given uniform value
-          fillTpetraVec (serial_req_vec,req_fields_info->get<double>(temp_str));
-        }
-        else if (fname!="")
-        {
-          *out << "Reading Elem Scalar field " << *it << " from file " << fname << "\n";
-          // Read the input file and stuff it in the Tpetra vector
-          readScalarFileSerial (fname,serial_req_vec,commT);
-
-          temp_str = *it + " Scale Factor";
-          if (req_fields_info->isParameter(temp_str))
-          {
-            double scale_factor = req_fields_info->get<double>(temp_str);
-            serial_req_vec.scale (scale_factor);
-          }
-        }
-        else
-        {
-          bool found = false;
-          for (int i(0); i<missing.size(); ++i)
-          {
-            if (missing[i].field()->name()==*it)
-            {
-              *out << "No file name nor constant value specified for Elem Scalar field " << *it << "; initializing it to 0.\n";
-              fillTpetraVec (serial_req_vec,0.);
-              found = true;
-              break;
-            }
-          }
-          if (!found)
-          {
-            *out << "Using mesh-stored values for Elem Scalar field " << *it << " since no constant value nor filename has been specified\n";
-            continue;
-          }
-        }
-
-        // Fill the (possibly) parallel vector
-        req_vec.doImport(serial_req_vec,importOperatorElem,Tpetra::INSERT);
-
-        // Extracting the mesh field and the tpetra vector view
-        QPScalarFieldType* field = metaData->get_field<QPScalarFieldType>(stk::topology::ELEM_RANK, *it);
-        TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is 'Node Scalar'?).\n");
-
-        Teuchos::ArrayRCP<const ST> req_vec_view = req_vec.get1dView();
-
-        //Now we have to stuff the vector in the mesh data
-        for (int i(0); i<elems.size(); ++i)
-        {
-          elemId = bulkData->identifier(elems[i]) - 1;
-          lid    = elems_map->getLocalElement((GO)(elemId));
-
-          values = stk::mesh::field_data(*field, elems[i]);
-          values[0] = req_vec_view[lid];
-        }
-      }
-      else if (ftype == "Node Vector")
-      {
-        // Loading the dimension of the Vector Field (by default equal to the mesh dimension)
-        temp_str = *it + " Field Dimension";
-        int fieldDim = req_fields_info->get<int>(temp_str,this->meshSpecs[0]->numDim);
-
-        // Creating the serial and (possibly) parallel Tpetra service multivectors
-        Tpetra_MultiVector serial_req_mvec(serial_nodes_map,fieldDim);
-        Tpetra_MultiVector req_mvec(nodes_map,fieldDim);
-
-        temp_str = *it + " Value";
-        if (req_fields_info->isParameter(temp_str))
-        {
-          *out << "Discarding other info about Node Vector field " << *it << " and filling it with constant value "
-               << req_fields_info->get<Teuchos::Array<double> >(temp_str) << "\n";
-          // For debug, we allow to fill the field with a given uniform value
-          fillTpetraMVec (serial_req_mvec,req_fields_info->get<Teuchos::Array<double> >(temp_str));
-        }
-        else if (fname!="")
-        {
-          *out << "Reading Node Vector field " << *it << " from file " << fname << "\n";
-          // Read the input file and stuff it in the Tpetra multivector
-          readVectorFileSerial (fname,serial_req_mvec,commT);
-
-          temp_str = *it + " Scale Factor";
-          if (req_fields_info->isParameter(temp_str))
-          {
-            double scale_factor = req_fields_info->get<double>(temp_str);
-            serial_req_mvec.scale (scale_factor);
-          }
-        }
-        else
-        {
-          bool found = false;
-          for (int i(0); i<missing.size(); ++i)
-          {
-            if (missing[i].field()->name()==*it)
-            {
-              *out << "No file name nor constant value specified for Node Vector field " << *it << "; initializing it to 0.\n";
-              Teuchos::Array<double> vals(fieldDim,0.);
-              fillTpetraMVec (serial_req_mvec,vals);
-              found = true;
-              break;
-            }
-          }
-          if (!found)
-          {
-            *out << "Using mesh-stored values for Node Vector field " << *it << " since no constant value nor filename has been specified\n";
-            continue;
-          }
-        }
-
-        // Fill the (possibly) parallel vector
-        req_mvec.doImport(serial_req_mvec,importOperatorNode,Tpetra::INSERT);
-
-        // Extracting the mesh field and the tpetra vector views
-        VectorFieldType* field = metaData->get_field<VectorFieldType>(stk::topology::NODE_RANK, *it);
-        TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is 'Elem Vector'?).\n");
-
-        std::vector<Teuchos::ArrayRCP<const ST> > req_mvec_view;
-        for (int i(0); i<fieldDim; ++i)
-          req_mvec_view.push_back(req_mvec.getVector(i)->get1dView());
-
-        //Now we have to stuff the vector in the mesh data
-        for (int i(0); i<nodes.size(); ++i)
-        {
-          nodeId = bulkData->identifier(nodes[i]) - 1;
-          lid    = nodes_map->getLocalElement((GO)(nodeId));
-
-          values = stk::mesh::field_data(*field, nodes[i]);
-
-          for (int iDim(0); iDim<fieldDim; ++iDim)
-            values[iDim] = req_mvec_view[iDim][lid];
-        }
-      }
-      else if (ftype == "Elem Vector")
-      {
-        // Loading the dimension of the Vector Field (by default equal to the mesh dimension)
-        temp_str = *it + " Field Dimension";
-        int fieldDim = req_fields_info->get<int>(temp_str,this->meshSpecs[0]->numDim);
-
-        // Creating the serial and (possibly) parallel Tpetra service multivectors
-        Tpetra_MultiVector serial_req_mvec(serial_elems_map,fieldDim);
-        Tpetra_MultiVector req_mvec(elems_map,fieldDim);
-
-        temp_str = *it + " Value";
-        if (req_fields_info->isParameter(temp_str))
-        {
-          *out << "Discarding other info about Elem Vector field " << *it << " and filling it with constant value "
-               << req_fields_info->get<Teuchos::Array<double> >(temp_str) << "\n";
-          // For debug, we allow to fill the field with a given uniform value
-          fillTpetraMVec (serial_req_mvec,req_fields_info->get<Teuchos::Array<double> >(temp_str));
-        }
-        else if (fname!="")
-        {
-          *out << "Reading Elem Vector field " << *it << " from file " << fname << "\n";
-          // Read the input file and stuff it in the Tpetra multivector
-          readVectorFileSerial (fname,serial_req_mvec,commT);
-
-          temp_str = *it + " Scale Factor";
-          if (req_fields_info->isParameter(temp_str))
-          {
-            double scale_factor = req_fields_info->get<double>(temp_str);
-            serial_req_mvec.scale (scale_factor);
-          }
-        }
-        else
-        {
-          bool found = false;
-          for (int i(0); i<missing.size(); ++i)
-          {
-            if (missing[i].field()->name()==*it)
-            {
-              *out << "No file name nor constant value specified for Elem Vector field " << *it << "; initializing it to 0.\n";
-              Teuchos::Array<double> vals(fieldDim,0.);
-              fillTpetraMVec (serial_req_mvec,vals);
-              found = true;
-              break;
-            }
-          }
-          if (!found)
-          {
-            *out << "Using mesh-stored values for Elem Vector field " << *it << " since no constant value nor filename has been specified\n";
-            continue;
-          }
-        }
-
-        // Fill the (possibly) parallel vector
-        req_mvec.doImport(serial_req_mvec,importOperatorElem,Tpetra::INSERT);
-
-        // Extracting the mesh field and the tpetra vector views
-        VectorFieldType* field = metaData->get_field<VectorFieldType>(stk::topology::ELEM_RANK, *it);
-        TEUCHOS_TEST_FOR_EXCEPTION (field==0, std::logic_error, "Error! Field " << *it << " not present (perhaps is 'Node Vector'?).\n");
-        std::vector<Teuchos::ArrayRCP<const ST> > req_mvec_view;
-        for (int i(0); i<fieldDim; ++i)
-          req_mvec_view.push_back(req_mvec.getVector(i)->get1dView());
-
-        //Now we have to stuff the vector in the mesh data
-        for (int i(0); i<elems.size(); ++i)
-        {
-          elemId = bulkData->identifier(elems[i]) - 1;
-          lid    = elems_map->getLocalElement((GO)(elemId));
-
-          values = stk::mesh::field_data(*field, nodes[i]);
-
-          for (int iDim(0); iDim<fieldDim; ++iDim)
-            values[iDim] = req_mvec_view[iDim][lid];
-        }
-      }
-      else
-      {
-        TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
-                                    "Sorry, I haven't yet implemented the case of field that are not Scalar nor Vector or that is not at nodal nor elemental.\n");
-      }
+      mesh_data->get_global (it.first, it.second, true); // Last variable is abort_if_not_found. Should it be false?
     }
   }
-
-  if (params->get<bool>("Write points coordinates to ascii file", false))
+  else
   {
-    AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
-    std::ofstream ofile;
-    ofile.open("coordinates.ascii");
-    if (!ofile.is_open())
-    {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Cannot open coordinates file.\n");
-    }
-
-    ofile << nodes.size() << " " << 4 << "\n";
-
-    stk::mesh::Entity node;
-
-    for (int i(0); i<nodes.size(); ++i)
-    {
-      node   = bulkData->get_entity(stk::topology::NODE_RANK, i + 1);
-      double* coord = stk::mesh::field_data(*coordinates_field, node);
-
-      ofile << bulkData->identifier (nodes[i]) << " " << coord[0] << " " << coord[1]  << " " << coord[2] << "\n";
-    }
-
-    ofile.close();
+    // We put all the fields as 'missing'
+    const stk::mesh::FieldVector& fields = metaData->get_fields();
+    for (int i(0); i<fields.size(); ++i)
+      missing.emplace_back(fields[i],fields[i]->name());
   }
-#endif
+
+  // If this is a boundary mesh, the side_map/side_node_map may already be present, so we check
+  side_maps_present = true;
+  bool coherence = true;
+  for (const auto& it : missing)
+  {
+    if (it.field()->name()=="side_to_cell_map" || it.field()->name()=="side_nodes_ids")
+    {
+      side_maps_present = false;
+      coherence = !coherence; // Both fields should be present or absent so coherence should change exactly twice
+    }
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION (!coherence, std::runtime_error, "Error! The maps 'side_to_cell_map' and 'side_nodes_ids' should either both be present or both missing, but only one of them was found in the mesh file.\n");
+
+  if (useSerialMesh)
+  {
+    // Only proc 0 actually read the mesh, and can confirm whether or not the side maps were present
+    // Unfortunately, Teuchos does not have a specialization for type bool when it comes to communicators, so we need ints
+    int bool_to_int = side_maps_present ? 1 : 0;
+    Teuchos::broadcast(*commT,0,1,&bool_to_int);
+    side_maps_present = bool_to_int == 1 ? true : false;
+  }
+
+  // Loading required input fields from file
+  this->loadRequiredInputFields (req,commT);
 
   // Refine the mesh before starting the simulation if indicated
   uniformRefineMesh(commT);
@@ -809,6 +452,11 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
 
   // Build additional mesh connectivity needed for mesh fracture (if indicated)
   computeAddlConnectivity();
+
+  // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
+  this->finalizeSideSetMeshStructs(commT, side_set_req, side_set_sis, worksetSize);
+
+  fieldAndBulkDataSet = true;
 }
 
 double
@@ -848,99 +496,5 @@ Albany::IossSTKMeshStruct::getValidDiscretizationParameters() const
 
   return validPL;
 }
-
-#ifdef ALBANY_FELIX
-
-void Albany::IossSTKMeshStruct::readScalarFileSerial (std::string& fname,
-                                                Tpetra_MultiVector& content,
-                                                const Teuchos::RCP<const Teuchos_Comm>& comm) const
-{
-  GO numNodes;
-  Teuchos::ArrayRCP<ST> content_nonConstView = content.get1dViewNonConst();
-  if (comm->getRank() == 0)
-  {
-    std::ifstream ifile;
-    ifile.open(fname.c_str());
-    if (ifile.is_open())
-    {
-      ifile >> numNodes;
-      TEUCHOS_TEST_FOR_EXCEPTION (numNodes != content.getLocalLength(), Teuchos::Exceptions::InvalidParameterValue,
-                                  std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << content.getLocalLength() << ")" << std::endl);
-
-      for (GO i = 0; i < numNodes; i++)
-        ifile >> content_nonConstView[i];
-
-      ifile.close();
-    }
-    else
-    {
-      std::cout << "Warning in IossSTKMeshStruct: unable to open the file " << fname << std::endl;
-    }
-  }
-}
-
-void Albany::IossSTKMeshStruct::readVectorFileSerial (std::string& fname,
-                                                      Tpetra_MultiVector& contentVec,
-                                                      const Teuchos::RCP<const Teuchos_Comm>& comm) const
-{
-  GO numNodes;
-  int numComponents;
-  if (comm->getRank() == 0)
-  {
-    std::ifstream ifile;
-    ifile.open(fname.c_str());
-    if (ifile.is_open())
-    {
-      ifile >> numNodes >> numComponents;
-      TEUCHOS_TEST_FOR_EXCEPTION (numNodes != contentVec.getLocalLength(), Teuchos::Exceptions::InvalidParameterValue,
-                                  std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << contentVec.getLocalLength() << ")" << std::endl);
-      TEUCHOS_TEST_FOR_EXCEPTION(numComponents != contentVec.getNumVectors(), Teuchos::Exceptions::InvalidParameterValue,
-          std::endl << "Error in ExtrudedSTKMeshStruct: Number of components in file " << fname << " (" << numComponents << ") is different from the number expected (" << contentVec.getNumVectors() << ")" << std::endl);
-
-      for (int icomp(0); icomp<numComponents; ++icomp)
-      {
-        Teuchos::ArrayRCP<ST> contentVec_nonConstView = contentVec.getVectorNonConst(icomp)->get1dViewNonConst();
-        for (GO i = 0; i < numNodes; i++)
-          ifile >> contentVec_nonConstView[i];
-      }
-      ifile.close();
-    }
-    else
-    {
-      std::cout << "Warning in IossSTKMeshStruct: unable to open the file " << fname << std::endl;
-    }
-  }
-}
-
-
-void Albany::IossSTKMeshStruct::fillTpetraVec (Tpetra_Vector& vec, double value)
-{
-  int numElements = vec.getMap()->getNodeNumElements();
-  Teuchos::ArrayRCP<Tpetra_Vector::scalar_type> vec_vals = vec.get1dViewNonConst();
-  for (int i(0); i<numElements; ++i)
-  {
-    vec_vals[i] = value;
-  }
-}
-
-void Albany::IossSTKMeshStruct::fillTpetraMVec (Tpetra_MultiVector& mvec, const Teuchos::Array<double>& values)
-{
-  int numElements = mvec.getMap()->getNodeNumElements();
-  int numVectors = mvec.getNumVectors();
-
-  TEUCHOS_TEST_FOR_EXCEPTION (numVectors!=values.size(),Teuchos::Exceptions::InvalidParameterValue,
-                              "Error! Length of given array of values does not match the field dimension.\n");
-
-  for (int iv(0); iv<numVectors; ++iv)
-  {
-    Teuchos::ArrayRCP<Tpetra_MultiVector::scalar_type> vec_vals = mvec.getVectorNonConst(iv)->get1dViewNonConst();
-    for (int i(0); i<numElements; ++i)
-    {
-      vec_vals[i] = values[iv];
-    }
-  }
-}
-
-#endif // ALBANY_FELIX
 
 #endif // ALBANY_SEACAS

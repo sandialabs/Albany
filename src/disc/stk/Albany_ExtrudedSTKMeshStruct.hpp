@@ -20,7 +20,8 @@ namespace Albany {
 
     ExtrudedSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const Teuchos::RCP<const Teuchos_Comm>& comm);
+                  const Teuchos::RCP<const Teuchos_Comm>& comm,
+                  Teuchos::RCP<AbstractMeshStruct> basalMesh);
 
     ~ExtrudedSTKMeshStruct();
 
@@ -30,7 +31,9 @@ namespace Albany {
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize);
+                  const unsigned int worksetSize,
+                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {}, // empty map as default
+                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}); // empty map as default
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return false; }
@@ -38,16 +41,25 @@ namespace Albany {
     //! If restarting, convenience function to return restart data time
     double restartDataTime() const {return -1.0; }
 
+    // Overrides the method in GenericSTKMeshStruct
+    void buildCellSideNodeNumerationMap (const std::string& sideSetName,
+                                         std::map<GO,GO>& sideMap,
+                                         std::map<GO,std::vector<int>>& sideNodeMap);
+
     private:
     //Ioss::Init::Initializer ioInit;
 
     inline void computeMap();
     inline int prismType(GO const* prismVertexMpasIds, int& minIndex);
     inline void tetrasFromPrismStructured (GO const* prismVertexMpasIds, GO const* prismVertexGIds, GO tetrasIdsOnPrism[][4]);
-    void read2DFileSerial(std::string &fname, Teuchos::RCP<Tpetra_Vector> content, const Teuchos::RCP<const Teuchos_Comm>& comm);
-    void readFileSerial(std::string &fname, Tpetra_MultiVector& contentVec, const Teuchos::RCP<const Teuchos_Comm>& comm);
-    int readFileSerial(std::string &fname, Teuchos::RCP<const Tpetra_Map> map_serial, Teuchos::RCP<const Tpetra_Map> map, Teuchos::RCP<Tpetra_Import> importOperator, Teuchos::RCP<Tpetra_MultiVector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Teuchos_Comm>& comm);
 
+    void interpolateBasalLayeredFields (const std::vector<stk::mesh::Entity>& nodes2d,
+                                        const std::vector<stk::mesh::Entity>& cells2d,
+                                        const std::vector<double>& levelsNormalizedThickness,
+                                        GO numGlobalCells2d, GO numGlobalNodes2d);
+    void extrudeBasalFields (const std::vector<stk::mesh::Entity>& nodes2d,
+                             const std::vector<stk::mesh::Entity>& cells2d,
+                             GO numGlobalCells2d, GO numGlobalNodes2d);
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
@@ -58,11 +70,14 @@ namespace Albany {
     bool periodic;
     enum elemShapeType {Tetrahedron, Wedge, Hexahedron};
     elemShapeType ElemShape;
+
+    LayeredMeshOrdering Ordering;
+    int numLayers;
     int NumBaseElemeNodes;
     int NumNodes; //number of nodes
     int NumEles; //number of elements
     int NumBdEdges; //number of faces on basal boundary
-  };
+  }; // Class ExtrudedSTKMeshStruct
 
 
 

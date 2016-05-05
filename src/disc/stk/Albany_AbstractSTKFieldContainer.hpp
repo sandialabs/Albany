@@ -39,14 +39,16 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
   public:
 
 
-    // Tensor per Node  - (Node, Dim, Dim)
+    // Tensor per Node/Cell  - (Node, Dim, Dim) or (Cell,Dim,Dim)
     typedef stk::mesh::Field<double, stk::mesh::Cartesian, stk::mesh::Cartesian> TensorFieldType ;
-    // Vector per Node  - (Node, Dim)
+    // Vector per Node/Cell  - (Node, Dim) or (Cell,Dim)
     typedef stk::mesh::Field<double, stk::mesh::Cartesian> VectorFieldType ;
-    // One double scalar per Node  - (Node)
+    // Scalar per Node/Cell  - (Node) or (Cell)
     typedef stk::mesh::Field<double>                      ScalarFieldType ;
-    // One int scalar per Node  - (Node)
+    // One int scalar per Node/Cell  - (Node) or (Cell)
     typedef stk::mesh::Field<int>                         IntScalarFieldType ;
+    // int vector per Node/Cell  - (Node,Dim/VecDim) or (Cell,Dim/VecDim)
+    typedef stk::mesh::Field<int, stk::mesh::Cartesian>   IntVectorFieldType ;
 
     typedef stk::mesh::Cartesian QPTag; // need to invent shards::ArrayDimTag
     // Tensor3 per QP   - (Cell, QP, Dim, Dim, Dim)
@@ -71,11 +73,15 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     typedef std::vector<VectorFieldType*> VectorState;
     typedef std::vector<TensorFieldType*> TensorState;
 
+    typedef std::map<std::string,double>                MeshScalarState;
+    typedef std::map<std::string,std::vector<double> >  MeshVectorState;
+
     //! Destructor
     virtual ~AbstractSTKFieldContainer() {};
 
     virtual void addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis) = 0;
 
+    const VectorFieldType* const getCoordinatesField() const { return coordinates_field; }
     VectorFieldType* getCoordinatesField(){ return coordinates_field; }
     IntScalarFieldType* getProcRankField(){ return proc_rank_field; }
     IntScalarFieldType* getRefineField(){ return refine_field; }
@@ -84,11 +90,16 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
 #endif // ALBANY_LCM
     SphereVolumeFieldType* getSphereVolumeField(){ return sphereVolume_field; }
 
-    ScalarValueState getScalarValueStates(){ return scalarValue_states;}
-    QPScalarState getQPScalarStates(){return qpscalar_states;}
-    QPVectorState getQPVectorStates(){return qpvector_states;}
-    QPTensorState getQPTensorStates(){return qptensor_states;}
-    QPTensor3State getQPTensor3States(){return qptensor3_states;}
+    ScalarValueState& getScalarValueStates(){ return scalarValue_states;}
+    MeshScalarState& getMeshScalarStates(){return mesh_scalar_states;}
+    MeshVectorState& getMeshVectorStates(){return mesh_vector_states;}
+    ScalarState& getCellScalarStates(){return cell_scalar_states;}
+    VectorState& getCellVectorStates(){return cell_vector_states;}
+    TensorState& getCellTensorStates(){return cell_tensor_states;}
+    QPScalarState& getQPScalarStates(){return qpscalar_states;}
+    QPVectorState& getQPVectorStates(){return qpvector_states;}
+    QPTensorState& getQPTensorStates(){return qptensor_states;}
+    QPTensor3State& getQPTensor3States(){return qptensor3_states;}
     const StateInfoStruct& getNodalSIS() const {return nodal_sis;}
     const StateInfoStruct& getNodalParameterSIS() const {return nodal_parameter_sis;}
 
@@ -133,10 +144,15 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     SphereVolumeFieldType* sphereVolume_field; // Required for Peridynamics in LCM
 
     ScalarValueState scalarValue_states;
-    QPScalarState qpscalar_states;
-    QPVectorState qpvector_states;
-    QPTensorState qptensor_states;
-    QPTensor3State qptensor3_states;
+    MeshScalarState   mesh_scalar_states;
+    MeshVectorState   mesh_vector_states;
+    ScalarState       cell_scalar_states;
+    VectorState       cell_vector_states;
+    TensorState       cell_tensor_states;
+    QPScalarState     qpscalar_states;
+    QPVectorState     qpvector_states;
+    QPTensorState     qptensor_states;
+    QPTensor3State    qptensor3_states;
 
     StateInfoStruct nodal_sis;
     StateInfoStruct nodal_parameter_sis;

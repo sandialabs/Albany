@@ -59,7 +59,7 @@
     <ParameterList name="Response Functions">
       <Parameter name="Number of Response Vectors" type="int" value="1"/>
       <ParameterList name="Response Vector 0">
-	<Parameter name="Name" type="string" value="Aggregated"/>
+	<Parameter name="Name" type="string" value="Aggregate Responses"/>
         <Parameter name="Number" type="int" value="2"/>
         <Parameter name="Response 0" type="string" value="PHAL Field Integral"/>
 	<ParameterList name="ResponseParams 0">

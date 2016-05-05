@@ -6,8 +6,9 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
 #include "Intrepid2_FunctionSpaceTools.hpp"
+
+#include "PHAL_Workset.hpp"
 
 namespace PHAL {
 
