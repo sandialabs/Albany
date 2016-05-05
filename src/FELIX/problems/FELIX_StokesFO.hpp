@@ -412,7 +412,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     if (basalSideName!="INVALID")
     {
       // Interpolate the 3D state on the side (the BasalFrictionCoefficient evaluator needs a side field)
-      ev = evalUtils.getPSUtils().constructDOFCellToSideEvaluator(fieldName,basalSideName,"Node Scalar",cellType);
+      ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator(fieldName,basalSideName,"Node Scalar",cellType);
       fm0.template registerEvaluator<EvalT> (ev);
     }
   }
@@ -437,7 +437,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
         fm0.template registerEvaluator<EvalT>(ev);
 
         //---- Interpolate Beta Given on QP on side (may be used by a response)
-        ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator(fieldName, basalSideName);
+        ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator(fieldName, basalSideName);
         fm0.template registerEvaluator<EvalT>(ev);
       }
     }
@@ -610,7 +610,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Interpolate temperature from nodes to cell
-  ev = evalUtils.getPSUtils().constructNodesToCellInterpolationEvaluator ("temperature",false);
+  ev = evalUtils.getPSTUtils().constructNodesToCellInterpolationEvaluator ("temperature",false);
   fm0.template registerEvaluator<EvalT> (ev);
 
   if(!isThicknessAParameter)
@@ -673,7 +673,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     // -------------------- Special evaluators for side handling ----------------- //
 
     //---- Restrict vertex coordinates from cell-based to cell-side-based
-    ev = evalUtils.getMSUtils().constructDOFCellToSideEvaluator("Coord Vec",basalSideName,"Vertex Vector",cellType,"Coord Vec " + basalSideName);
+    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",basalSideName,"Vertex Vector",cellType,"Coord Vec " + basalSideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Compute side basis functions
@@ -697,35 +697,35 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Restrict ice thickness from cell-based to cell-side-based
-    ev = evalUtils.getPSUtils().constructDOFCellToSideEvaluator("Ice Thickness",basalSideName,"Node Scalar",cellType);
+    ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("Ice Thickness",basalSideName,"Node Scalar",cellType);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate thickness gradient on QP on side
-    ev = evalUtils.getPSUtils().constructDOFGradInterpolationSideEvaluator("Ice Thickness", basalSideName);
+    ev = evalUtils.getPSTUtils().constructDOFGradInterpolationSideEvaluator("Ice Thickness", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate thickness on QP on side
-    ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Ice Thickness Param", basalSideName);
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Ice Thickness Param", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Restrict ice thickness (param) from cell-based to cell-side-based
-    ev = evalUtils.getPSUtils().constructDOFCellToSideEvaluator("Ice Thickness Param",basalSideName,"Node Scalar",cellType);
+    ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("Ice Thickness Param",basalSideName,"Node Scalar",cellType);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate thickness (param) gradient on QP on side
-    ev = evalUtils.getPSUtils().constructDOFGradInterpolationSideEvaluator("Ice Thickness Param", basalSideName);
+    ev = evalUtils.getPSTUtils().constructDOFGradInterpolationSideEvaluator("Ice Thickness Param", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate observed thickness on QP on side
-    ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Observed Ice Thickness", basalSideName);
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Observed Ice Thickness", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate thickness on QP on side
-    ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Ice Thickness", basalSideName);
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Ice Thickness", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate thickness RMS on QP on side
-    ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Ice Thickness RMS", basalSideName);
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Ice Thickness RMS", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate effective pressure on QP on side
@@ -737,11 +737,11 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Restrict surface height from cell-based to cell-side-based
-    ev = evalUtils.getPSUtils().constructDOFCellToSideEvaluator("Surface Height",basalSideName,"Node Scalar",cellType);
+    ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("Surface Height",basalSideName,"Node Scalar",cellType);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate surface height on QP on side
-    ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Surface Height", basalSideName);
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Surface Height", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     // Interpolate the 3D state on the side (the BasalFrictionCoefficient evaluator needs a side field)
@@ -757,18 +757,18 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate surface velocity on QP on side
-    ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Surface Mass Balance", basalSideName);
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Surface Mass Balance", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
     
     //---- Interpolate surface velocity on QP on side
-    ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Surface Mass Balance RMS", basalSideName);
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Surface Mass Balance RMS", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
   if (surfaceSideName!="INVALID")
   {
     //---- Restrict vertex coordinates from cell-based to cell-side-based
-    ev = evalUtils.getMSUtils().constructDOFCellToSideEvaluator("Coord Vec",surfaceSideName,"Vertex Vector",cellType,"Coord Vec " + surfaceSideName);
+    ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",surfaceSideName,"Vertex Vector",cellType,"Coord Vec " + surfaceSideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Compute side basis functions
@@ -776,11 +776,11 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate surface velocity on QP on side
-    ev = evalUtils.getPSUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity", surfaceSideName);
+    ev = evalUtils.getPSTUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate surface velocity rms on QP on side
-    ev = evalUtils.getPSUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity RMS", surfaceSideName);
+    ev = evalUtils.getPSTUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity RMS", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Restrict velocity (the solution) from cell-based to cell-side-based on upper side

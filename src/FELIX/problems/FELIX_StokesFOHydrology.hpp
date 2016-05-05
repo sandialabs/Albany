@@ -394,7 +394,7 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   else
   {
     // Interpolate drainage sheet depth
-    ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Drainage Sheet Depth", basalSideName);
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Drainage Sheet Depth", basalSideName);
     fm0.template registerEvaluator<EvalT> (ev);
   }
 
@@ -411,7 +411,7 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Interpolate temperature from nodes to cell
-  ev = evalUtils.getPSUtils().constructNodesToCellInterpolationEvaluator ("temperature",false);
+  ev = evalUtils.getPSTUtils().constructNodesToCellInterpolationEvaluator ("temperature",false);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Intepolate surface height
@@ -433,11 +433,11 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   fm0.template registerEvaluator<EvalT> (ev);
 
   //---- Restrict ice thickness from cell-based to cell-side-based
-  ev = evalUtils.getPSUtils().constructDOFCellToSideEvaluator ("Ice Thickness",basalSideName,"Node Scalar",cellType);
+  ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator ("Ice Thickness",basalSideName,"Node Scalar",cellType);
   fm0.template registerEvaluator<EvalT> (ev);
 
   //---- Restrict surface height from cell-based to cell-side-based
-  ev = evalUtils.getPSUtils().constructDOFCellToSideEvaluator ("Surface Height",basalSideName,"Node Scalar",cellType);
+  ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator ("Surface Height",basalSideName,"Node Scalar",cellType);
   fm0.template registerEvaluator<EvalT> (ev);
 
   //---- Interpolate velocity on QP on side
@@ -445,11 +445,11 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   fm0.template registerEvaluator<EvalT>(ev);
 
   //---- Interpolate thickness on QP on side
-  ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Ice Thickness", basalSideName);
+  ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Ice Thickness", basalSideName);
   fm0.template registerEvaluator<EvalT>(ev);
 
   //---- Interpolate surface height on QP on side
-  ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Surface Height", basalSideName);
+  ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Surface Height", basalSideName);
   fm0.template registerEvaluator<EvalT>(ev);
 
   //---- Interpolate hydraulic potential gradient
@@ -457,11 +457,11 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
   fm0.template registerEvaluator<EvalT> (ev);
 
   //---- Interpolate surface water input
-  ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Surface Water Input", basalSideName);
+  ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Surface Water Input", basalSideName);
   fm0.template registerEvaluator<EvalT> (ev);
 
   //---- Interpolate geothermal flux
-  ev = evalUtils.getPSUtils().constructDOFInterpolationSideEvaluator("Geothermal Flux", basalSideName);
+  ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Geothermal Flux", basalSideName);
   fm0.template registerEvaluator<EvalT> (ev);
 
   // -------------------- Special evaluators for surface side handling ----------------- //
@@ -473,11 +473,11 @@ FELIX::StokesFOHydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTra
     fm0.template registerEvaluator<EvalT> (ev);
 
     //---- Interpolate surface velocity on QP on side
-    ev = evalUtils.getPSUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity", surfaceSideName);
+    ev = evalUtils.getPSTUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate surface velocity rms on QP on side
-    ev = evalUtils.getPSUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity RMS", surfaceSideName);
+    ev = evalUtils.getPSTUtils().constructDOFVecInterpolationSideEvaluator("Observed Surface Velocity RMS", surfaceSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Restrict velocity (the solution) from cell-based to cell-side-based on upper side
