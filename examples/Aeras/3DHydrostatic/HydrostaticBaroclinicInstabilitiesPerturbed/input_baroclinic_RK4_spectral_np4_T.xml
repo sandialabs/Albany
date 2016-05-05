@@ -21,8 +21,8 @@
       <Parameter name="Original Divergence" type="bool" value="False"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
-       <Parameter name="Function" type="string" value="Aeras Hydrostatic Baroclinic Instabilities2"/>
-       <Parameter name="Function Data" type="Array(double)" value="{10, 0}"/>
+       <Parameter name="Function" type="string" value="Aeras Hydrostatic Baroclinic Instabilities"/>
+       <Parameter name="Function Data" type="Array(double)" value="{10, 0, 1}"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>

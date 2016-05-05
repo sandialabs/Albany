@@ -21,8 +21,8 @@
       <Parameter name="Original Divergence" type="bool" value="False"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
-       <Parameter name="Function" type="string" value="Aeras Hydrostatic Baroclinic Instabilities2"/>
-       <Parameter name="Function Data" type="Array(double)" value="{10, 0}"/>
+       <Parameter name="Function" type="string" value="Aeras Hydrostatic Baroclinic Instabilities"/>
+       <Parameter name="Function Data" type="Array(double)" value="{10, 0, 0}"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="6"/>
@@ -72,14 +72,14 @@
     <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD4/uniform_10_quad4.g"/>
     <Parameter name="Element Degree" type="int" value="3"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
-    <Parameter name="Exodus Output File Name" type="string" value="pert_nu5e15.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="unpert_nu5e15.exo"/>
     <Parameter name="Exodus Write Interval" type="int" value="60"/>
     <!--Parameter name="NetCDF Output File Name" type="string" value="sphere10.nl"/>
     <Parameter name="NetCDF Output Number of Latitudes" type="int"  value="128"/>
     <Parameter name="NetCDF Output Number of Longitudes" type="int" value="256"/-->
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="6"/>
+    <Parameter  name="Number of Comparisons" type="int" value="0"/>
     <Parameter  name="Test Values" type="Array(double)" value="{
                     9.994522461925e+04,
                     1.000710131384e+05,
