@@ -243,6 +243,7 @@ if (BUILD_TRILINOS)
     "-DBoost_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib"
     #
     "-DTrilinos_ENABLE_SEACASIoss:BOOL=ON"
+    "-DTPL_Netcdf_PARALLEL:BOOL=ON"
     "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
     "-DTPL_ENABLE_Netcdf:BOOL=ON"
     #
