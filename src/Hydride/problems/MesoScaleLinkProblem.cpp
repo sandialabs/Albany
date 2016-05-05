@@ -13,7 +13,7 @@
 #include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 
-#if 0
+#if 1 // GLEN - Please FIXME
 #include "Teuchos_TypeNameTraits.hpp"
 
 namespace Teuchos {
