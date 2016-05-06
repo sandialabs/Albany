@@ -16,6 +16,8 @@ if [ ! $3 ] ; then
     exit
 fi
 
+STARTTIME=$(date +%s)
+
 echo "Initial cleanup..."
 bash initcleanup.sh
 echo "...cleanup done."
@@ -192,6 +194,9 @@ for (( step=0; step<$1; step++ )); do
    done #while loop
    echo "...finished load step $step run!" 
 done #load step loop 
+
+ENDTIME=$(date +%s)
+echo "Full Schwarz took $(($ENDTIME - $STARTTIME)) seconds to complete."
 
 echo "Beginning error processing..." 
 bash process_errors.sh $1
