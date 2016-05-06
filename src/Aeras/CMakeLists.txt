@@ -56,6 +56,7 @@
        evaluators/Aeras_XZHydrostatic_DensityWeightedVelx.cpp
        evaluators/Aeras_ShallowWaterResponseL2Error.cpp
        evaluators/Aeras_ShallowWaterResponseL2Norm.cpp
+       evaluators/Aeras_HydrostaticResponseL2Norm.cpp
        responses/Aeras_TotalVolume.cpp
        responses/Aeras_LayeredResponseUtilities.cpp
 
@@ -122,6 +123,8 @@
        evaluators/Aeras_ShallowWaterResponseL2Error_Def.hpp
        evaluators/Aeras_ShallowWaterResponseL2Norm.hpp
        evaluators/Aeras_ShallowWaterResponseL2Norm_Def.hpp
+       evaluators/Aeras_HydrostaticResponseL2Norm.hpp
+       evaluators/Aeras_HydrostaticResponseL2Norm_Def.hpp
        problems/Aeras_Layouts.hpp
        problems/Aeras_Dimension.hpp
        evaluators/Aeras_GatherSolution.hpp

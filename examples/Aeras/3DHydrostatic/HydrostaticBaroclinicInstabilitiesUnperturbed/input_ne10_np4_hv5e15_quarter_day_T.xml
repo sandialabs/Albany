@@ -50,6 +50,7 @@
             <ParameterList name="ResponseParams 5">
             <Parameter name="Equation" type="int" value="2" />
             </ParameterList>
+      <!--Parameter name="Response 6" type="string" value="Aeras Hydrostatic L2 Norm"/-->
       <Parameter name="Responses Observation Frequency" type="int" value="1000"/>
     </ParameterList>
 <!--
