@@ -425,7 +425,8 @@ Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes) {
-  createDiscretization(neq, empty_side_set_equations, sis, empty_side_set_sis, req, empty_side_set_req, rigidBodyModes);
+
+  return createDiscretization(neq, empty_side_set_equations, sis, empty_side_set_sis, req, empty_side_set_req, rigidBodyModes);
 }
 
 Teuchos::RCP<Albany::AbstractDiscretization>
