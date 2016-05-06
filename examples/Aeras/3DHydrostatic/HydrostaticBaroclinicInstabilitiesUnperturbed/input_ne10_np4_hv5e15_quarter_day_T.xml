@@ -72,22 +72,15 @@
     <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD4/uniform_10_quad4.g"/>
     <Parameter name="Element Degree" type="int" value="3"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
-    <Parameter name="Exodus Output File Name" type="string" value="unpert_nu5e15.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="pert_nu5e15.exo"/>
     <Parameter name="Exodus Write Interval" type="int" value="60"/>
     <!--Parameter name="NetCDF Output File Name" type="string" value="sphere10.nl"/>
     <Parameter name="NetCDF Output Number of Latitudes" type="int"  value="128"/>
     <Parameter name="NetCDF Output Number of Longitudes" type="int" value="256"/-->
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="0"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{
-                    9.994522461925e+04,
-                    1.000710131384e+05,
-                    -1.538419442130e-01,
-                    2.894863970252e-01,
-                    -1.633591094363e-01,
-                    1.933061493866e-01
-}"/>
+    <Parameter  name="Number of Comparisons" type="int" value="6"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{9.996292347098e+04, 1.000359599638e+05, -6.539809953896e-02, 1.624415827119e-01, -1.624415827103e-01, 6.539809953828e-02}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
