@@ -16,7 +16,7 @@ if __name__ == '__main__':
         opts, args = getopt.getopt(
             sys.argv[1:],"",["target_file=","source_file=","target_indices=","source_indices="])
     except getopt.GetoptError:
-        print 'usage: approximation_study.py'
+        print 'Error: bad arguments'
         sys.exit(2)
 
     for opt, arg in opts:
@@ -29,17 +29,20 @@ if __name__ == '__main__':
         if opt == "--source_indices":
             source_indices = arg
 
-    print 'target_file: %s, target_indices: %s' %(target_filename,target_indices)
-    print 'source_file: %s, source_indices: %s' %(source_filename,source_indices)
+    #print 'target_file: %s, target_indices: %s' %(target_filename,target_indices)
+    #print 'source_file: %s, source_indices: %s' %(source_filename,source_indices)
 
     # convert string argument to integer list argument 
     source_indices_int = ast.literal_eval(source_indices)
     target_indices_int = ast.literal_eval(target_indices)
 
-    # FIXME: check that length source_indices_int is same as target_indices_int
-
     siz = len(source_indices_int) 
-    print 'number of indices = ', siz
+    # Check that length source_indices_int is same as target_indices_int
+    if siz !=  len(target_indices_int) : 
+      print 'Error: length of target_indices', len(target_indices_int), ' is not equal to length of source_indices', siz 
+      exit(2) 
+
+    #print 'number of indices = ', siz
     # Read source_filename
     source = Dataset(source_filename, mode='r')
     # Modify variable in target_filename
@@ -47,11 +50,11 @@ if __name__ == '__main__':
    
     ind = 0
     while ind < siz : 
-      print 'ind = ', ind  
+      #print 'ind = ', ind  
       source_index = source_indices_int[ind]
       target_index = target_indices_int[ind]
-      print 'source_index = ', source_index 
-      print 'target_index = ', target_index 
+      #print 'source_index = ', source_index 
+      #print 'target_index = ', target_index 
       source_var_name = 'vals_nod_var' + str(source_index)
       var_source = source.variables[source_var_name][:]
       #print var_source
