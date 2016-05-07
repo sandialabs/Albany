@@ -213,7 +213,7 @@ void ViscosityFO<EvalT, Traits>::operator () (const ViscosityFO_EXPTRIG_Tag& tag
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
-void ViscosityFO<EvalT, Traits>::glenslaw (const ScalarT &flowFactorVec, const int& cell) const
+void ViscosityFO<EvalT, Traits>::glenslaw (const ParamScalarT &flowFactorVec, const int& cell) const
 {
   double power = 0.5*(1.0/n - 1.0);
   double a = 1.0;
@@ -281,7 +281,7 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits>::operator () (const ViscosityFO_GLENSLAW_TEMPERATUREBASED_Tag& tag, const int& cell) const
 {
-  ScalarT flowFactorVec;
+  ParamScalarT flowFactorVec;
   flowFactorVec =1.0/2.0*pow(flowRate<ParamScalarT>(temperature(cell)), -1.0/n);
   glenslaw(flowFactorVec,cell);
 }
