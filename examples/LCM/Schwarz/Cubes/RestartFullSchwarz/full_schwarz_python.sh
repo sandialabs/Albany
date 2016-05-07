@@ -9,14 +9,13 @@
 #input_schwarz_cube1_target.xml
 #cube0_restart.xml  
 #cube1_restart.xml  
-#norm_displacements.m
+#norm_displacements.py
+#replace_nodal_field.py 
 
 if [ ! $3 ] ; then
     echo "This function requires 3 arguments: # load steps (int), Schwarz convergence tolerance (double), max number Schwarz iters (int)";
     exit
 fi
-
-STARTTIME=$(date +%s)
 
 echo "Initial cleanup..."
 bash initcleanup.sh
@@ -97,14 +96,10 @@ for (( step=0; step<$1; step++ )); do
        target_file=cube0_in_load"$step"_schwarz"$schwarz_iter".exo
        #here, we replace the dirichlet_field in cube0_in_load"$step"_schwarz"$schwarz_iter".exo 
        #with the dirichlet_field in target_cube0_out_load"$step"_schwarz"$schwarz_iter".exo
-       python replace_nodal_field.py --target_file $target_file --target_index 1 --source_file $source_file --source_index 1
-       python replace_nodal_field.py --target_file $target_file --target_index 2 --source_file $source_file --source_index 2
-       python replace_nodal_field.py --target_file $target_file --target_index 3 --source_file $source_file --source_index 3
+       python replace_nodal_field.py --target_file $target_file --target_indices "[1, 2, 3]" --source_file $source_file --source_indices "[1, 2, 3]"
        #here, we replace the disp field in cube0_in_load"$step"_schwarz"$schwarz_iter".exo
        #with the dirichlet_field in target_cube0_out_load"$step"_schwarz"$schwarz_iter".exo for restarts
-       python replace_nodal_field.py --target_file $target_file --target_index 4 --source_file $source_file --source_index 1
-       python replace_nodal_field.py --target_file $target_file --target_index 5 --source_file $source_file --source_index 2
-       python replace_nodal_field.py --target_file $target_file --target_index 6 --source_file $source_file --source_index 3
+       python replace_nodal_field.py --target_file $target_file --target_indices "[4, 5, 6]" --source_file $source_file --source_indices "[1, 2, 3]"
        echo "      ...post-DTK cube0 run done."
        ##################################################################
      fi
@@ -138,14 +133,10 @@ for (( step=0; step<$1; step++ )); do
      target_file=cube1_in_load"$step"_schwarz"$schwarz_iter".exo
      #here, we replace the dirichlet_field in cube1_in_load"$step"_schwarz"$schwarz_iter".exo 
      #with the dirichlet_field in target_cube1_out_load"$step"_schwarz"$schwarz_iter".exo
-     python replace_nodal_field.py --target_file $target_file --target_index 1 --source_file $source_file --source_index 1
-     python replace_nodal_field.py --target_file $target_file --target_index 2 --source_file $source_file --source_index 2
-     python replace_nodal_field.py --target_file $target_file --target_index 3 --source_file $source_file --source_index 3
+     python replace_nodal_field.py --target_file $target_file --target_indices "[1, 2, 3]" --source_file $source_file --source_indices "[1, 2, 3]"
      #here, we replace the disp field in cube1_in_load"$step"_schwarz"$schwarz_iter".exo
      #with the dirichlet_field in target_cube1_out_load"$step"_schwarz"$schwarz_iter".exo for restarts
-     python replace_nodal_field.py --target_file $target_file --target_index 4 --source_file $source_file --source_index 1
-     python replace_nodal_field.py --target_file $target_file --target_index 5 --source_file $source_file --source_index 2
-     python replace_nodal_field.py --target_file $target_file --target_index 6 --source_file $source_file --source_index 3
+     python replace_nodal_field.py --target_file $target_file --target_indices "[4, 5, 6]" --source_file $source_file --source_indices "[1, 2, 3]"
      echo "      ...post-DTK cube1 run done."
      ##################################################################
 
@@ -194,9 +185,6 @@ for (( step=0; step<$1; step++ )); do
    done #while loop
    echo "...finished load step $step run!" 
 done #load step loop 
-
-ENDTIME=$(date +%s)
-echo "Full Schwarz took $(($ENDTIME - $STARTTIME)) seconds to complete."
 
 echo "Beginning error processing..." 
 bash process_errors.sh $1
