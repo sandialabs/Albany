@@ -10,6 +10,8 @@ creates usable output from LCM calculations
 #
 import sys
 import os
+import contextlib
+import cStringIO
 import xml.etree.ElementTree as et
 from exodus import exodus
 from exodus import copy_mesh
@@ -73,12 +75,20 @@ class objPoint(object):
 
 
 
+
+
+@contextlib.contextmanager
+def nostdout():
+    save_stdout = sys.stdout
+    sys.stdout = cStringIO.StringIO()
+    yield
+    sys.stdout = save_stdout
+
+
+
 #
 # Local functions
 #
-
-
-
 def readInputFile(fileInput, namesVariable = ''):
 
     returnDict = {}
@@ -207,7 +217,10 @@ def readXml(nameFileBase, **kwargs):
 
                             if value == nameMaterial:
 
-                                orientations[key] = orientation
+                                try:
+                                    orientations[key] = orientation
+                                except:
+                                    orientations[key] = np.eye(3)
 
 # end def readXml(nameFileInput):
 
@@ -368,7 +381,7 @@ def readFileLog(filename):
         plt.xlabel('Increment $\Delta u_n$')
         plt.ylabel('Increment $\Delta u_{n+1}$')
     #    plt.show()
-        plt.savefig('normDu_Convergence_'+label+'.eps')    
+        plt.savefig('normDu_Convergence_'+label+'.pdf')    
     
     return dataConverged, dataFailed
 
@@ -610,6 +623,176 @@ def setValuesScalar(fileInput, nameVariable, domain):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+def deriveValuesTensor(nameVariable, domain): 
+
+    num_dims = domain.num_dims
+
+    times = domain.times
+
+    setattr(
+        domain, 
+        nameVariable,
+        dict([(step, np.zeros((num_dims, num_dims))) for step in times]))
+
+    for keyStep in times:
+
+        if nameVariable == 'Log_Strain':
+
+            getattr(domain, nameVariable)[keyStep] = \
+                0.5 * logm(np.inner(domain.F[keyStep].T, domain.F[keyStep].T))
+
+    for keyBlock in domain.blocks:
+
+        block = domain.blocks[keyBlock]
+
+        setattr(
+            block, 
+            nameVariable,
+            dict([(step, np.zeros((num_dims, num_dims))) for step in times]))
+
+        for keyStep in times:
+
+            if nameVariable == 'Log_Strain':
+
+                getattr(block, nameVariable)[keyStep] = \
+                    0.5 * logm(np.inner(block.F[keyStep].T, block.F[keyStep].T))
+
+        for keyElement in block.elements:
+
+            element = block.elements[keyElement]
+
+            setattr(
+                element, 
+                nameVariable,
+                dict([(step, np.zeros((num_dims, num_dims))) for step in times]))
+
+            for keyStep in times:
+
+                if nameVariable == 'Log_Strain':
+
+                    getattr(element, nameVariable)[keyStep] = \
+                        0.5 * logm(np.inner(element.F[keyStep].T, element.F[keyStep].T))
+
+            for keyPoint in element.points:
+
+                point = element.points[keyPoint]
+
+                setattr(
+                    point, 
+                    nameVariable,
+                    dict([(keyStep, np.zeros((num_dims, num_dims))) for keyStep in times]))
+                
+                for keyStep in times:
+
+                    if nameVariable == 'Log_Strain':
+
+                        getattr(point, nameVariable)[keyStep] = \
+                            0.5 * logm(np.inner(point.F[keyStep].T, point.F[keyStep].T))
+
+# end def deriveValuesTensor(nameVariable, domain): 
+
+
+
+def deriveValuesScalar(nameVariable, domain): 
+
+    times = domain.times
+
+    setattr(
+        domain, 
+        nameVariable,
+        dict([(step, 0.0) for step in times]))
+
+    for keyStep in times:
+
+        if nameVariable == 'Misorientation':
+
+            getattr(domain, nameVariable)[keyStep] = 0.0
+
+    for keyBlock in domain.blocks:
+
+        block = domain.blocks[keyBlock]
+
+        setattr(
+            block, 
+            nameVariable,
+            dict([(step, 0.0) for step in times]))
+
+        for keyStep in times:
+
+            if nameVariable == 'Misorientation':
+
+                getattr(block, nameVariable)[keyStep] = 0.0
+
+        invOrientation = inv(block.orientation)
+
+        for keyElement in block.elements:
+
+            element = block.elements[keyElement]
+
+            setattr(
+                element, 
+                nameVariable,
+                dict([(step, 0.0) for step in times]))
+
+            for keyStep in times:
+
+                if nameVariable == 'Misorientation':
+
+                    matrixMisorientation = np.tensordot(
+                        element.orientation[keyStep], 
+                        invOrientation, 
+                        axes = 1)
+
+                    getattr(element, nameVariable)[keyStep] = \
+                        0.5 * (np.trace(matrixMisorientation) - 1.0)
+
+            for keyPoint in element.points:
+
+                point = element.points[keyPoint]
+
+                setattr(
+                    point, 
+                    nameVariable,
+                    dict([(keyStep, 0.0) for keyStep in times]))
+                
+                for keyStep in times:
+
+                    if nameVariable == 'Misorientation':
+
+                        getattr(point, nameVariable)[keyStep] = 0.0
+
+# end def deriveValuesScalar(nameVariable, domain): 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def plotInversePoleFigure(**kwargs):
 
     #
@@ -639,36 +822,34 @@ def plotInversePoleFigure(**kwargs):
                 element = block.elements[keyElement]
                 listOrientations.append(element.orientation[time].flatten())
         orientations = np.array(listOrientations)
+
     else:
 
         raise TypeError('Need either nameFileInput or orientations keyword args')
 
     #
+    # Create axes 
+    #
+    num_pts = 100
+    XX = np.zeros(num_pts + 2)
+    YY = np.zeros(num_pts + 2)
+
+    for x in range(1, num_pts + 1):
+
+        HKL = np.array([x / float(num_pts), 1., 1.])
+        HKL /= np.linalg.norm(HKL)        
+        XX[x] = HKL[1] / (1. + HKL[2])
+        YY[x] = HKL[0] / (1. + HKL[2])
+
+    #
     # Compute IPF quantities
     #
     RD = abs(orientations[:, 0:3])
+    RD /= np.linalg.norm(RD)
     TD = abs(orientations[:, 3:6])
+    TD /= np.linalg.norm(TD)
     ND = abs(orientations[:, 6:9])
-
-    #
-    # Create axes 
-    #
-    HKL = np.ones(3)
-    XX = np.zeros(103)
-    YY = np.zeros(103)
-
-    for x in range(101):
-
-        HKL[0] = -1 / 100. * (1 + x) + 1 / 100.
-        HKL[1] = 1
-        HKL[2] = 1
-        
-        HKL /= np.linalg.norm(HKL)        
-        XX[x] = HKL[1] / (1 + HKL[2])
-        YY[x] = -HKL[0] / (1 + HKL[2])
-        
-    XX[102] = XX[0]
-    YY[102] = 0
+    ND /= np.linalg.norm(ND)
 
     #
     # Convert orientations to ipf space 
@@ -677,22 +858,22 @@ def plotInversePoleFigure(**kwargs):
     Y_RD = np.zeros(len(orientations))
     for x in range(len(orientations)):
         A = sorted(RD[x,:])    
-        X_RD[x] = A[1] / (1 + A[2])
-        Y_RD[x] = A[0] / (1 + A[2])
+        X_RD[x] = A[1] / (1. + A[2])
+        Y_RD[x] = A[0] / (1. + A[2])
 
     X_TD = np.zeros(len(orientations))
     Y_TD = np.zeros(len(orientations))
     for x in range(len(orientations)):
         A = sorted(TD[x,:])    
-        X_TD[x] = A[1] / (1 + A[2])
-        Y_TD[x] = A[0] / (1 + A[2])
+        X_TD[x] = A[1] / (1. + A[2])
+        Y_TD[x] = A[0] / (1. + A[2])
         
     X_ND = np.zeros(len(orientations))
     Y_ND = np.zeros(len(orientations))
     for x in range(len(orientations)):
         A = sorted(ND[x,:])    
-        X_ND[x] = A[1] / (1 + A[2])
-        Y_ND[x] = A[0] / (1 + A[2])                        
+        X_ND[x] = A[1] / (1. + A[2])
+        Y_ND[x] = A[0] / (1. + A[2])
                                                                             
     #
     # Create figures  
@@ -717,6 +898,8 @@ def plotInversePoleFigure(**kwargs):
     ax1.text(-0.03, -0.03, r'$[001]$', fontsize = 15)
     ax1.text(0.38, -0.03, r'$[011]$', fontsize = 15)
     ax1.text(0.34, 0.375, r'$[\bar111]$', fontsize = 15)
+    # plt.xlim([-0.01, 0.5])
+    # plt.ylim([-0.01, 0.5])
 
     plt.subplot(1, 3, 2)
     plt.plot(X_TD, Y_TD, 'bo')
@@ -727,6 +910,8 @@ def plotInversePoleFigure(**kwargs):
     ax2.text(-0.03, -0.03, r'$[001]$', fontsize = 15)
     ax2.text(0.38, -0.03, r'$[011]$', fontsize = 15)
     ax2.text(0.34, 0.375, r'$[\bar111]$', fontsize = 15)
+    # plt.xlim([-0.01, 0.5])
+    # plt.ylim([-0.01, 0.5])
 
     plt.subplot(1, 3, 3)
     plt.plot(X_ND, Y_ND, 'go')
@@ -737,6 +922,8 @@ def plotInversePoleFigure(**kwargs):
     ax3.text(-0.03, -0.03, r'$[001]$', fontsize = 15)
     ax3.text(0.38, -0.03, r'$[011]$', fontsize = 15)
     ax3.text(0.34, 0.375, r'$[\bar111]$', fontsize = 15)
+    # plt.xlim([-0.01, 0.5])
+    # plt.ylim([-0.01, 0.5])
 
     plt.savefig(nameFileBase + '_IPF.pdf')
     plt.close(fig)
@@ -776,7 +963,9 @@ def writeExodusFile(domain, fileInput, nameFileOutput):
     if os.path.isfile(nameFileOutput):
         cmdLine = "rm %s" % nameFileOutput
         os.system(cmdLine)
-    fileOutput = fileInput.copy(nameFileOutput)
+
+    with nostdout():
+        fileOutput = fileInput.copy(nameFileOutput)
 
     # write times to fileOutput
     for step in range(len(times)):
@@ -810,7 +999,7 @@ def writeExodusFile(domain, fileInput, nameFileOutput):
     #
     # create variables in output file
     #
-    fileOutput.set_element_variable_number(2 * num_dims**2 + 2)
+    fileOutput.set_element_variable_number(3 * num_dims**2 + 3)
 
     for dim_i in range(num_dims):
 
@@ -827,6 +1016,12 @@ def writeExodusFile(domain, fileInput, nameFileOutput):
             fileOutput.put_element_variable_name(
                 nameDefGrad, 
                 num_dims**2 + dim_i * num_dims + dim_j + 1)
+
+            nameStrain = 'Log_Strain_' + str(dim_i + 1) + str(dim_j + 1)
+
+            fileOutput.put_element_variable_name(
+                nameStrain, 
+                2 * num_dims**2 + dim_i * num_dims + dim_j + 1)
 
             for keyBlock in domain.blocks:
 
@@ -846,9 +1041,15 @@ def writeExodusFile(domain, fileInput, nameFileOutput):
                         step + 1,
                         [block.elements[keyElement].F[times[step]][dim_i][dim_j] for keyElement in block.elements])
 
+                    fileOutput.put_element_variable_values(
+                        keyBlock,
+                        nameStrain,
+                        step + 1,
+                        [block.elements[keyElement].Log_Strain[times[step]][dim_i][dim_j] for keyElement in block.elements])
+
     fileOutput.put_element_variable_name(
         'Mises_Stress', 
-        2 * num_dims**2 + 1)
+        3 * num_dims**2 + 1)
 
     for keyBlock in domain.blocks:
 
@@ -864,7 +1065,7 @@ def writeExodusFile(domain, fileInput, nameFileOutput):
 
     fileOutput.put_element_variable_name(
         'eqps', 
-        2 * num_dims**2 + 2)
+        3 * num_dims**2 + 2)
 
     for keyBlock in domain.blocks:
 
@@ -878,9 +1079,25 @@ def writeExodusFile(domain, fileInput, nameFileOutput):
                 step + 1,
                 [block.elements[keyElement].eqps[times[step]] for keyElement in block.elements])
 
-            
+    fileOutput.put_element_variable_name(
+        'Misorientation', 
+        3 * num_dims**2 + 3)
 
-    fileOutput.close()
+    for keyBlock in domain.blocks:
+
+        block = domain.blocks[keyBlock]
+
+        for step in range(len(times)):
+
+            fileOutput.put_element_variable_values(
+                keyBlock,
+                'Misorientation',
+                step + 1,
+                [block.elements[keyElement].eqps[times[step]] for keyElement in block.elements])
+
+            
+    with nostdout():
+        fileOutput.close()
 
 # end def writeExodusFile(nameFileOutput):
 
@@ -899,27 +1116,6 @@ def plotStressStrain(domain):
 
     fig = plt.figure()
 
-    strain_domain = dict()
-
-    for keyStep in times:
-        
-        strain_domain[keyStep] = 0.5 * logm(np.inner(domain.F[keyStep].T, domain.F[keyStep].T))
-
-    setattr(domain, 'Log_Strain', strain_domain)
-
-    for keyBlock in domain.blocks:
-
-        block = domain.blocks[keyBlock]
-
-        strain_block = dict()
-
-        for keyStep in times:
-
-            strain_block[keyStep] = 0.5 * logm(np.inner(block.F[keyStep].T, block.F[keyStep].T))
-
-        setattr(block, 'Log_Strain', strain_block)
-
-
     for dim_i in range(num_dims):
 
         for dim_j in range(num_dims):
@@ -928,7 +1124,7 @@ def plotStressStrain(domain):
             plt.hold(True)
 
             plt.plot(
-                [domain.Log_Strain[keyStep][dim_i][dim_j] for keyStep in times],
+                [domain.Log_Strain[keyStep][(dim_i, dim_j)] for keyStep in times],
                 [domain.Cauchy_Stress[keyStep][(dim_i, dim_j)] for keyStep in times],
                 marker = 'o')
 
@@ -939,7 +1135,7 @@ def plotStressStrain(domain):
                 block = domain.blocks[keyBlock]
 
                 plt.plot(
-                    [block.Log_Strain[keyStep][dim_i][dim_j] for keyStep in times],
+                    [block.Log_Strain[keyStep][(dim_i, dim_j)] for keyStep in times],
                     [block.Cauchy_Stress[keyStep][(dim_i, dim_j)] for keyStep in times],
                     linestyle = ':')
 
@@ -973,7 +1169,8 @@ def postprocess(nameFileInput, **kwargs):
     #
     print 'Reading input file...'
 
-    fileInput = exodus(nameFileInput,"r")
+    with nostdout():
+        fileInput = exodus(nameFileInput,"r")
     
     inputValues = readInputFile(
         fileInput,
@@ -1049,7 +1246,7 @@ def postprocess(nameFileInput, **kwargs):
     setWeightsVolumes(fileInput, domain)
     
     if debug != 0:
-        print 'Volume: ', domain.volume
+        print '    Volume: ', domain.volume
 
     #
     # Average the quantities of interest
@@ -1061,7 +1258,8 @@ def postprocess(nameFileInput, **kwargs):
         #
         if (nameVariable == 'Cauchy_Stress'):
 
-            print nameVariable
+            if debug != 0:
+                print '    ' + nameVariable
 
             setValuesTensor(fileInput, nameVariable, domain)
 
@@ -1070,7 +1268,8 @@ def postprocess(nameFileInput, **kwargs):
         #
         elif (nameVariable == 'F'):
 
-            print nameVariable
+            if debug != 0:
+                print '    ' + nameVariable
 
             setValuesTensor(fileInput, nameVariable, domain)
 
@@ -1079,7 +1278,8 @@ def postprocess(nameFileInput, **kwargs):
         #
         elif (nameVariable == 'eqps'):
 
-            print nameVariable
+            if debug != 0:
+                print '    ' + nameVariable
 
             setValuesScalar(fileInput, nameVariable, domain)
 
@@ -1159,6 +1359,9 @@ def postprocess(nameFileInput, **kwargs):
         block.Mises_Stress[keyStep] = Mises_Stress
 
 
+    deriveValuesTensor('Log_Strain', domain)
+
+
 
     #
     # Calculate the deformed orientations
@@ -1181,7 +1384,10 @@ def postprocess(nameFileInput, **kwargs):
 
                 element.R[step], element.U[step] = polar(element.F[step])
 
-                element.orientation[step] = np.inner(element.R[step], block.orientation.T)
+                element.orientation[step] = np.inner(element.R[step].T, np.inner(block.orientation.T, element.R[step]))
+
+    deriveValuesScalar('Misorientation', domain)
+
 
 
     #
@@ -1207,7 +1413,8 @@ def postprocess(nameFileInput, **kwargs):
     
     writeExodusFile(domain, fileInput, nameFileOutput)
 
-    fileInput.close()
+    with nostdout():
+        fileInput.close()
 
 
 
@@ -1219,7 +1426,18 @@ def postprocess(nameFileInput, **kwargs):
     plotStressStrain(domain)
 
 
-    dataConverged, dataFailed = readFileLog(nameFileBase + '_Log.out')
+
+    #
+    # Extract convergence information from log file
+    #
+    print 'Reading log file...'
+    try:
+        dataConverged, dataFailed = readFileLog(nameFileBase + '_Log.out')
+    except IOError:
+        print '    No log file found.'
+    else:
+        raise
+    
 
 
     #
