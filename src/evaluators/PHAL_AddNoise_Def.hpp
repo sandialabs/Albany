@@ -98,14 +98,26 @@ preEvaluate(typename Traits::PreEvalData workset)
 template<typename EvalT, typename Traits, typename ScalarT>
 void AddNoiseBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
-  if (noise_free)
+
+// Mauro: for some reason deep copy is not working when evaluation type is MP Jacobian, and the kokkos views are
+// Kokkos::Experimental::View<Sacado::Fad::DFad<Sacado::MP::Vector<Stokhos::StaticFixedStorage<int, double, 16, Kokkos::Serial> > >*******, Kokkos::Serial>::array_type,
+
+/*  if (noise_free)
   {
     noisy_field.deep_copy(field);
     return;
   }
+*/
 
   PHAL::MDFieldIterator<ScalarT> in(field);
   PHAL::MDFieldIterator<ScalarT> out(noisy_field);
+
+  if (noise_free) {
+    for (; !in.done(); ++in, ++out)
+      *out = *in;
+    return;
+  }
+
 
   switch (pdf_type)
   {
