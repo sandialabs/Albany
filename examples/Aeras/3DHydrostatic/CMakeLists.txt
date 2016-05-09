@@ -1,6 +1,6 @@
 
-add_subdirectory(Hydrostatic)
-add_subdirectory(HydrostaticGaussianBallTracerInShear)
+#add_subdirectory(Hydrostatic)
+#add_subdirectory(HydrostaticGaussianBallTracerInShear)
 add_subdirectory(HydrostaticBaroclinicInstabilitiesUnperturbed)
 add_subdirectory(HydrostaticBaroclinicInstabilitiesPerturbed)
 add_subdirectory(HydrostaticPureAdvection)
