@@ -105,55 +105,51 @@ evaluateFields(typename Traits::EvalData workset)
 
   PHAL::set(Residual, 0.0);
 
-  if( !obtainLaplaceOp ){
-	  if( !pureAdvection ){
-		  for (int cell=0; cell < workset.numCells; ++cell) {
-			  for (int node=0; node < numNodes; ++node) {
-				  for (int level=0; level < numLevels; ++level) {
-					  for (int qp=0; qp < numQPs; ++qp) {
-						  for (int dim=0; dim < numDims; ++dim) {
-							  Residual(cell,node,level) += velx(cell,qp,level,dim)*temperatureGrad(cell,qp,level,dim)*wBF(cell,node,qp);
-							  Residual(cell,node,level) += (viscosity/Prandtl)*temperatureGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
-						  }
-					  }
-				  }
-			  }
-		  }
-		  for (int cell=0; cell < workset.numCells; ++cell) {
-			  for (int level=0; level < numLevels; ++level) {
-				  for (int qp=0; qp < numQPs; ++qp) {
-					  int node = qp;
-					  Residual(cell,node,level)   += temperatureSrc(cell,qp,level)                             *wBF(cell,node,qp);
-					  Residual(cell,node,level)   -= omega(cell,qp,level)                                      *wBF(cell,node,qp);
-					  Residual(cell,node,level)   += etadotdT(cell,qp,level)                                   *wBF(cell,node,qp);
-					  Residual(cell,node,level)   += temperatureDot(cell,qp,level)                             *wBF(cell,node,qp);
-				  }
-			  }
-		  }
-
-		  /*//OG debugging statements
-		  {
-			  int level = 2;
-
-			  std::cout << "level = " << level << " PRINT TRESID ------------------ \n";
-			  for (int qp=0; qp < numQPs; ++qp) {
-			     std::cout << "tresid qp = "<<qp << "value = " <<  Residual(23,qp,level)/wBF(23,qp,qp) << "\n";
-			  }
-
-		  }*/
-
-
-
-	  }//end of (if not pureAdvection)
-	  else{
-		  for (int cell=0; cell < workset.numCells; ++cell)
-			  for (int level=0; level < numLevels; ++level)
-				  for (int node=0; node < numNodes; ++node)
-					  Residual(cell,node,level)   += temperatureDot(cell,node,level)*wBF(cell,node,node);
+  if ( !obtainLaplaceOp ) {
+    if( !pureAdvection ) {
+      for (int cell=0; cell < workset.numCells; ++cell) {
+        for (int node=0; node < numNodes; ++node) {
+          for (int level=0; level < numLevels; ++level) {
+	    for (int qp=0; qp < numQPs; ++qp) {
+	      for (int dim=0; dim < numDims; ++dim) {
+	        Residual(cell,node,level) += velx(cell,qp,level,dim)*temperatureGrad(cell,qp,level,dim)*wBF(cell,node,qp);
+	        Residual(cell,node,level) += (viscosity/Prandtl)*temperatureGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
+	      }
+	    }
 	  }
+	}
+      }
+      for (int cell=0; cell < workset.numCells; ++cell) {
+        for (int level=0; level < numLevels; ++level) {
+          for (int qp=0; qp < numQPs; ++qp) {
+	    int node = qp;
+	    Residual(cell,node,level)   += temperatureSrc(cell,qp,level)                             *wBF(cell,node,qp);
+	    Residual(cell,node,level)   -= omega(cell,qp,level)                                      *wBF(cell,node,qp);
+	    Residual(cell,node,level)   += etadotdT(cell,qp,level)                                   *wBF(cell,node,qp);
+	    Residual(cell,node,level)   += temperatureDot(cell,qp,level)                             *wBF(cell,node,qp);
+	  }
+        }
+      }
+      /*//OG debugging statements
+      {
+      int level = 2;
+      std::cout << "level = " << level << " PRINT TRESID ------------------ \n";
+      for (int qp=0; qp < numQPs; ++qp) {
+        std::cout << "tresid qp = "<<qp << "value = " <<  Residual(23,qp,level)/wBF(23,qp,qp) << "\n";
+      }
+      }*/
+    }//end of (if not pureAdvection)
+
+    else {
+      for (int cell=0; cell < workset.numCells; ++cell)
+        for (int level=0; level < numLevels; ++level)
+          for (int node=0; node < numNodes; ++node)
+	    Residual(cell,node,level)   += temperatureDot(cell,node,level)*wBF(cell,node,node);
+    }
   }//end of (if not Laplace op)
-  else{//building Laplace
-	for (int cell=0; cell < workset.numCells; ++cell) {
+
+  else {//building Laplace
+    for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
         for (int level=0; level < numLevels; ++level) {
           for (int qp=0; qp < numQPs; ++qp) {
