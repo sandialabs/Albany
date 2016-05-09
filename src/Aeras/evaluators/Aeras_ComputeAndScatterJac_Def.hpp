@@ -309,50 +309,46 @@ evaluateFields(typename Traits::EvalData workset)
 	     localMassMatr(cell, node, node) = this -> wBF(cell, node, node);
   }*/
 
-  if( buildMass ){
+  if ( buildMass ) {
+    for (int cell=0; cell < workset.numCells; ++cell ) {
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+      const int neq = nodeID[0].size();
 
-
-  for (int cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-
-    const int neq = nodeID[0].size();
-
-    for (int node = 0; node < this->numNodes; ++node) {
-      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
-      int n = 0, eq = 0;
-      for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-        rowT = eqID[n];
-        ST val2 = mc * this -> wBF(cell, node, node);
-        JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
-      }
-      eq += this->numNodeVar;
-      for (int level = 0; level < this->numLevels; level++) {
-        for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
-          for (int dim = 0; dim < this->numDims; ++dim, ++n) {
+      for (int node = 0; node < this->numNodes; ++node) {
+        const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
+        int n = 0, eq = 0;
+        for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
+          rowT = eqID[n];
+          ST val2 = mc * this -> wBF(cell, node, node);
+          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
+        }
+        eq += this->numNodeVar;
+        for (int level = 0; level < this->numLevels; level++) {
+          for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
+            for (int dim = 0; dim < this->numDims; ++dim, ++n) {
+              rowT = eqID[n];
+              ST val2 = mc * this -> wBF(cell, node, node);
+              JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
+            }
+          }
+          for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
             rowT = eqID[n];
+            ST val2 = mc *  this -> wBF(cell, node, node);
+            JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
+          }
+        }
+        eq += this->numVectorLevelVar+this->numScalarLevelVar;
+        for (int level = 0; level < this->numLevels; ++level) {
+          for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
+            rowT = eqID[n];
+            //Minus!
             ST val2 = mc * this -> wBF(cell, node, node);
             JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
           }
         }
-        for (int j = eq+this->numVectorLevelVar;
-                 j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-          rowT = eqID[n];
-          ST val2 = mc *  this -> wBF(cell, node, node);
-          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
-        }
+        eq += this->numTracerVar;
       }
-      eq += this->numVectorLevelVar+this->numScalarLevelVar;
-      for (int level = 0; level < this->numLevels; ++level) {
-        for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          rowT = eqID[n];
-          //Minus!
-          ST val2 = mc * this -> wBF(cell, node, node);
-          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
-        }
-      }
-      eq += this->numTracerVar;
     }
-  }
   }
 
 
