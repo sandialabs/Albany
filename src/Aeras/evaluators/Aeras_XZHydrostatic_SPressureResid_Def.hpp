@@ -77,43 +77,39 @@ evaluateFields(typename Traits::EvalData workset)
 
   const Eta<EvalT> &E = Eta<EvalT>::self();
 
-  if( !obtainLaplaceOp ){
-	  if( !pureAdvection ){
-		  for (int cell=0; cell < workset.numCells; ++cell) {
-			  for (int qp=0; qp < numQPs; ++qp) {
-				  ScalarT sum = 0;
-				  for (int level=0; level<numLevels; ++level)  sum += divpivelx(cell,qp,level) * E.delta(level);
-				  int node = qp;
-				  Residual(cell,node) += (spDot(cell,qp) + sum)*wBF(cell,node,qp);
-			  }
-
-			  /*//OG debugging statements
-			  if(cell == 23){
-				 std::cout << "Name? " << this->getName() << "-----------------------------------------------------\n";
-				 std::cout << "SP residual = " << Residual(cell,0)/wBF(cell,0,0) << " spdot = "<< spDot(cell,0) <<"\n";
-				 //std::cout << "SP ITSELF = " << Residual(cell,0) << " spdot = "<< spDot(cell,0) <<"\n";
-			  }
-			  */
-
-		  }
-
-		  /*//OG debugging statements
-		  {
-			  for (int qp=0; qp < numQPs; ++qp) {
-			     std::cout << "SP resid qp = "<<qp << "value = " <<  Residual(23,qp)/wBF(23,qp,qp) << "\n";
-			  }
-		  }*/
-
-
-	  }//end of (if not  pureAdvection)
-	  else{
-		  for (int cell=0; cell < workset.numCells; ++cell)
-		   	 for (int node=0; node < numNodes; ++node)
-		  		 Residual(cell,node) += spDot(cell,node)*wBF(cell,node,node);
-	  }
+  if( !obtainLaplaceOp ) {
+    if( !pureAdvection ){
+      for (int cell=0; cell < workset.numCells; ++cell) {
+        for (int qp=0; qp < numQPs; ++qp) {
+          ScalarT sum = 0;
+	  for (int level=0; level<numLevels; ++level)  sum += divpivelx(cell,qp,level) * E.delta(level);
+	  int node = qp;
+	  Residual(cell,node) += (spDot(cell,qp) + sum)*wBF(cell,node,qp);
+	}
+        /*//OG debugging statements
+        if(cell == 23){
+          std::cout << "Name? " << this->getName() << "-----------------------------------------------------\n";
+	  std::cout << "SP residual = " << Residual(cell,0)/wBF(cell,0,0) << " spdot = "<< spDot(cell,0) <<"\n";
+	  //std::cout << "SP ITSELF = " << Residual(cell,0) << " spdot = "<< spDot(cell,0) <<"\n";
+	}
+	*/
+      }
+      /*//OG debugging statements
+      {
+        for (int qp=0; qp < numQPs; ++qp) {
+          std::cout << "SP resid qp = "<<qp << "value = " <<  Residual(23,qp)/wBF(23,qp,qp) << "\n";
+        }
+      }*/
+    }//end of (if not  pureAdvection)
+    else {
+      for (int cell=0; cell < workset.numCells; ++cell)
+        for (int node=0; node < numNodes; ++node)
+  	  Residual(cell,node) += spDot(cell,node)*wBF(cell,node,node);
+    }
   }//end of (if build laplace)
-  else{
-	  //no Laplace for surface pressure, zero block instead
+
+  else {
+    //no Laplace for surface pressure, zero block instead
   }
 }
 
