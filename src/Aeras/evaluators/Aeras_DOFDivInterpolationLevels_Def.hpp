@@ -79,47 +79,43 @@ evaluateFields(typename Traits::EvalData workset)
 {
   PHAL::set(div_val_qp, 0.0);
 
-  if( originalDiv ){
-	  for (int cell=0; cell < workset.numCells; ++cell){
-		  for (int qp=0; qp < numQPs; ++qp)
-			  for (int node= 0 ; node < numNodes; ++node)
-				  for (int level=0; level < numLevels; ++level)
-					  for (int dim=0; dim<numDims; dim++) {
-						  div_val_qp(cell,qp,level) += val_node(cell,node,level,dim) * GradBF(cell,node,qp,dim);
-						  //std::cout << "gradbf: " << cell << " " << node << " " << qp << " " << dim << " " << GradBF(cell,node,qp,dim) << std::endl;
-						  //std::cout << "val_node " << val_node(cell,node,level,dim) << std::endl;
-					  }
-	  }
-
+  if ( originalDiv ) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp)
+        for (int node= 0 ; node < numNodes; ++node)
+          for (int level=0; level < numLevels; ++level)
+	    for (int dim=0; dim<numDims; dim++) {
+	      div_val_qp(cell,qp,level) += val_node(cell,node,level,dim) * GradBF(cell,node,qp,dim);
+	      //std::cout << "gradbf: " << cell << " " << node << " " << qp << " " << dim << " " << GradBF(cell,node,qp,dim) << std::endl;
+	      //std::cout << "val_node " << val_node(cell,node,level,dim) << std::endl;
+	    }
+    }
   }//end of original div
-  else{
-	  //rather slow, needs revision
-	  for (int cell=0; cell < workset.numCells; ++cell){
-		  for (int level=0; level < numLevels; ++level) {
-			  for (std::size_t node=0; node < numNodes; ++node) {
 
-				  const MeshScalarT jinv00 = jacobian_inv(cell, node, 0, 0);
-				  const MeshScalarT jinv01 = jacobian_inv(cell, node, 0, 1);
-				  const MeshScalarT jinv10 = jacobian_inv(cell, node, 1, 0);
-				  const MeshScalarT jinv11 = jacobian_inv(cell, node, 1, 1);
-				  const MeshScalarT det_j  = jacobian_det(cell,node);
+  else {
+    //rather slow, needs revision
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int level=0; level < numLevels; ++level) {
+        for (std::size_t node=0; node < numNodes; ++node) {
+	  const MeshScalarT jinv00 = jacobian_inv(cell, node, 0, 0);
+	  const MeshScalarT jinv01 = jacobian_inv(cell, node, 0, 1);
+	  const MeshScalarT jinv10 = jacobian_inv(cell, node, 1, 0);
+	  const MeshScalarT jinv11 = jacobian_inv(cell, node, 1, 1);
+	  const MeshScalarT det_j  = jacobian_det(cell,node);
 
-				  vcontra(node, 0 ) = det_j*(
-						  jinv00*val_node(cell, node, level, 0) + jinv01*val_node(cell, node, level, 1) );
-				  vcontra(node, 1 ) = det_j*(
-						  jinv10*val_node(cell, node, level, 0) + jinv11*val_node(cell, node, level, 1) );
-			  }//end of nodal loop
-		      for (int qp=0; qp < numQPs; ++qp) {
-				  for (int node=0; node < numNodes; ++node) {
-					  div_val_qp(cell, qp, level) += vcontra(node, 0)*grad_at_cub_points(node, qp, 0)
-            	       						   +  vcontra(node, 1)*grad_at_cub_points(node, qp, 1);
-					  }
-			  }
-			  for (int qp=0; qp < numQPs; ++qp)
-				  div_val_qp(cell, qp, level) = div_val_qp(cell, qp, level)/jacobian_det(cell,qp);
-
-		  }//end level loop
-	  }//end of cell loop
+	  vcontra(node, 0 ) = det_j*(jinv00*val_node(cell, node, level, 0) + jinv01*val_node(cell, node, level, 1) );
+	  vcontra(node, 1 ) = det_j*(jinv10*val_node(cell, node, level, 0) + jinv11*val_node(cell, node, level, 1) );
+        }//end of nodal loop
+	for (int qp=0; qp < numQPs; ++qp) {
+	  for (int node=0; node < numNodes; ++node) {
+	    div_val_qp(cell, qp, level) += vcontra(node, 0)*grad_at_cub_points(node, qp, 0)
+            			        +  vcontra(node, 1)*grad_at_cub_points(node, qp, 1);
+          }
+	}
+	for (int qp=0; qp < numQPs; ++qp)
+	  div_val_qp(cell, qp, level) = div_val_qp(cell, qp, level)/jacobian_det(cell,qp);
+      }//end level loop
+    }//end of cell loop
   }//end of new div
 
 }
