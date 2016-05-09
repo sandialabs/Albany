@@ -250,7 +250,8 @@ struct Workset {
   //Tpetra analog of dgdp
   Teuchos::RCP<Tpetra_MultiVector> dgdpT;
   //dp-convert Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT;
-#ifdef ALBANY_STOKHOS
+
+#if defined(ALBANY_STOKHOS) and defined(ALBANY_EPETRA)
 #ifdef ALBANY_SG
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_g;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdx;
