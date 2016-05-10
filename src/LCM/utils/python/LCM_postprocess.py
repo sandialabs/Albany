@@ -1410,7 +1410,7 @@ def plotStressStrain(domain):
     num_dims = domain.num_dims
     times = domain.times
 
-    rcParams.update({'figure.autolayout': True})
+#    rcParams.update({'figure.autolayout': True})
 
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif', size=22)
@@ -1447,7 +1447,7 @@ def plotStressStrain(domain):
             plt.ylabel('Cauchy Stress $\sigma_{'+ str(dim_i + 1) + str(dim_j + 1) +'}$ (MPa)')
 
             legend = plt.legend(
-                stringLegend,
+                strLegend,
                 bbox_to_anchor = (1.05, 1), 
                 loc = 2, 
                 borderaxespad = 0.,
@@ -1799,7 +1799,7 @@ def postprocess(nameFileInput, **kwargs):
         if verbosity > 0:
             print 'Plotting inverse pole figures...'
 
-        for step in times:
+        for step in [times[0], times[-1]]:
 
             plotInversePoleFigure(domain = domain, time = step)
 
