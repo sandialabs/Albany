@@ -40,8 +40,6 @@ namespace Aeras {
     PHX::MDField<ScalarT,Cell,Node,VecDim> flow_state_field; //flow state field at nodes
     PHX::MDField<MeshScalarT> sphere_coord;
     PHX::MDField<MeshScalarT> weighted_measure;
-    //! Basis Functions
-    PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
     std::size_t numQPs, numDims, numNodes, vecDim;
     int responseSize; //length of response vector; 3 for this response
 

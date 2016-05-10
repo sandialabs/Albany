@@ -12,6 +12,7 @@ import sys
 import os
 import contextlib
 import cStringIO
+import time
 import xml.etree.ElementTree as et
 from exodus import exodus
 from exodus import copy_mesh
@@ -25,7 +26,60 @@ from scipy.linalg import *
 #
 # Local classes
 #
-class objDomain(object):
+class Timer:  
+
+    def __enter__(self):
+        self.start = time.clock()
+        self.now = self.start
+        self.last = self.now
+        return self
+
+    def __exit__(self, *args):
+        self.end = time.clock()
+        self.interval = self.end - self.start
+
+    def check(self):
+        self.now = time.clock()
+        self.step = self.now - self.last
+        self.interval = self.now - self.start
+        self.last = self.now
+
+
+
+#
+# Class for common properties of local objects
+#
+class objLocal(object):
+
+    def __repr__(self):
+
+        strRepr = self.__class__.__name__ + '('
+
+        items = self.__dict__.items()
+
+        strRepr += items[0][0] + ' = ' + str(items[0][1])
+
+        for item in items[1:]:
+
+            if isinstance(item[1], (int, int, float)):
+
+                strItem = str(item[1])
+
+            else:
+
+                strItem = item[1].__class__.__name__
+
+            strRepr += ', ' + item[0] + ' = ' + strItem
+
+        strRepr += ')'
+
+        return strRepr
+
+
+#
+# Topology data structure
+#
+class objDomain(objLocal):
 
     def __init__(self, **kwargs):
 
@@ -44,7 +98,7 @@ class objDomain(object):
 
 
 
-class objBlock(object):
+class objBlock(objLocal):
 
     def __init__(self, **kwargs):
 
@@ -55,7 +109,7 @@ class objBlock(object):
 
 
 
-class objElement(object):
+class objElement(objLocal):
 
     def __init__(self, **kwargs):
 
@@ -66,7 +120,7 @@ class objElement(object):
 
 
 
-class objPoint(object):
+class objPoint(objLocal):
 
     def __init__(self, **kwargs):
 
@@ -75,8 +129,71 @@ class objPoint(object):
 
 
 
+#
+# Simulation numerical information data structure
+#
+class objRun(objLocal):
+
+    def __init__(self, **kwargs):
+
+        self.steps = dict()
+        self.numItersNonlinear = 0
+        self.numItersLinear = 0
+
+        self.numProcessors = 1
+
+        self.timeCompute = 0.0
+        self.timeLinsolve = 0.0
+        self.timeConstitutive = 0.0
+
+        for (key, value) in kwargs.items():
+            setattr(self, key, value)
 
 
+
+class objStep(objLocal):
+
+    def __init__(self, **kwargs):
+
+        self.itersNonlinear = dict()
+        self.numItersNonlinear = 0
+        self.numItersLinear = 0
+
+        for (key, value) in kwargs.items():
+            setattr(self, key, value)
+
+
+
+class objIterNonlinear(objLocal):
+
+    def __init__(self, **kwargs):
+
+        self.itersLinear = dict()
+        self.statusConvergence = 0
+        self.numItersLinear = 0
+        self.normResidual = 0.0
+        self.normIncrement = 0.0
+
+        for (key, value) in kwargs.items():
+            setattr(self, key, value)
+
+
+
+class objIterLinear(objLocal):
+
+    def __init__(self, **kwargs):
+
+        self.normResidual = 0.0
+
+        for (key, value) in kwargs.items():
+            setattr(self, key, value)
+
+
+
+
+#
+# Context manager for silencing output
+#
 @contextlib.contextmanager
 def nostdout():
     save_stdout = sys.stdout
@@ -292,7 +409,7 @@ def getDataLog(linesNorm):
 
 
 
-def readFileLog(filename):
+def readFileLog(filename, run):
 
     #
     # Read the log file
@@ -302,9 +419,160 @@ def readFileLog(filename):
     file.close
 
     #
-    # Extract lines that have residual norm information
+    # Find start of continuation steps
     #
-    linesNorm = [line for line in lines if line.find('||F||') != -1]
+    linesStepStart = [line for line in lines if line.lower().find('start of continuation step') != -1]
+    linesStepEnd = [line for line in lines if line.lower().find('end of continuation step') != -1]
+
+
+    indexStepStart = -1
+
+    indicesStepStart = {}
+
+    for lineStepStart in linesStepStart:
+
+        stepNumber = int(lineStepStart.split()[4])
+
+        indicesStepStart[stepNumber] = lines.index(lineStepStart, indexStepStart + 1)
+
+        indexStepStart = indicesStepStart[stepNumber]
+
+    indicesStepEnd = {}
+    
+    for lineStepEnd in linesStepEnd:
+
+        stepNumber = int(lineStepEnd.split()[4])
+
+        indicesStepEnd[stepNumber] = lines.index(lineStepEnd, indicesStepStart[stepNumber] + 1)
+
+
+    for keyStep in indicesStepStart:
+
+        linesStep = lines[indicesStepStart[keyStep] : indicesStepEnd[keyStep] + 2]
+
+        keyTime = run.times[keyStep]
+
+        step = run.steps[keyTime]
+
+        step.numItersNonlinear = int(linesStep[-1].split()[4])
+
+        if keyStep > 0:
+            step.sizeStep = float(linesStep[2].split()[4])
+        else:
+            step.sizeStep = 0.0
+
+
+        #
+        # Extract lines that have residual norm information
+        #
+        linesNonlinStart = [lineStep for lineStep in linesStep if lineStep.find('||F||') != -1]
+
+        indicesLineNonlin = [-1]
+
+        for lineNonlinear in linesNonlinStart:
+
+            indicesLineNonlin.append(linesStep.index(lineNonlinear, indicesLineNonlin[-1] + 1))
+
+            keyIterNonlinear = int(linesStep[indicesLineNonlin[-1] - 1].split()[4])
+
+            step.itersNonlinear[keyIterNonlinear] = objIterNonlinear()
+
+            iterNonlinear = step.itersNonlinear[keyIterNonlinear]
+
+            if lineNonlinear.find('Converged') != -1:
+
+                iterNonlinear.statusConvergence = 1
+
+            elif lineNonlinear.find('Failed') != -1:
+
+                iterNonlinear.statusConvergence = -1
+
+            iterNonlinear.normResidual = float(lineNonlinear.split()[2])
+
+            iterNonlinear.normIncrement = float(lineNonlinear.split()[8])
+
+            linesIterNonlinear = linesStep[indicesLineNonlin[-2] + 1 : indicesLineNonlin[-1] + 1]
+
+            linesIterLinear = [line for line in linesIterNonlinear if line.find('Iter ') != -1]
+
+            if len(linesIterLinear) > 0:
+
+                iterNonlinear.numItersLinear = int(linesIterLinear[-1].split()[1][:-1])
+
+                for lineIterLinear in linesIterLinear:
+
+                    keyIterLinear = int(lineIterLinear.split()[1][:-1])
+
+                    iterNonlinear.itersLinear[keyIterLinear] = objIterLinear()
+
+                    iterLinear = iterNonlinear.itersLinear[keyIterLinear]
+
+                    iterLinear.normResidual = float(lineIterLinear.split()[-1])
+
+        step.numItersLinear = np.sum([step.itersNonlinear[x].numItersLinear for x in step.itersNonlinear])
+
+    run.numItersNonlinear = np.sum([run.steps[x].numItersNonlinear for x in run.steps])
+
+    run.numItersLinear = np.sum([run.steps[x].numItersLinear for x in run.steps])
+
+    for line in lines:
+        if line.find('TimeMonitor results') != -1:
+            run.numProcessors = int(line.split()[-2])
+        elif line.find('***Total Time***') != -1:
+            run.timeCompute = run.numProcessors * float(line.split()[-2])
+        elif line.find('ConstitutiveModelInterface') != -1:
+            run.timeConstitutive += run.numProcessors * float(line.split()[-2])
+        elif line.find('total solve time') != -1:
+            run.timeLinsolve = run.numProcessors * float(line.split()[-2])
+
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='serif', size=22)
+    rcParams['text.latex.preamble'] = [r'\usepackage{boldtensors}']
+
+    fig = plt.figure()
+    plt.bar(
+        [x for x in range(len(run.steps))],
+        [run.steps[x].numItersNonlinear for x in run.steps])
+
+    plt.savefig('nonlinear_iterations.pdf')
+
+    fig = plt.figure()
+    plt.plot(
+        [x for x in range(1, len(run.steps))],
+        [run.steps[x].sizeStep for x in run.steps if run.steps[x].sizeStep != 0.0])
+    plt.yscale('log')
+    plt.xlabel('Time Step')
+    plt.ylabel('Step Size (s)')
+
+    plt.savefig('step_size.pdf')
+
+    fig.clf()
+    plt.hold(True)
+
+    for keyStep in run.steps:
+
+        if run.steps[keyStep].sizeStep != 0.0:
+        
+            step = run.steps[keyStep]
+
+            pointsPlot = range(step.numItersNonlinear + 1)
+            valuesPlot = [step.itersNonlinear[x].normIncrement for x in step.itersNonlinear]
+
+            plt.plot(
+                pointsPlot[1:],
+                valuesPlot[1:])
+
+    plt.yscale('log')
+    plt.xlabel('Iteration')
+    plt.ylabel(r'Increment Norm $\left\| \Delta u^{(n)} \right\|$')
+
+    plt.savefig('norm_increment.pdf')
+
+    plt.close()
+
+
+
+    return
 
     #
     # Write the norm data to file
@@ -324,64 +592,97 @@ def readFileLog(filename):
     #
     # Loop through tuples of the data for plotting
     #
+    # rcParams.update({'figure.autolayout': True})
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='serif', size=22)
+    rcParams['text.latex.preamble'] = [r'\usepackage{boldtensors}']
+
     for (dataResidual,dataIncrement,numSteps,label) in [(normF,normDu,numStepsConverged,'Converged'), (normResidualFailed,normIncrementFailed,numStepsFailed,'Failed')]:
 
-        stringLegend = ['Step '+str(i+1) for i in range(numSteps)]
+        if numSteps > 0:
 
-        #print 'Legend'
-        #print stringLegend
+            stringLegend = ['Step '+str(i+1) for i in range(numSteps)]
 
-        fig = plt.figure()
-        plt.hold(True)
-        for dataStep in dataResidual:
-            #print 'dataStep'
-            #print dataStep
-            if np.max(dataStep) > 0.0:
-                dataPlot = [point for point in dataStep if point > 0.0]
-                plt.plot(dataPlot)
-        plt.yscale('log')
-        plt.legend(stringLegend)
-    #    plt.show()
-        plt.savefig('normF_Step_'+label+'.pdf')
-        fig.clf()
-        
-        plt.hold(True)
-        for dataStep in dataResidual:
-            if np.max(dataStep) > 0.0:
-                dataPlot = [point for point in dataStep if point > 0.0]
-                plt.plot(dataPlot[:-1],dataPlot[1:])
-        plt.yscale('log')
-        plt.xscale('log')
-        plt.legend(stringLegend, loc = 'upper left')
-    #    plt.show()
-        plt.xlabel('$\| F_n \|$')
-        plt.ylabel('$\| F_{n+1} \|$')
-        plt.savefig('normF_Convergence_'+label+'.pdf')
-        fig.clf()
-        
-        plt.hold(True)
-        for dataStep in dataIncrement:
-            if np.max(dataStep) > 0.0:
-                dataPlot = [point for point in dataStep if point > 0.0]
-                plt.plot(dataPlot)
-        plt.yscale('log')
-        plt.legend(stringLegend)
-        plt.savefig('normDu_Step_'+label+'.pdf')
-    #    plt.show(fig)
-        fig.clf()
-        
-        plt.hold(True)
-        for dataStep in dataIncrement:
-            if np.max(dataStep) > 0.0:
-                dataPlot = [point for point in dataStep if point > 0.0]
-                plt.plot(dataPlot[1:-1],dataPlot[2:])
-        plt.yscale('log')
-        plt.xscale('log')
-        plt.legend(stringLegend, loc = 'upper left')
-        plt.xlabel('Increment $\Delta u_n$')
-        plt.ylabel('Increment $\Delta u_{n+1}$')
-    #    plt.show()
-        plt.savefig('normDu_Convergence_'+label+'.pdf')    
+            #print 'Legend'
+            #print stringLegend
+
+            fig = plt.figure()
+            plt.hold(True)
+            for dataStep in dataResidual:
+                #print 'dataStep'
+                #print dataStep
+                if np.max(dataStep) > 0.0:
+                    plt.plot([point for point in dataStep if point > 0.0])
+            plt.yscale('log')
+            legend = plt.legend(
+                stringLegend,
+                bbox_to_anchor = (1.05, 1), 
+                loc = 2, 
+                borderaxespad = 0.)
+            plt.xlabel('Iteration')
+            plt.ylabel(r'Residual $\left\| F^{(n)} \right\|$')
+            plt.savefig(
+                'normF_Step_'+label+'.pdf', 
+                additional_artists = [legend],
+                bbox_inches = 'tight')
+            fig.clf()
+            
+            plt.hold(True)
+            for dataStep in dataResidual:
+                if np.max(dataStep) > 0.0:
+                    dataPlot = [point for point in dataStep if point > 0.0]
+                    plt.plot(dataPlot[:-1],dataPlot[1:])
+            plt.yscale('log')
+            plt.xscale('log')
+            legend = plt.legend(
+                stringLegend,
+                bbox_to_anchor = (1.05, 1), 
+                loc = 2, 
+                borderaxespad = 0.)
+            plt.xlabel(r'Residual $\left\| F^{(n)} \right\|$')
+            plt.ylabel(r'Residual $\left\| F^{(n+1)} \right\|$')
+            plt.savefig(
+                'normF_Convergence_'+label+'.pdf',
+                additional_artists = [legend],
+                bbox_inches='tight')
+            fig.clf()
+            
+            plt.hold(True)
+            for dataStep in dataIncrement:
+                if np.max(dataStep) > 0.0:
+                    plt.plot([point for point in dataStep if point > 0.0])
+            plt.yscale('log')
+            legend = plt.legend(
+                stringLegend,
+                bbox_to_anchor = (1.05, 1), 
+                loc = 2, 
+                borderaxespad = 0.)
+            plt.xlabel(r'Iteration')
+            plt.ylabel(r'Increment $\left\| \Delta u^{(n)} \right\|$')
+            plt.savefig(
+                'normDu_Step_'+label+'.pdf',
+                additional_artists = [legend],
+                bbox_inches='tight')
+            fig.clf()
+            
+            plt.hold(True)
+            for dataStep in dataIncrement:
+                if np.max(dataStep) > 0.0:
+                    dataPlot = [point for point in dataStep if point > 0.0]
+                    plt.plot(dataPlot[1:-1],dataPlot[2:])
+            plt.yscale('log')
+            plt.xscale('log')
+            legend = plt.legend(
+                stringLegend,
+                bbox_to_anchor = (1.05, 1), 
+                loc = 2, 
+                borderaxespad = 0.)
+            plt.xlabel(r'Increment $\left\| \Delta u^{(n)} \right\|$')
+            plt.ylabel(r'Increment $\left\| \Delta u^{(n+1)} \right\|$')
+            plt.savefig(
+                'normDu_Convergence_'+label+'.pdf',
+                additional_artists = [legend],
+                bbox_inches='tight')
     
     return dataConverged, dataFailed
 
@@ -825,7 +1126,7 @@ def plotInversePoleFigure(**kwargs):
 
     else:
 
-        raise TypeError('Need either nameFileInput or orientations keyword args')
+        raise TypeError("Need either 'nameFileInput' or 'domain' keyword args")
 
     #
     # Create axes 
@@ -1109,7 +1410,7 @@ def plotStressStrain(domain):
     num_dims = domain.num_dims
     times = domain.times
 
-    rcParams.update({'figure.autolayout': True})
+#    rcParams.update({'figure.autolayout': True})
 
     plt.rc('text', usetex=True)
     plt.rc('font', family='serif', size=22)
@@ -1144,9 +1445,18 @@ def plotStressStrain(domain):
 
             plt.xlabel('Logarithmic Strain $\epsilon_{'+ str(dim_i + 1) + str(dim_j + 1) +'}$')
             plt.ylabel('Cauchy Stress $\sigma_{'+ str(dim_i + 1) + str(dim_j + 1) +'}$ (MPa)')
-            plt.legend(strLegend, loc = 'upper left', fontsize = 15)
 
-            plt.savefig('stress_strain_'+ str(dim_i + 1) + str(dim_j + 1) +'.pdf')
+            legend = plt.legend(
+                strLegend,
+                bbox_to_anchor = (1.05, 1), 
+                loc = 2, 
+                borderaxespad = 0.,
+                fontsize = 15)
+
+            plt.savefig(
+                'stress_strain_'+ str(dim_i + 1) + str(dim_j + 1) +'.pdf',
+                additional_artists = [legend],
+                bbox_inches='tight')
 
 # end def plotStressStrain(domain):
 
@@ -1155,7 +1465,9 @@ def plotStressStrain(domain):
 
 def postprocess(nameFileInput, **kwargs):
 
-    debug = 1
+    print ''
+
+    verbosity = 1
 
 
     # Set i/o units 
@@ -1167,175 +1479,255 @@ def postprocess(nameFileInput, **kwargs):
     #
     # Get values of whole domain variables
     #
-    print 'Reading input file...'
+    with Timer() as timer:
 
-    with nostdout():
-        fileInput = exodus(nameFileInput,"r")
-    
-    inputValues = readInputFile(
-        fileInput,
-        namesVariable = [
-            'num_dims', 
-            'num_elements', 
-            'times', 
-            'elem_var_names', 
-            'names_variable_unique', 
-            'block_ids', 
-            'num_points'])
+        if verbosity > 0:
+            print 'Reading input file...'
 
-    num_dims = inputValues['num_dims']
-    num_elements = inputValues['num_elements']
-    times = inputValues['times']
-    elem_var_names = inputValues['elem_var_names']
-    names_variable_unique = inputValues['names_variable_unique']
-    block_ids = inputValues['block_ids']
-    num_points = inputValues['num_points']
+        with nostdout():
+            fileInput = exodus(nameFileInput,"r")
+        
+        inputValues = readInputFile(
+            fileInput,
+            namesVariable = [
+                'num_dims', 
+                'num_elements', 
+                'times', 
+                'elem_var_names', 
+                'names_variable_unique', 
+                'block_ids', 
+                'num_points'])
+
+        num_dims = inputValues['num_dims']
+        num_elements = inputValues['num_elements']
+        times = inputValues['times']
+        elem_var_names = inputValues['elem_var_names']
+        names_variable_unique = inputValues['names_variable_unique']
+        block_ids = inputValues['block_ids']
+        num_points = inputValues['num_points']
+
+    if verbosity > 0:
+        print '    Elapsed time: ' + str(timer.interval) + 's\n'
 
 
 
     #
     # Create the mesh stucture
     #
-    print 'Creating domain object...'
+    with Timer() as timer:
 
-    domain = objDomain(
-        num_dims = num_dims,
-        num_elements = np.sum(num_elements.values()),
-        times = times)
+        if verbosity > 0:
+            print 'Creating domain object...'
 
-    for block_id in block_ids:
+        domain = objDomain(
+            num_dims = num_dims,
+            num_elements = np.sum(num_elements.values()),
+            times = times)
 
-        domain.blocks[block_id] = objBlock(
-            num_elements = num_elements[block_id],
-            num_points = num_points)
-        # TODO: change line above to line below
-        # num_points =  = num_points[block_id]
+        for block_id in block_ids:
 
-        for indexElement in range(num_elements[block_id]):
+            domain.blocks[block_id] = objBlock(
+                num_elements = num_elements[block_id],
+                num_points = num_points)
+            # TODO: change line above to line below
+            # num_points =  = num_points[block_id]
 
-            domain.blocks[block_id].elements[indexElement] = objElement()
+            for indexElement in range(num_elements[block_id]):
 
-            for indexPoint in range(num_points):
+                domain.blocks[block_id].elements[indexElement] = objElement()
 
-                domain.blocks[block_id].elements[indexElement].points[indexPoint] = objPoint()
+                for indexPoint in range(num_points):
+
+                    domain.blocks[block_id].elements[indexElement].points[indexPoint] = objPoint()
+
+    if verbosity > 0:
+        print '    Elapsed time: ' + str(timer.interval) + 's\n'
+
+
+
+    #
+    # Create the simulation time step structure
+    #
+    with Timer() as timer:
+
+        if verbosity > 0:
+            print 'Creating simulation time step object...'
+
+        run = objRun(
+            times = times)
+
+        for keyTime in run.times:
+
+            run.steps[keyTime] = objStep()
+
+        #
+        # Extract convergence information from log file
+        #
+        try:
+            readFileLog(nameFileBase + '_Log.out', run)
+        except IOError:
+            print '    No log file found.'
+
+    if verbosity > 0:
+        print '    Elapsed time: ' + str(timer.interval) + 's\n'
+
 
 
 
     #
     # Get material data
     #
-    print 'Retrieving material data...'
+    with Timer() as timer:
 
-    orientations = dict()
+        if verbosity > 0:
+            print 'Retrieving material data...'
 
-    readXml(
-        nameFileBase, 
-        orientations = orientations)
-    
-    for block_id in block_ids:
-        nameBlock = fileInput.get_elem_blk_name(block_id)
-        domain.blocks[block_id].orientation = orientations[nameBlock]
+        orientations = dict()
+
+        readXml(
+            nameFileBase, 
+            orientations = orientations)
+        
+        for block_id in block_ids:
+            nameBlock = fileInput.get_elem_blk_name(block_id)
+            domain.blocks[block_id].orientation = orientations[nameBlock]
+
+    if verbosity > 0:
+        print '    Elapsed time: ' + str(timer.interval) + 's\n'
 
 
 
-    print 'Compiling output data...'
+    if verbosity > 0:
+        print 'Compiling output data...'
     
     #
     # Record the integration point weights and block volumes
     #
-    setWeightsVolumes(fileInput, domain)
+    with Timer() as timer:
     
-    if debug != 0:
-        print '    Volume: ', domain.volume
-
-    #
-    # Average the quantities of interest
-    #
-    for nameVariable in names_variable_unique:
+        setWeightsVolumes(fileInput, domain)
 
         #
-        # Handle the cauchy stress
+        # Average the quantities of interest
         #
-        if (nameVariable == 'Cauchy_Stress'):
+        for nameVariable in names_variable_unique:
 
-            if debug != 0:
-                print '    ' + nameVariable
+            #
+            # Handle the cauchy stress
+            #
+            if (nameVariable == 'Cauchy_Stress'):
 
-            setValuesTensor(fileInput, nameVariable, domain)
+                if verbosity > 1:
+                    print '    ' + nameVariable
+
+                setValuesTensor(fileInput, nameVariable, domain)
+
+                if verbosity > 1:
+                    timer.check()
+                    print '        Elapsed time: ' + str(timer.step) + 's'
+
+            #
+            # Handle the deformation gradient
+            #
+            elif (nameVariable == 'F'):
+
+                if verbosity > 1:
+                    print '    ' + nameVariable
+
+                setValuesTensor(fileInput, nameVariable, domain)
+
+                if verbosity > 1:
+                    timer.check()
+                    print '        Elapsed time: ' + str(timer.step) + 's'
+
+            #
+            # Handle the equivalent plastic strain
+            #
+            elif (nameVariable == 'eqps'):
+
+                if verbosity > 1:
+                    print '    ' + nameVariable
+
+                setValuesScalar(fileInput, nameVariable, domain)
+
+                if verbosity > 1:
+                    timer.check()
+                    print '        Elapsed time: ' + str(timer.step) + 's'
+
 
         #
-        # Handle the deformation gradient
+        # Handle the Mises stress
         #
-        elif (nameVariable == 'F'):
+        nameVariable = 'Mises_Stress'
 
-            if debug != 0:
-                print '    ' + nameVariable
+        if verbosity > 1:
+            print '    ' + nameVariable
 
-            setValuesTensor(fileInput, nameVariable, domain)
+        for keyBlock in domain.blocks:
 
-        #
-        # Handle the equivalent plastic strain
-        #
-        elif (nameVariable == 'eqps'):
+            block = domain.blocks[keyBlock]
 
-            if debug != 0:
-                print '    ' + nameVariable
+            for keyElement in block.elements:
 
-            setValuesScalar(fileInput, nameVariable, domain)
+                element = block.elements[keyElement]
 
+                for keyPoint in element.points:
 
+                    point = element.points[keyPoint]
 
+                    setattr(
+                        point, 
+                        nameVariable,
+                        dict([(step, 0.0) for step in times]))
 
-    for keyBlock in domain.blocks:
+                    for keyStep in times:
 
-        block = domain.blocks[keyBlock]
+                        stressCauchy = point.Cauchy_Stress[keyStep]
 
-        for keyElement in block.elements:
+                        stressDeviatoric = stressCauchy - 1. / 3. * np.trace(stressCauchy) * np.eye(3)
 
-            element = block.elements[keyElement]
+                        Mises_Stress = np.sqrt(3. / 2. * np.sum(np.tensordot(stressDeviatoric, stressDeviatoric, axes = 2)))
 
-            for keyPoint in element.points:
-
-                point = element.points[keyPoint]
+                        point.Mises_Stress[keyStep] = Mises_Stress
 
                 setattr(
-                    point, 
-                    'Mises_Stress',
+                    element, 
+                    nameVariable,
                     dict([(step, 0.0) for step in times]))
 
                 for keyStep in times:
 
-                    stressCauchy = point.Cauchy_Stress[keyStep]
+                    stressCauchy = element.Cauchy_Stress[keyStep]
 
                     stressDeviatoric = stressCauchy - 1. / 3. * np.trace(stressCauchy) * np.eye(3)
 
                     Mises_Stress = np.sqrt(3. / 2. * np.sum(np.tensordot(stressDeviatoric, stressDeviatoric, axes = 2)))
 
-                    point.Mises_Stress[keyStep] = Mises_Stress
+                    element.Mises_Stress[keyStep] = Mises_Stress
 
             setattr(
-                element, 
-                'Mises_Stress',
+                block, 
+                nameVariable,
                 dict([(step, 0.0) for step in times]))
 
             for keyStep in times:
 
-                stressCauchy = element.Cauchy_Stress[keyStep]
+                stressCauchy = block.Cauchy_Stress[keyStep]
 
                 stressDeviatoric = stressCauchy - 1. / 3. * np.trace(stressCauchy) * np.eye(3)
 
                 Mises_Stress = np.sqrt(3. / 2. * np.sum(np.tensordot(stressDeviatoric, stressDeviatoric, axes = 2)))
 
-                element.Mises_Stress[keyStep] = Mises_Stress
+                block.Mises_Stress[keyStep] = Mises_Stress
 
         setattr(
-            block, 
-            'Mises_Stress',
+            domain, 
+            nameVariable,
             dict([(step, 0.0) for step in times]))
 
         for keyStep in times:
 
-            stressCauchy = block.Cauchy_Stress[keyStep]
+            stressCauchy = domain.Cauchy_Stress[keyStep]
 
             stressDeviatoric = stressCauchy - 1. / 3. * np.trace(stressCauchy) * np.eye(3)
 
@@ -1343,106 +1735,118 @@ def postprocess(nameFileInput, **kwargs):
 
             block.Mises_Stress[keyStep] = Mises_Stress
 
-    setattr(
-        domain, 
-        'Mises_Stress',
-        dict([(step, 0.0) for step in times]))
+        if verbosity > 1:
+            timer.check()
+            print '        Elapsed time: ' + str(timer.step) + 's'
 
-    for keyStep in times:
+        #
+        # Handle the logarithmic strain
+        #
+        nameVariable = 'Log_Strain'
 
-        stressCauchy = domain.Cauchy_Stress[keyStep]
+        if verbosity > 1:
+            print '    ' + nameVariable
 
-        stressDeviatoric = stressCauchy - 1. / 3. * np.trace(stressCauchy) * np.eye(3)
+        deriveValuesTensor('Log_Strain', domain)
 
-        Mises_Stress = np.sqrt(3. / 2. * np.sum(np.tensordot(stressDeviatoric, stressDeviatoric, axes = 2)))
+        if verbosity > 1:
+            timer.check()
+            print '        Elapsed time: ' + str(timer.step) + 's'
 
-        block.Mises_Stress[keyStep] = Mises_Stress
-
-
-    deriveValuesTensor('Log_Strain', domain)
+    if verbosity > 0:
+        print '    Elapsed time: ' + str(timer.interval) + 's\n'
 
 
 
     #
     # Calculate the deformed orientations
     #
-    print 'Computing deformed orientations...'
+    with Timer() as timer:
 
-    for keyBlock in domain.blocks:
+        if verbosity > 0:
+            print 'Computing deformed orientations...'
 
-        block = domain.blocks[keyBlock]
+        for keyBlock in domain.blocks:
 
-        for keyElement in block.elements:
+            block = domain.blocks[keyBlock]
 
-            element = block.elements[keyElement]
+            for keyElement in block.elements:
 
-            element.R = dict()
-            element.U = dict()
-            element.orientation = dict()
+                element = block.elements[keyElement]
 
-            for step in times:
+                element.R = dict()
+                element.U = dict()
+                element.orientation = dict()
 
-                element.R[step], element.U[step] = polar(element.F[step])
+                for step in times:
 
-                element.orientation[step] = np.inner(element.R[step].T, np.inner(block.orientation.T, element.R[step]))
+                    element.R[step], element.U[step] = polar(element.F[step])
 
-    deriveValuesScalar('Misorientation', domain)
+                    element.orientation[step] = np.inner(element.R[step].T, np.inner(block.orientation.T, element.R[step]))
+
+        deriveValuesScalar('Misorientation', domain)
+
+    if verbosity > 0:
+        print '    Elapsed time: ' + str(timer.interval) + 's\n'
 
 
 
     #
     # Plot the inverse pole figures
     #
-    print 'Plotting inverse pole figures...'
+    with Timer() as timer:
 
-    for step in times:
+        if verbosity > 0:
+            print 'Plotting inverse pole figures...'
 
-        plotInversePoleFigure(domain = domain, time = step) 
+        for step in [times[0], times[-1]]:
+
+            plotInversePoleFigure(domain = domain, time = step)
+
+    if verbosity > 0:
+        print '    Elapsed time: ' + str(timer.interval) + 's\n'
 
 
 
     #
     # Write data to exodus output file
     #
-    print 'Writing data to exodus file...'
+    with Timer() as timer:
 
-    if 'nameFileOutput' in kwargs:
-        nameFileOutput = kwargs['nameFileOutput']
-    else:
-        nameFileOutput = nameFileBase + '_Postprocess.' + nameFileExtension
-    
-    writeExodusFile(domain, fileInput, nameFileOutput)
+        if verbosity > 0:
+            print 'Writing data to exodus file...'
 
-    with nostdout():
-        fileInput.close()
+        if 'nameFileOutput' in kwargs:
+            nameFileOutput = kwargs['nameFileOutput']
+        else:
+            nameFileOutput = nameFileBase + '_Postprocess.' + nameFileExtension
+        
+        writeExodusFile(domain, fileInput, nameFileOutput)
+
+        with nostdout():
+            fileInput.close()
+
+    if verbosity > 0:
+        print '    Elapsed time: ' + str(timer.interval) + 's\n'
 
 
 
     #
     # Plot stress-strain data
     #
-    print 'Plotting stress-strain data...'
+    with Timer() as timer:
 
-    plotStressStrain(domain)
+        if verbosity > 0:
+            print 'Plotting stress-strain data...'
 
+        plotStressStrain(domain)
 
-
-    #
-    # Extract convergence information from log file
-    #
-    print 'Reading log file...'
-    try:
-        dataConverged, dataFailed = readFileLog(nameFileBase + '_Log.out')
-    except IOError:
-        print '    No log file found.'
-    else:
-        raise
-    
+    if verbosity > 0:
+        print '    Elapsed time: ' + str(timer.interval) + 's\n'
 
 
-    #
+
     # Return topology and data
-    #
     return domain
 
 # end def postprocess(nameFileInput, nameFileOutput):
