@@ -192,8 +192,9 @@ evaluateFields(typename Traits::EvalData workset)
 	const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
 	const double lambda = std::atan2( y, x );
 			
+
 	const double radialDist = std::acos( std::sin( cntrLat ) * std::sin( theta ) + 
-	  			  std::cos( cntrLon ) * std::cos( theta ) * std::cos( cntrLon - lambda ) );
+					std::cos( cntrLat ) * std::cos( theta ) * std::cos( cntrLon - lambda ) );
 					
 	const double zsurf = radialDist < mtnWidth ? 0.5 * mtnHeight * ( 1.0 + std::cos ( PI * radialDist / mtnWidth ) ) *
 	 		     std::cos( PI * radialDist / mtnHalfWidth ) * std::cos( PI * radialDist / mtnHalfWidth ) : 0.0;
