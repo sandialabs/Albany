@@ -4,13 +4,11 @@
 	<!-- Parameter name="Solution Method" type="string" value="Transient"/> -->
 	<Parameter name="Solution Method" type="string" value="Aeras Hyperviscosity"/>
     <ParameterList name="Hydrostatic Problem">
+    	<Parameter name="Topography Type" type="string" value="SphereMountain1"/>
 		<Parameter name="Number of Vertical Levels" type="int" value="15"/>
-		<Parameter name="Tracers" type="Array(string)" value="{Vapor}"/>
-		<Parameter name="P0" type="double" value="10000.0"/>
+		<Parameter name="P0" type="double" value="100000.0"/>
 		<Parameter name="Ptop" type="double" value="20544.8"/>
 		<Parameter name="NonRotating" type="bool" value="True"/>
-		<Parameter name="Viscosity" type="double" value="1.0E8"/>
-		<Parameter name="Viscosity" type="double" value="0.0"/>
       	<Parameter name="Use Explicit Hyperviscosity" type="bool" value="True"/>
       	<Parameter name="Hyperviscosity Type" type="string" value="Constant"/>
       	<Parameter name="Hyperviscosity Tau" type="double" value="5e15"/>
