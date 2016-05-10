@@ -14,7 +14,6 @@
     <!--  <Parameter name="Tracers" type="Array(string)" value="{Vapor}"/>-->
       <Parameter name="P0" type="double" value="101325.0"/>
       <Parameter name="Ptop" type="double" value="101.325"/>
-      <Parameter name="Viscosity" type="double" value="0.0"/>
       <Parameter name="Use Explicit Hyperviscosity" type="bool" value="True"/>
       <Parameter name="Hyperviscosity Type" type="string" value="Constant"/>
       <Parameter name="Hyperviscosity Tau" type="double" value="5e15"/>
