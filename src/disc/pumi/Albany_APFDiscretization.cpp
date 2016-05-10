@@ -562,11 +562,11 @@ void Albany::APFDiscretization::writeAnySolutionToFile(
   apf::Field* f;
   int dim = getNumDim();
   apf::FieldShape* fs = apf::getIPShape(dim, meshStruct->cubatureDegree);
-  copyQPStatesToAPF(f,fs,false);
   copyNodalDataToAPF(false);
+  copyQPStatesToAPF(f,fs,false);
   meshOutput->writeFile(time_label);
-  removeNodalDataFromAPF();
   removeQPStatesFromAPF();
+  removeNodalDataFromAPF();
 
   if ((continuationStep == meshStruct->restartWriteStep) &&
       (continuationStep != 0))
@@ -584,14 +584,14 @@ Albany::APFDiscretization::writeRestartFile(const double time)
   apf::Field* f;
   int dim = getNumDim();
   apf::FieldShape* fs = apf::getIPShape(dim, meshStruct->cubatureDegree);
-  copyQPStatesToAPF(f,fs,true);
   copyNodalDataToAPF(true);
+  copyQPStatesToAPF(f,fs,true);
   apf::Mesh2* m = meshStruct->getMesh();
   std::ostringstream oss;
   oss << "restart_" << time << "_.smb";
   m->writeNative(oss.str().c_str());
-  removeNodalDataFromAPF();
   removeQPStatesFromAPF();
+  removeNodalDataFromAPF();
 }
 
 void
@@ -1339,6 +1339,8 @@ void Albany::APFDiscretization::copyQPStatesToAPF(
     f = apf::createField(m,state.name.c_str(),apf::MATRIX,fs);
     copyQPTensorToAPF(nqp, state.name, f);
   }
+  if (meshStruct->saveStabilizedStress)
+    saveStabilizedStress();
 }
 
 void Albany::APFDiscretization::removeQPStatesFromAPF()

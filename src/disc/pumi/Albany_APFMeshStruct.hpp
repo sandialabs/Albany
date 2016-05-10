@@ -134,6 +134,8 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     bool useTemperatureHack;
     bool useDOFOffsetHack;
 
+    bool saveStabilizedStress;
+
     // Number of distinct solution vectors handled (<=3)
     int num_time_deriv;
 

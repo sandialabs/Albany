@@ -13,6 +13,7 @@ SET(SOURCES
   Albany_PUMINodeData.cpp
   Albany_PUMIVtk.cpp
   Albany_PUMIOutput.cpp
+  Albany_APFStabilizedStress.cpp
   )
 
 SET(HEADERS

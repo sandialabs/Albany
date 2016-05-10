@@ -230,6 +230,8 @@ Albany::PUMIMeshStruct::getValidDiscretizationParameters() const
   // this will do nothing unless this is a GOAL mesh struct
   validPL->set<int>("Polynomial Order", 1, "Polynomial order of solution basis functions");
 
+  validPL->set<bool>("Save Stabilized Stress", false, "Save stabilized stress to file");
+
   return validPL;
 }
 
