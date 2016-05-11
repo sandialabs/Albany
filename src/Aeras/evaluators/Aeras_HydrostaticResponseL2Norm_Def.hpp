@@ -23,7 +23,8 @@ HydrostaticResponseL2Norm(Teuchos::ParameterList& p,
   weighted_measure("Weights", dl->qp_scalar),
   velocity("Velx",  dl->qp_vector_level),
   temperature("Temperature",dl->qp_scalar_level),
-  numLevels(dl->node_scalar_level->dimension(2))
+  numLevels(dl->node_scalar_level->dimension(2)), 
+  out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
   Teuchos::ParameterList* plist =
     p.get<Teuchos::ParameterList*>("Parameter List");
@@ -31,7 +32,7 @@ HydrostaticResponseL2Norm(Teuchos::ParameterList& p,
     this->getValidResponseParameters();
   plist->validateParameters(*reflist,0);
 
-  std::cout << "in Hydrostatic_Response_L2Norm!"<< std::endl;
+  *out << "in Hydrostatic_Response_L2Norm! \n";
 
   // number of quad points per cell and dimension of space
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
@@ -42,7 +43,7 @@ HydrostaticResponseL2Norm(Teuchos::ParameterList& p,
   numQPs  = dims[1];
   numDims = dims[2];
 
-  std::cout << "numQPs, numDims, numLevels: " << numQPs << ", " << numDims << ", " << numLevels << std::endl; 
+  *out << "numQPs, numDims, numLevels: " << numQPs << ", " << numDims << ", " << numLevels << std::endl; 
   this->addDependentField(weighted_measure);
   this->addDependentField(velocity);
   this->addDependentField(temperature);
@@ -57,7 +58,10 @@ HydrostaticResponseL2Norm(Teuchos::ParameterList& p,
   std::string global_response_name = "Global Response Aeras Hydrostatic Response L2 Norm";
   int worksetSize = scalar_dl->dimension(0);
 
-  int responseSize = 3;
+  //FIXME: extend responseSize to have tracers 
+  responseSize = 3*numLevels + 1; //there are 2 velocities and 1 temperature variable on each level
+                                      //surface pressure is on 1st level only
+                                      //the ordering is: Sp0, u0, v0, T0, u1, v1, T1, etc
 
   Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(
       new MDALayout<Cell,Dim>(worksetSize, responseSize));
@@ -105,39 +109,38 @@ template<typename EvalT, typename Traits>
 void HydrostaticResponseL2Norm<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  std::cout << "HydrostaticResponseL2Norm evaluateFields()" << std::endl;
+  *out << "HydrostaticResponseL2Norm evaluateFields() \n" << std::endl;
 
+  //Zero out local response 
   PHAL::set(this->local_response, 0.0);
-/*
-  ScalarT volume;
-  ScalarT mass;
-  ScalarT energy;
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell)
-    {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-        volume = weighted_measure(cell,qp);
-        for(std::size_t ell = 0; ell < numLevels; ++ell) {
-          this->local_response(cell, 0) += volume;
-          this->global_response(0) += volume;
-
-          mass = volume*density(cell, qp, ell);
-          this->local_response(cell, 1) += mass;
-          this->global_response(1) += mass;
-
-          //amb velocity (Velx) has rank 4, not 3. It appears to have dimension
-          // 1 in the fourth index. An Aeras person needs to check this.
-          const int level = 0;
-          energy = pie(cell, qp, ell)*(0.5*velocity(cell, qp, ell, level)*velocity(cell,qp,ell, level) +
-              Cpstar(cell,qp,ell)*temperature(cell,qp,ell) + Phi0 )*volume;
-
-          this->local_response(cell, 2) += energy;
-          this->global_response(2) += energy;
- }
-
+  //Calculate L2 norm squared of each component of solution.  We do not need to do 
+  //an interpolation from the nodes to the QPs of the solution since nodes = QPs for Aeras
+  //spectral elements. 
+  ScalarT wm; 
+  std::size_t dim; 
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp=0; qp < numQPs; ++qp)  {
+      wm = weighted_measure(cell,qp);
+      for (std::size_t level=0; level < numLevels; ++level) {
+        //surface pressure field: dof 0
+        //FIXME: fill in surface pressure field 
+        //u-velocity field: dof 1, 4, 7, ...
+        //v-velocity field: dof 2, 5, 8, ...
+        for (std::size_t i=0; i < 2; ++i) {
+          dim = 1 + i + level*3; 
+          this->local_response(cell,dim) += wm*velocity(cell,qp,level,i)*velocity(cell,qp,level,i); 
+          this->global_response(dim) += wm*velocity(cell,qp,level,i)*velocity(cell,qp,level,i);
+        }
+        //temperature field: dof 3, 6, 9, .... 
+        dim = 3 + level*3; 
+        this->local_response(cell,dim) += wm*temperature(cell,qp,level)*temperature(cell,qp,level); 
+        this->global_response(dim) += wm*temperature(cell,qp,level)*temperature(cell,qp,level);
+        //FIXME: ultimately, will want to add tracers. 
+      } 
     }
   }
-*/
+
   // Do any local-scattering necessary
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::evaluateFields(workset);
 }
@@ -148,7 +151,7 @@ void HydrostaticResponseL2Norm<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
 
-  std::cout << "HydrostaticResponseL2Norm postEvaluate()" << std::endl;
+  *out << "HydrostaticResponseL2Norm postEvaluate() \n" << std::endl;
 #if 0
   // Add contributions across processors
   Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
@@ -173,17 +176,13 @@ postEvaluate(typename Traits::PostEvalData workset)
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
 
 #if 0
-  //amb Won't work because of rank.
-  std::cout << "Hydrostatic Response L2 Norm is " << this->global_response(0) << std::endl;
-  std::cout << "Total Mass is " << this->global_response(1) << std::endl;
-  std::cout << "Total Energy is " << this->global_response(2) << std::endl;
 #else
   PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
-  std::cout << "Hydrostatic Response L2 Norm is " << *gr << std::endl;
-  ++gr;
-  //std::cout << "Total Mass is " << *gr << std::endl;
-  //++gr;
-  //std::cout << "Total Energy is " << *gr << std::endl;  
+  for (int i=0; i < responseSize; ++i) {
+    ScalarT norm_sq = *gr; 
+    *gr = sqrt(norm_sq);  
+    ++gr; 
+  } 
 #endif
 }
 
