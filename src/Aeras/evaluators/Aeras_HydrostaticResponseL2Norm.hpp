@@ -44,6 +44,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> velocity;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level> temperature;
+  PHX::MDField<ScalarT,Cell,QuadPoint> spressure;
   const int numLevels;
   int responseSize; 
 };

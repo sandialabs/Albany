@@ -23,6 +23,7 @@ HydrostaticResponseL2Norm(Teuchos::ParameterList& p,
   weighted_measure("Weights", dl->qp_scalar),
   velocity("Velx",  dl->qp_vector_level),
   temperature("Temperature",dl->qp_scalar_level),
+  spressure("SPressure",dl->qp_scalar),
   numLevels(dl->node_scalar_level->dimension(2)), 
   out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
@@ -47,6 +48,7 @@ HydrostaticResponseL2Norm(Teuchos::ParameterList& p,
   this->addDependentField(weighted_measure);
   this->addDependentField(velocity);
   this->addDependentField(temperature);
+  this->addDependentField(spressure);
 
   this->setName("Aeras Hydrostatic Response L2 Norm");
 
@@ -87,6 +89,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(weighted_measure,fm);
   this->utils.setFieldData(velocity,fm);
   this->utils.setFieldData(temperature,fm);
+  this->utils.setFieldData(spressure,fm);
 
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postRegistrationSetup(d,fm);
 }
@@ -122,9 +125,11 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp)  {
       wm = weighted_measure(cell,qp);
+      //surface pressure field: dof 0
+      dim = 0;
+      this->local_response(cell,dim) += wm*spressure(cell,qp)*spressure(cell,qp); 
+      this->global_response(dim) += wm*spressure(cell,qp)*spressure(cell,qp);
       for (std::size_t level=0; level < numLevels; ++level) {
-        //surface pressure field: dof 0
-        //FIXME: fill in surface pressure field 
         //u-velocity field: dof 1, 4, 7, ...
         //v-velocity field: dof 2, 5, 8, ...
         for (std::size_t i=0; i < 2; ++i) {
