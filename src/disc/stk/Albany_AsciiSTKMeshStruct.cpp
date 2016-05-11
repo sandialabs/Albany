@@ -387,6 +387,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
                              ebNameToIndex, this->interleavedOrdering));
 
 
+  this->initializeSideSetMeshStructs (commT);
 }
 
 Albany::AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
@@ -404,7 +405,9 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
               const unsigned int neq_,
               const AbstractFieldContainer::FieldContainerRequirements& req,
               const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-              const unsigned int worksetSize)
+              const unsigned int worksetSize,
+              const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+              const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
 {
   this->SetupFieldData(commT, neq_, req, sis, worksetSize);
 
@@ -423,12 +426,11 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
   int sideID = 0;
 
   typedef AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
-  typedef AbstractSTKFieldContainer::QPScalarFieldType ElemScalarFieldType;
 
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
   ScalarFieldType* surfaceHeight_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "surface_height");
-  ElemScalarFieldType* flowFactor_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "flow_factor");
-  ElemScalarFieldType* temperature_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
+  ScalarFieldType* flowFactor_field = metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "flow_factor");
+  ScalarFieldType* temperature_field = metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
   ScalarFieldType* basal_friction_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "basal_friction");
 
   if(!surfaceHeight_field)
@@ -704,6 +706,9 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
 
   Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
+
+  fieldAndBulkDataSet = true;
+  this->finalizeSideSetMeshStructs(commT, side_set_req, side_set_sis, worksetSize);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

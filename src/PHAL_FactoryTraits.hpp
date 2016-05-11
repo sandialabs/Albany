@@ -40,6 +40,7 @@
 #include "PHAL_GatherScalarNodalParameter.hpp"
 #include "PHAL_DirichletCoordinateFunction.hpp"
 #include "PHAL_DirichletField.hpp"
+#include "PHAL_DirichletOffNodeSet.hpp"
 
 #include "Sacado_mpl_placeholders.hpp"
 // \cond  Have doxygern ignore this namespace
@@ -64,37 +65,39 @@ namespace PHAL {
     static const int id_dirichlet_aggregator           =  1;
     static const int id_dirichlet_coordinate_function  =  2;
     static const int id_dirichlet_field                =  3;
-    static const int id_qcad_poisson_dirichlet         =  4;
-    static const int id_kfield_bc                      =  5; // Only for LCM probs
-    static const int id_eq_concentration_bc            =  6; // Only for LCM probs
-    static const int id_timedep_bc                     =  7; // Only for LCM probs
-    static const int id_time                           =  8; // Only for LCM probs
-    static const int id_torsion_bc                     =  9; // Only for LCM probs
-    static const int id_schwarz_bc                     = 10; // Only for LCM probs
-    static const int id_pd_neigh_fit_bc                = 11; // Only for LCM-Peridigm coupling
+    static const int id_dirichlet_off_nodeset          =  4; // To handle equations on side set (see PHAL_DirichletOffNodeSet)
+    static const int id_qcad_poisson_dirichlet         =  5;
+    static const int id_kfield_bc                      =  6; // Only for LCM probs
+    static const int id_eq_concentration_bc            =  7; // Only for LCM probs
+    static const int id_timedep_bc                     =  8; // Only for LCM probs
+    static const int id_time                           =  9; // Only for LCM probs
+    static const int id_torsion_bc                     = 10; // Only for LCM probs
+    static const int id_schwarz_bc                     = 11; // Only for LCM probs
+    static const int id_pd_neigh_fit_bc                = 12; // Only for LCM-Peridigm coupling
 
     typedef Sacado::mpl::vector<
-        PHAL::Dirichlet<_,Traits>,                 //  0
-        PHAL::DirichletAggregator<_,Traits>,       //  1
-        PHAL::DirichletCoordFunction<_,Traits>,    //  2
-        PHAL::DirichletField<_,Traits>,            //  3
+        PHAL::Dirichlet<_,Traits>,                //  0
+        PHAL::DirichletAggregator<_,Traits>,      //  1
+        PHAL::DirichletCoordFunction<_,Traits>,   //  2
+        PHAL::DirichletField<_,Traits>,           //  3
+        PHAL::DirichletOffNodeSet<_,Traits>,      //  4
 #ifdef ALBANY_QCAD
-        QCAD::PoissonDirichlet<_,Traits>           //  4
+        QCAD::PoissonDirichlet<_,Traits>          //  5
 #else
-        PHAL::Dirichlet<_,Traits>                  //  4 dummy
+        PHAL::Dirichlet<_,Traits>                 //  5 dummy
 #endif
 #if defined(ALBANY_LCM)
         ,
-        LCM::KfieldBC<_,Traits>,                   //  5
-        LCM::EquilibriumConcentrationBC<_,Traits>, //  6
-        LCM::TimeDepBC<_, Traits>,                 //  7
-        LCM::Time<_, Traits>,                      //  8
-        LCM::TorsionBC<_, Traits>                  //  9
+        LCM::KfieldBC<_,Traits>,                  //  6
+        LCM::EquilibriumConcentrationBC<_,Traits>, // 7
+        LCM::TimeDepBC<_, Traits>,                //  8
+        LCM::Time<_, Traits>,                     //  9
+        LCM::TorsionBC<_, Traits>                 // 10
 #endif
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
         ,
-        LCM::SchwarzBC<_, Traits>,                 // 10
-        LCM::PDNeighborFitBC<_, Traits>            // 11
+        LCM::SchwarzBC<_, Traits>,                 // 11
+        LCM::PDNeighborFitBC<_, Traits>           //  12
 #endif
         > EvaluatorTypes;
 };
@@ -134,7 +137,7 @@ namespace PHAL {
 #if defined(ALBANY_LCM)
        , LCM::TimeTracBC<_, Traits>               //  9
 #endif
-	  > EvaluatorTypes;
+    > EvaluatorTypes;
 };
 
 }

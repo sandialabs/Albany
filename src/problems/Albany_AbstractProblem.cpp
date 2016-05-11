@@ -80,6 +80,12 @@ Albany::AbstractProblem::numEquations() const
   return neq;
 }
 
+const std::map<int,std::vector<std::string> >&
+Albany::AbstractProblem::getSideSetEquations() const
+{
+  return sideSetEquations;
+}
+
 void
 Albany::AbstractProblem::setNumEquations(const int neq_)
 {
@@ -123,6 +129,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->set<bool>("Use Physics-Based Preconditioner", false,
       "Flag to create signal that this problem will creat its own preconditioner");
 
+  validPL->set<Teuchos::Array<std::string> >("Required Fields",Teuchos::Array<std::string>(),"List of field requirements");
   validPL->sublist("Initial Condition", false, "");
   validPL->sublist("Initial Condition Dot", false, "");
   validPL->sublist("Initial Condition DotDot", false, "");
@@ -149,7 +156,6 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   // Contact PL
   validPL->sublist("Contact", false, "");
 
-
   // Candidates for deprecation. Pertain to the solution rather than the problem definition.
   validPL->set<std::string>("Solution Method", "Steady", "Flag for Steady, Transient, or Continuation");
   validPL->set<double>("Homotopy Restart Step", 1., "Flag for Felix Homotopy Restart Step");
@@ -160,10 +166,10 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->set<bool>("Compute Sensitivities", true, "Deprecated; Use parameter located under \"Piro\"/\"Analysis\"/\"Solve\" instead.");
   validPL->set<bool>("Stochastic", false, "Deprecated; Unused; Run using AlbanySG executable and specify SG parameters under \"Piro\"");
   validPL->sublist("Stochastic Galerkin", false, "Deprecated; Unused; Run using AlbanySG executable and specify SG parameters under \"Piro\"");
-  
-  // Add "Schottky Barrier" for QCAD (Suzey Gao, 4/30/2015) 
+
+  // Add "Schottky Barrier" for QCAD (Suzey Gao, 4/30/2015)
   validPL->sublist("Schottky Barrier", false, "");
-  
+
   // Add "Interface Traps" for QCAD (Suzey Gao, 12/22/2015)
   validPL->sublist("Interface Traps", false, ""); 
 

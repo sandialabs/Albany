@@ -322,7 +322,7 @@ evaluateFields(typename Traits::EvalData workset)
   if(Teuchos::nonnull(xdotdotT))
     xdotdotT_constView = xdotdotT->get1dView();
 
-//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -379,7 +379,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-/*#else
+#else
 #ifdef ALBANY_TIMER
   auto start = std::chrono::high_resolution_clock::now();
 #endif
@@ -436,7 +436,7 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
 
 #endif
-*/
+
 }
 
 // **********************************************************************
@@ -661,7 +661,7 @@ evaluateFields(typename Traits::EvalData workset)
   if(Teuchos::nonnull(xdotdotT))
     xdotdotT_constView = xdotdotT->get1dView();
 
-//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   int numDim = 0;
   if (this->tensorRank==2) numDim = this->valTensor.dimension(2); // only needed for tensor fields
 
@@ -704,7 +704,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-/*#else
+#else
 #ifdef ALBANY_TIMER
  auto start = std::chrono::high_resolution_clock::now();
 #endif
@@ -763,7 +763,7 @@ long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapse
 std::cout<< "GaTher Solution Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
 #endif
 
-#endif*/
+#endif
 }
 
 // **********************************************************************

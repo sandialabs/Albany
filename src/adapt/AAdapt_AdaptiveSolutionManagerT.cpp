@@ -91,9 +91,9 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
   const Teuchos::RCP<const Tpetra_Map> mapT = disc_->getMapT();
   const Teuchos::RCP<const Tpetra_Map> overlapMapT = disc_->getOverlapMapT();
 #ifdef ALBANY_AERAS
-  //IKT, 1/20/15: the following is needed to ensure Laplace matrix is non-diagonal 
-  //for Aeras problems that have hyperviscosity and are integrated using an explicit time 
-  //integration scheme. 
+  //IKT, 1/20/15: the following is needed to ensure Laplace matrix is non-diagonal
+  //for Aeras problems that have hyperviscosity and are integrated using an explicit time
+  //integration scheme.
   const Teuchos::RCP<const Tpetra_CrsGraph> overlapJacGraphT = disc_
       ->getImplicitOverlapJacobianGraphT();
 #else
@@ -348,7 +348,7 @@ AAdapt::AdaptiveSolutionManagerT::scatterXT(
   overlapped_soln->getVectorNonConst(0)->doImport(xT, *importerT, Tpetra::INSERT);
 
   if (x_dotT){
-     TEUCHOS_TEST_FOR_EXCEPTION(overlapped_soln->getNumVectors() < 2, std::logic_error, 
+     TEUCHOS_TEST_FOR_EXCEPTION(overlapped_soln->getNumVectors() < 2, std::logic_error,
          "AdaptiveSolutionManager error: x_dotT defined but only a single solution vector is available");
      overlapped_soln->getVectorNonConst(1)->doImport(*x_dotT, *importerT, Tpetra::INSERT);
   }

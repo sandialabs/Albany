@@ -11,6 +11,7 @@
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include <string>
 
@@ -23,24 +24,46 @@ FELIX::Hydrology::Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& params,
 {
   TEUCHOS_TEST_FOR_EXCEPTION (numDim!=1 && numDim!=2,std::logic_error,"Problem supports only 1D and 2D");
 
-  // Set the num PDEs for the null space object to pass to ML
-  this->setNumEquations(1);
+  has_evolution_equation = params->sublist("FELIX Hydrology").get<bool>("Use Evolution Equation",false);
 
-  // Need to allocate a fields in mesh database
+  // Need to allocate the fields in mesh database
   this->requirements.push_back("surface_height");
-  this->requirements.push_back("basal_friction");
-  this->requirements.push_back("sliding_velocity");
-  this->requirements.push_back("drainage_sheet_depth");
+  this->requirements.push_back("basal_velocity");
   this->requirements.push_back("ice_thickness");
-  this->requirements.push_back("ice_viscosity");
   this->requirements.push_back("surface_water_input");
   this->requirements.push_back("geothermal_flux");
-//  this->requirements.push_back("effective_pressure");
 
-  dof_names.resize(1);
-  resid_names.resize(1);
-  dof_names[0] = "Hydraulic Potential";
-  resid_names[0] = "Hydrology Residual";
+  if (!has_evolution_equation)
+    this->requirements.push_back("drainage_sheet_depth");
+
+  // Set the num PDEs for the null space object to pass to ML
+  if (has_evolution_equation)
+  {
+    this->setNumEquations(2);
+
+    dof_names.resize(2);
+    dof_names_dot.resize(1);
+    resid_names.resize(2);
+
+    dof_names[0] = "Effective Pressure";
+    dof_names[1] = "Drainage Sheet Depth";
+
+    dof_names_dot[0] = "Drainage Sheet Depth Dot";
+
+    resid_names[0] = "Residual Elliptic Eqn";
+    resid_names[1] = "Residual Evolution Eqp";
+  }
+  else
+  {
+    this->setNumEquations(1);
+
+    dof_names.resize(1);
+    resid_names.resize(1);
+
+    dof_names[0] = "Effective Pressure";
+
+    resid_names[0] = "Residual";
+  }
 }
 
 FELIX::Hydrology::~Hydrology()
@@ -86,6 +109,8 @@ void FELIX::Hydrology::constructDirichletEvaluators (const Albany::MeshSpecsStru
   // Construct Dirichlet evaluators for all nodesets and names
   std::vector<std::string> dirichletNames(neq);
   dirichletNames[0] = dof_names[0];
+  if (has_evolution_equation)
+    dirichletNames[1] = dof_names[1];
 
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
@@ -110,12 +135,20 @@ void FELIX::Hydrology::constructNeumannEvaluators (const Teuchos::RCP<Albany::Me
 
   std::vector<std::string> neumannNames(neq + 1);
   Teuchos::Array<Teuchos::Array<int> > offsets;
-  offsets.resize(1);
+  offsets.resize(neq);
 
-  neumannNames[0] = "Hydraulic Potential";
-  neumannNames[1] = "all";
+  neumannNames[0] = "Effective Pressure";
+  if (has_evolution_equation)
+    neumannNames[1] = "Drainage Sheet Depth";
+  neumannNames[neq] = "all";
+
   offsets[0].resize(1);
   offsets[0][0] = 0;
+  if (has_evolution_equation)
+  {
+    offsets[1].resize(1);
+    offsets[1][0] = 1;
+  }
 
   // Construct BC evaluators for all possible names of conditions
   std::vector<std::string> condNames(1);
@@ -132,9 +165,10 @@ Teuchos::RCP<const Teuchos::ParameterList>
 FELIX::Hydrology::getValidProblemParameters () const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = this->getGenericProblemParams("ValidHydrologyProblemParams");
-
+  
   validPL->sublist("FELIX Hydrology", false, "");
   validPL->sublist("FELIX Physical Parameters", false, "");
+  validPL->sublist("FELIX Basal Friction Coefficient", false, "Parameters needed to compute the basal friction coefficient");
 
   return validPL;
 }

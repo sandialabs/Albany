@@ -5,46 +5,50 @@
 #*****************************************************************//
 
 #stk
-SET(SOURCES 
-  Albany_STKDiscretization.cpp
-  Albany_GenericSTKMeshStruct.cpp
-  Albany_GenericSTKFieldContainer.cpp
-  Albany_OrdinarySTKFieldContainer.cpp
-  Albany_MultiSTKFieldContainer.cpp
-  Albany_STKNodeFieldContainer.cpp
-  Albany_TmplSTKMeshStruct.cpp
-  Albany_STK3DPointStruct.cpp
-  Albany_FromCubitSTKMeshStruct.cpp
-  Albany_IossSTKMeshStruct.cpp
+SET(SOURCES
   Albany_AsciiSTKMesh2D.cpp
   Albany_AsciiSTKMeshStruct.cpp
+  Albany_GenericSTKFieldContainer.cpp
+  Albany_GenericSTKMeshStruct.cpp
+  Albany_GmshSTKMeshStruct.cpp
+  Albany_FromCubitSTKMeshStruct.cpp
+  Albany_IossSTKMeshStruct.cpp
+  Albany_MultiSTKFieldContainer.cpp
+  Albany_OrdinarySTKFieldContainer.cpp
+  Albany_SideSetSTKMeshStruct.cpp
+  Albany_STKDiscretization.cpp
+  Albany_STKNodeFieldContainer.cpp
   Albany_STKNodeSharing.cpp
+  Albany_STK3DPointStruct.cpp
+  Albany_TmplSTKMeshStruct.cpp
   )
-SET(HEADERS 
-  Albany_NodalGraphUtils.hpp
-  Albany_STKDiscretization.hpp
-  Albany_AbstractSTKMeshStruct.hpp
+SET(HEADERS
   Albany_AbstractSTKFieldContainer.hpp
+  Albany_AbstractSTKMeshStruct.hpp
+  Albany_AsciiSTKMeshStruct.hpp
+  Albany_AsciiSTKMesh2D.hpp
+  Albany_FromCubitSTKMeshStruct.hpp
   Albany_GenericSTKMeshStruct.hpp
+  Albany_GmshSTKMeshStruct.hpp
   Albany_GenericSTKFieldContainer.hpp
   Albany_GenericSTKFieldContainer_Def.hpp
-  Albany_OrdinarySTKFieldContainer.hpp
-  Albany_OrdinarySTKFieldContainer_Def.hpp
+  Albany_IossSTKMeshStruct.hpp
   Albany_MultiSTKFieldContainer.hpp
   Albany_MultiSTKFieldContainer_Def.hpp
+  Albany_NodalGraphUtils.hpp
+  Albany_OrdinarySTKFieldContainer.hpp
+  Albany_OrdinarySTKFieldContainer_Def.hpp
+  Albany_SideSetSTKMeshStruct.hpp
+  Albany_STKDiscretization.hpp
   Albany_STKNodeFieldContainer.hpp
   Albany_STKNodeFieldContainer_Def.hpp
+  Albany_STKNodeSharing.hpp
+  Albany_STK3DPointStruct.hpp
   Albany_TmplSTKMeshStruct.hpp
   Albany_TmplSTKMeshStruct_Def.hpp
-  Albany_STK3DPointStruct.hpp
-  Albany_FromCubitSTKMeshStruct.hpp
-  Albany_IossSTKMeshStruct.hpp
-  Albany_AsciiSTKMesh2D.hpp
-  Albany_AsciiSTKMeshStruct.hpp
-  Albany_STKNodeSharing.hpp
   )
 
-IF (ALBANY_FELIX) 
+IF (ALBANY_FELIX)
   SET(SOURCES ${SOURCES} Albany_ExtrudedSTKMeshStruct.cpp)
   SET(SOURCES ${SOURCES} Albany_STKDiscretizationStokesH.cpp)
   SET(HEADERS ${HEADERS} Albany_ExtrudedSTKMeshStruct.hpp)
@@ -56,10 +60,10 @@ IF (ALBANY_AERAS)
                          Aeras_SpectralOutputSTKMeshStruct.cpp)
   SET(HEADERS ${HEADERS} Aeras_SpectralDiscretization.hpp
                          Aeras_SpectralOutputSTKMeshStruct.hpp)
-ENDIF() 
+ENDIF()
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
-  ${Albany_SOURCE_DIR}/src 
+  ${Albany_SOURCE_DIR}/src
   )
 
 add_library(albanySTK ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})

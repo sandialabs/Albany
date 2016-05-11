@@ -1,5 +1,5 @@
 # machine_name  number_of_processors  max_wallclock_time  wallclock_time_tolerance
-penn            1                     12.60               0.35            Albany       input.xml
+penn            1                     13.30               0.35            Albany       input.xml
 neams-smp       4                     12.20               1.40            Albany       input.xml
 cee-compute011  4                     10.00               1.40            Albany       input.xml
 

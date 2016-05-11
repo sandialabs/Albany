@@ -13,6 +13,7 @@
 #include <Phalanx_DataLayout.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include "Albany_ProblemUtils.hpp"
+#include "Albany_StateManager.hpp"
 
 namespace LCM
 {

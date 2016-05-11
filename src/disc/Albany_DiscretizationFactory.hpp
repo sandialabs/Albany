@@ -34,7 +34,7 @@ class DiscretizationFactory {
     //! Default constructor
     DiscretizationFactory(
       const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
-      const Teuchos::RCP<const Teuchos_Comm>& commT, 
+      const Teuchos::RCP<const Teuchos_Comm>& commT,
       const bool explicit_scheme_ = false
     );
 
@@ -44,6 +44,20 @@ class DiscretizationFactory {
     //! Method to inject cubit dependence.
 #ifdef ALBANY_CUTR
     void setMeshMover(const Teuchos::RCP<CUTR::CubitMeshMover>& meshMover_);
+#endif
+
+#ifdef ALBANY_CUTR
+    static Teuchos::RCP<Albany::AbstractMeshStruct>
+    createMeshStruct (Teuchos::RCP<Teuchos::ParameterList> disc_params,
+                      Teuchos::RCP<Teuchos::ParameterList> adapt_params,
+                      Teuchos::RCP<const Teuchos_Comm> comm,
+                      Teuchos::RCP<CUTR::CubitMeshMover> mesh_mover = Teuchos::null,
+                      int neq = 0);
+#else
+    static Teuchos::RCP<Albany::AbstractMeshStruct>
+    createMeshStruct (Teuchos::RCP<Teuchos::ParameterList> disc_params,
+                      Teuchos::RCP<Teuchos::ParameterList> adapt_params,
+                      Teuchos::RCP<const Teuchos_Comm> comm);
 #endif
 
     Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() {
@@ -60,13 +74,35 @@ class DiscretizationFactory {
                          const AbstractFieldContainer::FieldContainerRequirements& req,
                          const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
 
+
+    Teuchos::RCP<Albany::AbstractDiscretization>
+    createDiscretization(unsigned int num_equations,
+                         const std::map<int,std::vector<std::string> >& sideSetEquations,
+                         const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                         const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+                         const AbstractFieldContainer::FieldContainerRequirements& req,
+                         const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req,
+                         const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
+
     void
     setupInternalMeshStruct(
       unsigned int neq,
       const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-      const AbstractFieldContainer::FieldContainerRequirements& req);
+      const AbstractFieldContainer::FieldContainerRequirements& req); 
+
+   void
+    setupInternalMeshStruct(
+      unsigned int neq,
+      const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+      const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+      const AbstractFieldContainer::FieldContainerRequirements& req,
+      const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req);
 
     Teuchos::RCP<Albany::AbstractDiscretization> createDiscretizationFromInternalMeshStruct(
+      const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes);
+
+    Teuchos::RCP<Albany::AbstractDiscretization> createDiscretizationFromInternalMeshStruct(
+      const std::map<int,std::vector<std::string> >& sideSetEquations,
       const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes);
 
 
@@ -77,6 +113,10 @@ class DiscretizationFactory {
 
     //! Private to prohibit copying
     DiscretizationFactory& operator=(const DiscretizationFactory&);
+
+    const std::map<int,std::vector<std::string> > empty_side_set_equations;
+    const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > empty_side_set_sis;
+    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements> empty_side_set_req;
 
   protected:
 
@@ -94,12 +134,12 @@ class DiscretizationFactory {
 
     Teuchos::RCP<const Teuchos_Comm> commT;
 
-    //The following are for Aeras hydrostatic problems 
-    int numLevels; 
+    //The following are for Aeras hydrostatic problems
+    int numLevels;
     int numTracers;
-   
-    //Flag for explicit time-integration scheme, used in Aeras  
-    bool explicit_scheme;  
+
+    //Flag for explicit time-integration scheme, used in Aeras
+    bool explicit_scheme;
 
 #ifdef ALBANY_CUTR
     Teuchos::RCP<CUTR::CubitMeshMover> meshMover;

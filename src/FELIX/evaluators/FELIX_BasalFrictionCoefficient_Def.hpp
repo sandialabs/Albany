@@ -10,6 +10,8 @@
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Albany_Layouts.hpp"
 
+#include "FELIX_HomotopyParameter.hpp"
+
 //uncomment the following line if you want debug output to be printed to screen
 #define OUTPUT_TO_SCREEN
 
@@ -19,167 +21,138 @@ namespace FELIX
 template<typename EvalT, typename Traits>
 BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos::ParameterList& p,
                                                                    const Teuchos::RCP<Albany::Layouts>& dl) :
-  u_grid      (NULL),
-  u_grid_h    (NULL),
-  beta_coeffs (NULL),
-  beta        (p.get<std::string> ("FELIX Basal Friction Coefficient Name"), dl->node_scalar),
-  beta_type   (FROM_FILE)
+  beta        (p.get<std::string> ("Basal Friction Coefficient Variable Name"), dl->qp_scalar),
+  muField     ("Coulomb Friction Coefficient", dl->shared_param),
+  lambdaField ("Bed Roughness", dl->shared_param),
+  powerField  ("Power Exponent", dl->shared_param)
 {
 #ifdef OUTPUT_TO_SCREEN
   Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
 #endif
 
-  Teuchos::ParameterList* beta_list = p.get<Teuchos::ParameterList*>("Parameter List");
-  Teuchos::ParameterList* physics = p.get<Teuchos::ParameterList*>("Physical Parameters");
+  Teuchos::ParameterList& beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
 
-  std::string betaType = (beta_list->isParameter("Type") ? beta_list->get<std::string>("Type") : "From File");
+  std::string betaType = (beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "Given Field");
+  is_hydrology         = (p.isParameter("Hydrology") ? p.get<bool>("Hydrology") : false);
 
-  if (betaType == "From File")
+
+  if (is_hydrology)
+  {
+    numQPs   = dl->qp_scalar->dimension(1);
+    numNodes = dl->node_scalar->dimension(1);
+  }
+  else
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+                                "Error! The layout structure does not appear to be that of a side set.\n");
+
+    basalSideName = p.get<std::string>("Side Set Name");
+    numQPs   = dl->qp_scalar->dimension(2);
+    numNodes = dl->node_scalar->dimension(2);
+  }
+
+  this->addEvaluatedField(beta);
+
+  if (betaType == "Given Constant")
   {
 #ifdef OUTPUT_TO_SCREEN
-    *output << "Constant beta, loaded from file.\n";
+    *output << "Given constant and uniform beta, value loaded from xml input file.\n";
 #endif
-    beta_type = FROM_FILE;
+    beta_type = GIVEN_CONSTANT;
+    beta_given_val = beta_list.get<double>("Constant Given Beta Value");
+  }
+  else if ((betaType == "Given Field")|| (betaType == "Exponent of Given Field"))
+  {
+#ifdef OUTPUT_TO_SCREEN
+    *output << "Given constant beta field, loaded from mesh or file.\n";
+#endif
+    if (betaType == "Given Field")
+      beta_type = GIVEN_FIELD;
+    else
+      beta_type = EXP_GIVEN_FIELD;
 
-    beta_given = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Given Beta Variable Name"), dl->node_scalar);
-    this->addDependentField (beta_given);
+    BF = PHX::MDField<RealType>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
+    beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->node_scalar);
+
+    this->addDependentField (BF);
+    this->addDependentField (beta_given_field);
   }
   else if (betaType == "Power Law")
   {
     beta_type = POWER_LAW;
 
-    mu    = beta_list->get<double>("Coulomb Friction Coefficient");
-    power = beta_list->get("Power Exponent",1.0);
-    TEUCHOS_TEST_FOR_EXCEPTION(power<-1.0, Teuchos::Exceptions::InvalidParameter,
-        std::endl << "Error in FELIX::BasalFrictionCoefficient: \"Power Exponent\" must be greater than (or equal to) -1.\n");
 
 #ifdef OUTPUT_TO_SCREEN
     *output << "Velocity-dependent beta (power law):\n\n"
             << "      beta = mu * N * |u|^p \n\n"
-            << "  with N being the effective pressure, |u| the sliding velocity, and\n"
-            << "    - mu (Coulomb Friction Coefficient): " << mu << "\n"
-            << "    - p  (Power Exponent): " << power << "\n";
+            << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
 
-    N      = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Effective Pressure Variable Name"), dl->node_scalar);
-    u_norm = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Velocity Norm Variable Name"), dl->node_scalar);
-    this->addDependentField (N);
+    N      = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
+    u_norm = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
+
+    this->addDependentField (muField);
+    this->addDependentField (lambdaField);
+    this->addDependentField (powerField);
     this->addDependentField (u_norm);
+    this->addDependentField (N);
   }
   else if (betaType == "Regularized Coulomb")
   {
     beta_type = REGULARIZED_COULOMB;
 
-    mu    = beta_list->get<double>("Coulomb Friction Coefficient");
-    power = beta_list->get("Power Exponent",1.0);
-    L = beta_list->get("Regularization Parameter",1e-4);
-#ifdef OUTPUT_TO_SCREEN
-    *output << "Velocity-dependent beta (regularized coulomb law):\n\n"
-            << "      beta = mu * N * |u|^{p-1} / [|u| + L*N^(1/p)]^p\n\n"
-            << "  with N being the effective pressure, |u| the sliding velocity, and\n"
-            << "    - mu (Coulomb Friction Coefficient): " << mu << "\n"
-            << "    - L  (Regularization Parameter): " << L << "\n"
-            << "    - p  (Power Exponent): " << power << "\n";
-#endif
-
-    N      = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Effective Pressure Variable Name"), dl->node_scalar);
-    u_norm = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Velocity Norm Variable Name"), dl->node_scalar);
-    this->addDependentField (N);
-    this->addDependentField (u_norm);
-  }
-  else if (betaType == "Piecewise Linear")
-  {
-    beta_type = PIECEWISE_LINEAR;
-
-    Teuchos::ParameterList& pw_params = beta_list->sublist("Piecewise Linear Parameters");
-
-    Teuchos::Array<double> coeffs = pw_params.get<Teuchos::Array<double> >("Values");
-    TEUCHOS_TEST_FOR_EXCEPTION(coeffs.size()<1, Teuchos::Exceptions::InvalidParameter,
-        std::endl << "Error in FELIX::BasalFrictionCoefficient: \"Values\" must be at least of size 1.\n");
-
-    nb_pts = coeffs.size();
-    beta_coeffs = new double[nb_pts+1];
-    for (int i(0); i<nb_pts; ++i)
+    printedMu      = -9999.999;
+    printedLambda  = -9999.999;
+    printedQ       = -9999.999;
+    if (beta_list.isParameter("Constant Flow Factor A"))
     {
-        beta_coeffs[i] = coeffs[i];
-    }
-#ifdef OUTPUT_TO_SCREEN
-    *output << "Velocity-dependent beta (piecewise linear FE):\n\n"
-            << "      beta = mu * N * [sum_i c_i*phi_i(|u|)] \n\n"
-            << "  with N being the effective pressure, |u| the sliding velocity, and\n"
-            << "    - mu  (Coulomb Friction Coefficient): " << mu << "\n"
-            << "    - c_i (Values): [" << beta_coeffs[0];
-    for (int i(1); i<nb_pts; ++i)
-        *output << " " << beta_coeffs[i];
-    *output << "]\n";
-#endif
+      A = beta_list.get<double>("Constant Flow Factor A");
 
-    u_grid      = new double[nb_pts+1];
-    u_grid_h    = new double[nb_pts];
-    if (pw_params.get("Uniform Grid",true))
-    {
-        double u_max = pw_params.get("Max Velocity",1.0);
-        double du = u_max/(nb_pts-1);
-        for (int i(0); i<nb_pts; ++i)
-            u_grid[i] = i*du;
-
-        for (int i(0); i<nb_pts-1; ++i)
-            u_grid_h[i] = du;
-
-        u_grid[nb_pts] = u_max;
-        u_grid_h[nb_pts-1] = 1;
-#ifdef OUTPUT_TO_SCREEN
-        *output << "    - Uniform grid in [0," << u_max << "]\n";
-#endif
+      // A*N^{1/q} is dimensionally correct only for q=1/3. To fix this, we modify A
+      // so that the formula becomes (A_mod*N)^{1/q}. This means that A_mod = A^{1/3}
+      A = std::cbrt(A);
     }
     else
     {
-        Teuchos::Array<double> pts = pw_params.get<Teuchos::Array<double> >("Grid");
-        TEUCHOS_TEST_FOR_EXCEPTION(pts.size()!=nb_pts, Teuchos::Exceptions::InvalidParameter,
-            std::endl << "Error in FELIX::BasalFrictionCoefficient: \"Grid\" and \"Values\" must be of the same size.\n");
-
-        for (int i(0); i<nb_pts; ++i)
-            u_grid[i] = pts[i];
-        for (int i(0); i<nb_pts-1; ++i)
-            u_grid_h[i] = u_grid[i+1]-u_grid[i];
-
-        u_grid[nb_pts] = u_grid[nb_pts-1];
-        u_grid_h[nb_pts-1] = 1;
-
-#ifdef OUTPUT_TO_SCREEN
-        *output << "    - User-defined grid: [" << u_grid[0];
-        for (int i(1); i<nb_pts; ++i)
-            *output << " " << u_grid[i];
-        *output << "]\n";
-#endif
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! The case with variable flow factor has not been implemented yet.\n");
     }
+#ifdef OUTPUT_TO_SCREEN
+    *output << "Velocity-dependent beta (regularized coulomb law):\n\n"
+            << "      beta = mu * N * |u|^{p-1} / [|u| + lambda*A*N^(1/p)]^p\n\n"
+            << "  with N being the effective pressure, |u| the sliding velocity\n";
+#endif
 
-    u_norm  = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Velocity Norm Variable Name"), dl->node_scalar);
+    N      = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
+    u_norm = PHX::MDField<ScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
+
+    this->addDependentField (muField);
+    this->addDependentField (lambdaField);
+    this->addDependentField (powerField);
+    this->addDependentField (N);
     this->addDependentField (u_norm);
   }
   else
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-        std::endl << "Error in FELIX::BasalFrictionCoefficient:  \"" << betaType << "\" is not a valid parameter for Beta Type" << std::endl);
+        std::endl << "Error in FELIX::BasalFrictionCoefficient:  \"" << betaType << "\" is not a valid parameter for Beta Type\n");
   }
 
-  std::vector<PHX::DataLayout::size_type> dims;
-  dl->node_vector->dimensions(dims);
-  numCells = dims[0];
-  numNodes = dims[1];
-  numDims  = dims[2];
+  fixed_point_beta = beta_list.get("Fixed Point Beta",false);
+  auto& stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
+  use_stereographic_map = stereographicMapList->get("Use Stereographic Map", false);
+  if(use_stereographic_map)
+  {
+    coordVec = PHX::MDField<MeshScalarT>(p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_coords);
 
-  this->addEvaluatedField(beta);
+    double R = stereographicMapList->get<double>("Earth Radius", 6371);
+    x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
+    y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
+    R2 = std::pow(R,2);
 
-  this->setName("BasalFrictionCoefficient");
-}
+    this->addDependentField(coordVec);
+  }
 
-template<typename EvalT, typename Traits>
-BasalFrictionCoefficient<EvalT, Traits>::~BasalFrictionCoefficient()
-{
-    delete[] u_grid;
-    delete[] u_grid_h;
-    delete[] beta_coeffs;
+  this->setName("BasalFrictionCoefficient"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -188,164 +161,236 @@ void BasalFrictionCoefficient<EvalT, Traits>::
 postRegistrationSetup (typename Traits::SetupData d,
                        PHX::FieldManager<Traits>& fm)
 {
+  this->utils.setFieldData(beta,fm);
+
   switch (beta_type)
   {
-    case FROM_FILE:
-        this->utils.setFieldData(beta_given,fm);
-        break;
+    case GIVEN_CONSTANT:
+      if (is_hydrology)
+      {
+        for (int cell=0; cell<beta.fieldTag().dataLayout().dimension(0); ++cell)
+          for (int qp=0; qp<numQPs; ++qp)
+            beta(cell,qp) = beta_given_val;
+      }
+      else
+      {
+        for (int cell=0; cell<beta.fieldTag().dataLayout().dimension(0); ++cell)
+          for (int side=0; side<beta.fieldTag().dataLayout().dimension(1); ++side)
+            for (int qp=0; qp<numQPs; ++qp)
+              beta(cell,side,qp) = beta_given_val;
+      }
+      break;
+    case GIVEN_FIELD:
+    case EXP_GIVEN_FIELD:
+      this->utils.setFieldData(BF,fm);
+      this->utils.setFieldData(beta_given_field,fm);
+      break;
     case POWER_LAW:
     case REGULARIZED_COULOMB:
-        this->utils.setFieldData(N,fm);
-    case PIECEWISE_LINEAR:
-        this->utils.setFieldData(u_norm,fm);
+      this->utils.setFieldData(muField,fm);
+      this->utils.setFieldData(lambdaField,fm);
+      this->utils.setFieldData(powerField,fm);
+      this->utils.setFieldData(N,fm);
+      this->utils.setFieldData(u_norm,fm);
   }
 
-  this->utils.setFieldData(beta,fm);
-}
-
-template<typename EvalT,typename Traits>
-void BasalFrictionCoefficient<EvalT,Traits>::setHomotopyParamPtr(ScalarT* h)
-{
-    homotopyParam = h;
-}
-
-//**********************************************************************
-//Kokkos functor
-template<typename EvalT, typename Traits>
-KOKKOS_INLINE_FUNCTION
-void BasalFrictionCoefficient<EvalT, Traits>::operator () (const int i) const
-{
-    switch (beta_type)
-    {
-        case FROM_FILE:
-            for (int node=0; node < numNodes; ++node)
-                beta(i,node) = beta_given(i,node);
-
-            break;
-
-        case POWER_LAW:
-            for (int node=0; node < numNodes; ++node)
-            {
-                beta(i,node) = mu * N(i,node) * std::pow(u_norm(i,node), power);
-            }
-            break;
-
-        case REGULARIZED_COULOMB:
-        {
-            ScalarT ff = 0;
-            if (homotopyParam!=0 && *homotopyParam!=0)
-                ff = pow(10.0, -10.0*(*homotopyParam));
-
-            for (int node=0; node < numNodes; ++node)
-            {
-                beta(i,node) = mu * N(i,node) * std::pow (u_norm(i,node), power-1)
-                             / std::pow(u_norm(i,node) + L*std::pow(N(i,node),1./power), power);
-            }
-            break;
-        }
-        case PIECEWISE_LINEAR:
-        {
-            ptrdiff_t where;
-            ScalarT xi;
-            for (int node=0; node < numNodes; ++node)
-            {
-                where = std::lower_bound(u_grid,u_grid+nb_pts,u_norm(i,node)) - u_grid;
-                xi = (u_norm(i,node) - u_grid[where]) / u_grid_h[where];
-
-                beta(i,node) = (1-xi)*beta_coeffs[where] + xi*beta_coeffs[where+1];
-            }
-            break;
-        }
-
-    }
+  if (use_stereographic_map)
+    this->utils.setFieldData(coordVec,fm);
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
 {
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  ScalarT mu, lambda, power;
+
+  if (beta_type==POWER_LAW || beta_type==REGULARIZED_COULOMB)
+  {
+    mu = muField(0);
+    lambda = lambdaField(0);
+    power = powerField(0);
+    TEUCHOS_TEST_FOR_EXCEPTION (power<-1.0, Teuchos::Exceptions::InvalidParameter,
+                                "\nError in FELIX::BasalFrictionCoefficient: \"Power Exponent\" must be greater than (or equal to) -1.\n");
+#ifdef OUTPUT_TO_SCREEN
+    Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
+    if (printedMu!=mu)
+    {
+      *output << "[Basal Friction Coefficient<" << PHX::typeAsString<EvalT>() << ">] mu = " << mu << "\n";
+      printedMu = mu;
+    }
+    if (printedLambda!=lambda)
+    {
+      *output << "[Basal Friction Coefficient<" << PHX::typeAsString<EvalT>() << ">] lambda = " << lambda << "\n";
+      printedLambda = lambda;
+    }
+    if (printedQ!=power)
+    {
+      *output << "[Basal Friction Coefficient<" << PHX::typeAsString<EvalT>() << ">]] power = " << power << "\n";
+      printedQ = power;
+    }
+#endif
+  }
+  if (is_hydrology)
+  {
+    ScalarT homotopyParam = FELIX::HomotopyParameter<EvalT>::value;
+    ScalarT ff = 0;
+    if (homotopyParam!=0)
+      ff = pow(10.0, -10.0*homotopyParam);
+
     switch (beta_type)
     {
-        case FROM_FILE:
-            for (int cell=0; cell<workset.numCells; ++cell)
-                for (int node=0; node < numNodes; ++node)
-                    beta(cell,node) = beta_given(cell,node);
+      case GIVEN_CONSTANT:
+        break;   // We don't have anything to do
 
-            break;
+      case GIVEN_FIELD:
+        for (int cell=0; cell<workset.numCells; ++cell)
+          for (int qp=0; qp<numQPs; ++qp)
+          {
+            beta(cell,qp) = 0.;
+            for (int node=0; node<numNodes; ++node)
+            {
+              beta(cell,qp) += BF(cell,node,qp)*beta_given_field(cell,node);
+            }
+          }
+        break;
+
+      case POWER_LAW:
+        for (int cell=0; cell<workset.numCells; ++cell)
+          for (int qp=0; qp<numQPs; ++qp)
+          {
+            beta(cell,qp) = mu * N(cell,qp) * std::pow (u_norm(cell,qp), power);
+          }
+        break;
+
+      case REGULARIZED_COULOMB:
+        for (int cell=0; cell<workset.numCells; ++cell)
+          for (int qp=0; qp<numQPs; ++qp)
+          {
+            beta(cell,qp) = ff + mu * N(cell,qp) * std::pow (u_norm(cell,qp),power-1)
+                          / std::pow( u_norm(cell,qp) + lambda*std::pow(A*N(cell,qp),1./power), power);
+          }
+        break;
+
+      case EXP_GIVEN_FIELD:
+        for (int cell=0; cell<workset.numCells; ++cell)
+          for (int qp=0; qp<numQPs; ++qp)
+          {
+            beta(cell,qp) = 0.;
+            for (int node=0; node<numNodes; ++node)
+            {
+              beta(cell,qp) += BF(cell,node,qp)*beta_given_field(cell,node);
+            }
+            beta(cell,qp) = std::exp(beta(cell,qp));
+          }
+        break;
+    }
+
+    // Correct the value if we are using a stereographic map
+    if (use_stereographic_map)
+    {
+      for (int cell=0; cell<workset.numCells; ++cell)
+      {
+        for (int qp=0; qp<numQPs; ++qp)
+        {
+          MeshScalarT x = coordVec(cell,qp,0) - x_0;
+          MeshScalarT y = coordVec(cell,qp,1) - y_0;
+          MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+          beta(cell,qp) *= h*h;
+        }
+      }
+    }
+  }
+  else
+  {
+    if (workset.sideSets->find(basalSideName)==workset.sideSets->end())
+      return;
+
+    ScalarT homotopyParam = FELIX::HomotopyParameter<EvalT>::value;
+    ScalarT ff = 0;
+    if (homotopyParam!=0)
+      ff = pow(10.0, -10.0*homotopyParam);
+/*
+    Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
+    *output << "h = " << homotopyParam << "\n"
+            << "mu = " << mu << "\n"
+            << "lambda = " << lambda << "\n";
+*/
+    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
+    for (auto const& it_side : sideSet)
+    {
+      // Get the local data of side and cell
+      const int cell = it_side.elem_LID;
+      const int side = it_side.side_local_id;
+
+      switch (beta_type)
+      {
+        case GIVEN_CONSTANT:
+          return;   // We can save ourself some useless iterations
+
+        case GIVEN_FIELD:
+          for (int qp=0; qp<numQPs; ++qp)
+          {
+            beta(cell,side,qp) = 0.;
+            for (int node=0; node<numNodes; ++node)
+            {
+              beta(cell,side,qp) += BF(cell,side,node,qp)*beta_given_field(cell,side,node);
+            }
+          }
+          break;
 
         case POWER_LAW:
-            for (int cell=0; cell<workset.numCells; ++cell)
-            {
-                for (int node=0; node < numNodes; ++node)
-                {
-                    beta(cell,node) = mu * N(cell,node) * std::pow (u_norm(cell,node), power);
-                }
-            }
-            break;
+          for (int qp=0; qp<numQPs; ++qp)
+          {
+            beta(cell,side,qp) = mu * N(cell,side,qp) * std::pow (u_norm(cell,side,qp), power);
+          }
+          break;
 
         case REGULARIZED_COULOMB:
-        {
-            ScalarT ff = 0;
-            if (homotopyParam!=0 && *homotopyParam!=0)
-                ff = pow(10.0, -10.0*(*homotopyParam));
+          if (fixed_point_beta)
+          {
+            for (int qp=0; qp<numQPs; ++qp)
+            {
+              ScalarT d = std::pow( u_norm(cell,side,qp) + lambda*std::pow(A*N(cell,side,qp),1./power), power);
+              double dd = Albany::ADValue(d);
+              beta(cell,side,qp) = mu * N(cell,side,qp) * std::pow (u_norm(cell,side,qp),power-1) / dd;
+            }
+          }
+          else
+          {
+            for (int qp=0; qp<numQPs; ++qp)
+            {
+              ScalarT q = u_norm(cell,side,qp) / ( u_norm(cell,side,qp) + lambda*std::pow(A*N(cell,side,qp),1./power) );
+              beta(cell,side,qp) = mu * N(cell,side,qp) * std::pow( q, power) / u_norm(cell,side,qp);
+            }
+          }
+          break;
 
-            for (int cell=0; cell<workset.numCells; ++cell)
+        case EXP_GIVEN_FIELD:
+          for (int qp=0; qp<numQPs; ++qp)
+          {
+            beta(cell,side,qp) = 0.;
+            for (int node=0; node<numNodes; ++node)
             {
-                for (int node=0; node < numNodes; ++node)
-                {
-                    beta(cell,node) = mu * N(cell,node) * std::pow (u_norm(cell,node), power-1)
-                                 / std::pow( u_norm(cell,node) + L*std::pow(N(cell,node),1./power), power);
-                }
+              beta(cell,side,qp) += BF(cell,side,node,qp)*beta_given_field(cell,side,node);
             }
-            break;
-        }
-        case PIECEWISE_LINEAR:
+            beta(cell,side,qp) = std::exp(beta(cell,side,qp));
+          }
+          break;
+      }
+
+      // Correct the value if we are using a stereographic map
+      if (use_stereographic_map)
+      {
+        for (int qp=0; qp<numQPs; ++qp)
         {
-            ptrdiff_t where;
-            ScalarT xi;
-            for (int cell=0; cell<workset.numCells; ++cell)
-            {
-                for (int node=0; node < numNodes; ++node)
-                {
-                    where = std::lower_bound(u_grid,u_grid+nb_pts,getScalarTValue(u_norm(cell,node))) - u_grid;
-                    xi = (u_norm(cell,node) - u_grid[where]) / u_grid_h[where];
-                    beta(cell,node) = (1-xi)*beta_coeffs[where] + xi*beta_coeffs[where+1];
-                }
-            }
-            break;
+          MeshScalarT x = coordVec(cell,side,qp,0) - x_0;
+          MeshScalarT y = coordVec(cell,side,qp,1) - y_0;
+          MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
+          beta(cell,side,qp) *= h*h;
         }
+      }
     }
-#else
-  Kokkos::parallel_for (workset.numCells, *this);
-#endif
+  }
 }
-
-
-template<typename EvalT, typename Traits>
-double BasalFrictionCoefficient<EvalT, Traits>::getScalarTValue(const ScalarT& s)
-{
-    return Albany::ADValue(s);
-}
-
-#ifdef ALBANY_ENSEMBLE
-template<>
-double BasalFrictionCoefficient<PHAL::AlbanyTraits::MPResidual,PHAL::AlbanyTraits>::getScalarTValue(const ScalarT& s) {
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "FELIX::BasalFrictionCoefficient::getScalarTValue does not work with Ensemble MP types!!");
-  return 0.;
-}
-
-template<>
-double BasalFrictionCoefficient<PHAL::AlbanyTraits::MPJacobian,PHAL::AlbanyTraits>::getScalarTValue(const ScalarT& s) {
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "FELIX::BasalFrictionCoefficient::getScalarTValue does not work with Ensemble MP types!!");
-  return 0.;
-}
-
-template<>
-double BasalFrictionCoefficient<PHAL::AlbanyTraits::MPTangent,PHAL::AlbanyTraits>::getScalarTValue(const ScalarT& s) {
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "FELIX::BasalFrictionCoefficient::getScalarTValue does not work with Ensemble MP types!!");
-  return 0.;
-}
-#endif
 
 } // Namespace FELIX

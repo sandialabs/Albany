@@ -104,26 +104,8 @@ LocalMatrixType jacobian;
 bool loadResid;
 int neq, nunk;
 
-Kokkos::View<int***, PHX::Device> Index;
+//FIXME, IKT, 5/9/16: add Kokkos functor implementations here. 
 
-struct ScatterResid_noFastAccess_Tag{};
-struct ScatterResid_hasFastAccess_is_adjoint_Tag{};
-struct ScatterResid_hasFastAccess_no_adjoint_Tag{};
-
-typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-
-typedef Kokkos::RangePolicy<ExecutionSpace, ScatterResid_noFastAccess_Tag> ScatterResid_noFastAccess_Policy;
-typedef Kokkos::RangePolicy<ExecutionSpace, ScatterResid_hasFastAccess_is_adjoint_Tag> ScatterResid_hasFastAccess_is_adjoint_Policy;
-typedef Kokkos::RangePolicy<ExecutionSpace, ScatterResid_hasFastAccess_no_adjoint_Tag> ScatterResid_hasFastAccess_no_adjoint_Policy;
-
-KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterResid_noFastAccess_Tag& tag, const int& i) const;
-
-KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterResid_hasFastAccess_is_adjoint_Tag& tag, const int& i) const;
-
-KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterResid_hasFastAccess_no_adjoint_Tag& tag, const int& i) const;
 #endif
 
 

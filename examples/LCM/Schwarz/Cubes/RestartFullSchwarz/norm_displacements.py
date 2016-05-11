@@ -26,7 +26,7 @@ if __name__ == '__main__':
         opts, args = getopt.getopt(
             sys.argv[1:],"",["schwarz_no=","step_no=","num_schwarz_prev="])
     except getopt.GetoptError:
-        print 'usage: approximation_study.py'
+        print 'Error: bad arguments'
         sys.exit(2)
 
     for opt, arg in opts:

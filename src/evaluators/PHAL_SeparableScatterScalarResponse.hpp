@@ -71,6 +71,8 @@ public:
 
   void evaluateFields(typename Traits::EvalData d) {}
 
+  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData d, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo) {}
+
 protected:
   SeparableScatterScalarResponse() {}
   void setup(const Teuchos::ParameterList& p,
@@ -103,6 +105,7 @@ public:
   }
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
+  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData d, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo);
   void postEvaluate(typename Traits::PostEvalData d);
 protected:
   typedef PHAL::AlbanyTraits::Jacobian EvalT;
@@ -113,9 +116,10 @@ protected:
     SeparableScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
     numNodes = dl->node_scalar->dimension(1);
   }
+protected:
+  int numNodes;
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
-  int numNodes;
 };
 
 // **************************************************************
@@ -135,6 +139,7 @@ public:
   }
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
+  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData d, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo) {}
   void postEvaluate(typename Traits::PostEvalData d);
 protected:
   typedef PHAL::AlbanyTraits::DistParamDeriv EvalT;
@@ -168,6 +173,7 @@ public:
   }
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
+  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData d, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo) {}
   void postEvaluate(typename Traits::PostEvalData d);
 protected:
   typedef PHAL::AlbanyTraits::SGJacobian EvalT;
@@ -202,6 +208,7 @@ public:
   }
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
+  void evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData d, std::string& sideset, Teuchos::RCP<const CellTopologyData> cellTopo) {}
   void postEvaluate(typename Traits::PostEvalData d);
 protected:
   typedef PHAL::AlbanyTraits::MPJacobian EvalT;

@@ -87,15 +87,16 @@ evaluateFields(typename Traits::EvalData workset)
           Residual(cell,node) += XDot(cell,qp)*wBF(cell,node,qp);
           for (int j=0; j < numDims; ++j) 
             Residual(cell,node) += XGrad(cell,qp,j)*wBF(cell,node,qp);
-        } else {
-//Irina TOFIX
-/*          for (int level=0; level < numLevels; ++level) {
-            Residual(cell,node,level) += XDot(cell,qp,level)*wBF(cell,node,qp);
-            for (int j=0; j < numDims; ++j) 
-              Residual(cell,node,level) +=                         wBF(cell,node,qp);
+        } 
+        else {
+          //Irina TOFIX
+         /*for (int level=0; level < numLevels; ++level) {
+             Residual(cell,node,level) += XDot(cell,qp,level)*wBF(cell,node,qp);
+             for (int j=0; j < numDims; ++j) 
+               Residual(cell,node,level) +=                         wBF(cell,node,qp);
  //            Residual(cell,node,level) += uXGrad(cell,qp,level,j)*wBF(cell,node,qp);
           }
-*/        }
+*/      }
       }
     }
   }

@@ -348,15 +348,14 @@ Albany::CismSTKMeshStruct::constructMesh(
 
   typedef AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
   typedef AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
-  typedef AbstractSTKFieldContainer::QPScalarFieldType ElemScalarFieldType;
 
   VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
   ScalarFieldType* surfaceHeight_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "surface_height");
   ScalarFieldType* thickness_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "thickness");
   ScalarFieldType* dsurfaceHeight_dx_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "xgrad_surface_height");
   ScalarFieldType* dsurfaceHeight_dy_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "ygrad_surface_height");
-  ElemScalarFieldType* flowFactor_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "flow_factor");
-  ElemScalarFieldType* temperature_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
+  ScalarFieldType* flowFactor_field = metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "flow_factor");
+  ScalarFieldType* temperature_field = metaData->get_field<ScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
   ScalarFieldType* basal_friction_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "basal_friction");
   VectorFieldType* dirichlet_field = metaData->get_field<VectorFieldType>(stk::topology::NODE_RANK, "dirichlet_field");
 

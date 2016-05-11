@@ -6,6 +6,7 @@
 
 #include "Albany_Helmholtz2DProblem.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 
 Albany::Helmholtz2DProblem::

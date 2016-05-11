@@ -11,6 +11,7 @@
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 
 void
@@ -74,12 +75,14 @@ Stokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if (haveFlowEq) num_eq += numDim+1;
   this->setNumEquations(num_eq);
 
-  // Need to allocate a surface height and temperature fields in mesh database
-  this->requirements.push_back("surface_height");
-  this->requirements.push_back("temperature");
-  this->requirements.push_back("basal_friction");
-  this->requirements.push_back("thickness");
-  this->requirements.push_back("flow_factor");
+  // Need to allocate a fields in mesh database
+  if (params->isParameter("Required Fields"))
+  {
+    // Need to allocate a fields in mesh database
+    Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Fields");
+    for (int i(0); i<req.size(); ++i)
+      this->requirements.push_back(req[i]);
+  }
 
   // Print out a summary of the problem
   *out << "Stokes problem:" << std::endl
@@ -146,7 +149,7 @@ FELIX::Stokes::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
-   offsets_ = dirUtils.getOffsets(); 
+   offsets_ = dirUtils.getOffsets();
 }
 
 //Neumann BCs

@@ -5,6 +5,7 @@
 //*****************************************************************//
 #include "GradientDamageProblem.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 
 Albany::GradientDamageProblem::

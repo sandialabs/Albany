@@ -1,4 +1,5 @@
 #include "Albany_Utils.hpp"
+#include "Albany_BCUtils.hpp"
 
 /******************************************************************************/
 template<typename N>

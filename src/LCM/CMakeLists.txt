@@ -119,7 +119,7 @@ set(HEADERS ${HEADERS}
   ${topology-headers}
  )
 
-IF(NOT ALBANY_PERIDIGM)
+IF(NOT ALBANY_PERIDIGM OR NOT ALBANY_EPETRA)
   list(REMOVE_ITEM SOURCES ${LCM_DIR}/problems/PeridigmProblem.cpp)
   list(REMOVE_ITEM SOURCES ${LCM_DIR}/utils/PeridigmManager.cpp)
   list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/PeridigmForce.cpp)

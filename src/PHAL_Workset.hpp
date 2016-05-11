@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: Epetra has been ifdef'ed out if ALBANY_EPETRA_EXE is off. 
+//IK, 9/12/14: Epetra has been ifdef'ed out if ALBANY_EPETRA_EXE is off.
 
 #ifndef PHAL_WORKSET_HPP
 #define PHAL_WORKSET_HPP
@@ -17,9 +17,10 @@
 #include "Epetra_Vector.h"
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Import.h"
+#include "Albany_EigendataInfoStruct.hpp"
 #endif
 #include "Albany_AbstractDiscretization.hpp"
-#include "Albany_StateManager.hpp"
+#include "Albany_EigendataInfoStructT.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_DistributedParameterLibrary_Tpetra.hpp"
 #include <Intrepid2_FieldContainer.hpp>
@@ -32,7 +33,6 @@
 #endif
 #endif
 
-#include "PHAL_AlbanyTraits.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Comm.hpp"
 
@@ -46,11 +46,10 @@ class Application;
 } // namespace Albany
 #endif
 
+
 namespace PHAL {
 
 struct Workset {
-
-  typedef AlbanyTraits::EvalTypes ET;
 
   Workset() :
     transientTerms(false), accelerationTerms(false), ignore_residual(false) {}
@@ -73,7 +72,7 @@ struct Workset {
   Teuchos::RCP<const Tpetra_Vector> xT;
   Teuchos::RCP<const Tpetra_Vector> xdotT;
   Teuchos::RCP<const Tpetra_Vector> xdotdotT;
-  
+
   Teuchos::RCP<ParamVec> params;
 #if defined(ALBANY_EPETRA)
   Teuchos::RCP<const Epetra_MultiVector> Vx;
@@ -87,6 +86,7 @@ struct Workset {
   Teuchos::RCP<const Tpetra_MultiVector> VxdotdotT;
   Teuchos::RCP<const Tpetra_MultiVector> VpT;
 #if defined(ALBANY_EPETRA)
+#ifdef ALBANY_STOKHOS
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_x;
 
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_xdot;
@@ -95,6 +95,7 @@ struct Workset {
   Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_xdot;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_xdotdot;
 #endif
+#endif
 
 #if defined(ALBANY_EPETRA)
   // These are residual related.
@@ -102,7 +103,7 @@ struct Workset {
 #endif
   //Tpetra analog of f
   Teuchos::RCP<Tpetra_Vector> fT;
- 
+
 #if defined(ALBANY_EPETRA)
   Teuchos::RCP<Epetra_CrsMatrix> Jac;
 #endif
@@ -126,6 +127,7 @@ struct Workset {
   Teuchos::RCP<Tpetra_MultiVector> Vp_bcT;
 
 #if defined(ALBANY_EPETRA)
+#ifdef ALBANY_STOKHOS
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_f;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > sg_Jac;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_JV;
@@ -134,6 +136,7 @@ struct Workset {
   Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > mp_Jac;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_JV;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_fp;
+#endif
 #endif
 
   Teuchos::RCP<const Albany::NodeSetList> nodeSets;
@@ -177,7 +180,7 @@ struct Workset {
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;
 
-  // Needed for Schwarz coupling and for dirichlet conditions based on dist parameters. 
+  // Needed for Schwarz coupling and for dirichlet conditions based on dist parameters.
   Teuchos::RCP<Albany::AbstractDiscretization> disc;
 #if defined(ALBANY_LCM)
   // Needed for Schwarz coupling
@@ -227,7 +230,7 @@ struct Workset {
   Teuchos::RCP<Epetra_MultiVector> dgdxdot;
   Teuchos::RCP<Epetra_MultiVector> dgdxdotdot;
 #endif
-  //Tpetra analogs of dgdx and dgdxdot 
+  //Tpetra analogs of dgdx and dgdxdot
   Teuchos::RCP<Tpetra_MultiVector> dgdxT;
   Teuchos::RCP<Tpetra_MultiVector> dgdxdotT;
   Teuchos::RCP<Tpetra_MultiVector> dgdxdotdotT;
@@ -247,6 +250,8 @@ struct Workset {
   //Tpetra analog of dgdp
   Teuchos::RCP<Tpetra_MultiVector> dgdpT;
   //dp-convert Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT;
+
+#if defined(ALBANY_STOKHOS) and defined(ALBANY_EPETRA)
 #ifdef ALBANY_SG
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_g;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdx;
@@ -256,8 +261,8 @@ struct Workset {
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > overlapped_sg_dgdxdot;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > overlapped_sg_dgdxdotdot;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdp;
-#endif 
-#ifdef ALBANY_ENSEMBLE 
+#endif
+#ifdef ALBANY_ENSEMBLE
   Teuchos::RCP< Stokhos::ProductEpetraVector > mp_g;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdx;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdxdot;
@@ -266,6 +271,7 @@ struct Workset {
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > overlapped_mp_dgdxdot;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > overlapped_mp_dgdxdotdot;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdp;
+#endif
 #endif
 
 #ifdef ALBANY_GOAL

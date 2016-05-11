@@ -10,7 +10,6 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace PHAL {
@@ -60,15 +59,15 @@ operator()( const team_member & thread) const{
 
   const int thread_idx = thread.league_rank() * threads_per_team;
   const int end_loop= thread_idx+threads_per_team>(numCells*numQPs)?(numCells*numQPs):(thread_idx+threads_per_team);
-  ScalarT gradVal_tmp; 
- 
+  ScalarT gradVal_tmp;
+
   Kokkos::parallel_for(Kokkos::TeamThreadRange(thread, thread_idx, end_loop), [=](int& indx){
       const int cell =indx/numCells;
       const int qp =indx=indx/numCells;
       const int vector_range=numNodes-1;
           for (int dim=0; dim<numDims; dim++) {
             grad_val_qp(cell,qp,dim) = val_node(cell, 0) * GradBF(cell, 0, qp, dim);
-           
+
            /* Kokkos::parallel_reduce(Kokkos::ThreadVectorRange(thread, vector_range),
                                [&](const int& lk, ScalarT& gradVal){
                            const int node=1+lk;
@@ -233,7 +232,7 @@ evaluateFields(typename Traits::EvalData workset)
 #else
             grad_val_qp(cell,qp,dim) = ScalarT(num_dof, val_node(cell, 0).val() * GradBF(cell, 0, qp, dim));
             (grad_val_qp(cell,qp,dim)).fastAccessDx(offset) = val_node(cell, 0).fastAccessDx(offset) * GradBF(cell, 0, qp, dim);
-#endif            
+#endif
             for (std::size_t node= 1 ; node < numNodes; ++node) {
 #ifdef ALBANY_MESH_DEPENDS_ON_SOLUTION
               grad_val_qp(cell,qp,dim) += val_node(cell, node) * GradBF(cell, node, qp, dim);
@@ -317,7 +316,7 @@ operator()(const int& i) const
               grad_val_qp(i,qp,dim) += val_node(i, node) * GradBF(i, node, qp, dim);
           }
         }
-      }  
+      }
  }
 //**********************************************************************
 template<typename EvalT, typename Traits>

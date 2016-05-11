@@ -59,7 +59,10 @@ inline Ioss::Field::RoleType role_type(const bool output) {
 
 template<bool Interleaved>
 void
-Albany::GenericSTKFieldContainer<Interleaved>::addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis){
+Albany::GenericSTKFieldContainer<Interleaved>::addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
+{
+  if (sis==Teuchos::null)
+    return;
 
   using namespace Albany;
 
@@ -69,6 +72,9 @@ Albany::GenericSTKFieldContainer<Interleaved>::addStateStructs(const Teuchos::RC
   typedef typename AbstractSTKFieldContainer::QPVectorFieldType QPVFT;
   typedef typename AbstractSTKFieldContainer::QPTensorFieldType QPTFT;
   typedef typename AbstractSTKFieldContainer::QPTensor3FieldType QPT3FT;
+  typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
+  typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
+  typedef typename AbstractSTKFieldContainer::TensorFieldType TFT;
 
   // Code to parse the vector of StateStructs and create STK fields
   for(std::size_t i = 0; i < sis->size(); i++) {
@@ -76,23 +82,47 @@ Albany::GenericSTKFieldContainer<Interleaved>::addStateStructs(const Teuchos::RC
     StateStruct::FieldDims& dim = st.dim;
 
     if(st.entity == StateStruct::ElemData){
-      qpscalar_states.push_back(& metaData->declare_field< QPSFT >(stk::topology::ELEMENT_RANK, st.name));
-      stk::mesh::put_field(*qpscalar_states.back() ,
-                           metaData->universal_part(), 1);
-      
+
+      if (dim.size()==1)
+      {
+        // Scalar on cell
+        cell_scalar_states.push_back(& metaData->declare_field< SFT >(stk::topology::ELEMENT_RANK, st.name));
+        stk::mesh::put_field(*cell_scalar_states.back(), metaData->universal_part(), 1);
+#ifdef ALBANY_SEACAS
+        stk::io::set_field_role(*cell_scalar_states.back(), role_type(st.output));
+#endif
+      }
+      else if (dim.size()==2)
+      {
+        // Vector on cell
+        cell_vector_states.push_back(& metaData->declare_field< VFT >(stk::topology::ELEMENT_RANK, st.name));
+        stk::mesh::put_field(*cell_vector_states.back(), metaData->universal_part(), dim[1]);
+#ifdef ALBANY_SEACAS
+        stk::io::set_field_role(*cell_vector_states.back(), role_type(st.output));
+#endif
+      }
+      else if (dim.size()==3)
+      {
+        // 2nd order tensor on cell
+        cell_tensor_states.push_back(& metaData->declare_field< TFT >(stk::topology::ELEMENT_RANK, st.name));
+        stk::mesh::put_field(*cell_tensor_states.back(), metaData->universal_part(), dim[2], dim[1]);
+#ifdef ALBANY_SEACAS
+        stk::io::set_field_role(*cell_tensor_states.back(), role_type(st.output));
+#endif
+      }
+      else
+      {
+        TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Unexpected state rank.\n");
+      }
       //Debug
       //      cout << "Allocating qps field name " << qpscalar_states.back()->name() <<
       //            " size: (" << dim[0] << ", " << dim[1] << ")" <<endl;
-#ifdef ALBANY_SEACAS
-      stk::io::set_field_role(*qpscalar_states.back(), role_type(st.output));
-#endif
 
     } else if(st.entity == StateStruct::QuadPoint || st.entity == StateStruct::ElemNode){
 
         if(dim.size() == 2){ // Scalar at QPs
           qpscalar_states.push_back(& metaData->declare_field< QPSFT >(stk::topology::ELEMENT_RANK, st.name));
-          stk::mesh::put_field(*qpscalar_states.back() ,
-                               metaData->universal_part(), dim[1]);
+          stk::mesh::put_field(*qpscalar_states.back(), metaData->universal_part(), dim[1]);
         //Debug
         //      cout << "Allocating qps field name " << qpscalar_states.back()->name() <<
         //            " size: (" << dim[0] << ", " << dim[1] << ")" <<endl;
@@ -103,8 +133,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::addStateStructs(const Teuchos::RC
         else if(dim.size() == 3){ // Vector at QPs
           qpvector_states.push_back(& metaData->declare_field< QPVFT >(stk::topology::ELEMENT_RANK, st.name));
           // Multi-dim order is Fortran Ordering, so reversed here
-          stk::mesh::put_field(*qpvector_states.back() ,
-                           metaData->universal_part(), dim[2], dim[1]);
+          stk::mesh::put_field(*qpvector_states.back(), metaData->universal_part(), dim[2], dim[1]);
           //Debug
           //      cout << "Allocating qpv field name " << qpvector_states.back()->name() <<
           //            " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ")" <<endl;
@@ -127,8 +156,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::addStateStructs(const Teuchos::RC
         else if(dim.size() == 5){ // Tensor3 at QPs
           qptensor3_states.push_back(& metaData->declare_field< QPT3FT >(stk::topology::ELEMENT_RANK, st.name));
           // Multi-dim order is Fortran Ordering, so reversed here
-          stk::mesh::put_field(*qptensor3_states.back() ,
-                               metaData->universal_part(), dim[4], dim[3], dim[2], dim[1]);
+          stk::mesh::put_field(*qptensor3_states.back(), metaData->universal_part(), dim[4], dim[3], dim[2], dim[1]);
           //Debug
           //      cout << "Allocating qpt field name " << qptensor_states.back()->name() <<
           //            " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ", " << dim[3] << ", " << dim[4] << ")" <<endl;
@@ -144,11 +172,11 @@ Albany::GenericSTKFieldContainer<Interleaved>::addStateStructs(const Teuchos::RC
     else if(dim.size() == 1 && st.entity == StateStruct::WorksetValue) { // A single value that applies over the entire workset (time)
       scalarValue_states.push_back(&st.name); // Just save a pointer to the name allocated in st
     } // End scalar at center of element
-    else if((st.entity == StateStruct::NodalData) ||(st.entity == StateStruct::NodalDataToElemNode) || (st.entity == StateStruct::NodalDistParameter)) { // Data at the node points
-
+    else if((st.entity == StateStruct::NodalData) ||(st.entity == StateStruct::NodalDataToElemNode) || (st.entity == StateStruct::NodalDistParameter))
+    { // Data at the node points
         const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
                = sis->getNodalDataBase()->getNodeContainer();
-      // const Teuchos::RCP<Albany::AbstractNodeFieldContainer>& nodeContainer 
+      // const Teuchos::RCP<Albany::AbstractNodeFieldContainer>& nodeContainer
       //         = sis->getNodalDataBlock()->getNodeContainer();
 
         if(st.entity == StateStruct::NodalDataToElemNode) {
@@ -172,6 +200,15 @@ Albany::GenericSTKFieldContainer<Interleaved>::addStateStructs(const Teuchos::RC
     else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
             "Error: GenericSTKFieldContainer - cannot match unknown entity : " << st.entity << std::endl);
 
+    // Checking if the field is layered, in which case the normalized layer coordinates need to be stored in the meta data
+    if (st.layered)
+    {
+      std::string tmp_str = st.name + "_NLC";
+
+      TEUCHOS_TEST_FOR_EXCEPTION (mesh_vector_states.find(tmp_str)!=mesh_vector_states.end(), std::logic_error,
+                                  "Error! Another layered state with the same name already exists.\n");
+      mesh_vector_states[tmp_str] = std::vector<double>(dim.back());
+    }
   }
 }
 
@@ -620,7 +657,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelperT(const Tpetra_Ve
     if(node_mapT->getLocalElement(node_gid) != Teuchos::OrdinalTraits<LO>::invalid()){
       int node_lid = node_mapT->getLocalElement(node_gid);
       for(std::size_t j = 0; j < num_vec_components; j++)
-	solution_array(j, i) = solnT_constView[getDOF(node_lid, offset + j)];
+        solution_array(j, i) = solnT_constView[getDOF(node_lid, offset + j)];
     }
   }
 }

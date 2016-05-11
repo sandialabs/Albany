@@ -62,7 +62,7 @@ namespace Albany {
 
     //! Return parameters upper bounds
     virtual Teuchos::RCP<const Epetra_Vector> get_p_upper_bounds(int l) const;
-    
+
     //! Create W = alpha*M + beta*J + omega*N matrix
     Teuchos::RCP<Epetra_Operator> create_W() const;
 
@@ -81,7 +81,7 @@ namespace Albany {
     //! Create operator form of dg/dx_dot for distributed responses
     Teuchos::RCP<Epetra_Operator> create_DgDx_dot_op(int j) const;
     Teuchos::RCP<Epetra_Operator> create_DgDx_dotdot_op(int j) const;
-    
+
     //! Create InArgs
     InArgs createInArgs() const;
 
@@ -106,6 +106,8 @@ namespace Albany {
 
     //! List of free parameter names
     Teuchos::Array< Teuchos::RCP< Teuchos::Array<std::string> > > param_names;
+    Teuchos::Array< Teuchos::RCP< Epetra_Vector > > param_lower_bd;
+    Teuchos::Array< Teuchos::RCP< Epetra_Vector > > param_upper_bd;
 
     //! Sacado parameter vector
     mutable Teuchos::Array<ParamVec> sacado_param_vec;
@@ -119,11 +121,13 @@ namespace Albany {
     //! Whether the problem supplies its own preconditioner
     bool supplies_prec;
 
+#ifdef ALBANY_STOKHOS
     //! Stochastic Galerkin parameters
     mutable Teuchos::Array< Teuchos::Array<SGType> > p_sg_vals;
 
     //! Multi-point parameters
     mutable Teuchos::Array< Teuchos::Array<MPType> > p_mp_vals;
+#endif
 
     //! Allocated Jacobian for sending to user preconditioner
     mutable Teuchos::RCP<Epetra_CrsMatrix> Extra_W_crs;

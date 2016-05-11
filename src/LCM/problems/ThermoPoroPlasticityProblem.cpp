@@ -10,6 +10,7 @@
 #include "Shards_CellTopology.hpp"
 
 #include "Albany_Utils.hpp"
+#include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 
 #include "Albany_EvaluatorUtils.hpp"

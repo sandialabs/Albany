@@ -11,6 +11,7 @@
 #include "Teuchos_ParameterList.hpp"
 
 #include "Albany_AbstractProblem.hpp"
+#include "Albany_BCUtils.hpp"
 #include "ATO_OptimizationProblem.hpp"
 #include "ATO_Mixture.hpp"
 #include "ATO_Utils.hpp"
@@ -108,6 +109,7 @@ namespace Albany {
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
 #include "Albany_EvaluatorUtils.hpp"

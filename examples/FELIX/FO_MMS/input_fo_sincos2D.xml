@@ -3,7 +3,7 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 2D"/>
-    <ParameterList name="Dirichlet BCs">     
+    <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF U0" type="double" value="0.0"/>
       <Parameter name="DBC on NS NodeSet1 for DOF U0" type="double" value="9.42477796"/>
       <Parameter name="DBC on NS NodeSet2 for DOF U1" type="double" value="0.0"/>
@@ -38,8 +38,8 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="1D Elements" type="int" value="20"/>
-    <Parameter name="2D Elements" type="int" value="20"/>
+    <Parameter name="1D Elements" type="int" value="5"/>
+    <Parameter name="2D Elements" type="int" value="5"/>
     <Parameter name="1D Scale" type="double" value="1"/>
     <Parameter name="2D Scale" type="double" value="1"/>
     <Parameter name="Method" type="string" value="STK2D"/>
@@ -47,7 +47,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="3"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{9.42477796, 0.0, 1.28896641408e-16}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{9.42477796, 0.0, 9.47390314347e-15}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.208812026834, 0.243439246662, 0.0545756230981}"/>
@@ -57,143 +57,143 @@
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>
       <ParameterList name="Predictor">
-	<Parameter  name="Method" type="string" value="Constant"/>
+  <Parameter  name="Method" type="string" value="Constant"/>
       </ParameterList>
       <ParameterList name="Stepper">
-	<Parameter  name="Initial Value" type="double" value="0"/>
-	<Parameter  name="Continuation Parameter" type="string" value="Glen's Law Homotopy Parameter"/>
-	<Parameter  name="Continuation Method" type="string" value="Natural"/>
-	<Parameter  name="Max Steps" type="int" value="10"/>
-	<Parameter  name="Max Value" type="double" value="1.0"/>
-	<Parameter  name="Min Value" type="double" value="0.0"/>
-	<Parameter  name="Compute Eigenvalues" type="bool" value="0"/>
+  <Parameter  name="Initial Value" type="double" value="0"/>
+  <Parameter  name="Continuation Parameter" type="string" value="Glen's Law Homotopy Parameter"/>
+  <Parameter  name="Continuation Method" type="string" value="Natural"/>
+  <Parameter  name="Max Steps" type="int" value="10"/>
+  <Parameter  name="Max Value" type="double" value="1.0"/>
+  <Parameter  name="Min Value" type="double" value="0.0"/>
+  <Parameter  name="Compute Eigenvalues" type="bool" value="0"/>
       </ParameterList>
       <ParameterList name="Step Size">
-	<Parameter  name="Initial Step Size" type="double" value="0.05"/>
+  <Parameter  name="Initial Step Size" type="double" value="0.05"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="NOX">
       <ParameterList name="Status Tests">
-	<Parameter name="Test Type" type="string" value="Combo"/>
-	<Parameter name="Combo Type" type="string" value="OR"/>
-	<Parameter name="Number of Tests" type="int" value="2"/>
-	<ParameterList name="Test 0">
-	  <Parameter name="Test Type" type="string" value="Combo"/>
-	  <Parameter name="Combo Type" type="string" value="AND"/>
-	  <Parameter name="Number of Tests" type="int" value="2"/>
-	  <ParameterList name="Test 0">
-	    <Parameter name="Test Type" type="string" value="NormF"/>
-	    <Parameter name="Norm Type" type="string" value="Two Norm"/>
-	    <Parameter name="Scale Type" type="string" value="Scaled"/>
-	    <Parameter name="Tolerance" type="double" value="1e-12"/>
-	  </ParameterList>
-	  <ParameterList name="Test 1">
-	    <Parameter name="Test Type" type="string" value="NormWRMS"/>
-	    <Parameter name="Absolute Tolerance" type="double" value="1e-4"/>
-	    <Parameter name="Relative Tolerance" type="double" value="1e-8"/>
-	  </ParameterList>
-	</ParameterList>
-	<ParameterList name="Test 1">
-	  <Parameter name="Test Type" type="string" value="MaxIters"/>
-	  <Parameter name="Maximum Iterations" type="int" value="10"/>
-	</ParameterList>
+  <Parameter name="Test Type" type="string" value="Combo"/>
+  <Parameter name="Combo Type" type="string" value="OR"/>
+  <Parameter name="Number of Tests" type="int" value="2"/>
+  <ParameterList name="Test 0">
+    <Parameter name="Test Type" type="string" value="Combo"/>
+    <Parameter name="Combo Type" type="string" value="AND"/>
+    <Parameter name="Number of Tests" type="int" value="2"/>
+    <ParameterList name="Test 0">
+      <Parameter name="Test Type" type="string" value="NormF"/>
+      <Parameter name="Norm Type" type="string" value="Two Norm"/>
+      <Parameter name="Scale Type" type="string" value="Scaled"/>
+      <Parameter name="Tolerance" type="double" value="1e-3"/>
+    </ParameterList>
+    <ParameterList name="Test 1">
+      <Parameter name="Test Type" type="string" value="NormWRMS"/>
+      <Parameter name="Absolute Tolerance" type="double" value="1e-1"/>
+      <Parameter name="Relative Tolerance" type="double" value="1e-3"/>
+    </ParameterList>
+  </ParameterList>
+  <ParameterList name="Test 1">
+    <Parameter name="Test Type" type="string" value="MaxIters"/>
+    <Parameter name="Maximum Iterations" type="int" value="10"/>
+  </ParameterList>
       </ParameterList>
       <ParameterList name="Direction">
-	<Parameter name="Method" type="string" value="Newton"/>
-	<ParameterList name="Newton">
-	  <Parameter name="Forcing Term Method" type="string" value="Constant"/>
-	  <ParameterList name="Linear Solver">
-	    <Parameter name="Write Linear System" type="bool" value="false"/>
-	  </ParameterList>
-	  <ParameterList name="Stratimikos Linear Solver">
-	    <ParameterList name="NOX Stratimikos Options">
-	    </ParameterList>
-	    <ParameterList name="Stratimikos">
-	      <Parameter name="Linear Solver Type" type="string" value="Belos"/>
-	      <ParameterList name="Linear Solver Types">
-		<ParameterList name="AztecOO">
-		  <ParameterList name="Forward Solve"> 
-		    <ParameterList name="AztecOO Settings">
-		      <Parameter name="Aztec Solver" type="string" value="GMRES"/>
-		      <Parameter name="Convergence Test" type="string" value="r0"/>
-		      <Parameter name="Size of Krylov Subspace" type="int" value="200"/>
-		      <Parameter name="Output Frequency" type="int" value="20"/>
-		    </ParameterList>
-		    <Parameter name="Max Iterations" type="int" value="200"/>
-		    <Parameter name="Tolerance" type="double" value="1e-6"/>
-		  </ParameterList>
-		</ParameterList>
-	        <ParameterList name="Belos">
-	          <Parameter name="Solver Type" type="string" value="Block GMRES"/>
-	          <ParameterList name="Solver Types">
-	            <ParameterList name="Block GMRES">
-	            <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
-	            <Parameter name="Output Frequency" type="int" value="20"/>
-	            <Parameter name="Output Style" type="int" value="1"/>
-	            <Parameter name="Verbosity" type="int" value="0"/>
-	            <Parameter name="Maximum Iterations" type="int" value="200"/>
-	            <Parameter name="Block Size" type="int" value="1"/>
-	            <Parameter name="Num Blocks" type="int" value="200"/>
-	            <Parameter name="Flexible Gmres" type="bool" value="0"/>
-	          </ParameterList>
+  <Parameter name="Method" type="string" value="Newton"/>
+  <ParameterList name="Newton">
+    <Parameter name="Forcing Term Method" type="string" value="Constant"/>
+    <ParameterList name="Linear Solver">
+      <Parameter name="Write Linear System" type="bool" value="false"/>
+    </ParameterList>
+    <ParameterList name="Stratimikos Linear Solver">
+      <ParameterList name="NOX Stratimikos Options">
+      </ParameterList>
+      <ParameterList name="Stratimikos">
+        <Parameter name="Linear Solver Type" type="string" value="Belos"/>
+        <ParameterList name="Linear Solver Types">
+    <ParameterList name="AztecOO">
+      <ParameterList name="Forward Solve">
+        <ParameterList name="AztecOO Settings">
+          <Parameter name="Aztec Solver" type="string" value="GMRES"/>
+          <Parameter name="Convergence Test" type="string" value="r0"/>
+          <Parameter name="Size of Krylov Subspace" type="int" value="200"/>
+          <Parameter name="Output Frequency" type="int" value="20"/>
+        </ParameterList>
+        <Parameter name="Max Iterations" type="int" value="200"/>
+        <Parameter name="Tolerance" type="double" value="1e-2"/>
+      </ParameterList>
+    </ParameterList>
+          <ParameterList name="Belos">
+            <Parameter name="Solver Type" type="string" value="Block GMRES"/>
+            <ParameterList name="Solver Types">
+              <ParameterList name="Block GMRES">
+              <Parameter name="Convergence Tolerance" type="double" value="1e-2"/>
+              <Parameter name="Output Frequency" type="int" value="20"/>
+              <Parameter name="Output Style" type="int" value="1"/>
+              <Parameter name="Verbosity" type="int" value="0"/>
+              <Parameter name="Maximum Iterations" type="int" value="200"/>
+              <Parameter name="Block Size" type="int" value="1"/>
+              <Parameter name="Num Blocks" type="int" value="200"/>
+              <Parameter name="Flexible Gmres" type="bool" value="0"/>
+            </ParameterList>
                  </ParameterList>
-	      </ParameterList>
-	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
-	      <ParameterList name="Preconditioner Types">
-		<ParameterList name="Ifpack">
-		  <Parameter name="Overlap" type="int" value="1"/>
-		  <Parameter name="Prec Type" type="string" value="ILU"/>
-		  <ParameterList name="Ifpack Settings">
-		    <Parameter name="fact: level-of-fill" type="int" value="2"/>
-		  </ParameterList>
-		</ParameterList>
-		<ParameterList name="ML">
-		  <Parameter name="Base Method Defaults" type="string" 
-			     value="none"/>
-		  <ParameterList name="ML Settings">
-		    <Parameter name="default values" type="string" value="SA"/>
-		    <Parameter name="smoother: type" type="string" 
-			       value="ML symmetric Gauss-Seidel"/>
-		    <Parameter name="smoother: pre or post" type="string" 
-			       value="both"/>
-		    <Parameter name="coarse: type" type="string" 
-			       value="Amesos-KLU"/>
-		    <Parameter name="PDE equations" type="int" 
-			       value="4"/>
-		  </ParameterList>
-		</ParameterList>
-	      </ParameterList>
-	    </ParameterList>
-	  </ParameterList>
+        </ParameterList>
+        </ParameterList>
+        <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+        <ParameterList name="Preconditioner Types">
+    <ParameterList name="Ifpack">
+      <Parameter name="Overlap" type="int" value="1"/>
+      <Parameter name="Prec Type" type="string" value="ILU"/>
+      <ParameterList name="Ifpack Settings">
+        <Parameter name="fact: level-of-fill" type="int" value="2"/>
+      </ParameterList>
+    </ParameterList>
+    <ParameterList name="ML">
+      <Parameter name="Base Method Defaults" type="string"
+           value="none"/>
+      <ParameterList name="ML Settings">
+        <Parameter name="default values" type="string" value="SA"/>
+        <Parameter name="smoother: type" type="string"
+             value="ML symmetric Gauss-Seidel"/>
+        <Parameter name="smoother: pre or post" type="string"
+             value="both"/>
+        <Parameter name="coarse: type" type="string"
+             value="Amesos-KLU"/>
+        <Parameter name="PDE equations" type="int"
+             value="4"/>
+      </ParameterList>
+    </ParameterList>
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
 
-	  <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
-	</ParameterList>
+    <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
+  </ParameterList>
       </ParameterList>
       <ParameterList name="Line Search">
-	<ParameterList name="Full Step">
-	  <Parameter name="Full Step" type="double" value="1"/>
-	</ParameterList>
-	<Parameter name="Method" type="string" value="Full Step"/>
+  <ParameterList name="Full Step">
+    <Parameter name="Full Step" type="double" value="1"/>
+  </ParameterList>
+  <Parameter name="Method" type="string" value="Full Step"/>
       </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
-	<Parameter name="Output Precision" type="int" value="3"/>
-	<Parameter name="Output Processor" type="int" value="0"/>
-	<ParameterList name="Output Information">
-	  <Parameter name="Error" type="bool" value="1"/>
-	  <Parameter name="Warning" type="bool" value="1"/>
-	  <Parameter name="Outer Iteration" type="bool" value="1"/>
-	  <Parameter name="Parameters" type="bool" value="0"/>
-	  <Parameter name="Details" type="bool" value="0"/>
-	  <Parameter name="Linear Solver Details" type="bool" value="0"/>
-	  <Parameter name="Stepper Iteration" type="bool" value="1"/>
-	  <Parameter name="Stepper Details" type="bool" value="1"/>
-	  <Parameter name="Stepper Parameters" type="bool" value="1"/>
-	</ParameterList>
+  <Parameter name="Output Precision" type="int" value="3"/>
+  <Parameter name="Output Processor" type="int" value="0"/>
+  <ParameterList name="Output Information">
+    <Parameter name="Error" type="bool" value="1"/>
+    <Parameter name="Warning" type="bool" value="1"/>
+    <Parameter name="Outer Iteration" type="bool" value="1"/>
+    <Parameter name="Parameters" type="bool" value="0"/>
+    <Parameter name="Details" type="bool" value="0"/>
+    <Parameter name="Linear Solver Details" type="bool" value="0"/>
+    <Parameter name="Stepper Iteration" type="bool" value="1"/>
+    <Parameter name="Stepper Details" type="bool" value="1"/>
+    <Parameter name="Stepper Parameters" type="bool" value="1"/>
+  </ParameterList>
       </ParameterList>
       <ParameterList name="Solver Options">
-	<Parameter name="Status Test Check Type" type="string" value="Minimal"/>
+  <Parameter name="Status Test Check Type" type="string" value="Minimal"/>
       </ParameterList>
     </ParameterList>
   </ParameterList>

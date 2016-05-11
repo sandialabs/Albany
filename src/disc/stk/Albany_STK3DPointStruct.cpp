@@ -33,6 +33,8 @@ Albany::STK3DPointStruct::STK3DPointStruct(const Teuchos::RCP<Teuchos::Parameter
                                              nsNames, ssNames, worksetSize, partVec[0]->name(),
                                              ebNameToIndex, this->interleavedOrdering));
   std::cout << "---3DPoint constructor done---" << std::endl;
+
+  this->initializeSideSetMeshStructs(commT);
 }
 
 Albany::STK3DPointStruct::~STK3DPointStruct() {};
@@ -44,7 +46,9 @@ Albany::STK3DPointStruct::setFieldAndBulkData(
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize)
+                  const unsigned int worksetSize,
+                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
+                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
 {
   std::cout << "---3DPoint::setFieldAndBulkData---" << std::endl;
   SetupFieldData(commT, neq_, req, sis, worksetSize);
@@ -63,6 +67,9 @@ Albany::STK3DPointStruct::setFieldAndBulkData(
   bulkData->declare_relation(pt, node, 0);
 
   bulkData->modification_end();
+
+  fieldAndBulkDataSet = true;
+  this->finalizeSideSetMeshStructs(commT, side_set_req, side_set_sis, worksetSize);
 }
 
 void

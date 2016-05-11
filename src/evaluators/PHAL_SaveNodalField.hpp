@@ -14,6 +14,11 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_ProblemUtils.hpp"
 
+namespace Albany
+{
+class StateManager;
+}
+
 namespace PHAL {
 /**
  * \brief Description
@@ -27,10 +32,10 @@ namespace PHAL {
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
     SaveNodalFieldBase(Teuchos::ParameterList& p,
-		      const Teuchos::RCP<Albany::Layouts>& dl);
+          const Teuchos::RCP<Albany::Layouts>& dl);
 
     void postRegistrationSetup(typename Traits::SetupData d,
-			       PHX::FieldManager<Traits>& vm);
+             PHX::FieldManager<Traits>& vm);
 
     // These functions are defined in the specializations
     void preEvaluate(typename Traits::PreEvalData d) = 0;

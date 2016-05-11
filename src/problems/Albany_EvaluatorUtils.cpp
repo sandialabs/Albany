@@ -9,5 +9,4 @@
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_EvaluatorUtils_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(Albany::EvaluatorUtils)
-
+PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(Albany::EvaluatorUtilsBase)

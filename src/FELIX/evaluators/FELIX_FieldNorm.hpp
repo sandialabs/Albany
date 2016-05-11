@@ -40,22 +40,21 @@ public:
   KOKKOS_INLINE_FUNCTION
   void operator () (const int i) const;
 
-  void setHomotopyParamPtr(ScalarT* h);
-
 private:
 
-  ScalarT  regularizationParam;
-  ScalarT* homotopyParam;
-  ScalarT  printedH;
+  ScalarT   regularizationParam;
+  ScalarT*  regularizationParamPtr;
+  ScalarT   printedH;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,Node,Dim> field;
+  PHX::MDField<ScalarT> field;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node>     field_norm;
+  PHX::MDField<ScalarT> field_norm;
 
-  int numNodes;
-  int numDim;
+  std::string sideSetName;
+  std::vector<PHX::DataLayout::size_type> dims;
+  int numDims;
 };
 
 } // Namespace FELIX

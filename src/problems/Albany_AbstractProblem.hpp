@@ -22,7 +22,6 @@
 
 #include "Phalanx.hpp"
 #include "Albany_DataTypes.hpp"
-#include "Albany_BCUtils.hpp"
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Workset.hpp"
@@ -77,6 +76,7 @@ enum SolutionMethodType {Steady, Continuation, Transient, Eigensolve, AerasHyper
 
     //! Get the number of equations
     unsigned int numEquations() const;
+    const std::map<int,std::vector<std::string> >& getSideSetEquations() const;
     void setNumEquations(const int neq_);
     unsigned int numStates() const;
 
@@ -123,6 +123,9 @@ enum SolutionMethodType {Steady, Continuation, Transient, Eigensolve, AerasHyper
     //! Get a list of the Special fields needed to implement the problem
     const AbstractFieldContainer::FieldContainerRequirements getFieldRequirements(){ return requirements; }
 
+    const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>&
+      getSideSetFieldRequirements () const {return ss_requirements;}
+
     //! Allow the Problem to modify the solver settings, for example by adding a custom status test.
     virtual void
       applyProblemSpecificSolverSettings(Teuchos::RCP<Teuchos::ParameterList> params){}
@@ -144,6 +147,9 @@ enum SolutionMethodType {Steady, Continuation, Transient, Eigensolve, AerasHyper
     //! Number of time derivatives used in the problem
     //! 0 = x, 1 = xdot, 2 = xdotdot
     int number_of_time_deriv;
+
+    //! Equations that are defined ONLY on some part of the mesh
+    std::map<int,std::vector<std::string> > sideSetEquations;
 
     // Variable use to store the solution method name.
     SolutionMethodType SolutionMethodName;
@@ -168,6 +174,8 @@ enum SolutionMethodType {Steady, Continuation, Transient, Eigensolve, AerasHyper
 
     //! Special fields needed to implement the problem
     AbstractFieldContainer::FieldContainerRequirements requirements;
+    //! Special fields defined on the side sets needed to implement the problem
+    std::map<std::string,AbstractFieldContainer::FieldContainerRequirements> ss_requirements;
 
     //! Null space object used to communicate with MP
     Teuchos::RCP<Albany::RigidBodyModes> rigidBodyModes;

@@ -16,6 +16,17 @@ namespace PHAL {
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
   const Albany::Application* app, const Albany::MeshSpecsStruct* ms)
 {
+  const Teuchos::RCP<const Teuchos::ParameterList> pl = app->getProblemPL();
+  if (Teuchos::nonnull(pl)) {
+    const bool extrudedColumnCoupled = pl->isParameter("Extruded Column Coupled in 2D Response") ? pl->get<bool>("Extruded Column Coupled in 2D Response") : false;
+    if(extrudedColumnCoupled)
+      { //all column is coupled
+        int side_node_count = ms->ctd.side[2].topology->node_count;
+        int node_count = ms->ctd.node_count;
+        int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
+        return app->getNumEquations()*(node_count + side_node_count*numLevels);
+      }
+  }
   return app->getNumEquations() * ms->ctd.node_count;
 }
 
@@ -41,8 +52,9 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
     if(problemName == "FELIX Coupled FO H 3D")
     { //all column is coupled
       int side_node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.side[2].topology->node_count;
+      int node_count = app->getEnrichedMeshSpecs()[ebi].get()->ctd.node_count;
       int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
-      return app->getNumEquations()*side_node_count*numLevels;
+      return app->getNumEquations()*(node_count + side_node_count*numLevels);
     }
 #ifdef ALBANY_GOAL
     if ((problemName == "GOAL Mechanics 2D") ||

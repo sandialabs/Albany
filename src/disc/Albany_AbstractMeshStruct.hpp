@@ -27,14 +27,21 @@ struct DynamicDataArray {
    typedef Teuchos::ArrayRCP<Teuchos::RCP<T> > type;
 };
 
+enum class LayeredMeshOrdering
+{
+  LAYER  = 0,
+  COLUMN = 1
+};
+
 template <typename T>
 struct LayeredMeshNumbering {
   T stride;
-  bool ordering; //0 for layer wise, 1 for column wise
+
+  LayeredMeshOrdering ordering;
   Teuchos::ArrayRCP<double> layers_ratio;
   T numLevels, numLayers;
 
-  LayeredMeshNumbering(const T _stride, const bool  _ordering, const Teuchos::ArrayRCP<double>& _layers_ratio){
+  LayeredMeshNumbering(const T _stride, const LayeredMeshOrdering _ordering, const Teuchos::ArrayRCP<double>& _layers_ratio){
     stride = _stride;
     ordering = _ordering;
     layers_ratio= _layers_ratio;
@@ -43,13 +50,13 @@ struct LayeredMeshNumbering {
   }
 
   T getId(const T column_id, const T level_index) const {
-      return  (ordering == 0) ?
+      return  (ordering == LayeredMeshOrdering::LAYER) ?
           column_id + level_index*stride :
           column_id * stride + level_index;
   }
 
   void getIndices(const T id, T& column_id, T& level_index) const {
-    if(ordering)  {
+    if(ordering == LayeredMeshOrdering::COLUMN)  {
       level_index = id%stride;
       column_id = id/stride;
     } else {
@@ -69,8 +76,7 @@ class CellSpecs {
         cellType(shards::CellTopology (&ctd)),
         intrepidBasis(Albany::getIntrepid2Basis(ctd, compositeTet)),
         cellCubature(cubFactory.create(cellType, cubdegree)),
-        dl(worksetSize, cellType.getNodeCount(),
-                          intrepidBasis->getCardinality(), cellCubature->getNumPoints(), numdim, vecdim, numface)
+        dl(worksetSize, cellType.getNodeCount(), intrepidBasis->getCardinality(), cellCubature->getNumPoints(), numdim, vecdim)
      { }
 
      unsigned int getNumVertices(){ return cellType.getNodeCount(); }
@@ -118,10 +124,14 @@ struct AbstractMeshStruct {
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize) = 0;
+                  const unsigned int worksetSize,
+                  const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
+                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}) = 0;
+
 ;
 
     virtual Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() = 0;
+    virtual const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() const = 0;
 
     virtual const Albany::DynamicDataArray<Albany::CellSpecs>::type& getMeshDynamicData() const = 0;
 
@@ -132,6 +142,7 @@ struct AbstractMeshStruct {
     Teuchos::RCP<Adapt::NodalDataBase> nodal_data_base;
 
 };
-}
+
+} // Namespace Albany
 
 #endif // ALBANY_ABSTRACTMESHSTRUCT_HPP

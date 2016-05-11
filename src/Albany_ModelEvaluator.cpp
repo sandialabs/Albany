@@ -12,9 +12,11 @@
 #include "Albany_DistributedParameterResponseDerivativeOp.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 #include "Teuchos_TestForException.hpp"
+#ifdef ALBANY_STOKHOS
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraOperatorOrthogPoly.hpp"
+#endif
 #include "Petra_Converters.hpp"
 
 //IK, 7/15/14: adding option to write the mass matrix to matrix market file, which is needed
@@ -67,6 +69,9 @@ Albany::ModelEvaluator::ModelEvaluator(
     }
   }
   param_names.resize(num_param_vecs);
+  param_lower_bd.resize(num_param_vecs);
+  param_upper_bd.resize(num_param_vecs);
+
   *out << "Number of parameters vectors  = " << num_param_vecs << std::endl;
   for (int i=0; i<num_param_vecs; i++) {
     Teuchos::ParameterList* pList;
@@ -88,14 +93,17 @@ Albany::ModelEvaluator::ModelEvaluator(
     }
     *out << "Number of parameters in parameter vector " << i << " = "
          << numParameters << std::endl;
+
   }
 
   // Setup sacado and epetra storage for parameters
   sacado_param_vec.resize(num_param_vecs);
   epetra_param_map.resize(num_param_vecs);
   epetra_param_vec.resize(num_param_vecs);
+#ifdef ALBANY_STOKHOS
   p_sg_vals.resize(num_param_vecs);
   p_mp_vals.resize(num_param_vecs);
+#endif
   Teuchos::RCP<const Epetra_Comm> comm = app->getEpetraComm();
   for (int i=0; i<num_param_vecs; i++) {
 
@@ -104,17 +112,64 @@ Albany::ModelEvaluator::ModelEvaluator(
       *(param_names[i]), sacado_param_vec[i]);
 
     // Create Epetra map for parameter vector
-    epetra_param_map[i] =
-      Teuchos::rcp(new Epetra_LocalMap((int) sacado_param_vec[i].size(), 0, *comm));
+    epetra_param_map[i] = Teuchos::rcp(new Epetra_LocalMap((int) sacado_param_vec[i].size(), 0, *comm));
 
     // Create Epetra vector for parameters
-    epetra_param_vec[i] =
-      Teuchos::rcp(new Epetra_Vector(*(epetra_param_map[i])));
-    for (unsigned int j=0; j<sacado_param_vec[i].size(); j++)
-      (*(epetra_param_vec[i]))[j] = sacado_param_vec[i][j].baseValue;
+    epetra_param_vec[i] = Teuchos::rcp(new Epetra_Vector(*(epetra_param_map[i])));
 
+    Teuchos::ParameterList* pList;
+    if (using_old_parameter_list)
+      pList = &parameterParams;
+    else
+      pList = &(parameterParams.sublist(Albany::strint("Parameter Vector",i)));
+
+    int numParameters = epetra_param_map[i]->NumMyElements();
+
+    // Loading lower bounds (if any)
+    if (pList->isParameter("Lower Bounds"))
+    {
+      param_lower_bd[i] = Teuchos::rcp(new Epetra_Vector(*(epetra_param_map[i])));
+      Teuchos::Array<double> lb = pList->get<Teuchos::Array<double>>("Lower Bounds");
+      TEUCHOS_TEST_FOR_EXCEPTION (lb.size()!=numParameters, Teuchos::Exceptions::InvalidParameter,
+                                  "Error! Input lower bounds array has the wrong dimension.\n");
+
+      for (int j=0; j<numParameters; ++j)
+        (*param_lower_bd[i])[j] = lb[j];
+    }
+
+    // Loading upper bounds (if any)
+    if (pList->isParameter("Upper Bounds"))
+    {
+      param_upper_bd[i] = Teuchos::rcp(new Epetra_Vector(*(epetra_param_map[i])));
+      Teuchos::Array<double> ub = pList->get<Teuchos::Array<double>>("Upper Bounds");
+      TEUCHOS_TEST_FOR_EXCEPTION (ub.size()!=numParameters, Teuchos::Exceptions::InvalidParameter,
+                                  "Error! Input upper bounds array has the wrong dimension.\n");
+
+      for (int j=0; j<numParameters; ++j)
+        (*param_upper_bd[i])[j] = ub[j];
+    }
+
+    // Loading nominal values (if any)
+    if (pList->isParameter("Nominal Values"))
+    {
+      Teuchos::Array<double> nvals = pList->get<Teuchos::Array<double>>("Nominal Values");
+      TEUCHOS_TEST_FOR_EXCEPTION (nvals.size()!=numParameters, Teuchos::Exceptions::InvalidParameter,
+                                  "Error! Input nominal values array has the wrong dimension.\n");
+
+      for (int j=0; j<numParameters; ++j) {
+        sacado_param_vec[i][j].baseValue = (*(epetra_param_vec[i]))[j] = nvals[j];
+      }
+    }
+    else
+    {
+      for (int j=0; j<numParameters; ++j)
+        (*(epetra_param_vec[i]))[j] = sacado_param_vec[i][j].baseValue;
+    }
+
+#ifdef ALBANY_STOKHOS
     p_sg_vals[i].resize(sacado_param_vec[i].size());
     p_mp_vals[i].resize(sacado_param_vec[i].size());
+#endif
   }
 
   // Setup distributed parameters
@@ -291,7 +346,9 @@ Albany::ModelEvaluator::get_p_lower_bounds(int l) const
     "Invalid parameter index l = " << l << std::endl);
 
   if (l < num_param_vecs) //need to be implemented
-    return Teuchos::null;
+  {
+    return param_lower_bd[l];
+  }
 
   Teuchos::RCP<Epetra_Vector> epetra_bounds_vec_to_return;
   Teuchos::RCP<const Epetra_Comm> comm = app->getEpetraComm();
@@ -309,7 +366,9 @@ Albany::ModelEvaluator::get_p_upper_bounds(int l) const
     "Error!  Albany::ModelEvaluator::get_p_init():  " <<
     "Invalid parameter index l = " << l << std::endl);
   if (l < num_param_vecs) //need to be implemented
-    return Teuchos::null;
+  {
+    return param_upper_bd[l];
+  }
 
   Teuchos::RCP<Epetra_Vector> epetra_bounds_vec_to_return;
   Teuchos::RCP<const Epetra_Comm> comm = app->getEpetraComm();
@@ -357,9 +416,9 @@ Albany::ModelEvaluator::create_DfDp_op(int l) const
 return Teuchos::rcp(new DistributedParameterDerivativeOp(
                       app, dist_param_names[l-num_param_vecs]));
   TEUCHOS_TEST_FOR_EXCEPTION( true, std::logic_error,
-  	       		"Albany::ModelEvaluator::create_DfDp_op is not implemented for Tpetra_Operator!"  <<
+              "Albany::ModelEvaluator::create_DfDp_op is not implemented for Tpetra_Operator!"  <<
                         "Distributed parameters won't work yet in Tpetra branch."<<
-			std::endl);
+      std::endl);
 }
 
 Teuchos::RCP<Epetra_Operator>
@@ -846,11 +905,11 @@ f_out->Print(std::cout);
         //create Tpetra copy of dgdp_out, call it dgdp_outT
         if (dgdp_out != Teuchos::null)
            dgdp_outT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp_out, commT);
-	app->evaluateResponseTangentT(i, alpha, beta, omega, curr_time, false,
-				     x_dotT.get(), x_dotdotT.get(), *xT,
-				     sacado_param_vec, p_vec.get(),
-				     NULL, NULL, NULL, NULL, g_outT.get(), NULL,
-				     dgdp_outT.get());
+  app->evaluateResponseTangentT(i, alpha, beta, omega, curr_time, false,
+             x_dotT.get(), x_dotdotT.get(), *xT,
+             sacado_param_vec, p_vec.get(),
+             NULL, NULL, NULL, NULL, g_outT.get(), NULL,
+             dgdp_outT.get());
         //convert g_outT to Epetra_Vector g_out
         if (g_out != Teuchos::null)
           Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, comm);
@@ -874,7 +933,7 @@ f_out->Print(std::cout);
       //create Tpetra copy of g_out, call it g_outT
       g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT);
       app->evaluateResponseT(i, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, sacado_param_vec,
-			    *g_outT);
+          *g_outT);
       //convert g_outT to Epetra_Vector g_out
       Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, comm);
     }
