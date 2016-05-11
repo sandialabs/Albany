@@ -138,11 +138,85 @@ evaluateFields(typename Traits::EvalData workset)
   //Zero out local response 
   PHAL::set(this->local_response, 0.0);
 
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> spressure_ref(workset.numCells, numQPs); //spressure_ref (exact solution) at quad points
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> spressure_err(workset.numCells, numQPs); //spressure error at quad points
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> velocity_ref(workset.numCells, numQPs, numLevels, 2); //velocity_ref (exact solution) at quad points
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> velocity_err(workset.numCells, numQPs, numLevels, 2); //velocity error at quad points
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> temperature_ref(workset.numCells, numQPs, numLevels); //temperature_ref (exact solution) at quad points
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> temperature_err(workset.numCells, numQPs, numLevels); //temperature error at quad points
+
   //Get time from workset.  This is for setting time-dependent exact solution.
   const RealType time  = workset.current_time;
   *out << "time = " << time << std::endl;
 
-  //FIXME: fill in! 
+  //Set reference solution at quadrature points
+  if (ref_sol_name == ZERO) { //zero reference solution 
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        spressure_ref(cell,qp) = 0.0;
+        for (std::size_t level; level < numLevels; ++level) {
+          for (std::size_t i=0; i<2; ++i) {
+            velocity_ref(cell,qp,level,i) = 0.0; 
+          }
+          temperature_ref(cell,qp,level) = 0.0; 
+        }
+      }
+    }
+  }
+  else if (ref_sol_name == BAROCLINIC_UNPERTURBED) {
+    //FIXME: fill in! 
+  }
+
+  //Calculate L2 error at all the quad points.  We do not need to interpolate flow_state_field from nodes
+  //to QPs because nodes = QPs for Aeras spectral elements.
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
+      spressure_err(cell,qp) = spressure(cell,qp) - spressure_ref(cell,qp); 
+      for (std::size_t level=0; level < numLevels; ++level) {
+        temperature_err(cell,qp,level) = temperature(cell,qp,level) - temperature_ref(cell,qp,level); 
+        for (std::size_t i=0; i<2; ++i) {
+          velocity_err(cell,qp,level,i) = velocity(cell,qp,level,i) - velocity_ref(cell,qp,level,i);
+        }
+      }
+    }
+  }
+  
+  //Calculate absolute L2 error squared (for now) 
+  //FIXME: calculate norm of reference solution squared for relative error calculation
+  ScalarT wm; //weighted measure
+  ScalarT spressure_err_sq = 0.0; 
+  ScalarT temperature_err_sq = 0.0; 
+  ScalarT uvelocity_err_sq = 0.0; 
+  ScalarT vvelocity_err_sq = 0.0; 
+  std::size_t dim; 
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp=0; qp < numQPs; ++qp)  {
+      wm = weighted_measure(cell,qp);
+      //surface pressure field: dof 0
+      dim = 0;
+      spressure_err_sq = spressure_err(cell,qp)*spressure_err(cell,qp); 
+      this->local_response(cell,dim) += wm*spressure_err_sq;
+      this->global_response(dim) += wm*spressure_err_sq; 
+      for (std::size_t level=0; level < numLevels; ++level) {
+        //u-velocity field: dof 1, 4, 7, ...
+        dim = 1 + level*3; 
+        uvelocity_err_sq = velocity_err(cell,qp,level,0)*velocity_err(cell,qp,level,0); 
+        this->local_response(cell,dim) += wm*uvelocity_err_sq; //velocity(cell,qp,level,0)*velocity(cell,qp,level,0);  
+        this->global_response(dim) += wm*uvelocity_err_sq; //velocity(cell,qp,level,0)*velocity(cell,qp,level,0); 
+        //v-velocity field: dof 2, 5, 8, ...
+        dim = 2 + level*3; 
+        vvelocity_err_sq = velocity_err(cell,qp,level,1)*velocity_err(cell,qp,level,1); 
+        this->local_response(cell,dim) += wm*vvelocity_err_sq;  
+        this->global_response(dim) += wm*vvelocity_err_sq;  
+        //temperature field: dof 3, 6, 9, .... 
+        dim = 3 + level*3; 
+        temperature_err_sq = temperature_err(cell,qp,level)*temperature_err(cell,qp,level); 
+        this->local_response(cell,dim) += wm*temperature_err_sq; 
+        this->global_response(dim) += wm*temperature_err_sq;
+        //FIXME: ultimately, will want to add tracers. 
+      } 
+    }
+  }
 
   // Do any local-scattering necessary
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::evaluateFields(workset);
@@ -182,8 +256,8 @@ postEvaluate(typename Traits::PostEvalData workset)
 #else
   PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
   for (int i=0; i < responseSize; ++i) {
-    ScalarT norm_sq = *gr; 
-    *gr = sqrt(norm_sq);  
+    ScalarT abs_err_sq = *gr; 
+    *gr = sqrt(abs_err_sq);  
     ++gr; 
   } 
 #endif
