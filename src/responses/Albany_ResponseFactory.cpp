@@ -136,6 +136,7 @@ createResponseFunction(
            name == "Aeras Shallow Water L2 Error" ||
            name == "Aeras Shallow Water L2 Norm" ||
            name == "Aeras Hydrostatic L2 Norm" ||
+           name == "Aeras Hydrostatic L2 Error" ||
            name == "Aeras Total Volume" ||
 	   name == "Center Of Mass" ||
 	   name == "Save Field" ||

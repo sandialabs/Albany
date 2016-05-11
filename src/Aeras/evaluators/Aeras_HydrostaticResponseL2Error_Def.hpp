@@ -5,8 +5,8 @@
 //*****************************************************************//
 
 
-#ifndef AERAS_HYDROSTATIC_RESPONSE_L2NORM_DEF_HPP_
-#define AERAS_HYDROSTATIC_RESPONSE_L2NORM_DEF_HPP_
+#ifndef AERAS_HYDROSTATIC_RESPONSE_L2ERROR_DEF_HPP_
+#define AERAS_HYDROSTATIC_RESPONSE_L2ERROR_DEF_HPP_
 
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
@@ -17,9 +17,10 @@
 
 namespace Aeras {
 template<typename EvalT, typename Traits>
-HydrostaticResponseL2Norm<EvalT, Traits>::
-HydrostaticResponseL2Norm(Teuchos::ParameterList& p,
+HydrostaticResponseL2Error<EvalT, Traits>::
+HydrostaticResponseL2Error(Teuchos::ParameterList& p,
                      const Teuchos::RCP<Aeras::Layouts>& dl) :
+  sphere_coord("Lat-Long", dl->qp_gradient),
   weighted_measure("Weights", dl->qp_scalar),
   velocity("Velx",  dl->qp_vector_level),
   temperature("Temperature",dl->qp_scalar_level),
@@ -33,7 +34,7 @@ HydrostaticResponseL2Norm(Teuchos::ParameterList& p,
     this->getValidResponseParameters();
   plist->validateParameters(*reflist,0);
 
-  *out << "in Hydrostatic_Response_L2Norm! \n";
+  *out << "in Hydrostatic_Response_L2Error! \n";
 
   // number of quad points per cell and dimension of space
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
@@ -44,20 +45,39 @@ HydrostaticResponseL2Norm(Teuchos::ParameterList& p,
   numQPs  = dims[1];
   numDims = dims[2];
 
-  *out << "numQPs, numDims, numLevels: " << numQPs << ", " << numDims << ", " << numLevels << std::endl; 
+  *out << "numQPs, numDims, numLevels: " << numQPs << ", " << numDims << ", " << numLevels << std::endl;
+
+  //User-specified parameters
+  refSolName = plist->get<std::string>("Reference Solution Name"); //no reference solution by default.
+  *out << "Reference Solution Name for Aeras::HydrostaticResponseL2Error response: " << refSolName << std::endl;
+  inputData = plist->get<double>("Reference Solution Data", 0.0);
+
+  if (refSolName == "Zero")
+    ref_sol_name = ZERO;
+  else if (refSolName == "Baroclinic Instabilities Unperturbed")
+    ref_sol_name  = BAROCLINIC_UNPERTURBED;
+  else {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Error!  Unknown reference solution name " << ref_sol_name <<
+      "!" << std::endl;);
+  }
+
+ 
+  this->addDependentField(sphere_coord);
   this->addDependentField(weighted_measure);
   this->addDependentField(velocity);
   this->addDependentField(temperature);
   this->addDependentField(spressure);
 
-  this->setName("Aeras Hydrostatic Response L2 Norm");
+  this->setName("Aeras Hydrostatic Response L2 Error");
 
   using PHX::MDALayout;
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
-  std::string local_response_name = "Local Response Aeras Hydrostatic Response L2 Norm";
-  std::string global_response_name = "Global Response Aeras Hydrostatic Response L2 Norm";
+  std::string local_response_name = "Local Response Aeras Hydrostatic Response L2 Error";
+  std::string global_response_name = "Global Response Aeras Hydrostatic Response L2 Error";
   int worksetSize = scalar_dl->dimension(0);
 
   //FIXME: extend responseSize to have tracers 
@@ -82,10 +102,11 @@ HydrostaticResponseL2Norm(Teuchos::ParameterList& p,
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void HydrostaticResponseL2Norm<EvalT, Traits>::
+void HydrostaticResponseL2Error<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
+  this->utils.setFieldData(sphere_coord,fm);
   this->utils.setFieldData(weighted_measure,fm);
   this->utils.setFieldData(velocity,fm);
   this->utils.setFieldData(temperature,fm);
@@ -96,7 +117,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void HydrostaticResponseL2Norm<EvalT, Traits>::
+void HydrostaticResponseL2Error<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
   const int imax = this->global_response.size();
@@ -109,45 +130,19 @@ preEvaluate(typename Traits::PreEvalData workset)
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void HydrostaticResponseL2Norm<EvalT, Traits>::
+void HydrostaticResponseL2Error<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  *out << "HydrostaticResponseL2Norm evaluateFields() \n" << std::endl;
+  *out << "HydrostaticResponseL2Error evaluateFields() \n" << std::endl;
 
   //Zero out local response 
   PHAL::set(this->local_response, 0.0);
 
-  //Print out time, for reference 
-  *out << "time = " << workset.current_time << std::endl;
+  //Get time from workset.  This is for setting time-dependent exact solution.
+  const RealType time  = workset.current_time;
+  *out << "time = " << time << std::endl;
 
-  //Calculate L2 norm squared of each component of solution.  We do not need to do 
-  //an interpolation from the nodes to the QPs of the solution since nodes = QPs for Aeras
-  //spectral elements. 
-  ScalarT wm; 
-  std::size_t dim; 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp)  {
-      wm = weighted_measure(cell,qp);
-      //surface pressure field: dof 0
-      dim = 0;
-      this->local_response(cell,dim) += wm*spressure(cell,qp)*spressure(cell,qp); 
-      this->global_response(dim) += wm*spressure(cell,qp)*spressure(cell,qp);
-      for (std::size_t level=0; level < numLevels; ++level) {
-        //u-velocity field: dof 1, 4, 7, ...
-        //v-velocity field: dof 2, 5, 8, ...
-        for (std::size_t i=0; i < 2; ++i) {
-          dim = 1 + i + level*3; 
-          this->local_response(cell,dim) += wm*velocity(cell,qp,level,i)*velocity(cell,qp,level,i); 
-          this->global_response(dim) += wm*velocity(cell,qp,level,i)*velocity(cell,qp,level,i);
-        }
-        //temperature field: dof 3, 6, 9, .... 
-        dim = 3 + level*3; 
-        this->local_response(cell,dim) += wm*temperature(cell,qp,level)*temperature(cell,qp,level); 
-        this->global_response(dim) += wm*temperature(cell,qp,level)*temperature(cell,qp,level);
-        //FIXME: ultimately, will want to add tracers. 
-      } 
-    }
-  }
+  //FIXME: fill in! 
 
   // Do any local-scattering necessary
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::evaluateFields(workset);
@@ -155,11 +150,11 @@ evaluateFields(typename Traits::EvalData workset)
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void HydrostaticResponseL2Norm<EvalT, Traits>::
+void HydrostaticResponseL2Error<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
 
-  *out << "HydrostaticResponseL2Norm postEvaluate() \n" << std::endl;
+  *out << "HydrostaticResponseL2Error postEvaluate() \n" << std::endl;
 #if 0
   // Add contributions across processors
   Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
@@ -197,11 +192,11 @@ postEvaluate(typename Traits::PostEvalData workset)
 // **********************************************************************
 template<typename EvalT,typename Traits>
 Teuchos::RCP<const Teuchos::ParameterList>
-HydrostaticResponseL2Norm<EvalT,Traits>::getValidResponseParameters() const
+HydrostaticResponseL2Error<EvalT,Traits>::getValidResponseParameters() const
 {
 
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-        rcp(new Teuchos::ParameterList("Valid Hydrostatic Response L2 Norm Params"));;
+        rcp(new Teuchos::ParameterList("Valid Hydrostatic Response L2 Error Params"));;
   Teuchos::RCP<const Teuchos::ParameterList> baseValidPL =
     PHAL::SeparableScatterScalarResponse<EvalT,Traits>::getValidResponseParameters();
   validPL->setParameters(*baseValidPL);
@@ -210,9 +205,11 @@ HydrostaticResponseL2Norm<EvalT,Traits>::getValidResponseParameters() const
   validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Make dot file to visualize phalanx graph");
   validPL->set<std::string>("Field Name", "", "Scalar field from which to compute center of mass");
   validPL->set<std::string>("Description", "", "Description of this response used by post processors");
+  validPL->set<std::string>("Reference Solution Name", "", "Name of reference solution");
+  validPL->set<double>("Reference Solution Data", 0.0, "Data needed to specifying reference solution");
 
   return validPL;
 }
 
 }
-#endif /* AERAS_HYDROSTATIC_RESPONSE_L2NORM_DEF_HPP_ */
+#endif /* AERAS_HYDROSTATIC_RESPONSE_L2ERROR_DEF_HPP_ */

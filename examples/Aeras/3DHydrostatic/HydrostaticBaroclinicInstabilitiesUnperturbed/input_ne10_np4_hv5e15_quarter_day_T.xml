@@ -24,6 +24,7 @@
        <Parameter name="Function Data" type="Array(double)" value="{10, 0, 0}"/>
     </ParameterList>
     <ParameterList name="Response Functions">
+      <!--Parameter name="Number" type="int" value="8"/-->
       <Parameter name="Number" type="int" value="6"/>
       <Parameter name="Response 0" type="string" value="Solution Min Value"/>
             <ParameterList name="ResponseParams 0">
@@ -49,7 +50,12 @@
             <ParameterList name="ResponseParams 5">
             <Parameter name="Equation" type="int" value="2" />
             </ParameterList>
-      <!--Parameter name="Response 6" type="string" value="Aeras Hydrostatic L2 Norm"/-->
+      <!--Parameter name="Response 6" type="string" value="Aeras Hydrostatic L2 Norm"/>
+      <Parameter name="Response 7" type="string" value="Aeras Hydrostatic L2 Error"/>
+            <ParameterList name="ResponseParams 7">
+            <Parameter name="Reference Solution Name" type="string" value="Baroclinic Instabilities Unperturbed"/>
+            <Parameter name="Reference Solution Data" type="double" value="0.0"/>
+      </ParameterList-->
       <Parameter name="Responses Observation Frequency" type="int" value="1000"/>
     </ParameterList>
 <!--

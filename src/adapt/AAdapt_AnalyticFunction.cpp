@@ -1653,8 +1653,8 @@ void AAdapt::AerasZonalFlow::compute(double* solution, const double* X) {
   const double u0 = 2.*myPi*a/(12*24*3600.);  // magnitude of wind
   const double h0g = data[0];
 
-    const double alpha = 0.0;//1.047; /* must match value in ShallowWaterResidDef
-                             //don't know how to get data from input into this class and that one. */
+  const double alpha = 0.0;//1.047; /* must match value in ShallowWaterResidDef
+                           //don't know how to get data from input into this class and that one. */
 
   const double cosAlpha = std::cos(alpha);
   const double sinAlpha = std::sin(alpha);
