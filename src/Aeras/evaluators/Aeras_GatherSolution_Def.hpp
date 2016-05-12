@@ -142,39 +142,37 @@ evaluateFields(typename Traits::EvalData workset)
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
-operator() (const int &cell) const{
-
+operator() (const int &cell) const
+{
  for (int node = 0; node < this->numNodes; ++node) {
-      int n = 0, eq = 0;
-      for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-        (this->d_val    [j])(cell,node) = xT_constView[wsID_kokkos(cell, node,n)];
-        (this->d_val_dot[j])(cell,node) = xdotT_constView[wsID_kokkos(cell, node,n)];
-      }
-      eq += this->numNodeVar;
-      for (int level = 0; level < this->numLevels; level++) {
-        for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
-          for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-            (this->d_val    [j])(cell,node,level,dim) = xT_constView   [wsID_kokkos(cell, node,n)];
-            (this->d_val_dot[j])(cell,node,level,dim) = xdotT_constView[wsID_kokkos(cell, node,n)];
-          }
-        }
-        for (int j = eq+this->numVectorLevelVar;
-                 j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-          (this->d_val    [j])(cell,node,level) = xT_constView   [wsID_kokkos(cell, node,n)];
-          (this->d_val_dot[j])(cell,node,level) = xdotT_constView[wsID_kokkos(cell, node,n)];
-        }
-      }
-      eq += this->numScalarLevelVar + this->numVectorLevelVar;
-      for (int level = 0; level < this->numLevels; ++level) {
-        for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          (this->d_val    [j])(cell,node,level) = xT_constView[wsID_kokkos(cell, node,n)];
-          (this->d_val_dot[j])(cell,node,level) = xdotT_constView[wsID_kokkos(cell, node,n)];
-        }
-      }
-      eq += this->numTracerVar;
+   int n = 0, eq = 0;
+   for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
+     (this->d_val    [j])(cell,node) = xT_constView[wsID_kokkos(cell, node,n)];
+     (this->d_val_dot[j])(cell,node) = xdotT_constView[wsID_kokkos(cell, node,n)];
     }
-
-
+    eq += this->numNodeVar;
+    for (int level = 0; level < this->numLevels; level++) {
+      for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
+        for (int dim = 0; dim < this->numDims; ++dim, ++n) {
+          (this->d_val    [j])(cell,node,level,dim) = xT_constView   [wsID_kokkos(cell, node,n)];
+          (this->d_val_dot[j])(cell,node,level,dim) = xdotT_constView[wsID_kokkos(cell, node,n)];
+        }
+      }
+      for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) 
+      {
+        (this->d_val    [j])(cell,node,level) = xT_constView   [wsID_kokkos(cell, node,n)];
+        (this->d_val_dot[j])(cell,node,level) = xdotT_constView[wsID_kokkos(cell, node,n)];
+      }
+    }
+    eq += this->numScalarLevelVar + this->numVectorLevelVar;
+    for (int level = 0; level < this->numLevels; ++level) {
+      for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
+        (this->d_val    [j])(cell,node,level) = xT_constView[wsID_kokkos(cell, node,n)];
+        (this->d_val_dot[j])(cell,node,level) = xdotT_constView[wsID_kokkos(cell, node,n)];
+      }
+    }
+    eq += this->numTracerVar;
+  }
 }
 #endif
 
@@ -200,8 +198,8 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
 
   //Get const view of xT and xdotT 
-//  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
-//  Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
+  //Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  //Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
   xT_constView = xT->get1dView();
   xdotT_constView = xdotT->get1dView();
 
