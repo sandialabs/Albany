@@ -135,10 +135,11 @@ public:
   GatherSolution(const Teuchos::ParameterList& p,
                  const Teuchos::RCP<Aeras::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d); 
-
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  
   Teuchos::ArrayRCP<const ST> xT_constView;
   Teuchos::ArrayRCP<const ST> xdotT_constView;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   bool ignore_residual;
   double j_coeff, m_coeff;
@@ -163,6 +164,17 @@ public:
   KOKKOS_INLINE_FUNCTION
   void gather_solution_transientTerms(const int &cell, const int &node, const int &neq, const int &num_dof, const int &firstunk) const;
 
+#endif
+
+private: 
+  const int numFields;
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
+  Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device > val_kokkosjac;  
+  Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device > val_dot_kokkosjac;  
+
+  typename Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device >::t_dev d_val;   
+  typename Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device >::t_dev d_val_dot;   
 #endif
 
 };
