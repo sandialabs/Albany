@@ -11,7 +11,6 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-
 #include "Aeras_Layouts.hpp"
 
 #include "Teuchos_ParameterList.hpp"
@@ -48,25 +47,23 @@ public:
   virtual void evaluateFields(typename Traits::EvalData d) = 0;
   
 protected:
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   std::vector< PHX::MDField<ScalarT> > val;
   std::vector< PHX::MDField<ScalarT> > val_dot;
-#else
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
-  std::vector< PHX::MDField<ScalarT> > val;
-  std::vector< PHX::MDField<ScalarT> > val_dot;
 
   Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device > val_kokkosvec;
   Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device > val_dot_kokkosvec;
 
-  typename Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device >::t_dev d_val; //=val_kokkosvec.template view<executionSpace>();
-  typename Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device >::t_dev d_val_dot; //=val_dot_kokkosvec.template view<executionSpace>();
+  typename Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device >::t_dev d_val; 
+  typename Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device >::t_dev d_val_dot; 
 #endif
   const int numNodes;
   const int numDims;
   const int numLevels;
   const int worksetSize;
   int numFields; 
+  int numFieldsBase; 
   int numNodeVar; 
   int numVectorLevelVar;
   int numScalarLevelVar;
@@ -111,6 +108,17 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const int &cell) const;
+#endif
+
+private: 
+  const int numFields;
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
+  Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device > val_kokkosvec;  
+  Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device > val_dot_kokkosvec;  
+
+  typename Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device >::t_dev d_val;   
+  typename Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device >::t_dev d_val_dot;   
 #endif
 
 };

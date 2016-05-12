@@ -39,6 +39,7 @@ numFields  (0), numNodeVar(0), numVectorLevelVar(0), numScalarLevelVar(0), numTr
   numScalarLevelVar  = scalar_level_names .size();
   numTracerVar       = tracer_names       .size();
   numFields          = numNodeVar +  numVectorLevelVar + numScalarLevelVar + numTracerVar;
+  numFieldsBase      = numNodeVar +  numVectorLevelVar + numScalarLevelVar + numTracerVar;
 
   val.resize(numFields);
   val_dot.resize(numFields);
@@ -83,16 +84,6 @@ numFields  (0), numNodeVar(0), numVectorLevelVar(0), numScalarLevelVar(0), numTr
     this->addEvaluatedField(val_dot[eq]);
   }
 
-/*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-   for (int i =0; i<numFields;i++){
-     val_kokkosvec[i]=val[i];//.get_kokkos_view();
-     val_dot_kokkosvec[i]=val_dot[i];//.get_kokkos_view();
-   }
-
-   d_val=val_kokkosvec.template view<executionSpace>();
-   d_val_dot=val_dot_kokkosvec.template view<executionSpace>();
-#endif
-*/
   this->setName("Aeras_GatherSolution" +PHX::typeAsString<EvalT>());
 }
 
@@ -147,7 +138,7 @@ evaluateFields(typename Traits::EvalData workset)
 // Specialization: Residual
 // **********************************************************************
 //Kokkos kernel Residual
-/*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
@@ -186,14 +177,20 @@ operator() (const int &cell) const{
 
 }
 #endif
-*/
+
 // ***********************************************************************
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 GatherSolution(const Teuchos::ParameterList& p,
                const Teuchos::RCP<Aeras::Layouts>& dl) :
-  GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl)
-{}
+  GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::Residual,Traits>::numFieldsBase)
+{
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  val_kokkosvec.resize(numFields);
+  val_dot_kokkosvec.resize(numFields);
+#endif
+}
 
 template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
@@ -208,7 +205,7 @@ evaluateFields(typename Traits::EvalData workset)
   xT_constView = xT->get1dView();
   xdotT_constView = xdotT->get1dView();
 
-//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   for (int cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -243,12 +240,18 @@ evaluateFields(typename Traits::EvalData workset)
       eq += this->numTracerVar;
     }
   }
-/*#else
-   wsID_kokkos=workset.wsElNodeEqID_kokkos;
+#else
+  for (int i =0; i<numFields;i++) {
+    val_kokkosvec[i]=this->val[i].get_kokkos_view(); 
+    val_dot_kokkosvec[i]=this->val_dot[i].get_kokkos_view(); 
+  }
+  d_val = val_kokkosvec.template view<executionSpace>(); 
+  d_val_dot = val_dot_kokkosvec.template view<executionSpace>(); 
+  wsID_kokkos=workset.wsElNodeEqID_kokkos;
   Kokkos::parallel_for(workset.numCells,*this);
 
 #endif
-*/
+
 }
 
 // **********************************************************************
