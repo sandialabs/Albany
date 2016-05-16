@@ -342,31 +342,23 @@ postRegistrationSetup(typename Traits::SetupData d,
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template< typename ScalarT, typename ArrayT1,typename ArrayT2, typename ArrayJac, typename ArrayGrad>
 KOKKOS_INLINE_FUNCTION
-void gradient(const ArrayT1  & fieldAtNodes,
-		const int &cell, ArrayT2  & gradField, ArrayJac &jacobian_inv, ArrayGrad &grad_at_cub_points_Kokkos) {
-
+void gradient(const ArrayT1  & fieldAtNodes, const int &cell, ArrayT2  & gradField, 
+              ArrayJac &jacobian_inv, ArrayGrad &grad_at_cub_points_Kokkos) 
+{
 #ifdef AERAS_OUTPUT
-	std::cout << "ShallowWaterResid::gradient (kokkos)" << std::endl;
+  std::cout << "ShallowWaterResid::gradient (kokkos)" << std::endl;
 #endif
-
-
-	for (int qp=0; qp < grad_at_cub_points_Kokkos.dimension(1); ++qp) {
-
-		ScalarT gx = 0;
-		ScalarT gy = 0;
-		for (int node=0; node < grad_at_cub_points_Kokkos.dimension(0); ++node) {
-
-			const typename PHAL::Ref<const ScalarT>::type
-			field = fieldAtNodes(node);
-
-			gx +=   field*grad_at_cub_points_Kokkos(node, qp,0);
-			gy +=   field*grad_at_cub_points_Kokkos(node, qp,1);
-		}
-
-		gradField(qp, 0) = jacobian_inv(cell, qp, 0, 0)*gx + jacobian_inv(cell, qp, 1, 0)*gy;
-		gradField(qp, 1) = jacobian_inv(cell, qp, 0, 1)*gx + jacobian_inv(cell, qp, 1, 1)*gy;
-	}
-
+  for (int qp=0; qp < grad_at_cub_points_Kokkos.dimension(1); ++qp) {
+    ScalarT gx = 0;
+    ScalarT gy = 0;
+    for (int node=0; node < grad_at_cub_points_Kokkos.dimension(0); ++node) {
+      const typename PHAL::Ref<const ScalarT>::type field = fieldAtNodes(node);
+      gx +=   field*grad_at_cub_points_Kokkos(node, qp,0);
+      gy +=   field*grad_at_cub_points_Kokkos(node, qp,1);
+    }
+    gradField(qp, 0) = jacobian_inv(cell, qp, 0, 0)*gx + jacobian_inv(cell, qp, 1, 0)*gy;
+    gradField(qp, 1) = jacobian_inv(cell, qp, 0, 1)*gx + jacobian_inv(cell, qp, 1, 1)*gy;
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -582,12 +574,11 @@ void ShallowWaterResid<EvalT, Traits>::
 zeroing_Residual(const int& cell) const
 {
 #ifdef AERAS_OUTPUT
-	std::cout << "ShallowWaterResid::zeroing_Residual (kokkos)" << std::endl;
+  std::cout << "ShallowWaterResid::zeroing_Residual (kokkos)" << std::endl;
 #endif
-
-	for(std::size_t node=0; node < numNodes; ++node)
-       for(std::size_t neq=0; neq < vecDim; ++neq)
-    	   Residual(cell, node, neq) = 0.0;
+  for(std::size_t node=0; node < numNodes; ++node)
+    for(std::size_t neq=0; neq < vecDim; ++neq)
+      Residual(cell, node, neq) = 0.0;
 }
 
 
@@ -706,6 +697,64 @@ compute_Residuals12_notprescribed (const int& cell) const
   }
 }
 
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT, Traits>::
+compute_Residuals12_Vorticity_notprescribed (const int& cell, const int& index) const
+{
+#ifdef AERAS_OUTPUT
+  std::cout << "ShallowWaterResid::compute_Residuals12_Vorticity_notprescribed  (kokkos)" << std::endl;
+#endif
+  get_coriolis4(ccor, cell);
+
+  for (int node=0; node < numNodes; ++node) {
+    //const typename PHAL::Ref<const ScalarT>::type
+    /*const ScalarT
+    depth = UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap_Kokkos[node]),
+    ulambda = UNodal(cell, node,1),
+    utheta  = UNodal(cell, node,2);
+
+    ckineticEnergy(cell, node) = 0.5*(ulambda*ulambda + utheta*utheta);
+    cpotentialEnergy(cell, node) = gravity*depth;
+
+    cvelocityVec(cell, node, 0) = ulambda;
+    cvelocityVec(cell, node, 1) = utheta;
+    */
+
+    ckineticEnergy(cell, node) = 0.5*(UNodal(cell, node,1)*UNodal(cell, node,1) + UNodal(cell, node,2)*UNodal(cell, node,2));
+    cpotentialEnergy(cell, node) = gravity*(UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap_Kokkos[node]));
+
+    cvelocityVec(cell, node, 0) = UNodal(cell, node,1);
+    cvelocityVec(cell, node, 1) = UNodal(cell, node,2);
+  }
+
+  curl4(cvelocityVec, cvort, cell);
+
+  gradient4(ckineticEnergy, cgradKineticEnergy, cell);
+  gradient4(cpotentialEnergy, cgradPotentialEnergy, cell);
+
+  for (int qp=0; qp < numQPs; ++qp) {
+    //int node = qp;
+    const typename PHAL::Ref<const ScalarT>::type
+    coriolis_ = ccor(cell, qp),
+    curl_ = cvort(cell, qp),//  old code curl_ = curlU(qp)
+    wbf_ = wBF(cell, qp, qp);
+
+    Residual(cell,qp,1) += (   UDot(cell,qp,1) + cgradKineticEnergy(cell, qp, 0)
+			+ cgradPotentialEnergy(cell, qp, 0)
+			- ( coriolis_ + curl_ )*U(cell, qp, 2))*wbf_;
+    Residual(cell,qp,2) += (   UDot(cell,qp,2) + cgradKineticEnergy(cell, qp, 1)
+			+ cgradPotentialEnergy(cell, qp, 1)
+			+ ( coriolis_ + curl_ )*U(cell, qp, 1))*wbf_;
+    //Vorticity
+    for (int node=0; node < numNodes; ++node)
+      Residual(cell,node,3) += (U(cell,qp,3) - curl_)*wBF(cell,node,qp);
+  }
+
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
@@ -720,6 +769,22 @@ operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag& tag, c
 
   compute_Residual0(cell);
   compute_Residuals12_notprescribed(cell);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT, Traits>::
+operator() (const ShallowWaterResid_VecDim3_Vorticity_no_usePrescribedVelocity_Tag& tag, const int& cell) const
+{
+#ifdef AERAS_OUTPUT
+  std::cout << "ShallowWaterResid::() tag ShallowWaterResid_VecDim3_Vorticity_no_usePrescribedVelocity  (kokkos)" << std::endl;
+#endif
+
+  zeroing_Residual(cell);
+
+  compute_Residual0(cell);
+  compute_Residuals12_Vorticity_notprescribed(cell, 3);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -743,6 +808,26 @@ operator() (const ShallowWaterResid_BuildLaplace_for_huv_Tag& tag, const int& ce
   BuildLaplace_for_h(cell);
   BuildLaplace_for_uv(cell);
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT, Traits>::
+operator() (const ShallowWaterResid_BuildLaplace_for_huv_Vorticity_Tag& tag, const int& cell) const
+{
+#ifdef AERAS_OUTPUT
+  std::cout << "ShallowWaterResid::() tag ShallowWaterResid_BuildLaplace_for_huv_Vorticity  (kokkos)" << std::endl;
+#endif
+  /*if((j_coeff == 0)&&(m_coeff == 1)&&(workset.current_time == 0)&&(plotVorticity)){
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
+      for (std::size_t node=0; node < numNodes; ++node) {
+        Residual(cell,node,3) += UDot(cell,qp,3);
+      }
+  }*/
+
+  setVecDim3_for_Vorticity(cell); 
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -772,17 +857,25 @@ compute_3Dvelocity4(std::size_t node, const ScalarT lam, const ScalarT th, const
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
+setVecDim3_for_Vorticity (const int& cell) const
+{
+#ifdef AERAS_OUTPUT
+  std::cout << "ShallowWaterResid::setVecDim3_for_Vorticity (kokkos)" << std::endl;
+#endif
+  for (std::size_t qp=0; qp < numQPs; ++qp) 
+    for (std::size_t node=0; node < numNodes; ++node) 
+      Residual(cell,node,3) += UDot(cell,qp,3);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT, Traits>::
 BuildLaplace_for_uv (const int& cell) const
 {
 #ifdef AERAS_OUTPUT
   std::cout << "ShallowWaterResid::BuildLaplace_for_uv (kokkos)" << std::endl;
 #endif
-  /*if((j_coeff == 0)&&(m_coeff == 1)&&(workset.current_time == 0)&&(plotVorticity)){
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-        Residual(cell,node,3) += UDot(cell,qp,3);
-      }
-  }*/
 
   for (std::size_t node=0; node < numNodes; ++node) {
 
@@ -899,6 +992,24 @@ operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const
   compute_Residual0(cell);
   compute_h_ImplHV(cell);
   compute_Residuals12_notprescribed(cell);
+  compute_uv_ImplHV(cell);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT, Traits>::
+operator() (const ShallowWaterResid_VecDim6_Vorticity_Tag& tag, const int& cell) const
+{
+#ifdef AERAS_OUTPUT
+  std::cout << "ShallowWaterResid::() ShallowWaterResid_VecDim6_Vorticity tag  (kokkos)" << std::endl;
+#endif
+
+  zeroing_Residual(cell);
+
+  compute_Residual0(cell);
+  compute_h_ImplHV(cell);
+  compute_Residuals12_Vorticity_notprescribed(cell, 6);
   compute_uv_ImplHV(cell);
 }
 
@@ -1491,17 +1602,31 @@ evaluateFields(typename Traits::EvalData workset)
 	Kokkos::parallel_for(ShallowWaterResid_VecDim3_usePrescribedVelocity_Policy(0,workset.numCells),*this);
   }
   else {
-    if (useImplHyperviscosity)
-      Kokkos::parallel_for(ShallowWaterResid_VecDim6_Policy(0,workset.numCells),*this);
+    if (useImplHyperviscosity) {
+      if (plotVorticity) 
+        Kokkos::parallel_for(ShallowWaterResid_VecDim6_Vorticity_Policy(0,workset.numCells),*this); 
+      else
+        Kokkos::parallel_for(ShallowWaterResid_VecDim6_Policy(0,workset.numCells),*this);
+    }
     else if (useExplHyperviscosity)
       if ( obtainLaplaceOp ) {
 	Kokkos::parallel_for(ShallowWaterResid_BuildLaplace_for_huv_Policy(0,workset.numCells),*this);
+        if ((j_coeff == 0) && (m_coeff == 1) && (workset.current_time == 0) && (plotVorticity))
+	  Kokkos::parallel_for(ShallowWaterResid_BuildLaplace_for_huv_Vorticity_Policy(0,workset.numCells),*this);
+         
       }
       else {
-	Kokkos::parallel_for(ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
+        if (plotVorticity)
+	  Kokkos::parallel_for(ShallowWaterResid_VecDim3_Vorticity_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
+        else
+	  Kokkos::parallel_for(ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
       }
-    else
-	Kokkos::parallel_for(ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
+    else {
+       if (plotVorticity)
+         Kokkos::parallel_for(ShallowWaterResid_VecDim3_Vorticity_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
+       else
+         Kokkos::parallel_for(ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
+    }
   }
 
 #ifdef AERAS_OUTPUT
