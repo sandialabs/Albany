@@ -120,8 +120,14 @@ operator() (const ShallowWaterSource_Tag& tag, const int& cell) const{
       source(cell, qp, 2) = 0.0;
    }
  }
- else {
-   // ts(0)=TMSHFT;
+ else if (sourceType == TC4) {
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+ 		               Teuchos::Exceptions::InvalidParameter,"Aeras::ShallowWaterSource: " <<
+			       "TC4 source not implemented in Kokkos functor code. "); 
+
+  //IKT, 5/16/16: I commented out the following b/c it caused a run-time error due to a 5/12/16 
+  //checkin to Trilinos Kokkos package by Eric Phipps.  We don't test the TC4 problem anyway. 
+/*   // ts(0)=TMSHFT;
    ts(0) = SU0*time/A;
    //ts(1)=AI
    ts(1)   = 1.0/A;
@@ -187,7 +193,7 @@ operator() (const ShallowWaterSource_Tag& tag, const int& cell) const{
      source(cell, qp, 1) = ts(30);
      source(cell, qp, 2) = ts(32);
 
-   }//end qp
+   }//end qp*/
  }
 
 }
@@ -343,7 +349,9 @@ evaluateFields(typename Traits::EvalData workset)
 
 #else
 
-  ts= Kokkos::View<ScalarT*, PHX::Device> ("ts",40);
+  //IKT, 5/16/16: I commented out the following b/c it caused a run-time error due to a 5/12/16 
+  //checkin to Trilinos Kokkos package by Eric Phipps.   
+  //ts= Kokkos::View<ScalarT*, PHX::Device> ("ts",40);
   A = earthRadius;
   time = workset.current_time; 
   Kokkos::parallel_for(ShallowWaterSource_Policy(0,workset.numCells),*this);
