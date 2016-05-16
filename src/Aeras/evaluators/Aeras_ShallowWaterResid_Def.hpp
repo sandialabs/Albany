@@ -749,7 +749,7 @@ compute_Residuals12_Vorticity_notprescribed (const int& cell, const int& index) 
 			+ ( coriolis_ + curl_ )*U(cell, qp, 1))*wbf_;
     //Vorticity
     for (int node=0; node < numNodes; ++node)
-      Residual(cell,node,3) += (U(cell,qp,3) - curl_)*wBF(cell,node,qp);
+      Residual(cell,node,index) += (U(cell,qp,index) - curl_)*wBF(cell,node,qp);
   }
 
 }
@@ -796,12 +796,6 @@ operator() (const ShallowWaterResid_BuildLaplace_for_huv_Tag& tag, const int& ce
 #ifdef AERAS_OUTPUT
   std::cout << "ShallowWaterResid::() tag ShallowWaterResid_BuildLaplace_for_huv  (kokkos)" << std::endl;
 #endif
-  /*if((j_coeff == 0)&&(m_coeff == 1)&&(workset.current_time == 0)&&(plotVorticity)){
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-        Residual(cell,node,3) += UDot(cell,qp,3);
-      }
-  }*/
 
   zeroing_Residual(cell);
 
@@ -818,12 +812,6 @@ operator() (const ShallowWaterResid_BuildLaplace_for_huv_Vorticity_Tag& tag, con
 #ifdef AERAS_OUTPUT
   std::cout << "ShallowWaterResid::() tag ShallowWaterResid_BuildLaplace_for_huv_Vorticity  (kokkos)" << std::endl;
 #endif
-  /*if((j_coeff == 0)&&(m_coeff == 1)&&(workset.current_time == 0)&&(plotVorticity)){
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-        Residual(cell,node,3) += UDot(cell,qp,3);
-      }
-  }*/
 
   setVecDim3_for_Vorticity(cell); 
 }
