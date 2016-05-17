@@ -83,23 +83,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
 
 
   this->setName("Aeras::ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
-/*
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  refWeights_CUDA=Kokkos::View<RealType*, PHX::Device>("refWeights_CUDA", numQPs);
-  val_at_cub_points_CUDA=Kokkos::View<RealType**, PHX::Device>("val_at_cub_points_CUDA", numNodes, numQPs);
-  grad_at_cub_points_CUDA=Kokkos::View<RealType***, PHX::Device>("grad_at_cub_points_CUDA", numNodes, numQPs, basisDims);
 
-  for (int i =0; i< numQPs; i++)
-    refWeights_CUDA(i)=refWeights(i);
-
-  for (int i =0; i < numNodes; i++){
-    for (int j=0; j < numQPs; j++){
-      val_at_cub_points_CUDA(i,j)=val_at_cub_points(i,j);
-      for (int k=0; k < basisDims; k++)
-        grad_at_cub_points_CUDA(i,j,k)=grad_at_cub_points(i,j,k);
-    }
-  }
-#endif*/
 }
 
 //**********************************************************************
@@ -127,280 +111,172 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 //Kokkos functors:
-/*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ComputeBasisFunctions<EvalT, Traits>::
 operator() (const ComputeBasisFunctions_Tag& tag, const int& cell) const
 {
-  for(int nodes = 0; nodes < numNodes; nodes++) 
-        for(int pt = 0; pt < numQPs; pt++) 
-           for( int dim = 0; dim < numDims; dim++) 
-              GradBF(cell, nodes,pt,dim) =0.0;
- 
-   compute_jacobian(cell);
-   compute_jacobian_inv(cell);
-   compute_jacobian_det(cell);
-   computeCellMeasure(cell);
-   compute_BF(cell);
-   compute_wBF(cell);
-   compute_GradBF(cell);
-   compute_wGradBF(cell);
+  compute_lambda_and_theta_nodal(cell);   
+  compute_jacobian(cell);
 }
-
-template<typename EvalT, typename Traits>
-KOKKOS_INLINE_FUNCTION
-void ComputeBasisFunctions<EvalT, Traits>::
-operator() (const ComputeBasisFunctions_basisDim_Tag& tag, const int& cell) const
-{
-
-  for(int nodes = 0; nodes < numNodes; nodes++)
-        for(int pt = 0; pt < numQPs; pt++)
-           for( int dim = 0; dim < numDims; dim++)
-              GradBF(cell, nodes,pt,dim) =0.0;
-
- 
-   compute_jacobian(cell); 
-   compute_jacobian_inv(cell);
-   compute_jacobian_det(cell);
-   computeCellMeasure(cell);
-   compute_BF(cell);
-   compute_wBF(cell);
-}
-
-template<typename EvalT, typename Traits>
-KOKKOS_INLINE_FUNCTION
-void ComputeBasisFunctions<EvalT, Traits>::
-operator() (const ComputeBasisFunctions_no_Jacobian_Tag& tag, const int& cell) const
-{
-
-  for(int nodes = 0; nodes < numNodes; nodes++)
-        for(int pt = 0; pt < numQPs; pt++)
-           for( int dim = 0; dim < numDims; dim++)
-              GradBF(cell, nodes,pt,dim) =0.0;
-
-
-   compute_jacobian_inv(cell);
-   compute_jacobian_det(cell);
-   computeCellMeasure(cell);
-   compute_BF(cell);
-   compute_wBF(cell);
-   compute_GradBF(cell);
-   compute_wGradBF(cell);
-}
-
-template<typename EvalT, typename Traits>
-KOKKOS_INLINE_FUNCTION
-void ComputeBasisFunctions<EvalT, Traits>::
-operator() (const ComputeBasisFunctions_no_Jacobian_basisDim_Tag& tag, const int& cell) const
-{
-
-  for(int nodes = 0; nodes < numNodes; nodes++)
-        for(int pt = 0; pt < numQPs; pt++)
-           for( int dim = 0; dim < numDims; dim++)
-              GradBF(cell, nodes,pt,dim) =0.0;
-
-
-   compute_jacobian_inv(cell);
-   compute_jacobian_det(cell);
-   computeCellMeasure(cell);
-   compute_BF(cell);
-   compute_wBF(cell);
-}
-
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ComputeBasisFunctions<EvalT, Traits>::
 compute_jacobian (const int e) const
 {
+  
+  Kokkos::deep_copy(phi, MeshScalarT(0.0));  
+  Kokkos::deep_copy(dphi, MeshScalarT(0.0));  
+  Kokkos::deep_copy(norm, MeshScalarT(0.0));  
+  Kokkos::deep_copy(sinL, MeshScalarT(0.0));  
+  Kokkos::deep_copy(cosL, MeshScalarT(0.0));  
+  Kokkos::deep_copy(sinT, MeshScalarT(0.0));  
+  Kokkos::deep_copy(cosT, MeshScalarT(0.0));  
+  Kokkos::deep_copy(D1, MeshScalarT(0.0));  
+  Kokkos::deep_copy(D2, MeshScalarT(0.0));  
+  Kokkos::deep_copy(D3, MeshScalarT(0.0));  
+
   for (int q = 0; q<numQPs;          ++q)
-       for (int b1= 0; b1<basisDim;     ++b1)
-          for (int b2= 0; b2<basisDim;   ++b2)
-            for (int d = 0; d<spatialDim;++d)
-              jacobian(e,q,b1,b2) = 0;
+    for (int b1= 0; b1<basisDim;     ++b1)
+      for (int b2= 0; b2<basisDim;   ++b2)
+        for (int d = 0; d<spatialDim;++d)
+          jacobian(e,q,b1,b2) = 0;
 
 
-      for (int q = 0; q<numQPs;         ++q)
-        for (int d = 0; d<spatialDim;   ++d)
-          for (int v = 0; v<numNodes;  ++v)
-            phi(q,d) += coordVec(e,v,d) * val_at_cub_points_CUDA(v,q);
+  for (int q = 0; q<numQPs;         ++q)
+    for (int d = 0; d<spatialDim;   ++d)
+      for (int v = 0; v<numNodes;  ++v)
+        phi(q,d) += coordVec(e,v,d) * val_at_cub_points(v,q); 
 
-      for (int v = 0; v<numNodes;      ++v)
-        for (int q = 0; q<numQPs;       ++q)
-          for (int d = 0; d<spatialDim; ++d)
-            for (int b = 0; b<basisDim; ++b)
-              dphi(q,d,b) += coordVec(e,v,d) * grad_at_cub_points_CUDA(v,q,b);
+  for (int v = 0; v<numNodes;      ++v)
+    for (int q = 0; q<numQPs;       ++q)
+      for (int d = 0; d<spatialDim; ++d)
+        for (int b = 0; b<basisDim; ++b)
+          dphi(q,d,b) += coordVec(e,v,d) * grad_at_cub_points(v,q,b);
 
-      for (int q = 0; q<numQPs;         ++q)
-        for (int d = 0; d<spatialDim;   ++d)
-          norm(q) += phi(q,d)*phi(q,d);
+  for (int q = 0; q<numQPs;         ++q)
+    for (int d = 0; d<spatialDim;   ++d)
+      norm(q) += phi(q,d)*phi(q,d);
 
-      for (int q = 0; q<numQPs;         ++q) {
-         norm(q) = std::sqrt(norm(q));
-      }
+  for (int q = 0; q<numQPs;         ++q) {
+    norm(q) = std::sqrt(norm(q));
+  }
 
-      for (int q = 0; q<numQPs;         ++q)
-        for (int d = 0; d<spatialDim;   ++d)
-          phi(q,d) /= norm(q);
+  for (int q = 0; q<numQPs;         ++q)
+    for (int d = 0; d<spatialDim;   ++d)
+      phi(q,d) /= norm(q);
 
-      for (int q = 0; q<numQPs;         ++q) {
-      const MeshScalarT latitude  = std::asin(phi(q,2));  //theta
+  for (int q = 0; q<numQPs;         ++q) {
+    // ==========================================================
+    // enforce three facts:
+    //
+    // 1) lon at poles is defined to be zero
+    //
+    // 2) Grid points must be separated by about .01 Meter (on earth)
+    //   from pole to be considered "not the pole".
+    //
+    // 3) range of lon is { 0<= lon < 2*PI }
+    //
+    // ==========================================================
+    //
+  
+    const MeshScalarT latitude  = std::asin(phi(q,2));  //theta
 
-        MeshScalarT longitude = std::atan2(phi(q,1),phi(q,0));  //lambda
-        if (std::abs(std::abs(latitude)-pi/2) < DIST_THRESHOLD) longitude = 0;
-        else if (longitude < 0) longitude += 2*pi;
+    MeshScalarT longitude = std::atan2(phi(q,1),phi(q,0));  //lambda
+    if (std::abs(std::abs(latitude)-pi/2) < DIST_THRESHOLD) longitude = 0;
+    else if (longitude < 0) longitude += 2*pi;
 
+    sphere_coord(e,q,0) = longitude;
+    sphere_coord(e,q,1) = latitude;
 
-        sphere_coord(e,q,0) = longitude;
-        sphere_coord(e,q,1) = latitude;
+    sinT(q) = std::sin(latitude);
+    cosT(q) = std::cos(latitude);
+    sinL(q) = std::sin(longitude);
+    cosL(q) = std::cos(longitude);
+  }
 
-        sinT(q) = std::sin(latitude);
-        cosT(q) = std::cos(latitude);
-        sinL(q) = std::sin(longitude);
-        cosL(q) = std::cos(longitude);
-      }
+  for (int q = 0; q<numQPs;         ++q) {
+    D1(q,0,0) = -sinL(q);
+    D1(q,0,1) =  cosL(q);
+    D1(q,1,2) =        1;
+  }
 
-      for (int q = 0; q<numQPs;         ++q) {
-        D1(q,0,0) = -sinL(q);
-        D1(q,0,1) =  cosL(q);
-        D1(q,1,2) =        1;
-      }
+  for (int q = 0; q<numQPs;         ++q) {
+    D2(q,0,0) =  sinL(q)*sinL(q)*cosT(q)*cosT(q) + sinT(q)*sinT(q);
+    D2(q,0,1) = -sinL(q)*cosL(q)*cosT(q)*cosT(q);
+    D2(q,0,2) = -cosL(q)*sinT(q)*cosT(q);
 
-      for (int q = 0; q<numQPs;         ++q) {
-        D2(q,0,0) =  sinL(q)*sinL(q)*cosT(q)*cosT(q) + sinT(q)*sinT(q);
-        D2(q,0,1) = -sinL(q)*cosL(q)*cosT(q)*cosT(q);
-        D2(q,0,2) = -cosL(q)*sinT(q)*cosT(q);
+    D2(q,1,0) = -sinL(q)*cosL(q)*cosT(q)*cosT(q);
+    D2(q,1,1) =  cosL(q)*cosL(q)*cosT(q)*cosT(q) + sinT(q)*sinT(q);
+    D2(q,1,2) = -sinL(q)*sinT(q)*cosT(q);
 
-        D2(q,1,0) = -sinL(q)*cosL(q)*cosT(q)*cosT(q);
-        D2(q,1,1) =  cosL(q)*cosL(q)*cosT(q)*cosT(q) + sinT(q)*sinT(q);
-        D2(q,1,2) = -sinL(q)*sinT(q)*cosT(q);
+    D2(q,2,0) = -cosL(q)*sinT(q);
+    D2(q,2,1) = -sinL(q)*sinT(q);
+    D2(q,2,2) =  cosT(q);
+  }
 
-        D2(q,2,0) = -cosL(q)*sinT(q);
-        D2(q,2,1) = -sinL(q)*sinT(q);
-        D2(q,2,2) =  cosT(q);
-      }
+  for (int q = 0; q<numQPs;          ++q)
+    for (int b = 0; b<basisDim;      ++b)
+      for (int d = 0; d<spatialDim;  ++d)
+        for (int j = 0; j<spatialDim;++j)
+          D3(q,b,d) += D1(q,b,j)*D2(q,j,d);
 
-      for (int q = 0; q<numQPs;          ++q)
-        for (int b = 0; b<basisDim;      ++b)
-          for (int d = 0; d<spatialDim;  ++d)
-            for (int j = 0; j<spatialDim;++j)
-              D3(q,b,d) += D1(q,b,j)*D2(q,j,d);
+  for (int q = 0; q<numQPs;          ++q)
+    for (int b1= 0; b1<basisDim;     ++b1)
+      for (int b2= 0; b2<basisDim;   ++b2)
+        for (int d = 0; d<spatialDim;++d)
+          jacobian(e,q,b1,b2) += D3(q,b1,d) *  dphi(q,d,b2);
 
-      for (int q = 0; q<numQPs;          ++q)
-        for (int b1= 0; b1<basisDim;     ++b1)
-          for (int b2= 0; b2<basisDim;   ++b2)
-            for (int d = 0; d<spatialDim;++d)
-              jacobian(e,q,b1,b2) += D3(q,b1,d) *  dphi(q,d,b2);
+  for (int q = 0; q<numQPs;          ++q)
+    for (int b1= 0; b1<basisDim;     ++b1)
+      for (int b2= 0; b2<basisDim;   ++b2) 
+        jacobian(e,q,b1,b2) *= earthRadius/norm(q);
 
-      for (int q = 0; q<numQPs;          ++q)
-        for (int b1= 0; b1<basisDim;     ++b1)
-          for (int b2= 0; b2<basisDim;   ++b2)
-            jacobian(e,q,b1,b2) *= earthRadius/norm(q);
-
-
+  //IKT - debug output
+  /*if (e == 0) {    
+    for (int q = 0; q<numQPs;          ++q)
+      for (int b1= 0; b1<basisDim;     ++b1)
+        for (int b2= 0; b2<basisDim;   ++b2) 
+          std::cout << "q, b1, b2, jac: " << q << ", " << b1 << ", " << b2 << ", " << jacobian(e,q,b1,b2) << std::endl; 
+  }*/
 }
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
-void ComputeBasisFunctions<EvalT, Traits>:: 
-compute_jacobian_inv (const int i) const
- {
-   MeshScalarT determinant;
-   for (int i1=0; i1<numQPs; i1++) {
-   determinant = jacobian(i, i1, 0, 0)*jacobian(i, i1, 1, 1)-jacobian(i, i1, 0, 1)*jacobian(i, i1, 1, 0);
-    jacobian_inv(i, i1, 0, 0) =jacobian (i,i1, 1, 1)/ determinant;
-    jacobian_inv(i, i1, 0, 1) =jacobian (i,i1, 0, 1)/ determinant;
-    jacobian_inv(i, i1, 1, 0) =jacobian (i,i1, 1, 0)/ determinant;
-    jacobian_inv(i, i1, 1, 1) =jacobian (i,i1, 0, 0)/ determinant;
+void ComputeBasisFunctions<EvalT, Traits>::
+compute_lambda_and_theta_nodal (const int e) const
+{
+  for (int v = 0; v<numNodes;      ++v) {
+    //  phi(q,d) += coordVec(e,v,d) * val_at_cub_points(v,q);
+    //const MeshScalarT latitude  = std::asin(phi(q,2));  //theta
+    const MeshScalarT latitude  = std::asin(coordVec(e,v,2));  //theta
+
+    //MeshScalarT longitude = std::atan2(phi(q,1),phi(q,0));  //lambda
+    MeshScalarT longitude = std::atan2(coordVec(e,v,1),coordVec(e,v,0));  //lambda
+    if (std::abs(std::abs(latitude)-pi/2) < DIST_THRESHOLD) longitude = 0;
+    else if (longitude < 0) longitude += 2*pi;
+
+    lambda_nodal(e,v) = longitude;
+    theta_nodal(e,v) = latitude;
+  }
+  //OG Pulling out coords of first 4 vertices which are also coords of element's corners
+  //this is the case for np=4 only!
+  if (e == 0) {
+    std::cout << "Cell number "<< e <<"\n";
+    for (int v = 0; v < numNodes; v++){
+      if ( (v == 0) || (v == 3) || (v == 12) || (v == 15)) {
+        std::cout << "Vertex number "<< v << ", coordinates lon, lat= "
+  	          << lambda_nodal(e,v) <<", "<<theta_nodal(e,v)<<"\n";
+      }
     }
- }
-
-template<typename EvalT, typename Traits>
-KOKKOS_INLINE_FUNCTION
-void ComputeBasisFunctions<EvalT, Traits>::
-compute_jacobian_det(const int i) const
-{
-   for (int i1=0; i1<numQPs; i1++) {
-    jacobian_det(i, i1)=jacobian(i, i1, 0, 0)*jacobian(i, i1, 1, 1)-jacobian(i, i1, 0, 1)*jacobian(i, i1, 1, 0);
-   }
+  }
 }
-
-template<typename EvalT, typename Traits>
-KOKKOS_INLINE_FUNCTION
-void ComputeBasisFunctions<EvalT, Traits>::
-computeCellMeasure(const int i) const 
-{
-   if (jacobian_det(i,0) < 0.0) {
-    for(int pt = 0; pt < numQPs; pt++) {
-       weighted_measure(i, pt) = -1* refWeights_CUDA(pt)*jacobian_det(i, pt);
-     } // P-loop
-   }
-   else {
-   for(int pt = 0; pt < numQPs; pt++) {
-       weighted_measure(i, pt) = refWeights_CUDA(pt)*jacobian_det(i, pt);
-     }
-   }
-}
-
-template<typename EvalT, typename Traits>
-KOKKOS_INLINE_FUNCTION
-void ComputeBasisFunctions<EvalT, Traits>::
-compute_BF(const int i) const 
-{
-  for(int nodes = 0; nodes < numNodes; nodes++) {
-     for(int pt = 0; pt < numQPs; pt++) {
-        BF(i, nodes, pt) = val_at_cub_points_CUDA(nodes, pt);
-     } // pt-loop
-   } // nodes-loop
-}
-
-template<typename EvalT, typename Traits>
-KOKKOS_INLINE_FUNCTION
-void ComputeBasisFunctions<EvalT, Traits>::
-compute_wBF(const int i) const 
-{
-  for(int nodes = 0; nodes < numNodes; nodes++) {
-     for(int pt = 0; pt < numQPs; pt++) {
-         wBF(i, nodes, pt) = BF(i, nodes, pt)*weighted_measure(i, pt);
-     } // P-loop
-   } //
-}
-
-template<typename EvalT, typename Traits>
-KOKKOS_INLINE_FUNCTION
-void ComputeBasisFunctions<EvalT, Traits>::
-compute_GradBF(const int i) const
-{
-  for(int nodes = 0; nodes < numNodes; nodes++) {
-     for(int pt = 0; pt < numQPs; pt++) {
-       for(int row = 0; row < numDims; row++){
-              GradBF(i, nodes, pt, row) = 0.0;
-              for(int col = 0; col < numDims; col++){
-                  GradBF(i, nodes, pt, row) +=jacobian_inv(i, pt, col, row)*grad_at_cub_points_CUDA(nodes, pt, col);
-               }// col
-            } //row
-     } // P-loop
-   } //
-}
-
-template<typename EvalT, typename Traits>
-KOKKOS_INLINE_FUNCTION
-void ComputeBasisFunctions<EvalT, Traits>::
-compute_wGradBF(const int i) const
-{
-  for(int nodes = 0; nodes < numNodes; nodes++) {
-        for(int pt = 0; pt < numQPs; pt++) {
-           for( int dim = 0; dim < numDims; dim++) {
-              wGradBF(i, nodes, pt, dim) = GradBF(i, nodes, pt, dim)*weighted_measure(i, pt);
-           } // D1-loop
-         } // P-loop
-      } // F-loop
-}
-
 #endif
-*/
+
+
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
@@ -420,7 +296,7 @@ evaluateFields(typename Traits::EvalData workset)
   // setJacobian only needs to be RealType since the data type is only
   //  used internally for Basis Fns on reference elements, which are
   //  not functions of coordinates. This save 18min of compile time!!!
-//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   const double pi = ShallowWaterConstants::self().pi;
   const double DIST_THRESHOLD = ShallowWaterConstants::self().distanceThreshold;
@@ -440,7 +316,8 @@ evaluateFields(typename Traits::EvalData workset)
                                "is only implemented for bilinear and biquadratic elements!  Attempting " <<
                                "to call this function for a higher order element. \n"); 
     Intrepid2::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
-  } else {
+  } 
+  else {
 
 #define HOMMEMAP 0
 #if !(HOMMEMAP)
@@ -457,33 +334,29 @@ evaluateFields(typename Traits::EvalData workset)
     
     for (int e = 0; e<numelements;      ++e) {
       for (int v = 0; v<numNodes;      ++v) {
+        //  phi(q,d) += coordVec(e,v,d) * val_at_cub_points(v,q);
+        //const MeshScalarT latitude  = std::asin(phi(q,2));  //theta
+        const MeshScalarT latitude  = std::asin(coordVec(e,v,2));  //theta
 
-          //  phi(q,d) += coordVec(e,v,d) * val_at_cub_points(v,q);
-          //const MeshScalarT latitude  = std::asin(phi(q,2));  //theta
-          const MeshScalarT latitude  = std::asin(coordVec(e,v,2));  //theta
+        //MeshScalarT longitude = std::atan2(phi(q,1),phi(q,0));  //lambda
+        MeshScalarT longitude = std::atan2(coordVec(e,v,1),coordVec(e,v,0));  //lambda
+        if (std::abs(std::abs(latitude)-pi/2) < DIST_THRESHOLD) longitude = 0;
+        else if (longitude < 0) longitude += 2*pi;
 
-          //MeshScalarT longitude = std::atan2(phi(q,1),phi(q,0));  //lambda
-          MeshScalarT longitude = std::atan2(coordVec(e,v,1),coordVec(e,v,0));  //lambda
-          if (std::abs(std::abs(latitude)-pi/2) < DIST_THRESHOLD) longitude = 0;
-          else if (longitude < 0) longitude += 2*pi;
-
-          lambda_nodal(e,v) = longitude;
-          theta_nodal(e,v) = latitude;
-
+        lambda_nodal(e,v) = longitude;
+        theta_nodal(e,v) = latitude;
       }
-
-  	  //OG Pulling out coords of first 4 vertices which are also coords of element's corners
+      //OG Pulling out coords of first 4 vertices which are also coords of element's corners
       //this is the case for np=4 only!
-      if(0){
-    	  std::cout << "Cell number "<< e <<"\n";
-    	  for(int v = 0; v < numNodes; v++){
-  	         if( (v == 0) || (v == 3) || (v == 12) || (v == 15)){
-  		        std::cout << "Vertex number "<< v << ", coordinates lon, lat= "
-  		    		   << lambda_nodal(e,v) <<", "<<theta_nodal(e,v)<<"\n";
-  	         }
-    	  }
+      if(0) {
+        std::cout << "Cell number "<< e <<"\n";
+        for(int v = 0; v < numNodes; v++){
+          if( (v == 0) || (v == 3) || (v == 12) || (v == 15)) {
+            std::cout << "Vertex number "<< v << ", coordinates lon, lat= "
+  		      << lambda_nodal(e,v) <<", "<<theta_nodal(e,v)<<"\n";
+  	  }
+    	}
       }
-
     }
     
     for (int e = 0; e<numelements;      ++e) {
@@ -595,6 +468,13 @@ evaluateFields(typename Traits::EvalData workset)
           for (int b2= 0; b2<basisDim;   ++b2){
             jacobian(e,q,b1,b2) *= earthRadius/norm(q);
           }
+      //IKT - debug output
+      /*if (e == 0) {    
+        for (int q = 0; q<numQPs;          ++q)
+          for (int b1= 0; b1<basisDim;     ++b1)
+            for (int b2= 0; b2<basisDim;   ++b2) 
+              std::cout << "q, b1, b2, jac: " << q << ", " << b1 << ", " << b2 << ", " << jacobian(e,q,b1,b2) << std::endl; 
+      }*/
     }
 #endif   //end another map
   }//end else
@@ -802,62 +682,77 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 
-/*#else // ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#else // ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
- pi = ShallowWaterConstants::self().pi;
- DIST_THRESHOLD = ShallowWaterConstants::self().distanceThreshold;
+  pi = ShallowWaterConstants::self().pi;
+  DIST_THRESHOLD = ShallowWaterConstants::self().distanceThreshold;
 
- numelements = coordVec.dimension(0);
- spatialDim  = coordVec.dimension(2);
- basisDim    =                    2;
+  numelements = coordVec.dimension(0);
+  spatialDim  = coordVec.dimension(2);
+  basisDim    =                    2;
 
 
- phi  =  Kokkos::View<MeshScalarT**,  PHX::Device> ("phi", numQPs,spatialDim);
- dphi =  Kokkos::View<MeshScalarT***, PHX::Device> ("dphi", numQPs,spatialDim, basisDim);
- norm =  Kokkos::View<MeshScalarT*,   PHX::Device> ("norm", numQPs);
- sinL =  Kokkos::View<MeshScalarT*,   PHX::Device> ("sinL", numQPs);
- cosL =  Kokkos::View<MeshScalarT*,   PHX::Device> ("cosL", numQPs);
- sinT =  Kokkos::View<MeshScalarT*,   PHX::Device> ("sinT", numQPs);
- cosT =  Kokkos::View<MeshScalarT*,   PHX::Device> ("cosT", numQPs);
- D1   =  Kokkos::View<MeshScalarT***, PHX::Device> ("D1", numQPs,basisDim,spatialDim);
- D2   =  Kokkos::View<MeshScalarT***, PHX::Device> ("D2", numQPs,spatialDim,spatialDim);
- D3   =  Kokkos::View<MeshScalarT***, PHX::Device> ("D3", numQPs,basisDim,spatialDim);
+  phi  =  Kokkos::View<MeshScalarT**,  PHX::Device> ("phi", numQPs,spatialDim);
+  dphi =  Kokkos::View<MeshScalarT***, PHX::Device> ("dphi", numQPs,spatialDim, basisDim);
+  norm =  Kokkos::View<MeshScalarT*,   PHX::Device> ("norm", numQPs);
+  sinL =  Kokkos::View<MeshScalarT*,   PHX::Device> ("sinL", numQPs);
+  cosL =  Kokkos::View<MeshScalarT*,   PHX::Device> ("cosL", numQPs);
+  sinT =  Kokkos::View<MeshScalarT*,   PHX::Device> ("sinT", numQPs);
+  cosT =  Kokkos::View<MeshScalarT*,   PHX::Device> ("cosT", numQPs);
+  D1   =  Kokkos::View<MeshScalarT***, PHX::Device> ("D1", numQPs,basisDim,spatialDim);
+  D2   =  Kokkos::View<MeshScalarT***, PHX::Device> ("D2", numQPs,spatialDim,spatialDim);
+  D3   =  Kokkos::View<MeshScalarT***, PHX::Device> ("D3", numQPs,basisDim,spatialDim);
 
-// PHAL::set(GradGradBF, 0.0);
 
- if (spatialDim==basisDim) {
- //Check that we don't have a higher order spectral element.  The node_count is based on 
- //2D quad/shellquad elements.  This logic will only get hit if spatialDim = 2.
- //Only a quad or shellquad element can be enriched according to the logic in Aeras::SpectralDiscretization
-   TEUCHOS_TEST_FOR_EXCEPTION(cellType->getNodeCount() > 9,
+  if (spatialDim==basisDim) {
+    //Check that we don't have a higher order spectral element.  The node_count is based on 
+    //2D quad/shellquad elements.  This logic will only get hit if spatialDim = 2.
+    //Only a quad or shellquad element can be enriched according to the logic in Aeras::SpectralDiscretization
+     TEUCHOS_TEST_FOR_EXCEPTION(cellType->getNodeCount() > 9,
                        Teuchos::Exceptions::InvalidParameter,
                        std::endl << "Error!  Intrepid2::CellTools<RealType>::setJacobian " <<
                        "is only implemented for bilinear and biquadratic elements!  Attempting " <<
                   "to call this function for a higher order element. \n");
-  Intrepid2::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
-   if (spatialDim!=basisDim)
-      Kokkos::parallel_for(ComputeBasisFunctions_no_Jacobian_Policy(0,workset.numCells),*this);
-   else
-      Kokkos::parallel_for(ComputeBasisFunctions_no_Jacobian_basisDim_Policy(0,workset.numCells),*this);
- }
- else {
-     if (spatialDim!=basisDim)
-        Kokkos::parallel_for(ComputeBasisFunctions_Policy(0,workset.numCells),*this);
-     else
-        Kokkos::parallel_for(ComputeBasisFunctions_basisDim_Policy(0,workset.numCells),*this);
- }
+     Intrepid2::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+  }
+  else {
+#if !(HOMMEMAP)
+    Kokkos::parallel_for(ComputeBasisFunctions_Policy(0,workset.numCells),*this);
+#else HOMMEMAP
+  //IKT, FIXME: add HOMME Jacobian test?
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+                       Teuchos::Exceptions::InvalidParameter,
+                       std::endl << "Error!  jacobian calculation not implemented for HOMMEMAP " <<
+                       "in Kokkos functor build of Albany. \n "); 
+#endif 
+  }
+  
 
- for (int e = 0; e<numelements;      ++e) {
+  Intrepid2::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
+  Intrepid2::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
+
+  for (int e = 0; e<numelements;      ++e) {
     for (int q = 0; q<numQPs;          ++q) {
       TEUCHOS_TEST_FOR_EXCEPTION(std::abs(jacobian_det(e,q))<.1e-8,
-                  std::logic_error,"Bad Jacobian Found.");
+                std::logic_error,"Bad Jacobian Found.");
     }
   }
 
+  Intrepid2::FunctionSpaceTools::computeCellMeasure<MeshScalarT> (weighted_measure, jacobian_det, refWeights);
+
+  Intrepid2::FunctionSpaceTools::HGRADtransformVALUE<RealType> (BF, val_at_cub_points);
+  Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>  (wBF, weighted_measure, BF);
+  Intrepid2::FunctionSpaceTools::HGRADtransformGRAD<MeshScalarT> (GradBF, jacobian_inv, grad_at_cub_points);
+  Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT> (wGradBF, weighted_measure, GradBF);
+
+  //IKT, 5/17/16, FIXME?: add GradGradBF and wGradGradBF calculation in Kokkos?
+  //This appears in hyperviscosity for Aeras Hydrostatic equations, but is it really needed?
+  //If it's not needed, maybe it should be removed from the code... 
    
 
 #endif // ALBANY_KOKKOS_UNDER_DEVELOPMENT
-*/
+
+  //IKT, 5/17/16: note that div_check code is not Kokkos-ized.
   //div_check(spatialDim, numelements);
 }
 

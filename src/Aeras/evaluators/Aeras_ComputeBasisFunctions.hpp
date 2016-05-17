@@ -92,11 +92,8 @@ private:
   MDFieldMemoizer<Traits> memoizer_;
 
   // Kokkos
-/*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
-  Kokkos::View<RealType*, PHX::Device> refWeights_CUDA;
-  Kokkos::View<RealType**, PHX::Device> val_at_cub_points_CUDA;
-  Kokkos::View<RealType***, PHX::Device> grad_at_cub_points_CUDA;
 
   Kokkos::View<MeshScalarT**,  PHX::Device>  phi;
   Kokkos::View<MeshScalarT***, PHX::Device>  dphi;
@@ -120,53 +117,20 @@ public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
   struct ComputeBasisFunctions_Tag{};
-  struct ComputeBasisFunctions_basisDim_Tag{};
-  struct ComputeBasisFunctions_no_Jacobian_Tag{};
-  struct ComputeBasisFunctions_no_Jacobian_basisDim_Tag{};
 
   typedef Kokkos::RangePolicy<ExecutionSpace, ComputeBasisFunctions_Tag> ComputeBasisFunctions_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, ComputeBasisFunctions_basisDim_Tag> ComputeBasisFunctions_basisDim_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, ComputeBasisFunctions_no_Jacobian_Tag> ComputeBasisFunctions_no_Jacobian_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, ComputeBasisFunctions_no_Jacobian_basisDim_Tag> ComputeBasisFunctions_no_Jacobian_basisDim_Policy;
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const ComputeBasisFunctions_Tag& tag, const int& i) const;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const ComputeBasisFunctions_basisDim_Tag& tag, const int& i) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const ComputeBasisFunctions_no_Jacobian_Tag& tag, const int& i) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const ComputeBasisFunctions_no_Jacobian_basisDim_Tag& tag, const int& i) const;
-
-  KOKKOS_INLINE_FUNCTION
   void compute_jacobian (const int cell) const;
-
+  
   KOKKOS_INLINE_FUNCTION
-  void compute_jacobian_inv (const int cell) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void compute_jacobian_det (const int cell) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void computeCellMeasure (const int cell) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void compute_BF (const int cell) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void compute_wBF (const int cell) const;  
-
-  KOKKOS_INLINE_FUNCTION
-  void compute_GradBF (const int cell) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void compute_wGradBF (const int cell) const;
+  void compute_lambda_and_theta_nodal (const int cell) const;
 
 
-#endif*/
+#endif
 };
 }
 
