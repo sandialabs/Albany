@@ -47,7 +47,8 @@ private:
 
 template<typename ... Args>
 inline void DisplayTable::addRow (Args ... args) {
-  rows_.emplace_back();
+  //TODO, when compiler allows, replace following with this for performance: rows_.emplace_back();
+  rows_.push_back(TableRow());
   addRow(rows_.back(), args...);
 }
 
