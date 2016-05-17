@@ -93,8 +93,6 @@ public:
 
  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
  
- Kokkos::View<ScalarT*, PHX::Device> ts ; //array of temorary ScalarT data
- 
  struct ShallowWaterSource_Tag{};
  typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterSource_Tag> ShallowWaterSource_Policy;
 
