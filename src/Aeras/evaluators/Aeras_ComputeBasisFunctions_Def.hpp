@@ -80,6 +80,19 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
 
   this->setName("Aeras::ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  val_at_cub_points_CUDA=Kokkos::View<RealType**, PHX::Device>("val_at_cub_points_CUDA", numNodes, numQPs);
+  grad_at_cub_points_CUDA=Kokkos::View<RealType***, PHX::Device>("grad_at_cub_points_CUDA", numNodes, numQPs, basisDims);
+
+  for (int i =0; i < numNodes; i++){
+    for (int j=0; j < numQPs; j++){
+      val_at_cub_points_CUDA(i,j)=val_at_cub_points(i,j);
+      for (int k=0; k < basisDims; k++)
+        grad_at_cub_points_CUDA(i,j,k)=grad_at_cub_points(i,j,k);
+    }
+  }
+#endif
+
 }
 
 //**********************************************************************
@@ -143,13 +156,13 @@ compute_jacobian (const int e) const
   for (int q = 0; q<numQPs;         ++q)
     for (int d = 0; d<spatialDim;   ++d)
       for (int v = 0; v<numNodes;  ++v)
-        phi(q,d) += coordVec(e,v,d) * val_at_cub_points(v,q); 
+        phi(q,d) += coordVec(e,v,d) * val_at_cub_points_CUDA(v,q); 
 
   for (int v = 0; v<numNodes;      ++v)
     for (int q = 0; q<numQPs;       ++q)
       for (int d = 0; d<spatialDim; ++d)
         for (int b = 0; b<basisDim; ++b)
-          dphi(q,d,b) += coordVec(e,v,d) * grad_at_cub_points(v,q,b);
+          dphi(q,d,b) += coordVec(e,v,d) * grad_at_cub_points_CUDA(v,q,b);
 
   for (int q = 0; q<numQPs;         ++q)
     for (int d = 0; d<spatialDim;   ++d)
