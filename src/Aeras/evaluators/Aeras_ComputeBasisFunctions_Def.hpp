@@ -264,7 +264,7 @@ compute_lambda_and_theta_nodal (const int e) const
   }
   //OG Pulling out coords of first 4 vertices which are also coords of element's corners
   //this is the case for np=4 only!
-  if (e == 0) {
+  /*if (e == 0) {
     std::cout << "Cell number "<< e <<"\n";
     for (int v = 0; v < numNodes; v++){
       if ( (v == 0) || (v == 3) || (v == 12) || (v == 15)) {
@@ -272,7 +272,7 @@ compute_lambda_and_theta_nodal (const int e) const
   	          << lambda_nodal(e,v) <<", "<<theta_nodal(e,v)<<"\n";
       }
     }
-  }
+  }*/
 }
 #endif
 
@@ -348,7 +348,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
       //OG Pulling out coords of first 4 vertices which are also coords of element's corners
       //this is the case for np=4 only!
-      if(0) {
+      /*if(0) {
         std::cout << "Cell number "<< e <<"\n";
         for(int v = 0; v < numNodes; v++){
           if( (v == 0) || (v == 3) || (v == 12) || (v == 15)) {
@@ -356,7 +356,7 @@ evaluateFields(typename Traits::EvalData workset)
   		      << lambda_nodal(e,v) <<", "<<theta_nodal(e,v)<<"\n";
   	  }
     	}
-      }
+      }*/
     }
     
     for (int e = 0; e<numelements;      ++e) {
@@ -718,8 +718,8 @@ evaluateFields(typename Traits::EvalData workset)
   else {
 #if !(HOMMEMAP)
     Kokkos::parallel_for(ComputeBasisFunctions_Policy(0,workset.numCells),*this);
-#else HOMMEMAP
-  //IKT, FIXME: add HOMME Jacobian test?
+#else 
+  //IKT: Kokkos version of Jacobian for HOMMEMAP is not implemented, nor does it need to be. 
     TEUCHOS_TEST_FOR_EXCEPTION(true,
                        Teuchos::Exceptions::InvalidParameter,
                        std::endl << "Error!  jacobian calculation not implemented for HOMMEMAP " <<

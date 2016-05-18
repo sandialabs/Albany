@@ -1034,7 +1034,7 @@ compute_uv_ImplHV (const int& cell) const
   //OG It seems that reversing these loops (nodal first, qp second)
   //will make it more efficient because of lam, th, weights assignments. Something to consider.
   for (int qp=0; qp < numQPs; ++qp) {
-    const ScalarT wbf_ = wBF(cell,qp,qp);
+    const ScalarT wbf_ = wBF(cell,qp,qp); 
     for (int node=0; node < numNodes; ++node) {
       const ScalarT lam = sphere_coord(cell, node, 0),
 		    th  = sphere_coord(cell, node, 1),
@@ -1082,13 +1082,11 @@ compute_uv_ImplHV (const int& cell) const
 			     + k32*( cgradUTZ(cell, qp, 0)*wgradbf0_ + cgradUTZ(cell, qp, 1)*wgradbf1_)
 			       );
 
-      Residual(cell,node,4) += U(cell,qp,4)*wbf_
-       		            +  k11*( cgradUX(cell, qp, 0)*wgradbf0_ + cgradUX(cell, qp, 1)*wgradbf1_ )
+      Residual(cell,node,4) += k11*( cgradUX(cell, qp, 0)*wgradbf0_ + cgradUX(cell, qp, 1)*wgradbf1_ )
 			    + k21*( cgradUY(cell, qp, 0)*wgradbf0_ + cgradUY(cell, qp, 1)*wgradbf1_ );
 			    //k31 = 0
 
-      Residual(cell,node,5) += U(cell,qp,5)*wbf_
- 		            + k12*( cgradUX(cell, qp, 0)*wgradbf0_ + cgradUX(cell, qp, 1)*wgradbf1_)
+      Residual(cell,node,5) += k12*( cgradUX(cell, qp, 0)*wgradbf0_ + cgradUX(cell, qp, 1)*wgradbf1_)
 			    + k22*( cgradUY(cell, qp, 0)*wgradbf0_ + cgradUY(cell, qp, 1)*wgradbf1_)
 			    + k32*( cgradUZ(cell, qp, 0)*wgradbf0_ + cgradUZ(cell, qp, 1)*wgradbf1_);
 
@@ -1097,8 +1095,8 @@ compute_uv_ImplHV (const int& cell) const
       //adding back the first mode (in sph. harmonic basis) which corresponds to -2/R/R eigenvalue of laplace
       Residual(cell,qp,1) += -hyperviscosity(cell,qp,0)*2.0*U(cell,qp,4)*RRadius*RRadius*wbf_;
       Residual(cell,qp,2) += -hyperviscosity(cell,qp,0)*2.0*U(cell,qp,5)*RRadius*RRadius*wbf_;
-      Residual(cell,qp,4) += -2.0*U(cell,qp,1)*RRadius*RRadius*wbf_;
-      Residual(cell,qp,5) += -2.0*U(cell,qp,2)*RRadius*RRadius*wbf_;
+      Residual(cell,qp,4) += (U(cell,qp,4) - 2.0*U(cell,qp,1)*RRadius*RRadius)*wbf_;
+      Residual(cell,qp,5) += (U(cell,qp,5) - 2.0*U(cell,qp,2)*RRadius*RRadius)*wbf_;
     }
   }
 }
@@ -1487,12 +1485,10 @@ evaluateFields(typename Traits::EvalData workset)
 				   + k22*( utYgradNodes(qp,0)*wGradBF(cell,node,qp,0) + utYgradNodes(qp,1)*wGradBF(cell,node,qp,1))
 				   + k32*( utZgradNodes(qp,0)*wGradBF(cell,node,qp,0) + utZgradNodes(qp,1)*wGradBF(cell,node,qp,1))
 				   );
-  	    Residual(cell,node,4) += U(cell,qp,4)*wBF(cell,node,qp)
-                		  + k11*( uXgradNodes(qp,0)*wGradBF(cell,node,qp,0) + uXgradNodes(qp,1)*wGradBF(cell,node,qp,1))
+  	    Residual(cell,node,4) += k11*( uXgradNodes(qp,0)*wGradBF(cell,node,qp,0) + uXgradNodes(qp,1)*wGradBF(cell,node,qp,1))
 				  + k21*( uYgradNodes(qp,0)*wGradBF(cell,node,qp,0) + uYgradNodes(qp,1)*wGradBF(cell,node,qp,1));
 				  //k31 = 0
-	    Residual(cell,node,5) += U(cell,qp,5)*wBF(cell,node,qp)
-            	   		  + k12*( uXgradNodes(qp,0)*wGradBF(cell,node,qp,0) + uXgradNodes(qp,1)*wGradBF(cell,node,qp,1))
+	    Residual(cell,node,5) += k12*( uXgradNodes(qp,0)*wGradBF(cell,node,qp,0) + uXgradNodes(qp,1)*wGradBF(cell,node,qp,1))
 				  + k22*( uYgradNodes(qp,0)*wGradBF(cell,node,qp,0) + uYgradNodes(qp,1)*wGradBF(cell,node,qp,1))
 				  + k32*( uZgradNodes(qp,0)*wGradBF(cell,node,qp,0) + uZgradNodes(qp,1)*wGradBF(cell,node,qp,1));
 
@@ -1501,8 +1497,8 @@ evaluateFields(typename Traits::EvalData workset)
 	    //adding back the first mode (in sph. harmonic basis) which corresponds to -2/R/R eigenvalue of laplace
 	    Residual(cell,qp,1) += -hyperviscosity(cell,qp,0)*2.0*U(cell,qp,4)*RRadius*RRadius*wBF(cell,qp,qp);
 	    Residual(cell,qp,2) += -hyperviscosity(cell,qp,0)*2.0*U(cell,qp,5)*RRadius*RRadius*wBF(cell,qp,qp);
-	    Residual(cell,qp,4) += -2.0*U(cell,qp,1)*wBF(cell,qp,qp)*RRadius*RRadius;
-	    Residual(cell,qp,5) += -2.0*U(cell,qp,2)*wBF(cell,qp,qp)*RRadius*RRadius;
+	    Residual(cell,qp,4) += (U(cell,qp,4) - 2.0*U(cell,qp,1)*RRadius*RRadius)*wBF(cell,qp,qp);
+	    Residual(cell,qp,5) += (U(cell,qp,5) - 2.0*U(cell,qp,2)*RRadius*RRadius)*wBF(cell,qp,qp);
    	  }
 	}
       }//end if ImplHV
