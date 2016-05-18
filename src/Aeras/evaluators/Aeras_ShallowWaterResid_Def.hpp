@@ -748,8 +748,7 @@ compute_Residuals12_Vorticity_notprescribed (const int& cell, const int& index) 
 			+ cgradPotentialEnergy(cell, qp, 1)
 			+ ( coriolis_ + curl_ )*U(cell, qp, 1))*wbf_;
     //Vorticity
-    for (int node=0; node < numNodes; ++node)
-      Residual(cell,node,index) += (U(cell,qp,index) - curl_)*wBF(cell,node,qp);
+    Residual(cell,qp,index) += (U(cell,qp,index) - curl_)*wbf_;
   }
 
 }
@@ -850,9 +849,8 @@ setVecDim3_for_Vorticity (const int& cell) const
 #ifdef AERAS_OUTPUT
   std::cout << "ShallowWaterResid::setVecDim3_for_Vorticity (kokkos)" << std::endl;
 #endif
-  for (std::size_t qp=0; qp < numQPs; ++qp) 
-    for (std::size_t node=0; node < numNodes; ++node) 
-      Residual(cell,node,3) += UDot(cell,qp,3);
+  for (std::size_t qp=0; qp < numQPs; ++qp)
+    Residual(cell,qp,3) += UDot(cell,qp,3);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -1012,6 +1010,7 @@ compute_uv_ImplHV (const int& cell) const
   std::cout << "ShallowWaterResid::compute_uv_ImplHV (kokkos)" << std::endl;
 #endif
 
+  //IKT FIXME: remove extra qp loop for wBF 
   for (int node=0; node < numNodes; ++node) {
     const ScalarT ulambda = UNodal(cell, node,1),
 		  utheta  = UNodal(cell, node,2),
@@ -1216,11 +1215,8 @@ evaluateFields(typename Traits::EvalData workset)
       //variable, the residual does not change with this modification. But nans in M^{-1} are avoided.
       //This if-statement may not be the best to detect the stage of computing M.
       if ((j_coeff == 0)&&(m_coeff == 1)&&(workset.current_time == 0)&&(plotVorticity)&&(!usePrescribedVelocity)) {
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
-	  for (std::size_t node=0; node < numNodes; ++node) {
-	    Residual(cell,node,3) += UDot(cell,qp,3);
-	  }
-	}
+        for (std::size_t qp=0; qp < numQPs; ++qp) 
+	  Residual(cell,qp,3) += UDot(cell,qp,3);
       }
     }//end of Laplace forming for h field
 
@@ -1436,13 +1432,11 @@ evaluateFields(typename Traits::EvalData workset)
       if (plotVorticity) {
 	if (useImplHyperviscosity) {
 	  for (std::size_t qp=0; qp < numQPs; ++qp)
-	    for (std::size_t node=0; node < numNodes; ++node)
-	      Residual(cell,node,6) += (U(cell,qp,6) - curlU(qp))*wBF(cell,node,qp);
+	    Residual(cell,qp,6) += (U(cell,qp,6) - curlU(qp))*wBF(cell,qp,qp);
 	}
         else {
 	  for (std::size_t qp=0; qp < numQPs; ++qp)
-	    for (std::size_t node=0; node < numNodes; ++node)
-	      Residual(cell,node,3) += (U(cell,qp,3) - curlU(qp))*wBF(cell,node,qp);
+	    Residual(cell,qp,3) += (U(cell,qp,3) - curlU(qp))*wBF(cell,qp,qp);
 	} 
       }
 
@@ -1503,6 +1497,7 @@ evaluateFields(typename Traits::EvalData workset)
 				  + k22*( uYgradNodes(qp,0)*wGradBF(cell,node,qp,0) + uYgradNodes(qp,1)*wGradBF(cell,node,qp,1))
 				  + k32*( uZgradNodes(qp,0)*wGradBF(cell,node,qp,0) + uZgradNodes(qp,1)*wGradBF(cell,node,qp,1));
 
+            //IKT FIXME: remove extra numNodes loop
 	    if (doNotDampRotation) {
 	      //adding back the first mode (in sph. harmonic basis) which corresponds to -2/R/R eigenvalue of laplace
 	      Residual(cell,node,1) += -hyperviscosity(cell,qp,0)*2.0*U(cell,qp,4)*RRadius*RRadius*wBF(cell,node,qp);
