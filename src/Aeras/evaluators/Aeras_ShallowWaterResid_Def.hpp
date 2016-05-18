@@ -1010,7 +1010,6 @@ compute_uv_ImplHV (const int& cell) const
   std::cout << "ShallowWaterResid::compute_uv_ImplHV (kokkos)" << std::endl;
 #endif
 
-  //IKT FIXME: remove extra qp loop for wBF 
   for (int node=0; node < numNodes; ++node) {
     const ScalarT ulambda = UNodal(cell, node,1),
 		  utheta  = UNodal(cell, node,2),
@@ -1035,12 +1034,12 @@ compute_uv_ImplHV (const int& cell) const
   //OG It seems that reversing these loops (nodal first, qp second)
   //will make it more efficient because of lam, th, weights assignments. Something to consider.
   for (int qp=0; qp < numQPs; ++qp) {
+    const ScalarT wbf_ = wBF(cell,qp,qp);
     for (int node=0; node < numNodes; ++node) {
       const ScalarT lam = sphere_coord(cell, node, 0),
 		    th  = sphere_coord(cell, node, 1),
 		    wgradbf0_ = wGradBF(cell, node, qp, 0),
-		    wgradbf1_ = wGradBF(cell, node, qp, 1),
-		    wbf_      = wBF(cell,node,qp);
+		    wgradbf1_ = wGradBF(cell, node, qp, 1);
       //K = -sin L    -sin T cos L
       //     cos L    -sin T sin L
       //     0         cos T
@@ -1093,13 +1092,13 @@ compute_uv_ImplHV (const int& cell) const
 			    + k22*( cgradUY(cell, qp, 0)*wgradbf0_ + cgradUY(cell, qp, 1)*wgradbf1_)
 			    + k32*( cgradUZ(cell, qp, 0)*wgradbf0_ + cgradUZ(cell, qp, 1)*wgradbf1_);
 
-      if (doNotDampRotation) {
-        //adding back the first mode (in sph. harmonic basis) which corresponds to -2/R/R eigenvalue of laplace
-	Residual(cell,node,1) += -hyperviscosity(cell,qp,0)*2.0*U(cell,qp,4)*RRadius*RRadius*wbf_;
-	Residual(cell,node,2) += -hyperviscosity(cell,qp,0)*2.0*U(cell,qp,5)*RRadius*RRadius*wbf_;
-	Residual(cell,node,4) += -2.0*U(cell,qp,1)*RRadius*RRadius*wbf_;
-	Residual(cell,node,5) += -2.0*U(cell,qp,2)*RRadius*RRadius*wbf_;
-      }
+    }
+    if (doNotDampRotation) {
+      //adding back the first mode (in sph. harmonic basis) which corresponds to -2/R/R eigenvalue of laplace
+      Residual(cell,qp,1) += -hyperviscosity(cell,qp,0)*2.0*U(cell,qp,4)*RRadius*RRadius*wbf_;
+      Residual(cell,qp,2) += -hyperviscosity(cell,qp,0)*2.0*U(cell,qp,5)*RRadius*RRadius*wbf_;
+      Residual(cell,qp,4) += -2.0*U(cell,qp,1)*RRadius*RRadius*wbf_;
+      Residual(cell,qp,5) += -2.0*U(cell,qp,2)*RRadius*RRadius*wbf_;
     }
   }
 }
@@ -1497,15 +1496,14 @@ evaluateFields(typename Traits::EvalData workset)
 				  + k22*( uYgradNodes(qp,0)*wGradBF(cell,node,qp,0) + uYgradNodes(qp,1)*wGradBF(cell,node,qp,1))
 				  + k32*( uZgradNodes(qp,0)*wGradBF(cell,node,qp,0) + uZgradNodes(qp,1)*wGradBF(cell,node,qp,1));
 
-            //IKT FIXME: remove extra numNodes loop
-	    if (doNotDampRotation) {
-	      //adding back the first mode (in sph. harmonic basis) which corresponds to -2/R/R eigenvalue of laplace
-	      Residual(cell,node,1) += -hyperviscosity(cell,qp,0)*2.0*U(cell,qp,4)*RRadius*RRadius*wBF(cell,node,qp);
-	      Residual(cell,node,2) += -hyperviscosity(cell,qp,0)*2.0*U(cell,qp,5)*RRadius*RRadius*wBF(cell,node,qp);
-	      Residual(cell,node,4) += -2.0*U(cell,qp,1)*wBF(cell,node,qp)*RRadius*RRadius;
-	      Residual(cell,node,5) += -2.0*U(cell,qp,2)*wBF(cell,node,qp)*RRadius*RRadius;
-   	    }
-	  }
+          }
+	  if (doNotDampRotation) {
+	    //adding back the first mode (in sph. harmonic basis) which corresponds to -2/R/R eigenvalue of laplace
+	    Residual(cell,qp,1) += -hyperviscosity(cell,qp,0)*2.0*U(cell,qp,4)*RRadius*RRadius*wBF(cell,qp,qp);
+	    Residual(cell,qp,2) += -hyperviscosity(cell,qp,0)*2.0*U(cell,qp,5)*RRadius*RRadius*wBF(cell,qp,qp);
+	    Residual(cell,qp,4) += -2.0*U(cell,qp,1)*wBF(cell,qp,qp)*RRadius*RRadius;
+	    Residual(cell,qp,5) += -2.0*U(cell,qp,2)*wBF(cell,qp,qp)*RRadius*RRadius;
+   	  }
 	}
       }//end if ImplHV
 
