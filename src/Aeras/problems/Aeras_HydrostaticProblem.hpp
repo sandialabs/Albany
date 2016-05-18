@@ -27,7 +27,6 @@
 #include "Aeras_VorticityLevels.hpp"
 #include "Aeras_DOFDInterpolationLevels.hpp"
 #include "Aeras_DOFGradInterpolationLevels.hpp"
-#include "Aeras_DOFLaplaceInterpolationLevels.hpp"
 #include "Aeras_Atmosphere_Moisture.hpp"
 #include "Aeras_XZHydrostatic_Density.hpp"
 #include "Aeras_XZHydrostatic_EtaDotPi.hpp"
@@ -350,8 +349,6 @@ Aeras::HydrostaticProblem::constructEvaluators(
     p->set<string>("Weighted BF Name",           "wBF");
     p->set<string>("Gradient BF Name",           "Grad BF");
     p->set<string>("Weighted Gradient BF Name",  "wGrad BF");
-    p->set<string>("Gradient Gradient BF Name",  "Grad Grad BF");
-    p->set<string>("Weighted Gradient Gradient BF Name",  "wGrad Grad BF");
     p->set<string>("Jacobian Det Name",          "Jacobian Det");
     p->set<string>("Jacobian Name",              "Jacobian");
     p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
@@ -477,7 +474,6 @@ Aeras::HydrostaticProblem::constructEvaluators(
     //Input
     p->set<std::string>("Weighted BF Name",                 "wBF");
     p->set<std::string>("Weighted Gradient BF Name",        "wGrad BF");
-    p->set<std::string>("Weighted Gradient Gradient BF Name","wGrad Grad BF");
     p->set<std::string>("Gradient BF Name", "Grad BF");
     p->set<std::string>("Gradient QP Kinetic Energy",       "KineticEnergy_gradient");
     p->set<std::string>("Gradient QP GeoPotential",         "Gradient QP GeoPotential");
@@ -564,16 +560,6 @@ Aeras::HydrostaticProblem::constructEvaluators(
       p->set<string>("Gradient Variable Name",   "Gradient QP Pressure");
     
       ev = rcp(new Aeras::DOFGradInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
-  }
-  {//Laplace QP Velocity
-      RCP<ParameterList> p = rcp(new ParameterList("Gradient Pressure"));
-      // Input
-      p->set<string>("Variable Name"            ,   dof_names_levels[0]);
-      p->set<string>("Gradient Gradient BF Name"    , "Grad Grad BF");
-      p->set<string>("Laplace Variable Name",         "Laplace Velx");
-    
-      ev = rcp(new Aeras::DOFLaplaceInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
   }
   {//QP Pi

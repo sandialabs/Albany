@@ -34,8 +34,6 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   wBF           (p.get<std::string>  ("Weighted BF Name"),  dl->node_qp_scalar),
   GradBF        (p.get<std::string>  ("Gradient BF Name"),  dl->node_qp_gradient),
   wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient),
-  GradGradBF    (p.get<std::string>  ("Gradient Gradient BF Name"), dl->node_qp_tensor),
-  wGradGradBF   (p.get<std::string>  ("Weighted Gradient Gradient BF Name"), dl->node_qp_tensor),
   jacobian  (p.get<std::string>  ("Jacobian Name"), dl->qp_tensor ),
   earthRadius(ShallowWaterConstants::self().earthRadius)
 {
@@ -51,8 +49,6 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   this->addEvaluatedField(wBF);
   this->addEvaluatedField(GradBF);
   this->addEvaluatedField(wGradBF);
-  this->addEvaluatedField(GradGradBF);
-  this->addEvaluatedField(wGradGradBF);
 
   
   // Get Dimensions
@@ -104,8 +100,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(GradBF,fm);
   this->utils.setFieldData(wGradBF,fm);
-  this->utils.setFieldData(GradGradBF,fm);
-  this->utils.setFieldData(wGradGradBF,fm);
   
 }
 
@@ -662,25 +656,6 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
     (wGradBF, weighted_measure, GradBF);
 
-  PHAL::set(GradGradBF, 0.0);
-  if (spatialDim!=basisDim)
-    for (int e=0; e<numelements; ++e)
-      for (int v=0; v<numNodes; ++v)
-        for (int q=0; q<numQPs; ++q)
-          for (int i=0; i<basisDim; i++)
-            for (int j=0; j<basisDim; j++)
-              for (int k=0; k<basisDim; k++)
-                GradGradBF(e,v,q,i,j) += jacobian_inv(e,q,i,k)*D2_at_cub_points(v,q,i+j);
-
-  if (spatialDim!=basisDim)
-    for (int e=0; e<numelements; ++e)
-      for (int v=0; v<numNodes; ++v)
-        for (int q=0; q<numQPs; ++q)
-          for (int i=0; i<basisDim; i++)
-            for (int j=0; j<basisDim; j++)
-              wGradGradBF(e,v,q,i,j) = weighted_measure(e,q) * GradGradBF(e,v,q,i,j);
-
-
 
 #else // ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
@@ -744,11 +719,6 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>  (wBF, weighted_measure, BF);
   Intrepid2::FunctionSpaceTools::HGRADtransformGRAD<MeshScalarT> (GradBF, jacobian_inv, grad_at_cub_points);
   Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT> (wGradBF, weighted_measure, GradBF);
-
-  //IKT, 5/17/16, FIXME?: add GradGradBF and wGradGradBF calculation in Kokkos?
-  //This appears in hyperviscosity for Aeras Hydrostatic equations, but is it really needed?
-  //If it's not needed, maybe it should be removed from the code... 
-   
 
 #endif // ALBANY_KOKKOS_UNDER_DEVELOPMENT
 

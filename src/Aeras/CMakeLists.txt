@@ -46,7 +46,6 @@
        evaluators/Aeras_DOFVecInterpolationLevels.cpp
        evaluators/Aeras_DOFGradInterpolation.cpp
        evaluators/Aeras_DOFGradInterpolationLevels.cpp
-       evaluators/Aeras_DOFLaplaceInterpolationLevels.cpp
        evaluators/Aeras_DOFDivInterpolationLevels.cpp
        evaluators/Aeras_DOFDivInterpolationLevelsXZ.cpp
        evaluators/Aeras_DOFDInterpolationLevels.cpp
@@ -146,8 +145,6 @@
        evaluators/Aeras_DOFGradInterpolation_Def.hpp
        evaluators/Aeras_DOFGradInterpolationLevels.hpp
        evaluators/Aeras_DOFGradInterpolationLevels_Def.hpp
-       evaluators/Aeras_DOFLaplaceInterpolationLevels.hpp
-       evaluators/Aeras_DOFLaplaceInterpolationLevels_Def.hpp
        evaluators/Aeras_DOFDivInterpolationLevels.hpp
        evaluators/Aeras_DOFDivInterpolationLevels_Def.hpp
        evaluators/Aeras_DOFDivInterpolationLevelsXZ.hpp

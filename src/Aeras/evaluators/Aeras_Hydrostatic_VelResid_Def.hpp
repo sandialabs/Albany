@@ -25,9 +25,6 @@ Hydrostatic_VelResid(const Teuchos::ParameterList& p,
   wBF         (p.get<std::string> ("Weighted BF Name"),                 dl->node_qp_scalar),
   GradBF      (p.get<std::string>   ("Gradient BF Name"),               dl->node_qp_gradient),
   wGradBF     (p.get<std::string> ("Weighted Gradient BF Name"),        dl->node_qp_gradient),
-  wGradGradBF (p.isParameter("Hydrostatic Problem") &&  
-               p.get<Teuchos::ParameterList*>("Hydrostatic Problem")->isParameter("HyperViscosity") ?
-               p.get<std::string> ("Weighted Gradient Gradient BF Name") : "None", dl->node_qp_tensor) ,
   keGrad      (p.get<std::string> ("Gradient QP Kinetic Energy"),       dl->qp_gradient_level),
   PhiGrad     (p.get<std::string> ("Gradient QP GeoPotential"),         dl->qp_gradient_level),
   etadotdVelx (p.get<std::string> ("EtaDotdVelx"),                      dl->node_vector_level),
@@ -36,9 +33,6 @@ Hydrostatic_VelResid(const Teuchos::ParameterList& p,
   Velx        (p.get<std::string> ("QP Velx"),                          dl->node_vector_level),
   VelxDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->node_vector_level),
   DVelx       (p.get<std::string> ("D Vel Name"),                       dl->qp_vector_level),
-  LaplaceVelx (p.isParameter("Hydrostatic Problem") &&
-                p.get<Teuchos::ParameterList*>("Hydrostatic Problem")->isParameter("HyperViscosity") ?
-                p.get<std::string> ("Laplace Vel Name") : "None",dl->qp_scalar_level),
   density     (p.get<std::string> ("QP Density"),                       dl->node_scalar_level),
   sphere_coord  (p.get<std::string>  ("Spherical Coord Name"), dl->qp_gradient ),
   vorticity    (p.get<std::string>  ("QP Vorticity"), dl->qp_scalar_level ),
@@ -78,8 +72,6 @@ Hydrostatic_VelResid(const Teuchos::ParameterList& p,
   this->addDependentField(vorticity);
   this->addDependentField(jacobian);
   this->addDependentField(jacobian_det);
-  if (hyperviscosity) this->addDependentField(LaplaceVelx);
-  if (hyperviscosity) this->addDependentField(wGradGradBF);
 
   this->addEvaluatedField(Residual);
 
@@ -115,8 +107,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(vorticity  , fm);
   this->utils.setFieldData(jacobian, fm);
   this->utils.setFieldData(jacobian_det, fm);
-  if (hyperviscosity) this->utils.setFieldData(LaplaceVelx, fm);
-  if (hyperviscosity) this->utils.setFieldData(wGradGradBF, fm);
 
   this->utils.setFieldData(Residual,fm);
 }
@@ -150,8 +140,6 @@ evaluateFields(typename Traits::EvalData workset)
 	      for (int dim=0; dim < numDims; ++dim) {
 	        // OG commenting this out
 		//Residual(cell,node,level,dim) +=   viscosity * DVelx(cell,qp,level,dim) * wGradBF(cell,node,qp,dim);
-		//if (hyperviscosity)
-		//  Residual(cell,node,level,dim) -= hyperviscosity * LaplaceVelx(cell,qp,level) * wGradGradBF(cell,node,qp,dim,dim);
 	      }
 	    }
 	  }

@@ -43,7 +43,6 @@ private:
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>         wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim,Dim> wGradGradBF;
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  keGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  PhiGrad;
@@ -51,7 +50,6 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  pGrad;
   PHX::MDField<ScalarT,Cell,Node,Level,Dim>  uDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  DVelx;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      LaplaceVelx;
   PHX::MDField<ScalarT,Cell,Node,Level>      density;
 
 
