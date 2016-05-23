@@ -14,6 +14,7 @@
 #include "Teuchos_CommHelpers.hpp"
 #include "Phalanx.hpp"
 #include "PHAL_Utilities.hpp"
+#include "Aeras_ShallowWaterConstants.hpp"
 
 namespace Aeras {
 template<typename EvalT, typename Traits>
@@ -164,7 +165,31 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   else if (ref_sol_name == BAROCLINIC_UNPERTURBED) {
-    //FIXME: fill in! 
+    //FIXME: fill in!
+    const double u0 = 35.0;
+    const double SP0 = 1.0e5;
+    const double a = Aeras::ShallowWaterConstants::self().earthRadius;
+    const double omega = Aeras::ShallowWaterConstants::self().omega;
+    double a_omega      = a*omega;
+    const double constPi = Aeras::ShallowWaterConstants::self().pi; 
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        //FIXME: SP_ref = SP0 is IC but it does not stay constant in time.  What should it be in the error computation?
+        spressure_ref(cell,qp) = SP0;
+        //The following 2 definitions are for the 1st velocity component solution
+        const MeshScalarT theta = sphere_coord(cell, qp, 1);
+        const double sin2Theta = std::sin(2.0*theta);
+        for (std::size_t level; level < numLevels; ++level) {
+          //first component of velocity.
+          const double cosEtav = 0.0; //FIXME: fill this in 
+          velocity_ref(cell,qp,level,0) = u0 * std::pow(cosEtav,1.5) * std::pow(sin2Theta,2.0);
+          //second component of velocity.
+          //FIXME: v = 0 is IC but it does not stay constant in time.  What should it be in the error computation?
+          velocity_ref(cell,qp,level,1) = 0.0;
+          temperature_ref(cell,qp,level) = 0.0;
+        }
+      }
+    }
   }
 
   //Calculate L2 error at all the quad points.  We do not need to interpolate flow_state_field from nodes
