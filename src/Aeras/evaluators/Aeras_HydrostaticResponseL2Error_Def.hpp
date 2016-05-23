@@ -15,6 +15,7 @@
 #include "Phalanx.hpp"
 #include "PHAL_Utilities.hpp"
 #include "Aeras_ShallowWaterConstants.hpp"
+#include "Aeras_Eta.hpp" 
 
 namespace Aeras {
 template<typename EvalT, typename Traits>
@@ -155,7 +156,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         spressure_ref(cell,qp) = 0.0;
-        for (std::size_t level; level < numLevels; ++level) {
+        for (std::size_t level=0; level < numLevels; ++level) {
           for (std::size_t i=0; i<2; ++i) {
             velocity_ref(cell,qp,level,i) = 0.0; 
           }
@@ -165,13 +166,22 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   else if (ref_sol_name == BAROCLINIC_UNPERTURBED) {
-    //FIXME: fill in!
+    *out << "Setting baroclinic unperturbed reference solution!" << std::endl; 
+    //IKT, 5/23/16: the values/expressions here are from AAdapt_AnalyticFunction.cpp.
+    //Warning: if the values/expressions change in AAdapt_AnalyticFunctions.cpp, they need to 
+    //be changed here as well. 
     const double u0 = 35.0;
     const double SP0 = 1.0e5;
+    const double P0 = SP0; 
+    const double Eta0 = 0.252, Etas=1.0, Etat=0.2, TT0=288.0,
+                 Gamma = 0.005, deltaT = 4.8E+5, Rd = 287.04;
+    const double Ptop = 219.4067;
     const double a = Aeras::ShallowWaterConstants::self().earthRadius;
     const double omega = Aeras::ShallowWaterConstants::self().omega;
+    const double g = Aeras::ShallowWaterConstants::self().gravity;
     double a_omega      = a*omega;
     const double constPi = Aeras::ShallowWaterConstants::self().pi; 
+    const Aeras::Eta<DoubleType> &EP = Aeras::Eta<DoubleType>::self(Ptop,P0,numLevels);
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         //FIXME: SP_ref = SP0 is IC but it does not stay constant in time.  What should it be in the error computation?
@@ -179,14 +189,23 @@ evaluateFields(typename Traits::EvalData workset)
         //The following 2 definitions are for the 1st velocity component solution
         const MeshScalarT theta = sphere_coord(cell, qp, 1);
         const double sin2Theta = std::sin(2.0*theta);
-        for (std::size_t level; level < numLevels; ++level) {
+        for (std::size_t level=0; level < numLevels; ++level) {
           //first component of velocity.
-          const double cosEtav = 0.0; //FIXME: fill this in 
+          const double Eta =  EP.eta(level);
+          const double cosEtav = std::cos((Eta-Eta0)*constPi/2.0);
           velocity_ref(cell,qp,level,0) = u0 * std::pow(cosEtav,1.5) * std::pow(sin2Theta,2.0);
           //second component of velocity.
           //FIXME: v = 0 is IC but it does not stay constant in time.  What should it be in the error computation?
           velocity_ref(cell,qp,level,1) = 0.0;
-          temperature_ref(cell,qp,level) = 0.0;
+          double Tavg =  TT0 * std::pow(Eta, Rd*Gamma/g);
+          if( Eta <= Etat ) Tavg += deltaT * std::pow(Etat - Eta, 5.0);
+          double factor       = Eta*constPi*u0/Rd;
+          double phi_vertical = (Eta - Eta0) * 0.5 *constPi;
+          double t_deviation = factor*1.5* std::sin(phi_vertical) * std::pow(std::cos(phi_vertical),0.5) *
+                 ((-2.* std::pow(std::sin(theta),6.) * ( std::pow(std::cos(theta),2.) + 1./3.) + 10./63.)*
+                 u0 * std::pow(std::cos(phi_vertical),1.5)  +
+                 (8./5.*std::pow(std::cos(theta),3.) * (std::pow(std::sin(theta),2.) + 2./3.) - constPi/4.)*a_omega*0.5 );
+          temperature_ref(cell,qp,level) = Tavg + t_deviation; //Tavg + TT0 * (TT1 + TT2);
         }
       }
     }
@@ -198,7 +217,11 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       spressure_err(cell,qp) = spressure(cell,qp) - spressure_ref(cell,qp); 
       for (std::size_t level=0; level < numLevels; ++level) {
-        temperature_err(cell,qp,level) = temperature(cell,qp,level) - temperature_ref(cell,qp,level); 
+        temperature_err(cell,qp,level) = temperature(cell,qp,level) - temperature_ref(cell,qp,level);
+        /*if (cell == 0) 
+           std::cout << "qp, level, temp, temp_ref, temp_err: " << qp << ", " << level << ", " << temperature(cell,qp,level) 
+                     << ", " << temperature_ref(cell,qp,level) << ", " << temperature_err(cell,qp,level) << std::endl;  
+        */
         for (std::size_t i=0; i<2; ++i) {
           velocity_err(cell,qp,level,i) = velocity(cell,qp,level,i) - velocity_ref(cell,qp,level,i);
         }
