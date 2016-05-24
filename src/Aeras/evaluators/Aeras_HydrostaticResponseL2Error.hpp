@@ -11,6 +11,11 @@
 #include "Aeras_Layouts.hpp"
 #include "Aeras_Dimension.hpp"
 
+struct DoubleType { 
+  typedef double  ScalarT; 
+  typedef double MeshScalarT; 
+};
+
 namespace Aeras{
 
 template<typename EvalT, typename Traits>
