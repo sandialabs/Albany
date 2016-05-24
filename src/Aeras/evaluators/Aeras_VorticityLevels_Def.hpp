@@ -66,7 +66,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 //Kokkos kernals
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+/*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void VorticityLevels<EvalT, Traits>::
@@ -93,7 +93,7 @@ operator() (const Vorticity_Tag& tag, const int & cell) const {
 }
 
 #endif
-
+*/
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void VorticityLevels<EvalT, Traits>::
@@ -101,7 +101,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
 
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   PHAL::set(vort_val_qp, 0.0);
 
@@ -183,11 +183,11 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
 
 
-#else
+/*#else
 
   Kokkos::parallel_for(Vorticity_Policy(0,workset.numCells),*this);
 
-#endif
+#endif*/
 
 }
 
