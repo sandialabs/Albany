@@ -12,3 +12,5 @@ add_subdirectory(Stokes_Test)
 add_subdirectory(L1L2_MMS)
 
 add_subdirectory(Hydrology)
+
+add_subdirectory(Enthalpy)

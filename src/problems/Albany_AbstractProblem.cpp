@@ -34,7 +34,6 @@ Albany::AbstractProblem::AbstractProblem(
 
   <Parameter name="Number Of Time Derivatives" type="int" value="2"/>
   */
-
   std::string solutionMethod = params->get("Solution Method", "Steady");
   if(solutionMethod == "Steady")
   {

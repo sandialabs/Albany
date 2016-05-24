@@ -6,8 +6,10 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "PHAL_DOFVecGradInterpolation.hpp"
-#include "PHAL_DOFVecGradInterpolation_Def.hpp"
+#include "FELIX_Dissipation.hpp"
+#include "FELIX_Dissipation_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(PHAL::DOFVecGradInterpolation)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::Dissipation)
+
+
 

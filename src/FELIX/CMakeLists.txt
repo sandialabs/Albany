@@ -9,8 +9,10 @@
   SET(SOURCES
        evaluators/FELIX_BasalFrictionCoefficient.cpp
        evaluators/FELIX_BasalFrictionCoefficientGradient.cpp
+       evaluators/FELIX_Dissipation.cpp
        evaluators/FELIX_EffectivePressure.cpp
        evaluators/FELIX_Elliptic2DResidual.cpp
+       evaluators/FELIX_EnthalpyResid.cpp	
        evaluators/FELIX_EpsilonL1L2.cpp
        evaluators/FELIX_FieldNorm.cpp
        evaluators/FELIX_FlowRate.cpp
@@ -39,6 +41,7 @@
        evaluators/FELIX_ViscosityFO.cpp
        evaluators/FELIX_ViscosityL1L2.cpp
        problems/FELIX_Elliptic2D.cpp
+       problems/FELIX_Enthalpy.cpp
        problems/FELIX_Hydrology.cpp
        problems/FELIX_Stokes.cpp
        problems/FELIX_StokesFO.cpp
@@ -78,10 +81,14 @@ ENDIF()
        evaluators/FELIX_BasalFrictionCoefficient_Def.hpp
        evaluators/FELIX_BasalFrictionCoefficientGradient.hpp
        evaluators/FELIX_BasalFrictionCoefficientGradient_Def.hpp
+       evaluators/FELIX_Dissipation.hpp
+       evaluators/FELIX_Dissipation_Def.hpp
        evaluators/FELIX_EffectivePressure.hpp
        evaluators/FELIX_EffectivePressure_Def.hpp
        evaluators/FELIX_Elliptic2DResidual.hpp
        evaluators/FELIX_Elliptic2DResidual_Def.hpp
+       evaluators/FELIX_EnthalpyResid.hpp
+       evaluators/FELIX_EnthalpyResid_Def.hpp
        evaluators/FELIX_EpsilonL1L2.hpp
        evaluators/FELIX_EpsilonL1L2_Def.hpp
        evaluators/FELIX_FieldNorm.hpp
@@ -134,6 +141,7 @@ ENDIF()
        evaluators/FELIX_ViscosityL1L2.hpp
        evaluators/FELIX_ViscosityL1L2_Def.hpp
        problems/FELIX_Elliptic2D.hpp
+       problems/FELIX_Enthalpy.hpp
        problems/FELIX_Hydrology.hpp
        problems/FELIX_Stokes.hpp
        problems/FELIX_StokesFO.hpp

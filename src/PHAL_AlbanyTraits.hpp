@@ -249,6 +249,46 @@ namespace PHX {
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType>;
 #endif
 
+
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_FOUR_SCALARS_RESIDUAL(name) \
+  template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits, RealType, RealType>;
+
+#if defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_FOUR_SCALARS_JACOBIAN(name) \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, FadType>;
+#else
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_FOUR_SCALARS_JACOBIAN(name) \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, FadType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, FadType>;
+#endif
+
+
+#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_FOUR_SCALARS_TANGENT(name) \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, TanFadType>;
+#else
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_FOUR_SCALARS_TANGENT(name) \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, TanFadType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType, TanFadType>;
+#endif
+
+#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_FOUR_SCALARS_DISTPARAMDERIV(name) \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType>;
+#else
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_FOUR_SCALARS_DISTPARAMDERIV(name)                                                         \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, RealType>; \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType, RealType>; \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType>; \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType, TanFadType>;
+#endif
+
+
+
 #ifdef ALBANY_SG
 
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_SGRESIDUAL(name) \
@@ -318,6 +358,12 @@ namespace PHX {
   PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_JACOBIAN(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_TANGENT(name)          \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_DISTPARAMDERIV(name)
+
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_FOUR_SCALARS(name)            \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_FOUR_SCALARS_RESIDUAL(name)         \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_FOUR_SCALARS_JACOBIAN(name)         \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_FOUR_SCALARS_TANGENT(name)          \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_FOUR_SCALARS_DISTPARAMDERIV(name)
 
 #include "PHAL_Workset.hpp"
 

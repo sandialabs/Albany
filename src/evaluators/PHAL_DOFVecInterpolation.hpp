@@ -21,7 +21,7 @@ namespace PHAL {
 
 */
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename Type>
 class DOFVecInterpolation
        : public PHX::EvaluatorWithBaseImpl<Traits>,
  	 public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -38,7 +38,7 @@ public:
 
 private:
 
-  typedef typename EvalT::ScalarT ScalarT;
+  typedef Type ScalarT;
 
   // Input:
   //! Values at nodes
@@ -57,7 +57,7 @@ private:
 
 //! Specialization for Jacobian evaluation taking advantage of known sparsity
 template<typename Traits>
-class DOFVecInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>
+class DOFVecInterpolation<PHAL::AlbanyTraits::Jacobian, Traits, FadType>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits>  {
 
@@ -94,7 +94,7 @@ private:
 #ifdef ALBANY_SG
 //! Specialization for SGJacobian evaluation taking advantage of known sparsity
 template<typename Traits>
-class DOFVecInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>
+class DOFVecInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, SGFadType>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::SGJacobian, Traits>  {
 
@@ -134,7 +134,7 @@ private:
 template<typename Traits>
 class DOFVecInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
-        public PHX::EvaluatorDerived<PHAL::AlbanyTraits::MPJacobian, Traits>  {
+        public PHX::EvaluatorDerived<PHAL::AlbanyTraits::MPJacobian, Traits, MPFadType>  {
 
 public:
 

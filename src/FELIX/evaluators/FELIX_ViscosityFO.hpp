@@ -21,13 +21,12 @@ namespace FELIX {
 
 */
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename Type, typename TemperatureType>
 class ViscosityFO : public PHX::EvaluatorWithBaseImpl<Traits>,
                     public PHX::EvaluatorDerived<EvalT, Traits>,
                     public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
 
 public:
-
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
   typedef typename EvalT::ParamScalarT ParamScalarT;
@@ -41,14 +40,15 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
-  ScalarT& getValue(const std::string &n);
+  typename EvalT::ScalarT& getValue(const std::string &n);
 
 
 private:
 
-  ScalarT dummyParam;
+  typename EvalT::ScalarT dummyParam;
   ScalarT printedH;
 
+  bool extractStrainRateSq;
   bool useStereographicMap;
   Teuchos::ParameterList* stereographicMapList;
 
@@ -57,14 +57,15 @@ private:
   double n;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> U;
+  PHX::MDField<Type,Cell,QuadPoint,VecDim,Dim> Ugrad;
+  PHX::MDField<Type,Cell,QuadPoint,VecDim> U;
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
-  PHX::MDField<ParamScalarT,Cell> temperature;
-  PHX::MDField<ParamScalarT,Cell> flowFactorA;  //this is the coefficient A.  To distinguish it from the scalar flowFactor defined in the body of the function, it is called flowFactorA.  Probably this should be changed at some point...
+  PHX::MDField<TemperatureType,Cell> temperature;
+  PHX::MDField<TemperatureType,Cell> flowFactorA;  //this is the coefficient A.  To distinguish it from the scalar flowFactor defined in the body of the function, it is called flowFactorA.  Probably this should be changed at some point...
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
+  PHX::MDField<ScalarT,Cell,QuadPoint> epsilonSq;
 
   unsigned int numQPs, numDims, numNodes, numCells;
 

@@ -923,7 +923,7 @@ FELIX::StokesFOThickness::constructEvaluators(
   //Output
   p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
 
-  ev = rcp(new FELIX::ViscosityFO<EvalT,PHAL::AlbanyTraits>(*p,dl_full));
+  ev = rcp(new FELIX::ViscosityFO<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ParamScalarT>(*p,dl_full));
   fm0.template registerEvaluator<EvalT>(ev);
 
 #ifdef CISM_HAS_FELIX
