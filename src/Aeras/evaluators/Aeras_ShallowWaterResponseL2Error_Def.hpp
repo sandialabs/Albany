@@ -410,13 +410,14 @@ postEvaluate(typename Traits::PostEvalData workset)
   ScalarT norm_ref_sq = *gr;
   *gr = sqrt(norm_ref_sq); //norm of reference solution
   ++gr;
-  *gr = sqrt(abs_err_sq/norm_ref_sq); //relative error in solution w.r.t. reference solution.
+  //relative error in solution w.r.t. reference solution.
+  //if norm of reference solution is 0, set relative error to absolute error
+  //to avoid dividing by 0
+  if (norm_ref_sq == 0)
+    *gr = sqrt(abs_err_sq);
+  else 
+    *gr = sqrt(abs_err_sq/norm_ref_sq); //relative error in solution w.r.t. reference solution.
 #endif
-
-  if (norm_ref_sq == 0)  {
-    *out << "Aeras::ShallowWaterResponseL2Error::postEvaluate WARNING: norm of reference solution is 0.  Aeras Shallow Water L2 Error response" <<
-            "will report 'nan' or 'inf' for the relative error, so please look at the absolute error." << std::endl;
-  }
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);

@@ -84,8 +84,12 @@ HydrostaticResponseL2Error(Teuchos::ParameterList& p,
 
   //FIXME: extend responseSize to have tracers 
   responseSize = 3*numLevels + 1; //there are 2 velocities and 1 temperature variable on each level
-                                      //surface pressure is on 1st level only
-                                      //the ordering is: Sp0, u0, v0, T0, u1, v1, T1, etc
+                                  //surface pressure is on 1st level only
+                                  //the ordering is: Sp0, u0, v0, T0, u1, v1, T1, etc
+                                  
+  responseSize *= 3;             //take into account that response has absute error, norm of reference
+                                 //solution, and relative error
+  
 
   Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(
       new MDALayout<Cell,Dim>(worksetSize, responseSize));
@@ -229,40 +233,84 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   
-  //Calculate absolute L2 error squared (for now) 
-  //FIXME: calculate norm of reference solution squared for relative error calculation
+  //Calculate absolute L2 error squared and the norm of reference solution squares  
   ScalarT wm; //weighted measure
   ScalarT spressure_err_sq = 0.0; 
   ScalarT temperature_err_sq = 0.0; 
   ScalarT uvelocity_err_sq = 0.0; 
   ScalarT vvelocity_err_sq = 0.0; 
-  std::size_t dim; 
+  ScalarT spressure_ref_norm_sq = 0.0; 
+  ScalarT temperature_ref_norm_sq = 0.0; 
+  ScalarT uvelocity_ref_norm_sq = 0.0; 
+  ScalarT vvelocity_ref_norm_sq = 0.0; 
+  std::size_t dim;
+  int nEqnsError = responseSize/3;  
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp)  {
       wm = weighted_measure(cell,qp);
       //surface pressure field: dof 0
+      //L2 absolute error squared
       dim = 0;
       spressure_err_sq = spressure_err(cell,qp)*spressure_err(cell,qp); 
       this->local_response(cell,dim) += wm*spressure_err_sq;
-      this->global_response(dim) += wm*spressure_err_sq; 
+      this->global_response(dim) += wm*spressure_err_sq;
+      //norm ref solution squared
+      dim++;  
+      spressure_ref_norm_sq = spressure_ref(cell,qp)*spressure_ref(cell,qp); 
+      this->local_response(cell,dim) += wm*spressure_ref_norm_sq;
+      this->global_response(dim) += wm*spressure_ref_norm_sq;
+      //L2 relative error
+      dim++; 
+      this->local_response(cell,dim) = 0.0;
+      this->global_response(dim) = 0.0;
       for (std::size_t level=0; level < numLevels; ++level) {
         //u-velocity field: dof 1, 4, 7, ...
-        dim = 1 + level*3; 
+        //L2 absolute error squared
+        dim = 3 + level*9; 
         uvelocity_err_sq = velocity_err(cell,qp,level,0)*velocity_err(cell,qp,level,0); 
-        this->local_response(cell,dim) += wm*uvelocity_err_sq; //velocity(cell,qp,level,0)*velocity(cell,qp,level,0);  
-        this->global_response(dim) += wm*uvelocity_err_sq; //velocity(cell,qp,level,0)*velocity(cell,qp,level,0); 
+        this->local_response(cell,dim) += wm*uvelocity_err_sq; 
+        this->global_response(dim) += wm*uvelocity_err_sq; 
+        //norm ref solution squared
+        dim++;  
+        uvelocity_ref_norm_sq = velocity_ref(cell,qp,level,0)*velocity_ref(cell,qp,level,0); 
+        this->local_response(cell,dim) += wm*uvelocity_ref_norm_sq; 
+        this->global_response(dim) += wm*uvelocity_ref_norm_sq; 
+        //L2 relative error
+        dim++; 
+        this->local_response(cell,dim) = 0.0;
+        this->global_response(dim) = 0.0;
         //v-velocity field: dof 2, 5, 8, ...
-        dim = 2 + level*3; 
+        //L2 absolute error squared
+        dim = 6 + level*9; 
         vvelocity_err_sq = velocity_err(cell,qp,level,1)*velocity_err(cell,qp,level,1); 
         this->local_response(cell,dim) += wm*vvelocity_err_sq;  
         this->global_response(dim) += wm*vvelocity_err_sq;  
+        //norm ref solution squared
+        dim++;  
+        vvelocity_ref_norm_sq = velocity_ref(cell,qp,level,1)*velocity_ref(cell,qp,level,1); 
+        this->local_response(cell,dim) += wm*vvelocity_ref_norm_sq;  
+        this->global_response(dim) += wm*vvelocity_ref_norm_sq;  
+        //L2 relative error
+        dim++; 
+        this->local_response(cell,dim) = 0.0;
+        this->global_response(dim) = 0.0;
         //temperature field: dof 3, 6, 9, .... 
-        dim = 3 + level*3; 
+        //L2 absolute error squared
+        dim = 9 + level*9; 
         temperature_err_sq = temperature_err(cell,qp,level)*temperature_err(cell,qp,level); 
         this->local_response(cell,dim) += wm*temperature_err_sq; 
         this->global_response(dim) += wm*temperature_err_sq;
+        //norm ref solution squared
+        dim++;  
+        temperature_ref_norm_sq = temperature_ref(cell,qp,level)*temperature_ref(cell,qp,level); 
+        this->local_response(cell,dim) += wm*temperature_ref_norm_sq; 
+        this->global_response(dim) += wm*temperature_ref_norm_sq;
+        //L2 relative error
+        dim++; 
+        this->local_response(cell,dim) = 0.0;
+        this->global_response(dim) = 0.0;
         //FIXME: ultimately, will want to add tracers. 
-      } 
+      }
     }
   }
 
@@ -303,12 +351,26 @@ postEvaluate(typename Traits::PostEvalData workset)
 #if 0
 #else
   PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
-  for (int i=0; i < responseSize; ++i) {
+  int nEqnsError = responseSize/3;  
+  for (int i=0; i < nEqnsError; ++i) {
     ScalarT abs_err_sq = *gr; 
-    *gr = sqrt(abs_err_sq);  
+    *gr = sqrt(abs_err_sq);  //absolute error 
+    ++gr; 
+    ScalarT norm_ref_sq = *gr; 
+    *gr = sqrt(norm_ref_sq); //norm of reference solution
+    ++gr;
+    //relative error w.r.r. ref solution
+    //if reference solution is all 0, set rel error equal to absolute error 
+    //to avoid division by 0. 
+    if (norm_ref_sq == 0) 
+       *gr = sqrt(abs_err_sq); 
+    else
+       *gr = sqrt(abs_err_sq/norm_ref_sq); 
     ++gr; 
   } 
 #endif
+    // Do global scattering
+    PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
 }
 
 // **********************************************************************

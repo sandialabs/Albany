@@ -92,11 +92,11 @@ ComputeAndScatterJac(const Teuchos::ParameterList& p,
 { }
 // *********************************************************************
 // Kokkos kernels
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
 //FIXME, IKT, 5/9/16: Kokkos functor implementations go here. 
 //
-#endif
+//#endif
 // **********************************************************************
 template<typename Traits>
 void ComputeAndScatterJac<PHAL::AlbanyTraits::Jacobian, Traits>::
@@ -125,7 +125,8 @@ evaluateFields(typename Traits::EvalData workset)
 //
 //Then the values of these matrices need to be scattered into the global Jacobian.
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//FIXME, IKT, 5/24/16: uncomment out the following once Kokkos functors have been implemented
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   Teuchos::RCP<Tpetra_Vector>      fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
@@ -527,12 +528,12 @@ evaluateFields(typename Traits::EvalData workset)
   }//end of if buildLaplace
 
 #endif
-#else
+//#else
 
   //FIXME, IKT, 5/9/16: this function needs to be Kokkos-ized!  Kokkos implementation goes here.
-  std::cout << "ComputeAndScatterJac evaluateFields Jacobian specialization has not been Kokkos-ized yet!" << std::endl; 
+  //std::cout << "ComputeAndScatterJac evaluateFields Jacobian specialization has not been Kokkos-ized yet!" << std::endl; 
  
-#endif
+//#endif
 }
 
 #ifdef ALBANY_ENSEMBLE

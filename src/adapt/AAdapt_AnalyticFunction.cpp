@@ -1035,7 +1035,7 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, 
     //Velocities
 
     double uwind = u0 * std::pow(cosEtav,1.5) * std::pow(sin2Theta,2.0) ;
-    if(perturbation){
+    if (perturbation) {
     	const double pertlon = perturbation_longitude*constPi/180.0,
     			     pertlat = perturbation_latitude*constPi/180.0;
         //phi_vertical = (eta - eta0) *0.5d0*constPi;
