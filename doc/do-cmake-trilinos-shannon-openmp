@@ -25,7 +25,8 @@
 # Albany automatically queries the Trilinos build to 
 # know if these capabilities are enabled or disabled.
 #
-# It is important you edit your ~/.bashrc to be as follows: 
+#
+# It is important you edit your ~/.bashrc to be as follows:
 # PATH=$PATH:/home/ikalash/codes/Trilinos_github/seacas-build/install/bin
 # export PATH 
 # LD_LIBRARY_PATH=/ha_cluster/global/opt/gcc/4.8.1/snos/lib:$LD_LIBRARY_PATH:/ha_cluster/home/projects/mpc/1.0.1/lib
@@ -40,17 +41,14 @@
 # Then just do ctest and Albany tests should run (make sure cmake module is loaded first).
 
 rm -rf CMake*
+rm -rf CMake*
 
 BUILD_DIR=`pwd`
-
-module purge 
-module load gcc/5.1.0
-module load cmake/2.8.11.2
-module list
 
 NETCDF=/home/ipdemes/install/netcdf
 HDF5DIR=/home/ikalash/Install/hdf5-1.8.10-gcc
 BOOSTDIR=/home/ikalash/Install/boost_1_53_0-gcc
+HWLOC_PATH=/home/projects/hwloc/1.6.2
 
 cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
@@ -113,9 +111,13 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
       -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
       -D Kokkos_ENABLE_Serial:BOOL=ON \
-      -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
+      -D Kokkos_ENABLE_OpenMP:BOOL=ON \
       -D Kokkos_ENABLE_Pthread:BOOL=OFF \
-      -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
+      -D Trilinos_ENABLE_OpenMP:BOOL=ON \
+      -D TPL_HWLOC_LIBRARIES:PATHNAME=${HWLOC_PATH}/lib/libhwloc.so \
+      -D TPL_HWLOC_INCLUDE_DIRS:PATHNAME=${HWLOC_PATH}/include \
+      -D TPL_ENABLE_HWLOC:STRING=ON \
+      -D CMAKE_CXX_FLAGS:STRING="-g -O3 -fno-var-tracking" \
       -D Trilinos_ENABLE_ML:BOOL=ON \
       -D Trilinos_ENABLE_MueLu:BOOL=ON \
       -D Trilinos_ENABLE_NOX:BOOL=ON \
@@ -153,7 +155,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Phalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
       -D Stokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
       -D Stratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
-      -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
+      -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="OPENMP" \
       -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
       -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
 \
