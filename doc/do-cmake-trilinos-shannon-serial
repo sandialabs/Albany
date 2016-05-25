@@ -76,8 +76,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
 \
       -D TPL_ENABLE_BoostAlbLib:BOOL=ON \
       -D TPL_ENABLE_BoostLib:BOOL=ON \
-      -D Boost_INCLUDE_DIRS:FILEPATH=$BOOSTDIR/include \
-      -D Boost_LIBRARY_DIRS:FILEPATH=$BOOSTDIR/lib \
       -D BoostLib_INCLUDE_DIRS:FILEPATH=$BOOSTDIR/include \
       -D BoostLib_LIBRARY_DIRS:FILEPATH=$BOOSTDIR/lib \
       -D BoostAlbLib_INCLUDE_DIRS:FILEPATH=$BOOSTDIR/include \
