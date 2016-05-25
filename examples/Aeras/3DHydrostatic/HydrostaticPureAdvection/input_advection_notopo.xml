@@ -1,6 +1,7 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Aeras Hydrostatic"/>
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
 
 <!--    <Parameter name="Solution Method" type="string" value="Aeras Hyperviscosity"/> -->
  
