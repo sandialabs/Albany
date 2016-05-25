@@ -21,23 +21,21 @@ namespace PHAL {
 
 */
 
-template<typename EvalT, typename Traits>
-class DOFInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
- 			 public PHX::EvaluatorDerived<EvalT, Traits>  {
+template<typename EvalT, typename Traits, typename ScalarT>
+class DOFInterpolationBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+                             public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  DOFInterpolation(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
+  DOFInterpolationBase (const Teuchos::ParameterList& p,
+                        const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+  void postRegistrationSetup (typename Traits::SetupData d,
+                              PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-
-  typedef typename EvalT::ScalarT ScalarT;
 
   // Input:
   //! Values at nodes
@@ -52,48 +50,16 @@ private:
   std::size_t numNodes;
   std::size_t numQPs;
 };
-
-template<typename EvalT, typename Traits>
-class DOFInterpolation_noDeriv : public PHX::EvaluatorWithBaseImpl<Traits>,
-       public PHX::EvaluatorDerived<EvalT, Traits>  {
-
-public:
-
-  DOFInterpolation_noDeriv(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-
-  typedef typename EvalT::ParamScalarT ParamScalarT;
-
-  // Input:
-  //! Values at nodes
-  PHX::MDField<ParamScalarT,Cell,Node> val_node;
-  //! Basis Functions
-  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
-
-  // Output:
-  //! Values at quadrature points
-  PHX::MDField<ParamScalarT,Cell,QuadPoint> val_qp;
-
-  std::size_t numNodes;
-  std::size_t numQPs;
-};
-
+/*
 //! Specialization for Jacobian evaluation taking advantage of known sparsity
 template<typename Traits>
-class DOFInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>
+class DOFInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits>  {
 
 public:
 
-  DOFInterpolation(const Teuchos::ParameterList& p,
+  DOFInterpolationBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -119,17 +85,17 @@ private:
   std::size_t numQPs;
   std::size_t offset;
 };
-
+*/
 #ifdef ALBANY_SG
 //! Specialization for SGJacobian evaluation taking advantage of known sparsity
 template<typename Traits>
-class DOFInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>
+class DOFInterpolationBase<PHAL::AlbanyTraits::SGJacobian, Traits, typename PHAL::AlbanyTraits::SGJacobian::ScalarT>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::SGJacobian, Traits>  {
 
 public:
 
-  DOFInterpolation(const Teuchos::ParameterList& p,
+  DOFInterpolationBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -160,13 +126,13 @@ private:
 #ifdef ALBANY_ENSEMBLE
 //! Specialization for MPJacobian evaluation taking advantage of known sparsity
 template<typename Traits>
-class DOFInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>
+class DOFInterpolationBase<PHAL::AlbanyTraits::MPJacobian, Traits, typename PHAL::AlbanyTraits::MPJacobian::ScalarT>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::MPJacobian, Traits>  {
 
 public:
 
-  DOFInterpolation(const Teuchos::ParameterList& p,
+  DOFInterpolationBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -194,6 +160,16 @@ private:
 };
 #endif
 
-}
+// Some shortcut names
+template<typename EvalT, typename Traits>
+using DOFInterpolation = DOFInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>;
 
-#endif
+template<typename EvalT, typename Traits>
+using DOFInterpolationMesh = DOFInterpolationBase<EvalT,Traits,typename EvalT::MeshScalarT>;
+
+template<typename EvalT, typename Traits>
+using DOFInterpolationParam = DOFInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>;
+
+} // Namespace PHAL
+
+#endif // PHAL_DOF_INTERPOLATION_HPP

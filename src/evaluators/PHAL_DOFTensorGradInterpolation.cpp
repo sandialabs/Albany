@@ -9,5 +9,4 @@
 #include "PHAL_DOFTensorGradInterpolation.hpp"
 #include "PHAL_DOFTensorGradInterpolation_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DOFTensorGradInterpolation)
-
+PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(PHAL::DOFTensorGradInterpolationBase)
