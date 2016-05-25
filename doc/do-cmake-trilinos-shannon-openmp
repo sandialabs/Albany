@@ -50,6 +50,12 @@ HDF5DIR=/home/ikalash/Install/hdf5-1.8.10-gcc
 BOOSTDIR=/home/ikalash/Install/boost_1_53_0-gcc
 HWLOC_PATH=/home/projects/hwloc/1.6.2
 
+module purge
+module load gcc/5.1.0
+module load cmake/2.8.11.2
+module list
+
+
 cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
       -D CMAKE_C_COMPILER=/home/projects/x86-64/openmpi/1.8.2/gnu/4.8.3/cuda/6.5.14/bin/mpicc \
