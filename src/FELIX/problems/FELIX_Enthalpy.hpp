@@ -29,6 +29,7 @@
 #include "FELIX_EnthalpyResid.hpp"
 #include "FELIX_ViscosityFO.hpp"
 #include "FELIX_Dissipation.hpp"
+#include "FELIX_BasalFrictionHeat.hpp"
 
 namespace FELIX
 {
@@ -161,12 +162,10 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 	  Teuchos::ArrayRCP<string> dof_names(neq);
 	  dof_names[0] = "Enthalpy";
 
-	  //Teuchos::ArrayRCP<string> dof_names_dot(neq);
-	  //if(number_of_time_deriv > 0)
-	  //  dof_names_dot[0] = "Enthalpy_dot";
-
 	  Teuchos::ArrayRCP<string> resid_names(neq);
 	  resid_names[0] = "Enthalpy Resid";
+
+	  // --- Interpolation and utilities ---
 
 	  // no transient
 	  fm0.template registerEvaluator<EvalT> (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names));
@@ -187,8 +186,17 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
 	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFVecGradInterpolationEvaluator("velocity"));
 
-      //---- Interpolate Beta Given on QP on side (may be used by a response)
+	  // --- Special evaluators for side handling
+
+	  // --- Interpolate Beta Given on QP on side
       fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Beta Given", basalSideName));
+
+      // --- Interpolate velocity on QP on side
+      fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFVecInterpolationSideEvaluator("Basal Velocity", basalSideName));
+
+      // --- Interpolate basal friction heat on QP
+	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("Basal Heat"));
+
 
 	  // -------------------------------- FELIX evaluators ------------------------- //
 	  // --- Enthalpy Residual ---
@@ -216,9 +224,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
 	  p->set<std::string>("Dissipation QP Variable Name", "FELIX Dissipation");
 
-      p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", "Beta");
-
-      p->set<std::string>("Side Set Name", basalSideName);
+	  p->set<std::string>("Basal Friction Heat QP Variable Name", "Basal Heat");
 
 	  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
@@ -256,9 +262,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 	  p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
 	  p->set<std::string>("Velocity QP Variable Name", "velocity");
 	  p->set<std::string>("Velocity Gradient QP Variable Name", "velocity Gradient");
-	  //p->set< RCP<DataLayout> >("QP Vector Gradient Data Layout", dl->qp_vecgradient);
 	  p->set<std::string>("Temperature Variable Name", "temperature");
-	  //p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 	  p->set<std::string>("Flow Factor Variable Name", "flow_factor");
 	  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 	  p->set<ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
@@ -269,6 +273,22 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 	  p->set<std::string>("EpsilonSq QP Variable Name", "FELIX EpsilonSq");
 
 	  ev = Teuchos::rcp(new FELIX::ViscosityFO<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::ParamScalarT>(*p,dl));
+	  fm0.template registerEvaluator<EvalT>(ev);
+	  }
+
+	  // --- FELIX Basal friction heat ---
+	  {
+	  p = rcp(new ParameterList("FELIX Basal Friction Heat"));
+	  //Input
+      p->set<std::string>("Velocity Side QP Variable Name", "Basal Velocity");
+	  p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", "Beta");
+	  p->set<std::string>("Side Set Name", basalSideName);
+	  //p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
+
+	  //Output
+	  p->set<std::string>("Basal Friction Heat Variable Name", "Basal Heat");
+
+	  ev = Teuchos::rcp(new FELIX::BasalFrictionHeat<EvalT,PHAL::AlbanyTraits>(*p,dl));
 	  fm0.template registerEvaluator<EvalT>(ev);
 	  }
 

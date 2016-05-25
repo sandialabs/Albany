@@ -49,6 +49,7 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		PHX::MDField<ParamScalarT,Cell,QuadPoint,VecDim> Velocity;
         PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec;
 		PHX::MDField<ScalarT,Cell,QuadPoint> diss;
+		PHX::MDField<ScalarT,Cell,QuadPoint> basalFricHeat;
 
 		// Output:
 		PHX::MDField<ScalarT,Cell,Node> Residual;
