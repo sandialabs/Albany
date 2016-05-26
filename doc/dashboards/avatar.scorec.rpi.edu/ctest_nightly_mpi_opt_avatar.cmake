@@ -224,7 +224,7 @@ IF(DOWNLOAD)
 ENDIF()
 
 
-# Set the commont Trilinos config options
+# Set the common Trilinos config options
 SET(COMMON_CONFIGURE_OPTIONS
   "-Wno-dev"
   "-DCMAKE_BUILD_TYPE:STRING=NONE"
@@ -242,6 +242,7 @@ SET(COMMON_CONFIGURE_OPTIONS
   "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
   "-DZOLTAN_BUILD_ZFDRIVE:BOOL=OFF"
   #
+  "-DTPL_Netcdf_PARALLEL:BOOL=ON"
   "-DSEACAS_ENABLE_SEACASSVDI:BOOL=OFF"
   "-DTrilinos_ENABLE_SEACASFastq:BOOL=OFF"
   "-DTrilinos_ENABLE_SEACASBlot:BOOL=OFF"
