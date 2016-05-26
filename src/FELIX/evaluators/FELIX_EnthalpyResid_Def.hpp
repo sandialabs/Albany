@@ -97,8 +97,7 @@ evaluateFields(typename Traits::EvalData d)
 								   k*EnthalpyGrad(cell,qp,2)*wGradBF(cell,node,qp,2) +
 								   0.057964172 * Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0)*wBF(cell,node,qp) +
 								   0.057964172 * Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1)*wBF(cell,node,qp) -
-								   1.0/(3.154*pow(10.0,4.0)) * diss(cell,qp)*wBF(cell,node,qp) -
-								   basalFricHeat(cell,qp)*wBF(cell,node,qp);
+								   diss(cell,qp)*wBF(cell,node,qp) - basalFricHeat(cell,qp)*wBF(cell,node,qp);
     		}
         }
     }
@@ -134,8 +133,8 @@ evaluateFields(typename Traits::EvalData d)
 				{
 	    				Residual(cell,node) += (delta*diam/vmax*(3.154 * pow(10.0,10.0)))*(0.057964172 * Velocity(cell,qp,0) * EnthalpyGrad(cell,qp,0) * (1/(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
 	    														  0.057964172 * Velocity(cell,qp,1) * EnthalpyGrad(cell,qp,1) * (1/(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) -
-																  1.0/(3.154*pow(10.0,4.0)) * diss(cell,qp) * (1/(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) -
-																  1.0/(3.154*pow(10.0,4.0)) * diss(cell,qp) * (1/(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) -
+																  diss(cell,qp) * (1/(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) -
+																  diss(cell,qp) * (1/(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) -
 																  basalFricHeat(cell,qp) * (1/(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) -
 																  basalFricHeat(cell,qp) * (1/(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1));
 				}

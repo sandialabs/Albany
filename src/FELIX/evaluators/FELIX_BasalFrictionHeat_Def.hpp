@@ -13,8 +13,8 @@
 namespace FELIX
 {
 
-template<typename EvalT, typename Traits>
-BasalFrictionHeat<EvalT,Traits>::
+template<typename EvalT, typename Traits, typename Type>
+BasalFrictionHeat<EvalT,Traits,Type>::
 BasalFrictionHeat(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
 	basalFricHeat   (p.get<std::string> ("Basal Friction Heat Variable Name"), dl->node_scalar)
 {
@@ -24,8 +24,8 @@ BasalFrictionHeat(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::La
 
 	Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
-	velocity = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
-	beta = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl_basal->qp_scalar);
+	velocity = PHX::MDField<Type,Cell,Side,QuadPoint,VecDim>(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
+	beta = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl_basal->qp_scalar);
 
 	this->addDependentField(velocity);
 	this->addDependentField(beta);
@@ -40,7 +40,6 @@ BasalFrictionHeat(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::La
 	numSideQPs   = dims[3];
 	sideDim      = dims[4];
 	numCellNodes = basalFricHeat.fieldTag().dataLayout().dimension(1);
-	numCellQPs 	 = basalFricHeat.fieldTag().dataLayout().dimension(2);
 
 	dl->node_vector->dimensions(dims);
 	vecDimFO     = std::min((int)dims[2],2);
@@ -62,8 +61,8 @@ BasalFrictionHeat(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::La
 	}
 }
 
-template<typename EvalT, typename Traits>
-void BasalFrictionHeat<EvalT,Traits>::
+template<typename EvalT, typename Traits, typename Type>
+void BasalFrictionHeat<EvalT,Traits,Type>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(velocity,fm);
@@ -71,8 +70,8 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(basalFricHeat,fm);
 }
 
-template<typename EvalT, typename Traits>
-void BasalFrictionHeat<EvalT,Traits>::
+template<typename EvalT, typename Traits, typename Type>
+void BasalFrictionHeat<EvalT,Traits,Type>::
 evaluateFields(typename Traits::EvalData d)
 {
 	// Zero out, to avoid leaving stuff from previous workset!
@@ -98,7 +97,7 @@ evaluateFields(typename Traits::EvalData d)
 			  {
 				  for (int dim = 0; dim < vecDimFO; ++dim)
 				  {
-					  basalFricHeat(cell,sideNodes[side][node]) += beta(cell,side,qp) * velocity(cell,side,qp,dim) * velocity(cell,side,qp,dim);
+					  basalFricHeat(cell,sideNodes[side][node]) += (1./(3.154*pow(10.0,4.0))) * beta(cell,side,qp) * velocity(cell,side,qp,dim) * velocity(cell,side,qp,dim);
 				  }
 			  }
 		  }

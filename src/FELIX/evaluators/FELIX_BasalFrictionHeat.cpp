@@ -10,7 +10,7 @@
 #include "FELIX_BasalFrictionHeat.hpp"
 #include "FELIX_BasalFrictionHeat_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::BasalFrictionHeat)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(FELIX::BasalFrictionHeat)
 
 
 

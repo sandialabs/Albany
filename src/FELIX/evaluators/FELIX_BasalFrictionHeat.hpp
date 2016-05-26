@@ -20,7 +20,7 @@ namespace FELIX
 
     This evaluator evaluates the production of heat caused by basal friction
 */
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename Type>
 class BasalFrictionHeat : public PHX::EvaluatorWithBaseImpl<Traits>,
                     	  public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -37,8 +37,8 @@ class BasalFrictionHeat : public PHX::EvaluatorWithBaseImpl<Traits>,
 		typedef typename EvalT::ParamScalarT ParamScalarT;
 
 		// Input:
-		PHX::MDField<ScalarT,Cell,Side,QuadPoint> beta;
-		PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim> velocity;
+		PHX::MDField<ParamScalarT,Cell,Side,QuadPoint> beta;
+		PHX::MDField<Type,Cell,Side,QuadPoint,VecDim> velocity;
 
 		// Output:
 		PHX::MDField<ScalarT,Cell,Node> basalFricHeat;
@@ -49,7 +49,6 @@ class BasalFrictionHeat : public PHX::EvaluatorWithBaseImpl<Traits>,
 		int numCellNodes;
 		int numSideNodes;
 		int numSideQPs;
-		int numCellQPs;
 		int sideDim;
 		int vecDim;
 		int vecDimFO;

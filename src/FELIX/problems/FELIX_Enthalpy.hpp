@@ -148,16 +148,14 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 		  fm0.template registerEvaluator<EvalT>(ev);
 	  }
 
-	  /*
 	  // Basal friction
 	  {
 		  entity = Albany::StateStruct::NodalDataToElemNode;
-		  std::string stateName = "basal_friction";
-		  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
+		  stateName = "basal_friction";
+		  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
 		  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
 		  fm0.template registerEvaluator<EvalT>(ev);
 	  }
-	  */
 	  // Define Field Names
 	  Teuchos::ArrayRCP<string> dof_names(neq);
 	  dof_names[0] = "Enthalpy";
@@ -188,11 +186,27 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
 	  // --- Special evaluators for side handling
 
+	  //---- Restrict vertex coordinates from cell-based to cell-side-based
+	  fm0.template registerEvaluator<EvalT> (evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",basalSideName,"Vertex Vector",cellType,
+			  	  	  	  	  	  	  	  	  "Coord Vec " + basalSideName));
+
+	  //---- Compute side basis functions
+	  fm0.template registerEvaluator<EvalT> (evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, basalSideBasis, basalCubature, basalSideName));
+
+	  //---- Compute Quad Points coordinates on the side set
+	  fm0.template registerEvaluator<EvalT> (evalUtils.constructMapToPhysicalFrameSideEvaluator(cellType,basalCubature,basalSideName));
+
+	  //---- Restrict basal friction from cell-based to cell-side-based
+	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("basal_friction",basalSideName,"Node Scalar",cellType));
+
 	  // --- Interpolate Beta Given on QP on side
-      fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Beta Given", basalSideName));
+      fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("basal_friction", basalSideName));
+
+	  //---- Restrict basal velocity from cell-based to cell-side-based
+	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("velocity",basalSideName,"Node Vector",cellType));
 
       // --- Interpolate velocity on QP on side
-      fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFVecInterpolationSideEvaluator("Basal Velocity", basalSideName));
+      fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFVecInterpolationSideEvaluator("velocity", basalSideName));
 
       // --- Interpolate basal friction heat on QP
 	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("Basal Heat"));
@@ -280,15 +294,15 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 	  {
 	  p = rcp(new ParameterList("FELIX Basal Friction Heat"));
 	  //Input
-      p->set<std::string>("Velocity Side QP Variable Name", "Basal Velocity");
-	  p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", "Beta");
+      p->set<std::string>("Velocity Side QP Variable Name", "velocity");
+	  p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", "basal_friction");
 	  p->set<std::string>("Side Set Name", basalSideName);
-	  //p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
+	  p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
 
 	  //Output
 	  p->set<std::string>("Basal Friction Heat Variable Name", "Basal Heat");
 
-	  ev = Teuchos::rcp(new FELIX::BasalFrictionHeat<EvalT,PHAL::AlbanyTraits>(*p,dl));
+	  ev = Teuchos::rcp(new FELIX::BasalFrictionHeat<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
 	  fm0.template registerEvaluator<EvalT>(ev);
 	  }
 
