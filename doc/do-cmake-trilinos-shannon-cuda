@@ -25,9 +25,10 @@
 # Albany automatically queries the Trilinos build to 
 # know if these capabilities are enabled or disabled.
 #
+# This build script is based on instructions on the Albany wiki: 
+# https://github.com/gahansen/Albany/wiki/LCM-with-Kokkos-CUDA-support-on-Shannon
+#
 # It is important you edit your ~/.bashrc to be as follows: 
-# PATH=$PATH:/home/ikalash/codes/Trilinos_github/seacas-build/install/bin
-# export PATH 
 # LD_LIBRARY_PATH=/ha_cluster/global/opt/gcc/4.8.1/snos/lib:$LD_LIBRARY_PATH:/ha_cluster/home/projects/mpc/1.0.1/lib
 # export LD_LIBRARY_PATH
 #
@@ -88,6 +89,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Kokkos_ENABLE_Pthread:BOOL=OFF \
       -D Kokkos_ENABLE_Serial:BOOL=ON \
       -D Kokkos_ENABLE_TESTS:BOOL=ON \
+      -D TPL_ENABLE_Thrust:BOOL=ON \
       -D TPL_ENABLE_CUDA:BOOL=ON \
       -D TPL_ENABLE_CUSPARSE:BOOL=ON \
 \
@@ -149,7 +151,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_Teko:BOOL=ON \
       -D Trilinos_ENABLE_Teuchos:BOOL=ON \
       -D Trilinos_ENABLE_ThreadPool:BOOL=ON \
-      -D TPL_ENABLE_Thrust:BOOL=ON \
       -D Trilinos_ENABLE_Thyra:BOOL=ON \
       -D Trilinos_ENABLE_Tpetra:BOOL=ON \
       -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
