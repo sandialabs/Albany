@@ -111,6 +111,13 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
     */
+
+    //TMS debug
+    //for (int level=0; level < numLevels; ++level) {
+    //  std::cout << "In EtaDotPi level: " << level << " " 
+    //            << "B(level+1/2): " << E.B(level+.5) << std::endl;
+    //}
+
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int qp=0; qp < numQPs; ++qp) {
         ScalarT pdotp0 = 0;
