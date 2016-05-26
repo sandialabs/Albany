@@ -377,7 +377,7 @@ void interp_and_calc_error(Teuchos::RCP<const Teuchos::Comm<int>> comm, Teuchos:
       abs_err_field_data = stk::mesh::field_data( target_abs_error_field, tgt_part_nodes[n] );
       rel_err_field_data[component] = std::abs(tgt_field_data[component] - gold_value[component]);
       abs_err_field_data[component] = std::abs(tgt_field_data[component] - gold_value[component]);
-      if (gold_value[component] != 0)
+      if (abs(gold_value[component]) > 1.0e-14)
         rel_err_field_data[component] /= std::abs(gold_value[component]);
 #ifdef DEBUG_OUTPUT
       *out << "      tgt_field_data, gold_value, abs_err, rel_err: "
