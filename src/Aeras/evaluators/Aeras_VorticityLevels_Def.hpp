@@ -70,9 +70,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void VorticityLevels<EvalT, Traits>::
-operator() (const Vorticity_Tag& tag, const int & cell) const {
-
-   
+operator() (const Vorticity_Orig_Tag& tag, const int & cell) const 
+{
   for (int qp=0; qp < numQPs; ++qp) {
     for (int node= 0 ; node < numNodes; ++node) { 
       for (int level=0; level < numLevels; ++level) {
@@ -89,7 +88,31 @@ operator() (const Vorticity_Tag& tag, const int & cell) const {
       }
     }
   }
+}
 
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void VorticityLevels<EvalT, Traits>::
+operator() (const Vorticity_Tag& tag, const int & cell) const 
+{
+  for (int level=0; level < numLevels; ++level) {
+    for (std::size_t node=0; node < numNodes; ++node) {
+      const MeshScalarT j00 = jacobian(cell, node, 0, 0);
+      const MeshScalarT j01 = jacobian(cell, node, 0, 1);
+      const MeshScalarT j10 = jacobian(cell, node, 1, 0);
+      const MeshScalarT j11 = jacobian(cell, node, 1, 1);
+
+      vco(node, 0 ) = j00*val_node(cell, node, level, 0) + j10*val_node(cell, node, level, 1);
+      vco(node, 1 ) = j01*val_node(cell, node, level, 0) + j11*val_node(cell, node, level, 1);
+    }
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
+      for (std::size_t node=0; node < numNodes; ++node) {
+        vort_val_qp(cell,qp,level) += vco(node, 1)*grad_at_cub_points(node, qp,0)
+        	                   - vco(node, 0)*grad_at_cub_points(node, qp,1);
+      }
+      vort_val_qp(cell,qp,level) /= jacobian_det(cell,qp);
+    }
+  }
 }
 
 #endif
@@ -185,7 +208,11 @@ evaluateFields(typename Traits::EvalData workset)
 
 #else
 
+#if ORIGINALVORT
+  Kokkos::parallel_for(Vorticity_Orig_Policy(0,workset.numCells),*this);
+#else
   Kokkos::parallel_for(Vorticity_Policy(0,workset.numCells),*this);
+#endif
 
 #endif
 
