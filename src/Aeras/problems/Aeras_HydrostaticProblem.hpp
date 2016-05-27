@@ -450,7 +450,7 @@ Aeras::HydrostaticProblem::constructEvaluators(
   }
 
   {//Level Kinetic Energy 
-    RCP<ParameterList> p = rcp(new ParameterList("KinieticEnergy"));
+    RCP<ParameterList> p = rcp(new ParameterList("KineticEnergy"));
     p->set<string>("Velx", dof_names_levels[0]);
     p->set<string>("Kinetic Energy", "KineticEnergy");
   
