@@ -32,6 +32,7 @@
 #include "Aeras_XZHydrostatic_Omega.hpp"
 #include "Aeras_XZHydrostatic_Pressure.hpp"
 #include "Aeras_XZHydrostatic_VelResid.hpp"
+#include "Aeras_XZHydrostatic_Velocity.hpp"
 #include "Aeras_XZHydrostatic_TracerResid.hpp"
 #include "Aeras_XZHydrostatic_TemperatureResid.hpp"
 #include "Aeras_XZHydrostatic_PiVel.hpp"
@@ -403,6 +404,16 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     ev = rcp(new Aeras::DOFGradInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+  
+  {//XZHydrostatic velocity
+    RCP<ParameterList> p = rcp(new ParameterList("Velocity"));
+    p->set<string>("Velx Name",    "Velx");
+    p->set<string>("Velocity",  "Velocity");
+    
+    ev = rcp(new Aeras::XZHydrostatic_Velocity<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
 
   { // XZHydrostatic Velx Resid
     RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_"+dof_names_levels_resid[0]));

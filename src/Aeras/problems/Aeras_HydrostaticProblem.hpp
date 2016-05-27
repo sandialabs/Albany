@@ -43,6 +43,7 @@
 #include "Aeras_XZHydrostatic_VirtualT.hpp"
 
 #include "Aeras_Hydrostatic_VelResid.hpp"
+#include "Aeras_Hydrostatic_Velocity.hpp"
 
 #include "Aeras_ComputeBasisFunctions.hpp"
 #include "Aeras_GatherCoordinateVector.hpp"
@@ -499,6 +500,16 @@ Aeras::HydrostaticProblem::constructEvaluators(
     p->set<std::string>("Residual Name", dof_names_levels_resid[0]);
 
     ev = rcp(new Aeras::Hydrostatic_VelResid<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+  
+  {//Hydrostatic velocity
+    RCP<ParameterList> p = rcp(new ParameterList("Velocity"));
+    p->set<string>("Velx Name",    "Velx");
+    p->set<std::string>("Spherical Coord Name",       "Lat-Long");
+    p->set<string>("Velocity",  "Velocity");
+    
+    ev = rcp(new Aeras::Hydrostatic_Velocity<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

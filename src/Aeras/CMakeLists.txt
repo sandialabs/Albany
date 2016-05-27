@@ -10,6 +10,8 @@
        evaluators/Aeras_Atmosphere_Moisture.cpp
        evaluators/Aeras_GatherCoordinateVector.cpp
        evaluators/Aeras_Hydrostatic_VelResid.cpp
+       evaluators/Aeras_Hydrostatic_Velocity.cpp
+       evaluators/Aeras_XZHydrostatic_Velocity.cpp
        evaluators/Aeras_SurfaceHeight.cpp
        evaluators/Aeras_VorticityLevels.cpp
        problems/Aeras_ShallowWaterProblem.cpp
@@ -73,6 +75,10 @@
        evaluators/Aeras_GatherCoordinateVector.hpp
        evaluators/Aeras_Hydrostatic_VelResid_Def.hpp
        evaluators/Aeras_Hydrostatic_VelResid.hpp
+       evaluators/Aeras_Hydrostatic_Velocity_Def.hpp
+       evaluators/Aeras_Hydrostatic_Velocity.hpp
+       evaluators/Aeras_XZHydrostatic_Velocity_Def.hpp
+       evaluators/Aeras_XZHydrostatic_Velocity.hpp
        problems/Aeras_ShallowWaterProblem.hpp
        evaluators/Aeras_XZScalarAdvectionResid_Def.hpp
        evaluators/Aeras_XZScalarAdvectionResid.hpp
