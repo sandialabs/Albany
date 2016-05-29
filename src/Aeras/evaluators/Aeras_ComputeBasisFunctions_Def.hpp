@@ -134,17 +134,27 @@ KOKKOS_INLINE_FUNCTION
 void ComputeBasisFunctions<EvalT, Traits>::
 compute_jacobian (const int e) const
 {
-  
-  Kokkos::deep_copy(phi, MeshScalarT(0.0));  
+  for (int q = 0; q<numQPs;          ++q) {
+    norm(q) = 0.0; 
+    for (int d = 0; d<spatialDim;++d)
+     phi(q,d) = 0.0; 
+  }
+
+  for (int q = 0; q<numQPs;       ++q)
+    for (int d = 0; d<spatialDim; ++d)
+      for (int b = 0; b<basisDim; ++b)
+        dphi(q,d,b) = 0.0;
+
+  for (int q = 0; q<numQPs;          ++q)
+    for (int b = 0; b<basisDim;      ++b)
+      for (int d = 0; d<spatialDim;  ++d)
+        D3(q,b,d) = 0.0; 
+ 
+  //IKT, 5/28/16: why does deep_copy cause seg fault with Node = OpenMP?  
+  /*Kokkos::deep_copy(phi, MeshScalarT(0.0));  
   Kokkos::deep_copy(dphi, MeshScalarT(0.0));  
   Kokkos::deep_copy(norm, MeshScalarT(0.0));  
-  Kokkos::deep_copy(sinL, MeshScalarT(0.0));  
-  Kokkos::deep_copy(cosL, MeshScalarT(0.0));  
-  Kokkos::deep_copy(sinT, MeshScalarT(0.0));  
-  Kokkos::deep_copy(cosT, MeshScalarT(0.0));  
-  Kokkos::deep_copy(D1, MeshScalarT(0.0));  
-  Kokkos::deep_copy(D2, MeshScalarT(0.0));  
-  Kokkos::deep_copy(D3, MeshScalarT(0.0));  
+  Kokkos::deep_copy(D3, MeshScalarT(0.0));  */
 
   for (int q = 0; q<numQPs;          ++q)
     for (int b1= 0; b1<basisDim;     ++b1)
@@ -652,6 +662,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (int e = 0; e<numelements;      ++e) {
     for (int q = 0; q<numQPs;          ++q) {
+      //std::cout << "e, q, jac det: " << e << ", " << q << ", " << std::abs(jacobian_det(e,q)) << std::endl; 
       TEUCHOS_TEST_FOR_EXCEPTION(std::abs(jacobian_det(e,q))<.1e-8,
                   std::logic_error,"Bad Jacobian Found.");
     }
@@ -721,6 +732,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (int e = 0; e<numelements;      ++e) {
     for (int q = 0; q<numQPs;          ++q) {
+      //std::cout << "e, q, jac det: " << e << ", " << q << ", " << std::abs(jacobian_det(e,q)) << std::endl; 
       TEUCHOS_TEST_FOR_EXCEPTION(std::abs(jacobian_det(e,q))<.1e-8,
                 std::logic_error,"Bad Jacobian Found.");
     }
