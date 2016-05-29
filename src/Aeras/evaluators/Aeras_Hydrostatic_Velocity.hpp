@@ -43,6 +43,10 @@ private:
   const int numNodes;
   const int numDims;
   const int numLevels;
+  Teuchos::RCP<Teuchos::FancyOStream> out;
+  
+  enum ADVTYPE {UNKNOWN, PRESCRIBED_1_1, PRESCRIBED_1_2};
+  ADVTYPE adv_type;
 };
 }
 

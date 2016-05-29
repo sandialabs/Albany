@@ -509,6 +509,10 @@ Aeras::HydrostaticProblem::constructEvaluators(
     p->set<std::string>("Spherical Coord Name",       "Lat-Long");
     p->set<string>("Velocity",  "Velocity");
     
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
+    
     ev = rcp(new Aeras::Hydrostatic_Velocity<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
