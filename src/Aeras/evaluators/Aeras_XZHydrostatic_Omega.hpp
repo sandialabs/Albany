@@ -40,7 +40,7 @@ public:
 
 private:
   // Input:
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim> Velx;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim> Velocity;
   PHX::MDField<ScalarT,Cell,Node,Level>     density;
   PHX::MDField<ScalarT,Cell,Node,Level>     Cpstar;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> gradp;

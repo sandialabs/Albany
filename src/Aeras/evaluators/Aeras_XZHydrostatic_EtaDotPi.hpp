@@ -44,7 +44,7 @@ private:
   PHX::MDField<ScalarT,Cell,Node>            pdotP0;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Pi;
   PHX::MDField<ScalarT,Cell,Node,Level>      Temperature;
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim>  Velx;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim>  Velocity;
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      etadotdT;
   PHX::MDField<ScalarT,Cell,Node,Level,Dim>  etadotdVelx;

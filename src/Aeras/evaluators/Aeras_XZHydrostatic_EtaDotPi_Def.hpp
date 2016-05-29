@@ -27,7 +27,7 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   pdotP0         (p.get<std::string> ("Pressure Dot Level 0"),  dl->node_scalar),
   Pi             (p.get<std::string> ("Pi"),                    dl->qp_scalar_level),
   Temperature    (p.get<std::string> ("QP Temperature"),        dl->node_scalar_level),
-  Velx           (p.get<std::string> ("QP Velx"),               dl->node_vector_level),
+  Velocity       (p.get<std::string> ("Velocity"),              dl->node_vector_level),
   tracerNames    (p.get< Teuchos::ArrayRCP<std::string> >("Tracer Names")),
   //etadotdtracerNames    (p.get< Teuchos::ArrayRCP<std::string> >("Tracer EtaDotd Names")),
   dedotpitracerdeNames    (p.get< Teuchos::ArrayRCP<std::string> >("Tracer EtaDotd Names")),
@@ -49,7 +49,7 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   this->addDependentField(pdotP0);
   this->addDependentField(Pi);
   this->addDependentField(Temperature);
-  this->addDependentField(Velx);
+  this->addDependentField(Velocity);
 
   this->addEvaluatedField(etadotdT);
   this->addEvaluatedField(etadotdVelx);
@@ -82,7 +82,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(pdotP0     ,   fm);
   this->utils.setFieldData(Pi         ,   fm);
   this->utils.setFieldData(Temperature,   fm);
-  this->utils.setFieldData(Velx       ,   fm);
+  this->utils.setFieldData(Velocity   ,   fm);
   this->utils.setFieldData(etadotdT   ,   fm);
   this->utils.setFieldData(etadotdVelx,   fm);
   this->utils.setFieldData(Pidot,         fm);
@@ -150,8 +150,8 @@ evaluateFields(typename Traits::EvalData workset)
 	  etadotdT(cell,qp,level) = factor * ( etadotpi_p*dT_p + etadotpi_m*dT_m );
 
    	  for (int dim=0; dim<numDims; ++dim) {
- 	    const ScalarT dVx_m      = Velx(cell,qp,level,dim)   - Velx(cell,qp,level_m,dim);
-	    const ScalarT dVx_p      = Velx(cell,qp,level_p,dim) - Velx(cell,qp,level,dim);
+ 	    const ScalarT dVx_m      = Velocity(cell,qp,level,dim)   - Velocity(cell,qp,level_m,dim);
+	    const ScalarT dVx_p      = Velocity(cell,qp,level_p,dim) - Velocity(cell,qp,level,dim);
 	    etadotdVelx(cell,qp,level,dim) = factor * ( etadotpi_p*dVx_p + etadotpi_m*dVx_m );
 	  }
 	  //OG: Why for tracers (etaDot delta_eta) operator is different than for velocity, T, etc.?

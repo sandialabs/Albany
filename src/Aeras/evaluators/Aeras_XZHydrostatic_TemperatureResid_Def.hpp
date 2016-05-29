@@ -27,7 +27,7 @@ XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
   temperatureGrad (p.get<std::string> ("Gradient QP Temperature"),        dl->qp_gradient_level),
   temperatureDot  (p.get<std::string> ("QP Time Derivative Temperature"), dl->node_scalar_level),
   temperatureSrc  (p.get<std::string> ("Temperature Source"),             dl->qp_scalar_level),
-  velx            (p.get<std::string> ("QP Velx"),                        dl->node_vector_level),
+  velocity        (p.get<std::string> ("Velocity"),                       dl->node_vector_level),
   omega           (p.get<std::string> ("Omega"),                          dl->node_scalar_level),
   etadotdT        (p.get<std::string> ("EtaDotdT"),                       dl->qp_scalar_level),
   Residual        (p.get<std::string> ("Residual Name"),                  dl->node_scalar_level),
@@ -53,7 +53,7 @@ XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
   this->addDependentField(temperatureGrad);
   this->addDependentField(temperatureDot);
   this->addDependentField(temperatureSrc);
-  this->addDependentField(velx);
+  this->addDependentField(velocity);
   this->addDependentField(omega);
   this->addDependentField(etadotdT);
   this->addDependentField(wBF);
@@ -82,7 +82,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(temperatureGrad,fm);
   this->utils.setFieldData(temperatureDot, fm);
   this->utils.setFieldData(temperatureSrc, fm);
-  this->utils.setFieldData(velx,           fm);
+  this->utils.setFieldData(velocity,       fm);
   this->utils.setFieldData(omega,          fm);
   this->utils.setFieldData(etadotdT,       fm);
   this->utils.setFieldData(wBF,            fm);
@@ -112,7 +112,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (int level=0; level < numLevels; ++level) {
 	    for (int qp=0; qp < numQPs; ++qp) {
 	      for (int dim=0; dim < numDims; ++dim) {
-	        Residual(cell,node,level) += velx(cell,qp,level,dim)*temperatureGrad(cell,qp,level,dim)*wBF(cell,node,qp);
+	        Residual(cell,node,level) += velocity(cell,qp,level,dim)*temperatureGrad(cell,qp,level,dim)*wBF(cell,node,qp);
 	        Residual(cell,node,level) += (viscosity/Prandtl)*temperatureGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
 	      }
 	    }
