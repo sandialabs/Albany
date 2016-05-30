@@ -44,7 +44,9 @@ public:
 
 private:
 
-  const int spatialDimension;
+  const int spatialDim;
+  int basisDim;
+  int numelements;
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
   int  numVertices, numDims, numNodes, numQPs;
@@ -96,24 +98,8 @@ public:
   Kokkos::View<RealType**, PHX::Device> val_at_cub_points_CUDA;
   Kokkos::View<RealType***, PHX::Device> grad_at_cub_points_CUDA;
 
-  Kokkos::View<MeshScalarT**,  PHX::Device>  phi;
-  Kokkos::View<MeshScalarT***, PHX::Device>  dphi;
-  Kokkos::View<MeshScalarT*,   PHX::Device>  norm;
-  Kokkos::View<MeshScalarT*,   PHX::Device>  sinL;
-  Kokkos::View<MeshScalarT*,   PHX::Device>  cosL;
-  Kokkos::View<MeshScalarT*,   PHX::Device>  sinT;
-  Kokkos::View<MeshScalarT*,   PHX::Device>  cosT;
-  Kokkos::View<MeshScalarT***, PHX::Device>  D1;
-  Kokkos::View<MeshScalarT***, PHX::Device>  D2;
-  Kokkos::View<MeshScalarT***, PHX::Device>  D3;
-
-
   double pi;
   double DIST_THRESHOLD;
-
-  int numelements;
-  int spatialDim;
-  int basisDim;
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
   typedef PHX::KokkosViewFactory<MeshScalarT,PHX::Device> ViewFactory;

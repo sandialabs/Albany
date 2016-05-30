@@ -18,9 +18,9 @@ template<typename EvalT, typename Traits>
 ComputeBasisFunctions<EvalT, Traits>::
 ComputeBasisFunctions(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Aeras::Layouts>& dl) :
-                              spatialDimension( p.get<std::size_t>("spatialDim") ),
+                              spatialDim( p.get<std::size_t>("spatialDim") ),
   coordVec      (p.get<std::string>  ("Coordinate Vector Name"),
-      spatialDimension == 3 ? dl->node_3vector : dl->node_vector ),
+      spatialDim == 3 ? dl->node_3vector : dl->node_vector ),
   cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >("Cubature")),
   intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > ("Intrepid2 Basis") ),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
@@ -55,17 +55,17 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   std::vector<PHX::DataLayout::size_type> dim;
   dl->node_qp_gradient->dimensions(dim);
 
-  const int containerSize   = dim[0];
+  numelements               = dim[0];
   numNodes                  = dim[1];
   numQPs                    = dim[2];
-  const int basisDims       =      2;
+  basisDim    =                    2;
 
 
   // Allocate Temporary FieldContainers
   val_at_cub_points .resize     (numNodes, numQPs);
-  grad_at_cub_points.resize     (numNodes, numQPs, basisDims);
-  D2_at_cub_points  .resize     (numNodes, numQPs, Intrepid2::getDkCardinality(Intrepid2::OPERATOR_D2, basisDims));
-  refPoints         .resize               (numQPs, basisDims);
+  grad_at_cub_points.resize     (numNodes, numQPs, basisDim);
+  D2_at_cub_points  .resize     (numNodes, numQPs, Intrepid2::getDkCardinality(Intrepid2::OPERATOR_D2, basisDim));
+  refPoints         .resize               (numQPs, basisDim);
   refWeights        .resize               (numQPs);
 
   // Pre-Calculate reference element quantitites
@@ -82,12 +82,12 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   val_at_cub_points_CUDA=Kokkos::View<RealType**, PHX::Device>("val_at_cub_points_CUDA", numNodes, numQPs);
-  grad_at_cub_points_CUDA=Kokkos::View<RealType***, PHX::Device>("grad_at_cub_points_CUDA", numNodes, numQPs, basisDims);
+  grad_at_cub_points_CUDA=Kokkos::View<RealType***, PHX::Device>("grad_at_cub_points_CUDA", numNodes, numQPs, basisDim);
 
   for (int i =0; i < numNodes; i++){
     for (int j=0; j < numQPs; j++){
       val_at_cub_points_CUDA(i,j)=val_at_cub_points(i,j);
-      for (int k=0; k < basisDims; k++)
+      for (int k=0; k < basisDim; k++)
         grad_at_cub_points_CUDA(i,j,k)=grad_at_cub_points(i,j,k);
     }
   }
@@ -99,29 +99,26 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   ddims_.push_back(95);
 #endif
 
-  Phi=PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>("Phi",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(containerSize,numQPs,spatialDimension)));
+  Phi=PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>("Phi",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numelements,numQPs,spatialDim)));
   Phi.setFieldData(ViewFactory::buildView(Phi.fieldTag(),ddims_));
-  Norm=PHX::MDField<MeshScalarT,Cell,QuadPoint>("Norm",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(containerSize,numQPs)));
+  Norm=PHX::MDField<MeshScalarT,Cell,QuadPoint>("Norm",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(numelements,numQPs)));
   Norm.setFieldData(ViewFactory::buildView(Norm.fieldTag(),ddims_));
-  dPhi=PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>("dPhi",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim,Dim>(containerSize,numQPs,spatialDimension,basisDims)));
+  dPhi=PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>("dPhi",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim,Dim>(numelements,numQPs,spatialDim,basisDim)));
   dPhi.setFieldData(ViewFactory::buildView(dPhi.fieldTag(),ddims_));
-  SinL=PHX::MDField<MeshScalarT,Cell,QuadPoint>("SinL",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(containerSize,numQPs)));
+  SinL=PHX::MDField<MeshScalarT,Cell,QuadPoint>("SinL",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(numelements,numQPs)));
   SinL.setFieldData(ViewFactory::buildView(SinL.fieldTag(),ddims_));
-  CosL=PHX::MDField<MeshScalarT,Cell,QuadPoint>("CosL",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(containerSize,numQPs)));
+  CosL=PHX::MDField<MeshScalarT,Cell,QuadPoint>("CosL",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(numelements,numQPs)));
   CosL.setFieldData(ViewFactory::buildView(CosL.fieldTag(),ddims_));
-  SinT=PHX::MDField<MeshScalarT,Cell,QuadPoint>("SinT",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(containerSize,numQPs)));
+  SinT=PHX::MDField<MeshScalarT,Cell,QuadPoint>("SinT",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(numelements,numQPs)));
   SinT.setFieldData(ViewFactory::buildView(SinT.fieldTag(),ddims_));
-  CosT=PHX::MDField<MeshScalarT,Cell,QuadPoint>("CosT",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(containerSize,numQPs)));
+  CosT=PHX::MDField<MeshScalarT,Cell,QuadPoint>("CosT",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(numelements,numQPs)));
   CosT.setFieldData(ViewFactory::buildView(CosT.fieldTag(),ddims_));
-  DD1=PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>("DD1",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim,Dim>(containerSize,numQPs,basisDims,spatialDimension)));
+  DD1=PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>("DD1",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim,Dim>(numelements,numQPs,basisDim,spatialDim)));
   DD1.setFieldData(ViewFactory::buildView(DD1.fieldTag(),ddims_));
-  DD2=PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>("DD2",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim,Dim>(containerSize,numQPs,spatialDimension,spatialDimension)));
+  DD2=PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>("DD2",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim,Dim>(numelements,numQPs,spatialDim,spatialDim)));
   DD2.setFieldData(ViewFactory::buildView(DD2.fieldTag(),ddims_));
-  DD3=PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>("DD3",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim,Dim>(containerSize,numQPs,basisDims,spatialDimension)));
+  DD3=PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>("DD3",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim,Dim>(numelements,numQPs,basisDim,spatialDim)));
   DD3.setFieldData(ViewFactory::buildView(DD3.fieldTag(),ddims_));
-  //Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D1(numQPs,basisDim,spatialDim);
-  //Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D2(numQPs,spatialDim,spatialDim);
-  //Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D3(numQPs,basisDim,spatialDim);
 #endif
 
 }
@@ -233,43 +230,6 @@ compute_jacobian (const int e) const
           std::cout << "q, d, b, dPhi: " << q << ", " << d << ", " << b << ", " << dPhi(e,q,d,b) << std::endl; 
   }*/
 
-  //IKT, 5/28/16: why does deep_copy cause seg fault with Node = OpenMP?  
-  /*Kokkos::deep_copy(phi, MeshScalarT(0.0));  
-  Kokkos::deep_copy(dphi, MeshScalarT(0.0));  
-  Kokkos::deep_copy(norm, MeshScalarT(0.0));  
-  Kokkos::deep_copy(D3, MeshScalarT(0.0));  */
-
-  /*for (int q = 0; q<numQPs;          ++q)
-    for (int b1= 0; b1<basisDim;     ++b1)
-      for (int b2= 0; b2<basisDim;   ++b2)
-        for (int d = 0; d<spatialDim;++d)
-          jacobian(e,q,b1,b2) = 0;
-  */
-
-  /*for (int q = 0; q<numQPs;         ++q)
-    for (int d = 0; d<spatialDim;   ++d)
-      for (int v = 0; v<numNodes;  ++v)
-        phi(q,d) += coordVec(e,v,d) * val_at_cub_points_CUDA(v,q); 
-
-  for (int v = 0; v<numNodes;      ++v)
-    for (int q = 0; q<numQPs;       ++q)
-      for (int d = 0; d<spatialDim; ++d)
-        for (int b = 0; b<basisDim; ++b)
-          dphi(q,d,b) += coordVec(e,v,d) * grad_at_cub_points_CUDA(v,q,b);
-
-  for (int q = 0; q<numQPs;         ++q)
-    for (int d = 0; d<spatialDim;   ++d)
-      norm(q) += phi(q,d)*phi(q,d);
-
-  for (int q = 0; q<numQPs;         ++q) {
-    norm(q) = std::sqrt(norm(q));
-  }
-
-  for (int q = 0; q<numQPs;         ++q)
-    for (int d = 0; d<spatialDim;   ++d)
-      phi(q,d) /= norm(q);
-  */
-
   for (int q = 0; q<numQPs;         ++q) {
     // ==========================================================
     // enforce three facts:
@@ -344,11 +304,6 @@ compute_jacobian (const int e) const
     }
   }
 
-  /*for (int q = 0; q<numQPs;          ++q)
-    for (int b1= 0; b1<basisDim;     ++b1)
-      for (int b2= 0; b2<basisDim;   ++b2) 
-        jacobian(e,q,b1,b2) *= earthRadius/Norm(e,q);*/
-
   //IKT - debug output
   /*if (e == 0) {    
     for (int q = 0; q<numQPs;          ++q)
@@ -403,7 +358,7 @@ evaluateFields(typename Traits::EvalData workset)
     * this is the size that is used in the computation. There is
     * wasted effort computing on zeroes for the padding on the
     * final workset. Ideally, these are size numCells.
-  //int containerSize = workset.numCells;
+  //int numelements = workset.numCells;
     */
 
 
@@ -414,11 +369,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   const double pi = ShallowWaterConstants::self().pi;
   const double DIST_THRESHOLD = ShallowWaterConstants::self().distanceThreshold;
-
-  const int numelements = coordVec.dimension(0);
-  const int spatialDim  = coordVec.dimension(2);
-  const int basisDim    =                    2;
-
 
   if (spatialDim==basisDim) {
     //Check that we don't have a higher order spectral element.  The node_count is based on 
@@ -782,23 +732,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   pi = ShallowWaterConstants::self().pi;
   DIST_THRESHOLD = ShallowWaterConstants::self().distanceThreshold;
-
-  numelements = coordVec.dimension(0);
-  spatialDim  = coordVec.dimension(2);
-  basisDim    =                    2;
-
-
-  phi  =  Kokkos::View<MeshScalarT**,  PHX::Device> ("phi", numQPs,spatialDim);
-  dphi =  Kokkos::View<MeshScalarT***, PHX::Device> ("dphi", numQPs,spatialDim, basisDim);
-  norm =  Kokkos::View<MeshScalarT*,   PHX::Device> ("norm", numQPs);
-  sinL =  Kokkos::View<MeshScalarT*,   PHX::Device> ("sinL", numQPs);
-  cosL =  Kokkos::View<MeshScalarT*,   PHX::Device> ("cosL", numQPs);
-  sinT =  Kokkos::View<MeshScalarT*,   PHX::Device> ("sinT", numQPs);
-  cosT =  Kokkos::View<MeshScalarT*,   PHX::Device> ("cosT", numQPs);
-  D1   =  Kokkos::View<MeshScalarT***, PHX::Device> ("D1", numQPs,basisDim,spatialDim);
-  D2   =  Kokkos::View<MeshScalarT***, PHX::Device> ("D2", numQPs,spatialDim,spatialDim);
-  D3   =  Kokkos::View<MeshScalarT***, PHX::Device> ("D3", numQPs,basisDim,spatialDim);
-
 
   if (spatialDim==basisDim) {
     //Check that we don't have a higher order spectral element.  The node_count is based on 
