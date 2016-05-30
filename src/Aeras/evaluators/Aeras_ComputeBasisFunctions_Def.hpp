@@ -91,6 +91,37 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
         grad_at_cub_points_CUDA(i,j,k)=grad_at_cub_points(i,j,k);
     }
   }
+
+  std::vector<PHX::index_size_type> ddims_;
+#ifdef  ALBANY_FAST_FELIX
+  ddims_.push_back(ALBANY_SLFAD_SIZE);
+#else
+  ddims_.push_back(95);
+#endif
+
+  Phi=PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>("Phi",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(containerSize,numQPs,spatialDimension)));
+  Phi.setFieldData(ViewFactory::buildView(Phi.fieldTag(),ddims_));
+  Norm=PHX::MDField<MeshScalarT,Cell,QuadPoint>("Norm",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(containerSize,numQPs)));
+  Norm.setFieldData(ViewFactory::buildView(Norm.fieldTag(),ddims_));
+  dPhi=PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>("dPhi",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim,Dim>(containerSize,numQPs,spatialDimension,basisDims)));
+  dPhi.setFieldData(ViewFactory::buildView(dPhi.fieldTag(),ddims_));
+  SinL=PHX::MDField<MeshScalarT,Cell,QuadPoint>("SinL",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(containerSize,numQPs)));
+  SinL.setFieldData(ViewFactory::buildView(SinL.fieldTag(),ddims_));
+  CosL=PHX::MDField<MeshScalarT,Cell,QuadPoint>("CosL",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(containerSize,numQPs)));
+  CosL.setFieldData(ViewFactory::buildView(CosL.fieldTag(),ddims_));
+  SinT=PHX::MDField<MeshScalarT,Cell,QuadPoint>("SinT",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(containerSize,numQPs)));
+  SinT.setFieldData(ViewFactory::buildView(SinT.fieldTag(),ddims_));
+  CosT=PHX::MDField<MeshScalarT,Cell,QuadPoint>("CosT",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(containerSize,numQPs)));
+  CosT.setFieldData(ViewFactory::buildView(CosT.fieldTag(),ddims_));
+  DD1=PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>("DD1",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim,Dim>(containerSize,numQPs,basisDims,spatialDimension)));
+  DD1.setFieldData(ViewFactory::buildView(DD1.fieldTag(),ddims_));
+  DD2=PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>("DD2",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim,Dim>(containerSize,numQPs,spatialDimension,spatialDimension)));
+  DD2.setFieldData(ViewFactory::buildView(DD2.fieldTag(),ddims_));
+  DD3=PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>("DD3",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim,Dim>(containerSize,numQPs,basisDims,spatialDimension)));
+  DD3.setFieldData(ViewFactory::buildView(DD3.fieldTag(),ddims_));
+  //Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D1(numQPs,basisDim,spatialDim);
+  //Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D2(numQPs,spatialDim,spatialDim);
+  //Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D3(numQPs,basisDim,spatialDim);
 #endif
 
 }
@@ -125,8 +156,64 @@ KOKKOS_INLINE_FUNCTION
 void ComputeBasisFunctions<EvalT, Traits>::
 operator() (const ComputeBasisFunctions_Tag& tag, const int& cell) const
 {
-  compute_lambda_and_theta_nodal(cell);   
+  compute_lambda_and_theta_nodal(cell);  
+  compute_phi_and_norm(cell);  
+  compute_dphi(cell);  
   compute_jacobian(cell);
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeBasisFunctions<EvalT, Traits>::
+compute_phi_and_norm (const int e) const
+{
+  for (int q = 0; q<numQPs;          ++q) { 
+    for (int d = 0; d<spatialDim;++d) {
+      MeshScalarT tmp = 0.0; 
+      for (int v = 0; v<numNodes;  ++v) {
+        tmp += coordVec(e,v,d) * val_at_cub_points_CUDA(v,q); 
+      }
+      Phi(e,q,d) = tmp;  
+    }
+  }
+  for (int q = 0; q<numQPs;         ++q) {
+    MeshScalarT tmp = 0.0; 
+    for (int d = 0; d<spatialDim;   ++d) {
+      tmp += Phi(e,q,d)*Phi(e,q,d);
+    }
+    Norm(e,q) = tmp;
+  }
+  for (int q = 0; q<numQPs;         ++q) 
+    Norm(e,q) = std::sqrt(Norm(e,q));
+
+  for (int q = 0; q<numQPs;         ++q)
+    for (int d = 0; d<spatialDim;   ++d)
+      Phi(e,q,d) /= Norm(e,q);
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeBasisFunctions<EvalT, Traits>::
+compute_dphi (const int e) const
+{
+  for (int q = 0; q<numQPs;       ++q) {
+    for (int d = 0; d<spatialDim; ++d) {
+      for (int b = 0; b<basisDim; ++b) {
+        MeshScalarT tmp = 0.0; 
+        for (int v = 0; v<numNodes;      ++v) {
+          tmp += coordVec(e,v,d) * grad_at_cub_points_CUDA(v,q,b);
+        }
+        dPhi(e,q,d,b) = tmp; 
+      }
+    }
+  }
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeBasisFunctions<EvalT, Traits>::
+compute_sphere_coord (const int e) const
+{
 }
 
 template<typename EvalT, typename Traits>
@@ -134,36 +221,32 @@ KOKKOS_INLINE_FUNCTION
 void ComputeBasisFunctions<EvalT, Traits>::
 compute_jacobian (const int e) const
 {
-  for (int q = 0; q<numQPs;          ++q) {
-    norm(q) = 0.0; 
-    for (int d = 0; d<spatialDim;++d)
-     phi(q,d) = 0.0; 
-  }
+  /*if (e == 0) { 
+    for (int q = 0; q<numQPs;          ++q) { 
+      std::cout << "q, Norm: " << q << ", " << Norm(e,q) << std::endl; 
+      for (int d = 0; d<spatialDim;++d)
+        std::cout << "q, d, Phi: " << q << ", " << d << ", " << Phi(e,q,d) << std::endl;  
+    }
+    for (int q = 0; q<numQPs;       ++q)
+      for (int d = 0; d<spatialDim; ++d)
+        for (int b = 0; b<basisDim; ++b)
+          std::cout << "q, d, b, dPhi: " << q << ", " << d << ", " << b << ", " << dPhi(e,q,d,b) << std::endl; 
+  }*/
 
-  for (int q = 0; q<numQPs;       ++q)
-    for (int d = 0; d<spatialDim; ++d)
-      for (int b = 0; b<basisDim; ++b)
-        dphi(q,d,b) = 0.0;
-
-  for (int q = 0; q<numQPs;          ++q)
-    for (int b = 0; b<basisDim;      ++b)
-      for (int d = 0; d<spatialDim;  ++d)
-        D3(q,b,d) = 0.0; 
- 
   //IKT, 5/28/16: why does deep_copy cause seg fault with Node = OpenMP?  
   /*Kokkos::deep_copy(phi, MeshScalarT(0.0));  
   Kokkos::deep_copy(dphi, MeshScalarT(0.0));  
   Kokkos::deep_copy(norm, MeshScalarT(0.0));  
   Kokkos::deep_copy(D3, MeshScalarT(0.0));  */
 
-  for (int q = 0; q<numQPs;          ++q)
+  /*for (int q = 0; q<numQPs;          ++q)
     for (int b1= 0; b1<basisDim;     ++b1)
       for (int b2= 0; b2<basisDim;   ++b2)
         for (int d = 0; d<spatialDim;++d)
           jacobian(e,q,b1,b2) = 0;
+  */
 
-
-  for (int q = 0; q<numQPs;         ++q)
+  /*for (int q = 0; q<numQPs;         ++q)
     for (int d = 0; d<spatialDim;   ++d)
       for (int v = 0; v<numNodes;  ++v)
         phi(q,d) += coordVec(e,v,d) * val_at_cub_points_CUDA(v,q); 
@@ -185,6 +268,7 @@ compute_jacobian (const int e) const
   for (int q = 0; q<numQPs;         ++q)
     for (int d = 0; d<spatialDim;   ++d)
       phi(q,d) /= norm(q);
+  */
 
   for (int q = 0; q<numQPs;         ++q) {
     // ==========================================================
@@ -200,57 +284,70 @@ compute_jacobian (const int e) const
     // ==========================================================
     //
   
-    const MeshScalarT latitude  = std::asin(phi(q,2));  //theta
+    const MeshScalarT latitude  = std::asin(Phi(e,q,2));  //theta
 
-    MeshScalarT longitude = std::atan2(phi(q,1),phi(q,0));  //lambda
+    MeshScalarT longitude = std::atan2(Phi(e,q,1),Phi(e,q,0));  //lambda
     if (std::abs(std::abs(latitude)-pi/2) < DIST_THRESHOLD) longitude = 0;
     else if (longitude < 0) longitude += 2*pi;
 
+    //if (e == 0) std::cout << "q, lat, long: " << q << ", " << latitude << ", " << longitude << std::endl; 
     sphere_coord(e,q,0) = longitude;
     sphere_coord(e,q,1) = latitude;
 
-    sinT(q) = std::sin(latitude);
-    cosT(q) = std::cos(latitude);
-    sinL(q) = std::sin(longitude);
-    cosL(q) = std::cos(longitude);
+    SinT(e,q) = std::sin(latitude);
+    CosT(e,q) = std::cos(latitude);
+    SinL(e,q) = std::sin(longitude);
+    CosL(e,q) = std::cos(longitude);
   }
 
   for (int q = 0; q<numQPs;         ++q) {
-    D1(q,0,0) = -sinL(q);
-    D1(q,0,1) =  cosL(q);
-    D1(q,1,2) =        1;
+    DD1(e,q,0,0) = -SinL(e,q);
+    DD1(e,q,0,1) =  CosL(e,q);
+    DD1(e,q,1,2) =        1;
   }
 
   for (int q = 0; q<numQPs;         ++q) {
-    D2(q,0,0) =  sinL(q)*sinL(q)*cosT(q)*cosT(q) + sinT(q)*sinT(q);
-    D2(q,0,1) = -sinL(q)*cosL(q)*cosT(q)*cosT(q);
-    D2(q,0,2) = -cosL(q)*sinT(q)*cosT(q);
+    DD2(e,q,0,0) =  SinL(e,q)*SinL(e,q)*CosT(e,q)*CosT(e,q) + SinT(e,q)*SinT(e,q);
+    DD2(e,q,0,1) = -SinL(e,q)*CosL(e,q)*CosT(e,q)*CosT(e,q);
+    DD2(e,q,0,2) = -CosL(e,q)*SinT(e,q)*CosT(e,q);
 
-    D2(q,1,0) = -sinL(q)*cosL(q)*cosT(q)*cosT(q);
-    D2(q,1,1) =  cosL(q)*cosL(q)*cosT(q)*cosT(q) + sinT(q)*sinT(q);
-    D2(q,1,2) = -sinL(q)*sinT(q)*cosT(q);
+    DD2(e,q,1,0) = -SinL(e,q)*CosL(e,q)*CosT(e,q)*CosT(e,q);
+    DD2(e,q,1,1) =  CosL(e,q)*CosL(e,q)*CosT(e,q)*CosT(e,q) + SinT(e,q)*SinT(e,q);
+    DD2(e,q,1,2) = -SinL(e,q)*SinT(e,q)*CosT(e,q);
 
-    D2(q,2,0) = -cosL(q)*sinT(q);
-    D2(q,2,1) = -sinL(q)*sinT(q);
-    D2(q,2,2) =  cosT(q);
+    DD2(e,q,2,0) = -CosL(e,q)*SinT(e,q);
+    DD2(e,q,2,1) = -SinL(e,q)*SinT(e,q);
+    DD2(e,q,2,2) =  CosT(e,q);
   }
 
-  for (int q = 0; q<numQPs;          ++q)
-    for (int b = 0; b<basisDim;      ++b)
-      for (int d = 0; d<spatialDim;  ++d)
-        for (int j = 0; j<spatialDim;++j)
-          D3(q,b,d) += D1(q,b,j)*D2(q,j,d);
+  for (int q = 0; q<numQPs;          ++q) {
+    for (int b = 0; b<basisDim;      ++b) {
+      for (int d = 0; d<spatialDim;  ++d) {
+        MeshScalarT tmp = 0.0; 
+        for (int j = 0; j<spatialDim;++j) {
+          tmp += DD1(e,q,b,j)*DD2(e,q,j,d);
+        }
+        DD3(e,q,b,d) = tmp;
+      }
+    } 
+  }
 
-  for (int q = 0; q<numQPs;          ++q)
-    for (int b1= 0; b1<basisDim;     ++b1)
-      for (int b2= 0; b2<basisDim;   ++b2)
-        for (int d = 0; d<spatialDim;++d)
-          jacobian(e,q,b1,b2) += D3(q,b1,d) *  dphi(q,d,b2);
+  for (int q = 0; q<numQPs;          ++q) {
+    for (int b1= 0; b1<basisDim;     ++b1) {
+      for (int b2= 0; b2<basisDim;   ++b2) {
+        MeshScalarT tmp = 0.0; 
+        for (int d = 0; d<spatialDim;++d) {
+          tmp += DD3(e,q,b1,d) *  dPhi(e,q,d,b2);
+        }
+        jacobian(e,q,b1,b2) = tmp*earthRadius/Norm(e,q); 
+      }
+    }
+  }
 
-  for (int q = 0; q<numQPs;          ++q)
+  /*for (int q = 0; q<numQPs;          ++q)
     for (int b1= 0; b1<basisDim;     ++b1)
       for (int b2= 0; b2<basisDim;   ++b2) 
-        jacobian(e,q,b1,b2) *= earthRadius/norm(q);
+        jacobian(e,q,b1,b2) *= earthRadius/Norm(e,q);*/
 
   //IKT - debug output
   /*if (e == 0) {    

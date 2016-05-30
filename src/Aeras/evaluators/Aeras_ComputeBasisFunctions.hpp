@@ -116,6 +116,17 @@ public:
   int basisDim;
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  typedef PHX::KokkosViewFactory<MeshScalarT,PHX::Device> ViewFactory;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> Phi;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint> Norm;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dPhi;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint> SinL;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint> CosL;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint> SinT;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint> CosT;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> DD1;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> DD2;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> DD3;
 
   struct ComputeBasisFunctions_Tag{};
 
@@ -126,6 +137,15 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   void compute_jacobian (const int cell) const;
+  
+  KOKKOS_INLINE_FUNCTION
+  void compute_phi_and_norm (const int cell) const;
+  
+  KOKKOS_INLINE_FUNCTION
+  void compute_dphi (const int cell) const;
+  
+  KOKKOS_INLINE_FUNCTION
+  void compute_sphere_coord (const int cell) const;
   
   KOKKOS_INLINE_FUNCTION
   void compute_lambda_and_theta_nodal (const int cell) const;
