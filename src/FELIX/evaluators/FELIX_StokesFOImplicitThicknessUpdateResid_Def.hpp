@@ -76,7 +76,15 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(Residual,fm);
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  int deriv_dims = PHAL::getDerivativeDimensionsFromView(dH.get_kokkos_view());
+  int deriv_dims; 
+#ifdef  ALBANY_FAST_FELIX
+  deriv_dims = ALBANY_SLFAD_SIZE;
+#else
+  deriv_dims = 95;
+#endif
+  //IKT, 5/31/16: commenting this out in favor of above code, as getDerivativeDimensionsFromView
+  //was returning 0, causing an exception to be thrown in a Kokkos functor build of Albany.
+  //int deriv_dims = PHAL::getDerivativeDimensionsFromView(dH.get_kokkos_view());
   res=Kokkos::View<ScalarT**, PHX::Device> ("res", numNodes, 2, deriv_dims );
 #endif
 }
