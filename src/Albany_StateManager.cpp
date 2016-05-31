@@ -498,6 +498,8 @@ Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetNam
   stateRef.output = outputToExodus;
   stateRef.responseIDtoRequire = responseIDtoRequire;
   stateRef.layered = (dl->name(dl->rank()-1) == "LayerDim");
+  TEUCHOS_TEST_FOR_EXCEPTION (layered && (dl->dimension(dl->rank()-1)<=0), std::logic_error,
+                              "Error! Invalid number of layers for layered state " << stateName << ".\n");
 
   // If space is needed for old state
   if (registerOldState) {

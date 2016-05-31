@@ -11,6 +11,7 @@
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include <string>
 
@@ -53,10 +54,10 @@ buildProblem(
   buildEvaluators(*fm[0],
                   *meshSpecs[0],
                   stateMgr,
-                  Albany::BUILD_RESID_FM, 
-		  Teuchos::null);
+                  Albany::BUILD_RESID_FM,
+      Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
-  
+
   // Build a sideset evaluator if sidesets are present
   if(meshSpecs[0]->ssNames.size() > 0)
      constructNeumannEvaluators(meshSpecs[0]);

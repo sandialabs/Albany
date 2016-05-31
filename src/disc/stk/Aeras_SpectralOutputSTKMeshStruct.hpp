@@ -21,11 +21,11 @@ namespace Aeras {
 
 //Constructor
     SpectralOutputSTKMeshStruct(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const Teuchos::RCP<const Teuchos_Comm>& commT, 
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const int numDim_, const int worksetSize_,
-                  const bool periodic_, const double scale_,  
-                  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID_, 
+                  const bool periodic_, const double scale_,
+                  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID_,
                   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords_,
                   const int points_per_edge_, const std::string element_name_);
 
@@ -41,7 +41,7 @@ namespace Aeras {
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                   const unsigned int worksetSize,
                   const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& /*side_set_sis*/ = {},
-                  const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/ = {});
+                  const std::map<std::string,Albany::AbstractFieldContainer::FieldContainerRequirements>& /*side_set_req*/ = {});
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return false; }
@@ -63,9 +63,9 @@ namespace Aeras {
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool periodic;
-    double scale; 
-    bool contigIDs; //boolean specifying if node / element / face IDs are contiguous; only relevant for 1 processor run 
-    const int numDim;  
+    double scale;
+    bool contigIDs; //boolean specifying if node / element / face IDs are contiguous; only relevant for 1 processor run
+    const int numDim;
     const int points_per_edge;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
