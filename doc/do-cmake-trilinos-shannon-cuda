@@ -107,6 +107,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_ENABLE_HDF5:BOOL=ON \
       -D TPL_ENABLE_Matio:BOOL=OFF \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
+      -D TPL_Netcdf_PARALLEL:BOOL=ON \
       -D TPL_ENABLE_X11:BOOL=OFF \
       -D TPL_Netcdf_INCLUDE_DIRS:PATH=$NETCDF/include \
       -D Netcdf_LIBRARY_DIRS:PATH=$NETCDF/lib \
