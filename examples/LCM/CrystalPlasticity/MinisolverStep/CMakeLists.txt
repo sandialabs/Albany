@@ -48,6 +48,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MinisolverStep_LineSearchRegularized.
 if(ALBANY_IFPACK2)
 add_test(CrystalPlasticity_MinisolverStep_Newton python ../run_exodiff_test.py "${SerialAlbanyT.exe}" MinisolverStep_Newton.xml)
 add_test(CrystalPlasticity_MinisolverStep_TrustRegion python ../run_exodiff_test.py "${SerialAlbanyT.exe}" MinisolverStep_TrustRegion.xml)
-add_test(CrystalPlasticity_MinisolverStep_ConjugateGradient python ../run_exodiff_test.py "${SerialAlbanyT.exe}" MinisolverStep_ConjugateGradient.xml)
+#add_test(CrystalPlasticity_MinisolverStep_ConjugateGradient python ../run_exodiff_test.py "${SerialAlbanyT.exe}" MinisolverStep_ConjugateGradient.xml)
 #add_test(CrystalPlasticity_MinisolverStep_LineSearchRegularized python ../run_exodiff_test.py "${SerialAlbanyT.exe}" MinisolverStep_LineSearchRegularized.xml)
 endif()
