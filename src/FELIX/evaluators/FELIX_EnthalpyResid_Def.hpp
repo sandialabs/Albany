@@ -33,8 +33,6 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 	EnthalpyGrad    (p.get<std::string> ("Enthalpy Gradient QP Variable Name"), dl->qp_gradient),
 	Velocity		(p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
     coordVec 		(p.get<std::string> ("Coordinate Vector Name"),dl->vertices_vector),
-    diss 			(p.get<std::string> ("Dissipation QP Variable Name"),dl->qp_scalar),
-	basalFricHeat   (p.get<std::string> ("Basal Friction Heat QP Variable Name"),dl->qp_scalar),
 	Residual 		(p.get<std::string> ("Residual Variable Name"), dl->node_scalar)
 {
 	Teuchos::RCP<PHX::DataLayout> vector_dl = p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
@@ -44,14 +42,49 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 	numQPs   = dims[2];
 	numDims  = dims[3];
 
+	Teuchos::ParameterList* SUPG_list = p.get<Teuchos::ParameterList*>("SUPG Settings");
+	haveSUPG = SUPG_list->get("Have SUPG Stabilization", false);
+
+	needsDiss = p.get<bool>("Needs Dissipation");
+	needsBasFric = p.get<bool>("Needs Basal Friction");
+	//isGeoFluxConst = p.get<bool>("Constant Geotermal Flux");
+	//std::cout <<"WEEEEEEE " << isGeoFluxConst << std::endl;
 	this->addDependentField(Enthalpy);
 	this->addDependentField(EnthalpyGrad);
 	this->addDependentField(wBF);
 	this->addDependentField(wGradBF);
 	this->addDependentField(Velocity);
 	this->addDependentField(coordVec);
-	this->addDependentField(diss);
-	this->addDependentField(basalFricHeat);
+
+	if (needsDiss)
+	{
+		diss = PHX::MDField<ScalarT,Cell,QuadPoint>(p.get<std::string> ("Dissipation QP Variable Name"),dl->qp_scalar);
+		this->addDependentField(diss);
+	}
+
+	if (needsBasFric)
+	{
+		basalFricHeat = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Basal Friction Heat Variable Name"),dl->node_scalar);
+		this->addDependentField(basalFricHeat);
+
+		if(haveSUPG)
+		{
+			basalFricHeatSUPG = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Basal Friction Heat SUPG Variable Name"),dl->node_scalar);
+			this->addDependentField(basalFricHeatSUPG);
+		}
+	}
+
+	//if (!isGeoFluxConst)
+	//{
+	geoFluxHeat = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Geotermal Flux Heat Variable Name"),dl->node_scalar);
+	this->addDependentField(geoFluxHeat);
+
+	if(haveSUPG)
+	{
+		geoFluxHeatSUPG = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Geotermal Flux Heat SUPG Variable Name"),dl->node_scalar);
+		this->addDependentField(geoFluxHeatSUPG);
+	}
+	//}
 
 	this->addEvaluatedField(Residual);
 	this->setName("EnthalpyResid");
@@ -59,8 +92,7 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 	Teuchos::ParameterList* option_list = p.get<Teuchos::ParameterList*>("Options");
 	k = option_list->get("Ice thermal conductivity k", 1.0);
 	k *= 0.001;
-	Teuchos::ParameterList* SUPG_list = p.get<Teuchos::ParameterList*>("SUPG Settings");
-	haveSUPG = SUPG_list->get("Have SUPG Stabilization", false);
+
 	delta = SUPG_list->get("Parameter Delta", 0.1);
 }
 
@@ -74,8 +106,23 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(Velocity,fm);
   this->utils.setFieldData(coordVec,fm);
-  this->utils.setFieldData(diss,fm);
-  this->utils.setFieldData(basalFricHeat,fm);
+
+  if (needsDiss)
+	  this->utils.setFieldData(diss,fm);
+
+  if (needsBasFric)
+  {
+	  this->utils.setFieldData(basalFricHeat,fm);
+	  if(haveSUPG)
+		  this->utils.setFieldData(basalFricHeatSUPG,fm);
+  }
+
+  //if (!isGeoFluxConst)
+  //{
+	  this->utils.setFieldData(geoFluxHeat,fm);
+	  if(haveSUPG)
+		  this->utils.setFieldData(geoFluxHeatSUPG,fm);
+  //}
 
   this->utils.setFieldData(Residual,fm);
 }
@@ -85,19 +132,45 @@ void EnthalpyResid<EvalT,Traits>::
 evaluateFields(typename Traits::EvalData d)
 {
     for (std::size_t cell = 0; cell < d.numCells; ++cell)
+    	for (std::size_t node = 0; node < numNodes; ++node)
+    		Residual(cell,node) = 0.0;
+
+	for (std::size_t cell = 0; cell < d.numCells; ++cell)
+		for (std::size_t node = 0; node < numNodes; ++node)
+			Residual(cell,node) -= geoFluxHeat(cell,node);
+
+    if (needsBasFric)
+    {
+    	for (std::size_t cell = 0; cell < d.numCells; ++cell)
+    		for (std::size_t node = 0; node < numNodes; ++node)
+    			Residual(cell,node) -= basalFricHeat(cell,node);
+	}
+
+    if (needsDiss)
+    {
+        for (std::size_t cell = 0; cell < d.numCells; ++cell)
+        {
+        	for (std::size_t node = 0; node < numNodes; ++node)
+        	{
+        		for (std::size_t qp = 0; qp < numQPs; ++qp)
+        		{
+        			Residual(cell,node) -= diss(cell,qp)*wBF(cell,node,qp);
+        		}
+        	}
+        }
+    }
+
+    for (std::size_t cell = 0; cell < d.numCells; ++cell)
     {
     	for (std::size_t node = 0; node < numNodes; ++node)
     	{
-    		Residual(cell,node) = 0.0;
-
     		for (std::size_t qp = 0; qp < numQPs; ++qp)
     		{ //mu*du/dx + mu*du/dy + mu*du/dz + vel_x*du/dx + vel_y*du/dy = 0
-            Residual(cell,node) += k*EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
-            					   k*EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-								   k*EnthalpyGrad(cell,qp,2)*wGradBF(cell,node,qp,2) +
-								   0.057964172 * Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0)*wBF(cell,node,qp) +
-								   0.057964172 * Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1)*wBF(cell,node,qp) -
-								   diss(cell,qp)*wBF(cell,node,qp) - basalFricHeat(cell,qp)*wBF(cell,node,qp);
+				Residual(cell,node) += k*EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+									   k*EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
+									   k*EnthalpyGrad(cell,qp,2)*wGradBF(cell,node,qp,2) +
+									   0.057964172 * Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0)*wBF(cell,node,qp) +
+									   0.057964172 * Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1)*wBF(cell,node,qp);
     		}
         }
     }
@@ -126,19 +199,106 @@ evaluateFields(typename Traits::EvalData d)
 												  coordVec(cell,j,0),coordVec(cell,j,1),coordVec(cell,j,2)));
         		}
         	}
-
         	for (std::size_t node=0; node < numNodes; ++node)
         	{
+				Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow(10.0,10.0)))*geoFluxHeatSUPG(cell,node);
 				for (std::size_t qp=0; qp < numQPs; ++qp)
 				{
 	    				Residual(cell,node) += (delta*diam/vmax*(3.154 * pow(10.0,10.0)))*(0.057964172 * Velocity(cell,qp,0) * EnthalpyGrad(cell,qp,0) * (1/(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
-	    														  0.057964172 * Velocity(cell,qp,1) * EnthalpyGrad(cell,qp,1) * (1/(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) -
-																  diss(cell,qp) * (1/(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) -
-																  diss(cell,qp) * (1/(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) -
-																  basalFricHeat(cell,qp) * (1/(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) -
-																  basalFricHeat(cell,qp) * (1/(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1));
+	    														  0.057964172 * Velocity(cell,qp,1) * EnthalpyGrad(cell,qp,1) * (1/(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1));
 				}
       	  	}
+    	}
+
+    	// additional contributions of dissipation and basal friction heat
+    	if (needsDiss && needsBasFric)
+    	{
+			for (std::size_t cell=0; cell < d.numCells; ++cell)
+			{
+				for (std::size_t qp = 0; qp < numQPs; ++qp)
+				{
+					for (std::size_t i = 0; i < numDims; i++)
+					{
+						vmax = std::max(vmax,std::fabs(Velocity(cell,qp,i)));
+					}
+				}
+
+				for (std::size_t i = 0; i < numNodes-1; ++i)
+				{
+					for (std::size_t j = i + 1; j < numNodes; ++j)
+					{
+						diam = std::max(diam,distance(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
+													  coordVec(cell,j,0),coordVec(cell,j,1),coordVec(cell,j,2)));
+					}
+				}
+				for (std::size_t node=0; node < numNodes; ++node)
+				{
+					Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow(10.0,10.0)))*basalFricHeatSUPG(cell,node);
+					for (std::size_t qp=0; qp < numQPs; ++qp)
+					{
+							Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow(10.0,10.0)))*
+												   (diss(cell,qp) * (1./(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
+													diss(cell,qp) * (1./(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1));
+					}
+				}
+			}
+    	}
+    	else if (needsBasFric)
+    	{
+			for (std::size_t cell=0; cell < d.numCells; ++cell)
+			{
+				for (std::size_t qp = 0; qp < numQPs; ++qp)
+				{
+					for (std::size_t i = 0; i < numDims; i++)
+					{
+						vmax = std::max(vmax,std::fabs(Velocity(cell,qp,i)));
+					}
+				}
+
+				for (std::size_t i = 0; i < numNodes-1; ++i)
+				{
+					for (std::size_t j = i + 1; j < numNodes; ++j)
+					{
+						diam = std::max(diam,distance(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
+													  coordVec(cell,j,0),coordVec(cell,j,1),coordVec(cell,j,2)));
+					}
+				}
+				for (std::size_t node=0; node < numNodes; ++node)
+				{
+					Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow(10.0,10.0)))*basalFricHeatSUPG(cell,node);
+				}
+			}
+    	}
+    	else if (needsDiss)
+    	{
+			for (std::size_t cell=0; cell < d.numCells; ++cell)
+			{
+				for (std::size_t qp = 0; qp < numQPs; ++qp)
+				{
+					for (std::size_t i = 0; i < numDims; i++)
+					{
+						vmax = std::max(vmax,std::fabs(Velocity(cell,qp,i)));
+					}
+				}
+
+				for (std::size_t i = 0; i < numNodes-1; ++i)
+				{
+					for (std::size_t j = i + 1; j < numNodes; ++j)
+					{
+						diam = std::max(diam,distance(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
+													  coordVec(cell,j,0),coordVec(cell,j,1),coordVec(cell,j,2)));
+					}
+				}
+				for (std::size_t node=0; node < numNodes; ++node)
+				{
+					for (std::size_t qp=0; qp < numQPs; ++qp)
+					{
+							Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow(10.0,10.0)))*
+												   (diss(cell,qp) * (1./(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
+													diss(cell,qp) * (1./(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1));
+					}
+				}
+			}
     	}
     }
 }

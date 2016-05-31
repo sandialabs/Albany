@@ -30,6 +30,7 @@
 #include "FELIX_ViscosityFO.hpp"
 #include "FELIX_Dissipation.hpp"
 #include "FELIX_BasalFrictionHeat.hpp"
+#include "FELIX_GeoFluxHeat.hpp"
 
 namespace FELIX
 {
@@ -87,6 +88,10 @@ class Enthalpy : public Albany::AbstractProblem
 		Teuchos::RCP<Albany::Layouts> dl, dl_basal;
         std::string elementBlockName;
 
+        bool haveSUPG;
+        bool needsDiss, needsBasFric;
+        bool isGeoFluxConst;
+
         std::string basalSideName, basalEBName;
 };
 
@@ -123,11 +128,13 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
 	  // Here is how to register the field for dirichlet condition.
 	  // Temperature Dirichelt field
-	  entity = Albany::StateStruct::NodalDistParameter;
-	  std::string stateName = "temperature";
-	  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
-	  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-	  fm0.template registerEvaluator<EvalT>(ev);
+	  {
+		  entity = Albany::StateStruct::NodalDistParameter;
+		  std::string stateName = "temperature";
+		  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
+		  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+		  fm0.template registerEvaluator<EvalT>(ev);
+	  }
 
 	  // Velocity
 	  {
@@ -149,13 +156,25 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 	  }
 
 	  // Basal friction
+	  if(needsBasFric)
 	  {
 		  entity = Albany::StateStruct::NodalDataToElemNode;
-		  stateName = "basal_friction";
+		  std::string stateName = "basal_friction";
 		  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
 		  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
 		  fm0.template registerEvaluator<EvalT>(ev);
 	  }
+
+	  // Geotermal flux
+	  if(!isGeoFluxConst)
+	  {
+		  entity = Albany::StateStruct::NodalDataToElemNode;
+		  std::string stateName = "geotermal_flux";
+		  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+		  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+		  fm0.template registerEvaluator<EvalT>(ev);
+	  }
+
 	  // Define Field Names
 	  Teuchos::ArrayRCP<string> dof_names(neq);
 	  dof_names[0] = "Enthalpy";
@@ -184,33 +203,46 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
 	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFVecGradInterpolationEvaluator("velocity"));
 
+	  // Interpolate temperature from nodes to cell
+	  if(needsDiss)
+		  fm0.template registerEvaluator<EvalT> (evalUtils.constructQuadPointsToCellInterpolationEvaluator (dof_names[0],false)); //getPSTUtils().
+
 	  // --- Special evaluators for side handling
 
-	  //---- Restrict vertex coordinates from cell-based to cell-side-based
+	  // --- Restrict vertex coordinates from cell-based to cell-side-based
 	  fm0.template registerEvaluator<EvalT> (evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",basalSideName,"Vertex Vector",cellType,
-			  	  	  	  	  	  	  	  	  "Coord Vec " + basalSideName));
+												  "Coord Vec " + basalSideName));
 
-	  //---- Compute side basis functions
+	  // --- Compute side basis functions
 	  fm0.template registerEvaluator<EvalT> (evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, basalSideBasis, basalCubature, basalSideName));
 
-	  //---- Compute Quad Points coordinates on the side set
+	  // --- Compute Quad Points coordinates on the side set
 	  fm0.template registerEvaluator<EvalT> (evalUtils.constructMapToPhysicalFrameSideEvaluator(cellType,basalCubature,basalSideName));
 
-	  //---- Restrict basal friction from cell-based to cell-side-based
-	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("basal_friction",basalSideName,"Node Scalar",cellType));
-
-	  // --- Interpolate Beta Given on QP on side
-      fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("basal_friction", basalSideName));
-
-	  //---- Restrict basal velocity from cell-based to cell-side-based
+	  // --- Restrict basal velocity from cell-based to cell-side-based
 	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("velocity",basalSideName,"Node Vector",cellType));
 
-      // --- Interpolate velocity on QP on side
-      fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFVecInterpolationSideEvaluator("velocity", basalSideName));
+	  // --- Interpolate velocity on QP on side
+	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFVecInterpolationSideEvaluator("velocity", basalSideName));
 
-      // --- Interpolate basal friction heat on QP
-	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("Basal Heat"));
+	  if(needsBasFric)
+	  {
+		  // --- Restrict basal friction from cell-based to cell-side-based
+		  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("basal_friction",basalSideName,"Node Scalar",cellType));
 
+		  // --- Interpolate Beta Given on QP on side
+		  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("basal_friction", basalSideName));
+	  }
+
+	  // --- Utilities for Geotermal flux
+	  if(!isGeoFluxConst)
+	  {
+		  // --- Restrict geotermal flux from cell-based to cell-side-based
+		  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("geotermal_flux",basalSideName,"Node Scalar",cellType));
+
+	  	  // --- Interpolate geotermal_flux on QP on side
+	  	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("geotermal_flux", basalSideName));
+	  }
 
 	  // -------------------------------- FELIX evaluators ------------------------- //
 	  // --- Enthalpy Residual ---
@@ -236,9 +268,23 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 	  p->set<string>("Velocity QP Variable Name", "velocity");
 	  p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
 
-	  p->set<std::string>("Dissipation QP Variable Name", "FELIX Dissipation");
+	  p->set<string>("Geotermal Flux Heat Variable Name","Geo Flux Heat");
+	  p->set<string>("Geotermal Flux Heat SUPG Variable Name","Geo Flux Heat SUPG");
 
-	  p->set<std::string>("Basal Friction Heat QP Variable Name", "Basal Heat");
+	  if(needsDiss)
+	  {
+		  p->set<std::string>("Dissipation QP Variable Name", "FELIX Dissipation");
+	  }
+
+	  if(needsBasFric)
+	  {
+		  p->set<std::string>("Basal Friction Heat Variable Name", "Basal Heat");
+		  p->set<std::string>("Basal Friction Heat SUPG Variable Name", "Basal Heat SUPG");
+	  }
+
+	  p->set<bool>("Needs Dissipation", needsDiss);
+	  p->set<bool>("Needs Basal Friction", needsBasFric);
+	  p->set<bool>("Constant Geotermal Flux", isGeoFluxConst);
 
 	  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
@@ -254,56 +300,98 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 	  }
 
 	  // --- FELIX Dissipation ---
+	  if(needsDiss)
 	  {
-	  p = rcp(new ParameterList("FELIX Dissipation"));
+		  {
+		  p = rcp(new ParameterList("FELIX Dissipation"));
 
-	  //Input
-	  p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
-	  p->set<std::string>("EpsilonSq QP Variable Name", "FELIX EpsilonSq");
+		  //Input
+		  p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
+		  p->set<std::string>("EpsilonSq QP Variable Name", "FELIX EpsilonSq");
 
-	  //Output
-	  p->set<std::string>("Dissipation QP Variable Name", "FELIX Dissipation");
+		  //Output
+		  p->set<std::string>("Dissipation QP Variable Name", "FELIX Dissipation");
 
-	  ev = Teuchos::rcp(new FELIX::Dissipation<EvalT,PHAL::AlbanyTraits>(*p,dl));
-	  fm0.template registerEvaluator<EvalT>(ev);
-	  }
+		  ev = Teuchos::rcp(new FELIX::Dissipation<EvalT,PHAL::AlbanyTraits>(*p,dl));
+		  fm0.template registerEvaluator<EvalT>(ev);
+		  }
 
-	  // --- FELIX Viscosity ---
-	  {
-	  p = rcp(new ParameterList("FELIX Viscosity"));
+		  // --- FELIX Viscosity ---
+		  {
+		  p = rcp(new ParameterList("FELIX Viscosity"));
 
-	  //Input
-	  p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
-	  p->set<std::string>("Velocity QP Variable Name", "velocity");
-	  p->set<std::string>("Velocity Gradient QP Variable Name", "velocity Gradient");
-	  p->set<std::string>("Temperature Variable Name", "temperature");
-	  p->set<std::string>("Flow Factor Variable Name", "flow_factor");
-	  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-	  p->set<ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
-	  p->set<ParameterList*>("Parameter List", &params->sublist("FELIX Viscosity"));
+		  //Input
+		  p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
+		  p->set<std::string>("Velocity QP Variable Name", "velocity");
+		  p->set<std::string>("Velocity Gradient QP Variable Name", "velocity Gradient");
+		  p->set<std::string>("Temperature Variable Name", dof_names[0] );	//NB this has to be the temperature instead of the enthalpy. It is used if we want flowRate_type == TEMPERATUREBASED in ViscosityFO
+		  p->set<std::string>("Flow Factor Variable Name", "flow_factor");
+		  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+		  p->set<ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
+		  p->set<ParameterList*>("Parameter List", &params->sublist("FELIX Viscosity"));
 
-	  //Output
-	  p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
-	  p->set<std::string>("EpsilonSq QP Variable Name", "FELIX EpsilonSq");
+		  //Output
+		  p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
+		  p->set<std::string>("EpsilonSq QP Variable Name", "FELIX EpsilonSq");
 
-	  ev = Teuchos::rcp(new FELIX::ViscosityFO<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::ParamScalarT>(*p,dl));
-	  fm0.template registerEvaluator<EvalT>(ev);
+		  ev = Teuchos::rcp(new FELIX::ViscosityFO<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::ParamScalarT>(*p,dl));
+		  fm0.template registerEvaluator<EvalT>(ev);
+		  }
 	  }
 
 	  // --- FELIX Basal friction heat ---
+	  if(needsBasFric)
 	  {
-	  p = rcp(new ParameterList("FELIX Basal Friction Heat"));
-	  //Input
-      p->set<std::string>("Velocity Side QP Variable Name", "velocity");
-	  p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", "basal_friction");
-	  p->set<std::string>("Side Set Name", basalSideName);
-	  p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
+		  p = rcp(new ParameterList("FELIX Basal Friction Heat"));
+		  //Input
+		  p->set<std::string>("BF Side Name", "BF "+basalSideName);
+		  p->set<std::string>("Gradient BF Side Name", "Grad BF "+basalSideName);
+		  p->set<std::string>("Weighted Measure Name", "Weighted Measure "+basalSideName);
+		  p->set<std::string>("Velocity Side QP Variable Name", "velocity");
+		  p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", "basal_friction");
+		  p->set<std::string>("Side Set Name", basalSideName);
 
-	  //Output
-	  p->set<std::string>("Basal Friction Heat Variable Name", "Basal Heat");
+		  p->set<ParameterList*>("SUPG Settings", &params->sublist("SUPG Settings"));
 
-	  ev = Teuchos::rcp(new FELIX::BasalFrictionHeat<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
-	  fm0.template registerEvaluator<EvalT>(ev);
+		  p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
+
+		  //Output
+		  p->set<std::string>("Basal Friction Heat Variable Name", "Basal Heat");
+
+		  if(haveSUPG)
+			  p->set<std::string>("Basal Friction Heat SUPG Variable Name", "Basal Heat SUPG");
+
+		  ev = Teuchos::rcp(new FELIX::BasalFrictionHeat<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+		  fm0.template registerEvaluator<EvalT>(ev);
+	  }
+
+	  // --- FELIX Geotermal flux heat
+	  {
+		  p = rcp(new ParameterList("FELIX Geotermal Flux Heat"));
+		  //Input
+		  p->set<std::string>("BF Side Name", "BF "+basalSideName);
+		  p->set<std::string>("Gradient BF Side Name", "Grad BF "+basalSideName);
+		  p->set<std::string>("Weighted Measure Name", "Weighted Measure "+basalSideName);
+		  p->set<std::string>("Velocity Side QP Variable Name", "velocity");
+		  p->set<std::string>("Side Set Name", basalSideName);
+		  p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
+
+		  p->set<ParameterList*>("SUPG Settings", &params->sublist("SUPG Settings"));
+
+		  if(!isGeoFluxConst)
+			  p->set<std::string>("Geotermal Flux Side QP Variable Name", "geotermal_flux");
+
+		  //p->set<ParameterList*>("Problem", &params->sublist("Problem"));
+		  p->set<bool>("Constant Geotermal Flux", isGeoFluxConst);
+
+		  //Output
+		  p->set<std::string>("Geotermal Flux Heat Variable Name", "Geo Flux Heat");
+
+		  if(haveSUPG)
+			  p->set<std::string>("Geotermal Flux Heat SUPG Variable Name", "Geo Flux Heat SUPG");
+
+		  ev = Teuchos::rcp(new FELIX::GeoFluxHeat<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+		  fm0.template registerEvaluator<EvalT>(ev);
 	  }
 
 	  if (fieldManagerChoice == Albany::BUILD_RESID_FM)

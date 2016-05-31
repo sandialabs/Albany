@@ -49,13 +49,18 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		PHX::MDField<ParamScalarT,Cell,QuadPoint,VecDim> Velocity;
         PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec;
 		PHX::MDField<ScalarT,Cell,QuadPoint> diss;
-		PHX::MDField<ScalarT,Cell,QuadPoint> basalFricHeat;
+		PHX::MDField<ScalarT,Cell,Node> basalFricHeat;
+		PHX::MDField<ScalarT,Cell,Node> basalFricHeatSUPG;
+		PHX::MDField<ScalarT,Cell,Node> geoFluxHeat;
+		PHX::MDField<ScalarT,Cell,Node> geoFluxHeatSUPG;
 
 		// Output:
 		PHX::MDField<ScalarT,Cell,Node> Residual;
 
 		unsigned int numQPs, numDims, numNodes;
 
+		bool needsDiss, needsBasFric;
+		//bool isGeoFluxConst;
 };
 
 }

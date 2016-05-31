@@ -18,6 +18,7 @@
        evaluators/FELIX_FieldNorm.cpp
        evaluators/FELIX_FlowRate.cpp
        evaluators/FELIX_FluxDiv.cpp
+       evaluators/FELIX_GeoFluxHeat.cpp
        evaluators/FELIX_HydrologyWaterDischarge.cpp
        evaluators/FELIX_HydrologyMeltingRate.cpp
        evaluators/FELIX_HydrologyResidualEllipticEqn.cpp
@@ -100,6 +101,8 @@ ENDIF()
        evaluators/FELIX_FlowRate_Def.hpp
        evaluators/FELIX_FluxDiv.hpp
        evaluators/FELIX_FluxDiv_Def.hpp
+       evaluators/FELIX_GeoFluxHeat.hpp
+       evaluators/FELIX_GeoFluxHeat_Def.hpp
        evaluators/FELIX_HydrologyWaterDischarge.hpp
        evaluators/FELIX_HydrologyWaterDischarge_Def.hpp
        evaluators/FELIX_HydrologyMeltingRate.hpp

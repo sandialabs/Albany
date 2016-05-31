@@ -475,7 +475,7 @@ evaluateFields(typename Traits::EvalData workset)
             flowFactorVec[cell] = 1.0/2.0*pow(A, -1.0/n);
           break;
         case TEMPERATUREBASED:
-          for (std::size_t cell=0; cell < workset.numCells; ++cell)
+        	for (std::size_t cell=0; cell < workset.numCells; ++cell)
             flowFactorVec[cell] = 1.0/2.0*pow(flowRate<TemperatureType>(temperature(cell)), -1.0/n);
           break;
         case FROMFILE:
