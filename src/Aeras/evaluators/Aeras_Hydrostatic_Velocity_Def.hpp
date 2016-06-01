@@ -81,13 +81,31 @@ evaluateFields(typename Traits::EvalData workset)
       break; 
     case PRESCRIBED_1_1: //velocity is prescribed to that of 1-1 test
       //FIXME: Pete, Tom - please fill in
-      //const MeshScalarT lambda = sphere_coord(cell, qp, 0);
-      //const MeshScalarT theta = sphere_coord(cell, qp, 1);
+      for (int cell=0; cell < workset.numCells; ++cell) { 
+        for (int node=0; node < numNodes; ++node) {
+          const MeshScalarT lambda = sphere_coord(cell, node, 0);
+          const MeshScalarT theta = sphere_coord(cell, node, 1);
+          for (int level=0; level < numLevels; ++level) {
+            for (int dim=0; dim < numDims; ++dim) {
+              Velocity(cell,node,level,dim) = 0.0; //FIXME 
+            }
+          }
+        }
+      }
       break; 
     case PRESCRIBED_1_2: //velocity is prescribed to that of 1-2 test
       //FIXME: Pete, Tom - please fill in
-      //const MeshScalarT lambda = sphere_coord(cell, qp, 0);
-      //const MeshScalarT theta = sphere_coord(cell, qp, 1);
+      for (int cell=0; cell < workset.numCells; ++cell) { 
+        for (int node=0; node < numNodes; ++node) {
+          const MeshScalarT lambda = sphere_coord(cell, node, 0);
+          const MeshScalarT theta = sphere_coord(cell, node, 1);
+          for (int level=0; level < numLevels; ++level) {
+            for (int dim=0; dim < numDims; ++dim) {
+              Velocity(cell,node,level,dim) = 0.0; //FIXME  
+            }
+          }
+        }
+      }
       break; 
   }
 }

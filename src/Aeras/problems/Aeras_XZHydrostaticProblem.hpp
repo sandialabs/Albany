@@ -33,6 +33,7 @@
 #include "Aeras_XZHydrostatic_Pressure.hpp"
 #include "Aeras_XZHydrostatic_VelResid.hpp"
 #include "Aeras_XZHydrostatic_Velocity.hpp"
+#include "Aeras_XZHydrostatic_EtaDot.hpp"
 #include "Aeras_XZHydrostatic_TracerResid.hpp"
 #include "Aeras_XZHydrostatic_TemperatureResid.hpp"
 #include "Aeras_XZHydrostatic_PiVel.hpp"
@@ -407,10 +408,21 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   
   {//XZHydrostatic velocity
     RCP<ParameterList> p = rcp(new ParameterList("Velocity"));
+    //Input
     p->set<string>("Velx Name",    "Velx");
+    //Output
     p->set<string>("Velocity",  "Velocity");
     
     ev = rcp(new Aeras::XZHydrostatic_Velocity<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+  
+  {//XZHydrostatic etadot
+    RCP<ParameterList> p = rcp(new ParameterList("EtaDot"));
+    //Output
+    p->set<string>("EtaDot",  "EtaDot");
+    
+    ev = rcp(new Aeras::XZHydrostatic_EtaDot<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -701,6 +713,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<std::string>("Velocity",               "Velocity");
     p->set<std::string>("QP Temperature",         dof_names_levels[1]);
     p->set< Teuchos::ArrayRCP<std::string> >("Tracer Names",        dof_names_tracers);
+    p->set<std::string>("EtaDot",                   "EtaDot");
 
     //Output
     p->set<std::string>("EtaDotPi",                   "EtaDotPi");

@@ -32,6 +32,7 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   //etadotdtracerNames    (p.get< Teuchos::ArrayRCP<std::string> >("Tracer EtaDotd Names")),
   dedotpitracerdeNames    (p.get< Teuchos::ArrayRCP<std::string> >("Tracer EtaDotd Names")),
   etadotdT       (p.get<std::string> ("EtaDotdT"),              dl->qp_scalar_level),
+  etadot       (p.get<std::string> ("EtaDot"),              dl->qp_scalar_level),
   etadotdVelx    (p.get<std::string> ("EtaDotdVelx"),           dl->node_vector_level),
   Pidot          (p.get<std::string> ("PiDot"),                 dl->qp_scalar_level),
   numQPs     (dl->node_qp_scalar          ->dimension(2)),
@@ -44,19 +45,6 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
       p.get<Teuchos::ParameterList*>("XZHydrostatic Problem"):
       p.get<Teuchos::ParameterList*>("Hydrostatic Problem");
 
-  std::string advType = xzhydrostatic_params->get("Advection Type", "Unknown");
-  
-  if (advType == "Unknown")
-    adv_type = UNKNOWN;
-  else if (advType == "Prescribed 1-1") 
-    adv_type = PRESCRIBED_1_1; 
-  else if (advType == "Prescribed 1-2")
-    adv_type = PRESCRIBED_1_2; 
-  else 
-    TEUCHOS_TEST_FOR_EXCEPTION(true,
- 		               Teuchos::Exceptions::InvalidParameter,"Aeras::Hydrostatic_Velocity: " 
-                               << "Advection Type = " << advType << " is invalid!"); 
-
   this->addDependentField(divpivelx);
   this->addDependentField(pdotP0);
   this->addDependentField(Pi);
@@ -64,6 +52,7 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   this->addDependentField(Velocity);
 
   this->addEvaluatedField(etadotdT);
+  this->addEvaluatedField(etadot);
   this->addEvaluatedField(etadotdVelx);
   this->addEvaluatedField(Pidot);
 
@@ -96,6 +85,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(Temperature,   fm);
   this->utils.setFieldData(Velocity   ,   fm);
   this->utils.setFieldData(etadotdT   ,   fm);
+  this->utils.setFieldData(etadot   ,   fm);
   this->utils.setFieldData(etadotdVelx,   fm);
   this->utils.setFieldData(Pidot,         fm);
   for (int i = 0; i < Tracer.size();  ++i)       this->utils.setFieldData(Tracer[tracerNames[i]], fm);
@@ -186,46 +176,10 @@ evaluateFields(typename Traits::EvalData workset)
 
   //pure advection: there are many auxiliary variables.
   else {
-    //Local variable -- to be prescribed here
-    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  etadot(workset.numCells,numQPs,numLevels);
-    etadot.initialize(); 
-    //PHX::MDField<ScalarT,Cell,QuadPoint,Level>      etadot;
     //Local variable that is etadot*Pi.  Defining this at (cell,qp,levels) which is not
     //the same as for the non-advection version. 
     Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  etadotPi(workset.numCells,numQPs,numLevels);
-    etadotPi.initialize(); 
-    //PHX::MDField<ScalarT,Cell,QuadPoint,Level>      etadotPi;
-    switch (adv_type) {
-      case PRESCRIBED_1_1: //etadot is prescribed to that of 1-1 test
-        //FIXME: Pete, Tom will fill in
-        for (int cell=0; cell < workset.numCells; ++cell) {
-          for (int qp=0; qp < numQPs; ++qp) {
-	    for (int level=0; level < numLevels; ++level) {
-              etadot(cell,qp,level) = 0.0; 
-            }
-          }
-        }
-        break;
-      case PRESCRIBED_1_2: //etadot is prescribed to that of 1-2 test
-        //FIXME: Pete, Tom will fill in
-        for (int cell=0; cell < workset.numCells; ++cell) {
-          for (int qp=0; qp < numQPs; ++qp) {
-	    for (int level=0; level < numLevels; ++level) {
-              etadot(cell,qp,level) = 0.0; 
-            }
-          }
-        }
-        break;
-      default: //constant advection
-        for (int cell=0; cell < workset.numCells; ++cell) {
-          for (int qp=0; qp < numQPs; ++qp) {
-	    for (int level=0; level < numLevels; ++level) {
-              etadot(cell,qp,level) = 0.0; 
-            }
-          }
-        }
-        break; 
-    }
+    etadotPi.initialize();
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int qp=0; qp < numQPs; ++qp) {
 	for (int level=0; level < numLevels; ++level) {
@@ -269,19 +223,6 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     }
-    /*for (int cell=0; cell < workset.numCells; ++cell) {
-      for (int qp=0; qp < numQPs; ++qp) {
-        //Vertical Finite Differencing
-	for (int level=0; level < numLevels; ++level) {
-	  etadotdT(cell,qp,level) = 0.0;
-	  for (int dim=0; dim<numDims; ++dim)
-	    etadotdVelx(cell,qp,level,dim) = 0.0;
-	  for (int i = 0; i < tracerNames.size(); ++i)
-	    dedotpiTracerde[tracerNames[i]](cell,qp,level) = 0.0;
-	  Pidot(cell,qp,level) = - divpivelx(cell,qp,level);
-	}
-      }
-    }*/
   }
 }
 }

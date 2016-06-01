@@ -44,6 +44,7 @@
 
 #include "Aeras_Hydrostatic_VelResid.hpp"
 #include "Aeras_Hydrostatic_Velocity.hpp"
+#include "Aeras_Hydrostatic_EtaDot.hpp"
 
 #include "Aeras_ComputeBasisFunctions.hpp"
 #include "Aeras_GatherCoordinateVector.hpp"
@@ -505,8 +506,10 @@ Aeras::HydrostaticProblem::constructEvaluators(
   
   {//Hydrostatic velocity
     RCP<ParameterList> p = rcp(new ParameterList("Velocity"));
+    //Input
     p->set<string>("Velx Name",    "Velx");
     p->set<std::string>("Spherical Coord Name",       "Lat-Long");
+    //Output
     p->set<string>("Velocity",  "Velocity");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -514,6 +517,21 @@ Aeras::HydrostaticProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
     
     ev = rcp(new Aeras::Hydrostatic_Velocity<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+  
+  {//Hydrostatic EtaDot 
+    RCP<ParameterList> p = rcp(new ParameterList("EtaDot"));
+    //Input
+    p->set<std::string>("Spherical Coord Name",       "Lat-Long");
+    //Output
+    p->set<string>("EtaDot",  "EtaDot");
+    
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Hydrostatic Problem");
+    p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
+    
+    ev = rcp(new Aeras::Hydrostatic_EtaDot<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -795,6 +813,7 @@ Aeras::HydrostaticProblem::constructEvaluators(
     p->set<std::string>("Velocity",               "Velocity");
     p->set<std::string>("QP Temperature",         dof_names_levels[1]);
     p->set< Teuchos::ArrayRCP<std::string> >("Tracer Names",        dof_names_tracers);
+    p->set<std::string>("EtaDot",  "EtaDot");
 
     //Output
     p->set<std::string>("EtaDotPi",                   "EtaDotPi");

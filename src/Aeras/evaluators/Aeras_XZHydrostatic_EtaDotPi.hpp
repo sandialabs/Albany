@@ -47,6 +47,7 @@ private:
   PHX::MDField<ScalarT,Cell,Node,Level,Dim>  Velocity;
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      etadotdT;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      etadot;
   PHX::MDField<ScalarT,Cell,Node,Level,Dim>  etadotdVelx;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Pidot;
 
@@ -63,9 +64,6 @@ private:
   const int numLevels;
 
   bool pureAdvection;
-  
-  enum ADVTYPE {UNKNOWN, PRESCRIBED_1_1, PRESCRIBED_1_2};
-  ADVTYPE adv_type;
 
 };
 }
