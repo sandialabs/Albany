@@ -72,7 +72,7 @@ fi
 echo; echo "...Starting Trilinos full Build"
 time source $SCRIPTDIR/trilinos_build_openmp.sh
 
-rm -rf $SCRIPTDIR/Albany 
+rm -rf $NIGHTLYDIR/Albany 
 
 #echo; echo "...Starting Albany Build (Albany and AlbanyT)"
 #time source $SCRIPTDIR/albany_build_tpetra.sh
