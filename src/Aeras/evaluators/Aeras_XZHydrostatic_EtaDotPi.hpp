@@ -63,6 +63,9 @@ private:
   const int numLevels;
 
   bool pureAdvection;
+  
+  enum ADVTYPE {UNKNOWN, PRESCRIBED_1_1, PRESCRIBED_1_2};
+  ADVTYPE adv_type;
 
 };
 }

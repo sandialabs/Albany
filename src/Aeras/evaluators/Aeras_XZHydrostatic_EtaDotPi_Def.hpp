@@ -44,6 +44,18 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
       p.get<Teuchos::ParameterList*>("XZHydrostatic Problem"):
       p.get<Teuchos::ParameterList*>("Hydrostatic Problem");
 
+  std::string advType = xzhydrostatic_params->get("Advection Type", "Unknown");
+  
+  if (advType == "Unknown")
+    adv_type = UNKNOWN;
+  else if (advType == "Prescribed 1-1") 
+    adv_type = PRESCRIBED_1_1; 
+  else if (advType == "Prescribed 1-2")
+    adv_type = PRESCRIBED_1_2; 
+  else 
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+ 		               Teuchos::Exceptions::InvalidParameter,"Aeras::Hydrostatic_Velocity: " 
+                               << "Advection Type = " << advType << " is invalid!"); 
 
   this->addDependentField(divpivelx);
   this->addDependentField(pdotP0);
@@ -101,7 +113,8 @@ evaluateFields(typename Traits::EvalData workset)
   //etadotpi(level) shifted by 1/2
   std::vector<ScalarT> etadotpi(numLevels+1);
 
-  if (!pureAdvection) {
+  if (!pureAdvection) 
+  {
     /*//OG debugging statements
     std::cout << "Printing DIVPIVELX ----------------------------------------\n";
     for (int level=0; level < numLevels; ++level) {
@@ -171,9 +184,92 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }//end of (not pure Advection)
 
-  //pure advection: there are amny auxiliary variables.
+  //pure advection: there are many auxiliary variables.
   else {
+    //Local variable -- to be prescribed here
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  etadot(workset.numCells,numQPs,numLevels);
+    etadot.initialize(); 
+    //PHX::MDField<ScalarT,Cell,QuadPoint,Level>      etadot;
+    //Local variable that is etadot*Pi.  Defining this at (cell,qp,levels) which is not
+    //the same as for the non-advection version. 
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  etadotPi(workset.numCells,numQPs,numLevels);
+    etadotPi.initialize(); 
+    //PHX::MDField<ScalarT,Cell,QuadPoint,Level>      etadotPi;
+    switch (adv_type) {
+      case PRESCRIBED_1_1: //etadot is prescribed to that of 1-1 test
+        //FIXME: Pete, Tom will fill in
+        for (int cell=0; cell < workset.numCells; ++cell) {
+          for (int qp=0; qp < numQPs; ++qp) {
+	    for (int level=0; level < numLevels; ++level) {
+              etadot(cell,qp,level) = 0.0; 
+            }
+          }
+        }
+        break;
+      case PRESCRIBED_1_2: //etadot is prescribed to that of 1-2 test
+        //FIXME: Pete, Tom will fill in
+        for (int cell=0; cell < workset.numCells; ++cell) {
+          for (int qp=0; qp < numQPs; ++qp) {
+	    for (int level=0; level < numLevels; ++level) {
+              etadot(cell,qp,level) = 0.0; 
+            }
+          }
+        }
+        break;
+      default: //constant advection
+        for (int cell=0; cell < workset.numCells; ++cell) {
+          for (int qp=0; qp < numQPs; ++qp) {
+	    for (int level=0; level < numLevels; ++level) {
+              etadot(cell,qp,level) = 0.0; 
+            }
+          }
+        }
+        break; 
+    }
     for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
+	for (int level=0; level < numLevels; ++level) {
+          //IKT: check with Pete, Tom that this is correct
+          etadotPi(cell,qp,level) = etadot(cell,qp,level)*Pi(cell,qp,level);  
+        }
+      }
+    }
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
+        //Vertical Finite Differencing
+        //IKT: there is a problem with this loop, b/c it assumed etadotPi has size (numLevels+1) whereas 
+        //here it has size (numLevels+1).  I changed it to go to numLevels-1 to avoid seg fault.  Ask Tom. 
+        for (int level=0; level < numLevels-1; ++level) {
+          //IKT, 6/1/16: I think the following line is not right... There is an E.  check with Tom.
+	  const ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*E.delta(level));
+	  const int level_m = level             ? level-1 : 0;
+	  const int level_p = level+1<numLevels ? level+1 : level;
+	  const ScalarT etadotpi_m = etadotPi(cell,qp,level);
+	  const ScalarT etadotpi_p = etadotPi(cell,qp,level+1);
+
+	  const ScalarT dT_m       = Temperature(cell,qp,level)   - Temperature(cell,qp,level_m);
+	  const ScalarT dT_p       = Temperature(cell,qp,level_p) - Temperature(cell,qp,level);
+	  etadotdT(cell,qp,level) = factor * ( etadotpi_p*dT_p + etadotpi_m*dT_m );
+
+   	  for (int dim=0; dim<numDims; ++dim) {
+ 	    const ScalarT dVx_m      = Velocity(cell,qp,level,dim)   - Velocity(cell,qp,level_m,dim);
+	    const ScalarT dVx_p      = Velocity(cell,qp,level_p,dim) - Velocity(cell,qp,level,dim);
+	    etadotdVelx(cell,qp,level,dim) = factor * ( etadotpi_p*dVx_p + etadotpi_m*dVx_m );
+	  }
+	  for (int i = 0; i < tracerNames.size(); ++i) {
+	    const ScalarT q_m = 0.5*( Tracer[tracerNames[i]](cell,qp,level)   / Pi(cell,qp,level)
+	 		      + Tracer[tracerNames[i]](cell,qp,level_m) / Pi(cell,qp,level_m) );
+	    const ScalarT q_p = 0.5*( Tracer[tracerNames[i]](cell,qp,level_p) / Pi(cell,qp,level_p)
+	 		      + Tracer[tracerNames[i]](cell,qp,level)   / Pi(cell,qp,level)   );
+	    //etadotdTracer[tracerNames[i]](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
+	    dedotpiTracerde[tracerNames[i]](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
+	  }
+          //IKT, 6/1/16: I think the following line is not right... There is an E.  check with Tom.
+  	  Pidot(cell,qp,level) = - divpivelx(cell,qp,level) - (etadotpi_p - etadotpi_m)/E.delta(level);
+        }
+      }
+    }
+    /*for (int cell=0; cell < workset.numCells; ++cell) {
       for (int qp=0; qp < numQPs; ++qp) {
         //Vertical Finite Differencing
 	for (int level=0; level < numLevels; ++level) {
@@ -185,7 +281,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  Pidot(cell,qp,level) = - divpivelx(cell,qp,level);
 	}
       }
-    }
+    }*/
   }
 }
 }
