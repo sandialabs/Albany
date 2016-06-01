@@ -1,5 +1,8 @@
 macro(do_albany)
 
+# Flags that are used to prevent running Albany tests if the build fails.
+SET(ALBANY_WAS_CONFED FALSE)
+
 # Configure the ALBANY build 
 #
 ####################################################################################################################
@@ -70,12 +73,18 @@ ENDIF()
 
 if(HAD_ERROR)
 	message(SEND_ERROR "Cannot configure Albany build!")
+ELSE()
+  SET(ALBANY_WAS_CONFED TRUE)
 endif()
 
 #
 # Build Albany
 #
 ###################################################################################################################
+
+SET(ALBANY_WAS_BUILT FALSE)
+
+IF(ALBANY_WAS_CONFED)
 
 SET(CTEST_BUILD_TARGET "Albany")
 
@@ -101,11 +110,15 @@ if(BUILD_LIBS_NUM_ERRORS GREATER 0)
 
   if(HAD_ERROR)
 	message(SEND_ERROR "Cannot build Albany!")
+  ELSE()
+    SET(ALBANY_WAS_BUILT TRUE)
   endif()
 
   message(SEND_ERROR "Encountered build errors in Albany build. Exiting!")
 
 endif()
+
+IF(ALBANY_WAS_BUILT)
 
 SET(CTEST_BUILD_TARGET "AlbanyT")
 
@@ -130,16 +143,25 @@ ENDIF()
 
 if(HAD_ERROR)
 	message(SEND_ERROR "Cannot build AlbanyT!")
+    SET(ALBANY_WAS_BUILT FALSE)
+  ELSE()
+    SET(ALBANY_WAS_BUILT TRUE)
 endif()
 
 if(BUILD_LIBS_NUM_ERRORS GREATER 0)
     message(SEND_ERROR "Encountered build errors in AlbanyT build. Exiting!")
 endif()
 
+ENDIF(ALBANY_WAS_BUILT)
+
+ENDIF(ALBANY_WAS_CONFED)
+
 #
 # Run Albany tests
 #
 ##################################################################################################################
+
+IF(ALBANY_WAS_BUILT)
 
 CTEST_TEST(
               BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
@@ -159,5 +181,7 @@ IF(CTEST_DO_SUBMIT)
     message(SEND_ERROR "Cannot submit Albany test results!")
   endif()
 ENDIF(CTEST_DO_SUBMIT)
+
+ENDIF(ALBANY_WAS_BUILT)
 
 endmacro(do_albany)

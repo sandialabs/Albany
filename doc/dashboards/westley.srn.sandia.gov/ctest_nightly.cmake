@@ -22,6 +22,9 @@ set( CTEST_SOURCE_NAME          repos)
 set( CTEST_BUILD_NAME           "intel-mic-${CTEST_BUILD_CONFIGURATION}")
 set( CTEST_BINARY_NAME          buildAlbany)
 
+# Double the test time because MICs are pretty slow
+set( CTEST_TEST_TIMEOUT 1200)
+
 SET(PREFIX_DIR /home/gahanse)
 SET(CMAKE_SW_INSTALL_DIR /usr/local)
 SET(MPI_BASE_DIR /opt/intel/impi/5.0.3.048/intel64)
@@ -292,6 +295,7 @@ SET(CONFIGURE_OPTIONS
   -DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_DIR}/lib
 #
   -DTPL_ENABLE_Netcdf:STRING=ON
+  -DTPL_Netcdf_PARALLEL:BOOL=ON
   -DNetcdf_INCLUDE_DIRS:PATH=${NETCDF}/include
   "-DTPL_Netcdf_LIBRARIES:FILEPATH='${NETCDF}/lib64/libnetcdf.a\\;${HDFDIR}/lib/libhdf5_hl.a\\;${HDFDIR}/lib/libhdf5.a\\;${ZLIB_DIR}/lib/libz.a'"
 #
