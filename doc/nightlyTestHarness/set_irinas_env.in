@@ -20,6 +20,7 @@ SCRIPTDIR=/home/ikalash/nightlyAlbanyTests/
 NIGHTLYDIR=$SCRIPTDIR/Results
 
 #set this correctly
+BOOSTDIR=/home/ikalash/Install/boost_1_55_0
 LAMEINCLUDEDIR=/home/ikalash/Install//lame-4.24.1/lame/include
 LAMELIBDIR=/home/ikalash/Install/lame-4.24.1/lame/build_mockba
 PARMETISDIR=/home/ikalash/Install/parmetis-4.0.3
@@ -31,6 +32,8 @@ SSGUSER=ikalash
 TRILDIR=$NIGHTLYDIR/Trilinos
 TRIBUILDDIR=$NIGHTLYDIR/Trilinos/build/
 TRILINSTALLDIR=$TRIBUILDDIR/install
+TRIBUILDDIROPENMP=$NIGHTLYDIR/Trilinos/build-openmp/
+TRILINSTALLDIROPENMP=$TRIBUILDDIROPENMP/install
 ALBDIR=$NIGHTLYDIR/Albany
 TRIKOTADIR=$TRILDIR/packages/TriKota
 
