@@ -32,6 +32,7 @@ let "max_schwarz_iter=max_schwarz_iter-1"
 num_schwarz_iter_prev=0 
 
 
+STARTTIME=$(date +%s)
 #load step loop
 for (( step=0; step<$1; step++ )); do
  
@@ -185,6 +186,8 @@ for (( step=0; step<$1; step++ )); do
    done #while loop
    echo "...finished load step $step run!" 
 done #load step loop 
+ENDTIME=$(date +%s)
+echo "It takes $(($ENDTIME - $STARTTIME)) seconds to complete this task..."
 
 echo "Beginning error processing..." 
 bash process_errors.sh $1
