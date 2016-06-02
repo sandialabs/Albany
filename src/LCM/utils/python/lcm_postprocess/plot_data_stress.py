@@ -2,6 +2,7 @@
 
 import cPickle as pickle
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
 from matplotlib import rcParams
 
 
@@ -26,9 +27,10 @@ def plot_data_stress(domain = None, filename = None):
         for dim_j in range(num_dims):
 
             fig.clf()
-            plt.hold(True)
+            ax = fig.add_subplot(111)
+            ax.hold(True)
 
-            plt.plot(
+            ax.plot(
                 [domain.variables['Log_Strain'][key_step][(dim_i, dim_j)] for key_step in times],
                 [domain.variables['Cauchy_Stress'][key_step][(dim_i, dim_j)] for key_step in times],
                 marker = 'o')
@@ -39,7 +41,7 @@ def plot_data_stress(domain = None, filename = None):
 
                 block = domain.blocks[key_block]
 
-                plt.plot(
+                ax.plot(
                     [block.variables['Log_Strain'][key_step][(dim_i, dim_j)] for key_step in times],
                     [block.variables['Cauchy_Stress'][key_step][(dim_i, dim_j)] for key_step in times],
                     linestyle = ':')
@@ -49,6 +51,9 @@ def plot_data_stress(domain = None, filename = None):
 
             plt.xlabel('Logarithmic Strain $\epsilon_{'+ str(dim_i + 1) + str(dim_j + 1) +'}$')
             plt.ylabel('Cauchy Stress $\sigma_{'+ str(dim_i + 1) + str(dim_j + 1) +'}$ (MPa)')
+
+            # ax.xaxis.set_major_formatter(mtick.FormatStrFormatter('%.1e'))
+            plt.locator_params(axis='x',nbins=4)
 
             legend = plt.legend(
                 str_legend,

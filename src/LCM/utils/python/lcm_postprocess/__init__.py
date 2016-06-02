@@ -2,11 +2,36 @@ import sys
 import os
 import contextlib
 import cStringIO
+import time
     
 # add Cubit libraries to your path
 sys.path.append('/home/callema/cubit/bin')
 import cubit
 
+#
+# Local classes
+#
+class Timer:  
+
+    def __enter__(self):
+        self.start = time.clock()
+        self.now = self.start
+        self.last = self.now
+        return self
+
+    def __exit__(self, *args):
+        self.end = time.clock()
+        self.interval = self.end - self.start
+
+    def check(self):
+        self.now = time.clock()
+        self.step = self.now - self.last
+        self.interval = self.now - self.start
+        self.last = self.now
+
+#
+# Local functions
+#
 @contextlib.contextmanager
 def nostdout():
     save_stdout = sys.stdout

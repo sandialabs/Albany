@@ -8,19 +8,8 @@ creates usable output from LCM calculations
 #
 # Imported modules
 #
-import contextlib
 import cPickle as pickle
-import cStringIO
-import matplotlib.pyplot as plt
-from matplotlib import rcParams
-from multiprocessing import Pool
-import numpy as np
-from operator import itemgetter
-import os
-from scipy.linalg import *
-import sys
-import time
-
+from lcm_postprocess import Timer
 from lcm_postprocess.read_file_output_exodus import read_file_output_exodus
 from lcm_postprocess.read_file_log import read_file_log
 from lcm_postprocess.read_file_input_material import read_file_input_material
@@ -34,69 +23,8 @@ from lcm_postprocess.plot_data_stress import plot_data_stress
 
 
 #
-# Local classes
-#
-class Timer:  
-
-    def __enter__(self):
-        self.start = time.clock()
-        self.now = self.start
-        self.last = self.now
-        return self
-
-    def __exit__(self, *args):
-        self.end = time.clock()
-        self.interval = self.end - self.start
-
-    def check(self):
-        self.now = time.clock()
-        self.step = self.now - self.last
-        self.interval = self.now - self.start
-        self.last = self.now
-
-
-
-
-#
-# Context manager for silencing output
-#
-@contextlib.contextmanager
-def nostdout():
-    save_stdout = sys.stdout
-    sys.stdout = cStringIO.StringIO()
-    yield
-    sys.stdout = save_stdout
-
-
-
-#
 # Local functions
 #
-
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-
- 
-
-
-
-
-
-
-
 
 
 # Write select data to text file
@@ -119,31 +47,6 @@ def write_data(domain, name_file_data, precision = 8):
     file.close()
 
 # end def write_data(data, name_file_data)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -341,6 +244,9 @@ def postprocess(
 # If run as 'python -m LCM_postprocess <filename>'
 #
 if __name__ == '__main__':
+
+    import os
+    import sys
 
     try:
 

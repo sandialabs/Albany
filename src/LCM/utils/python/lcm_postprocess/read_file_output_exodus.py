@@ -14,16 +14,7 @@ import sys
 import time
 
 from lcm_exodus import get_element_variable_values
-
-#
-# Context manager for silencing output
-#
-@contextlib.contextmanager
-def nostdout():
-    save_stdout = sys.stdout
-    sys.stdout = cStringIO.StringIO()
-    yield
-    sys.stdout = save_stdout
+from lcm_postprocess import stdout_redirected
 
 #
 # Read the Exodus output file
@@ -41,7 +32,7 @@ def read_file_output_exodus(
         'block_ids', 
         'num_points']):
 
-    with nostdout():
+    with stdout_redirected():
         file_input = exodus(filename,'r')
 
     dict_variables = {}
@@ -260,7 +251,7 @@ def read_file_output_exodus(
                 indices_variable,
                 domain)
 
-    with nostdout():
+    with stdout_redirected():
         file_input.close()
 
     return domain
