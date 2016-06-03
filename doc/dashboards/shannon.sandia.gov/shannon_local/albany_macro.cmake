@@ -161,7 +161,7 @@ ENDIF(ALBANY_WAS_CONFED)
 #
 ##################################################################################################################
 
-IF(ALBANY_WAS_BUILT)
+IF(ALBANY_WAS_CONFED AND ALBANY_WAS_BUILT)
 
 CTEST_TEST(
               BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
@@ -182,6 +182,6 @@ IF(CTEST_DO_SUBMIT)
   endif()
 ENDIF(CTEST_DO_SUBMIT)
 
-ENDIF(ALBANY_WAS_BUILT)
+ENDIF(ALBANY_WAS_CONFED AND ALBANY_WAS_BUILT)
 
 endmacro(do_albany)
