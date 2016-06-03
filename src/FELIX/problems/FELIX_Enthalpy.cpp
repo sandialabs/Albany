@@ -28,8 +28,6 @@ Enthalpy(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 	needsDiss = params->get<bool> ("Needs Dissipation",true);
 	needsBasFric = params->get<bool> ("Needs Basal Friction",true);
 	isGeoFluxConst = params->get<bool> ("Constant Geotermal Flux",true);
-	//std::cout << "needsDiss = " << needsDiss << std::endl;
-	//std::cout << "needsBasFric = " << needsBasFric << std::endl;
 
 	TEUCHOS_TEST_FOR_EXCEPTION (basalSideName=="INVALID", std::logic_error, "Error! In order to specify basal requirements, you must also specify a valid 'Basal Side Name'.\n");
     // Need to allocate a fields in basal mesh database
@@ -191,7 +189,7 @@ constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpec
 	offsets[neq].resize(neq);
 	offsets[neq][0] = 0;
 
-    neumannNames[neq] = "all";   // this is ok iff neumannNames has dim = neq + 1
+    neumannNames[neq] = "all";
 
     // Construct BC evaluators for all possible names of conditions
     // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both

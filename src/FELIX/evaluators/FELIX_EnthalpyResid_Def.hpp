@@ -47,8 +47,7 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 
 	needsDiss = p.get<bool>("Needs Dissipation");
 	needsBasFric = p.get<bool>("Needs Basal Friction");
-	//isGeoFluxConst = p.get<bool>("Constant Geotermal Flux");
-	//std::cout <<"WEEEEEEE " << isGeoFluxConst << std::endl;
+
 	this->addDependentField(Enthalpy);
 	this->addDependentField(EnthalpyGrad);
 	this->addDependentField(wBF);
@@ -74,8 +73,6 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 		}
 	}
 
-	//if (!isGeoFluxConst)
-	//{
 	geoFluxHeat = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Geotermal Flux Heat Variable Name"),dl->node_scalar);
 	this->addDependentField(geoFluxHeat);
 
@@ -84,7 +81,6 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 		geoFluxHeatSUPG = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Geotermal Flux Heat SUPG Variable Name"),dl->node_scalar);
 		this->addDependentField(geoFluxHeatSUPG);
 	}
-	//}
 
 	this->addEvaluatedField(Residual);
 	this->setName("EnthalpyResid");
@@ -117,12 +113,9 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
 		  this->utils.setFieldData(basalFricHeatSUPG,fm);
   }
 
-  //if (!isGeoFluxConst)
-  //{
-	  this->utils.setFieldData(geoFluxHeat,fm);
-	  if(haveSUPG)
-		  this->utils.setFieldData(geoFluxHeatSUPG,fm);
-  //}
+  this->utils.setFieldData(geoFluxHeat,fm);
+  if(haveSUPG)
+	  this->utils.setFieldData(geoFluxHeatSUPG,fm);
 
   this->utils.setFieldData(Residual,fm);
 }

@@ -127,7 +127,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 	  Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
 
 	  // Here is how to register the field for dirichlet condition.
-	  // Temperature Dirichelt field
+	  // Temperature Dirichlet field on the surface
 	  {
 		  entity = Albany::StateStruct::NodalDistParameter;
 		  std::string stateName = "temperature";
@@ -169,7 +169,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 	  if(!isGeoFluxConst)
 	  {
 		  entity = Albany::StateStruct::NodalDataToElemNode;
-		  std::string stateName = "geotermal_flux";
+		  std::string stateName = "basal_heat_flux";
 		  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
 		  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
 		  fm0.template registerEvaluator<EvalT>(ev);
@@ -205,7 +205,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
 	  // Interpolate temperature from nodes to cell
 	  if(needsDiss)
-		  fm0.template registerEvaluator<EvalT> (evalUtils.constructQuadPointsToCellInterpolationEvaluator (dof_names[0],false)); //getPSTUtils().
+		  fm0.template registerEvaluator<EvalT> (evalUtils.constructQuadPointsToCellInterpolationEvaluator (dof_names[0],false)); //getPSTUtils()
 
 	  // --- Special evaluators for side handling
 
@@ -238,10 +238,10 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 	  if(!isGeoFluxConst)
 	  {
 		  // --- Restrict geotermal flux from cell-based to cell-side-based
-		  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("geotermal_flux",basalSideName,"Node Scalar",cellType));
+		  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("basal_heat_flux",basalSideName,"Node Scalar",cellType));
 
 	  	  // --- Interpolate geotermal_flux on QP on side
-	  	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("geotermal_flux", basalSideName));
+	  	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("basal_heat_flux", basalSideName));
 	  }
 
 	  // -------------------------------- FELIX evaluators ------------------------- //
@@ -324,7 +324,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 		  p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
 		  p->set<std::string>("Velocity QP Variable Name", "velocity");
 		  p->set<std::string>("Velocity Gradient QP Variable Name", "velocity Gradient");
-		  p->set<std::string>("Temperature Variable Name", dof_names[0] );	//NB this has to be the temperature instead of the enthalpy. It is used if we want flowRate_type == TEMPERATUREBASED in ViscosityFO
+		  p->set<std::string>("Temperature Variable Name", dof_names[0]);	//NB this has to be the temperature instead of the enthalpy. It is used if we want flowRate_type == TEMPERATUREBASED in ViscosityFO
 		  p->set<std::string>("Flow Factor Variable Name", "flow_factor");
 		  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 		  p->set<ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
@@ -334,7 +334,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 		  p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
 		  p->set<std::string>("EpsilonSq QP Variable Name", "FELIX EpsilonSq");
 
-		  ev = Teuchos::rcp(new FELIX::ViscosityFO<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::ParamScalarT>(*p,dl));
+		  ev = Teuchos::rcp(new FELIX::ViscosityFO<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT,typename EvalT::ScalarT>(*p,dl));
 		  fm0.template registerEvaluator<EvalT>(ev);
 		  }
 	  }
@@ -379,7 +379,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 		  p->set<ParameterList*>("SUPG Settings", &params->sublist("SUPG Settings"));
 
 		  if(!isGeoFluxConst)
-			  p->set<std::string>("Geotermal Flux Side QP Variable Name", "geotermal_flux");
+			  p->set<std::string>("Geotermal Flux Side QP Variable Name", "basal_heat_flux");
 
 		  //p->set<ParameterList*>("Problem", &params->sublist("Problem"));
 		  p->set<bool>("Constant Geotermal Flux", isGeoFluxConst);

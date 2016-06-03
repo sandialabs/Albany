@@ -172,7 +172,6 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(Ugrad,fm);
   this->utils.setFieldData(mu,fm);
-
   if (extractStrainRateSq)
 	  this->utils.setFieldData(epsilonSq,fm);
 
@@ -440,7 +439,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 //std::cout << "before viscosity coord vec" << coordVec(0,0,0) << "   " <<coordVec(1,1,1) << "   " <<coordVec(2,2,2) << "   " <<coordVec(3,3,3) << "   " <<std::endl;
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-
+  //double eps = 240.0;
   double a = 1.0;
   switch (visc_type)
   {
@@ -472,12 +471,20 @@ evaluateFields(typename Traits::EvalData workset)
       {
         case UNIFORM:
           for (std::size_t cell=0; cell < workset.numCells; ++cell)
-            flowFactorVec[cell] = 1.0/2.0*pow(A, -1.0/n);
+          {
+        	  flowFactorVec[cell] = 1.0/2.0*pow(A, -1.0/n);
+          }
           break;
         case TEMPERATUREBASED:
         	for (std::size_t cell=0; cell < workset.numCells; ++cell)
-            flowFactorVec[cell] = 1.0/2.0*pow(flowRate<TemperatureType>(temperature(cell)), -1.0/n);
-          break;
+        	{
+        		//evaluate non-linear viscosity, given by Glen's law, at quadrature points
+        		temperature(cell) = std::max(temperature(cell), 230.0);
+
+        		flowFactorVec[cell] = 1.0/2.0*pow(flowRate<TemperatureType>(temperature(cell)), -1.0/n);
+        		//std::cout << flowFactorVec[cell] << std::endl;
+        	}
+        	break;
         case FROMFILE:
         case FROMCISM:
           for (std::size_t cell=0; cell < workset.numCells; ++cell)
