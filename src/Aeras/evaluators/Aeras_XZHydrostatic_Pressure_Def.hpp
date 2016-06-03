@@ -75,6 +75,12 @@ evaluateFields(typename Traits::EvalData workset)
       for (int level=0; level < numLevels; ++level) {
         Pressure(cell,node,level) = E.A(level)*E.p0() + E.B(level)*Ps(cell,node);
         //std::cout <<"In Pressure "<< " Ps" << Ps(cell,node) <<" workset time" << workset.current_time << "\n";
+        //if (cell == 0 && node == 0) {
+        //  std::cout <<"In Pressure "<< "level: " << level << "  " 
+        //                            << "A(level): " << E.A(level) << "  " 
+        //                            << "B(level): " << E.B(level) << "  " 
+        //                            << "eta(level): " << E.eta(level) << "\n";
+        //}
       }
       //here instead of computing eta, A, B, and pressure at level interfaces directly,
       //averages are used to approx. pressure at level interfaces.

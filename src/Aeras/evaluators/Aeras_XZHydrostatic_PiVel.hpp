@@ -41,7 +41,7 @@ public:
 private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Level>     pi;
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim> velx;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim> velocity;
   PHX::MDField<ScalarT,Cell,Node,Level,Dim> pivelx;
 
   const int numNodes;

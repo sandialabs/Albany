@@ -9,6 +9,10 @@
   </SubProject>
   <SubProject name="IKTAlbanyFunctor">
   </SubProject>
+  <SubProject name="IKTAlbanyFunctorOpenMP">
+  </SubProject>
   <SubProject name="IKTCismAlbany">
+  </SubProject>
+  <SubProject name="IKTCismAlbanyEpetra">
   </SubProject>
 </Project>

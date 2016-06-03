@@ -27,11 +27,12 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   pdotP0         (p.get<std::string> ("Pressure Dot Level 0"),  dl->node_scalar),
   Pi             (p.get<std::string> ("Pi"),                    dl->qp_scalar_level),
   Temperature    (p.get<std::string> ("QP Temperature"),        dl->node_scalar_level),
-  Velx           (p.get<std::string> ("QP Velx"),               dl->node_vector_level),
+  Velocity       (p.get<std::string> ("Velocity"),              dl->node_vector_level),
   tracerNames    (p.get< Teuchos::ArrayRCP<std::string> >("Tracer Names")),
   //etadotdtracerNames    (p.get< Teuchos::ArrayRCP<std::string> >("Tracer EtaDotd Names")),
   dedotpitracerdeNames    (p.get< Teuchos::ArrayRCP<std::string> >("Tracer EtaDotd Names")),
   etadotdT       (p.get<std::string> ("EtaDotdT"),              dl->qp_scalar_level),
+  etadot       (p.get<std::string> ("EtaDot"),              dl->qp_scalar_level),
   etadotdVelx    (p.get<std::string> ("EtaDotdVelx"),           dl->node_vector_level),
   Pidot          (p.get<std::string> ("PiDot"),                 dl->qp_scalar_level),
   numQPs     (dl->node_qp_scalar          ->dimension(2)),
@@ -44,14 +45,14 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
       p.get<Teuchos::ParameterList*>("XZHydrostatic Problem"):
       p.get<Teuchos::ParameterList*>("Hydrostatic Problem");
 
-
   this->addDependentField(divpivelx);
   this->addDependentField(pdotP0);
   this->addDependentField(Pi);
   this->addDependentField(Temperature);
-  this->addDependentField(Velx);
+  this->addDependentField(Velocity);
 
   this->addEvaluatedField(etadotdT);
+  this->addEvaluatedField(etadot);
   this->addEvaluatedField(etadotdVelx);
   this->addEvaluatedField(Pidot);
 
@@ -82,8 +83,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(pdotP0     ,   fm);
   this->utils.setFieldData(Pi         ,   fm);
   this->utils.setFieldData(Temperature,   fm);
-  this->utils.setFieldData(Velx       ,   fm);
+  this->utils.setFieldData(Velocity   ,   fm);
   this->utils.setFieldData(etadotdT   ,   fm);
+  this->utils.setFieldData(etadot   ,   fm);
   this->utils.setFieldData(etadotdVelx,   fm);
   this->utils.setFieldData(Pidot,         fm);
   for (int i = 0; i < Tracer.size();  ++i)       this->utils.setFieldData(Tracer[tracerNames[i]], fm);
@@ -101,7 +103,8 @@ evaluateFields(typename Traits::EvalData workset)
   //etadotpi(level) shifted by 1/2
   std::vector<ScalarT> etadotpi(numLevels+1);
 
-  if (!pureAdvection) {
+  if (!pureAdvection) 
+  {
     /*//OG debugging statements
     std::cout << "Printing DIVPIVELX ----------------------------------------\n";
     for (int level=0; level < numLevels; ++level) {
@@ -111,6 +114,13 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
     */
+
+    //TMS debug
+    //for (int level=0; level < numLevels; ++level) {
+    //  std::cout << "In EtaDotPi level: " << level << " " 
+    //            << "B(level+1/2): " << E.B(level+.5) << std::endl;
+    //}
+
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int qp=0; qp < numQPs; ++qp) {
         ScalarT pdotp0 = 0;
@@ -143,8 +153,8 @@ evaluateFields(typename Traits::EvalData workset)
 	  etadotdT(cell,qp,level) = factor * ( etadotpi_p*dT_p + etadotpi_m*dT_m );
 
    	  for (int dim=0; dim<numDims; ++dim) {
- 	    const ScalarT dVx_m      = Velx(cell,qp,level,dim)   - Velx(cell,qp,level_m,dim);
-	    const ScalarT dVx_p      = Velx(cell,qp,level_p,dim) - Velx(cell,qp,level,dim);
+ 	    const ScalarT dVx_m      = Velocity(cell,qp,level,dim)   - Velocity(cell,qp,level_m,dim);
+	    const ScalarT dVx_p      = Velocity(cell,qp,level_p,dim) - Velocity(cell,qp,level,dim);
 	    etadotdVelx(cell,qp,level,dim) = factor * ( etadotpi_p*dVx_p + etadotpi_m*dVx_m );
 	  }
 	  //OG: Why for tracers (etaDot delta_eta) operator is different than for velocity, T, etc.?
@@ -164,19 +174,53 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }//end of (not pure Advection)
 
-  //pure advection: there are amny auxiliary variables.
+  //pure advection: there are many auxiliary variables.
   else {
+    //Local variable that is etadot*Pi.  Defining this at (cell,qp,levels) which is not
+    //the same as for the non-advection version. 
+    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  etadotPi(workset.numCells,numQPs,numLevels);
+    etadotPi.initialize();
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
+	for (int level=0; level < numLevels; ++level) {
+          //IKT: check with Pete, Tom that this is correct
+          etadotPi(cell,qp,level) = etadot(cell,qp,level)*Pi(cell,qp,level);  
+        }
+      }
+    }
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int qp=0; qp < numQPs; ++qp) {
         //Vertical Finite Differencing
-	for (int level=0; level < numLevels; ++level) {
-	  etadotdT(cell,qp,level) = 0.0;
-	  for (int dim=0; dim<numDims; ++dim)
-	    etadotdVelx(cell,qp,level,dim) = 0.0;
-	  for (int i = 0; i < tracerNames.size(); ++i)
-	    dedotpiTracerde[tracerNames[i]](cell,qp,level) = 0.0;
-	  Pidot(cell,qp,level) = - divpivelx(cell,qp,level);
-	}
+        //IKT: there is a problem with this loop, b/c it assumed etadotPi has size (numLevels+1) whereas 
+        //here it has size (numLevels+1).  I changed it to go to numLevels-1 to avoid seg fault.  Ask Tom. 
+        for (int level=0; level < numLevels-1; ++level) {
+          //IKT, 6/1/16: I think the following line is not right... There is an E.  check with Tom.
+	  const ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*E.delta(level));
+	  const int level_m = level             ? level-1 : 0;
+	  const int level_p = level+1<numLevels ? level+1 : level;
+	  const ScalarT etadotpi_m = etadotPi(cell,qp,level);
+	  const ScalarT etadotpi_p = etadotPi(cell,qp,level+1);
+
+	  const ScalarT dT_m       = Temperature(cell,qp,level)   - Temperature(cell,qp,level_m);
+	  const ScalarT dT_p       = Temperature(cell,qp,level_p) - Temperature(cell,qp,level);
+	  etadotdT(cell,qp,level) = factor * ( etadotpi_p*dT_p + etadotpi_m*dT_m );
+
+   	  for (int dim=0; dim<numDims; ++dim) {
+ 	    const ScalarT dVx_m      = Velocity(cell,qp,level,dim)   - Velocity(cell,qp,level_m,dim);
+	    const ScalarT dVx_p      = Velocity(cell,qp,level_p,dim) - Velocity(cell,qp,level,dim);
+	    etadotdVelx(cell,qp,level,dim) = factor * ( etadotpi_p*dVx_p + etadotpi_m*dVx_m );
+	  }
+	  for (int i = 0; i < tracerNames.size(); ++i) {
+	    const ScalarT q_m = 0.5*( Tracer[tracerNames[i]](cell,qp,level)   / Pi(cell,qp,level)
+	 		      + Tracer[tracerNames[i]](cell,qp,level_m) / Pi(cell,qp,level_m) );
+	    const ScalarT q_p = 0.5*( Tracer[tracerNames[i]](cell,qp,level_p) / Pi(cell,qp,level_p)
+	 		      + Tracer[tracerNames[i]](cell,qp,level)   / Pi(cell,qp,level)   );
+	    //etadotdTracer[tracerNames[i]](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
+	    dedotpiTracerde[tracerNames[i]](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
+	  }
+          //IKT, 6/1/16: I think the following line is not right... There is an E.  check with Tom.
+  	  Pidot(cell,qp,level) = - divpivelx(cell,qp,level) - (etadotpi_p - etadotpi_m)/E.delta(level);
+        }
       }
     }
   }

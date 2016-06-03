@@ -7,16 +7,16 @@
   SET(SOURCES 
        evaluators/Aeras_ComputeBasisFunctions.cpp
        evaluators/Aeras_ShallowWaterResid.cpp
-       evaluators/Aeras_Atmosphere.cpp
        evaluators/Aeras_Atmosphere_Moisture.cpp
        evaluators/Aeras_GatherCoordinateVector.cpp
        evaluators/Aeras_Hydrostatic_VelResid.cpp
+       evaluators/Aeras_Hydrostatic_Velocity.cpp
+       evaluators/Aeras_XZHydrostatic_Velocity.cpp
        evaluators/Aeras_SurfaceHeight.cpp
        evaluators/Aeras_VorticityLevels.cpp
        problems/Aeras_ShallowWaterProblem.cpp
        evaluators/Aeras_XZScalarAdvectionResid.cpp
        problems/Aeras_XZScalarAdvectionProblem.cpp
-       evaluators/Aeras_ScalarAdvectionResid.cpp
        evaluators/Aeras_XScalarAdvectionResid.cpp
        problems/Aeras_XScalarAdvectionProblem.cpp
        evaluators/Aeras_XZHydrostatic_VelResid.cpp
@@ -25,6 +25,8 @@
        evaluators/Aeras_XZHydrostatic_TracerResid.cpp
        evaluators/Aeras_XZHydrostatic_Density.cpp
        evaluators/Aeras_XZHydrostatic_EtaDotPi.cpp
+       evaluators/Aeras_Hydrostatic_EtaDot.cpp
+       evaluators/Aeras_XZHydrostatic_EtaDot.cpp
        evaluators/Aeras_XZHydrostatic_GeoPotential.cpp
        evaluators/Aeras_XZHydrostatic_Omega.cpp
        evaluators/Aeras_XZHydrostatic_PiVel.cpp
@@ -46,17 +48,16 @@
        evaluators/Aeras_DOFVecInterpolationLevels.cpp
        evaluators/Aeras_DOFGradInterpolation.cpp
        evaluators/Aeras_DOFGradInterpolationLevels.cpp
-       evaluators/Aeras_DOFLaplaceInterpolationLevels.cpp
        evaluators/Aeras_DOFDivInterpolationLevels.cpp
        evaluators/Aeras_DOFDivInterpolationLevelsXZ.cpp
        evaluators/Aeras_DOFDInterpolationLevels.cpp
        evaluators/Aeras_Atmosphere_Moisture.cpp
        evaluators/Aeras_ShallowWaterSource.cpp
        evaluators/Aeras_ShallowWaterHyperViscosity.cpp
-       evaluators/Aeras_XZHydrostatic_DensityWeightedVelx.cpp
        evaluators/Aeras_ShallowWaterResponseL2Error.cpp
        evaluators/Aeras_ShallowWaterResponseL2Norm.cpp
        evaluators/Aeras_HydrostaticResponseL2Norm.cpp
+       evaluators/Aeras_HydrostaticResponseL2Error.cpp
        responses/Aeras_TotalVolume.cpp
        responses/Aeras_LayeredResponseUtilities.cpp
 
@@ -67,8 +68,6 @@
        evaluators/Aeras_Eta.hpp
        evaluators/Aeras_ComputeBasisFunctions_Def.hpp
        evaluators/Aeras_ComputeBasisFunctions.hpp
-       evaluators/Aeras_Atmosphere_Def.hpp
-       evaluators/Aeras_Atmosphere.hpp
        evaluators/Aeras_Atmosphere_Moisture_Def.hpp
        evaluators/Aeras_Atmosphere_Moisture.hpp
        evaluators/Aeras_ShallowWaterConstants.hpp
@@ -78,12 +77,14 @@
        evaluators/Aeras_GatherCoordinateVector.hpp
        evaluators/Aeras_Hydrostatic_VelResid_Def.hpp
        evaluators/Aeras_Hydrostatic_VelResid.hpp
+       evaluators/Aeras_Hydrostatic_Velocity_Def.hpp
+       evaluators/Aeras_Hydrostatic_Velocity.hpp
+       evaluators/Aeras_XZHydrostatic_Velocity_Def.hpp
+       evaluators/Aeras_XZHydrostatic_Velocity.hpp
        problems/Aeras_ShallowWaterProblem.hpp
        evaluators/Aeras_XZScalarAdvectionResid_Def.hpp
        evaluators/Aeras_XZScalarAdvectionResid.hpp
        problems/Aeras_XZScalarAdvectionProblem.hpp
-       evaluators/Aeras_ScalarAdvectionResid_Def.hpp
-       evaluators/Aeras_ScalarAdvectionResid.hpp
        evaluators/Aeras_XScalarAdvectionResid_Def.hpp
        evaluators/Aeras_XScalarAdvectionResid.hpp
        problems/Aeras_XScalarAdvectionProblem.hpp
@@ -105,6 +106,10 @@
        evaluators/Aeras_XZHydrostatic_Density.hpp
        evaluators/Aeras_XZHydrostatic_EtaDotPi_Def.hpp
        evaluators/Aeras_XZHydrostatic_EtaDotPi.hpp
+       evaluators/Aeras_Hydrostatic_EtaDot_Def.hpp
+       evaluators/Aeras_Hydrostatic_EtaDot.hpp
+       evaluators/Aeras_XZHydrostatic_EtaDot_Def.hpp
+       evaluators/Aeras_XZHydrostatic_EtaDot.hpp
        evaluators/Aeras_XZHydrostatic_GeoPotential_Def.hpp
        evaluators/Aeras_XZHydrostatic_GeoPotential.hpp
        evaluators/Aeras_XZHydrostatic_Omega_Def.hpp
@@ -125,6 +130,8 @@
        evaluators/Aeras_ShallowWaterResponseL2Norm_Def.hpp
        evaluators/Aeras_HydrostaticResponseL2Norm.hpp
        evaluators/Aeras_HydrostaticResponseL2Norm_Def.hpp
+       evaluators/Aeras_HydrostaticResponseL2Error.hpp
+       evaluators/Aeras_HydrostaticResponseL2Error_Def.hpp
        problems/Aeras_Layouts.hpp
        problems/Aeras_Dimension.hpp
        evaluators/Aeras_GatherSolution.hpp
@@ -143,8 +150,6 @@
        evaluators/Aeras_DOFGradInterpolation_Def.hpp
        evaluators/Aeras_DOFGradInterpolationLevels.hpp
        evaluators/Aeras_DOFGradInterpolationLevels_Def.hpp
-       evaluators/Aeras_DOFLaplaceInterpolationLevels.hpp
-       evaluators/Aeras_DOFLaplaceInterpolationLevels_Def.hpp
        evaluators/Aeras_DOFDivInterpolationLevels.hpp
        evaluators/Aeras_DOFDivInterpolationLevels_Def.hpp
        evaluators/Aeras_DOFDivInterpolationLevelsXZ.hpp
@@ -161,9 +166,6 @@
        responses/Aeras_TotalVolume_Def.hpp
        responses/Aeras_LayeredResponseUtilities.hpp
        responses/Aeras_LayeredResponseUtilities_Def.hpp
-       evaluators/Aeras_XZHydrostatic_DensityWeightedVelx.hpp
-       evaluators/Aeras_XZHydrostatic_DensityWeightedVelx_Def.hpp       
-       
   )
 
 SET(HEADERS ${HEADERS}

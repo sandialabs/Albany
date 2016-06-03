@@ -70,26 +70,41 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void VorticityLevels<EvalT, Traits>::
-operator() (const Vorticity_Tag& tag, const int & cell) const {
-
-   
+operator() (const Vorticity_Orig_Tag& tag, const int & cell) const 
+{
   for (int qp=0; qp < numQPs; ++qp) {
-    for (int node= 0 ; node < numNodes; ++node) { 
-      for (int level=0; level < numLevels; ++level) {
-         vort_val_qp(cell,qp,level) = 0.0;
+    for (int level=0; level < numLevels; ++level) {
+      ScalarT tmp = 0.0; 
+      for (int node= 0 ; node < numNodes; ++node) { 
+         tmp += (val_node(cell,node,level,1) * GradBF(cell,node,qp,0) 
+             -  val_node(cell,node,level,0) * GradBF(cell,node,qp,1));
       }
+      vort_val_qp(cell,qp,level) = tmp;
     }
   }
+}
 
-  for (int qp=0; qp < numQPs; ++qp) {
-    for (int node= 0 ; node < numNodes; ++node) { 
-      for (int level=0; level < numLevels; ++level) {
-         vort_val_qp(cell,qp,level) += (val_node(cell,node,level,1) * GradBF(cell,node,qp,0) 
-                                     -  val_node(cell,node,level,0) * GradBF(cell,node,qp,1));
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void VorticityLevels<EvalT, Traits>::
+operator() (const Vorticity_Tag& tag, const int & cell) const 
+{
+  for (int level=0; level < numLevels; ++level) {
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
+      ScalarT tmp = 0.0; 
+      for (std::size_t node=0; node < numNodes; ++node) {
+        const MeshScalarT j00 = jacobian(cell, node, 0, 0);
+        const MeshScalarT j01 = jacobian(cell, node, 0, 1);
+        const MeshScalarT j10 = jacobian(cell, node, 1, 0);
+        const MeshScalarT j11 = jacobian(cell, node, 1, 1);
+        ScalarT vco0 = j00*val_node(cell, node, level, 0) + j10*val_node(cell, node, level, 1);
+        ScalarT vco1 = j01*val_node(cell, node, level, 0) + j11*val_node(cell, node, level, 1);
+        tmp += vco1*grad_at_cub_points(node, qp,0)
+             - vco0*grad_at_cub_points(node, qp,1);
       }
+      vort_val_qp(cell,qp,level) = tmp/jacobian_det(cell,qp);
     }
   }
-
 }
 
 #endif
@@ -185,7 +200,11 @@ evaluateFields(typename Traits::EvalData workset)
 
 #else
 
+#if ORIGINALVORT
+  Kokkos::parallel_for(Vorticity_Orig_Policy(0,workset.numCells),*this);
+#else
   Kokkos::parallel_for(Vorticity_Policy(0,workset.numCells),*this);
+#endif
 
 #endif
 

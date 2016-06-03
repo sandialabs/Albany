@@ -27,7 +27,6 @@ IF(PHX_KOKKOS_DEVICE_TYPE_CUDA)
        evaluators/Aeras_GatherCoordinateVector.cpp
        evaluators/Aeras_SurfaceHeight.cpp
        evaluators/Aeras_ShallowWaterSource.cpp
-       evaluators/Aeras_Atmosphere.cpp
        ${OBJECTS_CUDA1}
        evaluators/Aeras_XZScalarAdvectionResid.cpp
        ${OBJECTS_CUDA2}
@@ -41,7 +40,6 @@ ELSE()
        evaluators/Aeras_ShallowWaterResid.cpp
        evaluators/Aeras_GatherCoordinateVector.cpp
        evaluators/Aeras_SurfaceHeight.cpp
-       evaluators/Aeras_Atmosphere.cpp
        problems/Aeras_ShallowWaterProblem.cpp
        evaluators/Aeras_XZScalarAdvectionResid.cpp
        problems/Aeras_XZScalarAdvectionProblem.cpp
@@ -56,8 +54,6 @@ ENDIF()
        evaluators/Aeras_ShallowWaterResid.hpp
        evaluators/Aeras_SurfaceHeight.hpp
        evaluators/Aeras_SurfaceHeight_Def.hpp
-       evaluators/Aeras_Atmosphere.hpp
-       evaluators/Aeras_Atmosphere_Def.hpp
        evaluators/Aeras_GatherCoordinateVector_Def.hpp
        evaluators/Aeras_GatherCoordinateVector.hpp
        problems/Aeras_ShallowWaterProblem.hpp

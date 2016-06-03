@@ -201,18 +201,25 @@ public:
 	//The following are for hyperviscosity
 	struct ShallowWaterResid_VecDim4_Tag{};
 	struct ShallowWaterResid_VecDim6_Tag{};
+        //The following are for vorticity
+	struct ShallowWaterResid_VecDim6_Vorticity_Tag{};
+	struct ShallowWaterResid_VecDim3_Vorticity_no_usePrescribedVelocity_Tag{};
+	struct ShallowWaterResid_BuildLaplace_for_huv_Vorticity_Tag{};
 
 	struct ShallowWaterResid_BuildLaplace_for_h_Tag{};
 	struct ShallowWaterResid_BuildLaplace_for_huv_Tag{};
 
 	typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag> ShallowWaterResid_VecDim3_usePrescribedVelocity_Policy;
 	typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag> ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Policy;
+	typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim3_Vorticity_no_usePrescribedVelocity_Tag> ShallowWaterResid_VecDim3_Vorticity_no_usePrescribedVelocity_Policy;
 	typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim4_Tag> ShallowWaterResid_VecDim4_Policy;
 	typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim6_Tag> ShallowWaterResid_VecDim6_Policy;
+	typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim6_Vorticity_Tag> ShallowWaterResid_VecDim6_Vorticity_Policy;
 
 	//building Laplace op
 	typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_BuildLaplace_for_h_Tag>  ShallowWaterResid_BuildLaplace_for_h_Policy;
 	typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_BuildLaplace_for_huv_Tag>  ShallowWaterResid_BuildLaplace_for_huv_Policy;
+	typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_BuildLaplace_for_huv_Vorticity_Tag>  ShallowWaterResid_BuildLaplace_for_huv_Vorticity_Policy;
 
 
 	KOKKOS_INLINE_FUNCTION
@@ -220,14 +227,20 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	void operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag& tag, const int& cell) const;
 	KOKKOS_INLINE_FUNCTION
+	void operator() (const ShallowWaterResid_VecDim3_Vorticity_no_usePrescribedVelocity_Tag& tag, const int& cell) const;
+	KOKKOS_INLINE_FUNCTION
 	void operator() (const ShallowWaterResid_VecDim4_Tag& tag, const int& cell) const;
 	KOKKOS_INLINE_FUNCTION
 	void operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const;
+	KOKKOS_INLINE_FUNCTION
+	void operator() (const ShallowWaterResid_VecDim6_Vorticity_Tag& tag, const int& cell) const;
 
 	KOKKOS_INLINE_FUNCTION
 	void operator() (const ShallowWaterResid_BuildLaplace_for_h_Tag& tag, const int& cell) const;
 	KOKKOS_INLINE_FUNCTION
 	void operator() (const ShallowWaterResid_BuildLaplace_for_huv_Tag& tag, const int& cell) const;
+	KOKKOS_INLINE_FUNCTION
+	void operator() (const ShallowWaterResid_BuildLaplace_for_huv_Vorticity_Tag& tag, const int& cell) const;
 
 	KOKKOS_INLINE_FUNCTION
 	void compute_Residual0(const int& cell) const;
@@ -243,12 +256,18 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	void BuildLaplace_for_uv (const int& cell) const;
+	
+        KOKKOS_INLINE_FUNCTION
+	void setVecDim3_for_Vorticity (const int& cell) const;
 
 	KOKKOS_INLINE_FUNCTION
 	void compute_Residuals12_prescribed (const int& cell) const;
 
 	KOKKOS_INLINE_FUNCTION
 	void compute_Residuals12_notprescribed (const int& cell) const;
+	
+        KOKKOS_INLINE_FUNCTION
+	void compute_Residuals12_Vorticity_notprescribed (const int& cell, const int& index) const;
 
 	KOKKOS_INLINE_FUNCTION
 	void zeroing_Residual (const int& cell) const;

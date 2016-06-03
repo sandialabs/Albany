@@ -4268,11 +4268,15 @@ postRegSetup(std::string eval)
                                "Error in setup call \n" << " Unrecognized name: " << eval << std::endl);
 
 
-  // Write out Phalanx Graph if requested, on Proc 0, for Resid or Jacobian
+  // Write out Phalanx Graph if requested, on Proc 0, for Resid and Jacobian
+  bool alreadyWroteResidPhxGraph = false;
+  bool alreadyWroteJacPhxGraph = false;
+
   if (phxGraphVisDetail>0) {
+
     bool detail = false; if (phxGraphVisDetail > 1) detail=true;
 
-    if (eval=="Residual") {
+    if ((eval=="Residual") && (alreadyWroteResidPhxGraph == false))  {
       *out << "Phalanx writing graphviz file for graph of Residual fill (detail ="
            << phxGraphVisDetail << ")"<<std::endl;
       *out << "Process using 'dot -Tpng -O phalanx_graph' \n" << std::endl;
@@ -4280,9 +4284,10 @@ postRegSetup(std::string eval)
         std::stringstream pg; pg << "phalanx_graph_" << ps;
         fm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Residual>(pg.str(),detail,detail);
       }
+      alreadyWroteResidPhxGraph = true; 
 //      phxGraphVisDetail = -1;
     }
-    else if (eval=="Jacobian") {
+    else if ((eval=="Jacobian") && (alreadyWroteJacPhxGraph == false)) {
       *out << "Phalanx writing graphviz file for graph of Jacobian fill (detail ="
            << phxGraphVisDetail << ")"<<std::endl;
       *out << "Process using 'dot -Tpng -O phalanx_graph' \n" << std::endl;
@@ -4290,8 +4295,11 @@ postRegSetup(std::string eval)
         std::stringstream pg; pg << "phalanx_graph_jac_" << ps;
         fm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Jacobian>(pg.str(),detail,detail);
       }
-      phxGraphVisDetail = -2;
+      alreadyWroteJacPhxGraph = true; 
     }
+    //Stop writing out phalanx graphs only when a Jacobian and a Residual graph has been written out
+    if ((alreadyWroteResidPhxGraph == true) && (alreadyWroteJacPhxGraph == true))
+      phxGraphVisDetail = -2;
   }
 }
 

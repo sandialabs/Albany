@@ -67,7 +67,8 @@ public:
   KOKKOS_INLINE_FUNCTION
   void operator() (const StokesFOImplicitThicknessUpdateResid_Tag& tag, const int& cell) const;
 
-  Kokkos::View<ScalarT**, PHX::Device> res;
+  typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
+  PHX::MDField<ScalarT, Cell, Node, Dim> Res;
 
 #endif
 
