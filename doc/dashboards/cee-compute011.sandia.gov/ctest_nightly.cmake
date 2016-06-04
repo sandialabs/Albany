@@ -26,18 +26,20 @@ else ()
   set (CTEST_TEST_TYPE Experimental)
 
   # What to build and test
-  set (BUILD_ALB64 FALSE)
-  set (BUILD_ALB64CLANG11 FALSE)
-  set (DOWNLOAD FALSE)
-  set (BUILD_SCOREC FALSE)
+  set (DOWNLOAD TRUE)
+  # See if we can get away with this for speed, at least until we get onto a
+  # machine that can support a lengthy nightly.
+  set (CLEAN_BUILD TRUE)
+  set (BUILD_SCOREC TRUE)
   set (BUILD_TRILINOS TRUE)
   set (BUILD_PERIDIGM TRUE)
   set (BUILD_ALB32 TRUE)
-  set (BUILD_TRILINOSCLANG11 FALSE)
-  set (CLEAN_BUILD FALSE)
-  set (BUILD_ALBFUNCTOR FALSE)
-  set (BUILD_INTEL_TRILINOS FALSE)
-  set (BUILD_INTEL_ALBANY FALSE)
+  set (BUILD_ALB64 FALSE)
+  set (BUILD_TRILINOSCLANG11 TRUE)
+  set (BUILD_ALB64CLANG11 TRUE)
+  set (BUILD_ALBFUNCTOR TRUE)
+  set (BUILD_INTEL_TRILINOS TRUE)
+  set (BUILD_INTEL_ALBANY TRUE)
 endif ()
 
 set (extra_cxx_flags "")
@@ -58,14 +60,15 @@ set (CTEST_BUILD_NAME "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
 set (CTEST_BINARY_NAME build)
 
 set (PREFIX_DIR /projects/albany)
-set (GCC_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.6.4-gcc-4.8.2-RHEL6)
-set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2015.1.133)
+set (GCC_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.8.8-gcc-5.2.0-RHEL6)
+set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210)
 
-set (BOOST_ROOT /projects/albany/nightly)
+#set (BOOST_ROOT /projects/albany/nightly)
+set (BOOST_ROOT /projects/albany)
 
-set (INTEL_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.6.4-intel-15.0-2015.2.164-RHEL6)
+set (INTEL_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.8.8-intel-16.0-2016.3.210-RHEL6)
 #set (MKL_PATH /sierra/sntools/SDK/compilers/intel)
-set (MKL_PATH /sierra/sntools/SDK/compilers/intel/composer_xe_2016.0.109/compilers_and_libraries_2016.0.109/linux)
+set (MKL_PATH /sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210)
 
 set (USE_LAME OFF)
 set (LAME_INC_DIR "/projects/sierra/linux_rh6/install/master/lame/include\;/projects/sierra/linux_rh6/install/master/Sierra/sierra_util/include\;/projects/sierra/linux_rh6/install/master/stk/stk_expreval/include\;/projects/sierra/linux_rh6/install/master/utility/include\;/projects/sierra/linux_rh6/install/master/Sierra/include")
@@ -78,6 +81,12 @@ set (MATH_TOOLKIT_LIB_DIR
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 set (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
+
+IF (CLEAN_BUILD)
+  IF(EXISTS "${CTEST_BINARY_DIRECTORY}" )
+    FILE(REMOVE_RECURSE "${CTEST_BINARY_DIRECTORY}")
+  ENDIF()
+ENDIF()
 
 if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}")
   file (MAKE_DIRECTORY "${CTEST_SOURCE_DIRECTORY}")
@@ -107,10 +116,12 @@ endif ()
 find_program (CTEST_GIT_COMMAND NAMES git)
 find_program (CTEST_SVN_COMMAND NAMES svn)
 
-set (Trilinos_REPOSITORY_LOCATION https://github.com/trilinos/Trilinos.git)
+#set (Trilinos_REPOSITORY_LOCATION https://github.com/trilinos/Trilinos.git)
+set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (SCOREC_REPOSITORY_LOCATION git@github.com:SCOREC/core.git)
 set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
-set (Peridigm_REPOSITORY_LOCATION https://github.com/peridigm/peridigm) #ssh://software.sandia.gov/git/peridigm)
+#set (Peridigm_REPOSITORY_LOCATION https://github.com/peridigm/peridigm) #ssh://software.sandia.gov/git/peridigm)
+set (Peridigm_REPOSITORY_LOCATION git@github.com:peridigm/peridigm) #ssh://software.sandia.gov/git/peridigm)
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -367,6 +378,7 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTPL_ENABLE_Netcdf:BOOL=ON"
   "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DTPL_Netcdf_PARALLEL:BOOL=ON"
   #
   "-DTPL_ENABLE_HDF5:BOOL=ON"
   "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"

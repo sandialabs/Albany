@@ -1,2 +1,3 @@
 MAILTO=""
-00 00 * * * /projects/AppComp/nightly/cee-compute011/nightly_cron_script.sh
+# Run the script in the Albany repo in my home directory
+00 00 * * * /ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011.sandia.gov/nightly_cron_script.sh
