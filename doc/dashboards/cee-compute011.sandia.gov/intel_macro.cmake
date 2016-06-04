@@ -15,6 +15,8 @@ macro(do_intel)
   set (CONFIGURE_OPTIONS
     "${COMMON_CONFIGURE_OPTIONS}"
     "-DTPL_ENABLE_SuperLU:STRING=ON"
+    "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
+    "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${INTEL_MPI_DIR}"
     "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -DNDEBUG ${extra_cxx_flags}'"
@@ -89,7 +91,6 @@ macro(do_intel)
       set (BUILD_INTEL_ALBANY FALSE)
     endif (BUILD_LIBS_NUM_ERRORS GREATER 0)
   endif (BUILD_INTEL_TRILINOS)
-endif (BUILD_INTEL_TRILINOS)
 
 if (BUILD_INTEL_ALBANY)
   message ("ctest state: BUILD_INTEL_ALBANY")
@@ -158,6 +159,7 @@ if (BUILD_INTEL_ALBANY)
     message ("Cannot configure Albany build.")
     set (BUILD_INTEL_ALBANY FALSE)
   endif (HAD_ERROR)
+endif (BUILD_INTEL_ALBANY)
 
   if (BUILD_INTEL_ALBANY)
     set (CTEST_BUILD_TARGET all)

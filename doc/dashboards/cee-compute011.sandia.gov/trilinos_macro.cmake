@@ -1,144 +1,6 @@
-macro(do_trilinos)
+macro(do_trilinos COM_CONF)
 
   message ("ctest state: BUILD_TRILINOS")
-
-#
-# Set the common Trilinos config options
-#
-
-set (COMMON_CONFIGURE_OPTIONS
-  "-Wno-dev"
-  "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
-  #
-  "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
-  "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
-  "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
-  "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
-  "-DTrilinos_ENABLE_MueLu:BOOL=ON"
-  #
-  "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
-  "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=ON"
-  "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
-  "-DZOLTAN_BUILD_ZFDRIVE:BOOL=OFF"
-  #
-  "-DSEACAS_ENABLE_SEACASSVDI:BOOL=OFF"
-  "-DTrilinos_ENABLE_SEACASFastq:BOOL=OFF"
-  "-DTrilinos_ENABLE_SEACASBlot:BOOL=OFF"
-  "-DTrilinos_ENABLE_SEACASPLT:BOOL=OFF"
-  "-DTPL_ENABLE_X11:BOOL=OFF"
-  "-DTPL_ENABLE_Matio:BOOL=OFF"
-  #
-  "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
-  "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
-  #
-  "-DTPL_ENABLE_Boost:BOOL=ON"
-  "-DTPL_ENABLE_BoostLib:BOOL=ON"
-  "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
-  "-DBoost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
-  "-DBoost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
-  "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
-  "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
-  "-DBoostAlbLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
-  "-DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
-  #
-  "-DTPL_ENABLE_Netcdf:BOOL=ON"
-  "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  "-DTPL_Netcdf_PARALLEL:BOOL=ON"
-  #
-  "-DTPL_ENABLE_HDF5:BOOL=ON"
-  "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  "-DHDF5_LIBRARY_NAMES:STRING='hdf5_hl\\;hdf5\\;z'"
-  #
-  "-DTPL_ENABLE_Zlib:BOOL=ON"
-  "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  #
-  "-DTPL_ENABLE_ParMETIS:BOOL=ON"
-  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  #
-  "-DTPL_ENABLE_SuperLU:BOOL=ON"
-  "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
-  "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
-  #
-  "-DTPL_BLAS_LIBRARIES:STRING='-L${INTEL_DIR}/mkl/lib/intel64 -lmkl_intel_lp64 -lmkl_blas95_lp64 -lmkl_core -lmkl_sequential'"
-  "-DTPL_LAPACK_LIBRARIES:STRING='-L${INTEL_DIR}/mkl/lib/intel64 -lmkl_lapack95_lp64'"
-  #
-  "-DDART_TESTING_TIMEOUT:STRING=600"
-  "-DTrilinos_ENABLE_ThreadPool:BOOL=ON"
-  #
-  "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
-  "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
-  "-DTrilinos_ENABLE_EXPORT_MAKEFILES:BOOL=OFF"
-  "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
-  #
-  "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
-  "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
-  "-DTrilinos_ENABLE_SECONDARY_TESTED_CODE:BOOL=ON"
-  #
-  "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
-  "-DTrilinos_ENABLE_Shards:BOOL=ON"
-  "-DTrilinos_ENABLE_Sacado:BOOL=ON"
-  "-DTrilinos_ENABLE_Epetra:BOOL=ON"
-  "-DTrilinos_ENABLE_EpetraExt:BOOL=ON"
-  "-DTrilinos_ENABLE_Ifpack:BOOL=ON"
-  "-DTrilinos_ENABLE_AztecOO:BOOL=ON"
-  "-DTrilinos_ENABLE_Amesos:BOOL=ON"
-  "-DTrilinos_ENABLE_Anasazi:BOOL=ON"
-  "-DTrilinos_ENABLE_Belos:BOOL=ON"
-  "-DTrilinos_ENABLE_ML:BOOL=ON"
-  "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
-  "-DTrilinos_ENABLE_Intrepid:BOOL=ON"
-  "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
-  "-DTrilinos_ENABLE_NOX:BOOL=ON"
-  "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
-  "-DTrilinos_ENABLE_Thyra:BOOL=ON"
-  "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
-  "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
-  "-DTrilinos_ENABLE_GlobiPack:BOOL=ON"
-  "-DTrilinos_ENABLE_Stokhos:BOOL=ON"
-  "-DTrilinos_ENABLE_Isorropia:BOOL=ON"
-  "-DTrilinos_ENABLE_Piro:BOOL=ON"
-  "-DTrilinos_ENABLE_Teko:BOOL=ON"
-  "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
-  "-DTrilinos_ENABLE_Moertel:BOOL=ON"
-  #
-  "-DTrilinos_ENABLE_FEI:BOOL=OFF"
-  #
-  "-DPhalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
-  "-DStokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
-  "-DStratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
-  #
-  "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
-  "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
-  "-DTrilinos_ENABLE_PyTrilinos:BOOL=OFF"
-  #
-  "-DTrilinos_ENABLE_STK:BOOL=ON"
-  "-DTrilinos_ENABLE_STKClassic:BOOL=OFF"
-  "-DTrilinos_ENABLE_SEACASIoss:BOOL=ON"
-  "-DTrilinos_ENABLE_SEACASExodus:BOOL=ON"
-  "-DTrilinos_ENABLE_STKUtil:BOOL=ON"
-  "-DTrilinos_ENABLE_STKTopology:BOOL=ON"
-  "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
-  "-DTrilinos_ENABLE_STKIO:BOOL=ON"
-  "-DTrilinos_ENABLE_STKExp:BOOL=OFF"
-  "-DTrilinos_ENABLE_STKSearch:BOOL=OFF"
-  "-DTrilinos_ENABLE_STKSearchUtil:BOOL=OFF"
-  "-DTrilinos_ENABLE_STKTransfer:BOOL=ON"
-  "-DTrilinos_ENABLE_STKUnit_tests:BOOL=OFF"
-  "-DTrilinos_ENABLE_STKDoc_tests:BOOL=OFF"
-  #
-  "-DTrilinos_ENABLE_Kokkos:BOOL=ON"
-  "-DTrilinos_ENABLE_KokkosCore:BOOL=ON"
-  "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING=SERIAL"
-  "-DPhalanx_INDEX_SIZE_TYPE:STRING=INT"
-  "-DPhalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
-  "-DKokkos_ENABLE_Serial:BOOL=ON"
-  "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
-  "-DKokkos_ENABLE_Pthread:BOOL=OFF"
-  )
 
   #
   # Configure the Trilinos/SCOREC build
@@ -155,7 +17,7 @@ set (COMMON_CONFIGURE_OPTIONS
     "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-    "${COMMON_CONFIGURE_OPTIONS}"
+    "${COM_CONF}"
     )
 
   if (BUILD_SCOREC)
@@ -273,4 +135,4 @@ set (COMMON_CONFIGURE_OPTIONS
     message ("Encountered build errors in Trilinos build. Exiting!")
   endif (BUILD_LIBS_NUM_ERRORS GREATER 0)
 
-endmacro(do_trilinos)
+endmacro(do_trilinos COM_CONF)

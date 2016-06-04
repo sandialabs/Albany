@@ -1,40 +1,68 @@
 cmake_minimum_required (VERSION 2.8)
 
-if (0)
-  set (CTEST_DO_SUBMIT ON)
-  set (CTEST_TEST_TYPE Nightly)
+SET(CTEST_DO_SUBMIT "$ENV{DO_SUBMIT}")
+SET(CTEST_TEST_TYPE "$ENV{TEST_TYPE}")
+SET(CTEST_BUILD_OPTION "$ENV{BUILD_OPTION}")
+
+if (1)
+  # What to build and test
+  IF(CTEST_BUILD_OPTION MATCHES "base")
+    # Only download repos and cleanout in the base nightly test run (start it an hour earlier)
+    set (CLEAN_BUILD TRUE)
+    set (DOWNLOAD TRUE)
+  ELSE()
+    set (CLEAN_BUILD FALSE)
+    set (DOWNLOAD FALSE)
+  ENDIF()
+
+  set (BUILD_SCOREC TRUE)
+  set (BUILD_TRILINOS TRUE)
+  set (BUILD_PERIDIGM TRUE)
+  set (BUILD_ALB32 TRUE)
+  set (BUILD_ALB64 TRUE)
+  set (BUILD_ALBFUNCTOR TRUE)
+  IF(CTEST_BUILD_OPTION MATCHES "clang")
+    set (BUILD_TRILINOS FALSE)
+    set (BUILD_PERIDIGM FALSE)
+    set (BUILD_ALB32 FALSE)
+    set (BUILD_ALB64 FALSE)
+    set (BUILD_TRILINOSCLANG11 TRUE)
+    set (BUILD_ALB64CLANG11 TRUE)
+    set (BUILD_ALBFUNCTOR FALSE)
+    set (BUILD_INTEL_TRILINOS FALSE)
+    set (BUILD_INTEL_ALBANY FALSE)
+  ELSE()
+    set (BUILD_TRILINOSCLANG11 FALSE)
+    set (BUILD_ALB64CLANG11 FALSE)
+  ENDIF()
+  IF(CTEST_BUILD_OPTION MATCHES "intel")
+    set (BUILD_TRILINOS FALSE)
+    set (BUILD_PERIDIGM FALSE)
+    set (BUILD_ALB32 FALSE)
+    set (BUILD_ALB64 FALSE)
+    set (BUILD_TRILINOSCLANG11 FALSE)
+    set (BUILD_ALB64CLANG11 FALSE)
+    set (BUILD_ALBFUNCTOR FALSE)
+    set (BUILD_INTEL_TRILINOS TRUE)
+    set (BUILD_INTEL_ALBANY TRUE)
+  ELSE()
+    set (BUILD_INTEL_TRILINOS FALSE)
+    set (BUILD_INTEL_ALBANY FALSE)
+  ENDIF()
+else ()
+  # This block is for testing. Set "if (1)" to "if (0)", and then freely mess
+  # around with the settings in this block.
 
   # What to build and test
   set (DOWNLOAD TRUE)
   # See if we can get away with this for speed, at least until we get onto a
   # machine that can support a lengthy nightly.
-  set (CLEAN_BUILD FALSE)
+  set (CLEAN_BUILD TRUE)
   set (BUILD_SCOREC TRUE)
   set (BUILD_TRILINOS TRUE)
   set (BUILD_PERIDIGM TRUE)
   set (BUILD_ALB32 TRUE)
-  set (BUILD_ALB64 FALSE)
-  set (BUILD_TRILINOSCLANG11 TRUE)
-  set (BUILD_ALB64CLANG11 TRUE)
-  set (BUILD_ALBFUNCTOR TRUE)
-  set (BUILD_INTEL_TRILINOS TRUE)
-  set (BUILD_INTEL_ALBANY TRUE)
-else ()
-  # This block is for testing. Set "if (1)" to "if (0)", and then freely mess
-  # around with the settings in this block.
-  set (CTEST_DO_SUBMIT OFF)
-  set (CTEST_TEST_TYPE Experimental)
-
-  # What to build and test
-  set (DOWNLOAD FALSE)
-  # See if we can get away with this for speed, at least until we get onto a
-  # machine that can support a lengthy nightly.
-  set (CLEAN_BUILD FALSE)
-  set (BUILD_SCOREC TRUE)
-  set (BUILD_TRILINOS TRUE)
-  set (BUILD_PERIDIGM TRUE)
-  set (BUILD_ALB32 TRUE)
-  set (BUILD_ALB64 FALSE)
+  set (BUILD_ALB64 TRUE)
   set (BUILD_TRILINOSCLANG11 TRUE)
   set (BUILD_ALB64CLANG11 TRUE)
   set (BUILD_ALBFUNCTOR TRUE)
@@ -133,7 +161,7 @@ if (CLEAN_BUILD)
   PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
   " )
 
-  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
+#  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
   file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
 endif ()
 
@@ -336,9 +364,149 @@ if (DOWNLOAD)
 
 endif ()
 
+#
+# Set the common Trilinos config options
+#
+
+set (COMMON_CONFIGURE_OPTIONS
+  "-Wno-dev"
+  "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
+  #
+  "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
+  "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
+  "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
+  "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
+  "-DTrilinos_ENABLE_MueLu:BOOL=ON"
+  #
+  "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
+  "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=ON"
+  "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
+  "-DZOLTAN_BUILD_ZFDRIVE:BOOL=OFF"
+  #
+  "-DSEACAS_ENABLE_SEACASSVDI:BOOL=OFF"
+  "-DTrilinos_ENABLE_SEACASFastq:BOOL=OFF"
+  "-DTrilinos_ENABLE_SEACASBlot:BOOL=OFF"
+  "-DTrilinos_ENABLE_SEACASPLT:BOOL=OFF"
+  "-DTPL_ENABLE_X11:BOOL=OFF"
+  "-DTPL_ENABLE_Matio:BOOL=OFF"
+  #
+  "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
+  "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
+  #
+  "-DTPL_ENABLE_Boost:BOOL=ON"
+  "-DTPL_ENABLE_BoostLib:BOOL=ON"
+  "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
+  "-DBoost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
+  "-DBoost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
+  "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
+  "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
+  "-DBoostAlbLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
+  "-DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
+  #
+  "-DTPL_ENABLE_Netcdf:BOOL=ON"
+  "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DTPL_Netcdf_PARALLEL:BOOL=ON"
+  #
+  "-DTPL_ENABLE_HDF5:BOOL=ON"
+  "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DHDF5_LIBRARY_NAMES:STRING='hdf5_hl\\;hdf5\\;z'"
+  #
+  "-DTPL_ENABLE_Zlib:BOOL=ON"
+  "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  #
+  "-DTPL_ENABLE_ParMETIS:BOOL=ON"
+  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  #
+  "-DTPL_ENABLE_SuperLU:BOOL=ON"
+  "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
+  "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
+  #
+  "-DTPL_BLAS_LIBRARIES:STRING='-L${INTEL_DIR}/mkl/lib/intel64 -lmkl_intel_lp64 -lmkl_blas95_lp64 -lmkl_core -lmkl_sequential'"
+  "-DTPL_LAPACK_LIBRARIES:STRING='-L${INTEL_DIR}/mkl/lib/intel64 -lmkl_lapack95_lp64'"
+  #
+  "-DDART_TESTING_TIMEOUT:STRING=600"
+  "-DTrilinos_ENABLE_ThreadPool:BOOL=ON"
+  #
+  "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
+  "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
+  "-DTrilinos_ENABLE_EXPORT_MAKEFILES:BOOL=OFF"
+  "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
+  #
+  "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
+  "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
+  "-DTrilinos_ENABLE_SECONDARY_TESTED_CODE:BOOL=ON"
+  #
+  "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
+  "-DTrilinos_ENABLE_Shards:BOOL=ON"
+  "-DTrilinos_ENABLE_Sacado:BOOL=ON"
+  "-DTrilinos_ENABLE_Epetra:BOOL=ON"
+  "-DTrilinos_ENABLE_EpetraExt:BOOL=ON"
+  "-DTrilinos_ENABLE_Ifpack:BOOL=ON"
+  "-DTrilinos_ENABLE_AztecOO:BOOL=ON"
+  "-DTrilinos_ENABLE_Amesos:BOOL=ON"
+  "-DTrilinos_ENABLE_Anasazi:BOOL=ON"
+  "-DTrilinos_ENABLE_Belos:BOOL=ON"
+  "-DTrilinos_ENABLE_ML:BOOL=ON"
+  "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
+  "-DTrilinos_ENABLE_Intrepid:BOOL=ON"
+  "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
+  "-DTrilinos_ENABLE_NOX:BOOL=ON"
+  "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
+  "-DTrilinos_ENABLE_Thyra:BOOL=ON"
+  "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
+  "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
+  "-DTrilinos_ENABLE_GlobiPack:BOOL=ON"
+  "-DTrilinos_ENABLE_Stokhos:BOOL=ON"
+  "-DTrilinos_ENABLE_Isorropia:BOOL=ON"
+  "-DTrilinos_ENABLE_Piro:BOOL=ON"
+  "-DTrilinos_ENABLE_Teko:BOOL=ON"
+  "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
+  "-DTrilinos_ENABLE_Moertel:BOOL=ON"
+  #
+  "-DTrilinos_ENABLE_FEI:BOOL=OFF"
+  #
+  "-DPhalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
+  "-DStokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
+  "-DStratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
+  #
+  "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
+  "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
+  "-DTrilinos_ENABLE_PyTrilinos:BOOL=OFF"
+  #
+  "-DTrilinos_ENABLE_STK:BOOL=ON"
+  "-DTrilinos_ENABLE_STKClassic:BOOL=OFF"
+  "-DTrilinos_ENABLE_SEACASIoss:BOOL=ON"
+  "-DTrilinos_ENABLE_SEACASExodus:BOOL=ON"
+  "-DTrilinos_ENABLE_STKUtil:BOOL=ON"
+  "-DTrilinos_ENABLE_STKTopology:BOOL=ON"
+  "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
+  "-DTrilinos_ENABLE_STKIO:BOOL=ON"
+  "-DTrilinos_ENABLE_STKExp:BOOL=OFF"
+  "-DTrilinos_ENABLE_STKSearch:BOOL=OFF"
+  "-DTrilinos_ENABLE_STKSearchUtil:BOOL=OFF"
+  "-DTrilinos_ENABLE_STKTransfer:BOOL=ON"
+  "-DTrilinos_ENABLE_STKUnit_tests:BOOL=OFF"
+  "-DTrilinos_ENABLE_STKDoc_tests:BOOL=OFF"
+  #
+  "-DTrilinos_ENABLE_Kokkos:BOOL=ON"
+  "-DTrilinos_ENABLE_KokkosCore:BOOL=ON"
+  "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING=SERIAL"
+  "-DPhalanx_INDEX_SIZE_TYPE:STRING=INT"
+  "-DPhalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
+  "-DKokkos_ENABLE_Serial:BOOL=ON"
+  "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
+  "-DKokkos_ENABLE_Pthread:BOOL=OFF"
+  )
+
 if (BUILD_TRILINOS)
   INCLUDE(${CTEST_SCRIPT_DIRECTORY}/trilinos_macro.cmake)
-  do_trilinos()
+
+  do_trilinos(COMMON_CONFIGURE_OPTIONS)
+
 endif (BUILD_TRILINOS)
 
 if (BUILD_PERIDIGM)
@@ -420,7 +588,27 @@ set (ENV{LD_LIBRARY_PATH}
 
 if (BUILD_TRILINOSCLANG11)
   INCLUDE(${CTEST_SCRIPT_DIRECTORY}/trilinosclang11_macro.cmake)
-  do_trilinosclang11()
+
+  set (CONFIGURE_OPTIONS
+    "${COMMON_CONFIGURE_OPTIONS}"
+    "-DTPL_ENABLE_MPI:BOOL=ON"
+    "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/clang"
+    #
+    "-DTrilinos_ENABLE_CXX11:BOOL=ON"
+    "-DCMAKE_CXX_FLAGS:STRING='-Os -w -DNDEBUG ${extra_cxx_flags}'"
+    "-DCMAKE_C_FLAGS:STRING='-Os -w -DNDEBUG'"
+    "-DCMAKE_Fortran_FLAGS:STRING='-Os -w -DNDEBUG'"
+    "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
+    "-DMDS_ID_TYPE:STRING='long long int'"
+    "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
+    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm'"
+    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallC11"
+    "-DBUILD_SHARED_LIBS:BOOL=OFF"
+    "-DTPL_ENABLE_SuperLU:BOOL=OFF"
+    "-DAmesos2_ENABLE_KLU2:BOOL=ON")
+
+  do_trilinosclang11(CONFIGURE_OPTIONS)
+
 endif (BUILD_TRILINOSCLANG11)
 
 #

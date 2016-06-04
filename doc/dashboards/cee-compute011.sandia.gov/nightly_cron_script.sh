@@ -1,6 +1,14 @@
 #!/bin/sh
 
-cd /projects/AppComp/nightly_gahanse/cee-compute011
+BUILD_OPT="$1"
+
+SCRIPT_DIR=/ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011.sandia.gov
+TEST_DIR=/projects/AppComp/nightly_gahanse/cee-compute011
+
+SUBMIT_RESULTS=ON
+#SUBMIT_RESULTS=OFF
+THE_TEST_TYPE=Nightly
+#THE_TEST_TYPE=Experimental
 
 export http_proxy=http://wwwproxy.sandia.gov:80
 export https_proxy=http://wwwproxy.sandia.gov:80
@@ -9,8 +17,6 @@ export PATH=/projects/albany/bin:/projects/albany/trilinos/MPI_REL/bin:/sierra/s
 
 export LD_LIBRARY_PATH=/sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210/mkl/lib/intel64:/sierra/sntools/SDK/compilers/clang/3.7-RHEL6/lib:/sierra/sntools/SDK/hwloc/lib:/sierra/sntools/SDK/mpi/openmpi/1.8.8-gcc-5.2.0-RHEL6/lib:/sierra/sntools/SDK/compilers/gcc/5.2.0-RHEL6/lib64:/sierra/sntools/SDK/compilers/gcc/5.2.0-RHEL6/lib:/projects/albany/lib
 
-TEST_DIR=/projects/AppComp/nightly_gahanse/cee-compute011
-SCRIPT_DIR=/ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011.sandia.gov
 
 if [ ! -d "$TEST_DIR" ]; then
   /bin/mkdir $TEST_DIR
@@ -20,7 +26,7 @@ cd $TEST_DIR
 
 now=$(date +"%m_%d_%Y-%H_%M")
 #LOG_FILE=/projects/AppComp/nightly/cee-compute011/nightly_$now
-LOG_FILE=$TEST_DIR/nightly_log.txt
+LOG_FILE=$TEST_DIR/nightly_log_$BUILD_OPT.txt
 
 # I want to run incremental builds to reduce the length of the nightly; with the
 # new Intel builds, we're up to ~12 hours. Make sure the CMake files are
@@ -47,7 +53,7 @@ else
   /bin/rm -rf $TEST_DIR/buildAlbany/nightly/Albany/*
 fi
 
-eval "env TEST_DIRECTORY=$TEST_DIR SCRIPT_DIRECTORY=$SCRIPT_DIR /projects/albany/bin/ctest -VV -S /ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011.sandia.gov/ctest_nightly.cmake" > $LOG_FILE 2>&1
+eval "env BUILD_OPTION=$BUILD_OPT DO_SUBMIT=$SUBMIT_RESULTS TEST_TYPE=$THE_TEST_TYPE TEST_DIRECTORY=$TEST_DIR SCRIPT_DIRECTORY=$SCRIPT_DIR /projects/albany/bin/ctest -VV -S /ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011.sandia.gov/ctest_nightly.cmake" > $LOG_FILE 2>&1
 
 # Copy a basic installation to /projects/albany for those who like a nightly
 # build.
