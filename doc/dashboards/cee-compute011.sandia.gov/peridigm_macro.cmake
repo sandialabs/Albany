@@ -69,4 +69,4 @@ macro(do_peridigm)
 
   message ("After configuring and building, BUILD_PERIDIGM = ${BUILD_PERIDIGM}")
 
-end_macro(do_peridigm)
+endmacro(do_peridigm)

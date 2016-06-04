@@ -120,4 +120,4 @@ macro(do_alb32)
   #	message(FATAL_ERROR "Some Albany tests failed.")
   #endif (HAD_ERROR)
 
-end_macro(do_alb32)
+endmacro(do_alb32)

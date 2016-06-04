@@ -100,4 +100,5 @@ macro(do_albfunctor)
       endif (S_HAD_ERROR)
     endif (CTEST_DO_SUBMIT)
   endif (BUILD_ALBFUNCTOR)
-end_macro(do_albfunctor)
+
+endmacro(do_albfunctor)

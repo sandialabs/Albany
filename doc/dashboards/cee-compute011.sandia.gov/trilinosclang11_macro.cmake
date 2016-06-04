@@ -81,4 +81,4 @@ macro(do_trilinosclang11)
     message ("Encountered build errors in Trilinos Clang build. Exiting!")
   endif (BUILD_LIBS_NUM_ERRORS GREATER 0)
 
-end_macro(do_trilinosclang11)
+endmacro(do_trilinosclang11)

@@ -273,4 +273,4 @@ set (COMMON_CONFIGURE_OPTIONS
     message ("Encountered build errors in Trilinos build. Exiting!")
   endif (BUILD_LIBS_NUM_ERRORS GREATER 0)
 
-end_macro(do_trilinos)
+endmacro(do_trilinos)

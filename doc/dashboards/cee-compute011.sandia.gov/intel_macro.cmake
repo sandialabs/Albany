@@ -206,4 +206,4 @@ if (BUILD_INTEL_ALBANY)
     endif (CTEST_DO_SUBMIT)
   endif (BUILD_INTEL_ALBANY)
 
-end_macro(do_intel)
+endmacro(do_intel)

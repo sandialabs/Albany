@@ -117,4 +117,4 @@ macro(do_alb64clang11)
     endif (CTEST_DO_SUBMIT)
   endif (BUILD_ALB64CLANG11)
 
-end_macro(do_alb64clang11)
+endmacro(do_alb64clang11)

@@ -110,4 +110,4 @@ macro(do_alb64)
     endif (HAD_ERROR)
   endif (CTEST_DO_SUBMIT)
 
-end_macro(do_alb64)
+endmacro(do_alb64)
