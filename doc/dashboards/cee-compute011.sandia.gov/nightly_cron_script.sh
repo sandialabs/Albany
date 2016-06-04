@@ -9,9 +9,18 @@ export PATH=/projects/albany/bin:/projects/albany/trilinos/MPI_REL/bin:/sierra/s
 
 export LD_LIBRARY_PATH=/sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210/mkl/lib/intel64:/sierra/sntools/SDK/compilers/clang/3.7-RHEL6/lib:/sierra/sntools/SDK/hwloc/lib:/sierra/sntools/SDK/mpi/openmpi/1.8.8-gcc-5.2.0-RHEL6/lib:/sierra/sntools/SDK/compilers/gcc/5.2.0-RHEL6/lib64:/sierra/sntools/SDK/compilers/gcc/5.2.0-RHEL6/lib:/projects/albany/lib
 
+TEST_DIR=/projects/AppComp/nightly_gahanse/cee-compute011
+SCRIPT_DIR=/ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011.sandia.gov
+
+if [ ! -d "$TEST_DIR" ]; then
+  /bin/mkdir $TEST_DIR
+fi
+
+cd $TEST_DIR
+
 now=$(date +"%m_%d_%Y-%H_%M")
 #LOG_FILE=/projects/AppComp/nightly/cee-compute011/nightly_$now
-LOG_FILE=/projects/AppComp/nightly_gahanse/cee-compute011/nightly_log.txt
+LOG_FILE=$TEST_DIR/nightly_log.txt
 
 # I want to run incremental builds to reduce the length of the nightly; with the
 # new Intel builds, we're up to ~12 hours. Make sure the CMake files are
@@ -19,12 +28,26 @@ LOG_FILE=/projects/AppComp/nightly_gahanse/cee-compute011/nightly_log.txt
 # for ctest_configure that I trust will do a configuration completely from
 # scratch.)
 
-for i in `ls build/`; do
-    rm -f build/$i/CMakeCache.txt
-    rm -rf build/$i/CMakeFiles
-done
+#for i in `ls build/`; do
+#    rm -f build/$i/CMakeCache.txt
+#    rm -rf build/$i/CMakeFiles
+#done
 
-eval "env TEST_DIRECTORY=/projects/AppComp/nightly_gahanse/cee-compute011 SCRIPT_DIRECTORY=/projects/AppComp/nightly_gahanse/cee-compute011 /projects/albany/bin/ctest -VV -S /ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011.sandia.gov/ctest_nightly.cmake" > $LOG_FILE 2>&1
+echo "Date and time is $now" > $LOG_FILE
+
+if [ ! -d "$TEST_DIR/buildAlbany" ]; then
+  /bin/mkdir $TEST_DIR/buildAlbany
+fi
+if [ ! -d "$TEST_DIR/buildAlbany/nightly" ]; then
+  /bin/mkdir $TEST_DIR/buildAlbany/nightly
+fi
+if [ ! -d "$TEST_DIR/buildAlbany/nightly/Albany" ]; then
+  /bin/mkdir $TEST_DIR/buildAlbany/nightly/Albany
+else
+  /bin/rm -rf $TEST_DIR/buildAlbany/nightly/Albany/*
+fi
+
+eval "env TEST_DIRECTORY=$TEST_DIR SCRIPT_DIRECTORY=$SCRIPT_DIR /projects/albany/bin/ctest -VV -S /ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011.sandia.gov/ctest_nightly.cmake" > $LOG_FILE 2>&1
 
 # Copy a basic installation to /projects/albany for those who like a nightly
 # build.

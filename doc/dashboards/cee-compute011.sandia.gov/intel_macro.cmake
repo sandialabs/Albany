@@ -57,7 +57,7 @@ macro(do_intel)
     message ("Cannot configure TrilinosIntel build.")
     set (BUILD_INTEL_ALBANY FALSE) # no need to go further, Albany needs Trilinos
     set (BUILD_INTEL_TRILINOS FALSE)
-  endif (HAD_ERROR`)
+  endif (HAD_ERROR)
 
   if (BUILD_INTEL_TRILINOS)
     set (CTEST_BUILD_TARGET install)
@@ -77,7 +77,7 @@ macro(do_intel)
         message ("Cannot submit TrilinosIntel build results.")
       endif (S_HAD_ERROR)
 
-    endif (CTEST_DO_SUBMI)
+    endif (CTEST_DO_SUBMIT)
 
     if (HAD_ERROR)
       message ("Cannot build Trilinos.")

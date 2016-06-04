@@ -48,8 +48,6 @@ set (extra_cxx_flags "")
 set (CTEST_SITE "cee-compute011.sandia.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
-# where the scripts live in the repo
-set (CTEST_REPO_SCRIPT_DIRECTORY "${CTEST_SCRIPT_DIRECTORY}/repos/Albany/doc/dashboards/cee-compute011.sandia.gov") 
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
 set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
 
@@ -339,18 +337,48 @@ if (DOWNLOAD)
 endif ()
 
 if (BUILD_TRILINOS)
-  INCLUDE(${CTEST_REPO_SCRIPT_DIRECTORY}/trilinos_macro.cmake)
+  INCLUDE(${CTEST_SCRIPT_DIRECTORY}/trilinos_macro.cmake)
   do_trilinos()
 endif (BUILD_TRILINOS)
 
 if (BUILD_PERIDIGM)
-  INCLUDE(${CTEST_REPO_SCRIPT_DIRECTORY}/peridigm_macro.cmake)
+  INCLUDE(${CTEST_SCRIPT_DIRECTORY}/peridigm_macro.cmake)
   do_peridigm()
 endif (BUILD_PERIDIGM)
 
+INCLUDE(${CTEST_SCRIPT_DIRECTORY}/albany_macro.cmake)
+
 if (BUILD_ALB32)
-  INCLUDE(${CTEST_REPO_SCRIPT_DIRECTORY}/alb32_macro.cmake)
-  do_alb32()
+
+  set (CONF_OPTIONS
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DENABLE_LCM:BOOL=ON"
+    "-DENABLE_CONTACT:BOOL=ON"
+    "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
+    "-DENABLE_HYDRIDE:BOOL=ON"
+    "-DENABLE_ENSEMBLE:BOOL=OFF"
+    "-DENABLE_SG:BOOL=OFF"
+    "-DENABLE_FELIX:BOOL=ON"
+    "-DENABLE_AERAS:BOOL=ON"
+    "-DENABLE_QCAD:BOOL=ON"
+    "-DENABLE_MOR:BOOL=ON"
+    "-DENABLE_ATO:BOOL=ON"
+    "-DENABLE_AMP:BOOL=OFF"
+    "-DENABLE_ASCR:BOOL=OFF"
+    "-DENABLE_CHECK_FPE:BOOL=ON")
+  if (BUILD_SCOREC)
+    set (CONF_OPTIONS ${CONF_OPTIONS}
+      "-DENABLE_SCOREC:BOOL=ON"
+      "-DENABLE_GOAL:BOOL=ON")
+  endif (BUILD_SCOREC)
+  if (BUILD_PERIDIGM)
+    set (CONF_OPTIONS ${CONF_OPTIONS}
+      "-DENABLE_PERIDIGM:BOOL=ON"
+      "-DPeridigm_DIR:PATH=${CTEST_BINARY_DIRECTORY}/PeridigmInstall/lib/Peridigm/cmake")
+  endif (BUILD_PERIDIGM)
+
+  do_albany(CONF_OPTIONS "Albany32Bit")
+
 endif (BUILD_ALB32)
 
 #
@@ -358,8 +386,27 @@ endif (BUILD_ALB32)
 #
 
 if (BUILD_ALB64)
-  INCLUDE(${CTEST_REPO_SCRIPT_DIRECTORY}/alb64_macro.cmake)
-  do_alb64()
+
+  set (CONF_OPTIONS
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DENABLE_64BIT_INT:BOOL=ON"
+    "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
+    "-DENABLE_LCM:BOOL=ON"
+    "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
+    "-DENABLE_HYDRIDE:BOOL=ON"
+    "-DENABLE_ENSEMBLE:BOOL=OFF"
+    "-DENABLE_SG:BOOL=OFF"
+    "-DENABLE_QCAD:BOOL=OFF"
+    "-DENABLE_MOR:BOOL=OFF"
+    "-DENABLE_CHECK_FPE:BOOL=ON")
+  if (BUILD_SCOREC)
+    set (CONF_OPTIONS ${CONF_OPTIONS}
+      "-DENABLE_SCOREC:BOOL=ON"
+      "-DENABLE_GOAL:BOOL=ON")
+  endif (BUILD_SCOREC)
+
+  do_albany(CONF_OPTIONS "Albany64Bit")
+
 endif (BUILD_ALB64)
 
 # Add the path to Clang libraries needed for the Clang configure, build and sest cycle
@@ -372,7 +419,7 @@ set (ENV{LD_LIBRARY_PATH}
   )
 
 if (BUILD_TRILINOSCLANG11)
-  INCLUDE(${CTEST_REPO_SCRIPT_DIRECTORY}/trilinosclang11_macro.cmake)
+  INCLUDE(${CTEST_SCRIPT_DIRECTORY}/trilinosclang11_macro.cmake)
   do_trilinosclang11()
 endif (BUILD_TRILINOSCLANG11)
 
@@ -381,16 +428,61 @@ endif (BUILD_TRILINOSCLANG11)
 #
 
 if (BUILD_ALB64CLANG11)
-  INCLUDE(${CTEST_REPO_SCRIPT_DIRECTORY}/alb64clang11_macro.cmake)
-  do_alb64clang11()
+
+  set (CONF_OPTIONS
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallC11"
+    "-DENABLE_64BIT_INT:BOOL=ON"
+    "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
+    "-DENABLE_LCM:BOOL=ON"
+    "-DENABLE_QCAD:BOOL=ON"
+    "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
+    "-DENABLE_HYDRIDE:BOOL=ON"
+    "-DENABLE_ENSEMBLE:BOOL=OFF"
+    "-DENABLE_SG:BOOL=OFF"
+    "-DENABLE_QCAD:BOOL=OFF"
+    "-DENABLE_MOR:BOOL=OFF"
+    "-DENABLE_CHECK_FPE:BOOL=ON"
+    )
+  if (BUILD_SCOREC)
+    set (CONF_OPTIONS ${CONF_OPTIONS}
+      "-DENABLE_SCOREC:BOOL=ON"
+      "-DENABLE_GOAL:BOOL=ON")
+  endif (BUILD_SCOREC)
+
+  do_albany(CONF_OPTIONS "Albany64BitClang++11")
+
 endif (BUILD_ALB64CLANG11)
 
 if (BUILD_ALBFUNCTOR)
-  INCLUDE(${CTEST_REPO_SCRIPT_DIRECTORY}/albfunctor_macro.cmake)
-  do_albfunctor()
+
+  set (CONF_OPTIONS
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DENABLE_LCM:BOOL=ON"
+    "-DENABLE_MOR:BOOL=ON"
+    "-DENABLE_FELIX:BOOL=ON"
+    "-DENABLE_HYDRIDE:BOOL=ON"
+    "-DENABLE_AMP:BOOL=OFF"
+    "-DENABLE_ATO:BOOL=ON"
+    "-DENABLE_QCAD:BOOL=ON"
+    "-DENABLE_ENSEMBLE:BOOL=OFF"
+    "-DENABLE_SG:BOOL=OFF"
+    "-DENABLE_ASCR:BOOL=OFF"
+    "-DENABLE_AERAS:BOOL=ON"
+    "-DENABLE_64BIT_INT:BOOL=OFF"
+    "-DENABLE_DEMO_PDES:BOOL=ON"
+    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
+    "-DENABLE_CHECK_FPE:BOOL=ON")
+  if (BUILD_SCOREC)
+    set (CONF_OPTIONS ${CONF_OPTIONS}
+      "-DENABLE_SCOREC:BOOL=ON"
+      "-DENABLE_GOAL:BOOL=ON")
+  endif (BUILD_SCOREC)
+
+  do_albany(CONF_OPTIONS "AlbanyFunctorDev")
+
 endif (BUILD_ALBFUNCTOR)
 
 if (BUILD_INTEL_TRILINOS)
-  INCLUDE(${CTEST_REPO_SCRIPT_DIRECTORY}/intel_macro.cmake)
+  INCLUDE(${CTEST_SCRIPT_DIRECTORY}/intel_macro.cmake)
    do_intel()
 endif (BUILD_INTEL_TRILINOS)
