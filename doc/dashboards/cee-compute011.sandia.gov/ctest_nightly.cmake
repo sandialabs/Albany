@@ -49,7 +49,7 @@ set (CTEST_SITE "cee-compute011.sandia.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 # where the scripts live in the repo
-set (CTEST_REPO_SCRIPT_DIRECTORY "${CTEST_SCRIPT_DIRECTORY}/repos/Albany/doc/dashboards/cee-compute011" ) 
+set (CTEST_REPO_SCRIPT_DIRECTORY "${CTEST_SCRIPT_DIRECTORY}/repos/Albany/doc/dashboards/cee-compute011.sandia.gov") 
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
 set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
 
