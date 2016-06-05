@@ -1,38 +1,20 @@
-macro(do_trilinos COM_CONF)
+macro(do_trilinos CONFIGURE_OPTIONS BTYPE)
 
-  message ("ctest state: BUILD_TRILINOS")
+  message ("ctest state: BUILD_${BTYPE}")
 
   #
   # Configure the Trilinos/SCOREC build
   #
 
-  set_property (GLOBAL PROPERTY SubProject Trilinos)
-  set_property (GLOBAL PROPERTY Label Trilinos)
+  set_property (GLOBAL PROPERTY SubProject ${BTYPE})
+  set_property (GLOBAL PROPERTY Label ${BTYPE})
 
-  set (CONFIGURE_OPTIONS
-    "-DTPL_ENABLE_MPI:BOOL=ON"
-    "-DMPI_BASE_DIR:PATH=${GCC_MPI_DIR}"
-    "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -w -DNDEBUG ${extra_cxx_flags}'"
-    "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
-    "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm'"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-    "${COM_CONF}"
-    )
-
-  if (BUILD_SCOREC)
-    set (CONFIGURE_OPTIONS
-      "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
-      "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"      
-      "${CONFIGURE_OPTIONS}")
-  endif (BUILD_SCOREC)
-
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TriBuild)
-  endif (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/${BTYPE}")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/${BTYPE})
+  endif (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/${BTYPE}")
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuild"
+    BUILD "${CTEST_BINARY_DIRECTORY}/${BTYPE}"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
@@ -52,7 +34,9 @@ macro(do_trilinos COM_CONF)
     message ("Cannot configure Trilinos/SCOREC build!")
   endif (HAD_ERROR)
 
-  if (BUILD_SCOREC)
+  SET(SEPARATE_BUILD_SCOREC FALSE)
+
+  if (SEPARATE_BUILD_SCOREC)
     #
     # SCOREC tools build inside Trilinos
     #
@@ -69,7 +53,7 @@ macro(do_trilinos COM_CONF)
     MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
     CTEST_BUILD(
-      BUILD "${CTEST_BINARY_DIRECTORY}/TriBuild"
+      BUILD "${CTEST_BINARY_DIRECTORY}/${BTYPE}"
       RETURN_VALUE  HAD_ERROR
       NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
       )
@@ -94,7 +78,8 @@ macro(do_trilinos COM_CONF)
       message ("Encountered build errors in SCOREC build. Exiting!")
       set (BUILD_SCOREC FALSE)
     endif (BUILD_LIBS_NUM_ERRORS GREATER 0)
-  endif (BUILD_SCOREC)
+
+  endif (SEPARATE_BUILD_SCOREC)
 
   #
   # Trilinos
@@ -102,15 +87,15 @@ macro(do_trilinos COM_CONF)
   # Build the rest of Trilinos and install everything
   #
 
-  set_property (GLOBAL PROPERTY SubProject Trilinos)
-  set_property (GLOBAL PROPERTY Label Trilinos)
+  set_property (GLOBAL PROPERTY SubProject ${BTYPE})
+  set_property (GLOBAL PROPERTY Label ${BTYPE})
   #set (CTEST_BUILD_TARGET all)
   set (CTEST_BUILD_TARGET install)
 
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuild"
+    BUILD "${CTEST_BINARY_DIRECTORY}/${BTYPE}"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -135,4 +120,4 @@ macro(do_trilinos COM_CONF)
     message ("Encountered build errors in Trilinos build. Exiting!")
   endif (BUILD_LIBS_NUM_ERRORS GREATER 0)
 
-endmacro(do_trilinos COM_CONF)
+endmacro(do_trilinos CONFIGURE_OPTIONS BTYPE)
