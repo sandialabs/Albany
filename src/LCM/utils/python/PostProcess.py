@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
     inFile.close()
 
-    outFileName = outFileLabel + 'force_displacement.txt'
+    outFileName = outFileLabel + 'force_displacement.dat'
     dataFile = open(outFileName, 'w')
     for timeStep in range(numTimeSteps):
         dataFile.write(str(nodeset_displacement[timeStep]) + "  " + str(nodeset_force[timeStep]) + "\n")
