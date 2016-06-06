@@ -39,10 +39,6 @@
 #include "Albany_PUMIDiscretization.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
 #endif
-#ifdef ALBANY_GOAL
-#include "Albany_GOALDiscretization.hpp"
-#include "Albany_GOALMeshStruct.hpp"
-#endif
 #ifdef ALBANY_AMP
 #include "Albany_SimDiscretization.hpp"
 #include "Albany_SimMeshStruct.hpp"
@@ -389,16 +385,6 @@ Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::Parameter
                                << " requested, but not compiled in" << std::endl);
 #endif
   }
-  else if(method == "PUMI Hierarchic") {
-#ifdef ALBANY_GOAL
-    return Teuchos::rcp(new Albany::GOALMeshStruct(disc_params, comm));
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(method == "PUMI Hierarchic",
-                               Teuchos::Exceptions::InvalidParameter,
-                               "Error: Discretization method " << method
-                               << " requested, but not compiled in" << std::endl);
-#endif
-  }
   else if (method == "Sim") {
 #ifdef ALBANY_AMP
     return Teuchos::rcp(new Albany::SimMeshStruct(disc_params, comm));
@@ -532,13 +518,6 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
       case Albany::AbstractMeshStruct::PUMI_MS: {
         Teuchos::RCP<Albany::PUMIMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::PUMIMeshStruct>(meshStruct);
         return Teuchos::rcp(new Albany::PUMIDiscretization(ms, commT, rigidBodyModes));
-      }
-      break;
-#endif
-#ifdef ALBANY_GOAL
-      case Albany::AbstractMeshStruct::GOAL_MS: {
-        Teuchos::RCP<Albany::GOALMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::GOALMeshStruct>(meshStruct);
-        return Teuchos::rcp(new Albany::GOALDiscretization(ms, commT, rigidBodyModes));
       }
       break;
 #endif

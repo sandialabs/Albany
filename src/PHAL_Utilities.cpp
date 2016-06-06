@@ -7,10 +7,6 @@
 #include "Albany_Application.hpp"
 #include "PHAL_Utilities.hpp"
 
-#ifdef ALBANY_GOAL
-#include "Albany_GOALDiscretization.hpp"
-#endif
-
 namespace PHAL {
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
@@ -56,17 +52,6 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
       int numLevels = app->getDiscretization()->getLayeredMeshNumbering()->numLayers+1;
       return app->getNumEquations()*(node_count + side_node_count*numLevels);
     }
-#ifdef ALBANY_GOAL
-    if ((problemName == "GOAL Mechanics 2D") ||
-        (problemName == "GOAL Mechanics 3D"))
-    {
-      Teuchos::RCP<Albany::AbstractDiscretization> ad =
-        app->getDiscretization();
-      Teuchos::RCP<Albany::GOALDiscretization> d =
-        Teuchos::rcp_dynamic_cast<Albany::GOALDiscretization>(ad);
-      return d->getNumNodesPerElem(ebi) * app->getNumEquations();
-    }
-#endif
 #ifdef ALBANY_AERAS
     if ((problemName == "Aeras Hydrostatic")  && (explicit_scheme == true))
     {

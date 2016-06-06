@@ -110,9 +110,6 @@ struct AbstractMeshStruct {
 #ifdef ALBANY_SCOREC
       PUMI_MS,
 #endif
-#ifdef ALBANY_GOAL
-      GOAL_MS,
-#endif
 #ifdef ALBANY_AMP
       SIM_MS,
 #endif

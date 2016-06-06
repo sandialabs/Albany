@@ -33,10 +33,6 @@
 #endif
 #endif
 
-#ifdef ALBANY_GOAL
-#include "GOAL_AdjointResponse.hpp"
-#endif
-
 #include "Teuchos_TestForException.hpp"
 
 void
@@ -212,15 +208,6 @@ createResponseFunction(
     }
   }
 #endif
-#endif
-
-#ifdef ALBANY_GOAL
-  else if (name == "Adjoint") {
-    responseParams.set("Name", name);
-    responses.push_back( rcp(
-          new GOAL::AdjointResponse(
-            app, prob, stateMgr, meshSpecs, responseParams)));
-  }
 #endif
 
   else {
