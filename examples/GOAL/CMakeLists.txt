@@ -5,6 +5,4 @@
 ##*****************************************************************//
 
 # GOAL ##################
-
-add_subdirectory(Elasticity2D)
-add_subdirectory(J2_2D)
+# do nothing for now
