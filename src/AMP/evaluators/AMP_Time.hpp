@@ -14,7 +14,6 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "Sacado_ParameterAccessor.hpp"
-#include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"
 
 namespace AMP {
