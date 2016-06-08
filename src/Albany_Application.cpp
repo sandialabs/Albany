@@ -181,7 +181,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   // Create problem object
   problemParams = Teuchos::sublist(params, "Problem", true);
 
-  Albany::ProblemFactory problemFactory(problemParams, paramLib, commT);
+  Albany::ProblemFactory problemFactory(params, paramLib, commT);
   rc_mgr = AAdapt::rc::Manager::create(
     Teuchos::rcp(&stateMgr, false), *problemParams);
   if (Teuchos::nonnull(rc_mgr))
