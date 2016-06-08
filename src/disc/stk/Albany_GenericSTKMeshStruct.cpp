@@ -1083,7 +1083,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
   // L.B: is this check a good idea?
   TEUCHOS_TEST_FOR_EXCEPTION (num_fields!=req.size(), std::logic_error, "Error! The number of required fields in the discretization parameter list does not match the number of requirements declared in the problem section.\n");
 
-  std::string fname, ftype;
+  std::string fname, ftype, forigin;
   for (int ifield=0; ifield<num_fields; ++ifield)
   {
     std::stringstream ss;
@@ -1091,17 +1091,18 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
     const Teuchos::ParameterList& fparams = req_fields_info->sublist(ss.str());
 
     fname = fparams.get<std::string>("Field Name");
-    ftype = fparams.get<std::string>("Field Type");
+    forigin = "File";  if(fparams.isParameter("Field Origin")) forigin = fparams.get<std::string>("Field Origin");
+    if(forigin == "File") ftype = fparams.get<std::string>("Field Type"); else ftype = "";
 
     // L.B: again, is this check a good idea?
     TEUCHOS_TEST_FOR_EXCEPTION (std::find(req.begin(),req.end(),fname)==req.end(), std::logic_error, "Error! The field " << fname << " is not listed in the problem requirements.\n");
 
-    if (ftype=="From Mesh")
+    if (forigin=="Mesh")
     {
       *out << "Skipping field " << fname << " since it's listed as already present in the mesh. Make sure this is true, since we can't check!\n";
       continue;
     }
-    else if (ftype=="Output")
+    else if (forigin=="Output")
     {
       *out << "Skipping field " << fname << " since it's listed as output (computed at run time). Make sure there's an evaluator set to save it.\n";
       continue;
