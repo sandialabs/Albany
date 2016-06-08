@@ -480,9 +480,7 @@ evaluateFields(typename Traits::EvalData workset)
         	{
         		//evaluate non-linear viscosity, given by Glen's law, at quadrature points
         		temperature(cell) = std::max(temperature(cell), 230.0);
-
         		flowFactorVec[cell] = 1.0/2.0*pow(flowRate<TemperatureType>(temperature(cell)), -1.0/n);
-        		//std::cout << flowFactorVec[cell] << std::endl;
         	}
         	break;
         case FROMFILE:

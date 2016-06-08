@@ -21,7 +21,7 @@ namespace PHAL {
 
 */
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename Type>
 class DOFInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
  			 public PHX::EvaluatorDerived<EvalT, Traits>  {
 
@@ -36,8 +36,9 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
+  typedef Type ScalarT;
 
-  typedef typename EvalT::ScalarT ScalarT;
+  //typedef typename EvalT::ScalarT ScalarT;
 
   // Input:
   //! Values at nodes
@@ -87,7 +88,7 @@ private:
 
 //! Specialization for Jacobian evaluation taking advantage of known sparsity
 template<typename Traits>
-class DOFInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>
+class DOFInterpolation<PHAL::AlbanyTraits::Jacobian, Traits, FadType>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits>  {
 

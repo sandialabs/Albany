@@ -9,6 +9,6 @@
 #include "PHAL_DOFInterpolation.hpp"
 #include "PHAL_DOFInterpolation_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DOFInterpolation)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(PHAL::DOFInterpolation)
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DOFInterpolation_noDeriv)
 

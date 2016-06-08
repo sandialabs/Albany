@@ -17,7 +17,7 @@
 namespace FELIX
 {
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename VelocityType>
 class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 					  public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -33,11 +33,10 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		typedef typename EvalT::ScalarT ScalarT;
 		typedef typename EvalT::MeshScalarT MeshScalarT;
 		typedef typename EvalT::ParamScalarT ParamScalarT;
-
-		ParamScalarT k;   //viscosity coefficient
+		//typedef VelocityType ParamScalarT;
 
 		bool haveSUPG;
-		ParamScalarT delta;
+		double delta;
 
 		// Input:
 		PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
@@ -45,14 +44,15 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 		PHX::MDField<ScalarT,Cell,QuadPoint> Enthalpy;
 		PHX::MDField<ScalarT,Cell,QuadPoint,Dim> EnthalpyGrad;
+		PHX::MDField<ParamScalarT,Cell,QuadPoint> EnthalpyHs;
 
-		PHX::MDField<ParamScalarT,Cell,QuadPoint,VecDim> Velocity;
+		PHX::MDField<VelocityType,Cell,QuadPoint,VecDim> Velocity;
         PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec;
 		PHX::MDField<ScalarT,Cell,QuadPoint> diss;
-		PHX::MDField<ScalarT,Cell,Node> basalFricHeat;
-		PHX::MDField<ScalarT,Cell,Node> basalFricHeatSUPG;
-		PHX::MDField<ScalarT,Cell,Node> geoFluxHeat;
-		PHX::MDField<ScalarT,Cell,Node> geoFluxHeatSUPG;
+		PHX::MDField<ParamScalarT,Cell,QuadPoint> basalFricHeat;
+		PHX::MDField<ParamScalarT,Cell,QuadPoint> basalFricHeatSUPG;
+		PHX::MDField<ParamScalarT,Cell,QuadPoint> geoFluxHeat;
+		PHX::MDField<ParamScalarT,Cell,QuadPoint> geoFluxHeatSUPG;
 
 		// Output:
 		PHX::MDField<ScalarT,Cell,Node> Residual;
@@ -60,7 +60,10 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		unsigned int numQPs, numDims, numNodes;
 
 		bool needsDiss, needsBasFric;
-		//bool isGeoFluxConst;
+
+		double k_i, c_i, K_i;   // for computing K_i
+		double K_0;	 // diffusivity temperate ice
+		double rho; 	// density of ice
 };
 
 }

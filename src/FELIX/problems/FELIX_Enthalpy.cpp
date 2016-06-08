@@ -221,7 +221,7 @@ Teuchos::RCP<const Teuchos::ParameterList>
 FELIX::Enthalpy::getValidProblemParameters() const
 {
 	Teuchos::RCP<Teuchos::ParameterList> validPL = this->getGenericProblemParams("ValidEnthalpyParams");
-	validPL->sublist("Options", false, "");
+	validPL->sublist("FELIX Physical Parameters", false, "");
 	validPL->sublist("SUPG Settings", false, "");
 	validPL->sublist("FELIX Viscosity", false, "");
 	validPL->sublist("Stereographic Map", false, "");

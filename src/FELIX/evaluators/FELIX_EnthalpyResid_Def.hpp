@@ -24,13 +24,14 @@ double distance (const double& x0, const double& x1, const double& x2,
 }
 
 
-template<typename EvalT, typename Traits>
-EnthalpyResid<EvalT,Traits>::
+template<typename EvalT, typename Traits, typename VelocityType>
+EnthalpyResid<EvalT,Traits,VelocityType>::
 EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
 	wBF      		(p.get<std::string> ("Weighted BF Variable Name"), dl->node_qp_scalar),
 	wGradBF  		(p.get<std::string> ("Weighted Gradient BF Variable Name"),dl->node_qp_gradient),
 	Enthalpy        (p.get<std::string> ("Enthalpy QP Variable Name"), dl->qp_scalar),
 	EnthalpyGrad    (p.get<std::string> ("Enthalpy Gradient QP Variable Name"), dl->qp_gradient),
+	EnthalpyHs		(p.get<std::string> ("Enthalpy Hs QP Variable Name"), dl->qp_scalar ),
 	Velocity		(p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
     coordVec 		(p.get<std::string> ("Coordinate Vector Name"),dl->vertices_vector),
 	Residual 		(p.get<std::string> ("Residual Variable Name"), dl->node_scalar)
@@ -44,12 +45,14 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 
 	Teuchos::ParameterList* SUPG_list = p.get<Teuchos::ParameterList*>("SUPG Settings");
 	haveSUPG = SUPG_list->get("Have SUPG Stabilization", false);
+	delta = SUPG_list->get("Parameter Delta", 0.1);
 
 	needsDiss = p.get<bool>("Needs Dissipation");
 	needsBasFric = p.get<bool>("Needs Basal Friction");
 
 	this->addDependentField(Enthalpy);
 	this->addDependentField(EnthalpyGrad);
+	this->addDependentField(EnthalpyHs);
 	this->addDependentField(wBF);
 	this->addDependentField(wGradBF);
 	this->addDependentField(Velocity);
@@ -63,41 +66,46 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 
 	if (needsBasFric)
 	{
-		basalFricHeat = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Basal Friction Heat Variable Name"),dl->node_scalar);
+		basalFricHeat = PHX::MDField<ParamScalarT,Cell,QuadPoint>(p.get<std::string> ("Basal Friction Heat QP Variable Name"),dl->qp_scalar);
 		this->addDependentField(basalFricHeat);
 
 		if(haveSUPG)
 		{
-			basalFricHeatSUPG = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Basal Friction Heat SUPG Variable Name"),dl->node_scalar);
+			basalFricHeatSUPG = PHX::MDField<ParamScalarT,Cell,QuadPoint>(p.get<std::string> ("Basal Friction Heat QP SUPG Variable Name"),dl->qp_scalar);
 			this->addDependentField(basalFricHeatSUPG);
 		}
 	}
 
-	geoFluxHeat = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Geotermal Flux Heat Variable Name"),dl->node_scalar);
+	geoFluxHeat = PHX::MDField<ParamScalarT,Cell,QuadPoint>(p.get<std::string> ("Geotermal Flux Heat QP Variable Name"),dl->qp_scalar);
 	this->addDependentField(geoFluxHeat);
 
 	if(haveSUPG)
 	{
-		geoFluxHeatSUPG = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Geotermal Flux Heat SUPG Variable Name"),dl->node_scalar);
+		geoFluxHeatSUPG = PHX::MDField<ParamScalarT,Cell,QuadPoint>(p.get<std::string> ("Geotermal Flux Heat QP SUPG Variable Name"),dl->qp_scalar);
 		this->addDependentField(geoFluxHeatSUPG);
 	}
 
 	this->addEvaluatedField(Residual);
 	this->setName("EnthalpyResid");
 
-	Teuchos::ParameterList* option_list = p.get<Teuchos::ParameterList*>("Options");
-	k = option_list->get("Ice thermal conductivity k", 1.0);
-	k *= 0.001;
+	Teuchos::ParameterList* physics_list = p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
+	k_i = physics_list->get("Conductivity of ice", 1.0);
+	k_i *= 0.001; //scaling needs to be done to match dimensions
+	c_i = physics_list->get("Heat capacity of ice",2000.0);
+	K_i = k_i / c_i;
 
-	delta = SUPG_list->get("Parameter Delta", 0.1);
+	K_0 = physics_list->get("Diffusivity temperate ice", 1.0);
+	K_0 *= 0.001; //scaling needs to be done to match dimensions
+	rho = physics_list->get("Ice Density", 910.0);
 }
 
-template<typename EvalT, typename Traits>
-void EnthalpyResid<EvalT,Traits>::
+template<typename EvalT, typename Traits, typename VelocityType>
+void EnthalpyResid<EvalT,Traits,VelocityType>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(Enthalpy,fm);
   this->utils.setFieldData(EnthalpyGrad,fm);
+  this->utils.setFieldData(EnthalpyHs,fm);
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(Velocity,fm);
@@ -120,26 +128,18 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(Residual,fm);
 }
 
-template<typename EvalT, typename Traits>
-void EnthalpyResid<EvalT,Traits>::
+template<typename EvalT, typename Traits, typename VelocityType>
+void EnthalpyResid<EvalT,Traits,VelocityType>::
 evaluateFields(typename Traits::EvalData d)
 {
+	double scaling = 0.317057705 * pow(10.0,-7.0);
+	double K;
+
     for (std::size_t cell = 0; cell < d.numCells; ++cell)
     	for (std::size_t node = 0; node < numNodes; ++node)
     		Residual(cell,node) = 0.0;
 
-	for (std::size_t cell = 0; cell < d.numCells; ++cell)
-		for (std::size_t node = 0; node < numNodes; ++node)
-			Residual(cell,node) -= geoFluxHeat(cell,node);
-
-    if (needsBasFric)
-    {
-    	for (std::size_t cell = 0; cell < d.numCells; ++cell)
-    		for (std::size_t node = 0; node < numNodes; ++node)
-    			Residual(cell,node) -= basalFricHeat(cell,node);
-	}
-
-    if (needsDiss)
+    if (needsDiss)	// this term is always in no matter the bc at the base is
     {
         for (std::size_t cell = 0; cell < d.numCells; ++cell)
         {
@@ -153,25 +153,47 @@ evaluateFields(typename Traits::EvalData d)
         }
     }
 
+    if (needsBasFric)
+    {
+    	for (std::size_t cell = 0; cell < d.numCells; ++cell)
+    	{
+    		for (std::size_t node = 0; node < numNodes; ++node)
+    		{
+        		for (std::size_t qp = 0; qp < numQPs; ++qp)
+        		{
+        			if ( Enthalpy(cell,qp) < EnthalpyHs(cell,qp) )	// if the base is cold, we consider the basal friction and the geothermal flux, otherwise we impose homogeneous Neumann bc
+        				Residual(cell,node) -= basalFricHeat(cell,qp) - geoFluxHeat(cell,qp);
+        		}
+        	}
+    	}
+    }
+
     for (std::size_t cell = 0; cell < d.numCells; ++cell)
     {
     	for (std::size_t node = 0; node < numNodes; ++node)
     	{
     		for (std::size_t qp = 0; qp < numQPs; ++qp)
-    		{ //mu*du/dx + mu*du/dy + mu*du/dz + vel_x*du/dx + vel_y*du/dy = 0
-				Residual(cell,node) += k*EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
-									   k*EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-									   k*EnthalpyGrad(cell,qp,2)*wGradBF(cell,node,qp,2) +
-									   0.057964172 * Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0)*wBF(cell,node,qp) +
-									   0.057964172 * Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1)*wBF(cell,node,qp);
+    		{
+				if ( Enthalpy(cell,qp) < EnthalpyHs(cell,qp) )
+					K = K_i; //cold ice
+				else
+					K = K_0; //temperate ice
+
+				Residual(cell,node) += K*EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+									   K*EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
+									   K*EnthalpyGrad(cell,qp,2)*wGradBF(cell,node,qp,2) +
+									   scaling * rho * Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0)*wBF(cell,node,qp) +
+									   scaling * rho * Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1)*wBF(cell,node,qp);
     		}
         }
     }
 
     if (haveSUPG)
     {
-    	ParamScalarT vmax = 0.0;
+    	VelocityType vmax = 0.0;
     	ParamScalarT diam = 0.0;
+
+    	double pow10 = pow(10.0,10.0);
 
 		// compute the max norm of the velocity
     	for (std::size_t cell=0; cell < d.numCells; ++cell)
@@ -194,16 +216,15 @@ evaluateFields(typename Traits::EvalData d)
         	}
         	for (std::size_t node=0; node < numNodes; ++node)
         	{
-				Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow(10.0,10.0)))*geoFluxHeatSUPG(cell,node);
 				for (std::size_t qp=0; qp < numQPs; ++qp)
 				{
-	    				Residual(cell,node) += (delta*diam/vmax*(3.154 * pow(10.0,10.0)))*(0.057964172 * Velocity(cell,qp,0) * EnthalpyGrad(cell,qp,0) * (1/(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
-	    														  0.057964172 * Velocity(cell,qp,1) * EnthalpyGrad(cell,qp,1) * (1/(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1));
+					Residual(cell,node) += (delta*diam/vmax*(3.154 * pow10))*(scaling * rho * Velocity(cell,qp,0) * EnthalpyGrad(cell,qp,0) * (1/(3.154 * pow10)) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
+	    			   					  scaling * rho * Velocity(cell,qp,1) * EnthalpyGrad(cell,qp,1) * (1/(3.154 * pow10)) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1));
 				}
       	  	}
     	}
 
-    	// additional contributions of dissipation and basal friction heat
+    	// additional contributions of dissipation, basal friction heat and geothermal flux
     	if (needsDiss && needsBasFric)
     	{
 			for (std::size_t cell=0; cell < d.numCells; ++cell)
@@ -224,14 +245,17 @@ evaluateFields(typename Traits::EvalData d)
 													  coordVec(cell,j,0),coordVec(cell,j,1),coordVec(cell,j,2)));
 					}
 				}
+
 				for (std::size_t node=0; node < numNodes; ++node)
 				{
-					Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow(10.0,10.0)))*basalFricHeatSUPG(cell,node);
 					for (std::size_t qp=0; qp < numQPs; ++qp)
 					{
-							Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow(10.0,10.0)))*
-												   (diss(cell,qp) * (1./(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
-													diss(cell,qp) * (1./(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1));
+						if ( Enthalpy(cell,qp) < EnthalpyHs(cell,qp) )
+							Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow10))*( basalFricHeatSUPG(cell,qp) + geoFluxHeatSUPG(cell,qp) );
+
+						Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow10))*
+											   (diss(cell,qp) * (1./(3.154 * pow10)) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
+												diss(cell,qp) * (1./(3.154 * pow10)) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1));
 					}
 				}
 			}
@@ -256,9 +280,14 @@ evaluateFields(typename Traits::EvalData d)
 													  coordVec(cell,j,0),coordVec(cell,j,1),coordVec(cell,j,2)));
 					}
 				}
+
 				for (std::size_t node=0; node < numNodes; ++node)
 				{
-					Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow(10.0,10.0)))*basalFricHeatSUPG(cell,node);
+					for (std::size_t qp = 0; qp < numQPs; ++qp)
+					{
+						if ( Enthalpy(cell,qp) < EnthalpyHs(cell,qp) )
+							Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow10))*( basalFricHeatSUPG(cell,qp) + geoFluxHeatSUPG(cell,qp) );
+					}
 				}
 			}
     	}
@@ -286,9 +315,9 @@ evaluateFields(typename Traits::EvalData d)
 				{
 					for (std::size_t qp=0; qp < numQPs; ++qp)
 					{
-							Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow(10.0,10.0)))*
-												   (diss(cell,qp) * (1./(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
-													diss(cell,qp) * (1./(3.154 * pow(10.0,10.0))) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1));
+							Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow10))*
+												   (diss(cell,qp) * (1./(3.154 * pow10)) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
+													diss(cell,qp) * (1./(3.154 * pow10)) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1));
 					}
 				}
 			}

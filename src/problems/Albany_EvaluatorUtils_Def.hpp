@@ -678,7 +678,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFInterpolationEvalu
 
     // Output (assumes same Name as input)
 
-    return rcp(new PHAL::DOFInterpolation<EvalT,Traits>(*p,dl));
+    return rcp(new PHAL::DOFInterpolation<EvalT,Traits,ScalarT>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
