@@ -8,12 +8,11 @@
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
     <Parameter name="Extruded Column Coupled in 2D Response" type="bool" value="true"/>
-    <Parameter name="Required Fields"         type="Array(string)" value="{}"/>
+    <Parameter name="Required Fields"         type="Array(string)" value="{temperature}"/>
     <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction,thickness, observed_thickness, thickness_RMS, temperature,surface_height, surface_mass_balance, surface_mass_balance_RMS}"/>
     <Parameter name="Required Surface Fields" type="Array(string)" value="{surface_velocity,surface_velocity_rms}"/>
     <Parameter name="Basal Side Name"         type="string" value="basalside"/>
     <Parameter name="Surface Side Name"       type="string" value="upperside"/>
-    <Parameter name="Layered Data Length"     type="int"    value="11"/>
 
     <ParameterList name="Response Functions">
       <Parameter name="Collection Method" type="string" value="Sum Responses"/>
@@ -99,6 +98,14 @@
     <Parameter name="Interpolate Basal Node Layered Fields" type="Array(string)" value="{temperature}"/>
     <Parameter name="Basal Node Layered Fields Ranks"       type="Array(int)"    value="{1}"/>
     <Parameter name="Use Glimmer Spacing" type="bool" value="true"/>
+    <ParameterList name="Required Fields Info">
+     <Parameter name="Number Of Fields" type="int" value="1"/>
+      <ParameterList name="Field 0">
+        <Parameter name="Field Name" type="string" value="temperature"/>
+        <Parameter name="Field Type" type="string" value="Node Scalar"/>
+        <Parameter name="Field Origin"  type="string" value="Output"/>
+      </ParameterList>
+    </ParameterList>
     <ParameterList name="Side Set Discretizations">
       <Parameter name="Side Sets" type="Array(string)" value="{basalside,upperside}"/>
       <ParameterList name="basalside">
@@ -106,7 +113,7 @@
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
         <Parameter name="Use Serial Mesh" type="bool" value="true"/>
         <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/gis_unstruct_2d.exo"/>
-        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_analysis_two_params.exo"/>
+        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_analysis_two_params_basal.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <ParameterList name="Required Fields Info">
           <Parameter name="Number Of Fields" type="int" value="8"/>
@@ -123,6 +130,7 @@
           <ParameterList name="Field 2">
             <Parameter name="Field Name" type="string" value="temperature"/>
             <Parameter name="Field Type" type="string" value="Node Layered Scalar"/>
+            <Parameter name="Number Of Layers" type="int" value="11"/>
             <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/temperature.ascii"/>
           </ParameterList>
           <ParameterList name="Field 3">
@@ -155,7 +163,7 @@
       <ParameterList name="upperside">
         <Parameter name="Method" type="string" value="SideSetSTK"/>
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
-        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_analysis_two_params.exo"/>
+        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_analysis_two_params_surface.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <ParameterList name="Required Fields Info">
           <Parameter name="Number Of Fields" type="int" value="2"/>
