@@ -639,6 +639,16 @@ ELSE()
   SET(MPAS_HAS_FELIX FALSE)
 ENDIF()
 
+# set optional dependency of mesh on parameters, defaults to Disabled
+OPTION(ENABLE_USE_CISM_FLOW_PARAMETERS "Flag to use the parameters of Glen's law used by Cism" OFF)
+IF (ENABLE_USE_CISM_FLOW_PARAMETERS)
+  ADD_DEFINITIONS(-DUSE_CISM_FLOW_PARAMETERS)
+  MESSAGE("-- USE_CISM_FLOW_PARAMETERS is Enabled, compiling with -DUSE_CISM_FLOW_PARAMETERS. WARNING: many FELIX tests will fail")
+  SET(USE_CISM_FLOW_PARAMETERS TRUE)
+ELSE()
+  SET(USE_CISM_FLOW_PARAMETERS FALSE)
+ENDIF()
+
 # Set optional build of Aeras (Atmosphere Dynamics LDRD), defaults to Disabled
 OPTION(ENABLE_AERAS "Flag to turn on Aeras Source code" OFF)
 OPTION(ENABLE_AERAS_IMPLICIT_HS "Flag to turn on implicit time-int scheme for Aeras hydrostatic Source code" OFF)
