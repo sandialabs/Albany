@@ -22,7 +22,7 @@ macro(do_intel)
     "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -DNDEBUG ${extra_cxx_flags}'"
     "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
     "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lhdf5_hl -lhdf5 -lifcore -lz -Wl,-rpath,${PREFIX_DIR}/lib'"
+    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lifcore -lz -Wl,-rpath,${PREFIX_DIR}/lib'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosIntelInstall"
     "-DTPL_BLAS_LIBRARIES:STRING=${LABLAS_LIBRARIES}"
     "-DTPL_LAPACK_LIBRARIES:STRING=${LABLAS_LIBRARIES}"
@@ -34,6 +34,7 @@ macro(do_intel)
       "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
       "-DTrilinos_ENABLE_EXPORT_MAKEFILES:BOOL=OFF"
       "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
+      "-DZoltan_ENABLE_ULONG_IDS:Bool=ON"
       "${CONFIGURE_OPTIONS}")
   endif (BUILD_SCOREC)
 

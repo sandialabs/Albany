@@ -80,7 +80,7 @@ set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
 set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
 
 set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
-set (PATH $ENV{PATH})
+#set (PATH $ENV{PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
@@ -379,6 +379,7 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_MueLu:BOOL=ON"
   #
   "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
+  "-DMDS_ID_TYPE:STRING='long int'"
   "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=ON"
   "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
   "-DZOLTAN_BUILD_ZFDRIVE:BOOL=OFF"
@@ -407,6 +408,9 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   "-DTPL_Netcdf_PARALLEL:BOOL=ON"
+  "-DTPL_ENABLE_Pnetcdf:STRING=ON"
+  "-DPnetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DPnetcdf_LIBRARY_DIRS=${PREFIX_DIR}/lib"
   #
   "-DTPL_ENABLE_HDF5:BOOL=ON"
   "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
@@ -509,10 +513,13 @@ if (BUILD_TRILINOS)
   set (CONF_OPTS
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${GCC_MPI_DIR}"
+    "-DCMAKE_CXX_COMPILER:STRING=${GCC_MPI_DIR}/bin/mpicxx"
     "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -w -DNDEBUG ${extra_cxx_flags}'"
+    "-DCMAKE_C_COMPILER:STRING=${GCC_MPI_DIR}/bin/mpicc"
     "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
+    "-DCMAKE_Fortran_COMPILER:STRING=${GCC_MPI_DIR}/bin/mpifort"
     "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm'"
+    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     "${COMMON_CONFIGURE_OPTIONS}"
     )
@@ -524,7 +531,7 @@ if (BUILD_TRILINOS)
         "${CONF_OPTS}")
     endif (BUILD_SCOREC)
 
-  do_trilinos(CONF_OPTS "TrilinosBld")
+  do_trilinos("${CONF_OPTS}" "TrilinosBld")
 
 endif (BUILD_TRILINOS)
 
@@ -564,7 +571,7 @@ if (BUILD_ALB32)
       "-DPeridigm_DIR:PATH=${CTEST_BINARY_DIRECTORY}/PeridigmInstall/lib/Peridigm/cmake")
   endif (BUILD_PERIDIGM)
 
-  do_albany(CONF_OPTIONS "Albany32Bit")
+  do_albany("${CONF_OPTIONS}" "Albany32Bit")
 
 endif (BUILD_ALB32)
 
@@ -592,7 +599,7 @@ if (BUILD_ALB64)
       "-DENABLE_GOAL:BOOL=ON")
   endif (BUILD_SCOREC)
 
-  do_albany(CONF_OPTIONS "Albany64Bit")
+  do_albany("${CONF_OPTIONS}" "Albany64Bit")
 
 endif (BUILD_ALB64)
 
@@ -612,20 +619,22 @@ if (BUILD_TRILINOSCLANG)
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/clang"
     #
-    "-DTrilinos_ENABLE_CXX11:BOOL=ON"
+    "-DCMAKE_CXX_COMPILER:STRING=/projects/albany/clang-3.7/bin/mpicxx"
     "-DCMAKE_CXX_FLAGS:STRING='-Os -w -DNDEBUG ${extra_cxx_flags}'"
+    "-DCMAKE_C_COMPILER:STRING=/projects/albany/clang-3.7/bin/mpicc"
     "-DCMAKE_C_FLAGS:STRING='-Os -w -DNDEBUG'"
+    "-DCMAKE_Fortran_COMPILER:STRING=/projects/albany/clang-3.7/bin/mpifort"
     "-DCMAKE_Fortran_FLAGS:STRING='-Os -w -DNDEBUG'"
     "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
     "-DMDS_ID_TYPE:STRING='long long int'"
     "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm'"
+    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallC11"
     "-DBUILD_SHARED_LIBS:BOOL=OFF"
     "-DTPL_ENABLE_SuperLU:BOOL=OFF"
     "-DAmesos2_ENABLE_KLU2:BOOL=ON")
 
-  do_trilinos(CONFIGURE_OPTIONS "TrilinosClangBld")
+  do_trilinos("${CONFIGURE_OPTIONS}" "TrilinosClangBld")
 
 endif (BUILD_TRILINOSCLANG)
 
@@ -655,7 +664,7 @@ if (BUILD_ALB64CLANG)
       "-DENABLE_GOAL:BOOL=ON")
   endif (BUILD_SCOREC)
 
-  do_albany(CONF_OPTIONS "Albany64BitClang")
+  do_albany("${CONF_OPTIONS}" "Albany64BitClang")
 
 endif (BUILD_ALB64CLANG)
 
@@ -684,7 +693,7 @@ if (BUILD_ALBFUNCTOR)
       "-DENABLE_GOAL:BOOL=ON")
   endif (BUILD_SCOREC)
 
-  do_albany(CONF_OPTIONS "AlbanyFunctorDev")
+  do_albany("${CONF_OPTIONS}" "AlbanyFunctorDev")
 
 endif (BUILD_ALBFUNCTOR)
 

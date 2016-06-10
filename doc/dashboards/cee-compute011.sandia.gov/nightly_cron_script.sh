@@ -21,6 +21,9 @@ export LD_LIBRARY_PATH=/sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.21
 if [ ! -d "$TEST_DIR" ]; then
   /bin/mkdir $TEST_DIR
 fi
+if [ ! -d "$TEST_DIR/build" ]; then
+  /bin/mkdir $TEST_DIR/build
+fi
 
 cd $TEST_DIR
 
@@ -40,18 +43,6 @@ LOG_FILE=$TEST_DIR/nightly_log_$BUILD_OPT.txt
 #done
 
 echo "Date and time is $now" > $LOG_FILE
-
-if [ ! -d "$TEST_DIR/buildAlbany" ]; then
-  /bin/mkdir $TEST_DIR/buildAlbany
-fi
-if [ ! -d "$TEST_DIR/buildAlbany/nightly" ]; then
-  /bin/mkdir $TEST_DIR/buildAlbany/nightly
-fi
-if [ ! -d "$TEST_DIR/buildAlbany/nightly/Albany" ]; then
-  /bin/mkdir $TEST_DIR/buildAlbany/nightly/Albany
-else
-  /bin/rm -rf $TEST_DIR/buildAlbany/nightly/Albany/*
-fi
 
 eval "env BUILD_OPTION=$BUILD_OPT DO_SUBMIT=$SUBMIT_RESULTS TEST_TYPE=$THE_TEST_TYPE TEST_DIRECTORY=$TEST_DIR SCRIPT_DIRECTORY=$SCRIPT_DIR /projects/albany/bin/ctest -VV -S /ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011.sandia.gov/ctest_nightly.cmake" > $LOG_FILE 2>&1
 
