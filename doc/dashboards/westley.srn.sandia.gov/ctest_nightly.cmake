@@ -27,14 +27,14 @@ set( CTEST_TEST_TIMEOUT 1200)
 
 SET(PREFIX_DIR /home/gahanse)
 SET(CMAKE_SW_INSTALL_DIR /usr/local)
-SET(MPI_BASE_DIR /opt/intel/compilers_and_libraries_2016.1.150/linux/mpi/intel64)
+SET(MPI_BASE_DIR /opt/intel/compilers_and_libraries/linux/mpi/intel64)
 SET(BOOST_DIR /usr/local/mic/boost-1.58.0)
 SET(NETCDF /usr/local/mic)
 SET(HDFDIR /usr/local/mic)
 SET(ZLIB_DIR /usr/local/mic)
 SET(PARMETISDIR /usr/local/mic)
 SET(HWLOC_PATH /usr/local/mic)
-SET(INTEL_DIR /opt/intel/compilers_and_libraries_2016.1.150/linux/mkl/lib/mic)
+SET(INTEL_DIR /opt/intel/compilers_and_libraries/linux/mkl/lib/intel64_lin_mic)
 
 SET (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 SET (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
@@ -247,8 +247,8 @@ SET(CONFIGURE_OPTIONS
   -DCMAKE_CXX_COMPILER:FILEPATH=${MPI_BASE_DIR}/bin/mpiicpc
   -DCMAKE_C_COMPILER:FILEPATH=${MPI_BASE_DIR}/bin/mpiicc
   -DCMAKE_Fortran_COMPILER:FILEPATH=${MPI_BASE_DIR}/bin/mpiifort
-  -DCMAKE_AR:FILEPATH=/opt/intel/compilers_and_libraries_2016.1.150/linux/bin/intel64_mic/xiar
-  -DCMAKE_LINKER:FILEPATH=/opt/intel/compilers_and_libraries_2016.1.150/linux/bin/intel64_mic/xild
+  -DCMAKE_AR:FILEPATH=/opt/intel/compilers_and_libraries_2016.3.210/linux/bin/intel64_mic/xiar
+  -DCMAKE_LINKER:FILEPATH=/opt/intel/compilers_and_libraries_2016.3.210/linux/bin/intel64_mic/xild
   -DTrilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF
   "-DCMAKE_CXX_FLAGS:STRING='-O3 -w -mmic -mkl=sequential -mt_mpi -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX -DPREC_TIMER -restrict -fasm-blocks -DDEVICE=1wq  -fopenmp'"
   "-DCMAKE_C_FLAGS:STRING='-O3 -w -mmic -mkl=sequential -mt_mpi -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX -DPREC_TIMER -restrict -fasm-blocks -DDEVICE=1wq  -fopenmp'"
@@ -297,11 +297,14 @@ SET(CONFIGURE_OPTIONS
   -DTPL_ENABLE_Netcdf:STRING=ON
   -DTPL_Netcdf_PARALLEL:BOOL=ON
   -DNetcdf_INCLUDE_DIRS:PATH=${NETCDF}/include
-  "-DTPL_Netcdf_LIBRARIES:FILEPATH='${NETCDF}/lib/libnetcdf.a\\;${HDFDIR}/lib/libhdf5_hl.a\\;${HDFDIR}/lib/libhdf5.a\\;${ZLIB_DIR}/lib/libz.a'"
+  "-DTPL_Netcdf_LIBRARIES:FILEPATH='${NETCDF}/lib/libnetcdf.a\\;${NETCDF}/lib/libpnetcdf.a\\;${HDFDIR}/lib/libhdf5_hl.a\\;${HDFDIR}/lib/libhdf5.a\\;${ZLIB_DIR}/lib/libz.a'"
+  -DTPL_ENABLE_Pnetcdf:STRING=ON
+  -DPnetcdf_INCLUDE_DIRS:PATH=${NETCDF}/include \
+  -DPnetcdf_LIBRARY_DIRS:PATH=${NETCDF}/lib \
 #
   -DTPL_ENABLE_HDF5:STRING=ON
   -DHDF5_INCLUDE_DIRS:PATH=${HDFDIR}/include
-  "-DTPL_HDF5_LIBRARIES:FILEPATH='${NETCDF}/lib/libnetcdf.a\\;${HDFDIR}/lib/libhdf5_hl.a\\;${HDFDIR}/lib/libhdf5.a\\;${ZLIB_DIR}/lib/libz.a'"
+  "-DTPL_HDF5_LIBRARIES:FILEPATH='${NETCDF}/lib/libnetcdf.a\\;${NETCDF}/lib/libpnetcdf.a\\;${HDFDIR}/lib/libhdf5_hl.a\\;${HDFDIR}/lib/libhdf5.a\\;${ZLIB_DIR}/lib/libz.a'"
 #
   -DTPL_ENABLE_Zlib:STRING=ON
   -DZlib_INCLUDE_DIRS:PATH=${ZLIB_DIR}/include
