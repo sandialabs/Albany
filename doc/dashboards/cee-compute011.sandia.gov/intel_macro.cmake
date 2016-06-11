@@ -1,17 +1,18 @@
-macro(do_intel)
+macro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)
 
 # Intel
-  message ("ctest state: BUILD_INTEL_TRILINOS")
-  set_property (GLOBAL PROPERTY SubProject TrilinosIntel)
-  set_property (GLOBAL PROPERTY Label TrilinosIntel)
+  message ("ctest state: BUILD_${BTYPE}")
+  set_property (GLOBAL PROPERTY SubProject ${BTYPE})
+  set_property (GLOBAL PROPERTY Label ${BTYPE})
 
-  set (ENV{LM_LICENSE_FILE} 7500@sitelicense.sandia.gov)
-  set (ENV{PATH}
-    ${INTEL_DIR}/compilers_and_libraries/linux/bin/intel64:${PATH})
-  set (ENV{LD_LIBRARY_PATH}
-    ${INTEL_DIR}/compilers_and_libraries/linux/lib/intel64:${INTEL_MPI_DIR}/lib:${INITIAL_LD_LIBRARY_PATH})
+#  set (ENV{LM_LICENSE_FILE} 7500@sitelicense.sandia.gov)
+#  set (ENV{PATH}
+#    ${INTEL_DIR}/compilers_and_libraries/linux/bin/intel64:${PATH})
+#  set (ENV{LD_LIBRARY_PATH}
+#    ${INTEL_DIR}/compilers_and_libraries/linux/lib/intel64:${INTEL_MPI_DIR}/lib:${INITIAL_LD_LIBRARY_PATH})
 
   set (LABLAS_LIBRARIES "-L${MKL_PATH}/mkl/lib/intel64 -Wl,--start-group ${MKL_PATH}/mkl/lib/intel64/libmkl_intel_lp64.a ${MKL_PATH}/mkl/lib/intel64/libmkl_core.a ${MKL_PATH}/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group")
+
   set (CONFIGURE_OPTIONS
     "${COMMON_CONFIGURE_OPTIONS}"
     "-DTPL_ENABLE_SuperLU:STRING=ON"
@@ -19,10 +20,15 @@ macro(do_intel)
     "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${INTEL_MPI_DIR}"
-    "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -DNDEBUG ${extra_cxx_flags}'"
-    "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
-    "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lifcore -lz -Wl,-rpath,${PREFIX_DIR}/lib'"
+    "-DCMAKE_CXX_COMPILER:STRING=${INTEL_MPI_DIR}/bin64/mpiicpc"
+    "-DCMAKE_CXX_FLAGS:STRING='-axAVX -O3 -DNDEBUG ${extra_cxx_flags}'"
+    "-DCMAKE_C_COMPILER:STRING=${INTEL_MPI_DIR}/bin64/mpiicc"
+    "-DCMAKE_C_FLAGS:STRING='-axAVX -O3 -DNDEBUG'"
+    "-DCMAKE_Fortran_COMPILER:STRING=${INTEL_MPI_DIR}/bin64/mpiifort"
+    "-DCMAKE_Fortran_FLAGS:STRING='-axAVX -O3 -DNDEBUG'"
+    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lifcore -lz -Wl,-rpath,${PREFIX_DIR}/lib:${INTEL_DIR}/lib/intel64'"
+    "-DCMAKE_AR:FILEPATH=${INTEL_DIR}/bin/intel64/xiar"
+    "-DCMAKE_LINKER:FILEPATH=${INTEL_DIR}/linux/bin/intel64/xild"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosIntelInstall"
     "-DTPL_BLAS_LIBRARIES:STRING=${LABLAS_LIBRARIES}"
     "-DTPL_LAPACK_LIBRARIES:STRING=${LABLAS_LIBRARIES}"
@@ -38,12 +44,12 @@ macro(do_intel)
       "${CONFIGURE_OPTIONS}")
   endif (BUILD_SCOREC)
 
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TrilinosIntel")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TrilinosIntel)
-  endif (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TrilinosIntel")
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/${BTYPE}")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/${BTYPE})
+  endif (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/${BTYPE}")
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/TrilinosIntel"
+    BUILD "${CTEST_BINARY_DIRECTORY}/${BTYPE}"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR)
@@ -68,7 +74,7 @@ macro(do_intel)
     message ("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
     ctest_build (
-      BUILD "${CTEST_BINARY_DIRECTORY}/TrilinosIntel"
+      BUILD "${CTEST_BINARY_DIRECTORY}/${BTYPE}"
       RETURN_VALUE HAD_ERROR
       NUMBER_ERRORS BUILD_LIBS_NUM_ERRORS
       APPEND)
@@ -101,11 +107,11 @@ if (BUILD_INTEL_ALBANY)
   # Copy from the Intel Trilinos block. Not actually needed here in practice,
   # but if I do debugging on this script, it's nice to be able to run just this
   # block without the Trilinos one.
-  set (ENV{LM_LICENSE_FILE} 7500@sitelicense.sandia.gov)
-  set (ENV{PATH}
-    ${INTEL_DIR}/compilers_and_libraries/linux/bin/intel64:${PATH})
-  set (ENV{LD_LIBRARY_PATH}
-    ${INTEL_DIR}/compilers_and_libraries/linux/lib/intel64:${INTEL_MPI_DIR}/lib:${INITIAL_LD_LIBRARY_PATH})
+#  set (ENV{LM_LICENSE_FILE} 7500@sitelicense.sandia.gov)
+#  set (ENV{PATH}
+#    ${INTEL_DIR}/compilers_and_libraries/linux/bin/intel64:${PATH})
+#  set (ENV{LD_LIBRARY_PATH}
+#    ${INTEL_DIR}/compilers_and_libraries/linux/lib/intel64:${INTEL_MPI_DIR}/lib:${INITIAL_LD_LIBRARY_PATH})
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosIntelInstall"
@@ -209,4 +215,4 @@ endif (BUILD_INTEL_ALBANY)
     endif (CTEST_DO_SUBMIT)
   endif (BUILD_INTEL_ALBANY)
 
-endmacro(do_intel)
+endmacro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)

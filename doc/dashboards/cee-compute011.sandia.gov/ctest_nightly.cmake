@@ -54,19 +54,19 @@ else ()
   # around with the settings in this block.
 
   # What to build and test
-  set (DOWNLOAD TRUE)
+  set (DOWNLOAD FALSE)
   # See if we can get away with this for speed, at least until we get onto a
   # machine that can support a lengthy nightly.
-  set (CLEAN_BUILD TRUE)
+  set (CLEAN_BUILD FALSE)
   set (BUILD_SCOREC TRUE)
-  set (BUILD_TRILINOS TRUE)
-  set (BUILD_PERIDIGM TRUE)
-  set (BUILD_ALB32 TRUE)
-  set (BUILD_ALB64 TRUE)
-  set (BUILD_TRILINOSCLANG TRUE)
-  set (BUILD_ALB64CLANG TRUE)
-  set (BUILD_ALBFUNCTOR TRUE)
-  set (BUILD_INTEL_TRILINOS TRUE)
+  set (BUILD_TRILINOS FALSE)
+  set (BUILD_PERIDIGM FALSE)
+  set (BUILD_ALB32 FALSE)
+  set (BUILD_ALB64 FALSE)
+  set (BUILD_TRILINOSCLANG FALSE)
+  set (BUILD_ALB64CLANG FALSE)
+  set (BUILD_ALBFUNCTOR FALSE)
+  set (BUILD_INTEL_TRILINOS FALSE)
   set (BUILD_INTEL_ALBANY TRUE)
 endif ()
 
@@ -89,12 +89,13 @@ set (CTEST_BINARY_NAME build)
 
 set (PREFIX_DIR /projects/albany)
 set (GCC_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.8.8-gcc-5.2.0-RHEL6)
-set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210)
+set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210/compilers_and_libraries/linux)
 
 #set (BOOST_ROOT /projects/albany/nightly)
 set (BOOST_ROOT /projects/albany)
 
-set (INTEL_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.8.8-intel-16.0-2016.3.210-RHEL6)
+#set (INTEL_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.8.8-intel-16.0-2016.3.210-RHEL6)
+set (INTEL_MPI_DIR /sierra/sntools/SDK/mpi/intel/5.0)
 #set (MKL_PATH /sierra/sntools/SDK/compilers/intel)
 set (MKL_PATH /sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210)
 
@@ -429,8 +430,8 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
   "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
   #
-  "-DTPL_BLAS_LIBRARIES:STRING='-L${INTEL_DIR}/mkl/lib/intel64 -lmkl_intel_lp64 -lmkl_blas95_lp64 -lmkl_core -lmkl_sequential'"
-  "-DTPL_LAPACK_LIBRARIES:STRING='-L${INTEL_DIR}/mkl/lib/intel64 -lmkl_lapack95_lp64'"
+  "-DTPL_BLAS_LIBRARIES:STRING='-L${MKL_PATH}/mkl/lib/intel64 -lmkl_intel_lp64 -lmkl_blas95_lp64 -lmkl_core -lmkl_sequential'"
+  "-DTPL_LAPACK_LIBRARIES:STRING='-L${MKL_PATH}/mkl/lib/intel64 -lmkl_lapack95_lp64'"
   #
   "-DDART_TESTING_TIMEOUT:STRING=600"
   "-DTrilinos_ENABLE_ThreadPool:BOOL=ON"
@@ -531,7 +532,8 @@ if (BUILD_TRILINOS)
         "${CONF_OPTS}")
     endif (BUILD_SCOREC)
 
-  do_trilinos("${CONF_OPTS}" "TrilinosBld")
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
+  do_trilinos("${CONF_OPTS}" "Trilinos")
 
 endif (BUILD_TRILINOS)
 
@@ -571,6 +573,7 @@ if (BUILD_ALB32)
       "-DPeridigm_DIR:PATH=${CTEST_BINARY_DIRECTORY}/PeridigmInstall/lib/Peridigm/cmake")
   endif (BUILD_PERIDIGM)
 
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
   do_albany("${CONF_OPTIONS}" "Albany32Bit")
 
 endif (BUILD_ALB32)
@@ -599,6 +602,7 @@ if (BUILD_ALB64)
       "-DENABLE_GOAL:BOOL=ON")
   endif (BUILD_SCOREC)
 
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
   do_albany("${CONF_OPTIONS}" "Albany64Bit")
 
 endif (BUILD_ALB64)
@@ -634,7 +638,8 @@ if (BUILD_TRILINOSCLANG)
     "-DTPL_ENABLE_SuperLU:BOOL=OFF"
     "-DAmesos2_ENABLE_KLU2:BOOL=ON")
 
-  do_trilinos("${CONFIGURE_OPTIONS}" "TrilinosClangBld")
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
+  do_trilinos("${CONFIGURE_OPTIONS}" "TrilinosClang")
 
 endif (BUILD_TRILINOSCLANG)
 
@@ -664,6 +669,7 @@ if (BUILD_ALB64CLANG)
       "-DENABLE_GOAL:BOOL=ON")
   endif (BUILD_SCOREC)
 
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
   do_albany("${CONF_OPTIONS}" "Albany64BitClang")
 
 endif (BUILD_ALB64CLANG)
@@ -693,11 +699,15 @@ if (BUILD_ALBFUNCTOR)
       "-DENABLE_GOAL:BOOL=ON")
   endif (BUILD_SCOREC)
 
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
   do_albany("${CONF_OPTIONS}" "AlbanyFunctorDev")
 
 endif (BUILD_ALBFUNCTOR)
 
-if (BUILD_INTEL_TRILINOS)
+if (BUILD_INTEL_TRILINOS OR BUILD_INTEL_ALBANY)
   INCLUDE(${CTEST_SCRIPT_DIRECTORY}/intel_macro.cmake)
-   do_intel()
-endif (BUILD_INTEL_TRILINOS)
+
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
+   do_intel("${COMMON_CONFIGURE_OPTIONS}" "TrilinosIntel")
+
+endif (BUILD_INTEL_TRILINOS OR BUILD_INTEL_ALBANY)
