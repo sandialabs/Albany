@@ -335,7 +335,23 @@ Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::Parameter
     return Teuchos::rcp(new Albany::AsciiSTKMeshStruct(disc_params, comm));
   }
   else if(method == "Ascii2D") {
-    return Teuchos::rcp(new Albany::AsciiSTKMesh2D(disc_params, comm));
+      return Teuchos::rcp(new Albany::AsciiSTKMesh2D(disc_params, comm));
+  }
+  else if(method == "Hacky Ascii2D") {
+      //FixME very hacky! needed for printing 2d mesh
+      Teuchos::RCP<Albany::GenericSTKMeshStruct> meshStruct2D;
+      meshStruct2D = Teuchos::rcp(new Albany::AsciiSTKMesh2D(disc_params, comm));
+      Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
+	  Albany::AbstractFieldContainer::FieldContainerRequirements req;
+	  int neq=2;
+      meshStruct2D->setFieldAndBulkData(comm, disc_params, neq, req,
+                                        sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
+      Ioss::Init::Initializer io;
+      Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data =Teuchos::rcp(new stk::io::StkMeshIoBroker(MPI_COMM_WORLD));
+      mesh_data->set_bulk_data(*meshStruct2D->bulkData);
+      const std::string& output_filename = disc_params->get("Exodus Output File Name", "ice_mesh.2d.exo");
+      size_t idx = mesh_data->create_output_mesh(output_filename, stk::io::WRITE_RESULTS);
+      mesh_data->process_output_request(idx, 0.0);
   }
   else if(method == "Gmsh") {
     return Teuchos::rcp(new Albany::GmshSTKMeshStruct(disc_params, comm));
