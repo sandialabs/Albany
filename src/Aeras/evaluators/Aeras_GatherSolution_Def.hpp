@@ -240,8 +240,8 @@ evaluateFields(typename Traits::EvalData workset)
   }
 #else
   for (int i =0; i<numFields;i++) {
-    val_kokkosvec[i]=this->val[i].get_kokkos_view(); 
-    val_dot_kokkosvec[i]=this->val_dot[i].get_kokkos_view(); 
+    val_kokkosvec[i]=this->val[i].get_view(); 
+    val_dot_kokkosvec[i]=this->val_dot[i].get_view(); 
   }
   d_val = val_kokkosvec.template view<executionSpace>(); 
   d_val_dot = val_dot_kokkosvec.template view<executionSpace>(); 
@@ -487,13 +487,13 @@ evaluateFields(typename Traits::EvalData workset)
  ignore_residual=workset.ignore_residual;
 
  for (int i =0; i<numFields;i++)
-   val_kokkosjac[i]=this->val[i].get_kokkos_view();
+   val_kokkosjac[i]=this->val[i].get_view();
  d_val=val_kokkosjac.template view<executionSpace>();
  Kokkos::parallel_for(GatherSolution_Policy(0,workset.numCells),*this);
 
  if (workset.transientTerms) { 
    for (int i =0; i<numFields;i++)
-     val_dot_kokkosjac[i]=this->val_dot[i].get_kokkos_view();
+     val_dot_kokkosjac[i]=this->val_dot[i].get_view();
    d_val_dot=val_dot_kokkosjac.template view<executionSpace>();
    Kokkos::parallel_for(GatherSolution_transientTerms_Policy(0,workset.numCells),*this);
  }

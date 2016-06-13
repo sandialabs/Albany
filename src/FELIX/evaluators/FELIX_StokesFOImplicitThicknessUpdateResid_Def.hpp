@@ -60,7 +60,7 @@ StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT  
   std::vector<PHX::index_size_type> ddims_;
   //IKT, 5/31/16: A better thing to do than the code below would be the following 
-  //int deriv_dims = PHAL::getDerivativeDimensionsFromView(dH.get_kokkos_view());
+  //int deriv_dims = PHAL::getDerivativeDimensionsFromView(dH.get_view());
   //ddims_.push_back(deriv_dims).  
   //The issue is getDerivativeDimensionsFromView returns 0 for this problem causing the code 
   //to crash.  Should be looked into. 
