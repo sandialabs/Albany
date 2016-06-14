@@ -76,7 +76,7 @@ namespace LCM
     rl(2,2) = cos(Phi_);
 
     // Set elastic tensor in lattice frame
-    Intrepid2::Tensor4<RealType, EC::MAX_DIM> C;
+    Intrepid2::Tensor4<RealType, VE::MAX_DIM> C;
     C.set_dimension(num_dims_);
     // Initialize with zeros
     C.fill(Intrepid2::ZEROS);

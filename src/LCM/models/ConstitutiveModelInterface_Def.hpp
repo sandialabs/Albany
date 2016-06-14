@@ -27,6 +27,7 @@
 #include "LinearElasticModel.hpp"
 #include "LinearHMCModel.hpp"
 #include "ElasticCrystalModel.hpp"
+#include "ViscoElasticModel.hpp"
 #include "J2HMCModel.hpp"
 #include "LinearPiezoModel.hpp"
 #ifndef KOKKOS_HAVE_CUDA
