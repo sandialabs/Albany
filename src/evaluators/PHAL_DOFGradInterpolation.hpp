@@ -22,7 +22,7 @@ namespace PHAL {
 
 */
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename Type>
 class DOFGradInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
  			     public PHX::EvaluatorDerived<EvalT, Traits>  {
 
@@ -38,7 +38,7 @@ public:
 
 private:
 
-  typedef typename EvalT::ScalarT ScalarT;
+  typedef Type ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
@@ -82,7 +82,7 @@ public:
 };
 
 template<typename Traits>
-class DOFGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>
+class DOFGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits, FadType>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits>  {
 

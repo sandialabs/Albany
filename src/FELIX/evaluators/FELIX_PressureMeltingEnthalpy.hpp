@@ -41,12 +41,12 @@ public:
 
 private:
   // Input:
-  PHX::MDField<Type,Cell,QuadPoint> meltingTemp;
+  PHX::MDField<Type,Cell,Node> meltingTemp;
 
   // Output:
-  PHX::MDField<Type,Cell,QuadPoint> enthalpyHs;
+  PHX::MDField<Type,Cell,Node> enthalpyHs;
 
-  int numQPs;
+  int numNodes;
 
   double c_i;
   double T0;

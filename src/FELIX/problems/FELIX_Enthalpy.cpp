@@ -20,7 +20,8 @@ Enthalpy(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 		 const Teuchos::RCP<ParamLib>& paramLib_,
 		 const int numDim_): Albany::AbstractProblem(params_, paramLib_, numDim_), numDim(numDim_)
 {
-	neq = 1;
+	this->setNumEquations(2);
+
 	basalSideName = params->isParameter("Basal Side Name") ? params->get<std::string>("Basal Side Name") : "INVALID";
 	basalEBName = "INVALID";
 	Teuchos::ParameterList SUPG_list = params->get<Teuchos::ParameterList>("SUPG Settings");
@@ -94,9 +95,9 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
 		  const Albany::MeshSpecsStruct& basalMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(basalSideName)[0];
 
 		  // Building also basal side structures
-		  const CellTopologyData * const side_top = &basalMeshSpecs.ctd;
-		  basalSideBasis = Albany::getIntrepid2Basis(*side_top);
-		  basalSideType = rcp(new shards::CellTopology (side_top));
+		  const CellTopologyData * const side_bottom = &basalMeshSpecs.ctd;
+		  basalSideBasis = Albany::getIntrepid2Basis(*side_bottom);
+		  basalSideType = rcp(new shards::CellTopology (side_bottom));
 
 		  basalEBName   = basalMeshSpecs.ebName;
 		  basalCubature = cubFactory.create(*basalSideType, basalMeshSpecs.cubatureDegree);
@@ -106,7 +107,11 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
 		  numBasalSideQPs      = basalCubature->getNumPoints();
 
 	      dl_basal = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,numBasalSideQPs,numDim-1,numDim,numCellSides,vecDim));
-		  dl->side_layouts[basalSideName] = dl_basal;
+
+	      // layout used to compute the gradient of Tm at the base
+	      dl_basal_temp = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,numBasalSideQPs,numDim,numDim,numCellSides,vecDim));
+
+	      dl->side_layouts[basalSideName] = dl_basal;
 	  }
 
 #ifdef OUTPUT_TO_SCREEN
@@ -152,7 +157,7 @@ void FELIX::Enthalpy::
 constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<std::string> dirichletNames(neq);
+   std::vector<std::string> dirichletNames(neq-1);
 
    std::stringstream s;
    s << "Enth";

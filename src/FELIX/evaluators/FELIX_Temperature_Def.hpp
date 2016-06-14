@@ -16,15 +16,15 @@ namespace FELIX
 template<typename EvalT, typename Traits, typename Type>
 Temperature<EvalT,Traits,Type>::
 Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
-	meltingTemp    (p.get<std::string> ("Melting Temperature QP Variable Name"), dl->qp_scalar),
-	enthalpyHs	   (p.get<std::string> ("Enthalpy Hs QP Variable Name"), dl->qp_scalar),
-	enthalpy	   (p.get<std::string> ("Enthalpy QP Variable Name"), dl->qp_scalar),
-	temperature	   (p.get<std::string> ("Temperature QP Variable Name"), dl->qp_scalar)
+	meltingTemp    (p.get<std::string> ("Melting Temperature Variable Name"), dl->node_scalar),
+	enthalpyHs	   (p.get<std::string> ("Enthalpy Hs Variable Name"), dl->node_scalar),
+	enthalpy	   (p.get<std::string> ("Enthalpy Variable Name"), dl->node_scalar),
+	temperature	   (p.get<std::string> ("Temperature Variable Name"), dl->node_scalar)
 {
 	std::vector<PHX::Device::size_type> dims;
 	dl->node_qp_vector->dimensions(dims);
 
-	numQPs = dims[2];
+	numNodes = dims[1];
 
 	this->addDependentField(meltingTemp);
 	this->addDependentField(enthalpyHs);
@@ -57,12 +57,12 @@ evaluateFields(typename Traits::EvalData d)
 {
     for (std::size_t cell = 0; cell < d.numCells; ++cell)
     {
-   		for (std::size_t qp = 0; qp < numQPs; ++qp)
+   		for (std::size_t node = 0; node < numNodes; ++node)
    		{
-   			if ( enthalpy(cell,qp) < enthalpyHs(cell,qp) )
-   				temperature(cell,qp) = enthalpy(cell,qp)/c_i + T0;
+   			if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
+   				temperature(cell,node) = enthalpy(cell,node)/c_i + T0;
    			else
-   				temperature(cell,qp) = meltingTemp(cell,qp);
+   				temperature(cell,node) = meltingTemp(cell,node);
    		}
    	}
 }

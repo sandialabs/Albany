@@ -41,12 +41,12 @@ public:
 
 private:
   // Input:
-  PHX::MDField<Type,Cell,QuadPoint> pressure;
+  PHX::MDField<Type,Cell,Node> pressure;
 
   // Output:
-  PHX::MDField<Type,Cell,QuadPoint> meltingTemp;
+  PHX::MDField<Type,Cell,Node> meltingTemp;
 
-  int numQPs;
+  int numNodes;
 
   double beta;
 };

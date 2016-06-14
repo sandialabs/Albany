@@ -34,7 +34,6 @@ class Dissipation : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 	private:
 		typedef typename EvalT::ScalarT ScalarT;
-		typedef typename EvalT::MeshScalarT MeshScalarT;
 		typedef typename EvalT::ParamScalarT ParamScalarT;
 
 		// Input:

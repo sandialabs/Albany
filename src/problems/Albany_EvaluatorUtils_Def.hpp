@@ -585,7 +585,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFGradInterpolationE
     // Output (assumes same Name as input)
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
-    return rcp(new PHAL::DOFGradInterpolation<EvalT,Traits>(*p,dl));
+    return rcp(new PHAL::DOFGradInterpolation<EvalT,Traits,ScalarT>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>

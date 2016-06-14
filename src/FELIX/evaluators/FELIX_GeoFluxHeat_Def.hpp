@@ -23,8 +23,6 @@ GeoFluxHeat(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 
 	Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
-	//Teuchos::ParameterList* Problem_list = p.get<Teuchos::ParameterList*>("Problem");
-	//isGeoFluxConst = SUPG_list->get("Constant Geotermal Flux", true);
 	isGeoFluxConst = p.get<bool>("Constant Geotermal Flux");
 
 	BF        = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);

@@ -37,6 +37,7 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 		bool haveSUPG;
 		double delta;
+		double alpha;
 
 		// Input:
 		PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
@@ -49,10 +50,11 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		PHX::MDField<VelocityType,Cell,QuadPoint,VecDim> Velocity;
         PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec;
 		PHX::MDField<ScalarT,Cell,QuadPoint> diss;
-		PHX::MDField<ParamScalarT,Cell,QuadPoint> basalFricHeat;
-		PHX::MDField<ParamScalarT,Cell,QuadPoint> basalFricHeatSUPG;
-		PHX::MDField<ParamScalarT,Cell,QuadPoint> geoFluxHeat;
-		PHX::MDField<ParamScalarT,Cell,QuadPoint> geoFluxHeatSUPG;
+		PHX::MDField<ScalarT,Cell,QuadPoint> basalFricHeat;
+		PHX::MDField<ScalarT,Cell,QuadPoint> basalFricHeatSUPG;
+		PHX::MDField<ScalarT,Cell,QuadPoint> geoFluxHeat;
+		PHX::MDField<ScalarT,Cell,QuadPoint> geoFluxHeatSUPG;
+		PHX::MDField<ParamScalarT,Cell,QuadPoint,Dim> meltTempGrad;
 
 		// Output:
 		PHX::MDField<ScalarT,Cell,Node> Residual;

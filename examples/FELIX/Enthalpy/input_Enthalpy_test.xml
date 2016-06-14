@@ -29,7 +29,8 @@
       <Parameter name="Reference Temperature" type="double" value="240.0"/>
       <Parameter name="Clausius-Clapeyron coefficient" type="double" value="0.000000079"/>
       <Parameter name="Latent heat of fusion" type="double" value="334000"/>
-    </ParameterList>
+      <Parameter name="alpha" type="double" value="0.0000001"/> 
+   </ParameterList>
     <ParameterList name="SUPG Settings">
        <Parameter name="Have SUPG Stabilization" type="bool" value="true"/>
        <Parameter name="Parameter Delta" type="double" value="0.75"/>
@@ -54,6 +55,8 @@
     <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_enthalpy_NEW.exo"/>
     <Parameter name="Exodus Input File Name" type="string" value="gis_unstructWE.exo"/>
     <Parameter name="Restart Index" type="int" value="1"/>
+    <!--Parameter name="Interleaved Ordering" type="bool" value="false"/>
+    <Parameter name="Columnwise Ordering" type="bool" value="false"/-->
     <ParameterList name="Side Set Discretizations">
       <Parameter name="Side Sets" type="Array(string)" value="{basalside}"/>
       <ParameterList name="basalside">
@@ -215,7 +218,8 @@
     <Parameter name="Full Step" type="double" value="1"/>
   </ParameterList>
   <Parameter name="Method" type="string" value="Full Step"/>
-      </ParameterList>
+  <Parameter name="Method" type="string" value="Backtrack"/>
+    </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
   <Parameter name="Output Precision" type="int" value="3"/>
@@ -238,3 +242,8 @@
     </ParameterList>
   </ParameterList>
 </ParameterList>
+
+ <!--ParameterList name="Debug Output">
+    <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
+    <Parameter name="Write Solution to MatrixMarket" type="bool" value="true"/>
+  </ParameterList-->

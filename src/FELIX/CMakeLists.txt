@@ -48,6 +48,7 @@
        evaluators/FELIX_Viscosity.cpp
        evaluators/FELIX_ViscosityFO.cpp
        evaluators/FELIX_ViscosityL1L2.cpp
+       evaluators/FELIX_w_ZResid.cpp
        problems/FELIX_Elliptic2D.cpp
        problems/FELIX_Enthalpy.cpp
        problems/FELIX_Hydrology.cpp
@@ -164,6 +165,8 @@ ENDIF()
        evaluators/FELIX_ViscosityFO_Def.hpp
        evaluators/FELIX_ViscosityL1L2.hpp
        evaluators/FELIX_ViscosityL1L2_Def.hpp
+       evaluators/FELIX_w_ZResid.hpp
+       evaluators/FELIX_w_ZResid_Def.hpp
        problems/FELIX_Elliptic2D.hpp
        problems/FELIX_Enthalpy.hpp
        problems/FELIX_Hydrology.hpp

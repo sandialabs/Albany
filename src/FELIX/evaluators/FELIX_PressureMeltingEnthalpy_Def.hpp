@@ -16,13 +16,13 @@ namespace FELIX
 template<typename EvalT, typename Traits, typename Type>
 PressureMeltingEnthalpy<EvalT,Traits,Type>::
 PressureMeltingEnthalpy(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
-	meltingTemp    (p.get<std::string> ("Melting Temperature QP Variable Name"), dl->qp_scalar),
-	enthalpyHs	   (p.get<std::string> ("Enthalpy Hs QP Variable Name"), dl->qp_scalar)
+	meltingTemp    (p.get<std::string> ("Melting Temperature Variable Name"), dl->node_scalar),
+	enthalpyHs	   (p.get<std::string> ("Enthalpy Hs Variable Name"), dl->node_scalar)
 {
 	std::vector<PHX::Device::size_type> dims;
 	dl->node_qp_vector->dimensions(dims);
 
-	numQPs = dims[2];
+	numNodes = dims[1];
 
 	this->addDependentField(meltingTemp);
 
@@ -50,8 +50,8 @@ void PressureMeltingEnthalpy<EvalT,Traits,Type>::
 evaluateFields(typename Traits::EvalData d)
 {
     for (std::size_t cell = 0; cell < d.numCells; ++cell)
-   		for (std::size_t qp = 0; qp < numQPs; ++qp)
-   			enthalpyHs(cell,qp) = c_i * ( meltingTemp(cell,qp) - T0 );
+   		for (std::size_t node = 0; node < numNodes; ++node)
+   			enthalpyHs(cell,node) = c_i * ( meltingTemp(cell,node) - T0 );
 }
 
 

@@ -17,7 +17,7 @@
 namespace FELIX
 {
 
-template<typename EvalT, typename Traits, typename Type>
+template<typename EvalT, typename Traits, typename VelocityType>
 class w_ZResid : public PHX::EvaluatorWithBaseImpl<Traits>,
                   public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -35,7 +35,7 @@ class w_ZResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 		// Input:
 		PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-		PHX::MDField<ParamScalarT,Cell,QuadPoint,VecDim,Dim>  GradVelocity;
+		PHX::MDField<VelocityType,Cell,QuadPoint,VecDim,Dim>  GradVelocity;
 		PHX::MDField<ScalarT,Cell,QuadPoint> w_z;
 
 		// Output
