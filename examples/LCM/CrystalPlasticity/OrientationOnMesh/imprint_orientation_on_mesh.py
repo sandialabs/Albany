@@ -71,12 +71,18 @@ def EulerAngles(R):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 3:
-        print "\nUsage:  imprint_orientation_on_mesh.py <mesh.g> <orientations.txt>\n"
+    if len(sys.argv) < 3:
+        print "\nUsage:  imprint_orientation_on_mesh.py <mesh.g> <orientations.txt> [options]\n"
+        print "Options:\n  --combine_blocks\n"
         sys.exit(1)
 
     genesis_input_name = sys.argv[1]
     genesis_input = exodus.exodus(genesis_input_name, mode='r')
+    combine_blocks = False
+    if len(sys.argv) > 3:
+        option = sys.argv[3]
+        if option == "--combine_blocks":
+            combine_blocks = True
 
     # Read the orientation data
 
@@ -120,6 +126,8 @@ if __name__ == "__main__":
     mesh_has_attributes = False
 
     block_ids = genesis_input.get_elem_blk_ids()
+    # make block_ids into a standard python list, as opposed to c_int_Array_8
+    block_ids = block_ids[:]
     block_elem_types = []
     block_num_elem = []
     block_num_nodes_per_elem = []
@@ -213,6 +221,72 @@ if __name__ == "__main__":
             for k in range(num_attributes):
                 block_attributes[block_id].append(block_euler_angles[block_id][k])
 
+    # Combine all blocks with an orientation assigned to them into a single block
+
+    if combine_blocks:
+
+        print "Combining all blocks with an orientation assigned to them into a single block ..."
+
+        # Placeholder for functionality that allows only specific blocks to be combined
+        blocks_to_combine = block_ids[:]
+
+        sorted_blocks_to_combine = blocks_to_combine[:]
+        sorted_blocks_to_combine.sort()
+        combined_block_id = sorted_blocks_to_combine[0]
+
+        grain_elem_types = {}
+        grain_num_elem = {}
+        grain_num_nodes_per_elem = {}
+        grain_num_attributes = {}
+        for i in range(len(block_ids)):
+            block_id = block_ids[i]
+            if block_id in blocks_to_combine:
+                grain_elem_types[block_id] = block_elem_types[i]
+                grain_num_elem[block_id] = block_num_elem[i]
+                grain_num_nodes_per_elem[block_id] = block_num_nodes_per_elem[i]
+                grain_num_attributes[block_id] = block_num_attributes[i]
+
+        combined_block_elem_type = grain_elem_types[grain_elem_types.keys()[0]]
+        combined_block_num_elem = 0
+        combined_block_num_nodes_per_elem = grain_num_nodes_per_elem[grain_num_nodes_per_elem.keys()[0]]
+        combined_block_num_attributes = grain_num_attributes[grain_num_attributes.keys()[0]]
+        combined_block_connectivity = []
+        combined_block_attributes = []
+
+        for block_id in blocks_to_combine:
+            combined_block_num_elem += grain_num_elem[block_id]
+            combined_block_connectivity.extend(block_connectivity[block_id])
+            combined_block_attributes.extend(block_attributes[block_id])
+
+        initial_block_ids = block_ids[:]
+        index = len(initial_block_ids) - 1
+        for i in range(len(initial_block_ids)):
+            block_id = initial_block_ids[index]
+            if block_id in blocks_to_combine:
+                if block_id != combined_block_id:
+                    block_ids.pop(index)
+                    block_elem_types.pop(index)
+                    block_num_elem.pop(index)
+                    block_num_nodes_per_elem.pop(index)
+                    block_num_attributes.pop(index)
+            index = index - 1
+
+        for i in range(len(block_ids)):
+            if block_ids[i] == combined_block_id:
+                block_elem_types[i] = combined_block_elem_type
+                block_num_elem[i] = combined_block_num_elem
+                block_num_nodes_per_elem[i] = combined_block_num_nodes_per_elem
+                block_num_attributes[i] = combined_block_num_attributes
+                block_connectivity[combined_block_id] = combined_block_connectivity
+                block_attributes[combined_block_id] = combined_block_attributes
+
+                print "combined_block_id", combined_block_id
+                print "num elem", block_num_elem[i]
+                print "num nodes per ele", block_num_nodes_per_elem[i]
+                print "num attr", block_num_attributes[i]
+                print "conn array len", len(block_connectivity[combined_block_id]), len(block_connectivity[combined_block_id])/8
+                print "attr array len", len(block_attributes[combined_block_id]), len(block_attributes[combined_block_id])/3
+        
     # Write ExodusII file
 
     genesis_output_name = genesis_input_name[:-2] + "_orientation.g"
@@ -226,7 +300,7 @@ if __name__ == "__main__":
                                    genesis_input.num_dimensions(),
                                    genesis_input.num_nodes(),
                                    genesis_input.num_elems(),
-                                   genesis_input.num_blks(),
+                                   len(block_ids),
                                    genesis_input.num_node_sets(),
                                    genesis_input.num_side_sets() )
 
