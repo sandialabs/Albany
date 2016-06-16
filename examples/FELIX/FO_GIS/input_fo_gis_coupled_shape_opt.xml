@@ -69,7 +69,7 @@
     <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
     <Parameter name="Method" type="string" value="Extruded"/>
     <Parameter name="Cubature Degree" type="int" value="1"/>
-    <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_coupled_shape_opt.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="gis_coupled_shape_opt.exo"/>
     <Parameter name="Element Shape" type="string" value="Tetrahedron"/>
     <Parameter name="NumLayers" type="int" value="5"/>
     <Parameter name="Extrude Basal Node Fields"             type="Array(string)" value="{thickness,surface_height}"/>
@@ -84,7 +84,7 @@
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
         <Parameter name="Use Serial Mesh" type="bool" value="true"/>
         <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/gis_unstruct_2d.exo"/>
-        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_basal.exo"/>
+        <Parameter name="Exodus Output File Name" type="string" value="gis_coupled_shape_opt_basal.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <ParameterList name="Required Fields Info">
           <Parameter name="basal_friction File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/basal_friction.ascii"/>
@@ -100,7 +100,7 @@
       <ParameterList name="upperside">
         <Parameter name="Method" type="string" value="SideSetSTK"/>
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
-        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_surface.exo"/>
+        <Parameter name="Exodus Output File Name" type="string" value="gis_coupled_shape_opt_surface.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <ParameterList name="Required Fields Info">
           <Parameter name="surface_velocity File Name"      type="string" value="../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii"/>
