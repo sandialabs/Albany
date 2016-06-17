@@ -116,7 +116,7 @@ template<typename EvalT, typename Traits>
 void ThermoPoroPlasticityResidMomentum<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
   typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
     RST::inverse(F_inv, defgrad);
@@ -152,7 +152,7 @@ evaluateFields(typename Traits::EvalData workset)
     } } } }
 */
 
-//   FST::integrate<ScalarT>(ExResidual, TotalStress, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
+//   FST::integrate(ExResidual, TotalStress, wGradBF, false); // "false" overwrites
 
 }
 

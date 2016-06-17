@@ -45,12 +45,10 @@ NSForchheimerTerm(const Teuchos::ParameterList& p) :
     p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
+  numCells = dims[0];
   numNodes = dims[1];
   numQPs  = dims[2];
   numDims = dims[3];
-
-  // Allocate workspace
-  normV.resize(dims[0], numQPs);
 
   this->setName("NSForchheimerTerm" );
 }
@@ -68,6 +66,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(F,fm);
 
   this->utils.setFieldData(ForchTerm,fm); 
+
+  // Allocate workspace
+  normV = Kokkos::createDynRankView(V.get_view(), "XXX", numCells, numQPs);
 }
 
 //**********************************************************************

@@ -7,6 +7,7 @@
 #include "Albany_DataTypes.hpp"
 
 #include "PHAL_FactoryTraits.hpp"
+#include "Phalanx_DataLayout_MDALayout.hpp"
 
 /*********************** Helper Functions*********************************/
 

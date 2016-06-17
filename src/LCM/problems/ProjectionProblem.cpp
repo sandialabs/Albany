@@ -6,7 +6,6 @@
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_Utils.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Intrepid2_FieldContainer.hpp"
 #include "ProjectionProblem.hpp"
 #include "Shards_CellTopology.hpp"
 
@@ -264,8 +263,8 @@ Albany::ProjectionProblem::getValidProblemParameters() const
 
 void
 Albany::ProjectionProblem::getAllocatedStates(
-    ArrayRCP<ArrayRCP<RCP<FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> old_state,
-    ArrayRCP<ArrayRCP<RCP<FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> new_state) const
+    ArrayRCP<ArrayRCP<RCP<Kokkos::DynRankView<RealType, PHX::Device> > > > old_state,
+    ArrayRCP<ArrayRCP<RCP<Kokkos::DynRankView<RealType, PHX::Device> > > > new_state) const
 {
   old_state = old_state_;
   new_state = new_state_;

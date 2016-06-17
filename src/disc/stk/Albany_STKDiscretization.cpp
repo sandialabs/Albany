@@ -20,7 +20,12 @@
 
 #include <Intrepid2_CellTools.hpp>
 #include <Intrepid2_Basis.hpp>
+#ifdef HAVE_REFACTORED_CN_BASIS
 #include <Intrepid2_HGRAD_QUAD_Cn_FEM.hpp>
+#else
+#include <Intrepid2_HGRAD_QUAD_C1_FEM.hpp>
+#include <Intrepid2_HGRAD_QUAD_C2_FEM.hpp>
+#endif
 
 #include <stk_util/parallel/Parallel.hpp>
 
@@ -2490,16 +2495,16 @@ namespace {
   }
 
 
-  const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > >
+  const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
   Basis(const int C)
   {
     // Static types
-    typedef Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> Field_t;
-    typedef Intrepid2::Basis< double, Field_t > Basis_t;
+    typedef Kokkos::DynRankView<RealType, PHX::Device> Field_t;
+    typedef Intrepid2::Basis<PHX::Device, RealType, RealType> Basis_t;
     static const Teuchos::RCP< Basis_t > HGRAD_Basis_4 =
-      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C1_FEM< double, Field_t >() );
+      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::Device>() );
     static const Teuchos::RCP< Basis_t > HGRAD_Basis_9 =
-      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C2_FEM< double, Field_t >() );
+      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C2_FEM<PHX::Device>() );
 
     // Check for valid value of C
     int deg = (int) std::sqrt((double)C);
@@ -2514,20 +2519,24 @@ namespace {
     if (C == 9) return HGRAD_Basis_9;
 
     // Spectral bases
+#ifdef HAVE_REFACTORED_CN_BASIS
     return Teuchos::rcp(
-      new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM< double, Field_t >(
+      new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::Device>(
         deg, Intrepid2::POINTTYPE_SPECTRAL) );
+#else
+return Teuchos::null;
+#endif
   }
 
   double value(const std::vector<double> &soln,
                const std::pair<double, double> &ref) {
 
     const int C = soln.size();
-    const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > > HGRAD_Basis = Basis(C);
+    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > HGRAD_Basis = Basis(C);
 
     const int numPoints        = 1;
-    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> basisVals (C, numPoints);
-    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> tempPoints(numPoints, 2);
+    Kokkos::DynRankView<RealType, PHX::Device> basisVals ("SSS", C, numPoints);
+    Kokkos::DynRankView<RealType, PHX::Device> tempPoints("SSS", numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
@@ -2543,11 +2552,11 @@ namespace {
              const std::pair<double, double> &ref){
 
     const int C = coords.size();
-    const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > > HGRAD_Basis = Basis(C);
+    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > HGRAD_Basis = Basis(C);
 
     const int numPoints        = 1;
-    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> basisVals (C, numPoints);
-    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> tempPoints(numPoints, 2);
+    Kokkos::DynRankView<RealType, PHX::Device> basisVals ("SSS", C, numPoints);
+    Kokkos::DynRankView<RealType, PHX::Device> tempPoints("SSS", numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
@@ -2564,11 +2573,11 @@ namespace {
              const std::pair<double, double> &ref){
 
     const int C = coords.size();
-    const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > > HGRAD_Basis = Basis(C);
+    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > HGRAD_Basis = Basis(C);
 
     const int numPoints        = 1;
-    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> basisGrad (C, numPoints, 2);
-    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> tempPoints(numPoints, 2);
+    Kokkos::DynRankView<RealType, PHX::Device> basisGrad ("SSS", C, numPoints, 2);
+    Kokkos::DynRankView<RealType, PHX::Device> tempPoints("SSS", numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 

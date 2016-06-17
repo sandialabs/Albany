@@ -214,7 +214,7 @@ template<typename EvalT, typename Traits>
 void ThermoPoroPlasticityResidMass<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
   typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
   Albany::MDArray porosityold = (*workset.stateArrayPtr)[porosityName];
@@ -262,7 +262,7 @@ evaluateFields(typename Traits::EvalData workset)
     	  }
       }
   }
-   FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
+   FST::integrate(TResidual, fluxdt, wGradBF, false); // "false" overwrites
 
   // Pore-fluid diffusion coupling.
   for (int cell=0; cell < workset.numCells; ++cell) {

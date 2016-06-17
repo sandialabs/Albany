@@ -253,9 +253,9 @@ computeConformalMeasure(std::string measureType,
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
 
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> coordCon;
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> topoVals;
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> dMdtopo;
+  Kokkos::DynRankView<RealType, PHX::Device> coordCon;
+  Kokkos::DynRankView<RealType, PHX::Device> topoVals;
+  Kokkos::DynRankView<RealType, PHX::Device> dMdtopo;
 
   std::vector<double*> topoValues(nTopologies);
   Teuchos::Array<Teuchos::RCP<Topology> > topologies(nTopologies);
@@ -399,9 +399,9 @@ double& v, double* dvdp)
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
 
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> coordCon;
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> topoVals;
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> dMdtopo;
+  Kokkos::DynRankView<RealType, PHX::Device> coordCon;
+  Kokkos::DynRankView<RealType, PHX::Device> topoVals;
+  Kokkos::DynRankView<RealType, PHX::Device> dMdtopo;
 
   double* odvdp = NULL;
   if( dvdp != NULL ){
@@ -540,8 +540,8 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
   basisAtQPs.resize(numPhysSets);
   for(int i=0; i<numPhysSets; i++){
     cellTypes[i] = Teuchos::rcp(new shards::CellTopology (&meshSpecs[i]->ctd));
-    Intrepid2::DefaultCubatureFactory<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > cubFactory;
-    cubatures[i] = cubFactory.create(*(cellTypes[i]), meshSpecs[i]->cubatureDegree);
+    Intrepid2::DefaultCubatureFactory cubFactory;
+    cubatures[i] = cubFactory.create<PHX::Device, RealType, RealType>(*(cellTypes[i]), meshSpecs[i]->cubatureDegree);
     intrepidBasis[i] = Albany::getIntrepid2Basis(meshSpecs[i]->ctd);
 
     int wsSize   = meshSpecs[i]->worksetSize;
@@ -620,9 +620,9 @@ ATO::OptimizationProblem::InitTopOpt()
   const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
 
   int numWorksets = wsElNodeEqID.size();
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> jacobian;
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> jacobian_det;
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> coordCon;
+  Kokkos::DynRankView<RealType, PHX::Device> jacobian;
+  Kokkos::DynRankView<RealType, PHX::Device> jacobian_det;
+  Kokkos::DynRankView<RealType, PHX::Device> coordCon;
 
   weighted_measure.resize(numWorksets);
   for(int ws=0; ws<numWorksets; ws++){

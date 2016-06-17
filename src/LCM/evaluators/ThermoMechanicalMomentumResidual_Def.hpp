@@ -79,7 +79,7 @@ void ThermoMechanicalMomentumResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   std::cout.precision(15);
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
   typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
    RST::inverse(F_inv, defgrad);

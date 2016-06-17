@@ -48,7 +48,6 @@
 #include "Aeras_ComputeBasisFunctions.hpp"
 #include "Aeras_GatherCoordinateVector.hpp"
 
-#include "Intrepid2_FieldContainer.hpp"
 #include "Intrepid2_CubaturePolylib.hpp"
 #include "Intrepid2_CubatureTensor.hpp"
 
@@ -159,7 +158,7 @@ Aeras::HydrostaticProblem::constructEvaluators(
   }
 
 
-  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+  RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
     intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
 
@@ -176,9 +175,9 @@ Aeras::HydrostaticProblem::constructEvaluators(
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  RCP <Intrepid2::CubaturePolylib<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > polylib = rcp(new Intrepid2::CubaturePolylib<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
-  std::vector< Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > > cubatures(2, polylib); 
-  RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = rcp( new Intrepid2::CubatureTensor<RealType,Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >(cubatures));
+  RCP <Intrepid2::CubaturePolylib<RealType, Kokkos::DynRankView<RealType, PHX::Device> > > polylib = rcp(new Intrepid2::CubaturePolylib<RealType, Kokkos::DynRankView<RealType, PHX::Device> >(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
+  std::vector< Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > > cubatures(2, polylib); 
+  RCP <Intrepid2::Cubature<PHX::Device> > cubature = rcp( new Intrepid2::CubatureTensor<RealType,Kokkos::DynRankView<RealType, PHX::Device> >(cubatures));
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
@@ -334,9 +333,9 @@ Aeras::HydrostaticProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Compute Basis Functions"));
 
     // Inputs: X, Y at nodes, Cubature, and Basis
-    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+    p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
  
-    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > 
+    p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > 
         ("Intrepid2 Basis", intrepidBasis);
  
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
@@ -440,9 +439,9 @@ Aeras::HydrostaticProblem::constructEvaluators(
     p->set<string>("Jacobian Det Name",          "Jacobian Det");
     p->set<string>("Jacobian Name",              "Jacobian");
     ///for sem vorticity
-    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+    p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
     ///for sem vorticity
-    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+    p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
         ("Intrepid2 Basis", intrepidBasis);
     //Output
     p->set<string>("Vorticity Variable Name", "Vorticity_QP");
@@ -753,9 +752,9 @@ Aeras::HydrostaticProblem::constructEvaluators(
     p->set<string>("Gradient BF Name",       "Grad BF");
 
     ///for strong divergence
-    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+    p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
     ///for strong divergence
-    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+    p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
         ("Intrepid2 Basis", intrepidBasis);
     ///for strong divergence
     p->set<string>("Jacobian Det Name",          "Jacobian Det");
@@ -868,9 +867,9 @@ Aeras::HydrostaticProblem::constructEvaluators(
       p->set<string>("Gradient BF Name",       "Grad BF");
 
       ///for strong divergence
-      p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+      p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
       ///for strong divergence
-      p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+      p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
               ("Intrepid2 Basis", intrepidBasis);
       ///for strong divergence
       p->set<string>("Jacobian Det Name",          "Jacobian Det");

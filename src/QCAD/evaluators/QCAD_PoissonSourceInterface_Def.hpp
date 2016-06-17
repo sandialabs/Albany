@@ -133,8 +133,8 @@ PoissonSourceInterfaceBase(const Teuchos::ParameterList& p) :
 
   cellType = Teuchos::rcp(new shards::CellTopology (elem_top));
 
-  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
-  cubatureCell = cubFactory.create(*cellType, meshSpecs->cubatureDegree);
+  Intrepid2::DefaultCubatureFactory cubFactory;
+  cubatureCell = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs->cubatureDegree);
 
   int cubatureDegree = (p.get<int>("Cubature Degree") > 0 ) ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
 
@@ -150,7 +150,7 @@ PoissonSourceInterfaceBase(const Teuchos::ParameterList& p) :
   for(int i = 0; i < numSidesOnElem; ++i) 
   {
     sideType[i] = Teuchos::rcp(new shards::CellTopology(elem_top->side[i].topology));
-    cubatureSide[i] = cubFactory.create(*sideType[i], cubatureDegree);
+    cubatureSide[i] = cubFactory.create<PHX::Device, RealType, RealType>(*sideType[i], cubatureDegree);
     maxSideDim = std::max( maxSideDim, (int)sideType[i]->getDimension());
     maxNumQpSide = std::max(maxNumQpSide, (int)cubatureSide[i]->getNumPoints());
     sideTypeName = sideType[i]->getName();
@@ -170,32 +170,9 @@ PoissonSourceInterfaceBase(const Teuchos::ParameterList& p) :
   // Get Dimensions
   std::vector<PHX::DataLayout::size_type> dim;
   dl->qp_tensor->dimensions(dim);
-  int containerSize = dim[0];  // number of volume cells
+  numCells = dim[0];  // number of volume cells
   numQPs = dim[1];             // number of QPs in a cell
   cellDims = dim[2];           // number of spatial dimensions in a cell
-
-  // Allocate Temporary FieldContainers
-  physPointsCell.resize(1, numNodes, cellDims);
-  dofCell.resize(1, numNodes);
-  neumann.resize(containerSize, numNodes, numDOFsSet);
-
-  // Allocate Temporary FieldContainers based on max sizes of sides. Need to be resized later for each side.
-  cubPointsSide.resize(maxNumQpSide, maxSideDim);
-  refPointsSide.resize(maxNumQpSide, cellDims);
-  cubWeightsSide.resize(maxNumQpSide);
-  physPointsSide.resize(1, maxNumQpSide, cellDims);
-  dofSide.resize(1, maxNumQpSide);
-
-  // Do the BC one side at a time for now
-  jacobianSide.resize(1, maxNumQpSide, cellDims, cellDims);
-  jacobianSide_det.resize(1, maxNumQpSide);
-
-  weighted_measure.resize(1, maxNumQpSide);
-  basis_refPointsSide.resize(numNodes, maxNumQpSide);
-  trans_basis_refPointsSide.resize(1, numNodes, maxNumQpSide);
-  weighted_trans_basis_refPointsSide.resize(1, numNodes, maxNumQpSide);
-
-  data.resize(1, maxNumQpSide, numDOFsSet);
 
   this->setName(name);
 }
@@ -208,6 +185,10 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(dof,fm);
+
+  physPointsCell = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, cellDims);
+  dofCell = Kokkos::createDynRankView(dof.get_view(), "XXX", 1, numNodes);
+
 }
 
 template<typename EvalT, typename Traits>
@@ -259,21 +240,23 @@ evaluateInterfaceContribution(typename Traits::EvalData workset)
       int numQPsSide = cubatureSide[elem_side]->getNumPoints(); // ??? number of QPs on a side or element ???
 
       // Need to resize containers because they depend on side topology
-      cubPointsSide.resize(numQPsSide, sideDims);
-      refPointsSide.resize(numQPsSide, cellDims);
-      cubWeightsSide.resize(numQPsSide);
-      physPointsSide.resize(1, numQPsSide, cellDims);
-      dofSide.resize(1, numQPsSide);
+      cubPointsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsSide, sideDims);
+      refPointsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsSide, cellDims);
+      cubWeightsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsSide);
+      basis_refPointsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPsSide);
       
       // Do the BC one side edge/face at a time for now
-      jacobianSide.resize(1, numQPsSide, cellDims, cellDims);
-      jacobianSide_det.resize(1, numQPsSide);
-      
-      weighted_measure.resize(1, numQPsSide);
-      basis_refPointsSide.resize(numNodes, numQPsSide);
-      trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
-      weighted_trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
-      data.resize(1, numQPsSide, numDOFsSet);
+      physPointsSide = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsSide, cellDims);
+      physPointsSide = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsSide, cellDims);
+      jacobianSide = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsSide, cellDims, cellDims);
+      jacobianSide_det = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsSide);
+      weighted_measure = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numQPsSide);
+      trans_basis_refPointsSide = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, numQPsSide);
+      weighted_trans_basis_refPointsSide = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, numQPsSide);
+
+      dofSide = Kokkos::createDynRankView(dof.get_view(), "XXX", 1, numQPsSide);
+      data = Kokkos::createDynRankView(dof.get_view(), "XXX", 1, numQPsSide, numDOFsSet);
+      neumann = Kokkos::createDynRankView(dof.get_view(), "XXX", 1, numQPsSide, numDOFsSet);
       
       // Return cubature points and weights for a side in a reference frame
       cubatureSide[elem_side]->getCubature(cubPointsSide, cubWeightsSide);  
@@ -286,13 +269,13 @@ evaluateInterfaceContribution(typename Traits::EvalData workset)
       // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
       // refPointsSide is the QPs of the side in form of (numQPsSide, cellDims), 
       // while cubPointsSide is the QPs of the side in form of (numQPsSide, sideDims).
-      Intrepid2::CellTools<RealType>::mapToReferenceSubcell
+      Intrepid2::CellTools<PHX::Device>::mapToReferenceSubcell
         (refPointsSide, cubPointsSide, sideDims, elem_side, *cellType);
 
       // Calculate Jacobian for refPointsSide on the side
-      Intrepid2::CellTools<MeshScalarT>::setJacobian(jacobianSide, refPointsSide, physPointsCell, *cellType);
+      Intrepid2::CellTools<PHX::Device>::setJacobian(jacobianSide, refPointsSide, physPointsCell, *cellType);
 
-      Intrepid2::CellTools<MeshScalarT>::setJacobianDet(jacobianSide_det, jacobianSide);
+      Intrepid2::CellTools<PHX::Device>::setJacobianDet(jacobianSide_det, jacobianSide);
       
       if (sideDims < 2)  //for 1 and 2D, get weighted edge measure
       {
@@ -317,7 +300,7 @@ evaluateInterfaceContribution(typename Traits::EvalData workset)
         (weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
       
       // Map the side cubature points in reference frame to physical frame
-      Intrepid2::CellTools<MeshScalarT>::mapToPhysicalFrame
+      Intrepid2::CellTools<PHX::Device>::mapToPhysicalFrame
         (physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
       
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
@@ -346,8 +329,8 @@ evaluateInterfaceContribution(typename Traits::EvalData workset)
 
 template<typename EvalT, typename Traits>
 void PoissonSourceInterfaceBase<EvalT, Traits>::
-calcInterfaceTrapChargDensity(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
-			const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& dof_side, int iSideset) 
+calcInterfaceTrapChargDensity(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
+			const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side, int iSideset) 
 {			
   int numCells = qp_data_returned.dimension(0);  // How many cell's worth of data is being computed?
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?

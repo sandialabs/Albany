@@ -52,8 +52,8 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TauM;
 
-  unsigned int numQPs, numDims;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> normGc;
+  unsigned int numQPs, numDims, numCells;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> normGc;
   
 };
 }

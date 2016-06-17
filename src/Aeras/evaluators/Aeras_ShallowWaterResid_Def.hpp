@@ -45,8 +45,8 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   jacobian  (p.get<std::string>  ("Jacobian Name"), dl->qp_tensor ),
   source    (p.get<std::string> ("Shallow Water Source QP Variable Name"), dl->qp_vector),
   Residual (p.get<std::string> ("Residual Name"), dl->node_vector),
-  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > ("Intrepid2 Basis") ),
-  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature")),
+  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis") ),
+  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
   spatialDim(p.get<std::size_t>("spatialDim")),
   sphere_coord  (p.get<std::string>  ("Spherical Coord Name"), dl->qp_gradient ),
   lambda_nodal  (p.get<std::string>  ("Lambda Coord Nodal Name"), dl->node_scalar),
@@ -1575,7 +1575,7 @@ evaluateFields(typename Traits::EvalData workset)
   a = Aeras::ShallowWaterConstants::self().earthRadius;
   myPi = Aeras::ShallowWaterConstants::self().pi;
 
-  //Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));
+  //Kokkos::deep_copy(Residual.get_view(), ScalarT(0.0));
 
   if (usePrescribedVelocity) {
     if (useImplHyperviscosity)

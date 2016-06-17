@@ -28,7 +28,7 @@ class ConstitutiveDriverProblem: public Albany::AbstractProblem
 {
 public:
 
-  typedef Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> FC;
+  typedef Kokkos::DynRankView<RealType, PHX::Device> FC;
 
   ///
   /// Default constructor

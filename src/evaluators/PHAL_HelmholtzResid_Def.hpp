@@ -88,17 +88,17 @@ template<typename EvalT, typename Traits>
 void HelmholtzResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
-  FST::integrate<ScalarT>(UResidual, UGrad, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
-  FST::integrate<ScalarT>(VResidual, VGrad, wGradBF, Intrepid2::COMP_CPP, false);
+  FST::integrate(UResidual.get_view(), UGrad.get_view(), wGradBF.get_view(), false); // "false" overwrites
+  FST::integrate(VResidual.get_view(), VGrad.get_view(), wGradBF.get_view(), false);
 
   PHAL::scale(UResidual, -1.0);
   PHAL::scale(VResidual, -1.0);
 
   if (haveSource) {
-    FST::integrate<ScalarT>(UResidual, USource, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
-    FST::integrate<ScalarT>(VResidual, VSource, wBF, Intrepid2::COMP_CPP, true);
+    FST::integrate(UResidual.get_view(), USource.get_view(), wBF.get_view(), true); // "true" sums into
+    FST::integrate(VResidual.get_view(), VSource.get_view(), wBF.get_view(), true);
   }
 
   if (ksqr != 1.0) {
@@ -106,8 +106,8 @@ evaluateFields(typename Traits::EvalData workset)
     PHAL::scale(V, ksqr);
   }
 
-  FST::integrate<ScalarT>(UResidual, U, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
-  FST::integrate<ScalarT>(VResidual, V, wBF, Intrepid2::COMP_CPP, true);
+  FST::integrate(UResidual.get_view(), U.get_view(), wBF.get_view(), true); // "true" sums into
+  FST::integrate(VResidual.get_view(), V.get_view(), wBF.get_view(), true);
 
  // Potential code for "attenuation"  (1 - 0.05i)k^2 \phi
  /*
@@ -117,8 +117,8 @@ evaluateFields(typename Traits::EvalData workset)
     V[i] *=  alpha;
   }
 
-  FST::integrate<ScalarT>(UResidual, V, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
-  FST::integrate<ScalarT>(VResidual, U, wBF, Intrepid2::COMP_CPP, true);
+  FST::integrate(UResidual, V, wBF, true); // "true" sums into
+  FST::integrate(VResidual, U, wBF, true);
  */
 }
 

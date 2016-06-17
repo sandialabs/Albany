@@ -22,7 +22,6 @@
 #include "Albany_ProblemUtils.hpp"
 
 #include "Intrepid2_Basis.hpp"
-#include "Intrepid2_FieldContainer.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 
@@ -244,15 +243,15 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructMapToPhysicalFrameEvaluator(
       const Teuchos::RCP<shards::CellTopology>& cellType,
-      const Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature,
-      const Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis = Teuchos::null) const;
+      const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature,
+      const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis = Teuchos::null) const;
 
     //! Function to create parameter list for construction of MapToPhysicalFrameSide
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructMapToPhysicalFrameSideEvaluator(
       const Teuchos::RCP<shards::CellTopology>& cellType,
-      const Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature,
+      const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature,
       const std::string& sideSetName) const;
 
     //! Function to create evaluator for restriction to side set
@@ -297,16 +296,16 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructComputeBasisFunctionsEvaluator(
       const Teuchos::RCP<shards::CellTopology>& cellType,
-      const Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis,
-      const Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature) const;
+      const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis,
+      const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature) const;
 
     //! Function to create parameter list for construction of ComputeBasisFunctionsSide
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructComputeBasisFunctionsSideEvaluator(
       const Teuchos::RCP<shards::CellTopology>& cellType,
-      const Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasisSide,
-      const Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubatureSide,
+      const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasisSide,
+      const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureSide,
       const std::string& sideSetName) const;
 
   private:

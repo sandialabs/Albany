@@ -49,7 +49,6 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> UGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> VGrad;
-
   PHX::MDField<ScalarT,Cell,QuadPoint> USource;
   PHX::MDField<ScalarT,Cell,QuadPoint> VSource;
 

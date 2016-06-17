@@ -5,22 +5,34 @@
 //*****************************************************************//
 #include "Albany_ProblemUtils.hpp"
 
+#ifdef HAVE_REFACTORED_CN_BASIS
 #include "Intrepid2_HGRAD_LINE_Cn_FEM.hpp"
 #include "Intrepid2_HGRAD_TRI_Cn_FEM.hpp"
 #include "Intrepid2_HGRAD_QUAD_Cn_FEM.hpp"
 #include "Intrepid2_HGRAD_HEX_Cn_FEM.hpp"
+#else
+#include "Intrepid2_HGRAD_LINE_C1_FEM.hpp"
+#include "Intrepid2_HGRAD_TRI_C1_FEM.hpp"
+#include "Intrepid2_HGRAD_QUAD_C1_FEM.hpp"
+#include "Intrepid2_HGRAD_TET_C1_FEM.hpp"
+#include "Intrepid2_HGRAD_HEX_C1_FEM.hpp"
+#include "Intrepid2_HGRAD_WEDGE_C1_FEM.hpp"
+#include "Intrepid2_HGRAD_TRI_C2_FEM.hpp"
+#include "Intrepid2_HGRAD_QUAD_C2_FEM.hpp"
+#include "Intrepid2_HGRAD_TET_C2_FEM.hpp"
+#include "Intrepid2_HGRAD_HEX_C2_FEM.hpp"
+#endif
 
 /*********************** Helper Functions*********************************/
 
-Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
 Albany::getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
 {
-   typedef Intrepid2::FieldContainer_Kokkos< RealType, PHX::Layout, PHX::Device > Field_t;
+   typedef Kokkos::DynRankView<RealType, PHX::Device> Field_t;
    using Teuchos::rcp;
    using std::cout;
    using std::endl;
-   using Intrepid2::FieldContainer_Kokkos;
-   Teuchos::RCP<Intrepid2::Basis< RealType, Field_t > > intrepidBasis;
+   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
    const int & numNodes = ctd.node_count;
    const int & numDim   = ctd.dimension;
    std::string name     = ctd.name;
@@ -40,7 +52,7 @@ Albany::getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
      cout << "  For " << name << " element, numNodes = " << numNodes <<  endl;
 #endif
      if (numNodes == 2)
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_LINE_C1_FEM< RealType, Field_t >() );
+       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_LINE_C1_FEM<PHX::Device>() );
      else
        TEUCHOS_TEST_FOR_EXCEPTION(
          true,
@@ -52,7 +64,9 @@ Albany::getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
 #ifdef ALBANY_VERBOSE
      cout << "  For " << name << " element, numNodes = " << numNodes <<  endl;
 #endif
-     intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_LINE_Cn_FEM< RealType, Field_t >(numNodes-1, Intrepid2::POINTTYPE_SPECTRAL) );
+#ifdef HAVE_REFACTORED_CN_BASIS
+     intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_LINE_Cn_FEM<PHX::Device>(numNodes-1, Intrepid2::POINTTYPE_SPECTRAL) );
+#endif
    }
 
    // 2D triangles -- non-spectral basis
@@ -62,9 +76,9 @@ Albany::getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
      cout << "  For " << name << " element, numNodes = " << numNodes << endl;
 #endif
      if (numNodes == 3)
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TRI_C1_FEM< RealType, Field_t >() );
+       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::Device>() );
      else if (numNodes == 6)
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TRI_C2_FEM< RealType, Field_t >() );
+       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TRI_C2_FEM<PHX::Device>() );
      else
        TEUCHOS_TEST_FOR_EXCEPTION(
          true,
@@ -84,7 +98,9 @@ Albany::getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
        Teuchos::Exceptions::InvalidParameter,
        "Albany::ProblemUtils::getIntrepid2Basis number of nodes for triangle element is not regular");
      --deg;
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TRI_Cn_FEM< RealType, Field_t >(deg, Intrepid2::POINTTYPE_SPECTRAL) );
+#ifdef HAVE_REFACTORED_CN_BASIS
+       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::Device>(deg, Intrepid2::POINTTYPE_SPECTRAL) );
+#endif
    }
 
    // 2D quadrilateral elements -- non spectral basis 
@@ -94,9 +110,9 @@ Albany::getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
      cout << "  For " << name << " element, numNodes = " << numNodes <<  endl;
 #endif
      if (numNodes == 4)
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_QUAD_C1_FEM< RealType, Field_t >() );
+       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::Device>() );
      else if (numNodes == 9)
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_QUAD_C2_FEM< RealType, Field_t >() );
+       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_QUAD_C2_FEM<PHX::Device>() );
      else
        TEUCHOS_TEST_FOR_EXCEPTION(
          true,
@@ -117,19 +133,23 @@ Albany::getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
        Teuchos::Exceptions::InvalidParameter,
        "Albany::ProblemUtils::getIntrepid2Basis number of nodes for quadrilateral element is not perfect square > 1");
      --deg;
-     intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM< RealType, Field_t >(deg, Intrepid2::POINTTYPE_SPECTRAL) );
+#ifdef HAVE_REFACTORED_CN_BASIS
+     intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::Device>(deg, Intrepid2::POINTTYPE_SPECTRAL) );
+#endif
    }
 
    // 3D tetrahedron elements
    else if (name == "Tetrahedron")
    {
      if (numNodes == 4)
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TET_C1_FEM< RealType, Field_t >() );
+       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TET_C1_FEM<PHX::Device>() );
      else if (numNodes == 10)
+#ifdef HAVE_REFACTORED_CN_BASIS
        if (compositeTet)
-         intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TET_COMP12_FEM< RealType, Field_t >() );
+         intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TET_COMP12_FEM<PHX::Device>() );
        else
-         intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TET_C2_FEM< RealType, Field_t >() );
+#endif
+         intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TET_C2_FEM<PHX::Device>() );
      else
        TEUCHOS_TEST_FOR_EXCEPTION(
          true,
@@ -144,9 +164,9 @@ Albany::getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
      cout << "  For " << name << " element, numNodes = " << numNodes << endl;
 #endif
      if (numNodes == 8)
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_HEX_C1_FEM< RealType, Field_t >() );
+       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_HEX_C1_FEM<PHX::Device>() );
      else if (numNodes == 27)
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_HEX_C2_FEM< RealType, Field_t >() );
+       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_HEX_C2_FEM<PHX::Device>() );
      else
        TEUCHOS_TEST_FOR_EXCEPTION(
          true,
@@ -166,14 +186,16 @@ Albany::getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
        Teuchos::Exceptions::InvalidParameter,
        "Albany::ProblemUtils::getIntrepid2Basis number of nodes for hexahedron element is not perfect cube > 1");
      --deg;
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_HEX_Cn_FEM< RealType, Field_t >(deg, Intrepid2::POINTTYPE_SPECTRAL) );
+#ifdef HAVE_REFACTORED_CN_BASIS
+       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_HEX_Cn_FEM<PHX::Device>(deg, Intrepid2::POINTTYPE_SPECTRAL) );
+#endif
   }
 
    // 3D wedge elements
    else if (name == "Wedge")
    {
      if (numNodes == 6)
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_WEDGE_C1_FEM< RealType, Field_t >() );
+       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_WEDGE_C1_FEM<PHX::Device>() );
      else
        TEUCHOS_TEST_FOR_EXCEPTION(
          true,

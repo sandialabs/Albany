@@ -166,7 +166,7 @@ namespace LCM {
   {
     //std::cout << "In evaluator: " << this->getName() << "\n";
         
-    typedef Intrepid2::FunctionSpaceTools FST;
+    typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
     //	 typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
     Albany::MDArray Clattice_old = (*workset.stateArrayPtr)[ClatticeName];
@@ -218,7 +218,7 @@ namespace LCM {
         }
       }
     }
-    FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid2::COMP_CPP, false); // this also works
+    FST::integrate(TResidual, Hflux, wGradBF, false); // this also works
 
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {

@@ -45,6 +45,9 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   sideDims     = dl_side->node_qp_gradient->dimension(4);
   cellDims     = sideDims+1;
 
+  cubature = p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature Side");
+  intrepidBasis = p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid Basis Side");
+
 #ifdef OUTPUT_TO_SCREEN
   Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
   *output << "Compute Basis Functions Side has: "
@@ -54,26 +57,6 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
           << numSideQPs << " side QPs, "
           << sideDims << " side dimensions.\n";
 #endif
-
-  // Allocate Temporary FieldContainers
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>  cub_points;
-  cub_points.resize(numSideQPs,sideDims);
-  cub_weights.resize(numSideQPs);
-  val_at_cub_points.resize(numSideNodes, numSideQPs);
-  grad_at_cub_points.resize(numSideNodes, numSideQPs, sideDims);
-  cub_weights.resize(numSideQPs);
-  tangents.resize(sideDims,cellDims,numSideQPs);
-  metric.resize(numSideQPs,sideDims,sideDims);
-
-  // Pre-Calculate reference element quantitites
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature;
-  cubature = p.get<Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature Side");
-  cubature->getCubature(cub_points, cub_weights);
-
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
-  intrepidBasis = p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > ("Intrepid Basis Side");
-  intrepidBasis->getValues(val_at_cub_points, cub_points, Intrepid2::OPERATOR_VALUE);
-  intrepidBasis->getValues(grad_at_cub_points, cub_points, Intrepid2::OPERATOR_GRAD);
 
   this->setName("ComputeBasisFunctionsSide"+PHX::typeAsString<EvalT>());
 }
@@ -90,6 +73,23 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(inv_metric,fm);
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(GradBF,fm);
+
+  tangents = Kokkos::createDynRankView(metric_det.get_view(), "XXX", sideDims,cellDims,numSideQPs);
+  metric = Kokkos::createDynRankView(metric_det.get_view(), "XXX", numSideQPs,sideDims,sideDims);
+
+  // Allocate Temporary Kokkos Views
+  Kokkos::DynRankView<RealType, PHX::Device>  cub_points;
+  cub_points = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numSideQPs,sideDims);
+  cub_weights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numSideQPs);
+  val_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numSideNodes, numSideQPs);
+  grad_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numSideNodes, numSideQPs, sideDims);
+  cub_weights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numSideQPs);
+
+  // Pre-Calculate reference element quantitites
+  cubature->getCubature(cub_points, cub_weights);
+
+  intrepidBasis->getValues(val_at_cub_points, cub_points, Intrepid2::OPERATOR_VALUE);
+  intrepidBasis->getValues(grad_at_cub_points, cub_points, Intrepid2::OPERATOR_GRAD);
 
   // BF does not depend on the current element, so we fill it now
   std::vector<PHX::DataLayout::size_type> dims;

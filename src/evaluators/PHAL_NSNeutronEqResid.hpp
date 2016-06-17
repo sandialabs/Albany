@@ -43,18 +43,19 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> NeutronDiff;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> NGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Source;
   PHX::MDField<ScalarT,Cell,QuadPoint> Absorp;
   PHX::MDField<ScalarT,Cell,QuadPoint> Fission;  
   PHX::MDField<ScalarT,Cell,QuadPoint> nu;  
+  
+  PHX::MDField<ScalarT,Cell,QuadPoint> Source;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> NResidual;
 
   bool haveNeutSource;
-  unsigned int numQPs, numDims, numNodes;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flux;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> abscoeff;
+  unsigned int numQPs, numDims, numNodes, numCells;
+  Kokkos::DynRankView<ScalarT, PHX::Device> flux;
+  Kokkos::DynRankView<ScalarT, PHX::Device> abscoeff;
 
  };
 }

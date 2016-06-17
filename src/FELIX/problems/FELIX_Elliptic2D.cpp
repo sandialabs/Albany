@@ -6,7 +6,6 @@
 
 #include "FELIX_Elliptic2D.hpp"
 
-#include "Intrepid_FieldContainer.hpp"
 #include "Intrepid_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
@@ -53,8 +52,8 @@ void Elliptic2D::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsS
   cellBasis = Albany::getIntrepid2Basis(*cell_top);
   cellType = Teuchos::rcp(new shards::CellTopology (cell_top));
 
-  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
-  cellCubature = cubFactory.create(*cellType, meshSpecs[0]->cubatureDegree);
+  Intrepid2::DefaultCubatureFactory cubFactory;
+  cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs[0]->cubatureDegree);
 
   cellEBName = meshSpecs[0]->ebName;
 
@@ -83,7 +82,7 @@ void Elliptic2D::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsS
     sideType = Teuchos::rcp(new shards::CellTopology (side_top));
 
     sideEBName   = sideMeshSpecs.ebName;
-    sideCubature = cubFactory.create(*sideType, sideMeshSpecs.cubatureDegree);
+    sideCubature = cubFactory.create<PHX::Device, RealType, RealType>(*sideType, sideMeshSpecs.cubatureDegree);
 
     numSideVertices = sideType->getNodeCount();
     numSideNodes    = sideBasis->getCardinality();

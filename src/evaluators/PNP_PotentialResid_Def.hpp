@@ -65,11 +65,11 @@ template<typename EvalT, typename Traits>
 void PNP::PotentialResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
   // Scale gradient into a flux, reusing same memory
-  FST::scalarMultiplyDataData<ScalarT> (PotentialGrad, Permittivity, PotentialGrad);
-  FST::integrate<ScalarT>(PotentialResidual, PotentialGrad, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
+  FST::scalarMultiplyDataData (PotentialGrad.get_view(), Permittivity.get_view(), PotentialGrad.get_view());
+  FST::integrate(PotentialResidual.get_view(), PotentialGrad.get_view(), wGradBF.get_view(), false); // "false" overwrites
 
     
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {

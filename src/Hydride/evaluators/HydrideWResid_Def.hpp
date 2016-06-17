@@ -74,13 +74,13 @@ template<typename EvalT, typename Traits>
 void HydrideWResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
-  FST::integrate<ScalarT>(wResidual, wGrad, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
+  FST::integrate(wResidual, wGrad, wGradBF, false); // "false" overwrites
 
   if(!lump){
     // Consistent mass matrix, the Intrepid2 way
-    FST::integrate<ScalarT>(wResidual, cDot, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+    FST::integrate(wResidual, cDot, wBF, true); // "true" sums into
 
     // Consistent mass matrix, done manually
 /*

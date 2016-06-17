@@ -52,7 +52,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node> rhoResidual;
 
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> gamma_term;
+  Kokkos::DynRankView<ScalarT, PHX::Device> gamma_term;
 
   unsigned int numQPs, numDims, numNodes, worksetSize;
 

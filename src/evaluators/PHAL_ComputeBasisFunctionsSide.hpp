@@ -50,12 +50,15 @@ private:
   //! Coordinate vector at side's vertices
   PHX::MDField<MeshScalarT,Cell,Side,Vertex,Dim> coordVec;
 
-  // Temporary FieldContainers
-  Intrepid2::FieldContainer_Kokkos<RealType,    PHX::Layout, PHX::Device> val_at_cub_points;
-  Intrepid2::FieldContainer_Kokkos<RealType,    PHX::Layout, PHX::Device> grad_at_cub_points;
-  Intrepid2::FieldContainer_Kokkos<RealType,    PHX::Layout, PHX::Device> cub_weights;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> tangents;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>  metric;
+  // Temporary Kokkos Views
+  Kokkos::DynRankView<RealType, PHX::Device> val_at_cub_points;
+  Kokkos::DynRankView<RealType, PHX::Device> grad_at_cub_points;
+  Kokkos::DynRankView<RealType, PHX::Device> cub_weights;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> tangents;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device>  metric;
+
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
 
   // Output:
   //! Basis Functions and other quantities at quadrature points

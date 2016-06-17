@@ -136,7 +136,7 @@ template<typename EvalT, typename Traits>
 void ComprNSResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
   if (numDims == 2) { //2D case; order of variables is rho, u, v, T
       for (std::size_t cell=0; cell < workset.numCells; ++cell) {

@@ -46,9 +46,9 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> Source;
-  Teuchos::Array<double> convectionVels;
   PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;
   PHX::MDField<ScalarT,Cell,QuadPoint> Absorption;
+  Teuchos::Array<double> convectionVels;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;
@@ -59,8 +59,9 @@ private:
   bool enableTransient;
   bool haverhoCp;
   unsigned int numQPs, numDims, numNodes, worksetSize;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flux;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> aterm;
+  Kokkos::DynRankView<ScalarT, PHX::Device> flux;
+  Kokkos::DynRankView<ScalarT, PHX::Device> aterm;
+  Kokkos::DynRankView<ScalarT, PHX::Device> convection;
 };
 }
 

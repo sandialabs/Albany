@@ -7,7 +7,6 @@
 #ifndef FELIX_ELLIPTIC_2D_HPP
 #define FELIX_ELLIPTIC_2D_HPP 1
 
-#include "Intrepid2_FieldContainer.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Phalanx.hpp"
 #include "Shards_CellTopology.hpp"
@@ -99,11 +98,11 @@ protected:
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::RCP<shards::CellTopology> sideType;
 
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > >  cellCubature;
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > >  sideCubature;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >  cellCubature;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >  sideCubature;
 
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > cellBasis;
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > sideBasis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > cellBasis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > sideBasis;
 
   Teuchos::RCP<Albany::Layouts> dl, dl_side;
 

@@ -58,9 +58,9 @@ private:
 
   bool haveSource, haveFlow, haveSUPG, haveNeut; 
   bool enableTransient;
-  unsigned int numQPs, numDims, numNodes;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flux;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> convection;
+  unsigned int numQPs, numDims, numNodes, numCells;
+  Kokkos::DynRankView<ScalarT, PHX::Device> flux;
+  Kokkos::DynRankView<ScalarT, PHX::Device> convection;
 
  };
 }

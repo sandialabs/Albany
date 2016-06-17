@@ -22,11 +22,10 @@ SurfaceVectorResidual(Teuchos::ParameterList & p,
     (p.get<double>("thickness")),
 
     cubature_
-    (p.get<Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>>("Cubature")),
+    (p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")),
 
     intrepid_basis_
-    (p.get<Teuchos::RCP<Intrepid2::Basis<RealType,
-        Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>("Intrepid2 Basis")),
+    (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>("Intrepid2 Basis")),
 
     stress_
     (p.get<std::string>("Stress Name"), dl->qp_tensor),

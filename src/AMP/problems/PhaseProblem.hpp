@@ -94,7 +94,6 @@ protected:
 
 //******************************************************************************
 
-#include "Intrepid2_FieldContainer.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Albany_Utils.hpp"
@@ -164,16 +163,16 @@ Albany::PhaseProblem::constructEvaluators(
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"*** Material name must be Powder or Solid ***\n")
   }
  
-  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+  RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
     intrepid_basis = Albany::getIntrepid2Basis(*elem_top);
 
   RCP<shards::CellTopology> elem_type = 
     rcp(new shards::CellTopology (elem_top));
 
-  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cub_factory;
+  Intrepid2::DefaultCubatureFactory cubFactory;
 
-  RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > elem_cubature = 
-    cub_factory.create(*elem_type, meshSpecs.cubatureDegree);
+  RCP <Intrepid2::Cubature<PHX::Device> > elem_cubature = 
+    cubFactory.create<PHX::Device, RealType, RealType>(*elem_type, meshSpecs.cubatureDegree);
 
   const int workset_size = meshSpecs.worksetSize;
   const int num_vertices = elem_type->getNodeCount();

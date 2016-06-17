@@ -56,7 +56,7 @@ private:
   int nwrkr_, prectr_, postctr_;
 };
 
-typedef Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>
+typedef Intrepid2::Basis<PHX::Device, RealType, RealType>>
         Intrepid2Basis;
 
 class ProjectIPtoNodalFieldQuadrature {
@@ -88,9 +88,9 @@ ProjectIPtoNodalFieldQuadrature (
   : ctd_(ctd)
 {
   cell_topo_ = Teuchos::rcp(new shards::CellTopology(&ctd_));
-  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cub_factory;
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>
-    cubature = cub_factory.create(*cell_topo_, degree);
+  Intrepid2::DefaultCubatureFactory cubFactory;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>
+    cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cell_topo_, degree);
   const int nqp = cubature->getNumPoints(), nd = cubature->getDimension();
   ref_points_.resize(nqp, nd);
   ref_weights_.resize(nqp);

@@ -10,7 +10,6 @@
 #include "Phalanx_TypeStrings.hpp"
 #include "Sacado.hpp"
 
-#include "Intrepid2_FunctionSpaceTools.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN

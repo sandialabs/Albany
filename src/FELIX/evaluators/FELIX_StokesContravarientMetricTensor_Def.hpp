@@ -7,7 +7,6 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
-#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace FELIX {
 
@@ -17,7 +16,7 @@ StokesContravarientMetricTensor<EvalT, Traits>::
 StokesContravarientMetricTensor(const Teuchos::ParameterList& p,
                                 const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVec (p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector),
-  cubature (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature")),
+  cubature (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
   cellType (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   Gc       (p.get<std::string> ("Contravarient Metric Tensor Name"), dl->qp_tensor)
 {
@@ -27,18 +26,9 @@ StokesContravarientMetricTensor(const Teuchos::ParameterList& p,
   // Get Dimensions
   std::vector<PHX::DataLayout::size_type> dim;
   dl->qp_gradient->dimensions(dim);
-  int containerSize = dim[0];
+  numCells = dim[0];
   numQPs = dim[1];
   numDims = dim[2];
-
-  // Allocate Temporary FieldContainers
-  refPoints.resize(numQPs, numDims);
-  refWeights.resize(numQPs);
-  jacobian.resize(containerSize, numQPs, numDims, numDims);
-  jacobian_inv.resize(containerSize, numQPs, numDims, numDims);
-
-  // Pre-Calculate reference element quantitites
-  cubature->getCubature(refPoints, refWeights);
 
   this->setName("StokesContravarientMetricTensor"+PHX::typeAsString<EvalT>());
 }
@@ -51,6 +41,15 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(Gc,fm);
+
+  // Allocate Temporary Views
+  refPoints = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs, numDims);
+  refWeights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
+  jacobian = Kokkos::createDynRankView(coordVec.get_view(), "XXX", numCells, numQPs, numDims, numDims);
+  jacobian_inv = Kokkos::createDynRankView(coordVec.get_view(), "XXX", numCells, numQPs, numDims, numDims);
+
+  // Pre-Calculate reference element quantitites
+  cubature->getCubature(refPoints, refWeights);
 }
 
 //**********************************************************************
@@ -64,11 +63,11 @@ evaluateFields(typename Traits::EvalData workset)
     * this is the size that is used in the computation. There is
     * wasted effort computing on zeroes for the padding on the
     * final workset. Ideally, these are size numCells.
-  //int containerSize = workset.numCells;
+  //int numCells = workset.numCells;
     */
   
-  Intrepid2::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, *cellType);
-  Intrepid2::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
+  Intrepid2::CellTools<PHX::Device>::setJacobian(jacobian, refPoints, coordVec.get_view(), *cellType);
+  Intrepid2::CellTools<PHX::Device>::setJacobianInv(jacobian_inv, jacobian);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {      

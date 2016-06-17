@@ -79,7 +79,7 @@ template<typename EvalT, typename Traits>
 void PoroElasticityResidMomentum<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
@@ -100,7 +100,7 @@ evaluateFields(typename Traits::EvalData workset)
     } } } }
 
 //Irina comment : was commented out 
-//   FST::integrate<ScalarT>(ExResidual, TotalStress, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
+//   FST::integrate(ExResidual, TotalStress, wGradBF, false); // "false" overwrites
 
 }
 

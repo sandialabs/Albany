@@ -76,10 +76,7 @@ template<typename EvalT, typename Traits>
 void PNP::ConcentrationResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
-
-  // Scale gradient into a flux, reusing same memory
-//  FST::scalarMultiplyDataData<ScalarT> (PhiFlux, Permittivity, PhiGrad);
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {          

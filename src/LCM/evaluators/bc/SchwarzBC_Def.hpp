@@ -232,7 +232,7 @@ computeBCs(
   auto
   parametric_dimension = 0;
 
-  Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>>>
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
   basis;
 
   Teuchos::ArrayRCP<double> const &
@@ -304,8 +304,7 @@ computeBCs(
       case Intrepid2::ELEMENT::TETRAHEDRAL:
         parametric_dimension = 3;
 
-        basis = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TET_C1_FEM<
-            double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>>());
+        basis = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TET_C1_FEM<PHX::Device>());
 
         in_element = Intrepid2::in_tetrahedron(
             point,
@@ -319,8 +318,7 @@ computeBCs(
       case Intrepid2::ELEMENT::HEXAHEDRAL:
         parametric_dimension = 3;
 
-        basis = Teuchos::rcp(new Intrepid2::Basis_HGRAD_HEX_C1_FEM<
-            double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>>());
+        basis = Teuchos::rcp(new Intrepid2::Basis_HGRAD_HEX_C1_FEM<PHX::Device>());
 
         in_element = Intrepid2::in_hexahedron(
             point,

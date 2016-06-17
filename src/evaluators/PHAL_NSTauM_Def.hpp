@@ -38,11 +38,9 @@ NSTauM(const Teuchos::ParameterList& p) :
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
+  numCells = dims[0];
   numQPs  = dims[1];
   numDims = dims[2];
-
-  // Allocate workspace
-  normGc.resize(dims[0], numQPs);
 
   this->setName("NSTauM" );
 }
@@ -59,6 +57,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(mu,fm);
   
   this->utils.setFieldData(TauM,fm);
+
+  // Allocate workspace
+  normGc = Kokkos::createDynRankView(Gc.get_view(), "XXX", numCells, numQPs);
 }
 
 //**********************************************************************

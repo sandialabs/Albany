@@ -113,7 +113,7 @@ evaluateFields(typename Traits::EvalData workset)
     // time step
     ScalarT dt = deltaTime_(0);
 
-    typedef Intrepid2::FunctionSpaceTools FST;
+    typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
     if (dt == 0.0) dt = 1.0e-15;
     //grab old temperature

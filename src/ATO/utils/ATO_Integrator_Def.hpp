@@ -15,8 +15,8 @@
 template<typename C>
 void ATO::Integrator::getMeasure(
      RealType& measure, 
-     const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& topoVals, 
-     const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& coordCon, 
+     const Kokkos::DynRankView<RealType, PHX::Device>& topoVals, 
+     const Kokkos::DynRankView<RealType, PHX::Device>& coordCon, 
      const RealType zeroVal, const C compare)
 //******************************************************************************//
 {
@@ -32,7 +32,7 @@ void ATO::Integrator::getMeasure(
     // if there are topoVals that are exactly equal to or very near zeroVal, 
     // there will be all sorts of special cases.  If necessary, nudge values
     // away from zeroVal.  
-    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> vals(topoVals);
+    Kokkos::DynRankView<RealType, PHX::Device> vals("ZZZ", topoVals);
 
     int nvals = vals.dimension(0);
     for(int i=0; i<nvals; i++){
@@ -56,8 +56,8 @@ void ATO::Integrator::getMeasure(
 //******************************************************************************//
 void ATO::SubIntegrator::getMeasure(
      RealType& measure, 
-     const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& topoVals, 
-     const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& coordCon, 
+     const Kokkos::DynRankView<RealType, PHX::Device>& topoVals, 
+     const Kokkos::DynRankView<RealType, PHX::Device>& coordCon, 
      const RealType zeroVal, Sense sense)
 //******************************************************************************//
 {
@@ -104,9 +104,9 @@ void ATO::SubIntegrator::getMeasure(
 //******************************************************************************//
 void ATO::SubIntegrator::getMeasure(
      RealType& measure, 
-     Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& dMdtopo,
-     const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& topoVals, 
-     const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& coordCon, 
+     Kokkos::DynRankView<RealType, PHX::Device>& dMdtopo,
+     const Kokkos::DynRankView<RealType, PHX::Device>& topoVals, 
+     const Kokkos::DynRankView<RealType, PHX::Device>& coordCon, 
      const RealType zeroVal, Sense sense)
 //******************************************************************************//
 {
@@ -117,8 +117,8 @@ void ATO::SubIntegrator::getMeasure(
 
   uint nTopoVals = topoVals.size();
   DFadType Mfad;
-  Intrepid2::FieldContainer_Kokkos<DFadType, PHX::Layout, PHX::Device> Tfad(nTopoVals);
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> Tval(nTopoVals);
+  Kokkos::DynRankView<DFadType, PHX::Device> Tfad(nTopoVals);
+  Kokkos::DynRankView<RealType, PHX::Device> Tval(nTopoVals);
   for(uint i=0; i<nTopoVals; i++){
     Tval(i) = Sacado::ScalarValue<RealType>::eval(topoVals(i));
     Tfad(i) = DFadType(nTopoVals, i, Tval(i));
@@ -299,7 +299,7 @@ void ATO::SubIntegrator::Refine(
 //******************************************************************************//
 template<typename N, typename V, typename P>
 void ATO::SubIntegrator::Project(
-     const Intrepid2::FieldContainer_Kokkos<N, PHX::Layout, PHX::Device>& topoVals, 
+     const Kokkos::DynRankView<N, PHX::Device>& topoVals, 
      std::vector<Simplex<V,P> >& implicitPolys)
 //******************************************************************************//
 {
@@ -307,8 +307,8 @@ void ATO::SubIntegrator::Project(
   int numNodes = basis->getCardinality();
   int nPoints = implicitPolys[0].points.size();
 
-  Intrepid2::FieldContainer_Kokkos<V, PHX::Layout, PHX::Device> Nvals(numNodes, nPoints);
-  Intrepid2::FieldContainer_Kokkos<P, PHX::Layout, PHX::Device> evalPoints(nPoints, nDims);
+  Kokkos::DynRankView<V, PHX::Device> Nvals("ZZZ", numNodes, nPoints);
+  Kokkos::DynRankView<P, PHX::Device> evalPoints("ZZZ", nPoints, nDims);
 
   typename std::vector<Simplex<V,P> >::iterator it;
   for(it=implicitPolys.begin(); it!=implicitPolys.end(); it++){
@@ -476,15 +476,15 @@ void ATO::SubIntegrator::Dice(
 namespace ATO {
 //******************************************************************************//
 template<>
-void SubIntegrator::getValues<>( Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& Nvals,
-                                 const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& evalPoints)
+void SubIntegrator::getValues<>( Kokkos::DynRankView<RealType, PHX::Device>& Nvals,
+                                 const Kokkos::DynRankView<RealType, PHX::Device>& evalPoints)
 //******************************************************************************//
 { basis->getValues(Nvals, evalPoints, Intrepid2::OPERATOR_VALUE); }
 
 //******************************************************************************//
 template<>
-void SubIntegrator::getValues<>( Intrepid2::FieldContainer_Kokkos<DFadType, PHX::Layout, PHX::Device>& Nvals,
-                                 const Intrepid2::FieldContainer_Kokkos<DFadType, PHX::Layout, PHX::Device>& evalPoints)
+void SubIntegrator::getValues<>( Kokkos::DynRankView<DFadType, PHX::Device>& Nvals,
+                                 const Kokkos::DynRankView<DFadType, PHX::Device>& evalPoints)
 //******************************************************************************//
 { DFadBasis->getValues(Nvals, evalPoints, Intrepid2::OPERATOR_VALUE); }
 }
@@ -492,23 +492,23 @@ void SubIntegrator::getValues<>( Intrepid2::FieldContainer_Kokkos<DFadType, PHX:
 //******************************************************************************//
 template<typename N, typename V, typename P>
 V ATO::SubIntegrator::Volume(Simplex<V,P>& simplex,
-                             const Intrepid2::FieldContainer_Kokkos<N, PHX::Layout, PHX::Device>& coordCon)
+                             const Kokkos::DynRankView<N, PHX::Device>& coordCon)
 //******************************************************************************//
 {
   int numNodes = basis->getCardinality();
   int nPoints = simplex.points.size();
-  Intrepid2::FieldContainer_Kokkos<P, PHX::Layout, PHX::Device> evalPoints(nPoints, nDims);
+  Kokkos::DynRankView<P, PHX::Device> evalPoints("ZZZ", nPoints, nDims);
 
   for(int i=0; i<nPoints; i++)
     for(uint j=0; j<nDims; j++)
       evalPoints(i, j) = simplex.points[i](j);
 
 
-  Intrepid2::FieldContainer_Kokkos<P, PHX::Layout, PHX::Device> Nvals(numNodes, nPoints);
+  Kokkos::DynRankView<P, PHX::Device> Nvals("ZZZ", numNodes, nPoints);
   getValues<V,P>(Nvals, evalPoints);
 
 
-  Intrepid2::FieldContainer_Kokkos<P, PHX::Layout, PHX::Device> pnts(nPoints, nDims);
+  Kokkos::DynRankView<P, PHX::Device> pnts("ZZZ", nPoints, nDims);
   for(int i=0; i<nPoints; i++)
     for(uint j=0; j<nDims; j++){
       pnts(i,j) = 0.0;
@@ -724,8 +724,8 @@ template<typename C>
 void ATO::Integrator::getSurfaceTris(
             std::vector< Vector3D >& points,
             std::vector< Tri >& tris,
-            const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& topoVals, 
-            const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& coordCon, 
+            const Kokkos::DynRankView<RealType, PHX::Device>& topoVals, 
+            const Kokkos::DynRankView<RealType, PHX::Device>& coordCon, 
             RealType zeroVal, C compare)
 //******************************************************************************//
 {
@@ -818,7 +818,7 @@ void ATO::Integrator::getSurfaceTris(
 template<typename C>
 bool ATO::Integrator::included(
      Teuchos::RCP<MiniPoly> poly,
-     const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& topoVals, 
+     const Kokkos::DynRankView<RealType, PHX::Device>& topoVals, 
      RealType zeroVal, C compare)
 //******************************************************************************//
 {
@@ -986,8 +986,8 @@ RealType ATO::Integrator::getTriMeasure(
 //******************************************************************************//
 void ATO::Integrator::getCubature(std::vector<std::vector<RealType> >& refPoints, 
                                   std::vector<RealType>& weights, 
-                                  const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& coordCon, 
-                                  const Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& topoVals, RealType zeroVal)
+                                  const Kokkos::DynRankView<RealType, PHX::Device>& coordCon, 
+                                  const Kokkos::DynRankView<RealType, PHX::Device>& topoVals, RealType zeroVal)
 //******************************************************************************//
 {
 }
@@ -1016,7 +1016,7 @@ void ATO::Integrator::addCubature(std::vector<std::vector<RealType> >& refPoints
 //******************************************************************************//
 ATO::Integrator::
 Integrator(Teuchos::RCP<shards::CellTopology> _celltype,
-Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > _basis):
+Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > _basis):
    cellTopology(_celltype),
    basis(_basis){}
 //******************************************************************************//
@@ -1024,7 +1024,7 @@ Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealTyp
 //******************************************************************************//
 ATO::SubIntegrator::
 SubIntegrator(Teuchos::RCP<shards::CellTopology> _celltype,
-Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > _basis,
+Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > _basis,
 uint _maxRefs, RealType _maxErr):
    cellTopology(_celltype),
    basis(_basis),
@@ -1039,9 +1039,9 @@ uint _maxRefs, RealType _maxErr):
   parentCoords.resize(basis->getCardinality(),nDims);
   
   try {
-    Teuchos::RCP<Intrepid2::DofCoordsInterface<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > 
+    Teuchos::RCP<Intrepid2::DofCoordsInterface<Kokkos::DynRankView<RealType, PHX::Device> > > 
       coords_interface = 
-       Teuchos::rcp_dynamic_cast<Intrepid2::DofCoordsInterface<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+       Teuchos::rcp_dynamic_cast<Intrepid2::DofCoordsInterface<Kokkos::DynRankView<RealType, PHX::Device> > >
         (basis,true);
   
     coords_interface->getDofCoords(parentCoords);
@@ -1061,7 +1061,7 @@ uint _maxRefs, RealType _maxErr):
   if( cellTopology->getBaseName() == shards::getCellTopologyData< shards::Tetrahedron<4> >()->name ){
 
     DFadBasis = Teuchos::rcp(
-      new Intrepid2::Basis_HGRAD_TET_C1_FEM<DFadType, Intrepid2::FieldContainer_Kokkos<DFadType, PHX::Layout, PHX::Device> >() );
+      new Intrepid2::Basis_HGRAD_TET_C1_FEM<DFadType, Kokkos::DynRankView<DFadType, PHX::Device> >() );
 
     int nVerts = topo.vertex_count;
 
@@ -1082,7 +1082,7 @@ uint _maxRefs, RealType _maxErr):
   if( cellTopology->getBaseName() == shards::getCellTopologyData< shards::Hexahedron<8> >()->name ){
 
     DFadBasis = Teuchos::rcp(
-     new Intrepid2::Basis_HGRAD_HEX_C1_FEM<DFadType, Intrepid2::FieldContainer_Kokkos<DFadType, PHX::Layout, PHX::Device> >() );
+     new Intrepid2::Basis_HGRAD_HEX_C1_FEM<DFadType, Kokkos::DynRankView<DFadType, PHX::Device> >() );
 
     Vector3D<RealType>::Type bodyCenter(0.0, 0.0, 0.0);
 
@@ -1118,12 +1118,12 @@ uint _maxRefs, RealType _maxErr):
 
     if( cellTopology->getName() == shards::getCellTopologyData< shards::Quadrilateral<4> >()->name ){
       DFadBasis = Teuchos::rcp(
-       new Intrepid2::Basis_HGRAD_QUAD_C1_FEM<DFadType, Intrepid2::FieldContainer_Kokkos<DFadType, PHX::Layout, PHX::Device> >() );
+       new Intrepid2::Basis_HGRAD_QUAD_C1_FEM<DFadType, Kokkos::DynRankView<DFadType, PHX::Device> >() );
     } else 
     if( cellTopology->getName() == shards::getCellTopologyData< shards::Quadrilateral<8> >()->name 
      || cellTopology->getName() == shards::getCellTopologyData< shards::Quadrilateral<9> >()->name ){
       DFadBasis = Teuchos::rcp(
-       new Intrepid2::Basis_HGRAD_QUAD_C2_FEM<DFadType, Intrepid2::FieldContainer_Kokkos<DFadType, PHX::Layout, PHX::Device> >() );
+       new Intrepid2::Basis_HGRAD_QUAD_C2_FEM<DFadType, Kokkos::DynRankView<DFadType, PHX::Device> >() );
     }
 
     const int nVerts = topo.vertex_count;
@@ -1152,7 +1152,7 @@ uint _maxRefs, RealType _maxErr):
   if( cellTopology->getBaseName() == shards::getCellTopologyData< shards::Triangle<3> >()->name ){
 
     DFadBasis = Teuchos::rcp(
-     new Intrepid2::Basis_HGRAD_TRI_C1_FEM<DFadType, Intrepid2::FieldContainer_Kokkos<DFadType, PHX::Layout, PHX::Device> >() );
+     new Intrepid2::Basis_HGRAD_TRI_C1_FEM<DFadType, Kokkos::DynRankView<DFadType, PHX::Device> >() );
 
     const int nVerts = topo.vertex_count;
     Simplex<RealType,RealType> tri(nVerts);

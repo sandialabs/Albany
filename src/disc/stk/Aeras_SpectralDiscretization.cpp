@@ -2085,18 +2085,18 @@ void Aeras::SpectralDiscretization::computeCoordsLines()
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
   // Initialization
-  typedef Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> Field_t;
+  typedef Kokkos::DynRankView<RealType, PHX::Device> Field_t;
   typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
   int np  = points_per_edge;
   int deg = np - 1;
 
   // Compute the 1D Gauss-Lobatto quadrature
-  Teuchos::RCP< Intrepid2::Cubature< double, Field_t, Field_t > > gl1D =
+  Teuchos::RCP< Intrepid2::Cubature<PHX::Device> > gl1D =
     Teuchos::rcp(
       new Intrepid2::CubaturePolylib< double, Field_t, Field_t >(
-        2*deg-1, Intrepid2::PL_GAUSS_LOBATTO));
-  Field_t refCoords(np, 1);
-  Field_t refWeights(np);
+        2*deg-1, Intrepid2::POLYTYPE_GAUSS_LOBATTO));
+  Field_t refCoords("AAA", np, 1);
+  Field_t refWeights("AAA", np);
   gl1D->getCubature(refCoords, refWeights);
 
   // Get the appropriate STK element buckets for extracting the
@@ -2178,27 +2178,27 @@ void Aeras::SpectralDiscretization::computeCoordsQuads()
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
 #endif
   // Initialization
-  typedef Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> Field_t;
+  typedef Kokkos::DynRankView<RealType, PHX::Device> Field_t;
   typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
   int np  = points_per_edge;
   int np2 = np * np;
   int deg = np - 1;
 
   // Compute the 1D Gauss-Lobatto quadrature
-  Teuchos::RCP< Intrepid2::Cubature< double, Field_t, Field_t > > gl1D =
+  Teuchos::RCP< Intrepid2::Cubature<PHX::Device> > gl1D =
     Teuchos::rcp(
       new Intrepid2::CubaturePolylib< double, Field_t, Field_t >(
-        2*deg-1, Intrepid2::PL_GAUSS_LOBATTO));
+        2*deg-1, Intrepid2::POLYTYPE_GAUSS_LOBATTO));
 
   // Compute the 2D Gauss-Lobatto cubature.  These will be the nodal
   // points of the reference spectral element
   std::vector<
-    Teuchos::RCP< Intrepid2::Cubature< double, Field_t, Field_t > > > axes;
+    Teuchos::RCP< Intrepid2::Cubature<PHX::Device> > axes;
   axes.push_back(gl1D);
   axes.push_back(gl1D);
-  Intrepid2::CubatureTensor< double, Field_t, Field_t > gl2D(axes);
-  Field_t refCoords(np2, 2);
-  Field_t refWeights(np2);
+  Intrepid2::CubatureTensor<PHX::Device> gl2D(axes);
+  Field_t refCoords("AAA", np2, 2);
+  Field_t refWeights("AAA", np2);
   gl2D.getCubature(refCoords, refWeights);
 
   // Get the appropriate STK element buckets for extracting the
@@ -3160,16 +3160,16 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
   }
 
 
-  const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > >
+  const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
   Basis(const int C)
   {
     // Static types
-    typedef Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> Field_t;
-    typedef Intrepid2::Basis< double, Field_t > Basis_t;
+    typedef Kokkos::DynRankView<RealType, PHX::Device> Field_t;
+    typedef Intrepid2::Basis<PHX::Device, RealType, RealType> Basis_t;
     static const Teuchos::RCP< Basis_t > HGRAD_Basis_4 =
-      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C1_FEM< double, Field_t >() );
+      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::Device>() );
     static const Teuchos::RCP< Basis_t > HGRAD_Basis_9 =
-      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C2_FEM< double, Field_t >() );
+      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C2_FEM<PHX::Device>() );
 
     // Check for valid value of C
     int deg = (int) std::sqrt((double)C);
@@ -3185,7 +3185,7 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
 
     // Spectral bases
     return Teuchos::rcp(
-      new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM< double, Field_t >(
+      new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::Device>(
         deg, Intrepid2::POINTTYPE_SPECTRAL) );
   }
 
@@ -3194,13 +3194,12 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
   {
 
     const int C = soln.size();
-    const Teuchos::RCP<Intrepid2::Basis<double,
-                                       Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > >
+    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
       HGRAD_Basis = Basis(C);
 
     const int numPoints = 1;
-    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> basisVals (C, numPoints);
-    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> tempPoints(numPoints, 2);
+    Kokkos::DynRankView<RealType, PHX::Device> basisVals ("AAA", C, numPoints);
+    Kokkos::DynRankView<RealType, PHX::Device> tempPoints("AAA", numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
@@ -3217,13 +3216,12 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
   {
 
     const int C = coords.size();
-    const Teuchos::RCP<Intrepid2::Basis<double,
-                                       Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > >
+    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
       HGRAD_Basis = Basis(C);
 
     const int numPoints = 1;
-    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> basisVals (C, numPoints);
-    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> tempPoints(numPoints, 2);
+    Kokkos::DynRankView<RealType, PHX::Device> basisVals ("AAA", C, numPoints);
+    Kokkos::DynRankView<RealType, PHX::Device> tempPoints("AAA", numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
@@ -3241,13 +3239,12 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
             const std::pair<double, double> &ref)
   {
     const int C = coords.size();
-    const Teuchos::RCP<Intrepid2::Basis<double,
-                                       Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > >
+    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
       HGRAD_Basis = Basis(C);
 
     const int numPoints = 1;
-    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> basisGrad (C, numPoints, 2);
-    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> tempPoints(numPoints, 2);
+    Kokkos::DynRankView<RealType, PHX::Device> basisGrad ("AAA", C, numPoints, 2);
+    Kokkos::DynRankView<RealType, PHX::Device> tempPoints("AAA", numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 

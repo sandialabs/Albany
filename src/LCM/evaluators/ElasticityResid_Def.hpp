@@ -92,7 +92,7 @@ template<typename EvalT, typename Traits>
 void ElasticityResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {
@@ -127,7 +127,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-//   FST::integrate<ScalarT>(ExResidual, Stress, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
+//   FST::integrate(ExResidual, Stress, wGradBF, false); // "false" overwrites
 
 }
 

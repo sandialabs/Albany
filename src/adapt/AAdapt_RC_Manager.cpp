@@ -7,6 +7,7 @@
 #include <Intrepid2_MiniTensor.h>
 #include <Phalanx_FieldManager.hpp>
 #include <Teuchos_CommHelpers.hpp>
+#include "Phalanx_DataLayout_MDALayout.hpp"
 
 #include "AAdapt_AdaptiveSolutionManagerT.hpp"
 #include "AAdapt_RC_DataTypes.hpp"

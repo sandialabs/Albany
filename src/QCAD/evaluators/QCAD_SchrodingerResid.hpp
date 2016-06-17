@@ -62,9 +62,9 @@ private:
   PHX::MDField<ScalarT,Cell,Node> psiResidual;
 
   // Intermediate workspace
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> psiGradWithMass;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> psiV;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> V_barrier;
+  Kokkos::DynRankView<ScalarT, PHX::Device> psiGradWithMass;
+  Kokkos::DynRankView<ScalarT, PHX::Device> psiV;
+  Kokkos::DynRankView<ScalarT, PHX::Device> V_barrier;
 
   //! units
   double energy_unit_in_eV, length_unit_in_m;

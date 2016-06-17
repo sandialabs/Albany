@@ -45,7 +45,7 @@ namespace LCM {
 		 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") ),
 	coordVec      (p.get<std::string>                   ("Coordinate Vector Name"),
 				 p.get<Teuchos::RCP<PHX::DataLayout>>("Coordinate Data Layout") ),
-    cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>>("Cubature")),
+    cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device>>>("Cubature")),
 	cellType      (p.get<Teuchos::RCP <shards::CellTopology>> ("Cell Type")),
 	weights       (p.get<std::string>                   ("Weights Name"),
 		         p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout") ),
@@ -175,7 +175,7 @@ template<typename EvalT, typename Traits>
 void UnSatPoroElasticityResidMass<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
 
   Albany::MDArray strainold = (*workset.stateArrayPtr)[strainName];
@@ -291,7 +291,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 
-   FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid2::COMP_CPP, true); // "true" sums into
+   FST::integrate(TResidual, fluxdt, wGradBF, true); // "true" sums into
 
 
 

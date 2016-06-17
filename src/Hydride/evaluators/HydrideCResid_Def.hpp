@@ -86,7 +86,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 // Form Equation 2.2
 
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
     for (std::size_t qp=0; qp < numQPs; ++qp) 
@@ -94,15 +94,15 @@ evaluateFields(typename Traits::EvalData workset)
 
         gamma_term(cell, qp, i) = cGrad(cell,qp,i) * gamma; 
 
-  FST::integrate<ScalarT>(cResidual, gamma_term, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
+  FST::integrate(cResidual, gamma_term, wGradBF, false); // "false" overwrites
 
-  FST::integrate<ScalarT>(cResidual, chemTerm, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+  FST::integrate(cResidual, chemTerm, wBF, true); // "true" sums into
 
-  FST::integrate<ScalarT>(cResidual, stressTerm, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+  FST::integrate(cResidual, stressTerm, wBF, true); // "true" sums into
 
   if(haveNoise)
 
-    FST::integrate<ScalarT>(cResidual, noiseTerm, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+    FST::integrate(cResidual, noiseTerm, wBF, true); // "true" sums into
 
 
 }

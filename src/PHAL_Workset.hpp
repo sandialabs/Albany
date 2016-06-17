@@ -23,7 +23,7 @@
 #include "Albany_EigendataInfoStructT.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_DistributedParameterLibrary_Tpetra.hpp"
-#include <Intrepid2_FieldContainer.hpp>
+#include "Kokkos_ViewFactory.hpp"
 
 #ifdef ALBANY_STOKHOS
 #include "Stokhos_OrthogPolyExpansion.hpp"

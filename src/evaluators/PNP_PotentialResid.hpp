@@ -43,12 +43,9 @@ private:
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  //PHX::MDField<ScalarT,Cell,QuadPoint> Potential;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PotentialGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Concentration;
   PHX::MDField<ScalarT,Cell,QuadPoint> Permittivity;
-  //PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PhiGrad;
-  //PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PhiFlux;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> PotentialResidual;

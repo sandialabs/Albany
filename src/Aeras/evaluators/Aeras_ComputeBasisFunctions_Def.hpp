@@ -21,8 +21,8 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
                               spatialDimension( p.get<std::size_t>("spatialDim") ),
   coordVec      (p.get<std::string>  ("Coordinate Vector Name"),
       spatialDimension == 3 ? dl->node_3vector : dl->node_vector ),
-  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >("Cubature")),
-  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > ("Intrepid2 Basis") ),
+  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
+  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis") ),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   weighted_measure (p.get<std::string>  ("Weights Name"),   dl->qp_scalar ),
   sphere_coord  (p.get<std::string>  ("Spherical Coord Name"), dl->qp_gradient ),
@@ -760,8 +760,8 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 
-  Intrepid2::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
-  Intrepid2::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
+  Intrepid2::CellTools<PHX::Device>::setJacobianInv(jacobian_inv, jacobian);
+  Intrepid2::CellTools<PHX::Device>::setJacobianDet(jacobian_det, jacobian);
 
   for (int e = 0; e<numelements;      ++e) {
     for (int q = 0; q<numQPs;          ++q) {
@@ -770,17 +770,15 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-  Intrepid2::FunctionSpaceTools::computeCellMeasure<MeshScalarT>
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
+
+  FST::computeCellMeasure<MeshScalarT>
     (weighted_measure, jacobian_det, refWeights);
 
-  Intrepid2::FunctionSpaceTools::HGRADtransformVALUE<RealType>
-    (BF, val_at_cub_points);
-  Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
-    (wBF, weighted_measure, BF);
-  Intrepid2::FunctionSpaceTools::HGRADtransformGRAD<MeshScalarT>
-    (GradBF, jacobian_inv, grad_at_cub_points);
-  Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
-    (wGradBF, weighted_measure, GradBF);
+  FST::HGRADtransformVALUE(BF, val_at_cub_points);
+  FST::multiplyMeasure(wBF, weighted_measure, BF);
+  FST::HGRADtransformGRAD(GradBF, jacobian_inv, grad_at_cub_points);
+  FST::multiplyMeasure(wGradBF, weighted_measure, GradBF);
 
   PHAL::set(GradGradBF, 0.0);
   if (spatialDim!=basisDim)

@@ -133,8 +133,6 @@ template<typename EvalT, typename Traits>
 void LinComprNSResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
-
   if (eqn_type == EULER) { //Euler equations
    if (numDims == 1) { //1D case
     double ubar = baseFlowData[0];

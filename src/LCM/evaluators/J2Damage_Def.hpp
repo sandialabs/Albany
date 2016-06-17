@@ -117,7 +117,7 @@ namespace LCM {
     bool print = false;
     //if (typeid(ScalarT) == typeid(RealType)) print = true;
 
-    typedef Intrepid2::FunctionSpaceTools FST;
+    typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
     typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
     ScalarT kappa, H, H2, phi, phi_old;

@@ -60,18 +60,18 @@ template<typename EvalT, typename Traits>
 void QCAD::PoissonResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
   // Scale gradient into a flux, reusing same memory
-  FST::scalarMultiplyDataData<ScalarT> (PhiFlux, Permittivity, PhiGrad);
+  FST::scalarMultiplyDataData (PhiFlux.get_view(), Permittivity.get_view(), PhiGrad.get_view());
 
-  FST::integrate<ScalarT>(PhiResidual, PhiFlux, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
+  FST::integrate(PhiResidual.get_view(), PhiFlux.get_view(), wGradBF.get_view(), false); // "false" overwrites
 
   if (haveSource) {
     for (int i=0; i<Source.dimension(0); i++)
       for (int j=0; j<Source.dimension(1); j++)
         Source(i,j) *= -1.0;
-    FST::integrate<ScalarT>(PhiResidual, Source, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+    FST::integrate(PhiResidual.get_view(), Source.get_view(), wBF.get_view(), true); // "true" sums into
   }
 }
 //**********************************************************************

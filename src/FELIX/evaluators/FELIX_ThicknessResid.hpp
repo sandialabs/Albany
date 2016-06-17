@@ -67,35 +67,33 @@ private:
 
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::RCP<shards::CellTopology> sideType;
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubatureSide;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureSide;
 
   // The basis
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
 
-  // Temporary FieldContainers
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> cubPointsSide;
-  //const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPointsSide;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> cubWeightsSide;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> physPointsSide;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobianSide;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> invJacobianSide;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobianSide_det;
+  // Temporary Views
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsCell;
+  Kokkos::DynRankView<ScalarT, PHX::Device> dofCell;
+  Kokkos::DynRankView<ScalarT, PHX::Device> dofCellVec;
 
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> physPointsCell;
+  Kokkos::DynRankView<RealType, PHX::Device> cubPointsSide;
+  Kokkos::DynRankView<RealType, PHX::Device> refPointsSide;
+  Kokkos::DynRankView<RealType, PHX::Device> cubWeightsSide;
+  Kokkos::DynRankView<RealType, PHX::Device> basis_refPointsSide;
+  Kokkos::DynRankView<RealType, PHX::Device> basisGrad_refPointsSide;
 
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> weighted_measure;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> basis_refPointsSide;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> basisGrad_refPointsSide;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> trans_basis_refPointsSide;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> trans_gradBasis_refPointsSide;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> weighted_trans_basis_refPointsSide;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsSide;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobianSide;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> invJacobianSide;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobianSide_det;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> weighted_measure;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> trans_basis_refPointsSide;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> trans_gradBasis_refPointsSide;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> weighted_trans_basis_refPointsSide;
 
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dofCell;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dofSide;
-
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dofCellVec;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dofSideVec;
+  Kokkos::DynRankView<ScalarT, PHX::Device> dofSide;
+  Kokkos::DynRankView<ScalarT, PHX::Device> dofSideVec;
 
   std::string sideSetID;
 

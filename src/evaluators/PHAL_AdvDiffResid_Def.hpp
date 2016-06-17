@@ -103,7 +103,7 @@ template<typename EvalT, typename Traits>
 void AdvDiffResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
   if (useAugForm == false) { //standard form of advection-diffusion equation
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {

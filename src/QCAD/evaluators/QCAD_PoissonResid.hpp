@@ -41,19 +41,26 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Potential;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Permittivity;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PhiGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PhiFlux;
-
-  PHX::MDField<ScalarT,Cell,QuadPoint> Source;
+  PHX::MDField<MeshScalarT> wBF;
+  PHX::MDField<ScalarT> Potential;
+  PHX::MDField<ScalarT> Permittivity;
+  PHX::MDField<MeshScalarT> wGradBF;
+  PHX::MDField<ScalarT> PhiGrad;
+  PHX::MDField<ScalarT> PhiFlux;
+  PHX::MDField<ScalarT> Source;
+  //PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  //PHX::MDField<ScalarT,Cell,QuadPoint> Potential;
+  //PHX::MDField<ScalarT,Cell,QuadPoint> Permittivity;
+  //PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  //PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PhiGrad;
+  //PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PhiFlux;
+  //PHX::MDField<ScalarT,Cell,QuadPoint> Source;
 
   bool haveSource;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> PhiResidual;
+  PHX::MDField<ScalarT> PhiResidual;
+  //PHX::MDField<ScalarT,Cell,Node> PhiResidual;
 };
 }
 

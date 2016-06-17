@@ -31,7 +31,7 @@ typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type
 typedef PHAL::AlbanyTraits::Residual Residual;
 typedef PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
 typedef PHAL::AlbanyTraits Traits;
-typedef Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> FC;
+typedef Kokkos::DynRankView<RealType, PHX::Device> FC;
 typedef shards::CellTopology CT;
 using Teuchos::RCP;
 using Teuchos::rcp;

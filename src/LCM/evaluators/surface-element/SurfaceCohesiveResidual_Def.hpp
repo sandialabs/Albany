@@ -17,10 +17,9 @@ SurfaceCohesiveResidual<EvalT, Traits>::
 SurfaceCohesiveResidual(const Teuchos::ParameterList& p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
     cubature_(
-        p.get<Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>>("Cubature")),
+        p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")),
     intrepid_basis_(
-        p.get<Teuchos::RCP<Intrepid2::Basis<RealType,
-            Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>("Intrepid2 Basis")),
+        p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>("Intrepid2 Basis")),
     ref_area_(
         p.get<std::string>("Reference Area Name"), dl->qp_scalar),
     cohesive_traction_(

@@ -55,9 +55,9 @@ class FaceAverage : public PHX::EvaluatorWithBaseImpl<Traits>,
       // The field that was projected to the nodes
       PHX::MDField<ScalarT,Cell,Node,VecDim> projected;
       //Numerical integration rule
-      Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >> cubature;
+      Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature;
       // FE basis
-      Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>> intrepidBasis;
+      Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
       // The cell type
       Teuchos::RCP<shards::CellTopology> cellType;
 

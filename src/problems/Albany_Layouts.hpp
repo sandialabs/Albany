@@ -12,7 +12,9 @@
 
 #include "Teuchos_RCP.hpp"
 
-#include "Phalanx.hpp"
+//#include "Phalanx.hpp"
+#include "Phalanx_DataLayout_MDALayout.hpp"
+#include "Phalanx_DataLayout.hpp"
 #include "Albany_DataTypes.hpp"
 
 namespace Albany {

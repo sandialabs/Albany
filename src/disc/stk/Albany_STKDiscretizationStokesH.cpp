@@ -20,7 +20,12 @@
 
 #include <Intrepid2_CellTools.hpp>
 #include <Intrepid2_Basis.hpp>
+#ifdef HAVE_REFACTORED_CN_BASIS
 #include <Intrepid2_HGRAD_QUAD_Cn_FEM.hpp>
+#else
+#include <Intrepid2_HGRAD_QUAD_C1_FEM.hpp>
+#include <Intrepid2_HGRAD_QUAD_C2_FEM.hpp>
+#endif
 
 #include <stk_util/parallel/Parallel.hpp>
 

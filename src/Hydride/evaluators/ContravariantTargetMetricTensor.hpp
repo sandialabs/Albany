@@ -47,7 +47,7 @@ private:
   // Input:
   //! Coordinate vector at vertices
   PHX::MDField<ScalarT, Cell, Node, Dim> solnVec;
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
   Teuchos::RCP<shards::CellTopology> cellType;
 
   // Temporary FieldContainers

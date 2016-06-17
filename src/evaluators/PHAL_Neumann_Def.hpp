@@ -96,7 +96,6 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
      }
 
-
      // In the robin boundary condition case, the NBC depends on the solution (dof) field
      if (inputConditions == "robin") {
       // Currently, the Neumann evaluator doesn't handle the case when the degree of freedom is a vector.
@@ -111,7 +110,6 @@ NeumannBase(const Teuchos::ParameterList& p) :
        PHX::MDField<ScalarT,Cell,Node> tmp(p.get<std::string>("DOF Name"),
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
        dof = tmp;
-
        this->addDependentField(dof);
      }
   }
@@ -242,15 +240,15 @@ NeumannBase(const Teuchos::ParameterList& p) :
         std::stringstream ss; ss << name << "[" << i << "]";
         this->registerSacadoParameter(ss.str(), paramLib);
       }
-       PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
-           p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
-       dofVec = tmp;
+      PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
+          p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
+      dofVec = tmp;
+      this->addDependentField(dofVec);
 #ifdef ALBANY_FELIX
       beta_field = PHX::MDField<ParamScalarT,Cell,Node>(
                     p.get<std::string>("Beta Field Name"), dl->node_scalar);
       this->addDependentField(beta_field);
 #endif
-      this->addDependentField(dofVec);
   }
   else if(inputConditions == "lateral"){ // Basal boundary condition for FELIX
        stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
@@ -281,20 +279,19 @@ NeumannBase(const Teuchos::ParameterList& p) :
         std::stringstream ss; ss << name << "[" << i << "]";
         this->registerSacadoParameter(ss.str(), paramLib);
       }
-       PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
+        PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
              p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
-       dofVec = tmp;
+        dofVec = tmp;
+        this->addDependentField(dofVec);
 #ifdef ALBANY_FELIX
-       thickness_field = PHX::MDField<ParamScalarT,Cell,Node>(
+        thickness_field = PHX::MDField<ParamScalarT,Cell,Node>(
                            p.get<std::string>("thickness Field Name"), dl->node_scalar);
-       elevation_field = PHX::MDField<ParamScalarT,Cell,Node>(
+        elevation_field = PHX::MDField<ParamScalarT,Cell,Node>(
                            p.get<std::string>("Elevation Field Name"), dl->node_scalar);
 
         this->addDependentField(thickness_field);
         this->addDependentField(elevation_field);
 #endif
-
-        this->addDependentField(dofVec);
     }
 
   else {
@@ -320,8 +317,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   cellType = Teuchos::rcp(new shards::CellTopology (elem_top));
 
-  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
-  cubatureCell = cubFactory.create(*cellType, meshSpecs->cubatureDegree);
+  Intrepid2::DefaultCubatureFactory cubFactory;
+  cubatureCell = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs->cubatureDegree);
 
   int cubatureDegree = (p.get<int>("Cubature Degree") > 0 ) ? p.get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
 
@@ -336,7 +333,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   for(int i=0; i<numSidesOnElem; ++i) {
     sideType[i] = Teuchos::rcp(new shards::CellTopology(elem_top->side[i].topology));
-    cubatureSide[i] = cubFactory.create(*sideType[i], cubatureDegree);
+    cubatureSide[i] = cubFactory.create<PHX::Device, RealType, RealType>(*sideType[i], cubatureDegree);
     maxSideDim = std::max( maxSideDim, (int)sideType[i]->getDimension());
     maxNumQpSide = std::max(maxNumQpSide, (int)cubatureSide[i]->getNumPoints());
     sideTypeName = sideType[i]->getName();
@@ -356,34 +353,9 @@ NeumannBase(const Teuchos::ParameterList& p) :
   // Get Dimensions
   std::vector<PHX::DataLayout::size_type> dim;
   dl->qp_tensor->dimensions(dim);
-  int containerSize = dim[0];
+  numCells = dim[0];
   numQPs = dim[1];
   cellDims = dim[2];
-
-  // Allocate Temporary FieldContainers
-  physPointsCell.resize(1, numNodes, cellDims);
-  dofCell.resize(1, numNodes);
-  dofCellVec.resize(1, numNodes, numDOFsSet);
-  neumann.resize(containerSize, numNodes, numDOFsSet);
-
-  // Allocate Temporary FieldContainers based on max sizes of sides. Need to be resized later for each side.
-  cubPointsSide.resize(maxNumQpSide, maxSideDim);
-  refPointsSide.resize(maxNumQpSide, cellDims);
-  cubWeightsSide.resize(maxNumQpSide);
-  physPointsSide.resize(1, maxNumQpSide, cellDims);
-  dofSide.resize(1, maxNumQpSide);
-  dofSideVec.resize(1, maxNumQpSide, numDOFsSet);
-
-  // Do the BC one side at a time for now
-  jacobianSide.resize(1, maxNumQpSide, cellDims, cellDims);
-  jacobianSide_det.resize(1, maxNumQpSide);
-
-  weighted_measure.resize(1, maxNumQpSide);
-  basis_refPointsSide.resize(numNodes, maxNumQpSide);
-  trans_basis_refPointsSide.resize(1, numNodes, maxNumQpSide);
-  weighted_trans_basis_refPointsSide.resize(1, numNodes, maxNumQpSide);
-
-  data.resize(1, maxNumQpSide, numDOFsSet);
 
 
   this->setName(name);
@@ -416,6 +388,16 @@ postRegistrationSetup(typename Traits::SetupData d,
 #endif
   // Note, we do not need to add dependent field to fm here for output - that is done
   // by Neumann Aggregator
+
+  // Allocate Temporary Views
+  physPointsCell = Kokkos::createDynRankView(coordVec.get_view(), "XXX", 1, numNodes, cellDims);
+
+  if (inputConditions == "robin") {
+    dofCell = Kokkos::createDynRankView(dof.get_view(), "XXX", 1, numNodes);
+  }
+  else if (inputConditions == "basal" || inputConditions == "basal_scalar_field" || inputConditions == "lateral") {
+    dofCellVec = Kokkos::createDynRankView(dofVec.get_view(), "XXX", 1, numNodes, numDOFsSet);
+  }
 }
 
 template<typename EvalT, typename Traits>
@@ -435,27 +417,101 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
          "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
+  // neumann data type is always ScalarT, but the deriv dimentsion
+  // actually needed depends on BC type. For many it just needs 
+  // deriv dimentsions from MeshScalarT (cloned from coordVec).
+  // "data" is same as neumann -- always ScalarT but not always
+  // with full deriv dimension of a ScalarT variable.
 
-  const Albany::SideSetList& ssList = *(workset.sideSets);
-  Albany::SideSetList::const_iterator it = ssList.find(this->sideSetID);
+    std::cout << "NN0 " << std::endl;
+  switch(bc_type){
+    case INTJUMP:
+       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+         (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
+       break;
+    case ROBIN:
+       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+         (dof.get_view(), "DDN", numCells, numNodes, numDOFsSet);
+       break;
+    case NORMAL:
+       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+         (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
+       break;
+    case PRESS:
+       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+         (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
+       break;
+    case BASAL:
+#ifdef ALBANY_FELIX
+       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+         (dofVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
+#endif
+       break;
+    case BASAL_SCALAR_FIELD:
+#ifdef ALBANY_FELIX
+       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+         (dofVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
+#endif
+       break;
+    case LATERAL:
+#ifdef ALBANY_FELIX
+       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+         (dofVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
+#endif
+       break;
+    case TRACTION:
+       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+         (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
+       break;
+    default:
+    std::cout << "NN1 " << std::endl;
+       neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
+         (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
+       break;
+  }
 
+  // Needed?
   for (std::size_t cell=0; cell < workset.numCells; ++cell)
    for (std::size_t node=0; node < numNodes; ++node)
      for (std::size_t dim=0; dim < numDOFsSet; ++dim)
              neumann(cell, node, dim) = 0.0;
 
-  if(it == ssList.end()) return; // This sideset does not exist in this workset (GAH - this can go away
-                                  // once we move logic to BCUtils
+  std::cout << "NNN " << neumann(0,0,0) << std::endl;
 
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> betaOnSide;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> thicknessOnSide;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> bedTopoOnSide;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> elevationOnSide;
+  const Albany::SideSetList& ssList = *(workset.sideSets);
+  Albany::SideSetList::const_iterator it = ssList.find(this->sideSetID);
 
   const std::vector<Albany::SideStruct>& sideSet = it->second;
 
-  // Loop over the sides that form the boundary condition
+  if(it == ssList.end()) return; // This sideset does not exist in this workset (GAH - this can go away
+                                  // once we move logic to BCUtils
 
+  Kokkos::DynRankView<RealType, PHX::Device> cubPointsSide;
+  Kokkos::DynRankView<RealType, PHX::Device> refPointsSide;
+  Kokkos::DynRankView<RealType, PHX::Device> cubWeightsSide;
+  Kokkos::DynRankView<RealType, PHX::Device> basis_refPointsSide;
+
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsSide;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobianSide;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobianSide_det;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> weighted_measure;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> trans_basis_refPointsSide;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> weighted_trans_basis_refPointsSide;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> scratch;
+
+  Kokkos::DynRankView<ScalarT, PHX::Device> betaOnSide;
+  Kokkos::DynRankView<ScalarT, PHX::Device> thicknessOnSide;
+  Kokkos::DynRankView<ScalarT, PHX::Device> bedTopoOnSide;
+  Kokkos::DynRankView<ScalarT, PHX::Device> elevationOnSide;
+  Kokkos::DynRankView<ScalarT, PHX::Device> dofSide;
+  Kokkos::DynRankView<ScalarT, PHX::Device> dofSideVec;
+  Kokkos::DynRankView<ScalarT, PHX::Device> betaOnCell;
+  Kokkos::DynRankView<ScalarT, PHX::Device> thicknessOnCell;
+  Kokkos::DynRankView<ScalarT, PHX::Device> bedTopoOnCell;
+
+  Kokkos::DynRankView<ScalarT, PHX::Device> data;
+
+  // Loop over the sides that form the boundary condition
   for (std::size_t side=0; side < sideSet.size(); ++side) { // loop over the sides on this ws and name
 
     // Get the data that corresponds to the side
@@ -469,27 +525,19 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
 
     //need to resize containers because they depend on side topology
-    cubPointsSide.resize(numQPsSide, sideDims);
-    refPointsSide.resize(numQPsSide, cellDims);
-    cubWeightsSide.resize(numQPsSide);
-    physPointsSide.resize(1, numQPsSide, cellDims);
-    dofSide.resize(1, numQPsSide);
-    dofSideVec.resize(1, numQPsSide, numDOFsSet);
+    cubPointsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsSide, sideDims);
+    refPointsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsSide, cellDims);
+    cubWeightsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPsSide);
+    basis_refPointsSide = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPsSide);
 
     // Do the BC one side at a time for now
-    jacobianSide.resize(1, numQPsSide, cellDims, cellDims);
-    jacobianSide_det.resize(1, numQPsSide);
-
-    weighted_measure.resize(1, numQPsSide);
-    basis_refPointsSide.resize(numNodes, numQPsSide);
-    trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
-    weighted_trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
-    data.resize(1, numQPsSide, numDOFsSet);
-
-    betaOnSide.resize(1,numQPsSide);
-    thicknessOnSide.resize(1,numQPsSide);
-    bedTopoOnSide.resize(1,numQPsSide);
-    elevationOnSide.resize(1,numQPsSide);
+    physPointsSide = Kokkos::createDynRankView(coordVec.get_view(),"XXX", 1, numQPsSide, cellDims);
+    jacobianSide = Kokkos::createDynRankView(coordVec.get_view(),"XXX", 1, numQPsSide, cellDims, cellDims);
+    jacobianSide_det = Kokkos::createDynRankView(coordVec.get_view(),"XXX", 1, numQPsSide);
+    weighted_measure = Kokkos::createDynRankView(coordVec.get_view(),"XXX", 1, numQPsSide);
+    trans_basis_refPointsSide = Kokkos::createDynRankView(coordVec.get_view(),"XXX", 1, numNodes, numQPsSide);
+    weighted_trans_basis_refPointsSide = Kokkos::createDynRankView(coordVec.get_view(),"XXX", 1, numNodes, numQPsSide);
+    scratch = Kokkos::createDynRankView(jacobianSide,"XXS", numQPsSide*cellDims*cellDims);
 
     cubatureSide[elem_side]->getCubature(cubPointsSide, cubWeightsSide);
 
@@ -501,37 +549,37 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
 
     // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
-    Intrepid2::CellTools<RealType>::mapToReferenceSubcell
+    Intrepid2::CellTools<PHX::Device>::mapToReferenceSubcell
       (refPointsSide, cubPointsSide, sideDims, elem_side, *cellType);
 
     // Calculate side geometry
-    Intrepid2::CellTools<MeshScalarT>::setJacobian
+    Intrepid2::CellTools<PHX::Device>::setJacobian
        (jacobianSide, refPointsSide, physPointsCell, *cellType);
 
-    Intrepid2::CellTools<MeshScalarT>::setJacobianDet(jacobianSide_det, jacobianSide);
+    Intrepid2::CellTools<PHX::Device>::setJacobianDet(jacobianSide_det, jacobianSide);
 
     if (sideDims < 2) { //for 1 and 2D, get weighted edge measure
-      Intrepid2::FunctionSpaceTools::computeEdgeMeasure<MeshScalarT>
-        (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
+      Intrepid2::FunctionSpaceTools<PHX::Device>::computeEdgeMeasure
+        (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType, scratch);
     }
     else { //for 3D, get weighted face measure
-      Intrepid2::FunctionSpaceTools::computeFaceMeasure<MeshScalarT>
-        (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType);
+      Intrepid2::FunctionSpaceTools<PHX::Device>::computeFaceMeasure
+        (weighted_measure, jacobianSide, cubWeightsSide, elem_side, *cellType, scratch);
     }
 
     // Values of the basis functions at side cubature points, in the reference parent cell domain
     intrepidBasis->getValues(basis_refPointsSide, refPointsSide, Intrepid2::OPERATOR_VALUE);
 
     // Transform values of the basis functions
-    Intrepid2::FunctionSpaceTools::HGRADtransformVALUE<MeshScalarT>
+    Intrepid2::FunctionSpaceTools<PHX::Device>::HGRADtransformVALUE
       (trans_basis_refPointsSide, basis_refPointsSide);
 
     // Multiply with weighted measure
-    Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
+    Intrepid2::FunctionSpaceTools<PHX::Device>::multiplyMeasure
       (weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
 
     // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
-    Intrepid2::CellTools<RealType>::mapToPhysicalFrame
+    Intrepid2::CellTools<PHX::Device>::mapToPhysicalFrame
       (physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
 
 
@@ -541,22 +589,28 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
         dofCell(0, node) = dof(elem_LID, node);
 
       // This is needed, since evaluate currently sums into
+      dofSide = Kokkos::createDynRankView(dof.get_view(), "XXX", 1, numQPsSide);
       for (int i=0; i < numQPsSide ; i++) dofSide(0,i) = 0.0;
 
       // Get dof at cubature points of appropriate side (see DOFInterpolation evaluator)
-      Intrepid2::FunctionSpaceTools::
-        evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
+      Intrepid2::FunctionSpaceTools<PHX::Device>::
+        evaluate(dofSide, dofCell, trans_basis_refPointsSide);
     }
 
     // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
     else if(bc_type == BASAL || bc_type == BASAL_SCALAR_FIELD) {
-      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> betaOnCell(1, numNodes);
-      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> thicknessOnCell(1, numNodes);
-      Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> bedTopoOnCell(1, numNodes);
+      betaOnCell      = Kokkos::createDynRankView(dofVec.get_view(), "XXX", 1, numNodes);
+      thicknessOnCell = Kokkos::createDynRankView(dofVec.get_view(), "XXX", 1, numNodes);
+      bedTopoOnCell   = Kokkos::createDynRankView(dofVec.get_view(), "XXX", 1, numNodes);
+      betaOnSide      = Kokkos::createDynRankView(dofVec.get_view(), "XXX", 1, numQPsSide);
+      thicknessOnSide = Kokkos::createDynRankView(dofVec.get_view(), "XXX", 1, numQPsSide);
+      bedTopoOnSide   = Kokkos::createDynRankView(dofVec.get_view(), "XXX", 1, numQPsSide);
+      dofSideVec      = Kokkos::createDynRankView(dofVec.get_view(), "XXX", 1, numQPsSide, numDOFsSet);
+
       for (std::size_t node=0; node < numNodes; ++node)
       {
-        betaOnCell(0,node) = beta_field(elem_LID,node);
 #ifdef ALBANY_FELIX
+        betaOnCell(0,node) = beta_field(elem_LID,node);
         if(bc_type == BASAL) {
           thicknessOnCell(0,node) = thickness_field(elem_LID,node);
           bedTopoOnCell(0,node) = bedTopo_field(elem_LID,node);
@@ -570,7 +624,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       for (int i=0; i < numQPsSide ; i++) betaOnSide(0,i) = 0.0;
       for (int i=0; i < numQPsSide ; i++) thicknessOnSide(0,i) = 0.0;
       for (int i=0; i < numQPsSide ; i++) bedTopoOnSide(0,i) = 0.0;
-      for (int i=0; i < dofSideVec.size() ; i++) dofSideVec[i] = 0.0;
+      for (int i=0; i < numQPsSide ; i++) for (int j=0; j < numDOFsSet ; j++) dofSideVec(0,i,j) = 0.0;
 
       // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
       for (std::size_t node=0; node < numNodes; ++node) {
@@ -585,13 +639,19 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
        }
 
       // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
-      //Intrepid2::FunctionSpaceTools::
-        //evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
+      //Intrepid2::FunctionSpaceTools<PHX::Device>::
+        //evaluate(dofSide, dofCell, trans_basis_refPointsSide);
     }
 #ifdef ALBANY_FELIX
     else if(bc_type == LATERAL) {
-          Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> thicknessOnCell(1, numNodes);
-          Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> elevationOnCell(1, numNodes);
+          Kokkos::DynRankView<ScalarT, PHX::Device> thicknessOnCell;
+          Kokkos::DynRankView<ScalarT, PHX::Device> elevationOnCell;
+          thicknessOnCell = Kokkos::createDynRankView(dofVec.get_view(), "XXX", 1, numNodes);
+          elevationOnCell = Kokkos::createDynRankView(dofVec.get_view(), "XXX", 1, numNodes);
+          thicknessOnSide = Kokkos::createDynRankView(dofVec.get_view(), "XXX", 1, numQPsSide);
+          elevationOnSide = Kokkos::createDynRankView(dofVec.get_view(), "XXX", 1, numQPsSide);
+          dofSideVec      = Kokkos::createDynRankView(dofVec.get_view(), "XXX", 1, numQPsSide, numDOFsSet);
+
           for (std::size_t node=0; node < numNodes; ++node)
           {
                 thicknessOnCell(0,node) = thickness_field(elem_LID,node);
@@ -606,7 +666,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
                   thicknessOnSide(0,i) = 0.0;
                   elevationOnSide(0,i) = 0.0;
           }
-          for (int i=0; i < dofSideVec.size() ; i++) dofSideVec[i] = 0.0;
+          for (int i=0; i < numQPsSide ; i++) for (int j=0; j < numDOFsSet ; j++) dofSideVec(0,i,j) = 0.0;
 
           // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
           for (std::size_t node=0; node < numNodes; ++node) {
@@ -620,12 +680,15 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
            }
 
           // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
-          //Intrepid2::FunctionSpaceTools::
-        //evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
+          //Intrepid2::FunctionSpaceTools<PHX::Device>::
+        //evaluate(dofSide, dofCell, trans_basis_refPointsSide);
     }
 #endif
   // Transform the given BC data to the physical space QPs in each side (elem_side)
+    data = Kokkos::createDynRankView(neumann, "DDA", 1, numQPsSide, numDOFsSet);
 
+    // Note: if you add a BC here, you need to add it above as well
+    // to allocate neumann correctly.
     switch(bc_type){
 
       case INTJUMP:
@@ -655,23 +718,23 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       case BASAL:
 
 #ifdef ALBANY_FELIX
-         calc_dudn_basal(data, betaOnSide, thicknessOnSide, bedTopoOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
+         calc_dudn_basal(data, physPointsSide, betaOnSide, thicknessOnSide, bedTopoOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
 #endif
          break;
 
       case BASAL_SCALAR_FIELD:
 
 #ifdef ALBANY_FELIX
-         calc_dudn_basal_scalar_field(data, betaOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
+         calc_dudn_basal_scalar_field(data, physPointsSide, betaOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
 #endif
          break;
 
       case LATERAL:
 
 #ifdef ALBANY_FELIX
-             calc_dudn_lateral(data, thicknessOnSide, elevationOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
+         calc_dudn_lateral(data, physPointsSide, thicknessOnSide, elevationOnSide, dofSideVec, jacobianSide, *cellType, cellDims, elem_side);
 #endif
-             break;
+         break;
 
       case TRACTION:
 
@@ -685,14 +748,16 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
     }
 
-    // Put this side's contribution into the vector
 
+    // Put this side's contribution into the vector
     for (std::size_t node=0; node < numNodes; ++node)
       for (std::size_t qp=0; qp < numQPsSide; ++qp)
          for (std::size_t dim=0; dim < numDOFsSet; ++dim)
+{
            neumann(elem_LID, node, dim) +=
                   data(0, qp, dim) * weighted_trans_basis_refPointsSide(0, node, qp);
-
+    std::cout << "NNM " << neumann(elem_LID, node, dim) <<  "  " << elem_LID << std::endl;
+}
 
   }
 }
@@ -729,25 +794,19 @@ getValue(const std::string &n) {
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_traction_components(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& phys_side_cub_points,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
+calc_traction_components(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id){
 
+/*
   int numCells = qp_data_returned.dimension(0); // How many cell's worth of data is being computed?
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
   int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
 
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> traction(numCells, numPoints, cellDims);
-
-/*
-  double traction[3];
-  traction[0] = 1.0; // x component of traction
-  traction[1] = 0.0; // y component of traction
-  traction[2] = 0.0; // z component of traction
-*/
+  Kokkos::DynRankView<ScalarT, PHX::Device> traction("BBB", numCells, numPoints, cellDims);
 
   for(int cell = 0; cell < numCells; cell++)
     for(int pt = 0; pt < numPoints; pt++)
@@ -757,14 +816,20 @@ calc_traction_components(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, 
   for(int pt = 0; pt < numPoints; pt++)
     for(int dim = 0; dim < numDOFsSet; dim++)
       qp_data_returned(0, pt, dim) = -traction(0, pt, dim);
+*/
+  // This appears equivalent to commented out version above
+  int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
+  for(int pt = 0; pt < numPoints; pt++)
+    for(int dim = 0; dim < numDOFsSet; dim++)
+      qp_data_returned(0, pt, dim) = -dudx[dim];
 
 }
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_gradu_dotn_const(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& phys_side_cub_points,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
+calc_gradu_dotn_const(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id){
@@ -773,9 +838,9 @@ calc_gradu_dotn_const(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
   int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
 
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> grad_T(numCells, numPoints, cellDims);
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> side_normals(numCells, numPoints, cellDims);
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> normal_lengths(numCells, numPoints);
+  Kokkos::DynRankView<ScalarT, PHX::Device> grad_T("BBB", numCells, numPoints, cellDims);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> side_normals("BBB", numCells, numPoints, cellDims);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> normal_lengths("BBB", numCells, numPoints);
 
 /*
   double kdTdx[3];
@@ -790,16 +855,16 @@ calc_gradu_dotn_const(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX
         grad_T(cell, pt, dim) = dudx[dim]; // k grad T in the x direction goes in the x spot, and so on
 
   // for this side in the reference cell, get the components of the normal direction vector
-  Intrepid2::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
+  Intrepid2::CellTools<PHX::Device>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
     local_side_id, celltopo);
 
   // scale normals (unity)
-  Intrepid2::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
-  Intrepid2::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
+  Intrepid2::RealSpaceTools<PHX::Device>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
+  Intrepid2::FunctionSpaceTools<PHX::Device>::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
     side_normals, true);
 
   // take grad_T dotted with the unit normal
-//  Intrepid2::FunctionSpaceTools::dotMultiplyDataData<ScalarT>(qp_data_returned,
+//  Intrepid2::FunctionSpaceTools<PHX::Device>::dotMultiplyDataData(qp_data_returned,
 //    grad_T, side_normals);
 
   for(int pt = 0; pt < numPoints; pt++)
@@ -810,9 +875,9 @@ calc_gradu_dotn_const(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_dudn_const(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& phys_side_cub_points,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
+calc_dudn_const(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id,
@@ -833,10 +898,10 @@ calc_dudn_const(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Devi
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_dudn_robin(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
-                const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& phys_side_cub_points,
-                const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& dof_side,
-                const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
+calc_dudn_robin(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
+                const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
+                const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side,
+                const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                 const shards::CellTopology & celltopo,
                 const int cellDims,
                 int local_side_id,
@@ -861,9 +926,9 @@ calc_dudn_robin(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Devi
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_press(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& phys_side_cub_points,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
+calc_press(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id){
@@ -872,23 +937,23 @@ calc_press(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> &
   int numPoints = qp_data_returned.dimension(1); // How many QPs per cell?
   int numDOFs = qp_data_returned.dimension(2); // How many DOFs per node to calculate?
 
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> side_normals(numCells, numPoints, cellDims);
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> normal_lengths(numCells, numPoints);
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> ref_normal(cellDims);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> side_normals("BBB", numCells, numPoints, cellDims);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> normal_lengths("BBB", numCells, numPoints);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> ref_normal("BBB", cellDims);
 
   // for this side in the reference cell, get the components of the normal direction vector
-  Intrepid2::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
+  Intrepid2::CellTools<PHX::Device>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
     local_side_id, celltopo);
 
   // for this side in the reference cell, get the constant normal vector to the side for area calc
-  Intrepid2::CellTools<MeshScalarT>::getReferenceSideNormal(ref_normal, local_side_id, celltopo);
+  Intrepid2::CellTools<PHX::Device>::getReferenceSideNormal(ref_normal, local_side_id, celltopo);
   /* Note: if the side is 1D the length of the normal times 2 is the side length
      If the side is a 2D quad, the length of the normal is the area of the side
      If the side is a 2D triangle, the length of the normal times 1/2 is the area of the side
    */
 
   MeshScalarT area =
-    Intrepid2::RealSpaceTools<MeshScalarT>::vectorNorm(ref_normal, Intrepid2::NORM_TWO);
+    Intrepid2::RealSpaceTools<PHX::Device>::Serial::vectorNorm(ref_normal, Intrepid2::NORM_TWO);
 
   // Calculate proper areas
 
@@ -916,8 +981,8 @@ calc_press(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> &
   }
 
   // scale normals (unity)
-  Intrepid2::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
-  Intrepid2::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
+  Intrepid2::RealSpaceTools<PHX::Device>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
+  Intrepid2::FunctionSpaceTools<PHX::Device>::scalarMultiplyDataData(side_normals, normal_lengths,
     side_normals, true);
 
   // Pressure is a force of magnitude P along the normal to the side, divided by the side area (det)
@@ -934,12 +999,13 @@ calc_press(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> &
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_dudn_basal(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
-                                  const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& basalFriction_side,
-                                  const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& thickness_side,
-                                  const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& bedTopography_side,
-                                  const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& dof_side,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
+calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
+                                  const Kokkos::DynRankView<MeshScalarT, PHX::Device>& physPointsSide,
+                                  const Kokkos::DynRankView<ScalarT, PHX::Device>& basalFriction_side,
+                                  const Kokkos::DynRankView<ScalarT, PHX::Device>& thickness_side,
+                                  const Kokkos::DynRankView<ScalarT, PHX::Device>& bedTopography_side,
+                                  const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id){
@@ -956,16 +1022,16 @@ calc_dudn_basal(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Devi
   const ScalarT& beta2 = robin_vals[3];
   const ScalarT& beta3 = robin_vals[4];
 
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> side_normals(numCells, numPoints, cellDims);
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> normal_lengths(numCells, numPoints);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> side_normals("BBB", numCells, numPoints, cellDims);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> normal_lengths("BBB", numCells, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
-  Intrepid2::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
+  Intrepid2::CellTools<PHX::Device>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
     local_side_id, celltopo);
 
   // scale normals (unity)
-  Intrepid2::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
-  Intrepid2::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
+  Intrepid2::RealSpaceTools<PHX::Device>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
+  Intrepid2::FunctionSpaceTools<PHX::Device>::scalarMultiplyDataData(side_normals, normal_lengths,
     side_normals, true);
 
   const double a = 1.0;
@@ -1277,10 +1343,11 @@ calc_dudn_basal(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Devi
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_dudn_basal_scalar_field(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
-                                  const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& basalFriction_side,
-                                  const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& dof_side,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
+calc_dudn_basal_scalar_field(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
+                                  const Kokkos::DynRankView<MeshScalarT, PHX::Device>& physPointsSide,
+                                  const Kokkos::DynRankView<ScalarT, PHX::Device>& basalFriction_side,
+                                  const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id){
@@ -1293,16 +1360,16 @@ calc_dudn_basal_scalar_field(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layo
 
   const ScalarT& scale = robin_vals[0];
 
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> side_normals(numCells, numPoints, cellDims);
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> normal_lengths(numCells, numPoints);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> side_normals("BBB", numCells, numPoints, cellDims);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> normal_lengths("BBB", numCells, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
-  Intrepid2::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
+  Intrepid2::CellTools<PHX::Device>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
     local_side_id, celltopo);
 
   // scale normals (unity)
-  Intrepid2::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
-  Intrepid2::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
+  Intrepid2::RealSpaceTools<PHX::Device>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
+  Intrepid2::FunctionSpaceTools<PHX::Device>::scalarMultiplyDataData(side_normals, normal_lengths,
     side_normals, true);
 
   for(int cell = 0; cell < numCells; cell++) {
@@ -1316,11 +1383,12 @@ calc_dudn_basal_scalar_field(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layo
 
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
-calc_dudn_lateral(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
-                                  const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& thickness_side,
-                                  const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& elevation_side,
-                                  const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& dof_side,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
+calc_dudn_lateral(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
+                                  const Kokkos::DynRankView<MeshScalarT, PHX::Device>& physPointsSide,
+                                  const Kokkos::DynRankView<ScalarT, PHX::Device>& thickness_side,
+                                  const Kokkos::DynRankView<ScalarT, PHX::Device>& elevation_side,
+                                  const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id){
@@ -1330,16 +1398,16 @@ calc_dudn_lateral(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::De
 
   //std::cout << "DEBUG: applying const dudn to sideset " << this->sideSetID << ": " << (const_val * scale) << std::endl;
 
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> side_normals(numCells, numPoints, cellDims);
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> normal_lengths(numCells, numPoints);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> side_normals("BBB", numCells, numPoints, cellDims);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> normal_lengths("BBB", numCells, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
-  Intrepid2::CellTools<MeshScalarT>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
+  Intrepid2::CellTools<PHX::Device>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
     local_side_id, celltopo);
 
   // scale normals (unity)
-  Intrepid2::RealSpaceTools<MeshScalarT>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
-  Intrepid2::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
+  Intrepid2::RealSpaceTools<PHX::Device>::vectorNorm(normal_lengths, side_normals, Intrepid2::NORM_TWO);
+  Intrepid2::FunctionSpaceTools<PHX::Device>::scalarMultiplyDataData(side_normals, normal_lengths,
     side_normals, true);
 
   const ScalarT &immersedRatioProvided = robin_vals[0];

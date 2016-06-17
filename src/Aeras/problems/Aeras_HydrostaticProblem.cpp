@@ -261,7 +261,7 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
   }
 
 
-  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+  RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
     intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
 
@@ -278,9 +278,9 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  RCP <Intrepid2::CubaturePolylib<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > polylib = rcp(new Intrepid2::CubaturePolylib<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
-  std::vector< Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > > cubatures(2, polylib); 
-  RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = rcp( new Intrepid2::CubatureTensor<RealType,Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >(cubatures));
+  RCP <Intrepid2::CubaturePolylib<RealType, Kokkos::DynRankView<RealType, PHX::Device> > > polylib = rcp(new Intrepid2::CubaturePolylib<RealType, Kokkos::DynRankView<RealType, PHX::Device> >(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
+  std::vector< Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > > cubatures(2, polylib); 
+  RCP <Intrepid2::Cubature<PHX::Device> > cubature = rcp( new Intrepid2::CubatureTensor<RealType,Kokkos::DynRankView<RealType, PHX::Device> >(cubatures));
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
@@ -375,9 +375,9 @@ HydrostaticProblem::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
     RCP<ParameterList> p = rcp(new ParameterList("Compute Basis Functions"));
 
     // Inputs: X, Y at nodes, Cubature, and Basis
-    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+    p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
  
-    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > 
+    p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > > 
         ("Intrepid2 Basis", intrepidBasis);
  
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);

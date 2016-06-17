@@ -16,15 +16,16 @@
 #include "Albany_Layouts.hpp"
 
 #include "Intrepid2_Basis.hpp"
-#include "Intrepid2_FieldContainer.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
+
+#include "Kokkos_DynRankView.hpp"
 
 
 namespace Albany {
 
   //! Helper Factory function to construct Intrepid2 Basis from Shards CellTopologyData
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
   getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet=false);
 }
 

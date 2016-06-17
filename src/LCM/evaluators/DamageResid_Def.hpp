@@ -82,19 +82,19 @@ template<typename EvalT, typename Traits>
 void DamageResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
   typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
    FST::scalarMultiplyDataData<ScalarT> (flux, damageLS, damage_grad);
   RST::scale(flux,-gc);
 
-   FST::integrate<ScalarT>(dResidual, flux, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
+   FST::integrate(dResidual, flux, wGradBF, false); // "false" overwrites
 
   //for (int i=0; i < source.size(); i++) source[i] *= -1.0;
-   FST::integrate<ScalarT>(dResidual, source, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+   FST::integrate(dResidual, source, wBF, true); // "true" sums into
   
   if (workset.transientTerms && enableTransient) 
-     FST::integrate<ScalarT>(dResidual, damage_dot, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+     FST::integrate(dResidual, damage_dot, wBF, true); // "true" sums into
 }
 
 //**********************************************************************

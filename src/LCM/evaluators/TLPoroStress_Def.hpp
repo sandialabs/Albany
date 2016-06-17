@@ -79,7 +79,7 @@ void TLPoroStress<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
   typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
   if (numDims == 1) {

@@ -10,7 +10,6 @@
 #include "Phalanx_TypeStrings.hpp"
 #include "Sacado.hpp"
 
-#include "Intrepid2_FunctionSpaceTools.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -73,7 +72,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
-  Kokkos::deep_copy(this->averagedVel.get_kokkos_view(), ScalarT(0.0));
+  Kokkos::deep_copy(this->averagedVel.get_view(), ScalarT(0.0));
 
   if (workset.sideSets == Teuchos::null)
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets defined in input file but not properly specified on the mesh" << std::endl);
@@ -149,7 +148,7 @@ evaluateFields(typename Traits::EvalData workset)
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
   int numLayers = layeredMeshNumbering.numLayers;
 
-  Kokkos::deep_copy(this->averagedVel.get_kokkos_view(), ScalarT(0.0));
+  Kokkos::deep_copy(this->averagedVel.get_view(), ScalarT(0.0));
 
   const Albany::SideSetList& ssList = *(workset.sideSets);
   Albany::SideSetList::const_iterator it = ssList.find(this->meshPart);
@@ -231,7 +230,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
-  Kokkos::deep_copy(this->averagedVel.get_kokkos_view(), ScalarT(0.0));
+  Kokkos::deep_copy(this->averagedVel.get_view(), ScalarT(0.0));
 
   if (workset.sideSets == Teuchos::null)
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets defined in input file but not properly specified on the mesh" << std::endl);

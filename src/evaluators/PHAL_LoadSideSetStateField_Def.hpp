@@ -11,7 +11,6 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Shards_CellTopology.hpp"
-#include "Intrepid_FieldContainer.hpp"
 
 namespace PHAL
 {

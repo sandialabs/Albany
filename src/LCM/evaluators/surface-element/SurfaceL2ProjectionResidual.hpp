@@ -49,9 +49,9 @@ private:
   //! Length scale parameter for localization zone
   RealType thickness;
   //! Numerical integration rule
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >> cubature;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature;
   //! Finite element basis for the midplane
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>> intrepidBasis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
   //! Scalar Gradient for H1 projection (not yet implemented)
   //PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
  //! Scalar Gradient Operator for H1 projection (not yet implemented)

@@ -22,8 +22,8 @@ namespace LCM {
   SurfaceL2ProjectionResidual(const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl) :
     thickness      (p.get<double>("thickness")),
-    cubature       (p.get<Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>>("Cubature")),
-    intrepidBasis  (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>("Intrepid2 Basis")),
+    cubature       (p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")),
+    intrepidBasis  (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >>("Intrepid2 Basis")),
     surface_Grad_BF     (p.get<std::string>("Surface Scalar Gradient Operator Name"),dl->node_qp_gradient),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
@@ -102,7 +102,7 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     // THESE NEED TO BE REMOVED!!!
-    typedef Intrepid2::FunctionSpaceTools FST;
+    typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
     typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
     ScalarT tau(0);

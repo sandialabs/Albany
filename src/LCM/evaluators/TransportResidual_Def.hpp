@@ -194,7 +194,7 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     
-      typedef Intrepid2::FunctionSpaceTools FST;
+      typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
       
     // zero out residual
     for (int cell = 0; cell < workset.numCells; ++cell) {

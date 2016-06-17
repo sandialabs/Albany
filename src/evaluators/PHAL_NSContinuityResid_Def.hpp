@@ -50,12 +50,10 @@ NSContinuityResid(const Teuchos::ParameterList& p) :
     p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
+  numCells = dims[0];
   numNodes = dims[1];
   numQPs  = dims[2];
   numDims = dims[3];
-
-  // Allocate workspace
-  divergence.resize(dims[0], numQPs);
 
   this->setName("NSContinuityResid" );
 }
@@ -76,6 +74,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
 
   this->utils.setFieldData(CResidual,fm);
+
+  divergence = Kokkos::createDynRankView(VGrad.get_view(), "XXX", numCells, numQPs);
 }
 
 //**********************************************************************
@@ -83,7 +83,7 @@ template<typename EvalT, typename Traits>
 void NSContinuityResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -94,7 +94,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   
-  FST::integrate<ScalarT>(CResidual, divergence, wBF, Intrepid2::COMP_CPP,  
+  FST::integrate(CResidual.get_view(), divergence, wBF.get_view(),  
                           false); // "false" overwrites
 
   if (havePSPG) {

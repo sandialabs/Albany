@@ -7,7 +7,6 @@
 #include "Albany_NavierStokes.hpp"
 #include "AAdapt_InitialCondition.hpp"
 
-#include "Intrepid2_FieldContainer.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"

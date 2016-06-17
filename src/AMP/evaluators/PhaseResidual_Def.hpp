@@ -101,7 +101,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
     // time step
     ScalarT dt = deltaTime(0);
-    typedef Intrepid2::FunctionSpaceTools FST;
+    typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
     if (dt == 0.0) dt = 1.0e-15;
     //grab old temperature
@@ -118,7 +118,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // diffusive term
     FST::scalarMultiplyDataData<ScalarT> (term1_, k_, T_grad_);
-    // FST::integrate<ScalarT>(residual_, term1_, w_grad_bf_, Intrepid2::COMP_CPP, false);
+    // FST::integrate(residual_, term1_, w_grad_bf_, false);
     //Using for loop to calculate the residual 
 
     
@@ -158,14 +158,14 @@ evaluateFields(typename Traits::EvalData workset)
 
     // heat source from laser 
     PHAL::scale(laser_source_, -1.0);
-    FST::integrate<ScalarT>(residual_, laser_source_, w_bf_, Intrepid2::COMP_CPP, true);
+    FST::integrate(residual_, laser_source_, w_bf_, true);
 
     // all other problem sources
     PHAL::scale(source_, -1.0);
-    FST::integrate<ScalarT>(residual_, source_, w_bf_, Intrepid2::COMP_CPP, true);
+    FST::integrate(residual_, source_, w_bf_, true);
 
     // transient term
-    FST::integrate<ScalarT>(residual_, energyDot_, w_bf_, Intrepid2::COMP_CPP, true);
+    FST::integrate(residual_, energyDot_, w_bf_, true);
 
 }
 

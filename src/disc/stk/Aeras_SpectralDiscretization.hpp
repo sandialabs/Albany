@@ -101,8 +101,8 @@ namespace Aeras
       else 
           *out << "Using Cubature Rule specified in input file: GAUSS_LOBATTO. \n";  
       
-      const Intrepid2::EIntrepidPLPoly new_cubatureRule 
-          = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS_LOBATTO);
+      const Intrepid2::EPolyType new_cubatureRule 
+          = static_cast<Intrepid2::EPolyType>(Intrepid2::POLYTYPE_GAUSS_LOBATTO);
 
       // Create enriched MeshSpecsStruct object, to be returned.  It
       // will have the same everything as the original mesh struct
