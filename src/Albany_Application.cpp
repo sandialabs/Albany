@@ -49,10 +49,6 @@
 #endif
 #endif
 
-#ifdef ALBANY_GOAL
-#include "GOAL_BCUtils.hpp"
-#endif
-
 //#define WRITE_TO_MATRIX_MARKET
 
 using Teuchos::ArrayRCP;
@@ -185,7 +181,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   // Create problem object
   problemParams = Teuchos::sublist(params, "Problem", true);
 
-  Albany::ProblemFactory problemFactory(problemParams, paramLib, commT);
+  Albany::ProblemFactory problemFactory(params, paramLib, commT);
   rc_mgr = AAdapt::rc::Manager::create(
     Teuchos::rcp(&stateMgr, false), *problemParams);
   if (Teuchos::nonnull(rc_mgr))
@@ -1208,12 +1204,6 @@ computeGlobalResidualImplT(
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
 
-#ifdef ALBANY_GOAL
-  double t = current_time;
-  if (paramLib->isParameter("Time"))
-    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-  GOAL::computeHierarchicBCs(t, (*this), xT, fT, Teuchos::null);
-#endif
   //scale residual by scaleVec_ if scaleBCdofs is on 
   if (scaleBCdofs == true) 
     fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0); 
@@ -1558,13 +1548,6 @@ computeGlobalJacobianImplT(const double alpha,
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
   }
-
-#ifdef ALBANY_GOAL
-  double t = current_time;
-  if (paramLib->isParameter("Time"))
-    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-  GOAL::computeHierarchicBCs(t, (*this), xT, fT, jacT);
-#endif
   jacT->fillComplete();
   
   //Apply scaling to residual and Jacobian 

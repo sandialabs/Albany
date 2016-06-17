@@ -274,10 +274,6 @@ struct Workset {
 #endif
 #endif
 
-#ifdef ALBANY_GOAL
-  Teuchos::RCP<Tpetra_Vector> qoi;
-#endif
-
   // Meta-function class encoding T<EvalT::ScalarT> given EvalT
   // where T is any lambda expression (typically a placeholder expression)
   template <typename T>

@@ -13,7 +13,10 @@
 #include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 
-#if 1 // GLEN - Please FIXME
+// The below gives an error with the INTEL compiler
+//  error: class "Teuchos::TypeNameTraits<int>" has already been defined
+
+#ifndef __INTEL_COMPILER 
 #include "Teuchos_TypeNameTraits.hpp"
 
 namespace Teuchos {

@@ -63,7 +63,7 @@
           <Parameter name="Number Of Fields" type="int" value="1"/>
           <ParameterList name="Field 0">
             <Parameter name="Field Name" type="string" value="surface_height"/>
-            <Parameter name="Field Type" type="string" value="From Mesh"/>
+            <Parameter name="Field Origin" type="string" value="Mesh"/>
           </ParameterList>
         </ParameterList>
       </ParameterList>

@@ -8,12 +8,11 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
-    <Parameter name="Required Fields"         type="Array(string)" value="{}"/>
+    <Parameter name="Required Fields"         type="Array(string)" value="{temperature}"/>
     <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction,thickness,temperature,surface_height}"/>
     <Parameter name="Required Surface Fields" type="Array(string)" value="{surface_velocity,surface_velocity_rms}"/>
     <Parameter name="Basal Side Name"         type="string" value="basalside"/>
     <Parameter name="Surface Side Name"       type="string" value="upperside"/>
-    <Parameter name="Layered Data Length"     type="int"    value="11"/>
 
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
@@ -75,6 +74,14 @@
     <Parameter name="Interpolate Basal Node Layered Fields" type="Array(string)" value="{temperature}"/>
     <Parameter name="Basal Node Layered Fields Ranks"       type="Array(int)"    value="{1}"/>
     <Parameter name="Use Glimmer Spacing" type="bool" value="true"/>
+    <ParameterList name="Required Fields Info">
+     <Parameter name="Number Of Fields" type="int" value="1"/>
+      <ParameterList name="Field 0">
+        <Parameter name="Field Name" type="string" value="temperature"/>
+        <Parameter name="Field Type" type="string" value="Node Scalar"/>
+        <Parameter name="Field Origin"  type="string" value="Output"/>
+      </ParameterList>
+    </ParameterList>
     <ParameterList name="Side Set Discretizations">
       <Parameter name="Side Sets" type="Array(string)" value="{basalside,upperside}"/>
       <ParameterList name="basalside">
@@ -99,6 +106,7 @@
           <ParameterList name="Field 2">
             <Parameter name="Field Name" type="string" value="temperature"/>
             <Parameter name="Field Type" type="string" value="Node Layered Scalar"/>
+            <Parameter name="Number Of Layers" type="int" value="11"/>
             <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/temperature.ascii"/>
           </ParameterList>
           <ParameterList name="Field 3">

@@ -1564,7 +1564,7 @@ evaluateFields(typename Traits::EvalData workset)
   a = Aeras::ShallowWaterConstants::self().earthRadius;
   myPi = Aeras::ShallowWaterConstants::self().pi;
 
-  //Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));
+  //Kokkos::deep_copy(Residual.get_view(), ScalarT(0.0));
 
   if (usePrescribedVelocity) {
     if (useImplHyperviscosity)

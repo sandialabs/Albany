@@ -24,7 +24,7 @@ namespace Albany {
   public:
 
     //! Default constructor
-    ProblemFactory(const Teuchos::RCP<Teuchos::ParameterList>& problemParams,
+    ProblemFactory(const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
                    const Teuchos::RCP<ParamLib>& paramLib,
                    const Teuchos::RCP<const Teuchos::Comm<int> >& commT_);  
 
@@ -50,6 +50,9 @@ namespace Albany {
 
     //! Parameter list specifying what problem to create
     Teuchos::RCP<Teuchos::ParameterList> problemParams;
+
+    //! Parameter list specifying what discretization to use.
+    Teuchos::RCP<Teuchos::ParameterList> discretizationParams;
 
     //! Parameter library
     Teuchos::RCP<ParamLib> paramLib;

@@ -1,14 +1,5 @@
 #!/usr/bin/python
 
-import numpy as np
-
-import uuid
-import Tkinter as tk
-import ttk
-import tkMessageBox
-
-import xml.etree.ElementTree as et
-
 #
 # Class for common properties of local objects
 #
@@ -25,11 +16,8 @@ class ObjLocal(object):
         for item in items[1:]:
 
             if isinstance(item[1], (int, int, float, str)):
-
                 str_item = str(item[1])
-
             else:
-
                 str_item = item[1].__class__.__name__
 
             str_repr += ', ' + item[0] + ' = ' + str_item
@@ -57,7 +45,6 @@ class ObjDomain(ObjLocal):
         self.variables = dict()
         self.names_variable_node = dict()
         self.names_variable_element = dict()
-        # self.variables = []
 
         for (key, value) in kwargs.items():
             setattr(self, key, value)
@@ -199,6 +186,11 @@ class ObjIterLinear(ObjLocal):
 # Populate a ttk.Treeview object for viewing data
 def populate_tree(tree, parent, dic):
 
+    import xml.etree.ElementTree as et
+    import numpy as np
+    import uuid
+    from lcm_postprocess.lcm_objects import ObjLocal
+
     try:
 
         for key in dic:
@@ -266,6 +258,9 @@ def populate_tree(tree, parent, dic):
 # View simulation data as a ttk.Treeview object
 def view_tree(dict_data = None, obj_data = None, filename = None):
 
+    import Tkinter as tk
+    import ttk
+
     if filename != None:
         extension = filename.split('.')[-1]
         if extension == 'pickle':
@@ -304,7 +299,7 @@ def view_tree(dict_data = None, obj_data = None, filename = None):
     root.minsize(root.winfo_reqwidth(), root.winfo_reqheight())
     root.mainloop()
 
-# end view_tree(dict_data = None, obj_data = None, file = None):
+# end view_tree(dict_data = None, obj_data = None, filename = None):
 
 
 

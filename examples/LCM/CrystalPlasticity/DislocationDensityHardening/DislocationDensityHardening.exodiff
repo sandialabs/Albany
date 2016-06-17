@@ -35,8 +35,9 @@ NODAL VARIABLES relative 1.e-6 floor 5.0e-10
 	dirichlet_field_y  # min:               0 @ t1,n1	max:               0 @ t1,n1
 	dirichlet_field_z  # min:               0 @ t1,n1	max:               0 @ t1,n1
 	force_x            # min:               0 @ t1,n1	max:       52.110544 @ t23,n2
-	force_y            # min:               0 @ t1,n1	max:   1.7103442e-06 @ t23,n8
-	force_z            # min:               0 @ t1,n1	max:   6.5163403e-06 @ t23,n1
+## Forces nearly zero but above the floor - use an absolute tolerance
+	force_y absolute 1.e-9 relative 1.0e-3            # min:               0 @ t1,n1	max:   1.7103442e-06 @ t23,n8
+	force_z absolute 1.e-9 relative 1.0e-3           # min:               0 @ t1,n1	max:   6.5163403e-06 @ t23,n1
 
 ELEMENT VARIABLES relative 1.e-6 floor 5.0e-10
 	Cauchy_Stress_01      # min:               0 @ t1,b1,e1	max:       219.04827 @ t23,b1,e1

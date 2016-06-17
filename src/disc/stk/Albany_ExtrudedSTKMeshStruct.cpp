@@ -857,7 +857,7 @@ void Albany::ExtrudedSTKMeshStruct::interpolateBasalLayeredFields (const std::ve
     // We also need to load the normalized layers coordinates
     std::string tmp_str = cell_fields_names[ifield] + "_NLC";
     auto it = basalMeshStruct->getFieldContainer()->getMeshVectorStates().find(tmp_str);
-    TEUCHOS_TEST_FOR_EXCEPTION (it!=basalMeshStruct->getFieldContainer()->getMeshVectorStates().end(), std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (it==basalMeshStruct->getFieldContainer()->getMeshVectorStates().end(), std::logic_error,
                                 "Error in ExtrudedSTKMeshStruct: normalized layers coords for layered field '" <<
                                 cell_fields_names[ifield] << "' not found.\n");
     fieldLayersCoords = it->second;

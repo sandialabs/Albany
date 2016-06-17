@@ -445,10 +445,10 @@ Albany::CismSTKMeshStruct::constructMesh(
        //For CISM-Albany runs, flowRate will always be passed, not temperature.  
        double *temperature = stk::mesh::field_data(*temperature_field, elem);
        //This is the inverse of the temperature-flowRate relationship; see FELIX_ViscosityFO_Def.hpp .
-       if (flwa[i] < 1.57349384110036e-05)
-         temperature[0] = 6.0e4/log(1.3e7/flwa[i])/8.314;
+       if (flwa[i] < 1.4e-05)
+         temperature[0] = 6.0e4/log(1.13939568e7/flwa[i])/8.314;
        else 
-         temperature[0] = 1.39e5/log(6.26e22/flwa[i])/8.314;
+         temperature[0] = 1.39e5/log(5.4651888e22/flwa[i])/8.314;
      }
      
   }

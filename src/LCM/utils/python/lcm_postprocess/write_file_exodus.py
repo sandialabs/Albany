@@ -6,13 +6,7 @@ from exodus import exodus
 import os
 import sys
 
-
-@contextlib.contextmanager
-def nostdout():
-    save_stdout = sys.stdout
-    sys.stdout = cStringIO.StringIO()
-    yield
-    sys.stdout = save_stdout
+from lcm_postprocess import stdout_redirected
 
 
 # Write postprocessed per-element data to an Exodus file
@@ -25,7 +19,7 @@ def write_file_exodus(domain = None, name_file_input = None, name_file_output = 
         cmd_line = "rm %s" % name_file_output
         os.system(cmd_line)
 
-    with nostdout():
+    with stdout_redirected():
         file_input = exodus(name_file_input)
         file_output = file_input.copy(name_file_output)
 
@@ -154,7 +148,7 @@ def write_file_exodus(domain = None, name_file_input = None, name_file_output = 
                 [block.elements[key_element].variables['Misorientation'][times[step]] for key_element in block.elements])
 
             
-    with nostdout():
+    with stdout_redirected():
         file_output.close()
 
 # end def write_exodus_file(name_file_output):
