@@ -32,7 +32,7 @@ public:
   typedef typename EvalT::ScalarT ScalarT;
 
   LiquidWaterFraction (const Teuchos::ParameterList& p,
-               	   	   const Teuchos::RCP<Albany::Layouts>& dl_basal);
+               	   	   const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
@@ -41,14 +41,14 @@ public:
 
 private:
   // Input:
-  PHX::MDField<Type,Cell,Side,Node> enthalpyHs;
-  PHX::MDField<ScalarT,Cell,Side,Node> enthalpy;
+  PHX::MDField<Type,Cell,Node> enthalpyHs;
+  PHX::MDField<ScalarT,Cell,Node> enthalpy;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Side,Node> omega;
+  PHX::MDField<ScalarT,Cell,Node> omega;
 
-  std::string sideSetName;
-  int numSideNodes;
+  //std::string sideSetName;
+  int numNodes;
 
   double L;
 };

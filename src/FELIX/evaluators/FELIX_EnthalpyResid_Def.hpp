@@ -33,6 +33,7 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 	EnthalpyGrad    (p.get<std::string> ("Enthalpy Gradient QP Variable Name"), dl->qp_gradient),
 	EnthalpyHs		(p.get<std::string> ("Enthalpy Hs QP Variable Name"), dl->qp_scalar ),
 	Velocity		(p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
+	verticalVel		(p.get<std::string> ("Vertical Velocity QP Variable Name"),  dl->qp_scalar),
     coordVec 		(p.get<std::string> ("Coordinate Vector Name"),dl->vertices_vector),
 	meltTempGrad	(p.get<std::string> ("Melting Temperature Gradient QP Variable Name"), dl->qp_gradient),
 	Residual 		(p.get<std::string> ("Residual Variable Name"), dl->node_scalar)
@@ -57,6 +58,7 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 	this->addDependentField(wBF);
 	this->addDependentField(wGradBF);
 	this->addDependentField(Velocity);
+	this->addDependentField(verticalVel);
 	this->addDependentField(coordVec);
 	this->addDependentField(meltTempGrad);
 
@@ -113,6 +115,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(Velocity,fm);
+  this->utils.setFieldData(verticalVel,fm);
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(meltTempGrad,fm);
 
@@ -187,7 +190,8 @@ evaluateFields(typename Traits::EvalData d)
 										   K*EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
 										   K*EnthalpyGrad(cell,qp,2)*wGradBF(cell,node,qp,2) +
 										   scaling * rho * Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0)*wBF(cell,node,qp) +
-										   scaling * rho * Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1)*wBF(cell,node,qp);
+										   scaling * rho * Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1)*wBF(cell,node,qp) +
+										   scaling * rho * verticalVel(cell,qp)*EnthalpyGrad(cell,qp,2)*wBF(cell,node,qp);
 				//}
 				/*
 				else
@@ -240,8 +244,10 @@ evaluateFields(typename Traits::EvalData d)
         	{
 				for (std::size_t qp=0; qp < numQPs; ++qp)
 				{
+					//std::cout << " diam = " << diam << std::endl;
 					Residual(cell,node) += (delta*diam/vmax*(3.154 * pow10))*(scaling * rho * Velocity(cell,qp,0) * EnthalpyGrad(cell,qp,0) * (1/(3.154 * pow10)) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
-	    			   					  scaling * rho * Velocity(cell,qp,1) * EnthalpyGrad(cell,qp,1) * (1/(3.154 * pow10)) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1));
+	    			   					  scaling * rho * Velocity(cell,qp,1) * EnthalpyGrad(cell,qp,1) * (1/(3.154 * pow10)) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) +
+										  scaling * rho * verticalVel(cell,qp) * EnthalpyGrad(cell,qp,2) * (1/(3.154 * pow10)) * verticalVel(cell,qp) * wGradBF(cell,node,qp,2));
 					/*
 					if ( Enthalpy(cell,qp) >= EnthalpyHs(cell,qp) )
 						Residual(cell,node) += k_i * meltTempGrad(cell,qp,0) * (1/(3.154 * pow10)) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
@@ -282,7 +288,8 @@ evaluateFields(typename Traits::EvalData d)
 
 						Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow10))*
 											   (diss(cell,qp) * (1./(3.154 * pow10)) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
-												diss(cell,qp) * (1./(3.154 * pow10)) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1));
+												diss(cell,qp) * (1./(3.154 * pow10)) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) +
+												diss(cell,qp) * (1./(3.154 * pow10)) * verticalVel(cell,qp) * wGradBF(cell,node,qp,2));
 					}
 				}
 			}
@@ -313,7 +320,7 @@ evaluateFields(typename Traits::EvalData d)
 					for (std::size_t qp = 0; qp < numQPs; ++qp)
 					{
 						if ( Enthalpy(cell,qp) < EnthalpyHs(cell,qp) )
-							Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow10))*( basalFricHeatSUPG(cell,qp) + geoFluxHeatSUPG(cell,qp) );
+							Residual(cell,node) -= ( delta*diam/vmax*(3.154 * pow10))*( basalFricHeatSUPG(cell,qp) + geoFluxHeatSUPG(cell,qp) );
 					}
 				}
 			}
@@ -344,7 +351,8 @@ evaluateFields(typename Traits::EvalData d)
 					{
 							Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow10))*
 												   (diss(cell,qp) * (1./(3.154 * pow10)) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
-													diss(cell,qp) * (1./(3.154 * pow10)) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1));
+													diss(cell,qp) * (1./(3.154 * pow10)) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) +
+													diss(cell,qp) * (1./(3.154 * pow10)) * verticalVel(cell,qp) * wGradBF(cell,node,qp,2));
 					}
 				}
 			}

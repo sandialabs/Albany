@@ -26,7 +26,7 @@ class BasalNormalVector : public PHX::EvaluatorWithBaseImpl<Traits>,
                     	  public PHX::EvaluatorDerived<EvalT, Traits>
 {
 	public:
-		BasalNormalVector (const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl_basal);
+		BasalNormalVector (const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
 
 		void postRegistrationSetup (typename Traits::SetupData d, PHX::FieldManager<Traits>& fm);
 
@@ -42,17 +42,16 @@ class BasalNormalVector : public PHX::EvaluatorWithBaseImpl<Traits>,
 		PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>    gradThickness;
 
 		// Output:
-		PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>	  normal;
+		PHX::MDField<ParamScalarT,Cell,QuadPoint,Dim>	  normal;
 
 		std::vector<std::vector<int> >  sideNodes;
 		std::string                     basalSideName;
 
-		int numCellNodes;
 		int numSideNodes;
 		int numSideQPs;
 		int sideDim;
-		int vecDim;
-		int vecDimFO;
+
+		int numNodes, numQPs, numDims;
 
 };
 

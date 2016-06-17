@@ -282,6 +282,32 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
 
   metaData->commit();
 
+  int numLayers = 5;
+  bool useGlimmerSpacing = true;
+  int serialSize2d=6730;
+  LayeredMeshOrdering LAYER  = LayeredMeshOrdering::LAYER;
+  LayeredMeshOrdering COLUMN = LayeredMeshOrdering::COLUMN;
+  LayeredMeshOrdering Ordering = COLUMN;
+
+  std::vector<double> levelsNormalizedThickness(numLayers + 1);
+  if(useGlimmerSpacing)
+    for (int i = 0; i < numLayers+1; i++)
+      levelsNormalizedThickness[numLayers-i] = 1.0- (1.0 - std::pow(double(i) / numLayers + 1.0, -2))/(1.0 - std::pow(2.0, -2));
+  else  //uniform layers
+    for (int i = 0; i < numLayers+1; i++)
+      levelsNormalizedThickness[i] = double(i) / numLayers;
+
+  Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers);
+  for (int i = 0; i < numLayers; i++)
+	  layerThicknessRatio[i] = levelsNormalizedThickness[i+1]-levelsNormalizedThickness[i];
+
+  int lVertexColumnShift = (Ordering == COLUMN) ? 1 : serialSize2d;
+  int vertexLayerShift   = (Ordering == LAYER)  ? 1 : numLayers + 1;
+  this->layered_mesh_numbering = (Ordering==LAYER) ?
+      Teuchos::rcp(new LayeredMeshNumbering<LO>(lVertexColumnShift,Ordering,layerThicknessRatio)):
+      Teuchos::rcp(new LayeredMeshNumbering<LO>(vertexLayerShift,Ordering,layerThicknessRatio));
+
+
   // Restart index to read solution from exodus file.
   int index = params->get("Restart Index",-1); // Default to no restart
   double res_time = params->get<double>("Restart Time",-1.0); // Default to no restart

@@ -108,9 +108,6 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
 
 	      dl_basal = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,numBasalSideQPs,numDim-1,numDim,numCellSides,vecDim));
 
-	      // layout used to compute the gradient of Tm at the base
-	      dl_basal_temp = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,numBasalSideQPs,numDim,numDim,numCellSides,vecDim));
-
 	      dl->side_layouts[basalSideName] = dl_basal;
 	  }
 

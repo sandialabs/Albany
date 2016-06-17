@@ -25,6 +25,7 @@
        evaluators/FELIX_HydrologyResidualEllipticEqn.cpp
        evaluators/FELIX_HydrologyResidualEvolutionEqn.cpp
        evaluators/FELIX_HydrostaticPressure.cpp
+       evaluators/FELIX_Integral1Dw_Z.cpp
        evaluators/FELIX_LiquidWaterFraction.cpp
        evaluators/FELIX_PressureMeltingTemperature.cpp
        evaluators/FELIX_PressureMeltingEnthalpy.cpp
@@ -45,6 +46,7 @@
        evaluators/FELIX_StokesTauM.cpp
        evaluators/FELIX_Temperature.cpp
        evaluators/FELIX_ThicknessResid.cpp
+       evaluators/FELIX_VerticalVelocity.cpp
        evaluators/FELIX_Viscosity.cpp
        evaluators/FELIX_ViscosityFO.cpp
        evaluators/FELIX_ViscosityL1L2.cpp
@@ -122,6 +124,8 @@ ENDIF()
        evaluators/FELIX_HydrologyResidualEvolutionEqn_Def.hpp
        evaluators/FELIX_HydrostaticPressure.hpp
        evaluators/FELIX_HydrostaticPressure_Def.hpp
+       evaluators/FELIX_Integral1Dw_Z.hpp
+       evaluators/FELIX_Integral1Dw_Z_Def.hpp
        evaluators/FELIX_LiquidWaterFraction.hpp
        evaluators/FELIX_LiquidWaterFraction_Def.hpp
        evaluators/FELIX_PressureMeltingTemperature.hpp
@@ -161,6 +165,8 @@ ENDIF()
        evaluators/FELIX_Temperature_Def.hpp
        evaluators/FELIX_ThicknessResid_Def.hpp
        evaluators/FELIX_ThicknessResid.hpp
+       evaluators/FELIX_VerticalVelocity.hpp
+       evaluators/FELIX_VerticalVelocity_Def.hpp
        evaluators/FELIX_ViscosityFO.hpp
        evaluators/FELIX_ViscosityFO_Def.hpp
        evaluators/FELIX_ViscosityL1L2.hpp
