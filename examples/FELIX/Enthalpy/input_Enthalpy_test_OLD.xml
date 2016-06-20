@@ -36,7 +36,7 @@
        <Parameter name="Parameter Delta" type="double" value="0.75"/>
     </ParameterList>
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="2"/>
+      <Parameter name="Number" type="int" value="0"/>
       <Parameter name="Response 0" type="string" value="Solution Max Value"/>
       <ParameterList name="ResponseParams 0">
         <Parameter name="Equation" type="int" value="0" />
@@ -77,9 +77,9 @@
    </ParameterList>
 </ParameterList>
 <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="2"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{2721396.09731,16.2025461051}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e-2"/>
+    <Parameter  name="Number of Comparisons" type="int" value="3"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{15.3401105369, 1.37190889873, 5.29062524756}"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.208812026834, 0.243439246662, 0.0545756230981}"/>
   </ParameterList>

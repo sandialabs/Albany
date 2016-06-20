@@ -451,7 +451,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Initialize residual to 0.0
 
-//  Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));
+//  Kokkos::deep_copy(Residual.get_view(), ScalarT(0.0));
 
   if (needsBasalResidual)
   {

@@ -62,7 +62,7 @@ evaluateFields(typename Traits::EvalData workset)
     Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
     Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
-  	Kokkos::deep_copy(this->int1Dw_z.get_kokkos_view(), ScalarT(0.0));
+  	Kokkos::deep_copy(this->int1Dw_z.get_view(), ScalarT(0.0));
 
   	const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
@@ -114,7 +114,7 @@ evaluateFields(typename Traits::EvalData workset)
     Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
     Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
-  	Kokkos::deep_copy(this->int1Dw_z.get_kokkos_view(), ScalarT(0.0));
+  	Kokkos::deep_copy(this->int1Dw_z.get_view(), ScalarT(0.0));
 
   	const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 

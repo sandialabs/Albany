@@ -436,10 +436,7 @@ template<typename EvalT, typename Traits, typename Type, typename TemperatureTyp
 void ViscosityFO<EvalT, Traits, Type, TemperatureType>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
-//std::cout << "before viscosity coord vec" << coordVec(0,0,0) << "   " <<coordVec(1,1,1) << "   " <<coordVec(2,2,2) << "   " <<coordVec(3,3,3) << "   " <<std::endl;
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  //double eps = 240.0;
   double a = 1.0;
   switch (visc_type)
   {

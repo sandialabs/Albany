@@ -47,13 +47,8 @@ void Dissipation<EvalT,Traits>::
 evaluateFields(typename Traits::EvalData d)
 {
     for (std::size_t cell = 0; cell < d.numCells; ++cell)
-    {
     	for (std::size_t qp = 0; qp < numQPs; ++qp)
-    	{
-    		diss(cell,qp) = 1.0/(3.154*pow(10.0,4.0)) * 2.0 * mu(cell,qp) * epsilonSq(cell,qp);
-    		//std::cout << "mu" << mu(cell,qp) << std::endl;
-    	}
-    }
+    	   	diss(cell,qp) = 1.0/(3.154*pow(10.0,4.0)) * 2.0 * mu(cell,qp) * epsilonSq(cell,qp);
 }
 
 

@@ -33,7 +33,6 @@ Enthalpy(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 	TEUCHOS_TEST_FOR_EXCEPTION (basalSideName=="INVALID", std::logic_error, "Error! In order to specify basal requirements, you must also specify a valid 'Basal Side Name'.\n");
     // Need to allocate a fields in basal mesh database
     Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Basal Fields");
-    std::cout << req[0] << std::endl;
     this->ss_requirements[basalSideName].reserve(req.size()); // Note: this is not for performance, but to guarantee
 
     for (int i(0); i<req.size(); ++i)                         //       that ss_requirements.at(basalSideName) does not
