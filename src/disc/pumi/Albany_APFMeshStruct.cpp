@@ -173,10 +173,6 @@ void Albany::APFMeshStruct::init(
   allElementBlocksHaveSamePhysics = true;
   hasRestartSolution = false;
 
-  // This value is set by default here and should be overridden in
-  // APFMeshStruct derived classes (PUMI_MeshStruct, Sim_MeshStruct)
-  restartWriteStep = 0;
-
   // No history available by default
   solutionFieldHistoryDepth = 0;
 
