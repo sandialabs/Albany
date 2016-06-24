@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_STOKES_FO_PROBLEM_HPP
-#define FELIX_STOKES_FO_PROBLEM_HPP 1
+#ifndef FELIX_STOKES_FO_THERMOCOUPLED_PROBLEM_HPP
+#define FELIX_STOKES_FO_THERMOCOUPLED_PROBLEM_HPP 1
 
 #include <type_traits>
 
@@ -34,7 +34,9 @@
 #include "PHAL_SaveSideSetStateField.hpp"
 #include "FELIX_SharedParameter.hpp"
 #include "FELIX_StokesParamEnum.hpp"
+#include "PHAL_SaveCellStateField.hpp"
 
+// include for velocity
 #include "FELIX_EffectivePressure.hpp"
 #include "FELIX_StokesFOResid.hpp"
 #include "FELIX_StokesFOBasalResid.hpp"
@@ -50,6 +52,20 @@
 #include "FELIX_UpdateZCoordinate.hpp"
 #include "FELIX_GatherVerticallyAveragedVelocity.hpp"
 
+// include for enthalpy
+#include "FELIX_EnthalpyResid.hpp"
+#include "FELIX_w_ZResid.hpp"
+#include "FELIX_ViscosityFO.hpp"
+#include "FELIX_Dissipation.hpp"
+#include "FELIX_BasalFrictionHeat.hpp"
+#include "FELIX_GeoFluxHeat.hpp"
+#include "FELIX_HydrostaticPressure.hpp"
+#include "FELIX_LiquidWaterFraction.hpp"
+#include "FELIX_PressureMeltingEnthalpy.hpp"
+#include "FELIX_PressureMeltingTemperature.hpp"
+#include "FELIX_Temperature.hpp"
+#include "FELIX_Integral1Dw_Z.hpp"
+#include "FELIX_VerticalVelocity.hpp"
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
@@ -60,17 +76,17 @@ namespace FELIX
  * \brief Abstract interface for representing a 1-D finite element
  * problem.
  */
-class StokesFO : public Albany::AbstractProblem
+class StokesFOThermoCoupled : public Albany::AbstractProblem
 {
 public:
 
   //! Default constructor
-  StokesFO (const Teuchos::RCP<Teuchos::ParameterList>& params,
-            const Teuchos::RCP<ParamLib>& paramLib,
-            const int numDim_);
+	StokesFOThermoCoupled (const Teuchos::RCP<Teuchos::ParameterList>& params,
+            			   const Teuchos::RCP<ParamLib>& paramLib,
+						   const int numDim_);
 
   //! Destructor
-  ~StokesFO();
+  ~StokesFOThermoCoupled();
 
   //! Return number of spatial dimensions
   virtual int spatialDimension() const { return numDim; }
@@ -93,10 +109,10 @@ public:
 private:
 
   //! Private to prohibit copying
-  StokesFO(const StokesFO&);
+  StokesFOThermoCoupled(const StokesFOThermoCoupled&);
 
   //! Private to prohibit copying
-  StokesFO& operator=(const StokesFO&);
+  StokesFOThermoCoupled& operator=(const StokesFOThermoCoupled&);
 
 public:
 
@@ -135,6 +151,11 @@ protected:
   std::string elementBlockName;
   std::string basalEBName;
   std::string surfaceEBName;
+
+  // flags for enthalpy
+  bool haveSUPG;
+  bool needsDiss, needsBasFric;
+  bool isGeoFluxConst;
 };
 
 } // Namespace FELIX
@@ -143,24 +164,27 @@ protected:
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-                                      const Albany::MeshSpecsStruct& meshSpecs,
-                                      Albany::StateManager& stateMgr,
-                                      Albany::FieldManagerChoice fieldManagerChoice,
-                                      const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                                      	  	  const Albany::MeshSpecsStruct& meshSpecs,
+											  Albany::StateManager& stateMgr,
+											  Albany::FieldManagerChoice fieldManagerChoice,
+											  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-
-  int offset=0;
 
   Albany::StateStruct::MeshFieldEntity entity;
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
 
-  // ---------------------------- Registering state variables ------------------------- //
+  //////////////////////////////////////////
+  // --- Registering state variables --- //
+  ////////////////////////////////////////
+
+  // --- Registering variables for Velocity
 
   std::string stateName, fieldName, param_name;
 
+/*	TEMPERATURE IS COMPUTED BY THE ENTHALPY SOLVER
   // Temperature
   if(params->get<int>("importCellTemperatureFromMesh",0)) {
     entity = Albany::StateStruct::ElemData;
@@ -178,7 +202,8 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-
+  // BE CAREFUL HERE, EXPECIALLY TO Layered Data Length
+  // ALSO, CHECK THAT THIS PART IS NOT INVOLVING THE TEMPERATURE
   if (ss_requirements.find(basalSideName)!=ss_requirements.end())
   {
     const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
@@ -196,7 +221,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
       p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_temp, basalEBName, true, &entity);
     }
   }
-
+*/
   // Flow factor
   entity = Albany::StateStruct::ElemData;
   stateName = fieldName = "flow_factor";
@@ -509,7 +534,14 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     if(basalSideName!="INVALID") {
       ev = evalUtils.constructDOFCellToSideEvaluator("Beta",basalSideName,"Node Scalar",cellType);
       fm0.template registerEvaluator<EvalT> (ev);
-    }
+
+	  if(needsBasFric)
+	  {
+		  //---- Interpolate Beta on QP on side, USED BY ENTHALPY
+		  ev = evalUtils.constructDOFInterpolationSideEvaluator("Beta", basalSideName);
+		  fm0.template registerEvaluator<EvalT>(ev);
+	  }
+	}
   }
 
   // Effective pressure
@@ -550,6 +582,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
 
+  //Hasn't it been registered in line 521 yet?
   stateName = "basal_friction";
   entity= Albany::StateStruct::NodalDataToElemNode;
   p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
@@ -578,20 +611,86 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity,"bottom");
 */
 
-  // ----------  Define Field Names ----------- //
+  // --- Registering Variables for Enthalpy
+
+  // Enthalpy Dirichlet field on the surface
+  {
+	  entity = Albany::StateStruct::NodalDistParameter;
+	  std::string stateName = "surface_air_enthalpy";
+	  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
+	  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+	  fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+/* ALREADY REGISTERED
+  // Flow factor
+  {
+	  entity = Albany::StateStruct::ElemData;
+	  std::string stateName = "flow_factor";
+	  p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, elementBlockName, true, &entity);
+	  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+	  fm0.template registerEvaluator<EvalT>(ev);
+  }
+*/
+
+/* ALREADY REGISTERED		BE CAREFUL, IT IS REGISTERED TWICE FOR THE VELOCITY!
+  // Basal friction        "basal_friction" ---> "Beta"
+  if(needsBasFric)
+  {
+	  entity = Albany::StateStruct::NodalDataToElemNode;
+	  std::string stateName = "basal_friction";
+	  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+	  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+	  fm0.template registerEvaluator<EvalT>(ev);
+  }
+*/
+  // Geotermal flux
+  if(!isGeoFluxConst)
+  {
+	  entity = Albany::StateStruct::NodalDataToElemNode;
+	  std::string stateName = "basal_heat_flux";
+	  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+	  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+	  fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+/* ALREADY REGISTERED
+  // Thickness		"thickness" ---> "Ice Thickness"
+  {
+	  entity = Albany::StateStruct::NodalDataToElemNode;
+	  std::string stateName = "thickness";
+	  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+	  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+	  fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  // Surface Height		 "surface_height" ---> "Surface Height"
+  {
+	  entity = Albany::StateStruct::NodalDataToElemNode;
+	  std::string stateName = "surface_height";
+	  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+	  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+	  fm0.template registerEvaluator<EvalT>(ev);
+  }
+*/
+
+  /////////////////////////////////
+  // --- Define Field Names --- //
+  ///////////////////////////////
+  int offset=0;
+  { // --- Velocity
   Teuchos::ArrayRCP<std::string> dof_names(1);
   Teuchos::ArrayRCP<std::string> resid_names(1);
   Teuchos::RCP<std::map<std::string, int> > extruded_params_levels = Teuchos::rcp(new std::map<std::string, int> ());
   dof_names[0] = "Velocity";
   resid_names[0] = "Stokes Residual";
+
   if(isThicknessAParameter)
   {
     std::string extruded_param_name = "thickness";
     int extruded_param_level = 0;
     extruded_params_levels->insert(std::make_pair(extruded_param_name, extruded_param_level));
   }
-
-  // ------------------- Interpolations and utilities ------------------ //
 
   // Gather solution field
   ev = evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names, offset);
@@ -609,10 +708,50 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   ev = evalUtils.constructScatterResidualEvaluatorWithExtrudedParams(true, resid_names, extruded_params_levels, offset, "Scatter Stokes");
   fm0.template registerEvaluator<EvalT> (ev);
 
-  // Interpolate temperature from nodes to cell
-  ev = evalUtils.getPSTUtils().constructNodesToCellInterpolationEvaluator ("temperature",false);
-  fm0.template registerEvaluator<EvalT> (ev);
 
+  offset += 2;	// there are two equations for the velocity, one for each component
+  }  //end of utilities for velocity
+
+  {	// --- Enthalpy
+  Teuchos::ArrayRCP<std::string> dof_names(1);
+  Teuchos::ArrayRCP<std::string> resid_names(1);
+  dof_names[0] = "Enthalpy";
+  resid_names[0] = "Enthalpy Residual";
+
+  // no transient
+  fm0.template registerEvaluator<EvalT> (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names, offset));
+
+  fm0.template registerEvaluator<EvalT> (evalUtils.constructScatterResidualEvaluator(false, resid_names, offset, "Scatter Enthalpy"));
+
+  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
+
+  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
+
+  // --- Restrict enthalpy from cell-based to cell-side-based
+  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator(dof_names[0],basalSideName,"Node Vector",cellType));
+
+  offset++;
+  }
+
+  {	// --- w_z Utilities
+  Teuchos::ArrayRCP<std::string> dof_names(1);
+  Teuchos::ArrayRCP<std::string> resid_names(1);
+  dof_names[0] = "w_z";
+  resid_names[0] = "w_z Residual";
+
+  // no transient
+  fm0.template registerEvaluator<EvalT> (evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names, offset));
+
+  fm0.template registerEvaluator<EvalT> (evalUtils.constructScatterResidualEvaluator(false, resid_names, offset, "Scatter w_z"));
+
+  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
+  }
+
+  ///////////////////////////////////////////
+  // --- Interpolations and utilities --- //
+  /////////////////////////////////////////
+
+  // WHY DO WE NEED THIS? CHECK!
   if(!isThicknessAParameter)
   {
     //----- Gather Coordinate Vector (general parameters)
@@ -656,17 +795,64 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   ev = evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cellCubature);
   fm0.template registerEvaluator<EvalT> (ev);
 
-  // Compute basis funcitons
+  // Compute basis functions
   ev = evalUtils.constructComputeBasisFunctionsEvaluator(cellType, cellBasis, cellCubature);
   fm0.template registerEvaluator<EvalT> (ev);
 
-  // Intepolate surface height
+  // Interpolate surface height
   ev = evalUtils.constructDOFInterpolationEvaluator_noDeriv("Surface Height");
   fm0.template registerEvaluator<EvalT> (ev);
 
-  // Intepolate surface height gradient
+  // Interpolate surface height gradient
   ev = evalUtils.constructDOFGradInterpolationEvaluator_noDeriv("Surface Height");
   fm0.template registerEvaluator<EvalT> (ev);
+
+  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFGradInterpolationEvaluator("melting temp"));
+
+  // Interpolate temperature from nodes to cell
+  if(needsDiss)
+	  fm0.template registerEvaluator<EvalT> (evalUtils.constructNodesToCellInterpolationEvaluator("Temperature",false));
+
+  // Interpolate pressure melting temperature gradient from nodes to QPs
+  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFGradInterpolationSideEvaluator("melting temp",basalSideName));
+
+  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator("melting temp"));
+
+  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("melting enthalpy"));
+
+  // --- Restrict enthalpy Hs from cell-based to cell-side-based
+  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("melting enthalpy",basalSideName,"Node Vector",cellType));
+
+  if(needsBasFric)
+  {
+	  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator("Basal Heat"));
+
+	  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator("Basal Heat SUPG"));
+  }
+
+  // --- Utilities for Basal Melt Rate
+  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("melting temp",basalSideName,"Node Scalar",cellType));
+
+  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("omega",basalSideName,"Node Scalar",cellType));
+
+  // --- Utilities for Geotermal flux
+  if(!isGeoFluxConst)
+  {
+	  // --- Restrict geotermal flux from cell-based to cell-side-based
+	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("basal_heat_flux",basalSideName,"Node Scalar",cellType));
+
+  	  // --- Interpolate geotermal_flux on QP on side
+  	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("basal_heat_flux", basalSideName));
+
+	  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator("Geo Flux Heat"));
+
+	  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator("Geo Flux Heat SUPG"));
+  }
+
+  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator("w"));
+
+  // THE SAME EVALUATOR IS INITIALIZED AROUND LINE 717, CHECK IT
+  fm0.template registerEvaluator<EvalT> (evalUtils.constructGatherCoordinateVectorEvaluator());
 
   if (basalSideName!="INVALID")
   {
@@ -792,7 +978,9 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  // -------------------------------- FELIX evaluators ------------------------- //
+  ///////////////////////////////
+  // --- FELIX evaluators --- //
+  /////////////////////////////
 
   // --- FO Stokes Resid --- //
   p = Teuchos::rcp(new Teuchos::ParameterList("Stokes Resid"));
@@ -833,7 +1021,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     //Output
     p->set<std::string>("Basal Residual Variable Name", "Basal Residual");
 
-    ev = Teuchos::rcp(new FELIX::StokesFOBasalResid<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
+    ev = Teuchos::rcp(new FELIX::StokesFOBasalResid<EvalT,PHAL::AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
     //--- Sliding velocity calculation ---//
@@ -975,7 +1163,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
   p->set<std::string>("Velocity QP Variable Name", "Velocity");
   p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
-  p->set<std::string>("Temperature Variable Name", "temperature");
+  p->set<std::string>("Temperature Variable Name", "Temperature");
   p->set<std::string>("Flow Factor Variable Name", "flow_factor");
   p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
@@ -985,7 +1173,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
   p->set<std::string>("EpsilonSq QP Variable Name", "FELIX EpsilonSq");
 
-  ev = Teuchos::rcp(new FELIX::ViscosityFO<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ParamScalarT>(*p,dl));
+  ev = Teuchos::rcp(new FELIX::ViscosityFO<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
 #ifdef CISM_HAS_FELIX
@@ -1121,11 +1309,320 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     }
   }
 
+  // --- Enthalpy Residual --- //
+  {
+  p = Teuchos::rcp(new Teuchos::ParameterList("Enthalpy Resid"));
+
+  //Input
+  p->set<std::string>("Weighted BF Variable Name", "wBF");
+  p->set< Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+
+  p->set<std::string>("Weighted Gradient BF Variable Name", "wGrad BF");
+  p->set< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
+
+  p->set<std::string>("Enthalpy QP Variable Name", "Enthalpy");
+  p->set< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+  p->set<std::string>("Enthalpy Gradient QP Variable Name", "Enthalpy Gradient");
+  p->set< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout", dl->qp_gradient);
+
+  p->set<std::string>("Enthalpy Hs QP Variable Name", "melting enthalpy");
+  p->set< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+  p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+
+  // Velocity field for the convective term (read from the mesh)
+  p->set<std::string>("Velocity QP Variable Name", "Velocity");
+  p->set< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+  // Vertical velocity derived from the continuity equation
+  p->set<std::string>("Vertical Velocity QP Variable Name", "w");
+
+  p->set<std::string>("Geotermal Flux Heat QP Variable Name","Geo Flux Heat");
+  p->set<std::string>("Geotermal Flux Heat QP SUPG Variable Name","Geo Flux Heat SUPG");
+
+  p->set<std::string>("Melting Temperature Gradient QP Variable Name","melting temp Gradient");
+
+  if(needsDiss)
+  {
+	  p->set<std::string>("Dissipation QP Variable Name", "FELIX Dissipation");
+  }
+
+  if(needsBasFric)
+  {
+	  p->set<std::string>("Basal Friction Heat QP Variable Name", "Basal Heat");
+	  p->set<std::string>("Basal Friction Heat QP SUPG Variable Name", "Basal Heat SUPG");
+  }
+
+  p->set<bool>("Needs Dissipation", needsDiss);
+  p->set<bool>("Needs Basal Friction", needsBasFric);
+  p->set<bool>("Constant Geotermal Flux", isGeoFluxConst);
+
+  p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+
+  p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
+  p->set<Teuchos::ParameterList*>("SUPG Settings", &params->sublist("SUPG Settings"));
+
+  //Output
+  p->set<std::string>("Residual Variable Name", "Enthalpy Residual");
+  p->set< Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+
+  ev = Teuchos::rcp(new FELIX::EnthalpyResid<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+  fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  // --- w_z Residual --- //
+  {
+  p = Teuchos::rcp(new Teuchos::ParameterList("w_z Resid"));
+
+  //Input
+  p->set<std::string>("Weighted BF Variable Name", "wBF");
+  p->set< Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+
+  p->set<std::string>("w_z QP Variable Name", "w_z");
+  p->set< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+  p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
+  p->set< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout", dl->qp_vecgradient);
+
+  //Output
+  p->set<std::string>("Residual Variable Name", "w_z Residual");
+  p->set< Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+
+  ev = Teuchos::rcp(new FELIX::w_ZResid<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+  fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  // --- FELIX Dissipation ---
+  if(needsDiss)
+  {
+  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Dissipation"));
+
+  //Input
+  p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity"); // viscosity has been called by stokes
+  p->set<std::string>("EpsilonSq QP Variable Name", "FELIX EpsilonSq");
+
+  //Output
+  p->set<std::string>("Dissipation QP Variable Name", "FELIX Dissipation");
+
+  ev = Teuchos::rcp(new FELIX::Dissipation<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  // --- FELIX Basal friction heat ---
+  if(needsBasFric)
+  {
+	  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Basal Friction Heat"));
+	  //Input
+	  p->set<std::string>("BF Side Name", "BF "+basalSideName);
+	  p->set<std::string>("Gradient BF Side Name", "Grad BF "+basalSideName);
+	  p->set<std::string>("Weighted Measure Name", "Weighted Measure "+basalSideName);
+	  p->set<std::string>("Velocity Side QP Variable Name", "Basal Velocity");
+	  p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", "Beta");  //basal_friction
+	  p->set<std::string>("Side Set Name", basalSideName);
+
+	  p->set<Teuchos::ParameterList*>("SUPG Settings", &params->sublist("SUPG Settings"));
+
+	  p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
+
+	  //Output
+	  p->set<std::string>("Basal Friction Heat Variable Name", "Basal Heat");
+
+	  if(haveSUPG)
+		  p->set<std::string>("Basal Friction Heat SUPG Variable Name", "Basal Heat SUPG");
+
+	  ev = Teuchos::rcp(new FELIX::BasalFrictionHeat<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+	  fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  // --- FELIX Geotermal flux heat
+  {
+	  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Geotermal Flux Heat"));
+	  //Input
+	  p->set<std::string>("BF Side Name", "BF "+basalSideName);
+	  p->set<std::string>("Gradient BF Side Name", "Grad BF "+basalSideName);
+	  p->set<std::string>("Weighted Measure Name", "Weighted Measure "+basalSideName);
+	  p->set<std::string>("Velocity Side QP Variable Name", "Basal Velocity");
+	  p->set<std::string>("Side Set Name", basalSideName);
+	  p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
+
+	  p->set<Teuchos::ParameterList*>("SUPG Settings", &params->sublist("SUPG Settings"));
+
+	  if(!isGeoFluxConst)
+		  p->set<std::string>("Geotermal Flux Side QP Variable Name", "basal_heat_flux");
+
+	  //p->set<ParameterList*>("Problem", &params->sublist("Problem"));
+	  p->set<bool>("Constant Geotermal Flux", isGeoFluxConst);
+
+	  //Output
+	  p->set<std::string>("Geotermal Flux Heat Variable Name", "Geo Flux Heat");
+
+	  if(haveSUPG)
+		  p->set<std::string>("Geotermal Flux Heat SUPG Variable Name", "Geo Flux Heat SUPG");
+
+	  ev = Teuchos::rcp(new FELIX::GeoFluxHeat<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+	  fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  // --- FELIX hydrostatic pressure
+  {
+	  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Hydrostatic Pressure"));
+
+	  //Input
+	  p->set<std::string>("Surface Height Variable Name", "Surface Height");
+	  p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
+
+	  p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
+
+	  //Output
+	  p->set<std::string>("Hydrostatic Pressure Variable Name", "Hydrostatic Pressure");
+
+	  ev = Teuchos::rcp(new FELIX::HydrostaticPressure<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+	  fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  // --- FELIX pressure-melting temperature
+  {
+	  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Pressure Melting Temperature"));
+
+	  //Input
+	  p->set<std::string>("Hydrostatic Pressure Variable Name", "Hydrostatic Pressure");
+
+	  p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
+
+	  //Output
+	  p->set<std::string>("Melting Temperature Variable Name", "melting temp");
+
+	  ev = Teuchos::rcp(new FELIX::PressureMeltingTemperature<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+	  fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  // --- FELIX pressure-melting enthalpy
+  {
+	  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Pressure Melting Enthalpy"));
+
+	  //Input
+	  p->set<std::string>("Melting Temperature Variable Name", "melting temp");
+
+	  p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
+
+	  //Output
+	  p->set<std::string>("Enthalpy Hs Variable Name", "melting enthalpy");
+	  ev = Teuchos::rcp(new FELIX::PressureMeltingEnthalpy<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+	  fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  // --- FELIX Temperature
+  {
+	  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Temperature"));
+
+	  //Input
+	  p->set<std::string>("Melting Temperature Variable Name", "melting temp");
+	  p->set<std::string>("Enthalpy Hs Variable Name", "melting enthalpy");
+	  p->set<std::string>("Enthalpy Variable Name", "Enthalpy");
+
+	  p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
+
+	  //Output  --->  Temperature is used in ViscosityFO by Stokes
+	  p->set<std::string>("Temperature Variable Name", "Temperature");
+	  ev = Teuchos::rcp(new FELIX::Temperature<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+	  fm0.template registerEvaluator<EvalT>(ev);
+
+	  // Not working...
+	  {
+		  std::string stateName = "Temperature";
+		  p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
+
+		  p->set<std::string>("Weights Name","Weights");
+		  p->set("Weights Layout", dl->qp_scalar);
+		  p->set("Field Layout", dl->cell_scalar2);
+		  p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
+
+		  ev = Teuchos::rcp(new PHAL::SaveCellStateField<EvalT,PHAL::AlbanyTraits>(*p));
+		  fm0.template registerEvaluator<EvalT>(ev);
+	  }
+  }
+
+  // --- FELIX Liquid Water Fraction
+  {
+	  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Liquid Water Fraction"));
+
+	  //Input
+	  p->set<std::string>("Enthalpy Hs Variable Name", "melting enthalpy");
+	  p->set<std::string>("Enthalpy Variable Name", "Enthalpy");
+
+	  p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
+
+      //p->set<std::string>("Side Set Name", basalSideName);
+
+	  //Output
+	  p->set<std::string>("Omega Variable Name", "omega");
+	  ev = Teuchos::rcp(new FELIX::LiquidWaterFraction<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+	  fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  // --- FELIX Integral 1D w_z
+  {
+	  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Integral 1D w_z"));
+
+	  p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
+
+	  //Output
+	  p->set<std::string>("Integral1D w_z Variable Name", "int1Dw_z");
+      ev = Teuchos::rcp(new FELIX::Integral1Dw_Z<EvalT,PHAL::AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  // --- FELIX Vertical Velocity
+  {
+	  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Vertical Velocity"));
+
+	  //Input
+      p->set<std::string>("Thickness Variable Name", "Ice Thickness");
+	  p->set<std::string>("Integral1D w_z Variable Name", "int1Dw_z");
+
+	  //Output
+	  p->set<std::string>("Vertical Velocity Variable Name", "w");
+	  ev = Teuchos::rcp(new FELIX::VerticalVelocity<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+	  fm0.template registerEvaluator<EvalT>(ev);
+
+	  {
+		  fm0.template registerEvaluator<EvalT> (evalUtils.constructNodesToCellInterpolationEvaluator("w",false));
+
+		  std::string stateName = "w";
+		  entity = Albany::StateStruct::NodalDataToElemNode;
+		  p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
+
+		  p->set<std::string>("Weights Name","Weights");
+		  p->set("Weights Layout", dl->qp_scalar);
+		  p->set("Field Layout", dl->cell_scalar2);
+		  p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
+
+		  ev = Teuchos::rcp(new PHAL::SaveCellStateField<EvalT,PHAL::AlbanyTraits>(*p));
+		  fm0.template registerEvaluator<EvalT>(ev);
+	  }
+
+      // Forcing the execution of the evaluator
+	  if (fieldManagerChoice == Albany::BUILD_RESID_FM)
+	  {
+		  if (ev->evaluatedFields().size()>0)
+	      {
+			  fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+	      }
+	  }
+  }
+
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)
   {
     // Require scattering of residual
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter Stokes", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
+
+	PHX::Tag<typename EvalT::ScalarT> res_tag1("Scatter Enthalpy", dl->dummy);
+    fm0.requireField<EvalT>(res_tag1);
+
+    PHX::Tag<typename EvalT::ScalarT> res_tag2("Scatter w_z", dl->dummy);
+    fm0.requireField<EvalT>(res_tag2);
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM)
   {

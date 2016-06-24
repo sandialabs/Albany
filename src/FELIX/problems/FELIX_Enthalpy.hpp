@@ -627,6 +627,20 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 		  p->set<std::string>("Temperature Variable Name", "Temperature");
 		  ev = Teuchos::rcp(new FELIX::Temperature<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
 		  fm0.template registerEvaluator<EvalT>(ev);
+
+		  // Not working...
+		  {
+			  std::string stateName = "Temperature_Cell";
+			  p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
+			  p->set<std::string>("Field Name", "Temperature");
+			  p->set<std::string>("Weights Name","Weights");
+			  p->set("Weights Layout", dl->qp_scalar);
+			  p->set("Field Layout", dl->cell_scalar2);
+			  p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
+
+			  ev = rcp(new PHAL::SaveCellStateField<EvalT,AlbanyTraits>(*p));
+			  fm0.template registerEvaluator<EvalT>(ev);
+		  }
 	  }
 
 	  // --- FELIX Liquid Water Fraction
@@ -683,7 +697,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
 			  std::string stateName = "w";
 			  entity = Albany::StateStruct::NodalDataToElemNode;
-			  p = stateMgr.registerStateVariable("w", dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
+			  p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
 
 			  p->set<std::string>("Weights Name","Weights");
 			  p->set("Weights Layout", dl->qp_scalar);
@@ -702,6 +716,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 				  fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
 		      }
 		  }
+
 	  }
 	  /*
 	   * 	// --- FELIX Basal Normal Vector

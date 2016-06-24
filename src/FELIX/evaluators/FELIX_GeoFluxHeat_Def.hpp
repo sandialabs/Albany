@@ -148,7 +148,7 @@ evaluateFields(typename Traits::EvalData d)
 			  {
 				  geoFluxHeat(cell,sideNodes[side][node]) = 0.;
 				  for (int qp = 0; qp < numSideQPs; ++qp)
-				  {
+				  {	  // we impose a constant flux equal to 0.05
 					  geoFluxHeat(cell,sideNodes[side][node]) += 0.05 * BF(cell,side,node,qp) * w_measure(cell,side,qp);
 				  }
 			  }

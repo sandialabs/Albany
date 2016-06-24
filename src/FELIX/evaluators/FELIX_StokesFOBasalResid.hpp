@@ -21,7 +21,7 @@ namespace FELIX
     This evaluator evaluates the residual of the Hydrology model
 */
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename Type>
 class StokesFOBasalResid : public PHX::EvaluatorWithBaseImpl<Traits>,
                            public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -43,7 +43,7 @@ private:
   ScalarT printedFF;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>         beta;
+  PHX::MDField<Type,Cell,Side,QuadPoint>         beta;
   PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>  u;
   PHX::MDField<RealType,Cell,Side,Node,QuadPoint>   BF;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>     w_measure;

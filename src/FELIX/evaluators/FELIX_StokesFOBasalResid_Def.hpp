@@ -15,8 +15,8 @@
 namespace FELIX {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-StokesFOBasalResid<EvalT, Traits>::StokesFOBasalResid (const Teuchos::ParameterList& p,
+template<typename EvalT, typename Traits, typename Type>
+StokesFOBasalResid<EvalT, Traits, Type>::StokesFOBasalResid (const Teuchos::ParameterList& p,
                                            const Teuchos::RCP<Albany::Layouts>& dl) :
   basalResid (p.get<std::string> ("Basal Residual Variable Name"),dl->node_vector)
 {
@@ -28,7 +28,7 @@ StokesFOBasalResid<EvalT, Traits>::StokesFOBasalResid (const Teuchos::ParameterL
   Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
   u         = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
-  beta      = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"),dl_basal->qp_scalar);
+  beta      = PHX::MDField<Type,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"),dl_basal->qp_scalar);
   BF        = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
   w_measure = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint> (p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
 
@@ -73,8 +73,8 @@ StokesFOBasalResid<EvalT, Traits>::StokesFOBasalResid (const Teuchos::ParameterL
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void StokesFOBasalResid<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename Type>
+void StokesFOBasalResid<EvalT, Traits, Type>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -87,8 +87,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void StokesFOBasalResid<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
+template<typename EvalT, typename Traits, typename Type>
+void StokesFOBasalResid<EvalT, Traits, Type>::evaluateFields (typename Traits::EvalData workset)
 {
   ScalarT homotopyParam = FELIX::HomotopyParameter<EvalT>::value;
   ScalarT ff = (regularized) ? pow(10.0, -10.0*homotopyParam) : ScalarT(0);

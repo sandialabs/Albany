@@ -229,6 +229,8 @@ evaluateFields(typename Traits::EvalData d)
 				for (std::size_t i = 0; i < numDims; i++)
 				{
 					vmax = std::max(vmax,std::fabs(Velocity(cell,qp,i)));
+					if (vmax == 0)
+						vmax = 1e-6;
 				}
 			}
 
@@ -244,7 +246,7 @@ evaluateFields(typename Traits::EvalData d)
         	{
 				for (std::size_t qp=0; qp < numQPs; ++qp)
 				{
-					//std::cout << " diam = " << diam << std::endl;
+					//std::cout << " vmax = " << vmax << std::endl;
 					Residual(cell,node) += (delta*diam/vmax*(3.154 * pow10))*(scaling * rho * Velocity(cell,qp,0) * EnthalpyGrad(cell,qp,0) * (1/(3.154 * pow10)) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
 	    			   					  scaling * rho * Velocity(cell,qp,1) * EnthalpyGrad(cell,qp,1) * (1/(3.154 * pow10)) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) +
 										  scaling * rho * verticalVel(cell,qp) * EnthalpyGrad(cell,qp,2) * (1/(3.154 * pow10)) * verticalVel(cell,qp) * wGradBF(cell,node,qp,2));

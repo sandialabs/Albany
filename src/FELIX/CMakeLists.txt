@@ -56,6 +56,7 @@
        problems/FELIX_Hydrology.cpp
        problems/FELIX_Stokes.cpp
        problems/FELIX_StokesFO.cpp
+       problems/FELIX_StokesFOThermoCoupled.cpp
        problems/FELIX_StokesL1L2.cpp
    )
 
@@ -175,6 +176,7 @@ ENDIF()
        evaluators/FELIX_w_ZResid_Def.hpp
        problems/FELIX_Elliptic2D.hpp
        problems/FELIX_Enthalpy.hpp
+       problems/FELIX_StokesFOThermoCoupled.hpp
        problems/FELIX_Hydrology.hpp
        problems/FELIX_Stokes.hpp
        problems/FELIX_StokesFO.hpp

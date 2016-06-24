@@ -9,4 +9,4 @@
 #include "FELIX_StokesFOBasalResid.hpp"
 #include "FELIX_StokesFOBasalResid_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::StokesFOBasalResid)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(FELIX::StokesFOBasalResid)
