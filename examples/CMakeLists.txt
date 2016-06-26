@@ -36,6 +36,10 @@ set(AlbanySGAdjointPath                ${Albany_BINARY_DIR}/src/AlbanySGAdjoint)
 set(AlbanyCoupledPath                  ${Albany_BINARY_DIR}/src/AlbanyCoupled)
 set(AlbanySGCoupledPath                ${Albany_BINARY_DIR}/src/AlbanySGCoupled)
 
+IF (CISM_EXE_DIR)
+set(CismAlbanyPath                ${CISM_EXE_DIR}/cism_driver)
+ENDIF()
+
 IF (ALBANY_MPI)
   set(SerialAlbany.exe                 ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${MPIPOST} ${AlbanyPath})
   set(SerialAlbanyT.exe                ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${MPIPOST} ${AlbanyTPath})

@@ -4,9 +4,8 @@
 # CISM-ALBANY
 
 # run cism-albany after modifying (if needed) the paths of the input nc "name" file and the "dycore_input_file" in the file inputFiles/cism-albanyT.config.
-# FIXME: pass cism build dir from do-cmake configure script for Albany 
 cd inputFiles
-/home/ikalash/cism-piscees/builds/linux-gnu-felix-debug/cism_driver/cism_driver cism-albanyT.config
+../cism_driver cism-albanyT.config
 cd ..
 
 # [optional] if you run the above on multiple processors, you need to merge the exodus files into one:
@@ -30,10 +29,10 @@ cd ..
 
 #create 2d exodus file for Greenland.
 #Warning!! this part is very hacky, you'll get a runtime error, but the correct *.exo will be saved in the albanyMesh folder. Also, this can be extremely slow with large files, unless trilinos is compiled with the nodebug option -D CMAKE_CXX_FLAGS:STRING="-O3 -fPIC -fno-var-tracking -DNDEBUG".
-../../../src/AlbanyT inputFiles/create2dExo.xml
+./AlbanyT inputFiles/create2dExo.xml
 
 #run standalone Albany simulation
-../../../src/AlbanyT inputFiles/input_standalone-albanyT.xml 
+./AlbanyT inputFiles/input_standalone-albanyT.xml 
 
 # [optional] if you run the above on multiple processors, you need to merge the exodus files into one:
 #$ path-to-trilinos-install/bin/epu --auto greenland_cism-albanyT.exo.4.
@@ -59,9 +58,8 @@ matlab -nojvm < print_exo_fields_into_nc.m
 cd ..
 
 #after modifying the inputFiles/cism-albanyT.config to use the new gid greenland_standalone-albanyT.nc, run cism-albanyT, and compare again
-# FIXME: pass cism build dir from do-cmake configure script for Albany 
 cd inputFiles
-/home/ikalash/cism-piscees/builds/linux-gnu-felix-debug/cism_driver/cism_driver cism-albanyT.config
+../cism_driver cism-albanyT.config
 cd ..
 
 cd mFiles
