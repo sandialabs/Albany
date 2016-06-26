@@ -1,0 +1,23 @@
+1. Make sure to use same physical parameters (g, rho_i, rho_w) in both cism-albanyT.config and in input_standalone-albanyT.xml input files.
+
+2. make sure that the "ice_limit" value is the same in the cism-albany.confing and in the scripts
+    build_cism_msh_from_nc.m and print_exo_fields_into_nc.m
+
+2. set to zero the use_glissade_surf_height_grad option in cism-albanyT.config file.
+
+3. Check whether that "use_lateral_bcs" in cism-albanyT.config is compatible with what b.c. is selected in input_standalone-albanyT.xml
+
+4. make sure that the number of levels/layers in albany-cism.config is the same to the ones in 
+print_exo_fields_into_nc.m, compare_exos.nc and the one in the input_standalone-albanyT.xml  (note, in albany and matlab scripts, num_levels := num layers+1).
+
+5. The values of the following options should be the same in input_cism-albanyT.xml and input_standalone-albanyT.xml:
+   - parameter name="Solution Method" in "Problem" sublist.
+   - parameter name="Glen's Law Homotopy Parameter" in "FELIX Viscosity" sublist in "Problem" sublist.
+   
+6. Make sure albany is configure with the flag "-D ENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON"
+
+Warning: beta (basal friction) is modified in cism, so that the output .nc of cism-albany has a different value than the input one.. this is done for accounting for the parts where ice is floating..but it is measliading that beta is changed.
+
+Warning2: the coordinates passed to albany by cism are shifted by some multiple of dx. Not sure where this happen, but it should get fixed. For now we account for this by manually setting the coordinate_shift in the script build_cism_msh_from_nc.m.
+
+
