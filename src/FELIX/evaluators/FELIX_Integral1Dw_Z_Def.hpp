@@ -36,6 +36,18 @@ Integral1Dw_ZBase(const Teuchos::ParameterList& p,
   dl->node_vector->dimensions(dims);
   numNodes = dims[1];
 
+  StokesThermoCoupled = p.get<bool>("Stokes and Thermo coupled");
+  if(StokesThermoCoupled)
+  {
+  	offset = 3; // it identifies the right variable to consider (in this case w_z)
+  	neq = 4;	// Stokes FO + Enthalpy + w_z
+  }
+  else	//(just Enthalpy + w_z)
+  {
+  	offset = 1;
+  	neq = 2;
+  }
+
   this->setName("Integral1Dw_Z"+PHX::typeAsString<EvalT>());
 }
 
@@ -73,7 +85,6 @@ evaluateFields(typename Traits::EvalData workset)
     int numLayers = layeredMeshNumbering.numLayers;
 
     LO baseId, ilayer;
-    int offset = 1; // it identifies the right variable to consider (in this case w_z)
 
     for ( std::size_t cell = 0; cell < workset.numCells; ++cell )
     {
@@ -90,7 +101,7 @@ evaluateFields(typename Traits::EvalData workset)
     		{
     			LO inode0 = layeredMeshNumbering.getId(baseId, il);
     			LO inode1 = layeredMeshNumbering.getId(baseId, il+1);
-    			int1D += 0.5 * ( xT_constView[solDOFManager.getLocalDOF(inode0, offset)] + xT_constView[solDOFManager.getLocalDOF(inode1, offset)] ) * layers_ratio[il];
+    			int1D += 0.5 * ( xT_constView[solDOFManager.getLocalDOF(inode0, this->offset)] + xT_constView[solDOFManager.getLocalDOF(inode1, this->offset)] ) * layers_ratio[il];
     		}
 
     		this->int1Dw_z(cell,node) = int1D;
@@ -125,8 +136,7 @@ evaluateFields(typename Traits::EvalData workset)
     int numLayers = layeredMeshNumbering.numLayers;
 
     LO baseId, ilevel, baseId_curr, ilevel_curr;
-    int offset = 1; // it identifies the right variable to consider (in this case w_z)
-    int neq = 2;
+
     for ( std::size_t cell = 0; cell < workset.numCells; ++cell )
     {
     	const Teuchos::ArrayRCP<int>& nodeID = wsElNodeID[cell];
@@ -142,7 +152,7 @@ evaluateFields(typename Traits::EvalData workset)
     		{
     			LO inode0 = layeredMeshNumbering.getId(baseId, il);
     			LO inode1 = layeredMeshNumbering.getId(baseId, il+1);
-    			int1D += 0.5 * ( xT_constView[solDOFManager.getLocalDOF(inode0, offset)] + xT_constView[solDOFManager.getLocalDOF(inode1, offset)] ) * layers_ratio[il];
+    			int1D += 0.5 * ( xT_constView[solDOFManager.getLocalDOF(inode0, this->offset)] + xT_constView[solDOFManager.getLocalDOF(inode1, this->offset)] ) * layers_ratio[il];
     		}
 
     		this->int1Dw_z(cell,node) = FadType(this->int1Dw_z(cell,node).size(), int1D);
@@ -154,7 +164,8 @@ evaluateFields(typename Traits::EvalData workset)
         	    layeredMeshNumbering.getIndices(lnodeId_curr, baseId_curr, ilevel_curr);
         	    if (baseId_curr == baseId)
         	    {
-        	    	int idx = neq * node_curr + offset;
+        	    	int idx = this->neq * node_curr + this->offset;
+        	    	//int idx = this->offset * this->numNodes + node_curr;
 
         	    	if(ilevel_curr == ilevel - 1)
 					{

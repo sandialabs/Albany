@@ -52,7 +52,7 @@
    </ParameterList>
     <ParameterList name="SUPG Settings">
        <Parameter name="Have SUPG Stabilization" type="bool" value="true"/>
-       <Parameter name="Parameter Delta" type="double" value="0.75"/>
+       <Parameter name="Parameter Delta" type="double" value="10.0"/>
     </ParameterList>
 
     <ParameterList name="FELIX Basal Friction Coefficient">
@@ -87,16 +87,16 @@
         <Parameter name="Number Of Fields" type="int" value="2"/>
          <ParameterList name="Field 0">
             <Parameter name="Field Name" type="string" value="thickness"/>
-            <Parameter name="Field Type" type="string" value="From Mesh"/>
+            <Parameter name="Field Origin" type="string" value="Mesh"/>
          </ParameterList>
          <ParameterList name="Field 1">
             <Parameter name="Field Name" type="string" value="surface_height"/>
-            <Parameter name="Field Type" type="string" value="From Mesh"/>
+            <Parameter name="Field Origin" type="string" value="Mesh"/>
          </ParameterList>
     </ParameterList>
     <!--Parameter name="Extrude Basal Node Fields" type="Array(string)" value="{thickness,surface_height}"/>
-    <Parameter name="Basal Node Fields Ranks" type="Array(int)" value="{1,1}"/>
-    <Parameter name="Interleaved Ordering" type="bool" value="false"/>
+    <Parameter name="Basal Node Fields Ranks" type="Array(int)" value="{1,1}"/-->
+    <!--Parameter name="Interleaved Ordering" type="bool" value="false"/>
     <Parameter name="Columnwise Ordering" type="bool" value="false"/-->
     <ParameterList name="Side Set Discretizations">
       <Parameter name="Side Sets" type="Array(string)" value="{basalside}"/>
@@ -113,11 +113,11 @@
           <Parameter name="Number Of Fields" type="int" value="2"/>
           <ParameterList name="Field 0">
             <Parameter name="Field Name" type="string" value="basal_friction"/>
-            <Parameter name="Field Type" type="string" value="From Mesh"/>
+            <Parameter name="Field Origin" type="string" value="Mesh"/>
           </ParameterList>
           <ParameterList name="Field 1">
             <Parameter name="Field Name" type="string" value="basal_heat_flux"/>
-            <Parameter name="Field Type" type="string" value="From Mesh"/>
+            <Parameter name="Field Origin" type="string" value="Mesh"/>
           </ParameterList>
         </ParameterList>
       </ParameterList>

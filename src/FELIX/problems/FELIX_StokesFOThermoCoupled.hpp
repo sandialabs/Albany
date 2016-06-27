@@ -289,9 +289,9 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 
 		  fm0.template registerEvaluator<EvalT> (evalUtils.constructScatterResidualEvaluator(true, resid_names, offset, "Scatter Stokes"));
 
-		  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+		  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0],offset));
 
-		  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
+		  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0],offset));
 
 		  if (basalSideName!="INVALID")
 		  {
@@ -356,10 +356,10 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 
 	  fm0.template registerEvaluator<EvalT> (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, cellBasis, cellCubature));
 
-	  // Intepolate surface height ---> for Stokes
+	  // Interpolate surface height ---> for Stokes
 	  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator_noDeriv("Surface Height"));
 
-	  // Intepolate surface height gradient ---> for Stokes
+	  // Interpolate surface height gradient ---> for Stokes
 	  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFGradInterpolationEvaluator_noDeriv("Surface Height"));
 
 	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFGradInterpolationEvaluator("Melting Temp"));
@@ -619,16 +619,16 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 	  p->set<std::string>("Enthalpy Hs QP Variable Name", "Melting Enthalpy");
 	  p->set< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
 
-	  p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-
-	  // Velocity field for the convective term (read from the mesh)
 	  p->set<std::string>("Velocity QP Variable Name", "Velocity");
 	  p->set< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+	  p->set<std::string>("Coordinate Vector Name", "Coord Vec");
 
 	  // Vertical velocity derived from the continuity equation
 	  p->set<std::string>("Vertical Velocity QP Variable Name", "w");
 
 	  p->set<std::string>("Geotermal Flux Heat QP Variable Name","Geo Flux Heat");
+
 	  p->set<std::string>("Geotermal Flux Heat QP SUPG Variable Name","Geo Flux Heat SUPG");
 
 	  p->set<std::string>("Melting Temperature Gradient QP Variable Name","Melting Temp Gradient");
@@ -658,28 +658,6 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 	  p->set< Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
 
 	  ev = Teuchos::rcp(new FELIX::EnthalpyResid<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
-	  fm0.template registerEvaluator<EvalT>(ev);
-	  }
-
-	  // --- w_z Residual ---
-	  {
-	  p = Teuchos::rcp(new Teuchos::ParameterList("w_z Resid"));
-
-	  //Input
-	  p->set<std::string>("Weighted BF Variable Name", "wBF");
-	  p->set< Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
-
-	  p->set<std::string>("w_z QP Variable Name", "w_z");
-	  p->set< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
-
-	  p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
-	  p->set< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout", dl->qp_vecgradient);
-
-	  //Output
-	  p->set<std::string>("Residual Variable Name", "w_z Residual");
-	  p->set< Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
-
-	  ev = Teuchos::rcp(new FELIX::w_ZResid<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
 	  fm0.template registerEvaluator<EvalT>(ev);
 	  }
 
@@ -838,11 +816,35 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 		  fm0.template registerEvaluator<EvalT>(ev);
 	  }
 
+	  // --- w_z Residual ---
+	  {
+		  p = Teuchos::rcp(new Teuchos::ParameterList("w_z Resid"));
+
+		  //Input
+		  p->set<std::string>("Weighted BF Variable Name", "wBF");
+		  p->set< Teuchos::RCP<PHX::DataLayout> >("Node QP Scalar Data Layout", dl->node_qp_scalar);
+
+		  p->set<std::string>("w_z QP Variable Name", "w_z");
+		  p->set< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+
+		  p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
+		  p->set< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout", dl->qp_vecgradient);
+
+		  //Output
+		  p->set<std::string>("Residual Variable Name", "w_z Residual");
+		  p->set< Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+
+		  ev = Teuchos::rcp(new FELIX::w_ZResid<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
+		  fm0.template registerEvaluator<EvalT>(ev);
+	  }
+
 	  // --- FELIX Integral 1D w_z
 	  {
 		  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Integral 1D w_z"));
 
 		  p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
+
+		  p->set<bool>("Stokes and Thermo coupled", true);
 
 		  //Output
 		  p->set<std::string>("Integral1D w_z Variable Name", "int1Dw_z");

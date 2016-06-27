@@ -667,6 +667,8 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
 		  p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
 
+		  p->set<bool>("Stokes and Thermo coupled", false);
+
 		  //Output
 		  p->set<std::string>("Integral1D w_z Variable Name", "int1Dw_z");
 	      ev = Teuchos::rcp(new FELIX::Integral1Dw_Z<EvalT,PHAL::AlbanyTraits>(*p,dl));

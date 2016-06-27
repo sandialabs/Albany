@@ -48,6 +48,10 @@ protected:
   std::size_t numNodes;
 
   Teuchos::RCP<const CellTopologyData> cell_topo;
+
+  bool StokesThermoCoupled;
+
+  int offset, neq;
 };
 
 template<typename EvalT, typename Traits> class Integral1Dw_Z;

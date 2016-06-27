@@ -230,7 +230,7 @@ evaluateFields(typename Traits::EvalData d)
 				{
 					vmax = std::max(vmax,std::fabs(Velocity(cell,qp,i)));
 					if (vmax == 0)
-						vmax = 1e-6;
+						vmax = 1e0;
 				}
 			}
 
