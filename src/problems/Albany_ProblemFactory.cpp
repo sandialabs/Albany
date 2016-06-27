@@ -69,10 +69,6 @@
 #include "AMP/problems/PhaseProblem.hpp"
 #endif
 
-#ifdef ALBANY_GOAL
-#include "GOAL/problems/GOAL_MechanicsProblem.hpp"
-#endif
-
 #ifdef ALBANY_FELIX
 #include "FELIX/problems/FELIX_Stokes.hpp"
 #include "FELIX/problems/FELIX_StokesFO.hpp"
@@ -98,10 +94,11 @@
 #endif
 
 Albany::ProblemFactory::ProblemFactory(
-       const Teuchos::RCP<Teuchos::ParameterList>& problemParams_,
+       const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
        const Teuchos::RCP<ParamLib>& paramLib_,
        const Teuchos::RCP<const Teuchos::Comm<int> >& commT_) :
-  problemParams(problemParams_),
+  problemParams(Teuchos::sublist(topLevelParams, "Problem", true)),
+  discretizationParams(Teuchos::sublist(topLevelParams, "Discretization")),
   paramLib(paramLib_),
   commT(commT_)
 {
@@ -362,14 +359,6 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Albany::PhaseProblem(problemParams, paramLib, 3, commT));
   }
 #endif
-#ifdef ALBANY_GOAL
-  else if (method == "GOAL Mechanics 2D") {
-    strategy = rcp(new Albany::GOALMechanicsProblem(problemParams, paramLib, 2, commT));
-  }
-  else if (method == "GOAL Mechanics 3D") {
-    strategy = rcp(new Albany::GOALMechanicsProblem(problemParams, paramLib, 3, commT));
-  }
-#endif
 #ifdef ALBANY_HYDRIDE
   else if (method == "Hydride 2D") {
     strategy = rcp(new Albany::HydrideProblem(problemParams, paramLib, 2, commT));
@@ -402,10 +391,10 @@ Albany::ProblemFactory::create()
   }
   else if (method == "FELIX Stokes First Order 2D" || method == "FELIX Stokes FO 2D" ||
            method == "FELIX Stokes First Order 2D XZ" || method == "FELIX Stokes FO 2D XZ") {
-    strategy = rcp(new FELIX::StokesFO(problemParams, paramLib, 2));
+    strategy = rcp(new FELIX::StokesFO(problemParams, discretizationParams, paramLib, 2));
   }
   else if (method == "FELIX Stokes First Order 3D" || method == "FELIX Stokes FO 3D" ) {
-    strategy = rcp(new FELIX::StokesFO(problemParams, paramLib, 3));
+    strategy = rcp(new FELIX::StokesFO(problemParams, discretizationParams, paramLib, 3));
   }
   else if (method == "FELIX Coupled FO H 3D" ) {
 #ifdef ALBANY_EPETRA

@@ -25,6 +25,14 @@
 //that is, there are N+1 level interfaces (eta=etatop, eta=1, etc.) and there are N levels' middle
 //points. This is why many quantities of interest are calculated on midlevels and
 //function eta below has (ScalarT(L)+.5).
+//
+// tmsmith - A few additional comments (05/24/16)
+// This class has been refactored to read A(level+1/2) and B(level+1/2)
+// from a file "aeras_eta_coefficients.dat".  If the file
+// does not exist, then the coefficients are computed using the original
+// formula mentioned above.  The file sould contain numLevels+1 rows and two columns.
+
+#include <fstream>
 
 namespace Aeras {
 
@@ -38,6 +46,7 @@ public:
                                 const ScalarT p0=0,
                                 const int     L=0) {
     static const Eta swc(ptop,p0,L);
+
     return swc;
   }
 
@@ -55,17 +64,62 @@ public:
   ScalarT   ptop() const { return Ptop;}
   ScalarT etatop() const { return Etatop;}
 
-  ScalarT     W(const int level) const { return  (eta(level)-Etatop)/(1-Etatop); }
-  ScalarT     A(const int level) const { return   eta(level)*(1-W(level));       }
-  ScalarT     B(const int level) const { return   eta(level)*   W(level);        }
+  //ScalarT     W(const int level) const { return  (eta(level)-Etatop)/(1-Etatop); }
+  //ScalarT     A(const int level) const { return   eta(level)*(1-W(level));       }
+  //ScalarT     B(const int level) const { return   eta(level)*   W(level);        }
+  ScalarT     A(const int level) const { return  0.5*(a[level]+a[level+1]); }
+  ScalarT     B(const int level) const { return  0.5*(b[level]+b[level+1]); }
 
-  ScalarT     B(const double half_step) const { return  eta(half_step)*(eta(half_step)-Etatop)/(1-Etatop);}
+  //ScalarT     A(const double half_step) const { return  eta(half_step)*(1-(eta(half_step)-Etatop)/(1-Etatop));}
+  //ScalarT     B(const double half_step) const { return  eta(half_step)*(   eta(half_step)-Etatop)/(1-Etatop);}
+  ScalarT     A(const double half_step) const { int lp = int(half_step+0.5);
+                                                return  a[lp]; }
+  ScalarT     B(const double half_step) const { int lp = int(half_step+0.5);
+                                                return  b[lp]; }
 
   Eta(const ScalarT ptop, const ScalarT p0, const int L) :
     P0(p0),
     Ptop(ptop),
     Etatop(ptop/p0),
-    numLevels(L) {}
+    numLevels(L), 
+    a(L+1,0.0),
+    b(L+1,0.0)
+    {
+    std::vector<double> ain(L+1,0.0);
+    std::vector<double> bin(L+1,0.0);
+
+    std::ifstream infile("aeras_eta_coefficients.dat");
+
+    if(infile) {
+
+      for (int i=0; i<=L; ++i) {
+        infile >> ain[i] >> bin[i];      
+        a[i] = (ScalarT) ain[i];
+        b[i] = (ScalarT) bin[i];
+        std::cout << "level: " << i << "  " << a[i] << "  " << b[i] << std::endl;
+      }
+      infile.close();
+
+    } else {
+      std::cout << "aeras_eta_coefficients.dat not found, using internal values for a and b! " << std::endl;
+      std::cout << "Etatop = " << Etatop << std::endl;
+      std::cout << "numLevels = " << L << std::endl;
+      // a and b coefficients are defined at 1/2 level itervals: a[0] is at level=1/2 to a[numLevels] numLevels+1/2
+      for (int i=0; i<=L; ++i) {
+        double half_step = i-0.5;
+        a[i] = eta(half_step)*(1-(eta(half_step)-Etatop)/(1-Etatop));
+        b[i] = eta(half_step)*(   eta(half_step)-Etatop)/(1-Etatop);
+        std::cout << "i: "          << i << "  " 
+                  << "level: "      << i+1 << "  "
+                  << "i+1/2: "      << half_step+1 << "  " 
+                  << "eta(i+1/2): " << eta(half_step) << "  " 
+                  << "a(i+1/2): "   << a[i] << "  " 
+                  << "b(i+1/2): "   << b[i] << "  " 
+                  << "a+b: "        << a[i]+b[i] << std::endl;
+      }
+    }
+
+}
 
   ~Eta(){}
 private:
@@ -73,6 +127,8 @@ private:
   const ScalarT Ptop;
   const ScalarT Etatop;
   const int     numLevels;
+  std::vector<ScalarT> a;
+  std::vector<ScalarT> b;
 
 };
 }

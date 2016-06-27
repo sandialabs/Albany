@@ -127,6 +127,7 @@ void Albany::APFMeshStruct::init(
   useNullspaceTranslationOnly = params->get<bool>("Use Nullspace Translation Only", false);
   useTemperatureHack = params->get<bool>("QP Temperature from Nodes", false);
   useDOFOffsetHack = params->get<bool>("Offset DOF Hack", false);
+  saveStabilizedStress = params->get<bool>("Save Stabilized Stress", false);
 
   compositeTet = false;
 
@@ -219,6 +220,7 @@ void Albany::APFMeshStruct::init(
           this->ebNameToIndex, this->interleavedOrdering, true));
     } // for
   } // else
+
 
 }
 

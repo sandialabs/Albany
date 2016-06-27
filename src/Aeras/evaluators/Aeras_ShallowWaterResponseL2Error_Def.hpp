@@ -19,8 +19,7 @@ ShallowWaterResponseL2Error(Teuchos::ParameterList& p,
 		      const Teuchos::RCP<Albany::Layouts>& dl) :
   sphere_coord("Lat-Long", dl->qp_gradient),
   weighted_measure("Weights", dl->qp_scalar),
-  flow_state_field("Flow State", dl->node_vector), 
-  BF("BF",dl->node_qp_scalar)
+  flow_state_field("Flow State", dl->node_vector) 
 {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   // get and validate Response parameter list
@@ -83,7 +82,6 @@ ShallowWaterResponseL2Error(Teuchos::ParameterList& p,
   this->addDependentField(sphere_coord);
   this->addDependentField(flow_state_field);
   this->addDependentField(weighted_measure);
-  this->addDependentField(BF);
   this->setName(fieldName+" Aeras Shallow Water L2 Error"+PHX::typeAsString<EvalT>());
   
   using PHX::MDALayout;
@@ -116,7 +114,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(sphere_coord,fm);
   this->utils.setFieldData(flow_state_field,fm);
   this->utils.setFieldData(weighted_measure,fm);
-  this->utils.setFieldData(BF,fm);
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postRegistrationSetup(d,fm);
 }
 
@@ -138,23 +135,8 @@ evaluateFields(typename Traits::EvalData workset)
   // Zero out local response
   PHAL::set(this->local_response, 0.0);
 
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flow_state_field_qp(workset.numCells, numQPs, vecDim); //flow_state_field at quad points
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flow_state_field_ref_qp(workset.numCells, numQPs, vecDim); //flow_state_field_ref (exact solution) at quad points
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> err_qp(workset.numCells, numQPs, vecDim); //error at quadrature points
-
-  //Interpolate flow_state_field from nodes -> quadrature points.  
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      for (std::size_t i=0; i<vecDim; i++) {
-        // Zero out for node==0; then += for node = 1 to numNodes
-        flow_state_field_qp(cell,qp,i) = 0.0;
-        flow_state_field_qp(cell,qp,i) = flow_state_field(cell, 0, i) * BF(cell, 0, qp); 
-        for (std::size_t node=1; node < numNodes; ++node) {
-          flow_state_field_qp(cell,qp,i) += flow_state_field(cell,node,i)*BF(cell,node,qp); 
-        }
-       }
-     }
-    }
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flow_state_field_ref(workset.numCells, numQPs, vecDim); //flow_state_field_ref (exact solution) at quad points
+  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> err(workset.numCells, numQPs, vecDim); //error at quadrature points
 
   //Get final time from workset.  This is for setting time-dependent exact solution.  
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -166,7 +148,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell) 
       for (std::size_t qp=0; qp < numQPs; ++qp) 
         for (std::size_t dim=0; dim < vecDim; dim++)
-          flow_state_field_ref_qp(cell,qp,dim) = 0.0;  
+          flow_state_field_ref(cell,qp,dim) = 0.0;  
   }
   else if (ref_sol_name == TC2) { //reference solution for TC2 
 
@@ -194,10 +176,10 @@ evaluateFields(typename Traits::EvalData workset)
         const MeshScalarT sinLambda = std::sin(lambda); //sin(lambda)
         const MeshScalarT cosTheta = std::cos(theta); //cos(theta)
         const MeshScalarT sinTheta = std::sin(theta); //sin(theta)
-        flow_state_field_ref_qp(cell,qp,0) =  h0 - 1.0/gravity * (a*Omega*u0 + u0*u0/2.0)*(-cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha)*
+        flow_state_field_ref(cell,qp,0) =  h0 - 1.0/gravity * (a*Omega*u0 + u0*u0/2.0)*(-cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha)*
            (-cosLambda*cosTheta*sinAlpha + sinTheta*cosAlpha); //h
-        flow_state_field_ref_qp(cell,qp,1) = u0*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha); //u
-        flow_state_field_ref_qp(cell,qp,2) = -u0*(sinLambda*sinAlpha); //v
+        flow_state_field_ref(cell,qp,1) = u0*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha); //u
+        flow_state_field_ref(cell,qp,2) = -u0*(sinLambda*sinAlpha); //v
        }
      }
    }else if (ref_sol_name == TC4) { //reference solution for TC4
@@ -278,32 +260,33 @@ evaluateFields(typename Traits::EvalData workset)
         h = phicon(theta)+corr*psib/gravity;
         
 
-        flow_state_field_ref_qp(cell,qp,0) = h; //h
-        flow_state_field_ref_qp(cell,qp,1) = u; //u
-        flow_state_field_ref_qp(cell,qp,2) = v; //v
+        flow_state_field_ref(cell,qp,0) = h; //h
+        flow_state_field_ref(cell,qp,1) = u; //u
+        flow_state_field_ref(cell,qp,2) = v; //v
       }
     }
   }
 
 
-  //Calculate L2 error at all the quad points 
-   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-     for (std::size_t qp=0; qp < numQPs; ++qp) {
-        for (std::size_t dim=0; dim < vecDim; ++dim) {
-          err_qp(cell,qp,dim) = flow_state_field_qp(cell,qp,dim) - flow_state_field_ref_qp(cell,qp,dim);
-        }
-        //debug print statements
-        /*std::cout << "cell, qp: " << cell << ", " << qp << std::endl;
-        std::cout << "error h: " << err_qp(cell,qp,0) << std::endl;   
-        std::cout << "h calc, h ref: " << flow_state_field_qp(cell,qp,0) << ", " << flow_state_field_ref_qp(cell,qp,0) << std::endl; 
-        std::cout << "error u: " << err_qp(cell,qp,1) << std::endl;  
-        std::cout << "u calc, u ref: " << flow_state_field_qp(cell,qp,1) << ", " << flow_state_field_ref_qp(cell,qp,1) << std::endl; 
-        std::cout << "error v: " << err_qp(cell,qp,2) << std::endl;  
-        */
-      }
-    }
+  //Calculate L2 error at all the quad points.  We do not need to interpolate flow_state_field from nodes
+  //to QPs because nodes = QPs for Aeras spectral elements. 
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp=0; qp < numQPs; ++qp) {
+       for (std::size_t dim=0; dim < vecDim; ++dim) {
+          err(cell,qp,dim) = flow_state_field(cell,qp,dim) - flow_state_field_ref(cell,qp,dim);
+       }
+       //debug print statements
+       /*std::cout << "cell, qp: " << cell << ", " << qp << std::endl;
+       std::cout << "error h: " << err(cell,qp,0) << std::endl;   
+       std::cout << "h calc, h ref: " << flow_state_field(cell,qp,0) << ", " << flow_state_field_ref(cell,qp,0) << std::endl; 
+       std::cout << "error u: " << err(cell,qp,1) << std::endl;  
+       std::cout << "u calc, u ref: " << flow_state_field(cell,qp,1) << ", " << flow_state_field_ref(cell,qp,1) << std::endl; 
+       std::cout << "error v: " << err(cell,qp,2) << std::endl;  
+       */
+     }
+   }
 
-  //Calculate absolute L2 error squared and norm of reference solution squared
+   //Calculate absolute L2 error squared and norm of reference solution squared
    ScalarT err_sq = 0.0;
    ScalarT norm_ref_sq = 0.0;
    ScalarT wm; //weighted measure
@@ -314,11 +297,11 @@ evaluateFields(typename Traits::EvalData workset)
        wm = weighted_measure(cell,qp); 
        for (std::size_t dim=0; dim < vecDim; ++dim) {
          //L^2 error squared w.r.t. flow_state_field_ref -- first component of global_response
-         err_sq = err_qp(cell,qp,dim)*err_qp(cell,qp,dim);
+         err_sq = err(cell,qp,dim)*err(cell,qp,dim);
          this->local_response(cell,0) += err_sq*wm;
          this->global_response(0) += err_sq*wm;
          //L^2 norm squared of flow_state_field_ref, the exact solution  -- second component of global_response
-         norm_ref_sq = flow_state_field_ref_qp(cell,qp,dim)*flow_state_field_ref_qp(cell,qp,dim);
+         norm_ref_sq = flow_state_field_ref(cell,qp,dim)*flow_state_field_ref(cell,qp,dim);
          this->local_response(cell,1) += norm_ref_sq*wm;
          this->global_response(1) += norm_ref_sq*wm;
        }
@@ -427,13 +410,14 @@ postEvaluate(typename Traits::PostEvalData workset)
   ScalarT norm_ref_sq = *gr;
   *gr = sqrt(norm_ref_sq); //norm of reference solution
   ++gr;
-  *gr = sqrt(abs_err_sq/norm_ref_sq); //relative error in solution w.r.t. reference solution.
+  //relative error in solution w.r.t. reference solution.
+  //if norm of reference solution is 0, set relative error to absolute error
+  //to avoid dividing by 0
+  if (norm_ref_sq == 0)
+    *gr = sqrt(abs_err_sq);
+  else 
+    *gr = sqrt(abs_err_sq/norm_ref_sq); //relative error in solution w.r.t. reference solution.
 #endif
-
-  if (norm_ref_sq == 0)  {
-    *out << "Aeras::ShallowWaterResponseL2Error::postEvaluate WARNING: norm of reference solution is 0.  Aeras Shallow Water L2 Error response" <<
-            "will report 'nan' or 'inf' for the relative error, so please look at the absolute error." << std::endl;
-  }
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);

@@ -216,7 +216,7 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::postEvaluate(typename Traits::Po
     ofile.open("smb_mismatch");
     if (ofile.is_open(), std::ofstream::out | std::ofstream::trunc) {
       //ofile << sqrt(this->global_response[0]);
-      ofile <<  Sacado::ScalarValue<ScalarT>::eval(this->global_response(0));
+      ofile << std::scientific << std::setprecision(15) <<  Sacado::ScalarValue<ScalarT>::eval(this->global_response(0));
       ofile.close();
     }
   }

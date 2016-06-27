@@ -1,7 +1,7 @@
 <ParameterList>
-    <ParameterList name="Debug Output">
+    <!--ParameterList name="Debug Output">
           <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
-    </ParameterList>
+    </ParameterList-->
 
   <ParameterList name="Problem">
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>

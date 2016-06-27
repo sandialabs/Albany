@@ -44,7 +44,9 @@ public:
 
 private:
 
-  const int spatialDimension;
+  const int spatialDim;
+  int basisDim;
+  int numelements;
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
   int  numVertices, numDims, numNodes, numQPs;
@@ -78,8 +80,6 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim,Dim> GradGradBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim,Dim> wGradGradBF;
          
   const double earthRadius;
   void div_check(const int spatialDim, const int numelements) const;
@@ -92,81 +92,52 @@ private:
   MDFieldMemoizer<Traits> memoizer_;
 
   // Kokkos
-/*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
-  Kokkos::View<RealType*, PHX::Device> refWeights_CUDA;
+  
   Kokkos::View<RealType**, PHX::Device> val_at_cub_points_CUDA;
   Kokkos::View<RealType***, PHX::Device> grad_at_cub_points_CUDA;
-
-  Kokkos::View<MeshScalarT**,  PHX::Device>  phi;
-  Kokkos::View<MeshScalarT***, PHX::Device>  dphi;
-  Kokkos::View<MeshScalarT*,   PHX::Device>  norm;
-  Kokkos::View<MeshScalarT*,   PHX::Device>  sinL;
-  Kokkos::View<MeshScalarT*,   PHX::Device>  cosL;
-  Kokkos::View<MeshScalarT*,   PHX::Device>  sinT;
-  Kokkos::View<MeshScalarT*,   PHX::Device>  cosT;
-  Kokkos::View<MeshScalarT***, PHX::Device>  D1;
-  Kokkos::View<MeshScalarT***, PHX::Device>  D2;
-  Kokkos::View<MeshScalarT***, PHX::Device>  D3;
-
 
   double pi;
   double DIST_THRESHOLD;
 
-  int numelements;
-  int spatialDim;
-  int basisDim;
-
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  typedef PHX::KokkosViewFactory<MeshScalarT,PHX::Device> ViewFactory;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> Phi;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint> Norm;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dPhi;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint> SinL;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint> CosL;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint> SinT;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint> CosT;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> DD1;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> DD2;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> DD3;
 
   struct ComputeBasisFunctions_Tag{};
-  struct ComputeBasisFunctions_basisDim_Tag{};
-  struct ComputeBasisFunctions_no_Jacobian_Tag{};
-  struct ComputeBasisFunctions_no_Jacobian_basisDim_Tag{};
 
   typedef Kokkos::RangePolicy<ExecutionSpace, ComputeBasisFunctions_Tag> ComputeBasisFunctions_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, ComputeBasisFunctions_basisDim_Tag> ComputeBasisFunctions_basisDim_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, ComputeBasisFunctions_no_Jacobian_Tag> ComputeBasisFunctions_no_Jacobian_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, ComputeBasisFunctions_no_Jacobian_basisDim_Tag> ComputeBasisFunctions_no_Jacobian_basisDim_Policy;
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const ComputeBasisFunctions_Tag& tag, const int& i) const;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const ComputeBasisFunctions_basisDim_Tag& tag, const int& i) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const ComputeBasisFunctions_no_Jacobian_Tag& tag, const int& i) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void operator() (const ComputeBasisFunctions_no_Jacobian_basisDim_Tag& tag, const int& i) const;
-
-  KOKKOS_INLINE_FUNCTION
   void compute_jacobian (const int cell) const;
-
+  
   KOKKOS_INLINE_FUNCTION
-  void compute_jacobian_inv (const int cell) const;
-
+  void compute_phi_and_norm (const int cell) const;
+  
   KOKKOS_INLINE_FUNCTION
-  void compute_jacobian_det (const int cell) const;
-
+  void compute_dphi (const int cell) const;
+  
   KOKKOS_INLINE_FUNCTION
-  void computeCellMeasure (const int cell) const;
-
+  void compute_sphere_coord (const int cell) const;
+  
   KOKKOS_INLINE_FUNCTION
-  void compute_BF (const int cell) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void compute_wBF (const int cell) const;  
-
-  KOKKOS_INLINE_FUNCTION
-  void compute_GradBF (const int cell) const;
-
-  KOKKOS_INLINE_FUNCTION
-  void compute_wGradBF (const int cell) const;
+  void compute_lambda_and_theta_nodal (const int cell) const;
 
 
-#endif*/
+#endif
 };
 }
 

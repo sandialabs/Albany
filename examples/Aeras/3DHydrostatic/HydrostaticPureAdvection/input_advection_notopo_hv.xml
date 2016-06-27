@@ -1,6 +1,7 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Aeras Hydrostatic"/>
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
 
     <Parameter name="Solution Method" type="string" value="Aeras Hyperviscosity"/> 
  
@@ -16,6 +17,7 @@
       <Parameter name="Hyperviscosity Type" type="string" value="Constant"/>
       <Parameter name="Hyperviscosity Tau" type="double" value="1e16"/>
       <Parameter name="Pure Advection" type="bool" value="True"/>
+      <Parameter name="Advection Type" type="string" value="Unknown"/>
       <Parameter name="Original Divergence" type="bool" value="False"/>
     </ParameterList>
     <ParameterList name="Initial Condition">

@@ -441,8 +441,11 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
   {
     // We put all the fields as 'missing'
     const stk::mesh::FieldVector& fields = metaData->get_fields();
-    for (int i(0); i<fields.size(); ++i)
-      missing.emplace_back(fields[i],fields[i]->name());
+    for (int i(0); i<fields.size(); ++i) {
+//      TODO, when compiler allows, replace following with this for performance: missing.emplace_back(fields[i],fields[i]->name());
+        missing.push_back(stk::io::MeshField(fields[i],fields[i]->name()));
+    }
+
   }
 
   // If this is a boundary mesh, the side_map/side_node_map may already be present, so we check

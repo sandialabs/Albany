@@ -1,0 +1,4 @@
+MAILTO=""
+# Run the script in the Albany repo in my home directory
+# This runs the intel set of tests on cee-compute018
+00 01 * * * /ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011.sandia.gov/nightly_cron_script.sh intel

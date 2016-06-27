@@ -6,6 +6,8 @@
 
 #include "PathSizeField.hpp"
 
+#include <cassert>
+
 #include <apf.h>
 #include <apfMesh.h>
 #include <apfGeometry.h>

@@ -230,7 +230,7 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typenam
     if (ofile.is_open(), std::ofstream::out | std::ofstream::trunc) {
       //ofile << sqrt(this->global_response[0]);
       //PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
-      ofile <<  Sacado::ScalarValue<ScalarT>::eval(this->global_response(0));
+      ofile <<  std::scientific << std::setprecision(15) << Sacado::ScalarValue<ScalarT>::eval(this->global_response(0));
       ofile.close();
     }
   }

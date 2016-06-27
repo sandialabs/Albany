@@ -402,6 +402,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void copyQPTensorFromAPF(unsigned nqp, std::string const& stateName, apf::Field* f);
     void copyQPStatesFromAPF();
 
+    //! Write stabilized stress out to file
+    void saveStabilizedStress();
+
     // Transfer nodal data to/from APF.
     void copyNodalDataToAPF(const bool copy_all);
     void removeNodalDataFromAPF();

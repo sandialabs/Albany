@@ -13,6 +13,7 @@ SET(SOURCES
   Albany_PUMINodeData.cpp
   Albany_PUMIVtk.cpp
   Albany_PUMIOutput.cpp
+  Albany_APFStabilizedStress.cpp
   )
 
 SET(HEADERS
@@ -35,19 +36,6 @@ IF(ALBANY_SCOREC)
       ${HEADERS}
       Albany_PUMIMeshStruct.hpp
       Albany_PUMIDiscretization.hpp
-     )
-ENDIF()
-
-IF(ALBANY_GOAL)
-  SET(SOURCES
-      ${SOURCES}
-      Albany_GOALMeshStruct.cpp
-      Albany_GOALDiscretization.cpp
-     )
-  SET(HEADERS
-      ${HEADERS}
-      Albany_GOALMeshStruct.hpp
-      Albany_GOALDiscretization.hpp
      )
 ENDIF()
 

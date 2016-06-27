@@ -1434,7 +1434,7 @@ Neumann(Teuchos::ParameterList& p)
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void Neumann<PHAL::AlbanyTraits::Jacobian,Traits>::
-operator()(const Newmann_Tag& tag, const int& cell) const
+operator()(const Neumann_Tag& tag, const int& cell) const
 {
 
   LO colT[1];
@@ -1455,14 +1455,13 @@ operator()(const Newmann_Tag& tag, const int& cell) const
          this->fT->sumIntoLocalValue(rowT, this->neumann(cell, node, dim).val());
       }
 
-        // Check derivative array is nonzero
-        if (this->neumann(cell, node, dim).hasFastAccess()) {
-          // Loop over nodes in element
-          for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
-        
-            // Loop over equations per node
-            for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-             lcol = neq * node_col + eq_col;
+      // Check derivative array is nonzero
+      if (this->neumann(cell, node, dim).hasFastAccess()) {
+        // Loop over nodes in element
+        for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
+          // Loop over equations per node
+          for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+            lcol = neq * node_col + eq_col;
 
             // Global column
             colT[0] =  Index(cell, node_col, eq_col);
@@ -1487,16 +1486,22 @@ template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//IKT, 5/31/16: I commented out the KOKKOS_UNDER_DEVELOPMENT 
+//code b/c it does not execute correctly on an OpenMP KokkosNode.
+//This problem shows up for some FELIX cases.
+//It is somewhat of a mystery why this is the case b/c the Jacobian 
+//matrices dumped to matrix market _are_ correct.  This problem needs 
+//to be looked into.
+//
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
 
   //Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
   Teuchos::ArrayRCP<ST> fT_nonconstView;
-  if (fT != Teuchos::null) {
-	  fT_nonconstView = fT->get1dViewNonConst();
-  }else{
-	  fT_nonconstView = Teuchos::null;
-  }
+  if (fT != Teuchos::null) 
+    fT_nonconstView = fT->get1dViewNonConst();
+  else
+    fT_nonconstView = Teuchos::null;
 
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
@@ -1548,15 +1553,14 @@ evaluateFields(typename Traits::EvalData workset)
       } // has fast access
     }
   }
-#else
+/*#else
   
   fT = workset.fT;
   //fT_nonconstView = fT->get1dViewNonConst();
-  if (this->fT != Teuchos::null) {
-	  fT_nonconstView = fT->get1dViewNonConst();
-  }else{
-	  fT_nonconstView = Teuchos::null;
-  }
+  if (this->fT != Teuchos::null) 
+    fT_nonconstView = fT->get1dViewNonConst();
+  else
+    fT_nonconstView = Teuchos::null;
   JacT = workset.JacT;
 
 
@@ -1572,12 +1576,12 @@ evaluateFields(typename Traits::EvalData workset)
 
    is_adjoint=workset.is_adjoint;
 
-   Kokkos::parallel_for(Newmann_Policy(0,workset.numCells),*this);
+   Kokkos::parallel_for(Neumann_Policy(0,workset.numCells),*this);
 
 //   if ( !JacT->isFillActive())
 //    JacT->fillComplete();
 
-#endif
+#endif*/
 }
 
 // **********************************************************************

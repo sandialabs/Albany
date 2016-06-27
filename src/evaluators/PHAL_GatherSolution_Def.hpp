@@ -322,7 +322,7 @@ evaluateFields(typename Traits::EvalData workset)
   if(Teuchos::nonnull(xdotdotT))
     xdotdotT_constView = xdotdotT->get1dView();
 
-//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -379,7 +379,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-/*#else
+#else
 #ifdef ALBANY_TIMER
   auto start = std::chrono::high_resolution_clock::now();
 #endif
@@ -409,20 +409,20 @@ evaluateFields(typename Traits::EvalData workset)
    } else  {
 
      for (int i =0; i<numFields;i++){
-       val_kokkos[i]=this->val[i].get_kokkos_view();
+       val_kokkos[i]=this->val[i].get_static_view();
      }
      d_val=val_kokkos.template view<executionSpace>();
      Kokkos::parallel_for(tensorRank_0Policy(0,workset.numCells),*this);
 
      if (workset.transientTerms && this->enableTransient){ 
         for (int i =0; i<numFields;i++) 
-           val_dot_kokkos[i]=this->val_dot[i].get_kokkos_view();
+           val_dot_kokkos[i]=this->val_dot[i].get_static_view();
         d_val_dot=val_dot_kokkos.template view<executionSpace>();
         Kokkos::parallel_for(tensorRank_0_enableTransientPolicy(0,workset.numCells),*this);  
      }
      if (workset.accelerationTerms && this->enableAcceleration){
         for (int i =0; i<numFields;i++)
-           val_dotdot_kokkos[i]=this->val_dotdot[i].get_kokkos_view();
+           val_dotdot_kokkos[i]=this->val_dotdot[i].get_static_view();
         d_val_dotdot=val_dotdot_kokkos.template view<executionSpace>();
         Kokkos::parallel_for(tensorRank_0_enableAccelerationPolicy(0,workset.numCells),*this);
      }
@@ -436,7 +436,7 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
 
 #endif
-*/
+
 }
 
 // **********************************************************************
@@ -661,7 +661,7 @@ evaluateFields(typename Traits::EvalData workset)
   if(Teuchos::nonnull(xdotdotT))
     xdotdotT_constView = xdotdotT->get1dView();
 
-//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   int numDim = 0;
   if (this->tensorRank==2) numDim = this->valTensor.dimension(2); // only needed for tensor fields
 
@@ -704,7 +704,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-/*#else
+#else
 #ifdef ALBANY_TIMER
  auto start = std::chrono::high_resolution_clock::now();
 #endif
@@ -737,20 +737,20 @@ evaluateFields(typename Traits::EvalData workset)
    } else  {
      
      for (int i =0; i<numFields;i++)
-        val_kokkosjac[i]=this->val[i].get_kokkos_view();
+        val_kokkosjac[i]=this->val[i].get_static_view();
      d_val=val_kokkosjac.template view<executionSpace>();
      Kokkos::parallel_for(tensorRank_0Policy(0,workset.numCells),*this);
 
      if (workset.transientTerms && this->enableTransient){
         for (int i =0; i<numFields;i++)
-           val_dot_kokkosjac[i]=this->val_dot[i].get_kokkos_view();
+           val_dot_kokkosjac[i]=this->val_dot[i].get_static_view();
         d_val_dot=val_dot_kokkosjac.template view<executionSpace>();
         Kokkos::parallel_for(tensorRank_0_enableTransientPolicy(0,workset.numCells),*this);
      }
 
      if (workset.accelerationTerms && this->enableAcceleration){
         for (int i =0; i<numFields;i++)
-           val_dotdot_kokkosjac[i]=this->val_dotdot[i].get_kokkos_view();
+           val_dotdot_kokkosjac[i]=this->val_dotdot[i].get_static_view();
         d_val_dot=val_dotdot_kokkosjac.template view<executionSpace>();
         Kokkos::parallel_for(tensorRank_0_enableAccelerationPolicy(0,workset.numCells),*this);
      }
@@ -763,7 +763,7 @@ long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapse
 std::cout<< "GaTher Solution Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
 #endif
 
-#endif*/
+#endif
 }
 
 // **********************************************************************

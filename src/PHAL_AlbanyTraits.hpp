@@ -240,6 +240,31 @@ namespace PHX {
   template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType>;
 #endif
 
+//TODO, add macros for ALBANY_SG case.
+#ifdef ALBANY_ENSEMBLE
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_MPRESIDUAL(name) \
+  template class name<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits,MPType>; \
+  template class name<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits,RealType>;
+
+#if defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_MPJACOBIAN(name) \
+  template class name<PHAL::AlbanyTraits::MPJacobian, PHAL::AlbanyTraits, MPFadType>;
+#else
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_MPJACOBIAN(name) \
+  template class name<PHAL::AlbanyTraits::MPJacobian, PHAL::AlbanyTraits, MPFadType>; \
+  template class name<PHAL::AlbanyTraits::MPJacobian, PHAL::AlbanyTraits, RealType>;
+#endif
+
+#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_MPTANGENT(name) \
+  template class name<PHAL::AlbanyTraits::MPTangent, PHAL::AlbanyTraits, MPFadType>;
+#else
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_MPTANGENT(name) \
+  template class name<PHAL::AlbanyTraits::MPTangent, PHAL::AlbanyTraits, MPFadType>; \
+  template class name<PHAL::AlbanyTraits::MPTangent, PHAL::AlbanyTraits, RealType>;
+#endif
+#endif
+
 #if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_DISTPARAMDERIV(name) \
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType>;
@@ -353,11 +378,23 @@ namespace PHX {
 #endif
 #endif
 
+//TODO, ALBANY_SG case.
+#ifdef ALBANY_ENSEMBLE
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(name)            \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_RESIDUAL(name)         \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_JACOBIAN(name)         \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_TANGENT(name)          \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_DISTPARAMDERIV(name)   \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_MPRESIDUAL(name)       \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_MPJACOBIAN(name)       \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_MPTANGENT(name)
+#else
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(name)            \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_RESIDUAL(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_JACOBIAN(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_TANGENT(name)          \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS_DISTPARAMDERIV(name)
+#endif
 
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_FOUR_SCALARS(name)            \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_FOUR_SCALARS_RESIDUAL(name)         \

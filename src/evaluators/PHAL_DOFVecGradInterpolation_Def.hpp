@@ -109,7 +109,7 @@ namespace PHAL {
  PHX::Device::fence();
  auto start = std::chrono::high_resolution_clock::now(); 
 #endif
-  //Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), 0.0);
+  //Kokkos::deep_copy(grad_val_qp.get_static_view(), 0.0);
   Kokkos::parallel_for(DOFVecGradInterpolation_Residual_Policy(0,workset.numCells),*this);
 
 #ifdef ALBANY_TIMER
@@ -303,7 +303,7 @@ namespace PHAL {
 
 /*#else
   
-   //Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), ScalarT(0.0));
+   //Kokkos::deep_copy(grad_val_qp.get_static_view(), ScalarT(0.0));
    Kokkos::parallel_for ( workset.numCells,  VecGradInterpolationJacobian <ScalarT,  PHX::Device, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<ScalarT,Cell,Node,VecDim>,  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim>  >(GradBF, val_node, grad_val_qp, numQPs, numNodes, numDims, vecDim, offset));
 #endif
 */
@@ -376,7 +376,7 @@ namespace PHAL {
 
 /*#else
   
-   //Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), ScalarT(0.0));
+   //Kokkos::deep_copy(grad_val_qp.get_static_view(), ScalarT(0.0));
    Kokkos::parallel_for ( workset.numCells,  VecGradInterpolationJacobian <ScalarT,  PHX::Device, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<ScalarT,Cell,Node,VecDim>,  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim>  >(GradBF, val_node, grad_val_qp, numQPs, numNodes, numDims, vecDim, offset));
 #endif
 */

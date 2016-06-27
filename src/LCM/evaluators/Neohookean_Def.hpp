@@ -77,6 +77,11 @@ namespace LCM {
           elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
         mu = 
           elasticModulus(cell,qp) / ( 2. * ( 1. + poissonsRatio(cell,qp) ) );
+
+//          TEUCHOS_TEST_FOR_EXCEPTION(J(cell,qp) <= 0, std::runtime_error,
+//              " negative / zero volume detected in Neohookean_Def.hpp line " + __LINE__);
+// Note - J(cell, qp) < equal to zero causes an FPE (GAH)
+
         Jm53 = std::pow(J(cell,qp), -5./3.);
 
         F.fill(defGrad,cell,qp,0,0);

@@ -128,7 +128,7 @@ evaluateFields(typename Traits::EvalData workset)
  PHX::Device::fence();
  auto start = std::chrono::high_resolution_clock::now();
 #endif
-//  Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), 0.0);
+//  Kokkos::deep_copy(grad_val_qp.get_view(), 0.0);
 
 #ifdef KOKKOS_OPTIMIZED
 
