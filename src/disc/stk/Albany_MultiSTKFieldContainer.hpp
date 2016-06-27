@@ -34,6 +34,7 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
 
     bool hasResidualField(){ return haveResidual; }
     bool hasSphereVolumeField(){ return buildSphereVolume; }
+    bool hasLatticeOrientationField(){ return buildLatticeOrientation; }
 
 #if defined(ALBANY_EPETRA)
     void fillSolnVector(Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<const Epetra_Map>& node_map);
@@ -77,6 +78,7 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
     bool haveResidual;
 
     bool buildSphereVolume;
+    bool buildLatticeOrientation;
 
     // Containers for residual and solution
 
