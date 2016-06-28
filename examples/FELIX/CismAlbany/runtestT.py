@@ -4,6 +4,7 @@
 import sys
 import os
 import re
+import subprocess
 from subprocess import Popen
 
 result = 0
@@ -13,6 +14,27 @@ result = 0
 ######################
 print "test 1 - CismAlbany"
 name = "CismAlbany"
+if os.path.exists('out'):
+    os.remove('out')
+if os.path.exists('coords_mismatch'):
+    os.remove('coords_mismatch')
+if os.path.exists('sh_mismatch'):
+    os.remove('sh_mismatch')
+if os.path.exists('thk_mismatch'):
+    os.remove('thk_mismatch')
+if os.path.exists('temp_mismatch'):
+    os.remove('temp_mismatch')
+if os.path.exists('uvel_mismatch'):
+    os.remove('uvel_mismatch')
+if os.path.exists('vvel_mismatch'):
+    os.remove('vvel_mismatch')
+if os.path.exists('beta_mismatch'):
+    os.remove('beta_mismatch')
+if os.path.exists('mismatches'):
+    os.remove('mismatches')
+subprocess.call("bash run_test.sh >& out",shell=True); 
+subprocess.call("bash process_output_test.sh",shell=True)
+
 log_file_name = 'mismatches'
 logfile = open(log_file_name, 'r')
 

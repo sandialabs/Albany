@@ -14,5 +14,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/run_test.sh
                ${CMAKE_CURRENT_BINARY_DIR}/run_test.sh COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/process_output_test.sh
                ${CMAKE_CURRENT_BINARY_DIR}/process_output_test.sh COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
-               ${CMAKE_CURRENT_BINARY_DIR}/runtest.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
+               ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
+
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+add_test(NAME FELIX_${testName} COMMAND "python" "runtestT.py")
