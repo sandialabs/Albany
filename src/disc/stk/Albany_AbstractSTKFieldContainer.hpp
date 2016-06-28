@@ -89,6 +89,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     IntScalarFieldType* getFractureState(stk::topology::rank_t rank){ return fracture_state[rank]; }
 #endif // ALBANY_LCM
     SphereVolumeFieldType* getSphereVolumeField(){ return sphereVolume_field; }
+    stk::mesh::FieldBase* getLatticeOrientationField(){ return latticeOrientation_field; }
 
     ScalarValueState& getScalarValueStates(){ return scalarValue_states;}
     MeshScalarState& getMeshScalarStates(){return mesh_scalar_states;}
@@ -105,6 +106,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
 
     virtual bool hasResidualField() = 0;
     virtual bool hasSphereVolumeField() = 0;
+    virtual bool hasLatticeOrientationField() = 0;
 
     std::map<std::string, double>& getTime() {
       return time;
@@ -142,8 +144,9 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
 #endif // ALBANY_LCM
 
     SphereVolumeFieldType* sphereVolume_field; // Required for Peridynamics in LCM
+    stk::mesh::FieldBase* latticeOrientation_field; // Required for certain LCM material models
 
-    ScalarValueState scalarValue_states;
+    ScalarValueState  scalarValue_states;
     MeshScalarState   mesh_scalar_states;
     MeshVectorState   mesh_vector_states;
     ScalarState       cell_scalar_states;
