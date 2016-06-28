@@ -313,6 +313,8 @@ initializeModel(Teuchos::ParameterList* p,
 #endif
   } else if (model_name == "ElasticCrystal") {
     model = rcp(new ElasticCrystalModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "ViscoElastic") {
+    model = rcp(new ViscoElasticModel<EvalT, Traits>(p, dl));
   } else if (model_name == "AHD") {
     model = rcp(new AnisotropicHyperelasticDamageModel<EvalT, Traits>(p, dl));
 #ifndef KOKKOS_HAVE_CUDA
