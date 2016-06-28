@@ -1468,11 +1468,11 @@ operator()(const Neumann_Tag& tag, const int& cell) const
             value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);
             if (is_adjoint) {
               // Sum Jacobian transposed
-              jacobian.sumIntoValues(colT[0], &rowT,1, &value[0],true);
+              jacobian.sumIntoValues(colT[0], &rowT,1, &value[0], false, true);
             }
             else {
               // Sum Jacobian
-              jacobian.sumIntoValues(rowT, colT, nunk,value, true);
+              jacobian.sumIntoValues(rowT, colT, nunk,value, false, true);
             }
           } // column equations
         } // column nodes

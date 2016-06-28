@@ -1,0 +1,22 @@
+reset
+create brick x 1.0 y 1.0 z 1.0
+webcut volume 1 with plane yplane offset 0.0 merge
+webcut volume 1 2 with plane xplane offset 0.0 merge
+webcut volume 1 2 3 4 with plane zplane offset 0.0 merge
+block 1 volume 1
+block 2 volume 2
+block 3 volume 3
+block 4 volume 4
+block 5 volume 5
+block 6 volume 6
+block 7 volume 7
+block 8 volume 8
+volume all size {1.0/2.0}
+mesh volume all
+nodeset 1 surface with x_coord < -0.499999 and x_coord > -0.5000001
+nodeset 2 surface with x_coord >  0.499999 and x_coord <  0.5000001
+nodeset 3 surface with y_coord < -0.499999 and y_coord > -0.5000001
+nodeset 4 surface with y_coord >  0.499999 and y_coord <  0.5000001
+nodeset 5 surface with z_coord < -0.499999 and z_coord > -0.5000001
+nodeset 6 surface with z_coord >  0.499999 and z_coord <  0.5000001
+export genesis 'OrientationOnMesh.g' overwrite
