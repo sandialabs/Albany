@@ -358,6 +358,9 @@ namespace Aeras
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
     getSphereVolume() const;
 
+    const Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type&
+    getLatticeOrientation() const;
+
     //! Print the coordinates for debugging
     void printCoords() const;
     void printConnectivity(bool printEdges=false) const;
@@ -781,6 +784,7 @@ namespace Aeras
     Albany::WorksetArray<int>::type wsPhysIndex;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
+    Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type latticeOrientation;
 
     //! Connectivity map from elementGID to workset and LID in workset
     Albany::WsLIDList  elemGIDws;

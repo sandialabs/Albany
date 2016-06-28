@@ -343,6 +343,12 @@ Aeras::SpectralDiscretization::getSphereVolume() const
   return sphereVolume;
 }
 
+const Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type&
+Aeras::SpectralDiscretization::getLatticeOrientation() const
+{
+  return latticeOrientation;
+}
+
 void
 Aeras::SpectralDiscretization::printCoords() const
 {

@@ -72,7 +72,7 @@ public:
   void
   computeState(
       typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
 
   virtual
@@ -153,6 +153,12 @@ private:
   ///
   std::vector< CP::SlipSystemStruct<CP::MAX_DIM,CP::MAX_SLIP> > 
   slip_systems_;
+
+  ///
+  /// Flags for reading lattice orientations from file
+  ///
+  bool orientations_initialized_;
+  bool read_orientations_from_mesh_;
 
   ///
   /// Constitutive relations
