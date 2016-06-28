@@ -6,6 +6,52 @@
 
 #include <boost/math/special_functions/fpclassify.hpp>
 
+//
+//! Convert Euler (Bunge) angles to basis vector
+//
+template<typename ArgT>
+void
+CP::eulerAnglesToBasisVectors(ArgT euler_phi_1,
+			      ArgT euler_Phi,
+			      ArgT euler_phi_2,
+			      std::vector<ArgT>& basis_1,
+			      std::vector<ArgT>& basis_2,
+			      std::vector<ArgT>& basis_3)
+{
+  using std::sin;
+  using std::cos;
+
+  ArgT R[][3] = {{0.0, 0.0, 0.0},
+		 {0.0, 0.0, 0.0},
+		 {0.0, 0.0, 0.0}};
+
+  // Active rotation tensor
+  R[0][0] =  cos(euler_phi_1)*cos(euler_phi_2) - sin(euler_phi_1)*sin(euler_phi_2)*cos(euler_Phi);
+  R[0][1] = -cos(euler_phi_1)*sin(euler_phi_2) - sin(euler_phi_1)*cos(euler_phi_2)*cos(euler_Phi);
+  R[0][2] =  sin(euler_phi_1)*sin(euler_Phi);
+  R[1][0] =  sin(euler_phi_1)*cos(euler_phi_2) + cos(euler_phi_1)*sin(euler_phi_2)*cos(euler_Phi);
+  R[1][1] = -sin(euler_phi_1)*sin(euler_phi_2) + cos(euler_phi_1)*cos(euler_phi_2)*cos(euler_Phi);
+  R[1][2] = -cos(euler_phi_1)*sin(euler_Phi);
+  R[2][0] =  sin(euler_phi_2)*sin(euler_Phi);
+  R[2][1] =  cos(euler_phi_2)*sin(euler_Phi);
+  R[2][2] =  cos(euler_Phi);
+
+  ArgT e1[3] = {1.0, 0.0, 0.0};
+  ArgT e2[3] = {0.0, 1.0, 0.0};
+  ArgT e3[3] = {0.0, 0.0, 1.0};
+
+  basis_1 = std::vector<ArgT>(3, 0.0);
+  basis_2 = std::vector<ArgT>(3, 0.0);
+  basis_3 = std::vector<ArgT>(3, 0.0);
+   
+  for (int i=0 ; i<3 ; i++) {
+    for (int j=0 ; j<3 ; j++) {
+      basis_1[i] += R[i][j]*e1[j];
+      basis_2[i] += R[i][j]*e2[j];
+      basis_3[i] += R[i][j]*e3[j];
+    }
+  }
+}
 
 ///
 /// Verify that constitutive update has preserved finite values

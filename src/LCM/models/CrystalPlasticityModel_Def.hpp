@@ -159,7 +159,6 @@ CrystalPlasticityModel(
   c44_temperature_coeff_ = e_list.get<RealType>("M44",0.0);
   reference_temperature_ = e_list.get<RealType>("Reference Temperature",0.0);
 
-
   Intrepid2::Tensor4<ScalarT, CP::MAX_DIM>
   C(Intrepid2::ZEROS);
 
@@ -650,7 +649,20 @@ computeState(typename Traits::EvalData workset,
       double euler_Phi   = euler_angles[cell][1];
       double euler_phi_2 = euler_angles[cell][2];
       for (int pt(0); pt < num_pts_; ++pt) {
-	std::cout << "DJL DEBUGGING euler " << euler_phi_1 << ", " << euler_Phi << ", " << euler_phi_2 << std::endl;
+
+	std::vector<double> basis_1, basis_2, basis_3;
+	CP::eulerAnglesToBasisVectors(euler_phi_1,
+				      euler_Phi,
+				      euler_phi_2,
+				      basis_1,
+				      basis_2,
+				      basis_3);
+
+	std::cout << "DJL DEBUGGING euler   " << euler_phi_1 << ", " << euler_Phi << ", " << euler_phi_2 << std::endl;
+	std::cout << "DJL DEBUGGING basis_1 " << basis_1[0] << ", " << basis_1[1] << ", " << basis_1[2] << std::endl;
+	std::cout << "DJL DEBUGGING basis_2 " << basis_2[0] << ", " << basis_2[1] << ", " << basis_2[2] << std::endl;
+	std::cout << "DJL DEBUGGING basis_3 " << basis_3[0] << ", " << basis_3[1] << ", " << basis_3[2] << std::endl;
+	std::cout << std::endl;
       }
     }
     orientations_initialized_ = true;
