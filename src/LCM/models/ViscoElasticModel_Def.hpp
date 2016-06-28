@@ -264,18 +264,14 @@ namespace LCM
     	  {
 	    //get Jacobian
 	    Jac = J(cell,pt);
-//            std::cout << "Not here 1" << std::endl;
             // get Jacobian old
             Jac_old = J_old(cell,pt);
-//            std::cout << "Jac_old = " << Jac_old << std::endl;
-//            std::cout << "Not here 2" << std::endl;
 	    // get Jac23 at Gauss point
 	    Jac23_inv = std::pow(Jac, -2.0 / 3.0 );
             //
             Jac23 = std::pow(Jac, 2.0 / 3.0 );
             //
             Jac23_old = std::pow(Jac_old, 2.0 / 3.0 );
-//            std::cout << "Not here 3" << std::endl;
 	    // Fill deformation gradient
     	    F.fill(def_grad, cell, pt, 0,0);
 //             Fill old values
@@ -346,8 +342,6 @@ namespace LCM
 	      {
 		for (int j = 0; j < num_dims_; j++)
 		  {
-//                    stress(cell,pt,i,j) = 0.0;
-//                    stress_0(cell,pt,i,j) = 0.0;
 		    stress(cell,pt,i,j) = sigma(i,j);
                     stress_0(cell,pt,i,j) = S0(i,j);
                     H1(cell,pt,i,j) = h1(i,j);
