@@ -31,6 +31,13 @@ CrystalPlasticityModel(
       p->get< Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> >("NOX Status Test");
   }
 
+  orientations_initialized_ = true;
+  read_orientations_from_mesh_ = false;
+  if (p->isParameter("Read Lattice Orientation From Mesh")) {
+    orientations_initialized_ = false;
+    read_orientations_from_mesh_ = true;
+  }
+
   integration_scheme_ = IntegrationScheme::EXPLICIT;
   if (p->isParameter("Integration Scheme")) {
     std::string integration_scheme_string = p->get<std::string>(
@@ -619,19 +626,34 @@ CrystalPlasticityModel(
       p->get<bool>("Output CP_Residual", false));
 }
 
-
 //
 // Compute the constitutive response of the material
 //
 template<typename EvalT, typename Traits>
 void CrystalPlasticityModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>dep_fields,
-std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 {
 
   if(verbosity_ > 2) {
     std::cout << ">>> in cp compute state\n";
+  }
+
+  //
+  // Optionally assign lattice orientations with data from mesh file
+  //
+  if (!orientations_initialized_ && read_orientations_from_mesh_) {
+    Teuchos::ArrayRCP<double*> const& euler_angles = workset.wsLatticeOrientation;
+    for (int cell(0); cell < workset.numCells; ++cell) {
+      double euler_phi_1 = euler_angles[cell][0];;
+      double euler_Phi   = euler_angles[cell][1];
+      double euler_phi_2 = euler_angles[cell][2];
+      for (int pt(0); pt < num_pts_; ++pt) {
+	std::cout << "DJL DEBUGGING euler " << euler_phi_1 << ", " << euler_Phi << ", " << euler_phi_2 << std::endl;
+      }
+    }
+    orientations_initialized_ = true;
   }
 
   //

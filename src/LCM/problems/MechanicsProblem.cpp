@@ -262,7 +262,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
     }
   }
   if (requireLatticeOrientationOnMesh) {
-    requirements.push_back("Lattice Orientation");
+    requirements.push_back("Lattice_Orientation");
   }
 
 }

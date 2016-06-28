@@ -245,7 +245,7 @@ Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     }
   }
   // lattice orientation is mesh attributes read from a genesis mesh file use with certain solid mechanics material models
-  bool hasLatticeOrientationFieldContainerRequirement = (std::find(req.begin(), req.end(), "Lattice Orientation") != req.end());
+  bool hasLatticeOrientationFieldContainerRequirement = (std::find(req.begin(), req.end(), "Lattice_Orientation") != req.end());
   if(hasLatticeOrientationFieldContainerRequirement){
     // STK says that attributes are of type Field<double,anonymous>[ name: "extra_attribute_3" , #states: 1 ]
     this->latticeOrientation_field = metaData_->template get_field<stk::mesh::FieldBase>(stk::topology::ELEMENT_RANK, "extra_attribute_3");

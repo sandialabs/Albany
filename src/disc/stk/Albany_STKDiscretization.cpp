@@ -1953,7 +1953,6 @@ void Albany::STKDiscretization::computeWorksetInfo()
       }
       if(stkMeshStruct->getFieldContainer()->hasLatticeOrientationField()){
         latticeOrientation[b][i] = static_cast<double*>( stk::mesh::field_data(*latticeOrientation_field, element) );
-	std::cout << "DJL DEBUGGING lattice orientation = " << latticeOrientation[b][i][0] << ", " << latticeOrientation[b][i][1] << ", " << latticeOrientation[b][i][2] << std::endl;
       }
 #endif
 

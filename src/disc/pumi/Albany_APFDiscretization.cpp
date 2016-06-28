@@ -261,6 +261,12 @@ Albany::APFDiscretization::getSphereVolume() const
   return sphereVolume;
 }
 
+const Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type&
+Albany::APFDiscretization::getLatticeOrientation() const
+{
+  return latticeOrientation;
+}
+
 double mean (const double* x, const int n,
              const Teuchos::RCP<const Tpetra_Map>& map) {
   Teuchos::ArrayView<const double> xav = Teuchos::arrayView(x, n);

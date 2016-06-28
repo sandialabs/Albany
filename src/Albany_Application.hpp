@@ -1229,12 +1229,15 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
   const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
   const WorksetArray<Teuchos::ArrayRCP<double> >::type&
         sphereVolume = disc->getSphereVolume();
+  const WorksetArray<Teuchos::ArrayRCP<double*> >::type&
+        latticeOrientation = disc->getLatticeOrientation();
 
   workset.numCells = wsElNodeEqID[ws].size();
   workset.wsElNodeEqID = wsElNodeEqID[ws];
   workset.wsElNodeID = wsElNodeID[ws];
   workset.wsCoords = coords[ws];
   workset.wsSphereVolume = sphereVolume[ws];
+  workset.wsLatticeOrientation = latticeOrientation[ws];
   workset.EBName = wsEBNames[ws];
   workset.wsIndex = ws;
 
