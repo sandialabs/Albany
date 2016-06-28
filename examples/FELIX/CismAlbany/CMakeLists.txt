@@ -17,5 +17,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/process_output_test.sh
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
 
-#get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-#add_test(NAME FELIX_${testName} COMMAND "python" "runtestT.py")
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+IF (CISM_EXE_DIR)
+add_test(NAME FELIX_${testName} COMMAND "python" "runtestT.py")
+ENDIF() 
