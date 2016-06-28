@@ -12,3 +12,5 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/run_test.sh
                ${CMAKE_CURRENT_BINARY_DIR}/run_test.sh COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/process_output_test.sh
+               ${CMAKE_CURRENT_BINARY_DIR}/process_output_test.sh COPYONLY)
