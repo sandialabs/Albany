@@ -70,7 +70,7 @@ case "$ARCH" in
 	;;
 esac
 
-NVCC_WRAPPER="$LCM_DIR/$PACKAGE_NAME/packages/kokkos/config/nvcc_wrapper"
+NVCC_WRAPPER="$LCM_DIR/Trilinos/packages/kokkos/config/nvcc_wrapper"
 
 case "$TOOL_CHAIN" in
     gcc)
