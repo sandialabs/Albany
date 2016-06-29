@@ -70,6 +70,8 @@ case "$ARCH" in
 	;;
 esac
 
+NVCC_WRAPPER="$LCM_DIR/$PACKAGE_NAME/packages/kokkos/config/nvcc_wrapper"
+
 case "$TOOL_CHAIN" in
     gcc)
 	if [ -z ${CC+x} ]; then CC=`which gcc`; fi
@@ -85,10 +87,10 @@ case "$TOOL_CHAIN" in
 		;;
 	    cuda)
 		if [ -z ${CXX+x} ]; then
-		    CXX="$LCM_DIR/$PACKAGE_NAME/packages/kokkos/config/nvcc_wrapper";
+		    CXX="$NVCC_WRAPPER";
 		else
 		    export NVCC_WRAPPER_DEFAULT_COMPILER="$CXX";
-		    CXX="$LCM_DIR/$PACKAGE_NAME/packages/kokkos/config/nvcc_wrapper";
+		    CXX="$NVCC_WRAPPER";
 		fi
 		;;
 	    *)
