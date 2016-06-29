@@ -21,6 +21,7 @@ setenv                  CUDA_VISIBLE_DEVICES    0
 
 prepend-path            PATH            /usr/local/cuda/bin
 prepend-path            PATH            /usr/lib64/openmpi/bin
+prepend-path            LD_LIBRARY_PATH /usr/local/cuda/lib64
 prepend-path            LD_LIBRARY_PATH /usr/lib64/openmpi/lib
 prepend-path            PATH            $install_dir/bin
 prepend-path            PYTHONPATH      $install_dir/lib
