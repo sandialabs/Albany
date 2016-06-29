@@ -126,6 +126,15 @@ SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
     nodes_per_element = points_per_edge*points_per_edge;
     ElemType = QUAD;
   }
+  //IKT: the following is necessary to prevent seg fault when running Aeras 
+  //due to changes to Albany added by Dave Littlewood on 6/28/16.  We need
+  //to recize latticeOrientation array b/c it is indexed in Albany_Application.hpp.
+  stk::mesh::Selector select_owned =
+    stk::mesh::Selector(metaData.locally_owned_part());
+  const stk::mesh::BucketVector & buckets =
+    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned);
+  const int numBuckets = buckets.size();
+  latticeOrientation.resize(numBuckets);
 #ifdef OUTPUT_TO_SCREEN
   *out << "points_per_edge: " << points_per_edge << std::endl;
   *out << "element name: " << element_name << std::endl;
