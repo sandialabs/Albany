@@ -1009,6 +1009,7 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
   wsElNodeID.resize(numBuckets);
   coords.resize(numBuckets);
   sphereVolume.resize(numBuckets);
+  latticeOrientation.resize(numBuckets);
 
   // Clear map if remeshing
   if(!elemGIDws.empty()) elemGIDws.clear();
