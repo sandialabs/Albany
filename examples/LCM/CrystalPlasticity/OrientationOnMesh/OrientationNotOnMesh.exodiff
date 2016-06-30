@@ -111,14 +111,14 @@ ELEMENT VARIABLES relative 1.e-6 floor 0.0
 	Cauchy_Stress_70  absolute 7.838691500000e-05    # min:               0 @ t1,b1,e1	max:       78.386915 @ t30,b6,e6
 	Cauchy_Stress_71  absolute 1.532938100000e-04    # min:               0 @ t1,b1,e1	max:       153.29381 @ t30,b2,e2
 	Cauchy_Stress_72  absolute 1.481017700000e-04    # min:               0 @ t1,b1,e1	max:       148.10177 @ t30,b4,e4
-	CP_Residual_1     absolute 9.477440000000e-19    # min:               0 @ t1,b1,e1	max:     9.47744e-13 @ t24,b1,e1
-	CP_Residual_2     absolute 9.965966400000e-19    # min:               0 @ t1,b1,e1	max:   9.9659664e-13 @ t8,b7,e7
-	CP_Residual_3     absolute 9.586567500000e-19    # min:               0 @ t1,b1,e1	max:   9.5865675e-13 @ t18,b6,e6
-	CP_Residual_4     absolute 8.429102000000e-19    # min:               0 @ t1,b1,e1	max:    8.429102e-13 @ t9,b5,e5
-	CP_Residual_5     absolute 9.639533900000e-19    # min:               0 @ t1,b1,e1	max:   9.6395339e-13 @ t26,b5,e5
-	CP_Residual_6     absolute 9.361570500000e-19    # min:               0 @ t1,b1,e1	max:   9.3615705e-13 @ t21,b5,e5
-	CP_Residual_7     absolute 8.465109300000e-19    # min:               0 @ t1,b1,e1	max:   8.4651093e-13 @ t24,b5,e5
-	CP_Residual_8     absolute 9.668132400000e-19    # min:               0 @ t1,b1,e1	max:   9.6681324e-13 @ t25,b6,e6
+	CP_Residual_1     absolute 1.0e-12
+	CP_Residual_2     absolute 1.0e-12
+	CP_Residual_3     absolute 1.0e-12
+	CP_Residual_4     absolute 1.0e-12
+	CP_Residual_5     absolute 1.0e-12
+	CP_Residual_6     absolute 1.0e-12
+	CP_Residual_7     absolute 1.0e-12
+	CP_Residual_8     absolute 1.0e-12
 	eqps_1            absolute 2.762129900000e-08    # min:               0 @ t1,b1,e1	max:     0.027621299 @ t30,b1,e1
 	eqps_2            absolute 2.319433700000e-08    # min:               0 @ t1,b1,e1	max:     0.023194337 @ t30,b2,e2
 	eqps_3            absolute 2.439951600000e-08    # min:               0 @ t1,b1,e1	max:     0.024399516 @ t30,b1,e1
