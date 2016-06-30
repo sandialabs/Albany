@@ -34,6 +34,10 @@
 
 <!-- ~~~~~~~~~ Crystal Elasticity moduli and orientation -->
 
+               <Parameter name="Read Lattice Orientation From Mesh"
+                          type="bool" 
+                          value="true"/>
+
                <ParameterList name="Crystal Elasticity">
 
                     <Parameter name="C11" 
@@ -48,23 +52,7 @@
                                type="double" 
                                value="126.2e3"/>
 
-                    <Parameter name="Basis Vector 1" 
-                               type="Array(double)" 
-                               value="{1.0, 0.0, 0.0}"/>
-
-                    <Parameter name="Basis Vector 2" 
-                               type="Array(double)" 
-                               value="{0.0, 1.0, 0.0}"/>
-
-                    <Parameter name="Basis Vector 3" 
-                               type="Array(double)" 
-                               value="{0.0, 0.0, 1.0}"/>
-
                </ParameterList>
-
-               <Parameter name="Read Lattice Orientation From Mesh"
-                          type="bool" 
-                          value="true"/>
 
                <Parameter name="Integration Scheme" 
                           type="string" 

@@ -603,6 +603,14 @@ computeState(typename Traits::EvalData workset,
     std::cout << ">>> in cp compute state\n";
   }
 
+  if (read_orientations_from_mesh_) {
+    Teuchos::ArrayRCP<double*> const& rotation_matrix_transpose = workset.wsLatticeOrientation;
+    TEUCHOS_TEST_FOR_EXCEPTION(
+	rotation_matrix_transpose.is_null(),
+	std::logic_error,
+	"\n**** Error in CrystalPlasticityModel, rotation matrix not found on genesis mesh.\n");
+  }
+
   //
   // retrive appropriate field name strings
   //
