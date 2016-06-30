@@ -124,6 +124,9 @@ CrystalPlasticityModel(
     else if (step_type_string == "Line Search Regularized") {
       step_type_ = Intrepid2::StepType::LINE_SEARCH_REG;
     }
+    else if (step_type_string == "Newton with Line Search") {
+      step_type_ = Intrepid2::StepType::NEWTON_LS;
+    }
     else {
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
@@ -132,8 +135,9 @@ CrystalPlasticityModel(
             \"Nonlinear Solver Step Type\", must be \
             \"Newton\", \
             \"Trust Region\", \
-            \"Conjugate Gradient\", or \
-            \"Line Search Regularized\".\n");
+            \"Conjugate Gradient\", \
+            \"Line Search Regularized\", or \
+            \"Newton with Line Search\".\n");
     }
   }
 
