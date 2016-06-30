@@ -907,11 +907,6 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, 
   const double SP0 =  1e5;     // = p0
   const double u0  =  35.0;     //
 
-  if (perturbation) 
-    std::cout << "Setting IC for PERTURBED baroclinic instabilities test case." << std::endl; 
-  else 
-    std::cout << "Setting IC for UNPERTURBED baroclinic instabilities test case." << std::endl; 
-
   //From Homme, 26 levels ASP baroclinic TC (see file cami-26.ascii):
   //A[top] = 0.00219406700000001 = eta_top = p_top/p0,
   //that is, p_top = A[top]*p0 = 219.4067 .
@@ -1040,7 +1035,7 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, 
     //Velocities
 
     double uwind = u0 * std::pow(cosEtav,1.5) * std::pow(sin2Theta,2.0) ;
-    if(perturbation){
+    if (perturbation) {
     	const double pertlon = perturbation_longitude*constPi/180.0,
     			     pertlat = perturbation_latitude*constPi/180.0;
         //phi_vertical = (eta - eta0) *0.5d0*constPi;

@@ -251,11 +251,11 @@ public:
 
  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
- struct Newmann_Tag{};
- typedef Kokkos::RangePolicy<ExecutionSpace, Newmann_Tag> Newmann_Policy;
+ struct Neumann_Tag{};
+ typedef Kokkos::RangePolicy<ExecutionSpace, Neumann_Tag> Neumann_Policy;
 
  KOKKOS_INLINE_FUNCTION
-  void operator() (const Newmann_Tag& tag, const int& i) const;
+  void operator() (const Neumann_Tag& tag, const int& i) const;
 
 #endif
 

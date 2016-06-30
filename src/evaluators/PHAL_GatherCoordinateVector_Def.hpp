@@ -120,7 +120,8 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
  typedef Kokkos::View<MeshScalarT***,PHX::Device> view_type;
  typedef typename view_type::HostMirror host_view_type;
   
- host_view_type coordVecHost = Kokkos::create_mirror_view (coordVec.get_view());
+// host_view_type coordVecHost = Kokkos::create_mirror_view (coordVec.get_view());
+ host_view_type coordVecHost = Kokkos::create_mirror_view (coordVec.get_static_view());
 
   if( dispVecName.is_null() ){
     for (std::size_t cell=0; cell < numCells; ++cell) {
@@ -162,7 +163,8 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
       }
     }
   } 
-  Kokkos::deep_copy (coordVec.get_view(), coordVecHost);
+  // Kokkos::deep_copy (coordVec.get_view(), coordVecHost);
+  Kokkos::deep_copy (coordVec.get_static_view(), coordVecHost);
 
 #endif
 }

@@ -56,7 +56,6 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>         wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>     GradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>     wGradBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim,Dim> wGradGradBF;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>          sphere_coord;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>      jacobian;
   PHX::MDField<MeshScalarT,Cell,QuadPoint>              jacobian_det;
@@ -69,7 +68,6 @@ private:
   PHX::MDField<ScalarT,Cell,Node,Level,Dim>       VelxNode;
   PHX::MDField<ScalarT,Cell,Node,Level,Dim>  VelxDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  DVelx;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      LaplaceVelx;
   PHX::MDField<ScalarT,Cell,Node,Level>      density;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      vorticity;
 

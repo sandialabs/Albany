@@ -17,10 +17,12 @@
 
 FELIX::StokesFO::
 StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
+          const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
-  numDim(numDim_)
+  numDim(numDim_),
+  discParams(discParams_)
 {
   //Set # of PDEs per node based on the Equation Set.
   //Equation Set is FELIX by default (2 dofs / node -- usual FELIX Stokes FO).

@@ -19,12 +19,28 @@
 namespace FELIX {
 
 const double pi = 3.1415926535897932385;
+const double actenh = 1.39e5;     //[J mol-1]
+const double actenl = 6.0e4;      //[J mol-1]
+const double gascon = 8.314;      //[J mol-1 K-1]
+const double switchingT = 263.15; // [K]
+
+#ifdef USE_CISM_FLOW_PARAMETERS
+  const double arrmlh = 1.733e3;    // [Pa-3 s-1]
+  const double arrmll = 3.613e-13;  // [Pa-3 s-1]
+  const double k4scyr = 3.1536e19;  // [s y-1]
+  const double arrmh = k4scyr*arrmlh;  // [Pa-3 yr-1]
+  const double arrml = k4scyr*arrmll;  // [Pa-3 yr-1]
+#else
+  const double arrmh = 6.26e22;        // [Pa-3 yr-1]
+  const double arrml = 1.3e7;          // [Pa-3 yr-1]
+#endif
+
 
 namespace {
 template<typename ParamScalarT>
 KOKKOS_INLINE_FUNCTION
 ParamScalarT flowRate (const ParamScalarT& T) {
-  return (T < 263) ? 1.3e7 / exp (6.0e4 / 8.314 / T) : 6.26e22 / exp (1.39e5 / 8.314 / T);
+  return (T < switchingT) ? arrml / exp (actenl / gascon / T) : arrmh / exp (actenh / gascon / T);
 }
 }
 

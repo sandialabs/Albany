@@ -6,6 +6,9 @@ that demonstrate the code's capabilities on a wide variety of problems including
 mechanics (elasticity and plasticity), ice-sheet flow, 
 [quantum device modeling](http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6242832), and many other applications.
 
+The Albany web page is located at
+[http://gahansen.github.io/Albany](http://gahansen.github.io/Albany)
+
 ## Features
 
 ### Analysis of complex multiphysics problems
@@ -32,8 +35,8 @@ to [Dakota](https://dakota.sandia.gov) using the Trilinos TriKota package.
 
 ## Building Albany
 
-Detailed build instructions for both Trilinos and Albany are maintained at 
-[http://redmine.scorec.rpi.edu/projects/albany-rpi/wiki](http://redmine.scorec.rpi.edu/projects/albany-rpi/wiki)
+Detailed build instructions for both Trilinos and Albany are maintained on the Albany wiki at
+[https://github.com/gahansen/Albany/wiki/Building-Albany-and-supporting-tools](https://github.com/gahansen/Albany/wiki/Building-Albany-and-supporting-tools)
 
 ## Nightly Build and Test Results
 

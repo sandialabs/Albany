@@ -245,8 +245,6 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<string>("Weighted BF Name", "wBF");
     p->set<string>("Gradient BF Name",          "Grad BF");
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<string>("Gradient Gradient BF Name",  "GradGrad BF");
-    p->set<string>("Weighted Gradient Gradient BF Name",  "wGradGrad BF");
     p->set<string>("Jacobian Det Name",          "Jacobian Det");
     p->set<string>("Jacobian Name",          "Jacobian");
     p->set<string>("Jacobian Inv Name",          "Jacobian Inv");

@@ -6,6 +6,52 @@
 
 #include <boost/math/special_functions/fpclassify.hpp>
 
+//
+//! Convert Euler (Bunge) angles to basis vector
+//
+template<typename ArgT>
+void
+CP::eulerAnglesToBasisVectors(ArgT euler_phi_1,
+			      ArgT euler_Phi,
+			      ArgT euler_phi_2,
+			      std::vector<ArgT>& basis_1,
+			      std::vector<ArgT>& basis_2,
+			      std::vector<ArgT>& basis_3)
+{
+  using std::sin;
+  using std::cos;
+
+  ArgT R[][3] = {{0.0, 0.0, 0.0},
+		 {0.0, 0.0, 0.0},
+		 {0.0, 0.0, 0.0}};
+
+  // Active rotation tensor
+  R[0][0] =  cos(euler_phi_1)*cos(euler_phi_2) - sin(euler_phi_1)*sin(euler_phi_2)*cos(euler_Phi);
+  R[0][1] = -cos(euler_phi_1)*sin(euler_phi_2) - sin(euler_phi_1)*cos(euler_phi_2)*cos(euler_Phi);
+  R[0][2] =  sin(euler_phi_1)*sin(euler_Phi);
+  R[1][0] =  sin(euler_phi_1)*cos(euler_phi_2) + cos(euler_phi_1)*sin(euler_phi_2)*cos(euler_Phi);
+  R[1][1] = -sin(euler_phi_1)*sin(euler_phi_2) + cos(euler_phi_1)*cos(euler_phi_2)*cos(euler_Phi);
+  R[1][2] = -cos(euler_phi_1)*sin(euler_Phi);
+  R[2][0] =  sin(euler_phi_2)*sin(euler_Phi);
+  R[2][1] =  cos(euler_phi_2)*sin(euler_Phi);
+  R[2][2] =  cos(euler_Phi);
+
+  ArgT e1[3] = {1.0, 0.0, 0.0};
+  ArgT e2[3] = {0.0, 1.0, 0.0};
+  ArgT e3[3] = {0.0, 0.0, 1.0};
+
+  basis_1 = std::vector<ArgT>(3, 0.0);
+  basis_2 = std::vector<ArgT>(3, 0.0);
+  basis_3 = std::vector<ArgT>(3, 0.0);
+   
+  for (int i=0 ; i<3 ; i++) {
+    for (int j=0 ; j<3 ; j++) {
+      basis_1[i] += R[i][j]*e1[j];
+      basis_2[i] += R[i][j]*e2[j];
+      basis_3[i] += R[i][j]*e3[j];
+    }
+  }
+}
 
 ///
 /// Verify that constitutive update has preserved finite values
@@ -486,8 +532,14 @@ template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
 template<typename T, Intrepid2::Index N>
 Intrepid2::Vector<T, N>
 CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
-    Intrepid2::Vector<T, N> const & x) const
+    Intrepid2::Vector<T, N> const & x)
 {
+  // Get a convenience reference to the failed flag in case it is used more
+  // than once.
+  bool &
+  failed = Intrepid2::Function_Base<
+  ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>, ArgT>::failed;
+
   // Tensor mechanical state variables
   Intrepid2::Tensor<T, NumDimT>
   Fp_np1(num_dim_);
@@ -535,6 +587,12 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   Intrepid2::Vector<T, N>
   residual(num_unknowns);
 
+  // Return immediately if something failed catastrophically.
+  if (failed == true) {
+    residual.fill(Intrepid2::ZEROS);
+    return residual;
+  }
+
   Intrepid2::Tensor<T, NumDimT> const
   F_np1_peeled = LCM::peel_tensor<EvalT, T, N, NumDimT>()(F_np1_);
 
@@ -551,6 +609,12 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   }
   else{
     rate_slip.fill(Intrepid2::ZEROS);
+  }
+
+  // Ensure that the slip increment is bounded
+  if (Intrepid2::norm(rate_slip * dt_) > 1.0) {
+    failed =  true;
+    return residual;
   }
 
   // Compute Lp_np1, and Fp_np1

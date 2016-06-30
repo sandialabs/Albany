@@ -265,6 +265,10 @@ namespace LCM {
            			- 3.0*skeletonThermalExpansion(cell,qp)*
            			(Temperature(cell,qp)-refTemperature(cell,qp));
 
+//          TEUCHOS_TEST_FOR_EXCEPTION(J(cell,qp) <= 0, std::runtime_error,
+//              " negative / zero volume detected in Porosity_def.hpp line " + __LINE__);
+// Note - J(cell, qp) equal to zero causes an FPE (GAH)
+
         	porosity(cell,qp) = initialPorosityValue*std::exp(
 		                        biotCoefficient(cell,qp)*std::log(J(cell,qp)) +
 	                            biotCoefficient(cell,qp)/GrainBulkModulus*porePressure(cell,qp)-

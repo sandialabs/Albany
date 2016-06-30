@@ -32,6 +32,8 @@
 #include "Aeras_XZHydrostatic_Omega.hpp"
 #include "Aeras_XZHydrostatic_Pressure.hpp"
 #include "Aeras_XZHydrostatic_VelResid.hpp"
+#include "Aeras_XZHydrostatic_Velocity.hpp"
+#include "Aeras_XZHydrostatic_EtaDot.hpp"
 #include "Aeras_XZHydrostatic_TracerResid.hpp"
 #include "Aeras_XZHydrostatic_TemperatureResid.hpp"
 #include "Aeras_XZHydrostatic_PiVel.hpp"
@@ -384,7 +386,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   
 
   {//Level Kinetic Energy 
-    RCP<ParameterList> p = rcp(new ParameterList("KinieticEnergy"));
+    RCP<ParameterList> p = rcp(new ParameterList("KineticEnergy"));
     p->set<string>("Velx", dof_names_levels[0]);
     p->set<string>("Kinetic Energy", "KineticEnergy");
   
@@ -402,6 +404,27 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     ev = rcp(new Aeras::DOFGradInterpolationLevels<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+  
+  {//XZHydrostatic velocity
+    RCP<ParameterList> p = rcp(new ParameterList("Velocity"));
+    //Input
+    p->set<string>("Velx Name",    "Velx");
+    //Output
+    p->set<string>("Velocity",  "Velocity");
+    
+    ev = rcp(new Aeras::XZHydrostatic_Velocity<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+  
+  {//XZHydrostatic etadot
+    RCP<ParameterList> p = rcp(new ParameterList("EtaDot"));
+    //Output
+    p->set<string>("EtaDot",  "EtaDot");
+    
+    ev = rcp(new Aeras::XZHydrostatic_EtaDot<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
 
   { // XZHydrostatic Velx Resid
     RCP<ParameterList> p = rcp(new ParameterList("XZHydrostatic_"+dof_names_levels_resid[0]));
@@ -439,7 +462,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<std::string>("Gradient QP Temperature",        dof_names_levels_gradient[1]);
     p->set<std::string>("QP Time Derivative Temperature", dof_names_levels_dot[1]);
     p->set<std::string>("Temperature Source",             dof_names_levels_src[1]);
-    p->set<std::string>("QP Velx",                        dof_names_levels[0]);
+    p->set<std::string>("Velocity",                       "Velocity");
     p->set<std::string>("Omega",                          "Omega");
     p->set<std::string>("EtaDotdT",                       "EtaDotdT");
     
@@ -506,7 +529,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
 
     //Input
-    p->set<string>("QP Velx"               , dof_names_levels[0]);
+    p->set<string>("Velocity"              , "Velocity");
     p->set<string>("Gradient QP Pressure"  , "Gradient QP Pressure");
     p->set<string>("Density"               , "Density");
     p->set<string>("QP Cpstar"             , "Cpstar");
@@ -647,7 +670,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
 
     //Input
     p->set<std::string>("Pi",            "Pi");
-    p->set<std::string>("Velx",          dof_names_levels[0]);
+    p->set<std::string>("Velocity",      "Velocity");
     //Output
     p->set<std::string>("PiVelx",        "PiVelx");
 
@@ -686,9 +709,10 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<std::string>("Divergence QP PiVelx",     "Divergence QP PiVelx");
     p->set<std::string>("Pressure Dot Level 0",   dof_names_nodes_dot[0]);
     p->set<std::string>("Pi"                    , "Pi");
-    p->set<std::string>("QP Velx",                dof_names_levels[0]);
+    p->set<std::string>("Velocity",               "Velocity");
     p->set<std::string>("QP Temperature",         dof_names_levels[1]);
     p->set< Teuchos::ArrayRCP<std::string> >("Tracer Names",        dof_names_tracers);
+    p->set<std::string>("EtaDot",                   "EtaDot");
 
     //Output
     p->set<std::string>("EtaDotPi",                   "EtaDotPi");
@@ -744,7 +768,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
 
     {//Level u*Tracer
       RCP<ParameterList> p = rcp(new ParameterList("UTracer"));
-      p->set<string>("Velx Name", "Velx");
+      p->set<string>("Velocity", "Velocity");
       p->set<string>("PiVelx",    "PiVelx");
       p->set<string>("Tracer",    dof_names_tracers[t]);
       p->set<string>("UTracer",   "U"+dof_names_tracers[t]);

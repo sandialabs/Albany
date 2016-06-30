@@ -1,0 +1,8 @@
+<ParameterList>
+  <ParameterList name="Discretization">
+    <Parameter name="Method" type="string" value="Hacky Ascii2D"/>
+    <Parameter name="Exodus Output File Name" type="string" value="albanyMesh/greenland_2d.exo"/>
+   <Parameter name="Ascii Input Mesh File Name" type="string" value="albanyMesh/greenland_2d.quad.msh"/>
+   <Parameter name="Use Serial Mesh" type="bool" value="1"/>
+  </ParameterList>
+</ParameterList>

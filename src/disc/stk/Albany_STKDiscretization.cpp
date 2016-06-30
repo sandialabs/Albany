@@ -305,6 +305,12 @@ Albany::STKDiscretization::getSphereVolume() const
   return sphereVolume;
 }
 
+const Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type&
+Albany::STKDiscretization::getLatticeOrientation() const
+{
+  return latticeOrientation;
+}
+
 void
 Albany::STKDiscretization::printCoords() const
 {
@@ -1761,6 +1767,11 @@ void Albany::STKDiscretization::computeWorksetInfo()
     sphereVolume_field = stkMeshStruct->getFieldContainer()->getSphereVolumeField();
   }
 
+  stk::mesh::FieldBase* latticeOrientation_field;
+  if(stkMeshStruct->getFieldContainer()->hasLatticeOrientationField()){
+    latticeOrientation_field = stkMeshStruct->getFieldContainer()->getLatticeOrientationField();
+  }
+
   wsEBNames.resize(numBuckets);
   for (int i=0; i<numBuckets; i++) {
     stk::mesh::PartVector const& bpv = buckets[i]->supersets();
@@ -1786,6 +1797,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
   wsElNodeID.resize(numBuckets);
   coords.resize(numBuckets);
   sphereVolume.resize(numBuckets);
+  latticeOrientation.resize(numBuckets);
 
   nodesOnElemStateVec.resize(numBuckets);
   stateArrays.elemStateArrays.resize(numBuckets);
@@ -1882,8 +1894,12 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
 
 #if defined(ALBANY_LCM)
-    if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField())
+    if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField()) {
       sphereVolume[b].resize(buck.size());
+    }
+    if(stkMeshStruct->getFieldContainer()->hasLatticeOrientationField()) {
+      latticeOrientation[b].resize(buck.size());
+    }
 #endif
 
     stk::mesh::Entity element = buck[0];
@@ -1935,10 +1951,13 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
 #if defined(ALBANY_LCM)
       if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField() && nodes_per_element == 1){
-  double* volumeTemp = stk::mesh::field_data(*sphereVolume_field, element);
-  if(volumeTemp){
-    sphereVolume[b][i] = volumeTemp[0];
-  }
+	double* volumeTemp = stk::mesh::field_data(*sphereVolume_field, element);
+	if(volumeTemp){
+	  sphereVolume[b][i] = volumeTemp[0];
+	}
+      }
+      if(stkMeshStruct->getFieldContainer()->hasLatticeOrientationField()){
+        latticeOrientation[b][i] = static_cast<double*>( stk::mesh::field_data(*latticeOrientation_field, element) );
       }
 #endif
 

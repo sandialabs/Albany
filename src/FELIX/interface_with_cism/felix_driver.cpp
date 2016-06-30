@@ -474,10 +474,6 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     nNodes = (ewn-2*nhalo+1)*(nsn-2*nhalo+1)*upn; //number of nodes in mesh (on each processor) 
     nElementsActive = nCellsActive*(upn-1); //number of 3D active elements in mesh  
    
-    //IK, 11/20/14: added this here: BCs are set in this file rather than in input.xml file to prevent confusion 
-    //to the reader.  Basically the BCs should be passed from CISM.
-    Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (1, 1.0));
-
 /*    std::string beta_name = "basal_friction";
     Teuchos::Array<std::string> arrayBasalFields(1, beta_name);
     Teuchos::Array<std::string> arraySideSets(1, "Basal");
@@ -492,6 +488,11 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     basalParamList.sublist("Required Fields Info").sublist("Field 0").set<std::string>("Field Name",beta_name);
     basalParamList.sublist("Required Fields Info").sublist("Field 0").set<std::string>("Field Type","From Mesh");*/
 
+    Teuchos::Array<std::string> arrayRequiredFields(2);
+    arrayRequiredFields[0]="flow_factor"; arrayRequiredFields[1]="temperature";
+    parameterList->sublist("Problem").set("Required Fields", arrayRequiredFields);
+
+    Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (1, 1.0));
     parameterList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS Basal for DOF all set basal_scalar_field", *inputArrayBasal);
     //Lateral floating ice BCs. 
     if ((global_west_face_conn_active_Ptr != NULL || global_east_face_conn_active_Ptr != NULL || global_north_face_conn_active_Ptr != NULL || global_south_face_conn_active_Ptr != NULL) && (nWestFacesActive > 0 || nEastFacesActive > 0 || nSouthFacesActive > 0 || nNorthFacesActive > 0)) {
@@ -511,12 +512,10 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
           std::endl << "Error in felix_driver: cannot set Dirichlet BC from CISM; pointers to uvel and vvel passed from CISM are null."                    << std::endl);
       }
     }
-    parameterList->sublist("Problem").set<int>("importCellTemperatureFromMesh",1);
-
  
    //IK, 11/20/14: pass gravity, ice density, and water density values to Albany.  These are needed 
    //in the PHAL_Neumann and FELIX_StokesFOBodyForce evaluators.  
-    parameterList->sublist("Problem").sublist("FELIX Physical Parameters").set("Gravity", gravity);
+    parameterList->sublist("Problem").sublist("FELIX Physical Parameters").set("Gravity Acceleration", gravity);
     parameterList->sublist("Problem").sublist("FELIX Physical Parameters").set("Ice Density", rho_ice);
     parameterList->sublist("Problem").sublist("FELIX Physical Parameters").set("Water Density", rho_seawater);
  
@@ -528,6 +527,22 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     else {
       parameterList->sublist("Problem").sublist("Body Force").set("Type", "FO INTERP SURF GRAD"); 
     }
+
+    discParams->set<std::string>("Method", "Cism");
+    discParams->sublist("Required Fields Info").set<int>("Number Of Fields",2);
+    Teuchos::ParameterList& field0 = discParams->sublist("Required Fields Info").sublist("Field 0");
+    Teuchos::ParameterList& field1 = discParams->sublist("Required Fields Info").sublist("Field 1");
+
+    //set flow_factor
+    field0.set<std::string>("Field Name", "flow_factor");
+    field0.set<std::string>("Field Type", "Elem Scalar");
+    field0.set<std::string>("Field Origin", "Mesh");
+
+    //set temperature
+    field1.set<std::string>("Field Name", "temperature");
+    field1.set<std::string>("Field Type", "Elem Scalar");
+    field1.set<std::string>("Field Origin", "Mesh");
+
 
     albanyApp = Teuchos::rcp(new Albany::Application(reducedMpiCommT));
     albanyApp->initialSetUp(parameterList);

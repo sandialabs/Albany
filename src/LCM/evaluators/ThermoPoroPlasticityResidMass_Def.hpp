@@ -270,6 +270,12 @@ evaluateFields(typename Traits::EvalData workset)
 	//	  TResidual(cell,node)=0.0;
 		  for (int qp=0; qp < numQPs; ++qp) {
 
+//          TEUCHOS_TEST_FOR_EXCEPTION(J(cell,qp) <= 0, std::runtime_error,
+//              " negative / zero volume detected in ThermoPoroPlasticityResidMass_Def.hpp line " + __LINE__);
+//          TEUCHOS_TEST_FOR_EXCEPTION(Jold(cell,qp) <= 0, std::runtime_error,
+//              " negative / zero volume detected in ThermoPoroPlasticityResidMass_Def.hpp line " + __LINE__);
+// Note - J(cell, qp) < equal to zero causes an FPE (GAH)
+
 		    	  dJ = std::log(J(cell,qp)/Jold(cell,qp));
 			  	  dTemperature = Temp(cell,qp)-Tempold(cell,qp);
 			      dporePressure = porePressure(cell,qp)-porePressureold(cell, qp);

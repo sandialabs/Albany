@@ -14,6 +14,8 @@
 #include "Teuchos_CommHelpers.hpp"
 #include "Phalanx.hpp"
 #include "PHAL_Utilities.hpp"
+#include "Aeras_ShallowWaterConstants.hpp"
+#include "Aeras_Eta.hpp" 
 
 namespace Aeras {
 template<typename EvalT, typename Traits>
@@ -82,8 +84,12 @@ HydrostaticResponseL2Error(Teuchos::ParameterList& p,
 
   //FIXME: extend responseSize to have tracers 
   responseSize = 3*numLevels + 1; //there are 2 velocities and 1 temperature variable on each level
-                                      //surface pressure is on 1st level only
-                                      //the ordering is: Sp0, u0, v0, T0, u1, v1, T1, etc
+                                  //surface pressure is on 1st level only
+                                  //the ordering is: Sp0, u0, v0, T0, u1, v1, T1, etc
+                                  
+  responseSize *= 3;             //take into account that response has absute error, norm of reference
+                                 //solution, and relative error
+  
 
   Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(
       new MDALayout<Cell,Dim>(worksetSize, responseSize));
@@ -154,7 +160,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         spressure_ref(cell,qp) = 0.0;
-        for (std::size_t level; level < numLevels; ++level) {
+        for (std::size_t level=0; level < numLevels; ++level) {
           for (std::size_t i=0; i<2; ++i) {
             velocity_ref(cell,qp,level,i) = 0.0; 
           }
@@ -164,7 +170,49 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   else if (ref_sol_name == BAROCLINIC_UNPERTURBED) {
-    //FIXME: fill in! 
+    *out << "Setting baroclinic unperturbed reference solution!" << std::endl; 
+    //IKT, 5/23/16: the values/expressions here are from AAdapt_AnalyticFunction.cpp.
+    //Warning: if the values/expressions change in AAdapt_AnalyticFunctions.cpp, they need to 
+    //be changed here as well. 
+    const double u0 = 35.0;
+    const double SP0 = 1.0e5;
+    const double P0 = SP0; 
+    const double Eta0 = 0.252, Etas=1.0, Etat=0.2, TT0=288.0,
+                 Gamma = 0.005, deltaT = 4.8E+5, Rd = 287.04;
+    const double Ptop = 219.4067;
+    const double a = Aeras::ShallowWaterConstants::self().earthRadius;
+    const double omega = Aeras::ShallowWaterConstants::self().omega;
+    const double g = Aeras::ShallowWaterConstants::self().gravity;
+    double a_omega      = a*omega;
+    const double constPi = Aeras::ShallowWaterConstants::self().pi; 
+    const Aeras::Eta<DoubleType> &EP = Aeras::Eta<DoubleType>::self(Ptop,P0,numLevels);
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        //FIXME: SP_ref = SP0 is IC but it does not stay constant in time.  What should it be in the error computation?
+        spressure_ref(cell,qp) = SP0;
+        //The following 2 definitions are for the 1st velocity component solution
+        const MeshScalarT theta = sphere_coord(cell, qp, 1);
+        const double sin2Theta = std::sin(2.0*theta);
+        for (std::size_t level=0; level < numLevels; ++level) {
+          //first component of velocity.
+          const double Eta =  EP.eta(level);
+          const double cosEtav = std::cos((Eta-Eta0)*constPi/2.0);
+          velocity_ref(cell,qp,level,0) = u0 * std::pow(cosEtav,1.5) * std::pow(sin2Theta,2.0);
+          //second component of velocity.
+          //FIXME: v = 0 is IC but it does not stay constant in time.  What should it be in the error computation?
+          velocity_ref(cell,qp,level,1) = 0.0;
+          double Tavg =  TT0 * std::pow(Eta, Rd*Gamma/g);
+          if( Eta <= Etat ) Tavg += deltaT * std::pow(Etat - Eta, 5.0);
+          double factor       = Eta*constPi*u0/Rd;
+          double phi_vertical = (Eta - Eta0) * 0.5 *constPi;
+          double t_deviation = factor*1.5* std::sin(phi_vertical) * std::pow(std::cos(phi_vertical),0.5) *
+                 ((-2.* std::pow(std::sin(theta),6.) * ( std::pow(std::cos(theta),2.) + 1./3.) + 10./63.)*
+                 u0 * std::pow(std::cos(phi_vertical),1.5)  +
+                 (8./5.*std::pow(std::cos(theta),3.) * (std::pow(std::sin(theta),2.) + 2./3.) - constPi/4.)*a_omega*0.5 );
+          temperature_ref(cell,qp,level) = Tavg + t_deviation; //Tavg + TT0 * (TT1 + TT2);
+        }
+      }
+    }
   }
 
   //Calculate L2 error at all the quad points.  We do not need to interpolate flow_state_field from nodes
@@ -173,7 +221,11 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       spressure_err(cell,qp) = spressure(cell,qp) - spressure_ref(cell,qp); 
       for (std::size_t level=0; level < numLevels; ++level) {
-        temperature_err(cell,qp,level) = temperature(cell,qp,level) - temperature_ref(cell,qp,level); 
+        temperature_err(cell,qp,level) = temperature(cell,qp,level) - temperature_ref(cell,qp,level);
+        /*if (cell == 0) 
+           std::cout << "qp, level, temp, temp_ref, temp_err: " << qp << ", " << level << ", " << temperature(cell,qp,level) 
+                     << ", " << temperature_ref(cell,qp,level) << ", " << temperature_err(cell,qp,level) << std::endl;  
+        */
         for (std::size_t i=0; i<2; ++i) {
           velocity_err(cell,qp,level,i) = velocity(cell,qp,level,i) - velocity_ref(cell,qp,level,i);
         }
@@ -181,40 +233,84 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   
-  //Calculate absolute L2 error squared (for now) 
-  //FIXME: calculate norm of reference solution squared for relative error calculation
+  //Calculate absolute L2 error squared and the norm of reference solution squares  
   ScalarT wm; //weighted measure
   ScalarT spressure_err_sq = 0.0; 
   ScalarT temperature_err_sq = 0.0; 
   ScalarT uvelocity_err_sq = 0.0; 
   ScalarT vvelocity_err_sq = 0.0; 
-  std::size_t dim; 
+  ScalarT spressure_ref_norm_sq = 0.0; 
+  ScalarT temperature_ref_norm_sq = 0.0; 
+  ScalarT uvelocity_ref_norm_sq = 0.0; 
+  ScalarT vvelocity_ref_norm_sq = 0.0; 
+  std::size_t dim;
+  int nEqnsError = responseSize/3;  
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp)  {
       wm = weighted_measure(cell,qp);
       //surface pressure field: dof 0
+      //L2 absolute error squared
       dim = 0;
       spressure_err_sq = spressure_err(cell,qp)*spressure_err(cell,qp); 
       this->local_response(cell,dim) += wm*spressure_err_sq;
-      this->global_response(dim) += wm*spressure_err_sq; 
+      this->global_response(dim) += wm*spressure_err_sq;
+      //norm ref solution squared
+      dim++;  
+      spressure_ref_norm_sq = spressure_ref(cell,qp)*spressure_ref(cell,qp); 
+      this->local_response(cell,dim) += wm*spressure_ref_norm_sq;
+      this->global_response(dim) += wm*spressure_ref_norm_sq;
+      //L2 relative error
+      dim++; 
+      this->local_response(cell,dim) = 0.0;
+      this->global_response(dim) = 0.0;
       for (std::size_t level=0; level < numLevels; ++level) {
         //u-velocity field: dof 1, 4, 7, ...
-        dim = 1 + level*3; 
+        //L2 absolute error squared
+        dim = 3 + level*9; 
         uvelocity_err_sq = velocity_err(cell,qp,level,0)*velocity_err(cell,qp,level,0); 
-        this->local_response(cell,dim) += wm*uvelocity_err_sq; //velocity(cell,qp,level,0)*velocity(cell,qp,level,0);  
-        this->global_response(dim) += wm*uvelocity_err_sq; //velocity(cell,qp,level,0)*velocity(cell,qp,level,0); 
+        this->local_response(cell,dim) += wm*uvelocity_err_sq; 
+        this->global_response(dim) += wm*uvelocity_err_sq; 
+        //norm ref solution squared
+        dim++;  
+        uvelocity_ref_norm_sq = velocity_ref(cell,qp,level,0)*velocity_ref(cell,qp,level,0); 
+        this->local_response(cell,dim) += wm*uvelocity_ref_norm_sq; 
+        this->global_response(dim) += wm*uvelocity_ref_norm_sq; 
+        //L2 relative error
+        dim++; 
+        this->local_response(cell,dim) = 0.0;
+        this->global_response(dim) = 0.0;
         //v-velocity field: dof 2, 5, 8, ...
-        dim = 2 + level*3; 
+        //L2 absolute error squared
+        dim = 6 + level*9; 
         vvelocity_err_sq = velocity_err(cell,qp,level,1)*velocity_err(cell,qp,level,1); 
         this->local_response(cell,dim) += wm*vvelocity_err_sq;  
         this->global_response(dim) += wm*vvelocity_err_sq;  
+        //norm ref solution squared
+        dim++;  
+        vvelocity_ref_norm_sq = velocity_ref(cell,qp,level,1)*velocity_ref(cell,qp,level,1); 
+        this->local_response(cell,dim) += wm*vvelocity_ref_norm_sq;  
+        this->global_response(dim) += wm*vvelocity_ref_norm_sq;  
+        //L2 relative error
+        dim++; 
+        this->local_response(cell,dim) = 0.0;
+        this->global_response(dim) = 0.0;
         //temperature field: dof 3, 6, 9, .... 
-        dim = 3 + level*3; 
+        //L2 absolute error squared
+        dim = 9 + level*9; 
         temperature_err_sq = temperature_err(cell,qp,level)*temperature_err(cell,qp,level); 
         this->local_response(cell,dim) += wm*temperature_err_sq; 
         this->global_response(dim) += wm*temperature_err_sq;
+        //norm ref solution squared
+        dim++;  
+        temperature_ref_norm_sq = temperature_ref(cell,qp,level)*temperature_ref(cell,qp,level); 
+        this->local_response(cell,dim) += wm*temperature_ref_norm_sq; 
+        this->global_response(dim) += wm*temperature_ref_norm_sq;
+        //L2 relative error
+        dim++; 
+        this->local_response(cell,dim) = 0.0;
+        this->global_response(dim) = 0.0;
         //FIXME: ultimately, will want to add tracers. 
-      } 
+      }
     }
   }
 
@@ -255,12 +351,26 @@ postEvaluate(typename Traits::PostEvalData workset)
 #if 0
 #else
   PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
-  for (int i=0; i < responseSize; ++i) {
+  int nEqnsError = responseSize/3;  
+  for (int i=0; i < nEqnsError; ++i) {
     ScalarT abs_err_sq = *gr; 
-    *gr = sqrt(abs_err_sq);  
+    *gr = sqrt(abs_err_sq);  //absolute error 
+    ++gr; 
+    ScalarT norm_ref_sq = *gr; 
+    *gr = sqrt(norm_ref_sq); //norm of reference solution
+    ++gr;
+    //relative error w.r.r. ref solution
+    //if reference solution is all 0, set rel error equal to absolute error 
+    //to avoid division by 0. 
+    if (norm_ref_sq == 0) 
+       *gr = sqrt(abs_err_sq); 
+    else
+       *gr = sqrt(abs_err_sq/norm_ref_sq); 
     ++gr; 
   } 
 #endif
+    // Do global scattering
+    PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
 }
 
 // **********************************************************************

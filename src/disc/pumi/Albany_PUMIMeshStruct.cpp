@@ -227,9 +227,6 @@ Albany::PUMIMeshStruct::getValidDiscretizationParameters() const
   validPL->set<double>("3D Scale", 1.0, "Height of Z discretization");
   validPL->set<bool>("Hexahedral", true, "Build hexahedral elements");
 
-  // this will do nothing unless this is a GOAL mesh struct
-  validPL->set<int>("Polynomial Order", 1, "Polynomial order of solution basis functions");
-
   validPL->set<bool>("Save Stabilized Stress", false, "Save stabilized stress to file");
 
   return validPL;

@@ -177,6 +177,7 @@ struct Workset {
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
   Teuchos::ArrayRCP<double>  wsSphereVolume;
+  Teuchos::ArrayRCP<double*>  wsLatticeOrientation;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;
 
@@ -272,10 +273,6 @@ struct Workset {
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > overlapped_mp_dgdxdotdot;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdp;
 #endif
-#endif
-
-#ifdef ALBANY_GOAL
-  Teuchos::RCP<Tpetra_Vector> qoi;
 #endif
 
   // Meta-function class encoding T<EvalT::ScalarT> given EvalT

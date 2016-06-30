@@ -192,6 +192,8 @@ postEvaluate(typename Traits::PostEvalData workset)
     ++gr; 
   } 
 #endif
+  // Do global scattering
+  PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
 }
 
 // **********************************************************************
