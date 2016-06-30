@@ -19,4 +19,4 @@ nodeset 3 surface with y_coord < -0.499999 and y_coord > -0.5000001
 nodeset 4 surface with y_coord >  0.499999 and y_coord <  0.5000001
 nodeset 5 surface with z_coord < -0.499999 and z_coord > -0.5000001
 nodeset 6 surface with z_coord >  0.499999 and z_coord <  0.5000001
-export genesis 'OrientationOnMesh.g' overwrite
+export genesis 'OrientationNotOnMesh.g' overwrite

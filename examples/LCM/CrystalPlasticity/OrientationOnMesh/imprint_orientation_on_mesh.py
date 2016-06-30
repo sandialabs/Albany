@@ -76,6 +76,15 @@ if __name__ == "__main__":
         print "Options:\n  --combine_blocks\n"
         sys.exit(1)
 
+    # "rotation matrix" or "euler angles"
+    orientation_format = "rotation matrix"
+
+    num_orientation_attributes = 0
+    if orientation_format == "rotation matrix":
+        num_orientation_attributes = 9
+    elif orientation_format == "euler angles":
+        num_orientation_attributes = 3
+
     genesis_input_name = sys.argv[1]
     genesis_input = exodus.exodus(genesis_input_name, mode='r')
     combine_blocks = False
@@ -197,29 +206,40 @@ if __name__ == "__main__":
 
     # Create attributes for the orientations
 
-    block_euler_angles = {}
-    num_attributes = 3
+    block_orientations = {}
 
     sorted_block_ids = []
     for block_id in block_ids:
         sorted_block_ids.append(block_id)
     sorted_block_ids.sort()
 
-    block_euler_angles = {}
+    block_orientations = {}
     for i in range(len(sorted_block_ids)):
         block_id = sorted_block_ids[i]
-        block_euler_angles[block_id] = []
-        rotation_matrix = ListToMatrix(orientations[i])
-        euler_angles = EulerAngles(rotation_matrix)
-        for j in range(num_attributes):
-            block_euler_angles[block_id].append(euler_angles[j])
+        block_orientations[block_id] = []
+        if orientation_format == "euler angles":
+            rotation_matrix = ListToMatrix(orientations[i])
+            euler_angles = EulerAngles(rotation_matrix)
+            for j in range(num_orientation_attributes):
+                block_orientations[block_id].append(euler_angles[j])
+        else:
+            # store the transpose of the rotation matrix on the mesh
+            block_orientations[block_id].append(orientations[i][0])
+            block_orientations[block_id].append(orientations[i][3])
+            block_orientations[block_id].append(orientations[i][6])
+            block_orientations[block_id].append(orientations[i][1])
+            block_orientations[block_id].append(orientations[i][4])
+            block_orientations[block_id].append(orientations[i][7])
+            block_orientations[block_id].append(orientations[i][2])
+            block_orientations[block_id].append(orientations[i][5])
+            block_orientations[block_id].append(orientations[i][8])            
 
     for i in range(len(block_ids)):
         block_id = block_ids[i]
-        block_num_attributes[i] = num_attributes
+        block_num_attributes[i] = num_orientation_attributes
         for j in range(block_num_elem[i]):
-            for k in range(num_attributes):
-                block_attributes[block_id].append(block_euler_angles[block_id][k])
+            for k in range(num_orientation_attributes):
+                block_attributes[block_id].append(block_orientations[block_id][k])
 
     # Combine all blocks with an orientation assigned to them into a single block
 

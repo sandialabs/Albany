@@ -127,18 +127,6 @@ struct SlipSystemStruct
 };
 
 //
-//! Convert Euler (Bunge) angles to basis vector
-//
-template<typename ArgT>
-void
-eulerAnglesToBasisVectors(ArgT euler_phi_1,
-			  ArgT euler_Phi,
-			  ArgT euler_phi_2,
-			  std::vector<ArgT>& basis_1,
-			  std::vector<ArgT>& basis_2,
-			  std::vector<ArgT>& basis_3);
-
-//
 //! Check tensor for NaN and inf values.
 //
 template<Intrepid2::Index NumDimT, typename ArgT>
