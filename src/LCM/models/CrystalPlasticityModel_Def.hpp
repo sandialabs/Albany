@@ -863,22 +863,16 @@ computeState(typename Traits::EvalData workset,
       }
 
       if (read_orientations_from_mesh_) {
-	Teuchos::ArrayRCP<double*> const& euler_angles = workset.wsLatticeOrientation;
-	double euler_phi_1 = euler_angles[cell][0];;
-	double euler_Phi   = euler_angles[cell][1];
-	double euler_phi_2 = euler_angles[cell][2];
-	std::vector<double> basis_1, basis_2, basis_3;
-	CP::eulerAnglesToBasisVectors(euler_phi_1,
-				      euler_Phi,
-				      euler_phi_2,
-				      basis_1,
-				      basis_2,
-				      basis_3);
-	std::cout << "DJL DEBUGGING euler   " << euler_phi_1 << ", " << euler_Phi << ", " << euler_phi_2 << std::endl;
-	std::cout << "DJL DEBUGGING basis_1 " << basis_1[0] << ", " << basis_1[1] << ", " << basis_1[2] << std::endl;
-	std::cout << "DJL DEBUGGING basis_2 " << basis_2[0] << ", " << basis_2[1] << ", " << basis_2[2] << std::endl;
-	std::cout << "DJL DEBUGGING basis_3 " << basis_3[0] << ", " << basis_3[1] << ", " << basis_3[2] << std::endl;
-	std::cout << std::endl;
+	Teuchos::ArrayRCP<double*> const& rotation_matrix_transpose = workset.wsLatticeOrientation;
+	orientation_matrix(0,0) = rotation_matrix_transpose[cell][0];
+	orientation_matrix(0,1) = rotation_matrix_transpose[cell][1];
+	orientation_matrix(0,2) = rotation_matrix_transpose[cell][2];
+	orientation_matrix(1,0) = rotation_matrix_transpose[cell][3];
+	orientation_matrix(1,1) = rotation_matrix_transpose[cell][4];
+	orientation_matrix(1,2) = rotation_matrix_transpose[cell][5];
+	orientation_matrix(2,0) = rotation_matrix_transpose[cell][6];
+	orientation_matrix(2,1) = rotation_matrix_transpose[cell][7];
+	orientation_matrix(2,2) = rotation_matrix_transpose[cell][8];
       }
       else {
 	orientation_matrix = element_block_orientation_;

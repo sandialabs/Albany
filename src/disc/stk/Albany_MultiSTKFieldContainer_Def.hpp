@@ -248,7 +248,7 @@ Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
   bool hasLatticeOrientationFieldContainerRequirement = (std::find(req.begin(), req.end(), "Lattice_Orientation") != req.end());
   if(hasLatticeOrientationFieldContainerRequirement){
     // STK says that attributes are of type Field<double,anonymous>[ name: "extra_attribute_3" , #states: 1 ]
-    this->latticeOrientation_field = metaData_->template get_field<stk::mesh::FieldBase>(stk::topology::ELEMENT_RANK, "extra_attribute_3");
+    this->latticeOrientation_field = metaData_->template get_field<stk::mesh::FieldBase>(stk::topology::ELEMENT_RANK, "extra_attribute_9");
     if(this->latticeOrientation_field != 0){
       buildLatticeOrientation = true;
       stk::io::set_field_role(*this->latticeOrientation_field, Ioss::Field::ATTRIBUTE);
