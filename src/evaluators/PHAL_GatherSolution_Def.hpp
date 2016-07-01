@@ -740,12 +740,14 @@ evaluateFields(typename Traits::EvalData workset)
      
      for (int i =0; i<numFields;i++)
         // val_kokkosjac[i]=this->val[i].get_view();
+         val_kokkosjac[i]=this->val[i].get_static_view();
      d_val=val_kokkosjac.template view<executionSpace>();
      Kokkos::parallel_for(tensorRank_0Policy(0,workset.numCells),*this);
 
      if (workset.transientTerms && this->enableTransient){
         for (int i =0; i<numFields;i++)
            // val_dot_kokkosjac[i]=this->val_dot[i].get_view();
+           val_dot_kokkosjac[i]=this->val_dot[i].get_static_view();
         d_val_dot=val_dot_kokkosjac.template view<executionSpace>();
         Kokkos::parallel_for(tensorRank_0_enableTransientPolicy(0,workset.numCells),*this);
      }
