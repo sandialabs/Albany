@@ -1,5 +1,95 @@
 #!/usr/bin/python
 
+import contextlib
+import os
+import time
+
+#
+# Local functions
+#
+@contextlib.contextmanager
+def nostdout():
+
+    import cStringIO
+    import sys
+
+    save_stdout = sys.stdout
+    sys.stdout = cStringIO.StringIO()
+    yield
+    sys.stdout = save_stdout
+
+@contextlib.contextmanager
+def stdout_redirected(to = os.devnull):
+    '''
+    import os
+
+    with stdout_redirected(to=filename):
+        print("from Python")
+        os.system("echo non-Python applications are also supported")
+    '''
+
+    import cStringIO
+    import sys
+
+    fd = sys.stdout.fileno()
+
+    ##### assert that Python and C stdio write using the same file descriptor
+    ####assert libc.fileno(ctypes.c_void_p.in_dll(libc, "stdout")) == fd == 1
+
+    def _redirect_stdout(to):
+        sys.stdout.close() # + implicit flush()
+        os.dup2(to.fileno(), fd) # fd writes to 'to' file
+        sys.stdout = os.fdopen(fd, 'w') # Python writes to fd
+
+    with os.fdopen(os.dup(fd), 'w') as old_stdout:
+        with open(to, 'w') as file:
+            _redirect_stdout(to = file)
+        try:
+            yield # allow code to be run with the redirected stdout
+        finally:
+            _redirect_stdout(to = old_stdout) # restore stdout.
+                                            # buffering and flags such as
+                                            # CLOEXEC may be different
+
+#
+# Local classes
+#
+class InputError(Exception):
+
+    """Exception raised for errors in the input.
+
+    Attributes:
+        expression -- input expression in which the error occurred
+        message -- explanation of the error
+    """
+
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return repr(self.message)
+
+#
+# Class for timing
+#
+class Timer:  
+
+    def __enter__(self):
+        self.start = time.clock()
+        self.now = self.start
+        self.last = self.now
+        return self
+
+    def __exit__(self, *args):
+        self.end = time.clock()
+        self.interval = self.end - self.start
+
+    def check(self):
+        self.now = time.clock()
+        self.step = self.now - self.last
+        self.interval = self.now - self.start
+        self.last = self.now
+
 #
 # Class for common properties of local objects
 #
@@ -189,7 +279,7 @@ def populate_tree(tree, parent, dic):
     import xml.etree.ElementTree as et
     import numpy as np
     import uuid
-    from lcm_postprocess.lcm_objects import ObjLocal
+    from lcm_postprocess import ObjLocal
 
     try:
 
@@ -300,18 +390,3 @@ def view_tree(dict_data = None, obj_data = None, filename = None):
     root.mainloop()
 
 # end view_tree(dict_data = None, obj_data = None, filename = None):
-
-
-
-if __name__ == '__main__':
-
-    import sys
-
-    try:
-        name_file_input = sys.argv[1]
-    except:
-        raise
-
-    view_tree(filename = name_file_input)
-
-# end if __name__ == '__main__':

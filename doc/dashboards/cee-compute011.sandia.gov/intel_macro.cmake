@@ -15,23 +15,57 @@ macro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)
 
   set (CONFIGURE_OPTIONS
     "${COMMON_CONFIGURE_OPTIONS}"
-    "-DTPL_ENABLE_SuperLU:STRING=ON"
-    "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
-    "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
+  "-DBoost_INCLUDE_DIRS:PATH=${INTEL_BOOST_ROOT}/include"
+  "-DBoost_LIBRARY_DIRS:PATH=${INTEL_BOOST_ROOT}/lib"
+  "-DBoostLib_INCLUDE_DIRS:PATH=${INTEL_BOOST_ROOT}/include"
+  "-DBoostLib_LIBRARY_DIRS:PATH=${INTEL_BOOST_ROOT}/lib"
+  "-DBoostAlbLib_INCLUDE_DIRS:PATH=${INTEL_BOOST_ROOT}/include"
+  "-DBoostAlbLib_LIBRARY_DIRS:PATH=${INTEL_BOOST_ROOT}/lib"
+#
+  "-DTPL_ENABLE_Netcdf:BOOL=ON"
+  "-DNetcdf_INCLUDE_DIRS:PATH=${INTEL_PREFIX_DIR}/include"
+  "-DNetcdf_LIBRARY_DIRS:PATH=${INTEL_PREFIX_DIR}/lib"
+  "-DTPL_Netcdf_PARALLEL:BOOL=ON"
+  "-DTPL_ENABLE_Pnetcdf:STRING=ON"
+  "-DPnetcdf_INCLUDE_DIRS:PATH=${INTEL_PREFIX_DIR}/include"
+  "-DPnetcdf_LIBRARY_DIRS=${INTEL_PREFIX_DIR}/lib"
+  #
+  "-DTPL_ENABLE_HDF5:BOOL=ON"
+  "-DHDF5_INCLUDE_DIRS:PATH=${INTEL_PREFIX_DIR}/include"
+  "-DHDF5_LIBRARY_DIRS:PATH=${INTEL_PREFIX_DIR}/lib"
+  "-DHDF5_LIBRARY_NAMES:STRING='hdf5_hl\\;hdf5\\;z'"
+  #
+  "-DTPL_ENABLE_Zlib:BOOL=ON"
+  "-DZlib_INCLUDE_DIRS:PATH=${INTEL_PREFIX_DIR}/include"
+  "-DZlib_LIBRARY_DIRS:PATH=${INTEL_PREFIX_DIR}/lib"
+  #
+  "-DTPL_ENABLE_ParMETIS:BOOL=ON"
+  "-DParMETIS_INCLUDE_DIRS:PATH=${INTEL_PREFIX_DIR}/include"
+  "-DParMETIS_LIBRARY_DIRS:PATH=${INTEL_PREFIX_DIR}/lib"
+  #
+  "-DTPL_ENABLE_SuperLU:BOOL=ON"
+  "-DSuperLU_INCLUDE_DIRS:PATH=${INTEL_PREFIX_DIR}/SuperLU_4.3/include"
+  "-DSuperLU_LIBRARY_DIRS:PATH=${INTEL_PREFIX_DIR}/SuperLU_4.3/lib"
+#
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${INTEL_MPI_DIR}"
     "-DCMAKE_CXX_COMPILER:STRING=${INTEL_MPI_DIR}/bin64/mpiicpc"
-    "-DCMAKE_CXX_FLAGS:STRING='-axAVX -O3 -DNDEBUG ${extra_cxx_flags}'"
+    "-DCMAKE_CXX_FLAGS:STRING='-O2 -DNDEBUG -diag-disable=cpu-dispatch ${extra_cxx_flags}'"
+#    "-DCMAKE_CXX_FLAGS:STRING='-axAVX -O3 -DNDEBUG -diag-disable=cpu-dispatch ${extra_cxx_flags}'"
     "-DCMAKE_C_COMPILER:STRING=${INTEL_MPI_DIR}/bin64/mpiicc"
-    "-DCMAKE_C_FLAGS:STRING='-axAVX -O3 -DNDEBUG'"
+    "-DCMAKE_C_FLAGS:STRING='-O2 -diag-disable=cpu-dispatch -DNDEBUG'"
+#    "-DCMAKE_C_FLAGS:STRING='-axAVX -O3 -diag-disable=cpu-dispatch -DNDEBUG'"
     "-DCMAKE_Fortran_COMPILER:STRING=${INTEL_MPI_DIR}/bin64/mpiifort"
-    "-DCMAKE_Fortran_FLAGS:STRING='-axAVX -O3 -DNDEBUG'"
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lifcore -lz -Wl,-rpath,${PREFIX_DIR}/lib:${INTEL_DIR}/lib/intel64'"
+#    "-DCMAKE_Fortran_FLAGS:STRING='-axAVX -O3 -DNDEBUG -diag-disable=cpu-dispatch'"
+    "-DCMAKE_Fortran_FLAGS:STRING='-O2 -DNDEBUG -diag-disable=cpu-dispatch'"
+    "-DTrilinos_EXTRA_LINK_FLAGS='-L${INTEL_PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lifcore -lz -Wl,-rpath,${INTEL_PREFIX_DIR}/lib:${INTEL_DIR}/lib/intel64'"
     "-DCMAKE_AR:FILEPATH=${INTEL_DIR}/bin/intel64/xiar"
     "-DCMAKE_LINKER:FILEPATH=${INTEL_DIR}/linux/bin/intel64/xild"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosIntelInstall"
     "-DTPL_BLAS_LIBRARIES:STRING=${LABLAS_LIBRARIES}"
     "-DTPL_LAPACK_LIBRARIES:STRING=${LABLAS_LIBRARIES}"
+    "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"
+    "-DCMAKE_INSTALL_RPATH:STRING=${INTEL_MPI_DIR}/lib64;${INTEL_PREFIX_DIR}/lib;${INTEL_DIR}/lib/intel64"
     )
 
   if (BUILD_SCOREC)
@@ -158,7 +192,6 @@ if (BUILD_INTEL_ALBANY)
     
     if (S_HAD_ERROR)
       message ("Cannot submit Albany configure results.")
-      set (BUILD_INTEL_ALBANY FALSE)
     endif (S_HAD_ERROR)
   endif (CTEST_DO_SUBMIT)
 
@@ -185,7 +218,6 @@ endif (BUILD_INTEL_ALBANY)
 
       if (S_HAD_ERROR)
         message ("Cannot submit Albany build results.")
-        set (BUILD_INTEL_ALBANY FALSE)
       endif (S_HAD_ERROR)
     endif (CTEST_DO_SUBMIT)
 

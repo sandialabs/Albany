@@ -4,13 +4,13 @@ read_file_input_material.py
 '''
 
 import xml.etree.ElementTree as et
-import lcm_objects
+from _core import ObjDomain
 import numpy as np
 
 # Read the materials input file
 def read_file_input_material(
     filename = None,
-    domain = lcm_objects.ObjDomain(),
+    domain = ObjDomain(),
     names_variable = ['orientations','num_slip_systems']):
     
     tree = et.parse(filename)
