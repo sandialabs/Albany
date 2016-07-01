@@ -87,7 +87,7 @@ def plot_inverse_pole_figure(**kwargs):
     #
     # Create figures  
     #
-    plt.rc('text', usetex = True)
+    # plt.rc('text', usetex = True)
     plt.rc('font', family = 'serif', size = 22)
 
     fig = plt.figure(figsize = (15,4))

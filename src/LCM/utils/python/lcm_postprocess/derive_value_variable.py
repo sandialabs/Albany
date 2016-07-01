@@ -4,14 +4,16 @@ import numpy as np
 from scipy.linalg import inv
 from scipy.linalg import logm
 from scipy.linalg import polar
+from scipy.linalg import eigh
 
 
 # Compute the von Mises equivalent stress
+# @profile
 def compute_stress_mises(stress_cauchy):
 
     stress_deviatoric = stress_cauchy - 1. / 3. * np.trace(stress_cauchy) * np.eye(3)
 
-    stress_mises = np.sqrt(3. / 2. * np.sum(np.tensordot(stress_deviatoric, stress_deviatoric, axes = 2)))
+    stress_mises = np.sqrt(3. / 2. * np.sum(np.tensordot(stress_deviatoric, stress_deviatoric)))
 
     return stress_mises
 
@@ -20,15 +22,25 @@ def compute_stress_mises(stress_cauchy):
 
 
 # Compute the logarithmic strain
+# @profile
 def compute_strain_logarithmic(defgrad):
 
-    return 0.5 * logm(np.tensordot(defgrad, defgrad, axes = 1))
+    deformation = np.dot(defgrad.T, defgrad,)
+    eigenvalues, eigenvectors = eigh(deformation)
+    if np.min(eigenvalues) < 0:
+        print defgrad, deformation, eigenvalues
+        raise ValueError
+    strain_logarithmic = 0.5 * np.dot(np.dot(eigenvectors,np.diag(np.log(eigenvalues))),eigenvectors.T)
+
+    # return 0.5 * logm(np.dot(defgrad.T, defgrad))
+    return strain_logarithmic
 
 # end def compute_strain_logarithmic(defgrad):
 
 
 
 # Compute deformed orientations
+# @profile
 def compute_orientations(domain):
 
     for key_block in domain.blocks:
@@ -49,13 +61,9 @@ def compute_orientations(domain):
                     polar(element.variables['F'][step])
 
                 element.variables['orientation'][step] = \
-                    np.tensordot(
+                    np.dot(
                         element.variables['R'][step],
-                        np.tensordot(
-                            block.material.orientation,
-                            element.variables['R'][step].T,
-                            axes = 1),
-                        axes = 1)
+                        np.dot(block.material.orientation, element.variables['R'][step].T))
 
             for key_point in element.points:
 
@@ -84,6 +92,7 @@ def compute_orientations(domain):
 
 
 # Compute derived tensor-valued fields and populate domain object
+# @profile
 def _derive_values_scalar(name_variable, domain): 
 
     num_dims = domain.num_dims
@@ -129,10 +138,9 @@ def _derive_values_scalar(name_variable, domain):
 
                 elif name_variable == 'Misorientation':
 
-                    matrix_misorientation = np.tensordot(
+                    matrix_misorientation = np.dot(
                         element.variables['orientation'][key_step], 
-                        inv_orientation, 
-                        axes = 1)
+                        inv_orientation)
 
                     value_variable = 0.5 * (np.trace(matrix_misorientation) - 1.0)
 
@@ -152,10 +160,9 @@ def _derive_values_scalar(name_variable, domain):
 
                     elif name_variable == 'Misorientation':
 
-                        matrix_misorientation = np.tensordot(
+                        matrix_misorientation = np.dot(
                             point.variables['orientation'][key_step], 
-                            inv_orientation, 
-                            axes = 1)
+                            inv_orientation)
 
                         value_variable = 0.5 * (np.trace(matrix_misorientation) - 1.0)
 
@@ -167,6 +174,7 @@ def _derive_values_scalar(name_variable, domain):
 
 
 # Compute derived tensor-valued fields and populate domain object
+# @profile
 def _derive_values_tensor(name_variable, domain): 
 
     num_dims = domain.num_dims
@@ -230,6 +238,7 @@ def _derive_values_tensor(name_variable, domain):
 
 
 # Populate domain object with derived variable values
+# @profile
 def derive_value_variable(
     domain = None,
     names_variable = [

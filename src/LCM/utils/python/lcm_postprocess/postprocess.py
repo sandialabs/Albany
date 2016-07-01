@@ -140,10 +140,13 @@ def postprocess(
 
 
     #
-    # Plot the convergence data
+    # Plot the simulation results
     #
     if plotting == True:
     
+        #
+        # Plot the convergence data
+        #
         with Timer() as timer:
 
             if verbosity > 0:
@@ -154,14 +157,9 @@ def postprocess(
         if verbosity > 0:
             print '    Elapsed time: ' + str(timer.interval) + 's\n'
 
-
-
-
-    #
-    # Plot the inverse pole figures
-    #
-    if plotting == True:
-
+        #
+        # Plot the inverse pole figures
+        #
         with Timer() as timer:
 
             if verbosity > 0:
@@ -174,13 +172,9 @@ def postprocess(
         if verbosity > 0:
             print '    Elapsed time: ' + str(timer.interval) + 's\n'
 
-
-
-    #
-    # Plot stress-strain data
-    #
-    if plotting == True:
-
+        #
+        # Plot stress-strain data
+        #
         with Timer() as timer:
 
             if verbosity > 0:
