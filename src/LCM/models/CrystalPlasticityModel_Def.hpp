@@ -274,6 +274,10 @@ CrystalPlasticityModel(
       slip_systems_[num_ss].energy_activation_ = 
           f_list.get<RealType>("Activation Energy", 0.0);
     }
+    else
+    {
+      slip_systems_[num_ss].flow_rule = CP::FlowRule::POWER_LAW;
+    }
 
     //
     // Obtain hardening law parameters
