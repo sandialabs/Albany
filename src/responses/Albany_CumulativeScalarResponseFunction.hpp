@@ -33,6 +33,9 @@ namespace Albany {
     //! Setup response function
     virtual void setupT();
 
+    //!Perform post registration setup
+    virtual void postRegSetup();
+
     //! Destructor
     virtual ~CumulativeScalarResponseFunction();
 

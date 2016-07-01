@@ -645,10 +645,10 @@ ELSE()
 ENDIF()
 
 # set optional dependency of mesh on parameters, defaults to Disabled
-OPTION(ENABLE_USE_CISM_FLOW_PARAMETERS "Flag to use the parameters of Glen's law used by Cism" OFF)
+OPTION(ENABLE_USE_CISM_FLOW_PARAMETERS "Flag to use the parameters of Glen's law used by Cism" ON)
 IF (ENABLE_USE_CISM_FLOW_PARAMETERS)
   ADD_DEFINITIONS(-DUSE_CISM_FLOW_PARAMETERS)
-  MESSAGE("-- USE_CISM_FLOW_PARAMETERS is Enabled, compiling with -DUSE_CISM_FLOW_PARAMETERS. WARNING: many FELIX tests will fail")
+  MESSAGE("-- USE_CISM_FLOW_PARAMETERS is Enabled, compiling with -DUSE_CISM_FLOW_PARAMETERS.")
   SET(USE_CISM_FLOW_PARAMETERS TRUE)
 ELSE()
   SET(USE_CISM_FLOW_PARAMETERS FALSE)

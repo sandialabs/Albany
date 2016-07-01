@@ -25,7 +25,6 @@ public:
   MDFieldMemoizer () : prev_workset_index_(-1) {}
 
   bool haveStoredData (typename Traits::EvalData workset) {
-     return false; //TODO: fix this. Returning false to disable optimization because it gives uncorrect results.
     const bool stored = workset.wsIndex == prev_workset_index_;
     prev_workset_index_ = workset.wsIndex;
     return stored;

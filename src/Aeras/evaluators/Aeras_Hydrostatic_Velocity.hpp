@@ -34,8 +34,9 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   // Input:
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim> Velx;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>          sphere_coord;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim>       Velx;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>    sphere_coord;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      pressure;
   
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Level,Dim> Velocity;

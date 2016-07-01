@@ -29,6 +29,9 @@ namespace Albany {
     //! Get the number of responses
     virtual unsigned int numResponses() const;
 
+    //! Perform optimization setup
+    virtual void postRegSetup(){};
+
     //! Evaluate responses
     virtual void 
     evaluateResponseT(const double current_time,

@@ -76,6 +76,9 @@ namespace Albany {
     //! Create Tpetra operator for gradient (e.g., dg/dx)
     virtual Teuchos::RCP<Tpetra_Operator> createGradientOpT() const = 0;
 
+    //! perform post registration setup
+    virtual void postRegSetup() = 0;
+
     //! \name Deterministic evaluation functions
     //@{
 
