@@ -83,6 +83,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
  else if(name == "Aeras Hydrostatic Pure Advection 1")
     F = Teuchos::rcp(new AAdapt::AerasHydrostaticPureAdvection1(neq, numDim, data));
 
+ else if(name == "Aeras Hydrostatic 3D Deformational Flow")
+    F = Teuchos::rcp(new AAdapt::AerasHydrostatic3dDeformationalFlow(neq, numDim, data));
+
   else if(name == "Aeras Hydrostatic")
     F = Teuchos::rcp(new AAdapt::AerasHydrostatic(neq, numDim, data));
 
@@ -1140,7 +1143,6 @@ void AAdapt::AerasHydrostaticBaroclinicInstabilities::compute(double* solution, 
   }
 }
 
-
 //*****************************************************************************
 AAdapt::AerasHydrostaticPureAdvection1::AerasHydrostaticPureAdvection1(int neq_, int numDim_, Teuchos::Array<double> data_)
 : numDim(numDim_), neq(neq_), data(data_) {
@@ -1260,6 +1262,158 @@ void AAdapt::AerasHydrostaticPureAdvection1::compute(double* solution, const dou
 	//std::cout << "Pi[1] " << Pi[1] <<"\n";
 
 }
+
+//*****************************************************************************
+AAdapt::AerasHydrostatic3dDeformationalFlow::AerasHydrostatic3dDeformationalFlow(int neq_, int numDim_, Teuchos::Array<double> data_)
+: numDim(numDim_), neq(neq_), data(data_) {
+	TEUCHOS_TEST_FOR_EXCEPTION((numDim != 3),
+			std::logic_error,
+			"Error! Invalid call of Aeras Hydrostatic 3d Deformational Flow " << neq
+			<< " " << numDim << std::endl);
+}
+void AAdapt::AerasHydrostatic3dDeformationalFlow::compute(double* solution, const double* X) 
+{
+
+  const int numLevels  = (int) data[0];
+  const int numTracers = (int) data[1];
+  //const double SP0     =       data[2];
+  //const double U0      =       data[3];
+  //const double U1      =       data[4];
+  //const double T0      =       data[5];
+
+  //Initialization for dCMIP, 2012 3D Deformational Flow, p. 16.
+
+  std::cout <<"AAdapt::AerasHydrostatic3dDeformationalFlow::compute()" << std::endl;
+  std::cout <<"Number of tracers "<< numTracers <<" , numLevels "<<numLevels << std::endl;
+  
+  std::vector<double> q0(numTracers,0.0);
+
+  //for (int nt = 0; nt<numTracers; ++nt) {
+  //  q0[nt] = data[6 + nt];
+  //}
+  
+  std::vector<double> Pressure(numLevels);
+  std::vector<double> Pi(numLevels);
+  std::vector<double> z_press(numLevels);
+  
+  const double a       = Aeras::ShallowWaterConstants::self().earthRadius;
+  const double g       = Aeras::ShallowWaterConstants::self().gravity;
+  const double T0      = 300.0;
+  const double P0      = 100000.0;
+  const double SP0     = P0;
+  const double PI      = 3.141592653589793;
+  const double Ptop    = 25494.4;
+  const double Rgasd   = 287.0;
+  const double H       = Rgasd*T0/g;
+  const double zs      = 0.0;
+  const double tau     = 1036800.0;
+  const double omega0  = 23000.0*PI/tau; 
+  const double k       = 10.0*a/tau;
+  
+  const Aeras::Eta<DoubleType> &EP = Aeras::Eta<DoubleType>::self(Ptop,P0,numLevels);
+  
+  for (int i=0; i<numLevels; ++i) Pressure[i] = EP.A(i)*EP.p0() + EP.B(i)*SP0;
+  
+  for (int i=0; i<numLevels; ++i) {
+  	const double pp   = i<numLevels-1 ? 0.5*(Pressure[i] + Pressure[i+1]) : SP0;
+  	const double pm   = i             ? 0.5*(Pressure[i] + Pressure[i-1]) : EP.ptop();
+  	Pi[i] = (pp - pm) / EP.delta(i);
+  }
+  
+  for (int i=0; i<numLevels; ++i) z_press[i] = H*log(P0/Pressure[i]) + zs;
+  
+  const double x = X[0];
+  const double y = X[1];
+  const double z = X[2];
+  
+  const double myPi  = PI;
+  const double alpha = myPi/2;
+  
+  double theta  = std::asin(z);
+  double lambda = std::atan2(y,x);
+  
+  static const double DIST_THRESHOLD = Aeras::ShallowWaterConstants::self().distanceThreshold;
+  if (std::abs(std::abs(theta)-myPi/2) < DIST_THRESHOLD) lambda = 0;
+  else if (lambda < 0) lambda += 2*myPi;
+  
+  const double sin2Theta = std::sin(2.0*theta);
+  const double sinTheta  = std::sin(theta);
+  const double cosTheta  = std::cos(theta);
+  
+  const double sinLambda  = std::sin(lambda);
+  const double sin2Lambda = std::sin(2.0*lambda);
+  const double cosLambda  = std::cos(lambda);
+
+  int offset = 0;
+  //Surface Pressure
+  solution[offset++] = SP0;
+
+  for (int i=0; i<numLevels; ++i) {
+    double Ua = k*sinLambda*sinLambda*sin2Theta + (2.0*PI*a/tau)*cosTheta;
+ 
+    double Va = k*sin2Lambda*cosTheta;
+
+    double B = EP.B(i);
+
+    double taper = - exp( (Pressure[i] - P0          )/(B*Ptop) )
+                   + exp( (Ptop        - Pressure[i] )/(B*Ptop) );
+
+    double Ud = (omega0*a)/(B*Ptop)*cosLambda*cosTheta*cosTheta*taper;
+
+    //Velx
+    solution[offset++] = Ua + Ud; //
+    solution[offset++] = Va; //
+    
+    //Temperature
+    solution[offset++] = T0; //T0;
+  }
+  
+  //for Tracers
+  const double Rt         = a/2.0;
+  const double Zt         = 1000.0;
+  const double zc         = 5000.0;
+  const double lambda_c1  = 5.0*PI/6.0;
+  const double lambda_c2  = 7.0*PI/6.0;
+  const double theta_c    = 0.0;
+  const double sinTheta_c = std::sin(theta_c);
+  const double cosTheta_c = std::cos(theta_c);
+
+  for (int level=0; level<numLevels; ++level) {
+
+    double r1 = a*std::acos( sinTheta_c*sinTheta+cosTheta_c*cosTheta*cos(lambda-lambda_c1) );
+    double r2 = a*std::acos( sinTheta_c*sinTheta+cosTheta_c*cosTheta*cos(lambda-lambda_c2) );
+    double d1 = std::min( 1.0, (r1/Rt)*(r1/Rt) + (z_press[level] - zc)*(z_press[level] - zc)/(Zt*Zt) );
+    double d2 = std::min( 1.0, (r2/Rt)*(r2/Rt) + (z_press[level] - zc)*(z_press[level] - zc)/(Zt*Zt) );
+
+    q0[0] = 0.5*(1.0+cos(PI*d1)) + 0.5*(1.0+cos(PI*d2));
+
+    q0[1] = 0.9 - 0.8*q0[0]*q0[0];
+
+    if (d1 < 0.5 || d2 < 0.5) {
+      q0[2] = 1.0;
+    } else {
+      q0[2] = 0.1;
+    }
+
+    if ( (z_press[level] > zc)            && 
+         (theta          > theta_c-0.125) &&
+         (theta          < theta_c+0.125) ) {
+      q0[2] = 0.1;
+    }
+
+    q0[3] = 1.0 - 0.3*( q0[0] + q0[1] + q0[2]);
+
+    q0[4] = 1.0;
+
+  //Tracers
+    for (int nt=0; nt<numTracers; ++nt) {
+      solution[offset++] = q0[nt]*Pi[level];
+    }
+
+  }
+  
+}
+
 //*****************************************************************************
 AAdapt::AerasRestingHydrostatic::AerasRestingHydrostatic( int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {

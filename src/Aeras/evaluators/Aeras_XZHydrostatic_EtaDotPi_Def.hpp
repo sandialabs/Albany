@@ -32,7 +32,7 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   //etadotdtracerNames    (p.get< Teuchos::ArrayRCP<std::string> >("Tracer EtaDotd Names")),
   dedotpitracerdeNames    (p.get< Teuchos::ArrayRCP<std::string> >("Tracer EtaDotd Names")),
   etadotdT       (p.get<std::string> ("EtaDotdT"),              dl->qp_scalar_level),
-  etadot       (p.get<std::string> ("EtaDot"),              dl->qp_scalar_level),
+  etadot         (p.get<std::string> ("EtaDot"),                dl->qp_scalar_level),
   etadotdVelx    (p.get<std::string> ("EtaDotdVelx"),           dl->node_vector_level),
   Pidot          (p.get<std::string> ("PiDot"),                 dl->qp_scalar_level),
   numQPs     (dl->node_qp_scalar          ->dimension(2)),
@@ -85,7 +85,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(Temperature,   fm);
   this->utils.setFieldData(Velocity   ,   fm);
   this->utils.setFieldData(etadotdT   ,   fm);
-  this->utils.setFieldData(etadot   ,   fm);
+  this->utils.setFieldData(etadot     ,   fm);
   this->utils.setFieldData(etadotdVelx,   fm);
   this->utils.setFieldData(Pidot,         fm);
   for (int i = 0; i < Tracer.size();  ++i)       this->utils.setFieldData(Tracer[tracerNames[i]], fm);
@@ -123,6 +123,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int qp=0; qp < numQPs; ++qp) {
+
         ScalarT pdotp0 = 0;
 	for (int level=0; level < numLevels; ++level) pdotp0 -= divpivelx(cell,qp,level) * E.delta(level);
 	for (int level=0; level < numLevels; ++level) {
@@ -170,6 +171,7 @@ evaluateFields(typename Traits::EvalData workset)
           //OG: A tracer eqn for pi, or for q=1. Not relevant for basic hydrostatic version.
   	  Pidot(cell,qp,level) = - divpivelx(cell,qp,level) - (etadotpi_p - etadotpi_m)/E.delta(level);
 	}
+
       }
     }
   }//end of (not pure Advection)
@@ -182,24 +184,22 @@ evaluateFields(typename Traits::EvalData workset)
     etadotPi.initialize();
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int qp=0; qp < numQPs; ++qp) {
-	for (int level=0; level < numLevels; ++level) {
-          //IKT: check with Pete, Tom that this is correct
-          etadotPi(cell,qp,level) = etadot(cell,qp,level)*Pi(cell,qp,level);  
+
+	for (int level=0; level < numLevels-1; ++level) {
+	  const ScalarT etadotpi_m = etadot(cell,qp,level  )*Pi(cell,qp,level  );
+	  const ScalarT etadotpi_p = etadot(cell,qp,level+1)*Pi(cell,qp,level+1);
+          //Simple average in vertical direction for etadotPi(level+1/2) at interfaces
+          etadotPi[level] = 0.5*(etadotpi_m + etadotpi_p);  
         }
-      }
-    }
-    for (int cell=0; cell < workset.numCells; ++cell) {
-      for (int qp=0; qp < numQPs; ++qp) {
+	etadotpi[0] = etadotpi[numLevels] = 0;
+        
         //Vertical Finite Differencing
-        //IKT: there is a problem with this loop, b/c it assumed etadotPi has size (numLevels+1) whereas 
-        //here it has size (numLevels+1).  I changed it to go to numLevels-1 to avoid seg fault.  Ask Tom. 
-        for (int level=0; level < numLevels-1; ++level) {
-          //IKT, 6/1/16: I think the following line is not right... There is an E.  check with Tom.
+        for (int level=0; level < numLevels; ++level) {
 	  const ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*E.delta(level));
 	  const int level_m = level             ? level-1 : 0;
 	  const int level_p = level+1<numLevels ? level+1 : level;
-	  const ScalarT etadotpi_m = etadotPi(cell,qp,level);
-	  const ScalarT etadotpi_p = etadotPi(cell,qp,level+1);
+	  const ScalarT etadotpi_m = etadotPi[level  ];
+	  const ScalarT etadotpi_p = etadotPi[level+1];
 
 	  const ScalarT dT_m       = Temperature(cell,qp,level)   - Temperature(cell,qp,level_m);
 	  const ScalarT dT_p       = Temperature(cell,qp,level_p) - Temperature(cell,qp,level);
@@ -215,12 +215,11 @@ evaluateFields(typename Traits::EvalData workset)
 	 		      + Tracer[tracerNames[i]](cell,qp,level_m) / Pi(cell,qp,level_m) );
 	    const ScalarT q_p = 0.5*( Tracer[tracerNames[i]](cell,qp,level_p) / Pi(cell,qp,level_p)
 	 		      + Tracer[tracerNames[i]](cell,qp,level)   / Pi(cell,qp,level)   );
-	    //etadotdTracer[tracerNames[i]](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
 	    dedotpiTracerde[tracerNames[i]](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
 	  }
-          //IKT, 6/1/16: I think the following line is not right... There is an E.  check with Tom.
   	  Pidot(cell,qp,level) = - divpivelx(cell,qp,level) - (etadotpi_p - etadotpi_m)/E.delta(level);
         }
+
       }
     }
   }
