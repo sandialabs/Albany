@@ -1,7 +1,9 @@
 #!/usr/bin/python
 
 import numpy as np
-from scipy.linalg import inv, logm, polar
+from scipy.linalg import inv
+from scipy.linalg import logm
+from scipy.linalg import polar
 
 
 # Compute the von Mises equivalent stress

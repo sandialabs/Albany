@@ -81,4 +81,5 @@ ENDIF()
 # Can remove following once stk_rebalance is in trilinos again
 IF (ALBANY_STK_REBALANCE)
   add_subdirectory(percept)
+  target_link_libraries(albanySTK albanySTKRebalance)
 ENDIF()

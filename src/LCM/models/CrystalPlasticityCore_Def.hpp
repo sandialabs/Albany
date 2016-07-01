@@ -6,53 +6,6 @@
 
 #include <boost/math/special_functions/fpclassify.hpp>
 
-//
-//! Convert Euler (Bunge) angles to basis vector
-//
-template<typename ArgT>
-void
-CP::eulerAnglesToBasisVectors(ArgT euler_phi_1,
-			      ArgT euler_Phi,
-			      ArgT euler_phi_2,
-			      std::vector<ArgT>& basis_1,
-			      std::vector<ArgT>& basis_2,
-			      std::vector<ArgT>& basis_3)
-{
-  using std::sin;
-  using std::cos;
-
-  ArgT R[][3] = {{0.0, 0.0, 0.0},
-		 {0.0, 0.0, 0.0},
-		 {0.0, 0.0, 0.0}};
-
-  // Active rotation tensor
-  R[0][0] =  cos(euler_phi_1)*cos(euler_phi_2) - sin(euler_phi_1)*sin(euler_phi_2)*cos(euler_Phi);
-  R[0][1] = -cos(euler_phi_1)*sin(euler_phi_2) - sin(euler_phi_1)*cos(euler_phi_2)*cos(euler_Phi);
-  R[0][2] =  sin(euler_phi_1)*sin(euler_Phi);
-  R[1][0] =  sin(euler_phi_1)*cos(euler_phi_2) + cos(euler_phi_1)*sin(euler_phi_2)*cos(euler_Phi);
-  R[1][1] = -sin(euler_phi_1)*sin(euler_phi_2) + cos(euler_phi_1)*cos(euler_phi_2)*cos(euler_Phi);
-  R[1][2] = -cos(euler_phi_1)*sin(euler_Phi);
-  R[2][0] =  sin(euler_phi_2)*sin(euler_Phi);
-  R[2][1] =  cos(euler_phi_2)*sin(euler_Phi);
-  R[2][2] =  cos(euler_Phi);
-
-  ArgT e1[3] = {1.0, 0.0, 0.0};
-  ArgT e2[3] = {0.0, 1.0, 0.0};
-  ArgT e3[3] = {0.0, 0.0, 1.0};
-
-  basis_1 = std::vector<ArgT>(3, 0.0);
-  basis_2 = std::vector<ArgT>(3, 0.0);
-  basis_3 = std::vector<ArgT>(3, 0.0);
-   
-  for (int i=0 ; i<3 ; i++) {
-    for (int j=0 ; j<3 ; j++) {
-      basis_1[i] += R[i][j]*e1[j];
-      basis_2[i] += R[i][j]*e2[j];
-      basis_3[i] += R[i][j]*e3[j];
-    }
-  }
-}
-
 ///
 /// Verify that constitutive update has preserved finite values
 ///
@@ -196,25 +149,25 @@ CP::updateSlip(
 {
   Intrepid2::Index const num_slip_sys = slip_n.get_dimension();
 
-  for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys) {
+  if (num_slip_sys > 0) {
 
-    // Material properties
-    DataT const
-    tauC = slip_systems[slip_sys].tau_critical_;
+    using FLOW_RULE = CP::FlowRuleBase<NumDimT, NumSlipT, DataT, ArgT>;
 
-    DataT const
-    m = slip_systems[slip_sys].exponent_rate_;
+    std::unique_ptr<FLOW_RULE>
+    pflow_rule = 
+      CP::flowRuleFactory<NumDimT, NumSlipT, DataT, ArgT>(
+        slip_systems[0].flow_rule);
 
-    DataT const
-    g0 = slip_systems[slip_sys].rate_slip_reference_;
+    FLOW_RULE &
+    flow_rule = *pflow_rule;
 
-    // Compute slip increment
-    ArgT const
-    temp = shear[slip_sys] / slip_resistance[slip_sys];
+    Intrepid2::Vector<ArgT, NumSlipT> const
+    rate_slip = flow_rule.computeRateSlip(slip_systems, shear, slip_resistance);
 
-    slip_np1[slip_sys] = slip_n[slip_sys] + 
-      dt * g0 * std::pow(std::fabs(temp), m-1) * temp;
+    for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys) {
 
+      slip_np1[slip_sys] = slip_n[slip_sys] + dt * rate_slip[slip_sys];
+    }
   }
 
 }
@@ -675,6 +628,72 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::hessian(
       ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>, ArgT>::hessian(
       *this,
       x);
+}
+
+//
+// Power law flow rule
+//
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+  typename DataT, typename ArgT>
+Intrepid2::Vector<ArgT, NumSlipT>
+CP::PowerLawFlowRule<NumDimT, NumSlipT, DataT, ArgT>::
+computeRateSlip(
+  std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+  Intrepid2::Vector<ArgT, NumSlipT> const & shear,
+  Intrepid2::Vector<ArgT, NumSlipT> const & slip_resistance)
+{
+  Intrepid2::Index const
+  num_slip_sys = slip_systems.size();
+
+  Intrepid2::Vector<ArgT, NumSlipT>
+  rate_slip(num_slip_sys);
+
+  rate_slip.fill(Intrepid2::ZEROS);
+
+  for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys) {
+
+    // Material properties
+    DataT const
+    tauC = slip_systems[slip_sys].tau_critical_;
+
+    DataT const
+    m = slip_systems[slip_sys].exponent_rate_;
+
+    DataT const
+    g0 = slip_systems[slip_sys].rate_slip_reference_;
+
+    ArgT const
+    ratio_stress = shear[slip_sys] / slip_resistance[slip_sys];
+
+    // Compute slip increment
+    rate_slip[slip_sys] = 
+      g0 * std::pow(std::fabs(ratio_stress), m-1) * ratio_stress;
+  }
+
+  return rate_slip;
+}
+
+//
+// No flow rule
+//
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+  typename DataT, typename ArgT>
+Intrepid2::Vector<ArgT, NumSlipT>
+CP::NoFlowRule<NumDimT, NumSlipT, DataT, ArgT>::
+computeRateSlip(
+  std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+  Intrepid2::Vector<ArgT, NumSlipT> const & shear,
+  Intrepid2::Vector<ArgT, NumSlipT> const & slip_resistance)
+{
+  Intrepid2::Index const
+  num_slip_sys = slip_systems.size();
+
+  Intrepid2::Vector<ArgT, NumSlipT>
+  rate_slip(num_slip_sys);
+
+  rate_slip.fill(Intrepid2::ZEROS);
+
+  return rate_slip;
 }
 
 //

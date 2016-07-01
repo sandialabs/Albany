@@ -3,9 +3,9 @@
 read_file_log.py
 '''
 
-import lcm_objects
 import numpy as np
 import re
+import lcm_postprocess
 
 # Read the console output file
 def read_file_log(filename = None):
@@ -25,7 +25,7 @@ def read_file_log(filename = None):
 
     times = []
 
-    run = lcm_objects.ObjRun()
+    run = lcm_postprocess.ObjRun()
 
     index_step_start = -1
 
@@ -50,7 +50,7 @@ def read_file_log(filename = None):
 
                 key_times = (float(match.group(2)), float(match.group(1)))
 
-            run.steps[key_times] = lcm_objects.ObjStep(step_number = step_number)
+            run.steps[key_times] = lcm_postprocess.ObjStep(step_number = step_number)
 
             step = run.steps[key_times]
 
@@ -94,7 +94,7 @@ def read_file_log(filename = None):
 
             key_iter_nonlinear = int(match.group(1))
 
-            step.iters_nonlinear[key_iter_nonlinear] = lcm_objects.ObjIterNonlinear()
+            step.iters_nonlinear[key_iter_nonlinear] = lcm_postprocess.ObjIterNonlinear()
 
             step.num_iters_nonlinear = key_iter_nonlinear
 
@@ -135,7 +135,7 @@ def read_file_log(filename = None):
 
             key_iter_linear = int(match.group(1))
 
-            iter_nonlinear.iters_linear[key_iter_linear] = lcm_objects.ObjIterLinear()
+            iter_nonlinear.iters_linear[key_iter_linear] = lcm_postprocess.ObjIterLinear()
 
             iter_linear = iter_nonlinear.iters_linear[key_iter_linear]
 

@@ -24,7 +24,7 @@
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
-    <Parameter name="MaterialDB Filename" type="string" value="OrientationOnMesh_Material_Implicit.xml"/> -->
+    <Parameter name="MaterialDB Filename" type="string" value="OrientationOnMesh_Material.xml"/> -->
     <ParameterList name="Dirichlet BCs">
       <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF X">
         <Parameter name="Number of points" type="int" value="4"/>
@@ -46,7 +46,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="OrientationOnMesh_orientation.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="OrientationOnMesh.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="OrientationOnMesh.exo"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
@@ -113,7 +113,7 @@
                   <Parameter name="Solver Type" type="string" value="Block GMRES"/>
                   <ParameterList name="Solver Types">
                     <ParameterList name="Block GMRES">
-                      <Parameter name="Output Frequency" type="int" value="1"/>
+                      <Parameter name="Output Frequency" type="int" value="10"/>
                       <Parameter name="Output Style" type="int" value="1"/>
                       <Parameter name="Verbosity" type="int" value="33"/>
                       <Parameter name="Maximum Iterations" type="int" value="500"/>

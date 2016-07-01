@@ -233,7 +233,7 @@ bool stk::rebalance::rebalance(mesh::BulkData   & bulk_data  ,
   mesh::EntityVector rebal_elem_ptrs;
   mesh::EntityVector entities;
 
-  mesh::MetaData &meta_data = mesh::MetaData::get(bulk_data);
+  const mesh::MetaData &meta_data = mesh::MetaData::get(bulk_data);
   mesh::get_selected_entities(selector & meta_data.locally_owned_part(),
                               bulk_data.buckets(element_rank),
                               entities);

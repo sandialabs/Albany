@@ -636,6 +636,15 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
     morFacade = createMORFacade(disc, problemParams);
 #endif
 #endif
+  //MPerego: Preforming post registration setup here to make sure that the discretization is already created, so that 
+  //derivative dimensions are known. Cannot do post registration right before the evaluate , as done for other field managers.
+  //because memoizer hack is needed by Aeras.
+  //TODO, determine when it's best to perform post setup registration and fix memoizer hack if needed.
+  for(int i=0; i<responses.size(); ++i)
+  {
+    responses[i]->postRegSetup();
+  }
+
 
 /*
  * Initialize mesh adaptation features
