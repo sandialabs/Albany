@@ -232,7 +232,7 @@ if __name__ == "__main__":
             block_orientations[block_id].append(orientations[i][7])
             block_orientations[block_id].append(orientations[i][2])
             block_orientations[block_id].append(orientations[i][5])
-            block_orientations[block_id].append(orientations[i][8])
+            block_orientations[block_id].append(orientations[i][8])            
 
     for i in range(len(block_ids)):
         block_id = block_ids[i]

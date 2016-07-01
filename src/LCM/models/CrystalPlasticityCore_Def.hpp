@@ -149,25 +149,25 @@ CP::updateSlip(
 {
   Intrepid2::Index const num_slip_sys = slip_n.get_dimension();
 
-  for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys) {
+  if (num_slip_sys > 0) {
 
-    // Material properties
-    DataT const
-    tauC = slip_systems[slip_sys].tau_critical_;
+    using FLOW_RULE = CP::FlowRuleBase<NumDimT, NumSlipT, DataT, ArgT>;
 
-    DataT const
-    m = slip_systems[slip_sys].exponent_rate_;
+    std::unique_ptr<FLOW_RULE>
+    pflow_rule = 
+      CP::flowRuleFactory<NumDimT, NumSlipT, DataT, ArgT>(
+        slip_systems[0].flow_rule);
 
-    DataT const
-    g0 = slip_systems[slip_sys].rate_slip_reference_;
+    FLOW_RULE &
+    flow_rule = *pflow_rule;
 
-    // Compute slip increment
-    ArgT const
-    temp = shear[slip_sys] / slip_resistance[slip_sys];
+    Intrepid2::Vector<ArgT, NumSlipT> const
+    rate_slip = flow_rule.computeRateSlip(slip_systems, shear, slip_resistance);
 
-    slip_np1[slip_sys] = slip_n[slip_sys] + 
-      dt * g0 * std::pow(std::fabs(temp), m-1) * temp;
+    for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys) {
 
+      slip_np1[slip_sys] = slip_n[slip_sys] + dt * rate_slip[slip_sys];
+    }
   }
 
 }
@@ -628,6 +628,72 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::hessian(
       ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>, ArgT>::hessian(
       *this,
       x);
+}
+
+//
+// Power law flow rule
+//
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+  typename DataT, typename ArgT>
+Intrepid2::Vector<ArgT, NumSlipT>
+CP::PowerLawFlowRule<NumDimT, NumSlipT, DataT, ArgT>::
+computeRateSlip(
+  std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+  Intrepid2::Vector<ArgT, NumSlipT> const & shear,
+  Intrepid2::Vector<ArgT, NumSlipT> const & slip_resistance)
+{
+  Intrepid2::Index const
+  num_slip_sys = slip_systems.size();
+
+  Intrepid2::Vector<ArgT, NumSlipT>
+  rate_slip(num_slip_sys);
+
+  rate_slip.fill(Intrepid2::ZEROS);
+
+  for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys) {
+
+    // Material properties
+    DataT const
+    tauC = slip_systems[slip_sys].tau_critical_;
+
+    DataT const
+    m = slip_systems[slip_sys].exponent_rate_;
+
+    DataT const
+    g0 = slip_systems[slip_sys].rate_slip_reference_;
+
+    ArgT const
+    ratio_stress = shear[slip_sys] / slip_resistance[slip_sys];
+
+    // Compute slip increment
+    rate_slip[slip_sys] = 
+      g0 * std::pow(std::fabs(ratio_stress), m-1) * ratio_stress;
+  }
+
+  return rate_slip;
+}
+
+//
+// No flow rule
+//
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+  typename DataT, typename ArgT>
+Intrepid2::Vector<ArgT, NumSlipT>
+CP::NoFlowRule<NumDimT, NumSlipT, DataT, ArgT>::
+computeRateSlip(
+  std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+  Intrepid2::Vector<ArgT, NumSlipT> const & shear,
+  Intrepid2::Vector<ArgT, NumSlipT> const & slip_resistance)
+{
+  Intrepid2::Index const
+  num_slip_sys = slip_systems.size();
+
+  Intrepid2::Vector<ArgT, NumSlipT>
+  rate_slip(num_slip_sys);
+
+  rate_slip.fill(Intrepid2::ZEROS);
+
+  return rate_slip;
 }
 
 //

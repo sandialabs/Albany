@@ -124,6 +124,9 @@ CrystalPlasticityModel(
     else if (step_type_string == "Line Search Regularized") {
       step_type_ = Intrepid2::StepType::LINE_SEARCH_REG;
     }
+    else if (step_type_string == "Newton with Line Search") {
+      step_type_ = Intrepid2::StepType::NEWTON_LS;
+    }
     else {
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
@@ -132,8 +135,9 @@ CrystalPlasticityModel(
             \"Nonlinear Solver Step Type\", must be \
             \"Newton\", \
             \"Trust Region\", \
-            \"Conjugate Gradient\", or \
-            \"Line Search Regularized\".\n");
+            \"Conjugate Gradient\", \
+            \"Line Search Regularized\", or \
+            \"Newton with Line Search\".\n");
     }
   }
 
@@ -269,6 +273,10 @@ CrystalPlasticityModel(
 
       slip_systems_[num_ss].energy_activation_ = 
           f_list.get<RealType>("Activation Energy", 0.0);
+    }
+    else
+    {
+      slip_systems_[num_ss].flow_rule = CP::FlowRule::POWER_LAW;
     }
 
     //
@@ -601,6 +609,14 @@ computeState(typename Traits::EvalData workset,
 
   if(verbosity_ > 2) {
     std::cout << ">>> in cp compute state\n";
+  }
+
+  if (read_orientations_from_mesh_) {
+    Teuchos::ArrayRCP<double*> const& rotation_matrix_transpose = workset.wsLatticeOrientation;
+    TEUCHOS_TEST_FOR_EXCEPTION(
+	rotation_matrix_transpose.is_null(),
+	std::logic_error,
+	"\n**** Error in CrystalPlasticityModel, rotation matrix not found on genesis mesh.\n");
   }
 
   //
