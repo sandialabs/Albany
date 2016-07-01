@@ -3,22 +3,20 @@
 read_file_output_exodus.py
 '''
 
-import contextlib
-import cStringIO
+from _core import stdout_redirected
 from exodus import exodus
-import lcm_objects
-from multiprocessing import Pool
+import lcm_postprocess
 import numpy as np
 import re
-import sys
-import time
 
+from lcm_exodus import get_names_variable
+from lcm_exodus import get_num_elements_block
 from lcm_exodus import get_element_variable_values
-from lcm_postprocess import stdout_redirected
 
 #
 # Read the Exodus output file
 #
+# @profile
 def read_file_output_exodus(
     filename,
     names_variable = [
@@ -135,7 +133,7 @@ def read_file_output_exodus(
     #
     # Create and populate the domain object
     #
-    domain = lcm_objects.ObjDomain(
+    domain = lcm_postprocess.ObjDomain(
         num_dims = num_dims,
         num_elements = np.sum(num_elements.values()),
         num_nodes = num_nodes,
@@ -147,14 +145,51 @@ def read_file_output_exodus(
 
     for node_id in node_ids:
 
-        domain.nodes[node_id] = lcm_objects.ObjNode(
+        domain.nodes[node_id] = lcm_postprocess.ObjNode(
             coords = np.array([coords[x][node_id - 1] for x in range(num_dims)]))
+
+        node = domain.nodes[node_id]
+
+        for name_variable_node in names_variable_node:
+
+            indices_variable = names_variable_node[name_variable_node]
+
+            if len(indices_variable) == num_dims:
+
+                node.variables[name_variable_node] = \
+                    dict([(step, np.zeros(num_dims)) for step in times])
+
+            for step in range(len(times)):
+
+                time = times[step]
+
+                for dim_i in range(num_dims):
+
+                    name_variable = name_variable_node + '_' + names_variable_node[name_variable_node][dim_i]
+
+                    values = file_input.get_node_variable_values(
+                        name_variable,
+                        step + 1)
+
+                    for key_node in domain.nodes:
+
+                        node = domain.nodes[key_node]
+
+                        try:
+                            node.variables[name_variable_node][time][dim_i] = values[int(key_node)-1] #FIXME: should be indexed by node id map
+                        except:
+                            print key_node
+
 
     element_start_id = 0
 
+    names_variable_exodus = get_names_variable(file_input)
+
     for block_id in block_ids:
 
-        domain.blocks[block_id] = lcm_objects.ObjBlock(
+        num_elements_block = get_num_elements_block(file_input, block_id)
+
+        domain.blocks[block_id] = lcm_postprocess.ObjBlock(
             num_elements = num_elements[block_id],
             num_points = num_points,
             num_nodes_per_elem = file_input.num_nodes_per_elem(block_id),
@@ -174,7 +209,7 @@ def read_file_output_exodus(
             # Map global element id to blockwise index
             block.map_element_ids[key_element] = index_element
 
-            block.elements[key_element] = lcm_objects.ObjElement()
+            block.elements[key_element] = lcm_postprocess.ObjElement()
 
             element = block.elements[key_element]
 
@@ -190,19 +225,17 @@ def read_file_output_exodus(
 
             for index_point in range(num_points):
 
-                element.points[index_point] = lcm_objects.ObjPoint()
+                element.points[index_point] = lcm_postprocess.ObjPoint()
 
 
         for index_point in range(block.num_points):
 
             key_weight = 'Weights_' + str(index_point + 1)
 
-            # values_weights = file_input.get_element_variable_values(
-            #     block_id, 
-            #     key_weight, 
-            #     1)
+            index_weight = names_variable_exodus.index(key_weight) + 1
 
-            values_weights = get_element_variable_values(file_input, block_id, key_weight, 1)
+            values_weights = get_element_variable_values(
+                file_input, block_id, num_elements_block, index_weight, 1)
 
             for key_element in block.elements:
 
@@ -263,7 +296,7 @@ def read_file_output_exodus(
 
 
 # Create tensor-valued field in the domain object
-# @profile
+#@profile
 def _set_values_tensor(file_input, name_variable, indices_variable, domain):
 
     num_dims = domain.num_dims
@@ -273,10 +306,14 @@ def _set_values_tensor(file_input, name_variable, indices_variable, domain):
     domain.variables[name_variable] = \
         dict([(step, np.zeros((num_dims, num_dims))) for step in times])
 
+    names_variable_exodus = get_names_variable(file_input)
+
     # Note: exodus function get_element_variable_values returns values by block,    
     # so outer loop over block
 
     for key_block in domain.blocks:
+
+        num_elements_block = get_num_elements_block(file_input, key_block)
 
         block = domain.blocks[key_block]
 
@@ -323,17 +360,15 @@ def _set_values_tensor(file_input, name_variable, indices_variable, domain):
 
                     for index_point in range(block.num_points):
 
-                        index_variable = index_dim * block.num_points + index_point
+                        name_variable_exodus = keys_variable[index_dim * block.num_points + index_point]
 
-                        # values_block = file_input.get_element_variable_values(
-                        #     key_block, 
-                        #     key_variable, 
-                        #     step + 1)
+                        index_variable = names_variable_exodus.index(name_variable_exodus) + 1
 
                         values_block = get_element_variable_values(
                             file_input,
                             key_block,
-                            keys_variable[index_variable],
+                            num_elements_block,
+                            index_variable,
                             step + 1)
 
                         for key_element in block.elements:
@@ -342,7 +377,8 @@ def _set_values_tensor(file_input, name_variable, indices_variable, domain):
 
                             point = element.points[index_point]
 
-                            point.variables[name_variable][time][dim_i, dim_j] = values_block[block.map_element_ids[key_element]]
+                            point.variables[name_variable][time][dim_i, dim_j] = \
+                                values_block[block.map_element_ids[key_element]]
 
                     for key_element in block.elements:
 
@@ -377,10 +413,14 @@ def _set_values_scalar(file_input, name_variable, indices_variable, domain):
 
     domain.variables[name_variable] = dict([(step, 0.0) for step in times])
 
+    names_variable_exodus = get_names_variable(file_input)
+
     # Note: exodus function get_element_variable_values returns values by block,    
     # so outer loop over block
 
     for key_block in domain.blocks:
+
+        num_elements_block = get_num_elements_block(file_input, key_block)
 
         block = domain.blocks[key_block]
 
@@ -415,10 +455,15 @@ def _set_values_scalar(file_input, name_variable, indices_variable, domain):
                 #     key_variable, 
                 #     step + 1)
 
+                name_variable_exodus = keys_variable[index_point]
+
+                index_variable = names_variable_exodus.index(name_variable_exodus) + 1
+
                 values_block = get_element_variable_values(
                     file_input, 
                     key_block, 
-                    keys_variable[index_point],
+                    num_elements_block,
+                    index_variable,
                     step + 1)
 
                 for key_element in block.elements:
