@@ -1270,6 +1270,19 @@ IF(ALBANY_MPI)
   ENDIF()
 ENDIF(ALBANY_MPI)
 
+#Add option to run any pretest executables in a specific environment (mpiexec.hydra, srun, or other)
+IF (DEFINED ALBANY_PRETEST_EXEC) 
+  MESSAGE("-- ALBANY_PRETEST_EXEC is ${ALBANY_PRETEST_EXEC}")
+ELSE()
+  # Not set in configure - set it to be empty
+  SET(ALBANY_PRETEST_EXEC "" CACHE STRING "Command to use to execute pretests")
+ENDIF()
+
+#Add option to specify path to desired SEACAS utils
+IF (DEFINED ALBANY_SEACAS_PATH) 
+  MESSAGE("-- ALBANY_SEACAS_PATH is ${ALBANY_SEACAS_PATH}")
+ENDIF()
+
 # Add Albany test -- in the "examples" directory
 IF (ALBANY_LIBRARIES_ONLY)
   MESSAGE("\nALBANY_LIBRARIES_ONLY has been set: turning off all tests.")
