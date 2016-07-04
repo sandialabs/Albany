@@ -25,7 +25,7 @@
        <Parameter name="Function Data" type="Array(double)" value="{10, 0, 0}"/>
     </ParameterList>
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="7"/>
+      <Parameter name="Number" type="int" value="6"/>
       <Parameter name="Response 0" type="string" value="Solution Min Value"/>
             <ParameterList name="ResponseParams 0">
             <Parameter name="Equation" type="int" value="0" />
