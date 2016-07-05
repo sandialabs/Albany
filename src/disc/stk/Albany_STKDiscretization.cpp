@@ -705,6 +705,10 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
      {
        mesh_data->write_global (outputFileIdx, it.first, it.second);
      }
+     for (auto& it : stkMeshStruct->getFieldContainer()->getMeshScalarIntegerStates())
+     {
+       mesh_data->write_global (outputFileIdx, it.first, it.second);
+     }
      mesh_data->end_output_step(outputFileIdx);
 
      if (mapT->getComm()->getRank()==0) {
@@ -802,6 +806,10 @@ writeSolutionToFileT(const Tpetra_Vector& solnT, const double time,
      {
        mesh_data->write_global (outputFileIdx, it.first, it.second);
      }
+     for (auto& it : stkMeshStruct->getFieldContainer()->getMeshScalarIntegerStates())
+     {
+       mesh_data->write_global (outputFileIdx, it.first, it.second);
+     }
      mesh_data->end_output_step(outputFileIdx);
 
      if (mapT->getComm()->getRank()==0) {
@@ -872,6 +880,10 @@ writeSolutionMVToFile(const Tpetra_MultiVector& solnT, const double time,
      int out_step = mesh_data->write_defined_output_fields(outputFileIdx);
      // Writing mesh global variables
      for (auto& it : stkMeshStruct->getFieldContainer()->getMeshVectorStates())
+     {
+       mesh_data->write_global (outputFileIdx, it.first, it.second);
+     }
+     for (auto& it : stkMeshStruct->getFieldContainer()->getMeshScalarIntegerStates())
      {
        mesh_data->write_global (outputFileIdx, it.first, it.second);
      }
@@ -2431,6 +2443,11 @@ void Albany::STKDiscretization::setupExodusOutput()
     {
       boost::any mvs = it.second;
       mesh_data->add_global (outputFileIdx, it.first, mvs, stk::util::ParameterType::DOUBLEVECTOR);
+    }
+    for (auto& it : stkMeshStruct->getFieldContainer()->getMeshScalarIntegerStates())
+    {
+      boost::any mvs = it.second;
+      mesh_data->add_global (outputFileIdx, it.first, mvs, stk::util::ParameterType::INTEGER);
     }
 
     const stk::mesh::FieldVector &fields = mesh_data->meta_data().get_fields();
