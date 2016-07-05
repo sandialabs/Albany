@@ -2,7 +2,7 @@
 
 cd /home/ikalash/nightlyCDash
 
-#rm -rf /home/ikalash/nightlyCDash/repos/Albany
+rm -rf /home/ikalash/nightlyCDash/repos/Albany
 
 cat albanyKDVFunctorOpenMP ctest_nightly.cmake.frag >& ctest_nightly.cmake  
 
