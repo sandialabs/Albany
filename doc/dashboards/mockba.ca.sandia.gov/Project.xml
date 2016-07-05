@@ -1,0 +1,6 @@
+<Project name="Albany">
+  <SubProject name="IKT_AlbanyDynRankView_NoFunctor">
+  </SubProject>
+  <SubProject name="IKT_AlbanyDynRankView_FunctorSerial">
+  </SubProject>
+</Project>
