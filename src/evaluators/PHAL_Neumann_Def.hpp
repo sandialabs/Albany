@@ -423,7 +423,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   // "data" is same as neumann -- always ScalarT but not always
   // with full deriv dimension of a ScalarT variable.
 
-    std::cout << "NN0 " << std::endl;
+  // std::cout << "NN0 " << std::endl;
   switch(bc_type){
     case INTJUMP:
        neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
@@ -464,7 +464,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
          (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
        break;
     default:
-    std::cout << "NN1 " << std::endl;
+    //std::cout << "NN1 " << std::endl;
        neumann = Kokkos::createDynRankViewWithType<Kokkos::DynRankView<ScalarT, PHX::Device> >
          (coordVec.get_view(), "DDN", numCells, numNodes, numDOFsSet);
        break;
@@ -476,7 +476,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
      for (std::size_t dim=0; dim < numDOFsSet; ++dim)
              neumann(cell, node, dim) = 0.0;
 
-  std::cout << "NNN " << neumann(0,0,0) << std::endl;
+  //std::cout << "NNN " << neumann(0,0,0) << std::endl;
 
   const Albany::SideSetList& ssList = *(workset.sideSets);
   Albany::SideSetList::const_iterator it = ssList.find(this->sideSetID);
@@ -756,7 +756,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 {
            neumann(elem_LID, node, dim) +=
                   data(0, qp, dim) * weighted_trans_basis_refPointsSide(0, node, qp);
-    std::cout << "NNM " << neumann(elem_LID, node, dim) <<  "  " << elem_LID << std::endl;
+    //std::cout << "NNM " << neumann(elem_LID, node, dim) <<  "  " << elem_LID << std::endl;
 }
 
   }
