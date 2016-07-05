@@ -26,6 +26,7 @@ ParallelConstitutiveModel(
   
 }
 
+
 template<typename EvalT, typename Traits, typename Kernel>
 inline void
 ParallelConstitutiveModel<EvalT, Traits, Kernel>::
@@ -37,14 +38,15 @@ computeState(
   util::TimeMonitor &tmonitor = util::PerformanceContext::instance().timeMonitor();
   Teuchos::RCP<Teuchos::Time> kernel_time = tmonitor["Constituive Model: Kernel Time"];
   Teuchos::RCP<Teuchos::Time> transfer_time = tmonitor["Constituive Model: Transfer Time"];
-  EvalKernel kern = createEvalKernel(dep_fields, eval_fields, workset.numCells);
+  EvalKernel kern = createEvalKernel(workset, dep_fields, eval_fields);
   
   // Data may be set using CUDA UVM so we need to synchronize
   //transfer_time->start();
   Kokkos::fence();
   util::TimeGuard total_time_guard( kernel_time );
   //transfer_time->stop();
-  Kokkos::parallel_for(workset.numCells, kern);
+  //Kokkos::parallel_for(workset.numCells, kern);
+  Kokkos::parallel_for(Kokkos::RangePolicy<Kokkos::Schedule<Kokkos::Dynamic>>(0,workset.numCells), kern);
   Kokkos::fence();
 }
 

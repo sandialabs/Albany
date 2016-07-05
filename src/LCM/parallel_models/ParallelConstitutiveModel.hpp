@@ -31,12 +31,11 @@ public:
   virtual
   ~ParallelConstitutiveModel() = default;
   
-  virtual
   void
   computeState(
       typename Traits::EvalData workset,
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields) override;
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields) final;
   
   virtual
   void
@@ -50,9 +49,9 @@ protected:
   
   virtual
   EvalKernel
-  createEvalKernel( FieldMap &dep_fields,
-                    FieldMap &eval_fields,
-                    int numCells) = 0;
+  createEvalKernel( typename Traits::EvalData &workset,
+                    FieldMap &dep_fields,
+                    FieldMap &eval_fields) = 0;
   
   
 };

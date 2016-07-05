@@ -94,9 +94,9 @@ protected:
   
   virtual
   EvalKernel
-  createEvalKernel(FieldMap &dep_fields,
-                   FieldMap &eval_fields,
-                   int numCells) override;
+  createEvalKernel(typename Traits::EvalData &workset,
+                   FieldMap &dep_fields,
+                   FieldMap &eval_fields) override;
   
 };
 }

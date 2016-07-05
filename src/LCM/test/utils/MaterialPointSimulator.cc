@@ -53,11 +53,24 @@
 #include <cuda.h>
 #endif
 
+struct KokkosGuard
+{
+  KokkosGuard( int ac, char* av[] )
+  {
+    Kokkos::initialize( ac, av );
+  }
+  
+  ~KokkosGuard()
+  {
+    Kokkos::finalize();
+  }
+};
+
 bool TpetraBuild = false;
 
 int main(int ac, char* av[])
 {
-  Kokkos::initialize( ac, av );
+  KokkosGuard kokkos( ac, av );
 
   typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
   typedef PHAL::AlbanyTraits::Residual Residual;
@@ -522,6 +535,7 @@ int main(int ac, char* av[])
   discretizationParameterList->set<std::string>(
       "Exodus Output File Name",
       output_file);
+  discretizationParameterList->set<int>("Workset Size", workset_size);
   Teuchos::RCP<Tpetra_Map> mapT =
     Teuchos::rcp(new Tpetra_Map(workset_size*num_dims*num_nodes,
                                 0,
@@ -809,8 +823,6 @@ int main(int ac, char* av[])
     //
 
   } // end loading steps
-
-  Kokkos::finalize();
 
   // Summarize with AlbanyUtil performance monitors
   if ( tout ) {

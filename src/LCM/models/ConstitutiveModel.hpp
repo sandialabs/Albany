@@ -137,6 +137,22 @@ public:
   {
     return state_var_output_flags_[state_var];
   }
+  
+  void addStateVar(std::string const & name,
+                   Teuchos::RCP<PHX::DataLayout> layout,
+                   std::string const & init_type,
+                   double init_value,
+                   bool old_state_flag,
+                   bool output_flag)
+  {
+    ++num_state_variables_;
+    state_var_names_.push_back(name);
+    state_var_layouts_.push_back(layout);
+    state_var_init_types_.push_back(init_type);
+    state_var_init_values_.push_back(init_value);
+    state_var_old_state_flags_.push_back(false);
+    state_var_output_flags_.push_back(output_flag);
+  }
 
   ///
   /// Deal with fields
@@ -167,6 +183,15 @@ public:
   {
     dep_field_map_.insert(std::make_pair(field_name, field));
   }
+  
+  void
+  setDependentFieldFromNameMap(
+      std::string const & name_key,
+      Teuchos::RCP<PHX::DataLayout> const & field)
+  {
+    std::string const name = (*field_name_map_)[name_key];
+    setDependentField( name, field );
+  }
 
   void
   setEvaluatedField(
@@ -174,6 +199,15 @@ public:
       Teuchos::RCP<PHX::DataLayout> const & field)
   {
     eval_field_map_.insert(std::make_pair(field_name, field));
+  }
+  
+  void
+  setEvaluatedFieldFromNameMap(
+      std::string const & name_key,
+      Teuchos::RCP<PHX::DataLayout> const & field)
+  {
+    std::string const name = (*field_name_map_)[name_key];
+    setEvaluatedField( name, field );
   }
 
   ///

@@ -53,9 +53,9 @@ ParallelNeohookeanModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 typename ParallelNeohookeanModel<EvalT, Traits>::EvalKernel
 ParallelNeohookeanModel<EvalT, Traits>::
-createEvalKernel(FieldMap &dep_fields,
-                 FieldMap &eval_fields,
-                 int numCells)
+createEvalKernel(typename Traits::EvalData &workset,
+                 FieldMap &dep_fields,
+                 FieldMap &eval_fields)
 {
   EvalKernel kern;
   

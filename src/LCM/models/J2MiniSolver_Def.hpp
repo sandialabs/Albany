@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "MiniNonlinearSolver.h"
+#include "J2MiniSolver.hpp"
 
 namespace LCM
 {
@@ -16,7 +17,7 @@ J2MiniSolver<EvalT, Traits>::
 J2MiniSolver(
     Teuchos::ParameterList * p,
     Teuchos::RCP<Albany::Layouts> const & dl) :
-    LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
+    LCM::ParallelConstitutiveModel<EvalT, Traits, EvalKernel>(p, dl),
     sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
     sat_exp_(p->get<RealType>("Saturation Exponent", 0.0))
 {
@@ -98,6 +99,61 @@ J2MiniSolver(
     this->state_var_output_flags_.push_back(
         p->get<bool>("Output Mechanical Source", false));
   }
+}
+
+template<typename EvalT, typename Traits>
+typename J2MiniSolver<EvalT, Traits>::EvalKernel
+J2MiniSolver<EvalT, Traits>::
+createEvalKernel(typename Traits::EvalData &workset,
+                 FieldMap &dep_fields,
+                 FieldMap &eval_fields)
+{
+  EvalKernel kern;
+  
+  std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
+  std::string Fp_string = (*field_name_map_)["Fp"];
+  std::string eqps_string = (*field_name_map_)["eqps"];
+  std::string yieldSurface_string = (*field_name_map_)["Yield_Surface"];
+  std::string source_string = (*field_name_map_)["Mechanical_Source"];
+  std::string F_string = (*field_name_map_)["F"];
+  std::string J_string = (*field_name_map_)["J"];
+
+  // extract dependent MDFields
+  kern.def_grad = *dep_fields[F_string];
+  kern.J = *dep_fields[J_string];
+  kern.poissons_ratio = *dep_fields["Poissons Ratio"];
+  kern.elastic_modulus = *dep_fields["Elastic Modulus"];
+  kern.yieldStrength = *dep_fields["Yield Strength"];
+  kern.hardeningModulus = *dep_fields["Hardening Modulus"];
+  kern.delta_time = *dep_fields["Delta Time"];
+
+  // extract evaluated MDFields
+  kern.stress = *eval_fields[cauchy_string];
+  kern.Fp = *eval_fields[Fp_string];
+  kern.eqps = *eval_fields[eqps_string];
+  kern.yieldSurf = *eval_fields[yieldSurface_string];
+  kern.source;
+
+  if (have_temperature_ == true) {
+    kern.source = *eval_fields[source_string];
+  }
+
+  // get State Variables
+  kern.Fpold = (*workset.stateArrayPtr)[Fp_string + "_old"];
+  kern.eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
+  
+  kern.sat_mod = sat_mod_;
+  kern.sat_exp = sat_exp_;
+  
+  kern.num_dims = num_dims_;
+  kern.num_pts = num_pts_;
+  
+  kern.have_temperature = have_temperature_;
+  kern.temperature = temperature_;
+  kern.density = density_;
+  kern.heat_capacity = heat_capacity_;
+  
+  return kern;
 }
 
 //
@@ -238,6 +294,7 @@ operator()(const J2ResidualTag & tag, int const & cell) const
   return;
 }
 
+#if 0
 //
 //
 //
@@ -480,6 +537,191 @@ computeState(
   }
 }
 
+#endif
+
+namespace detail
+{
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION void
+J2MiniKernel<EvalT, Traits>::
+operator()(int cell) const
+{
+  constexpr
+  Intrepid2::Index
+  MAX_DIM{3};
+
+  Intrepid2::Tensor<ScalarT, MAX_DIM>
+  F(num_dims);
+
+  Intrepid2::Tensor<ScalarT, MAX_DIM> const
+  I(Intrepid2::eye<ScalarT, MAX_DIM>(num_dims));
+
+  Intrepid2::Tensor<ScalarT, MAX_DIM>
+  sigma(num_dims);
+  
+  for (int pt = 0; pt < num_pts; ++pt) {
+      ScalarT const
+      kappa = elastic_modulus(cell, pt)
+          / (3.0 * (1.0 - 2.0 * poissons_ratio(cell, pt)));
+
+      ScalarT const
+      mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
+
+      ScalarT const
+      K = hardeningModulus(cell, pt);
+
+      ScalarT const
+      Y = yieldStrength(cell, pt);
+
+      ScalarT const
+      Jm23 = std::pow(J(cell, pt), -2. / 3.);
+
+      // fill local tensors
+      F.fill(def_grad, cell, pt, 0, 0);
+
+      //Fpn.fill( &Fpold(cell,pt,int(0),int(0)) );
+
+      Intrepid2::Tensor<ScalarT, MAX_DIM>
+      Fpn(num_dims);
+
+      for (int i{0}; i < num_dims; ++i) {
+        for (int j{0}; j < num_dims; ++j) {
+          Fpn(i, j) = ScalarT(Fpold(cell, pt, i, j));
+        }
+      }
+
+      // compute trial state
+      Intrepid2::Tensor<ScalarT, MAX_DIM> const
+      Fpinv = Intrepid2::inverse(Fpn);
+
+      Intrepid2::Tensor<ScalarT, MAX_DIM> const
+      Cpinv = Fpinv * Intrepid2::transpose(Fpinv);
+
+      Intrepid2::Tensor<ScalarT, MAX_DIM> const
+      be = Jm23 * F * Cpinv * Intrepid2::transpose(F);
+
+      Intrepid2::Tensor<ScalarT, MAX_DIM>
+      s = mu * Intrepid2::dev(be);
+
+      ScalarT const
+      mubar = Intrepid2::trace(be) * mu / (num_dims);
+
+      // check yield condition
+      ScalarT const
+      smag = Intrepid2::norm(s);
+
+      ScalarT const
+      sq23{std::sqrt(2.0 / 3.0)};
+
+      ScalarT const
+      f = smag - sq23 * (Y + K * eqpsold(cell, pt)
+          + sat_mod * (1.0 - std::exp(-sat_exp * eqpsold(cell, pt))));
+
+      RealType constexpr
+      yield_tolerance = 1.0e-12;
+      
+      if (f > yield_tolerance) {
+        // Use minimization equivalent to return mapping
+        using ValueT = typename Sacado::ValueType<ScalarT>::type;
+        using NLS = J2NLS<EvalT>;
+
+        constexpr
+        Intrepid2::Index
+        nls_dim{NLS::DIMENSION};
+
+        using MIN = Intrepid2::Minimizer<ValueT, nls_dim>;
+        using STEP = Intrepid2::NewtonStep<NLS, ValueT, nls_dim>;
+
+        MIN
+        minimizer;
+
+        STEP
+        step;
+
+        NLS
+        j2nls(sat_mod, sat_exp, eqpsold(cell, pt), K, smag, mubar, Y);
+
+        Intrepid2::Vector<ScalarT, nls_dim>
+        x;
+
+        x(0) = 0.0;
+
+        LCM::MiniSolver<MIN, STEP, NLS, EvalT, nls_dim>
+        mini_solver(minimizer, step, j2nls, x);
+
+        ScalarT const
+        alpha = eqpsold(cell, pt) + sq23 * x(0);
+
+        ScalarT const
+        H = K * alpha + sat_mod * (1.0 - exp(-sat_exp * alpha));
+
+        ScalarT const
+        dgam = x(0);
+
+        // plastic direction
+        Intrepid2::Tensor<ScalarT, MAX_DIM> const
+        N = (1 / smag) * s;
+
+        // update s
+        s -= 2 * mubar * dgam * N;
+
+        // update eqps
+        eqps(cell, pt) = alpha;
+
+        // mechanical source
+        if (have_temperature == true && delta_time(0) > 0) {
+          source(cell, pt) = (sq23 * dgam / delta_time(0)
+              * (Y + H + temperature(cell, pt))) / (density * heat_capacity);
+        }
+
+        // exponential map to get Fpnew
+        Intrepid2::Tensor<ScalarT, MAX_DIM> const
+        A = dgam * N;
+
+        Intrepid2::Tensor<ScalarT, MAX_DIM> const
+        expA = Intrepid2::exp(A);
+
+        Intrepid2::Tensor<ScalarT, MAX_DIM> const
+        Fpnew = expA * Fpn;
+
+        for (int i{0}; i < num_dims; ++i) {
+          for (int j{0}; j < num_dims; ++j) {
+            Fp(cell, pt, i, j) = Fpnew(i, j);
+          }
+        }
+      } else {
+        eqps(cell, pt) = eqpsold(cell, pt);
+
+        if (have_temperature == true) source(cell, pt) = 0.0;
+
+        for (int i{0}; i < num_dims; ++i) {
+          for (int j{0}; j < num_dims; ++j) {
+            Fp(cell, pt, i, j) = Fpn(i, j);
+          }
+        }
+      }
+
+      // update yield surface
+      yieldSurf(cell, pt) = Y + K * eqps(cell, pt)
+          + sat_mod * (1. - std::exp(-sat_exp * eqps(cell, pt)));
+
+      // compute pressure
+      ScalarT const
+      p = 0.5 * kappa * (J(cell, pt) - 1. / (J(cell, pt)));
+
+      // compute stress
+      sigma = p * I + s / J(cell, pt);
+
+      for (int i(0); i < num_dims; ++i) {
+        for (int j(0); j < num_dims; ++j) {
+          stress(cell, pt, i, j) = sigma(i, j);
+        }
+      }
+      
+  }
+}
+}
+
 #ifdef ALBANY_ENSEMBLE
 template<>
 void J2MiniSolver<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits>::
@@ -511,7 +753,7 @@ computeState(
   assert(false);
 }
 #endif // ALBANY_ENSEMBLE
-
+#if 0
 // computeState parallel function, which calls Kokkos::parallel_for
 template<typename EvalT, typename Traits>
 void J2MiniSolver<EvalT, Traits>::
@@ -521,5 +763,6 @@ computeStateParallel(
     FieldMap<typename EvalT::ScalarT> eval_fields)
 {
 }
+#endif
 
 } // namespace LCM
