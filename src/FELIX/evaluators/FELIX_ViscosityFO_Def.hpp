@@ -208,7 +208,7 @@ typename EvalT::ScalarT&
 ViscosityFO<EvalT,Traits,Type,TemperatureType>::getValue(const std::string &n)
 {
   return (n=="Glen's Law Homotopy Parameter") ?
-    FELIX::HomotopyParameter<EvalT>::value : dummyParam;
+		  FELIX::HomotopyParameter<EvalT>::value : dummyParam;
 }
 //**********************************************************************
 //Kokkos functors
@@ -492,7 +492,7 @@ evaluateFields(typename Traits::EvalData workset)
         	for (std::size_t cell=0; cell < workset.numCells; ++cell)
         	{
         		//evaluate non-linear viscosity, given by Glen's law, at quadrature points
-        		temperature(cell) = std::max(temperature(cell), 230.0);
+        		temperature(cell) = std::max(temperature(cell), 240.0);
         		//std::cout << temperature(cell) << std::endl;
         		flowFactorVec[cell] = 1.0/2.0*pow(flowRate<TemperatureType>(temperature(cell)), -1.0/n);
         	}
@@ -518,7 +518,8 @@ evaluateFields(typename Traits::EvalData workset)
       else
       {
         //set Glen's law viscosity with regularization specified by homotopyParam
-        ScalarT ff = pow(10.0, -10.0*FELIX::HomotopyParameter<EvalT>::value);
+        //ScalarT ff = pow(10.0, -10.0*FELIX::HomotopyParameter<EvalT>::value);
+    	ScalarT ff = pow(10.0, -10.0*FELIX::HomotopyParameter<EvalT>::value);
         ScalarT epsilonEqpSq = 0.0; //used to define the viscosity in non-linear Stokes
         if (visc_type == GLENSLAW)
         {

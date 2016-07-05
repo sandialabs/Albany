@@ -52,7 +52,6 @@ StokesFOBasalResid<EvalT, Traits, Type>::StokesFOBasalResid (const Teuchos::Para
   vecDim       = dims[2];
 
   regularized = p.get<Teuchos::ParameterList*>("Parameter List")->get("Regularize With Continuation",false);
-
   // Index of the nodes on the sides in the numeration of the cell
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
@@ -98,6 +97,7 @@ void StokesFOBasalResid<EvalT, Traits, Type>::evaluateFields (typename Traits::E
     if (std::fabs(printedFF-ff)>0.0001*ff)
     {
         *output << "[Basal Residual] ff = " << ff << "\n";
+        *output << "[Homotopy param] h = " << homotopyParam << "\n";
         printedFF = ff;
     }
 #endif

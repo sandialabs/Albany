@@ -60,7 +60,7 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		// Output:
 		PHX::MDField<ScalarT,Cell,Node> Residual;
 
-		unsigned int numQPs, numDims, numNodes;
+		unsigned int numQPs, numNodes, vecDimFO;
 
 		bool needsDiss, needsBasFric;
 

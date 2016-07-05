@@ -26,7 +26,6 @@ w_ZResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& d
 
 	numNodes = dims[1];
 	numQPs   = dims[2];
-	numDims  = dims[3];
 
 	this->addDependentField(GradVelocity);
 	this->addDependentField(wBF);

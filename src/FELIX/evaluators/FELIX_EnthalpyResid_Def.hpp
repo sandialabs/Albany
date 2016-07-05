@@ -43,7 +43,7 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 	vector_dl->dimensions(dims);
 	numNodes = dims[1];
 	numQPs   = dims[2];
-	numDims  = dims[3];
+	vecDimFO = 2;
 
 	Teuchos::ParameterList* SUPG_list = p.get<Teuchos::ParameterList*>("SUPG Settings");
 	haveSUPG = SUPG_list->get("Have SUPG Stabilization", false);
@@ -206,10 +206,12 @@ evaluateFields(typename Traits::EvalData d)
 									   k_i*meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2);
 				}
 				*/
+				/*
 				if ( abs(K-K_0) < 1e-3 ) // if the ice is approximatively temperate
 					Residual(cell,node) += k_i*meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
 					   	   	   	   	   	   k_i*meltTempGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
 										   k_i*meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2);
+				*/
 			}
         }
     }
@@ -226,11 +228,12 @@ evaluateFields(typename Traits::EvalData d)
 		{
 			for (std::size_t qp = 0; qp < numQPs; ++qp)
 			{
-				for (std::size_t i = 0; i < numDims; i++)
+				for (std::size_t i = 0; i < vecDimFO; i++)
 				{
 					vmax = std::max(vmax,std::fabs(Velocity(cell,qp,i)));
+
 					if (vmax == 0)
-						vmax = 1e0;
+						vmax = 1e-3;
 				}
 			}
 
@@ -266,7 +269,7 @@ evaluateFields(typename Traits::EvalData d)
 			{
 				for (std::size_t qp = 0; qp < numQPs; ++qp)
 				{
-					for (std::size_t i = 0; i < numDims; i++)
+					for (std::size_t i = 0; i < vecDimFO; i++)
 					{
 						vmax = std::max(vmax,std::fabs(Velocity(cell,qp,i)));
 					}
@@ -302,7 +305,7 @@ evaluateFields(typename Traits::EvalData d)
 			{
 				for (std::size_t qp = 0; qp < numQPs; ++qp)
 				{
-					for (std::size_t i = 0; i < numDims; i++)
+					for (std::size_t i = 0; i < vecDimFO; i++)
 					{
 						vmax = std::max(vmax,std::fabs(Velocity(cell,qp,i)));
 					}
@@ -333,7 +336,7 @@ evaluateFields(typename Traits::EvalData d)
 			{
 				for (std::size_t qp = 0; qp < numQPs; ++qp)
 				{
-					for (std::size_t i = 0; i < numDims; i++)
+					for (std::size_t i = 0; i < vecDimFO; i++)
 					{
 						vmax = std::max(vmax,std::fabs(Velocity(cell,qp,i)));
 					}

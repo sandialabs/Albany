@@ -555,7 +555,7 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 	  }
 
 	  // --- FELIX Viscosity ---
-	  {
+
 	  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Viscosity"));
 
 	  //Input
@@ -574,7 +574,7 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 
 	  ev = Teuchos::rcp(new FELIX::ViscosityFO<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ScalarT>(*p,dl));
 	  fm0.template registerEvaluator<EvalT>(ev);
-	  }
+
 
 	  //--- Body Force ---//
 	  {

@@ -41,7 +41,7 @@ class w_ZResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		// Output
 		PHX::MDField<ScalarT,Cell,Node> Residual;
 
-		unsigned int numQPs, numDims, numNodes;
+		unsigned int numQPs, numNodes;
 
 };
 

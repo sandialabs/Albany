@@ -20,6 +20,7 @@ StokesFOThermoCoupled(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 		 const Teuchos::RCP<ParamLib>& paramLib_,
 		 const int numDim_): Albany::AbstractProblem(params_, paramLib_, numDim_), numDim(numDim_)
 {
+	// 2 eqns for Stokes FO + 1 eqn. for enthalpy + 1 eqn. for w_z
 	this->setNumEquations(4);
 
 	// Need to allocate a fields in mesh database
@@ -93,17 +94,18 @@ buildProblem(Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpec
 
 	  const int numQPtsCell = cellCubature->getNumPoints();
 	  const int numVertices = cellType->getNodeCount();
-	  const int velDim = 2;
 	  const int vecDim = 2;
 
-	   *out << "Field Dimensions: Workset=" << worksetSize
-	        << ", Vertices= " << numVertices
-	        << ", Nodes= " << numNodes
-	        << ", QuadPts= " << numQPtsCell
-	        << ", Dim= " << numDim << std::endl;
+	   *out << "Field Dimensions: \n"
+			<< "  Workset = " << worksetSize << "\n"
+	        << "  Vertices = " << numVertices << "\n"
+	        << "  Nodes = " << numNodes << "\n"
+	        << "  QuadPts = " << numQPtsCell << "\n"
+	        << "  Dim = " << numDim << "\n"
+            << "  VecDim = " << vecDim << "\n" << std::endl;
 
 	  // Using the utility for the common evaluators
-	  dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPtsCell,numDim,velDim));
+	  dl = Teuchos::rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPtsCell,numDim,vecDim));
 
 	  int numBasalSideVertices   = -1;
 	  int numBasalSideNodes      = -1;

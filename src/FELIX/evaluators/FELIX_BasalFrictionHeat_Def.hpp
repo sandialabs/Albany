@@ -59,7 +59,7 @@ BasalFrictionHeat(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::La
 
 	dl->node_vector->dimensions(dims);
 	vecDimFO     = std::min((int)dims[2],2);
-	vecDim       = dims[2];
+	//vecDim       = dims[2];
 
 	// Index of the nodes on the sides in the numeration of the cell
 	Teuchos::RCP<shards::CellTopology> cellType;
@@ -120,7 +120,7 @@ evaluateFields(typename Traits::EvalData d)
 				  for (int dim = 0; dim < vecDimFO; ++dim)
 				  {
 					  basalFricHeat(cell,sideNodes[side][node]) += (1./(3.154*pow(10.0,4.0))) * beta(cell,side,qp) * velocity(cell,side,qp,dim) * velocity(cell,side,qp,dim) *
-							  	  	  	  	  	  	  	  	  	    BF(cell,side,node,qp) * w_measure(cell,side,qp);
+					 		  	  	  	  	  	  	  	  	  	    BF(cell,side,node,qp) * w_measure(cell,side,qp);
 				  }
 			  }
 		  }

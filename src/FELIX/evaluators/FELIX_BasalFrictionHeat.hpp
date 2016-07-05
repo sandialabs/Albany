@@ -54,7 +54,7 @@ class BasalFrictionHeat : public PHX::EvaluatorWithBaseImpl<Traits>,
 		int numSideNodes;
 		int numSideQPs;
 		int sideDim;
-		int vecDim;
+		//int vecDim;
 		int vecDimFO;
 
 		bool haveSUPG;
