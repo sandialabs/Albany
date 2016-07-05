@@ -190,6 +190,8 @@ class AbstractDiscretization {
 
     virtual const WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const = 0;
 
+    virtual const WorksetArray<Teuchos::ArrayRCP<double*> >::type& getLatticeOrientation() const = 0;
+
     //! Print the coords for mesh debugging
     virtual void printCoords() const = 0;
 

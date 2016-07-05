@@ -570,7 +570,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   if (!isBetaAParameter && std::find(requirements.begin(),requirements.end(),stateName)!=requirements.end())
   {
     entity = Albany::StateStruct::NodalDataToElemNode;
-    fieldName = "Beta";
+    fieldName = "Beta Given";
     p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
     p->set<std::string>("Field Name", fieldName);
 
@@ -580,7 +580,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     // We restrict it back to the 2D mesh. Clearly, this is not optimal. Just add 'basal_friction' to the Basal Requirements!
     if(basalSideName!="INVALID") {
-      ev = evalUtils.constructDOFCellToSideEvaluator("Beta",basalSideName,"Node Scalar",cellType);
+      ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator(fieldName,basalSideName,"Node Scalar",cellType);
       fm0.template registerEvaluator<EvalT> (ev);
     }
   }
@@ -748,7 +748,11 @@ if (basalSideName!="INVALID")
 
     p->set<std::string>("Old Coords Name", "Coord Vec Old");
     p->set<std::string>("New Coords Name", "Coord Vec");
-    p->set<std::string>("Thickness Name", "Ice Thickness Param");
+    if(isThicknessAParameter)
+      p->set<std::string>("Thickness Name", "Ice Thickness Param");
+    else
+      p->set<std::string>("Thickness Name", "Ice Thickness");
+      
     p->set<std::string>("Top Surface Name", "Surface Height");
 
     ev = Teuchos::rcp(new FELIX::UpdateZCoordinateMovingBed<EvalT,PHAL::AlbanyTraits>(*p, dl));
@@ -1237,12 +1241,17 @@ if (basalSideName!="INVALID")
     Teuchos::RCP<Teuchos::ParameterList> paramList = Teuchos::rcp(new Teuchos::ParameterList("Param List"));
     paramList->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
     paramList->set<std::string>("Basal Friction Coefficient Gradient Name","Beta Gradient");
-    paramList->set<std::string>("Thickness Gradient Name","Ice Thickness Param Gradient");
+    if(isThicknessAParameter) {
+      paramList->set<std::string>("Thickness Gradient Name","Ice Thickness Param Gradient");
+      paramList->set<std::string>("Thickness Side QP Variable Name","Ice Thickness Param");
+    } else {   
+      paramList->set<std::string>("Thickness Gradient Name","Ice Thickness Gradient");
+      paramList->set<std::string>("Thickness Side QP Variable Name","Ice Thickness");
+    }
     paramList->set<std::string>("Surface Velocity Side QP Variable Name","Surface Velocity");
     paramList->set<std::string>("SMB Side QP Variable Name","Surface Mass Balance");
     paramList->set<std::string>("SMB RMS Side QP Variable Name","Surface Mass Balance RMS");
     paramList->set<std::string>("Flux Divergence Side QP Variable Name","Flux Divergence");
-    paramList->set<std::string>("Thickness Side QP Variable Name","Ice Thickness Param");
     paramList->set<std::string>("Thickness RMS Side QP Variable Name","Ice Thickness RMS");
     paramList->set<std::string>("Observed Thickness Side QP Variable Name","Observed Ice Thickness");
     paramList->set<std::string>("Observed Surface Velocity Side QP Variable Name","Observed Surface Velocity");

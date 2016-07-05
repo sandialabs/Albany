@@ -2,18 +2,19 @@
 
 import cPickle as pickle
 import matplotlib.pyplot as plt
-from matplotlib import rcParams
+# from matplotlib import rcParams
 from operator import itemgetter
 
 # Plot the time stepping and convergence data
+# @profile
 def plot_data_run(run = None, filename = None):
 
     if filename != None:
         run = pickle.load(open(filename, 'rb'))
 
-    plt.rc('text', usetex=True)
+    # plt.rc('text', usetex=True)
     plt.rc('font', family='serif', size=22)
-    rcParams['text.latex.preamble'] = [r'\usepackage{boldtensors}']
+    # rcParams['text.latex.preamble'] = [r'\usepackage{boldtensors}']
 
     fig = plt.figure()
 

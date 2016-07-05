@@ -6,21 +6,39 @@
 
 # Setup paths for SEACAS tools needed to run some of the tests
 IF (ALBANY_SEACAS)
-  find_program(
-       SEACAS_EPU
-       NAMES epu
-       PATHS ${Trilinos_BIN_DIRS} ENV PATH
-  )
-  find_program(
-       SEACAS_EXODIFF
-       NAMES exodiff
-       PATHS ${Trilinos_BIN_DIRS} ENV PATH
-  )
-  find_program(
-       SEACAS_ALGEBRA
-       NAMES algebra
-       PATHS ${Trilinos_BIN_DIRS} ENV PATH
-  )
+  IF(DEFINED ALBANY_SEACAS_PATH)
+    find_program(
+         SEACAS_EPU
+         NAMES epu
+         PATHS ${ALBANY_SEACAS_PATH}
+    )
+    find_program(
+         SEACAS_EXODIFF
+         NAMES exodiff
+         PATHS ${ALBANY_SEACAS_PATH}
+    )
+    find_program(
+         SEACAS_ALGEBRA
+         NAMES algebra
+         PATHS ${ALBANY_SEACAS_PATH}
+    )
+  ELSE()
+    find_program(
+         SEACAS_EPU
+         NAMES epu
+         PATHS ${Trilinos_BIN_DIRS} ENV PATH
+    )
+    find_program(
+         SEACAS_EXODIFF
+         NAMES exodiff
+         PATHS ${Trilinos_BIN_DIRS} ENV PATH
+    )
+    find_program(
+         SEACAS_ALGEBRA
+         NAMES algebra
+         PATHS ${Trilinos_BIN_DIRS} ENV PATH
+    )
+  ENDIF()
 ENDIF()
 
 # Paths to the actual executables
@@ -35,6 +53,10 @@ set(AlbanyAdjointPath                  ${Albany_BINARY_DIR}/src/AlbanyAdjoint)
 set(AlbanySGAdjointPath                ${Albany_BINARY_DIR}/src/AlbanySGAdjoint)
 set(AlbanyCoupledPath                  ${Albany_BINARY_DIR}/src/AlbanyCoupled)
 set(AlbanySGCoupledPath                ${Albany_BINARY_DIR}/src/AlbanySGCoupled)
+
+IF (CISM_EXE_DIR)
+set(CismAlbanyPath                ${CISM_EXE_DIR}/cism_driver)
+ENDIF()
 
 IF (ALBANY_MPI)
   set(SerialAlbany.exe                 ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${MPIPOST} ${AlbanyPath})

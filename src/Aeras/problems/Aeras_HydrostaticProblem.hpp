@@ -507,8 +507,9 @@ Aeras::HydrostaticProblem::constructEvaluators(
   {//Hydrostatic velocity
     RCP<ParameterList> p = rcp(new ParameterList("Velocity"));
     //Input
-    p->set<string>("Velx Name",    "Velx");
-    p->set<std::string>("Spherical Coord Name",       "Lat-Long");
+    p->set<string>     ("Velx Name",            "Velx");
+    p->set<std::string>("Spherical Coord Name", "Lat-Long");
+    p->set<std::string>("Pressure",             "Pressure");
     //Output
     p->set<string>("Velocity",  "Velocity");
     
@@ -523,7 +524,8 @@ Aeras::HydrostaticProblem::constructEvaluators(
   {//Hydrostatic EtaDot 
     RCP<ParameterList> p = rcp(new ParameterList("EtaDot"));
     //Input
-    p->set<std::string>("Spherical Coord Name",       "Lat-Long");
+    p->set<std::string>("Spherical Coord Name",  "Lat-Long");
+    p->set<std::string>("Pressure",              "Pressure");
     //Output
     p->set<string>("EtaDot",  "EtaDot");
     

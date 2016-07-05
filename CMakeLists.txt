@@ -571,6 +571,11 @@ cism_driver.")
   ELSE()
     MESSAGE("---> CISM_INCLUDE_DIR ${CISM_INCLUDE_DIR}")
   ENDIF()
+  IF (NOT CISM_EXE_DIR)
+    MESSAGE("\n CISM_EXE_DIR not defined.  CismAlbany test will not run.\n")
+  ELSE()
+    MESSAGE("---> CISM_EXE_DIR ${CISM_EXE_DIR}")
+  ENDIF()
 ELSEIF(ENABLE_CISM_INTERFACE AND (NOT ENABLE_FELIX))
   MESSAGE(FATAL_ERROR "\nError:  ENABLE_CISM_INTERFACE requires ENABLE_FELIX
 to be ON\n")
@@ -640,10 +645,10 @@ ELSE()
 ENDIF()
 
 # set optional dependency of mesh on parameters, defaults to Disabled
-OPTION(ENABLE_USE_CISM_FLOW_PARAMETERS "Flag to use the parameters of Glen's law used by Cism" OFF)
+OPTION(ENABLE_USE_CISM_FLOW_PARAMETERS "Flag to use the parameters of Glen's law used by Cism" ON)
 IF (ENABLE_USE_CISM_FLOW_PARAMETERS)
   ADD_DEFINITIONS(-DUSE_CISM_FLOW_PARAMETERS)
-  MESSAGE("-- USE_CISM_FLOW_PARAMETERS is Enabled, compiling with -DUSE_CISM_FLOW_PARAMETERS. WARNING: many FELIX tests will fail")
+  MESSAGE("-- USE_CISM_FLOW_PARAMETERS is Enabled, compiling with -DUSE_CISM_FLOW_PARAMETERS.")
   SET(USE_CISM_FLOW_PARAMETERS TRUE)
 ELSE()
   SET(USE_CISM_FLOW_PARAMETERS FALSE)
@@ -1264,6 +1269,19 @@ IF(ALBANY_MPI)
     MESSAGE("-- CTest mpi_exec call:  ${MPIEX} ${MPINPF} ${MPIMNP}")
   ENDIF()
 ENDIF(ALBANY_MPI)
+
+#Add option to run any pretest executables in a specific environment (mpiexec.hydra, srun, or other)
+IF (DEFINED ALBANY_PRETEST_EXEC) 
+  MESSAGE("-- ALBANY_PRETEST_EXEC is ${ALBANY_PRETEST_EXEC}")
+ELSE()
+  # Not set in configure - set it to be empty
+  SET(ALBANY_PRETEST_EXEC "" CACHE STRING "Command to use to execute pretests")
+ENDIF()
+
+#Add option to specify path to desired SEACAS utils
+IF (DEFINED ALBANY_SEACAS_PATH) 
+  MESSAGE("-- ALBANY_SEACAS_PATH is ${ALBANY_SEACAS_PATH}")
+ENDIF()
 
 # Add Albany test -- in the "examples" directory
 IF (ALBANY_LIBRARIES_ONLY)

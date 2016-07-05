@@ -9,45 +9,16 @@ creates usable output from LCM calculations
 # Imported modules
 #
 import cPickle as pickle
-from lcm_postprocess import Timer
-from lcm_postprocess.read_file_output_exodus import read_file_output_exodus
-from lcm_postprocess.read_file_log import read_file_log
-from lcm_postprocess.read_file_input_material import read_file_input_material
-from lcm_postprocess.derive_value_variable import derive_value_variable
-from lcm_postprocess.write_file_exodus import write_file_exodus
-from lcm_postprocess.plot_data_run import plot_data_run
-from lcm_postprocess.plot_inverse_pole_figure import plot_inverse_pole_figure
-from lcm_postprocess.plot_data_stress import plot_data_stress
-
-
-
-
-#
-# Local functions
-#
-
-
-# Write select data to text file
-def write_data(domain, name_file_data, precision = 8):
-
-    file = open(name_file_data, 'w')
-
-    str_format = '%.'+str(precision)+'e'
-
-    file.write('Deformation Gradient\n')
-    for step in domain.F:
-        domain.F[step].tofile(file, sep = ' ', format = str_format)
-        file.write('\n')
-
-    file.write('Cauchy Stress\n')
-    for step in domain.Cauchy_Stress:
-        domain.Cauchy_Stress[step].tofile(file, sep = ' ', format = str_format)
-        file.write('\n')
-
-    file.close()
-
-# end def write_data(data, name_file_data)
-
+from _core import Timer
+from read_file_log import read_file_log
+from read_file_output_exodus import read_file_output_exodus
+from read_file_input_material import read_file_input_material
+from derive_value_variable import derive_value_variable
+from write_file_exodus import write_file_exodus
+from plot_data_run import plot_data_run
+from plot_inverse_pole_figure import plot_inverse_pole_figure
+from plot_data_stress import plot_data_stress
+from write_file_data import write_file_data
 
 
 #
@@ -57,10 +28,9 @@ def postprocess(
     name_file_output_exodus,
     plotting = False,
     pickling = True,
+    write_data = True,
     verbosity = 1,
     **kwargs):
-
-
 
     print ''
 
@@ -170,65 +140,89 @@ def postprocess(
 
 
     #
-    # Plot the convergence data
+    # Plot the simulation results
     #
-    with Timer() as timer:
+    if plotting == True:
+    
+        #
+        # Plot the convergence data
+        #
+        with Timer() as timer:
 
-        if verbosity > 0:
-            print 'Plotting convergence data...'
-
-        if plotting == True:
+            if verbosity > 0:
+                print 'Plotting convergence data...'
 
             plot_data_run(run = run)
 
-    if verbosity > 0:
-        print '    Elapsed time: ' + str(timer.interval) + 's\n'
-
-
-
-
-    #
-    # Plot the inverse pole figures
-    #
-    with Timer() as timer:
-
         if verbosity > 0:
-            print 'Plotting inverse pole figures...'
+            print '    Elapsed time: ' + str(timer.interval) + 's\n'
 
-        if plotting == True:
+        #
+        # Plot the inverse pole figures
+        #
+        with Timer() as timer:
+
+            if verbosity > 0:
+                print 'Plotting inverse pole figures...'
             
             for step in [domain.times[0], domain.times[-1]]:
 
                 plot_inverse_pole_figure(domain = domain, time = step)
 
-    if verbosity > 0:
-        print '    Elapsed time: ' + str(timer.interval) + 's\n'
-
-
-
-    #
-    # Plot stress-strain data
-    #
-    with Timer() as timer:
-
         if verbosity > 0:
-            print 'Plotting stress-strain data...'
+            print '    Elapsed time: ' + str(timer.interval) + 's\n'
 
-        if plotting == True:
+        #
+        # Plot stress-strain data
+        #
+        with Timer() as timer:
+
+            if verbosity > 0:
+                print 'Plotting stress-strain data...'
+
             plot_data_stress(domain = domain)
 
-    if verbosity > 0:
-        print '    Elapsed time: ' + str(timer.interval) + 's\n'
+        if verbosity > 0:
+            print '    Elapsed time: ' + str(timer.interval) + 's\n'
 
+
+
+    #
+    # Serialize data objects
+    #
     if pickling == True:
 
-        file_pickling = open(name_file_base + '_Domain.pickle', 'wb')
-        pickle.dump(domain, file_pickling, pickle.HIGHEST_PROTOCOL)
-        file_pickling.close()
+        with Timer() as timer:
 
-        file_pickling = open(name_file_base + '_Run.pickle', 'wb')
-        pickle.dump(run, file_pickling, pickle.HIGHEST_PROTOCOL)
-        file_pickling.close()
+            if verbosity > 0:
+                print 'Writing serialized object files...'
+
+            file_pickling = open(name_file_base + '_Domain.pickle', 'wb')
+            pickle.dump(domain, file_pickling, pickle.HIGHEST_PROTOCOL)
+            file_pickling.close()
+
+            file_pickling = open(name_file_base + '_Run.pickle', 'wb')
+            pickle.dump(run, file_pickling, pickle.HIGHEST_PROTOCOL)
+            file_pickling.close()
+
+        if verbosity > 0:
+            print '    Elapsed time: ' + str(timer.interval) + 's\n'
+
+
+    #
+    # Write data to text file
+    #
+    if write_data == True:
+
+        with Timer() as timer:
+
+            if verbosity > 0:
+                print 'Writing data to text file...'
+
+            write_file_data(domain = domain, name_file_output = name_file_base + '_Data.out')
+
+        if verbosity > 0:
+            print '    Elapsed time: ' + str(timer.interval) + 's\n'
 
 
 

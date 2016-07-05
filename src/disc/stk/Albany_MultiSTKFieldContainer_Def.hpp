@@ -50,7 +50,7 @@ Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
   const Teuchos::Array<Teuchos::Array<std::string> >& solution_vector,
   const Teuchos::Array<std::string>& residual_vector)
   : GenericSTKFieldContainer<Interleaved>(params_, metaData_, bulkData_, neq_, numDim_),
-    haveResidual(false), buildSphereVolume(false) {
+    haveResidual(false), buildSphereVolume(false), buildLatticeOrientation(false) {
 
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
@@ -242,6 +242,16 @@ Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     if(this->sphereVolume_field != 0){
       buildSphereVolume = true;
       stk::io::set_field_role(*this->sphereVolume_field, Ioss::Field::ATTRIBUTE);
+    }
+  }
+  // lattice orientation is mesh attributes read from a genesis mesh file use with certain solid mechanics material models
+  bool hasLatticeOrientationFieldContainerRequirement = (std::find(req.begin(), req.end(), "Lattice_Orientation") != req.end());
+  if(hasLatticeOrientationFieldContainerRequirement){
+    // STK says that attributes are of type Field<double,anonymous>[ name: "extra_attribute_3" , #states: 1 ]
+    this->latticeOrientation_field = metaData_->template get_field<stk::mesh::FieldBase>(stk::topology::ELEMENT_RANK, "extra_attribute_9");
+    if(this->latticeOrientation_field != 0){
+      buildLatticeOrientation = true;
+      stk::io::set_field_role(*this->latticeOrientation_field, Ioss::Field::ATTRIBUTE);
     }
   }
 #endif

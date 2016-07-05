@@ -76,6 +76,8 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     typedef std::map<std::string,double>                MeshScalarState;
     typedef std::map<std::string,std::vector<double> >  MeshVectorState;
 
+    typedef std::map<std::string,int>                MeshScalarIntegerState;
+    typedef std::map<std::string,std::vector<int> >  MeshVectorIntegerState;
     //! Destructor
     virtual ~AbstractSTKFieldContainer() {};
 
@@ -89,10 +91,13 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     IntScalarFieldType* getFractureState(stk::topology::rank_t rank){ return fracture_state[rank]; }
 #endif // ALBANY_LCM
     SphereVolumeFieldType* getSphereVolumeField(){ return sphereVolume_field; }
+    stk::mesh::FieldBase* getLatticeOrientationField(){ return latticeOrientation_field; }
 
     ScalarValueState& getScalarValueStates(){ return scalarValue_states;}
     MeshScalarState& getMeshScalarStates(){return mesh_scalar_states;}
     MeshVectorState& getMeshVectorStates(){return mesh_vector_states;}
+    MeshScalarIntegerState& getMeshScalarIntegerStates(){return mesh_scalar_integer_states;}
+    MeshVectorIntegerState& getMeshVectorIntegerStates(){return mesh_vector_integer_states;}
     ScalarState& getCellScalarStates(){return cell_scalar_states;}
     VectorState& getCellVectorStates(){return cell_vector_states;}
     TensorState& getCellTensorStates(){return cell_tensor_states;}
@@ -105,6 +110,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
 
     virtual bool hasResidualField() = 0;
     virtual bool hasSphereVolumeField() = 0;
+    virtual bool hasLatticeOrientationField() = 0;
 
     std::map<std::string, double>& getTime() {
       return time;
@@ -142,17 +148,20 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
 #endif // ALBANY_LCM
 
     SphereVolumeFieldType* sphereVolume_field; // Required for Peridynamics in LCM
+    stk::mesh::FieldBase* latticeOrientation_field; // Required for certain LCM material models
 
-    ScalarValueState scalarValue_states;
-    MeshScalarState   mesh_scalar_states;
-    MeshVectorState   mesh_vector_states;
-    ScalarState       cell_scalar_states;
-    VectorState       cell_vector_states;
-    TensorState       cell_tensor_states;
-    QPScalarState     qpscalar_states;
-    QPVectorState     qpvector_states;
-    QPTensorState     qptensor_states;
-    QPTensor3State    qptensor3_states;
+    ScalarValueState       scalarValue_states;
+    MeshScalarState        mesh_scalar_states;
+    MeshVectorState        mesh_vector_states;
+    MeshScalarIntegerState mesh_scalar_integer_states;
+    MeshVectorIntegerState mesh_vector_integer_states;
+    ScalarState            cell_scalar_states;
+    VectorState            cell_vector_states;
+    TensorState            cell_tensor_states;
+    QPScalarState          qpscalar_states;
+    QPVectorState          qpvector_states;
+    QPTensorState          qptensor_states;
+    QPTensor3State         qptensor3_states;
 
     StateInfoStruct nodal_sis;
     StateInfoStruct nodal_parameter_sis;

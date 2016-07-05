@@ -5,9 +5,7 @@ import cStringIO
 from exodus import exodus
 import os
 import sys
-
-from lcm_postprocess import stdout_redirected
-
+from _core import stdout_redirected
 
 # Write postprocessed per-element data to an Exodus file
 def write_file_exodus(domain = None, name_file_input = None, name_file_output = None):

@@ -29,6 +29,7 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
 
     bool hasResidualField(){ return (residual_field != NULL); }
     bool hasSphereVolumeField(){ return buildSphereVolume; }
+    bool hasLatticeOrientationField(){ return false; }
 
     AbstractSTKFieldContainer::VectorFieldType* getSolutionField(){ return solution_field[0]; };
    

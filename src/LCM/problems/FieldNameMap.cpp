@@ -63,6 +63,11 @@ namespace LCM {
     name_map->insert( std::make_pair("CP_Residual","CP_Residual") );
     // field name for crystallographic rotation tensor
     name_map->insert( std::make_pair("Re","Re") );
+    // field name for ViscoElastic model
+    name_map->insert( std::make_pair("H_1","H_1") );
+    name_map->insert( std::make_pair("H_2","H_2") );
+    name_map->insert( std::make_pair("H_3","H_3") );
+    name_map->insert( std::make_pair("Instantaneous Stress","Instantaneous Stress") );
     // Poroplasticity model
     name_map->insert( std::make_pair("Total_Stress","Total_Stress") );
     name_map->insert( std::make_pair("KCPermeability","KCPermeability") );

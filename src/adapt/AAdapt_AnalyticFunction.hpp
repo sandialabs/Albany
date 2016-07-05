@@ -215,6 +215,16 @@ class AerasHydrostaticPureAdvection1 : public AnalyticFunction {
     Teuchos::Array<double> data;
 };
 
+class AerasHydrostatic3dDeformationalFlow : public AnalyticFunction {
+  public:
+    AerasHydrostatic3dDeformationalFlow(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    const int numDim; // size of coordinate vector X
+    const int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
 class AerasXZHydrostatic : public AnalyticFunction {
   public:
     AerasXZHydrostatic(int neq_, int numDim_, Teuchos::Array<double> data_);

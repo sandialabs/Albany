@@ -72,7 +72,7 @@ public:
   void
   computeState(
       typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
 
   virtual
@@ -135,12 +135,9 @@ private:
 
   RealType
   reference_temperature_;
-
-  Intrepid2::Tensor4<ScalarT, CP::MAX_DIM>
-  C_;
   
   Intrepid2::Tensor<RealType, CP::MAX_DIM>
-  orientation_;
+  element_block_orientation_;
 
   ///
   /// Number of slip systems
@@ -149,10 +146,39 @@ private:
   num_slip_;
 
   ///
+  /// Unrotated elasticity tensor
+  ///
+  Intrepid2::Tensor4<ScalarT, CP::MAX_DIM>
+  C_unrotated_;
+
+  ///
+  /// Elasticity tensor
+  ///
+  Intrepid2::Tensor4<ScalarT, CP::MAX_DIM>
+  C_;
+
+  //
+  // Unrotated slip directions
+  //
+  std::vector< Intrepid2::Vector<RealType, CP::MAX_DIM> >
+  s_unrotated_;
+
+  //
+  // Unrotated slip normals
+  //
+  std::vector< Intrepid2::Vector<RealType, CP::MAX_DIM> >
+  n_unrotated_;
+
+  ///
   /// Struct holding slip system data
   ///
-  std::vector< CP::SlipSystemStruct<CP::MAX_DIM,CP::MAX_SLIP> > 
+  std::vector< CP::SlipSystemStruct<CP::MAX_DIM, CP::MAX_SLIP> >
   slip_systems_;
+
+  ///
+  /// Flags for reading lattice orientations from file
+  ///
+  bool read_orientations_from_mesh_;
 
   ///
   /// Constitutive relations

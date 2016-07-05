@@ -436,6 +436,31 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
     {
       mesh_data->get_global (it.first, it.second, true); // Last variable is abort_if_not_found. Should it be false?
     }
+    for (auto& it : fieldContainer->getMeshScalarIntegerStates())
+    {
+      mesh_data->get_global (it.first, it.second, true); // Last variable is abort_if_not_found. Should it be false?
+    }
+
+    //Read info for layered mehes.
+    bool hasLayeredStructure=true;
+    std::vector<double> ltr;
+    int ordering, stride;
+  
+    std::string state_name = "layer_thickness_ratio";
+    hasLayeredStructure = hasLayeredStructure && mesh_data->get_global (state_name, ltr, false);
+    if(hasLayeredStructure) fieldContainer->getMeshVectorStates()[state_name] = ltr;
+    state_name = "ordering";
+    hasLayeredStructure = hasLayeredStructure && mesh_data->get_global (state_name, ordering, false);
+    if(hasLayeredStructure) fieldContainer->getMeshScalarIntegerStates()[state_name] = ordering;
+    state_name = "stride";
+    hasLayeredStructure = hasLayeredStructure && mesh_data->get_global (state_name, stride, false);
+    if(hasLayeredStructure) fieldContainer->getMeshScalarIntegerStates()[state_name] = stride;
+
+    if(hasLayeredStructure) {
+      Teuchos::ArrayRCP<double> layerThicknessRatio(ltr.size());
+      for(int i=0; i< ltr.size(); ++i) layerThicknessRatio[i] = ltr[i];
+        this->layered_mesh_numbering = Teuchos::rcp(new LayeredMeshNumbering<LO>(stride,static_cast<LayeredMeshOrdering>(ordering),layerThicknessRatio));
+    }
   }
   else
   {

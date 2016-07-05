@@ -47,6 +47,7 @@ add_executable(CylHeatProfile CylHeatProfile.C)
 if (ALBANY_EPETRA) 
 add_test(NAME ${testName}
      COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=
+     "-DAUX_ENV=${ALBANY_PRETEST_EXEC}"
      "-DAUX_PROG=${CMAKE_CURRENT_BINARY_DIR}/CylHeatProfile" -P
      ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake
      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
@@ -56,6 +57,7 @@ if (ALBANY_IFPACK2)
 add_test(NAME ${testName}_Tpetra
      COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${AlbanyT.exe}"
      "-DTEST_ARGS=inputT.xml"
+     "-DAUX_ENV=${ALBANY_PRETEST_EXEC}"
      "-DAUX_PROG=${CMAKE_CURRENT_BINARY_DIR}/CylHeatProfile" -P
      ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake
      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})

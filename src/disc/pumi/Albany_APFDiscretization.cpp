@@ -91,9 +91,8 @@ void Albany::APFDiscretization::init()
 // layout[num deriv vectors][DOF_component]
   Teuchos::Array<Teuchos::Array<std::string> > layout = meshStruct->solVectorLayout;
   int number_of_solution_vecs = layout.size();
-  int index;
   solNames.resizeTimeDeriv(number_of_solution_vecs);
- 
+
 
   for (std::size_t i=0; i < layout[0].size(); i+=2) {
 
@@ -105,20 +104,28 @@ void Albany::APFDiscretization::init()
   }
 
   for (int j=0; j < number_of_solution_vecs; j++) {
+    int total_ndofs = 0;
     for (std::size_t i=0; i < layout[j].size(); i+=2) {
       solNames.getTimeDeriv(j).push_back(layout[j][i]);
+      int ndofs = 0;
       if (layout[j][i+1] == "S") {
-        index = 1; // num DOFs in sub-vector
-        solNames.getTimeIdx(j).push_back(index);
+        ndofs = 1; // num DOFs in sub-scalar
+        solNames.getTimeIdx(j).push_back(ndofs);
       }
       else if (layout[j][i+1] == "V") {
-        index = getNumDim(); // num DOFs in sub-vector
-        solNames.getTimeIdx(j).push_back(index);
+        ndofs = getNumDim(); // num DOFs in sub-vector
+        solNames.getTimeIdx(j).push_back(ndofs);
       } else {
         TEUCHOS_TEST_FOR_EXCEPTION(
           true, std::logic_error,
           "Layout '" << layout[j][i+1] << "' is not supported.");
       }
+      total_ndofs += ndofs;
+    }
+    if (layout[0].size()) {
+      TEUCHOS_TEST_FOR_EXCEPTION(total_ndofs != neq, std::logic_error,
+          "Layout size " << total_ndofs <<
+          " does not match number of equations " << neq << '\n');
     }
   }
 
@@ -261,6 +268,12 @@ Albany::APFDiscretization::getSphereVolume() const
   return sphereVolume;
 }
 
+const Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type&
+Albany::APFDiscretization::getLatticeOrientation() const
+{
+  return latticeOrientation;
+}
+
 double mean (const double* x, const int n,
              const Teuchos::RCP<const Tpetra_Map>& map) {
   Teuchos::ArrayView<const double> xav = Teuchos::arrayView(x, n);
@@ -338,17 +351,16 @@ void Albany::APFDiscretization::setField(
   // 9 components is the max number we ever need.
   double data_buf[9] = {0};
   // Determine the PUMI and Albany field sizes for this field.
-  const int
-    pumi_nc = apf::countComponents(f),
-    albany_nc = albanyCountComponents(spdim, pumi_nc);
+  const int pumi_nc = apf::countComponents(f);
+  const int albany_nc = albanyCountComponents(spdim, pumi_nc);
 
   for (size_t i = 0; i < nodes.getSize(); ++i) {
     apf::Node node = nodes[i];
     GO node_gid = apf::getNumber(globalNumbering, node);
     int node_lid;
-    if (overlapped)
+    if (overlapped) {
       node_lid = overlap_node_mapT->getLocalElement(node_gid);
-    else {
+    } else {
       if ( ! m->isOwned(node.entity)) continue;
       node_lid = node_mapT->getLocalElement(node_gid);
     }
@@ -356,8 +368,9 @@ void Albany::APFDiscretization::setField(
 
     const double* datap = data + first_dof;
     if (spdim < 3) {
-      for (int j = 0; j < albany_nc; ++j)
+      for (int j = 0; j < albany_nc; ++j) {
         data_buf[j] = datap[j];
+      }
       datap = data_buf;
     }
 
@@ -389,25 +402,23 @@ void Albany::APFDiscretization::getField(
 {
   apf::Mesh* m = meshStruct->getMesh();
   apf::Field* f = m->findField(name);
-  const int
-    spdim = getNumDim(),
-    albany_nc = albanyCountComponents(spdim, apf::countComponents(f));
-
+  const int spdim = getNumDim();
+  const int albany_nc = albanyCountComponents(
+      spdim, apf::countComponents(f));
   for (size_t i = 0; i < nodes.getSize(); ++i) {
     apf::Node node = nodes[i];
     GO node_gid = apf::getNumber(globalNumbering,node);
     int node_lid;
-    if (overlapped)
+    if (overlapped) {
       node_lid = overlap_node_mapT->getLocalElement(node_gid);
-    else {
-      if ( ! m->isOwned(node.entity))
-        continue;
+    } else {
+      if ( ! m->isOwned(node.entity)) continue;
       node_lid = node_mapT->getLocalElement(node_gid);
     }
     const int first_dof = getDOF(node_lid, offset, nentries);
-    if (spdim == 3)
+    if (spdim == 3) {
       apf::getComponents(f, node.entity, node.node, &data[first_dof]);
-    else {
+    } else {
       double buf[4];
       apf::getComponents(f, node.entity, node.node, buf);
       for (int j = 0; j < albany_nc; ++j) data[first_dof + j] = buf[j];
@@ -451,7 +462,6 @@ void Albany::APFDiscretization::writeSolutionMV(
 {
 
   for(int i = 0; i <= meshStruct->num_time_deriv; i++){
-
     Teuchos::RCP<const Tpetra_Vector> colT = solnT.getVector(i);
     Teuchos::ArrayRCP<const ST> data = colT->get1dView();
     writeAnySolutionToMeshDatabase(&(data[0]), i, overlapped);
@@ -472,7 +482,6 @@ void Albany::APFDiscretization::writeSolutionMVToMeshDatabase(
   const Tpetra_MultiVector& solnT, const double time_value, const bool overlapped)
 {
   for(int i = 0; i <= meshStruct->num_time_deriv; i++){
-
     Teuchos::RCP<const Tpetra_Vector> colT = solnT.getVector(i);
     Teuchos::ArrayRCP<const ST> data = colT->get1dView();
     writeAnySolutionToMeshDatabase(&(data[0]), i, overlapped);
@@ -681,7 +690,9 @@ Albany::APFDiscretization::getSolutionMV(bool overlapped) const
 {
   // Copy soln vector into solution field, one node at a time
   Teuchos::RCP<Tpetra_MultiVector> solnT = Teuchos::rcp(
-    new Tpetra_MultiVector(overlapped ? overlap_mapT : mapT, meshStruct->num_time_deriv + 1, false));
+    new Tpetra_MultiVector(overlapped ? overlap_mapT : mapT,
+      meshStruct->num_time_deriv + 1,
+      /*zero-out=*/false));
 
   for(int i = 0; i <= meshStruct->num_time_deriv; i++){
 
@@ -693,9 +704,15 @@ Albany::APFDiscretization::getSolutionMV(bool overlapped) const
         this->getField(APFMeshStruct::solution_name[i], &(data[0]), overlapped);
       else
         this->getSplitFields(solNames.getTimeDeriv(i), solNames.getTimeIdx(i), &(data[0]), overlapped);
+    } else if ( ! PCU_Comm_Self()) {
+      if (solNames.getTimeDeriv(i).size() == 0) {
+        *out <<__func__<<": uninit field "
+             << APFMeshStruct::solution_name[i] << '\n';
+      } else {
+        *out <<__func__<<": uninit field "
+             << solNames.getTimeDeriv(i) << '\n';
+      }
     }
-    else if ( ! PCU_Comm_Self())
-      *out <<__func__<<": uninit field" << std::endl;
   }
   return solnT;
 }
@@ -1003,6 +1020,7 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
   wsElNodeID.resize(numBuckets);
   coords.resize(numBuckets);
   sphereVolume.resize(numBuckets);
+  latticeOrientation.resize(numBuckets);
 
   // Clear map if remeshing
   if(!elemGIDws.empty()) elemGIDws.clear();
