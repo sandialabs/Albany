@@ -748,7 +748,11 @@ if (basalSideName!="INVALID")
 
     p->set<std::string>("Old Coords Name", "Coord Vec Old");
     p->set<std::string>("New Coords Name", "Coord Vec");
-    p->set<std::string>("Thickness Name", "Ice Thickness Param");
+    if(isThicknessAParameter)
+      p->set<std::string>("Thickness Name", "Ice Thickness Param");
+    else
+      p->set<std::string>("Thickness Name", "Ice Thickness");
+      
     p->set<std::string>("Top Surface Name", "Surface Height");
 
     ev = Teuchos::rcp(new FELIX::UpdateZCoordinateMovingBed<EvalT,PHAL::AlbanyTraits>(*p, dl));
@@ -1236,12 +1240,17 @@ if (basalSideName!="INVALID")
     Teuchos::RCP<Teuchos::ParameterList> paramList = Teuchos::rcp(new Teuchos::ParameterList("Param List"));
     paramList->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
     paramList->set<std::string>("Basal Friction Coefficient Gradient Name","Beta Gradient");
-    paramList->set<std::string>("Thickness Gradient Name","Ice Thickness Param Gradient");
+    if(isThicknessAParameter) {
+      paramList->set<std::string>("Thickness Gradient Name","Ice Thickness Param Gradient");
+      paramList->set<std::string>("Thickness Side QP Variable Name","Ice Thickness Param");
+    } else {   
+      paramList->set<std::string>("Thickness Gradient Name","Ice Thickness Gradient");
+      paramList->set<std::string>("Thickness Side QP Variable Name","Ice Thickness");
+    }
     paramList->set<std::string>("Surface Velocity Side QP Variable Name","Surface Velocity");
     paramList->set<std::string>("SMB Side QP Variable Name","Surface Mass Balance");
     paramList->set<std::string>("SMB RMS Side QP Variable Name","Surface Mass Balance RMS");
     paramList->set<std::string>("Flux Divergence Side QP Variable Name","Flux Divergence");
-    paramList->set<std::string>("Thickness Side QP Variable Name","Ice Thickness Param");
     paramList->set<std::string>("Thickness RMS Side QP Variable Name","Ice Thickness RMS");
     paramList->set<std::string>("Observed Thickness Side QP Variable Name","Observed Ice Thickness");
     paramList->set<std::string>("Observed Surface Velocity Side QP Variable Name","Observed Surface Velocity");
