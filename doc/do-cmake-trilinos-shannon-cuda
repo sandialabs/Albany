@@ -48,9 +48,8 @@ export CC=mpicc
 export CXX=mpicxx
 export FC=mpif90
 export NVCC_WRAPPER_DEFAULT_COMPILER=mpicc
-#NOTE: the following needs may need to be changed your Trilinos base directory, 
-#if your build directory is not in your Trilinos base directory.
-export OMPI_CXX=../packages/kokkos/config/nvcc_wrapper
+#FIXME: the following needs needs to be changed to point to your Trilinos! 
+export OMPI_CXX=/home/ikalash/Trilinos_devel/packages/kokkos/config/nvcc_wrapper
 export CUDA_LAUNCH_BLOCKING=1
 
 NETCDF=/home/ikalash/Install/TPLS
