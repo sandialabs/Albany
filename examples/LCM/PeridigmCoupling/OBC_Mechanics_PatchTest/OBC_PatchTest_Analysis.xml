@@ -60,11 +60,11 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS nodelist_1 for DOF X prescribe Field" type="string" value="dirichlet_field"/>
-      <Parameter name="DBC on NS nodelist_1 for DOF Y" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_1 for DOF Z" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_6 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_7 for DOF Z" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_2 for DOF X prescribe Field" type="string" value="dirichlet_field"/>
-      <Parameter name="DBC on NS nodelist_2 for DOF Y" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_2 for DOF Z" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_8 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_9 for DOF Z" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF X prescribe Field" type="string" value="dirichlet_control_field"/>
       <Parameter name="DBC on NS nodelist_4 for DOF X prescribe Field" type="string" value="dirichlet_control_field"/>
     </ParameterList>
@@ -107,7 +107,7 @@
       <Parameter name="Analysis Package" type="string" value="ROL"/>
       <ParameterList name="ROL">
         <Parameter name="Check Gradient" type="bool" value="false"/>
-        <Parameter name="Gradient Tolerance" type="double" value="1e-7"/>
+        <Parameter name="Gradient Tolerance" type="double" value="1e-9"/> <!-- DJL -->
         <Parameter name="Step Tolerance" type="double" value="1e-20"/>
         <Parameter name="Max Iterations" type="int" value="500"/>
         <Parameter name="Print Output" type="bool" value="true"/>
@@ -323,7 +323,7 @@
 	      <Parameter name="Test Type" type="string" value="NormF"/>
 	      <Parameter name="Norm Type" type="string" value="Two Norm"/>
 	      <Parameter name="Scale Type" type="string" value="Scaled"/>
-	      <Parameter name="Tolerance" type="double" value="1.0e-12"/>
+	      <Parameter name="Tolerance" type="double" value="1.0e-14"/> <!-- DJL -->
 	    </ParameterList>
 	    <ParameterList name="Test 1">
 	      <Parameter name="Test Type" type="string" value="MaxIters"/>
