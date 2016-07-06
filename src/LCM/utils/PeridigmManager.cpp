@@ -901,22 +901,28 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
           deriv[dim] = 2*displacementDiffScaled[3*iEvalPt+dim]*basisOnRefPoint(i,0);
           globalNodeIds[dim] = 3*globalAlbanyNodeId + dim;
         }
-        obcFunctionalDerivWrtDisplacementOverlap->SumIntoGlobalValues(3, deriv, globalNodeIds);
+        int err = obcFunctionalDerivWrtDisplacementOverlap->SumIntoGlobalValues(3, deriv, globalNodeIds);
+	TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "\n\n**** Error in PeridigmManager::obcEvaluateFunctional(), obcFunctionalDerivWrtDisplacementOverlap->SumIntoGlobalValues(3, deriv, globalNodeIds) position A.\n\n");
       }
 
       // Derivatives corresponding to dof at peridigm node
       for(int dim=0; dim<3; ++dim) {
         deriv[dim] = -2*displacementDiffScaled[3*iEvalPt+dim];
-        globalNodeIds[dim] = 3*((*obcDataPoints)[iEvalPt].peridigmGlobalId) + dim;
+        globalNodeIds[dim] = 3*((*obcDataPoints)[iEvalPt].peridigmGlobalId) + dim; // DJL HERE
       }
-      obcFunctionalDerivWrtDisplacementOverlap->SumIntoGlobalValues(3, deriv, globalNodeIds);
+      int err = obcFunctionalDerivWrtDisplacementOverlap->SumIntoGlobalValues(3, deriv, globalNodeIds);
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "\n\n**** Error in PeridigmManager::obcEvaluateFunctional(), obcFunctionalDerivWrtDisplacementOverlap->SumIntoGlobalValues(3, deriv, globalNodeIds) position B.\n\n");
     }
   }
+
+
 
   // Assemble the derivative of the functional
   if(obcFunctionalDerivWrtDisplacement != NULL) {
     obcFunctionalDerivWrtDisplacement->Export(*obcFunctionalDerivWrtDisplacementOverlap, *overlapSolutionExporter, Add);
   }
+
+//   std::cout << "DJL DEBUGGING obcFunctionalDerivWrtDisplacement\n" << *obcFunctionalDerivWrtDisplacement << std::cout;
 
   // Send displacement differences to Peridigm for output
   Teuchos::RCP< std::vector<PeridigmNS::Block>> peridigmBlocks = peridigm->getBlocks();
