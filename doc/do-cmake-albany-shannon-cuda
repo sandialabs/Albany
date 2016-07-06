@@ -1,56 +1,25 @@
-# Here is a script for configuring Trilinos using cmake
-# that includes the packages needed for Albany.
-# Any environment variables (e.g. $BOOST_DIR) are
-# set in the customization file, e.g. set_andy_env.in
-# 
-# It is important to not put CXX flags.  Otherwise you will 
-# get weird compilation errors.  
 
-rm -f CMakeCache.txt
-rm -rf CMakeFiles
+
+#!\bin/bash
 
 BUILD_DIR=`pwd`
-
-module purge
-module add cmake/2.8.11.2
-module add openmpi/1.8.4/gnu/4.7.2/cuda/7.0.28
-module add libmpc/1.0.1
-module add nvcc-wrapper/gnu
-
-# Don't change these
-TRIBUILDDIR=/home/ikalash/codes/Trilinos_github/build-cuda/
-TRILINSTALLDIR=$TRIBUILDDIR/install
-
+rm CMakeCache.txt; rm -rf CMakeFiles
+TRILINSTALLDIR=/home/ikalash/codes/Trilinos_develop/build-cuda/install
 
 cmake \
-      -D Trilinos_DIR="$TRILINSTALLDIR" \
-      -D ALBANY_TRILINOS_DIR:FILEPATH="$TRILINSTALLDIR" \
-      -D ENABLE_DEBUGGING:BOOL=OFF \
+      -D ALBANY_TRILINOS_DIR:FILEPATH=$TRILINSTALLDIR \
+      -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+      -D ENABLE_DEMO_PDES:BOOL=ON \
+      -D ENABLE_FELIX:BOOL=OFF \
+      -D ENABLE_QCAD:BOOL=OFF \
       -D ENABLE_LCM:BOOL=OFF \
-      -D ENABLE_LCM_SPECULATIVE:BOOL=OFF \
-      -D ENABLE_LCM_TEST_EXES:BOOL=OFF \
-      -D ENABLE_CONTACT:BOOL=OFF \
-      -D ENABLE_HYDRIDE:BOOL=OFF \
+      -D ENABLE_AERAS:BOOL=OFF \
       -D ENABLE_SG:BOOL=OFF \
-      -D ENABLE_FELIX:BOOL=ON \
-      -D ENABLE_AERAS:BOOL=ON \
-      -D ENABLE_QCAD:BOOL=ON \
-      -D ENABLE_MOR:BOOL=OFF \
-      -D ENABLE_ATO:BOOL=OFF \
-      -D ENABLE_ALBANY_EPETRA_EXE:BOOL=ON \
-      -D ENABLE_AMP:BOOL=OFF \
-      -D ENABLE_GOAL:BOOL=OFF \
-      -D ENABLE_ASCR:BOOL=OFF \
-      -D ENABLE_CHECK_FPE:BOOL=OFF \
-      -D ENABLE_MPAS_INTERFACE:BOOL=OFF \
-      -D ENABLE_CISM_INTERFACE:BOOL=OFF \
-      -D ENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON \
-      -D ENABLE_DAKOTA_RESTART_EXAMPLES=OFF \
-      -D ENABLE_SLFAD:BOOL=OFF \
       -D ENABLE_ENSEMBLE:BOOL=OFF \
-      -D ENSEMBLE_SIZE:INT=16 \
-      -D ENABLE_64BIT_INT:BOOL=OFF \
-      -D ENABLE_LAME:BOOL=OFF\
-       ../
-
-#      -D CMAKE_CXX_FLAGS:STRING="-g" \
+      -D ENABLE_ATO:BOOL=OFF \
+      -D ENABLE_MOR:BOOL=OFF \
+      -D ENABLE_PERFORMANCE_TESTS:BOOL=OFF \
+      -D ALBANY_LIBRARIES_ONLY=OFF \
+      -D ENABLE_INSTALL:BOOL=OFF \
+      -D ENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON \
+..

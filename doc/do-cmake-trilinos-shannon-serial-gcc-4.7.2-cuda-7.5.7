@@ -26,7 +26,7 @@
 # know if these capabilities are enabled or disabled.
 #
 # It is important you edit your ~/.bashrc to be as follows: 
-# LD_LIBRARY_PATH=/ha_cluster/global/opt/gcc/4.8.1/snos/lib:$LD_LIBRARY_PATH:/ha_cluster/home/projects/mpc/1.0.1/lib
+# LD_LIBRARY_PATH=/home/ikalash/Install/TPLS/lib:/ha_cluster/global/opt/gcc/4.8.1/snos/lib:$LD_LIBRARY_PATH:/ha_cluster/home/projects/mpc/1.0.1/lib
 # export LD_LIBRARY_PATH
 #
 # To run: 
@@ -39,19 +39,19 @@ rm -rf CMake*
 BUILD_DIR=`pwd`
 
 module purge 
-module load gcc/5.1.0
+module load openmpi/1.10.1/gnu/4.7.2/cuda/7.5.7
 module load cmake/2.8.11.2
 module list
 
-NETCDF=/home/ipdemes/install/netcdf
-HDF5DIR=/home/ikalash/Install/hdf5-1.8.10-gcc
+NETCDF=/home/ikalash/Install/TPLS
+HDF5DIR=/home/ikalash/Install/TPLS
 BOOSTDIR=/home/ikalash/Install/boost_1_53_0-gcc
 
 cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
-      -D CMAKE_C_COMPILER=/home/projects/x86-64/openmpi/1.8.2/gnu/4.8.3/cuda/6.5.14/bin/mpicc \
-      -D CMAKE_CXX_COMPILER=/home/projects/x86-64/openmpi/1.8.2/gnu/4.8.3/cuda/6.5.14/bin/mpicxx \
-      -D CMAKE_Fortran_COMPILER=/home/projects/x86-64/openmpi/1.8.2/gnu/4.8.3/cuda/6.5.14/bin/mpif90 \
+      -D CMAKE_C_COMPILER="mpicc" \
+      -D CMAKE_CXX_COMPILER="mpicxx" \
+      -D CMAKE_Fortran_COMPILER="mpif90" \
       -D BLAS_LIBRARY_NAMES:STRING="libf77blas.so.3" \
       -D BLAS_LIBRARY_DIRS:PATH="/usr/lib64/atlas" \
       -D LAPACK_LIBRARY_NAMES:STRING="liblapack.so.3" \
