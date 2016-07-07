@@ -740,18 +740,31 @@ computeRateSlip(
     ArgT const
     viscous_drag = std::fabs(ratio_stress) / drag_term;
 
-    ArgT const
-    power_law = std::pow(std::fabs(ratio_stress), m-1) * ratio_stress;
-      
+    RealType const
+    pl_tol = std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / m);
+
+    bool const
+    finite_power_law = std::fabs(ratio_stress) > pl_tol;
+
     ArgT
-    effective;
+    power_law{0.0};
+
+    if (finite_power_law == true) {
+      power_law = std::pow(std::fabs(ratio_stress), m - 1) * ratio_stress;
+    }
+
+    RealType const
+    eff_tol = 1.0e-8;
+
+    bool const
+    vd_active = std::fabs(ratio_stress) > eff_tol;
 
     // prevent flow rule singularities if stress is zero
-    if (std::fabs(ratio_stress) < 1.0e-16){
-      effective = power_law;
-    }
-    else {
-      effective = 1.0/((1.0 / power_law) + (1.0 / viscous_drag));      
+    ArgT
+    effective{power_law};
+
+    if (vd_active == true) {
+      effective = 1.0/((1.0 / power_law) + (1.0 / viscous_drag));
     }
 
     // compute slip increment
