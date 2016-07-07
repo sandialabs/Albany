@@ -5,7 +5,7 @@
 
   <ParameterList name="Problem">
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
-    <Parameter name="Solution Method" type="string" value="Steady"/>
+    <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Name" type="string" value="FELIX Stokes FO Thermo Coupled 3D"/>
     <Parameter name="Required Fields" type="Array(string)" value="{thickness,surface_height}"/>
     <Parameter name="Basal Side Name" type="string" value="basalside"/>
@@ -48,15 +48,15 @@
       <Parameter name="Reference Temperature" type="double" value="265.0"/>
       <Parameter name="Clausius-Clapeyron coefficient" type="double" value="0.000000079"/>
       <Parameter name="Latent heat of fusion" type="double" value="334000"/>
-      <Parameter name="alpha" type="double" value="0.0000001"/> 
    </ParameterList>
     <ParameterList name="SUPG Settings">
        <Parameter name="Have SUPG Stabilization" type="bool" value="true"/>
-       <Parameter name="Parameter Delta" type="double" value="1.0"/>
+       <Parameter name="Parameter Delta" type="double" value="0.75"/>
     </ParameterList>
 
     <ParameterList name="FELIX Basal Friction Coefficient">
       <Parameter name="Type" type="string" value="Given Field"/> <!-- "Constant", "Given Field","Power Law","Regularized Coulomb"-->
+      <Parameter name="Regularize With Continuation" type="bool" value="true"/>
     </ParameterList>
 
     <ParameterList name="Body Force">
@@ -77,11 +77,12 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
+    <!--Parameter name="Workset Size" type="int" value="-1"/-->
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
-    <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_FOThermo.exo"/>
-    <Parameter name="Exodus Input File Name" type="string" value="gis_unstructT265.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_FO_Thermo.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="mesh32km/gis_unstruct.exo"/>
     <Parameter name="Restart Index" type="int" value="1"/>
     <ParameterList name="Required Fields Info">
         <Parameter name="Number Of Fields" type="int" value="2"/>
@@ -105,7 +106,7 @@
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
         <Parameter name="Use Serial Mesh" type="bool" value="true"/>
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
-        <Parameter name="Exodus Input File Name" type="string" value="gis_unstruct_basal.exo"/>
+        <Parameter name="Exodus Input File Name" type="string" value="mesh32km/gis_unstruct_basal.exo"/>
         <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_basal_FO_Thermo.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <Parameter name="Restart Index" type="int" value="1"/>
@@ -149,20 +150,6 @@
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.208812026834, 0.243439246662, 0.0545756230981}"/>
   </ParameterList>
   <ParameterList name="Piro">
-
-    <!--ParameterList name="LOCA">
-      <ParameterList name="Bifurcation"/>
-      <ParameterList name="Constraints"/>
-      <ParameterList name="Predictor">
-        <ParameterList name="First Step Predictor"/>
-        <ParameterList name="Last Step Predictor"/>
-      </ParameterList>
-      <ParameterList name="Step Size"/>
-      <ParameterList name="Stepper">
-        <ParameterList name="Eigensolver"/>
-      </ParameterList>
-    </ParameterList-->
-
     <ParameterList name="LOCA">
       <ParameterList name="Bifurcation">
       </ParameterList>
@@ -180,7 +167,7 @@
         <Parameter  name="Min Value" type="double" value="0.0"/>
       </ParameterList>
       <ParameterList name="Step Size">
-        <Parameter  name="Initial Step Size" type="double" value="0.2"/>
+        <Parameter  name="Initial Step Size" type="double" value="0.05"/>
       </ParameterList>
     </ParameterList> <!-- LOCA -->
 
@@ -192,12 +179,12 @@
   <ParameterList name="Test 0">
     <Parameter name="Test Type" type="string" value="Combo"/>
     <Parameter name="Combo Type" type="string" value="AND"/>
-    <Parameter name="Number of Tests" type="int" value="2"/>
+    <Parameter name="Number of Tests" type="int" value="1"/>
     <ParameterList name="Test 0">
       <Parameter name="Test Type" type="string" value="NormF"/>
       <Parameter name="Norm Type" type="string" value="Two Norm"/>
       <Parameter name="Scale Type" type="string" value="Scaled"/>
-      <Parameter name="Tolerance" type="double" value="1e-5"/>
+      <Parameter name="Tolerance" type="double" value="1e-1"/>
     </ParameterList>
     <ParameterList name="Test 1">
       <Parameter name="Test Type" type="string" value="NormWRMS"/>
@@ -207,7 +194,7 @@
   </ParameterList>
   <ParameterList name="Test 1">
     <Parameter name="Test Type" type="string" value="MaxIters"/>
-    <Parameter name="Maximum Iterations" type="int" value="50"/>
+    <Parameter name="Maximum Iterations" type="int" value="100"/>
   </ParameterList>
       </ParameterList>
       <ParameterList name="Direction">
@@ -231,19 +218,19 @@
           <Parameter name="Size of Krylov Subspace" type="int" value="200"/>
           <Parameter name="Output Frequency" type="int" value="20"/>
         </ParameterList>
-        <Parameter name="Max Iterations" type="int" value="200"/>
-        <Parameter name="Tolerance" type="double" value="1e-3"/>
+        <Parameter name="Max Iterations" type="int" value="50"/>
+        <Parameter name="Tolerance" type="double" value="1e-1"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="Belos">
       <Parameter name="Solver Type" type="string" value="Block GMRES"/>
       <ParameterList name="Solver Types">
         <ParameterList name="Block GMRES">
-          <Parameter name="Convergence Tolerance" type="double" value="1e-3"/>
+          <Parameter name="Convergence Tolerance" type="double" value="1e-1"/>
           <Parameter name="Output Frequency" type="int" value="20"/>
           <Parameter name="Output Style" type="int" value="1"/>
           <Parameter name="Verbosity" type="int" value="33"/>
-          <Parameter name="Maximum Iterations" type="int" value="200"/>
+          <Parameter name="Maximum Iterations" type="int" value="50"/>
           <Parameter name="Block Size" type="int" value="1"/>
           <Parameter name="Num Blocks" type="int" value="200"/>
           <Parameter name="Flexible Gmres" type="bool" value="0"/>
@@ -261,21 +248,35 @@
       </ParameterList>
     </ParameterList>
     <ParameterList name="ML">
-      <Parameter name="Base Method Defaults" type="string"
-           value="none"/>
+      <Parameter name="Base Method Defaults" type="string" value="none"/>
       <ParameterList name="ML Settings">
         <Parameter name="default values" type="string" value="SA"/>
-        <Parameter name="smoother: type" type="string"
-             value="ML symmetric Gauss-Seidel"/>
-        <Parameter name="smoother: pre or post" type="string"
-             value="both"/>
-        <Parameter name="coarse: type" type="string"
-             value="Amesos-KLU"/>
-        <Parameter name="PDE equations" type="int"
-             value="4"/>
+        <Parameter name="ML output" type="int" value="0"/>
+        <Parameter name="repartition: enable" type="int" value="1"/>
+        <Parameter name="repartition: max min ratio" type="double" value="1.327"/>
+        <Parameter name="repartition: min per proc" type="int" value="600"/>
+        <Parameter name="repartition: Zoltan dimensions" type="int" value="2"/>
+        <Parameter name="repartition: start level" type="int" value="4"/>
+        <Parameter name="semicoarsen: number of levels" type="int" value="2"/>
+        <Parameter name="semicoarsen: coarsen rate" type="int" value="12"/>
+        <Parameter name="smoother: sweeps" type="int" value="4"/>
+        <Parameter name="smoother: type" type="string" value="Chebyshev"/>
+        <Parameter name="smoother: Chebyshev eig boost" type="double" value="1.2"/>
+        <Parameter name="smoother: sweeps (level 0)" type="int" value="1"/>
+        <Parameter name="smoother: sweeps (level 1)" type="int" value="4"/>
+        <Parameter name="smoother: type (level 0)" type="string" value="line Jacobi"/>
+        <Parameter name="smoother: type (level 1)" type="string" value="line Jacobi"/>
+        <Parameter name="smoother: damping factor" type="double" value=".55"/>
+        <Parameter name="smoother: pre or post" type="string" value="both"/>
+        <Parameter name="coarse: type" type="string" value="Amesos-KLU"/>
+        <Parameter name="coarse: pre or post" type="string" value="pre"/>
+        <Parameter name="coarse: sweeps" type="int" value="4"/>
+        <Parameter name="max levels" type="int" value="7"/>
+        <Parameter name="PDE equations" type="int" value="4"/>
       </ParameterList>
-    </ParameterList>
-        </ParameterList>
+    </ParameterList>  
+      
+   </ParameterList>
       </ParameterList>
     </ParameterList>
 

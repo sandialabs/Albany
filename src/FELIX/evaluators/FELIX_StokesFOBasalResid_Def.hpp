@@ -18,7 +18,8 @@ namespace FELIX {
 template<typename EvalT, typename Traits, typename Type>
 StokesFOBasalResid<EvalT, Traits, Type>::StokesFOBasalResid (const Teuchos::ParameterList& p,
                                            const Teuchos::RCP<Albany::Layouts>& dl) :
-  basalResid (p.get<std::string> ("Basal Residual Variable Name"),dl->node_vector)
+  basalResid (p.get<std::string> ("Basal Residual Variable Name"),dl->node_vector),
+  homotopy(p.get<std::string>("Continuation Parameter Name"), dl->shared_param)
 {
   basalSideName = p.get<std::string>("Side Set Name");
 
@@ -36,6 +37,7 @@ StokesFOBasalResid<EvalT, Traits, Type>::StokesFOBasalResid (const Teuchos::Para
   this->addDependentField(beta);
   this->addDependentField(BF);
   this->addDependentField(w_measure);
+  this->addDependentField(homotopy);
 
   this->addEvaluatedField(basalResid);
 
@@ -81,6 +83,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(beta,fm);
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(w_measure,fm);
+  this->utils.setFieldData(homotopy,fm);
 
   this->utils.setFieldData(basalResid,fm);
 }
@@ -89,7 +92,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits, typename Type>
 void StokesFOBasalResid<EvalT, Traits, Type>::evaluateFields (typename Traits::EvalData workset)
 {
-  ScalarT homotopyParam = FELIX::HomotopyParameter<EvalT>::value;
+  ScalarT homotopyParam = homotopy(0);
   ScalarT ff = (regularized) ? pow(10.0, -10.0*homotopyParam) : ScalarT(0);
  #ifdef OUTPUT_TO_SCREEN
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -97,7 +100,7 @@ void StokesFOBasalResid<EvalT, Traits, Type>::evaluateFields (typename Traits::E
     if (std::fabs(printedFF-ff)>0.0001*ff)
     {
         *output << "[Basal Residual] ff = " << ff << "\n";
-        *output << "[Homotopy param] h = " << homotopyParam << "\n";
+        //*output << "[Homotopy param] h = " << homotopyParam << "\n";
         printedFF = ff;
     }
 #endif

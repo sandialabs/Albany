@@ -48,6 +48,8 @@ private:
   PHX::MDField<RealType,Cell,Side,Node,QuadPoint>   BF;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>     w_measure;
 
+  PHX::MDField<ScalarT,Dim> homotopy;
+
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim>            basalResid;
 

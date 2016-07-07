@@ -74,16 +74,14 @@ evaluateFields(typename Traits::EvalData workset)
     Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
     Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
-  	Kokkos::deep_copy(this->int1Dw_z.get_view(), ScalarT(0.0));
+    Kokkos::deep_copy(this->int1Dw_z.get_view(), ScalarT(0.0));
 
   	const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
 
     const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
     const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
-
     const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
     int numLayers = layeredMeshNumbering.numLayers;
-
     LO baseId, ilayer;
 
     for ( std::size_t cell = 0; cell < workset.numCells; ++cell )
@@ -94,7 +92,6 @@ evaluateFields(typename Traits::EvalData workset)
     	{
     		LO lnodeId = nodeID[node];
     		layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
-
     		double int1D = 0;
 
     		for (int il = 0; il < ilayer; ++il)

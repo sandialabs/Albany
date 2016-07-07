@@ -57,7 +57,8 @@ ViscosityFO(const Teuchos::ParameterList& p,
   flowFactorA(p.get<std::string> ("Flow Factor Variable Name"), dl->cell_scalar2),
   A(1.0),
   n(3.0),
-  flowRate_type(UNIFORM)
+  flowRate_type(UNIFORM),
+  homotopy(p.get<std::string>("Continuation Parameter Name"), dl->shared_param)
 {
   Teuchos::ParameterList* visc_list =
    p.get<Teuchos::ParameterList*>("Parameter List");
@@ -72,7 +73,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
   else
     flowRateType = "Uniform";
 
-  FELIX::HomotopyParameter<EvalT>::value = visc_list->get("Glen's Law Homotopy Parameter", 1.0);
+  //FELIX::HomotopyParameter<EvalT>::value = visc_list->get("Glen's Law Homotopy Parameter", 1.0);
   stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
   useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
 
@@ -159,7 +160,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
     *out << "n: " << n << std::endl;
 #endif
   }
-
+  this->addDependentField(homotopy);
   this->addDependentField(Ugrad);
   if (visc_type == EXPTRIG) this->addDependentField(coordVec);
   this->addEvaluatedField(mu);
@@ -173,9 +174,10 @@ ViscosityFO(const Teuchos::ParameterList& p,
   numDims = dims[2];
   numCells = dims[0] ;
 
-  Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >("Parameter Library");
+  printedFF = -1.0;
+  //Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >("Parameter Library");
 
-  this->registerSacadoParameter("Glen's Law Homotopy Parameter", paramLib);
+  //this->registerSacadoParameter("Glen's Law Homotopy Parameter", paramLib);
 
   this->setName("ViscosityFO");
 }
@@ -200,16 +202,20 @@ postRegistrationSetup(typename Traits::SetupData d,
     this->utils.setFieldData(U, fm);
     this->utils.setFieldData(coordVec,fm);
   }
+  this->utils.setFieldData(homotopy,fm);
 }
 
 //**********************************************************************
+
 template<typename EvalT,typename Traits,typename Type, typename TemperatureType>
 typename EvalT::ScalarT&
 ViscosityFO<EvalT,Traits,Type,TemperatureType>::getValue(const std::string &n)
 {
-  return (n=="Glen's Law Homotopy Parameter") ?
-		  FELIX::HomotopyParameter<EvalT>::value : dummyParam;
+	ScalarT hom = homotopy(0);
+	return (n=="Glen's Law Homotopy Parameter") ? hom : dummyParam;
+		  //FELIX::HomotopyParameter<EvalT>::value : dummyParam;
 }
+
 //**********************************************************************
 //Kokkos functors
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -452,6 +458,8 @@ template<typename EvalT, typename Traits, typename Type, typename TemperatureTyp
 void ViscosityFO<EvalT, Traits, Type, TemperatureType>::
 evaluateFields(typename Traits::EvalData workset)
 {
+	ScalarT hom = homotopy(0);
+	
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   double a = 1.0;
   switch (visc_type)
@@ -492,7 +500,7 @@ evaluateFields(typename Traits::EvalData workset)
         	for (std::size_t cell=0; cell < workset.numCells; ++cell)
         	{
         		//evaluate non-linear viscosity, given by Glen's law, at quadrature points
-        		temperature(cell) = std::max(temperature(cell), 240.0);
+        		temperature(cell) = std::max(temperature(cell), 240.0);	//Albany::ADValue(temperature(cell))
         		//std::cout << temperature(cell) << std::endl;
         		flowFactorVec[cell] = 1.0/2.0*pow(flowRate<TemperatureType>(temperature(cell)), -1.0/n);
         	}
@@ -504,7 +512,8 @@ evaluateFields(typename Traits::EvalData workset)
           break;
       }
       double power = 0.5*(1.0/n - 1.0);
-      if (FELIX::HomotopyParameter<EvalT>::value == 0.0)
+      //if (FELIX::HomotopyParameter<EvalT>::value == 0.0)
+      if (hom == 0.0)
       {
         //set constant viscosity
         for (std::size_t cell=0; cell < workset.numCells; ++cell)
@@ -519,7 +528,13 @@ evaluateFields(typename Traits::EvalData workset)
       {
         //set Glen's law viscosity with regularization specified by homotopyParam
         //ScalarT ff = pow(10.0, -10.0*FELIX::HomotopyParameter<EvalT>::value);
-    	ScalarT ff = pow(10.0, -10.0*FELIX::HomotopyParameter<EvalT>::value);
+    	ScalarT ff = pow(10.0, -10.0*hom);
+        if (std::fabs(printedFF - ff) > 0.0001*ff)
+        {
+            std::cout << "[Viscosity] ff = " << ff << "\n";
+            //std::cout << "[Homotopy param] h = " << hom << "\n";
+            printedFF = ff;
+        }
         ScalarT epsilonEqpSq = 0.0; //used to define the viscosity in non-linear Stokes
         if (visc_type == GLENSLAW)
         {

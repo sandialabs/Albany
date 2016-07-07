@@ -25,8 +25,6 @@ LiquidWaterFraction(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::
 	dl->node_qp_vector->dimensions(dims);
 	numNodes = dims[1];
 
-	//sideSetName = p.get<std::string> ("Side Set Name");
-
 	this->addDependentField(enthalpyHs);
 	this->addDependentField(enthalpy);
 

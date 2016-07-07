@@ -37,7 +37,7 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 		bool haveSUPG;
 		double delta;
-		double alpha;
+		//double alpha;
 
 		// Input:
 		PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
@@ -57,6 +57,8 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		PHX::MDField<ScalarT,Cell,QuadPoint> geoFluxHeatSUPG;
 		PHX::MDField<ParamScalarT,Cell,QuadPoint,Dim> meltTempGrad;
 
+		PHX::MDField<ScalarT,Dim> homotopy;
+
 		// Output:
 		PHX::MDField<ScalarT,Cell,Node> Residual;
 
@@ -67,6 +69,8 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		double k_i, c_i, K_i;   // for computing K_i
 		double K_0;	 // diffusivity temperate ice
 		double rho; 	// density of ice
+
+		ScalarT printedAlpha;
 };
 
 }

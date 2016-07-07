@@ -67,6 +67,9 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
   PHX::MDField<ScalarT,Cell,QuadPoint> epsilonSq;
 
+  PHX::MDField<ScalarT,Dim> homotopy;
+  ScalarT printedFF;
+
   unsigned int numQPs, numDims, numNodes, numCells;
 
   enum VISCTYPE {CONSTANT, EXPTRIG, GLENSLAW, GLENSLAW_XZ};
