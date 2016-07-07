@@ -274,6 +274,19 @@ CrystalPlasticityModel(
       slip_systems_[num_ss].energy_activation_ = 
           f_list.get<RealType>("Activation Energy", 0.0);
     }
+    else if(type_flow_rule == "Power Law with Drag")
+    {
+      slip_systems_[num_ss].flow_rule = CP::FlowRule::POWER_LAW_DRAG;
+
+      slip_systems_[num_ss].rate_slip_reference_ = 
+          f_list.get<RealType>("Gamma Dot", 0.0);
+
+      slip_systems_[num_ss].exponent_rate_ = 
+          f_list.get<RealType>("Gamma Exponent", 0.0);
+
+      slip_systems_[num_ss].drag_coeff_ = 
+          f_list.get<RealType>("Drag Coefficient", 0.0);
+    }
     else
     {
       slip_systems_[num_ss].flow_rule = CP::FlowRule::POWER_LAW;
@@ -408,6 +421,9 @@ CrystalPlasticityModel(
   std::string const
   residual_string = (*field_name_map_)["CP_Residual"];
 
+  std::string const
+  residual_iter_string = (*field_name_map_)["CP_Residual_Iter"];
+
   //
   // define the dependent fields required for calculation
   //
@@ -425,6 +441,7 @@ CrystalPlasticityModel(
   this->eval_field_map_.insert(std::make_pair(L_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair(residual_string, dl->qp_scalar));
+  this->eval_field_map_.insert(std::make_pair(residual_iter_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair("Time", dl->workset_scalar));
   if (have_temperature_) {
     this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
@@ -595,6 +612,17 @@ CrystalPlasticityModel(
   this->state_var_old_state_flags_.push_back(false);
   this->state_var_output_flags_.push_back(
       p->get<bool>("Output CP_Residual", false));
+
+  // residual iterations
+  this->num_state_variables_++;
+  this->state_var_names_.push_back(residual_iter_string);
+  this->state_var_layouts_.push_back(dl->qp_scalar);
+  this->state_var_init_types_.push_back("scalar");
+  this->state_var_init_values_.push_back(0.0);
+  this->state_var_old_state_flags_.push_back(false);
+  this->state_var_output_flags_.push_back(
+      p->get<bool>("Output CP_Residual_Iter", false));    
+
 }
 
 //
@@ -639,6 +667,9 @@ computeState(typename Traits::EvalData workset,
 
   std::string const
   residual_string = (*field_name_map_)["CP_Residual"];
+
+  std::string const
+  residual_iter_string = (*field_name_map_)["CP_Residual_Iter"];
 
   std::string const
   source_string = (*field_name_map_)["Mechanical_Source"];
@@ -688,6 +719,9 @@ computeState(typename Traits::EvalData workset,
 
   PHX::MDField<ScalarT>
   cp_residual = *eval_fields[residual_string];
+
+  PHX::MDField<ScalarT>
+  cp_residual_iter = *eval_fields[residual_iter_string];
 
   PHX::MDField<ScalarT>
   time = *eval_fields["Time"];
@@ -842,6 +876,9 @@ computeState(typename Traits::EvalData workset,
 
   RealType
   norm_slip_residual;
+
+  RealType
+  residual_iter;
 
   RealType
   equivalent_plastic_strain;
@@ -1211,6 +1248,7 @@ computeState(typename Traits::EvalData workset,
 
           // Compute the residual norm 
           norm_slip_residual = std::sqrt(2.0 * minimizer.final_value);
+	  residual_iter = minimizer.num_iter;
 
         }
         break;
@@ -1269,6 +1307,7 @@ computeState(typename Traits::EvalData workset,
 
         // residual norm
         cp_residual(cell, pt) = norm_slip_residual;
+	cp_residual_iter(cell,pt) = residual_iter;
 
         // num_dims_ x num_dims_ dimensional array variables
         for (int i(0); i < num_dims_; ++i) {
