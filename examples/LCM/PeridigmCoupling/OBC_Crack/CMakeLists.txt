@@ -31,5 +31,5 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OBC_Crack_Analysis.exodiff
 # Add the tests
 if(ALBANY_IFPACK2)
 add_test(PeridigmCoupling_OBC_Crack_np1_Epetra python ../run_exodiff_test.py "${SerialAlbanyAnalysis.exe}" OBC_Crack_Analysis.xml)
-#add_test(PeridigmCoupling_OBC_Crack_np4_Epetra python ../run_exodiff_test.py "${AlbanyAnalysis.exe}" OBC_Crack_Analysis.xml)
+add_test(PeridigmCoupling_OBC_Crack_np4_Epetra python ../run_exodiff_test.py "${AlbanyAnalysis.exe}" OBC_Crack_Analysis.xml)
 endif()
