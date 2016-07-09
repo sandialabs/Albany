@@ -307,9 +307,9 @@ Albany::APFMeshStruct::setFieldAndBulkData(
         assert(neq == 4 || neq == 9);
         valueType = apf::MATRIX;
       }
-      if(i == 0)
+      /* fields may have been created by restart mechanism */
+      if(i == 0 && (!mesh->findField(residual_name)))
         this->createNodalField(residual_name,valueType);
-      /* field may have been created by restart mechanism */
       if (mesh->findField(solution_name[i]))
         solutionInitialized = true;
       else {

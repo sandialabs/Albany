@@ -31,20 +31,23 @@ Albany::PUMIDiscretization::setRestartData()
   // want to first call apf::createField to import the state data
   // from mesh tags from the .smb file
   int dim = getNumDim();
-  apf::Field* f;
   apf::Mesh* m = meshStruct->getMesh();
   apf::FieldShape* fs = apf::getIPShape(dim, meshStruct->cubatureDegree);
   for (std::size_t i=0; i < meshStruct->qpscalar_states.size(); ++i) {
     PUMIQPData<double, 2>& state = *(meshStruct->qpscalar_states[i]);
-    f = apf::createField(m,state.name.c_str(),apf::SCALAR,fs);
+    /* check for existing field due to restart */
+    if (!m->findField(state.name.c_str()))
+      apf::createField(m,state.name.c_str(),apf::SCALAR,fs);
   }
   for (std::size_t i=0; i < meshStruct->qpvector_states.size(); ++i) {
     PUMIQPData<double, 3>& state = *(meshStruct->qpvector_states[i]);
-    f = apf::createField(m,state.name.c_str(),apf::VECTOR,fs);
+    if (!m->findField(state.name.c_str()))
+      apf::createField(m,state.name.c_str(),apf::VECTOR,fs);
   }
   for (std::size_t i=0; i < meshStruct->qptensor_states.size(); ++i) {
     PUMIQPData<double, 4>& state = *(meshStruct->qptensor_states[i]);
-    f = apf::createField(m,state.name.c_str(),apf::MATRIX,fs);
+    if (!m->findField(state.name.c_str()))
+      apf::createField(m,state.name.c_str(),apf::MATRIX,fs);
   }
 
   // then we want to copy the qp data from apf to Albany's data structs
