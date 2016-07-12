@@ -43,14 +43,35 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void XZHydrostatic_Velocity<EvalT, Traits>::
+operator() (const XZHydrostatic_Velocity_Tag& tag, const int& cell) const{
+  for (int node=0; node < numNodes; ++node) 
+    for (int level=0; level < numLevels; ++level) 
+      for (int dim=0; dim < numDims; ++dim)  
+        Velocity(cell,node,level,dim) = Velx(cell,node,level,dim); 
+}
+
+#endif
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void XZHydrostatic_Velocity<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   for (int cell=0; cell < workset.numCells; ++cell) 
     for (int node=0; node < numNodes; ++node) 
       for (int level=0; level < numLevels; ++level) 
         for (int dim=0; dim < numDims; ++dim)  
-          Velocity(cell,node,level,dim) = Velx(cell,node,level,dim); 
+          Velocity(cell,node,level,dim) = Velx(cell,node,level,dim);
+
+#else
+  Kokkos::parallel_for(XZHydrostatic_Velocity_Policy(0,workset.numCells),*this);
+
+#endif
 }
 }
