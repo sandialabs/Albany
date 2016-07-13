@@ -10,6 +10,9 @@
 namespace LCM
 {
 
+template<typename EvalT, typename Traits>
+class ParallelKernel;
+
 ///
 /// Constitutive Model Base Class
 ///
@@ -150,7 +153,7 @@ public:
     state_var_layouts_.push_back(layout);
     state_var_init_types_.push_back(init_type);
     state_var_init_values_.push_back(init_value);
-    state_var_old_state_flags_.push_back(false);
+    state_var_old_state_flags_.push_back(old_state_flag);
     state_var_output_flags_.push_back(output_flag);
   }
 
@@ -292,6 +295,8 @@ public:
   }
 
 protected:
+  
+  friend class ParallelKernel<EvalT, Traits>;
 
   ///
   /// Number of dimensions

@@ -4,10 +4,20 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "PHAL_AlbanyTraits.hpp"
+#if !defined(Memory_hpp)
+#define Memory_hpp
 
-#include "J2MiniSolver.hpp"
-#include "J2MiniSolver_Def.hpp"
+#include <memory>
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::J2MiniKernel)
+namespace util
+{
 
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args)
+{
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
+}
+
+#endif
