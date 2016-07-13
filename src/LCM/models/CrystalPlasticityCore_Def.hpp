@@ -153,6 +153,7 @@ CP::updateSlip(
 
     using FLOW_RULE = CP::FlowRuleBase<NumDimT, NumSlipT, DataT, ArgT>;
 
+    // Assumption that all slip systems use the same flow rule
     std::unique_ptr<FLOW_RULE>
     pflow_rule = 
       CP::flowRuleFactory<NumDimT, NumSlipT, DataT, ArgT>(
@@ -692,6 +693,84 @@ computeRateSlip(
   rate_slip(num_slip_sys);
 
   rate_slip.fill(Intrepid2::ZEROS);
+
+  return rate_slip;
+}
+
+
+//
+// Power law with Drag flow rule
+//
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+  typename DataT, typename ArgT>
+Intrepid2::Vector<ArgT, NumSlipT>
+CP::PowerLawDragFlowRule<NumDimT, NumSlipT, DataT, ArgT>::
+computeRateSlip(
+  std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+  Intrepid2::Vector<ArgT, NumSlipT> const & shear,
+  Intrepid2::Vector<ArgT, NumSlipT> const & slip_resistance)
+{     
+  Intrepid2::Index const
+  num_slip_sys = slip_systems.size();
+
+  Intrepid2::Vector<ArgT, NumSlipT>
+  rate_slip(num_slip_sys);
+
+  rate_slip.fill(Intrepid2::ZEROS);
+
+  for (int slip_sys(0); slip_sys < num_slip_sys; ++slip_sys) {
+
+    // Material properties
+    DataT const
+    tauC = slip_systems[slip_sys].tau_critical_;
+
+    DataT const
+    m = slip_systems[slip_sys].exponent_rate_;
+
+    DataT const
+    g0 = slip_systems[slip_sys].rate_slip_reference_;
+
+    DataT const
+    drag_term = slip_systems[slip_sys].drag_coeff_;
+
+    ArgT const
+    ratio_stress = shear[slip_sys] / slip_resistance[slip_sys];
+
+    // Compute drag term
+    ArgT const
+    viscous_drag = std::fabs(ratio_stress) / drag_term;
+
+    RealType const
+    pl_tol = std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / m);
+
+    bool const
+    finite_power_law = std::fabs(ratio_stress) > pl_tol;
+
+    ArgT
+    power_law{0.0};
+
+    if (finite_power_law == true) {
+      power_law = std::pow(std::fabs(ratio_stress), m - 1) * ratio_stress;
+    }
+
+    RealType const
+    eff_tol = 1.0e-8;
+
+    bool const
+    vd_active = std::fabs(ratio_stress) > eff_tol;
+
+    // prevent flow rule singularities if stress is zero
+    ArgT
+    effective{power_law};
+
+    if (vd_active == true) {
+      effective = 1.0/((1.0 / power_law) + (1.0 / viscous_drag));
+    }
+
+    // compute slip increment
+    rate_slip[slip_sys] =  g0 * effective;
+      
+  }
 
   return rate_slip;
 }

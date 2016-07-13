@@ -39,20 +39,20 @@ rm -rf CMake*
 BUILD_DIR=`pwd`
 
 module purge 
-module load gcc/5.1.0
+module load openmpi/1.10.1/gcc/5.1.0/cuda/7.5.7
 module load cmake/2.8.11.2
 module list
 
-NETCDF=/home/ipdemes/install/netcdf
-HDF5DIR=/home/ikalash/Install/hdf5-1.8.10-gcc
-BOOSTDIR=/home/ikalash/Install/boost_1_53_0-gcc
-HWLOC_PATH=/home/projects/hwloc/1.6.2
+NETCDF=/home/jwatkin/Install/netcdf
+HDF5DIR=/home/jwatkin/Install/hdf5
+BOOSTDIR=/home/jwatkin/Install/boost
+HWLOC_PATH=/home/jwatkin/Install/hwloc
 
 cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
-      -D CMAKE_C_COMPILER=/home/projects/x86-64/openmpi/1.8.2/gnu/4.8.3/cuda/6.5.14/bin/mpicc \
-      -D CMAKE_CXX_COMPILER=/home/projects/x86-64/openmpi/1.8.2/gnu/4.8.3/cuda/6.5.14/bin/mpicxx \
-      -D CMAKE_Fortran_COMPILER=/home/projects/x86-64/openmpi/1.8.2/gnu/4.8.3/cuda/6.5.14/bin/mpif90 \
+      -D CMAKE_C_COMPILER="mpicc" \
+      -D CMAKE_CXX_COMPILER="mpicxx" \
+      -D CMAKE_Fortran_COMPILER="mpif90" \
       -D BLAS_LIBRARY_NAMES:STRING="libf77blas.so.3" \
       -D BLAS_LIBRARY_DIRS:PATH="/usr/lib64/atlas" \
       -D LAPACK_LIBRARY_NAMES:STRING="liblapack.so.3" \
@@ -62,12 +62,12 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D MPI_EXEC=srun \
       -D MPI_EXEC_NUMPROCS_FLAG:STRING=-n \
 \
-      -D TPL_ENABLE_BoostAlbLib:BOOL=ON \
+      -D TPL_ENABLE_Boost:BOOL=ON \
       -D TPL_ENABLE_BoostLib:BOOL=ON \
       -D BoostLib_INCLUDE_DIRS:FILEPATH=$BOOSTDIR/include \
       -D BoostLib_LIBRARY_DIRS:FILEPATH=$BOOSTDIR/lib \
-      -D BoostAlbLib_INCLUDE_DIRS:FILEPATH=$BOOSTDIR/include \
-      -D BoostAlbLib_LIBRARY_DIRS:FILEPATH=$BOOSTDIR/lib \
+      -D Boost_INCLUDE_DIRS:FILEPATH=$BOOSTDIR/include \
+      -D Boost_LIBRARY_DIRS:FILEPATH=$BOOSTDIR/lib \
 \
       -D Trilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF \
       -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
@@ -84,7 +84,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Kokkos_ENABLE_EXAMPLES:BOOL=OFF \
       -D Kokkos_ENABLE_OpenMP:BOOL=ON \
       -D Kokkos_ENABLE_Pthread:BOOL=OFF \
-      -D Kokkos_ENABLE_Serial:BOOL=ON \
+      -D Kokkos_ENABLE_Serial:BOOL=OFF \
       -D Kokkos_ENABLE_TESTS:BOOL=ON \
       -D TPL_ENABLE_Thrust:BOOL=OFF \
       -D TPL_ENABLE_CUDA:BOOL=OFF \

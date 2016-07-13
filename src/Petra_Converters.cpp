@@ -262,7 +262,7 @@ Teuchos::RCP<const Tpetra_Vector> Petra::EpetraVector_To_TpetraVectorConst(const
   Teuchos::RCP<const Tpetra_Map> mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesAV, commT_, nodeT_);
   ST *values;
   epetraVector_.ExtractView(&values);
-  Teuchos::ArrayView<ST> valuesAV = Teuchos::arrayView(values, mapT->getGlobalNumElements());
+  Teuchos::ArrayView<ST> valuesAV = Teuchos::arrayView(values, mapT->getNodeNumElements());
   Teuchos::RCP<const Tpetra_Vector> tpetraVector_ = Teuchos::rcp(new Tpetra_Vector(mapT, valuesAV));
   return tpetraVector_;
 }
@@ -300,7 +300,7 @@ Teuchos::RCP<Tpetra_Vector> Petra::EpetraVector_To_TpetraVectorNonConst(const Ep
   Teuchos::RCP<const Tpetra_Map> mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesAV, commT_, nodeT_);
   ST *values;
   epetraVector_.ExtractView(&values);
-  Teuchos::ArrayView<ST> valuesAV = Teuchos::arrayView(values, mapT->getGlobalNumElements());
+  Teuchos::ArrayView<ST> valuesAV = Teuchos::arrayView(values, mapT->getNodeNumElements());
   Teuchos::RCP<Tpetra_Vector> tpetraVector_ = Teuchos::rcp(new Tpetra_Vector(mapT, valuesAV));
   return tpetraVector_;
 }
