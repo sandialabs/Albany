@@ -91,6 +91,8 @@ for P in $PACKAGES; do
 				                ;;
 			                    intel)
 				                ;;
+			                    pgi)
+				                ;;
 			                    *)
 				                echo "Unrecognized tool chain option"
 				                exit 1
