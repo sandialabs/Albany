@@ -86,11 +86,11 @@ evaluateFields(typename Traits::EvalData workset)
 
     for ( std::size_t cell = 0; cell < workset.numCells; ++cell )
     {
-    	const Teuchos::ArrayRCP<int>& nodeID = wsElNodeID[cell];
+    	const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
 
     	for (std::size_t node = 0; node < this->numNodes; ++node)
     	{
-    		LO lnodeId = nodeID[node];
+    		LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[node]);
     		layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
     		double int1D = 0;
 
@@ -136,11 +136,11 @@ evaluateFields(typename Traits::EvalData workset)
 
     for ( std::size_t cell = 0; cell < workset.numCells; ++cell )
     {
-    	const Teuchos::ArrayRCP<int>& nodeID = wsElNodeID[cell];
+    	const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
 
     	for (std::size_t node = 0; node < this->numNodes; ++node)
     	{
-    		LO lnodeId = nodeID[node];
+    		LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[node]);
     		layeredMeshNumbering.getIndices(lnodeId, baseId, ilevel);
 
     		double int1D = 0;
