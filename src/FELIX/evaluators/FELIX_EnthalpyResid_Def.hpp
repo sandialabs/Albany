@@ -185,12 +185,12 @@ evaluateFields(typename Traits::EvalData d)
         		for (std::size_t qp = 0; qp < numQPs; ++qp)
         		{
         			// Modify here if you want to impose different basal BC
-        			Residual(cell,node) -= ( basalFricHeat(cell,qp) + geoFluxHeat(cell,qp) );
+        		  ScalarT scale = -  atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
+        			Residual(cell,node) -= ( basalFricHeat(cell,qp) + geoFluxHeat(cell,qp) ) * scale;  //go to zero in temperate region
         		}
         	}
     	}
     }
-
     for (std::size_t cell = 0; cell < d.numCells; ++cell)
     {
     	for (std::size_t node = 0; node < numNodes; ++node)
@@ -286,7 +286,8 @@ evaluateFields(typename Traits::EvalData d)
 					for (std::size_t qp=0; qp < numQPs; ++qp)
 					{
 	        			// Modify here if you want to impose different basal BC
-						Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow10))*( basalFricHeatSUPG(cell,qp) + geoFluxHeatSUPG(cell,qp) );
+					  ScalarT scale = -  atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
+						Residual(cell,node) -= scale*(delta*diam/vmax*(3.154 * pow10))*( basalFricHeatSUPG(cell,qp) + geoFluxHeatSUPG(cell,qp) );
 
 						Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow10))*
 											   (diss(cell,qp) * (1./(3.154 * pow10)) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
@@ -322,7 +323,8 @@ evaluateFields(typename Traits::EvalData d)
 					for (std::size_t qp = 0; qp < numQPs; ++qp)
 					{
 	        			// Modify here if you want to impose different basal BC
-						Residual(cell,node) -= ( delta*diam/vmax*(3.154 * pow10))*( basalFricHeatSUPG(cell,qp) + geoFluxHeatSUPG(cell,qp) );
+					  ScalarT scale = -  atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
+						Residual(cell,node) -= scale*( delta*diam/vmax*(3.154 * pow10))*( basalFricHeatSUPG(cell,qp) + geoFluxHeatSUPG(cell,qp) );
 					}
 				}
 			}

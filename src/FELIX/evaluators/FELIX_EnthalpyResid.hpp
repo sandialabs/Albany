@@ -49,7 +49,7 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 		PHX::MDField<VelocityType,Cell,QuadPoint,VecDim> Velocity;
 		PHX::MDField<ScalarT,Cell,QuadPoint> verticalVel;
-        PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec;
+    PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec;
 		PHX::MDField<ScalarT,Cell,QuadPoint> diss;
 		PHX::MDField<ScalarT,Cell,QuadPoint> basalFricHeat;
 		PHX::MDField<ScalarT,Cell,QuadPoint> basalFricHeatSUPG;
