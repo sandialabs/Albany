@@ -21,8 +21,6 @@ class SPRSizeField : public MeshAdaptMethod {
 
     void adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
-    int getCubatureDegree(int num_qp);
-
     void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
 
     void preProcessShrunkenMesh();
