@@ -7,6 +7,7 @@
 #include "Albany_APFDiscretization.hpp"
 #include "Albany_PUMIDiscretization.hpp"
 
+#include <PCU.h>
 #include <apf.h>
 #include <apfShape.h>
 
@@ -62,4 +63,62 @@ Albany::PUMIDiscretization::setRestartData()
   // get rid of this qp data from apf
   this->removeQPStatesFromAPF();
 
+}
+
+void
+Albany::PUMIDiscretization::setFELIXData()
+{
+  assert(meshStruct->qpscalar_states.size() == 0);
+  assert(meshStruct->qpvector_states.size() == 0);
+  assert(meshStruct->qptensor_states.size() == 0);
+
+  apf::Mesh2* m = meshStruct->getMesh();
+
+  /* loop over the fields that the FELIX problem wants to exist */
+  for (std::size_t i=0; i < meshStruct->elemnodescalar_states.size(); ++i) {
+
+    /* try to find the field on the mesh */
+    PUMIQPData<double, 2>& state = *(meshStruct->elemnodescalar_states[i]);
+    apf::Field* f = m->findField(state.name.c_str());
+
+    /* if the field does not exist on the mesh, we initialize it to zero */
+    if (!f) {
+
+      if(! PCU_Comm_Self())
+        std::cout << "initializing " << state.name << " to zero" << std::endl;
+
+      for (std::size_t b=0; b < buckets.size(); ++b) {
+        std::vector<apf::MeshEntity*>& buck = buckets[b];
+        Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
+        for (std::size_t e=0; e < buck.size(); ++e)
+          for (std::size_t n=0; n < state.dims[1]; ++n)
+            ar(e,n) = 0.0;
+      }
+
+    }
+
+    /* otherwise we pull in the data from the mesh */
+    else {
+
+      apf::NewArray<double> values;
+      int num_nodes = state.dims[1];
+
+      for (std::size_t b=0; b < buckets.size(); ++b) {
+        std::vector<apf::MeshEntity*>& buck = buckets[b];
+        Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
+        for (std::size_t e=0; e < buck.size(); ++e) {
+          for (std::size_t n=0; n < num_nodes; ++n) {
+            apf::MeshElement* mesh_elem = apf::createMeshElement(m, buck[e]);
+            apf::Element* elem = apf::createElement(f, mesh_elem);
+            apf::getScalarNodes(elem, values);
+            assert(values.size() == num_nodes);
+            ar(e,n) = values[n];
+            apf::destroyElement(elem);
+            apf::destroyMeshElement(mesh_elem);
+          }
+        }
+      }
+
+    }
+  }
 }
