@@ -8,11 +8,11 @@
 #ifndef AADAPT_SPRSIZEFIELD_HPP
 #define AADAPT_SPRSIZEFIELD_HPP
 
-#include "AAdapt_MeshSizeField.hpp"
+#include "AAdapt_MeshAdaptMethod.hpp"
 
 namespace AAdapt {
 
-class SPRSizeField : public MeshSizeField {
+class SPRSizeField : public MeshAdaptMethod {
 
   public:
     SPRSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);

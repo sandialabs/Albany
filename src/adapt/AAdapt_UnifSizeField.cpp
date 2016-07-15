@@ -9,7 +9,7 @@
 #include "Albany_PUMIMeshStruct.hpp"
 
 AAdapt::UnifSizeField::UnifSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc) :
-  MeshSizeField(disc) {
+  MeshAdaptMethod(disc) {
 }
 
 AAdapt::UnifSizeField::

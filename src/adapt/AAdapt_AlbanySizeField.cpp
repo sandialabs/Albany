@@ -12,7 +12,7 @@
 #include <apf.h>
 
 AAdapt::AlbanySizeField::AlbanySizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc) :
-  apfDisc(disc), MeshSizeField(disc) {
+  apfDisc(disc), MeshAdaptMethod(disc) {
 }
 
 AAdapt::AlbanySizeField::
@@ -33,8 +33,8 @@ AAdapt::AlbanySizeField::configure(const Teuchos::RCP<Teuchos::ParameterList>& a
   }
 */
 
-  apf::Field* field = mesh_struct->getMesh()->findField("proj_nodal_IsoMeshSizeField");
-  TEUCHOS_TEST_FOR_EXCEPTION(field == NULL, std::logic_error, "Cannot find proj_nodal_IsoMeshSizeField");
+  apf::Field* field = mesh_struct->getMesh()->findField("proj_nodal_IsoMeshAdaptMethod");
+  TEUCHOS_TEST_FOR_EXCEPTION(field == NULL, std::logic_error, "Cannot find proj_nodal_IsoMeshAdaptMethod");
 
   ma::Input *in = ma::configure(mesh_struct->getMesh(), field);
 
@@ -68,7 +68,7 @@ AAdapt::AlbanySizeField::copyInputFields() {
       nd.is_null(), std::logic_error,
       "A node field container is not a PUMINodeDataBase");
 
-    if ( nd->name != "proj_nodal_IsoMeshSizeField") continue;
+    if ( nd->name != "proj_nodal_IsoMeshAdaptMethod") continue;
 
     int value_type, nentries;
     const int spdim = mesh_struct->numDim;
@@ -90,7 +90,7 @@ AAdapt::AlbanySizeField::copyInputFields() {
 void
 AAdapt::AlbanySizeField::freeInputFields() {
 
-//  std::cout << "Adapt - destroying Node Field: proj_nodal_IsoMeshSizeField" << std::endl;
-  apf::destroyField(mesh_struct->getMesh()->findField("proj_nodal_IsoMeshSizeField"));
+//  std::cout << "Adapt - destroying Node Field: proj_nodal_IsoMeshAdaptMethod" << std::endl;
+  apf::destroyField(mesh_struct->getMesh()->findField("proj_nodal_IsoMeshAdaptMethod"));
 
 }

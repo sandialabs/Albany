@@ -7,11 +7,11 @@
 #ifndef AADAPT_UNIFSIZEFIELD_HPP
 #define AADAPT_UNIFSIZEFIELD_HPP
 
-#include "AAdapt_MeshSizeField.hpp"
+#include "AAdapt_MeshAdaptMethod.hpp"
 
 namespace AAdapt {
 
-class UnifSizeField : public MeshSizeField {
+class UnifSizeField : public MeshAdaptMethod {
 
   public:
 

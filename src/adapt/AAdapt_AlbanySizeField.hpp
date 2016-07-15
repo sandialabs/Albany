@@ -8,7 +8,7 @@
 #ifndef AADAPT_ALBANYSIZEFIELD_HPP
 #define AADAPT_ALBANYSIZEFIELD_HPP
 
-#include "AAdapt_MeshSizeField.hpp"
+#include "AAdapt_MeshAdaptMethod.hpp"
 
 /*
 An Albany evaluator calculates the size field and passes it to this class
@@ -17,7 +17,7 @@ to perform the adaptation.
 
 namespace AAdapt {
 
-class AlbanySizeField : public MeshSizeField {
+class AlbanySizeField : public MeshAdaptMethod {
 
   public:
 

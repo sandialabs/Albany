@@ -11,7 +11,7 @@
 #include "Albany_Utils.hpp"
 
 AAdapt::UnifRefSizeField::UnifRefSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc) :
-  MeshSizeField(disc) {
+  MeshAdaptMethod(disc) {
 }
 
 void

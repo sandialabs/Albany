@@ -11,11 +11,11 @@
 #include "Albany_APFDiscretization.hpp"
 #include <ma.h>
 #include "Albany_StateManager.hpp"
-#include "AAdapt_MeshSizeField.hpp"
+#include "AAdapt_MeshAdaptMethod.hpp"
 
 namespace AAdapt {
 
-class NonUnifRefSizeField : public MeshSizeField {
+class NonUnifRefSizeField : public MeshAdaptMethod {
 
   public:
     NonUnifRefSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
