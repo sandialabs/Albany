@@ -16,15 +16,7 @@
 #include "AAdapt_RC_Projector_impl.hpp"
 #include "AAdapt_RC_Manager.hpp"
 
-#ifdef AMBDEBUG
-#define amb_test_projector
-//#define amb_do_check
-#define pr(msg) lpr(0,msg)
-//#define pr(msg) std::cerr << "amb: (rc) " << msg << std::endl;
-//#define prc(msg) pr(#msg << " | " << (msg))
-#else
 #define pr(msg)
-#endif
 
 #define loop(a, i, dim)                                                 \
   for (PHX::MDField<RealType>::size_type i = 0; i < a.dimension(dim); ++i)

@@ -110,18 +110,6 @@ void AAdapt::MeshAdapt::initRcMgr () {
     rc_mgr->initProjector(pumi_discretization->getNodeMapT(),
                           pumi_discretization->getOverlapNodeMapT());
   }
-#ifdef AMBDEBUG
-  // Create a field that never changes. It's interp'ed from now mesh to the
-  // next. In the initial configuration, each component is simply a
-  // coordinate value.
-  const int dim = pumi_discretization->getNumDim();
-  pumiMeshStruct->createNodalField("test_interp_field", apf::VECTOR);
-  const Teuchos::ArrayRCP<const double>&
-    coords = pumi_discretization->getCoordinates();
-  Teuchos::Array<double> f(coords.size());
-  memcpy(&f[0], &coords[0], coords.size()*sizeof(double));
-  pumi_discretization->setField("test_interp_field", &f[0], true, 0, dim);
-#endif
 }
 
 AAdapt::MeshAdapt::~MeshAdapt() {}
@@ -335,13 +323,7 @@ double findAlpha(
   const int n_iterations_to_fail);
 
 bool correctnessTestSkip () {
-#ifndef AMBDEBUG
   return false;
-#else
-  static int cnt = 0;
-  if ( ! amb::Options::get()->params()->isType<int>("nadapt")) return false;
-  return ++cnt > amb::Options::get()->params()->get<int>("nadapt");
-#endif
 }
 } // namespace al
 
@@ -350,10 +332,6 @@ void adaptShrunken(apf::Mesh2* m, double min_part_density,
 
 bool AAdapt::MeshAdapt::adaptMesh()
 {
-#ifdef AMBDEBUG
-  al::anlzCoords(pumi_discretization);
-#endif
-
   AdaptCallbackOf callback;
   callback.adapter = this;
   const double
@@ -375,10 +353,6 @@ bool AAdapt::MeshAdapt::adaptMesh()
     success = adaptMeshWithRc(min_part_density, callback);
   }
 
-#ifdef AMBDEBUG
-  al::anlzCoords(pumi_discretization);
-  al::writeMesh(pumi_discretization);
-#endif
   return success;
 }
 
@@ -757,9 +731,6 @@ double findAlpha (
   for (int it = 0 ;; ) {
     cs.set_alpha(alpha);
     updateCoordinates(pumi_disc, cs, x);
-#ifdef AMBDEBUG
-    if (it == 0) al::writeMesh(pumi_disc);
-#endif
 
     ++it;
     const long n_negative_simplices = apf::verifyVolumes(
