@@ -229,23 +229,16 @@ namespace {
     m->destroyTag(weights);
   }
 
-  struct albBalancer {
-    double imb;
-    std::string method;
-    void (*bal)(ma::Mesh* m, double maxImb);
-  };
-
-  albBalancer* postBalance(std::string method, double maxImb) {
-    albBalancer* b = new albBalancer;
-    b->imb = maxImb;
-    if(method == std::string("zoltan")) {
-      b->bal = runZoltanBal;
-    } else if(method == std::string("parma")) {
-      b->bal = runParmaVtxElm;
+  void postBalance(ma::Mesh* m, std::string const& method, double maxImb) {
+    if (method == "zoltan") {
+      runZoltanBal(m, maxImb);
+    } else if (method == "parma") {
+      runParmaVtxElm(m, maxImb);
+    } else if (method == "none") {
     } else {
-      b->bal = NULL;
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Unknown \"Load Balancing\" option " << method << std::endl);
     }
-    return b;
   }
 } // end anonymous namespace
 
@@ -255,11 +248,11 @@ void AAdapt::MeshAdapt::afterAdapt()
 
   Teuchos::Array<std::string> defaultStArgs =
      Teuchos::tuple<std::string>("zoltan", "parma", "parma");
+  Teuchos::Array<std::string> loadBalancing =
+    adapt_params_->get<Teuchos::Array<std::string> >(
+        "Load Balancing", defaultStArgs);
   double maxImb = adapt_params_->get<double>("Maximum LB Imbalance", 1.30);
-
-  albBalancer* b = postBalance(defaultStArgs[2], maxImb);
-  b->bal(mesh, b->imb);
-  delete b;
+  postBalance(mesh, loadBalancing[2], maxImb);
 
   mesh->verify();
 
