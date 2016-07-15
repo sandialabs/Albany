@@ -1027,16 +1027,16 @@ if (basalSideName!="INVALID")
     fm0.template registerEvaluator<EvalT>(ptr_power);
 
     //--- Shared Parameter for homotopy parameter: h ---//
-	p = Teuchos::rcp(new Teuchos::ParameterList("Glen's Law Homotopy Parameter"));
+    p = Teuchos::rcp(new Teuchos::ParameterList("Glen's Law Homotopy Parameter"));
 
-	std::string param_name = "Glen's Law Homotopy Parameter";
-	p->set<std::string>("Parameter Name", param_name);
-	p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+    std::string param_name = "Glen's Law Homotopy Parameter";
+    p->set<std::string>("Parameter Name", param_name);
+    p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
 
-	Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Homotopy>> ptr_h;
-	ptr_h = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Homotopy>(*p,dl));
-	ptr_h->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Viscosity").get<double>(param_name,-1.0));
-	fm0.template registerEvaluator<EvalT>(ptr_h);
+    Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Homotopy>> ptr_h;
+    ptr_h = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Homotopy>(*p,dl));
+    ptr_h->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Viscosity").get<double>(param_name,-1.0));
+    fm0.template registerEvaluator<EvalT>(ptr_h);
 
     //--- FELIX basal friction coefficient ---//
     p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Basal Friction Coefficient"));

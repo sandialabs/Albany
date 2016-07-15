@@ -383,7 +383,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       ParameterList& locaParams = piroParams->sublist("LOCA");
       if (app->getDiscretization()->hasRestartSolution()) {
         // Pick up problem time from restart file
-        //locaParams.sublist("Stepper").set("Initial Value", app->getDiscretization()->restartDataTime());
+        locaParams.sublist("Stepper").set("Initial Value", app->getDiscretization()->restartDataTime());
       }
     }
 

@@ -48,7 +48,6 @@ public:
 
   ScalarT& getValue(const std::string &n)
   {
-	//std::cout << "we! " << value << std::endl;
     if (n==param_name)
       return value;
     return dummy;

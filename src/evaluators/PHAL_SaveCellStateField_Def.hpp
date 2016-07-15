@@ -95,10 +95,7 @@ evaluateFields(typename Traits::EvalData workset)
     switch (size) {
     case 1:
       for (int cell = 0; cell < dims[0]; ++cell)
-      {
         sta(cell) = field(cell);
-      	//std::cout << stateName << " " << field(cell) << std::endl;
-      }
       break;
     case 2:
       for (int cell = 0; cell < dims[0]; ++cell){

@@ -91,12 +91,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(InputResidual,fm);
   this->utils.setFieldData(Residual,fm);
 
-/*
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  int deriv_dims = PHAL::getDerivativeDimensionsFromView(dH.get_view());
-  res=Kokkos::View<ScalarT**, PHX::Device> ("res", numNodes, 2, deriv_dims );
-#endif
-*/
 }
 //**********************************************************************
 //Kokkos functors
