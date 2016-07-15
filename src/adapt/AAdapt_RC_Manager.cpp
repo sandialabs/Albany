@@ -16,8 +16,6 @@
 #include "AAdapt_RC_Projector_impl.hpp"
 #include "AAdapt_RC_Manager.hpp"
 
-#define pr(msg)
-
 #define loop(a, i, dim)                                                 \
   for (PHX::MDField<RealType>::size_type i = 0; i < a.dimension(dim); ++i)
 
@@ -81,88 +79,6 @@ void write (Albany::MDArray& mda, const MDArray& f) {
   }
 }
 
-#ifdef amb_do_check
-class Checker {
-private:
-  typedef Intrepid2::Tensor<RealType> Tensor;
-  int wi_, cell_, qp_, node_;
-  void display (const std::string& name, const Tensor& a,
-                const std::string& msg) {
-    std::stringstream ss;
-    const int rank = Teuchos::DefaultComm<int>::getComm()->getRank();
-    ss << "amb: Checker: On rank " << rank << " with (wi, cell, qp, node) = ("
-       << wi_ << ", " << cell_ << ", " << qp_ << ", " << node_ << "), " << name
-       << " gave the following message: " << msg << std::endl << name
-       << " = [" << a << "];" << std::endl;
-    std::cout << ss.str();
-  }
-  bool equal (const RealType a, const RealType b) {
-    return a == b ||
-      std::abs(a - b) < (1e3 * std::numeric_limits<RealType>::epsilon() *
-                         std::max(std::abs(a), std::abs(b)));
-  }
-public:
-  Checker (int wi, int cell, int qp, int node = 0)
-    : wi_(wi), cell_(cell), qp_(qp), node_(node) {}
-#define loopa(i, dim) for (Intrepid2::Index i = 0; i < a.get_dimension(); ++i)
-  bool ok_numbers (const std::string& name, const Tensor& a) {
-    loopa(i, 0) loopa(j, 1) {
-      const bool is_inf = std::isinf(a(i,j)), is_nan = std::isnan(a(i,j));
-      if (is_nan || is_nan) {
-        display(name, a, is_inf ? "inf" : "nan");
-        return false;
-      }
-    }
-    return true;
-  }
-  bool first () const
-    { return wi_ == 0 && cell_ == 0 && qp_ == 0 && node_ == 0; }
-  bool is_rotation (const std::string& name, const Tensor& a) {
-    const double det = Intrepid2::det(a);
-    if (std::abs(det - 1) >= 1e-10) {
-      std::stringstream ss;
-      ss << "det = " << det;
-      display(name, a, ss.str());
-      return false;
-    }
-    return true;
-  }
-  bool is_symmetric (const std::string& name, const Tensor& a) {
-    if ((a.get_dimension() > 1 && !equal(a(0,1), a(1,0))) || 
-        (a.get_dimension() > 2 &&
-         (!equal(a(0,2), a(2,0)) || !equal(a(1,2), a(2,1))))) {
-      display(name, a, "not symmetric");
-      return false;
-    }
-    return true;
-  }
-  bool is_antisymmetric (const std::string& name, const Tensor& a) {
-    if (!equal(a(0,0), 0) ||
-        (a.get_dimension() > 1 &&
-         (!equal(a(0,1), -a(1,0)) || !equal(a(1,1), 0))) ||
-        (a.get_dimension() > 2 &&
-         (!equal(a(0,2), -a(2,0)) || !equal(a(1,2), -a(2,1)) ||
-          !equal(a(2,2), 0)))) {
-      display(name, a, "not antisymmetric");
-      return false;
-    }
-    return true;
-  }
-#undef loopa
-};
-#else // amb_do_check
-class Checker {
-  typedef Intrepid2::Tensor<RealType> Tensor;
-public:
-  Checker (int wi, int cell, int qp, int node = 0) {}
-  bool first () const { return false; }
-#define empty(s) bool s (const std::string&, const Tensor&) { return true; }
-  empty(ok_numbers) empty(is_rotation) empty(is_symmetric)
-  empty(is_antisymmetric)
-#undef empty
-};    
-#endif // amb_do_check
-
 Intrepid2::Tensor<RealType>&
 symmetrize (Intrepid2::Tensor<RealType>& a) {
   const Intrepid2::Index dim = a.get_dimension();
@@ -178,42 +94,24 @@ symmetrize (Intrepid2::Tensor<RealType>& a) {
 
 struct Direction { enum Enum { g2G, G2g }; };
 
-void calc_right_polar_LieR_LieS_G2g (
-  const Intrepid2::Tensor<RealType>& F, Intrepid2::Tensor<RealType> RS[2],
-  Checker& c)
+void calc_right_polar_LieR_LieS_G2g(
+  const Intrepid2::Tensor<RealType>& F, Intrepid2::Tensor<RealType> RS[2])
 {
-  c.ok_numbers("F", F);
   { std::pair< Intrepid2::Tensor<RealType>, Intrepid2::Tensor<RealType> >
       RSpair = Intrepid2::polar_right(F);
     RS[0] = RSpair.first; RS[1] = RSpair.second; }
-  if (c.first() ||
-      ! (c.ok_numbers("R", RS[0]) && c.ok_numbers("S", RS[1]) &&
-         c.is_rotation("R", RS[0]) && c.is_symmetric("S", RS[1])))
-    pr("F = [\n" << F << "];\nR = [\n" << RS[0] << "];\nS = [\n"
-       << RS[1] << "];");    
   RS[0] = Intrepid2::log_rotation(RS[0]);
-  c.ok_numbers("r", RS[0]); c.is_antisymmetric("r", RS[0]);
   RS[1] = Intrepid2::log_sym(RS[1]);
   symmetrize(RS[1]);
-  c.ok_numbers("s", RS[1]); c.is_symmetric("s write", RS[1]);
-  if (c.first()) pr("r =[\n" << RS[0] << "];\ns =[\n" << RS[1] << "];");
 }
 
 void calc_right_polar_LieR_LieS_g2G (
-  Intrepid2::Tensor<RealType>& R, Intrepid2::Tensor<RealType>& S, Checker& c)
+  Intrepid2::Tensor<RealType>& R, Intrepid2::Tensor<RealType>& S)
 {
-  c.ok_numbers("r", R); c.is_antisymmetric("r", R);
-  c.ok_numbers("s", S); c.is_symmetric("s read", S);
-  if (c.first()) pr("r = [\n" << R << "];\ns = [\n" << S << "];");
-  // Math.
   R = Intrepid2::exp_skew_symmetric(R);
-  c.ok_numbers("R", R); c.is_rotation("R", R);
   S = Intrepid2::exp(S);
   symmetrize(S);
-  c.ok_numbers("S", S); c.is_symmetric("S", S);
   R = Intrepid2::dot(R, S);
-  c.ok_numbers("F", R);
-  if (c.first()) pr("F = [\n" << R << "];");
 }
 
 void transformStateArray (const unsigned int wi, const Direction::Enum dir,
@@ -221,7 +119,6 @@ void transformStateArray (const unsigned int wi, const Direction::Enum dir,
                           Albany::MDArray& mda1, Albany::MDArray& mda2) {
   switch (transformation) {
   case Transformation::none: {
-    if (wi == 0) pr("none " << (dir == Direction::g2G));
     if (dir == Direction::G2g) {
       // Copy from the provisional to the primary field.
       write(mda1, mda2);
@@ -231,15 +128,13 @@ void transformStateArray (const unsigned int wi, const Direction::Enum dir,
     }
   } break;
   case Transformation::right_polar_LieR_LieS: {
-    if (wi == 0) pr("right_polar_LieR_LieS " << Direction::g2G);
     loop(mda1, cell, 0) loop(mda1, qp, 1) {
-      Checker c(wi, cell, qp);
       if (dir == Direction::G2g) {
         // Copy mda2 (provisional) -> local.
         Intrepid2::Tensor<RealType> F(mda1.dimension(2));
         loop(mda2, i, 2) loop(mda2, j, 3) F(i, j) = mda2(cell, qp, i, j);
         Intrepid2::Tensor<RealType> RS[2];
-        calc_right_polar_LieR_LieS_G2g(F, RS, c);
+        calc_right_polar_LieR_LieS_G2g(F, RS);
         // Copy local -> mda1, mda2.
         loop(mda1, i, 2) loop(mda1, j, 3) {
           mda1(cell, qp, i, j) = RS[0](i, j);
@@ -252,13 +147,13 @@ void transformStateArray (const unsigned int wi, const Direction::Enum dir,
           R(i, j) = mda1(cell, qp, i, j);
           S(i, j) = mda2(cell, qp, i, j);
         }
-        calc_right_polar_LieR_LieS_g2G(R, S, c);
+        calc_right_polar_LieR_LieS_g2G(R, S);
         // Copy local -> mda1. mda2 is unused after g -> G.
         loop(mda1, i, 2) loop(mda1, j, 3) mda1(cell, qp, i, j) = R(i, j);
       }
     }
   } break;
-  }    
+  }
 }
 
 class Projector {
@@ -298,8 +193,6 @@ private:
 void Projector::
 init (const Teuchos::RCP<const Tpetra_Map>& node_map,
       const Teuchos::RCP<const Tpetra_Map>& ol_node_map) {
-  pr("Projector::init nodes " << node_map->getGlobalNumElements() << " "
-     << ol_node_map->getGlobalNumElements());
   node_map_ = node_map;
   ol_node_map_ = ol_node_map;
   const int max_num_entries = 27; // Enough for first-order hex.
@@ -348,13 +241,12 @@ fillRhs (const PHX::MDField<RealType>& f_G_qp, Manager::Field& f,
       f.data_->mv[fi] = Teuchos::rcp(
         new Tpetra_MultiVector(ol_node_map_, ncol, true));
   }
-    
+
   const Transformation::Enum transformation = f.data_->transformation;
   for (int cell = 0; cell < (int) workset.numCells; ++cell)
     for (int node = 0; node < num_node; ++node) {
       const GO row = workset.wsElNodeID[cell][node];
       for (int qp = 0; qp < num_qp; ++qp) {
-        Checker c(workset.wsIndex, cell, qp);
         switch (rank) {
         case 0:
         case 1:
@@ -373,7 +265,7 @@ fillRhs (const PHX::MDField<RealType>& f_G_qp, Manager::Field& f,
             loop(f_G_qp, i, 2) loop(f_G_qp, j, 3)
               F(i, j) = f_G_qp(cell, qp, i, j);
             Intrepid2::Tensor<RealType> RS[2];
-            calc_right_polar_LieR_LieS_G2g(F, RS, c);
+            calc_right_polar_LieR_LieS_G2g(F, RS);
             for (int fi = 0; fi < f.num_g_fields; ++fi) {
               for (int i = 0, col = 0; i < ndim; ++i)
                 for (int j = 0; j < ndim; ++j, ++col)
@@ -472,15 +364,6 @@ interp (const Manager::Field& f, const PHAL::Workset& workset,
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, ss.str());
       }
     }
-#if 0
-  pr("bf:");
-  for (int cell = 0; cell < (int) workset.numCells; ++cell)
-    for (int qp = 0; qp < num_qp; ++qp) {
-      for (int node = 0; node < num_node; ++node)
-        std::cout << " " << bf(cell, node, qp);
-      std::cout << "\n";
-    }
-#endif
 }
 
 bool Projector::is_filled (int wi) {
@@ -584,7 +467,6 @@ public:
   void beginAdapt () {
     // Transform G -> g and write to the primary or, depending on state, primary
     // and provisional fields.
-    pr("beginAdapt: write final");
     if (proj_.is_null())
       for (Map::const_iterator it = field_map_.begin(); it != field_map_.end();
            ++it)
@@ -599,8 +481,6 @@ public:
 
   void endAdapt (const Teuchos::RCP<const Tpetra_Map>& node_map,
                  const Teuchos::RCP<const Tpetra_Map>& ol_node_map) {
-    pr("is_g_.size() was " << is_g_.size() << " and now will be "
-       << state_mgr_->getStateArrays().elemStateArrays.size());
     init_g(state_mgr_->getStateArrays().elemStateArrays.size(), true);
     if (Teuchos::nonnull(proj_)) {
       proj_->init(node_map, ol_node_map);
@@ -653,7 +533,6 @@ public:
   }
 
   void readQpField (PHX::MDField<RealType>& f, const PHAL::Workset& workset) {
-    if (workset.wsIndex == 0) pr("readQpField " << f.fieldTag().name());
     // At startup, is_g_.size() is 0. We also initialized fields to their G, not
     // g, values.
     if (is_g_.empty())
@@ -674,27 +553,10 @@ public:
     }
     // Read from the primary field.
     read(getMDArray(f.fieldTag().name(), workset.wsIndex), f);
-#if 0
-    { pr("mda1:");
-      const int rank = 2, num_node = f.dimension(1),
-        num_qp = f.dimension(2), ndim = 3;
-      const Albany::MDArray&
-        mda1 = getMDArray(f.fieldTag().name(), workset.wsIndex);
-      for (int cell = 0; cell < (int) workset.numCells; ++cell)
-        for (int qp = 0; qp < num_qp; ++qp) {
-          for (int i = 0; i < ndim; ++i)
-            for (int j = 0; j < ndim; ++j)
-              std::cout << " " << mda1(cell, qp, i, j);
-          std::cout << "\n";
-        }
-    }
-#endif
   }
 
   void writeQpField (const PHX::MDField<RealType>& f,
                      const PHAL::Workset& workset, const BasisField& wbf) {
-    if (workset.wsIndex == 0)
-      pr("writeQpField (provisional) " << f.fieldTag().name());
     const std::string name_rc = decorate(f.fieldTag().name());
     if (proj_.is_null()) {
       // Write to the provisional field.
@@ -767,7 +629,6 @@ private:
 
   void transformStateArray (const std::string& name_rc, const WsIdx wi,
                             const Direction::Enum dir) {
-    if (wi == 0) pr("transform " << name_rc);
     // Name decoration coordinates with registerField's calls to
     // registerStateVariable.
     const Transformation::Enum transformation = get_transformation(name_rc);
@@ -816,7 +677,7 @@ static void update_x (
   const int spdim = disc->getNumDim(), neq = disc->getNumEq();
   for (int i = 0; i < x.size(); i += neq)
     for (int j = 0; j < spdim; ++j)
-      x[i+j] += s[i+j];  
+      x[i+j] += s[i+j];
 }
 
 void Manager::update_x (const Tpetra_Vector& soln_nol) {
@@ -960,12 +821,6 @@ namespace testing {
 typedef Intrepid2::Tensor<RealType> Tensor;
 
 // Some deformation gradient tensors with det(F) > 0 for use in testing.
-/*
-   pr('{'); for (i = 1:3)
-   pr('{'); for (j = 1:3) pr('%22.15e',F(i,j)); if (j < 3) pr(', '); end; end
-   pr('}'); if (i < 3) pr(','); else pr('}'); end; pr('\n');
-   end
-*/
 static const double Fs[3][3][3] = {
   {{-7.382752820294219e-01, -1.759182226321058e+00,  1.417301043170359e+00},
    { 7.999093048231801e-01,  5.295155264305610e-01, -3.075207765325406e-02},
@@ -1206,7 +1061,6 @@ struct ProjectorTester::Impl {
 };
 
 ProjectorTester::ProjectorTester () {
-  pr("ProjectorTester::ProjectorTester");
   d = Teuchos::rcp(new Impl());
   for (int test = 0; test < Impl::ntests; ++test) {
     Impl::TestData& td = d->td[test];
@@ -1361,8 +1215,6 @@ void ProjectorTester::finish (const PHAL::Workset& workset) {
       const Impl::FValues& fv_true = it->second;
       const Impl::Map::const_iterator it_interp = td.f_interp_qp.find(p);
       if (it_interp == td.f_interp_qp.end()) {
-        pr("ProjectorTester::finish(): Failed to find matching f_interp_qp.");
-        pr(p.x[0] << " " << p.x[1] << " " << p.x[2]);
         break;
       }
       const Impl::FValues& fv_interp = it_interp->second;
