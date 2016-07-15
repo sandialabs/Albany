@@ -17,8 +17,6 @@ class SPRSizeField : public MeshAdaptMethod {
   public:
     SPRSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
 
-    ~SPRSizeField();
-
     void adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
     void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
@@ -39,9 +37,10 @@ class SPRSizeField : public MeshAdaptMethod {
             return apf::getScalar(field,v,0);
         }
     } sprIsoFunc;
-  protected:
 
-    std::string sol_name;
+    void setSolName(std::string const& new_sol_name) {
+      sol_name = new_sol_name;
+    }
 
   private:
 
@@ -50,6 +49,7 @@ class SPRSizeField : public MeshAdaptMethod {
     Teuchos::RCP<Albany::APFDiscretization> pumi_disc;
 
     std::string state_name;
+    std::string sol_name;
     bool using_state;
     double rel_err;
 

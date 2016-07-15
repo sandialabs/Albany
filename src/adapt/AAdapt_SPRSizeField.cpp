@@ -21,9 +21,6 @@ AAdapt::SPRSizeField::SPRSizeField(const Teuchos::RCP<Albany::APFDiscretization>
   sol_name("solution") {
 }
 
-AAdapt::SPRSizeField::~SPRSizeField() {
-}
-
 void
 AAdapt::SPRSizeField::adaptMesh(
     const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)

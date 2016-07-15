@@ -23,6 +23,7 @@
 #ifdef SCOREC_SPR
 #include "AAdapt_SPRSizeField.hpp"
 #endif
+#include "AAdapt_ExtrudedAdapt.hpp"
 
 #include "AAdapt_RC_Manager.hpp"
 
@@ -59,6 +60,8 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   else if (method == "RPI SPR Size")
     szField = Teuchos::rcp(new AAdapt::SPRSizeField(pumi_discretization));
 #endif
+  else if (method == "RPI Extruded")
+    szField = Teuchos::rcp(new AAdapt::ExtrudedAdapt(pumi_discretization));
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "unknown RPI adapt method" << method);
 
