@@ -172,6 +172,7 @@ void Albany::APFMeshStruct::init(
   num_time_deriv = params->get<int>("Number Of Time Derivatives", 0);
   allElementBlocksHaveSamePhysics = true;
   hasRestartSolution = false;
+  shouldLoadFELIXData = false;
 
   // No history available by default
   solutionFieldHistoryDepth = 0;
@@ -335,13 +336,18 @@ Albany::APFMeshStruct::setFieldAndBulkData(
     StateStruct& st = *((*sis)[i]);
 
 #ifdef ALBANY_SCOREC
-    if (meshSpecsType() == AbstractMeshStruct::PUMI_MS)
-        st.restartDataAvailable = hasRestartSolution;
+    if (meshSpecsType() == AbstractMeshStruct::PUMI_MS) {
+      if(hasRestartSolution)
+        st.restartDataAvailable = true;
+      if((shouldLoadFELIXData) && (st.entity == StateStruct::NodalDataToElemNode))
+        st.restartDataAvailable = true;
+    }
 #endif
 
     if ( ! nameSet.insert(st.name).second)
       continue; //ignore duplicates
     std::vector<PHX::DataLayout::size_type>& dim = st.dim;
+
     if(st.entity == StateStruct::NodalData) { // Data at the node points
        const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
                = sis->getNodalDataBase()->getNodeContainer();
@@ -350,6 +356,8 @@ Albany::APFMeshStruct::setFieldAndBulkData(
     else if (dim.size() == 2) {
       if(st.entity == StateStruct::QuadPoint || st.entity == StateStruct::ElemNode)
         qpscalar_states.push_back(Teuchos::rcp(new PUMIQPData<double, 2>(st.name, dim, st.output)));
+      else if(st.entity == StateStruct::NodalDataToElemNode)
+        elemnodescalar_states.push_back(Teuchos::rcp(new PUMIQPData<double, 2>(st.name, dim, st.output)));
     }
     else if (dim.size() == 3) {
       if(st.entity == StateStruct::QuadPoint || st.entity == StateStruct::ElemNode)

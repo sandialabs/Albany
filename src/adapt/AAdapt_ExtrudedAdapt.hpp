@@ -5,38 +5,34 @@
 //*****************************************************************//
 
 
-#ifndef AADAPT_NONUNIFREFSIZEFIELD_HPP
-#define AADAPT_NONUNIFREFSIZEFIELD_HPP
+#ifndef AADAPT_EXTRUDEDADAPT_HPP
+#define AADAPT_EXTRUDEDADAPT_HPP
 
-#include "Albany_APFDiscretization.hpp"
-#include <ma.h>
-#include "Albany_StateManager.hpp"
 #include "AAdapt_MeshAdaptMethod.hpp"
+#include "AAdapt_SPRSizeField.hpp"
+#include <maExtrude.h>
 
 namespace AAdapt {
 
-class NonUnifRefSizeField : public MeshAdaptMethod {
-
+class ExtrudedAdapt : public MeshAdaptMethod {
   public:
-    NonUnifRefSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
-
-    ~NonUnifRefSizeField();
-
-    void adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
+    ExtrudedAdapt(const Teuchos::RCP<Albany::APFDiscretization>& disc);
 
     void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
 
-    void preProcessShrunkenMesh();
-
     void preProcessOriginalMesh();
-    void postProcessFinalMesh() {}
-    void postProcessShrunkenMesh() {}
+    void preProcessShrunkenMesh();
+    void adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
+    void postProcessShrunkenMesh();
+    void postProcessFinalMesh();
 
   private:
-
+    SPRSizeField spr_helper;
+    ma::Mesh* mesh;
+    ma::ModelExtrusions model_extrusions;
+    size_t nlayers;
 };
 
 }
 
 #endif
-

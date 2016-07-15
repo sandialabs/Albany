@@ -86,6 +86,9 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     std::vector<Teuchos::RCP<PUMIQPData<double, 3> > > qpvector_states;
     std::vector<Teuchos::RCP<PUMIQPData<double, 4> > > qptensor_states;
 
+    /* only for FELIX problems */
+    std::vector<Teuchos::RCP<PUMIQPData<double, 2> > > elemnodescalar_states;
+
     std::vector<std::string> nsNames;
     std::vector<std::string> ssNames;
 
@@ -110,6 +113,8 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     bool hasRestartSolution;
     double restartDataTime;
     int restartWriteStep;
+
+    bool shouldLoadFELIXData;
 
     int neq;
     int numDim;

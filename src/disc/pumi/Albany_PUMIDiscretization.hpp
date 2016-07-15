@@ -31,6 +31,9 @@ class PUMIDiscretization : public APFDiscretization {
     //! Set restart data
     void setRestartData();
 
+    //! Set data for FELIX problems
+    void setFELIXData();
+
   private:
 
     Teuchos::RCP<Albany::PUMIMeshStruct> pumiMeshStruct;

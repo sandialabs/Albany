@@ -375,6 +375,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     void initTemperatureHack();
 
+    //! Set any FELIX Data
+    virtual void setFELIXData() {}
+
     //! Some evaluators may want access to the underlying apf mesh elements.
     std::vector<std::vector<apf::MeshEntity*> >& getBuckets() {return buckets;}
 

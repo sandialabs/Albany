@@ -12,40 +12,35 @@
 #include <apfShape.h>
 
 AAdapt::SPRSizeField::SPRSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc) :
-  MeshSizeField(disc),
+  MeshAdaptMethod(disc),
   global_numbering(disc->getAPFGlobalNumbering()),
   esa(disc->getStateArrays().elemStateArrays),
   elemGIDws(disc->getElemGIDws()),
   cub_degree(disc->getAPFMeshStruct()->cubatureDegree),
-  pumi_disc(disc) {
-}
-
-AAdapt::SPRSizeField::
-~SPRSizeField() {
+  pumi_disc(disc),
+  sol_name("solution") {
 }
 
 void
-AAdapt::SPRSizeField::configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
+AAdapt::SPRSizeField::adaptMesh(
+    const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
 {
 
-  ma::IsotropicFunction*
-    isf = dynamic_cast<ma::IsotropicFunction*>(&sprIsoFunc);
-  ma::Input *in = ma::configure(mesh_struct->getMesh(), isf);
+  ma::Input *in = ma::configure(mesh_struct->getMesh(), &sprIsoFunc);
 
   in->maximumIterations = adapt_params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
-  //do not snap on deformation problems even if the model supports it
   in->shouldSnap = false;
 
-  setMAInputParams(adapt_params_, in);
+  setCommonMeshAdaptOptions(adapt_params_, in);
 
   ma::adapt(in);
 
 }
 
 void
-AAdapt::SPRSizeField::computeError() {
+AAdapt::SPRSizeField::preProcessShrunkenMesh() {
 
-  if ( sv_name.length() > 0 )
+  if ( using_state )
     computeErrorFromStateVariable();
   else
     computeErrorFromRecoveredGradients();
@@ -58,16 +53,20 @@ AAdapt::SPRSizeField::setParams(
     const Teuchos::RCP<Teuchos::ParameterList>& p) {
 
   rel_err = p->get<double>("Error Bound", 0.01);
-  sv_name = p->get<std::string>("State Variable", "");
-  std::vector<int> dims;
-  esa[0][sv_name].dimensions(dims);
-  num_qp = dims[1];
+  state_name = p->get<std::string>("State Variable", "");
+  using_state = !state_name.empty();
+  if ( using_state ) {
+    std::vector<int> dims;
+    esa[0][state_name].dimensions(dims);
+    num_qp = dims[1];
+  }
 
 }
 
 void
-AAdapt::SPRSizeField::copyInputFields()
+AAdapt::SPRSizeField::preProcessOriginalMesh()
 {
+  if (!using_state) return;
   apf::Mesh2* mesh = mesh_struct->getMesh();
   apf::FieldShape* fs = apf::getVoronoiShape(mesh->getDimension(), cub_degree);
   apf::Field* eps = apf::createField(mesh, "eps", apf::MATRIX, fs);
@@ -82,7 +81,7 @@ AAdapt::SPRSizeField::copyInputFields()
       apf::Matrix3x3 value;
       for (int i=0; i<3; i++) {
         for (int j=0; j<3; j++) {
-          value[i][j] = esa[ws][sv_name](lid,qp,i,j);
+          value[i][j] = esa[ws][state_name](lid,qp,i,j);
         }
       }
       apf::setMatrix(eps,e,qp,value);
@@ -91,20 +90,20 @@ AAdapt::SPRSizeField::copyInputFields()
   mesh->end(it);
 }
 
-void AAdapt::SPRSizeField::freeSizeField()
+void AAdapt::SPRSizeField::postProcessShrunkenMesh()
 {
   apf::destroyField(mesh_struct->getMesh()->findField("size"));
 }
 
-void AAdapt::SPRSizeField::freeInputFields()
+void AAdapt::SPRSizeField::postProcessFinalMesh()
 {
   apf::destroyField(mesh_struct->getMesh()->findField("eps"));
 }
 
 void
 AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
-  
-  apf::Field* f = mesh_struct->getMesh()->findField("solution");
+
+  apf::Field* f = mesh_struct->getMesh()->findField(sol_name.c_str());
   apf::Field* sol_grad = spr::getGradIPField(f,"sol_grad",cub_degree);
   sprIsoFunc.field = spr::getSPRSizeField(sol_grad,rel_err);
   apf::destroyField(sol_grad);

@@ -140,6 +140,11 @@ void Albany::APFDiscretization::init()
   // set all of the restart fields here
   if (meshStruct->hasRestartSolution)
     setRestartData();
+
+  // load the FELIX Data and tell the state manager to not initialize
+  // these fields
+  if (meshStruct->shouldLoadFELIXData)
+    setFELIXData();
 }
 
 Teuchos::RCP<const Tpetra_Map>
@@ -1098,6 +1103,8 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
       // special case : need to store one double value that represents all the elements in the workset (time)
       // numBuckets are the number of worksets
       meshStruct->scalarValue_states[i]->reAllocateBuffer(numBuckets);
+  for (std::size_t i=0; i<meshStruct->elemnodescalar_states.size(); ++i)
+      meshStruct->elemnodescalar_states[i]->reAllocateBuffer(numElementsAccessed);
 
   // Pull out pointers to shards::Arrays for every bucket, for every state
 
@@ -1119,6 +1126,10 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
     for (std::size_t i=0; i<meshStruct->scalarValue_states.size(); i++)
       stateArrays.elemStateArrays[b][meshStruct->scalarValue_states[i]->name] =
                  meshStruct->scalarValue_states[i]->getMDA(1);
+    for (std::size_t i=0; i<meshStruct->elemnodescalar_states.size(); ++i) {
+      stateArrays.elemStateArrays[b][meshStruct->elemnodescalar_states[i]->name] =
+                 meshStruct->elemnodescalar_states[i]->getMDA(buck.size());
+    }
   }
 
 // Process node data sets if present
