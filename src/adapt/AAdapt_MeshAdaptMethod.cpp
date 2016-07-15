@@ -4,18 +4,18 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "AAdapt_MeshSizeField.hpp"
+#include "AAdapt_MeshAdaptMethod.hpp"
 
 namespace AAdapt {
 
-MeshSizeField::MeshSizeField(
+MeshAdaptMethod::MeshAdaptMethod(
     const Teuchos::RCP<Albany::APFDiscretization>& disc):
     mesh_struct(disc->getAPFMeshStruct()),
     commT(disc->getComm())
 {
 }
 
-void MeshSizeField::setMAInputParams(
+void MeshAdaptMethod::setCommonMeshAdaptOptions(
     const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
     ma::Input *in) {
   Teuchos::Array<std::string> defaultStArgs =

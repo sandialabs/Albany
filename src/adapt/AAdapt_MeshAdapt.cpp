@@ -14,7 +14,7 @@
 #include <PCU.h>
 #include <parma.h>
 #include <apfZoltan.h>
-#include <apfMDS.h> // for createMdsMesh
+#include <apfMDS.h> // for reorderMdsMesh
 
 #include "AAdapt_UnifSizeField.hpp"
 #include "AAdapt_UnifRefSizeField.hpp"
@@ -182,17 +182,14 @@ void AAdapt::MeshAdapt::beforeAdapt()
   TEUCHOS_FUNC_TIME_MONITOR("AlbanyAdapt: Transfer to APF Mesh");
   if (should_transfer_ip_data)
     pumi_discretization->attachQPData();
-  szField->copyInputFields();
+  szField->preProcessOriginalMesh();
 }
 
 void AAdapt::MeshAdapt::adaptInPartition()
 {
-  szField->computeError();
-
-  /* i.e. adapt */
-  szField->configure(adapt_params_);
-
-  szField->freeSizeField();
+  szField->preProcessShrunkenMesh();
+  szField->adaptMesh(adapt_params_);
+  szField->postProcessShrunkenMesh();
 }
 
 namespace {
@@ -254,9 +251,12 @@ void AAdapt::MeshAdapt::afterAdapt()
   double maxImb = adapt_params_->get<double>("Maximum LB Imbalance", 1.30);
   postBalance(mesh, loadBalancing[2], maxImb);
 
+  szField->postProcessFinalMesh();
+
   mesh->verify();
 
   apf::reorderMdsMesh(mesh);
+
   if (adapt_params_->isParameter("Write Adapted SMB Files")) {
     std::ostringstream smbOutName;
     smbOutName << "adapted_mesh_" << ncalls << "/";
@@ -264,7 +264,6 @@ void AAdapt::MeshAdapt::afterAdapt()
     mesh->writeNative(outFile.c_str());
   }
 
-  szField->freeInputFields();
   // Throw away all the Albany data structures and re-build them from the mesh
   // Note that the solution transfer for the QP fields happens in this call
   pumi_discretization->updateMesh(should_transfer_ip_data);

@@ -147,7 +147,7 @@ IF(ALBANY_SCOREC)
 
 SET(SOURCES ${SOURCES}
     AAdapt_MeshAdapt.cpp
-    AAdapt_MeshSizeField.cpp
+    AAdapt_MeshAdaptMethod.cpp
     AAdapt_UnifSizeField.cpp
     AAdapt_UnifRefSizeField.cpp
     AAdapt_NonUnifRefSizeField.cpp
@@ -155,7 +155,7 @@ SET(SOURCES ${SOURCES}
    )
 
 SET(HEADERS ${HEADERS}
-    AAdapt_MeshSizeField.hpp
+    AAdapt_MeshAdaptMethod.hpp
     AAdapt_MeshAdapt.hpp
     AAdapt_UnifSizeField.hpp
     AAdapt_UnifRefSizeField.hpp

@@ -12,7 +12,7 @@
 #include <apfShape.h>
 
 AAdapt::SPRSizeField::SPRSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc) :
-  MeshSizeField(disc),
+  MeshAdaptMethod(disc),
   global_numbering(disc->getAPFGlobalNumbering()),
   esa(disc->getStateArrays().elemStateArrays),
   elemGIDws(disc->getElemGIDws()),
@@ -25,7 +25,7 @@ AAdapt::SPRSizeField::
 }
 
 void
-AAdapt::SPRSizeField::configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
+AAdapt::SPRSizeField::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
 {
 
   ma::IsotropicFunction*
@@ -36,19 +36,19 @@ AAdapt::SPRSizeField::configure(const Teuchos::RCP<Teuchos::ParameterList>& adap
   //do not snap on deformation problems even if the model supports it
   in->shouldSnap = false;
 
-  setMAInputParams(adapt_params_, in);
+  setCommonMeshAdaptOptions(adapt_params_, in);
 
   ma::adapt(in);
 
 }
 
 void
-AAdapt::SPRSizeField::computeError() {
+AAdapt::SPRSizeField::preProcessShrunkenMesh() {
 
   if ( sv_name.length() > 0 )
-    computeErrorFromStateVariable();
+    preProcessShrunkenMeshFromStateVariable();
   else
-    computeErrorFromRecoveredGradients();
+    preProcessShrunkenMeshFromRecoveredGradients();
 
 }
 
@@ -66,7 +66,7 @@ AAdapt::SPRSizeField::setParams(
 }
 
 void
-AAdapt::SPRSizeField::copyInputFields()
+AAdapt::SPRSizeField::preProcessOriginalMesh()
 {
   apf::Mesh2* mesh = mesh_struct->getMesh();
   apf::FieldShape* fs = apf::getVoronoiShape(mesh->getDimension(), cub_degree);
@@ -91,18 +91,18 @@ AAdapt::SPRSizeField::copyInputFields()
   mesh->end(it);
 }
 
-void AAdapt::SPRSizeField::freeSizeField()
+void AAdapt::SPRSizeField::postProcessShrunkenMesh()
 {
   apf::destroyField(mesh_struct->getMesh()->findField("size"));
 }
 
-void AAdapt::SPRSizeField::freeInputFields()
+void AAdapt::SPRSizeField::postProcessFinalMesh()
 {
   apf::destroyField(mesh_struct->getMesh()->findField("eps"));
 }
 
 void
-AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
+AAdapt::SPRSizeField::preProcessShrunkenMeshFromRecoveredGradients() {
   
   apf::Field* f = mesh_struct->getMesh()->findField("solution");
   apf::Field* sol_grad = spr::getGradIPField(f,"sol_grad",cub_degree);
@@ -112,7 +112,7 @@ AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
 }
 
 void
-AAdapt::SPRSizeField::computeErrorFromStateVariable() {
+AAdapt::SPRSizeField::preProcessShrunkenMeshFromStateVariable() {
 
   apf::Field* eps = mesh_struct->getMesh()->findField("eps");
   sprIsoFunc.field = spr::getSPRSizeField(eps,rel_err);
