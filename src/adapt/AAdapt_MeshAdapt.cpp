@@ -464,34 +464,33 @@ void AAdapt::MeshAdapt::checkValidStateVariable(
   const Albany::StateManager& state_mgr_,
   const std::string name)
 {
-  if (name.length() > 0) {
-    // does state variable exist?
-    std::string stateName;
+  // does state variable exist?
+  // if not, we will be using the solution field
+  if (name.empty()) return;
 
-    Albany::StateArrays& sa = disc->getStateArrays();
-    Albany::StateArrayVec& esa = sa.elemStateArrays;
-    Teuchos::RCP<Albany::StateInfoStruct> stateInfo = state_mgr_.getStateInfoStruct();
-    bool exists = false;
-    for(unsigned int i = 0; i < stateInfo->size(); i++) {
-      stateName = (*stateInfo)[i]->name;
-      if ( name.compare(0,100,stateName) == 0 ) {
-        exists = true;
-        break;
-      }
+  std::string stateName;
+
+  Albany::StateArrays& sa = disc->getStateArrays();
+  Albany::StateArrayVec& esa = sa.elemStateArrays;
+  Teuchos::RCP<Albany::StateInfoStruct> stateInfo = state_mgr_.getStateInfoStruct();
+  bool exists = false;
+  for(unsigned int i = 0; i < stateInfo->size(); i++) {
+    stateName = (*stateInfo)[i]->name;
+    if ( name.compare(0,100,stateName) == 0 ) {
+      exists = true;
+      break;
     }
-    if (!exists)
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                                 "Error!    Invalid State Variable Parameter!");
-
-    // is state variable a 3x3 tensor?
-
-    std::vector<int> dims;
-    esa[0][name].dimensions(dims);
-    int size = dims.size();
-    if (size != 4)
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                                 "Error! Invalid State Variable Parameter \"" << name << "\" looking for \"" << stateName << "\"" << std::endl);
   }
+  TEUCHOS_TEST_FOR_EXCEPTION(!exists, Teuchos::Exceptions::InvalidParameter,
+                             "Error!    Invalid State Variable Parameter!");
+
+  // is state variable a 3x3 tensor?
+
+  std::vector<int> dims;
+  esa[0][name].dimensions(dims);
+  int size = dims.size();
+  TEUCHOS_TEST_FOR_EXCEPTION(size != 4, Teuchos::Exceptions::InvalidParameter,
+                             "Error! Invalid State Variable Parameter \"" << name << "\" looking for \"" << stateName << "\"" << std::endl);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

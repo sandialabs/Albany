@@ -16,7 +16,7 @@ class SPRSizeField : public MeshAdaptMethod {
 
   public:
     SPRSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
-  
+
     ~SPRSizeField();
 
     void adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
@@ -34,19 +34,16 @@ class SPRSizeField : public MeshAdaptMethod {
     class SPRIsoFunc : public ma::IsotropicFunction
     {
       public:
-        virtual ~SPRIsoFunc(){}
-
-    /** \brief get the desired element size at this vertex */
-
-        virtual double getValue(ma::Entity* v){
-
-            return apf::getScalar(field,v,0);
-
-        } 
-
         apf::Field* field;
-
+        virtual ~SPRIsoFunc(){}
+    /** \brief get the desired element size at this vertex */
+        virtual double getValue(ma::Entity* v){
+            return apf::getScalar(field,v,0);
+        }
     } sprIsoFunc;
+  protected:
+
+    std::string sol_name;
 
   private:
 
@@ -54,7 +51,8 @@ class SPRSizeField : public MeshAdaptMethod {
     Albany::WsLIDList& elemGIDws;
     Teuchos::RCP<Albany::APFDiscretization> pumi_disc;
 
-    std::string sv_name;
+    std::string state_name;
+    bool using_state;
     double rel_err;
 
     apf::GlobalNumbering* global_numbering;
@@ -63,8 +61,8 @@ class SPRSizeField : public MeshAdaptMethod {
     int cub_degree;
 
     void getFieldFromStateVariable(apf::Field* eps);
-    void preProcessShrunkenMeshFromRecoveredGradients();
-    void preProcessShrunkenMeshFromStateVariable();
+    void computeErrorFromRecoveredGradients();
+    void computeErrorFromStateVariable();
 
 };
 
