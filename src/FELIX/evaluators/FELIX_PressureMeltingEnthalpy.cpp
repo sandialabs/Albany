@@ -10,6 +10,6 @@
 #include "FELIX_PressureMeltingEnthalpy.hpp"
 #include "FELIX_PressureMeltingEnthalpy_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(FELIX::PressureMeltingEnthalpy)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_EVAL_TYPE(FELIX::PressureMeltingEnthalpy)
 
 

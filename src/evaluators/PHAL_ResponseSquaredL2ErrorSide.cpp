@@ -9,4 +9,4 @@
 #include "PHAL_ResponseSquaredL2ErrorSide.hpp"
 #include "PHAL_ResponseSquaredL2ErrorSide_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(PHAL::ResponseSquaredL2ErrorSideBase)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_EVAL_TYPE(PHAL::ResponseSquaredL2ErrorSideBase)

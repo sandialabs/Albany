@@ -10,7 +10,7 @@
 #include "FELIX_EnthalpyResid.hpp"
 #include "FELIX_EnthalpyResid_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(FELIX::EnthalpyResid)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_EVAL_TYPE(FELIX::EnthalpyResid)
 
 
 

@@ -10,7 +10,7 @@
 #include "FELIX_Temperature.hpp"
 #include "FELIX_Temperature_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(FELIX::Temperature)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_EVAL_TYPE(FELIX::Temperature)
 
 
 

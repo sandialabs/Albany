@@ -10,4 +10,4 @@
 #include "FELIX_VerticalVelocity.hpp"
 #include "FELIX_VerticalVelocity_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(FELIX::VerticalVelocity)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_EVAL_TYPE(FELIX::VerticalVelocity)
