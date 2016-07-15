@@ -60,7 +60,7 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     szField = Teuchos::rcp(new AAdapt::SPRSizeField(pumi_discretization));
 #endif
   else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "should not be here");
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "unknown RPI adapt method" << method);
 
   // Save the initial output file name
   base_exo_filename = pumiMeshStruct->outputFileName;
@@ -80,13 +80,11 @@ inline int getValueType (const PHX::DataLayout& dl) {
   case 1: return apf::VECTOR;
   case 2: return apf::MATRIX;
   default:
-    std::stringstream ss;
-    ss << "not a valid rank: " << dl.rank() - 2;
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, ss.str());
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not a valid rank: " << dl.rank() - 2);
     return -1;
   }
 }
-} // namespace
+} // end anonymous namespace
 
 void AAdapt::MeshAdapt::initRcMgr () {
   if (rc_mgr.is_null()) return;
@@ -249,7 +247,7 @@ namespace {
     }
     return b;
   }
-}
+} // end anonymous namespace
 
 void AAdapt::MeshAdapt::afterAdapt()
 {
@@ -285,7 +283,7 @@ void AAdapt::MeshAdapt::afterAdapt()
   ncalls++;
 }
 
-struct AdaptCallbackOf : public Parma_GroupCode
+struct AdaptCallback : public Parma_GroupCode
 {
   AAdapt::MeshAdapt* adapter;
   void run(int group) {
@@ -327,12 +325,20 @@ bool correctnessTestSkip () {
 }
 } // namespace al
 
+/* If the mesh is spread too thin, as defined by having a small (<1000)
+ * number of element on each MPI rank, the partition adjustment algorithms
+ * in MeshAdapt may migrate all elements out of an MPI rank, which is something
+ * the SCOREC code is not designed to handle.
+ * This function will examine the mesh and determine if it is spread too thin.
+ * If so, it will repartition the mesh onto a subset of the MPI ranks and
+ * call (callback), then repartition to the full set of ranks and return.
+ */
 void adaptShrunken(apf::Mesh2* m, double min_part_density,
                    Parma_GroupCode& callback);
 
 bool AAdapt::MeshAdapt::adaptMesh()
 {
-  AdaptCallbackOf callback;
+  AdaptCallback callback;
   callback.adapter = this;
   const double
     min_part_density = adapt_params_->get<double>("Minimum Part Density", 1000);
@@ -518,10 +524,6 @@ AAdapt::MeshAdapt::getValidAdapterParameters() const
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
   validPL->set<double>("Minimum Part Density", 1000, "Minimum elements per part: triggers partition shrinking");
   validPL->set<bool>("Write Adapted SMB Files", false, "Write .smb mesh files after adaptation");
-  // For the new adaptive model, we preallocate all vectors larger than will be needed during the calculation.
-  // We can adapt the mesh up to that point, but an exception will be thrown if the number of nodes grow beyond
-  // the high water mark on the processor.
-  validPL->set<int>("High Water Mark", 1, "Number of nodes to allocate space for on each rank");
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->getValidParameters(validPL);
 
   return validPL;
@@ -530,7 +532,7 @@ AAdapt::MeshAdapt::getValidAdapterParameters() const
 static double getAveragePartDensity(apf::Mesh* m)
 {
   double nElements = m->count(m->getDimension());
-  PCU_Add_Doubles(&nElements, 1);
+  nElements = PCU_Add_Double(nElements);
   return nElements / PCU_Comm_Peers();
 }
 
@@ -560,9 +562,9 @@ void adaptShrunken(apf::Mesh2* m, double minPartDensity,
                    Parma_GroupCode& callback)
 {
   int factor = getShrinkFactor(m, minPartDensity);
-  if (factor == 1)
+  if (factor == 1) {
     callback.run(0);
-  else {
+  } else {
     warnAboutShrinking(factor);
     Parma_ShrinkPartition(m, factor, callback);
   }
