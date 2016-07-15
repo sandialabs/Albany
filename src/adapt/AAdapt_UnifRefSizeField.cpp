@@ -15,7 +15,7 @@ AAdapt::UnifRefSizeField::UnifRefSizeField(const Teuchos::RCP<Albany::APFDiscret
 }
 
 void
-AAdapt::UnifRefSizeField::configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
+AAdapt::UnifRefSizeField::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
 {
 
   ma::IsotropicFunction*
@@ -26,14 +26,14 @@ AAdapt::UnifRefSizeField::configure(const Teuchos::RCP<Teuchos::ParameterList>& 
   //do not snap on deformation problems even if the model supports it
   in->shouldSnap = false;
 
-  setMAInputParams(adapt_params_, in);
+  setCommonMeshAdaptOptions(adapt_params_, in);
 
   ma::adapt(in);
 
 }
 
 void
-AAdapt::UnifRefSizeField::copyInputFields()
+AAdapt::UnifRefSizeField::preProcessOriginalMesh()
 {
 
   unifRefIsoFunc.averageEdgeLength = ma::getAverageEdgeLength(mesh_struct->getMesh());
@@ -45,7 +45,7 @@ AAdapt::UnifRefSizeField::
 }
 
 void
-AAdapt::UnifRefSizeField::computeError() {
+AAdapt::UnifRefSizeField::preProcessShrunkenMesh() {
 }
 
 void

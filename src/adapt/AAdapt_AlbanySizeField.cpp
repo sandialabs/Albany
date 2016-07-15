@@ -20,7 +20,7 @@ AAdapt::AlbanySizeField::
 }
 
 void
-AAdapt::AlbanySizeField::configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
+AAdapt::AlbanySizeField::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
 {
 
 // Print the fields we see
@@ -42,14 +42,14 @@ AAdapt::AlbanySizeField::configure(const Teuchos::RCP<Teuchos::ParameterList>& a
   //do not snap on deformation problems even if the model supports it
   in->shouldSnap = false;
 
-  setMAInputParams(adapt_params_, in);
+  setCommonMeshAdaptOptions(adapt_params_, in);
 
   ma::adapt(in);
 
 }
 
 void
-AAdapt::AlbanySizeField::copyInputFields() {
+AAdapt::AlbanySizeField::preProcessOriginalMesh() {
 
   TEUCHOS_TEST_FOR_EXCEPTION(
       mesh_struct->nodal_data_base.is_null(), std::logic_error,
@@ -88,7 +88,7 @@ AAdapt::AlbanySizeField::copyInputFields() {
 }
 
 void
-AAdapt::AlbanySizeField::freeInputFields() {
+AAdapt::AlbanySizeField::postProcessFinalMesh() {
 
 //  std::cout << "Adapt - destroying Node Field: proj_nodal_IsoMeshAdaptMethod" << std::endl;
   apf::destroyField(mesh_struct->getMesh()->findField("proj_nodal_IsoMeshAdaptMethod"));

@@ -19,17 +19,17 @@ class SPRSizeField : public MeshAdaptMethod {
   
     ~SPRSizeField();
 
-    void configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
+    void adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
     int getCubatureDegree(int num_qp);
 
     void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
 
-    void computeError();
+    void preProcessShrunkenMesh();
 
-    void copyInputFields();
-    void freeInputFields();
-    void freeSizeField();
+    void preProcessOriginalMesh();
+    void postProcessFinalMesh();
+    void postProcessShrunkenMesh();
 
     class SPRIsoFunc : public ma::IsotropicFunction
     {
@@ -63,8 +63,8 @@ class SPRSizeField : public MeshAdaptMethod {
     int cub_degree;
 
     void getFieldFromStateVariable(apf::Field* eps);
-    void computeErrorFromRecoveredGradients();
-    void computeErrorFromStateVariable();
+    void preProcessShrunkenMeshFromRecoveredGradients();
+    void preProcessShrunkenMeshFromStateVariable();
 
 };
 

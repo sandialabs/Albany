@@ -25,13 +25,13 @@ class AlbanySizeField : public MeshAdaptMethod {
 
     ~AlbanySizeField();
 
-    void configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
+    void adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
     void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p){}
-    void computeError(){}
-    void copyInputFields();
-    void freeInputFields();
-    void freeSizeField() {}
+    void preProcessShrunkenMesh(){}
+    void preProcessOriginalMesh();
+    void postProcessFinalMesh();
+    void postProcessShrunkenMesh() {}
 
   private:
 

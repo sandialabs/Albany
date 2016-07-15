@@ -22,15 +22,15 @@ class NonUnifRefSizeField : public MeshAdaptMethod {
 
     ~NonUnifRefSizeField();
 
-    void configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
+    void adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
     void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
 
-    void computeError();
+    void preProcessShrunkenMesh();
 
-    void copyInputFields();
-    void freeInputFields() {}
-    void freeSizeField() {}
+    void preProcessOriginalMesh();
+    void postProcessFinalMesh() {}
+    void postProcessShrunkenMesh() {}
 
   private:
 

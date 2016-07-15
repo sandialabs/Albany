@@ -14,6 +14,7 @@
 #include <PCU.h>
 #include <parma.h>
 #include <apfZoltan.h>
+#include <apfMDS.h> // for reorderMdsMesh
 
 #include "AAdapt_UnifSizeField.hpp"
 #include "AAdapt_UnifRefSizeField.hpp"
@@ -187,10 +188,7 @@ void AAdapt::MeshAdapt::beforeAdapt()
 void AAdapt::MeshAdapt::adaptInPartition()
 {
   szField->preProcessShrunkenMesh();
-
-  /* i.e. adapt */
   szField->adaptMesh(adapt_params_);
-
   szField->postProcessShrunkenMesh();
 }
 
