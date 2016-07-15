@@ -100,6 +100,9 @@ Albany::PUMIDiscretization::setFELIXData()
     /* otherwise we pull in the data from the mesh */
     else {
 
+      if(! PCU_Comm_Self())
+        std::cout << "initializing " << state.name << " from mesh" << std::endl;
+
       apf::NewArray<double> values;
       int num_nodes = state.dims[1];
 
