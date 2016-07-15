@@ -45,6 +45,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_beta_smb.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smb.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_beta_smb_restart.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smb_restart.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_wedge_pumi.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_wedge_pumi.xml COPYONLY)
 
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
