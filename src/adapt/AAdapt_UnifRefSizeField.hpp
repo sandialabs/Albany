@@ -8,11 +8,11 @@
 #ifndef AADAPT_UNIFREFSIZEFIELD_HPP
 #define AADAPT_UNIFREFSIZEFIELD_HPP
 
-#include "AAdapt_MeshSizeField.hpp"
+#include "AAdapt_MeshAdaptMethod.hpp"
 
 namespace AAdapt {
 
-class UnifRefSizeField : public MeshSizeField {
+class UnifRefSizeField : public MeshAdaptMethod {
 
   public:
 
@@ -20,15 +20,15 @@ class UnifRefSizeField : public MeshSizeField {
 
     ~UnifRefSizeField();
 
-    void configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
+    void adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
     void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
 
-    void computeError();
+    void preProcessShrunkenMesh();
 
-    void copyInputFields();
-    void freeInputFields() {}
-    void freeSizeField() {}
+    void preProcessOriginalMesh();
+    void postProcessFinalMesh() {}
+    void postProcessShrunkenMesh() {}
 
     class UnifRefIsoFunc : public ma::IsotropicFunction
     {

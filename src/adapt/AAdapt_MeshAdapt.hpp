@@ -21,7 +21,7 @@
 struct Parma_GroupCode;
 
 namespace AAdapt {
-class MeshSizeField;
+class MeshAdaptMethod;
 namespace rc { class Manager; }
 
 class MeshAdapt : public AbstractAdapterT {
@@ -62,7 +62,7 @@ private:
 
   apf::Mesh2* mesh;
 
-  Teuchos::RCP<MeshSizeField> szField;
+  Teuchos::RCP<MeshAdaptMethod> szField;
   
   std::string adaptation_method;
   std::string base_exo_filename;

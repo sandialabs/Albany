@@ -169,6 +169,7 @@ CP::updateSlip(
 
       slip_np1[slip_sys] = slip_n[slip_sys] + dt * rate_slip[slip_sys];
     }
+
   }
 
 }
@@ -666,11 +667,21 @@ computeRateSlip(
     ArgT const
     ratio_stress = shear[slip_sys] / slip_resistance[slip_sys];
 
-    // Compute slip increment
-    rate_slip[slip_sys] = 
-      g0 * std::pow(std::fabs(ratio_stress), m-1) * ratio_stress;
-  }
+    RealType const
+    min_tol = std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / m);
 
+    // protect against denormalized slip rates
+    bool const
+    finite_power_law = std::fabs(ratio_stress) > min_tol;    
+
+    // Compute slip increment
+
+    if (finite_power_law == true) {
+      rate_slip[slip_sys] = 
+	g0 * std::pow(std::fabs(ratio_stress), m-1) * ratio_stress;
+    }
+  }
+  
   return rate_slip;
 }
 
@@ -741,10 +752,14 @@ computeRateSlip(
     viscous_drag = std::fabs(ratio_stress) / drag_term;
 
     RealType const
-    pl_tol = std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / m);
+    min_tol = std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / m);
 
+    RealType const
+    machine_eps = std::numeric_limits<RealType>::epsilon();
+
+    // protect against denormalized slip rates
     bool const
-    finite_power_law = std::fabs(ratio_stress) > pl_tol;
+    finite_power_law = std::fabs(ratio_stress) > min_tol;
 
     ArgT
     power_law{0.0};
@@ -753,18 +768,27 @@ computeRateSlip(
       power_law = std::pow(std::fabs(ratio_stress), m - 1) * ratio_stress;
     }
 
-    RealType const
-    eff_tol = 1.0e-8;
+    ArgT
+    pl_vd_ratio = drag_term * std::pow(ratio_stress,m-1);
 
     bool const
-    vd_active = std::fabs(ratio_stress) > eff_tol;
+    pl_active = pl_vd_ratio < machine_eps;
 
+    bool const
+    vd_active = pl_vd_ratio > 1.0 / machine_eps;
+      
+    bool const
+    eff_active = !pl_active && !vd_active;
+      
     // prevent flow rule singularities if stress is zero
     ArgT
     effective{power_law};
 
-    if (vd_active == true) {
+    if (eff_active == true) {
       effective = 1.0/((1.0 / power_law) + (1.0 / viscous_drag));
+    }
+    else if (vd_active == true) {
+      effective = viscous_drag;
     }
 
     // compute slip increment
