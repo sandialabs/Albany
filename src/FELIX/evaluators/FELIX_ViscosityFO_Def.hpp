@@ -531,7 +531,8 @@ evaluateFields(typename Traits::EvalData workset)
     	ScalarT ff = pow(10.0, -10.0*hom);
         if (std::fabs(printedFF - ff) > 0.0001*ff)
         {
-            std::cout << "[Viscosity] ff = " << ff << "\n";
+            Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+            *out << "[Viscosity] ff = " << ff << "\n";
             //std::cout << "[Homotopy param] h = " << hom << "\n";
             printedFF = ff;
         }
