@@ -57,10 +57,10 @@
     </ParameterList>
 
     <ParameterList name="Adaptation">
-      <Parameter name="Method" type="string" value="RPI SPR Size"/>
+      <Parameter name="Method" type="string" value="RPI Extruded"/>
       <Parameter name="Remesh Strategy" type="string" value="Continuous"/>
       <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="1"/>
-      <Parameter name="Error Bound" type="double" value="0.05"/>
+      <Parameter name="Error Bound" type="double" value="0.20"/>
       <Parameter name="Minimum Part Density" type="double" value="2500"/>
     </ParameterList>
 
@@ -69,7 +69,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="PUMI"/>
     <Parameter name="Mesh Model Input File Name" type="string" value="greenland.dmg"/>
-    <Parameter name="PUMI Input File Name" type="string" value="greenland-wedge.smb"/>
+    <Parameter name="PUMI Input File Name" type="string" value="noadapt_restart/restart_0.3_.smb"/>
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{1, eb_1}"/>
     <!--Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x2:{2, 4, ns_1, ns_2}"/-->
     <Parameter name="Side Set Associations" type="TwoDArray(string)" value="2x3:{1, 2, 3, upperside, basalside, lateralside}"/>
@@ -78,9 +78,8 @@
     <Parameter name="Load FELIX Data" type="bool" value="true"/>
     <Parameter name="2nd Order Mesh" type="bool" value="false"/>
     <Parameter name="Cubature Degree" type="int" value="4"/>
-    <!-- Have both velocity and acceleration -->
     <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
-
+    <Parameter name="PUMI Restart Time" type="double" value="0.0"/>
   </ParameterList>
 
 
@@ -128,7 +127,7 @@
         <Parameter  name="Initial Value" type="double" value="0.1"/>
         <Parameter  name="Continuation Parameter" type="string" value="Time"/>
         <Parameter  name="Continuation Method" type="string" value="Natural"/>
-        <Parameter  name="Max Steps" type="int" value="3"/>
+        <Parameter  name="Max Steps" type="int" value="2"/>
         <Parameter  name="Max Value" type="double" value="1"/>
         <Parameter  name="Min Value" type="double" value="0.0"/>
       </ParameterList>
