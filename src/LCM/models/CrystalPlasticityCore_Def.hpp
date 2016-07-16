@@ -668,7 +668,7 @@ computeRateSlip(
     ratio_stress = shear[slip_sys] / slip_resistance[slip_sys];
 
     RealType const
-    min_tol = std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / m);
+    min_tol = std::pow(2.0 * std::numeric_limits<RealType>::min(), 1.0 / m);
 
     // protect against denormalized slip rates
     bool const
@@ -678,7 +678,10 @@ computeRateSlip(
 
     if (finite_power_law == true) {
       rate_slip[slip_sys] = 
-	g0 * std::pow(std::fabs(ratio_stress), m-1) * ratio_stress;
+        g0 * std::pow(std::fabs(ratio_stress), m-1) * ratio_stress;
+    }
+    else {
+      rate_slip[slip_sys] = 0.0 * ratio_stress;
     }
   }
   
