@@ -241,7 +241,7 @@ namespace PHAL {
 #ifdef ALBANY_SG
   //**********************************************************************
   template<typename Traits>
-  DOFVecGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, FadType>::
+  DOFVecGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, SGFadType>::
   DOFVecGradInterpolation(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
     val_node    (p.get<std::string>  ("Variable Name"), dl->node_vector),
@@ -268,7 +268,7 @@ namespace PHAL {
 
   //**********************************************************************
   template<typename Traits>
-  void DOFVecGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, FadType>::
+  void DOFVecGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, SGFadType>::
   postRegistrationSetup(typename Traits::SetupData d,
                         PHX::FieldManager<Traits>& fm)
   {
@@ -278,7 +278,7 @@ namespace PHAL {
   }
   //**********************************************************************
   template<typename Traits>
-  void DOFVecGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, FadType>::
+  void DOFVecGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, SGFadType>::
   evaluateFields(typename Traits::EvalData workset)
   {
 //#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -313,7 +313,7 @@ namespace PHAL {
 #ifdef ALBANY_ENSEMBLE
   //**********************************************************************
   template<typename Traits>
-  DOFVecGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, FadType>::
+  DOFVecGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, MPFadType>::
   DOFVecGradInterpolation(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
     val_node    (p.get<std::string>  ("Variable Name"), dl->node_vector),
@@ -340,7 +340,7 @@ namespace PHAL {
 
   //**********************************************************************
   template<typename Traits>
-  void DOFVecGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, FadType>::
+  void DOFVecGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, MPFadType>::
   postRegistrationSetup(typename Traits::SetupData d,
                         PHX::FieldManager<Traits>& fm)
   {
@@ -351,7 +351,7 @@ namespace PHAL {
 
   //**********************************************************************
   template<typename Traits>
-  void DOFVecGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, FadType>::
+  void DOFVecGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, MPFadType>::
   evaluateFields(typename Traits::EvalData workset)
   {
 //#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT

@@ -179,7 +179,7 @@ evaluateFields(typename Traits::EvalData workset)
 #ifdef ALBANY_SG
 //**********************************************************************
 template<typename Traits>
-DOFInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, FadType>::
+DOFInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, SGFadType>::
 DOFInterpolation(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar),
@@ -202,7 +202,7 @@ DOFInterpolation(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename Traits>
-void DOFInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, FadType>::
+void DOFInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, SGFadType>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -213,7 +213,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename Traits>
-void DOFInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, FadType>::
+void DOFInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, SGFadType>::
 evaluateFields(typename Traits::EvalData workset)
 {
   //Intrepid2 version:
@@ -240,7 +240,7 @@ evaluateFields(typename Traits::EvalData workset)
 #ifdef ALBANY_ENSEMBLE
 //**********************************************************************
 template<typename Traits>
-DOFInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, FadType>::
+DOFInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, MPFadType>::
 DOFInterpolation(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar),
@@ -263,7 +263,7 @@ DOFInterpolation(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename Traits>
-void DOFInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, FadType>::
+void DOFInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, MPFadType>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -274,7 +274,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename Traits>
-void DOFInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, FadType>::
+void DOFInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, MPFadType>::
 evaluateFields(typename Traits::EvalData workset)
 {
   //Intrepid2 version:

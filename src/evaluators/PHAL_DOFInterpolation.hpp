@@ -124,7 +124,7 @@ private:
 #ifdef ALBANY_SG
 //! Specialization for SGJacobian evaluation taking advantage of known sparsity
 template<typename Traits>
-class DOFInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>
+class DOFInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, SGFadType>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::SGJacobian, Traits>  {
 
@@ -161,7 +161,7 @@ private:
 #ifdef ALBANY_ENSEMBLE
 //! Specialization for MPJacobian evaluation taking advantage of known sparsity
 template<typename Traits>
-class DOFInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>
+class DOFInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, MPFadType>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::MPJacobian, Traits>  {
 

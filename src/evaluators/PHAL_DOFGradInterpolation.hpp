@@ -135,7 +135,7 @@ public:
 
 #ifdef ALBANY_SG
 template<typename Traits>
-class DOFGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>
+class DOFGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, SGFadType>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::SGJacobian, Traits>  {
 
@@ -173,7 +173,7 @@ private:
 
 #ifdef ALBANY_ENSEMBLE
 template<typename Traits>
-class DOFGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>
+class DOFGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, MPFadType>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::MPJacobian, Traits>  {
 
