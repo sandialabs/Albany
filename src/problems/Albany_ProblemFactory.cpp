@@ -75,6 +75,8 @@
 #include "FELIX/problems/FELIX_StokesL1L2.hpp"
 #include "FELIX/problems/FELIX_Hydrology.hpp"
 #include "FELIX/problems/FELIX_Elliptic2D.hpp"
+#include "FELIX/problems/FELIX_Enthalpy.hpp"
+#include "FELIX/problems/FELIX_StokesFOThermoCoupled.hpp"
 
 #ifdef ALBANY_EPETRA
 #include "FELIX/problems/FELIX_StokesFOHydrology.hpp"
@@ -416,6 +418,12 @@ Albany::ProblemFactory::create()
   }
   else if (method == "FELIX Elliptic 2D") {
     strategy = rcp(new FELIX::Elliptic2D(problemParams, paramLib, 1));
+  }
+  else if (method == "FELIX Enthalpy 3D") {
+    strategy = rcp(new FELIX::Enthalpy(problemParams, paramLib, 3));
+  }
+  else if (method == "FELIX Stokes FO Thermo Coupled 3D") {
+   strategy = rcp(new FELIX::StokesFOThermoCoupled(problemParams, paramLib, 3));
   }
 #endif
 #ifdef ALBANY_AERAS

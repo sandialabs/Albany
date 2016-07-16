@@ -9,7 +9,8 @@ enum StokesParamEnum
   Alpha = 0,
   Lambda = 1,
   Mu     = 2,
-  Power  =3
+  Power  = 3,
+  Homotopy = 4
 };
 
 
