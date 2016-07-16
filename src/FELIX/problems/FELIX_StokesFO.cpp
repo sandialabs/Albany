@@ -330,6 +330,7 @@ FELIX::StokesFO::getValidProblemParameters () const
   validPL->sublist("FELIX Physical Parameters", false, "");
   validPL->sublist("FELIX Noise", false, "");
   validPL->sublist("Parameter Fields", false, "Parameter Fields to be registered");
+  validPL->set<bool>("Use Time Parameter", false, "Solely to use Solver Method = Continuation");
 
   return validPL;
 }
