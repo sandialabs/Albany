@@ -18,7 +18,7 @@ AAdapt::SPRSizeField::SPRSizeField(const Teuchos::RCP<Albany::APFDiscretization>
   elemGIDws(disc->getElemGIDws()),
   cub_degree(disc->getAPFMeshStruct()->cubatureDegree),
   pumi_disc(disc),
-  sol_name("solution") {
+  sol_name(Albany::APFMeshStruct::solution_name[0]) {
 }
 
 void
@@ -40,10 +40,11 @@ AAdapt::SPRSizeField::adaptMesh(
 void
 AAdapt::SPRSizeField::preProcessShrunkenMesh() {
 
-  if ( using_state )
+  if ( using_state ) {
     computeErrorFromStateVariable();
-  else
+  } else {
     computeErrorFromRecoveredGradients();
+  }
 
 }
 
@@ -66,7 +67,9 @@ AAdapt::SPRSizeField::setParams(
 void
 AAdapt::SPRSizeField::preProcessOriginalMesh()
 {
-  if (!using_state) return;
+  if (!using_state) {
+    return;
+  }
   apf::Mesh2* mesh = mesh_struct->getMesh();
   apf::FieldShape* fs = apf::getVoronoiShape(mesh->getDimension(), cub_degree);
   apf::Field* eps = apf::createField(mesh, "eps", apf::MATRIX, fs);
@@ -103,7 +106,9 @@ void AAdapt::SPRSizeField::postProcessFinalMesh()
 void
 AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
 
+
   apf::Field* f = mesh_struct->getMesh()->findField(sol_name.c_str());
+  assert(f);
   apf::Field* sol_grad = spr::getGradIPField(f,"sol_grad",cub_degree);
   sprIsoFunc.field = spr::getSPRSizeField(sol_grad,rel_err);
   apf::destroyField(sol_grad);
