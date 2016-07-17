@@ -5,7 +5,7 @@
   </ParameterList>
 
   <ParameterList name="Problem">
-    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
     <Parameter name="Use Time Parameter" type="bool" value="true"/>
@@ -63,6 +63,7 @@
       <Parameter name="Error Bound" type="double" value="0.20"/>
       <Parameter name="Minimum Part Density" type="double" value="2500"/>
       <Parameter name="Write Adapted SMB Files" type="bool" value="true"/>
+      <Parameter name="Equilibrate" type="bool" value="false"/>
     </ParameterList>
 
   </ParameterList> <!-- Problem -->
