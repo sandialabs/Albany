@@ -140,11 +140,6 @@ void Albany::APFDiscretization::init()
   // set all of the restart fields here
   if (meshStruct->hasRestartSolution)
     setRestartData();
-
-  // load the FELIX Data and tell the state manager to not initialize
-  // these fields
-  if (meshStruct->shouldLoadFELIXData)
-    setFELIXData();
 }
 
 Teuchos::RCP<const Tpetra_Map>
@@ -1545,9 +1540,16 @@ Albany::APFDiscretization::updateMeshBase(bool shouldTransferIPData)
   computeWorksetInfo();
   computeNodeSets();
   computeSideSets();
+
   // transfer of internal variables
   if (shouldTransferIPData)
     copyQPStatesFromAPF();
+
+  // load the FELIX Data and tell the state manager to not initialize
+  // these fields
+  if (meshStruct->shouldLoadFELIXData)
+    setFELIXData();
+
   // Tell the nodal data base that the graph changed. We don't create the graph
   // (as STKDiscretization does), but others might (such as
   // ProjectIPtoNodalField), so invalidate it.
