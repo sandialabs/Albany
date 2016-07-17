@@ -214,7 +214,14 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     }
   }
-
+  else {//temporary fix for non STK meshes..
+    stateName = fieldName = "temperature";
+    entity = Albany::StateStruct::NodalDataToElemNode;
+    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
+    p->set<std::string>("Field Name", fieldName);
+    ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   if (discParams->isSublist("Side Set Discretizations") &&
       discParams->sublist("Side Set Discretizations").isSublist("basalside") &&
