@@ -28,8 +28,11 @@ void ExtrudedAdapt::setParams(const Teuchos::RCP<Teuchos::ParameterList>& p) {
 }
 
 void ExtrudedAdapt::preProcessOriginalMesh() {
-  std::cerr << "pre-processing original...\n";
+  std::cerr << "pre-processing original (flattening)...\n";
   ma::intrude(mesh, model_extrusions, &nlayers);
+  std::cerr << "flattening done.\n";
+  std::cerr << "mesh dim is now " << mesh->getDimension() << ", element count "
+    << mesh->count(mesh->getDimension()) << '\n';
   /* we will use the top layer velocity for error estimation */
   std::string flat_name = ma::getFlatName(
         Albany::APFMeshStruct::solution_name[0], nlayers - 1);
@@ -53,21 +56,20 @@ void ExtrudedAdapt::preProcessOriginalMesh() {
     apf::setVector(new_field, v, 0, x);
   }
   mesh->end(it);
+  std::cerr << "copied " << flat_name << " to " << apf::getName(new_field)
+    << " for error estimation\n";
   std::cerr << "pre-processing original done.\n";
-  std::cerr << "mesh dim is now " << mesh->getDimension() << ", element count "
-    << mesh->count(mesh->getDimension()) << '\n';
 }
 
 void ExtrudedAdapt::preProcessShrunkenMesh() {
-  std::cerr << "pre-processing shrunken...\n";
+  std::cerr << "pre-processing shrunken (error estimation by SPR)...\n";
   spr_helper.preProcessOriginalMesh();
-  std::cerr << "spr pre-processed original\n";
   spr_helper.preProcessShrunkenMesh();
-  std::cerr << "pre-processing shrunken done.\n";
   apf::Field* new_field = mesh->findField(
       Albany::APFMeshStruct::solution_name[0]);
   assert(new_field);
   apf::destroyField(new_field);
+  std::cerr << "error estimation by SPR done.\n";
 }
 
 void ExtrudedAdapt::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_) {
@@ -84,9 +86,11 @@ void ExtrudedAdapt::postProcessShrunkenMesh() {
 }
 
 void ExtrudedAdapt::postProcessFinalMesh() {
-  std::cerr << "post-processing final...\n";
+  std::cerr << "post-processing final (extrude)...\n";
   ma::extrude(mesh, model_extrusions, nlayers);
-  std::cerr << "post-processing final done.\n";
+  std::cerr << "extrusion done.\n";
+  std::cerr << "mesh dim is now " << mesh->getDimension() << ", element count "
+    << mesh->count(mesh->getDimension()) << '\n';
 }
 
 }
