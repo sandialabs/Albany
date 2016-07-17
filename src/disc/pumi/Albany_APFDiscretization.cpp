@@ -981,7 +981,8 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
     apf::ModelEntity* mr = m->toModel(element);
     apf::StkModel* block = sets.invMaps[numDim][mr];
     TEUCHOS_TEST_FOR_EXCEPTION(!block, std::logic_error,
-		   "Error: no element block for model region on line " << __LINE__ << " of file " << __FILE__ << std::endl);
+        "No element block for model region " << m->getModelTag(mr)
+        << " at " << __FILE__ << " +" << __LINE__ << '\n');
     // find the latest bucket being filled with elements for this block
     buck_it = bucketMap.find(block);
     if((buck_it == bucketMap.end()) ||  // this block hasn't been encountered yet
@@ -1067,7 +1068,7 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
         const LO node_lid = overlap_node_mapT->getLocalElement(node_gid);
 
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
-			   "PUMI_Disc: node_lid out of range " << node_lid << std::endl);
+            "PUMI: node_lid " << node_lid << " out of range\n");
 
         coords[b][i][j] = &coordinates[node_lid * spdim];
         wsElNodeEqID[b][i][j].resize(neq);
