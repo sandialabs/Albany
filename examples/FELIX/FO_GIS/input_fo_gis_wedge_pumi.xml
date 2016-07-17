@@ -62,6 +62,7 @@
       <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="1"/>
       <Parameter name="Error Bound" type="double" value="0.20"/>
       <Parameter name="Minimum Part Density" type="double" value="2500"/>
+      <Parameter name="Write Adapted SMB Files" type="bool" value="true"/>
     </ParameterList>
 
   </ParameterList> <!-- Problem -->
