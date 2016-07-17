@@ -260,7 +260,7 @@ void AAdapt::MeshAdapt::afterAdapt()
 
   apf::reorderMdsMesh(mesh);
 
-  if (adapt_params_->isParameter("Write Adapted SMB Files")) {
+  if (adapt_params_->get<bool>("Write Adapted SMB Files", false)) {
     std::ostringstream smbOutName;
     smbOutName << "adapted_mesh_" << ncalls << "/";
     std::string outFile= smbOutName.str();
