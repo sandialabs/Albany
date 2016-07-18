@@ -1067,7 +1067,6 @@ computeGlobalResidualImplT(
     const Teuchos::Array<ParamVec>& p,
     const Teuchos::RCP<Tpetra_Vector>& fT)
 {
-  std::cerr << "Albany::Application::computeGlobalResidualImplT\n";
 
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
   postRegSetup("Residual");
@@ -1114,7 +1113,6 @@ computeGlobalResidualImplT(
 #endif
 
   // Zero out overlapped residual - Tpetra
-  std::cerr << "zeroing overlapped_fT and fT\n";
   overlapped_fT->putScalar(0.0);
   fT->putScalar(0.0);
 
@@ -1177,13 +1175,9 @@ computeGlobalResidualImplT(
 
 #ifdef ALBANY_LCM
   // Push the assembled residual values back into the overlap vector
-  std::cerr << "importing owned fT into overlapped_fT\n";
   overlapped_fT->doImport(*fT, *importerT, Tpetra::INSERT);
   // Write the residual to the discretization, which will later (optionally) be written to the output file
-  std::cerr << "disc->setResidualFieldT\n";
   disc->setResidualFieldT(*overlapped_fT);
-#else
-#error "not ALBANY_LCM !!!"
 #endif
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -1359,7 +1353,6 @@ computeGlobalJacobianImplT(const double alpha,
                            const Teuchos::RCP<Tpetra_Vector>& fT,
                            const Teuchos::RCP<Tpetra_CrsMatrix>& jacT)
 {
-  std::cerr << "Albany::Application::computeGlobalJacobianImplT\n";
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian");
 
   postRegSetup("Jacobian");
@@ -1378,10 +1371,8 @@ computeGlobalJacobianImplT(const double alpha,
   Teuchos::RCP<Tpetra_Vector> overlapped_fT;
   if(Teuchos::nonnull(fT)){
 	  overlapped_fT = solMgrT->get_overlapped_fT();
-    std::cerr << "fT was nonnull, get overlapped_fT from solMgrT\n";
   }else{
 	  overlapped_fT = Teuchos::null;
-    std::cerr << "overlapped_fT = Teuchos::null\n";
   }
   Teuchos::RCP<Tpetra_CrsMatrix> overlapped_jacT = solMgrT->get_overlapped_jacT();
   Teuchos::RCP<Tpetra_Export> exporterT = solMgrT->get_exporterT();
@@ -1412,7 +1403,6 @@ computeGlobalJacobianImplT(const double alpha,
 
   // Zero out overlapped residual
   if (Teuchos::nonnull(fT)) {
-    std::cerr << "zero overlapped_fT and fT\n";
     overlapped_fT->putScalar(0.0);
     fT->putScalar(0.0);
   }
