@@ -642,6 +642,7 @@ Albany::APFDiscretization::monotonicTimeLabel(const double time)
 void
 Albany::APFDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 {
+  std::cerr << "APFDiscretization::setResidualFieldT\n";
   Teuchos::ArrayRCP<const ST> data = residualT.get1dView();
   if (solNames.getTimeDeriv(0).size() == 0) // dont have solution_dot or solution_dotdot
     this->setField(APFMeshStruct::residual_name,&(data[0]),/*overlapped=*/false);
@@ -655,6 +656,7 @@ Albany::APFDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 void
 Albany::APFDiscretization::setResidualField(const Epetra_Vector& residual)
 {
+  std::cerr << "APFDiscretization::setResidualField\n";
   if (solNames.getTimeDeriv(0).size() == 0)
     this->setField(APFMeshStruct::residual_name,&(residual[0]),/*overlapped=*/false);
   else
