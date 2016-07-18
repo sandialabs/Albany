@@ -482,7 +482,10 @@ evaluateFields(typename Traits::EvalData workset)
 
 //  Residual.deep_copy(ScalarT(0.0));
   if (numDims == 3) { //3D case
+    std::cerr << "3D case\n";
     if (eqn_type == FELIX) {
+      std::cerr << "eqn_type == FELIX\n";
+      std::cerr << "useStereographicMap == " << useStereographicMap << '\n';
       for (std::size_t cell=0; cell < workset.numCells; ++cell) {
 
         if(useStereographicMap) {
@@ -549,6 +552,8 @@ evaluateFields(typename Traits::EvalData workset)
                  Residual(cell,node,1) += strs01*wGradBF(cell,node,qp,0) +
                                           strs11*wGradBF(cell,node,qp,1) +
                                           strs12*wGradBF(cell,node,qp,2);
+                 if (Residual(cell,node,0) > 1e+100) std::cerr << "fizz\n";
+                 if (Residual(cell,node,1) > 1e+100) std::cerr << "buzz\n";
             }
           }
         }

@@ -373,6 +373,8 @@ void Albany::APFDiscretization::setField(
       }
       datap = data_buf;
     }
+    for (int di = 0; di < pumi_nc; ++di)
+      if (datap[di] > 1e+100) std::cerr << "fizz\n";
 
     apf::setComponents(f, node.entity, node.node, datap);
   }

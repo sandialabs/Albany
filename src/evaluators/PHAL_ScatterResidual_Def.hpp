@@ -150,6 +150,8 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  std::cerr << "ScatterResidual::evaluateFields\n";
+  std::cerr << "tensorRank == " << this->tensorRank << '\n';
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
 
@@ -168,8 +170,10 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
-        for (std::size_t eq = 0; eq < numFields; eq++)
+        for (std::size_t eq = 0; eq < numFields; eq++) {
+          if ((this->valVec)(cell,node,eq) > 1e+100) std::cerr << "fizz\n";
           f_nonconstView[nodeID[node][this->offset + eq]] += (this->valVec)(cell,node,eq);
+        }
     }
   } else
   if (this->tensorRank == 2) {
