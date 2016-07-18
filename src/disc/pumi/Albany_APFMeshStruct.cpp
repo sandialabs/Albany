@@ -288,8 +288,11 @@ Albany::APFMeshStruct::setFieldAndBulkData(
   TEUCHOS_TEST_FOR_EXCEPTION((solVectorLayout[2].size() % 2), std::logic_error,
       "Error in input file: specification of solution vector dotdot layout is incorrect\n");
 
-  solutionInitialized = false;
-  residualInitialized = false;
+  solutionInitialized = true;
+  residualInitialized = true;
+
+  if (solVectorLayout[0].size() == 0 && (neq == 2 || neq == 4)) problemDim = 2;
+  else problemDim = numDim;
 
   if (solVectorLayout[0].size() == 0) {
 
@@ -300,28 +303,23 @@ Albany::APFMeshStruct::setFieldAndBulkData(
     for(int i = 0; i <= num_time_deriv; i++){
 
       int valueType;
-      if (neq==1)
+      if (neq == 1) {
         valueType = apf::SCALAR;
-      else if (neq == 2 || neq == 3)
+      } else if (neq == problemDim) {
         valueType = apf::VECTOR;
-      else {
-        assert(neq == 4 || neq == 9);
+      } else {
+        assert(neq == problemDim * problemDim);
         valueType = apf::MATRIX;
       }
-      /* fields may have been created by restart mechanism */
-      if(i == 0 && (!mesh->findField(residual_name)))
-        this->createNodalField(residual_name,valueType);
-      if (mesh->findField(solution_name[i]))
-        solutionInitialized = true;
-      else {
-        this->createNodalField(solution_name[i],valueType);
-        if (hasRestartSolution)
-          solutionInitialized = true;
+      if(i == 0) {
+        residualInitialized = findOrCreateNodalField(residual_name, valueType);
       }
+      bool found_field = findOrCreateNodalField(solution_name[i], valueType);
+      solutionInitialized = solutionInitialized && found_field;
     }
-  }
-  else
+  } else {
     splitFields(solVectorLayout);
+  }
 
   // Code to parse the vector of StateStructs and save the information
 
@@ -376,6 +374,22 @@ Albany::APFMeshStruct::setFieldAndBulkData(
   }
 }
 
+bool
+Albany::APFMeshStruct::findOrCreateNodalField(const char* name, int value_type) {
+  apf::Field* f = mesh->findField(name);
+  if (f) {
+    /* fields may have been created by the restart mechanism,
+     * but we should still check that they are of the expected type
+     */
+    assert(apf::getShape(f) == mesh->getShape());
+    assert(apf::getValueType(f) == value_type);
+    return true;
+  } else {
+    this->createNodalField(name, value_type);
+    return false;
+  }
+}
+
 void
 Albany::APFMeshStruct::splitFields(Teuchos::Array<Teuchos::Array<std::string> >& fieldLayout)
 { // user is breaking up or renaming solution & residual fields
@@ -401,17 +415,17 @@ Albany::APFMeshStruct::splitFields(Teuchos::Array<Teuchos::Array<std::string> >&
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
             "Error in input file: specification of solution vector layout is incorrect\n");
 
-      this->createNodalField(fieldLayout[fcomp][i].c_str(),valueType);
+      bool found_field =
+        findOrCreateNodalField(fieldLayout[fcomp][i].c_str(),valueType);
+      solutionInitialized = solutionInitialized && found_field;
+
       // Add the residual field - based on the text entered in the "Solution" PL only
       if(fcomp == 0){
         std::string res_name = fieldLayout[fcomp][i];
         res_name.append("Res");
-        this->createNodalField(res_name.c_str(),valueType);
+        residualInitialized = findOrCreateNodalField(res_name.c_str(), valueType);
       }
     }
-
-    if (hasRestartSolution)
-      solutionInitialized = true;
   }
 }
 
