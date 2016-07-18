@@ -167,7 +167,7 @@ void Albany::APFMeshStruct::init(
   // Set defaults for cubature and workset size, overridden in input file
 
   cubatureDegree = params->get("Cubature Degree", 3);
-  int worksetSizeMax = params->get("Workset Size", 50);
+  int worksetSizeMax = params->get("Workset Size", 10000);
   interleavedOrdering = params->get("Interleaved Ordering",true);
   num_time_deriv = params->get<int>("Number Of Time Derivatives", 0);
   allElementBlocksHaveSamePhysics = true;
@@ -437,8 +437,9 @@ int Albany::APFMeshStruct::computeWorksetSize(const int worksetSizeMax,
                                                      const int ebSizeMax) const
 {
   // Resize workset size down to maximum number in an element block
-  if (worksetSizeMax > ebSizeMax || worksetSizeMax < 1) return ebSizeMax;
-  else {
+  if (worksetSizeMax > ebSizeMax || worksetSizeMax < 1) {
+    return ebSizeMax;
+  } else {
      // compute numWorksets, and shrink workset size to minimize padding
      const int numWorksets = 1 + (ebSizeMax-1) / worksetSizeMax;
      return (1 + (ebSizeMax-1) /  numWorksets);
@@ -471,7 +472,7 @@ Albany::APFMeshStruct::getValidDiscretizationParameters() const
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid2");
-  validPL->set<int>("Workset Size", 50, "Upper bound on workset (bucket) size");
+  validPL->set<int>("Workset Size", 10000, "Upper bound on workset (bucket) size");
   validPL->set<bool>("Interleaved Ordering", true, "Flag for interleaved or blocked unknown ordering");
   validPL->set<bool>("Separate Evaluators by Element Block", false,
                      "Flag for different evaluation trees for each Element Block");

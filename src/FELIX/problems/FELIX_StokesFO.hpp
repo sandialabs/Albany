@@ -33,6 +33,7 @@
 #include "PHAL_DOFVecInterpolationSide.hpp"
 #include "PHAL_LoadSideSetStateField.hpp"
 #include "PHAL_SaveSideSetStateField.hpp"
+#include "PHAL_SaveStateField.hpp"
 #include "FELIX_SharedParameter.hpp"
 #include "FELIX_StokesParamEnum.hpp"
 
@@ -50,6 +51,7 @@
 #include "FELIX_BasalFrictionCoefficientGradient.hpp"
 #include "FELIX_UpdateZCoordinate.hpp"
 #include "FELIX_GatherVerticallyAveragedVelocity.hpp"
+#include "FELIX_Time.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -212,7 +214,14 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     }
   }
-
+  else {//temporary fix for non STK meshes..
+    stateName = fieldName = "temperature";
+    entity = Albany::StateStruct::NodalDataToElemNode;
+    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
+    p->set<std::string>("Field Name", fieldName);
+    ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   if (discParams->isSublist("Side Set Discretizations") &&
       discParams->sublist("Side Set Discretizations").isSublist("basalside") &&
@@ -688,6 +697,23 @@ if (basalSideName!="INVALID")
     std::string extruded_param_name = "thickness";
     int extruded_param_level = 0;
     extruded_params_levels->insert(std::make_pair(extruded_param_name, extruded_param_level));
+  }
+
+  // ---------- Add time as a Sacado-ized parameter (only if specified) ------- //
+  bool isTimeAParameter = false;
+  if (params->isParameter("Use Time Parameter")) isTimeAParameter = params->get<bool>("Use Time Parameter");
+  if (isTimeAParameter) {
+    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Time"));
+    p->set<Teuchos::RCP<PHX::DataLayout>>("Workset Scalar Data Layout", dl->workset_scalar);
+    p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
+    p->set<bool>("Disable Transient", true);
+    p->set<std::string>("Time Name", "Time");
+    p->set<std::string>("Delta Time Name", "Delta Time");
+    ev = Teuchos::rcp(new FELIX::Time<EvalT, PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable("Time", dl->workset_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
+    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   // ------------------- Interpolations and utilities ------------------ //
