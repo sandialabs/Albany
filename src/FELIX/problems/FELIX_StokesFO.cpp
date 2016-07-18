@@ -18,10 +18,12 @@
 
 FELIX::StokesFO::
 StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
+          const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
-  numDim(numDim_)
+  numDim(numDim_),
+  discParams(discParams_)
 {
   //Set # of PDEs per node based on the Equation Set.
   //Equation Set is FELIX by default (2 dofs / node -- usual FELIX Stokes FO).
@@ -313,6 +315,7 @@ FELIX::StokesFO::getValidProblemParameters () const
 
   validPL->set<bool> ("Extruded Column Coupled in 2D Response", false, "Boolean describing whether the extruded column is coupled in 2D response");
   validPL->set<int> ("Layered Data Length", 0, "Number of layers in input layered data files.");
+  validPL->set<int> ("importCellTemperatureFromMesh", 0, "");
   validPL->set<Teuchos::Array<std::string> > ("Required Fields", Teuchos::Array<std::string>(), "");
   validPL->set<Teuchos::Array<std::string> > ("Required Basal Fields", Teuchos::Array<std::string>(), "");
   validPL->set<Teuchos::Array<std::string> > ("Required Surface Fields", Teuchos::Array<std::string>(), "");
@@ -327,6 +330,7 @@ FELIX::StokesFO::getValidProblemParameters () const
   validPL->sublist("FELIX Physical Parameters", false, "");
   validPL->sublist("FELIX Noise", false, "");
   validPL->sublist("Parameter Fields", false, "Parameter Fields to be registered");
+  validPL->set<bool>("Use Time Parameter", false, "Solely to use Solver Method = Continuation");
 
   return validPL;
 }

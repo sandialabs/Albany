@@ -74,12 +74,12 @@ protected:
   unsigned short int tensorRank;
   bool enableTransient;
   bool enableAcceleration;
-/*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT 
  typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
  Kokkos::vector< PHX::MDField<ScalarT, Cell, Node>, PHX::Device > val_kokkos;
  typename Kokkos::vector< PHX::MDField<ScalarT, Cell, Node>, PHX::Device >::t_dev d_val;
 
-#endif*/
+#endif
 };
 
 template<typename EvalT, typename Traits> class GatherSolution;

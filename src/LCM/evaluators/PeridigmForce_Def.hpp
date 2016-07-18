@@ -134,12 +134,12 @@ void PeridigmForce<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   std::string blockName = workset.EBName;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>> wsElNodeID = workset.wsElNodeID;
+  auto wsElNodeID = workset.wsElNodeID;
 
   PeridigmManager& peridigmManager = *PeridigmManager::self();
 
   for(int cell = 0; cell < workset.numCells; ++cell){
-    int globalNodeId = wsElNodeID[cell][0];
+    auto globalNodeId = wsElNodeID[cell][0];
     this->force(cell, 0, 0) = peridigmManager.getForce(globalNodeId, 0);
     this->force(cell, 0, 1) = peridigmManager.getForce(globalNodeId, 1);
     this->force(cell, 0, 2) = peridigmManager.getForce(globalNodeId, 2);
@@ -153,7 +153,7 @@ evaluateFields(typename Traits::EvalData workset)
     this->residual(cell, 0, 2) = this->force(cell, 0, 2);
   }
 
-  int globalId, peridigmLocalId;
+  GO globalId, peridigmLocalId;
   for(unsigned int i=0 ; i<this->outputFieldInfo.size() ; ++i){
 
     std::string peridigmName = this->outputFieldInfo[i].peridigmName;

@@ -1,43 +1,73 @@
 cmake_minimum_required (VERSION 2.8)
 
+SET(CTEST_DO_SUBMIT "$ENV{DO_SUBMIT}")
+SET(CTEST_TEST_TYPE "$ENV{TEST_TYPE}")
+SET(CTEST_BUILD_OPTION "$ENV{BUILD_OPTION}")
+
 if (1)
-  set (CTEST_DO_SUBMIT ON)
-  set (CTEST_TEST_TYPE Nightly)
+  # What to build and test
+  IF(CTEST_BUILD_OPTION MATCHES "base")
+    # Only download repos and cleanout in the base nightly test run (start it an hour earlier)
+    set (CLEAN_BUILD TRUE)
+    set (DOWNLOAD TRUE)
+  ELSE()
+    set (CLEAN_BUILD FALSE)
+    set (DOWNLOAD FALSE)
+  ENDIF()
+
+  set (BUILD_SCOREC TRUE)
+  set (BUILD_TRILINOS TRUE)
+  set (BUILD_PERIDIGM TRUE)
+  set (BUILD_ALB32 TRUE)
+  set (BUILD_ALB64 TRUE)
+  set (BUILD_ALBFUNCTOR TRUE)
+  IF(CTEST_BUILD_OPTION MATCHES "clang")
+    set (BUILD_TRILINOS FALSE)
+    set (BUILD_PERIDIGM FALSE)
+    set (BUILD_ALB32 FALSE)
+    set (BUILD_ALB64 FALSE)
+    set (BUILD_TRILINOSCLANG TRUE)
+    set (BUILD_ALB64CLANG TRUE)
+    set (BUILD_ALBFUNCTOR FALSE)
+    set (BUILD_INTEL_TRILINOS FALSE)
+    set (BUILD_INTEL_ALBANY FALSE)
+  ELSE()
+    set (BUILD_TRILINOSCLANG FALSE)
+    set (BUILD_ALB64CLANG FALSE)
+  ENDIF()
+  IF(CTEST_BUILD_OPTION MATCHES "intel")
+    set (BUILD_TRILINOS FALSE)
+    set (BUILD_PERIDIGM FALSE)
+    set (BUILD_ALB32 FALSE)
+    set (BUILD_ALB64 FALSE)
+    set (BUILD_TRILINOSCLANG FALSE)
+    set (BUILD_ALB64CLANG FALSE)
+    set (BUILD_ALBFUNCTOR FALSE)
+    set (BUILD_INTEL_TRILINOS TRUE)
+    set (BUILD_INTEL_ALBANY TRUE)
+  ELSE()
+    set (BUILD_INTEL_TRILINOS FALSE)
+    set (BUILD_INTEL_ALBANY FALSE)
+  ENDIF()
+else ()
+  # This block is for testing. Set "if (1)" to "if (0)", and then freely mess
+  # around with the settings in this block.
 
   # What to build and test
   set (DOWNLOAD TRUE)
   # See if we can get away with this for speed, at least until we get onto a
   # machine that can support a lengthy nightly.
-  set (CLEAN_BUILD FALSE)
+  set (CLEAN_BUILD TRUE)
   set (BUILD_SCOREC TRUE)
-  set (BUILD_TRILINOS TRUE)
-  set (BUILD_PERIDIGM TRUE)
-  set (BUILD_ALB32 TRUE)
+  set (BUILD_TRILINOS FALSE)
+  set (BUILD_PERIDIGM FALSE)
+  set (BUILD_ALB32 FALSE)
   set (BUILD_ALB64 FALSE)
-  set (BUILD_TRILINOSCLANG11 TRUE)
-  set (BUILD_ALB64CLANG11 TRUE)
-  set (BUILD_ALBFUNCTOR TRUE)
+  set (BUILD_TRILINOSCLANG FALSE)
+  set (BUILD_ALB64CLANG FALSE)
+  set (BUILD_ALBFUNCTOR FALSE)
   set (BUILD_INTEL_TRILINOS TRUE)
   set (BUILD_INTEL_ALBANY TRUE)
-else ()
-  # This block is for testing. Set "if (1)" to "if (0)", and then freely mess
-  # around with the settings in this block.
-  set (CTEST_DO_SUBMIT OFF)
-  set (CTEST_TEST_TYPE Experimental)
-
-  # What to build and test
-  set (BUILD_ALB64 FALSE)
-  set (BUILD_ALB64CLANG11 FALSE)
-  set (DOWNLOAD FALSE)
-  set (BUILD_SCOREC FALSE)
-  set (BUILD_TRILINOS TRUE)
-  set (BUILD_PERIDIGM TRUE)
-  set (BUILD_ALB32 TRUE)
-  set (BUILD_TRILINOSCLANG11 FALSE)
-  set (CLEAN_BUILD FALSE)
-  set (BUILD_ALBFUNCTOR FALSE)
-  set (BUILD_INTEL_TRILINOS FALSE)
-  set (BUILD_INTEL_ALBANY FALSE)
 endif ()
 
 set (extra_cxx_flags "")
@@ -50,7 +80,7 @@ set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
 set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
 
 set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
-set (PATH $ENV{PATH})
+#set (PATH $ENV{PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
@@ -58,14 +88,18 @@ set (CTEST_BUILD_NAME "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
 set (CTEST_BINARY_NAME build)
 
 set (PREFIX_DIR /projects/albany)
-set (GCC_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.6.4-gcc-4.8.2-RHEL6)
-set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2015.1.133)
+set (INTEL_PREFIX_DIR ${PREFIX_DIR}/intel5.0)
+set (GCC_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.8.8-gcc-5.2.0-RHEL6)
+set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210/compilers_and_libraries/linux)
 
-set (BOOST_ROOT /projects/albany/nightly)
+#set (BOOST_ROOT /projects/albany/nightly)
+set (BOOST_ROOT /projects/albany)
+set (INTEL_BOOST_ROOT ${BOOST_ROOT}/intel5.0)
 
-set (INTEL_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.6.4-intel-15.0-2015.2.164-RHEL6)
+#set (INTEL_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.8.8-intel-16.0-2016.3.210-RHEL6)
+set (INTEL_MPI_DIR /sierra/sntools/SDK/mpi/intel/5.0)
 #set (MKL_PATH /sierra/sntools/SDK/compilers/intel)
-set (MKL_PATH /sierra/sntools/SDK/compilers/intel/composer_xe_2016.0.109/compilers_and_libraries_2016.0.109/linux)
+set (MKL_PATH /sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210)
 
 set (USE_LAME OFF)
 set (LAME_INC_DIR "/projects/sierra/linux_rh6/install/master/lame/include\;/projects/sierra/linux_rh6/install/master/Sierra/sierra_util/include\;/projects/sierra/linux_rh6/install/master/stk/stk_expreval/include\;/projects/sierra/linux_rh6/install/master/utility/include\;/projects/sierra/linux_rh6/install/master/Sierra/include")
@@ -78,6 +112,12 @@ set (MATH_TOOLKIT_LIB_DIR
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 set (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
+
+IF (CLEAN_BUILD)
+  IF(EXISTS "${CTEST_BINARY_DIRECTORY}" )
+    FILE(REMOVE_RECURSE "${CTEST_BINARY_DIRECTORY}")
+  ENDIF()
+ENDIF()
 
 if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}")
   file (MAKE_DIRECTORY "${CTEST_SOURCE_DIRECTORY}")
@@ -107,10 +147,10 @@ endif ()
 find_program (CTEST_GIT_COMMAND NAMES git)
 find_program (CTEST_SVN_COMMAND NAMES svn)
 
-set (Trilinos_REPOSITORY_LOCATION https://github.com/trilinos/Trilinos.git)
+set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 set (SCOREC_REPOSITORY_LOCATION git@github.com:SCOREC/core.git)
 set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
-set (Peridigm_REPOSITORY_LOCATION https://github.com/peridigm/peridigm) #ssh://software.sandia.gov/git/peridigm)
+set (Peridigm_REPOSITORY_LOCATION git@github.com:peridigm/peridigm) #ssh://software.sandia.gov/git/peridigm)
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -122,7 +162,7 @@ if (CLEAN_BUILD)
   PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
   " )
 
-  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
+#  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
   file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
 endif ()
 
@@ -222,8 +262,8 @@ if (CTEST_DO_SUBMIT)
 
   if (HAD_ERROR)
     message ("Cannot submit Albany Project.xml!")
-  endif ()
-endif ()
+  endif (HAD_ERROR)
+endif (CTEST_DO_SUBMIT)
 
 if (DOWNLOAD)
 
@@ -243,7 +283,7 @@ if (DOWNLOAD)
       )
 
     if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot update Trilinos!")
+      message("Cannot update Trilinos!")
     endif ()
   endif ()
 
@@ -296,7 +336,7 @@ if (DOWNLOAD)
       )
 
     if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot update Albany repository!")
+      message("Cannot update Albany repository!")
     endif ()
   endif ()
 
@@ -340,6 +380,7 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_MueLu:BOOL=ON"
   #
   "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
+  "-DMDS_ID_TYPE:STRING='long int'"
   "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=ON"
   "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
   "-DZOLTAN_BUILD_ZFDRIVE:BOOL=OFF"
@@ -357,36 +398,10 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTPL_ENABLE_Boost:BOOL=ON"
   "-DTPL_ENABLE_BoostLib:BOOL=ON"
   "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
-  "-DBoost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
-  "-DBoost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
-  "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
-  "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
-  "-DBoostAlbLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
-  "-DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
   #
-  "-DTPL_ENABLE_Netcdf:BOOL=ON"
-  "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   #
-  "-DTPL_ENABLE_HDF5:BOOL=ON"
-  "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  "-DHDF5_LIBRARY_NAMES:STRING='hdf5_hl\\;hdf5\\;z'"
-  #
-  "-DTPL_ENABLE_Zlib:BOOL=ON"
-  "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  #
-  "-DTPL_ENABLE_ParMETIS:BOOL=ON"
-  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  #
-  "-DTPL_ENABLE_SuperLU:BOOL=ON"
-  "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
-  "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
-  #
-  "-DTPL_BLAS_LIBRARIES:STRING='-L${INTEL_DIR}/mkl/lib/intel64 -lmkl_intel_lp64 -lmkl_blas95_lp64 -lmkl_core -lmkl_sequential'"
-  "-DTPL_LAPACK_LIBRARIES:STRING='-L${INTEL_DIR}/mkl/lib/intel64 -lmkl_lapack95_lp64'"
+  "-DTPL_BLAS_LIBRARIES:STRING='-L${MKL_PATH}/mkl/lib/intel64 -lmkl_intel_lp64 -lmkl_blas95_lp64 -lmkl_core -lmkl_sequential'"
+  "-DTPL_LAPACK_LIBRARIES:STRING='-L${MKL_PATH}/mkl/lib/intel64 -lmkl_lapack95_lp64'"
   #
   "-DDART_TESTING_TIMEOUT:STRING=600"
   "-DTrilinos_ENABLE_ThreadPool:BOOL=ON"
@@ -462,225 +477,78 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DKokkos_ENABLE_Pthread:BOOL=OFF"
   )
 
+INCLUDE(${CTEST_SCRIPT_DIRECTORY}/trilinos_macro.cmake)
+
 if (BUILD_TRILINOS)
-  message ("ctest state: BUILD_TRILINOS")
 
-  #
-  # Configure the Trilinos/SCOREC build
-  #
-
-  set_property (GLOBAL PROPERTY SubProject Trilinos)
-  set_property (GLOBAL PROPERTY Label Trilinos)
-
-  set (CONFIGURE_OPTIONS
+  set (CONF_OPTS
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${GCC_MPI_DIR}"
+    "-DCMAKE_CXX_COMPILER:STRING=${GCC_MPI_DIR}/bin/mpicxx"
     "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -w -DNDEBUG ${extra_cxx_flags}'"
+    "-DCMAKE_C_COMPILER:STRING=${GCC_MPI_DIR}/bin/mpicc"
     "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
+    "-DCMAKE_Fortran_COMPILER:STRING=${GCC_MPI_DIR}/bin/mpifort"
     "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm'"
+    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+  "-DBoost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
+  "-DBoost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
+  "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
+  "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
+  "-DBoostAlbLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
+  "-DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
+#
+  "-DTPL_ENABLE_Netcdf:BOOL=ON"
+  "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DTPL_Netcdf_PARALLEL:BOOL=ON"
+  "-DTPL_ENABLE_Pnetcdf:STRING=ON"
+  "-DPnetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DPnetcdf_LIBRARY_DIRS=${PREFIX_DIR}/lib"
+  #
+  "-DTPL_ENABLE_HDF5:BOOL=ON"
+  "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DHDF5_LIBRARY_NAMES:STRING='hdf5_hl\\;hdf5\\;z'"
+  #
+  "-DTPL_ENABLE_Zlib:BOOL=ON"
+  "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  #
+  "-DTPL_ENABLE_ParMETIS:BOOL=ON"
+  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  #
+  "-DTPL_ENABLE_SuperLU:BOOL=ON"
+  "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
+  "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
+#
     "${COMMON_CONFIGURE_OPTIONS}"
     )
 
-  if (BUILD_SCOREC)
-    set (CONFIGURE_OPTIONS
-      "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
-      "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"      
-      "${CONFIGURE_OPTIONS}")
-  endif ()
+    if (BUILD_SCOREC)
+      set (CONF_OPTS
+        "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
+        "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"      
+        "${CONF_OPTS}")
+    endif (BUILD_SCOREC)
 
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TriBuild)
-  endif ()
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
+  do_trilinos("${CONF_OPTS}" "Trilinos")
 
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuild"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Trilinos/SCOREC configure results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot configure Trilinos/SCOREC build!")
-  endif ()
-
-  if (BUILD_SCOREC)
-    #
-    # SCOREC tools build inside Trilinos
-    #
-    # Note that we do a trick here, and just build the SCOREC_libs target, as we
-    # build SCOREC as a Trilinos packages and its not possible to do that
-    # independent of Trilinos. So, while this builds most of SCOREC, other
-    # Trilinos capabilities are also built here.
-    #
-
-    set_property (GLOBAL PROPERTY SubProject SCOREC)
-    set_property (GLOBAL PROPERTY Label SCOREC)
-    set (CTEST_BUILD_TARGET "SCOREC_libs")
-
-    MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-    CTEST_BUILD(
-      BUILD "${CTEST_BINARY_DIRECTORY}/TriBuild"
-      RETURN_VALUE  HAD_ERROR
-      NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-      )
-
-    if (CTEST_DO_SUBMIT)
-      ctest_submit (PARTS Build
-        RETURN_VALUE  S_HAD_ERROR
-        )
-
-      if (S_HAD_ERROR)
-        message ("Cannot submit SCOREC build results!")
-        set (BUILD_SCOREC FALSE)
-      endif ()
-    endif ()
-
-    if (HAD_ERROR)
-      message ("Cannot build SCOREC!")
-      set (BUILD_SCOREC FALSE)
-    endif ()
-
-    if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-      message ("Encountered build errors in SCOREC build. Exiting!")
-      set (BUILD_SCOREC FALSE)
-    endif ()
-  endif ()
-
-  #
-  # Trilinos
-  #
-  # Build the rest of Trilinos and install everything
-  #
-
-  set_property (GLOBAL PROPERTY SubProject Trilinos)
-  set_property (GLOBAL PROPERTY Label Trilinos)
-  #set (CTEST_BUILD_TARGET all)
-  set (CTEST_BUILD_TARGET install)
-
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-  CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuild"
-    RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-    APPEND
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Build
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Trilinos/SCOREC build results!")
-    endif ()
-
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot build Trilinos!")
-  endif ()
-
-  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message ("Encountered build errors in Trilinos build. Exiting!")
-  endif ()
-
-endif ()
+endif (BUILD_TRILINOS)
 
 if (BUILD_PERIDIGM)
-  message ("ctest state: BUILD_PERIDIGM")
+  INCLUDE(${CTEST_SCRIPT_DIRECTORY}/peridigm_macro.cmake)
+  do_peridigm()
+endif (BUILD_PERIDIGM)
 
-  set_property (GLOBAL PROPERTY SubProject Peridigm)
-  set_property (GLOBAL PROPERTY Label Peridigm)
-
-  set (CONFIGURE_OPTIONS
-    "-DCMAKE_BUILD_TYPE:STRING=Release"
-    "-DENABLE_INSTALL:BOOL=ON"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/PeridigmInstall"
-    "-DTRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-    "-DCMAKE_C_COMPILER:STRING=mpicc"
-    "-DCMAKE_CXX_COMPILER:STRING=mpicxx"
-    "-DBOOST_ROOT=${BOOST_ROOT}"
-    "-DUSE_DAKOTA:BOOL=OFF"
-    "-DUSE_PV:BOOL=OFF"
-    "-DUSE_PALS:BOOL=OFF"
-    "-DCMAKE_CXX_FLAGS:STRING='-O2 -std=c++11 -Wall -pedantic -Wno-long-long -ftrapv -Wno-deprecated'"
-    "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF")
-
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/PeridigmBuild")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/PeridigmBuild)
-  endif ()
-
-  ctest_configure (
-    BUILD "${CTEST_BINARY_DIRECTORY}/PeridigmBuild"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Peridigm"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    APPEND)
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure RETURN_VALUE S_HAD_ERROR)
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Peridigm configure results.")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot configure Peridigm build!")
-    set (BUILD_PERIDIGM FALSE)
-  endif ()
-
-  if (BUILD_PERIDIGM)
-    set (CTEST_BUILD_TARGET install)
-    message ("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-    ctest_build (
-      BUILD "${CTEST_BINARY_DIRECTORY}/PeridigmBuild"
-      RETURN_VALUE HAD_ERROR
-      NUMBER_ERRORS BUILD_NUM_ERRORS
-      APPEND)
-    if (CTEST_DO_SUBMIT)
-      ctest_submit (PARTS Build RETURN_VALUE S_HAD_ERROR)
-      if (S_HAD_ERROR)
-        message ("Cannot submit Peridigm build results.")
-      endif ()
-    endif ()
-    if (HAD_ERROR)
-      message ("Cannot build Peridigm.")
-      set (BUILD_PERIDIGM FALSE)
-    endif ()
-    if (BUILD_NUM_ERRORS GREATER 0)
-      message ("Encountered build errors in Peridigm.")
-      set (BUILD_PERIDIGM FALSE)
-    endif ()
-  endif ()
-
-  message ("After configuring and building, BUILD_PERIDIGM = ${BUILD_PERIDIGM}")
-endif ()
+INCLUDE(${CTEST_SCRIPT_DIRECTORY}/albany_macro.cmake)
 
 if (BUILD_ALB32)
-  message ("ctest state: BUILD_ALB32")
 
-  # Configure the Albany 32 Bit build 
-  # Builds everything!
-
-  set_property (GLOBAL PROPERTY SubProject Albany32Bit)
-  set_property (GLOBAL PROPERTY Label Albany32Bit)
-
-  set (CONFIGURE_OPTIONS
+  set (CONF_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     "-DENABLE_LCM:BOOL=ON"
     "-DENABLE_CONTACT:BOOL=ON"
@@ -697,114 +565,28 @@ if (BUILD_ALB32)
     "-DENABLE_ASCR:BOOL=OFF"
     "-DENABLE_CHECK_FPE:BOOL=ON")
   if (BUILD_SCOREC)
-    set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
+    set (CONF_OPTIONS ${CONF_OPTIONS}
       "-DENABLE_SCOREC:BOOL=ON"
       "-DENABLE_GOAL:BOOL=ON")
-  endif ()
+  endif (BUILD_SCOREC)
   if (BUILD_PERIDIGM)
-    set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
+    set (CONF_OPTIONS ${CONF_OPTIONS}
       "-DENABLE_PERIDIGM:BOOL=ON"
       "-DPeridigm_DIR:PATH=${CTEST_BINARY_DIRECTORY}/PeridigmInstall/lib/Peridigm/cmake")
-  endif ()
-  
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany32Bit")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany32Bit)
-  endif ()
+  endif (BUILD_PERIDIGM)
 
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany32Bit"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    APPEND
-    )
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
+  do_albany("${CONF_OPTIONS}" "Albany32Bit")
 
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany configure results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot configure Albany build!")
-  endif ()
-
-  #
-  # Build Albany
-  #
-
-  set (CTEST_BUILD_TARGET all)
-
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-  CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany32Bit"
-    RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-    APPEND
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Build
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany build results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot build Albany!")
-  endif ()
-
-  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message ("Encountered build errors in Albany build. Exiting!")
-  endif ()
-
-  #
-  # Run Albany tests
-  #
-
-  CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany32Bit"
-    #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-    #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-    #NUMBER_FAILED  TEST_NUM_FAILED
-    RETURN_VALUE  HAD_ERROR
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Test
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany test results!")
-    endif ()
-  endif ()
-
-  #if (HAD_ERROR)
-  #	message(FATAL_ERROR "Some Albany tests failed.")
-  #endif ()
-
-endif ()
+endif (BUILD_ALB32)
 
 #
 # Configure the Albany build using GO = long
 #
 
 if (BUILD_ALB64)
-  message ("ctest state: BUILD_ALB64")
 
-  set_property (GLOBAL PROPERTY SubProject Albany64Bit)
-  set_property (GLOBAL PROPERTY Label Albany64Bit)
-
-  set (CONFIGURE_OPTIONS
+  set (CONF_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     "-DENABLE_64BIT_INT:BOOL=ON"
     "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
@@ -817,98 +599,15 @@ if (BUILD_ALB64)
     "-DENABLE_MOR:BOOL=OFF"
     "-DENABLE_CHECK_FPE:BOOL=ON")
   if (BUILD_SCOREC)
-    set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
+    set (CONF_OPTIONS ${CONF_OPTIONS}
       "-DENABLE_SCOREC:BOOL=ON"
       "-DENABLE_GOAL:BOOL=ON")
-  endif ()
+  endif (BUILD_SCOREC)
 
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany64Bit")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany64Bit)
-  endif ()
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
+  do_albany("${CONF_OPTIONS}" "Albany64Bit")
 
-  #
-  # The 64 bit build 
-  #
-
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany64Bit"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    APPEND
-    )
-
-  # Read the CTestCustom.cmake file to turn off ignored tests
-
-  #CTEST_READ_CUSTOM_FILES("${CTEST_BINARY_DIRECTORY}/AlbanyT64")
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany 64 bit configure results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot configure Albany 64 bit build!")
-  endif ()
-
-  #
-  # Build Albany 64 bit
-  #
-
-  set (CTEST_BUILD_TARGET all)
-
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-  CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany64Bit"
-    RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-    APPEND
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Build
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany 64 bit build results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot build Albany 64 bit!")
-  endif ()
-
-  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message ("Encountered build errors in Albany 64 bit build. Exiting!")
-  endif ()
-  #
-  # Run Albany 64 bit tests
-  #
-
-  CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany64Bit"
-    #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-    #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-    #NUMBER_FAILED  TEST_NUM_FAILED
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Test
-      RETURN_VALUE  HAD_ERROR
-      )
-
-    if (HAD_ERROR)
-      message ("Cannot submit Albany 64 bit test results!")
-    endif ()
-  endif ()
-endif ()
+endif (BUILD_ALB64)
 
 # Add the path to Clang libraries needed for the Clang configure, build and sest cycle
 #
@@ -916,103 +615,75 @@ endif ()
 #
 
 set (ENV{LD_LIBRARY_PATH} 
-  /projects/albany/clang/lib:${INITIAL_LD_LIBRARY_PATH}
+  ${PREFIX_DIR}/clang/lib:${INITIAL_LD_LIBRARY_PATH}
   )
 
-if (BUILD_TRILINOSCLANG11)
-  message ("ctest state: BUILD_TRILINOSCLANG11")
-  #
-  # Configure the Trilinos/SCOREC Clang build
-  #
-
-  set_property (GLOBAL PROPERTY SubProject TrilinosClang++11)
-  set_property (GLOBAL PROPERTY Label TrilinosClang++11)
+if (BUILD_TRILINOSCLANG)
 
   set (CONFIGURE_OPTIONS
     "${COMMON_CONFIGURE_OPTIONS}"
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/clang"
     #
-    "-DTrilinos_ENABLE_CXX11:BOOL=ON"
+    "-DCMAKE_CXX_COMPILER:STRING=/projects/albany/clang-3.7/bin/mpicxx"
     "-DCMAKE_CXX_FLAGS:STRING='-Os -w -DNDEBUG ${extra_cxx_flags}'"
+    "-DCMAKE_C_COMPILER:STRING=/projects/albany/clang-3.7/bin/mpicc"
     "-DCMAKE_C_FLAGS:STRING='-Os -w -DNDEBUG'"
+    "-DCMAKE_Fortran_COMPILER:STRING=/projects/albany/clang-3.7/bin/mpifort"
     "-DCMAKE_Fortran_FLAGS:STRING='-Os -w -DNDEBUG'"
     "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
     "-DMDS_ID_TYPE:STRING='long long int'"
     "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm'"
+    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallC11"
     "-DBUILD_SHARED_LIBS:BOOL=OFF"
     "-DTPL_ENABLE_SuperLU:BOOL=OFF"
-    "-DAmesos2_ENABLE_KLU2:BOOL=ON")
+    "-DAmesos2_ENABLE_KLU2:BOOL=ON"
+  "-DBoost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
+  "-DBoost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
+  "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
+  "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
+  "-DBoostAlbLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
+  "-DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
+#
+  "-DTPL_ENABLE_Netcdf:BOOL=ON"
+  "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DTPL_Netcdf_PARALLEL:BOOL=ON"
+  "-DTPL_ENABLE_Pnetcdf:STRING=ON"
+  "-DPnetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DPnetcdf_LIBRARY_DIRS=${PREFIX_DIR}/lib"
+  #
+  "-DTPL_ENABLE_HDF5:BOOL=ON"
+  "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DHDF5_LIBRARY_NAMES:STRING='hdf5_hl\\;hdf5\\;z'"
+  #
+  "-DTPL_ENABLE_Zlib:BOOL=ON"
+  "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  #
+  "-DTPL_ENABLE_ParMETIS:BOOL=ON"
+  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  #
+  "-DTPL_ENABLE_SuperLU:BOOL=ON"
+  "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
+  "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
+)
 
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuildC11")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TriBuildC11)
-  endif ()
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
+  do_trilinos("${CONFIGURE_OPTIONS}" "TrilinosClang")
 
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildC11"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure
-      RETURN_VALUE  S_HAD_ERROR)
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit TrilinosClang++11 configure results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot configure TrilinosClang++11 build!")
-  endif ()
-
-  #set (CTEST_BUILD_TARGET all)
-  set (CTEST_BUILD_TARGET install)
-
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-  CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildC11"
-    RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-    APPEND
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Build
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit TrilinoClang++11 build results!")
-    endif ()
-
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot build Trilinos with Clang!")
-  endif ()
-
-  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message ("Encountered build errors in Trilinos Clang build. Exiting!")
-  endif ()
-
-endif ()
+endif (BUILD_TRILINOSCLANG)
 
 #
 # Configure the Albany Clang build using GO = long
 #
 
-if (BUILD_ALB64CLANG11)
-  message ("ctest state: BUILD_ALB64CLANG11")
-  set_property (GLOBAL PROPERTY SubProject Albany64BitClang++11)
-  set_property (GLOBAL PROPERTY Label Albany64BitClang++11)
+if (BUILD_ALB64CLANG)
 
-  set (CONFIGURE_OPTIONS
+  set (CONF_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallC11"
     "-DENABLE_64BIT_INT:BOOL=ON"
     "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
@@ -1027,113 +698,19 @@ if (BUILD_ALB64CLANG11)
     "-DENABLE_CHECK_FPE:BOOL=ON"
     )
   if (BUILD_SCOREC)
-    set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
+    set (CONF_OPTIONS ${CONF_OPTIONS}
       "-DENABLE_SCOREC:BOOL=ON"
       "-DENABLE_GOAL:BOOL=ON")
-  endif ()
+  endif (BUILD_SCOREC)
 
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany64BitC11")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany64BitC11)
-  endif ()
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
+  do_albany("${CONF_OPTIONS}" "Albany64BitClang")
 
-  #
-  # The Clang 64 bit build 
-  #
-
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany64BitC11"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    APPEND
-    )
-
-  # Read the CTestCustom.cmake file to turn off ignored tests
-
-  #CTEST_READ_CUSTOM_FILES("${CTEST_BINARY_DIRECTORY}/AlbanyT64")
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message("Cannot submit Albany 64 bit Clang configure results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message("Cannot configure Albany 64 bit Clang build!")
-    set (BUILD_ALB64CLANG11 FALSE)
-  endif ()
-
-  #
-  # Build Clang Albany 64 bit
-  #
-
-  set (CTEST_BUILD_TARGET all)
-
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-  CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany64BitC11"
-    RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-    APPEND
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Build
-      RETURN_VALUE  S_HAD_ERROR
-      )
-
-    if (S_HAD_ERROR)
-      message("Cannot submit Albany 64 bit Clang build results!")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message("Cannot build Albany 64 bit with Clang!")
-    set (BUILD_ALB64CLANG11 FALSE)
-  endif ()
-
-  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message("Encountered build errors in Albany 64 bit Clang build. Exiting!")
-    set (BUILD_ALB64CLANG11 FALSE)
-  endif ()
-
-  #
-  # Run Clang Albany 64 bit tests
-  #
-
-  if (BUILD_ALB64CLANG11)
-    CTEST_TEST(
-      BUILD "${CTEST_BINARY_DIRECTORY}/Albany64BitC11"
-      #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-      #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-      #NUMBER_FAILED  TEST_NUM_FAILED
-      )
-
-    if (CTEST_DO_SUBMIT)
-      ctest_submit (PARTS Test
-        RETURN_VALUE  HAD_ERROR
-        )
-
-      if (HAD_ERROR)
-        message("Cannot submit Albany 64 bit Clang test results!")
-      endif ()
-    endif ()
-  endif ()
-endif ()
+endif (BUILD_ALB64CLANG)
 
 if (BUILD_ALBFUNCTOR)
-  message ("ctest state: BUILD_ALBFUNCTOR")
-  # ALBANY_KOKKOS_UNDER_DEVELOPMENT build
 
-  set_property (GLOBAL PROPERTY SubProject AlbanyFunctorDev)
-  set_property (GLOBAL PROPERTY Label AlbanyFunctorDev)
-
-  set (CONFIGURE_OPTIONS
+  set (CONF_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     "-DENABLE_LCM:BOOL=ON"
     "-DENABLE_MOR:BOOL=ON"
@@ -1151,288 +728,20 @@ if (BUILD_ALBFUNCTOR)
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
     "-DENABLE_CHECK_FPE:BOOL=ON")
   if (BUILD_SCOREC)
-    set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
+    set (CONF_OPTIONS ${CONF_OPTIONS}
       "-DENABLE_SCOREC:BOOL=ON"
       "-DENABLE_GOAL:BOOL=ON")
-  endif ()
-  
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev)
-  endif ()
+  endif (BUILD_SCOREC)
 
-  CTEST_CONFIGURE (
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    APPEND)
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
+  do_albany("${CONF_OPTIONS}" "AlbanyFunctorDev")
 
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure RETURN_VALUE S_HAD_ERROR)
-    
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany configure results!")
-      set (BUILD_ALBFUNCTOR FALSE)
-    endif ()
-  endif ()
+endif (BUILD_ALBFUNCTOR)
 
-  if (HAD_ERROR)
-    message ("Cannot configure Albany build!")
-    set (BUILD_ALBFUNCTOR FALSE)
-  endif ()
+if (BUILD_INTEL_TRILINOS OR BUILD_INTEL_ALBANY)
+  INCLUDE(${CTEST_SCRIPT_DIRECTORY}/intel_macro.cmake)
 
-  if (BUILD_ALBFUNCTOR)
-    set (CTEST_BUILD_TARGET all)
+  # First argument is the string of the configure options, second is the dashboard target (a name in a string)
+   do_intel("${COMMON_CONFIGURE_OPTIONS}" "TrilinosIntel")
 
-    message ("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-    CTEST_BUILD (
-      BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev"
-      RETURN_VALUE HAD_ERROR
-      NUMBER_ERRORS BUILD_LIBS_NUM_ERRORS
-      APPEND)
-
-    if (CTEST_DO_SUBMIT)
-      ctest_submit (PARTS Build
-        RETURN_VALUE S_HAD_ERROR)
-
-      if (S_HAD_ERROR)
-        message ("Cannot submit Albany build results!")
-        set (BUILD_ALBFUNCTOR FALSE)
-      endif ()
-    endif ()
-
-    if (HAD_ERROR)
-      message ("Cannot build Albany!")
-      set (BUILD_ALBFUNCTOR FALSE)
-    endif ()
-
-    if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-      message ("Encountered build errors in Albany build.")
-      set (BUILD_ALBFUNCTOR FALSE)
-    endif ()
-  endif ()
-
-  if (BUILD_ALBFUNCTOR)
-    set (CTEST_TEST_TIMEOUT 180)
-    CTEST_TEST (
-      BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev"
-      RETURN_VALUE HAD_ERROR)
-
-    if (CTEST_DO_SUBMIT)
-      ctest_submit (PARTS Test RETURN_VALUE S_HAD_ERROR)
-
-      if (S_HAD_ERROR)
-        message ("Cannot submit Albany test results!")
-      endif ()
-    endif ()
-  endif ()
-endif ()
-
-# Intel
-
-if (BUILD_INTEL_TRILINOS)
-  message ("ctest state: BUILD_INTEL_TRILINOS")
-  set_property (GLOBAL PROPERTY SubProject TrilinosIntel)
-  set_property (GLOBAL PROPERTY Label TrilinosIntel)
-
-  set (ENV{LM_LICENSE_FILE} 7500@sitelicense.sandia.gov)
-  set (ENV{PATH}
-    /sierra/sntools/SDK/compilers/intel/composer_xe_2015.2.164/bin/intel64:${PATH})
-  set (ENV{LD_LIBRARY_PATH}
-    /sierra/sntools/SDK/compilers/intel/composer_xe_2015.2.164/compiler/lib/intel64:/sierra/sntools/SDK/mpi/openmpi/1.6.4-intel-15.0-2015.2.164-RHEL6/lib:${INITIAL_LD_LIBRARY_PATH})
-
-  set (LABLAS_LIBRARIES "-L${MKL_PATH}/mkl/lib/intel64 -Wl,--start-group ${MKL_PATH}/mkl/lib/intel64/libmkl_intel_lp64.a ${MKL_PATH}/mkl/lib/intel64/libmkl_core.a ${MKL_PATH}/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group")
-  set (CONFIGURE_OPTIONS
-    "${COMMON_CONFIGURE_OPTIONS}"
-    "-DTPL_ENABLE_SuperLU:STRING=ON"
-    "-DTPL_ENABLE_MPI:BOOL=ON"
-    "-DMPI_BASE_DIR:PATH=${INTEL_MPI_DIR}"
-    "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -DNDEBUG ${extra_cxx_flags}'"
-    "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
-    "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lhdf5_hl -lhdf5 -lifcore -lz -Wl,-rpath,/projects/albany/lib'"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosIntelInstall"
-    "-DTPL_BLAS_LIBRARIES:STRING=${LABLAS_LIBRARIES}"
-    "-DTPL_LAPACK_LIBRARIES:STRING=${LABLAS_LIBRARIES}"
-    )
-
-  if (BUILD_SCOREC)
-    set (CONFIGURE_OPTIONS
-      "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
-      "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
-      "-DTrilinos_ENABLE_EXPORT_MAKEFILES:BOOL=OFF"
-      "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
-      "${CONFIGURE_OPTIONS}")
-  endif ()
-
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TrilinosIntel")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TrilinosIntel)
-  endif ()
-
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/TrilinosIntel"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR)
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure RETURN_VALUE S_HAD_ERROR)
-
-    if (S_HAD_ERROR)
-      message ("Cannot submit Trilinos/SCOREC configure results.")
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot configure TrilinosIntel build.")
-    set (BUILD_INTEL_ALBANY FALSE)
-  endif ()
-
-  if (BUILD_INTEL_TRILINOS)
-    set (CTEST_BUILD_TARGET install)
-
-    message ("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-    ctest_build (
-      BUILD "${CTEST_BINARY_DIRECTORY}/TrilinosIntel"
-      RETURN_VALUE HAD_ERROR
-      NUMBER_ERRORS BUILD_LIBS_NUM_ERRORS
-      APPEND)
-
-    if (CTEST_DO_SUBMIT)
-      ctest_submit (PARTS Build RETURN_VALUE S_HAD_ERROR)
-
-      if (S_HAD_ERROR)
-        message ("Cannot submit TrilinosIntel build results.")
-      endif ()
-
-    endif ()
-
-    if (HAD_ERROR)
-      message ("Cannot build Trilinos.")
-      set (BUILD_INTEL_ALBANY FALSE)
-    endif ()
-
-    if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-      message ("Encountered build errors in Trilinos build. Exiting.")
-      set (BUILD_INTEL_ALBANY FALSE)
-    endif ()
-  endif ()
-endif ()
-
-if (BUILD_INTEL_ALBANY)
-  message ("ctest state: BUILD_INTEL_ALBANY")
-  set_property (GLOBAL PROPERTY SubProject AlbanyIntel)
-  set_property (GLOBAL PROPERTY Label AlbanyIntel)
-
-  # Copy from the Intel Trilinos block. Not actually needed here in practice,
-  # but if I do debugging on this script, it's nice to be able to run just this
-  # block without the Trilinos one.
-  set (ENV{LM_LICENSE_FILE} 7500@sitelicense.sandia.gov)
-  set (ENV{PATH}
-    /sierra/sntools/SDK/compilers/intel/composer_xe_2015.2.164/bin/intel64:${PATH})
-  set (ENV{LD_LIBRARY_PATH}
-    /sierra/sntools/SDK/compilers/intel/composer_xe_2015.2.164/compiler/lib/intel64:/sierra/sntools/SDK/mpi/openmpi/1.6.4-intel-15.0-2015.2.164-RHEL6/lib:${INITIAL_LD_LIBRARY_PATH})
-
-  set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosIntelInstall"
-    "-DENABLE_LCM:BOOL=ON"
-    "-DENABLE_MOR:BOOL=ON"
-    "-DENABLE_FELIX:BOOL=ON"
-    "-DENABLE_HYDRIDE:BOOL=ON"
-    "-DENABLE_BGL:BOOL=OFF"
-    "-DENABLE_AMP:BOOL=OFF"
-    "-DENABLE_ATO:BOOL=ON"
-    "-DENABLE_QCAD:BOOL=ON"
-    "-DENABLE_ENSEMBLE:BOOL=OFF"
-    "-DENABLE_SG:BOOL=OFF"
-    "-DENABLE_ASCR:BOOL=OFF"
-    "-DENABLE_AERAS:BOOL=ON"
-    "-DENABLE_64BIT_INT:BOOL=OFF"
-    "-DENABLE_DEMO_PDES:BOOL=ON"
-    "-DENABLE_CHECK_FPE:BOOL=ON"
-    "-DENABLE_LAME:BOOL=${USE_LAME}"
-    "-DLAME_INCLUDE_DIR:PATH=${LAME_INC_DIR}"
-    "-DLAME_LIBRARY_DIR:PATH=${LAME_LIB_DIR}"
-    "-DLAME_LIBRARIES:PATH=${LAME_LIBRARIES}"
-    "-DMATH_TOOLKIT_INCLUDE_DIR:PATH=${MATH_TOOLKIT_INC_DIR}"
-    "-DMATH_TOOLKIT_LIBRARY_DIR:PATH=${MATH_TOOLKIT_LIB_DIR}")
-  if (BUILD_SCOREC)
-    set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON"
-      "-DENABLE_GOAL:BOOL=ON")
-  endif ()
-  
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbanyIntel")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbanyIntel)
-  endif ()
-
-  CTEST_CONFIGURE (
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyIntel"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    APPEND)
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure RETURN_VALUE S_HAD_ERROR)
-    
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany configure results.")
-      set (BUILD_INTEL_ALBANY FALSE)
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot configure Albany build.")
-    set (BUILD_INTEL_ALBANY FALSE)
-  endif ()
-
-  if (BUILD_INTEL_ALBANY)
-    set (CTEST_BUILD_TARGET all)
-
-    message ("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-    CTEST_BUILD (
-      BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyIntel"
-      RETURN_VALUE HAD_ERROR
-      NUMBER_ERRORS BUILD_LIBS_NUM_ERRORS
-      APPEND)
-
-    if (CTEST_DO_SUBMIT)
-      ctest_submit (PARTS Build
-        RETURN_VALUE S_HAD_ERROR)
-
-      if (S_HAD_ERROR)
-        message ("Cannot submit Albany build results.")
-        set (BUILD_INTEL_ALBANY FALSE)
-      endif ()
-    endif ()
-
-    if (HAD_ERROR)
-      message ("Cannot build Albany.")
-      set (BUILD_INTEL_ALBANY FALSE)
-    endif ()
-
-    if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-      message ("Encountered build errors in Albany build.")
-      set (BUILD_INTEL_ALBANY FALSE)
-    endif ()
-  endif ()
-
-  if (BUILD_INTEL_ALBANY)
-    #set (CTEST_TEST_TIMEOUT 120)
-    CTEST_TEST (
-      BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyIntel"
-      RETURN_VALUE HAD_ERROR)
-
-    if (CTEST_DO_SUBMIT)
-      ctest_submit (PARTS Test RETURN_VALUE S_HAD_ERROR)
-
-      if (S_HAD_ERROR)
-        message ("Cannot submit Albany test results.")
-      endif ()
-    endif ()
-  endif ()
-endif ()
+endif (BUILD_INTEL_TRILINOS OR BUILD_INTEL_ALBANY)

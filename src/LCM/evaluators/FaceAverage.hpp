@@ -63,7 +63,7 @@ class FaceAverage : public PHX::EvaluatorWithBaseImpl<Traits>,
 
       //Output:
       // As a test, output the face average of the nodal field
-      PHX::MDField<ScalarT,Cell,Face,VecDim> faceAve;
+      PHX::MDField<ScalarT,Cell,Side,VecDim> faceAve;
 
       // This is in here to trick the code to run the evaluator - does absolutely nothing
       PHX::MDField<ScalarT,Cell,QuadPoint> temp;

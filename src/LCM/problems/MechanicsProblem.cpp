@@ -5,6 +5,7 @@
 //*****************************************************************//
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_BCUtils.hpp"
 #include "LCM_Utils.h"
 #include "MechanicsProblem.hpp"
 #include "PHAL_AlbanyTraits.hpp"
@@ -249,7 +250,21 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   }
 
   // Create a user-defined NOX status test that can be passed to the ModelEvaluators
-  nox_status_test_ = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag); 
+  nox_status_test_ = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag);
+
+  bool requireLatticeOrientationOnMesh = false;
+  if (Teuchos::nonnull(material_db_)) {
+    std::vector<bool> readOrientationFromMesh = material_db_->getAllMatchingParams<bool>("Read Lattice Orientation From Mesh");
+    for (unsigned int i=0 ; i<readOrientationFromMesh.size() ; i++) {
+      if (readOrientationFromMesh[i] ) {
+	requireLatticeOrientationOnMesh = true;
+      }
+    }
+  }
+  if (requireLatticeOrientationOnMesh) {
+    requirements.push_back("Lattice_Orientation");
+  }
+
 }
 //------------------------------------------------------------------------------
 Albany::MechanicsProblem::

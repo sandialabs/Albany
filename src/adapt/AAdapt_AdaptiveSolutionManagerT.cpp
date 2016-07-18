@@ -198,7 +198,6 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
 # endif
 #endif
 #ifdef ALBANY_SCOREC
-  // RCP needs to be non-owned because otherwise there is an RCP circle.
   if (first_three_chars == "RPI") {
     adapter_ = Teuchos::rcp(
       new AAdapt::MeshAdapt(adaptParams_, paramLib_, stateMgr_, rc_mgr,

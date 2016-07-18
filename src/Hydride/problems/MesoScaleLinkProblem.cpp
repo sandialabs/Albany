@@ -10,9 +10,13 @@
 
 #include "MesoScaleLinkProblem.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 
-#if 0
+// The below gives an error with the INTEL compiler
+//  error: class "Teuchos::TypeNameTraits<int>" has already been defined
+
+#ifndef __INTEL_COMPILER 
 #include "Teuchos_TypeNameTraits.hpp"
 
 namespace Teuchos {

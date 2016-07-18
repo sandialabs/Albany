@@ -89,11 +89,13 @@ void interpolate(Teuchos::RCP<const Teuchos::Comm<int>> comm, Teuchos::RCP<Teuch
 	plist->get<int>("Target Mesh Snapshot Number", 1); //this value is 1-based
   std::string target_mesh_part_name = 
         plist->get<std::string>("Target Mesh Part");
-  std::string field_name = 
-	plist->get<std::string>("Field Name", "solution");
+  std::string source_field_name = 
+	plist->get<std::string>("Source Field Name", "solution");
+  std::string target_field_name = 
+	plist->get<std::string>("Target Field Name", "solution");
   bool write_dirichlet_field = 
 	plist->get<bool>("Write dirichlet_field to Exodus", false);
-  std::string tgt_interp_field_name = field_name+"Ref";
+  std::string tgt_interp_field_name = source_field_name+"Ref";
     
   // Get the raw mpi communicator (basic typedef in STK).
   Teuchos::RCP<const Teuchos::MpiComm<int> > mpi_comm = 
@@ -188,12 +190,12 @@ void interpolate(Teuchos::RCP<const Teuchos::Comm<int>> comm, Teuchos::RCP<Teuch
   tgt_broker.add_all_mesh_fields_as_input_fields(tmo);
        
   //Get source_field from source mesh  
-  FieldType* source_field = src_broker.meta_data().get_field<FieldType>(stk::topology::NODE_RANK, field_name); 
+  FieldType* source_field = src_broker.meta_data().get_field<FieldType>(stk::topology::NODE_RANK, source_field_name); 
   if (source_field != 0) 
-    *out << "   Field with name " << field_name << " found in source mesh file!" << std::endl; 
+    *out << "   Field with name " << source_field_name << " found in source mesh file!" << std::endl; 
   else   
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-            std::endl << "   Field with name " << field_name << " NOT found in source mesh file!" << std::endl); 
+            std::endl << "   Field with name " << source_field_name << " NOT found in source mesh file!" << std::endl); 
 
   int neq = source_field->max_size(stk::topology::NODE_RANK); 
 #ifdef DEBUG_OUTPUT
@@ -215,12 +217,12 @@ void interpolate(Teuchos::RCP<const Teuchos::Comm<int>> comm, Teuchos::RCP<Teuch
     
   // Add a nodal field to the interpolated target part.
   // Populate target_field 
-  FieldType* target_field = tgt_broker.meta_data().get_field<FieldType>(stk::topology::NODE_RANK, field_name); 
+  FieldType* target_field = tgt_broker.meta_data().get_field<FieldType>(stk::topology::NODE_RANK, target_field_name); 
   if (target_field != 0) 
-    *out << "   Field with name " << field_name << " found in target mesh file!" << std::endl; 
+    *out << "   Field with name " << target_field_name << " found in target mesh file!" << std::endl; 
   else   
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-        std::endl << "   Field with name " << field_name << " NOT found in target mesh file!" << std::endl); 
+        std::endl << "   Field with name " << target_field_name << " NOT found in target mesh file!" << std::endl); 
     
   io_region = tgt_broker.get_input_io_region();
   STKIORequire(!Teuchos::is_null(io_region));

@@ -12,13 +12,13 @@
 
 #include "Albany_AbstractProblem.hpp"
 #include "ATO_OptimizationProblem.hpp"
+#include "Albany_BCUtils.hpp"
 
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_GatherEigenData.hpp"
-
 
 namespace Albany {
 

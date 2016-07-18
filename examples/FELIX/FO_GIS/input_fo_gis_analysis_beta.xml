@@ -5,14 +5,13 @@
   </ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
-    <Parameter name="Solution Method" type="string" value="Continuation"/>
+    <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
-    <Parameter name="Required Fields"         type="Array(string)" value="{}"/>
+    <Parameter name="Required Fields"         type="Array(string)" value="{temperature}"/>
     <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction,thickness,temperature,surface_height}"/>
     <Parameter name="Required Surface Fields" type="Array(string)" value="{surface_velocity,surface_velocity_rms}"/>
     <Parameter name="Basal Side Name"         type="string" value="basalside"/>
     <Parameter name="Surface Side Name"       type="string" value="upperside"/>
-    <Parameter name="Layered Data Length"     type="int"    value="11"/>
 
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
@@ -70,7 +69,7 @@
     <Parameter name="Method" type="string" value="Extruded"/>
     <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
     <Parameter name="Cubature Degree" type="int" value="1"/>
-    <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_analysis_beta.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="gis_analysis_beta.exo"/>
     <Parameter name="Element Shape" type="string" value="Tetrahedron"/>
     <Parameter name="NumLayers" type="int" value="5"/>
     <Parameter name="Extrude Basal Node Fields"             type="Array(string)" value="{thickness,surface_height,basal_friction}"/>
@@ -78,6 +77,14 @@
     <Parameter name="Interpolate Basal Node Layered Fields" type="Array(string)" value="{temperature}"/>
     <Parameter name="Basal Node Layered Fields Ranks"       type="Array(int)"    value="{1}"/>
     <Parameter name="Use Glimmer Spacing" type="bool" value="true"/>
+    <ParameterList name="Required Fields Info">
+     <Parameter name="Number Of Fields" type="int" value="1"/>
+      <ParameterList name="Field 0">
+        <Parameter name="Field Name" type="string" value="temperature"/>
+        <Parameter name="Field Type" type="string" value="Node Scalar"/>
+        <Parameter name="Field Origin"  type="string" value="Output"/>
+      </ParameterList>
+    </ParameterList>
     <ParameterList name="Side Set Discretizations">
       <Parameter name="Side Sets" type="Array(string)" value="{basalside,upperside}"/>
       <ParameterList name="basalside">
@@ -85,7 +92,7 @@
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
         <Parameter name="Use Serial Mesh" type="bool" value="true"/>
         <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/gis_unstruct_2d.exo"/>
-        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_basal.exo"/>
+        <Parameter name="Exodus Output File Name" type="string" value="gis_analysis_basal.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <ParameterList name="Required Fields Info">
           <Parameter name="Number Of Fields" type="int" value="4"/>
@@ -107,6 +114,7 @@
           <ParameterList name="Field 3">
             <Parameter name="Field Name" type="string" value="temperature"/>
             <Parameter name="Field Type" type="string" value="Node Layered Scalar"/>
+            <Parameter name="Number Of Layers" type="int" value="11"/>
             <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/temperature.ascii"/>
           </ParameterList>
         </ParameterList>
@@ -114,7 +122,7 @@
       <ParameterList name="upperside">
         <Parameter name="Method" type="string" value="SideSetSTK"/>
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
-        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_surface.exo"/>
+        <Parameter name="Exodus Output File Name" type="string" value="gis_analysis_surface.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <ParameterList name="Required Fields Info">
           <Parameter name="Number Of Fields" type="int" value="2"/>
@@ -134,10 +142,10 @@
   </ParameterList> <!--Discretization -->
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{62.6031906852}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{63.4333263225}"/>
     <ParameterList name="Sensitivity Comparisons 0">
       <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{1.15732737637}"/>
+      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{1.16406007846}"/>
     </ParameterList>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>

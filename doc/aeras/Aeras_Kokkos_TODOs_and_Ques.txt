@@ -1,0 +1,3 @@
+
+- Ask Tom if Tracer Source is needed in Aeras_XZHydrostatic_TracerResid_Def.hpp.  Seems to be obsolete. 
+

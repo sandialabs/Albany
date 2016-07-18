@@ -12,6 +12,7 @@
 #include "Schwarz_BoundaryJacobian.hpp" 
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
+#include "MaterialDatabase.h"
 
 namespace LCM {
 
@@ -141,7 +142,7 @@ private:
   param_names_;
   
   /// RCP to matDB object
-  Teuchos::Array<Teuchos::RCP<MaterialDatabase>>
+  Teuchos::Array<Teuchos::RCP<LCM::MaterialDatabase>>
   material_dbs_;
 
   Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>

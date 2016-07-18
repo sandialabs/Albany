@@ -78,11 +78,16 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     void splitFields(Teuchos::Array<Teuchos::Array<std::string> >& fieldLayout);
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
+    const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() const;
+
 
     std::vector<Teuchos::RCP<PUMIQPData<double, 1> > > scalarValue_states;
     std::vector<Teuchos::RCP<PUMIQPData<double, 2> > > qpscalar_states;
     std::vector<Teuchos::RCP<PUMIQPData<double, 3> > > qpvector_states;
     std::vector<Teuchos::RCP<PUMIQPData<double, 4> > > qptensor_states;
+
+    /* only for FELIX problems */
+    std::vector<Teuchos::RCP<PUMIQPData<double, 2> > > elemnodescalar_states;
 
     std::vector<std::string> nsNames;
     std::vector<std::string> ssNames;
@@ -109,6 +114,8 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     double restartDataTime;
     int restartWriteStep;
 
+    bool shouldLoadFELIXData;
+
     int neq;
     int numDim;
     int cubatureDegree;
@@ -131,6 +138,8 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     bool useNullspaceTranslationOnly;
     bool useTemperatureHack;
     bool useDOFOffsetHack;
+
+    bool saveStabilizedStress;
 
     // Number of distinct solution vectors handled (<=3)
     int num_time_deriv;

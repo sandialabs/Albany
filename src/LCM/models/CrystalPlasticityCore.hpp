@@ -22,7 +22,8 @@ enum class FlowRule
 {
   UNDEFINED = 0,
   POWER_LAW = 1,
-  THERMAL_ACTIVATION = 2
+  THERMAL_ACTIVATION = 2,
+  POWER_LAW_DRAG = 3
 };
 
 enum class HardeningLaw
@@ -69,6 +70,9 @@ struct SlipSystemStruct
 
   RealType
   energy_activation_;
+
+  RealType
+  drag_coeff_;
 
   //
   // Hardening law parameters
@@ -126,8 +130,6 @@ struct SlipSystemStruct
 
 };
 
-
-
 //
 //! Check tensor for NaN and inf values.
 //
@@ -136,7 +138,6 @@ void
 confirmTensorSanity(
     Intrepid2::Tensor<ArgT, NumDimT> const & input,
     std::string const & message);
-
 
 
 //
@@ -328,7 +329,7 @@ public:
   // and hardness at step N+1.
   template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
   Intrepid2::Vector<T, N>
-  gradient(Intrepid2::Vector<T, N> const & x) const;
+  gradient(Intrepid2::Vector<T, N> const & x);
 
 
   //! Default implementation of hessian.
@@ -348,6 +349,169 @@ private:
   Intrepid2::Tensor<ArgT, NumDimT> const & F_np1_;
   RealType dt_;
 };
+
+///
+/// FlowRule base class
+///
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+  typename DataT, typename ArgT>
+struct FlowRuleBase
+{
+  FlowRuleBase() {}
+
+  virtual
+  char const * const
+  name() = 0;
+
+  virtual
+  Intrepid2::Vector<ArgT, NumSlipT>
+  computeRateSlip(
+    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+    Intrepid2::Vector<ArgT, NumSlipT> const & shear,
+    Intrepid2::Vector<ArgT, NumSlipT> const & slip_resistance) = 0;
+
+  virtual
+  ~FlowRuleBase() {}
+};
+
+///
+///
+///
+// template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+//   typename DataT, typename ArgT>
+// std::unique_ptr<FlowRuleBase<NumDimT, NumSlipT, DataT, ArgT>>
+// FlowRuleFactory(FlowRule flow_rule);
+
+///
+/// Power Law
+///
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+  typename DataT, typename ArgT>
+struct PowerLawFlowRule final : public FlowRuleBase<NumDimT, NumSlipT, DataT, ArgT>
+{
+  static constexpr
+  char const * const
+  NAME{"Power Law"};
+
+  virtual
+  char const * const
+  name()
+  {
+    return NAME;
+  }
+
+  virtual
+  Intrepid2::Vector<ArgT, NumSlipT>
+  computeRateSlip(
+    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+    Intrepid2::Vector<ArgT, NumSlipT> const & shear,
+    Intrepid2::Vector<ArgT, NumSlipT> const & slip_resistance);
+
+  virtual
+  ~PowerLawFlowRule() {}
+};
+
+///
+/// No flow (elasticity)
+///
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+  typename DataT, typename ArgT>
+struct NoFlowRule final : public FlowRuleBase<NumDimT, NumSlipT, DataT, ArgT>
+{
+  static constexpr
+  char const * const
+  NAME{"No flow"};
+
+  virtual
+  char const * const
+  name()
+  {
+    return NAME;
+  }
+
+  virtual
+  Intrepid2::Vector<ArgT, NumSlipT>
+  computeRateSlip(
+    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+    Intrepid2::Vector<ArgT, NumSlipT> const & shear,
+    Intrepid2::Vector<ArgT, NumSlipT> const & slip_resistance);
+
+  virtual
+  ~NoFlowRule() {}
+};
+
+///
+/// Power Law with Viscous Drag
+///
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+  typename DataT, typename ArgT>
+struct PowerLawDragFlowRule final : public FlowRuleBase<NumDimT, NumSlipT, DataT, ArgT>
+{
+  static constexpr
+  char const * const
+  NAME{"Power Law with Drag"};
+
+  virtual
+  char const * const
+  name()
+  {
+    return NAME;
+  }
+
+  virtual
+  Intrepid2::Vector<ArgT, NumSlipT>
+  computeRateSlip(
+    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+    Intrepid2::Vector<ArgT, NumSlipT> const & shear,
+    Intrepid2::Vector<ArgT, NumSlipT> const & slip_resistance);
+
+  virtual
+  ~PowerLawDragFlowRule() {}
+};
+
+
+//
+//
+//
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+  typename DataT, typename ArgT>
+std::unique_ptr<FlowRuleBase<NumDimT, NumSlipT, DataT, ArgT>>
+flowRuleFactory(FlowRule flow_rule)
+{
+  using FTUP = std::unique_ptr<FlowRuleBase<NumDimT, NumSlipT, DataT, ArgT>>;
+
+  switch (flow_rule) {
+
+  default:
+    std::cerr << __PRETTY_FUNCTION__ << '\n';
+    std::cerr << "ERROR: Unknown flow rule\n";
+    exit(1);
+    break;
+
+  case FlowRule::POWER_LAW:
+    return FTUP(new PowerLawFlowRule<NumDimT, NumSlipT, DataT, ArgT>());
+    break;
+
+  case FlowRule::POWER_LAW_DRAG:
+    return FTUP(new PowerLawDragFlowRule<NumDimT, NumSlipT, DataT, ArgT>());
+    break;
+
+  // case FlowRule::THERMAL_ACTIVATION:
+  //   return FTUP(new ThermalActivationFlowRule<NumDimT, NumSlipT, DataT, ArgT>());
+  //   break;
+
+  // case FlowRule::POWER_LAW_DRAG:
+  //   return FTUP(new PowerLawDragFlowRule<NumDimT, NumSlipT, DataT, ArgT>());
+  //   break;
+
+  case FlowRule::UNDEFINED:
+    return FTUP(new NoFlowRule<NumDimT, NumSlipT, DataT, ArgT>());
+    break;
+
+  }
+
+  return FTUP(nullptr);
+}
 
 ///
 /// Hardening Base
@@ -384,10 +548,10 @@ struct HardeningBase
 ///
 ///
 ///
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
-  typename DataT, typename ArgT>
-std::unique_ptr<HardeningBase<NumDimT, NumSlipT, DataT, ArgT>>
-HardeningFactory(HardeningLaw hardening_law);
+// template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+//   typename DataT, typename ArgT>
+// std::unique_ptr<HardeningBase<NumDimT, NumSlipT, DataT, ArgT>>
+// HardeningFactory(HardeningLaw hardening_law);
 
 ///
 /// Linear hardening with recovery

@@ -39,10 +39,6 @@
 #include "Albany_PUMIDiscretization.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
 #endif
-#ifdef ALBANY_GOAL
-#include "Albany_GOALDiscretization.hpp"
-#include "Albany_GOALMeshStruct.hpp"
-#endif
 #ifdef ALBANY_AMP
 #include "Albany_SimDiscretization.hpp"
 #include "Albany_SimMeshStruct.hpp"
@@ -266,6 +262,7 @@ Albany::DiscretizationFactory::createMeshSpecs()
 #if defined(ALBANY_AERAS) && defined(HAVE_STK)
   //IK, 2/9/15: if the method is Ioss Aeras or Exodus Aeras (corresponding to Aeras::SpectralDiscretization,
   //overwrite the meshSpecs of the meshStruct with an enriched one.
+  std::string& method = discParams->get("Method", "STK1D");
   if (method == "Ioss Aeras" || method == "Exodus Aeras" || method == "STK1D Aeras") {
     //get "Element Degree" from parameter list.  Default value is 1.
     int points_per_edge = discParams->get("Element Degree", 1) + 1;
@@ -338,7 +335,23 @@ Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::Parameter
     return Teuchos::rcp(new Albany::AsciiSTKMeshStruct(disc_params, comm));
   }
   else if(method == "Ascii2D") {
-    return Teuchos::rcp(new Albany::AsciiSTKMesh2D(disc_params, comm));
+      return Teuchos::rcp(new Albany::AsciiSTKMesh2D(disc_params, comm));
+  }
+  else if(method == "Hacky Ascii2D") {
+      //FixME very hacky! needed for printing 2d mesh
+      Teuchos::RCP<Albany::GenericSTKMeshStruct> meshStruct2D;
+      meshStruct2D = Teuchos::rcp(new Albany::AsciiSTKMesh2D(disc_params, comm));
+      Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
+	  Albany::AbstractFieldContainer::FieldContainerRequirements req;
+	  int neq=2;
+      meshStruct2D->setFieldAndBulkData(comm, disc_params, neq, req,
+                                        sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
+      Ioss::Init::Initializer io;
+      Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data =Teuchos::rcp(new stk::io::StkMeshIoBroker(MPI_COMM_WORLD));
+      mesh_data->set_bulk_data(*meshStruct2D->bulkData);
+      const std::string& output_filename = disc_params->get("Exodus Output File Name", "ice_mesh.2d.exo");
+      size_t idx = mesh_data->create_output_mesh(output_filename, stk::io::WRITE_RESULTS);
+      mesh_data->process_output_request(idx, 0.0);
   }
   else if(method == "Gmsh") {
     return Teuchos::rcp(new Albany::GmshSTKMeshStruct(disc_params, comm));
@@ -388,16 +401,6 @@ Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::Parameter
                                << " requested, but not compiled in" << std::endl);
 #endif
   }
-  else if(method == "PUMI Hierarchic") {
-#ifdef ALBANY_GOAL
-    return Teuchos::rcp(new Albany::GOALMeshStruct(disc_params, comm));
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(method == "PUMI Hierarchic",
-                               Teuchos::Exceptions::InvalidParameter,
-                               "Error: Discretization method " << method
-                               << " requested, but not compiled in" << std::endl);
-#endif
-  }
   else if (method == "Sim") {
 #ifdef ALBANY_AMP
     return Teuchos::rcp(new Albany::SimMeshStruct(disc_params, comm));
@@ -413,9 +416,19 @@ Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::Parameter
                                "Error!  Unknown discretization method in DiscretizationFactory: " << method <<
                                "!" << std::endl << "Supplied parameter list is " << std::endl << *disc_params <<
                                "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss, Ioss Aeras," <<
-                               " Exodus, Exodus Aeras, Cubit, PUMI, PUMI Hierarchic, Sim, Mpas, Ascii," <<
+                               " Exodus, Exodus Aeras, Cubit, PUMI, PUMI Hierarchic, Sim, Ascii," <<
                                " Ascii2D, Extruded" << std::endl);
   }
+}
+
+
+Teuchos::RCP<Albany::AbstractDiscretization>
+Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
+    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+    const AbstractFieldContainer::FieldContainerRequirements& req,
+    const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes) {
+
+  return createDiscretization(neq, empty_side_set_equations, sis, empty_side_set_sis, req, empty_side_set_req, rigidBodyModes);
 }
 
 Teuchos::RCP<Albany::AbstractDiscretization>
@@ -456,11 +469,27 @@ void
 Albany::DiscretizationFactory::setupInternalMeshStruct(
   unsigned int neq,
   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+  const AbstractFieldContainer::FieldContainerRequirements& req) 
+{
+  setupInternalMeshStruct(neq, sis, empty_side_set_sis, req, empty_side_set_req);
+}
+
+void
+Albany::DiscretizationFactory::setupInternalMeshStruct(
+  unsigned int neq,
+  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
   const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
   const AbstractFieldContainer::FieldContainerRequirements& req,
   const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req) {
   meshStruct->setFieldAndBulkData(commT, discParams, neq, req, sis,
                                   meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis, side_set_req);
+}
+
+Teuchos::RCP<Albany::AbstractDiscretization>
+Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
+  const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes) 
+{
+  return createDiscretizationFromInternalMeshStruct(empty_side_set_equations, rigidBodyModes);
 }
 
 Teuchos::RCP<Albany::AbstractDiscretization>
@@ -505,13 +534,6 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
       case Albany::AbstractMeshStruct::PUMI_MS: {
         Teuchos::RCP<Albany::PUMIMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::PUMIMeshStruct>(meshStruct);
         return Teuchos::rcp(new Albany::PUMIDiscretization(ms, commT, rigidBodyModes));
-      }
-      break;
-#endif
-#ifdef ALBANY_GOAL
-      case Albany::AbstractMeshStruct::GOAL_MS: {
-        Teuchos::RCP<Albany::GOALMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::GOALMeshStruct>(meshStruct);
-        return Teuchos::rcp(new Albany::GOALDiscretization(ms, commT, rigidBodyModes));
       }
       break;
 #endif

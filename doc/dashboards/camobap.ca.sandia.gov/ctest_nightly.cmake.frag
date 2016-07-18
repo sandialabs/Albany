@@ -312,6 +312,8 @@ if (BUILD_ALB32)
     "-DENABLE_INSTALL:BOOL=ON"
     "-DCMAKE_INSTALL_PREFIX:BOOL=${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitInstall"
     "-DENABLE_PARAMETERS_DEPEND_ON_SOLUTION:BOOL=ON"
+    "-DCISM_EXE_DIR:FILEPATH=${CTEST_BINARY_DIRECTORY}/IKTCismAlbany"
+    "-DENABLE_USE_CISM_FLOW_PARAMETERS:BOOL=ON"
     "-DENABLE_LAME:BOOL=OFF")
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbany32Bit")
@@ -752,7 +754,7 @@ if (BUILD_ALBFUNCTOR)
   endif ()
 
   if (BUILD_ALBFUNCTOR)
-    set (CTEST_TEST_TIMEOUT 120)
+    set (CTEST_TEST_TIMEOUT 1200)
     CTEST_TEST (
       BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFunctor"
       RETURN_VALUE HAD_ERROR)
@@ -766,6 +768,118 @@ if (BUILD_ALBFUNCTOR)
     endif ()
   endif ()
 endif ()
+
+
+if (BUILD_ALBFUNCTOR_OPENMP)
+  # ALBANY_KOKKOS_UNDER_DEVELOPMENT build with OpenMP KokkosNode
+
+  set_property (GLOBAL PROPERTY SubProject IKTAlbanyFunctorOpenMP)
+  set_property (GLOBAL PROPERTY Label IKTAlbanyFunctorOpenMP)
+
+  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build-openmp/install")
+
+  set (CONFIGURE_OPTIONS
+    "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
+    "-DENABLE_LCM:BOOL=ON"
+    "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
+    "-DENABLE_LCM_TEST_EXES:BOOL=OFF"
+    "-DENABLE_CONTACT:BOOL=OFF"
+    "-DENABLE_HYDRIDE:BOOL=OFF"
+    "-DENABLE_SG:BOOL=OFF"
+    "-DENABLE_FELIX:BOOL=ON"
+    "-DENABLE_AERAS:BOOL=ON"
+    "-DENABLE_QCAD:BOOL=ON"
+    "-DENABLE_MOR:BOOL=OFF"
+    "-DENABLE_ATO:BOOL=OFF"
+    "-DENABLE_ALBANY_EPETRA_EXE:BOOL=ON"
+    "-DENABLE_AMP:BOOL=OFF"
+    "-DENABLE_GOAL:BOOL=OFF"
+    "-DENABLE_ASCR:BOOL=OFF"
+    "-DENABLE_CHECK_FPE:BOOL=OFF"
+    "-DENABLE_MPAS_INTERFACE:BOOL=ON"
+    "-DENABLE_CISM_INTERFACE:BOOL=OFF"
+    "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
+    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
+    "-DENABLE_DAKOTA_RESTART_EXAMPLES=OFF"
+    "-DENABLE_SLFAD:BOOL=OFF"
+    "-DENABLE_ENSEMBLE:BOOL=OFF"
+    "-DENSEMBLE_SIZE:INT=16"
+    "-DENABLE_64BIT_INT:BOOL=OFF"
+    "-DENABLE_LAME:BOOL=OFF")
+  
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFunctorOpenMP")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/IKTAlbanyFunctorOpenMP)
+  endif ()
+
+  CTEST_CONFIGURE (
+    BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFunctorOpenMP"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
+    OPTIONS "${CONFIGURE_OPTIONS}"
+    RETURN_VALUE HAD_ERROR
+    APPEND)
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Configure RETURN_VALUE S_HAD_ERROR)
+    
+    if (S_HAD_ERROR)
+      message ("Cannot submit Albany configure results!")
+      set (BUILD_ALBFUNCTOR_OPENMP FALSE)
+    endif ()
+  endif ()
+
+  if (HAD_ERROR)
+    message ("Cannot configure Albany build!")
+    set (BUILD_ALBFUNCTOR_OPENMP FALSE)
+  endif ()
+
+  if (BUILD_ALBFUNCTOR_OPENMP)
+    set (CTEST_BUILD_TARGET all)
+
+    message ("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+
+    CTEST_BUILD (
+      BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFunctorOpenMP"
+      RETURN_VALUE HAD_ERROR
+      NUMBER_ERRORS BUILD_LIBS_NUM_ERRORS
+      APPEND)
+
+    if (CTEST_DO_SUBMIT)
+      ctest_submit (PARTS Build
+        RETURN_VALUE S_HAD_ERROR)
+
+      if (S_HAD_ERROR)
+        message ("Cannot submit Albany build results!")
+        set (BUILD_ALBFUNCTOR_OPENMP FALSE)
+      endif ()
+    endif ()
+
+    if (HAD_ERROR)
+      message ("Cannot build Albany!")
+      set (BUILD_ALBFUNCTOR_OPENMP FALSE)
+    endif ()
+
+    if (BUILD_LIBS_NUM_ERRORS GREATER 0)
+      message ("Encountered build errors in Albany build.")
+      set (BUILD_ALBFUNCTOR_OPENMP FALSE)
+    endif ()
+  endif ()
+
+  if (BUILD_ALBFUNCTOR_OPENMP)
+    set (CTEST_TEST_TIMEOUT 1200)
+    CTEST_TEST (
+      BUILD "${CTEST_BINARY_DIRECTORY}/IKTAlbanyFunctorOpenMP"
+      RETURN_VALUE HAD_ERROR)
+
+    if (CTEST_DO_SUBMIT)
+      ctest_submit (PARTS Test RETURN_VALUE S_HAD_ERROR)
+
+      if (S_HAD_ERROR)
+        message ("Cannot submit Albany test results!")
+      endif ()
+    endif ()
+  endif ()
+endif ()
+
 
 if (BUILD_CISM_PISCEES)
 

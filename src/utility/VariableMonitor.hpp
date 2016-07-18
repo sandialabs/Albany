@@ -55,7 +55,8 @@ protected:
 
 template<typename T>
 inline void VariableHistory::addValue (T&& val) {
-  m_history.emplace_back(to_string(std::forward<T>(val)));
+  //TODO, when compiler allows, replace following with this for performance: m_history.emplace_back(to_string(std::forward<T>(val)));
+  m_history.push_back(to_string(std::forward<T>(val)));
 }
 
 }

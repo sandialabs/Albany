@@ -9,6 +9,7 @@
 #include "Albany_Layouts.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
+#include "Albany_StateManager.hpp"
 
 namespace ATO {
 

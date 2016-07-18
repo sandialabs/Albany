@@ -683,3 +683,8 @@ template std::vector<std::string>
 LCM::MaterialDatabase::
 getAllMatchingParams(
     std::string const & param_name);
+
+template std::vector<bool>
+LCM::MaterialDatabase::
+getAllMatchingParams(
+    std::string const & param_name);

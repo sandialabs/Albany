@@ -9,4 +9,4 @@
 #include "FELIX_ProlongateVector.hpp"
 #include "FELIX_ProlongateVector_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(FELIX::ProlongateVectorBase)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_EVAL_TYPE(FELIX::ProlongateVectorBase)

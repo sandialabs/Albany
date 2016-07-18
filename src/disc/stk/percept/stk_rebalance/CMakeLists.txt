@@ -6,6 +6,7 @@ FILE(GLOB SOURCES *.cpp)
 FILE(GLOB HEADERS *.hpp)
 
 add_library(albanySTKRebalance ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+target_link_libraries(albanySTKRebalance ${Trilinos_LIBRARIES})
 
 IF (INSTALL_ALBANY)
   install(TARGETS albanySTKRebalance EXPORT albany-export

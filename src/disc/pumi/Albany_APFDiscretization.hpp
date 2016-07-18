@@ -107,13 +107,15 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const;
 
+    const Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type& getLatticeOrientation() const;
+
     //! Print coords for debugging
     void printCoords() const;
 
     //! Get sideSet discretizations map
     const SideSetDiscretizationsType& getSideSetDiscretizations () const
     {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Functionality not supported by APF discretization.\n");
+      //Warning: returning empty SideSetDiscretization for now.
       return sideSetDiscretizations;
     }
 
@@ -167,6 +169,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     // Retrieve mesh struct
     Teuchos::RCP<Albany::APFMeshStruct> getAPFMeshStruct() {return meshStruct;}
+    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const {return meshStruct;}
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return meshStruct->hasRestartSolution;}
@@ -372,6 +375,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     void initTemperatureHack();
 
+    //! Set any FELIX Data
+    virtual void setFELIXData() {}
+
     //! Some evaluators may want access to the underlying apf mesh elements.
     std::vector<std::vector<apf::MeshEntity*> >& getBuckets() {return buckets;}
 
@@ -400,6 +406,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void copyQPVectorFromAPF(unsigned nqp, std::string const& stateName, apf::Field* f);
     void copyQPTensorFromAPF(unsigned nqp, std::string const& stateName, apf::Field* f);
     void copyQPStatesFromAPF();
+
+    //! Write stabilized stress out to file
+    void saveStabilizedStress();
 
     // Transfer nodal data to/from APF.
     void copyNodalDataToAPF(const bool copy_all);
@@ -520,6 +529,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     Albany::WorksetArray<int>::type wsPhysIndex;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
+    Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type latticeOrientation;
 
     //! Connectivity map from elementGID to workset and LID in workset
     Albany::WsLIDList  elemGIDws;

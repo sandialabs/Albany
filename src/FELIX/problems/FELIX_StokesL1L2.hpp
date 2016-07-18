@@ -191,7 +191,7 @@ FELIX::StokesL1L2::constructEvaluators(
      // Output (assumes same Name as input)
      p->set<std::string>("Gradient Variable Name", dof_names[0]+" Gradient");
      
-     ev = rcp(new PHAL::DOFVecGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
+     ev = rcp(new PHAL::DOFVecGradInterpolation<EvalT,AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
    }
 

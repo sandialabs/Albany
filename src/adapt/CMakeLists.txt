@@ -147,20 +147,22 @@ IF(ALBANY_SCOREC)
 
 SET(SOURCES ${SOURCES}
     AAdapt_MeshAdapt.cpp
-    AAdapt_MeshSizeField.cpp
+    AAdapt_MeshAdaptMethod.cpp
     AAdapt_UnifSizeField.cpp
     AAdapt_UnifRefSizeField.cpp
     AAdapt_NonUnifRefSizeField.cpp
     AAdapt_AlbanySizeField.cpp
+    AAdapt_ExtrudedAdapt.cpp
    )
 
 SET(HEADERS ${HEADERS}
-    AAdapt_MeshSizeField.hpp
+    AAdapt_MeshAdaptMethod.hpp
     AAdapt_MeshAdapt.hpp
     AAdapt_UnifSizeField.hpp
     AAdapt_UnifRefSizeField.hpp
     AAdapt_NonUnifRefSizeField.hpp
     AAdapt_AlbanySizeField.hpp
+    AAdapt_ExtrudedAdapt.hpp
    )
 
 IF(ENABLE_SPR)

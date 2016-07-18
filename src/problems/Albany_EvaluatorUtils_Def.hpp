@@ -585,7 +585,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFGradInterpolationE
     // Output (assumes same Name as input)
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
-    return rcp(new PHAL::DOFGradInterpolation<EvalT,Traits>(*p,dl));
+    return rcp(new PHAL::DOFGradInterpolation<EvalT,Traits,ScalarT>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -678,7 +678,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFInterpolationEvalu
 
     // Output (assumes same Name as input)
 
-    return rcp(new PHAL::DOFInterpolation<EvalT,Traits>(*p,dl));
+    return rcp(new PHAL::DOFInterpolation<EvalT,Traits,ScalarT>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -768,7 +768,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecGradInterpolati
     // Output (assumes same Name as input)
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
-    return rcp(new PHAL::DOFVecGradInterpolation<EvalT,Traits>(*p,dl));
+    return rcp(new PHAL::DOFVecGradInterpolation<EvalT,Traits,ScalarT>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -814,7 +814,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecInterpolationEv
 
     // Output (assumes same Name as input)
 
-    return rcp(new PHAL::DOFVecInterpolation<EvalT,Traits>(*p,dl));
+    return rcp(new PHAL::DOFVecInterpolation<EvalT,Traits,ScalarT>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>

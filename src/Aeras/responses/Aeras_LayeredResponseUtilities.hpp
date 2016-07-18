@@ -19,6 +19,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_ProblemUtils.hpp"
+#include "Albany_StateManager.hpp"
 #include "Aeras/problems/Aeras_Layouts.hpp"
 
 #include "Phalanx.hpp"

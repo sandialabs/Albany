@@ -86,12 +86,14 @@ void interp_and_calc_error(Teuchos::RCP<const Teuchos::Comm<int>> comm, Teuchos:
 	plist->get<std::string>("Target Mesh Output File");
   int tgt_snap_no = 
 	plist->get<int>("Target Mesh Snapshot Number", 1); //this value is 1-based
-  std::string field_name = 
-	plist->get<std::string>("Field Name", "solution");
-  std::string src_field_name = field_name+"_src"; 
-  std::string tgt_interp_field_name = field_name+"Ref";
-  std::string rel_err_field_name = field_name+"RelErr";
-  std::string abs_err_field_name = field_name+"AbsErr";
+  std::string source_field_name = 
+	plist->get<std::string>("Source Field Name", "solution");
+  std::string target_field_name = 
+	plist->get<std::string>("Target Field Name", "solution");
+  std::string src_field_name = source_field_name+"_src"; 
+  std::string tgt_interp_field_name = target_field_name+"Ref";
+  std::string rel_err_field_name = target_field_name+"RelErr";
+  std::string abs_err_field_name = target_field_name+"AbsErr";
     
   // Get the raw mpi communicator (basic typedef in STK).
   Teuchos::RCP<const Teuchos::MpiComm<int> > mpi_comm = 
@@ -185,12 +187,12 @@ void interp_and_calc_error(Teuchos::RCP<const Teuchos::Comm<int>> comm, Teuchos:
   tgt_broker.add_all_mesh_fields_as_input_fields(tmo);
        
   //Get source_field from source mesh  
-  FieldType* source_field = src_broker.meta_data().get_field<FieldType>(stk::topology::NODE_RANK, field_name); 
+  FieldType* source_field = src_broker.meta_data().get_field<FieldType>(stk::topology::NODE_RANK, source_field_name); 
   if (source_field != 0) 
-    *out << "   Field with name " << field_name << " found in source mesh file!" << std::endl; 
+    *out << "   Field with name " << source_field_name << " found in source mesh file!" << std::endl; 
   else   
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-            std::endl << "   Field with name " << field_name << " NOT found in source mesh file!" << std::endl); 
+            std::endl << "   Field with name " << source_field_name << " NOT found in source mesh file!" << std::endl); 
 
   int neq = source_field->max_size(stk::topology::NODE_RANK); 
 #ifdef DEBUG_OUTPUT
@@ -219,12 +221,12 @@ void interp_and_calc_error(Teuchos::RCP<const Teuchos::Comm<int>> comm, Teuchos:
     
   // Add a nodal field to the interpolated target part.
   // Populate target_field 
-  FieldType* target_field = tgt_broker.meta_data().get_field<FieldType>(stk::topology::NODE_RANK, field_name); 
+  FieldType* target_field = tgt_broker.meta_data().get_field<FieldType>(stk::topology::NODE_RANK, target_field_name); 
   if (target_field != 0) 
-    *out << "   Field with name " << field_name << " found in target mesh file!" << std::endl; 
+    *out << "   Field with name " << target_field_name << " found in target mesh file!" << std::endl; 
   else   
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-        std::endl << "   Field with name " << field_name << " NOT found in target mesh file!" << std::endl); 
+        std::endl << "   Field with name " << target_field_name << " NOT found in target mesh file!" << std::endl); 
     
   io_region = tgt_broker.get_input_io_region();
   STKIORequire(!Teuchos::is_null(io_region));
@@ -375,7 +377,7 @@ void interp_and_calc_error(Teuchos::RCP<const Teuchos::Comm<int>> comm, Teuchos:
       abs_err_field_data = stk::mesh::field_data( target_abs_error_field, tgt_part_nodes[n] );
       rel_err_field_data[component] = std::abs(tgt_field_data[component] - gold_value[component]);
       abs_err_field_data[component] = std::abs(tgt_field_data[component] - gold_value[component]);
-      if (gold_value[component] != 0)
+      if (abs(gold_value[component]) > 1.0e-14)
         rel_err_field_data[component] /= std::abs(gold_value[component]);
 #ifdef DEBUG_OUTPUT
       *out << "      tgt_field_data, gold_value, abs_err, rel_err: "

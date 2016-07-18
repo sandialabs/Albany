@@ -843,6 +843,12 @@ IF (ALBANY_MESHDB_TOOLS)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} exopumiconvert)
 ENDIF()
 
+IF (ALBANY_GOAL)
+  add_executable(AlbanyGOAL GOAL/GOAL_Main.cpp)
+  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyGOAL)
+ENDIF()
+
+
 ENDIF (NOT ALBANY_LIBRARIES_ONLY)
 # End declaration of executables
 
@@ -1000,7 +1006,7 @@ IF (INSTALL_ALBANY)
   MESSAGE("-- Exporting link libs to: ${CMAKE_INSTALL_PREFIX}/export_albany.in")
   STRING(REGEX REPLACE ";/" " /" TMP2 "${TMP1}")
   STRING(REPLACE ";" " -l" ALBANY_LINK_LIBS
-        "-L ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}"
+        "-L${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}"
         " -L${Trilinos_LIBRARY_DIRS}" " -l${TMP2}")
   CONFIGURE_FILE(export_albany.in ${CMAKE_INSTALL_PREFIX}/export_albany.in)
 

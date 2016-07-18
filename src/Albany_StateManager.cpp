@@ -406,7 +406,8 @@ Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetNam
   if ( sideSetStateInfo.find(sideSetName)==sideSetStateInfo.end() )
   {
     // It's the first time we register states on this side set, so we initiate the pointer
-    sideSetStateInfo.emplace(sideSetName,Teuchos::rcp(new StateInfoStruct()));
+    //TODO, when compiler allows, replace following with this for performance: sideSetStateInfo.emplace(sideSetName,Teuchos::rcp(new StateInfoStruct()));
+    sideSetStateInfo.insert(std::make_pair(sideSetName,Teuchos::rcp(new StateInfoStruct())));
   }
 
   const Teuchos::RCP<StateInfoStruct>& sis_ptr = sideSetStateInfo.at(sideSetName);

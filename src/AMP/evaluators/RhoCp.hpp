@@ -14,7 +14,6 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Vector.h"
 #include "Sacado_ParameterAccessor.hpp"
-#include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"
 #include "Albany_Layouts.hpp"
 
@@ -54,6 +53,7 @@ private:
 
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_;
   PHX::MDField<ScalarT,Cell,QuadPoint> rho_cp_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porosity_;
 
   unsigned int num_qps_;
   unsigned int num_dims_;

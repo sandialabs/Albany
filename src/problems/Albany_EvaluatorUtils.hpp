@@ -42,7 +42,7 @@ namespace Albany {
     EvaluatorUtilsBase(Teuchos::RCP<Albany::Layouts> dl);
 
     const EvaluatorUtilsBase<EvalT,Traits,MeshScalarT>&
-    getMSUtils()
+    getMSTUtils()
     {
       if (utils_MST==Teuchos::null)
         utils_MST = Teuchos::rcp(new EvaluatorUtilsBase<EvalT,Traits,MeshScalarT>(dl));
@@ -50,11 +50,19 @@ namespace Albany {
     }
 
     const EvaluatorUtilsBase<EvalT,Traits,ParamScalarT>&
-    getPSUtils()
+    getPSTUtils()
     {
       if (utils_PST==Teuchos::null)
         utils_PST = Teuchos::rcp(new EvaluatorUtilsBase<EvalT,Traits,ParamScalarT>(dl));
       return *utils_PST;
+    }
+
+    const EvaluatorUtilsBase<EvalT,Traits,RealType>&
+    getRTUtils()
+    {
+      if (utils_RT==Teuchos::null)
+        utils_RT = Teuchos::rcp(new EvaluatorUtilsBase<EvalT,Traits,RealType>(dl));
+      return *utils_RT;
     }
 
     //! Function to create parameter list for construction of GatherSolution
@@ -306,6 +314,7 @@ namespace Albany {
     //! Evaluator Utils with different ScalarType
     Teuchos::RCP<EvaluatorUtilsBase<EvalT,Traits,MeshScalarT>>    utils_MST;
     Teuchos::RCP<EvaluatorUtilsBase<EvalT,Traits,ParamScalarT>>   utils_PST;
+    Teuchos::RCP<EvaluatorUtilsBase<EvalT,Traits,RealType>>   utils_RT;
 
     //! Struct of PHX::DataLayout objects defined all together.
     Teuchos::RCP<Albany::Layouts> dl;

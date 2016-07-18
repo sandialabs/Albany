@@ -69,7 +69,7 @@
     <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
     <Parameter name="Method" type="string" value="Extruded"/>
     <Parameter name="Cubature Degree" type="int" value="1"/>
-    <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_coupled_shape_opt.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="gis_coupled_shape_opt.exo"/>
     <Parameter name="Element Shape" type="string" value="Tetrahedron"/>
     <Parameter name="NumLayers" type="int" value="5"/>
     <Parameter name="Extrude Basal Node Fields"             type="Array(string)" value="{thickness,surface_height}"/>
@@ -84,29 +84,49 @@
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
         <Parameter name="Use Serial Mesh" type="bool" value="true"/>
         <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/gis_unstruct_2d.exo"/>
-        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_basal.exo"/>
+        <Parameter name="Exodus Output File Name" type="string" value="gis_coupled_shape_opt_basal.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <ParameterList name="Required Fields Info">
-          <Parameter name="basal_friction File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/basal_friction.ascii"/>
-          <Parameter name="basal_friction Field Type" type="string" value="Node Scalar"/>
-          <Parameter name="thickness File Name"       type="string" value="../AsciiMeshes/GisUnstructFiles/thickness.ascii"/>
-          <Parameter name="thickness Field Type"      type="string" value="Node Scalar"/>
-          <Parameter name="surface_height File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/surface_height.ascii"/>
-          <Parameter name="surface_height Field Type" type="string" value="Node Scalar"/>
-          <Parameter name="temperature File Name"     type="string" value="../AsciiMeshes/GisUnstructFiles/temperature.ascii"/>
-          <Parameter name="temperature Field Type"    type="string" value="Node Layered Scalar"/>
+          <Parameter name="Number Of Fields" type="int" value="4"/>
+          <ParameterList name="Field 0">
+            <Parameter name="Field Name" type="string" value="thickness"/>
+            <Parameter name="Field Type" type="string" value="Node Scalar"/>
+            <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/thickness.ascii"/>
+          </ParameterList>
+          <ParameterList name="Field 1">
+            <Parameter name="Field Name" type="string" value="surface_height"/>
+            <Parameter name="Field Type" type="string" value="Node Scalar"/>
+            <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/surface_height.ascii"/>
+          </ParameterList>
+          <ParameterList name="Field 2">
+            <Parameter name="Field Name" type="string" value="temperature"/>
+            <Parameter name="Field Type" type="string" value="Node Layered Scalar"/>
+            <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/temperature.ascii"/>
+          </ParameterList>
+          <ParameterList name="Field 3">
+            <Parameter name="Field Name" type="string" value="basal_friction"/>
+            <Parameter name="Field Type" type="string" value="Node Scalar"/>
+            <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/basal_friction.ascii"/>
+          </ParameterList>
         </ParameterList>
       </ParameterList>
       <ParameterList name="upperside">
         <Parameter name="Method" type="string" value="SideSetSTK"/>
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
-        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_surface.exo"/>
+        <Parameter name="Exodus Output File Name" type="string" value="gis_coupled_shape_opt_surface.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <ParameterList name="Required Fields Info">
-          <Parameter name="surface_velocity File Name"      type="string" value="../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii"/>
-          <Parameter name="surface_velocity Field Type"     type="string" value="Node Vector"/>
-          <Parameter name="surface_velocity_rms File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii"/>
-          <Parameter name="surface_velocity_rms Field Type" type="string" value="Node Vector"/>
+          <Parameter name="Number Of Fields" type="int" value="2"/>
+          <ParameterList name="Field 0">
+            <Parameter name="Field Name" type="string" value="surface_velocity"/>
+            <Parameter name="Field Type" type="string" value="Node Vector"/>
+            <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii"/>
+          </ParameterList>
+          <ParameterList name="Field 1">
+            <Parameter name="Field Name" type="string" value="surface_velocity_rms"/>
+            <Parameter name="Field Type" type="string" value="Node Vector"/>
+            <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii"/>
+          </ParameterList>
         </ParameterList>
       </ParameterList>
     </ParameterList>
@@ -114,9 +134,9 @@
 
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{106202982.608}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{107605026.563}"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{17396096.0365}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{18680495.3866}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>

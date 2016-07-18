@@ -7,6 +7,7 @@
 #include "QCAD_PoissonProblem.hpp"
 #include "QCAD_MaterialDatabase.hpp"
 #include "Albany_Utils.hpp"
+#include "Albany_BCUtils.hpp"
 
 QCAD::PoissonProblem::
 PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,

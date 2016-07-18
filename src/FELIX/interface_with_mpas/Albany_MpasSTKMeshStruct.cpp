@@ -33,7 +33,7 @@
 //Wedge
 Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                                              const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                             const std::vector<GO>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles, int numLayers, int Ordering) :
+                                             const std::vector<GO>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles, int numLayers, int ordering) :
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
@@ -41,12 +41,17 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   hasRestartSol(false),
   restartTime(0.)
 {
+  auto LAYER  = LayeredMeshOrdering::LAYER;
+  auto COLUMN = LayeredMeshOrdering::COLUMN;
+
+  Ordering = (ordering==0) ? LAYER : COLUMN;
+
   std::vector<GO> indexToPrismID(indexToTriangleID.size()*numLayers);
 
   //Int ElemColumnShift = (ordering == ColumnWise) ? 1 : indexToTriangleID.size();
-  int elemColumnShift = (Ordering == 1) ? 1 : nGlobalTriangles;
-  int lElemColumnShift = (Ordering == 1) ? 1 : indexToTriangleID.size();
-  int elemLayerShift = (Ordering == 0) ? 1 : numLayers;
+  int elemColumnShift = (Ordering == COLUMN) ? 1 : nGlobalTriangles;
+  int lElemColumnShift = (Ordering == COLUMN) ? 1 : indexToTriangleID.size();
+  int elemLayerShift = (Ordering == LAYER) ? 1 : numLayers;
 
   for(int il=0; il< numLayers; il++)
   {
@@ -140,6 +145,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                              nsNames, ssNames, worksetSize, partVec[0]->name(),
                              ebNameToIndex, this->interleavedOrdering));
+  //this->initializeSideSetMeshStructs(comm);
 
 
 }
@@ -147,7 +153,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 //Tetra
 Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                                              const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                             const std::vector<GO>& indexToTriangleID, int nGlobalTriangles, int numLayers, int Ordering) :
+                                             const std::vector<GO>& indexToTriangleID, int nGlobalTriangles, int numLayers, int ordering) :
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
@@ -155,12 +161,17 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   hasRestartSol(false),
   restartTime(0.)
 {
+  auto LAYER  = LayeredMeshOrdering::LAYER;
+  auto COLUMN = LayeredMeshOrdering::COLUMN;
+
+  Ordering = (ordering==0) ? LAYER : COLUMN;
+
   std::vector<GO> indexToTetraID(3*indexToTriangleID.size()*numLayers);
 
   //Int ElemColumnShift = (ordering == ColumnWise) ? 1 : indexToTriangleID.size();
-  int elemColumnShift = (Ordering == 1) ? 3 : 3*nGlobalTriangles;
-  int lElemColumnShift = (Ordering == 1) ? 3 : 3*indexToTriangleID.size();
-  int elemLayerShift = (Ordering == 0) ? 3 : 3*numLayers;
+  int elemColumnShift = (Ordering == COLUMN) ? 3 : 3*nGlobalTriangles;
+  int lElemColumnShift = (Ordering == COLUMN) ? 3 : 3*indexToTriangleID.size();
+  int elemLayerShift = (Ordering == LAYER) ? 3 : 3*numLayers;
 
   for(int il=0; il< numLayers; il++)
   {
@@ -281,26 +292,30 @@ Albany::MpasSTKMeshStruct::constructMesh(
                                                const std::vector<int>& dirichletNodesIds,
                                                const std::vector<int>& floating2dLateralEdgesIds,
                                                const unsigned int worksetSize,
-                                               int numLayers, int Ordering)
+                                               int numLayers, int ordering)
 {
 	this->SetupFieldData(commT, neq_, req, sis, worksetSize);
+  auto LAYER  = LayeredMeshOrdering::LAYER;
+  auto COLUMN = LayeredMeshOrdering::COLUMN;
 
-    int elemColumnShift = (Ordering == 1) ? 1 : elem_mapT->getGlobalNumElements()/numLayers;
-    int lElemColumnShift = (Ordering == 1) ? 1 : indexToTriangleID.size();
-    int elemLayerShift = (Ordering == 0) ? 1 : numLayers;
+	Ordering = (ordering==0) ? LAYER : COLUMN;
 
-    int vertexColumnShift = (Ordering == 1) ? 1 : nGlobalVertices;
-    int lVertexColumnShift = (Ordering == 1) ? 1 : indexToVertexID.size();
-    int vertexLayerShift = (Ordering == 0) ? 1 : numLayers+1;
+  int elemColumnShift = (Ordering == COLUMN) ? 1 : elem_mapT->getGlobalNumElements()/numLayers;
+  int lElemColumnShift = (Ordering == COLUMN) ? 1 : indexToTriangleID.size();
+  int elemLayerShift = (Ordering == LAYER) ? 1 : numLayers;
 
-    int edgeColumnShift = (Ordering == 1) ? 1 : nGlobalEdges;
-    int lEdgeColumnShift = (Ordering == 1) ? 1 : indexToEdgeID.size();
-    int edgeLayerShift = (Ordering == 0) ? 1 : numLayers;
+  int vertexColumnShift = (Ordering == COLUMN) ? 1 : nGlobalVertices;
+  int lVertexColumnShift = (Ordering == COLUMN) ? 1 : indexToVertexID.size();
+  int vertexLayerShift = (Ordering == LAYER) ? 1 : numLayers+1;
 
-    Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers, 1.0/double(numLayers));
-    this->layered_mesh_numbering = (Ordering==0) ?
-              Teuchos::rcp(new LayeredMeshNumbering<LO>(lVertexColumnShift,Ordering,layerThicknessRatio)):
-              Teuchos::rcp(new LayeredMeshNumbering<LO>(vertexLayerShift,Ordering,layerThicknessRatio));
+  int edgeColumnShift = (Ordering == COLUMN) ? 1 : nGlobalEdges;
+  int lEdgeColumnShift = (Ordering == COLUMN) ? 1 : indexToEdgeID.size();
+  int edgeLayerShift = (Ordering == LAYER) ? 1 : numLayers;
+
+  Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers, 1.0/double(numLayers));
+  this->layered_mesh_numbering = (Ordering == LAYER) ?
+            Teuchos::rcp(new LayeredMeshNumbering<LO>(lVertexColumnShift,Ordering,layerThicknessRatio)):
+            Teuchos::rcp(new LayeredMeshNumbering<LO>(vertexLayerShift,Ordering,layerThicknessRatio));
 
 
   metaData->commit();
@@ -322,8 +337,8 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
   for(int i=0; i< (numLayers+1)*indexToVertexID.size(); i++)
   {
-	  int ib = (Ordering == 0)*(i%lVertexColumnShift) + (Ordering == 1)*(i/vertexLayerShift);
-	  int il = (Ordering == 0)*(i/lVertexColumnShift) + (Ordering == 1)*(i%vertexLayerShift);
+	  int ib = (Ordering == LAYER)*(i%lVertexColumnShift) + (Ordering == COLUMN)*(i/vertexLayerShift);
+	  int il = (Ordering == LAYER)*(i/lVertexColumnShift) + (Ordering == COLUMN)*(i%vertexLayerShift);
 
     stk::mesh::Entity node;
 	  if(il == 0)
@@ -354,8 +369,8 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
   for (int i=0; i<elem_mapT->getNodeNumElements(); i++) {
 
-	 int ib = (Ordering == 0)*(i%lElemColumnShift) + (Ordering == 1)*(i/elemLayerShift);
-	 int il = (Ordering == 0)*(i/lElemColumnShift) + (Ordering == 1)*(i%elemLayerShift);
+	 int ib = (Ordering == LAYER)*(i%lElemColumnShift) + (Ordering == COLUMN)*(i/elemLayerShift);
+	 int il = (Ordering == LAYER)*(i/lElemColumnShift) + (Ordering == COLUMN)*(i%elemLayerShift);
 
 	 int shift = il*vertexColumnShift;
 
@@ -382,10 +397,10 @@ Albany::MpasSTKMeshStruct::constructMesh(
   //first we store the lateral faces of prisms, which corresponds to edges of the basal mesh
 
   for (int i=0; i<indexToEdgeID.size()*numLayers; i++) {
-	 int ib = (Ordering == 0)*(i%lEdgeColumnShift) + (Ordering == 1)*(i/edgeLayerShift);
+	 int ib = (Ordering == LAYER)*(i%lEdgeColumnShift) + (Ordering == COLUMN)*(i/edgeLayerShift);
 	 if(isBoundaryEdge[ib])
 	 {
-		 int il = (Ordering == 0)*(i/lEdgeColumnShift) + (Ordering == 1)*(i%edgeLayerShift);
+		 int il = (Ordering == LAYER)*(i/lEdgeColumnShift) + (Ordering == COLUMN)*(i%edgeLayerShift);
 		 int basalEdgeId = indexToEdgeID[ib]*edgeLayerShift;
 		 int basalElemId = indexToTriangleID[trianglesOnEdge[2*ib]]*elemLayerShift;
 		 int basalVertexId[2] = {indexToVertexID[verticesOnEdge[2*ib]]*vertexLayerShift, indexToVertexID[verticesOnEdge[2*ib+1]]*vertexLayerShift};
@@ -415,7 +430,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
   //then we store the lower and upper faces of prisms, which corresponds to triangles of the basal mesh
 
-  edgeLayerShift = (Ordering == 0) ? 1 : numLayers+1;
+  edgeLayerShift = (Ordering == LAYER) ? 1 : numLayers+1;
   edgeColumnShift = elemColumnShift;
 
   singlePartVec[0] = ssPartVec["basalside"];
@@ -469,26 +484,31 @@ Albany::MpasSTKMeshStruct::constructMesh(
                                                const std::vector<int>& dirichletNodesIds,
                                                const std::vector<int>& floating2dLateralEdgesIds,
                                                const unsigned int worksetSize,
-                                               int numLayers, int Ordering)
+                                               int numLayers, int ordering)
 {
 	this->SetupFieldData(commT, neq_, req, sis, worksetSize);
 
-    int elemColumnShift = (Ordering == 1) ? 3 : elem_mapT->getGlobalNumElements()/numLayers;
-    int lElemColumnShift = (Ordering == 1) ? 3 : 3*indexToTriangleID.size();
-    int elemLayerShift = (Ordering == 0) ? 3 : 3*numLayers;
+  auto LAYER  = LayeredMeshOrdering::LAYER;
+  auto COLUMN = LayeredMeshOrdering::COLUMN;
 
-    int vertexColumnShift = (Ordering == 1) ? 1 : nGlobalVertices;
-    int lVertexColumnShift = (Ordering == 1) ? 1 : indexToVertexID.size();
-    int vertexLayerShift = (Ordering == 0) ? 1 : numLayers+1;
+  Ordering = (ordering==0) ? LAYER : COLUMN;
 
-    int edgeColumnShift = (Ordering == 1) ? 2 : 2*nGlobalEdges;
-    int lEdgeColumnShift = (Ordering == 1) ? 1 : indexToEdgeID.size();
-    int edgeLayerShift = (Ordering == 0) ? 1 : numLayers;
+  int elemColumnShift = (Ordering == COLUMN) ? 3 : elem_mapT->getGlobalNumElements()/numLayers;
+  int lElemColumnShift = (Ordering == COLUMN) ? 3 : 3*indexToTriangleID.size();
+  int elemLayerShift = (Ordering == LAYER) ? 3 : 3*numLayers;
 
-    Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers, 1.0/double(numLayers));
-    this->layered_mesh_numbering = (Ordering==0) ?
-          Teuchos::rcp(new LayeredMeshNumbering<LO>(lVertexColumnShift,Ordering,layerThicknessRatio)):
-          Teuchos::rcp(new LayeredMeshNumbering<LO>(vertexLayerShift,Ordering,layerThicknessRatio));
+  int vertexColumnShift = (Ordering == COLUMN) ? 1 : nGlobalVertices;
+  int lVertexColumnShift = (Ordering == COLUMN) ? 1 : indexToVertexID.size();
+  int vertexLayerShift = (Ordering == LAYER) ? 1 : numLayers+1;
+
+  int edgeColumnShift = (Ordering == COLUMN) ? 2 : 2*nGlobalEdges;
+  int lEdgeColumnShift = (Ordering == COLUMN) ? 1 : indexToEdgeID.size();
+  int edgeLayerShift = (Ordering == LAYER) ? 1 : numLayers;
+
+  Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers, 1.0/double(numLayers));
+  this->layered_mesh_numbering = (Ordering == LAYER) ?
+        Teuchos::rcp(new LayeredMeshNumbering<LO>(lVertexColumnShift,Ordering,layerThicknessRatio)):
+        Teuchos::rcp(new LayeredMeshNumbering<LO>(vertexLayerShift,Ordering,layerThicknessRatio));
 
 
   metaData->commit();
@@ -508,8 +528,8 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
   for(int i=0; i< (numLayers+1)*indexToVertexID.size(); i++)
   {
-	  int ib = (Ordering == 0)*(i%lVertexColumnShift) + (Ordering == 1)*(i/vertexLayerShift);
-	  int il = (Ordering == 0)*(i/lVertexColumnShift) + (Ordering == 1)*(i%vertexLayerShift);
+	  int ib = (Ordering == LAYER)*(i%lVertexColumnShift) + (Ordering == COLUMN)*(i/vertexLayerShift);
+	  int il = (Ordering == LAYER)*(i/lVertexColumnShift) + (Ordering == COLUMN)*(i%vertexLayerShift);
 
 	  stk::mesh::Entity node;
 	  if(il == 0)
@@ -537,8 +557,8 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
   for (int i=0; i<elem_mapT->getNodeNumElements()/3; i++) {
 
-	 int ib = (Ordering == 0)*(i%(lElemColumnShift/3)) + (Ordering == 1)*(i/(elemLayerShift/3));
-	 int il = (Ordering == 0)*(i/(lElemColumnShift/3)) + (Ordering == 1)*(i%(elemLayerShift/3));
+	 int ib = (Ordering == LAYER)*(i%(lElemColumnShift/3)) + (Ordering == COLUMN)*(i/(elemLayerShift/3));
+	 int il = (Ordering == LAYER)*(i/(lElemColumnShift/3)) + (Ordering == COLUMN)*(i%(elemLayerShift/3));
 
 	 int shift = il*vertexColumnShift;
 
@@ -583,10 +603,10 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
   std::vector<std::vector<std::vector<int> > > prismStruct(3, std::vector<std::vector<int> >(4, std::vector<int>(3)));
   for (int i=0; i<indexToEdgeID.size()*numLayers; i++) {
-	 int ib = (Ordering == 0)*(i%lEdgeColumnShift) + (Ordering == 1)*(i/edgeLayerShift);
+	 int ib = (Ordering == LAYER)*(i%lEdgeColumnShift) + (Ordering == COLUMN)*(i/edgeLayerShift);
 	 if(isBoundaryEdge[ib])
 	 {
-		 int il = (Ordering == 0)*(i/lEdgeColumnShift) + (Ordering == 1)*(i%edgeLayerShift);
+		 int il = (Ordering == LAYER)*(i/lEdgeColumnShift) + (Ordering == COLUMN)*(i%edgeLayerShift);
 		 int lBasalElemId = trianglesOnEdge[2*ib];
 		 int basalElemId = indexToTriangleID[lBasalElemId];
 
@@ -669,7 +689,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
   //then we store the lower and upper faces of prisms, which corresponds to triangles of the basal mesh
 
-  edgeLayerShift = (Ordering == 0) ? 1 : numLayers+1;
+  edgeLayerShift = (Ordering == LAYER) ? 1 : numLayers+1;
   edgeColumnShift = 2*(elemColumnShift/3);
 
   singlePartVec[0] = ssPartVec["basalside"];

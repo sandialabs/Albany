@@ -1,14 +1,19 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Aeras Hydrostatic"/> 
-	<Parameter name="Solution Method" type="string" value="Transient"/>
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
+    <!-- Parameter name="Solution Method" type="string" value="Transient"/> -->
+    <Parameter name="Solution Method" type="string" value="Aeras Hyperviscosity"/>
     <ParameterList name="Hydrostatic Problem">
+    	<Parameter name="Topography Type" type="string" value="SphereMountain1"/>
 		<Parameter name="Number of Vertical Levels" type="int" value="15"/>
-		<Parameter name="Tracers" type="Array(string)" value="{Vapor}"/>
-		<Parameter name="P0" type="double" value="10000.0"/>
+		<Parameter name="P0" type="double" value="100000.0"/>
 		<Parameter name="Ptop" type="double" value="20544.8"/>
 		<Parameter name="NonRotating" type="bool" value="True"/>
-		<Parameter name="Viscosity" type="double" value="1.0E8"/>
+      	<Parameter name="Use Explicit Hyperviscosity" type="bool" value="True"/>
+      	<Parameter name="Hyperviscosity Type" type="string" value="Constant"/>
+      	<Parameter name="Hyperviscosity Tau" type="double" value="5e15"/>
+      	<Parameter name="Original Divergence" type="bool" value="False"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
        <Parameter name="Function" type="string" value="Aeras Resting Hydrostatic"/>
@@ -36,10 +41,10 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus Aeras"/>
-    <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD4/uniform_30_quad4.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD4/uniform_16_quad4.g"/>
     <Parameter name="Element Degree" type="int" value="3"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
-    <Parameter name="Exodus Output File Name" type="string" value="sphere30_15lev_rk4_out.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="sphere16_15lev_rk4_out.exo"/>
     <Parameter name="Exodus Write Interval" type="int" value="1"/>
     <!--Parameter name="NetCDF Output File Name" type="string" value="sphere10.nl"/>
     <Parameter name="NetCDF Output Number of Latitudes" type="int"  value="128"/>

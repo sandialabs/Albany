@@ -15,8 +15,8 @@
 namespace PHAL {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-DOFGradInterpolation<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename Type>
+DOFGradInterpolation<EvalT, Traits, Type>::
 DOFGradInterpolation(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar),
@@ -38,8 +38,8 @@ DOFGradInterpolation(const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void DOFGradInterpolation<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename Type>
+void DOFGradInterpolation<EvalT, Traits, Type>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -52,9 +52,9 @@ postRegistrationSetup(typename Traits::SetupData d,
 // Kokkos functor Reesidual
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 #ifdef KOKKOS_OPTIMIZED
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename Type>
 KOKKOS_INLINE_FUNCTION
-void DOFGradInterpolation<EvalT, Traits>::
+void DOFGradInterpolation<EvalT, Traits, Type>::
 operator()( const team_member & thread) const{
 
   const int thread_idx = thread.league_rank() * threads_per_team;
@@ -87,9 +87,9 @@ operator()( const team_member & thread) const{
 }
 
 #else
-  template<typename EvalT, typename Traits>
+  template<typename EvalT, typename Traits, typename Type>
   KOKKOS_INLINE_FUNCTION
-  void DOFGradInterpolation<EvalT, Traits>::
+  void DOFGradInterpolation<EvalT, Traits, Type>::
   operator() (const DOFGradInterpolation_Residual_Tag& tag, const int& cell) const {
 
    for (int qp=0; qp < numQPs; ++qp) {
@@ -104,8 +104,8 @@ operator()( const team_member & thread) const{
 #endif
 #endif
 // ***************************************************************************************
-template<typename EvalT, typename Traits>
-void DOFGradInterpolation<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename Type>
+void DOFGradInterpolation<EvalT, Traits, Type>::
 evaluateFields(typename Traits::EvalData workset)
 {
   //Intrepid2 Version:
@@ -128,7 +128,7 @@ evaluateFields(typename Traits::EvalData workset)
  PHX::Device::fence();
  auto start = std::chrono::high_resolution_clock::now();
 #endif
-//  Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), 0.0);
+//  Kokkos::deep_copy(grad_val_qp.get_view(), 0.0);
 
 #ifdef KOKKOS_OPTIMIZED
 
@@ -158,7 +158,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 //**********************************************************************
 template<typename Traits>
-DOFGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
+DOFGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits, FadType>::
 DOFGradInterpolation(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar),
@@ -182,7 +182,7 @@ DOFGradInterpolation(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename Traits>
-void DOFGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
+void DOFGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits, FadType>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -195,7 +195,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   template< typename Traits>
   KOKKOS_INLINE_FUNCTION
-  void DOFGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
+  void DOFGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits, FadType>::
   operator() (const DOFGradInterpolation_Jacobian_Tag& tag, const int& cell) const {
 
     for (int qp=0; qp < numQPs; ++qp) {
@@ -212,7 +212,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 #endif
 //**********************************************************************
 template<typename Traits>
-void DOFGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
+void DOFGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits, FadType>::
 evaluateFields(typename Traits::EvalData workset)
 {
   //Intrepid2 Version:
@@ -361,7 +361,7 @@ evaluateFields(typename Traits::EvalData workset)
 #ifdef ALBANY_SG
 //**********************************************************************
 template<typename Traits>
-DOFGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>::
+DOFGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, SGFadType>::
 DOFGradInterpolation(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar),
@@ -385,7 +385,7 @@ DOFGradInterpolation(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename Traits>
-void DOFGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>::
+void DOFGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, SGFadType>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -396,7 +396,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename Traits>
-void DOFGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>::
+void DOFGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, SGFadType>::
 evaluateFields(typename Traits::EvalData workset)
 {
   //Intrepid2 Version:
@@ -425,7 +425,7 @@ evaluateFields(typename Traits::EvalData workset)
 #ifdef ALBANY_ENSEMBLE
 //**********************************************************************
 template<typename Traits>
-DOFGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>::
+DOFGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, MPFadType>::
 DOFGradInterpolation(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
   val_node    (p.get<std::string>   ("Variable Name"), dl->node_scalar),
@@ -449,7 +449,7 @@ DOFGradInterpolation(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename Traits>
-void DOFGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>::
+void DOFGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, MPFadType>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -460,7 +460,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename Traits>
-void DOFGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>::
+void DOFGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, MPFadType>::
 evaluateFields(typename Traits::EvalData workset)
 {
   //Intrepid2 Version:

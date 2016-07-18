@@ -17,8 +17,10 @@
 #include "Epetra_Vector.h"
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Import.h"
+#include "Albany_EigendataInfoStruct.hpp"
 #endif
 #include "Albany_AbstractDiscretization.hpp"
+#include "Albany_EigendataInfoStructT.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
 #include "Albany_DistributedParameterLibrary_Tpetra.hpp"
 #include <Intrepid2_FieldContainer.hpp>
@@ -36,13 +38,6 @@
 
 typedef Albany::DistributedParameterLibrary<Tpetra_Vector, Tpetra_MultiVector, Albany::IDArray> DistParamLib;
 typedef Albany::DistributedParameter<Tpetra_Vector, Tpetra_MultiVector, Albany::IDArray> DistParam;
-
-#if defined(ALBANY_EPETRA)
-namespace Albany
-{
-class EigendataStruct;
-}
-#endif
 
 #if defined(ALBANY_LCM)
 // Forward declaration needed for Schwarz coupling
@@ -182,6 +177,7 @@ struct Workset {
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
   Teuchos::ArrayRCP<double>  wsSphereVolume;
+  Teuchos::ArrayRCP<double*>  wsLatticeOrientation;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;
 
@@ -255,7 +251,8 @@ struct Workset {
   //Tpetra analog of dgdp
   Teuchos::RCP<Tpetra_MultiVector> dgdpT;
   //dp-convert Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT;
-#ifdef ALBANY_STOKHOS
+
+#if defined(ALBANY_STOKHOS) and defined(ALBANY_EPETRA)
 #ifdef ALBANY_SG
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_g;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdx;
@@ -276,10 +273,6 @@ struct Workset {
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > overlapped_mp_dgdxdotdot;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdp;
 #endif
-#endif
-
-#ifdef ALBANY_GOAL
-  Teuchos::RCP<Tpetra_Vector> qoi;
 #endif
 
   // Meta-function class encoding T<EvalT::ScalarT> given EvalT

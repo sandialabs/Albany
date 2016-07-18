@@ -127,6 +127,7 @@ void Albany::APFMeshStruct::init(
   useNullspaceTranslationOnly = params->get<bool>("Use Nullspace Translation Only", false);
   useTemperatureHack = params->get<bool>("QP Temperature from Nodes", false);
   useDOFOffsetHack = params->get<bool>("Offset DOF Hack", false);
+  saveStabilizedStress = params->get<bool>("Save Stabilized Stress", false);
 
   compositeTet = false;
 
@@ -166,11 +167,12 @@ void Albany::APFMeshStruct::init(
   // Set defaults for cubature and workset size, overridden in input file
 
   cubatureDegree = params->get("Cubature Degree", 3);
-  int worksetSizeMax = params->get("Workset Size", 50);
+  int worksetSizeMax = params->get("Workset Size", 10000);
   interleavedOrdering = params->get("Interleaved Ordering",true);
   num_time_deriv = params->get<int>("Number Of Time Derivatives", 0);
   allElementBlocksHaveSamePhysics = true;
   hasRestartSolution = false;
+  shouldLoadFELIXData = false;
 
   // No history available by default
   solutionFieldHistoryDepth = 0;
@@ -219,6 +221,7 @@ void Albany::APFMeshStruct::init(
           this->ebNameToIndex, this->interleavedOrdering, true));
     } // for
   } // else
+
 
 }
 
@@ -305,9 +308,9 @@ Albany::APFMeshStruct::setFieldAndBulkData(
         assert(neq == 4 || neq == 9);
         valueType = apf::MATRIX;
       }
-      if(i == 0)
+      /* fields may have been created by restart mechanism */
+      if(i == 0 && (!mesh->findField(residual_name)))
         this->createNodalField(residual_name,valueType);
-      /* field may have been created by restart mechanism */
       if (mesh->findField(solution_name[i]))
         solutionInitialized = true;
       else {
@@ -333,13 +336,18 @@ Albany::APFMeshStruct::setFieldAndBulkData(
     StateStruct& st = *((*sis)[i]);
 
 #ifdef ALBANY_SCOREC
-    if (meshSpecsType() == AbstractMeshStruct::PUMI_MS)
-        st.restartDataAvailable = hasRestartSolution;
+    if (meshSpecsType() == AbstractMeshStruct::PUMI_MS) {
+      if(hasRestartSolution)
+        st.restartDataAvailable = true;
+      if((shouldLoadFELIXData) && (st.entity == StateStruct::NodalDataToElemNode))
+        st.restartDataAvailable = true;
+    }
 #endif
 
     if ( ! nameSet.insert(st.name).second)
       continue; //ignore duplicates
     std::vector<PHX::DataLayout::size_type>& dim = st.dim;
+
     if(st.entity == StateStruct::NodalData) { // Data at the node points
        const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
                = sis->getNodalDataBase()->getNodeContainer();
@@ -348,6 +356,8 @@ Albany::APFMeshStruct::setFieldAndBulkData(
     else if (dim.size() == 2) {
       if(st.entity == StateStruct::QuadPoint || st.entity == StateStruct::ElemNode)
         qpscalar_states.push_back(Teuchos::rcp(new PUMIQPData<double, 2>(st.name, dim, st.output)));
+      else if(st.entity == StateStruct::NodalDataToElemNode)
+        elemnodescalar_states.push_back(Teuchos::rcp(new PUMIQPData<double, 2>(st.name, dim, st.output)));
     }
     else if (dim.size() == 3) {
       if(st.entity == StateStruct::QuadPoint || st.entity == StateStruct::ElemNode)
@@ -414,12 +424,22 @@ Albany::APFMeshStruct::getMeshSpecs()
   return meshSpecs;
 }
 
+const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
+Albany::APFMeshStruct::getMeshSpecs() const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
+       std::logic_error,
+       "meshSpecs accessed, but it has not been constructed" << std::endl);
+  return meshSpecs;
+}
+
 int Albany::APFMeshStruct::computeWorksetSize(const int worksetSizeMax,
                                                      const int ebSizeMax) const
 {
   // Resize workset size down to maximum number in an element block
-  if (worksetSizeMax > ebSizeMax || worksetSizeMax < 1) return ebSizeMax;
-  else {
+  if (worksetSizeMax > ebSizeMax || worksetSizeMax < 1) {
+    return ebSizeMax;
+  } else {
      // compute numWorksets, and shrink workset size to minimize padding
      const int numWorksets = 1 + (ebSizeMax-1) / worksetSizeMax;
      return (1 + (ebSizeMax-1) /  numWorksets);
@@ -452,7 +472,7 @@ Albany::APFMeshStruct::getValidDiscretizationParameters() const
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid2");
-  validPL->set<int>("Workset Size", 50, "Upper bound on workset (bucket) size");
+  validPL->set<int>("Workset Size", 10000, "Upper bound on workset (bucket) size");
   validPL->set<bool>("Interleaved Ordering", true, "Flag for interleaved or blocked unknown ordering");
   validPL->set<bool>("Separate Evaluators by Element Block", false,
                      "Flag for different evaluation trees for each Element Block");

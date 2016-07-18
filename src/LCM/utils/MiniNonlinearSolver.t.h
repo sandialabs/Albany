@@ -97,7 +97,7 @@ MiniSolver(
   // there won't be confusion with MiniSolver's FAD.
     using AD = Intrepid2::FAD<RealType, N>;
 
-    using T = PHAL::AlbanyTraits::Jacobian::ScalarT;
+    using T = PHAL::AlbanyTraits::Tangent::ScalarT;
 
     static_assert(
         std::is_same<T, AD>::value == false,

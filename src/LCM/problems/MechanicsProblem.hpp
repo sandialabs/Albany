@@ -838,7 +838,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           false,
           dof_names,
           dof_names_dot,
-          Teuchos::null));
+          Teuchos::null,
+          offset));
     } else {
       fm0.template registerEvaluator<EvalT>
       (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
@@ -1886,22 +1887,32 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         output_flag =
             material_db_->getElementBlockParam<bool>(eb_name,
                 "Output Deformation Gradient");
+      // MJJ (06/17/2016) I want to save the old values of the deformation
+      // gradient
+      // optional output
+      bool old_defgrad_flag(false);
+      if (material_db_->isElementBlockParam(eb_name,
+          "Old Deformation Gradient"))
+        old_defgrad_flag =
+            material_db_->getElementBlockParam<bool>(eb_name,
+                "Old Deformation Gradient");
+      if (output_flag || old_defgrad_flag)
+            {
 
-      if (output_flag) {
-        p = stateMgr.registerStateVariable(defgrad,
-            dl_->qp_tensor,
-            dl_->dummy,
-            eb_name,
-            "identity",
-            1.0,
-            false,
-            output_flag);
-        ev = Teuchos::rcp(
-            new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
-        fm0.template registerEvaluator<EvalT>(ev);
-      }
+                p = stateMgr.registerStateVariable(defgrad,
+                                                   dl_->qp_tensor,
+                                                   dl_->dummy,
+                                                   eb_name,
+                                                   "identity",
+                                                   1.0,
+                                                   old_defgrad_flag,
+                                                   output_flag);
+                ev = Teuchos::rcp(
+                                  new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+                fm0.template registerEvaluator<EvalT>(ev);
+            }
 
-            // optional output of the integration weights
+      // optional output of the integration weights
       output_flag = false;
       if (material_db_->isElementBlockParam(eb_name,
         "Output Integration Weights"))
@@ -1927,19 +1938,43 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       if (material_db_->isElementBlockParam(eb_name, "Output J"))
         output_flag =
             material_db_->getElementBlockParam<bool>(eb_name, "Output J");
-      if (have_pore_pressure_eq_ || output_flag) {
-        p = stateMgr.registerStateVariable(J,
+//      if (have_pore_pressure_eq_ || output_flag) {
+//        p = stateMgr.registerStateVariable(J,
+//            dl_->qp_scalar,
+//            dl_->dummy,
+//            eb_name,
+//            "scalar",
+//            1.0,
+//            true,
+//            output_flag);
+//        ev = Teuchos::rcp(
+//            new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+//        fm0.template registerEvaluator<EvalT>(ev);
+//      } else if (true) // MJJ. Incompatible with pore_pressure_eq. Need to fix it.
+//      {
+//          p = stateMgr.registerStateVariable(J,
+//            dl_->qp_scalar,
+//            dl_->dummy,
+//            eb_name,
+//            "scalar",
+//            1.0,
+//            true,
+//            false);
+//        ev = Teuchos::rcp(
+//            new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+//        fm0.template registerEvaluator<EvalT>(ev);
+//      }
+      p = stateMgr.registerStateVariable(J,
             dl_->qp_scalar,
             dl_->dummy,
             eb_name,
             "scalar",
             1.0,
             true,
-            output_flag);
+            false);
         ev = Teuchos::rcp(
             new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
-      }
 
       // Optional output: strain
       if (small_strain) {
@@ -2755,6 +2790,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Scalar Variable Name", "Temperature");
     p->set<std::string>("Scalar Gradient Variable Name",
         "Temperature Gradient");
+    if (have_mech_eq_)
+        {
+            p->set<std::string>("Velocity Gradient Variable Name",
+                    "Velocity Gradient");
+            p->set<std::string>("Stress Name", firstPK);
+            p->set<bool>("Have Mechanics", true);
+        }
     p->set<std::string>("Weights Name", "Weights");
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<std::string>("Weighted BF Name", "wBF");
@@ -2764,6 +2806,15 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Scalar Dot Name", "Temperature Dot");
     p->set<std::string>("Transient Coefficient Name",
         "Thermal Transient Coefficient");
+    
+    if (SolutionType == Albany::SolutionMethodType::Continuation)
+        {
+            p->set<std::string>("Solution Method Type", "Continuation");
+        }
+        else
+        {
+            p->set<std::string>("Solution Method Type", "No Continuation");
+        }
 
     // Diffusion
     p->set<bool>("Have Diffusion", true);

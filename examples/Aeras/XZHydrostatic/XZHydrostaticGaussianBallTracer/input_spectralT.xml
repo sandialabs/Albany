@@ -1,6 +1,7 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Aeras XZ Hydrostatic"/>
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="XZHydrostatic Problem">
       <!--Parameter name="Reynolds Number" type="double" value="0.02"/-->

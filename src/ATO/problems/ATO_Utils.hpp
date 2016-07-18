@@ -16,6 +16,7 @@
 #include "Phalanx.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Albany_Layouts.hpp"
+#include "Albany_StateManager.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
 #include "Teuchos_VerboseObject.hpp"

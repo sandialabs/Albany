@@ -85,6 +85,52 @@ Teuchos::RCP<Epetra_CrsGraph> Petra::TpetraCrsGraph_To_EpetraCrsGraph(const Teuc
 
 //TpetraCrsMatrix_To_EpetraCrsMatrix: copies Tpetra::CrsMatrix object into its analogous
 //Epetra_CrsMatrix object
+Teuchos::RCP<Epetra_CrsMatrix>
+Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(const Teuchos::RCP<Tpetra_CrsMatrix>& tpetraCrsMatrix,
+                                          const Teuchos::RCP<const Epetra_Comm>& comm)
+{
+  Teuchos::RCP<Epetra_CrsGraph> epetraCrsGraph = Petra::TpetraCrsGraph_To_EpetraCrsGraph(tpetraCrsMatrix->getCrsGraph(),comm);
+  Teuchos::RCP<Epetra_CrsMatrix> epetraCrsMatrix = Teuchos::rcp(new Epetra_CrsMatrix(Copy,*epetraCrsGraph));
+
+  GO col; ST val;
+  Teuchos::ArrayView<const ST> tValues;
+  int numEntries;
+  double* eValues;
+  if (tpetraCrsMatrix->isLocallyIndexed())
+  {
+    Teuchos::ArrayView<const LO> tIndices;
+    Teuchos::RCP<const Tpetra_Map> tpetraColMap = tpetraCrsMatrix->getColMap();
+    for (std::size_t i = 0; i<tpetraCrsMatrix->getNodeNumRows(); i++)
+    {
+       tpetraCrsMatrix->getLocalRowView(i, tIndices, tValues);
+       epetraCrsMatrix->ExtractMyRowView(i, numEntries, eValues);
+       for (std::size_t j=0; j<numEntries; ++j)
+       {
+          eValues[j] = tValues[j];
+       }
+    }
+  }
+  else
+  {
+    Teuchos::RCP<const Tpetra_Map> tpetraRangeMap  = tpetraCrsMatrix->getRangeMap();
+    Teuchos::ArrayView<const GO> tIndices;
+    for (std::size_t i = 0; i<tpetraCrsMatrix->getNodeNumRows(); i++)
+    {
+       GO row = tpetraRangeMap->getGlobalElement(i);
+       tpetraCrsMatrix->getGlobalRowView(row, tIndices, tValues);
+       epetraCrsMatrix->ExtractGlobalRowView(row, numEntries, eValues);
+       for (std::size_t j=0; j<numEntries; ++j)
+       {
+          eValues[j] = tValues[j];
+       }
+    }
+  }
+
+  return epetraCrsMatrix;
+}
+
+//TpetraCrsMatrix_To_EpetraCrsMatrix: copies Tpetra::CrsMatrix object into its analogous
+//Epetra_CrsMatrix object
 void Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(const Teuchos::RCP<Tpetra_CrsMatrix>& tpetraCrsMatrix_,
                                                Epetra_CrsMatrix& epetraCrsMatrix_,
                                                const Teuchos::RCP<const Epetra_Comm>& comm_)

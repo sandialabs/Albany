@@ -109,7 +109,7 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid2::FunctionSpaceTools FST; 
 
   // Initialize residual to 0.0
-  Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));
+  Kokkos::deep_copy(Residual.get_view(), ScalarT(0.0));
 
   const Albany::SideSetList& ssList = *(workset.sideSets);
   Albany::SideSetList::const_iterator it = ssList.find(meshPart);

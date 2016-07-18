@@ -14,8 +14,8 @@
 namespace PHAL {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-DOFVecInterpolation<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename Type>
+DOFVecInterpolation<EvalT, Traits, Type>::
 DOFVecInterpolation(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl) :
   val_node    (p.get<std::string>  ("Variable Name"), dl->node_vector),
@@ -37,8 +37,8 @@ DOFVecInterpolation(const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void DOFVecInterpolation<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename Type>
+void DOFVecInterpolation<EvalT, Traits, Type>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -88,8 +88,8 @@ class VecInterpolation {
 };
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void DOFVecInterpolation<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename Type>
+void DOFVecInterpolation<EvalT, Traits, Type>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -128,7 +128,7 @@ std::cout<< "DOFVecInterpolation Residual time = "  << millisec << "  "  << micr
 
 //**********************************************************************
 template<typename Traits>
-DOFVecInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
+DOFVecInterpolation<PHAL::AlbanyTraits::Jacobian, Traits, FadType>::
 DOFVecInterpolation(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl) :
   val_node    (p.get<std::string>  ("Variable Name"), dl->node_vector),
@@ -153,7 +153,7 @@ DOFVecInterpolation(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename Traits>
-void DOFVecInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
+void DOFVecInterpolation<PHAL::AlbanyTraits::Jacobian, Traits, FadType>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -213,7 +213,7 @@ class VecInterpolationJacob {
 
 //**********************************************************************
 template<typename Traits>
-void DOFVecInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
+void DOFVecInterpolation<PHAL::AlbanyTraits::Jacobian, Traits, FadType>::
 evaluateFields(typename Traits::EvalData workset)
 {
   int num_dof = val_node(0,0,0).size();
@@ -243,7 +243,7 @@ evaluateFields(typename Traits::EvalData workset)
 #ifdef ALBANY_SG
 //**********************************************************************
 template<typename Traits>
-DOFVecInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>::
+DOFVecInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, SGFadType>::
 DOFVecInterpolation(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl) :
   val_node    (p.get<std::string>  ("Variable Name"), dl->node_vector),
@@ -268,7 +268,7 @@ DOFVecInterpolation(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename Traits>
-void DOFVecInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>::
+void DOFVecInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, SGFadType>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -278,7 +278,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 //**********************************************************************
 template<typename Traits>
-void DOFVecInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>::
+void DOFVecInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, SGFadType>::
 evaluateFields(typename Traits::EvalData workset)
 {
   int num_dof = val_node(0,0,0).size();
@@ -309,7 +309,7 @@ evaluateFields(typename Traits::EvalData workset)
 #ifdef ALBANY_ENSEMBLE
 //**********************************************************************
 template<typename Traits>
-DOFVecInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>::
+DOFVecInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, MPFadType>::
 DOFVecInterpolation(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl) :
   val_node    (p.get<std::string>  ("Variable Name"), dl->node_vector),
@@ -334,7 +334,7 @@ DOFVecInterpolation(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename Traits>
-void DOFVecInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>::
+void DOFVecInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, MPFadType>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -344,7 +344,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 //**********************************************************************
 template<typename Traits>
-void DOFVecInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>::
+void DOFVecInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, MPFadType>::
 evaluateFields(typename Traits::EvalData workset)
 {
   int num_dof = val_node(0,0,0).size();
@@ -386,3 +386,4 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
 
 }
+

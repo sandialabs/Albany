@@ -31,6 +31,41 @@ CrystalPlasticityModel(
       p->get< Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> >("NOX Status Test");
   }
 
+  Teuchos::ParameterList
+  e_list = p->sublist("Crystal Elasticity");
+
+  if (p->isParameter("Read Lattice Orientation From Mesh")) {
+    read_orientations_from_mesh_ = true;
+  }
+  else {
+    read_orientations_from_mesh_ = false;
+    // TODO check if basis is given else default
+    // NOTE default to coordinate axes; construct 3rd direction if only 2 given
+    element_block_orientation_.set_dimension(num_dims_);
+    for (int i = 0; i < num_dims_; ++i) {
+      std::vector<RealType> 
+      b_temp = e_list.get<Teuchos::Array<RealType>>(
+        Albany::strint("Basis Vector", i + 1)).toVector();
+
+      RealType 
+	norm = 0.;
+
+      for (int j = 0; j < num_dims_; ++j) {
+	norm += b_temp[j] * b_temp[j];
+      }
+
+      RealType const 
+	inverse_norm = 1. / std::sqrt(norm);
+
+      // TODO check zero, rh system
+      // Filling columns of transformation with basis vectors
+      // We are forming R^{T} which is equivalent to the direction cosine matrix
+      for (int j = 0; j < num_dims_; ++j) {
+	element_block_orientation_(j, i) = b_temp[j] * inverse_norm;
+      }
+    }
+  }
+
   integration_scheme_ = IntegrationScheme::EXPLICIT;
   if (p->isParameter("Integration Scheme")) {
     std::string integration_scheme_string = p->get<std::string>(
@@ -89,6 +124,9 @@ CrystalPlasticityModel(
     else if (step_type_string == "Line Search Regularized") {
       step_type_ = Intrepid2::StepType::LINE_SEARCH_REG;
     }
+    else if (step_type_string == "Newton with Line Search") {
+      step_type_ = Intrepid2::StepType::NEWTON_LS;
+    }
     else {
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
@@ -97,8 +135,9 @@ CrystalPlasticityModel(
             \"Nonlinear Solver Step Type\", must be \
             \"Newton\", \
             \"Trust Region\", \
-            \"Conjugate Gradient\", or \
-            \"Line Search Regularized\".\n");
+            \"Conjugate Gradient\", \
+            \"Line Search Regularized\", or \
+            \"Newton with Line Search\".\n");
     }
   }
 
@@ -139,11 +178,8 @@ CrystalPlasticityModel(
 
   //
   // Obtain crystal elasticity constants and populate elasticity tensor
-  //
-  Teuchos::ParameterList
-  e_list = p->sublist("Crystal Elasticity");
   // assuming cubic symmetry
-
+  //
   c11_ = e_list.get<RealType>("C11");
   c12_ = e_list.get<RealType>("C12");
   c44_ = e_list.get<RealType>("C44");
@@ -152,59 +188,13 @@ CrystalPlasticityModel(
   c44_temperature_coeff_ = e_list.get<RealType>("M44",0.0);
   reference_temperature_ = e_list.get<RealType>("Reference Temperature",0.0);
 
-
-  Intrepid2::Tensor4<ScalarT, CP::MAX_DIM>
-  C(Intrepid2::ZEROS);
-
-  C.set_dimension(num_dims_);
-  CP::computeCubicElasticityTensor(c11_, c12_, c44_, C);
+  C_unrotated_.set_dimension(num_dims_);
+  CP::computeCubicElasticityTensor(c11_, c12_, c44_, C_unrotated_);
+  C_.set_dimension(num_dims_);
 
   if (verbosity_ > 2) {
     // print elasticity tensor
-    std::cout << ">>> C :" << std::endl << C << std::endl;
-  }
-
-  // TODO check if basis is given else default
-  // NOTE default to coordinate axes; construct 3rd direction if only 2 given
-  for (int i = 0; i < num_dims_; ++i) {
-
-    std::vector<RealType> 
-    b_temp = e_list.get<Teuchos::Array<RealType>>(
-        Albany::strint("Basis Vector", i + 1)).toVector();
-
-    RealType 
-    norm = 0.;
-
-    for (int j = 0; j < num_dims_; ++j) {
-      norm += b_temp[j] * b_temp[j];
-    }
-
-    RealType const 
-    inverse_norm = 1. / std::sqrt(norm);
-
-    // TODO check zero, rh system
-    // Filling columns of transformation with basis vectors
-    // We are forming R^{T} which is equivalent to the direction cosine matrix
-    orientation_.set_dimension(num_dims_);
-    for (int j = 0; j < num_dims_; ++j) {
-      orientation_(j, i) = b_temp[j] * inverse_norm;
-    }
-  }
-
-  if (verbosity_ > 2) {
-    // print rotation tensor employed for transformations
-    std::cout << ">>> orientation_ :\n" << orientation_ << std::endl;
-  }
-
-  //
-  // rotate elastic tensor and slip systems to match given orientation
-  //
-  // Intrepid2::Tensor4<ScalarT, CP::MAX_DIM> C_;
-  C_ = Intrepid2::kronecker(orientation_, C);
-
-  if (verbosity_ > 2) {
-    // print rotated elasticity tensor
-    std::cout << ">>> C_ :" << std::endl << C_ << std::endl;
+    std::cout << ">>> Unrotated C :" << std::endl << C_unrotated_ << std::endl;
   }
 
   //
@@ -232,7 +222,7 @@ CrystalPlasticityModel(
     }
     s_temp_normalized = Intrepid2::unit(s_temp_normalized);
     slip_systems_[num_ss].s_.set_dimension(num_dims_);
-    slip_systems_[num_ss].s_ = orientation_ * s_temp_normalized;
+    s_unrotated_.push_back( s_temp_normalized );
 
     //
     // Obtain and normalize slip normals. Miller indices need to be normalized.
@@ -248,25 +238,9 @@ CrystalPlasticityModel(
     }
     n_temp_normalized = Intrepid2::unit(n_temp_normalized);
     slip_systems_[num_ss].n_.set_dimension(num_dims_);
-    slip_systems_[num_ss].n_ = orientation_ * n_temp_normalized;
-
-    // Print each slip direction and slip normal after transformation
-    if (verbosity_ > 2) {
-      std::cout << ">>> slip direction " << num_ss + 1 << ": "
-          << slip_systems_[num_ss].s_ << std::endl;
-      std::cout << ">>> slip normal " << num_ss + 1 << ": "
-          << slip_systems_[num_ss].n_ << std::endl;
-    }
+    n_unrotated_.push_back( n_temp_normalized );
 
     slip_systems_[num_ss].projector_.set_dimension(num_dims_);
-    slip_systems_[num_ss].projector_ = 
-      Intrepid2::dyad(slip_systems_[num_ss].s_, slip_systems_[num_ss].n_);
-
-    // Print projector
-    if (verbosity_ > 2) {
-      std::cout << ">>> projector_ " << num_ss + 1 << ": "
-          << slip_systems_[num_ss].projector_ << std::endl;
-    }
 
     //
     // Obtain flow rule parameters
@@ -299,6 +273,23 @@ CrystalPlasticityModel(
 
       slip_systems_[num_ss].energy_activation_ = 
           f_list.get<RealType>("Activation Energy", 0.0);
+    }
+    else if(type_flow_rule == "Power Law with Drag")
+    {
+      slip_systems_[num_ss].flow_rule = CP::FlowRule::POWER_LAW_DRAG;
+
+      slip_systems_[num_ss].rate_slip_reference_ = 
+          f_list.get<RealType>("Gamma Dot", 0.0);
+
+      slip_systems_[num_ss].exponent_rate_ = 
+          f_list.get<RealType>("Gamma Exponent", 0.0);
+
+      slip_systems_[num_ss].drag_coeff_ = 
+          f_list.get<RealType>("Drag Coefficient", 0.0);
+    }
+    else
+    {
+      slip_systems_[num_ss].flow_rule = CP::FlowRule::POWER_LAW;
     }
 
     //
@@ -430,6 +421,9 @@ CrystalPlasticityModel(
   std::string const
   residual_string = (*field_name_map_)["CP_Residual"];
 
+  std::string const
+  residual_iter_string = (*field_name_map_)["CP_Residual_Iter"];
+
   //
   // define the dependent fields required for calculation
   //
@@ -447,6 +441,7 @@ CrystalPlasticityModel(
   this->eval_field_map_.insert(std::make_pair(L_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair(residual_string, dl->qp_scalar));
+  this->eval_field_map_.insert(std::make_pair(residual_iter_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair("Time", dl->workset_scalar));
   if (have_temperature_) {
     this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
@@ -617,8 +612,18 @@ CrystalPlasticityModel(
   this->state_var_old_state_flags_.push_back(false);
   this->state_var_output_flags_.push_back(
       p->get<bool>("Output CP_Residual", false));
-}
 
+  // residual iterations
+  this->num_state_variables_++;
+  this->state_var_names_.push_back(residual_iter_string);
+  this->state_var_layouts_.push_back(dl->qp_scalar);
+  this->state_var_init_types_.push_back("scalar");
+  this->state_var_init_values_.push_back(0.0);
+  this->state_var_old_state_flags_.push_back(false);
+  this->state_var_output_flags_.push_back(
+      p->get<bool>("Output CP_Residual_Iter", false));    
+
+}
 
 //
 // Compute the constitutive response of the material
@@ -626,12 +631,20 @@ CrystalPlasticityModel(
 template<typename EvalT, typename Traits>
 void CrystalPlasticityModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>dep_fields,
-std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 {
 
   if(verbosity_ > 2) {
     std::cout << ">>> in cp compute state\n";
+  }
+
+  if (read_orientations_from_mesh_) {
+    Teuchos::ArrayRCP<double*> const& rotation_matrix_transpose = workset.wsLatticeOrientation;
+    TEUCHOS_TEST_FOR_EXCEPTION(
+	rotation_matrix_transpose.is_null(),
+	std::logic_error,
+	"\n**** Error in CrystalPlasticityModel, rotation matrix not found on genesis mesh.\n");
   }
 
   //
@@ -654,6 +667,9 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 
   std::string const
   residual_string = (*field_name_map_)["CP_Residual"];
+
+  std::string const
+  residual_iter_string = (*field_name_map_)["CP_Residual_Iter"];
 
   std::string const
   source_string = (*field_name_map_)["Mechanical_Source"];
@@ -703,6 +719,9 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 
   PHX::MDField<ScalarT>
   cp_residual = *eval_fields[residual_string];
+
+  PHX::MDField<ScalarT>
+  cp_residual_iter = *eval_fields[residual_iter_string];
 
   PHX::MDField<ScalarT>
   time = *eval_fields["Time"];
@@ -783,6 +802,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
   }
 
   // get state variables
+
   Albany::MDArray
   previous_plastic_deformation = (*workset.stateArrayPtr)[Fp_string + "_old"];
 
@@ -858,10 +878,16 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
   norm_slip_residual;
 
   RealType
+  residual_iter;
+
+  RealType
   equivalent_plastic_strain;
 
   bool
   update_state_successful{true};
+
+  Intrepid2::Tensor<RealType, CP::MAX_DIM>
+  orientation_matrix(num_dims_);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
 
@@ -881,18 +907,37 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
         RealType const
         c44 = c44_ + c44_temperature_coeff_ * (tlocal - reference_temperature_);
 
-        Intrepid2::Tensor4<ScalarT, CP::MAX_DIM>
-        C(num_dims_);
-
-        CP::computeCubicElasticityTensor(c11, c12, c44, C);
-
-        C_ = Intrepid2::kronecker(orientation_, C);
+        CP::computeCubicElasticityTensor(c11, c12, c44, C_unrotated_);
 
         if (verbosity_ > 2) {
           std::cout << "tlocal: " << tlocal << std::endl;
           std::cout << "c11, c12, c44: " << c11 << c12 << c44 << std::endl;
         }
+      }
 
+      if (read_orientations_from_mesh_) {
+	Teuchos::ArrayRCP<double*> const& rotation_matrix_transpose = workset.wsLatticeOrientation;
+	orientation_matrix(0,0) = rotation_matrix_transpose[cell][0];
+	orientation_matrix(0,1) = rotation_matrix_transpose[cell][1];
+	orientation_matrix(0,2) = rotation_matrix_transpose[cell][2];
+	orientation_matrix(1,0) = rotation_matrix_transpose[cell][3];
+	orientation_matrix(1,1) = rotation_matrix_transpose[cell][4];
+	orientation_matrix(1,2) = rotation_matrix_transpose[cell][5];
+	orientation_matrix(2,0) = rotation_matrix_transpose[cell][6];
+	orientation_matrix(2,1) = rotation_matrix_transpose[cell][7];
+	orientation_matrix(2,2) = rotation_matrix_transpose[cell][8];
+      }
+      else {
+	orientation_matrix = element_block_orientation_;
+      }
+
+      // Set the rotated elasticity tensor, slip normals, slip directions, and projection operator
+      C_ = Intrepid2::kronecker(orientation_matrix, C_unrotated_);
+      for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
+	slip_systems_[num_ss].s_ = orientation_matrix * s_unrotated_[num_ss];
+	slip_systems_[num_ss].n_ = orientation_matrix * n_unrotated_[num_ss];
+ 	slip_systems_[num_ss].projector_ =
+ 	  Intrepid2::dyad(slip_systems_[num_ss].s_, slip_systems_[num_ss].n_);
       }
 
       equivalent_plastic_strain = 
@@ -1203,6 +1248,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 
           // Compute the residual norm 
           norm_slip_residual = std::sqrt(2.0 * minimizer.final_value);
+	  residual_iter = minimizer.num_iter;
 
         }
         break;
@@ -1261,6 +1307,7 @@ std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 
         // residual norm
         cp_residual(cell, pt) = norm_slip_residual;
+	cp_residual_iter(cell,pt) = residual_iter;
 
         // num_dims_ x num_dims_ dimensional array variables
         for (int i(0); i < num_dims_; ++i) {

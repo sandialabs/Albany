@@ -9,6 +9,16 @@
   </SubProject>
   <SubProject name="IKTAlbanyFunctor">
   </SubProject>
+  <SubProject name="IKTAlbanyFunctorOpenMP">
+  </SubProject>
   <SubProject name="IKTCismAlbany">
+  </SubProject>
+  <SubProject name="IKTCismAlbanyEpetra">
+  </SubProject>
+  <SubProject name="IKT_AlbanyDynRankView_NoFunctor">
+  </SubProject>
+  <SubProject name="IKT_AlbanyDynRankView_FunctorSerial">
+  </SubProject>
+  <SubProject name="IKT_AlbanyDynRankView_FunctorOpenMP">
   </SubProject>
 </Project>

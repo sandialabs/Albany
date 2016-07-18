@@ -18,8 +18,7 @@ Aeras::ShallowWaterResponseL2Norm<EvalT, Traits>::
 ShallowWaterResponseL2Norm(Teuchos::ParameterList& p,
 		      const Teuchos::RCP<Albany::Layouts>& dl) :
   weighted_measure("Weights", dl->qp_scalar),
-  flow_state_field("Flow State", dl->node_vector), 
-  BF("BF",dl->node_qp_scalar)
+  flow_state_field("Flow State", dl->node_vector) 
 {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   // get and validate Response parameter list
@@ -48,7 +47,6 @@ ShallowWaterResponseL2Norm(Teuchos::ParameterList& p,
   // add dependent fields
   this->addDependentField(flow_state_field);
   this->addDependentField(weighted_measure);
-  this->addDependentField(BF);
   this->setName(fieldName+" Aeras Shallow Water L2 Norm"+PHX::typeAsString<EvalT>());
   
   using PHX::MDALayout;
@@ -81,7 +79,6 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(flow_state_field,fm);
   this->utils.setFieldData(weighted_measure,fm);
-  this->utils.setFieldData(BF,fm);
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postRegistrationSetup(d,fm);
 }
 
@@ -103,33 +100,16 @@ evaluateFields(typename Traits::EvalData workset)
   // Zero out local response
   PHAL::set(this->local_response, 0.0);
 
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flow_state_field_qp(workset.numCells, numQPs, nPrimaryDOFs); //flow_state_field at quad points
-  
-  //Interpolate flow_state_field from nodes -> quadrature points.  
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    this->local_response(cell,3) = 0.0;  
-    this->global_response(3) = 0.0; 
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      for (std::size_t i=0; i<nPrimaryDOFs; i++) {
-        // Zero out for node==0; then += for node = 1 to numNodes
-        flow_state_field_qp(cell,qp,i) = 0.0;
-        flow_state_field_qp(cell,qp,i) = flow_state_field(cell, 0, i)*BF(cell, 0, qp); 
-        for (std::size_t node=1; node < numNodes; ++node) {
-          flow_state_field_qp(cell,qp,i) += flow_state_field(cell,node,i)*BF(cell,node,qp); 
-        }
-       }
-     }
-   }
-
- 
-  //Calculate L2 norm squared of each component of solution
+  //Calculate L2 norm squared of each component of solution.  We do not need to do 
+  //an interpolation from the nodes to the QPs of the solution since nodes = QPs for Aeras
+  //spectral elements.  
   ScalarT wm;
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       wm = weighted_measure(cell,qp);
       for (std::size_t dim=0; dim<nPrimaryDOFs; ++dim) {
-        this->local_response(cell,dim) += wm*flow_state_field_qp(cell,qp,dim)*flow_state_field_qp(cell,qp,dim);
-        this->global_response(dim) += wm*flow_state_field_qp(cell,qp,dim)*flow_state_field_qp(cell,qp,dim);
+        this->local_response(cell,dim) += wm*flow_state_field(cell,qp,dim)*flow_state_field(cell,qp,dim);
+        this->global_response(dim) += wm*flow_state_field(cell,qp,dim)*flow_state_field(cell,qp,dim);
       }
     }
   }

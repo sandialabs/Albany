@@ -17,6 +17,6 @@ if [ -f $LOG_FILE ]; then
   rm $LOG_FILE
 fi
 
-eval "env  TEST_DIRECTORY=/lore/ghansen/nightly SCRIPT_DIRECTORY=/users/ghansen/Albany/doc/dashboards/avatar.scorec.rpi.edu ctest -VV -S /users/ghansen/Albany/doc/dashboards/avatar.scorec.rpi.edu/ctest_nightly_mpi_opt_avatar.cmake" >> $LOG_FILE 2>&1
+eval "env  TEST_DIRECTORY=/lore/ghansen/nightly SCRIPT_DIRECTORY=/users/ghansen/Albany/doc/dashboards/avatar.scorec.rpi.edu ctest -VV -S /users/ghansen/Albany/doc/dashboards/avatar.scorec.rpi.edu/ctest_nightly_avatar.cmake" >> $LOG_FILE 2>&1
 
 

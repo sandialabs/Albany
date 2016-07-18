@@ -6,7 +6,8 @@
   <Parameter name="Target Mesh Output File" type="string" value="target_disp_out.exo"/>
   <Parameter name="Number of Iterations" type="int" value="10"/>
   <Parameter name="Compute Relative Error" type="bool" value="false"/>
-  <Parameter name="Field Name" type="string" value="disp"/>
+  <Parameter name="Source Field Name" type="string" value="disp"/>
+  <Parameter name="Target Field Name" type="string" value="disp"/>
   <ParameterList name="DataTransferKit">
     <Parameter name="Map Type" type="string" value="Consistent Interpolation"/>
     <ParameterList name="L2 Projection">

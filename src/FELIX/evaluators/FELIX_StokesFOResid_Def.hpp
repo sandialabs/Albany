@@ -369,6 +369,7 @@ class StokesFOResid_3D_FELIX  {
  MDFieldType7 basalRes_;
  const int numNodes_;
  const int numQPs_;
+ bool needsBasalResidual_;
 
  public:
  typedef DeviceType device_type;
@@ -381,7 +382,8 @@ class StokesFOResid_3D_FELIX  {
                          MDFieldType6 &wBF,
                          MDFieldType7 &basalRes,
                          int numNodes,
-                         int numQPs)
+                         int numQPs,
+                         bool needsBasalResidual)
   : Residual_(Residual)
   , wGradBF_(wGradBF)
   , force_(force)
@@ -390,23 +392,24 @@ class StokesFOResid_3D_FELIX  {
   , wBF_(wBF)
   , basalRes_(basalRes)
   , numNodes_(numNodes)
-  , numQPs_(numQPs){}
+  , numQPs_(numQPs)
+  , needsBasalResidual_(needsBasalResidual){}
 
  KOKKOS_INLINE_FUNCTION
  void operator () (const int i) const
  {
-  if (needsBasalResidual)
+  if (needsBasalResidual_)
   {
-    for (int node=0; node<numNodes; ++node){
-      Residual(i,node,0)=basalRes(i,node,0);
-      Residual(i,node,1)=basalRes(i,node,1);
+    for (int node=0; node<numNodes_; ++node){
+      Residual_(i,node,0)=basalRes_(i,node,0);
+      Residual_(i,node,1)=basalRes_(i,node,1);
     }
   }
   else
   {
-    for (int node=0; node<numNodes; ++node){
-      Residual(i,node,0)=0.;
-      Residual(i,node,1)=0.;
+    for (int node=0; node<numNodes_; ++node){
+      Residual_(i,node,0)=0.;
+      Residual_(i,node,1)=0.;
     }
   }
 
@@ -451,7 +454,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Initialize residual to 0.0
 
-//  Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));
+//  Kokkos::deep_copy(Residual.get_view(), ScalarT(0.0));
 
   if (needsBasalResidual)
   {

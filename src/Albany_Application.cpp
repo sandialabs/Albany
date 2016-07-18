@@ -49,10 +49,6 @@
 #endif
 #endif
 
-#ifdef ALBANY_GOAL
-#include "GOAL_BCUtils.hpp"
-#endif
-
 //#define WRITE_TO_MATRIX_MARKET
 
 using Teuchos::ArrayRCP;
@@ -185,7 +181,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   // Create problem object
   problemParams = Teuchos::sublist(params, "Problem", true);
 
-  Albany::ProblemFactory problemFactory(problemParams, paramLib, commT);
+  Albany::ProblemFactory problemFactory(params, paramLib, commT);
   rc_mgr = AAdapt::rc::Manager::create(
     Teuchos::rcp(&stateMgr, false), *problemParams);
   if (Teuchos::nonnull(rc_mgr))
@@ -640,6 +636,15 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
     morFacade = createMORFacade(disc, problemParams);
 #endif
 #endif
+  //MPerego: Preforming post registration setup here to make sure that the discretization is already created, so that 
+  //derivative dimensions are known. Cannot do post registration right before the evaluate , as done for other field managers.
+  //because memoizer hack is needed by Aeras.
+  //TODO, determine when it's best to perform post setup registration and fix memoizer hack if needed.
+  for(int i=0; i<responses.size(); ++i)
+  {
+    responses[i]->postRegSetup();
+  }
+
 
 /*
  * Initialize mesh adaptation features
@@ -1208,12 +1213,6 @@ computeGlobalResidualImplT(
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
 
-#ifdef ALBANY_GOAL
-  double t = current_time;
-  if (paramLib->isParameter("Time"))
-    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-  GOAL::computeHierarchicBCs(t, (*this), xT, fT, Teuchos::null);
-#endif
   //scale residual by scaleVec_ if scaleBCdofs is on 
   if (scaleBCdofs == true) 
     fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0); 
@@ -1478,7 +1477,7 @@ computeGlobalJacobianImplT(const double alpha,
   }
 #endif
 #endif
-
+  
   //scale Jacobian 
   if (scaleBCdofs == false && scale != 1.0) { 
     jacT->fillComplete();
@@ -1558,15 +1557,8 @@ computeGlobalJacobianImplT(const double alpha,
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
   }
-
-#ifdef ALBANY_GOAL
-  double t = current_time;
-  if (paramLib->isParameter("Time"))
-    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-  GOAL::computeHierarchicBCs(t, (*this), xT, fT, jacT);
-#endif
   jacT->fillComplete();
-
+  
   //Apply scaling to residual and Jacobian 
   if (scaleBCdofs == true) {
     if (Teuchos::nonnull(fT))
@@ -4268,11 +4260,15 @@ postRegSetup(std::string eval)
                                "Error in setup call \n" << " Unrecognized name: " << eval << std::endl);
 
 
-  // Write out Phalanx Graph if requested, on Proc 0, for Resid or Jacobian
+  // Write out Phalanx Graph if requested, on Proc 0, for Resid and Jacobian
+  bool alreadyWroteResidPhxGraph = false;
+  bool alreadyWroteJacPhxGraph = false;
+
   if (phxGraphVisDetail>0) {
+
     bool detail = false; if (phxGraphVisDetail > 1) detail=true;
 
-    if (eval=="Residual") {
+    if ((eval=="Residual") && (alreadyWroteResidPhxGraph == false))  {
       *out << "Phalanx writing graphviz file for graph of Residual fill (detail ="
            << phxGraphVisDetail << ")"<<std::endl;
       *out << "Process using 'dot -Tpng -O phalanx_graph' \n" << std::endl;
@@ -4280,9 +4276,10 @@ postRegSetup(std::string eval)
         std::stringstream pg; pg << "phalanx_graph_" << ps;
         fm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Residual>(pg.str(),detail,detail);
       }
+      alreadyWroteResidPhxGraph = true; 
 //      phxGraphVisDetail = -1;
     }
-    else if (eval=="Jacobian") {
+    else if ((eval=="Jacobian") && (alreadyWroteJacPhxGraph == false)) {
       *out << "Phalanx writing graphviz file for graph of Jacobian fill (detail ="
            << phxGraphVisDetail << ")"<<std::endl;
       *out << "Process using 'dot -Tpng -O phalanx_graph' \n" << std::endl;
@@ -4290,8 +4287,11 @@ postRegSetup(std::string eval)
         std::stringstream pg; pg << "phalanx_graph_jac_" << ps;
         fm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Jacobian>(pg.str(),detail,detail);
       }
-      phxGraphVisDetail = -2;
+      alreadyWroteJacPhxGraph = true; 
     }
+    //Stop writing out phalanx graphs only when a Jacobian and a Residual graph has been written out
+    if ((alreadyWroteResidPhxGraph == true) && (alreadyWroteJacPhxGraph == true))
+      phxGraphVisDetail = -2;
   }
 }
 

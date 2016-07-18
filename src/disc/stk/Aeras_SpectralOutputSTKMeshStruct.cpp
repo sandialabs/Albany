@@ -284,16 +284,16 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
           coord = stk::mesh::field_data(*coordinates_field, node0);
           coord[0] = coords[ws][e][i][0];
 #ifdef OUTPUT_TO_SCREEN
-          std::cout << "Output mesh node0 x-coord: " << coord[0] << std::endl;
-#endif
-          //set node 1 in STK linear mesh
+          std::cout << "Output mesh node0 x-coord: " << coord[0] << std::endl;  
+#endif 
+          //set node 1 in STK linear mesh 
           coord = stk::mesh::field_data(*coordinates_field, node1);
           coord[0] = coords[ws][e][i+1][0];
           if ((periodic == true) && (coords[ws][e][i+1][0] == scale))
-            coord[0] = 0.0;
+            coord[0] = 0.0; 
 #ifdef OUTPUT_TO_SCREEN
-          std::cout << "Output mesh node1 x-coord: " << coord[0] << std::endl;
-#endif
+          std::cout << "Output mesh node1 x-coord: " << coord[0] << std::endl;  
+#endif 
         }
       }
     }

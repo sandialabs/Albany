@@ -137,7 +137,7 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D (const Teuchos::RCP<Teuchos::ParameterLis
   ssPartVec[ssn] = &metaData->declare_part(ssn, metaData->side_rank());
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*ssPartVec[ssn]);
-  stk::io::put_io_part_attribute(metaData->universal_part());
+//  stk::io::put_io_part_attribute(metaData->universal_part());
 #endif
 
   // Counting boundaries

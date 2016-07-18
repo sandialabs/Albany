@@ -39,12 +39,16 @@ Teuchos::RCP<Epetra_Map> TpetraMap_To_EpetraMap(const Teuchos::RCP<const Tpetra_
 Teuchos::RCP<const Tpetra_Map> EpetraMap_To_TpetraMap(const Teuchos::RCP<const Epetra_Map>& epetraMap_,
                                                       const Teuchos::RCP<const Tpetra::Comm<int> >& comm_,
                                                       const Teuchos::RCP< KokkosNode > &node = KokkosClassic::Details::getNode< KokkosNode >());
-
+#ifndef ALBANY_64BIT_INT
 //TpetraCrsGraph_To_TpetraCrsGraph: takes in Tpetra::CrsGraph object, converts it to its equivalent Epetra_CrsGraph object,
 //and returns an RCP pointer to this Epetra_CrsGraph
 Teuchos::RCP<Epetra_CrsGraph> TpetraCrsGraph_To_EpetraCrsGraph(const Teuchos::RCP<const Tpetra_CrsGraph>& tpetraCrsGraph_,
                                                                const Teuchos::RCP<const Epetra_Comm>& comm_,
                                                                Tpetra::ProfileType pft = Tpetra::DynamicProfile);
+#else
+Teuchos::RCP<Epetra_CrsGraph> TpetraCrsGraph_To_EpetraCrsGraph(const Teuchos::RCP<const Tpetra_CrsGraph>& tpetraCrsGraph_,
+                                                                 const Teuchos::RCP<const Epetra_Comm>& comm);
+#endif
 
 
 //TpetraCrsMatrix_To_CrsMatrix: copies Tpetra::CrsMatrix object into its analogous

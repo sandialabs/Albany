@@ -6,6 +6,7 @@
 
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
+#include "PHAL_Utilities.hpp"
 #include <typeinfo>
 
 namespace LCM {
@@ -29,6 +30,8 @@ namespace LCM {
     have_species_coupling_(p.get<bool>("Have Species Coupling", false)),
     have_stabilization_   (p.get<bool>("Have Stabilization", false)),
     have_contact_         (p.get<bool>("Have Contact", false)),
+    have_mechanics_       (p.get<bool>("Have Mechanics", false)),
+    SolutionType_ (p.get<std::string>("Solution Method Type")),
     num_nodes_(0),
     num_pts_(0),
     num_dims_(0)
@@ -99,6 +102,21 @@ namespace LCM {
       M_operator_ = tmp;
       this->addDependentField(M_operator_);
     }
+    
+    if ( have_transient_ && have_mechanics_ && (SolutionType_ != "Continuation") )
+    {
+       PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
+       tmp(p.get<std::string>("Stress Name"), dl->qp_tensor);
+       stress_ = tmp;
+       
+       PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>
+       tmpVel(p.get<std::string>("Velocity Gradient Variable Name"),dl->qp_tensor);
+       vel_grad_ = tmpVel;
+       
+       this->addDependentField(stress_);
+       this->addDependentField(vel_grad_);
+       
+    }
 
     this->addEvaluatedField(residual_);
 
@@ -107,7 +125,10 @@ namespace LCM {
     num_nodes_ = dims[1];
     num_pts_   = dims[2];
     num_dims_  = dims[3];
-
+    
+    // initialize term1_
+    term1_.resize(dims[0],num_pts_);
+    
     scalar_name_ = p.get<std::string>("Scalar Variable Name")+"_old";
 
     this->setName("TransportResidual"+PHX::typeAsString<EvalT>());
@@ -157,6 +178,12 @@ namespace LCM {
     if (have_contact_) {
       this->utils.setFieldData(M_operator_,fm);
     }
+    
+    if ( have_transient_ && have_mechanics_ && (SolutionType_ != "Continuation") )
+    {
+        this->utils.setFieldData(stress_,fm);
+        this->utils.setFieldData(vel_grad_,fm);
+    }
 
     this->utils.setFieldData(residual_,fm);
   }
@@ -166,6 +193,9 @@ namespace LCM {
   void TransportResidual<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
+    
+      typedef Intrepid2::FunctionSpaceTools FST;
+      
     // zero out residual
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int node = 0; node < num_nodes_; ++node) {
@@ -190,7 +220,41 @@ namespace LCM {
         }
       }
     }
+    
+//     term ==> P : F_dot
+    if (have_transient_ && have_mechanics_ && (SolutionType_ != "Continuation"))
+    {
+        for (int cell = 0; cell < workset.numCells; ++cell)
+        {
+            for (int pt = 0; pt < num_pts_; ++pt)
+            {
+                ScalarT sum(0.0);
+                // This is dumb, but I want to be sure I am initializing the arrays with zeros.
+                term1_(cell, pt) = ScalarT(0.0);
+                for (int i = 0; i < num_dims_; ++i)
+                {
+                    for (int j = 0; j < num_dims_; ++j)
+                    {
+                        sum += stress_(cell, pt, i, j) * vel_grad_(cell, pt, i, j);
+                    }
+                }
+                term1_(cell, pt) = sum;
+            }
+        }
 
+        // add to residual
+        for (int cell = 0; cell < workset.numCells; ++cell)
+        {
+            for (int pt = 0; pt < num_pts_; ++pt)
+            {
+                for (int node = 0; node < num_nodes_; ++node)
+                {
+                    residual_(cell,node) -= w_bf_(cell,node,pt) * term1_(cell, pt);
+                }
+            }
+        }
+    }
+    
     // diffusive term
     if ( have_diffusion_ ) {
       for (int cell = 0; cell < workset.numCells; ++cell) {

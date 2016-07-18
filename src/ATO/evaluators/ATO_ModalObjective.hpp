@@ -14,6 +14,7 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "ATO_TopoTools.hpp"
+#include "Albany_StateManager.hpp"
 
 namespace ATO {
 /**

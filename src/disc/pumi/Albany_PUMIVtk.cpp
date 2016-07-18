@@ -51,6 +51,7 @@ writeFile(const double time_value){
     if(commT->getRank() == 0){ // Only PE 0 writes the collection file
 
       std::string vtu_filename = outputFileName;
+      std::string vtu_directory = outputFileName;
       std::string str = outputFileName;
       size_t found = str.find("vtk");
       str.replace(found, 3, "pvd");
@@ -59,10 +60,13 @@ writeFile(const double time_value){
       vtu_collection_file.seekp (ofilepos);
 
       std::ostringstream vtu_ss;
-      vtu_ss << "_" << remeshFileIndex << "_.pvtu";
+      vtu_ss << "_" << remeshFileIndex << ".pvtu";
       vtu_filename.replace(vtu_filename.find(".vtk"), 4, vtu_ss.str());
+      std::ostringstream vtu_dir_ss;
+      vtu_dir_ss << "_" << remeshFileIndex;
+      vtu_directory.replace(vtu_directory.find(".vtk"), 4, vtu_dir_ss.str());
       vtu_collection_file << "      <DataSet timestep=\"" << time_value << "\" group=\"\" part=\"0\" file=\""
-                         << vtu_filename << "\"/>" << std::endl;
+                          <<  vtu_directory << "/" << vtu_filename << "\"/>" << std::endl;
 
       ofilepos = vtu_collection_file.tellp();
       // Write the trailer and close the file in case Albany exits before finalizing the file
@@ -75,7 +79,7 @@ writeFile(const double time_value){
     std::string filename = outputFileName;
     std::string vtk_filename = outputFileName;
     std::ostringstream vtk_ss;
-    vtk_ss << "_" << remeshFileIndex << "_";
+    vtk_ss << "_" << remeshFileIndex;
     vtk_filename.replace(vtk_filename.find(".vtk"), 4, vtk_ss.str());
     const char* cstr = vtk_filename.c_str();
     apf::writeVtkFiles(cstr, mesh_struct->getMesh());

@@ -292,6 +292,8 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
       new Albany::SolverFactory("albany_input.xml", mpiCommT));
   paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
 
+  Teuchos::Array<std::string> arrayRequiredFields(1, "temperature");
+  paramList->sublist("Problem").set("Required Fields", arrayRequiredFields);
 
   //Physical Parameters
   if(!paramList->sublist("Problem").isSublist("FELIX Physical Parameters")) {
@@ -347,6 +349,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   viscosityList.set("Glen's Law n", viscosityList.get("Glen's Law n",  MPAS_flowLawExponent));
   viscosityList.set("Flow Rate Type", viscosityList.get("Flow Rate Type", "Temperature Based"));
 
+  paramList->sublist("Problem").sublist("Body Force").set("Type", "FO INTERP SURF GRAD");
   
 
   Teuchos::ParameterList& discretizationList = paramList->sublist("Discretization");
@@ -355,7 +358,14 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   discretizationList.set("Cubature Degree", discretizationList.get("Cubature Degree", 1));  //set 1 if not defined
   discretizationList.set("Interleaved Ordering", discretizationList.get("Interleaved Ordering", true));  //set true if not define
   
-  paramList->sublist("Problem").sublist("Body Force").set("Type", "FO INTERP SURF GRAD");
+  discretizationList.sublist("Required Fields Info").set<int>("Number Of Fields",1);
+  Teuchos::ParameterList& field0 = discretizationList.sublist("Required Fields Info").sublist("Field 0");
+
+  //set temperature
+  field0.set<std::string>("Field Name", "temperature");
+  field0.set<std::string>("Field Type", "Elem Scalar");
+  field0.set<std::string>("Field Origin", "Mesh");
+
 
   discParams = Teuchos::sublist(paramList, "Discretization", true);
 

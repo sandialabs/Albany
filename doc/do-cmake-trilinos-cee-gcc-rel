@@ -1,0 +1,112 @@
+#!/bin/sh
+#
+export TRILINOS_HOME=/projects/AppComp/Trilinos
+BUILD_DIR=`pwd`
+INSTALL_DIR=/projects/albany/trilinos/MPI_REL
+BOOST_DIR=/projects/albany
+LIB_DIR=/projects/albany
+MPI_BASE_DIR=/sierra/sntools/SDK/mpi/openmpi/1.8.8-gcc-5.2.0-RHEL6
+NETCDF=/projects/albany
+HDFDIR=/projects/albany
+PARMETISDIR=/projects/albany
+MKL_PATH=/sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210
+HWLOC_PATH=/projects/albany
+SUPERLUDIR=/projects/albany/SuperLU_4.3
+LABLAS_LIBRARIES="-L$MKL_PATH/lib/intel64 -Wl,--start-group $MKL_PATH/mkl/lib/intel64/libmkl_intel_lp64.a $MKL_PATH/mkl/lib/intel64/libmkl_core.a $MKL_PATH/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group"
+
+#print all variables
+#cmake -LAH
+
+cmake \
+    -Wno-dev \
+    -D Trilinos_CONFIGURE_OPTIONS_FILE:FILEPATH=$TRILINOS_HOME/sampleScripts/AlbanySettings.cmake \
+    -D Trilinos_ENABLE_SCOREC:BOOL=ON \
+    -D PCU_COMPRESS:BOOL=ON \
+    -D SCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON \
+    -D CMAKE_BUILD_TYPE:STRING=NONE \
+    -D Trilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
+    -D CMAKE_CXX_FLAGS:STRING="-O3 -march=native -DNDEBUG" \
+    -D CMAKE_C_FLAGS:STRING="-O3 -march=native -DNDEBUG" \
+    -D CMAKE_Fortran_FLAGS:STRING="-O3 -march=native -DNDEBUG" \
+    -D Rythmos_ENABLE_DEBUG:BOOL=ON \
+    -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
+    -D Tpetra_INST_INT_LONG_LONG:BOOL=ON \
+    -D Tpetra_INST_INT_INT:BOOL=ON \
+    -D Tpetra_INST_DOUBLE:BOOL=ON \
+    -D Tpetra_INST_FLOAT:BOOL=OFF \
+    -D Tpetra_INST_COMPLEX_FLOAT:BOOL=OFF \
+    -D Tpetra_INST_COMPLEX_DOUBLE:BOOL=OFF \
+    -D Tpetra_INST_INT_LONG:BOOL=OFF \
+    -D Tpetra_INST_INT_UNSIGNED:BOOL=OFF \
+    -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+    -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
+    -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
+    -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
+    -D Kokkos_ENABLE_Serial:BOOL=ON \
+    -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
+    -D Kokkos_ENABLE_Pthread:BOOL=OFF \
+\
+    -D TPL_ENABLE_MPI:BOOL=ON \
+    -D MPI_BASE_DIR:PATH=$MPI_BASE_DIR \
+\
+	-D TPL_ENABLE_Pthread:BOOL=OFF \
+\
+    -D TPL_ENABLE_Boost:BOOL=ON \
+    -D TPL_ENABLE_BoostLib:BOOL=ON \
+    -D TPL_ENABLE_BoostAlbLib:BOOL=ON \
+	-D Boost_INCLUDE_DIRS:PATH=$BOOST_DIR/include \
+	-D Boost_LIBRARY_DIRS:PATH=$BOOST_DIR/lib \
+	-D BoostLib_INCLUDE_DIRS:PATH=$BOOST_DIR/include \
+	-D BoostLib_LIBRARY_DIRS:PATH=$BOOST_DIR/lib \
+	-D BoostAlbLib_INCLUDE_DIRS:PATH=$BOOST_DIR/include \
+	-D BoostAlbLib_LIBRARY_DIRS:PATH=$BOOST_DIR/lib \
+\
+    -D TPL_ENABLE_Netcdf:STRING=ON \
+	-D Netcdf_INCLUDE_DIRS:PATH=$NETCDF/include \
+	-D Netcdf_LIBRARY_DIRS:PATH=$NETCDF/lib \
+    -D TPL_Netcdf_PARALLEL:BOOL=ON \
+    -D TPL_ENABLE_Pnetcdf:BOOL=ON \
+    -D Pnetcdf_INCLUDE_DIRS:PATH=${NETCDF}/include \
+    -D Pnetcdf_LIBRARY_DIRS:PATH=${NETCDF}/lib \
+\
+    -D TPL_ENABLE_HDF5:STRING=ON \
+    -D HDF5_INCLUDE_DIRS:PATH=$HDFDIR/include \
+    -D HDF5_LIBRARY_DIRS:PATH=$HDFDIR/lib \
+\
+    -D TPL_ENABLE_Zlib:STRING=ON \
+    -D Zlib_INCLUDE_DIRS:PATH=$HDFDIR/include \
+    -D Zlib_LIBRARY_DIRS:PATH=$HDFDIR/lib \
+\
+    -D TPL_ENABLE_SuperLU:STRING=ON \
+    -D SuperLU_INCLUDE_DIRS:STRING="${SUPERLUDIR}/include" \
+    -D SuperLU_LIBRARY_DIRS:STRING="${SUPERLUDIR}/lib" \
+\
+    -D TPL_ENABLE_BLAS:STRING=ON \
+    -D TPL_ENABLE_LAPACK:STRING=ON \
+    -D TPL_BLAS_LIBRARIES:STRING="$LABLAS_LIBRARIES" \
+    -D TPL_LAPACK_LIBRARIES:STRING="$LABLAS_LIBRARIES" \
+\
+    -D TPL_ENABLE_ParMETIS:STRING=ON \
+    -D ParMETIS_INCLUDE_DIRS:PATH="${PARMETISDIR}/include" \
+    -D ParMETIS_LIBRARY_DIRS:PATH="${PARMETISDIR}/lib" \
+\
+	-D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR \
+    -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L${HDFDIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lgfortran" \
+\
+    -D Trilinos_ENABLE_Moertel:BOOL=OFF \
+    -D Moertel_ENABLE_EXAMPLES:BOOL=OFF \
+    -D Moertel_ENABLE_Morkon:BOOL=OFF \
+    -D Trilinos_ENABLE_TriKota:BOOL=OFF \
+    -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+    -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
+    -D Trilinos_ENABLE_SECONDARY_TESTED_CODE=OFF \
+    -D Teuchos_SHOW_DEPRECATED_WARNINGS=OFF \
+    -D Trilinos_ENABLE_Amesos2:BOOL=ON \
+    -D Amesos2_ENABLE_KLU2:BOOL=ON \
+    -D CMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON \
+    -D CMAKE_INSTALL_RPATH:STRING="/projects/albany/lib" \
+\
+$EXTRA_ARGS \
+${TRILINOS_HOME}
+
+exit 0
