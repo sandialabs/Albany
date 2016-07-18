@@ -1477,9 +1477,9 @@ copyNodalDataToAPF (const bool copy_all) {
 
     int value_type;
     switch (nd->ndims()) {
-    case 0: value_type = apf::SCALAR;
-    case 1: value_type = apf::VECTOR;
-    case 2: value_type = apf::MATRIX;
+    case 0: value_type = apf::SCALAR; break;
+    case 1: value_type = apf::VECTOR; break;
+    case 2: value_type = apf::MATRIX; break;
     default:
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                                  "dim is not in {1,2,3}");
