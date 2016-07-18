@@ -339,11 +339,15 @@ void Albany::APFDiscretization::setField(
   apf::Field* f = m->findField(name);
 
   const int problem_dim = meshStruct->problemDim;
-  double data_buf[3] = {0};
+  double data_buf[9] = {0};
   const int pumi_value_type = apf::getValueType(f);
   const int albany_nc = albanyCountComponents(problem_dim, pumi_value_type);
-  assert(albany_nc <= 3);
   const int total_comps = (neq_sized ? neq : albany_nc);
+
+  // the simple front-packing of components below would not
+  // be sufficient to deal with incoming 2x2 tensors, so assert
+  // that we are passing data straight through if dealing with a tensor
+  if (pumi_value_type == apf::MATRIX) assert(albany_nc == 9);
 
   for (size_t i = 0; i < nodes.getSize(); ++i) {
     apf::Node node = nodes[i];
@@ -1485,6 +1489,8 @@ copyNodalDataToAPF (const bool copy_all) {
                                  "dim is not in {1,2,3}");
     }
     apf::Field* f = meshStruct->createNodalField(nd->name.c_str(), value_type);
+    if (!PCU_Comm_Self()) std::cerr << "setting nodal field " << nd->name;
+    PCU_Barrier();
     setField(nd->name.c_str(), &nd->buffer[0], false, 0, false);
   }
 }
