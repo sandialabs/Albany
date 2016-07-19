@@ -32,6 +32,12 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "TemperatureStep")
     F = Teuchos::rcp(new AAdapt::TemperatureStep(neq, numDim, data));
 
+  else if(name == "Displacement Constant TemperatureStep")
+    F = Teuchos::rcp(new AAdapt::DispConstTemperatureStep(neq, numDim, data));
+
+  else if(name == "Displacement Constant TemperatureLinear")
+    F = Teuchos::rcp(new AAdapt::DispConstTemperatureLinear(neq, numDim, data));
+
   else if(name == "TemperatureLinear")
     F = Teuchos::rcp(new AAdapt::TemperatureLinear(neq, numDim, data));
   
@@ -227,6 +233,112 @@ void AAdapt::TemperatureStep::compute(double* x, const double* X) {
     } else {
         x[0] = T;
     }
+}
+
+//*****************************************************************************
+AAdapt::DispConstTemperatureStep::DispConstTemperatureStep(int neq_, int numDim_,
+    Teuchos::Array<double> data_) : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((data.size() != 9),
+                             std::logic_error,
+                             "Error! Invalid specification of initial condition: incorrect length of Function Data for Displacement Constant TemperatureStep; Length = " << 9 << ", data.size() = " << data.size() <<  std::endl) ;
+}
+
+void AAdapt::DispConstTemperatureStep::compute(double* x, const double* X) {
+    // Get displacement
+    for(int i = 0; i < 3; i++)
+      x[i] = data[i];
+    // Temperature bottom
+    double T0 = data[3];
+    // Temperature top
+    double T1 = data[4];
+    // constant temperature
+    double T = data[5];
+    // bottom coordinate
+    double Z0 = data[6];
+    // top coordinate
+    double Z1 = data[7];
+    // flag to specify which coordinate we want.
+    // 0 == x-coordinate
+    // 1 == y-coordinate
+    // 2 == z-cordinate
+    int coord = static_cast<int>(data[8]);
+    
+    // check that coordinate is valid
+    if ( ( coord > 2 ) || ( coord < 0 ) )
+      {
+	TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+				   "Error! Coordinate not valid!" <<  std::endl) ;	
+      }
+    
+    const double TOL = 1.0e-12;
+    
+    // bottom
+    if ( X[coord] < ( Z0 + TOL) ) {
+        x[3] = T0;
+    } else if ( X[coord] > ( Z1 - TOL) ){
+        x[3] = T1;
+    } else {
+        x[3] = T;
+    }
+}
+
+//*****************************************************************************
+AAdapt::DispConstTemperatureLinear::DispConstTemperatureLinear(int neq_, int numDim_,
+    Teuchos::Array<double> data_) : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((data.size() != 8),
+                             std::logic_error,
+                             "Error! Invalid specification of initial condition: incorrect length of Function Data for Displacement Constant TemperatureLinear; Length = " << 8 << ", data.size() = " << data.size() <<  std::endl) ;
+}
+
+void AAdapt::DispConstTemperatureLinear::compute(double* x, const double* X) {
+    // Get displacement
+    for(int i = 0; i < 3; i++)
+      x[i] = data[i];
+    // Temperature bottom
+    double T0 = data[3];
+    // Temperature top
+    double T1 = data[4];
+    // bottom coordinate
+    double Z0 = data[5];
+    // top coordinate
+    double Z1 = data[6];
+    // flag to specify which coordinate we want.
+    // 0 == x-coordinate
+    // 1 == y-coordinate
+    // 2 == z-cordinate
+    int coord = static_cast<int>(data[7]);
+
+    // check that coordinate is valid
+    if ( ( coord > 2 ) || ( coord < 0 ) )
+      {
+	TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+				   "Error! Coordinate not valid!" <<  std::endl) ;	
+      }
+
+    const double TOL = 1.0e-12;
+
+    // check that temperatures are not equal
+    if ( std::abs(T0 - T1) <= TOL )
+      {
+	TEUCHOS_TEST_FOR_EXCEPTION(true,
+				   std::logic_error,
+				   "Error! Temperature are equals!" <<  std::endl) ;
+      }
+    // check coordinates are not equal
+    if ( std::abs( Z0 - Z1 ) <= TOL )
+      {
+	TEUCHOS_TEST_FOR_EXCEPTION(true,
+				   std::logic_error,
+				   "Error! Z-coordinates are the same!" <<  std::endl) ;
+      }
+
+    // We interpolate Temperature as a linear function of z-ccordinate: T = b + m*z
+    double b = ( T1*Z0 - T0*Z1 ) / ( Z0 - Z1);
+    //
+    double m = ( T0 - T1 ) / ( Z0 - Z1);
+
+    // assign temperature
+    x[3] = b + m * X[coord];
 }
 
 //*****************************************************************************

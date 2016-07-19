@@ -69,9 +69,29 @@ class TemperatureStep : public AnalyticFunction {
     Teuchos::Array<double> data;
 };
 
+class DispConstTemperatureStep : public AnalyticFunction {
+  public:
+    DispConstTemperatureStep(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
 class TemperatureLinear : public AnalyticFunction {
   public:
     TemperatureLinear(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int numDim; // size of coordinate vector Y
+    int neq;    // size of solution vector
+    Teuchos::Array<double> data;
+};
+
+class DispConstTemperatureLinear : public AnalyticFunction {
+  public:
+    DispConstTemperatureLinear(int neq_, int numDim_, Teuchos::Array<double> data_);
     void compute(double* x, const double* X);
   private:
     int numDim; // size of coordinate vector Y
