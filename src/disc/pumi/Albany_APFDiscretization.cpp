@@ -642,7 +642,7 @@ Albany::APFDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 void
 Albany::APFDiscretization::setResidualField(const Epetra_Vector& residual)
 {
-  if (solNames.getDerivNames(0).size() == 0)
+  if (solLayout.getDerivNames(0).size() == 0)
     this->setField(APFMeshStruct::residual_name,&(residual[0]),/*overlapped=*/false);
   else
     this->setSplitFields(resNames, solLayout.getDerivSizes(0), &(residual[0]), /*overlapped=*/false);
@@ -713,10 +713,10 @@ Albany::APFDiscretization::getSolutionField(bool overlapped) const
     new Epetra_Vector(overlapped ? *overlap_map : *map));
 
   if (meshStruct->solutionInitialized) {
-    if (solLayout.getTimeDeriv(0).size() == 0)
+    if (solLayout.getDerivNames(0).size() == 0)
       this->getField(APFMeshStruct::solution_name[0], &((*soln)[0]), overlapped);
     else
-      this->getSplitFields(solLayout.getTimeDeriv(0), solLayout.getTimeIdx(0), &((*soln)[0]), overlapped);
+      this->getSplitFields(solLayout.getDerivNames(0), solLayout.getDerivSizes(0), &((*soln)[0]), overlapped);
   }
   else if ( ! PCU_Comm_Self())
     *out <<__func__<<": uninit field" << std::endl;
