@@ -85,7 +85,7 @@ Albany::PUMIDiscretization::setFELIXData()
     if (!f) {
 
       if(! PCU_Comm_Self())
-        std::cout << "initializing " << state.name << " to zero" << std::endl;
+        std::cout << "PUMIDisc: initializing " << state.name << " to zero" << std::endl;
 
       for (std::size_t b=0; b < buckets.size(); ++b) {
         std::vector<apf::MeshEntity*>& buck = buckets[b];
@@ -101,7 +101,7 @@ Albany::PUMIDiscretization::setFELIXData()
     else {
 
       if(! PCU_Comm_Self())
-        std::cout << "initializing " << state.name << " from mesh" << std::endl;
+        std::cout << "PUMIDisc: initializing " << state.name << " from mesh" << std::endl;
 
       apf::NewArray<double> values;
       int num_nodes = state.dims[1];
