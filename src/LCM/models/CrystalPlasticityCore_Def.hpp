@@ -764,8 +764,9 @@ computeRateSlip(
     bool const
     finite_power_law = std::fabs(ratio_stress) > min_tol;
 
+    // carry derivative info from ratio_stress
     ArgT
-    power_law{0.0};
+    power_law{0.0 * ratio_stress};
 
     if (finite_power_law == true) {
       power_law = std::pow(std::fabs(ratio_stress), m - 1) * ratio_stress;
