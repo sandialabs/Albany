@@ -9,5 +9,5 @@
 #include "FELIX_StackVectors.hpp"
 #include "FELIX_StackVectors_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_EVAL_TYPE(FELIX::StackVectorsBase)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(FELIX::StackVectorsBase)
 
