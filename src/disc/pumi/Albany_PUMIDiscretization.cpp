@@ -110,15 +110,13 @@ Albany::PUMIDiscretization::setFELIXData()
         std::vector<apf::MeshEntity*>& buck = buckets[b];
         Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
         for (std::size_t e=0; e < buck.size(); ++e) {
+          apf::Element* elem = apf::createElement(f, buck[e]);
+          apf::getScalarNodes(elem, values);
+          assert(values.size() == num_nodes);
           for (std::size_t n=0; n < num_nodes; ++n) {
-            apf::MeshElement* mesh_elem = apf::createMeshElement(m, buck[e]);
-            apf::Element* elem = apf::createElement(f, mesh_elem);
-            apf::getScalarNodes(elem, values);
-            assert(values.size() == num_nodes);
             ar(e,n) = values[n];
-            apf::destroyElement(elem);
-            apf::destroyMeshElement(mesh_elem);
           }
+          apf::destroyElement(elem);
         }
       }
 
