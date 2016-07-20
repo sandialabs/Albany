@@ -18,7 +18,13 @@ MAX_DIM = 3;
 static constexpr Intrepid2::Index
 MAX_SLIP = 12;
 
-enum class FlowRule
+static constexpr Intrepid2::Index
+NLS_DIM = 2 * MAX_SLIP;
+
+static constexpr Intrepid2::Index
+MAX_FAMILY = 3;
+
+enum class FlowRuleType
 {
   UNDEFINED = 0,
   POWER_LAW = 1,
@@ -26,10 +32,10 @@ enum class FlowRule
   POWER_LAW_DRAG = 3
 };
 
-enum class HardeningLaw
+enum class HardeningLawType
 {
   UNDEFINED = 0, 
-  EXPONENTIAL = 1, 
+  LINEAR_MINUS_RECOVERY = 1, 
   SATURATION = 2, 
   DISLOCATION_DENSITY = 3
 };
@@ -39,11 +45,17 @@ enum class HardeningLaw
 //
 //! Struct containing slip system information.
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
-struct SlipSystemStruct
+template<Intrepid2::Index NumDimT>
+struct SlipSystem
 {
 
-  SlipSystemStruct() {}
+  SlipSystem() {}
+
+  // SlipSystem(SlipFamily<MAX_SLIP> const & sf)
+  // : slip_family_{sf} {}
+
+  Intrepid2::Index
+  slip_family_index_;
 
   //! Slip system vectors.
   Intrepid2::Vector<RealType, NumDimT>
@@ -57,78 +69,422 @@ struct SlipSystemStruct
   projector_;
 
   //
-  // Flow rule parameters
-  //
-  FlowRule 
-  flow_rule;
-
-  RealType 
-  rate_slip_reference_;
-
   RealType
-  exponent_rate_;
+  state_hardening_initial_;
 
-  RealType
-  energy_activation_;
-
-  RealType
-  drag_coeff_;
-
-  //
-  // Hardening law parameters
-  //
-  HardeningLaw
-  hardening_law;
-
-  ///
-  /// Hardening parameters: linear hardening
-  ///
-  RealType
-  tau_critical_;
-
-  RealType
-  H_;
-
-  RealType
-  Rd_;
-
-  ///
-  /// Hardening parameters: saturation hardening
-  ///    
-  RealType
-  resistance_slip_initial_;
-
-  RealType
-  rate_hardening_;
-
-  RealType
-  stress_saturation_initial_;
-
-  RealType
-  exponent_saturation_;
-
-  ///
-  /// Hardening parameters: dislocation density hardening
-  /// 
-  RealType
-  factor_geometry_dislocation_;
-
-  RealType
-  density_dislocation_;
-
-  RealType
-  c_generation_;
-
-  RealType
-  c_annihilation_;
-
-  RealType
-  modulus_shear_;
-
-  RealType
-  magnitude_burgers_;
-
+  // SlipFamily<MAX_SLIP> const &
+  // slip_family_;
 };
+
+// Forward declarations
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+struct HardeningParameterBase;
+
+struct FlowParameterBase;
+
+
+//
+// Slip system family - collection of slip systems grouped by flow and
+// hardening characteristics
+//
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+struct SlipFamily
+{
+  SlipFamily() {}
+
+  ~SlipFamily() {}
+
+  Intrepid2::Index
+  num_slip_sys_{0};
+
+  Intrepid2::Vector<Intrepid2::Index, NumSlipT>
+  slip_system_indices_;
+
+  std::unique_ptr<HardeningParameterBase<NumDimT, NumSlipT>>
+  phardening_parameters_{nullptr};
+
+  std::unique_ptr<FlowParameterBase>
+  pflow_parameters_{nullptr};
+
+  Intrepid2::Tensor<RealType, NumSlipT>
+  latent_matrix_;
+
+  HardeningLawType
+  type_hardening_law_{HardeningLawType::UNDEFINED};
+
+  FlowRuleType
+  type_flow_rule_{FlowRuleType::UNDEFINED};
+};
+
+///
+/// Hardening Base
+///
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+struct HardeningParameterBase
+{
+  using ParamIndex = int;
+  
+  virtual
+  void
+  createLatentMatrix(
+    SlipFamily<NumDimT, NumSlipT> & slip_family, 
+    std::vector<SlipSystem<NumDimT>> const & slip_systems);
+
+  void
+  setParameter(ParamIndex const index_param, RealType const value_param)
+  {
+    hardening_params_[index_param] = value_param;
+  }
+
+  RealType
+  getParameter(ParamIndex const index_param)
+  {
+    return hardening_params_[index_param];
+  }
+
+  virtual
+  ~HardeningParameterBase() {}
+
+  std::map<std::string, ParamIndex>
+  param_map_;
+
+  Intrepid2::Vector<RealType>
+  hardening_params_;
+};
+
+
+///
+/// Linear hardening with recovery
+///
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+struct LinearMinusRecoveryHardeningParameters final :
+  public HardeningParameterBase<NumDimT, NumSlipT>
+{
+  using ParamIndex = typename HardeningParameterBase<NumDimT, NumSlipT>::ParamIndex;
+
+  enum HardeningParamTypes : ParamIndex
+  {
+    RESISTANCE_SLIP_INITIAL,
+    MODULUS_HARDENING,
+    MODULUS_RECOVERY,
+    NUM_PARAMS
+  };
+
+  LinearMinusRecoveryHardeningParameters()
+  {
+    this->param_map_["Tau Critical"] = RESISTANCE_SLIP_INITIAL;
+    this->param_map_["Initial Slip Resistance"] = RESISTANCE_SLIP_INITIAL;
+    this->param_map_["Hardening"] = MODULUS_HARDENING;
+    this->param_map_["Hardening Modulus"] = MODULUS_HARDENING;
+    this->param_map_["Hardening Exponent"] = MODULUS_RECOVERY;
+    this->param_map_["Recovery Modulus"] = MODULUS_RECOVERY;
+    this->param_map_["Initial Hardening State"] = RESISTANCE_SLIP_INITIAL;
+    this->hardening_params_.set_dimension(NUM_PARAMS);
+    this->hardening_params_.fill(Intrepid2::ZEROS);
+  }
+
+  virtual
+  void
+  createLatentMatrix(
+    SlipFamily<NumDimT, NumSlipT> & slip_family, 
+    std::vector<SlipSystem<NumDimT>> const & slip_systems);
+
+  virtual
+  ~LinearMinusRecoveryHardeningParameters() {}
+};
+
+///
+/// Saturation hardening
+///
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+struct SaturationHardeningParameters final :
+  public HardeningParameterBase<NumDimT, NumSlipT>
+{
+  using ParamIndex = typename HardeningParameterBase<NumDimT, NumSlipT>::ParamIndex;
+
+  enum HardeningParamTypes : ParamIndex
+  {
+    RESISTANCE_SLIP_INITIAL,
+    RATE_HARDENING,
+    STRESS_SATURATION_INITIAL,
+    EXPONENT_SATURATION,
+    RATE_SLIP_REFERENCE,
+    NUM_PARAMS
+  };
+
+  SaturationHardeningParameters()
+  {
+    this->param_map_["Initial Slip Resistance"] = RESISTANCE_SLIP_INITIAL;
+    this->param_map_["Hardening Rate"] = RATE_HARDENING;
+    this->param_map_["Initial Saturation Stress"] = STRESS_SATURATION_INITIAL;
+    this->param_map_["Saturation Exponent"] = EXPONENT_SATURATION;
+    this->param_map_["Reference Slip Rate"] = RATE_SLIP_REFERENCE;
+    this->param_map_["Initial Hardening State"] = RESISTANCE_SLIP_INITIAL;
+    this->hardening_params_.set_dimension(NUM_PARAMS);
+    this->hardening_params_.fill(Intrepid2::ZEROS);
+  }
+
+  virtual
+  void
+  createLatentMatrix(
+    SlipFamily<NumDimT, NumSlipT> & slip_family, 
+    std::vector<SlipSystem<NumDimT>> const & slip_systems);
+
+  virtual
+  ~SaturationHardeningParameters() {}
+};
+
+///
+/// Dislocation-density based hardening
+///
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+struct DislocationDensityHardeningParameters final :
+  public HardeningParameterBase<NumDimT, NumSlipT>
+{
+  using ParamIndex = typename HardeningParameterBase<NumDimT, NumSlipT>::ParamIndex;
+
+  enum HardeningParamTypes : ParamIndex
+  {
+    FACTOR_GEOMETRY_DISLOCATION,
+    DENSITY_DISLOCATION_INITIAL,
+    FACTOR_GENERATION,
+    FACTOR_ANNIHILATION,
+    MODULUS_SHEAR,
+    MAGNITUDE_BURGERS,
+    NUM_PARAMS
+  };
+
+  DislocationDensityHardeningParameters()
+  {
+    this->param_map_["Geometric Factor"] = FACTOR_GEOMETRY_DISLOCATION;
+    this->param_map_["Initial Dislocation Density"] = DENSITY_DISLOCATION_INITIAL;
+    this->param_map_["Generation Factor"] = FACTOR_GENERATION;
+    this->param_map_["Annihilation Factor"] = FACTOR_ANNIHILATION;
+    this->param_map_["Shear Modulus"] = MODULUS_SHEAR;
+    this->param_map_["Burgers Vector Magnitude"] = MAGNITUDE_BURGERS;
+    this->param_map_["Initial Hardening State"] = DENSITY_DISLOCATION_INITIAL;
+    this->hardening_params_.set_dimension(NUM_PARAMS);
+    this->hardening_params_.fill(Intrepid2::ZEROS);
+  }
+
+  virtual
+  void
+  createLatentMatrix(
+    SlipFamily<NumDimT, NumSlipT> & slip_family, 
+    std::vector<SlipSystem<NumDimT>> const & slip_systems);
+
+  virtual
+  ~DislocationDensityHardeningParameters() {}
+};
+
+///
+/// No hardening
+///
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+struct NoHardeningParameters final :
+  public HardeningParameterBase<NumDimT, NumSlipT>
+{
+  NoHardeningParameters()
+  {
+    return;
+  }
+
+  virtual
+  void
+  createLatentMatrix(
+    SlipFamily<NumDimT, NumSlipT> & slip_family, 
+    std::vector<SlipSystem<NumDimT>> const & slip_systems);
+
+  virtual
+  ~NoHardeningParameters() {}
+};
+
+//
+// Factory returning a pointer to a hardening paremeter object
+//
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+std::unique_ptr<HardeningParameterBase<NumDimT, NumSlipT>>
+hardeningParameterFactory(HardeningLawType type_hardening_law)
+{
+  using HPUP = std::unique_ptr<HardeningParameterBase<NumDimT, NumSlipT>>;
+
+  switch (type_hardening_law) {
+
+  default:
+    std::cerr << __PRETTY_FUNCTION__ << '\n';
+    std::cerr << "ERROR: Unknown hardening law\n";
+    exit(1);
+    break;
+
+  case HardeningLawType::LINEAR_MINUS_RECOVERY:
+    return HPUP(new LinearMinusRecoveryHardeningParameters<NumDimT, NumSlipT>());
+    break;
+
+  case HardeningLawType::SATURATION:
+    return HPUP(new SaturationHardeningParameters<NumDimT, NumSlipT>());
+    break;
+
+  case HardeningLawType::DISLOCATION_DENSITY:
+    return HPUP(new DislocationDensityHardeningParameters<NumDimT, NumSlipT>());
+    break;
+
+  case HardeningLawType::UNDEFINED:
+    return HPUP(new NoHardeningParameters<NumDimT, NumSlipT>());
+    break;
+
+  }
+
+  return HPUP(nullptr);
+}
+
+
+///
+/// FlowRule parameters base class
+///
+struct FlowParameterBase
+{
+  using ParamIndex = int;
+
+  void
+  setParameter(ParamIndex const index_param, RealType const value_param)
+  {
+    flow_params_[index_param] = value_param;
+  }
+
+  RealType
+  getParameter(ParamIndex const index_param)
+  {
+    return flow_params_[index_param];
+  }
+
+  std::map<std::string, ParamIndex>
+  param_map_;
+
+  // Flow parameters
+  Intrepid2::Vector<RealType>
+  flow_params_;
+};
+
+///
+/// Power Law parameters
+///
+struct PowerLawFlowParameters final : public FlowParameterBase
+{
+  enum FlowParamTypes : FlowParameterBase::ParamIndex
+  {
+    RATE_SLIP_REFERENCE,
+    EXPONENT_RATE,
+    NUM_PARAMS
+  };
+
+  PowerLawFlowParameters()
+  {
+    param_map_["Gamma Dot"] = RATE_SLIP_REFERENCE;
+    param_map_["Reference Slip Rate"] = RATE_SLIP_REFERENCE;
+    param_map_["Gamma Exponent"] = EXPONENT_RATE;
+    param_map_["Rate Exponent"] = EXPONENT_RATE;
+    flow_params_.set_dimension(NUM_PARAMS);
+    flow_params_.fill(Intrepid2::ZEROS);
+  }
+};
+
+
+///
+/// Thermal activation parameters
+///
+struct ThermalActivationFlowParameters final : public FlowParameterBase
+{
+  enum FlowParamTypes : FlowParameterBase::ParamIndex
+  {
+    RATE_SLIP_REFERENCE,
+    ENERGY_ACTIVATION,
+    NUM_PARAMS
+  };
+
+  ThermalActivationFlowParameters()
+  {
+    param_map_["Reference Slip Rate"] = RATE_SLIP_REFERENCE;
+    param_map_["Activation Energy"] = ENERGY_ACTIVATION;
+    flow_params_.set_dimension(NUM_PARAMS);
+    flow_params_.fill(Intrepid2::ZEROS);
+  }
+};
+
+
+///
+/// Power Law with Viscous Drag parameters
+///
+struct PowerLawDragFlowParameters final : public FlowParameterBase
+{
+  enum FlowParamTypes : FlowParameterBase::ParamIndex
+  {
+    RATE_SLIP_REFERENCE,
+    EXPONENT_RATE,
+    DRAG_COEFF,
+    NUM_PARAMS
+  };
+
+  PowerLawDragFlowParameters()
+  {
+    param_map_["Gamma Dot"] = RATE_SLIP_REFERENCE;
+    param_map_["Reference Slip Rate"] = RATE_SLIP_REFERENCE;
+    param_map_["Gamma Exponent"] = EXPONENT_RATE;
+    param_map_["Rate Exponent"] = EXPONENT_RATE;
+    param_map_["Drag Coefficient"] = DRAG_COEFF;
+    flow_params_.set_dimension(NUM_PARAMS);
+    flow_params_.fill(Intrepid2::ZEROS);
+  }
+};
+
+
+///
+/// No flow (elasticity) parameters
+///
+struct NoFlowParameters final : public FlowParameterBase
+{
+  NoFlowParameters()
+  {
+    return;
+  }
+};
+
+
+//
+// Factory returning a pointer to a Flow parameters object
+//
+std::unique_ptr<FlowParameterBase>
+flowParameterFactory(FlowRuleType type_flow_rule)
+{
+  using FPUP = std::unique_ptr<FlowParameterBase>;
+
+  switch (type_flow_rule) {
+
+  default:
+    std::cerr << __PRETTY_FUNCTION__ << '\n';
+    std::cerr << "ERROR: Unknown flow rule\n";
+    exit(1);
+    break;
+
+  case FlowRuleType::POWER_LAW:
+    return FPUP(new PowerLawFlowParameters());
+    break;
+
+  case FlowRuleType::POWER_LAW_DRAG:
+    return FPUP(new PowerLawDragFlowParameters());
+    break;
+
+  case FlowRuleType::THERMAL_ACTIVATION:
+    return FPUP(new ThermalActivationFlowParameters());
+    break;
+
+  case FlowRuleType::UNDEFINED:
+    return FPUP(new NoFlowParameters());
+    break;
+
+  }
+
+  return FPUP(nullptr);
+}
 
 //
 //! Check tensor for NaN and inf values.
@@ -143,15 +499,14 @@ confirmTensorSanity(
 //
 //! Compute Lp_np1 and Fp_np1 based on computed slip increment.
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename DataT,
-    typename ArgT>
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT>
 void
 applySlipIncrement(
-    std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
-    DataT dt,
-    Intrepid2::Vector<DataT, NumSlipT> const & slip_n,
+    std::vector<SlipSystem<NumDimT>> const & slip_systems,
+    RealType dt,
+    Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
     Intrepid2::Vector<ArgT, NumSlipT> const & slip_np1,
-    Intrepid2::Tensor<DataT, NumDimT> const & Fp_n,
+    Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
     Intrepid2::Tensor<ArgT, NumDimT> & Lp_np1,
     Intrepid2::Tensor<ArgT, NumDimT> & Fp_np1);
 
@@ -160,14 +515,14 @@ applySlipIncrement(
 //
 //! Update the hardness.
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename DataT,
-    typename ArgT>
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT>
 void
 updateHardness(
-    std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
-    DataT dt,
+    std::vector<SlipSystem<NumDimT>> const & slip_systems,
+    std::vector<SlipFamily<NumDimT, NumSlipT>> const & slip_families,
+    RealType dt,
     Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<DataT, NumSlipT> const & state_hardening_n,
+    Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
     Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
     Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance);
 
@@ -176,15 +531,15 @@ updateHardness(
 ///
 /// Update the plastic slips
 ///
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename DataT,
-    typename ArgT>
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT>
 void
 updateSlip(
-    std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
-    DataT dt,
+    std::vector<SlipSystem<NumDimT>> const & slip_systems,
+    std::vector<SlipFamily<NumDimT, NumSlipT>> const & slip_families,
+    RealType dt,
     Intrepid2::Vector<ArgT, NumSlipT> const & slip_resistance,
     Intrepid2::Vector<ArgT, NumSlipT> const & shear,
-    Intrepid2::Vector<DataT, NumSlipT> const & slip_n,
+    Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
     Intrepid2::Vector<ArgT, NumSlipT> & slip_np1);
 
 
@@ -192,14 +547,13 @@ updateSlip(
 //
 //! Compute stress.
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename DataT,
-    typename ArgT, typename DataS>
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT, typename DataT>
 void
 computeStress(
-    std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
-    Intrepid2::Tensor4<DataS, NumDimT> const & C,
-    Intrepid2::Tensor<DataS, NumDimT> const & F,
-    Intrepid2::Tensor<DataT, NumDimT> const & Fp,
+    std::vector<SlipSystem<NumDimT>> const & slip_systems,
+    Intrepid2::Tensor4<DataT, NumDimT> const & C,
+    Intrepid2::Tensor<DataT, NumDimT> const & F,
+    Intrepid2::Tensor<ArgT, NumDimT> const & Fp,
     Intrepid2::Tensor<ArgT, NumDimT> & sigma,
     Intrepid2::Tensor<ArgT, NumDimT> & S,
     Intrepid2::Vector<ArgT, NumSlipT> & shear);
@@ -224,22 +578,23 @@ computeCubicElasticityTensor(
 //  increments as unknowns.
 //
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
-class CrystalPlasticityNLS:
+class ResidualSlipNLS:
     public Intrepid2::Function_Base<
-    CrystalPlasticityNLS<NumDimT, NumSlipT, EvalT>, typename EvalT::ScalarT>
+    ResidualSlipNLS<NumDimT, NumSlipT, EvalT>, typename EvalT::ScalarT>
 {
-  using ArgT = typename EvalT::ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
 
 public:
 
   //! Constructor.
-  CrystalPlasticityNLS(
-      Intrepid2::Tensor4<ArgT, NumDimT> const & C,
-      std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+  ResidualSlipNLS(
+      Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
+      std::vector<SlipSystem<NumDimT>> const & slip_systems,
+      std::vector<SlipFamily<NumDimT, NumSlipT>> const & slip_families,
       Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
       Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
       Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
-      Intrepid2::Tensor<ArgT, NumDimT> const & F_np1,
+      Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt);
 
   static constexpr char const * const NAME =
@@ -270,11 +625,14 @@ private:
   RealType
   num_slip_;
 
-  Intrepid2::Tensor4<ArgT, NumDimT> const &
+  Intrepid2::Tensor4<ScalarT, NumDimT> const &
   C_;
 
-  std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const &
+  std::vector<SlipSystem<NumDimT>> const &
   slip_systems_;
+
+  std::vector<SlipFamily<NumDimT, NumSlipT>> const &
+  slip_families_;
 
   Intrepid2::Tensor<RealType, NumDimT> const &
   Fp_n_;
@@ -285,7 +643,7 @@ private:
   Intrepid2::Vector<RealType, NumSlipT> const &
   slip_n_;
 
-  Intrepid2::Tensor<ArgT, NumDimT> const &
+  Intrepid2::Tensor<ScalarT, NumDimT> const &
   F_np1_;
 
   RealType
@@ -303,18 +661,19 @@ class ResidualSlipHardnessNLS:
     public Intrepid2::Function_Base<
     ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>, typename EvalT::ScalarT>
 {
-  using ArgT = typename EvalT::ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
 
 public:
 
   //! Constructor.
   ResidualSlipHardnessNLS(
-      Intrepid2::Tensor4<ArgT, NumDimT> const & C,
-      std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+      Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
+      std::vector<SlipSystem<NumDimT>> const & slip_systems,
+      std::vector<SlipFamily<NumDimT, NumSlipT>> const & slip_families,
       Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
       Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
       Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
-      Intrepid2::Tensor<ArgT, NumDimT> const & F_np1,
+      Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt);
 
   static constexpr char const * const NAME =
@@ -339,427 +698,408 @@ public:
 
 private:
 
-  RealType num_dim_;
-  RealType num_slip_;
-  Intrepid2::Tensor4<ArgT, NumDimT> const & C_;
-  std::vector<CP::SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems_;
-  Intrepid2::Tensor<RealType, NumDimT> const & Fp_n_;
-  Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n_;
-  Intrepid2::Vector<RealType, NumSlipT> const & slip_n_;
-  Intrepid2::Tensor<ArgT, NumDimT> const & F_np1_;
-  RealType dt_;
+  RealType
+  num_dim_;
+
+  RealType
+  num_slip_;
+
+  Intrepid2::Tensor4<ScalarT, NumDimT> const &
+  C_;
+
+  std::vector<SlipSystem<NumDimT>> const &
+  slip_systems_;
+
+  std::vector<SlipFamily<NumDimT, NumSlipT>> const &
+  slip_families_;
+
+  Intrepid2::Tensor<RealType, NumDimT> const &
+  Fp_n_;
+
+  Intrepid2::Vector<RealType, NumSlipT> const &
+  state_hardening_n_;
+
+  Intrepid2::Vector<RealType, NumSlipT> const &
+  slip_n_;
+
+  Intrepid2::Tensor<ScalarT, NumDimT> const &
+  F_np1_;
+
+  RealType
+  dt_;
 };
+
+
+//
+// Nonlinear Solver (NLS) class for the CrystalPlasticity model explicit update
+//
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
+class ExplicitUpdateNLS:
+    public Intrepid2::Function_Base<
+    ExplicitUpdateNLS<NumDimT, NumSlipT, EvalT>, typename EvalT::ScalarT>
+{
+  using ScalarT = typename EvalT::ScalarT;
+
+public:
+
+  //! Constructor.
+  ExplicitUpdateNLS(
+      Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
+      std::vector<SlipSystem<NumDimT>> const & slip_systems,
+      std::vector<SlipFamily<NumDimT, NumSlipT>> const & slip_families,
+      Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
+      Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
+      Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
+      Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
+      RealType dt);
+
+  static constexpr char const * const NAME =
+      "Slip and Hardness Residual Nonlinear System";
+
+  //! Default implementation of value.
+  template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
+  T
+  value(Intrepid2::Vector<T, N> const & x);
+
+  //! Gradient function; returns the residual vector as a function of the slip 
+  // and hardness at step N+1.
+  template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
+  Intrepid2::Vector<T, N>
+  gradient(Intrepid2::Vector<T, N> const & x);
+
+
+  //! Default implementation of hessian.
+  template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
+  Intrepid2::Tensor<T, N>
+  hessian(Intrepid2::Vector<T, N> const & x);
+
+private:
+
+  RealType
+  num_dim_;
+
+  RealType
+  num_slip_;
+
+  Intrepid2::Tensor4<ScalarT, NumDimT> const &
+  C_;
+
+  std::vector<SlipSystem<NumDimT>> const &
+  slip_systems_;
+
+  std::vector<SlipFamily<NumDimT, NumSlipT>> const &
+  slip_families_;
+
+  Intrepid2::Tensor<RealType, NumDimT> const &
+  Fp_n_;
+
+  Intrepid2::Vector<RealType, NumSlipT> const &
+  state_hardening_n_;
+
+  Intrepid2::Vector<RealType, NumSlipT> const &
+  slip_n_;
+
+  Intrepid2::Tensor<ScalarT, NumDimT> const &
+  F_np1_;
+
+  RealType
+  dt_;
+};
+
 
 ///
 /// FlowRule base class
 ///
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
-  typename DataT, typename ArgT>
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ScalarT>
 struct FlowRuleBase
 {
   FlowRuleBase() {}
 
   virtual
-  char const * const
-  name() = 0;
-
-  virtual
-  Intrepid2::Vector<ArgT, NumSlipT>
+  ScalarT
   computeRateSlip(
-    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
-    Intrepid2::Vector<ArgT, NumSlipT> const & shear,
-    Intrepid2::Vector<ArgT, NumSlipT> const & slip_resistance) = 0;
+    std::unique_ptr<FlowParameterBase> pflow_parameters,
+    ScalarT const & shear,
+    ScalarT const & slip_resistance);
 
   virtual
   ~FlowRuleBase() {}
 };
 
 ///
-///
-///
-// template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
-//   typename DataT, typename ArgT>
-// std::unique_ptr<FlowRuleBase<NumDimT, NumSlipT, DataT, ArgT>>
-// FlowRuleFactory(FlowRule flow_rule);
-
-///
 /// Power Law
 ///
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
-  typename DataT, typename ArgT>
-struct PowerLawFlowRule final : public FlowRuleBase<NumDimT, NumSlipT, DataT, ArgT>
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ScalarT>
+struct PowerLawFlowRule final : public FlowRuleBase<NumDimT, NumSlipT, ScalarT>
 {
-  static constexpr
-  char const * const
-  NAME{"Power Law"};
-
   virtual
-  char const * const
-  name()
-  {
-    return NAME;
-  }
-
-  virtual
-  Intrepid2::Vector<ArgT, NumSlipT>
+  ScalarT
   computeRateSlip(
-    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
-    Intrepid2::Vector<ArgT, NumSlipT> const & shear,
-    Intrepid2::Vector<ArgT, NumSlipT> const & slip_resistance);
+    std::unique_ptr<FlowParameterBase> pflow_parameters,
+    ScalarT const & shear,
+    ScalarT const & slip_resistance);
 
   virtual
   ~PowerLawFlowRule() {}
 };
 
 ///
-/// No flow (elasticity)
+/// Thermally-activated flow rule
 ///
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
-  typename DataT, typename ArgT>
-struct NoFlowRule final : public FlowRuleBase<NumDimT, NumSlipT, DataT, ArgT>
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ScalarT>
+struct ThermalActivationFlowRule final : public FlowRuleBase<NumDimT, NumSlipT, ScalarT>
 {
-  static constexpr
-  char const * const
-  NAME{"No flow"};
-
   virtual
-  char const * const
-  name()
-  {
-    return NAME;
-  }
-
-  virtual
-  Intrepid2::Vector<ArgT, NumSlipT>
+  ScalarT
   computeRateSlip(
-    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
-    Intrepid2::Vector<ArgT, NumSlipT> const & shear,
-    Intrepid2::Vector<ArgT, NumSlipT> const & slip_resistance);
+    std::unique_ptr<FlowParameterBase> pflow_parameters,
+    ScalarT const & shear,
+    ScalarT const & slip_resistance);
 
   virtual
-  ~NoFlowRule() {}
+  ~ThermalActivationFlowRule() {}
 };
+
 
 ///
 /// Power Law with Viscous Drag
 ///
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
-  typename DataT, typename ArgT>
-struct PowerLawDragFlowRule final : public FlowRuleBase<NumDimT, NumSlipT, DataT, ArgT>
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ScalarT>
+struct PowerLawDragFlowRule final : public FlowRuleBase<NumDimT, NumSlipT, ScalarT>
 {
-  static constexpr
-  char const * const
-  NAME{"Power Law with Drag"};
-
   virtual
-  char const * const
-  name()
-  {
-    return NAME;
-  }
-
-  virtual
-  Intrepid2::Vector<ArgT, NumSlipT>
+  ScalarT
   computeRateSlip(
-    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
-    Intrepid2::Vector<ArgT, NumSlipT> const & shear,
-    Intrepid2::Vector<ArgT, NumSlipT> const & slip_resistance);
+    std::unique_ptr<FlowParameterBase> pflow_parameters,
+    ScalarT const & shear,
+    ScalarT const & slip_resistance);
 
   virtual
   ~PowerLawDragFlowRule() {}
 };
 
 
-//
-//
-//
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
-  typename DataT, typename ArgT>
-std::unique_ptr<FlowRuleBase<NumDimT, NumSlipT, DataT, ArgT>>
-flowRuleFactory(FlowRule flow_rule)
+///
+/// No flow (elasticity)
+///
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ScalarT>
+struct NoFlowRule final : public FlowRuleBase<NumDimT, NumSlipT, ScalarT>
 {
-  using FTUP = std::unique_ptr<FlowRuleBase<NumDimT, NumSlipT, DataT, ArgT>>;
+  virtual
+  ScalarT
+  computeRateSlip(
+    std::unique_ptr<FlowParameterBase> pflow_parameters,
+    ScalarT const & shear,
+    ScalarT const & slip_resistance);
 
-  switch (flow_rule) {
+  virtual
+  ~NoFlowRule() {}
+};
 
-  default:
-    std::cerr << __PRETTY_FUNCTION__ << '\n';
-    std::cerr << "ERROR: Unknown flow rule\n";
-    exit(1);
-    break;
 
-  case FlowRule::POWER_LAW:
-    return FTUP(new PowerLawFlowRule<NumDimT, NumSlipT, DataT, ArgT>());
-    break;
+//
+// Factory returning a pointer to a flow rule object
+//
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ScalarT>
+class flowRuleFactory
+{
 
-  case FlowRule::POWER_LAW_DRAG:
-    return FTUP(new PowerLawDragFlowRule<NumDimT, NumSlipT, DataT, ArgT>());
-    break;
+public:
 
-  // case FlowRule::THERMAL_ACTIVATION:
-  //   return FTUP(new ThermalActivationFlowRule<NumDimT, NumSlipT, DataT, ArgT>());
-  //   break;
+  using FlowRuleBaseType = FlowRuleBase<NumDimT, NumSlipT, ScalarT>;
 
-  // case FlowRule::POWER_LAW_DRAG:
-  //   return FTUP(new PowerLawDragFlowRule<NumDimT, NumSlipT, DataT, ArgT>());
-  //   break;
+  FlowRuleBaseType *
+  createFlowRule(FlowRuleType type_flow_rule) {  
 
-  case FlowRule::UNDEFINED:
-    return FTUP(new NoFlowRule<NumDimT, NumSlipT, DataT, ArgT>());
-    break;
+    switch (type_flow_rule) {
 
+    default:
+      std::cerr << __PRETTY_FUNCTION__ << '\n';
+      std::cerr << "ERROR: Unknown flow rule\n";
+      exit(1);
+      break;
+
+    case FlowRuleType::POWER_LAW:
+      return new(flow_buffer_) PowerLawFlowRule<NumDimT, NumSlipT, ScalarT>();
+      break;
+
+    case FlowRuleType::POWER_LAW_DRAG:
+      return new(flow_buffer_) PowerLawDragFlowRule<NumDimT, NumSlipT, ScalarT>();
+      break;
+
+    case FlowRuleType::THERMAL_ACTIVATION:
+      return new(flow_buffer_) ThermalActivationFlowRule<NumDimT, NumSlipT, ScalarT>();
+      break;
+
+    case FlowRuleType::UNDEFINED:
+      return new(flow_buffer_) NoFlowRule<NumDimT, NumSlipT, ScalarT>();
+      break;
+    }
+
+    return nullptr;
   }
 
-  return FTUP(nullptr);
-}
+private:
+
+  unsigned char
+  flow_buffer_[sizeof(FlowRuleBaseType)];
+};
 
 ///
-/// Hardening Base
+/// Hardening Law Base
 ///
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
-  typename DataT, typename ArgT>
-struct HardeningBase
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ScalarT>
+struct HardeningLawBase
 {
-  HardeningBase() {}
-
-  virtual
-  char const * const
-  name() = 0;
-
-  virtual
-  void
-  createLatentMatrix(
-    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems) = 0;
+  HardeningLawBase() {}
 
   virtual
   void
   harden(
-    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
-    DataT dt,
-    Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<DataT, NumSlipT> const & state_hardening_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance) = 0;
+    SlipFamily<NumDimT, NumSlipT> const & slip_family,
+    std::vector<SlipSystem<NumDimT>> const & slip_systems,
+    RealType dt,
+    Intrepid2::Vector<ScalarT, NumSlipT> const & rate_slip,
+    Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
+    Intrepid2::Vector<ScalarT, NumSlipT> & state_hardening_np1,
+    Intrepid2::Vector<ScalarT, NumSlipT> & slip_resistance);
 
   virtual
-  ~HardeningBase() {}
+  ~HardeningLawBase() {}
 };
-
-///
-///
-///
-// template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
-//   typename DataT, typename ArgT>
-// std::unique_ptr<HardeningBase<NumDimT, NumSlipT, DataT, ArgT>>
-// HardeningFactory(HardeningLaw hardening_law);
 
 ///
 /// Linear hardening with recovery
 ///
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
-  typename DataT, typename ArgT>
-struct LinearMinusRecoveryHardening final : public HardeningBase<NumDimT, NumSlipT, DataT, ArgT>
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ScalarT>
+struct LinearMinusRecoveryHardeningLaw final : public HardeningLawBase<NumDimT, NumSlipT, ScalarT>
 {
-  static constexpr
-  char const * const
-  NAME{"Exponential"};
-
-  virtual
-  char const * const
-  name()
-  {
-    return NAME;
-  }
-
-  virtual
-  void
-  createLatentMatrix(
-    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems);
-
   virtual
   void
   harden(
-    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
-    DataT dt,
-    Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<DataT, NumSlipT> const & state_hardening_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance);
+    SlipFamily<NumDimT, NumSlipT> const & slip_family, 
+    std::vector<SlipSystem<NumDimT>> const & slip_systems,
+    RealType dt,
+    Intrepid2::Vector<ScalarT, NumSlipT> const & rate_slip,
+    Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
+    Intrepid2::Vector<ScalarT, NumSlipT> & state_hardening_np1,
+    Intrepid2::Vector<ScalarT, NumSlipT> & slip_resistance);
 
   virtual
-  ~LinearMinusRecoveryHardening() {}
-
-private:
-  Intrepid2::Tensor<DataT, NumSlipT>
-  latent_matrix;//{Intrepid2::identity<DataT, NumSlipT>(NumSlipT)};
-
-
+  ~LinearMinusRecoveryHardeningLaw() {}
 };
 
 ///
 /// Saturation hardening
 ///
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
-  typename DataT, typename ArgT>
-struct SaturationHardening final : public HardeningBase<NumDimT, NumSlipT, DataT, ArgT>
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ScalarT>
+struct SaturationHardeningLaw final : public HardeningLawBase<NumDimT, NumSlipT, ScalarT>
 {
-  static constexpr
-  char const * const
-  NAME{"Saturation"};
-
-  virtual
-  char const * const
-  name()
-  {
-    return NAME;
-  }
-
-  virtual
-  void
-  createLatentMatrix(
-    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems);
-
   virtual
   void
   harden(
-    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
-    DataT dt,
-    Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<DataT, NumSlipT> const & state_hardening_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance);
+    SlipFamily<NumDimT, NumSlipT> const & slip_family,
+    std::vector<SlipSystem<NumDimT>> const & slip_systems,
+    RealType dt,
+    Intrepid2::Vector<ScalarT, NumSlipT> const & rate_slip,
+    Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
+    Intrepid2::Vector<ScalarT, NumSlipT> & state_hardening_np1,
+    Intrepid2::Vector<ScalarT, NumSlipT> & slip_resistance);
 
   virtual
-  ~SaturationHardening() {}
-
-private:
-  Intrepid2::Tensor<DataT, NumSlipT>
-  latent_matrix;//{Intrepid2::identity<DataT, NumSlipT>(NumSlipT)};
-
+  ~SaturationHardeningLaw() {}
 };
 
 ///
 /// Dislocation-density based hardening
 ///
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
-  typename DataT, typename ArgT>
-struct DislocationDensityHardening final : public HardeningBase<NumDimT, NumSlipT, DataT, ArgT>
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ScalarT>
+struct DislocationDensityHardeningLaw final : public HardeningLawBase<NumDimT, NumSlipT, ScalarT>
 {
-  static constexpr
-  char const * const
-  NAME{"Dislocation-Density Based"};
-
-  virtual
-  char const * const
-  name()
-  {
-    return NAME;
-  }
-
-  virtual
-  void
-  createLatentMatrix(
-    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems);
-
   virtual
   void
   harden(
-    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
-    DataT dt,
-    Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<DataT, NumSlipT> const & state_hardening_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance);
+    SlipFamily<NumDimT, NumSlipT> const & slip_family,
+    std::vector<SlipSystem<NumDimT>> const & slip_systems,
+    RealType dt,
+    Intrepid2::Vector<ScalarT, NumSlipT> const & rate_slip,
+    Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
+    Intrepid2::Vector<ScalarT, NumSlipT> & state_hardening_np1,
+    Intrepid2::Vector<ScalarT, NumSlipT> & slip_resistance);
 
   virtual
-  ~DislocationDensityHardening() {}
-
-private:
-  Intrepid2::Tensor<DataT, NumSlipT>
-  latent_matrix;//{Intrepid2::identity<DataT, NumSlipT>(NumSlipT)};
-
+  ~DislocationDensityHardeningLaw() {}
 };
 
 ///
 /// No hardening
 ///
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
-  typename DataT, typename ArgT>
-struct NoHardening final : public HardeningBase<NumDimT, NumSlipT, DataT, ArgT>
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ScalarT>
+struct NoHardeningLaw final : public HardeningLawBase<NumDimT, NumSlipT, ScalarT>
 {
-  static constexpr
-  char const * const
-  NAME{"No hardening"};
-
-  virtual
-  char const * const
-  name()
-  {
-    return NAME;
-  }
-
-  virtual
-  void
-  createLatentMatrix(
-    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems);
-
   virtual
   void
   harden(
-    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
-    DataT dt,
-    Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<DataT, NumSlipT> const & state_hardening_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance);
+    SlipFamily<NumDimT, NumSlipT> const & slip_family,
+    std::vector<SlipSystem<NumDimT>> const & slip_systems,
+    RealType dt,
+    Intrepid2::Vector<ScalarT, NumSlipT> const & rate_slip,
+    Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
+    Intrepid2::Vector<ScalarT, NumSlipT> & state_hardening_np1,
+    Intrepid2::Vector<ScalarT, NumSlipT> & slip_resistance);
 
   virtual
-  ~NoHardening() {}
-
-private:
-  Intrepid2::Tensor<DataT, NumSlipT>
-  latent_matrix;//{Intrepid2::identity<DataT, NumSlipT>(NumSlipT)};
-
+  ~NoHardeningLaw() {}
 };
 
 //
 //
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
-  typename DataT, typename ArgT>
-std::unique_ptr<HardeningBase<NumDimT, NumSlipT, DataT, ArgT>>
-hardeningFactory(HardeningLaw hardening_law)
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ScalarT>
+class hardeningLawFactory
 {
-  using HTUP = std::unique_ptr<HardeningBase<NumDimT, NumSlipT, DataT, ArgT>>;
 
-  switch (hardening_law) {
+public:
 
-  default:
-    std::cerr << __PRETTY_FUNCTION__ << '\n';
-    std::cerr << "ERROR: Unknown hardening law\n";
-    exit(1);
-    break;
+  using HardeningBaseType = HardeningLawBase<NumDimT, NumSlipT, ScalarT>;
 
-  case HardeningLaw::EXPONENTIAL:
-    return HTUP(new LinearMinusRecoveryHardening<NumDimT, NumSlipT, DataT, ArgT>());
-    break;
+  HardeningBaseType *
+  createHardeningLaw(HardeningLawType type_hardening_law) {
 
-  case HardeningLaw::SATURATION:
-    return HTUP(new SaturationHardening<NumDimT, NumSlipT, DataT, ArgT>());
-    break;
+    switch (type_hardening_law) {
 
-  case HardeningLaw::DISLOCATION_DENSITY:
-    return HTUP(new DislocationDensityHardening<NumDimT, NumSlipT, DataT, ArgT>());
-    break;
+      default:
+        std::cerr << __PRETTY_FUNCTION__ << '\n';
+        std::cerr << "ERROR: Unknown hardening law\n";
+        exit(1);
+        break;
 
-  case HardeningLaw::UNDEFINED:
-    return HTUP(new NoHardening<NumDimT, NumSlipT, DataT, ArgT>());
-    break;
+      case HardeningLawType::LINEAR_MINUS_RECOVERY:
+        return new(hardening_buffer_) LinearMinusRecoveryHardeningLaw<NumDimT, NumSlipT, ScalarT>();
+        break;
 
+      case HardeningLawType::SATURATION:
+        return new(hardening_buffer_) SaturationHardeningLaw<NumDimT, NumSlipT, ScalarT>();
+        break;
+
+      case HardeningLawType::DISLOCATION_DENSITY:
+        return new(hardening_buffer_) DislocationDensityHardeningLaw<NumDimT, NumSlipT, ScalarT>();
+        break;
+
+      case HardeningLawType::UNDEFINED:
+        return new(hardening_buffer_) NoHardeningLaw<NumDimT, NumSlipT, ScalarT>();
+        break;
+    }
+
+    return nullptr;
   }
 
-  return HTUP(nullptr);
-}
+private:
+
+  unsigned char
+  hardening_buffer_[sizeof(HardeningBaseType)];
+  
+};
 
 } // namespace CP
 

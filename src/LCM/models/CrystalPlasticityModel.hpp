@@ -93,9 +93,10 @@ public:
   forceGlobalLoadStepReduction()
   {
     TEUCHOS_TEST_FOR_EXCEPTION(
-	  nox_status_test_.is_null(),
-          std::logic_error,
-          "\n**** Error in CrystalPlasticityModel, error accessing NOX status test.");
+        nox_status_test_.is_null(),
+        std::logic_error,
+        "\n**** Error in CrystalPlasticityModel: \
+            error accessing NOX status test.");
 
     nox_status_test_->status_ = NOX::StatusTest::Failed;
   }
@@ -143,6 +144,9 @@ private:
   /// Number of slip systems
   ///
   int
+  num_family_;
+
+  int
   num_slip_;
 
   ///
@@ -160,19 +164,25 @@ private:
   //
   // Unrotated slip directions
   //
-  std::vector< Intrepid2::Vector<RealType, CP::MAX_DIM> >
+  std::vector<Intrepid2::Vector<RealType, CP::MAX_DIM>>
   s_unrotated_;
 
   //
   // Unrotated slip normals
   //
-  std::vector< Intrepid2::Vector<RealType, CP::MAX_DIM> >
+  std::vector<Intrepid2::Vector<RealType, CP::MAX_DIM>>
   n_unrotated_;
+
+  ///
+  /// Vector holding slip system families
+  ///
+  std::vector<CP::SlipFamily<CP::MAX_DIM, CP::MAX_SLIP>>
+  slip_families_;
 
   ///
   /// Struct holding slip system data
   ///
-  std::vector< CP::SlipSystemStruct<CP::MAX_DIM, CP::MAX_SLIP> >
+  std::vector<CP::SlipSystem<CP::MAX_DIM>>
   slip_systems_;
 
   ///
@@ -181,19 +191,36 @@ private:
   bool read_orientations_from_mesh_;
 
   ///
-  /// Constitutive relations
-  ///
-  CP::FlowRule
-  flow_rule_;
-
-  CP::HardeningLaw
-  hardening_law_;
-
-  ///
   /// Solution options
   ///
   IntegrationScheme 
   integration_scheme_;
+
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+
+  Intrepid2::StepBase<
+    CP::ResidualSlipHardnessNLS<CP::MAX_DIM, CP::MAX_SLIP, EvalT>, 
+    ValueT, 
+    CP::NLS_DIM> *
+  step_slip_hard_;
+
+  Intrepid2::StepBase<
+    CP::ResidualSlipNLS<CP::MAX_DIM, CP::MAX_SLIP, EvalT>, 
+    ValueT, 
+    CP::NLS_DIM> *
+  step_slip_;
+
+  Intrepid2::StepBase<
+    CP::ExplicitUpdateNLS<CP::MAX_DIM, CP::MAX_SLIP, EvalT>, 
+    ValueT, 
+    CP::NLS_DIM> *
+  step_explicit_;
+
+  // Intrepid2::Minimizer<ScalarT, CP::NLS_DIM>
+  // minimizer_;
+
+  // Intrepid2::StepBase<NLS, ScalarT, NLS_DIM> 
+  // step_;
   
   ResidualType
   residual_type_;
@@ -205,16 +232,16 @@ private:
   step_type_;
 
   RealType
-  implicit_nonlinear_solver_relative_tolerance_;
+  nonlinear_solver_relative_tolerance_;
   
   RealType
-  implicit_nonlinear_solver_absolute_tolerance_;
+  nonlinear_solver_absolute_tolerance_;
   
   int
-  implicit_nonlinear_solver_max_iterations_;
+  nonlinear_solver_max_iterations_;
   
   int
-  implicit_nonlinear_solver_min_iterations_;
+  nonlinear_solver_min_iterations_;
 
   ///
   /// Pointer to NOX status test, allows the material model to force a global load step reduction
