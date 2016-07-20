@@ -36,8 +36,9 @@ void ExtrudedAdapt::preProcessOriginalMesh() {
   std::cerr << "pre-processing original (flattening)...\n";
   ma::intrude(mesh, model_extrusions, &nlayers);
   std::cerr << "flattening done.\n";
-  std::cerr << "mesh dim is now " << mesh->getDimension() << ", element count "
-    << mesh->count(mesh->getDimension()) << '\n';
+  std::cerr << "mesh dim is now " << mesh->getDimension() << ", "
+    << mesh->count(0) << " vertices, "
+    << mesh->count(mesh->getDimension()) << " elements.\n";
   SPRSizeField* spr_helper = dynamic_cast<SPRSizeField*>(helper);
   if (spr_helper) {
   /* we will use the top layer velocity for error estimation */
@@ -72,8 +73,9 @@ void ExtrudedAdapt::postProcessFinalMesh() {
   std::cerr << "post-processing final (extrude)...\n";
   ma::extrude(mesh, model_extrusions, nlayers);
   std::cerr << "extrusion done.\n";
-  std::cerr << "mesh dim is now " << mesh->getDimension() << ", element count "
-    << mesh->count(mesh->getDimension()) << '\n';
+  std::cerr << "mesh dim is now " << mesh->getDimension() << ", "
+    << mesh->count(0) << " vertices, "
+    << mesh->count(mesh->getDimension()) << " elements.\n";
 }
 
 }
