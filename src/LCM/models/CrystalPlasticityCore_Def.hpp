@@ -871,7 +871,7 @@ template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ScalarT>
 ScalarT
 CP::PowerLawFlowRule<NumDimT, NumSlipT, ScalarT>::
 computeRateSlip(
-  std::unique_ptr<CP::FlowParameterBase> pflow_parameters,
+  std::shared_ptr<CP::FlowParameterBase> const & pflow_parameters,
   ScalarT const & shear,
   ScalarT const & slip_resistance)
 {
@@ -901,7 +901,7 @@ template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ScalarT>
 ScalarT
 CP::ThermalActivationFlowRule<NumDimT, NumSlipT, ScalarT>::
 computeRateSlip(
-  std::unique_ptr<CP::FlowParameterBase> pflow_parameters,
+  std::shared_ptr<CP::FlowParameterBase> const & pflow_parameters,
   ScalarT const & shear,
   ScalarT const & slip_resistance)
 {
@@ -922,7 +922,7 @@ template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ScalarT>
 ScalarT
 CP::PowerLawDragFlowRule<NumDimT, NumSlipT, ScalarT>::
 computeRateSlip(
-  std::unique_ptr<CP::FlowParameterBase> pflow_parameters,
+  std::shared_ptr<CP::FlowParameterBase> const & pflow_parameters,
   ScalarT const & shear,
   ScalarT const & slip_resistance)
 {     
@@ -983,7 +983,7 @@ template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ScalarT>
 ScalarT
 CP::NoFlowRule<NumDimT, NumSlipT, ScalarT>::
 computeRateSlip(
-  std::unique_ptr<CP::FlowParameterBase> pflow_parameters,
+  std::shared_ptr<CP::FlowParameterBase> const & pflow_parameters,
   ScalarT const & shear,
   ScalarT const & slip_resistance)
 {
@@ -1050,19 +1050,19 @@ harden(
   driver_hardening = slip_family.latent_matrix_ * rate_slip_abs;
 
   auto const
-  hardening_params = slip_family.phardening_parameters_;
+  phardening_params = slip_family.phardening_parameters_;
 
   auto const
-  param_map = hardening_params->param_map_;
+  param_map = phardening_params->param_map_;
 
   auto const
-  modulus_recovery = hardening_params.getParameter(Params::MODULUS_RECOVERY);
+  modulus_recovery = phardening_params->getParameter(Params::MODULUS_RECOVERY);
 
   auto const
-  modulus_hardening = hardening_params[param_map["Hardening Modulus"]];
+  modulus_hardening = phardening_params->getParameter(Params::MODULUS_HARDENING);
 
   auto const
-  resistance_slip_initial = hardening_params[param_map["Initial Slip Resistance"]];
+  resistance_slip_initial = phardening_params->getParameter(Params::RESISTANCE_SLIP_INITIAL);
 
   if (modulus_recovery > 0.0)
   {
@@ -1149,6 +1149,8 @@ harden(
   Intrepid2::Vector<ScalarT, NumSlipT> & state_hardening_np1,
   Intrepid2::Vector<ScalarT, NumSlipT> & slip_resistance)
 {
+  using Params = SaturationHardeningParameters<NumDimT, NumSlipT>;
+
   auto const
   num_slip_sys{slip_family.num_slip_sys_};
 
@@ -1173,25 +1175,25 @@ harden(
   effective_slip_rate{Intrepid2::norm_1(rate_slip)};
 
   auto const
-  hardening_params = slip_family.phardening_parameters->hardening_params_;
+  phardening_params = slip_family.phardening_parameters_;
 
   auto const
-  param_map = slip_family.phardening_parameters->param_map_;
+  param_map = phardening_params->param_map_;
 
   auto const
-  stress_saturation_initial = hardening_params[param_map["Initial Saturation Stress"]];
+  stress_saturation_initial = phardening_params->getParameter(Params::STRESS_SATURATION_INITIAL);
 
   auto const
-  rate_slip_reference = hardening_params[param_map["Reference Slip Rate"]];
+  rate_slip_reference = phardening_params->getParameter(Params::RATE_SLIP_REFERENCE);
 
   auto const
-  exponent_saturation = hardening_params[param_map["Saturation Exponent"]];
+  exponent_saturation = phardening_params->getParameter(Params::EXPONENT_SATURATION);
 
   auto const
-  rate_hardening = hardening_params[param_map["Hardening Rate"]];
+  rate_hardening = phardening_params->getParameter(Params::RATE_HARDENING);
 
   auto const
-  resistance_slip_initial = hardening_params[param_map["Initial Slip Resistancee"]];
+  resistance_slip_initial = phardening_params->getParameter(Params::RESISTANCE_SLIP_INITIAL);
 
   for (int ss_index(0); ss_index < num_slip_sys; ++ss_index)
   {
@@ -1201,7 +1203,7 @@ harden(
     ScalarT
     stress_saturation{stress_saturation_initial};
 
-    if (slip_family.exponent_saturation_ > 0.0) {
+    if (exponent_saturation > 0.0) {
       stress_saturation = stress_saturation_initial * std::pow(
         effective_slip_rate / rate_slip_reference, exponent_saturation);
     }
@@ -1285,6 +1287,8 @@ harden(
   Intrepid2::Vector<ScalarT, NumSlipT> & state_hardening_np1,
   Intrepid2::Vector<ScalarT, NumSlipT> & slip_resistance)
 {
+  using Params = DislocationDensityHardeningParameters<NumDimT, NumSlipT>;
+
   auto const
   num_slip_sys{slip_family.num_slip_sys_};
 
@@ -1326,16 +1330,25 @@ harden(
   // Update dislocation densities
   //
   auto const
-  hardening_params = slip_family.phardening_parameters->hardening_params_;
+  phardening_params = slip_family.phardening_parameters_;
 
   auto const
-  param_map = slip_family.phardening_parameters->param_map_;
+  param_map = phardening_params->param_map_;
 
   RealType const
-  factor_generation = hardening_params[param_map["Generation Factor"]];
+  factor_generation = phardening_params->getParameter(Params::FACTOR_GENERATION);
 
   RealType const
-  factor_annihilation = hardening_params[param_map["Annihilation Factor"]];
+  factor_annihilation = phardening_params->getParameter(Params::FACTOR_ANNIHILATION);
+
+  RealType const
+  factor_geometry_dislocation = phardening_params->getParameter(Params::FACTOR_GEOMETRY_DISLOCATION);
+
+  RealType const
+  modulus_shear = phardening_params->getParameter(Params::MODULUS_SHEAR);
+
+  RealType const
+  magnitude_burgers = phardening_params->getParameter(Params::MAGNITUDE_BURGERS);
 
   for (int ss_index(0); ss_index < num_slip_sys; ++ss_index)
   {
@@ -1358,7 +1371,7 @@ harden(
 
     // Compute the slip resistance
     slip_resistance[ss_index_global] = 
-        slip_family.factor_geometry_dislocation_ * slip_family.modulus_shear_ * slip_family.magnitude_burgers_ *
+        factor_geometry_dislocation * modulus_shear * magnitude_burgers *
         std::sqrt(densities_parallel[ss_index]);
   }
 }

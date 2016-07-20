@@ -100,10 +100,10 @@ struct SlipFamily
   Intrepid2::Vector<Intrepid2::Index, NumSlipT>
   slip_system_indices_;
 
-  std::unique_ptr<HardeningParameterBase<NumDimT, NumSlipT>>
+  std::shared_ptr<HardeningParameterBase<NumDimT, NumSlipT>>
   phardening_parameters_{nullptr};
 
-  std::unique_ptr<FlowParameterBase>
+  std::shared_ptr<FlowParameterBase>
   pflow_parameters_{nullptr};
 
   Intrepid2::Tensor<RealType, NumSlipT>
@@ -128,7 +128,7 @@ struct HardeningParameterBase
   void
   createLatentMatrix(
     SlipFamily<NumDimT, NumSlipT> & slip_family, 
-    std::vector<SlipSystem<NumDimT>> const & slip_systems);
+    std::vector<SlipSystem<NumDimT>> const & slip_systems) = 0;
 
   void
   setParameter(ParamIndex const index_param, RealType const value_param)
@@ -187,7 +187,7 @@ struct LinearMinusRecoveryHardeningParameters final :
   void
   createLatentMatrix(
     SlipFamily<NumDimT, NumSlipT> & slip_family, 
-    std::vector<SlipSystem<NumDimT>> const & slip_systems);
+    std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
 
   virtual
   ~LinearMinusRecoveryHardeningParameters() {}
@@ -228,7 +228,7 @@ struct SaturationHardeningParameters final :
   void
   createLatentMatrix(
     SlipFamily<NumDimT, NumSlipT> & slip_family, 
-    std::vector<SlipSystem<NumDimT>> const & slip_systems);
+    std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
 
   virtual
   ~SaturationHardeningParameters() {}
@@ -271,7 +271,7 @@ struct DislocationDensityHardeningParameters final :
   void
   createLatentMatrix(
     SlipFamily<NumDimT, NumSlipT> & slip_family, 
-    std::vector<SlipSystem<NumDimT>> const & slip_systems);
+    std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
 
   virtual
   ~DislocationDensityHardeningParameters() {}
@@ -293,7 +293,7 @@ struct NoHardeningParameters final :
   void
   createLatentMatrix(
     SlipFamily<NumDimT, NumSlipT> & slip_family, 
-    std::vector<SlipSystem<NumDimT>> const & slip_systems);
+    std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
 
   virtual
   ~NoHardeningParameters() {}
@@ -303,10 +303,10 @@ struct NoHardeningParameters final :
 // Factory returning a pointer to a hardening paremeter object
 //
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
-std::unique_ptr<HardeningParameterBase<NumDimT, NumSlipT>>
+std::shared_ptr<HardeningParameterBase<NumDimT, NumSlipT>>
 hardeningParameterFactory(HardeningLawType type_hardening_law)
 {
-  using HPUP = std::unique_ptr<HardeningParameterBase<NumDimT, NumSlipT>>;
+  using HPUP = std::shared_ptr<HardeningParameterBase<NumDimT, NumSlipT>>;
 
   switch (type_hardening_law) {
 
@@ -452,10 +452,10 @@ struct NoFlowParameters final : public FlowParameterBase
 //
 // Factory returning a pointer to a Flow parameters object
 //
-std::unique_ptr<FlowParameterBase>
+inline std::shared_ptr<FlowParameterBase>
 flowParameterFactory(FlowRuleType type_flow_rule)
 {
-  using FPUP = std::unique_ptr<FlowParameterBase>;
+  using FPUP = std::shared_ptr<FlowParameterBase>;
 
   switch (type_flow_rule) {
 
@@ -818,7 +818,7 @@ struct FlowRuleBase
   virtual
   ScalarT
   computeRateSlip(
-    std::unique_ptr<FlowParameterBase> pflow_parameters,
+    std::shared_ptr<FlowParameterBase> const & pflow_parameters,
     ScalarT const & shear,
     ScalarT const & slip_resistance);
 
@@ -835,7 +835,7 @@ struct PowerLawFlowRule final : public FlowRuleBase<NumDimT, NumSlipT, ScalarT>
   virtual
   ScalarT
   computeRateSlip(
-    std::unique_ptr<FlowParameterBase> pflow_parameters,
+    std::shared_ptr<FlowParameterBase> const & pflow_parameters,
     ScalarT const & shear,
     ScalarT const & slip_resistance);
 
@@ -852,7 +852,7 @@ struct ThermalActivationFlowRule final : public FlowRuleBase<NumDimT, NumSlipT, 
   virtual
   ScalarT
   computeRateSlip(
-    std::unique_ptr<FlowParameterBase> pflow_parameters,
+    std::shared_ptr<FlowParameterBase> const & pflow_parameters,
     ScalarT const & shear,
     ScalarT const & slip_resistance);
 
@@ -870,7 +870,7 @@ struct PowerLawDragFlowRule final : public FlowRuleBase<NumDimT, NumSlipT, Scala
   virtual
   ScalarT
   computeRateSlip(
-    std::unique_ptr<FlowParameterBase> pflow_parameters,
+    std::shared_ptr<FlowParameterBase> const & pflow_parameters,
     ScalarT const & shear,
     ScalarT const & slip_resistance);
 
@@ -888,7 +888,7 @@ struct NoFlowRule final : public FlowRuleBase<NumDimT, NumSlipT, ScalarT>
   virtual
   ScalarT
   computeRateSlip(
-    std::unique_ptr<FlowParameterBase> pflow_parameters,
+    std::shared_ptr<FlowParameterBase> const & pflow_parameters,
     ScalarT const & shear,
     ScalarT const & slip_resistance);
 
