@@ -7,12 +7,12 @@
 #include "AAdapt_ExtrudedAdapt.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
 #include "AAdapt_SPRSizeField.hpp"
+#include "AAdapt_UnifSizeField.hpp"
 
 namespace AAdapt {
 
 ExtrudedAdapt::ExtrudedAdapt(const Teuchos::RCP<Albany::APFDiscretization>& disc):
   MeshAdaptMethod(disc) {
-  helper = new SPRSizeField(disc);
   mesh = mesh_struct->getMesh();
   model_extrusions.push_back(ma::ModelExtrusion(
         mesh->findModelEntity(1, 2),
@@ -29,6 +29,15 @@ ExtrudedAdapt::~ExtrudedAdapt() {
 }
 
 void ExtrudedAdapt::setParams(const Teuchos::RCP<Teuchos::ParameterList>& p) {
+  std::string size_method = p->get<std::string>(
+      "Extruded Size Method", "SPR");
+  if (size_method == "SPR")
+    helper = new SPRSizeField(apf_disc);
+  else if (size_method == "Unif")
+    helper = new UnifSizeField(apf_disc);
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "Unknown \"Extruded Size Method\" option " << size_method << '\n');
   helper->setParams(p);
 }
 
