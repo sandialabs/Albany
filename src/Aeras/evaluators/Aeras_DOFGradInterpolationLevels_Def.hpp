@@ -46,10 +46,31 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void DOFGradInterpolationLevels<EvalT, Traits>::
+operator() (const DOFGradInterpolationLevels_Tag& tag, const int& cell) const{
+  for (int qp=0; qp < numQPs; ++qp) {
+    for (int level=0; level < numLevels; ++level) {
+      for (int dim=0; dim<numDims; dim++) {
+        for (int node= 0 ; node < numNodes; ++node) {
+          grad_val_qp(cell,qp,level,dim) += val_node(cell, node, level) * GradBF(cell, node, qp, dim);
+        }
+      }
+    }
+  }
+}
+
+#endif
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void DOFGradInterpolationLevels<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   //Intrepid2 Version:
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
@@ -99,6 +120,13 @@ evaluateFields(typename Traits::EvalData workset)
     std::cout << "qp = " << qp << " value = "<< grad_val_qp(23,qp,0,0) << ", "<<grad_val_qp(23,qp,0,1) <<"\n";
   }
 */
+
+#else
+  // Note: Needs to be changed for cuda
+  PHAL::set(grad_val_qp, 0.0);
+  Kokkos::parallel_for(DOFGradInterpolationLevels_Policy(0,workset.numCells),*this);
+
+#endif
 }
 
 //**********************************************************************

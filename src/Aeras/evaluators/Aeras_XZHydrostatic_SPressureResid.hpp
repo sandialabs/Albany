@@ -14,6 +14,7 @@
 #include "Aeras_Layouts.hpp"
 #include "Aeras_Dimension.hpp"
 #include "Sacado_ParameterAccessor.hpp"
+#include "Aeras_Eta.hpp"
 
 namespace Aeras {
 /** \brief XZHydrostatic equation Residual for atmospheric modeling
@@ -56,12 +57,30 @@ private:
   const int numNodes;
   const int numQPs;
   const int numLevels;
+  const Eta<EvalT> &E;
 
   ScalarT sp0;
 
   bool obtainLaplaceOp;
   bool pureAdvection;
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct XZHydrostatic_SPressureResid_Tag{};
+  struct XZHydrostatic_SPressureResid_pureAdvection_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_SPressureResid_Tag> XZHydrostatic_SPressureResid_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_SPressureResid_pureAdvection_Tag> XZHydrostatic_SPressureResid_pureAdvection_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_SPressureResid_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_SPressureResid_pureAdvection_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 
