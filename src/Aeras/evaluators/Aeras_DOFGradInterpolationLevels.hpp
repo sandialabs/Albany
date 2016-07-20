@@ -56,6 +56,19 @@ private:
   const int numDims;
   const int numQPs;
   const int numLevels;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct DOFGradInterpolationLevels_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFGradInterpolationLevels_Tag> DOFGradInterpolationLevels_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFGradInterpolationLevels_Tag& tag, const int& i) const;
+
+#endif
 };
 
 // Exact copy as above except data type is RealType instead of ScalarT
