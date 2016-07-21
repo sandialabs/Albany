@@ -5,6 +5,9 @@
 //*****************************************************************//
 
 #include "AAdapt_AbstractAdapterT.hpp"
+/* BRD */
+class SGModel;
+/* BRD */
 
 namespace AAdapt {
 
@@ -21,6 +24,16 @@ public:
   //                        const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution);
   virtual bool adaptMesh();
   virtual Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters();
+/* BRD */
+  virtual ~SimAdapt() {
+    if (Simmetrix_numLayers > 0)
+      delete []  Simmetrix_layerTimes;
+  };
+protected:
+  void computeLayerTimes(SGModel *model);
+  double *Simmetrix_layerTimes;
+  int    Simmetrix_numLayers;
+/* BRD */
 private:
   double errorBound;
 };
