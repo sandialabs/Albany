@@ -40,6 +40,7 @@ public:
 private:
   // Input
   PHX::MDField<ScalarT,Cell,Node>       Ps;
+
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Level> Pressure;
   PHX::MDField<ScalarT,Cell,Node,Level> Pi;
@@ -47,6 +48,23 @@ private:
   const int numNodes;
   const int numLevels;
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct XZHydrostatic_Pressure_Tag{};
+  struct XZHydrostatic_Pressure_Pi_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_Pressure_Tag> XZHydrostatic_Pressure_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_Pressure_Pi_Tag> XZHydrostatic_Pressure_Pi_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_Pressure_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_Pressure_Pi_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 

@@ -9,7 +9,7 @@
 #include "Albany_PUMIMeshStruct.hpp"
 
 AAdapt::UnifSizeField::UnifSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc) :
-  MeshSizeField(disc) {
+  MeshAdaptMethod(disc) {
 }
 
 AAdapt::UnifSizeField::
@@ -17,7 +17,7 @@ AAdapt::UnifSizeField::
 }
 
 void
-AAdapt::UnifSizeField::configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
+AAdapt::UnifSizeField::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
 {
 
   ma::IsotropicFunction*
@@ -28,14 +28,14 @@ AAdapt::UnifSizeField::configure(const Teuchos::RCP<Teuchos::ParameterList>& ada
   //do not snap on deformation problems even if the model supports it
   in->shouldSnap = false;
 
-  setMAInputParams(adapt_params_, in);
+  setCommonMeshAdaptOptions(adapt_params_, in);
 
   ma::adapt(in);
 
 }
 
 void
-AAdapt::UnifSizeField::computeError() {
+AAdapt::UnifSizeField::preProcessShrunkenMesh() {
 }
 
 

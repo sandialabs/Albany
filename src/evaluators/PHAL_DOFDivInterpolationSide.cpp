@@ -9,4 +9,4 @@
 #include "PHAL_DOFDivInterpolationSide.hpp"
 #include "PHAL_DOFDivInterpolationSide_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(PHAL::DOFDivInterpolationSideBase)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_EVAL_TYPE(PHAL::DOFDivInterpolationSideBase)

@@ -22,7 +22,7 @@ namespace PHAL {
 
 */
 
-template<typename EvalT, typename Traits>
+template<typename EvalT, typename Traits, typename Type>
 class DOFGradInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
  			     public PHX::EvaluatorDerived<EvalT, Traits>  {
 
@@ -38,7 +38,7 @@ public:
 
 private:
 
-  typedef typename EvalT::ScalarT ScalarT;
+  typedef Type ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
@@ -82,7 +82,7 @@ public:
 };
 
 template<typename Traits>
-class DOFGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>
+class DOFGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits, FadType>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits>  {
 
@@ -135,7 +135,7 @@ public:
 
 #ifdef ALBANY_SG
 template<typename Traits>
-class DOFGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>
+class DOFGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, SGFadType>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::SGJacobian, Traits>  {
 
@@ -173,7 +173,7 @@ private:
 
 #ifdef ALBANY_ENSEMBLE
 template<typename Traits>
-class DOFGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>
+class DOFGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, MPFadType>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::MPJacobian, Traits>  {
 

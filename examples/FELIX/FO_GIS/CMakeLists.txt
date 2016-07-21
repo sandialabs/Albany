@@ -45,6 +45,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_beta_smb.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smb.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_beta_smb_restart.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_beta_smb_restart.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis_wedge_pumi.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis_wedge_pumi.xml COPYONLY)
 
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
@@ -70,6 +72,7 @@ if (ALBANY_EPETRA)
 add_test(${testName}_GisAdjointSensitivityBasalFriction ${Albany.exe} input_fo_gis_adjoint_sensitivity_beta.xml)
 add_test(${testName}_GisSensSMBwrtBeta ${Albany.exe} input_fo_gis_beta_smb.xml)
 add_test(${testName}_GisSensSMBwrtBetaRestart ${Albany.exe} input_fo_gis_beta_smb_restart.xml)
+set_tests_properties(${testName}_GisSensSMBwrtBetaRestart  PROPERTIES DEPENDS ${testName}_GisSensSMBwrtBeta)
   if (ALBANY_MESH_DEPENDS_ON_PARAMETERS)
     add_test(${testName}_GisAdjointSensitivityThickness ${Albany.exe} input_fo_gis_adjoint_sensitivity_thickness.xml)
     add_test(${testName}_GisAdjointSensitivityTwoParameters ${Albany.exe} input_fo_gis_analysis_two_params.xml)

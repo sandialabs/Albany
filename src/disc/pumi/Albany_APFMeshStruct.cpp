@@ -167,11 +167,12 @@ void Albany::APFMeshStruct::init(
   // Set defaults for cubature and workset size, overridden in input file
 
   cubatureDegree = params->get("Cubature Degree", 3);
-  int worksetSizeMax = params->get("Workset Size", 50);
+  int worksetSizeMax = params->get("Workset Size", 10000);
   interleavedOrdering = params->get("Interleaved Ordering",true);
   num_time_deriv = params->get<int>("Number Of Time Derivatives", 0);
   allElementBlocksHaveSamePhysics = true;
   hasRestartSolution = false;
+  shouldLoadFELIXData = false;
 
   // No history available by default
   solutionFieldHistoryDepth = 0;
@@ -287,8 +288,11 @@ Albany::APFMeshStruct::setFieldAndBulkData(
   TEUCHOS_TEST_FOR_EXCEPTION((solVectorLayout[2].size() % 2), std::logic_error,
       "Error in input file: specification of solution vector dotdot layout is incorrect\n");
 
-  solutionInitialized = false;
-  residualInitialized = false;
+  solutionInitialized = true;
+  residualInitialized = true;
+
+  if (solVectorLayout[0].size() == 0 && (neq == 2 || neq == 4)) problemDim = 2;
+  else problemDim = numDim;
 
   if (solVectorLayout[0].size() == 0) {
 
@@ -299,28 +303,23 @@ Albany::APFMeshStruct::setFieldAndBulkData(
     for(int i = 0; i <= num_time_deriv; i++){
 
       int valueType;
-      if (neq==1)
+      if (neq == 1) {
         valueType = apf::SCALAR;
-      else if (neq == 2 || neq == 3)
+      } else if (neq == problemDim) {
         valueType = apf::VECTOR;
-      else {
-        assert(neq == 4 || neq == 9);
+      } else {
+        assert(neq == problemDim * problemDim);
         valueType = apf::MATRIX;
       }
-      /* fields may have been created by restart mechanism */
-      if(i == 0 && (!mesh->findField(residual_name)))
-        this->createNodalField(residual_name,valueType);
-      if (mesh->findField(solution_name[i]))
-        solutionInitialized = true;
-      else {
-        this->createNodalField(solution_name[i],valueType);
-        if (hasRestartSolution)
-          solutionInitialized = true;
+      if(i == 0) {
+        residualInitialized = findOrCreateNodalField(residual_name, valueType);
       }
+      bool found_field = findOrCreateNodalField(solution_name[i], valueType);
+      solutionInitialized = solutionInitialized && found_field;
     }
-  }
-  else
+  } else {
     splitFields(solVectorLayout);
+  }
 
   // Code to parse the vector of StateStructs and save the information
 
@@ -335,13 +334,18 @@ Albany::APFMeshStruct::setFieldAndBulkData(
     StateStruct& st = *((*sis)[i]);
 
 #ifdef ALBANY_SCOREC
-    if (meshSpecsType() == AbstractMeshStruct::PUMI_MS)
-        st.restartDataAvailable = hasRestartSolution;
+    if (meshSpecsType() == AbstractMeshStruct::PUMI_MS) {
+      if(hasRestartSolution)
+        st.restartDataAvailable = true;
+      if((shouldLoadFELIXData) && (st.entity == StateStruct::NodalDataToElemNode))
+        st.restartDataAvailable = true;
+    }
 #endif
 
     if ( ! nameSet.insert(st.name).second)
       continue; //ignore duplicates
     std::vector<PHX::DataLayout::size_type>& dim = st.dim;
+
     if(st.entity == StateStruct::NodalData) { // Data at the node points
        const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
                = sis->getNodalDataBase()->getNodeContainer();
@@ -350,6 +354,8 @@ Albany::APFMeshStruct::setFieldAndBulkData(
     else if (dim.size() == 2) {
       if(st.entity == StateStruct::QuadPoint || st.entity == StateStruct::ElemNode)
         qpscalar_states.push_back(Teuchos::rcp(new PUMIQPData<double, 2>(st.name, dim, st.output)));
+      else if(st.entity == StateStruct::NodalDataToElemNode)
+        elemnodescalar_states.push_back(Teuchos::rcp(new PUMIQPData<double, 2>(st.name, dim, st.output)));
     }
     else if (dim.size() == 3) {
       if(st.entity == StateStruct::QuadPoint || st.entity == StateStruct::ElemNode)
@@ -365,6 +371,22 @@ Albany::APFMeshStruct::setFieldAndBulkData(
          "st.entity != Albany::StateStruct::QuadPoint || " <<
          "st.entity != Albany::StateStruct::ElemNode || " <<
          "st.entity != Albany::StateStruct::NodalData" << std::endl);
+  }
+}
+
+bool
+Albany::APFMeshStruct::findOrCreateNodalField(const char* name, int value_type) {
+  apf::Field* f = mesh->findField(name);
+  if (f) {
+    /* fields may have been created by the restart mechanism,
+     * but we should still check that they are of the expected type
+     */
+    assert(apf::getShape(f) == mesh->getShape());
+    assert(apf::getValueType(f) == value_type);
+    return true;
+  } else {
+    this->createNodalField(name, value_type);
+    return false;
   }
 }
 
@@ -393,17 +415,17 @@ Albany::APFMeshStruct::splitFields(Teuchos::Array<Teuchos::Array<std::string> >&
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
             "Error in input file: specification of solution vector layout is incorrect\n");
 
-      this->createNodalField(fieldLayout[fcomp][i].c_str(),valueType);
+      bool found_field =
+        findOrCreateNodalField(fieldLayout[fcomp][i].c_str(),valueType);
+      solutionInitialized = solutionInitialized && found_field;
+
       // Add the residual field - based on the text entered in the "Solution" PL only
       if(fcomp == 0){
         std::string res_name = fieldLayout[fcomp][i];
         res_name.append("Res");
-        this->createNodalField(res_name.c_str(),valueType);
+        residualInitialized = findOrCreateNodalField(res_name.c_str(), valueType);
       }
     }
-
-    if (hasRestartSolution)
-      solutionInitialized = true;
   }
 }
 
@@ -429,8 +451,9 @@ int Albany::APFMeshStruct::computeWorksetSize(const int worksetSizeMax,
                                                      const int ebSizeMax) const
 {
   // Resize workset size down to maximum number in an element block
-  if (worksetSizeMax > ebSizeMax || worksetSizeMax < 1) return ebSizeMax;
-  else {
+  if (worksetSizeMax > ebSizeMax || worksetSizeMax < 1) {
+    return ebSizeMax;
+  } else {
      // compute numWorksets, and shrink workset size to minimize padding
      const int numWorksets = 1 + (ebSizeMax-1) / worksetSizeMax;
      return (1 + (ebSizeMax-1) /  numWorksets);
@@ -463,7 +486,7 @@ Albany::APFMeshStruct::getValidDiscretizationParameters() const
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid2");
-  validPL->set<int>("Workset Size", 50, "Upper bound on workset (bucket) size");
+  validPL->set<int>("Workset Size", 10000, "Upper bound on workset (bucket) size");
   validPL->set<bool>("Interleaved Ordering", true, "Flag for interleaved or blocked unknown ordering");
   validPL->set<bool>("Separate Evaluators by Element Block", false,
                      "Flag for different evaluation trees for each Element Block");

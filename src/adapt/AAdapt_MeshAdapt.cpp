@@ -14,15 +14,14 @@
 #include <PCU.h>
 #include <parma.h>
 #include <apfZoltan.h>
-#include <apfMDS.h> // for createMdsMesh
+#include <apfMDS.h> // for reorderMdsMesh
 
 #include "AAdapt_UnifSizeField.hpp"
 #include "AAdapt_UnifRefSizeField.hpp"
 #include "AAdapt_NonUnifRefSizeField.hpp"
 #include "AAdapt_AlbanySizeField.hpp"
-#ifdef SCOREC_SPR
 #include "AAdapt_SPRSizeField.hpp"
-#endif
+#include "AAdapt_ExtrudedAdapt.hpp"
 
 #include "AAdapt_RC_Manager.hpp"
 
@@ -55,12 +54,12 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     szField = Teuchos::rcp(new AAdapt::NonUnifRefSizeField(pumi_discretization));
   else if (method == "RPI Albany Size")
     szField = Teuchos::rcp(new AAdapt::AlbanySizeField(pumi_discretization));
-#ifdef SCOREC_SPR
   else if (method == "RPI SPR Size")
     szField = Teuchos::rcp(new AAdapt::SPRSizeField(pumi_discretization));
-#endif
+  else if (method == "RPI Extruded")
+    szField = Teuchos::rcp(new AAdapt::ExtrudedAdapt(pumi_discretization));
   else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "should not be here");
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "unknown RPI adapt method" << method);
 
   // Save the initial output file name
   base_exo_filename = pumiMeshStruct->outputFileName;
@@ -80,13 +79,11 @@ inline int getValueType (const PHX::DataLayout& dl) {
   case 1: return apf::VECTOR;
   case 2: return apf::MATRIX;
   default:
-    std::stringstream ss;
-    ss << "not a valid rank: " << dl.rank() - 2;
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, ss.str());
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not a valid rank: " << dl.rank() - 2);
     return -1;
   }
 }
-} // namespace
+} // end anonymous namespace
 
 void AAdapt::MeshAdapt::initRcMgr () {
   if (rc_mgr.is_null()) return;
@@ -110,18 +107,6 @@ void AAdapt::MeshAdapt::initRcMgr () {
     rc_mgr->initProjector(pumi_discretization->getNodeMapT(),
                           pumi_discretization->getOverlapNodeMapT());
   }
-#ifdef AMBDEBUG
-  // Create a field that never changes. It's interp'ed from now mesh to the
-  // next. In the initial configuration, each component is simply a
-  // coordinate value.
-  const int dim = pumi_discretization->getNumDim();
-  pumiMeshStruct->createNodalField("test_interp_field", apf::VECTOR);
-  const Teuchos::ArrayRCP<const double>&
-    coords = pumi_discretization->getCoordinates();
-  Teuchos::Array<double> f(coords.size());
-  memcpy(&f[0], &coords[0], coords.size()*sizeof(double));
-  pumi_discretization->setField("test_interp_field", &f[0], true, 0, dim);
-#endif
 }
 
 AAdapt::MeshAdapt::~MeshAdapt() {}
@@ -196,17 +181,14 @@ void AAdapt::MeshAdapt::beforeAdapt()
   TEUCHOS_FUNC_TIME_MONITOR("AlbanyAdapt: Transfer to APF Mesh");
   if (should_transfer_ip_data)
     pumi_discretization->attachQPData();
-  szField->copyInputFields();
+  szField->preProcessOriginalMesh();
 }
 
 void AAdapt::MeshAdapt::adaptInPartition()
 {
-  szField->computeError();
-
-  /* i.e. adapt */
-  szField->configure(adapt_params_);
-
-  szField->freeSizeField();
+  szField->preProcessShrunkenMesh();
+  szField->adaptMesh(adapt_params_);
+  szField->postProcessShrunkenMesh();
 }
 
 namespace {
@@ -243,25 +225,18 @@ namespace {
     m->destroyTag(weights);
   }
 
-  struct albBalancer {
-    double imb;
-    std::string method;
-    void (*bal)(ma::Mesh* m, double maxImb);
-  };
-
-  albBalancer* postBalance(std::string method, double maxImb) {
-    albBalancer* b = new albBalancer;
-    b->imb = maxImb;
-    if(method == std::string("zoltan")) {
-      b->bal = runZoltanBal;
-    } else if(method == std::string("parma")) {
-      b->bal = runParmaVtxElm;
+  void postBalance(ma::Mesh* m, std::string const& method, double maxImb) {
+    if (method == "zoltan") {
+      runZoltanBal(m, maxImb);
+    } else if (method == "parma") {
+      runParmaVtxElm(m, maxImb);
+    } else if (method == "none") {
     } else {
-      b->bal = NULL;
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "Unknown \"Load Balancing\" option " << method << std::endl);
     }
-    return b;
   }
-}
+} // end anonymous namespace
 
 void AAdapt::MeshAdapt::afterAdapt()
 {
@@ -269,23 +244,25 @@ void AAdapt::MeshAdapt::afterAdapt()
 
   Teuchos::Array<std::string> defaultStArgs =
      Teuchos::tuple<std::string>("zoltan", "parma", "parma");
+  Teuchos::Array<std::string> loadBalancing =
+    adapt_params_->get<Teuchos::Array<std::string> >(
+        "Load Balancing", defaultStArgs);
   double maxImb = adapt_params_->get<double>("Maximum LB Imbalance", 1.30);
+  postBalance(mesh, loadBalancing[2], maxImb);
 
-  albBalancer* b = postBalance(defaultStArgs[2], maxImb);
-  b->bal(mesh, b->imb);
-  delete b;
+  szField->postProcessFinalMesh();
 
   mesh->verify();
 
   apf::reorderMdsMesh(mesh);
-  if (adapt_params_->isParameter("Write Adapted SMB Files")) {
+
+  if (adapt_params_->get<bool>("Write Adapted SMB Files", false)) {
     std::ostringstream smbOutName;
     smbOutName << "adapted_mesh_" << ncalls << "/";
     std::string outFile= smbOutName.str();
     mesh->writeNative(outFile.c_str());
   }
 
-  szField->freeInputFields();
   // Throw away all the Albany data structures and re-build them from the mesh
   // Note that the solution transfer for the QP fields happens in this call
   pumi_discretization->updateMesh(should_transfer_ip_data);
@@ -297,7 +274,7 @@ void AAdapt::MeshAdapt::afterAdapt()
   ncalls++;
 }
 
-struct AdaptCallbackOf : public Parma_GroupCode
+struct AdaptCallback : public Parma_GroupCode
 {
   AAdapt::MeshAdapt* adapter;
   void run(int group) {
@@ -335,26 +312,24 @@ double findAlpha(
   const int n_iterations_to_fail);
 
 bool correctnessTestSkip () {
-#ifndef AMBDEBUG
   return false;
-#else
-  static int cnt = 0;
-  if ( ! amb::Options::get()->params()->isType<int>("nadapt")) return false;
-  return ++cnt > amb::Options::get()->params()->get<int>("nadapt");
-#endif
 }
 } // namespace al
 
+/* If the mesh is spread too thin, as defined by having a small (<1000)
+ * number of element on each MPI rank, the partition adjustment algorithms
+ * in MeshAdapt may migrate all elements out of an MPI rank, which is something
+ * the SCOREC code is not designed to handle.
+ * This function will examine the mesh and determine if it is spread too thin.
+ * If so, it will repartition the mesh onto a subset of the MPI ranks and
+ * call (callback), then repartition to the full set of ranks and return.
+ */
 void adaptShrunken(apf::Mesh2* m, double min_part_density,
                    Parma_GroupCode& callback);
 
 bool AAdapt::MeshAdapt::adaptMesh()
 {
-#ifdef AMBDEBUG
-  al::anlzCoords(pumi_discretization);
-#endif
-
-  AdaptCallbackOf callback;
+  AdaptCallback callback;
   callback.adapter = this;
   const double
     min_part_density = adapt_params_->get<double>("Minimum Part Density", 1000);
@@ -375,10 +350,6 @@ bool AAdapt::MeshAdapt::adaptMesh()
     success = adaptMeshWithRc(min_part_density, callback);
   }
 
-#ifdef AMBDEBUG
-  al::anlzCoords(pumi_discretization);
-  al::writeMesh(pumi_discretization);
-#endif
   return success;
 }
 
@@ -492,34 +463,33 @@ void AAdapt::MeshAdapt::checkValidStateVariable(
   const Albany::StateManager& state_mgr_,
   const std::string name)
 {
-  if (name.length() > 0) {
-    // does state variable exist?
-    std::string stateName;
+  // does state variable exist?
+  // if not, we will be using the solution field
+  if (name.empty()) return;
 
-    Albany::StateArrays& sa = disc->getStateArrays();
-    Albany::StateArrayVec& esa = sa.elemStateArrays;
-    Teuchos::RCP<Albany::StateInfoStruct> stateInfo = state_mgr_.getStateInfoStruct();
-    bool exists = false;
-    for(unsigned int i = 0; i < stateInfo->size(); i++) {
-      stateName = (*stateInfo)[i]->name;
-      if ( name.compare(0,100,stateName) == 0 ) {
-        exists = true;
-        break;
-      }
+  std::string stateName;
+
+  Albany::StateArrays& sa = disc->getStateArrays();
+  Albany::StateArrayVec& esa = sa.elemStateArrays;
+  Teuchos::RCP<Albany::StateInfoStruct> stateInfo = state_mgr_.getStateInfoStruct();
+  bool exists = false;
+  for(unsigned int i = 0; i < stateInfo->size(); i++) {
+    stateName = (*stateInfo)[i]->name;
+    if ( name.compare(0,100,stateName) == 0 ) {
+      exists = true;
+      break;
     }
-    if (!exists)
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                                 "Error!    Invalid State Variable Parameter!");
-
-    // is state variable a 3x3 tensor?
-
-    std::vector<int> dims;
-    esa[0][name].dimensions(dims);
-    int size = dims.size();
-    if (size != 4)
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                                 "Error! Invalid State Variable Parameter \"" << name << "\" looking for \"" << stateName << "\"" << std::endl);
   }
+  TEUCHOS_TEST_FOR_EXCEPTION(!exists, Teuchos::Exceptions::InvalidParameter,
+                             "Error!    Invalid State Variable Parameter!");
+
+  // is state variable a 3x3 tensor?
+
+  std::vector<int> dims;
+  esa[0][name].dimensions(dims);
+  int size = dims.size();
+  TEUCHOS_TEST_FOR_EXCEPTION(size != 4, Teuchos::Exceptions::InvalidParameter,
+                             "Error! Invalid State Variable Parameter \"" << name << "\" looking for \"" << stateName << "\"" << std::endl);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
@@ -544,10 +514,6 @@ AAdapt::MeshAdapt::getValidAdapterParameters() const
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
   validPL->set<double>("Minimum Part Density", 1000, "Minimum elements per part: triggers partition shrinking");
   validPL->set<bool>("Write Adapted SMB Files", false, "Write .smb mesh files after adaptation");
-  // For the new adaptive model, we preallocate all vectors larger than will be needed during the calculation.
-  // We can adapt the mesh up to that point, but an exception will be thrown if the number of nodes grow beyond
-  // the high water mark on the processor.
-  validPL->set<int>("High Water Mark", 1, "Number of nodes to allocate space for on each rank");
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->getValidParameters(validPL);
 
   return validPL;
@@ -556,7 +522,7 @@ AAdapt::MeshAdapt::getValidAdapterParameters() const
 static double getAveragePartDensity(apf::Mesh* m)
 {
   double nElements = m->count(m->getDimension());
-  PCU_Add_Doubles(&nElements, 1);
+  nElements = PCU_Add_Double(nElements);
   return nElements / PCU_Comm_Peers();
 }
 
@@ -586,9 +552,9 @@ void adaptShrunken(apf::Mesh2* m, double minPartDensity,
                    Parma_GroupCode& callback)
 {
   int factor = getShrinkFactor(m, minPartDensity);
-  if (factor == 1)
+  if (factor == 1) {
     callback.run(0);
-  else {
+  } else {
     warnAboutShrinking(factor);
     Parma_ShrinkPartition(m, factor, callback);
   }
@@ -757,9 +723,6 @@ double findAlpha (
   for (int it = 0 ;; ) {
     cs.set_alpha(alpha);
     updateCoordinates(pumi_disc, cs, x);
-#ifdef AMBDEBUG
-    if (it == 0) al::writeMesh(pumi_disc);
-#endif
 
     ++it;
     const long n_negative_simplices = apf::verifyVolumes(

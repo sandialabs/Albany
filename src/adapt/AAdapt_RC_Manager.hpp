@@ -6,11 +6,6 @@
 #ifndef AADAPT_RC_MANAGER
 #define AADAPT_RC_MANAGER
 
-//#define AMBDEBUG
-#ifdef AMBDEBUG
-#include "/home/ambradl/bigcode/amb.hpp"
-#endif
-
 #include "Albany_DataTypes.hpp"
 #include "AAdapt_RC_DataTypes.hpp"
 
