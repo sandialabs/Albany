@@ -25,6 +25,7 @@ XZHydrostatic_SurfaceGeopotential<EvalT, Traits>::
 XZHydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
   PhiSurf       (p.get<std::string> ("SurfaceGeopotential"), dl->node_scalar),
+  coordVec  (p.get<std::string> ("Coordinate Vector Name"), dl->node_3vector ),
   numNodes ( dl->node_scalar          ->dimension(1)),
   numParam(0)
 
@@ -128,6 +129,7 @@ XZHydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
 
   
   this->addEvaluatedField(PhiSurf);
+  this->addEvaluatedField(coordVec);
 
   this->setName("Aeras::XZHydrostatic_SurfaceGeopotential"+PHX::typeAsString<EvalT>());
 }
@@ -139,6 +141,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(PhiSurf      , fm);
+  this->utils.setFieldData(coordVec      , fm);
 }
 
 //**********************************************************************

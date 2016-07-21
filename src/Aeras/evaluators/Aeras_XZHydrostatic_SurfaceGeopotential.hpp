@@ -39,6 +39,7 @@ public:
 
 private:
   // Input
+  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> PhiSurf;
