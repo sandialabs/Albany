@@ -7,7 +7,7 @@
 #if !defined(LCM_CrystalPlasticityModel_hpp)
 #define LCM_CrystalPlasticityModel_hpp
 
-#include "CrystalPlasticityCore/CrystalPlasticityCore.hpp"
+#include "core/CrystalPlasticity/CrystalPlasticityCore.hpp"
 #include "ConstitutiveModel.hpp"
 #include "NOX_StatusTest_ModelEvaluatorFlag.h"
 

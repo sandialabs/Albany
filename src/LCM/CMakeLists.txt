@@ -63,7 +63,7 @@ file (GLOB models-sources
 )
 file (GLOB models-headers
   "${LCM_DIR}/models/*.hpp"
-	"${LCM_DIR}/models/CrystalPlasticityCore/*.hpp"
+  "${LCM_DIR}/models/core/CrystalPlasticity/*.hpp"
   "${LCM_DIR}/parallel_models/*.hpp"
 )
 

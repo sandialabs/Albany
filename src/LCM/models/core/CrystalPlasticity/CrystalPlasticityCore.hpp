@@ -9,8 +9,8 @@
 
 #include <MiniNonlinearSolver.h>
 #include "CrystalPlasticityFwd.hpp"
-#include "CrystalPlasticityCore/FlowRule.hpp"
-#include "CrystalPlasticityCore/HardeningLaw.hpp"
+#include "FlowRule.hpp"
+#include "HardeningLaw.hpp"
 
 namespace CP
 {
