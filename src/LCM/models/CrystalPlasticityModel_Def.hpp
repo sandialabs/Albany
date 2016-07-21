@@ -243,13 +243,13 @@ CrystalPlasticityModel(
     // Obtain flow rule parameters
     //
     std::string 
-    name_flow_rule = list_fam_slip.get<std::string>("Flow Rule");
+    name_flow_rule = list_fam_slip.get<std::string>("Flow Rule","");
 
     Teuchos::ParameterList 
     f_list = p->sublist(name_flow_rule);
 
     std::string 
-    name_type_flow_rule = f_list.get<std::string>("Type");
+    name_type_flow_rule = f_list.get<std::string>("Type","");
 
     std::map<std::string, CP::FlowRuleType> const
     flow_rule_name_map = {
@@ -277,13 +277,13 @@ CrystalPlasticityModel(
     // Obtain hardening law parameters
     //
     std::string 
-    name_hardening_law = list_fam_slip.get<std::string>("Hardening Law");
+    name_hardening_law = list_fam_slip.get<std::string>("Hardening Law","");
 
     Teuchos::ParameterList 
     h_list = p->sublist(name_hardening_law);
 
     std::string 
-    name_type_hardening_law = h_list.get<std::string>("Type");
+    name_type_hardening_law = h_list.get<std::string>("Type","");
 
     std::map<std::string, CP::HardeningLawType> const
     hardening_law_name_map = {
@@ -319,25 +319,20 @@ CrystalPlasticityModel(
     Teuchos::ParameterList
     ss_list = p->sublist(Albany::strint("Slip System", num_ss + 1));
 
-    auto const
-    slip_family_index = ss_list.get<int>("Slip Family", 1);
-
-    auto &
+    CP::SlipSystem<CP::MAX_DIM> &
     slip_system = slip_systems_[num_ss];
 
-    slip_system.slip_family_index_ = slip_family_index;
+    slip_system.slip_family_index_ = ss_list.get<int>("Slip Family", 1);
 
-    auto &
-    slip_family = slip_families_[slip_family_index];
+    CP::SlipFamily<CP::MAX_DIM, CP::MAX_SLIP> &
+    slip_family = slip_families_[slip_system.slip_family_index_];
 
-    auto &
+    Intrepid2::Index 
     slip_system_index = slip_family.num_slip_sys_;
 
     slip_family.slip_system_indices_[slip_system_index] = num_ss;
 
-    ++slip_system_index;
-
-    slip_family.num_slip_sys_ = slip_system_index;
+    slip_family.num_slip_sys_ = slip_system_index + 1;
 
     //
     // Read and normalize slip directions. Miller indices need to be normalized.
