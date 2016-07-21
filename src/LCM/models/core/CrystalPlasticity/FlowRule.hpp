@@ -162,7 +162,7 @@ struct FlowRuleBase
   computeRateSlip(
     std::shared_ptr<FlowParameterBase> const & pflow_parameters,
     ScalarT const & shear,
-    ScalarT const & slip_resistance);
+    ScalarT const & slip_resistance) = 0;
 
   virtual
   ~FlowRuleBase() {}

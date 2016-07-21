@@ -77,7 +77,7 @@ harden(
 {
   using Params = LinearMinusRecoveryHardeningParameters<NumDimT, NumSlipT>;
 
-  auto const
+  Intrepid2::Index const
   num_slip_sys{slip_family.num_slip_sys_};
 
   Intrepid2::Vector<ScalarT, NumSlipT>
@@ -199,7 +199,7 @@ harden(
 {
   using Params = SaturationHardeningParameters<NumDimT, NumSlipT>;
 
-  auto const
+  Intrepid2::Index const
   num_slip_sys{slip_family.num_slip_sys_};
 
   Intrepid2::Vector<ScalarT, NumSlipT>
@@ -337,7 +337,7 @@ harden(
 {
   using Params = DislocationDensityHardeningParameters<NumDimT, NumSlipT>;
 
-  auto const
+  Intrepid2::Index const
   num_slip_sys{slip_family.num_slip_sys_};
 
   //
@@ -455,7 +455,7 @@ harden(
   Intrepid2::Vector<ScalarT, NumSlipT> & state_hardening_np1,
   Intrepid2::Vector<ScalarT, NumSlipT> & slip_resistance)
 {  
-  auto const
+  Intrepid2::Index const
   num_slip_sys = slip_family.num_slip_sys_;
 
   auto const

@@ -260,7 +260,7 @@ struct HardeningLawBase
     Intrepid2::Vector<ScalarT, NumSlipT> const & rate_slip,
     Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
     Intrepid2::Vector<ScalarT, NumSlipT> & state_hardening_np1,
-    Intrepid2::Vector<ScalarT, NumSlipT> & slip_resistance);
+    Intrepid2::Vector<ScalarT, NumSlipT> & slip_resistance) = 0;
 
   virtual
   ~HardeningLawBase() {}
