@@ -8,6 +8,7 @@
 #define LCM_CrystalPlasticityModel_hpp
 
 #include "core/CrystalPlasticity/CrystalPlasticityCore.hpp"
+#include "core/CrystalPlasticity/NonlinearSolver.hpp"
 #include "ConstitutiveModel.hpp"
 #include "NOX_StatusTest_ModelEvaluatorFlag.h"
 
