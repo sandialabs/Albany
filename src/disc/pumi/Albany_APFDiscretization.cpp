@@ -1215,6 +1215,7 @@ void Albany::APFDiscretization::computeSideSetsBase()
 
   // need a sideset list per workset
   int num_buckets = wsEBNames.size();
+  sideSets.clear();
   sideSets.resize(num_buckets);
 
   int d = m->getDimension();
