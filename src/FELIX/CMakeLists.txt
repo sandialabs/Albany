@@ -10,6 +10,7 @@
        evaluators/FELIX_BasalFrictionCoefficient.cpp
        evaluators/FELIX_BasalFrictionCoefficientGradient.cpp
        evaluators/FELIX_BasalFrictionHeat.cpp
+       evaluators/FELIX_BasalMeltRate.cpp
        evaluators/FELIX_DirichletEnthalpySurface.cpp
        evaluators/FELIX_Dissipation.cpp
        evaluators/FELIX_EffectivePressure.cpp
@@ -95,6 +96,8 @@ ENDIF()
        evaluators/FELIX_BasalFrictionCoefficientGradient_Def.hpp
        evaluators/FELIX_BasalFrictionHeat.hpp
        evaluators/FELIX_BasalFrictionHeat_Def.hpp
+       evaluators/FELIX_BasalMeltRate.hpp
+       evaluators/FELIX_BasalMeltRate_Def.hpp
        evaluators/FELIX_DirichletEnthalpySurface.hpp
        evaluators/FELIX_DirichletEnthalpySurface_Def.hpp       
        evaluators/FELIX_Dissipation.hpp

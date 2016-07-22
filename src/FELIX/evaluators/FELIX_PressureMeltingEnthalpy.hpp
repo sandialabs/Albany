@@ -48,7 +48,7 @@ private:
 
   int numNodes;
 
-  double c_i;
+  double c_i, rho_i;
   double T0;
 };
 

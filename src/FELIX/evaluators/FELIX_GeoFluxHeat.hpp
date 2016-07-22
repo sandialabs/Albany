@@ -43,6 +43,7 @@ class GeoFluxHeat : public PHX::EvaluatorWithBaseImpl<Traits>,
 		PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim>  GradBF;
 		PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>     	 w_measure;
 		PHX::MDField<Type,Cell,Side,QuadPoint,VecDim>        velocity;
+		PHX::MDField<ScalarT,Cell,Side,QuadPoint>        		 verticalVel;
 
 		// Output:
 		PHX::MDField<ScalarT,Cell,Node> geoFluxHeat;

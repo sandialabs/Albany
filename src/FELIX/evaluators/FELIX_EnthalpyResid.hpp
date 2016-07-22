@@ -37,7 +37,6 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 		bool haveSUPG;
 		double delta;
-		//double alpha;
 
 		// Input:
 		PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
@@ -49,12 +48,14 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 		PHX::MDField<VelocityType,Cell,QuadPoint,VecDim> Velocity;
 		PHX::MDField<ScalarT,Cell,QuadPoint> verticalVel;
-    PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec;
+		PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec;
 		PHX::MDField<ScalarT,Cell,QuadPoint> diss;
 		PHX::MDField<ScalarT,Cell,QuadPoint> basalFricHeat;
 		PHX::MDField<ScalarT,Cell,QuadPoint> basalFricHeatSUPG;
 		PHX::MDField<ScalarT,Cell,QuadPoint> geoFluxHeat;
 		PHX::MDField<ScalarT,Cell,QuadPoint> geoFluxHeatSUPG;
+		PHX::MDField<ScalarT,Cell,QuadPoint> omega;
+		PHX::MDField<ScalarT,Cell,QuadPoint,Dim> omegaGrad;
 		PHX::MDField<ParamScalarT,Cell,QuadPoint,Dim> meltTempGrad;
 
 		PHX::MDField<ScalarT,Dim> homotopy;
@@ -66,9 +67,13 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 		bool needsDiss, needsBasFric;
 
-		double k_i, c_i, K_i;   // for computing K_i
-		double K_0;	 // diffusivity temperate ice
-		double rho; 	// density of ice
+		double k, c, K_i;   // for computing K_i
+		double k_0, eta_w;
+		double nu;	 // diffusivity temperate ice
+		double rho_i; 	// density of ice
+		double rho_w; 	// density of water
+		double g, L;
+		double drainage_coeff;
 
 		ScalarT printedAlpha;
 };

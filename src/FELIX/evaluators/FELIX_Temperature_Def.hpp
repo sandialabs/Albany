@@ -35,7 +35,7 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 
 	// Setting parameters
 	Teuchos::ParameterList& physics = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
-
+	rho_i = physics.get<double>("Ice Density", 916.0);
 	c_i = physics.get<double>("Heat capacity of ice", 2009.0);
 	T0 = physics.get<double>("Reference Temperature", 240.0);
 }
@@ -60,7 +60,7 @@ evaluateFields(typename Traits::EvalData d)
    		for (std::size_t node = 0; node < numNodes; ++node)
    		{
    			if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
-   				temperature(cell,node) = enthalpy(cell,node)/c_i + T0;
+   				temperature(cell,node) = enthalpy(cell,node)/(rho_i * c_i) + T0;
    			else
    				temperature(cell,node) = meltingTemp(cell,node);
    		}

@@ -42,6 +42,7 @@
 #include "FELIX_Temperature.hpp"
 #include "FELIX_Integral1Dw_Z.hpp"
 #include "FELIX_VerticalVelocity.hpp"
+#include "FELIX_BasalMeltRate.hpp"
 
 
 namespace FELIX
@@ -222,7 +223,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 		  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
 
 		  // --- Restrict enthalpy from cell-based to cell-side-based
-		  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator(dof_names[0],basalSideName,"Node Vector",cellType));
+		  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFCellToSideEvaluator(dof_names[0],basalSideName,"Node Scalar",cellType));
 
 		  //fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator(dof_names[0], basalSideName));
 
@@ -267,6 +268,11 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
 	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("melting enthalpy"));
 
+	  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator("omega"));
+
+	  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFGradInterpolationEvaluator("omega"));
+
+
 	  // --- Special evaluators for side handling --- //
 
 	  // --- Restrict vertex coordinates from cell-based to cell-side-based
@@ -282,10 +288,13 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 	  // --- Restrict basal velocity from cell-based to cell-side-based
 	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("velocity",basalSideName,"Node Vector",cellType));
 
-	  // --- Restrict enthalpy Hs from cell-based to cell-side-based
-	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("melting enthalpy",basalSideName,"Node Vector",cellType));
+	  // --- Restrict vertical velocity from cell-based to cell-side-based
+	  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFCellToSideEvaluator("w",basalSideName,"Node Scalar",cellType));
 
-  	  //fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("melting enthalpy", basalSideName));
+	  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationSideEvaluator("w", basalSideName));
+
+	  // --- Restrict enthalpy Hs from cell-based to cell-side-based
+	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("melting enthalpy",basalSideName,"Node Scalar",cellType));
 
 	  // --- Interpolate velocity on QP on side
 	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFVecInterpolationSideEvaluator("velocity", basalSideName));
@@ -306,7 +315,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 	  // --- Utilities for Basal Melt Rate
 	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("melting temp",basalSideName,"Node Scalar",cellType));
 
-	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("omega",basalSideName,"Node Scalar",cellType));
+	  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFCellToSideEvaluator("omega",basalSideName,"Node Scalar",cellType));
 
 	  // --- Utilities for Geotermal flux
 	  if(!isGeoFluxConst)
@@ -324,6 +333,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
 	  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator("w"));
 
+	  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFSideToCellEvaluator("basal_melt_rate",basalSideName,"Node Scalar",cellType,"basal_melt_rate"));
 
 	  // -------------------------------- FELIX evaluators ------------------------- //
 
@@ -371,6 +381,9 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 			  p->set<std::string>("Basal Friction Heat QP Variable Name", "Basal Heat");
 			  p->set<std::string>("Basal Friction Heat QP SUPG Variable Name", "Basal Heat SUPG");
 		  }
+
+		  p->set<string>("Liquid Water Fraction QP Variable Name","omega");
+		  p->set<string>("Liquid Water Fraction Gradient QP Variable Name","omega Gradient");
 
 		  p->set<bool>("Needs Dissipation", needsDiss);
 		  p->set<bool>("Needs Basal Friction", needsBasFric);
@@ -463,7 +476,9 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 		  p->set<std::string>("Gradient BF Side Name", "Grad BF "+basalSideName);
 		  p->set<std::string>("Weighted Measure Name", "Weighted Measure "+basalSideName);
 		  p->set<std::string>("Velocity Side QP Variable Name", "velocity");
+		  p->set<std::string>("Vertical Velocity Side QP Variable Name", "w");
 		  p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", "basal_friction");
+
 		  p->set<std::string>("Side Set Name", basalSideName);
 
 		  p->set<ParameterList*>("SUPG Settings", &params->sublist("SUPG Settings"));
@@ -488,6 +503,8 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 		  p->set<std::string>("Gradient BF Side Name", "Grad BF "+basalSideName);
 		  p->set<std::string>("Weighted Measure Name", "Weighted Measure "+basalSideName);
 		  p->set<std::string>("Velocity Side QP Variable Name", "velocity");
+		  p->set<std::string>("Vertical Velocity Side QP Variable Name", "w");
+
 		  p->set<std::string>("Side Set Name", basalSideName);
 		  p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
 
@@ -597,6 +614,9 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
 		  p->set<ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
 
+		  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+		  p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
+
 		  //Output
 		  p->set<std::string>("Omega Variable Name", "omega");
 		  ev = Teuchos::rcp(new FELIX::LiquidWaterFraction<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
@@ -632,6 +652,9 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 	  // --- FELIX Integral 1D w_z
 	  {
 		  p = rcp(new ParameterList("FELIX Integral 1D w_z"));
+
+		  p->set<std::string>("Basal Melt Rate Variable Name", "basal_melt_rate");
+		  p->set<std::string>("Thickness Variable Name", "thickness");
 
 		  p->set<Teuchos::RCP<const CellTopologyData> >("Cell Topology",Teuchos::rcp(new CellTopologyData(meshSpecs.ctd)));
 
@@ -680,6 +703,58 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 				  fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
 		      }
 		  }
+	  }
+
+	  // --- FELIX Basal Melt Rate
+	  {
+		  p = rcp(new ParameterList("FELIX Basal Melt Rate"));
+
+		  //Input
+		  p->set<std::string>("Omega Side Variable Name", "omega");
+		  p->set<std::string>("Geotermal Flux Side Variable Name", "basal_heat_flux");
+		  p->set<std::string>("Velocity Side Variable Name", "velocity");
+		  p->set<std::string>("Basal Friction Coefficient Side Variable Name", "basal_friction");
+		  p->set<std::string>("Enthalpy Hs Side Variable Name", "melting enthalpy");
+		  p->set<std::string>("Enthalpy Side Variable Name", "Enthalpy");
+
+		  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+		  p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
+
+		  p->set<ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
+
+		  p->set<std::string>("Side Set Name", basalSideName);
+
+		  //Output
+		  p->set<std::string>("Basal Melt Rate Variable Name", "basal_melt_rate");
+	      ev = Teuchos::rcp(new FELIX::BasalMeltRate<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl_basal));
+	      fm0.template registerEvaluator<EvalT>(ev);
+
+		  {
+			  fm0.template registerEvaluator<EvalT> (evalUtils.constructNodesToCellInterpolationEvaluator("basal_melt_rate",false));
+
+			  std::string stateName = "basal_melt_rate";
+			  entity = Albany::StateStruct::NodalDataToElemNode;
+			  p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
+
+			  p->set<std::string>("Weights Name","Weights");
+			  p->set("Weights Layout", dl->qp_scalar);
+			  p->set("Field Layout", dl->cell_scalar2);
+			  p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
+
+			  ev = rcp(new PHAL::SaveCellStateField<EvalT,PHAL::AlbanyTraits>(*p));
+			  fm0.template registerEvaluator<EvalT>(ev);
+		  }
+
+	      // Forcing the execution of the evaluator
+		  if (fieldManagerChoice == Albany::BUILD_RESID_FM)
+		  {
+			  if (ev->evaluatedFields().size()>0)
+		      {
+				  fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+		      }
+		  }
+
+
 	  }
 
 	  {

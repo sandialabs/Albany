@@ -36,28 +36,30 @@ class BasalMeltRate : public PHX::EvaluatorWithBaseImpl<Traits>,
 		//typedef VelocityType ParamScalarT;
 
 		// Input:
-		PHX::MDField<ParamScalarT,Cell,Side,Node> basalNormalHeatCold;
-		PHX::MDField<ParamScalarT,Cell,Side,Node> basalNormalHeatTemperate;
-		PHX::MDField<ParamScalarT,Cell,Side,Node> omega;
-		PHX::MDField<ParamScalarT,Cell,Side,Node> basal_heat_flux;
-
-		PHX::MDField<VelocityType,Cell,Side,Node,Dim> velocity;
-		PHX::MDField<ParamScalarT,Cell,Side,Node> basal_friction;
-
-		PHX::MDField<ParamScalarT,Cell,Side,Node> meltEnthalpy;
-		PHX::MDField<ParamScalarT,Cell,Side,Node> Enthalpy;
+		PHX::MDField<ScalarT,Cell,Side,Node> 				omega;
+		PHX::MDField<ParamScalarT,Cell,Side,Node>    		beta;
+		PHX::MDField<VelocityType,Cell,Side,Node,VecDim>	velocity;
+		PHX::MDField<ParamScalarT,Cell,Side,Node> 			geoFluxHeat;
+		PHX::MDField<ScalarT,Cell,Side,Node> 				Enthalpy;
+		PHX::MDField<ParamScalarT,Cell,Side,Node> 			EnthalpyHs;
 
 		// Output:
 		PHX::MDField<ScalarT,Cell,Side,Node> basalMeltRate;
 
 		//unsigned int numQPs, numNodes;
+		PHX::MDField<ScalarT,Dim> homotopy;
 
 		std::vector<std::vector<int> >  sideNodes;
 		std::string                     basalSideName;
 
-		int numCellNodes, numSideNodes, numSideQPs, sideDim;
+		int numCellNodes, numSideNodes, sideDim;
 
-		double L;
+		double rho_w; 	// density of water
+		double rho_i; 	// density of ice
+		double L, g;
+
+		double k_0, eta_w;
+
 };
 
 }

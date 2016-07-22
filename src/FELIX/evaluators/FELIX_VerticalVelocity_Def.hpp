@@ -27,7 +27,6 @@ VerticalVelocity(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Lay
 	Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
 	basalMeltRate 		= PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Melt Rate QP Variable Name"), dl_basal->qp_scalar);
-	//int1Ddrainage		= PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Integral1D Drainage Side QP Variable Name"), dl_basal->qp_scalar);
 	surface_height_grad = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Surface Height Gradient Side QP Variable Name"), dl_basal->qp_gradient);
 	thickness_grad      = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Thickness Gradient Side QP Variable Name"), dl_basal->qp_gradient);
 	velocity    		= PHX::MDField<VelocityType,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Velocity Side QP Variable Name"), dl->qp_vector);
@@ -77,7 +76,6 @@ void VerticalVelocity<EvalT,Traits,VelocityType>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
 	//this->utils.setFieldData(basalMeltRate,fm);
-	//this->utils.setFieldData(int1Ddrainage,fm);
 	//this->utils.setFieldData(surface_height_grad,fm);
 	//this->utils.setFieldData(thickness_grad,fm);
 	//this->utils.setFieldData(velocity,fm);
@@ -92,7 +90,9 @@ evaluateFields(typename Traits::EvalData d)
 {
     for (std::size_t cell = 0; cell < d.numCells; ++cell)
     	for (std::size_t node = 0; node < numNodes; ++node)
+    	{
     		w(cell,node) = thickness(cell,node) * int1Dw_z(cell,node);
+    		//std::cout << basal_melt_rate(cell,node) << "\n";
+    	}
 }
-
 }

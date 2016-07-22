@@ -48,8 +48,10 @@ GeoFluxHeat(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 		geoFluxHeatSUPG  = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Geotermal Flux Heat SUPG Variable Name"), dl->node_scalar);
 	    GradBF    		 = PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Name"), dl_basal->node_qp_gradient);
 		velocity  		 = PHX::MDField<Type,Cell,Side,QuadPoint,VecDim>(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
+		verticalVel		 = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string>("Vertical Velocity Side QP Variable Name"), dl_basal->qp_scalar);
 
 		this->addDependentField(velocity);
+		this->addDependentField(verticalVel);
 		this->addDependentField(GradBF);
 
 		this->addEvaluatedField(geoFluxHeatSUPG);
@@ -99,6 +101,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
 	if (haveSUPG)
 	{
 		this->utils.setFieldData(velocity,fm);
+		this->utils.setFieldData(verticalVel,fm);
 		this->utils.setFieldData(GradBF,fm);
 		this->utils.setFieldData(geoFluxHeatSUPG,fm);
 	}
@@ -181,6 +184,8 @@ evaluateFields(typename Traits::EvalData d)
 							  geoFluxHeatSUPG(cell,sideNodes[side][node]) += geoFlux(cell,side,qp) * (1./(3.154 * pow(10.0,10.0))) * velocity(cell,side,qp,dim) *
 																			 GradBF(cell,side,node,qp,dim) * w_measure(cell,side,qp);
 						  }
+						  geoFluxHeatSUPG(cell,sideNodes[side][node]) += geoFlux(cell,side,qp) * (1./(3.154 * pow(10.0,10.0))) *
+								  	  	  	  	  	  	  	  	  	  	 verticalVel(cell,side,qp) * GradBF(cell,side,node,qp,2) * w_measure(cell,side,qp);
 					  }
 				  }
 			  }
@@ -203,6 +208,8 @@ evaluateFields(typename Traits::EvalData d)
 							  geoFluxHeatSUPG(cell,sideNodes[side][node]) += 0.05 * (1./(3.154 * pow(10.0,10.0))) * velocity(cell,side,qp,dim) *
 																			 GradBF(cell,side,node,qp,dim) * w_measure(cell,side,qp);
 						  }
+						  geoFluxHeatSUPG(cell,sideNodes[side][node]) += geoFlux(cell,side,qp) * (1./(3.154 * pow(10.0,10.0))) *
+						  								  	  	  	  	 verticalVel(cell,side,qp) * GradBF(cell,side,node,qp,2) * w_measure(cell,side,qp);
 					  }
 				  }
 			  }

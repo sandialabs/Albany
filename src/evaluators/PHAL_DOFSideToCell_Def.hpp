@@ -77,8 +77,8 @@ DOFSideToCellBase(const Teuchos::ParameterList& p,
   }
 
   val_side.dimensions(dims);
-  this->addDependentField(val_cell);
-  this->addEvaluatedField(val_side);
+  this->addDependentField(val_side);
+  this->addEvaluatedField(val_cell);
 
   this->setName("DOFSideToCell");
 

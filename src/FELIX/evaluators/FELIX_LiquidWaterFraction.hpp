@@ -43,6 +43,7 @@ private:
   // Input:
   PHX::MDField<Type,Cell,Node> enthalpyHs;
   PHX::MDField<ScalarT,Cell,Node> enthalpy;
+  PHX::MDField<ScalarT,Dim> homotopy;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> omega;
@@ -51,6 +52,7 @@ private:
   int numNodes;
 
   double L;
+  double rho_w;
 };
 
 } // Namespace FELIX

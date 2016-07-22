@@ -35,7 +35,6 @@ class VerticalVelocity : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 		// Input:
 		//PHX::MDField<ParamScalarT,Cell,Side,QuadPoint> basalMeltRate;
-		//PHX::MDField<ScalarT,Cell,Side,QuadPoint> int1Ddrainage;
 		//PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim> surface_height_grad;
 		//PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim> thickness_grad;
 		//PHX::MDField<VelocityType,Cell,Side,QuadPoint,Dim> velocity;
