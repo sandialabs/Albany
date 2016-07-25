@@ -77,9 +77,7 @@ struct PowerLawFlowParameters final : public FlowParameterBase
 
   PowerLawFlowParameters()
   {
-    param_map_["Gamma Dot"] = RATE_SLIP_REFERENCE;
     param_map_["Reference Slip Rate"] = RATE_SLIP_REFERENCE;
-    param_map_["Gamma Exponent"] = EXPONENT_RATE;
     param_map_["Rate Exponent"] = EXPONENT_RATE;
     flow_params_.set_dimension(NUM_PARAMS);
     flow_params_.fill(Intrepid2::ZEROS);
@@ -124,9 +122,7 @@ struct PowerLawDragFlowParameters final : public FlowParameterBase
 
   PowerLawDragFlowParameters()
   {
-    param_map_["Gamma Dot"] = RATE_SLIP_REFERENCE;
     param_map_["Reference Slip Rate"] = RATE_SLIP_REFERENCE;
-    param_map_["Gamma Exponent"] = EXPONENT_RATE;
     param_map_["Rate Exponent"] = EXPONENT_RATE;
     param_map_["Drag Coefficient"] = DRAG_COEFF;
     flow_params_.set_dimension(NUM_PARAMS);

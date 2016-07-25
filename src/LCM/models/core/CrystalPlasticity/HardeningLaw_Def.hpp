@@ -78,7 +78,7 @@ harden(
   using Params = LinearMinusRecoveryHardeningParameters<NumDimT, NumSlipT>;
 
   Intrepid2::Index const
-  num_slip_sys{slip_family.num_slip_sys_};
+  num_slip_sys = slip_family.num_slip_sys_;
 
   Intrepid2::Vector<ScalarT, NumSlipT>
   rate_slip_abs(num_slip_sys);
@@ -110,7 +110,7 @@ harden(
   modulus_hardening = phardening_params->getParameter(Params::MODULUS_HARDENING);
 
   auto const
-  resistance_slip_initial = phardening_params->getParameter(Params::RESISTANCE_SLIP_INITIAL);
+  resistance_slip_initial = phardening_params->getParameter(Params::STATE_HARDENING_INITIAL);
 
   if (modulus_recovery > 0.0)
   {
@@ -200,7 +200,7 @@ harden(
   using Params = SaturationHardeningParameters<NumDimT, NumSlipT>;
 
   Intrepid2::Index const
-  num_slip_sys{slip_family.num_slip_sys_};
+  num_slip_sys = slip_family.num_slip_sys_;
 
   Intrepid2::Vector<ScalarT, NumSlipT>
   rate_slip_abs(num_slip_sys);
@@ -241,7 +241,7 @@ harden(
   rate_hardening = phardening_params->getParameter(Params::RATE_HARDENING);
 
   auto const
-  resistance_slip_initial = phardening_params->getParameter(Params::RESISTANCE_SLIP_INITIAL);
+  resistance_slip_initial = phardening_params->getParameter(Params::STATE_HARDENING_INITIAL);
 
   for (int ss_index(0); ss_index < num_slip_sys; ++ss_index)
   {
@@ -338,7 +338,7 @@ harden(
   using Params = DislocationDensityHardeningParameters<NumDimT, NumSlipT>;
 
   Intrepid2::Index const
-  num_slip_sys{slip_family.num_slip_sys_};
+  num_slip_sys = slip_family.num_slip_sys_;
 
   //
   // Compute the effective dislocation density at step n

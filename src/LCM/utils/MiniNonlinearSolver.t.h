@@ -160,7 +160,7 @@ computeFADInfo(
   auto const
   dimension = r.get_dimension();
 
-  assert(dimension > 0);
+  if (0 == dimension) return;
 
   auto const
   order = r[0].size();

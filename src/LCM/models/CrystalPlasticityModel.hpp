@@ -197,32 +197,6 @@ private:
   IntegrationScheme 
   integration_scheme_;
 
-  using ValueT = typename Sacado::ValueType<ScalarT>::type;
-
-  Intrepid2::StepBase<
-    CP::ResidualSlipHardnessNLS<CP::MAX_DIM, CP::MAX_SLIP, EvalT>, 
-    ValueT, 
-    CP::NLS_DIM> *
-  step_slip_hard_;
-
-  Intrepid2::StepBase<
-    CP::ResidualSlipNLS<CP::MAX_DIM, CP::MAX_SLIP, EvalT>, 
-    ValueT, 
-    CP::NLS_DIM> *
-  step_slip_;
-
-  Intrepid2::StepBase<
-    CP::ExplicitUpdateNLS<CP::MAX_DIM, CP::MAX_SLIP, EvalT>, 
-    ValueT, 
-    CP::NLS_DIM> *
-  step_explicit_;
-
-  // Intrepid2::Minimizer<ScalarT, CP::NLS_DIM>
-  // minimizer_;
-
-  // Intrepid2::StepBase<NLS, ScalarT, NLS_DIM> 
-  // step_;
-  
   ResidualType
   residual_type_;
 

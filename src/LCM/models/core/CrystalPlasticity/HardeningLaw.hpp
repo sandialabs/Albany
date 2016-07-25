@@ -91,21 +91,17 @@ struct LinearMinusRecoveryHardeningParameters final :
 
   enum HardeningParamTypes : ParamIndex
   {
-    RESISTANCE_SLIP_INITIAL,
     MODULUS_HARDENING,
     MODULUS_RECOVERY,
+    STATE_HARDENING_INITIAL,
     NUM_PARAMS
   };
 
   LinearMinusRecoveryHardeningParameters()
   {
-    this->param_map_["Tau Critical"] = RESISTANCE_SLIP_INITIAL;
-    this->param_map_["Initial Slip Resistance"] = RESISTANCE_SLIP_INITIAL;
-    this->param_map_["Hardening"] = MODULUS_HARDENING;
     this->param_map_["Hardening Modulus"] = MODULUS_HARDENING;
-    this->param_map_["Hardening Exponent"] = MODULUS_RECOVERY;
     this->param_map_["Recovery Modulus"] = MODULUS_RECOVERY;
-    this->param_map_["Initial Hardening State"] = RESISTANCE_SLIP_INITIAL;
+    this->param_map_["Initial Hardening State"] = STATE_HARDENING_INITIAL;
     this->hardening_params_.set_dimension(NUM_PARAMS);
     this->hardening_params_.fill(Intrepid2::ZEROS);
   }
@@ -135,22 +131,21 @@ struct SaturationHardeningParameters final :
 
   enum HardeningParamTypes : ParamIndex
   {
-    RESISTANCE_SLIP_INITIAL,
     RATE_HARDENING,
     STRESS_SATURATION_INITIAL,
     EXPONENT_SATURATION,
     RATE_SLIP_REFERENCE,
+    STATE_HARDENING_INITIAL,
     NUM_PARAMS
   };
 
   SaturationHardeningParameters()
   {
-    this->param_map_["Initial Slip Resistance"] = RESISTANCE_SLIP_INITIAL;
     this->param_map_["Hardening Rate"] = RATE_HARDENING;
     this->param_map_["Initial Saturation Stress"] = STRESS_SATURATION_INITIAL;
     this->param_map_["Saturation Exponent"] = EXPONENT_SATURATION;
     this->param_map_["Reference Slip Rate"] = RATE_SLIP_REFERENCE;
-    this->param_map_["Initial Hardening State"] = RESISTANCE_SLIP_INITIAL;
+    this->param_map_["Initial Hardening State"] = STATE_HARDENING_INITIAL;
     this->hardening_params_.set_dimension(NUM_PARAMS);
     this->hardening_params_.fill(Intrepid2::ZEROS);
   }
@@ -181,23 +176,22 @@ struct DislocationDensityHardeningParameters final :
   enum HardeningParamTypes : ParamIndex
   {
     FACTOR_GEOMETRY_DISLOCATION,
-    DENSITY_DISLOCATION_INITIAL,
     FACTOR_GENERATION,
     FACTOR_ANNIHILATION,
     MODULUS_SHEAR,
     MAGNITUDE_BURGERS,
+    STATE_HARDENING_INITIAL,
     NUM_PARAMS
   };
 
   DislocationDensityHardeningParameters()
   {
     this->param_map_["Geometric Factor"] = FACTOR_GEOMETRY_DISLOCATION;
-    this->param_map_["Initial Dislocation Density"] = DENSITY_DISLOCATION_INITIAL;
     this->param_map_["Generation Factor"] = FACTOR_GENERATION;
     this->param_map_["Annihilation Factor"] = FACTOR_ANNIHILATION;
     this->param_map_["Shear Modulus"] = MODULUS_SHEAR;
     this->param_map_["Burgers Vector Magnitude"] = MAGNITUDE_BURGERS;
-    this->param_map_["Initial Hardening State"] = DENSITY_DISLOCATION_INITIAL;
+    this->param_map_["Initial Hardening State"] = STATE_HARDENING_INITIAL;
     this->hardening_params_.set_dimension(NUM_PARAMS);
     this->hardening_params_.fill(Intrepid2::ZEROS);
   }

@@ -171,7 +171,8 @@ CP::updateSlip(
 ///
 /// Compute the stresses 
 ///
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT, typename DataT>
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT, 
+typename DataT>
 void
 CP::computeStress(
     std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
@@ -258,4 +259,3 @@ CP::computeCubicElasticityTensor(
     }
   }
 }
-

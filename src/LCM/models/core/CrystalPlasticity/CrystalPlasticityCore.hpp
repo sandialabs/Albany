@@ -186,28 +186,28 @@ public:
   createFlowRule(FlowRuleType type_flow_rule) {  
 
     switch (type_flow_rule) {
+      
+      default:
+        std::cerr << __PRETTY_FUNCTION__ << '\n';
+        std::cerr << "ERROR: Unknown flow rule\n";
+        exit(1);
+        break;
 
-    default:
-      std::cerr << __PRETTY_FUNCTION__ << '\n';
-      std::cerr << "ERROR: Unknown flow rule\n";
-      exit(1);
-      break;
+      case FlowRuleType::POWER_LAW:
+        return new(flow_buffer_) PowerLawFlowRule<ScalarT>();
+        break;
 
-    case FlowRuleType::POWER_LAW:
-      return new(flow_buffer_) PowerLawFlowRule<ScalarT>();
-      break;
+      case FlowRuleType::POWER_LAW_DRAG:
+        return new(flow_buffer_) PowerLawDragFlowRule<ScalarT>();
+        break;
 
-    case FlowRuleType::POWER_LAW_DRAG:
-      return new(flow_buffer_) PowerLawDragFlowRule<ScalarT>();
-      break;
+      case FlowRuleType::THERMAL_ACTIVATION:
+        return new(flow_buffer_) ThermalActivationFlowRule<ScalarT>();
+        break;
 
-    case FlowRuleType::THERMAL_ACTIVATION:
-      return new(flow_buffer_) ThermalActivationFlowRule<ScalarT>();
-      break;
-
-    case FlowRuleType::UNDEFINED:
-      return new(flow_buffer_) NoFlowRule<ScalarT>();
-      break;
+      case FlowRuleType::UNDEFINED:
+        return new(flow_buffer_) NoFlowRule<ScalarT>();
+        break;
     }
 
     return nullptr;

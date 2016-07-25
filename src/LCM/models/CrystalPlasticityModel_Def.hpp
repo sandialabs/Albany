@@ -158,22 +158,6 @@ CrystalPlasticityModel(
             \"Newton with Line Search\".\n");
     }
 
-    // minimizer_.rel_tol = p->get<double>(
-    //     "Implicit Integration Relative Tolerance",
-    //     1.0e-6);
-
-    // minimizer_.abs_tol = p->get<double>(
-    //     "Implicit Integration Absolute Tolerance",
-    //     1.0e-10);
-
-    // minimizer_.max_num_iter = p->get<int>(
-    //     "Implicit Integration Max Iterations",
-    //     100);
-
-    // minimizer_.min_num_iter = p->get<int>(
-    //     "Implicit Integration Min Iterations",
-    //     2);
-
     nonlinear_solver_relative_tolerance_ = p->get<double>(
         "Implicit Integration Relative Tolerance",
         1.0e-6);
@@ -234,19 +218,13 @@ CrystalPlasticityModel(
 
     Teuchos::ParameterList
     list_fam_slip = p->sublist(
-        Albany::strint("Slip System Family", num_fam + 1));
-
-    // Intrepid2::Index
-    // num_slip_sys_ = list_fam_slip.get<int>("Number of Slip Systems");
+        Albany::strint("Slip System Family", num_fam));
 
     //
     // Obtain flow rule parameters
     //
-    std::string 
-    name_flow_rule = list_fam_slip.get<std::string>("Flow Rule","");
-
     Teuchos::ParameterList 
-    f_list = p->sublist(name_flow_rule);
+    f_list = list_fam_slip.sublist("Flow Rule");
 
     std::string 
     name_type_flow_rule = f_list.get<std::string>("Type","");
@@ -276,11 +254,8 @@ CrystalPlasticityModel(
     //
     // Obtain hardening law parameters
     //
-    std::string 
-    name_hardening_law = list_fam_slip.get<std::string>("Hardening Law","");
-
     Teuchos::ParameterList 
-    h_list = p->sublist(name_hardening_law);
+    h_list = list_fam_slip.sublist("Hardening Law");
 
     std::string 
     name_type_hardening_law = h_list.get<std::string>("Type","");
@@ -297,12 +272,17 @@ CrystalPlasticityModel(
       slip_family.type_hardening_law_ = hpos->second;
     }
 
+    if (verbosity_ > 2) {
+      // std::cout << "Flow rule: " << name_type_flow_rule << std::endl;
+      // std::cout << "Hardening law: " << name_type_hardening_law << std::endl;
+    }
+
     slip_family.phardening_parameters_ =
       CP::hardeningParameterFactory<CP::MAX_DIM, CP::MAX_SLIP>(slip_family.type_hardening_law_);
 
     for (auto & param : slip_family.phardening_parameters_->param_map_) {
       auto const index_param = param.second;
-      auto const value_param = f_list.get<RealType>(param.first);
+      auto const value_param = h_list.get<RealType>(param.first);
 
       slip_family.phardening_parameters_->setParameter(index_param, value_param);
     }
@@ -322,7 +302,7 @@ CrystalPlasticityModel(
     CP::SlipSystem<CP::MAX_DIM> &
     slip_system = slip_systems_[num_ss];
 
-    slip_system.slip_family_index_ = ss_list.get<int>("Slip Family", 1);
+    slip_system.slip_family_index_ = ss_list.get<int>("Slip Family", 0);
 
     CP::SlipFamily<CP::MAX_DIM, CP::MAX_SLIP> &
     slip_family = slip_families_[slip_system.slip_family_index_];
@@ -573,7 +553,8 @@ CrystalPlasticityModel(
     this->state_var_names_.push_back(tau_hard_string);
     this->state_var_layouts_.push_back(dl->qp_scalar);
     this->state_var_init_types_.push_back("scalar");
-    this->state_var_init_values_.push_back(state_hardening_initial[num_ss]);
+    this->state_var_init_values_.push_back(
+      slip_systems_[num_ss].state_hardening_initial_);
     this->state_var_old_state_flags_.push_back(true);
     this->state_var_output_flags_.push_back(
         p->get<bool>(output_tau_hard_string, false));
@@ -788,6 +769,7 @@ computeState(typename Traits::EvalData workset,
     tau_hard_string = (*field_name_map_)[t_h];
 
     hards.push_back(eval_fields[tau_hard_string]);
+
     state_hardening.push_back(
     &((*workset.stateArrayPtr)[tau_hard_string + "_old"]));
   }
@@ -900,19 +882,7 @@ computeState(typename Traits::EvalData workset,
   Intrepid2::Vector<ScalarT, CP::NLS_DIM>
   x;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+  // Choose explicit or implicit integration of the constitutive update
   switch (integration_scheme_) {
 
     default:
@@ -922,11 +892,6 @@ computeState(typename Traits::EvalData workset,
     {
       // unknowns, which are slip_np1
       x.set_dimension(num_slip_);          
-
-      using NLS =
-      CP::ExplicitUpdateNLS<CP::MAX_DIM, CP::MAX_SLIP, EvalT>;
-
-      using STEP = Intrepid2::StepBase<NLS, ValueT, CP::NLS_DIM>;
     }
     break;
 
@@ -939,11 +904,6 @@ computeState(typename Traits::EvalData workset,
       {
         case ResidualType::SLIP:
         {
-          using NLS =
-              CP::ResidualSlipNLS<CP::MAX_DIM, CP::MAX_SLIP, EvalT>;
-
-          using STEP = Intrepid2::StepBase<NLS, ValueT, CP::NLS_DIM>;
-
           // unknowns, which are slip_np1
           x.set_dimension(num_slip_);
         }
@@ -951,11 +911,6 @@ computeState(typename Traits::EvalData workset,
 
         case ResidualType::SLIP_HARDNESS:
         {
-          using NLS =
-              CP::ResidualSlipHardnessNLS<CP::MAX_DIM, CP::MAX_SLIP, EvalT>;
-
-          using STEP = Intrepid2::StepBase<NLS, ValueT, CP::NLS_DIM>;
-
           // unknowns, which are slip_np1 followed by slip_resistance
           x.set_dimension(2 * num_slip_);
         }
@@ -1109,12 +1064,35 @@ computeState(typename Traits::EvalData workset,
 
           using STEP = Intrepid2::StepBase<NLS, ValueT, CP::NLS_DIM>;
 
+          std::unique_ptr<STEP>
+          pstep = Intrepid2::stepFactory<NLS, ValueT, CP::NLS_DIM>(step_type_);
+
           LCM::MiniSolver<MIN, STEP, NLS, EvalT, CP::NLS_DIM>
-          mini_solver(minimizer, *step_explicit_, explicit_nls, x);
+          mini_solver(minimizer, *pstep, explicit_nls, x);
 
           for(int i=0; i<num_slip_; ++i) {
             slip_np1[i] = x[i];
           }
+
+          // Compute Lp_np1, and Fp_np1
+          CP::applySlipIncrement<CP::MAX_DIM, CP::MAX_SLIP, ScalarT>(
+            slip_systems_, 
+            dt,
+            slip_n, 
+            slip_np1, 
+            Fp_n, 
+            Lp_np1, 
+            Fp_np1);
+
+          // Compute sigma_np1, S_np1, and shear_np1
+          CP::computeStress<CP::MAX_DIM, CP::MAX_SLIP, ScalarT, ScalarT>(
+            slip_systems_, 
+            C_, 
+            F_np1, 
+            Fp_np1, 
+            sigma_np1, 
+            S_np1, 
+            shear_np1);
         }
         break;
         
@@ -1129,8 +1107,6 @@ computeState(typename Traits::EvalData workset,
             {
               using NLS =
                   CP::ResidualSlipNLS<CP::MAX_DIM, CP::MAX_SLIP, EvalT>;
-
-              using STEP = Intrepid2::StepBase<NLS, ValueT, CP::NLS_DIM>;
 
               NLS
               slip_nls(
@@ -1148,8 +1124,13 @@ computeState(typename Traits::EvalData workset,
                 x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
               }
 
+              using STEP = Intrepid2::StepBase<NLS, ValueT, CP::NLS_DIM>;
+
+              std::unique_ptr<STEP>
+              pstep = Intrepid2::stepFactory<NLS, ValueT, CP::NLS_DIM>(step_type_);
+
               LCM::MiniSolver<MIN, STEP, NLS, EvalT, CP::NLS_DIM>
-              mini_solver(minimizer, *step_slip_, slip_nls, x);
+              mini_solver(minimizer, *pstep, slip_nls, x);
 
               for(int i=0; i<num_slip_; ++i) {
                 slip_np1[i] = x[i];
@@ -1179,8 +1160,6 @@ computeState(typename Traits::EvalData workset,
               using NLS =
                   CP::ResidualSlipHardnessNLS<CP::MAX_DIM, CP::MAX_SLIP, EvalT>;
 
-              using STEP = Intrepid2::StepBase<NLS, ValueT, CP::NLS_DIM>;
-
               NLS
               slip_state_hardening_nls(
                   C_,
@@ -1200,8 +1179,13 @@ computeState(typename Traits::EvalData workset,
                   Sacado::ScalarValue<ScalarT>::eval(slip_resistance(i));
               }
 
+              using STEP = Intrepid2::StepBase<NLS, ValueT, CP::NLS_DIM>;
+
+              std::unique_ptr<STEP>
+              pstep = Intrepid2::stepFactory<NLS, ValueT, CP::NLS_DIM>(step_type_);
+
               LCM::MiniSolver<MIN, STEP, NLS, EvalT, CP::NLS_DIM>
-              mini_solver(minimizer, *step_slip_hard_, slip_state_hardening_nls, x);
+              mini_solver(minimizer, *pstep, slip_state_hardening_nls, x);
 
               for(int i=0; i<num_slip_; ++i) {
                 slip_np1[i] = x[i];

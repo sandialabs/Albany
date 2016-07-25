@@ -483,7 +483,7 @@ CP::ExplicitUpdateNLS<NumDimT, NumSlipT, EvalT>::gradient(
   Intrepid2::Tensor4<T, NumDimT> const
   C_peeled = LCM::peel_tensor4<EvalT, T, N, NumDimT>()(C_);
 
-  for (int i = 0; i< num_slip_; ++i){
+  for (int i = 0; i < num_slip_; ++i){
     slip_np1[i] = x[i];
   }
 
