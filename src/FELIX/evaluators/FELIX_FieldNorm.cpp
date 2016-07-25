@@ -9,4 +9,4 @@
 #include "FELIX_FieldNorm.hpp"
 #include "FELIX_FieldNorm_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::FieldNorm)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(FELIX::FieldNormBase)
