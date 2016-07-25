@@ -152,7 +152,7 @@ KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_SurfaceGeopotential<EvalT, Traits>::
 operator() (const XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag& tag, const int& cell) const{
   for (int node=0; node < numNodes; ++node) {
-    double xcoord = wsCoords[cell][node][0];
+    double xcoord = coordVec(cell,node,0);
     if (std::abs(xcoord - center) <= (width/2.)) {
       PhiSurf(cell,node) =
              (std::cos( (xcoord - center)*local_pi*2./width ) + 1.)
@@ -168,9 +168,9 @@ KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_SurfaceGeopotential<EvalT, Traits>::
 operator() (const XZHydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Tag& tag, const int& cell) const{
   for ( int node = 0; node < numNodes; ++node ) {
-    const double x = wsCoords[cell][node][0];
-    const double y = wsCoords[cell][node][1];
-    const double z = wsCoords[cell][node][2];
+    const double x = coordVec(cell,node,0);
+    const double y = coordVec(cell,node,1);
+    const double z = coordVec(cell,node,2);
         
     const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
     const double lambda = std::atan2( y, x );
@@ -190,9 +190,9 @@ KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_SurfaceGeopotential<EvalT, Traits>::
 operator() (const XZHydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Tag& tag, const int& cell) const{
   for ( int node = 0; node < numNodes; ++node ) {
-    const double x = wsCoords[cell][node][0];
-    const double y = wsCoords[cell][node][1];
-    const double z = wsCoords[cell][node][2];
+    const double x = coordVec(cell,node,0);
+    const double y = coordVec(cell,node,1);
+    const double z = coordVec(cell,node,2);
 
     const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
 
@@ -217,13 +217,13 @@ evaluateFields(typename Traits::EvalData workset)
       for (int node=0; node < numNodes; ++node) {
       
         //How to get x coordinate:
-        //workset.wsCoords[cell][node][0]
+        //coordVec(cell,node,0)
         PhiSurf(cell,node) = 0.0;
       
         //std::cout << "topotype = none" <<std::endl;
         
         //std::cout << "cell="<<cell<<", node="<<node<<", coord x="<<
-        //workset.wsCoords[cell][node][0] << std::endl;
+        //coordVec(cell,node,0) << std::endl;
       
       }
     }
@@ -235,9 +235,9 @@ evaluateFields(typename Traits::EvalData workset)
       for (int node=0; node < numNodes; ++node) {
         
         //How to get x coordinate:
-        //workset.wsCoords[cell][node][0]
+        //coordVec(cell,node,0)
         
-        double xcoord = workset.wsCoords[cell][node][0];
+        double xcoord = coordVec(cell,node,0);
         if (std::abs(xcoord - center) <= (width/2.)) {
           PhiSurf(cell,node) =
                  (std::cos( (xcoord - center)*local_pi*2./width ) + 1.)
@@ -258,9 +258,9 @@ evaluateFields(typename Traits::EvalData workset)
   else if ( topoType == SPHERE_MOUNTAIN1 ){
     for ( int cell = 0; cell < workset.numCells; ++cell ) {
       for ( int node = 0; node < numNodes; ++node ) {
-        const double x = workset.wsCoords[cell][node][0];
-        const double y = workset.wsCoords[cell][node][1];
-        const double z = workset.wsCoords[cell][node][2];
+        const double x = coordVec(cell,node,0);
+        const double y = coordVec(cell,node,1);
+        const double z = coordVec(cell,node,2);
             
         const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
         const double lambda = std::atan2( y, x );
@@ -289,9 +289,9 @@ evaluateFields(typename Traits::EvalData workset)
 
     for ( int cell = 0; cell < workset.numCells; ++cell ) {
       for ( int node = 0; node < numNodes; ++node ) {
-        const double x = workset.wsCoords[cell][node][0];
-        const double y = workset.wsCoords[cell][node][1];
-        const double z = workset.wsCoords[cell][node][2];
+        const double x = coordVec(cell,node,0);
+        const double y = coordVec(cell,node,1);
+        const double z = coordVec(cell,node,2);
 
         const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
 
@@ -304,8 +304,6 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 #else
-  // Note: Can be replaced by coordVec
-  wsCoords = workset.wsCoords;
   if (topoType == NONE){
     PHAL::set(PhiSurf, 0.0);
   }

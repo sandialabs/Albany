@@ -50,11 +50,16 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void DOFVecInterpolationLevels<EvalT, Traits>::
 operator() (const DOFVecInterpolationLevels_Tag& tag, const int& cell) const{
-  for (int qp=0; qp < numQPs; ++qp) 
-    for (int node=0; node < numNodes; ++node) 
-      for (int level=0; level < numLevels; ++level) 
-        for (int dim=0; dim < numDims; ++dim) 
+  for (int qp=0; qp < numQPs; ++qp) {
+    for (int level=0; level < numLevels; ++level) {
+      for (int dim=0; dim < numDims; ++dim) {
+        val_qp(cell,qp,level,dim) = 0;
+        for (int node=0; node < numNodes; ++node) {
           val_qp(cell,qp,level,dim) += val_node(cell,node,level,dim) * BF(cell,node,qp);
+        }
+      }
+    }
+  }
 }
 
 #endif
@@ -64,14 +69,20 @@ template<typename EvalT, typename Traits>
 void DOFVecInterpolationLevels<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  PHAL::set(val_qp, 0.0);
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  for (int cell=0; cell < workset.numCells; ++cell) 
-    for (int qp=0; qp < numQPs; ++qp) 
-      for (int node=0; node < numNodes; ++node) 
-        for (int level=0; level < numLevels; ++level) 
-          for (int dim=0; dim < numDims; ++dim) 
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
+      for (int level=0; level < numLevels; ++level) {
+        for (int dim=0; dim < numDims; ++dim) {
+          val_qp(cell,qp,level,dim) = 0;
+          for (int node=0; node < numNodes; ++node) {
             val_qp(cell,qp,level,dim) += val_node(cell,node,level,dim) * BF(cell,node,qp);
+          }
+        }
+      }
+    }
+  }
+
 #else
   Kokkos::parallel_for(DOFVecInterpolationLevels_Policy(0,workset.numCells),*this);
 

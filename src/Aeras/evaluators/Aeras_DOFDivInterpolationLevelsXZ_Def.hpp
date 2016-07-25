@@ -51,12 +51,16 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void DOFDivInterpolationLevelsXZ<EvalT, Traits>::
 operator() (const DOFDivInterpolationLevelsXZ_Tag& tag, const int& cell) const{
-  for (int qp=0; qp < numQPs; ++qp) 
-    for (int node= 0 ; node < numNodes; ++node) 
-      for (int level=0; level < numLevels; ++level) 
+  for (int qp=0; qp < numQPs; ++qp) {
+    for (int level=0; level < numLevels; ++level) {
+      div_val_qp(cell,qp,level) = 0;
+      for (int node= 0 ; node < numNodes; ++node) {
         for (int dim=0; dim<numDims; dim++) {
           div_val_qp(cell,qp,level) += val_node(cell,node,level,dim) * GradBF(cell,node,qp,dim);
         }
+      }
+    }
+  }
 }
 
 #endif
@@ -66,20 +70,24 @@ template<typename EvalT, typename Traits>
 void DOFDivInterpolationLevelsXZ<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  PHAL::set(div_val_qp, 0.0);
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 //#define WEAK_DIV 0
 //#if WEAK_DIV
-  for (int cell=0; cell < workset.numCells; ++cell) 
-    for (int qp=0; qp < numQPs; ++qp) 
-      for (int node= 0 ; node < numNodes; ++node) 
-        for (int level=0; level < numLevels; ++level) 
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
+      for (int level=0; level < numLevels; ++level) {
+        div_val_qp(cell,qp,level) = 0;
+        for (int node= 0 ; node < numNodes; ++node) {
           for (int dim=0; dim<numDims; dim++) {
             div_val_qp(cell,qp,level) += val_node(cell,node,level,dim) * GradBF(cell,node,qp,dim);
+
             //std::cout << "gradbf: " << cell << " " << node << " " << qp << " " << dim << " " << GradBF(cell,node,qp,dim) << std::endl;
             //std::cout << "val_node " << val_node(cell,node,level,dim) << std::endl;
-
-         }
+          }
+        }
+      }
+    }
+  }
 
 #else
   Kokkos::parallel_for(DOFDivInterpolationLevelsXZ_Policy(0,workset.numCells),*this);

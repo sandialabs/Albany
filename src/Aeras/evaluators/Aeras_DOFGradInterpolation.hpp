@@ -54,6 +54,19 @@ private:
   const int numNodes;
   const int numDims;
   const int numQPs;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct DOFGradInterpolation_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFGradInterpolation_Tag> DOFGradInterpolation_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFGradInterpolation_Tag& tag, const int& i) const;
+
+#endif
 };
 
 // Exact copy as above except data type is RealType instead of ScalarT
@@ -89,6 +102,19 @@ private:
   const int numNodes;
   const int numDims;
   const int numQPs;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct DOFGradInterpolation_noDeriv_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFGradInterpolation_noDeriv_Tag> DOFGradInterpolation_noDeriv_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFGradInterpolation_noDeriv_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 
