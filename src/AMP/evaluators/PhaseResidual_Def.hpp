@@ -157,15 +157,48 @@ evaluateFields(typename Traits::EvalData workset)
     }
 
     // heat source from laser 
-    PHAL::scale(laser_source_, -1.0);
-    FST::integrate<ScalarT>(residual_, laser_source_, w_bf_, Intrepid2::COMP_CPP, true);
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int qp = 0; qp < num_qps_; ++qp) {
+        for (int node = 0; node < num_nodes_; ++node) {
+            porosity_function2 = (1.0 - Initial_porosity)/(1.0 - porosity_(cell,qp));
+
+            residual_(cell,node) -= porosity_function2*(w_bf_(cell,node,qp) * laser_source_(cell,qp));
+        }
+      }
+    }
 
     // all other problem sources
-    PHAL::scale(source_, -1.0);
-    FST::integrate<ScalarT>(residual_, source_, w_bf_, Intrepid2::COMP_CPP, true);
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int qp = 0; qp < num_qps_; ++qp) {
+        for (int node = 0; node < num_nodes_; ++node) {
+            porosity_function2 = (1.0 - Initial_porosity)/(1.0 - porosity_(cell,qp));
+
+            residual_(cell,node) -= porosity_function2*(w_bf_(cell,node,qp) * source_(cell,qp));
+        }
+      }
+    }
 
     // transient term
-    FST::integrate<ScalarT>(residual_, energyDot_, w_bf_, Intrepid2::COMP_CPP, true);
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int qp = 0; qp < num_qps_; ++qp) {
+        for (int node = 0; node < num_nodes_; ++node) {
+            porosity_function2 = (1.0 - Initial_porosity)/(1.0 - porosity_(cell,qp));
+
+            residual_(cell,node) += porosity_function2*(w_bf_(cell,node,qp) * energyDot_(cell,qp));
+        }
+      }
+    }
+
+    // heat source from laser 
+    //PHAL::scale(laser_source_, -1.0);
+    //FST::integrate<ScalarT>(residual_, laser_source_, w_bf_, Intrepid2::COMP_CPP, true);
+
+    // all other problem sources
+    //PHAL::scale(source_, -1.0);
+    //FST::integrate<ScalarT>(residual_, source_, w_bf_, Intrepid2::COMP_CPP, true);
+
+    // transient term
+    //FST::integrate<ScalarT>(residual_, energyDot_, w_bf_, Intrepid2::COMP_CPP, true);
 
 }
 
