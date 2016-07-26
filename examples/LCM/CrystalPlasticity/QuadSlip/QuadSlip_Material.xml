@@ -94,7 +94,7 @@
                           type="int"
                           value="0"/>
 
-               <ParameterList name="Slip Family 0">
+               <ParameterList name="Slip System Family 0">
 
                     <ParameterList name="Flow Rule">
 
@@ -118,7 +118,7 @@
                                     type="string" 
                                     value="Saturation"/>
 
-                         <Parameter name="Initial Slip Resistance"
+                         <Parameter name="Reference Slip Rate"
                                     type="double"
                                     value="9.0e01"/>
 
@@ -133,6 +133,10 @@
                          <Parameter name="Saturation Exponent"
                                     type="double"
                                     value="1.0e-02"/>
+
+                         <Parameter name="Initial Hardening State"
+                                    type="double"
+                                    value="1.0"/>
 
                     </ParameterList>
 

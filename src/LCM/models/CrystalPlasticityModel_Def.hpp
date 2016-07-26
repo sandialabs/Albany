@@ -365,7 +365,6 @@ CrystalPlasticityModel(
     slip_family = slip_families_[sf_index];
 
     slip_family.slip_system_indices_.set_dimension(slip_family.num_slip_sys_);
-    slip_family.phardening_parameters_->createLatentMatrix(slip_family, slip_systems_); 
   }
 
   //
@@ -995,6 +994,15 @@ computeState(typename Traits::EvalData workset,
         slip_systems_[num_ss].projector_ =
           Intrepid2::dyad(slip_systems_[num_ss].s_, slip_systems_[num_ss].n_);
       }
+
+			// TODO: Try to preprocess this
+			// Currently this possibly has a dependency on s_ and n_
+  		for (int sf_index(0); sf_index < num_family_; ++sf_index) {
+    		auto &
+    		slip_family = slip_families_[sf_index];
+
+    		slip_family.phardening_parameters_->createLatentMatrix(slip_family, slip_systems_); 
+			}
 
       equivalent_plastic_strain = 
         Sacado::ScalarValue<ScalarT>::eval(eqps(cell, pt));
