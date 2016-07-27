@@ -150,8 +150,8 @@ evaluateFields(typename Traits::EvalData workset)
             //function1 is multiplied with the second term. 
             residual_(cell,node) += porosity_function2*(
                        w_grad_bf_(cell,node,qp,0) * term1_(cell,qp,0)
-                     + porosity_function1* w_grad_bf_(cell,node,qp,1) * term1_(cell,qp,1)
-                     + w_grad_bf_(cell,node,qp,2) * term1_(cell,qp,2));
+                     + w_grad_bf_(cell,node,qp,1) * term1_(cell,qp,1)
+                     + porosity_function1* w_grad_bf_(cell,node,qp,2) * term1_(cell,qp,2));
         }
       }
     }
