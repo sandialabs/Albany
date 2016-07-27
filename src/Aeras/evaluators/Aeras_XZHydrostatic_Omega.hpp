@@ -13,6 +13,7 @@
 #include "Phalanx_MDField.hpp"
 #include "Aeras_Layouts.hpp"
 #include "Aeras_Dimension.hpp"
+#include "Aeras_Eta.hpp"
 
 namespace Aeras {
 /** \brief Density for XZHydrostatic atmospheric model
@@ -53,6 +54,20 @@ private:
   const int numDims;
   const int numLevels;
   const ScalarT Cp;
+  const Eta<EvalT> &E;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct XZHydrostatic_Omega_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_Omega_Tag> XZHydrostatic_Omega_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_Omega_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 

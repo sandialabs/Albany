@@ -33,7 +33,8 @@ XZHydrostatic_Omega(const Teuchos::ParameterList& p,
   numLevels  (dl->node_scalar_level ->dimension(2)),
   Cp         (p.isParameter("XZHydrostatic Problem") ? 
                 p.get<Teuchos::ParameterList*>("XZHydrostatic Problem")->get<double>("Cp", 1005.7):
-                p.get<Teuchos::ParameterList*>("Hydrostatic Problem")->get<double>("Cp", 1005.7))
+                p.get<Teuchos::ParameterList*>("Hydrostatic Problem")->get<double>("Cp", 1005.7)),
+  E (Eta<EvalT>::self())
 {
 
   this->addDependentField(Velocity);
@@ -62,12 +63,30 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void XZHydrostatic_Omega<EvalT, Traits>::
+operator() (const XZHydrostatic_Omega_Tag& tag, const int& cell) const{
+  for (int qp=0; qp < numQPs; ++qp) {
+    for (int level=0; level < numLevels; ++level) {
+      ScalarT                               sum  = -0.5*divpivelx(cell,qp,level) * E.delta(level);
+      for (int j=0; j<level; ++j)           sum -=     divpivelx(cell,qp,j)     * E.delta(j);
+      for (int dim=0; dim < numDims; ++dim) sum += Velocity(cell,qp,level,dim)*gradp(cell,qp,level,dim);
+      omega(cell,qp,level) = sum/(Cpstar(cell,qp,level)*density(cell,qp,level));
+    }
+  }
+}
+
+#endif
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void XZHydrostatic_Omega<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  const Eta<EvalT> &E = Eta<EvalT>::self();
-
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
       for (int level=0; level < numLevels; ++level) {
@@ -78,5 +97,10 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+
+#else
+  Kokkos::parallel_for(XZHydrostatic_Omega_Policy(0,workset.numCells),*this);
+
+#endif
 }
 }

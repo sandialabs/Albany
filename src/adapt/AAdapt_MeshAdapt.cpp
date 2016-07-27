@@ -514,6 +514,7 @@ AAdapt::MeshAdapt::getValidAdapterParameters() const
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
   validPL->set<double>("Minimum Part Density", 1000, "Minimum elements per part: triggers partition shrinking");
   validPL->set<bool>("Write Adapted SMB Files", false, "Write .smb mesh files after adaptation");
+  validPL->set<std::string>("Extruded Size Method", "SPR", "Error estimator for extruded meshes");
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->getValidParameters(validPL);
 
   return validPL;

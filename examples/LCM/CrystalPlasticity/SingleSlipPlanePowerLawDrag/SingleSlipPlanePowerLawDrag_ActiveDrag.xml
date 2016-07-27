@@ -3,7 +3,7 @@
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
-    <Parameter name="MaterialDB Filename" type="string" value="SingleSlipPlanePowerLawDrag_Implicit_Material.xml"/> -->
+    <Parameter name="MaterialDB Filename" type="string" value="SingleSlipPlanePowerLawDrag_ActiveDrag_Material.xml"/> -->
     <ParameterList name="Dirichlet BCs">
       <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF X">
         <Parameter name="Number of points" type="int" value="3"/>
@@ -38,7 +38,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="SingleSlipPlanePowerLawDrag.g"/>
-    <Parameter name="Exodus Output File Name" type="string" value="SingleSlipPlanePowerLawDrag_Implicit.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="SingleSlipPlanePowerLawDrag_ActiveDrag.exo"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>

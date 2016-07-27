@@ -42,24 +42,48 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void DOFInterpolationLevels<EvalT, Traits>::
+operator() (const DOFInterpolationLevels_Tag& tag, const int& cell) const{
+  for (int qp=0; qp < numQPs; ++qp) {
+    for (int level=0; level < numLevels; ++level) {
+      typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,qp,level);
+      vqp = 0;
+      for (int node=0; node < numNodes; ++node) {
+        vqp += val_node(cell, node, level) * BF(cell, node, qp);
+      }
+    }
+  }
+}
+
+#endif
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void DOFInterpolationLevels<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   //Intrepid2 version:
   // for (int i=0; i < val_qp.size() ; i++) val_qp[i] = 0.0;
   // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(val_qp, val_node, BF);
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
       for (int level=0; level < numLevels; ++level) {
-        typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,qp,level);
-        vqp = 0;
+        typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,qp,level) = 0;
         for (int node=0; node < numNodes; ++node) {
           vqp += val_node(cell, node, level) * BF(cell, node, qp);
         }
       }
     }
   }
-}
-}
 
+#else
+  Kokkos::parallel_for(DOFInterpolationLevels_Policy(0,workset.numCells),*this);
+
+#endif
+}
+}
