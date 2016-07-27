@@ -86,12 +86,9 @@ harden(
   for (Intrepid2::Index ss_index(0); ss_index < num_slip_sys; ++ss_index)
   {
     auto const
-    ss_index_global = slip_family.slip_system_indices_(ss_index);
+    ss_index_global = slip_family.slip_system_indices_[ss_index];
 
-    auto const &
-    slip_rate = rate_slip(ss_index_global);
-
-    rate_slip_abs(ss_index) = std::fabs(slip_rate);
+    rate_slip_abs[ss_index] = std::fabs(rate_slip[ss_index_global]);
   }
 
   Intrepid2::Vector<ScalarT, NumSlipT> const 
@@ -109,8 +106,7 @@ harden(
   auto const
   modulus_hardening = phardening_params->getParameter(Params::MODULUS_HARDENING);
 
-  auto const
-  resistance_slip_initial = phardening_params->getParameter(Params::STATE_HARDENING_INITIAL);
+  std::cout << "Slip Rate" << rate_slip << std::endl;
 
   if (modulus_recovery > 0.0)
   {
@@ -126,7 +122,7 @@ harden(
       state_hardening_np1[ss_index_global] = modulus_hardening / modulus_recovery * (1.0 - 
         std::exp(-modulus_recovery * (effective_slip_n + dt * driver_hardening[ss_index])));  
 
-      slip_resistance[ss_index_global] = resistance_slip_initial + state_hardening_np1[ss_index_global];
+      slip_resistance[ss_index_global] = state_hardening_np1[ss_index_global];
     }
   }
   else
@@ -139,7 +135,7 @@ harden(
       state_hardening_np1[ss_index_global] = 
         state_hardening_n[ss_index_global] + modulus_hardening * dt * driver_hardening[ss_index];
 
-      slip_resistance[ss_index_global] = resistance_slip_initial + state_hardening_np1[ss_index_global];
+      slip_resistance[ss_index_global] = state_hardening_np1[ss_index_global];
     }
   }
 

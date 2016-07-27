@@ -136,7 +136,7 @@
 
                          <Parameter name="Initial Hardening State"
                                     type="double"
-                                    value="1.0"/>
+                                    value="90.0"/>
 
                     </ParameterList>
 

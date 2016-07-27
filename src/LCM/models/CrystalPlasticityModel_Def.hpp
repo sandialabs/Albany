@@ -365,6 +365,10 @@ CrystalPlasticityModel(
     slip_family = slip_families_[sf_index];
 
     slip_family.slip_system_indices_.set_dimension(slip_family.num_slip_sys_);
+
+    if (verbosity_ > 2) {
+      std::cout << "slip system indices" << slip_family.slip_system_indices_ << std::endl;
+    }
   }
 
   //
@@ -1002,6 +1006,10 @@ computeState(typename Traits::EvalData workset,
     		slip_family = slip_families_[sf_index];
 
     		slip_family.phardening_parameters_->createLatentMatrix(slip_family, slip_systems_); 
+
+        if (verbosity_ > 2) {
+          std::cout << slip_family.latent_matrix_ << std::endl;
+        }
 			}
 
       equivalent_plastic_strain = 

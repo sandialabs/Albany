@@ -65,6 +65,7 @@ CP::applySlipIncrement(
   exp_L_dt(num_dim);
 
   Lp_np1.fill(Intrepid2::ZEROS);
+  Lp_np1 = 0. * Lp_np1;
 
   if(dt > 0){
     for (int s(0); s < num_slip; ++s) {
