@@ -11,6 +11,7 @@
 #include "core/CrystalPlasticity/NonlinearSolver.hpp"
 #include "ConstitutiveModel.hpp"
 #include "NOX_StatusTest_ModelEvaluatorFlag.h"
+#include "../../utility/StaticAllocator.hpp"
 
 namespace LCM
 {
@@ -21,21 +22,10 @@ class CrystalPlasticityModel: public LCM::ConstitutiveModel<EvalT, Traits>
 {
 public:
 
-  enum class IntegrationScheme
-  {
-    UNDEFINED = 0, 
-    EXPLICIT = 1, 
-    IMPLICIT = 2
-  };
-
-  enum class ResidualType
-  {
-    UNDEFINED = 0, 
-    SLIP = 1, 
-    SLIP_HARDNESS = 2
-  };
-
   using ScalarT = typename EvalT::ScalarT;
+	using ValueT = typename Sacado::ValueType<ScalarT>::type;
+	
+	using Minimizer = Intrepid2::Minimizer<ValueT, CP::NLS_DIM>;
 
   // Dimension of problem, e.g., 2 -> 2D, 3 -> 3D
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
@@ -194,10 +184,10 @@ private:
   ///
   /// Solution options
   ///
-  IntegrationScheme 
+	CP::IntegrationScheme 
   integration_scheme_;
 
-  ResidualType
+	CP::ResidualType
   residual_type_;
 
   bool
@@ -206,23 +196,21 @@ private:
   Intrepid2::StepType
   step_type_;
 
-  RealType
-  nonlinear_solver_relative_tolerance_;
-  
-  RealType
-  nonlinear_solver_absolute_tolerance_;
-  
-  int
-  nonlinear_solver_max_iterations_;
-  
-  int
-  nonlinear_solver_min_iterations_;
+	///
+	/// Minimizer
+	///
+	Minimizer minimizer_;
 
   ///
   /// Pointer to NOX status test, allows the material model to force a global load step reduction
   ///
   Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
   nox_status_test_;
+  
+  ///
+  /// Memory management
+  ///
+  utility::StaticAllocator  allocator_;
 
   ///
   /// Output options 

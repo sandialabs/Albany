@@ -34,9 +34,7 @@ namespace
   {
     StaticAllocator alloc(1024);
     
-    auto tarray = alloc.create<TestArray<1025>>();
-    
-    ASSERT_EQ(tarray, StaticPointer<TestArray<1025>>());
+    ASSERT_THROW(alloc.create<TestArray<1025>>(), std::bad_alloc);
   }
   
   TEST(StaticAllocatorTest, MultipleAllocation)
@@ -63,11 +61,10 @@ namespace
     auto tarray2 = alloc.create<TestArray<512>>();
     ASSERT_NE(tarray2, StaticPointer<TestArray<512>>());
     
-    auto tarray3 = alloc.create<TestArray<256>>();
-    ASSERT_EQ(tarray3, StaticPointer<TestArray<256>>());
+    ASSERT_THROW(alloc.create<TestArray<256>>(), std::bad_alloc);
     
-    auto tarray4 = alloc.create<TestArray<255>>();
-    ASSERT_NE(tarray4, StaticPointer<TestArray<255>>());
+    auto tarray3 = alloc.create<TestArray<255>>();
+    ASSERT_NE(tarray3, StaticPointer<TestArray<255>>());
   }
   
   struct PointerTester

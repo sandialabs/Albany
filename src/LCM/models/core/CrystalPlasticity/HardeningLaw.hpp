@@ -7,6 +7,8 @@
 #if !defined(LCM_HardeningLaw_hpp)
 #define LCM_HardeningLaw_hpp
 
+#include "../../../../utility/StaticAllocator.hpp"
+
 namespace CP
 {
 /**
@@ -33,6 +35,7 @@ enum class HardeningLawType
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
 std::shared_ptr<HardeningParameterBase<NumDimT, NumSlipT>>
 hardeningParameterFactory(HardeningLawType type_hardening_law);
+
 
 /**
  *	Hardening parameters base class.
@@ -258,6 +261,27 @@ struct HardeningLawBase
 
   virtual
   ~HardeningLawBase() {}
+};
+
+
+/**
+ *  Factory class for instantiating hardening laws.
+ */
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+class HardeningLawFactory
+{
+
+public:
+
+  explicit HardeningLawFactory(utility::StaticAllocator & alloc);
+
+  template<typename ArgT>
+  utility::StaticPointer<HardeningLawBase<NumDimT, NumSlipT, ArgT>>
+  createHardeningLaw(HardeningLawType type_hardening_law) const;
+
+private:
+
+  utility::StaticAllocator & allocator_;
 };
 
 

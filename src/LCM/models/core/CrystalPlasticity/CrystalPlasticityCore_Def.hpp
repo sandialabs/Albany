@@ -6,6 +6,41 @@
 
 #include <boost/math/special_functions/fpclassify.hpp>
 
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+CP::SlipFamily<NumDimT, NumSlipT>::SlipFamily(utility::StaticAllocator & alloc)
+  : hardening_law_factory_(alloc)
+{
+
+}
+
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+void
+CP::SlipFamily<NumDimT, NumSlipT>::setHardeningLawType(CP::HardeningLawType law)
+{
+	type_hardening_law_ = law;
+
+	phardening_parameters_ =
+		CP::hardeningParameterFactory<CP::MAX_DIM, CP::MAX_SLIP>(type_hardening_law_);
+}
+
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+void
+CP::SlipFamily<NumDimT, NumSlipT>::setFlowRuleType(CP::FlowRuleType rule)
+{
+	type_flow_rule_ = rule;
+
+	pflow_parameters_ = CP::flowParameterFactory(type_flow_rule_);
+}
+
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<typename ArgT>
+utility::StaticPointer<CP::HardeningLawBase<NumDimT, NumSlipT, ArgT>>
+CP::SlipFamily<NumDimT, NumSlipT>::createHardeningLaw() const
+{
+  return hardening_law_factory_.createHardeningLaw<ArgT>(type_hardening_law_); 
+}
+
+
 ///
 /// Verify that constitutive update has preserved finite values
 ///
@@ -105,14 +140,7 @@ CP::updateHardness(
     auto const &
     slip_family = slip_families[sf_index];
 
-    CP::hardeningLawFactory<NumDimT, NumSlipT, ArgT>
-    f;
-
-    CP::HardeningLawType const
-    type_hardening_law = slip_family.type_hardening_law_;
-
-    CP::HardeningLawBase<NumDimT, NumSlipT, ArgT> *
-    phardening = f.createHardeningLaw(type_hardening_law);
+    auto phardening = slip_family.template createHardeningLaw<ArgT>();
 
     phardening->harden(
       slip_family,
@@ -153,7 +181,7 @@ CP::updateSlip(
     f;
 
     CP::FlowRuleBase<ArgT> *
-    pflow = f.createFlowRule(slip_family.type_flow_rule_);
+    pflow = f.createFlowRule(slip_family.getFlowRuleType());
 
     ArgT const
     rate_slip = pflow->computeRateSlip(

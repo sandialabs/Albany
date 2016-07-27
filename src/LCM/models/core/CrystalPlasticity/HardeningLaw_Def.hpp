@@ -43,6 +43,45 @@ CP::hardeningParameterFactory(CP::HardeningLawType type_hardening_law)
   return HPUP(nullptr);
 }
 
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+CP::HardeningLawFactory<NumDimT, NumSlipT>::HardeningLawFactory(utility::StaticAllocator & alloc)
+  : allocator_(alloc)
+{
+
+}
+
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<typename ArgT>
+utility::StaticPointer<CP::HardeningLawBase<NumDimT, NumSlipT, ArgT>>
+CP::HardeningLawFactory<NumDimT, NumSlipT>::createHardeningLaw(HardeningLawType type_hardening_law) const
+{
+  switch (type_hardening_law) {
+
+    default:
+      std::cerr << __PRETTY_FUNCTION__ << '\n';
+      std::cerr << "ERROR: Unknown hardening law\n";
+      exit(1);
+      break;
+
+    case HardeningLawType::LINEAR_MINUS_RECOVERY:
+      return allocator_.create<LinearMinusRecoveryHardeningLaw<NumDimT, NumSlipT, ArgT>>();
+      break;
+
+    case HardeningLawType::SATURATION:
+      return allocator_.create<SaturationHardeningLaw<NumDimT, NumSlipT, ArgT>>();
+      break;
+
+    case HardeningLawType::DISLOCATION_DENSITY:
+      return allocator_.create<DislocationDensityHardeningLaw<NumDimT, NumSlipT, ArgT>>();
+      break;
+
+    case HardeningLawType::UNDEFINED:
+      return allocator_.create<NoHardeningLaw<NumDimT, NumSlipT, ArgT>>();
+      break;
+  }
+
+  return nullptr;
+}
 
 //
 // Linear hardening with recovery

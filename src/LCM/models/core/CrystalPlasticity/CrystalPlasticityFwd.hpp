@@ -21,6 +21,21 @@ NLS_DIM = 2 * MAX_SLIP;
 static constexpr Intrepid2::Index
 MAX_FAMILY = 3;
 
+enum class IntegrationScheme
+{
+  UNDEFINED = 0, 
+  EXPLICIT = 1, 
+  IMPLICIT = 2
+};
+
+enum class ResidualType
+{
+  UNDEFINED = 0, 
+  SLIP = 1, 
+  SLIP_HARDNESS = 2
+};
+
+
 
 struct FlowParameterBase;
 

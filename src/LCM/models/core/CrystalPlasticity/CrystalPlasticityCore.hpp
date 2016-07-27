@@ -55,11 +55,21 @@ struct SlipSystem
 // hardening characteristics
 //
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
-struct SlipFamily
+class SlipFamily
 {
-  SlipFamily() {}
+public:
+  SlipFamily(utility::StaticAllocator & alloc);
 
   ~SlipFamily() {}
+	
+	void setHardeningLawType(HardeningLawType law);
+	HardeningLawType getHardeningLawType() const { return type_hardening_law_; }
+	void setFlowRuleType(FlowRuleType rule);
+	FlowRuleType getFlowRuleType() const { return type_flow_rule_; }
+
+  template<typename ArgT>
+  utility::StaticPointer<HardeningLawBase<NumDimT, NumSlipT, ArgT>>
+  createHardeningLaw() const;
 
   Intrepid2::Index
   num_slip_sys_{0};
@@ -76,11 +86,15 @@ struct SlipFamily
   Intrepid2::Tensor<RealType, NumSlipT>
   latent_matrix_;
 
+private:
+
   HardeningLawType
   type_hardening_law_{HardeningLawType::UNDEFINED};
 
   FlowRuleType
   type_flow_rule_{FlowRuleType::UNDEFINED};
+
+  HardeningLawFactory<NumDimT, NumSlipT> hardening_law_factory_;
 };
 
 
@@ -217,55 +231,6 @@ private:
 
   unsigned char
   flow_buffer_[sizeof(FlowRuleBaseType)];
-};
-
-//
-//
-//
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ScalarT>
-class hardeningLawFactory
-{
-
-public:
-
-  using HardeningBaseType = HardeningLawBase<NumDimT, NumSlipT, ScalarT>;
-
-  HardeningBaseType *
-  createHardeningLaw(HardeningLawType type_hardening_law) {
-
-    switch (type_hardening_law) {
-
-      default:
-        std::cerr << __PRETTY_FUNCTION__ << '\n';
-        std::cerr << "ERROR: Unknown hardening law\n";
-        exit(1);
-        break;
-
-      case HardeningLawType::LINEAR_MINUS_RECOVERY:
-        return new(hardening_buffer_) LinearMinusRecoveryHardeningLaw<NumDimT, NumSlipT, ScalarT>();
-        break;
-
-      case HardeningLawType::SATURATION:
-        return new(hardening_buffer_) SaturationHardeningLaw<NumDimT, NumSlipT, ScalarT>();
-        break;
-
-      case HardeningLawType::DISLOCATION_DENSITY:
-        return new(hardening_buffer_) DislocationDensityHardeningLaw<NumDimT, NumSlipT, ScalarT>();
-        break;
-
-      case HardeningLawType::UNDEFINED:
-        return new(hardening_buffer_) NoHardeningLaw<NumDimT, NumSlipT, ScalarT>();
-        break;
-    }
-
-    return nullptr;
-  }
-
-private:
-
-  unsigned char
-  hardening_buffer_[sizeof(HardeningBaseType)];
-  
 };
 
 } // namespace CP
