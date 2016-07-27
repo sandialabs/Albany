@@ -73,6 +73,28 @@ private:
   bool obtainLaplaceOp;
   bool pureAdvection;
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct XZHydrostatic_TemperatureResid_Tag{};
+  struct XZHydrostatic_TemperatureResid_pureAdvection_Tag{};
+  struct XZHydrostatic_TemperatureResid_Laplace_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_TemperatureResid_Tag> XZHydrostatic_TemperatureResid_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_TemperatureResid_Tag> XZHydrostatic_TemperatureResid_pureAdvection_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_TemperatureResid_Tag> XZHydrostatic_TemperatureResid_Laplace_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_TemperatureResid_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_TemperatureResid_pureAdvection_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_TemperatureResid_Laplace_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 
