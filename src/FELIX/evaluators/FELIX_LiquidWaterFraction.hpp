@@ -53,6 +53,9 @@ private:
 
   double L;
   double rho_w;
+
+  ScalarT printedAlpha;
+
 };
 
 } // Namespace FELIX

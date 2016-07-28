@@ -114,6 +114,7 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 	eta_w = physics_list->get("Viscosity of water", 0.0018);
 	g = physics_list->get("Gravity Acceleration", 9.8);
 	L = physics_list->get("Latent heat of fusion", 3e5);
+	alpha_om = physics_list->get("Omega exponent alpha", 2.0);
 
 	drainage_coeff = g * rho_w * L * k_0 * (rho_w - rho_i) / eta_w;
 
@@ -238,8 +239,8 @@ evaluateFields(typename Traits::EvalData d)
     				ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
 					Residual(cell,node) += (1 - scale) * 0.001*(k - rho_i*c*nu) * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
 										   meltTempGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-										   meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2)) +
-										   0.0 * (1 - scale) * drainage_coeff*2*omega(cell,qp)*omegaGrad(cell,qp,2)*wBF(cell,node,qp);
+										   meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2)) -
+										   (1 - scale) * drainage_coeff*alpha_om*pow(omega(cell,qp),alpha_om-1)*omegaGrad(cell,qp,2)*wBF(cell,node,qp);
 				//std::cout << "omega = " << omega(cell,qp) << "\n";
 			}
         }
@@ -299,7 +300,7 @@ evaluateFields(typename Traits::EvalData d)
 											   Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) + verticalVel(cell,qp) * wGradBF(cell,node,qp,2));
 						*/
 	    				ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
-						Residual(cell,node) += 0.0 * (1 - scale) * drainage_coeff*2*omega(cell,qp)*omegaGrad(cell,qp,2) * wSUPG;  // check whether is plus or minus
+						Residual(cell,node) -= (1-scale) * drainage_coeff*alpha_om*pow(omega(cell,qp),alpha_om-1)*omegaGrad(cell,qp,2) * wSUPG;  // check whether is plus or minus
 					//}
 				}
       	  	}

@@ -25,7 +25,7 @@
    </ParameterList>
     <ParameterList name="FELIX Physical Parameters">
       <Parameter name="Conductivity of ice" type="double" value="2.1"/>
-      <Parameter name="Diffusivity temperate ice" type ="double" value="0.00000011"/>
+      <Parameter name="Diffusivity temperate ice" type ="double" value="1.1e-8"/>
       <Parameter name="Heat capacity of ice" type="double" value="2009"/>
       <Parameter name="Water Density" type="double" value="1028"/>
       <Parameter name="Ice Density" type="double" value="916"/>
@@ -34,7 +34,8 @@
       <Parameter name="Clausius-Clapeyron coefficient" type="double" value="0.000000079"/>
       <Parameter name="Latent heat of fusion" type="double" value="334000"/>
       <Parameter name="Permeability factor" type="double" value="1.0e-12"/>
-      <Parameter name="Viscosity of water" type="double" value="0.0018"/> 
+      <Parameter name="Viscosity of water" type="double" value="0.0018"/>
+      <Parameter name="Omega exponent alpha" type="double" value="2."/> 
    </ParameterList>
     <ParameterList name="SUPG Settings">
        <Parameter name="Have SUPG Stabilization" type="bool" value="true"/>
@@ -100,15 +101,15 @@
   <Parameter  name="Method" type="string" value="Constant"/>
       </ParameterList>
       <ParameterList name="Stepper">
-  <Parameter  name="Initial Value" type="double" value="0.1"/>
+  <Parameter  name="Initial Value" type="double" value="0.2"/>
   <Parameter  name="Continuation Parameter" type="string" value="Glen's Law Homotopy Parameter"/>
   <Parameter  name="Continuation Method" type="string" value="Natural"/>
-  <Parameter  name="Max Steps" type="int" value="10"/>
+  <Parameter  name="Max Steps" type="int" value="3"/>
   <Parameter  name="Max Value" type="double" value="1.0"/>
   <Parameter  name="Min Value" type="double" value="0.0"/>
       </ParameterList>
       <ParameterList name="Step Size">
-  <Parameter  name="Initial Step Size" type="double" value="0.05"/>
+  <Parameter  name="Initial Step Size" type="double" value="0.1"/>
       </ParameterList>
      </ParameterList>
    <ParameterList name="NOX">
@@ -134,7 +135,7 @@
   </ParameterList>
   <ParameterList name="Test 1">
     <Parameter name="Test Type" type="string" value="MaxIters"/>
-    <Parameter name="Maximum Iterations" type="int" value="100"/>
+    <Parameter name="Maximum Iterations" type="int" value="200"/>
   </ParameterList>
       </ParameterList>
       <ParameterList name="Direction">

@@ -37,6 +37,9 @@ LiquidWaterFraction(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::
 	Teuchos::ParameterList& physics = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
 	rho_w = physics.get<double>("Water Density", 1000.0);
 	L = physics.get<double>("Latent heat of fusion", 334000.0);
+
+	printedAlpha = -1.0;
+
 }
 
 template<typename EvalT, typename Traits, typename Type>
@@ -57,25 +60,37 @@ evaluateFields(typename Traits::EvalData d)
 	ScalarT hom = homotopy(0);
 	ScalarT alpha = pow(10.0, -8.0 + hom*10);
 	double pi = atan(1.) * 4.;
-
 	ScalarT om;
+
+    if (std::fabs(printedAlpha - alpha) > 0.0001*alpha)
+    {
+    	std::cout << "[OMEGA] alpha = " << alpha << "\n";
+        printedAlpha = alpha;
+    }
 
     for (std::size_t cell = 0; cell < d.numCells; ++cell)
     {
     	for (std::size_t node = 0; node < numNodes; ++node)
     	{
-			ScalarT scale = - atan(alpha * (enthalpy(cell,node) - enthalpyHs(cell,node)))/pi + 0.5;
 
-			omega(cell,node) = (1-scale) * ( enthalpy(cell,node) - enthalpyHs(cell,node) ) / (rho_w * L);
+    		ScalarT scale = - atan(alpha * (enthalpy(cell,node) - enthalpyHs(cell,node)))/pi + 0.5;
+
+    		omega(cell,node) = (1-scale) * ( enthalpy(cell,node) - enthalpyHs(cell,node) ) / (rho_w * L);
+
+			if (omega(cell,node) < 0.0)
+				omega(cell,node) = 0.0;
+
 			/*
 			if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
     			om = 0.0;
     	    else
     	    	om = ( enthalpy(cell,node) - enthalpyHs(cell,node) ) / (rho_w * L);
-			 */
-    		// TODO change here
-    		// this is just temporary, it has been done to not let omega be bigger than 1
-    		//omega(cell,node) = om / (1 + om);
+
+			if (omega(cell,node) < 0.0)
+				omega(cell,node) = 0.0;
+			else
+				omega(cell,node) = om;
+			*/
     	}
     }
 }

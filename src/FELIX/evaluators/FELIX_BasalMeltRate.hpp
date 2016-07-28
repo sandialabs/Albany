@@ -59,6 +59,7 @@ class BasalMeltRate : public PHX::EvaluatorWithBaseImpl<Traits>,
 		double L, g;
 
 		double k_0, eta_w;
+		double alpha_om;
 
 };
 

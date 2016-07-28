@@ -556,6 +556,22 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
 		  ev = Teuchos::rcp(new FELIX::PressureMeltingTemperature<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
 		  fm0.template registerEvaluator<EvalT>(ev);
+
+		  // Saving the melting temperature in the output mesh
+		  {
+			  fm0.template registerEvaluator<EvalT> (evalUtils.constructNodesToCellInterpolationEvaluator("melting temp",false));
+
+			  std::string stateName = "MeltingTemperature_Cell";
+			  p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
+			  p->set<std::string>("Field Name", "melting temp");
+			  p->set<std::string>("Weights Name","Weights");
+			  p->set("Weights Layout", dl->qp_scalar);
+			  p->set("Field Layout", dl->cell_scalar2);
+			  p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
+
+			  ev = rcp(new PHAL::SaveCellStateField<EvalT,AlbanyTraits>(*p));
+			  fm0.template registerEvaluator<EvalT>(ev);
+		  }
 	  }
 
 	  // --- FELIX pressure-melting enthalpy
@@ -573,7 +589,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 		  fm0.template registerEvaluator<EvalT>(ev);
 	  }
 
-	  // --- FELIX Temperature
+	  // --- FELIX Temperature: temperate ice is field where the values are either 1 (if the ice is temperate) or 0 (if it is cold)
 	  {
 		  p = rcp(new ParameterList("FELIX Temperature"));
 
@@ -586,6 +602,8 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
 		  //Output
 		  p->set<std::string>("Temperature Variable Name", "Temperature");
+		  p->set<std::string>("Temperate Ice Variable Name", "Temperate Ice");
+
 		  ev = Teuchos::rcp(new FELIX::Temperature<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
 		  fm0.template registerEvaluator<EvalT>(ev);
 
@@ -594,6 +612,22 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 			  std::string stateName = "Temperature_Cell";
 			  p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
 			  p->set<std::string>("Field Name", "Temperature");
+			  p->set<std::string>("Weights Name","Weights");
+			  p->set("Weights Layout", dl->qp_scalar);
+			  p->set("Field Layout", dl->cell_scalar2);
+			  p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
+
+			  ev = rcp(new PHAL::SaveCellStateField<EvalT,AlbanyTraits>(*p));
+			  fm0.template registerEvaluator<EvalT>(ev);
+		  }
+
+		  // Saving the temperate ice field in the output mesh
+		  {
+			  fm0.template registerEvaluator<EvalT> (evalUtils.constructNodesToCellInterpolationEvaluator("Temperate Ice",false));
+
+			  std::string stateName = "IsTemperate_Cell";
+			  p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
+			  p->set<std::string>("Field Name", "Temperate Ice");
 			  p->set<std::string>("Weights Name","Weights");
 			  p->set("Weights Layout", dl->qp_scalar);
 			  p->set("Field Layout", dl->cell_scalar2);

@@ -28,8 +28,7 @@ class Temperature: public PHX::EvaluatorWithBaseImpl<Traits>,
 {
 public:
 
-  //typedef typename EvalT::ParamScalarT ParamScalarT;
-  //typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
   typedef typename EvalT::ScalarT ScalarT;
 
   Temperature (const Teuchos::ParameterList& p,
@@ -48,6 +47,7 @@ private:
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> temperature;
+  PHX::MDField<ScalarT,Cell,Node> temperateIce;
 
   int numNodes;
 

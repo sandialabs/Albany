@@ -74,6 +74,7 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		double rho_w; 	// density of water
 		double g, L;
 		double drainage_coeff;
+		double alpha_om;
 
 		ScalarT printedAlpha;
 };

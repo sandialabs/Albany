@@ -54,6 +54,7 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 	k_0 = physics_list->get("Permeability factor", 0.0);
 	eta_w = physics_list->get("Viscosity of water", 0.0018);
 	g = physics_list->get("Gravity Acceleration", 9.8);
+	alpha_om = physics_list->get("Omega exponent alpha", 2.0);
 }
 
 template<typename EvalT, typename Traits, typename VelocityType>
@@ -81,6 +82,8 @@ evaluateFields(typename Traits::EvalData d)
 	ScalarT hom = homotopy(0);
 	ScalarT alpha = pow(10.0, -8.0 + hom*10);
 	double scaling = pow(10.0,8.0) / 3.171;
+	ScalarT omegaExp;
+
 	if (d.sideSets->find(basalSideName) != d.sideSets->end())
 	{
 		const std::vector<Albany::SideStruct>& sideSet = d.sideSets->at(basalSideName);
@@ -97,8 +100,12 @@ evaluateFields(typename Traits::EvalData d)
     			for (int dim = 0; dim < vecDimFO; dim++)
     				basalHeat += (1./(3.154*pow(10.0,4.0))) * beta(cell,side,node) * velocity(cell,side,node,dim) * velocity(cell,side,node,dim);  // check dimensions
 
-    			basalMeltRate(cell,side,node) = scaling*( ((1 - scale)*( basalHeat + geoFluxHeat(cell,side,node) ) / ((1 - rho_w/rho_i*omega(cell,side,node))*L*rho_w)) +
-    											0.0 * k_0 * (rho_w - rho_i) * g / eta_w * omega(cell,side,node) * omega(cell,side,node) );
+    			//std::cout << "omega = " << omega(cell,side,node) << "\n";
+
+    			omegaExp = pow(omega(cell,side,node),alpha_om);
+
+    			basalMeltRate(cell,side,node) = scaling*( ((1 - scale)*( basalHeat + geoFluxHeat(cell,side,node) ) / ((1 - rho_w/rho_i*omega(cell,side,node))*L*rho_w)) -
+    											k_0 * (rho_w - rho_i) * g / eta_w * omegaExp );
 	    	}
 	    }
 	}
