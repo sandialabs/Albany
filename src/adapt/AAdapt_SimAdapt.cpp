@@ -56,6 +56,18 @@ bool SimAdapt::queryAdaptationCriteria(int iteration)
         return true;
     return false;
   }
+  if (strategy == "Every N Step Number") {
+            TEUCHOS_TEST_FOR_EXCEPTION(!adapt_params_->isParameter("Remesh Every N Step Number"),
+                    std::logic_error,
+                    "Remesh Strategy " << strategy << " but no Remesh Every N Step Number" << '\n');
+            int remesh_iter = adapt_params_->get<int>("Remesh Every N Step Number", -1);
+            // check user do not specify a zero or negative value
+            TEUCHOS_TEST_FOR_EXCEPTION(remesh_iter <= 0, std::logic_error,
+                    "Value must be positive" << '\n');
+            if (iteration % remesh_iter == 0)
+                return true;
+            return false;
+        }
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
       "Unknown Remesh Strategy " << strategy << '\n');
   return false;
@@ -64,6 +76,7 @@ bool SimAdapt::queryAdaptationCriteria(int iteration)
 /* BRD */
 void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double sliceThickness)
 {
+  //Sim_logOn("meshLog.lua");
   pACase mcase = MS_newMeshCase(model);
   MS_setMeshSize(mcase,GM_domain(model),1,10.0*sliceThickness,0);  // at least an order of magnitude more than slice thickness
   MS_setMeshCurv(mcase,GM_domain(model),2,0.025);
@@ -81,14 +94,29 @@ void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double sl
   while (gr=GRIter_next(regions)) {
     if (GEN_numNativeIntAttribute(gr,"SimLayer")==1) {
       GEN_nativeIntAttribute(gr,"SimLayer",&layer);
-      if (layer==currentLayer)
+      if (layer==currentLayer) {
         MS_setMeshSize(mcase,gr,1,sliceThickness/3.0,0);
+        pPList regFaces = GR_faces(gr);
+        void *fiter = 0;
+        pGFace gf;
+        while (gf = static_cast<pGFace>(PList_next(regFaces,&fiter))) {
+          if (GEN_numNativeIntAttribute(gf,"SimLayer")==1) {
+            GEN_nativeIntAttribute(gf,"SimLayer",&layer);
+            if (layer==currentLayer+1) {
+              MS_limitSurfaceMeshModification(mcase,gf,1);
+              MS_useDiscreteGeometryMesh(mcase,gf,1);
+            }
+          }
+        }
+        PList_delete(regFaces);
+      }
       else if (layer > currentLayer)
         MS_setNoMesh(mcase,gr,1);
     }
   }
   GRIter_delete(regions);
-  
+  //PM_write(mesh, "beforeSurfaceMesh.sms", sthreadDefault, 0);
+
   pSurfaceMesher sm = SurfaceMesher_new(mcase,mesh);
   // SurfaceMesher_setParamForDiscrete(sm, 1);
   SurfaceMesher_execute(sm,0);
@@ -100,6 +128,7 @@ void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double sl
   VolumeMesher_delete(vm);
 
   MS_deleteMeshCase(mcase);
+  //Sim_logOff();
 }
 
 void adaptMesh2(pGModel model,pParMesh mesh,int currentLayer,double sliceThickness,pPList flds)
@@ -454,7 +483,6 @@ bool SimAdapt::adaptMesh()
                   MSA_setVertexSize(adapter,mv,sliceThickness/3.0);  // should be same as top layer size in meshModel
                 VIter_delete(allVerts);
               }
-              break;
             }
           }
         }
@@ -482,7 +510,7 @@ bool SimAdapt::adaptMesh()
   /* BRD */
   MSA_setPrebalance(adapter, 0);
   /* BRD */
-  PM_write(sim_pm,"debugMesh.sms",sthreadDefault,0);
+  //PM_write(sim_pm,"debugMesh.sms",sthreadDefault,0);
   MSA_adapt(adapter, progress);
   pPartitionOpts popts = PM_newPartitionOpts();
   PartitionOpts_setAdaptive(popts,1);
@@ -504,13 +532,12 @@ bool SimAdapt::adaptMesh()
   /* BRD */
   double currentTime = param_lib_->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
   std::cout << "Current time = " << currentTime << "\n";
-  std::cout << "layer time = " << Simmetrix_layerTimes[Simmetrix_currentLayer] << "\n";
   if (currentTime >= Simmetrix_layerTimes[Simmetrix_currentLayer]) {
     char meshFile[80];
     std::cout << "Adding layer " << Simmetrix_currentLayer+1 << "\n";
     addNextLayer(sim_pm,Simmetrix_currentLayer+1,apf_ms->num_time_deriv+1,sim_fld_lst);
     sprintf(meshFile, "layerMesh%d.sms", Simmetrix_currentLayer+1);
-    PM_write(sim_pm, meshFile, sthreadDefault, 0);
+    //PM_write(sim_pm, meshFile, sthreadDefault, 0);
     Simmetrix_currentLayer++;
   }
   PList_delete(sim_fld_lst);

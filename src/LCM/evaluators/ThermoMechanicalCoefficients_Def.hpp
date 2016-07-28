@@ -113,7 +113,7 @@ evaluateFields(typename Traits::EvalData workset)
         if (dt == 0.0)
             dt = 1.e-15;
         else
-          dt = 0.5;
+           dt = 1.0;
         Albany::MDArray temperature_old = (*workset.stateArrayPtr)[temperature_name_];
         for (int cell = 0; cell < workset.numCells; ++cell)
         {
