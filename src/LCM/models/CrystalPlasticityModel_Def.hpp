@@ -707,6 +707,8 @@ computeState(typename Traits::EvalData workset,
   Intrepid2::Vector<ScalarT, CP::NLS_DIM>
   x;
 
+  x.fill(Intrepid2::ZEROS);
+
   // Choose explicit or implicit integration of the constitutive update
   switch (integration_scheme_) {
 
@@ -881,7 +883,7 @@ computeState(typename Traits::EvalData workset,
         
 				case CP::IntegrationScheme::EXPLICIT:
         {
-          for(int i=0; i<num_slip_; ++i) {
+          for(int i = 0; i < num_slip_; ++i) {
             // initial guess for x is slip_n + dt * rate_slip_n
             x(i) = slip_n[i] + dt * (*(rate_slip_n[i]))(cell, pt);
           }
@@ -908,7 +910,7 @@ computeState(typename Traits::EvalData workset,
           LCM::MiniSolver<Minimizer, STEP, NLS, EvalT, CP::NLS_DIM>
           mini_solver(minimizer_, *pstep, explicit_nls, x);
 
-          for(int i=0; i<num_slip_; ++i) {
+          for(int i = 0; i < num_slip_; ++i) {
             slip_np1[i] = x[i];
           }
 
@@ -931,20 +933,36 @@ computeState(typename Traits::EvalData workset,
             sigma_np1, 
             S_np1, 
             shear_np1);
-        }
+
+          if (dt > 0.0) {
+            rate_slip = (slip_np1 - slip_n) / dt;
+          }
+          else {
+            rate_slip.fill(Intrepid2::ZEROS);
+          }
+
+          // Compute state_hardening_np1
+          CP::updateHardness<CP::MAX_DIM, CP::MAX_SLIP, ScalarT>(
+            slip_systems_, 
+            slip_families_,
+            dt,
+            rate_slip, 
+            state_hardening_n, 
+            state_hardening_np1,
+            slip_resistance);
+        } // end case CP::IntegrationScheme::EXPLICIT:
         break;
         
 				case CP::IntegrationScheme::IMPLICIT:
         {
           //
-          // Chose residual type
+          // Choose residual type
           //
           switch (residual_type_)
           {
 						case CP::ResidualType::SLIP:
             {
-              using NLS =
-                  CP::ResidualSlipNLS<CP::MAX_DIM, CP::MAX_SLIP, EvalT>;
+              using NLS = CP::ResidualSlipNLS<CP::MAX_DIM, CP::MAX_SLIP, EvalT>;
 
               NLS
               slip_nls(
@@ -957,7 +975,7 @@ computeState(typename Traits::EvalData workset,
                   F_np1,
                   dt);
 
-              for(int i=0; i<num_slip_; ++i) {
+              for(int i = 0; i < num_slip_; ++i) {
                 // initial guess for x is slip_np1 (predictor, see above)
                 x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
               }
@@ -965,7 +983,8 @@ computeState(typename Traits::EvalData workset,
               using STEP = Intrepid2::StepBase<NLS, ValueT, CP::NLS_DIM>;
 
               std::unique_ptr<STEP>
-              pstep = Intrepid2::stepFactory<NLS, ValueT, CP::NLS_DIM>(step_type_);
+              pstep = 
+                Intrepid2::stepFactory<NLS, ValueT, CP::NLS_DIM>(step_type_);
 
               LCM::MiniSolver<Minimizer, STEP, NLS, EvalT, CP::NLS_DIM>
               mini_solver(minimizer_, *pstep, slip_nls, x);
@@ -1082,9 +1101,9 @@ computeState(typename Traits::EvalData workset,
             sigma_np1, 
             S_np1, 
             shear_np1);
-        }
+        } // end case CP::IntegrationScheme::IMPLICIT:
         break;
-      }
+      } // end switch (integration_scheme_)
 
       // Compute the residual norm 
       norm_slip_residual = std::sqrt(2.0 * minimizer_.final_value);
