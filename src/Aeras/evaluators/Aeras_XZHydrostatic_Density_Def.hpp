@@ -27,6 +27,7 @@ XZHydrostatic_Density(const Teuchos::ParameterList& p,
   numNodes   (dl->node_scalar             ->dimension(1)),
   numLevels  (dl->node_scalar_level       ->dimension(2))
 {
+  R = 287;
   this->addDependentField(pressure);
   this->addDependentField(virtT);
   this->addEvaluatedField(density);
@@ -45,11 +46,28 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void XZHydrostatic_Density<EvalT, Traits>::
+operator() (const XZHydrostatic_Density_Tag& tag, const int& cell) const{
+  for (int node=0; node < numNodes; ++node) {
+    for (int level=0; level < numLevels; ++level) {
+      density(cell,node,level) = 
+        pressure(cell,node,level)/(R*virtT(cell,node,level));
+    }
+  }
+}
+
+#endif
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void XZHydrostatic_Density<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  const ScalarT R=287;
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {
       for (int level=0; level < numLevels; ++level) {
@@ -58,5 +76,10 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+
+#else
+  Kokkos::parallel_for(XZHydrostatic_Density_Policy(0,workset.numCells),*this);
+
+#endif
 }
 }

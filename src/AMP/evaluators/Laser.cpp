@@ -18,18 +18,18 @@ namespace AMP
 
     std::cout << "Reading file ..." << std::endl;
 
-    RealType t,x,z,power_fraction;
+    RealType t,x,y,power_fraction;
     int power;
-    while (is >> t >> x >> z >> power >> power_fraction)
+    while (is >> t >> x >> y >> power >> power_fraction)
       {
 	//data
 	LaserCenter Data;
 	//
 	Data.t = t;
 	Data.x = x;
-	Data.z = z;
+	Data.y = y;
 	Data.power = power;
-  Data.power_fraction = power_fraction;
+        Data.power_fraction = power_fraction;
 	//
 	LaserData_.push_back(Data);
       }
@@ -56,7 +56,7 @@ namespace AMP
   }
 
   // interpolate
-  void Laser::getLaserPosition(RealType t, LaserCenter val, RealType &x, RealType &z, int &power, RealType &power_fraction)
+  void Laser::getLaserPosition(RealType t, LaserCenter val, RealType &x, RealType &y, int &power, RealType &power_fraction)
   {
     Teuchos::Array<LaserCenter>::iterator low;
     // this line below works because Teuchos::Array<T> is a lighweight implementation of
@@ -70,7 +70,7 @@ namespace AMP
     // point 1
     RealType t1 = low->t;
     RealType x1 = low->x;	
-    RealType z1 = low->z;
+    RealType y1 = low->y;
     int power1 = low->power;
     RealType power_fraction1 = low->power_fraction; 
     
@@ -88,7 +88,7 @@ namespace AMP
     // point 2
     RealType t2 = low->t;
     RealType x2 = low->x;	
-    RealType z2 = low->z;
+    RealType y2 = low->y;
     int power2 = low->power;
     RealType power_fraction2 = low->power_fraction;
    
@@ -105,7 +105,7 @@ namespace AMP
     // x position
     x = (1.0 - q)*x1 + q*x2;
     // z position
-    z = (1.0 - q)*z1 + q*z2;
+    y = (1.0 - q)*y1 + q*y2;
     // power fraction
     power_fraction = (1.0 - q)*power_fraction1 + q*power_fraction2;
 

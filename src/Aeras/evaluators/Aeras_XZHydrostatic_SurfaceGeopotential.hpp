@@ -39,6 +39,7 @@ public:
 
 private:
   // Input
+  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> PhiSurf;
@@ -50,8 +51,42 @@ private:
   
   int numParam;
   
-  Teuchos::Array<double> topoData;                   
-                     
+  Teuchos::Array<double> topoData;
+
+  // MOUNTAIN1 parameters:
+  double local_pi, local_gravity, center, width, height;
+
+  // SPHERE_MOUNTAIN1 parameters:
+  double cntrLat, cntrLon, mtnHeight, mtnWidth, mtnHalfWidth, PI, G;
+
+  // ASP_BAROCLINIC parameters:
+  double a, omega, eta0, etas, u0, pi;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag{};
+  struct XZHydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Tag{};
+  struct XZHydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag> XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Tag> XZHydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Tag> XZHydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Tag& tag, const int& i) const;
+
+private:
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords;
+
+#endif
 };
 }
 

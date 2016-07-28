@@ -27,6 +27,8 @@ namespace AMP {
                     dl->qp_scalar),
     phi_            (p.get<std::string>("Phi Name"),
                     dl->qp_scalar),
+    phi_dot_        (p.get<std::string>("Phi Dot Name"),
+		     dl->qp_scalar),
     rho_Cp_         (p.get<std::string>("Rho Cp Name"),
                     dl->qp_scalar),
     deltaTime_      (p.get<std::string>("Delta Time Name"),
@@ -34,6 +36,7 @@ namespace AMP {
     energyDot_      (p.get<std::string>("Energy Rate Name"),
                     dl->qp_scalar) {
         
+      // dependent field
         this->addDependentField(T_);
         this->addDependentField(T_dot_);
         this->addDependentField(phi_);
@@ -42,7 +45,9 @@ namespace AMP {
         this->addDependentField(time_);
         this->addDependentField(deltaTime_);
 
+	// evaluated field
         this->addEvaluatedField(energyDot_);
+	this->addEvaluatedField(phi_dot_);
 
         std::vector<PHX::Device::size_type> dims;
         Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
@@ -50,7 +55,11 @@ namespace AMP {
         workset_size_ = dims[0];
         num_qps_ = dims[1];
 
+	// get temperature old variable name
         Temperature_Name_ = p.get<std::string>("Temperature Name") + "_old";
+	// Get phi old variable name
+	Phi_old_name_ =  p.get<std::string>("Phi Name") + "_old";
+
 
         // Only verify Change Phase Parameter list because initial Phi already
         // verified inside Phi evaluator (I hope so)
@@ -99,6 +108,7 @@ namespace AMP {
         this->utils.setFieldData(time_, fm);
         this->utils.setFieldData(deltaTime_, fm);
         this->utils.setFieldData(phi_, fm);
+	this->utils.setFieldData(phi_dot_, fm);
         this->utils.setFieldData(psi_, fm);
         this->utils.setFieldData(rho_Cp_, fm);
         this->utils.setFieldData(energyDot_, fm);
@@ -119,6 +129,9 @@ evaluateFields(typename Traits::EvalData workset)
     //grab old temperature
     Albany::MDArray T_old = (*workset.stateArrayPtr)[Temperature_Name_];
 
+    // grab old value opf phi
+     Albany::MDArray phi_old = (*workset.stateArrayPtr)[Phi_old_name_];
+
     // Compute Temp rate
 
     // temporal variables
@@ -131,7 +144,7 @@ evaluateFields(typename Traits::EvalData workset)
     // Variable used to store dp/dphi = 30*phi^2*(1-2*phi+phi^2)
     ScalarT dpdphi;
     // Variable used to store time derivative of phi
-    ScalarT phi_dot;
+    //ScalarT phi_dot;
     // Variable used to compute p = phi^3 * (10-15*phi+6*phi^2)
     ScalarT p;
 
@@ -148,7 +161,8 @@ evaluateFields(typename Traits::EvalData workset)
             dpdphi = 30.0 * phi * phi * (1.0 - 2.0 * phi + phi * phi);
 
             // compute phi_dot
-            phi_dot = (1.0 / (2.0 * Tc_)) * std::pow(std::cosh((T_(cell, qp) - Tm_) / Tc_), -2.0) * T_dot_(cell, qp);
+            //phi_dot = (1.0 / (2.0 * Tc_)) * std::pow(std::cosh((T_(cell, qp) - Tm_) / Tc_), -2.0) * T_dot_(cell, qp);
+	    phi_dot_(cell,qp) = ( phi_(cell,qp) - phi_old(cell,qp) ) / dt;
 
             // compute energy dot
             Cs = rho_Cp_(cell, qp);
@@ -156,7 +170,7 @@ evaluateFields(typename Traits::EvalData workset)
             // p
             p = phi * phi * phi * (10.0 - 15.0 * phi + 6.0 * phi * phi);
             energyDot_(cell, qp) = (Cs + p * (Cl_ - Cs)) * T_dot_(cell, qp) +
-                    dpdphi * (L_ + (Cl_ - Cs) * (T_(cell, qp) - Tm_)) * phi_dot;
+	      dpdphi * (L_ + (Cl_ - Cs) * (T_(cell, qp) - Tm_)) * phi_dot_(cell,qp);
 		
         }
     }

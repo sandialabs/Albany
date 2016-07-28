@@ -46,8 +46,8 @@ if __name__ == "__main__":
 
     print "\nProcessing", num_nodes, "nodes...\n"
 
-    pd_target_y = 0.03125
-    pd_target_z = 0.03125
+    pd_target_y = 0.03125*1.230769
+    pd_target_z = 0.03125*1.230769
     fem_target_y = 0.0
     fem_target_z = 0.0
     tol = 1.0e-3

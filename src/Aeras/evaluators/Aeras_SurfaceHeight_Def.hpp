@@ -56,7 +56,7 @@ SurfaceHeight(const Teuchos::ParameterList& p,
   numQPs  = dims[1];
   numDims = dims[2];
 
-  this->setName("SurfaceHeight" );
+  this->setName("SurfaceHeight"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

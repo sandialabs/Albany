@@ -106,8 +106,8 @@ void AAdapt::SPRSizeField::postProcessFinalMesh()
 void
 AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
 
-
-  apf::Field* f = mesh_struct->getMesh()->findField(sol_name.c_str());
+  ma::Mesh* m = mesh_struct->getMesh();
+  apf::Field* f = m->findField(sol_name.c_str());
   assert(f);
   apf::Field* sol_grad = spr::getGradIPField(f,"sol_grad",cub_degree);
   sprIsoFunc.field = spr::getSPRSizeField(sol_grad,rel_err);

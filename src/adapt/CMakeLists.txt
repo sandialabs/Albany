@@ -165,10 +165,8 @@ SET(HEADERS ${HEADERS}
     AAdapt_ExtrudedAdapt.hpp
    )
 
-IF(ENABLE_SPR)
 SET(SOURCES ${SOURCES} AAdapt_SPRSizeField.cpp)
 SET(HEADERS ${HEADERS} AAdapt_SPRSizeField.hpp)
-ENDIF()
 
 include_directories(${ALBANY_PUMI_INCLUDE_DIRS} ${PUMI_INCLUDE_DIR})
 

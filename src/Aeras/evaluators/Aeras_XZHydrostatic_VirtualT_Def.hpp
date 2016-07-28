@@ -32,11 +32,12 @@ XZHydrostatic_VirtualT(const Teuchos::ParameterList& p,
                 p.get<Teuchos::ParameterList*>("XZHydrostatic Problem")->get<double>("Cp", 1005.7):
                 p.get<Teuchos::ParameterList*>("Hydrostatic Problem")->get<double>("Cp", 1005.7)),
   vapor      (false)
-
 {
-
   Cpv = 1870.0; // (J/kgK)
   Cvv = 1410.0; // (J/kgK)
+  R =287.0;
+  Rv=461.5;
+  factor = Rv/R - 1.0;
   //std::cout << "XZHydrostatic_Omega: Cp = " << Cp << std::endl;
 
   const Teuchos::ArrayRCP<std::string> RequiredTracers(1, "Vapor");
@@ -72,14 +73,41 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void XZHydrostatic_VirtualT<EvalT, Traits>::
+operator() (const XZHydrostatic_VirtualT_Tag& tag, const int& cell) const{
+  for (int node=0; node < numNodes; ++node) {
+    for (int level=0; level < numLevels; ++level) {
+      virt_t(cell,node,level) = temperature(cell,node,level);
+      Cpstar(cell,node,level) = Cp;
+    }
+  }
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void XZHydrostatic_VirtualT<EvalT, Traits>::
+operator() (const XZHydrostatic_VirtualT_vapor_Tag& tag, const int& cell) const{
+  for (int node=0; node < numNodes; ++node) {
+    for (int level=0; level < numLevels; ++level) {
+      virt_t(cell,node,level) = temperature(cell,node,level) 
+                              + factor * temperature(cell,node,level)*qv(cell,node,level)/Pi(cell,node,level);
+      Cpstar(cell,node,level) = Cp + (Cpv - Cp)*qv(cell,node,level)/Pi(cell,node,level);
+    }
+  }
+}
+
+#endif
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void XZHydrostatic_VirtualT<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  const ScalarT R =287.0;
-  const ScalarT Rv=461.5;
-  const ScalarT factor = Rv/R - 1.0;
-
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (!vapor) {
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
@@ -100,5 +128,14 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+
+#else
+  if (!vapor) {
+    Kokkos::parallel_for(XZHydrostatic_VirtualT_Policy(0,workset.numCells),*this);
+  } else { 
+    Kokkos::parallel_for(XZHydrostatic_VirtualT_vapor_Policy(0,workset.numCells),*this);
+  }
+
+#endif
 }
 }

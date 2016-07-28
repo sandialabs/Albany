@@ -9,7 +9,6 @@
 #define AADAPT_EXTRUDEDADAPT_HPP
 
 #include "AAdapt_MeshAdaptMethod.hpp"
-#include "AAdapt_SPRSizeField.hpp"
 #include <maExtrude.h>
 
 namespace AAdapt {
@@ -17,6 +16,8 @@ namespace AAdapt {
 class ExtrudedAdapt : public MeshAdaptMethod {
   public:
     ExtrudedAdapt(const Teuchos::RCP<Albany::APFDiscretization>& disc);
+
+    ~ExtrudedAdapt();
 
     void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
 
@@ -27,7 +28,7 @@ class ExtrudedAdapt : public MeshAdaptMethod {
     void postProcessFinalMesh();
 
   private:
-    SPRSizeField spr_helper;
+    MeshAdaptMethod* helper;
     ma::Mesh* mesh;
     ma::ModelExtrusions model_extrusions;
     size_t nlayers;
