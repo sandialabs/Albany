@@ -130,11 +130,11 @@ evaluateFields(typename Traits::EvalData workset)
   AMP::LaserCenter Val;
   Val.t = t;
   
-  RealType x, z, power_fraction;
+  RealType x, y, power_fraction;
   int power;
-  LaserData_.getLaserPosition(t,Val,x,z,power,power_fraction);
+  LaserData_.getLaserPosition(t,Val,x,y,power,power_fraction);
   ScalarT Laser_center_x = x;
-  ScalarT Laser_center_z = z;
+  ScalarT Laser_center_y = y;
   ScalarT Laser_power_fraction = power_fraction;
 
   // source function
@@ -173,13 +173,12 @@ evaluateFields(typename Traits::EvalData workset)
 	  MeshScalarT Y = coord_(cell,qp,1);
 	  MeshScalarT Z = coord_(cell,qp,2);
 
-//  Note:(0.0002 -Y) is because of the Y axis for the depth_profile is in the negative direction as per the Gusarov's equation.
-    ScalarT depth_profile = f1*(f2*(A*(b2*exp(2.0*a*beta*(0.0002-Y))-b1*exp(-2.0*a*beta*(0.0002-Y))) - B*(c2*exp(-2.0*a*(lambda - beta*(0.0002-Y)))-c1*exp(2.0*a*(lambda-beta*(0.0002-Y))))) + f3*(exp(-beta*(0.0002-Y))+powder_hemispherical_reflectivity*exp(beta*(0.0002-Y) - 2.0*lambda)));
+    ScalarT depth_profile = f1*(f2*(A*(b2*exp(2.0*a*beta*Z)-b1*exp(-2.0*a*beta*Z)) - B*(c2*exp(-2.0*a*(lambda - beta*Z))-c1*exp(2.0*a*(lambda-beta*Z)))) + f3*(exp(-beta*Z)+powder_hemispherical_reflectivity*exp(beta*Z - 2.0*lambda)));
     MeshScalarT* XX = &coord_(cell,qp,0);
-    ScalarT radius = sqrt((X - Laser_center_x)*(X - Laser_center_x) + (Z - Laser_center_z)*(Z - Laser_center_z));
-     if (radius < laser_beam_radius && beta*(0.0002-Y) <= lambda)
-            laser_source_(cell,qp) =beta*LaserFlux_Max*pow((1.0-(radius*radius)/(laser_beam_radius*laser_beam_radius)),2)*depth_profile;
-     else   laser_source_(cell,qp) =0.0;
+    ScalarT radius = sqrt((X - Laser_center_x)*(X - Laser_center_x) + (Y - Laser_center_y)*(Y - Laser_center_y));
+     if (radius < laser_beam_radius && beta*Z <= lambda)
+            laser_source_(cell,qp) = beta*LaserFlux_Max*pow((1.0-(radius*radius)/(laser_beam_radius*laser_beam_radius)),2)*depth_profile;
+     else   laser_source_(cell,qp) = 0.0;
 	
     }
   }

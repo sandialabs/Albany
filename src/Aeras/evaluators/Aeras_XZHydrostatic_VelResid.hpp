@@ -63,6 +63,19 @@ private:
   const int numQPs;
   const int numDims;
   const int numLevels;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct XZHydrostatic_VelResid_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_VelResid_Tag> XZHydrostatic_VelResid_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_VelResid_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 
