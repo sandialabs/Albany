@@ -133,8 +133,6 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 
 	 */
 
-	//alpha = physics_list->get("alpha", 1.0);
-
 	printedAlpha = -1.0;
 }
 
@@ -241,7 +239,6 @@ evaluateFields(typename Traits::EvalData d)
 										   meltTempGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
 										   meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2)) -
 										   (1 - scale) * drainage_coeff*alpha_om*pow(omega(cell,qp),alpha_om-1)*omegaGrad(cell,qp,2)*wBF(cell,node,qp);
-				//std::cout << "omega = " << omega(cell,qp) << "\n";
 			}
         }
     }
@@ -281,7 +278,6 @@ evaluateFields(typename Traits::EvalData d)
 				{
 					wSUPG = (1/(3.154 * pow10)) *
 							(Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) + Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) + verticalVel(cell,qp) * wGradBF(cell,node,qp,2));
-					//std::cout << " vmax = " << vmax << std::endl;
 					/*
 					Residual(cell,node) += (delta*diam/vmax*(3.154 * pow10))*(scaling * Velocity(cell,qp,0) * EnthalpyGrad(cell,qp,0) * (1/(3.154 * pow10)) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
 	    			   					  	scaling * Velocity(cell,qp,1) * EnthalpyGrad(cell,qp,1) * (1/(3.154 * pow10)) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) +

@@ -156,7 +156,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 		  fm0.template registerEvaluator<EvalT>(ev);
 	  }
 
-	  // Flow factor
+	  // Flow factor - actually, this is not used if viscosity is temperature based
 	  {
 		  entity = Albany::StateStruct::ElemData;
 		  std::string stateName = "flow_factor";
@@ -271,7 +271,6 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 	  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator("omega"));
 
 	  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFGradInterpolationEvaluator("omega"));
-
 
 	  // --- Special evaluators for side handling --- //
 
@@ -787,8 +786,6 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 				  fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
 		      }
 		  }
-
-
 	  }
 
 	  {

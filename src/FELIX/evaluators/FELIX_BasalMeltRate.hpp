@@ -33,7 +33,6 @@ class BasalMeltRate : public PHX::EvaluatorWithBaseImpl<Traits>,
 		typedef typename EvalT::ScalarT ScalarT;
 		typedef typename EvalT::MeshScalarT MeshScalarT;
 		typedef typename EvalT::ParamScalarT ParamScalarT;
-		//typedef VelocityType ParamScalarT;
 
 		// Input:
 		PHX::MDField<ScalarT,Cell,Side,Node> 				omega;
