@@ -25,9 +25,9 @@ cmake \
     -D CMAKE_CXX_COMPILER:FILEPATH=$MPI_BASE_DIR/bin64/mpiicpc \
     -D CMAKE_C_COMPILER:FILEPATH=$MPI_BASE_DIR/bin64/mpiicc \
     -D CMAKE_Fortran_COMPILER:FILEPATH=$MPI_BASE_DIR/bin64/mpiifort \
-    -D CMAKE_CXX_FLAGS:STRING="-O0 -g -mkl=sequential" \
-    -D CMAKE_C_FLAGS:STRING="-O0 -g -mkl=sequential" \
-    -D CMAKE_Fortran_FLAGS:STRING="-O0 -g -mkl=sequential" \
+    -D CMAKE_CXX_FLAGS:STRING="-O2 -g -fp-trap-all=all -mkl=sequential" \
+    -D CMAKE_C_FLAGS:STRING="-O2 -g -fp-trap-all=all -mkl=sequential" \
+    -D CMAKE_Fortran_FLAGS:STRING="-O2 -g -fp-trap-all=all -mkl=sequential" \
     -D CMAKE_AR:FILEPATH=${INTEL_DIR}/bin/intel64/xiar \
     -D CMAKE_LINKER:FILEPATH=${INTEL_DIR}/linux/bin/intel64/xild \
     -D Rythmos_ENABLE_DEBUG:BOOL=ON \

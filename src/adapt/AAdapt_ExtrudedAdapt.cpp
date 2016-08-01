@@ -22,6 +22,10 @@ ExtrudedAdapt::ExtrudedAdapt(const Teuchos::RCP<Albany::APFDiscretization>& disc
         mesh->findModelEntity(2, 2),
         mesh->findModelEntity(3, 1),
         mesh->findModelEntity(2, 1)));
+  model_extrusions.push_back(ma::ModelExtrusion(
+        mesh->findModelEntity(0, 2),
+        mesh->findModelEntity(1, 3),
+        mesh->findModelEntity(0, 1)));
 }
 
 ExtrudedAdapt::~ExtrudedAdapt() {
