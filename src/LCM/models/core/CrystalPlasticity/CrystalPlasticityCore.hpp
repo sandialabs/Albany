@@ -49,6 +49,14 @@ struct SlipSystem
   // slip_family_;
 };
 
+// TODO: reorganize slip variables once tests start running
+/*template<typename ScalarT>
+struct Slip
+{
+  Teuchos::RCP<PHX::MDField<ScalarT>> rate_np1_;
+  Albany::MDArray *rate_n_;
+};*/
+
 
 //
 // Slip system family - collection of slip systems grouped by flow and
@@ -98,6 +106,62 @@ private:
 };
 
 
+template<typename ScalarT, Intrepid2::Index NumDimT>
+struct PlasticityState
+{
+  using TensorType = Intrepid2::Tensor<ScalarT, NumDimT>;
+  using InputTensorType = Intrepid2::Tensor<RealType, NumDimT>;
+
+  PlasticityState(int num_dim, InputTensorType const &Fp_n)
+    : num_dim_(num_dim),
+      Fp_n_(Fp_n),
+      Fp_np1_(num_dim),
+      Lp_np1_(num_dim),
+      sigma_np1_(num_dim),
+      S_np1_(num_dim)
+  {}
+
+  int         num_dim_;
+
+  InputTensorType const Fp_n_;
+
+  TensorType  Fp_np1_;
+  TensorType  Lp_np1_;
+  TensorType  sigma_np1_;
+  TensorType  S_np1_;
+};
+
+
+template<typename ScalarT, Intrepid2::Index NumSlipT>
+struct SlipState
+{
+  using VectorType = Intrepid2::Vector<ScalarT, NumSlipT>;
+  using InputVectorType = Intrepid2::Vector<RealType, NumSlipT>;
+
+  SlipState(int num_slip, InputVectorType const &hardening_n,
+      InputVectorType const &slip_n, InputVectorType const &rate)
+    : num_slip_(num_slip),
+      hardening_n_(hardening_n),
+      slip_n_(slip_n),
+      rate_(rate),
+      hardening_np1_(num_slip),
+      slip_np1_(num_slip),
+      shear_np1_(num_slip),
+      resistance_(num_slip)
+  {}
+
+  int   num_slip_;
+
+  InputVectorType const hardening_n_;
+  InputVectorType const slip_n_;
+  InputVectorType const rate_;
+
+  VectorType  hardening_np1_;
+  VectorType  slip_np1_;
+  VectorType  shear_np1_;
+  
+  VectorType  resistance_;
+};
 
 //
 //! Check tensor for NaN and inf values.

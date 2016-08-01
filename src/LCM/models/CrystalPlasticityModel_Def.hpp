@@ -15,6 +15,7 @@
 #include <Sacado_Traits.hpp>
 
 #include "core/CrystalPlasticity/ParameterReader.hpp"
+#include "core/CrystalPlasticity/Integrator.hpp"
 
 namespace LCM
 {
@@ -874,6 +875,15 @@ computeState(typename Traits::EvalData workset,
         }
       }
 
+
+      Minimizer minz;
+      minz.rel_tol = minimizer_.rel_tol;
+      minz.abs_tol = minimizer_.abs_tol;
+      minz.max_num_iter = minimizer_.max_num_iter;
+      minz.min_num_iter = minimizer_.min_num_iter;
+
+
+
       switch (integration_scheme_) {
 
         default:
@@ -881,6 +891,40 @@ computeState(typename Traits::EvalData workset,
         
 				case CP::IntegrationScheme::EXPLICIT:
         {
+          CP::PlasticityState<ScalarT, CP::MAX_DIM> plasticity_state(num_dims_, Fp_n);
+          // TODO: is this the right rate?
+          CP::SlipState<ScalarT, CP::MAX_SLIP> slip_state(num_slip_, state_hardening_n,
+              slip_n, slip_dot_n);
+
+          CP::Integrator<EvalT, CP::MAX_DIM, CP::MAX_SLIP> *
+          integrator = new CP::ExplicitIntegrator<EvalT, CP::MAX_DIM, CP::MAX_SLIP>(
+                slip_systems_,
+                slip_families_,
+                plasticity_state,
+                slip_state,
+                C_,
+                F_np1,
+                dt
+              );
+
+          Intrepid2::Vector<ScalarT, CP::MAX_SLIP>
+          residual(num_slip_);
+
+          integrator->update(residual);
+
+          norm_slip_residual = 
+            Sacado::ScalarValue<ScalarT>::eval(norm(residual));
+
+          Fp_np1 = plasticity_state.Fp_np1_;
+          Lp_np1 = plasticity_state.Lp_np1_;
+          sigma_np1 = plasticity_state.sigma_np1_;
+          S_np1 = plasticity_state.S_np1_;
+
+          state_hardening_np1 = slip_state.hardening_np1_;
+          slip_resistance = slip_state.resistance_;
+          slip_np1 = slip_state.slip_np1_;
+          shear_np1 = slip_state.shear_np1_;
+#if 0
           for(int i=0; i<num_slip_; ++i) {
             // initial guess for x is slip_n + dt * rate_slip_n
             x(i) = slip_n[i] + dt * (*(rate_slip_n[i]))(cell, pt);
@@ -931,11 +975,13 @@ computeState(typename Traits::EvalData workset,
             sigma_np1, 
             S_np1, 
             shear_np1);
+#endif
         }
         break;
         
 				case CP::IntegrationScheme::IMPLICIT:
         {
+
           //
           // Chose residual type
           //
@@ -962,13 +1008,15 @@ computeState(typename Traits::EvalData workset,
                 x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
               }
 
+
+
               using STEP = Intrepid2::StepBase<NLS, ValueT, CP::NLS_DIM>;
 
               std::unique_ptr<STEP>
               pstep = Intrepid2::stepFactory<NLS, ValueT, CP::NLS_DIM>(step_type_);
 
               LCM::MiniSolver<Minimizer, STEP, NLS, EvalT, CP::NLS_DIM>
-              mini_solver(minimizer_, *pstep, slip_nls, x);
+              mini_solver(minz, *pstep, slip_nls, x);
 
               for(int i=0; i<num_slip_; ++i) {
                 slip_np1[i] = x[i];
@@ -1023,7 +1071,7 @@ computeState(typename Traits::EvalData workset,
               pstep = Intrepid2::stepFactory<NLS, ValueT, CP::NLS_DIM>(step_type_);
 
               LCM::MiniSolver<Minimizer, STEP, NLS, EvalT, CP::NLS_DIM>
-              mini_solver(minimizer_, *pstep, slip_state_hardening_nls, x);
+              mini_solver(minz, *pstep, slip_state_hardening_nls, x);
 
               for(int i=0; i<num_slip_; ++i) {
                 slip_np1[i] = x[i];
@@ -1038,11 +1086,11 @@ computeState(typename Traits::EvalData workset,
             break;
           }
 
-          if(!minimizer_.converged){
+          if(!minz.converged){
             if(verbosity_ > 2){
               std::cout << "\n**** CrystalPlasticityModel computeState()";
               std::cout << " failed to converge.\n" << std::endl;
-              minimizer_.printReport(std::cout);
+              minz.printReport(std::cout);
             }
             update_state_successful = false;
             forceGlobalLoadStepReduction();
@@ -1050,7 +1098,7 @@ computeState(typename Traits::EvalData workset,
 
           // cases in which the model is subject to divergence
           // more work to do in the nonlinear systems
-          if(minimizer_.failed){
+          if(minz.failed){
             if (verbosity_ > 2){
               std::cout << "\n**** CrystalPlasticityModel computeState() ";
               std::cout << "exited due to failure criteria.\n" << std::endl;
@@ -1087,8 +1135,8 @@ computeState(typename Traits::EvalData workset,
       }
 
       // Compute the residual norm 
-      norm_slip_residual = std::sqrt(2.0 * minimizer_.final_value);
-      residual_iter = minimizer_.num_iter;
+      norm_slip_residual = std::sqrt(2.0 * minz.final_value);
+      residual_iter = minz.num_iter;
 
       if(update_state_successful){
 
