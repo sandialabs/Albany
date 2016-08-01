@@ -222,6 +222,7 @@ void Albany::APFMeshStruct::init(
     } // for
   } // else
 
+  shouldWriteAsciiVtk = params->get<bool>("Write ASCII VTK Files", false);
 
 }
 
@@ -523,6 +524,8 @@ Albany::APFMeshStruct::getValidDiscretizationParameters() const
 
   validPL->set<bool>("Offset DOF Hack", false,
       "Offset DOF numberings to start at 2^31 - 1 to test GO types");
+
+  validPL->set<bool>("Write ASCII VTK Files", false, "");
 
   return validPL;
 }
