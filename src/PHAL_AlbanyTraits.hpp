@@ -218,6 +218,15 @@ namespace PHX {
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_DISTPARAMDERIV(name) \
   template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits>;
 
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_RESIDUAL(name,...) \
+  template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits,__VA_ARGS__>;
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_JACOBIAN(name,...) \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits,__VA_ARGS__>;
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_TANGENT(name,...) \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits,__VA_ARGS__>;
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_DISTPARAMDERIV(name,...) \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits,__VA_ARGS__>;
+
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE_RESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits, RealType>;
 
@@ -443,6 +452,12 @@ namespace PHX {
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_TANGENT(name)          \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_DISTPARAMDERIV(name)
 #endif
+
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(name,...)                  \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_RESIDUAL(name,__VA_ARGS__)       \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_JACOBIAN(name,__VA_ARGS__)       \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_TANGENT(name,__VA_ARGS__)        \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS_DISTPARAMDERIV(name,__VA_ARGS__)
 
 #include "PHAL_Workset.hpp"
 

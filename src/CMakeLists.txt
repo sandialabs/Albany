@@ -100,7 +100,7 @@ SET(SOURCES ${SOURCES}
   utility/PerformanceContext.cpp
   utility/TimeMonitor.cpp
   utility/VariableMonitor.cpp
-	utility/StaticAllocator.cpp
+  utility/StaticAllocator.cpp
   )
 SET(HEADERS ${HEADERS}
   utility/Counter.hpp
@@ -112,7 +112,7 @@ SET(HEADERS ${HEADERS}
   utility/TimeGuard.hpp
   utility/TimeMonitor.hpp
   utility/VariableMonitor.hpp
-	utility/StaticAllocator.hpp
+  utility/StaticAllocator.hpp
   utility/math/Tensor.hpp
   utility/math/TensorCommon.hpp
   utility/math/TensorDetail.hpp
@@ -265,6 +265,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_DirichletOffNodeSet.cpp
   evaluators/PHAL_DirichletField.cpp
   evaluators/PHAL_DOFCellToSide.cpp
+  evaluators/PHAL_DOFCellToSideQP.cpp
   evaluators/PHAL_DOFInterpolation.cpp
   evaluators/PHAL_DOFInterpolationSide.cpp
   evaluators/PHAL_DOFGradInterpolation.cpp
@@ -378,6 +379,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_DirichletOffNodeSet_Def.hpp
   evaluators/PHAL_DOFCellToSide.hpp
   evaluators/PHAL_DOFCellToSide_Def.hpp
+  evaluators/PHAL_DOFCellToSideQP.hpp
+  evaluators/PHAL_DOFCellToSideQP_Def.hpp
   evaluators/PHAL_DOFGradInterpolation.hpp
   evaluators/PHAL_DOFGradInterpolation_Def.hpp
   evaluators/PHAL_DOFGradInterpolationSide.hpp
@@ -686,7 +689,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./AMP/
                      ./AMP/problems
                      ./AMP/evaluators
-		     ./AMP/responses
+         ./AMP/responses
                      ./QCAD
                      ./QCAD/problems
                      ./QCAD/evaluators
@@ -906,7 +909,7 @@ IF (ALBANY_FELIX)
   ENDIF()
 
   IF (ENABLE_CISM_INTERFACE)
-    IF (ENABLE_CISM_EPETRA) 
+    IF (ENABLE_CISM_EPETRA)
       SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterfaceE)
     ELSE()
       SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterface)
