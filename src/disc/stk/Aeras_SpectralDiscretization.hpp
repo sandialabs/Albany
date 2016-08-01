@@ -390,7 +390,7 @@ namespace Aeras
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Functionality not supported by Aeras discretization.\n");
 
       // Bind temporary to const ref. Just to avoid compile errors. Will never be executed
-      return std::map<std::string,std::map<GO,std::vector<int>>();
+      return std::map<std::string,std::map<GO,std::vector<int>>>();
     }
 
     //! Get stateArrays
