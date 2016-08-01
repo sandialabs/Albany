@@ -50,10 +50,26 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void XZHydrostatic_UTracer<EvalT, Traits>::
+operator() (const XZHydrostatic_UTracer_Tag& tag, const int& cell) const{
+  for (int node=0; node < numNodes; ++node) 
+    for (int level=0; level < numLevels; ++level) 
+      for (int dim=0; dim < numDims; ++dim)
+        UTracer(cell,node,level,dim) = Velocity(cell,node,level,dim)*Tracer(cell,node,level);
+}
+
+#endif
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void XZHydrostatic_UTracer<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   for (int cell=0; cell < workset.numCells; ++cell) 
     for (int node=0; node < numNodes; ++node) 
       for (int level=0; level < numLevels; ++level) 
@@ -64,5 +80,9 @@ evaluateFields(typename Traits::EvalData workset)
             //std::cout << "Tracer " << Tracer(cell,node,level) << std::endl;
           }
 
+#else
+  Kokkos::parallel_for(XZHydrostatic_UTracer_Policy(0,workset.numCells),*this);
+
+#endif
 }
 }

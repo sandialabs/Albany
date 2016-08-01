@@ -20,9 +20,7 @@
 #include "AAdapt_UnifRefSizeField.hpp"
 #include "AAdapt_NonUnifRefSizeField.hpp"
 #include "AAdapt_AlbanySizeField.hpp"
-#ifdef SCOREC_SPR
 #include "AAdapt_SPRSizeField.hpp"
-#endif
 #include "AAdapt_ExtrudedAdapt.hpp"
 
 #include "AAdapt_RC_Manager.hpp"
@@ -56,10 +54,8 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     szField = Teuchos::rcp(new AAdapt::NonUnifRefSizeField(pumi_discretization));
   else if (method == "RPI Albany Size")
     szField = Teuchos::rcp(new AAdapt::AlbanySizeField(pumi_discretization));
-#ifdef SCOREC_SPR
   else if (method == "RPI SPR Size")
     szField = Teuchos::rcp(new AAdapt::SPRSizeField(pumi_discretization));
-#endif
   else if (method == "RPI Extruded")
     szField = Teuchos::rcp(new AAdapt::ExtrudedAdapt(pumi_discretization));
   else
@@ -518,6 +514,7 @@ AAdapt::MeshAdapt::getValidAdapterParameters() const
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
   validPL->set<double>("Minimum Part Density", 1000, "Minimum elements per part: triggers partition shrinking");
   validPL->set<bool>("Write Adapted SMB Files", false, "Write .smb mesh files after adaptation");
+  validPL->set<std::string>("Extruded Size Method", "SPR", "Error estimator for extruded meshes");
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->getValidParameters(validPL);
 
   return validPL;

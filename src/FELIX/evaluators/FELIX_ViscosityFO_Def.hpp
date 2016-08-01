@@ -211,9 +211,8 @@ template<typename EvalT,typename Traits,typename VelT, typename TemprT>
 typename EvalT::ScalarT&
 ViscosityFO<EvalT,Traits,VelT,TemprT>::getValue(const std::string &n)
 {
-	ScalarT hom = homotopy(0);
-	return (n=="Glen's Law Homotopy Parameter") ? hom : dummyParam;
-		  //FELIX::HomotopyParameter<EvalT>::value : dummyParam;
+	dummyParam = homotopy(0);
+	return dummyParam;
 }
 
 //**********************************************************************

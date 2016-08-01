@@ -85,7 +85,7 @@ Albany::PUMIDiscretization::setFELIXData()
     if (!f) {
 
       if(! PCU_Comm_Self())
-        std::cout << "initializing " << state.name << " to zero" << std::endl;
+        std::cout << "PUMIDisc: initializing " << state.name << " to zero" << std::endl;
 
       for (std::size_t b=0; b < buckets.size(); ++b) {
         std::vector<apf::MeshEntity*>& buck = buckets[b];
@@ -101,7 +101,7 @@ Albany::PUMIDiscretization::setFELIXData()
     else {
 
       if(! PCU_Comm_Self())
-        std::cout << "initializing " << state.name << " from mesh" << std::endl;
+        std::cout << "PUMIDisc: initializing " << state.name << " from mesh" << std::endl;
 
       apf::NewArray<double> values;
       int num_nodes = state.dims[1];
@@ -110,15 +110,13 @@ Albany::PUMIDiscretization::setFELIXData()
         std::vector<apf::MeshEntity*>& buck = buckets[b];
         Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
         for (std::size_t e=0; e < buck.size(); ++e) {
+          apf::Element* elem = apf::createElement(f, buck[e]);
+          apf::getScalarNodes(elem, values);
+          assert(values.size() == num_nodes);
           for (std::size_t n=0; n < num_nodes; ++n) {
-            apf::MeshElement* mesh_elem = apf::createMeshElement(m, buck[e]);
-            apf::Element* elem = apf::createElement(f, mesh_elem);
-            apf::getScalarNodes(elem, values);
-            assert(values.size() == num_nodes);
             ar(e,n) = values[n];
-            apf::destroyElement(elem);
-            apf::destroyMeshElement(mesh_elem);
           }
+          apf::destroyElement(elem);
         }
       }
 

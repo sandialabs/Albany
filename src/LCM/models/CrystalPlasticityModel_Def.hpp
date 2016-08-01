@@ -14,8 +14,33 @@
 #include <iostream>
 #include <Sacado_Traits.hpp>
 
+#include <type_traits>
+
 namespace LCM
 {
+
+  // Matches ScalarT != ST
+  template<class T, typename std::enable_if< !std::is_same<T, ST>::value>::type* = nullptr >
+  bool isnaninf(const T& x)
+  {
+    typedef typename Sacado::ValueType<T>::type ValueT;
+    if (Teuchos::ScalarTraits<ValueT>::isnaninf(x.val()))
+      return true;
+    for (int i=0; i<x.size(); i++)
+      if (Teuchos::ScalarTraits<ValueT>::isnaninf(x.dx(i)))
+        return true;
+    return false;
+  }
+
+  // Matches ScalarT == ST
+  template<class T, typename std::enable_if< std::is_same<T, ST>::value>::type* = nullptr >
+  bool
+  isnaninf(const T& x)
+  {
+    if (Teuchos::ScalarTraits<T>::isnaninf(x))
+      return true;
+    return false;
+  }
 
 template<typename EvalT, typename Traits>
 CrystalPlasticityModel<EvalT, Traits>::
@@ -1119,6 +1144,11 @@ computeState(typename Traits::EvalData workset,
               for(int i=0; i<num_slip_; ++i) {
                 // initial guess for x is slip_np1 (predictor, see above)
                 x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
+
+                // GAH - getting NANs here
+//                TEUCHOS_TEST_FOR_EXCEPTION(isnaninf(x(i)), std::runtime_error,
+//                           "Getting a NAN in CrystalPlasticityModel_Def.hpp line 1088.");
+
               }
 
               LCM::MiniSolver<MIN, STEP, NLS, EvalT, NLS_DIM>

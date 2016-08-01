@@ -30,6 +30,7 @@ struct MeshAdaptMethod {
 
 protected:
 
+  Teuchos::RCP<Albany::APFDiscretization> apf_disc;
   Teuchos::RCP<Albany::APFMeshStruct> mesh_struct;
   Teuchos::RCP<const Teuchos_Comm> commT;
 
