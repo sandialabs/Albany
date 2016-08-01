@@ -78,8 +78,10 @@ evaluateFields(typename Traits::EvalData workset)
   // specific heat function
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-//              rho_cp_(cell,qp) = constant_value_;
-       rho_cp_(cell,qp) = constant_value_*(1.0 - porosity_(cell,qp));
+	//If No consolidation is considered
+        //rho_cp_(cell,qp) = constant_value_;
+ 	// If consolidation is considered
+        rho_cp_(cell,qp) = constant_value_*(1.0 - porosity_(cell,qp));
 
     }
   }
