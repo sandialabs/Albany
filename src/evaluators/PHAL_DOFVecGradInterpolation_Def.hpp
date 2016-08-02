@@ -86,7 +86,7 @@ namespace PHAL {
   {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     // This is needed, since evaluate currently sums into
-   Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), 0.0);
+    //Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), 0.0);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
