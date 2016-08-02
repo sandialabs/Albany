@@ -4,7 +4,6 @@
     <Parameter name="Write Solution to MatrixMarket" type="bool" value="false"/>
       </ParameterList>
 
-
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Peridigm Code Coupling"/>
 
@@ -27,18 +26,17 @@
 	<Parameter name="Type" type="string" value="Albany" />
       </ParameterList>
       <ParameterList name="Materials">
-        <ParameterList name="My Elastic Correspondence Material">
-          <Parameter name="Material Model" type="string" value="Elastic Correspondence"/>
-	  <Parameter name="Density" type="double" value="1.0"/>
-	  <Parameter name="Bulk Modulus" type="double" value="1.0"/>
+        <ParameterList name="My Linearized LPS Material">
+          <Parameter name="Material Model" type="string" value="Linear LPS Partial Volume"/>
+	  <Parameter name="Density" type="double" value="8.05e-9"/>
+	  <Parameter name="Bulk Modulus" type="double" value="160.0e3"/>
 	  <Parameter name="Poisson's Ratio" type="double" value="0.25"/>
-	  <Parameter name="Hourglass Coefficient" type="double" value="0.02"/>
         </ParameterList>
       </ParameterList>
       <ParameterList name="Blocks">
 	    <ParameterList name="My Group of Blocks">
 	      <Parameter name="Block Names" type="string" value="block_1"/>
-	      <Parameter name="Material" type="string" value="My Elastic Correspondence Material"/>
+	      <Parameter name="Material" type="string" value="My Linearized LPS Material"/>
               <Parameter name="Horizon" type="double" value="0.12500001"/>
 	    </ParameterList>
       </ParameterList>
@@ -323,7 +321,7 @@
 	      <Parameter name="Test Type" type="string" value="NormF"/>
 	      <Parameter name="Norm Type" type="string" value="Two Norm"/>
 	      <Parameter name="Scale Type" type="string" value="Scaled"/>
-	      <Parameter name="Tolerance" type="double" value="1.0e-14"/> <!-- DJL -->
+	      <Parameter name="Tolerance" type="double" value="1.0e-12"/> <!-- DJL want this as tight as possible without screwing up the forward solve -->
 	    </ParameterList>
 	    <ParameterList name="Test 1">
 	      <Parameter name="Test Type" type="string" value="MaxIters"/>

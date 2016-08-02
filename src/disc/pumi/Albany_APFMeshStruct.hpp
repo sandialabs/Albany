@@ -34,22 +34,22 @@ namespace Albany {
 class SolutionLayout {
   public:
 
- Teuchos::Array<std::string>& getTimeDeriv(int i){ return solNames[i]; }
- const Teuchos::Array<std::string>& getTimeDeriv(int i) const { return solNames[i]; }
+ Teuchos::Array<std::string>& getDerivNames(int i){ return solNames[i]; }
+ const Teuchos::Array<std::string>& getDerivNames(int i) const { return solNames[i]; }
 
- Teuchos::Array<int>& getTimeIdx(int i){ return solIndex[i]; }
- const Teuchos::Array<int>& getTimeIdx(int i) const { return solIndex[i]; }
+ Teuchos::Array<int>& getDerivSizes(int i){ return solSizes[i]; }
+ const Teuchos::Array<int>& getDerivSizes(int i) const { return solSizes[i]; }
 
- SolutionLayout* timeDeriv(int i){ td_val = i; return this; }
+ SolutionLayout* setDeriv(int i){ td_val = i; return this; }
 
- std::string& getDOFIndex(int i){ return solNames[td_val][i]; }
+ std::string& getName(int i){ return solNames[td_val][i]; }
 
- int& getDOFIndexSize(int i){ return solIndex[td_val][i]; }
+ int& getSize(int i){ return solSizes[td_val][i]; }
 
- void resizeTimeDeriv(size_t size){ solNames.resize(size); solIndex.resize(size); }
+ void resize(size_t size){ solNames.resize(size); solSizes.resize(size); }
 
  Teuchos::Array<Teuchos::Array<std::string> > solNames;
- Teuchos::Array<Teuchos::Array<int> > solIndex; // solIndex[time_deriv_vector][DOF_component]
+ Teuchos::Array<Teuchos::Array<int> > solSizes; // solSizes[time_deriv_vector][DOF_component]
 
  int td_val;
 
@@ -108,6 +108,8 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     //! Process PUMI mesh for element block specific info
     void setupMeshBlkInfo();
 
+    //! returns true iff the field was found
+    bool findOrCreateNodalField(char const* name, int value_type);
     virtual apf::Field* createNodalField(char const* name, int valueType) = 0;
 
     bool hasRestartSolution;
@@ -115,9 +117,11 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     int restartWriteStep;
 
     bool shouldLoadFELIXData;
+    bool shouldWriteAsciiVtk;
 
-    int neq;
-    int numDim;
+    int neq; //! number of equations (components) per node in the solution and residual
+    int numDim; //! mesh element dimensionality
+    int problemDim; //! (hackish) problem dimensionality, for < 3D problems
     int cubatureDegree;
     bool interleavedOrdering;
     bool solutionInitialized;

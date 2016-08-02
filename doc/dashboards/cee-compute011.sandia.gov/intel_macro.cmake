@@ -5,16 +5,11 @@ macro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)
   set_property (GLOBAL PROPERTY SubProject ${BTYPE})
   set_property (GLOBAL PROPERTY Label ${BTYPE})
 
-#  set (ENV{LM_LICENSE_FILE} 7500@sitelicense.sandia.gov)
-#  set (ENV{PATH}
-#    ${INTEL_DIR}/compilers_and_libraries/linux/bin/intel64:${PATH})
-#  set (ENV{LD_LIBRARY_PATH}
-#    ${INTEL_DIR}/compilers_and_libraries/linux/lib/intel64:${INTEL_MPI_DIR}/lib:${INITIAL_LD_LIBRARY_PATH})
-
   set (LABLAS_LIBRARIES "-L${MKL_PATH}/mkl/lib/intel64 -Wl,--start-group ${MKL_PATH}/mkl/lib/intel64/libmkl_intel_lp64.a ${MKL_PATH}/mkl/lib/intel64/libmkl_core.a ${MKL_PATH}/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group")
 
   set (CONFIGURE_OPTIONS
     "${COMMON_CONFIGURE_OPTIONS}"
+  "-DTPL_ENABLE_Pthread:BOOL=OFF"
   "-DBoost_INCLUDE_DIRS:PATH=${INTEL_BOOST_ROOT}/include"
   "-DBoost_LIBRARY_DIRS:PATH=${INTEL_BOOST_ROOT}/lib"
   "-DBoostLib_INCLUDE_DIRS:PATH=${INTEL_BOOST_ROOT}/include"
@@ -26,7 +21,7 @@ macro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)
   "-DNetcdf_INCLUDE_DIRS:PATH=${INTEL_PREFIX_DIR}/include"
   "-DNetcdf_LIBRARY_DIRS:PATH=${INTEL_PREFIX_DIR}/lib"
   "-DTPL_Netcdf_PARALLEL:BOOL=ON"
-  "-DTPL_ENABLE_Pnetcdf:STRING=ON"
+  "-DTPL_ENABLE_Pnetcdf:BOOL=ON"
   "-DPnetcdf_INCLUDE_DIRS:PATH=${INTEL_PREFIX_DIR}/include"
   "-DPnetcdf_LIBRARY_DIRS=${INTEL_PREFIX_DIR}/lib"
   #
@@ -49,15 +44,16 @@ macro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)
 #
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${INTEL_MPI_DIR}"
+    "-DMPI_EXEC:FILEPATH=${INTEL_MPI_DIR}/bin64/mpiexec.hydra"
     "-DCMAKE_CXX_COMPILER:STRING=${INTEL_MPI_DIR}/bin64/mpiicpc"
-    "-DCMAKE_CXX_FLAGS:STRING='-O2 -DNDEBUG -diag-disable=cpu-dispatch ${extra_cxx_flags}'"
-#    "-DCMAKE_CXX_FLAGS:STRING='-axAVX -O3 -DNDEBUG -diag-disable=cpu-dispatch ${extra_cxx_flags}'"
+#    "-DCMAKE_CXX_FLAGS:STRING='-axAVX -O3 -DNDEBUG -diag-disable=cpu-dispatch -mkl=sequential ${extra_cxx_flags}'"
+    "-DCMAKE_CXX_FLAGS:STRING='-O1 -DNDEBUG -diag-disable=cpu-dispatch -mkl=sequential ${extra_cxx_flags}'"
     "-DCMAKE_C_COMPILER:STRING=${INTEL_MPI_DIR}/bin64/mpiicc"
-    "-DCMAKE_C_FLAGS:STRING='-O2 -diag-disable=cpu-dispatch -DNDEBUG'"
-#    "-DCMAKE_C_FLAGS:STRING='-axAVX -O3 -diag-disable=cpu-dispatch -DNDEBUG'"
+#    "-DCMAKE_C_FLAGS:STRING='-axAVX -O3 -diag-disable=cpu-dispatch -DNDEBUG -mkl=sequential'"
+    "-DCMAKE_C_FLAGS:STRING='-O1 -diag-disable=cpu-dispatch -DNDEBUG -mkl=sequential'"
     "-DCMAKE_Fortran_COMPILER:STRING=${INTEL_MPI_DIR}/bin64/mpiifort"
-#    "-DCMAKE_Fortran_FLAGS:STRING='-axAVX -O3 -DNDEBUG -diag-disable=cpu-dispatch'"
-    "-DCMAKE_Fortran_FLAGS:STRING='-O2 -DNDEBUG -diag-disable=cpu-dispatch'"
+#    "-DCMAKE_Fortran_FLAGS:STRING='-axAVX -O3 -DNDEBUG -diag-disable=cpu-dispatch -mkl=sequential'"
+    "-DCMAKE_Fortran_FLAGS:STRING='-O1 -DNDEBUG -diag-disable=cpu-dispatch -mkl=sequential'"
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${INTEL_PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lifcore -lz -Wl,-rpath,${INTEL_PREFIX_DIR}/lib:${INTEL_DIR}/lib/intel64'"
     "-DCMAKE_AR:FILEPATH=${INTEL_DIR}/bin/intel64/xiar"
     "-DCMAKE_LINKER:FILEPATH=${INTEL_DIR}/linux/bin/intel64/xild"

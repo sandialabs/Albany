@@ -28,7 +28,8 @@ XZHydrostatic_GeoPotential(const Teuchos::ParameterList& p,
   
   numNodes ( dl->node_scalar          ->dimension(1)),
   numLevels( dl->node_scalar_level    ->dimension(2)),
-  Phi0(0.0)
+  Phi0(0.0),
+  E (Eta<EvalT>::self())
 {
 
   Teuchos::ParameterList* xzhydrostatic_params =
@@ -45,7 +46,7 @@ XZHydrostatic_GeoPotential(const Teuchos::ParameterList& p,
   
   this->addEvaluatedField(Phi);
 
-  this->setName("Aeras::XZHydrostatic_GeoPotential" );
+  this->setName("Aeras::XZHydrostatic_GeoPotential" + PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -62,31 +63,47 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void XZHydrostatic_GeoPotential<EvalT, Traits>::
+operator() (const XZHydrostatic_GeoPotential_Tag& tag, const int& cell) const{
+  for (int node=0; node < numNodes; ++node) {
+    for (int level=0; level < numLevels; ++level) {
+      ScalarT sum =
+      PhiSurf(cell,node) +
+      0.5 * Pi(cell,node,level) * E.delta(level) / density(cell,node,level);
+      for (int j=level+1; j < numLevels; ++j) sum += Pi(cell,node,j)     * E.delta(j)     / density(cell,node,j);
+
+      Phi(cell,node,level) = sum;
+    }
+  }
+}
+
+#endif
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void XZHydrostatic_GeoPotential<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  const Eta<EvalT> &E = Eta<EvalT>::self();
-
-  ScalarT sum;
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {
       for (int level=0; level < numLevels; ++level) {
-        
-        sum =
+        ScalarT sum =
         PhiSurf(cell,node) +
         0.5 * Pi(cell,node,level) * E.delta(level) / density(cell,node,level);
         for (int j=level+1; j < numLevels; ++j) sum += Pi(cell,node,j)     * E.delta(j)     / density(cell,node,j);
 
         Phi(cell,node,level) = sum;
         
-        
         //std::cout <<"Inside GeoP, cell, node, PhiSurf(cell,node)="<<cell<<
         //", "<<node<<", "<<PhiSurf(cell,node) <<std::endl;
       }
     }
   }
-
 
   /* OG Debugging statements
   std::cout << "Printing PHI at level 0 ----------------------------------------- \n";
@@ -97,5 +114,9 @@ evaluateFields(typename Traits::EvalData workset)
   }
   //}*/
 
+#else
+  Kokkos::parallel_for(XZHydrostatic_GeoPotential_Policy(0,workset.numCells),*this);
+
+#endif
 }
 }

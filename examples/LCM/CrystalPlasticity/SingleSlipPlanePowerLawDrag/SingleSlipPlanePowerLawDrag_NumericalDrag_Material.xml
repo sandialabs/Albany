@@ -69,11 +69,11 @@
 
                     <Parameter name="Gamma Exponent" 
                                type="double" 
-                               value="5.0e1"/>
+                               value="1.0e2"/>
 
 		    <Parameter name="Drag Coefficient" 
                                type="double" 
-                               value="10.0e-12"/>
+                               value="1.0e-6"/>
 
       </ParameterList>
 
@@ -170,11 +170,11 @@
 
                     <Parameter name="Gamma Exponent" 
                                type="double" 
-                               value="5.0e01"/>
+                               value="1.0e02"/>
 		    
 		    <Parameter name="Drag Coefficient" 
                                type="double" 
-                               value="10.0e-12"/>
+                               value="1.0e-6"/>
 
       </ParameterList>
 

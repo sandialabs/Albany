@@ -296,6 +296,13 @@ IF (LCM_TEST_EXES AND ALBANY_BGL)
     test/unit_tests/StandardUnitTestMain.cpp
     test/unit_tests/utHeliumODEs.cpp
     )
+
+  IF(NOT BUILD_SHARED_LIBS)
+    add_executable(
+      utStaticAllocator
+      test/unit_tests/utStaticAllocator.cpp
+      )
+  ENDIF()
 ENDIF()
 
 IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
@@ -441,4 +448,7 @@ IF (LCM_TEST_EXES AND ALBANY_BGL)
   target_link_libraries(utMiniSolvers ${repeat_libs} ${ALL_LIBRARIES})
   target_link_libraries(utSurfaceElement ${repeat_libs} ${ALL_LIBRARIES})
   target_link_libraries(utHeliumODEs ${repeat_libs} ${ALL_LIBRARIES})
+  IF(NOT BUILD_SHARED_LIBS)
+    target_link_libraries(utStaticAllocator ${repeat_libs} ${ALL_LIBRARIES})
+  ENDIF()
 ENDIF()

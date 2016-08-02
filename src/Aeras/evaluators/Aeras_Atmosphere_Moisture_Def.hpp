@@ -83,7 +83,7 @@ Atmosphere_Moisture(Teuchos::ParameterList& p,
     this->addDependentField(TracerIn   [tracerNames[i]]);
     this->addEvaluatedField(TracerSrc[tracerSrcNames[i]]);
   }
-  this->setName("Aeras::Atmosphere_Moisture" );
+  this->setName("Aeras::Atmosphere_Moisture" + PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************
