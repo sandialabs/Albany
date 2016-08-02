@@ -58,12 +58,14 @@ template<typename EvalT, typename Traits, typename Type>
 void Temperature<EvalT,Traits,Type>::
 evaluateFields(typename Traits::EvalData d)
 {
+	double pow6 = pow(10.0,6.0);
+
     for (std::size_t cell = 0; cell < d.numCells; ++cell)
     {
    		for (std::size_t node = 0; node < numNodes; ++node)
    		{
    			if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
-   				temperature(cell,node) = enthalpy(cell,node)/(rho_i * c_i) + T0;
+   				temperature(cell,node) = pow6 * enthalpy(cell,node)/(rho_i * c_i) + T0;
    			else
    				temperature(cell,node) = meltingTemp(cell,node);
 

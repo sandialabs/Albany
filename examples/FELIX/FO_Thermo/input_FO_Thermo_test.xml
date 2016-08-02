@@ -51,6 +51,7 @@
       <Parameter name="Permeability factor" type="double" value="1.0e-12"/>
       <Parameter name="Viscosity of water" type="double" value="0.0018"/>
       <Parameter name="Omega exponent alpha" type="double" value="2."/>
+      <Parameter name="Diffusivity homotopy exponent" type="double" value="-2.0"/>
    </ParameterList>
     <ParameterList name="SUPG Settings">
        <Parameter name="Have SUPG Stabilization" type="bool" value="true"/>
@@ -84,7 +85,7 @@
     <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_FO_Thermo.exo"/>
-    <Parameter name="Exodus Input File Name" type="string" value="mesh32km/gis_unstruct.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="mesh32kmSCALED/gis_unstruct.exo"/>
     <Parameter name="Restart Index" type="int" value="1"/>
     <ParameterList name="Required Fields Info">
         <Parameter name="Number Of Fields" type="int" value="2"/>
@@ -108,7 +109,7 @@
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
         <!--Parameter name="Use Serial Mesh" type="bool" value="true"/-->
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
-        <Parameter name="Exodus Input File Name" type="string" value="mesh32km/gis_unstruct_basal.exo"/>
+        <Parameter name="Exodus Input File Name" type="string" value="mesh32kmSCALED/gis_unstruct_basal.exo"/>
         <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_basal_FO_Thermo.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <Parameter name="Restart Index" type="int" value="1"/>
@@ -164,12 +165,12 @@
         <Parameter  name="Initial Value" type="double" value="0.1"/>
         <Parameter  name="Continuation Parameter" type="string" value="Glen's Law Homotopy Parameter"/>
         <Parameter  name="Continuation Method" type="string" value="Natural"/>
-        <Parameter  name="Max Steps" type="int" value="3"/>
+        <Parameter  name="Max Steps" type="int" value="10"/>
         <Parameter  name="Max Value" type="double" value="1"/>
         <Parameter  name="Min Value" type="double" value="0.0"/>
       </ParameterList>
       <ParameterList name="Step Size">
-        <Parameter  name="Initial Step Size" type="double" value="0.03"/>
+        <Parameter  name="Initial Step Size" type="double" value="0.05"/>
       </ParameterList>
     </ParameterList> <!-- LOCA -->
 
@@ -186,7 +187,7 @@
       <Parameter name="Test Type" type="string" value="NormF"/>
       <Parameter name="Norm Type" type="string" value="Two Norm"/>
       <Parameter name="Scale Type" type="string" value="Scaled"/>
-      <Parameter name="Tolerance" type="double" value="1e0"/>
+      <Parameter name="Tolerance" type="double" value="1e-2"/>
     </ParameterList>
     <ParameterList name="Test 1">
       <Parameter name="Test Type" type="string" value="NormWRMS"/>
@@ -196,7 +197,7 @@
   </ParameterList>
   <ParameterList name="Test 1">
     <Parameter name="Test Type" type="string" value="MaxIters"/>
-    <Parameter name="Maximum Iterations" type="int" value="200"/>
+    <Parameter name="Maximum Iterations" type="int" value="50"/>
   </ParameterList>
       </ParameterList>
       <ParameterList name="Direction">

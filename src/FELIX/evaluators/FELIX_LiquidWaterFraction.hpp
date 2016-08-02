@@ -46,12 +46,12 @@ private:
   PHX::MDField<ScalarT,Dim> homotopy;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> omega;
+  PHX::MDField<ScalarT,Cell,Node> phi;
 
   //std::string sideSetName;
   int numNodes;
 
-  double L;
+  double L, a;
   double rho_w;
 
   ScalarT printedAlpha;

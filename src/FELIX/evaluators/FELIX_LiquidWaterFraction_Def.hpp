@@ -19,7 +19,7 @@ LiquidWaterFraction(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::
 	enthalpyHs	   (p.get<std::string> ("Enthalpy Hs Variable Name"), dl->node_scalar),
 	enthalpy	   (p.get<std::string> ("Enthalpy Variable Name"), dl->node_scalar),
     homotopy	   (p.get<std::string> ("Continuation Parameter Name"), dl->shared_param),
-	omega	   	   (p.get<std::string> ("Omega Variable Name"), dl->node_scalar)
+	phi	   	   	   (p.get<std::string> ("Water Content Variable Name"), dl->node_scalar)
 {
 	// Get Dimensions
 	std::vector<PHX::DataLayout::size_type> dims;
@@ -30,13 +30,15 @@ LiquidWaterFraction(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::
 	this->addDependentField(enthalpy);
 	this->addDependentField(homotopy);
 
-	this->addEvaluatedField(omega);
-	this->setName("Omega");
+	this->addEvaluatedField(phi);
+	this->setName("Phi");
 
 	// Setting parameters
 	Teuchos::ParameterList& physics = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
 	rho_w = physics.get<double>("Water Density", 1000.0);
 	L = physics.get<double>("Latent heat of fusion", 334000.0);
+
+	a = physics.get<double>("Diffusivity homotopy exponent", -9.0);
 
 	printedAlpha = -1.0;
 
@@ -50,47 +52,43 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(enthalpy,fm);
   this->utils.setFieldData(homotopy,fm);
 
-  this->utils.setFieldData(omega,fm);
+  this->utils.setFieldData(phi,fm);
 }
 
 template<typename EvalT, typename Traits, typename Type>
 void LiquidWaterFraction<EvalT,Traits,Type>::
 evaluateFields(typename Traits::EvalData d)
 {
+	double pow6 = pow(10.0,6.0);
 	ScalarT hom = homotopy(0);
-	ScalarT alpha = pow(10.0, -8.0 + hom*10);
 	double pi = atan(1.) * 4.;
-	ScalarT om;
+	ScalarT phiNode, alpha;
 
+	if (a == -2.0)
+		alpha = pow(10.0, (a + hom*10)/8);
+	else
+		alpha = pow(10.0, (a + hom*10)/4.5);
+
+/*
     if (std::fabs(printedAlpha - alpha) > 0.0001*alpha)
     {
     	std::cout << "[OMEGA] alpha = " << alpha << "\n";
         printedAlpha = alpha;
     }
-
+*/
     for (std::size_t cell = 0; cell < d.numCells; ++cell)
     {
     	for (std::size_t node = 0; node < numNodes; ++node)
     	{
-
-    		ScalarT scale = - atan(alpha * (enthalpy(cell,node) - enthalpyHs(cell,node)))/pi + 0.5;
-
-    		omega(cell,node) = (1-scale) * ( enthalpy(cell,node) - enthalpyHs(cell,node) ) / (rho_w * L);
-
-			if (omega(cell,node) < 0.0)
-				omega(cell,node) = 0.0;
-
-			/*
 			if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
-    			om = 0.0;
+				phiNode = 0.0;
     	    else
-    	    	om = ( enthalpy(cell,node) - enthalpyHs(cell,node) ) / (rho_w * L);
+    	    	phiNode = pow6 * (enthalpy(cell,node) - enthalpyHs(cell,node)) / (rho_w * L);
 
-			if (omega(cell,node) < 0.0)
-				omega(cell,node) = 0.0;
+			if (phi(cell,node) < 0.0)
+				phi(cell,node) = 0.0;
 			else
-				omega(cell,node) = om;
-			*/
+				phi(cell,node) = phiNode;
     	}
     }
 }

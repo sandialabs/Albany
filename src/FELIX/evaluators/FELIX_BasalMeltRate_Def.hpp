@@ -17,7 +17,7 @@ namespace FELIX
 template<typename EvalT, typename Traits, typename VelocityType>
 BasalMeltRate<EvalT,Traits,VelocityType>::
 BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl_basal):
-	omega				(p.get<std::string> ("Omega Side Variable Name"),dl_basal->node_scalar),
+	phi					(p.get<std::string> ("Water Content Side Variable Name"),dl_basal->node_scalar),
 	geoFluxHeat			(p.get<std::string> ("Geotermal Flux Side Variable Name"),dl_basal->node_scalar),
 	velocity			(p.get<std::string> ("Velocity Side Variable Name"),dl_basal->node_vector),
 	beta				(p.get<std::string> ("Basal Friction Coefficient Side Variable Name"),dl_basal->node_scalar),
@@ -26,7 +26,7 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 	basalMeltRate		(p.get<std::string> ("Basal Melt Rate Variable Name"),dl_basal->node_scalar),
     homotopy			(p.get<std::string> ("Continuation Parameter Name"),dl_basal->shared_param)
 {
-	this->addDependentField(omega);
+	this->addDependentField(phi);
 	this->addDependentField(geoFluxHeat);
 	this->addDependentField(velocity);
 	this->addDependentField(beta);
@@ -55,13 +55,15 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 	eta_w = physics_list->get("Viscosity of water", 0.0018);
 	g = physics_list->get("Gravity Acceleration", 9.8);
 	alpha_om = physics_list->get("Omega exponent alpha", 2.0);
+
+	a = physics_list->get("Diffusivity homotopy exponent", -9.0);
 }
 
 template<typename EvalT, typename Traits, typename VelocityType>
 void BasalMeltRate<EvalT,Traits,VelocityType>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
-	this->utils.setFieldData(omega,fm);
+	this->utils.setFieldData(phi,fm);
 	this->utils.setFieldData(geoFluxHeat,fm);
 	this->utils.setFieldData(velocity,fm);
 	this->utils.setFieldData(beta,fm);
@@ -80,9 +82,13 @@ evaluateFields(typename Traits::EvalData d)
 	int vecDimFO = 2;
 	double pi = atan(1.) * 4.;
 	ScalarT hom = homotopy(0);
-	ScalarT alpha = pow(10.0, -8.0 + hom*10);
 	double scaling = pow(10.0,8.0) / 3.171;
-	ScalarT omegaExp;
+	ScalarT phiExp, alpha;
+
+	if (a == -2.0)
+		alpha = pow(10.0, (a + hom*10)/8);
+	else
+		alpha = pow(10.0, (a + hom*10)/4.5);
 
 	if (d.sideSets->find(basalSideName) != d.sideSets->end())
 	{
@@ -97,15 +103,14 @@ evaluateFields(typename Traits::EvalData d)
 	    	{
     			ScalarT scale = - atan(alpha * (Enthalpy(cell,side,node) - EnthalpyHs(cell,side,node)))/pi + 0.5;
     			ScalarT basalHeat = 0.;
+
     			for (int dim = 0; dim < vecDimFO; dim++)
     				basalHeat += (1./(3.154*pow(10.0,4.0))) * beta(cell,side,node) * velocity(cell,side,node,dim) * velocity(cell,side,node,dim);  // check dimensions
 
-    			//std::cout << "omega = " << omega(cell,side,node) << "\n";
+    			phiExp = pow(phi(cell,side,node),alpha_om);
 
-    			omegaExp = pow(omega(cell,side,node),alpha_om);
-
-    			basalMeltRate(cell,side,node) = scaling*( ((1 - scale)*( basalHeat + geoFluxHeat(cell,side,node) ) / ((1 - rho_w/rho_i*omega(cell,side,node))*L*rho_w)) -
-    											k_0 * (rho_w - rho_i) * g / eta_w * omegaExp );
+    			basalMeltRate(cell,side,node) = scaling*( ((1 - scale)*( basalHeat + geoFluxHeat(cell,side,node) ) / ((1 - rho_w/rho_i*phi(cell,side,node))*L*rho_w)) -
+    											k_0 * (rho_w - rho_i) * g / eta_w * phiExp );
 	    	}
 	    }
 	}

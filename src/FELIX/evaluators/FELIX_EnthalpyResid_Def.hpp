@@ -36,8 +36,8 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 	verticalVel		(p.get<std::string> ("Vertical Velocity QP Variable Name"),  dl->qp_scalar),
     coordVec 		(p.get<std::string> ("Coordinate Vector Name"),dl->vertices_vector),
 	meltTempGrad	(p.get<std::string> ("Melting Temperature Gradient QP Variable Name"), dl->qp_gradient),
-	omega			(p.get<std::string> ("Liquid Water Fraction QP Variable Name"), dl->qp_scalar ),
-	omegaGrad		(p.get<std::string> ("Liquid Water Fraction Gradient QP Variable Name"), dl->qp_gradient ),
+	phi			    (p.get<std::string> ("Water Content QP Variable Name"), dl->qp_scalar ),
+	phiGrad		    (p.get<std::string> ("Water Content Gradient QP Variable Name"), dl->qp_gradient ),
 	Residual 		(p.get<std::string> ("Residual Variable Name"), dl->node_scalar),
     homotopy		(p.get<std::string> ("Continuation Parameter Name"), dl->shared_param)
 {
@@ -64,8 +64,8 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 	this->addDependentField(verticalVel);
 	this->addDependentField(coordVec);
 	this->addDependentField(meltTempGrad);
-	this->addDependentField(omega);
-	this->addDependentField(omegaGrad);
+	this->addDependentField(phi);
+	this->addDependentField(phiGrad);
 	this->addDependentField(homotopy);
 
 	if (needsDiss)
@@ -103,12 +103,12 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 	rho_w = physics_list->get("Water Density", 1000.0);
 
 	k = physics_list->get("Conductivity of ice", 1.0);
-	k *= 0.001; //scaling needs to be done to match dimensions
+	//k *= pow(10.0, 3.0); //scaling needs to be done to match dimensions
 	c = physics_list->get("Heat capacity of ice", 2000.0);
 	K_i = k / (rho_i * c);
 
 	nu = physics_list->get("Diffusivity temperate ice", 0.000000011);
-	nu *= 0.001; //scaling needs to be done to match dimensions
+	//nu *= pow(10.0, 3.0); //scaling needs to be done to match dimensions
 
 	k_0 = physics_list->get("Permeability factor", 0.1);
 	eta_w = physics_list->get("Viscosity of water", 0.0018);
@@ -116,22 +116,9 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 	L = physics_list->get("Latent heat of fusion", 3e5);
 	alpha_om = physics_list->get("Omega exponent alpha", 2.0);
 
+	a = physics_list->get("Diffusivity homotopy exponent", -9.0);
+
 	drainage_coeff = g * rho_w * L * k_0 * (rho_w - rho_i) / eta_w;
-
-	/*
-	std::cout << "PARAMETERS:" << "\n" << "rho_i = " << rho_i << "\n"
-			<< "rho_w = " << rho_w << "\n"
-			<< "k = " << k << "\n"
-			<< "c = " << c << "\n"
-			<< "K_i = " << K_i << "\n"
-			<< "nu = " << nu << "\n"
-			<< "k_0 = " << k_0 << "\n"
-			<< "eta_w = " << eta_w << "\n"
-			<< "g = " << g << "\n"
-			<< "L = " << L << "\n"
-			<< "drainage_coeff = " << drainage_coeff << "\n"
-
-	 */
 
 	printedAlpha = -1.0;
 }
@@ -149,8 +136,8 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(verticalVel,fm);
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(meltTempGrad,fm);
-  this->utils.setFieldData(omega,fm);
-  this->utils.setFieldData(omegaGrad,fm);
+  this->utils.setFieldData(phi,fm);
+  this->utils.setFieldData(phiGrad,fm);
   this->utils.setFieldData(homotopy,fm);
 
   if (needsDiss)
@@ -174,16 +161,24 @@ template<typename EvalT, typename Traits, typename VelocityType>
 void EnthalpyResid<EvalT,Traits,VelocityType>::
 evaluateFields(typename Traits::EvalData d)
 {
-	double scaling = 0.317057705 * pow(10.0,-7.0);
+	double scaling = 0.0317057705;
+	double pow3 = pow(10.0, 3.0);
 	ScalarT K;
 	double pi = atan(1.) * 4.;
 	ScalarT hom = homotopy(0);
-	ScalarT alpha = pow(10.0, -8.0 + hom*10);
+
+	ScalarT alpha;
+
+	if (a == -2.0)
+		alpha = pow(10.0, (a + hom*10)/8);
+	else if (a == -1.0)
+		alpha = pow(10.0, (a + hom*10)/4.5);
+	else
+		alpha = pow(10.0, a + hom*10); // this is for StokesFO+Thermo
 
     if (std::fabs(printedAlpha - alpha) > 0.0001*alpha)
     {
         std::cout << "[Diffusivity] alpha = " << alpha << "\n";
-        //std::cout << "[Homotopy param] h = " << hom << "\n";
         printedAlpha = alpha;
     }
 
@@ -227,18 +222,19 @@ evaluateFields(typename Traits::EvalData d)
     		for (std::size_t qp = 0; qp < numQPs; ++qp)
     		{
     			K = - (K_i - nu)/pi * atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp))) + (K_i + nu)/2;
-				Residual(cell,node) += K * (EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+				Residual(cell,node) += pow3 * K * (EnthalpyGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
 									   EnthalpyGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
 									   EnthalpyGrad(cell,qp,2)*wGradBF(cell,node,qp,2)) +
 					 				   scaling * (Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
 									   Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + verticalVel(cell,qp)*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp);
 
-				//if ( Enthalpy(cell,qp) >= EnthalpyHs(cell,qp) ) // if the ice is temperate
-    				ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
-					Residual(cell,node) += (1 - scale) * 0.001*(k - rho_i*c*nu) * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+				if ( Enthalpy(cell,qp) >= EnthalpyHs(cell,qp) ) // if the ice is temperate
+					Residual(cell,node) += 0.001*(k - rho_i*c*nu) * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
 										   meltTempGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
-										   meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2)) -
-										   (1 - scale) * drainage_coeff*alpha_om*pow(omega(cell,qp),alpha_om-1)*omegaGrad(cell,qp,2)*wBF(cell,node,qp);
+										   meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
+
+				ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
+				Residual(cell,node) -= (1 - scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp);
 			}
         }
     }
@@ -278,25 +274,14 @@ evaluateFields(typename Traits::EvalData d)
 				{
 					wSUPG = (1/(3.154 * pow10)) *
 							(Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) + Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) + verticalVel(cell,qp) * wGradBF(cell,node,qp,2));
-					/*
-					Residual(cell,node) += (delta*diam/vmax*(3.154 * pow10))*(scaling * Velocity(cell,qp,0) * EnthalpyGrad(cell,qp,0) * (1/(3.154 * pow10)) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
-	    			   					  	scaling * Velocity(cell,qp,1) * EnthalpyGrad(cell,qp,1) * (1/(3.154 * pow10)) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) +
-										    scaling * verticalVel(cell,qp) * EnthalpyGrad(cell,qp,2) * (1/(3.154 * pow10)) * verticalVel(cell,qp) * wGradBF(cell,node,qp,2));
-					*/
+
 					Residual(cell,node) += (delta*diam/vmax*(3.154 * pow10)) * scaling * (Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
 							   	   	   	    Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + verticalVel(cell,qp)*EnthalpyGrad(cell,qp,2)) * wSUPG;
 
 					//if ( Enthalpy(cell,qp) >= EnthalpyHs(cell,qp) )
 					//{
-						/*
-						Residual(cell,node) += 0.001*(k - rho_i*c*nu) * meltTempGrad(cell,qp,0) * (1/(3.154 * pow10)) * Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
-											   0.001*(k - rho_i*c*nu) * meltTempGrad(cell,qp,1) * (1/(3.154 * pow10)) * Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) +
-											   0.001*(k - rho_i*c*nu) * meltTempGrad(cell,qp,2) * (1/(3.154 * pow10)) * verticalVel(cell,qp) * wGradBF(cell,node,qp,2) -
-											   drainage_coeff*2*omega(cell,qp)*omegaGrad(cell,qp,2) * (1/(3.154 * pow10)) * (Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) +
-											   Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) + verticalVel(cell,qp) * wGradBF(cell,node,qp,2));
-						*/
 	    				ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
-						Residual(cell,node) -= (1-scale) * drainage_coeff*alpha_om*pow(omega(cell,qp),alpha_om-1)*omegaGrad(cell,qp,2) * wSUPG;  // check whether is plus or minus
+						Residual(cell,node) -= (1-scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2) * wSUPG;  // check whether is plus or minus
 					//}
 				}
       	  	}

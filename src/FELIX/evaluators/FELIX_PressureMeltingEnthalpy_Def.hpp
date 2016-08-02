@@ -49,9 +49,11 @@ template<typename EvalT, typename Traits, typename Type>
 void PressureMeltingEnthalpy<EvalT,Traits,Type>::
 evaluateFields(typename Traits::EvalData d)
 {
+	double pow6 = pow(10.0,6.0); // [h] = MJ m^-3
+
     for (std::size_t cell = 0; cell < d.numCells; ++cell)
    		for (std::size_t node = 0; node < numNodes; ++node)
-   			enthalpyHs(cell,node) = rho_i * c_i * ( meltingTemp(cell,node) - T0 );
+   			enthalpyHs(cell,node) = rho_i * c_i * ( meltingTemp(cell,node) - T0 ) / pow6;
 }
 
 

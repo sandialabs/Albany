@@ -35,7 +35,7 @@ class BasalMeltRate : public PHX::EvaluatorWithBaseImpl<Traits>,
 		typedef typename EvalT::ParamScalarT ParamScalarT;
 
 		// Input:
-		PHX::MDField<ScalarT,Cell,Side,Node> 				omega;
+		PHX::MDField<ScalarT,Cell,Side,Node> 				phi;
 		PHX::MDField<ParamScalarT,Cell,Side,Node>    		beta;
 		PHX::MDField<VelocityType,Cell,Side,Node,VecDim>	velocity;
 		PHX::MDField<ParamScalarT,Cell,Side,Node> 			geoFluxHeat;
@@ -55,7 +55,7 @@ class BasalMeltRate : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 		double rho_w; 	// density of water
 		double rho_i; 	// density of ice
-		double L, g;
+		double L, g, a;
 
 		double k_0, eta_w;
 		double alpha_om;

@@ -54,8 +54,8 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		PHX::MDField<ScalarT,Cell,QuadPoint> basalFricHeatSUPG;
 		PHX::MDField<ScalarT,Cell,QuadPoint> geoFluxHeat;
 		PHX::MDField<ScalarT,Cell,QuadPoint> geoFluxHeatSUPG;
-		PHX::MDField<ScalarT,Cell,QuadPoint> omega;
-		PHX::MDField<ScalarT,Cell,QuadPoint,Dim> omegaGrad;
+		PHX::MDField<ScalarT,Cell,QuadPoint> phi;
+		PHX::MDField<ScalarT,Cell,QuadPoint,Dim> phiGrad;
 		PHX::MDField<ParamScalarT,Cell,QuadPoint,Dim> meltTempGrad;
 
 		PHX::MDField<ScalarT,Dim> homotopy;
@@ -72,7 +72,7 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		double nu;	 // diffusivity temperate ice
 		double rho_i; 	// density of ice
 		double rho_w; 	// density of water
-		double g, L;
+		double g, L, a;
 		double drainage_coeff;
 		double alpha_om;
 
