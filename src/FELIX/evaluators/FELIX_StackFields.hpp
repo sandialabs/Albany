@@ -19,19 +19,19 @@
 namespace FELIX {
 
 template<typename EvalT, typename Traits, typename ScalarT>
-class StackVectorsBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+class StackFieldsBase : public PHX::EvaluatorWithBaseImpl<Traits>,
                          public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
   // Simple case: 2 vectors
-  StackVectorsBase(const Teuchos::ParameterList& p,
+  StackFieldsBase(const Teuchos::ParameterList& p,
                    const Teuchos::RCP<Albany::Layouts>& dl_in1,
                    const Teuchos::RCP<Albany::Layouts>& dl_in2,
                    const Teuchos::RCP<Albany::Layouts>& dl_out);
 
   // General case
-  StackVectorsBase(const Teuchos::ParameterList& p,
+  StackFieldsBase(const Teuchos::ParameterList& p,
                    const std::vector<Teuchos::RCP<Albany::Layouts>>& dls_in,
                    const Teuchos::RCP<Albany::Layouts>& dl_out);
 
@@ -46,14 +46,22 @@ private:
               const std::vector<Teuchos::RCP<Albany::Layouts>>& dls_in,
               const Teuchos::RCP<Albany::Layouts>& dl_out);
 
+  Teuchos::RCP<PHX::DataLayout> getLayout (const std::string& name,
+                                           const Teuchos::RCP<Albany::Layouts>& dl) const;
+
+  bool isCompatible (const Teuchos::RCP<PHX::DataLayout>& layout_1,
+                     const Teuchos::RCP<PHX::DataLayout>& layout_2) const;
+
+
   // Input:
-  std::vector<PHX::MDField<ScalarT>> v_in;
+  std::vector<PHX::MDField<ScalarT>> fields_in;
 
   // Output:
-  PHX::MDField<ScalarT> v_out;
+  PHX::MDField<ScalarT> field_out;
 
-  int num_v_in;
-  int numNodes;
+  int              num_fields_in;
+  int              rank_out;
+  std::vector<int> dims_out;
   std::vector<int> dims_in;
   std::vector<int> offsets;
   std::vector<int> ranks_in;
@@ -61,13 +69,13 @@ private:
 
 // Some shortcut names
 template<typename EvalT, typename Traits>
-using StackVectors = StackVectorsBase<EvalT,Traits,typename EvalT::ScalarT>;
+using StackFields = StackFieldsBase<EvalT,Traits,typename EvalT::ScalarT>;
 
 template<typename EvalT, typename Traits>
-using StackVectorsMesh = StackVectorsBase<EvalT,Traits,typename EvalT::MeshScalarT>;
+using StackFieldsMesh = StackFieldsBase<EvalT,Traits,typename EvalT::MeshScalarT>;
 
 template<typename EvalT, typename Traits>
-using StackVectorsParam = StackVectorsBase<EvalT,Traits,typename EvalT::ParamScalarT>;
+using StackFieldsParam = StackFieldsBase<EvalT,Traits,typename EvalT::ParamScalarT>;
 
 } // Namespace FELIX
 

@@ -14,7 +14,7 @@
        evaluators/FELIX_Dissipation.cpp
        evaluators/FELIX_EffectivePressure.cpp
        evaluators/FELIX_Elliptic2DResidual.cpp
-       evaluators/FELIX_EnthalpyResid.cpp	
+       evaluators/FELIX_EnthalpyResid.cpp
        evaluators/FELIX_EpsilonL1L2.cpp
        evaluators/FELIX_FieldNorm.cpp
        evaluators/FELIX_FlowRate.cpp
@@ -22,8 +22,8 @@
        evaluators/FELIX_GeoFluxHeat.cpp
        evaluators/FELIX_HydrologyWaterDischarge.cpp
        evaluators/FELIX_HydrologyMeltingRate.cpp
-       evaluators/FELIX_HydrologyResidualEllipticEqn.cpp
-       evaluators/FELIX_HydrologyResidualEvolutionEqn.cpp
+       evaluators/FELIX_HydrologyResidualPotentialEqn.cpp
+       evaluators/FELIX_HydrologyResidualThicknessEqn.cpp
        evaluators/FELIX_HydrostaticPressure.cpp
        evaluators/FELIX_Integral1Dw_Z.cpp
        evaluators/FELIX_LiquidWaterFraction.cpp
@@ -32,7 +32,7 @@
        evaluators/FELIX_ProlongateVector.cpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
        evaluators/FELIX_ResponseSMBMismatch.cpp
-       evaluators/FELIX_StackVectors.cpp
+       evaluators/FELIX_StackFields.cpp
        evaluators/FELIX_StokesMomentumResid.cpp
        evaluators/FELIX_StokesFOBasalResid.cpp
        evaluators/FELIX_StokesFOResid.cpp
@@ -97,7 +97,7 @@ ENDIF()
        evaluators/FELIX_BasalFrictionHeat.hpp
        evaluators/FELIX_BasalFrictionHeat_Def.hpp
        evaluators/FELIX_DirichletEnthalpySurface.hpp
-       evaluators/FELIX_DirichletEnthalpySurface_Def.hpp       
+       evaluators/FELIX_DirichletEnthalpySurface_Def.hpp
        evaluators/FELIX_Dissipation.hpp
        evaluators/FELIX_Dissipation_Def.hpp
        evaluators/FELIX_EffectivePressure.hpp
@@ -120,10 +120,10 @@ ENDIF()
        evaluators/FELIX_HydrologyWaterDischarge_Def.hpp
        evaluators/FELIX_HydrologyMeltingRate.hpp
        evaluators/FELIX_HydrologyMeltingRate_Def.hpp
-       evaluators/FELIX_HydrologyResidualEllipticEqn.hpp
-       evaluators/FELIX_HydrologyResidualEllipticEqn_Def.hpp
-       evaluators/FELIX_HydrologyResidualEvolutionEqn.hpp
-       evaluators/FELIX_HydrologyResidualEvolutionEqn_Def.hpp
+       evaluators/FELIX_HydrologyResidualPotentialEqn.hpp
+       evaluators/FELIX_HydrologyResidualPotentialEqn_Def.hpp
+       evaluators/FELIX_HydrologyResidualThicknessEqn.hpp
+       evaluators/FELIX_HydrologyResidualThicknessEqn_Def.hpp
        evaluators/FELIX_HydrostaticPressure.hpp
        evaluators/FELIX_HydrostaticPressure_Def.hpp
        evaluators/FELIX_Integral1Dw_Z.hpp
@@ -141,8 +141,8 @@ ENDIF()
        evaluators/FELIX_ResponseSMBMismatch.hpp
        evaluators/FELIX_ResponseSMBMismatch_Def.hpp
        evaluators/FELIX_SharedParameter.hpp
-       evaluators/FELIX_StackVectors.hpp
-       evaluators/FELIX_StackVectors_Def.hpp
+       evaluators/FELIX_StackFields.hpp
+       evaluators/FELIX_StackFields_Def.hpp
        evaluators/FELIX_StokesBodyForce.hpp
        evaluators/FELIX_StokesBodyForce_Def.hpp
        evaluators/FELIX_StokesContinuityResid.hpp
@@ -181,6 +181,7 @@ ENDIF()
        problems/FELIX_Enthalpy.hpp
        problems/FELIX_StokesFOThermoCoupled.hpp
        problems/FELIX_Hydrology.hpp
+       problems/FELIX_ParamEnum.hpp
        problems/FELIX_Stokes.hpp
        problems/FELIX_StokesFO.hpp
        problems/FELIX_StokesL1L2.hpp

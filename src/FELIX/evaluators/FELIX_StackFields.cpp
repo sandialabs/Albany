@@ -6,8 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "FELIX_StackVectors.hpp"
-#include "FELIX_StackVectors_Def.hpp"
+#include "FELIX_StackFields.hpp"
+#include "FELIX_StackFields_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(FELIX::StackVectorsBase)
-
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(FELIX::StackFieldsBase)
