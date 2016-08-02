@@ -75,7 +75,7 @@ Hydrostatic_VelResid(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Residual);
 
-  this->setName("Aeras::Hydrostatic_VelResid" );
+  this->setName("Aeras::Hydrostatic_VelResid" + PHX::typeAsString<EvalT>());
 
   //refWeights        .resize               (numQPs);
   //grad_at_cub_points.resize     (numNodes, numQPs, 2);
@@ -128,7 +128,7 @@ operator() (const Hydrostatic_VelResid_Tag& tag, const int& cell) const{
     // Compute Residual
     for (int level=0; level < numLevels; ++level) {
       for (int dim=0; dim < numDims; ++dim) {
-        Residual(cell,node,level,dim) += ( keGrad(cell,node,level,dim) + PhiGrad(cell,node,level,dim) )
+        Residual(cell,node,level,dim) =  ( keGrad(cell,node,level,dim) + PhiGrad(cell,node,level,dim) )
                                       +  ( pGrad (cell,node,level,dim)/density(cell,node,level) )
                                       +   etadotdVelx(cell,node,level,dim)
                                       +   VelxDot(cell,node,level,dim);
@@ -148,7 +148,7 @@ operator() (const Hydrostatic_VelResid_pureAdvection_Tag& tag, const int& cell) 
   for (int node=0; node < numNodes; ++node)
     for (int level=0; level < numLevels; ++level)
       for (int dim=0; dim < numDims; ++dim)
-        Residual(cell,node,level,dim) +=   VelxDot(cell,node,level,dim) *wBF(cell,node,node); 
+        Residual(cell,node,level,dim) =   VelxDot(cell,node,level,dim) *wBF(cell,node,node); 
 }
 
 #endif
@@ -162,9 +162,8 @@ evaluateFields(typename Traits::EvalData workset)
   double n_coeff = workset.n_coeff;
   obtainLaplaceOp = ((n_coeff == 22.0)&&(j_coeff == 1.0)) ? true : false;
 
-  PHAL::set(Residual, 0.0);
-
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  PHAL::set(Residual, 0.0);
   //std::cout <<"In velocity resid: Laplace = " << obtainLaplaceOp << "\n";
 
   //OG I had an segfault when moving this statement uder (if not Laplace op), where it belongs.
@@ -317,6 +316,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   else {
     //to be implemented
+    PHAL::set(Residual, 0.0);
   }
 
 #endif

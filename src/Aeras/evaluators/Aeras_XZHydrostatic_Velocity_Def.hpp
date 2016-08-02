@@ -29,7 +29,7 @@ XZHydrostatic_Velocity(const Teuchos::ParameterList& p,
   this->addDependentField(Velx);
   this->addEvaluatedField(Velocity);
 
-  this->setName("Aeras::XZHydrostatic_Velocity" );
+  this->setName("Aeras::XZHydrostatic_Velocity" + PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
