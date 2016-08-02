@@ -135,8 +135,10 @@ evaluateFields(typename Traits::EvalData workset)
   // Zero out local response
   PHAL::set(this->local_response, 0.0);
 
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flow_state_field_ref(workset.numCells, numQPs, vecDim); //flow_state_field_ref (exact solution) at quad points
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> err(workset.numCells, numQPs, vecDim); //error at quadrature points
+  Kokkos::DynRankView<ScalarT, PHX::Device> flow_state_field_ref
+    = Kokkos::createDynRankView(flow_state_field.get_view(), "FSF", workset.numCells, numQPs, vecDim); //flow_state_field_ref (exact solution) at quad points
+  Kokkos::DynRankView<ScalarT, PHX::Device> err
+    = Kokkos::createDynRankView(flow_state_field.get_view(), "FSF", workset.numCells, numQPs, vecDim); //error at quadrature points
 
   //Get final time from workset.  This is for setting time-dependent exact solution.  
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());

@@ -48,7 +48,6 @@ protected:
   //OG not used anymore
   Teuchos::RCP<PHX::FieldTag> scatter_operation;
   //OG not used anymore
-  std::vector< PHX::MDField<ScalarT> > val;
   const int numNodes;
   const int numDims;
   const int numLevels;

@@ -176,9 +176,13 @@ Aeras::HydrostaticProblem::constructEvaluators(
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  RCP <Intrepid2::CubaturePolylib<RealType, Kokkos::DynRankView<RealType, PHX::Device> > > polylib = rcp(new Intrepid2::CubaturePolylib<RealType, Kokkos::DynRankView<RealType, PHX::Device> >(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
-  std::vector< Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > > cubatures(2, polylib); 
-  RCP <Intrepid2::Cubature<PHX::Device> > cubature = rcp( new Intrepid2::CubatureTensor<RealType,Kokkos::DynRankView<RealType, PHX::Device> >(cubatures));
+//  RCP <Intrepid2::CubaturePolylib<RealType, Kokkos::DynRankView<RealType, PHX::Device> > > polylib = rcp(new Intrepid2::CubaturePolylib<RealType, Kokkos::DynRankView<RealType, PHX::Device> >(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
+//  std::vector< Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > > cubatures(2, polylib); 
+//  RCP <Intrepid2::Cubature<PHX::Device> > cubature = rcp( new Intrepid2::CubatureTensor<RealType,Kokkos::DynRankView<RealType, PHX::Device> >(cubatures));
+
+//std::cout << "AGS: Switching CubatureFactory -- no Polylib -- may break code??" << std::endl;
+  Intrepid2::DefaultCubatureFactory cubFactory;
+  RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree, meshSpecs.cubatureRule);
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();

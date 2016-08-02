@@ -53,13 +53,13 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(jacobian_det, fm);
   this->utils.setFieldData(vort_val_qp,fm);
 
-  refWeights        .resize(numQPs);
-  grad_at_cub_points.resize(numNodes, numQPs, 2);
-  refPoints         .resize(numQPs, 2);
+  refWeights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
+  grad_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPs, 2);
+  refPoints = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs, 2);
   cubature->getCubature(refPoints, refWeights);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
 
-  vco.resize(numNodes, 2);
+  vco = Kokkos::createDynRankView(val_node.get_view(), "XXX", numNodes, 2);
 }
 
 //**********************************************************************

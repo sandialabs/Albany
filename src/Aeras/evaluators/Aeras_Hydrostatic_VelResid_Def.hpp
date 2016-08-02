@@ -127,8 +127,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   //OG I had an segfault when moving this statement uder (if not Laplace op), where it belongs.
   //To be looked at later.
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  coriolis(numQPs);
-  //Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  vorticity(numQPs);
+  Kokkos::DynRankView<ScalarT, PHX::Device>  coriolis = Kokkos::createDynRankView(Velx.get_view(), "XXX",numQPs);
+  //Kokkos::DynRankView<ScalarT, PHX::Device>  vorticity(numQPs);
 
   if ( !obtainLaplaceOp ) {
     if (!pureAdvection ) {
@@ -265,9 +265,10 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename EvalT,typename Traits>
 void
-Hydrostatic_VelResid<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & coriolis) {
+Hydrostatic_VelResid<EvalT,Traits>::get_coriolis(std::size_t cell, Kokkos::DynRankView<ScalarT, PHX::Device>  & coriolis) {
 
-  coriolis.initialize();
+  // AGS: not needed == coriolis is = not += below.
+  //Kokkos::deep_copy(coriolis, 0.0);
   double alpha = AlphaAngle; 
 
 //  std::cout << "In coriolis alpha = " << alpha << "\n";
@@ -284,10 +285,10 @@ Hydrostatic_VelResid<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid2::Fi
 
 //template<typename EvalT,typename Traits>
 //void
-//Hydrostatic_VelResid<EvalT,Traits>::get_vorticity(const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & nodalVector,
-//    std::size_t cell, std::size_t level, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & curl) {
+//Hydrostatic_VelResid<EvalT,Traits>::get_vorticity(const Kokkos::DynRankView<ScalarT, PHX::Device>  & nodalVector,
+//    std::size_t cell, std::size_t level, Kokkos::DynRankView<ScalarT, PHX::Device>  & curl) {
 //
-//  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& covariantVector = wrk_;
+//  Kokkos::DynRankView<ScalarT, PHX::Device>& covariantVector = wrk_;
 //  covariantVector.initialize();
 //
 //  fill_nodal_metrics(cell);

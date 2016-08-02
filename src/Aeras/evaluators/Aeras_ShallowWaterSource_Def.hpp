@@ -383,9 +383,9 @@ KOKKOS_INLINE_FUNCTION
 
   
 template<typename EvalT,typename Traits>
-void ShallowWaterSource<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & coriolis) {
+void ShallowWaterSource<EvalT,Traits>::get_coriolis(std::size_t cell, Kokkos::DynRankView<ScalarT, PHX::Device>  & coriolis) {
     
-    coriolis.initialize();
+    //Kokkos::deep_copy(coriolis, 0.0);;
     double alpha = 0.0;//1.047;  /*must match what is in initial condition for TC2 and TC5.
     //see AAdatpt::AerasZonal analytic function. */
     

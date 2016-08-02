@@ -6,7 +6,7 @@
 
 #include "FELIX_Elliptic2D.hpp"
 
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_BCUtils.hpp"

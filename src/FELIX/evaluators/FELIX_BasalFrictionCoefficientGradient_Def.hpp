@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Albany_Layouts.hpp"
 #include "FELIX_SharedParameter.hpp"
 #include "FELIX_StokesParamEnum.hpp"

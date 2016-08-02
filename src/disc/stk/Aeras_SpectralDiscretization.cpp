@@ -2106,9 +2106,10 @@ void Aeras::SpectralDiscretization::computeCoordsLines()
   int deg = np - 1;
 
   // Compute the 1D Gauss-Lobatto quadrature
+std::cout << "AGS -- need to uncomment to run -- just trying to compile" << std::endl;
   Teuchos::RCP< Intrepid2::Cubature<PHX::Device> > gl1D =
     Teuchos::rcp(
-      new Intrepid2::CubaturePolylib< double, Field_t, Field_t >(
+      new Intrepid2::CubaturePolylib<PHX::Device, RealType, RealType>(
         2*deg-1, Intrepid2::POLYTYPE_GAUSS_LOBATTO));
   Field_t refCoords("AAA", np, 1);
   Field_t refWeights("AAA", np);
@@ -2200,18 +2201,18 @@ void Aeras::SpectralDiscretization::computeCoordsQuads()
   int deg = np - 1;
 
   // Compute the 1D Gauss-Lobatto quadrature
-  Teuchos::RCP< Intrepid2::Cubature<PHX::Device> > gl1D =
-    Teuchos::rcp(
-      new Intrepid2::CubaturePolylib< double, Field_t, Field_t >(
-        2*deg-1, Intrepid2::POLYTYPE_GAUSS_LOBATTO));
+std::cout << "AGS -- see if this works??" << std::endl;
+  Intrepid2::CubaturePolylib<PHX::Device, RealType, RealType>
+    gl1D(2*deg-1, Intrepid2::POLYTYPE_GAUSS_LOBATTO);
 
   // Compute the 2D Gauss-Lobatto cubature.  These will be the nodal
   // points of the reference spectral element
-  std::vector<
-    Teuchos::RCP< Intrepid2::Cubature<PHX::Device> > axes;
-  axes.push_back(gl1D);
-  axes.push_back(gl1D);
-  Intrepid2::CubatureTensor<PHX::Device> gl2D(axes);
+//  std::vector<Teuchos::RCP< Intrepid2::Cubature<PHX::Device> > > axes;
+//  axes.push_back(gl1D);
+//  axes.push_back(gl1D);
+  //Intrepid2::CubatureTensor<PHX::Device> gl2D(axes);
+std::cout << "AGS -- need to uncomment to run -- just trying to compile" << std::endl;
+  Intrepid2::CubatureTensor<PHX::Device> gl2D(gl1D, gl1D);
   Field_t refCoords("AAA", np2, 2);
   Field_t refWeights("AAA", np2);
   gl2D.getCubature(refCoords, refWeights);
@@ -3199,9 +3200,11 @@ bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
     if (C == 9) return HGRAD_Basis_9;
 
     // Spectral bases
+std::cout << "AGS -- changing POINTTYPE_SPECTRAL to POINTTYPE_WARPBLEND -- check with Kyungjoo" << std::endl;
     return Teuchos::rcp(
       new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::Device>(
-        deg, Intrepid2::POINTTYPE_SPECTRAL) );
+        deg, Intrepid2::POINTTYPE_WARPBLEND) );
+//        deg, Intrepid2::POINTTYPE_SPECTRAL) );
   }
 
   double value(const std::vector<double> &soln,

@@ -172,7 +172,7 @@ evaluateFields(typename Traits::EvalData workset)
           if (workset.is_adjoint) {
             // Sum Jacobian transposed
             for (unsigned int i=0; i<colT.size(); ++i) {
-              ST val = valptr.fastAccessDx(i); 
+              RealType val = valptr.fastAccessDx(i); 
               if (val != 0.0) { 
                 JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
               }
@@ -181,7 +181,7 @@ evaluateFields(typename Traits::EvalData workset)
           else {
             //Sum Jacobian entries 
             for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-              ST val = valptr.fastAccessDx(i);
+              RealType val = valptr.fastAccessDx(i);
               if (val != 0.0) {
                 JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
               }
@@ -202,7 +202,7 @@ evaluateFields(typename Traits::EvalData workset)
               if (workset.is_adjoint) {
                 // Sum Jacobian transposed
                 for (int i=0; i<colT.size(); ++i) {
-                  ST val = valptr.fastAccessDx(i); 
+                  RealType val = valptr.fastAccessDx(i); 
                   if (val != 0.0) { 
                     JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
                   }
@@ -211,7 +211,7 @@ evaluateFields(typename Traits::EvalData workset)
               else {
                 //Sum Jacobian entries 
                 for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-                  ST val = valptr.fastAccessDx(i);
+                  RealType val = valptr.fastAccessDx(i);
                   if (val != 0.0) {
                     JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
                   }
@@ -231,7 +231,7 @@ evaluateFields(typename Traits::EvalData workset)
             if (workset.is_adjoint) {
               // Sum Jacobian transposed
               for (unsigned int i=0; i<colT.size(); ++i) {
-                ST val = valptr.fastAccessDx(i); 
+                RealType val = valptr.fastAccessDx(i); 
                 if (val != 0.0) { 
                   JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
                 }
@@ -240,7 +240,7 @@ evaluateFields(typename Traits::EvalData workset)
             else {
                 //Sum Jacobian entries 
                 for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-                  ST val = valptr.fastAccessDx(i);
+                  RealType val = valptr.fastAccessDx(i);
                   if (val != 0.0) {
                     JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
                   }
@@ -261,7 +261,7 @@ evaluateFields(typename Traits::EvalData workset)
             if (workset.is_adjoint) {
               // Sum Jacobian transposed
               for (unsigned int i=0; i<colT.size(); ++i) {
-                ST val = valptr.fastAccessDx(i); 
+                RealType val = valptr.fastAccessDx(i); 
                 if (val != 0.0) { 
                   JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
                 }
@@ -270,7 +270,7 @@ evaluateFields(typename Traits::EvalData workset)
             else {
               //Sum Jacobian entries 
                 for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-                  ST val = valptr.fastAccessDx(i);
+                  RealType val = valptr.fastAccessDx(i);
                   if (val != 0.0) {
                     JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
                   }
@@ -291,7 +291,7 @@ evaluateFields(typename Traits::EvalData workset)
 //AMET calls for mass with (j, m, n ) = (0, -1, 0)
 //HVDecorator calls for mass with 0, -1, 0 (for the time step as in AMET) and 0, 1, 0 for the HV operator
 
-  ST mc = workset.m_coeff;
+  RealType mc = workset.m_coeff;
 
   std::cout <<"Workset coefficients: j = "<< workset.j_coeff << ", m = " <<workset.m_coeff << ", n = " <<workset.n_coeff << "\n";
 
@@ -304,7 +304,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  numnodes_ = this->numNodes;
   //for mass we do not really need even this
   /*
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> localMassMatr(numcells_,numnodes_,numnodes_);
+  Kokkos::DynRankView<ScalarT, PHX::Device> localMassMatr(numcells_,numnodes_,numnodes_);
   for(int cell = 0; cell < numcells_; cell++){
 	  for(int node = 0; node < numnodes_; node++)
 	     localMassMatr(cell, node, node) = this -> wBF(cell, node, node);
@@ -320,7 +320,7 @@ evaluateFields(typename Traits::EvalData workset)
         int n = 0, eq = 0;
         for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
           rowT = eqID[n];
-          ST val2 = mc * this -> wBF(cell, node, node);
+          RealType val2 = mc * this -> wBF(cell, node, node);
           JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
         }
         eq += this->numNodeVar;
@@ -328,13 +328,13 @@ evaluateFields(typename Traits::EvalData workset)
           for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
             for (int dim = 0; dim < this->numDims; ++dim, ++n) {
               rowT = eqID[n];
-              ST val2 = mc * this -> wBF(cell, node, node);
+              RealType val2 = mc * this -> wBF(cell, node, node);
               JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
             }
           }
           for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
             rowT = eqID[n];
-            ST val2 = mc *  this -> wBF(cell, node, node);
+            RealType val2 = mc *  this -> wBF(cell, node, node);
             JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
           }
         }
@@ -343,7 +343,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
             rowT = eqID[n];
             //Minus!
-            ST val2 = mc * this -> wBF(cell, node, node);
+            RealType val2 = mc * this -> wBF(cell, node, node);
             JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val2,1));
           }
         }
@@ -356,9 +356,12 @@ evaluateFields(typename Traits::EvalData workset)
 ////////////////////////////////////////////////////////
   if ( buildLaplace ) {
     int numn = this->numNodes;
-    Intrepid2::FieldContainer_Kokkos<ST, PHX::Layout, PHX::Device>  KK(numn*3, numn*2), KT(numn*2, numn*3),
-   	                                                            GR(numn*3, numn*3), L(numn*2, numn*2),
-								    GRKK(numn*3,numn*2), KTGRKK(numn*2,numn*2); 
+    Kokkos::DynRankView<RealType, PHX::Device>  KK("KK", numn*3, numn*2);
+    Kokkos::DynRankView<RealType, PHX::Device>  KT("KK", numn*2, numn*3);
+    Kokkos::DynRankView<RealType, PHX::Device>  GR("KK", numn*3, numn*3); 
+    Kokkos::DynRankView<RealType, PHX::Device>  L("KK", numn*2, numn*2);
+    Kokkos::DynRankView<RealType, PHX::Device>  GRKK("KK", numn*3,numn*2); 
+    Kokkos::DynRankView<RealType, PHX::Device>  KTGRKK("KK", numn*2,numn*2); 
     for (int cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
       const int neq = nodeID[0].size();
@@ -384,12 +387,12 @@ evaluateFields(typename Traits::EvalData workset)
       //component, and K^T is equivalent to K^{inverse}.
 
       //The biggest effort is to find how to insert values of the local matrix to the big matrix.
-      KK.initialize();
-      GR.initialize();
+      Kokkos::deep_copy(KK, 0.0);
+      Kokkos::deep_copy(GR, 0.0);
       for (int node=0; node<this->numNodes; node++) {
-        ST lam = this -> lambda_nodal(cell, node),
+        RealType lam = this -> lambda_nodal(cell, node),
 	    th = this -> theta_nodal(cell, node);
-        const ST k11 = -sin(lam),
+        const RealType k11 = -sin(lam),
 	         k12 = -sin(th)*cos(lam),
 	         k21 =  cos(lam),
 	         k22 = -sin(th)*sin(lam),
@@ -403,7 +406,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       for (int no = 0; no < this->numNodes; no++) {
         for (int mo = 0; mo< this->numNodes; mo++) {
-          ST val = 0;
+          RealType val = 0;
 	  for (int qp = 0; qp < this->numNodes; qp++) {
 	    val += this->GradBF(cell,no,qp,0)*this->GradBF(cell,mo,qp,0)*this->wBF(cell,qp,qp)
 	        +  this->GradBF(cell,no,qp,1)*this->GradBF(cell,mo,qp,1)*this->wBF(cell,qp,qp);
@@ -415,12 +418,12 @@ evaluateFields(typename Traits::EvalData workset)
       }
 
       //now let's multiply everything
-      GRKK.initialize();
+      Kokkos::deep_copy(GRKK, 0.0);
       for (int ii = 0; ii < 3*numn; ii++)
         for (int jj = 0; jj < 2*numn; jj++)
           for(int cc = 0; cc < 3*numn; cc++)
             GRKK(ii,jj) += GR(ii,cc)*KK(cc,jj);
-      KTGRKK.initialize();
+      Kokkos::deep_copy(KTGRKK, 0.0);
       for(int ii = 0; ii < 2*numn; ii++)
         for (int jj = 0; jj < 2*numn; jj++)
           for(int cc = 0; cc < 3*numn; cc++)
@@ -440,7 +443,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  for (unsigned int m=0; m< this->numNodes; m++) {
             const int col_ = colT[m*neq];//= nodeID[m][n];
 	    //at this point we know node, cell, m
-            ST val = 0;
+            RealType val = 0;
 	    for (int qp = 0; qp < this->numNodes; qp++) {
 	      val += this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
 	  	  + this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp);
@@ -462,7 +465,7 @@ evaluateFields(typename Traits::EvalData workset)
 	        if (dim == 0) {
 	          //filling dependency on u values
 	          const int col1_ = nodeID[m][n];
-	          ST val = this->sqrtHVcoef * KTGRKK(node*2,m*2);
+	          RealType val = this->sqrtHVcoef * KTGRKK(node*2,m*2);
 	          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col1_,1), Teuchos::arrayView(&val,1));
    	          //filling dependency on v values, so, it is eqn n+1
 	          const int col2_ = nodeID[m][n+1];
@@ -473,7 +476,7 @@ evaluateFields(typename Traits::EvalData workset)
 	        if (dim == 1) {
 	          //filling dependencies on u values. The current eqn is n, so, we need to look at n-1 level IDs.
 	          const int col1_ = nodeID[m][n-1];
-	          ST val = this->sqrtHVcoef * KTGRKK(node*2+1,m*2);
+	          RealType val = this->sqrtHVcoef * KTGRKK(node*2+1,m*2);
 	          JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col1_,1), Teuchos::arrayView(&val,1));
 	          //filling dependencies on v values.
 	          const int col2_ = nodeID[m][n];
@@ -491,7 +494,7 @@ evaluateFields(typename Traits::EvalData workset)
      	      const int col_ = nodeID[m][n];
 	      //const int row_ = nodeID[node][n];
 	      //at this point we know node, cell, m
-    	      ST val = 0;
+    	      RealType val = 0;
 	      for (int qp = 0; qp < this->numNodes; qp++) {
 	        val += this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
 	            + this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp);
@@ -512,7 +515,7 @@ evaluateFields(typename Traits::EvalData workset)
     	      const int col_ = nodeID[m][n];
 	      //const int row_ = nodeID[node][n];
 	      //at this point we know node, cell, m
-    	      ST val = 0;
+    	      RealType val = 0;
 	      for (int qp = 0; qp < this->numNodes; qp++) {
 	        val += this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
 	            + this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp);

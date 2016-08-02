@@ -5,12 +5,11 @@
 //*****************************************************************//
 #include "Albany_ProblemUtils.hpp"
 
-#ifdef HAVE_REFACTORED_CN_BASIS
-#include "Intrepid2_HGRAD_LINE_Cn_FEM.hpp"
-#include "Intrepid2_HGRAD_TRI_Cn_FEM.hpp"
+////#include "Intrepid2_HGRAD_LINE_Cn_FEM.hpp"
+//#include "Intrepid2_HGRAD_TRI_Cn_FEM.hpp"
 #include "Intrepid2_HGRAD_QUAD_Cn_FEM.hpp"
-#include "Intrepid2_HGRAD_HEX_Cn_FEM.hpp"
-#else
+//#include "Intrepid2_HGRAD_HEX_Cn_FEM.hpp"
+
 #include "Intrepid2_HGRAD_LINE_C1_FEM.hpp"
 #include "Intrepid2_HGRAD_TRI_C1_FEM.hpp"
 #include "Intrepid2_HGRAD_QUAD_C1_FEM.hpp"
@@ -21,7 +20,6 @@
 #include "Intrepid2_HGRAD_QUAD_C2_FEM.hpp"
 #include "Intrepid2_HGRAD_TET_C2_FEM.hpp"
 #include "Intrepid2_HGRAD_HEX_C2_FEM.hpp"
-#endif
 
 /*********************** Helper Functions*********************************/
 
@@ -64,9 +62,7 @@ Albany::getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
 #ifdef ALBANY_VERBOSE
      cout << "  For " << name << " element, numNodes = " << numNodes <<  endl;
 #endif
-#ifdef HAVE_REFACTORED_CN_BASIS
-     intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_LINE_Cn_FEM<PHX::Device>(numNodes-1, Intrepid2::POINTTYPE_SPECTRAL) );
-#endif
+     intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_LINE_Cn_FEM<PHX::Device>(numNodes-1, Intrepid2::POINTTYPE_WARPBLEND) );
    }
 
    // 2D triangles -- non-spectral basis
@@ -98,9 +94,11 @@ Albany::getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
        Teuchos::Exceptions::InvalidParameter,
        "Albany::ProblemUtils::getIntrepid2Basis number of nodes for triangle element is not regular");
      --deg;
-#ifdef HAVE_REFACTORED_CN_BASIS
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::Device>(deg, Intrepid2::POINTTYPE_SPECTRAL) );
-#endif
+
+     // Spectral triangles not implemented in Intrepid2 yet
+     TEUCHOS_TEST_FOR_EXCEPTION(name == "SpectralTriangle",Teuchos::Exceptions::InvalidParameter,
+           "Error: getIntrepid2Basis: No HGRAD_TRI_Cn in Intrepid2 ");
+     //  intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TRI_Cn_FEM<PHX::Device>(deg, Intrepid2::POINTTYPE_WARPBLEND) );
    }
 
    // 2D quadrilateral elements -- non spectral basis 
@@ -133,9 +131,7 @@ Albany::getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
        Teuchos::Exceptions::InvalidParameter,
        "Albany::ProblemUtils::getIntrepid2Basis number of nodes for quadrilateral element is not perfect square > 1");
      --deg;
-#ifdef HAVE_REFACTORED_CN_BASIS
-     intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::Device>(deg, Intrepid2::POINTTYPE_SPECTRAL) );
-#endif
+     intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::Device>(deg, Intrepid2::POINTTYPE_WARPBLEND) );
    }
 
    // 3D tetrahedron elements
@@ -143,13 +139,17 @@ Albany::getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
    {
      if (numNodes == 4)
        intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TET_C1_FEM<PHX::Device>() );
-     else if (numNodes == 10)
-#ifdef HAVE_REFACTORED_CN_BASIS
-       if (compositeTet)
-         intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TET_COMP12_FEM<PHX::Device>() );
-       else
-#endif
+     else if (numNodes == 10) {
+       if (compositeTet) {
+     // Composite tet not implemented in Intrepid2 yet
+     TEUCHOS_TEST_FOR_EXCEPTION(compositeTet, Teuchos::Exceptions::InvalidParameter,
+           "Error: getIntrepid2Basis: No HGRAD_TET_COMP12  in Intrepid2 ");
+ //         intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TET_COMP12_FEM<PHX::Device>() );
+       }
+       else {
          intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TET_C2_FEM<PHX::Device>() );
+       }
+     }
      else
        TEUCHOS_TEST_FOR_EXCEPTION(
          true,
@@ -186,9 +186,10 @@ Albany::getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
        Teuchos::Exceptions::InvalidParameter,
        "Albany::ProblemUtils::getIntrepid2Basis number of nodes for hexahedron element is not perfect cube > 1");
      --deg;
-#ifdef HAVE_REFACTORED_CN_BASIS
-       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_HEX_Cn_FEM<PHX::Device>(deg, Intrepid2::POINTTYPE_SPECTRAL) );
-#endif
+
+     TEUCHOS_TEST_FOR_EXCEPTION(name == "SpectralHexahedron",Teuchos::Exceptions::InvalidParameter,
+           "Error: getIntrepid2Basis: No HGRAD_HEX_Cn in Intrepid2 ");
+//       intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_HEX_Cn_FEM<PHX::Device>(deg, Intrepid2::POINTTYPE_WARPBLEND) );
   }
 
    // 3D wedge elements

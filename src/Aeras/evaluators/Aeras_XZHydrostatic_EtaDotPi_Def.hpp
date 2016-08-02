@@ -178,8 +178,8 @@ evaluateFields(typename Traits::EvalData workset)
   else {
     //Local variable that is etadot*Pi.  Defining this at (cell,qp,levels) which is not
     //the same as for the non-advection version. 
-    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  etadotPi(workset.numCells,numQPs,numLevels);
-    etadotPi.initialize();
+    Kokkos::DynRankView<ScalarT, PHX::Device>  etadotPi 
+     = Kokkos::createDynRankView(etadot.get_view(), "ETA", workset.numCells,numQPs,numLevels);
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int qp=0; qp < numQPs; ++qp) {
 	for (int level=0; level < numLevels; ++level) {
