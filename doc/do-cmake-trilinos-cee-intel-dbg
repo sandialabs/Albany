@@ -1,0 +1,127 @@
+#!/bin/sh
+#
+export TRILINOS_HOME=/projects/AppComp/Trilinos
+BUILD_DIR=`pwd`
+INSTALL_DIR=/projects/albany/trilinos/MPI_INTEL_DBG
+BOOST_DIR=/projects/albany/intel5.0/boost-1.60.0
+MPI_BASE_DIR=/sierra/sntools/SDK/mpi/intel/5.0
+NETCDF=/projects/albany/intel5.0
+HDFDIR=/projects/albany/intel5.0
+ZLIB_DIR=/projects/albany/intel5.0
+PARMETISDIR=/projects/albany/intel5.0
+INTEL_DIR=/sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210/compilers_and_libraries/linux
+MKL_PATH=/sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210
+HWLOC_PATH=/projects/albany
+SUPERLUDIR=/projects/albany/intel5.0/SuperLU_4.3
+LABLAS_LIBRARIES="-L$INTEL_DIR/lib/intel64 -Wl,--start-group $MKL_PATH/mkl/lib/intel64/libmkl_intel_lp64.a $MKL_PATH/mkl/lib/intel64/libmkl_core.a $MKL_PATH/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group"
+
+cmake \
+    -Wno-dev \
+    -D Trilinos_CONFIGURE_OPTIONS_FILE:FILEPATH=$TRILINOS_HOME/sampleScripts/AlbanySettings.cmake \
+    -D Trilinos_ENABLE_SCOREC:BOOL=ON \
+    -D SCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON \
+    -D CMAKE_BUILD_TYPE:STRING=DEBUG \
+    -D Trilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
+    -D CMAKE_CXX_COMPILER:FILEPATH=$MPI_BASE_DIR/bin64/mpiicpc \
+    -D CMAKE_C_COMPILER:FILEPATH=$MPI_BASE_DIR/bin64/mpiicc \
+    -D CMAKE_Fortran_COMPILER:FILEPATH=$MPI_BASE_DIR/bin64/mpiifort \
+    -D CMAKE_CXX_FLAGS:STRING="-O2 -g -fp-trap-all=all -mkl=sequential" \
+    -D CMAKE_C_FLAGS:STRING="-O2 -g -fp-trap-all=all -mkl=sequential" \
+    -D CMAKE_Fortran_FLAGS:STRING="-O2 -g -fp-trap-all=all -mkl=sequential" \
+    -D CMAKE_AR:FILEPATH=${INTEL_DIR}/bin/intel64/xiar \
+    -D CMAKE_LINKER:FILEPATH=${INTEL_DIR}/linux/bin/intel64/xild \
+    -D Rythmos_ENABLE_DEBUG:BOOL=ON \
+    -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
+    -D Tpetra_INST_INT_LONG_LONG:BOOL=ON \
+    -D Tpetra_INST_INT_INT:BOOL=ON \
+    -D Tpetra_INST_DOUBLE:BOOL=ON \
+    -D Tpetra_INST_FLOAT:BOOL=OFF \
+    -D Tpetra_INST_COMPLEX_FLOAT:BOOL=OFF \
+    -D Tpetra_INST_COMPLEX_DOUBLE:BOOL=OFF \
+    -D Tpetra_INST_INT_LONG:BOOL=OFF \
+    -D Tpetra_INST_INT_UNSIGNED:BOOL=OFF \
+    -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+    -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
+    -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
+    -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
+    -D Kokkos_ENABLE_Serial:BOOL=ON \
+    -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
+    -D Kokkos_ENABLE_Pthread:BOOL=OFF \
+\
+    -D TPL_ENABLE_MPI:BOOL=ON \
+    -D MPI_BASE_DIR:PATH=$MPI_BASE_DIR \
+    -D MPI_EXEC:FILEPATH=$MPI_BASE_DIR/bin64/mpiexec.hydra \
+\
+	-D TPL_ENABLE_Pthread:BOOL=OFF \
+\
+    -D TPL_ENABLE_Boost:BOOL=ON \
+    -D TPL_ENABLE_BoostLib:BOOL=ON \
+    -D TPL_ENABLE_BoostAlbLib:BOOL=ON \
+	-D Boost_INCLUDE_DIRS:PATH=$BOOST_DIR/include \
+	-D Boost_LIBRARY_DIRS:PATH=$BOOST_DIR/lib \
+	-D BoostLib_INCLUDE_DIRS:PATH=$BOOST_DIR/include \
+	-D BoostLib_LIBRARY_DIRS:PATH=$BOOST_DIR/lib \
+	-D BoostAlbLib_INCLUDE_DIRS:PATH=$BOOST_DIR/include \
+	-D BoostAlbLib_LIBRARY_DIRS:PATH=$BOOST_DIR/lib \
+\
+    -D TPL_ENABLE_Netcdf:BOOL=ON \
+	-D Netcdf_INCLUDE_DIRS:PATH=$NETCDF/include \
+    -D Netcdf_LIBRARY_DIRS:PATH=${NETCDF}/lib \
+    -D TPL_Netcdf_PARALLEL:BOOL=ON \
+    -D TPL_ENABLE_Pnetcdf:BOOL=ON \
+    -D Pnetcdf_INCLUDE_DIRS:PATH=${NETCDF}/include \
+    -D Pnetcdf_LIBRARY_DIRS:PATH=${NETCDF}/lib \
+\
+    -D TPL_ENABLE_HDF5:BOOL=ON \
+    -D HDF5_INCLUDE_DIRS:PATH=${HDFDIR}/include \
+    -D HDF5_LIBRARY_NAMES:STRING="" \
+\
+    -D TPL_ENABLE_Zlib:STRING=ON \
+    -D Zlib_INCLUDE_DIRS:PATH=${ZLIB_DIR}/include \
+    -D Zlib_LIBRARY_NAMES:STRING="" \
+\
+    -D TPL_ENABLE_SuperLU:STRING=ON \
+    -D SuperLU_INCLUDE_DIRS:STRING="${SUPERLUDIR}/include" \
+    -D SuperLU_LIBRARY_DIRS:STRING="${SUPERLUDIR}/lib" \
+\
+    -D TPL_ENABLE_BLAS:STRING=ON \
+    -D TPL_ENABLE_LAPACK:STRING=ON \
+    -D TPL_BLAS_LIBRARIES:STRING="${MKL_PATH}/mkl/lib/intel64/libmkl_intel_lp64.a;${MKL_PATH}/mkl/lib/intel64/libmkl_sequential.a;${MKL_PATH}/mkl/lib/intel64/libmkl_core.a" \
+    -D LAPACK_LIBRARY_NAMES:STRING="" \
+\
+    -D TPL_ENABLE_ParMETIS:STRING=ON \
+    -D ParMETIS_INCLUDE_DIRS:PATH="${PARMETISDIR}/include" \
+    -D ParMETIS_LIBRARY_DIRS:PATH="${PARMETISDIR}/lib" \
+\
+	-D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR \
+\
+    -D Trilinos_ENABLE_Moertel:BOOL=OFF \
+    -D Moertel_ENABLE_EXAMPLES:BOOL=OFF \
+    -D Moertel_ENABLE_Morkon:BOOL=OFF \
+    -D Trilinos_ENABLE_TriKota:BOOL=OFF \
+    -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+    -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
+    -D Trilinos_ENABLE_SECONDARY_TESTED_CODE=OFF \
+    -D Trilinos_ENABLE_Amesos2:BOOL=ON \
+    -D Amesos2_ENABLE_KLU2:BOOL=ON \
+    -D CMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON \
+    -D CMAKE_INSTALL_RPATH:STRING="$MPI_BASE_DIR/lib64" \
+\
+$EXTRA_ARGS \
+${TRILINOS_HOME}
+
+exit 0
+
+    -D CMAKE_CXX_COMPILER:FILEPATH=$MPI_BASE_DIR/bin/mpicxx \
+    -D CMAKE_C_COMPILER:FILEPATH=$MPI_BASE_DIR/bin/mpicc \
+    -D CMAKE_Fortran_COMPILER:FILEPATH=$MPI_BASE_DIR/bin/mpifort \
+	-D Netcdf_LIBRARY_DIRS:PATH=$NETCDF/lib64 \
+    -D HDF5_LIBRARY_DIRS:PATH=$HDFDIR/lib \
+    -D Zlib_LIBRARY_DIRS:PATH=$HDFDIR/lib \
+    -D TPL_BLAS_LIBRARIES:STRING="$LABLAS_LIBRARIES" \
+    -D TPL_LAPACK_LIBRARIES:STRING="$LABLAS_LIBRARIES" \
+
+    -D CMAKE_CXX_FLAGS:STRING="-xHOST -O3 -no-prec-div -fp-model fast=2 -mkl=sequential -DNDEBUG" \
+    -D CMAKE_C_FLAGS:STRING="-xHOST -O3 -no-prec-div -fp-model fast=2 -mkl=sequential -DNDEBUG" \
+    -D CMAKE_Fortran_FLAGS:STRING="-xHOST -O3 -no-prec-div -fp-model fast=2 -mkl=sequential -DNDEBUG" \
+    -D CMAKE_INSTALL_RPATH:STRING="$ARTIFACT/lib;$MESA/lib;$PYTHON/lib" \ 

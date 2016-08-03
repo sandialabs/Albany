@@ -71,6 +71,9 @@ struct SlipSystemStruct
   RealType
   energy_activation_;
 
+  RealType
+  drag_coeff_;
+
   //
   // Hardening law parameters
   //
@@ -437,6 +440,36 @@ struct NoFlowRule final : public FlowRuleBase<NumDimT, NumSlipT, DataT, ArgT>
   ~NoFlowRule() {}
 };
 
+///
+/// Power Law with Viscous Drag
+///
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, 
+  typename DataT, typename ArgT>
+struct PowerLawDragFlowRule final : public FlowRuleBase<NumDimT, NumSlipT, DataT, ArgT>
+{
+  static constexpr
+  char const * const
+  NAME{"Power Law with Drag"};
+
+  virtual
+  char const * const
+  name()
+  {
+    return NAME;
+  }
+
+  virtual
+  Intrepid2::Vector<ArgT, NumSlipT>
+  computeRateSlip(
+    std::vector<SlipSystemStruct<NumDimT, NumSlipT> > const & slip_systems,
+    Intrepid2::Vector<ArgT, NumSlipT> const & shear,
+    Intrepid2::Vector<ArgT, NumSlipT> const & slip_resistance);
+
+  virtual
+  ~PowerLawDragFlowRule() {}
+};
+
+
 //
 //
 //
@@ -457,6 +490,10 @@ flowRuleFactory(FlowRule flow_rule)
 
   case FlowRule::POWER_LAW:
     return FTUP(new PowerLawFlowRule<NumDimT, NumSlipT, DataT, ArgT>());
+    break;
+
+  case FlowRule::POWER_LAW_DRAG:
+    return FTUP(new PowerLawDragFlowRule<NumDimT, NumSlipT, DataT, ArgT>());
     break;
 
   // case FlowRule::THERMAL_ACTIVATION:

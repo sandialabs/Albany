@@ -52,7 +52,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
 
-   //Radom field types
+   //Random field types
   enum BFTYPE {NONE, FO_INTERP_SURF_GRAD, FO_SURF_GRAD_PROVIDED, POISSON, FO_SINCOS2D, FO_COSEXP2D, FO_COSEXP2DFLIP, FO_COSEXP2DALL,
 	  FO_SINCOSZ, FO_SINEXP2D, FO_DOME, FO_XZMMS};
   BFTYPE bf_type;

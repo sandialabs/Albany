@@ -9,5 +9,5 @@
 #include "PHAL_DOFVecInterpolation.hpp"
 #include "PHAL_DOFVecInterpolation_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(PHAL::DOFVecInterpolation)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_EVAL_TYPE(PHAL::DOFVecInterpolation)
 

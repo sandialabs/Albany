@@ -93,7 +93,7 @@ namespace FELIX
       Albany::FieldManagerChoice fmchoice,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
-    //! Each problem must generate it's list of valide parameters
+    //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
   private:
@@ -705,6 +705,18 @@ FELIX::StokesFOThickness::constructEvaluators(
   ev = rcp(new FELIX::GatherVerticallyAveragedVelocity<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
+  //--- Shared Parameter for homotopy parameter: h ---//
+  p = Teuchos::rcp(new Teuchos::ParameterList("Glen's Law Homotopy Parameter"));
+
+  param_name = "Glen's Law Homotopy Parameter";
+  p->set<std::string>("Parameter Name", param_name);
+  p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+
+  Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Homotopy>> ptr_h;
+  ptr_h = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Homotopy>(*p,dl));
+  ptr_h->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Viscosity").get<double>(param_name,-1.0));
+  fm0.template registerEvaluator<EvalT>(ptr_h);
+
   if (sliding)
   {
     // --- Basal Residual --- //
@@ -718,11 +730,13 @@ FELIX::StokesFOThickness::constructEvaluators(
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
+    p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
 
     //Output
     p->set<std::string>("Basal Residual Variable Name", "Basal Residual");
 
-    ev = rcp(new FELIX::StokesFOBasalResid<EvalT,PHAL::AlbanyTraits>(*p,dl_full));
+    ev = rcp(new FELIX::StokesFOBasalResid<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl_full));
     fm0.template registerEvaluator<EvalT>(ev);
 
     // --- Prolongate Stokes FO Basal Residual --- //
@@ -919,11 +933,13 @@ FELIX::StokesFOThickness::constructEvaluators(
   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
   p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Viscosity"));
+  p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
 
   //Output
   p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
+  p->set<std::string>("EpsilonSq QP Variable Name", "FELIX EpsilonSq");
 
-  ev = rcp(new FELIX::ViscosityFO<EvalT,PHAL::AlbanyTraits>(*p,dl_full));
+  ev = rcp(new FELIX::ViscosityFO<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ParamScalarT>(*p,dl_full));
   fm0.template registerEvaluator<EvalT>(ev);
 
 #ifdef CISM_HAS_FELIX

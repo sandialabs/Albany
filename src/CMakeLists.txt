@@ -100,6 +100,7 @@ SET(SOURCES ${SOURCES}
   utility/PerformanceContext.cpp
   utility/TimeMonitor.cpp
   utility/VariableMonitor.cpp
+	utility/StaticAllocator.cpp
   )
 SET(HEADERS ${HEADERS}
   utility/Counter.hpp
@@ -111,6 +112,7 @@ SET(HEADERS ${HEADERS}
   utility/TimeGuard.hpp
   utility/TimeMonitor.hpp
   utility/VariableMonitor.hpp
+	utility/StaticAllocator.hpp
   utility/math/Tensor.hpp
   utility/math/TensorCommon.hpp
   utility/math/TensorDetail.hpp

@@ -197,25 +197,25 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     // this is called with both LO's and GO's to compute a dof number
     // based on a node number and an equation number
-    GO getDOF(const GO inode, const int entry, int nentries=-1) const
+    GO getDOF(const GO inode, const int entry, int total_comps = -1) const
     {
       if (interleavedOrdering) {
-        if (nentries == -1) nentries = neq;
-        return inode*nentries + entry;
+        if (total_comps == -1) total_comps = neq;
+        return inode * total_comps + entry;
       }
       else return inode + numOwnedNodes*entry;
     }
 
     // Copy field data from Tpetra_Vector to APF
     void setField(const char* name, const ST* data, bool overlapped,
-                  int offset = 0, int nentries = -1);
+                  int offset = 0, bool neq_sized = true);
     void setSplitFields(const Teuchos::Array<std::string>& names,
                         const Teuchos::Array<int>& indices,
                         const ST* data, bool overlapped);
 
     // Copy field data from APF to Tpetra_Vector
-    void getField(const char* name, ST* dataT, bool overlapped, int offset = 0,
-                  int nentries = -1) const;
+    void getField(const char* name, ST* dataT, bool overlapped,
+                  int offset = 0, bool neq_sized = true) const;
     void getSplitFields(const Teuchos::Array<std::string>& names,
                         const Teuchos::Array<int>& indices,
                         ST* dataT, bool overlapped) const;
@@ -375,6 +375,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     void initTemperatureHack();
 
+    //! Set any FELIX Data
+    virtual void setFELIXData() {}
+
     //! Some evaluators may want access to the underlying apf mesh elements.
     std::vector<std::vector<apf::MeshEntity*> >& getBuckets() {return buckets;}
 
@@ -412,7 +415,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void removeNodalDataFromAPF();
 
     // ! Split Solution fields
-    SolutionLayout solNames; // solNames[time_deriv_vector][Field]
+    SolutionLayout solLayout; // solLayout[time_deriv_vector][Field]
     Teuchos::Array<std::string> resNames; // resNames[Field]
 
   private:

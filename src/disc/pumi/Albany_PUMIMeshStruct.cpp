@@ -160,6 +160,9 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
         << " from restart file: " << name << std::endl;
   }
 
+  if (params->isParameter("Load FELIX Data"))
+    shouldLoadFELIXData = true;
+
 }
 
 Albany::PUMIMeshStruct::~PUMIMeshStruct()
@@ -212,6 +215,7 @@ Albany::PUMIMeshStruct::getValidDiscretizationParameters() const
 
   validPL->set<int>("Write Restart File at Step", 0, "Continuation step to write restart files");
   validPL->set<double>("PUMI Restart Time", 0, "Simulation time to restart from");
+  validPL->set<bool>("Load FELIX Data", false, "Load fields required for FELIX FO problem");
 
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
 

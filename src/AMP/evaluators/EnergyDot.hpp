@@ -45,6 +45,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> T_;
   PHX::MDField<ScalarT,Cell,QuadPoint> T_dot_;
   PHX::MDField<ScalarT,Cell,QuadPoint> phi_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> phi_dot_;
   PHX::MDField<ScalarT,Cell,QuadPoint> psi_;
   PHX::MDField<ScalarT,Cell,QuadPoint> rho_Cp_;
   PHX::MDField<ScalarT,Dummy> time_;
@@ -66,8 +67,11 @@ private:
   // Delta temperature to compute phi
   ScalarT Tc_;
   
-// old temperature name
+  // old temperature name
   std::string Temperature_Name_;
+
+  // old phi name
+  std::string Phi_old_name_;
 
   Teuchos::RCP<const Teuchos::ParameterList>
     getValidEnergyDotParameters() const;

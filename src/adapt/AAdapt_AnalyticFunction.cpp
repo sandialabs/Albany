@@ -28,6 +28,12 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
 
   else if(name == "Step X")
     F = Teuchos::rcp(new AAdapt::StepX(neq, numDim, data));
+
+  else if(name == "TemperatureStep Z")
+    F = Teuchos::rcp(new AAdapt::TemperatureStepZ(neq, numDim, data));
+
+  else if(name == "TemperatureLinear Z")
+    F = Teuchos::rcp(new AAdapt::TemperatureLinearZ(neq, numDim, data));
   
   else if(name == "1D Gauss-Sin")
     F = Teuchos::rcp(new AAdapt::GaussSin(neq, numDim, data));
@@ -178,6 +184,83 @@ void AAdapt::StepX::compute(double* x, const double* X) {
         x[0] = T;
     }
 }
+
+//*****************************************************************************
+AAdapt::TemperatureStepZ::TemperatureStepZ(int neq_, int numDim_,
+    Teuchos::Array<double> data_) : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((data.size() != 5),
+                             std::logic_error,
+                             "Error! Invalid specification of initial condition: incorrect length of Function Data for TemperatureStep Z; Length = " << 5 << ", data.size() = " << data.size() <<  std::endl) ;
+}
+
+void AAdapt::TemperatureStepZ::compute(double* x, const double* X) {
+    // Temperature bottom
+    double T0 = data[0];
+    // Temperature top
+    double T1 = data[1];
+    // constant temperature
+    double T = data[2];
+    // bottom z-coordinate
+    double Z0 = data[3];
+    // top x-coordinate
+    double Z1 = data[4];
+    
+    const double TOL = 1.0e-12;
+    
+    // bottom
+    if ( X[2] < ( Z0 + TOL) ) {
+        x[0] = T0;
+    } else if ( X[2] > ( Z1 - TOL) ){
+        x[0] = T1;
+    } else {
+        x[0] = T;
+    }
+}
+
+//*****************************************************************************
+AAdapt::TemperatureLinearZ::TemperatureLinearZ(int neq_, int numDim_,
+    Teuchos::Array<double> data_) : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((data.size() != 4),
+                             std::logic_error,
+                             "Error! Invalid specification of initial condition: incorrect length of Function Data for TemperatureLinear Z; Length = " << 4 << ", data.size() = " << data.size() <<  std::endl) ;
+}
+
+void AAdapt::TemperatureLinearZ::compute(double* x, const double* X) {
+    // Temperature bottom
+    double T0 = data[0];
+    // Temperature top
+    double T1 = data[1];
+    // bottom z-coordinate
+    double Z0 = data[2];
+    // top z-coordinate
+    double Z1 = data[3];
+
+    const double TOL = 1.0e-12;
+    
+    // check that temperatures are not equal
+    if ( std::abs(T0 - T1) <= TOL )
+      {
+	TEUCHOS_TEST_FOR_EXCEPTION(true,
+				   std::logic_error,
+				   "Error! Temperature are equals!" <<  std::endl) ;
+      }
+    // check coordinates are not equal
+    if ( std::abs( Z0 - Z1 ) <= TOL )
+      {
+	TEUCHOS_TEST_FOR_EXCEPTION(true,
+				   std::logic_error,
+				   "Error! Z-coordinates are the same!" <<  std::endl) ;
+      }
+
+    // We interpolate Temperature as a linear function of z-ccordinate: T = b + m*z
+    double b = ( T1*Z0 - T0*Z1 ) / ( Z0 - Z1);
+    //
+    double m = ( T0 - T1 ) / ( Z0 - Z1);
+
+    // assign temperature
+    x[0] = b + m * X[2];
+}
+
 //*****************************************************************************
 // Private convenience function
 long AAdapt::seedgen(int worksetID) {

@@ -44,20 +44,48 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void DOFDInterpolationLevels<EvalT, Traits>::
+operator() (const DOFDInterpolationLevels_Tag& tag, const int& cell) const{
+  for (int qp=0; qp < numQPs; ++qp) {
+    for (int level=0; level < numLevels; ++level) {
+      for (int dim=0; dim<numDims; dim++) {
+        d_val_qp(cell,qp,level,dim) = 0;
+        for (int node= 0 ; node < numNodes; ++node) {
+          d_val_qp(cell,qp,level,dim) += val_node(cell,node,level,dim) * GradBF(cell,node,qp,dim);
+        }
+      }
+    }
+  }
+}
+
+#endif
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void DOFDInterpolationLevels<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  PHAL::set(d_val_qp, 0.0);
-  for (int cell=0; cell < workset.numCells; ++cell) 
-    for (int qp=0; qp < numQPs; ++qp) 
-      for (int node= 0 ; node < numNodes; ++node) 
-        for (int level=0; level < numLevels; ++level) 
-          for (int dim=0; dim<numDims; dim++) {
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
+      for (int level=0; level < numLevels; ++level) {
+        for (int dim=0; dim<numDims; dim++) {
+          d_val_qp(cell,qp,level,dim) = 0;
+          for (int node= 0 ; node < numNodes; ++node) {
             d_val_qp(cell,qp,level,dim) += val_node(cell,node,level,dim) * GradBF(cell,node,qp,dim);
-}
+          }
+        }
+      }
+    }
+  }
 
-}
+#else
+  Kokkos::parallel_for(DOFDInterpolationLevels_Policy(0,workset.numCells),*this);
 
+#endif
 }
-
+}

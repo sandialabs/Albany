@@ -19,7 +19,7 @@ if [ -z "$ARCH" ]; then
 fi
 
 if [ -z "$TOOL_CHAIN" ]; then
-    echo "Specify tool chain [gcc|clang|intel]"
+    echo "Specify tool chain [gcc|clang|intel|pgi]"
     exit 1
 fi
 
@@ -111,6 +111,11 @@ case "$TOOL_CHAIN" in
 	if [ -z ${CXX+x} ]; then CXX=`which icpc`; fi
 	if [ -z ${FC+x} ]; then FC=`which ifort`; fi
 	;;
+    pgi)
+	if [ -z ${CC+x} ]; then CC=`which pgcc`; fi
+	if [ -z ${CXX+x} ]; then CXX=`which pgc++`; fi
+	if [ -z ${FC+x} ]; then FC=`which pgfortran`; fi
+	;;
     *)
 	echo "Unrecognized tool chain option"
 	exit 1
@@ -134,6 +139,8 @@ case "$BUILD_TYPE" in
 		;;
 	    intel)
 		;;
+	    pgi)
+		;;
 	    *)
 		;;
 	esac
@@ -146,6 +153,8 @@ case "$BUILD_TYPE" in
 	    clang)
 		;;
 	    intel)
+		;;
+	    pgi)
 		;;
 	    *)
 		;;
@@ -160,6 +169,8 @@ case "$BUILD_TYPE" in
 		;;
 	    intel)
 		;;
+	    pgi)
+		;;
 	    *)
 		;;
 	esac
@@ -173,6 +184,8 @@ case "$BUILD_TYPE" in
 		;;
 	    intel)
 		;;
+	    pgi)
+		;;
 	    *)
 		;;
 	esac
@@ -185,6 +198,8 @@ case "$BUILD_TYPE" in
 	    clang)
 		;;
 	    intel)
+		;;
+	    pgi)
 		;;
 	    *)
 		;;

@@ -7,6 +7,7 @@ from matplotlib import rcParams
 
 
 # Plot ij-components of Cauchy stress vs ij-components of Logarithmic strain 
+# @profile
 def plot_data_stress(domain = None, filename = None):
 
     if filename != None:
@@ -17,7 +18,7 @@ def plot_data_stress(domain = None, filename = None):
 
 #    rc_params.update({'figure.autolayout': True})
 
-    plt.rc('text', usetex=True)
+    # plt.rc('text', usetex=True)
     plt.rc('font', family='serif', size=22)
 
     fig = plt.figure()

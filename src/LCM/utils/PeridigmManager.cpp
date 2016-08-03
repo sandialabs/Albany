@@ -807,6 +807,8 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 
 double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalDerivWrtDisplacement)
 {
+  double scaleFactor = 1.0;
+
   if(!enableOptimizationBasedCoupling){
     return 0.0;
   }
@@ -833,6 +835,23 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
   if(obcFunctionalDerivWrtDisplacement != NULL){
     obcFunctionalDerivWrtDisplacementOverlap = Teuchos::rcp<Epetra_Vector>(new Epetra_Vector(*stkDisc->getOverlapMap()));
     overlapSolutionExporter = Teuchos::rcp<Epetra_Export>(new Epetra_Export(*stkDisc->getOverlapMap(), obcFunctionalDerivWrtDisplacement->Map()));
+  }
+
+  Teuchos::RCP<Epetra_Vector> obcFunctionalDerivWrtDisplacementPeridynamicNodes;
+  if(obcFunctionalDerivWrtDisplacement != NULL){
+    std::vector<int> tempGlobalIds(3*obcDataPoints->size());
+    for(unsigned int i=0 ; i<obcDataPoints->size() ; i++){
+      tempGlobalIds[3*i]   = 3*(*obcDataPoints)[i].peridigmGlobalId;
+      tempGlobalIds[3*i+1] = 3*(*obcDataPoints)[i].peridigmGlobalId + 1;
+      tempGlobalIds[3*i+2] = 3*(*obcDataPoints)[i].peridigmGlobalId + 2;
+    }
+    Epetra_BlockMap epetraTempMap(-1,
+				  static_cast<int>( tempGlobalIds.size() ),
+				  &tempGlobalIds[0],
+				  1,
+				  0,
+				  obcFunctionalDerivWrtDisplacement->Map().Comm());
+    obcFunctionalDerivWrtDisplacementPeridynamicNodes = Teuchos::rcp<Epetra_Vector>(new Epetra_Vector(epetraTempMap));
   }
 
   // We're interested in a single point in a single element in a three-dimensional simulation
@@ -878,7 +897,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
     for(int dof=0 ; dof<3 ; dof++){
       displacementDiff[3*iEvalPt+dof] = physPoints(0,0,dof) - ((*obcDataPoints)[iEvalPt].currentCoords[dof] - (*obcDataPoints)[iEvalPt].initialCoords[dof]);
       // Multiply the displacement vector by the sphere element volume
-      displacementDiffScaled[3*iEvalPt+dof] = displacementDiff[3*iEvalPt+dof]*(*obcDataPoints)[iEvalPt].sphereElementVolume;
+      displacementDiffScaled[3*iEvalPt+dof] = scaleFactor*displacementDiff[3*iEvalPt+dof]*(*obcDataPoints)[iEvalPt].sphereElementVolume;
     }
 
     if(obcFunctionalDerivWrtDisplacement != NULL) {
@@ -901,7 +920,8 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
           deriv[dim] = 2*displacementDiffScaled[3*iEvalPt+dim]*basisOnRefPoint(i,0);
           globalNodeIds[dim] = 3*globalAlbanyNodeId + dim;
         }
-        obcFunctionalDerivWrtDisplacementOverlap->SumIntoGlobalValues(3, deriv, globalNodeIds);
+        int err = obcFunctionalDerivWrtDisplacementOverlap->SumIntoGlobalValues(3, deriv, globalNodeIds);
+	TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "\n\n**** Error in PeridigmManager::obcEvaluateFunctional(), obcFunctionalDerivWrtDisplacementOverlap->SumIntoGlobalValues().\n\n");
       }
 
       // Derivatives corresponding to dof at peridigm node
@@ -909,13 +929,24 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
         deriv[dim] = -2*displacementDiffScaled[3*iEvalPt+dim];
         globalNodeIds[dim] = 3*((*obcDataPoints)[iEvalPt].peridigmGlobalId) + dim;
       }
-      obcFunctionalDerivWrtDisplacementOverlap->SumIntoGlobalValues(3, deriv, globalNodeIds);
+
+      int err = obcFunctionalDerivWrtDisplacementPeridynamicNodes->SumIntoGlobalValues(3, deriv, globalNodeIds);
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "\n\n**** Error in PeridigmManager::obcEvaluateFunctional(), obcFunctionalDerivWrtDisplacementPeridynamicNodes->SumIntoGlobalValues().\n\n");
     }
   }
+
+
 
   // Assemble the derivative of the functional
   if(obcFunctionalDerivWrtDisplacement != NULL) {
     obcFunctionalDerivWrtDisplacement->Export(*obcFunctionalDerivWrtDisplacementOverlap, *overlapSolutionExporter, Add);
+
+    // Add in the contribution from the peridynamic nodes, which may be owned by a different processor
+    Epetra_Vector temp(obcFunctionalDerivWrtDisplacement->Map());
+    Epetra_Import tempImporter(temp.Map(), obcFunctionalDerivWrtDisplacementPeridynamicNodes->Map());
+    int err = temp.Import(*obcFunctionalDerivWrtDisplacementPeridynamicNodes, tempImporter, Add);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "\n\n**** Error in PeridigmManager::obcEvaluateFunctional(), import operation failed for obcFunctionalDerivWrtDisplacementPeridynamicNodes!\n\n");
+    obcFunctionalDerivWrtDisplacement->Update(1.0, temp, 1.0);
   }
 
   // Send displacement differences to Peridigm for output
@@ -933,7 +964,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
 
   // Evaluate the functional
   double functionalValue(0.0);
-  displacementDiff.Dot(displacementDiffScaled, &functionalValue);
+  displacementDiffScaled.Dot(displacementDiffScaled, &functionalValue);
 
   return functionalValue;
 }
@@ -1399,7 +1430,7 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
           double* dirichletData = stk::mesh::field_data (*dirichletField, node);
 
           //set dirichletData as any function of the coordinates;
-          dirichletData[0] = 0.001*(coord[0]/1.625);
+          dirichletData[0] = 0.001*coord[0];
         }
       }
     }
@@ -1414,7 +1445,7 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
           double* coord = stk::mesh::field_data(*stkDisc->getSTKMeshStruct()->getCoordinatesField(), node);
           double* dirichletData = stk::mesh::field_data(*dirichletField, node);
           //set dirichletData as any function of the coordinates;
-          dirichletData[0]= 0.001*(coord[0]/1.625);
+          dirichletData[0]= 0.001*coord[0];
         }
       }
     }

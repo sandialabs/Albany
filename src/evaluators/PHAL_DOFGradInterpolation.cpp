@@ -9,6 +9,6 @@
 #include "PHAL_DOFGradInterpolation.hpp"
 #include "PHAL_DOFGradInterpolation_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DOFGradInterpolation)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_EVAL_TYPE(PHAL::DOFGradInterpolation)
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::DOFGradInterpolation_noDeriv)
 

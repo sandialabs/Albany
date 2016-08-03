@@ -14,6 +14,7 @@
 #include "Aeras_Layouts.hpp"
 #include "Aeras_Dimension.hpp"
 #include "Sacado_ParameterAccessor.hpp"
+#include "Aeras_Eta.hpp"
 
 namespace Aeras {
 
@@ -44,10 +45,38 @@ private:
   const int numNodes;
   const int numDims;
   const int numLevels;
+  const Eta<EvalT> &E;
   Teuchos::RCP<Teuchos::FancyOStream> out;
   
   enum ADVTYPE {UNKNOWN, PRESCRIBED_1_1, PRESCRIBED_1_2};
   ADVTYPE adv_type;
+  double time;
+
+  // Prescribed 1-1 parameters
+  ScalarT PI, earthRadius, ptop, p0, tau, omega0, k;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct Hydrostatic_Velocity_Tag{};
+  struct Hydrostatic_Velocity_PRESCRIBED_1_1_Tag{};
+  struct Hydrostatic_Velocity_PRESCRIBED_1_2_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, Hydrostatic_Velocity_Tag> Hydrostatic_Velocity_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, Hydrostatic_Velocity_PRESCRIBED_1_1_Tag> Hydrostatic_Velocity_PRESCRIBED_1_1_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, Hydrostatic_Velocity_PRESCRIBED_1_2_Tag> Hydrostatic_Velocity_PRESCRIBED_1_2_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Hydrostatic_Velocity_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Hydrostatic_Velocity_PRESCRIBED_1_1_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Hydrostatic_Velocity_PRESCRIBED_1_2_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 

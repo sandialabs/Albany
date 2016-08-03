@@ -4,7 +4,7 @@ set (CTEST_DO_SUBMIT ON)
 set (CTEST_TEST_TYPE Nightly)
 
 # What to build and test
-set (DOWNLOAD FALSE)
+set (DOWNLOAD TRUE)
 set (BUILD_ALB32 FALSE)
 set (BUILD_ALB32_NOEPETRA TRUE)
 set (BUILD_ALB64 FALSE)

@@ -16,7 +16,7 @@ setenv                  TOOL_CHAIN      $tool_chain
 setenv                  BUILD_TYPE      $build_type
 setenv                  BUILD           $build
 setenv                  INSTALL_DIR     $install_dir
-#setenv                 CUDA_LAUNCH_BLOCKING    1
+setenv                  CUDA_LAUNCH_BLOCKING    1
 setenv                  CUDA_VISIBLE_DEVICES    0
 
 prepend-path            LD_LIBRARY_PATH $install_dir/lib

@@ -51,6 +51,24 @@ private:
   const int numQPs;
   const int numLevels;
   const int numRank;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct DOFInterpolation_numRank2_Tag{};
+  struct DOFInterpolation_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFInterpolation_numRank2_Tag> DOFInterpolation_numRank2_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFInterpolation_Tag> DOFInterpolation_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFInterpolation_numRank2_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFInterpolation_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 

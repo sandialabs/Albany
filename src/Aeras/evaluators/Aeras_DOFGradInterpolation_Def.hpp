@@ -43,10 +43,30 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void DOFGradInterpolation<EvalT, Traits>::
+operator() (const DOFGradInterpolation_Tag& tag, const int& cell) const{
+  for (int qp=0; qp < numQPs; ++qp) {
+    for (int dim=0; dim<numDims; dim++) {
+      grad_val_qp(cell,qp,dim) = 0;
+      for (int node=0 ; node < numNodes; ++node) {
+        grad_val_qp(cell,qp,dim)+= val_node(cell, node) * GradBF(cell, node, qp, dim);
+      }
+    }
+  }
+}
+
+#endif
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void DOFGradInterpolation<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   //Intrepid2 Version:
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
@@ -61,6 +81,11 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+
+#else
+  Kokkos::parallel_for(DOFGradInterpolation_Policy(0,workset.numCells),*this);
+
+#endif
 }
 
 //**********************************************************************
@@ -96,23 +121,51 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void DOFGradInterpolation_noDeriv<EvalT, Traits>::
+operator() (const DOFGradInterpolation_noDeriv_Tag& tag, const int& cell) const{
+  for (int qp=0; qp < numQPs; ++qp) {
+    for (int dim=0; dim<numDims; dim++) {
+      grad_val_qp(cell,qp,dim) = 0;
+      for (int node=0 ; node < numNodes; ++node) {
+        grad_val_qp(cell,qp,dim) += val_node(cell, node) * GradBF(cell, node, qp, dim);
+      }
+    }
+  }
+}
+
+#endif
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void DOFGradInterpolation_noDeriv<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   //Intrepid2 Version:
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid2::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
-  PHAL::set(grad_val_qp, 0.0);
-  for (int cell=0; cell < workset.numCells; ++cell) 
-    for (int qp=0; qp < numQPs; ++qp) 
-      for (int dim=0; dim<numDims; dim++) 
-        for (int node=0 ; node < numNodes; ++node) 
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
+      for (int dim=0; dim<numDims; dim++) {
+        grad_val_qp(cell,qp,dim) = 0;
+        for (int node=0 ; node < numNodes; ++node) {
           grad_val_qp(cell,qp,dim) += val_node(cell, node) * GradBF(cell, node, qp, dim);
+        }
+      }
+    }
+  }
+
+#else
+  Kokkos::parallel_for(DOFGradInterpolation_noDeriv_Policy(0,workset.numCells),*this);
+
+#endif
 }
 
 //**********************************************************************
 
 }
-
