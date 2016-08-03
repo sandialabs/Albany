@@ -74,6 +74,10 @@
                           type="string" 
                           value="Implicit"/>
 
+               <Parameter name="Residual Type"
+                          type="string"
+                          value="Slip Hardness"/>
+
                <Parameter name="Implicit Integration Relative Tolerance" 
                           type="double" 
                           value="1.0e-35"/>
@@ -120,7 +124,7 @@
 
                          <Parameter name="Reference Slip Rate"
                                     type="double"
-                                    value="9.0e01"/>
+                                    value="1.0e-03"/>
 
                          <Parameter name="Hardening Rate" 
                                     type="double" 
@@ -136,7 +140,7 @@
 
                          <Parameter name="Initial Hardening State"
                                     type="double"
-                                    value="90.0"/>
+                                    value="9.0e+01"/>
 
                     </ParameterList>
 

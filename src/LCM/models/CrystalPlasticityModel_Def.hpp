@@ -28,7 +28,7 @@ CrystalPlasticityModel(
     LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
     num_family_(p->get<int>("Number of Slip Families", 1)),
     num_slip_(p->get<int>("Number of Slip Systems", 0)),
-    allocator_(1024)  // 1 kB
+    allocator_(1024*1024)  // 1 mB
 {
 	CP::ParameterReader<EvalT, Traits> preader(p, allocator_);
 
@@ -134,7 +134,7 @@ CrystalPlasticityModel(
     ss_list = p->sublist(Albany::strint("Slip System", num_ss + 1));
 
     CP::SlipSystem<CP::MAX_DIM> &
-    slip_system = slip_systems_[num_ss];
+    slip_system = slip_systems_.at(num_ss);
 
     slip_system.slip_family_index_ = ss_list.get<int>("Slip Family", 0);
 
@@ -161,7 +161,7 @@ CrystalPlasticityModel(
       s_temp_normalized[i] = s_temp[i];
     }
     s_temp_normalized = Intrepid2::unit(s_temp_normalized);
-    slip_systems_[num_ss].s_.set_dimension(num_dims_);
+    slip_systems_.at(num_ss).s_.set_dimension(num_dims_);
     s_unrotated_.push_back( s_temp_normalized );
 
     //
@@ -177,10 +177,10 @@ CrystalPlasticityModel(
       n_temp_normalized[i] = n_temp[i];
     }
     n_temp_normalized = Intrepid2::unit(n_temp_normalized);
-    slip_systems_[num_ss].n_.set_dimension(num_dims_);
+    slip_systems_.at(num_ss).n_.set_dimension(num_dims_);
     n_unrotated_.push_back( n_temp_normalized );
 
-    slip_systems_[num_ss].projector_.set_dimension(num_dims_);
+    slip_systems_.at(num_ss).projector_.set_dimension(num_dims_);
 
     auto const
     index_param = 
@@ -391,7 +391,7 @@ CrystalPlasticityModel(
     this->state_var_layouts_.push_back(dl->qp_scalar);
     this->state_var_init_types_.push_back("scalar");
     this->state_var_init_values_.push_back(
-      slip_systems_[num_ss].state_hardening_initial_);
+      slip_systems_.at(num_ss).state_hardening_initial_);
     this->state_var_old_state_flags_.push_back(true);
     this->state_var_output_flags_.push_back(
         p->get<bool>(output_tau_hard_string, false));
@@ -708,8 +708,6 @@ computeState(typename Traits::EvalData workset,
   Intrepid2::Vector<ScalarT, CP::NLS_DIM>
   x;
 
-  x.fill(Intrepid2::ZEROS);
-
   // Choose explicit or implicit integration of the constitutive update
   switch (integration_scheme_) {
 
@@ -752,6 +750,8 @@ computeState(typename Traits::EvalData workset,
     }
   }
 
+  x.fill(Intrepid2::ZEROS);
+
 
 
 
@@ -773,6 +773,8 @@ computeState(typename Traits::EvalData workset,
   for (int cell(0); cell < workset.numCells; ++cell) {
 
     for (int pt(0); pt < num_pts_; ++pt) {
+
+      allocator_.clear();
 
       if (have_temperature_) {
 
@@ -818,10 +820,10 @@ computeState(typename Traits::EvalData workset,
       // and projection operator
       C_ = Intrepid2::kronecker(orientation_matrix, C_unrotated_);
       for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
-        slip_systems_[num_ss].s_ = orientation_matrix * s_unrotated_[num_ss];
-        slip_systems_[num_ss].n_ = orientation_matrix * n_unrotated_[num_ss];
-        slip_systems_[num_ss].projector_ =
-          Intrepid2::dyad(slip_systems_[num_ss].s_, slip_systems_[num_ss].n_);
+        slip_systems_.at(num_ss).s_ = orientation_matrix * s_unrotated_[num_ss];
+        slip_systems_.at(num_ss).n_ = orientation_matrix * n_unrotated_[num_ss];
+        slip_systems_.at(num_ss).projector_ =
+          Intrepid2::dyad(slip_systems_.at(num_ss).s_, slip_systems_.at(num_ss).n_);
       }
 
 			// TODO: Try to preprocess this
@@ -1081,7 +1083,7 @@ computeState(typename Traits::EvalData workset,
                 x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
                 // initial guess for x(num_slip_:2*num_slip_) from predictor
                 x(i + num_slip_) = 
-                  Sacado::ScalarValue<ScalarT>::eval(slip_resistance(i));
+                  Sacado::ScalarValue<ScalarT>::eval(state_hardening_n(i));
               }
 
               using STEP = Intrepid2::StepBase<NLS, ValueT, CP::NLS_DIM>;
@@ -1094,8 +1096,25 @@ computeState(typename Traits::EvalData workset,
 
               for(int i=0; i<num_slip_; ++i) {
                 slip_np1[i] = x[i];
-                slip_resistance[i] = x[i + num_slip_];
+                state_hardening_np1[i] = x[i + num_slip_];
               }
+
+              if(dt > 0.0){
+                rate_slip = (slip_np1 - slip_n) / dt;
+              }
+              else{
+                rate_slip.fill(Intrepid2::ZEROS);
+              }
+
+              // Compute state_hardening_np1
+              CP::updateHardness<CP::MAX_DIM, CP::MAX_SLIP, ScalarT>(
+                slip_systems_, 
+                slip_families_,
+                dt,
+                rate_slip, 
+                state_hardening_n, 
+                state_hardening_np1,
+                slip_resistance);
             }
             break;
 
@@ -1252,7 +1271,7 @@ computeState(typename Traits::EvalData workset,
 
             for (int s(0); s < num_slip_; ++s) {
               data_file << "\n" << "P" << s << ": ";
-              P = slip_systems_[s].projector_;
+              P = slip_systems_.at(s).projector_;
               for (int i(0); i < num_dims_; ++i) {
                 for (int j(0); j < num_dims_; ++j) {
                   data_file << std::setprecision(12);

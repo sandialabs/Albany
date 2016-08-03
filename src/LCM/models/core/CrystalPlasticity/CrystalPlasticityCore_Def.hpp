@@ -17,19 +17,19 @@ template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
 void
 CP::SlipFamily<NumDimT, NumSlipT>::setHardeningLawType(CP::HardeningLawType law)
 {
-	type_hardening_law_ = law;
+  type_hardening_law_ = law;
 
-	phardening_parameters_ =
-		CP::hardeningParameterFactory<CP::MAX_DIM, CP::MAX_SLIP>(type_hardening_law_);
+  phardening_parameters_ =
+    CP::hardeningParameterFactory<CP::MAX_DIM, CP::MAX_SLIP>(type_hardening_law_);
 }
 
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
 void
 CP::SlipFamily<NumDimT, NumSlipT>::setFlowRuleType(CP::FlowRuleType rule)
 {
-	type_flow_rule_ = rule;
+  type_flow_rule_ = rule;
 
-	pflow_parameters_ = CP::flowParameterFactory(type_flow_rule_);
+  pflow_parameters_ = CP::flowParameterFactory(type_flow_rule_);
 }
 
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
@@ -104,7 +104,7 @@ CP::applySlipIncrement(
 
   if(dt > 0){
     for (int s(0); s < num_slip; ++s) {
-      Lp_np1 += (slip_np1[s] - slip_n[s])/dt * slip_systems[s].projector_;
+      Lp_np1 += (slip_np1[s] - slip_n[s])/dt * slip_systems.at(s).projector_;
     }
   }
 
@@ -175,7 +175,7 @@ CP::updateSlip(
   for (int ss_index(0); ss_index < slip_systems.size(); ++ ss_index)
   {
     auto const &
-    slip_family = slip_families[slip_systems[ss_index].slip_family_index_];
+    slip_family = slip_families[slip_systems.at(ss_index).slip_family_index_];
 
     CP::flowRuleFactory<ArgT>
     f;
@@ -253,7 +253,7 @@ CP::computeStress(
   // Compute resolved shear stresses
   for (int s(0); s < num_slip; ++s) {
     shear[s] = 
-      Intrepid2::dotdot(slip_systems[s].projector_, deformation_elastic * S);
+      Intrepid2::dotdot(slip_systems.at(s).projector_, deformation_elastic * S);
   }
 }
 

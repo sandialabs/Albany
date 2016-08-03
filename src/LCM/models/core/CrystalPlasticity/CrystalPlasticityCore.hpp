@@ -69,11 +69,11 @@ public:
   SlipFamily(utility::StaticAllocator & alloc);
 
   ~SlipFamily() {}
-	
-	void setHardeningLawType(HardeningLawType law);
-	HardeningLawType getHardeningLawType() const { return type_hardening_law_; }
-	void setFlowRuleType(FlowRuleType rule);
-	FlowRuleType getFlowRuleType() const { return type_flow_rule_; }
+  
+  void setHardeningLawType(HardeningLawType law);
+  HardeningLawType getHardeningLawType() const { return type_hardening_law_; }
+  void setFlowRuleType(FlowRuleType rule);
+  FlowRuleType getFlowRuleType() const { return type_flow_rule_; }
 
   template<typename ArgT>
   utility::StaticPointer<HardeningLawBase<NumDimT, NumSlipT, ArgT>>

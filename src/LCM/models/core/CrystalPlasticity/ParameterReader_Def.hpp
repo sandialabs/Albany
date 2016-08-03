@@ -67,8 +67,8 @@ CP::ParameterReader<EvalT, Traits>::getMinimizer() const
 
 	min.rel_tol = p_->get<RealType>("Implicit Integration Relative Tolerance", 1.0e-6);
 	min.abs_tol = p_->get<RealType>("Implicit Integration Absolute Tolerance", 1.0e-10);
-	min.min_num_iter = p_->get<int>("Implicit Integration Max Iterations", 100);
-	min.max_num_iter = p_->get<int>("Implicit Integration Min Iterations", 2);
+	min.max_num_iter = p_->get<int>("Implicit Integration Max Iterations", 100);
+	min.min_num_iter = p_->get<int>("Implicit Integration Min Iterations", 2);
 
 	return min;
 }

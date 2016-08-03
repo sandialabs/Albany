@@ -145,7 +145,8 @@ harden(
   auto const
   modulus_hardening = phardening_params->getParameter(Params::MODULUS_HARDENING);
 
-  std::cout << "Slip Rate" << rate_slip << std::endl;
+  auto const
+  hardness_initial = phardening_params->getParameter(Params::STATE_HARDENING_INITIAL);
 
   if (modulus_recovery > 0.0)
   {
@@ -154,12 +155,13 @@ harden(
       auto const
       ss_index_global = slip_family.slip_system_indices_(ss_index);
 
+      // FIXME: there is no guard against log(x), x<0 
       RealType const 
       effective_slip_n = -1.0 / modulus_recovery * 
-        std::log(1.0 - modulus_recovery / modulus_hardening * state_hardening_n[ss_index_global]);
+        std::log(1.0 - modulus_recovery / modulus_hardening * (state_hardening_n[ss_index_global] - hardness_initial));
 
       state_hardening_np1[ss_index_global] = modulus_hardening / modulus_recovery * (1.0 - 
-        std::exp(-modulus_recovery * (effective_slip_n + dt * driver_hardening[ss_index])));  
+        std::exp(-modulus_recovery * (effective_slip_n + dt * driver_hardening[ss_index]))) + hardness_initial;  
 
       slip_resistance[ss_index_global] = state_hardening_np1[ss_index_global];
     }
@@ -178,8 +180,26 @@ harden(
     }
   }
 
-//    state_hardening_np1[slip_sys] = state_hardening_n[slip_sys] +
-//      dt * (H - Rd * (state_hardening_n[slip_sys])) * driver_hardening[slip_sys];
+
+
+  // auto const
+  // Rd = phardening_params->getParameter(Params::MODULUS_RECOVERY);
+
+  // auto const
+  // H = phardening_params->getParameter(Params::MODULUS_HARDENING);
+
+  // for (int ss_index(0); ss_index < num_slip_sys; ++ss_index)
+  // {
+  //   auto const
+  //   ss_index_global = slip_family.slip_system_indices_(ss_index);
+
+  //   state_hardening_np1[ss_index_global] = state_hardening_n[ss_index_global] +
+  //     dt * (H - Rd * (state_hardening_n[ss_index_global])) * driver_hardening[ss_index_global];
+
+  //   slip_resistance[ss_index_global] = state_hardening_np1[ss_index_global] + hardness_initial;
+  // }
+
+   
 
   return;
 }
