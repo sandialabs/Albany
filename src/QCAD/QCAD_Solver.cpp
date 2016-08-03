@@ -3363,7 +3363,7 @@ void QCAD::CopyStateToContainer(Albany::StateArrays& state_arrays,
     dest.resize(numWorksets);    
     for (int ws = 0; ws < numWorksets; ws++) {
       src[ws][stateNameToCopy].dimensions(dims);
-      dest[ws].resize(dims);
+      dest[ws] = Kokkos::DynRankView<RealType, PHX::Device>("XXX", dims[0], dims[1]);
     }
   }
 
@@ -3413,7 +3413,7 @@ void QCAD::CopyContainer(std::vector<Kokkos::DynRankView<RealType, PHX::Device> 
   
   for (int ws = 0; ws < numWorksets; ws++)
   {
-    dest[ws] = src[ws]; //assignment operator in Intrepid2::FieldContainer
+    Kokkos::deep_copy(dest[ws],src[ws]);
   }
 }
 
@@ -3427,11 +3427,10 @@ void QCAD::AddContainerToContainer(std::vector<Kokkos::DynRankView<RealType, PHX
 
   for (int ws = 0; ws < numWorksets; ws++)
   {
-    dest[ws].dimensions(dims);
-    TEUCHOS_TEST_FOR_EXCEPT( dims.size() != 2 );
+    TEUCHOS_TEST_FOR_EXCEPT( dest[ws].rank() != 2 );
     
-    for(int cell=0; cell < dims[0]; cell++) {
-      for(int qp=0; qp < dims[1]; qp++) {
+    for(int cell=0; cell < dest[ws].dimension(0); cell++) {
+      for(int qp=0; qp < dest[ws].dimension(1); qp++) {
 	TEUCHOS_TEST_FOR_EXCEPT( std::isnan(src[ws](cell,qp)) );
         dest[ws](cell,qp) = thisFactor * dest[ws](cell,qp) + srcFactor * src[ws](cell,qp);
       }
@@ -3593,12 +3592,11 @@ double QCAD::getNorm2(std::vector<Kokkos::DynRankView<RealType, PHX::Device> >& 
 
   for (int ws = 0; ws < numWorksets; ws++)
   {
-    container[ws].dimensions(dims);
-    TEUCHOS_TEST_FOR_EXCEPT( dims.size() != 2 );
+    TEUCHOS_TEST_FOR_EXCEPT( container[ws].rank() != 2 );
 
-    for(int cell=0; cell < dims[0]; cell++) 
+    for(int cell=0; cell < container[ws].dimension(0); cell++) 
     {
-      for(int qp=0; qp < dims[1]; qp++) 
+      for(int qp=0; qp < container[ws].dimension(1); qp++) 
       {
 	norm2 += pow( container[ws](cell,qp), 2);
       }
@@ -3617,7 +3615,7 @@ int QCAD::getElementCount(std::vector<Kokkos::DynRankView<RealType, PHX::Device>
 
   for (int ws = 0; ws < numWorksets; ws++)
   {
-    cnt += container[ws].size();
+    cnt += container[ws].dimension(0);
   }
   return cnt;
 }

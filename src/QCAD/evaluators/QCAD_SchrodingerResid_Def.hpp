@@ -53,6 +53,7 @@ SchrodingerResid(const Teuchos::ParameterList& p,
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_gradient->dimensions(dims);
+  numCells = dims[0];
   numQPs  = dims[1];
   numDims = dims[2];
 
@@ -87,9 +88,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(psiResidual,fm);
 
   // Allocate workspace
-  psiGradWithMass = Kokkos::createDynRankView(V.get_view(), "XXX", dims[0], numQPs, numDims);
-  psiV = Kokkos::createDynRankView(V.get_view(), "XXX", dims[0], numQPs);
-  V_barrier = Kokkos::createDynRankView(V.get_view(), "XXX", dims[0], numQPs);
+  psiGradWithMass = Kokkos::createDynRankView(V.get_view(), "XXX", numCells, numQPs, numDims);
+  psiV = Kokkos::createDynRankView(V.get_view(), "XXX", numCells, numQPs);
+  V_barrier = Kokkos::createDynRankView(V.get_view(), "XXX", numCells, numQPs);
 }
 
 
@@ -212,18 +213,18 @@ evaluateFields(typename Traits::EvalData workset)
     }    
 
     //Kinetic term: add integral( hbar^2/2m * Grad(psi) * Grad(BF)dV ) to residual
-    FST::integrate(psiResidual, psiGradWithMass, wGradBF, false); // "false" overwrites
+    FST::integrate(psiResidual.get_view(), psiGradWithMass, wGradBF.get_view(), false); // "false" overwrites
   
     //Potential term: add integral( psi * V * BF dV ) to residual
     if (havePotential) {
-      FST::scalarMultiplyDataData (psiV, V, psi);
-      FST::integrate(psiResidual, psiV, wBF, true); // "true" sums into
+      FST::scalarMultiplyDataData (psiV, V.get_view(), psi.get_view());
+      FST::integrate(psiResidual.get_view(), psiV, wBF.get_view(), true); // "true" sums into
     }
 
     //**Note: I think this should always be used with enableTransient = True
     //psiDot term (to use loca): add integral( psi_dot * BF dV ) to residual
     if (workset.transientTerms && enableTransient) 
-      FST::integrate(psiResidual, psiDot, wBF, true); // "true" sums into
+      FST::integrate(psiResidual.get_view(), psiDot.get_view(), wBF.get_view(), true); // "true" sums into
       
   }  // end of if(bValidRegion)
   
@@ -246,9 +247,9 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t qp = 0; qp < numQPs; ++qp)
           V_barrier(cell,qp) = 100.0;
           
-      FST::scalarMultiplyDataData(psiV, V_barrier, psi);
+      FST::scalarMultiplyDataData(psiV, V_barrier, psi.get_view());
       // FST::scalarMultiplyDataData(psiV, V, psi);
-      FST::integrate(psiResidual, psiV, wBF, false); // "false" overwrites
+      FST::integrate(psiResidual.get_view(), psiV, wBF.get_view(), false); // "false" overwrites
     }
 
 

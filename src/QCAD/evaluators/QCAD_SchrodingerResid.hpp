@@ -43,6 +43,7 @@ private:
   double getInvEffMass1DMosCap(const MeshScalarT coord0);
   
   // Input:
+  std::size_t numCells;
   std::size_t numQPs;
   std::size_t numDims;
 
