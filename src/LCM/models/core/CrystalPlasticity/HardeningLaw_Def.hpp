@@ -133,10 +133,10 @@ harden(
   Intrepid2::Vector<ScalarT, NumSlipT> const 
   driver_hardening = slip_family.latent_matrix_ * rate_slip_abs;
 
-  auto const
+  auto const &
   phardening_params = slip_family.phardening_parameters_;
 
-  auto const
+  auto const &
   param_map = phardening_params->param_map_;
 
   auto const

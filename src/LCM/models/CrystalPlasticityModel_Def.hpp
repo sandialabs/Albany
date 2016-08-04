@@ -886,6 +886,13 @@ computeState(typename Traits::EvalData workset,
       minz.max_num_iter = minimizer_.max_num_iter;
       minz.min_num_iter = minimizer_.min_num_iter;
 
+      
+      if (dt > 0.0) {
+        rate_slip = (slip_np1 - slip_n) / dt;
+      }
+      else {
+        rate_slip.fill(Intrepid2::ZEROS);
+      }
 
 
       switch (integration_scheme_) {
@@ -895,10 +902,16 @@ computeState(typename Traits::EvalData workset,
         
 				case CP::IntegrationScheme::EXPLICIT:
         {
+          Intrepid2::Vector<RealType, CP::MAX_SLIP>
+          rate(num_slip_);
+          
+          for (int s = 0; s < num_slip_; ++s) {
+            rate[s] = Sacado::ScalarValue<ScalarT>::eval(rate_slip[s]);
+          }
+
           CP::PlasticityState<ScalarT, CP::MAX_DIM> plasticity_state(num_dims_, Fp_n);
-          // TODO: is this the right rate?
           CP::SlipState<ScalarT, CP::MAX_SLIP> slip_state(num_slip_, state_hardening_n,
-              slip_n, slip_dot_n);
+              slip_n, rate );
 
           CP::Integrator<EvalT, CP::MAX_DIM, CP::MAX_SLIP> *
           integrator = new CP::ExplicitIntegrator<EvalT, CP::MAX_DIM, CP::MAX_SLIP>(
@@ -1168,13 +1181,14 @@ computeState(typename Traits::EvalData workset,
             sigma_np1, 
             S_np1, 
             shear_np1);
+
+            // Compute the residual norm 
+            norm_slip_residual = std::sqrt(2.0 * minz.final_value);
+            residual_iter = minz.num_iter;
         } // end case CP::IntegrationScheme::IMPLICIT:
         break;
       } // end switch (integration_scheme_)
 
-      // Compute the residual norm 
-      norm_slip_residual = std::sqrt(2.0 * minz.final_value);
-      residual_iter = minz.num_iter;
 
       if(update_state_successful){
 
