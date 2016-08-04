@@ -119,7 +119,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   ddims_.push_back(95);
 #endif
 
-AGS  TODO CONVERT TO DynRankView for all temporaries
+//AGS  TODO CONVERT TO DynRankView for all temporaries
 
   Phi=PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>("Phi",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numelements,numQPs,spatialDim)));
   Phi.setFieldData(ViewFactory::buildView(Phi.fieldTag(),ddims_));
@@ -768,7 +768,8 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
-  FST::computeCellMeasure(weighted_measure, jacobian_det, refWeights);
+  FST::computeCellMeasure<MeshScalarT>
+    (weighted_measure.get_view(), jacobian_det.get_view(), refWeights);
 
   FST::HGRADtransformVALUE(BF.get_view(), val_at_cub_points);
   FST::multiplyMeasure(wBF.get_view(), weighted_measure.get_view(), BF.get_view());
