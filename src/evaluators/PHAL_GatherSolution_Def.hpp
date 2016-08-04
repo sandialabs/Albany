@@ -418,6 +418,7 @@ evaluateFields(typename Traits::EvalData workset)
      if (workset.transientTerms && this->enableTransient){ 
         for (int i =0; i<numFields;i++) 
       //     val_dot_kokkos[i]=this->val_dot[i].get_view();
+             val_dot_kokkos[i]=this->val_dot[i].get_static_view();
         d_val_dot=val_dot_kokkos.template view<executionSpace>();
         Kokkos::parallel_for(tensorRank_0_enableTransientPolicy(0,workset.numCells),*this);  
      }
