@@ -138,6 +138,11 @@ operator() (const Hydrostatic_VelResid_Tag& tag, const int& cell) const{
       Residual(cell,node,level,0) *= wBF(cell,node,node);
       Residual(cell,node,level,1) *= wBF(cell,node,node);
     }
+    for (int level = 0; level < 2; ++level ) {
+    	for (int dim = 0; dim < numDims; ++dim) {
+    		Residual(cell, node, level, dim) += viscosity * DVelx(cell, qp, level, dim) * wGradBF(cell, node, qp, dim)
+    	}
+    }
   }
 }
 
@@ -175,12 +180,12 @@ evaluateFields(typename Traits::EvalData workset)
     if (!pureAdvection ) {
       for (int cell=0; cell < workset.numCells; ++cell) {
         for (int node=0; node < numNodes; ++node) {
-          for (int level=0; level < numLevels; ++level) {
+          for (int level=0; level < 2; ++level) {
   	    //get_vorticity(VelxNode, cell, level, vorticity);
  	    for (int qp=0; qp < numQPs; ++qp) {
 	      for (int dim=0; dim < numDims; ++dim) {
 	        // OG commenting this out
-		//Residual(cell,node,level,dim) +=   viscosity * DVelx(cell,qp,level,dim) * wGradBF(cell,node,qp,dim);
+		 Residual(cell,node,level,dim) +=   viscosity * DVelx(cell,qp,level,dim) * wGradBF(cell,node,qp,dim);
 	      }
 	    }
 	  }

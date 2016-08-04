@@ -89,7 +89,7 @@ operator() (const XZHydrostatic_TracerResid_Tag& tag, const int& cell) const{
   }
 
   for (int node=0; node < numNodes; ++node) {
-    for (int level=0; level < numLevels; ++level) {
+    for (int level=0; level < 2; ++level) {
       for (int qp=0; qp < numQPs; ++qp) {
         for (int dim=0; dim < numDims; ++dim) {
           Residual(cell,node,level) += (viscosity/Schmidt)*piTracerGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
@@ -127,7 +127,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
 
     for (int node=0; node < numNodes; ++node) {
-      for (int level=0; level < numLevels; ++level) {
+      for (int level=0; level < 2; ++level) {
         for (int qp=0; qp < numQPs; ++qp) {
           for (int dim=0; dim < numDims; ++dim) {
             Residual(cell,node,level) += (viscosity/Schmidt)*piTracerGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
