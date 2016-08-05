@@ -2,6 +2,7 @@
 
 import sys
 import string
+from create_slip_systems import create_slip_systems
 
 INDENTATION = 2
 
@@ -89,72 +90,6 @@ def VectorToString(vec):
     vec_string = "{" + str(vec[0]) + ", " + str(vec[1]) + ", " + str(vec[2]) + "}"
     return vec_string
 
-def FCCSlipSystems():
-
-    slip_systems = []
-
-    # system 1
-    direction = (-1.0, 1.0, 0.0)
-    normal = (1.0, 1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 2
-    direction = (0.0, -1.0, 1.0)
-    normal = (1.0, 1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 3
-    direction = (1.0, 0.0, -1.0)
-    normal = (1.0, 1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 4
-    direction = (-1.0, -1.0, 0.0)
-    normal = (-1.0, 1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 5
-    direction = (1.0, 0.0, 1.0)
-    normal = (-1.0, 1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 6
-    direction = (0.0, 1.0, -1.0)
-    normal = (-1.0, 1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 7
-    direction = (1.0, -1.0, 0.0)
-    normal = (-1.0, -1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 8
-    direction = (0.0, 1.0, 1.0)
-    normal = (-1.0, -1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 9
-    direction = (-1.0, 0.0, -1.0)
-    normal = (-1.0, -1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 10
-    direction = (1.0, 1.0, 0.0)
-    normal = (1.0, -1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 11
-    direction = (-1.0, 0.0, 1.0)
-    normal = (1.0, -1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 12
-    direction = (0.0, -1.0, -1.0)
-    normal = (1.0, -1.0, 1.0)
-    slip_systems.append((direction, normal))
-    
-    return slip_systems
-
 def StartParamList(param_list_name, file, indent):
 
     file.write("\n")
@@ -218,7 +153,12 @@ def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, num_blocks
 
         # Obtain the specifics for this grain
         (vec1, vec2, vec3) = ConstructBasisVectors(rotations[iBlock])
-        slip_systems = FCCSlipSystems()
+
+        slip_systems = create_slip_systems(
+            crystal_structure=mat_params["crystal_structure"],
+            slip_families = mat_params["slip_families"],
+            ratio_c_a = mat_params["ratio_c_a"])
+
         num_slip_systems = len(slip_systems)
 
         # Material model name
@@ -350,14 +290,23 @@ if __name__ == "__main__":
     # List of material parameters that are expected to be in the input file
     # If it's set to None, then it is a required parameter
     mat_params = {}
-    mat_params["C11"] = None
-    mat_params["C12"] = None
-    mat_params["C44"] = None
-    mat_params["flow_rule"] = None
-    mat_params["rate_slip_reference"] = None
+
+    mat_params["crystal_structure"] = "fcc"
+    mat_params["slip_families"] = "unspecified"
+    mat_params["ratio_c_a"] = "unspecified"
+
+    mat_params["C11"] = "unspecified"
+    mat_params["C12"] = "unspecified"
+    mat_params["C13"] = "unspecified"
+    mat_params["C33"] = "unspecified"
+    mat_params["C44"] = "unspecified"
+
+    mat_params["flow_rule"] = "unspecified"
+    mat_params["rate_slip_reference"] = "unspecified"
     mat_params["exponent_rate"] = "unspecified"
     mat_params["drag_coeff"] = "unspecified"
-    mat_params["hardening_law"] = None
+
+    mat_params["hardening_law"] = "unspecified"
     mat_params["modulus_hardening"] = "unspecified"
     mat_params["modulus_recovery"] = "unspecified"
     mat_params["state_hardening_initial"] = "unspecified"
@@ -369,6 +318,7 @@ if __name__ == "__main__":
     mat_params["factor_annihilation"] = "unspecified"
     mat_params["magnitude_burgers"] = "unspecified"
     mat_params["modulus_shear"] = "unspecified"
+
     mat_params["integration_scheme"] = "unspecified"
     mat_params["type_residual"] = "unspecified"
     mat_params["nonlinear_solver_step_type"] = "unspecified"
