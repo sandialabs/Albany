@@ -20,7 +20,8 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 	enthalpyHs	   (p.get<std::string> ("Enthalpy Hs Variable Name"), dl->node_scalar),
 	enthalpy	   (p.get<std::string> ("Enthalpy Variable Name"), dl->node_scalar),
 	temperature	   (p.get<std::string> ("Temperature Variable Name"), dl->node_scalar),
-	temperateIce   (p.get<std::string> ("Temperate Ice Variable Name"), dl->node_scalar)
+	diffEnth  	   (p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar),
+	tempIce  	   (p.get<std::string> ("Temperature Ice Variable Name"), dl->node_scalar)
 {
 	std::vector<PHX::Device::size_type> dims;
 	dl->node_qp_vector->dimensions(dims);
@@ -32,7 +33,8 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 	this->addDependentField(enthalpy);
 
 	this->addEvaluatedField(temperature);
-	this->addEvaluatedField(temperateIce);
+	this->addEvaluatedField(diffEnth);
+	this->addEvaluatedField(tempIce);
 	this->setName("Temperature");
 
 	// Setting parameters
@@ -51,7 +53,8 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(enthalpy,fm);
 
   this->utils.setFieldData(temperature,fm);
-  this->utils.setFieldData(temperateIce,fm);
+  this->utils.setFieldData(diffEnth,fm);
+  this->utils.setFieldData(tempIce,fm);
 }
 
 template<typename EvalT, typename Traits, typename Type>
@@ -69,7 +72,12 @@ evaluateFields(typename Traits::EvalData d)
    			else
    				temperature(cell,node) = meltingTemp(cell,node);
 
-   			temperateIce(cell,node) = temperature(cell,node) - meltingTemp(cell,node);
+   			diffEnth(cell,node) = enthalpy(cell,node) - enthalpyHs(cell,node);
+
+   			if (diffEnth(cell,node) <= -0.1)
+   				tempIce(cell,node) = temperature(cell,node);
+   			else
+   				tempIce(cell,node) = 273;
    		}
    	}
 }

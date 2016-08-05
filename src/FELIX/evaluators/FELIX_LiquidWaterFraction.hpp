@@ -51,7 +51,7 @@ private:
   //std::string sideSetName;
   int numNodes;
 
-  double L, a;
+  double L;
   double rho_w;
 
   ScalarT printedAlpha;

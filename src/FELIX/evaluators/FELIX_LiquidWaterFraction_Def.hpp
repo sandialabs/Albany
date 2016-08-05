@@ -38,8 +38,6 @@ LiquidWaterFraction(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::
 	rho_w = physics.get<double>("Water Density", 1000.0);
 	L = physics.get<double>("Latent heat of fusion", 334000.0);
 
-	a = physics.get<double>("Diffusivity homotopy exponent", -9.0);
-
 	printedAlpha = -1.0;
 
 }
@@ -62,21 +60,9 @@ evaluateFields(typename Traits::EvalData d)
 	double pow6 = pow(10.0,6.0);
 	ScalarT hom = homotopy(0);
 	double pi = atan(1.) * 4.;
-	ScalarT phiNode, alpha;
+	ScalarT phiNode;
 
-	if (a == -2.0)
-		alpha = pow(10.0, (a + hom*10)/8);
-	else
-		alpha = pow(10.0, (a + hom*10)/4.5);
-
-/*
-    if (std::fabs(printedAlpha - alpha) > 0.0001*alpha)
-    {
-    	std::cout << "[OMEGA] alpha = " << alpha << "\n";
-        printedAlpha = alpha;
-    }
-*/
-    for (std::size_t cell = 0; cell < d.numCells; ++cell)
+	for (std::size_t cell = 0; cell < d.numCells; ++cell)
     {
     	for (std::size_t node = 0; node < numNodes; ++node)
     	{

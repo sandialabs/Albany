@@ -87,8 +87,10 @@ evaluateFields(typename Traits::EvalData d)
 
 	if (a == -2.0)
 		alpha = pow(10.0, (a + hom*10)/8);
-	else
+	else if (a == -1.0)
 		alpha = pow(10.0, (a + hom*10)/4.5);
+	else
+		alpha = pow(10.0, a + hom*10/3);
 
 	if (d.sideSets->find(basalSideName) != d.sideSets->end())
 	{

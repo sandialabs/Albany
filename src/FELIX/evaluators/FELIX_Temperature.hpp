@@ -47,7 +47,8 @@ private:
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> temperature;
-  PHX::MDField<ScalarT,Cell,Node> temperateIce;
+  PHX::MDField<ScalarT,Cell,Node> diffEnth;
+  PHX::MDField<ScalarT,Cell,Node> tempIce;
 
   int numNodes;
 

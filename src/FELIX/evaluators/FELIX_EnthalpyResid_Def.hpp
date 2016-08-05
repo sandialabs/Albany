@@ -174,7 +174,7 @@ evaluateFields(typename Traits::EvalData d)
 	else if (a == -1.0)
 		alpha = pow(10.0, (a + hom*10)/4.5);
 	else
-		alpha = pow(10.0, a + hom*10); // this is for StokesFO+Thermo
+		alpha = pow(10.0, a + hom*10/3);
 
     if (std::fabs(printedAlpha - alpha) > 0.0001*alpha)
     {

@@ -45,7 +45,6 @@ class BasalMeltRate : public PHX::EvaluatorWithBaseImpl<Traits>,
 		// Output:
 		PHX::MDField<ScalarT,Cell,Side,Node> basalMeltRate;
 
-		//unsigned int numQPs, numNodes;
 		PHX::MDField<ScalarT,Dim> homotopy;
 
 		std::vector<std::vector<int> >  sideNodes;
