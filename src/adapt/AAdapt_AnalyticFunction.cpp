@@ -1360,10 +1360,6 @@ void AAdapt::AerasHydrostatic3dDeformationalFlow::compute(double* solution, cons
 
   const int numLevels  = (int) data[0];
   const int numTracers = (int) data[1];
-  //const double SP0     =       data[2];
-  //const double U0      =       data[3];
-  //const double U1      =       data[4];
-  //const double T0      =       data[5];
 
   std::cout <<"AAdapt::AerasHydrostatic3dDeformationalFlow::compute()" << std::endl;
   std::cout <<"Number of tracers "<< numTracers <<" , numLevels "<<numLevels << std::endl;

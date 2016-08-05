@@ -1,7 +1,7 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Aeras Hydrostatic"/>
-    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
 
     <Parameter name="Solution Method" type="string" value="Aeras Hyperviscosity"/> 
  
@@ -90,7 +90,7 @@
       <ParameterList name="Rythmos">
      
          <ParameterList name="Integrator Settings">
-           <Parameter name="Final Time" type="double" value="86400"/>
+           <Parameter name="Final Time" type="double" value="172800"/>
            <ParameterList name="Integrator Selection">
              <Parameter name="Integrator Type" type="string" value="Default Integrator"/>
              <ParameterList name="Default Integrator">
