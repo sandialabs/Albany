@@ -743,40 +743,6 @@ int Albany::APFDiscretization::nonzeroesPerRow(const int neq) const
   return estNonzeroesPerRow;
 }
 
-void Albany::APFDiscretization::computeOwnedNodesAndUnknowns()
-{
-  apf::Mesh* m = meshStruct->getMesh();
-  computeOwnedNodesAndUnknownsBase(m->getShape());
-}
-
-void Albany::APFDiscretization::computeOverlapNodesAndUnknowns()
-{
-  apf::Mesh* m = meshStruct->getMesh();
-  computeOverlapNodesAndUnknownsBase(m->getShape());
-}
-
-void Albany::APFDiscretization::computeGraphs()
-{
-  apf::Mesh* m = meshStruct->getMesh();
-  computeGraphsBase(m->getShape());
-}
-
-void Albany::APFDiscretization::computeWorksetInfo()
-{
-  apf::Mesh* m = meshStruct->getMesh();
-  computeWorksetInfoBase(m->getShape());
-}
-
-void Albany::APFDiscretization::computeNodeSets()
-{
-  computeNodeSetsBase();
-}
-
-void Albany::APFDiscretization::computeSideSets()
-{
-  computeSideSetsBase();
-}
-
 static void offsetNumbering(
     apf::GlobalNumbering* n,
     apf::DynamicArray<apf::Node> const& nodes)
@@ -790,12 +756,11 @@ static void offsetNumbering(
   }
 }
 
-void Albany::APFDiscretization::computeOwnedNodesAndUnknownsBase(
-    apf::FieldShape* shape)
+void Albany::APFDiscretization::computeOwnedNodesAndUnknowns()
 {
   apf::Mesh* m = meshStruct->getMesh();
   if (globalNumbering) apf::destroyGlobalNumbering(globalNumbering);
-  globalNumbering = apf::makeGlobal(apf::numberOwnedNodes(m,"owned",shape));
+  globalNumbering = apf::makeGlobal(apf::numberOwnedNodes(m,"owned"));
   apf::DynamicArray<apf::Node> ownedNodes;
   apf::getNodes(globalNumbering,ownedNodes);
   if (meshStruct->useDOFOffsetHack)
@@ -823,13 +788,12 @@ void Albany::APFDiscretization::computeOwnedNodesAndUnknownsBase(
 #endif
 }
 
-void Albany::APFDiscretization::computeOverlapNodesAndUnknownsBase(
-    apf::FieldShape* shape)
+void Albany::APFDiscretization::computeOverlapNodesAndUnknowns()
 {
   apf::Mesh* m = meshStruct->getMesh();
   apf::Numbering* overlap = m->findNumbering("overlap");
   if (overlap) apf::destroyNumbering(overlap);
-  overlap = apf::numberOverlapNodes(m,"overlap",shape);
+  overlap = apf::numberOverlapNodes(m,"overlap");
   apf::getNodes(overlap,nodes);
   numOverlapNodes = nodes.getSize();
   Teuchos::Array<GO> nodeIndices(numOverlapNodes);
@@ -851,10 +815,10 @@ void Albany::APFDiscretization::computeOverlapNodesAndUnknownsBase(
     meshStruct->nodal_data_base->resizeOverlapMap(nodeIndices, commT);
 }
 
-void Albany::APFDiscretization::computeGraphsBase(
-    apf::FieldShape* shape)
+void Albany::APFDiscretization::computeGraphs()
 {
   apf::Mesh* m = meshStruct->getMesh();
+  apf::FieldShape* shape = m->getShape();
   int numDim = m->getDimension();
   std::vector<apf::MeshEntity*> cells;
   std::vector<int> n_nodes_in_elem;
@@ -923,10 +887,10 @@ void Albany::APFDiscretization::computeGraphsBase(
 #endif
 }
 
-void Albany::APFDiscretization::computeWorksetInfoBase(
-    apf::FieldShape* shape)
+void Albany::APFDiscretization::computeWorksetInfo()
 {
   apf::Mesh* m = meshStruct->getMesh();
+  apf::FieldShape* shape = m->getShape();
   int numDim = m->getDimension();
   if (elementNumbering) apf::destroyGlobalNumbering(elementNumbering);
   elementNumbering = apf::makeGlobal(apf::numberElements(m,"element"));
@@ -1161,7 +1125,7 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
   }
 }
 
-void Albany::APFDiscretization::computeNodeSetsBase()
+void Albany::APFDiscretization::computeNodeSets()
 {
   // Make sure all the maps are allocated
   for (int i = 0; i < meshStruct->nsNames.size(); i++)
@@ -1208,7 +1172,7 @@ void Albany::APFDiscretization::computeNodeSetsBase()
   }
 }
 
-void Albany::APFDiscretization::computeSideSetsBase()
+void Albany::APFDiscretization::computeSideSets()
 {
   apf::Mesh* m = meshStruct->getMesh();
   apf::StkModels& sets = meshStruct->getSets();
@@ -1511,12 +1475,6 @@ void Albany::APFDiscretization::removeNodalDataFromAPF () {
 
 void
 Albany::APFDiscretization::updateMesh(bool shouldTransferIPData)
-{
-  updateMeshBase(shouldTransferIPData);
-}
-
-void
-Albany::APFDiscretization::updateMeshBase(bool shouldTransferIPData)
 {
   // This function is called both to initialize the mesh at the beginning of the simulation
   // and then each time the mesh is adapted (called from AAdapt_MeshAdapt_Def.hpp - afterAdapt())
