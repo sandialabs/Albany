@@ -263,7 +263,7 @@ void AAdapt::MeshAdapt::afterAdapt()
     mesh->writeNative(outFile.c_str());
   }
 
-  // Throw away all the Albany data structures and re-build them from the mesh
+  // Throw away some Albany data structures and re-build them from the mesh
   // Note that the solution transfer for the QP fields happens in this call
   pumi_discretization->updateMesh(should_transfer_ip_data);
 
