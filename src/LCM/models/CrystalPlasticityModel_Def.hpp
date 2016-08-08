@@ -145,7 +145,7 @@ CrystalPlasticityModel(
 
     slip_family.slip_system_indices_[slip_system_index] = num_ss;
 
-    slip_family.num_slip_sys_ = slip_system_index + 1;
+    slip_family.num_slip_sys_++;
 
     //
     // Read and normalize slip directions. Miller indices need to be normalized.
@@ -197,7 +197,15 @@ CrystalPlasticityModel(
     auto &
     slip_family = slip_families_[sf_index];
 
+    // FIXME: Get this behavior right in intrepid2
+    auto
+    slip_system_indices = slip_family.slip_system_indices_;
+
     slip_family.slip_system_indices_.set_dimension(slip_family.num_slip_sys_);
+
+    for (int ss_index(0); ss_index < slip_family.num_slip_sys_; ++ss_index) {
+      slip_family.slip_system_indices_[ss_index] = slip_system_indices[ss_index];
+    }
 
     if (verbosity_ > 2) {
       std::cout << "slip system indices" << slip_family.slip_system_indices_ << std::endl;
