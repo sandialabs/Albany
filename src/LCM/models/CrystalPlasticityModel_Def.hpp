@@ -15,7 +15,6 @@
 #include <Sacado_Traits.hpp>
 
 #include "core/CrystalPlasticity/ParameterReader.hpp"
-#include "core/CrystalPlasticity/Integrator.hpp"
 
 namespace LCM
 {
@@ -704,69 +703,6 @@ computeState(typename Traits::EvalData workset,
   Intrepid2::Tensor<RealType, CP::MAX_DIM>
   orientation_matrix(num_dims_);
 
-  // unknowns array
-  Intrepid2::Vector<ScalarT, CP::NLS_DIM>
-  x;
-
-  // Choose explicit or implicit integration of the constitutive update
-  switch (integration_scheme_) {
-
-    default:
-    break;
-
-		case CP::IntegrationScheme::EXPLICIT:
-    {
-      // unknowns, which are slip_np1
-      x.set_dimension(num_slip_);          
-    }
-    break;
-
-		case CP::IntegrationScheme::IMPLICIT:
-    {
-      //
-      // Chose residual type
-      //
-      switch (residual_type_)
-      {
-				case CP::ResidualType::SLIP:
-        {
-          // unknowns, which are slip_np1
-          x.set_dimension(num_slip_);
-        }
-        break;
-
-				case CP::ResidualType::SLIP_HARDNESS:
-        {
-          // unknowns, which are slip_np1 followed by slip_resistance
-          x.set_dimension(2 * num_slip_);
-        }
-        break;
-
-        default:
-          std::cerr << "You must supply a residual type." << std::endl;
-          exit(1);
-        break;
-      }
-    }
-  }
-
-  x.fill(Intrepid2::ZEROS);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   //
   // Material point loop
   //
@@ -801,16 +737,14 @@ computeState(typename Traits::EvalData workset,
       if (read_orientations_from_mesh_) {
         Teuchos::ArrayRCP<double*> const &
         rotation_matrix_transpose = workset.wsLatticeOrientation;
-
-        orientation_matrix(0,0) = rotation_matrix_transpose[cell][0];
-        orientation_matrix(0,1) = rotation_matrix_transpose[cell][1];
-        orientation_matrix(0,2) = rotation_matrix_transpose[cell][2];
-        orientation_matrix(1,0) = rotation_matrix_transpose[cell][3];
-        orientation_matrix(1,1) = rotation_matrix_transpose[cell][4];
-        orientation_matrix(1,2) = rotation_matrix_transpose[cell][5];
-        orientation_matrix(2,0) = rotation_matrix_transpose[cell][6];
-        orientation_matrix(2,1) = rotation_matrix_transpose[cell][7];
-        orientation_matrix(2,2) = rotation_matrix_transpose[cell][8];
+      
+        for (int i = 0; i < 3; ++i)
+        {
+          for (int j = 0; j < 3; ++j)
+          {
+            orientation_matrix(i,j) = rotation_matrix_transpose[cell][i * 3 + j];
+          }
+        }
       }
       else {
         orientation_matrix = element_block_orientation_;
@@ -879,14 +813,6 @@ computeState(typename Traits::EvalData workset,
         }
       }
 
-
-      Minimizer minz;
-      minz.rel_tol = minimizer_.rel_tol;
-      minz.abs_tol = minimizer_.abs_tol;
-      minz.max_num_iter = minimizer_.max_num_iter;
-      minz.min_num_iter = minimizer_.min_num_iter;
-
-      
       if (dt > 0.0) {
         rate_slip = (slip_np1 - slip_n) / dt;
       }
@@ -894,301 +820,44 @@ computeState(typename Traits::EvalData workset,
         rate_slip.fill(Intrepid2::ZEROS);
       }
 
-
-      switch (integration_scheme_) {
-
-        default:
-        break;
-        
-				case CP::IntegrationScheme::EXPLICIT:
-        {
-          Intrepid2::Vector<RealType, CP::MAX_SLIP>
-          rate(num_slip_);
+      Intrepid2::Vector<RealType, CP::MAX_SLIP>
+      rate(num_slip_);
           
-          for (int s = 0; s < num_slip_; ++s) {
-            rate[s] = Sacado::ScalarValue<ScalarT>::eval(rate_slip[s]);
-          }
+      for (int s = 0; s < num_slip_; ++s) {
+        rate[s] = Sacado::ScalarValue<ScalarT>::eval(rate_slip[s]);
+      }
 
-          CP::PlasticityState<ScalarT, CP::MAX_DIM> plasticity_state(num_dims_, Fp_n);
-          CP::SlipState<ScalarT, CP::MAX_SLIP> slip_state(num_slip_, state_hardening_n,
-              slip_n, rate );
+      CP::PlasticityState<ScalarT, CP::MAX_DIM> plasticity_state(num_dims_, Fp_n);
+      CP::SlipState<ScalarT, CP::MAX_SLIP> slip_state(num_slip_, state_hardening_n,
+          slip_n, rate );
+      slip_state.slip_np1_ = slip_np1;
 
-          CP::Integrator<EvalT, CP::MAX_DIM, CP::MAX_SLIP> *
-          integrator = new CP::ExplicitIntegrator<EvalT, CP::MAX_DIM, CP::MAX_SLIP>(
-                slip_systems_,
-                slip_families_,
-                plasticity_state,
-                slip_state,
-                C_,
-                F_np1,
-                dt
-              );
+      auto integrator = integratorFactory(integration_scheme_,
+          residual_type_,
+          plasticity_state,
+          slip_state,
+          F_np1,
+          dt);
 
-          Intrepid2::Vector<ScalarT, CP::MAX_SLIP>
-          residual(num_slip_);
+      update_state_successful = integrator->update(norm_slip_residual);
+      residual_iter = integrator->getNumIters();
 
-          integrator->update(residual);
+      Fp_np1 = plasticity_state.Fp_np1_;
+      Lp_np1 = plasticity_state.Lp_np1_;
+      sigma_np1 = plasticity_state.sigma_np1_;
+      S_np1 = plasticity_state.S_np1_;
 
-          norm_slip_residual = 
-            Sacado::ScalarValue<ScalarT>::eval(norm(residual));
+      state_hardening_np1 = slip_state.hardening_np1_;
+      slip_resistance = slip_state.resistance_;
+      slip_np1 = slip_state.slip_np1_;
+      shear_np1 = slip_state.shear_np1_;
 
-          Fp_np1 = plasticity_state.Fp_np1_;
-          Lp_np1 = plasticity_state.Lp_np1_;
-          sigma_np1 = plasticity_state.sigma_np1_;
-          S_np1 = plasticity_state.S_np1_;
-
-          state_hardening_np1 = slip_state.hardening_np1_;
-          slip_resistance = slip_state.resistance_;
-          slip_np1 = slip_state.slip_np1_;
-          shear_np1 = slip_state.shear_np1_;
-#if 0
-          for(int i = 0; i < num_slip_; ++i) {
-            // initial guess for x is slip_n + dt * rate_slip_n
-            x(i) = slip_n[i] + dt * (*(rate_slip_n[i]))(cell, pt);
-          }
-
-          using NLS =
-          CP::ExplicitUpdateNLS<CP::MAX_DIM, CP::MAX_SLIP, EvalT>;
-
-          NLS
-          explicit_nls(
-              C_,
-              slip_systems_,
-              slip_families_,
-              Fp_n,
-              state_hardening_n,
-              slip_n,
-              F_np1,
-              dt);
-
-          using STEP = Intrepid2::StepBase<NLS, ValueT, CP::NLS_DIM>;
-
-          std::unique_ptr<STEP>
-          pstep = Intrepid2::stepFactory<NLS, ValueT, CP::NLS_DIM>(step_type_);
-
-          LCM::MiniSolver<Minimizer, STEP, NLS, EvalT, CP::NLS_DIM>
-          mini_solver(minimizer_, *pstep, explicit_nls, x);
-
-          for(int i = 0; i < num_slip_; ++i) {
-            slip_np1[i] = x[i];
-          }
-
-          // Compute Lp_np1, and Fp_np1
-          CP::applySlipIncrement<CP::MAX_DIM, CP::MAX_SLIP, ScalarT>(
-            slip_systems_, 
-            dt,
-            slip_n, 
-            slip_np1, 
-            Fp_n, 
-            Lp_np1, 
-            Fp_np1);
-
-          // Compute sigma_np1, S_np1, and shear_np1
-          CP::computeStress<CP::MAX_DIM, CP::MAX_SLIP, ScalarT, ScalarT>(
-            slip_systems_, 
-            C_, 
-            F_np1, 
-            Fp_np1, 
-            sigma_np1, 
-            S_np1, 
-            shear_np1);
-
-          if (dt > 0.0) {
-            rate_slip = (slip_np1 - slip_n) / dt;
-          }
-          else {
-            rate_slip.fill(Intrepid2::ZEROS);
-          }
-
-          // Compute state_hardening_np1
-          CP::updateHardness<CP::MAX_DIM, CP::MAX_SLIP, ScalarT>(
-            slip_systems_, 
-            slip_families_,
-            dt,
-            rate_slip, 
-            state_hardening_n, 
-            state_hardening_np1,
-            slip_resistance);
-#endif
-        } // end case CP::IntegrationScheme::EXPLICIT:
-        break;
-        
-				case CP::IntegrationScheme::IMPLICIT:
-        {
-
-          //
-          // Choose residual type
-          //
-          switch (residual_type_)
-          {
-						case CP::ResidualType::SLIP:
-            {
-              using NLS = CP::ResidualSlipNLS<CP::MAX_DIM, CP::MAX_SLIP, EvalT>;
-
-              NLS
-              slip_nls(
-                  C_,
-                  slip_systems_,
-                  slip_families_,
-                  Fp_n,
-                  state_hardening_n,
-                  slip_n,
-                  F_np1,
-                  dt);
-
-              for(int i = 0; i < num_slip_; ++i) {
-                // initial guess for x is slip_np1 (predictor, see above)
-                x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
-              }
-
-
-
-              using STEP = Intrepid2::StepBase<NLS, ValueT, CP::NLS_DIM>;
-
-              std::unique_ptr<STEP>
-              pstep = 
-                Intrepid2::stepFactory<NLS, ValueT, CP::NLS_DIM>(step_type_);
-
-              LCM::MiniSolver<Minimizer, STEP, NLS, EvalT, CP::NLS_DIM>
-              mini_solver(minz, *pstep, slip_nls, x);
-
-              for(int i=0; i<num_slip_; ++i) {
-                slip_np1[i] = x[i];
-              }
-
-              if(dt > 0.0){
-                rate_slip = (slip_np1 - slip_n) / dt;
-              }
-              else{
-                rate_slip.fill(Intrepid2::ZEROS);
-              }
-
-              // Compute state_hardening_np1
-              CP::updateHardness<CP::MAX_DIM, CP::MAX_SLIP, ScalarT>(
-                slip_systems_, 
-                slip_families_,
-                dt,
-                rate_slip, 
-                state_hardening_n, 
-                state_hardening_np1,
-                slip_resistance);
-            }
-            break;
-
-						case CP::ResidualType::SLIP_HARDNESS:
-            {
-              using NLS =
-                  CP::ResidualSlipHardnessNLS<CP::MAX_DIM, CP::MAX_SLIP, EvalT>;
-
-              NLS
-              slip_state_hardening_nls(
-                  C_,
-                  slip_systems_,
-                  slip_families_,
-                  Fp_n,
-                  state_hardening_n,
-                  slip_n,
-                  F_np1,
-                  dt);
-
-              for(int i=0; i<num_slip_; ++i) {
-                // initial guess for x(0:num_slip_-1) from predictor
-                x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
-                // initial guess for x(num_slip_:2*num_slip_) from predictor
-                x(i + num_slip_) = 
-                  Sacado::ScalarValue<ScalarT>::eval(state_hardening_n(i));
-              }
-
-              using STEP = Intrepid2::StepBase<NLS, ValueT, CP::NLS_DIM>;
-
-              std::unique_ptr<STEP>
-              pstep = Intrepid2::stepFactory<NLS, ValueT, CP::NLS_DIM>(step_type_);
-
-              LCM::MiniSolver<Minimizer, STEP, NLS, EvalT, CP::NLS_DIM>
-              mini_solver(minz, *pstep, slip_state_hardening_nls, x);
-
-              for(int i=0; i<num_slip_; ++i) {
-                slip_np1[i] = x[i];
-                state_hardening_np1[i] = x[i + num_slip_];
-              }
-
-              if(dt > 0.0){
-                rate_slip = (slip_np1 - slip_n) / dt;
-              }
-              else{
-                rate_slip.fill(Intrepid2::ZEROS);
-              }
-
-              // Compute state_hardening_np1
-              CP::updateHardness<CP::MAX_DIM, CP::MAX_SLIP, ScalarT>(
-                slip_systems_, 
-                slip_families_,
-                dt,
-                rate_slip, 
-                state_hardening_n, 
-                state_hardening_np1,
-                slip_resistance);
-            }
-            break;
-
-            default:
-              std::cerr << "You must supply a residual type." << std::endl;
-              exit(1);
-            break;
-          }
-
-          if(!minz.converged){
-            if(verbosity_ > 2){
-              std::cout << "\n**** CrystalPlasticityModel computeState()";
-              std::cout << " failed to converge.\n" << std::endl;
-              minz.printReport(std::cout);
-            }
-            update_state_successful = false;
-            forceGlobalLoadStepReduction();
-          }
-
-          // cases in which the model is subject to divergence
-          // more work to do in the nonlinear systems
-          if(minz.failed){
-            if (verbosity_ > 2){
-              std::cout << "\n**** CrystalPlasticityModel computeState() ";
-              std::cout << "exited due to failure criteria.\n" << std::endl;
-            }
-            update_state_successful = false;
-            forceGlobalLoadStepReduction();
-          }
-
-          // We now have the solution for slip_np1, including sensitivities 
-          // (if any). Re-evaluate all the other state variables based on 
-          // slip_np1.
-
-          // Compute Lp_np1, and Fp_np1
-          CP::applySlipIncrement<CP::MAX_DIM, CP::MAX_SLIP, ScalarT>(
-            slip_systems_, 
-            dt,
-            slip_n, 
-            slip_np1, 
-            Fp_n, 
-            Lp_np1, 
-            Fp_np1);
-
-          // Compute sigma_np1, S_np1, and shear_np1
-          CP::computeStress<CP::MAX_DIM, CP::MAX_SLIP, ScalarT, ScalarT>(
-            slip_systems_, 
-            C_, 
-            F_np1, 
-            Fp_np1, 
-            sigma_np1, 
-            S_np1, 
-            shear_np1);
-
-            // Compute the residual norm 
-            norm_slip_residual = std::sqrt(2.0 * minz.final_value);
-            residual_iter = minz.num_iter;
-        } // end case CP::IntegrationScheme::IMPLICIT:
-        break;
-      } // end switch (integration_scheme_)
-
+      if(dt > 0.0){
+        rate_slip = (slip_np1 - slip_n) / dt;
+      }
+      else{
+        rate_slip.fill(Intrepid2::ZEROS);
+      }
 
       if(update_state_successful){
 
@@ -1334,5 +1003,84 @@ computeState(typename Traits::EvalData workset,
     } // end loop over integration points
   } // end loop over elements
 } // computeState
+
+template<typename EvalT, typename Traits>
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+utility::StaticPointer<CP::Integrator<EvalT, NumDimT, NumSlipT>>
+CrystalPlasticityModel<EvalT, Traits>::integratorFactory(CP::IntegrationScheme integration_scheme,
+    CP::ResidualType residual_type,
+    CP::PlasticityState<ScalarT, NumDimT> & plasticity_state,
+    CP::SlipState<ScalarT, NumSlipT> & slip_state,
+    Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
+    RealType dt)
+{
+  switch (integration_scheme)
+  {
+    case CP::IntegrationScheme::EXPLICIT:
+    {
+      using IntegratorType = CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>;
+      return allocator_.create<IntegratorType>(nox_status_test_,
+          slip_systems_,
+          slip_families_,
+          plasticity_state,
+          slip_state,
+          C_,
+          F_np1,
+          dt);
+
+    } break;
+
+    case CP::IntegrationScheme::IMPLICIT:
+    {
+      switch (residual_type)
+      {
+        case CP::ResidualType::SLIP:
+        {
+          using IntegratorType
+            = CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>;
+          return allocator_.create<IntegratorType>(minimizer_,
+              step_type_,
+              nox_status_test_,
+              slip_systems_,
+              slip_families_,
+              plasticity_state,
+              slip_state,
+              C_,
+              F_np1,
+              dt);
+        } break;
+
+        case CP::ResidualType::SLIP_HARDNESS:
+        {
+          using IntegratorType
+            = CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>;
+          return allocator_.create<IntegratorType>(minimizer_,
+              step_type_,
+              nox_status_test_,
+              slip_systems_,
+              slip_families_,
+              plasticity_state,
+              slip_state,
+              C_,
+              F_np1,
+              dt);
+        } break;
+
+        default:
+        {
+          // throw
+          return nullptr;
+        } break;
+      }
+    } break;
+
+    default:
+    {
+      return nullptr;
+      // throw
+    } break;
+  }
+}
+
 
 } // namespace LCM

@@ -9,6 +9,7 @@
 
 #include "core/CrystalPlasticity/CrystalPlasticityCore.hpp"
 #include "core/CrystalPlasticity/NonlinearSolver.hpp"
+#include "core/CrystalPlasticity/Integrator.hpp"
 #include "ConstitutiveModel.hpp"
 #include "NOX_StatusTest_ModelEvaluatorFlag.h"
 #include "../../utility/StaticAllocator.hpp"
@@ -91,6 +92,17 @@ public:
 
     nox_status_test_->status_ = NOX::StatusTest::Failed;
   }
+
+protected:
+
+  template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+  utility::StaticPointer<CP::Integrator<EvalT, NumDimT, NumSlipT>>
+  integratorFactory(CP::IntegrationScheme integration_scheme,
+                    CP::ResidualType residual_type,
+                    CP::PlasticityState<ScalarT, NumDimT> & plasticity_state,
+                    CP::SlipState<ScalarT, NumSlipT> & slip_state,
+                    Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
+                    RealType dt);
 
 private:
 

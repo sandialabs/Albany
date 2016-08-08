@@ -16,10 +16,16 @@ static constexpr Intrepid2::Index
 MAX_SLIP = 12;
 
 static constexpr Intrepid2::Index
-NLS_DIM = 2 * MAX_SLIP;
+MAX_FAMILY = 3;
+
+template<Intrepid2::Index NumSlipT>
+struct NlsDim
+{
+  static constexpr Intrepid2::Index value{NumSlipT * 2};
+};
 
 static constexpr Intrepid2::Index
-MAX_FAMILY = 3;
+NLS_DIM = NlsDim<MAX_SLIP>::value;
 
 enum class IntegrationScheme
 {
