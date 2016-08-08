@@ -12,6 +12,7 @@
 #endif
 
 #include "Albany_Utils.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 #ifdef ALBANY_EPETRA
 #include "Petra_Converters.hpp"
 #endif
@@ -1474,8 +1475,31 @@ void Albany::APFDiscretization::removeNodalDataFromAPF () {
 }
 
 void
-Albany::APFDiscretization::updateMesh(bool shouldTransferIPData)
-{
+Albany::APFDiscretization::
+initTimeFromParamLib(Teuchos::RCP<ParamLib> paramLib) {
+  for (std::size_t b = 0; b < buckets.size(); ++b) {
+    if (stateArrays.elemStateArrays[b].count("Time")) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        !paramLib->isParameter("Time"), std::logic_error,
+        "APF: Time is a state but not a parameter, cannot reinitialize it\n");
+      Albany::MDArray& time = stateArrays.elemStateArrays[b]["Time"];
+      time(0) = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    }
+    if (stateArrays.elemStateArrays[b].count("Time_old")) {
+      Albany::MDArray& oldTime = stateArrays.elemStateArrays[b]["Time_old"];
+      oldTime(0) = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    }
+  }
+}
+
+void
+Albany::APFDiscretization::updateMesh(bool shouldTransferIPData) {
+  updateMesh(shouldTransferIPData, Teuchos::null);
+}
+
+void
+Albany::APFDiscretization::updateMesh(bool shouldTransferIPData,
+    Teuchos::RCP<ParamLib> paramLib) {
   // This function is called both to initialize the mesh at the beginning of the simulation
   // and then each time the mesh is adapted (called from AAdapt_MeshAdapt_Def.hpp - afterAdapt())
 
@@ -1503,6 +1527,10 @@ Albany::APFDiscretization::updateMesh(bool shouldTransferIPData)
   // ProjectIPtoNodalField), so invalidate it.
   if (Teuchos::nonnull(meshStruct->nodal_data_base))
     meshStruct->nodal_data_base->updateNodalGraph(Teuchos::null);
+
+  // Use the parameter library to re-initialize Time state arrays
+  if (Teuchos::nonnull(paramLib))
+    initTimeFromParamLib(paramLib);
 }
 
 void
