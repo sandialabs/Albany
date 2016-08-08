@@ -52,8 +52,8 @@ set (cism-piscees_REPOSITORY_LOCATION  git@github.com:ACME-Climate/cism-piscees.
 
 #IKT, 8/27/15: FIXME 
 #Why does CDash script not find BOOST_DIR, NETCDF_DIR from loaded modules? 
-set (BOOST_DIR /usr/common/software/boost/1.59/hsw/gnu) 
-set (NETCDF_DIR /opt/cray/netcdf-hdf5parallel/4.3.3.1/GNU/5.1) 
+set (BOOST_DIR /usr/common/software/boost/1.61/hsw/intel) 
+set (NETCDF_DIR /opt/cray/pe/netcdf-hdf5parallel/4.4.0/gnu/5.1) 
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -178,9 +178,6 @@ if (BUILD_TRILINOS)
     "-DTPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include" 
     "-DBoostLib_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib" 
     "-DBoostLib_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include" 
-    "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
-    "-DBoostAlbLib_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include" 
-    "-DBoostAlbLib_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib" 
     "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF" 
     "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
@@ -243,7 +240,6 @@ if (BUILD_TRILINOS)
     "-DBoost_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib"
     #
     "-DTrilinos_ENABLE_SEACASIoss:BOOL=ON"
-    "-DTPL_Netcdf_PARALLEL:BOOL=ON"
     "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
     "-DTPL_ENABLE_Netcdf:BOOL=ON"
     #
@@ -307,7 +303,6 @@ if (BUILD_TRILINOS)
     "-DMPI_EXEC:FILEPATH=srun"
     "-DMPI_EXEC_MAX_NUMPROCS:STRING=4"
     "-DMPI_EXEC_NUMPROCS_FLAG:STRING=-n"
-    "-DTPL_Netcdf_PARALLEL:BOOL=ON"
   )
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")

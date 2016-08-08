@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AERAS_XZHYDROSTATIC_SURFACEGEOPOTENTIAL_HPP
-#define AERAS_XZHYDROSTATIC_SURFACEGEOPOTENTIAL_HPP
+#ifndef AERAS_HYDROSTATIC_SURFACEGEOPOTENTIAL_HPP
+#define AERAS_HYDROSTATIC_SURFACEGEOPOTENTIAL_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -15,21 +15,21 @@
 #include "Aeras_Dimension.hpp"
 
 namespace Aeras {
-/** \brief Surface geopotential (phi_s) for XZHydrostatic atmospheric model
+/** \brief Surface geopotential (phi_s) for Hydrostatic atmospheric model
 
-    This evaluator computes the surface geopotential for the XZHydrostatic model
+    This evaluator computes the surface geopotential for the Hydrostatic model
     of atmospheric dynamics.
 
 */
 template<typename EvalT, typename Traits>
-class XZHydrostatic_SurfaceGeopotential : public PHX::EvaluatorWithBaseImpl<Traits>,
+class Hydrostatic_SurfaceGeopotential : public PHX::EvaluatorWithBaseImpl<Traits>,
                    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  XZHydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
+  Hydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -39,33 +39,41 @@ public:
 
 private:
   // Input
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
+  PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> PhiSurf;
 
   const int numNodes;
                      
-  enum TOPOGRAPHYTYPE {NONE, MOUNTAIN1};
+  enum TOPOGRAPHYTYPE {NONE, SPHERE_MOUNTAIN1, ASP_BAROCLINIC};
   TOPOGRAPHYTYPE topoType;
   
   int numParam;
   
   Teuchos::Array<double> topoData;
 
-  // MOUNTAIN1 parameters:
-  double local_pi, local_gravity, center, width, height;
+  // SPHERE_MOUNTAIN1 parameters:
+  double cntrLat, cntrLon, mtnHeight, mtnWidth, mtnHalfWidth, PI, G;
+
+  // ASP_BAROCLINIC parameters:
+  double a, omega, eta0, etas, u0, pi;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
-  struct XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag{};
+  struct Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Tag{};
+  struct Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag> XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Tag> Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Tag> Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Policy;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag& tag, const int& i) const;
+  void operator() (const Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Tag& tag, const int& i) const;
 
 private:
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords;

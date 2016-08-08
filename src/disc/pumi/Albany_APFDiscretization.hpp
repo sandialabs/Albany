@@ -432,22 +432,6 @@ class APFDiscretization : public Albany::AbstractDiscretization {
   protected:
 
     //! Process APF mesh for Owned nodal quantitites
-    void computeOwnedNodesAndUnknownsBase(apf::FieldShape* s);
-    //! Process APF mesh for Overlap nodal quantitites
-    void computeOverlapNodesAndUnknownsBase(apf::FieldShape* s);
-    //! Process APF mesh for CRS Graphs
-    void computeGraphsBase(apf::FieldShape* s);
-    //! Process APF mesh for Workset/Bucket Info
-    void computeWorksetInfoBase(apf::FieldShape* s);
-    //! Process APF mesh for NodeSets
-    void computeNodeSetsBase();
-    //! Process APF mesh for SideSets
-    void computeSideSetsBase();
-    //! Base for updating the mesh
-    void updateMeshBase(bool shouldTransferIPData);
-
-
-    //! Process APF mesh for Owned nodal quantitites
     virtual void computeOwnedNodesAndUnknowns();
     //! Process APF mesh for Overlap nodal quantitites
     virtual void computeOverlapNodesAndUnknowns();
