@@ -189,7 +189,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void detachQPData();
 
     // After mesh modification, need to update the element connectivity and nodal coordinates
-    virtual void updateMesh(bool shouldTransferIPData);
+    void updateMesh(bool shouldTransferIPData);
+    // The parameter library is used to update Time after adapting
+    void updateMesh(bool shouldTransferIPData, Teuchos::RCP<ParamLib> paramLib);
 
     // Function that transforms a mesh of a unit cube (for FELIX problems)
     // not supported in PUMI now
@@ -432,17 +434,19 @@ class APFDiscretization : public Albany::AbstractDiscretization {
   protected:
 
     //! Process APF mesh for Owned nodal quantitites
-    virtual void computeOwnedNodesAndUnknowns();
+    void computeOwnedNodesAndUnknowns();
     //! Process APF mesh for Overlap nodal quantitites
-    virtual void computeOverlapNodesAndUnknowns();
+    void computeOverlapNodesAndUnknowns();
     //! Process APF mesh for CRS Graphs
-    virtual void computeGraphs();
+    void computeGraphs();
     //! Process APF mesh for Workset/Bucket Info
-    virtual void computeWorksetInfo();
+    void computeWorksetInfo();
     //! Process APF mesh for NodeSets
-    virtual void computeNodeSets();
+    void computeNodeSets();
     //! Process APF mesh for SideSets
-    virtual void computeSideSets();
+    void computeSideSets();
+    //! Re-initialize Time after adaptation
+    void initTimeFromParamLib(Teuchos::RCP<ParamLib> paramLib);
 
     //! Output object
     PUMIOutput* meshOutput;
