@@ -33,7 +33,6 @@ class EnthalpyResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		typedef typename EvalT::ScalarT ScalarT;
 		typedef typename EvalT::MeshScalarT MeshScalarT;
 		typedef typename EvalT::ParamScalarT ParamScalarT;
-		//typedef VelocityType ParamScalarT;
 
 		bool haveSUPG;
 		double delta;

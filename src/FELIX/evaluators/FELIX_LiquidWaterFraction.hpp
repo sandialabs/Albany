@@ -19,7 +19,7 @@ namespace FELIX
 
 /** \brief Liquid Water Fraction
 
-    This evaluator computes the liquid water fraction
+    This evaluator computes the liquid water fraction in temperate ice
 */
 
 template<typename EvalT, typename Traits, typename Type>
@@ -28,7 +28,6 @@ class LiquidWaterFraction: public PHX::EvaluatorWithBaseImpl<Traits>,
 {
 public:
 
-  //typedef typename EvalT::ParamScalarT ParamScalarT;
   typedef typename EvalT::ScalarT ScalarT;
 
   LiquidWaterFraction (const Teuchos::ParameterList& p,
@@ -41,18 +40,16 @@ public:
 
 private:
   // Input:
-  PHX::MDField<Type,Cell,Node> enthalpyHs;
-  PHX::MDField<ScalarT,Cell,Node> enthalpy;
-  PHX::MDField<ScalarT,Dim> homotopy;
+  PHX::MDField<Type,Cell,Node> 		enthalpyHs;
+  PHX::MDField<ScalarT,Cell,Node> 	enthalpy;
+  PHX::MDField<ScalarT,Dim> 		homotopy;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> phi;
 
-  //std::string sideSetName;
   int numNodes;
 
-  double L;
-  double rho_w;
+  double L, rho_w;
 
   ScalarT printedAlpha;
 

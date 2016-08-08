@@ -152,7 +152,7 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 
 	  // ---------------------------- Registering state variables ------------------------- //
 	  std::string stateName, fieldName;
-	  // Here is how to register the field for dirichlet condition.
+
 	  // Enthalpy Dirichlet field on the surface
 	  {
 		  entity = Albany::StateStruct::NodalDistParameter;
@@ -161,17 +161,6 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 		  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
 		  fm0.template registerEvaluator<EvalT>(ev);
 	  }
-
-	  // Velocity from mesh- if you want to decouple velocity and enthalpy
-	  /*
-	  {
-		  entity = Albany::StateStruct::NodalDataToElemNode;
-		  std::string stateName = "velocity";
-		  p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName, true, &entity, "");
-		  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-		  fm0.template registerEvaluator<EvalT>(ev);
-	  }
-	  */
 
 	  // Flow factor - actually, this is not used if viscosity is temperature based
 	  {
@@ -778,7 +767,6 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 		  //Output
 		  p->set<std::string>("Temperature Variable Name", "Temperature");
 		  p->set<std::string>("Diff Enthalpy Variable Name", "Diff Enth");
-		  p->set<std::string>("Temperature Ice Variable Name", "Temperature Ice");
 
 		  ev = Teuchos::rcp(new FELIX::Temperature<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
 		  fm0.template registerEvaluator<EvalT>(ev);
@@ -810,22 +798,6 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 			  p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
 
 			  ev = Teuchos::rcp(new PHAL::SaveCellStateField<EvalT,PHAL::AlbanyTraits>(*p));
-			  fm0.template registerEvaluator<EvalT>(ev);
-		  }
-
-		  // Saving the temperature ice field in the output mesh
-		  {
-			  fm0.template registerEvaluator<EvalT> (evalUtils.constructNodesToCellInterpolationEvaluator("Temperature Ice",false));
-
-			  std::string stateName = "TIce_Cell";
-			  p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
-			  p->set<std::string>("Field Name", "Temperature Ice");
-			  p->set<std::string>("Weights Name","Weights");
-			  p->set("Weights Layout", dl->qp_scalar);
-			  p->set("Field Layout", dl->cell_scalar2);
-			  p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
-
-			  ev = rcp(new PHAL::SaveCellStateField<EvalT,AlbanyTraits>(*p));
 			  fm0.template registerEvaluator<EvalT>(ev);
 		  }
 	  }
@@ -982,15 +954,6 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 
 			  ev = Teuchos::rcp(new PHAL::SaveCellStateField<EvalT,PHAL::AlbanyTraits>(*p));
 			  fm0.template registerEvaluator<EvalT>(ev);
-		  }
-
-	      // Forcing the execution of the evaluator
-		  if (fieldManagerChoice == Albany::BUILD_RESID_FM)
-		  {
-			  if (ev->evaluatedFields().size()>0)
-		      {
-				  fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
-		      }
 		  }
 	  }
 

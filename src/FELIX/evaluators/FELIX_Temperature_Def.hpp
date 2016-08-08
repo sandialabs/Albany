@@ -20,8 +20,7 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 	enthalpyHs	   (p.get<std::string> ("Enthalpy Hs Variable Name"), dl->node_scalar),
 	enthalpy	   (p.get<std::string> ("Enthalpy Variable Name"), dl->node_scalar),
 	temperature	   (p.get<std::string> ("Temperature Variable Name"), dl->node_scalar),
-	diffEnth  	   (p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar),
-	tempIce  	   (p.get<std::string> ("Temperature Ice Variable Name"), dl->node_scalar)
+	diffEnth  	   (p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar)
 {
 	std::vector<PHX::Device::size_type> dims;
 	dl->node_qp_vector->dimensions(dims);
@@ -34,14 +33,13 @@ Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 
 	this->addEvaluatedField(temperature);
 	this->addEvaluatedField(diffEnth);
-	this->addEvaluatedField(tempIce);
 	this->setName("Temperature");
 
 	// Setting parameters
 	Teuchos::ParameterList& physics = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
-	rho_i = physics.get<double>("Ice Density", 916.0);
-	c_i = physics.get<double>("Heat capacity of ice", 2009.0);
-	T0 = physics.get<double>("Reference Temperature", 240.0);
+	rho_i 	= physics.get<double>("Ice Density", 916.0);
+	c_i 	= physics.get<double>("Heat capacity of ice", 2009.0);
+	T0 		= physics.get<double>("Reference Temperature", 240.0);
 }
 
 template<typename EvalT, typename Traits, typename Type>
@@ -54,7 +52,6 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
 
   this->utils.setFieldData(temperature,fm);
   this->utils.setFieldData(diffEnth,fm);
-  this->utils.setFieldData(tempIce,fm);
 }
 
 template<typename EvalT, typename Traits, typename Type>
@@ -73,15 +70,10 @@ evaluateFields(typename Traits::EvalData d)
    				temperature(cell,node) = meltingTemp(cell,node);
 
    			diffEnth(cell,node) = enthalpy(cell,node) - enthalpyHs(cell,node);
-
-   			if (diffEnth(cell,node) <= -0.1)
-   				tempIce(cell,node) = temperature(cell,node);
-   			else
-   				tempIce(cell,node) = 273;
    		}
    	}
 }
 
 
-}
+}  // end namespace FELIX
 

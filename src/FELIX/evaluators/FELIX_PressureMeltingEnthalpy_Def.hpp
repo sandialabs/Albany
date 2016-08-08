@@ -31,9 +31,9 @@ PressureMeltingEnthalpy(const Teuchos::ParameterList& p, const Teuchos::RCP<Alba
 
 	// Setting parameters
 	Teuchos::ParameterList& physics = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
-	rho_i = physics.get<double>("Ice Density", 916.0);
-	c_i = physics.get<double>("Heat capacity of ice", 2009.0);
-	T0 = physics.get<double>("Reference Temperature", 265.0);
+	rho_i 	= physics.get<double>("Ice Density", 916.0);
+	c_i 	= physics.get<double>("Heat capacity of ice", 2009.0);
+	T0 		= physics.get<double>("Reference Temperature", 265.0);
 }
 
 template<typename EvalT, typename Traits, typename Type>

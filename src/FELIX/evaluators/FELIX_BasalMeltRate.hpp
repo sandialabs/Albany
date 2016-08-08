@@ -64,6 +64,4 @@ class BasalMeltRate : public PHX::EvaluatorWithBaseImpl<Traits>,
 }
 
 
-
-
 #endif /* FELIX_BASALMELTRATE_HPP_ */

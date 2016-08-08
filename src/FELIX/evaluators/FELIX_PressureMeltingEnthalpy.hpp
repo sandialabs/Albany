@@ -19,7 +19,7 @@ namespace FELIX
 
 /** \brief Pressure-melting enthalpy
 
-    This evaluator computes the enthalpy of the ice at the pressure-melting temperature Tm(p).
+    This evaluator computes enthalpy of the ice at pressure-melting temperature Tm(p).
 */
 
 template<typename EvalT, typename Traits, typename Type>
@@ -27,9 +27,6 @@ class PressureMeltingEnthalpy: public PHX::EvaluatorWithBaseImpl<Traits>,
                                public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
-
-  //typedef typename EvalT::ParamScalarT ParamScalarT;
-  //typedef typename EvalT::MeshScalarT MeshScalarT;
 
   PressureMeltingEnthalpy (const Teuchos::ParameterList& p,
                        	   const Teuchos::RCP<Albany::Layouts>& dl);
@@ -48,12 +45,10 @@ private:
 
   int numNodes;
 
-  double c_i, rho_i;
-  double T0;
+  double c_i, rho_i, T0;
 };
 
 } // Namespace FELIX
-
 
 
 #endif /* FELIX_PRESSUREMELTINGENTHALPY_HPP_ */

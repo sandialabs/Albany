@@ -23,7 +23,7 @@ Dissipation(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 	std::vector<PHX::Device::size_type> dims;
 	dl->node_qp_vector->dimensions(dims);
 
-	numQPs   = dims[2];
+	numQPs = dims[2];
 
 	this->addDependentField(mu);
 	this->addDependentField(epsilonSq);

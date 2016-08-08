@@ -107,7 +107,7 @@ evaluateFields(typename Traits::EvalData d)
     			ScalarT basalHeat = 0.;
 
     			for (int dim = 0; dim < vecDimFO; dim++)
-    				basalHeat += (1./(3.154*pow(10.0,4.0))) * beta(cell,side,node) * velocity(cell,side,node,dim) * velocity(cell,side,node,dim);  // check dimensions
+    				basalHeat += (1./(3.154*pow(10.0,4.0))) * beta(cell,side,node) * velocity(cell,side,node,dim) * velocity(cell,side,node,dim);
 
     			phiExp = pow(phi(cell,side,node),alpha_om);
 

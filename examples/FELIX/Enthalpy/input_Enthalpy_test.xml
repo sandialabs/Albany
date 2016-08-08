@@ -5,7 +5,7 @@
   </ParameterList-->
 <ParameterList name="Problem">
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
-    <Parameter name="Solution Method" type="string" value="Continuation"/>
+    <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Name" type="string" value="FELIX Enthalpy 3D"/>
     <Parameter name="Basal Side Name" type="string" value="basalside"/>
     <Parameter name="Required Basal Fields" type="Array(string)" value="{basal_friction}"/>
@@ -36,7 +36,7 @@
       <Parameter name="Permeability factor" type="double" value="1.0e-12"/>
       <Parameter name="Viscosity of water" type="double" value="0.0018"/>
       <Parameter name="Omega exponent alpha" type="double" value="2."/> 
-      <Parameter name="Diffusivity homotopy exponent" type="double" value="-2.0"/>
+      <Parameter name="Diffusivity homotopy exponent" type="double" value="-1.0"/>
    </ParameterList>
     <ParameterList name="SUPG Settings">
        <Parameter name="Have SUPG Stabilization" type="bool" value="true"/>
@@ -64,7 +64,7 @@
     <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_enthalpy.exo"/>
-    <Parameter name="Exodus Input File Name" type="string" value="mesh32kmSCALED/gis_unstruct.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="mesh32km/gis_unstruct.exo"/>
     <Parameter name="Restart Index" type="int" value="1"/>
     <!--Parameter name="Interleaved Ordering" type="bool" value="false"/>
     <Parameter name="Columnwise Ordering" type="bool" value="false"/-->
@@ -73,7 +73,7 @@
       <ParameterList name="basalside">
         <Parameter name="Method" type="string" value="Exodus"/>
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
-        <Parameter name="Exodus Input File Name" type="string" value="mesh32kmSCALED/gis_unstruct_basal.exo"/>
+        <Parameter name="Exodus Input File Name" type="string" value="mesh32km/gis_unstruct_basal.exo"/>
         <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_basal_enthalpy.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <Parameter name="Restart Index" type="int" value="1"/>
@@ -89,7 +89,7 @@
 </ParameterList>
 <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="2"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{2721396.09731,16.2025461051}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{27.2804467936,7.28622636011}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-2"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.208812026834, 0.243439246662, 0.0545756230981}"/>

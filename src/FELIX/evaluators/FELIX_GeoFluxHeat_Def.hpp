@@ -68,7 +68,6 @@ GeoFluxHeat(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 
 	dl->node_vector->dimensions(dims);
 	vecDimFO     = std::min((int)dims[2],2);
-	//vecDim       = dims[2];
 
 	// Index of the nodes on the sides in the numeration of the cell
 	Teuchos::RCP<shards::CellTopology> cellType;

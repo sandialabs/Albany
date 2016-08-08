@@ -34,22 +34,13 @@ class VerticalVelocity : public PHX::EvaluatorWithBaseImpl<Traits>,
 		typedef typename EvalT::ParamScalarT ParamScalarT;
 
 		// Input:
-		//PHX::MDField<ParamScalarT,Cell,Side,QuadPoint> basalMeltRate;
-		//PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim> surface_height_grad;
-		//PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim> thickness_grad;
-		//PHX::MDField<VelocityType,Cell,Side,QuadPoint,Dim> velocity;
-		PHX::MDField<ParamScalarT,Cell,Node> thickness;
-		PHX::MDField<ScalarT,Cell,Node> int1Dw_z;
+		PHX::MDField<ParamScalarT,Cell,Node>    thickness;
+		PHX::MDField<ScalarT,Cell,Node> 		int1Dw_z;
 
 		// Output:
 		PHX::MDField<ScalarT,Cell,Node> w;
 
 		unsigned int numNodes;
-
-		//std::vector<std::vector<int> >  sideNodes;
-		//std::string                     basalSideName;
-
-		//int numCellNodes, numSideNodes, numSideQPs, sideDim;
 };
 
 }

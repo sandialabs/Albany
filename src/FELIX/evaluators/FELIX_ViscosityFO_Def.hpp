@@ -508,7 +508,6 @@ evaluateFields(typename Traits::EvalData workset)
         	{
         		//evaluate non-linear viscosity, given by Glen's law, at quadrature points
         		temperature(cell) = std::max(temperature(cell), 240.0);	//Albany::ADValue(temperature(cell))
-        		//std::cout << temperature(cell) << std::endl;
         		flowFactorVec[cell] = 1.0/2.0*pow(flowRate<TemprT>(temperature(cell)), -1.0/n);
         	}
         	break;
@@ -519,7 +518,6 @@ evaluateFields(typename Traits::EvalData workset)
           break;
       }
       double power = 0.5*(1.0/n - 1.0);
-      //if (FELIX::HomotopyParameter<EvalT>::value == 0.0)
       if (hom == 0.0)
       {
         //set constant viscosity
@@ -534,13 +532,11 @@ evaluateFields(typename Traits::EvalData workset)
       else
       {
         //set Glen's law viscosity with regularization specified by homotopyParam
-        //ScalarT ff = pow(10.0, -10.0*FELIX::HomotopyParameter<EvalT>::value);
     	ScalarT ff = pow(10.0, -10.0*hom);
         if (std::fabs(printedFF - ff) > 0.0001*ff)
         {
             Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
             *out << "[Viscosity] ff = " << ff << "\n";
-            //std::cout << "[Homotopy param] h = " << hom << "\n";
             printedFF = ff;
         }
         ScalarT epsilonEqpSq = 0.0; //used to define the viscosity in non-linear Stokes
