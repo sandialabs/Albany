@@ -117,7 +117,7 @@ computeRateSlip(
 
   // Compute drag term
   ScalarT const
-  viscous_drag = std::fabs(ratio_stress) / drag_term;
+  viscous_drag = ratio_stress / drag_term;
 
   RealType const
   pl_tol = std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / m);
