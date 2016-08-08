@@ -27,7 +27,6 @@ class ViscosityFO : public PHX::EvaluatorWithBaseImpl<Traits>,
                     public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
 
 public:
-
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
   typedef typename EvalT::ParamScalarT ParamScalarT;
@@ -43,11 +42,22 @@ public:
 
   ScalarT& getValue(const std::string &n);
 
-
 private:
+  template<typename TemperatureT>
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  KOKKOS_INLINE_FUNCTION
+#endif
+  TemperatureT flowRate(const TemperatureT& T) const;
+
+  const double pi, actenh, actenl, gascon, switchingT;
+#ifdef USE_CISM_FLOW_PARAMETERS
+  const double arrmlh, arrmll, k4scyr;
+#endif
+  const double arrmh, arrml;
 
   ScalarT dummyParam;
   ScalarT printedH;
+  ScalarT HomoParam;
 
   bool useStereographicMap;
   Teuchos::ParameterList* stereographicMapList;

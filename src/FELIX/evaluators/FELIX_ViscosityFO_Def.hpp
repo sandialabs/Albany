@@ -18,32 +18,6 @@
 
 namespace FELIX {
 
-const double pi = 3.1415926535897932385;
-const double actenh = 1.39e5;     //[J mol-1]
-const double actenl = 6.0e4;      //[J mol-1]
-const double gascon = 8.314;      //[J mol-1 K-1]
-const double switchingT = 263.15; // [K]
-
-#ifdef USE_CISM_FLOW_PARAMETERS
-  const double arrmlh = 1.733e3;    // [Pa-3 s-1]
-  const double arrmll = 3.613e-13;  // [Pa-3 s-1]
-  const double k4scyr = 3.1536e19;  // [s y-1]
-  const double arrmh = k4scyr*arrmlh;  // [Pa-3 yr-1]
-  const double arrml = k4scyr*arrmll;  // [Pa-3 yr-1]
-#else
-  const double arrmh = 6.26e22;        // [Pa-3 yr-1]
-  const double arrml = 1.3e7;          // [Pa-3 yr-1]
-#endif
-
-
-namespace {
-template<typename ParamScalarT>
-KOKKOS_INLINE_FUNCTION
-ParamScalarT flowRate (const ParamScalarT& T) {
-  return (T < switchingT) ? arrml / exp (actenl / gascon / T) : arrmh / exp (actenh / gascon / T);
-}
-}
-
 //**********************************************************************
 template<typename EvalT, typename Traits>
 ViscosityFO<EvalT, Traits>::
@@ -55,7 +29,22 @@ ViscosityFO(const Teuchos::ParameterList& p,
   flowFactorA(p.get<std::string> ("Flow Factor Variable Name"), dl->cell_scalar2),
   A(1.0),
   n(3.0),
-  flowRate_type(UNIFORM)
+  flowRate_type(UNIFORM),
+  pi (3.1415926535897932385),
+  actenh (1.39e5),        // [J mol-1]
+  actenl (6.0e4),         // [J mol-1]
+  gascon (8.314),         // [J mol-1 K-1]
+  switchingT (263.15),    // [K]
+#ifdef USE_CISM_FLOW_PARAMETERS
+  arrmlh (1.733e3),       // [Pa-3 s-1]
+  arrmll (3.613e-13),     // [Pa-3 s-1]
+  k4scyr (3.1536e19),     // [s y-1]
+  arrmh (k4scyr*arrmlh),  // [Pa-3 yr-1]
+  arrml (k4scyr*arrmll)   // [Pa-3 yr-1]
+#else
+  arrmh (6.26e22),        // [Pa-3 yr-1]
+  arrml (1.3e7)           // [Pa-3 yr-1]
+#endif
 {
   Teuchos::ParameterList* visc_list =
    p.get<Teuchos::ParameterList*>("Parameter List");
@@ -201,6 +190,17 @@ ViscosityFO<EvalT,Traits>::getValue(const std::string &n)
   return (n=="Glen's Law Homotopy Parameter") ?
     FELIX::HomotopyParameter<EvalT>::value : dummyParam;
 }
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+template<typename TemperatureT>
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+KOKKOS_INLINE_FUNCTION
+#endif
+TemperatureT ViscosityFO<EvalT, Traits>::flowRate (const TemperatureT& T) const {
+  return (T < switchingT) ? arrml / exp (actenl / gascon / T) : arrmh / exp (actenh / gascon / T);
+}
+
 //**********************************************************************
 //Kokkos functors
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -232,7 +232,7 @@ void ViscosityFO<EvalT, Traits>::glenslaw (const ParamScalarT &flowFactorVec, co
 {
   double power = 0.5*(1.0/n - 1.0);
   double a = 1.0;
-  if (FELIX::HomotopyParameter<EvalT>::value == 0.0)
+  if (HomoParam == 0.0)
   {
     //set constant viscosity
     for (int qp=0; qp < numQPs; ++qp)
@@ -242,7 +242,7 @@ void ViscosityFO<EvalT, Traits>::glenslaw (const ParamScalarT &flowFactorVec, co
   }
   else
   {
-    ScalarT ff = pow(10.0, -10.0*FELIX::HomotopyParameter<EvalT>::value);
+    ScalarT ff = pow(10.0, -10.0*HomoParam);
     ScalarT epsilonEqpSq = 0.0;
     if(useStereographicMap)
     {
@@ -317,7 +317,7 @@ void ViscosityFO<EvalT, Traits>::glenslaw_xz (const ParamScalarT &flowFactorVec,
 {
   double power = 0.5*(1.0/n - 1.0);
   double a = 1.0;
-  if (FELIX::HomotopyParameter<EvalT>::value == 0.0)
+  if (HomoParam == 0.0)
   {
     //set constant viscosity
     for (int qp=0; qp < numQPs; ++qp)
@@ -327,7 +327,7 @@ void ViscosityFO<EvalT, Traits>::glenslaw_xz (const ParamScalarT &flowFactorVec,
   }
   else
   {
-    ScalarT ff = pow(10.0, -10.0*FELIX::HomotopyParameter<EvalT>::value);
+    ScalarT ff = pow(10.0, -10.0*HomoParam);
     ScalarT epsilonEqpSq = 0.0;
     for (int qp=0; qp < numQPs; ++qp)
     {
@@ -380,6 +380,7 @@ template<typename EvalT, typename Traits>
 void ViscosityFO<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  HomoParam = FELIX::HomotopyParameter<EvalT>::value;
 
 //std::cout << "before viscosity coord vec" << coordVec(0,0,0) << "   " <<coordVec(1,1,1) << "   " <<coordVec(2,2,2) << "   " <<coordVec(3,3,3) << "   " <<std::endl;
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -428,7 +429,7 @@ evaluateFields(typename Traits::EvalData workset)
           break;
       }
       double power = 0.5*(1.0/n - 1.0);
-      if (FELIX::HomotopyParameter<EvalT>::value == 0.0)
+      if (HomoParam == 0.0)
       {
         //set constant viscosity
         for (std::size_t cell=0; cell < workset.numCells; ++cell)
@@ -442,7 +443,7 @@ evaluateFields(typename Traits::EvalData workset)
       else
       {
         //set Glen's law viscosity with regularization specified by homotopyParam
-        ScalarT ff = pow(10.0, -10.0*FELIX::HomotopyParameter<EvalT>::value);
+        ScalarT ff = pow(10.0, -10.0*HomoParam);
         ScalarT epsilonEqpSq = 0.0; //used to define the viscosity in non-linear Stokes
         if (visc_type == GLENSLAW)
         {
