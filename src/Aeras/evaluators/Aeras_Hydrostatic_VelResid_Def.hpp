@@ -75,7 +75,7 @@ Hydrostatic_VelResid(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Residual);
 
-  this->setName("Aeras::Hydrostatic_VelResid" );
+  this->setName("Aeras::Hydrostatic_VelResid" + PHX::typeAsString<EvalT>());
 
   //refWeights        .resize               (numQPs);
   //grad_at_cub_points.resize     (numNodes, numQPs, 2);
@@ -112,17 +112,58 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void Hydrostatic_VelResid<EvalT, Traits>::
+operator() (const Hydrostatic_VelResid_Tag& tag, const int& cell) const{
+  for (int node=0; node < numNodes; ++node) {
+    // Compute Coriolis
+    const double alpha = AlphaAngle;
+    const MeshScalarT lambda = sphere_coord(cell, node, 0);
+    const MeshScalarT theta = sphere_coord(cell, node, 1);
+    const ScalarT coriolis = 2*Omega*( -cos(lambda)*cos(theta)*sin(alpha) + sin(theta)*cos(alpha));
+
+    // Compute Residual
+    for (int level=0; level < numLevels; ++level) {
+      for (int dim=0; dim < numDims; ++dim) {
+        Residual(cell,node,level,dim) =  ( keGrad(cell,node,level,dim) + PhiGrad(cell,node,level,dim) )
+                                      +  ( pGrad (cell,node,level,dim)/density(cell,node,level) )
+                                      +   etadotdVelx(cell,node,level,dim)
+                                      +   VelxDot(cell,node,level,dim);
+      }
+      Residual(cell,node,level,0) -= (vorticity(cell,node,level) + coriolis)*Velx(cell,node,level,1);
+      Residual(cell,node,level,1) += (vorticity(cell,node,level) + coriolis)*Velx(cell,node,level,0);
+      Residual(cell,node,level,0) *= wBF(cell,node,node);
+      Residual(cell,node,level,1) *= wBF(cell,node,node);
+    }
+  }
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void Hydrostatic_VelResid<EvalT, Traits>::
+operator() (const Hydrostatic_VelResid_pureAdvection_Tag& tag, const int& cell) const{
+  for (int node=0; node < numNodes; ++node)
+    for (int level=0; level < numLevels; ++level)
+      for (int dim=0; dim < numDims; ++dim)
+        Residual(cell,node,level,dim) =   VelxDot(cell,node,level,dim) *wBF(cell,node,node); 
+}
+
+#endif
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void Hydrostatic_VelResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
   double j_coeff = workset.j_coeff;
   double n_coeff = workset.n_coeff;
   obtainLaplaceOp = ((n_coeff == 22.0)&&(j_coeff == 1.0)) ? true : false;
 
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   PHAL::set(Residual, 0.0);
-
   //std::cout <<"In velocity resid: Laplace = " << obtainLaplaceOp << "\n";
 
   //OG I had an segfault when moving this statement uder (if not Laplace op), where it belongs.
@@ -261,6 +302,24 @@ evaluateFields(typename Traits::EvalData workset)
   else {
 	  //to be implemented
   }
+
+#else
+  if ( !obtainLaplaceOp ) {
+    if (!pureAdvection ) {
+      Kokkos::parallel_for(Hydrostatic_VelResid_Policy(0,workset.numCells),*this);
+    }
+
+    else {
+      Kokkos::parallel_for(Hydrostatic_VelResid_pureAdvection_Policy(0,workset.numCells),*this);
+    }
+  }
+
+  else {
+    //to be implemented
+    PHAL::set(Residual, 0.0);
+  }
+
+#endif
 }
 
 template<typename EvalT,typename Traits>

@@ -27,7 +27,8 @@ XZHydrostatic_SPressureResid(const Teuchos::ParameterList& p,
   Residual (p.get<std::string> ("Residual Name"),                    dl->node_scalar),
   numNodes ( dl->node_scalar             ->dimension(1)),
   numQPs   ( dl->node_qp_scalar          ->dimension(2)),
-  numLevels( dl->node_scalar_level       ->dimension(2))
+  numLevels( dl->node_scalar_level       ->dimension(2)),
+  E (Eta<EvalT>::self())
 {
 
   Teuchos::ParameterList* xsa_params =
@@ -62,6 +63,31 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void XZHydrostatic_SPressureResid<EvalT, Traits>::
+operator() (const XZHydrostatic_SPressureResid_Tag& tag, const int& cell) const{
+  for (int qp=0; qp < numQPs; ++qp) {
+    ScalarT sum = 0;
+	  for (int level=0; level<numLevels; ++level)  sum += divpivelx(cell,qp,level) * E.delta(level);
+
+	  int node = qp;
+	  Residual(cell,node) += (spDot(cell,qp) + sum)*wBF(cell,node,qp);
+	}
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void XZHydrostatic_SPressureResid<EvalT, Traits>::
+operator() (const XZHydrostatic_SPressureResid_pureAdvection_Tag& tag, const int& cell) const{
+  for (int node=0; node < numNodes; ++node)
+    Residual(cell,node) += spDot(cell,node)*wBF(cell,node,node);
+}
+#endif
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void XZHydrostatic_SPressureResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
@@ -75,8 +101,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 //  std::cout <<"In surf pressure resid: Laplace = " << obtainLaplaceOp << "\n";
 
-  const Eta<EvalT> &E = Eta<EvalT>::self();
-
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if( !obtainLaplaceOp ) {
     if( !pureAdvection ){
       for (int cell=0; cell < workset.numCells; ++cell) {
@@ -111,6 +136,23 @@ evaluateFields(typename Traits::EvalData workset)
   else {
     //no Laplace for surface pressure, zero block instead
   }
+
+#else
+  if( !obtainLaplaceOp ) {
+    if( !pureAdvection ) {
+      Kokkos::parallel_for(XZHydrostatic_SPressureResid_Policy(0,workset.numCells),*this);
+    }
+
+    else {
+      Kokkos::parallel_for(XZHydrostatic_SPressureResid_pureAdvection_Policy(0,workset.numCells),*this);
+    }
+  }
+
+  else {
+    //no Laplace for surface pressure, zero block instead
+  }
+
+#endif
 }
 
 //**********************************************************************

@@ -10,6 +10,7 @@ namespace AAdapt {
 
 MeshAdaptMethod::MeshAdaptMethod(
     const Teuchos::RCP<Albany::APFDiscretization>& disc):
+    apf_disc(disc),
     mesh_struct(disc->getAPFMeshStruct()),
     commT(disc->getComm())
 {

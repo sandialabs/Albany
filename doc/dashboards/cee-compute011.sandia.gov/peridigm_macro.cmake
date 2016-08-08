@@ -6,6 +6,7 @@ macro(do_peridigm)
   set_property (GLOBAL PROPERTY Label Peridigm)
 
   set (CONFIGURE_OPTIONS
+    "-DCMAKE_FIND_PREFIX_PATH:PATH=/projects/albany"
     "-DCMAKE_BUILD_TYPE:STRING=Release"
     "-DENABLE_INSTALL:BOOL=ON"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/PeridigmInstall"

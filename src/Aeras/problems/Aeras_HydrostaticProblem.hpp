@@ -719,6 +719,7 @@ Aeras::HydrostaticProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
     
     //Input
+    p->set<std::string>("Coordinate Vector Name", "Coordinate Vector Name");
     
     //Output
     p->set<std::string>("SurfaceGeopotential", "SurfaceGeopotential");

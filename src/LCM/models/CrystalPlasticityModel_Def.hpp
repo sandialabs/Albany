@@ -15,9 +15,33 @@
 #include <Sacado_Traits.hpp>
 
 #include "core/CrystalPlasticity/ParameterReader.hpp"
+#include <type_traits>
 
 namespace LCM
 {
+
+  // Matches ScalarT != ST
+  template<class T, typename std::enable_if< !std::is_same<T, ST>::value>::type* = nullptr >
+  bool isnaninf(const T& x)
+  {
+    typedef typename Sacado::ValueType<T>::type ValueT;
+    if (Teuchos::ScalarTraits<ValueT>::isnaninf(x.val()))
+      return true;
+    for (int i=0; i<x.size(); i++)
+      if (Teuchos::ScalarTraits<ValueT>::isnaninf(x.dx(i)))
+        return true;
+    return false;
+  }
+
+  // Matches ScalarT == ST
+  template<class T, typename std::enable_if< std::is_same<T, ST>::value>::type* = nullptr >
+  bool
+  isnaninf(const T& x)
+  {
+    if (Teuchos::ScalarTraits<T>::isnaninf(x))
+      return true;
+    return false;
+  }
 
 template<typename EvalT, typename Traits>
 CrystalPlasticityModel<EvalT, Traits>::

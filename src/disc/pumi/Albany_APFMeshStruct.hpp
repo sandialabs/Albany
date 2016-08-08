@@ -117,6 +117,7 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     int restartWriteStep;
 
     bool shouldLoadFELIXData;
+    bool shouldWriteAsciiVtk;
 
     int neq; //! number of equations (components) per node in the solution and residual
     int numDim; //! mesh element dimensionality

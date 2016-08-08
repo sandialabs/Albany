@@ -807,6 +807,8 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 
 double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalDerivWrtDisplacement)
 {
+  double scaleFactor = 1.0;
+
   if(!enableOptimizationBasedCoupling){
     return 0.0;
   }
@@ -895,7 +897,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
     for(int dof=0 ; dof<3 ; dof++){
       displacementDiff[3*iEvalPt+dof] = physPoints(0,0,dof) - ((*obcDataPoints)[iEvalPt].currentCoords[dof] - (*obcDataPoints)[iEvalPt].initialCoords[dof]);
       // Multiply the displacement vector by the sphere element volume
-      displacementDiffScaled[3*iEvalPt+dof] = displacementDiff[3*iEvalPt+dof]*(*obcDataPoints)[iEvalPt].sphereElementVolume;
+      displacementDiffScaled[3*iEvalPt+dof] = scaleFactor*displacementDiff[3*iEvalPt+dof]*(*obcDataPoints)[iEvalPt].sphereElementVolume;
     }
 
     if(obcFunctionalDerivWrtDisplacement != NULL) {
@@ -962,7 +964,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
 
   // Evaluate the functional
   double functionalValue(0.0);
-  displacementDiff.Dot(displacementDiffScaled, &functionalValue);
+  displacementDiffScaled.Dot(displacementDiffScaled, &functionalValue);
 
   return functionalValue;
 }
@@ -1428,7 +1430,7 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
           double* dirichletData = stk::mesh::field_data (*dirichletField, node);
 
           //set dirichletData as any function of the coordinates;
-          dirichletData[0] = 0.001*(coord[0]/1.625);
+          dirichletData[0] = 0.001*coord[0];
         }
       }
     }
@@ -1443,7 +1445,7 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
           double* coord = stk::mesh::field_data(*stkDisc->getSTKMeshStruct()->getCoordinatesField(), node);
           double* dirichletData = stk::mesh::field_data(*dirichletField, node);
           //set dirichletData as any function of the coordinates;
-          dirichletData[0]= 0.001*(coord[0]/1.625);
+          dirichletData[0]= 0.001*coord[0];
         }
       }
     }

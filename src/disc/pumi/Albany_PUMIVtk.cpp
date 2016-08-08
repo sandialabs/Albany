@@ -81,15 +81,20 @@ writeFile(const double time_value){
     std::ostringstream vtk_ss;
     vtk_ss << "_" << remeshFileIndex;
     vtk_filename.replace(vtk_filename.find(".vtk"), 4, vtk_ss.str());
-    const char* cstr = vtk_filename.c_str();
-    apf::writeVtkFiles(cstr, mesh_struct->getMesh());
-  }
-  else {
+    callAPFWrite(vtk_filename);
+  } else {
     std::string filename = outputFileName;
     filename.replace(filename.find(".vtk"), 4, "");
-    const char* cstr = filename.c_str();
-    apf::writeVtkFiles(cstr, mesh_struct->getMesh());
+    callAPFWrite(filename);
   }
   remeshFileIndex++;
 }
 
+void
+Albany::PUMIVtk::
+callAPFWrite(std::string const& path) {
+  if (mesh_struct->shouldWriteAsciiVtk)
+    apf::writeASCIIVtkFiles(path.c_str(), mesh_struct->getMesh());
+  else
+    apf::writeVtkFiles(path.c_str(), mesh_struct->getMesh());
+}

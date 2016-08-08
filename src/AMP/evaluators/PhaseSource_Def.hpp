@@ -89,11 +89,11 @@ evaluateFields(typename Traits::EvalData workset)
   AMP::LaserCenter Val;
   Val.t = t;
   
-  RealType x, z, power_fraction;
+  RealType x, y, power_fraction;
   int power;
-  LaserData_.getLaserPosition(t,Val,x,z,power,power_fraction);
+  LaserData_.getLaserPosition(t,Val,x,y,power,power_fraction);
   ScalarT Laser_center_x = x;
-  ScalarT Laser_center_z = z;
+  ScalarT Laser_center_y = y;
   ScalarT Laser_power_fraction = power_fraction; 
 
   //source function
@@ -103,7 +103,7 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT powder_hemispherical_reflectivity = 0.70;
   ScalarT lambda =2.50;
   ScalarT pi = 3.1415926535897932;
-//  ScalarT laser_power = 30;
+
   ScalarT LaserFlux_Max;
   // laser on or off
   if ( power == 1 )
@@ -114,7 +114,7 @@ evaluateFields(typename Traits::EvalData workset)
     {
       LaserFlux_Max = 0.0;
     }
-  //ScalarT LaserFlux_Max =(3.0/(pi*laser_beam_radius*laser_beam_radius))*laser_power;
+
   ScalarT beta = 1.5*(1.0 - porosity)/(porosity*particle_dia);
   // Few parameters:
   ScalarT a = sqrt(1.0 - powder_hemispherical_reflectivity);
@@ -125,7 +125,6 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT c1 = b2 - powder_hemispherical_reflectivity*b1;
   ScalarT c2 = b1 - powder_hemispherical_reflectivity*b2;
   ScalarT C = b1*c2*exp(-2*a*lambda) - b2*c1*exp(2*a*lambda);
-  
   
   //  Code for heat into substrate
   ScalarT Absorptivity_substrate = 0.77;
@@ -138,32 +137,15 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT Substrate_Top = 0.00005;
   ScalarT Substrate_Bot = 0.0000575;
 
-
-
   // source function
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t qp = 0; qp < num_qps_; ++qp) {
         MeshScalarT X = coord_(cell,qp,0);
         MeshScalarT Y = coord_(cell,qp,1);
         MeshScalarT Z = coord_(cell,qp,2);
-
-
-  // //  Code for moving laser point
-  //       ScalarT LaserVelocity_x = 1.0;
-  //       ScalarT LaserVelocity_z = 0.0;
-  //       ScalarT Laser_Init_position_x = 0.0;
-  //       ScalarT Laser_Init_position_z = 0.0;
-
-  //  //     ScalarT Laser_center_x = 0.0;
-  //  //     ScalarT Laser_center_z = 0.0;
-        
-  //       ScalarT Laser_center_x = Laser_Init_position_x + LaserVelocity_x*(time(0)-deltaTime(0));
-  //       ScalarT Laser_center_z = Laser_Init_position_z + LaserVelocity_z*(time(0)-deltaTime(0));
-
-
-  //  Note:(0.0002 -Y) is because of the Y axis for the depth_profile is in the negative direction as per the Gusarov's equation.                                  
-        ScalarT radius = sqrt((X - Laser_center_x)*(X - Laser_center_x) + (Z - Laser_center_z)*(Z - Laser_center_z));
-        if (radius < laser_beam_radius && (0.0002 - Y) >= Substrate_Top && (0.0002 - Y) <= Substrate_Bot)
+                           
+        ScalarT radius = sqrt((X - Laser_center_x)*(X - Laser_center_x) + (Y - Laser_center_y)*(Y - Laser_center_y));
+        if (radius < laser_beam_radius && Z >= Substrate_Top && Z <= Substrate_Bot)
               source_(cell,qp) = beta*LaserFlux_Max*pow((1.0-(radius*radius)/(laser_beam_radius*laser_beam_radius)),2)*(Absorptivity_substrate - I_value);
         else  source_(cell,qp) =0.0;
          

@@ -13,6 +13,7 @@
 #include "Phalanx_MDField.hpp"
 #include "Aeras_Layouts.hpp"
 #include "Aeras_Dimension.hpp"
+#include "Aeras_Eta.hpp"
 
 namespace Aeras {
 /** \brief Pressure for XZHydrostatic atmospheric model
@@ -47,6 +48,7 @@ private:
 
   const int numNodes;
   const int numLevels;
+  const Eta<EvalT> &E;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:

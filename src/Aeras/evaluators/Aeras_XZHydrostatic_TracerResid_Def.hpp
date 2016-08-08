@@ -49,7 +49,7 @@ XZHydrostatic_TracerResid(Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Residual);
 
-  this->setName("Aeras::XZHydrostatic_TracerResid" );
+  this->setName("Aeras::XZHydrostatic_TracerResid" + PHX::typeAsString<EvalT>());
 
   Schmidt = 1.0;
 }
@@ -72,33 +72,63 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void XZHydrostatic_TracerResid<EvalT, Traits>::
+operator() (const XZHydrostatic_TracerResid_Tag& tag, const int& cell) const{
+  for (int qp=0; qp < numQPs; ++qp) {
+    int node = qp; 
+    for (int level=0; level < numLevels; ++level) {
+      Residual(cell,node,level) +=     TracerDot(cell,qp,level) * wBF(cell,node,qp)
+                                +      TracerSrc(cell,qp,level) * wBF(cell,node,qp)
+                                +     UTracerDiv(cell,qp,level) * wBF(cell,node,qp)
+                                +  dedotpiTracerde(cell,qp,level) * wBF(cell,node,qp);
+    }
+  }
+
+  for (int node=0; node < numNodes; ++node) {
+    for (int level=0; level < numLevels; ++level) {
+      for (int qp=0; qp < numQPs; ++qp) {
+        for (int dim=0; dim < numDims; ++dim) {
+          Residual(cell,node,level) += (viscosity/Schmidt)*piTracerGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
+        }
+      }
+    }
+  }
+}
+
+#endif
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void XZHydrostatic_TracerResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   PHAL::set(Residual, 0.0);
 
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
       int node = qp; 
       //for (int node=0; node < numNodes; ++node) {
         for (int level=0; level < numLevels; ++level) {
-          Residual(cell,node,level) +=     TracerDot(cell,qp,level) * wBF(cell,node,qp);
-          Residual(cell,node,level) +=     TracerSrc(cell,qp,level) * wBF(cell,node,qp);
-          Residual(cell,node,level) +=    UTracerDiv(cell,qp,level) * wBF(cell,node,qp);
+          Residual(cell,node,level) +=     TracerDot(cell,qp,level) * wBF(cell,node,qp)
+                                    +      TracerSrc(cell,qp,level) * wBF(cell,node,qp)
+                                    +     UTracerDiv(cell,qp,level) * wBF(cell,node,qp)
+                                    +  dedotpiTracerde(cell,qp,level) * wBF(cell,node,qp);
           //Residual(cell,node,level) += etadotdTracer(cell,qp,level) * wBF(cell,node,qp);
-          Residual(cell,node,level) += dedotpiTracerde(cell,qp,level) * wBF(cell,node,qp);
 
           //std::cout <<"IN TRACERS: TracerSrc" << TracerSrc(cell,qp,level) <<" UTracerDiv "<< UTracerDiv(cell,qp,level) << "\n";
 
         //}
       }
     }
-  }
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int qp=0; qp < numQPs; ++qp) {
-      for (int node=0; node < numNodes; ++node) {
-        for (int level=0; level < numLevels; ++level) {
+
+    for (int node=0; node < numNodes; ++node) {
+      for (int level=0; level < numLevels; ++level) {
+        for (int qp=0; qp < numQPs; ++qp) {
           for (int dim=0; dim < numDims; ++dim) {
             Residual(cell,node,level) += (viscosity/Schmidt)*piTracerGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
           }
@@ -106,5 +136,10 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+
+#else
+  Kokkos::parallel_for(XZHydrostatic_TracerResid_Policy(0,workset.numCells),*this);
+
+#endif
 }
 }
