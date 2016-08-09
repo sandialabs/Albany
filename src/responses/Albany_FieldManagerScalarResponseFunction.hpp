@@ -38,6 +38,9 @@ namespace Albany {
     //! Get the number of responses
     virtual unsigned int numResponses() const;
 
+    //! Perform post registration setup
+    void postRegSetup();
+
     //! Evaluate responses
     virtual void 
     evaluateResponseT(const double current_time,
@@ -289,6 +292,7 @@ namespace Albany {
     //! sfm in Albany::Application.
     int element_block_index;
 
+    bool performedPostRegSetup;
   };
 
   template <typename EvalT> 

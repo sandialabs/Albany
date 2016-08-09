@@ -21,6 +21,7 @@ cmake \
  -D ENABLE_LAME:BOOL=OFF \
  -D ENABLE_LAMENT:BOOL=OFF \
  -D ENABLE_CHECK_FPE:BOOL=lcm_fpe_switch \
+ -D ENABLE_FLUSH_DENORMALS:BOOL=lcm_denormal_switch \
  -D ENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=lcm_enable_kokkos_devel \
  -D ALBANY_ENABLE_FORTRAN:BOOL=OFF \
  -D ENABLE_SLFAD:BOOL=lcm_enable_slfad \

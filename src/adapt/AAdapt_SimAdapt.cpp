@@ -46,6 +46,18 @@ bool SimAdapt::queryAdaptationCriteria(int iteration)
         return true;
     return false;
   }
+  if (strategy == "Every N Step Number") {
+            TEUCHOS_TEST_FOR_EXCEPTION(!adapt_params_->isParameter("Remesh Every N Step Number"),
+                    std::logic_error,
+                    "Remesh Strategy " << strategy << " but no Remesh Every N Step Number" << '\n');
+            int remesh_iter = adapt_params_->get<int>("Remesh Every N Step Number", -1);
+            // check user do not specify a zero or negative value
+            TEUCHOS_TEST_FOR_EXCEPTION(remesh_iter <= 0, std::logic_error,
+                    "Value must be positive" << '\n');
+            if (iteration % remesh_iter == 0)
+                return true;
+            return false;
+        }
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
       "Unknown Remesh Strategy " << strategy << '\n');
   return false;
@@ -360,7 +372,7 @@ bool SimAdapt::adaptMesh()
   /* run APF verification on the resulting mesh */
   apf_m->verify();
   /* update Albany structures to reflect the adapted mesh */
-  sim_disc->updateMesh(should_transfer_ip_data);
+  sim_disc->updateMesh(should_transfer_ip_data, param_lib_);
   /* see the comment in Albany_APFDiscretization.cpp */
   sim_disc->initTemperatureHack();
   ++callcount;
@@ -520,7 +532,7 @@ bool SimAdapt::adaptMesh()
   apf_m->verify();
   //  Albany::debugAMPMesh(apf_m, "after");
   /* update Albany structures to reflect the adapted mesh */
-  sim_disc->updateMesh(should_transfer_ip_data);
+  sim_disc->updateMesh(should_transfer_ip_data, param_lib_);
   /* see the comment in Albany_APFDiscretization.cpp */
   sim_disc->initTemperatureHack();
 //  sprintf(simname, "after%d", callcount);

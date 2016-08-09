@@ -299,6 +299,12 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
       Teuchos::rcp(new LayeredMeshNumbering<LO>(lVertexColumnShift,Ordering,layerThicknessRatio)):
       Teuchos::rcp(new LayeredMeshNumbering<LO>(vertexLayerShift,Ordering,layerThicknessRatio));
 
+  std::vector<double> ltr(layerThicknessRatio.size());
+  for(int i=0; i< ltr.size(); ++i) ltr[i]=layerThicknessRatio[i];
+  fieldContainer->getMeshVectorStates()["layer_thickness_ratio"] = ltr;
+  fieldContainer->getMeshScalarIntegerStates()["ordering"] = static_cast<int>(Ordering);
+  fieldContainer->getMeshScalarIntegerStates()["stride"] = (Ordering==LAYER) ? lVertexColumnShift : vertexLayerShift;
+
   metaData->commit();
 
   bulkData->modification_begin(); // Begin modifying the mesh

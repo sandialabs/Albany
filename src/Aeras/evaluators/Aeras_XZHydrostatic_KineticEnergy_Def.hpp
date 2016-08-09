@@ -31,7 +31,7 @@ XZHydrostatic_KineticEnergy(const Teuchos::ParameterList& p,
   this->addDependentField(u);
   this->addEvaluatedField(ke);
 
-  this->setName("Aeras::XZHydrostatic_KineticEnergy" );
+  this->setName("Aeras::XZHydrostatic_KineticEnergy" + PHX::typeAsString<EvalT>());
 
   ke0 = 0.0;
 
@@ -48,16 +48,45 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void XZHydrostatic_KineticEnergy<EvalT, Traits>::
+operator() (const XZHydrostatic_KineticEnergy_Tag& tag, const int& cell) const{
+  for (int node=0; node < numNodes; ++node) {
+    for (int level=0; level < numLevels; ++level) {
+      ke(cell,node,level) = 0;
+      for (int dim=0; dim < numDims; ++dim) {
+        ke(cell,node,level) += 0.5*u(cell,node,level,dim)*u(cell,node,level,dim);
+      }
+    }
+  }
+}
+
+#endif
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void XZHydrostatic_KineticEnergy<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  PHAL::set(ke, 0.0);
-  for (int cell=0; cell < workset.numCells; ++cell) 
-    for (int node=0; node < numNodes; ++node) 
-      for (int level=0; level < numLevels; ++level) 
-        for (int dim=0; dim < numDims; ++dim) 
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int node=0; node < numNodes; ++node) {
+      for (int level=0; level < numLevels; ++level) {
+        ke(cell,node,level) = 0;
+        for (int dim=0; dim < numDims; ++dim) {
           ke(cell,node,level) += 0.5*u(cell,node,level,dim)*u(cell,node,level,dim);
+        }
+      }
+    }
+  }
+
+#else
+  Kokkos::parallel_for(XZHydrostatic_KineticEnergy_Policy(0,workset.numCells),*this);
+
+#endif
 }
 
 //**********************************************************************

@@ -1,0 +1,34 @@
+
+reset
+
+#{SCALE_FACTOR=1.230769}
+#{HORIZON=0.125*SCALE_FACTOR}
+#{FEM_ELEM_SIZE=0.125*SCALE_FACTOR}
+#{PD_ELEM_SIZE=HORIZON/2.0}
+#{PD_BAR_LENGTH=8*HORIZON}
+#{FEM_BAR_LENGTH=PD_BAR_LENGTH}
+#{OVERLAP=3*HORIZON}
+
+create brick x {PD_BAR_LENGTH} y {0.5*SCALE_FACTOR} z {0.25*SCALE_FACTOR}
+volume 1 move x {-0.5*PD_BAR_LENGTH + 0.5*OVERLAP} y 0.0 z 0.0
+create brick x {FEM_BAR_LENGTH} y {0.5*SCALE_FACTOR} z {0.25*SCALE_FACTOR}
+volume 2 move x {0.5*PD_BAR_LENGTH - 0.5*OVERLAP} y 0.0 z 0.0
+webcut volume 1 with plane xplane offset {-PD_BAR_LENGTH + 0.5*OVERLAP + HORIZON} imprint merge
+webcut volume 1 with plane xplane offset {0.5*OVERLAP - HORIZON} imprint merge
+volume 1 3 4 size {PD_ELEM_SIZE}
+volume 2  size {FEM_ELEM_SIZE}
+mesh volume all
+block 1 volume 1 3 4
+block 2 volume 2
+nodeset 1 volume 3                    # left end pd volume
+nodeset 2 surface 12                  # right end fem face
+nodeset 3 volume 1                    # pd nodes in control
+nodeset 4 surface 10                  # fem nodes in control
+nodeset 5 volume 1 surface 10         # complete set of control nodes
+nodeset 6 curve 9                     # z axis on PD side
+nodeset 7 curve 7                     # y axis on PD side
+nodeset 8 curve 22                    # z axis on FEM side
+nodeset 9 curve 17                    # y axis on FEM side
+export genesis 'OBC_PatchTest_AllHex.g' overwrite
+
+# spheregen.py --ignore-blocks 2 -o OBC_PatchTest.g OBC_PatchTest_AllHex.g

@@ -136,9 +136,9 @@
   </ParameterList> <!--Discretization -->
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{105228186.915}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{106697612.025}"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{18430781.7856}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{19334770.5432}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>

@@ -14,8 +14,33 @@
 #include <iostream>
 #include <Sacado_Traits.hpp>
 
+#include <type_traits>
+
 namespace LCM
 {
+
+  // Matches ScalarT != ST
+  template<class T, typename std::enable_if< !std::is_same<T, ST>::value>::type* = nullptr >
+  bool isnaninf(const T& x)
+  {
+    typedef typename Sacado::ValueType<T>::type ValueT;
+    if (Teuchos::ScalarTraits<ValueT>::isnaninf(x.val()))
+      return true;
+    for (int i=0; i<x.size(); i++)
+      if (Teuchos::ScalarTraits<ValueT>::isnaninf(x.dx(i)))
+        return true;
+    return false;
+  }
+
+  // Matches ScalarT == ST
+  template<class T, typename std::enable_if< std::is_same<T, ST>::value>::type* = nullptr >
+  bool
+  isnaninf(const T& x)
+  {
+    if (Teuchos::ScalarTraits<T>::isnaninf(x))
+      return true;
+    return false;
+  }
 
 template<typename EvalT, typename Traits>
 CrystalPlasticityModel<EvalT, Traits>::
@@ -124,6 +149,9 @@ CrystalPlasticityModel(
     else if (step_type_string == "Line Search Regularized") {
       step_type_ = Intrepid2::StepType::LINE_SEARCH_REG;
     }
+    else if (step_type_string == "Newton with Line Search") {
+      step_type_ = Intrepid2::StepType::NEWTON_LS;
+    }
     else {
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
@@ -132,8 +160,9 @@ CrystalPlasticityModel(
             \"Nonlinear Solver Step Type\", must be \
             \"Newton\", \
             \"Trust Region\", \
-            \"Conjugate Gradient\", or \
-            \"Line Search Regularized\".\n");
+            \"Conjugate Gradient\", \
+            \"Line Search Regularized\", or \
+            \"Newton with Line Search\".\n");
     }
   }
 
@@ -270,6 +299,23 @@ CrystalPlasticityModel(
       slip_systems_[num_ss].energy_activation_ = 
           f_list.get<RealType>("Activation Energy", 0.0);
     }
+    else if(type_flow_rule == "Power Law with Drag")
+    {
+      slip_systems_[num_ss].flow_rule = CP::FlowRule::POWER_LAW_DRAG;
+
+      slip_systems_[num_ss].rate_slip_reference_ = 
+          f_list.get<RealType>("Gamma Dot", 0.0);
+
+      slip_systems_[num_ss].exponent_rate_ = 
+          f_list.get<RealType>("Gamma Exponent", 0.0);
+
+      slip_systems_[num_ss].drag_coeff_ = 
+          f_list.get<RealType>("Drag Coefficient", 0.0);
+    }
+    else
+    {
+      slip_systems_[num_ss].flow_rule = CP::FlowRule::POWER_LAW;
+    }
 
     //
     // Obtain hardening law parameters
@@ -400,6 +446,9 @@ CrystalPlasticityModel(
   std::string const
   residual_string = (*field_name_map_)["CP_Residual"];
 
+  std::string const
+  residual_iter_string = (*field_name_map_)["CP_Residual_Iter"];
+
   //
   // define the dependent fields required for calculation
   //
@@ -417,6 +466,7 @@ CrystalPlasticityModel(
   this->eval_field_map_.insert(std::make_pair(L_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair(residual_string, dl->qp_scalar));
+  this->eval_field_map_.insert(std::make_pair(residual_iter_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair("Time", dl->workset_scalar));
   if (have_temperature_) {
     this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
@@ -587,6 +637,17 @@ CrystalPlasticityModel(
   this->state_var_old_state_flags_.push_back(false);
   this->state_var_output_flags_.push_back(
       p->get<bool>("Output CP_Residual", false));
+
+  // residual iterations
+  this->num_state_variables_++;
+  this->state_var_names_.push_back(residual_iter_string);
+  this->state_var_layouts_.push_back(dl->qp_scalar);
+  this->state_var_init_types_.push_back("scalar");
+  this->state_var_init_values_.push_back(0.0);
+  this->state_var_old_state_flags_.push_back(false);
+  this->state_var_output_flags_.push_back(
+      p->get<bool>("Output CP_Residual_Iter", false));    
+
 }
 
 //
@@ -601,6 +662,14 @@ computeState(typename Traits::EvalData workset,
 
   if(verbosity_ > 2) {
     std::cout << ">>> in cp compute state\n";
+  }
+
+  if (read_orientations_from_mesh_) {
+    Teuchos::ArrayRCP<double*> const& rotation_matrix_transpose = workset.wsLatticeOrientation;
+    TEUCHOS_TEST_FOR_EXCEPTION(
+	rotation_matrix_transpose.is_null(),
+	std::logic_error,
+	"\n**** Error in CrystalPlasticityModel, rotation matrix not found on genesis mesh.\n");
   }
 
   //
@@ -623,6 +692,9 @@ computeState(typename Traits::EvalData workset,
 
   std::string const
   residual_string = (*field_name_map_)["CP_Residual"];
+
+  std::string const
+  residual_iter_string = (*field_name_map_)["CP_Residual_Iter"];
 
   std::string const
   source_string = (*field_name_map_)["Mechanical_Source"];
@@ -672,6 +744,9 @@ computeState(typename Traits::EvalData workset,
 
   PHX::MDField<ScalarT>
   cp_residual = *eval_fields[residual_string];
+
+  PHX::MDField<ScalarT>
+  cp_residual_iter = *eval_fields[residual_iter_string];
 
   PHX::MDField<ScalarT>
   time = *eval_fields["Time"];
@@ -828,6 +903,9 @@ computeState(typename Traits::EvalData workset,
   norm_slip_residual;
 
   RealType
+  residual_iter;
+
+  RealType
   equivalent_plastic_strain;
 
   bool
@@ -863,22 +941,16 @@ computeState(typename Traits::EvalData workset,
       }
 
       if (read_orientations_from_mesh_) {
-	Teuchos::ArrayRCP<double*> const& euler_angles = workset.wsLatticeOrientation;
-	double euler_phi_1 = euler_angles[cell][0];;
-	double euler_Phi   = euler_angles[cell][1];
-	double euler_phi_2 = euler_angles[cell][2];
-	std::vector<double> basis_1, basis_2, basis_3;
-	CP::eulerAnglesToBasisVectors(euler_phi_1,
-				      euler_Phi,
-				      euler_phi_2,
-				      basis_1,
-				      basis_2,
-				      basis_3);
-	std::cout << "DJL DEBUGGING euler   " << euler_phi_1 << ", " << euler_Phi << ", " << euler_phi_2 << std::endl;
-	std::cout << "DJL DEBUGGING basis_1 " << basis_1[0] << ", " << basis_1[1] << ", " << basis_1[2] << std::endl;
-	std::cout << "DJL DEBUGGING basis_2 " << basis_2[0] << ", " << basis_2[1] << ", " << basis_2[2] << std::endl;
-	std::cout << "DJL DEBUGGING basis_3 " << basis_3[0] << ", " << basis_3[1] << ", " << basis_3[2] << std::endl;
-	std::cout << std::endl;
+	Teuchos::ArrayRCP<double*> const& rotation_matrix_transpose = workset.wsLatticeOrientation;
+	orientation_matrix(0,0) = rotation_matrix_transpose[cell][0];
+	orientation_matrix(0,1) = rotation_matrix_transpose[cell][1];
+	orientation_matrix(0,2) = rotation_matrix_transpose[cell][2];
+	orientation_matrix(1,0) = rotation_matrix_transpose[cell][3];
+	orientation_matrix(1,1) = rotation_matrix_transpose[cell][4];
+	orientation_matrix(1,2) = rotation_matrix_transpose[cell][5];
+	orientation_matrix(2,0) = rotation_matrix_transpose[cell][6];
+	orientation_matrix(2,1) = rotation_matrix_transpose[cell][7];
+	orientation_matrix(2,2) = rotation_matrix_transpose[cell][8];
       }
       else {
 	orientation_matrix = element_block_orientation_;
@@ -1072,6 +1144,11 @@ computeState(typename Traits::EvalData workset,
               for(int i=0; i<num_slip_; ++i) {
                 // initial guess for x is slip_np1 (predictor, see above)
                 x(i) = Sacado::ScalarValue<ScalarT>::eval(slip_np1(i));
+
+                // GAH - getting NANs here
+//                TEUCHOS_TEST_FOR_EXCEPTION(isnaninf(x(i)), std::runtime_error,
+//                           "Getting a NAN in CrystalPlasticityModel_Def.hpp line 1088.");
+
               }
 
               LCM::MiniSolver<MIN, STEP, NLS, EvalT, NLS_DIM>
@@ -1201,6 +1278,7 @@ computeState(typename Traits::EvalData workset,
 
           // Compute the residual norm 
           norm_slip_residual = std::sqrt(2.0 * minimizer.final_value);
+	  residual_iter = minimizer.num_iter;
 
         }
         break;
@@ -1259,6 +1337,7 @@ computeState(typename Traits::EvalData workset,
 
         // residual norm
         cp_residual(cell, pt) = norm_slip_residual;
+	cp_residual_iter(cell,pt) = residual_iter;
 
         // num_dims_ x num_dims_ dimensional array variables
         for (int i(0); i < num_dims_; ++i) {

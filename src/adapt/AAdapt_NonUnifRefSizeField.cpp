@@ -11,7 +11,7 @@
 #include "Albany_Utils.hpp"
 
 AAdapt::NonUnifRefSizeField::NonUnifRefSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc) :
-  MeshSizeField(disc) {
+  MeshAdaptMethod(disc) {
 }
 
 AAdapt::NonUnifRefSizeField::
@@ -19,7 +19,7 @@ AAdapt::NonUnifRefSizeField::
 }
 
 void
-AAdapt::NonUnifRefSizeField::configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_) {
+AAdapt::NonUnifRefSizeField::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_) {
 
      int num_iters = adapt_params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
 
@@ -29,7 +29,7 @@ AAdapt::NonUnifRefSizeField::configure(const Teuchos::RCP<Teuchos::ParameterList
      //do not snap on deformation problems even if the model supports it
      in->shouldSnap = false;
 
-     setMAInputParams(adapt_params_, in);
+     setCommonMeshAdaptOptions(adapt_params_, in);
 
      in->shouldFixShape = true;
 
@@ -38,7 +38,7 @@ AAdapt::NonUnifRefSizeField::configure(const Teuchos::RCP<Teuchos::ParameterList
 }
 
 void
-AAdapt::NonUnifRefSizeField::computeError() {
+AAdapt::NonUnifRefSizeField::preProcessShrunkenMesh() {
 }
 
 void
@@ -48,7 +48,7 @@ AAdapt::NonUnifRefSizeField::setParams(
 }
 
 void
-AAdapt::NonUnifRefSizeField::copyInputFields() {
+AAdapt::NonUnifRefSizeField::preProcessOriginalMesh() {
 
 }
 

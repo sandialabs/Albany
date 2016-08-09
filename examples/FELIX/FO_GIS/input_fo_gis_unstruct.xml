@@ -69,8 +69,8 @@
     <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct.exo"/>
     <Parameter name="Element Shape" type="string" value="Tetrahedron"/>
     <Parameter name="NumLayers" type="int" value="5"/>
-    <Parameter name="Extrude Basal Node Fields"             type="Array(string)" value="{thickness,surface_height}"/>
-    <Parameter name="Basal Node Fields Ranks"               type="Array(int)"    value="{1,1}"/>
+    <Parameter name="Extrude Basal Node Fields"             type="Array(string)" value="{thickness,surface_height,basal_friction}"/>
+    <Parameter name="Basal Node Fields Ranks"               type="Array(int)"    value="{1,1,1}"/>
     <Parameter name="Interpolate Basal Node Layered Fields" type="Array(string)" value="{temperature}"/>
     <Parameter name="Basal Node Layered Fields Ranks"       type="Array(int)"    value="{1}"/>
     <Parameter name="Use Glimmer Spacing" type="bool" value="true"/>
@@ -140,9 +140,9 @@
 
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{107604493.807}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{109129452.686}"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{19948298.8019}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{20780201.6563}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>

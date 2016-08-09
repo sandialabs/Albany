@@ -15,10 +15,11 @@
 namespace FELIX {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-StokesFOBasalResid<EvalT, Traits>::StokesFOBasalResid (const Teuchos::ParameterList& p,
+template<typename EvalT, typename Traits, typename Type>
+StokesFOBasalResid<EvalT, Traits, Type>::StokesFOBasalResid (const Teuchos::ParameterList& p,
                                            const Teuchos::RCP<Albany::Layouts>& dl) :
-  basalResid (p.get<std::string> ("Basal Residual Variable Name"),dl->node_vector)
+  basalResid (p.get<std::string> ("Basal Residual Variable Name"),dl->node_vector),
+  homotopy(p.get<std::string>("Continuation Parameter Name"), dl->shared_param)
 {
   basalSideName = p.get<std::string>("Side Set Name");
 
@@ -28,7 +29,7 @@ StokesFOBasalResid<EvalT, Traits>::StokesFOBasalResid (const Teuchos::ParameterL
   Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
   u         = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
-  beta      = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"),dl_basal->qp_scalar);
+  beta      = PHX::MDField<Type,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"),dl_basal->qp_scalar);
   BF        = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
   w_measure = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint> (p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
 
@@ -36,6 +37,7 @@ StokesFOBasalResid<EvalT, Traits>::StokesFOBasalResid (const Teuchos::ParameterL
   this->addDependentField(beta);
   this->addDependentField(BF);
   this->addDependentField(w_measure);
+  this->addDependentField(homotopy);
 
   this->addEvaluatedField(basalResid);
 
@@ -52,7 +54,6 @@ StokesFOBasalResid<EvalT, Traits>::StokesFOBasalResid (const Teuchos::ParameterL
   vecDim       = dims[2];
 
   regularized = p.get<Teuchos::ParameterList*>("Parameter List")->get("Regularize With Continuation",false);
-
   // Index of the nodes on the sides in the numeration of the cell
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
@@ -73,8 +74,8 @@ StokesFOBasalResid<EvalT, Traits>::StokesFOBasalResid (const Teuchos::ParameterL
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void StokesFOBasalResid<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename Type>
+void StokesFOBasalResid<EvalT, Traits, Type>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -82,15 +83,16 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(beta,fm);
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(w_measure,fm);
+  this->utils.setFieldData(homotopy,fm);
 
   this->utils.setFieldData(basalResid,fm);
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void StokesFOBasalResid<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
+template<typename EvalT, typename Traits, typename Type>
+void StokesFOBasalResid<EvalT, Traits, Type>::evaluateFields (typename Traits::EvalData workset)
 {
-  ScalarT homotopyParam = FELIX::HomotopyParameter<EvalT>::value;
+  ScalarT homotopyParam = homotopy(0);
   ScalarT ff = (regularized) ? pow(10.0, -10.0*homotopyParam) : ScalarT(0);
  #ifdef OUTPUT_TO_SCREEN
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -98,6 +100,7 @@ void StokesFOBasalResid<EvalT, Traits>::evaluateFields (typename Traits::EvalDat
     if (std::fabs(printedFF-ff)>0.0001*ff)
     {
         *output << "[Basal Residual] ff = " << ff << "\n";
+        //*output << "[Homotopy param] h = " << homotopyParam << "\n";
         printedFF = ff;
     }
 #endif

@@ -56,6 +56,27 @@ private:
   const double Cp;
   double Cpv;
   double Cvv;
+  ScalarT R;
+  ScalarT Rv;
+  ScalarT factor;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct XZHydrostatic_VirtualT_Tag{};
+  struct XZHydrostatic_VirtualT_vapor_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_VirtualT_Tag> XZHydrostatic_VirtualT_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_VirtualT_vapor_Tag> XZHydrostatic_VirtualT_vapor_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_VirtualT_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_VirtualT_vapor_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 

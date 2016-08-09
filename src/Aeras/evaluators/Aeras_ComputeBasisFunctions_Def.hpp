@@ -19,8 +19,7 @@ ComputeBasisFunctions<EvalT, Traits>::
 ComputeBasisFunctions(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Aeras::Layouts>& dl) :
                               spatialDim( p.get<std::size_t>("spatialDim") ),
-  coordVec      (p.get<std::string>  ("Coordinate Vector Name"),
-      spatialDim == 3 ? dl->node_3vector : dl->node_vector ),
+  coordVec      (p.get<std::string>  ("Coordinate Vector Name"), dl->node_3vector),
   cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
   intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis") ),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),

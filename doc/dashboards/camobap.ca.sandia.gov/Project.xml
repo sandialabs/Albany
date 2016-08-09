@@ -15,4 +15,10 @@
   </SubProject>
   <SubProject name="IKTCismAlbanyEpetra">
   </SubProject>
+  <SubProject name="IKT_AlbanyDynRankView_NoFunctor">
+  </SubProject>
+  <SubProject name="IKT_AlbanyDynRankView_FunctorSerial">
+  </SubProject>
+  <SubProject name="IKT_AlbanyDynRankView_FunctorOpenMP">
+  </SubProject>
 </Project>

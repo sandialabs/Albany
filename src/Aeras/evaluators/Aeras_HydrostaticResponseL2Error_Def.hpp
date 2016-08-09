@@ -198,7 +198,7 @@ evaluateFields(typename Traits::EvalData workset)
         spressure_ref(cell,qp) = SP0;
         //The following 2 definitions are for the 1st velocity component solution
         const MeshScalarT theta = sphere_coord(cell, qp, 1);
-        const double sin2Theta = std::sin(2.0*theta);
+        const MeshScalarT sin2Theta = std::sin(2.0*theta);
         for (std::size_t level=0; level < numLevels; ++level) {
           //first component of velocity.
           const double Eta =  EP.eta(level);
@@ -211,7 +211,7 @@ evaluateFields(typename Traits::EvalData workset)
           if( Eta <= Etat ) Tavg += deltaT * std::pow(Etat - Eta, 5.0);
           double factor       = Eta*constPi*u0/Rd;
           double phi_vertical = (Eta - Eta0) * 0.5 *constPi;
-          double t_deviation = factor*1.5* std::sin(phi_vertical) * std::pow(std::cos(phi_vertical),0.5) *
+          MeshScalarT t_deviation = factor*1.5* std::sin(phi_vertical) * std::pow(std::cos(phi_vertical),0.5) *
                  ((-2.* std::pow(std::sin(theta),6.) * ( std::pow(std::cos(theta),2.) + 1./3.) + 10./63.)*
                  u0 * std::pow(std::cos(phi_vertical),1.5)  +
                  (8./5.*std::pow(std::cos(theta),3.) * (std::pow(std::sin(theta),2.) + 2./3.) - constPi/4.)*a_omega*0.5 );

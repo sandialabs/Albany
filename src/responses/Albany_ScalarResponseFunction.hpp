@@ -34,6 +34,9 @@ namespace Albany {
     //! Get the number of responses
     virtual unsigned int numResponses() const = 0;
 
+    //! Performs post registration setup
+    virtual void postRegSetup(){};
+    
     //! Get the comm
     virtual Teuchos::RCP<const Teuchos_Comm> getComm() const {
       return commT;

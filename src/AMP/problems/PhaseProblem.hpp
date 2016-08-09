@@ -451,6 +451,7 @@ Albany::PhaseProblem::constructEvaluators(
     p->set<string>("Temperature Name","Temperature");
     p->set<string>("Temperature Time Derivative Name","Temperature_dot");
     p->set<string>("Phi Name","Phi");
+    p->set<string>("Phi Dot Name","Phi_dot");
     p->set<string>("Psi Name","Psi");
     p->set<string>("Time Name","Time");
     p->set<string>("Delta Time Name","Delta Time");

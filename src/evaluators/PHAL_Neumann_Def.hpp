@@ -1731,6 +1731,8 @@ evaluateFields(typename Traits::EvalData workset)
         workset.local_Vp[cell];
       const int num_deriv = local_Vp.size()/neq;
       for (int i=0; i<num_deriv; i++) {
+        const LO row = wsElDofs((int)cell,i,0);
+        if(row<0) continue;
         for (int col=0; col<num_cols; col++) {
           double val = 0.0;
           for (std::size_t node = 0; node < this->numNodes; ++node) {
@@ -1739,7 +1741,6 @@ evaluateFields(typename Traits::EvalData workset)
               val += this->neumann(cell, node, dim).dx(i)*local_Vp[node*neq+eq][col];
             }
           }
-          const LO row = wsElDofs((int)cell,i,0);
           fpVT->sumIntoLocalValue(row, col, val);
         }
       }

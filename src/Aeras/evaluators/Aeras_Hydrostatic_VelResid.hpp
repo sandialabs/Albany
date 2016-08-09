@@ -88,6 +88,23 @@ private:
   bool obtainLaplaceOp;
   bool pureAdvection;
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct Hydrostatic_VelResid_Tag{};
+  struct Hydrostatic_VelResid_pureAdvection_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, Hydrostatic_VelResid_Tag> Hydrostatic_VelResid_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, Hydrostatic_VelResid_pureAdvection_Tag> Hydrostatic_VelResid_pureAdvection_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Hydrostatic_VelResid_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Hydrostatic_VelResid_pureAdvection_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 

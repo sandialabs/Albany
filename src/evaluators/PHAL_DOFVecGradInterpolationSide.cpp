@@ -9,4 +9,4 @@
 #include "PHAL_DOFVecGradInterpolationSide.hpp"
 #include "PHAL_DOFVecGradInterpolationSide_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(PHAL::DOFVecGradInterpolationSideBase)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_EVAL_TYPE(PHAL::DOFVecGradInterpolationSideBase)

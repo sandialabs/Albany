@@ -7,8 +7,8 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
-    <Parameter name="Required Fields"         type="Array(string)" value="{temperature}"/>
-    <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction}"/>
+    <Parameter name="Required Fields"         type="Array(string)" value="{temperature,basal_friction}"/>
+    <Parameter name="Required Basal Fields"   type="Array(string)" value="{}"/>
     <Parameter name="Basal Side Name"         type="string" value="basalside"/>
     <Parameter name="Surface Side Name"       type="string" value="upperside"/>
 
@@ -59,9 +59,14 @@
     <Parameter name="Exodus Input File Name" type="string" value="gis_unstruct.exo"/>
     <Parameter name="Restart Index" type="int" value="1"/>
     <ParameterList name="Required Fields Info">
-    <Parameter name="Number Of Fields" type="int" value="1"/>
+    <Parameter name="Number Of Fields" type="int" value="2"/>
       <ParameterList name="Field 0">
         <Parameter name="Field Name" type="string" value="temperature"/>
+        <Parameter name="Field Type" type="string" value="Node Scalar"/>
+        <Parameter name="Field Origin"  type="string" value="Mesh"/>
+      </ParameterList>
+      <ParameterList name="Field 1">
+        <Parameter name="Field Name" type="string" value="basal_friction"/>
         <Parameter name="Field Type" type="string" value="Node Scalar"/>
         <Parameter name="Field Origin"  type="string" value="Mesh"/>
       </ParameterList>
@@ -69,18 +74,12 @@
     <ParameterList name="Side Set Discretizations">
       <Parameter name="Side Sets" type="Array(string)" value="{basalside,upperside}"/>
       <ParameterList name="basalside">
-        <Parameter name="Method" type="string" value="Exodus"/>
+        <Parameter name="Method" type="string" value="SideSetSTK"/>
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
-        <Parameter name="Exodus Input File Name" type="string" value="gis_unstruct_basal.exo"/>
         <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_basal_restart.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
-        <Parameter name="Restart Index" type="int" value="1"/>
         <ParameterList name="Required Fields Info">
-          <Parameter name="Number Of Fields" type="int" value="1"/>
-          <ParameterList name="Field 0">
-            <Parameter name="Field Name" type="string" value="basal_friction"/>
-            <Parameter name="Field Origin" type="string" value="Mesh"/>
-          </ParameterList>
+          <Parameter name="Number Of Fields" type="int" value="0"/>
         </ParameterList>
       </ParameterList>
       <ParameterList name="upperside">
@@ -95,9 +94,9 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{107604493.807}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{109129452.686}"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{19948298.8019}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{20780201.6563}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>
