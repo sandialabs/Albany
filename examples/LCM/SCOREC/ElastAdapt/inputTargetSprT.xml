@@ -1,0 +1,247 @@
+<ParameterList>
+  <ParameterList name="Problem">
+    <Parameter name="Name" type="string" value="Mechanics 3D"/>
+    <Parameter name="Solution Method" type="string" value="Continuation"/>
+    <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
+    <ParameterList name="Dirichlet BCs">      
+      <Parameter name="DBC on NS ns_1 for DOF X" type="double" value="0.0"/>
+      <Parameter name="DBC on NS ns_2 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS ns_3 for DOF Z" type="double" value="0.0"/>
+      <ParameterList name="Time Dependent DBC on NS ns_4 for DOF Y">
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.75}"/>
+      </ParameterList>
+    </ParameterList>  
+    <ParameterList name="Parameters">
+      <Parameter name="Number" type="int" value="1"/>
+      <Parameter name="Parameter 0" type="string" value="Time"/>
+    </ParameterList>
+    <ParameterList name="Response Functions">
+      <Parameter name="Number" type="int" value="1"/>
+      <Parameter name="Response 0"  type="string" value="Solution Average"/>
+    </ParameterList>
+    <ParameterList name="Adaptation">
+      <Parameter name="Method" type="string" value="RPI SPR Size"/>
+      <Parameter name="Remesh Strategy" type="string" value="Continuous"/>
+      <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="2"/>
+      <Parameter name="Target Element Count" type="long int" value="10000"/>
+      <Parameter name="State Variable" type="string" value="Cauchy_Stress"/>
+      <Parameter name="Minimum Part Density" type="double" value="2500"/>
+    </ParameterList>
+  </ParameterList>
+  <ParameterList name="Discretization">
+    <Parameter name="Method" type="string" value="PUMI"/>
+    <Parameter name="Workset Size" type="int" value="50"/> 
+    <Parameter name="Mesh Model Input File Name" type="string" value="../meshes/bar/bar.dmg"/>
+    <Parameter name="PUMI Input File Name" type="string" value="../meshes/bar/bar.smb"/>
+    <Parameter name="PUMI Output File Name" type="string" value="out.vtk"/>
+    <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{115, eb_1}"/>
+    <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x4:{97, 101, 51, 95, ns_1, ns_2, ns_3, ns_4}"/>
+    <Parameter name="2nd Order Mesh" type="bool" value="false"/>
+    <Parameter name="Cubature Degree" type="int" value="1"/>
+  </ParameterList>
+  <ParameterList name="Regression Results">
+    <Parameter name="Number of Comparisons" type="int" value="1"/>
+    <Parameter name="Test Values" type="Array(double)" value="{-0.0752267887711}"/>
+    <Parameter name="Relative Tolerance" type="double" value="1.0e-6"/>
+  </ParameterList>
+  <ParameterList name="Piro">
+    <ParameterList name="Rythmos">
+      <Parameter name="Num Time Steps" type="int" value="100"/>
+      <Parameter name="Final Time" type="double" value="1"/>
+      <Parameter name="Max State Error" type="double" value="0.0001"/>
+      <Parameter name="Alpha" type="double" value="0"/>
+      <ParameterList name="Rythmos Stepper">
+        <ParameterList name="VerboseObject">
+          <Parameter name="Verbosity Level" type="string" value="low"/>
+        </ParameterList>
+      </ParameterList>
+      <ParameterList name="Rythmos Integration Control">
+      </ParameterList>
+      <ParameterList name="Rythmos Integrator">
+        <ParameterList name="VerboseObject">
+          <Parameter name="Verbosity Level" type="string" value="none"/>
+        </ParameterList>
+      </ParameterList>
+      <ParameterList name="Stratimikos">
+      </ParameterList>
+    </ParameterList>
+    <ParameterList name="LOCA">
+      <ParameterList name="Bifurcation">
+      </ParameterList>
+      <ParameterList name="Constraints">
+      </ParameterList>
+      <ParameterList name="Predictor">
+        <Parameter name="Method" type="string" value="Constant"/>
+      </ParameterList>
+      <ParameterList name="Stepper">
+        <Parameter name="Continuation Method" type="string" value="Natural"/>
+        <Parameter name="Initial Value" type="double" value="0.0"/>
+        <Parameter name="Continuation Parameter" type="string" value="Time"/>
+        <Parameter name="Max Steps" type="int" value="3"/>
+        <Parameter name="Max Value" type="double" value="1.0"/>
+        <Parameter name="Min Value" type="double" value="0"/>
+        <Parameter name="Compute Eigenvalues" type="bool" value="0"/>
+        <ParameterList name="Eigensolver">
+          <Parameter name="Method" type="string" value="Anasazi"/>
+          <Parameter name="Operator" type="string" value="Jacobian Inverse"/>
+          <Parameter name="Num Eigenvalues" type="int" value="1"/>
+        </ParameterList>
+      </ParameterList>
+      <ParameterList name="Step Size">
+        <Parameter name="Initial Step Size" type="double" value="0.25"/>
+        <Parameter name="Method" type="string" value="Constant"/>
+      </ParameterList>
+    </ParameterList>
+    <ParameterList name="NOX">
+      <ParameterList name="Direction">
+        <Parameter name="Method" type="string" value="Newton"/>
+        <ParameterList name="Newton">
+          <ParameterList name="Linear Solver">
+            <Parameter name="Tolerance" type="double" value="1.0e-10"/>
+          </ParameterList>
+          <Parameter name="Forcing Term Method" type="string" value="Constant"/>
+          <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
+          <ParameterList name="Stratimikos Linear Solver">
+            <ParameterList name="NOX Stratimikos Options">
+            </ParameterList>
+            <ParameterList name="Stratimikos">
+              <Parameter name="Linear Solver Type" type="string" value="Belos"/>
+              <ParameterList name="Linear Solver Types">
+                <ParameterList name="AztecOO">
+                  <ParameterList name="Forward Solve">
+                    <ParameterList name="AztecOO Settings">
+                      <Parameter name="Aztec Solver" type="string" value="GMRES"/>
+                      <Parameter name="Convergence Test" type="string" value="r0"/>
+                      <Parameter name="Size of Krylov Subspace" type="int" value="200"/>
+                      <Parameter name="Output Frequency" type="int" value="10"/>
+                    </ParameterList>
+                    <Parameter name="Max Iterations" type="int" value="200"/>
+                    <Parameter name="Tolerance" type="double" value="1e-09"/>
+                  </ParameterList>
+                </ParameterList>
+                <ParameterList name="Belos">
+                  <ParameterList name="VerboseObject">
+                    <Parameter name="Verbosity Level" type="string" value="medium"/>
+                  </ParameterList>
+                  <Parameter name="Left Preconditioner If Unspecified" type="bool" value="1"/>
+                  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
+                  <ParameterList name="Solver Types">
+                    <ParameterList name="Block GMRES">
+                      <Parameter name="Convergence Tolerance" type="double" value="1.0e-6"/>
+                      <Parameter name="Implicit Residual Scaling" type="string" value="Norm of Preconditioned Initial Residual"/>
+                      <Parameter name="Explicit Residual Scaling" type="string" value="Norm of RHS"/>
+                      <Parameter name="Output Frequency" type="int" value="1"/>
+                      <Parameter name="Output Style" type="int" value="1"/>
+                      <Parameter name="Verbosity" type="int" value="33"/>
+                      <Parameter name="Maximum Iterations" type="int" value="200"/>
+                      <Parameter name="Block Size" type="int" value="1"/>
+                      <Parameter name="Num Blocks" type="int" value="200"/>
+                      <Parameter name="Orthogonalization" type="string" value="DGKS"/>
+                    </ParameterList>
+                  </ParameterList>
+                </ParameterList>
+              </ParameterList>
+              <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
+              <ParameterList name="Preconditioner Types">
+                <ParameterList name="Ifpack2">
+                  <Parameter name="Prec Type" type="string" value="RILUK"/>
+                  <ParameterList name="Ifpack2 Settings">
+                    <Parameter name="fact: drop tolerance" type="double" value="0"/>
+                    <Parameter name="fact: iluk level-of-fill" type="int" value="0"/>
+                    <Parameter name="fact: ilut level-of-fill" type="double" value="0"/>
+                    <Parameter name="schwarz: filter singletons" type="bool" value="1"/>
+                    <Parameter name="schwarz: use reordering" type="bool" value="1"/>
+                    <Parameter name="schwarz: overlap level" type="int" value="0"/>
+                  </ParameterList>
+                </ParameterList>
+                <!--
+                <ParameterList name="ML">
+                  <Parameter name="Base Method Defaults" type="string" value="none"/>
+                  <ParameterList name="ML Settings">
+                    <Parameter name="ML print initial list" type="int" value="0"/>
+                    <Parameter name="ML print final list" type="int" value="0"/>
+                    <Parameter name="ML output" type="int" value="10"/>
+                    <Parameter name="default values" type="string" value="SA"/>
+                    <Parameter name="aggregation: type" type="string" value="MIS"/>
+                    <Parameter name="smoother: type" type="string" value="ML symmetric Gauss-Seidel"/>
+                    <Parameter name="smoother: pre or post" type="string" value="both"/>
+                    <Parameter name="coarse: type" type="string" value="Amesos-KLU"/>
+                    <Parameter name="repartition: enable" type="int" value="1"/>
+                    <Parameter name="repartition: min per proc" type="int" value="750"/>
+                    <Parameter name="repartition: Zoltan dimensions" type="int" value="3"/>
+                    <Parameter name="PDE equations" type="int" value="3"/>
+                 </ParameterList>
+                </ParameterList>
+                <ParameterList name="MueLu">
+                  <Parameter name="verbosity" type="string" value="high"/>
+                  <Parameter name="max levels" type="int" value="10"/>
+                  <Parameter name="repartition: enable" type="bool" value="1"/>
+                  <Parameter name="repartition: min rows per proc" type="int" value="1000"/>
+                  <Parameter name="sa: damping factor" type="double" value="0.5"/>
+                  <Parameter name="smoother: pre or post" type="string" value="both"/>
+                  <Parameter name="coarse: max size" type="int" value="500"/>
+                  <Parameter name="coarse: type" type="string" value="KLU"/>
+                  <Parameter name="aggregation: type" type="string" value="uncoupled"/>
+                  <Parameter name="smoother: type" type="string" value="RELAXATION"/>
+                  <ParameterList name="smoother: params">
+                    <Parameter name="relaxation: type" type="string" value="Symmetric Gauss-Seidel"/>
+                  </ParameterList>
+                </ParameterList>
+                -->
+              </ParameterList>
+            </ParameterList>
+          </ParameterList>
+        </ParameterList>
+      </ParameterList>
+      <ParameterList name="Line Search">
+        <ParameterList name="Full Step">
+          <Parameter name="Full Step" type="double" value="1"/>
+        </ParameterList>
+        <Parameter name="Method" type="string" value="Full Step"/>
+      </ParameterList>
+      <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
+      <ParameterList name="Printing">
+        <ParameterList name="Output Information">
+          <Parameter name="Error" type="bool" value="1"/>
+          <Parameter name="Warning" type="bool" value="1"/>
+          <Parameter name="Outer Iteration" type="bool" value="1"/>
+          <Parameter name="Parameters" type="bool" value="0"/>
+          <Parameter name="Details" type="bool" value="0"/>
+          <Parameter name="Linear Solver Details" type="bool" value="0"/>
+          <Parameter name="Stepper Iteration" type="bool" value="1"/>
+          <Parameter name="Stepper Details" type="bool" value="1"/>
+          <Parameter name="Stepper Parameters" type="bool" value="0"/>
+        </ParameterList>
+        <Parameter name="Output Precision" type="int" value="3"/>
+        <Parameter name="Output Processor" type="int" value="0"/>
+      </ParameterList>
+      <ParameterList name="Solver Options">
+        <Parameter name="Status Test Check Type" type="string" value="Complete"/>
+      </ParameterList>
+      <ParameterList name="Status Tests">
+        <Parameter name="Test Type" type="string" value="Combo"/>
+        <Parameter name="Combo Type" type="string" value="OR"/>
+        <Parameter name="Number of Tests" type="int" value="4"/>
+        <ParameterList name="Test 0">
+          <Parameter name="Test Type" type="string" value="NormF"/>
+          <Parameter name="Norm Type" type="string" value="Two Norm"/>
+          <Parameter name="Scale Type" type="string" value="Unscaled"/>
+          <Parameter name="Tolerance" type="double" value="1.0e-6"/>
+        </ParameterList>
+        <ParameterList name="Test 1">
+          <Parameter name="Test Type" type="string" value="MaxIters"/>
+          <Parameter name="Maximum Iterations" type="int" value="100"/>
+        </ParameterList>
+        <ParameterList name="Test 2">
+          <Parameter name="Test Type" type="string" value="FiniteValue"/>
+        </ParameterList>
+        <ParameterList name="Test 3">
+          <Parameter name="Test Type" type="string" value="NormUpdate"/>
+          <Parameter name="Scale Type" type="string" value="Unscaled"/>
+          <Parameter name="Tolerance" type="double" value="1e-11"/>
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
+  </ParameterList>
+</ParameterList>
