@@ -1146,12 +1146,11 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
   {
     std::stringstream ss;
     ss << "Field " << ifield;
-    const Teuchos::ParameterList& fparams = req_fields_info->sublist(ss.str());
+    Teuchos::ParameterList& fparams = req_fields_info->sublist(ss.str());
 
-    fname = fparams.get<std::string>("Field Name");
-    forigin = "File";
-    if(fparams.isParameter("Field Origin"))
-      forigin = fparams.get<std::string>("Field Origin");
+    fname   = fparams.get<std::string>("Field Name");
+    forigin = fparams.get<std::string>("Field Origin","File");
+    ftype   = fparams.get<std::string>("Field Type");
 
     // L.B: again, is this check a good idea?
     TEUCHOS_TEST_FOR_EXCEPTION (std::find(req.begin(),req.end(),fname)==req.end(), std::logic_error,
@@ -1173,7 +1172,6 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
                                   "Error! Invalid choice for option 'Field Origin' for field '" << fname << "'.\n");
     }
 
-    ftype = fparams.get<std::string>("Field Type");
     // Depending on the input field type, we need to use different pointers/importers/vectors
     if (ftype == "Node Scalar")
     {
@@ -1266,7 +1264,7 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
     }
     else
     {
-      *out << "  - Discarding other info about " << field_type << " field " << field_name << " and filling it with constant value " << values << "\n";
+      *out << "  - Discarding other info about " << field_type << " field '" << field_name << "' and filling it with constant value " << values << "\n";
     }
     // For debug, we allow to fill the field with a given uniform value
     for (int iv(0); iv<serial_req_mvec->getNumVectors(); ++iv)
@@ -1280,7 +1278,7 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
 
     std::string fname = params.get<std::string>("File Name");
 
-    *out << "  - Reading " << field_type << " field " << field_name << " from file '" << fname << "'...";
+    *out << "  - Reading " << field_type << " field '" << field_name << "' from file '" << fname << "'...";
     out->getOStream()->flush();
     // Read the input file and stuff it in the Tpetra multivector
 
@@ -1322,11 +1320,14 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
 
     if (params.isParameter("Scale Factor"))
     {
-      *out << "   - Scaling " << field_type << " field " << field_name << "\n";
-
       Teuchos::Array<double> scale_factors = params.get<Teuchos::Array<double> >("Scale Factor");
       TEUCHOS_TEST_FOR_EXCEPTION (scale_factors.size()!=serial_req_mvec->getNumVectors(), Teuchos::Exceptions::InvalidParameter,
                                   "Error! The given scale factors vector size does not match the field dimension.\n");
+      *out << "   - Scaling " << field_type << " field '" << field_name << "' with scaling factors [" << scale_factors[0];
+      for (int i=1; i<scale_factors.size(); ++i)
+        *out << " " << scale_factors[i];
+      *out << "]\n";
+
       serial_req_mvec->scale (scale_factors);
     }
   }
