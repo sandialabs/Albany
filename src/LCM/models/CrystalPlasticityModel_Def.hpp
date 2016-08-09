@@ -208,6 +208,7 @@ CrystalPlasticityModel(
     }
     s_temp_normalized = Intrepid2::unit(s_temp_normalized);
     slip_systems_.at(num_ss).s_.set_dimension(num_dims_);
+    slip_systems_.at(num_ss).s_ = s_temp_normalized;
     s_unrotated_.push_back( s_temp_normalized );
 
     //
@@ -224,9 +225,12 @@ CrystalPlasticityModel(
     }
     n_temp_normalized = Intrepid2::unit(n_temp_normalized);
     slip_systems_.at(num_ss).n_.set_dimension(num_dims_);
+    slip_systems_.at(num_ss).n_ = n_temp_normalized;
     n_unrotated_.push_back( n_temp_normalized );
 
     slip_systems_.at(num_ss).projector_.set_dimension(num_dims_);
+    slip_systems_.at(num_ss).projector_ =
+      Intrepid2::dyad(slip_systems_.at(num_ss).s_, slip_systems_.at(num_ss).n_);
 
     auto const
     index_param = 
@@ -243,6 +247,14 @@ CrystalPlasticityModel(
   for (int sf_index(0); sf_index < num_family_; ++sf_index) {
     auto &
     slip_family = slip_families_[sf_index];
+
+    // Create latent matrix for hardening law
+    slip_family.phardening_parameters_->createLatentMatrix(
+      slip_family, slip_systems_); 
+
+    if (verbosity_ > 2) {
+      std::cout << slip_family.latent_matrix_ << std::endl;
+    }
 
     // FIXME: Get this behavior right in intrepid2
     auto
@@ -823,19 +835,6 @@ computeState(typename Traits::EvalData workset,
         slip_systems_.at(num_ss).projector_ =
           Intrepid2::dyad(slip_systems_.at(num_ss).s_, slip_systems_.at(num_ss).n_);
       }
-
-			// TODO: Try to preprocess this
-			// Currently this possibly has a dependency on s_ and n_
-  		for (int sf_index(0); sf_index < num_family_; ++sf_index) {
-    		auto &
-    		slip_family = slip_families_[sf_index];
-
-    		slip_family.phardening_parameters_->createLatentMatrix(slip_family, slip_systems_); 
-
-        if (verbosity_ > 2) {
-          std::cout << slip_family.latent_matrix_ << std::endl;
-        }
-			}
 
       equivalent_plastic_strain = 
         Sacado::ScalarValue<ScalarT>::eval(eqps(cell, pt));
