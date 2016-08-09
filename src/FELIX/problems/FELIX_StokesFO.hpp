@@ -517,10 +517,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
         //---- Load the side state
         ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
-
-        //---- Interpolate Beta Given on QP on side (may be used by a response)
-        ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator(fieldName, basalSideName);
-        fm0.template registerEvaluator<EvalT>(ev);
       }
     }
 
@@ -850,6 +846,10 @@ if (basalSideName!="INVALID")
 
     //---- Interpolate thickness on QP on side
     ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Ice Thickness Param", basalSideName);
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    //---- Interpolate beta on QP on side
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Beta Given", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Restrict ice thickness (param) from cell-based to cell-side-based

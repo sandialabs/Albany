@@ -192,7 +192,7 @@ FELIX::StokesFOThickness::constructEvaluators(
       int numLayers = params->get<int>("Layered Data Length",11); // Default 11 layers: 0, 0.1, ...,1.0
       Teuchos::RCP<PHX::DataLayout> dl_temp;
       Teuchos::RCP<PHX::DataLayout> sns = dl_basal->node_scalar;
-      dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,VecDim>(sns->dimension(0),sns->dimension(1),sns->dimension(2),numLayers));
+      dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,LayerDim>(sns->dimension(0),sns->dimension(1),sns->dimension(2),numLayers));
       p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_temp, basalEBName, true, &entity);
     }
   }
@@ -557,6 +557,10 @@ FELIX::StokesFOThickness::constructEvaluators(
     //---- Interpolate thickness on QP on side
     ev = evalUtils_full.constructDOFInterpolationSideEvaluator("Ice Thickness", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
+    
+        //---- Interpolate thickness on QP on side
+    ev = evalUtils_full.getPSTUtils().constructDOFInterpolationSideEvaluator("Beta Given", basalSideName);
+    fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate surface height on QP on side
     ev = evalUtils_full.constructDOFInterpolationSideEvaluator("Surface Height", basalSideName);
@@ -758,6 +762,7 @@ FELIX::StokesFOThickness::constructEvaluators(
     p->set<std::string>("Field Name","Basal Velocity");
     p->set<std::string>("Field Layout","Cell Side QuadPoint Vector");
     p->set<std::string>("Side Set Name", basalSideName);
+    p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Field Norm"));
 
     // Output
     p->set<std::string>("Field Norm Name","Sliding Velocity");
