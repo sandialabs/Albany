@@ -507,6 +507,7 @@ AAdapt::MeshAdapt::getValidAdapterParameters() const
   validPL->set<int>("Max Number of Mesh Adapt Iterations", 1, "Number of iterations to limit meshadapt to");
   validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
+  validPL->set<long int>("Target Element Count", 1000, "Desired number of elements for error-based adaptivity");
   validPL->set<std::string>("State Variable", "", "SPR operates on this variable");
   validPL->set<Teuchos::Array<std::string> >("Load Balancing", defaultStArgs, "Turn on predictive load balancing");
   validPL->set<double>("Maximum LB Imbalance", 1.3, "Set maximum imbalance tolerance for predictive laod balancing");
