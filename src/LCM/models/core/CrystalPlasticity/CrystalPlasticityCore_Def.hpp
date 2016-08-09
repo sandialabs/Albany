@@ -37,7 +37,7 @@ template<typename ArgT>
 utility::StaticPointer<CP::HardeningLawBase<NumDimT, NumSlipT, ArgT>>
 CP::SlipFamily<NumDimT, NumSlipT>::createHardeningLaw() const
 {
-  return hardening_law_factory_.createHardeningLaw<ArgT>(type_hardening_law_); 
+  return hardening_law_factory_.template createHardeningLaw<ArgT>(type_hardening_law_); 
 }
 
 
