@@ -25,22 +25,30 @@ namespace LCM
   bool isnaninf(const T& x)
   {
     typedef typename Sacado::ValueType<T>::type ValueT;
-    if (Teuchos::ScalarTraits<ValueT>::isnaninf(x.val()))
+ 
+    if (Teuchos::ScalarTraits<ValueT>::isnaninf(x.val())) {
       return true;
-    for (int i=0; i<x.size(); i++)
-      if (Teuchos::ScalarTraits<ValueT>::isnaninf(x.dx(i)))
+    }
+ 
+    for (int i=0; i<x.size(); i++) {
+      if (Teuchos::ScalarTraits<ValueT>::isnaninf(x.dx(i))) {
         return true;
+      }
+    }
+
     return false;
   }
 
   // Matches ScalarT == ST
   template<class T, typename std::enable_if< std::is_same<T, ST>::value>::type* = nullptr >
   bool
-  isnaninf(const T& x)
+  isnaninf(const T & x)
   {
-    if (Teuchos::ScalarTraits<T>::isnaninf(x))
+    if (Teuchos::ScalarTraits<T>::isnaninf(x)) {
       return true;
-    return false;
+    } else {
+      return false;
+    }
   }
 
 template<typename EvalT, typename Traits>
@@ -53,7 +61,8 @@ CrystalPlasticityModel(
     num_slip_(p->get<int>("Number of Slip Systems", 0)),
     allocator_(1024*1024)  // 1 mB
 {
-	CP::ParameterReader<EvalT, Traits> preader(p, allocator_);
+	CP::ParameterReader<EvalT, Traits>
+  preader(p, allocator_);
 
   slip_systems_.resize(num_slip_);
 
@@ -76,7 +85,7 @@ CrystalPlasticityModel(
     // NOTE default to coordinate axes; construct 3rd direction if only 2 given
     element_block_orientation_.set_dimension(num_dims_);
     for (int i = 0; i < num_dims_; ++i) {
-      std::vector<RealType> 
+      std::vector<RealType> const
       b_temp = e_list.get<Teuchos::Array<RealType>>(
         Albany::strint("Basis Vector", i + 1)).toVector();
 
@@ -117,18 +126,32 @@ CrystalPlasticityModel(
 
   //
   // Obtain crystal elasticity constants and populate elasticity tensor
-  // assuming cubic symmetry
-  //
+  // assuming cubic symmetry (fcc, bcc) or transverse isotropy (hcp)
+  // Constants C11, C12, and C44 must be defined for either symmetry
   c11_ = e_list.get<RealType>("C11");
   c12_ = e_list.get<RealType>("C12");
+  c13_ = e_list.get<RealType>("C13", c12_);
+  c33_ = e_list.get<RealType>("C33", c11_);
   c44_ = e_list.get<RealType>("C44");
-  c11_temperature_coeff_ = e_list.get<RealType>("M11",0.0);
-  c12_temperature_coeff_ = e_list.get<RealType>("M12",0.0);
-  c44_temperature_coeff_ = e_list.get<RealType>("M44",0.0);
-  reference_temperature_ = e_list.get<RealType>("Reference Temperature",0.0);
+  c11_temperature_coeff_ = e_list.get<RealType>("M11", NAN);
+  c12_temperature_coeff_ = e_list.get<RealType>("M12", NAN);
+  c12_temperature_coeff_ = e_list.get<RealType>("M13", NAN);
+  c12_temperature_coeff_ = e_list.get<RealType>("M33", NAN);
+  c44_temperature_coeff_ = e_list.get<RealType>("M44", NAN);
+  reference_temperature_ = e_list.get<RealType>("Reference Temperature", NAN);
 
   C_unrotated_.set_dimension(num_dims_);
-  CP::computeCubicElasticityTensor(c11_, c12_, c44_, C_unrotated_);
+  if (c11_ == c33_) {
+    c66_ = c44_;
+    c66_temperature_coeff_ = c44_temperature_coeff_;
+  } else {
+    c66_ = 0.5 * (c11_ - c12_);
+    c66_temperature_coeff_ = 
+      0.5 * (c11_temperature_coeff_ - c12_temperature_coeff_);
+  }
+
+  CP::computeElasticityTensor(c11_, c12_, c13_, c33_, c44_, c66_, C_unrotated_);
+  
   C_.set_dimension(num_dims_);
 
   if (verbosity_ > 2) {
@@ -756,9 +779,18 @@ computeState(typename Traits::EvalData workset,
         c12 = c12_ + c12_temperature_coeff_ * (tlocal - reference_temperature_);
 
         RealType const
+        c13 = c13_ + c13_temperature_coeff_ * (tlocal - reference_temperature_);
+
+        RealType const
+        c33 = c33_ + c44_temperature_coeff_ * (tlocal - reference_temperature_);
+
+        RealType const
         c44 = c44_ + c44_temperature_coeff_ * (tlocal - reference_temperature_);
 
-        CP::computeCubicElasticityTensor(c11, c12, c44, C_unrotated_);
+        RealType const
+        c66 = c66_ + c44_temperature_coeff_ * (tlocal - reference_temperature_);
+
+        CP::computeElasticityTensor(c11, c12, c13, c33, c44, c66, C_unrotated_);
 
         if (verbosity_ > 2) {
           std::cout << "tlocal: " << tlocal << std::endl;

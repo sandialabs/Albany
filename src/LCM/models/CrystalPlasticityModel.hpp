@@ -24,9 +24,7 @@ class CrystalPlasticityModel: public LCM::ConstitutiveModel<EvalT, Traits>
 public:
 
   using ScalarT = typename EvalT::ScalarT;
-	using ValueT = typename Sacado::ValueType<ScalarT>::type;
-	
-	using Minimizer = Intrepid2::Minimizer<ValueT, CP::NLS_DIM>;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   // Dimension of problem, e.g., 2 -> 2D, 3 -> 3D
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
@@ -126,7 +124,16 @@ private:
   c12_;
 
   RealType
+  c13_;
+
+  RealType
+  c33_;
+
+  RealType
   c44_;
+
+  RealType
+  c66_;
 
   RealType
   c11_temperature_coeff_;
@@ -135,7 +142,16 @@ private:
   c12_temperature_coeff_;
 
   RealType
+  c13_temperature_coeff_;
+
+  RealType
+  c33_temperature_coeff_;
+
+  RealType
   c44_temperature_coeff_;
+
+  RealType
+  c66_temperature_coeff_;
 
   RealType
   reference_temperature_;
@@ -191,15 +207,16 @@ private:
   ///
   /// Flags for reading lattice orientations from file
   ///
-  bool read_orientations_from_mesh_;
+  bool
+  read_orientations_from_mesh_;
 
   ///
   /// Solution options
   ///
-	CP::IntegrationScheme 
+  CP::IntegrationScheme 
   integration_scheme_;
 
-	CP::ResidualType
+  CP::ResidualType
   residual_type_;
 
   bool
@@ -208,10 +225,11 @@ private:
   Intrepid2::StepType
   step_type_;
 
-	///
-	/// Minimizer
-	///
-	Minimizer minimizer_;
+  ///
+  /// Minimizer
+  ///
+  Intrepid2::Minimizer<ValueT, CP::NLS_DIM>
+  minimizer_;
 
   ///
   /// Pointer to NOX status test, allows the material model to force a global load step reduction
@@ -222,7 +240,8 @@ private:
   ///
   /// Memory management
   ///
-  utility::StaticAllocator  allocator_;
+  utility::StaticAllocator
+  allocator_;
 
   ///
   /// Output options 
@@ -232,8 +251,9 @@ private:
 
   bool
   write_data_file_;
-};
 
-}
+}; // class CrystalPlasticityModel
+
+} // namespace LCM
 
 #endif

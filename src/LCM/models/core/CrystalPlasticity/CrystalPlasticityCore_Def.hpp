@@ -264,10 +264,13 @@ CP::computeStress(
 //
 template<Intrepid2::Index NumDimT, typename DataT, typename ArgT>
 void
-CP::computeCubicElasticityTensor(
+CP::computeElasticityTensor(
     DataT c11, 
-    DataT c12, 
+    DataT c12,  
+    DataT c13, 
+    DataT c33,
     DataT c44,
+    DataT c66,
     Intrepid2::Tensor4<ArgT, NumDimT> & C)
 {
 
@@ -276,12 +279,23 @@ CP::computeCubicElasticityTensor(
 
   C.fill(Intrepid2::ZEROS);
 
+  if (num_dim >= 2) {
+    C(0, 0, 0, 0) = c11;
+    C(1, 1, 1, 1) = c11;
+    C(0, 0, 1, 1) = c12;
+    C(0, 1, 0, 1) = c66;
+    if (num_dim >= 3) {
+      C(0, 0, 2, 2) = c13;
+      C(2, 2, 2, 2) = c33;
+      C(1, 1, 2, 2) = c13;
+      C(1, 2, 1, 2) = c44;
+      C(0, 2, 0, 2) = c44;
+    }
+  }
+
   for (Intrepid2::Index dim_i = 0; dim_i < num_dim; ++dim_i) {
-    C(dim_i, dim_i, dim_i, dim_i) = c11;
     for (Intrepid2::Index dim_j = dim_i + 1; dim_j < num_dim; ++dim_j) {
-      C(dim_i, dim_i, dim_j, dim_j) = c12;
       C(dim_j, dim_j, dim_i, dim_i) = C(dim_i, dim_i, dim_j, dim_j);
-      C(dim_i, dim_j, dim_i, dim_j) = c44;
       C(dim_j, dim_i, dim_j, dim_i) = C(dim_i, dim_j, dim_i, dim_j);
       C(dim_i, dim_j, dim_j, dim_i) = C(dim_i, dim_j, dim_i, dim_j);
       C(dim_j, dim_i, dim_i, dim_j) = C(dim_i, dim_j, dim_i, dim_j);

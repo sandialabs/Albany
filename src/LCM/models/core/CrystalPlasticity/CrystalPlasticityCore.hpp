@@ -242,10 +242,13 @@ computeStress(
 //
 template<Intrepid2::Index NumDimT, typename DataT, typename ArgT>
 void
-computeCubicElasticityTensor(
+computeElasticityTensor(
     DataT c11, 
-    DataT c12, 
+    DataT c12,
+    DataT c13,
+    DataT c33,
     DataT c44,
+    DataT c66,
     Intrepid2::Tensor4<ArgT, NumDimT> & C);
 
 
