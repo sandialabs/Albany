@@ -17,13 +17,11 @@ def ParseMaterialParametersFile(file_name, mat_params, vars_output):
         vals = string.splitfields(param)
 
         print vals
-        if len(vals) == 2:
+        if len(vals) > 1:
             name = vals[0]
             value = vals[1]
-        if len(vals) == 3:
-            name = vals[0]
-            value = vals[1] + " " + vals[2]    
-
+            for val in vals[2:]:
+                value = value + " " + val
         
         print " ", name, value
         if name in mat_params.keys():
