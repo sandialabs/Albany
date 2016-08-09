@@ -654,10 +654,12 @@ if (ALBANY_MOR AND ALBANY_EPETRA)
   set(HEADERS ${HEADERS} ${MOR_ALBANY_HEADERS})
 endif ()
 
+IF (ALBANY_SCOREC_STANDALONE)
+  SET(SCOREC_LIB SCOREC::core)
+ENDIF()
 
 add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
-target_link_libraries(albanyLib ${Trilinos_LIBRARIES})
-
+target_link_libraries(albanyLib ${SCOREC_LIB} ${Trilinos_LIBRARIES})
 
 # Add Albany external libraries
 
@@ -852,7 +854,6 @@ IF (ALBANY_GOAL)
   add_executable(AlbanyGOAL GOAL/GOAL_Main.cpp)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyGOAL)
 ENDIF()
-
 
 ENDIF (NOT ALBANY_LIBRARIES_ONLY)
 # End declaration of executables
