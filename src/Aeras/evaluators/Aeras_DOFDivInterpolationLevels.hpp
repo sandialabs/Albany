@@ -73,7 +73,24 @@ private:
   std::string myName;
 
   bool originalDiv;
-};
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct DOFDivInterpolationLevels_originalDiv_Tag{};
+  struct DOFDivInterpolationLevels_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFDivInterpolationLevels_originalDiv_Tag> DOFDivInterpolationLevels_originalDiv_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFDivInterpolationLevels_Tag> DOFDivInterpolationLevels_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFDivInterpolationLevels_originalDiv_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFDivInterpolationLevels_Tag& tag, const int& i) const;
+
+#endif
+};
 }
 #endif

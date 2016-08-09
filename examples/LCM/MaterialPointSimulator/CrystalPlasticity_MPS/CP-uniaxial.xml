@@ -117,41 +117,45 @@
 
                </ParameterList>
 
-               <ParameterList name="Flow Rule">
+               <ParameterList name="Slip System Family 0">
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Power Law"/>
+                    <ParameterList name="Flow Rule">
 
-                    <Parameter name="Gamma Dot" 
-                               type="double" 
-                               value="1.0"/>
+                         <Parameter name="Type"
+                                    type="string"
+                                    value="Power Law"/>
 
-                    <Parameter name="Gamma Exponent" 
-                               type="double" 
-                               value="20.0"/>
+                         <Parameter name="Reference Slip Rate" 
+                                    type="double" 
+                                    value="1.0"/>
 
-      </ParameterList>
+                         <Parameter name="Rate Exponent" 
+                                    type="double" 
+                                    value="20.0"/>
 
-      <ParameterList name="Hardening Law">
+                    </ParameterList>
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Exponential"/>
+                    <ParameterList name="Hardening Law">
 
-                    <Parameter name="Hardening" 
-                               type="double" 
-                               value="0.0"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Linear Minus Recovery"/>
 
-                    <Parameter name="Hardening Exponent" 
-                               type="double" 
-                               value="0.0"/>
+                         <Parameter name="Hardening Modulus" 
+                                    type="double" 
+                                    value="0.0"/>
 
-                    <Parameter name="Tau Critical"
-                               type="double"
-                               value="122.0"/>
+                         <Parameter name="Recovery Modulus" 
+                                    type="double" 
+                                    value="0.0"/>
 
-      </ParameterList>
+                         <Parameter name="Initial Hardening State"
+                                    type="double"
+                                    value="1.22e02"/>
+
+                    </ParameterList>
+
+               </ParameterList>
 
 
 <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -173,14 +177,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)" 
                                value="{1.0, 1.0, 1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
- 
-                    <Parameter name="Hardening Law"  
-                               type="string" 
-                               value="Hardening Law"/>
 
                </ParameterList>
 

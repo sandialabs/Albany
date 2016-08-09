@@ -2,10 +2,11 @@
 
 import sys
 import string
+from create_slip_systems import create_slip_systems
 
 INDENTATION = 2
 
-def ParseMaterialParametersFile(file_name, mat_params):
+def ParseMaterialParametersFile(file_name, mat_params, vars_output):
 
     print "\nReading material parameters from", file_name
 
@@ -27,6 +28,8 @@ def ParseMaterialParametersFile(file_name, mat_params):
         print " ", name, value
         if name in mat_params.keys():
             mat_params[name] = value
+        elif name in vars_output.keys():
+            vars_output[name] = value
         else:
             print "\n**** Error, unexpected material parameter:", name
             print "\n     Allowable material parameters:"
@@ -87,72 +90,6 @@ def VectorToString(vec):
     vec_string = "{" + str(vec[0]) + ", " + str(vec[1]) + ", " + str(vec[2]) + "}"
     return vec_string
 
-def FCCSlipSystems():
-
-    slip_systems = []
-
-    # system 1
-    direction = (-1.0, 1.0, 0.0)
-    normal = (1.0, 1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 2
-    direction = (0.0, -1.0, 1.0)
-    normal = (1.0, 1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 3
-    direction = (1.0, 0.0, -1.0)
-    normal = (1.0, 1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 4
-    direction = (-1.0, -1.0, 0.0)
-    normal = (-1.0, 1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 5
-    direction = (1.0, 0.0, 1.0)
-    normal = (-1.0, 1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 6
-    direction = (0.0, 1.0, -1.0)
-    normal = (-1.0, 1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 7
-    direction = (1.0, -1.0, 0.0)
-    normal = (-1.0, -1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 8
-    direction = (0.0, 1.0, 1.0)
-    normal = (-1.0, -1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 9
-    direction = (-1.0, 0.0, -1.0)
-    normal = (-1.0, -1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 10
-    direction = (1.0, 1.0, 0.0)
-    normal = (1.0, -1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 11
-    direction = (-1.0, 0.0, 1.0)
-    normal = (1.0, -1.0, 1.0)
-    slip_systems.append((direction, normal))
-
-    # system 12
-    direction = (0.0, -1.0, -1.0)
-    normal = (1.0, -1.0, 1.0)
-    slip_systems.append((direction, normal))
-    
-    return slip_systems
-
 def StartParamList(param_list_name, file, indent):
 
     file.write("\n")
@@ -185,7 +122,7 @@ def WriteBool(name, type, value, file, indent):
     return
 
 
-def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
+def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, num_blocks):
 
     block_names = []
     material_names = []
@@ -216,7 +153,12 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
 
         # Obtain the specifics for this grain
         (vec1, vec2, vec3) = ConstructBasisVectors(rotations[iBlock])
-        slip_systems = FCCSlipSystems()
+
+        slip_systems = create_slip_systems(
+            crystal_structure=mat_params["crystal_structure"],
+            slip_families = mat_params["slip_families"],
+            ratio_c_a = mat_params["ratio_c_a"])
+
         num_slip_systems = len(slip_systems)
 
         # Material model name
@@ -234,27 +176,26 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
             WriteParameter("Implicit Integration Relative Tolerance", "double", mat_params["implicit_integration_relative_tolerance"], mat_file, indent)
             WriteParameter("Implicit Integration Absolute Tolerance", "double", mat_params["implicit_integration_absolute_tolerance"], mat_file, indent)
             WriteParameter("Implicit Integration Max Iterations", "int", mat_params["implicit_integration_max_iterations"], mat_file, indent)
+            if mat_params["type_residual"] == "Slip Hardness":
+                WriteParameter("Residual Type", "string", mat_params["type_residual"], mat_file, indent)
 
         # Specify output to exodus
-        WriteParameter("Output Cauchy Stress", "bool", "true", mat_file, indent)
-        WriteParameter("Output Fp", "bool", "true", mat_file, indent)
-        WriteParameter("Output Deformation Gradient", "bool", "true", mat_file, indent)
-        #WriteParameter("Output L", "bool", "true", mat_file, indent)
-        WriteParameter("Output CP_Residual", "bool", "true", mat_file, indent)
-        WriteParameter("Output eqps", "bool", "true", mat_file, indent)
-        WriteParameter("Output Integration Weights", "bool", "true", mat_file, indent)
-        #for i in range(num_slip_systems):
-        #    WriteParameter("Output tau_" + str(i+1), "bool", "true", mat_file, indent)
-        #for i in range(num_slip_systems):
-        #    WriteParameter("Output tau_hard_" + str(i+1), "bool", "true", mat_file, indent)
-        #for i in range(num_slip_systems):
-        #    WriteParameter("Output gamma_" + str(i+1), "bool", "true", mat_file, indent)
-        #for i in range(1):
-        #    WriteParameter("Output tau_" + str(i+1), "bool", "true", mat_file, indent)
-        #for i in range(1):
-        #    WriteParameter("Output tau_hard_" + str(i+1), "bool", "true", mat_file, indent)
-        #for i in range(1):
-        #    WriteParameter("Output gamma_" + str(i+1), "bool", "true", mat_file, indent)
+        WriteParameter("Output Cauchy Stress", "bool", vars_output["cauchy_stress"], mat_file, indent)
+        WriteParameter("Output Fp", "bool", vars_output["Fp"], mat_file, indent)
+        WriteParameter("Output Deformation Gradient", "bool", vars_output["F"], mat_file, indent)
+        WriteParameter("Output L", "bool", vars_output["L"], mat_file, indent)
+        WriteParameter("Output CP_Residual", "bool", vars_output["cp_residual"], mat_file, indent)
+        WriteParameter("Output CP_residual_iter", "bool", vars_output["cp_residual_iter"], mat_file, indent)
+        WriteParameter("Output eqps", "bool", vars_output["eqps"], mat_file, indent)
+        WriteParameter("Output Integration Weights", "bool", vars_output["integration_weights"], mat_file, indent)
+        for i in range(num_slip_systems):
+           WriteParameter("Output tau_" + str(i+1), "bool", vars_output["tau"], mat_file, indent)
+        for i in range(num_slip_systems):
+           WriteParameter("Output tau_hard_" + str(i+1), "bool", vars_output["tau_hard"], mat_file, indent)
+        for i in range(num_slip_systems):
+           WriteParameter("Output gamma_" + str(i+1), "bool", vars_output["gamma"], mat_file, indent)
+        for i in range(num_slip_systems):
+           WriteParameter("Output gamma_dot_" + str(i+1), "bool", vars_output["gamma_dot"], mat_file, indent)
 
         # Elastic modulii and lattice orientation
         indent = StartParamList("Crystal Elasticity", mat_file, indent)
@@ -265,31 +206,56 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
         WriteParameter("Basis Vector 2", "Array(double)", VectorToString(vec2), mat_file, indent)
         WriteParameter("Basis Vector 3", "Array(double)", VectorToString(vec3), mat_file, indent)
         indent = EndParamList(mat_file, indent)        
- 
+
+        indent = StartParamList("Slip System Family 0", mat_file, indent)
+
         # Flow rule
-        indent = StartParamList("Flow Rule", mat_file, indent)
-        WriteParameter("Type", "string", "Power Law", mat_file, indent)
-        WriteParameter("Gamma Dot", "double", mat_params["gamma_dot"], mat_file, indent)
-        WriteParameter("Gamma Exponent", "double", mat_params["gamma_exponent"], mat_file, indent)
-        indent = EndParamList(mat_file, indent)
+        if mat_params["flow_rule"] == "Power Law":
+            indent = StartParamList("Flow Rule", mat_file, indent)
+            WriteParameter("Type", "string", "Power Law", mat_file, indent)
+            WriteParameter("Reference Slip Rate", "double", mat_params["rate_slip_reference"], mat_file, indent)
+            WriteParameter("Rate Exponent", "double", mat_params["exponent_rate"], mat_file, indent)
+            indent = EndParamList(mat_file, indent)
+
+        elif mat_params["flow_rule"] == "Power Law with Drag":
+            indent = StartParamList("Flow Rule", mat_file, indent)
+            WriteParameter("Type", "string", "Power Law with Drag", mat_file, indent)
+            WriteParameter("Reference Slip Rate", "double", mat_params["rate_slip_reference"], mat_file, indent)
+            WriteParameter("Rate Exponent", "double", mat_params["exponent_rate"], mat_file, indent)
+            WriteParameter("Drag Coefficient", "double", mat_params["drag_coeff"], mat_file, indent)
+            indent = EndParamList(mat_file, indent)
 
         # Hardening laws
-        if mat_params["hardening_law"] == "Exponential":
+        if mat_params["hardening_law"] == "Linear Minus Recovery":
             indent = StartParamList("Hardening Law", mat_file, indent)
-            WriteParameter("Type", "string", "Exponential", mat_file, indent)
-            WriteParameter("Hardening", "double", mat_params["hardening"], mat_file, indent)
-            WriteParameter("Hardening Exponent", "double", mat_params["hardening_exponent"], mat_file, indent)
-            WriteParameter("Tau Critical", "double", mat_params["tau_critical"], mat_file, indent)
+            WriteParameter("Type", "string", "Linear Minus Recovery", mat_file, indent)
+            WriteParameter("Hardening Modulus", "double", mat_params["modulus_hardening"], mat_file, indent)
+            WriteParameter("Recover Modulus", "double", mat_params["modulus_recovery"], mat_file, indent)
+            WriteParameter("Initial Hardening State", "double", mat_params["state_hardening_initial"], mat_file, indent)
             indent = EndParamList(mat_file, indent)
 
-        if mat_params["hardening_law"] == "Saturation":
+        elif mat_params["hardening_law"] == "Saturation":
             indent = StartParamList("Hardening Law", mat_file, indent)
             WriteParameter("Type", "string", "Saturation", mat_file, indent)
-            WriteParameter("Initial Slip Resistance", "double", mat_params["initial_slip_resistance"], mat_file, indent)
-            WriteParameter("Hardening Rate", "double", mat_params["hardening_rate"], mat_file, indent)
-            WriteParameter("Initial Saturation Stress", "double", mat_params["initial_saturation_stress"], mat_file, indent)
-            WriteParameter("Saturation Exponent", "double", mat_params["saturation_exponent"], mat_file, indent)
+            WriteParameter("Hardening Rate", "double", mat_params["rate_hardening"], mat_file, indent)
+            WriteParameter("Initial Saturation Stress", "double", mat_params["stress_saturation_initial"], mat_file, indent)
+            WriteParameter("Saturation Exponent", "double", mat_params["exponent_saturation"], mat_file, indent)
+            WriteParameter("Reference Slip Rate", "double", mat_params["rate_slip_reference"], mat_file, indent)
+            WriteParameter("Initial Hardening State", "double", mat_params["state_hardening_initial"], mat_file, indent)
             indent = EndParamList(mat_file, indent)
+
+        elif mat_params["hardening_law"] == "Dislocation Density":
+            indent = StartParamList("Hardening Law", mat_file, indent)
+            WriteParameter("Type", "string", "Dislocation Density", mat_file, indent)
+            WriteParameter("Geometric Factor", "double", mat_params["factor_geometric"], mat_file, indent)
+            WriteParameter("Generation Factor", "double", mat_params["factor_generation"], mat_file, indent)
+            WriteParameter("Annihilation Factor", "double", mat_params["factor_annihilation"], mat_file, indent)
+            WriteParameter("Shear Modulus", "double", mat_params["modulus_shear"], mat_file, indent)
+            WriteParameter("Burgers Vector Magnitude", "double", mat_params["magnitude_burgers"], mat_file, indent)
+            WriteParameter("Initial Hardening State", "double", mat_params["state_hardening_initial"], mat_file, indent)
+            indent = EndParamList(mat_file, indent)
+
+        indent = EndParamList(mat_file, indent)
         
 
         # Crystal plasticity slip systems
@@ -299,8 +265,6 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
             indent = StartParamList("Slip System " + str(iSS+1), mat_file, indent)
             WriteParameter("Slip Direction", "Array(double)", VectorToString(direction), mat_file, indent)
             WriteParameter("Slip Normal", "Array(double)", VectorToString(normal), mat_file, indent)
-            WriteParameter("Flow Rule", "string", "Flow Rule", mat_file, indent)
-            WriteParameter("Hardening Law", "string", "Hardening Law", mat_file, indent)
             indent = EndParamList(mat_file, indent)
 
         indent = EndParamList(mat_file, indent)
@@ -326,31 +290,62 @@ if __name__ == "__main__":
     # List of material parameters that are expected to be in the input file
     # If it's set to None, then it is a required parameter
     mat_params = {}
-    mat_params["C11"] = None
-    mat_params["C12"] = None
-    mat_params["C44"] = None
-    mat_params["tau_critical"] = None
-    mat_params["gamma_dot"] = None
-    mat_params["gamma_exponent"] = None
-    mat_params["hardening_law"] = None
-    mat_params["hardening"] = "unspecified"
-    mat_params["hardening_exponent"] = "unspecified"
-    mat_params["initial_slip_resistance"] = "unspecified"
-    mat_params["hardening_rate"] = "unspecified"
-    mat_params["initial_saturation_stress"] = "unspecified"
-    mat_params["saturation_exponent"] = "unspecified"
+
+    mat_params["crystal_structure"] = "fcc"
+    mat_params["slip_families"] = "unspecified"
+    mat_params["ratio_c_a"] = "unspecified"
+
+    mat_params["C11"] = "unspecified"
+    mat_params["C12"] = "unspecified"
+    mat_params["C13"] = "unspecified"
+    mat_params["C33"] = "unspecified"
+    mat_params["C44"] = "unspecified"
+
+    mat_params["flow_rule"] = "unspecified"
+    mat_params["rate_slip_reference"] = "unspecified"
+    mat_params["exponent_rate"] = "unspecified"
+    mat_params["drag_coeff"] = "unspecified"
+
+    mat_params["hardening_law"] = "unspecified"
+    mat_params["modulus_hardening"] = "unspecified"
+    mat_params["modulus_recovery"] = "unspecified"
+    mat_params["state_hardening_initial"] = "unspecified"
+    mat_params["rate_hardening"] = "unspecified"
+    mat_params["stress_saturation_initial"] = "unspecified"
+    mat_params["exponent_saturation"] = "unspecified"
+    mat_params["factor_geometric"] = "unspecified"
+    mat_params["factor_generation"] = "unspecified"
+    mat_params["factor_annihilation"] = "unspecified"
+    mat_params["magnitude_burgers"] = "unspecified"
+    mat_params["modulus_shear"] = "unspecified"
+
     mat_params["integration_scheme"] = "unspecified"
+    mat_params["type_residual"] = "unspecified"
     mat_params["nonlinear_solver_step_type"] = "unspecified"
     mat_params["implicit_integration_relative_tolerance"] = "unspecified"
     mat_params["implicit_integration_absolute_tolerance"] = "unspecified"
     mat_params["implicit_integration_max_iterations"] = "unspecified"
 
-    ParseMaterialParametersFile(mat_params_file_name, mat_params)
+    vars_output = {}
+    vars_output["cauchy_stress"] = "true"
+    vars_output["F"] = "true"
+    vars_output["integration_weights"] = "true"
+    vars_output["Fp"] = "false"
+    vars_output["L"] = "false"
+    vars_output["eqps"] = "false"
+    vars_output["gamma"] = "false"
+    vars_output["gamma_dot"] = "false"
+    vars_output["tau"] = "false"
+    vars_output["tau_hard"] = "false"
+    vars_output["cp_residual"] = "false"
+    vars_output["cp_residual_iter"] = "false"
+
+    ParseMaterialParametersFile(mat_params_file_name, mat_params, vars_output)
 
     rotations = []
     ParseRotationMatricesFile(rotations_file_name, rotations)
 
     materials_file_name = "Materials.xml"
-    WriteMaterialsFile(materials_file_name, mat_params, rotations, num_blocks)
+    WriteMaterialsFile(materials_file_name, mat_params, vars_output, rotations, num_blocks)
 
     print "\nComplete.\n"

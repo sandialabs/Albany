@@ -1356,6 +1356,7 @@ AAdapt::AerasHydrostatic3dDeformationalFlow::AerasHydrostatic3dDeformationalFlow
 }
 void AAdapt::AerasHydrostatic3dDeformationalFlow::compute(double* solution, const double* X) 
 {
+  //Initialization for dCMIP, 2012 3D Deformational Flow, p. 16.
 
   const int numLevels  = (int) data[0];
   const int numTracers = (int) data[1];
@@ -1364,17 +1365,10 @@ void AAdapt::AerasHydrostatic3dDeformationalFlow::compute(double* solution, cons
   //const double U1      =       data[4];
   //const double T0      =       data[5];
 
-  //Initialization for dCMIP, 2012 3D Deformational Flow, p. 16.
-
   std::cout <<"AAdapt::AerasHydrostatic3dDeformationalFlow::compute()" << std::endl;
   std::cout <<"Number of tracers "<< numTracers <<" , numLevels "<<numLevels << std::endl;
   
   std::vector<double> q0(numTracers,0.0);
-
-  //for (int nt = 0; nt<numTracers; ++nt) {
-  //  q0[nt] = data[6 + nt];
-  //}
-  
   std::vector<double> Pressure(numLevels);
   std::vector<double> Pi(numLevels);
   std::vector<double> z_press(numLevels);
@@ -1409,15 +1403,14 @@ void AAdapt::AerasHydrostatic3dDeformationalFlow::compute(double* solution, cons
   const double y = X[1];
   const double z = X[2];
   
-  const double myPi  = PI;
-  const double alpha = myPi/2;
+  const double alpha = PI/2;
   
   double theta  = std::asin(z);
   double lambda = std::atan2(y,x);
   
   static const double DIST_THRESHOLD = Aeras::ShallowWaterConstants::self().distanceThreshold;
-  if (std::abs(std::abs(theta)-myPi/2) < DIST_THRESHOLD) lambda = 0;
-  else if (lambda < 0) lambda += 2*myPi;
+  if (std::abs(std::abs(theta)-PI/2) < DIST_THRESHOLD) lambda = 0;
+  else if (lambda < 0) lambda += 2*PI;
   
   const double sin2Theta = std::sin(2.0*theta);
   const double sinTheta  = std::sin(theta);

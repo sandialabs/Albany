@@ -372,7 +372,7 @@ bool SimAdapt::adaptMesh()
   /* run APF verification on the resulting mesh */
   apf_m->verify();
   /* update Albany structures to reflect the adapted mesh */
-  sim_disc->updateMesh(should_transfer_ip_data);
+  sim_disc->updateMesh(should_transfer_ip_data, param_lib_);
   /* see the comment in Albany_APFDiscretization.cpp */
   sim_disc->initTemperatureHack();
   ++callcount;
@@ -532,7 +532,7 @@ bool SimAdapt::adaptMesh()
   apf_m->verify();
   //  Albany::debugAMPMesh(apf_m, "after");
   /* update Albany structures to reflect the adapted mesh */
-  sim_disc->updateMesh(should_transfer_ip_data);
+  sim_disc->updateMesh(should_transfer_ip_data, param_lib_);
   /* see the comment in Albany_APFDiscretization.cpp */
   sim_disc->initTemperatureHack();
 //  sprintf(simname, "after%d", callcount);

@@ -1,36 +1,60 @@
 <ParameterList>
-  <ParameterList name="ElementBlocks">
 
-    <ParameterList name="block_1">
-      <Parameter name="material" type="string" value="Aligned Lattice" />
-    </ParameterList>
+     <ParameterList name="ElementBlocks">
 
-    <ParameterList name="block_2">
-      <Parameter name="material" type="string" value="FCC" />
-    </ParameterList>
+          <ParameterList name="block_1">
 
-  </ParameterList>
+               <Parameter name="material"
+                          type="string"
+                          value="Aligned Lattice"/>
 
-  <ParameterList name="Materials">
+          </ParameterList>
 
-    <ParameterList name="Aligned Lattice">
+          <ParameterList name="block_2">
 
-      <ParameterList name="Material Model"> 
-        <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
-      </ParameterList>
+               <Parameter name="material"
+                          type="string" 
+                          value="FCC" />
 
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
+          </ParameterList>
 
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-10"/>
-`
-      <Parameter name="Implicit Integration Max Iterations Implicit" type="int" value="100"/>
+     </ParameterList>
 
-      <Parameter name="Output CP_Residual" type="bool" value="true"/>
+     <ParameterList name="Materials">
 
-      <Parameter name="Output CP_Residual_Iter" type="bool" value="true"/>
+          <ParameterList name="Aligned Lattice">
 
-      <!-- Crystal Elasticity moduli and orientation -->
-      <ParameterList name="Crystal Elasticity">
+               <ParameterList name="Material Model"> 
+
+                    <Parameter name="Model Name"
+                               type="string" 
+                               value="CrystalPlasticity"/>
+
+               </ParameterList>
+
+               <Parameter name="Integration Scheme"
+                          type="string"
+                          value="Implicit"/>
+
+               <Parameter name="Implicit Integration Relative Tolerance"
+                          type="double"
+                          value="1.0e-10"/>
+
+               <Parameter name="Implicit Integration Max Iterations Implicit"
+                          type="int"
+                          value="100"/>
+
+               <Parameter name="Output CP_Residual"
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output CP_Residual_Iter"
+                          type="bool"
+                          value="true"/>
+
+               <!-- Crystal Elasticity moduli and orientation -->
+               <ParameterList name="Crystal Elasticity">
+
                     <Parameter name="C11"
                                type="double"
                                value="204.6e3"/>
@@ -55,52 +79,58 @@
                                type="Array(double)" 
                                value="{0.0,0.0,1.0}"/>
 
-      </ParameterList>
+               </ParameterList>
 
-      <ParameterList name="Flow Rule">
+               <ParameterList name="Slip System Family 0">
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Power Law with Drag"/>
+                    <ParameterList name="Flow Rule">
 
-                    <Parameter name="Gamma Dot" 
-                               type="double" 
-                               value="1.0e0"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Power Law with Drag"/>
 
-                    <Parameter name="Gamma Exponent" 
-                               type="double" 
-                               value="1.0e2"/>
+                         <Parameter name="Reference Slip Rate" 
+                                    type="double" 
+                                    value="1.0e00"/>
 
-		    <Parameter name="Drag Coefficient" 
-                               type="double" 
-                               value="1.0e-6"/>
+                         <Parameter name="Rate Exponent" 
+                                    type="double" 
+                                    value="1.0e02"/>
 
-      </ParameterList>
+                         <Parameter name="Drag Coefficient" 
+                                    type="double" 
+                                    value="1.0e-06"/>
 
-      <ParameterList name="Hardening Law">
+                    </ParameterList>
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Exponential"/>
+                    <ParameterList name="Hardening Law">
 
-                    <Parameter name="Hardening" 
-                               type="double" 
-                               value="0.0"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Linear Minus Recovery"/>
 
-                    <Parameter name="Hardening Exponent" 
-                               type="double" 
-                               value="0.0"/>
+                         <Parameter name="Hardening Modulus" 
+                                    type="double" 
+                                    value="0.0"/>
 
-                    <Parameter name="Tau Critical"
-                               type="double"
-                               value="1.22e02"/>
+                         <Parameter name="Recovery Modulus" 
+                                    type="double" 
+                                    value="0.0"/>
 
-      </ParameterList>
+                         <Parameter name="Initial Hardening State"
+                                    type="double"
+                                    value="1.22e02"/>
 
-      <!-- Crystal Plasticity Slip System -->
-      <Parameter name="Number of Slip Systems" type="int" value="1"/>
+                    </ParameterList>
 
-      <ParameterList name="Slip System 1">
+               </ParameterList>
+
+               <!-- Crystal Plasticity Slip System -->
+               <Parameter name="Number of Slip Systems"
+                          type="int"
+                          value="1"/>
+
+               <ParameterList name="Slip System 1">
       
                     <Parameter name="Slip Direction"
                                type="Array(double)"
@@ -110,117 +140,152 @@
                                type="Array(double)"
                                value="{0.0, 1.0, 0.0}"/>
 
+               </ParameterList>
 
-          <Parameter name="Flow Rule" type="string" value="Flow Rule"/>
-          <Parameter name="Hardening Law" type="string" value="Hardening Law"/>
+               <!-- Specify output to Exodus -->
+               <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
+               <Parameter name="Output Deformation Gradient" type="bool" value="true"/>
+               <Parameter name="Output Fp" type="bool" value="true"/>
+               <Parameter name="Output gamma_1" type="bool" value="true"/>
+               <Parameter name="Output tau_hard_1" type="bool" value="true"/>
+               <Parameter name="Output tau_1" type="bool" value="true"/>
+               <Parameter name="Output CP_Residual" type="bool" value="true"/>
+               <Parameter name="Output CP_Residual_Iter" type="bool" value="true"/>
 
-      </ParameterList>
+          </ParameterList>
 
-      <!-- Specify output to Exodus -->
-      <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
-      <Parameter name="Output Deformation Gradient" type="bool" value="true"/>
-      <Parameter name="Output Fp" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output CP_Residual_Iter" type="bool" value="true"/>
-    </ParameterList>
+          <ParameterList name="FCC">
 
-    <ParameterList name="FCC">
+               <ParameterList name="Material Model">
 
-      <ParameterList name="Material Model"> 
-        <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
-      </ParameterList>
+                    <Parameter name="Model Name"
+                               type="string"
+                               value="CrystalPlasticity"/>
 
-      <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-35"/>
-      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-14"/>
-      <Parameter name="Implicit Integration Max Iterations Implicit" type="int" value="100"/>
+               </ParameterList>
 
-      <!-- Crystal Elasticity moduli and orientation -->
-      <ParameterList name="Crystal Elasticity">
-        <Parameter name="C11" type="double" value="204.6e3"/>
-        <Parameter name="C12" type="double" value="137.7e3"/>
-        <Parameter name="C44" type="double" value="126.2e3"/>
+               <Parameter name="Integration Scheme"
+                          type="string"
+                          value="Implicit"/>
 
-        <Parameter name="Basis Vector 1" 
-                   type="Array(double)" 
-                   value="{-0.09175170953613698, 0.9082482904638630, 0.4082482904638630}"/>
+               <Parameter name="Implicit Integration Relative Tolerance"
+                          type="double"
+                          value="1.0e-35"/>
 
-        <Parameter name="Basis Vector 2" 
-                   type="Array(double)" 
-                   value="{0.9082482904638630, -0.09175170953613698, 0.4082482904638630}"/>
+               <Parameter name="Implicit Integration Absolute Tolerance"
+                          type="double"
+                          value="1.0e-14"/>
 
-        <Parameter name="Basis Vector 3" 
-                   type="Array(double)" 
-                   value="{0.4082482904638630, 0.4082482904638630, -0.8164965809277260}"/>
-      </ParameterList>
+               <Parameter name="Implicit Integration Max Iterations Implicit"
+                          type="int"
+                          value="100"/>
+
+               <!-- Crystal Elasticity moduli and orientation -->
+               <ParameterList name="Crystal Elasticity">
+
+                    <Parameter name="C11"
+                               type="double"
+                               value="204.6e3"/>
+
+                    <Parameter name="C12"
+                               type="double"
+                               value="137.7e3"/>
+
+                    <Parameter name="C44"
+                               type="double"
+                               value="126.2e3"/>
+
+                    <Parameter name="Basis Vector 1" 
+                               type="Array(double)" 
+                               value="{-0.09175170953613698, 0.9082482904638630, 0.4082482904638630}"/>
+
+                    <Parameter name="Basis Vector 2" 
+                               type="Array(double)" 
+                               value="{0.9082482904638630, -0.09175170953613698, 0.4082482904638630}"/>
+
+                    <Parameter name="Basis Vector 3" 
+                               type="Array(double)" 
+                               value="{0.4082482904638630, 0.4082482904638630, -0.8164965809277260}"/>
+
+               </ParameterList>
 
       
-      <ParameterList name="Flow Rule">
+               <ParameterList name="Slip System Family 0">
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Power Law with Drag"/>
+                    <ParameterList name="Flow Rule">
 
-                    <Parameter name="Gamma Dot" 
-                               type="double" 
-                               value="1.0e00"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Power Law with Drag"/>
 
-                    <Parameter name="Gamma Exponent" 
-                               type="double" 
-                               value="1.0e02"/>
-		    
-		    <Parameter name="Drag Coefficient" 
-                               type="double" 
-                               value="1.0e-6"/>
+                         <Parameter name="Reference Slip Rate" 
+                                    type="double" 
+                                    value="1.0e00"/>
 
-      </ParameterList>
+                         <Parameter name="Rate Exponent" 
+                                    type="double" 
+                                    value="1.0e02"/>
 
-      <ParameterList name="Hardening Law">
+                         <Parameter name="Drag Coefficient" 
+                                    type="double" 
+                                    value="1.0e-06"/>
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Exponential"/>
+                    </ParameterList>
 
-                    <Parameter name="Hardening" 
-                               type="double" 
-                               value="0.0"/>
+                    <ParameterList name="Hardening Law">
 
-                    <Parameter name="Hardening Exponent" 
-                               type="double" 
-                               value="0.0"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Linear Minus Recovery"/>
 
-                    <Parameter name="Tau Critical"
-                               type="double"
-                               value="1.22e02"/>
+                         <Parameter name="Hardening Modulus" 
+                                    type="double" 
+                                    value="0.0"/>
 
-      </ParameterList>
+                         <Parameter name="Recovery Modulus" 
+                                    type="double" 
+                                    value="0.0"/>
 
-      <!-- Crystal Plasticity Slip System -->
-      <Parameter name="Number of Slip Systems" type="int" value="1"/>
+                         <Parameter name="Initial Hardening State"
+                                    type="double"
+                                    value="1.22e02"/>
 
-      <!-- Crystal Plasticity Slip System -->
-      <Parameter name="Number of Slip Systems" type="int" value="1"/>
-      <ParameterList name="Slip System 1">
-        <Parameter name="Slip Direction" type="Array(double)" value="{-1.0, 1.0, 0.0}"/>
-        <Parameter name="Slip Normal" type="Array(double)"    value="{1.0, 1.0, 1.0}"/>
-        <Parameter name="Flow Rule" type="string" value="Flow Rule"/>
-        <Parameter name="Hardening Law" type="string" value="Hardening Law"/>
-      </ParameterList>
+                    </ParameterList>
 
-      <!-- Specify output to Exodus -->
-      <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
-      <Parameter name="Output Deformation Gradient" type="bool" value="true"/>
-      <Parameter name="Output Fp" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output CP_Residual" type="bool" value="true"/>
-      <Parameter name="Output CP_Residual_Iter" type="bool" value="true"/>
-    </ParameterList>
+               </ParameterList>
 
-  </ParameterList>
+               <!-- Crystal Plasticity Slip System -->
+               <Parameter name="Number of Slip Systems" type="int" value="1"/>
+
+               <!-- Crystal Plasticity Slip System -->
+               <Parameter name="Number of Slip Systems"
+                          type="int"
+                          value="1"/>
+
+               <ParameterList name="Slip System 1">
+
+                    <Parameter name="Slip Direction"
+                               type="Array(double)"
+                               value="{-1.0, 1.0, 0.0}"/>
+
+                    <Parameter name="Slip Normal"
+                               type="Array(double)"
+                               value="{1.0, 1.0, 1.0}"/>
+                               
+               </ParameterList>
+
+               <!-- Specify output to Exodus -->
+               <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
+               <Parameter name="Output Deformation Gradient" type="bool" value="true"/>
+               <Parameter name="Output Fp" type="bool" value="true"/>
+               <Parameter name="Output gamma_1" type="bool" value="true"/>
+               <Parameter name="Output tau_hard_1" type="bool" value="true"/>
+               <Parameter name="Output tau_1" type="bool" value="true"/>
+               <Parameter name="Output CP_Residual" type="bool" value="true"/>
+               <Parameter name="Output CP_Residual_Iter" type="bool" value="true"/>
+
+          </ParameterList>
+
+     </ParameterList>
 
 </ParameterList>

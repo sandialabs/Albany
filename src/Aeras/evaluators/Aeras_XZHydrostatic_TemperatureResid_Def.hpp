@@ -61,7 +61,7 @@ XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Residual);
 
-  this->setName("Aeras::XZHydrostatic_TemperatureResid" );
+  this->setName("Aeras::XZHydrostatic_TemperatureResid" + PHX::typeAsString<EvalT>());
 
   // Register Reynolds number as Sacado-ized Parameter
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
@@ -100,22 +100,17 @@ void XZHydrostatic_TemperatureResid<EvalT, Traits>::
 operator() (const XZHydrostatic_TemperatureResid_Tag& tag, const int& cell) const{
   for (int node=0; node < numNodes; ++node) {
     for (int level=0; level < numLevels; ++level) {
+      Residual(cell,node,level)   =  temperatureSrc(cell,node,level)                             *wBF(cell,node,node)
+                                  -  omega(cell,node,level)                                      *wBF(cell,node,node)
+                                  +  etadotdT(cell,node,level)                                   *wBF(cell,node,node)
+                                  +  temperatureDot(cell,node,level)                             *wBF(cell,node,node);
+
       for (int qp=0; qp < numQPs; ++qp) {
         for (int dim=0; dim < numDims; ++dim) {
           Residual(cell,node,level) += velocity(cell,qp,level,dim)*temperatureGrad(cell,qp,level,dim)*wBF(cell,node,qp)
                                     +  (viscosity/Prandtl)*temperatureGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
         }
       }
-    }
-  }
-
-  for (int qp=0; qp < numQPs; ++qp) {
-    int node = qp;
-    for (int level=0; level < numLevels; ++level) {
-      Residual(cell,node,level)   += temperatureSrc(cell,qp,level)                             *wBF(cell,node,qp)
-                                  -  omega(cell,qp,level)                                      *wBF(cell,node,qp)
-                                  +  etadotdT(cell,qp,level)                                   *wBF(cell,node,qp)
-                                  +  temperatureDot(cell,qp,level)                             *wBF(cell,node,qp);
     }
   }
 }
@@ -126,7 +121,7 @@ void XZHydrostatic_TemperatureResid<EvalT, Traits>::
 operator() (const XZHydrostatic_TemperatureResid_pureAdvection_Tag& tag, const int& cell) const{
   for (int node=0; node < numNodes; ++node)
     for (int level=0; level < numLevels; ++level)
-      Residual(cell,node,level)   += temperatureDot(cell,node,level)*wBF(cell,node,node);
+      Residual(cell,node,level)   = temperatureDot(cell,node,level)*wBF(cell,node,node);
 }
 
 template<typename EvalT, typename Traits>
@@ -135,6 +130,7 @@ void XZHydrostatic_TemperatureResid<EvalT, Traits>::
 operator() (const XZHydrostatic_TemperatureResid_Laplace_Tag& tag, const int& cell) const{
   for (int node=0; node < numNodes; ++node) {
     for (int level=0; level < numLevels; ++level) {
+      Residual(cell,node,level) = 0;
       for (int qp=0; qp < numQPs; ++qp) {
         for (int dim=0; dim < numDims; ++dim) {
           Residual(cell,node,level) += temperatureGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
@@ -157,9 +153,8 @@ evaluateFields(typename Traits::EvalData workset)
 
 //  std::cout <<"In temperature resid: Laplace = " << obtainLaplaceOp << "\n";
 
-  PHAL::set(Residual, 0.0);
-
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  PHAL::set(Residual, 0.0);
   if ( !obtainLaplaceOp ) {
     if( !pureAdvection ) {
       for (int cell=0; cell < workset.numCells; ++cell) {

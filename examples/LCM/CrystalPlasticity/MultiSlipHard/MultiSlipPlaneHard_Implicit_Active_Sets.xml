@@ -8,7 +8,9 @@
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
-    <Parameter name="MaterialDB Filename" type="string" value="MultiSlipPlaneHard_Material_Implicit_Active_Sets.xml"/> -->
+    <Parameter name="MaterialDB Filename"
+               type="string"
+               value="MultiSlipPlaneHard_Material_Implicit_Active_Sets.xml"/>
     <ParameterList name="Dirichlet BCs">
       <ParameterList name="Time Dependent DBC on NS nodelist_12 for DOF X">
         <Parameter name="Number of points" type="int" value="4"/>
