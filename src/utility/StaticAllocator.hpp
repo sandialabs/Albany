@@ -27,7 +27,7 @@ namespace utility
     using pointer = T *;
     
     StaticPointer();
-    StaticPointer(nullptr_t);
+    StaticPointer(std::nullptr_t);
     ~StaticPointer();
 
     StaticPointer(StaticPointer<T> && other);
@@ -93,7 +93,7 @@ namespace utility
   }
 
   template<typename T>
-  StaticPointer<T>::StaticPointer(nullptr_t)
+  StaticPointer<T>::StaticPointer(std::nullptr_t)
     : ptr_(nullptr)
   {
     
