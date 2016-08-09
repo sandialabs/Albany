@@ -120,12 +120,15 @@ computeRateSlip(
   viscous_drag = ratio_stress / drag_term;
 
   RealType const
-  pl_tol = std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / m);
+  min_tol = std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / m);
+
+  RealType const
+  machine_eps = std::numeric_limits<RealType>::epsilon();
 
   bool const
-  finite_power_law = std::fabs(ratio_stress) > pl_tol;
+  finite_power_law = std::fabs(ratio_stress) > min_tol;
 
-	// carry derivative info from ratio_stress
+  // carry derivative info from ratio_stress
   ScalarT
   power_law{0.0 * ratio_stress};
 
@@ -133,18 +136,27 @@ computeRateSlip(
     power_law = std::pow(std::fabs(ratio_stress), m - 1) * ratio_stress;
   }
 
-  RealType const
-  eff_tol = 1.0e-8;
+  ScalarT
+  pl_vd_ratio = drag_term * std::pow(ratio_stress,m-1);
 
   bool const
-  vd_active = std::fabs(ratio_stress) > eff_tol;
+  pl_active = pl_vd_ratio < machine_eps;
 
+  bool const
+  vd_active = pl_vd_ratio > 1.0 / machine_eps;
+      
+  bool const
+  eff_active = !pl_active && !vd_active;
+      
   // prevent flow rule singularities if stress is zero
   ScalarT
   effective{power_law};
 
-  if (vd_active == true) {
+  if (eff_active == true) {
     effective = 1.0/((1.0 / power_law) + (1.0 / viscous_drag));
+  }
+  else if (vd_active == true) {
+    effective = viscous_drag;
   }
 
   // compute slip increment
