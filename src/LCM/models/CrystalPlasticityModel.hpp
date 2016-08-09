@@ -7,9 +7,12 @@
 #if !defined(LCM_CrystalPlasticityModel_hpp)
 #define LCM_CrystalPlasticityModel_hpp
 
-#include "CrystalPlasticityCore.hpp"
+#include "core/CrystalPlasticity/CrystalPlasticityCore.hpp"
+#include "core/CrystalPlasticity/NonlinearSolver.hpp"
+#include "core/CrystalPlasticity/Integrator.hpp"
 #include "ConstitutiveModel.hpp"
 #include "NOX_StatusTest_ModelEvaluatorFlag.h"
+#include "../../utility/StaticAllocator.hpp"
 
 namespace LCM
 {
@@ -20,21 +23,10 @@ class CrystalPlasticityModel: public LCM::ConstitutiveModel<EvalT, Traits>
 {
 public:
 
-  enum class IntegrationScheme
-  {
-    UNDEFINED = 0, 
-    EXPLICIT = 1, 
-    IMPLICIT = 2
-  };
-
-  enum class ResidualType
-  {
-    UNDEFINED = 0, 
-    SLIP = 1, 
-    SLIP_HARDNESS = 2
-  };
-
   using ScalarT = typename EvalT::ScalarT;
+	using ValueT = typename Sacado::ValueType<ScalarT>::type;
+	
+	using Minimizer = Intrepid2::Minimizer<ValueT, CP::NLS_DIM>;
 
   // Dimension of problem, e.g., 2 -> 2D, 3 -> 3D
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
@@ -93,12 +85,24 @@ public:
   forceGlobalLoadStepReduction()
   {
     TEUCHOS_TEST_FOR_EXCEPTION(
-	  nox_status_test_.is_null(),
-          std::logic_error,
-          "\n**** Error in CrystalPlasticityModel, error accessing NOX status test.");
+        nox_status_test_.is_null(),
+        std::logic_error,
+        "\n**** Error in CrystalPlasticityModel: \
+            error accessing NOX status test.");
 
     nox_status_test_->status_ = NOX::StatusTest::Failed;
   }
+
+protected:
+
+  template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+  utility::StaticPointer<CP::Integrator<EvalT, NumDimT, NumSlipT>>
+  integratorFactory(CP::IntegrationScheme integration_scheme,
+                    CP::ResidualType residual_type,
+                    CP::PlasticityState<ScalarT, NumDimT> & plasticity_state,
+                    CP::SlipState<ScalarT, NumSlipT> & slip_state,
+                    Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
+                    RealType dt);
 
 private:
 
@@ -143,6 +147,9 @@ private:
   /// Number of slip systems
   ///
   int
+  num_family_;
+
+  int
   num_slip_;
 
   ///
@@ -160,19 +167,25 @@ private:
   //
   // Unrotated slip directions
   //
-  std::vector< Intrepid2::Vector<RealType, CP::MAX_DIM> >
+  std::vector<Intrepid2::Vector<RealType, CP::MAX_DIM>>
   s_unrotated_;
 
   //
   // Unrotated slip normals
   //
-  std::vector< Intrepid2::Vector<RealType, CP::MAX_DIM> >
+  std::vector<Intrepid2::Vector<RealType, CP::MAX_DIM>>
   n_unrotated_;
+
+  ///
+  /// Vector holding slip system families
+  ///
+  std::vector<CP::SlipFamily<CP::MAX_DIM, CP::MAX_SLIP>>
+  slip_families_;
 
   ///
   /// Struct holding slip system data
   ///
-  std::vector< CP::SlipSystemStruct<CP::MAX_DIM, CP::MAX_SLIP> >
+  std::vector<CP::SlipSystem<CP::MAX_DIM>>
   slip_systems_;
 
   ///
@@ -181,21 +194,12 @@ private:
   bool read_orientations_from_mesh_;
 
   ///
-  /// Constitutive relations
-  ///
-  CP::FlowRule
-  flow_rule_;
-
-  CP::HardeningLaw
-  hardening_law_;
-
-  ///
   /// Solution options
   ///
-  IntegrationScheme 
+	CP::IntegrationScheme 
   integration_scheme_;
-  
-  ResidualType
+
+	CP::ResidualType
   residual_type_;
 
   bool
@@ -204,23 +208,21 @@ private:
   Intrepid2::StepType
   step_type_;
 
-  RealType
-  implicit_nonlinear_solver_relative_tolerance_;
-  
-  RealType
-  implicit_nonlinear_solver_absolute_tolerance_;
-  
-  int
-  implicit_nonlinear_solver_max_iterations_;
-  
-  int
-  implicit_nonlinear_solver_min_iterations_;
+	///
+	/// Minimizer
+	///
+	Minimizer minimizer_;
 
   ///
   /// Pointer to NOX status test, allows the material model to force a global load step reduction
   ///
   Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
   nox_status_test_;
+  
+  ///
+  /// Memory management
+  ///
+  utility::StaticAllocator  allocator_;
 
   ///
   /// Output options 
