@@ -7,11 +7,14 @@
       <Parameter name="DBC on NS ns_1 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS ns_2 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS ns_3 for DOF Z" type="double" value="0.0"/>
-      <ParameterList name="Time Dependent DBC on NS ns_4 for DOF Y">
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.75}"/>
-      </ParameterList>
     </ParameterList>  
+    <ParameterList name="Neumann BCs">
+      <Parameter name="NBC on SS ss_1 for DOF all set P" type="Array(double)" value="{20.0}"/>
+      <ParameterList name="Time Dependent NBC on SS ss_1 for DOF all set P">
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0 }"/>
+        <Parameter name="BC Values" type="TwoDArray(double)" value="2x1:{ 0.0, 75.0 }"/>
+      </ParameterList>
+    </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Parameter 0" type="string" value="Time"/>
@@ -23,7 +26,7 @@
     <ParameterList name="Adaptation">
       <Parameter name="Method" type="string" value="RPI SPR Size"/>
       <Parameter name="Remesh Strategy" type="string" value="Continuous"/>
-      <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="2"/>
+      <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="3"/>
       <Parameter name="Target Element Count" type="long int" value="10000"/>
       <Parameter name="State Variable" type="string" value="Cauchy_Stress"/>
       <Parameter name="Minimum Part Density" type="double" value="2500"/>
@@ -37,6 +40,7 @@
     <Parameter name="PUMI Output File Name" type="string" value="out.vtk"/>
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{115, eb_1}"/>
     <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x4:{97, 101, 51, 95, ns_1, ns_2, ns_3, ns_4}"/>
+    <Parameter name="Side Set Associations" type="TwoDArray(string)" value="2x1:{99, ss_1}"/>
     <Parameter name="2nd Order Mesh" type="bool" value="false"/>
     <Parameter name="Cubature Degree" type="int" value="1"/>
   </ParameterList>
