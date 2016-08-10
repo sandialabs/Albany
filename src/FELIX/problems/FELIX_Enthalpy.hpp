@@ -175,7 +175,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 		  fm0.template registerEvaluator<EvalT>(ev);
 	  }
 
-	  // Geotermal flux
+	  // Geothermal flux
 	  if(!isGeoFluxConst)
 	  {
 		  entity = Albany::StateStruct::NodalDataToElemNode;
@@ -303,7 +303,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 		  // --- Restrict basal friction from cell-based to cell-side-based
 		  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("basal_friction",basalSideName,"Node Scalar",cellType));
 
-		  // --- Interpolate Beta Given on QP on side
+		  // --- Interpolate basal friction on QP on side
 		  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("basal_friction", basalSideName));
 
 		  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator("Basal Heat"));
@@ -316,13 +316,13 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
 	  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFCellToSideEvaluator("phi",basalSideName,"Node Scalar",cellType));
 
-	  // --- Utilities for Geotermal flux
+	  // --- Utilities for Geothermal flux
 	  if(!isGeoFluxConst)
 	  {
-		  // --- Restrict geotermal flux from cell-based to cell-side-based
+		  // --- Restrict geothermal flux from cell-based to cell-side-based
 		  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("basal_heat_flux",basalSideName,"Node Scalar",cellType));
 
-	  	  // --- Interpolate geotermal_flux on QP on side
+	  	  // --- Interpolate geothermal_flux on QP on side
 	  	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("basal_heat_flux", basalSideName));
 
 		  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator("Geo Flux Heat"));
@@ -365,8 +365,8 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 		  // Vertical velocity derived from the continuity equation
 		  p->set<string>("Vertical Velocity QP Variable Name", "w");
 
-		  p->set<string>("Geotermal Flux Heat QP Variable Name","Geo Flux Heat");
-		  p->set<string>("Geotermal Flux Heat QP SUPG Variable Name","Geo Flux Heat SUPG");
+		  p->set<string>("Geothermal Flux Heat QP Variable Name","Geo Flux Heat");
+		  p->set<string>("Geothermal Flux Heat QP SUPG Variable Name","Geo Flux Heat SUPG");
 
 		  p->set<string>("Melting Temperature Gradient QP Variable Name","melting temp Gradient");
 
@@ -386,7 +386,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
 		  p->set<bool>("Needs Dissipation", needsDiss);
 		  p->set<bool>("Needs Basal Friction", needsBasFric);
-		  p->set<bool>("Constant Geotermal Flux", isGeoFluxConst);
+		  p->set<bool>("Constant Geothermal Flux", isGeoFluxConst);
 
 		  p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 		  p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
@@ -494,9 +494,9 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 		  fm0.template registerEvaluator<EvalT>(ev);
 	  }
 
-	  // --- FELIX Geotermal flux heat
+	  // --- FELIX Geothermal flux heat
 	  {
-		  p = rcp(new ParameterList("FELIX Geotermal Flux Heat"));
+		  p = rcp(new ParameterList("FELIX Geothermal Flux Heat"));
 		  //Input
 		  p->set<std::string>("BF Side Name", "BF "+basalSideName);
 		  p->set<std::string>("Gradient BF Side Name", "Grad BF "+basalSideName);
@@ -510,15 +510,15 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 		  p->set<ParameterList*>("SUPG Settings", &params->sublist("SUPG Settings"));
 
 		  if(!isGeoFluxConst)
-			  p->set<std::string>("Geotermal Flux Side QP Variable Name", "basal_heat_flux");
+			  p->set<std::string>("Geothermal Flux Side QP Variable Name", "basal_heat_flux");
 
-		  p->set<bool>("Constant Geotermal Flux", isGeoFluxConst);
+		  p->set<bool>("Constant Geothermal Flux", isGeoFluxConst);
 
 		  //Output
-		  p->set<std::string>("Geotermal Flux Heat Variable Name", "Geo Flux Heat");
+		  p->set<std::string>("Geothermal Flux Heat Variable Name", "Geo Flux Heat");
 
 		  if(haveSUPG)
-			  p->set<std::string>("Geotermal Flux Heat SUPG Variable Name", "Geo Flux Heat SUPG");
+			  p->set<std::string>("Geothermal Flux Heat SUPG Variable Name", "Geo Flux Heat SUPG");
 
 		  ev = Teuchos::rcp(new FELIX::GeoFluxHeat<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
 		  fm0.template registerEvaluator<EvalT>(ev);
@@ -735,7 +735,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
 		  //Input
 		  p->set<std::string>("Water Content Side Variable Name", "phi");
-		  p->set<std::string>("Geotermal Flux Side Variable Name", "basal_heat_flux");
+		  p->set<std::string>("Geothermal Flux Side Variable Name", "basal_heat_flux");
 		  p->set<std::string>("Velocity Side Variable Name", "velocity");
 		  p->set<std::string>("Basal Friction Coefficient Side Variable Name", "basal_friction");
 		  p->set<std::string>("Enthalpy Hs Side Variable Name", "melting enthalpy");

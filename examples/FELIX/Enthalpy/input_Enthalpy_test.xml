@@ -11,7 +11,7 @@
     <Parameter name="Required Basal Fields" type="Array(string)" value="{basal_friction}"/>
     <Parameter name="Needs Dissipation" type="bool" value="true"/>
     <Parameter name="Needs Basal Friction" type="bool" value="true"/>
-    <Parameter name="Constant Geotermal Flux" type="bool" value="false"/> 
+    <Parameter name="Constant Geothermal Flux" type="bool" value="false"/> 
 <ParameterList name="Dirichlet BCs">
         <Parameter name="DBC on NS top for DOF Enth prescribe Field" type="string" value="surface_air_enthalpy"/>
 </ParameterList>
@@ -89,7 +89,7 @@
 </ParameterList>
 <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="2"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{27.2804467936,7.28622636011}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{28.7696527545,7.28622633343}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-2"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.208812026834, 0.243439246662, 0.0545756230981}"/>

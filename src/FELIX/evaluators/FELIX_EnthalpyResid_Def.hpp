@@ -86,12 +86,12 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 		}
 	}
 
-	geoFluxHeat = PHX::MDField<ScalarT,Cell,QuadPoint>(p.get<std::string> ("Geotermal Flux Heat QP Variable Name"),dl->qp_scalar);
+	geoFluxHeat = PHX::MDField<ScalarT,Cell,QuadPoint>(p.get<std::string> ("Geothermal Flux Heat QP Variable Name"),dl->qp_scalar);
 	this->addDependentField(geoFluxHeat);
 
 	if(haveSUPG)
 	{
-		geoFluxHeatSUPG = PHX::MDField<ScalarT,Cell,QuadPoint>(p.get<std::string> ("Geotermal Flux Heat QP SUPG Variable Name"),dl->qp_scalar);
+		geoFluxHeatSUPG = PHX::MDField<ScalarT,Cell,QuadPoint>(p.get<std::string> ("Geothermal Flux Heat QP SUPG Variable Name"),dl->qp_scalar);
 		this->addDependentField(geoFluxHeatSUPG);
 	}
 

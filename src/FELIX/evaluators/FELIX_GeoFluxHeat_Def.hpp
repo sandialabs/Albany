@@ -15,7 +15,7 @@ namespace FELIX
 template<typename EvalT, typename Traits, typename Type>
 GeoFluxHeat<EvalT,Traits,Type>::
 GeoFluxHeat(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
-	geoFluxHeat(p.get<std::string> ("Geotermal Flux Heat Variable Name"), dl->node_scalar)
+	geoFluxHeat(p.get<std::string> ("Geothermal Flux Heat Variable Name"), dl->node_scalar)
 {
 	basalSideName = p.get<std::string>("Side Set Name");
 
@@ -23,13 +23,13 @@ GeoFluxHeat(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 
 	Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
-	isGeoFluxConst = p.get<bool>("Constant Geotermal Flux");
+	isGeoFluxConst = p.get<bool>("Constant Geothermal Flux");
 
 	BF        = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
 	w_measure = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint> (p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
 
 	if(!isGeoFluxConst)
-		geoFlux   = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Geotermal Flux Side QP Variable Name"), dl_basal->qp_scalar);
+		geoFlux   = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Geothermal Flux Side QP Variable Name"), dl_basal->qp_scalar);
 
 	Teuchos::ParameterList* SUPG_list = p.get<Teuchos::ParameterList*>("SUPG Settings");
 	haveSUPG = SUPG_list->get("Have SUPG Stabilization", false);
@@ -45,7 +45,7 @@ GeoFluxHeat(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 
 	if (haveSUPG)
 	{
-		geoFluxHeatSUPG  = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Geotermal Flux Heat SUPG Variable Name"), dl->node_scalar);
+		geoFluxHeatSUPG  = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Geothermal Flux Heat SUPG Variable Name"), dl->node_scalar);
 	    GradBF    		 = PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Name"), dl_basal->node_qp_gradient);
 		velocity  		 = PHX::MDField<Type,Cell,Side,QuadPoint,VecDim>(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
 		verticalVel		 = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string>("Vertical Velocity Side QP Variable Name"), dl_basal->qp_scalar);

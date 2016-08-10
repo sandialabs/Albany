@@ -174,108 +174,51 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 	  // Basal friction
 	  if(needsBasFric)
 	  {
+		  entity = Albany::StateStruct::NodalDataToElemNode;
 		  stateName = "basal_friction";
 		  fieldName = "Beta";
-		  entity = Albany::StateStruct::NodalDataToElemNode;
 
-		  // if basal_friction is required at the base
-		  if (ss_requirements.find(basalSideName) != ss_requirements.end())
-		  {
-			  const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
-			  if (std::find(req.begin(), req.end(), stateName) != req.end())
-			  {
-				  p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
-			      ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
-			      fm0.template registerEvaluator<EvalT>(ev);
-			  }
-		  }
-		  // if basal_friction is required in the whole mesh
-		  if (std::find(requirements.begin(),requirements.end(),stateName) != requirements.end())
-		  {
-		      p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-		      p->set<std::string>("Field Name", fieldName);
-
-              ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-		      fm0.template registerEvaluator<EvalT>(ev);
-		  }
+		  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+          p->set<std::string>("Field Name", fieldName);
+		  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+		  fm0.template registerEvaluator<EvalT>(ev);
 	  }
 
-	  // Geotermal flux
+	  // Geothermal flux
 	  if(!isGeoFluxConst)
 	  {
+		  entity = Albany::StateStruct::NodalDataToElemNode;
 		  stateName = "basal_heat_flux";
 		  fieldName = "Basal Heat Flux";
-		  entity = Albany::StateStruct::NodalDataToElemNode;
 
-		  // if basal_heat_flux is required at the base
-		  if (ss_requirements.find(basalSideName) != ss_requirements.end())
-		  {
-			  const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
-			  if (std::find(req.begin(), req.end(), stateName) != req.end())
-			  {
-				  p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
-			      ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
-			      fm0.template registerEvaluator<EvalT>(ev);
-			  }
-		  }
+		  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+          p->set<std::string>("Field Name", fieldName);
+		  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+		  fm0.template registerEvaluator<EvalT>(ev);
 	  }
 
 	  // Thickness
 	  {
+		  entity = Albany::StateStruct::NodalDataToElemNode;
 		  stateName = "thickness";
 		  fieldName = "Ice Thickness";
-		  entity = Albany::StateStruct::NodalDataToElemNode;
 
-		  // if thickness is required at the base
-		  if (ss_requirements.find(basalSideName) != ss_requirements.end())
-		  {
-			  const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
-			  if (std::find(req.begin(), req.end(), stateName) != req.end())
-			  {
-				  p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
-			      ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
-				  fm0.template registerEvaluator<EvalT>(ev);
-			  }
-		  }
-
-		  // if thickness is required in the whole mesh
-		  if (std::find(requirements.begin(),requirements.end(),stateName) != requirements.end())
-		  {
-		      p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
-		      p->set<std::string>("Field Name", fieldName);
-
-              ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-		      fm0.template registerEvaluator<EvalT>(ev);
-		  }
+		  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+		  p->set<std::string>("Field Name", fieldName);
+		  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+		  fm0.template registerEvaluator<EvalT>(ev);
 	  }
 
 	  // Surface Height
 	  {
+		  entity = Albany::StateStruct::NodalDataToElemNode;
 		  stateName = "surface_height";
 		  fieldName = "Surface Height";
-		  entity = Albany::StateStruct::NodalDataToElemNode;
 
-		  // if surface_height is required at the base
-		  if (ss_requirements.find(basalSideName) != ss_requirements.end())
-		  {
-			  const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
-			  if (std::find(req.begin(), req.end(), stateName) != req.end())
-			  {
-				  p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
-			      ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
-				  fm0.template registerEvaluator<EvalT>(ev);
-			  }
-		  }
-
-		  // if surface_height is required in the whole mesh
-		  if (std::find(requirements.begin(),requirements.end(),stateName) != requirements.end())
-		  {
-			  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
-			  p->set<std::string>("Field Name", fieldName);
-
-			  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-			  fm0.template registerEvaluator<EvalT>(ev);
-		  }
+		  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+		  p->set<std::string>("Field Name", fieldName);
+		  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+		  fm0.template registerEvaluator<EvalT>(ev);
 	  }
 
 	  // ----------  Define Field Names ----------- //
@@ -389,7 +332,7 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 		  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator("Basal Heat SUPG"));
 	  }
 
-	  // --- Utilities for Geotermal flux
+	  // --- Utilities for Geothermal flux
 	  if(!isGeoFluxConst)
 	  {
 		  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator("Geo Flux Heat"));
@@ -415,19 +358,31 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 		  fm0.template registerEvaluator<EvalT> (evalUtils.constructMapToPhysicalFrameSideEvaluator(cellType,basalCubature,basalSideName));
 
 	      //---- Interpolate thickness gradient on QP on side
-		  fm0.template registerEvaluator<EvalT>(evalUtils.getPSTUtils().constructDOFGradInterpolationSideEvaluator("Ice Thickness", basalSideName));
+		  //fm0.template registerEvaluator<EvalT>(evalUtils.getPSTUtils().constructDOFGradInterpolationSideEvaluator("Ice Thickness", basalSideName));
 
 	      //---- Interpolate thickness on QP on side
-	      fm0.template registerEvaluator<EvalT>(evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Ice Thickness", basalSideName));
+	      //fm0.template registerEvaluator<EvalT>(evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Ice Thickness", basalSideName));
 
 	      if(needsBasFric)
 		  {
-	    	  // --- Interpolate Beta on QP on side
-	    	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Beta", basalSideName));
+	    	  // --- Restrict Beta from cell-based to cell-side-based
+			  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("Beta",basalSideName,"Node Scalar",cellType));
+
+			  // --- Interpolate Beta on QP on side
+			  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Beta", basalSideName));
+		  }
+
+	      if(!isGeoFluxConst)
+		  {
+			  // --- Restrict geothermal flux from cell-based to cell-side-based
+			  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("Basal Heat Flux",basalSideName,"Node Scalar",cellType));
+
+		  	  // --- Interpolate geothermal_flux on QP on side
+		  	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Basal Heat Flux", basalSideName));
 		  }
 
 	      //---- Interpolate surface height on QP on side
-	      fm0.template registerEvaluator<EvalT>(evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Surface Height", basalSideName));
+	      //fm0.template registerEvaluator<EvalT>(evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Surface Height", basalSideName));
 
 		  // --- Restrict enthalpy Hs from cell-based to cell-side-based
 		  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("Melting Enthalpy",basalSideName,"Node Scalar",cellType));
@@ -436,9 +391,6 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 		  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFCellToSideEvaluator("Melting Temp",basalSideName,"Node Scalar",cellType));
 
 		  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFCellToSideEvaluator("phi",basalSideName,"Node Scalar",cellType));
-
-	  	  // --- Interpolate geotermal_flux on QP on side
-	  	  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Basal Heat Flux", basalSideName));
 
 		  // --- Restrict vertical velocity from cell-based to cell-side-based
 		  fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFCellToSideEvaluator("w",basalSideName,"Node Scalar",cellType));
@@ -592,8 +544,8 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 		  // Vertical velocity derived from the continuity equation
 		  p->set<std::string>("Vertical Velocity QP Variable Name", "w");
 
-		  p->set<std::string>("Geotermal Flux Heat QP Variable Name","Geo Flux Heat");
-		  p->set<std::string>("Geotermal Flux Heat QP SUPG Variable Name","Geo Flux Heat SUPG");
+		  p->set<std::string>("Geothermal Flux Heat QP Variable Name","Geo Flux Heat");
+		  p->set<std::string>("Geothermal Flux Heat QP SUPG Variable Name","Geo Flux Heat SUPG");
 
 		  p->set<std::string>("Melting Temperature Gradient QP Variable Name","Melting Temp Gradient");
 
@@ -613,7 +565,7 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 
 		  p->set<bool>("Needs Dissipation", needsDiss);
 		  p->set<bool>("Needs Basal Friction", needsBasFric);
-		  p->set<bool>("Constant Geotermal Flux", isGeoFluxConst);
+		  p->set<bool>("Constant Geothermal Flux", isGeoFluxConst);
 
 		  p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
 		  p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
@@ -677,7 +629,7 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 
 	  // --- FELIX Geothermal flux heat
 	  {
-		  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Geotermal Flux Heat"));
+		  p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Geothermal Flux Heat"));
 		  //Input
 		  p->set<std::string>("BF Side Name", "BF "+basalSideName);
 		  p->set<std::string>("Gradient BF Side Name", "Grad BF "+basalSideName);
@@ -691,15 +643,15 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 		  p->set<Teuchos::ParameterList*>("SUPG Settings", &params->sublist("SUPG Settings"));
 
 		  if(!isGeoFluxConst)
-			  p->set<std::string>("Geotermal Flux Side QP Variable Name", "Basal Heat Flux");
+			  p->set<std::string>("Geothermal Flux Side QP Variable Name", "Basal Heat Flux");
 
-		  p->set<bool>("Constant Geotermal Flux", isGeoFluxConst);
+		  p->set<bool>("Constant Geothermal Flux", isGeoFluxConst);
 
 		  //Output
-		  p->set<std::string>("Geotermal Flux Heat Variable Name", "Geo Flux Heat");
+		  p->set<std::string>("Geothermal Flux Heat Variable Name", "Geo Flux Heat");
 
 		  if(haveSUPG)
-			  p->set<std::string>("Geotermal Flux Heat SUPG Variable Name", "Geo Flux Heat SUPG");
+			  p->set<std::string>("Geothermal Flux Heat SUPG Variable Name", "Geo Flux Heat SUPG");
 
 		  ev = Teuchos::rcp(new FELIX::GeoFluxHeat<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
 		  fm0.template registerEvaluator<EvalT>(ev);
@@ -922,7 +874,7 @@ FELIX::StokesFOThermoCoupled::constructEvaluators (PHX::FieldManager<PHAL::Alban
 
 		  //Input
 		  p->set<std::string>("Water Content Side Variable Name", "phi");
-		  p->set<std::string>("Geotermal Flux Side Variable Name", "Basal Heat Flux");
+		  p->set<std::string>("Geothermal Flux Side Variable Name", "Basal Heat Flux");
 		  p->set<std::string>("Velocity Side Variable Name", "Basal Velocity");
 		  p->set<std::string>("Basal Friction Coefficient Side Variable Name", "Beta");
 		  p->set<std::string>("Enthalpy Hs Side Variable Name", "Melting Enthalpy");
