@@ -691,7 +691,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./AMP/
                      ./AMP/problems
                      ./AMP/evaluators
-         ./AMP/responses
+                     ./AMP/responses
                      ./QCAD
                      ./QCAD/problems
                      ./QCAD/evaluators
@@ -700,10 +700,6 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./ATO/problems
                      ./ATO/evaluators
                      ./ATO/utils
-                     ./GOAL
-                     ./GOAL/utils
-                     ./GOAL/responses
-                     ./GOAL/evaluators
                     )
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
@@ -850,11 +846,6 @@ IF (ALBANY_MESHDB_TOOLS)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} exopumiconvert)
 ENDIF()
 
-IF (ALBANY_GOAL)
-  add_executable(AlbanyGOAL GOAL/GOAL_Main.cpp)
-  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyGOAL)
-ENDIF()
-
 ENDIF (NOT ALBANY_LIBRARIES_ONLY)
 # End declaration of executables
 
@@ -935,7 +926,6 @@ ENDIF()
 
 IF (ALBANY_GOAL)
   add_subdirectory(GOAL)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} GOAL)
 ENDIF()
 
 IF(ALBANY_CATALYST)
