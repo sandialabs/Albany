@@ -18,4 +18,5 @@ set(testName "SCOREC_${testRoot}")
 # 3. Create the test with this name and standard executable
 IF(ALBANY_IFPACK2)
   add_test(NAME ${testName}_Tpetra COMMAND ${AlbanyT.exe} inputT.xml)
+  add_test(NAME ${testName}_Verification_Tpetra COMMAND ${AlbanyT.exe} inputVerificationT.xml)
 ENDIF()
