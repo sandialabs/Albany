@@ -3,6 +3,7 @@
 import sys
 import string
 from create_slip_systems import create_slip_systems
+from exodus import exodus
 
 INDENTATION = 2
 
@@ -120,13 +121,12 @@ def WriteBool(name, type, value, file, indent):
     return
 
 
-def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, num_blocks):
+def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, names_block):
 
-    block_names = []
+    num_blocks = len(names_block)
     material_names = []
-    for i in range(num_blocks):
-        block_names.append("block_" + str(i+1))
-        material_names.append("Block " + str(i+1) + " Material")
+    for name in names_block:
+        material_names.append(name + " Material")
 
     indent = 0
 
@@ -136,7 +136,7 @@ def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, num_blocks
     # Associate a material model with each block
     indent = StartParamList("ElementBlocks", mat_file, indent)
     for iBlock in range(num_blocks):
-        indent = StartParamList(block_names[iBlock], mat_file, indent)
+        indent = StartParamList(names_block[iBlock], mat_file, indent)
         WriteParameter("material", "string", material_names[iBlock], mat_file, indent)
         WriteBool("Weighted Volume Average J", "bool", "true", mat_file, indent)
         WriteBool("Volume Average Pressure", "bool", "true", mat_file, indent)
@@ -183,7 +183,7 @@ def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, num_blocks
         WriteParameter("Output Deformation Gradient", "bool", vars_output["F"], mat_file, indent)
         WriteParameter("Output L", "bool", vars_output["L"], mat_file, indent)
         WriteParameter("Output CP_Residual", "bool", vars_output["cp_residual"], mat_file, indent)
-        WriteParameter("Output CP_residual_iter", "bool", vars_output["cp_residual_iter"], mat_file, indent)
+        WriteParameter("Output CP_Residual_Iter", "bool", vars_output["cp_residual_iter"], mat_file, indent)
         WriteParameter("Output eqps", "bool", vars_output["eqps"], mat_file, indent)
         WriteParameter("Output Integration Weights", "bool", vars_output["integration_weights"], mat_file, indent)
         for i in range(num_slip_systems):
@@ -278,12 +278,14 @@ def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, num_blocks
 if __name__ == "__main__":
 
     if len(sys.argv) != 4:
-        print "\nUsage:  CreateMaterialsFile.py <mat_props.txt> <rotation_matrices.txt> <num_blocks>\n"
+        print "\nUsage: python -m lcm_preprocess.write_file_material <mat_props.txt> <rotation_matrices.txt> <mesh_filename>\n"
         sys.exit(1)
 
     mat_params_file_name = sys.argv[1]
     rotations_file_name = sys.argv[2]
-    num_blocks = int(sys.argv[3])
+    name_file_exodus = sys.argv[3]
+    file_exodus = exodus(name_file_exodus)
+    names_block = file_exodus.get_elem_blk_names()
 
     # List of material parameters that are expected to be in the input file
     # If it's set to None, then it is a required parameter
@@ -343,7 +345,7 @@ if __name__ == "__main__":
     rotations = []
     ParseRotationMatricesFile(rotations_file_name, rotations)
 
-    materials_file_name = "Materials.xml"
-    WriteMaterialsFile(materials_file_name, mat_params, vars_output, rotations, num_blocks)
+    materials_file_name = name_file_exodus.split('.')[0] + '_Material.xml'
+    WriteMaterialsFile(materials_file_name, mat_params, vars_output, rotations, names_block)
 
     print "\nComplete.\n"
