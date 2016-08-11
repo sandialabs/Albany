@@ -679,6 +679,8 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./LCM/evaluators
                      ./LCM/evaluators/bc
                      ./LCM/evaluators/surface-element
+                     ./LCM/evaluators/transport
+                     ./LCM/evaluators/HMC
                      ./LCM/models
                      ./LCM/utils
                      ./LCM/utils/topology
