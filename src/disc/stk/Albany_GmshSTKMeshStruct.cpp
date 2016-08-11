@@ -124,15 +124,26 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
   for (int i(0); i<NumSides; ++i)
     bdTags.insert(sides[NumSideNodes][i]);
 
-  // Adding boundary nodesets and sidesets separating different labels
-  for (std::set<int>::const_iterator it=bdTags.begin(); it!=bdTags.end(); ++it)
-  {
-    std::stringstream nsn_i,ssn_i;
-    nsn_i << "BoundaryNode" << *it;
-    ssn_i << "BoundarySide" << *it;
+  // Broadcasting the tags
+  int numBdTags = bdTags.size();
+  Teuchos::broadcast<LO,LO>(*commT, 0, &numBdTags);
+  int* bdTagsArray = new int[numBdTags];
+  std::set<int>::iterator it=bdTags.begin();
+  for (int k=0; it!=bdTags.end(); ++it,++k)
+    bdTagsArray[k] = *it;
+  Teuchos::broadcast<LO,LO>(*commT, 0, numBdTags, bdTagsArray);
 
-    bdTagToNodeSetName[*it] = nsn_i.str();
-    bdTagToSideSetName[*it] = ssn_i.str();
+  // Adding boundary nodesets and sidesets separating different labels
+  for (int k=0; k<numBdTags; ++k)
+  {
+    int tag = bdTagsArray[k];
+
+    std::stringstream nsn_i,ssn_i;
+    nsn_i << "BoundaryNode" << tag;
+    ssn_i << "BoundarySide" << tag;
+
+    bdTagToNodeSetName[tag] = nsn_i.str();
+    bdTagToSideSetName[tag] = ssn_i.str();
 
     nsNames.push_back(nsn_i.str());
     ssNames.push_back(ssn_i.str());
@@ -146,6 +157,7 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
 #endif
   }
 
+  Teuchos::broadcast<LO,LO>(*commT, 0, &NumElemNodes);
   switch (NumElemNodes)
   {
     case 3:
@@ -182,7 +194,6 @@ Albany::GmshSTKMeshStruct::GmshSTKMeshStruct (const Teuchos::RCP<Teuchos::Parame
       new Albany::MeshSpecsStruct (ctd, numDim, cub, nsNames, ssNames,
                                    worksetSize, partVec[0]->name(), ebNameToIndex,
                                    this->interleavedOrdering));
-  std::cout << "Spatial dim: " << metaData->spatial_dimension() << std::endl;
 
   this->initializeSideSetMeshStructs(commT);
 }
@@ -211,7 +222,8 @@ Albany::GmshSTKMeshStruct::~GmshSTKMeshStruct()
 
 void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
     const Teuchos::RCP<const Teuchos_Comm>& commT,
-    const Teuchos::RCP<Teuchos::ParameterList>& params, const unsigned int neq_,
+    const Teuchos::RCP<Teuchos::ParameterList>& params,
+    const unsigned int neq_,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const unsigned int worksetSize,
@@ -224,94 +236,101 @@ void Albany::GmshSTKMeshStruct::setFieldAndBulkData(
 
   bulkData->modification_begin(); // Begin modifying the mesh
 
-  stk::mesh::PartVector singlePartVec(1);
-  unsigned int ebNo = 0; //element block #???
-  int sideID = 0;
-
-  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
-  AbstractSTKFieldContainer::VectorFieldType* coordinates_field =  fieldContainer->getCoordinatesField();
-
-  singlePartVec[0] = nsPartVec["Node"];
-
-  for (int i = 0; i < NumNodes; i++)
+  // Only proc 0 has loaded the file
+  if (commT->getRank()==0)
   {
-    stk::mesh::Entity node = bulkData->declare_entity(stk::topology::NODE_RANK, i + 1, singlePartVec);
+    stk::mesh::PartVector singlePartVec(1);
+    unsigned int ebNo = 0; //element block #???
+    int sideID = 0;
 
-    double* coord;
-    coord = stk::mesh::field_data(*coordinates_field, node);
-    coord[0] = pts[i][0];
-    coord[1] = pts[i][1];
-    if (numDim==3)
-      coord[2] = pts[i][2];
-  }
+    AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
+    AbstractSTKFieldContainer::VectorFieldType* coordinates_field =  fieldContainer->getCoordinatesField();
 
-  for (int i = 0; i < NumElems; i++)
-  {
-    singlePartVec[0] = partVec[ebNo];
-    stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, i + 1, singlePartVec);
+    singlePartVec[0] = nsPartVec["Node"];
 
-    for (int j = 0; j < NumElemNodes; j++)
+    for (int i = 0; i < NumNodes; i++)
     {
-      stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, elems[j][i]);
-      bulkData->declare_relation(elem, node, j);
-    }
-  }
+      stk::mesh::Entity node = bulkData->declare_entity(stk::topology::NODE_RANK, i + 1, singlePartVec);
 
-  std::string partName;
-  stk::mesh::PartVector nsPartVec_i(1), ssPartVec_i(2);
-  ssPartVec_i[0] = ssPartVec["BoundarySide"]; // The whole boundary side
-  for (int i = 0; i < NumSides; i++)
-  {
-    std::map<int,int> elm_count;
-    partName = bdTagToNodeSetName[sides[NumSideNodes][i]];
-    nsPartVec_i[0] = nsPartVec[partName];
-
-    partName = bdTagToSideSetName[sides[NumSideNodes][i]];
-    ssPartVec_i[1] = ssPartVec[partName];
-
-    stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), i + 1, ssPartVec_i);
-    for (int j=0; j<NumSideNodes; ++j)
-    {
-      stk::mesh::Entity node_j = bulkData->get_entity(stk::topology::NODE_RANK,sides[j][i]);
-      bulkData->change_entity_parts (node_j,nsPartVec_i); // Add node to the boundary nodeset
-      bulkData->declare_relation(side, node_j, j);
-
-      int num_e = bulkData->num_elements(node_j);
-      const stk::mesh::Entity* e = bulkData->begin_elements(node_j);
-      for (int k(0); k<num_e; ++k)
-      {
-        ++elm_count[bulkData->identifier(e[k])];
-      }
+      double* coord;
+      coord = stk::mesh::field_data(*coordinates_field, node);
+      coord[0] = pts[i][0];
+      coord[1] = pts[i][1];
+      if (numDim==3)
+        coord[2] = pts[i][2];
     }
 
-    // We have to find out what element has this side as a side. We check the node connectivity
-    // In particular, the element that is connected to all NumSideNodes nodes is the one.
-    bool found = false;
+    for (int i = 0; i < NumElems; i++)
+    {
+      singlePartVec[0] = partVec[ebNo];
+      stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, i + 1, singlePartVec);
 
-    for (auto e : elm_count)
-      if (e.second==NumSideNodes)
+      for (int j = 0; j < NumElemNodes; j++)
       {
-        stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEM_RANK, e.first);
-        found = true;
-        int num_sides = bulkData->num_sides(elem);
-        bulkData->declare_relation(elem,side,num_sides);
-        break;
+        stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, elems[j][i]);
+        bulkData->declare_relation(elem, node, j);
       }
 
-    TEUCHOS_TEST_FOR_EXCEPTION (found==false, std::logic_error, "Error! Cannot find element connected to side " << i+1 << ".\n");
-  }
+      int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
+      p_rank[0] = commT->getRank();
+    }
 
-  Albany::fix_node_sharing(*bulkData);
+    std::string partName;
+    stk::mesh::PartVector nsPartVec_i(1), ssPartVec_i(2);
+    ssPartVec_i[0] = ssPartVec["BoundarySide"]; // The whole boundary side
+    for (int i = 0; i < NumSides; i++)
+    {
+      std::map<int,int> elm_count;
+      partName = bdTagToNodeSetName[sides[NumSideNodes][i]];
+      nsPartVec_i[0] = nsPartVec[partName];
+
+      partName = bdTagToSideSetName[sides[NumSideNodes][i]];
+      ssPartVec_i[1] = ssPartVec[partName];
+
+      stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), i + 1, ssPartVec_i);
+      for (int j=0; j<NumSideNodes; ++j)
+      {
+        stk::mesh::Entity node_j = bulkData->get_entity(stk::topology::NODE_RANK,sides[j][i]);
+        bulkData->change_entity_parts (node_j,nsPartVec_i); // Add node to the boundary nodeset
+        bulkData->declare_relation(side, node_j, j);
+
+        int num_e = bulkData->num_elements(node_j);
+        const stk::mesh::Entity* e = bulkData->begin_elements(node_j);
+        for (int k(0); k<num_e; ++k)
+        {
+          ++elm_count[bulkData->identifier(e[k])];
+        }
+      }
+
+      // We have to find out what element has this side as a side. We check the node connectivity
+      // In particular, the element that is connected to all NumSideNodes nodes is the one.
+      bool found = false;
+
+      for (auto e : elm_count)
+        if (e.second==NumSideNodes)
+        {
+          stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEM_RANK, e.first);
+          found = true;
+          int num_sides = bulkData->num_sides(elem);
+          bulkData->declare_relation(elem,side,num_sides);
+          break;
+        }
+
+      TEUCHOS_TEST_FOR_EXCEPTION (found==false, std::logic_error, "Error! Cannot find element connected to side " << i+1 << ".\n");
+    }
+
+  }
   bulkData->modification_end();
 
 #ifdef ALBANY_ZOLTAN
+  // Gmsh is for sure using a serial mesh. We hard code it here, in case the user did not set it
+  params->set<bool>("Use Serial Mesh", true);
 
   // Refine the mesh before starting the simulation if indicated
-  //  uniformRefineMesh(comm);
+  uniformRefineMesh(commT);
 
   // Rebalance the mesh before starting the simulation if indicated
-  //   rebalanceInitialMesh(comm);
-
+  rebalanceInitialMeshT(commT);
 #endif
 
   // Loading required input fields from file

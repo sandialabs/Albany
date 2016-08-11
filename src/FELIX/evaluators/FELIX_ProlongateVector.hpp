@@ -17,9 +17,9 @@
 #include "Intrepid2_Cubature.hpp"
 
 namespace FELIX {
-/** \brief Finite Element Interpolation Evaluator
+/** \brief Prolongation Evaluator
 
-    This evaluator interpolates nodal DOF values to quad points.
+    This evaluator prolongates a vector/gradient layout to one of bigger size
 
 */
 

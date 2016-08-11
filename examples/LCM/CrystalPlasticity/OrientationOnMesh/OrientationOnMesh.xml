@@ -52,6 +52,14 @@
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
+    <ParameterList name="Required Fields Info">
+      <Parameter name="Number Of Fields" type="int" value="1"/>
+      <ParameterList name="Field 0">
+        <Parameter name="Field Name" type="string" value="Lattice_Orientation"/>
+        <Parameter name="Field Type" type="string" value="Elem Scalar"/>
+        <Parameter name="Field Origin" type="string" value="Mesh"/>
+      </ParameterList>
+    </ParameterList>
   </ParameterList>
   <!-- The regression test examines "Response 0", as defined above. -->
 <!--

@@ -68,11 +68,15 @@
                </ParameterList>
 
 
-<!-- ~~~~~~~~~ Set model options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- ~~~~~~~~~ Set model options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
                <Parameter name="Integration Scheme" 
                           type="string" 
                           value="Implicit"/>
+
+               <Parameter name="Residual Type"
+                          type="string"
+                          value="Slip Hardness"/>
 
                <Parameter name="Implicit Integration Relative Tolerance" 
                           type="double" 
@@ -94,72 +98,53 @@
                           type="int"
                           value="0"/>
 
+               <ParameterList name="Slip System Family 0">
 
-<!-- ~~~~~~~~~ Definitions of flow rules ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+                    <ParameterList name="Flow Rule">
 
-               <ParameterList name="Flow Rule">
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Power Law"/>
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Power Law"/>
+                         <Parameter name="Reference Slip Rate" 
+                                    type="double" 
+                                    value="1.0e-03"/>
 
-                    <Parameter name="Gamma Dot" 
-                               type="double" 
-                               value="1.0e-03"/>
+                         <Parameter name="Rate Exponent" 
+                                    type="double" 
+                                    value="5.0e01"/>
 
-                    <Parameter name="Gamma Exponent" 
-                               type="double" 
-                               value="5.0e01"/>
+                    </ParameterList>
 
-               </ParameterList>
+                    <ParameterList name="Hardening Law">
 
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Saturation"/>
 
-<!-- ~~~~~~~~~ Definitions of hardening laws ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+                         <Parameter name="Reference Slip Rate"
+                                    type="double"
+                                    value="1.0e-03"/>
 
-               <ParameterList name="Exponential Hardening">
+                         <Parameter name="Hardening Rate" 
+                                    type="double" 
+                                    value="2.0e04"/>
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Exponential"/>
+                         <Parameter name="Initial Saturation Stress" 
+                                    type="double" 
+                                    value="2.02e+02"/>
 
-                    <Parameter name="Hardening" 
-                               type="double" 
-                               value="3.55e02"/>
+                         <Parameter name="Saturation Exponent"
+                                    type="double"
+                                    value="1.0e-02"/>
 
-                    <Parameter name="Hardening Exponent" 
-                               type="double" 
-                               value="2.9e00"/>
+                         <Parameter name="Initial Hardening State"
+                                    type="double"
+                                    value="9.0e+01"/>
 
-                    <Parameter name="Tau Critical"
-                               type="double"
-                               value="1.22e02"/>
-
-               </ParameterList>
-
-               <ParameterList name="Saturation Hardening">
-
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Saturation"/>
-
-                    <Parameter name="Initial Slip Resistance"
-                               type="double"
-                               value="9.0e01"/>
-
-                    <Parameter name="Hardening Rate" 
-                               type="double" 
-                               value="2.0e04"/>
-
-                    <Parameter name="Initial Saturation Stress" 
-                               type="double" 
-                               value="2.02e+02"/>
-
-                    <Parameter name="Saturation Exponent"
-                               type="double"
-                               value="1.0e-02"/>
+                    </ParameterList>
 
                </ParameterList>
-
 
 <!-- ~~~~~~~~~ Crystal Plasticity Slip Systems ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 <!-- ~~~~~~~~~ Convention taken from Plasticity by Nemat-Nasser, p. 454 - 455 ~~~~~~~~~~~~~~~~~~ -->
@@ -178,14 +163,6 @@
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Saturation Hardening"/> 
-
                </ParameterList>
 
 
@@ -198,14 +175,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Saturation Hardening"/> 
 
                </ParameterList>
 
@@ -220,14 +189,6 @@
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Saturation Hardening"/> 
-
                </ParameterList>
 
 
@@ -240,14 +201,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Saturation Hardening"/> 
 
                </ParameterList>
 
@@ -262,14 +215,6 @@
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Saturation Hardening"/> 
-
                </ParameterList>
 
 
@@ -282,14 +227,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Saturation Hardening"/> 
 
                </ParameterList>
 
@@ -304,14 +241,6 @@
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Saturation Hardening"/> 
-
                </ParameterList>
 
 
@@ -324,14 +253,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Saturation Hardening"/>
 
                </ParameterList>
 
@@ -346,14 +267,6 @@
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Saturation Hardening"/> 
-
                </ParameterList>
 
 
@@ -366,14 +279,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Saturation Hardening"/>
 
                </ParameterList>
 
@@ -388,14 +293,6 @@
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Saturation Hardening"/> 
-
                </ParameterList>
 
 
@@ -408,14 +305,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Saturation Hardening"/> 
 
                </ParameterList>
 
@@ -437,62 +326,62 @@
                           type="bool" 
                           value="true"/>
 
-      <Parameter name="Output eqps" type="bool" value="true"/>
-      <Parameter name="Output gamma_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_2" type="bool" value="true"/>
-      <Parameter name="Output gamma_3" type="bool" value="true"/>
-      <Parameter name="Output gamma_4" type="bool" value="true"/>
-      <Parameter name="Output gamma_5" type="bool" value="true"/>
-      <Parameter name="Output gamma_6" type="bool" value="true"/>
-      <Parameter name="Output gamma_7" type="bool" value="true"/>
-      <Parameter name="Output gamma_8" type="bool" value="true"/>
-      <Parameter name="Output gamma_9" type="bool" value="true"/>
-      <Parameter name="Output gamma_10" type="bool" value="true"/>
-      <Parameter name="Output gamma_11" type="bool" value="true"/>
-      <Parameter name="Output gamma_12" type="bool" value="true"/>
-      <Parameter name="Output gamma_dot_1" type="bool" value="true"/>
-      <Parameter name="Output gamma_dot_2" type="bool" value="true"/>
-      <Parameter name="Output gamma_dot_3" type="bool" value="true"/>
-      <Parameter name="Output gamma_dot_4" type="bool" value="true"/>
-      <Parameter name="Output gamma_dot_5" type="bool" value="true"/>
-      <Parameter name="Output gamma_dot_6" type="bool" value="true"/>
-      <Parameter name="Output gamma_dot_7" type="bool" value="true"/>
-      <Parameter name="Output gamma_dot_8" type="bool" value="true"/>
-      <Parameter name="Output gamma_dot_9" type="bool" value="true"/>
-      <Parameter name="Output gamma_dot_10" type="bool" value="true"/>
-      <Parameter name="Output gamma_dot_11" type="bool" value="true"/>
-      <Parameter name="Output gamma_dot_12" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>      
-      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_2" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_3" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_4" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_5" type="bool" value="true"/> 
-      <Parameter name="Output tau_hard_6" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_7" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_8" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_9" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_10" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_11" type="bool" value="true"/>
-      <Parameter name="Output tau_hard_12" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_1" type="bool" value="true"/>
-      <Parameter name="Output tau_2" type="bool" value="true"/>
-      <Parameter name="Output tau_3" type="bool" value="true"/>
-      <Parameter name="Output tau_4" type="bool" value="true"/>
-      <Parameter name="Output tau_5" type="bool" value="true"/>
-      <Parameter name="Output tau_6" type="bool" value="true"/>
-      <Parameter name="Output tau_7" type="bool" value="true"/>
-      <Parameter name="Output tau_8" type="bool" value="true"/>
-      <Parameter name="Output tau_9" type="bool" value="true"/>
-      <Parameter name="Output tau_10" type="bool" value="true"/>
-      <Parameter name="Output tau_11" type="bool" value="true"/>
-      <Parameter name="Output tau_12" type="bool" value="true"/>
-      <Parameter name="Output CP_Residual" type="bool" value="true"/>
+               <Parameter name="Output eqps" type="bool" value="true"/>
+               <Parameter name="Output gamma_1" type="bool" value="true"/>
+               <Parameter name="Output gamma_2" type="bool" value="true"/>
+               <Parameter name="Output gamma_3" type="bool" value="true"/>
+               <Parameter name="Output gamma_4" type="bool" value="true"/>
+               <Parameter name="Output gamma_5" type="bool" value="true"/>
+               <Parameter name="Output gamma_6" type="bool" value="true"/>
+               <Parameter name="Output gamma_7" type="bool" value="true"/>
+               <Parameter name="Output gamma_8" type="bool" value="true"/>
+               <Parameter name="Output gamma_9" type="bool" value="true"/>
+               <Parameter name="Output gamma_10" type="bool" value="true"/>
+               <Parameter name="Output gamma_11" type="bool" value="true"/>
+               <Parameter name="Output gamma_12" type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_1" type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_2" type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_3" type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_4" type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_5" type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_6" type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_7" type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_8" type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_9" type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_10" type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_11" type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_12" type="bool" value="true"/>
+               <Parameter name="Output tau_hard_1" type="bool" value="true"/>      
+               <Parameter name="Output tau_hard_1" type="bool" value="true"/>
+               <Parameter name="Output tau_hard_2" type="bool" value="true"/>
+               <Parameter name="Output tau_hard_3" type="bool" value="true"/>
+               <Parameter name="Output tau_hard_4" type="bool" value="true"/>
+               <Parameter name="Output tau_hard_5" type="bool" value="true"/> 
+               <Parameter name="Output tau_hard_6" type="bool" value="true"/>
+               <Parameter name="Output tau_hard_7" type="bool" value="true"/>
+               <Parameter name="Output tau_hard_8" type="bool" value="true"/>
+               <Parameter name="Output tau_hard_9" type="bool" value="true"/>
+               <Parameter name="Output tau_hard_10" type="bool" value="true"/>
+               <Parameter name="Output tau_hard_11" type="bool" value="true"/>
+               <Parameter name="Output tau_hard_12" type="bool" value="true"/>
+               <Parameter name="Output tau_1" type="bool" value="true"/>
+               <Parameter name="Output tau_1" type="bool" value="true"/>
+               <Parameter name="Output tau_2" type="bool" value="true"/>
+               <Parameter name="Output tau_3" type="bool" value="true"/>
+               <Parameter name="Output tau_4" type="bool" value="true"/>
+               <Parameter name="Output tau_5" type="bool" value="true"/>
+               <Parameter name="Output tau_6" type="bool" value="true"/>
+               <Parameter name="Output tau_7" type="bool" value="true"/>
+               <Parameter name="Output tau_8" type="bool" value="true"/>
+               <Parameter name="Output tau_9" type="bool" value="true"/>
+               <Parameter name="Output tau_10" type="bool" value="true"/>
+               <Parameter name="Output tau_11" type="bool" value="true"/>
+               <Parameter name="Output tau_12" type="bool" value="true"/>
+               <Parameter name="Output CP_Residual" type="bool" value="true"/>
 
 
-    </ParameterList>
+          </ParameterList>
 
-  </ParameterList>
+     </ParameterList>
 
 </ParameterList>

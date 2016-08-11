@@ -220,7 +220,7 @@
 
                     <Parameter name="Aggressiveness" 
                                type="double" 
-                               value="0.1"/>
+                               value="0.0"/>
 
                </ParameterList>
 

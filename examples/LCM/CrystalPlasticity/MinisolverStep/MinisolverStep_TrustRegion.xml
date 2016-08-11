@@ -404,7 +404,7 @@
 
                          <Parameter name="Stepper Iteration" 
                                     type="bool" 
-                                    value="false"/>
+                                    value="true"/>
 
                          <Parameter name="Stepper Details" 
                                     type="bool" 

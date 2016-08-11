@@ -13,7 +13,7 @@ add_subdirectory(AnisotropicHyperelasticDamage)
 add_subdirectory(AnisotropicDamage-Bifurcation)
 add_subdirectory(Gurson)
 add_subdirectory(Neohookean)
-add_subdirectory(CrystalPlasticity)
+add_subdirectory(CrystalPlasticity_MPS)
 
 
 ENDIF()
