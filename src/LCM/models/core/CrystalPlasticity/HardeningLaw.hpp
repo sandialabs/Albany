@@ -273,7 +273,7 @@ class HardeningLawFactory
 
 public:
 
-  explicit HardeningLawFactory(utility::StaticAllocator & alloc);
+  explicit HardeningLawFactory();
 
   template<typename ArgT>
   utility::StaticPointer<HardeningLawBase<NumDimT, NumSlipT, ArgT>>
@@ -281,7 +281,7 @@ public:
 
 private:
 
-  utility::StaticAllocator & allocator_;
+  mutable utility::StaticStackAllocator<sizeof(std::uintptr_t)> allocator_;
 };
 
 

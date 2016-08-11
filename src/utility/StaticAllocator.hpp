@@ -12,6 +12,7 @@
 #include <algorithm>
 #ifndef KOKKOS_HAVE_CUDA
 #include <new>
+#include <iostream>
 #endif
 
 namespace utility
@@ -60,6 +61,9 @@ namespace utility
   private:
     
     friend class StaticAllocator;
+
+    template<std::size_t Size>
+    friend class StaticStackAllocator;
     
     StaticPointer(T *ptr);
     
@@ -82,6 +86,25 @@ namespace utility
     
     std::size_t    size_;
     unsigned char *buffer_;
+    unsigned char *ptr_;
+  };
+
+  // Allocates memory on the stack but is fixed size at compile time
+  template<std::size_t Size>
+  class StaticStackAllocator
+  {
+  public:
+
+    StaticStackAllocator();
+
+    template<typename T, typename... Args>
+    StaticPointer<T> create(Args&&... args);
+
+    void clear();
+
+  private:
+
+    unsigned char buffer_[Size];
     unsigned char *ptr_;
   };
   
@@ -209,6 +232,10 @@ namespace utility
 #ifdef KOKKOS_HAVE_CUDA
       return nullptr;
 #else
+      std::cerr << "Static Allocator bad alloc" << "\n";
+      std::cerr << "Current allocated: " << ptr_ - buffer_ << "\n";
+      std::cerr << "Need to allocate: " << sizeof(T) << "\n";
+      std::cerr << "Space remaining: " << size_ - (ptr_ - buffer_) << "\n";
       throw std::bad_alloc();
 #endif
     }
@@ -219,6 +246,43 @@ namespace utility
     return new (ret) T(std::forward<Args>(args)...);
   }
   
+  template<std::size_t Size>
+  StaticStackAllocator<Size>::StaticStackAllocator()
+    : ptr_(buffer_)
+  {
+    
+  }
+
+  template<std::size_t Size>
+  void
+  StaticStackAllocator<Size>::clear()
+  {
+    ptr_ = buffer_;
+  }
+
+  template<std::size_t Size>
+  template<typename T, typename... Args>
+  StaticPointer<T>
+  StaticStackAllocator<Size>::create(Args&&... args)
+  {
+    if (ptr_ + sizeof(T) > buffer_ + Size)
+    {
+#ifdef KOKKOS_HAVE_CUDA
+      return nullptr;
+#else
+      std::cerr << "Static Stack Allocator bad alloc" << "\n";
+      std::cerr << "Current allocated: " << ptr_ - buffer_ << "\n";
+      std::cerr << "Need to allocate: " << sizeof(T) << "\n";
+      std::cerr << "Space remaining: " << Size - (ptr_ - buffer_) << "\n";
+      throw std::bad_alloc();
+#endif
+    }
+    
+    unsigned char *ret = ptr_;
+    ptr_ += sizeof(T);
+    
+    return new (ret) T(std::forward<Args>(args)...);
+  }
 }
 
 #endif

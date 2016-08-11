@@ -65,6 +65,51 @@ class Integrator
 
 
 template<typename EvalT, Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+class IntegratorFactory
+{
+  public:
+    
+    using ScalarT = typename EvalT::ScalarT;
+    using ValueT = typename Sacado::ValueType<ScalarT>::type;
+    using Minimizer = Intrepid2::Minimizer<ValueT, CP::NlsDim<NumSlipT>::value>;
+    using IntegratorBase = Integrator<EvalT, NumDimT, NumSlipT>;
+
+    IntegratorFactory(utility::StaticAllocator & allocator,
+      const Minimizer & minimizer,
+      Intrepid2::StepType step_type,
+      Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
+      std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
+      std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
+      CP::PlasticityState<ScalarT, NumDimT> & plasticity_state,
+      CP::SlipState<ScalarT, NumSlipT> & slip_state,
+      Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
+      Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
+      RealType dt);
+
+    utility::StaticPointer<IntegratorBase>
+    operator()(CP::IntegrationScheme integration_scheme,
+               CP::ResidualType residual_type) const;
+
+  private:
+
+    utility::StaticAllocator & allocator_;
+
+    const Minimizer & minimizer_;
+    Intrepid2::StepType step_type_;
+    Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test_;
+
+    std::vector<CP::SlipSystem<NumDimT>> const & slip_systems_;
+    std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families_;
+
+    CP::PlasticityState<ScalarT, NumDimT> & plasticity_state_;
+    CP::SlipState<ScalarT, NumSlipT> & slip_state_;
+    
+    Intrepid2::Tensor4<ScalarT, NumDimT> const & C_;
+    Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1_;
+    RealType dt_;
+};
+
+template<typename EvalT, Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
 class ExplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
 {
   public:
@@ -106,7 +151,7 @@ class ImplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
     using Minimizer = Intrepid2::Minimizer<ValueT, CP::NlsDim<NumSlipT>::value>;
 
     ImplicitIntegrator(
-      Minimizer &minimizer,
+      const Minimizer & minimizer,
       Intrepid2::StepType step_type,
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
@@ -145,7 +190,7 @@ class ImplicitSlipIntegrator : public ImplicitIntegrator<EvalT, NumDimT, NumSlip
     using Minimizer = typename Base::Minimizer;
 
     ImplicitSlipIntegrator(
-      Minimizer &minimizer,
+      const Minimizer &minimizer,
       Intrepid2::StepType step_type,
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
@@ -183,7 +228,7 @@ class ImplicitSlipHardnessIntegrator : public ImplicitIntegrator<EvalT, NumDimT,
     using Minimizer = typename Base::Minimizer;
 
     ImplicitSlipHardnessIntegrator(
-      Minimizer &minimizer,
+      const Minimizer &minimizer,
       Intrepid2::StepType step_type,
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,

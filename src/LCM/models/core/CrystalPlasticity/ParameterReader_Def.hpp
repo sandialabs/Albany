@@ -7,9 +7,8 @@
 #include <map>
 
 template<typename EvalT, typename Traits>
-CP::ParameterReader<EvalT, Traits>::ParameterReader(Teuchos::ParameterList *p,
-                                               utility::StaticAllocator & alloc)
-	: p_(p), allocator_(alloc)
+CP::ParameterReader<EvalT, Traits>::ParameterReader(Teuchos::ParameterList *p)
+	: p_(p)
 {
 }
 
@@ -77,7 +76,7 @@ template<typename EvalT, typename Traits>
 CP::SlipFamily<CP::MAX_DIM, CP::MAX_SLIP>
 CP::ParameterReader<EvalT, Traits>::getSlipFamily(int index)
 {
-	SlipFamily<MAX_DIM, MAX_SLIP> slip_family(allocator_);
+	SlipFamily<MAX_DIM, MAX_SLIP> slip_family;
 
 	auto family_plist = p_->sublist(Albany::strint("Slip System Family", index));
 

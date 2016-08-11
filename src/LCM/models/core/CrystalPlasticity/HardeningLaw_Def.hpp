@@ -44,8 +44,7 @@ CP::hardeningParameterFactory(CP::HardeningLawType type_hardening_law)
 }
 
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
-CP::HardeningLawFactory<NumDimT, NumSlipT>::HardeningLawFactory(utility::StaticAllocator & alloc)
-  : allocator_(alloc)
+CP::HardeningLawFactory<NumDimT, NumSlipT>::HardeningLawFactory()
 {
 
 }

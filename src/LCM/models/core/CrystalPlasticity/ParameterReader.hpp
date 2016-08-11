@@ -25,7 +25,7 @@ namespace CP
 
 		using Minimizer = Intrepid2::Minimizer<ValueT, CP::NLS_DIM>;
 
-		ParameterReader(Teuchos::ParameterList* p, utility::StaticAllocator & alloc);
+		ParameterReader(Teuchos::ParameterList* p);
 		
 		IntegrationScheme	getIntegrationScheme() const;
 		ResidualType getResidualType() const;
@@ -37,7 +37,6 @@ namespace CP
 	private:
 
 		Teuchos::ParameterList* p_;
-    utility::StaticAllocator & allocator_;
 	};
 }
 

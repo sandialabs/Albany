@@ -21,11 +21,7 @@ namespace CP
 template<Intrepid2::Index NumDimT>
 struct SlipSystem
 {
-
   SlipSystem() {}
-
-  // SlipSystem(SlipFamily<MAX_SLIP> const & sf)
-  // : slip_family_{sf} {}
 
   Intrepid2::Index
   slip_family_index_;
@@ -44,19 +40,7 @@ struct SlipSystem
   //
   RealType
   state_hardening_initial_;
-
-  // SlipFamily<MAX_SLIP> const &
-  // slip_family_;
 };
-
-// TODO: reorganize slip variables once tests start running
-/*template<typename ScalarT>
-struct Slip
-{
-  Teuchos::RCP<PHX::MDField<ScalarT>> rate_np1_;
-  Albany::MDArray *rate_n_;
-};*/
-
 
 //
 // Slip system family - collection of slip systems grouped by flow and
@@ -66,7 +50,7 @@ template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
 class SlipFamily
 {
 public:
-  SlipFamily(utility::StaticAllocator & alloc);
+  SlipFamily();
 
   ~SlipFamily() {}
   
@@ -74,10 +58,6 @@ public:
   HardeningLawType getHardeningLawType() const { return type_hardening_law_; }
   void setFlowRuleType(FlowRuleType rule);
   FlowRuleType getFlowRuleType() const { return type_flow_rule_; }
-
-  template<typename ArgT>
-  utility::StaticPointer<HardeningLawBase<NumDimT, NumSlipT, ArgT>>
-  createHardeningLaw() const;
 
   Intrepid2::Index
   num_slip_sys_{0};
@@ -101,8 +81,6 @@ private:
 
   FlowRuleType
   type_flow_rule_{FlowRuleType::UNDEFINED};
-
-  HardeningLawFactory<NumDimT, NumSlipT> hardening_law_factory_;
 };
 
 

@@ -7,8 +7,7 @@
 #include <boost/math/special_functions/fpclassify.hpp>
 
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
-CP::SlipFamily<NumDimT, NumSlipT>::SlipFamily(utility::StaticAllocator & alloc)
-  : hardening_law_factory_(alloc)
+CP::SlipFamily<NumDimT, NumSlipT>::SlipFamily()
 {
 
 }
@@ -30,14 +29,6 @@ CP::SlipFamily<NumDimT, NumSlipT>::setFlowRuleType(CP::FlowRuleType rule)
   type_flow_rule_ = rule;
 
   pflow_parameters_ = CP::flowParameterFactory(type_flow_rule_);
-}
-
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
-template<typename ArgT>
-utility::StaticPointer<CP::HardeningLawBase<NumDimT, NumSlipT, ArgT>>
-CP::SlipFamily<NumDimT, NumSlipT>::createHardeningLaw() const
-{
-  return hardening_law_factory_.template createHardeningLaw<ArgT>(type_hardening_law_); 
 }
 
 
@@ -140,7 +131,11 @@ CP::updateHardness(
     auto const &
     slip_family = slip_families[sf_index];
 
-    auto phardening = slip_family.template createHardeningLaw<ArgT>();
+    auto type_hardening_law = slip_family.getHardeningLawType();
+
+    HardeningLawFactory<NumDimT, NumSlipT> hardening_law_factory;
+
+    auto phardening = hardening_law_factory.template createHardeningLaw<ArgT>(type_hardening_law); 
 
     phardening->harden(
       slip_family,

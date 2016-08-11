@@ -10,7 +10,7 @@
 #include "core/CrystalPlasticity/CrystalPlasticityCore.hpp"
 #include "core/CrystalPlasticity/NonlinearSolver.hpp"
 #include "core/CrystalPlasticity/Integrator.hpp"
-#include "ConstitutiveModel.hpp"
+#include "../parallel_models/ParallelConstitutiveModel.hpp"
 #include "NOX_StatusTest_ModelEvaluatorFlag.h"
 #include "../../utility/StaticAllocator.hpp"
 
@@ -19,61 +19,66 @@ namespace LCM
 
 //! \brief CrystalPlasticity Plasticity Constitutive Model
 template<typename EvalT, typename Traits>
-class CrystalPlasticityModel: public LCM::ConstitutiveModel<EvalT, Traits>
+class CrystalPlasticityKernel: public ParallelKernel<EvalT, Traits>
 {
 public:
 
   using ScalarT = typename EvalT::ScalarT;
-  using ValueT = typename Sacado::ValueType<ScalarT>::type;
-
+	using ValueT = typename Sacado::ValueType<ScalarT>::type;
+	
+  using BaseKernel = ParallelKernel<EvalT, Traits>;
+  using ScalarField = typename BaseKernel::ScalarField;
+  using Workset = typename BaseKernel::Workset;
+	
   // Dimension of problem, e.g., 2 -> 2D, 3 -> 3D
-  using ConstitutiveModel<EvalT, Traits>::num_dims_;
+  using BaseKernel::num_dims_;
 
-  using ConstitutiveModel<EvalT, Traits>::num_pts_;
-  using ConstitutiveModel<EvalT, Traits>::field_name_map_;
+  using BaseKernel::num_pts_;
+  using BaseKernel::field_name_map_;
 
   // optional temperature support
-  using ConstitutiveModel<EvalT, Traits>::have_temperature_;
-  using ConstitutiveModel<EvalT, Traits>::expansion_coeff_;
-  using ConstitutiveModel<EvalT, Traits>::ref_temperature_;
-  using ConstitutiveModel<EvalT, Traits>::heat_capacity_;
-  using ConstitutiveModel<EvalT, Traits>::density_;
-  using ConstitutiveModel<EvalT, Traits>::temperature_;
+  using BaseKernel::have_temperature_;
+  using BaseKernel::expansion_coeff_;
+  using BaseKernel::ref_temperature_;
+  using BaseKernel::heat_capacity_;
+  using BaseKernel::density_;
+  using BaseKernel::temperature_;
   
+  using BaseKernel::setDependentField;
+  using BaseKernel::setEvaluatedField;
+  using BaseKernel::addStateVariable;
+  using BaseKernel::extractEvaluatedFieldArray;
+
   ///
   /// Constructor
   ///
-  CrystalPlasticityModel(
-      Teuchos::ParameterList* p,
+  CrystalPlasticityKernel(
+      ConstitutiveModel<EvalT, Traits> & model,
+      Teuchos::ParameterList * p,
       Teuchos::RCP<Albany::Layouts> const & dl);
+
+  CrystalPlasticityKernel(CrystalPlasticityKernel const &) = delete;
+  CrystalPlasticityKernel & operator=(CrystalPlasticityKernel const &) = delete;
 
   ///
   /// Virtual Denstructor
   ///
   virtual
-  ~CrystalPlasticityModel()
+  ~CrystalPlasticityKernel()
   {
   }
 
-  ///
-  /// Method to compute the state (e.g. energy, stress, tangent)
-  ///
-  virtual
   void
-  computeState(
-      typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
+  init(Workset & workset,
+       FieldMap<ScalarT> & dep_fields,
+       FieldMap<ScalarT> & eval_fields);
 
-  virtual
-  void
-  computeStateParallel(
-      typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
-  }
+  ///
+  /// Method to compute the state for a single cell and quadrature point
+  //  (e.g. energy, stress, tangent)
+  ///
+  KOKKOS_INLINE_FUNCTION
+  void operator() (int cell, int pt) const;
 
   ///
   ///  Set a NOX status test to Failed, which will trigger Piro to cut the global
@@ -91,28 +96,7 @@ public:
     nox_status_test_->status_ = NOX::StatusTest::Failed;
   }
 
-protected:
-
-  template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
-  utility::StaticPointer<CP::Integrator<EvalT, NumDimT, NumSlipT>>
-  integratorFactory(CP::IntegrationScheme integration_scheme,
-                    CP::ResidualType residual_type,
-                    CP::PlasticityState<ScalarT, NumDimT> & plasticity_state,
-                    CP::SlipState<ScalarT, NumSlipT> & slip_state,
-                    Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
-                    RealType dt);
-
 private:
-
-  ///
-  /// Private to prohibit copying
-  ///
-  CrystalPlasticityModel(const CrystalPlasticityModel &);
-
-  ///
-  /// Private to prohibit copying
-  ///
-  CrystalPlasticityModel & operator=(const CrystalPlasticityModel &);
 
   ///
   /// Crystal elasticity parameters
@@ -174,12 +158,6 @@ private:
   Intrepid2::Tensor4<ScalarT, CP::MAX_DIM>
   C_unrotated_;
 
-  ///
-  /// Elasticity tensor
-  ///
-  Intrepid2::Tensor4<ScalarT, CP::MAX_DIM>
-  C_;
-
   //
   // Unrotated slip directions
   //
@@ -240,8 +218,8 @@ private:
   ///
   /// Memory management
   ///
-  utility::StaticAllocator
-  allocator_;
+  //mutable utility::StaticAllocator
+  //allocator_;
 
   ///
   /// Output options 
@@ -252,8 +230,53 @@ private:
   bool
   write_data_file_;
 
-}; // class CrystalPlasticityModel
+  ///
+  /// Dependent MDFields
+  ///
 
-} // namespace LCM
+  ScalarField def_grad_;
+  ScalarField delta_time_;
+
+  ///
+  /// Evaluated MDFields
+  ///
+  ScalarField eqps_;
+  ScalarField xtal_rotation_;
+  ScalarField stress_;
+  ScalarField plastic_deformation_;
+  ScalarField velocity_gradient_;
+  ScalarField source_;
+  ScalarField cp_residual_;
+  ScalarField cp_residual_iter_;
+  ScalarField time_;
+
+  std::vector<Teuchos::RCP<ScalarField>> slips_;
+  std::vector<Albany::MDArray *> previous_slips_;
+
+  std::vector<Teuchos::RCP<ScalarField>> slip_rates_;
+  std::vector<Albany::MDArray *> previous_slip_rates_;
+
+  std::vector<Teuchos::RCP<ScalarField>> hards_;
+  std::vector<Albany::MDArray *> previous_hards_;
+
+  std::vector<Teuchos::RCP<ScalarField>> shears_;
+
+  ///
+  /// State Variables
+  ///
+  Albany::MDArray previous_plastic_deformation_;
+  RealType dt_;
+
+  Teuchos::ArrayRCP<double*>
+  rotation_matrix_transpose_;
+
+
+};
+
+template<typename EvalT, typename Traits>
+using CrystalPlasticityModel
+  = LCM::ParallelConstitutiveModel<EvalT, Traits, CrystalPlasticityKernel<EvalT, Traits>>;
+
+}
 
 #endif

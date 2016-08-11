@@ -17,6 +17,106 @@ CP::Integrator<EvalT, NumDimT, NumSlipT>::forceGlobalLoadStepReduction() const
   nox_status_test_->status_ = NOX::StatusTest::Failed;
 }
 
+template<typename EvalT, Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::IntegratorFactory(
+      utility::StaticAllocator & allocator,
+      const Minimizer & minimizer,
+      Intrepid2::StepType step_type,
+      Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
+      std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
+      std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
+      CP::PlasticityState<ScalarT, NumDimT> & plasticity_state,
+      CP::SlipState<ScalarT, NumSlipT> & slip_state,
+      Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
+      Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
+      RealType dt)
+  : allocator_(allocator),
+    minimizer_(minimizer),
+    step_type_(step_type),
+    nox_status_test_(nox_status_test),
+    slip_systems_(slip_systems),
+    slip_families_(slip_families),
+    plasticity_state_(plasticity_state),
+    slip_state_(slip_state),
+    C_(C),
+    F_np1_(F_np1),
+    dt_(dt)
+{}
+
+template<typename EvalT, Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+utility::StaticPointer<typename CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::IntegratorBase>
+CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::operator()(
+    CP::IntegrationScheme integration_scheme,
+    CP::ResidualType residual_type) const
+{
+  switch (integration_scheme)
+  {
+    case CP::IntegrationScheme::EXPLICIT:
+    {
+      using IntegratorType = CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>;
+      return allocator_.create<IntegratorType>(nox_status_test_,
+          slip_systems_,
+          slip_families_,
+          plasticity_state_,
+          slip_state_,
+          C_,
+          F_np1_,
+          dt_);
+
+    } break;
+
+    case CP::IntegrationScheme::IMPLICIT:
+    {
+      switch (residual_type)
+      {
+        case CP::ResidualType::SLIP:
+        {
+          using IntegratorType
+            = CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>;
+          return allocator_.create<IntegratorType>(minimizer_,
+              step_type_,
+              nox_status_test_,
+              slip_systems_,
+              slip_families_,
+              plasticity_state_,
+              slip_state_,
+              C_,
+              F_np1_,
+              dt_);
+        } break;
+
+        case CP::ResidualType::SLIP_HARDNESS:
+        {
+          using IntegratorType
+            = CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>;
+          return allocator_.create<IntegratorType>(minimizer_,
+              step_type_,
+              nox_status_test_,
+              slip_systems_,
+              slip_families_,
+              plasticity_state_,
+              slip_state_,
+              C_,
+              F_np1_,
+              dt_);
+        } break;
+
+        default:
+        {
+          // throw
+          return nullptr;
+        } break;
+      }
+    } break;
+
+    default:
+    {
+      return nullptr;
+      // throw
+    } break;
+  }
+
+}
     
 template<typename EvalT, Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
 CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::ExplicitIntegrator(
@@ -38,7 +138,7 @@ bool
 CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
     RealType & residual_norm) const
 {
-  Intrepid2::Vector<ScalarT, CP::MAX_SLIP>
+  Intrepid2::Vector<ScalarT, NumSlipT>
   residual(this->num_slip_);
 
   Intrepid2::Tensor<ScalarT, NumDimT>
@@ -56,7 +156,7 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
   }
 
   // compute sigma_np1, S_np1, and shear_np1 using Fp_n
-  CP::computeStress<CP::MAX_DIM, CP::MAX_SLIP, ScalarT, ScalarT>(
+  CP::computeStress<NumDimT, NumSlipT, ScalarT, ScalarT>(
     slip_systems_, 
     C_, 
     F_np1_, 
@@ -66,7 +166,7 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
     slip_state_.shear_np1_);
 
   // compute state_hardening_np1 using slip_n
-  CP::updateHardness<CP::MAX_DIM, CP::MAX_SLIP, ScalarT>(
+  CP::updateHardness<NumDimT, NumSlipT, ScalarT>(
     slip_systems_,
     slip_families_,
     dt_,
@@ -76,7 +176,7 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
     slip_state_.resistance_);
 
   // compute slip_np1
-  CP::updateSlip<CP::MAX_DIM, CP::MAX_SLIP, ScalarT>(
+  CP::updateSlip<NumDimT, NumSlipT, ScalarT>(
     slip_systems_,
     slip_families_,
     dt_,
@@ -86,7 +186,7 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
     slip_state_.slip_np1_);
 
   // compute Lp_np1, and Fp_np1
-  CP::applySlipIncrement<CP::MAX_DIM, CP::MAX_SLIP, ScalarT>(
+  CP::applySlipIncrement<NumDimT, NumSlipT, ScalarT>(
     slip_systems_, 
     dt_,
     slip_state_.slip_n_,
@@ -96,7 +196,7 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
     plasticity_state_.Fp_np1_);
 
   // compute sigma_np1, S_np1, and shear_np1 using Fp_np1
-  CP::computeStress<CP::MAX_DIM, CP::MAX_SLIP, ScalarT, ScalarT>(
+  CP::computeStress<NumDimT, NumSlipT, ScalarT, ScalarT>(
     slip_systems_, 
     C_, 
     F_np1_, 
@@ -109,7 +209,7 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
   slip_computed(slip_state_.slip_np1_.get_dimension());
 
   // compute slip_np1
-  CP::updateSlip<CP::MAX_DIM, CP::MAX_SLIP, ScalarT>(
+  CP::updateSlip<NumDimT, NumSlipT, ScalarT>(
     slip_systems_,
     slip_families_,
     dt_,
@@ -129,7 +229,7 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
 
 template<typename EvalT, Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
 CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::ImplicitIntegrator(
-      Minimizer & minimizer,
+      const Minimizer & minimizer,
       Intrepid2::StepType step_type,
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
@@ -176,7 +276,7 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState(RealType & res
   // (if any). Re-evaluate all the other state variables based on 
   // slip_np1.
   // Compute Lp_np1, and Fp_np1
-  CP::applySlipIncrement<CP::MAX_DIM, CP::MAX_SLIP, ScalarT>(
+  CP::applySlipIncrement<NumDimT, NumSlipT, ScalarT>(
     slip_systems_, 
     dt_,
     slip_state_.slip_n_, 
@@ -186,7 +286,7 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState(RealType & res
     plasticity_state_.Fp_np1_);
 
   // Compute sigma_np1, S_np1, and shear_np1
-  CP::computeStress<CP::MAX_DIM, CP::MAX_SLIP, ScalarT, ScalarT>(
+  CP::computeStress<NumDimT, NumSlipT, ScalarT, ScalarT>(
     slip_systems_, 
     C_, 
     F_np1_, 
@@ -203,7 +303,7 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState(RealType & res
 
 template<typename EvalT, Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
 CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::ImplicitSlipIntegrator(
-      Minimizer &minimizer,
+      const Minimizer & minimizer,
       Intrepid2::StepType step_type,
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
@@ -275,7 +375,7 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::update(
 
 template<typename EvalT, Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
 CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::ImplicitSlipHardnessIntegrator(
-      Minimizer &minimizer,
+      const Minimizer & minimizer,
       Intrepid2::StepType step_type,
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
