@@ -42,10 +42,10 @@ ENDIF(ALBANY_DEMO_PDES)
 
 # LCM ###############
 IF(ALBANY_LCM)
-  add_subdirectory(TLPoroElasticity3D)
 
-  IF(ALBANY_SEACAS)
-    add_subdirectory(Necking3D)
+  IF(ALBANY_SCOREC)
+# Not sure if this runs for anyone...
+  #  add_subdirectory(Necking3D)
   ENDIF()
 
   IF(ALBANY_HYDRIDE)
