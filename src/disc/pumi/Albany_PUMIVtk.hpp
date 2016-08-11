@@ -25,6 +25,8 @@ class PUMIVtk : public PUMIOutput {
 
   private:
 
+    void callAPFWrite(std::string const& path);
+
     std::fstream vtu_collection_file;
 
     Teuchos::RCP<APFMeshStruct> mesh_struct;

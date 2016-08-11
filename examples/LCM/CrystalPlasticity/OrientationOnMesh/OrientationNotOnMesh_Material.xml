@@ -195,39 +195,43 @@
                           type="bool" 
                           value="true"/>
 
-               <ParameterList name="Flow Rule">
+               <ParameterList name="Slip System Family 0">
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Power Law"/>
+                    <ParameterList name="Flow Rule">
 
-                    <Parameter name="Gamma Dot" 
-                               type="double" 
-                               value="1.0e00"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Power Law"/>
 
-                    <Parameter name="Gamma Exponent" 
-                               type="double" 
-                               value="2.0e01"/>
+                         <Parameter name="Reference Slip Rate" 
+                                    type="double" 
+                                    value="1.0e00"/>
 
-               </ParameterList>
+                         <Parameter name="Rate Exponent" 
+                                    type="double" 
+                                    value="2.0e01"/>
 
-               <ParameterList name="Hardening Law">
+                    </ParameterList>
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Exponential"/>
+                    <ParameterList name="Hardening Law">
 
-                    <Parameter name="Hardening" 
-                               type="double" 
-                               value="3.55e02"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Linear Minus Recovery"/>
 
-                    <Parameter name="Hardening Exponent" 
-                               type="double" 
-                               value="2.9e00"/>
+                         <Parameter name="Hardening Modulus" 
+                                    type="double" 
+                                    value="3.55e02"/>
 
-                    <Parameter name="Tau Critical"
-                               type="double"
-                               value="1.22e02"/>
+                         <Parameter name="Recovery Modulus" 
+                                    type="double" 
+                                    value="2.9e00"/>
+
+                         <Parameter name="Initial Hardening State"
+                                    type="double"
+                                    value="1.22e02"/>
+
+                    </ParameterList>
 
                </ParameterList>
 
@@ -248,14 +252,6 @@
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -268,14 +264,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -290,14 +278,6 @@
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -310,14 +290,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -332,14 +304,6 @@
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -352,14 +316,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -374,14 +330,6 @@
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -394,14 +342,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/>
 
                </ParameterList>
 
@@ -416,14 +356,6 @@
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -436,14 +368,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/>
 
                </ParameterList>
 
@@ -458,14 +382,6 @@
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -478,14 +394,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -608,39 +516,43 @@
                           type="bool" 
                           value="true"/>
 
-               <ParameterList name="Flow Rule">
+               <ParameterList name="Slip System Family 0">
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Power Law"/>
+                    <ParameterList name="Flow Rule">
 
-                    <Parameter name="Gamma Dot" 
-                               type="double" 
-                               value="1.0e00"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Power Law"/>
 
-                    <Parameter name="Gamma Exponent" 
-                               type="double" 
-                               value="2.0e01"/>
+                         <Parameter name="Reference Slip Rate" 
+                                    type="double" 
+                                    value="1.0e00"/>
 
-               </ParameterList>
+                         <Parameter name="Rate Exponent" 
+                                    type="double" 
+                                    value="2.0e01"/>
 
-               <ParameterList name="Hardening Law">
+                    </ParameterList>
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Exponential"/>
+                    <ParameterList name="Hardening Law">
 
-                    <Parameter name="Hardening" 
-                               type="double" 
-                               value="3.55e02"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Linear Minus Recovery"/>
 
-                    <Parameter name="Hardening Exponent" 
-                               type="double" 
-                               value="2.9e00"/>
+                         <Parameter name="Hardening Modulus" 
+                                    type="double" 
+                                    value="3.55e02"/>
 
-                    <Parameter name="Tau Critical"
-                               type="double"
-                               value="1.22e02"/>
+                         <Parameter name="Recovery Modulus" 
+                                    type="double" 
+                                    value="2.9e00"/>
+
+                         <Parameter name="Initial Hardening State"
+                                    type="double"
+                                    value="1.22e02"/>
+
+                    </ParameterList>
 
                </ParameterList>
 
@@ -661,14 +573,6 @@
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -681,14 +585,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -703,14 +599,6 @@
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -723,14 +611,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -745,14 +625,6 @@
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -765,14 +637,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -787,14 +651,6 @@
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -807,14 +663,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/>
 
                </ParameterList>
 
@@ -829,14 +677,6 @@
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -850,14 +690,6 @@
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/>
-
                </ParameterList>
 
 
@@ -869,15 +701,7 @@
 
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
-                               value="{1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
+                               value="{1.0,-1.0,1.0}"/> 
 
                </ParameterList>
 
@@ -890,15 +714,7 @@
 
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
-                               value="{1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
+                               value="{1.0,-1.0,1.0}"/> 
 
                </ParameterList>
 
@@ -1021,39 +837,43 @@
                           type="bool" 
                           value="true"/>
 
-               <ParameterList name="Flow Rule">
+               <ParameterList name="Slip System Family 0">
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Power Law"/>
+                    <ParameterList name="Flow Rule">
 
-                    <Parameter name="Gamma Dot" 
-                               type="double" 
-                               value="1.0e00"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Power Law"/>
 
-                    <Parameter name="Gamma Exponent" 
-                               type="double" 
-                               value="2.0e01"/>
+                         <Parameter name="Reference Slip Rate" 
+                                    type="double" 
+                                    value="1.0e00"/>
 
-               </ParameterList>
+                         <Parameter name="Rate Exponent" 
+                                    type="double" 
+                                    value="2.0e01"/>
 
-               <ParameterList name="Hardening Law">
+                    </ParameterList>
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Exponential"/>
+                    <ParameterList name="Hardening Law">
 
-                    <Parameter name="Hardening" 
-                               type="double" 
-                               value="3.55e02"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Linear Minus Recovery"/>
 
-                    <Parameter name="Hardening Exponent" 
-                               type="double" 
-                               value="2.9e00"/>
+                         <Parameter name="Hardening Modulus" 
+                                    type="double" 
+                                    value="3.55e02"/>
 
-                    <Parameter name="Tau Critical"
-                               type="double"
-                               value="1.22e02"/>
+                         <Parameter name="Recovery Modulus" 
+                                    type="double" 
+                                    value="2.9e00"/>
+
+                         <Parameter name="Initial Hardening State"
+                                    type="double"
+                                    value="1.22e02"/>
+
+                    </ParameterList>
 
                </ParameterList>
 
@@ -1074,14 +894,6 @@
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -1094,14 +906,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -1116,14 +920,6 @@
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -1136,14 +932,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -1158,14 +946,6 @@
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -1178,14 +958,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -1200,14 +972,6 @@
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -1220,14 +984,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/>
 
                </ParameterList>
 
@@ -1242,14 +998,6 @@
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -1263,14 +1011,6 @@
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/>
-
                </ParameterList>
 
 
@@ -1282,15 +1022,7 @@
 
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
-                               value="{1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
+                               value="{1.0,-1.0,1.0}"/> 
 
                </ParameterList>
 
@@ -1304,14 +1036,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -1434,39 +1158,43 @@
                           type="bool" 
                           value="true"/>
 
-               <ParameterList name="Flow Rule">
+               <ParameterList name="Slip System Family 0">
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Power Law"/>
+                    <ParameterList name="Flow Rule">
 
-                    <Parameter name="Gamma Dot" 
-                               type="double" 
-                               value="1.0e00"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Power Law"/>
 
-                    <Parameter name="Gamma Exponent" 
-                               type="double" 
-                               value="2.0e01"/>
+                         <Parameter name="Reference Slip Rate" 
+                                    type="double" 
+                                    value="1.0e00"/>
 
-               </ParameterList>
+                         <Parameter name="Rate Exponent" 
+                                    type="double" 
+                                    value="2.0e01"/>
 
-               <ParameterList name="Hardening Law">
+                    </ParameterList>
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Exponential"/>
+                    <ParameterList name="Hardening Law">
 
-                    <Parameter name="Hardening" 
-                               type="double" 
-                               value="3.55e02"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Linear Minus Recovery"/>
 
-                    <Parameter name="Hardening Exponent" 
-                               type="double" 
-                               value="2.9e00"/>
+                         <Parameter name="Hardening Modulus" 
+                                    type="double" 
+                                    value="3.55e02"/>
 
-                    <Parameter name="Tau Critical"
-                               type="double"
-                               value="1.22e02"/>
+                         <Parameter name="Recovery Modulus" 
+                                    type="double" 
+                                    value="2.9e00"/>
+
+                         <Parameter name="Initial Hardening State"
+                                    type="double"
+                                    value="1.22e02"/>
+
+                    </ParameterList>
 
                </ParameterList>
 
@@ -1487,14 +1215,6 @@
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -1507,14 +1227,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -1529,14 +1241,6 @@
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -1549,14 +1253,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -1571,14 +1267,6 @@
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -1591,14 +1279,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -1613,14 +1293,6 @@
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -1633,14 +1305,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/>
 
                </ParameterList>
 
@@ -1655,14 +1319,6 @@
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -1675,14 +1331,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/>
 
                </ParameterList>
 
@@ -1697,14 +1345,6 @@
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -1717,14 +1357,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -1847,39 +1479,43 @@
                           type="bool" 
                           value="true"/>
 
-               <ParameterList name="Flow Rule">
+               <ParameterList name="Slip System Family 0">
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Power Law"/>
+                    <ParameterList name="Flow Rule">
 
-                    <Parameter name="Gamma Dot" 
-                               type="double" 
-                               value="1.0e00"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Power Law"/>
 
-                    <Parameter name="Gamma Exponent" 
-                               type="double" 
-                               value="2.0e01"/>
+                         <Parameter name="Reference Slip Rate" 
+                                    type="double" 
+                                    value="1.0e00"/>
 
-               </ParameterList>
+                         <Parameter name="Rate Exponent" 
+                                    type="double" 
+                                    value="2.0e01"/>
 
-               <ParameterList name="Hardening Law">
+                    </ParameterList>
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Exponential"/>
+                    <ParameterList name="Hardening Law">
 
-                    <Parameter name="Hardening" 
-                               type="double" 
-                               value="3.55e02"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Linear Minus Recovery"/>
 
-                    <Parameter name="Hardening Exponent" 
-                               type="double" 
-                               value="2.9e00"/>
+                         <Parameter name="Hardening Modulus" 
+                                    type="double" 
+                                    value="3.55e02"/>
 
-                    <Parameter name="Tau Critical"
-                               type="double"
-                               value="1.22e02"/>
+                         <Parameter name="Recovery Modulus" 
+                                    type="double" 
+                                    value="2.9e00"/>
+
+                         <Parameter name="Initial Hardening State"
+                                    type="double"
+                                    value="1.22e02"/>
+
+                    </ParameterList>
 
                </ParameterList>
 
@@ -1900,14 +1536,6 @@
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -1920,14 +1548,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -1942,14 +1562,6 @@
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -1962,14 +1574,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -1984,14 +1588,6 @@
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -2004,14 +1600,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -2026,14 +1614,6 @@
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -2046,14 +1626,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/>
 
                </ParameterList>
 
@@ -2068,14 +1640,6 @@
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -2088,14 +1652,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/>
 
                </ParameterList>
 
@@ -2110,14 +1666,6 @@
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -2130,14 +1678,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -2260,39 +1800,43 @@
                           type="bool" 
                           value="true"/>
 
-               <ParameterList name="Flow Rule">
+               <ParameterList name="Slip System Family 0">
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Power Law"/>
+                    <ParameterList name="Flow Rule">
 
-                    <Parameter name="Gamma Dot" 
-                               type="double" 
-                               value="1.0e00"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Power Law"/>
 
-                    <Parameter name="Gamma Exponent" 
-                               type="double" 
-                               value="2.0e01"/>
+                         <Parameter name="Reference Slip Rate" 
+                                    type="double" 
+                                    value="1.0e00"/>
 
-               </ParameterList>
+                         <Parameter name="Rate Exponent" 
+                                    type="double" 
+                                    value="2.0e01"/>
 
-               <ParameterList name="Hardening Law">
+                    </ParameterList>
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Exponential"/>
+                    <ParameterList name="Hardening Law">
 
-                    <Parameter name="Hardening" 
-                               type="double" 
-                               value="3.55e02"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Linear Minus Recovery"/>
 
-                    <Parameter name="Hardening Exponent" 
-                               type="double" 
-                               value="2.9e00"/>
+                         <Parameter name="Hardening Modulus" 
+                                    type="double" 
+                                    value="3.55e02"/>
 
-                    <Parameter name="Tau Critical"
-                               type="double"
-                               value="1.22e02"/>
+                         <Parameter name="Recovery Modulus" 
+                                    type="double" 
+                                    value="2.9e00"/>
+
+                         <Parameter name="Initial Hardening State"
+                                    type="double"
+                                    value="1.22e02"/>
+
+                    </ParameterList>
 
                </ParameterList>
 
@@ -2313,14 +1857,6 @@
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -2333,14 +1869,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -2355,14 +1883,6 @@
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -2375,14 +1895,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -2397,14 +1909,6 @@
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -2417,14 +1921,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -2439,14 +1935,6 @@
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -2459,14 +1947,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/>
 
                </ParameterList>
 
@@ -2481,14 +1961,6 @@
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -2501,14 +1973,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/>
 
                </ParameterList>
 
@@ -2523,14 +1987,6 @@
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -2543,14 +1999,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -2673,39 +2121,43 @@
                           type="bool" 
                           value="true"/>
 
-               <ParameterList name="Flow Rule">
+               <ParameterList name="Slip System Family 0">
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Power Law"/>
+                    <ParameterList name="Flow Rule">
 
-                    <Parameter name="Gamma Dot" 
-                               type="double" 
-                               value="1.0e00"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Power Law"/>
 
-                    <Parameter name="Gamma Exponent" 
-                               type="double" 
-                               value="2.0e01"/>
+                         <Parameter name="Reference Slip Rate" 
+                                    type="double" 
+                                    value="1.0e00"/>
 
-               </ParameterList>
+                         <Parameter name="Rate Exponent" 
+                                    type="double" 
+                                    value="2.0e01"/>
 
-               <ParameterList name="Hardening Law">
+                    </ParameterList>
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Exponential"/>
+                    <ParameterList name="Hardening Law">
 
-                    <Parameter name="Hardening" 
-                               type="double" 
-                               value="3.55e02"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Linear Minus Recovery"/>
 
-                    <Parameter name="Hardening Exponent" 
-                               type="double" 
-                               value="2.9e00"/>
+                         <Parameter name="Hardening Modulus" 
+                                    type="double" 
+                                    value="3.55e02"/>
 
-                    <Parameter name="Tau Critical"
-                               type="double"
-                               value="1.22e02"/>
+                         <Parameter name="Recovery Modulus" 
+                                    type="double" 
+                                    value="2.9e00"/>
+
+                         <Parameter name="Initial Hardening State"
+                                    type="double"
+                                    value="1.22e02"/>
+
+                    </ParameterList>
 
                </ParameterList>
 
@@ -2726,14 +2178,6 @@
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -2746,14 +2190,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -2768,14 +2204,6 @@
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -2788,14 +2216,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -2810,14 +2230,6 @@
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -2830,14 +2242,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -2852,14 +2256,6 @@
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -2872,14 +2268,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/>
 
                </ParameterList>
 
@@ -2894,14 +2282,6 @@
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -2914,14 +2294,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/>
 
                </ParameterList>
 
@@ -2936,14 +2308,6 @@
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -2956,14 +2320,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -3086,39 +2442,43 @@
                           type="bool" 
                           value="true"/>
 
-               <ParameterList name="Flow Rule">
+               <ParameterList name="Slip System Family 0">
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Power Law"/>
+                    <ParameterList name="Flow Rule">
 
-                    <Parameter name="Gamma Dot" 
-                               type="double" 
-                               value="1.0e00"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Power Law"/>
 
-                    <Parameter name="Gamma Exponent" 
-                               type="double" 
-                               value="2.0e01"/>
+                         <Parameter name="Reference Slip Rate" 
+                                    type="double" 
+                                    value="1.0e00"/>
 
-               </ParameterList>
+                         <Parameter name="Rate Exponent" 
+                                    type="double" 
+                                    value="2.0e01"/>
 
-               <ParameterList name="Hardening Law">
+                    </ParameterList>
 
-                    <Parameter name="Type" 
-                               type="string" 
-                               value="Exponential"/>
+                    <ParameterList name="Hardening Law">
 
-                    <Parameter name="Hardening" 
-                               type="double" 
-                               value="3.55e02"/>
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Linear Minus Recovery"/>
 
-                    <Parameter name="Hardening Exponent" 
-                               type="double" 
-                               value="2.9e00"/>
+                         <Parameter name="Hardening Modulus" 
+                                    type="double" 
+                                    value="3.55e02"/>
 
-                    <Parameter name="Tau Critical"
-                               type="double"
-                               value="1.22e02"/>
+                         <Parameter name="Recovery Modulus" 
+                                    type="double" 
+                                    value="2.9e00"/>
+
+                         <Parameter name="Initial Hardening State"
+                                    type="double"
+                                    value="1.22e02"/>
+
+                    </ParameterList>
 
                </ParameterList>
 
@@ -3139,14 +2499,6 @@
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -3159,14 +2511,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -3181,14 +2525,6 @@
                                type="Array(double)"    
                                value="{1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -3201,14 +2537,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -3223,14 +2551,6 @@
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -3243,14 +2563,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 
@@ -3265,14 +2577,6 @@
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -3285,14 +2589,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/>
 
                </ParameterList>
 
@@ -3307,14 +2603,6 @@
                                type="Array(double)"    
                                value="{-1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -3327,14 +2615,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/>
 
                </ParameterList>
 
@@ -3349,14 +2629,6 @@
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
 
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
-
                </ParameterList>
 
 
@@ -3369,14 +2641,6 @@
                     <Parameter name="Slip Normal" 
                                type="Array(double)"    
                                value="{1.0,-1.0,1.0}"/>
-
-                    <Parameter name="Flow Rule" 
-                               type="string" 
-                               value="Flow Rule"/>
-
-                    <Parameter name="Hardening Law" 
-                               type="string" 
-                               value="Hardening Law"/> 
 
                </ParameterList>
 

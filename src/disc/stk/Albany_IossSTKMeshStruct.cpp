@@ -45,10 +45,10 @@ void get_element_block_sizes(stk::io::StkMeshIoBroker &mesh_data,
 } // Anonymous namespace
 
 Albany::IossSTKMeshStruct::IossSTKMeshStruct(
-                                             const Teuchos::RCP<Teuchos::ParameterList>& params,
+                                             const Teuchos::RCP<Teuchos::ParameterList>& params_,
                                              const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
                                              const Teuchos::RCP<const Teuchos_Comm>& commT) :
-  GenericSTKMeshStruct(params, adaptParams_),
+  GenericSTKMeshStruct(params_, adaptParams_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   useSerialMesh(false),
   periodic(params->get("Periodic BC", false)),
@@ -237,6 +237,12 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     m_solutionFieldHistoryDepth = inputRegion.get_property("state_count").get_int();
   }
 
+  // Upon request, add a nodeset for each sideset
+  if (params->get<bool>("Build Node Sets From Side Sets",false))
+  {
+    this->addNodeSetsFromSideSets ();
+  }
+
   this->initializeSideSetMeshStructs(commT);
 }
 
@@ -305,6 +311,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
 
       //stk::io::process_mesh_bulk_data(region, *bulkData);
       mesh_data->populate_bulk_data();
+
       //bulkData = &mesh_data->bulk_data();
 
       // Read solution from exodus file.
@@ -343,6 +350,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
      */
 
   { // running in Serial or Parallel read from Nemspread files
+    bulkData->modification_begin();
     mesh_data->populate_bulk_data();
     if (!usePamgen)
     {
@@ -480,6 +488,9 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
 
   // Build additional mesh connectivity needed for mesh fracture (if indicated)
   computeAddlConnectivity();
+
+  // Check that the nodeset created from sidesets contain the right number of nodes
+  this->checkNodeSetsFromSideSetsIntegrity ();
 
   // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
   this->finalizeSideSetMeshStructs(commT, side_set_req, side_set_sis, worksetSize);

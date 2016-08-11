@@ -24,11 +24,11 @@ namespace FELIX {
    */
   class Stokes : public Albany::AbstractProblem {
   public:
-  
+
     //! Default constructor
     Stokes(const Teuchos::RCP<Teuchos::ParameterList>& params,
-		 const Teuchos::RCP<ParamLib>& paramLib,
-		 const int numDim_);
+     const Teuchos::RCP<ParamLib>& paramLib,
+     const int numDim_);
 
     //! Destructor
     ~Stokes();
@@ -57,7 +57,7 @@ namespace FELIX {
 
     //! Private to prohibit copying
     Stokes(const Stokes&);
-    
+
     //! Private to prohibit copying
     Stokes& operator=(const Stokes&);
 
@@ -86,14 +86,14 @@ namespace FELIX {
     };
 
     void getVariableType(Teuchos::ParameterList& paramList,
-			 const std::string& defaultType,
-			 NS_VAR_TYPE& variableType,
-			 bool& haveVariable,
-			 bool& haveEquation);
+       const std::string& defaultType,
+       NS_VAR_TYPE& variableType,
+       bool& haveVariable,
+       bool& haveEquation);
     std::string variableTypeToString(const NS_VAR_TYPE variableType);
 
   protected:
-    
+
     int numDim;        //! number of spatial dimensions
 
     NS_VAR_TYPE flowType; //! type of flow variables
@@ -105,8 +105,8 @@ namespace FELIX {
     bool haveSource;   //! have source term in heat equation
     bool havePSPG;     //! have pressure stabilization
 
-   Teuchos::RCP<Albany::Layouts> dl; 
-    
+   Teuchos::RCP<Albany::Layouts> dl;
+
   };
 
 }
@@ -122,6 +122,8 @@ namespace FELIX {
 
 #include "FELIX_StokesContravarientMetricTensor.hpp"
 #include "PHAL_Neumann.hpp"
+#include "FELIX_SharedParameter.hpp"
+#include "FELIX_ParamEnum.hpp"
 #include "FELIX_StokesBodyForce.hpp"
 #include "FELIX_StokesRm.hpp"
 #include "FELIX_StokesTauM.hpp"
@@ -147,26 +149,26 @@ FELIX::Stokes::constructEvaluators(
   using std::string;
   using std::map;
   using PHAL::AlbanyTraits;
-  
+
   RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
     intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-  
+
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
-  
+
   Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
   RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
-  
+
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
-  
-  *out << "Field Dimensions: Workset=" << worksetSize 
+
+  *out << "Field Dimensions: Workset=" << worksetSize
        << ", Vertices= " << numVertices
        << ", Nodes= " << numNodes
        << ", QuadPts= " << numQPts
        << ", Dim= " << numDim << std::endl;
-  
+
 
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, numDim));
    TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
@@ -239,7 +241,7 @@ FELIX::Stokes::constructEvaluators(
      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
   if (havePSPG) { // Compute Contravarient Metric Tensor
-    RCP<ParameterList> p = 
+    RCP<ParameterList> p =
       rcp(new ParameterList("Contravarient Metric Tensor"));
 
     // Inputs: X, Y at nodes, Cubature, and Basis
@@ -255,7 +257,7 @@ FELIX::Stokes::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  
+
 
   if (haveFlowEq) { // Body Force
     RCP<ParameterList> p = rcp(new ParameterList("Body Force"));
@@ -266,7 +268,7 @@ FELIX::Stokes::constructEvaluators(
 
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-      
+
 
     //Output
     p->set<std::string>("Body Force Name", "Body Force");
@@ -289,14 +291,14 @@ FELIX::Stokes::constructEvaluators(
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-  
+
     //Output
     p->set<std::string>("Rm Name", "Rm");
 
     ev = rcp(new FELIX::StokesRm<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-  
+
   //IK, 7/24/2012
   if (haveFlowEq) { // FELIX viscosity
     RCP<ParameterList> p = rcp(new ParameterList("FELIX Viscosity"));
@@ -307,12 +309,24 @@ FELIX::Stokes::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("FELIX Viscosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-  
+
     //Output
     p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
 
     ev = rcp(new FELIX::Viscosity<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    //--- Shared Parameter for Continuation:  ---//
+    p = rcp(new ParameterList("Homotopy Parameter"));
+
+    std::string param_name = "Glen's Law Homotopy Parameter";
+    p->set<std::string>("Parameter Name", param_name);
+    p->set< RCP<ParamLib> >("Parameter Library", paramLib);
+
+    RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Homotopy>> ptr_homotopy;
+    ptr_homotopy = rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Homotopy>(*p,dl));
+    ptr_homotopy->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Viscosity").get<double>(param_name,-1.0));
+    fm0.template registerEvaluator<EvalT>(ptr_homotopy);
   }
 
 
@@ -321,10 +335,10 @@ FELIX::Stokes::constructEvaluators(
 
     //Input
     p->set<std::string>("Velocity QP Variable Name", "Velocity");
-    p->set<std::string>("Contravarient Metric Tensor Name", "Gc"); 
+    p->set<std::string>("Contravarient Metric Tensor Name", "Gc");
     p->set<std::string>("Jacobian Det Name", "Jacobian Det");
     p->set<string>("Jacobian Name",          "Jacobian");
-    p->set<string>("Jacobian Inv Name",          "Jacobian Inv"); 
+    p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
     p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -354,16 +368,16 @@ FELIX::Stokes::constructEvaluators(
     p->set<std::string>("Velocity QP Variable Name", "Velocity");
     p->set<std::string>("Density QP Variable Name", "Density");
     p->set<std::string> ("Tau M Name", "Tau M");
- 
+
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-  
+
     //Output
     p->set<std::string>("Residual Name", "Momentum Residual");
 
     ev = rcp(new FELIX::StokesMomentumResid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-  
+
 
   if (haveFlowEq) { // Continuity Resid
     RCP<ParameterList> p = rcp(new ParameterList("Continuity Resid"));

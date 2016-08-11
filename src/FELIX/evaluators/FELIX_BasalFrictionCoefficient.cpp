@@ -9,5 +9,6 @@
 #include "FELIX_BasalFrictionCoefficient.hpp"
 #include "FELIX_BasalFrictionCoefficient_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::BasalFrictionCoefficient)
-
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(FELIX::BasalFrictionCoefficient,false,true)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(FELIX::BasalFrictionCoefficient,true,true)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(FELIX::BasalFrictionCoefficient,true,false)

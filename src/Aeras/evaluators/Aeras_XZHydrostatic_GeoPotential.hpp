@@ -13,6 +13,7 @@
 #include "Phalanx_MDField.hpp"
 #include "Aeras_Layouts.hpp"
 #include "Aeras_Dimension.hpp"
+#include "Aeras_Eta.hpp"
 
 namespace Aeras {
 /** \brief Geopotential (phi) for XZHydrostatic atmospheric model
@@ -52,8 +53,22 @@ private:
 
   const int numNodes;
   const int numLevels;
+  const Eta<EvalT> &E;
 
   ScalarT Phi0;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct XZHydrostatic_GeoPotential_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_GeoPotential_Tag> XZHydrostatic_GeoPotential_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_GeoPotential_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 

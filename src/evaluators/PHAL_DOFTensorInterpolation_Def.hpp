@@ -12,9 +12,9 @@
 namespace PHAL {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-DOFTensorInterpolation<EvalT, Traits>::
-DOFTensorInterpolation(const Teuchos::ParameterList& p,
+template<typename EvalT, typename Traits, typename ScalarT>
+DOFTensorInterpolationBase<EvalT, Traits, ScalarT>::
+DOFTensorInterpolationBase(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl) :
   val_node    (p.get<std::string>  ("Variable Name"), dl->node_tensor),
   BF          (p.get<std::string>  ("BF Name"),  dl->node_qp_scalar),
@@ -24,7 +24,7 @@ DOFTensorInterpolation(const Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("DOFTensorInterpolation"+PHX::typeAsString<EvalT>());
+  this->setName("DOFTensorInterpolationBase"+PHX::typeAsString<EvalT>());
   std::vector<PHX::DataLayout::size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
@@ -35,8 +35,8 @@ DOFTensorInterpolation(const Teuchos::ParameterList& p,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void DOFTensorInterpolation<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarT>
+void DOFTensorInterpolationBase<EvalT, Traits, ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -46,8 +46,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void DOFTensorInterpolation<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarT>
+void DOFTensorInterpolationBase<EvalT, Traits, ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -59,17 +59,17 @@ evaluateFields(typename Traits::EvalData workset)
           vqp = val_node(cell, 0, i, j) * BF(cell, 0, qp);
           for (std::size_t node=1; node < numNodes; ++node) {
             vqp += val_node(cell, node, i, j) * BF(cell, node, qp);
-          } 
+          }
         }
-      } 
-    } 
+      }
+    }
   }
 }
 
 //**********************************************************************
 template<typename Traits>
-DOFTensorInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
-DOFTensorInterpolation(const Teuchos::ParameterList& p,
+DOFTensorInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
+DOFTensorInterpolationBase(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl) :
   val_node    (p.get<std::string>  ("Variable Name"), dl->node_tensor),
   BF          (p.get<std::string>  ("BF Name"),  dl->node_qp_scalar),
@@ -79,7 +79,7 @@ DOFTensorInterpolation(const Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("DOFTensorInterpolation"+PHX::typeAsString<PHAL::AlbanyTraits::Jacobian>());
+  this->setName("DOFTensorInterpolationBase"+PHX::typeAsString<PHAL::AlbanyTraits::Jacobian>());
   std::vector<PHX::DataLayout::size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
@@ -93,7 +93,7 @@ DOFTensorInterpolation(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename Traits>
-void DOFTensorInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
+void DOFTensorInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -104,7 +104,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename Traits>
-void DOFTensorInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
+void DOFTensorInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
   const int num_dof = val_node(0,0,0,0).size();
@@ -118,7 +118,7 @@ evaluateFields(typename Traits::EvalData workset)
 #ifdef ALBANY_MESH_DEPENDS_ON_SOLUTION
           vqp = val_node(cell, 0, i, j) * BF(cell, 0, qp);
 #else
-	        vqp = ScalarT(num_dof, val_node(cell, 0, i, j).val() * BF(cell, 0, qp));
+          vqp = ScalarT(num_dof, val_node(cell, 0, i, j).val() * BF(cell, 0, qp));
           vqp.fastAccessDx(offset+i*vecDim+j) = val_node(cell, 0, i, j).fastAccessDx(offset+i*vecDim+j) * BF(cell, 0, qp);
 #endif
           for (std::size_t node=1; node < numNodes; ++node) {
@@ -126,21 +126,21 @@ evaluateFields(typename Traits::EvalData workset)
             vqp += val_node(cell, node, i, j) * BF(cell, node, qp);
 #else
             vqp.val() += val_node(cell, node, i, j).val() * BF(cell, node, qp);
-            vqp.fastAccessDx(neq*node+offset+i*vecDim+j) 
+            vqp.fastAccessDx(neq*node+offset+i*vecDim+j)
               += val_node(cell, node, i, j).fastAccessDx(neq*node+offset+i*vecDim+j) * BF(cell, node, qp);
 #endif
-          } 
+          }
         }
-      } 
-    } 
+      }
+    }
   }
 }
 //**********************************************************************
 
 #ifdef ALBANY_SG
 template<typename Traits>
-DOFTensorInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>::
-DOFTensorInterpolation(const Teuchos::ParameterList& p,
+DOFTensorInterpolationBase<PHAL::AlbanyTraits::SGJacobian, Traits, typename PHAL::AlbanyTraits::SGJacobian::ScalarT>::
+DOFTensorInterpolationBase(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl) :
   val_node    (p.get<std::string>  ("Variable Name"), dl->node_tensor),
   BF          (p.get<std::string>  ("BF Name"),  dl->node_qp_scalar),
@@ -150,7 +150,7 @@ DOFTensorInterpolation(const Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("DOFTensorInterpolation"+PHX::typeAsString<PHAL::AlbanyTraits::SGJacobian>());
+  this->setName("DOFTensorInterpolationBase"+PHX::typeAsString<PHAL::AlbanyTraits::SGJacobian>());
   std::vector<PHX::DataLayout::size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
@@ -164,7 +164,7 @@ DOFTensorInterpolation(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename Traits>
-void DOFTensorInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>::
+void DOFTensorInterpolationBase<PHAL::AlbanyTraits::SGJacobian, Traits, typename PHAL::AlbanyTraits::SGJacobian::ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -175,7 +175,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename Traits>
-void DOFTensorInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>::
+void DOFTensorInterpolationBase<PHAL::AlbanyTraits::SGJacobian, Traits, typename PHAL::AlbanyTraits::SGJacobian::ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
   const int num_dof = val_node(0,0,0,0).size();
@@ -186,16 +186,16 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t j=0; j<vecDim; j++) {
           // Zero out for node==0; then += for node = 1 to numNodes
           typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,qp,i,j);
-	  vqp = ScalarT(num_dof, val_node(cell, 0, i, j).val() * BF(cell, 0, qp));
+    vqp = ScalarT(num_dof, val_node(cell, 0, i, j).val() * BF(cell, 0, qp));
           vqp.fastAccessDx(offset+i*vecDim+j) = val_node(cell, 0, i, j).fastAccessDx(offset+i*vecDim+j) * BF(cell, 0, qp);
           for (std::size_t node=1; node < numNodes; ++node) {
             vqp.val() += val_node(cell, node, i, j).val() * BF(cell, node, qp);
-            vqp.fastAccessDx(neq*node+offset+i*vecDim+j) 
+            vqp.fastAccessDx(neq*node+offset+i*vecDim+j)
               += val_node(cell, node, i, j).fastAccessDx(neq*node+offset+i*vecDim+j) * BF(cell, node, qp);
-          } 
+          }
         }
-      } 
-    } 
+      }
+    }
   }
 }
 //**********************************************************************
@@ -203,8 +203,8 @@ evaluateFields(typename Traits::EvalData workset)
 
 #ifdef ALBANY_ENSEMBLE
 template<typename Traits>
-DOFTensorInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>::
-DOFTensorInterpolation(const Teuchos::ParameterList& p,
+DOFTensorInterpolationBase<PHAL::AlbanyTraits::MPJacobian, Traits, typename PHAL::AlbanyTraits::MPJacobian::ScalarT>::
+DOFTensorInterpolationBase(const Teuchos::ParameterList& p,
                     const Teuchos::RCP<Albany::Layouts>& dl) :
   val_node    (p.get<std::string>  ("Variable Name"), dl->node_tensor),
   BF          (p.get<std::string>  ("BF Name"),  dl->node_qp_scalar),
@@ -214,7 +214,7 @@ DOFTensorInterpolation(const Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("DOFTensorInterpolation"+PHX::typeAsString<PHAL::AlbanyTraits::MPJacobian>());
+  this->setName("DOFTensorInterpolationBase"+PHX::typeAsString<PHAL::AlbanyTraits::MPJacobian>());
   std::vector<PHX::DataLayout::size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
@@ -228,7 +228,7 @@ DOFTensorInterpolation(const Teuchos::ParameterList& p,
 
 //**********************************************************************
 template<typename Traits>
-void DOFTensorInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>::
+void DOFTensorInterpolationBase<PHAL::AlbanyTraits::MPJacobian, Traits, typename PHAL::AlbanyTraits::MPJacobian::ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -239,7 +239,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename Traits>
-void DOFTensorInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>::
+void DOFTensorInterpolationBase<PHAL::AlbanyTraits::MPJacobian, Traits, typename PHAL::AlbanyTraits::MPJacobian::ScalarT>::
 evaluateFields(typename Traits::EvalData workset)
 {
   const int num_dof = val_node(0,0,0,0).size();
@@ -250,20 +250,18 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t j=0; j<vecDim; j++) {
           // Zero out for node==0; then += for node = 1 to numNodes
           typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,qp,i,j);
-	  vqp = ScalarT(num_dof, val_node(cell, 0, i, j).val() * BF(cell, 0, qp));
+    vqp = ScalarT(num_dof, val_node(cell, 0, i, j).val() * BF(cell, 0, qp));
           vqp.fastAccessDx(offset+i*vecDim+j) = val_node(cell, 0, i, j).fastAccessDx(offset+i*vecDim+j) * BF(cell, 0, qp);
           for (std::size_t node=1; node < numNodes; ++node) {
             vqp.val() += val_node(cell, node, i, j).val() * BF(cell, node, qp);
-            vqp.fastAccessDx(neq*node+offset+i*vecDim+j) 
+            vqp.fastAccessDx(neq*node+offset+i*vecDim+j)
               += val_node(cell, node, i, j).fastAccessDx(neq*node+offset+i*vecDim+j) * BF(cell, node, qp);
-          } 
+          }
         }
-      } 
-    } 
+      }
+    }
   }
 }
 #endif
 
-//**********************************************************************
-
-}
+} // Namespace PHAL

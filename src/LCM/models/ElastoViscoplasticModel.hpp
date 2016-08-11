@@ -7,12 +7,8 @@
 #if !defined(LCM_ElastoViscoplasticModel_hpp)
 #define LCM_ElastoViscoplasticModel_hpp
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
-#include "Albany_Layouts.hpp"
-#include "LCM/models/ConstitutiveModel.hpp"
+#include "ElastoViscoplasticCore.hpp"
+#include "ConstitutiveModel.hpp"
 
 namespace LCM
 {
@@ -138,6 +134,18 @@ private:
   /// Flow Rule Scale Factor
   ///
   RealType f_scale_;
+
+  ///
+  /// Solution options
+  ///
+  bool apply_slip_predictor_;
+  Intrepid2::StepType step_type_;
+
+  RealType implicit_nonlinear_solver_relative_tolerance_;
+  RealType implicit_nonlinear_solver_absolute_tolerance_;
+  int implicit_nonlinear_solver_max_iterations_;
+  int implicit_nonlinear_solver_min_iterations_;
+
 
   ///
   /// flag to print convergence

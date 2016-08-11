@@ -165,10 +165,8 @@ SET(HEADERS ${HEADERS}
     AAdapt_ExtrudedAdapt.hpp
    )
 
-IF(ENABLE_SPR)
 SET(SOURCES ${SOURCES} AAdapt_SPRSizeField.cpp)
 SET(HEADERS ${HEADERS} AAdapt_SPRSizeField.hpp)
-ENDIF()
 
 include_directories(${ALBANY_PUMI_INCLUDE_DIRS} ${PUMI_INCLUDE_DIR})
 
@@ -192,6 +190,8 @@ include_directories(${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
 add_library(albanyAdapt ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 
 set_target_properties(albanyAdapt PROPERTIES PUBLIC_HEADER "${HEADERS}")
+
+target_link_libraries(albanyAdapt ${SCOREC_LIB})
 
 IF(INSTALL_ALBANY)
 install(TARGETS albanyAdapt EXPORT albany-export

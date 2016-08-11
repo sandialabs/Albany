@@ -4,7 +4,7 @@ BASE_DIR=/project/projectdirs/piscees/nightlyCoriCDash
 
 cd $BASE_DIR
 
-#source cori_modules.sh 
+source cori_modules.sh 
 
 rm -rf $BASE_DIR/repos
 rm -rf $BASE_DIR/build

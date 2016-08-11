@@ -189,7 +189,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void detachQPData();
 
     // After mesh modification, need to update the element connectivity and nodal coordinates
-    virtual void updateMesh(bool shouldTransferIPData);
+    void updateMesh(bool shouldTransferIPData);
+    // The parameter library is used to update Time after adapting
+    void updateMesh(bool shouldTransferIPData, Teuchos::RCP<ParamLib> paramLib);
 
     // Function that transforms a mesh of a unit cube (for FELIX problems)
     // not supported in PUMI now
@@ -197,25 +199,25 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     // this is called with both LO's and GO's to compute a dof number
     // based on a node number and an equation number
-    GO getDOF(const GO inode, const int entry, int nentries=-1) const
+    GO getDOF(const GO inode, const int entry, int total_comps = -1) const
     {
       if (interleavedOrdering) {
-        if (nentries == -1) nentries = neq;
-        return inode*nentries + entry;
+        if (total_comps == -1) total_comps = neq;
+        return inode * total_comps + entry;
       }
       else return inode + numOwnedNodes*entry;
     }
 
     // Copy field data from Tpetra_Vector to APF
     void setField(const char* name, const ST* data, bool overlapped,
-                  int offset = 0, int nentries = -1);
+                  int offset = 0, bool neq_sized = true);
     void setSplitFields(const Teuchos::Array<std::string>& names,
                         const Teuchos::Array<int>& indices,
                         const ST* data, bool overlapped);
 
     // Copy field data from APF to Tpetra_Vector
-    void getField(const char* name, ST* dataT, bool overlapped, int offset = 0,
-                  int nentries = -1) const;
+    void getField(const char* name, ST* dataT, bool overlapped,
+                  int offset = 0, bool neq_sized = true) const;
     void getSplitFields(const Teuchos::Array<std::string>& names,
                         const Teuchos::Array<int>& indices,
                         ST* dataT, bool overlapped) const;
@@ -415,7 +417,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void removeNodalDataFromAPF();
 
     // ! Split Solution fields
-    SolutionLayout solNames; // solNames[time_deriv_vector][Field]
+    SolutionLayout solLayout; // solLayout[time_deriv_vector][Field]
     Teuchos::Array<std::string> resNames; // resNames[Field]
 
   private:
@@ -432,33 +434,19 @@ class APFDiscretization : public Albany::AbstractDiscretization {
   protected:
 
     //! Process APF mesh for Owned nodal quantitites
-    void computeOwnedNodesAndUnknownsBase(apf::FieldShape* s);
+    void computeOwnedNodesAndUnknowns();
     //! Process APF mesh for Overlap nodal quantitites
-    void computeOverlapNodesAndUnknownsBase(apf::FieldShape* s);
+    void computeOverlapNodesAndUnknowns();
     //! Process APF mesh for CRS Graphs
-    void computeGraphsBase(apf::FieldShape* s);
+    void computeGraphs();
     //! Process APF mesh for Workset/Bucket Info
-    void computeWorksetInfoBase(apf::FieldShape* s);
+    void computeWorksetInfo();
     //! Process APF mesh for NodeSets
-    void computeNodeSetsBase();
+    void computeNodeSets();
     //! Process APF mesh for SideSets
-    void computeSideSetsBase();
-    //! Base for updating the mesh
-    void updateMeshBase(bool shouldTransferIPData);
-
-
-    //! Process APF mesh for Owned nodal quantitites
-    virtual void computeOwnedNodesAndUnknowns();
-    //! Process APF mesh for Overlap nodal quantitites
-    virtual void computeOverlapNodesAndUnknowns();
-    //! Process APF mesh for CRS Graphs
-    virtual void computeGraphs();
-    //! Process APF mesh for Workset/Bucket Info
-    virtual void computeWorksetInfo();
-    //! Process APF mesh for NodeSets
-    virtual void computeNodeSets();
-    //! Process APF mesh for SideSets
-    virtual void computeSideSets();
+    void computeSideSets();
+    //! Re-initialize Time after adaptation
+    void initTimeFromParamLib(Teuchos::RCP<ParamLib> paramLib);
 
     //! Output object
     PUMIOutput* meshOutput;

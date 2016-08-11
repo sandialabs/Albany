@@ -1,0 +1,16 @@
+C11 204.6e3
+C12 137.7e3
+C44 126.2e3
+state_hardening_initial 122.0
+rate_slip_reference 1.0
+exponent_rate 20.0
+hardening_law Saturation
+flow_rule Power Law
+rate_hardening 2.0e4
+stress_saturation_initial 202.0
+exponent_saturation 0.01
+integration_scheme Implicit
+nonlinear_solver_step_type Newton
+implicit_integration_relative_tolerance 1.0e-35
+implicit_integration_absolute_tolerance 1.0e-10
+implicit_integration_max_iterations 100

@@ -39,19 +39,38 @@ public:
 
 private:
   // Input
+  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> PhiSurf;
 
   const int numNodes;
                      
-  enum TOPOGRAPHYTYPE {NONE, MOUNTAIN1, SPHERE_MOUNTAIN1, ASP_BAROCLINIC};
+  enum TOPOGRAPHYTYPE {NONE, MOUNTAIN1};
   TOPOGRAPHYTYPE topoType;
   
   int numParam;
   
-  Teuchos::Array<double> topoData;                   
-                     
+  Teuchos::Array<double> topoData;
+
+  // MOUNTAIN1 parameters:
+  double local_pi, local_gravity, center, width, height;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag> XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag& tag, const int& i) const;
+
+private:
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords;
+
+#endif
 };
 }
 

@@ -10,7 +10,7 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Albany_Layouts.hpp"
 #include "FELIX_SharedParameter.hpp"
-#include "FELIX_StokesParamEnum.hpp"
+#include "FELIX_ParamEnum.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -65,17 +65,25 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 #endif
     beta_type = REGULARIZED_COULOMB;
 
-    N      = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Effective Pressure QP Name"), dl->qp_scalar);
+    N      = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Effective Pressure QP Name"), dl->qp_scalar);
     U      = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Basal Velocity QP Name"), dl->qp_vector);
     gradN  = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Effective Pressure Gradient QP Name"), dl->qp_gradient);
     gradU  = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim,Dim>(p.get<std::string> ("Basal Velocity Gradient QP Name"), dl->qp_vecgradient);
     u_norm = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Sliding Velocity QP Name"), dl->qp_scalar);
+
+    muParam        = PHX::MDField<ScalarT,Dim>("Coulomb Friction Coefficient", dl->shared_param);
+    lambdaParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
+    powerParam     = PHX::MDField<ScalarT,Dim>("Power Exponent", dl->shared_param);
 
     this->addDependentField (N);
     this->addDependentField (U);
     this->addDependentField (gradN);
     this->addDependentField (gradU);
     this->addDependentField (u_norm);
+
+    this->addDependentField (muParam);
+    this->addDependentField (lambdaParam);
+    this->addDependentField (powerParam);
 
     vecDim = dl->qp_vecgradient->dimension(3);
 
@@ -129,6 +137,9 @@ postRegistrationSetup (typename Traits::SetupData d,
     this->utils.setFieldData(gradN,fm);
     this->utils.setFieldData(gradU,fm);
     this->utils.setFieldData(u_norm,fm);
+    this->utils.setFieldData(muParam,fm);
+    this->utils.setFieldData(lambdaParam,fm);
+    this->utils.setFieldData(powerParam,fm);
   }
   if (use_stereographic_map)
     this->utils.setFieldData(coordVec,fm);
@@ -150,9 +161,9 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
   ScalarT lambda, mu, power;
   if (beta_type==REGULARIZED_COULOMB)
   {
-    lambda = SharedParameter<EvalT,Traits,StokesParamEnum,Lambda>::getValue();
-    mu     = SharedParameter<EvalT,Traits,StokesParamEnum,Mu>::getValue();
-    power  = SharedParameter<EvalT,Traits,StokesParamEnum,Power>::getValue();
+    lambda = lambdaParam(0);
+    mu     = muParam(0);
+    power  = powerParam(0);
   }
 
   const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
@@ -189,9 +200,9 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
       case REGULARIZED_COULOMB:
         for (int qp=0; qp<numSideQPs; ++qp)
         {
-          ScalarT u_val = u_norm(cell,side,qp);
-          ScalarT N_val = N(cell,side,qp);
-          ScalarT den = u_val+lambda*std::pow(A*N_val,1./power);
+          ScalarT u_val      = u_norm(cell,side,qp);
+          ParamScalarT N_val = N(cell,side,qp);
+          ScalarT den        = u_val+lambda*std::pow(A*N_val,1./power);
 
           ScalarT f_u = (power-1)*mu*N_val*std::pow(u_val,power-2)/std::pow(u_val+lambda*std::pow(A*N_val,1./power), power)
                       - power*mu*N_val*std::pow(u_val,power-1)/std::pow(den, power+1);

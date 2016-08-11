@@ -125,8 +125,12 @@ createResponseFunction(
   else if (name == "Field Integral" ||
      name == "Field Value" ||
      name == "Field Average" ||
-     name == "Squared L2 Error Side" ||
-     name == "Squared L2 Error Side No Target Deriv" ||
+     name == "Squared L2 Error Target ST" ||
+     name == "Squared L2 Error Target MST" ||
+     name == "Squared L2 Error Target PST" ||
+     name == "Squared L2 Error Side Target ST" ||
+     name == "Squared L2 Error Side Target MST" ||
+     name == "Squared L2 Error Side Target PST" ||
      name == "Surface Velocity Mismatch" ||
      name == "Surface Mass Balance Mismatch" ||
            name == "Aeras Shallow Water L2 Error" ||
@@ -134,16 +138,16 @@ createResponseFunction(
            name == "Aeras Hydrostatic L2 Norm" ||
            name == "Aeras Hydrostatic L2 Error" ||
            name == "Aeras Total Volume" ||
-	   name == "Center Of Mass" ||
-	   name == "Save Field" ||
-	   name == "Region Boundary" ||
-	   name == "Element Size Field" ||
-	   name == "Save Nodal Fields" ||
-	   name == "Stiffness Objective" ||
-	   name == "Internal Energy Objective" ||
-	   name == "Tensor PNorm Objective" ||
-	   name == "Homogenized Constants Response" ||
-	   name == "Modal Objective" ||
+     name == "Center Of Mass" ||
+     name == "Save Field" ||
+     name == "Region Boundary" ||
+     name == "Element Size Field" ||
+     name == "Save Nodal Fields" ||
+     name == "Stiffness Objective" ||
+     name == "Internal Energy Objective" ||
+     name == "Tensor PNorm Objective" ||
+     name == "Homogenized Constants Response" ||
+     name == "Modal Objective" ||
            name == "PHAL Field Integral" ||
            name == "PHAL Field IntegralT" ||
            name == "PHAL Thermal EnergyT" ||
@@ -191,10 +195,10 @@ createResponseFunction(
     Array< RCP<AbstractResponseFunction> > base_responses;
     std::string name = responseParams.get<std::string>("Response");
     createResponseFunction(name, responseParams.sublist("ResponseParams"),
-			   base_responses);
+         base_responses);
     for (int i=0; i<base_responses.size(); i++)
       responses.push_back(
-	rcp(new Albany::KLResponseFunction(base_responses[i], responseParams)));
+  rcp(new Albany::KLResponseFunction(base_responses[i], responseParams)));
   }
 
 #ifdef ALBANY_QCAD
@@ -203,8 +207,8 @@ createResponseFunction(
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
       responses.push_back(
-	rcp(new QCAD::SaddleValueResponseFunction(
-	      app, prob, meshSpecs[i], stateMgr, responseParams)));
+  rcp(new QCAD::SaddleValueResponseFunction(
+        app, prob, meshSpecs[i], stateMgr, responseParams)));
     }
   }
 #endif

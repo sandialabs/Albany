@@ -1,0 +1,159 @@
+# July 2015.
+#   Need cmake:
+#     => Use this line in your .soft file:
+#          +cmake-3.0.2
+#   C++11 requirement in Trilinos, especially in Kokkos:
+#     => Use bgclang.
+#     => Use this line in your .soft file:
+#          +mpiwrapper-bgclang
+#   However, (i) bgclang has no Fortran equivalent, and (ii) XL's
+# binaries appear not to be compatible with bgclang's:
+#     => Use the CMAKE_Fortran_COMPILER flag to point to gcc's Fortran compiler.
+
+# Install next to the build directory.
+BASEDIR=/projects/FASTMath/ATPESC-2016/installs
+TRILINSTALLDIR=$BASEDIR/trilinos
+
+# These TPLs are already built for us.
+NETCDFDIR=$BASEDIR/netcdf/4.4.1/ppc64-bgq-rhel6-gcc4.4
+PNETCDFDIR=$BASEDIR/pnetcdf/1.7.0/ppc64-bgq-rhel6-gcc4.4
+HDF5DIR=$BASEDIR/hdf5/1.8.17/ppc64-bgq-rhel6-gcc4.4
+ZLIBDIR=$BASEDIR/zlib/1.2.8/ppc64-bgq-rhel6-gcc4.4
+BLASDIR=$BASEDIR/blas/nl-3.6.0/ppc64-bgq-rhel6-gcc4.4
+LAPACKDIR=$BASEDIR/lapack/3.6.1/ppc64-bgq-rhel6-gcc4.4
+BOOSTDIR=/soft/libraries/boost/current/cnk-gcc-4.7.2/current
+#BOOSTDIR=/soft/libraries/boost/current/cnk-bgclang++11/current
+#BOOSTDIR=$BASEDIR/boost-1.61.0
+PARMETIS=$BASEDIR/parmetis/4.0.3/ppc64-bgq-rhel6-gcc4.4
+METIS=$BASEDIR/metis/5.1.0/ppc64-bgq-rhel6-gcc4.4
+
+# Make Trilinos choose the .a rather than .so files.
+BOOST_LIBS="$BOOSTDIR/lib/libboost_program_options.a;$BOOSTDIR/lib/libboost_system.a"
+
+# netcdf and hdf5 ordering are wrong for static linking. Fix with the
+# usual hack of appending these as extra link flags. List libz.a
+# specifically so libz.so is not used.
+EXTRA_LINK_FLAGS="${HDF5DIR}/lib/libhdf5_hl.a;${HDF5DIR}/lib/libhdf5.a;${ZLIBDIR}/lib/libz.a;-ldl"
+
+# Turn on for a 64-bit local ordinal.
+HAVE_LL=OFF
+
+#rm -f CMakeCache.txt;
+
+cmake \
+    -D Trilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES=ON \
+    -D CMAKE_INSTALL_PREFIX:PATH=${TRILINSTALLDIR} \
+    -D CMAKE_BUILD_TYPE:STRING="RELEASE" \
+    -D TPL_ENABLE_MPI:BOOL=ON \
+    -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+    -D BUILD_SHARED_LIBS:BOOL=OFF \
+    -D Trilinos_ENABLE_SECONDARY_TESTED_CODE:BOOL=OFF \
+    \
+    -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+    -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
+    -D Trilinos_ENABLE_Teuchos:BOOL=ON \
+    -D Trilinos_ENABLE_Shards:BOOL=ON \
+    -D Trilinos_ENABLE_Sacado:BOOL=ON \
+    -D Trilinos_ENABLE_Epetra:BOOL=ON \
+    -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
+    -D Trilinos_ENABLE_Ifpack:BOOL=ON \
+    -D Trilinos_ENABLE_AztecOO:BOOL=ON \
+    -D Trilinos_ENABLE_Amesos:BOOL=ON \
+    -D Trilinos_ENABLE_Anasazi:BOOL=ON \
+    -D Trilinos_ENABLE_Belos:BOOL=ON \
+    -D Trilinos_ENABLE_ML:BOOL=ON \
+    -D Trilinos_ENABLE_Phalanx:BOOL=ON \
+    -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+    -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
+    -D Trilinos_ENABLE_NOX:BOOL=ON \
+    -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
+    -D Trilinos_ENABLE_Thyra:BOOL=ON \
+    -D Trilinos_ENABLE_Rythmos:BOOL=ON \
+    -D Trilinos_ENABLE_Stokhos:BOOL=OFF \
+    -D Trilinos_ENABLE_Piro:BOOL=ON \
+    -D Trilinos_ENABLE_Teko:BOOL=ON \
+    -D Trilinos_ENABLE_Moertel:BOOL=ON \
+    \
+    -D Trilinos_ENABLE_STKIO:BOOL=ON \
+    -D Trilinos_ENABLE_STKMesh:BOOL=ON \
+    -D TPL_ENABLE_Boost:BOOL=ON \
+    -D Boost_INCLUDE_DIRS:FILEPATH="$BOOSTDIR/include" \
+    -D TPL_Boost_LIBRARIES=${BOOST_LIBS} \
+    -D TPL_ENABLE_BoostLib:BOOL=ON \
+    -D BoostLib_INCLUDE_DIRS:FILEPATH="$BOOSTDIR/include" \
+    -D TPL_BoostLib_LIBRARIES=${BOOST_LIBS} \
+    \
+    -D Trilinos_ENABLE_SEACAS:BOOL=ON \
+    -D TPL_ENABLE_X11:BOOL=OFF \
+    -D TPL_ENABLE_Matio:BOOL=OFF \
+    -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
+    -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
+    \
+    -D TPL_ENABLE_Netcdf:BOOL=ON \
+    -D Netcdf_INCLUDE_DIRS:PATH="$NETCDFDIR/include" \
+    -D TPL_Netcdf_LIBRARIES="$NETCDFDIR/lib/libnetcdf.a" \
+    -D TPL_ENABLE_HDF5:BOOL=ON \
+    -D TPL_HDF5_LIBRARIES="$HDF5DIR/lib/libhdf5_hl.a;$HDF5DIR/lib/libhdf5.a;$ZLIBDIR/lib/libz.a" \
+    -D HDF5_INCLUDE_DIRS:PATH="$HDF5DIR/include" \
+    -D TPL_ENABLE_Pnetcdf:STRING=ON \
+    -D Pnetcdf_INCLUDE_DIRS:PATH=$PNETCDFDIR/include \
+    -D Pnetcdf_LIBRARY_DIRS:PATH=$PNETCDFDIR/lib \
+    \
+    -D Trilinos_ENABLE_Tpetra:BOOL=ON \
+    -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+    -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
+    -D Trilinos_ENABLE_Amesos2:BOOL=ON \
+    -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
+    -D Trilinos_ENABLE_MueLu:BOOL=ON \
+    -D Amesos2_ENABLE_KLU2:BOOL=ON \
+    \
+    -D Trilinos_ENABLE_SCOREC:BOOL=ON \
+    -D SCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON \
+    -D Trilinos_ENABLE_EXPORT_MAKEFILES:BOOL=OFF \
+    -D Trilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF \
+    -D MDS_ID_TYPE:STRING="int" \
+    \
+    -D TPL_ENABLE_ParMETIS:STRING=ON \
+    -D ParMETIS_INCLUDE_DIRS:PATH="${PARMETIS}/include" \
+    -D ParMETIS_LIBRARY_DIRS:PATH="${PARMETIS}/lib" \
+    -D TPL_ENABLE_METIS:STRING=ON \
+    -D METIS_INCLUDE_DIRS:PATH="${METIS}/include" \
+    -D METIS_LIBRARY_DIRS:PATH="${METIS}/lib" \
+    -D Zoltan_ENABLE_ULLONG_IDS:BOOL=ON \
+    -D Teuchos_ENABLE_LONG_LONG_INT:BOOL=$HAVE_LL \
+    \
+    -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
+    -D Tpetra_INST_FLOAT=OFF \
+    -D Tpetra_INST_INT_INT=ON \
+    -D Tpetra_INST_DOUBLE=ON \
+    -D Tpetra_INST_COMPLEX_FLOAT=OFF \
+    -D Tpetra_INST_COMPLEX_DOUBLE=OFF \
+    -D Tpetra_INST_INT_LONG=OFF \
+    -D Tpetra_INST_INT_UNSIGNED=OFF \
+    -D Tpetra_INST_INT_LONG_LONG=$HAVE_LL \
+    \
+    -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+    -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
+    -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
+    -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
+    -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
+    -D Kokkos_ENABLE_Serial:BOOL=ON \
+    -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
+    -D Kokkos_ENABLE_Pthread:BOOL=OFF \
+    \
+    -D Trilinos_ENABLE_Zoltan:BOOL=ON \
+    -D Zoltan_ENABLE_ParMETIS:BOOL=ON \
+    \
+    -D TPL_BLAS_LIBRARIES="$BLASDIR/lib/libblas.a" \
+    -D TPL_LAPACK_LIBRARIES="$LAPACKDIR/lib/liblapack.a;$LAPACKDIR/lib/libtmglib.a" \
+    -D Trilinos_EXTRA_LINK_FLAGS:STRING=${EXTRA_LINK_FLAGS} \
+    -D F77_FUNC:STRING="(name,NAME) name" \
+    -D F77_FUNC_:STRING="(name,NAME) name" \
+    \
+    ../
+
+exit 0
+
+    -D CMAKE_Fortran_COMPILER="/soft/compilers/wrappers/gcc/mpif90" \
+    -D CMAKE_CXX_FLAGS:STRING="-Wno-inconsistent-missing-override -Wno-expansion-to-defined -Wno-deprecated-declarations -Wno-sign-compare" \
+    -D CMAKE_C_FLAGS:STRING="-Wno-inconsistent-missing-override -Wno-expansion-to-defined -Wno-deprecated-declarations -Wno-sign-compare" \

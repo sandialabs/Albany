@@ -20,9 +20,7 @@
 #include "AAdapt_UnifRefSizeField.hpp"
 #include "AAdapt_NonUnifRefSizeField.hpp"
 #include "AAdapt_AlbanySizeField.hpp"
-#ifdef SCOREC_SPR
 #include "AAdapt_SPRSizeField.hpp"
-#endif
 #include "AAdapt_ExtrudedAdapt.hpp"
 
 #include "AAdapt_RC_Manager.hpp"
@@ -56,10 +54,8 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     szField = Teuchos::rcp(new AAdapt::NonUnifRefSizeField(pumi_discretization));
   else if (method == "RPI Albany Size")
     szField = Teuchos::rcp(new AAdapt::AlbanySizeField(pumi_discretization));
-#ifdef SCOREC_SPR
   else if (method == "RPI SPR Size")
     szField = Teuchos::rcp(new AAdapt::SPRSizeField(pumi_discretization));
-#endif
   else if (method == "RPI Extruded")
     szField = Teuchos::rcp(new AAdapt::ExtrudedAdapt(pumi_discretization));
   else
@@ -260,16 +256,16 @@ void AAdapt::MeshAdapt::afterAdapt()
 
   apf::reorderMdsMesh(mesh);
 
-  if (adapt_params_->isParameter("Write Adapted SMB Files")) {
+  if (adapt_params_->get<bool>("Write Adapted SMB Files", false)) {
     std::ostringstream smbOutName;
     smbOutName << "adapted_mesh_" << ncalls << "/";
     std::string outFile= smbOutName.str();
     mesh->writeNative(outFile.c_str());
   }
 
-  // Throw away all the Albany data structures and re-build them from the mesh
+  // Throw away some Albany data structures and re-build them from the mesh
   // Note that the solution transfer for the QP fields happens in this call
-  pumi_discretization->updateMesh(should_transfer_ip_data);
+  pumi_discretization->updateMesh(should_transfer_ip_data, param_lib_);
 
   // detach QP fields from the apf mesh
   if (should_transfer_ip_data)
@@ -511,6 +507,7 @@ AAdapt::MeshAdapt::getValidAdapterParameters() const
   validPL->set<int>("Max Number of Mesh Adapt Iterations", 1, "Number of iterations to limit meshadapt to");
   validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
+  validPL->set<long int>("Target Element Count", 1000, "Desired number of elements for error-based adaptivity");
   validPL->set<std::string>("State Variable", "", "SPR operates on this variable");
   validPL->set<Teuchos::Array<std::string> >("Load Balancing", defaultStArgs, "Turn on predictive load balancing");
   validPL->set<double>("Maximum LB Imbalance", 1.3, "Set maximum imbalance tolerance for predictive laod balancing");
@@ -518,6 +515,7 @@ AAdapt::MeshAdapt::getValidAdapterParameters() const
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
   validPL->set<double>("Minimum Part Density", 1000, "Minimum elements per part: triggers partition shrinking");
   validPL->set<bool>("Write Adapted SMB Files", false, "Write .smb mesh files after adaptation");
+  validPL->set<std::string>("Extruded Size Method", "SPR", "Error estimator for extruded meshes");
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->getValidParameters(validPL);
 
   return validPL;

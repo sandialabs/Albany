@@ -15,6 +15,7 @@
 #include "Aeras_Dimension.hpp"
 
 #include "Aeras_Eta.hpp"
+#include "Kokkos_Vector.hpp"
 
 namespace Aeras {
 
@@ -37,7 +38,8 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   Pidot          (p.get<std::string> ("PiDot"),                 dl->qp_scalar_level),
   numQPs     (dl->node_qp_scalar          ->dimension(2)),
   numDims    (dl->node_qp_gradient        ->dimension(3)),
-  numLevels  (dl->node_scalar_level       ->dimension(2))
+  numLevels  (dl->node_scalar_level       ->dimension(2)),
+  E (Eta<EvalT>::self())
 {
 
   Teuchos::ParameterList* xzhydrostatic_params =
@@ -56,6 +58,7 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   this->addEvaluatedField(etadotdVelx);
   this->addEvaluatedField(Pidot);
 
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   for (int i = 0; i < tracerNames.size(); ++i) {
     PHX::MDField<ScalarT,Cell,QuadPoint,Level> in   (tracerNames[i],          dl->qp_scalar_level);
     //PHX::MDField<ScalarT,Cell,QuadPoint,Level> out  (etadotdtracerNames[i],   dl->qp_scalar_level);
@@ -67,6 +70,24 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
     //this->addEvaluatedField(etadotdTracer[tracerNames[i]]);
     this->addEvaluatedField(dedotpiTracerde[tracerNames[i]]);
   }
+
+#else
+  Tracer.resize(tracerNames.size());
+  //etadotdTracer.resize(tracerNames.size());
+  dedotpiTracerde.resize(tracerNames.size());
+  for (int i = 0; i < tracerNames.size(); ++i) {
+    PHX::MDField<ScalarT,Cell,QuadPoint,Level> in   (tracerNames[i],          dl->qp_scalar_level);
+    //PHX::MDField<ScalarT,Cell,QuadPoint,Level> out  (etadotdtracerNames[i],   dl->qp_scalar_level);
+    PHX::MDField<ScalarT,Cell,QuadPoint,Level> out  (dedotpitracerdeNames[i],   dl->qp_scalar_level);
+    Tracer[i]          = in;
+    //etadotdTracer[i] = out;
+    dedotpiTracerde[i] = out;
+    this->addDependentField(Tracer[i]);
+    //this->addEvaluatedField(etadotdTracer[tracerNames[i]]);
+    this->addEvaluatedField(dedotpiTracerde[i]);
+  }
+
+#endif
 
   this->setName("Aeras::XZHydrostatic_EtaDotPi"+PHX::typeAsString<EvalT>());
 
@@ -88,18 +109,131 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(etadot     ,   fm);
   this->utils.setFieldData(etadotdVelx,   fm);
   this->utils.setFieldData(Pidot,         fm);
+
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   for (int i = 0; i < Tracer.size();  ++i)       this->utils.setFieldData(Tracer[tracerNames[i]], fm);
   //for (int i = 0; i < etadotdTracer.size(); ++i) this->utils.setFieldData(etadotdTracer[tracerNames[i]],fm);
   for (int i = 0; i < dedotpiTracerde.size(); ++i) this->utils.setFieldData(dedotpiTracerde[tracerNames[i]],fm);
+
+#else
+  for (int i = 0; i < Tracer.size();  ++i)       this->utils.setFieldData(Tracer[i], fm);
+  //for (int i = 0; i < etadotdTracer.size(); ++i) this->utils.setFieldData(etadotdTracer[i],fm);
+  for (int i = 0; i < dedotpiTracerde.size(); ++i) this->utils.setFieldData(dedotpiTracerde[i],fm);
+
+#endif
 }
+
+//**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void XZHydrostatic_EtaDotPi<EvalT, Traits>::
+operator() (const XZHydrostatic_EtaDotPi_Tag& tag, const int& cell) const{
+  for (int qp=0; qp < numQPs; ++qp) {
+    ScalarT pdotp0 = 0;
+    for (int level=0; level < numLevels; ++level) pdotp0 -= divpivelx(cell,qp,level) * E.delta(level);
+
+    //etadotpi(level) shifted by 1/2
+    ScalarT etadotpi[numLevels+1];
+    for (int level=0; level < numLevels; ++level) {
+      //define etadotpi on interfaces
+      ScalarT integral = 0;
+      for (int j=0; j<=level; ++j) integral += divpivelx(cell,qp,j) * E.delta(j);
+
+      etadotpi[level] = -E.B(level+.5)*pdotp0 - integral;
+    }
+    etadotpi[0] = etadotpi[numLevels] = 0;
+
+    //Vertical Finite Differencing
+    for (int level=0; level < numLevels; ++level) {
+      const ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*E.delta(level));
+      const int level_m = level             ? level-1 : 0;
+      const int level_p = level+1<numLevels ? level+1 : level;
+      const ScalarT etadotpi_m = etadotpi[level  ];
+      const ScalarT etadotpi_p = etadotpi[level+1];
+
+      const ScalarT dT_m       = Temperature(cell,qp,level)   - Temperature(cell,qp,level_m);
+      const ScalarT dT_p       = Temperature(cell,qp,level_p) - Temperature(cell,qp,level);
+      etadotdT(cell,qp,level) = factor * ( etadotpi_p*dT_p + etadotpi_m*dT_m );
+
+      for (int dim=0; dim<numDims; ++dim) {
+        const ScalarT dVx_m      = Velocity(cell,qp,level,dim)   - Velocity(cell,qp,level_m,dim);
+        const ScalarT dVx_p      = Velocity(cell,qp,level_p,dim) - Velocity(cell,qp,level,dim);
+        etadotdVelx(cell,qp,level,dim) = factor * ( etadotpi_p*dVx_p + etadotpi_m*dVx_m );
+      }
+
+      //OG: Why for tracers (etaDot delta_eta) operator is different than for velocity, T, etc.?
+      for (int i = 0; i < tracerNames.size(); ++i) {
+        const ScalarT q_m = 0.5*( Tracer[i](cell,qp,level)   / Pi(cell,qp,level)
+                          + Tracer[i](cell,qp,level_m) / Pi(cell,qp,level_m) );
+        const ScalarT q_p = 0.5*( Tracer[i](cell,qp,level_p) / Pi(cell,qp,level_p)
+                          + Tracer[i](cell,qp,level)   / Pi(cell,qp,level)   );
+        //etadotdTracer[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
+        dedotpiTracerde[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
+      }
+
+      //OG: A tracer eqn for pi, or for q=1. Not relevant for basic hydrostatic version.
+      Pidot(cell,qp,level) = - divpivelx(cell,qp,level) - (etadotpi_p - etadotpi_m)/E.delta(level);
+    }
+  }
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void XZHydrostatic_EtaDotPi<EvalT, Traits>::
+operator() (const XZHydrostatic_EtaDotPi_pureAdvection_Tag& tag, const int& cell) const{
+  for (int qp=0; qp < numQPs; ++qp) {
+    //etadotpi(level) shifted by 1/2
+    ScalarT etadotpi[numLevels+1];
+    for (int level=0; level < numLevels-1; ++level) {
+      const ScalarT etadotpi_m = etadot(cell,qp,level  )*Pi(cell,qp,level  );
+      const ScalarT etadotpi_p = etadot(cell,qp,level+1)*Pi(cell,qp,level+1);
+
+      //Simple average in vertical direction for etadotpi(level+1/2) at interfaces
+      etadotpi[level] = 0.5*(etadotpi_m + etadotpi_p);  
+    }
+    etadotpi[0] = etadotpi[numLevels] = 0;
+        
+    //Vertical Finite Differencing
+    for (int level=0; level < numLevels; ++level) {
+      const ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*E.delta(level));
+      const int level_m = level             ? level-1 : 0;
+      const int level_p = level+1<numLevels ? level+1 : level;
+      const ScalarT etadotpi_m = etadotpi[level  ];
+      const ScalarT etadotpi_p = etadotpi[level+1];
+
+      const ScalarT dT_m       = Temperature(cell,qp,level)   - Temperature(cell,qp,level_m);
+      const ScalarT dT_p       = Temperature(cell,qp,level_p) - Temperature(cell,qp,level);
+      etadotdT(cell,qp,level) = factor * ( etadotpi_p*dT_p + etadotpi_m*dT_m );
+
+      for (int dim=0; dim<numDims; ++dim) {
+        const ScalarT dVx_m      = Velocity(cell,qp,level,dim)   - Velocity(cell,qp,level_m,dim);
+        const ScalarT dVx_p      = Velocity(cell,qp,level_p,dim) - Velocity(cell,qp,level,dim);
+        etadotdVelx(cell,qp,level,dim) = factor * ( etadotpi_p*dVx_p + etadotpi_m*dVx_m );
+      }
+
+      for (int i = 0; i < tracerNames.size(); ++i) {
+        const ScalarT q_m = 0.5*( Tracer[i](cell,qp,level)   / Pi(cell,qp,level)
+                          + Tracer[i](cell,qp,level_m) / Pi(cell,qp,level_m) );
+        const ScalarT q_p = 0.5*( Tracer[i](cell,qp,level_p) / Pi(cell,qp,level_p)
+                          + Tracer[i](cell,qp,level)   / Pi(cell,qp,level)   );
+        dedotpiTracerde[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
+      }
+
+      Pidot(cell,qp,level) = - divpivelx(cell,qp,level) - (etadotpi_p - etadotpi_m)/E.delta(level);
+    }
+  }
+}
+
+#endif
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void XZHydrostatic_EtaDotPi<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  const Eta<EvalT> &E = Eta<EvalT>::self();
-
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   //etadotpi(level) shifted by 1/2
   std::vector<ScalarT> etadotpi(numLevels+1);
 
@@ -178,18 +312,14 @@ evaluateFields(typename Traits::EvalData workset)
 
   //pure advection: there are many auxiliary variables.
   else {
-    //Local variable that is etadot*Pi.  Defining this at (cell,qp,levels) which is not
-    //the same as for the non-advection version. 
-    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  etadotPi(workset.numCells,numQPs,numLevels);
-    etadotPi.initialize();
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int qp=0; qp < numQPs; ++qp) {
 
 	for (int level=0; level < numLevels-1; ++level) {
 	  const ScalarT etadotpi_m = etadot(cell,qp,level  )*Pi(cell,qp,level  );
 	  const ScalarT etadotpi_p = etadot(cell,qp,level+1)*Pi(cell,qp,level+1);
-          //Simple average in vertical direction for etadotPi(level+1/2) at interfaces
-          etadotPi[level] = 0.5*(etadotpi_m + etadotpi_p);  
+          //Simple average in vertical direction for etadotpi(level+1/2) at interfaces
+          etadotpi[level] = 0.5*(etadotpi_m + etadotpi_p);  
         }
 	etadotpi[0] = etadotpi[numLevels] = 0;
         
@@ -198,8 +328,8 @@ evaluateFields(typename Traits::EvalData workset)
 	  const ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*E.delta(level));
 	  const int level_m = level             ? level-1 : 0;
 	  const int level_p = level+1<numLevels ? level+1 : level;
-	  const ScalarT etadotpi_m = etadotPi[level  ];
-	  const ScalarT etadotpi_p = etadotPi[level+1];
+	  const ScalarT etadotpi_m = etadotpi[level  ];
+	  const ScalarT etadotpi_p = etadotpi[level+1];
 
 	  const ScalarT dT_m       = Temperature(cell,qp,level)   - Temperature(cell,qp,level_m);
 	  const ScalarT dT_p       = Temperature(cell,qp,level_p) - Temperature(cell,qp,level);
@@ -223,5 +353,16 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+
+#else
+  if (!pureAdvection) {
+    Kokkos::parallel_for(XZHydrostatic_EtaDotPi_Policy(0,workset.numCells),*this);
+  }
+
+  else {
+    Kokkos::parallel_for(XZHydrostatic_EtaDotPi_pureAdvection_Policy(0,workset.numCells),*this);
+  }
+
+#endif
 }
 }

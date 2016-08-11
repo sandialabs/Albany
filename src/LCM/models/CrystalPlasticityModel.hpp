@@ -7,110 +7,97 @@
 #if !defined(LCM_CrystalPlasticityModel_hpp)
 #define LCM_CrystalPlasticityModel_hpp
 
-#include "CrystalPlasticityCore.hpp"
-#include "ConstitutiveModel.hpp"
+#include "core/CrystalPlasticity/CrystalPlasticityCore.hpp"
+#include "core/CrystalPlasticity/NonlinearSolver.hpp"
+#include "core/CrystalPlasticity/Integrator.hpp"
+#include "../parallel_models/ParallelConstitutiveModel.hpp"
 #include "NOX_StatusTest_ModelEvaluatorFlag.h"
+#include "../../utility/StaticAllocator.hpp"
 
 namespace LCM
 {
 
 //! \brief CrystalPlasticity Plasticity Constitutive Model
 template<typename EvalT, typename Traits>
-class CrystalPlasticityModel: public LCM::ConstitutiveModel<EvalT, Traits>
+class CrystalPlasticityKernel: public ParallelKernel<EvalT, Traits>
 {
 public:
 
-  enum class IntegrationScheme
-  {
-    UNDEFINED = 0, 
-    EXPLICIT = 1, 
-    IMPLICIT = 2
-  };
-
-  enum class ResidualType
-  {
-    UNDEFINED = 0, 
-    SLIP = 1, 
-    SLIP_HARDNESS = 2
-  };
-
   using ScalarT = typename EvalT::ScalarT;
-
+	using ValueT = typename Sacado::ValueType<ScalarT>::type;
+	
+  using BaseKernel = ParallelKernel<EvalT, Traits>;
+  using ScalarField = typename BaseKernel::ScalarField;
+  using Workset = typename BaseKernel::Workset;
+	
   // Dimension of problem, e.g., 2 -> 2D, 3 -> 3D
-  using ConstitutiveModel<EvalT, Traits>::num_dims_;
+  using BaseKernel::num_dims_;
 
-  using ConstitutiveModel<EvalT, Traits>::num_pts_;
-  using ConstitutiveModel<EvalT, Traits>::field_name_map_;
+  using BaseKernel::num_pts_;
+  using BaseKernel::field_name_map_;
 
   // optional temperature support
-  using ConstitutiveModel<EvalT, Traits>::have_temperature_;
-  using ConstitutiveModel<EvalT, Traits>::expansion_coeff_;
-  using ConstitutiveModel<EvalT, Traits>::ref_temperature_;
-  using ConstitutiveModel<EvalT, Traits>::heat_capacity_;
-  using ConstitutiveModel<EvalT, Traits>::density_;
-  using ConstitutiveModel<EvalT, Traits>::temperature_;
+  using BaseKernel::have_temperature_;
+  using BaseKernel::expansion_coeff_;
+  using BaseKernel::ref_temperature_;
+  using BaseKernel::heat_capacity_;
+  using BaseKernel::density_;
+  using BaseKernel::temperature_;
   
+  using BaseKernel::setDependentField;
+  using BaseKernel::setEvaluatedField;
+  using BaseKernel::addStateVariable;
+  using BaseKernel::extractEvaluatedFieldArray;
+
   ///
   /// Constructor
   ///
-  CrystalPlasticityModel(
-      Teuchos::ParameterList* p,
+  CrystalPlasticityKernel(
+      ConstitutiveModel<EvalT, Traits> & model,
+      Teuchos::ParameterList * p,
       Teuchos::RCP<Albany::Layouts> const & dl);
+
+  CrystalPlasticityKernel(CrystalPlasticityKernel const &) = delete;
+  CrystalPlasticityKernel & operator=(CrystalPlasticityKernel const &) = delete;
 
   ///
   /// Virtual Denstructor
   ///
   virtual
-  ~CrystalPlasticityModel()
+  ~CrystalPlasticityKernel()
   {
   }
 
-  ///
-  /// Method to compute the state (e.g. energy, stress, tangent)
-  ///
-  virtual
   void
-  computeState(
-      typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
+  init(Workset & workset,
+       FieldMap<ScalarT> & dep_fields,
+       FieldMap<ScalarT> & eval_fields);
 
-  virtual
-  void
-  computeStateParallel(
-      typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
-  }
+  ///
+  /// Method to compute the state for a single cell and quadrature point
+  //  (e.g. energy, stress, tangent)
+  ///
+  KOKKOS_INLINE_FUNCTION
+  void operator() (int cell, int pt) const;
 
   ///
   ///  Set a NOX status test to Failed, which will trigger Piro to cut the global
   ///  load step, assuming the load-step-reduction feature is active.
-  ///
+  /// FIXME: This needs to be done outside of the material point loop
+  /// (it's a race condition)
   void
   forceGlobalLoadStepReduction()
   {
     TEUCHOS_TEST_FOR_EXCEPTION(
-	  nox_status_test_.is_null(),
-          std::logic_error,
-          "\n**** Error in CrystalPlasticityModel, error accessing NOX status test.");
+        nox_status_test_.is_null(),
+        std::logic_error,
+        "\n**** Error in CrystalPlasticityModel: \
+            error accessing NOX status test.");
 
     nox_status_test_->status_ = NOX::StatusTest::Failed;
   }
 
 private:
-
-  ///
-  /// Private to prohibit copying
-  ///
-  CrystalPlasticityModel(const CrystalPlasticityModel &);
-
-  ///
-  /// Private to prohibit copying
-  ///
-  CrystalPlasticityModel & operator=(const CrystalPlasticityModel &);
 
   ///
   /// Crystal elasticity parameters
@@ -122,7 +109,16 @@ private:
   c12_;
 
   RealType
+  c13_;
+
+  RealType
+  c33_;
+
+  RealType
   c44_;
+
+  RealType
+  c66_;
 
   RealType
   c11_temperature_coeff_;
@@ -131,7 +127,16 @@ private:
   c12_temperature_coeff_;
 
   RealType
+  c13_temperature_coeff_;
+
+  RealType
+  c33_temperature_coeff_;
+
+  RealType
   c44_temperature_coeff_;
+
+  RealType
+  c66_temperature_coeff_;
 
   RealType
   reference_temperature_;
@@ -143,6 +148,9 @@ private:
   /// Number of slip systems
   ///
   int
+  num_family_;
+
+  int
   num_slip_;
 
   ///
@@ -151,51 +159,43 @@ private:
   Intrepid2::Tensor4<ScalarT, CP::MAX_DIM>
   C_unrotated_;
 
-  ///
-  /// Elasticity tensor
-  ///
-  Intrepid2::Tensor4<ScalarT, CP::MAX_DIM>
-  C_;
-
   //
   // Unrotated slip directions
   //
-  std::vector< Intrepid2::Vector<RealType, CP::MAX_DIM> >
+  std::vector<Intrepid2::Vector<RealType, CP::MAX_DIM>>
   s_unrotated_;
 
   //
   // Unrotated slip normals
   //
-  std::vector< Intrepid2::Vector<RealType, CP::MAX_DIM> >
+  std::vector<Intrepid2::Vector<RealType, CP::MAX_DIM>>
   n_unrotated_;
+
+  ///
+  /// Vector holding slip system families
+  ///
+  std::vector<CP::SlipFamily<CP::MAX_DIM, CP::MAX_SLIP>>
+  slip_families_;
 
   ///
   /// Struct holding slip system data
   ///
-  std::vector< CP::SlipSystemStruct<CP::MAX_DIM, CP::MAX_SLIP> >
+  std::vector<CP::SlipSystem<CP::MAX_DIM>>
   slip_systems_;
 
   ///
   /// Flags for reading lattice orientations from file
   ///
-  bool read_orientations_from_mesh_;
-
-  ///
-  /// Constitutive relations
-  ///
-  CP::FlowRule
-  flow_rule_;
-
-  CP::HardeningLaw
-  hardening_law_;
+  bool
+  read_orientations_from_mesh_;
 
   ///
   /// Solution options
   ///
-  IntegrationScheme 
+  CP::IntegrationScheme 
   integration_scheme_;
-  
-  ResidualType
+
+  CP::ResidualType
   residual_type_;
 
   bool
@@ -204,23 +204,23 @@ private:
   Intrepid2::StepType
   step_type_;
 
-  RealType
-  implicit_nonlinear_solver_relative_tolerance_;
-  
-  RealType
-  implicit_nonlinear_solver_absolute_tolerance_;
-  
-  int
-  implicit_nonlinear_solver_max_iterations_;
-  
-  int
-  implicit_nonlinear_solver_min_iterations_;
+  ///
+  /// Minimizer
+  ///
+  Intrepid2::Minimizer<ValueT, CP::NLS_DIM>
+  minimizer_;
 
   ///
   /// Pointer to NOX status test, allows the material model to force a global load step reduction
   ///
   Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
   nox_status_test_;
+  
+  ///
+  /// Memory management
+  ///
+  //mutable utility::StaticAllocator
+  //allocator_;
 
   ///
   /// Output options 
@@ -230,7 +230,123 @@ private:
 
   bool
   write_data_file_;
+
+  ///
+  /// Dependent MDFields
+  ///
+  ScalarField
+  def_grad_;
+
+  ScalarField
+  time_;
+
+  ScalarField
+  delta_time_;
+
+  ///
+  /// Evaluated MDFields
+  ///
+  ScalarField
+  eqps_;
+
+  ScalarField
+  xtal_rotation_;
+
+  ScalarField
+  stress_;
+  
+  ScalarField
+  plastic_deformation_;
+  
+  ScalarField
+  velocity_gradient_;
+  
+  ScalarField
+  source_;
+  
+  ScalarField
+  cp_residual_;
+  
+  ScalarField
+  cp_residual_iter_;
+
+  std::vector<Teuchos::RCP<ScalarField>>
+  slips_;
+  
+  std::vector<Albany::MDArray *>
+  previous_slips_;
+
+  std::vector<Teuchos::RCP<ScalarField>>
+  slip_rates_;
+
+  std::vector<Albany::MDArray *>
+  previous_slip_rates_;
+
+  std::vector<Teuchos::RCP<ScalarField>>
+  hards_;
+
+  std::vector<Albany::MDArray *>
+  previous_hards_;
+
+  std::vector<Teuchos::RCP<ScalarField>>
+  shears_;
+
+  //
+  // Field strings
+  //
+  std::string const
+  eqps_string_ = field_name_map_["eqps"];
+
+  std::string const
+  Re_string_ = field_name_map_["Re"];
+
+  std::string const
+  cauchy_string_ = field_name_map_["Cauchy_Stress"];
+
+  std::string const
+  Fp_string_ = field_name_map_["Fp"];
+
+  std::string const
+  L_string_ = field_name_map_["Velocity_Gradient"];
+
+  std::string const
+  residual_string_ = field_name_map_["CP_Residual"];
+
+  std::string const
+  residual_iter_string_ = field_name_map_["CP_Residual_Iter"];
+
+  std::string const
+  source_string_ = field_name_map_["Mechanical_Source"];
+
+  std::string const
+  F_string_ = field_name_map_["F"];
+
+  std::string const
+  J_string_ = field_name_map_["J"];
+
+  std::string const
+  time_string_ = "Time";
+
+  std::string const
+  dt_string_ = "Delta Time";
+
+  ///
+  /// State Variables
+  ///
+  Albany::MDArray
+  previous_plastic_deformation_;
+
+  RealType
+  dt_;
+
+  Teuchos::ArrayRCP<double*>
+  rotation_matrix_transpose_;
+
 };
+
+template<typename EvalT, typename Traits>
+using CrystalPlasticityModel
+  = LCM::ParallelConstitutiveModel<EvalT, Traits, CrystalPlasticityKernel<EvalT, Traits>>;
 
 }
 

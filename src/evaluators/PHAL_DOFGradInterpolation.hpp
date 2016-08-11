@@ -22,23 +22,22 @@ namespace PHAL {
 
 */
 
-template<typename EvalT, typename Traits, typename Type>
-class DOFGradInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
- 			     public PHX::EvaluatorDerived<EvalT, Traits>  {
-
+template<typename EvalT, typename Traits, typename ScalarT>
+class DOFGradInterpolationBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                 public PHX::EvaluatorDerived<EvalT, Traits>
+{
 public:
 
-  DOFGradInterpolation(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
+  DOFGradInterpolationBase(const Teuchos::ParameterList& p,
+                           const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+                             PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
 private:
 
-  typedef Type ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
@@ -58,7 +57,7 @@ private:
 public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-  struct DOFGradInterpolation_Residual_Tag{};
+  struct DOFGradInterpolationBase_Residual_Tag{};
 
 
 #ifdef KOKKOS_OPTIMIZED
@@ -72,23 +71,23 @@ public:
   void operator()( const team_member & thread) const;
 
 #else
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFGradInterpolation_Residual_Tag> DOFGradInterpolation_Residual_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFGradInterpolationBase_Residual_Tag> DOFGradInterpolationBase_Residual_Policy;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFGradInterpolation_Residual_Tag& tag, const int& cell) const;
+  void operator() (const DOFGradInterpolationBase_Residual_Tag& tag, const int& cell) const;
 #endif
 #endif
 
 };
 
 template<typename Traits>
-class DOFGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits, FadType>
+class DOFGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits>  {
 
 public:
 
-  DOFGradInterpolation(const Teuchos::ParameterList& p,
+  DOFGradInterpolationBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -120,14 +119,14 @@ private:
 public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-  struct DOFGradInterpolation_Jacobian_Tag{};
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFGradInterpolation_Jacobian_Tag> DOFGradInterpolation_Jacobian_Policy;
+  struct DOFGradInterpolationBase_Jacobian_Tag{};
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFGradInterpolationBase_Jacobian_Tag> DOFGradInterpolationBase_Jacobian_Policy;
 
   int num_dof;
   int neq;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFGradInterpolation_Jacobian_Tag& tag, const int& cell) const;
+  void operator() (const DOFGradInterpolationBase_Jacobian_Tag& tag, const int& cell) const;
 
 #endif
 
@@ -135,13 +134,13 @@ public:
 
 #ifdef ALBANY_SG
 template<typename Traits>
-class DOFGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, SGFadType>
+class DOFGradInterpolationBase<PHAL::AlbanyTraits::SGJacobian, Traits, typename PHAL::AlbanyTraits::SGJacobian::ScalarT>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::SGJacobian, Traits>  {
 
 public:
 
-  DOFGradInterpolation(const Teuchos::ParameterList& p,
+  DOFGradInterpolationBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -173,13 +172,13 @@ private:
 
 #ifdef ALBANY_ENSEMBLE
 template<typename Traits>
-class DOFGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, MPFadType>
+class DOFGradInterpolationBase<PHAL::AlbanyTraits::MPJacobian, Traits, typename PHAL::AlbanyTraits::MPJacobian::ScalarT>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::MPJacobian, Traits>  {
 
 public:
 
-  DOFGradInterpolation(const Teuchos::ParameterList& p,
+  DOFGradInterpolationBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -209,44 +208,16 @@ private:
 };
 #endif
 
-// Exact copy as above except data type is RealType instead of ScalarT
-// to interpolate quantities without derivative arrays
+// Some shortcut names
 template<typename EvalT, typename Traits>
-class DOFGradInterpolation_noDeriv : public PHX::EvaluatorWithBaseImpl<Traits>,
- 			     public PHX::EvaluatorDerived<EvalT, Traits>  {
+using DOFGradInterpolation = DOFGradInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>;
 
-public:
+template<typename EvalT, typename Traits>
+using DOFGradInterpolationMesh = DOFGradInterpolationBase<EvalT,Traits,typename EvalT::MeshScalarT>;
 
-  DOFGradInterpolation_noDeriv(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
+template<typename EvalT, typename Traits>
+using DOFGradInterpolationParam = DOFGradInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>;
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+} // Namespace PHAL
 
-  void evaluateFields(typename Traits::EvalData d);
- 
-  KOKKOS_INLINE_FUNCTION
-  void operator()(const int& i) const;
-
-private:
-
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-  typedef typename EvalT::ParamScalarT ParamScalarT;
-
-  // Input:
-  //! Values at nodes
-  PHX::MDField<ParamScalarT,Cell,Node> val_node;
-  //! Basis Functions
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
-
-  // Output:
-  //! Values at quadrature points
-  PHX::MDField<ParamScalarT,Cell,QuadPoint,Dim> grad_val_qp;
-
-  std::size_t numNodes;
-  std::size_t numQPs;
-  std::size_t numDims;
-};
-}
-
-#endif
+#endif // PHAL_DOFGRAD_INTERPOLATION_HPP

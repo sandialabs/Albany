@@ -16,15 +16,34 @@
 
 namespace LCM
 {
-
-namespace detail {
-
 template<typename EvalT, typename Traits>
-struct NeohookeanKernel
+struct NeohookeanKernel : public ParallelKernel<EvalT, Traits>
 {
+  ///
+  /// Constructor
+  ///
+  NeohookeanKernel(ConstitutiveModel<EvalT, Traits> &model,
+          Teuchos::ParameterList* p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
+
+  NeohookeanKernel(const NeohookeanKernel&) = delete;
+  NeohookeanKernel& operator=(const NeohookeanKernel&) = delete;
+  
   using ScalarT = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
   using ScalarField = PHX::MDField<ScalarT>;
+  using BaseKernel = ParallelKernel<EvalT, Traits>;
+  using Workset = typename BaseKernel::Workset;
+
+  using BaseKernel::num_dims_;
+  using BaseKernel::num_pts_;
+  using BaseKernel::field_name_map_;
+  using BaseKernel::compute_energy_;
+  using BaseKernel::compute_tangent_;
+  
+  using BaseKernel::setDependentField;
+  using BaseKernel::setEvaluatedField;
+  using BaseKernel::addStateVariable;
   
   // Dependent MDFields
   ScalarField def_grad;
@@ -37,17 +56,18 @@ struct NeohookeanKernel
   ScalarField energy;
   ScalarField tangent;
   
-  // Misc parameters
-  int num_dims, num_pts;
-  bool compute_energy;
-  bool compute_tangent;
+  void init(Workset &workset,
+       FieldMap<ScalarT> &dep_fields,
+       FieldMap<ScalarT> &eval_fields);
   
   KOKKOS_INLINE_FUNCTION
-  void operator() (int cell) const;
+  void operator() (int cell, int pt) const;
 };
 
-}
+template<typename EvalT, typename Traits>
+using ParallelNeohookeanModel = LCM::ParallelConstitutiveModel<EvalT, Traits, NeohookeanKernel<EvalT, Traits>>;
 
+#if 0
 //! \brief Parallel Neohookean Model
 template<typename EvalT, typename Traits>
 class ParallelNeohookeanModel: public LCM::ParallelConstitutiveModel<EvalT, Traits, detail::NeohookeanKernel<EvalT, Traits> >
@@ -76,15 +96,6 @@ public:
   using Parent::temperature_;
 
   ///
-  /// Constructor
-  ///
-  ParallelNeohookeanModel(Teuchos::ParameterList* p,
-      const Teuchos::RCP<Albany::Layouts>& dl);
-
-  ParallelNeohookeanModel(const ParallelNeohookeanModel&) = delete;
-  ParallelNeohookeanModel& operator=(const ParallelNeohookeanModel&) = delete;
-
-  ///
   /// Virtual Destructor
   ///
   virtual
@@ -94,11 +105,12 @@ protected:
   
   virtual
   EvalKernel
-  createEvalKernel(FieldMap &dep_fields,
-                   FieldMap &eval_fields,
-                   int numCells) override;
+  createEvalKernel(typename Traits::EvalData &workset,
+                   FieldMap &dep_fields,
+                   FieldMap &eval_fields) override;
   
 };
+#endif
 }
 
 #endif

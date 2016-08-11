@@ -34,8 +34,8 @@ class VerticalVelocity : public PHX::EvaluatorWithBaseImpl<Traits>,
 		typedef typename EvalT::ParamScalarT ParamScalarT;
 
 		// Input:
-		PHX::MDField<ParamScalarT,Cell,Node>    thickness;
-		PHX::MDField<ScalarT,Cell,Node> 		int1Dw_z;
+		PHX::MDField<ParamScalarT,Cell,Node> thickness;
+		PHX::MDField<ScalarT,Cell,Node> int1Dw_z;
 
 		// Output:
 		PHX::MDField<ScalarT,Cell,Node> w;

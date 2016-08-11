@@ -52,12 +52,23 @@ private:
   //! Values at quadrature points
   PHX::MDField<ScalarT,Cell,QuadPoint,Level> div_val_qp;
 
-
   const int numNodes;
   const int numDims;
   const int numQPs;
   const int numLevels;
-};
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct DOFDivInterpolationLevelsXZ_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFDivInterpolationLevelsXZ_Tag> DOFDivInterpolationLevelsXZ_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFDivInterpolationLevelsXZ_Tag& tag, const int& i) const;
+
+#endif
+};
 }
 #endif

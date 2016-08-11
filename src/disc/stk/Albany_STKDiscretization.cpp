@@ -1525,7 +1525,7 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 #ifdef ALBANY_EPETRA
   overlap_map = Petra::TpetraMap_To_EpetraMap(overlap_mapT, comm);
   overlap_node_map = Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
-#endif 
+#endif
 
   if(Teuchos::nonnull(stkMeshStruct->nodal_data_base))
     stkMeshStruct->nodal_data_base->resizeOverlapMap(
@@ -2246,42 +2246,6 @@ void Albany::STKDiscretization::computeSideSets(){
     }
 
     ss++;
-  }
-}
-
-void Albany::STKDiscretization::computeNodeSetsFromSideSets()
-{
-  // Looping over all side_rank parts found in the mesh
-  for (auto ss : stkMeshStruct->ssPartVec)
-  {
-    if (nodeSets.find(ss.first) != nodeSets.end())
-    {
-      // WARNING! We are assuming that if an existing node set has already the name of
-      //          this side set, then it must contain all this side set's nodes.
-      continue;
-    }
-
-    // Get all owned sides in this side set
-    stk::mesh::Selector select_owned_in_sspart = stk::mesh::Selector( *ss.second )
-                                               & stk::mesh::Selector( metaData.locally_owned_part() );
-
-    std::vector<stk::mesh::Entity> nodes;
-    stk::mesh::get_selected_entities (select_owned_in_sspart , // sides local to this processor
-                                      bulkData.buckets (stk::topology::NODE_RANK) ,
-                                      nodes); // store the result in "nodes"
-
-    // Adding the nodes to the nodeSets
-    nodeSets[ss.first].resize(nodes.size());
-    for (int inode=0; inode<nodes.size(); ++inode)
-    {
-      GO node_gid = gid(nodes[inode]);
-      nodeSets[ss.first][inode].resize(neq);
-      int node_lid = node_mapT->getLocalElement(node_gid);
-      for (int eq=0; eq<neq; ++eq)
-      {
-        nodeSets[ss.first][inode][eq] = getOwnedDOF(node_lid,eq);
-      }
-    }
   }
 }
 
@@ -3319,8 +3283,6 @@ Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   computeNodeSets();
 
   computeSideSets();
-
-  computeNodeSetsFromSideSets();
 
   setupExodusOutput();
 
