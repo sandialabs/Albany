@@ -88,21 +88,23 @@ CrystalPlasticityKernel(
       b_temp = e_list.get<Teuchos::Array<RealType>>(
         Albany::strint("Basis Vector", i + 1)).toVector();
 
-      RealType 
-      norm{0.};
+      // RealType 
+      // norm{0.};
 
-      for (int j = 0; j < num_dims_; ++j) {
-        norm += b_temp[j] * b_temp[j];
+      Intrepid2::Vector<RealType, CP::MAX_DIM>
+      basis(num_dims_);
+
+      for (int dim = 0; dim < num_dims_; ++dim){
+        basis[dim] = b_temp[dim];
       }
 
-      RealType const 
-      inverse_norm = 1. / std::sqrt(norm);
+      basis = Intrepid2::unit(basis);
 
       // TODO check zero, rh system
       // Filling columns of transformation with basis vectors
       // We are forming R^{T} which is equivalent to the direction cosine matrix
       for (int j = 0; j < num_dims_; ++j) {
-        element_block_orientation_(j, i) = b_temp[j] * inverse_norm;
+        element_block_orientation_(j, i) = basis[j];
       }
     }
   }
@@ -220,6 +222,7 @@ CrystalPlasticityKernel(
     for (int i = 0; i < num_dims_; ++i) {
       n_temp_normalized[i] = n_temp[i];
     }
+
     n_temp_normalized = Intrepid2::unit(n_temp_normalized);
     slip_systems_.at(num_ss).n_.set_dimension(num_dims_);
     slip_systems_.at(num_ss).n_ = n_temp_normalized;
@@ -253,15 +256,7 @@ CrystalPlasticityKernel(
       std::cout << slip_family.latent_matrix_ << std::endl;
     }
 
-    // FIXME: Get this behavior right in intrepid2
-    auto
-    slip_system_indices = slip_family.slip_system_indices_;
-
     slip_family.slip_system_indices_.set_dimension(slip_family.num_slip_sys_);
-
-    for (int ss_index(0); ss_index < slip_family.num_slip_sys_; ++ss_index) {
-      slip_family.slip_system_indices_[ss_index] = slip_system_indices[ss_index];
-    }
 
     if (verbosity_ > 2) {
       std::cout << "slip system indices" << slip_family.slip_system_indices_ << std::endl;
@@ -271,58 +266,29 @@ CrystalPlasticityKernel(
   //
   // retrive appropriate field name strings (ref to problems/FieldNameMap)
   //
-  std::string const
-  eqps_string = field_name_map_["eqps"];
-
-  std::string const
-  Re_string = field_name_map_["Re"];
-
-  std::string const
-  cauchy_string = field_name_map_["Cauchy_Stress"];
-
-  std::string const
-  Fp_string = field_name_map_["Fp"];
-
-  std::string const
-  L_string = field_name_map_["Velocity_Gradient"];
-
-  std::string const
-  F_string = field_name_map_["F"];
-
-  std::string const
-  J_string = field_name_map_["J"];
-
-  std::string const
-  source_string = field_name_map_["Mechanical_Source"];
-
-  std::string const
-  residual_string = field_name_map_["CP_Residual"];
-
-  std::string const
-  residual_iter_string = field_name_map_["CP_Residual_Iter"];
 
   //
   // define the dependent fields required for calculation
   //
-  setDependentField(F_string, dl->qp_tensor);
-  setDependentField(J_string, dl->qp_scalar);
-  setDependentField("Delta Time", dl->workset_scalar);
+  setDependentField(F_string_, dl->qp_tensor);
+  setDependentField(J_string_, dl->qp_scalar);
+  setDependentField(dt_string_, dl->workset_scalar);
 
   //
   // define the evaluated fields
   //
-  setEvaluatedField(eqps_string, dl->qp_scalar);
-  setEvaluatedField(Re_string, dl->qp_tensor);
-  setEvaluatedField(cauchy_string, dl->qp_tensor);
-  setEvaluatedField(Fp_string, dl->qp_tensor);
-  setEvaluatedField(L_string, dl->qp_tensor);
-  setEvaluatedField(source_string, dl->qp_scalar);
-  setEvaluatedField(residual_string, dl->qp_scalar);
-  setEvaluatedField(residual_iter_string, dl->qp_scalar);
-  setEvaluatedField("Time", dl->workset_scalar);
+  setEvaluatedField(time_string_, dl->workset_scalar);
+  setEvaluatedField(eqps_string_, dl->qp_scalar);
+  setEvaluatedField(Re_string_, dl->qp_tensor);
+  setEvaluatedField(cauchy_string_, dl->qp_tensor);
+  setEvaluatedField(Fp_string_, dl->qp_tensor);
+  setEvaluatedField(L_string_, dl->qp_tensor);
+  setEvaluatedField(source_string_, dl->qp_scalar);
+  setEvaluatedField(residual_string_, dl->qp_scalar);
+  setEvaluatedField(residual_iter_string_, dl->qp_scalar);
 
   if (have_temperature_) {
-    setEvaluatedField(source_string, dl->qp_scalar);
+    setEvaluatedField(source_string_, dl->qp_scalar);
   }
 
   //
@@ -330,28 +296,28 @@ CrystalPlasticityKernel(
   //
 
   // eqps
-  addStateVariable(eqps_string, dl->qp_scalar, "scalar", 0.0, false,
+  addStateVariable(eqps_string_, dl->qp_scalar, "scalar", 0.0, false,
       p->get<bool>("Output eqps", false));
 
   // Re
-  addStateVariable(Re_string, dl->qp_tensor, "identity", 0.0, false,
+  addStateVariable(Re_string_, dl->qp_tensor, "identity", 0.0, false,
       p->get<bool>("Output Re", false));
 
   // stress
-  addStateVariable(cauchy_string, dl->qp_tensor, "scalar", 0.0, false,
+  addStateVariable(cauchy_string_, dl->qp_tensor, "scalar", 0.0, false,
       p->get<bool>("Output Cauchy Stress", false));
 
   // Fp
-  addStateVariable(Fp_string, dl->qp_tensor, "identity", 0.0, true,
+  addStateVariable(Fp_string_, dl->qp_tensor, "identity", 0.0, true,
       p->get<bool>("Output Fp", false));
 
   // L
-  addStateVariable(L_string, dl->qp_tensor, "identity", 0.0, true,
+  addStateVariable(L_string_, dl->qp_tensor, "identity", 0.0, true,
       p->get<bool>("Output L", false));
 
   // mechanical source
   if (have_temperature_) {
-    addStateVariable(source_string, dl->qp_scalar, "scalar", 0.0, false,
+    addStateVariable(source_string_, dl->qp_scalar, "scalar", 0.0, false,
         p->get<bool>("Output Mechanical Source", false));
   }
 
@@ -426,19 +392,15 @@ CrystalPlasticityKernel(
   }
 
   // residual
-  addStateVariable(residual_string, dl->qp_scalar, "scalar", 0.0, false,
+  addStateVariable(residual_string_, dl->qp_scalar, "scalar", 0.0, false,
       p->get<bool>("Output CP_Residual", false));
 
   // residual iterations
-  addStateVariable(residual_iter_string, dl->qp_scalar, "scalar", 0.0, false,
+  addStateVariable(residual_iter_string_, dl->qp_scalar, "scalar", 0.0, false,
       p->get<bool>("Output CP_Residual_Iter", false));    
 
 }
 
-
-//
-// Compute the constitutive response of the material
-//
 
 //
 // Initialize state for computing the constitutive response of the material
@@ -463,60 +425,27 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(Workset & workset,
   }
 
   //
-  // retrive appropriate field name strings
-  //
-  std::string const
-  eqps_string = field_name_map_["eqps"];
-
-  std::string const
-  Re_string = field_name_map_["Re"];
-
-  std::string const
-  cauchy_string = field_name_map_["Cauchy_Stress"];
-
-  std::string const
-  Fp_string = field_name_map_["Fp"];
-
-  std::string const
-  L_string = field_name_map_["Velocity_Gradient"];
-
-  std::string const
-  residual_string = field_name_map_["CP_Residual"];
-
-  std::string const
-  residual_iter_string = field_name_map_["CP_Residual_Iter"];
-
-  std::string const
-  source_string = field_name_map_["Mechanical_Source"];
-
-  std::string const
-  F_string = field_name_map_["F"];
-
-  std::string const
-  J_string = field_name_map_["J"];
-
-  //
   // extract dependent MDFields
   //
-  def_grad_ = *dep_fields[F_string];
-  delta_time_ = *dep_fields["Delta Time"];
+  def_grad_ = *dep_fields[F_string_];
+  delta_time_ = *dep_fields[dt_string_];
 
   //
   // extract evaluated MDFields
   //
-  eqps_ = *eval_fields[eqps_string];
-  xtal_rotation_ = *eval_fields[Re_string];
-  stress_ = *eval_fields[cauchy_string];
-  plastic_deformation_ = *eval_fields[Fp_string];
-  velocity_gradient_ = *eval_fields[L_string];
+  time_ = *eval_fields[time_string_];
+  eqps_ = *eval_fields[eqps_string_];
+  xtal_rotation_ = *eval_fields[Re_string_];
+  stress_ = *eval_fields[cauchy_string_];
+  plastic_deformation_ = *eval_fields[Fp_string_];
+  velocity_gradient_ = *eval_fields[L_string_];
   
   if (have_temperature_) {
-    source_ = *eval_fields[source_string];
+    source_ = *eval_fields[source_string_];
   }
 
-  cp_residual_ = *eval_fields[residual_string];
-  cp_residual_iter_ = *eval_fields[residual_iter_string];
-  time_ = *eval_fields["Time"];
+  cp_residual_ = *eval_fields[residual_string_];
+  cp_residual_iter_ = *eval_fields[residual_iter_string_];
 
   // extract slip on each slip system
   extractEvaluatedFieldArray("gamma", num_slip_, slips_, previous_slips_,
@@ -535,7 +464,8 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(Workset & workset,
 
   // get state variables
 
-  previous_plastic_deformation_ = (*workset.stateArrayPtr)[Fp_string + "_old"];
+  previous_plastic_deformation_ = (*workset.stateArrayPtr)[Fp_string_ + "_old"];
+  
   dt_ = Sacado::ScalarValue<ScalarT>::eval(delta_time_(0));
 }
 
@@ -544,6 +474,9 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
 CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 {
+  // TODO: In the future for CUDA this should be moved out of the kernel because
+  // it uses dynamic allocation for the buffer. It should also be modified to use 
+  // cudaMalloc.
   utility::StaticAllocator allocator(1024 * 1024);
 
   //
@@ -596,10 +529,6 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   Intrepid2::Vector<ScalarT, CP::MAX_SLIP>
   slip_computed(num_slip_);
-
-  ///
-  /// Elasticity tensor
-  ///
 
   ///
   /// Elasticity tensor
@@ -737,10 +666,10 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
     rate[s] = Sacado::ScalarValue<ScalarT>::eval(rate_slip[s]);
   }
 
-  CP::PlasticityState<ScalarT, CP::MAX_DIM> plasticity_state(num_dims_, Fp_n);
-  CP::SlipState<ScalarT, CP::MAX_SLIP> slip_state(num_slip_, state_hardening_n,
-      slip_n, rate );
-  slip_state.slip_np1_ = slip_np1;
+  CP::StateMechanical<ScalarT, CP::MAX_DIM> state_mechanical(num_dims_, Fp_n);
+  CP::StateInternal<ScalarT, CP::MAX_SLIP> state_internal(num_slip_, state_hardening_n,
+      slip_n, rate_slip);
+  state_internal.slip_np1_ = slip_np1;
 
   auto integratorFactory = CP::IntegratorFactory<EvalT, CP::MAX_DIM, CP::MAX_SLIP>(
                               allocator,
@@ -749,8 +678,8 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
                               nox_status_test_,
                               element_slip_systems,
                               slip_families_,
-                              plasticity_state,
-                              slip_state,
+                              state_mechanical,
+                              state_internal,
                               C,
                               F_np1,
                               dt_);
@@ -761,15 +690,15 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   update_state_successful = integrator->update(norm_slip_residual);
   residual_iter = integrator->getNumIters();
 
-  Fp_np1 = plasticity_state.Fp_np1_;
-  Lp_np1 = plasticity_state.Lp_np1_;
-  sigma_np1 = plasticity_state.sigma_np1_;
-  S_np1 = plasticity_state.S_np1_;
+  Fp_np1 = state_mechanical.Fp_np1_;
+  Lp_np1 = state_mechanical.Lp_np1_;
+  sigma_np1 = state_mechanical.sigma_np1_;
+  S_np1 = state_mechanical.S_np1_;
 
-  state_hardening_np1 = slip_state.hardening_np1_;
-  slip_resistance = slip_state.resistance_;
-  slip_np1 = slip_state.slip_np1_;
-  shear_np1 = slip_state.shear_np1_;
+  state_hardening_np1 = state_internal.hardening_np1_;
+  slip_resistance = state_internal.resistance_;
+  slip_np1 = state_internal.slip_np1_;
+  shear_np1 = state_internal.shear_np1_;
 
   if(dt_ > 0.0){
     rate_slip = (slip_np1 - slip_n) / dt_;
@@ -870,7 +799,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
       data_file << "\n" << "time: ";
       data_file << std::setprecision(12);
-      data_file << Sacado::ScalarValue<ScalarT>::eval(time(0));
+      data_file << Sacado::ScalarValue<ScalarT>::eval(time_(0));
       data_file << "     dt: ";
       data_file << std::setprecision(12) << dt_ << " \n";
 

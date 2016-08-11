@@ -23,19 +23,19 @@ class Integrator
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
       std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
-      PlasticityState<ScalarT, NumDimT> & plasticity_state,
-      SlipState<ScalarT, NumSlipT > & slip_state,
+      StateMechanical<ScalarT, NumDimT> & state_mechanical,
+      StateInternal<ScalarT, NumSlipT > & state_internal,
       Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
       Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt)
       : nox_status_test_(nox_status_test),
-        num_slip_(slip_state.slip_n_.get_dimension()),
-        num_dims_(plasticity_state.Fp_n_.get_dimension()),
+        num_slip_(state_internal.slip_n_.get_dimension()),
+        num_dims_(state_mechanical.Fp_n_.get_dimension()),
         num_iters_(0),
         slip_systems_(slip_systems),
         slip_families_(slip_families),
-        plasticity_state_(plasticity_state),
-        slip_state_(slip_state),
+        state_mechanical_(state_mechanical),
+        state_internal_(state_internal),
         C_(C),
         F_np1_(F_np1),
         dt_(dt)
@@ -56,8 +56,8 @@ class Integrator
 
     std::vector<SlipSystem<NumDimT>> const & slip_systems_;
     std::vector<SlipFamily<NumDimT, NumSlipT>> const & slip_families_;
-    PlasticityState<ScalarT, NumDimT> & plasticity_state_;
-    SlipState<ScalarT, NumSlipT> & slip_state_;
+    StateMechanical<ScalarT, NumDimT> & state_mechanical_;
+    StateInternal<ScalarT, NumSlipT> & state_internal_;
     Intrepid2::Tensor4<ScalarT, NumDimT> const & C_;
     Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1_;
     RealType dt_;
@@ -80,8 +80,8 @@ class IntegratorFactory
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
       std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
-      CP::PlasticityState<ScalarT, NumDimT> & plasticity_state,
-      CP::SlipState<ScalarT, NumSlipT> & slip_state,
+      CP::StateMechanical<ScalarT, NumDimT> & state_mechanical,
+      CP::StateInternal<ScalarT, NumSlipT> & state_internal,
       Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
       Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt);
@@ -101,8 +101,8 @@ class IntegratorFactory
     std::vector<CP::SlipSystem<NumDimT>> const & slip_systems_;
     std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families_;
 
-    CP::PlasticityState<ScalarT, NumDimT> & plasticity_state_;
-    CP::SlipState<ScalarT, NumSlipT> & slip_state_;
+    CP::StateMechanical<ScalarT, NumDimT> & state_mechanical_;
+    CP::StateInternal<ScalarT, NumSlipT> & state_internal_;
     
     Intrepid2::Tensor4<ScalarT, NumDimT> const & C_;
     Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1_;
@@ -121,8 +121,8 @@ class ExplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
       std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
-      PlasticityState<ScalarT, NumDimT> & plasticity_state,
-      SlipState<ScalarT, NumSlipT > & slip_state,
+      StateMechanical<ScalarT, NumDimT> & state_mechanical,
+      StateInternal<ScalarT, NumSlipT > & state_internal,
       Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
       Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt);
@@ -133,8 +133,8 @@ class ExplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
 
     using Base::slip_systems_;
     using Base::slip_families_;
-    using Base::plasticity_state_;
-    using Base::slip_state_;
+    using Base::state_mechanical_;
+    using Base::state_internal_;
     using Base::C_;
     using Base::F_np1_;
     using Base::dt_;
@@ -156,8 +156,8 @@ class ImplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
       std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
-      PlasticityState<ScalarT, NumDimT> & plasticity_state,
-      SlipState<ScalarT, NumSlipT > & slip_state,
+      StateMechanical<ScalarT, NumDimT> & state_mechanical,
+      StateInternal<ScalarT, NumSlipT > & state_internal,
       Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
       Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt);
@@ -168,8 +168,8 @@ class ImplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
 
     using Base::slip_systems_;
     using Base::slip_families_;
-    using Base::plasticity_state_;
-    using Base::slip_state_;
+    using Base::state_mechanical_;
+    using Base::state_internal_;
     using Base::C_;
     using Base::F_np1_;
     using Base::dt_;
@@ -195,8 +195,8 @@ class ImplicitSlipIntegrator : public ImplicitIntegrator<EvalT, NumDimT, NumSlip
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
       std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
-      PlasticityState<ScalarT, NumDimT> & plasticity_state,
-      SlipState<ScalarT, NumSlipT > & slip_state,
+      StateMechanical<ScalarT, NumDimT> & state_mechanical,
+      StateInternal<ScalarT, NumSlipT > & state_internal,
       Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
       Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt);
@@ -207,8 +207,8 @@ class ImplicitSlipIntegrator : public ImplicitIntegrator<EvalT, NumDimT, NumSlip
 
     using Base::slip_systems_;
     using Base::slip_families_;
-    using Base::plasticity_state_;
-    using Base::slip_state_;
+    using Base::state_mechanical_;
+    using Base::state_internal_;
     using Base::C_;
     using Base::F_np1_;
     using Base::dt_;
@@ -233,8 +233,8 @@ class ImplicitSlipHardnessIntegrator : public ImplicitIntegrator<EvalT, NumDimT,
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
       std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
-      PlasticityState<ScalarT, NumDimT> & plasticity_state,
-      SlipState<ScalarT, NumSlipT > & slip_state,
+      StateMechanical<ScalarT, NumDimT> & state_mechanical,
+      StateInternal<ScalarT, NumSlipT > & state_internal,
       Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
       Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt);
@@ -245,8 +245,8 @@ class ImplicitSlipHardnessIntegrator : public ImplicitIntegrator<EvalT, NumDimT,
 
     using Base::slip_systems_;
     using Base::slip_families_;
-    using Base::plasticity_state_;
-    using Base::slip_state_;
+    using Base::state_mechanical_;
+    using Base::state_internal_;
     using Base::C_;
     using Base::F_np1_;
     using Base::dt_;

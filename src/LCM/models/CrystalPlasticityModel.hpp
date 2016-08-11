@@ -83,7 +83,8 @@ public:
   ///
   ///  Set a NOX status test to Failed, which will trigger Piro to cut the global
   ///  load step, assuming the load-step-reduction feature is active.
-  ///
+  /// FIXME: This needs to be done outside of the material point loop
+  /// (it's a race condition)
   void
   forceGlobalLoadStepReduction()
   {
@@ -233,43 +234,113 @@ private:
   ///
   /// Dependent MDFields
   ///
+  ScalarField
+  def_grad_;
 
-  ScalarField def_grad_;
-  ScalarField delta_time_;
+  ScalarField
+  time_;
+
+  ScalarField
+  delta_time_;
 
   ///
   /// Evaluated MDFields
   ///
-  ScalarField eqps_;
-  ScalarField xtal_rotation_;
-  ScalarField stress_;
-  ScalarField plastic_deformation_;
-  ScalarField velocity_gradient_;
-  ScalarField source_;
-  ScalarField cp_residual_;
-  ScalarField cp_residual_iter_;
-  ScalarField time_;
+  ScalarField
+  eqps_;
 
-  std::vector<Teuchos::RCP<ScalarField>> slips_;
-  std::vector<Albany::MDArray *> previous_slips_;
+  ScalarField
+  xtal_rotation_;
 
-  std::vector<Teuchos::RCP<ScalarField>> slip_rates_;
-  std::vector<Albany::MDArray *> previous_slip_rates_;
+  ScalarField
+  stress_;
+  
+  ScalarField
+  plastic_deformation_;
+  
+  ScalarField
+  velocity_gradient_;
+  
+  ScalarField
+  source_;
+  
+  ScalarField
+  cp_residual_;
+  
+  ScalarField
+  cp_residual_iter_;
 
-  std::vector<Teuchos::RCP<ScalarField>> hards_;
-  std::vector<Albany::MDArray *> previous_hards_;
+  std::vector<Teuchos::RCP<ScalarField>>
+  slips_;
+  
+  std::vector<Albany::MDArray *>
+  previous_slips_;
 
-  std::vector<Teuchos::RCP<ScalarField>> shears_;
+  std::vector<Teuchos::RCP<ScalarField>>
+  slip_rates_;
+
+  std::vector<Albany::MDArray *>
+  previous_slip_rates_;
+
+  std::vector<Teuchos::RCP<ScalarField>>
+  hards_;
+
+  std::vector<Albany::MDArray *>
+  previous_hards_;
+
+  std::vector<Teuchos::RCP<ScalarField>>
+  shears_;
+
+  //
+  // Field strings
+  //
+  std::string const
+  eqps_string_ = field_name_map_["eqps"];
+
+  std::string const
+  Re_string_ = field_name_map_["Re"];
+
+  std::string const
+  cauchy_string_ = field_name_map_["Cauchy_Stress"];
+
+  std::string const
+  Fp_string_ = field_name_map_["Fp"];
+
+  std::string const
+  L_string_ = field_name_map_["Velocity_Gradient"];
+
+  std::string const
+  residual_string_ = field_name_map_["CP_Residual"];
+
+  std::string const
+  residual_iter_string_ = field_name_map_["CP_Residual_Iter"];
+
+  std::string const
+  source_string_ = field_name_map_["Mechanical_Source"];
+
+  std::string const
+  F_string_ = field_name_map_["F"];
+
+  std::string const
+  J_string_ = field_name_map_["J"];
+
+  std::string const
+  time_string_ = "Time";
+
+  std::string const
+  dt_string_ = "Delta Time";
 
   ///
   /// State Variables
   ///
-  Albany::MDArray previous_plastic_deformation_;
-  RealType dt_;
+  Albany::MDArray
+  previous_plastic_deformation_;
+
+  RealType
+  dt_;
 
   Teuchos::ArrayRCP<double*>
   rotation_matrix_transpose_;
-
 
 };
 

@@ -85,12 +85,12 @@ private:
 
 
 template<typename ScalarT, Intrepid2::Index NumDimT>
-struct PlasticityState
+struct StateMechanical
 {
   using TensorType = Intrepid2::Tensor<ScalarT, NumDimT>;
   using InputTensorType = Intrepid2::Tensor<RealType, NumDimT>;
 
-  PlasticityState(int num_dim, InputTensorType const &Fp_n)
+  StateMechanical(int num_dim, InputTensorType const &Fp_n)
     : num_dim_(num_dim),
       Fp_n_(Fp_n),
       Fp_np1_(num_dim),
@@ -111,34 +111,46 @@ struct PlasticityState
 
 
 template<typename ScalarT, Intrepid2::Index NumSlipT>
-struct SlipState
+struct StateInternal
 {
   using VectorType = Intrepid2::Vector<ScalarT, NumSlipT>;
   using InputVectorType = Intrepid2::Vector<RealType, NumSlipT>;
 
-  SlipState(int num_slip, InputVectorType const &hardening_n,
-      InputVectorType const &slip_n, InputVectorType const &rate)
+  StateInternal(int num_slip, InputVectorType const & hardening_n,
+      InputVectorType const & slip_n, VectorType const & rate_slip)
     : num_slip_(num_slip),
       hardening_n_(hardening_n),
       slip_n_(slip_n),
-      rate_(rate),
+      rate_slip_(rate_slip),
       hardening_np1_(num_slip),
       slip_np1_(num_slip),
       shear_np1_(num_slip),
       resistance_(num_slip)
   {}
 
-  int   num_slip_;
+  int
+  num_slip_;
 
-  InputVectorType const hardening_n_;
-  InputVectorType const slip_n_;
-  InputVectorType const rate_;
+  InputVectorType const
+  hardening_n_;
 
-  VectorType  hardening_np1_;
-  VectorType  slip_np1_;
-  VectorType  shear_np1_;
+  InputVectorType const
+  slip_n_;
+
+  VectorType const
+  rate_slip_;
+
+  VectorType
+  hardening_np1_;
+
+  VectorType
+  slip_np1_;
+
+  VectorType
+  shear_np1_;
   
-  VectorType  resistance_;
+  VectorType
+  resistance_;
 };
 
 //
