@@ -121,12 +121,12 @@ def WriteBool(name, type, value, file, indent):
     return
 
 
-def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, names_block):
+def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, block_ids):
 
-    num_blocks = len(names_block)
+    num_blocks = len(block_ids)
     material_names = []
-    for name in names_block:
-        material_names.append(name + " Material")
+    for name in block_ids:
+        material_names.append("Block " + str(name) + " Material")
 
     indent = 0
 
@@ -136,7 +136,7 @@ def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, names_bloc
     # Associate a material model with each block
     indent = StartParamList("ElementBlocks", mat_file, indent)
     for iBlock in range(num_blocks):
-        indent = StartParamList(names_block[iBlock], mat_file, indent)
+        indent = StartParamList("block_" + str(block_ids[iBlock]), mat_file, indent)
         WriteParameter("material", "string", material_names[iBlock], mat_file, indent)
         WriteBool("Weighted Volume Average J", "bool", "true", mat_file, indent)
         WriteBool("Volume Average Pressure", "bool", "true", mat_file, indent)
@@ -285,7 +285,7 @@ if __name__ == "__main__":
     rotations_file_name = sys.argv[2]
     name_file_exodus = sys.argv[3]
     file_exodus = exodus(name_file_exodus)
-    names_block = file_exodus.get_elem_blk_names()
+    block_ids = file_exodus.get_elem_blk_ids()
 
     # List of material parameters that are expected to be in the input file
     # If it's set to None, then it is a required parameter
@@ -346,6 +346,6 @@ if __name__ == "__main__":
     ParseRotationMatricesFile(rotations_file_name, rotations)
 
     materials_file_name = name_file_exodus.split('.')[0] + '_Material.xml'
-    WriteMaterialsFile(materials_file_name, mat_params, vars_output, rotations, names_block)
+    WriteMaterialsFile(materials_file_name, mat_params, vars_output, rotations, block_ids)
 
     print "\nComplete.\n"
