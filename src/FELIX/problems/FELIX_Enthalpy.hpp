@@ -365,8 +365,8 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
       // Vertical velocity derived from the continuity equation
       p->set<string>("Vertical Velocity QP Variable Name", "w");
 
-      p->set<string>("Geotermal Flux Heat QP Variable Name","Geo Flux Heat");
-      p->set<string>("Geotermal Flux Heat QP SUPG Variable Name","Geo Flux Heat SUPG");
+      p->set<string>("Geothermal Flux Heat QP Variable Name","Geo Flux Heat");
+      p->set<string>("Geothermal Flux Heat QP SUPG Variable Name","Geo Flux Heat SUPG");
 
       p->set<string>("Melting Temperature Gradient QP Variable Name","melting temp Gradient");
 
@@ -386,7 +386,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
       p->set<bool>("Needs Dissipation", needsDiss);
       p->set<bool>("Needs Basal Friction", needsBasFric);
-      p->set<bool>("Constant Geotermal Flux", isGeoFluxConst);
+      p->set<bool>("Constant Geothermal Flux", isGeoFluxConst);
 
       p->set<RCP<ParamLib> >("Parameter Library", paramLib);
       p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
@@ -476,6 +476,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
       p->set<std::string>("Weighted Measure Name", "Weighted Measure "+basalSideName);
       p->set<std::string>("Velocity Side QP Variable Name", "velocity");
       p->set<std::string>("Basal Friction Coefficient Side QP Variable Name", "basal_friction");
+
       p->set<std::string>("Side Set Name", basalSideName);
 
       p->set<ParameterList*>("SUPG Settings", &params->sublist("SUPG Settings"));

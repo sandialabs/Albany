@@ -63,8 +63,8 @@
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
-    <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_enthalpy.exo"/>
-    <Parameter name="Exodus Input File Name" type="string" value="mesh32km/gis_unstruct.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="gis_enthalpy.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/gis_struct_enth.exo"/>
     <Parameter name="Restart Index" type="int" value="1"/>
     <!--Parameter name="Interleaved Ordering" type="bool" value="false"/>
     <Parameter name="Columnwise Ordering" type="bool" value="false"/-->
@@ -73,8 +73,8 @@
       <ParameterList name="basalside">
         <Parameter name="Method" type="string" value="Exodus"/>
         <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
-        <Parameter name="Exodus Input File Name" type="string" value="mesh32km/gis_unstruct_basal.exo"/>
-        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_basal_enthalpy.exo"/>
+        <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/gis_struct_enth_basal.exo"/>
+        <Parameter name="Exodus Output File Name" type="string" value="gis_enthalpy_basal.exo"/>
         <Parameter name="Cubature Degree" type="int" value="3"/>
         <Parameter name="Restart Index" type="int" value="1"/>
         <ParameterList name="Required Fields Info">
@@ -89,7 +89,7 @@
 </ParameterList>
 <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="2"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{28.7696527545,7.28622633343}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{27.3114847948, 7.28622636011}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-2"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.208812026834, 0.243439246662, 0.0545756230981}"/>
