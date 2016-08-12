@@ -39,7 +39,6 @@ class BasalFrictionHeat : public PHX::EvaluatorWithBaseImpl<Traits>,
 		// Input:
 		PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>       beta;
 		PHX::MDField<Type,Cell,Side,QuadPoint,VecDim>        velocity;
-		PHX::MDField<ScalarT,Cell,Side,QuadPoint>        	 verticalVel;
 		PHX::MDField<RealType,Cell,Side,Node,QuadPoint>   	 BF;
 		PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim>  GradBF;
 		PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>     	 w_measure;
