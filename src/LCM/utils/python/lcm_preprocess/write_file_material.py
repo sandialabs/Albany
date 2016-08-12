@@ -121,22 +121,22 @@ def WriteBool(name, type, value, file, indent):
     return
 
 
-def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, block_ids):
+def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, names_block):
 
-    num_blocks = len(block_ids)
+    num_blocks = len(names_block)
     material_names = []
-    for name in block_ids:
+    for name in names_block:
         material_names.append("Block " + str(name) + " Material")
 
     indent = 0
 
-    mat_file = open(file_name, mode='w')
+    mat_file = open(file_name, mode = 'w')
     indent = StartParamList(None, mat_file, indent)
 
     # Associate a material model with each block
     indent = StartParamList("ElementBlocks", mat_file, indent)
     for iBlock in range(num_blocks):
-        indent = StartParamList("block_" + str(block_ids[iBlock]), mat_file, indent)
+        indent = StartParamList(names_block[iBlock], mat_file, indent)
         WriteParameter("material", "string", material_names[iBlock], mat_file, indent)
         WriteBool("Weighted Volume Average J", "bool", "true", mat_file, indent)
         WriteBool("Volume Average Pressure", "bool", "true", mat_file, indent)
@@ -153,7 +153,7 @@ def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, block_ids)
         (vec1, vec2, vec3) = ConstructBasisVectors(rotations[iBlock])
 
         slip_systems = create_slip_systems(
-            crystal_structure=mat_params["crystal_structure"],
+            crystal_structure = mat_params["crystal_structure"],
             slip_families = mat_params["slip_families"],
             ratio_c_a = mat_params["ratio_c_a"])
 
@@ -213,6 +213,16 @@ def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, block_ids)
             WriteParameter("Type", "string", "Power Law", mat_file, indent)
             WriteParameter("Reference Slip Rate", "double", mat_params["rate_slip_reference"], mat_file, indent)
             WriteParameter("Rate Exponent", "double", mat_params["exponent_rate"], mat_file, indent)
+            indent = EndParamList(mat_file, indent)
+
+        if mat_params["flow_rule"] == "Thermal Activation":
+            indent = StartParamList("Flow Rule", mat_file, indent)
+            WriteParameter("Type", "string", "Thermal Activation", mat_file, indent)
+            WriteParameter("Reference Slip Rate", "double", mat_params["rate_slip_reference"], mat_file, indent)
+            WriteParameter("Activation Energy", "double", mat_params["energy_activation"], mat_file, indent)
+            WriteParameter("Thermal Resistance", "double", mat_params["resistance_thermal"], mat_file, indent)
+            WriteParameter("P Exponent", "double", mat_params["exponent_p"], mat_file, indent)
+            WriteParameter("Q Exponent", "double", mat_params["exponent_q"], mat_file, indent)
             indent = EndParamList(mat_file, indent)
 
         elif mat_params["flow_rule"] == "Power Law with Drag":
@@ -285,7 +295,12 @@ if __name__ == "__main__":
     rotations_file_name = sys.argv[2]
     name_file_exodus = sys.argv[3]
     file_exodus = exodus(name_file_exodus)
-    block_ids = file_exodus.get_elem_blk_ids()
+    ids_block = file_exodus.get_elem_blk_ids()
+    names_block = file_exodus.get_elem_blk_names()
+
+    for idx in range(len(ids_block)):
+        if (names_block[idx] == ""):
+            names_block[idx] = "block_" + str(ids_block[idx])
 
     # List of material parameters that are expected to be in the input file
     # If it's set to None, then it is a required parameter
@@ -305,6 +320,10 @@ if __name__ == "__main__":
     mat_params["rate_slip_reference"] = "unspecified"
     mat_params["exponent_rate"] = "unspecified"
     mat_params["drag_coeff"] = "unspecified"
+    mat_params["energy_activation"] = "unspecified"
+    mat_params["resistance_thermal"] = "unspecified"
+    mat_params["exponent_p"] = "unspecified"
+    mat_params["exponent_q"] = "unspecified"
 
     mat_params["hardening_law"] = "unspecified"
     mat_params["modulus_hardening"] = "unspecified"
@@ -346,6 +365,6 @@ if __name__ == "__main__":
     ParseRotationMatricesFile(rotations_file_name, rotations)
 
     materials_file_name = name_file_exodus.split('.')[0] + '_Material.xml'
-    WriteMaterialsFile(materials_file_name, mat_params, vars_output, rotations, block_ids)
+    WriteMaterialsFile(materials_file_name, mat_params, vars_output, rotations, names_block)
 
     print "\nComplete.\n"

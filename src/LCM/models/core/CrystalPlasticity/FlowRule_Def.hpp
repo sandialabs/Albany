@@ -42,29 +42,40 @@ CP::flowParameterFactory(CP::FlowRuleType type_flow_rule)
 //
 // Power law flow rule
 //
-template<typename ScalarT>
-ScalarT
-CP::PowerLawFlowRule<ScalarT>::
+template<typename ArgT>
+ArgT
+CP::PowerLawFlowRule<ArgT>::
 computeRateSlip(
   std::shared_ptr<CP::FlowParameterBase> const & pflow_parameters,
-  ScalarT const & shear,
-  ScalarT const & slip_resistance)
+  ArgT const & shear,
+  ArgT const & slip_resistance)
 {
-  ScalarT
-  rate_slip{0.};
+  using Params = PowerLawFlowParameters;
 
   // Material properties
   RealType const
-  m = pflow_parameters->flow_params_[pflow_parameters->param_map_["Rate Exponent"]];
+  m = pflow_parameters->getParameter(Params::EXPONENT_RATE);
 
   RealType const
-  g0 = pflow_parameters->flow_params_[pflow_parameters->param_map_["Reference Slip Rate"]];
+  g0 = pflow_parameters->getParameter(Params::RATE_SLIP_REFERENCE);
 
-  ScalarT const
+  ArgT const
   ratio_stress = shear / slip_resistance;
 
-  // Compute slip increment
-  rate_slip = g0 * std::pow(std::fabs(ratio_stress), m-1) * ratio_stress;
+  RealType const
+  min_tol = std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / m);
+
+  bool const
+  finite_rate = std::fabs(ratio_stress) > min_tol;
+
+  // carry derivative info from ratio_stress
+  ArgT
+  rate_slip{0.0 * ratio_stress};
+
+  if (finite_rate == true) {
+    // Compute slip increment
+    rate_slip = g0 * std::pow(std::fabs(ratio_stress), m - 1) * ratio_stress;
+  }
 
   return rate_slip;
 }
@@ -72,20 +83,52 @@ computeRateSlip(
 //
 // Thermally-activated flow rule
 //
-template<typename ScalarT>
-ScalarT
-CP::ThermalActivationFlowRule<ScalarT>::
+template<typename ArgT>
+ArgT
+CP::ThermalActivationFlowRule<ArgT>::
 computeRateSlip(
   std::shared_ptr<CP::FlowParameterBase> const & pflow_parameters,
-  ScalarT const & shear,
-  ScalarT const & slip_resistance)
+  ArgT const & shear,
+  ArgT const & slip_resistance)
 {
-  ScalarT
-  rate_slip{0.};
+  using Params = ThermalActivationFlowParameters;
 
+  //
   // Material properties
-  
+  //
+  RealType const
+  g0 = pflow_parameters->getParameter(Params::RATE_SLIP_REFERENCE);
+
+  RealType const
+  F0 = pflow_parameters->getParameter(Params::ENERGY_ACTIVATION);
+
+  RealType const
+  s_t = pflow_parameters->getParameter(Params::RESISTANCE_THERMAL);
+
+  RealType const
+  p = pflow_parameters->getParameter(Params::EXPONENT_P);
+
+  RealType const
+  q = pflow_parameters->getParameter(Params::EXPONENT_Q);
+
+  ArgT const
+  ratio_stress = std::max(0.0, (std::fabs(shear) - slip_resistance) / s_t);
+
+  // carry derivative info from ratio_stress
+  ArgT
+  rate_slip{0.0 * ratio_stress};
+
+  RealType const
+  min_tol = 2.0 * std::numeric_limits<RealType>::min();
+
   // Compute slip increment
+  if (ratio_stress > min_tol) {
+    RealType const
+    sign = shear < 0.0 ? -1.0 : 1.0;
+
+    rate_slip = 
+      g0 * std::exp(-F0 * std::pow(1.0 - std::pow(ratio_stress, p), q)) * sign;
+  }
 
   return rate_slip;
 }
@@ -93,31 +136,32 @@ computeRateSlip(
 //
 // Power law with Drag flow rule
 //
-template<typename ScalarT>
-ScalarT
-CP::PowerLawDragFlowRule<ScalarT>::
+template<typename ArgT>
+ArgT
+CP::PowerLawDragFlowRule<ArgT>::
 computeRateSlip(
   std::shared_ptr<CP::FlowParameterBase> const & pflow_parameters,
-  ScalarT const & shear,
-  ScalarT const & slip_resistance)
+  ArgT const & shear,
+  ArgT const & slip_resistance)
 {     
+  using Params = PowerLawDragFlowParameters;
 
   // Material properties
   RealType const
-  m = pflow_parameters->flow_params_[pflow_parameters->param_map_["Rate Exponent"]];
+  m = pflow_parameters->getParameter(Params::EXPONENT_RATE);
 
   RealType const
-  g0 = pflow_parameters->flow_params_[pflow_parameters->param_map_["Reference Slip Rate"]];
+  g0 = pflow_parameters->getParameter(Params::RATE_SLIP_REFERENCE);
 
   RealType const
-  drag_term = pflow_parameters->flow_params_[pflow_parameters->param_map_["Drag Coefficient"]];
+  coefficient_drag = pflow_parameters->getParameter(Params::COEFFICIENT_DRAG);
 
-  ScalarT const
+  ArgT const
   ratio_stress = shear / slip_resistance;
 
   // Compute drag term
-  ScalarT const
-  viscous_drag = ratio_stress / drag_term;
+  ArgT const
+  viscous_drag = ratio_stress / coefficient_drag;
 
   RealType const
   min_tol = std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / m);
@@ -129,15 +173,15 @@ computeRateSlip(
   finite_power_law = std::fabs(ratio_stress) > min_tol;
 
   // carry derivative info from ratio_stress
-  ScalarT
+  ArgT
   power_law{0.0 * ratio_stress};
 
   if (finite_power_law == true) {
     power_law = std::pow(std::fabs(ratio_stress), m - 1) * ratio_stress;
   }
 
-  ScalarT
-  pl_vd_ratio = drag_term * std::pow(ratio_stress,m-1);
+  ArgT
+  pl_vd_ratio = coefficient_drag * std::pow(ratio_stress,m-1);
 
   bool const
   pl_active = pl_vd_ratio < machine_eps;
@@ -149,7 +193,7 @@ computeRateSlip(
   eff_active = !pl_active && !vd_active;
       
   // prevent flow rule singularities if stress is zero
-  ScalarT
+  ArgT
   effective{power_law};
 
   if (eff_active == true) {
@@ -167,13 +211,13 @@ computeRateSlip(
 //
 // No flow rule
 //
-template<typename ScalarT>
-ScalarT
-CP::NoFlowRule<ScalarT>::
+template<typename ArgT>
+ArgT
+CP::NoFlowRule<ArgT>::
 computeRateSlip(
   std::shared_ptr<CP::FlowParameterBase> const & pflow_parameters,
-  ScalarT const & shear,
-  ScalarT const & slip_resistance)
+  ArgT const & shear,
+  ArgT const & slip_resistance)
 {
   return 0.;
 }

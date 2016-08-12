@@ -94,6 +94,9 @@ struct ThermalActivationFlowParameters final : public FlowParameterBase
   {
     RATE_SLIP_REFERENCE,
     ENERGY_ACTIVATION,
+    RESISTANCE_THERMAL,
+    EXPONENT_P,
+    EXPONENT_Q,
     NUM_PARAMS
   };
 
@@ -101,6 +104,9 @@ struct ThermalActivationFlowParameters final : public FlowParameterBase
   {
     param_map_["Reference Slip Rate"] = RATE_SLIP_REFERENCE;
     param_map_["Activation Energy"] = ENERGY_ACTIVATION;
+    param_map_["Thermal Resistance"] = RESISTANCE_THERMAL;
+    param_map_["P Exponent"] = EXPONENT_P;
+    param_map_["Q Exponent"] = EXPONENT_Q;
     flow_params_.set_dimension(NUM_PARAMS);
     flow_params_.fill(Intrepid2::ZEROS);
   }
@@ -116,7 +122,7 @@ struct PowerLawDragFlowParameters final : public FlowParameterBase
   {
     RATE_SLIP_REFERENCE,
     EXPONENT_RATE,
-    DRAG_COEFF,
+    COEFFICIENT_DRAG,
     NUM_PARAMS
   };
 
@@ -124,7 +130,7 @@ struct PowerLawDragFlowParameters final : public FlowParameterBase
   {
     param_map_["Reference Slip Rate"] = RATE_SLIP_REFERENCE;
     param_map_["Rate Exponent"] = EXPONENT_RATE;
-    param_map_["Drag Coefficient"] = DRAG_COEFF;
+    param_map_["Drag Coefficient"] = COEFFICIENT_DRAG;
     flow_params_.set_dimension(NUM_PARAMS);
     flow_params_.fill(Intrepid2::ZEROS);
   }
@@ -146,19 +152,19 @@ struct NoFlowParameters final : public FlowParameterBase
 /**
  *  Base class for flow rules.
  *
- *  \tparam ScalarT The scalar type for computing the slip rate.
+ *  \tparam ArgT The scalar type for computing the slip rate.
  */
-template<typename ScalarT>
+template<typename ArgT>
 struct FlowRuleBase
 {
   FlowRuleBase() {}
 
   virtual
-  ScalarT
+  ArgT
   computeRateSlip(
     std::shared_ptr<FlowParameterBase> const & pflow_parameters,
-    ScalarT const & shear,
-    ScalarT const & slip_resistance) = 0;
+    ArgT const & shear,
+    ArgT const & slip_resistance) = 0;
 
   virtual
   ~FlowRuleBase() {}
@@ -168,17 +174,17 @@ struct FlowRuleBase
 /**
  *  Power Law flow rule.
  *
- *  \tparam ScalarT The scalar type for computing the slip rate.
+ *  \tparam ArgT The scalar type for computing the slip rate.
  */
-template<typename ScalarT>
-struct PowerLawFlowRule final : public FlowRuleBase<ScalarT>
+template<typename ArgT>
+struct PowerLawFlowRule final : public FlowRuleBase<ArgT>
 {
   virtual
-  ScalarT
+  ArgT
   computeRateSlip(
     std::shared_ptr<FlowParameterBase> const & pflow_parameters,
-    ScalarT const & shear,
-    ScalarT const & slip_resistance);
+    ArgT const & shear,
+    ArgT const & slip_resistance);
 
   virtual
   ~PowerLawFlowRule() {}
@@ -188,17 +194,17 @@ struct PowerLawFlowRule final : public FlowRuleBase<ScalarT>
 /**
  *  Thermally-activated flow rule.
  *
- *  \tparam ScalarT The scalar type for computing the slip rate.
+ *  \tparam ArgT The scalar type for computing the slip rate.
  */
-template<typename ScalarT>
-struct ThermalActivationFlowRule final : public FlowRuleBase<ScalarT>
+template<typename ArgT>
+struct ThermalActivationFlowRule final : public FlowRuleBase<ArgT>
 {
   virtual
-  ScalarT
+  ArgT
   computeRateSlip(
     std::shared_ptr<FlowParameterBase> const & pflow_parameters,
-    ScalarT const & shear,
-    ScalarT const & slip_resistance);
+    ArgT const & shear,
+    ArgT const & slip_resistance);
 
   virtual
   ~ThermalActivationFlowRule() {}
@@ -208,17 +214,17 @@ struct ThermalActivationFlowRule final : public FlowRuleBase<ScalarT>
 /**
  *  Power Law with Viscous Drag flow rule.
  *
- *  \tparam ScalarT The scalar type for computing the slip rate.
+ *  \tparam ArgT The scalar type for computing the slip rate.
  */
-template<typename ScalarT>
-struct PowerLawDragFlowRule final : public FlowRuleBase<ScalarT>
+template<typename ArgT>
+struct PowerLawDragFlowRule final : public FlowRuleBase<ArgT>
 {
   virtual
-  ScalarT
+  ArgT
   computeRateSlip(
     std::shared_ptr<FlowParameterBase> const & pflow_parameters,
-    ScalarT const & shear,
-    ScalarT const & slip_resistance);
+    ArgT const & shear,
+    ArgT const & slip_resistance);
 
   virtual
   ~PowerLawDragFlowRule() {}
@@ -228,17 +234,17 @@ struct PowerLawDragFlowRule final : public FlowRuleBase<ScalarT>
 /**
  *  Flow rule for no flow (elasticity)
  *
- *  \tparam ScalarT The scalar type for computing the slip rate.
+ *  \tparam ArgT The scalar type for computing the slip rate.
  */
-template<typename ScalarT>
-struct NoFlowRule final : public FlowRuleBase<ScalarT>
+template<typename ArgT>
+struct NoFlowRule final : public FlowRuleBase<ArgT>
 {
   virtual
-  ScalarT
+  ArgT
   computeRateSlip(
     std::shared_ptr<FlowParameterBase> const & pflow_parameters,
-    ScalarT const & shear,
-    ScalarT const & slip_resistance);
+    ArgT const & shear,
+    ArgT const & slip_resistance);
 
   virtual
   ~NoFlowRule() {}

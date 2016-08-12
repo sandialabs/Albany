@@ -157,7 +157,7 @@ CrystalPlasticityKernel(
 
 
   //
-  // Get slip families.
+  // Get slip families
   //
   slip_families_.reserve(num_family_);
   for (int num_fam(0); num_fam < num_family_; ++num_fam) {
@@ -202,7 +202,6 @@ CrystalPlasticityKernel(
     s_temp_normalized = Intrepid2::unit(s_temp_normalized);
     slip_systems_.at(num_ss).s_.set_dimension(num_dims_);
     slip_systems_.at(num_ss).s_ = s_temp_normalized;
-    s_unrotated_.push_back( s_temp_normalized );
 
     //
     // Read and normalize slip normals. Miller indices need to be normalized.
@@ -220,7 +219,6 @@ CrystalPlasticityKernel(
     n_temp_normalized = Intrepid2::unit(n_temp_normalized);
     slip_systems_.at(num_ss).n_.set_dimension(num_dims_);
     slip_systems_.at(num_ss).n_ = n_temp_normalized;
-    n_unrotated_.push_back( n_temp_normalized );
 
     slip_systems_.at(num_ss).projector_.set_dimension(num_dims_);
     slip_systems_.at(num_ss).projector_ =
@@ -595,8 +593,10 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // and projection operator
   C = Intrepid2::kronecker(orientation_matrix, C_unrotated);
   for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
-    element_slip_systems.at(num_ss).s_ = orientation_matrix * s_unrotated_[num_ss];
-    element_slip_systems.at(num_ss).n_ = orientation_matrix * n_unrotated_[num_ss];
+    element_slip_systems.at(num_ss).s_ = 
+      orientation_matrix * slip_systems_.at(num_ss).s_;
+    element_slip_systems.at(num_ss).n_ = 
+      orientation_matrix * slip_systems_.at(num_ss).n_;
     element_slip_systems.at(num_ss).projector_ =
       Intrepid2::dyad(element_slip_systems.at(num_ss).s_,
                       element_slip_systems.at(num_ss).n_);

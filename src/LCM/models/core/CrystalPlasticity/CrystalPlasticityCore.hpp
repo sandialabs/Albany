@@ -223,12 +223,12 @@ updateSlip(
 //
 //! Compute stress.
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT, typename DataT>
+template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT>
 void
 computeStress(
     std::vector<SlipSystem<NumDimT>> const & slip_systems,
-    Intrepid2::Tensor4<DataT, NumDimT> const & C,
-    Intrepid2::Tensor<DataT, NumDimT> const & F,
+    Intrepid2::Tensor4<ArgT, NumDimT> const & C,
+    Intrepid2::Tensor<ArgT, NumDimT> const & F,
     Intrepid2::Tensor<ArgT, NumDimT> const & Fp,
     Intrepid2::Tensor<ArgT, NumDimT> & sigma,
     Intrepid2::Tensor<ArgT, NumDimT> & S,

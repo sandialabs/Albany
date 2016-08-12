@@ -61,7 +61,7 @@ public:
   CrystalPlasticityKernel & operator=(CrystalPlasticityKernel const &) = delete;
 
   ///
-  /// Virtual Denstructor
+  /// Virtual Deconstructor
   ///
   virtual
   ~CrystalPlasticityKernel()
@@ -144,48 +144,27 @@ private:
   Intrepid2::Tensor<RealType, CP::MAX_DIM>
   element_block_orientation_;
 
-  ///
-  /// Number of slip systems
-  ///
+  /// Number of slip families
   int
   num_family_;
 
+  /// Number of slip systems
   int
   num_slip_;
 
-  ///
   /// Unrotated elasticity tensor
-  ///
   Intrepid2::Tensor4<ScalarT, CP::MAX_DIM>
   C_unrotated_;
 
-  //
-  // Unrotated slip directions
-  //
-  std::vector<Intrepid2::Vector<RealType, CP::MAX_DIM>>
-  s_unrotated_;
-
-  //
-  // Unrotated slip normals
-  //
-  std::vector<Intrepid2::Vector<RealType, CP::MAX_DIM>>
-  n_unrotated_;
-
-  ///
-  /// Vector holding slip system families
-  ///
+  /// Vector of structs holding slip system family data
   std::vector<CP::SlipFamily<CP::MAX_DIM, CP::MAX_SLIP>>
   slip_families_;
 
-  ///
-  /// Struct holding slip system data
-  ///
+  /// Vector of structs holding slip system data
   std::vector<CP::SlipSystem<CP::MAX_DIM>>
   slip_systems_;
 
-  ///
   /// Flags for reading lattice orientations from file
-  ///
   bool
   read_orientations_from_mesh_;
 
@@ -204,23 +183,13 @@ private:
   Intrepid2::StepType
   step_type_;
 
-  ///
-  /// Minimizer
-  ///
+  /// Minisolver Minimizer
   Intrepid2::Minimizer<ValueT, CP::NLS_DIM>
   minimizer_;
 
-  ///
   /// Pointer to NOX status test, allows the material model to force a global load step reduction
-  ///
   Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
   nox_status_test_;
-  
-  ///
-  /// Memory management
-  ///
-  //mutable utility::StaticAllocator
-  //allocator_;
 
   ///
   /// Output options 

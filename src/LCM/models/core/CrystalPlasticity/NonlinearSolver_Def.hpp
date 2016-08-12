@@ -42,9 +42,7 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::value(
     Intrepid2::Vector<T, N> const & x)
 {
   return Intrepid2::Function_Base<
-  ResidualSlipNLS<NumDimT, NumSlipT, EvalT>, ScalarT>::value(
-      *this,
-      x);
+  ResidualSlipNLS<NumDimT, NumSlipT, EvalT>, ScalarT>::value(*this, x);
 }
 
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
@@ -137,7 +135,7 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
       Fp_np1);
 
   // Compute sigma_np1, S_np1, and shear_np1
-  CP::computeStress<NumDimT, NumSlipT, T, T>(
+  CP::computeStress<NumDimT, NumSlipT, T>(
       slip_systems_,
       C_peeled,
       F_np1_peeled,
@@ -327,7 +325,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
       Fp_np1);
   
   // Compute sigma_np1, S_np1, and shear_np1
-  CP::computeStress<NumDimT, NumSlipT, T, T>(
+  CP::computeStress<NumDimT, NumSlipT, T>(
       slip_systems_,
       C_peeled,
       F_np1_peeled,

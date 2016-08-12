@@ -149,7 +149,7 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
   }
 
   // compute sigma_np1, S_np1, and shear_np1 using Fp_n
-  CP::computeStress<NumDimT, NumSlipT, ScalarT, ScalarT>(
+  CP::computeStress<NumDimT, NumSlipT, ScalarT>(
     slip_systems_, 
     C_, 
     F_np1_, 
@@ -189,7 +189,7 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
     state_mechanical_.Fp_np1_);
 
   // compute sigma_np1, S_np1, and shear_np1 using Fp_np1
-  CP::computeStress<NumDimT, NumSlipT, ScalarT, ScalarT>(
+  CP::computeStress<NumDimT, NumSlipT, ScalarT>(
     slip_systems_, 
     C_, 
     F_np1_, 
@@ -282,7 +282,7 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState(RealType & res
     state_mechanical_.Fp_np1_);
 
   // Compute sigma_np1, S_np1, and shear_np1
-  CP::computeStress<NumDimT, NumSlipT, ScalarT, ScalarT>(
+  CP::computeStress<NumDimT, NumSlipT, ScalarT>(
     slip_systems_, 
     C_, 
     F_np1_, 

@@ -13,7 +13,7 @@ static constexpr Intrepid2::Index
 MAX_DIM = 3;
 
 static constexpr Intrepid2::Index
-MAX_SLIP = 12;
+MAX_SLIP = 48;
 
 static constexpr Intrepid2::Index
 MAX_FAMILY = 3;
