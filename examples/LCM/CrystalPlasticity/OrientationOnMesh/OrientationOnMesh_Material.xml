@@ -277,7 +277,9 @@
                </ParameterList>
 
                <!-- Specify output to Exodus -->
+               <Parameter name="Output Deformation Gradient" type="bool" value="true"/>
                <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
+               <Parameter name="Output Integration Weights" type="bool" value="true"/>
                <Parameter name="Output Fp" type="bool" value="false"/>
                <Parameter name="Output L" type="bool" value="false"/>
                <Parameter name="Output eqps" type="bool" value="true"/>
@@ -332,6 +334,7 @@
                <Parameter name="Output tau_11" type="bool" value="true"/>
                <Parameter name="Output tau_12" type="bool" value="true"/>
                <Parameter name="Output CP_Residual" type="bool" value="true"/>
+               <Parameter name="Output CP_Residual_Iter" type="bool" value="true"/>
 
           </ParameterList>
 

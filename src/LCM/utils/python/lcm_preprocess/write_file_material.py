@@ -126,7 +126,7 @@ def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, names_bloc
     num_blocks = len(names_block)
     material_names = []
     for name in names_block:
-        material_names.append("Block " + str(name) + " Material")
+        material_names.append(name + " Material")
 
     indent = 0
 

@@ -80,8 +80,8 @@
         <Parameter  name="Continuation Method" type="string" value="Natural"/>
         <Parameter name="Initial Value" type="double" value="0.0"/>
         <Parameter name="Continuation Parameter" type="string" value="Time"/>
-        <Parameter name="Max Steps" type="int" value="5000"/>
-        <Parameter name="Max Value" type="double" value="0.03"/>
+        <Parameter name="Max Steps" type="int" value="1000"/>
+        <Parameter name="Max Value" type="double" value="0.01"/>
         <Parameter name="Min Value" type="double" value="0.0"/>
         <Parameter name="Compute Eigenvalues" type="bool" value="0"/>
         <ParameterList name="Eigensolver">
@@ -92,11 +92,11 @@
       </ParameterList>
       <ParameterList name="Step Size">
        <Parameter name="Method" type="string" value="Adaptive"/>
-       <Parameter name="Initial Step Size" type="double" value="0.0005"/>
-       <Parameter name="Max Step Size" type="double" value="0.02"/>
-       <Parameter name="Min Step Size" type="double" value="0.00001"/>
+       <Parameter name="Initial Step Size" type="double" value="0.01"/>
+       <Parameter name="Max Step Size" type="double" value="0.01"/>
+       <Parameter name="Min Step Size" type="double" value="0.0001"/>
        <Parameter name="Failed Step Reduction Factor" type="double" value="0.5"/>
-       <Parameter name="Aggressiveness" type="double" value="0.1"/>
+       <Parameter name="Aggressiveness" type="double" value="1.0"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="NOX">
@@ -165,7 +165,7 @@
           <Parameter name="Parameters" type="bool" value="0"/>
           <Parameter name="Details" type="bool" value="0"/>
           <Parameter name="Linear Solver Details" type="bool" value="0"/>
-          <Parameter name="Stepper Iteration" type="bool" value="0"/>
+          <Parameter name="Stepper Iteration" type="bool" value="true"/>
           <Parameter name="Stepper Details" type="bool" value="0"/>
           <Parameter name="Stepper Parameters" type="bool" value="0"/>
         </ParameterList>
