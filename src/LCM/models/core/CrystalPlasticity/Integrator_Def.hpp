@@ -148,13 +148,6 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
     Fp_n_FAD[i] = state_mechanical_.Fp_n_[i];
   }
 
-  // Intrepid2::Vector<ScalarT, NumSlipT>
-  // slip_rate_FAD(state_internal_.rate_.get_dimension());
-
-  // for (auto i = 0; i < state_internal_.rate_.get_number_components(); ++i) {
-  //   slip_rate_FAD[i] = state_internal_.rate_[i];
-  // }
-
   // compute sigma_np1, S_np1, and shear_np1 using Fp_n
   CP::computeStress<NumDimT, NumSlipT, ScalarT, ScalarT>(
     slip_systems_, 
@@ -222,6 +215,10 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
 
   residual_norm = Sacado::ScalarValue<ScalarT>::eval(norm(residual));
 
+  if (dt_ > 0.0) {
+    state_internal_.rate_slip_ = 
+      (state_internal_.slip_np1_ - state_internal_.slip_n_) / dt_;
+  }
 
   return true;
 }
@@ -273,8 +270,7 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState(RealType & res
   }
 
   // We now have the solution for slip_np1, including sensitivities 
-  // (if any). Re-evaluate all the other state variables based on 
-  // slip_np1.
+  // (if any). Re-evaluate all the other state variables based on slip_np1.
   // Compute Lp_np1, and Fp_np1
   CP::applySlipIncrement<NumDimT, NumSlipT, ScalarT>(
     slip_systems_, 
@@ -295,9 +291,16 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState(RealType & res
     state_mechanical_.S_np1_, 
     state_internal_.shear_np1_);
 
+  if (dt_ > 0.0) {
+    state_internal_.rate_slip_ = 
+      (state_internal_.slip_np1_ - state_internal_.slip_n_) / dt_;
+  }
+
   // Compute the residual norm 
   residual_norm = std::sqrt(2.0 * minimizer_.final_value);
+  
   this->num_iters_ = minimizer_.num_iter;
+
   return true;
 }
 
@@ -369,6 +372,7 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::update(
       state_internal_.hardening_n_,
       state_internal_.hardening_np1_,
       state_internal_.resistance_);
+
   return this->reevaluateState(residual_norm);
 }
 
@@ -444,6 +448,7 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update(
       state_internal_.hardening_n_,
       state_internal_.hardening_np1_,
       state_internal_.resistance_);
+
   return this->reevaluateState(residual_norm);
 }
 

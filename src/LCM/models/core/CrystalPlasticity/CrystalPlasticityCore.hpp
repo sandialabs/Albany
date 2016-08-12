@@ -90,7 +90,7 @@ struct StateMechanical
   using TensorType = Intrepid2::Tensor<ScalarT, NumDimT>;
   using InputTensorType = Intrepid2::Tensor<RealType, NumDimT>;
 
-  StateMechanical(int num_dim, InputTensorType const &Fp_n)
+  StateMechanical(int num_dim, InputTensorType const & Fp_n)
     : num_dim_(num_dim),
       Fp_n_(Fp_n),
       Fp_np1_(num_dim),
@@ -99,14 +99,23 @@ struct StateMechanical
       S_np1_(num_dim)
   {}
 
-  int         num_dim_;
+  int
+  num_dim_;
 
-  InputTensorType const Fp_n_;
+  InputTensorType const
+  Fp_n_;
 
-  TensorType  Fp_np1_;
-  TensorType  Lp_np1_;
-  TensorType  sigma_np1_;
-  TensorType  S_np1_;
+  TensorType
+  Fp_np1_;
+
+  TensorType
+  Lp_np1_;
+
+  TensorType 
+  sigma_np1_;
+
+  TensorType
+  S_np1_;
 };
 
 
@@ -117,11 +126,11 @@ struct StateInternal
   using InputVectorType = Intrepid2::Vector<RealType, NumSlipT>;
 
   StateInternal(int num_slip, InputVectorType const & hardening_n,
-      InputVectorType const & slip_n, VectorType const & rate_slip)
+      InputVectorType const & slip_n)
     : num_slip_(num_slip),
       hardening_n_(hardening_n),
       slip_n_(slip_n),
-      rate_slip_(rate_slip),
+      rate_slip_(num_slip),
       hardening_np1_(num_slip),
       slip_np1_(num_slip),
       shear_np1_(num_slip),
@@ -137,7 +146,7 @@ struct StateInternal
   InputVectorType const
   slip_n_;
 
-  VectorType const
+  VectorType
   rate_slip_;
 
   VectorType
