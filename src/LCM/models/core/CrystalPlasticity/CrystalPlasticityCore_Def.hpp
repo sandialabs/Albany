@@ -63,7 +63,6 @@ CP::confirmTensorSanity(
 }
 
 
-
 ///
 /// Update the plastic quantities
 ///
@@ -110,8 +109,6 @@ CP::applySlipIncrement(
 }
 
 
-
-
 ///
 /// Evolve the hardnesses
 ///
@@ -131,11 +128,13 @@ CP::updateHardness(
     auto const &
     slip_family = slip_families[sf_index];
 
-    auto type_hardening_law = slip_family.getHardeningLawType();
+    auto
+    type_hardening_law = slip_family.getHardeningLawType();
 
     HardeningLawFactory<NumDimT, NumSlipT> hardening_law_factory;
 
-    auto phardening = hardening_law_factory.template createHardeningLaw<ArgT>(type_hardening_law); 
+    auto
+    phardening = hardening_law_factory.template createHardeningLaw<ArgT>(type_hardening_law); 
 
     phardening->harden(
       slip_family,
@@ -149,8 +148,6 @@ CP::updateHardness(
 
   return;
 }
-
-
 
 
 ///
@@ -172,11 +169,14 @@ CP::updateSlip(
     auto const &
     slip_family = slip_families[slip_systems.at(ss_index).slip_family_index_];
 
-    CP::flowRuleFactory<ArgT>
-    f;
+    auto
+    type_flow_rule = slip_family.getFlowRuleType();
 
-    CP::FlowRuleBase<ArgT> *
-    pflow = f.createFlowRule(slip_family.getFlowRuleType());
+    FlowRuleFactory
+    flow_rule_factory;
+
+    auto
+    pflow = flow_rule_factory.template createFlowRule<ArgT>(type_flow_rule);
 
     ArgT const
     rate_slip = pflow->computeRateSlip(
@@ -189,7 +189,6 @@ CP::updateSlip(
 
   return;
 }
-
 
 
 ///
@@ -250,7 +249,6 @@ CP::computeStress(
       Intrepid2::dotdot(slip_systems.at(s).projector_, deformation_elastic * S);
   }
 }
-
 
 
 //

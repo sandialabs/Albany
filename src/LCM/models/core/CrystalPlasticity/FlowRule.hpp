@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "../../../../utility/StaticAllocator.hpp"
+
 #if !defined(LCM_FlowRule_hpp)
 #define LCM_FlowRule_hpp
 
@@ -168,6 +170,26 @@ struct FlowRuleBase
 
   virtual
   ~FlowRuleBase() {}
+};
+
+
+/**
+ *  Factory class for instantiating flow rules.
+ */
+class FlowRuleFactory
+{
+
+public:
+
+  FlowRuleFactory() {};
+
+  template<typename ArgT>
+  utility::StaticPointer<FlowRuleBase<ArgT>>
+  createFlowRule(FlowRuleType type_flow_rule) const;
+
+private:
+
+  mutable utility::StaticStackAllocator<sizeof(std::uintptr_t)> allocator_;
 };
 
 

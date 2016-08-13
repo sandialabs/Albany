@@ -40,6 +40,42 @@ CP::flowParameterFactory(CP::FlowRuleType type_flow_rule)
 
 
 //
+// Factory returning a pointer to a flow rule object
+//
+template<typename ArgT>
+utility::StaticPointer<CP::FlowRuleBase<ArgT>>
+CP::FlowRuleFactory::createFlowRule(FlowRuleType type_flow_rule) const
+{
+  switch (type_flow_rule) {
+    
+    default:
+      std::cerr << __PRETTY_FUNCTION__ << '\n';
+      std::cerr << "ERROR: Unknown flow rule\n";
+      exit(1);
+      break;
+
+    case FlowRuleType::POWER_LAW:
+      return allocator_.create<PowerLawFlowRule<ArgT>>();
+      break;
+
+    case FlowRuleType::POWER_LAW_DRAG:
+      return allocator_.create<PowerLawDragFlowRule<ArgT>>();
+      break;
+
+    case FlowRuleType::THERMAL_ACTIVATION:
+      return allocator_.create<ThermalActivationFlowRule<ArgT>>();
+      break;
+
+    case FlowRuleType::UNDEFINED:
+      return allocator_.create<NoFlowRule<ArgT>>();
+      break;
+  }
+
+  return nullptr;
+}
+
+
+//
 // Power law flow rule
 //
 template<typename ArgT>

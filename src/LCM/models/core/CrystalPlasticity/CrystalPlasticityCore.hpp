@@ -250,55 +250,6 @@ computeElasticityTensor(
     DataT c66,
     Intrepid2::Tensor4<ArgT, NumDimT> & C);
 
-
-//
-// Factory returning a pointer to a flow rule object
-//
-template<typename ScalarT>
-class flowRuleFactory
-{
-
-public:
-
-  using FlowRuleBaseType = FlowRuleBase<ScalarT>;
-
-  FlowRuleBaseType *
-  createFlowRule(FlowRuleType type_flow_rule) {  
-
-    switch (type_flow_rule) {
-      
-      default:
-        std::cerr << __PRETTY_FUNCTION__ << '\n';
-        std::cerr << "ERROR: Unknown flow rule\n";
-        exit(1);
-        break;
-
-      case FlowRuleType::POWER_LAW:
-        return new(flow_buffer_) PowerLawFlowRule<ScalarT>();
-        break;
-
-      case FlowRuleType::POWER_LAW_DRAG:
-        return new(flow_buffer_) PowerLawDragFlowRule<ScalarT>();
-        break;
-
-      case FlowRuleType::THERMAL_ACTIVATION:
-        return new(flow_buffer_) ThermalActivationFlowRule<ScalarT>();
-        break;
-
-      case FlowRuleType::UNDEFINED:
-        return new(flow_buffer_) NoFlowRule<ScalarT>();
-        break;
-    }
-
-    return nullptr;
-  }
-
-private:
-
-  unsigned char
-  flow_buffer_[sizeof(FlowRuleBaseType)];
-};
-
 } // namespace CP
 
 #include "CrystalPlasticityCore_Def.hpp"
