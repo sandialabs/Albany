@@ -95,7 +95,7 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void DOFDivInterpolationLevels<EvalT, Traits>::
 operator() (const DOFDivInterpolationLevels_Tag& tag, const int& cell) const{
-  Kokkos::View<ScalarT***> vcontra("vcontra", numNodes, numLevels, 2);
+  Kokkos::DynRankView<ScalarT, PHX::Device> vcontra = createDynRankView(div_val_qp.get_view(), "vcontra", numNodes, numLevels, 2);
   for (std::size_t node=0; node < numNodes; ++node) {
     const MeshScalarT jinv00 = jacobian_inv(cell, node, 0, 0);
     const MeshScalarT jinv01 = jacobian_inv(cell, node, 0, 1);

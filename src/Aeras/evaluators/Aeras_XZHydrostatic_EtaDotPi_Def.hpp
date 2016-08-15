@@ -135,7 +135,7 @@ operator() (const XZHydrostatic_EtaDotPi_Tag& tag, const int& cell) const{
     for (int level=0; level < numLevels; ++level) pdotp0 -= divpivelx(cell,qp,level) * E.delta(level);
 
     //etadotpi(level) shifted by 1/2
-    Kokkos::View<ScalarT*> etadotpi("etadotpi", numLevels+1);
+    Kokkos::DynRankView<ScalarT, PHX::Device> etadotpi = Kokkos::createDynRankView(Pidot.get_view(), "etadotpi", numLevels+1);
     for (int level=0; level < numLevels; ++level) {
       //define etadotpi on interfaces
       ScalarT integral = 0;
@@ -185,7 +185,7 @@ void XZHydrostatic_EtaDotPi<EvalT, Traits>::
 operator() (const XZHydrostatic_EtaDotPi_pureAdvection_Tag& tag, const int& cell) const{
   for (int qp=0; qp < numQPs; ++qp) {
     //etadotpi(level) shifted by 1/2
-    Kokkos::View<ScalarT*> etadotpi("etadotpi", numLevels+1);
+    Kokkos::DynRankView<ScalarT, PHX::Device> etadotpi = Kokkos::createDynRankView(Pidot.get_view(), "etadotpi", numLevels+1);
     for (int level=0; level < numLevels-1; ++level) {
       const ScalarT etadotpi_m = etadot(cell,qp,level  )*Pi(cell,qp,level  );
       const ScalarT etadotpi_p = etadot(cell,qp,level+1)*Pi(cell,qp,level+1);
