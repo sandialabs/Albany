@@ -303,7 +303,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   Teuchos::ParameterList& physParamList = paramList->sublist("Problem").sublist("FELIX Physical Parameters");
  
   double rho_ice, rho_seawater; 
-  physParamList.set("Gravity", physParamList.get("Gravity", MPAS_gravity));
+  physParamList.set("Gravity Acceleration", physParamList.get("Gravity Acceleration", MPAS_gravity));
   physParamList.set("Ice Density", rho_ice = physParamList.get("Ice Density", MPAS_rho_ice));
   physParamList.set("Water Density", rho_seawater = physParamList.get("Water Density", MPAS_rho_seawater));
   
