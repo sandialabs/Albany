@@ -71,7 +71,8 @@ cmake \
  -D TPL_ENABLE_Matio:BOOL=OFF \
  -D TPL_ENABLE_Netcdf:BOOL=ON \
  -D TPL_ENABLE_X11:BOOL=OFF \
- -D TPL_Netcdf_INCLUDE_DIRS:PATH=/usr/include \
+ -D TPL_Netcdf_INCLUDE_DIRS:PATH=/usr/include/openmpi-x86_64/ \
+ -D TPL_Netcdf_PARALLEL:BOOL=ON \
 \
  -D Trilinos_ENABLE_Amesos2:BOOL=ON \
  -D Trilinos_ENABLE_Amesos:BOOL=ON \
