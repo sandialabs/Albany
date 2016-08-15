@@ -108,10 +108,19 @@ ELSE()
   set(utils-headers ${utils-headers}
     ${LCM_DIR}/utils/LCM_Utils.h
     ${LCM_DIR}/utils/Projection.hpp
+    ${LCM_DIR}/utils/LocalNonlinearSolver.hpp
+    ${LCM_DIR}/utils/LocalNonlinearSolver_Def.hpp
+    ${LCM_DIR}/utils/NOXSolverPrePostOperator.h
+    ${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.h
+    ${LCM_DIR}/utils/MaterialDatabase.h
   )
   set(utils-sources ${utils-sources}
     ${LCM_DIR}/utils/LCM_Utils.cc
     ${LCM_DIR}/utils/Projection.cpp
+    ${LCM_DIR}/utils/LocalNonlinearSolver.cpp
+    ${LCM_DIR}/utils/NOXSolverPrePostOperator.cc
+    ${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.cc
+    ${LCM_DIR}/utils/MaterialDatabase.cc
   )
 ENDIF()
 
