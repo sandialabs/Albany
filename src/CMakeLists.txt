@@ -281,6 +281,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherAuxData.cpp
   evaluators/PHAL_GatherCoordinateVector.cpp
   evaluators/PHAL_GatherScalarNodalParameter.cpp
+  evaluators/PHAL_ScatterScalarNodalParameter.cpp
   evaluators/PHAL_GatherSolution.cpp
   evaluators/PHAL_HeatEqResid.cpp
   evaluators/PHAL_IdentityCoordinateFunctionTraits.cpp
@@ -411,6 +412,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherCoordinateVector_Def.hpp
   evaluators/PHAL_GatherScalarNodalParameter.hpp
   evaluators/PHAL_GatherScalarNodalParameter_Def.hpp
+  evaluators/PHAL_ScatterScalarNodalParameter.hpp
+  evaluators/PHAL_ScatterScalarNodalParameter_Def.hpp
   evaluators/PHAL_GatherSolution.hpp
   evaluators/PHAL_GatherSolution_Def.hpp
   evaluators/PHAL_HeatEqResid.hpp
