@@ -108,7 +108,7 @@
               <ParameterList name="Linear Solver Types">
                 <ParameterList name="Belos">
                   <ParameterList name="VerboseObject">
-                    <Parameter name="Verbosity Level" type="string" value="high"/>
+                    <Parameter name="Verbosity Level" type="string" value="none"/>
                   </ParameterList>
                   <Parameter name="Solver Type" type="string" value="Block GMRES"/>
                   <ParameterList name="Solver Types">
@@ -156,9 +156,9 @@
           <Parameter name="Outer Iteration" type="bool" value="1"/>
           <Parameter name="Parameters" type="bool" value="0"/>
           <Parameter name="Details" type="bool" value="0"/>
-          <Parameter name="Linear Solver Details" type="bool" value="0"/>
-          <Parameter name="Stepper Iteration" type="bool" value="0"/>
-          <Parameter name="Stepper Details" type="bool" value="0"/>
+          <Parameter name="Linear Solver Details" type="bool" value="true"/>
+          <Parameter name="Stepper Iteration" type="bool" value="true"/>
+          <Parameter name="Stepper Details" type="bool" value="true"/>
           <Parameter name="Stepper Parameters" type="bool" value="0"/>
         </ParameterList>
       </ParameterList>

@@ -9,5 +9,5 @@
 #include "CrystalPlasticityModel.hpp"
 #include "CrystalPlasticityModel_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::CrystalPlasticityModel)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::CrystalPlasticityKernel)
 

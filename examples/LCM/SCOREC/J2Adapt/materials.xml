@@ -33,8 +33,11 @@
         <Parameter name="Yield Strength Type" type="string" value="Constant"/>
         <Parameter name="Value" type="double" value="10.0"/>
       </ParameterList>
+      <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
+      <Parameter name="Output Fp" type="bool" value="true"/>
+      <Parameter name="Output eqps" type="bool" value="true"/>
     </ParameterList>
-    
+
   </ParameterList>
 
 </ParameterList>

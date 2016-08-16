@@ -10,4 +10,4 @@
 #include "FELIX_LiquidWaterFraction.hpp"
 #include "FELIX_LiquidWaterFraction_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_EVAL_TYPE(FELIX::LiquidWaterFraction)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(FELIX::LiquidWaterFraction)

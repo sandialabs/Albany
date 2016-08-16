@@ -67,6 +67,7 @@ include_directories(
   )
 
 add_library(pumi ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+target_link_libraries(pumi ${SCOREC_LIB})
 
 IF (INSTALL_ALBANY)
   install(TARGETS pumi EXPORT albany-export

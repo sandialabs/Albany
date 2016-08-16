@@ -17,32 +17,22 @@ namespace FELIX
 template<typename EvalT, typename Traits, typename VelocityType>
 BasalMeltRate<EvalT,Traits,VelocityType>::
 BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl_basal):
-	basalNormalHeatCold				(p.get<std::string> ("Basal Normal Heat Flux Cold Side Variable Name"),dl_basal->node_scalar),
-	basalNormalHeatTemperate 		(p.get<std::string> ("Basal Normal Heat Flux Temperate Side Variable Name"),dl_basal->node_scalar),
-	omega							(p.get<std::string> ("Omega Side Variable Name"),dl_basal->node_scalar),
-	basal_heat_flux					(p.get<std::string> ("Geotermal Flux Side Variable Name"),dl_basal->node_scalar),
-	velocity						(p.get<std::string> ("Velocity Side Variable Name"),dl_basal->node_vector),
-	basal_friction					(p.get<std::string> ("Basal Friction Coefficient Side Variable Name"),dl_basal->node_scalar),
-	meltEnthalpy					(p.get<std::string> ("Enthalpy Hs Side Variable Name"),dl_basal->node_scalar),
-	Enthalpy						(p.get<std::string> ("Enthalpy Side Variable Name"),dl_basal->node_scalar),
-	basalMeltRate					(p.get<std::string> ("Basal Melt Rate Variable Name"),dl_basal->node_scalar)
+	phi					(p.get<std::string> ("Water Content Side Variable Name"),dl_basal->node_scalar),
+	geoFluxHeat			(p.get<std::string> ("Geothermal Flux Side Variable Name"),dl_basal->node_scalar),
+	velocity			(p.get<std::string> ("Velocity Side Variable Name"),dl_basal->node_vector),
+	beta				(p.get<std::string> ("Basal Friction Coefficient Side Variable Name"),dl_basal->node_scalar),
+	EnthalpyHs			(p.get<std::string> ("Enthalpy Hs Side Variable Name"),dl_basal->node_scalar),
+	Enthalpy			(p.get<std::string> ("Enthalpy Side Variable Name"),dl_basal->node_scalar),
+	basalMeltRate		(p.get<std::string> ("Basal Melt Rate Variable Name"),dl_basal->node_scalar),
+    homotopy			(p.get<std::string> ("Continuation Parameter Name"),dl_basal->shared_param)
 {
-	basalSideName = p.get<std::string>("Side Set Name");
-
-	basalMeltRate 		= PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Melt Rate QP Variable Name"), dl_basal->qp_scalar);
-	//int1Ddrainage		= PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Integral1D Drainage Side QP Variable Name"), dl_basal->qp_scalar);
-	surface_height_grad = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Surface Height Gradient Side QP Variable Name"), dl_basal->qp_gradient);
-	thickness_grad      = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Thickness Gradient Side QP Variable Name"), dl_basal->qp_gradient);
-	velocity    		= PHX::MDField<VelocityType,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Velocity Side QP Variable Name"), dl->qp_vector);
-
-	this->addDependentField(basalNormalHeatCold);
-	this->addDependentField(basalNormalHeatTemperate);
-	this->addDependentField(omega);
-	this->addDependentField(basal_heat_flux);
+	this->addDependentField(phi);
+	this->addDependentField(geoFluxHeat);
 	this->addDependentField(velocity);
-	this->addDependentField(basal_friction);
-	this->addDependentField(meltEnthalpy);
+	this->addDependentField(beta);
+	this->addDependentField(EnthalpyHs);
 	this->addDependentField(Enthalpy);
+	this->addDependentField(homotopy);
 
 	this->addEvaluatedField(basalMeltRate);
 	this->setName("Basal Melt Rate");
@@ -51,66 +41,84 @@ BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 	dl_basal->node_qp_gradient->dimensions(dims);
 	int numSides = dims[1];
 	numSideNodes = dims[2];
-/*
-	// Index of the nodes on the sides in the numeration of the cell
-	Teuchos::RCP<shards::CellTopology> cellType;
-	cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
-	sideNodes.resize(numSides);
-	for (int side=0; side<numSides; ++side)
-	{
-		// Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-	    int thisSideNodes = cellType->getNodeCount(sideDim,side);
-	    sideNodes[side].resize(thisSideNodes);
-	    for (int node=0; node<thisSideNodes; ++node)
-	    {
-	    	sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
-	    }
-	}
-*/
+	sideDim      = dims[4];
+	numCellNodes = basalMeltRate.fieldTag().dataLayout().dimension(1);
+
+	basalSideName = p.get<std::string> ("Side Set Name");
+
+	Teuchos::ParameterList* physics_list = p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
+	rho_w = physics_list->get("Water Density", 1000.0);
+	rho_i = physics_list->get("Ice Density", 910.0);
+	L = physics_list->get("Latent heat of fusion", 3e5);
+
+	k_0 = physics_list->get("Permeability factor", 0.0);
+	eta_w = physics_list->get("Viscosity of water", 0.0018);
+	g = physics_list->get("Gravity Acceleration", 9.8);
+	alpha_om = physics_list->get("Omega exponent alpha", 2.0);
+
+	a = physics_list->get("Diffusivity homotopy exponent", -9.0);
 }
 
 template<typename EvalT, typename Traits, typename VelocityType>
 void BasalMeltRate<EvalT,Traits,VelocityType>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
-	this->utils.setFieldData(basalNormalHeatCold,fm);
-	this->utils.setFieldData(basalNormalHeatTemperate,fm);
-	this->utils.setFieldData(omega,fm);
-	this->utils.setFieldData(basal_heat_flux,fm);
+	this->utils.setFieldData(phi,fm);
+	this->utils.setFieldData(geoFluxHeat,fm);
 	this->utils.setFieldData(velocity,fm);
-	this->utils.setFieldData(basal_friction,fm);
-	this->utils.setFieldData(meltEnthalpy,fm);
+	this->utils.setFieldData(beta,fm);
+	this->utils.setFieldData(EnthalpyHs,fm);
 	this->utils.setFieldData(Enthalpy,fm);
+	this->utils.setFieldData(homotopy,fm);
 	this->utils.setFieldData(basalMeltRate,fm);
 }
 
-template<typename EvalT, typename Traits, typename Type>
-void VerticalVelocity<EvalT,Traits,Type>::
+template<typename EvalT, typename Traits, typename VelocityType>
+void BasalMeltRate<EvalT,Traits,VelocityType>::
 evaluateFields(typename Traits::EvalData d)
 {
-	if (d.sideSets->find(basalSideName)==d.sideSets->end())
-		return;
+	TEUCHOS_TEST_FOR_EXCEPTION (d.sideSets==Teuchos::null, std::runtime_error,
+	                            "Side sets defined in input file but not properly specified on the mesh.\n");
+	int vecDimFO = 2;
+	double pi = atan(1.) * 4.;
+	ScalarT hom = homotopy(0);
+	double scaling = pow(10.0,8.0) / 3.171;
+	ScalarT phiExp, alpha;
 
-	const std::vector<Albany::SideStruct>& sideSet = d.sideSets->at(basalSideName);
+	if (a == -2.0)
+		alpha = pow(10.0, (a + hom*10)/8);
+	else if (a == -1.0)
+		alpha = pow(10.0, (a + hom*10)/4.5);
+	else
+		alpha = pow(10.0, a + hom*10/3);
 
-
-	for (auto const& it_side : sideSet)
+	if (d.sideSets->find(basalSideName) != d.sideSets->end())
 	{
-		// Get the local data of side and cell
-		const int cell = it_side.elem_LID;
-		const int side = it_side.side_local_id;
+		const std::vector<Albany::SideStruct>& sideSet = d.sideSets->at(basalSideName);
+	    for (auto const& it_side : sideSet)
+	    {
+	    	// Get the local data of side and cell
+	    	const int cell = it_side.elem_LID;
+	    	const int side = it_side.side_local_id;
 
-		for (int node = 0; node < numSideNodes; ++node)
-		{
-			for (int qp = 0; qp < numSideQPs; ++qp)
-			{
-				// check whether w(cell,qp) is correct
-				w(cell,qp) +=  basalMeltRate(cell,side,qp) + gradb0 * velocity(cell,side,qp,0) + gradb1 * velocity(cell,side,qp,1); // + int1Ddrainage(cell,side,qp)
-			}
-		}
+	    	for (int node = 0; node < numSideNodes; ++node)
+	    	{
+    			ScalarT scale = - atan(alpha * (Enthalpy(cell,side,node) - EnthalpyHs(cell,side,node)))/pi + 0.5;
+    			ScalarT basalHeat = 0.;
+
+    			for (int dim = 0; dim < vecDimFO; dim++)
+    				basalHeat += (1./(3.154*pow(10.0,4.0))) * beta(cell,side,node) * velocity(cell,side,node,dim) * velocity(cell,side,node,dim);
+
+    			phiExp = pow(phi(cell,side,node),alpha_om);
+
+    			basalMeltRate(cell,side,node) = scaling*( ((1 - scale)*( basalHeat + geoFluxHeat(cell,side,node) ) / ((1 - rho_w/rho_i*phi(cell,side,node))*L*rho_w)) -
+    											k_0 * (rho_w - rho_i) * g / eta_w * phiExp );
+	    	}
+	    }
 	}
 }
 
-}
+
+} //namespace FELIX
 
 

@@ -60,7 +60,7 @@ static apf::Migration* getPlan(apf::Mesh* m, int npartitions)
 
 Albany::PUMIMeshStruct::PUMIMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params,
-		const Teuchos::RCP<const Teuchos_Comm>& commT)
+    const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
   PCU_Comm_Init();
   params->validateParameters(
@@ -91,7 +91,7 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
 
     std::string mesh_file = params->get<std::string>("PUMI Input File Name");
     mesh = 0;
-    
+
     // If we are running in parallel but have a single mesh file, split it and rebalance
     bool useSerialMesh = params->get<bool>("Use Serial Mesh", false);
     if (useSerialMesh && commT->getSize() > 1){ // do the equivalent of the SCOREC "split" utility

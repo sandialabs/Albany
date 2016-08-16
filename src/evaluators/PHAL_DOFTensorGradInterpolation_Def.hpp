@@ -12,9 +12,9 @@
 namespace PHAL {
 
   //**********************************************************************
-  template<typename EvalT, typename Traits>
-  DOFTensorGradInterpolation<EvalT, Traits>::
-  DOFTensorGradInterpolation(const Teuchos::ParameterList& p,
+  template<typename EvalT, typename Traits, typename ScalarT>
+  DOFTensorGradInterpolationBase<EvalT, Traits, ScalarT>::
+  DOFTensorGradInterpolationBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
     val_node    (p.get<std::string>  ("Variable Name"), dl->node_tensor),
     GradBF      (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient ),
@@ -24,7 +24,7 @@ namespace PHAL {
     this->addDependentField(GradBF);
     this->addEvaluatedField(grad_val_qp);
 
-    this->setName("DOFTensorGradInterpolation"+PHX::typeAsString<EvalT>());
+    this->setName("DOFTensorGradInterpolationBase"+PHX::typeAsString<EvalT>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     GradBF.fieldTag().dataLayout().dimensions(dims);
@@ -37,8 +37,8 @@ namespace PHAL {
   }
 
   //**********************************************************************
-  template<typename EvalT, typename Traits>
-  void DOFTensorGradInterpolation<EvalT, Traits>::
+  template<typename EvalT, typename Traits, typename ScalarT>
+  void DOFTensorGradInterpolationBase<EvalT, Traits, ScalarT>::
   postRegistrationSetup(typename Traits::SetupData d,
                         PHX::FieldManager<Traits>& fm)
   {
@@ -48,8 +48,8 @@ namespace PHAL {
   }
 
   //**********************************************************************
-  template<typename EvalT, typename Traits>
-  void DOFTensorGradInterpolation<EvalT, Traits>::
+  template<typename EvalT, typename Traits, typename ScalarT>
+  void DOFTensorGradInterpolationBase<EvalT, Traits, ScalarT>::
   evaluateFields(typename Traits::EvalData workset)
   {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -63,18 +63,18 @@ namespace PHAL {
               for (std::size_t node= 1 ; node < numNodes; ++node) {
                 grad_val_qp(cell,qp,i,j,dim) += val_node(cell, node, i, j) * GradBF(cell, node, qp, dim);
               }
-            } 
-          } 
-        } 
-      } 
+            }
+          }
+        }
+      }
     }
   }
-  
+
   //**********************************************************************
   template<typename Traits>
-  DOFTensorGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
-  DOFTensorGradInterpolation(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  DOFTensorGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
+  DOFTensorGradInterpolationBase(const Teuchos::ParameterList& p,
+                                 const Teuchos::RCP<Albany::Layouts>& dl) :
     val_node    (p.get<std::string>  ("Variable Name"), dl->node_tensor),
     GradBF      (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient ),
     grad_val_qp (p.get<std::string>  ("Gradient Variable Name"), dl->qp_tensorgradient )
@@ -83,7 +83,7 @@ namespace PHAL {
     this->addDependentField(GradBF);
     this->addEvaluatedField(grad_val_qp);
 
-    this->setName("DOFTensorGradInterpolation"+PHX::typeAsString<PHAL::AlbanyTraits::Jacobian>());
+    this->setName("DOFTensorGradInterpolationBase"+PHX::typeAsString<PHAL::AlbanyTraits::Jacobian>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     GradBF.fieldTag().dataLayout().dimensions(dims);
@@ -99,7 +99,7 @@ namespace PHAL {
 
   //**********************************************************************
   template<typename Traits>
-  void DOFTensorGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
+  void DOFTensorGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
   postRegistrationSetup(typename Traits::SetupData d,
                         PHX::FieldManager<Traits>& fm)
   {
@@ -110,7 +110,7 @@ namespace PHAL {
 
   //**********************************************************************
   template<typename Traits>
-  void DOFTensorGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
+  void DOFTensorGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
   evaluateFields(typename Traits::EvalData workset)
   {
     const int num_dof = val_node(0,0,0,0).size();
@@ -133,23 +133,23 @@ namespace PHAL {
                 gvqp += val_node(cell, node, i, j) * GradBF(cell, node, qp, dim);
 #else
                 gvqp.val() += val_node(cell, node, i, j).val() * GradBF(cell, node, qp, dim);
-                gvqp.fastAccessDx(neq*node+offset+i*vecDim+j) 
+                gvqp.fastAccessDx(neq*node+offset+i*vecDim+j)
                   += val_node(cell, node, i, j).fastAccessDx(neq*node+offset+i*vecDim+j) * GradBF(cell, node, qp, dim);
 #endif
               }
-            } 
-          } 
-        } 
-      } 
+            }
+          }
+        }
+      }
     }
   }
-  
+
 #ifdef ALBANY_SG
   //**********************************************************************
   template<typename Traits>
-  DOFTensorGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>::
-  DOFTensorGradInterpolation(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  DOFTensorGradInterpolationBase<PHAL::AlbanyTraits::SGJacobian, Traits, typename PHAL::AlbanyTraits::SGJacobian::ScalarT>::
+  DOFTensorGradInterpolationBase(const Teuchos::ParameterList& p,
+                                 const Teuchos::RCP<Albany::Layouts>& dl) :
     val_node    (p.get<std::string>  ("Variable Name"), dl->node_tensor),
     GradBF      (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient ),
     grad_val_qp (p.get<std::string>  ("Gradient Variable Name"), dl->qp_tensorgradient )
@@ -158,7 +158,7 @@ namespace PHAL {
     this->addDependentField(GradBF);
     this->addEvaluatedField(grad_val_qp);
 
-    this->setName("DOFTensorGradInterpolation"+PHX::typeAsString<PHAL::AlbanyTraits::SGJacobian>());
+    this->setName("DOFTensorGradInterpolationBase"+PHX::typeAsString<PHAL::AlbanyTraits::SGJacobian>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     GradBF.fieldTag().dataLayout().dimensions(dims);
@@ -174,7 +174,7 @@ namespace PHAL {
 
   //**********************************************************************
   template<typename Traits>
-  void DOFTensorGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>::
+  void DOFTensorGradInterpolationBase<PHAL::AlbanyTraits::SGJacobian, Traits, typename PHAL::AlbanyTraits::SGJacobian::ScalarT>::
   postRegistrationSetup(typename Traits::SetupData d,
                         PHX::FieldManager<Traits>& fm)
   {
@@ -185,7 +185,7 @@ namespace PHAL {
 
   //**********************************************************************
   template<typename Traits>
-  void DOFTensorGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>::
+  void DOFTensorGradInterpolationBase<PHAL::AlbanyTraits::SGJacobian, Traits, typename PHAL::AlbanyTraits::SGJacobian::ScalarT>::
   evaluateFields(typename Traits::EvalData workset)
   {
     const int num_dof = val_node(0,0,0,0).size();
@@ -201,24 +201,24 @@ namespace PHAL {
               gvqp.fastAccessDx(offset+i*vecDim+j) = val_node(cell, 0, i, j).fastAccessDx(offset+i*vecDim+j) * GradBF(cell, 0, qp, dim);
               for (std::size_t node= 1 ; node < numNodes; ++node) {
                 gvqp.val() += val_node(cell, node, i, j).val() * GradBF(cell, node, qp, dim);
-                gvqp.fastAccessDx(neq*node+offset+i*vecDim+j) 
+                gvqp.fastAccessDx(neq*node+offset+i*vecDim+j)
                   += val_node(cell, node, i, j).fastAccessDx(neq*node+offset+i*vecDim+j) * GradBF(cell, node, qp, dim);
               }
-            } 
-          } 
-        } 
-      } 
+            }
+          }
+        }
+      }
     }
   }
   //**********************************************************************
 #endif
-  
+
 #ifdef ALBANY_ENSEMBLE
   //**********************************************************************
   template<typename Traits>
-  DOFTensorGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>::
-  DOFTensorGradInterpolation(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  DOFTensorGradInterpolationBase<PHAL::AlbanyTraits::MPJacobian, Traits, typename PHAL::AlbanyTraits::MPJacobian::ScalarT>::
+  DOFTensorGradInterpolationBase(const Teuchos::ParameterList& p,
+                                 const Teuchos::RCP<Albany::Layouts>& dl) :
     val_node    (p.get<std::string>  ("Variable Name"), dl->node_tensor),
     GradBF      (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient ),
     grad_val_qp (p.get<std::string>  ("Gradient Variable Name"), dl->qp_tensorgradient )
@@ -227,7 +227,7 @@ namespace PHAL {
     this->addDependentField(GradBF);
     this->addEvaluatedField(grad_val_qp);
 
-    this->setName("DOFTensorGradInterpolation"+PHX::typeAsString<PHAL::AlbanyTraits::MPJacobian>());
+    this->setName("DOFTensorGradInterpolationBase"+PHX::typeAsString<PHAL::AlbanyTraits::MPJacobian>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     GradBF.fieldTag().dataLayout().dimensions(dims);
@@ -243,7 +243,7 @@ namespace PHAL {
 
   //**********************************************************************
   template<typename Traits>
-  void DOFTensorGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>::
+  void DOFTensorGradInterpolationBase<PHAL::AlbanyTraits::MPJacobian, Traits, typename PHAL::AlbanyTraits::MPJacobian::ScalarT>::
   postRegistrationSetup(typename Traits::SetupData d,
                         PHX::FieldManager<Traits>& fm)
   {
@@ -254,7 +254,7 @@ namespace PHAL {
 
   //**********************************************************************
   template<typename Traits>
-  void DOFTensorGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>::
+  void DOFTensorGradInterpolationBase<PHAL::AlbanyTraits::MPJacobian, Traits, typename PHAL::AlbanyTraits::MPJacobian::ScalarT>::
   evaluateFields(typename Traits::EvalData workset)
   {
     const int num_dof = val_node(0,0,0,0).size();
@@ -270,17 +270,17 @@ namespace PHAL {
               gvqp.fastAccessDx(offset+i*vecDim+j) = val_node(cell, 0, i, j).fastAccessDx(offset+i*vecDim+j) * GradBF(cell, 0, qp, dim);
               for (std::size_t node= 1 ; node < numNodes; ++node) {
                 gvqp.val() += val_node(cell, node, i, j).val() * GradBF(cell, node, qp, dim);
-                gvqp.fastAccessDx(neq*node+offset+i*vecDim+j) 
+                gvqp.fastAccessDx(neq*node+offset+i*vecDim+j)
                   += val_node(cell, node, i, j).fastAccessDx(neq*node+offset+i*vecDim+j) * GradBF(cell, node, qp, dim);
               }
-            } 
-          } 
-        } 
-      } 
+            }
+          }
+        }
+      }
     }
   }
-  
+
   //**********************************************************************
 #endif
 
-}
+} // Namespace PHAL

@@ -76,7 +76,7 @@ def plot_data_run(run = None, filename = None):
         additional_artists = []
 
     plt.yscale('log')
-    plt.xlabel('Time Step')
+    plt.xlabel('Simulation step')
     plt.ylabel('Step Size (s)')
 
     plt.savefig(
