@@ -79,7 +79,6 @@ SET(HEADERS
 
 IF(ALBANY_EPETRA)
   SET(HEADERS ${HEADERS}
-    Albany_DistributedParameterDerivativeOp.hpp
     Albany_EigendataInfoStruct.hpp
     Albany_SaveEigenData.hpp
     Albany_ModelEvaluator.hpp

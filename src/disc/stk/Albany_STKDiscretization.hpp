@@ -103,7 +103,7 @@ namespace Albany {
     //! Get Tpetra overlapped DOF map
     Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const;
 
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
     //! Get field DOF map
     Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const;
 
@@ -155,7 +155,7 @@ namespace Albany {
     //! Modify CRS Graphs for Peridigm-Albany coupling
     void insertPeridigmNonzerosIntoGraph();
 
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
     //! Get Epetra Node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const;
     //! Get overlapped Node map
@@ -337,7 +337,7 @@ namespace Albany {
 
     void getSolutionMV(Tpetra_MultiVector &resultT, bool overlapped=false) const;
 
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
     //! Copy field from STK Mesh field to given Epetra_Vector
     void getField(Epetra_Vector &field_vector, const std::string& field_name) const;
 
@@ -364,7 +364,7 @@ namespace Albany {
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local + neighbor (overlapped) solution
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
     void setOvlpSolutionField(const Epetra_Vector& soln);
 #endif
     //Tpetra version of above
@@ -393,7 +393,7 @@ namespace Albany {
     void setupExodusOutput();
     //! Call stk_io for creating NetCDF output file
     void setupNetCDFOutput();
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
     int processNetCDFOutputRequest(const Epetra_Vector&);
 #endif
     int processNetCDFOutputRequestT(const Tpetra_Vector&);
@@ -447,7 +447,7 @@ namespace Albany {
 
     //! Overlapped unknown map and node map
     Teuchos::RCP<const Epetra_Map> overlap_map;
-    Teuchos::RCP<const Epetra_Map> overlap_node_map;
+//    Teuchos::RCP<const Epetra_Map> overlap_node_map;
 #endif
 
 
