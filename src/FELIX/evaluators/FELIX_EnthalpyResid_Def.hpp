@@ -99,24 +99,24 @@ EnthalpyResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 	this->setName("EnthalpyResid");
 
 	Teuchos::ParameterList* physics_list = p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
-	rho_i = physics_list->get("Ice Density", 910.0);
-	rho_w = physics_list->get("Water Density", 1000.0);
+	rho_i = physics_list->get("Ice Density", 910.0); //[Kg m^{-3}]
+	rho_w = physics_list->get("Water Density", 1000.0); //[Kg m^{-3}]
 
-	k = physics_list->get("Conductivity of ice", 1.0);
-	c = physics_list->get("Heat capacity of ice", 2000.0);
-	K_i = k / (rho_i * c);
+	k = physics_list->get("Conductivity of ice", 1.0); //[W m^{-1} K^{-1}]
+	c = physics_list->get("Heat capacity of ice", 2000.0); //[J Kg^{-1} K^{-1}]
+	K_i = k / (rho_i * c); //[m^2 s^{-1}]
 
-	nu = physics_list->get("Diffusivity temperate ice", 0.000000011);
+	nu = physics_list->get("Diffusivity temperate ice", 0.000000011); //[m^2 s^{-1}]
 
-	k_0 = physics_list->get("Permeability factor", 0.1);
-	eta_w = physics_list->get("Viscosity of water", 0.0018);
-	g = physics_list->get("Gravity Acceleration", 9.8);
-	L = physics_list->get("Latent heat of fusion", 3e5);
+	k_0 = physics_list->get("Permeability factor", 1e-12); //[m^2]
+	eta_w = physics_list->get("Viscosity of water", 0.0018); //[Pa s]
+	g = physics_list->get("Gravity Acceleration", 9.8); //[m s^{-2}]
+	L = physics_list->get("Latent heat of fusion", 3e5); //[J kg^{-1} ]
 	alpha_om = physics_list->get("Omega exponent alpha", 2.0);
 
 	a = physics_list->get("Diffusivity homotopy exponent", -9.0);
 
-	drainage_coeff = g * rho_w * L * k_0 * (rho_w - rho_i) / eta_w;
+	drainage_coeff = g * rho_w * L * k_0 * (rho_w - rho_i) / eta_w; //[kg s^{-3}]
 
 	printedAlpha = -1.0;
 }
@@ -159,8 +159,9 @@ template<typename EvalT, typename Traits, typename VelocityType>
 void EnthalpyResid<EvalT,Traits,VelocityType>::
 evaluateFields(typename Traits::EvalData d)
 {
-	double scaling = 0.0317057705;	//scaling needs to be done to match dimensions. Measurements unit of each term has to be kg km^-1 s^-3
+	double scaling = 3.17057705e-8;// [s yr^{-1}]	//scaling needs to be done to match dimensions. Measurements unit of each term has to be M kg km^-1 s^-3
 	double pow3 = pow(10.0, 3.0);
+	double powm6 = 1e-6;
 	ScalarT K;
 	double pi = atan(1.) * 4.;
 	ScalarT hom = homotopy(0);
@@ -192,7 +193,7 @@ evaluateFields(typename Traits::EvalData d)
         	{
         		for (std::size_t qp = 0; qp < numQPs; ++qp)
         		{
-        			Residual(cell,node) -= diss(cell,qp)*wBF(cell,node,qp);
+        			Residual(cell,node) -= 0.001*diss(cell,qp)*wBF(cell,node,qp);
         		}
         	}
         }
@@ -208,7 +209,7 @@ evaluateFields(typename Traits::EvalData d)
         		{
         			// Modify here if you want to impose different basal BC. NB: in case of temperate ice, we disregard the extra boundary term related to the gradient of the T_m. You might want to reconsider this in the future
         			ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
-        			Residual(cell,node) -= ( basalFricHeat(cell,qp) + geoFluxHeat(cell,qp) ) * scale;  //go to zero in temperate region
+        			Residual(cell,node) -= powm6*( basalFricHeat(cell,qp) + geoFluxHeat(cell,qp) ) * scale;  //go to zero in temperate region
         		}
         	}
     	}
@@ -226,13 +227,14 @@ evaluateFields(typename Traits::EvalData d)
 					 				   scaling * (Velocity(cell,qp,0)*EnthalpyGrad(cell,qp,0) +
 									   Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + verticalVel(cell,qp)*EnthalpyGrad(cell,qp,2))*wBF(cell,node,qp);
 
-				if ( Enthalpy(cell,qp) >= EnthalpyHs(cell,qp) ) // if the ice is temperate
-					Residual(cell,node) += 0.001*(k - rho_i*c*nu) * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
+//				if ( Enthalpy(cell,qp) >= EnthalpyHs(cell,qp) ) // if the ice is temperate
+				ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
+					Residual(cell,node) += 1e-9*(1 - scale)*(k - rho_i*c*nu) * (meltTempGrad(cell,qp,0)*wGradBF(cell,node,qp,0) +
 										   meltTempGrad(cell,qp,1)*wGradBF(cell,node,qp,1) +
 										   meltTempGrad(cell,qp,2)*wGradBF(cell,node,qp,2));
 
-				ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
-				Residual(cell,node) -= (1 - scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp);
+
+				Residual(cell,node) -= powm6*(1 - scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2)*wBF(cell,node,qp);
 			}
         }
     }
@@ -277,7 +279,7 @@ evaluateFields(typename Traits::EvalData d)
 							   	   	   	    Velocity(cell,qp,1)*EnthalpyGrad(cell,qp,1) + verticalVel(cell,qp)*EnthalpyGrad(cell,qp,2)) * wSUPG;
 
     				ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
-					Residual(cell,node) -= (1-scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2) * wSUPG;
+					Residual(cell,node) -= powm6*(1-scale) * drainage_coeff*alpha_om*pow(phi(cell,qp),alpha_om-1)*phiGrad(cell,qp,2) * wSUPG;
 				}
       	  	}
     	}
@@ -310,9 +312,9 @@ evaluateFields(typename Traits::EvalData d)
 					{
 	        			// Modify here if you want to impose different basal BC
 						ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
-						Residual(cell,node) -= scale*(delta*diam/vmax*(3.154 * pow10))*( basalFricHeatSUPG(cell,qp) + geoFluxHeatSUPG(cell,qp) );
+						Residual(cell,node) -= powm6*scale*(delta*diam/vmax*(3.154 * pow10))*( basalFricHeatSUPG(cell,qp) + geoFluxHeatSUPG(cell,qp) );
 
-						Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow10))*
+						Residual(cell,node) -= 0.001*(delta*diam/vmax*(3.154 * pow10))*
 											    diss(cell,qp) * (1./(3.154 * pow10)) * (Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) + Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) +
 												verticalVel(cell,qp) * wGradBF(cell,node,qp,2));
 					}
@@ -346,7 +348,7 @@ evaluateFields(typename Traits::EvalData d)
 					{
 	        			// Modify here if you want to impose different basal BC
 						ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
-						Residual(cell,node) -= scale*(delta*diam/vmax*(3.154 * pow10))*( basalFricHeatSUPG(cell,qp) + geoFluxHeatSUPG(cell,qp) );
+						Residual(cell,node) -= powm6*scale*(delta*diam/vmax*(3.154 * pow10))*( basalFricHeatSUPG(cell,qp) + geoFluxHeatSUPG(cell,qp) );
 					}
 				}
 			}
@@ -375,7 +377,7 @@ evaluateFields(typename Traits::EvalData d)
 				{
 					for (std::size_t qp=0; qp < numQPs; ++qp)
 					{
-						Residual(cell,node) -= (delta*diam/vmax*(3.154 * pow10))*
+						Residual(cell,node) -= 0.001*(delta*diam/vmax*(3.154 * pow10))*
 										        diss(cell,qp) * (1./(3.154 * pow10)) * (Velocity(cell,qp,0) * wGradBF(cell,node,qp,0) + Velocity(cell,qp,1) * wGradBF(cell,node,qp,1) +
 												verticalVel(cell,qp) * wGradBF(cell,node,qp,2));
 					}
