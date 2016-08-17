@@ -153,7 +153,7 @@ Albany::APFDiscretization::getOverlapMapT() const
   return overlap_mapT;
 }
 
-#if 0 //defined(ALBANY_EPETRA)
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_Map>
 Albany::APFDiscretization::getOverlapNodeMap() const
 {

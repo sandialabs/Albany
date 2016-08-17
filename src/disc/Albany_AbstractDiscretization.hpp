@@ -127,10 +127,12 @@ class AbstractDiscretization {
     virtual Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const = 0;
 #endif
 
-#if 0 //defined(ALBANY_EPETRA)
+#if defined(ALBANY_EPETRA)
     //! Get Epetra Node map
     virtual Teuchos::RCP<const Epetra_Map> getNodeMap() const = 0;
+#endif
 
+#if 0 //defined(ALBANY_EPETRA)
     //! Get Field Node map
     virtual Teuchos::RCP<const Epetra_Map> getNodeMap(const std::string& field_name) const = 0;
 #endif
@@ -140,10 +142,12 @@ class AbstractDiscretization {
     //! Get Field Node map
     virtual Teuchos::RCP<const Tpetra_Map> getNodeMapT(const std::string& field_name) const = 0;
 
-#if 0 //defined(ALBANY_EPETRA)
+#if defined(ALBANY_EPETRA)
     //! Get overlapped Node map
     virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const = 0;
+#endif
 
+#if 0 //defined(ALBANY_EPETRA)
     //! Get Field overlapped Node map
     virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap(const std::string& field_name) const = 0;
 #endif

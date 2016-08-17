@@ -254,7 +254,7 @@ Albany::STKDiscretization::getImplicitOverlapJacobianGraphT() const
 }
 #endif
 
-#if 0 //defined(ALBANY_EPETRA)
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_Map>
 Albany::STKDiscretization::getNodeMap() const
 {
@@ -1541,7 +1541,7 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 
 #ifdef ALBANY_EPETRA
   overlap_map = Petra::TpetraMap_To_EpetraMap(overlap_mapT, comm);
-//  overlap_node_map = Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
+  overlap_node_map = Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
 #endif
 
   if(Teuchos::nonnull(stkMeshStruct->nodal_data_base))

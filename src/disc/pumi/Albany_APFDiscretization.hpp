@@ -231,14 +231,14 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     virtual Teuchos::RCP<const Epetra_Map> getMap() const { return map; }
     virtual Teuchos::RCP<const Epetra_Map> getOverlapMap() const { return overlap_map; }
 #endif
-#if 0 //defined(ALBANY_EPETRA)
+#if defined(ALBANY_EPETRA)
     virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
 #endif
 #if defined(ALBANY_EPETRA)
     virtual Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const { return graph; }
     virtual Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const { return overlap_graph; }
 #endif
-#if 0 //defined(ALBANY_EPETRA)
+#if defined(ALBANY_EPETRA)
     virtual Teuchos::RCP<const Epetra_Map> getNodeMap() const {
       fprintf(stderr,"APF Discretization unsupported call getNodeMap\n");
       abort();

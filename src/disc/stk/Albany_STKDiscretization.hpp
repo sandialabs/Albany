@@ -155,7 +155,7 @@ namespace Albany {
     //! Modify CRS Graphs for Peridigm-Albany coupling
     void insertPeridigmNonzerosIntoGraph();
 
-#if 0 //defined(ALBANY_EPETRA)
+#if defined(ALBANY_EPETRA)
     //! Get Epetra Node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const;
     //! Get overlapped Node map
@@ -447,7 +447,7 @@ namespace Albany {
 
     //! Overlapped unknown map and node map
     Teuchos::RCP<const Epetra_Map> overlap_map;
-//    Teuchos::RCP<const Epetra_Map> overlap_node_map;
+    Teuchos::RCP<const Epetra_Map> overlap_node_map;
 #endif
 
 

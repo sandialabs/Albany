@@ -215,12 +215,12 @@ namespace Aeras
 #if defined(ALBANY_EPETRA)
     //! Get Epetra DOF map
     Teuchos::RCP<const Epetra_Map> getMap() const;
+
+    //! Get overlapped node map
+    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
 #endif
 
 #if 0 //defined(ALBANY_EPETRA)
-    //! Get overlapped node map
-    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
-
     //! Get field overlapped node map
     Teuchos::RCP<const Epetra_Map>
     getOverlapNodeMap(const std::string& field_name) const;
@@ -262,9 +262,12 @@ namespace Aeras
     //! Get Tpetra overlap implicit Jacobian graph (non-diagonal) 
     Teuchos::RCP<const Tpetra_CrsGraph> getImplicitOverlapJacobianGraphT() const;
 
-#if 0 //defined(ALBANY_EPETRA)
+#if defined(ALBANY_EPETRA)
     //! Get field node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const;
+#endif
+
+#if 0 //defined(ALBANY_EPETRA)
     //! Get field node map
     Teuchos::RCP<const Epetra_Map> getNodeMap(const std::string& field_name) const;
 #endif

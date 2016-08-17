@@ -270,7 +270,7 @@ Aeras::SpectralDiscretization::getImplicitOverlapJacobianGraphT() const
 }
 
 
-#if 0 //defined(ALBANY_EPETRA)
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_Map>
 Aeras::SpectralDiscretization::getNodeMap() const
 {
@@ -286,6 +286,9 @@ Aeras::SpectralDiscretization::getOverlapNodeMap() const
     Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
   return overlap_node_map;
 }
+#endif
+
+#if 0 //defined(ALBANY_EPETRA)
 
 Teuchos::RCP<const Epetra_Map>
 Aeras::SpectralDiscretization::getNodeMap(const std::string& field_name) const
