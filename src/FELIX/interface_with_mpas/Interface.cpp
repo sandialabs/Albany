@@ -228,6 +228,22 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     velocityOnVertices[j + numVertices3D] = solution_constView[lId1];
   }
 
+
+  ScalarFieldType* dissipationHeatField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::ELEMENT_RANK, "dissipation_heat");
+  for (UInt j = 0; j < numPrisms; ++j) {
+    int ib = (ordering == 0) * (j % (lElemColumnShift / 3))
+        + (ordering == 1) * (j / (elemLayerShift / 3));
+    int il = (ordering == 0) * (j / (lElemColumnShift / 3))
+        + (ordering == 1) * (j % (elemLayerShift / 3));
+    int gId = il * elemColumnShift + elemLayerShift * indexToTriangleID[ib];
+    int lId = il * lElemColumnShift + elemLayerShift * ib;
+    for (int iTetra = 0; iTetra < 3; iTetra++) {
+      stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, ++gId);
+      double* dissipationHeat = stk::mesh::field_data(*dissipationHeatField, elem);
+//      dissipationHeatOnTetra[lId++] = dissipationHeat[0];
+    }
+  }
+
   keptMesh = true;
 
   //UInt componentGlobalLength = (nLayers+1)*nGlobalVertices; //mesh3DPtr->numGlobalVertices();
@@ -296,7 +312,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   paramList->sublist("Problem").set("Required Fields", arrayRequiredFields);
 
   //Physical Parameters
-  if(!paramList->sublist("Problem").isSublist("FELIX Physical Parameters")) {
+  if(paramList->sublist("Problem").isSublist("FELIX Physical Parameters")) {
     std::cout<<"\nWARNING: Using Physical Parameters (gravity, ice/ocean densities) provided in Albany input file. In order to use those provided by MPAS, remove \"FELIX Physical Parameters\" sublist from Albany input file.\n"<<std::endl;
   }
  
@@ -348,6 +364,8 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   viscosityList.set("Glen's Law A", viscosityList.get("Glen's Law A", MPAS_flowParamA));
   viscosityList.set("Glen's Law n", viscosityList.get("Glen's Law n",  MPAS_flowLawExponent));
   viscosityList.set("Flow Rate Type", viscosityList.get("Flow Rate Type", "Temperature Based"));
+  viscosityList.set("Extract Strain Rate Sq", viscosityList.get("Extract Strain Rate Sq", true)); //set true if not defined
+
 
   paramList->sublist("Problem").sublist("Body Force").set("Type", "FO INTERP SURF GRAD");
   

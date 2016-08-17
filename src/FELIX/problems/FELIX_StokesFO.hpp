@@ -49,6 +49,8 @@
 #include "FELIX_FluxDiv.hpp"
 #include "FELIX_BasalFrictionCoefficient.hpp"
 #include "FELIX_BasalFrictionCoefficientGradient.hpp"
+#include "FELIX_BasalFrictionHeat.hpp"
+#include "FELIX_Dissipation.hpp"
 #include "FELIX_UpdateZCoordinate.hpp"
 #include "FELIX_GatherVerticallyAveragedVelocity.hpp"
 #include "FELIX_Time.hpp"
@@ -1143,6 +1145,50 @@ if (basalSideName!="INVALID")
 
   ev = Teuchos::rcp(new FELIX::ViscosityFO<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ParamScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
+
+  // --- Print FELIX Dissipation ---
+  if(params->sublist("FELIX Viscosity").get("Extract Strain Rate Sq", false))
+  {
+    {
+    p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Dissipation"));
+
+    //Input
+    p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
+    p->set<std::string>("EpsilonSq QP Variable Name", "FELIX EpsilonSq");
+
+    //Output
+    p->set<std::string>("Dissipation QP Variable Name", "FELIX Dissipation");
+
+    ev = Teuchos::rcp(new FELIX::Dissipation<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructQuadPointsToCellInterpolationEvaluator("FELIX Dissipation",false));
+
+    // Saving the dissipation heat in the output mesh
+    {
+//         fm0.template registerEvaluator<EvalT> (evalUtils.constructNodesToCellInterpolationEvaluator("melting temp",false));
+
+      std::string stateName = "dissipation_heat";
+      p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
+      p->set<std::string>("Field Name", "FELIX Dissipation");
+      p->set<std::string>("Weights Name","Weights");
+      p->set("Weights Layout", dl->qp_scalar);
+      p->set("Field Layout", dl->cell_scalar2);
+      p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
+      ev = Teuchos::rcp(new PHAL::SaveCellStateField<EvalT,PHAL::AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+    if (fieldManagerChoice == Albany::BUILD_RESID_FM)
+    {
+      // Only PHAL::AlbanyTraits::Residual evaluates something
+      if (ev->evaluatedFields().size()>0)
+      {
+        // Require save friction heat
+        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+      }
+    }
+  }
 
 #ifdef CISM_HAS_FELIX
   //--- FELIX surface gradient from CISM ---//
