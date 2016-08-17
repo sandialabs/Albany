@@ -51,11 +51,9 @@ DamageResid(const Teuchos::ParameterList& p) :
     p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
+  numCells= dims[0];
   numQPs  = dims[1];
   numDims = dims[2];
-
-  // Allocate workspace
-  flux.resize(dims[0], numQPs, numDims);
 
   this->setName("DamageResid"+PHX::typeAsString<EvalT>());
 }
@@ -75,6 +73,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (enableTransient) this->utils.setFieldData(damage_dot,fm);
 
   this->utils.setFieldData(dResidual,fm);
+
+  flux = Kokkos::createDynRankView(damage.get_view(), "XXX", numCells, numQPs, numDims);
+
 }
 
 //**********************************************************************
@@ -83,18 +84,18 @@ void DamageResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
-  typedef Intrepid2::RealSpaceTools<ScalarT> RST;
+  typedef Intrepid2::RealSpaceTools<PHX::Device> RST;
 
-   FST::scalarMultiplyDataData<ScalarT> (flux, damageLS, damage_grad);
-  RST::scale(flux,-gc);
+   FST::scalarMultiplyDataData (flux, damageLS.get_view(), damage_grad.get_view());
+   RST::scale(flux,-gc);
 
-   FST::integrate(dResidual, flux, wGradBF, false); // "false" overwrites
+   FST::integrate(dResidual.get_view(), flux, wGradBF.get_view(), false); // "false" overwrites
 
   //for (int i=0; i < source.size(); i++) source[i] *= -1.0;
-   FST::integrate(dResidual, source, wBF, true); // "true" sums into
+   FST::integrate(dResidual.get_view(), source.get_view(), wBF.get_view(), true); // "true" sums into
   
   if (workset.transientTerms && enableTransient) 
-     FST::integrate(dResidual, damage_dot, wBF, true); // "true" sums into
+     FST::integrate(dResidual.get_view(), damage_dot.get_view(), wBF.get_view(), true); // "true" sums into
 }
 
 //**********************************************************************

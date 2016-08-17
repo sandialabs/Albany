@@ -64,7 +64,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   switch (numDims) {
   case 1:
-    Intrepid2::FunctionSpaceTools::tensorMultiplyDataData<ScalarT>(stress, elasticModulus, strain);
+    Intrepid2::FunctionSpaceTools<PHX::Device>::tensorMultiplyDataData(stress.get_view(), elasticModulus.get_view(), strain.get_view());
     break;
   case 2:
     // Compute Stress (with the plane strain assumption for now)

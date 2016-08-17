@@ -88,27 +88,21 @@ private:
   unsigned int numDims;
   unsigned int worksetSize;
 
-  // Temporary FieldContainers
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flux;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> fluxdt;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> pterm;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> tpterm;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> aterm;
-  // Temporary FieldContainers
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobian;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobian_inv;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> Gc;
+  // Temporary Views
+  Kokkos::DynRankView<ScalarT, PHX::Device> flux;
+  Kokkos::DynRankView<ScalarT, PHX::Device> fluxdt;
+  Kokkos::DynRankView<ScalarT, PHX::Device> pterm;
+  Kokkos::DynRankView<ScalarT, PHX::Device> tpterm;
+  Kokkos::DynRankView<ScalarT, PHX::Device> aterm;
 
   // Work space FCs
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> F_inv;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> F_invT;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> C;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Cinv;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> JF_invT;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> KJF_invT;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Kref;
+  Kokkos::DynRankView<ScalarT, PHX::Device> F_inv;
+  Kokkos::DynRankView<ScalarT, PHX::Device> F_invT;
+  Kokkos::DynRankView<ScalarT, PHX::Device> C;
+  Kokkos::DynRankView<ScalarT, PHX::Device> Cinv;
+  Kokkos::DynRankView<ScalarT, PHX::Device> JF_invT;
+  Kokkos::DynRankView<ScalarT, PHX::Device> KJF_invT;
+  Kokkos::DynRankView<ScalarT, PHX::Device> Kref;
 
   ScalarT porePbar, vol;
   ScalarT trialPbar;

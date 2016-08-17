@@ -118,7 +118,8 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-  Intrepid2::RealSpaceTools<ScalarT>::det(J, defgrad);
+  Intrepid2::RealSpaceTools<PHX::Device>::det(J.get_view(), defgrad.get_view());
+
 
   if (weightedAverage) {
     ScalarT Jbar, wJbar, vol;
@@ -174,7 +175,8 @@ evaluateFields(typename Traits::EvalData workset)
       for (int i=0; i < numDims; ++i)
         defgrad(cell,qp,i,i) = 1.0;
 
-  Intrepid2::RealSpaceTools<ScalarT>::det(J, defgrad);
+  Intrepid2::RealSpaceTools<PHX::Device>::det(J.get_view(), defgrad.get_view());
+
 
   if (weightedAverage)
   {

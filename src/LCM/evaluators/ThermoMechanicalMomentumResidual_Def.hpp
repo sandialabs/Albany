@@ -39,16 +39,10 @@ ThermoMechanicalMomentumResidual(const Teuchos::ParameterList& p) :
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);
+  worksetSize = dims[0];
   numNodes = dims[1];
   numQPs   = dims[2];
   numDims  = dims[3];
-  int worksetSize = dims[0];
-
-  // Works space FCs
-  F_inv.resize(worksetSize, numQPs, numDims, numDims);
-  F_invT.resize(worksetSize, numQPs, numDims, numDims);
-  JF_invT.resize(worksetSize, numQPs, numDims, numDims);
-  P.resize(worksetSize, numQPs, numDims, numDims);
 
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib>>("Parameter Library");
 
@@ -71,6 +65,12 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wGradBF,fm);
 
   this->utils.setFieldData(Residual,fm);
+
+  // Works space FCs
+  F_inv = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+  F_invT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+  JF_invT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+  P = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
 }
 
 //**********************************************************************
@@ -80,12 +80,12 @@ evaluateFields(typename Traits::EvalData workset)
 {
   std::cout.precision(15);
   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
-  typedef Intrepid2::RealSpaceTools<ScalarT> RST;
+  typedef Intrepid2::RealSpaceTools<PHX::Device> RST;
 
-   RST::inverse(F_inv, defgrad);
+   RST::inverse(F_inv, defgrad.get_view());
    RST::transpose(F_invT, F_inv);
-   FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-   FST::tensorMultiplyDataData<ScalarT>(P, stress, JF_invT);
+   FST::scalarMultiplyDataData(JF_invT, J.get_view(), F_invT);
+   FST::tensorMultiplyDataData(P, stress.get_view(), JF_invT);
 
   for (int cell=0; cell < workset.numCells; ++cell) 
   {

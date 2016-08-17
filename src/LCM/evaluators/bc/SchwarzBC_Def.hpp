@@ -355,16 +355,16 @@ computeBCs(
   number_cells = 1;
 
   // Container for the parametric coordinates
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>
-  parametric_point(number_cells, parametric_dimension);
+  Kokkos::DynRankView<RealType, PHX::Device>
+  parametric_point("BBB",number_cells, parametric_dimension);
 
   for (auto j = 0; j < parametric_dimension; ++j) {
     parametric_point(0, j) = 0.0;
   }
 
   // Container for the physical point
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>
-  physical_coordinates(number_cells, coupled_dimension);
+  Kokkos::DynRankView<RealType, PHX::Device>
+  physical_coordinates("BBB",number_cells, coupled_dimension);
 
   for (auto i = 0; i < coupled_dimension; ++i) {
     physical_coordinates(0, i) = point(i);
@@ -373,8 +373,8 @@ computeBCs(
   // Container for the physical nodal coordinates
   // TODO: matToReference more general, accepts more topologies.
   // Use it to find if point is contained in element as well.
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>
-  nodal_coordinates(number_cells, coupled_vertex_count, coupled_dimension);
+  Kokkos::DynRankView<RealType, PHX::Device>
+  nodal_coordinates("BBB",number_cells, coupled_vertex_count, coupled_dimension);
 
   for (auto i = 0; i < coupled_vertex_count; ++i) {
     for (auto j = 0; j < coupled_dimension; ++j) {
@@ -383,20 +383,20 @@ computeBCs(
   }
 
   // Get parametric coordinates
-  Intrepid2::CellTools<double>::mapToReferenceFrame(
+  Intrepid2::CellTools<PHX::Device>::mapToReferenceFrame(
       parametric_point,
       physical_coordinates,
       nodal_coordinates,
-      coupled_cell_topology,
-      0
+      coupled_cell_topology /**,
+      0   **/
       );
 
   // Evaluate shape functions at parametric point.
   auto const
   number_points = 1;
 
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>
-  basis_values(coupled_vertex_count, number_points);
+  Kokkos::DynRankView<RealType, PHX::Device>
+  basis_values("BBB", coupled_vertex_count, number_points);
 
   basis->getValues(basis_values, parametric_point, Intrepid2::OPERATOR_VALUE);
 

@@ -24,6 +24,7 @@ PisdWdF(const Teuchos::ParameterList& p) :
   P                (p.get<std::string>                   ("Stress Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout") )
 {
+#ifdef FIX_SECOND_DERIVS_PISDWDF
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
     p.get< Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout");
@@ -39,6 +40,7 @@ PisdWdF(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(P);
 
   this->setName("P by AD of dWdF"+PHX::typeAsString<EvalT>());
+#endif
 }
 
 //**********************************************************************
@@ -47,10 +49,12 @@ void PisdWdF<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
+#ifdef FIX_SECOND_DERIVS_PISDWDF
   this->utils.setFieldData(P,fm);
   this->utils.setFieldData(defgrad,fm);
   this->utils.setFieldData(elasticModulus,fm);
   this->utils.setFieldData(poissonsRatio,fm);
+#endif
 }
 
 //**********************************************************************
@@ -58,11 +62,12 @@ template<typename EvalT, typename Traits>
 void PisdWdF<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifdef FIX_SECOND_DERIVS_PISDWDF
   ScalarT kappa;
   ScalarT mu;
 
   // Leading dimension of 1 added so we can use Intrepid2::det
-  Intrepid2::FieldContainer_Kokkos<EnergyFadType, PHX::Layout, PHX::Device> F(1,numDims,numDims);
+  Kokkos::DynRankView<EnergyFadType, PHX::Device> F("EEE", 1,numDims,numDims);
 
   // Allocate F ( = defgrad of derivative types) and seed with identity derivs
   for (int i=0; i < numDims; ++i) 
@@ -94,17 +99,19 @@ evaluateFields(typename Traits::EvalData workset)
       
     }
   }
+#endif
 }
 
 //**********************************************************************
 
 template<typename EvalT, typename Traits>
 typename PisdWdF<EvalT, Traits>::EnergyFadType
-PisdWdF<EvalT, Traits>::computeEnergy(ScalarT& kappa, ScalarT& mu, Intrepid2::FieldContainer_Kokkos<EnergyFadType, PHX::Layout, PHX::Device>& F) 
+PisdWdF<EvalT, Traits>::computeEnergy(ScalarT& kappa, ScalarT& mu, Kokkos::DynRankView<EnergyFadType, PHX::Device>& F) 
 {
+#ifdef FIX_SECOND_DERIVS_PISDWDF
   // array of length 1 so Intrepid2::det can be called.
-  Intrepid2::FieldContainer_Kokkos<EnergyFadType, PHX::Layout, PHX::Device> Jvec(1);
-  Intrepid2::RealSpaceTools<EnergyFadType>::det(Jvec, F);
+  Kokkos::DynRankView<EnergyFadType, PHX::Device> Jvec(1);
+  Intrepid2::RealSpaceTools<PHX::Device>::det(Jvec, F());
   EnergyFadType& J =  Jvec(0);
   EnergyFadType Jm23  = std::pow(J, -2./3.);
   EnergyFadType trace = 0.0;
@@ -118,6 +125,9 @@ PisdWdF<EvalT, Traits>::computeEnergy(ScalarT& kappa, ScalarT& mu, Intrepid2::Fi
 
   return ( kappa_div_2 * ( 0.5 * ( J * J - 1.0 ) - std::log(J) )
 	   + mu_div_2 * ( Jm23 * trace - 3.0 ));
+#else
+ return 0; // just to compile
+#endif
 }
 
 } // LCM

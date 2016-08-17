@@ -134,26 +134,6 @@ namespace LCM {
     JName =p.get<std::string>("DetDefGrad Name")+"_old";
     TempName =p.get<std::string>("QP Temperature Name")+"_old";
 
-    // Works space FCs
-    C.resize(worksetSize, numQPs, numDims, numDims);
-    Cinv.resize(worksetSize, numQPs, numDims, numDims);
-    F_inv.resize(worksetSize, numQPs, numDims, numDims);
-    F_invT.resize(worksetSize, numQPs, numDims, numDims);
-    JF_invT.resize(worksetSize, numQPs, numDims, numDims);
-    KJF_invT.resize(worksetSize, numQPs, numDims, numDims);
-    Kref.resize(worksetSize, numQPs, numDims, numDims);
-
-    // Allocate workspace
-    flux.resize(dims[0], numQPs, numDims);
-    fgravity.resize(dims[0], numQPs, numDims);
-    fluxdt.resize(dims[0], numQPs, numDims);
-    pterm.resize(dims[0], numQPs);
-    Tterm.resize(dims[0], numQPs);
-
-    tpterm.resize(dims[0], numNodes, numQPs);
-
-    if (haveAbsorption)  aterm.resize(dims[0], numQPs);
-
     convectionVels = Teuchos::getArrayFromStringParameter<double> (p,
 								   "Convection Velocity", numDims, false);
     if (p.isType<std::string>("Convection Velocity")) {
@@ -207,6 +187,26 @@ namespace LCM {
     if (haveSource)  this->utils.setFieldData(Source,fm);
     if (haveAbsorption)  this->utils.setFieldData(Absorption,fm);
     if (haveConvection && haverhoCp)  this->utils.setFieldData(rhoCp,fm);
+
+    // Works space FCs
+    C = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+    Cinv = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+    F_inv = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+    F_invT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+    JF_invT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+    KJF_invT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+    Kref = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+
+    // Allocate workspace
+    flux = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims);
+    fgravity = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims);
+    fluxdt = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims);
+    pterm = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs);
+    Tterm = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs);
+
+    tpterm = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numNodes, numQPs);
+
+    if (haveAbsorption)  aterm = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs);
   }
 
 //**********************************************************************
@@ -215,7 +215,7 @@ void ThermoPoroPlasticityResidMass<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
-  typedef Intrepid2::RealSpaceTools<ScalarT> RST;
+  typedef Intrepid2::RealSpaceTools<PHX::Device> RST;
 
   Albany::MDArray porosityold = (*workset.stateArrayPtr)[porosityName];
   Albany::MDArray porePressureold = (*workset.stateArrayPtr)[porePressureName];
@@ -231,11 +231,11 @@ evaluateFields(typename Traits::EvalData workset)
    ScalarT dt = deltaTime(0);
 
    // Pull back permeability
-   RST::inverse(F_inv, defgrad);
+   RST::inverse(F_inv, defgrad.get_view());
    RST::transpose(F_invT, F_inv);
-    FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-    FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
-   FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
+    FST::scalarMultiplyDataData(JF_invT, J.get_view(), F_invT);
+    FST::scalarMultiplyDataData(KJF_invT, kcPermeability.get_view(), JF_invT);
+   FST::tensorMultiplyDataData(Kref, F_inv, KJF_invT);
 
    /*
    // gravity or other potential term
@@ -253,7 +253,7 @@ evaluateFields(typename Traits::EvalData workset)
    */
 
    // Pore pressure gradient contribution
-  FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
+  FST::tensorMultiplyDataData (flux, Kref, TGrad.get_view()); // flux_i = k I_ij p_j
 
    for (int cell=0; cell < workset.numCells; ++cell){
       for (int qp=0; qp < numQPs; ++qp) {
@@ -262,7 +262,7 @@ evaluateFields(typename Traits::EvalData workset)
     	  }
       }
   }
-   FST::integrate(TResidual, fluxdt, wGradBF, false); // "false" overwrites
+   FST::integrate(TResidual.get_view(), fluxdt, wGradBF.get_view(), false); // "false" overwrites
 
   // Pore-fluid diffusion coupling.
   for (int cell=0; cell < workset.numCells; ++cell) {

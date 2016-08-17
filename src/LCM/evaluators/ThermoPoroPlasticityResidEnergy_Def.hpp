@@ -151,26 +151,6 @@ namespace LCM {
  //   numQPs  = dims[2];
  //   numDims = dims[3];
 
-    // Works space FCs
-    C.resize(worksetSize, numQPs, numDims, numDims);
-    Cinv.resize(worksetSize, numQPs, numDims, numDims);
-    F_inv.resize(worksetSize, numQPs, numDims, numDims);
-    F_invT.resize(worksetSize, numQPs, numDims, numDims);
-    JF_invT.resize(worksetSize, numQPs, numDims, numDims);
-    KJF_invT.resize(worksetSize, numQPs, numDims, numDims);
-    Kref.resize(worksetSize, numQPs, numDims, numDims);
-
-
-
-    // Allocate workspace
-    flux.resize(dims[0], numQPs, numDims);
-    fluxdt.resize(dims[0], numQPs, numDims);
-    pterm.resize(dims[0], numQPs);
-    tterm.resize(dims[0], numQPs);
-
-    tpterm.resize(dims[0], numNodes, numQPs);
-
-    if (haveAbsorption)  aterm.resize(dims[0], numQPs);
 
     convectionVels = Teuchos::getArrayFromStringParameter<double> (p,
 								   "Convection Velocity", numDims, false);
@@ -229,6 +209,25 @@ namespace LCM {
     this->utils.setFieldData(young_modulus_,fm);
     this->utils.setFieldData(poissons_ratio_,fm);
     this->utils.setFieldData(TResidual,fm);
+
+    // Works space FCs
+    C = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+    Cinv = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+    F_inv = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+    F_invT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+    JF_invT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+    KJF_invT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+    Kref = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+
+    // Allocate workspace
+    flux = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims);
+    fluxdt = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims);
+    pterm = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs);
+    tterm = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs);
+
+    tpterm = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numNodes, numQPs);
+
+    if (haveAbsorption)  aterm = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs);
   }
 
 //**********************************************************************
@@ -237,7 +236,7 @@ void ThermoPoroPlasticityResidEnergy<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
-  typedef Intrepid2::RealSpaceTools<ScalarT> RST;
+  typedef Intrepid2::RealSpaceTools<PHX::Device> RST;
 
   Albany::MDArray porePressureold = (*workset.stateArrayPtr)[porePressureName];
   Albany::MDArray Jold = (*workset.stateArrayPtr)[JName];
@@ -251,13 +250,13 @@ evaluateFields(typename Traits::EvalData workset)
 
    ScalarT dt = deltaTime(0);
 
-   RST::inverse(F_inv, defgrad);
+   RST::inverse(F_inv, defgrad.get_view());
    RST::transpose(F_invT, F_inv);
-   FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-   FST::scalarMultiplyDataData<ScalarT>(KJF_invT, ThermalCond, JF_invT);
-   FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
+   FST::scalarMultiplyDataData(JF_invT, J.get_view(), F_invT);
+   FST::scalarMultiplyDataData(KJF_invT, ThermalCond.get_view(), JF_invT);
+   FST::tensorMultiplyDataData(Kref, F_inv, KJF_invT);
 
-   FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
+   FST::tensorMultiplyDataData (flux, Kref, TGrad.get_view()); // flux_i = k I_ij p_j
 
    for (int cell=0; cell < workset.numCells; ++cell){
       for (int qp=0; qp < numQPs; ++qp) {
@@ -266,13 +265,13 @@ evaluateFields(typename Traits::EvalData workset)
     	  }
       }
   }
-   FST::integrate(TResidual, fluxdt, wGradBF, false); // "true" sums into
+   FST::integrate(TResidual.get_view(), fluxdt, wGradBF.get_view(), false); // "true" sums into
 
   // Heat Convection Term
-   FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
-   FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
-   FST::tensorMultiplyDataData<ScalarT> (flux, Kref, PGrad); // flux_i = k I_ij p_j
-   FST::tensorMultiplyDataData<ScalarT> (fluxdt, F_invT, flux); // flux_i = k I_ij p_j
+   FST::scalarMultiplyDataData(KJF_invT, kcPermeability.get_view(), JF_invT);
+   FST::tensorMultiplyDataData(Kref, F_inv, KJF_invT);
+   FST::tensorMultiplyDataData (flux, Kref, PGrad.get_view()); // flux_i = k I_ij p_j
+   FST::tensorMultiplyDataData (fluxdt, F_invT, flux); // flux_i = k I_ij p_j
 
 
   for (int cell=0; cell < workset.numCells; ++cell) {

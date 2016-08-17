@@ -20,6 +20,7 @@
 #include "Intrepid2_HGRAD_QUAD_C2_FEM.hpp"
 #include "Intrepid2_HGRAD_TET_C2_FEM.hpp"
 #include "Intrepid2_HGRAD_HEX_C2_FEM.hpp"
+//#include "Intrepid2_HGRAD_TET_COMP12_FEM.hpp"
 
 /*********************** Helper Functions*********************************/
 
@@ -144,7 +145,7 @@ Albany::getIntrepid2Basis(const CellTopologyData& ctd, bool compositeTet)
      // Composite tet not implemented in Intrepid2 yet
      TEUCHOS_TEST_FOR_EXCEPTION(compositeTet, Teuchos::Exceptions::InvalidParameter,
            "Error: getIntrepid2Basis: No HGRAD_TET_COMP12  in Intrepid2 ");
- //         intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TET_COMP12_FEM<PHX::Device>() );
+//         intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TET_COMP12_FEM<PHX::Device>() );
        }
        else {
          intrepidBasis = rcp(new Intrepid2::Basis_HGRAD_TET_C2_FEM<PHX::Device>() );

@@ -65,18 +65,6 @@ J2Stress(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(Fp);
   this->addEvaluatedField(eqps);
 
-  // scratch space FCs
-  be.resize(numDims, numDims);
-  s.resize(numDims, numDims);
-  N.resize(numDims, numDims);
-  A.resize(numDims, numDims);
-  expA.resize(numDims, numDims);
-  Fpinv.resize(worksetSize, numQPs, numDims, numDims);
-  FpinvT.resize(worksetSize, numQPs, numDims, numDims);
-  Cpinv.resize(worksetSize, numQPs, numDims, numDims);
-  tmp.resize(numDims, numDims);
-  tmp2.resize(numDims, numDims);
-
   this->setName("J2 Stress"+PHX::typeAsString<EvalT>());
 
 }
@@ -98,6 +86,18 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(Fp,fm);
   this->utils.setFieldData(eqps,fm);
   if (numDims>1) this->utils.setFieldData(poissonsRatio,fm);
+
+  // scratch space FCs
+  be = Kokkos::createDynRankView(J.get_view(), "XXX", numDims, numDims);
+  s = Kokkos::createDynRankView(J.get_view(), "XXX", numDims, numDims);
+  N = Kokkos::createDynRankView(J.get_view(), "XXX", numDims, numDims);
+  A = Kokkos::createDynRankView(J.get_view(), "XXX", numDims, numDims);
+  expA = Kokkos::createDynRankView(J.get_view(), "XXX", numDims, numDims);
+  Fpinv = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+  FpinvT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+  Cpinv = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+  tmp = Kokkos::createDynRankView(J.get_view(), "XXX", numDims, numDims);
+  tmp2 = Kokkos::createDynRankView(J.get_view(), "XXX", numDims, numDims);
 }
 
 //**********************************************************************
@@ -106,7 +106,7 @@ void J2Stress<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
-  typedef Intrepid2::RealSpaceTools<ScalarT> RST;
+  typedef Intrepid2::RealSpaceTools<PHX::Device> RST;
 
   bool print = false;
   //if (typeid(ScalarT) == typeid(RealType)) print = true;
@@ -122,12 +122,29 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT smag2, smag, f, p, dgam;
   ScalarT sq23 = std::sqrt(2./3.);
 
-  Albany::MDArray Fpold = (*workset.stateArrayPtr)[fpName];
-  Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqpsName];
+
+  Albany::MDArray Fpold_shards = (*workset.stateArrayPtr)[fpName];
+  Albany::MDArray eqpsold_shards = (*workset.stateArrayPtr)[eqpsName];
+
+  // Copy Shards MDArray into Kokkos DynRankView containers
+  Kokkos::DynRankView<RealType, PHX::Device> Fpold("STA",workset.numCells, numQPs, numDims, numDims);
+  Kokkos::DynRankView<RealType, PHX::Device> eqpsold("STA",workset.numCells, numQPs);
+
+  for (int cell=0; cell < workset.numCells; ++cell)
+    for (int qp=0; qp < numQPs; ++qp)
+      for (int i=0; i < numDims; ++i)
+        for (int j=0; j < numDims; ++j)
+          Fpold(cell,qp,i,j)=Fpold_shards(cell,qp,i,j);
+
+  for (int cell=0; cell < workset.numCells; ++cell)
+    for (int qp=0; qp < numQPs; ++qp)
+      eqpsold(cell,qp) = eqpsold_shards(cell,qp);
 
   // compute Cp_{n}^{-1}
   // AGS MAY NEED TO ALLOCATE Fpinv FpinvT Cpinv  with actual workse size
   // to prevent going past the end of Fpold.
+
+//std::cout << "AGS: commenting out necessary line to get code to compile. states need to be Kokkos, or copied to Kokkos" << std::endl;
   RST::inverse(Fpinv, Fpold);
   RST::transpose(FpinvT, Fpinv);
   FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
@@ -167,7 +184,7 @@ evaluateFields(typename Traits::EvalData workset)
       if(print) std::cout << "Jm23    : " << Jm23 << std::endl;
 
 
-      be.initialize(0.0);
+      Kokkos::deep_copy(be, 0.0);
       // Compute Trial State
       for (int i=0; i < numDims; ++i)
       {
@@ -393,11 +410,11 @@ evaluateFields(typename Traits::EvalData workset)
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void
-J2Stress<EvalT, Traits>::exponential_map(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & expA,
-		const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> A)
+J2Stress<EvalT, Traits>::exponential_map(Kokkos::DynRankView<ScalarT, PHX::Device> & expA,
+		const Kokkos::DynRankView<ScalarT, PHX::Device> A)
 {
-  tmp.initialize(0.0);
-  expA.initialize(0.0);
+  Kokkos::deep_copy(tmp,0.0);
+  Kokkos::deep_copy(expA,0.0);
 
   bool converged = false;
   ScalarT norm0 = norm(A);
@@ -415,7 +432,7 @@ J2Stress<EvalT, Traits>::exponential_map(Intrepid2::FieldContainer_Kokkos<Scalar
       for (int j=0; j < numDims; ++j)
         expA(i,j) += tmp(i,j);
 
-    tmp2.initialize(0.0);
+    Kokkos::deep_copy(tmp2, 0.0);
     for (int i=0; i < numDims; ++i)
       for (int j=0; j < numDims; ++j)
         for (int p=0; p < numDims; ++p)
@@ -440,7 +457,7 @@ J2Stress<EvalT, Traits>::exponential_map(Intrepid2::FieldContainer_Kokkos<Scalar
 //**********************************************************************
 template<typename EvalT, typename Traits>
 typename EvalT::ScalarT
-J2Stress<EvalT, Traits>::norm(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> A)
+J2Stress<EvalT, Traits>::norm(Kokkos::DynRankView<ScalarT, PHX::Device> A)
 {
   ScalarT max(0.0), colsum;
 

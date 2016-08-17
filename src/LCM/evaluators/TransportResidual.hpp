@@ -57,7 +57,7 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> vel_grad_;
     
     // Temporal container used to store P : F_dot
-    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> term1_;
+    Kokkos::DynRankView<ScalarT, PHX::Device> term1_;
     
     ///
     /// Scalar field for transport variable
@@ -148,7 +148,7 @@ namespace LCM {
     ///
     /// Data structure dimensions
     ///
-    int num_nodes_, num_pts_, num_dims_;
+    int num_cells_, num_nodes_, num_pts_, num_dims_;
 
     ///
     /// Scalar name

@@ -60,7 +60,7 @@ constructEvaluators(
   Intrepid2::DefaultCubatureFactory cubFactory;
 
   Teuchos::RCP<
-      Intrepid2::Cubature<PHX::Device>> cubature =
+      Intrepid2::Cubature<PHX::Device > cubature =
       cubFactory.create<PHX::Device, RealType, RealType>(*cellType, mesh_specs.cubatureDegree);
 
 
@@ -269,7 +269,7 @@ constructEvaluators(
     p
         ->set<
             const Teuchos::RCP<
-                Intrepid2::Basis<PHX::Device, RealType, RealType>>("Intrepid2 Basis", intrepid_basis);
+                Intrepid2::Basis<PHX::Device, RealType, RealType>>>("Intrepid2 Basis", intrepid_basis);
     ev = Teuchos::rcp(
         new LCM::IsoMeshSizeField<EvalT, PHAL::AlbanyTraits>(*p, dl_));
     field_mgr.template registerEvaluator<EvalT>(ev);

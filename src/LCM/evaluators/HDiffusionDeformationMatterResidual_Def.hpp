@@ -109,18 +109,6 @@ namespace LCM {
     if (have_eqps_)
       eqpsName = p.get<std::string>("Equivalent Plastic Strain Name")+"_old";
 
-    // Allocate workspace for temporary variables
-    Hflux.resize(worksetSize, numQPs, numDims);
-    pterm.resize(worksetSize, numQPs);
-    tpterm.resize(worksetSize, numNodes, numQPs);
-    artificalDL.resize(worksetSize, numQPs);
-    stabilizedDL.resize(worksetSize, numQPs);
-    C.resize(worksetSize, numQPs, numDims, numDims);
-    Cinv.resize(worksetSize, numQPs, numDims, numDims);
-    CinvTgrad.resize(worksetSize, numQPs, numDims);
-    CinvTgrad_old.resize(worksetSize, numQPs, numDims);
-    CinvTaugrad.resize(worksetSize, numQPs, numDims);
-
     this->setName("HDiffusionDeformationMatterResidual"+PHX::typeAsString<EvalT>());
     //std::cout << "End of Hdiff ctor" << std::endl;
   }
@@ -157,6 +145,18 @@ namespace LCM {
     //   if (haveMechSource) this->utils.setFieldData(MechSource);
 
     this->utils.setFieldData(TResidual,fm);
+
+    // Allocate workspace for temporary variables
+    Hflux = Kokkos::createDynRankView(DL.get_view(), "XXX", worksetSize, numQPs, numDims);
+    pterm = Kokkos::createDynRankView(DL.get_view(), "XXX", worksetSize, numQPs);
+    tpterm = Kokkos::createDynRankView(DL.get_view(), "XXX", worksetSize, numNodes, numQPs);
+    artificalDL = Kokkos::createDynRankView(DL.get_view(), "XXX", worksetSize, numQPs);
+    stabilizedDL = Kokkos::createDynRankView(DL.get_view(), "XXX", worksetSize, numQPs);
+    C = Kokkos::createDynRankView(DL.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+    Cinv = Kokkos::createDynRankView(DL.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+    //CinDLTgrad = Kokkos::createDynRankView(DL.get_view(), "XXX", worksetSize, numQPs, numDims);
+    //CinDLTgrad_old = Kokkos::createDynRankView(DL.get_view(), "XXX", worksetSize, numQPs, numDims);
+    CinvTaugrad = Kokkos::createDynRankView(DL.get_view(), "XXX", worksetSize, numQPs, numDims);
   }
 
   //**********************************************************************
@@ -218,7 +218,7 @@ namespace LCM {
         }
       }
     }
-    FST::integrate(TResidual, Hflux, wGradBF, false); // this also works
+    FST::integrate(TResidual.get_view(), Hflux, wGradBF.get_view(), false); // this also works
 
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {

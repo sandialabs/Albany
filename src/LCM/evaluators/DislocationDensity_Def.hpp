@@ -39,10 +39,6 @@ DislocationDensity(const Teuchos::ParameterList& p) :
   numQPs = dim[2];
   numDims = dim[3];
 
-  // Allocate Temporary FieldContainers
-  nodalFp.resize(numNodes,numDims,numDims);
-  curlFp.resize(numQPs,numDims,numDims);
-    
   square = (numNodes == numQPs);
 
   TEUCHOS_TEST_FOR_EXCEPTION( square == false, std::runtime_error, 
@@ -62,6 +58,10 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(GradBF,fm);
   this->utils.setFieldData(G,fm);
+
+  // Allocate Temporary Views
+  nodalFp = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes,numDims,numDims);
+  curlFp = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs,numDims,numDims);
 }
 
 //**********************************************************************
@@ -103,7 +103,7 @@ evaluateFields(typename Traits::EvalData workset)
     status = solver.solve();
 
     // compute nodal Fp
-    nodalFp.initialize(0.0);
+    Kokkos::deep_copy(nodalFp, 0.0);
     for (int node=0; node < numNodes; ++node) 
       for (int qp=0; qp < numQPs; ++qp) 
 	for (int i=0; i < numDims; ++i) 
@@ -111,7 +111,7 @@ evaluateFields(typename Traits::EvalData workset)
 	    nodalFp(node,i,j) += X(node,qp) * Fp(cell,qp,i,j);
 
     // compute the curl using nodalFp
-    curlFp.initialize(0.0);
+    Kokkos::deep_copy(curlFp, 0.0);
     for (int node=0; node < numNodes; ++node) 
     {
       for (int qp=0; qp < numQPs; ++qp) 

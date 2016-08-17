@@ -84,7 +84,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-  Intrepid2::RealSpaceTools<ScalarT>::det(J, defgrad);
+  Intrepid2::RealSpaceTools<PHX::Device>::det(J.get_view(), defgrad.get_view());
 
   if (avgJ)
   {

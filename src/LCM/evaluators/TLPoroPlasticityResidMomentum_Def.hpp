@@ -64,13 +64,7 @@ TLPoroPlasticityResidMomentum(const Teuchos::ParameterList& p) :
   numNodes = dims[1];
   numQPs   = dims[2];
   numDims  = dims[3];
-  int worksetSize = dims[0];
-
-  // Works space FCs
-  F_inv.resize(worksetSize, numQPs, numDims, numDims);
-  F_invT.resize(worksetSize, numQPs, numDims, numDims);
-  JF_invT.resize(worksetSize, numQPs, numDims, numDims);
-
+  worksetSize = dims[0];
 }
 
 //**********************************************************************
@@ -88,6 +82,10 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (enableTransient) this->utils.setFieldData(uDotDot,fm);
   if (enableTransient) this->utils.setFieldData(wBF,fm);
 
+  // Works space FCs
+  F_inv = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+  F_invT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+  JF_invT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
 }
 
 //**********************************************************************
@@ -96,11 +94,11 @@ void TLPoroPlasticityResidMomentum<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
-  typedef Intrepid2::RealSpaceTools<ScalarT> RST;
-  RST::inverse(F_inv, defgrad);
+  typedef Intrepid2::RealSpaceTools<PHX::Device> RST;
+  RST::inverse(F_inv, defgrad.get_view());
   RST::transpose(F_invT, F_inv);
-  FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-  FST::tensorMultiplyDataData<ScalarT>(P, TotalStress, JF_invT);
+  FST::scalarMultiplyDataData(JF_invT, J.get_view(), F_invT);
+  //FST::tensorMultiplyDataData(P.get_view(), TotalStress.get_view(), JF_invT);
 
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
@@ -121,7 +119,7 @@ evaluateFields(typename Traits::EvalData workset)
     } } } }
 
 
-//   FST::integrate(ExResidual, TotalStress, wGradBF, false); // "false" overwrites
+//   FST::integrate(ExResidual.get_view(), TotalStress.get_view(), wGradBF.get_view(), false); // "false" overwrites
 
 }
 

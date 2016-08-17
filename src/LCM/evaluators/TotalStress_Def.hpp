@@ -82,7 +82,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   switch (numDims) {
   case 1:
-    Intrepid2::FunctionSpaceTools::tensorMultiplyDataData<ScalarT>(stress, elasticModulus, strain);
+    Intrepid2::FunctionSpaceTools::tensorMultiplyDataData(stress.get_view(), elasticModulus.get_view(), strain.get_view());
     for (int cell=0; cell < workset.numCells; ++cell) {
           for (int qp=0; qp < numQPs; ++qp) {
         	  stress(cell, qp) = stress(cell, qp) - porePressure(cell,qp);

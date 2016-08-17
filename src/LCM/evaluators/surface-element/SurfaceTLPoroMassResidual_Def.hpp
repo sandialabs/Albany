@@ -87,31 +87,6 @@ namespace LCM {
     std::cout << " cubature->getDimension(): " << cubature->getDimension() << std::endl;
 #endif
 
-    // Allocate Temporary FieldContainers
-    refValues.resize(numPlaneNodes, numQPs);
-    refGrads.resize(numPlaneNodes, numQPs, numPlaneDims);
-    refPoints.resize(numQPs, numPlaneDims);
-    refWeights.resize(numQPs);
-
-    if (haveMech) {
-      // Works space FCs
-      C.resize(worksetSize, numQPs, numDims, numDims);
-      Cinv.resize(worksetSize, numQPs, numDims, numDims);
-      F_inv.resize(worksetSize, numQPs, numDims, numDims);
-      F_invT.resize(worksetSize, numQPs, numDims, numDims);
-      JF_invT.resize(worksetSize, numQPs, numDims, numDims);
-      KJF_invT.resize(worksetSize, numQPs, numDims, numDims);
-      Kref.resize(worksetSize, numQPs, numDims, numDims);
-    }
-
-    // Allocate workspace
-    flux.resize(worksetSize, numQPs, numDims);
-
-    // Pre-Calculate reference element quantitites
-    cubature->getCubature(refPoints, refWeights);
-    intrepidBasis->getValues(refValues, refPoints, Intrepid2::OPERATOR_VALUE);
-    intrepidBasis->getValues(refGrads, refPoints, Intrepid2::OPERATOR_GRAD);
-
     porePressureName = p.get<std::string>("Pore Pressure Name")+"_old";
     //if (haveMech) JName =p.get<std::string>("DetDefGrad Name")+"_old";
     if (haveMech) JName ="surf_J_old";
@@ -140,6 +115,31 @@ namespace LCM {
       this->utils.setFieldData(defGrad,fm);
       this->utils.setFieldData(J,fm);
     }
+
+    // Allocate Temporary Views
+    refValues = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numPlaneNodes, numQPs);
+    refGrads = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numPlaneNodes, numQPs, numPlaneDims);
+    refPoints = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs, numPlaneDims);
+    refWeights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
+
+    if (haveMech) {
+      // Works space FCs
+      C = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+      Cinv = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+      F_inv = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+      F_invT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+      JF_invT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+      KJF_invT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+      Kref = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+    }
+
+    // Allocate workspace
+    flux = Kokkos::createDynRankView(scalarGrad.get_view(), "XXX", worksetSize, numQPs, numDims);
+
+    // Pre-Calculate reference element quantitites
+    cubature->getCubature(refPoints, refWeights);
+    intrepidBasis->getValues(refValues, refPoints, Intrepid2::OPERATOR_VALUE);
+    intrepidBasis->getValues(refGrads, refPoints, Intrepid2::OPERATOR_GRAD);
   }
 
   //**********************************************************************
@@ -162,14 +162,17 @@ namespace LCM {
     // Compute pore fluid flux
     if (haveMech) {
       // Put back the permeability tensor to the reference configuration
-      RST::inverse(F_inv, defGrad);
+ std::cout << "AGS: commenting out necessary line to get code to compile. states need to be Kokkos, or copied to Kokkos" << std::endl;
+#ifdef AGS_HACK_NEED_TO_FIX
+      RST::inverse(F_inv, defGrad.get_view());
       RST::transpose(F_invT, F_inv);
-       FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-       FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
-      FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
-      FST::tensorMultiplyDataData<ScalarT> (flux, Kref, scalarGrad); // flux_i = k I_ij p_j
+#endif
+       FST::scalarMultiplyDataData(JF_invT, J.get_view(), F_invT);
+       FST::scalarMultiplyDataData(KJF_invT, kcPermeability.get_view(), JF_invT);
+      FST::tensorMultiplyDataData(Kref, F_inv, KJF_invT);
+      FST::tensorMultiplyDataData (flux, Kref, scalarGrad.get_view()); // flux_i = k I_ij p_j
     } else {
-       FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, scalarGrad); // flux_i = kc p_i
+       FST::scalarMultiplyDataData (flux, kcPermeability.get_view(), scalarGrad.get_view()); // flux_i = kc p_i
     }
 
     for (int cell(0); cell < workset.numCells; ++cell) {

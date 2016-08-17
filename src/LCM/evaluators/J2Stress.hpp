@@ -38,8 +38,8 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  typename EvalT::ScalarT norm(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>);
-  void exponential_map(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> &, const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>);
+  typename EvalT::ScalarT norm(Kokkos::DynRankView<ScalarT, PHX::Device>);
+  void exponential_map(Kokkos::DynRankView<ScalarT, PHX::Device> &, const Kokkos::DynRankView<ScalarT, PHX::Device>);
 
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
@@ -62,17 +62,17 @@ private:
   unsigned int worksetSize;
 
   // scratch space FCs
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> be;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> s;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> N;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> A;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> expA;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Fpinv;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> FpinvT;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Cpinv;
+  Kokkos::DynRankView<ScalarT, PHX::Device> be;
+  Kokkos::DynRankView<ScalarT, PHX::Device> s;
+  Kokkos::DynRankView<ScalarT, PHX::Device> N;
+  Kokkos::DynRankView<ScalarT, PHX::Device> A;
+  Kokkos::DynRankView<ScalarT, PHX::Device> expA;
+  Kokkos::DynRankView<ScalarT, PHX::Device> Fpinv;
+  Kokkos::DynRankView<ScalarT, PHX::Device> FpinvT;
+  Kokkos::DynRankView<ScalarT, PHX::Device> Cpinv;
 
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> tmp;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> tmp2;
+  Kokkos::DynRankView<ScalarT, PHX::Device> tmp;
+  Kokkos::DynRankView<ScalarT, PHX::Device> tmp2;
 
 };
 }

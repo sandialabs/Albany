@@ -69,9 +69,9 @@ class FaceAverage : public PHX::EvaluatorWithBaseImpl<Traits>,
       PHX::MDField<ScalarT,Cell,QuadPoint> temp;
 
       // For creating the quadrature weights
-      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
-      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
-      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refValues;
+      Kokkos::DynRankView<RealType, PHX::Device> refPoints;
+      Kokkos::DynRankView<RealType, PHX::Device> refWeights;
+      Kokkos::DynRankView<RealType, PHX::Device> refValues;
 
       // Face topology data
       const struct CellTopologyData_Subcell * sides;

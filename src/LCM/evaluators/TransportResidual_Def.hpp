@@ -122,12 +122,10 @@ namespace LCM {
 
     std::vector<PHX::DataLayout::size_type> dims;
     dl->node_qp_vector->dimensions(dims);
+    num_cells_ = dims[0];
     num_nodes_ = dims[1];
     num_pts_   = dims[2];
     num_dims_  = dims[3];
-    
-    // initialize term1_
-    term1_.resize(dims[0],num_pts_);
     
     scalar_name_ = p.get<std::string>("Scalar Variable Name")+"_old";
 
@@ -186,6 +184,9 @@ namespace LCM {
     }
 
     this->utils.setFieldData(residual_,fm);
+    
+    // initialize term1_
+    term1_ = Kokkos::createDynRankView(scalar_.get_view(), "XXX", num_cells_,num_pts_);
   }
 
   //----------------------------------------------------------------------------
@@ -194,7 +195,7 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     
-      typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
+    //typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
       
     // zero out residual
     for (int cell = 0; cell < workset.numCells; ++cell) {

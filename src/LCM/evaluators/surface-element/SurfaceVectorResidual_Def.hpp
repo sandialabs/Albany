@@ -102,20 +102,6 @@ SurfaceVectorResidual(Teuchos::ParameterList & p,
 
   num_surf_nodes_ = num_nodes_ / 2;
   num_plane_dims_ = num_dims_ - 1;
-
-  // Allocate Temporary FieldContainers
-  ref_values_.resize(num_surf_nodes_, num_qps_);
-  ref_grads_.resize(num_surf_nodes_, num_qps_, num_plane_dims_);
-  ref_points_.resize(num_qps_, num_plane_dims_);
-  ref_weights_.resize(num_qps_);
-
-  // Pre-Calculate reference element quantitites
-  cubature_->getCubature(ref_points_, ref_weights_);
-  intrepid_basis_->getValues(
-      ref_values_, ref_points_, Intrepid2::OPERATOR_VALUE);
-
-  intrepid_basis_->getValues(
-      ref_grads_, ref_points_, Intrepid2::OPERATOR_GRAD);
 }
 
 //----------------------------------------------------------------------------
@@ -138,6 +124,20 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   if (have_topmod_adaptation_)
     this->utils.setFieldData(cauchy_stress_, fm);
+
+  // Allocate Temporary Views
+  ref_values_ = Kokkos::DynRankView<RealType, PHX::Device>("XXX", num_surf_nodes_, num_qps_);
+  ref_grads_ = Kokkos::DynRankView<RealType, PHX::Device>("XXX", num_surf_nodes_, num_qps_, num_plane_dims_);
+  ref_points_ = Kokkos::DynRankView<RealType, PHX::Device>("XXX", num_qps_, num_plane_dims_);
+  ref_weights_ = Kokkos::DynRankView<RealType, PHX::Device>("XXX", num_qps_);
+
+  // Pre-Calculate reference element quantitites
+  cubature_->getCubature(ref_points_, ref_weights_);
+  intrepid_basis_->getValues(
+      ref_values_, ref_points_, Intrepid2::OPERATOR_VALUE);
+
+  intrepid_basis_->getValues(
+      ref_grads_, ref_points_, Intrepid2::OPERATOR_GRAD);
 }
 
 //----------------------------------------------------------------------------

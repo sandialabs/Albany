@@ -10,7 +10,7 @@
 #include "Sacado.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Shards_CellTopology.hpp"
-#include "Intrepid2_HGRAD_HEX_Cn_FEM.hpp"
+//#include "Intrepid2_HGRAD_HEX_Cn_FEM.hpp"
 #include <Intrepid2_MiniTensor.h>
 #include <vector>
 #include <functional>

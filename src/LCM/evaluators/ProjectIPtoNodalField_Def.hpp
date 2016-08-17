@@ -18,7 +18,6 @@
 
 #include <Intrepid2_CellTools.hpp>
 #include <Intrepid2_FunctionSpaceTools.hpp>
-#include <Intrepid2_FieldContainer.hpp>
 #include <Intrepid2_DefaultCubatureFactory.hpp>
 #include <Shards_CellTopology.hpp>
 
@@ -56,7 +55,7 @@ private:
   int nwrkr_, prectr_, postctr_;
 };
 
-typedef Intrepid2::Basis<PHX::Device, RealType, RealType>>
+typedef Intrepid2::Basis<PHX::Device, RealType, RealType>
         Intrepid2Basis;
 
 class ProjectIPtoNodalFieldQuadrature {
@@ -67,7 +66,7 @@ class ProjectIPtoNodalFieldQuadrature {
   Teuchos::RCP<Intrepid2Basis> intrepid_basis_;
   CellTopologyData ctd_;
   Teuchos::RCP<shards::CellTopology> cell_topo_;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> ref_points_, ref_weights_;
+  Kokkos::DynRankView<RealType, PHX::Device> ref_points_, ref_weights_;
 
 public:
   ProjectIPtoNodalFieldQuadrature(
@@ -92,8 +91,8 @@ ProjectIPtoNodalFieldQuadrature (
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>
     cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cell_topo_, degree);
   const int nqp = cubature->getNumPoints(), nd = cubature->getDimension();
-  ref_points_.resize(nqp, nd);
-  ref_weights_.resize(nqp);
+  ref_points_ = Kokkos::DynRankView<RealType, PHX::Device>("XXX", nqp, nd);
+  ref_weights_ = Kokkos::DynRankView<RealType, PHX::Device>("XXX", nqp);
   cubature->getCubature(ref_points_, ref_weights_);
 
   // Support composite Tet<10> in principle; however, I observe that there
@@ -125,19 +124,19 @@ ProjectIPtoNodalFieldQuadrature (
 void ProjectIPtoNodalFieldQuadrature::
 evaluateBasis (const PHX::MDField<MeshScalarT,Cell,Vertex,Dim>& coord_vert) {
   using namespace Intrepid2;
-  typedef CellTools<RealType> CellTools;
+  typedef CellTools<PHX::Device> CellTools;
   const int nqp = ref_points_.dimension(0), nd = ref_points_.dimension(1),
     nc = coord_vert.dimension(0), nn = coord_vert.dimension(1);
-  FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> jacobian(nc, nqp, nd, nd), jacobian_det(nc, nqp),
-    weighted_measure(nc, nqp), val_ref_points(nn, nqp);
-  CellTools::setJacobian(jacobian, ref_points_, coord_vert, *cell_topo_);
+  Kokkos::DynRankView<RealType, PHX::Device> jacobian("JJJ", nc, nqp, nd, nd), jacobian_det("JJJ", nc, nqp),
+    weighted_measure("JJJ", nc, nqp), val_ref_points("JJJ", nn, nqp);
+  CellTools::setJacobian(jacobian, ref_points_, coord_vert.get_view(), *cell_topo_);
   CellTools::setJacobianDet(jacobian_det, jacobian);
   intrepid_basis_->getValues(val_ref_points, ref_points_,
                              Intrepid2::OPERATOR_VALUE);
-  FunctionSpaceTools::computeCellMeasure<RealType>(weighted_measure,
+  FunctionSpaceTools<PHX::Device>::computeCellMeasure(weighted_measure,
                                                    jacobian_det, ref_weights_);
-  FunctionSpaceTools::HGRADtransformVALUE<RealType>(bf_, val_ref_points);
-  FunctionSpaceTools::multiplyMeasure<RealType>(wbf_, weighted_measure, bf_);
+  FunctionSpaceTools<PHX::Device>::HGRADtransformVALUE(bf_.get_view(), val_ref_points);
+  FunctionSpaceTools<PHX::Device>::multiplyMeasure(wbf_.get_view(), weighted_measure, bf_.get_view());
 }
 
 static Teuchos::RCP<ProjectIPtoNodalFieldQuadrature>

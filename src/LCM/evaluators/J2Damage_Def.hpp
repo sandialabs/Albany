@@ -54,8 +54,7 @@ namespace LCM {
     tensor_dl->dimensions(dims);
     numQPs = dims[1];
     numDims = dims[2];
-    //int worksetSize = dims[0];
-    int worksetSize = dims[0];
+    worksetSize = dims[0];
 
     this->addDependentField(defgrad);
     this->addDependentField(J);
@@ -75,11 +74,6 @@ namespace LCM {
     this->addEvaluatedField(energy);
     this->addEvaluatedField(Fp);
     this->addEvaluatedField(eqps);
-
-    // scratch space FCs
-    Fpinv.resize(worksetSize, numQPs, numDims, numDims);
-    FpinvT.resize(worksetSize, numQPs, numDims, numDims);
-    Cpinv.resize(worksetSize, numQPs, numDims, numDims);
 
     this->setName("Stress" + PHX::typeAsString<EvalT>());
 
@@ -105,6 +99,11 @@ namespace LCM {
     this->utils.setFieldData(damage, fm);
     this->utils.setFieldData(Fp, fm);
     this->utils.setFieldData(eqps, fm);
+
+    // scratch space FCs
+    Fpinv = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+    FpinvT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+    Cpinv = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
   }
 
 //**********************************************************************
@@ -118,7 +117,7 @@ namespace LCM {
     //if (typeid(ScalarT) == typeid(RealType)) print = true;
 
     typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
-    typedef Intrepid2::RealSpaceTools<ScalarT> RST;
+    typedef Intrepid2::RealSpaceTools<PHX::Device> RST;
 
     ScalarT kappa, H, H2, phi, phi_old;
     ScalarT mu, mubar;
@@ -135,19 +134,34 @@ namespace LCM {
     Intrepid2::Tensor<ScalarT> A(3);
     Intrepid2::Tensor<ScalarT> expA(3);
 
-    //Albany::StateVariables  oldState = *workset.oldState;
-    //Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& Fpold   = *oldState[fpName];
-    //Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& eqpsold = *oldState[eqpsName];
-    //Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>& phi_old_FC = *oldState["Damage"];
+    Albany::MDArray Fpold_shards = (*workset.stateArrayPtr)[fpName];
+    Albany::MDArray eqpsold_shards = (*workset.stateArrayPtr)[eqpsName];
+    Albany::MDArray phi_old_FC_shards = (*workset.stateArrayPtr)["Damage_old"];
 
-    Albany::MDArray Fpold = (*workset.stateArrayPtr)[fpName];
-    Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqpsName];
-    Albany::MDArray phi_old_FC = (*workset.stateArrayPtr)["Damage_old"];
+    // Copy Shards MDArray into Kokkos DynRankView containers
+    Kokkos::DynRankView<RealType, PHX::Device> Fpold("STA",workset.numCells, numQPs, numDims, numDims);
+    Kokkos::DynRankView<RealType, PHX::Device> eqpsold("STA",workset.numCells, numQPs);
+    Kokkos::DynRankView<RealType, PHX::Device> phi_old_FC("STA",workset.numCells, numQPs);
+
+    for (int cell=0; cell < workset.numCells; ++cell)
+      for (int qp=0; qp < numQPs; ++qp)
+        for (int i=0; i < numDims; ++i)
+          for (int j=0; j < numDims; ++j)
+            Fpold(cell,qp,i,j)=Fpold_shards(cell,qp,i,j);
+
+    for (int cell=0; cell < workset.numCells; ++cell)
+      for (int qp=0; qp < numQPs; ++qp)
+        eqpsold(cell,qp) = eqpsold_shards(cell,qp);
+
+    for (int cell=0; cell < workset.numCells; ++cell)
+      for (int qp=0; qp < numQPs; ++qp)
+        phi_old_FC(cell,qp) = phi_old_FC_shards(cell,qp);
 
     // compute Cp_{n}^{-1}
+//std::cout << "AGS: commenting out necessary line to get code to compile. states need to be Kokkos, or copied to Kokkos" << std::endl;
     RST::inverse(Fpinv, Fpold);
     RST::transpose(FpinvT, Fpinv);
-    FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
+    FST::tensorMultiplyDataData(Cpinv, Fpinv, FpinvT);
 
     // std::cout << "F:\n";
     // for (int cell=0; cell < workset.numCells; ++cell)

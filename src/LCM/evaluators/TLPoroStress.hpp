@@ -48,13 +48,14 @@ private:
 
   unsigned int numQPs;
   unsigned int numDims;
+  unsigned int worksetSize;
 
   // Work space FCs
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> F_inv;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> F_invT;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> JF_invT;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> JpF_invT;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> JBpF_invT;
+  Kokkos::DynRankView<ScalarT, PHX::Device> F_inv;
+  Kokkos::DynRankView<ScalarT, PHX::Device> F_invT;
+  Kokkos::DynRankView<ScalarT, PHX::Device> JF_invT;
+  Kokkos::DynRankView<ScalarT, PHX::Device> JpF_invT;
+  Kokkos::DynRankView<ScalarT, PHX::Device> JBpF_invT;
 
   // Material Name
     std::string matModel;

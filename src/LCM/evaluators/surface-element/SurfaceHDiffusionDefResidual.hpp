@@ -98,21 +98,21 @@ private:
    // Time
    PHX::MDField<ScalarT,Dummy> deltaTime;
 
-  //! Reference Cell FieldContainers
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refValues;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refGrads;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
+  //! Reference Cell Views
+  Kokkos::DynRankView<RealType, PHX::Device> refValues;
+  Kokkos::DynRankView<RealType, PHX::Device> refGrads;
+  Kokkos::DynRankView<RealType, PHX::Device> refPoints;
+  Kokkos::DynRankView<RealType, PHX::Device> refWeights;
 
 
 
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> artificalDL;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> stabilizedDL;
+  Kokkos::DynRankView<ScalarT, PHX::Device> artificalDL;
+  Kokkos::DynRankView<ScalarT, PHX::Device> stabilizedDL;
 
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> pterm;
+  Kokkos::DynRankView<ScalarT, PHX::Device> pterm;
 
-  // Temporary FieldContainers
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flux;
+  // Temporary Views
+  Kokkos::DynRankView<ScalarT, PHX::Device> flux;
 
   ScalarT trialPbar;
 

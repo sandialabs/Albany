@@ -25,7 +25,7 @@ SurfaceBasis(
         dl->vertices_vector),
     cubature_(p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")),
     intrepid_basis_(
-        p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >("Intrepid2 Basis")),
+        p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >("Intrepid2 Basis")),
     ref_basis_(p.get<std::string>("Reference Basis Name"), dl->qp_tensor),
     ref_area_(p.get<std::string>("Reference Area Name"), dl->qp_scalar),
     ref_dual_basis_(
@@ -65,9 +65,7 @@ SurfaceBasis(
 
   dl->node_vector->dimensions(dims);
 
-  int
   container_size = dims[0];
-
   num_nodes_ = dims[1];
   num_surf_nodes_ = num_nodes_ / 2;
 
@@ -85,22 +83,6 @@ SurfaceBasis(
   std::cout << " cubature->getDimension(): ";
   std::cout << cubature_->getDimension() << '\n';
 #endif
-
-  // Allocate Temporary FieldContainers
-  ref_values_.resize(num_surf_nodes_, num_qps_);
-  ref_grads_.resize(num_surf_nodes_, num_qps_, num_surf_dims_);
-  ref_points_.resize(num_qps_, num_surf_dims_);
-  ref_weights_.resize(num_qps_);
-
-  // temp space for midplane coords
-  ref_midplane_coords_.resize(container_size, num_surf_nodes_, num_dims_);
-  current_midplane_coords_.resize(container_size, num_surf_nodes_, num_dims_);
-
-  // Pre-Calculate reference element quantitites
-  cubature_->getCubature(ref_points_, ref_weights_);
-  intrepid_basis_->getValues(
-      ref_values_, ref_points_, Intrepid2::OPERATOR_VALUE);
-  intrepid_basis_->getValues(ref_grads_, ref_points_, Intrepid2::OPERATOR_GRAD);
 
   this->setName("SurfaceBasis" + PHX::typeAsString<EvalT>());
 }
@@ -124,6 +106,24 @@ postRegistrationSetup(
     this->utils.setFieldData(current_coords_, fm);
     this->utils.setFieldData(current_basis_, fm);
   }
+
+  // Allocate Temporary Views
+  ref_values_ = Kokkos::DynRankView<RealType, PHX::Device>("XXX", num_surf_nodes_, num_qps_);
+  ref_grads_ = Kokkos::DynRankView<RealType, PHX::Device>("XXX", num_surf_nodes_, num_qps_, num_surf_dims_);
+  ref_points_ = Kokkos::DynRankView<RealType, PHX::Device>("XXX", num_qps_, num_surf_dims_);
+  ref_weights_ = Kokkos::DynRankView<RealType, PHX::Device>("XXX", num_qps_);
+
+  // temp space for midplane coords
+  ref_midplane_coords_ = Kokkos::createDynRankView(reference_coords_.get_view(), "XXX", container_size, num_surf_nodes_, num_dims_);
+  if (need_current_basis_ == true) {
+    current_midplane_coords_ = Kokkos::createDynRankView(current_coords_.get_view(), "XXX", container_size, num_surf_nodes_, num_dims_);
+  }
+
+  // Pre-Calculate reference element quantitites
+  cubature_->getCubature(ref_points_, ref_weights_);
+  intrepid_basis_->getValues(
+      ref_values_, ref_points_, Intrepid2::OPERATOR_VALUE);
+  intrepid_basis_->getValues(ref_grads_, ref_points_, Intrepid2::OPERATOR_GRAD);
 }
 
 //
@@ -173,7 +173,7 @@ void
 SurfaceBasis<EvalT, Traits>::
 computeMidplaneCoords(
     PHX::MDField<ST, Cell, Vertex, Dim> const coords,
-    Intrepid2::FieldContainer_Kokkos<ST, PHX::Layout, PHX::Device> & midplane_coords)
+    Kokkos::DynRankView<ST, PHX::Device> & midplane_coords)
 {
   for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
     // compute the mid-plane coordinates
@@ -197,7 +197,7 @@ template<typename EvalT, typename Traits>
 template<typename ST>
 void
 SurfaceBasis<EvalT, Traits>::
-computeBasisVectors(Intrepid2::FieldContainer_Kokkos<ST, PHX::Layout, PHX::Device> const & midplane_coords,
+computeBasisVectors(Kokkos::DynRankView<ST, PHX::Device> const & midplane_coords,
     PHX::MDField<ST, Cell, QuadPoint, Dim, Dim> basis)
 {
   for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
@@ -243,7 +243,7 @@ template<typename EvalT, typename Traits>
 void
 SurfaceBasis<EvalT, Traits>::
 computeDualBasisVectors(
-    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> const & midplane_coords,
+    Kokkos::DynRankView<MeshScalarT, PHX::Device> const & midplane_coords,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dual_basis)

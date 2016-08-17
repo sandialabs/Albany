@@ -47,7 +47,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Source;
+  //PHX::MDField<ScalarT,Cell,QuadPoint> Source;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> DefGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> elementLength;
   PHX::MDField<ScalarT,Cell,QuadPoint> Dstar;
@@ -87,19 +87,17 @@ private:
   unsigned int numDims;
   unsigned int worksetSize;
 
-  // Temporary FieldContainers
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Hflux;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> C;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Cinv;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> CinvTgrad;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> CinvTgrad_old;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> artificalDL;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> stabilizedDL;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> tauStress;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> pterm;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> tpterm;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> tauH;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> CinvTaugrad;
+  // Temporary Views
+  Kokkos::DynRankView<ScalarT, PHX::Device> Hflux;
+  Kokkos::DynRankView<ScalarT, PHX::Device> C;
+  Kokkos::DynRankView<ScalarT, PHX::Device> Cinv;
+  Kokkos::DynRankView<ScalarT, PHX::Device> CinvTgrad;
+  Kokkos::DynRankView<ScalarT, PHX::Device> CinvTgrad_old;
+  Kokkos::DynRankView<ScalarT, PHX::Device> artificalDL;
+  Kokkos::DynRankView<ScalarT, PHX::Device> stabilizedDL;
+  Kokkos::DynRankView<ScalarT, PHX::Device> pterm;
+  Kokkos::DynRankView<ScalarT, PHX::Device> tpterm;
+  Kokkos::DynRankView<ScalarT, PHX::Device> CinvTaugrad;
 
 
   ScalarT CLbar, vol ;

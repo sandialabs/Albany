@@ -21,7 +21,7 @@ FaceAverage(const Teuchos::ParameterList& p) :
   projected(p.get<std::string>("Projected Field Name"),
     p.get<Teuchos::RCP<PHX::DataLayout>>("Node Vector Data Layout")),
   cubature(p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Face Cubature")),
-  intrepidBasis(p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >("Face Intrepid2 Basis")),
+  intrepidBasis(p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>("Face Intrepid2 Basis")),
   cellType(p.get<Teuchos::RCP<shards::CellTopology>>("Cell Type")),
   faceAve(p.get<std::string>("Face Average Name"),
     p.get<Teuchos::RCP<PHX::DataLayout>>("Face Vector Data Layout")),
@@ -73,14 +73,6 @@ FaceAverage(const Teuchos::ParameterList& p) :
     // Need the local ordering of the nodes on the faces
     sides = cellType->getCellTopologyData()->side;
 
-    // Get the quadrature weights and basis functions
-    refPoints.resize(numQPs,faceDim);
-    refWeights.resize(numQPs);
-    refValues.resize(numFaceNodes,numQPs);
-
-    cubature->getCubature(refPoints,refWeights);
-    intrepidBasis->getValues(refValues, refPoints, Intrepid2::OPERATOR_VALUE);
-
 
     this->setName("FaceAverage"+PHX::typeAsString<EvalT>());
 
@@ -97,6 +89,14 @@ postRegistrationSetup(typename Traits::SetupData d,
 
     this->utils.setFieldData(temp,fm);  // temp for testing
 
+
+    // Get the quadrature weights and basis functions
+    refPoints = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs,faceDim);
+    refWeights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
+    refValues = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numFaceNodes,numQPs);
+
+    cubature->getCubature(refPoints,refWeights);
+    intrepidBasis->getValues(refValues, refPoints, Intrepid2::OPERATOR_VALUE);
 }
 
 template<typename EvalT, typename Traits>

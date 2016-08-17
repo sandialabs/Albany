@@ -57,10 +57,6 @@ namespace LCM {
     numQPs  = dims[2];
     numDims = dims[3];
 
-    // Allocate workspace for temporary variables
-   // tauStress.resize(worksetSize, numQPs, numDims, numDims);
-    tauH.resize(dims[0], numQPs);
-
     this->setName("ScalarL2ProjectionResidual"+PHX::typeAsString<EvalT>());
 
   }
@@ -78,6 +74,10 @@ namespace LCM {
 	this->utils.setFieldData(Pstress,fm);
 
     this->utils.setFieldData(TResidual,fm);
+
+    // Allocate workspace for temporary variables
+   // tauStress = Kokkos::createDynRankView(v.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+    tauH = Kokkos::createDynRankView(projectedStress.get_view(), "XXX", worksetSize, numQPs);
   }
 
 //**********************************************************************

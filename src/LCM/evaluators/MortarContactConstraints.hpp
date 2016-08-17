@@ -81,9 +81,7 @@ protected:
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
 
 //! Temporary containers
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> physPointsCell;
-
-
+//  Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsCell;
 
 };
 }

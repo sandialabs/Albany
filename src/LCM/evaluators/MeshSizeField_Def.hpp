@@ -51,18 +51,6 @@ namespace LCM {
     std::vector<PHX::DataLayout::size_type> dims2;
     dl->node_vector->dimensions(dims2);
     numNodes = dims2[1];
-
-    // Allocate Temporary FieldContainers
-    grad_at_cub_points.resize(numNodes, numQPs, numDims);
-    refPoints.resize(numQPs, numDims);
-    refWeights.resize(numQPs);
-    dxdxi.resize(numDims, numDims);
-    dEDdxi.resize(numDims);
-
-    // Pre-Calculate reference element quantitites
-    cubature->getCubature(refPoints, refWeights);
-    intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
-
   }
 
   //----------------------------------------------------------------------------
@@ -73,6 +61,17 @@ namespace LCM {
   {
     this->utils.setFieldData(isoMeshSizeField,fm);
     this->utils.setFieldData(currentCoords,fm);
+
+    // Allocate Temporary Views
+    grad_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPs, numDims);
+    refPoints = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs, numDims);
+    refWeights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
+    dxdxi = Kokkos::createDynRankView(isoMeshSizeField.get_view(), "XXX", numDims, numDims);
+    dEDdxi = Kokkos::createDynRankView(isoMeshSizeField.get_view(), "XXX", numDims);
+
+    // Pre-Calculate reference element quantitites
+    cubature->getCubature(refPoints, refWeights);
+    intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
   }
 
   //----------------------------------------------------------------------------
@@ -166,17 +165,6 @@ namespace LCM {
     std::vector<PHX::DataLayout::size_type> dims2;
     dl->node_vector->dimensions(dims2);
     numNodes = dims2[1];
-
-    // Allocate Temporary FieldContainers
-    grad_at_cub_points.resize(numNodes, numQPs, numDims);
-    refPoints.resize(numQPs, numDims);
-    refWeights.resize(numQPs);
-    dxdxi.resize(numDims, numDims);
-
-    // Pre-Calculate reference element quantitites
-    cubature->getCubature(refPoints, refWeights);
-    intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
-
   }
 
   //----------------------------------------------------------------------------
@@ -187,6 +175,17 @@ namespace LCM {
   {
     this->utils.setFieldData(anisoMeshSizeField,fm);
     this->utils.setFieldData(currentCoords,fm);
+
+    // Allocate Temporary Views
+    grad_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPs, numDims);
+    refPoints = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs, numDims);
+    refWeights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
+    dxdxi = Kokkos::createDynRankView(anisoMeshSizeField.get_view(), "XXX", numDims, numDims);
+
+    // Pre-Calculate reference element quantitites
+    cubature->getCubature(refPoints, refWeights);
+    intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
+
   }
 
   //----------------------------------------------------------------------------

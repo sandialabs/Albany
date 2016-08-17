@@ -51,8 +51,8 @@ private:
   PHX::MDField<ScalarT,Cell,Node> dResidual;
 
   bool enableTransient;
-  unsigned int numQPs, numDims;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flux;
+  unsigned int numCells, numQPs, numDims;
+  Kokkos::DynRankView<ScalarT, PHX::Device> flux;
 };
 }
 

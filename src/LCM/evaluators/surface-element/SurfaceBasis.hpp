@@ -63,7 +63,7 @@ public:
   void
   computeMidplaneCoords(
       PHX::MDField<ST, Cell, Vertex, Dim> const coords,
-      Intrepid2::FieldContainer_Kokkos<ST, PHX::Layout, PHX::Device> & midplane_coords);
+      Kokkos::DynRankView<ST, PHX::Device> & midplane_coords);
 
   ///
   /// Computes basis from the reference midplane
@@ -72,7 +72,7 @@ public:
   ///
   template<typename ST>
   void
-  computeBasisVectors(Intrepid2::FieldContainer_Kokkos<ST, PHX::Layout, PHX::Device> const & midplane_coords,
+  computeBasisVectors(Kokkos::DynRankView<ST, PHX::Device> const & midplane_coords,
       PHX::MDField<ST, Cell, QuadPoint, Dim, Dim> basis);
 
   ///
@@ -84,7 +84,7 @@ public:
   ///
   void
   computeDualBasisVectors(
-      Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> const & midplane_coords,
+      Kokkos::DynRankView<MeshScalarT, PHX::Device> const & midplane_coords,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dual_basis);
@@ -103,7 +103,7 @@ public:
 
 private:
   unsigned int
-  num_dims_, num_nodes_, num_qps_, num_surf_nodes_, num_surf_dims_;
+  container_size, num_dims_, num_nodes_, num_qps_, num_surf_nodes_, num_surf_dims_;
 
   bool
   need_current_basis_;
@@ -127,15 +127,15 @@ private:
   intrepid_basis_;
 
   ///
-  /// Local FieldContainer to store the reference midplane_coords
+  /// Local View to store the reference midplane_coords
   ///
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>
+  Kokkos::DynRankView<MeshScalarT, PHX::Device>
   ref_midplane_coords_;
 
   ///
-  /// Local FieldContainer to store the current midplane_coords
+  /// Local View to store the current midplane_coords
   ///
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>
+  Kokkos::DynRankView<ScalarT, PHX::Device>
   current_midplane_coords_;
 
   ///
@@ -176,27 +176,27 @@ private:
   current_basis_;
 
   ///
-  /// Reference Cell FieldContainer for basis values
+  /// Reference Cell View for basis values
   ///
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
+  Kokkos::DynRankView<RealType, PHX::Device>
   ref_values_;
 
   ///
-  /// Reference Cell FieldContainer for basis gradients
+  /// Reference Cell View for basis gradients
   ///
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
+  Kokkos::DynRankView<RealType, PHX::Device>
   ref_grads_;
 
   ///
-  /// Reference Cell FieldContainer for integration point locations
+  /// Reference Cell View for integration point locations
   ///
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
+  Kokkos::DynRankView<RealType, PHX::Device>
   ref_points_;
 
   ///
-  /// Reference Cell FieldContainer for integration weights
+  /// Reference Cell View for integration weights
   ///
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
+  Kokkos::DynRankView<RealType, PHX::Device>
   ref_weights_;
 };
 }

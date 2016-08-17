@@ -53,9 +53,9 @@ private:
   // Output:
   PHX::MDField<double,Cell,QuadPoint,Dim,Dim> G;
 
-  // Temporary FieldContainers
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> nodalFp;
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> curlFp;
+  // Temporary Views
+  Kokkos::DynRankView<RealType, PHX::Device> nodalFp;
+  Kokkos::DynRankView<RealType, PHX::Device> curlFp;
 
 };
 }

@@ -41,11 +41,11 @@ namespace Albany {
 
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void buildProblem(
-      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>  meshSpecs,
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
       StateManager& stateMgr);
 
     // Build evaluators
-    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag>>
+    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
     buildEvaluators(
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       const Albany::MeshSpecsStruct& meshSpecs,
@@ -57,8 +57,8 @@ namespace Albany {
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
     void getAllocatedStates(
-         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>> oldState_,
-	 Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>> newState_
+         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device> > > > oldState_,
+	 Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device> > > > newState_
 	 ) const;
 
   private:
@@ -93,8 +93,8 @@ namespace Albany {
 
     std::string matModel;
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>> oldState;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>> newState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device> > > > oldState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device> > > > newState;
   };
 }
 
@@ -165,7 +165,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
    const int worksetSize = meshSpecs.worksetSize;
 
    Intrepid2::DefaultCubatureFactory cubFactory;
-   RCP <Intrepid2::Cubature<PHX::Device> >> cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
+   RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
 
    const int numQPts = cubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();
@@ -767,7 +767,7 @@ Albany::PoroElasticityProblem::constructEvaluators(
      // Inputs: X, Y at nodes, Cubature, and Basis
      p->set<std::string>("Coordinate Vector Name","Coord Vec");
      p->set< RCP<DataLayout>>("Coordinate Data Layout", dl->vertices_vector);
-     p->set< RCP<Intrepid2::Cubature<PHX::Device> >>>("Cubature", cubature);
+     p->set< RCP<Intrepid2::Cubature<PHX::Device> >>("Cubature", cubature);
      p->set<RCP<shards::CellTopology>>("Cell Type", cellType);
 
      p->set<std::string>("Weights Name","Weights");

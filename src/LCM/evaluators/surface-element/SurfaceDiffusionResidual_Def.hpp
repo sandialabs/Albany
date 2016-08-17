@@ -46,17 +46,6 @@ namespace LCM {
 
     numPlaneNodes = numNodes / 2;
     numPlaneDims = numDims - 1;
-
-    // Allocate Temporary FieldContainers
-    refValues.resize(numPlaneNodes, numQPs);
-    refGrads.resize(numPlaneNodes, numQPs, numPlaneDims);
-    refPoints.resize(numQPs, numPlaneDims);
-    refWeights.resize(numQPs);
-
-    // Pre-Calculate reference element quantitites
-    cubature->getCubature(refPoints, refWeights);
-    intrepidBasis->getValues(refValues, refPoints, Intrepid2::OPERATOR_VALUE);
-    intrepidBasis->getValues(refGrads, refPoints, Intrepid2::OPERATOR_GRAD);
   }
 
   //**********************************************************************
@@ -72,6 +61,17 @@ namespace LCM {
     this->utils.setFieldData(refNormal,fm);
     this->utils.setFieldData(refArea,fm);
     this->utils.setFieldData(scalarResidual,fm);
+
+    // Allocate Temporary Views
+    refValues = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numPlaneNodes, numQPs);
+    refGrads = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numPlaneNodes, numQPs, numPlaneDims);
+    refPoints = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs, numPlaneDims);
+    refWeights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
+
+    // Pre-Calculate reference element quantitites
+    cubature->getCubature(refPoints, refWeights);
+    intrepidBasis->getValues(refValues, refPoints, Intrepid2::OPERATOR_VALUE);
+    intrepidBasis->getValues(refGrads, refPoints, Intrepid2::OPERATOR_GRAD);
   }
 
   //**********************************************************************

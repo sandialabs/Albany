@@ -232,7 +232,7 @@ Albany::ProjectionProblem::constructEvaluators(
 
   Intrepid2::DefaultCubatureFactory cubFactory;
 
-  RCP<Intrepid2::Cubature<PHX::Device> >>
+  RCP<Intrepid2::Cubature<PHX::Device> >
   cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cell_type, mesh_specs.cubatureDegree);
 
   // Create intrepid basis and cubature for the face averaging. Not the best
@@ -246,7 +246,7 @@ Albany::ProjectionProblem::constructEvaluators(
 
   // the quadrature is general to the
   // topology of the faces of the volume elements
-  RCP<Intrepid2::Cubature<PHX::Device> >>
+  RCP<Intrepid2::Cubature<PHX::Device> >
   face_cubature = cubFactory.create<PHX::Device, RealType, RealType>(
       cell_type->getCellTopologyData()->side->topology,
       mesh_specs.cubatureDegree);
@@ -1170,7 +1170,7 @@ Albany::ProjectionProblem::constructEvaluators(
         projection_layout->node_vector);
 
     // the cubature and basis function information
-    p->set<RCP<Intrepid2::Cubature<PHX::Device> >>>(
+    p->set<RCP<Intrepid2::Cubature<PHX::Device> > >(
         "Face Cubature",
         face_cubature);
 

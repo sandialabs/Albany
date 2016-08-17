@@ -58,17 +58,17 @@ private:
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim>
   cohesive_traction_;
 
-  // Reference Cell FieldContainers
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
+  // Reference Cell Views
+  Kokkos::DynRankView<RealType, PHX::Device>
   ref_values_;
 
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
+  Kokkos::DynRankView<RealType, PHX::Device>
   ref_grads_;
 
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
+  Kokkos::DynRankView<RealType, PHX::Device>
   ref_points_;
 
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>
+  Kokkos::DynRankView<RealType, PHX::Device>
   ref_weights_;
 
   // Output:

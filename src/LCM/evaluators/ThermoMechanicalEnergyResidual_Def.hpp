@@ -63,13 +63,6 @@ ThermoMechanicalEnergyResidual(const Teuchos::ParameterList& p) :
   numQPs  = dims[1];
   numDims = dims[2];
 
-  // Allocate workspace
-  flux.resize(dims[0], numQPs, numDims);
-  C.resize(worksetSize, numQPs, numDims, numDims);
-  Cinv.resize(worksetSize, numQPs, numDims, numDims);
-  CinvTgrad.resize(worksetSize, numQPs, numDims);
-  Tdot.resize(worksetSize, numQPs);
-
   this->setName("ThermoMechanicalEnergyResidual"+PHX::typeAsString<EvalT>());
 }
 
@@ -90,6 +83,13 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (haveSource)  this->utils.setFieldData(Source,fm);
 
   this->utils.setFieldData(TResidual,fm);
+
+  // Allocate workspace
+  flux = Kokkos::createDynRankView(Temperature.get_view(), "XXX", worksetSize, numQPs, numDims);
+  C = Kokkos::createDynRankView(Temperature.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+  Cinv = Kokkos::createDynRankView(Temperature.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+  CinvTgrad = Kokkos::createDynRankView(Temperature.get_view(), "XXX", worksetSize, numQPs, numDims);
+  Tdot = Kokkos::createDynRankView(Temperature.get_view(), "XXX", worksetSize, numQPs);
 }
 
 //**********************************************************************
@@ -110,29 +110,29 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT dt = deltaTime(0);
 
   // compute the 'material' flux
-  FST::tensorMultiplyDataData<ScalarT> (C, F, F, 'T');
-  Intrepid2::RealSpaceTools<ScalarT>::inverse(Cinv, C);
-  FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, TGrad);
-  FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, CinvTgrad);
+  FST::tensorMultiplyDataData (C, F.get_view(), F.get_view(), 'T');
+  Intrepid2::RealSpaceTools<PHX::Device>::inverse(Cinv, C);
+  FST::tensorMultiplyDataData (CinvTgrad, Cinv, TGrad.get_view());
+  FST::scalarMultiplyDataData (flux, ThermalCond.get_view(), CinvTgrad);
 
-   FST::integrate(TResidual, flux, wGradBF, false); // "false" overwrites
+   FST::integrate(TResidual.get_view(), flux, wGradBF.get_view(), false); // "false" overwrites
 
   if (haveSource) {
     for (int i=0; i<Source.dimension(0); i++) 
        for (int j=0; j<Source.dimension(1); j++) 
           Source(i,j) *= -1.0;
-     FST::integrate(TResidual, Source, wBF, true); // "true" sums into
+     FST::integrate(TResidual.get_view(), Source.get_view(), wBF.get_view(), true); // "true" sums into
   }
 
  for (int i=0; i<mechSource.dimension(0); i++) 
        for (int j=0; j<mechSource.dimension(1); j++)
            mechSource(i,j) *= -1.0;
-    FST::integrate(TResidual, mechSource, wBF, true); // "true" sums into
+    FST::integrate(TResidual.get_view(), mechSource.get_view(), wBF.get_view(), true); // "true" sums into
 
 
 //Irina comment: code below was commented out
   //if (workset.transientTerms && enableTransient)
-  //   FST::integrate(TResidual, Tdot, wBF, true); // "true" sums into
+  //   FST::integrate(TResidual.get_view(), Tdot.get_view(), wBF.get_view(), true); // "true" sums into
   //
   // compute factor
   ScalarT fac(0.0);
@@ -142,7 +142,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (int cell=0; cell < workset.numCells; ++cell)
     for (int qp=0; qp < numQPs; ++qp)
       Tdot(cell,qp) = fac * ( Temperature(cell,qp) - Temperature_old(cell,qp) );
-   FST::integrate(TResidual, Tdot, wBF, true); // "true" sums into
+   FST::integrate(TResidual.get_view(), Tdot, wBF.get_view(), true); // "true" sums into
 
   if (print)
   {

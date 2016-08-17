@@ -211,7 +211,7 @@ Albany::HMCProblem::constructEvaluators(
    const int worksetSize = meshSpecs.worksetSize;
 
    Intrepid2::DefaultCubatureFactory cubFactory;
-   RCP <Intrepid2::Cubature<PHX::Device> >> cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
+   RCP <Intrepid2::Cubature<PHX::Device>  > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
 
    const int numDim = cubature->getDimension();
    const int numQPts = cubature->getNumPoints();

@@ -101,24 +101,10 @@ namespace LCM {
     porePressureName = p.get<std::string>("QP Pore Pressure Name")+"_old";
     satName = p.get<std::string>("Van Genuchten Saturation Name")+"_old";
 
-
-
     worksetSize = dims[0];
     numNodes = dims[1];
     numQPs  = dims[2];
     numDims = dims[3];
-
-
-
-    // Allocate workspace
-    flux.resize(dims[0], numQPs, numDims);
-    fluxdt.resize(dims[0], numQPs, numDims);
-    pterm.resize(dims[0], numQPs);
-    tpterm.resize(dims[0], numNodes, numQPs);
-
-
-
-    if (haveAbsorption)  aterm.resize(dims[0], numQPs);
 
     convectionVels = Teuchos::getArrayFromStringParameter<double> (p,
 								   "Convection Velocity", numDims, false);
@@ -168,6 +154,13 @@ namespace LCM {
     if (haveConvection && haverhoCp)  this->utils.setFieldData(rhoCp,fm);
     this->utils.setFieldData(strain,fm);
     this->utils.setFieldData(TResidual,fm);
+
+    // Allocate workspace
+    flux = Kokkos::createDynRankView(porePressure.get_view(), "XXX", worksetSize, numQPs, numDims);
+    fluxdt = Kokkos::createDynRankView(porePressure.get_view(), "XXX", worksetSize, numQPs, numDims);
+    pterm = Kokkos::createDynRankView(porePressure.get_view(), "XXX", worksetSize, numQPs);
+    tpterm = Kokkos::createDynRankView(porePressure.get_view(), "XXX", worksetSize, numNodes, numQPs);
+    if (haveAbsorption)  aterm = Kokkos::createDynRankView(porePressure.get_view(), "XXX", worksetSize, numQPs);
   }
 
 //**********************************************************************
@@ -280,7 +273,7 @@ evaluateFields(typename Traits::EvalData workset)
 
    ScalarT dt = deltaTime(0);
 
-    FST::scalarMultiplyDataData<ScalarT> (flux, vgPermeability, TGrad); // flux_i = k I_ij p_j
+    FST::scalarMultiplyDataData(flux, vgPermeability.get_view(), TGrad.get_view()); // flux_i = k I_ij p_j
 
    for (int cell=0; cell < workset.numCells; ++cell){
       for (int qp=0; qp < numQPs; ++qp) {
@@ -291,7 +284,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 
-   FST::integrate(TResidual, fluxdt, wGradBF, true); // "true" sums into
+   FST::integrate(TResidual.get_view(), fluxdt, wGradBF.get_view(), true); // "true" sums into
 
 
 

@@ -37,14 +37,7 @@ TLPoroStress(const Teuchos::ParameterList& p) :
   tensor_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
-
-  // Works space FCs
-  int worksetSize = dims[0];
-  F_inv.resize(worksetSize, numQPs, numDims, numDims);
-  F_invT.resize(worksetSize, numQPs, numDims, numDims);
-  JF_invT.resize(worksetSize, numQPs, numDims, numDims);
-  JpF_invT.resize(worksetSize, numQPs, numDims, numDims);
-  JBpF_invT.resize(worksetSize, numQPs, numDims, numDims);
+  worksetSize = dims[0];
 
   this->addDependentField(stress);
   this->addDependentField(defGrad);
@@ -71,6 +64,13 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(biotCoefficient,fm);
   this->utils.setFieldData(porePressure,fm);
   this->utils.setFieldData(totstress,fm);
+
+  // Works space FCs
+  F_inv = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+  F_invT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+  JF_invT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+  JpF_invT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
+  JBpF_invT = Kokkos::createDynRankView(J.get_view(), "XXX", worksetSize, numQPs, numDims, numDims);
 }
 
 //**********************************************************************
@@ -80,10 +80,10 @@ evaluateFields(typename Traits::EvalData workset)
 {
 
   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
-  typedef Intrepid2::RealSpaceTools<ScalarT> RST;
+  typedef Intrepid2::RealSpaceTools<PHX::Device> RST;
 
   if (numDims == 1) {
-    Intrepid2::FunctionSpaceTools::scalarMultiplyDataData<ScalarT>(totstress, J, stress);
+    Intrepid2::FunctionSpaceTools<PHX::Device>::scalarMultiplyDataData(totstress.get_view(), J.get_view(), stress.get_view());
     for (int cell=0; cell < workset.numCells; ++cell) {
           for (int qp=0; qp < numQPs; ++qp) {
               for (int dim=0; dim<numDims; ++ dim) {
@@ -97,12 +97,12 @@ evaluateFields(typename Traits::EvalData workset)
   else
     {
 
-	   RST::inverse(F_inv, defGrad);
+	   RST::inverse(F_inv, defGrad.get_view());
 	   RST::transpose(F_invT, F_inv);
-	   FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-	   FST::scalarMultiplyDataData<ScalarT>(JpF_invT, porePressure,JF_invT);
-	   FST::scalarMultiplyDataData<ScalarT>(JBpF_invT, biotCoefficient, JpF_invT);
-  	   FST::tensorMultiplyDataData<ScalarT>(totstress, stress,JF_invT); // Cauchy to 1st PK
+	   FST::scalarMultiplyDataData<ScalarT>(JF_invT, J.get_view(), F_invT);
+	   FST::scalarMultiplyDataData<ScalarT>(JpF_invT, porePressure.get_view(),JF_invT);
+	   FST::scalarMultiplyDataData<ScalarT>(JBpF_invT, biotCoefficient.get_view(), JpF_invT);
+  	   FST::tensorMultiplyDataData<ScalarT>(totstress.get_view(), stress.get_view(),JF_invT); // Cauchy to 1st PK
 
     // Compute Stress
 

@@ -133,15 +133,15 @@ namespace LCM {
     ///
     PHX::MDField<ScalarT,Cell,QuadPoint> isoMeshSizeField;
 
-    // Temporary FieldContainers
-    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> grad_at_cub_points;
-    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
-    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
-    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dxdxi;
-    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dEDdxi;
+    // Temporary Views
+    Kokkos::DynRankView<RealType, PHX::Device> grad_at_cub_points;
+    Kokkos::DynRankView<RealType, PHX::Device> refPoints;
+    Kokkos::DynRankView<RealType, PHX::Device> refWeights;
+    Kokkos::DynRankView<ScalarT, PHX::Device> dxdxi;
+    Kokkos::DynRankView<ScalarT, PHX::Device> dEDdxi;
 
     Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature;
-    Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>> intrepidBasis;
+    Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
 
     ///
     /// Number of integration points
@@ -246,14 +246,14 @@ namespace LCM {
     ///
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim> anisoMeshSizeField;
 
-    // Temporary FieldContainers
-    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> grad_at_cub_points;
-    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
-    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
-    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dxdxi;
+    // Temporary Views
+    Kokkos::DynRankView<RealType, PHX::Device> grad_at_cub_points;
+    Kokkos::DynRankView<RealType, PHX::Device> refPoints;
+    Kokkos::DynRankView<RealType, PHX::Device> refWeights;
+    Kokkos::DynRankView<ScalarT, PHX::Device> dxdxi;
 
     Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature;
-    Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>> intrepidBasis;
+    Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
 
     ///
     /// Number of integration points

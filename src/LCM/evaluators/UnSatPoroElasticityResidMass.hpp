@@ -86,27 +86,18 @@ private:
   unsigned int numDims;
   unsigned int worksetSize;
 
-  // Temporary FieldContainers
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flux;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> fluxdt;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> pterm;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> tpterm;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> aterm;
-  // Temporary FieldContainers
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobian;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobian_inv;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> Gc;
-
+  // Temporary Views
+  Kokkos::DynRankView<ScalarT, PHX::Device> flux;
+  Kokkos::DynRankView<ScalarT, PHX::Device> fluxdt;
+  Kokkos::DynRankView<ScalarT, PHX::Device> pterm;
+  Kokkos::DynRankView<ScalarT, PHX::Device> tpterm;
+  Kokkos::DynRankView<ScalarT, PHX::Device> aterm;
 
   ScalarT porePbar, vol;
   ScalarT trialPbar;
 
-
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;
-
 
 };
 }

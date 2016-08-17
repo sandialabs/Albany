@@ -79,7 +79,7 @@ template<typename EvalT, typename Traits>
 void MicroResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
+  //typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {

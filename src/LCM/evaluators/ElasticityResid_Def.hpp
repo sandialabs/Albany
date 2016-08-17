@@ -127,7 +127,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-//   FST::integrate(ExResidual, Stress, wGradBF, false); // "false" overwrites
+//   FST::integrate(ExResidual.get_view(), Stress.get_view(), wGradBF.get_view(), false); // "false" overwrites
 
 }
 

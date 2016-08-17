@@ -176,7 +176,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
    const int worksetSize = meshSpecs.worksetSize;
 
    Intrepid2::DefaultCubatureFactory cubFactory;
-   RCP <Intrepid2::Cubature<PHX::Device> >> cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
+   RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
 
    const int numQPts = cubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();
@@ -1108,7 +1108,7 @@ Albany::ThermoPoroPlasticityProblem::constructEvaluators(
      // Inputs: X, Y at nodes, Cubature, and Basis
      p->set<std::string>("Coordinate Vector Name","Coord Vec");
      p->set< RCP<DataLayout>>("Coordinate Data Layout", dl->vertices_vector);
-     p->set< RCP<Intrepid2::Cubature<PHX::Device> >>>("Cubature", cubature);
+     p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
      p->set<RCP<shards::CellTopology>>("Cell Type", cellType);
 
      p->set<std::string>("Weights Name","Weights");

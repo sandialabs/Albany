@@ -58,6 +58,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Dim> ExResidual;
 
+  int worksetSize;
   int numNodes;
   int numQPs;
   int numDims;
@@ -65,11 +66,11 @@ private:
   ScalarT dTemp;
 
   // Work space FCs
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> F_inv;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> F_invT;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> JF_invT;
-//  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> P;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> thermoEPS;
+  Kokkos::DynRankView<ScalarT, PHX::Device> F_inv;
+  Kokkos::DynRankView<ScalarT, PHX::Device> F_invT;
+  Kokkos::DynRankView<ScalarT, PHX::Device> JF_invT;
+//  Kokkos::DynRankView<ScalarT, PHX::Device> P;
+  Kokkos::DynRankView<ScalarT, PHX::Device> thermoEPS;
 
 };
 }

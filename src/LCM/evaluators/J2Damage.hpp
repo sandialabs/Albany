@@ -60,10 +60,11 @@ namespace LCM {
     std::string fpName, eqpsName;
     unsigned int numQPs;
     unsigned int numDims;
+    unsigned int worksetSize;
 
-    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Fpinv;
-    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> FpinvT;
-    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Cpinv;
+    Kokkos::DynRankView<ScalarT, PHX::Device> Fpinv;
+    Kokkos::DynRankView<ScalarT, PHX::Device> FpinvT;
+    Kokkos::DynRankView<ScalarT, PHX::Device> Cpinv;
 
   };
 }
