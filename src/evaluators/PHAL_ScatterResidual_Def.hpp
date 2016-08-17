@@ -150,7 +150,13 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  /*
+  std::cout << "Start Scatter<Residual>" << std::endl;
+  cudaError_t err = cudaGetLastError();
+  if (err != cudaSuccess) {printf("CUDA error: %s\n", cudaGetErrorString(err));}
+  */
+
+#if ! defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) || defined(KOKKOS_HAVE_CUDA)
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
 
   //get nonconst (read and write) view of fT
@@ -208,6 +214,11 @@ evaluateFields(typename Traits::EvalData workset)
  std::cout<< "Scatter Residual time = "  << millisec << "  "  << microseconds << std::endl;
 #endif
 #endif
+  /*
+  std::cout << "End Scatter<Residual>" << std::endl;
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {printf("CUDA error: %s\n", cudaGetErrorString(err));}
+  */
 }
 
 // **********************************************************************
@@ -464,6 +475,12 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  /*
+  std::cout << "Begin Scatter<Jacobian>" << std::endl;
+  cudaError_t err = cudaGetLastError();
+  if (err != cudaSuccess) {printf("CUDA error: %s\n", cudaGetErrorString(err));}
+  */
+
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
@@ -557,7 +574,11 @@ evaluateFields(typename Traits::EvalData workset)
  std::cout<< "Scatter Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
 #endif 
 #endif
-
+  /*
+  std::cout << "End Scatter<Jacobian>" << std::endl;
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {printf("CUDA error: %s\n", cudaGetErrorString(err));}
+  */
 }
 
 // **********************************************************************

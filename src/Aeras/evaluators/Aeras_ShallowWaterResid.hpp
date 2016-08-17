@@ -86,7 +86,7 @@ private:
 	Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
 	Kokkos::DynRankView<RealType, PHX::Device>    refPoints;
 	Kokkos::DynRankView<RealType, PHX::Device>    refWeights;
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#if ! defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) || defined(KOKKOS_HAVE_CUDA)
 	Kokkos::DynRankView<MeshScalarT, PHX::Device>  nodal_jacobian;
 	Kokkos::DynRankView<MeshScalarT, PHX::Device>  nodal_inv_jacobian;
 	Kokkos::DynRankView<MeshScalarT, PHX::Device>  nodal_det_j;
@@ -117,7 +117,7 @@ private:
 	double sHvTau;
 
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#if ! defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) || defined(KOKKOS_HAVE_CUDA)
 	void divergence(const Kokkos::DynRankView<ScalarT, PHX::Device>  & fieldAtNodes,
 			std::size_t cell, Kokkos::DynRankView<ScalarT, PHX::Device>  & div);
 

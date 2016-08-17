@@ -203,7 +203,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   this->registerSacadoParameter("Gravity", paramLib);
   this->registerSacadoParameter("Omega", paramLib);
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#if defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) && ! defined(KOKKOS_HAVE_CUDA)
   std::vector<PHX::index_size_type> ddims_;
 #ifdef  ALBANY_FAST_FELIX
   ddims_.push_back(ALBANY_SLFAD_SIZE);
@@ -315,7 +315,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   cubature->getCubature(refPoints, refWeights);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#if ! defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) || defined(KOKKOS_HAVE_CUDA)
   nodal_jacobian = Kokkos::createDynRankView(wBF.get_view(), "XXX", numNodes, 2, 2);
   nodal_inv_jacobian = Kokkos::createDynRankView(wBF.get_view(), "XXX", numNodes, 2, 2);
   nodal_det_j = Kokkos::createDynRankView(wBF.get_view(), "XXX", numNodes);
@@ -340,7 +340,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 // *********************************************************************
 //Kokkos functors
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#if defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) && ! defined(KOKKOS_HAVE_CUDA)
 template< typename ScalarT, typename ArrayT1,typename ArrayT2, typename ArrayJac, typename ArrayGrad>
 KOKKOS_INLINE_FUNCTION
 void gradient(const ArrayT1  & fieldAtNodes, const int &cell, ArrayT2  & gradField, 
@@ -1109,6 +1109,11 @@ template<typename EvalT, typename Traits>
 void ShallowWaterResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  /*
+  std::cout << "Start Aeras::ShallowWaterResid" << std::endl;
+  cudaError_t err = cudaGetLastError();
+  if (err != cudaSuccess) {printf("CUDA error: %s\n", cudaGetErrorString(err));}
+  */
 
   double j_coeff = workset.j_coeff;
   double m_coeff = workset.m_coeff;
@@ -1118,7 +1123,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   //  MeshScalarT k11, k12, k21, k22, k32;
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#if ! defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) || defined(KOKKOS_HAVE_CUDA)
   PHAL::set(Residual, 0.0);
 #ifdef ALBANY_VERBOSE
   std::cout << "In SW_resid: j_coeff, m_coeff, n_coeff: " << j_coeff << ", " << m_coeff << ", " << n_coeff << std::endl;
@@ -1612,6 +1617,11 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
 
 #endif
+  /*
+  std::cout << "End Aeras::ShallowWaterResid" << std::endl;
+  err = cudaGetLastError();
+  if (err != cudaSuccess) {printf("CUDA error: %s\n", cudaGetErrorString(err));}
+  */
 }
 
 //**********************************************************************
@@ -1625,7 +1635,7 @@ ShallowWaterResid<EvalT,Traits>::getValue(const std::string &n)
   return Omega;
 }
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#if ! defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) || defined(KOKKOS_HAVE_CUDA)
 template<typename EvalT,typename Traits>
 void
 ShallowWaterResid<EvalT,Traits>::divergence(const Kokkos::DynRankView<ScalarT, PHX::Device>  & fieldAtNodes,
@@ -1675,7 +1685,7 @@ ShallowWaterResid<EvalT,Traits>::divergence(const Kokkos::DynRankView<ScalarT, P
 #endif
 
 //**********************************************************************
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#if ! defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) || defined(KOKKOS_HAVE_CUDA)
 template<typename EvalT,typename Traits>
 void
 ShallowWaterResid<EvalT,Traits>::gradient(const Kokkos::DynRankView<ScalarT, PHX::Device>  & fieldAtNodes,
@@ -1697,7 +1707,7 @@ ShallowWaterResid<EvalT,Traits>::gradient(const Kokkos::DynRankView<ScalarT, PHX
 #endif
 
 // *********************************************************************
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#if ! defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) || defined(KOKKOS_HAVE_CUDA)
 template<typename EvalT,typename Traits>
 void
 ShallowWaterResid<EvalT,Traits>::fill_nodal_metrics(std::size_t cell) 
@@ -1721,8 +1731,7 @@ ShallowWaterResid<EvalT,Traits>::fill_nodal_metrics(std::size_t cell)
 #endif
 
 // *********************************************************************
-
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#if ! defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) || defined(KOKKOS_HAVE_CUDA)
 //og: rename this to vorticity
 template<typename EvalT,typename Traits>
 void
@@ -1792,7 +1801,7 @@ ShallowWaterResid<EvalT,Traits>::curl(const Kokkos::DynRankView<ScalarT, PHX::De
 
 // *********************************************************************
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#if ! defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) || defined(KOKKOS_HAVE_CUDA)
 template<typename EvalT,typename Traits>
 void
 ShallowWaterResid<EvalT,Traits>::get_coriolis(std::size_t cell, Kokkos::DynRankView<ScalarT, PHX::Device>  & coriolis) 
