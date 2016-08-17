@@ -30,9 +30,7 @@
 #include "Teuchos_VerboseObject.hpp"
 
 #include "Intrepid2_HGRAD_LINE_C1_FEM.hpp"
-#ifdef HAVE_REFACTORED_CN_BASIS
 #include "Intrepid2_HGRAD_LINE_Cn_FEM.hpp"
-#endif
 #include "Intrepid2_HGRAD_QUAD_C1_FEM.hpp"
 #include "Intrepid2_HGRAD_QUAD_C2_FEM.hpp"
 #include "Intrepid2_HGRAD_TRI_C1_FEM.hpp"
@@ -41,9 +39,7 @@
 #include "Intrepid2_HGRAD_HEX_C2_FEM.hpp"
 #include "Intrepid2_HGRAD_TET_C1_FEM.hpp"
 #include "Intrepid2_HGRAD_TET_C2_FEM.hpp"
-#ifdef HAVE_REFACTORED_CN_BASIS
 #include "Intrepid2_HGRAD_TET_COMP12_FEM.hpp"
-#endif
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"

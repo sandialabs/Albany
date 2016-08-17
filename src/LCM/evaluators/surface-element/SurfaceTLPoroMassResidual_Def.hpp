@@ -162,11 +162,9 @@ namespace LCM {
     // Compute pore fluid flux
     if (haveMech) {
       // Put back the permeability tensor to the reference configuration
- std::cout << "AGS: commenting out necessary line to get code to compile. states need to be Kokkos, or copied to Kokkos" << std::endl;
-#ifdef AGS_HACK_NEED_TO_FIX
+// std::cout << "AGS: commenting out necessary line to get code to compile. states need to be Kokkos, or copied to Kokkos" << std::endl;
       RST::inverse(F_inv, defGrad.get_view());
       RST::transpose(F_invT, F_inv);
-#endif
        FST::scalarMultiplyDataData(JF_invT, J.get_view(), F_invT);
        FST::scalarMultiplyDataData(KJF_invT, kcPermeability.get_view(), JF_invT);
       FST::tensorMultiplyDataData(Kref, F_inv, KJF_invT);

@@ -1,4 +1,3 @@
-//*****************************************************************//
 //    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
@@ -20,12 +19,6 @@
 
 #include <Intrepid2_CellTools.hpp>
 #include <Intrepid2_Basis.hpp>
-#ifdef HAVE_REFACTORED_CN_BASIS
-#include <Intrepid2_HGRAD_QUAD_Cn_FEM.hpp>
-#else
-#include <Intrepid2_HGRAD_QUAD_C1_FEM.hpp>
-#include <Intrepid2_HGRAD_QUAD_C2_FEM.hpp>
-#endif
 
 #include <stk_util/parallel/Parallel.hpp>
 

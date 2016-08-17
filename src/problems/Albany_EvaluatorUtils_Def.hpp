@@ -6,10 +6,6 @@
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_DataTypes.hpp"
 
-#ifdef HAVE_REFACTORED_CN_BASIS
-#include "Intrepid2_HGRAD_LINE_Cn_FEM.hpp"
-#endif
-
 #include "PHAL_GatherSolution.hpp"
 #include "PHAL_GatherScalarNodalParameter.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"

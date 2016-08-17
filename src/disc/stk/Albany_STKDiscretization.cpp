@@ -20,12 +20,7 @@
 
 #include <Intrepid2_CellTools.hpp>
 #include <Intrepid2_Basis.hpp>
-#ifdef HAVE_REFACTORED_CN_BASIS
 #include <Intrepid2_HGRAD_QUAD_Cn_FEM.hpp>
-#else
-#include <Intrepid2_HGRAD_QUAD_C1_FEM.hpp>
-#include <Intrepid2_HGRAD_QUAD_C2_FEM.hpp>
-#endif
 
 #include <stk_util/parallel/Parallel.hpp>
 
@@ -2555,13 +2550,9 @@ namespace {
     if (C == 9) return HGRAD_Basis_9;
 
     // Spectral bases
-#ifdef HAVE_REFACTORED_CN_BASIS
     return Teuchos::rcp(
       new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::Device>(
-        deg, Intrepid2::POINTTYPE_SPECTRAL) );
-#else
-return Teuchos::null;
-#endif
+        deg, Intrepid2::POINTTYPE_WARPBLEND) );
   }
 
   double value(const std::vector<double> &soln,

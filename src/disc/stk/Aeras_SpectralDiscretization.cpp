@@ -2106,7 +2106,6 @@ void Aeras::SpectralDiscretization::computeCoordsLines()
   int deg = np - 1;
 
   // Compute the 1D Gauss-Lobatto quadrature
-std::cout << "AGS -- need to uncomment to run -- just trying to compile" << std::endl;
   Teuchos::RCP< Intrepid2::Cubature<PHX::Device> > gl1D =
     Teuchos::rcp(
       new Intrepid2::CubaturePolylib<PHX::Device, RealType, RealType>(
