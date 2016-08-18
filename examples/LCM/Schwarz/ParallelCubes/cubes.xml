@@ -44,9 +44,9 @@
         <Parameter name="Continuation Method" type="string" value="Natural"/>
 	<Parameter  name="Initial Value" type="double" value="0.0"/>
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
-	<Parameter  name="Max Steps" type="int" value="10"/>
+	<Parameter  name="Max Steps" type="int" value="2"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>
-	<Parameter  name="Max Value" type="double" value="1.0"/>
+	<Parameter  name="Max Value" type="double" value="0.2"/>
 	<Parameter  name="Return Failed on Reaching Max Steps"
 		    type="bool" value="0"/>
 	<Parameter name="Hit Continuation Bound" type="bool" value="0"/>
