@@ -130,7 +130,7 @@
       type="string"
       value="resid" />
   </ParameterList>
-  <!-- REGRESSION comparison of the RESPONSE FUNCTION declared above-->
+  <!-- REGRESSION comparison of the RESPONSE FUNCTION declared above -->
   <ParameterList name="Regression Results">
     <Parameter
       name="Number of Comparisons"
@@ -171,12 +171,12 @@
           name="Initial Value"
           type="double"
           value="0.0" />
-	<!-- Repeat the boundary condition (just one) that is to be loaded -->
+        <!-- Repeat the boundary condition (just one) that is to be loaded -->
         <Parameter
           name="Continuation Parameter"
           type="string"
           value="Time" />
-	<!-- The number of steps in the problem -->
+        <!-- The number of steps in the problem -->
         <Parameter
           name="Max Steps"
           type="int"
@@ -188,8 +188,8 @@
         <Parameter
           name="Min Value"
           type="double"
-          value="0.0" />    
-	<!-- Compute eigenvalues of the global stiffness -->
+          value="0.0" />
+        <!-- Compute eigenvalues of the global stiffness -->
         <Parameter
           name="Compute Eigenvalues"
           type="bool"
@@ -210,7 +210,8 @@
         </ParameterList>
       </ParameterList>
       <ParameterList name="Step Size">
-	<!-- Control the actual parameter incrementation, here it is the displacement increment on the BC -->
+        <!-- Control the actual parameter incrementation, here it is the displacement 
+          increment on the BC -->
         <Parameter
           name="Initial Step Size"
           type="double"
@@ -241,7 +242,7 @@
             <ParameterList name="NOX Stratimikos Options">
             </ParameterList>
             <ParameterList name="Stratimikos">
-	      <!-- Belos for iterative solvers, Amesos for direct-->
+              <!-- Belos for iterative solvers, Amesos for direct -->
               <Parameter
                 name="Linear Solver Type"
                 type="string"
@@ -314,28 +315,23 @@
                         name="Convergence Tolerance"
                         type="double"
                         value="1e-6" />
-		      <!-- 
-		      <Parameter name="Output Frequency" type="int" value="10"/>
-		      <Parameter name="Output Style" type="int" value="1"/>
-		      <Parameter name="Verbosity" type="int" value="33"/>
-		      <Parameter name="Maximum Iterations" type="int" value="200"/>
-		      <Parameter name="Block Size" type="int" value="1"/>
-		      <Parameter name="Num Blocks" type="int" value="200"/>
-		      -->
+                      <!-- <Parameter name="Output Frequency" type="int" value="10"/> 
+                        <Parameter name="Output Style" type="int" value="1"/> <Parameter name="Verbosity" 
+                        type="int" value="33"/> <Parameter name="Maximum Iterations" type="int" value="200"/> 
+                        <Parameter name="Block Size" type="int" value="1"/> <Parameter name="Num Blocks" 
+                        type="int" value="200"/> -->
                     </ParameterList>
                     <ParameterList name="Block CG">
                       <Parameter
                         name="Output Frequency"
                         type="int"
                         value="1" />
-		      <!-- <Parameter name="Convergence Tolerance" type="double" value="1e-10"/>
-		      <Parameter name="Output Frequency" type="int" value="10"/>
-		      <Parameter name="Output Style" type="int" value="1"/>
-		      <Parameter name="Verbosity" type="int" value="33"/>
-		      <Parameter name="Maximum Iterations" type="int" value="200"/>
-		      <Parameter name="Block Size" type="int" value="1"/>
-		      <Parameter name="Num Blocks" type="int" value="200"/>
-		      <Parameter name="Flexible Gmres" type="bool" value="0"/>-->
+                      <!-- <Parameter name="Convergence Tolerance" type="double" 
+                        value="1e-10"/> <Parameter name="Output Frequency" type="int" value="10"/> <Parameter 
+                        name="Output Style" type="int" value="1"/> <Parameter name="Verbosity" type="int" 
+                        value="33"/> <Parameter name="Maximum Iterations" type="int" value="200"/> <Parameter 
+                        name="Block Size" type="int" value="1"/> <Parameter name="Num Blocks" type="int" 
+                        value="200"/> <Parameter name="Flexible Gmres" type="bool" value="0"/> -->
                     </ParameterList>
                   </ParameterList>
                 </ParameterList>
