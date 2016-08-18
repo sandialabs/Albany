@@ -148,7 +148,7 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
-    typedef Intrepid2::RealSpaceTools<ScalarT> RST;
+    typedef Intrepid2::RealSpaceTools<PHX::Device> RST;
 
     Albany::MDArray porePressureold = (*workset.stateArrayPtr)[porePressureName];
     Albany::MDArray Jold;
