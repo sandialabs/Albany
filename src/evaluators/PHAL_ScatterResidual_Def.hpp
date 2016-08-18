@@ -115,48 +115,45 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
 operator()(const ScatterRank0_Tag& tag, const int& cell) const
 {
-      for (std::size_t node = 0; node < this->numNodes; ++node){
-        for (std::size_t eq = 0; eq < numFields; eq++){
-          Kokkos::atomic_fetch_add(&f_nonconstView[Index(cell,node,this->offset + eq)], (this->val[eq])(cell,node));
-        }
-      }    
+  for (std::size_t node = 0; node < this->numNodes; ++node){
+    for (std::size_t eq = 0; eq < numFields; eq++){
+      Kokkos::atomic_fetch_add(&f_nonconstView(Index(cell,node,this->offset + eq)), (this->val[eq])(cell,node));
+    }
+  }
 }
+
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
 operator()(const ScatterRank1_Tag& tag, const int& cell) const
 {
-   for (std::size_t node = 0; node < this->numNodes; ++node){
-        for (std::size_t eq = 0; eq < numFields; eq++){
-             Kokkos::atomic_fetch_add(&f_nonconstView[Index(cell,node,this->offset + eq)], (this->valVec)(cell,node,eq));
-        }
+  for (std::size_t node = 0; node < this->numNodes; ++node){
+    for (std::size_t eq = 0; eq < numFields; eq++){
+      Kokkos::atomic_fetch_add(&f_nonconstView(Index(cell,node,this->offset + eq)), (this->valVec)(cell,node,eq));
     }
+  }
 }
+
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
 operator()(const ScatterRank2_Tag& tag, const int& cell) const
 {
   const int numDims = this->valTensor[0].dimension(2);
-
   for (std::size_t node = 0; node < this->numNodes; ++node)
-      for (std::size_t i = 0; i < numDims; i++)
-          for (std::size_t j = 0; j < numDims; j++)
-              Kokkos::atomic_fetch_add( &f_nonconstView[Index(cell,node,this->offset + i*numDims + j)], (this->valTensor[0])(cell,node,i,j)); 
+    for (std::size_t i = 0; i < numDims; i++)
+      for (std::size_t j = 0; j < numDims; j++)
+        Kokkos::atomic_fetch_add(&f_nonconstView(Index(cell,node,this->offset + i*numDims + j)), (this->valTensor[0])(cell,node,i,j)); 
 }
+
 #endif
+
 // **********************************************************************
 template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  /*
-  std::cout << "Start Scatter<Residual>" << std::endl;
-  cudaError_t err = cudaGetLastError();
-  if (err != cudaSuccess) {printf("CUDA error: %s\n", cudaGetErrorString(err));}
-  */
-
-#if ! defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) || defined(KOKKOS_HAVE_CUDA)
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
 
   //get nonconst (read and write) view of fT
@@ -189,36 +186,36 @@ evaluateFields(typename Traits::EvalData workset)
   
     }
   }
+
 #else
+#ifdef ALBANY_TIMER
+  auto start = std::chrono::high_resolution_clock::now();
+#endif
+
+  Index = workset.wsElNodeEqID_kokkos;
+
+  // Tpetra getLocalView is needed to obtain a Kokkos View from a specific device
+  auto fT_2d = workset.fT->template getLocalView<PHX::Device>();
+  f_nonconstView = Kokkos::subview(fT_2d, Kokkos::ALL(), 0);
+
+  if (this->tensorRank == 0) {
+    Kokkos::parallel_for(ScatterRank0_Policy(0,workset.numCells),*this);
+  }
+  else if (this->tensorRank == 1) {
+    Kokkos::parallel_for(ScatterRank1_Policy(0,workset.numCells),*this);
+  }
+  else if (this->tensorRank == 2) {
+    Kokkos::parallel_for(ScatterRank2_Policy(0,workset.numCells),*this);
+  }
 
 #ifdef ALBANY_TIMER
- auto start = std::chrono::high_resolution_clock::now();
-#endif
- fT = workset.fT;
- f_nonconstView = fT->get1dViewNonConst();
- Index=workset.wsElNodeEqID_kokkos;
-  if (this->tensorRank == 0) {
-   Kokkos::parallel_for(ScatterRank0_Policy(0,workset.numCells),*this);
- }
- else  if (this->tensorRank == 1) {
-  Kokkos::parallel_for(ScatterRank1_Policy(0,workset.numCells),*this);
- }
- else if (this->tensorRank == 2) {
-  Kokkos::parallel_for(ScatterRank2_Policy(0,workset.numCells),*this);
- }
-#ifdef ALBANY_TIMER
- PHX::Device::fence();
- auto elapsed = std::chrono::high_resolution_clock::now() - start;
- long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
- long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
- std::cout<< "Scatter Residual time = "  << millisec << "  "  << microseconds << std::endl;
+  PHX::Device::fence();
+  auto elapsed = std::chrono::high_resolution_clock::now() - start;
+  long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+  long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+  std::cout<< "Scatter Residual time = "  << millisec << "  "  << microseconds << std::endl;
 #endif
 #endif
-  /*
-  std::cout << "End Scatter<Residual>" << std::endl;
-  err = cudaGetLastError();
-  if (err != cudaSuccess) {printf("CUDA error: %s\n", cudaGetErrorString(err));}
-  */
 }
 
 // **********************************************************************

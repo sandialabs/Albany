@@ -120,11 +120,8 @@ private:
 //Kokkos
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
-
-  Teuchos::RCP<Tpetra_Vector> fT;
-  Teuchos::ArrayRCP<ST> f_nonconstView;
-
   Kokkos::View<int***, PHX::Device> Index;
+  Kokkos::View<ST*, PHX::Device> f_nonconstView;
 
   struct ScatterRank0_Tag{};
   struct ScatterRank1_Tag{};
