@@ -1139,7 +1139,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
 
   int num_fields = req_fields_info->get<int>("Number Of Fields",0);
   // L.B: is this check a good idea?
-  TEUCHOS_TEST_FOR_EXCEPTION (num_fields!=req.size(), std::logic_error, "Error! The number of required fields in the discretization parameter list (" << num_fields << ") does not match the number of requirements declared in the problem section (" << req.size() << ").\n");
+  //TEUCHOS_TEST_FOR_EXCEPTION (num_fields!=req.size(), std::logic_error, "Error! The number of required fields in the discretization parameter list (" << num_fields << ") does not match the number of requirements declared in the problem section (" << req.size() << ").\n");
 
   std::string fname, ftype, forigin;
   for (int ifield=0; ifield<num_fields; ++ifield)
