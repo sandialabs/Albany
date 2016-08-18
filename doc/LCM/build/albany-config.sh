@@ -1,7 +1,16 @@
 #!/bin/bash
 
+# WARNING: This file is generated automatically. Any changes made here
+# will be lost when the package is configured again.  Any permament
+# changes should go into the corresponding template at the top level
+# LCM directory.
+
 if [ -f ./CMakeCache.txt ]; then
-    rm CMakeCache.txt
+    rm ./CMakeCache.txt
+fi
+
+if [ -d ./CMakeFiles ]; then
+    rm ./CMakeFiles -rf
 fi
 
 # The Trilinos Dir is the same as the PREFIX entry from the
