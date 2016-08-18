@@ -15,6 +15,7 @@
 #include "PHAL_ComputeBasisFunctions.hpp"
 #include "PHAL_ComputeBasisFunctionsSide.hpp"
 #include "PHAL_DOFCellToSide.hpp"
+#include "PHAL_DOFCellToSideQP.hpp"
 #include "PHAL_DOFGradInterpolation.hpp"
 #include "PHAL_DOFGradInterpolationSide.hpp"
 #include "PHAL_DOFDivInterpolationSide.hpp"
@@ -516,6 +517,36 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFCellToSideEvaluato
 
 template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFCellToSideQPEvaluator(
+       const std::string& cell_dof_name,
+       const std::string& sideSetName,
+       const std::string& layout,
+       const Teuchos::RCP<shards::CellTopology>& cellType,
+       const std::string& side_dof_name) const
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+
+    RCP<ParameterList> p = rcp(new ParameterList("DOF Cell To Side"));
+
+    // Input
+    p->set<std::string>("Cell Variable Name", cell_dof_name);
+    p->set<std::string>("Data Layout", layout);
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set<std::string>("Side Set Name", sideSetName);
+
+    // Output
+    if (side_dof_name!="")
+      p->set<std::string>("Side Variable Name", side_dof_name);
+    else
+      p->set<std::string>("Side Variable Name", cell_dof_name);
+
+    return rcp(new PHAL::DOFCellToSideQPBase<EvalT,Traits,ScalarT>(*p,dl));
+}
+
+template<typename EvalT, typename Traits, typename ScalarT>
+Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFSideToCellEvaluator(
        const std::string& side_dof_name,
        const std::string& sideSetName,
@@ -546,26 +577,6 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFSideToCellEvaluato
 
 template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFInterpolationEvaluator_noDeriv(
-       const std::string& dof_name) const
-{
-    using Teuchos::RCP;
-    using Teuchos::rcp;
-    using Teuchos::ParameterList;
-    using std::string;
-
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Interpolation "+dof_name));
-    // Input
-    p->set<string>("Variable Name", dof_name);
-    p->set<string>("BF Name", "BF");
-
-    // Output (assumes same Name as input)
-
-    return rcp(new PHAL::DOFInterpolation_noDeriv<EvalT,Traits>(*p,dl));
-}
-
-template<typename EvalT, typename Traits, typename ScalarT>
-Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFGradInterpolationEvaluator(
        const std::string& dof_name,
        int offsetToFirstDOF) const
@@ -583,7 +594,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFGradInterpolationE
     // Output (assumes same Name as input)
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
-    return rcp(new PHAL::DOFGradInterpolation<EvalT,Traits,ScalarT>(*p,dl));
+    return rcp(new PHAL::DOFGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -634,27 +645,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFDivInterpolationSi
     // Output (assumes same Name as input)
     p->set<std::string>("Divergence Variable Name", dof_name+" Divergence");
 
-    return rcp(new PHAL::DOFDivInterpolationSide<EvalT,Traits>(*p,dl->side_layouts.at(sideSetName)));
-}
-
-template<typename EvalT, typename Traits, typename ScalarT>
-Teuchos::RCP< PHX::Evaluator<Traits> >
-Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFGradInterpolationEvaluator_noDeriv(
-    const std::string& dof_name) const
-{
-    using Teuchos::RCP;
-    using Teuchos::rcp;
-    using Teuchos::ParameterList;
-
-    RCP<ParameterList> p = rcp(new ParameterList("DOF Grad Interpolation "+dof_name));
-    // Input
-    p->set<std::string>("Variable Name", dof_name);
-    p->set<std::string>("Gradient BF Name", "Grad BF");
-
-    // Output (assumes same Name as input)
-    p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
-
-    return rcp(new PHAL::DOFGradInterpolation_noDeriv<EvalT,Traits>(*p,dl));
+    return rcp(new PHAL::DOFDivInterpolationSideBase<EvalT,Traits,ScalarT>(*p,dl->side_layouts.at(sideSetName)));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -676,7 +667,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFInterpolationEvalu
 
     // Output (assumes same Name as input)
 
-    return rcp(new PHAL::DOFInterpolation<EvalT,Traits,ScalarT>(*p,dl));
+    return rcp(new PHAL::DOFInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -722,7 +713,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFTensorInterpolatio
 
     // Output (assumes same Name as input)
 
-    return rcp(new PHAL::DOFTensorInterpolation<EvalT,Traits>(*p,dl));
+    return rcp(new PHAL::DOFTensorInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -744,7 +735,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFTensorGradInterpol
     // Output (assumes same Name as input)
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
-    return rcp(new PHAL::DOFTensorGradInterpolation<EvalT,Traits>(*p,dl));
+    return rcp(new PHAL::DOFTensorGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -766,7 +757,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecGradInterpolati
     // Output (assumes same Name as input)
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
-    return rcp(new PHAL::DOFVecGradInterpolation<EvalT,Traits,ScalarT>(*p,dl));
+    return rcp(new PHAL::DOFVecGradInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -791,7 +782,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecGradInterpolati
     // Output (assumes same Name as input)
     p->set<std::string>("Gradient Variable Name", dof_name+" Gradient");
 
-    return rcp(new PHAL::DOFVecGradInterpolationSide<EvalT,Traits>(*p,dl->side_layouts.at(sideSetName)));
+    return rcp(new PHAL::DOFVecGradInterpolationSideBase<EvalT,Traits,ScalarT>(*p,dl->side_layouts.at(sideSetName)));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>
@@ -812,7 +803,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructDOFVecInterpolationEv
 
     // Output (assumes same Name as input)
 
-    return rcp(new PHAL::DOFVecInterpolation<EvalT,Traits,ScalarT>(*p,dl));
+    return rcp(new PHAL::DOFVecInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>

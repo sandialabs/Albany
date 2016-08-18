@@ -1,0 +1,31 @@
+crystal_structure bcc
+slip_families 110
+C11 260.824e3
+C12 156.084e3
+C44 82.623e3
+flow_rule Thermal Activation
+rate_slip_reference 1.0e07
+energy_activation 50.7
+exponent_p 0.34
+exponent_q 1.66
+resistance_thermal 550.0
+hardening_law Saturation
+state_hardening_initial 50.0
+rate_hardening 300.0
+stress_saturation_initial 125.0
+exponent_saturation 0.004142
+integration_scheme Implicit
+type_residual Slip Hardness
+nonlinear_solver_step_type Newton
+implicit_integration_relative_tolerance 1.0e-35
+implicit_integration_absolute_tolerance 1.0e-12
+implicit_integration_max_iterations 100
+tau true
+tau_hard true
+gamma true
+gamma_dot true
+cp_residual true
+cp_residual_iter true
+Fp true
+L true
+eqps true

@@ -19,4 +19,9 @@ StaticAllocator::~StaticAllocator()
   delete[] buffer_;
 }
 
+void
+StaticAllocator::clear()
+{
+  ptr_ = buffer_;
+}
 

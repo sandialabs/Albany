@@ -21,15 +21,14 @@ namespace PHAL {
 
 */
 
-template<typename EvalT, typename Traits, typename Type>
-class DOFVecInterpolation
-       : public PHX::EvaluatorWithBaseImpl<Traits>,
- 	 public PHX::EvaluatorDerived<EvalT, Traits>  {
-
+template<typename EvalT, typename Traits, typename ScalarT>
+class DOFVecInterpolationBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                public PHX::EvaluatorDerived<EvalT, Traits>
+{
 public:
 
-  DOFVecInterpolation(const Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl);
+  DOFVecInterpolationBase (const Teuchos::ParameterList& p,
+                           const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -37,8 +36,6 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-
-  typedef Type ScalarT;
 
   // Input:
   //! Values at nodes
@@ -57,14 +54,14 @@ private:
 
 //! Specialization for Jacobian evaluation taking advantage of known sparsity
 template<typename Traits>
-class DOFVecInterpolation<PHAL::AlbanyTraits::Jacobian, Traits, FadType>
+class DOFVecInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits>  {
 
 public:
 
-  DOFVecInterpolation(const Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl);
+  DOFVecInterpolationBase (const Teuchos::ParameterList& p,
+                           const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -94,14 +91,14 @@ private:
 #ifdef ALBANY_SG
 //! Specialization for SGJacobian evaluation taking advantage of known sparsity
 template<typename Traits>
-class DOFVecInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits, SGFadType>
+class DOFVecInterpolationBase<PHAL::AlbanyTraits::SGJacobian, Traits, typename PHAL::AlbanyTraits::SGJacobian::ScalarT>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::SGJacobian, Traits>  {
 
 public:
 
-  DOFVecInterpolation(const Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl);
+  DOFVecInterpolationBase (const Teuchos::ParameterList& p,
+                           const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -132,14 +129,14 @@ private:
 #ifdef ALBANY_ENSEMBLE
 //! Specialization for MPJacobian evaluation taking advantage of known sparsity
 template<typename Traits>
-class DOFVecInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, MPFadType>
+class DOFVecInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits, typename PHAL::AlbanyTraits::MPJacobian::ScalarT>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::MPJacobian, Traits>  {
 
 public:
 
-  DOFVecInterpolation(const Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl);
+  DOFVecInterpolationBase (const Teuchos::ParameterList& p,
+                           const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -167,5 +164,16 @@ private:
 };
 #endif
 
-}
-#endif
+// Some shortcut names
+template<typename EvalT, typename Traits>
+using DOFVecInterpolation = DOFVecInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>;
+
+template<typename EvalT, typename Traits>
+using DOFVecInterpolationMesh = DOFVecInterpolationBase<EvalT,Traits,typename EvalT::MeshScalarT>;
+
+template<typename EvalT, typename Traits>
+using DOFVecInterpolationParam = DOFVecInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>;
+
+} // Namespace PHAL
+
+#endif // PHAL_DOFVEC_INTERPOLATION_HPP

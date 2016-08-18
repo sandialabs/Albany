@@ -38,13 +38,6 @@
 #include "LCM/problems/MechanicsProblem.hpp"
 #include "LCM/problems/ElasticityProblem.hpp"
 #include "LCM/problems/ThermoElasticityProblem.hpp"
-#include "LCM/problems/PoroElasticityProblem.hpp"
-#include "LCM/problems/UnSatPoroElasticityProblem.hpp"
-#include "LCM/problems/TLPoroPlasticityProblem.hpp"
-#include "LCM/problems/ThermoPoroPlasticityProblem.hpp"
-#include "LCM/problems/GradientDamageProblem.hpp"
-#include "LCM/problems/ThermoMechanicalProblem.hpp"
-#include "LCM/problems/ProjectionProblem.hpp"
 #include "LCM/problems/ConstitutiveDriverProblem.hpp"
 #include "LCM/problems/HMCProblem.hpp"
 #include "LCM/problems/ElectroMechanicsProblem.hpp"
@@ -248,57 +241,6 @@ Albany::ProblemFactory::create()
   }
   else if (method == "ThermoElasticity 3D") {
     strategy = rcp(new Albany::ThermoElasticityProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "PoroElasticity 1D") {
-    strategy = rcp(new Albany::PoroElasticityProblem(problemParams, paramLib, 1));
-  }
-  else if (method == "PoroElasticity 2D") {
-    strategy = rcp(new Albany::PoroElasticityProblem(problemParams, paramLib, 2));
-  }
-  else if (method == "PoroElasticity 3D") {
-    strategy = rcp(new Albany::PoroElasticityProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "UnSaturated PoroElasticity 1D") {
-    strategy = rcp(new Albany::UnSatPoroElasticityProblem(problemParams, paramLib, 1));
-  }
-  else if (method == "UnSaturated PoroElasticity 2D") {
-    strategy = rcp(new Albany::UnSatPoroElasticityProblem(problemParams, paramLib, 2));
-  }
-  else if (method == "UnSaturated PoroElasticity 3D") {
-    strategy = rcp(new Albany::UnSatPoroElasticityProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "Total Lagrangian PoroPlasticity 1D") {
-    strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 1));
-  }
-  else if (method == "Total Lagrangian PoroPlasticity 2D") {
-    strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 2));
-  }
-  else if (method == "Total Lagrangian PoroPlasticity 3D") {
-    strategy = rcp(new Albany::TLPoroPlasticityProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "Total Lagrangian ThermoPoroPlasticity 1D") {
-    strategy = rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 1));
-  }
-  else if (method == "Total Lagrangian ThermoPoroPlasticity 2D") {
-    strategy = rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 2));
-  }
-  else if (method == "Total Lagrangian ThermoPoroPlasticity 3D") {
-    strategy =   rcp(new Albany::ThermoPoroPlasticityProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "Total Lagrangian Plasticity with Projection 1D") {
-    strategy = rcp(new Albany::ProjectionProblem(problemParams, paramLib, 1));
-  }
-  else if (method == "Total Lagrangian Plasticity with Projection 2D") {
-    strategy = rcp(new Albany::ProjectionProblem(problemParams, paramLib, 2));
-  }
-  else if (method == "Total Lagrangian Plasticity with Projection 3D") {
-    strategy =   rcp(new Albany::ProjectionProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "GradientDamage") {
-    strategy = rcp(new Albany::GradientDamageProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "ThermoMechanical") {
-    strategy = rcp(new Albany::ThermoMechanicalProblem(problemParams, paramLib, 3));
   }
   else if (method == "HMC 1D") {
     strategy = rcp(new Albany::HMCProblem(problemParams, paramLib, 1, commT));

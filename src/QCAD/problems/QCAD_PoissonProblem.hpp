@@ -316,7 +316,7 @@ QCAD::PoissonProblem::constructEvaluators(
     // Output (assumes same Name as input)
     
     sprintf(buf, "Eigenvector Re %d interpolate to qps", k);
-    ev = rcp(new PHAL::DOFInterpolation<EvalT,AlbanyTraits, typename EvalT::ScalarT>(*p,dl));
+    ev = rcp(new PHAL::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
     
     
@@ -333,7 +333,7 @@ QCAD::PoissonProblem::constructEvaluators(
     // Output (assumes same Name as input)
     
     sprintf(buf, "Eigenvector Im %d interpolate to qps", k);
-    ev = rcp(new PHAL::DOFInterpolation<EvalT,AlbanyTraits, typename EvalT::ScalarT>(*p,dl));
+    ev = rcp(new PHAL::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

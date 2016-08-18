@@ -4,16 +4,17 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "FELIX_StokesFO.hpp"
+#include <string>
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
+#include "Teuchos_FancyOStream.hpp"
+
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
-#include <string>
-
+#include "FELIX_StokesFO.hpp"
 
 FELIX::StokesFO::
 StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -174,6 +175,12 @@ void FELIX::StokesFO::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshS
   }
 
 #ifdef OUTPUT_TO_SCREEN
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
+  int commRank = Teuchos::GlobalMPISession::getRank();
+  int commSize = Teuchos::GlobalMPISession::getNProc();
+  out->setProcRankAndSize(commRank, commSize);
+  out->setOutputToRootOnly(0);
+
   *out << "Field Dimensions: \n"
        << "  Workset             = " << worksetSize << "\n"
        << "  Vertices            = " << numCellVertices << "\n"
@@ -326,6 +333,7 @@ FELIX::StokesFO::getValidProblemParameters () const
   validPL->sublist("FELIX Surface Gradient", false, "");
   validPL->sublist("Equation Set", false, "");
   validPL->sublist("Body Force", false, "");
+  validPL->sublist("FELIX Field Norm", false, "");
   validPL->sublist("FELIX Physical Parameters", false, "");
   validPL->sublist("FELIX Noise", false, "");
   validPL->sublist("Parameter Fields", false, "Parameter Fields to be registered");

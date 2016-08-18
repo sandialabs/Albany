@@ -17,10 +17,12 @@
 
 namespace FELIX
 {
+
 /** \brief Geotermal Flux Heat Evaluator
 
     This evaluator evaluates the production of heat coming from the earth
 */
+
 template<typename EvalT, typename Traits, typename Type>
 class GeoFluxHeat : public PHX::EvaluatorWithBaseImpl<Traits>,
                     public PHX::EvaluatorDerived<EvalT, Traits>
@@ -43,6 +45,7 @@ class GeoFluxHeat : public PHX::EvaluatorWithBaseImpl<Traits>,
 		PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim>  GradBF;
 		PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>     	 w_measure;
 		PHX::MDField<Type,Cell,Side,QuadPoint,VecDim>        velocity;
+		PHX::MDField<ScalarT,Cell,Side,QuadPoint>        	 verticalVel;
 
 		// Output:
 		PHX::MDField<ScalarT,Cell,Node> geoFluxHeat;
@@ -55,16 +58,12 @@ class GeoFluxHeat : public PHX::EvaluatorWithBaseImpl<Traits>,
 		int numSideNodes;
 		int numSideQPs;
 		int sideDim;
-		//int vecDim;
 		int vecDimFO;
 
 		bool haveSUPG;
 		bool isGeoFluxConst;
 };
 
-
-}
-
-
+}	// end namespace FELIX
 
 #endif /* FELIX_GEOFLUXHEAT_HPP_ */

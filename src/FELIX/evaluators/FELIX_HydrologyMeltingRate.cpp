@@ -9,4 +9,5 @@
 #include "FELIX_HydrologyMeltingRate.hpp"
 #include "FELIX_HydrologyMeltingRate_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::HydrologyMeltingRate)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(FELIX::HydrologyMeltingRate,false)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(FELIX::HydrologyMeltingRate,true)

@@ -194,7 +194,7 @@ Aeras::SpectralDiscretization::getOverlapMapT() const
   return overlap_mapT;
 }
 
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_Map>
 Aeras::SpectralDiscretization::getMap(const std::string& field_name) const
 {
@@ -208,7 +208,9 @@ Aeras::SpectralDiscretization::getOverlapMap(const std::string& field_name) cons
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
   return Teuchos::null;
 }
+#endif
 
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_CrsGraph>
 Aeras::SpectralDiscretization::getJacobianGraph() const
 {
@@ -284,6 +286,9 @@ Aeras::SpectralDiscretization::getOverlapNodeMap() const
     Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
   return overlap_node_map;
 }
+#endif
+
+#if 0 //defined(ALBANY_EPETRA)
 
 Teuchos::RCP<const Epetra_Map>
 Aeras::SpectralDiscretization::getNodeMap(const std::string& field_name) const
@@ -679,6 +684,11 @@ Aeras::SpectralDiscretization::writeSolution(
     const Epetra_Vector& soln,
     const double time, const bool overlapped)
 {
+#if 1
+  Teuchos::RCP<const Tpetra_Vector> solnT =
+     Petra::EpetraVector_To_TpetraVectorConst(soln, commT);
+  writeSolutionT(*solnT, time, overlapped);
+#else
   // Put solution as Epetra_Vector into STK Mesh
   if(!overlapped)
     setSolutionField(soln);
@@ -720,6 +730,7 @@ Aeras::SpectralDiscretization::writeSolution(
      }
   }
   outputInterval++;
+#endif
 #endif
 }
 #endif
@@ -922,7 +933,7 @@ Aeras::SpectralDiscretization::monotonicTimeLabel(const double time)
   return previous_time_label;
 }
 
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
 void
 Aeras::SpectralDiscretization::setResidualField(const Epetra_Vector& residual)
 {
@@ -984,7 +995,7 @@ Aeras::SpectralDiscretization::getSolutionFieldHistoryDepth() const
   //return stkMeshStruct->getSolutionFieldHistoryDepth();
 }
 
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
 Teuchos::RCP<Epetra_MultiVector>
 Aeras::SpectralDiscretization::getSolutionFieldHistory() const
 {
@@ -1051,7 +1062,9 @@ Aeras::SpectralDiscretization::getSolutionFieldHistoryImpl(
     this->getSolutionField(v);
   }
 }
+#endif
 
+#if defined(ALBANY_EPETRA)
 void
 Aeras::SpectralDiscretization::getSolutionField(Epetra_Vector &result,
                                                 const bool overlapped) const
@@ -1069,7 +1082,9 @@ Aeras::SpectralDiscretization::getSolutionField(Epetra_Vector &result,
     Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
   container->fillSolnVector(result, locally_owned, node_map);
 }
+#endif
 
+#if 0 //defined(ALBANY_EPETRA)
 void
 Aeras::SpectralDiscretization::getField(Epetra_Vector &result,
                                         const std::string& name) const
@@ -1151,7 +1166,7 @@ Aeras::SpectralDiscretization::getSolutionMV(Tpetra_MultiVector &resultT,
 /*** Private functions follow. These are just used in above code */
 /*****************************************************************/
 
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
 void
 Aeras::SpectralDiscretization::setField(const Epetra_Vector &result,
                                         const std::string& name,
@@ -1266,7 +1281,7 @@ Aeras::SpectralDiscretization::setSolutionFieldMV(const Tpetra_MultiVector& soln
 
 }
 
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
 void
 Aeras::SpectralDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
 {
@@ -3478,7 +3493,7 @@ Aeras::SpectralDiscretization::processNetCDFOutputRequestT(const Tpetra_Vector& 
 #endif
   return 0;
 }
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
 int
 Aeras::SpectralDiscretization::processNetCDFOutputRequest(const Epetra_Vector& solution_field)
 {

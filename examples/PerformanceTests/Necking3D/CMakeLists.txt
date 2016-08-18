@@ -42,9 +42,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/data.perf
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
-IF(ENABLE_MESHMODEL)
-  add_test(${testName}_MMODEL_perf ${performanceTestScript})
-ENDIF()
+add_test(${testName}_perf ${performanceTestScript})
 
 # Disable test if there isn't an entry for the current machine in data.perf
 
@@ -67,8 +65,5 @@ FOREACH(text_line ${contents})
   ENDIF()
 ENDFOREACH()
 
-IF(ENABLE_MESHMODEL)
-  set_tests_properties(${testName}_MMODEL_perf  PROPERTIES REQUIRED_FILES "machine ${machineName} not found in data.perf file")
-ENDIF()
-
+set_tests_properties(${testName}_perf  PROPERTIES REQUIRED_FILES "machine ${machineName} not found in data.perf file")
 

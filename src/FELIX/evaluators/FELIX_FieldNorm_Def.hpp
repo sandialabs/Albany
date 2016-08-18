@@ -7,18 +7,16 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
 
-#include "FELIX_HomotopyParameter.hpp"
-
 //uncomment the following line if you want debug output to be printed to screen
 #define OUTPUT_TO_SCREEN
 
 namespace FELIX {
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-FieldNorm<EvalT, Traits>::FieldNorm (const Teuchos::ParameterList& p,
-                                     const Teuchos::RCP<Albany::Layouts>& dl) :
-  regularizationParamPtr (nullptr)
+template<typename EvalT, typename Traits, typename ScalarT>
+FieldNormBase<EvalT, Traits, ScalarT>::
+FieldNormBase (const Teuchos::ParameterList& p,
+               const Teuchos::RCP<Albany::Layouts>& dl)
 {
   std::string fieldName = p.get<std::string> ("Field Name");
   std::string fieldNormName = p.get<std::string> ("Field Norm Name");
@@ -127,49 +125,71 @@ FieldNorm<EvalT, Traits>::FieldNorm (const Teuchos::ParameterList& p,
   this->addDependentField(field);
   this->addEvaluatedField(field_norm);
 
-  if (p.isParameter("Regularization"))
+  Teuchos::ParameterList& options = p.get<Teuchos::ParameterList*>("Parameter List")->sublist(fieldNormName);
+  std::string type = options.get<std::string>("Regularization Type","None");
+  if (type=="None")
   {
-    regularizationParam = p.get<double>("Regularization");
-    regularizationParamPtr = &regularizationParam;
+    regularization_type = NONE;
   }
-  else if (p.isParameter("Regularize With Continuation"))
+  else if (type=="Given Value")
   {
-    if (p.get<bool>("Regularize With Continuation"))
-      regularizationParamPtr = &FELIX::HomotopyParameter<EvalT>::value;
+    regularization_type = GIVEN_VALUE;
+    regularization = options.get<double>("Regularization Value");
+  }
+  else if (type=="Given Parameter")
+  {
+    regularization_type = GIVEN_PARAMETER;
+    regularizationParam = PHX::MDField<EScalarT,Dim>(options.get<std::string>("Regularization Parameter Name"),dl->shared_param);
+    this->addDependentField(regularizationParam);
+  }
+  else if (type=="Parameter Exponential")
+  {
+    regularization_type = PARAMETER_EXPONENTIAL;
+    regularizationParam = PHX::MDField<EScalarT,Dim>(options.get<std::string>("Regularization Parameter Name"),dl->shared_param);
+    this->addDependentField(regularizationParam);
+  }
+  else
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Invalid regularization type");
   }
 
   numDims = dims.size();
 
-  this->setName("FieldNorm"+PHX::typeAsString<EvalT>());
+  this->setName("FieldNormBase"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void FieldNorm<EvalT, Traits>::
+template<typename EvalT, typename Traits, typename ScalarT>
+void FieldNormBase<EvalT, Traits, ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(field,fm);
   this->utils.setFieldData(field_norm,fm);
+
+  if (regularization_type==GIVEN_PARAMETER || regularization_type==PARAMETER_EXPONENTIAL)
+    this->utils.setFieldData(regularizationParam,fm);
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits>
-void FieldNorm<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
+template<typename EvalT, typename Traits, typename ScalarT>
+void FieldNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
+  if (regularization_type==GIVEN_PARAMETER)
+    regularization = Albany::ScalarConverter<ScalarT>::apply(regularizationParam(0));
+  else if (regularization_type==PARAMETER_EXPONENTIAL)
+    regularization = pow(10.0, -10.0*Albany::ScalarConverter<ScalarT>::apply(regularizationParam(0)));
+
 #ifdef OUTPUT_TO_SCREEN
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-    if (regularizationParamPtr!=0 &&  std::fabs(printedH-*regularizationParamPtr)>0.0001)
-    {
-        *output << "[Field Norm<" << PHX::typeAsString<EvalT>() << ">]] h = " << *regularizationParamPtr << "\n";
-        printedH = *regularizationParamPtr;
-    }
+    if (regularization_type!=NONE)
+      if (std::fabs(printedReg-regularization)>1e-6*regularization)
+      {
+          *output << "[Field Norm<" << PHX::typeAsString<EvalT>() << ">]] reg = " << regularization << "\n";
+          printedReg = regularization;
+      }
 #endif
-
-  ScalarT ff = 0;
-  if (regularizationParamPtr!=0 && *regularizationParamPtr!=0)
-    ff = pow(10.0, -10.0*(*regularizationParamPtr));
 
   ScalarT norm;
   switch (numDims)
@@ -183,7 +203,7 @@ void FieldNorm<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset
         {
           norm += std::pow(field(cell,dim),2);
         }
-        field_norm(cell) = std::sqrt(norm + ff);
+        field_norm(cell) = std::sqrt(norm + regularization);
       }
       break;
     case 3:
@@ -197,7 +217,7 @@ void FieldNorm<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset
           {
             norm += std::pow(field(cell,i,dim),2);
           }
-          field_norm(cell,i) = std::sqrt(norm + ff);
+          field_norm(cell,i) = std::sqrt(norm + regularization);
         }
       }
       break;
@@ -225,7 +245,7 @@ void FieldNorm<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset
             {
               norm += std::pow(field(cell,side,i,dim),2);
             }
-            field_norm(cell,side,i) = std::sqrt(norm + ff);
+            field_norm(cell,side,i) = std::sqrt(norm + regularization);
           }
         }
       }

@@ -21,24 +21,21 @@ namespace PHAL {
 
 */
 
-template<typename EvalT, typename Traits>
-class DOFTensorInterpolation
-       : public PHX::EvaluatorWithBaseImpl<Traits>,
- 	 public PHX::EvaluatorDerived<EvalT, Traits>  {
-
+template<typename EvalT, typename Traits, typename ScalarT>
+class DOFTensorInterpolationBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                   public PHX::EvaluatorDerived<EvalT, Traits>
+{
 public:
 
-  DOFTensorInterpolation(const Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl);
+  DOFTensorInterpolationBase(const Teuchos::ParameterList& p,
+                             const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+                             PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-
-  typedef typename EvalT::ScalarT ScalarT;
 
   // Input:
   //! Values at nodes
@@ -57,17 +54,17 @@ private:
 
 //! Specialization for Jacobian evaluation taking advantage of known sparsity
 template<typename Traits>
-class DOFTensorInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>
+class DOFTensorInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits>  {
 
 public:
 
-  DOFTensorInterpolation(const Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl);
+  DOFTensorInterpolationBase(const Teuchos::ParameterList& p,
+                             const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+                             PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -93,17 +90,17 @@ private:
 
 #ifdef ALBANY_SG
 template<typename Traits>
-class DOFTensorInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>
+class DOFTensorInterpolationBase<PHAL::AlbanyTraits::SGJacobian, Traits, typename PHAL::AlbanyTraits::SGJacobian::ScalarT>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::SGJacobian, Traits>  {
 
 public:
 
-  DOFTensorInterpolation(const Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl);
+  DOFTensorInterpolationBase(const Teuchos::ParameterList& p,
+                             const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+                             PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -130,17 +127,17 @@ private:
 
 #ifdef ALBANY_ENSEMBLE
 template<typename Traits>
-class DOFTensorInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>
+class DOFTensorInterpolationBase<PHAL::AlbanyTraits::MPJacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
         public PHX::EvaluatorDerived<PHAL::AlbanyTraits::MPJacobian, Traits>  {
 
 public:
 
-  DOFTensorInterpolation(const Teuchos::ParameterList& p,
-                      const Teuchos::RCP<Albany::Layouts>& dl);
+  DOFTensorInterpolationBase(const Teuchos::ParameterList& p,
+                             const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+                             PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -165,6 +162,16 @@ private:
 };
 #endif
 
-}
+// Some shortcut names
+template<typename EvalT, typename Traits>
+using DOFTensorInterpolation = DOFTensorInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>;
 
-#endif
+template<typename EvalT, typename Traits>
+using DOFTensorInterpolationMesh = DOFTensorInterpolationBase<EvalT,Traits,typename EvalT::MeshScalarT>;
+
+template<typename EvalT, typename Traits>
+using DOFTensorInterpolationParam = DOFTensorInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>;
+
+} // Namespace PHAL
+
+#endif // PHAL_DOFTENSOR_INTERPOLATION_HPP

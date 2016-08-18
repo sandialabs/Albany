@@ -4,78 +4,41 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "FELIX_StokesFOHydrology.hpp"
+#include <string>
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
+#include "Teuchos_FancyOStream.hpp"
+
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
-#include <string>
 
+#include "FELIX_StokesFOHydrology.hpp"
 
 FELIX::StokesFOHydrology::
 StokesFOHydrology (const Teuchos::RCP<Teuchos::ParameterList>& params_,
                    const Teuchos::RCP<ParamLib>& paramLib_,
                    const int numDim_) :
-  Albany::AbstractProblem(params_, paramLib_, numDim_),
+  Albany::AbstractProblem(params_, paramLib_),
   numDim(numDim_)
 {
-  stokes_dof_names.resize(1);
-  stokes_resid_names.resize(1);
-  stokes_dof_names[0] = "Velocity";
-  stokes_resid_names[0] = "Residual Stokes";
-  vecDimStokesFO = 2;
-
-  has_evolution_equation = params->sublist("FELIX Hydrology").get<bool>("Use Evolution Equation",false);
-  if (has_evolution_equation)
-  {
-    this->setNumEquations(4);
-
-    hydro_dof_names.resize(2);
-    hydro_dof_names_dot.resize(1);
-    hydro_resid_names.resize(2);
-
-    hydro_dof_names[0] = "Effective Pressure";
-    hydro_dof_names[1] = "Drainage Sheet Depth";
-
-    hydro_dof_names_dot[0] = "Drainage Sheet Depth Dot";
-
-    hydro_resid_names[1] = "Residual Hydrology Elliptic Eqn";
-    hydro_resid_names[2] = "Residual Hydrology Evolution Eqp";
-  }
-  else
-  {
-    this->setNumEquations(3);
-
-    hydro_dof_names.resize(1);
-    hydro_resid_names.resize(2);
-
-    hydro_dof_names[0] = "Effective Pressure";
-    hydro_resid_names[1] = "Residual Hydrology Elliptic Eqn";
-  }
-
-  // Set the num PDEs for the null space object to pass to ML
-  this->rigidBodyModes->setNumPDEs(neq);
+  basalSideName   = params->get<std::string>("Basal Side Name");
+  surfaceSideName = params->isParameter("Surface Side Name") ? params->get<std::string>("Surface Side Name") : "INVALID";
+  basalEBName = "INVALID";
+  surfaceEBName = "INVALID";
 
   // Need to allocate a fields in mesh database
   Teuchos::Array<std::string> req = params->get<Teuchos::Array<std::string> > ("Required Fields");
   for (int i(0); i<req.size(); ++i)
     this->requirements.push_back(req[i]);
 
-  basalSideName   = params->isParameter("Basal Side Name")   ? params->get<std::string>("Basal Side Name")   : "INVALID";
-  surfaceSideName = params->isParameter("Surface Side Name") ? params->get<std::string>("Surface Side Name") : "INVALID";
-  basalEBName = "INVALID";
-  surfaceEBName = "INVALID";
-  TEUCHOS_TEST_FOR_EXCEPTION (basalSideName=="INVALID", std::logic_error, "Error! You need to provide a valid 'Basal Side Name',\n" );
-
   // Need to allocate a fields in basal mesh database
   Teuchos::Array<std::string> breq = params->get<Teuchos::Array<std::string> > ("Required Basal Fields");
   this->ss_requirements[basalSideName].reserve(breq.size()); // Note: this is not for performance, but to guarantee
   for (int i(0); i<breq.size(); ++i)                         //       that ss_requirements.at(basalSideName) does not
     this->ss_requirements[basalSideName].push_back(breq[i]); //       throw, even if it's empty...
-  basalReq = this->ss_requirements[basalSideName];
 
   if (params->isParameter("Required Surface Fields"))
   {
@@ -86,6 +49,60 @@ StokesFOHydrology (const Teuchos::RCP<Teuchos::ParameterList>& params_,
     for (int i(0); i<sreq.size(); ++i)
       this->ss_requirements[surfaceSideName].push_back(sreq[i]);
   }
+
+  stokes_dof_names.resize(1);
+  stokes_resid_names.resize(1);
+  stokes_dof_names[0] = "Velocity";
+  stokes_resid_names[0] = "Residual Stokes";
+  stokes_neq = 2;
+
+  has_h_equation = params->sublist("FELIX Hydrology").get<bool>("Use Water Thickness Equation",false);
+  std::string sol_method = params->get<std::string>("Solution Method");
+  if (sol_method=="Unsteady")
+    unsteady = true;
+  else
+    unsteady = false;
+
+  TEUCHOS_TEST_FOR_EXCEPTION (unsteady && !has_h_equation, std::logic_error,
+                              "Error! Unsteady case require to use the water thickness equation.\n");
+
+  if (has_h_equation)
+  {
+    hydro_neq = 2;
+
+    hydro_dof_names.resize(hydro_neq);
+    hydro_dof_names[0] = "Hydraulic Potential";
+    hydro_dof_names[1] = "Water Thickness";
+
+    if (unsteady)
+    {
+      hydro_dof_names_dot.resize(1);
+      hydro_dof_names_dot[0] = "Water Thickness Dot";
+    }
+
+    hydro_resid_names.resize(hydro_neq);
+    hydro_resid_names[0] = "Residual Hydrology Potential Eqn";
+    hydro_resid_names[1] = "Residual Hydrology Thickness Eqp";
+  }
+  else
+  {
+    hydro_neq = 1;
+
+    hydro_dof_names.resize(hydro_neq);
+    hydro_dof_names[0] = "Hydraulic Potential";
+
+    hydro_resid_names.resize(hydro_neq);
+    hydro_resid_names[0] = "Residual Hydrology Potential Eqn";
+  }
+
+  // Set the number of eq of the problem
+  this->neq = stokes_neq + hydro_neq;
+  this->setNumEquations(neq);
+  this->rigidBodyModes->setNumPDEs(neq);
+
+  // Set the hydrology equations as side set equations on the basal side
+  for (int eq=stokes_neq; eq<hydro_neq; ++eq)
+    this->sideSetEquations[eq].push_back(basalSideName);
 }
 
 FELIX::StokesFOHydrology::
@@ -110,11 +127,11 @@ void FELIX::StokesFOHydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Alba
   elementBlockName = meshSpecs[0]->ebName;
 
   TEUCHOS_TEST_FOR_EXCEPTION (meshSpecs[0]->sideSetMeshSpecs.find(basalSideName)==meshSpecs[0]->sideSetMeshSpecs.end(), std::logic_error,
-                              "Error! Either 'Basal Side Name' is wrong or something went wrong while building the side mesh specs.\n");
+                              "Error! Either 'Basal Side Name' (" << basalSideName << ") is wrong or something went wrong while building the side mesh specs.\n");
   const Albany::MeshSpecsStruct& basalMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(basalSideName)[0];
 
   const int worksetSize     = meshSpecs[0]->worksetSize;
-  const int vecDim          = 2;
+  const int vecDim          = stokes_neq;
   const int numCellSides    = cellType->getFaceCount();
   const int numCellVertices = cellType->getNodeCount();
   const int numCellNodes    = cellBasis->getCardinality();
@@ -135,7 +152,7 @@ void FELIX::StokesFOHydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Alba
   int numBasalSideQPs      = basalCubature->getNumPoints();
 
   dl_basal = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,
-                                     numBasalSideQPs,numDim-1,numDim,vecDim,numCellSides));
+                                     numBasalSideQPs,numDim-1,numDim,numCellSides,vecDim));
   dl->side_layouts[basalSideName] = dl_basal;
 
   int numSurfaceSideVertices = -1;
@@ -162,11 +179,17 @@ void FELIX::StokesFOHydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Alba
     numSurfaceSideQPs      = surfaceCubature->getNumPoints();
 
     dl_surface = rcp(new Albany::Layouts(worksetSize,numSurfaceSideVertices,numSurfaceSideNodes,
-                                         numSurfaceSideQPs,numDim-1,numDim,vecDim,numCellSides));
+                                         numSurfaceSideQPs,numDim-1,numDim,numCellSides,vecDim));
     dl->side_layouts[surfaceSideName] = dl_surface;
   }
 
 #ifdef OUTPUT_TO_SCREEN
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
+  int commRank = Teuchos::GlobalMPISession::getRank();
+  int commSize = Teuchos::GlobalMPISession::getNProc();
+  out->setProcRankAndSize(commRank, commSize);
+  out->setOutputToRootOnly(0);
+
   *out << "Field Dimensions: \n"
        << "  Workset             = " << worksetSize << "\n"
        << "  Vertices            = " << numCellVertices << "\n"
@@ -187,9 +210,11 @@ void FELIX::StokesFOHydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Alba
   fm.resize(1);
   fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
   buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM,Teuchos::null);
-  constructDirichletEvaluators(*meshSpecs[0]);
 
-  if(meshSpecs[0]->ssNames.size() > 0) // Build a sideset evaluator if sidesets are present
+  if(meshSpecs[0]->nsNames.size() > 0) // Build a dirichlet field manager if nodesets are present
+    constructDirichletEvaluators(*meshSpecs[0]);
+
+  if(meshSpecs[0]->ssNames.size() > 0) // Build a neumann field manager if sidesets are present
      constructNeumannEvaluators(meshSpecs[0]);
 }
 
@@ -215,74 +240,71 @@ FELIX::StokesFOHydrology::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
   // Construct Dirichlet evaluators for all nodesets and names
-  std::vector<std::string> dirichletNames(neq);
-  for (int i=0; i<neq; i++) {
+  std::vector<std::string> stokes_dir_names(neq);
+  for (int i=0; i<stokes_neq; i++) {
     std::stringstream s; s << "U" << i;
-    dirichletNames[i] = s.str();
+    stokes_dir_names[i] = s.str();
   }
+
+  std::map<std::string,std::vector<std::string>> hydro_dir_names;
+  hydro_dir_names[basalSideName].push_back("Hydrostatic Potential");
+  if (hydro_neq>1)
+    hydro_dir_names[basalSideName].push_back("Water Thickness");
+
+  std::map<std::string,std::vector<std::string>> ss_nsNames;
+  ss_nsNames[basalSideName] = meshSpecs.sideSetMeshSpecs.at(basalSideName)[0]->nsNames;
+
+  std::map<std::string,std::vector<int>> ss_bcOffsets;
+  ss_bcOffsets[basalSideName].push_back(stokes_neq);
+  if (hydro_neq>1)
+    ss_bcOffsets[basalSideName].push_back(stokes_neq+1);
+
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
-  dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
-                                         this->params, this->paramLib);
+  dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, stokes_dir_names, this->params, this->paramLib, neq);
 }
 
 // Neumann BCs
 void FELIX::StokesFOHydrology::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
-
-  // Note: we only enter this function if sidesets are defined in the mesh file
-  // i.e. meshSpecs.ssNames.size() > 0
-
   Albany::BCUtils<Albany::NeumannTraits> nbcUtils;
 
   // Check to make sure that Neumann BCs are given in the input file
-
-  if(!nbcUtils.haveBCSpecified(this->params)) {
+  if(!nbcUtils.haveBCSpecified(this->params))
      return;
-  }
-
 
   // Construct BC evaluators for all side sets and names
   // Note that the string index sets up the equation offset, so ordering is important
+  // Also, note that we only have neumann conditions for the ice. Hydrology can also
+  // have neumann BC, but they are homogeneous (do-nothing).
 
-  std::vector<std::string> neumannNames(neq + 1);
-  Teuchos::Array<Teuchos::Array<int> > offsets;
-  offsets.resize(neq + 1);
+  // Stokes BCs
+  std::vector<std::string> stokes_neumann_names(stokes_neq + 1);
+  Teuchos::Array<Teuchos::Array<int> > stokes_offsets;
+  stokes_offsets.resize(stokes_neq + 1);
 
-  neumannNames[0] = "U0";
-  offsets[0].resize(1);
-  offsets[0][0] = 0;
-  offsets[neq].resize(neq);
-  offsets[neq][0] = 0;
+  stokes_neumann_names[0] = "U0";
+  stokes_offsets[0].resize(1);
+  stokes_offsets[0][0] = 0;
+  stokes_offsets[stokes_neq].resize(stokes_neq);
+  stokes_offsets[stokes_neq][0] = 0;
 
-  neumannNames[1] = "U1";
-  offsets[1].resize(1);
-  offsets[1][0] = 1;
-  offsets[neq][1] = 1;
-
-  neumannNames[2] = "Phi";
-  offsets[2].resize(1);
-  offsets[2][0] = 2;
-  offsets[neq][2] = 2;
-
-  if (has_evolution_equation)
+  if (neq>1)
   {
-    neumannNames[3] = "N";
-    offsets[3].resize(1);
-    offsets[3][0] = 2;
-    offsets[neq][3] = 3;
+    stokes_neumann_names[1] = "U1";
+    stokes_offsets[1].resize(1);
+    stokes_offsets[1][0] = 1;
+    stokes_offsets[stokes_neq][1] = 1;
   }
 
-  neumannNames[neq] = "all";
+  stokes_neumann_names[stokes_neq] = "all";
 
-  // Construct BC evaluators for all possible names of conditions
-  std::vector<std::string> condNames(2);
-  condNames[0] = "lateral";
-  condNames[1] = "neumann";
+  std::vector<std::string> stokes_cond_names(1);
+  stokes_cond_names[0] = "lateral";
 
   nfm.resize(1); // FELIX problem only has one element block
 
-  nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, stokes_dof_names, true, 0,
-                                          condNames, offsets, dl,
+  nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, stokes_neumann_names, stokes_dof_names, true, 0,
+                                          stokes_cond_names, stokes_offsets, dl,
                                           this->params, this->paramLib);
 }
 
@@ -303,9 +325,10 @@ FELIX::StokesFOHydrology::getValidProblemParameters () const
   validPL->sublist("FELIX Viscosity", false, "");
   validPL->sublist("FELIX Basal Friction Coefficient", false, "Parameters needed to compute the basal friction coefficient");
   validPL->sublist("FELIX Surface Gradient", false, "");
-  validPL->sublist("Equation Set", false, "");
+  validPL->sublist("FELIX Field Norm", false, "");
   validPL->sublist("Body Force", false, "");
   validPL->sublist("FELIX Physical Parameters", false, "");
+  validPL->sublist("FELIX Noise", false, "");
   validPL->sublist("Parameter Fields", false, "Parameter Fields to be registered");
 
   return validPL;

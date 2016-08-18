@@ -7,19 +7,16 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
 
-#include "FELIX_HomotopyParameter.hpp"
-
 //uncomment the following line if you want debug output to be printed to screen
 #define OUTPUT_TO_SCREEN
 
 namespace FELIX {
 
 //**********************************************************************
-template<typename EvalT, typename Traits, typename Type>
-StokesFOBasalResid<EvalT, Traits, Type>::StokesFOBasalResid (const Teuchos::ParameterList& p,
+template<typename EvalT, typename Traits, typename BetaScalarT>
+StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teuchos::ParameterList& p,
                                            const Teuchos::RCP<Albany::Layouts>& dl) :
-  basalResid (p.get<std::string> ("Basal Residual Variable Name"),dl->node_vector),
-  homotopy(p.get<std::string>("Continuation Parameter Name"), dl->shared_param)
+  basalResid (p.get<std::string> ("Basal Residual Variable Name"),dl->node_vector)
 {
   basalSideName = p.get<std::string>("Side Set Name");
 
@@ -29,7 +26,7 @@ StokesFOBasalResid<EvalT, Traits, Type>::StokesFOBasalResid (const Teuchos::Para
   Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
   u         = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
-  beta      = PHX::MDField<Type,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"),dl_basal->qp_scalar);
+  beta      = PHX::MDField<BetaScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"),dl_basal->qp_scalar);
   BF        = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
   w_measure = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint> (p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
 
@@ -37,7 +34,6 @@ StokesFOBasalResid<EvalT, Traits, Type>::StokesFOBasalResid (const Teuchos::Para
   this->addDependentField(beta);
   this->addDependentField(BF);
   this->addDependentField(w_measure);
-  this->addDependentField(homotopy);
 
   this->addEvaluatedField(basalResid);
 
@@ -54,6 +50,12 @@ StokesFOBasalResid<EvalT, Traits, Type>::StokesFOBasalResid (const Teuchos::Para
   vecDim       = dims[2];
 
   regularized = p.get<Teuchos::ParameterList*>("Parameter List")->get("Regularize With Continuation",false);
+  if (regularized)
+  {
+    homotopyParam = PHX::MDField<ScalarT,Dim>("Glen's Law Homotopy Parameter", dl->shared_param);
+    this->addDependentField(homotopyParam);
+  }
+
   // Index of the nodes on the sides in the numeration of the cell
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
@@ -74,8 +76,8 @@ StokesFOBasalResid<EvalT, Traits, Type>::StokesFOBasalResid (const Teuchos::Para
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, typename Type>
-void StokesFOBasalResid<EvalT, Traits, Type>::
+template<typename EvalT, typename Traits, typename BetaScalarT>
+void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -83,24 +85,23 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(beta,fm);
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(w_measure,fm);
-  this->utils.setFieldData(homotopy,fm);
+  if (regularized)
+    this->utils.setFieldData(homotopyParam,fm);
 
   this->utils.setFieldData(basalResid,fm);
 }
 
 //**********************************************************************
-template<typename EvalT, typename Traits, typename Type>
-void StokesFOBasalResid<EvalT, Traits, Type>::evaluateFields (typename Traits::EvalData workset)
+template<typename EvalT, typename Traits, typename BetaScalarT>
+void StokesFOBasalResid<EvalT, Traits, BetaScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
-  ScalarT homotopyParam = homotopy(0);
-  ScalarT ff = (regularized) ? pow(10.0, -10.0*homotopyParam) : ScalarT(0);
- #ifdef OUTPUT_TO_SCREEN
+  ScalarT ff = (regularized) ? pow(10.0, -10.0*homotopyParam(0)) : ScalarT(0);
+#ifdef OUTPUT_TO_SCREEN
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
 
     if (std::fabs(printedFF-ff)>0.0001*ff)
     {
         *output << "[Basal Residual] ff = " << ff << "\n";
-        //*output << "[Homotopy param] h = " << homotopyParam << "\n";
         printedFF = ff;
     }
 #endif

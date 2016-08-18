@@ -218,7 +218,9 @@ namespace Aeras
 
     //! Get overlapped node map
     Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
+#endif
 
+#if 0 //defined(ALBANY_EPETRA)
     //! Get field overlapped node map
     Teuchos::RCP<const Epetra_Map>
     getOverlapNodeMap(const std::string& field_name) const;
@@ -232,7 +234,7 @@ namespace Aeras
     //! Get field overlapped node map
     Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT(const std::string& field_name) const;
 
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
     //! Get field DOF map
     Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const;
 #endif
@@ -263,10 +265,19 @@ namespace Aeras
 #if defined(ALBANY_EPETRA)
     //! Get field node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const;
+#endif
+
+#if 0 //defined(ALBANY_EPETRA)
     //! Get field node map
     Teuchos::RCP<const Epetra_Map> getNodeMap(const std::string& field_name) const;
+#endif
+
+#if defined(ALBANY_EPETRA)
     //! Get field overlapped DOF map
     Teuchos::RCP<const Epetra_Map> getOverlapMap() const;
+#endif
+
+#if 0 //defined(ALBANY_EPETRA)
     //! Get field overlapped DOF map
     Teuchos::RCP<const Epetra_Map> getOverlapMap(const std::string& field_name) const;
 #endif
@@ -440,7 +451,7 @@ namespace Aeras
     getSolutionMV(const bool overlapped=false) const;
 
     int getSolutionFieldHistoryDepth() const;
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
     Teuchos::RCP<Epetra_MultiVector>
     getSolutionFieldHistory() const;
     Teuchos::RCP<Epetra_MultiVector>
@@ -572,7 +583,7 @@ namespace Aeras
     void getSolutionMV(Tpetra_MultiVector &resultT,
                            bool overlapped=false) const;
 
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
     //! Copy field from STK Mesh field to given Epetra_Vector
     void getField(Epetra_Vector &field_vector,
                   const std::string& field_name) const;
@@ -606,7 +617,7 @@ namespace Aeras
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local + neighbor (overlapped) solution
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
     void setOvlpSolutionField(const Epetra_Vector& soln);
 #endif
     //Tpetra version of above
@@ -668,7 +679,7 @@ namespace Aeras
 
     //! Call stk_io for creating NetCDF output file
     void setupNetCDFOutput();
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
     int processNetCDFOutputRequest(const Epetra_Vector&);
 #endif
     int processNetCDFOutputRequestT(const Tpetra_Vector&);

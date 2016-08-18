@@ -148,6 +148,143 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
     this->state_var_output_flags_.push_back(p->get<bool>("Output Mechanical Source", false));
   }
 }
+
+//
+// ElastoViscoplastic nonlinear system
+//
+// template<typename EvalT>
+// class EVNLS:
+//     public Intrepid2::Function_Base<EVNLS<EvalT>, typename EvalT::ScalarT>
+// {
+//   using S = typename EvalT::ScalarT;
+
+// public:
+//   EVNLS(
+//       // RealType sat_mod_,
+//       // RealType sat_exp_,
+//       // RealType eqps_old_,
+//       // S const & K,
+//       // S const & smag,
+//       // S const & mubar,
+//       // S const & Y) :
+//       // sat_mod(sat_mod_),
+//       // sat_exp(sat_exp_),
+//       // eqps_old(eqps_old_),
+//       // K_(K),
+//       // smag_(smag),
+//       // mubar_(mubar),
+//       // Y_(Y)
+//       RealType dt,
+//       Intrepid2::Tensor<S,3> const & s,
+//       S const & Y,
+//       S const & H,
+//       S const & Rd,
+//       S const & f,
+//       S const & n,
+//       S const & twomubar,
+      
+      
+//   {
+//   }
+
+//   static constexpr Intrepid2::Index
+//   DIMENSION{5};
+
+//   static constexpr
+//   char const * const
+//   NAME{"ElastoViscoplastic NLS"};
+
+//   // Default value.
+//   template<typename T, Intrepid2::Index N>
+//   T
+//   value(Intrepid2::Vector<T, N> const & x)
+//   {
+//     return Intrepid2::Function_Base<EVNLS<EvalT>, S>::value(*this, x);
+//   }
+
+//   // Explicit gradient.
+//   template<typename T, Intrepid2::Index N>
+//   Intrepid2::Vector<T, N>
+//   gradient(Intrepid2::Vector<T, N> const & x)
+//   {
+//     // Firewalls.
+//     Intrepid2::Index const
+//     dimension = x.get_dimension();
+
+//     assert(dimension == DIMENSION);
+
+//     // Variables that potentially have Albany::Traits sensitivity
+//     // information need to be handled by the peel functor so that
+//     // proper conversions take place.
+//     T const
+//     K = peel<EvalT, T, N>()(K_);
+
+//     T const
+//     smag = peel<EvalT, T, N>()(smag_);
+
+//     T const
+//     mubar = peel<EvalT, T, N>()(mubar_);
+
+//     T const
+//     Y = peel<EvalT, T, N>()(Y_);
+
+//     // This is the actual computation of the gradient.
+//     Intrepid2::Vector<T, N>
+//     r(dimension);
+
+//     T const &
+//     X = x(0);
+
+//     T const
+//     alpha = eqps_old + sq23 * X;
+
+//     T const
+//     H = K * alpha + sat_mod * (1.0 - std::exp(-sat_exp * alpha));
+
+//     T const
+//     R = smag - (2.0 * mubar * X + sq23 * (Y + H));
+
+//     r(0) = R;
+
+//     return r;
+//   }
+
+//   // Default AD hessian.
+//   template<typename T, Intrepid2::Index N>
+//   Intrepid2::Tensor<T, N>
+//   hessian(Intrepid2::Vector<T, N> const & x)
+//   {
+//     return Intrepid2::Function_Base<EVNLS<EvalT>, S>::hessian(*this, x);
+//   }
+
+//   // Constants.
+//   RealType const
+//   sq23{std::sqrt(2.0 / 3.0)};
+
+//   // RealType data (fixed non-AD type)
+//   RealType const
+//   sat_mod{0.0};
+
+//   RealType const
+//   sat_exp{0.0};
+
+//   RealType const
+//   eqps_old{0.0};
+
+//   // Inputs
+//   S const &
+//   K_;
+
+//   S const &
+//   smag_;
+
+//   S const &
+//   mubar_;
+
+//   S const &
+//   Y_;
+// };
+
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void ElastoViscoplasticModel<EvalT, Traits>::

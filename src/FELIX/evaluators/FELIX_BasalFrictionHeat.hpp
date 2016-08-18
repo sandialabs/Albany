@@ -37,11 +37,11 @@ class BasalFrictionHeat : public PHX::EvaluatorWithBaseImpl<Traits>,
 		typedef typename EvalT::ParamScalarT ParamScalarT;
 
 		// Input:
-		PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>    beta;
-		PHX::MDField<Type,Cell,Side,QuadPoint,VecDim>     velocity;
-		PHX::MDField<RealType,Cell,Side,Node,QuadPoint>   BF;
+		PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>       beta;
+		PHX::MDField<Type,Cell,Side,QuadPoint,VecDim>        velocity;
+		PHX::MDField<RealType,Cell,Side,Node,QuadPoint>   	 BF;
 		PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim>  GradBF;
-		PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>     w_measure;
+		PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>     	 w_measure;
 
 		// Output:
 		PHX::MDField<ScalarT,Cell,Node> basalFricHeat;
@@ -54,7 +54,6 @@ class BasalFrictionHeat : public PHX::EvaluatorWithBaseImpl<Traits>,
 		int numSideNodes;
 		int numSideQPs;
 		int sideDim;
-		//int vecDim;
 		int vecDimFO;
 
 		bool haveSUPG;
