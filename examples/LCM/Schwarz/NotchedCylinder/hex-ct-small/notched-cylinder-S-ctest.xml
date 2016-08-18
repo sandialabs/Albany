@@ -45,9 +45,9 @@
         <Parameter name="Continuation Method" type="string" value="Natural"/>
 	<Parameter  name="Initial Value" type="double" value="0.0"/>
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
-	<Parameter  name="Max Steps" type="int" value="4"/>
+	<Parameter  name="Max Steps" type="int" value="1"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>
-	<Parameter  name="Max Value" type="double" value="0.4"/>
+	<Parameter  name="Max Value" type="double" value="0.1"/>
 	<Parameter  name="Return Failed on Reaching Max Steps"
 		    type="bool" value="0"/>
 	<Parameter name="Hit Continuation Bound" type="bool" value="0"/>
@@ -232,7 +232,9 @@
 	<Parameter name="Number of Tests" type="int" value="4"/>
         <ParameterList name="Test 0">
           <Parameter name="Test Type" type="string" value="RelativeNormF"/>
-          <Parameter name="Tolerance" type="double" value="1.0e-10"/>
+          <!--original tolerance-->
+          <!--Parameter name="Tolerance" type="double" value="1.0e-10"/-->
+          <Parameter name="Tolerance" type="double" value="1.0e-8"/>
         </ParameterList>
         <ParameterList name="Test 1">
           <Parameter name="Test Type" type="string" value="MaxIters"/>
@@ -249,7 +251,9 @@
           </ParameterList>
           <ParameterList name="Test 1">
             <Parameter name="Test Type" type="string" value="NormF"/>
-            <Parameter name="Tolerance" type="double" value="1.0e-8"/>
+            <!--original tolerance-->
+            <!--Parameter name="Tolerance" type="double" value="1.0e-8"/-->
+            <Parameter name="Tolerance" type="double" value="1.0e-6"/>
           </ParameterList>
         </ParameterList>
         <ParameterList name="Test 3">
