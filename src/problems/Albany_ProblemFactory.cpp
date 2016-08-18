@@ -60,6 +60,10 @@
 #include "Hydride/problems/LaplaceBeltramiProblem.hpp"
 #endif
 
+#ifdef ALBANY_AFRL
+#include "AFRL/problems/MultiScaleHeatProblem.hpp"
+#endif
+
 #ifdef ALBANY_AMP
 #include "AMP/problems/PhaseProblem.hpp"
 #include "AMP/problems/AMPThermoMechanics.hpp"
@@ -289,6 +293,17 @@ Albany::ProblemFactory::create()
   }
   else if (method == "LinearElasticityModal 3D") {
     strategy = rcp(new Albany::LinearElasticityModalProblem(problemParams, paramLib, 3));
+  }
+#endif
+#ifdef ALBANY_AFRL
+  else if (method == "MultiScale Heat 1D") {
+    strategy = rcp(new Albany::MultiScaleHeatProblem(problemParams, paramLib, 1, commT));
+  }
+  else if (method == "MultiScale Heat 2D") {
+    strategy = rcp(new Albany::MultiScaleHeatProblem(problemParams, paramLib, 2, commT));
+  }
+  else if (method == "MultiScale Heat 3D") {
+    strategy = rcp(new Albany::MultiScaleHeatProblem(problemParams, paramLib, 3, commT));
   }
 #endif
 #ifdef ALBANY_AMP

@@ -677,6 +677,17 @@ ELSE()
   SET(CISM_HAS_FELIX FALSE)
 ENDIF()
 
+# Set optional build of AFRL MultiScale; defaults to ON
+OPTION(ENABLE_AFRL "Flag to turn on AFRL Source code" ON)
+IF (ENABLE_AFRL)
+  ADD_DEFINITIONS(-DALBANY_AFRL)
+  MESSAGE("-- AFRL      is Enabled, compiling with -DALBANY_AFRL")
+  SET(ALBANY_AFRL TRUE)
+ELSE()
+  MESSAGE("-- AFRL      is NOT Enabled.")
+  SET(ALBANY_AFRL FALSE)
+ENDIF()
+
 # set optional dependency of mesh on parameters, defaults to Disabled
 OPTION(ENABLE_MESH_DEPENDS_ON_PARAMETERS "Flag to turn on dependency of mesh on parameters, e.g for shape optimization" OFF)
 IF (ENABLE_MESH_DEPENDS_ON_PARAMETERS)

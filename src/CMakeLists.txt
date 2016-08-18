@@ -682,6 +682,9 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./Aeras/evaluators
                      ./Hydride/problems
                      ./Hydride/evaluators
+		     ./AFRL/
+		     ./AFRL/problems
+		     ./AFRL/evaluators
                      ./AMP/
                      ./AMP/problems
                      ./AMP/evaluators
@@ -949,6 +952,11 @@ ENDIF()
 # RPI APF mesh interface
 IF(ALBANY_APF)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyPUMI)
+ENDIF()
+
+IF (ALBANY_AFRL)
+  add_subdirectory(AFRL)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AFRL)
 ENDIF()
 
 IF (ALBANY_AMP)
