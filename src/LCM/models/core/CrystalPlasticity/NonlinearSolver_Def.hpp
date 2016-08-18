@@ -168,6 +168,21 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
     residual[i] = slip_np1[i] - slip_computed[i];
   }
 
+
+  // ***** Residual scaling done below is commented out for now since it is in a preliminary stage.  
+
+  // RealType
+  // norm_resid = Sacado::ScalarValue<T>::eval(Intrepid2::norm(residual));
+
+  // RealType
+  // max_tol = std::numeric_limits<RealType>::max();
+  
+  // if (norm_resid > 0.5 * std::pow(max_tol, 1.0 / 10.0)) {
+    
+  //   residual *= 1.0 / norm_resid;
+    
+  // }
+
   return residual;
 }
 
@@ -359,6 +374,21 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
     residual[i + num_slip_] = 
         state_hardening_np1[i] - state_hardening_computed[i];
   }
+
+
+  // ***** Residual scaling done below is commented out for now since it is in a preliminary stage.
+  
+  // RealType
+  // norm_resid = Sacado::ScalarValue<T>::eval(Intrepid2::norm(residual));
+
+  // RealType
+  // max_tol = std::numeric_limits<RealType>::max();
+  
+  // if (norm_resid > 0.5 * std::pow(max_tol, 1.0 / 10.0)) {
+    
+  //   residual *= 1.0 / norm_resid;
+    
+  // }  
   
   return residual;
 }
