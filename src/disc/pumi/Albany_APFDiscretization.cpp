@@ -645,19 +645,6 @@ Albany::APFDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
   meshStruct->residualInitialized = true;
 }
 
-#if 0 //defined(ALBANY_EPETRA)
-void
-Albany::APFDiscretization::setResidualField(const Epetra_Vector& residual)
-{
-  if (solLayout.getDerivNames(0).size() == 0)
-    this->setField(APFMeshStruct::residual_name,&(residual[0]),/*overlapped=*/false);
-  else
-    this->setSplitFields(resNames, solLayout.getDerivSizes(0), &(residual[0]), /*overlapped=*/false);
-
-  meshStruct->residualInitialized = true;
-}
-#endif
-
 Teuchos::RCP<Tpetra_Vector>
 Albany::APFDiscretization::getSolutionFieldT(bool overlapped) const
 {

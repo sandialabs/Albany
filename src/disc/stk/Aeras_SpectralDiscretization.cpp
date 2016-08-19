@@ -194,22 +194,6 @@ Aeras::SpectralDiscretization::getOverlapMapT() const
   return overlap_mapT;
 }
 
-#if 0 //defined(ALBANY_EPETRA)
-Teuchos::RCP<const Epetra_Map>
-Aeras::SpectralDiscretization::getMap(const std::string& field_name) const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
-  return Teuchos::null;
-}
-
-Teuchos::RCP<const Epetra_Map>
-Aeras::SpectralDiscretization::getOverlapMap(const std::string& field_name) const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
-  return Teuchos::null;
-}
-#endif
-
 #if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_CrsGraph>
 Aeras::SpectralDiscretization::getJacobianGraph() const
@@ -285,24 +269,6 @@ Aeras::SpectralDiscretization::getOverlapNodeMap() const
   Teuchos::RCP<const Epetra_Map> overlap_node_map =
     Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
   return overlap_node_map;
-}
-#endif
-
-#if 0 //defined(ALBANY_EPETRA)
-
-Teuchos::RCP<const Epetra_Map>
-Aeras::SpectralDiscretization::getNodeMap(const std::string& field_name) const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not implemented");
-  return Teuchos::null;
-}
-
-Teuchos::RCP<const Epetra_Map>
-Aeras::SpectralDiscretization::getOverlapNodeMap(const std::string& field_name)
-  const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not implemented");
-  return Teuchos::null;
 }
 #endif
 
@@ -933,14 +899,6 @@ Aeras::SpectralDiscretization::monotonicTimeLabel(const double time)
   return previous_time_label;
 }
 
-#if 0 //defined(ALBANY_EPETRA)
-void
-Aeras::SpectralDiscretization::setResidualField(const Epetra_Vector& residual)
-{
-  // Nothing to do for Aeras -- LCM-only function
-}
-#endif
-
 void
 Aeras::SpectralDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 {
@@ -987,83 +945,6 @@ Aeras::SpectralDiscretization::getSolutionMV(bool overlapped) const
   return solnMV;
 }
 
-#if 0 //defined(ALBANY_EPETRA)
-int
-Aeras::SpectralDiscretization::getSolutionFieldHistoryDepth() const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Aeras::SpectralDiscretization::getSolutionFieldHistoryDepth() not implemented!");
-  //return stkMeshStruct->getSolutionFieldHistoryDepth();
-}
-
-
-Teuchos::RCP<Epetra_MultiVector>
-Aeras::SpectralDiscretization::getSolutionFieldHistory() const
-{
-  const int stepCount = this->getSolutionFieldHistoryDepth();
-  return this->getSolutionFieldHistoryImpl(stepCount);
-}
-
-Teuchos::RCP<Epetra_MultiVector>
-Aeras::SpectralDiscretization::getSolutionFieldHistory(int maxStepCount) const
-{
-  const int stepCount = std::min(this->getSolutionFieldHistoryDepth(),
-                                 maxStepCount);
-  return this->getSolutionFieldHistoryImpl(stepCount);
-}
-
-// IK, 10/28/13: this function should be converted to Tpetra...
-void
-Aeras::SpectralDiscretization::getSolutionFieldHistory(
-    Epetra_MultiVector &result) const
-{
-  Teuchos::RCP<Epetra_Map> map = Petra::TpetraMap_To_EpetraMap(mapT, comm);
-  TEUCHOS_TEST_FOR_EXCEPT(!map->SameAs(result.Map()));
-  const int stepCount = std::min(this->getSolutionFieldHistoryDepth(),
-                                 result.NumVectors());
-  Epetra_MultiVector head(View, result, 0, stepCount);
-  this->getSolutionFieldHistoryImpl(head);
-}
-
-Teuchos::RCP<Epetra_MultiVector>
-Aeras::SpectralDiscretization::getSolutionFieldHistoryImpl(int stepCount) const
-{
-  // A valid MultiVector has at least one vector
-  const int vectorCount = stepCount > 0 ? stepCount : 1;
-  Teuchos::ArrayView<const GO> indicesAV = mapT->getNodeElementList();
-  LO numElements = mapT->getNodeNumElements();
-#ifdef ALBANY_64BIT_INT
-  Teuchos::Array<int> i_indices(numElements);
-  for(std::size_t k = 0; k < numElements; k++)
-	i_indices[k] = Teuchos::as<int>(indicesAV[k]);
-  Teuchos::RCP<Epetra_Map> map =
-    Teuchos::rcp(new Epetra_Map(-1,numElements,i_indices.getRawPtr(),0,*comm));
-#else
-  Teuchos::RCP<Epetra_Map> map =
-    Teuchos::rcp(new Epetra_Map(-1,numElements,indicesAV.getRawPtr(),0,*comm));
-#endif
-  const Teuchos::RCP<Epetra_MultiVector> result =
-    Teuchos::rcp(new Epetra_MultiVector(*map, vectorCount));
-  if (stepCount > 0)
-  {
-    this->getSolutionFieldHistoryImpl(*result);
-  }
-  return result;
-}
-
-void
-Aeras::SpectralDiscretization::getSolutionFieldHistoryImpl(
-    Epetra_MultiVector &result) const
-{
-  const int stepCount = result.NumVectors();
-  for (int i = 0; i < stepCount; ++i)
-  {
-    stkMeshStruct->loadSolutionFieldHistory(i);
-    Epetra_Vector v(View, result, i);
-    this->getSolutionField(v);
-  }
-}
-#endif
-
 #if defined(ALBANY_EPETRA)
 void
 Aeras::SpectralDiscretization::getSolutionField(Epetra_Vector &result,
@@ -1083,42 +964,6 @@ Aeras::SpectralDiscretization::getSolutionField(Epetra_Vector &result,
   container->fillSolnVector(result, locally_owned, node_map);
 }
 #endif
-
-#if 0 //defined(ALBANY_EPETRA)
-void
-Aeras::SpectralDiscretization::getField(Epetra_Vector &result,
-                                        const std::string& name) const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-      "Aeras::SpectralDiscretization::getField() not implemented!");
-
-  /*
-  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container =
-    stkMeshStruct->getFieldContainer();
-
-  // Iterate over the on-processor nodes by getting node buckets and
-  // iterating over each bucket.
-  const std::string& part =
-    nodalDOFsStructContainer.fieldToMap.find(name)->second->first.first;
-  stk::mesh::Selector selector = metaData.locally_owned_part();
-  if(part.size())
-  {
-    std::map<std::string, stk::mesh::Part*>::const_iterator it =
-      stkMeshStruct->nsPartVec.find(part);
-    if(it != stkMeshStruct->nsPartVec.end())
-      selector &= stk::mesh::Selector( *(it->second) );
-  }
-
-  const DOFsStruct& dofsStruct = nodalDOFsStructContainer.getDOFsStruct(name);
-
-  container->fillVector(result,
-                        name,
-                        selector,
-                        dofsStruct.node_map,
-                        dofsStruct.dofManager);
-  */
-}
-#endif // ALBANY_EPETRA
 
 void
 Aeras::SpectralDiscretization::getSolutionFieldT(Tpetra_Vector &resultT,
@@ -1165,70 +1010,6 @@ Aeras::SpectralDiscretization::getSolutionMV(Tpetra_MultiVector &resultT,
 /*****************************************************************/
 /*** Private functions follow. These are just used in above code */
 /*****************************************************************/
-
-#if 0 //defined(ALBANY_EPETRA)
-void
-Aeras::SpectralDiscretization::setField(const Epetra_Vector &result,
-                                        const std::string& name,
-                                        bool overlapped)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Aeras::SpectralDiscretization::setField() not implemented!");
-
-  /*
-  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container =
-    stkMeshStruct->getFieldContainer();
-
-  const std::string& part =
-    nodalDOFsStructContainer.fieldToMap.find(name)->second->first.first;
-
-  stk::mesh::Selector selector = overlapped ?
-      metaData.locally_owned_part() | metaData.globally_shared_part() :
-      metaData.locally_owned_part();
-
-  // Iterate over the on-processor nodes by getting node buckets and
-  // iterating over each bucket.
-  if(part.size())
-  {
-    std::map<std::string, stk::mesh::Part*>::const_iterator it =
-      stkMeshStruct->nsPartVec.find(part);
-    if(it != stkMeshStruct->nsPartVec.end())
-      selector &= stk::mesh::Selector( *(it->second) );
-  }
-
-  const DOFsStruct& dofsStruct = nodalDOFsStructContainer.getDOFsStruct(name);
-
-  if(overlapped)
-    container->saveVector(result,
-                          name,
-                          selector,
-                          dofsStruct.overlap_node_map,
-                          dofsStruct.overlap_dofManager);
-  else
-    container->saveVector(result,
-                          name,
-                          selector,
-                          dofsStruct.node_map,
-                          dofsStruct.dofManager);
-  */
-}
-
-void
-Aeras::SpectralDiscretization::setSolutionField(const Epetra_Vector& soln)
-{
-  // Copy soln vector into solution field, one node at a time
-  // Note that soln coming in is the local (non overlapped) soln
-
-  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container =
-    outputStkMeshStruct->getFieldContainer();
-
-  // Iterate over the on-processor nodes
-  stk::mesh::Selector locally_owned = metaData.locally_owned_part();
-
-  Teuchos::RCP<Epetra_Map> node_map =
-    Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
-  container->saveSolnVector(soln, locally_owned, node_map);
-}
-#endif // ALBANY_EPETRA
 
 // Tpetra version of above
 void
@@ -1280,27 +1061,6 @@ Aeras::SpectralDiscretization::setSolutionFieldMV(const Tpetra_MultiVector& soln
   container->saveSolnMultiVector(solnT, locally_owned, node_mapT);
 
 }
-
-#if 0 //defined(ALBANY_EPETRA)
-void
-Aeras::SpectralDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
-{
-  // Copy soln vector into solution field, one node at a time
-  // Note that soln coming in is the local+ghost (overlapped) soln
-
-  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container =
-    outputStkMeshStruct->getFieldContainer();
-
-  // Iterate over the processor-visible nodes
-  stk::mesh::Selector select_owned_or_shared =
-    metaData.locally_owned_part() | metaData.globally_shared_part();
-
-  Teuchos::RCP<Epetra_Map> overlap_node_map =
-    Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
-  container->saveSolnVector(soln, select_owned_or_shared, overlap_node_map);
-
-}
-#endif // ALBANY_EPETRA
 
 void
 Aeras::SpectralDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT)
@@ -3494,16 +3254,6 @@ Aeras::SpectralDiscretization::processNetCDFOutputRequestT(const Tpetra_Vector& 
 #endif
   return 0;
 }
-#if 0 //defined(ALBANY_EPETRA)
-int
-Aeras::SpectralDiscretization::processNetCDFOutputRequest(const Epetra_Vector& solution_field)
-{
-#ifdef ALBANY_SEACAS
-  // IK, 10/13/14: need to implement!
-#endif
-  return 0;
-}
-#endif
 
 void Aeras::SpectralDiscretization::setupNetCDFOutput()
 {

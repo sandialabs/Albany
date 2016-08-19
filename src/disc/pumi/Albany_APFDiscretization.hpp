@@ -230,91 +230,16 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 #if defined(ALBANY_EPETRA)
     virtual Teuchos::RCP<const Epetra_Map> getMap() const { return map; }
     virtual Teuchos::RCP<const Epetra_Map> getOverlapMap() const { return overlap_map; }
-#endif
-#if defined(ALBANY_EPETRA)
     virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
-#endif
-#if defined(ALBANY_EPETRA)
     virtual Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const { return graph; }
     virtual Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const { return overlap_graph; }
-#endif
-#if defined(ALBANY_EPETRA)
     virtual Teuchos::RCP<const Epetra_Map> getNodeMap() const {
       fprintf(stderr,"APF Discretization unsupported call getNodeMap\n");
       abort();
       return Teuchos::RCP<const Epetra_Map>();
     }
-#endif
-#if defined(ALBANY_EPETRA)
     virtual Teuchos::RCP<Epetra_Vector> getSolutionField(bool overlapped=false) const;
-#endif
-#if 0 //defined(ALBANY_EPETRA)
-    virtual void setResidualField(const Epetra_Vector& residual);
-#endif
-#if defined(ALBANY_EPETRA)
     virtual void writeSolution(const Epetra_Vector&, const double, const bool);
-#endif
-#if 0 //defined(ALBANY_EPETRA
-    void setSolutionField(const Epetra_Vector&) {
-      fprintf(stderr,"APF Discretization unsupported call setSolutionField\n");
-      abort();
-    }
-    void debugMeshWriteNative(const Epetra_Vector&, const char*) {
-      fprintf(stderr,"APF Discretization unsupported call debugMeshWriteNative\n");
-      abort();
-    }
-    void debugMeshWrite(const Epetra_Vector&, const char*) {
-      fprintf(stderr,"APF Discretization unsupported call debugMeshWrite\n");
-      abort();
-    }
-    // Copy field data from Epetra_Vector to APF
-    void setField(
-        const char* name,
-        const Epetra_Vector& data,
-        bool overlapped,
-        int offset = 0);
-
-    // Copy field data from APF to Epetra_Vector
-    void getField(
-        const char* name,
-        Epetra_Vector& data,
-        bool overlapped,
-        int offset = 0) const;
-
-    //! Get field DOF map
-    Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Albany::APFDiscretization: getMap(field_name) not implemented yet");
-    }
-
-    //! Get field node map
-    Teuchos::RCP<const Epetra_Map> getNodeMap(const std::string& field_name) const {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Albany::APFDiscretization: getNodeMap(field_name) not implemented yet");
-    }
-
-    //! Get field overlapped DOF map
-    Teuchos::RCP<const Epetra_Map> getOverlapMap(const std::string& field_name) const {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Albany::APFDiscretization: getOverlapMap(field_name) not implemented yet");
-    }
-
-    //! Get field overlapped node map
-    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap(const std::string& field_name) const {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Albany::APFDiscretization: getOverlapNodeMap(field_name) not implemented yet");
-    }
-
-    //! Get field vector from mesh database
-    virtual void getField(Epetra_Vector &field_vector, const std::string& field_name) const  {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Albany::APFDiscretization: getField(field_vector, field_name) not implemented yet");
-    }
-    //! Set the field vector into mesh database
-    virtual void setField(const Epetra_Vector &field_vector, const std::string& field_name, bool overlapped)  {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Albany::APFDiscretization: setField(field_vector, field_name, overlapped) not implemented yet");
-    }
 #endif
 
     //! Get field DOF map
