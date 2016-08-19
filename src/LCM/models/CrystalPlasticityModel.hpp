@@ -314,8 +314,11 @@ private:
 };
 
 template<typename EvalT, typename Traits>
-using CrystalPlasticityModel
-  = LCM::ParallelConstitutiveModel<EvalT, Traits, CrystalPlasticityKernel<EvalT, Traits>>;
+class CrystalPlasticityModel : public LCM::ParallelConstitutiveModel<EvalT, Traits, CrystalPlasticityKernel<EvalT, Traits>> {
+public:
+  CrystalPlasticityModel(Teuchos::ParameterList* p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
+};
 
 }
 

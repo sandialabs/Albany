@@ -65,7 +65,11 @@ struct NeohookeanKernel : public ParallelKernel<EvalT, Traits>
 };
 
 template<typename EvalT, typename Traits>
-using ParallelNeohookeanModel = LCM::ParallelConstitutiveModel<EvalT, Traits, NeohookeanKernel<EvalT, Traits>>;
+class ParallelNeohookeanModel : public LCM::ParallelConstitutiveModel<EvalT, Traits, NeohookeanKernel<EvalT, Traits>> {
+public:
+  ParallelNeohookeanModel(Teuchos::ParameterList* p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
+};
 
 #if 0
 //! \brief Parallel Neohookean Model
