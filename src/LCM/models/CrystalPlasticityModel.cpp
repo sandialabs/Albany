@@ -8,6 +8,14 @@
 
 #include "CrystalPlasticityModel.hpp"
 #include "CrystalPlasticityModel_Def.hpp"
+#include "../parallel_models/ParallelConstitutiveModel_Def.hpp"
+
+template<typename EvalT, typename Traits>
+LCM::CrystalPlasticityModel<EvalT,Traits>::CrystalPlasticityModel(Teuchos::ParameterList* p,
+    const Teuchos::RCP<Albany::Layouts>& dl):
+  LCM::ParallelConstitutiveModel<EvalT, Traits, CrystalPlasticityKernel<EvalT, Traits>>(p, dl)
+{}
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::CrystalPlasticityKernel)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::CrystalPlasticityModel)
 
