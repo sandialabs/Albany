@@ -1072,7 +1072,7 @@ Albany::STKDiscretization::getSolutionFieldHistoryDepth() const
   return stkMeshStruct->getSolutionFieldHistoryDepth();
 }
 
-#if 0// defined(ALBANY_EPETRA)
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<Epetra_MultiVector>
 Albany::STKDiscretization::getSolutionFieldHistory() const
 {
@@ -1101,16 +1101,6 @@ Teuchos::RCP<Epetra_MultiVector>
 Albany::STKDiscretization::getSolutionFieldHistoryImpl(int stepCount) const
 {
   const int vectorCount = stepCount > 0 ? stepCount : 1; // A valid MultiVector has at least one vector
-  Teuchos::ArrayView<const GO> indicesAV = mapT->getNodeElementList();
-  LO numElements = mapT->getNodeNumElements();
-#ifdef ALBANY_64BIT_INT
-  Teuchos::Array<int> i_indices(numElements);
-  for(std::size_t k = 0; k < numElements; k++)
-  i_indices[k] = Teuchos::as<int>(indicesAV[k]);
-  Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(-1, numElements, i_indices.getRawPtr(), 0, *comm));
-#else
-  Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(-1, numElements, indicesAV.getRawPtr(), 0, *comm));
-#endif
   const Teuchos::RCP<Epetra_MultiVector> result = Teuchos::rcp(new Epetra_MultiVector(*map, vectorCount));
   if (stepCount > 0) {
     this->getSolutionFieldHistoryImpl(*result);

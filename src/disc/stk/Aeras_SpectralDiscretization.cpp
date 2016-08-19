@@ -987,7 +987,7 @@ Aeras::SpectralDiscretization::getSolutionMV(bool overlapped) const
   return solnMV;
 }
 
-
+#if 0 //defined(ALBANY_EPETRA)
 int
 Aeras::SpectralDiscretization::getSolutionFieldHistoryDepth() const
 {
@@ -995,7 +995,7 @@ Aeras::SpectralDiscretization::getSolutionFieldHistoryDepth() const
   //return stkMeshStruct->getSolutionFieldHistoryDepth();
 }
 
-#if 0 //defined(ALBANY_EPETRA)
+
 Teuchos::RCP<Epetra_MultiVector>
 Aeras::SpectralDiscretization::getSolutionFieldHistory() const
 {

@@ -450,8 +450,8 @@ namespace Aeras
     Teuchos::RCP<Tpetra_MultiVector>
     getSolutionMV(const bool overlapped=false) const;
 
-    int getSolutionFieldHistoryDepth() const;
 #if 0 //defined(ALBANY_EPETRA)
+    int getSolutionFieldHistoryDepth() const;
     Teuchos::RCP<Epetra_MultiVector>
     getSolutionFieldHistory() const;
     Teuchos::RCP<Epetra_MultiVector>
