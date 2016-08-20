@@ -147,6 +147,35 @@ namespace Albany {
   typename Sacado::ScalarType<T>::type
   ADValue(const T& x) { return Sacado::ScalarValue<T>::eval(x); }
 
+  // Function to convert a ScalarType to a different one. This is used to convert
+  // a ScalarT to a ParamScalarT.
+  // Note, for all Evaluation types but one, ScalarT and ParamScalarT are the same,
+  // and for those we want to keep the Fad derivatives (if any).
+  // The only exception can be Jacobian (if mesh/param do not depend on solution),
+  // where ParamScalarT=RealType and ScalarT=FadType. In this case we are ASSUMING
+  // that the underlying value of ScalarT (i.e., dropping the derivatives) is
+  // a valid value for the param scalar type
+  template<typename ToST>
+  struct ScalarConverter
+  {
+    template<typename FromST>
+    static ToST apply (const FromST& x)
+    {
+      ToST p = ADValue(x);
+      return p;
+    }
+
+    static ToST apply (const ToST& x)
+    {
+      return x;
+    }
+  };
+
+  template<typename FromST, typename ToST>
+  ToST convertScalar (const FromST& x)
+  {
+    return ScalarConverter<ToST>::eval(x);
+  }
 }
 
 // Code macros to support deprecated warnings

@@ -79,6 +79,9 @@ class AbstractDiscretization {
 #if defined(ALBANY_EPETRA)
     //! Get Epetra DOF map
     virtual Teuchos::RCP<const Epetra_Map> getMap() const = 0;
+#endif
+
+#if 0 //defined(ALBANY_EPETRA)
     //! Get field DOF map
     virtual Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const = 0;
 #endif
@@ -90,6 +93,9 @@ class AbstractDiscretization {
 #if defined(ALBANY_EPETRA)
     //! Get Epetra overlapped DOF map
     virtual Teuchos::RCP<const Epetra_Map> getOverlapMap() const = 0;
+#endif
+
+#if 0 //defined(ALBANY_EPETRA)
     //! Get field overlapped DOF map
     virtual Teuchos::RCP<const Epetra_Map> getOverlapMap(const std::string& field_name) const = 0;
 #endif
@@ -124,7 +130,9 @@ class AbstractDiscretization {
 #if defined(ALBANY_EPETRA)
     //! Get Epetra Node map
     virtual Teuchos::RCP<const Epetra_Map> getNodeMap() const = 0;
+#endif
 
+#if 0 //defined(ALBANY_EPETRA)
     //! Get Field Node map
     virtual Teuchos::RCP<const Epetra_Map> getNodeMap(const std::string& field_name) const = 0;
 #endif
@@ -137,7 +145,9 @@ class AbstractDiscretization {
 #if defined(ALBANY_EPETRA)
     //! Get overlapped Node map
     virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const = 0;
+#endif
 
+#if 0 //defined(ALBANY_EPETRA)
     //! Get Field overlapped Node map
     virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap(const std::string& field_name) const = 0;
 #endif
@@ -231,7 +241,7 @@ class AbstractDiscretization {
 
     virtual Teuchos::RCP<Tpetra_MultiVector> getSolutionMV(bool overlapped=false) const = 0;
 
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
     //! Get field vector from mesh database
     virtual void getField(Epetra_Vector &field_vector, const std::string& field_name) const = 0;
 #endif
@@ -252,7 +262,7 @@ class AbstractDiscretization {
     //! Get number of total DOFs per node
     virtual int getNumEq() const = 0;
 
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
     //! Set the solution field into mesh database
     virtual void setSolutionField(const Epetra_Vector& soln) = 0;
 

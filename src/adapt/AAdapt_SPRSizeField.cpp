@@ -53,7 +53,17 @@ void
 AAdapt::SPRSizeField::setParams(
     const Teuchos::RCP<Teuchos::ParameterList>& p) {
 
-  rel_err = p->get<double>("Error Bound", 0.01);
+  if (p->isParameter("Target Element Count")) {
+    using_rel_err = false;
+    target_count = p->get<long int>("Target Element Count", 1000);
+    TEUCHOS_TEST_FOR_EXCEPTION(target_count <= 0, std::logic_error,
+        "Non-positive Target Element Count\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(p->isParameter("Error Bound"), std::logic_error,
+        "\"Target Element Count\" and \"Error Bound\" cannot both be defined\n");
+  } else {
+    using_rel_err = true;
+    rel_err = p->get<double>("Error Bound", 0.1);
+  }
   state_name = p->get<std::string>("State Variable", "");
   using_state = !state_name.empty();
   if ( using_state ) {
@@ -103,6 +113,15 @@ void AAdapt::SPRSizeField::postProcessFinalMesh()
   apf::destroyField(mesh_struct->getMesh()->findField("eps"));
 }
 
+apf::Field*
+AAdapt::SPRSizeField::runSPR(apf::Field* elem_fld) {
+  if (using_rel_err) {
+    sprIsoFunc.field = spr::getSPRSizeField(elem_fld, rel_err);
+  } else {
+    sprIsoFunc.field = spr::getTargetSPRSizeField(elem_fld, target_count);
+  }
+}
+
 void
 AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
 
@@ -110,7 +129,7 @@ AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
   apf::Field* f = m->findField(sol_name.c_str());
   assert(f);
   apf::Field* sol_grad = spr::getGradIPField(f,"sol_grad",cub_degree);
-  sprIsoFunc.field = spr::getSPRSizeField(sol_grad,rel_err);
+  this->runSPR(sol_grad);
   apf::destroyField(sol_grad);
 
 }
@@ -119,6 +138,6 @@ void
 AAdapt::SPRSizeField::computeErrorFromStateVariable() {
 
   apf::Field* eps = mesh_struct->getMesh()->findField("eps");
-  sprIsoFunc.field = spr::getSPRSizeField(eps,rel_err);
+  this->runSPR(eps);
 
 }

@@ -7,4 +7,4 @@ TTTT=`grep "(Not Run)" /home/ikalash/nightlyCDash/nightly_log_kdv_functor_openmp
 TTTTT=`grep "Timeouts" /home/ikalash/nightlyCDash/nightly_log_kdv_functor_openmp.txt -c`
 
 #/bin/mail -s "Albany ($ALBANY_BRANCH): $TTT" "albany-regression@software.sandia.gov" < $ALBOUTDIR/albany_runtests.out
-/bin/mail -s "Albany (DynRankViewIntrepid2Refactor, OpenMP, KOKKOS_UNDER_DEVELOPMENT): $TTT tests failed, $TTTT tests not run, $TTTTT timeouts" "ikalash@sandia.gov, agsalin@sandia.gov, jwatkin@sandia.gov, mperego@sandia.gov" < /home/ikalash/nightlyCDash/results_kdv_functor_openmp
+/bin/mail -s "Albany (DynRankViewIntrepid2Refactor, OpenMP, KOKKOS_UNDER_DEVELOPMENT): $TTT tests failed, $TTTT tests not run, $TTTTT timeouts" "ikalash@sandia.gov, agsalin@sandia.gov, jwatkin@sandia.gov, mperego@sandia.gov, amota@sandia.gov" < /home/ikalash/nightlyCDash/results_kdv_functor_openmp

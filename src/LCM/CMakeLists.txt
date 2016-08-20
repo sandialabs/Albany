@@ -48,6 +48,22 @@ file (GLOB surface-element-headers
   "${LCM_DIR}/evaluators/surface-element/*.hpp"
 )
 
+# LCM transport evaluators
+file (GLOB transport-sources
+  "${LCM_DIR}/evaluators/transport/*.cpp"
+)
+file (GLOB transport-headers
+  "${LCM_DIR}/evaluators/transport/*.hpp"
+)
+
+# LCM HMC evaluators
+file (GLOB hmc-sources
+  "${LCM_DIR}/evaluators/HMC/*.cpp"
+)
+file (GLOB hmc-headers
+  "${LCM_DIR}/evaluators/HMC/*.hpp"
+)
+
 # LCM special boundary conditions
 file (GLOB bc-sources
   "${LCM_DIR}/evaluators/bc/*.cpp"
@@ -63,6 +79,7 @@ file (GLOB models-sources
 )
 file (GLOB models-headers
   "${LCM_DIR}/models/*.hpp"
+  "${LCM_DIR}/models/core/CrystalPlasticity/*.hpp"
   "${LCM_DIR}/parallel_models/*.hpp"
 )
 
@@ -91,10 +108,19 @@ ELSE()
   set(utils-headers ${utils-headers}
     ${LCM_DIR}/utils/LCM_Utils.h
     ${LCM_DIR}/utils/Projection.hpp
+    ${LCM_DIR}/utils/LocalNonlinearSolver.hpp
+    ${LCM_DIR}/utils/LocalNonlinearSolver_Def.hpp
+    ${LCM_DIR}/utils/NOXSolverPrePostOperator.h
+    ${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.h
+    ${LCM_DIR}/utils/MaterialDatabase.h
   )
   set(utils-sources ${utils-sources}
     ${LCM_DIR}/utils/LCM_Utils.cc
     ${LCM_DIR}/utils/Projection.cpp
+    ${LCM_DIR}/utils/LocalNonlinearSolver.cpp
+    ${LCM_DIR}/utils/NOXSolverPrePostOperator.cc
+    ${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.cc
+    ${LCM_DIR}/utils/MaterialDatabase.cc
   )
 ENDIF()
 
@@ -103,6 +129,8 @@ set(SOURCES ${SOURCES}
   ${evaluator-sources}
   ${model-eval-sources}
   ${surface-element-sources}
+  ${transport-sources}
+  ${hmc-sources}
   ${bc-sources}
   ${models-sources}
   ${utils-sources}
@@ -113,6 +141,8 @@ set(HEADERS ${HEADERS}
   ${evaluator-headers}
   ${model-eval-headers}
   ${surface-element-headers}
+  ${transport-headers}
+  ${hmc-headers}
   ${bc-headers}
   ${models-headers}
   ${utils-headers}
@@ -225,6 +255,8 @@ set(INCLUDE_DIRS
   ${LCM_DIR}/evaluators
   ${LCM_DIR}/evaluators/bc
   ${LCM_DIR}/evaluators/surface-element
+  ${LCM_DIR}/evaluators/transport
+  ${LCM_DIR}/evaluators/HMC
   ${LCM_DIR}/models
   ${LCM_DIR}/utils
   ${LCM_DIR}/utils/topology

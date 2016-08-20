@@ -249,7 +249,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
       p->set<string>("BF Name", "BF");
       p->set<int>("Offset of First DOF", 0);
 
-      ev = rcp(new PHAL::DOFInterpolation<EvalT,AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
+      ev = rcp(new PHAL::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
 #endif
     }

@@ -495,8 +495,14 @@ void Albany::APFDiscretization::writeSolutionMVToFile(
 void Albany::APFDiscretization::writeSolution(const Epetra_Vector& soln, const double time_value,
       const bool overlapped)
 {
+#if 1
+  Teuchos::RCP<const Tpetra_Vector> solnT =
+     Petra::EpetraVector_To_TpetraVectorConst(soln, commT);
+  writeSolutionT(*solnT, time_value, overlapped);
+#else
   writeAnySolutionToMeshDatabase(&(soln[0]), 0, overlapped);
   writeAnySolutionToFile(time_value);
+#endif
 }
 #endif
 
@@ -639,7 +645,7 @@ Albany::APFDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
   meshStruct->residualInitialized = true;
 }
 
-#if defined(ALBANY_EPETRA)
+#if 0 //defined(ALBANY_EPETRA)
 void
 Albany::APFDiscretization::setResidualField(const Epetra_Vector& residual)
 {

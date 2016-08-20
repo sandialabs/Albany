@@ -230,19 +230,31 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 #if defined(ALBANY_EPETRA)
     virtual Teuchos::RCP<const Epetra_Map> getMap() const { return map; }
     virtual Teuchos::RCP<const Epetra_Map> getOverlapMap() const { return overlap_map; }
+#endif
+#if defined(ALBANY_EPETRA)
     virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
+#endif
+#if defined(ALBANY_EPETRA)
     virtual Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const { return graph; }
     virtual Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const { return overlap_graph; }
-
+#endif
+#if defined(ALBANY_EPETRA)
     virtual Teuchos::RCP<const Epetra_Map> getNodeMap() const {
       fprintf(stderr,"APF Discretization unsupported call getNodeMap\n");
       abort();
       return Teuchos::RCP<const Epetra_Map>();
     }
-
+#endif
+#if defined(ALBANY_EPETRA)
     virtual Teuchos::RCP<Epetra_Vector> getSolutionField(bool overlapped=false) const;
+#endif
+#if 0 //defined(ALBANY_EPETRA)
     virtual void setResidualField(const Epetra_Vector& residual);
+#endif
+#if defined(ALBANY_EPETRA)
     virtual void writeSolution(const Epetra_Vector&, const double, const bool);
+#endif
+#if 0 //defined(ALBANY_EPETRA
     void setSolutionField(const Epetra_Vector&) {
       fprintf(stderr,"APF Discretization unsupported call setSolutionField\n");
       abort();

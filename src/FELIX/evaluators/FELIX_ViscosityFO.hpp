@@ -11,7 +11,6 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Sacado_ParameterAccessor.hpp"
 #include "Albany_Layouts.hpp"
 
 namespace FELIX {
@@ -23,14 +22,14 @@ namespace FELIX {
 
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 class ViscosityFO : public PHX::EvaluatorWithBaseImpl<Traits>,
-                    public PHX::EvaluatorDerived<EvalT, Traits>,
-                    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-
+                    public PHX::EvaluatorDerived<EvalT, Traits>
+{
 public:
+
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
   typedef typename EvalT::ParamScalarT ParamScalarT;
-  
+
 
   ViscosityFO(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl);
@@ -39,8 +38,6 @@ public:
                       PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
-
-  typename EvalT::ScalarT& getValue(const std::string &n);
 
 private:
   template<typename TemperatureT>
@@ -54,9 +51,6 @@ private:
   const double arrmlh, arrmll, k4scyr;
 #endif
   const double arrmh, arrml;
-
-  typename EvalT::ScalarT dummyParam;
-  ScalarT printedH;
 
   bool extractStrainRateSq;
   bool useStereographicMap;
@@ -77,7 +71,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
   PHX::MDField<ScalarT,Cell,QuadPoint> epsilonSq;
 
-  PHX::MDField<ScalarT,Dim> homotopy;
+  PHX::MDField<ScalarT> homotopyParam;
   ScalarT printedFF;
 
   unsigned int numQPs, numDims, numNodes, numCells;

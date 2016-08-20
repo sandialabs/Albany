@@ -10,7 +10,7 @@
 #include "FELIX_HydrostaticPressure.hpp"
 #include "FELIX_HydrostaticPressure_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_EVAL_TYPE(FELIX::HydrostaticPressure)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(FELIX::HydrostaticPressure)
 
 
 

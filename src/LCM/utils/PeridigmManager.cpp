@@ -18,6 +18,8 @@
 #include <Teuchos_LAPACK.hpp>
 #include <Teuchos_SerialDenseMatrix.hpp>
 #include <Epetra_Export.h>
+#include "Phalanx_KokkosViewFactory.hpp"
+#include "Phalanx_MDField.hpp"
 
 const Teuchos::RCP<LCM::PeridigmManager>& LCM::PeridigmManager::self() {
   static Teuchos::RCP<PeridigmManager> peridigmManager;
@@ -171,7 +173,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       CellTopologyData& cellTopologyData = partCellTopologyData[blockName];
       shards::CellTopology cellTopology(&cellTopologyData);
       Intrepid2::DefaultCubatureFactory cubFactory;
-      Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >> cubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopology, cubatureDegree);
+      Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopology, cubatureDegree);
       const int numQPts = cubature->getNumPoints();
       numPartialStressIds += numQPts * elementsInElementBlock.size();
     }
@@ -329,7 +331,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       CellTopologyData& cellTopologyData = partCellTopologyData[blockName];
       shards::CellTopology cellTopology(&cellTopologyData);
       Intrepid2::DefaultCubatureFactory cubFactory;
-      Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >> cubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopology, cubatureDegree);
+      Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopology, cubatureDegree);
       const int numDim = cubature->getDimension();
       const int numQuadPoints = cubature->getNumPoints();
       const int numNodes = cellTopology.getNodeCount();
@@ -382,12 +384,12 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 	}
 
 	// Determine the global (x,y,z) coordinates of the quadrature points
-  	Intrepid2::CellTools<RealType>::mapToPhysicalFrame(physPoints, refPoints, cellWorkset, cellTopology);
+  	Intrepid2::CellTools<PHX::Device>::mapToPhysicalFrame(physPoints.get_view(), refPoints.get_view(), cellWorkset.get_view(), cellTopology);
 
 	// Determine the weighted integration measures, which are the volumes that will be assigned to the peridynamic material points
- 	Intrepid2::CellTools<RealType>::setJacobian(jacobians, refPoints, cellWorkset, cellTopology);
- 	Intrepid2::CellTools<RealType>::setJacobianDet(jacobianDeterminants, jacobians);
- 	Intrepid2::FunctionSpaceTools::computeCellMeasure<RealType>(weightedMeasures, jacobianDeterminants, quadratureRefWeights);
+ 	Intrepid2::CellTools<PHX::Device>::setJacobian(jacobians, refPoints.get_view(), cellWorkset.get_view(), cellTopology);
+ 	Intrepid2::CellTools<PHX::Device>::setJacobianDet(jacobianDeterminants, jacobians);
+ 	Intrepid2::FunctionSpaceTools<PHX::Device>::computeCellMeasure<RealType>(weightedMeasures, jacobianDeterminants, quadratureRefWeights);
 
 	// Bookkeeping for use downstream
 	PartialStressElement partialStressElement;
@@ -741,16 +743,17 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
  	    }
  	  }
 
-	  Intrepid2::CellTools<RealType>::mapToReferenceFrame(refPoints, physPoints, cellWorkset, cellTopology, -1);
+	  Intrepid2::CellTools<PHX::Device>::mapToReferenceFrame(refPoints, physPoints, cellWorkset, cellTopology); //, -1); TODO: check this
 
 	  bool refPointsAreNan = !boost::math::isfinite(refPoints(0,0,0)) || !boost::math::isfinite(refPoints(0,0,1)) || !boost::math::isfinite(refPoints(0,0,2));
 	  TEUCHOS_TEST_FOR_EXCEPT_MSG(refPointsAreNan, "\n**** Error in PeridigmManager::obcOverlappingElementSearch(), NaN in refPoints.\n");
 
-	  std::vector<RealType> point(3);
+	   Kokkos::DynRankView<RealType, PHX::Device> point("point", 3);
 	  for(int dof=0 ; dof<3 ; dof++){
-	    point[dof] = refPoints(0, 0, dof);
+	    point(dof) = refPoints(0, 0, dof);
 	  }
-	  int inElement = Intrepid2::CellTools<RealType>::checkPointInclusion(&point[0], numDim, cellTopology);
+          
+	  int inElement = Intrepid2::CellTools<PHX::Device>::checkPointInclusion(point, cellTopology);
 
 	  if(inElement){
 	    OBCDataPoint dataPoint;
@@ -851,7 +854,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
   int numPoints = 1;
   int numDim = 3;
 
-  Kokkos::DynRankView<RealType, PHX::Device> physPoints.resize("PPP", numCells, numPoints, numDim);
+  Kokkos::DynRankView<RealType, PHX::Device> physPoints("PPP", numCells, numPoints, numDim);
 
   Kokkos::DynRankView<RealType, PHX::Device> refPoints("PPP", numCells, numPoints, numDim);
 
@@ -879,7 +882,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
 
     shards::CellTopology cellTopology(&(*obcDataPoints)[iEvalPt].cellTopologyData);
 
-    Intrepid2::CellTools<RealType>::mapToPhysicalFrame(physPoints, refPoints, cellWorkset, cellTopology);
+    Intrepid2::CellTools<PHX::Device>::mapToPhysicalFrame(physPoints, refPoints, cellWorkset, cellTopology);
 
     // Record the difference between the Albany displacement at the point (which was just computed using Intrepid2) and
     // the Peridigm displacement at the point
@@ -1010,17 +1013,15 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
 
       shards::CellTopology cellTopology(&it->cellTopologyData);
       Intrepid2::DefaultCubatureFactory cubFactory;
-      Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >> cubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopology, cubatureDegree);
+      Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopology, cubatureDegree);
       const int numDim = cubature->getDimension();
       const int numQuadPoints = cubature->getNumPoints();
       const int numNodes = cellTopology.getNodeCount();
       const int numCells = 1;
 
       // Get the quadrature points and weights
-      Kokkos::DynRankView<RealType, PHX::Device> quadratureRefPoints;
-      Kokkos::DynRankView<RealType, PHX::Device> quadratureRefWeights;
-      quadratureRefPoints.resize(numQuadPoints, numDim);
-      quadratureRefWeights.resize(numQuadPoints);
+      Kokkos::DynRankView<RealType, PHX::Device> quadratureRefPoints("quadratureRefPoints", numQuadPoints, numDim);
+      Kokkos::DynRankView<RealType, PHX::Device> quadratureRefWeights("quadratureRefWeights", numQuadPoints);
       cubature->getCubature(quadratureRefPoints, quadratureRefWeights);
 
       typedef PHX::KokkosViewFactory<RealType, PHX::Device> ViewFactory;
@@ -1061,7 +1062,7 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
       }
 
       // Determine the global (x,y,z) coordinates of the quadrature points
-      Intrepid2::CellTools<RealType>::mapToPhysicalFrame(physPoints, refPoints, cellWorkset, cellTopology);
+      Intrepid2::CellTools<PHX::Device>::mapToPhysicalFrame(physPoints.get_view(), refPoints.get_view(), cellWorkset.get_view(), cellTopology);
 
       for(unsigned int i=0 ; i<it->peridigmGlobalIds.size() ; ++i){
 	peridigmLocalId = peridigmGlobalIdToPeridigmLocalId[it->peridigmGlobalIds[i]];

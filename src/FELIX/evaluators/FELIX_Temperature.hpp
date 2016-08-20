@@ -19,7 +19,7 @@ namespace FELIX
 
 /** \brief Temperature
 
-    This evaluator computes the temperature from the enthalpy
+    This evaluator computes the temperature from enthalpy
 */
 
 template<typename EvalT, typename Traits, typename Type>
@@ -28,8 +28,7 @@ class Temperature: public PHX::EvaluatorWithBaseImpl<Traits>,
 {
 public:
 
-  //typedef typename EvalT::ParamScalarT ParamScalarT;
-  //typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename EvalT::ParamScalarT ParamScalarT;
   typedef typename EvalT::ScalarT ScalarT;
 
   Temperature (const Teuchos::ParameterList& p,
@@ -42,17 +41,17 @@ public:
 
 private:
   // Input:
-  PHX::MDField<Type,Cell,Node> meltingTemp;
-  PHX::MDField<Type,Cell,Node> enthalpyHs;
-  PHX::MDField<ScalarT,Cell,Node> enthalpy;
+  PHX::MDField<Type,Cell,Node> 		meltingTemp;
+  PHX::MDField<Type,Cell,Node> 		enthalpyHs;
+  PHX::MDField<ScalarT,Cell,Node> 	enthalpy;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> temperature;
+  PHX::MDField<ScalarT,Cell,Node> 	temperature;
+  PHX::MDField<ScalarT,Cell,Node> 	diffEnth;
 
   int numNodes;
 
-  double c_i;
-  double T0;
+  double c_i, rho_i, T0;
 };
 
 } // Namespace FELIX

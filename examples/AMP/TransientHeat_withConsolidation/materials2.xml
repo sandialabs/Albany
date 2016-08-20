@@ -1,0 +1,141 @@
+<ParameterList>
+
+  <ParameterList name="ElementBlocks">
+
+    <ParameterList name="Powder_Region">
+      <Parameter name="material" type="string" value="Powder" />
+    </ParameterList>
+
+    <ParameterList name="Solid_Region">
+      <Parameter name="material" type="string" value="Solid" />
+    </ParameterList>
+
+  </ParameterList>
+
+  <ParameterList name="Materials">
+
+    <ParameterList name="Powder">
+      <Parameter name="Category" type="string" value="Powder" />
+       <ParameterList name="Thermal Conductivity">
+        <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.5"/>
+	<!-- Unit of thermal conductivity is W/m-K)-->
+      </ParameterList>
+
+      <ParameterList name="Rho Cp">
+        <Parameter name="Rho Cp Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="4.25e6"/>
+	<!-- Unit of RhoCp is J/m^3-K)-->
+      </ParameterList>
+
+      <ParameterList name="Porosity">
+        <Parameter name="Porosity Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.6"/>
+	<!-- Unitless-->
+      </ParameterList>
+
+      <ParameterList name="Initial Psi">
+        <Parameter name="Psi Type" type="string" value="Constant"/>
+        <Parameter name="Psi" type="double" value="0.0"/>
+  <!-- Intial Value of Psi in Powder (unitless) --> 
+      </ParameterList>
+
+<!-- Should always put the value = 0 (which is heat in substrate) in the powder zone-->
+      <ParameterList name="Source">
+        <Parameter name="Phase Source Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.0"/>
+      </ParameterList>
+<!-- Should always put the value of Laser power in the powder-->
+      <ParameterList name="Laser Source">
+	<!-- all values are in SI units-->
+        <Parameter name="Porosity Type" type="string" value="Constant"/>
+        <Parameter name="Porosity Value" type="double" value="0.60"/>
+        <Parameter name="Particle Dia Type" type="string" value="Constant"/>
+        <Parameter name="Particle Dia Value" type="double" value="20.0e-6"/>
+        <Parameter name="Laser Beam Radius Type" type="string" value="Constant"/>
+        <Parameter name="Laser Beam Radius Value" type="double" value="60.0e-6"/>
+        <Parameter name="Laser Power Type" type="string" value="Constant"/>
+        <Parameter name="Laser Power Value" type="double" value="100.0"/>
+        <Parameter name="Powder Hemispherical Reflectivity Type" type="string" value="Constant"/>
+        <Parameter name="Powder Hemispherical Reflectivity Value" type="double" value="0.70"/>
+      </ParameterList>
+
+      <ParameterList name="Initial Phi">
+        <Parameter name="Melting Temperature Type" type="string" value="Constant"/>
+        <Parameter name="Melting Temperature Value" type="double" value="1700.0"/>
+	<!-- Unit of Melting Temperature is K)-->
+        <Parameter name="delta Temperature Type" type="string" value="Constant"/>
+        <Parameter name="delta Temperature Value" type="double" value="150.0"/>
+	<!-- Unit of delta Temperature is K)-->
+      </ParameterList>
+
+      <ParameterList name="Phase Change Properties">
+	<Parameter name="Volumetric Heat Capacity Liquid Value" type="double" value="5.95e6"/>
+	<Parameter name="Latent Heat Value" type="double" value="2.18e9"/>
+      </ParameterList>
+
+    </ParameterList>
+
+    <ParameterList name="Solid">
+      <Parameter name="Category" type="string" value="Solid" />
+      <ParameterList name="Thermal Conductivity">
+        <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="20.0"/>
+	<!-- Unit of thermal conductivity is W/m-K)-->
+      </ParameterList>
+
+      <ParameterList name="Rho Cp">
+        <Parameter name="Rho Cp Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="4.25e6"/>
+	<!-- Unit of RhoCp is J/m^3-K)-->
+      </ParameterList>
+
+      <ParameterList name="Porosity">
+        <Parameter name="Porosity Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.0"/>
+	<!-- Unitless-->
+      </ParameterList>
+
+      <ParameterList name="Initial Psi">
+        <Parameter name="Psi Type" type="string" value="Constant"/>
+        <Parameter name="Psi" type="double" value="1.0"/>
+        <!--   Intial Value of Psi in Substrate (unitless)--> 
+      </ParameterList>
+
+<!-- Heat in Substrate -->
+      <ParameterList name="Source">
+        <Parameter name="Phase Source Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="100.0"/>
+      </ParameterList>
+<!-- Should always put the value of Laser power = 0 in the substrate-->
+      <ParameterList name="Laser Source">
+	<!-- all values are in SI units-->
+        <Parameter name="Porosity Type" type="string" value="Constant"/>
+        <Parameter name="Porosity Value" type="double" value="0.60"/>
+        <Parameter name="Particle Dia Type" type="string" value="Constant"/>
+        <Parameter name="Particle Dia Value" type="double" value="20.0e-6"/>
+        <Parameter name="Laser Beam Radius Type" type="string" value="Constant"/>
+        <Parameter name="Laser Beam Radius Value" type="double" value="60.0e-6"/>
+        <Parameter name="Laser Power Type" type="string" value="Constant"/>
+        <Parameter name="Laser Power Value" type="double" value="0.0"/>
+        <Parameter name="Powder Hemispherical Reflectivity Type" type="string" value="Constant"/>
+        <Parameter name="Powder Hemispherical Reflectivity Value" type="double" value="0.70"/>
+      </ParameterList>
+
+      <ParameterList name="Initial Phi">
+        <Parameter name="Melting Temperature Type" type="string" value="Constant"/>
+        <Parameter name="Melting Temperature Value" type="double" value="1700.0"/>
+	<!-- Unit of Melting Temperature is K)-->
+        <Parameter name="delta Temperature Type" type="string" value="Constant"/>
+        <Parameter name="delta Temperature Value" type="double" value="150.0"/>
+	<!-- Unit of delta Temperature is K)-->
+      </ParameterList>
+
+       <ParameterList name="Phase Change Properties">
+	<Parameter name="Volumetric Heat Capacity Liquid Value" type="double" value="5.95e6"/>
+	<Parameter name="Latent Heat Value" type="double" value="2.18e9"/>
+      </ParameterList>
+
+    </ParameterList>
+  </ParameterList>
+</ParameterList>

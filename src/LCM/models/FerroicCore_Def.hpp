@@ -12,7 +12,7 @@ FM::DomainSwitching<EvalT>::DomainSwitching(
       Teuchos::Array<FM::Transition>      const & transitions,
       Teuchos::Array<RealType>            const & transBarriers,
       Teuchos::Array<RealType>            const & binFractions,
-      Intrepid::FieldContainer<RealType>  const & aMatrix,
+      Kokkos::DynRankView<RealType>       const & aMatrix,
       Intrepid2::Tensor<ArgT,THREE_D>     const & x,
       Intrepid2::Vector<ArgT,THREE_D>     const & E,
       RealType dt)
@@ -231,7 +231,7 @@ FM::computeBinFractions(
     Teuchos::Array<ArgT>                        & newFractions,
     Teuchos::Array<DataT>                 const & oldFractions,
     Teuchos::Array<int>                   const & transitionMap,
-    Intrepid::FieldContainer<DataT>       const & aMatrix)
+    Kokkos::DynRankView<DataT>            const & aMatrix)
 /******************************************************************************/
 {
   int nVariants = oldFractions.size();
@@ -336,7 +336,7 @@ FM::computeResidual(
     Teuchos::Array<FM::Transition>        const & transitions,
     Teuchos::Array<FM::CrystalVariant>    const & crystalVariants,
     Teuchos::Array<DataT>                 const & tBarrier,
-    Intrepid::FieldContainer<DataT>       const & aMatrix,
+    Kokkos::DynRankView<DataT>            const & aMatrix,
     Intrepid2::Tensor<ArgT,FM::THREE_D>   const & X, 
     Intrepid2::Tensor<ArgT,FM::THREE_D>   const & linear_x,
     Intrepid2::Vector<ArgT,FM::THREE_D>   const & E,

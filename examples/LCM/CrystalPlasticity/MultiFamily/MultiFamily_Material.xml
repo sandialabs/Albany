@@ -1,0 +1,631 @@
+<ParameterList>
+
+     <ParameterList name="ElementBlocks">
+
+          <ParameterList name="element">
+
+               <Parameter name="material" 
+                          type="string" 
+                          value="FCC" />
+
+               <Parameter name="Weighted Volume Average J" 
+                          type="bool" 
+                          value="true" />
+
+               <Parameter name="Volume Average Pressure" 
+                          type="bool" 
+                          value="true" />
+
+               <Parameter name="Output Integration Weights" 
+                          type="bool" 
+                          value="true"/>
+
+          </ParameterList>
+
+     </ParameterList>
+
+     <ParameterList name="Materials">
+
+          <ParameterList name="FCC">
+
+               <ParameterList name="Material Model"> 
+
+                    <Parameter name="Model Name" 
+                               type="string" 
+                               value="CrystalPlasticity"/>
+
+               </ParameterList>
+               
+
+<!-- ~~~~~~~~~ Crystal Elasticity moduli and orientation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+               <ParameterList name="Crystal Elasticity">
+
+                    <Parameter name="C11" 
+                               type="double" 
+                               value="204.6e3"/>
+
+                    <Parameter name="C12" 
+                               type="double" 
+                               value="137.7e3"/>
+
+                    <Parameter name="C44" 
+                               type="double" 
+                               value="126.2e3"/>
+
+                    <Parameter name="Basis Vector 1" 
+                               type="Array(double)" 
+                               value="{1.0, 1.0, 0.0}"/>
+
+                    <Parameter name="Basis Vector 2" 
+                               type="Array(double)" 
+                               value="{-1.0, 1.0, 0.0}"/>
+
+                    <Parameter name="Basis Vector 3" 
+                               type="Array(double)" 
+                               value="{0.0, 0.0, 1.0}"/>
+
+               </ParameterList>
+
+
+<!-- ~~~~~~~~~ Set model options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+               <Parameter name="Integration Scheme" 
+                          type="string" 
+                          value="Implicit"/>
+
+               <Parameter name="Residual Type"
+                          type="string"
+                          value="Slip Hardness"/>
+
+               <Parameter name="Implicit Integration Relative Tolerance" 
+                          type="double" 
+                          value="1.0e-35"/>
+
+               <Parameter name="Implicit Integration Absolute Tolerance" 
+                          type="double" 
+                          value="1.0e-12"/>
+
+               <Parameter name="Implicit Integration Max Iterations" 
+                          type="int" 
+                          value="100"/>
+
+               <Parameter name="Output CP_Residual" 
+                          type="bool" 
+                          value="true"/>
+
+               <Parameter name="Verbosity"
+                          type="int"
+                          value="0"/>
+
+               <Parameter name="Number of Slip Families" 
+                          type="int" 
+                          value="3"/>
+
+               <ParameterList name="Slip System Family 0">
+
+                    <ParameterList name="Flow Rule">
+
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Power Law"/>
+
+                         <Parameter name="Reference Slip Rate" 
+                                    type="double" 
+                                    value="1.0e-03"/>
+
+                         <Parameter name="Rate Exponent" 
+                                    type="double" 
+                                    value="5.0e01"/>
+
+                    </ParameterList>
+
+                    <ParameterList name="Hardening Law">
+
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Linear Minus Recovery"/>
+
+                         <Parameter name="Hardening Modulus" 
+                                    type="double" 
+                                    value="10.0e00"/>
+
+                         <Parameter name="Recovery Modulus" 
+                                    type="double" 
+                                    value="0.0"/>
+
+                         <Parameter name="Initial Hardening State"
+                                    type="double"
+                                    value="1.0e00"/>
+
+                    </ParameterList>
+
+               </ParameterList>
+
+               <ParameterList name="Slip System Family 1">
+
+                    <ParameterList name="Flow Rule">
+
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Power Law"/>
+
+                         <Parameter name="Reference Slip Rate" 
+                                    type="double" 
+                                    value="1.0e-03"/>
+
+                         <Parameter name="Rate Exponent" 
+                                    type="double" 
+                                    value="5.0e01"/>
+
+                    </ParameterList>
+
+                    <ParameterList name="Hardening Law">
+
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Saturation"/>
+
+                         <Parameter name="Reference Slip Rate"
+                                    type="double"
+                                    value="1.0e00"/>
+
+                         <Parameter name="Hardening Rate" 
+                                    type="double" 
+                                    value="7.5e03"/>
+
+                         <Parameter name="Initial Saturation Stress" 
+                                    type="double" 
+                                    value="2.02e+02"/>
+
+                         <Parameter name="Saturation Exponent"
+                                    type="double"
+                                    value="0.0"/>
+
+                         <Parameter name="Initial Hardening State"
+                                    type="double"
+                                    value="2.0e+01"/>
+
+                    </ParameterList>
+
+               </ParameterList>
+
+               <ParameterList name="Slip System Family 2">
+
+                    <ParameterList name="Flow Rule">
+
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Power Law"/>
+
+                         <Parameter name="Reference Slip Rate" 
+                                    type="double" 
+                                    value="1.0e-03"/>
+
+                         <Parameter name="Rate Exponent" 
+                                    type="double" 
+                                    value="5.0e01"/>
+
+                    </ParameterList>
+
+                    <ParameterList name="Hardening Law">
+
+                         <Parameter name="Type" 
+                                    type="string" 
+                                    value="Saturation"/>
+
+                         <Parameter name="Reference Slip Rate"
+                                    type="double"
+                                    value="1.0e00"/>
+
+                         <Parameter name="Hardening Rate" 
+                                    type="double" 
+                                    value="7.5e03"/>
+
+                         <Parameter name="Initial Saturation Stress" 
+                                    type="double" 
+                                    value="2.6e+02"/>
+
+                         <Parameter name="Saturation Exponent"
+                                    type="double"
+                                    value="0.0"/>
+
+                         <Parameter name="Initial Hardening State"
+                                    type="double"
+                                    value="4.0e+01"/>
+
+                    </ParameterList>
+
+               </ParameterList>
+
+<!-- ~~~~~~~~~ Crystal Plasticity Slip Systems ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- ~~~~~~~~~ Convention taken from Plasticity by Nemat-Nasser, p. 454 - 455 ~~~~~~~~~~~~~~~~~~ -->
+
+               <Parameter name="Number of Slip Systems" 
+                          type="int" 
+                          value="12"/>
+
+<!-- ~~~~~~~~~ Basal slip systems ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+               <ParameterList name="Slip System 1">
+
+                    <Parameter name="Slip Direction" 
+                               type="Array(double)" 
+                               value="{0.5, -0.8660254037844386, 0.0}"/>
+
+                    <Parameter name="Slip Normal" 
+                               type="Array(double)"    
+                               value="{0.0, 0.0, 1.0}"/>
+
+                    <Parameter name="Slip Family"
+                               type="int"
+                               value="0"/>
+
+               </ParameterList>
+
+
+               <ParameterList name="Slip System 2">
+
+                    <Parameter name="Slip Direction" 
+                               type="Array(double)" 
+                               value="{0.5, 0.8660254037844386, 0.0}"/>
+
+                    <Parameter name="Slip Normal" 
+                               type="Array(double)"    
+                               value="{0.0, 0.0, 1.0}"/>
+
+                    <Parameter name="Slip Family"
+                               type="int"
+                               value="0"/>
+
+               </ParameterList>
+
+
+               <ParameterList name="Slip System 3">
+
+                    <Parameter name="Slip Direction" 
+                               type="Array(double)" 
+                               value="{-1.0, 0.0, 0.0}"/>
+
+                    <Parameter name="Slip Normal" 
+                               type="Array(double)"    
+                               value="{0.0, 0.0, 1.0}"/>
+
+                    <Parameter name="Slip Family"
+                               type="int"
+                               value="0"/>
+
+               </ParameterList>
+
+<!-- ~~~~~~~~~ Prismatic slip systems ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+               <ParameterList name="Slip System 4">
+
+                    <Parameter name="Slip Direction" 
+                               type="Array(double)" 
+                               value="{1.0, 0.0, 0.0}"/>
+
+                    <Parameter name="Slip Normal" 
+                               type="Array(double)"    
+                               value="{0.0, 1.0, 0.0}"/>
+
+                    <Parameter name="Slip Family"
+                               type="int"
+                               value="1"/>
+
+               </ParameterList>
+
+
+               <ParameterList name="Slip System 5">
+
+                    <Parameter name="Slip Direction" 
+                               type="Array(double)" 
+                               value="{0.5, 0.8660254037844386, 0.0}"/>
+
+                    <Parameter name="Slip Normal" 
+                               type="Array(double)"    
+                               value="{-0.8660254037844386, 0.5, 0.0}"/>
+
+                    <Parameter name="Slip Family"
+                               type="int"
+                               value="1"/>
+
+               </ParameterList>
+
+
+               <ParameterList name="Slip System 6">
+
+                    <Parameter name="Slip Direction" 
+                               type="Array(double)" 
+                               value="{-0.5, 0.8660254037844386, 0.0}"/>
+
+                    <Parameter name="Slip Normal" 
+                               type="Array(double)"    
+                               value="{-0.8660254037844386, -0.5, 0.0}"/>
+
+                    <Parameter name="Slip Family"
+                               type="int"
+                               value="1"/>
+
+               </ParameterList>
+
+<!-- ~~~~~~~~~ Pyramidal slip systems ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+               <ParameterList name="Slip System 7">
+
+                    <Parameter name="Slip Direction" 
+                               type="Array(double)" 
+                               value="{1.0, 0.0, 0.0}"/>
+
+                    <Parameter name="Slip Normal" 
+                               type="Array(double)"    
+                               value="{0.0000000000000000, -0.8823772896082351, 0.4705425791398955}"/>
+
+                    <Parameter name="Slip Family"
+                               type="int"
+                               value="2"/>
+
+               </ParameterList>
+
+
+               <ParameterList name="Slip System 8">
+
+                    <Parameter name="Slip Direction" 
+                               type="Array(double)" 
+                               value="{0.5, 0.8660254037844386, 0.0}"/>
+
+                    <Parameter name="Slip Normal" 
+                               type="Array(double)"    
+                               value="{0.7641611485231904, -0.4411886448041176, 0.4705425791398955}"/>
+
+                    <Parameter name="Slip Family"
+                               type="int"
+                               value="2"/>
+
+               </ParameterList>
+
+
+               <ParameterList name="Slip System 9">
+
+                    <Parameter name="Slip Direction" 
+                               type="Array(double)" 
+                               value="{-0.5, 0.8660254037844386, 0.0}"/>
+
+                    <Parameter name="Slip Normal" 
+                               type="Array(double)"    
+                               value="{0.7641611485231904, 0.4411886448041176, 0.4705425791398955}"/>
+
+                    <Parameter name="Slip Family"
+                               type="int"
+                               value="2"/>
+
+               </ParameterList>
+
+
+               <ParameterList name="Slip System 10">
+
+                    <Parameter name="Slip Direction" 
+                               type="Array(double)" 
+                               value="{-1.0, 0.0, 0.0}"/>
+
+                    <Parameter name="Slip Normal" 
+                               type="Array(double)"    
+                               value="{0.0000000000000000, 0.8823772896082351, 0.4705425791398955}"/>
+
+                    <Parameter name="Slip Family"
+                               type="int"
+                               value="2"/>
+
+               </ParameterList>
+
+
+               <ParameterList name="Slip System 11">
+
+                    <Parameter name="Slip Direction" 
+                               type="Array(double)" 
+                               value="{-0.5, -0.8660254037844386, 0.0}"/>
+
+                    <Parameter name="Slip Normal" 
+                               type="Array(double)"    
+                               value="{-0.7641611485231904, 0.4411886448041176, 0.4705425791398955}"/>
+
+                    <Parameter name="Slip Family"
+                               type="int"
+                               value="2"/>
+
+               </ParameterList>
+
+
+               <ParameterList name="Slip System 12">
+
+                    <Parameter name="Slip Direction" 
+                               type="Array(double)" 
+                               value="{0.5, -0.8660254037844386, 0.0}"/>
+
+                    <Parameter name="Slip Normal" 
+                               type="Array(double)"    
+                               value="{-0.7641611485231904, -0.4411886448041176, 0.4705425791398955}"/>
+
+                    <Parameter name="Slip Family"
+                               type="int"
+                               value="2"/>
+
+               </ParameterList>
+
+<!-- ~~~~~~~~~ Specify output to Exodus ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+               <Parameter name="Output Cauchy Stress" 
+                          type="bool" 
+                          value="true"/>
+
+               <Parameter name="Output Deformation Gradient" 
+                          type="bool" 
+                          value="true"/>
+
+               <Parameter name="Output Fp" 
+                          type="bool" 
+                          value="true"/>
+
+               <Parameter name="Output L" 
+                          type="bool" 
+                          value="true"/>
+           
+               <Parameter name="Output eqps" 
+                          type="bool" 
+                          value="true"/>
+
+               <Parameter name="Output gamma_1" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output gamma_2" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output gamma_3" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output gamma_4" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output gamma_5" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output gamma_6" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output gamma_7" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output gamma_8" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output gamma_9" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output gamma_10" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output gamma_11" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output gamma_12" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output gamma_dot_1" 
+                          type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_2" 
+                          type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_3" 
+                          type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_4" 
+                          type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_5" 
+                          type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_6" 
+                          type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_7" 
+                          type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_8" 
+                          type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_9" 
+                          type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_10" 
+                          type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_11" 
+                          type="bool" value="true"/>
+               <Parameter name="Output gamma_dot_12" 
+                          type="bool" value="true"/>
+               <Parameter name="Output tau_hard_1" 
+                          type="bool" value="true"/>
+               <Parameter name="Output tau_hard_2" 
+                          type="bool" value="true"/>
+               <Parameter name="Output tau_hard_3" 
+                          type="bool" value="true"/>
+               <Parameter name="Output tau_hard_4" 
+                          type="bool" value="true"/>
+               <Parameter name="Output tau_hard_5" 
+                          type="bool" value="true"/> 
+               <Parameter name="Output tau_hard_6" 
+                          type="bool" value="true"/>
+               <Parameter name="Output tau_hard_7" 
+                          type="bool" value="true"/>
+               <Parameter name="Output tau_hard_8" 
+                          type="bool" value="true"/>
+               <Parameter name="Output tau_hard_9" 
+                          type="bool" value="true"/>
+               <Parameter name="Output tau_hard_10" 
+                          type="bool" value="true"/>
+               <Parameter name="Output tau_hard_11" 
+                          type="bool" value="true"/>
+               <Parameter name="Output tau_hard_12" 
+                          type="bool" value="true"/>
+
+               <Parameter name="Output tau_1" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output tau_2" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output tau_3" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output tau_4" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output tau_5" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output tau_6" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output tau_7" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output tau_8" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output tau_9" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output tau_10" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output tau_11" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output tau_12" 
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output CP_Residual" 
+                          type="bool"
+                          value="true"/>
+
+
+          </ParameterList>
+
+     </ParameterList>
+
+</ParameterList>

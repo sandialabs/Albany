@@ -72,6 +72,9 @@ typedef std::vector<StateArray> StateArrayVec;
     bool sepEvalsByEB;
     const Intrepid2::EPolyType cubatureRule;
     std::map<std::string,Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > > sideSetMeshSpecs;
+
+    // We store the side meshes names so we have a way to index them with a number
+    std::vector<std::string>                                                 sideSetMeshNames;
   };
 
 //! Container to get state info from StateManager to STK. Made into a struct so

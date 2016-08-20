@@ -24,7 +24,7 @@ namespace FELIX {
    */
   class StokesL1L2 : public Albany::AbstractProblem {
   public:
-  
+
     //! Default constructor
     StokesL1L2(const Teuchos::RCP<Teuchos::ParameterList>& params,
 		 const Teuchos::RCP<ParamLib>& paramLib,
@@ -57,7 +57,7 @@ namespace FELIX {
 
     //! Private to prohibit copying
     StokesL1L2(const StokesL1L2&);
-    
+
     //! Private to prohibit copying
     StokesL1L2& operator=(const StokesL1L2&);
 
@@ -78,8 +78,7 @@ namespace FELIX {
     int numDim;
 
   };
-
-}
+} // Namespace FELIX
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
@@ -91,6 +90,8 @@ namespace FELIX {
 
 #include "PHAL_DOFVecGradInterpolation.hpp"
 
+#include "FELIX_SharedParameter.hpp"
+#include "FELIX_ParamEnum.hpp"
 #include "FELIX_StokesL1L2Resid.hpp"
 #include "FELIX_ViscosityL1L2.hpp"
 #include "FELIX_EpsilonL1L2.hpp"
@@ -120,22 +121,22 @@ FELIX::StokesL1L2::constructEvaluators(
   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
     intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-  
+
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
   Intrepid2::DefaultCubatureFactory cubFactory;
   RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
-  
+
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
-  
-  *out << "Field Dimensions: Workset=" << worksetSize 
+
+  *out << "Field Dimensions: Workset=" << worksetSize
        << ", Vertices= " << numVertices
        << ", Nodes= " << numNodes
        << ", QuadPts= " << numQPts
        << ", Dim= " << numDim << std::endl;
-  
+
    int vecDim = neq;
 
    RCP<Albany::Layouts> dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
@@ -180,23 +181,23 @@ FELIX::StokesL1L2::constructEvaluators(
      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
    { // Specialized DofVecGrad Interpolation for this problem
-    
+
      RCP<ParameterList> p = rcp(new ParameterList("DOFVecGrad Interpolation "+dof_names[0]));
      // Input
      p->set<std::string>("Variable Name", dof_names[0]);
-     
+
      p->set<std::string>("Gradient BF Name", "Grad BF");
-     
+
      // Output (assumes same Name as input)
      p->set<std::string>("Gradient Variable Name", dof_names[0]+" Gradient");
-     
-     ev = rcp(new PHAL::DOFVecGradInterpolation<EvalT,AlbanyTraits,typename EvalT::ScalarT>(*p,dl));
+
+     ev = rcp(new PHAL::DOFVecGradInterpolation<EvalT,AlbanyTraits>(*p,dl));
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
   { // Stokes Resid
     RCP<ParameterList> p = rcp(new ParameterList("Stokes Resid"));
-   
+
     //Input
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
@@ -209,42 +210,55 @@ FELIX::StokesL1L2::constructEvaluators(
     p->set<std::string>("FELIX EpsilonXX QP Variable Name", "FELIX EpsilonXX");
     p->set<std::string>("FELIX EpsilonYY QP Variable Name", "FELIX EpsilonYY");
     p->set<std::string>("FELIX EpsilonXY QP Variable Name", "FELIX EpsilonXY");
-    
+
     //Output
     p->set<std::string>("Residual Name", "Stokes Residual");
 
     ev = rcp(new FELIX::StokesL1L2Resid<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+  {
+    //--- Shared Parameter for Continuation:  ---//
+    RCP<ParameterList> p = rcp(new ParameterList("Homotopy Parameter"));
+
+    std::string param_name = "Glen's Law Homotopy Parameter";
+    p->set<std::string>("Parameter Name", param_name);
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
+    RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FELIX::FelixParamEnum,FELIX::FelixParamEnum::Homotopy>> ptr_homotopy;
+    ptr_homotopy = rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FELIX::FelixParamEnum,FELIX::FelixParamEnum::Homotopy>(*p,dl));
+    ptr_homotopy->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Viscosity").get<double>(param_name,-1.0));
+    fm0.template registerEvaluator<EvalT>(ptr_homotopy);
+  }
   { // FELIX viscosity
     RCP<ParameterList> p = rcp(new ParameterList("FELIX Viscosity"));
 
     //Input
     p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
-    
+
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("FELIX Viscosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set<std::string>("FELIX EpsilonB QP Variable Name", "FELIX EpsilonB");
-  
+
     //Output
     p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
 
     ev = rcp(new FELIX::ViscosityL1L2<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-    
+
   }
   { // FELIX epsilon
     RCP<ParameterList> p = rcp(new ParameterList("FELIX Epsilon"));
 
     //Input
     p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
-    
+
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("FELIX Viscosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-  
+
     //Output
     p->set<std::string>("FELIX EpsilonXX QP Variable Name", "FELIX EpsilonXX");
     p->set<std::string>("FELIX EpsilonXY QP Variable Name", "FELIX EpsilonXY");
@@ -253,7 +267,6 @@ FELIX::StokesL1L2::constructEvaluators(
 
     ev = rcp(new FELIX::EpsilonL1L2<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-    
   }
 
   { // Body Force
@@ -265,7 +278,7 @@ FELIX::StokesL1L2::constructEvaluators(
 
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-      
+
 
     //Output
     p->set<std::string>("Body Force Name", "Body Force");
@@ -284,4 +297,5 @@ FELIX::StokesL1L2::constructEvaluators(
 
   return Teuchos::null;
 }
+
 #endif // FELIX_STOKESL1L2PROBLEM_HPP
