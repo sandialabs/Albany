@@ -69,28 +69,16 @@
 #include "AMP/problems/PhaseProblem.hpp"
 #endif
 
-#ifdef ALBANY_FELIX
-#include "FELIX/problems/FELIX_Stokes.hpp"
-#include "FELIX/problems/FELIX_StokesFO.hpp"
-#include "FELIX/problems/FELIX_StokesL1L2.hpp"
-#include "FELIX/problems/FELIX_Hydrology.hpp"
-#include "FELIX/problems/FELIX_Elliptic2D.hpp"
-#include "FELIX/problems/FELIX_Enthalpy.hpp"
-#include "FELIX/problems/FELIX_StokesFOThermoCoupled.hpp"
-
-#ifdef ALBANY_EPETRA
-#include "FELIX/problems/FELIX_StokesFOHydrology.hpp"
-#include "FELIX/problems/FELIX_StokesFOThickness.hpp"
-#endif
-
-#endif
-
 #ifdef ALBANY_AERAS
 #include "Aeras/problems/Aeras_ShallowWaterProblem.hpp"
 #include "Aeras/problems/Aeras_XZScalarAdvectionProblem.hpp"
 #include "Aeras/problems/Aeras_XScalarAdvectionProblem.hpp"
 #include "Aeras/problems/Aeras_XZHydrostaticProblem.hpp"
 #include "Aeras/problems/Aeras_HydrostaticProblem.hpp"
+#endif
+
+#ifdef ALBANY_FELIX
+#include "FELIX/problems/FELIX_ProblemFactory.hpp"
 #endif
 
 Albany::ProblemFactory::ProblemFactory(
@@ -122,7 +110,6 @@ Albany::ProblemFactory::create()
 {
   Teuchos::RCP<Albany::AbstractProblem> strategy;
   using Teuchos::rcp;
-
 
   std::string& method = problemParams->get("Name", "Heat 1D");
 
@@ -383,47 +370,9 @@ Albany::ProblemFactory::create()
   }
 #endif
 #ifdef ALBANY_FELIX
-  else if (method == "FELIX Stokes" || method == "FELIX Stokes 3D" ) {
-    strategy = rcp(new FELIX::Stokes(problemParams, paramLib, 3));
-  }
-  else if (method == "FELIX Stokes 2D" ) {
-    strategy = rcp(new FELIX::Stokes(problemParams, paramLib, 2));
-  }
-  else if (method == "FELIX Stokes First Order 2D" || method == "FELIX Stokes FO 2D" ||
-           method == "FELIX Stokes First Order 2D XZ" || method == "FELIX Stokes FO 2D XZ") {
-    strategy = rcp(new FELIX::StokesFO(problemParams, discretizationParams, paramLib, 2));
-  }
-  else if (method == "FELIX Stokes First Order 3D" || method == "FELIX Stokes FO 3D" ) {
-    strategy = rcp(new FELIX::StokesFO(problemParams, discretizationParams, paramLib, 3));
-  }
-  else if (method == "FELIX Coupled FO H 3D" ) {
-#ifdef ALBANY_EPETRA
-      strategy = rcp(new FELIX::StokesFOThickness(problemParams, paramLib, 3));
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** FELIX Coupled FO H requires Epetra, recompile with -DENABLE_ALBANY_EPETRA_EXE ****\n");
-#endif
-  }
-  else if (method == "FELIX Coupled FO Hydrology 3D" ) {
-#ifdef ALBANY_EPETRA
-      strategy = rcp(new FELIX::StokesFOHydrology(problemParams, paramLib, 3));
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** FELIX Coupled FO Hydrology requires Epetra, recompile with -DENABLE_ALBANY_EPETRA_EXE ****\n");
-#endif
-  }
-  else if (method == "FELIX Stokes L1L2 2D") {
-    strategy = rcp(new FELIX::StokesL1L2(problemParams, paramLib, 2));
-  }
-  else if (method == "FELIX Hydrology 2D") {
-    strategy = rcp(new FELIX::Hydrology(problemParams, paramLib, 2));
-  }
-  else if (method == "FELIX Elliptic 2D") {
-    strategy = rcp(new FELIX::Elliptic2D(problemParams, paramLib, 1));
-  }
-  else if (method == "FELIX Enthalpy 3D") {
-    strategy = rcp(new FELIX::Enthalpy(problemParams, paramLib, 3));
-  }
-  else if (method == "FELIX Stokes FO Thermo Coupled 3D") {
-   strategy = rcp(new FELIX::StokesFOThermoCoupled(problemParams, paramLib, 3));
+  else if (FELIX::ProblemFactory::hasProblem(method)) {
+    FELIX::ProblemFactory felix_factory(problemParams,discretizationParams,paramLib);
+    strategy = felix_factory.create();
   }
 #endif
 #ifdef ALBANY_AERAS

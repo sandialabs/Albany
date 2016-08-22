@@ -26,7 +26,7 @@ namespace Albany {
     //! Default constructor
     ProblemFactory(const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
                    const Teuchos::RCP<ParamLib>& paramLib,
-                   const Teuchos::RCP<const Teuchos::Comm<int> >& commT_);  
+                   const Teuchos::RCP<const Teuchos::Comm<int> >& commT_);
 
     //! Destructor
     virtual ~ProblemFactory() {}
@@ -58,7 +58,7 @@ namespace Albany {
     Teuchos::RCP<ParamLib> paramLib;
 
     //! MPI Communicator
-    Teuchos::RCP<const Teuchos::Comm<int> > commT;  
+    Teuchos::RCP<const Teuchos::Comm<int> > commT;
 
     Teuchos::RCP<AAdapt::rc::Manager> rc_mgr;
 
