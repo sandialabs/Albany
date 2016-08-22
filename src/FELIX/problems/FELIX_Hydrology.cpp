@@ -25,7 +25,7 @@ FELIX::Hydrology::Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   has_h_equation = params->sublist("FELIX Hydrology").get<bool>("Use Water Thickness Equation",false);
   std::string sol_method = params->get<std::string>("Solution Method");
-  if (sol_method=="Unsteady")
+  if (sol_method=="Transient")
     unsteady = true;
   else
     unsteady = false;

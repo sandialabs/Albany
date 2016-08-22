@@ -211,7 +211,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
         ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
-
     }
   }
   else {//temporary fix for non STK meshes..
@@ -634,12 +633,12 @@ if (basalSideName!="INVALID")
   // Effective pressure
   if (ss_requirements.find(basalSideName)!=ss_requirements.end())
   {
-    stateName = "effective_pressure";
-    fieldName = "Effective Pressure";
     const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
 
-    auto it = std::find(req.begin(), req.end(), stateName);
-    if (it!=req.end())
+    // Check if the user also wants to save a side-averaged effective_pressure
+    stateName = "effective_pressure_side_avg";
+    fieldName = "Effective Pressure";
+    if (std::find(req.begin(), req.end(), stateName)!=req.end())
     {
       // We interpolate the effective pressure from quad point to cell (to then save it)
       ev = evalUtils.constructSideQuadPointsToSideInterpolationEvaluator (fieldName, basalSideName, false);
@@ -1003,7 +1002,7 @@ if (basalSideName!="INVALID")
     p->set<std::string>("Ice Thickness Variable Name", "Ice Thickness");
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
-    p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
+    p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Effective Pressure Surrogate"));
 
     // Output
     p->set<std::string>("Effective Pressure Variable Name","Effective Pressure");

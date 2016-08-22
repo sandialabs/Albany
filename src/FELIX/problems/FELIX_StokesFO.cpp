@@ -330,6 +330,7 @@ FELIX::StokesFO::getValidProblemParameters () const
   validPL->set<std::string> ("Surface Side Name", "", "Name of the surface side set");
   validPL->sublist("Stereographic Map", false, "");
   validPL->sublist("FELIX Viscosity", false, "");
+  validPL->sublist("FELIX Effective Pressure Surrogate", false, "Parameters needed to compute the effective pressure surrogate");
   validPL->sublist("FELIX Basal Friction Coefficient", false, "Parameters needed to compute the basal friction coefficient");
   validPL->sublist("FELIX Surface Gradient", false, "");
   validPL->sublist("Equation Set", false, "");
