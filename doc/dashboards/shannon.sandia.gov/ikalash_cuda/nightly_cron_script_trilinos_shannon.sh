@@ -7,13 +7,6 @@ export https_proxy="https://wwwproxy.sandia.gov:80"
 export http_proxy="http://wwwproxy.sandia.gov:80"
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/ha_cluster/home/projects/x86-64-sandybridge-nvidia/cuda/7.5.7/lib64:/ha_cluster/home/projects/mpfr/3.1.2/lib:/ha_cluster/home/projects/gmp/5.1.1/lib
 
-rm -rf /home/ikalash/Desktop/nightlyCDash/repos
-rm -rf /home/ikalash/Desktop/nightlyCDash/build
-rm -rf /home/ikalash/Desktop/nightlyCDash/ctest_nightly.cmake
-rm -rf /home/ikalash/Desktop/nightlyCDash/ctest_nightly.cmake.work
-rm -rf /home/ikalash/Desktop/nightlyCDash/nightly_log*
-rm -rf /home/ikalash/Desktop/nightlyCDash/results*
-
 cat trilinos ctest_nightly.cmake.frag >& ctest_nightly.cmake  
 
 now=$(date +"%m_%d_%Y-%H_%M")
