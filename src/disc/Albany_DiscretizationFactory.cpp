@@ -342,8 +342,8 @@ Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::Parameter
       Teuchos::RCP<Albany::GenericSTKMeshStruct> meshStruct2D;
       meshStruct2D = Teuchos::rcp(new Albany::AsciiSTKMesh2D(disc_params, comm));
       Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
-	  Albany::AbstractFieldContainer::FieldContainerRequirements req;
-	  int neq=2;
+    Albany::AbstractFieldContainer::FieldContainerRequirements req;
+    int neq=2;
       meshStruct2D->setFieldAndBulkData(comm, disc_params, neq, req,
                                         sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
       Ioss::Init::Initializer io;
@@ -372,6 +372,10 @@ Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::Parameter
       basal_params->set("Use Serial Mesh", disc_params->get("Use Serial Mesh", false));
       basal_params->set("Exodus Input File Name", disc_params->get("Exodus Input File Name", "basalmesh.exo"));
     }
+
+    // The basal params must have the number of derivatives
+    if (!basal_params->isParameter("Number Of Time Derivatives"))
+      basal_params->set<int>("Number Of Time Derivatives",disc_params->get<int>("Number Of Time Derivatives"));
 
     basalMesh = createMeshStruct(basal_params, Teuchos::null, comm);
     return Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(disc_params, comm, basalMesh));
@@ -469,7 +473,7 @@ void
 Albany::DiscretizationFactory::setupInternalMeshStruct(
   unsigned int neq,
   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-  const AbstractFieldContainer::FieldContainerRequirements& req) 
+  const AbstractFieldContainer::FieldContainerRequirements& req)
 {
   setupInternalMeshStruct(neq, sis, empty_side_set_sis, req, empty_side_set_req);
 }
@@ -487,7 +491,7 @@ Albany::DiscretizationFactory::setupInternalMeshStruct(
 
 Teuchos::RCP<Albany::AbstractDiscretization>
 Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
-  const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes) 
+  const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes)
 {
   return createDiscretizationFromInternalMeshStruct(empty_side_set_equations, rigidBodyModes);
 }
