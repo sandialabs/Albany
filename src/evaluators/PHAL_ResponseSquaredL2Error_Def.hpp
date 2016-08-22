@@ -114,7 +114,6 @@ void PHAL::ResponseSquaredL2ErrorBase<EvalT, Traits, TargetScalarT>::evaluateFie
 
       sum += sq * w_measure(cell,qp);
     }
-
     this->local_response(cell, 0) += sum*scaling;
     this->global_response(0) += sum*scaling;
   }
@@ -130,7 +129,7 @@ void PHAL::ResponseSquaredL2ErrorBase<EvalT, Traits, TargetScalarT>::postEvaluat
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
 
   if(workset.comm->getRank()==0)
-    std::cout << "resp: " << Sacado::ScalarValue<ScalarT>::eval(this->global_response(0)) << "\n" << std::flush;
+    std::cout << "resp: " << this->global_response(0) << "\n" << std::flush;
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postEvaluate(workset);
