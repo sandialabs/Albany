@@ -22,12 +22,8 @@ namespace FELIX
 */
 
 template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes>
-class BasalFrictionCoefficient;
-
-// Partial specialization for StokesFO, StokesFOThickness and StokesFOHydrology problems
-template<typename EvalT, typename Traits, bool IsHydrology>
-class BasalFrictionCoefficient<EvalT,Traits,IsHydrology,true> : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                                                public PHX::EvaluatorDerived<EvalT, Traits>
+class BasalFrictionCoefficient : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                 public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
@@ -35,6 +31,7 @@ public:
   typedef typename EvalT::MeshScalarT   MeshScalarT;
   typedef typename EvalT::ParamScalarT  ParamScalarT;
 
+  typedef typename std::conditional<IsStokes,ScalarT,ParamScalarT>::type     IceScalarT;
   typedef typename std::conditional<IsHydrology,ScalarT,ParamScalarT>::type  HydroScalarT;
 
   BasalFrictionCoefficient (const Teuchos::ParameterList& p,
@@ -60,15 +57,15 @@ private:
   double A;               // Constant value for the flowFactorA field (for REGULARIZED_COULOMB only)
 
   // Input:
-  PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>      beta_given_field;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>           u_norm;
-  PHX::MDField<HydroScalarT,Cell,Side,QuadPoint>      N;
-  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>   coordVec;
+  PHX::MDField<ParamScalarT>  beta_given_field;
+  PHX::MDField<IceScalarT>    u_norm;
+  PHX::MDField<HydroScalarT>  N;
+  PHX::MDField<MeshScalarT>   coordVec;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>           beta;
+  PHX::MDField<ScalarT>       beta;
 
-  std::string                         basalSideName;
+  std::string                 basalSideName;  // Only if IsStokes=true
 
   bool use_stereographic_map;
 
@@ -79,52 +76,10 @@ private:
   int numNodes;
   int numQPs;
 
+  bool logParameters;
   bool regularize;
 
   enum BETA_TYPE {GIVEN_CONSTANT, EXP_GIVEN_FIELD, GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
-  BETA_TYPE beta_type;
-};
-
-// Partial Specialization for Hydrology only problem
-template<typename EvalT, typename Traits>
-class BasalFrictionCoefficient<EvalT,Traits,true,false> : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                                          public PHX::EvaluatorDerived<EvalT, Traits>
-{
-public:
-
-  typedef typename EvalT::ScalarT       ScalarT;
-  typedef typename EvalT::MeshScalarT   MeshScalarT;
-  typedef typename EvalT::ParamScalarT  ParamScalarT;
-
-  BasalFrictionCoefficient (const Teuchos::ParameterList& p,
-                            const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& vm);
-
-  void evaluateFields (typename Traits::EvalData d);
-
-private:
-
-  double beta_given_val;  // Constant value (for CONSTANT only)
-
-  // Input:
-  PHX::MDField<ParamScalarT,Cell,QuadPoint>     beta_given_field;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>  coordVec;
-
-  // Output:
-  PHX::MDField<ParamScalarT,Cell,QuadPoint>     beta;
-
-  bool use_stereographic_map;
-
-  double x_0;
-  double y_0;
-  double R2;
-
-  int numNodes;
-  int numQPs;
-
-  enum BETA_TYPE {GIVEN_CONSTANT, EXP_GIVEN_FIELD, GIVEN_FIELD};
   BETA_TYPE beta_type;
 };
 

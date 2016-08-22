@@ -37,6 +37,11 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   k_0   = hydrology.get<double>("Transmissivity");
   alpha = hydrology.get<double>("Water Thickness Exponent (alpha)",3);
   beta  = hydrology.get<double>("Potential Gradient Exponent (beta)",2) - 2.0;
+
+  // The mesh is assumed to be in km, therefore we need to adjust the units
+  // of divergence and gradient, since all other distances are in SI units.
+  // We do so by simply rescaling k_0
+  k_0   *= 1e-6;
 /*
   needsGradPhiNorm = false;
   if (beta!=0.0)

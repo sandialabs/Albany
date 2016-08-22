@@ -22,17 +22,15 @@ namespace FELIX
 */
 
 template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes>
-class EffectivePressure;
-
-// Partial specialization for Hydrology only problem
-template<typename EvalT, typename Traits>
-class EffectivePressure<EvalT,Traits,false,true> : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                                   public PHX::EvaluatorDerived<EvalT, Traits>
+class EffectivePressure : public PHX::EvaluatorWithBaseImpl<Traits>,
+                          public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
   typedef typename EvalT::ScalarT      ScalarT;
   typedef typename EvalT::ParamScalarT ParamScalarT;
+
+  typedef typename std::conditional<IsHydrology,ScalarT,ParamScalarT>::type  HydroScalarT;
 
   EffectivePressure (const Teuchos::ParameterList& p,
                      const Teuchos::RCP<Albany::Layouts>& dl);
@@ -47,95 +45,25 @@ private:
   // Input:
   PHX::MDField<ParamScalarT>  H;
   PHX::MDField<ParamScalarT>  z_s;
-  PHX::MDField<ParamScalarT>  phi;
+  PHX::MDField<HydroScalarT>  phi;
 
   // Output:
-  PHX::MDField<ParamScalarT>  N;
-
-  std::string basalSideName;
+  PHX::MDField<HydroScalarT>  N;
 
   int numNodes;
+  int scenario;
 
-  bool   regularized;
   double rho_i;
   double rho_w;
   double g;
 
+  std::string basalSideName; // Needed if IsStokes=true
+
+  // Parameters needed for Stokes alone case
+  bool   regularized;
   PHX::MDField<ScalarT,Dim> alphaParam;
   PHX::MDField<ScalarT,Dim> regularizationParam;
   ScalarT printedAlpha;
-};
-
-// Partial specialization: coupled StokesFOHydrology problem
-template<typename EvalT, typename Traits>
-class EffectivePressure<EvalT,Traits,true,true> : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                                  public PHX::EvaluatorDerived<EvalT, Traits>
-{
-public:
-
-  typedef typename EvalT::ScalarT      ScalarT;
-  typedef typename EvalT::ParamScalarT ParamScalarT;
-
-  EffectivePressure (const Teuchos::ParameterList& p,
-                     const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-
-  // Input:
-  PHX::MDField<ParamScalarT>  H;
-  PHX::MDField<ParamScalarT>  z_s;
-  PHX::MDField<ScalarT>       phi;
-
-  // Output:
-  PHX::MDField<ScalarT>       N;
-
-  std::string basalSideName;
-
-  int numNodes;
-
-  double rho_i;
-  double rho_w;
-  double g;
-};
-
-// Partial specialization: Hydrology problem
-template<typename EvalT, typename Traits>
-class EffectivePressure<EvalT,Traits,true,false> : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                                   public PHX::EvaluatorDerived<EvalT, Traits>
-{
-public:
-
-  typedef typename EvalT::ScalarT      ScalarT;
-  typedef typename EvalT::ParamScalarT ParamScalarT;
-
-  EffectivePressure (const Teuchos::ParameterList& p,
-                     const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-
-  // Input:
-  PHX::MDField<ParamScalarT>  H;
-  PHX::MDField<ParamScalarT>  z_s;
-  PHX::MDField<ScalarT>       phi;
-
-  // Output:
-  PHX::MDField<ScalarT>       N;
-
-  int numNodes;
-
-  double rho_i;
-  double rho_w;
-  double g;
 };
 
 } // Namespace FELIX

@@ -23,50 +23,16 @@ namespace FELIX
 */
 
 template<typename EvalT, typename Traits, bool IsStokes>
-class HydrologyMeltingRate;
-
-// Partial specialization for Hydrology only problem
-template<typename EvalT, typename Traits>
-class HydrologyMeltingRate<EvalT,Traits,false> : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                                 public PHX::EvaluatorDerived<EvalT, Traits>
-{
-public:
-
-  typedef typename EvalT::ParamScalarT ParamScalarT;
-
-  HydrologyMeltingRate (const Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
-
-  // Input:
-  PHX::MDField<ParamScalarT,Cell,QuadPoint>  u_b;
-  PHX::MDField<ParamScalarT,Cell,QuadPoint>  beta;
-  PHX::MDField<ParamScalarT,Cell,QuadPoint>  G;
-
-  // Output:
-  PHX::MDField<ParamScalarT,Cell,QuadPoint>  m;
-
-  int numQPs;
-
-  double L;
-};
-
-// Partial specialization for StokesFO coupling
-template<typename EvalT, typename Traits>
-class HydrologyMeltingRate<EvalT,Traits,true> : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                                public PHX::EvaluatorDerived<EvalT, Traits>
+class HydrologyMeltingRate : public PHX::EvaluatorWithBaseImpl<Traits>,
+                             public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
   typedef typename EvalT::ScalarT       ScalarT;
   typedef typename EvalT::ParamScalarT  ParamScalarT;
 
+  typedef typename std::conditional<IsStokes,ScalarT,ParamScalarT>::type     IceScalarT;
+
   HydrologyMeltingRate (const Teuchos::ParameterList& p,
                         const Teuchos::RCP<Albany::Layouts>& dl);
 
@@ -78,18 +44,17 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>       u_b;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>       beta;
-  PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>  G;
+  PHX::MDField<IceScalarT>    u_b;
+  PHX::MDField<ScalarT>       beta;
+  PHX::MDField<ParamScalarT>  G;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>       m;
+  PHX::MDField<ScalarT>       m;
 
-  std::string       sideSetName;
+  int               numQPs;
+  double            L;
 
-  int numQPs;
-
-  double L;
+  std::string       sideSetName; // Only needed if IsStokes=true
 };
 
 } // Namespace FELIX

@@ -12,21 +12,60 @@ namespace FELIX {
 //**********************************************************************
 // PARTIAL SPECIALIZATION: Hydrology ***********************************
 //**********************************************************************
-template<typename EvalT, typename Traits>
-HydrologyResidualThicknessEqn<EvalT, Traits, false>::
+template<typename EvalT, typename Traits, bool IsStokes>
+HydrologyResidualThicknessEqn<EvalT, Traits, IsStokes>::
 HydrologyResidualThicknessEqn (const Teuchos::ParameterList& p,
                                const Teuchos::RCP<Albany::Layouts>& dl) :
-  BF        (p.get<std::string> ("BF Name"), dl->node_qp_scalar),
-  w_measure (p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar),
-  h         (p.get<std::string> ("Water Thickness QP Variable Name"), dl->qp_scalar),
-  h_dot     (p.get<std::string> ("Water Thickness Dot QP Variable Name"), dl->qp_scalar),
-  N         (p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar),
-  m         (p.get<std::string> ("Melting Rate QP Variable Name"), dl->qp_scalar),
-  u_b       (p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar)
+  residual  (p.get<std::string> ("Thickness Eqn Residual Name"),dl->node_scalar)
 {
-  numNodes = dl->node_scalar->dimension(1);
-  numQPs   = dl->qp_scalar->dimension(1);
-  numDims  = dl->qp_gradient->dimension(2);
+  if (IsStokes)
+  {
+    sideSetName = p.get<std::string>("Side Set Name");
+
+    Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
+
+    numNodes = dl_side->node_scalar->dimension(2);
+    numQPs   = dl_side->qp_scalar->dimension(2);
+
+    BF        = PHX::MDField<RealType>(p.get<std::string> ("BF Name"), dl_side->node_qp_scalar);
+    w_measure = PHX::MDField<MeshScalarT>(p.get<std::string> ("Weighted Measure Name"), dl_side->qp_scalar);
+    h         = PHX::MDField<ScalarT>(p.get<std::string> ("Water Thickness QP Variable Name"), dl_side->qp_scalar);
+    h_dot     = PHX::MDField<ScalarT>(p.get<std::string> ("Water Thickness Dot QP Variable Name"), dl_side->qp_scalar);
+    N         = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl_side->qp_scalar);
+    m         = PHX::MDField<ScalarT>(p.get<std::string> ("Melting Rate QP Variable Name"), dl_side->qp_scalar);
+    u_b       = PHX::MDField<IceScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl_side->qp_scalar);
+
+    // Index of the nodes on the sides in the numeration of the cell
+    int numSides = dl_side->node_scalar->dimension(1);
+    int sideDim  = dl_side->qp_gradient->dimension(3);
+
+    Teuchos::RCP<shards::CellTopology> cellType;
+    cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
+    sideNodes.resize(numSides);
+    for (int side=0; side<numSides; ++side)
+    {
+      // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
+      int thisSideNodes = cellType->getNodeCount(sideDim,side);
+      sideNodes[side].resize(thisSideNodes);
+      for (int node=0; node<thisSideNodes; ++node)
+      {
+        sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
+      }
+    }
+  }
+  else
+  {
+    numNodes = dl->node_scalar->dimension(1);
+    numQPs   = dl->qp_scalar->dimension(1);
+
+    BF        = PHX::MDField<RealType>(p.get<std::string> ("BF Name"), dl->node_qp_scalar);
+    w_measure = PHX::MDField<MeshScalarT>(p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar);
+    h         = PHX::MDField<ScalarT>(p.get<std::string> ("Water Thickness QP Variable Name"), dl->qp_scalar);
+    h_dot     = PHX::MDField<ScalarT>(p.get<std::string> ("Water Thickness Dot QP Variable Name"), dl->qp_scalar);
+    N         = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
+    m         = PHX::MDField<ScalarT>(p.get<std::string> ("Melting Rate QP Variable Name"), dl->qp_scalar);
+    u_b       = PHX::MDField<IceScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
+  }
 
   this->addDependentField(BF);
   this->addDependentField(w_measure);
@@ -41,33 +80,35 @@ HydrologyResidualThicknessEqn (const Teuchos::ParameterList& p,
   else
     this->addEvaluatedField(h_dot);
 
-  residual = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Thickness Eqn Residual Name"),dl->node_scalar);
-
   this->addEvaluatedField(residual);
 
   // Setting parameters
   Teuchos::ParameterList& hydrology_params = *p.get<Teuchos::ParameterList*>("FELIX Hydrology");
   Teuchos::ParameterList& physical_params  = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
 
-  rho_i = physical_params.get<double>("Ice Density");
+  double rho_i = physical_params.get<double>("Ice Density");
   h_r = hydrology_params.get<double>("Bed Bumps Height");
   l_r = hydrology_params.get<double>("Bed Bumps Length");
-  n   = hydrology_params.get<double>("Potential Eqn Mass Term Exponent");
   A   = hydrology_params.get<double>("Flow Factor Constant");
 
-  // Adjusting constants (for units)
-  A         = std::cbrt( A/31536000 ); // The factor 1/3153600 is to account for different units: ice velocity
-                                       // is in yr rather than s, while all other quantities are in SI units.
-                                       // The cubic root instead is to bring A inside the power with N and
-                                       // allow for general exponents.
-  l_r *= 31536000;  // Again, this is to adjust from [yr] (ice) to [s] (hydrology). The quantity to adjust is u_b, but since
-                    // u_b gets divided by l_r, we can adjust l_r here once and for all.
+  bool melting_cav = hydrology_params.get<bool>("Use Melting In Cavities Equation", false);
+  use_eff_cav = (hydrology_params.get<bool>("Use Effective Cavities Height", true) ? 1.0 : 0.0);
+  if (melting_cav)
+    rho_i_inv = 1./rho_i;
+  else
+    rho_i_inv = 0;
+
+  // Scalings, needed to account for different units: ice velocity
+  // is in m/yr rather than m/s, while all other quantities are in SI units.
+  double yr_to_s = 365.25*24*3600;
+  A   *= 1./(1000*yr_to_s);    // Need to adjust A, which is given in k [kPa]^-n yr^-1, to [kPa]^-n s^-1.
+  l_r *= yr_to_s;  // Since u_b is always divided by l_r, we simply scale l_r
 
   this->setName("HydrologyResidualThicknessEqn"+PHX::typeAsString<EvalT>());
 }
 
-template<typename EvalT, typename Traits>
-void HydrologyResidualThicknessEqn<EvalT, Traits, false>::
+template<typename EvalT, typename Traits, bool IsStokes>
+void HydrologyResidualThicknessEqn<EvalT, Traits, IsStokes>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -85,15 +126,49 @@ postRegistrationSetup(typename Traits::SetupData d,
     h_dot.deep_copy(ScalarT(0.0));
 }
 
-template<typename EvalT, typename Traits>
-void HydrologyResidualThicknessEqn<EvalT, Traits, false>::
+template<typename EvalT, typename Traits, bool IsStokes>
+void HydrologyResidualThicknessEqn<EvalT, Traits, IsStokes>::
 evaluateFields (typename Traits::EvalData workset)
 {
+  // h' = W_O - W_C = (m/rho_i + u_b*(h_b-h)/l_b) - AhN^n
+
   ScalarT res_node, res_qp;
 
-  if (unsteady)
+  if (IsStokes)
   {
-    // h' = W_O - W_C = (m/rho_i + u_b*(h_b-h)/l_b) - AhN^n
+    // Zero out, to avoid leaving stuff from previous workset!
+    const int numCellNodes = residual.fieldTag().dataLayout().dimension(1);
+    for (int cell=0; cell<workset.numCells; ++cell)
+      for (int node=0; node<numCellNodes; ++node)
+        residual(cell,node) = 0;
+
+    if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
+      return;
+
+    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
+    for (auto const& it_side : sideSet)
+    {
+      // Get the local data of side and cell
+      const int cell = it_side.elem_LID;
+      const int side = it_side.side_local_id;
+
+      for (int node=0; node < numNodes; ++node)
+      {
+        res_node = 0;
+        for (int qp=0; qp < numQPs; ++qp)
+        {
+          res_qp = rho_i_inv*m(cell,side,qp) - (h_r - use_eff_cav*h(cell,side,qp))*u_b(cell,side,qp)/l_r
+                 + h(cell,side,qp)*A*std::pow(N(cell,side,qp),3) - h_dot(cell,side,qp);
+
+          res_node += res_qp * BF(cell,side,node,qp) * w_measure(cell,side,qp);
+        }
+
+        residual (cell,sideNodes[side][node]) = res_node;
+      }
+    }
+  }
+  else
+  {
     for (int cell=0; cell < workset.numCells; ++cell)
     {
       for (int node=0; node < numNodes; ++node)
@@ -101,167 +176,13 @@ evaluateFields (typename Traits::EvalData workset)
         res_node = 0;
         for (int qp=0; qp < numQPs; ++qp)
         {
-          res_qp = m(cell,qp)/rho_i + (h_r -h(cell,qp))*u_b(cell,qp)/l_r
-                 - h(cell,qp)*std::pow(A*N(cell,qp),n) - h_dot(cell,qp);
+          res_qp = rho_i_inv*m(cell,qp) + (h_r - use_eff_cav*h(cell,qp))*u_b(cell,qp)/l_r
+                 - h(cell,qp)*A*std::pow(N(cell,qp),3) - h_dot(cell,qp);
 
           res_node += res_qp * BF(cell,node,qp) * w_measure(cell,qp);
         }
         residual (cell,node) = res_node;
       }
-    }
-  }
-  else
-  {
-    // h' = W_O - W_C = (m/rho_i + u_b*(h_b-h)/l_b) - AhN^n = 0
-    for (int cell=0; cell < workset.numCells; ++cell)
-    {
-      for (int node=0; node < numNodes; ++node)
-      {
-        res_node = 0;
-        for (int qp=0; qp < numQPs; ++qp)
-        {
-          res_qp = m(cell,qp)/rho_i + (h_r -h(cell,qp))*u_b(cell,qp)/l_r
-                 - h(cell,qp)*std::pow(A*N(cell,qp),n);
-
-          res_node += res_qp * BF(cell,node,qp) * w_measure(cell,qp);
-        }
-        residual (cell,node) = res_node;
-      }
-    }
-  }
-}
-
-//**********************************************************************
-// PARTIAL SPECIALIZATION: StokesFOHydrology ***************************
-//**********************************************************************
-template<typename EvalT, typename Traits>
-HydrologyResidualThicknessEqn<EvalT, Traits, true>::
-HydrologyResidualThicknessEqn (const Teuchos::ParameterList& p,
-                               const Teuchos::RCP<Albany::Layouts>& dl) :
-  BF        (p.get<std::string> ("BF Name"), dl->node_qp_scalar),
-  w_measure (p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar),
-  h         (p.get<std::string> ("Water Thickness QP Variable Name"), dl->qp_scalar),
-  h_dot     (p.get<std::string> ("Water Thickness Dot QP Variable Name"), dl->qp_scalar),
-  N         (p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar),
-  m         (p.get<std::string> ("Melting Rate QP Variable Name"), dl->qp_scalar),
-  u_b       (p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar)
-{
-  TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
-                                "Error! For Stokes-coupled hydrology, provide a side set layout structure.\n");
-
-  numNodes = dl->node_scalar->dimension(2);
-  numQPs   = dl->qp_scalar->dimension(2);
-  numDims  = dl->qp_gradient->dimension(3);
-
-  sideSetName = p.get<std::string>("Side Set Name");
-
-  // Index of the nodes on the sides in the numeration of the cell
-  int numSides = dl->node_scalar->dimension(1);
-  int sideDim  = dl->qp_gradient->dimension(3);
-
-  Teuchos::RCP<shards::CellTopology> cellType;
-  cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
-  sideNodes.resize(numSides);
-  for (int side=0; side<numSides; ++side)
-  {
-    // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-    int thisSideNodes = cellType->getNodeCount(sideDim,side);
-    sideNodes[side].resize(thisSideNodes);
-    for (int node=0; node<thisSideNodes; ++node)
-    {
-      sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
-    }
-  }
-
-  this->addDependentField(BF);
-  this->addDependentField(w_measure);
-  this->addDependentField(h);
-  this->addDependentField(N);
-  this->addDependentField(m);
-  this->addDependentField(u_b);
-
-  unsteady = p.get<bool>("Unsteady");
-  if (unsteady)
-    this->addDependentField(h_dot);
-  else
-    this->addEvaluatedField(h_dot);
-
-  residual = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Thickness Eqn Residual Name"),dl->node_scalar);
-
-  this->addEvaluatedField(residual);
-
-  // Setting parameters
-  Teuchos::ParameterList& hydrology_params = *p.get<Teuchos::ParameterList*>("FELIX Hydrology");
-  Teuchos::ParameterList& physical_params  = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
-
-  rho_i = physical_params.get<double>("Ice Density");
-  h_r = hydrology_params.get<double>("Bed Bumps Height");
-  l_r = hydrology_params.get<double>("Bed Bumps Length");
-  n   = hydrology_params.get<double>("Potential Eqn Mass Term Exponent");
-  A   = hydrology_params.get<double>("Flow Factor Constant");
-
-  // Adjusting constants (for units)
-  A         = std::cbrt( A*1e-21/31536000 ); // The factor 1e-21/3153600 is to account for different units. In particular, ice velocity
-                                             // is in yr (rather than s) and pressure/stresses are in kPa (rather than Pa)
-                                             // while all other quantities are in SI units. The cubic root instead is
-                                             // to bring A inside the power with N and allow for general exponents
-  l_r *= 31536000;  // Again, this is to adjust from [yr] (ice) to [s] (hydrology). The quantity to adjust is u_b, but since
-                    // u_b gets divided by l_r, we can adjust l_r here once and for all.
-
-  this->setName("HydrologyResidualThicknessEqn"+PHX::typeAsString<EvalT>());
-}
-
-template<typename EvalT, typename Traits>
-void HydrologyResidualThicknessEqn<EvalT, Traits, true>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
-{
-  this->utils.setFieldData(BF,fm);
-  this->utils.setFieldData(w_measure,fm);
-  this->utils.setFieldData(h,fm);
-  this->utils.setFieldData(h_dot,fm);
-  this->utils.setFieldData(N,fm);
-  this->utils.setFieldData(m,fm);
-  this->utils.setFieldData(u_b,fm);
-
-  this->utils.setFieldData(residual,fm);
-
-  if (!unsteady)
-    h_dot.deep_copy(ScalarT(0.0));
-}
-
-template<typename EvalT, typename Traits>
-void HydrologyResidualThicknessEqn<EvalT, Traits, true>::evaluateFields (typename Traits::EvalData workset)
-{
-  // Zero out, to avoid leaving stuff from previous workset!
-  const int numCellNodes = residual.fieldTag().dataLayout().dimension(1);
-  for (int cell=0; cell<workset.numCells; ++cell)
-    for (int node=0; node<numCellNodes; ++node)
-      residual(cell,node) = 0;
-
-  if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
-    return;
-
-  ScalarT res_qp, res_node;
-  const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(sideSetName);
-  for (auto const& it_side : sideSet)
-  {
-    // Get the local data of side and cell
-    const int cell = it_side.elem_LID;
-    const int side = it_side.side_local_id;
-
-    for (int node=0; node < numNodes; ++node)
-    {
-      res_node = 0;
-      for (int qp=0; qp < numQPs; ++qp)
-      {
-        res_qp = m(cell,side,qp)/rho_i - (h_r -h(cell,side,qp))*u_b(cell,side,qp)/l_r
-               + h(cell,side,qp)*std::pow(A*N(cell,side,qp),n) - h_dot(cell,side,qp);
-
-        res_node += res_qp * BF(cell,side,node,qp) * w_measure(cell,side,qp);
-      }
-
-      residual (cell,sideNodes[side][node]) = res_node;
     }
   }
 }

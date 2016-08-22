@@ -22,60 +22,16 @@ namespace FELIX
 */
 
 template<typename EvalT, typename Traits, bool IsStokes>
-class HydrologyResidualThicknessEqn;
-
-// Partial specialization for the hydrology only problem
-template<typename EvalT, typename Traits>
-class HydrologyResidualThicknessEqn<EvalT,Traits,false> : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                                          public PHX::EvaluatorDerived<EvalT, Traits>
+class HydrologyResidualThicknessEqn : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                      public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
-
-  HydrologyResidualThicknessEqn (const Teuchos::ParameterList& p,
-                                 const Teuchos::RCP<Albany::Layouts>& dl);
-
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
-
-  void evaluateFields(typename Traits::EvalData d);
-
-private:
 
   typedef typename EvalT::ScalarT         ScalarT;
   typedef typename EvalT::MeshScalarT     MeshScalarT;
   typedef typename EvalT::ParamScalarT    ParamScalarT;
 
-  // Input:
-  PHX::MDField<RealType,Cell,Node,QuadPoint>  BF;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint>    w_measure;
-  PHX::MDField<ScalarT,Cell,QuadPoint>        h;
-  PHX::MDField<ScalarT,Cell,QuadPoint>        h_dot;
-  PHX::MDField<ScalarT,Cell,QuadPoint>        N;
-  PHX::MDField<ParamScalarT,Cell,QuadPoint>   m;
-  PHX::MDField<ParamScalarT,Cell,QuadPoint>   u_b;
-
-  // Output:
-  PHX::MDField<ScalarT,Cell,Node> residual;
-
-  int numNodes;
-  int numQPs;
-  int numDims;
-
-  double rho_i;
-  double h_r;
-  double l_r;
-  double A;
-  double n;
-
-  bool unsteady;
-};
-
-// Partial specialization for StokesFO coupling
-template<typename EvalT, typename Traits>
-class HydrologyResidualThicknessEqn<EvalT,Traits,true> : public PHX::EvaluatorWithBaseImpl<Traits>,
-                                                          public PHX::EvaluatorDerived<EvalT, Traits>
-{
-public:
+  typedef typename std::conditional<IsStokes,ScalarT,ParamScalarT>::type     IceScalarT;
 
   HydrologyResidualThicknessEqn (const Teuchos::ParameterList& p,
                                  const Teuchos::RCP<Albany::Layouts>& dl);
@@ -87,30 +43,26 @@ public:
 
 private:
 
-  typedef typename EvalT::MeshScalarT MeshScalarT;
-  typedef typename EvalT::ScalarT     ScalarT;
-
   // Input:
-  PHX::MDField<RealType,Cell,Side,Node,QuadPoint>  BF;
-  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>    w_measure;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>        h;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>        h_dot;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>        N;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>        m;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>        u_b;
+  PHX::MDField<RealType>      BF;
+  PHX::MDField<MeshScalarT>   w_measure;
+  PHX::MDField<ScalarT>       h;
+  PHX::MDField<ScalarT>       h_dot;
+  PHX::MDField<ScalarT>       N;
+  PHX::MDField<ScalarT>       m;
+  PHX::MDField<IceScalarT>    u_b;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> residual;
+  PHX::MDField<ScalarT,Cell,Node>   residual;
 
   int numNodes;
   int numQPs;
-  int numDims;
 
-  double rho_i;
+  double use_eff_cav;
+  double rho_i_inv;
   double h_r;
   double l_r;
   double A;
-  double n;
 
   bool unsteady;
 
