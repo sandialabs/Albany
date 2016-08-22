@@ -778,6 +778,9 @@ void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::
       Teuchos::RCP<Albany::AbstractMeshStruct> ss_mesh;
       const std::string& ss_name = sideSets[i];
       params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(ss_name)));
+      if (!params_ss->isParameter("Number Of Time Derivatives"))
+        params_ss->set<int>("Number Of Time Derivatives",num_time_deriv);
+
       std::string method = params_ss->get<std::string>("Method");
       if (method=="SideSetSTK")
       {
@@ -1137,40 +1140,43 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
     req_fields_info = &dummyList;
   }
 
-  int num_fields = req_fields_info->get<int>("Number Of Fields",0);
-  // L.B: is this check a good idea?
-  TEUCHOS_TEST_FOR_EXCEPTION (num_fields!=req.size(), std::logic_error, "Error! The number of required fields in the discretization parameter list (" << num_fields << ") does not match the number of requirements declared in the problem section (" << req.size() << ").\n");
+  std::set<std::string> missing;
+  for (auto rname : req)
+    missing.insert(rname);
 
-  std::string fname, ftype, forigin;
+  std::string fname, fscope, ftype;
+  int num_fields = req_fields_info->get<int>("Number Of Fields",0);
   for (int ifield=0; ifield<num_fields; ++ifield)
   {
     std::stringstream ss;
     ss << "Field " << ifield;
     Teuchos::ParameterList& fparams = req_fields_info->sublist(ss.str());
 
-    fname   = fparams.get<std::string>("Field Name");
-    forigin = fparams.get<std::string>("Field Origin","File");
-    ftype   = fparams.get<std::string>("Field Type");
+    fname = fparams.get<std::string>("Field Name");
+    missing.erase(fname);
 
-    // L.B: again, is this check a good idea?
-    TEUCHOS_TEST_FOR_EXCEPTION (std::find(req.begin(),req.end(),fname)==req.end(), std::logic_error,
-                                "Error! The field '" << fname << "' is not listed in the problem requirements.\n");
+    fscope = fparams.get<std::string>("Field Scope", "Input From File");
+    if (fscope == "Output")
+    {
+      *out << "  - Skipping field '" << fname << "' since it's listed as output. Make sure there's an evaluator set to save it!\n";
+      continue;
 
-    if (forigin=="Mesh")
+    }
+    else if (fscope == "Unused")
+    {
+      *out << "  - Skipping field '" << fname << "' since it's listed as unused.\n";
+      continue;
+    }
+    else if (fscope=="Input From Mesh")
     {
       *out << "  - Skipping field '" << fname << "' since it's listed as already present in the mesh. Make sure this is true, since we can't check!\n";
       continue;
     }
-    else if (forigin=="Output")
-    {
-      *out << "  - Skipping field '" << fname << "' since it's listed as output (computed at run time). Make sure there's an evaluator set to save it.\n";
-      continue;
-    }
-    else if (forigin!="File")
-    {
-      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
-                                  "Error! Invalid choice for option 'Field Origin' for field '" << fname << "'.\n");
-    }
+
+    TEUCHOS_TEST_FOR_EXCEPTION (fscope!="Input From File", Teuchos::Exceptions::InvalidParameter,
+                                  "Error! 'Field Scope' for field '" << fname << "' must be one of 'Output', 'Unused', 'Input From File' or 'Input From Mesh'.\n");
+
+    ftype = fparams.get<std::string>("Field Type","INVALID");
 
     // Depending on the input field type, we need to use different pointers/importers/vectors
     if (ftype == "Node Scalar")
@@ -1208,9 +1214,20 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
     else
     {
       TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
-                                  "Sorry, I haven't yet implemented the case of field that are not (Layered) Scalar nor " <<
+                                  "Sorry, I haven't yet implemented the cases of fields that are not (Layered) Scalar nor " <<
                                   "(Layered) Vector or that is not defined at nodes nor elements.\n");
     }
+  }
+
+  if (missing.size()>0)
+  {
+    std::string missing_list;
+    for (auto i : missing)
+      missing_list += " '" + i + "',";
+    missing_list.erase(missing_list.size()-1);
+
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error,
+                                "Error! The following requirements were not find in the discretization list:" << missing_list << ".\n");
   }
 }
 
