@@ -48,6 +48,11 @@ find_program (CTEST_SVN_COMMAND NAMES svn)
 
 set (Albany_REPOSITORY_LOCATION https://github.com/gahansen/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION https://github.com/trilinos/Trilinos.git)
+# The following will allow you to push to a repo checked out using https.  It is not 
+# practical for CDash b/c it will prompt you to enter a password; but adding it here
+# for documentation. 
+#set (Albany_REPOSITORY_LOCATION https://ikalash@github.com/gahansen/Albany.git)
+#set (Trilinos_REPOSITORY_LOCATION https://ikalash@github.com/trilinos/Trilinos.git)
 
 
 set(NETCDF /home/ikalash/Install/TPLS)
