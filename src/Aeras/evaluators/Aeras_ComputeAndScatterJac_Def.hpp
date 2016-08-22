@@ -378,6 +378,7 @@ evaluateFields(typename Traits::EvalData workset)
     }//end of loop over cells
   }//end of if buildLaplace
 
+//#else
 
   //FIXME, IKT, 5/9/16: this function needs to be Kokkos-ized!  Kokkos implementation goes here.
   //std::cout << "ComputeAndScatterJac evaluateFields Jacobian specialization has not been Kokkos-ized yet!" << std::endl; 
