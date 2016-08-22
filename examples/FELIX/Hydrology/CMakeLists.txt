@@ -1,6 +1,8 @@
 # 1. Copy Input file from source to binary dir
 CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/input_steady.xml
                 ${CMAKE_CURRENT_BINARY_DIR}/input_steady.xml COPYONLY)
+CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/input_potential_only.xml
+                ${CMAKE_CURRENT_BINARY_DIR}/input_potential_only.xml COPYONLY)
 #CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/input_unsteady.xml
 #                ${CMAKE_CURRENT_BINARY_DIR}/input_unsteady.xml COPYONLY)
 
