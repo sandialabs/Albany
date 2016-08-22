@@ -217,7 +217,7 @@ Albany::ModelEvaluator::ModelEvaluator(
       if(param_list->isParameter("Upper Bound") && (distParam->upper_bounds_vector() != Teuchos::null))
         distParam->upper_bounds_vector()->putScalar(param_list->get<double>("Upper Bound", std::numeric_limits<double>::max()));
       if(param_list->isParameter("Initial Uniform Value") && (distParam->vector() != Teuchos::null))
-        distParam->vector()->putScalar(param_list->get<double>("Uniform Value"));
+        distParam->vector()->putScalar(param_list->get<double>("Initial Uniform Value"));
     }
   }
 
