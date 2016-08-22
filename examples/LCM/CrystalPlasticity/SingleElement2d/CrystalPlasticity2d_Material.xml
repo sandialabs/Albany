@@ -1,162 +1,190 @@
 <ParameterList>
 
-     <ParameterList name="ElementBlocks">
+  <ParameterList name="ElementBlocks">
 
-          <ParameterList name="Block0">
+    <ParameterList name="Block0">
 
-               <Parameter name="material"
-                          type="string" 
-                          value="Metal" />
+      <Parameter
+        name="material"
+        type="string"
+        value="Metal" />
 
-          </ParameterList>
-     
-     </ParameterList>
+    </ParameterList>
 
-     <ParameterList name="Materials">
+  </ParameterList>
 
-          <ParameterList name="Metal">
+  <ParameterList name="Materials">
 
-               <ParameterList name="Material Model"> 
+    <ParameterList name="Metal">
 
-                    <Parameter name="Model Name"
-                               type="string" 
-                               value="CrystalPlasticity"/>
+      <ParameterList name="Material Model">
 
-               </ParameterList>
+        <Parameter
+          name="Model Name"
+          type="string"
+          value="CrystalPlasticity" />
 
-               <!-- Crystal Elasticity moduli and orientation -->
-               <ParameterList name="Crystal Elasticity">
+      </ParameterList>
 
-                    <Parameter name="C11" 
-                               type="double"
-                               value="168.4"/>
+      <!-- Crystal Elasticity moduli and orientation -->
+      <ParameterList name="Crystal Elasticity">
 
-                    <Parameter name="C12"
-                               type="double"
-                               value="121.4"/>
+        <Parameter
+          name="C11"
+          type="double"
+          value="168.4" />
 
-                    <Parameter name="C44" 
-                               type="double"
-                               value="75.4"/>
+        <Parameter
+          name="C12"
+          type="double"
+          value="121.4" />
 
-                    <Parameter name="Basis Vector 1" 
-                               type="Array(double)"
-                               value="{1.0, 0.0, 0.0}"/>
+        <Parameter
+          name="C44"
+          type="double"
+          value="75.4" />
 
-                    <Parameter name="Basis Vector 2"
-                               type="Array(double)"
-                               value="{0.0, 1.0, 0.0}"/>
+        <Parameter
+          name="Basis Vector 1"
+          type="Array(double)"
+          value="{1.0, 0.0, 0.0}" />
 
-                    <Parameter name="Basis Vector 3"
-                               type="Array(double)"
-                               value="{0.0, 0.0, 1.0}"/>
+        <Parameter
+          name="Basis Vector 2"
+          type="Array(double)"
+          value="{0.0, 1.0, 0.0}" />
 
-               </ParameterList>
+        <Parameter
+          name="Basis Vector 3"
+          type="Array(double)"
+          value="{0.0, 0.0, 1.0}" />
 
-               <ParameterList name="Slip System Family 0">
+      </ParameterList>
 
-                    <ParameterList name="Flow Rule">
+      <ParameterList name="Slip System Family 0">
 
-                         <Parameter name="Type"
-                                    type="string"
-                                    value="Power Law"/>
+        <ParameterList name="Flow Rule">
 
-                         <Parameter name="Reference Slip Rate" 
-                                    type="double" 
-                                    value="1.0"/>
+          <Parameter
+            name="Type"
+            type="string"
+            value="Power Law" />
 
-                         <Parameter name="Rate Exponent" 
-                                    type="double" 
-                                    value="1.0"/>
+          <Parameter
+            name="Reference Slip Rate"
+            type="double"
+            value="1.0" />
 
-                    </ParameterList>
+          <Parameter
+            name="Rate Exponent"
+            type="double"
+            value="1.0" />
 
-                    <ParameterList name="Hardening Law">
+        </ParameterList>
 
-                         <Parameter name="Type" 
-                                    type="string" 
-                                    value="Linear Minus Recovery"/>
+        <ParameterList name="Hardening Law">
 
-                         <Parameter name="Hardening Modulus" 
-                                    type="double" 
-                                    value="0.0"/>
+          <Parameter
+            name="Type"
+            type="string"
+            value="Linear Minus Recovery" />
 
-                         <Parameter name="Recovery Modulus" 
-                                    type="double" 
-                                    value="0.0"/>
+          <Parameter
+            name="Hardening Modulus"
+            type="double"
+            value="0.0" />
 
-                         <Parameter name="Initial Hardening State"
-                                    type="double"
-                                    value="1.0"/>
+          <Parameter
+            name="Recovery Modulus"
+            type="double"
+            value="0.0" />
 
-                    </ParameterList>
+          <Parameter
+            name="Initial Hardening State"
+            type="double"
+            value="1.0" />
 
-               </ParameterList>
+        </ParameterList>
 
-               <!-- Crystal Plasticity Slip System -->
-               <Parameter name="Number of Slip Systems"
-                          type="int"
-                          value="2"/>
+      </ParameterList>
 
-               <ParameterList name="Slip System 1">
+      <!-- Crystal Plasticity Slip System -->
+      <Parameter
+        name="Number of Slip Systems"
+        type="int"
+        value="2" />
 
-                    <Parameter name="Slip Direction"
-                               type="Array(double)"
-                               value="{1.0, 0.0, 0.0}"/>
+      <ParameterList name="Slip System 1">
 
-                    <Parameter name="Slip Normal"
-                               type="Array(double)"
-                               value="{0.0, 1.0, 0.0}"/>
+        <Parameter
+          name="Slip Direction"
+          type="Array(double)"
+          value="{1.0, 0.0, 0.0}" />
 
-                    <Parameter name="Slip Family"
-                               type="int" 
-                               value="0"/>
+        <Parameter
+          name="Slip Normal"
+          type="Array(double)"
+          value="{0.0, 1.0, 0.0}" />
 
-               </ParameterList>
+        <Parameter
+          name="Slip Family"
+          type="int"
+          value="0" />
 
-               <ParameterList name="Slip System 2">
+      </ParameterList>
 
-                    <Parameter name="Slip Direction" 
-                               type="Array(double)" 
-                               value="{0.0, 1.0, 0.0}"/>
+      <ParameterList name="Slip System 2">
 
-                    <Parameter name="Slip Normal"
-                               type="Array(double)"
-                               value="{-1.0, 0.0, 0.0}"/>
+        <Parameter
+          name="Slip Direction"
+          type="Array(double)"
+          value="{0.0, 1.0, 0.0}" />
 
-                    <Parameter name="Slip Family"
-                               type="int"
-                               value="0"/>
-                               
-               </ParameterList>
+        <Parameter
+          name="Slip Normal"
+          type="Array(double)"
+          value="{-1.0, 0.0, 0.0}" />
 
-               <!-- Specify output to Exodus -->
-               <Parameter name="Output Cauchy Stress" 
-                          type="bool" 
-                          value="true"/>
+        <Parameter
+          name="Slip Family"
+          type="int"
+          value="0" />
 
-               <Parameter name="Output Fp" 
-                          type="bool"
-                          value="true"/>
+      </ParameterList>
 
-               <Parameter name="Output L" 
-                          type="bool" 
-                          value="true"/>
+      <!-- Specify output to Exodus -->
+      <Parameter
+        name="Output Cauchy Stress"
+        type="bool"
+        value="true" />
 
-               <Parameter name="Output Mechanical Source"
-                          type="bool"
-                          value="true"/>
+      <Parameter
+        name="Output Fp"
+        type="bool"
+        value="true" />
 
-               <Parameter name="Output Deformation Gradient"
-                          type="bool"
-                          value="true"/>
+      <Parameter
+        name="Output L"
+        type="bool"
+        value="true" />
 
-               <Parameter name="Output Integration Weights"
-                          type="bool" 
-                          value="true"/>
+      <Parameter
+        name="Output Mechanical Source"
+        type="bool"
+        value="true" />
 
-          </ParameterList>
+      <Parameter
+        name="Output Deformation Gradient"
+        type="bool"
+        value="true" />
 
-     </ParameterList>
+      <Parameter
+        name="Output Integration Weights"
+        type="bool"
+        value="true" />
+
+    </ParameterList>
+
+  </ParameterList>
 
 </ParameterList>

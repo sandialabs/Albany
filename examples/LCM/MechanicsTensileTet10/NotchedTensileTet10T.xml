@@ -1,27 +1,27 @@
 <ParameterList>
 
-	<!-- MODEL DECLARATION, Look in the "Problem" directory -->
+  <!-- MODEL DECLARATION, Look in the "Problem" directory -->
   <ParameterList name="Problem">
 
-		<!-- Declare your Physics (What you intend to model)! -->
+    <!-- Declare your Physics (What you intend to model)! -->
     <Parameter
       name="Name"
       type="string"
       value="Mechanics 3D" />
-		<!-- Transient or Steady (Quasi-Static) or Continuation (load steps) -->
+    <!-- Transient or Steady (Quasi-Static) or Continuation (load steps) -->
     <Parameter
       name="Solution Method"
       type="string"
       value="Continuation" />
-		<!-- XML filename with material definitions -->
+    <!-- XML filename with material definitions -->
     <Parameter
       name="MaterialDB Filename"
       type="string"
       value="materials.xml" />
 
-		<!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
+    <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
     <ParameterList name="Dirichlet BCs">
-			<!-- Kfield Boundary Conditions -->
+      <!-- Kfield Boundary Conditions -->
       <Parameter
         name="DBC on NS nodelist_2 for DOF Z"
         type="double"
@@ -49,7 +49,7 @@
           value="{ 0.0, 0.002}" />
       </ParameterList>
     </ParameterList>
-		<!-- PARAMETER -->
+    <!-- PARAMETER -->
     <ParameterList name="Parameters">
       <Parameter
         name="Number"
@@ -60,7 +60,7 @@
         type="string"
         value="Time" />
     </ParameterList>
-		<!-- RESPONSE FUNCTION used for regression testing -->
+    <!-- RESPONSE FUNCTION used for regression testing -->
     <ParameterList name="Response Functions">
       <Parameter
         name="Number"
@@ -99,7 +99,7 @@
     </ParameterList>
   </ParameterList>
 
-	<!-- MESH -->
+  <!-- MESH -->
   <ParameterList name="Discretization">
     <Parameter
       name="Method"
@@ -130,7 +130,7 @@
       type="string"
       value="resid" />
   </ParameterList>
-	<!-- REGRESSION comparison of the RESPONSE FUNCTION declared above -->
+  <!-- REGRESSION comparison of the RESPONSE FUNCTION declared above -->
   <ParameterList name="Regression Results">
     <Parameter
       name="Number of Comparisons"
@@ -139,7 +139,7 @@
     <Parameter
       name="Test Values"
       type="Array(double)"
-      value="{3.066230153023e-05}" />
+      value="{3.068153928654e-05}" />
     <Parameter
       name="Relative Tolerance"
       type="double"
@@ -155,7 +155,7 @@
   </ParameterList>
 
   <ParameterList name="Piro">
-		<!-- LOCA is used for stability analysis, continuation -->
+    <!-- LOCA is used for stability analysis, continuation -->
     <ParameterList name="LOCA">
       <ParameterList name="Bifurcation" />
       <ParameterList name="Constraints" />
@@ -165,18 +165,18 @@
           type="string"
           value="Tangent" />
       </ParameterList>
-			<!-- PARAMETER STEPPING -->
+      <!-- PARAMETER STEPPING -->
       <ParameterList name="Stepper">
         <Parameter
           name="Initial Value"
           type="double"
           value="0.0" />
-				<!-- Repeat the boundary condition (just one) that is to be loaded -->
+        <!-- Repeat the boundary condition (just one) that is to be loaded -->
         <Parameter
           name="Continuation Parameter"
           type="string"
           value="Time" />
-				<!-- The number of steps in the problem -->
+        <!-- The number of steps in the problem -->
         <Parameter
           name="Max Steps"
           type="int"
@@ -189,7 +189,7 @@
           name="Min Value"
           type="double"
           value="0.0" />
-				<!-- Compute eigenvalues of the global stiffness -->
+        <!-- Compute eigenvalues of the global stiffness -->
         <Parameter
           name="Compute Eigenvalues"
           type="bool"
@@ -210,8 +210,8 @@
         </ParameterList>
       </ParameterList>
       <ParameterList name="Step Size">
-				<!-- Control the actual parameter incrementation, here it is the displacement 
-					increment on the BC -->
+        <!-- Control the actual parameter incrementation, here it is the displacement 
+          increment on the BC -->
         <Parameter
           name="Initial Step Size"
           type="double"
@@ -222,7 +222,7 @@
           value="Constant" />
       </ParameterList>
     </ParameterList>
-		<!-- BEGIN SOLVER CONTROLS. IN GENERAL, The defaults need not be changed. -->
+    <!-- BEGIN SOLVER CONTROLS. IN GENERAL, The defaults need not be changed. -->
     <ParameterList name="NOX">
       <ParameterList name="Direction">
         <Parameter
@@ -242,7 +242,7 @@
             <ParameterList name="NOX Stratimikos Options">
             </ParameterList>
             <ParameterList name="Stratimikos">
-							<!-- Belos for iterative solvers, Amesos for direct -->
+              <!-- Belos for iterative solvers, Amesos for direct -->
               <Parameter
                 name="Linear Solver Type"
                 type="string"
@@ -315,23 +315,23 @@
                         name="Convergence Tolerance"
                         type="double"
                         value="1e-6" />
-											<!-- <Parameter name="Output Frequency" type="int" value="10"/> 
-												<Parameter name="Output Style" type="int" value="1"/> <Parameter name="Verbosity" 
-												type="int" value="33"/> <Parameter name="Maximum Iterations" type="int" value="200"/> 
-												<Parameter name="Block Size" type="int" value="1"/> <Parameter name="Num 
-												Blocks" type="int" value="200"/> -->
+                      <!-- <Parameter name="Output Frequency" type="int" value="10"/> 
+                        <Parameter name="Output Style" type="int" value="1"/> <Parameter name="Verbosity" 
+                        type="int" value="33"/> <Parameter name="Maximum Iterations" type="int" value="200"/> 
+                        <Parameter name="Block Size" type="int" value="1"/> <Parameter name="Num Blocks" 
+                        type="int" value="200"/> -->
                     </ParameterList>
                     <ParameterList name="Block CG">
                       <Parameter
                         name="Output Frequency"
                         type="int"
                         value="1" />
-											<!-- <Parameter name="Convergence Tolerance" type="double" value="1e-10"/> 
-												<Parameter name="Output Frequency" type="int" value="10"/> <Parameter name="Output 
-												Style" type="int" value="1"/> <Parameter name="Verbosity" type="int" value="33"/> 
-												<Parameter name="Maximum Iterations" type="int" value="200"/> <Parameter 
-												name="Block Size" type="int" value="1"/> <Parameter name="Num Blocks" type="int" 
-												value="200"/> <Parameter name="Flexible Gmres" type="bool" value="0"/> -->
+                      <!-- <Parameter name="Convergence Tolerance" type="double" 
+                        value="1e-10"/> <Parameter name="Output Frequency" type="int" value="10"/> <Parameter 
+                        name="Output Style" type="int" value="1"/> <Parameter name="Verbosity" type="int" 
+                        value="33"/> <Parameter name="Maximum Iterations" type="int" value="200"/> <Parameter 
+                        name="Block Size" type="int" value="1"/> <Parameter name="Num Blocks" type="int" 
+                        value="200"/> <Parameter name="Flexible Gmres" type="bool" value="0"/> -->
                     </ParameterList>
                   </ParameterList>
                 </ParameterList>
@@ -341,7 +341,7 @@
                 type="string"
                 value="MueLu" />
               <ParameterList name="Preconditioner Types">
-								<!-- ML -->
+                <!-- ML -->
                 <ParameterList name="MueLu">
                   <Parameter
                     name="multigrid algorithm"
@@ -420,7 +420,7 @@
           name="Output Processor"
           type="int"
           value="0" />
-				<!-- set the output information -->
+        <!-- set the output information -->
         <ParameterList name="Output Information">
           <Parameter
             name="Error"
@@ -460,7 +460,7 @@
             value="1" />
         </ParameterList>
       </ParameterList>
-			<!-- Checking for residual convergence (rel, maxiter, abs, finitevalue) -->
+      <!-- Checking for residual convergence (rel, maxiter, abs, finitevalue) -->
       <ParameterList name="Solver Options">
         <Parameter
           name="Status Test Check Type"

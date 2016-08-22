@@ -40,7 +40,7 @@ case "$SCRIPT_NAME" in
     test-mail.sh)
 	;;
     *)
-	echo "Unrecognized script name"
+	echo "Unrecognized script name: $SCRIPT_NAME"
 	exit 1
 	;;
 esac
@@ -67,7 +67,7 @@ case "$SCRIPT_NAME" in
 	    albany)
 		;;
 	    *)
-		echo "Unrecognized package option"
+		echo "Unrecognized package option in config: $PACKAGE"
 		exit 1
 		;;
 	esac
@@ -158,7 +158,7 @@ case "$SCRIPT_NAME" in
 		sed -i -e "s|lcm_cxx_flags|-msse3 -std=c++11 -g -O0|g;" "$CONFIG_FILE"
 		;;
 	    *)
-		echo "Unrecognized build type option"
+		echo "Unrecognized build type option in config: $BUILD_TYPE"
 		exit 1
 		;;
 	esac
@@ -224,7 +224,7 @@ case "$SCRIPT_NAME" in
 		sed -i -e "s|lcm_slfad_size|-D SLFAD_SIZE=48|g;" "$CONFIG_FILE"
 		;;
 	    *)
-		echo "Unrecognized architecture option"
+		echo "Unrecognized architecture option in config: $ARCH"
 		exit 1
 		;;
 	esac
@@ -279,7 +279,7 @@ case "$SCRIPT_NAME" in
 		echo SUCCESS > "$STATUS_LOG" 
 		;;
 	    *)
-		echo "Unrecognized package option"
+		echo "Unrecognized package option in build: $PACKAGE"
 		exit 1
 		;;
 	esac
@@ -302,7 +302,7 @@ case "$SCRIPT_NAME" in
 		ctest --timeout 600 . | tee "$TEST_LOG"
 		;;
 	    *)
-		echo "Unrecognized package option"
+		echo "Unrecognized package option in test: $PACKAGE"
 		exit 1
 		;;
 	esac

@@ -86,7 +86,11 @@ struct J2MiniKernel : public ParallelKernel<EvalT, Traits>
 };
 
 template<typename EvalT, typename Traits>
-using J2MiniSolver = LCM::ParallelConstitutiveModel<EvalT, Traits, J2MiniKernel<EvalT, Traits>>;
+class J2MiniSolver : public LCM::ParallelConstitutiveModel<EvalT, Traits, J2MiniKernel<EvalT, Traits>> {
+public:
+  J2MiniSolver(Teuchos::ParameterList* p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
+};
 
 }
 #endif // LCM_J2MiniSolver_hpp
