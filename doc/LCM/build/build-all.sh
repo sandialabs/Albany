@@ -25,6 +25,7 @@ update_wiki () {
 source ./env-all.sh
 
 cd "$LCM_DIR"
+SCRIPT_NAME=`basename $0`
 
 case "$SCRIPT_NAME" in
     build-all.sh)
@@ -59,7 +60,7 @@ case "$SCRIPT_NAME" in
 	COMMAND="$LCM_DIR/${SCRIPT_NAME%-*}.sh"
 	;;
     *)
-	echo "Unrecognized script name"
+	echo "Unrecognized script name in build-all: $SCRIPT_NAME"
 	exit 1
 	;;
 esac
@@ -77,13 +78,13 @@ for P in $PACKAGES; do
                 module load "$MODULE"
                 "$COMMAND" "$P" "$NUM_PROCS"
                 # Update wiki after compiling Albany with gcc debug only.
-                case "$PACKAGE" in
+                case "$P" in
                     albany)
-	                case "$ARCH" in
+	                case "$A" in
 	                    serial)
-		                case "$BUILD_TYPE" in
+		                case "$BT" in
 		                    debug)
-			                case "$TOOL_CHAIN" in
+			                case "$TC" in
 			                    gcc)
 				                update_wiki
 				                ;;
@@ -94,7 +95,7 @@ for P in $PACKAGES; do
 			                    pgi)
 				                ;;
 			                    *)
-				                echo "Unrecognized tool chain option"
+				                echo "Unrecognized tool chain option in build-all: $TC"
 				                exit 1
 				                ;;
 			                esac
@@ -102,7 +103,7 @@ for P in $PACKAGES; do
 		                    release)
 			                ;;
 		                    *)
-			                echo "Unrecognized build type option"
+			                echo "Unrecognized build type option in build-all: $BT"
 			                exit 1
 			                ;;
 		                esac
@@ -112,7 +113,7 @@ for P in $PACKAGES; do
 	                    cuda)
 		                ;;
 	                    *)
-		                echo "Unrecongnized architecture option"
+		                echo "Unrecongnized architecture option in build-all: $A"
 		                exit 1
 		                ;;
 	                esac
@@ -120,7 +121,7 @@ for P in $PACKAGES; do
                     trilinos)
 	                ;;
                     *)
-	                echo "Unrecognized package option"
+	                echo "Unrecognized package option in build-all: $P"
 	                exit 1
 	                ;;
                 esac
