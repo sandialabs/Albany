@@ -139,7 +139,7 @@
     <Parameter
       name="Test Values"
       type="Array(double)"
-      value="{3.066230153023e-05}" />
+      value="{3.068153928654e-05}" />
     <Parameter
       name="Relative Tolerance"
       type="double"
