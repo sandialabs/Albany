@@ -1,0 +1,6 @@
+----Shannon CUDA Trilinos build----
+   0 Compiler errors
+   50 or more Compiler warnings
+----Shannon CUDA Albany build----
+   0 Compiler errors
+   50 or more Compiler warnings

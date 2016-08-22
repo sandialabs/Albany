@@ -28,9 +28,10 @@ configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
   ${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake COPYONLY)
 
 set (CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
-set (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
-set (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
+set (CTEST_CMAKE_COMMAND "cmake")
+set (CTEST_COMMAND "ctest -D ${CTEST_TEST_TYPE}")
 set (CTEST_FLAGS "-j16")
+SET (CTEST_BUILD_FLAGS "-j16")
 
 set (CTEST_DROP_METHOD "http")
 
@@ -53,7 +54,6 @@ set(NETCDF /home/ikalash/Install/TPLS)
 set(HDF5DIR /home/ikalash/Install/TPLS)
 set(BOOSTDIR /home/ikalash/Install/boost_1_53_0-gcc)
 set(INTEL_DIR /opt/intel/mkl/lib/intel64)
-set(MPICC_DIR /home/projects/x86-64-sandybridge-nvidia/openmpi/1.10.1/gnu/4.7.2/cuda/7.5.7/bin) 
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -152,13 +152,16 @@ if (BUILD_TRILINOS)
   set_property (GLOBAL PROPERTY SubProject IKTShannonTrilinosCUDA)
   set_property (GLOBAL PROPERTY Label IKTShannonTrilinosCUDA)
 
-
+    #"-DCMAKE_CXX_COMPILER:FILEPATH=${MPI_BASE_DIR}/bin/mpicxx" 
+    #"-DCMAKE_C_COMPILER:FILEPATH=${MPI_BASE_DIR}/bin/mpicc" 
+    #"-DCMAKE_Fortran_COMPILER:FILEPATH=${MPI_BASE_DIR}/bin/mpifort"
+    #"-DMPI_BASE_DIR:PATH=${MPI_BASE_DIR}"
   set (CONFIGURE_OPTIONS
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
-    "-DCMAKE_CXX_COMPILER:FILEPATH=${MPICC_DIR}/mpicxx" 
-    "-DCMAKE_C_COMPILER:FILEPATH=${MPICC_DIR}/mpicc" 
-    "-DCMAKE_Fortran_COMPILER:FILEPATH=${MPICC_DIR}/mpifort"
+    "-DCMAKE_CXX_COMPILER:FILEPATH=mpicxx" 
+    "-DCMAKE_C_COMPILER:FILEPATH=mpicc" 
+    "-DCMAKE_Fortran_COMPILER:FILEPATH=mpifort"
     "-DBLAS_LIBRARY_DIRS:PATH=$INTEL_DIR"
     "-DTPL_BLAS_LIBRARIES:STRING=-L${INTEL_DIR} -lmkl_intel_lp64 -lmkl_sequential -lmkl_core"
     "-DTPL_ENABLE_LAPACK:BOOL=ON"
@@ -260,7 +263,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
     "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
     "-DIntrepid2_ENABLE_KokkosDynRankView:BOOL=ON"
-    "-DBUILD_SHARED_LIBS:BOOL=ON"
   )
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")
@@ -330,21 +332,21 @@ endif()
 if (BUILD_ALBANY)
 
   # Configure the Albany build 
-  # Builds FELIX only. 
   #
 
   set_property (GLOBAL PROPERTY SubProject IKTShannonAlbanyCUDA)
   set_property (GLOBAL PROPERTY Label IKTShannonAlbanyCUDA)
 
+  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build-cuda/install")
 
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR}"
     "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_FELIX:BOOL=ON"
-    "-DENABLE_QCAD:BOOL=OFF"
+    "-DENABLE_QCAD:BOOL=ON"
     "-DENABLE_LCM:BOOL=OFF"
-    "-DENABLE_AERAS:BOOL=OFF"
+    "-DENABLE_AERAS:BOOL=ON"
     "-DENABLE_SG:BOOL=OFF"
     "-DENABLE_ENSEMBLE:BOOL=OFF"
     "-DENABLE_ATO:BOOL=OFF"
