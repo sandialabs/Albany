@@ -65,6 +65,14 @@ namespace ATO {
        const std::string &elementBlockName, 
        std::string residForceName);
 
+    void 
+    constructBoundaryConditionEvaluators(
+       const Teuchos::ParameterList& params,
+       PHX::FieldManager<Traits>& fm0,
+       Albany::StateManager& stateMgr,
+       const std::string &elementBlockName, 
+       std::string boundaryForceName);
+
   private:
 
     Teuchos::RCP<Albany::Layouts> dl;

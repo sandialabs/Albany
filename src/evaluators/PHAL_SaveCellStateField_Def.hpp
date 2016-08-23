@@ -89,19 +89,22 @@ evaluateFields(typename Traits::EvalData workset)
     std::vector<int> dims;
     field.dimensions(dims);
     int size = dims.size();
+    int numCells = workset.numCells;
+    int numQPs = dims[1];
+    
    
     double el_weight;
 
     switch (size) {
     case 1:
-      for (int cell = 0; cell < dims[0]; ++cell)
+      for (int cell = 0; cell < numCells; ++cell)
         sta(cell) = field(cell);
       break;
     case 2:
-      for (int cell = 0; cell < dims[0]; ++cell){
+      for (int cell = 0; cell < numCells; ++cell){
         sta(cell, 0) = 0.0;
         el_weight = 0.0;
-	for (int qp = 0; qp < dims[1]; ++qp){
+	for (int qp = 0; qp < numQPs; ++qp){
 	  sta(cell, 0) += weights(cell,qp)*field(cell,qp);
           el_weight += weights(cell,qp);
         }
@@ -109,10 +112,10 @@ evaluateFields(typename Traits::EvalData workset)
       }
       break;
     case 3:
-      for (int cell = 0; cell < dims[0]; ++cell){
+      for (int cell = 0; cell < numCells; ++cell){
         sta(cell, 0) = 0.0;
         el_weight = 0.0;
-	for (int qp = 0; qp < dims[1]; ++qp){
+	for (int qp = 0; qp < numQPs; ++qp){
 	  sta(cell, 0) += weights(cell,qp)*field(cell,qp,i_index);
           el_weight += weights(cell,qp);
         }
@@ -120,10 +123,10 @@ evaluateFields(typename Traits::EvalData workset)
       }
       break;
     case 4:
-      for (int cell = 0; cell < dims[0]; ++cell){
+      for (int cell = 0; cell < numCells; ++cell){
         sta(cell, 0) = 0.0;
         el_weight = 0.0;
-	for (int qp = 0; qp < dims[1]; ++qp){
+	for (int qp = 0; qp < numQPs; ++qp){
           sta(cell, 0) += weights(cell,qp)*field(cell,qp,i_index,j_index);
           el_weight += weights(cell,qp);
         }
@@ -131,10 +134,10 @@ evaluateFields(typename Traits::EvalData workset)
       }
       break;
     case 5:
-      for (int cell = 0; cell < dims[0]; ++cell){
+      for (int cell = 0; cell < numCells; ++cell){
         sta(cell, 0) = 0.0;
         el_weight = 0.0;
-	for (int qp = 0; qp < dims[1]; ++qp){
+	for (int qp = 0; qp < numQPs; ++qp){
           sta(cell, 0) += weights(cell,qp)*field(cell,qp,i_index,j_index,k_index);
           el_weight += weights(cell,qp);
         }

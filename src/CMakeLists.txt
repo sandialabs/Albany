@@ -718,6 +718,14 @@ ELSE()
   set(NLOPT_LIB )
 ENDIF()
 
+IF ( ENABLE_Cogent )
+  include_directories (${Cogent_INCLUDE_DIR})
+  link_directories (${Cogent_LIBRARY_DIR})
+  set(Cogent_LIB Cogent)
+ELSE()
+  set(Cogent_LIB )
+ENDIF()
+
 IF ( ENABLE_DOTK )
   include_directories (${DOTK_INCLUDE_DIR})
   link_directories (${DOTK_LIBRARY_DIR})
@@ -856,6 +864,7 @@ set(ALL_LIBRARIES
   ${LAME_LIB}
   ${MATH_TOOLKIT_LIB}
   ${NLOPT_LIB}
+  ${Cogent_LIB}
   ${DOTK_LIB}
   ${LAMENT_LIB}
   ${Trilinos_EXTRA_LD_FLAGS}

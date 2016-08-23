@@ -16,6 +16,8 @@ SET(SOURCES
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Stress.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ScaleVector.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_BodyForce.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_NeumannTerm.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_DirichletTerm.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_CreateField.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_AddForce.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TopologyWeighting.cpp
@@ -36,6 +38,12 @@ IF (ENABLE_DOTK)
   SET(SOURCES ${SOURCES}       
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_Optimizer.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_ContinuousOperators.cpp
+  )
+ENDIF()
+
+IF (ENABLE_Cogent)
+  SET(SOURCES ${SOURCES}       
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ComputeBasisFunctions.cpp
   )
 ENDIF()
 
@@ -62,6 +70,10 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ScaleVector.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_BodyForce_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_BodyForce.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_NeumannTerm_Def.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_NeumannTerm.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_DirichletTerm_Def.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_DirichletTerm.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_CreateField.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_CreateField_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_AddForce_Def.hpp
@@ -94,6 +106,13 @@ IF (ENABLE_DOTK)
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_Optimizer.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_ContinuousOperators.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_vector.hpp
+  )
+ENDIF()
+
+IF (ENABLE_Cogent)
+  SET(HEADERS ${HEADERS}
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ComputeBasisFunctions_Def.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ComputeBasisFunctions.hpp
   )
 ENDIF()
 

@@ -21,6 +21,9 @@
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
+#ifdef ATO_USES_COGENT
+#include <Cogent_Integrator.hpp>
+#endif
 
 namespace Albany {
 
@@ -122,6 +125,7 @@ namespace Albany {
 #include "ATO_AddForce.hpp"
 #include "ATO_TopologyFieldWeighting.hpp"
 #include "ATO_TopologyWeighting.hpp"
+#include "ATO_ComputeBasisFunctions.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "ElasticityResid.hpp"
 
@@ -154,12 +158,58 @@ Albany::LinearElasticityProblem::constructEvaluators(
    const int numNodes = intrepidBasis->getCardinality();
    const int worksetSize = meshSpecs.worksetSize;
 
-   Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
-   RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
 
-   const int numDim = cubature->getDimension();
+   int cubatureDegree = meshSpecs.cubatureDegree;
+
+   std::string blockType = "Body";
+
+#ifdef ATO_USES_COGENT
+   bool isNonconformal = false;
+   Teuchos::ParameterList geomSpec, blockSpec;
+   if(params->isSublist("Configuration")){
+     if(params->sublist("Configuration").isType<bool>("Nonconformal"))
+       isNonconformal = params->sublist("Configuration").get<bool>("Nonconformal");
+   }
+   RCP<Cogent::Integrator> projector;
+   if(isNonconformal){
+     // find geom spec
+     Teuchos::ParameterList& blocksParams = params->sublist("Configuration").sublist("Element Blocks");
+     int nBlocks = blocksParams.get<int>("Number of Element Blocks");
+     std::string specName;
+     for(int i=0; i<nBlocks; i++){
+       std::string specName_i = Albany::strint("Element Block", i);
+       blockSpec = blocksParams.sublist(specName_i);
+       if( blockSpec.get<std::string>("Name") == elementBlockName ){
+         geomSpec = blockSpec.sublist("Geometry Construction");
+         if( geomSpec.get<bool>("Uniform Quadrature") ){
+           specName = specName_i;
+           break;
+         } else {
+           TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                                    "Nonconformal method requires 'Uniform Quadrature'");
+         }
+       }
+     }
+     Cogent::IntegratorFactory integratorFactory;
+     projector = integratorFactory.create(cellType, intrepidBasis, geomSpec);
+//     projector = rcp(new Cogent::Integrator(cellType, intrepidBasis, geomSpec));
+
+     int projectionOrder = geomSpec.get<int>("Projection Order");
+     cubatureDegree = 2*projectionOrder;
+
+     blockType = geomSpec.get<std::string>("Type");
+
+   }
+#endif
+
+   Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+   RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > >
+     cubature = cubFactory.create(*cellType, cubatureDegree);
+
    const int numQPts = cubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();
+   const int numDim = cellType->getDimension();
+
 
    *out << "Field Dimensions: Workset=" << worksetSize 
         << ", Vertices= " << numVertices
@@ -177,17 +227,34 @@ Albany::LinearElasticityProblem::constructEvaluators(
    ATO::Utils<EvalT, PHAL::AlbanyTraits> atoUtils(dl, numDim);
 
 
+   // Temporary variable used numerous times below
+   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+
+#ifdef ATO_USES_COGENT
+   if( isNonconformal ){
+     Teuchos::Array<std::string> topoNames = geomSpec.get<Teuchos::Array<std::string> >("Level Set Names");
+     int numNames = topoNames.size();
+     for(int i=0; i<numNames; i++){
+       RCP<ParameterList> p = rcp(new ParameterList);
+       Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDataToElemNode;
+       p = stateMgr.registerStateVariable(topoNames[i], dl->node_scalar, "all", true, &entity);
+     }
+   }
+#endif
 
    std::string stressName("Stress");
    std::string strainName("Strain");
 
    std::string bodyForceName("Body Force");
+   std::string boundaryForceName("Boundary Force");
+   std::string residStressName("Not Set");
 
 
    Teuchos::ArrayRCP<std::string> dof_names(1);
    dof_names[0] = "Displacement";
    Teuchos::ArrayRCP<std::string> resid_names(1);
    resid_names[0] = dof_names[0]+" Residual";
+   
 
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
@@ -201,14 +268,41 @@ Albany::LinearElasticityProblem::constructEvaluators(
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructGatherCoordinateVectorEvaluator());
 
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
+     fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
 
-   fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+#ifdef ATO_USES_COGENT
+   if( isNonconformal ){
 
-   // Temporary variable used numerous times below
-   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+     RCP<ParameterList> p = rcp(new ParameterList("Compute Basis Functions"));
+
+     //Input
+     p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
+
+     p->set< RCP<Cogent::Integrator> >("Cubature",     projector);
+     p->set<std::string>("Coordinate Vector Name",   "Coord Vec");
+     p->set<std::string>("Weights Name",               "Weights");
+     p->set<std::string>("Jacobian Det Name",     "Jacobian Det");
+     p->set<std::string>("Jacobian Name",             "Jacobian");
+     p->set<std::string>("Jacobian Inv Name",     "Jacobian Inv");
+     p->set<std::string>("BF Name",                         "BF");
+     p->set<std::string>("Weighted BF Name",               "wBF");
+     p->set<std::string>("Gradient BF Name",           "Grad BF");
+     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+ 
+     ev = rcp(new ATO::ComputeBasisFunctions<EvalT,AlbanyTraits>(*p,dl,&meshSpecs));
+     fm0.template registerEvaluator<EvalT>(ev);
+ 
+   } else
+#endif
+     fm0.template registerEvaluator<EvalT>
+       (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+
+
+
+
+
+   
 
 
   { // Time
@@ -250,23 +344,29 @@ Albany::LinearElasticityProblem::constructEvaluators(
     atoUtils.SaveCellStateField(fm0, stateMgr, strainName, elementBlockName, dl->qp_tensor);
   }
 
+  if( blockType == "Body" ){
 
-  // Linear elasticity stress
-  //
-  atoUtils.constructStressEvaluators( params, fm0, stateMgr, elementBlockName, stressName, strainName );
- 
-  
-  // Body forces
-  //
-  atoUtils.constructBodyForceEvaluators( params, fm0, stateMgr, elementBlockName, bodyForceName );
- 
-  // Residual Strains
-  //
-  std::string residStressName("Not Set");
-  if( params->isSublist("Residual Strain") ){
-//    residForceName = params->sublist("Residual Strain").get<std::string>("Field Name");
-    residStressName = "Residual Stress";
-    atoUtils.constructResidualStressEvaluators( params, fm0, stateMgr, elementBlockName, residStressName );
+    // Linear elasticity stress
+    //
+    atoUtils.constructStressEvaluators( params, fm0, stateMgr, elementBlockName, stressName, strainName );
+   
+    
+    // Body forces
+    //
+    atoUtils.constructBodyForceEvaluators( params, fm0, stateMgr, elementBlockName, bodyForceName );
+   
+    // Residual Strains
+    //
+    if( params->isSublist("Residual Strain") ){
+      residStressName = "Residual Stress";
+      atoUtils.constructResidualStressEvaluators( params, fm0, stateMgr, elementBlockName, residStressName );
+    }
+  } else 
+  if( blockType == "Boundary" ){
+    
+    // Boundary forces
+    //
+    atoUtils.constructBoundaryConditionEvaluators( blockSpec, fm0, stateMgr, elementBlockName, boundaryForceName );
   }
  
 
@@ -287,6 +387,14 @@ Albany::LinearElasticityProblem::constructEvaluators(
       std::string fieldName  = fieldParams.get<std::string>("Name");
       std::string layoutName = fieldParams.get<std::string>("Layout");
       int functionIndex      = fieldParams.get<int>("Function Index");
+
+      std::string reqBlockType;
+      if( fieldParams.isType<std::string>("Type") )
+        reqBlockType = fieldParams.get<std::string>("Type");
+      else
+        reqBlockType = "Body";
+
+      if( reqBlockType != blockType ) continue;
 
       Teuchos::RCP<PHX::DataLayout> layout;
       if( layoutName == "QP Scalar" ) layout = dl->qp_scalar;
@@ -331,7 +439,9 @@ Albany::LinearElasticityProblem::constructEvaluators(
   /** End topology weighting *****************************************************/
   /*******************************************************************************/
 
-  { // Displacement Resid 
+  if( blockType == "Body" )
+  {
+   { // Displacement Resid 
     RCP<ParameterList> p = rcp(new ParameterList("Displacement Resid"));
 
     p->set<bool>("Disable Transient", true);
@@ -352,10 +462,10 @@ Albany::LinearElasticityProblem::constructEvaluators(
 
     ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-  }
+   }
 
-  if( params->isSublist("Body Force") )
-  {
+   if( params->isSublist("Body Force") )
+   {
     RCP<ParameterList> p = rcp(new ParameterList("Body Forces"));
     if( params->isType<Teuchos::RCP<ATO::TopologyArray> > ("Topologies") )
       p->set<std::string>("Force Name", bodyForceName+"_Weighted");
@@ -372,10 +482,11 @@ Albany::LinearElasticityProblem::constructEvaluators(
     p->set<bool>("Negative",true);
     ev = rcp(new ATO::AddForce<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-  }
+   }
 
-  if( params->isSublist("Residual Strain") ){
-    {
+   if( params->isSublist("Residual Strain") )
+   {
+     {
       //Compute divergence of the residual stress
       RCP<ParameterList> p = rcp(new ParameterList("Residual Stress Divergence"));
 
@@ -397,8 +508,8 @@ Albany::LinearElasticityProblem::constructEvaluators(
 
       ev = rcp(new LCM::ElasticityResid<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-    }
-    {
+     }
+     {
       RCP<ParameterList> p = rcp(new ParameterList("Add Residual Force"));
       p->set<std::string>("Force Name", "Residual Force");
       p->set< RCP<DataLayout> >("Force Data Layout", dl->node_vector);
@@ -409,7 +520,26 @@ Albany::LinearElasticityProblem::constructEvaluators(
       p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
       ev = rcp(new ATO::AddForce<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-    }
+     }
+   }
+  } else
+  if( blockType == "Boundary" )
+  {
+    RCP<ParameterList> p = rcp(new ParameterList("Boundary Forces"));
+    if( params->isType<Teuchos::RCP<ATO::TopologyArray> > ("Topologies") )
+      p->set<std::string>("Force Name", boundaryForceName+"_Weighted");
+    else 
+      p->set<std::string>("Force Name", boundaryForceName);
+    p->set<std::string>("Weighted BF Name", "wBF");
+    resid_names[0] = "Boundary Force";
+    p->set<std::string>("Out Residual Name", resid_names[0]);
+    p->set< RCP<DataLayout> >("Force Data Layout", dl->qp_vector);
+    p->set< RCP<DataLayout> >("Weighted BF Data Layout", dl->node_qp_scalar);
+    p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
+    p->set<bool>("Negative",true);
+    ev = rcp(new ATO::AddForce<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  
   }
 
   fm0.template registerEvaluator<EvalT>
