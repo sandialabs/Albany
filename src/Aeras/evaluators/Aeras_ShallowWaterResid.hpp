@@ -86,7 +86,7 @@ private:
 	Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
 	Kokkos::DynRankView<RealType, PHX::Device>    refPoints;
 	Kokkos::DynRankView<RealType, PHX::Device>    refWeights;
-#if ! defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) || defined(KOKKOS_HAVE_CUDA)
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 	Kokkos::DynRankView<MeshScalarT, PHX::Device>  nodal_jacobian;
 	Kokkos::DynRankView<MeshScalarT, PHX::Device>  nodal_inv_jacobian;
 	Kokkos::DynRankView<MeshScalarT, PHX::Device>  nodal_det_j;
@@ -117,7 +117,7 @@ private:
 	double sHvTau;
 
 
-#if ! defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) || defined(KOKKOS_HAVE_CUDA)
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 	void divergence(const Kokkos::DynRankView<ScalarT, PHX::Device>  & fieldAtNodes,
 			std::size_t cell, Kokkos::DynRankView<ScalarT, PHX::Device>  & div);
 
@@ -140,8 +140,6 @@ private:
 public:
 
 	//OG why is everything here public?
-
-
 	//this will stay
 	Kokkos::DynRankView<MeshScalarT, PHX::Device> refWeights_Kokkos;
 	Kokkos::DynRankView<MeshScalarT, PHX::Device> grad_at_cub_points_Kokkos;
@@ -149,23 +147,22 @@ public:
 
 	typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
 
-	PHX::MDField<ScalarT, Cell, Node> csurf;
-	PHX::MDField<ScalarT, Cell, Node> csurftilde;
-	PHX::MDField<ScalarT, Cell, QuadPoint, Dim> cgradsurf;
-	PHX::MDField<ScalarT, Cell, QuadPoint, Dim> cgradsurftilde;
-	PHX::MDField<ScalarT, Cell, Node> cUX, cUY, cUZ, cUTX, cUTY, cUTZ;
-	PHX::MDField<ScalarT, Cell, QuadPoint, Dim> cgradUX, cgradUY, cgradUZ;
-	PHX::MDField<ScalarT, Cell, QuadPoint, Dim> cgradUTX, cgradUTY, cgradUTZ;
-	PHX::MDField<ScalarT, Cell, Node, Dim> tempnodalvec1, tempnodalvec2;
-	PHX::MDField<ScalarT, Cell, Node, Dim> chuv;
-	PHX::MDField<ScalarT, Cell, QuadPoint> cdiv;
-	PHX::MDField<ScalarT, Cell, QuadPoint> ccor;
-	PHX::MDField<ScalarT, Cell, QuadPoint> cvort;
-	PHX::MDField<ScalarT, Cell, Node> ckineticEnergy, cpotentialEnergy;
-	PHX::MDField<ScalarT, Cell, Node, Dim> cvelocityVec;
-	PHX::MDField<ScalarT, Cell, QuadPoint, Dim> cgradKineticEnergy;
-	PHX::MDField<ScalarT, Cell, QuadPoint, Dim> cgradPotentialEnergy;
-
+  Kokkos::DynRankView<ScalarT, PHX::Device> csurf;
+  Kokkos::DynRankView<ScalarT, PHX::Device> csurftilde;
+  Kokkos::DynRankView<ScalarT, PHX::Device> cgradsurf;
+  Kokkos::DynRankView<ScalarT, PHX::Device> cgradsurftilde;
+  Kokkos::DynRankView<ScalarT, PHX::Device> cUX, cUY, cUZ, cUTX, cUTY, cUTZ;
+  Kokkos::DynRankView<ScalarT, PHX::Device> cgradUX, cgradUY, cgradUZ;
+  Kokkos::DynRankView<ScalarT, PHX::Device> cgradUTX, cgradUTY, cgradUTZ;
+  Kokkos::DynRankView<ScalarT, PHX::Device> tempnodalvec1, tempnodalvec2;
+  Kokkos::DynRankView<ScalarT, PHX::Device> chuv;
+  Kokkos::DynRankView<ScalarT, PHX::Device> cdiv;
+  Kokkos::DynRankView<ScalarT, PHX::Device> ccor;
+  Kokkos::DynRankView<ScalarT, PHX::Device> cvort;
+  Kokkos::DynRankView<ScalarT, PHX::Device> ckineticEnergy, cpotentialEnergy;
+  Kokkos::DynRankView<ScalarT, PHX::Device> cvelocityVec;
+  Kokkos::DynRankView<ScalarT, PHX::Device> cgradKineticEnergy;
+  Kokkos::DynRankView<ScalarT, PHX::Device> cgradPotentialEnergy;
 
 	std::vector<LO> qpToNodeMap;
 	std::vector<LO> nodeToQPMap;
@@ -176,22 +173,23 @@ public:
 
 //	ScalarT k11, k12, k21, k22, k32;
 
-	void divergence4(const PHX::MDField<ScalarT, Cell, Node, Dim>  & field,
-			const PHX::MDField<ScalarT, Cell, QuadPoint>  & div_,
+	KOKKOS_INLINE_FUNCTION
+	void divergence4(const Kokkos::DynRankView<ScalarT, PHX::Device>  & field,
+			const Kokkos::DynRankView<ScalarT, PHX::Device>  & div_,
 			const int & cell) const;
 
 	KOKKOS_INLINE_FUNCTION
-	void gradient4(const PHX::MDField<ScalarT, Cell, Node>  & field,
-			const PHX::MDField<ScalarT, Cell, QuadPoint, Dim>  & gradient_,
+	void gradient4(const Kokkos::DynRankView<ScalarT, PHX::Device>  & field,
+			const Kokkos::DynRankView<ScalarT, PHX::Device>  & gradient_,
 			const int & cell) const;
 
 	KOKKOS_INLINE_FUNCTION
-	void curl4(const PHX::MDField<ScalarT, Cell, Node, Dim>  & field,
-			const PHX::MDField<ScalarT, Cell, QuadPoint>  & curl_,
+	void curl4(const Kokkos::DynRankView<ScalarT, PHX::Device>  & field,
+			const Kokkos::DynRankView<ScalarT, PHX::Device>  & curl_,
 			const int &cell) const;
 
 	KOKKOS_INLINE_FUNCTION
-	void get_coriolis4(const PHX::MDField<ScalarT, Cell, QuadPoint>  & cor_,
+	void get_coriolis4(const Kokkos::DynRankView<ScalarT, PHX::Device>  & cor_,
 			const int &cell) const;
 
 	typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
@@ -257,7 +255,7 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	void BuildLaplace_for_uv (const int& cell) const;
 	
-        KOKKOS_INLINE_FUNCTION
+  KOKKOS_INLINE_FUNCTION
 	void setVecDim3_for_Vorticity (const int& cell) const;
 
 	KOKKOS_INLINE_FUNCTION
@@ -266,7 +264,7 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	void compute_Residuals12_notprescribed (const int& cell) const;
 	
-        KOKKOS_INLINE_FUNCTION
+  KOKKOS_INLINE_FUNCTION
 	void compute_Residuals12_Vorticity_notprescribed (const int& cell, const int& index) const;
 
 	KOKKOS_INLINE_FUNCTION
@@ -276,9 +274,10 @@ public:
 	// KOKKOS_INLINE_FUNCTION
 	//void compute_coefficients_K(const MeshScalarT lam, const MeshScalarT th   );
 
+	KOKKOS_INLINE_FUNCTION
 	void compute_3Dvelocity4(std::size_t node, const ScalarT lam, const ScalarT th, const ScalarT ulambda, const ScalarT utheta,
-			const PHX::MDField<ScalarT, Cell, Node>  & ux, const PHX::MDField<ScalarT, Cell, Node>  & uy,
-			const PHX::MDField<ScalarT, Cell, Node>  & uz, const int& cell) const;
+			const Kokkos::DynRankView<ScalarT, PHX::Device>  & ux, const Kokkos::DynRankView<ScalarT, PHX::Device>  & uy,
+			const Kokkos::DynRankView<ScalarT, PHX::Device>  & uz, const int& cell) const;
 
 #endif
 };
