@@ -125,7 +125,9 @@ namespace Albany {
 #include "ATO_AddForce.hpp"
 #include "ATO_TopologyFieldWeighting.hpp"
 #include "ATO_TopologyWeighting.hpp"
+#ifdef ATO_USES_COGENT
 #include "ATO_ComputeBasisFunctions.hpp"
+#endif
 #include "PHAL_SaveStateField.hpp"
 #include "ElasticityResid.hpp"
 
@@ -362,12 +364,19 @@ Albany::LinearElasticityProblem::constructEvaluators(
       atoUtils.constructResidualStressEvaluators( params, fm0, stateMgr, elementBlockName, residStressName );
     }
   } else 
-  if( blockType == "Boundary" ){
-    
+  if( blockType == "Boundary" )
+#ifdef ATO_USES_COGENT
+  {
     // Boundary forces
     //
     atoUtils.constructBoundaryConditionEvaluators( blockSpec, fm0, stateMgr, elementBlockName, boundaryForceName );
   }
+#else
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                               "Cogent not enabled. 'Boundary' block type not available.");
+  }
+#endif
  
 
   /*******************************************************************************/
@@ -524,6 +533,7 @@ Albany::LinearElasticityProblem::constructEvaluators(
    }
   } else
   if( blockType == "Boundary" )
+#ifdef ATO_USES_COGENT
   {
     RCP<ParameterList> p = rcp(new ParameterList("Boundary Forces"));
     if( params->isType<Teuchos::RCP<ATO::TopologyArray> > ("Topologies") )
@@ -541,6 +551,12 @@ Albany::LinearElasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   
   }
+#else
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                               "Cogent not enabled. 'Boundary' block type not available.");
+  }
+#endif
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructScatterResidualEvaluator(/*is_vector_dof=*/ true, resid_names));
