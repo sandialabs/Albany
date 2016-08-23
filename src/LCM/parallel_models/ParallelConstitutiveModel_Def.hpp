@@ -45,8 +45,13 @@ computeState(
   util::TimeGuard total_time_guard( kernel_time );
   //transfer_time->stop();
   //Kokkos::parallel_for(workset.numCells, kern);
+
+  //create a local copy of the kernel_ pointer.
+  //this may avoid internal compiler errors for GCC 4.7.2,
+  //which is buggy but is the only available compiler on Blue Gene/Q supercomputers
+  auto kernel_ptr = kernel_.get();
   Kokkos::parallel_for(Kokkos::RangePolicy<Kokkos::Schedule<Kokkos::Dynamic>>(0,workset.numCells),
-                        [this]( int cell ){ for (int pt = 0; pt < num_pts_; ++pt) {(*kernel_)(cell,pt);}});
+                        [=]( int cell ){ for (int pt = 0; pt < num_pts_; ++pt) {(*kernel_ptr)(cell,pt);}});
   Kokkos::fence();
 }
 
