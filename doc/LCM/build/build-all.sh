@@ -77,52 +77,30 @@ for P in $PACKAGES; do
                 echo "MODULE: $MODULE"
                 module load "$MODULE"
                 "$COMMAND" "$P" "$NUM_PROCS"
-                # Update wiki after compiling Albany with gcc debug only.
+                # Update wiki after compiling Albany with gcc release only.
                 case "$P" in
                     albany)
 	                case "$A" in
 	                    serial)
 		                case "$BT" in
-		                    debug)
+		                    release)
 			                case "$TC" in
 			                    gcc)
 				                update_wiki
 				                ;;
-			                    clang)
-				                ;;
-			                    intel)
-				                ;;
-			                    pgi)
-				                ;;
 			                    *)
-				                echo "Unrecognized tool chain option in build-all: $TC"
-				                exit 1
 				                ;;
 			                esac
 			                ;;
-		                    release)
-			                ;;
 		                    *)
-			                echo "Unrecognized build type option in build-all: $BT"
-			                exit 1
 			                ;;
 		                esac
 		                ;;
-	                    openmp)
-		                ;;
-	                    cuda)
-		                ;;
 	                    *)
-		                echo "Unrecongnized architecture option in build-all: $A"
-		                exit 1
 		                ;;
 	                esac
 	                ;;
-                    trilinos)
-	                ;;
                     *)
-	                echo "Unrecognized package option in build-all: $P"
-	                exit 1
 	                ;;
                 esac
                 module purge
