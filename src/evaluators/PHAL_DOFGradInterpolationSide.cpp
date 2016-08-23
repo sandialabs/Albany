@@ -9,4 +9,4 @@
 #include "PHAL_DOFGradInterpolationSide.hpp"
 #include "PHAL_DOFGradInterpolationSide_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(PHAL::DOFGradInterpolationSideBase)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(PHAL::DOFGradInterpolationSideBase)

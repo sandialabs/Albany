@@ -19,6 +19,7 @@
 #include "Phalanx_FieldManager.hpp"
 #include "Aeras_ShallowWaterResponseL2Error.hpp"
 #include "Aeras_HydrostaticResponseL2Norm.hpp"
+#include "Aeras_HydrostaticResponseL2Error.hpp"
 #include "Aeras_TotalVolume.hpp"
 #include "Teuchos_RCP.hpp"
 
@@ -61,6 +62,14 @@ Aeras::LayeredResponseUtilities<EvalT,Traits>::constructResponses(
   {
     RCP<Aeras::HydrostaticResponseL2Norm<EvalT,Traits> > res_ev =
       rcp(new Aeras::HydrostaticResponseL2Norm<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+  else if (responseName == "Aeras Hydrostatic L2 Error")
+  {
+    RCP<Aeras::HydrostaticResponseL2Error<EvalT,Traits> > res_ev =
+      rcp(new Aeras::HydrostaticResponseL2Error<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

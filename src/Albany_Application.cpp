@@ -49,10 +49,6 @@
 #endif
 #endif
 
-#ifdef ALBANY_GOAL
-#include "GOAL_BCUtils.hpp"
-#endif
-
 //#define WRITE_TO_MATRIX_MARKET
 
 using Teuchos::ArrayRCP;
@@ -65,7 +61,7 @@ using Teuchos::rcpFromRef;
 
 int countJac; //counter which counts instances of Jacobian (for debug output)
 int countRes; //counter which counts instances of residual (for debug output)
-int countScale; 
+int countScale;
 
 extern bool TpetraBuild;
 
@@ -185,7 +181,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   // Create problem object
   problemParams = Teuchos::sublist(params, "Problem", true);
 
-  Albany::ProblemFactory problemFactory(problemParams, paramLib, commT);
+  Albany::ProblemFactory problemFactory(params, paramLib, commT);
   rc_mgr = AAdapt::rc::Manager::create(
     Teuchos::rcp(&stateMgr, false), *problemParams);
   if (Teuchos::nonnull(rc_mgr))
@@ -297,49 +293,49 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   scale = scalingParams->get("Scale", 1.0);
   scaleBCdofs = scalingParams->get("Scale BC Dofs", false);
   std::string scaleType = scalingParams->get("Type", "Constant");
-  if (scaleType == "Constant") { 
+  if (scaleType == "Constant") {
     scale_type = CONSTANT;
   }
   else if (scaleType == "Diagonal") {
     scale_type = DIAG;
-    scale = 1.0e1; 
-    if (scaleBCdofs == true) { 
+    scale = 1.0e1;
+    if (scaleBCdofs == true) {
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                  std::endl << "Error in Albany::Application: " <<
-                                 "Scale BC dofs does not work with "  << scaleType 
-                                 << "Type scaling, only Type = Constant Scaling."<< std::endl);  
+                                 "Scale BC dofs does not work with "  << scaleType
+                                 << "Type scaling, only Type = Constant Scaling."<< std::endl);
     }
   }
   else if (scaleType == "Abs Row Sum") {
     scale_type = ABSROWSUM;
-    scale = 1.0e1; 
-    if (scaleBCdofs == true) { 
+    scale = 1.0e1;
+    if (scaleBCdofs == true) {
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                  std::endl << "Error in Albany::Application: " <<
-                                 "Scale BC dofs does not work with "  << scaleType 
-                                 << "Type scaling, only Type = Constant Scaling."<< std::endl);  
+                                 "Scale BC dofs does not work with "  << scaleType
+                                 << "Type scaling, only Type = Constant Scaling."<< std::endl);
     }
   }
   else {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "The scaling Type you selected " << scaleType << " is not supported!" << 
-          "Supported scaling Types are currently: Constant" << std::endl); 
+          "The scaling Type you selected " << scaleType << " is not supported!" <<
+          "Supported scaling Types are currently: Constant" << std::endl);
   }
   if (scale == 1.0)  scaleBCdofs = false;
   RCP<Teuchos::ParameterList> problemParams = Teuchos::sublist(params, "Problem", true);
-  if ((problemParams->get("Name", "Heat 1D") == "Poisson 1D") || 
+  if ((problemParams->get("Name", "Heat 1D") == "Poisson 1D") ||
       (problemParams->get("Name", "Heat 1D") == "Poisson 2D") ||
       (problemParams->get("Name", "Heat 1D") == "Poisson 3D") ||
       (problemParams->get("Name", "Heat 1D") == "Schrodinger 1D") ||
       (problemParams->get("Name", "Heat 1D") == "Schrodinger 2D") ||
-      (problemParams->get("Name", "Heat 1D") == "Schrodinger 3D")) { 
-    if (scaleBCdofs == true) { 
+      (problemParams->get("Name", "Heat 1D") == "Schrodinger 3D")) {
+    if (scaleBCdofs == true) {
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                  std::endl << "Error in Albany::Application: " <<
-                                 "Scale BC dofs does not work for QCAD Poisson or Schrodiner problems. " << std::endl);  
+                                 "Scale BC dofs does not work for QCAD Poisson or Schrodiner problems. " << std::endl);
     }
   }
-  
+
   // Create debug output object
   RCP<Teuchos::ParameterList> debugParams =
     Teuchos::sublist(params, "Debug Output", true);
@@ -366,9 +362,9 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
      countRes = 0; //initiate counter that counts instances of Jacobian matrix to 0
 
-  //FIXME: call setScaleBCDofs only on first step rather than at every Newton step. 
-  //It's called every step now b/c calling it once did not work for Schwarz problems. 
-  countScale = 0; 
+  //FIXME: call setScaleBCDofs only on first step rather than at every Newton step.
+  //It's called every step now b/c calling it once did not work for Schwarz problems.
+  countScale = 0;
   // Create discretization object
   discFactory = rcp(new Albany::DiscretizationFactory(params, commT, expl));
 
@@ -452,8 +448,8 @@ void Albany::Application::buildProblem()   {
   ResponseFactory responseFactory(Teuchos::rcp(this,false), problem, meshSpecs,
                                   Teuchos::rcp(&stateMgr,false));
   responses = responseFactory.createResponseFunctions(responseList);
-  observe_responses = responseList.get("Observe Responses", true); 
-  response_observ_freq = responseList.get("Responses Observation Frequency", 1); 
+  observe_responses = responseList.get("Observe Responses", true);
+  response_observ_freq = responseList.get("Responses Observation Frequency", 1);
   const Teuchos::Array<unsigned int> defaultDataUnsignedInt;
   relative_responses = responseList.get("Relative Responses Markers", defaultDataUnsignedInt);
 
@@ -553,12 +549,12 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
       Teuchos::RCP<const Tpetra_Map> node_mapT, overlap_node_mapT;
       node_mapT = disc->getMapT(param_name); //Petra::EpetraMap_To_TpetraMap(node_map, commT);
       overlap_node_mapT =  disc->getOverlapMapT(param_name); //Petra::EpetraMap_To_TpetraMap(overlap_node_map, commT);
-      dist_paramT = Teuchos::rcp(new Tpetra_Vector(node_mapT)); 
-        
+      dist_paramT = Teuchos::rcp(new Tpetra_Vector(node_mapT));
+
       // Initialize parameter with data stored in the mesh
       disc->getFieldT(*dist_paramT, param_name); //Petra::EpetraVector_To_TpetraVectorNonConst(dist_param, commT);
-        
-        
+
+
       // JR: for now, initialize to constant value from user input if requested.  This needs to be generalized.
       if(params->sublist("Problem").isType<Teuchos::ParameterList>("Topology Parameters")){
         Teuchos::ParameterList& topoParams = params->sublist("Problem").sublist("Topology Parameters");
@@ -599,7 +595,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
                              "getFieldManager not implemented!!!");
   dfm = problem->getDirichletFieldManager();
 
-  offsets_ = problem->getOffsets();  
+  offsets_ = problem->getOffsets();
 
   nfm = problem->getNeumannFieldManager();
 
@@ -640,6 +636,15 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
     morFacade = createMORFacade(disc, problemParams);
 #endif
 #endif
+  //MPerego: Preforming post registration setup here to make sure that the discretization is already created, so that 
+  //derivative dimensions are known. Cannot do post registration right before the evaluate , as done for other field managers.
+  //because memoizer hack is needed by Aeras.
+  //TODO, determine when it's best to perform post setup registration and fix memoizer hack if needed.
+  for(int i=0; i<responses.size(); ++i)
+  {
+    responses[i]->postRegSetup();
+  }
+
 
 /*
  * Initialize mesh adaptation features
@@ -912,7 +917,7 @@ void dfm_set (
   const Teuchos::RCP<const Tpetra_Vector>& x,
   const Teuchos::RCP<const Tpetra_Vector>& xd,
   const Teuchos::RCP<const Tpetra_Vector>& xdd,
-  Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr) 
+  Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr)
 {
   workset.xT = Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(x) : x;
   workset.transientTerms = Teuchos::nonnull(xd);
@@ -1148,21 +1153,21 @@ computeGlobalResidualImplT(
 
   // Assemble the residual into a non-overlapping vector
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-  
-  //Allocate scaleVec_ 
-  if (scaleVec_ == Teuchos::null && scale != 1.0) { 
-    scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap())); 
-    setScale(); 
+
+  //Allocate scaleVec_
+  if (scaleVec_ == Teuchos::null && scale != 1.0) {
+    scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap()));
+    setScale();
   }
 
-#ifdef WRITE_TO_MATRIX_MARKET 
+#ifdef WRITE_TO_MATRIX_MARKET
   char nameResUnscaled[100];  //create string for file name
   sprintf(nameResUnscaled, "resUnscaled%i_residual.mm", countScale);
   Tpetra_MatrixMarket_Writer::writeDenseFile(nameResUnscaled, fT);
 #endif
-  if (scaleBCdofs == false && scale != 1.0)  
-    fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0); 
-#ifdef WRITE_TO_MATRIX_MARKET 
+  if (scaleBCdofs == false && scale != 1.0)
+    fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
+#ifdef WRITE_TO_MATRIX_MARKET
   char nameResScaled[100];  //create string for file name
   sprintf(nameResScaled, "resScaled%i_residual.mm", countScale);
   Tpetra_MatrixMarket_Writer::writeDenseFile(nameResScaled, fT);
@@ -1185,10 +1190,10 @@ computeGlobalResidualImplT(
     if (scaleBCdofs == true) {
       setScaleBCDofs(workset);
 #ifdef WRITE_TO_MATRIX_MARKET
-      if (countScale == 0)  
+      if (countScale == 0)
         Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
 #endif
-      countScale++; 
+      countScale++;
     }
     dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
     if ( paramLib->isParameter("Time") )
@@ -1208,12 +1213,6 @@ computeGlobalResidualImplT(
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
 
-#ifdef ALBANY_GOAL
-  double t = current_time;
-  if (paramLib->isParameter("Time"))
-    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-  GOAL::computeHierarchicBCs(t, (*this), xT, fT, Teuchos::null);
-#endif
   //scale residual by scaleVec_ if scaleBCdofs is on 
   if (scaleBCdofs == true) 
     fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0); 
@@ -1371,9 +1370,9 @@ computeGlobalJacobianImplT(const double alpha,
   //Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
   Teuchos::RCP<Tpetra_Vector> overlapped_fT;
   if(Teuchos::nonnull(fT)){
-	  overlapped_fT = solMgrT->get_overlapped_fT();
+    overlapped_fT = solMgrT->get_overlapped_fT();
   }else{
-	  overlapped_fT = Teuchos::null;
+    overlapped_fT = Teuchos::null;
   }
   Teuchos::RCP<Tpetra_CrsMatrix> overlapped_jacT = solMgrT->get_overlapped_jacT();
   Teuchos::RCP<Tpetra_Export> exporterT = solMgrT->get_exporterT();
@@ -1459,15 +1458,15 @@ computeGlobalJacobianImplT(const double alpha,
   }
 
   { TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian Export");
-  //Allocate and populate scaleVec_  
-  if (scaleVec_ == Teuchos::null && scale != 1.0) { 
-    scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap())); 
-    setScale(); 
+  //Allocate and populate scaleVec_
+  if (scaleVec_ == Teuchos::null && scale != 1.0) {
+    scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap()));
+    setScale();
   }
   // Assemble global residual
-  if (Teuchos::nonnull(fT)) 
+  if (Teuchos::nonnull(fT))
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-  
+
   // Assemble global Jacobian
   jacT->doExport(*overlapped_jacT, *exporterT, Tpetra::ADD);
 
@@ -1478,9 +1477,9 @@ computeGlobalJacobianImplT(const double alpha,
   }
 #endif
 #endif
-  
-  //scale Jacobian 
-  if (scaleBCdofs == false && scale != 1.0) { 
+
+  //scale Jacobian
+  if (scaleBCdofs == false && scale != 1.0) {
     jacT->fillComplete();
 #ifdef WRITE_TO_MATRIX_MARKET
     char nameJacUnscaled[100];  //create string for file name
@@ -1492,13 +1491,13 @@ computeGlobalJacobianImplT(const double alpha,
       Tpetra_MatrixMarket_Writer::writeDenseFile(nameResUnscaled, fT);
     }
 #endif
-    //set the scaling 
+    //set the scaling
     setScale(jacT);
-    //scale Jacobian  
+    //scale Jacobian
     jacT->leftScale(*scaleVec_);
     jacT->resumeFill();
-    //scale residual 
-    if (Teuchos::nonnull(fT)) 
+    //scale residual
+    if (Teuchos::nonnull(fT))
       fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
 #ifdef WRITE_TO_MATRIX_MARKET
     char nameJacScaled[100];  //create string for file name
@@ -1513,7 +1512,7 @@ computeGlobalJacobianImplT(const double alpha,
     sprintf(nameScale, "scale%i.mm", countScale);
     Tpetra_MatrixMarket_Writer::writeDenseFile(nameScale, scaleVec_);
 #endif
-    countScale++; 
+    countScale++;
   }
   } // End timer
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
@@ -1536,14 +1535,14 @@ computeGlobalJacobianImplT(const double alpha,
     dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
 
     loadWorksetNodesetInfo(workset);
-    
+
     if (scaleBCdofs == true) {
-      setScaleBCDofs(workset); 
+      setScaleBCDofs(workset);
 #ifdef WRITE_TO_MATRIX_MARKET
-      if (countScale == 0)  
+      if (countScale == 0)
         Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
 #endif
-      countScale++; 
+      countScale++;
     }
 
     workset.distParamLib = distParamLib;
@@ -1558,22 +1557,15 @@ computeGlobalJacobianImplT(const double alpha,
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
   }
-
-#ifdef ALBANY_GOAL
-  double t = current_time;
-  if (paramLib->isParameter("Time"))
-    t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-  GOAL::computeHierarchicBCs(t, (*this), xT, fT, jacT);
-#endif
   jacT->fillComplete();
-  
-  //Apply scaling to residual and Jacobian 
+
+  //Apply scaling to residual and Jacobian
   if (scaleBCdofs == true) {
     if (Teuchos::nonnull(fT))
       fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
     jacT->leftScale(*scaleVec_);
   }
-    
+
  #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (overlapped_jacT->isFillActive()) {
     // Makes getLocalMatrix() valid.
@@ -2030,7 +2022,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
   }
 
   params = Teuchos::null;
-  
+
   // Assemble global residual
   if (Teuchos::nonnull(fT)) {
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
@@ -2388,7 +2380,7 @@ evaluateResponseT(int response_index,
   double t = current_time;
   if ( paramLib->isParameter("Time") )
     t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-  
+
   responses[response_index]->evaluateResponseT(t, xdotT, xdotdotT, xT, p, gT);
 }
 
@@ -4268,11 +4260,14 @@ postRegSetup(std::string eval)
                                "Error in setup call \n" << " Unrecognized name: " << eval << std::endl);
 
 
-  // Write out Phalanx Graph if requested, on Proc 0, for Resid or Jacobian
+  // Write out Phalanx Graph if requested, on Proc 0, for Resid and Jacobian
+  bool alreadyWroteResidPhxGraph = false;
+  bool alreadyWroteJacPhxGraph = false;
+
   if (phxGraphVisDetail>0) {
     bool detail = false; if (phxGraphVisDetail > 1) detail=true;
 
-    if (eval=="Residual") {
+    if ((eval=="Residual") && (alreadyWroteResidPhxGraph == false))  {
       *out << "Phalanx writing graphviz file for graph of Residual fill (detail ="
            << phxGraphVisDetail << ")"<<std::endl;
       *out << "Process using 'dot -Tpng -O phalanx_graph' \n" << std::endl;
@@ -4280,9 +4275,10 @@ postRegSetup(std::string eval)
         std::stringstream pg; pg << "phalanx_graph_" << ps;
         fm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Residual>(pg.str(),detail,detail);
       }
+      alreadyWroteResidPhxGraph = true; 
 //      phxGraphVisDetail = -1;
     }
-    else if (eval=="Jacobian") {
+    else if ((eval=="Jacobian") && (alreadyWroteJacPhxGraph == false)) {
       *out << "Phalanx writing graphviz file for graph of Jacobian fill (detail ="
            << phxGraphVisDetail << ")"<<std::endl;
       *out << "Process using 'dot -Tpng -O phalanx_graph' \n" << std::endl;
@@ -4290,8 +4286,11 @@ postRegSetup(std::string eval)
         std::stringstream pg; pg << "phalanx_graph_jac_" << ps;
         fm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Jacobian>(pg.str(),detail,detail);
       }
-      phxGraphVisDetail = -2;
+      alreadyWroteJacPhxGraph = true; 
     }
+    //Stop writing out phalanx graphs only when a Jacobian and a Residual graph has been written out
+    if ((alreadyWroteResidPhxGraph == true) && (alreadyWroteJacPhxGraph == true))
+      phxGraphVisDetail = -2;
   }
 }
 
@@ -4422,25 +4421,26 @@ void Albany::Application::loadWorksetNodesetInfo(PHAL::Workset& workset)
     workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
     workset.nodeSetCoords = Teuchos::rcpFromRef(disc->getNodeSetCoords());
 }
-void Albany::Application::setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT) 
+
+void Albany::Application::setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT)
 {
   if (scale_type == CONSTANT) { //constant scaling
     scaleVec_->putScalar(1.0/scale);
   }
-  else if (scale_type == DIAG) { //diagonal scaling 
+  else if (scale_type == DIAG) { //diagonal scaling
     if (jacT == Teuchos::null) { scaleVec_->putScalar(1.0); }
     else {
       jacT->getLocalDiagCopy(*scaleVec_);
-      //std::cout << "scaleVec_ noninv: " <<std::endl;  
-      //scaleVec_->describe(*out, Teuchos::VERB_EXTREME); 
-      scaleVec_->reciprocal(*scaleVec_);  
+      //std::cout << "scaleVec_ noninv: " <<std::endl;
+      //scaleVec_->describe(*out, Teuchos::VERB_EXTREME);
+      scaleVec_->reciprocal(*scaleVec_);
     }
   }
-  //std::cout << "countScale: " << countScale << std::endl; 
-  //std::cout << "scaleVec_: " <<std::endl;  
+  //std::cout << "countScale: " << countScale << std::endl;
+  //std::cout << "scaleVec_: " <<std::endl;
   //scaleVec_->describe(*out, Teuchos::VERB_EXTREME);
 
-  else if (scale_type == ABSROWSUM) {//absolute value of row sum scaling 
+  else if (scale_type == ABSROWSUM) {//absolute value of row sum scaling
     if (jacT == Teuchos::null) { scaleVec_->putScalar(1.0); }
     else {
       //FIXME: create a tpetra implementation .
@@ -4453,52 +4453,84 @@ void Albany::Application::setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT)
       Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(jacT, *jacE, comm);
       Teuchos::RCP<Epetra_Vector> scaleVecE = Teuchos::rcp(new Epetra_Vector(*rowMap));
       scaleVecE->PutScalar(0.0);
-      //TODO: ask Mark Hoemenn re: adding InvRowSums to Tpetra 
+      //TODO: ask Mark Hoemenn re: adding InvRowSums to Tpetra
       jacE->InvRowSums(*scaleVecE);
       scaleVec_ = Petra::EpetraVector_To_TpetraVectorNonConst(*scaleVecE, commT);
 #endif
       /*
-      for (std::size_t i = 0; i < jacT->getNodeNumRows(); i++) { 
-         Teuchos::ArrayView<const GO> indices; 
-         Teuchos::ArrayView<const ST> values; 
-         //get ith row of jacT 
-         jacT->getLocalRowView(i, indices, values);  
-         //calculate absolute value of row sum for ith row 
-         ST rowsum = 0.0; 
+      for (std::size_t i = 0; i < jacT->getNodeNumRows(); i++) {
+         Teuchos::ArrayView<const GO> indices;
+         Teuchos::ArrayView<const ST> values;
+         //get ith row of jacT
+         jacT->getLocalRowView(i, indices, values);
+         //calculate absolute value of row sum for ith row
+         ST rowsum = 0.0;
          for (int j=0; j<indices.size(); j++) {
-           rowsum += abs(values[j]); 
+           rowsum += abs(values[j]);
          }
-         //take reciprocal of rowsum 
-         ST rowsuminv = 1.0/rowsum; 
+         //take reciprocal of rowsum
+         ST rowsuminv = 1.0/rowsum;
          GO globalRow = jacT->getRowMap()->getGlobalElement(i);
-         //put 1/rowsum into globalRow entry of scaleVec_ 
-         scaleVec_->replaceGlobalValue(globalRow, rowsuminv); 
+         //put 1/rowsum into globalRow entry of scaleVec_
+         scaleVec_->replaceGlobalValue(globalRow, rowsuminv);
       }*/
     }
   }
 }
-   
-void Albany::Application::setScaleBCDofs(PHAL::Workset& workset) 
+
+void Albany::Application::setScaleBCDofs(PHAL::Workset& workset)
 {
   scaleVec_->putScalar(1.0);
-  int l = 0;  
-  for (auto iterator = workset.nodeSets->begin(); iterator != workset.nodeSets->end(); iterator++) 
+  int l = 0;
+  for (auto iterator = workset.nodeSets->begin(); iterator != workset.nodeSets->end(); iterator++)
   {
     //std::cout << "key: " << iterator->first <<  std::endl;
     const std::vector<std::vector<int> >& nsNodes = iterator->second;
     for (unsigned int i = 0; i < nsNodes.size(); i++) {
-      //std::cout << "l, offsets size: " << l << ", " << offsets_[l].size() << std::endl; 
+      //std::cout << "l, offsets size: " << l << ", " << offsets_[l].size() << std::endl;
       for (unsigned j = 0; j < offsets_[l].size(); j++) {
         int lunk = nsNodes[i][offsets_[l][j]];
         //std::cout << "l, j, i, offsets_: " << l << ", " << j << ", " << i << ", " << offsets_[l][j] << std::endl;
-        //std::cout << "lunk = " << lunk << std::endl; 
-        scaleVec_->replaceLocalValue(lunk, scale);  
+        //std::cout << "lunk = " << lunk << std::endl;
+        scaleVec_->replaceLocalValue(lunk, scale);
       }
     }
-    l++; 
+    l++;
   }
-  //std::cout << "scaleVec_: " <<std::endl;  
-  //scaleVec_->describe(*out, Teuchos::VERB_EXTREME); 
+
+  if (problem->getSideSetEquations().size()>0)
+  {
+    // Case where we have sideset equations: loop through sidesets' nodesets
+    // Note: the side discretizations' nodesets are indexed progressively:
+    //       nodeSet_0,...,nodeSetN,
+    //       side0_nodeSet0,...,side0_nodeSetN0,
+    //       ...,
+    //       sideM_nodeSet0,...,sideM_nodeSetNM
+    // Therefore, we simply loop through the sideset discretizations (in order)
+    // and in each one we loop through its nodesets
+    const auto& sdn = disc->getMeshStruct()->getMeshSpecs()[0]->sideSetMeshNames;
+    for (int isd=0; isd<sdn.size(); ++isd)
+    {
+      const auto& sd = disc->getSideSetDiscretizations().at(sdn[isd]);
+      for (auto iterator = sd->getNodeSets().begin(); iterator != sd->getNodeSets().end(); iterator++)
+      {
+        //std::cout << "key: " << iterator->first <<  std::endl;
+        const std::vector<std::vector<int> >& nsNodes = iterator->second;
+        for (unsigned int i = 0; i < nsNodes.size(); i++) {
+          //std::cout << "l, offsets size: " << l << ", " << offsets_[l].size() << std::endl;
+          for (unsigned j = 0; j < offsets_[l].size(); j++) {
+            int lunk = nsNodes[i][offsets_[l][j]];
+            //std::cout << "l, j, i, offsets_: " << l << ", " << j << ", " << i << ", " << offsets_[l][j] << std::endl;
+            //std::cout << "lunk = " << lunk << std::endl;
+            scaleVec_->replaceLocalValue(lunk, scale);
+          }
+        }
+        l++;
+      }
+    }
+  }
+  //std::cout << "scaleVec_: " <<std::endl;
+  //scaleVec_->describe(*out, Teuchos::VERB_EXTREME);
 }
 
 void Albany::Application::loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws)
@@ -4675,7 +4707,7 @@ void Albany::Application::setupBasicWorksetInfo(
   if (sg_xdot != NULL) workset.transientTerms = true;
   if (sg_xdotdot != NULL) workset.accelerationTerms = true;
 
-  workset.comm = commT; 
+  workset.comm = commT;
 
   workset.x_importer = importer;
 }
@@ -4727,7 +4759,7 @@ void Albany::Application::setupBasicWorksetInfo(
   if (mp_xdot != NULL) workset.transientTerms = true;
   if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
-  workset.comm = commT; 
+  workset.comm = commT;
 
   workset.x_importer = importer;
 }
@@ -5170,42 +5202,42 @@ Teuchos::RCP<Albany::MORFacade> Albany::Application::getMorFacade()
 
 void Albany::Application::removeEpetraRelatedPLs(const Teuchos::RCP<Teuchos::ParameterList>& params){
 
-	if(params->isSublist("Piro")){
+  if(params->isSublist("Piro")){
        Teuchos::ParameterList &piroPL = params->sublist("Piro", true);
-	   if(piroPL.isSublist("Rythmos")){
+     if(piroPL.isSublist("Rythmos")){
          Teuchos::ParameterList &rytPL = piroPL.sublist("Rythmos", true);
-	     if(rytPL.isSublist("Stratimikos")){
+       if(rytPL.isSublist("Stratimikos")){
             Teuchos::ParameterList &strataPL = rytPL.sublist("Stratimikos", true);
-	        if(strataPL.isSublist("Linear Solver Types")){
+          if(strataPL.isSublist("Linear Solver Types")){
                Teuchos::ParameterList &lsPL = strataPL.sublist("Linear Solver Types", true);
-	           if(lsPL.isSublist("AztecOO")){
+             if(lsPL.isSublist("AztecOO")){
                    lsPL.remove("AztecOO", true);
                }
-	        if(strataPL.isSublist("Preconditioner Types")){
+          if(strataPL.isSublist("Preconditioner Types")){
                Teuchos::ParameterList &precPL = strataPL.sublist("Preconditioner Types", true);
-	           if(precPL.isSublist("ML")){
+             if(precPL.isSublist("ML")){
                    precPL.remove("ML", true);
                }
            }
            }
          }
        }
-	   if(piroPL.isSublist("NOX")){
+     if(piroPL.isSublist("NOX")){
           Teuchos::ParameterList &noxPL = piroPL.sublist("NOX", true);
-	      if(noxPL.isSublist("Direction")){
+        if(noxPL.isSublist("Direction")){
              Teuchos::ParameterList &dirPL = noxPL.sublist("Direction", true);
-	         if(dirPL.isSublist("Newton")){
+           if(dirPL.isSublist("Newton")){
                 Teuchos::ParameterList &newPL = dirPL.sublist("Newton", true);
-	            if(newPL.isSublist("Stratimikos Linear Solver")){
+              if(newPL.isSublist("Stratimikos Linear Solver")){
                    Teuchos::ParameterList &stratPL = newPL.sublist("Stratimikos Linear Solver", true);
-	               if(stratPL.isSublist("Stratimikos")){
+                 if(stratPL.isSublist("Stratimikos")){
                       Teuchos::ParameterList &strataPL = stratPL.sublist("Stratimikos", true);
-	                  if(strataPL.isSublist("AztecOO")){
+                    if(strataPL.isSublist("AztecOO")){
                          strataPL.remove("AztecOO", true);
                       }
-	                  if(strataPL.isSublist("Linear Solver Types")){
+                    if(strataPL.isSublist("Linear Solver Types")){
                          Teuchos::ParameterList &lsPL = strataPL.sublist("Linear Solver Types", true);
-	                     if(lsPL.isSublist("AztecOO")){
+                       if(lsPL.isSublist("AztecOO")){
                             lsPL.remove("AztecOO", true);
     }}}}}}}}
 }

@@ -22,25 +22,23 @@ namespace PHAL {
 
 */
 
-template<typename EvalT, typename Traits>
-class DOFVecGradInterpolation : public PHX::EvaluatorWithBaseImpl<Traits>,
- 			 public PHX::EvaluatorDerived<EvalT, Traits>  {
-
+template<typename EvalT, typename Traits, typename ScalarT>
+class DOFVecGradInterpolationBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                    public PHX::EvaluatorDerived<EvalT, Traits>
+{
 public:
 
-  DOFVecGradInterpolation(const Teuchos::ParameterList& p,
+  DOFVecGradInterpolationBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& vm);
+                             PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
 private:
 
-  typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
-
 
   // Input:
   //! Values at nodes
@@ -61,11 +59,11 @@ private:
 public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-  struct DOFVecGradInterpolation_Residual_Tag{};
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFVecGradInterpolation_Residual_Tag> DOFVecGradInterpolation_Residual_Policy;
+  struct DOFVecGradInterpolationBase_Residual_Tag{};
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFVecGradInterpolationBase_Residual_Tag> DOFVecGradInterpolationBase_Residual_Policy;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFVecGradInterpolation_Residual_Tag& tag, const int& cell) const;
+  void operator() (const DOFVecGradInterpolationBase_Residual_Tag& tag, const int& cell) const;
 
 #endif
 
@@ -73,13 +71,13 @@ public:
 
 //! Specialization for Jacobian evaluation taking advantage of known sparsity
 template<typename Traits>
-class DOFVecGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>\
+class DOFVecGradInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
- 	public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits>  {
-
+        public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Jacobian, Traits>
+{
 public:
 
-  DOFVecGradInterpolation(const Teuchos::ParameterList& p,
+  DOFVecGradInterpolationBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -112,13 +110,13 @@ private:
 //KOKKOS:
  #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
- 
+
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-  struct DOFVecGradInterpolation_Jacobian_Tag{};
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFVecGradInterpolation_Jacobian_Tag> DOFVecGradInterpolation_Jacobian_Policy;
+  struct DOFVecGradInterpolationBase_Jacobian_Tag{};
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFVecGradInterpolationBase_Jacobian_Tag> DOFVecGradInterpolationBase_Jacobian_Policy;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFVecGradInterpolation_Jacobian_Tag& tag, const int& cell) const;
+  void operator() (const DOFVecGradInterpolationBase_Jacobian_Tag& tag, const int& cell) const;
 
   int num_dof, neq;
 
@@ -128,13 +126,13 @@ public:
 #ifdef ALBANY_SG
 //! Specialization for SGJacobian evaluation taking advantage of known sparsity
 template<typename Traits>
-class DOFVecGradInterpolation<PHAL::AlbanyTraits::SGJacobian, Traits>\
-      : public PHX::EvaluatorWithBaseImpl<Traits>,
- 	public PHX::EvaluatorDerived<PHAL::AlbanyTraits::SGJacobian, Traits>  {
+class DOFVecGradInterpolationBase<PHAL::AlbanyTraits::SGJacobian, Traits, typename PHAL::AlbanyTraits::SGJacobian::ScalarT>
+              : public PHX::EvaluatorWithBaseImpl<Traits>,
+                public PHX::EvaluatorDerived<PHAL::AlbanyTraits::SGJacobian, Traits>  {
 
 public:
 
-  DOFVecGradInterpolation(const Teuchos::ParameterList& p,
+  DOFVecGradInterpolationBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -169,13 +167,13 @@ private:
 #ifdef ALBANY_ENSEMBLE
 //! Specialization for MPJacobian evaluation taking advantage of known sparsity
 template<typename Traits>
-class DOFVecGradInterpolation<PHAL::AlbanyTraits::MPJacobian, Traits>\
+class DOFVecGradInterpolationBase<PHAL::AlbanyTraits::MPJacobian, Traits, typename PHAL::AlbanyTraits::MPJacobian::ScalarT>
       : public PHX::EvaluatorWithBaseImpl<Traits>,
- 	public PHX::EvaluatorDerived<PHAL::AlbanyTraits::MPJacobian, Traits>  {
+        public PHX::EvaluatorDerived<PHAL::AlbanyTraits::MPJacobian, Traits>  {
 
 public:
 
-  DOFVecGradInterpolation(const Teuchos::ParameterList& p,
+  DOFVecGradInterpolationBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -207,6 +205,16 @@ private:
 };
 #endif
 
-}
+// Some shortcut names
+template<typename EvalT, typename Traits>
+using DOFVecGradInterpolation = DOFVecGradInterpolationBase<EvalT,Traits,typename EvalT::ScalarT>;
 
-#endif
+template<typename EvalT, typename Traits>
+using DOFVecGradInterpolationMesh = DOFVecGradInterpolationBase<EvalT,Traits,typename EvalT::MeshScalarT>;
+
+template<typename EvalT, typename Traits>
+using DOFVecGradInterpolationParam = DOFVecGradInterpolationBase<EvalT,Traits,typename EvalT::ParamScalarT>;
+
+} // Namespace PHAL
+
+#endif // PHAL_DOFVECGRAD_INTERPOLATION_HPP

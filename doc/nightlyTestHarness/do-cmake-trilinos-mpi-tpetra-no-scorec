@@ -52,14 +52,12 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
 \
       -D Amesos2_ENABLE_KLU2:BOOL=ON \
 \
-      -D TPL_ENABLE_BoostAlbLib:BOOL=ON \
+      -D TPL_ENABLE_Boost:BOOL=ON \
       -D TPL_ENABLE_BoostLib:BOOL=ON \
       -D Boost_INCLUDE_DIRS:FILEPATH=/usr/include \
       -D Boost_LIBRARY_DIRS:FILEPATH=/usr/lib64 \
       -D BoostLib_INCLUDE_DIRS:FILEPATH=/usr/include \
       -D BoostLib_LIBRARY_DIRS:FILEPATH=/usr/lib64 \
-      -D BoostAlbLib_INCLUDE_DIRS:FILEPATH=/usr/include \
-      -D BoostAlbLib_LIBRARY_DIRS:FILEPATH=/usr/lib64 \
 \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \
       -D Piro_ENABLE_TESTS:BOOL=ON \
@@ -80,12 +78,10 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_Epetra:BOOL=ON \
       -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
       -D Trilinos_ENABLE_FEI:BOOL=OFF\
-      -D Trilinos_ENABLE_Galeri:BOOL=ON\
       -D Trilinos_ENABLE_Ifpack:BOOL=ON \
       -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
       -D Trilinos_ENABLE_Intrepid:BOOL=ON \
       -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
-      -D Trilinos_ENABLE_Isorropia:BOOL=ON\
       -D Trilinos_ENABLE_Kokkos:BOOL=ON \
       -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
       -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \

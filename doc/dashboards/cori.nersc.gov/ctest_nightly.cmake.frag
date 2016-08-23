@@ -31,6 +31,7 @@ set (CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 set (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
 set (CTEST_FLAGS "-j16")
+set (CTEST_BUILD_FLAGS "-j16")
 
 set (CTEST_DROP_METHOD "http")
 
@@ -52,8 +53,8 @@ set (cism-piscees_REPOSITORY_LOCATION  git@github.com:ACME-Climate/cism-piscees.
 
 #IKT, 8/27/15: FIXME 
 #Why does CDash script not find BOOST_DIR, NETCDF_DIR from loaded modules? 
-set (BOOST_DIR /usr/common/software/boost/1.59/hsw/gnu) 
-set (NETCDF_DIR /opt/cray/netcdf-hdf5parallel/4.3.3.1/GNU/5.1) 
+set (BOOST_DIR /usr/common/software/boost/1.61/hsw/gnu) 
+set (NETCDF_DIR /opt/cray/pe/netcdf-hdf5parallel/4.4.0/GNU/5.1) 
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -173,14 +174,19 @@ if (BUILD_TRILINOS)
 
   set (CONFIGURE_OPTIONS
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-    "-DBoost_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include"
     "-DNetcdf_LIBRARY_DIRS:FILEPATH=${NETCDF_DIR}/lib"
-    "-DTPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include" 
+    "-DTPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include"
+    # 
     "-DBoostLib_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib" 
     "-DBoostLib_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include" 
-    "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
-    "-DBoostAlbLib_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include" 
     "-DBoostAlbLib_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib" 
+    "-DBoostAlbLib_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include" 
+    "-DBoost_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib"
+    "-DBoost_INCLUDE_DIRS:FILEPATH=${BOOST_DIR}/include"
+    "-DTPL_ENABLE_Boost:BOOL=ON"
+    "-DTPL_ENABLE_BoostLib:BOOL=ON"
+    "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
+    #
     "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF" 
     "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
@@ -240,10 +246,8 @@ if (BUILD_TRILINOS)
     "-DKokkos_ENABLE_Pthread:BOOL=OFF"
     #
     "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
-    "-DBoost_LIBRARY_DIRS:FILEPATH=${BOOST_DIR}/lib"
     #
     "-DTrilinos_ENABLE_SEACASIoss:BOOL=ON"
-    "-DTPL_Netcdf_PARALLEL:BOOL=ON"
     "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
     "-DTPL_ENABLE_Netcdf:BOOL=ON"
     #
@@ -263,8 +267,6 @@ if (BUILD_TRILINOS)
     "-DPiro_ENABLE_TESTS:BOOL=OFF"
     "-DTrilinos_ENABLE_EXAMPLES:BOOL=OFF"
     "-DTPL_ENABLE_MPI:BOOL=ON"
-    "-DTPL_ENABLE_Boost:BOOL=ON"
-    "-DTPL_ENABLE_BoostLib:BOOL=ON"
     #
     "-DAnasazi_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
     "-DAztecOO_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"

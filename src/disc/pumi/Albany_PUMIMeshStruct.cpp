@@ -60,7 +60,7 @@ static apf::Migration* getPlan(apf::Mesh* m, int npartitions)
 
 Albany::PUMIMeshStruct::PUMIMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params,
-		const Teuchos::RCP<const Teuchos_Comm>& commT)
+    const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
   PCU_Comm_Init();
   params->validateParameters(
@@ -91,7 +91,7 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
 
     std::string mesh_file = params->get<std::string>("PUMI Input File Name");
     mesh = 0;
-    
+
     // If we are running in parallel but have a single mesh file, split it and rebalance
     bool useSerialMesh = params->get<bool>("Use Serial Mesh", false);
     if (useSerialMesh && commT->getSize() > 1){ // do the equivalent of the SCOREC "split" utility
@@ -160,6 +160,9 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
         << " from restart file: " << name << std::endl;
   }
 
+  if (params->isParameter("Load FELIX Data"))
+    shouldLoadFELIXData = true;
+
 }
 
 Albany::PUMIMeshStruct::~PUMIMeshStruct()
@@ -212,6 +215,7 @@ Albany::PUMIMeshStruct::getValidDiscretizationParameters() const
 
   validPL->set<int>("Write Restart File at Step", 0, "Continuation step to write restart files");
   validPL->set<double>("PUMI Restart Time", 0, "Simulation time to restart from");
+  validPL->set<bool>("Load FELIX Data", false, "Load fields required for FELIX FO problem");
 
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
 
@@ -226,9 +230,6 @@ Albany::PUMIMeshStruct::getValidDiscretizationParameters() const
   validPL->set<double>("2D Scale", 1.0, "Depth of Y discretization");
   validPL->set<double>("3D Scale", 1.0, "Height of Z discretization");
   validPL->set<bool>("Hexahedral", true, "Build hexahedral elements");
-
-  // this will do nothing unless this is a GOAL mesh struct
-  validPL->set<int>("Polynomial Order", 1, "Polynomial order of solution basis functions");
 
   validPL->set<bool>("Save Stabilized Stress", false, "Save stabilized stress to file");
 

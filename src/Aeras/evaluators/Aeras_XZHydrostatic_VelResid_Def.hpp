@@ -23,9 +23,6 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
                        const Teuchos::RCP<Aeras::Layouts>& dl) :
   wBF         (p.get<std::string> ("Weighted BF Name"),                 dl->node_qp_scalar),
   wGradBF     (p.get<std::string> ("Weighted Gradient BF Name"),        dl->node_qp_gradient),
-  wGradGradBF (p.isParameter("Hydrostatic Problem") &&  
-               p.get<Teuchos::ParameterList*>("Hydrostatic Problem")->isParameter("HyperViscosity") ?
-               p.get<std::string> ("Weighted Gradient Gradient BF Name") : "None", dl->node_qp_tensor) ,
   keGrad      (p.get<std::string> ("Gradient QP Kinetic Energy"),       dl->qp_gradient_level),
   PhiGrad     (p.get<std::string> ("Gradient QP GeoPotential"),         dl->qp_gradient_level),
   etadotdVelx (p.get<std::string> ("EtaDotdVelx"),                      dl->node_vector_level),
@@ -33,9 +30,6 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
 
   uDot        (p.get<std::string> ("QP Time Derivative Variable Name"), dl->node_vector_level),
   DVelx       (p.get<std::string> ("D Vel Name"),                       dl->qp_vector_level),
-  LaplaceVelx (p.isParameter("Hydrostatic Problem") &&
-                p.get<Teuchos::ParameterList*>("Hydrostatic Problem")->isParameter("HyperViscosity") ?
-                p.get<std::string> ("Laplace Vel Name") : "None",dl->qp_scalar_level),
   density     (p.get<std::string> ("QP Density"),                       dl->node_scalar_level),
   Residual    (p.get<std::string> ("Residual Name"),                    dl->node_vector_level),
 
@@ -55,12 +49,10 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
   this->addDependentField(uDot);
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
-  if (hyperviscosity) this->addDependentField(LaplaceVelx);
-  if (hyperviscosity) this->addDependentField(wGradGradBF);
 
   this->addEvaluatedField(Residual);
 
-  this->setName("Aeras::XZHydrostatic_VelResid" );
+  this->setName("Aeras::XZHydrostatic_VelResid" + PHX::typeAsString<EvalT>());
 
 }
 
@@ -79,45 +71,63 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(uDot       , fm);
   this->utils.setFieldData(wBF        , fm);
   this->utils.setFieldData(wGradBF    , fm);
-  if (hyperviscosity) this->utils.setFieldData(LaplaceVelx, fm);
-  if (hyperviscosity) this->utils.setFieldData(wGradGradBF, fm);
 
   this->utils.setFieldData(Residual,fm);
 }
+
+//**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void XZHydrostatic_VelResid<EvalT, Traits>::
+operator() (const XZHydrostatic_VelResid_Tag& tag, const int& cell) const{
+  for (int node=0; node < numNodes; ++node) {
+    for (int level=0; level < numLevels; ++level) {
+      for (int dim=0; dim < numDims; ++dim) {
+        int qp = node; 
+        Residual(cell,node,level,dim) = ( keGrad(cell,qp,level,dim) + PhiGrad(cell,qp,level,dim) )*wBF(cell,node,qp)
+                                      + ( pGrad (cell,qp,level,dim)/density(cell,qp,level) )      *wBF(cell,node,qp)
+                                      + etadotdVelx(cell,qp,level,dim)                            *wBF(cell,node,qp)
+                                      + uDot(cell,qp,level,dim)                                   *wBF(cell,node,qp);
+
+        for (int qp=0; qp < numQPs; ++qp) {
+          Residual(cell,node,level,dim) += viscosity * DVelx(cell,qp,level,dim) * wGradBF(cell,node,qp,dim);
+        }
+      }
+    }
+  }
+}
+
+#endif
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void XZHydrostatic_VelResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  PHAL::set(Residual, 0.0);
-
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {
       for (int level=0; level < numLevels; ++level) {
-        int qp = node; 
         for (int dim=0; dim < numDims; ++dim) {
-          Residual(cell,node,level,dim) += ( keGrad(cell,qp,level,dim) + PhiGrad(cell,qp,level,dim) )*wBF(cell,node,qp);
-          Residual(cell,node,level,dim) += ( pGrad (cell,qp,level,dim)/density(cell,qp,level) )      *wBF(cell,node,qp);
-          Residual(cell,node,level,dim) += etadotdVelx(cell,qp,level,dim)                            *wBF(cell,node,qp);
-          Residual(cell,node,level,dim) += uDot(cell,qp,level,dim)                                   *wBF(cell,node,qp);
-        }
-      }
-    }
-  }
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int node=0; node < numNodes; ++node) {
-      for (int level=0; level < numLevels; ++level) {
-        for (int qp=0; qp < numQPs; ++qp) {
-          for (int dim=0; dim < numDims; ++dim) {
+          int qp = node; 
+          Residual(cell,node,level,dim) = ( keGrad(cell,qp,level,dim) + PhiGrad(cell,qp,level,dim) )*wBF(cell,node,qp)
+                                        + ( pGrad (cell,qp,level,dim)/density(cell,qp,level) )      *wBF(cell,node,qp)
+                                        + etadotdVelx(cell,qp,level,dim)                            *wBF(cell,node,qp)
+                                        + uDot(cell,qp,level,dim)                                   *wBF(cell,node,qp);
+
+          for (int qp=0; qp < numQPs; ++qp) {
             Residual(cell,node,level,dim) += viscosity * DVelx(cell,qp,level,dim) * wGradBF(cell,node,qp,dim);
-            if (hyperviscosity) 
-              Residual(cell,node,level,dim) -= hyperviscosity * LaplaceVelx(cell,qp,level) * wGradGradBF(cell,node,qp,dim,dim);
           }
         }
       }
     }
   }
 
+#else
+  Kokkos::parallel_for(XZHydrostatic_VelResid_Policy(0,workset.numCells),*this);
+
+#endif
 }
 }

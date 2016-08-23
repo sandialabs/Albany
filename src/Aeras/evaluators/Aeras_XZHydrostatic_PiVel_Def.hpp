@@ -21,7 +21,7 @@ XZHydrostatic_PiVel<EvalT, Traits>::
 XZHydrostatic_PiVel(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
   pi         (p.get<std::string> ("Pi"),          dl->node_scalar_level),
-  velx       (p.get<std::string> ("Velx"),        dl->node_vector_level),
+  velocity   (p.get<std::string> ("Velocity"),    dl->node_vector_level),
   pivelx     (p.get<std::string> ("PiVelx"),      dl->node_vector_level),
 
   numDims    (dl->node_qp_gradient        ->dimension(3)),
@@ -29,7 +29,7 @@ XZHydrostatic_PiVel(const Teuchos::ParameterList& p,
   numLevels  (dl->node_scalar_level       ->dimension(2))
 {
   this->addDependentField(pi);
-  this->addDependentField(velx);
+  this->addDependentField(velocity);
 
   this->addEvaluatedField(pivelx);
   this->setName("Aeras::XZHydrostatic_PiVel"+PHX::typeAsString<EvalT>());
@@ -42,23 +42,42 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(pi     , fm);
-  this->utils.setFieldData(velx   , fm);
+  this->utils.setFieldData(velocity  , fm);
   this->utils.setFieldData(pivelx , fm);
 }
+
+//**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void XZHydrostatic_PiVel<EvalT, Traits>::
+operator() (const XZHydrostatic_PiVel_Tag& tag, const int& cell) const{
+  for (int node=0; node < numNodes; ++node) 
+    for (int level=0; level < numLevels; ++level) 
+      for (int dim=0; dim < numDims; ++dim)  
+        pivelx(cell,node,level,dim) = pi(cell,node,level)*velocity(cell,node,level,dim);
+}
+
+#endif
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void XZHydrostatic_PiVel<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   for (int cell=0; cell < workset.numCells; ++cell) 
     for (int node=0; node < numNodes; ++node) 
       for (int level=0; level < numLevels; ++level) 
         for (int dim=0; dim < numDims; ++dim) {
-          pivelx(cell,node,level,dim) = pi(cell,node,level)*velx(cell,node,level,dim);
+          pivelx(cell,node,level,dim) = pi(cell,node,level)*velocity(cell,node,level,dim);
              //std::cout << "pivelx: " << cell << " " << node << " " << level << " " << dim << " " << PiVelx(cell,node,level,dim) << std::endl;
             //std::cout << "Tracer " << Tracer(cell,node,level) << std::endl;
           }
+#else
+  Kokkos::parallel_for(XZHydrostatic_PiVel_Policy(0,workset.numCells),*this);
 
+#endif
 }
 }

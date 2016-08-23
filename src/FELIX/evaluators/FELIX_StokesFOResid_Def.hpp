@@ -30,11 +30,19 @@ StokesFOResid(const Teuchos::ParameterList& p,
   muFELIX  (p.get<std::string> ("Viscosity QP Variable Name"), dl->qp_scalar),
   Residual (p.get<std::string> ("Residual Variable Name"), dl->node_vector)
 {
+#ifdef OUTPUT_TO_SCREEN
+  Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
+
+  int procRank = Teuchos::GlobalMPISession::getRank();
+  int numProcs = Teuchos::GlobalMPISession::getNProc();
+  output->setProcRankAndSize (procRank, numProcs);
+  output->setOutputToRootOnly (0);
+#endif
+
   Teuchos::ParameterList* list = p.get<Teuchos::ParameterList*>("Parameter List");
 
   std::string type = list->get("Type", "FELIX");
 
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   if (type == "FELIX") {
 #ifdef OUTPUT_TO_SCREEN
     *out << "setting FELIX FO model physics" << std::endl;
@@ -448,13 +456,20 @@ template<typename EvalT, typename Traits>
 void StokesFOResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+#ifdef OUTPUT_TO_SCREEN
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+
+  int procRank = Teuchos::GlobalMPISession::getRank();
+  int numProcs = Teuchos::GlobalMPISession::getNProc();
+  output->setProcRankAndSize (procRank, numProcs);
+  output->setOutputToRootOnly (0);
+#endif
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   // Initialize residual to 0.0
 
-//  Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));
+//  Kokkos::deep_copy(Residual.get_view(), ScalarT(0.0));
 
   if (needsBasalResidual)
   {

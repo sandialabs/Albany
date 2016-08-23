@@ -41,13 +41,25 @@ public:
 private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Level>     pi;
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim> velx;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim> velocity;
   PHX::MDField<ScalarT,Cell,Node,Level,Dim> pivelx;
 
   const int numNodes;
   const int numDims;
   const int numLevels;
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct XZHydrostatic_PiVel_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_PiVel_Tag> XZHydrostatic_PiVel_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_PiVel_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 

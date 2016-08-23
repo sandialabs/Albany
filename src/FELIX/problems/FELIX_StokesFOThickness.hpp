@@ -33,7 +33,7 @@
 #include "PHAL_DOFVecInterpolationSide.hpp"
 
 #include "FELIX_SharedParameter.hpp"
-#include "FELIX_StokesParamEnum.hpp"
+#include "FELIX_ParamEnum.hpp"
 #include "FELIX_EffectivePressure.hpp"
 #include "FELIX_StokesFOResid.hpp"
 #include "FELIX_StokesFOBasalResid.hpp"
@@ -93,7 +93,7 @@ namespace FELIX
       Albany::FieldManagerChoice fmchoice,
       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
-    //! Each problem must generate it's list of valide parameters
+    //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
   private:
@@ -192,7 +192,7 @@ FELIX::StokesFOThickness::constructEvaluators(
       int numLayers = params->get<int>("Layered Data Length",11); // Default 11 layers: 0, 0.1, ...,1.0
       Teuchos::RCP<PHX::DataLayout> dl_temp;
       Teuchos::RCP<PHX::DataLayout> sns = dl_basal->node_scalar;
-      dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,VecDim>(sns->dimension(0),sns->dimension(1),sns->dimension(2),numLayers));
+      dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,LayerDim>(sns->dimension(0),sns->dimension(1),sns->dimension(2),numLayers));
       p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_temp, basalEBName, true, &entity);
     }
   }
@@ -519,7 +519,7 @@ FELIX::StokesFOThickness::constructEvaluators(
   fm0.template registerEvaluator<EvalT> (ev);
 
   //---- Interpolate Surface Height gradient
-  ev = evalUtils.constructDOFGradInterpolationEvaluator_noDeriv("Surface Height");
+  ev = evalUtils.getPSTUtils().constructDOFGradInterpolationEvaluator("Surface Height");
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Interpolate temperature from nodes to cell
@@ -557,6 +557,10 @@ FELIX::StokesFOThickness::constructEvaluators(
     //---- Interpolate thickness on QP on side
     ev = evalUtils_full.constructDOFInterpolationSideEvaluator("Ice Thickness", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
+    
+        //---- Interpolate thickness on QP on side
+    ev = evalUtils_full.getPSTUtils().constructDOFInterpolationSideEvaluator("Beta Given", basalSideName);
+    fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Interpolate surface height on QP on side
     ev = evalUtils_full.constructDOFInterpolationSideEvaluator("Surface Height", basalSideName);
@@ -572,7 +576,7 @@ FELIX::StokesFOThickness::constructEvaluators(
     //---- Restrict coordinate vector from cell-based to cell-side-based
     ev = evalUtils.getMSTUtils().constructDOFCellToSideEvaluator("Coord Vec",surfaceSideName,"Vertex Vector",cellType,"Coord Vec " + surfaceSideName);
     fm0.template registerEvaluator<EvalT> (ev);
-    
+
     //---- Compute side basis functions
     ev = evalUtils.constructComputeBasisFunctionsSideEvaluator(cellType, surfaceSideBasis, surfaceCubature, surfaceSideName);
     fm0.template registerEvaluator<EvalT> (ev);
@@ -705,6 +709,18 @@ FELIX::StokesFOThickness::constructEvaluators(
   ev = rcp(new FELIX::GatherVerticallyAveragedVelocity<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
 
+  //--- Shared Parameter for homotopy parameter: h ---//
+  p = Teuchos::rcp(new Teuchos::ParameterList("Glen's Law Homotopy Parameter"));
+
+  param_name = "Glen's Law Homotopy Parameter";
+  p->set<std::string>("Parameter Name", param_name);
+  p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+
+  Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Homotopy>> ptr_h;
+  ptr_h = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Homotopy>(*p,dl));
+  ptr_h->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Viscosity").get<double>(param_name,-1.0));
+  fm0.template registerEvaluator<EvalT>(ptr_h);
+
   if (sliding)
   {
     // --- Basal Residual --- //
@@ -718,11 +734,13 @@ FELIX::StokesFOThickness::constructEvaluators(
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
+    p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
 
     //Output
     p->set<std::string>("Basal Residual Variable Name", "Basal Residual");
 
-    ev = rcp(new FELIX::StokesFOBasalResid<EvalT,PHAL::AlbanyTraits>(*p,dl_full));
+    ev = rcp(new FELIX::StokesFOBasalResid<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT>(*p,dl_full));
     fm0.template registerEvaluator<EvalT>(ev);
 
     // --- Prolongate Stokes FO Basal Residual --- //
@@ -744,6 +762,7 @@ FELIX::StokesFOThickness::constructEvaluators(
     p->set<std::string>("Field Name","Basal Velocity");
     p->set<std::string>("Field Layout","Cell Side QuadPoint Vector");
     p->set<std::string>("Side Set Name", basalSideName);
+    p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Field Norm"));
 
     // Output
     p->set<std::string>("Field Norm Name","Sliding Velocity");
@@ -758,15 +777,13 @@ FELIX::StokesFOThickness::constructEvaluators(
     p->set<std::string>("Surface Height Variable Name","Surface Height");
     p->set<std::string>("Ice Thickness Variable Name", "Ice Thickness");
     p->set<std::string>("Side Set Name", basalSideName);
-    p->set<bool>("Surrogate", true);
-    p->set<bool>("Stokes", true);
     p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
 
     // Output
     p->set<std::string>("Effective Pressure Variable Name","Effective Pressure");
 
-    ev = Teuchos::rcp(new FELIX::EffectivePressure<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
+    ev = Teuchos::rcp(new FELIX::EffectivePressure<EvalT,PHAL::AlbanyTraits,false,true>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
 
     //--- Shared Parameter for basal friction coefficient: alpha ---//
@@ -776,8 +793,8 @@ FELIX::StokesFOThickness::constructEvaluators(
     p->set<std::string>("Parameter Name", param_name);
     p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
 
-    Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Alpha>> ptr_alpha;
-    ptr_alpha = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Alpha>(*p,dl));
+    Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Alpha>> ptr_alpha;
+    ptr_alpha = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Alpha>(*p,dl));
     ptr_alpha->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Basal Friction Coefficient").get<double>(param_name,-1.0));
     fm0.template registerEvaluator<EvalT>(ptr_alpha);
 
@@ -788,8 +805,8 @@ FELIX::StokesFOThickness::constructEvaluators(
     p->set<std::string>("Parameter Name", param_name);
     p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
 
-    Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Lambda>> ptr_lambda;
-    ptr_lambda = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Lambda>(*p,dl));
+    Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Lambda>> ptr_lambda;
+    ptr_lambda = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Lambda>(*p,dl));
     ptr_lambda->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Basal Friction Coefficient").get<double>(param_name,-1.0));
     fm0.template registerEvaluator<EvalT>(ptr_lambda);
 
@@ -800,8 +817,8 @@ FELIX::StokesFOThickness::constructEvaluators(
     p->set<std::string>("Parameter Name", param_name);
     p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
 
-    Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Mu>> ptr_mu;
-    ptr_mu = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Mu>(*p,dl));
+    Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Mu>> ptr_mu;
+    ptr_mu = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Mu>(*p,dl));
     ptr_mu->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Basal Friction Coefficient").get<double>(param_name,-1.0));
     fm0.template registerEvaluator<EvalT>(ptr_mu);
 
@@ -812,8 +829,8 @@ FELIX::StokesFOThickness::constructEvaluators(
     p->set<std::string>("Parameter Name", param_name);
     p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
 
-    Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Power>> ptr_power;
-    ptr_power = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,StokesParamEnum,Power>(*p,dl));
+    Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Power>> ptr_power;
+    ptr_power = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Power>(*p,dl));
     ptr_power->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Basal Friction Coefficient").get<double>(param_name,-1.0));
     fm0.template registerEvaluator<EvalT>(ptr_power);
 
@@ -832,7 +849,7 @@ FELIX::StokesFOThickness::constructEvaluators(
     //Output
     p->set<std::string>("Basal Friction Coefficient Variable Name", "Beta");
 
-    ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits>(*p,dl_basal));
+    ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits,false,true>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -907,6 +924,18 @@ FELIX::StokesFOThickness::constructEvaluators(
   ev = rcp(new FELIX::StokesFOImplicitThicknessUpdateResid<EvalT,PHAL::AlbanyTraits>(*p, dl_full, dl_full));
   fm0.template registerEvaluator<EvalT>(ev);
 
+  //--- Shared Parameter for Continuation:  ---//
+  p = Teuchos::rcp(new Teuchos::ParameterList("Homotopy Parameter"));
+
+  param_name = "Glen's Law Homotopy Parameter";
+  p->set<std::string>("Parameter Name", param_name);
+  p->set< Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+
+  Teuchos::RCP<FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Homotopy>> ptr_homotopy;
+  ptr_homotopy = Teuchos::rcp(new FELIX::SharedParameter<EvalT,PHAL::AlbanyTraits,FelixParamEnum,FelixParamEnum::Homotopy>(*p,dl));
+  ptr_homotopy->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Viscosity").get<double>(param_name,-1.0));
+  fm0.template registerEvaluator<EvalT>(ptr_homotopy);
+
   //--- FELIX viscosity ---//
   p = rcp(new ParameterList("FELIX Viscosity"));
 
@@ -919,11 +948,13 @@ FELIX::StokesFOThickness::constructEvaluators(
   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
   p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
   p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Viscosity"));
+  p->set<std::string>("Continuation Parameter Name","Glen's Law Homotopy Parameter");
 
   //Output
   p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
+  p->set<std::string>("EpsilonSq QP Variable Name", "FELIX EpsilonSq");
 
-  ev = rcp(new FELIX::ViscosityFO<EvalT,PHAL::AlbanyTraits>(*p,dl_full));
+  ev = rcp(new FELIX::ViscosityFO<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ParamScalarT>(*p,dl_full));
   fm0.template registerEvaluator<EvalT>(ev);
 
 #ifdef CISM_HAS_FELIX

@@ -203,7 +203,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (have_temperature_) this->utils.setFieldData(temperature_, fm);
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-    int deriv_dims=PHAL::getDerivativeDimensionsFromView(coord_vec_.get_kokkos_view());
+    int deriv_dims=PHAL::getDerivativeDimensionsFromView(coord_vec_.get_view());
     ddims_.push_back(deriv_dims);
     const int num_cells=coord_vec_.dimension(0);
 

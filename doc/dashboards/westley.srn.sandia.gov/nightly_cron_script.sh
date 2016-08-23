@@ -25,7 +25,7 @@ cd $TEST_DIR
 
 . /opt/intel/bin/compilervars.sh intel64
 export PATH=/usr/local/trilinos/MPI_REL/bin:/opt/intel/bin:/usr/local/bin:/usr/lib64/qt-3.3/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/gahanse/bin
-. /opt/intel/impi_latest/bin64/mpivars.sh
+#. /opt/intel/impi_latest/bin64/mpivars.sh
 export LD_LIBRARY_PATH=/opt/intel/composer_xe_2015.3.187/compiler/lib/mic:/usr/local/gcc-5.1.0/lib64:$LD_LIBRARY_PATH
 
 export I_MPI_MIC=1

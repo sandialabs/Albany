@@ -17,12 +17,15 @@ namespace Albany {
 void
 setupInternalMeshStruct(
     DiscretizationFactory &discFactory,
-    const Teuchos::RCP<Teuchos::ParameterList> &problemParams,
+    const Teuchos::RCP<Teuchos::ParameterList> &topLevelParams,
     const Teuchos::RCP<const Teuchos_Comm> &comm)
 {
   const Teuchos::RCP<ParamLib> paramLib(new ParamLib);
-  ProblemFactory problemFactory(problemParams, paramLib, comm);
+  ProblemFactory problemFactory(topLevelParams, paramLib, comm);
   const Teuchos::RCP<AbstractProblem> problem = problemFactory.create();
+  const bool sublistMustExist = true;
+  const Teuchos::RCP<Teuchos::ParameterList> problemParams =
+      Teuchos::sublist(topLevelParams, "Problem", sublistMustExist);
   problemParams->validateParameters(*problem->getValidProblemParameters(), 0);
 
   StateManager stateMgr;
@@ -47,12 +50,8 @@ discretizationNew(
     const Teuchos::RCP<Teuchos::ParameterList> &topLevelParams,
     const Teuchos::RCP<const Teuchos_Comm> &comm)
 {
-  const bool sublistMustExist = true;
-  const Teuchos::RCP<Teuchos::ParameterList> problemParams =
-    Teuchos::sublist(topLevelParams, "Problem", sublistMustExist);
-
   DiscretizationFactory discFactory(topLevelParams, comm);
-  setupInternalMeshStruct(discFactory, problemParams, comm);
+  setupInternalMeshStruct(discFactory, topLevelParams, comm);
   return createDiscretization(discFactory);
 }
 
@@ -62,12 +61,8 @@ modifiedDiscretizationNew(
     const Teuchos::RCP<const Teuchos_Comm> &comm,
     DiscretizationTransformation &transformation)
 {
-  const bool sublistMustExist = true;
-  const Teuchos::RCP<Teuchos::ParameterList> problemParams =
-    Teuchos::sublist(topLevelParams, "Problem", sublistMustExist);
-
   DiscretizationFactory discFactory(topLevelParams, comm);
-  setupInternalMeshStruct(discFactory, problemParams, comm);
+  setupInternalMeshStruct(discFactory, topLevelParams, comm);
 
   transformation(discFactory);
 

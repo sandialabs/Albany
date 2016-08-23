@@ -9,19 +9,6 @@
 namespace AAdapt {
 namespace rc {
 
-#ifdef AMBDEBUG
-template<typename Traits>
-struct Reader<PHAL::AlbanyTraits::Residual, Traits>::InterpTestData {
-  PHX::MDField<RealType,Cell,QuadPoint,Dim> coords_qp;
-  PHX::MDField<RealType,Cell,Vertex,Dim> coords_verts;
-
-  InterpTestData (const Teuchos::RCP<Albany::Layouts>& dl)
-    : coords_qp("Coord Vec", dl->qp_vector),
-      coords_verts("Coord Vec", dl->vertices_vector)
-  {}
-};
-#endif
-
 template<typename EvalT, typename Traits>
 ReaderBase<EvalT, Traits>::ReaderBase (const Teuchos::RCP<Manager>& rc_mgr)
   : rc_mgr_(rc_mgr)
@@ -69,11 +56,6 @@ Reader(const Teuchos::RCP<Manager>& rc_mgr,
       "wBF", dl->node_qp_scalar);
     this->addDependentField(bf_);
     this->addDependentField(wbf_);
-#ifdef AMBDEBUG
-    itd_ = Teuchos::rcp(new InterpTestData(dl));
-    this->addDependentField(itd_->coords_qp);
-    this->addDependentField(itd_->coords_verts);
-#endif
   }
 }
 
@@ -84,10 +66,6 @@ postRegistrationSetup (typename Traits::SetupData d,
   if (this->rc_mgr_->usingProjection()) {
     this->utils.setFieldData(bf_, fm);
     this->utils.setFieldData(wbf_, fm);
-#ifdef AMBDEBUG
-    this->utils.setFieldData(itd_->coords_qp, fm);
-    this->utils.setFieldData(itd_->coords_verts, fm);
-#endif
   }
   ReaderBase<PHAL::AlbanyTraits::Residual, Traits>::postRegistrationSetup(
     d, fm);
@@ -100,10 +78,6 @@ evaluateFields (typename Traits::EvalData workset) {
   // EvalT other than Residual, for otherwise the interpolated values won't be
   // available.
   if (this->rc_mgr_->usingProjection()) {
-#ifdef AMBDEBUG
-    this->rc_mgr_->testProjector(workset, bf_, wbf_, itd_->coords_verts,
-                                 itd_->coords_qp);
-#endif
     this->rc_mgr_->beginQpInterp();
     for (typename ReaderBase<PHAL::AlbanyTraits::Residual, Traits>::
            FieldsIterator it = this->fields_.begin();

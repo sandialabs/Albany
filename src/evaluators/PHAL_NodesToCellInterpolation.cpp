@@ -9,4 +9,4 @@
 #include "PHAL_NodesToCellInterpolation.hpp"
 #include "PHAL_NodesToCellInterpolation_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_FOR_ALL_SCALARS(PHAL::NodesToCellInterpolationBase)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(PHAL::NodesToCellInterpolationBase)

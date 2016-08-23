@@ -19,7 +19,7 @@ if [ -z "$ARCH" ]; then
 fi
 
 if [ -z "$TOOL_CHAIN" ]; then
-    echo "Specify tool chain [gcc|clang|intel]"
+    echo "Specify tool chain [gcc|clang|intel|pgi]"
     exit 1
 fi
 
@@ -42,7 +42,7 @@ case "$PACKAGE" in
 	PACKAGE_NAME="Albany"
 	;;
     *)
-	echo "Unrecognized package option"
+	echo "Unrecognized package option in env-single: $PACKAGE"
 	exit 1
 	;;
 esac
@@ -65,10 +65,12 @@ case "$ARCH" in
 	ARCH_NAME="Cuda"
 	;;
     *)
-	echo "Unrecognized architecture option"
+	echo "Unrecognized architecture option in env-single: $ARCH"
 	exit 1
 	;;
 esac
+
+NVCC_WRAPPER="$LCM_DIR/Trilinos/packages/kokkos/config/nvcc_wrapper"
 
 case "$TOOL_CHAIN" in
     gcc)
@@ -85,14 +87,14 @@ case "$TOOL_CHAIN" in
 		;;
 	    cuda)
 		if [ -z ${CXX+x} ]; then
-		    CXX="$LCM_DIR/$PACKAGE_NAME/packages/kokkos/config/nvcc_wrapper";
+		    CXX="$NVCC_WRAPPER";
 		else
 		    export NVCC_WRAPPER_DEFAULT_COMPILER="$CXX";
-		    CXX="$LCM_DIR/$PACKAGE_NAME/packages/kokkos/config/nvcc_wrapper";
+		    CXX="$NVCC_WRAPPER";
 		fi
 		;;
 	    *)
-		echo "Unrecognized architecture option"
+		echo "Unrecognized architecture option in env-single: $ARCH"
 		exit 1
 		;;
 	esac
@@ -109,8 +111,13 @@ case "$TOOL_CHAIN" in
 	if [ -z ${CXX+x} ]; then CXX=`which icpc`; fi
 	if [ -z ${FC+x} ]; then FC=`which ifort`; fi
 	;;
+    pgi)
+	if [ -z ${CC+x} ]; then CC=`which pgcc`; fi
+	if [ -z ${CXX+x} ]; then CXX=`which pgc++`; fi
+	if [ -z ${FC+x} ]; then FC=`which pgfortran`; fi
+	;;
     *)
-	echo "Unrecognized tool chain option"
+	echo "Unrecognized tool chain option in env-single: $TOOL_CHAIN"
 	exit 1
 	;;
 esac
@@ -132,6 +139,8 @@ case "$BUILD_TYPE" in
 		;;
 	    intel)
 		;;
+	    pgi)
+		;;
 	    *)
 		;;
 	esac
@@ -144,6 +153,8 @@ case "$BUILD_TYPE" in
 	    clang)
 		;;
 	    intel)
+		;;
+	    pgi)
 		;;
 	    *)
 		;;
@@ -158,6 +169,8 @@ case "$BUILD_TYPE" in
 		;;
 	    intel)
 		;;
+	    pgi)
+		;;
 	    *)
 		;;
 	esac
@@ -170,6 +183,8 @@ case "$BUILD_TYPE" in
 	    clang)
 		;;
 	    intel)
+		;;
+	    pgi)
 		;;
 	    *)
 		;;
@@ -184,12 +199,14 @@ case "$BUILD_TYPE" in
 		;;
 	    intel)
 		;;
+	    pgi)
+		;;
 	    *)
 		;;
 	esac
 	;;
     *)
-	echo "Unrecognized build type option"
+	echo "Unrecognized build type option in env-single: $BUILD_TYPE"
 	exit 1
 	;;
 esac

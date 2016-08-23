@@ -54,8 +54,7 @@ namespace Albany {
     std::map<int,std::string> bdTagToNodeSetName;
     std::map<int,std::string> bdTagToSideSetName;
     double (*xyz)[3];
-    double* sh;
-    int (*eles)[4]; //hard-coded for quads
+    int (*eles)[4]; //hard-coded for quads (tria will ignore last one)
     int (*be)[3]; //2 points plus label
   };
 

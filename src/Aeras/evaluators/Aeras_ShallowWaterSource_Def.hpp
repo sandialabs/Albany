@@ -120,74 +120,76 @@ operator() (const ShallowWaterSource_Tag& tag, const int& cell) const{
       source(cell, qp, 2) = 0.0;
    }
  }
- else {
-   // ts(0)=TMSHFT;
-   ts(0) = SU0*time/A;
-   //ts(1)=AI
-   ts(1)   = 1.0/A;
-   //ts(2)=RLAT, ts(3)=SNJ, ts(4)=CSJ, ts(5)=BUB, ts(6)=COR, ts(7)=SRCSJ, ts(8)=TMPRY
-   //ts(9)= CSJI, ts(10)=ACSJI, ts(11)=RLON, ts(12)=C, ts(13)=DCDM, ts(14)=DCDL, ts(15)=D2CDM, ts(16)=D2CDL;
+ else if (sourceType == TC4) {
+   std::vector<ScalarT> ts; 
+   ts.resize(40);  
+   // ts[0]=TMSHFT;
+   ts[0] = SU0*time/A;
+   //ts[1]=AI
+   ts[1]   = 1.0/A;
+   //ts[2]=RLAT, ts[3]=SNJ, ts[4]=CSJ, ts[5]=BUB, ts[6]=COR, ts[7]=SRCSJ, ts[8]=TMPRY
+   //ts[9]= CSJI, ts[10]=ACSJI, ts[11]=RLON, ts[12]=C, ts[13]=DCDM, ts[14]=DCDL, ts[15]=D2CDM, ts[16]=D2CDL;
    for (int qp = 0; qp < numQPs; ++qp) {
      const MeshScalarT theta = sphere_coord(cell, qp, 0);
      const MeshScalarT lambda = sphere_coord(cell, qp, 1);
-     ts(2) = theta;
-     ts(3)  = sin(theta);
-     ts(4)  = cos(theta)*cos(theta);
-     ts(5)    = bubfnc(theta)*cos(theta);
-     ts(6)    = 2.0*Omega*ts(3);
-     ts(7)  = cos(theta);
-     ts(8)  = tan(theta); //////potential problem at poles
-     ts(9)   = 1.0/ts(4);
-     ts(10)   = 1.0/(A*ts(4));
-     ts(11) = lambda;
-     ts(12) = sin(RLAT0)*ts(3) + cos(RLAT0)*ts(7)*cos(ts(11)-ts(0)-RLON0);
-     ts(13)    = sin(RLAT0) - cos(ts(11)-ts(0)-RLON0)*cos(RLAT0)*ts(8) ;
-     ts(14)    = -cos(RLAT0)*ts(7)*sin(ts(11)-ts(0)-RLON0);
-     ts(15)   = -cos(RLAT0)*cos(ts(11)-ts(0)-RLON0)*ts(9)/ts(7);
-     ts(16)   = -cos(RLAT0)*ts(7)*cos(ts(11)-(ts(0)-RLON0));
-     ts(17)  = +cos(RLAT0)*sin(ts(11)-ts(0)-RLON0)*ts(8) ;
-     //ts(18)= PSIB;
-     if (ts(12) == -1) ts(18) = 0.0;
-     else ts(18) = ALFA*exp(-SIGMA*((1.0-ts(12) )/(1.0+ts(12) )));
-     //ts(19)=TMP1, ts(20)=TMP2, ts(21)=TMP3
-     ts(19)    = 2.0*SIGMA*ts(18) /((1.0 + ts(12) )*(1.0 + ts(12)));
-     ts(20)    = (SIGMA - (1.0 + ts(12) ))/((1.0 + ts(12) )*(1.0 + ts(12)));
-     ts(21)    = (((1.0+ts(12) )*(1.0+ts(12)))-2.0*SIGMA*(1.0+ts(12) ))/
-                 ((1.0 + ts(12) )*(1.0 + ts(12))*(1.0 + ts(12))*(1.0 + ts(12)));
-     //ts(22)= DKDM  
-     ts(22)  = ts(19) *ts(13);
-     //ts(23)= DLDKDM  
-     ts(23)== ts(19) *(ts(17)  + 2.0*ts(14) *ts(13) *ts(20) );
-     //ts(24)= UT, ts(25)=VT, ts(26)=DUTDL, ts(27)=DVTDL, ts(28)=DUTDM, ts(29)=DVTDM
-     ts(24)     = ts(5) - ts(4)*ts(22) *ts(1);
-     ts(25)     = (ts(19) *ts(14)) *ts(1);
-     ts(26)  = -ts(4)*ts(23) *ts(1);
-     ts(27)  = (ts(19) *(ts(16)  + 2.0*(ts(14) *ts(14))*ts(20) )) *ts(1);
-     ts(28)  = (dbubf(ts(2))) - (ts(4)*(ts(19) *(ts(15)  + 2.0*(ts(13) *ts(13))*ts(20) ))  - 2.0*ts(3)*ts(22) )*ts(1);
-     ts(29)  = ts(23) *ts(1);
-     ts(19)  = (ts(4)*SU0)/(A*A)*ts(23);
-     ts(19)  = ts(19)  + ts(24) *ts(10)*ts(26);
-     ts(19)  = ts(19)  + ts(25) *ts(1)* ts(28);
-     //ts(30)=ETAFCG
-     ts(30) = ts(19)  + ts(6)*(ts(1)*(ts(19) *ts(14)) -ts(25) ); //U
-     ts(21)      = ts(6)*(ts(19) *ts(14));
-     //ts(31)=PHIFCG
-     ts(31) = -SU0*ts(1)*ts(21)  + ts(24)*ts(21) *ts(10);
-     ts(31) = ts(31) + ts(1)*ts(25) *(ts(18) *(2.0*Omega)+ts(6)*ts(22) );
-     ts(31) = ts(31) - ts(25) *ts(5)*ts(9)*(ts(6) + ts(5)*ts(10)*ts(3));  //H
-     ts(21)  = - SU0*(1.0/(A*A))*(ts(19) *(ts(16)  + 2.0*(ts(14) *ts(14))*ts(20) ));
-     ts(21)  = ts(21)  + ts(24) *ts(10)*ts(27);
-     ts(21)  = ts(21)  + ts(25) *ts(1)*ts(29);
-     ts(21)  = ts(21)  + (ts(24) *ts(24) +ts(25) *ts(25) )*ts(3)*ts(10);
-     //ts(32)= DIVFCG
-     ts(32) = ts(21)  + ts(4)*ts(1)*(ts(6)*ts(22) +ts(18) *(2.0*Omega));
-     ts(32) = ts(32) + ts(6)*(ts(24) -ts(5)) - ts(10)*ts(3)*ts(5)*ts(5); //V
+     ts[2] = theta;
+     ts[3]  = sin(theta);
+     ts[4]  = cos(theta)*cos(theta);
+     ts[5]    = bubfnc(theta)*cos(theta);
+     ts[6]    = 2.0*Omega*ts[3];
+     ts[7]  = cos(theta);
+     ts[8]  = tan(theta); //////potential problem at poles
+     ts[9]   = 1.0/ts[4];
+     ts[10]   = 1.0/(A*ts[4]);
+     ts[11] = lambda;
+     ts[12] = sin(RLAT0)*ts[3] + cos(RLAT0)*ts[7]*cos(ts[11]-ts[0]-RLON0);
+     ts[13]    = sin(RLAT0) - cos(ts[11]-ts[0]-RLON0)*cos(RLAT0)*ts[8] ;
+     ts[14]    = -cos(RLAT0)*ts[7]*sin(ts[11]-ts[0]-RLON0);
+     ts[15]   = -cos(RLAT0)*cos(ts[11]-ts[0]-RLON0)*ts[9]/ts[7];
+     ts[16]   = -cos(RLAT0)*ts[7]*cos(ts[11]-(ts[0]-RLON0));
+     ts[17]  = +cos(RLAT0)*sin(ts[11]-ts[0]-RLON0)*ts[8] ;
+     //ts[18]= PSIB;
+     if (ts[12] == -1) ts[18] = 0.0;
+     else ts[18] = ALFA*exp(-SIGMA*((1.0-ts[12] )/(1.0+ts[12] )));
+     //ts[19]=TMP1, ts[20]=TMP2, ts[21]=TMP3
+     ts[19]    = 2.0*SIGMA*ts[18] /((1.0 + ts[12] )*(1.0 + ts[12]));
+     ts[20]    = (SIGMA - (1.0 + ts[12] ))/((1.0 + ts[12] )*(1.0 + ts[12]));
+     ts[21]    = (((1.0+ts[12] )*(1.0+ts[12]))-2.0*SIGMA*(1.0+ts[12] ))/
+                 ((1.0 + ts[12] )*(1.0 + ts[12])*(1.0 + ts[12])*(1.0 + ts[12]));
+     //ts[22]= DKDM  
+     ts[22]  = ts[19] *ts[13];
+     //ts[23]= DLDKDM  
+     ts[23]== ts[19] *(ts[17]  + 2.0*ts[14] *ts[13] *ts[20] );
+     //ts[24]= UT, ts[25]=VT, ts[26]=DUTDL, ts[27]=DVTDL, ts[28]=DUTDM, ts[29]=DVTDM
+     ts[24]     = ts[5] - ts[4]*ts[22] *ts[1];
+     ts[25]     = (ts[19] *ts[14]) *ts[1];
+     ts[26]  = -ts[4]*ts[23] *ts[1];
+     ts[27]  = (ts[19] *(ts[16]  + 2.0*(ts[14] *ts[14])*ts[20] )) *ts[1];
+     ts[28]  = (dbubf(ts[2])) - (ts[4]*(ts[19] *(ts[15]  + 2.0*(ts[13] *ts[13])*ts[20] ))  - 2.0*ts[3]*ts[22] )*ts[1];
+     ts[29]  = ts[23] *ts[1];
+     ts[19]  = (ts[4]*SU0)/(A*A)*ts[23];
+     ts[19]  = ts[19]  + ts[24] *ts[10]*ts[26];
+     ts[19]  = ts[19]  + ts[25] *ts[1]* ts[28];
+     //ts[30]=ETAFCG
+     ts[30] = ts[19]  + ts[6]*(ts[1]*(ts[19] *ts[14]) -ts[25] ); //U
+     ts[21]      = ts[6]*(ts[19] *ts[14]);
+     //ts[31)=PHIFCG
+     ts[31] = -SU0*ts[1]*ts[21]  + ts[24]*ts[21] *ts[10];
+     ts[31] = ts[31] + ts[1]*ts[25] *(ts[18] *(2.0*Omega)+ts[6]*ts[22] );
+     ts[31] = ts[31] - ts[25] *ts[5]*ts[9]*(ts[6] + ts[5]*ts[10]*ts[3]);  //H
+     ts[21]  = - SU0*(1.0/(A*A))*(ts[19] *(ts[16]  + 2.0*(ts[14] *ts[14])*ts[20] ));
+     ts[21]  = ts[21]  + ts[24] *ts[10]*ts[27];
+     ts[21]  = ts[21]  + ts[25] *ts[1]*ts[29];
+     ts[21]  = ts[21]  + (ts[24] *ts[24] +ts[25] *ts[25] )*ts[3]*ts[10];
+     //ts[32]= DIVFCG
+     ts[32] = ts[21]  + ts[4]*ts[1]*(ts[6]*ts[22] +ts[18] *(2.0*Omega));
+     ts[32] = ts[32] + ts[6]*(ts[24] -ts[5]) - ts[10]*ts[3]*ts[5]*ts[5]; //V
 
-     source(cell, qp, 0) = ts(31);
-     source(cell, qp, 1) = ts(30);
-     source(cell, qp, 2) = ts(32);
+     source(cell, qp, 0) = ts[31];
+     source(cell, qp, 1) = ts[30];
+     source(cell, qp, 2) = ts[32];
 
-   }//end qp
+   }//end qp 
  }
 
 }
@@ -343,7 +345,6 @@ evaluateFields(typename Traits::EvalData workset)
 
 #else
 
-  ts= Kokkos::View<ScalarT*, PHX::Device> ("ts",40);
   A = earthRadius;
   time = workset.current_time; 
   Kokkos::parallel_for(ShallowWaterSource_Policy(0,workset.numCells),*this);

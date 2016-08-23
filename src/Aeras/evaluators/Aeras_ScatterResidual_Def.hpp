@@ -212,7 +212,7 @@ operator() (const ScatterResid_hasFastAccess_is_adjoint_Tag& tag, const int& cel
         for (unsigned int i=0; i<nunk; ++i) {
           ST val = valptr.fastAccessDx(i);
           if (val != 0) 
-            jacobian.sumIntoValues(colT[i], &rowT,  1, &val,true);
+            jacobian.sumIntoValues(colT[i], &rowT,  1, &val, false, true);
         }
       }
       eq += this->numNodeVar;
@@ -225,7 +225,7 @@ operator() (const ScatterResid_hasFastAccess_is_adjoint_Tag& tag, const int& cel
             for (int i=0; i<nunk; ++i){
               ST val = valptr.fastAccessDx(i);
               if (val != 0) 
-                jacobian.sumIntoValues(colT[i], &rowT,  1, &val,true);
+                jacobian.sumIntoValues(colT[i], &rowT,  1, &val, false, true);
          }
         }
          for (int j = eq+this->numVectorLevelVar;
@@ -236,7 +236,7 @@ operator() (const ScatterResid_hasFastAccess_is_adjoint_Tag& tag, const int& cel
           for (int i=0; i<nunk; ++i){ 
             ST val = valptr.fastAccessDx(i);
             if (val != 0) 
-              jacobian.sumIntoValues(colT[i], &rowT,  1, &val,true);
+              jacobian.sumIntoValues(colT[i], &rowT,  1, &val, false, true);
           }
         }
       }
@@ -250,7 +250,7 @@ operator() (const ScatterResid_hasFastAccess_is_adjoint_Tag& tag, const int& cel
           for (int i=0; i<nunk; ++i) {
             ST val = valptr.fastAccessDx(i);
             if (val != 0) 
-              jacobian.sumIntoValues(colT[i], &rowT,  1, &val,true);
+              jacobian.sumIntoValues(colT[i], &rowT,  1, &val, false, true);
         }
       }
      }
@@ -281,7 +281,7 @@ operator() (const ScatterResid_hasFastAccess_no_adjoint_Tag& tag, const int& cel
         for (unsigned int i=0; i<nunk; ++i) { 
           ST val = valptr.fastAccessDx(i);
           if (val != 0) 
-            jacobian.sumIntoValues(rowT, &colT[i],  1, &val, true);
+            jacobian.sumIntoValues(rowT, &colT[i],  1, &val, false, true);
         }
         //jacobian.sumIntoValues(rowT, colT, nunk,  vals, true); 
       }
@@ -295,7 +295,7 @@ operator() (const ScatterResid_hasFastAccess_no_adjoint_Tag& tag, const int& cel
             for (int i=0; i<nunk; ++i) { 
               ST val = valptr.fastAccessDx(i);
               if (val != 0) 
-                jacobian.sumIntoValues(rowT, &colT[i],  1, &val, true);
+                jacobian.sumIntoValues(rowT, &colT[i],  1, &val, false, true);
             }
             //jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
         }
@@ -307,7 +307,7 @@ operator() (const ScatterResid_hasFastAccess_no_adjoint_Tag& tag, const int& cel
           for (int i=0; i<nunk; ++i) {
             ST val = valptr.fastAccessDx(i);
             if (val != 0) 
-              jacobian.sumIntoValues(rowT, &colT[i],  1, &val, true);
+              jacobian.sumIntoValues(rowT, &colT[i],  1, &val, false, true);
           }
           //jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
         }
@@ -322,7 +322,7 @@ operator() (const ScatterResid_hasFastAccess_no_adjoint_Tag& tag, const int& cel
           for (int i=0; i<nunk; ++i) {
             ST val = valptr.fastAccessDx(i);
             if (val != 0) 
-              jacobian.sumIntoValues(rowT, &colT[i],  1, &val, true);
+              jacobian.sumIntoValues(rowT, &colT[i],  1, &val, false, true);
           }
           //jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
       }

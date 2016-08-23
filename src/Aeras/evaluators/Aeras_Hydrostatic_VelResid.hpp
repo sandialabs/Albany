@@ -56,7 +56,6 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>         wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>     GradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>     wGradBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim,Dim> wGradGradBF;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>          sphere_coord;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>      jacobian;
   PHX::MDField<MeshScalarT,Cell,QuadPoint>              jacobian_det;
@@ -69,7 +68,6 @@ private:
   PHX::MDField<ScalarT,Cell,Node,Level,Dim>       VelxNode;
   PHX::MDField<ScalarT,Cell,Node,Level,Dim>  VelxDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  DVelx;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      LaplaceVelx;
   PHX::MDField<ScalarT,Cell,Node,Level>      density;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      vorticity;
 
@@ -90,6 +88,23 @@ private:
   bool obtainLaplaceOp;
   bool pureAdvection;
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct Hydrostatic_VelResid_Tag{};
+  struct Hydrostatic_VelResid_pureAdvection_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, Hydrostatic_VelResid_Tag> Hydrostatic_VelResid_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, Hydrostatic_VelResid_pureAdvection_Tag> Hydrostatic_VelResid_pureAdvection_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Hydrostatic_VelResid_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Hydrostatic_VelResid_pureAdvection_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 

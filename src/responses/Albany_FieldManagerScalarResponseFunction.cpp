@@ -23,7 +23,8 @@ FieldManagerScalarResponseFunction(
   application(application_),
   problem(problem_),
   meshSpecs(meshSpecs_),
-  stateMgr(stateMgr_)
+  stateMgr(stateMgr_),
+  performedPostRegSetup(false)
 {
   setup(responseParams);
 }
@@ -38,7 +39,8 @@ FieldManagerScalarResponseFunction(
   application(application_),
   problem(problem_),
   meshSpecs(meshSpecs_),
-  stateMgr(stateMgr_)
+  stateMgr(stateMgr_),
+  performedPostRegSetup(false)
 {
 }
 
@@ -80,7 +82,10 @@ setup(Teuchos::ParameterList& responseParams)
   num_responses = tags[0]->dataLayout().dimension(rank-1);
   if (num_responses == 0)
     num_responses = 1;
-  //MP: post-registration setup moved into evaluators.
+  
+  // MPerego: In order to do post-registration setup, need to call postRegSetup function,
+  // which is now called in AlbanyApplications (at this point the derivative dimensions cannot be
+  // computed correctly because the discretization has not been created yet). 
 
   // Visualize rfm graph -- get file name from name of response function
   // (with spaces replaced by _ and lower case)
@@ -104,6 +109,63 @@ Albany::FieldManagerScalarResponseFunction::
 numResponses() const 
 {
   return num_responses;
+}
+
+//amb This is not right because rfm doesn't account for multiple element
+// blocks. Make do for now. Also, rewrite this code to get rid of all this
+// redundancy.
+void Albany::FieldManagerScalarResponseFunction::
+postRegSetup()
+{
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+        application.get(), meshSpecs.get()));
+    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
+      derivative_dimensions); }
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
+        application.get(), meshSpecs.get()));
+    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(
+      derivative_dimensions); }
+  // SG and MP implementations get deriv info from the regular evaluation types
+#ifdef ALBANY_SG
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+        application.get(), meshSpecs.get()));
+    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::SGJacobian>(
+      derivative_dimensions); }
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
+        application.get(), meshSpecs.get()));
+    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::SGTangent>(
+      derivative_dimensions); }
+#endif
+#ifdef ALBANY_ENSEMBLE
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+        application.get(), meshSpecs.get()));
+    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::MPJacobian>(
+      derivative_dimensions); }
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
+        application.get(), meshSpecs.get()));
+    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::MPTangent>(
+      derivative_dimensions); }
+#endif
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
+        application.get(), meshSpecs.get()));
+    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
+      derivative_dimensions); }
+  rfm->postRegistrationSetup("");
+  performedPostRegSetup = true;
 }
 
 template<typename EvalT>
@@ -131,14 +193,15 @@ evaluateResponseT(const double current_time,
 		 const Teuchos::Array<ParamVec>& p,
 		 Tpetra_Vector& gT)
 {
-  visResponseGraph<PHAL::AlbanyTraits::Residual>("");
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Post registration setup not performed in field manager " <<
+      std::endl << "Forgot to call \"postRegSetup\"? ");
 
-  //do post-registration setup
-  rfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>("Residual");
+  visResponseGraph<PHAL::AlbanyTraits::Residual>("");
 
   // Set data in Workset struct
   PHAL::Workset workset;
-  
   application->setupBasicWorksetInfoT(workset, current_time, rcp(xdotT, false), rcp(xdotdotT, false), rcpFromRef(xT), p);
   workset.gT = Teuchos::rcp(&gT,false);
 
@@ -167,25 +230,13 @@ evaluateTangentT(const double alpha,
 		Tpetra_MultiVector* gxT,
 		Tpetra_MultiVector* gpT)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Post registration setup not performed in field manager " <<
+      std::endl << "Forgot to call \"postRegSetup\"? ");
+
   visResponseGraph<PHAL::AlbanyTraits::Tangent>("_tangent");
   
-  //amb This is not right because rfm doesn't account for multiple element
-  // blocks. Make do for now. Also, rewrite this code to get rid of all this
-  // redundancy.
-
-  // get deriv info and do post-registration setup
-  {
-    std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back(
-      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
-        application.get(), meshSpecs.get()));
-    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(
-      derivative_dimensions);
-  }
-
-  rfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>("Tangent");
-
-
   // Set data in Workset struct
   PHAL::Workset workset;
   application->setupTangentWorksetInfoT(workset, current_time, sum_derivs, 
@@ -214,20 +265,12 @@ evaluateGradient(const double current_time,
 		 Epetra_MultiVector* dg_dxdotdot,
 		 Epetra_MultiVector* dg_dp)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Post registration setup not performed in field manager " <<
+      std::endl << "Forgot to call \"postRegSetup\"? ");
+
   visResponseGraph<PHAL::AlbanyTraits::Jacobian>("_gradient");
-
-  // get deriv info and do post-registration setup
-  {
-    std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back(
-      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-        application.get(), meshSpecs.get()));
-    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
-      derivative_dimensions);
-  }
-
-  rfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>("Jacobian");
-
   Teuchos::RCP<const Teuchos_Comm> commT = application->getComm();
   //Create Tpetra copy of x, called xT
   Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT);
@@ -346,19 +389,12 @@ evaluateGradientT(const double current_time,
 		 Tpetra_MultiVector* dg_dxdotdotT,
 		 Tpetra_MultiVector* dg_dpT)
 {
-  visResponseGraph<PHAL::AlbanyTraits::Jacobian>("_gradient");
-  
-  // get deriv info and do post-registration setup
-  {
-    std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back(
-      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-        application.get(), meshSpecs.get()));
-    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
-      derivative_dimensions);
-  }
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Post registration setup not performed in field manager " <<
+      std::endl << "Forgot to call \"postRegSetup\"? ");
 
-  rfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>("Jacobian");
+  visResponseGraph<PHAL::AlbanyTraits::Jacobian>("_gradient");
 
   // Set data in Workset struct
   PHAL::Workset workset;
@@ -416,18 +452,11 @@ evaluateDistParamDeriv(
       const std::string& dist_param_name,
       Epetra_MultiVector* dg_dp)
 {
-  // get deriv info and do post-registration setup
-  {
-    std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back(
-      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
-        application.get(), meshSpecs.get()));
-    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
-      derivative_dimensions);
-  }
-
-  rfm->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>("DistParamDeriv");
-
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Post registration setup not performed in field manager " <<
+      std::endl << "Forgot to call \"postRegSetup\"? ");
+  
   // Set data in Workset struct
   PHAL::Workset workset;
   Teuchos::RCP<const Tpetra_Vector> xdotT;
@@ -479,6 +508,11 @@ evaluateSGResponse(
   const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
   Stokhos::EpetraVectorOrthogPoly& sg_g)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Post registration setup not performed in field manager " <<
+      std::endl << "Forgot to call \"postRegSetup\"? ");
+  
   visResponseGraph<PHAL::AlbanyTraits::SGResidual>("_sg");
 
   // Set data in Workset struct
@@ -514,20 +548,12 @@ evaluateSGTangent(
   Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
   Stokhos::EpetraMultiVectorOrthogPoly* sg_gp)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Post registration setup not performed in field manager " <<
+      std::endl << "Forgot to call \"postRegSetup\"? ");
+  
   visResponseGraph<PHAL::AlbanyTraits::SGTangent>("_sg_tangent");
-
-  // get deriv info and do post-registration setup
-  {
-    std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back(
-      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
-        application.get(), meshSpecs.get()));
-    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::SGTangent>(
-      derivative_dimensions);
-  }
-
-  rfm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGTangent>("SGTangent");
-
 
   // Set data in Workset struct
   PHAL::Workset workset;
@@ -560,19 +586,12 @@ evaluateSGGradient(
   Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdotdot,
   Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Post registration setup not performed in field manager " <<
+      std::endl << "Forgot to call \"postRegSetup\"? ");
+  
   visResponseGraph<PHAL::AlbanyTraits::SGJacobian>("_sg_gradient");
-
-  // get deriv info and do post-registration setup
-  {
-    std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back(
-      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-        application.get(), meshSpecs.get()));
-    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::SGJacobian>(
-      derivative_dimensions);
-  }
-
-  rfm->postRegistrationSetupForType<PHAL::AlbanyTraits::SGJacobian>("SGJacobian");
 
   // Set data in Workset struct
   PHAL::Workset workset;
@@ -647,6 +666,11 @@ evaluateMPResponse(
   const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
   Stokhos::ProductEpetraVector& mp_g)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Post registration setup not performed in field manager " <<
+      std::endl << "Forgot to call \"postRegSetup\"? ");
+  
   visResponseGraph<PHAL::AlbanyTraits::MPResidual>("_mp");
 
   // Set data in Workset struct
@@ -682,20 +706,12 @@ evaluateMPTangent(
   Stokhos::ProductEpetraMultiVector* mp_JV,
   Stokhos::ProductEpetraMultiVector* mp_gp)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Post registration setup not performed in field manager " <<
+      std::endl << "Forgot to call \"postRegSetup\"? ");
+  
   visResponseGraph<PHAL::AlbanyTraits::MPTangent>("_mp_tangent");
-
-  // get deriv info and do post-registration setup
-  {
-    std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back(
-      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
-        application.get(), meshSpecs.get()));
-    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::MPTangent>(
-      derivative_dimensions);
-  }
-
-  rfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPTangent>("MPTangent");
-
 
   // Set data in Workset struct
   PHAL::Workset workset;
@@ -728,19 +744,12 @@ evaluateMPGradient(
   Stokhos::ProductEpetraMultiVector* mp_dg_dxdotdot,
   Stokhos::ProductEpetraMultiVector* mp_dg_dp)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Post registration setup not performed in field manager " <<
+      std::endl << "Forgot to call \"postRegSetup\"? ");
+
   visResponseGraph<PHAL::AlbanyTraits::MPJacobian>("_mp_gradient");
-
-  // get deriv info and do post-registration setup
-  {
-    std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back(
-      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-        application.get(), meshSpecs.get()));
-    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::MPJacobian>(
-      derivative_dimensions);
-  }
-
-  rfm->postRegistrationSetupForType<PHAL::AlbanyTraits::MPJacobian>("MPJacobian");
 
   // Set data in Workset struct
   PHAL::Workset workset;

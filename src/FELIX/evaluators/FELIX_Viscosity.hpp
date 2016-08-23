@@ -11,7 +11,6 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Sacado_ParameterAccessor.hpp" 
 #include "Albany_Layouts.hpp"
 
 namespace FELIX {
@@ -23,9 +22,8 @@ namespace FELIX {
 
 template<typename EvalT, typename Traits>
 class Viscosity : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>,
-		    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-
+                  public PHX::EvaluatorDerived<EvalT, Traits>
+{
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
@@ -38,32 +36,28 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
-  ScalarT& getValue(const std::string &n); 
-
 private:
- 
+
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  ScalarT homotopyParam;
-  ScalarT dummyParam;
-
   //coefficients for Glen's law
-  double A; 
-  double n; 
+  double A;
+  double n;
 
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  PHX::MDField<ScalarT,Dim>                    homotopyParam;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
 
   unsigned int numQPs, numDims, numNodes;
-  
+
   enum VISCTYPE {CONSTANT, GLENSLAW};
   VISCTYPE visc_type;
- 
 };
-}
 
-#endif
+} // Namespace FELIX
+
+#endif // FELIX_VISCOSITY_HPP

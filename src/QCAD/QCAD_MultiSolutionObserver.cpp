@@ -9,6 +9,7 @@
 #include "Epetra_Export.h"
 #include "Epetra_Vector.h"
 #include "Epetra_MultiVector.h"
+#include "Petra_Converters.hpp"
 
 #include "Albany_StateInfoStruct.hpp"
 #include "QCAD_MultiSolutionObserver.hpp"
@@ -130,7 +131,9 @@ void QCAD::MultiSolution_Observer::observeSolution(const Epetra_Vector& solution
   QCAD::CopyAllStates(appStates, my_states, appStateInfo);
 
     //Finally, write out the solution using our the created discretization object
-  my_disc->writeSolution(*fullSoln, stamp, /*overlapped =*/ false);
+  Teuchos::RCP<const Tpetra_Vector> fullSolnT =
+     Petra::EpetraVector_To_TpetraVectorConst(*fullSoln, commT);
+  my_disc->writeSolutionT(*fullSolnT, stamp, /*overlapped =*/ false);
 }
 
 

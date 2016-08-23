@@ -5,10 +5,10 @@
 ##*****************************************************************//
 
 # Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse0.exo
-               ${CMAKE_CURRENT_BINARY_DIR}/coarse0.exo COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse1.exo
-               ${CMAKE_CURRENT_BINARY_DIR}/coarse1.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse0.g
+               ${CMAKE_CURRENT_BINARY_DIR}/coarse0.g COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse1.g
+               ${CMAKE_CURRENT_BINARY_DIR}/coarse1.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse0.xml
                ${CMAKE_CURRENT_BINARY_DIR}/coarse0.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse1.xml

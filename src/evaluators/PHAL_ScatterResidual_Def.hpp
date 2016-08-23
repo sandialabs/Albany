@@ -255,7 +255,7 @@ operator()(const ScatterRank0_is_adjoint_Tag& tag, const int& cell) const
            if (((this->val[eq])(cell,node)).hasFastAccess()) {  
                for (int lunk=0; lunk<nunk; lunk++){
                    ST val = ((this->val[eq])(cell,node)).fastAccessDx(lunk);
-                    jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val,true); 
+                    jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val, false, true); 
                }
             }//has fast access
       }
@@ -294,7 +294,7 @@ operator()(const ScatterRank0_no_adjoint_Tag& tag, const int& cell) const
               fT->sumIntoLocalValue(rowT, ((this->val[eq])(cell,node)).val());
            if (((this->val[eq])(cell,node)).hasFastAccess()) {
              for (int i = 0; i < nunk; ++i) vals[i] = this->val[eq](cell,node).fastAccessDx(i);
-                jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
+                jacobian.sumIntoValues(rowT, colT, nunk,  vals, false, true);
 //              jacobian.sumIntoValues(rowT, &colT[0], nunk,  &vals[0], true);  
         }
       }
@@ -335,7 +335,7 @@ operator()(const ScatterRank1_is_adjoint_Tag& tag, const int& cell) const
            if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
                for (int lunk=0; lunk<nunk; lunk++){
                    ST val = ((this->valVec)(cell,node,eq)).fastAccessDx(lunk);
-                    jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val,true);
+                    jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val, false, true);
                }
             }//has fast access
       }
@@ -374,7 +374,7 @@ operator()(const ScatterRank1_no_adjoint_Tag& tag, const int& cell) const
               fT->sumIntoLocalValue(rowT, ((this->valVec)(cell,node,eq)).val());
            if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
              for (int i = 0; i < nunk; ++i) vals[i] = (this->valVec)(cell,node,eq).fastAccessDx(i);
-              jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
+              jacobian.sumIntoValues(rowT, colT, nunk,  vals, false, true);
 //              jacobian.sumIntoValues(rowT, &colT[0], nunk, &vals[0], true);
         }
       }
@@ -412,7 +412,7 @@ operator()(const ScatterRank2_is_adjoint_Tag& tag, const int& cell) const
            if (((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).hasFastAccess()) {
                for (int lunk=0; lunk<nunk; lunk++){
                     ST val = ((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).fastAccessDx(lunk);
-                    jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val,true);
+                    jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val, false, true);
                }
             }//has fast access
       }
@@ -451,7 +451,7 @@ operator()(const ScatterRank2_no_adjoint_Tag& tag, const int& cell) const
               fT->sumIntoLocalValue(rowT, ((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).val());
            if (((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).hasFastAccess()) {
              for (int i = 0; i < nunk; ++i) vals[i] = (this->valTensor[0])(cell,node, eq/numDim, eq%numDim).fastAccessDx(i);
-              jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
+              jacobian.sumIntoValues(rowT, colT, nunk,  vals, false, true);
            //   jacobian.sumIntoValues(rowT, &colT[0], nunk, &vals[0], true);
         }
       }

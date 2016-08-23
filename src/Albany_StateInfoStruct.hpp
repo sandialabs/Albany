@@ -54,7 +54,7 @@ typedef std::vector<StateArray> StateArrayVec;
           nsNames(nsNames_), ssNames(ssNames_), worksetSize(worksetSize_),
           ebName(ebName_), ebNameToIndex(ebNameToIndex_),
           interleavedOrdering(interleavedOrdering_), sepEvalsByEB(sepEvalsByEB_),
-          cubatureRule(cubatureRule_), polynomialOrder(0) {}
+          cubatureRule(cubatureRule_) {}
     CellTopologyData ctd;  // nonconst to allow replacement when the mesh adapts
     int numDim;
     int cubatureDegree;
@@ -71,9 +71,10 @@ typedef std::vector<StateArray> StateArrayVec;
     // but the user must enforce this intention.
     bool sepEvalsByEB;
     const Intrepid2::EIntrepidPLPoly cubatureRule;
-    // polynomial order for higher order fields in GOAL
-    int polynomialOrder;
     std::map<std::string,Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > > sideSetMeshSpecs;
+
+    // We store the side meshes names so we have a way to index them with a number
+    std::vector<std::string>                                                 sideSetMeshNames;
   };
 
 //! Container to get state info from StateManager to STK. Made into a struct so

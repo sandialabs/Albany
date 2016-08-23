@@ -153,7 +153,10 @@ Teuchos::RCP<Epetra_Vector> Decorator::getSolutionField() const
 
 void Decorator::setResidualField(const Epetra_Vector &residual)
 {
-  discretization->setResidualField(residual);
+  Teuchos::RCP<const Tpetra_Vector> residualT =
+       Petra::EpetraVector_To_TpetraVectorConst(residual, discretization->getComm());
+    writeSolutionT(solnT, time, overlapped);
+  discretization->setResidualFieldT(residualT);
 }
 
 bool Decorator::hasRestartSolution() const

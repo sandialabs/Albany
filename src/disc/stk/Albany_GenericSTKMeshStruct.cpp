@@ -172,10 +172,10 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 
       if(interleavedOrdering)
         this->fieldContainer = Teuchos::rcp(new Albany::MultiSTKFieldContainer<true>(params,
-            metaData, bulkData, neq_, req, numDim, sis, solution_vector, residual_vector));
+            metaData, bulkData, neq, req, numDim, sis, solution_vector, residual_vector));
       else
         this->fieldContainer = Teuchos::rcp(new Albany::MultiSTKFieldContainer<false>(params,
-            metaData, bulkData, neq_, req, numDim, sis, solution_vector, residual_vector));
+            metaData, bulkData, neq, req, numDim, sis, solution_vector, residual_vector));
 
   }
 
@@ -183,10 +183,10 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 
       if(interleavedOrdering)
         this->fieldContainer = Teuchos::rcp(new Albany::OrdinarySTKFieldContainer<true>(params,
-            metaData, bulkData, neq_, req, numDim, sis));
+            metaData, bulkData, neq, req, numDim, sis));
       else
         this->fieldContainer = Teuchos::rcp(new Albany::OrdinarySTKFieldContainer<false>(params,
-            metaData, bulkData, neq_, req, numDim, sis));
+            metaData, bulkData, neq, req, numDim, sis));
 
   }
 
@@ -708,6 +708,62 @@ void Albany::GenericSTKMeshStruct::setupMeshBlkInfo()
 
 }
 
+void Albany::GenericSTKMeshStruct::addNodeSetsFromSideSets ()
+{
+  TEUCHOS_TEST_FOR_EXCEPTION (this->meshSpecs[0]==Teuchos::null, std::runtime_error,
+                              "Error! Mesh specs have not been initialized yet.\n");
+
+  // This function adds a (sideset) part to nsPartVec and to the meshSpecs (nsNames)
+  for (const auto& ssn_part_pair : ssPartVec)
+  {
+    // If a nodeset with the same name already exists, we ASSUME it contains this sideset's nodes.
+    auto itns = nsPartVec.find(ssn_part_pair.first);
+    if (itns!=nsPartVec.end())
+      return;
+
+    // Add the part to the node sets parts vector
+    stk::mesh::Part* part = ssn_part_pair.second;
+    nsPartVec[ssn_part_pair.first] = part;
+
+    // Update the list of nodesets in the mesh specs
+    this->meshSpecs[0]->nsNames.push_back(ssn_part_pair.first);
+
+    // This list will be used later to check that the new nodesets' integrity
+    m_nodesets_from_sidesets.push_back(ssn_part_pair.first);
+  }
+}
+
+void Albany::GenericSTKMeshStruct::checkNodeSetsFromSideSetsIntegrity ()
+{
+  // For each nodeset generated from a sideset, this method checks that
+  // the sides in the corresponding nodeset contain the right number of
+  // nodes, that is, makes sure that 'declare_relation' was called to
+  // establish the relation between the side and its node.
+
+  for (auto ssn : m_nodesets_from_sidesets)
+  {
+    // Fetch the part
+    auto it = ssPartVec.find(ssn);
+    TEUCHOS_TEST_FOR_EXCEPTION (it==ssPartVec.end(), std::runtime_error,
+                                "Error! Side set " << ssn << " not found. This error should NEVER occurr though. Bug?\n");
+    stk::mesh::Part* ssPart = it->second;
+
+    // Extract sides
+    stk::mesh::Selector selector (*ssPart & (metaData->locally_owned_part() | metaData->globally_shared_part()));
+    std::vector<stk::mesh::Entity> sides;
+    stk::mesh::get_selected_entities(selector, bulkData->buckets(metaData->side_rank()), sides);
+
+    // For each side, we check that it has the right number of nodes.
+    unsigned num_nodes = metaData->get_topology(*ssPart).num_nodes();
+    for (const auto& side : sides)
+    {
+      TEUCHOS_TEST_FOR_EXCEPTION (bulkData->num_nodes(side)==num_nodes, std::runtime_error,
+                                  "Error! Found a side with wrong number of nodes stored. Most likely,"
+                                  "its nodes were not added to the side with 'declare_relation').\n");
+    }
+  }
+}
+
 void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
   if (params->isSublist ("Side Set Discretizations"))
@@ -733,10 +789,11 @@ void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::
       }
       else
       {
+        // We must check whether a side mesh was already created elsewhere.
+        // If the mesh already exists, we do nothing, and we ASSUME it is a valid mesh
+        // This happens, for instance, for the basal mesh for extruded meshes.
         if (this->sideSetMeshStructs.find(ss_name)==this->sideSetMeshStructs.end())
         {
-          // We must check whether a side mesh was already created elsewhere. This happens,
-          // for instance, for the basal mesh for extruded meshes.
           ss_mesh = Albany::DiscretizationFactory::createMeshStruct (params_ss,adaptParams,commT);
           this->sideSetMeshStructs[ss_name] = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(ss_mesh,false);
           TEUCHOS_TEST_FOR_EXCEPTION (this->sideSetMeshStructs[ss_name]==Teuchos::null, std::runtime_error,
@@ -751,6 +808,7 @@ void Albany::GenericSTKMeshStruct::initializeSideSetMeshStructs (const Teuchos::
 
       // Update the side set mesh specs pointer in the mesh specs of this mesh
       this->meshSpecs[0]->sideSetMeshSpecs[ss_name] = this->sideSetMeshStructs[ss_name]->getMeshSpecs();
+      this->meshSpecs[0]->sideSetMeshNames.push_back(ss_name);
 
       // We need to create the 2D cell -> (3D cell, side_node_ids) map in the side mesh now
       typedef AbstractSTKFieldContainer::IntScalarFieldType ISFT;
@@ -807,7 +865,7 @@ void Albany::GenericSTKMeshStruct::finalizeSideSetMeshStructs (
         auto& sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
 
         params_ss = Teuchos::rcp(new Teuchos::ParameterList(ssd_list.sublist(it.first)));
-        it.second->setFieldAndBulkData(commT,params_ss,neq,req,sis,worksetSize);
+        it.second->setFieldAndBulkData(commT,params_ss,neq,req,sis,worksetSize);  // Cell equations are also defined on the side, but not viceversa
       }
     }
   }
@@ -961,7 +1019,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
   out->setProcRankAndSize(commT->getRank(), commT->getSize());
   out->setOutputToRootOnly(0);
 
-  *out << "Processing field requirements...\n";
+  *out << "[GenericSTKMeshStruct] Processing field requirements...\n";
 
   // Load required fields
   stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(metaData->universal_part()) & stk::mesh::Selector(metaData->locally_owned_part());
@@ -1081,9 +1139,9 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
 
   int num_fields = req_fields_info->get<int>("Number Of Fields",0);
   // L.B: is this check a good idea?
-  TEUCHOS_TEST_FOR_EXCEPTION (num_fields!=req.size(), std::logic_error, "Error! The number of required fields in the discretization parameter list does not match the number of requirements declared in the problem section.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (num_fields!=req.size(), std::logic_error, "Error! The number of required fields in the discretization parameter list (" << num_fields << ") does not match the number of requirements declared in the problem section (" << req.size() << ").\n");
 
-  std::string fname, ftype;
+  std::string fname, ftype, forigin;
   for (int ifield=0; ifield<num_fields; ++ifield)
   {
     std::stringstream ss;
@@ -1091,22 +1149,31 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
     const Teuchos::ParameterList& fparams = req_fields_info->sublist(ss.str());
 
     fname = fparams.get<std::string>("Field Name");
-    ftype = fparams.get<std::string>("Field Type");
+    forigin = "File";
+    if(fparams.isParameter("Field Origin"))
+      forigin = fparams.get<std::string>("Field Origin");
 
     // L.B: again, is this check a good idea?
-    TEUCHOS_TEST_FOR_EXCEPTION (std::find(req.begin(),req.end(),fname)==req.end(), std::logic_error, "Error! The field " << fname << " is not listed in the problem requirements.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (std::find(req.begin(),req.end(),fname)==req.end(), std::logic_error,
+                                "Error! The field '" << fname << "' is not listed in the problem requirements.\n");
 
-    if (ftype=="From Mesh")
+    if (forigin=="Mesh")
     {
-      *out << "Skipping field " << fname << " since it's listed as already present in the mesh. Make sure this is true, since we can't check!\n";
+      *out << "  - Skipping field '" << fname << "' since it's listed as already present in the mesh. Make sure this is true, since we can't check!\n";
       continue;
     }
-    else if (ftype=="Output")
+    else if (forigin=="Output")
     {
-      *out << "Skipping field " << fname << " since it's listed as output (computed at run time). Make sure there's an evaluator set to save it.\n";
+      *out << "  - Skipping field '" << fname << "' since it's listed as output (computed at run time). Make sure there's an evaluator set to save it.\n";
       continue;
     }
+    else if (forigin!="File")
+    {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+                                  "Error! Invalid choice for option 'Field Origin' for field '" << fname << "'.\n");
+    }
 
+    ftype = fparams.get<std::string>("Field Type");
     // Depending on the input field type, we need to use different pointers/importers/vectors
     if (ftype == "Node Scalar")
     {
@@ -1154,7 +1221,7 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
                                               const Teuchos::RCP<const Teuchos_Comm>& commT,
                                               bool node, bool scalar, bool layered)
 {
-  std::vector<double> norm_layers_coords;
+  std::vector<double>* norm_layers_coords;
 
   // Getting the serial and (possibly) parallel maps
   const Teuchos::RCP<const Tpetra_Map> serial_map = importOperator.getSourceMap();
@@ -1178,8 +1245,29 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
 
     serial_req_mvec = Teuchos::rcp(new Tpetra_MultiVector(serial_map,values.size()));
 
-    *out << "Discarding other info about " << field_type << " field " << field_name << " and filling it with constant value " << values << "\n";
+    if (layered)
+    {
+      *out << "  - Discarding other info about " << field_type << " field " << field_name << " and filling it with constant value " << values << " and filling layers normalized coordinates linearly in [0,1].\n";
 
+      temp_str = field_name + "_NLC";
+      norm_layers_coords = &fieldContainer->getMeshVectorStates()[temp_str];
+      int size = norm_layers_coords->size();
+      if (size==1)
+        (*norm_layers_coords)[0] = 1.;
+      else
+      {
+        int n_int = size-1;
+        double dx = 1./n_int;
+        (*norm_layers_coords)[0] = 0.;
+        for (int i=0; i<n_int; ++i)
+          (*norm_layers_coords)[i+1] = (*norm_layers_coords)[i]+dx;
+
+      }
+    }
+    else
+    {
+      *out << "  - Discarding other info about " << field_type << " field " << field_name << " and filling it with constant value " << values << "\n";
+    }
     // For debug, we allow to fill the field with a given uniform value
     for (int iv(0); iv<serial_req_mvec->getNumVectors(); ++iv)
     {
@@ -1192,14 +1280,21 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
 
     std::string fname = params.get<std::string>("File Name");
 
-    *out << "Reading " << field_type << " field " << field_name << " from file " << fname << "\n";
+    *out << "  - Reading " << field_type << " field " << field_name << " from file '" << fname << "'...";
+    out->getOStream()->flush();
     // Read the input file and stuff it in the Tpetra multivector
 
     if (scalar)
     {
       if (layered)
       {
-        readLayeredScalarFileSerial (fname,serial_req_mvec,serial_map,norm_layers_coords,commT);
+        temp_str = field_name + "_NLC";
+        norm_layers_coords = &fieldContainer->getMeshVectorStates()[temp_str];
+        readLayeredScalarFileSerial (fname,serial_req_mvec,serial_map,*norm_layers_coords,commT);
+
+        // Broadcast the normalized layers coordinates
+        int size = norm_layers_coords->size();
+        Teuchos::broadcast(*commT,0,size,norm_layers_coords->data());
       }
       else
       {
@@ -1210,17 +1305,24 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
     {
       if (layered)
       {
-        readLayeredVectorFileSerial (fname,serial_req_mvec,serial_map,norm_layers_coords,commT);
+        temp_str = field_name + "_NLC";
+        norm_layers_coords = &fieldContainer->getMeshVectorStates()[temp_str];
+        readLayeredVectorFileSerial (fname,serial_req_mvec,serial_map,*norm_layers_coords,commT);
+
+        // Broadcast the normalized layers coordinates
+        int size = norm_layers_coords->size();
+        Teuchos::broadcast(*commT,0,size,norm_layers_coords->data());
       }
       else
       {
         readVectorFileSerial (fname,serial_req_mvec,serial_map,commT);
       }
     }
+    *out << "done!\n";
 
     if (params.isParameter("Scale Factor"))
     {
-      *out << " - Scaling " << field_type << " field " << field_name << "\n";
+      *out << "   - Scaling " << field_type << " field " << field_name << "\n";
 
       Teuchos::Array<double> scale_factors = params.get<Teuchos::Array<double> >("Scale Factor");
       TEUCHOS_TEST_FOR_EXCEPTION (scale_factors.size()!=serial_req_mvec->getNumVectors(), Teuchos::Exceptions::InvalidParameter,
@@ -1236,17 +1338,6 @@ void Albany::GenericSTKMeshStruct::loadField (const std::string& field_name, con
 
   for (int i(0); i<req_mvec.getNumVectors(); ++i)
     req_mvec_view.push_back(req_mvec.getVector(i)->get1dView());
-
-  if (layered)
-  {
-    // Broadcast the normalized layers coordinates
-    int size = norm_layers_coords.size();
-    Teuchos::broadcast(*commT,0,1,&size);
-    norm_layers_coords.resize(size);
-    Teuchos::broadcast(*commT,0,size,norm_layers_coords.data());
-    temp_str = field_name + "_NLC";
-    fieldContainer->getMeshVectorStates()[temp_str] = norm_layers_coords;
-  }
 
   //Now we have to stuff the vector in the mesh data
   typedef AbstractSTKFieldContainer::ScalarFieldType  SFT;
@@ -1388,10 +1479,13 @@ void Albany::GenericSTKMeshStruct::readLayeredScalarFileSerial (const std::strin
     TEUCHOS_TEST_FOR_EXCEPTION (numNodes != map->getNodeNumElements(), Teuchos::Exceptions::InvalidParameterValue,
                                 "Error in GenericSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") " <<
                                 "is different from the number expected (" << map->getNodeNumElements() << ").\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (numLayers != normalizedLayersCoords.size(), Teuchos::Exceptions::InvalidParameterValue,
+                                "Error in GenericSTKMeshStruct: Number of layers in file " << fname << " (" << numLayers << ") " <<
+                                "is different from the number expected (" << normalizedLayersCoords.size() << ")." <<
+                                " To fix this, please specify the correct layered data dimension when you register the state.\n");
 
     mvec = Teuchos::rcp(new Tpetra_MultiVector(map,numLayers));
 
-    normalizedLayersCoords.resize(numLayers);
     for (int il = 0; il < numLayers; ++il)
       ifile >> normalizedLayersCoords[il];
 
@@ -1540,7 +1634,8 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<bool>("Transfer Solution to Coordinates", false, "Copies the solution vector to the coordinates for output");
 
   validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
-  validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the composite tet 10 basis in Intrepid2");
+  validPL->set<bool>("Use Composite Tet 10", false, "Flag to use the composite tet 10 basis in Intrepid");
+  validPL->set<bool>("Build Node Sets From Side Sets",false,"Flag to build node sets from side sets");
 
   validPL->sublist("Required Fields Info", false, "Info for the creation of the required fields in the STK mesh");
 

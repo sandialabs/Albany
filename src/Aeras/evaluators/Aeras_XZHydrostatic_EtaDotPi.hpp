@@ -13,6 +13,8 @@
 #include "Phalanx_MDField.hpp"
 #include "Aeras_Layouts.hpp"
 #include "Aeras_Dimension.hpp"
+#include "Aeras_Eta.hpp"
+#include "Kokkos_Vector.hpp"
 
 namespace Aeras {
 /** \brief Density for XZHydrostatic atmospheric model
@@ -44,15 +46,24 @@ private:
   PHX::MDField<ScalarT,Cell,Node>            pdotP0;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Pi;
   PHX::MDField<ScalarT,Cell,Node,Level>      Temperature;
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim>  Velx;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim>  Velocity;
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      etadotdT;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      etadot;
   PHX::MDField<ScalarT,Cell,Node,Level,Dim>  etadotdVelx;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Pidot;
 
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > Tracer;
   //std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > etadotdTracer;
   std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > dedotpiTracerde;
+
+#else
+  Kokkos::vector< PHX::MDField<ScalarT,Cell,QuadPoint,Level>, PHX::Device > Tracer;
+  //Kokkos::vector< PHX::MDField<ScalarT,Cell,QuadPoint,Level>, PHX::Device > etadotdTracer;
+  Kokkos::vector< PHX::MDField<ScalarT,Cell,QuadPoint,Level>, PHX::Device > dedotpiTracerde;
+
+#endif
 
   const Teuchos::ArrayRCP<std::string> tracerNames;
   //const Teuchos::ArrayRCP<std::string> etadotdtracerNames;
@@ -61,9 +72,27 @@ private:
   const int numQPs;
   const int numDims;
   const int numLevels;
+  const Eta<EvalT> &E;
 
   bool pureAdvection;
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct XZHydrostatic_EtaDotPi_Tag{};
+  struct XZHydrostatic_EtaDotPi_pureAdvection_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_EtaDotPi_Tag> XZHydrostatic_EtaDotPi_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_EtaDotPi_pureAdvection_Tag> XZHydrostatic_EtaDotPi_pureAdvection_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_EtaDotPi_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_EtaDotPi_pureAdvection_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 

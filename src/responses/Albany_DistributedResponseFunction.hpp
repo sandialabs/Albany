@@ -35,6 +35,9 @@ namespace Albany {
     //! Destructor
     virtual ~DistributedResponseFunction() {};
 
+    //! Perform post registration setup (do nothing)
+    virtual void postRegSetup(){};
+
 #if defined(ALBANY_EPETRA)
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void evaluateGradient(

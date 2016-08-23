@@ -12,6 +12,7 @@
 #endif
 
 #include "Albany_Utils.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 #ifdef ALBANY_EPETRA
 #include "Petra_Converters.hpp"
 #endif
@@ -91,9 +92,8 @@ void Albany::APFDiscretization::init()
 // layout[num deriv vectors][DOF_component]
   Teuchos::Array<Teuchos::Array<std::string> > layout = meshStruct->solVectorLayout;
   int number_of_solution_vecs = layout.size();
-  int index;
-  solNames.resizeTimeDeriv(number_of_solution_vecs);
- 
+  solLayout.resize(number_of_solution_vecs);
+
 
   for (std::size_t i=0; i < layout[0].size(); i+=2) {
 
@@ -105,20 +105,26 @@ void Albany::APFDiscretization::init()
   }
 
   for (int j=0; j < number_of_solution_vecs; j++) {
-    for (std::size_t i=0; i < layout[j].size(); i+=2) {
-      solNames.getTimeDeriv(j).push_back(layout[j][i]);
-      if (layout[j][i+1] == "S") {
-        index = 1; // num DOFs in sub-vector
-        solNames.getTimeIdx(j).push_back(index);
-      }
-      else if (layout[j][i+1] == "V") {
-        index = getNumDim(); // num DOFs in sub-vector
-        solNames.getTimeIdx(j).push_back(index);
+    int total_ndofs = 0;
+    for (std::size_t i = 0; i < layout[j].size(); i += 2) {
+      solLayout.getDerivNames(j).push_back(layout[j][i]);
+      int ndofs = 0;
+      if (layout[j][i + 1] == "S") {
+        ndofs = 1;
+      } else if (layout[j][i + 1] == "V") {
+        ndofs = getNumDim();
       } else {
         TEUCHOS_TEST_FOR_EXCEPTION(
           true, std::logic_error,
           "Layout '" << layout[j][i+1] << "' is not supported.");
       }
+      solLayout.getDerivSizes(j).push_back(ndofs);
+      total_ndofs += ndofs;
+    }
+    if (layout[0].size()) {
+      TEUCHOS_TEST_FOR_EXCEPTION(total_ndofs != neq, std::logic_error,
+          "Layout size " << total_ndofs <<
+          " does not match number of equations " << neq << '\n');
     }
   }
 
@@ -261,6 +267,12 @@ Albany::APFDiscretization::getSphereVolume() const
   return sphereVolume;
 }
 
+const Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type&
+Albany::APFDiscretization::getLatticeOrientation() const
+{
+  return latticeOrientation;
+}
+
 double mean (const double* x, const int n,
              const Teuchos::RCP<const Tpetra_Map>& map) {
   Teuchos::ArrayView<const double> xav = Teuchos::arrayView(x, n);
@@ -312,56 +324,50 @@ Albany::APFDiscretization::getWsPhysIndex() const
   return wsPhysIndex;
 }
 
-inline int albanyCountComponents (const int spatial_dim, const int pumi_nc) {
-  if (spatial_dim == 3) return pumi_nc;
-  switch (pumi_nc) {
-  case 1: return 1;
-  case 3: return spatial_dim;
-  case 9: return spatial_dim*spatial_dim;
+inline int albanyCountComponents (const int problem_dim, const int pumi_value_type) {
+  switch (pumi_value_type) {
+  case apf::SCALAR: return 1;
+  case apf::VECTOR: return problem_dim;
+  case apf::MATRIX: return problem_dim * problem_dim;
   default: assert(0); return -1;
   }
 }
 
 void Albany::APFDiscretization::setField(
-  const char* name, const ST* data, bool overlapped, int offset, int nentries)
+  const char* name, const ST* data, bool overlapped, int offset, bool neq_sized)
 {
   apf::Mesh* m = meshStruct->getMesh();
   apf::Field* f = m->findField(name);
 
-  // PUMI internally tends to think of everything as 3D. For example, VTK output
-  // is 3D. To make sure output for a 2D problem is not polluted by a spurious Z
-  // component value (or similarly for 1D if we ever do 1D problems), explicitly
-  // make PUMI see a 0.
-  //   The following and similar patterns are used in get/setField,
-  // get/setCoordinates, and the QP data transfer routines.
-  const int spdim = getNumDim();
-  // 9 components is the max number we ever need.
+  const int problem_dim = meshStruct->problemDim;
   double data_buf[9] = {0};
-  // Determine the PUMI and Albany field sizes for this field.
-  const int
-    pumi_nc = apf::countComponents(f),
-    albany_nc = albanyCountComponents(spdim, pumi_nc);
+  const int pumi_value_type = apf::getValueType(f);
+  const int albany_nc = albanyCountComponents(problem_dim, pumi_value_type);
+  const int total_comps = (neq_sized ? neq : albany_nc);
+
+  // the simple front-packing of components below would not
+  // be sufficient to deal with incoming 2x2 tensors, so assert
+  // that we are passing data straight through if dealing with a tensor
+  if (pumi_value_type == apf::MATRIX) assert(albany_nc == 9);
 
   for (size_t i = 0; i < nodes.getSize(); ++i) {
     apf::Node node = nodes[i];
     GO node_gid = apf::getNumber(globalNumbering, node);
     int node_lid;
-    if (overlapped)
+    if (overlapped) {
       node_lid = overlap_node_mapT->getLocalElement(node_gid);
-    else {
+    } else {
       if ( ! m->isOwned(node.entity)) continue;
       node_lid = node_mapT->getLocalElement(node_gid);
     }
-    const int first_dof = getDOF(node_lid, offset, nentries);
+    const int first_dof = getDOF(node_lid, offset, total_comps);
 
     const double* datap = data + first_dof;
-    if (spdim < 3) {
-      for (int j = 0; j < albany_nc; ++j)
-        data_buf[j] = datap[j];
-      datap = data_buf;
+    for (int j = 0; j < albany_nc; ++j) {
+      data_buf[j] = datap[j];
     }
 
-    apf::setComponents(f, node.entity, node.node, datap);
+    apf::setComponents(f, node.entity, node.node, data_buf);
   }
 
   if ( ! overlapped)
@@ -369,65 +375,55 @@ void Albany::APFDiscretization::setField(
 }
 
 void Albany::APFDiscretization::setSplitFields(
-  const Teuchos::Array<std::string>& names, const Teuchos::Array<int>& indices,
+  const Teuchos::Array<std::string>& names, const Teuchos::Array<int>& sizes,
   const ST* data, bool overlapped)
 {
   const int spdim = getNumDim();
   apf::Mesh* m = meshStruct->getMesh();
   int offset = 0;
-  int indexSum = 0;
   for (std::size_t i=0; i < names.size(); ++i) {
-    assert(spdim < 3 || indexSum == offset);
-    this->setField(names[i].c_str(), data, overlapped, indexSum);
-    offset += apf::countComponents(m->findField(names[i].c_str()));
-    indexSum += indices[i];
+    this->setField(names[i].c_str(), data, overlapped, offset);
+    offset += sizes[i];
   }
 }
 
 void Albany::APFDiscretization::getField(
-  const char* name, ST* data, bool overlapped, int offset, int nentries) const
+  const char* name, ST* data, bool overlapped, int offset, bool neq_sized) const
 {
   apf::Mesh* m = meshStruct->getMesh();
   apf::Field* f = m->findField(name);
-  const int
-    spdim = getNumDim(),
-    albany_nc = albanyCountComponents(spdim, apf::countComponents(f));
-
+  const int problem_dim = meshStruct->problemDim;
+  const int pumi_value_type = apf::getValueType(f);
+  const int albany_nc = albanyCountComponents(problem_dim, pumi_value_type);
+  assert(albany_nc <= 3);
+  const int total_comps = (neq_sized ? neq : albany_nc);
   for (size_t i = 0; i < nodes.getSize(); ++i) {
     apf::Node node = nodes[i];
     GO node_gid = apf::getNumber(globalNumbering,node);
     int node_lid;
-    if (overlapped)
+    if (overlapped) {
       node_lid = overlap_node_mapT->getLocalElement(node_gid);
-    else {
-      if ( ! m->isOwned(node.entity))
-        continue;
+    } else {
+      if ( ! m->isOwned(node.entity)) continue;
       node_lid = node_mapT->getLocalElement(node_gid);
     }
-    const int first_dof = getDOF(node_lid, offset, nentries);
-    if (spdim == 3)
-      apf::getComponents(f, node.entity, node.node, &data[first_dof]);
-    else {
-      double buf[4];
-      apf::getComponents(f, node.entity, node.node, buf);
-      for (int j = 0; j < albany_nc; ++j) data[first_dof + j] = buf[j];
-    }
+    const int first_dof = getDOF(node_lid, offset, total_comps);
+    double buf[3];
+    apf::getComponents(f, node.entity, node.node, buf);
+    for (int j = 0; j < albany_nc; ++j) data[first_dof + j] = buf[j];
   }
 }
 
 void Albany::APFDiscretization::getSplitFields(
-  const Teuchos::Array<std::string>& names, const Teuchos::Array<int>& indices, ST* data,
+  const Teuchos::Array<std::string>& names, const Teuchos::Array<int>& sizes, ST* data,
   bool overlapped) const
 {
   const int spdim = getNumDim();
   apf::Mesh* m = meshStruct->getMesh();
   int offset = 0;
-  int indexSum = 0;
   for (std::size_t i=0; i < names.size(); ++i) {
-    assert(spdim < 3 || indexSum == offset);
-    this->getField(names[i].c_str(),data, overlapped, indexSum);
-    offset += apf::countComponents(m->findField(names[i].c_str()));
-    indexSum += indices[i];
+    this->getField(names[i].c_str(), data, overlapped, offset);
+    offset += sizes[i];
   }
 }
 
@@ -451,7 +447,6 @@ void Albany::APFDiscretization::writeSolutionMV(
 {
 
   for(int i = 0; i <= meshStruct->num_time_deriv; i++){
-
     Teuchos::RCP<const Tpetra_Vector> colT = solnT.getVector(i);
     Teuchos::ArrayRCP<const ST> data = colT->get1dView();
     writeAnySolutionToMeshDatabase(&(data[0]), i, overlapped);
@@ -472,7 +467,6 @@ void Albany::APFDiscretization::writeSolutionMVToMeshDatabase(
   const Tpetra_MultiVector& solnT, const double time_value, const bool overlapped)
 {
   for(int i = 0; i <= meshStruct->num_time_deriv; i++){
-
     Teuchos::RCP<const Tpetra_Vector> colT = solnT.getVector(i);
     Teuchos::ArrayRCP<const ST> data = colT->get1dView();
     writeAnySolutionToMeshDatabase(&(data[0]), i, overlapped);
@@ -501,8 +495,14 @@ void Albany::APFDiscretization::writeSolutionMVToFile(
 void Albany::APFDiscretization::writeSolution(const Epetra_Vector& soln, const double time_value,
       const bool overlapped)
 {
+#if 1
+  Teuchos::RCP<const Tpetra_Vector> solnT =
+     Petra::EpetraVector_To_TpetraVectorConst(soln, commT);
+  writeSolutionT(*solnT, time_value, overlapped);
+#else
   writeAnySolutionToMeshDatabase(&(soln[0]), 0, overlapped);
   writeAnySolutionToFile(time_value);
+#endif
 }
 #endif
 
@@ -528,11 +528,14 @@ void Albany::APFDiscretization::writeAnySolutionToMeshDatabase(
       const ST* soln, const int index, const bool overlapped)
 {
   TEUCHOS_FUNC_TIME_MONITOR("AlbanyAdapt: Transfer to APF Mesh");
-  // index is time deriv vector (solution, solution_dot, or solution_dotdot
-  if (solNames.getTimeDeriv(index).size() == 0)
-    this->setField(APFMeshStruct::solution_name[index],soln,overlapped);
-  else
-    this->setSplitFields(solNames.getTimeDeriv(index), solNames.getTimeIdx(index), soln, overlapped);
+  // time deriv vector (solution, solution_dot, or solution_dotdot)
+  if (solLayout.getDerivNames(index).size() == 0) {
+    this->setField(APFMeshStruct::solution_name[index], soln, overlapped);
+  } else {
+    this->setSplitFields(solLayout.getDerivNames(index),
+                         solLayout.getDerivSizes(index),
+                         soln, overlapped);
+  }
   meshStruct->solutionInitialized = true;
   saveOldTemperature(meshStruct);
 }
@@ -634,26 +637,13 @@ void
 Albany::APFDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 {
   Teuchos::ArrayRCP<const ST> data = residualT.get1dView();
-  if (solNames.getTimeDeriv(0).size() == 0) // dont have solution_dot or solution_dotdot
+  if (solLayout.getDerivNames(0).size() == 0) // dont have split fields
     this->setField(APFMeshStruct::residual_name,&(data[0]),/*overlapped=*/false);
   else
-    this->setSplitFields(resNames, solNames.getTimeIdx(0), &(data[0]), /*overlapped=*/false);
+    this->setSplitFields(resNames, solLayout.getDerivSizes(0), &(data[0]), /*overlapped=*/false);
 
   meshStruct->residualInitialized = true;
 }
-
-#if defined(ALBANY_EPETRA)
-void
-Albany::APFDiscretization::setResidualField(const Epetra_Vector& residual)
-{
-  if (solNames.getTimeDeriv(0).size() == 0)
-    this->setField(APFMeshStruct::residual_name,&(residual[0]),/*overlapped=*/false);
-  else
-    this->setSplitFields(resNames, solNames.getTimeIdx(0), &(residual[0]), /*overlapped=*/false);
-
-  meshStruct->residualInitialized = true;
-}
-#endif
 
 Teuchos::RCP<Tpetra_Vector>
 Albany::APFDiscretization::getSolutionFieldT(bool overlapped) const
@@ -665,10 +655,10 @@ Albany::APFDiscretization::getSolutionFieldT(bool overlapped) const
     Teuchos::ArrayRCP<ST> data = solnT->get1dViewNonConst();
 
     if (meshStruct->solutionInitialized) {
-      if (solNames.getTimeDeriv(0).size() == 0)
-        this->getField(APFMeshStruct::solution_name[0],&(data[0]),overlapped);
+      if (solLayout.getDerivNames(0).size() == 0)
+        this->getField(APFMeshStruct::solution_name[0], &(data[0]), overlapped);
       else
-        this->getSplitFields(solNames.getTimeDeriv(0), solNames.getTimeIdx(0), &(data[0]), overlapped);
+        this->getSplitFields(solLayout.getDerivNames(0), solLayout.getDerivSizes(0), &(data[0]), overlapped);
     }
     else if ( ! PCU_Comm_Self())
       *out <<__func__<<": uninit field" << std::endl;
@@ -677,25 +667,33 @@ Albany::APFDiscretization::getSolutionFieldT(bool overlapped) const
 }
 
 Teuchos::RCP<Tpetra_MultiVector>
-Albany::APFDiscretization::getSolutionMV(bool overlapped) const 
+Albany::APFDiscretization::getSolutionMV(bool overlapped) const
 {
   // Copy soln vector into solution field, one node at a time
   Teuchos::RCP<Tpetra_MultiVector> solnT = Teuchos::rcp(
-    new Tpetra_MultiVector(overlapped ? overlap_mapT : mapT, meshStruct->num_time_deriv + 1, false));
+    new Tpetra_MultiVector(overlapped ? overlap_mapT : mapT,
+      meshStruct->num_time_deriv + 1,
+      /*zero-out=*/false));
 
-  for(int i = 0; i <= meshStruct->num_time_deriv; i++){
+  for(int i = 0; i <= meshStruct->num_time_deriv; ++i){
 
     Teuchos::RCP<Tpetra_Vector> colT = solnT->getVectorNonConst(i);
     Teuchos::ArrayRCP<ST> data = colT->get1dViewNonConst();
 
     if (meshStruct->solutionInitialized) {
-      if (solNames.getTimeDeriv(i).size() == 0)
+      if (solLayout.getDerivNames(i).size() == 0)
         this->getField(APFMeshStruct::solution_name[i], &(data[0]), overlapped);
       else
-        this->getSplitFields(solNames.getTimeDeriv(i), solNames.getTimeIdx(i), &(data[0]), overlapped);
+        this->getSplitFields(solLayout.getDerivNames(i), solLayout.getDerivSizes(i), &(data[0]), overlapped);
+    } else if ( ! PCU_Comm_Self()) {
+      if (solLayout.getDerivNames(i).size() == 0) {
+        *out <<__func__<<": uninit field "
+             << APFMeshStruct::solution_name[i] << '\n';
+      } else {
+        *out <<__func__<<": uninit fields "
+             << solLayout.getDerivNames(i) << '\n';
+      }
     }
-    else if ( ! PCU_Comm_Self())
-      *out <<__func__<<": uninit field" << std::endl;
   }
   return solnT;
 }
@@ -709,10 +707,10 @@ Albany::APFDiscretization::getSolutionField(bool overlapped) const
     new Epetra_Vector(overlapped ? *overlap_map : *map));
 
   if (meshStruct->solutionInitialized) {
-    if (solNames.getTimeDeriv(0).size() == 0)
-      this->getField(APFMeshStruct::solution_name[0],&((*soln)[0]),overlapped);
+    if (solLayout.getDerivNames(0).size() == 0)
+      this->getField(APFMeshStruct::solution_name[0], &((*soln)[0]), overlapped);
     else
-      this->getSplitFields(solNames.getTimeDeriv(0), solNames.getTimeIdx(0), &((*soln)[0]), overlapped);
+      this->getSplitFields(solLayout.getDerivNames(0), solLayout.getDerivSizes(0), &((*soln)[0]), overlapped);
   }
   else if ( ! PCU_Comm_Self())
     *out <<__func__<<": uninit field" << std::endl;
@@ -739,40 +737,6 @@ int Albany::APFDiscretization::nonzeroesPerRow(const int neq) const
   return estNonzeroesPerRow;
 }
 
-void Albany::APFDiscretization::computeOwnedNodesAndUnknowns()
-{
-  apf::Mesh* m = meshStruct->getMesh();
-  computeOwnedNodesAndUnknownsBase(m->getShape());
-}
-
-void Albany::APFDiscretization::computeOverlapNodesAndUnknowns()
-{
-  apf::Mesh* m = meshStruct->getMesh();
-  computeOverlapNodesAndUnknownsBase(m->getShape());
-}
-
-void Albany::APFDiscretization::computeGraphs()
-{
-  apf::Mesh* m = meshStruct->getMesh();
-  computeGraphsBase(m->getShape());
-}
-
-void Albany::APFDiscretization::computeWorksetInfo()
-{
-  apf::Mesh* m = meshStruct->getMesh();
-  computeWorksetInfoBase(m->getShape());
-}
-
-void Albany::APFDiscretization::computeNodeSets()
-{
-  computeNodeSetsBase();
-}
-
-void Albany::APFDiscretization::computeSideSets()
-{
-  computeSideSetsBase();
-}
-
 static void offsetNumbering(
     apf::GlobalNumbering* n,
     apf::DynamicArray<apf::Node> const& nodes)
@@ -786,12 +750,11 @@ static void offsetNumbering(
   }
 }
 
-void Albany::APFDiscretization::computeOwnedNodesAndUnknownsBase(
-    apf::FieldShape* shape)
+void Albany::APFDiscretization::computeOwnedNodesAndUnknowns()
 {
   apf::Mesh* m = meshStruct->getMesh();
   if (globalNumbering) apf::destroyGlobalNumbering(globalNumbering);
-  globalNumbering = apf::makeGlobal(apf::numberOwnedNodes(m,"owned",shape));
+  globalNumbering = apf::makeGlobal(apf::numberOwnedNodes(m,"owned"));
   apf::DynamicArray<apf::Node> ownedNodes;
   apf::getNodes(globalNumbering,ownedNodes);
   if (meshStruct->useDOFOffsetHack)
@@ -819,13 +782,12 @@ void Albany::APFDiscretization::computeOwnedNodesAndUnknownsBase(
 #endif
 }
 
-void Albany::APFDiscretization::computeOverlapNodesAndUnknownsBase(
-    apf::FieldShape* shape)
+void Albany::APFDiscretization::computeOverlapNodesAndUnknowns()
 {
   apf::Mesh* m = meshStruct->getMesh();
   apf::Numbering* overlap = m->findNumbering("overlap");
   if (overlap) apf::destroyNumbering(overlap);
-  overlap = apf::numberOverlapNodes(m,"overlap",shape);
+  overlap = apf::numberOverlapNodes(m,"overlap");
   apf::getNodes(overlap,nodes);
   numOverlapNodes = nodes.getSize();
   Teuchos::Array<GO> nodeIndices(numOverlapNodes);
@@ -847,10 +809,10 @@ void Albany::APFDiscretization::computeOverlapNodesAndUnknownsBase(
     meshStruct->nodal_data_base->resizeOverlapMap(nodeIndices, commT);
 }
 
-void Albany::APFDiscretization::computeGraphsBase(
-    apf::FieldShape* shape)
+void Albany::APFDiscretization::computeGraphs()
 {
   apf::Mesh* m = meshStruct->getMesh();
+  apf::FieldShape* shape = m->getShape();
   int numDim = m->getDimension();
   std::vector<apf::MeshEntity*> cells;
   std::vector<int> n_nodes_in_elem;
@@ -919,10 +881,10 @@ void Albany::APFDiscretization::computeGraphsBase(
 #endif
 }
 
-void Albany::APFDiscretization::computeWorksetInfoBase(
-    apf::FieldShape* shape)
+void Albany::APFDiscretization::computeWorksetInfo()
 {
   apf::Mesh* m = meshStruct->getMesh();
+  apf::FieldShape* shape = m->getShape();
   int numDim = m->getDimension();
   if (elementNumbering) apf::destroyGlobalNumbering(elementNumbering);
   elementNumbering = apf::makeGlobal(apf::numberElements(m,"element"));
@@ -964,7 +926,8 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
     apf::ModelEntity* mr = m->toModel(element);
     apf::StkModel* block = sets.invMaps[numDim][mr];
     TEUCHOS_TEST_FOR_EXCEPTION(!block, std::logic_error,
-		   "Error: no element block for model region on line " << __LINE__ << " of file " << __FILE__ << std::endl);
+        "No element block for model region " << m->getModelTag(mr)
+        << " at " << __FILE__ << " +" << __LINE__ << '\n');
     // find the latest bucket being filled with elements for this block
     buck_it = bucketMap.find(block);
     if((buck_it == bucketMap.end()) ||  // this block hasn't been encountered yet
@@ -1003,6 +966,7 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
   wsElNodeID.resize(numBuckets);
   coords.resize(numBuckets);
   sphereVolume.resize(numBuckets);
+  latticeOrientation.resize(numBuckets);
 
   // Clear map if remeshing
   if(!elemGIDws.empty()) elemGIDws.clear();
@@ -1049,7 +1013,7 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
         const LO node_lid = overlap_node_mapT->getLocalElement(node_gid);
 
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
-			   "PUMI_Disc: node_lid out of range " << node_lid << std::endl);
+            "PUMI: node_lid " << node_lid << " out of range\n");
 
         coords[b][i][j] = &coordinates[node_lid * spdim];
         wsElNodeEqID[b][i][j].resize(neq);
@@ -1080,6 +1044,8 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
       // special case : need to store one double value that represents all the elements in the workset (time)
       // numBuckets are the number of worksets
       meshStruct->scalarValue_states[i]->reAllocateBuffer(numBuckets);
+  for (std::size_t i=0; i<meshStruct->elemnodescalar_states.size(); ++i)
+      meshStruct->elemnodescalar_states[i]->reAllocateBuffer(numElementsAccessed);
 
   // Pull out pointers to shards::Arrays for every bucket, for every state
 
@@ -1101,6 +1067,10 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
     for (std::size_t i=0; i<meshStruct->scalarValue_states.size(); i++)
       stateArrays.elemStateArrays[b][meshStruct->scalarValue_states[i]->name] =
                  meshStruct->scalarValue_states[i]->getMDA(1);
+    for (std::size_t i=0; i<meshStruct->elemnodescalar_states.size(); ++i) {
+      stateArrays.elemStateArrays[b][meshStruct->elemnodescalar_states[i]->name] =
+                 meshStruct->elemnodescalar_states[i]->getMDA(buck.size());
+    }
   }
 
 // Process node data sets if present
@@ -1149,7 +1119,7 @@ void Albany::APFDiscretization::computeWorksetInfoBase(
   }
 }
 
-void Albany::APFDiscretization::computeNodeSetsBase()
+void Albany::APFDiscretization::computeNodeSets()
 {
   // Make sure all the maps are allocated
   for (int i = 0; i < meshStruct->nsNames.size(); i++)
@@ -1196,13 +1166,14 @@ void Albany::APFDiscretization::computeNodeSetsBase()
   }
 }
 
-void Albany::APFDiscretization::computeSideSetsBase()
+void Albany::APFDiscretization::computeSideSets()
 {
   apf::Mesh* m = meshStruct->getMesh();
   apf::StkModels& sets = meshStruct->getSets();
 
   // need a sideset list per workset
   int num_buckets = wsEBNames.size();
+  sideSets.clear();
   sideSets.resize(num_buckets);
 
   int d = m->getDimension();
@@ -1254,27 +1225,6 @@ void Albany::APFDiscretization::computeSideSetsBase()
   m->end(it);
 }
 
-void Albany::APFDiscretization::copyQPTensorToAPF(
-    unsigned nqp,
-    std::string const& stateName,
-    apf::Field* f)
-{
-  const int spdim = getNumDim();
-  apf::Matrix3x3 v(0,0,0,0,0,0,0,0,0);
-  for (std::size_t b=0; b < buckets.size(); ++b) {
-    std::vector<apf::MeshEntity*>& buck = buckets[b];
-    Albany::MDArray& ar = stateArrays.elemStateArrays[b][stateName];
-    for (std::size_t e=0; e < buck.size(); ++e) {
-      for (std::size_t p=0; p < nqp; ++p) {
-        for (std::size_t i=0; i < spdim; ++i)
-          for (std::size_t j=0; j < spdim; ++j)
-            v[i][j] = ar(e,p,i,j);
-        apf::setMatrix(f,buck[e],p,v);
-      }
-    }
-  }
-}
-
 void Albany::APFDiscretization::copyQPScalarToAPF(
     unsigned nqp,
     std::string const& stateName,
@@ -1294,7 +1244,7 @@ void Albany::APFDiscretization::copyQPVectorToAPF(
     std::string const& stateName,
     apf::Field* f)
 {
-  const int spdim = getNumDim();
+  const int spdim = meshStruct->problemDim;
   apf::Vector3 v(0,0,0);
   for (std::size_t b=0; b < buckets.size(); ++b) {
     std::vector<apf::MeshEntity*>& buck = buckets[b];
@@ -1304,6 +1254,27 @@ void Albany::APFDiscretization::copyQPVectorToAPF(
         for (std::size_t i=0; i < spdim; ++i)
           v[i] = ar(e,p,i);
         apf::setVector(f,buck[e],p,v);
+      }
+    }
+  }
+}
+
+void Albany::APFDiscretization::copyQPTensorToAPF(
+    unsigned nqp,
+    std::string const& stateName,
+    apf::Field* f)
+{
+  const int spdim = meshStruct->problemDim;
+  apf::Matrix3x3 v(0,0,0,0,0,0,0,0,0);
+  for (std::size_t b=0; b < buckets.size(); ++b) {
+    std::vector<apf::MeshEntity*>& buck = buckets[b];
+    Albany::MDArray& ar = stateArrays.elemStateArrays[b][stateName];
+    for (std::size_t e=0; e < buck.size(); ++e) {
+      for (std::size_t p=0; p < nqp; ++p) {
+        for (std::size_t i=0; i < spdim; ++i)
+          for (std::size_t j=0; j < spdim; ++j)
+            v[i][j] = ar(e,p,i,j);
+        apf::setMatrix(f,buck[e],p,v);
       }
     }
   }
@@ -1382,7 +1353,7 @@ void Albany::APFDiscretization::copyQPVectorFromAPF(
     std::string const& stateName,
     apf::Field* f)
 {
-  const int spdim = getNumDim();
+  const int spdim = meshStruct->problemDim;
   apf::Mesh2* m = meshStruct->getMesh();
   apf::Vector3 v(0,0,0);
   for (std::size_t b=0; b < buckets.size(); ++b) {
@@ -1403,7 +1374,7 @@ void Albany::APFDiscretization::copyQPTensorFromAPF(
     std::string const& stateName,
     apf::Field* f)
 {
-  const int spdim = getNumDim();
+  const int spdim = meshStruct->problemDim;
   apf::Mesh2* m = meshStruct->getMesh();
   apf::Matrix3x3 v(0,0,0,0,0,0,0,0,0);
   for (std::size_t b = 0; b < buckets.size(); ++b) {
@@ -1465,18 +1436,19 @@ copyNodalDataToAPF (const bool copy_all) {
       "A node field container is not a PUMINodeDataBase");
     if ( ! copy_all && ! nd->output) continue;
 
-    int value_type, nentries;
-    const int spdim = getNumDim();
+    int value_type;
     switch (nd->ndims()) {
-    case 0: value_type = apf::SCALAR; nentries = 1; break;
-    case 1: value_type = apf::VECTOR; nentries = spdim; break;
-    case 2: value_type = apf::MATRIX; nentries = spdim*spdim; break;
+    case 0: value_type = apf::SCALAR; break;
+    case 1: value_type = apf::VECTOR; break;
+    case 2: value_type = apf::MATRIX; break;
     default:
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                                  "dim is not in {1,2,3}");
     }
     apf::Field* f = meshStruct->createNodalField(nd->name.c_str(), value_type);
-    setField(nd->name.c_str(), &nd->buffer[0], false, 0, nentries);
+    if (!PCU_Comm_Self()) std::cerr << "setting nodal field " << nd->name;
+    PCU_Barrier();
+    setField(nd->name.c_str(), &nd->buffer[0], false, 0, false);
   }
 }
 
@@ -1496,14 +1468,31 @@ void Albany::APFDiscretization::removeNodalDataFromAPF () {
 }
 
 void
-Albany::APFDiscretization::updateMesh(bool shouldTransferIPData)
-{
-  updateMeshBase(shouldTransferIPData);
+Albany::APFDiscretization::
+initTimeFromParamLib(Teuchos::RCP<ParamLib> paramLib) {
+  for (std::size_t b = 0; b < buckets.size(); ++b) {
+    if (stateArrays.elemStateArrays[b].count("Time")) {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        !paramLib->isParameter("Time"), std::logic_error,
+        "APF: Time is a state but not a parameter, cannot reinitialize it\n");
+      Albany::MDArray& time = stateArrays.elemStateArrays[b]["Time"];
+      time(0) = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    }
+    if (stateArrays.elemStateArrays[b].count("Time_old")) {
+      Albany::MDArray& oldTime = stateArrays.elemStateArrays[b]["Time_old"];
+      oldTime(0) = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+    }
+  }
 }
 
 void
-Albany::APFDiscretization::updateMeshBase(bool shouldTransferIPData)
-{
+Albany::APFDiscretization::updateMesh(bool shouldTransferIPData) {
+  updateMesh(shouldTransferIPData, Teuchos::null);
+}
+
+void
+Albany::APFDiscretization::updateMesh(bool shouldTransferIPData,
+    Teuchos::RCP<ParamLib> paramLib) {
   // This function is called both to initialize the mesh at the beginning of the simulation
   // and then each time the mesh is adapted (called from AAdapt_MeshAdapt_Def.hpp - afterAdapt())
 
@@ -1516,14 +1505,25 @@ Albany::APFDiscretization::updateMeshBase(bool shouldTransferIPData)
   computeWorksetInfo();
   computeNodeSets();
   computeSideSets();
+
   // transfer of internal variables
   if (shouldTransferIPData)
     copyQPStatesFromAPF();
+
+  // load the FELIX Data and tell the state manager to not initialize
+  // these fields
+  if (meshStruct->shouldLoadFELIXData)
+    setFELIXData();
+
   // Tell the nodal data base that the graph changed. We don't create the graph
   // (as STKDiscretization does), but others might (such as
   // ProjectIPtoNodalField), so invalidate it.
   if (Teuchos::nonnull(meshStruct->nodal_data_base))
     meshStruct->nodal_data_base->updateNodalGraph(Teuchos::null);
+
+  // Use the parameter library to re-initialize Time state arrays
+  if (Teuchos::nonnull(paramLib))
+    initTimeFromParamLib(paramLib);
 }
 
 void

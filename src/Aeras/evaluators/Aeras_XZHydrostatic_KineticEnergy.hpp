@@ -53,6 +53,19 @@ private:
   const int numLevels;
 
   ScalarT ke0;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct XZHydrostatic_KineticEnergy_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_KineticEnergy_Tag> XZHydrostatic_KineticEnergy_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_KineticEnergy_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 

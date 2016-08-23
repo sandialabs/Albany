@@ -45,10 +45,10 @@ void get_element_block_sizes(stk::io::StkMeshIoBroker &mesh_data,
 } // Anonymous namespace
 
 Albany::IossSTKMeshStruct::IossSTKMeshStruct(
-                                             const Teuchos::RCP<Teuchos::ParameterList>& params,
+                                             const Teuchos::RCP<Teuchos::ParameterList>& params_,
                                              const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
                                              const Teuchos::RCP<const Teuchos_Comm>& commT) :
-  GenericSTKMeshStruct(params, adaptParams_),
+  GenericSTKMeshStruct(params_, adaptParams_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   useSerialMesh(false),
   periodic(params->get("Periodic BC", false)),
@@ -237,6 +237,12 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     m_solutionFieldHistoryDepth = inputRegion.get_property("state_count").get_int();
   }
 
+  // Upon request, add a nodeset for each sideset
+  if (params->get<bool>("Build Node Sets From Side Sets",false))
+  {
+    this->addNodeSetsFromSideSets ();
+  }
+
   this->initializeSideSetMeshStructs(commT);
 }
 
@@ -305,6 +311,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
 
       //stk::io::process_mesh_bulk_data(region, *bulkData);
       mesh_data->populate_bulk_data();
+
       //bulkData = &mesh_data->bulk_data();
 
       // Read solution from exodus file.
@@ -343,6 +350,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
      */
 
   { // running in Serial or Parallel read from Nemspread files
+    bulkData->modification_begin();
     mesh_data->populate_bulk_data();
     if (!usePamgen)
     {
@@ -410,13 +418,41 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
     {
       mesh_data->get_global (it.first, it.second, true); // Last variable is abort_if_not_found. Should it be false?
     }
+    for (auto& it : fieldContainer->getMeshScalarIntegerStates())
+    {
+      mesh_data->get_global (it.first, it.second, true); // Last variable is abort_if_not_found. Should it be false?
+    }
+
+    //Read info for layered mehes.
+    bool hasLayeredStructure=true;
+    std::vector<double> ltr;
+    int ordering, stride;
+  
+    std::string state_name = "layer_thickness_ratio";
+    hasLayeredStructure = hasLayeredStructure && mesh_data->get_global (state_name, ltr, false);
+    if(hasLayeredStructure) fieldContainer->getMeshVectorStates()[state_name] = ltr;
+    state_name = "ordering";
+    hasLayeredStructure = hasLayeredStructure && mesh_data->get_global (state_name, ordering, false);
+    if(hasLayeredStructure) fieldContainer->getMeshScalarIntegerStates()[state_name] = ordering;
+    state_name = "stride";
+    hasLayeredStructure = hasLayeredStructure && mesh_data->get_global (state_name, stride, false);
+    if(hasLayeredStructure) fieldContainer->getMeshScalarIntegerStates()[state_name] = stride;
+
+    if(hasLayeredStructure) {
+      Teuchos::ArrayRCP<double> layerThicknessRatio(ltr.size());
+      for(int i=0; i< ltr.size(); ++i) layerThicknessRatio[i] = ltr[i];
+        this->layered_mesh_numbering = Teuchos::rcp(new LayeredMeshNumbering<LO>(stride,static_cast<LayeredMeshOrdering>(ordering),layerThicknessRatio));
+    }
   }
   else
   {
     // We put all the fields as 'missing'
     const stk::mesh::FieldVector& fields = metaData->get_fields();
-    for (int i(0); i<fields.size(); ++i)
-      missing.emplace_back(fields[i],fields[i]->name());
+    for (int i(0); i<fields.size(); ++i) {
+//      TODO, when compiler allows, replace following with this for performance: missing.emplace_back(fields[i],fields[i]->name());
+        missing.push_back(stk::io::MeshField(fields[i],fields[i]->name()));
+    }
+
   }
 
   // If this is a boundary mesh, the side_map/side_node_map may already be present, so we check
@@ -452,6 +488,9 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
 
   // Build additional mesh connectivity needed for mesh fracture (if indicated)
   computeAddlConnectivity();
+
+  // Check that the nodeset created from sidesets contain the right number of nodes
+  this->checkNodeSetsFromSideSetsIntegrity ();
 
   // Finally, perform the setup of the (possible) side set meshes (including extraction if of type SideSetSTKMeshStruct)
   this->finalizeSideSetMeshStructs(commT, side_set_req, side_set_sis, worksetSize);

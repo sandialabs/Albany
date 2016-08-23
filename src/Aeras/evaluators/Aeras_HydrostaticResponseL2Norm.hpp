@@ -35,6 +35,7 @@ public:
 
 private:
   Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
+  Teuchos::RCP<Teuchos::FancyOStream> out; 
 
   std::size_t numQPs;
   std::size_t numDims;
@@ -43,7 +44,9 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> velocity;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level> temperature;
+  PHX::MDField<ScalarT,Cell,QuadPoint> spressure;
   const int numLevels;
+  int responseSize; 
 };
 
 }

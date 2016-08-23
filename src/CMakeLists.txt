@@ -79,7 +79,6 @@ SET(HEADERS
 
 IF(ALBANY_EPETRA)
   SET(HEADERS ${HEADERS}
-    Albany_DistributedParameterDerivativeOp.hpp
     Albany_EigendataInfoStruct.hpp
     Albany_SaveEigenData.hpp
     Albany_ModelEvaluator.hpp
@@ -100,6 +99,7 @@ SET(SOURCES ${SOURCES}
   utility/PerformanceContext.cpp
   utility/TimeMonitor.cpp
   utility/VariableMonitor.cpp
+  utility/StaticAllocator.cpp
   )
 SET(HEADERS ${HEADERS}
   utility/Counter.hpp
@@ -111,6 +111,7 @@ SET(HEADERS ${HEADERS}
   utility/TimeGuard.hpp
   utility/TimeMonitor.hpp
   utility/VariableMonitor.hpp
+  utility/StaticAllocator.hpp
   utility/math/Tensor.hpp
   utility/math/TensorCommon.hpp
   utility/math/TensorDetail.hpp
@@ -263,6 +264,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_DirichletOffNodeSet.cpp
   evaluators/PHAL_DirichletField.cpp
   evaluators/PHAL_DOFCellToSide.cpp
+  evaluators/PHAL_DOFCellToSideQP.cpp
   evaluators/PHAL_DOFInterpolation.cpp
   evaluators/PHAL_DOFInterpolationSide.cpp
   evaluators/PHAL_DOFGradInterpolation.cpp
@@ -278,6 +280,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherAuxData.cpp
   evaluators/PHAL_GatherCoordinateVector.cpp
   evaluators/PHAL_GatherScalarNodalParameter.cpp
+  evaluators/PHAL_ScatterScalarNodalParameter.cpp
   evaluators/PHAL_GatherSolution.cpp
   evaluators/PHAL_HeatEqResid.cpp
   evaluators/PHAL_IdentityCoordinateFunctionTraits.cpp
@@ -376,6 +379,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_DirichletOffNodeSet_Def.hpp
   evaluators/PHAL_DOFCellToSide.hpp
   evaluators/PHAL_DOFCellToSide_Def.hpp
+  evaluators/PHAL_DOFCellToSideQP.hpp
+  evaluators/PHAL_DOFCellToSideQP_Def.hpp
   evaluators/PHAL_DOFGradInterpolation.hpp
   evaluators/PHAL_DOFGradInterpolation_Def.hpp
   evaluators/PHAL_DOFGradInterpolationSide.hpp
@@ -406,6 +411,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherCoordinateVector_Def.hpp
   evaluators/PHAL_GatherScalarNodalParameter.hpp
   evaluators/PHAL_GatherScalarNodalParameter_Def.hpp
+  evaluators/PHAL_ScatterScalarNodalParameter.hpp
+  evaluators/PHAL_ScatterScalarNodalParameter_Def.hpp
   evaluators/PHAL_GatherSolution.hpp
   evaluators/PHAL_GatherSolution_Def.hpp
   evaluators/PHAL_HeatEqResid.hpp
@@ -649,10 +656,12 @@ if (ALBANY_MOR AND ALBANY_EPETRA)
   set(HEADERS ${HEADERS} ${MOR_ALBANY_HEADERS})
 endif ()
 
+IF (ALBANY_SCOREC_STANDALONE)
+  SET(SCOREC_LIB SCOREC::core)
+ENDIF()
 
 add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
-target_link_libraries(albanyLib ${Trilinos_LIBRARIES})
-
+target_link_libraries(albanyLib ${SCOREC_LIB} ${Trilinos_LIBRARIES})
 
 # Add Albany external libraries
 
@@ -672,6 +681,8 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./LCM/evaluators
                      ./LCM/evaluators/bc
                      ./LCM/evaluators/surface-element
+                     ./LCM/evaluators/transport
+                     ./LCM/evaluators/HMC
                      ./LCM/models
                      ./LCM/utils
                      ./LCM/utils/topology
@@ -684,7 +695,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./AMP/
                      ./AMP/problems
                      ./AMP/evaluators
-		     ./AMP/responses
+                     ./AMP/responses
                      ./QCAD
                      ./QCAD/problems
                      ./QCAD/evaluators
@@ -693,10 +704,6 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./ATO/problems
                      ./ATO/evaluators
                      ./ATO/utils
-                     ./GOAL
-                     ./GOAL/utils
-                     ./GOAL/responses
-                     ./GOAL/evaluators
                     )
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
@@ -907,7 +914,7 @@ IF (ALBANY_FELIX)
   ENDIF()
 
   IF (ENABLE_CISM_INTERFACE)
-    IF (ENABLE_CISM_EPETRA) 
+    IF (ENABLE_CISM_EPETRA)
       SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterfaceE)
     ELSE()
       SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterface)
@@ -922,7 +929,7 @@ ENDIF()
 
 # RPI APF mesh interface
 IF(ALBANY_APF)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} pumi)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyPUMI)
 ENDIF()
 
 IF (ALBANY_AMP)
@@ -932,7 +939,6 @@ ENDIF()
 
 IF (ALBANY_GOAL)
   add_subdirectory(GOAL)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} GOAL)
 ENDIF()
 
 IF(ALBANY_CATALYST)

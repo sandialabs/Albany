@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include <stdio.h>
+#include <unistd.h>
 #include <iostream>
 
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
@@ -149,6 +151,12 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(), ebNameToIndex, this->interleavedOrdering));
 
+  // Upon request, add a nodeset for each sideset
+  if (params->get<bool>("Build Node Sets From Side Sets",false))
+  {
+    this->addNodeSetsFromSideSets ();
+  }
+
   // Initialize the (possible) other side set meshes
   this->initializeSideSetMeshStructs(comm);
 }
@@ -168,6 +176,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis,
     const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req)
 {
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
+  out->setProcRankAndSize(comm->getRank(), comm->getSize());
+  out->setOutputToRootOnly(0);
+
   // Finish to set up the basal mesh
   Teuchos::RCP<Teuchos::ParameterList> params2D;
   if (params->isSublist("Side Set Discretizations"))
@@ -188,6 +200,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   auto it_sis = side_set_sis.find("basalside");
   auto& basal_req = (it_req==side_set_req.end() ? dummy_req : it_req->second);
   auto& basal_sis = (it_sis==side_set_sis.end() ? dummy_sis : it_sis->second);
+
   this->sideSetMeshStructs.at("basalside")->setFieldAndBulkData (comm, params2D, neq_, basal_req, basal_sis, worksetSize);
 
   // Setting up the field container
@@ -238,8 +251,6 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   std::vector<stk::mesh::Entity> sides2D;
   stk::mesh::get_selected_entities(select_sides, bulkData2D.buckets(metaData2D.side_rank()), sides2D);
 
-  if (comm->getRank() == 0) std::cout << "Importing ascii files ...";
-
   //std::cout << "Num Global Elements: " << maxGlobalElements2D<< " " << maxGlobalVertices2dId<< " " << maxGlobalSides2D << std::endl;
 
   Teuchos::Array<GO> indices(nodes2D.size());
@@ -280,9 +291,6 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   Teuchos::RCP<Tpetra_MultiVector> sVelocityVec;
   Teuchos::RCP<Tpetra_MultiVector> velocityRMSVec;
 
-  if (comm->getRank() == 0)
-    std::cout << " done." << std::endl;
-
   GO elemColumnShift     = (Ordering == COLUMN) ? 1 : maxGlobalElements2dId;
   int lElemColumnShift   = (Ordering == COLUMN) ? 1 : cells2D.size();
   int elemLayerShift     = (Ordering == LAYER)  ? 1 : numLayers;
@@ -298,6 +306,12 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   this->layered_mesh_numbering = (Ordering==LAYER) ?
       Teuchos::rcp(new LayeredMeshNumbering<LO>(lVertexColumnShift,Ordering,layerThicknessRatio)):
       Teuchos::rcp(new LayeredMeshNumbering<LO>(vertexLayerShift,Ordering,layerThicknessRatio));
+
+  std::vector<double> ltr(layerThicknessRatio.size());
+  for(int i=0; i< ltr.size(); ++i) ltr[i]=layerThicknessRatio[i];
+  fieldContainer->getMeshVectorStates()["layer_thickness_ratio"] = ltr;
+  fieldContainer->getMeshScalarIntegerStates()["ordering"] = static_cast<int>(Ordering);
+  fieldContainer->getMeshScalarIntegerStates()["stride"] = (Ordering==LAYER) ? lVertexColumnShift : vertexLayerShift;
 
   metaData->commit();
 
@@ -326,7 +340,11 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   std::vector<GO> prismMpasIds(NumBaseElemeNodes), prismGlobalIds(2 * NumBaseElemeNodes);
 
   double *thick_val, *sHeight_val;
-  for (int i = 0; i < (numLayers + 1) * nodes2D.size(); i++) {
+
+  int num_nodes = (numLayers + 1) * nodes2D.size();
+  *out << "[ExtrudedSTKMesh] Adding nodes... ";
+  out->getOStream()->flush();
+  for (int i = 0; i < num_nodes; i++) {
     int ib = (Ordering == LAYER) * (i % lVertexColumnShift) + (Ordering == COLUMN) * (i / vertexLayerShift);
     int il = (Ordering == LAYER) * (i / lVertexColumnShift) + (Ordering == COLUMN) * (i % vertexLayerShift);
     stk::mesh::Entity node;
@@ -355,9 +373,16 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     coord[2] = sHeight_val[0] - thick_val[0] * (1. - levelsNormalizedThickness[il]);
   }
 
+  *out << "done!\n";
+  out->getOStream()->flush();
+
   GO tetrasLocalIdsOnPrism[3][4];
   singlePartVec[0] = partVec[ebNo];
-  for (int i = 0; i < cells2D.size() * numLayers; i++) {
+
+  *out << "[ExtrudedSTKMesh] Adding elements... ";
+  out->getOStream()->flush();
+  GO num_cells = cells2D.size() * numLayers;
+  for (int i = 0; i < num_cells; i++) {
 
     int ib = (Ordering == LAYER) * (i % lElemColumnShift) + (Ordering == COLUMN) * (i / elemLayerShift);
     int il = (Ordering == LAYER) * (i / lElemColumnShift) + (Ordering == COLUMN) * (i % elemLayerShift);
@@ -407,6 +432,9 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     }
   }
 
+  *out << "done!\n";
+  out->getOStream()->flush();
+
   int numSubelemOnPrism, numBasalSidePoints;
   int basalSideLID, upperSideLID;
 
@@ -437,6 +465,8 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   // WARNING: these sides do NOT follow column-wise ordering (even if requested).
   singlePartVec[0] = ssPartVec["basalside"];
 
+  *out << "[ExtrudedSTKMesh] Adding basalside sides... ";
+  out->getOStream()->flush();
   for (int i = 0; i < cells2D.size(); i++) {
     stk::mesh::Entity elem2d = cells2D[i];
     stk::mesh::EntityId elem2d_id = bulkData2D.identifier(elem2d) - 1;
@@ -451,10 +481,15 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     }
   }
 
+  *out << "done!\n";
+  out->getOStream()->flush();
+
   singlePartVec[0] = ssPartVec["upperside"];
 
   GO upperBasalOffset = maxGlobalElements2dId;
 
+  *out << "[ExtrudedSTKMesh] Adding upperside sides... ";
+  out->getOStream()->flush();
   for (int i = 0; i < cells2D.size(); i++) {
     stk::mesh::Entity elem2d = cells2D[i];
     stk::mesh::EntityId elem2d_id = bulkData2D.identifier(elem2d) - 1;
@@ -468,6 +503,9 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
       bulkData->declare_relation(side, node, j);
     }
   }
+
+  *out << "done!\n";
+  out->getOStream()->flush();
 
   singlePartVec[0] = ssPartVec["lateralside"];
 
@@ -485,7 +523,11 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
                                                       { { { 0, 1 }, { 1, 2 }, { 0, 2 } }, { { 0, 1 }, { 0, 2 }, { 1, 2 } } } };
 
   upperBasalOffset += maxGlobalElements2dId;
-  for (int i = 0; i < sides2D.size() * numLayers; i++) {
+
+  *out << "[ExtrudedSTKMesh] Adding lateral sides... ";
+  out->getOStream()->flush();
+  int num_sides = sides2D.size() * numLayers;
+  for (int i = 0; i < num_sides; i++) {
     int ib = (Ordering == LAYER) * (i % lsideColumnShift) + (Ordering == COLUMN) * (i / sideLayerShift);
     // if(!isBoundaryside[ib]) continue; //WARNING: assuming that all the edges stored are boundary edges!!
 
@@ -548,6 +590,9 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     }
   }
 
+  *out << "done!\n";
+  out->getOStream()->flush();
+
   // Extrude fields
   extrudeBasalFields (nodes2D,cells2D,maxGlobalElements2dId,maxGlobalVertices2dId);
   interpolateBasalLayeredFields (nodes2D,cells2D,levelsNormalizedThickness,maxGlobalElements2dId,maxGlobalVertices2dId);
@@ -555,6 +600,9 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   //Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
   fieldAndBulkDataSet = true;
+
+  // Check that the nodeset created from sidesets contain the right number of nodes
+  this->checkNodeSetsFromSideSetsIntegrity ();
 
   // We can finally extract the side set meshes and set the fields and bulk data in all of them
   this->finalizeSideSetMeshStructs(comm, side_set_req, side_set_sis, worksetSize);
@@ -730,6 +778,12 @@ void Albany::ExtrudedSTKMeshStruct::interpolateBasalLayeredFields (const std::ve
     cell_fields_ranks = params->get<Teuchos::Array<int> >("Basal Elem Layered Fields Ranks");
   }
 
+  if (node_fields_names.size()==0 && cell_fields_names.size()==0)
+    return;
+
+  *out << "[ExtrudedSTKMesh] Interpolating layered basal fields...\n";
+  out->getOStream()->flush();
+
   // NOTE: a scalar layered field is stored as a vector field,
   //       a vector layered field is stored as a tensor field.
 
@@ -757,10 +811,12 @@ void Albany::ExtrudedSTKMeshStruct::interpolateBasalLayeredFields (const std::ve
 
   std::string ranks[4] = {"ERROR!","Scalar","Vector","Tensor"};
   std::vector<double> fieldLayersCoords;
-  // Extrude node fields
+
+  // Interpolate node fields
   for (int ifield=0; ifield<numNodeFields; ++ifield)
   {
-    *out << "Interpolating " << ranks[node_fields_ranks[ifield]] << " field " << node_fields_names[ifield] << " from basal mesh\n";
+    *out << "  - Interpolating " << ranks[node_fields_ranks[ifield]] << " field " << node_fields_names[ifield] << "...";
+    out->getOStream()->flush();
 
     // We also need to load the normalized layers coordinates
     std::string tmp_str = node_fields_names[ifield] + "_NLC";
@@ -848,16 +904,17 @@ void Albany::ExtrudedSTKMeshStruct::interpolateBasalLayeredFields (const std::ve
         }
       }
     }
+    *out << "done!\n";
   }
 
   // Extrude cell fields
   for (int ifield=0; ifield<numCellFields; ++ifield)
   {
-    *out << "Interpolating " << ranks[cell_fields_ranks[ifield]] << " field " << cell_fields_names[ifield] << " from basal mesh\n";
+    *out << "  - Interpolating " << ranks[cell_fields_ranks[ifield]] << " field " << cell_fields_names[ifield] << "...";
     // We also need to load the normalized layers coordinates
     std::string tmp_str = cell_fields_names[ifield] + "_NLC";
     auto it = basalMeshStruct->getFieldContainer()->getMeshVectorStates().find(tmp_str);
-    TEUCHOS_TEST_FOR_EXCEPTION (it!=basalMeshStruct->getFieldContainer()->getMeshVectorStates().end(), std::logic_error,
+    TEUCHOS_TEST_FOR_EXCEPTION (it==basalMeshStruct->getFieldContainer()->getMeshVectorStates().end(), std::logic_error,
                                 "Error in ExtrudedSTKMeshStruct: normalized layers coords for layered field '" <<
                                 cell_fields_names[ifield] << "' not found.\n");
     fieldLayersCoords = it->second;
@@ -952,6 +1009,7 @@ void Albany::ExtrudedSTKMeshStruct::interpolateBasalLayeredFields (const std::ve
         }
       }
     }
+    *out << "done!\n";
   }
 }
 
@@ -979,6 +1037,12 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
     cell_fields_ranks = params->get<Teuchos::Array<int> >("Basal Elem Fields Ranks");
   }
 
+  if (node_fields_names.size()==0 && cell_fields_names.size()==0)
+    return;
+
+  *out << "[ExtrudedSTKMesh] Extruding basal fields...\n";
+  out->getOStream()->flush();
+
   // Typedefs
   typedef Albany::AbstractSTKFieldContainer::ScalarFieldType SFT;
   typedef Albany::AbstractSTKFieldContainer::VectorFieldType VFT;
@@ -1005,7 +1069,8 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
     {
       case 1:
       {
-        *out << "Extruding Scalar Node field " << node_fields_names[ifield] << " from basal mesh\n";
+        *out << "  - Extruding Scalar Node field " << node_fields_names[ifield] << "...";
+        out->getOStream()->flush();
 
         SFT* field2d = metaData2d.get_field<SFT>(stk::topology::NODE_RANK, node_fields_names[ifield]);
         SFT* field3d = metaData->get_field<SFT> (stk::topology::NODE_RANK, node_fields_names[ifield]);
@@ -1029,7 +1094,8 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
       }
       case 2:
       {
-        *out << "Extruding Vector Node field " << node_fields_names[ifield] << " from basal mesh\n";
+        *out << "  - Extruding Vector Node field " << node_fields_names[ifield] << "...";
+        out->getOStream()->flush();
 
         VFT* field2d = metaData2d.get_field<VFT>(stk::topology::NODE_RANK, node_fields_names[ifield]);
         VFT* field3d = metaData->get_field<VFT> (stk::topology::NODE_RANK, node_fields_names[ifield]);
@@ -1054,7 +1120,8 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
       }
       case 3:
       {
-        *out << "Extruding Tensor Node field " << node_fields_names[ifield] << " from basal mesh\n";
+        *out << "  - Extruding Tensor Node field " << node_fields_names[ifield] << "...";
+        out->getOStream()->flush();
 
         TFT* field2d = metaData2d.get_field<TFT>(stk::topology::NODE_RANK, node_fields_names[ifield]);
         TFT* field3d = metaData->get_field<TFT> (stk::topology::NODE_RANK, node_fields_names[ifield]);
@@ -1080,6 +1147,7 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
       default:
         TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid/unsupported field rank.\n");
     }
+    *out << "done!\n";
   }
 
   // Extrude cell fields
@@ -1089,7 +1157,8 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
     {
       case 1:
       {
-        *out << "Extruding Scalar Elem field " << cell_fields_names[ifield] << " from basal mesh\n";
+        *out << "  - Extruding Scalar Elem field " << cell_fields_names[ifield] << "...";
+        out->getOStream()->flush();
 
         SFT* field2d = metaData2d.get_field<SFT>(stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
         SFT* field3d = metaData->get_field<SFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
@@ -1125,7 +1194,8 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
       }
       case 2:
       {
-        *out << "Extruding Vector Elem field " << cell_fields_names[ifield] << " from basal mesh\n";
+        *out << "  - Extruding Vector Elem field " << cell_fields_names[ifield] << "...";
+        out->getOStream()->flush();
 
         VFT* field2d = metaData2d.get_field<VFT>(stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
         VFT* field3d = metaData->get_field<VFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
@@ -1165,7 +1235,8 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
       }
       case 3:
       {
-        *out << "Extruding Tensor Elem field " << cell_fields_names[ifield] << " from basal mesh\n";
+        *out << "  - Extruding Tensor Elem field " << cell_fields_names[ifield] << "...";
+        out->getOStream()->flush();
 
         TFT* field2d = metaData2d.get_field<TFT>(stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
         TFT* field3d = metaData->get_field<TFT> (stk::topology::ELEMENT_RANK, cell_fields_names[ifield]);
@@ -1206,6 +1277,7 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
       default:
         TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Invalid/unsupported field rank.\n");
     }
+    *out << "done!\n";
   }
 }
 

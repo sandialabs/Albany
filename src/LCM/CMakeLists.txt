@@ -48,6 +48,22 @@ file (GLOB surface-element-headers
   "${LCM_DIR}/evaluators/surface-element/*.hpp"
 )
 
+# LCM transport evaluators
+file (GLOB transport-sources
+  "${LCM_DIR}/evaluators/transport/*.cpp"
+)
+file (GLOB transport-headers
+  "${LCM_DIR}/evaluators/transport/*.hpp"
+)
+
+# LCM HMC evaluators
+file (GLOB hmc-sources
+  "${LCM_DIR}/evaluators/HMC/*.cpp"
+)
+file (GLOB hmc-headers
+  "${LCM_DIR}/evaluators/HMC/*.hpp"
+)
+
 # LCM special boundary conditions
 file (GLOB bc-sources
   "${LCM_DIR}/evaluators/bc/*.cpp"
@@ -63,6 +79,7 @@ file (GLOB models-sources
 )
 file (GLOB models-headers
   "${LCM_DIR}/models/*.hpp"
+  "${LCM_DIR}/models/core/CrystalPlasticity/*.hpp"
   "${LCM_DIR}/parallel_models/*.hpp"
 )
 
@@ -91,10 +108,19 @@ ELSE()
   set(utils-headers ${utils-headers}
     ${LCM_DIR}/utils/LCM_Utils.h
     ${LCM_DIR}/utils/Projection.hpp
+    ${LCM_DIR}/utils/LocalNonlinearSolver.hpp
+    ${LCM_DIR}/utils/LocalNonlinearSolver_Def.hpp
+    ${LCM_DIR}/utils/NOXSolverPrePostOperator.h
+    ${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.h
+    ${LCM_DIR}/utils/MaterialDatabase.h
   )
   set(utils-sources ${utils-sources}
     ${LCM_DIR}/utils/LCM_Utils.cc
     ${LCM_DIR}/utils/Projection.cpp
+    ${LCM_DIR}/utils/LocalNonlinearSolver.cpp
+    ${LCM_DIR}/utils/NOXSolverPrePostOperator.cc
+    ${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.cc
+    ${LCM_DIR}/utils/MaterialDatabase.cc
   )
 ENDIF()
 
@@ -103,6 +129,8 @@ set(SOURCES ${SOURCES}
   ${evaluator-sources}
   ${model-eval-sources}
   ${surface-element-sources}
+  ${transport-sources}
+  ${hmc-sources}
   ${bc-sources}
   ${models-sources}
   ${utils-sources}
@@ -113,6 +141,8 @@ set(HEADERS ${HEADERS}
   ${evaluator-headers}
   ${model-eval-headers}
   ${surface-element-headers}
+  ${transport-headers}
+  ${hmc-headers}
   ${bc-headers}
   ${models-headers}
   ${utils-headers}
@@ -225,6 +255,8 @@ set(INCLUDE_DIRS
   ${LCM_DIR}/evaluators
   ${LCM_DIR}/evaluators/bc
   ${LCM_DIR}/evaluators/surface-element
+  ${LCM_DIR}/evaluators/transport
+  ${LCM_DIR}/evaluators/HMC
   ${LCM_DIR}/models
   ${LCM_DIR}/utils
   ${LCM_DIR}/utils/topology
@@ -296,6 +328,13 @@ IF (LCM_TEST_EXES AND ALBANY_BGL)
     test/unit_tests/StandardUnitTestMain.cpp
     test/unit_tests/utHeliumODEs.cpp
     )
+
+  IF(NOT BUILD_SHARED_LIBS)
+    add_executable(
+      utStaticAllocator
+      test/unit_tests/utStaticAllocator.cpp
+      )
+  ENDIF()
 ENDIF()
 
 IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
@@ -400,14 +439,14 @@ ENDIF ()
 
 IF(BUILD_SHARED_LIBS)
   IF(ALBANY_SCOREC)
-    SET(LCM_UT_LIBS albanyLib albanyAdapt pumi albanySTK LCM albanyLib)
+    SET(LCM_UT_LIBS albanyLib albanyAdapt albanyPUMI albanySTK LCM albanyLib)
   ELSE()
     SET(LCM_UT_LIBS albanyLib albanyAdapt albanySTK LCM albanyLib)
   ENDIF()
 ELSE(BUILD_SHARED_LIBS)
   # We really don't link to anything in Hydride
   IF(ALBANY_SCOREC)
-    SET(LCM_UT_LIBS LCM albanyAdapt albanyLib pumi albanySTK albanyLib)
+    SET(LCM_UT_LIBS LCM albanyAdapt albanyLib albanyPUMI albanySTK albanyLib)
   ELSE()
     SET(LCM_UT_LIBS LCM albanyAdapt albanyLib albanySTK albanyLib )
   ENDIF()
@@ -441,4 +480,7 @@ IF (LCM_TEST_EXES AND ALBANY_BGL)
   target_link_libraries(utMiniSolvers ${repeat_libs} ${ALL_LIBRARIES})
   target_link_libraries(utSurfaceElement ${repeat_libs} ${ALL_LIBRARIES})
   target_link_libraries(utHeliumODEs ${repeat_libs} ${ALL_LIBRARIES})
+  IF(NOT BUILD_SHARED_LIBS)
+    target_link_libraries(utStaticAllocator ${repeat_libs} ${ALL_LIBRARIES})
+  ENDIF()
 ENDIF()

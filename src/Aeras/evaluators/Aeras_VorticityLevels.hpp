@@ -72,7 +72,12 @@ private:
 public:
 typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
+struct Vorticity_Orig_Tag{};
 struct Vorticity_Tag{};
+
+typedef Kokkos::RangePolicy<ExecutionSpace, Vorticity_Orig_Tag> Vorticity_Orig_Policy;
+KOKKOS_INLINE_FUNCTION
+void operator() (const Vorticity_Orig_Tag& tag, const int& i) const;
 
 typedef Kokkos::RangePolicy<ExecutionSpace, Vorticity_Tag> Vorticity_Policy;
 KOKKOS_INLINE_FUNCTION

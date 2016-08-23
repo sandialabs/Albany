@@ -9,8 +9,13 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Name" type="string" value="FELIX Hydrology 2D"/>
-    <Parameter name="Required Fields" type="Array(string)" value="{surface_height,surface_water_input,sliding_velocity,
-                                                                   ice_thickness,geothermal_flux,drainage_sheet_depth}"/>
+    <Parameter name="Required Fields" type="Array(string)" value="{surface_height,surface_water_input,basal_velocity,
+                                                                   ice_thickness,geothermal_flux}"/>
+
+    <ParameterList name="Initial Condition">
+      <Parameter name="Function"      type="string"        value="Constant"/>
+      <Parameter name="Function Data" type="Array(double)" value="{1e5,10}"/>
+    </ParameterList>
 
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet1 for DOF Hydraulic Potential" type="double" value="0.0"/>
@@ -30,30 +35,29 @@
     </ParameterList>
 
     <ParameterList name="FELIX Physical Parameters">
-      <Parameter name="Water Viscosity" type="double" value="1e-3"/>
-      <Parameter name="Water Density" type="double" value="1000"/>
-      <Parameter name="Ice Density" type="double" value="900"/>
-      <Parameter name="Ice Latent Heat" type="double" value="3e5"/>
-      <Parameter name="Gravity Acceleration" type="double" value="10"/>
+      <Parameter name="Water Viscosity" type="double" value="1e-6"/>      <!-- [kPa*s]  -->
+      <Parameter name="Water Density" type="double" value="1000"/>        <!-- [kg/m^3] -->
+      <Parameter name="Ice Density" type="double" value="910"/>           <!-- [kg/m^3] -->
+      <Parameter name="Ice Latent Heat" type="double" value="3e5"/>       <!-- [J/kg]   -->
+      <Parameter name="Gravity Acceleration" type="double" value="9.8"/>  <!-- [m/s^2]  -->
     </ParameterList>
 
     <ParameterList name="FELIX Hydrology">
-      <Parameter name="Transmissivity" type="double" value="1e-5"/>
-      <Parameter name="Bed Bumps Height" type="double" value="10"/>
-      <Parameter name="Bed Bumps Length" type="double" value="5000"/>
-      <Parameter name="Elliptic Eqn Mass Term Exponent" type="double" value="3"/>
-      <Parameter name="Flow Factor Constant" type="double" value="0.0001"/>
+      <Parameter name="Use Water Thickness Equation"        type="bool"   value="true"/>
+      <Parameter name="Transmissivity"                      type="double" value="0.316"/>   <!-- [kPa^(2-beta) m^(1-alpha+beta)] -->
+      <Parameter name="Bed Bumps Height"                    type="double" value="0.1"/>     <!-- [m] -->
+      <Parameter name="Bed Bumps Length"                    type="double" value="2"/>       <!-- [m] -->
+      <Parameter name="Water Thickness Exponent (alpha)"    type="double" value="3"/>     <!-- [1] -->
+      <Parameter name="Potential Gradient Exponent (beta)"  type="double" value="2"/>     <!-- [1] -->
+      <Parameter name="Potential Eqn Mass Term Exponent"    type="double" value="3"/>
+      <Parameter name="Flow Factor Constant"                type="double" value="0.00000001576800000000"/>     <!-- [kPa^-3 yr^-1)] -->
+      <Parameter name="Field Norm Regularization"           type="double" value="1e-6"/>
     </ParameterList>
 
     <ParameterList name="FELIX Basal Friction Coefficient">
-      <Parameter name="Basal Side Name" type="string" value="basalside"/>
-      <Parameter name="Type" type="string" value="Regularized Coulomb"/> <!-- "Constant", "Given Field","Power Law","Regularized Coulomb"-->
-      <Parameter name="Coulomb Friction Coefficient" type="double" value="0.8"/>
-      <Parameter name="Power Exponent" type="double" value="0.33"/>
-      <Parameter name="Bed Roughness" type="double" value="1e-4"/>
-      <Parameter name="Constant Flow Factor A" type="double" value="0.0001"/>
-      <Parameter name="Hydraulic-Over-Hydrostatic Potential Ratio" type="double" value="0.9"/>
-      <Parameter name="Side Cubature Degree" type="int" value="3"/>
+      <Parameter name="Basal Side Name"           type="string" value="basalside"/>
+      <Parameter name="Type"                      type="string" value="Given Constant"/> <!-- "Given Constant", "Given Field"-->
+      <Parameter name="Constant Given Beta Value" type="double" value="0.0"/>           <!-- [kPa yr m^-1] -->
     </ParameterList>
 
   </ParameterList> <!-- Problem -->
@@ -68,31 +72,48 @@
 
   <ParameterList name="Discretization">
     <Parameter name="Periodic_y BC" type="bool" value="true"/>
-    <Parameter name="Workset Size" type="int" value="100"/>
+    <Parameter name="Workset Size" type="int" value="10"/>
     <Parameter name="1D Elements" type="int" value="50"/>
     <Parameter name="2D Elements" type="int" value="10"/>
-    <Parameter name="1D Scale" type="double" value="1000e3"/>
-    <Parameter name="2D Scale" type="double" value="10e3"/>
+    <Parameter name="1D Scale" type="double" value="50"/>
+    <Parameter name="2D Scale" type="double" value="10"/>
     <Parameter name="Method" type="string" value="STK2D"/>
     <Parameter name="Write points coordinates to ascii file" type="bool" value="false"/>
     <Parameter name="Cell Topology" type="string" value="Triangle"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Exodus Output File Name" type="string" value="./hydrology.exo"/>
     <ParameterList name="Required Fields Info">
-      <Parameter name="sliding_velocity Field Type"     type="string" value="Node Vector"/>
-      <Parameter name="basal_friction Field Type"       type="string" value="Node Scalar"/>
-      <Parameter name="surface_height Field Type"       type="string" value="Node Scalar"/>
-      <Parameter name="drainage_sheet_depth Field Type" type="string" value="Node Scalar"/>
-      <Parameter name="ice_thickness Field Type"        type="string" value="Node Scalar"/>
-      <Parameter name="surface_water_input Field Type"  type="string" value="Node Scalar"/>
-      <Parameter name="geothermal_flux Field Type"      type="string" value="Node Scalar"/>
-      <Parameter name="surface_height File Name"        type="string" value="../AsciiMeshes/Rectangle/surface_height.ascii"/>
-      <Parameter name="drainage_sheet_depth File Name"  type="string" value="../AsciiMeshes/Rectangle/drainage_sheet_depth.ascii"/>
-      <Parameter name="ice_thickness File Name"         type="string" value="../AsciiMeshes/Rectangle/thickness.ascii"/>
-      <Parameter name="sliding_velocity Value"          type="Array(double)" value="{1e-7,0}"/>
-      <Parameter name="basal_friction Value"            type="Array(double)" value="{-1e12}"/>
-      <Parameter name="surface_water_input Value"       type="Array(double)" value="{2e-10}"/>
-      <Parameter name="geothermal_flux Value"           type="Array(double)" value="{0.067}"/>
+      <Parameter name="Number Of Fields"  type="int" value="5"/>
+      <ParameterList name="Field 0">
+        <Parameter name="Field Name"    type="string" value="ice_thickness"/>
+        <Parameter name="Field Type"    type="string" value="Node Scalar"/>
+        <Parameter name="File Name"     type="string" value="../AsciiMeshes/Rectangle/thickness.ascii"/>
+      </ParameterList>
+      <ParameterList name="Field 1">
+        <Parameter name="Field Name"    type="string" value="surface_height"/>
+        <Parameter name="Field Type"    type="string" value="Node Scalar"/>
+        <Parameter name="File Name"     type="string" value="../AsciiMeshes/Rectangle/surface_height.ascii"/>
+      </ParameterList>
+      <ParameterList name="Field 2">
+        <Parameter name="Field Name"    type="string" value="basal_velocity"/>
+        <Parameter name="Field Type"    type="string" value="Node Vector"/>
+        <Parameter name="Field Value"   type="Array(double)" value="{30,0}"/>   <!-- m/yr -->
+      </ParameterList>
+      <ParameterList name="Field 3">
+        <Parameter name="Field Name"    type="string" value="surface_water_input"/>
+        <Parameter name="Field Type"    type="string" value="Node Scalar"/>
+        <Parameter name="Field Value"   type="Array(double)" value="{0.365}"/> <!-- m/yr -->
+      </ParameterList>
+      <ParameterList name="Field 4">
+        <Parameter name="Field Name"    type="string" value="geothermal_flux"/>
+        <Parameter name="Field Type"    type="string" value="Node Scalar"/>
+        <Parameter name="Field Value"   type="Array(double)" value="{0.0}"/>  <!-- W/(m^2) -->
+      </ParameterList>
+      <ParameterList name="Field 5">
+        <Parameter name="Field Name"    type="string" value="water_thickness"/>
+        <Parameter name="Field Type"    type="string" value="Node Scalar"/>
+        <Parameter name="File Name"     type="string" value="../AsciiMeshes/Rectangle/water_thickness.ascii"/>
+      </ParameterList>
     </ParameterList>
   </ParameterList>
 
@@ -105,23 +126,23 @@
       <ParameterList name="Status Tests">
         <Parameter name="Test Type" type="string" value="Combo"/>
         <Parameter name="Combo Type" type="string" value="OR"/>
-        <Parameter name="Number of Tests" type="int" value="3"/>
+        <Parameter name="Number of Tests" type="int" value="2"/>
 
         <ParameterList name="Test 0">
+          <Parameter name="Test Type" type="string" value="MaxIters"/>
+          <Parameter name="Maximum Iterations" type="int" value="20"/>
+        </ParameterList>
+        <ParameterList name="Test 1">
           <Parameter name="Test Type" type="string" value="NormF"/>
           <Parameter name="Norm Type" type="string" value="Two Norm"/>
           <Parameter name="Scale Type" type="string" value="Unscaled"/>
           <Parameter name="Tolerance" type="double" value="1e-2"/>
         </ParameterList>
-        <ParameterList name="Test 1">
+        <ParameterList name="Test 2">
           <Parameter name="Test Type" type="string" value="RelativeNormF"/>
           <Parameter name="Norm Type" type="string" value="Two Norm"/>
           <Parameter name="Scale Type" type="string" value="Unscaled"/>
           <Parameter name="Tolerance" type="double" value="1e-6"/>
-        </ParameterList>
-        <ParameterList name="Test 2">
-          <Parameter name="Test Type" type="string" value="MaxIters"/>
-          <Parameter name="Maximum Iterations" type="int" value="1"/>
         </ParameterList>
       </ParameterList> <!-- Status Tests -->
 
@@ -149,10 +170,10 @@
                       <Parameter name="Aztec Solver" type="string" value="GMRES"/>
                       <Parameter name="Convergence Test" type="string" value="r0"/>
                       <Parameter name="Size of Krylov Subspace" type="int" value="4000"/>
-                      <Parameter name="Output Frequency" type="int" value="20"/>
+                      <Parameter name="Output Frequency" type="int" value="10"/>
                     </ParameterList>
                     <Parameter name="Max Iterations" type="int" value="1500"/>
-                    <Parameter name="Tolerance" type="double" value="1e-9"/>
+                    <Parameter name="Tolerance" type="double" value="1e-3"/>
                   </ParameterList>
                 </ParameterList>
               </ParameterList>

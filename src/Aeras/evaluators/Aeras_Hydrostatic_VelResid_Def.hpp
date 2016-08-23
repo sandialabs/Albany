@@ -25,9 +25,6 @@ Hydrostatic_VelResid(const Teuchos::ParameterList& p,
   wBF         (p.get<std::string> ("Weighted BF Name"),                 dl->node_qp_scalar),
   GradBF      (p.get<std::string>   ("Gradient BF Name"),               dl->node_qp_gradient),
   wGradBF     (p.get<std::string> ("Weighted Gradient BF Name"),        dl->node_qp_gradient),
-  wGradGradBF (p.isParameter("Hydrostatic Problem") &&  
-               p.get<Teuchos::ParameterList*>("Hydrostatic Problem")->isParameter("HyperViscosity") ?
-               p.get<std::string> ("Weighted Gradient Gradient BF Name") : "None", dl->node_qp_tensor) ,
   keGrad      (p.get<std::string> ("Gradient QP Kinetic Energy"),       dl->qp_gradient_level),
   PhiGrad     (p.get<std::string> ("Gradient QP GeoPotential"),         dl->qp_gradient_level),
   etadotdVelx (p.get<std::string> ("EtaDotdVelx"),                      dl->node_vector_level),
@@ -36,9 +33,6 @@ Hydrostatic_VelResid(const Teuchos::ParameterList& p,
   Velx        (p.get<std::string> ("QP Velx"),                          dl->node_vector_level),
   VelxDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->node_vector_level),
   DVelx       (p.get<std::string> ("D Vel Name"),                       dl->qp_vector_level),
-  LaplaceVelx (p.isParameter("Hydrostatic Problem") &&
-                p.get<Teuchos::ParameterList*>("Hydrostatic Problem")->isParameter("HyperViscosity") ?
-                p.get<std::string> ("Laplace Vel Name") : "None",dl->qp_scalar_level),
   density     (p.get<std::string> ("QP Density"),                       dl->node_scalar_level),
   sphere_coord  (p.get<std::string>  ("Spherical Coord Name"), dl->qp_gradient ),
   vorticity    (p.get<std::string>  ("QP Vorticity"), dl->qp_scalar_level ),
@@ -78,12 +72,10 @@ Hydrostatic_VelResid(const Teuchos::ParameterList& p,
   this->addDependentField(vorticity);
   this->addDependentField(jacobian);
   this->addDependentField(jacobian_det);
-  if (hyperviscosity) this->addDependentField(LaplaceVelx);
-  if (hyperviscosity) this->addDependentField(wGradGradBF);
 
   this->addEvaluatedField(Residual);
 
-  this->setName("Aeras::Hydrostatic_VelResid" );
+  this->setName("Aeras::Hydrostatic_VelResid" + PHX::typeAsString<EvalT>());
 
   //refWeights        .resize               (numQPs);
   //grad_at_cub_points.resize     (numNodes, numQPs, 2);
@@ -115,24 +107,63 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(vorticity  , fm);
   this->utils.setFieldData(jacobian, fm);
   this->utils.setFieldData(jacobian_det, fm);
-  if (hyperviscosity) this->utils.setFieldData(LaplaceVelx, fm);
-  if (hyperviscosity) this->utils.setFieldData(wGradGradBF, fm);
 
   this->utils.setFieldData(Residual,fm);
 }
+
+//**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void Hydrostatic_VelResid<EvalT, Traits>::
+operator() (const Hydrostatic_VelResid_Tag& tag, const int& cell) const{
+  for (int node=0; node < numNodes; ++node) {
+    // Compute Coriolis
+    const double alpha = AlphaAngle;
+    const MeshScalarT lambda = sphere_coord(cell, node, 0);
+    const MeshScalarT theta = sphere_coord(cell, node, 1);
+    const ScalarT coriolis = 2*Omega*( -cos(lambda)*cos(theta)*sin(alpha) + sin(theta)*cos(alpha));
+
+    // Compute Residual
+    for (int level=0; level < numLevels; ++level) {
+      for (int dim=0; dim < numDims; ++dim) {
+        Residual(cell,node,level,dim) =  ( keGrad(cell,node,level,dim) + PhiGrad(cell,node,level,dim) )
+                                      +  ( pGrad (cell,node,level,dim)/density(cell,node,level) )
+                                      +   etadotdVelx(cell,node,level,dim)
+                                      +   VelxDot(cell,node,level,dim);
+      }
+      Residual(cell,node,level,0) -= (vorticity(cell,node,level) + coriolis)*Velx(cell,node,level,1);
+      Residual(cell,node,level,1) += (vorticity(cell,node,level) + coriolis)*Velx(cell,node,level,0);
+      Residual(cell,node,level,0) *= wBF(cell,node,node);
+      Residual(cell,node,level,1) *= wBF(cell,node,node);
+    }
+  }
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void Hydrostatic_VelResid<EvalT, Traits>::
+operator() (const Hydrostatic_VelResid_pureAdvection_Tag& tag, const int& cell) const{
+  for (int node=0; node < numNodes; ++node)
+    for (int level=0; level < numLevels; ++level)
+      for (int dim=0; dim < numDims; ++dim)
+        Residual(cell,node,level,dim) =   VelxDot(cell,node,level,dim) *wBF(cell,node,node); 
+}
+
+#endif
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void Hydrostatic_VelResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
   double j_coeff = workset.j_coeff;
   double n_coeff = workset.n_coeff;
   obtainLaplaceOp = ((n_coeff == 22.0)&&(j_coeff == 1.0)) ? true : false;
 
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   PHAL::set(Residual, 0.0);
-
   //std::cout <<"In velocity resid: Laplace = " << obtainLaplaceOp << "\n";
 
   //OG I had an segfault when moving this statement uder (if not Laplace op), where it belongs.
@@ -150,8 +181,6 @@ evaluateFields(typename Traits::EvalData workset)
 	      for (int dim=0; dim < numDims; ++dim) {
 	        // OG commenting this out
 		//Residual(cell,node,level,dim) +=   viscosity * DVelx(cell,qp,level,dim) * wGradBF(cell,node,qp,dim);
-		//if (hyperviscosity)
-		//  Residual(cell,node,level,dim) -= hyperviscosity * LaplaceVelx(cell,qp,level) * wGradGradBF(cell,node,qp,dim,dim);
 	      }
 	    }
 	  }
@@ -273,6 +302,24 @@ evaluateFields(typename Traits::EvalData workset)
   else {
 	  //to be implemented
   }
+
+#else
+  if ( !obtainLaplaceOp ) {
+    if (!pureAdvection ) {
+      Kokkos::parallel_for(Hydrostatic_VelResid_Policy(0,workset.numCells),*this);
+    }
+
+    else {
+      Kokkos::parallel_for(Hydrostatic_VelResid_pureAdvection_Policy(0,workset.numCells),*this);
+    }
+  }
+
+  else {
+    //to be implemented
+    PHAL::set(Residual, 0.0);
+  }
+
+#endif
 }
 
 template<typename EvalT,typename Traits>

@@ -406,7 +406,8 @@ Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetNam
   if ( sideSetStateInfo.find(sideSetName)==sideSetStateInfo.end() )
   {
     // It's the first time we register states on this side set, so we initiate the pointer
-    sideSetStateInfo.emplace(sideSetName,Teuchos::rcp(new StateInfoStruct()));
+    //TODO, when compiler allows, replace following with this for performance: sideSetStateInfo.emplace(sideSetName,Teuchos::rcp(new StateInfoStruct()));
+    sideSetStateInfo.insert(std::make_pair(sideSetName,Teuchos::rcp(new StateInfoStruct())));
   }
 
   const Teuchos::RCP<StateInfoStruct>& sis_ptr = sideSetStateInfo.at(sideSetName);
@@ -498,6 +499,8 @@ Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetNam
   stateRef.output = outputToExodus;
   stateRef.responseIDtoRequire = responseIDtoRequire;
   stateRef.layered = (dl->name(dl->rank()-1) == "LayerDim");
+  TEUCHOS_TEST_FOR_EXCEPTION (stateRef.layered && (dl->dimension(dl->rank()-1)<=0), std::logic_error,
+                              "Error! Invalid number of layers for layered state " << stateName << ".\n");
 
   // If space is needed for old state
   if (registerOldState) {

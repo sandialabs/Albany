@@ -1,60 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <ParameterList>
   <!-- <Parameter name="Reference Material" type="string" value="Metal"/> -->
 
   <ParameterList name="ElementBlocks">
 
     <ParameterList name="Block0">
-      <Parameter name="material" type="string" value="6061Aluminum" />
-      <Parameter name="Weighted Volume Average J" type="bool" value="true" />
-      <Parameter name="Average J Stabilization Parameter" type="double" value="0.05" />
+      <Parameter
+        name="material"
+        type="string"
+        value="6061Aluminum" />
+      <Parameter
+        name="Weighted Volume Average J"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Average J Stabilization Parameter"
+        type="double"
+        value="0.05" />
     </ParameterList>
   </ParameterList>
 
   <ParameterList name="Materials">
 
     <ParameterList name="6061Aluminum">
-            <ParameterList name="Material Model"> 
-              <Parameter name="Model Name" type="string" value="GursonFD"/>
-            </ParameterList>
-            <ParameterList name="Elastic Modulus">
-              <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
-              <Parameter name="Value" type="double" value="6.7559e4"/>
-            </ParameterList>
-            <ParameterList name="Poissons Ratio">
-              <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
-              <Parameter name="Value" type="double" value="0.3299"/>
-            </ParameterList>
-           <ParameterList name="Hardening Modulus">
-              <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
-              <Parameter name="Value" type="double" value="30.4"/>
-            </ParameterList>
-            <ParameterList name="Yield Strength">
-              <Parameter name="Yield Strength Type" type="string" value="Constant"/>
-              <Parameter name="Value" type="double" value="303.3"/>
-            </ParameterList>
-            <ParameterList name="Saturation Exponent">
-        	<Parameter name="Saturation Exponent Type" type="string" value="Constant"/>
-        	<Parameter name="Value" type="double" value="12.4"/>
-            </ParameterList>
-            <ParameterList name="Saturation Modulus">
-        	<Parameter name="Saturation Modulus Type" type="string" value="Constant"/>
-        	<Parameter name="Value" type="double" value="73.6"/>
-            </ParameterList>  
-            <Parameter name="N" type="double" value="0.0"/> 
-            <Parameter name="eq0" type="double" value="0.0"/>   
-            <Parameter name="f0" type="double" value="0.0"/>   
-            <Parameter name="kw" type="double" value="0.0"/>   
-            <Parameter name="fN" type="double" value="0.0"/>   
-            <Parameter name="fc" type="double" value="1.0"/>   
-            <Parameter name="ff" type="double" value="1.0"/>   
-            <Parameter name="sN" type="double" value="0.1"/>   
-            <Parameter name="eN" type="double" value="0.3"/> 
-            <Parameter name="q1" type="double" value="1.5"/> 
-            <Parameter name="q2" type="double" value="1.0"/> 
-            <Parameter name="q3" type="double" value="2.25"/> 
-            <Parameter name="isSaturationH" type="bool" value="true"/>
+      <ParameterList name="Material Model">
+        <Parameter
+          name="Model Name"
+          type="string"
+          value="GursonFD" />
+      </ParameterList>
+      <ParameterList name="Elastic Modulus">
+        <Parameter
+          name="Elastic Modulus Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="6.7559e4" />
+      </ParameterList>
+      <ParameterList name="Poissons Ratio">
+        <Parameter
+          name="Poissons Ratio Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="0.3299" />
+      </ParameterList>
+      <ParameterList name="Hardening Modulus">
+        <Parameter
+          name="Hardening Modulus Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="30.4" />
+      </ParameterList>
+      <ParameterList name="Yield Strength">
+        <Parameter
+          name="Yield Strength Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="303.3" />
+      </ParameterList>
+      <ParameterList name="Saturation Exponent">
+        <Parameter
+          name="Saturation Exponent Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="12.4" />
+      </ParameterList>
+      <ParameterList name="Saturation Modulus">
+        <Parameter
+          name="Saturation Modulus Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="73.6" />
+      </ParameterList>
+      <Parameter
+        name="N"
+        type="double"
+        value="0.0" />
+      <Parameter
+        name="eq0"
+        type="double"
+        value="0.0" />
+      <Parameter
+        name="f0"
+        type="double"
+        value="0.0" />
+      <Parameter
+        name="kw"
+        type="double"
+        value="0.0" />
+      <Parameter
+        name="fN"
+        type="double"
+        value="0.0" />
+      <Parameter
+        name="fc"
+        type="double"
+        value="1.0" />
+      <Parameter
+        name="ff"
+        type="double"
+        value="1.0" />
+      <Parameter
+        name="sN"
+        type="double"
+        value="0.1" />
+      <Parameter
+        name="eN"
+        type="double"
+        value="0.3" />
+      <Parameter
+        name="q1"
+        type="double"
+        value="1.5" />
+      <Parameter
+        name="q2"
+        type="double"
+        value="1.0" />
+      <Parameter
+        name="q3"
+        type="double"
+        value="2.25" />
+      <Parameter
+        name="isSaturationH"
+        type="bool"
+        value="true" />
     </ParameterList>
-    
+
   </ParameterList>
 
 </ParameterList>

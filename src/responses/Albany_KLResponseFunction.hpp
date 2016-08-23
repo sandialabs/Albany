@@ -47,6 +47,9 @@ namespace Albany {
     //! Setup response function
     virtual void setupT() { response->setupT(); }
 
+    //! Perform post registration setup (do nothing)
+    virtual void postRegSetup(){};
+
 #if defined(ALBANY_EPETRA)
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const;

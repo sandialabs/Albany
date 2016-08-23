@@ -43,7 +43,6 @@ private:
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>         wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim,Dim> wGradGradBF;
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  keGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  PhiGrad;
@@ -51,7 +50,6 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  pGrad;
   PHX::MDField<ScalarT,Cell,Node,Level,Dim>  uDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  DVelx;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      LaplaceVelx;
   PHX::MDField<ScalarT,Cell,Node,Level>      density;
 
 
@@ -65,6 +63,19 @@ private:
   const int numQPs;
   const int numDims;
   const int numLevels;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct XZHydrostatic_VelResid_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_VelResid_Tag> XZHydrostatic_VelResid_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_VelResid_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 

@@ -218,11 +218,8 @@ namespace Aeras
 
     //! Get overlapped node map
     Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
-
-    //! Get field overlapped node map
-    Teuchos::RCP<const Epetra_Map>
-    getOverlapNodeMap(const std::string& field_name) const;
 #endif
+
     //! Get Tpetra DOF map
     Teuchos::RCP<const Tpetra_Map> getMapT() const;
 
@@ -231,11 +228,6 @@ namespace Aeras
 
     //! Get field overlapped node map
     Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT(const std::string& field_name) const;
-
-#if defined(ALBANY_EPETRA)
-    //! Get field DOF map
-    Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const;
-#endif
 
     //! Get field DOF map
     Teuchos::RCP<const Tpetra_Map> getMapT(const std::string& field_name) const;
@@ -263,13 +255,10 @@ namespace Aeras
 #if defined(ALBANY_EPETRA)
     //! Get field node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const;
-    //! Get field node map
-    Teuchos::RCP<const Epetra_Map> getNodeMap(const std::string& field_name) const;
     //! Get field overlapped DOF map
     Teuchos::RCP<const Epetra_Map> getOverlapMap() const;
-    //! Get field overlapped DOF map
-    Teuchos::RCP<const Epetra_Map> getOverlapMap(const std::string& field_name) const;
 #endif
+
     //! Get Tpetra Node map
     Teuchos::RCP<const Tpetra_Map> getNodeMapT() const;
     //! Get field Tpetra node map
@@ -358,6 +347,9 @@ namespace Aeras
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
     getSphereVolume() const;
 
+    const Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type&
+    getLatticeOrientation() const;
+
     //! Print the coordinates for debugging
     void printCoords() const;
     void printConnectivity(bool printEdges=false) const;
@@ -436,16 +428,6 @@ namespace Aeras
     Teuchos::RCP<Tpetra_MultiVector>
     getSolutionMV(const bool overlapped=false) const;
 
-    int getSolutionFieldHistoryDepth() const;
-#if defined(ALBANY_EPETRA)
-    Teuchos::RCP<Epetra_MultiVector>
-    getSolutionFieldHistory() const;
-    Teuchos::RCP<Epetra_MultiVector>
-    getSolutionFieldHistory(int maxStepCount) const;
-    void getSolutionFieldHistory(Epetra_MultiVector &result) const;
-
-    void setResidualField(const Epetra_Vector& residual);
-#endif
     //Tpetra analog
     void setResidualFieldT(const Tpetra_Vector& residualT);
 
@@ -569,25 +551,6 @@ namespace Aeras
     void getSolutionMV(Tpetra_MultiVector &resultT,
                            bool overlapped=false) const;
 
-#if defined(ALBANY_EPETRA)
-    //! Copy field from STK Mesh field to given Epetra_Vector
-    void getField(Epetra_Vector &field_vector,
-                  const std::string& field_name) const;
-
-    // Copy field vector into STK Mesh field
-    void setField(const Epetra_Vector &field_vector,
-                  const std::string& field_name,
-                  bool overlapped=false);
-
-    Teuchos::RCP<Epetra_MultiVector>
-    getSolutionFieldHistoryImpl(int stepCount) const;
-    void getSolutionFieldHistoryImpl(Epetra_MultiVector &result) const;
-
-    // Copy solution vector from Epetra_Vector into STK Mesh
-    // Here soln is the local (non overlapped) solution
-    void setSolutionField(const Epetra_Vector& soln);
-#endif
-
     //! Copy field from STK Mesh field to given Epetra_Vector
     void getFieldT(Tpetra_Vector &field_vector,
                   const std::string& field_name) const;
@@ -603,10 +566,6 @@ namespace Aeras
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local + neighbor (overlapped) solution
-#if defined(ALBANY_EPETRA)
-    void setOvlpSolutionField(const Epetra_Vector& soln);
-#endif
-    //Tpetra version of above
     void setOvlpSolutionFieldT(const Tpetra_Vector& solnT);
     void setOvlpSolutionFieldMV(const Tpetra_MultiVector& solnT);
 
@@ -665,9 +624,7 @@ namespace Aeras
 
     //! Call stk_io for creating NetCDF output file
     void setupNetCDFOutput();
-#if defined(ALBANY_EPETRA)
-    int processNetCDFOutputRequest(const Epetra_Vector&);
-#endif
+
     int processNetCDFOutputRequestT(const Tpetra_Vector&);
 
     //! Find the local side id number within parent element
@@ -781,6 +738,7 @@ namespace Aeras
     Albany::WorksetArray<int>::type wsPhysIndex;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
+    Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type latticeOrientation;
 
     //! Connectivity map from elementGID to workset and LID in workset
     Albany::WsLIDList  elemGIDws;

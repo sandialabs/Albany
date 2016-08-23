@@ -51,6 +51,19 @@ private:
   const int numNodes;
   const int numQPs;
   const int numLevels;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct DOFInterpolationLevels_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFInterpolationLevels_Tag> DOFInterpolationLevels_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFInterpolationLevels_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 

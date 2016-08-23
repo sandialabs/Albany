@@ -29,14 +29,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/serial_coarse_cube0.smb
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
-IF(ENABLE_MESHMODEL)
-  add_test(NAME ${testName}_Mmodel_Tpetra
-     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${AlbanyT.exe}" -DTEST_ARGS=
-     "-DFILENAME=coarse_cube_out.pvd" -P
-     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
-ENDIF()
+add_test(NAME ${testName}_Tpetra
+   COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${AlbanyT.exe}" -DTEST_ARGS=
+   "-DFILENAME=coarse_cube_out.pvd" -P
+   ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
 
-IF(NOT ALBANY_PARALLEL_ONLY AND ENABLE_MESHMODEL)
+IF(NOT ALBANY_PARALLEL_ONLY)
   add_test(NAME ${testName}_SERIAL_Tpetra
      COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${SerialAlbanyT.exe}" -DTEST_ARGS=inputSerial.xml
      "-DFILENAME=serial_coarse_cube_out.pvd" -P

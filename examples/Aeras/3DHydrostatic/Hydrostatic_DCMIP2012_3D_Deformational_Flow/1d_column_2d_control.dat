@@ -1,0 +1,22 @@
+10
+5
+0.0  12000.0
+100000 25494.4 
+0
+0
+0
+0
+0
+
+# ----------------------
+# file format
+# ----------------------
+int num_levels
+int num_tracers
+double Zbot double Ztop
+double P0  double Ptop
+bool moist
+surf_model
+height
+center
+width

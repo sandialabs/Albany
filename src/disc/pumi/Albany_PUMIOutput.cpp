@@ -31,7 +31,9 @@ Albany::PUMIOutput* Albany::PUMIOutput::create(
 #endif
   if (meshStruct->outputFileName.find("vtk") != std::string::npos)
     return new PUMIVtk(meshStruct, comm);
+  if (meshStruct->outputFileName.find("vtkascii") != std::string::npos)
+    return new PUMIVtk(meshStruct, comm);
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-			      "PUMIDiscretization: Output should be .exo or .vtk, have "<<
-            meshStruct->outputFileName << '\n');
+      "PUMIDiscretization: Output should be .exo or .vtk, have "<<
+      meshStruct->outputFileName << '\n');
 }

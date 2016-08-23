@@ -17,16 +17,35 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 add_executable(HeatProfile HeatProfile.C)
 
-add_test(${testName}_Prep ${CMAKE_CURRENT_BINARY_DIR}/HeatProfile)
+#add_test(${testName}_Prep "${ALBANY_PRETEST_EXEC} ${CMAKE_CURRENT_BINARY_DIR}/HeatProfile")
 
 # 5. Create the test with this name and standard executable
 
-if (ALBANY_IFPACK2)
-  add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
-  set_tests_properties(${testName}_Tpetra  PROPERTIES DEPENDS ${testName}_Prep)
-endif ()
+#if (ALBANY_IFPACK2)
+#  add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+#  set_tests_properties(${testName}_Tpetra  PROPERTIES DEPENDS ${testName}_Prep)
+#endif ()
 
-if (ALBANY_EPETRA) 
-add_test(${testName} ${Albany.exe})
-set_tests_properties(${testName}  PROPERTIES DEPENDS ${testName}_Prep)
+#if (ALBANY_EPETRA) 
+#add_test(${testName} ${Albany.exe})
+#set_tests_properties(${testName}  PROPERTIES DEPENDS ${testName}_Prep)
+#endif()
+
+if (ALBANY_EPETRA)
+add_test(NAME ${testName}
+     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=
+     "-DAUX_ENV=${ALBANY_PRETEST_EXEC}"
+     "-DAUX_PROG=${CMAKE_CURRENT_BINARY_DIR}/HeatProfile" -P
+     ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake
+     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif()
+
+if (ALBANY_IFPACK2)
+add_test(NAME ${testName}_Tpetra
+     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${AlbanyT.exe}"
+     "-DTEST_ARGS=inputT.xml"
+     "-DAUX_ENV=${ALBANY_PRETEST_EXEC}"
+     "-DAUX_PROG=${CMAKE_CURRENT_BINARY_DIR}/HeatProfile" -P
+     ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake
+     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif ()

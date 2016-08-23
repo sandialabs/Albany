@@ -3,6 +3,7 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
+    <Parameter name="Required Fields" type="Array(string)" value="{flow_factor}"/>
     <Parameter name="Basal Side Name" type="string" value="Basal"/>
     <!--ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS Bottom for DOF U0" type="double" value="0.0"/>
@@ -52,6 +53,14 @@
     <Parameter name="Method" type="string" value="Ascii"/>
     <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
     <Parameter name="Exodus Output File Name" type="string" value="dome_ascii_out.exo"/>
+    <ParameterList name="Required Fields Info">
+     <Parameter name="Number Of Fields" type="int" value="1"/>
+      <ParameterList name="Field 0">
+        <Parameter name="Field Name" type="string" value="flow_factor"/>
+        <Parameter name="Field Type" type="string" value="Elem Scalar"/>
+        <Parameter name="Field Origin"  type="string" value="Mesh"/>
+      </ParameterList>
+    </ParameterList>
     <ParameterList name="Side Set Discretizations">
       <Parameter name="Side Sets" type="Array(string)" value="{Basal}"/>
       <ParameterList name="Basal">

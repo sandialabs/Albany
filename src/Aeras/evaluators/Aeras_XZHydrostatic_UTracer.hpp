@@ -39,7 +39,7 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   // Input:
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim> Velx;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim> Velocity;
   PHX::MDField<ScalarT,Cell,Node,Level,Dim> PiVelx;
   PHX::MDField<ScalarT,Cell,Node,Level>     Tracer;
   
@@ -49,6 +49,19 @@ private:
   const int numDims;
   const int numNodes;
   const int numLevels;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct XZHydrostatic_UTracer_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_UTracer_Tag> XZHydrostatic_UTracer_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const XZHydrostatic_UTracer_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 

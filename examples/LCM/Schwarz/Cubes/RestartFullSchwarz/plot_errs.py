@@ -14,7 +14,6 @@ if __name__ == '__main__':
         opts, args = getopt.getopt(
             sys.argv[1:],"",["num_load_steps="])
     except getopt.GetoptError:
-        print 'usage: approximation_study.py'
         sys.exit(2)
 
     for opt, arg in opts:

@@ -26,7 +26,8 @@ XZHydrostatic_Pressure(const Teuchos::ParameterList& p,
   Pi        (p.get<std::string> ("Pi"),               dl->node_scalar_level),
 
   numNodes ( dl->node_scalar          ->dimension(1)),
-  numLevels( dl->node_scalar_level    ->dimension(2))
+  numLevels( dl->node_scalar_level    ->dimension(2)),
+  E (Eta<EvalT>::self())
 {
 
   Teuchos::ParameterList* xzhydrostatic_params =
@@ -38,7 +39,7 @@ XZHydrostatic_Pressure(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Pressure);
   this->addEvaluatedField(Pi);
-  this->setName("Aeras::XZHydrostatic_Pressure" );
+  this->setName("Aeras::XZHydrostatic_Pressure" + PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -53,12 +54,39 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void XZHydrostatic_Pressure<EvalT, Traits>::
+operator() (const XZHydrostatic_Pressure_Tag& tag, const int& cell) const{
+  for (int node=0; node < numNodes; ++node) {
+    for (int level=0; level < numLevels; ++level) {
+      Pressure(cell,node,level) = E.A(level)*E.p0() + E.B(level)*Ps(cell,node);
+    }
+  }
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void XZHydrostatic_Pressure<EvalT, Traits>::
+operator() (const XZHydrostatic_Pressure_Pi_Tag& tag, const int& cell) const{
+  for (int node=0; node < numNodes; ++node) {
+    for (int level=0; level < numLevels; ++level) {
+      const ScalarT pm   = level             ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level-1) ) : E.ptop();
+      const ScalarT pp   = level<numLevels-1 ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level+1) ) : ScalarT(Ps(cell,node));
+      Pi(cell,node,level) = (pp - pm) /E.delta(level);
+    }
+  }
+}
+#endif
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void XZHydrostatic_Pressure<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  const Eta<EvalT> &E = Eta<EvalT>::self();
-
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {
       /*//OG debugging statements
@@ -75,6 +103,12 @@ evaluateFields(typename Traits::EvalData workset)
       for (int level=0; level < numLevels; ++level) {
         Pressure(cell,node,level) = E.A(level)*E.p0() + E.B(level)*Ps(cell,node);
         //std::cout <<"In Pressure "<< " Ps" << Ps(cell,node) <<" workset time" << workset.current_time << "\n";
+        //if (cell == 0 && node == 0) {
+        //  std::cout <<"In Pressure "<< "level: " << level << "  " 
+        //                            << "A(level): " << E.A(level) << "  " 
+        //                            << "B(level): " << E.B(level) << "  " 
+        //                            << "eta(level): " << E.eta(level) << "\n";
+        //}
       }
       //here instead of computing eta, A, B, and pressure at level interfaces directly,
       //averages are used to approx. pressure at level interfaces.
@@ -89,5 +123,11 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+
+#else
+  Kokkos::parallel_for(XZHydrostatic_Pressure_Policy(0,workset.numCells),*this);
+  Kokkos::parallel_for(XZHydrostatic_Pressure_Pi_Policy(0,workset.numCells),*this);
+
+#endif
 }
 }

@@ -17,6 +17,15 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MinisolverStep_Newton.exodiff
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MinisolverStep_Newton.gold.exo
                ${CMAKE_CURRENT_BINARY_DIR}/MinisolverStep_Newton.gold.exo COPYONLY)
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MinisolverStep_NewtonLineSearch.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/MinisolverStep_NewtonLineSearch.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MinisolverStep_NewtonLineSearch_Material.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/MinisolverStep_NewtonLineSearch_Material.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MinisolverStep_NewtonLineSearch.exodiff
+               ${CMAKE_CURRENT_BINARY_DIR}/MinisolverStep_NewtonLineSearch.exodiff COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MinisolverStep_NewtonLineSearch.gold.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/MinisolverStep_NewtonLineSearch.gold.exo COPYONLY)
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MinisolverStep_TrustRegion.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MinisolverStep_TrustRegion.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MinisolverStep_TrustRegion_Material.xml
@@ -47,7 +56,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MinisolverStep_LineSearchRegularized.
 # Add the tests
 if(ALBANY_IFPACK2)
 add_test(CrystalPlasticity_MinisolverStep_Newton python ../run_exodiff_test.py "${SerialAlbanyT.exe}" MinisolverStep_Newton.xml)
+add_test(CrystalPlasticity_MinisolverStep_NewtonLineSearch python ../run_exodiff_test.py "${SerialAlbanyT.exe}" MinisolverStep_NewtonLineSearch.xml)
 add_test(CrystalPlasticity_MinisolverStep_TrustRegion python ../run_exodiff_test.py "${SerialAlbanyT.exe}" MinisolverStep_TrustRegion.xml)
-add_test(CrystalPlasticity_MinisolverStep_ConjugateGradient python ../run_exodiff_test.py "${SerialAlbanyT.exe}" MinisolverStep_ConjugateGradient.xml)
+#add_test(CrystalPlasticity_MinisolverStep_ConjugateGradient python ../run_exodiff_test.py "${SerialAlbanyT.exe}" MinisolverStep_ConjugateGradient.xml)
 #add_test(CrystalPlasticity_MinisolverStep_LineSearchRegularized python ../run_exodiff_test.py "${SerialAlbanyT.exe}" MinisolverStep_LineSearchRegularized.xml)
 endif()

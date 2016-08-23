@@ -92,11 +92,11 @@ ComputeAndScatterJac(const Teuchos::ParameterList& p,
 { }
 // *********************************************************************
 // Kokkos kernels
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
 //FIXME, IKT, 5/9/16: Kokkos functor implementations go here. 
 //
-#endif
+//#endif
 // **********************************************************************
 template<typename Traits>
 void ComputeAndScatterJac<PHAL::AlbanyTraits::Jacobian, Traits>::
@@ -125,7 +125,8 @@ evaluateFields(typename Traits::EvalData workset)
 //
 //Then the values of these matrices need to be scattered into the global Jacobian.
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//FIXME, IKT, 5/24/16: uncomment out the following once Kokkos functors have been implemented
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   Teuchos::RCP<Tpetra_Vector>      fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
@@ -137,156 +138,7 @@ evaluateFields(typename Traits::EvalData workset)
   std::cout << "DEBUG in ComputeAndScatterJac::EvaluateFields: " << __PRETTY_FUNCTION__ << "\n";
   std::cout << "LOAD RESIDUAL? " << loadResid << "\n";
 
-#define OLDSCATTER 0
-#if OLDSCATTER
-  for (int cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
-    //OG (the way I understand this code): nodeID is an array of LIDs (row map, or map for Tpetra Vector),
-    //that is, wsElNodeEqID[cell][node][equation] gives a map to LIDs.
-    //If a proc owes cell, then it owes all nodes and equations (layers of eqns) at this cell.
-    //That is the jacobian is overlapped here, later jac->export(overlap_jac) is called for unique mapping.
-    //TPetra vector (say, residual vector) is ordered by
-    //ps(node0),u_lev0(node0),v_lev0(node0),T_lev0(node0),trA_lev0(node0),trB_lev0(node0),...,u_lev1(node0),v_lev1(node0),..., ps(node1),u_lev0(node1)...
-    //In our case of hydrostatic problem numNodeVar = 1 (ps), numVectorLevelVar = 1 (velocity),
-    //numScalarLevelVar = 1 (temperature), numTracerVar = # of tracers, tracers are also leveled vars.
-
-
-    const int neq = nodeID[0].size();
-    colT.resize(neq * this->numNodes);
-    
-    for (int node=0; node<this->numNodes; node++){
-      for (int eq_col=0; eq_col<neq; eq_col++) {
-        colT[neq * node + eq_col] =  nodeID[node][eq_col];
-      }
-    }
-    for (int node = 0; node < this->numNodes; ++node) {
-      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
-      int n = 0, eq = 0;
-      for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-        const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node);
-        rowT = eqID[n];
-        if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
-        if (valptr.hasFastAccess()) {
-          if (workset.is_adjoint) {
-            // Sum Jacobian transposed
-            for (unsigned int i=0; i<colT.size(); ++i) {
-              ST val = valptr.fastAccessDx(i); 
-              if (val != 0.0) { 
-                JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
-              }
-            }
-          } 
-          else {
-            //Sum Jacobian entries 
-            for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-              ST val = valptr.fastAccessDx(i);
-              if (val != 0.0) {
-                JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
-              }
-            }
-            // Sum Jacobian entries all at once
-            // JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
-          }
-        } // has fast access
-      }
-      eq += this->numNodeVar;
-      for (int level = 0; level < this->numLevels; level++) {
-        for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
-          for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-            const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
-            rowT = eqID[n];
-            if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
-            if (valptr.hasFastAccess()) {
-              if (workset.is_adjoint) {
-                // Sum Jacobian transposed
-                for (int i=0; i<colT.size(); ++i) {
-                  ST val = valptr.fastAccessDx(i); 
-                  if (val != 0.0) { 
-                    JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
-                  }
-                }
-              } 
-              else {
-                //Sum Jacobian entries 
-                for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-                  ST val = valptr.fastAccessDx(i);
-                  if (val != 0.0) {
-                    JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
-                  }
-                }
-                // Sum Jacobian entries all at once
-                //JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
-              }
-            }
-          }
-        }
-        for (int j = eq+this->numVectorLevelVar;
-                 j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-          const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
-          rowT = eqID[n];
-          if (loadResid) fT->sumIntoLocalValue(eqID[n], valptr.val());
-          if (valptr.hasFastAccess()) {
-            if (workset.is_adjoint) {
-              // Sum Jacobian transposed
-              for (unsigned int i=0; i<colT.size(); ++i) {
-                ST val = valptr.fastAccessDx(i); 
-                if (val != 0.0) { 
-                  JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
-                }
-              }
-            } 
-            else {
-                //Sum Jacobian entries 
-                for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-                  ST val = valptr.fastAccessDx(i);
-                  if (val != 0.0) {
-                    JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
-                  }
-                }
-              // Sum Jacobian entries all at once
-              //JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
-            }
-          } // has fast access
-        }
-      }
-      eq += this->numVectorLevelVar+this->numScalarLevelVar;
-      for (int level = 0; level < this->numLevels; ++level) {
-        for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
-          rowT = eqID[n];
-          if (loadResid) fT->sumIntoLocalValue(eqID[n], valptr.val());
-          if (valptr.hasFastAccess()) {
-            if (workset.is_adjoint) {
-              // Sum Jacobian transposed
-              for (unsigned int i=0; i<colT.size(); ++i) {
-                ST val = valptr.fastAccessDx(i); 
-                if (val != 0.0) { 
-                  JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
-                }
-              }
-            } 
-            else {
-              //Sum Jacobian entries 
-                for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-                  ST val = valptr.fastAccessDx(i);
-                  if (val != 0.0) {
-                    JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
-                  }
-                }
-              // Sum Jacobian entries all at once
-              //JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
-            }
-          } // has fast access
-        }
-      }
-      eq += this->numTracerVar;
-    }
-  }
-
-#endif
-
-#if !OLDSCATTER
 //AMET calls for mass with (j, m, n ) = (0, -1, 0)
 //HVDecorator calls for mass with 0, -1, 0 (for the time step as in AMET) and 0, 1, 0 for the HV operator
 
@@ -526,13 +378,12 @@ evaluateFields(typename Traits::EvalData workset)
     }//end of loop over cells
   }//end of if buildLaplace
 
-#endif
-#else
+//#else
 
   //FIXME, IKT, 5/9/16: this function needs to be Kokkos-ized!  Kokkos implementation goes here.
-  std::cout << "ComputeAndScatterJac evaluateFields Jacobian specialization has not been Kokkos-ized yet!" << std::endl; 
+  //std::cout << "ComputeAndScatterJac evaluateFields Jacobian specialization has not been Kokkos-ized yet!" << std::endl; 
  
-#endif
+//#endif
 }
 
 #ifdef ALBANY_ENSEMBLE

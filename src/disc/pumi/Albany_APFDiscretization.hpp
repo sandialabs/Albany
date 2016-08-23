@@ -107,6 +107,8 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const;
 
+    const Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type& getLatticeOrientation() const;
+
     //! Print coords for debugging
     void printCoords() const;
 
@@ -187,7 +189,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void detachQPData();
 
     // After mesh modification, need to update the element connectivity and nodal coordinates
-    virtual void updateMesh(bool shouldTransferIPData);
+    void updateMesh(bool shouldTransferIPData);
+    // The parameter library is used to update Time after adapting
+    void updateMesh(bool shouldTransferIPData, Teuchos::RCP<ParamLib> paramLib);
 
     // Function that transforms a mesh of a unit cube (for FELIX problems)
     // not supported in PUMI now
@@ -195,25 +199,25 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     // this is called with both LO's and GO's to compute a dof number
     // based on a node number and an equation number
-    GO getDOF(const GO inode, const int entry, int nentries=-1) const
+    GO getDOF(const GO inode, const int entry, int total_comps = -1) const
     {
       if (interleavedOrdering) {
-        if (nentries == -1) nentries = neq;
-        return inode*nentries + entry;
+        if (total_comps == -1) total_comps = neq;
+        return inode * total_comps + entry;
       }
       else return inode + numOwnedNodes*entry;
     }
 
     // Copy field data from Tpetra_Vector to APF
     void setField(const char* name, const ST* data, bool overlapped,
-                  int offset = 0, int nentries = -1);
+                  int offset = 0, bool neq_sized = true);
     void setSplitFields(const Teuchos::Array<std::string>& names,
                         const Teuchos::Array<int>& indices,
                         const ST* data, bool overlapped);
 
     // Copy field data from APF to Tpetra_Vector
-    void getField(const char* name, ST* dataT, bool overlapped, int offset = 0,
-                  int nentries = -1) const;
+    void getField(const char* name, ST* dataT, bool overlapped,
+                  int offset = 0, bool neq_sized = true) const;
     void getSplitFields(const Teuchos::Array<std::string>& names,
                         const Teuchos::Array<int>& indices,
                         ST* dataT, bool overlapped) const;
@@ -229,76 +233,13 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
     virtual Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const { return graph; }
     virtual Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const { return overlap_graph; }
-
     virtual Teuchos::RCP<const Epetra_Map> getNodeMap() const {
       fprintf(stderr,"APF Discretization unsupported call getNodeMap\n");
       abort();
       return Teuchos::RCP<const Epetra_Map>();
     }
-
     virtual Teuchos::RCP<Epetra_Vector> getSolutionField(bool overlapped=false) const;
-    virtual void setResidualField(const Epetra_Vector& residual);
     virtual void writeSolution(const Epetra_Vector&, const double, const bool);
-    void setSolutionField(const Epetra_Vector&) {
-      fprintf(stderr,"APF Discretization unsupported call setSolutionField\n");
-      abort();
-    }
-    void debugMeshWriteNative(const Epetra_Vector&, const char*) {
-      fprintf(stderr,"APF Discretization unsupported call debugMeshWriteNative\n");
-      abort();
-    }
-    void debugMeshWrite(const Epetra_Vector&, const char*) {
-      fprintf(stderr,"APF Discretization unsupported call debugMeshWrite\n");
-      abort();
-    }
-    // Copy field data from Epetra_Vector to APF
-    void setField(
-        const char* name,
-        const Epetra_Vector& data,
-        bool overlapped,
-        int offset = 0);
-
-    // Copy field data from APF to Epetra_Vector
-    void getField(
-        const char* name,
-        Epetra_Vector& data,
-        bool overlapped,
-        int offset = 0) const;
-
-    //! Get field DOF map
-    Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Albany::APFDiscretization: getMap(field_name) not implemented yet");
-    }
-
-    //! Get field node map
-    Teuchos::RCP<const Epetra_Map> getNodeMap(const std::string& field_name) const {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Albany::APFDiscretization: getNodeMap(field_name) not implemented yet");
-    }
-
-    //! Get field overlapped DOF map
-    Teuchos::RCP<const Epetra_Map> getOverlapMap(const std::string& field_name) const {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Albany::APFDiscretization: getOverlapMap(field_name) not implemented yet");
-    }
-
-    //! Get field overlapped node map
-    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap(const std::string& field_name) const {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Albany::APFDiscretization: getOverlapNodeMap(field_name) not implemented yet");
-    }
-
-    //! Get field vector from mesh database
-    virtual void getField(Epetra_Vector &field_vector, const std::string& field_name) const  {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Albany::APFDiscretization: getField(field_vector, field_name) not implemented yet");
-    }
-    //! Set the field vector into mesh database
-    virtual void setField(const Epetra_Vector &field_vector, const std::string& field_name, bool overlapped)  {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "Albany::APFDiscretization: setField(field_vector, field_name, overlapped) not implemented yet");
-    }
 #endif
 
     //! Get field DOF map
@@ -373,6 +314,9 @@ class APFDiscretization : public Albany::AbstractDiscretization {
 
     void initTemperatureHack();
 
+    //! Set any FELIX Data
+    virtual void setFELIXData() {}
+
     //! Some evaluators may want access to the underlying apf mesh elements.
     std::vector<std::vector<apf::MeshEntity*> >& getBuckets() {return buckets;}
 
@@ -410,7 +354,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void removeNodalDataFromAPF();
 
     // ! Split Solution fields
-    SolutionLayout solNames; // solNames[time_deriv_vector][Field]
+    SolutionLayout solLayout; // solLayout[time_deriv_vector][Field]
     Teuchos::Array<std::string> resNames; // resNames[Field]
 
   private:
@@ -427,33 +371,19 @@ class APFDiscretization : public Albany::AbstractDiscretization {
   protected:
 
     //! Process APF mesh for Owned nodal quantitites
-    void computeOwnedNodesAndUnknownsBase(apf::FieldShape* s);
+    void computeOwnedNodesAndUnknowns();
     //! Process APF mesh for Overlap nodal quantitites
-    void computeOverlapNodesAndUnknownsBase(apf::FieldShape* s);
+    void computeOverlapNodesAndUnknowns();
     //! Process APF mesh for CRS Graphs
-    void computeGraphsBase(apf::FieldShape* s);
+    void computeGraphs();
     //! Process APF mesh for Workset/Bucket Info
-    void computeWorksetInfoBase(apf::FieldShape* s);
+    void computeWorksetInfo();
     //! Process APF mesh for NodeSets
-    void computeNodeSetsBase();
+    void computeNodeSets();
     //! Process APF mesh for SideSets
-    void computeSideSetsBase();
-    //! Base for updating the mesh
-    void updateMeshBase(bool shouldTransferIPData);
-
-
-    //! Process APF mesh for Owned nodal quantitites
-    virtual void computeOwnedNodesAndUnknowns();
-    //! Process APF mesh for Overlap nodal quantitites
-    virtual void computeOverlapNodesAndUnknowns();
-    //! Process APF mesh for CRS Graphs
-    virtual void computeGraphs();
-    //! Process APF mesh for Workset/Bucket Info
-    virtual void computeWorksetInfo();
-    //! Process APF mesh for NodeSets
-    virtual void computeNodeSets();
-    //! Process APF mesh for SideSets
-    virtual void computeSideSets();
+    void computeSideSets();
+    //! Re-initialize Time after adaptation
+    void initTimeFromParamLib(Teuchos::RCP<ParamLib> paramLib);
 
     //! Output object
     PUMIOutput* meshOutput;
@@ -524,6 +454,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     Albany::WorksetArray<int>::type wsPhysIndex;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
+    Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type latticeOrientation;
 
     //! Connectivity map from elementGID to workset and LID in workset
     Albany::WsLIDList  elemGIDws;
