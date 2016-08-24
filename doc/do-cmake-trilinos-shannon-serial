@@ -58,7 +58,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D LAPACK_LIBRARY_DIRS:PATH="/usr/lib64/atlas" \
 \
       -D TPL_ENABLE_MPI:BOOL=ON \
-      -D MPI_EXEC=srun \
+      -D MPI_EXEC=/home/projects/x86-64-sandybridge-nvidia/openmpi/1.10.1/gnu/4.7.2/cuda/7.5.7/bin/mpirun \
       -D MPI_EXEC_NUMPROCS_FLAG:STRING=-n \
 \
       -D TPL_ENABLE_Boost:BOOL=ON \
