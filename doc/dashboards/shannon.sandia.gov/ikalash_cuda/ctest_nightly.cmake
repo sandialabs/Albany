@@ -1,4 +1,14 @@
 
+#cmake_minimum_required (VERSION 2.8)
+set (CTEST_DO_SUBMIT ON)
+set (CTEST_TEST_TYPE Nightly)
+
+# What to build and test
+set (DOWNLOAD_TRILINOS FALSE)
+set (BUILD_TRILINOS FALSE)
+set (DOWNLOAD_ALBANY TRUE) 
+set (BUILD_ALBANY TRUE) 
+
 # Begin User inputs:
 set (CTEST_SITE "shannon.nersc.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
@@ -168,7 +178,7 @@ if (BUILD_TRILINOS)
     "-DLAPACK_LIBRARY_NAMES:STRING="
     #
     "-DTPL_ENABLE_MPI:BOOL=ON"
-    "-D MPI_EXEC=/home/projects/x86-64-sandybridge-nvidia/openmpi/1.10.1/gnu/4.7.2/cuda/7.5.7/bin/mpirun"
+    "-D MPI_EXEC=mpirun"
     "-DMPI_EXEC_NUMPROCS_FLAG:STRING=-n"
     #
     "-DTPL_ENABLE_Boost:BOOL=ON"
