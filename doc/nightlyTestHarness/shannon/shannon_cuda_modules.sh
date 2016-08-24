@@ -2,7 +2,7 @@
 module purge
 module load cmake/2.8.11.2
 module load openmpi/1.10.1/gnu/4.7.2/cuda/7.5.7
-module load intel/15.5.223
+#module load intel/15.5.223
 module load nvcc-wrapper/gnu
 module list 
 export CC=mpicc
