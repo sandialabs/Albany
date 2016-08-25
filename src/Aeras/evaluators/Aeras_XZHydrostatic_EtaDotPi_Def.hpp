@@ -9,6 +9,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "Albany_Utils.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
@@ -58,7 +59,6 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   this->addEvaluatedField(etadotdVelx);
   this->addEvaluatedField(Pidot);
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   for (int i = 0; i < tracerNames.size(); ++i) {
     PHX::MDField<ScalarT,Cell,QuadPoint,Level> in   (tracerNames[i],          dl->qp_scalar_level);
     //PHX::MDField<ScalarT,Cell,QuadPoint,Level> out  (etadotdtracerNames[i],   dl->qp_scalar_level);
@@ -71,22 +71,10 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
     this->addEvaluatedField(dedotpiTracerde[tracerNames[i]]);
   }
 
-#else
-  Tracer.resize(tracerNames.size());
-  //etadotdTracer.resize(tracerNames.size());
-  dedotpiTracerde.resize(tracerNames.size());
-  for (int i = 0; i < tracerNames.size(); ++i) {
-    PHX::MDField<ScalarT,Cell,QuadPoint,Level> in   (tracerNames[i],          dl->qp_scalar_level);
-    //PHX::MDField<ScalarT,Cell,QuadPoint,Level> out  (etadotdtracerNames[i],   dl->qp_scalar_level);
-    PHX::MDField<ScalarT,Cell,QuadPoint,Level> out  (dedotpitracerdeNames[i],   dl->qp_scalar_level);
-    Tracer[i]          = in;
-    //etadotdTracer[i] = out;
-    dedotpiTracerde[i] = out;
-    this->addDependentField(Tracer[i]);
-    //this->addEvaluatedField(etadotdTracer[tracerNames[i]]);
-    this->addEvaluatedField(dedotpiTracerde[i]);
-  }
-
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  Tracer_kokkos.resize(tracerNames.size());
+  //etadotdTracer_kokkos.resize(tracerNames.size());
+  dedotpiTracerde_kokkos.resize(tracerNames.size());
 #endif
 
   this->setName("Aeras::XZHydrostatic_EtaDotPi"+PHX::typeAsString<EvalT>());
@@ -110,17 +98,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(etadotdVelx,   fm);
   this->utils.setFieldData(Pidot,         fm);
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   for (int i = 0; i < Tracer.size();  ++i)       this->utils.setFieldData(Tracer[tracerNames[i]], fm);
   //for (int i = 0; i < etadotdTracer.size(); ++i) this->utils.setFieldData(etadotdTracer[tracerNames[i]],fm);
   for (int i = 0; i < dedotpiTracerde.size(); ++i) this->utils.setFieldData(dedotpiTracerde[tracerNames[i]],fm);
-
-#else
-  for (int i = 0; i < Tracer.size();  ++i)       this->utils.setFieldData(Tracer[i], fm);
-  //for (int i = 0; i < etadotdTracer.size(); ++i) this->utils.setFieldData(etadotdTracer[i],fm);
-  for (int i = 0; i < dedotpiTracerde.size(); ++i) this->utils.setFieldData(dedotpiTracerde[i],fm);
-
-#endif
 }
 
 //**********************************************************************
@@ -165,12 +145,12 @@ operator() (const XZHydrostatic_EtaDotPi_Tag& tag, const int& cell) const{
 
       //OG: Why for tracers (etaDot delta_eta) operator is different than for velocity, T, etc.?
       for (int i = 0; i < tracerNames.size(); ++i) {
-        const ScalarT q_m = 0.5*( Tracer[i](cell,qp,level)   / Pi(cell,qp,level)
-                          + Tracer[i](cell,qp,level_m) / Pi(cell,qp,level_m) );
-        const ScalarT q_p = 0.5*( Tracer[i](cell,qp,level_p) / Pi(cell,qp,level_p)
-                          + Tracer[i](cell,qp,level)   / Pi(cell,qp,level)   );
-        //etadotdTracer[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
-        dedotpiTracerde[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
+        const ScalarT q_m = 0.5*( d_Tracer[i](cell,qp,level)   / Pi(cell,qp,level)
+                          + d_Tracer[i](cell,qp,level_m) / Pi(cell,qp,level_m) );
+        const ScalarT q_p = 0.5*( d_Tracer[i](cell,qp,level_p) / Pi(cell,qp,level_p)
+                          + d_Tracer[i](cell,qp,level)   / Pi(cell,qp,level)   );
+        //d_etadotdTracer[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
+        d_dedotpiTracerde[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
       }
 
       //OG: A tracer eqn for pi, or for q=1. Not relevant for basic hydrostatic version.
@@ -214,11 +194,11 @@ operator() (const XZHydrostatic_EtaDotPi_pureAdvection_Tag& tag, const int& cell
       }
 
       for (int i = 0; i < tracerNames.size(); ++i) {
-        const ScalarT q_m = 0.5*( Tracer[i](cell,qp,level)   / Pi(cell,qp,level)
-                          + Tracer[i](cell,qp,level_m) / Pi(cell,qp,level_m) );
-        const ScalarT q_p = 0.5*( Tracer[i](cell,qp,level_p) / Pi(cell,qp,level_p)
-                          + Tracer[i](cell,qp,level)   / Pi(cell,qp,level)   );
-        dedotpiTracerde[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
+        const ScalarT q_m = 0.5*( d_Tracer[i](cell,qp,level)   / Pi(cell,qp,level)
+                          + d_Tracer[i](cell,qp,level_m) / Pi(cell,qp,level_m) );
+        const ScalarT q_p = 0.5*( d_Tracer[i](cell,qp,level_p) / Pi(cell,qp,level_p)
+                          + d_Tracer[i](cell,qp,level)   / Pi(cell,qp,level)   );
+        d_dedotpiTracerde[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
       }
 
       Pidot(cell,qp,level) = - divpivelx(cell,qp,level) - (etadotpi_p - etadotpi_m)/E.delta(level);
@@ -355,6 +335,16 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 #else
+  // Obtain vector of device views from map of MDFields
+  for (int i = 0; i < tracerNames.size(); ++i) {
+    Tracer_kokkos[i] = Tracer[tracerNames[i]].get_static_view();
+    //etadotdTracer_kokkos[i] = etadotdTracer[tracerNames[i]].get_static_view();
+    dedotpiTracerde_kokkos[i] = dedotpiTracerde[tracerNames[i]].get_static_view();
+  }
+  d_Tracer = Tracer_kokkos.template view<executionSpace>();
+  //d_etadotdTracer = etadotdTracer_kokkos.template view<executionSpace>();
+  d_dedotpiTracerde = dedotpiTracerde_kokkos.template view<executionSpace>();
+
   if (!pureAdvection) {
     Kokkos::parallel_for(XZHydrostatic_EtaDotPi_Policy(0,workset.numCells),*this);
   }

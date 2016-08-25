@@ -27,6 +27,19 @@
 #include "Teuchos_RCP.hpp"
 #include "Albany_DataTypes.hpp"
 
+#ifdef KOKKOS_HAVE_CUDA
+#include <sstream>
+#include <stdexcept>
+#define cudaCheckError() {  \
+  cudaError_t err = cudaGetLastError();  \
+  if (err != cudaSuccess) {  \
+    std::stringstream s;  \
+    s << __FILE__ << ":" << __LINE__ << ":" << __func__ << ": " << cudaGetErrorString(err);  \
+    throw std::runtime_error(s.str());  \
+  }  \
+}
+#endif
+
 namespace Albany {
 
 #if defined(ALBANY_EPETRA)
@@ -92,6 +105,5 @@ namespace Albany {
 
   // Do a nice stack trace for debugging
   void do_stack_trace();
-
 }
 #endif //ALBANY_UTILS
