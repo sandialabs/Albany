@@ -53,15 +53,19 @@ private:
   PHX::MDField<ScalarT,Cell,Node,Level,Dim>  etadotdVelx;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Pidot;
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > Tracer;
   //std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > etadotdTracer;
   std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > dedotpiTracerde;
 
-#else
-  Kokkos::vector< PHX::MDField<ScalarT,Cell,QuadPoint,Level>, PHX::Device > Tracer;
-  //Kokkos::vector< PHX::MDField<ScalarT,Cell,QuadPoint,Level>, PHX::Device > etadotdTracer;
-  Kokkos::vector< PHX::MDField<ScalarT,Cell,QuadPoint,Level>, PHX::Device > dedotpiTracerde;
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
+  Kokkos::vector< Kokkos::View<ScalarT***, PHX::Device>, PHX::Device > Tracer_kokkos;
+  //Kokkos::vector< Kokkos::View<ScalarT***, PHX::Device>, PHX::Device > etadotdTracer_kokkos; 
+  Kokkos::vector< Kokkos::View<ScalarT***, PHX::Device>, PHX::Device > dedotpiTracerde_kokkos;
+
+  typename Kokkos::vector< Kokkos::View<ScalarT***, PHX::Device>, PHX::Device >::t_dev d_Tracer;
+  //typename Kokkos::vector< Kokkos::View<ScalarT***, PHX::Device>, PHX::Device >::t_dev d_etadotdTracer;
+  typename Kokkos::vector< Kokkos::View<ScalarT***, PHX::Device>, PHX::Device >::t_dev d_dedotpiTracerde;
 
 #endif
 
