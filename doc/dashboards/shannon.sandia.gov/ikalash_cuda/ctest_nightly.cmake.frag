@@ -337,10 +337,8 @@ if (BUILD_ALBANY)
   set_property (GLOBAL PROPERTY SubProject IKTShannonAlbanyCUDA)
   set_property (GLOBAL PROPERTY Label IKTShannonAlbanyCUDA)
 
-  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build-cuda/install")
-
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:FILEPATH=${TRILINSTALLDIR}"
+    "-DALBANY_TRILINOS_DIR:FILEPATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_FELIX:BOOL=ON"
