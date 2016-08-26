@@ -19,3 +19,10 @@ cmake \
       -D ENABLE_INSTALL:BOOL=OFF \
       -D ENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON \
 ..
+
+#For debug build:
+#  -D CMAKE_CXX_FLAGS:STRING="-g -G" \
+#  -g is for host code, -G is for device code
+#
+#To run with cuda-gdb: 
+#mpirun -n 1 cuda-gdb AlbanyT 

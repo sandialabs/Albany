@@ -10,10 +10,10 @@ cmake \
       -D ALBANY_TRILINOS_DIR:FILEPATH=$TRILINSTALLDIR \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
       -D ENABLE_DEMO_PDES:BOOL=ON \
-      -D ENABLE_FELIX:BOOL=OFF \
-      -D ENABLE_QCAD:BOOL=OFF \
+      -D ENABLE_FELIX:BOOL=ON \
+      -D ENABLE_QCAD:BOOL=ON \
       -D ENABLE_LCM:BOOL=OFF \
-      -D ENABLE_AERAS:BOOL=OFF \
+      -D ENABLE_AERAS:BOOL=ON \
       -D ENABLE_SG:BOOL=OFF \
       -D ENABLE_ENSEMBLE:BOOL=OFF \
       -D ENABLE_ATO:BOOL=OFF \
@@ -23,3 +23,10 @@ cmake \
       -D ENABLE_INSTALL:BOOL=OFF \
       -D ENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON \
 ..
+
+#For debug build:
+#  -D CMAKE_CXX_FLAGS:STRING="-g -G" \
+#  -g is for host code, -G is for device code
+#
+#To run with cuda-gdb: 
+#mpirun -n 1 cuda-gdb AlbanyT 
