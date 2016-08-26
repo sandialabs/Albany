@@ -680,7 +680,18 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./LCM/
                      ./LCM/evaluators
                      ./LCM/evaluators/bc
+                     ./LCM/evaluators/contact
+                     ./LCM/evaluators/HMC
+                     ./LCM/evaluators/kinematics
+                     ./LCM/evaluators/lame
+                     ./LCM/evaluators/linear-elasticity
+                     ./LCM/evaluators/peridigm
+                     ./LCM/evaluators/poro
+                     ./LCM/evaluators/projection
+                     ./LCM/evaluators/responses
+                     ./LCM/evaluators/residuals
                      ./LCM/evaluators/surface-element
+                     ./LCM/evaluators/size-field
                      ./LCM/evaluators/transport
                      ./LCM/evaluators/HMC
                      ./LCM/models
