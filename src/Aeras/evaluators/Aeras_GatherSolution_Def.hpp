@@ -11,6 +11,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Aeras_Layouts.hpp"
 #include "Aeras_Dimension.hpp"
+#include "Albany_Utils.hpp"
 
 namespace Aeras {
 
@@ -247,6 +248,7 @@ evaluateFields(typename Traits::EvalData workset)
   d_val_dot = val_dot_kokkosvec.template view<executionSpace>(); 
   wsID_kokkos=workset.wsElNodeEqID_kokkos;
   Kokkos::parallel_for(workset.numCells,*this);
+  cudaCheckError();
 
 #endif
 
@@ -490,12 +492,14 @@ evaluateFields(typename Traits::EvalData workset)
    val_kokkosjac[i]=this->val[i].get_view();
  d_val=val_kokkosjac.template view<executionSpace>();
  Kokkos::parallel_for(GatherSolution_Policy(0,workset.numCells),*this);
+ cudaCheckError();
 
  if (workset.transientTerms) { 
    for (int i =0; i<numFields;i++)
      val_dot_kokkosjac[i]=this->val_dot[i].get_view();
    d_val_dot=val_dot_kokkosjac.template view<executionSpace>();
    Kokkos::parallel_for(GatherSolution_transientTerms_Policy(0,workset.numCells),*this);
+   cudaCheckError();
  }
 
 #endif

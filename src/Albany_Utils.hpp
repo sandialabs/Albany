@@ -7,6 +7,9 @@
 #ifndef ALBANY_UTILS_H
 #define ALBANY_UTILS_H
 
+// For cudaCheckError
+#include <stdexcept>
+
 #ifdef ALBANY_MPI
   #define Albany_MPI_Comm MPI_Comm
   #define Albany_MPI_COMM_WORLD MPI_COMM_WORLD
@@ -27,18 +30,17 @@
 #include "Teuchos_RCP.hpp"
 #include "Albany_DataTypes.hpp"
 
-#ifdef KOKKOS_HAVE_CUDA
-#include <sstream>
-#include <stdexcept>
-#define cudaCheckError() {  \
-  cudaError_t err = cudaGetLastError();  \
-  if (err != cudaSuccess) {  \
-    std::stringstream s;  \
-    s << __FILE__ << ":" << __LINE__ << ":" << __func__ << ": " << cudaGetErrorString(err);  \
-    throw std::runtime_error(s.str());  \
-  }  \
-}
+// Checks if the previous Kokkos::Cuda kernel has failed
+#define cudaCheckError() { cudaError(__FILE__, __LINE__); }
+inline void cudaError(const char *file, int line) {
+#if defined(KOKKOS_HAVE_CUDA) && defined(ALBANY_CUDA_ERROR_CHECK)
+  cudaError_t err = cudaGetLastError();
+  if (err != cudaSuccess) {
+    fprintf(stderr,"CUDA Error: %s before %s:%d\n", cudaGetErrorString(err), file, line);
+    throw std::runtime_error(cudaGetErrorString(err));
+  }
 #endif
+}
 
 namespace Albany {
 
