@@ -9,6 +9,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "PHAL_Utilities.hpp"
+#include "Albany_Utils.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
@@ -141,10 +142,12 @@ evaluateFields(typename Traits::EvalData workset)
   if( !obtainLaplaceOp ) {
     if( !pureAdvection ) {
       Kokkos::parallel_for(XZHydrostatic_SPressureResid_Policy(0,workset.numCells),*this);
+      cudaCheckError();
     }
 
     else {
       Kokkos::parallel_for(XZHydrostatic_SPressureResid_pureAdvection_Policy(0,workset.numCells),*this);
+      cudaCheckError();
     }
   }
 

@@ -347,10 +347,12 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (!pureAdvection) {
     Kokkos::parallel_for(XZHydrostatic_EtaDotPi_Policy(0,workset.numCells),*this);
+    cudaCheckError();
   }
 
   else {
     Kokkos::parallel_for(XZHydrostatic_EtaDotPi_pureAdvection_Policy(0,workset.numCells),*this);
+    cudaCheckError();
   }
 
 #endif

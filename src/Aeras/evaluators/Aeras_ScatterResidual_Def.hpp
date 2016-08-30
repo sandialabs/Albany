@@ -10,6 +10,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Aeras_Layouts.hpp"
+#include "Albany_Utils.hpp"
 
 namespace Aeras {
 
@@ -167,6 +168,7 @@ evaluateFields(typename Traits::EvalData workset)
  Index=workset.wsElNodeEqID_kokkos;
 
   Kokkos::parallel_for(ScatterResid_Policy(0,workset.numCells),*this);
+  cudaCheckError();
 #endif
 }
 
@@ -494,10 +496,14 @@ evaluateFields(typename Traits::EvalData workset)
 
    loadResid = (fT != Teuchos::null);
 
-       if (workset.is_adjoint)
+       if (workset.is_adjoint) {
            Kokkos::parallel_for(ScatterResid_hasFastAccess_is_adjoint_Policy(0,workset.numCells),*this);
-       else
+         cudaCheckError();
+       }
+       else {
            Kokkos::parallel_for(ScatterResid_hasFastAccess_no_adjoint_Policy(0,workset.numCells),*this);
+         cudaCheckError();
+       }
 
 
   if (JacT->isFillComplete())

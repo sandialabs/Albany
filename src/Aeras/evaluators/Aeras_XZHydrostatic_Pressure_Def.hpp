@@ -9,6 +9,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "Albany_Utils.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
@@ -126,8 +127,10 @@ evaluateFields(typename Traits::EvalData workset)
 
 #else
   Kokkos::parallel_for(XZHydrostatic_Pressure_Policy(0,workset.numCells),*this);
-  Kokkos::parallel_for(XZHydrostatic_Pressure_Pi_Policy(0,workset.numCells),*this);
+  cudaCheckError();
 
+  Kokkos::parallel_for(XZHydrostatic_Pressure_Pi_Policy(0,workset.numCells),*this);
+  cudaCheckError();
 #endif
 }
 }

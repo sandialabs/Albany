@@ -10,6 +10,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "PHAL_Utilities.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "Albany_Utils.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
@@ -186,6 +187,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   else if (topoType == MOUNTAIN1) {
     Kokkos::parallel_for(XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Policy(0,workset.numCells),*this);
+    cudaCheckError();
   }
 
 #endif
