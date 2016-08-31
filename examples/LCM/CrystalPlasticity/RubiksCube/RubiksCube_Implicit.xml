@@ -38,11 +38,11 @@
         <Parameter
           name="Time Values"
           type="Array(double)"
-          value="{0.00, 1000.0, 2000.0}" />
+          value="{0.0, 1.0}" />
         <Parameter
           name="BC Values"
           type="Array(double)"
-          value="{0.00, 1.0, 2.0}" />
+          value="{0.0, 1.0}" />
       </ParameterList>
       <Parameter
         name="DBC on NS nodelist_1 for DOF X"
@@ -100,7 +100,7 @@
     <Parameter
       name="Exodus Write Interval"
       type="int"
-      value="10" />
+      value="1" />
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
@@ -128,11 +128,11 @@
         <Parameter
           name="Max Steps"
           type="int"
-          value="10000" />
+          value="1000" />
         <Parameter
           name="Max Value"
           type="double"
-          value="1000.0" />
+          value="0.005" />
         <Parameter
           name="Min Value"
           type="double"
@@ -164,11 +164,11 @@
         <Parameter
           name="Initial Step Size"
           type="double"
-          value="0.1" />
+          value="0.0005" />
         <Parameter
           name="Max Step Size"
           type="double"
-          value="0.1" />
+          value="0.0005" />
         <Parameter
           name="Min Step Size"
           type="double"
@@ -180,7 +180,7 @@
         <Parameter
           name="Aggressiveness"
           type="double"
-          value="0.1" />
+          value="0.25" />
       </ParameterList>
     </ParameterList>
     <ParameterList name="NOX">
