@@ -66,7 +66,7 @@
 #include <Ioss_SubSystem.h>
 
 
-#define DEBUG_OUTPUT
+// #define DEBUG_OUTPUT
 
 // Global variable that denotes this is the Tpetra executable
 bool TpetraBuild = false;
