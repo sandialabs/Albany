@@ -111,9 +111,9 @@ operator() (const XZHydrostatic_TemperatureResid_Tag& tag, const int& cell) cons
         }
       }
     }
-    for (int level = 0; level < 2; ++level){
-    	Residual(cell,node,level) += (viscosity/Prandtl)*temperatureGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
-	}
+//     for (int level = 0; level < 2; ++level){
+//     	Residual(cell,node,level) += (viscosity/Prandtl)*temperatureGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
+// 	}
   }
 }
 
@@ -168,13 +168,13 @@ evaluateFields(typename Traits::EvalData workset)
               }
             }
           }
-          for (int level = 0; level < 2; ++level) {
-          	for (int qp = 0; qp < numQPs; ++qp ) {
-          		for (int dim = 0; dim < numDims; ++dim) {
-          	Residual(cell,node,level) += (viscosity/Prandtl)*temperatureGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
-          		}
-          	}
-          }
+// 		  for (int level = 0; level < 2; ++level) {
+//          for (int qp = 0; qp < numQPs; ++qp ) {
+//           	for (int dim = 0; dim < numDims; ++dim) {
+//           	Residual(cell,node,level) += (viscosity/Prandtl)*temperatureGrad(cell,qp,level,dim)*wGradBF(cell,node,qp,dim);
+//           	}
+//           }
+//         }
         }
 
         for (int qp=0; qp < numQPs; ++qp) {
