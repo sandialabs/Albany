@@ -40,9 +40,9 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   numQPs     (dl->node_qp_scalar          ->dimension(2)),
   numDims    (dl->node_qp_gradient        ->dimension(3)),
   numLevels  (dl->node_scalar_level       ->dimension(2)),
+  numTracers (tracerNames.size()),
   E (Eta<EvalT>::self())
 {
-
   Teuchos::ParameterList* xzhydrostatic_params =
     p.isParameter("XZHydrostatic Problem") ? 
       p.get<Teuchos::ParameterList*>("XZHydrostatic Problem"):
@@ -71,12 +71,6 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
     this->addEvaluatedField(dedotpiTracerde[tracerNames[i]]);
   }
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Tracer_kokkos.resize(tracerNames.size());
-  //etadotdTracer_kokkos.resize(tracerNames.size());
-  dedotpiTracerde_kokkos.resize(tracerNames.size());
-#endif
-
   this->setName("Aeras::XZHydrostatic_EtaDotPi"+PHX::typeAsString<EvalT>());
 
   pureAdvection = xzhydrostatic_params->get<bool>("Pure Advection", false);
@@ -101,6 +95,15 @@ postRegistrationSetup(typename Traits::SetupData d,
   for (int i = 0; i < Tracer.size();  ++i)       this->utils.setFieldData(Tracer[tracerNames[i]], fm);
   //for (int i = 0; i < etadotdTracer.size(); ++i) this->utils.setFieldData(etadotdTracer[tracerNames[i]],fm);
   for (int i = 0; i < dedotpiTracerde.size(); ++i) this->utils.setFieldData(dedotpiTracerde[tracerNames[i]],fm);
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  Tracer_kokkos.resize(tracerNames.size());
+  //etadotdTracer_kokkos.resize(tracerNames.size());
+  dedotpiTracerde_kokkos.resize(tracerNames.size());
+
+  b = E.b_kokkos;
+  delta = E.delta_kokkos;
+#endif
 }
 
 //**********************************************************************
@@ -112,26 +115,25 @@ void XZHydrostatic_EtaDotPi<EvalT, Traits>::
 operator() (const XZHydrostatic_EtaDotPi_Tag& tag, const int& cell) const{
   for (int qp=0; qp < numQPs; ++qp) {
     ScalarT pdotp0 = 0;
-    for (int level=0; level < numLevels; ++level) pdotp0 -= divpivelx(cell,qp,level) * E.delta(level);
+    for (int level=0; level < numLevels; ++level) pdotp0 -= divpivelx(cell,qp,level) * delta(level);
 
     //etadotpi(level) shifted by 1/2
-    Kokkos::DynRankView<ScalarT, PHX::Device> etadotpi = Kokkos::createDynRankView(Pidot.get_view(), "etadotpi", numLevels+1);
     for (int level=0; level < numLevels; ++level) {
       //define etadotpi on interfaces
       ScalarT integral = 0;
-      for (int j=0; j<=level; ++j) integral += divpivelx(cell,qp,j) * E.delta(j);
+      for (int j=0; j<=level; ++j) integral += divpivelx(cell,qp,j) * delta(j);
 
-      etadotpi(level) = -E.B(level+.5)*pdotp0 - integral;
+      etadotpi(cell,level) = -b(level+1)*pdotp0 - integral;
     }
-    etadotpi(0) = etadotpi(numLevels) = 0;
+    etadotpi(cell,0) = etadotpi(cell,numLevels) = 0;
 
     //Vertical Finite Differencing
     for (int level=0; level < numLevels; ++level) {
-      const ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*E.delta(level));
+      const ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*delta(level));
       const int level_m = level             ? level-1 : 0;
       const int level_p = level+1<numLevels ? level+1 : level;
-      const ScalarT etadotpi_m = etadotpi(level  );
-      const ScalarT etadotpi_p = etadotpi(level+1);
+      const ScalarT etadotpi_m = etadotpi(cell,level  );
+      const ScalarT etadotpi_p = etadotpi(cell,level+1);
 
       const ScalarT dT_m       = Temperature(cell,qp,level)   - Temperature(cell,qp,level_m);
       const ScalarT dT_p       = Temperature(cell,qp,level_p) - Temperature(cell,qp,level);
@@ -144,17 +146,17 @@ operator() (const XZHydrostatic_EtaDotPi_Tag& tag, const int& cell) const{
       }
 
       //OG: Why for tracers (etaDot delta_eta) operator is different than for velocity, T, etc.?
-      for (int i = 0; i < tracerNames.size(); ++i) {
+      for (int i = 0; i < numTracers; ++i) {
         const ScalarT q_m = 0.5*( d_Tracer[i](cell,qp,level)   / Pi(cell,qp,level)
                           + d_Tracer[i](cell,qp,level_m) / Pi(cell,qp,level_m) );
         const ScalarT q_p = 0.5*( d_Tracer[i](cell,qp,level_p) / Pi(cell,qp,level_p)
                           + d_Tracer[i](cell,qp,level)   / Pi(cell,qp,level)   );
-        //d_etadotdTracer[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
-        d_dedotpiTracerde[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
+        //d_etadotdTracer[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / delta(level);
+        d_dedotpiTracerde[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / delta(level);
       }
 
       //OG: A tracer eqn for pi, or for q=1. Not relevant for basic hydrostatic version.
-      Pidot(cell,qp,level) = - divpivelx(cell,qp,level) - (etadotpi_p - etadotpi_m)/E.delta(level);
+      Pidot(cell,qp,level) = - divpivelx(cell,qp,level) - (etadotpi_p - etadotpi_m)/delta(level);
     }
   }
 }
@@ -165,23 +167,22 @@ void XZHydrostatic_EtaDotPi<EvalT, Traits>::
 operator() (const XZHydrostatic_EtaDotPi_pureAdvection_Tag& tag, const int& cell) const{
   for (int qp=0; qp < numQPs; ++qp) {
     //etadotpi(level) shifted by 1/2
-    Kokkos::DynRankView<ScalarT, PHX::Device> etadotpi = Kokkos::createDynRankView(Pidot.get_view(), "etadotpi", numLevels+1);
     for (int level=0; level < numLevels-1; ++level) {
       const ScalarT etadotpi_m = etadot(cell,qp,level  )*Pi(cell,qp,level  );
       const ScalarT etadotpi_p = etadot(cell,qp,level+1)*Pi(cell,qp,level+1);
 
       //Simple average in vertical direction for etadotpi(level+1/2) at interfaces
-      etadotpi(level) = 0.5*(etadotpi_m + etadotpi_p);  
+      etadotpi(cell,level) = 0.5*(etadotpi_m + etadotpi_p);  
     }
-    etadotpi(0) = etadotpi(numLevels) = 0;
+    etadotpi(cell,0) = etadotpi(cell,numLevels) = 0;
         
     //Vertical Finite Differencing
     for (int level=0; level < numLevels; ++level) {
-      const ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*E.delta(level));
+      const ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*delta(level));
       const int level_m = level             ? level-1 : 0;
       const int level_p = level+1<numLevels ? level+1 : level;
-      const ScalarT etadotpi_m = etadotpi(level  );
-      const ScalarT etadotpi_p = etadotpi(level+1);
+      const ScalarT etadotpi_m = etadotpi(cell,level  );
+      const ScalarT etadotpi_p = etadotpi(cell,level+1);
 
       const ScalarT dT_m       = Temperature(cell,qp,level)   - Temperature(cell,qp,level_m);
       const ScalarT dT_p       = Temperature(cell,qp,level_p) - Temperature(cell,qp,level);
@@ -193,15 +194,15 @@ operator() (const XZHydrostatic_EtaDotPi_pureAdvection_Tag& tag, const int& cell
         etadotdVelx(cell,qp,level,dim) = factor * ( etadotpi_p*dVx_p + etadotpi_m*dVx_m );
       }
 
-      for (int i = 0; i < tracerNames.size(); ++i) {
+      for (int i = 0; i < numTracers; ++i) {
         const ScalarT q_m = 0.5*( d_Tracer[i](cell,qp,level)   / Pi(cell,qp,level)
                           + d_Tracer[i](cell,qp,level_m) / Pi(cell,qp,level_m) );
         const ScalarT q_p = 0.5*( d_Tracer[i](cell,qp,level_p) / Pi(cell,qp,level_p)
                           + d_Tracer[i](cell,qp,level)   / Pi(cell,qp,level)   );
-        d_dedotpiTracerde[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / E.delta(level);
+        d_dedotpiTracerde[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / delta(level);
       }
 
-      Pidot(cell,qp,level) = - divpivelx(cell,qp,level) - (etadotpi_p - etadotpi_m)/E.delta(level);
+      Pidot(cell,qp,level) = - divpivelx(cell,qp,level) - (etadotpi_p - etadotpi_m)/delta(level);
     }
   }
 }
@@ -335,11 +336,14 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 #else
+  // etadotpi(level) shifted by 1/2
+  etadotpi = Kokkos::createDynRankView(Pidot.get_view(), "etadotpi", workset.numCells, numLevels+1);
+
   // Obtain vector of device views from map of MDFields
   for (int i = 0; i < tracerNames.size(); ++i) {
-    Tracer_kokkos[i] = Tracer[tracerNames[i]].get_static_view();
-    //etadotdTracer_kokkos[i] = etadotdTracer[tracerNames[i]].get_static_view();
-    dedotpiTracerde_kokkos[i] = dedotpiTracerde[tracerNames[i]].get_static_view();
+    Tracer_kokkos[i] = Tracer[tracerNames[i]].get_view();
+    //etadotdTracer_kokkos[i] = etadotdTracer[tracerNames[i]].get_view();
+    dedotpiTracerde_kokkos[i] = dedotpiTracerde[tracerNames[i]].get_view();
   }
   d_Tracer = Tracer_kokkos.template view<executionSpace>();
   //d_etadotdTracer = etadotdTracer_kokkos.template view<executionSpace>();

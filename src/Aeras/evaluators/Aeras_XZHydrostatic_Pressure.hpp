@@ -49,8 +49,11 @@ private:
   const int numNodes;
   const int numLevels;
   const Eta<EvalT> &E;
+  const ScalarT P0, Ptop;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  Kokkos::DynRankView<ScalarT, PHX::Device> A, B, delta;
+
 public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 

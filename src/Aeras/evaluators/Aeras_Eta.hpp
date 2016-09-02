@@ -33,6 +33,9 @@
 // formula mentioned above.  The file sould contain numLevels+1 rows and two columns.
 
 #include <fstream>
+#include "Kokkos_ViewFactory.hpp"
+#include "Phalanx_KokkosDeviceTypes.hpp"
+#include "Kokkos_DynRankView.hpp"
 
 namespace Aeras {
 
@@ -42,6 +45,12 @@ public:
   typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  Kokkos::DynRankView<ScalarT, PHX::Device> a_kokkos, b_kokkos;
+  Kokkos::DynRankView<ScalarT, PHX::Device> A_kokkos, B_kokkos;
+  Kokkos::DynRankView<ScalarT, PHX::Device> delta_kokkos;
+#endif
+
   static const Eta<EvalT> &self(const ScalarT ptop=0,
                                 const ScalarT p0=0,
                                 const int     L=0) {
@@ -50,19 +59,21 @@ public:
     return swc;
   }
 
+  ScalarT     p0() const { return P0;  }
+  ScalarT   ptop() const { return Ptop;}
+  ScalarT etatop() const { return Etatop;}
+
   ScalarT   eta(const double L) const { 
     const ScalarT e = Etatop + (1-Etatop)*(ScalarT(L)+.5)/numLevels; 
     return e;
   }
+
   ScalarT delta(const int L) const { 
     const double etap = L + .5;
     const double etam = L - .5;
     const ScalarT DeltaEta = eta(etap) - eta(etam);
     return  DeltaEta;
   }
-  ScalarT     p0() const { return P0;  }
-  ScalarT   ptop() const { return Ptop;}
-  ScalarT etatop() const { return Etatop;}
 
   //ScalarT     W(const int level) const { return  (eta(level)-Etatop)/(1-Etatop); }
   //ScalarT     A(const int level) const { return   eta(level)*(1-W(level));       }
@@ -84,7 +95,7 @@ public:
     numLevels(L), 
     a(L+1,0.0),
     b(L+1,0.0)
-    {
+  {
     std::vector<double> ain(L+1,0.0);
     std::vector<double> bin(L+1,0.0);
 
@@ -121,9 +132,38 @@ public:
       }
     }
 
-}
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+    // Convert vector of a and b coefficients to views
+    a_kokkos = Kokkos::createDynRankView(a_kokkos, "a", L+1);
+    b_kokkos = Kokkos::createDynRankView(b_kokkos, "b", L+1);
+    for (int i=0; i<=L; ++i) {
+      a_kokkos(i) = a[i];
+      b_kokkos(i) = b[i];
+    }
+
+    // Compute A and B
+    A_kokkos = Kokkos::createDynRankView(A_kokkos, "A", numLevels);
+    B_kokkos = Kokkos::createDynRankView(B_kokkos, "B", numLevels);
+    for (int level = 0; level < numLevels; level++) {
+      A_kokkos(level) = 0.5*(a[level] + a[level+1]);
+      B_kokkos(level) = 0.5*(b[level] + b[level+1]);
+    }
+
+    // Compute delta eta
+    delta_kokkos = Kokkos::createDynRankView(delta_kokkos, "delta", numLevels);
+    for (int level = 0; level < numLevels; level++) {
+      const double levelp = level + .5;
+      const double levelm = level - .5;
+      const ScalarT etap = Etatop + (1-Etatop)*(ScalarT(levelp)+.5)/numLevels;
+      const ScalarT etam = Etatop + (1-Etatop)*(ScalarT(levelm)+.5)/numLevels;
+      delta_kokkos(level) = etap - etam;
+    }
+
+#endif
+  }
 
   ~Eta(){}
+
 private:
   const ScalarT P0;
   const ScalarT Ptop;
@@ -131,9 +171,6 @@ private:
   const int     numLevels;
   std::vector<ScalarT> a;
   std::vector<ScalarT> b;
-
 };
 }
-
-
 #endif /* AERAS_ETA_HPP */

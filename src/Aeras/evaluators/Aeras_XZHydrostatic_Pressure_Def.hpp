@@ -28,9 +28,10 @@ XZHydrostatic_Pressure(const Teuchos::ParameterList& p,
 
   numNodes ( dl->node_scalar          ->dimension(1)),
   numLevels( dl->node_scalar_level    ->dimension(2)),
-  E (Eta<EvalT>::self())
+  E    (Eta<EvalT>::self()),
+  P0   (E.p0()),
+  Ptop (E.ptop())
 {
-
   Teuchos::ParameterList* xzhydrostatic_params =
     p.isParameter("XZHydrostatic Problem") ? 
       p.get<Teuchos::ParameterList*>("XZHydrostatic Problem"):
@@ -41,6 +42,12 @@ XZHydrostatic_Pressure(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Pressure);
   this->addEvaluatedField(Pi);
   this->setName("Aeras::XZHydrostatic_Pressure" + PHX::typeAsString<EvalT>());
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  A = E.A_kokkos;
+  B = E.B_kokkos;
+  delta = E.delta_kokkos;
+#endif
 }
 
 //**********************************************************************
@@ -63,7 +70,7 @@ void XZHydrostatic_Pressure<EvalT, Traits>::
 operator() (const XZHydrostatic_Pressure_Tag& tag, const int& cell) const{
   for (int node=0; node < numNodes; ++node) {
     for (int level=0; level < numLevels; ++level) {
-      Pressure(cell,node,level) = E.A(level)*E.p0() + E.B(level)*Ps(cell,node);
+      Pressure(cell,node,level) = A(level)*P0 + B(level)*Ps(cell,node);
     }
   }
 }
@@ -74,9 +81,9 @@ void XZHydrostatic_Pressure<EvalT, Traits>::
 operator() (const XZHydrostatic_Pressure_Pi_Tag& tag, const int& cell) const{
   for (int node=0; node < numNodes; ++node) {
     for (int level=0; level < numLevels; ++level) {
-      const ScalarT pm   = level             ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level-1) ) : E.ptop();
+      const ScalarT pm   = level             ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level-1) ) : Ptop;
       const ScalarT pp   = level<numLevels-1 ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level+1) ) : ScalarT(Ps(cell,node));
-      Pi(cell,node,level) = (pp - pm) /E.delta(level);
+      Pi(cell,node,level) = (pp - pm) /delta(level);
     }
   }
 }
@@ -102,7 +109,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
       */
       for (int level=0; level < numLevels; ++level) {
-        Pressure(cell,node,level) = E.A(level)*E.p0() + E.B(level)*Ps(cell,node);
+        Pressure(cell,node,level) = E.A(level)*P0 + E.B(level)*Ps(cell,node);
         //std::cout <<"In Pressure "<< " Ps" << Ps(cell,node) <<" workset time" << workset.current_time << "\n";
         //if (cell == 0 && node == 0) {
         //  std::cout <<"In Pressure "<< "level: " << level << "  " 
@@ -116,9 +123,9 @@ evaluateFields(typename Traits::EvalData workset)
       for (int level=0; level < numLevels; ++level) {
         //OG Why not analyt. relationship? Verify this in homme. Update: Homme uses averaging below because of consistency restrictions as in Chapter 12.
         //That is, it is required that B (and A) coeffs at midpoints equal averages from closest interfaces.
-        //const ScalarT pm   = E.A(level-.5)*E.p0() + E.B(level-.5)*Ps(cell,node);
-        //const ScalarT pp   = E.A(level+.5)*E.p0() + E.B(level+.5)*Ps(cell,node);
-        const ScalarT pm   = level             ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level-1) ) : E.ptop();
+        //const ScalarT pm   = E.A(level-.5)*P0 + E.B(level-.5)*Ps(cell,node);
+        //const ScalarT pp   = E.A(level+.5)*P0 + E.B(level+.5)*Ps(cell,node);
+        const ScalarT pm   = level             ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level-1) ) : Ptop;
         const ScalarT pp   = level<numLevels-1 ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level+1) ) : ScalarT(Ps(cell,node));
         Pi(cell,node,level) = (pp - pm) /E.delta(level);
       }

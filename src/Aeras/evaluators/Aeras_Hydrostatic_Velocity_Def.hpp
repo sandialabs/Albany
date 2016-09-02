@@ -71,6 +71,10 @@ Hydrostatic_Velocity(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Velocity);
 
   this->setName("Aeras::Hydrostatic_Velocity" + PHX::typeAsString<EvalT>());
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  B = E.B_kokkos;
+#endif
 }
 
 //**********************************************************************
@@ -113,7 +117,7 @@ operator() (const Hydrostatic_Velocity_PRESCRIBED_1_1_Tag& tag, const int& cell)
     ScalarT Va = k*sin(2.0*lambdap)*cos(theta)*cos(PI*time/tau);
 
     for (int level=0; level < numLevels; ++level) {
-      ScalarT B = E.B(level);
+      ScalarT B = this->B(level);
       ScalarT p = pressure(cell,node,level);
 
       ScalarT taper = - exp( (p    - p0)/(B*ptop) )

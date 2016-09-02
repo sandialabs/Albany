@@ -48,6 +48,10 @@ XZHydrostatic_GeoPotential(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Phi);
 
   this->setName("Aeras::XZHydrostatic_GeoPotential" + PHX::typeAsString<EvalT>());
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  delta = E.delta_kokkos;
+#endif
 }
 
 //**********************************************************************
@@ -74,8 +78,8 @@ operator() (const XZHydrostatic_GeoPotential_Tag& tag, const int& cell) const{
     for (int level=0; level < numLevels; ++level) {
       ScalarT sum =
       PhiSurf(cell,node) +
-      0.5 * Pi(cell,node,level) * E.delta(level) / density(cell,node,level);
-      for (int j=level+1; j < numLevels; ++j) sum += Pi(cell,node,j)     * E.delta(j)     / density(cell,node,j);
+      0.5 * Pi(cell,node,level) * delta(level) / density(cell,node,level);
+      for (int j=level+1; j < numLevels; ++j) sum += Pi(cell,node,j)     * delta(j)     / density(cell,node,j);
 
       Phi(cell,node,level) = sum;
     }
