@@ -138,10 +138,12 @@ operator() (const Hydrostatic_VelResid_Tag& tag, const int& cell) const{
       Residual(cell,node,level,0) *= wBF(cell,node,node);
       Residual(cell,node,level,1) *= wBF(cell,node,node);
     }
-    for (int level = 0; level < 2; ++level ) {
-    	for (int dim = 0; dim < numDims; ++dim) {
-    		Residual(cell, node, level, dim) += viscosity * DVelx(cell, qp, level, dim) * wGradBF(cell, node, qp, dim)
+    for (int qp=0; qp < numQPs; ++qp) {
+      for (int level = 0; level < 2; ++level ) {
+        for (int dim = 0; dim < numDims; ++dim) {
+          Residual(cell, node, level, dim) += viscosity * DVelx(cell, qp, level, dim) * wGradBF(cell, node, qp, dim);  
     	}
+      }
     }
   }
 }
