@@ -472,12 +472,6 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  /*
-  std::cout << "Begin Scatter<Jacobian>" << std::endl;
-  cudaError_t err = cudaGetLastError();
-  if (err != cudaSuccess) {printf("CUDA error: %s\n", cudaGetErrorString(err));}
-  */
-
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
@@ -571,11 +565,6 @@ evaluateFields(typename Traits::EvalData workset)
  std::cout<< "Scatter Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
 #endif 
 #endif
-  /*
-  std::cout << "End Scatter<Jacobian>" << std::endl;
-  err = cudaGetLastError();
-  if (err != cudaSuccess) {printf("CUDA error: %s\n", cudaGetErrorString(err));}
-  */
 }
 
 // **********************************************************************
