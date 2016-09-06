@@ -75,9 +75,6 @@ public:
   KOKKOS_INLINE_FUNCTION
   void operator() (const Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Tag& tag, const int& i) const;
 
-private:
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords;
-
 #endif
 };
 }

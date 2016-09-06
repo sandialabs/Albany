@@ -114,7 +114,7 @@ KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_SurfaceGeopotential<EvalT, Traits>::
 operator() (const XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag& tag, const int& cell) const{
   for (int node=0; node < numNodes; ++node) {
-    double xcoord = wsCoords[cell][node][0];
+    double xcoord = coordVec(cell,node,0);
     if (std::abs(xcoord - center) <= (width/2.)) {
       PhiSurf(cell,node) =
              (std::cos( (xcoord - center)*local_pi*2./width ) + 1.)
@@ -179,8 +179,6 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 #else
-  // Note: Can be replaced by coordVec
-  wsCoords = workset.wsCoords;
   if (topoType == NONE){
     PHAL::set(PhiSurf, 0.0);
   }

@@ -10,6 +10,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "PHAL_Utilities.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "Albany_Utils.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
@@ -122,9 +123,9 @@ KOKKOS_INLINE_FUNCTION
 void Hydrostatic_SurfaceGeopotential<EvalT, Traits>::
 operator() (const Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Tag& tag, const int& cell) const{
   for ( int node = 0; node < numNodes; ++node ) {
-    const double x = wsCoords[cell][node][0];
-    const double y = wsCoords[cell][node][1];
-    const double z = wsCoords[cell][node][2];
+    const double x = coordVec(cell,node,0);
+    const double y = coordVec(cell,node,1);
+    const double z = coordVec(cell,node,2);
         
     const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
     const double lambda = std::atan2( y, x );
@@ -144,9 +145,9 @@ KOKKOS_INLINE_FUNCTION
 void Hydrostatic_SurfaceGeopotential<EvalT, Traits>::
 operator() (const Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Tag& tag, const int& cell) const{
   for ( int node = 0; node < numNodes; ++node ) {
-    const double x = wsCoords[cell][node][0];
-    const double y = wsCoords[cell][node][1];
-    const double z = wsCoords[cell][node][2];
+    const double x = coordVec(cell,node,0);
+    const double y = coordVec(cell,node,1);
+    const double z = coordVec(cell,node,2);
 
     const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
 
@@ -233,18 +234,18 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 #else
-  // Note: Can be replaced by coordVec
-  wsCoords = workset.wsCoords;
   if (topoType == NONE){
     PHAL::set(PhiSurf, 0.0);
   }
 
   else if ( topoType == SPHERE_MOUNTAIN1 ){
     Kokkos::parallel_for(Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Policy(0,workset.numCells),*this);
+    cudaCheckError();
   }
 
   else if (topoType == ASP_BAROCLINIC){
     Kokkos::parallel_for(Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Policy(0,workset.numCells),*this);
+    cudaCheckError();
   }
 
 #endif

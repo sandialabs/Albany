@@ -10,6 +10,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "PHAL_Utilities.hpp"
+#include "Albany_Utils.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
@@ -307,10 +308,12 @@ evaluateFields(typename Traits::EvalData workset)
   if ( !obtainLaplaceOp ) {
     if (!pureAdvection ) {
       Kokkos::parallel_for(Hydrostatic_VelResid_Policy(0,workset.numCells),*this);
+      cudaCheckError();
     }
 
     else {
       Kokkos::parallel_for(Hydrostatic_VelResid_pureAdvection_Policy(0,workset.numCells),*this);
+      cudaCheckError();
     }
   }
 

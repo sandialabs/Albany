@@ -9,6 +9,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "Albany_Utils.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
@@ -226,18 +227,21 @@ evaluateFields(typename Traits::EvalData workset)
     case UNKNOWN: //velocity is an unknown that we solve for (not prescribed)
     {
       Kokkos::parallel_for(Hydrostatic_Velocity_Policy(0,workset.numCells),*this);
+      cudaCheckError();
       break; 
     } 
 
     case PRESCRIBED_1_1: //velocity is prescribed to that of 1-1 test
     {
       Kokkos::parallel_for(Hydrostatic_Velocity_PRESCRIBED_1_1_Policy(0,workset.numCells),*this);
+      cudaCheckError();
       break; 
     }
 
     case PRESCRIBED_1_2: //velocity is prescribed to that of 1-2 test
     {
       Kokkos::parallel_for(Hydrostatic_Velocity_PRESCRIBED_1_2_Policy(0,workset.numCells),*this);
+      cudaCheckError();
       break; 
     }
   }
