@@ -31,7 +31,7 @@ namespace ATO {
 
    public:
 
-    Utils(Teuchos::RCP<Albany::Layouts> dl);
+    Utils(Teuchos::RCP<Albany::Layouts> dl_, int numDim_);
 
     void
     SaveCellStateField(
@@ -39,11 +39,44 @@ namespace ATO {
        Albany::StateManager& stateMgr,
        const std::string &variableName,
        const std::string &elementBlockName,
-       const Teuchos::RCP<PHX::DataLayout>& dataLayout, int numDim);
+       const Teuchos::RCP<PHX::DataLayout>& dataLayout);
+
+    void 
+    constructStressEvaluators(
+       const Teuchos::RCP<Teuchos::ParameterList>& params,
+       PHX::FieldManager<Traits>& fm0,
+       Albany::StateManager& stateMgr,
+       const std::string &elementBlockName, 
+       std::string stressName, std::string strainName);
+
+    void 
+    constructBodyForceEvaluators(
+       const Teuchos::RCP<Teuchos::ParameterList>& params,
+       PHX::FieldManager<Traits>& fm0,
+       Albany::StateManager& stateMgr,
+       const std::string &elementBlockName, 
+       std::string bodyForceName);
+
+    void 
+    constructResidualStressEvaluators(
+       const Teuchos::RCP<Teuchos::ParameterList>& params,
+       PHX::FieldManager<Traits>& fm0,
+       Albany::StateManager& stateMgr,
+       const std::string &elementBlockName, 
+       std::string residForceName);
+
+    void 
+    constructBoundaryConditionEvaluators(
+       const Teuchos::ParameterList& params,
+       PHX::FieldManager<Traits>& fm0,
+       Albany::StateManager& stateMgr,
+       const std::string &elementBlockName, 
+       std::string boundaryForceName);
 
   private:
 
     Teuchos::RCP<Albany::Layouts> dl;
+    int numDim;
 
   };
 }

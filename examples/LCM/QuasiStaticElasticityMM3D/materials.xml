@@ -3,59 +3,113 @@
   <ParameterList name="ElementBlocks">
 
     <ParameterList name="compressor">
-      <Parameter name="material" type="string" value="hcsteel" />
+      <Parameter
+        name="material"
+        type="string"
+        value="hcsteel" />
     </ParameterList>
     <ParameterList name="turbine">
-      <Parameter name="material" type="string" value="ssteel" />
+      <Parameter
+        name="material"
+        type="string"
+        value="ssteel" />
     </ParameterList>
     <ParameterList name="middle">
-      <Parameter name="material" type="string" value="marshmellow" />
+      <Parameter
+        name="material"
+        type="string"
+        value="marshmellow" />
     </ParameterList>
   </ParameterList>
 
   <ParameterList name="Materials">
 
     <ParameterList name="marshmellow">
-       <ParameterList name="Material Model">
-          <Parameter name="Model Name" type="string" value="Linear Elastic"/>
-       </ParameterList>
-       <ParameterList name="Elastic Modulus">
-          <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
-          <Parameter name="Value" type="double" value="1.5"/>
-       </ParameterList>
-       <ParameterList name="Poissons Ratio">
-         <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
-         <Parameter name="Value" type="double" value="0.25"/>
-       </ParameterList>
-     </ParameterList>
+      <ParameterList name="Material Model">
+        <Parameter
+          name="Model Name"
+          type="string"
+          value="Linear Elastic" />
+      </ParameterList>
+      <ParameterList name="Elastic Modulus">
+        <Parameter
+          name="Elastic Modulus Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="1.5" />
+      </ParameterList>
+      <ParameterList name="Poissons Ratio">
+        <Parameter
+          name="Poissons Ratio Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="0.25" />
+      </ParameterList>
+    </ParameterList>
 
     <ParameterList name="ssteel">
-       <ParameterList name="Material Model">
-          <Parameter name="Model Name" type="string" value="Linear Elastic"/>
-       </ParameterList>
-       <ParameterList name="Elastic Modulus">
-          <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
-          <Parameter name="Value" type="double" value="3.0e6"/>
-       </ParameterList>
-       <ParameterList name="Poissons Ratio">
-         <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
-         <Parameter name="Value" type="double" value="0.25"/>
-       </ParameterList>
-     </ParameterList>
+      <ParameterList name="Material Model">
+        <Parameter
+          name="Model Name"
+          type="string"
+          value="Linear Elastic" />
+      </ParameterList>
+      <ParameterList name="Elastic Modulus">
+        <Parameter
+          name="Elastic Modulus Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="3.0e6" />
+      </ParameterList>
+      <ParameterList name="Poissons Ratio">
+        <Parameter
+          name="Poissons Ratio Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="0.25" />
+      </ParameterList>
+    </ParameterList>
 
     <ParameterList name="hcsteel">
-       <ParameterList name="Material Model">
-          <Parameter name="Model Name" type="string" value="Linear Elastic"/>
-       </ParameterList>
-       <ParameterList name="Elastic Modulus">
-          <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
-          <Parameter name="Value" type="double" value="5.0e6"/>
-       </ParameterList>
-       <ParameterList name="Poissons Ratio">
-         <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
-         <Parameter name="Value" type="double" value="0.25"/>
-       </ParameterList>
-     </ParameterList>
+      <ParameterList name="Material Model">
+        <Parameter
+          name="Model Name"
+          type="string"
+          value="Linear Elastic" />
+      </ParameterList>
+      <ParameterList name="Elastic Modulus">
+        <Parameter
+          name="Elastic Modulus Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="5.0e6" />
+      </ParameterList>
+      <ParameterList name="Poissons Ratio">
+        <Parameter
+          name="Poissons Ratio Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="0.25" />
+      </ParameterList>
+    </ParameterList>
 
   </ParameterList>
 

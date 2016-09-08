@@ -72,4 +72,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/square_quad9.jou
                ${CMAKE_CURRENT_BINARY_DIR}/square_quad9.jou COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gis_unstruct_2d.exo
                ${CMAKE_CURRENT_BINARY_DIR}/gis_unstruct_2d.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gis_struct_enth.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/gis_struct_enth.exo COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gis_struct_enth_basal.exo
+               ${CMAKE_CURRENT_BINARY_DIR}/gis_struct_enth_basal.exo COPYONLY)
 

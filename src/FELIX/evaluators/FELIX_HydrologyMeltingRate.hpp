@@ -11,6 +11,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+
 #include "Albany_Layouts.hpp"
 
 namespace FELIX
@@ -21,13 +22,16 @@ namespace FELIX
     This evaluator evaluates the residual of the Hydrology model
 */
 
+template<typename EvalT, typename Traits, bool IsStokes>
+class HydrologyMeltingRate;
+
+// Partial specialization for Hydrology only problem
 template<typename EvalT, typename Traits>
-class HydrologyMeltingRate : public PHX::EvaluatorWithBaseImpl<Traits>,
-                             public PHX::EvaluatorDerived<EvalT, Traits>
+class HydrologyMeltingRate<EvalT,Traits,false> : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                                 public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
   HydrologyMeltingRate (const Teuchos::ParameterList& p,
@@ -41,20 +45,49 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ParamScalarT>      u_b;
-  PHX::MDField<ScalarT>           beta;
-  PHX::MDField<ParamScalarT>      beta_p;
-  PHX::MDField<ParamScalarT>      G;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint>  u_b;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint>  beta;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint>  G;
 
   // Output:
-  PHX::MDField<ScalarT>           m;
-  PHX::MDField<ParamScalarT>      m_p;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint>  m;
 
-  bool              stokes_coupling;
+  int numQPs;
+
+  double L;
+};
+
+// Partial specialization for StokesFO coupling
+template<typename EvalT, typename Traits>
+class HydrologyMeltingRate<EvalT,Traits,true> : public PHX::EvaluatorWithBaseImpl<Traits>,
+                                                public PHX::EvaluatorDerived<EvalT, Traits>
+{
+public:
+
+  typedef typename EvalT::ScalarT       ScalarT;
+  typedef typename EvalT::ParamScalarT  ParamScalarT;
+
+  HydrologyMeltingRate (const Teuchos::ParameterList& p,
+                        const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void postRegistrationSetup (typename Traits::SetupData d,
+                              PHX::FieldManager<Traits>& fm);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+private:
+
+  // Input:
+  PHX::MDField<ScalarT,Cell,Side,QuadPoint>       u_b;
+  PHX::MDField<ScalarT,Cell,Side,QuadPoint>       beta;
+  PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>  G;
+
+  // Output:
+  PHX::MDField<ScalarT,Cell,Side,QuadPoint>       m;
+
   std::string       sideSetName;
 
   int numQPs;
-  int numDim;
 
   double L;
 };

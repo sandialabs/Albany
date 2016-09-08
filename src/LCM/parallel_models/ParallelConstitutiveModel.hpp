@@ -26,6 +26,7 @@ struct ParallelKernel
   using ScalarT = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
   using Workset = typename Traits::EvalData;
+  using ScalarField = PHX::MDField<ScalarT>;
   
 protected:
   
@@ -86,6 +87,18 @@ protected:
     model_.addStateVar(name, layout, init_type, init_value,
             old_state_flag, output_flag);
   }
+
+  void extractEvaluatedFieldArray(std::string const & field_name,
+                                  std::size_t num,
+                                  std::vector<Teuchos::RCP<ScalarField>> & state,
+                                  std::vector<Albany::MDArray *> & old_state,
+                                  FieldMap<ScalarT> & eval_fields,
+                                  Workset & workset);
+
+  void extractEvaluatedFieldArray(std::string const & field_name,
+                                  std::size_t num,
+                                  std::vector<Teuchos::RCP<ScalarField>> & state,
+                                  FieldMap<ScalarT> & eval_fields);
   
   ConstitutiveModel<EvalT, Traits> &model_;
   
@@ -165,7 +178,5 @@ protected:
 };
 
 }
-
-#include "ParallelConstitutiveModel_Def.hpp"
 
 #endif

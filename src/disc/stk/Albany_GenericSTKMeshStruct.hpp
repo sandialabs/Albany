@@ -94,6 +94,12 @@ namespace Albany {
     //! Perform initial uniform refinement of the mesh
     void uniformRefineMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
 
+    //! Creates a node set from a side set
+    void addNodeSetsFromSideSets ();
+
+    //! Checks the integrity of the nodesets created from sidesets
+    void checkNodeSetsFromSideSetsIntegrity ();
+
     //! Creates empty mesh structs if required (and not already present)
     void initializeSideSetMeshStructs (const Teuchos::RCP<const Teuchos_Comm>& commT);
 
@@ -162,6 +168,8 @@ namespace Albany {
     bool requiresAutomaticAura;
 
     bool compositeTet;
+
+    std::vector<std::string>  m_nodesets_from_sidesets;
   };
 
 }

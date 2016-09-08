@@ -238,7 +238,7 @@ Albany::HMCProblem::constructEvaluators(
 
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 #ifdef ALBANY_ATO
-   ATO::Utils<EvalT, PHAL::AlbanyTraits> atoUtils(dl);
+   ATO::Utils<EvalT, PHAL::AlbanyTraits> atoUtils(dl, numDim);
 #endif
 
    // independent variables
@@ -936,7 +936,7 @@ Albany::HMCProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
 
     //if(some input stuff)
-    atoUtils.SaveCellStateField(fm0, stateMgr, macroKinematicFieldName+"_Weighted", eb_name, dl->qp_tensor, numDim);
+    atoUtils.SaveCellStateField(fm0, stateMgr, macroKinematicFieldName+"_Weighted", eb_name, dl->qp_tensor);
 
     // microscales
     for(int i=0;i<numMicroScales;i++){ 
@@ -962,7 +962,7 @@ Albany::HMCProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
 
       //if(some input stuff)
-      atoUtils.SaveCellStateField(fm0, stateMgr, ms+"_Weighted", eb_name, dl->qp_tensor, numDim);
+      atoUtils.SaveCellStateField(fm0, stateMgr, ms+"_Weighted", eb_name, dl->qp_tensor);
     }
     for(int i=0;i<numMicroScales;i++){ 
       RCP<ParameterList> p = rcp(new ParameterList("TopologyWeighting"));
@@ -987,7 +987,7 @@ Albany::HMCProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
 
       //if(some input stuff)
-      atoUtils.SaveCellStateField(fm0, stateMgr, ds+"_Weighted", eb_name, dl->qp_tensor3, numDim);
+      atoUtils.SaveCellStateField(fm0, stateMgr, ds+"_Weighted", eb_name, dl->qp_tensor3);
     }
   }
   /******************************************************************************/

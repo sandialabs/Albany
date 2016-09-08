@@ -21,16 +21,14 @@ namespace FELIX
     This evaluator evaluates the norm of a field
 */
 
-template<typename EvalT, typename Traits>
-class FieldNorm : public PHX::EvaluatorWithBaseImpl<Traits>,
-                  public PHX::EvaluatorDerived<EvalT, Traits>
+template<typename EvalT, typename Traits, typename ScalarT>
+class FieldNormBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+                      public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  typedef typename EvalT::ScalarT ScalarT;
-
-  FieldNorm (const Teuchos::ParameterList& p,
-             const Teuchos::RCP<Albany::Layouts>& dl);
+  FieldNormBase (const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
@@ -42,9 +40,18 @@ public:
 
 private:
 
-  ScalarT   regularizationParam;
-  ScalarT*  regularizationParamPtr;
-  ScalarT   printedH;
+  // The parameter is always defined in terms of the
+  // evaluation type native scalar type (otherwise
+  // the evaluation manager does not update it).
+  typedef typename EvalT::ScalarT       EScalarT;
+  typedef typename EvalT::ParamScalarT  ParamScalarT;
+
+  enum RegularizationType { NONE=1, GIVEN_VALUE, GIVEN_PARAMETER, PARAMETER_EXPONENTIAL};
+
+  PHX::MDField<EScalarT,Dim>    regularizationParam;
+  RegularizationType            regularization_type;
+  ScalarT                       regularization;
+  ScalarT                       printedReg;
 
   // Input:
   PHX::MDField<ScalarT> field;
@@ -56,6 +63,16 @@ private:
   std::vector<PHX::DataLayout::size_type> dims;
   int numDims;
 };
+
+// Some shortcut names
+template<typename EvalT, typename Traits>
+using FieldNorm = FieldNormBase<EvalT,Traits,typename EvalT::ScalarT>;
+
+template<typename EvalT, typename Traits>
+using FieldNormMesh = FieldNormBase<EvalT,Traits,typename EvalT::MeshScalarT>;
+
+template<typename EvalT, typename Traits>
+using FieldNormParam = FieldNormBase<EvalT,Traits,typename EvalT::ParamScalarT>;
 
 } // Namespace FELIX
 

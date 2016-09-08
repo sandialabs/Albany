@@ -27,7 +27,7 @@ TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:        
 
 # No GLOBAL VARIABLES
 
-NODAL VARIABLES relative 1.e-6 floor 0.0
+NODAL VARIABLES relative 1.e-6 floor 1.0e-9
 	displacement_x     # min:               0 @ t1,n1	max:            0.01 @ t51,n1
 	displacement_y     # min:               0 @ t1,n1	max:               0 @ t1,n1
 	displacement_z     # min:               0 @ t1,n1	max:               0 @ t1,n1
@@ -38,7 +38,7 @@ NODAL VARIABLES relative 1.e-6 floor 0.0
 	force_y            # min:               0 @ t1,n1	max:        503.6273 @ t51,n13
 	force_z            # min:               0 @ t1,n1	max:       345.97125 @ t51,n1
 
-ELEMENT VARIABLES relative 1.e-6 floor 0.0
+ELEMENT VARIABLES relative 1.e-6 floor 1.0e-9
 	Cauchy_Stress_01    # min:               0 @ t1,b1,e1	max:       2076.7923 @ t51,b1,e1
 	Cauchy_Stress_02    # min:               0 @ t1,b1,e1	max:       72.462926 @ t51,b2,e2
 	Cauchy_Stress_03    # min:               0 @ t1,b1,e1	max:       210.36201 @ t51,b2,e2

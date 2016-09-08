@@ -8,7 +8,9 @@
 #define ATO_TENSORPNORMRESPONSE_HPP
 
 #include "PHAL_SeparableScatterScalarResponse.hpp"
+#include "Albany_StateManager.hpp"
 #include "ATO_TopoTools.hpp"
+#include <Intrepid2_MiniTensor.h>
 
 
 /** 
@@ -26,6 +28,26 @@ namespace ATO
     void postEvaluate(typename Traits::PostEvalData d);
 	  
   protected:
+    void saveState(RealType&, ScalarT){}
+    Albany::StateManager* pStateMgr;
+    double pVal;
+  };
+  /******************************************************************************/
+  // Specialization: Residual
+  /******************************************************************************/
+  template<typename Traits>
+  class TensorPNormResponseSpec<PHAL::AlbanyTraits::Residual,Traits> : 
+    public PHAL::SeparableScatterScalarResponse<PHAL::AlbanyTraits::Residual,Traits>
+  {
+  public:
+    typedef PHAL::AlbanyTraits::Residual EvalT;
+    typedef typename EvalT::ScalarT ScalarT;
+    
+    void postEvaluate(typename Traits::PostEvalData d);
+	  
+  protected:
+    void saveState(RealType& to, ScalarT from);
+    Albany::StateManager* pStateMgr;
     double pVal;
   };
 
@@ -43,6 +65,8 @@ namespace ATO
     void postEvaluate(typename Traits::PostEvalData d);
 	  
   protected:
+    void saveState(RealType& to, ScalarT from);
+    Albany::StateManager* pStateMgr;
     double pVal;
   };
   /******************************************************************************/
@@ -59,6 +83,8 @@ namespace ATO
     void postEvaluate(typename Traits::PostEvalData d);
 	  
   protected:
+    void saveState(RealType&, ScalarT){}
+    Albany::StateManager* pStateMgr;
     double pVal;
   };
   /******************************************************************************/
@@ -76,6 +102,8 @@ namespace ATO
     void postEvaluate(typename Traits::PostEvalData d);
 	  
   protected:
+    void saveState(RealType&, ScalarT){}
+    Albany::StateManager* pStateMgr;
     double pVal;
   };
 
@@ -96,6 +124,8 @@ namespace ATO
     void postEvaluate(typename Traits::PostEvalData d);
 	  
   protected:
+    void saveState(RealType&, ScalarT){}
+    Albany::StateManager* pStateMgr;
     double pVal;
   };
 #endif
@@ -120,9 +150,11 @@ namespace ATO
     void postEvaluate(typename Traits::PostEvalData d);
 
   private:
-  
     using TensorPNormResponseSpec<EvalT,Traits>::pVal;
+    using TensorPNormResponseSpec<EvalT,Traits>::pStateMgr;
+    using TensorPNormResponseSpec<EvalT,Traits>::saveState;
 
+    void TransformResponse (int Cell, int QP, ScalarT& response_eff);
     std::string FName;
     static const std::string className;
     PHX::MDField<ScalarT> tensor;
@@ -132,6 +164,12 @@ namespace ATO
     Teuchos::RCP< PHX::Tag<ScalarT> > objective_tag;
 
     Teuchos::RCP<Topology> topology;
+
+    Intrepid2::Matrix<double> Cp;
+    Intrepid2::Matrix<double> Cpp;
+    int R;
+    double yieldStress;
+
     int functionIndex;
 
   };
