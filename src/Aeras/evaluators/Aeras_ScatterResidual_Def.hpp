@@ -496,14 +496,14 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 #else
-  // Temporary data structure
-  neq = workset.wsElNodeEqID[0][0].size();
-  nunk = neq*this->numNodes;
-  colT = Kokkos::DynRankView<LO, PHX::Device>("colT", workset.numCells, nunk);
-
-  Index = workset.wsElNodeEqID_kokkos;
   fT = workset.fT;
   JacT = workset.JacT;
+  neq = workset.wsElNodeEqID[0][0].size();
+  nunk = neq*this->numNodes;
+  Index = workset.wsElNodeEqID_kokkos;
+
+  // Temporary data structure
+  colT = Kokkos::DynRankView<LO, PHX::Device>("colT", workset.numCells, nunk);
 
   if (!JacT->isFillComplete())
     JacT->fillComplete();

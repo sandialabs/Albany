@@ -10,6 +10,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Aeras_Layouts.hpp"
+#include "Albany_Utils.hpp"
 
 namespace Aeras {
 
@@ -83,26 +84,239 @@ postRegistrationSetup(typename Traits::SetupData d,
 // **********************************************************************
 // Specialization: Jacobian
 // **********************************************************************
-
 template<typename Traits>
 ComputeAndScatterJac<PHAL::AlbanyTraits::Jacobian, Traits>::
 ComputeAndScatterJac(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Aeras::Layouts>& dl)
   : ComputeAndScatterJacBase<PHAL::AlbanyTraits::Jacobian,Traits>(p,dl)
 { }
+
 // *********************************************************************
 // Kokkos kernels
-//#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeAndScatterJac<PHAL::AlbanyTraits::Jacobian, Traits>::
+operator() (const ComputeAndScatterJac_buildMass_Tag& tag, const int& cell) const{
+  for (int node = 0; node < this->numNodes; ++node) {
+    int n = 0, eq = 0;
+    for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
+      LO rowT = Index(cell, node, n);
+      RealType val2 = mc * this->wBF(cell, node, node);
+      jacobian.sumIntoValues(rowT, &rowT, 1, &val2, false, true);
+    }
 
-//FIXME, IKT, 5/9/16: Kokkos functor implementations go here. 
-//
-//#endif
+    eq += this->numNodeVar;
+    for (int level = 0; level < this->numLevels; level++) {
+      for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
+        for (int dim = 0; dim < this->numDims; ++dim, ++n) {
+          LO rowT = Index(cell, node, n);
+          RealType val2 = mc * this->wBF(cell, node, node);
+          jacobian.sumIntoValues(rowT, &rowT, 1, &val2, false, true);
+        }
+      }
+
+      for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
+        LO rowT = Index(cell, node, n);
+        RealType val2 = mc * this->wBF(cell, node, node);
+        jacobian.sumIntoValues(rowT, &rowT, 1, &val2, false, true);
+      }
+    }
+
+    eq += this->numVectorLevelVar+this->numScalarLevelVar;
+    for (int level = 0; level < this->numLevels; ++level) {
+      for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
+        LO rowT = Index(cell, node, n);
+        //Minus!
+        RealType val2 = mc * this->wBF(cell, node, node);
+        jacobian.sumIntoValues(rowT, &rowT, 1, &val2, false, true);
+      }
+    }
+    eq += this->numTracerVar;
+  }
+}
+
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ComputeAndScatterJac<PHAL::AlbanyTraits::Jacobian, Traits>::
+operator() (const ComputeAndScatterJac_buildLaplace_Tag& tag, const int& cell) const{
+  for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
+    for (int eq_col=0; eq_col<neq; eq_col++) {
+      colT(cell, neq * node_col + eq_col) =  Index(cell,node_col,eq_col);
+    }
+  }
+
+  //Build a submatrix (local matrix) for Laplace. For any particular cell:
+  //The matrix acts on vector (u1 v1 u2 v2 u3 v3 ... uNumNodes vNumNodes)
+  //and returns (WGrad(u1) WGrad(v1) WGrad(u2) WGrad(v2) ...), that is, the output vector is ordered
+  //the same way as the input vector. After this matrix is built,
+  //if we are filling Laplace matrix's row corresponding to node N for u vector, then we need row
+  //2N from the local matrix. In other words, this Laplace operator takes u and v from all nodes on
+  //a certain level and produces weak Laplace for them. If we fix a nodal value for u,
+  //then Laplace at this nodal value for u depends on local matrix' row 2N. For v at node
+  //N it should be row 2N+1.
+
+  //The local matrix is K^T*WeakGrad*K. Here K is a transform from lon/lat velocity
+  //to xyz velocity, WeakGrad calculates a weak Laplace op (grad*grad) for each (x, or y, or z)
+  //component, and K^T is equivalent to K^{inverse}.
+
+  //The biggest effort is to find how to insert values of the local matrix to the big matrix.
+  for (int node=0; node<this->numNodes; node++) {
+    RealType lam = this->lambda_nodal(cell, node),
+             th  = this->theta_nodal(cell, node);
+    const RealType k11 = -sin(lam),
+                   k12 = -sin(th)*cos(lam),
+                   k21 =  cos(lam),
+                   k22 = -sin(th)*sin(lam),
+                   k32 =  cos(th);
+    KK(cell, node*3, node*2) = k11;
+    KK(cell, node*3, node*2+1) = k12;
+    KK(cell, node*3+1, node*2) = k21;
+    KK(cell, node*3+1, node*2+1) = k22;
+    KK(cell, node*3+2, node*2+1) = k32;
+  }
+
+  for (int no = 0; no < this->numNodes; no++) {
+    for (int mo = 0; mo< this->numNodes; mo++) {
+      RealType val = 0;
+      for (int qp = 0; qp < this->numNodes; qp++) {
+        val += this->GradBF(cell,no,qp,0)*this->GradBF(cell,mo,qp,0)*this->wBF(cell,qp,qp)
+            +  this->GradBF(cell,no,qp,1)*this->GradBF(cell,mo,qp,1)*this->wBF(cell,qp,qp);
+      }
+      GR(cell,no*3,mo*3) = val;
+      GR(cell,no*3+1,mo*3+1) = val;
+      GR(cell,no*3+2,mo*3+2) = val;
+    }
+  }
+
+  //now let's multiply everything
+  for (int ii = 0; ii < 3*numn; ii++) {
+    for (int jj = 0; jj < 2*numn; jj++) {
+      GRKK(cell,ii,jj) = 0;
+      for(int cc = 0; cc < 3*numn; cc++) {
+        GRKK(cell,ii,jj) += GR(cell,ii,cc)*KK(cell,cc,jj);
+      }
+    }
+  }
+
+  for(int ii = 0; ii < 2*numn; ii++) {
+    for (int jj = 0; jj < 2*numn; jj++) {
+      KTGRKK(cell,ii,jj) = 0;
+      for(int cc = 0; cc < 3*numn; cc++) {
+        KTGRKK(cell,ii,jj) += KK(cell,cc,ii)*GRKK(cell,cc,jj);
+      }
+    }
+  }
+
+  for (int node = 0; node < this->numNodes; ++node) {
+    int n = 0, eq = 0;
+    //dealing with surf pressure
+    for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
+      /*
+      //OG Disabling Laplace for surface pressure.
+      //rowT is LID in row map for vector x=all variables
+      //so rowT here is a row index corresponding to pressure eqn at (node, cell)
+      rowT = eqID[n];
+      //loop over nodes on the same level
+      for (unsigned int m=0; m< this->numNodes; m++) {
+        const int col_ = colT[m*neq];//= nodeID[m][n];
+        //at this point we know node, cell, m
+        RealType val = 0;
+        for (int qp = 0; qp < this->numNodes; qp++) {
+          val += this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
+              +  this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp);
+        }
+        val *= this->sqrtHVcoef;
+        JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col_,1), Teuchos::arrayView(&val,1));
+      }
+      */
+    }
+    eq += this->numNodeVar;
+
+    for (int level = 0; level < this->numLevels; level++) {
+      //dealing with velocity
+      for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
+        for (int dim = 0; dim < this->numDims; ++dim, ++n) {
+          LO rowT = Index(cell, node, n);
+          for (unsigned int m=0; m< this->numNodes; m++) {
+            //filling u values
+            if (dim == 0) {
+              //filling dependency on u values
+              const int col1_ = Index(cell, m, n);
+              RealType val = this->sqrtHVcoef * KTGRKK(cell,node*2,m*2);
+              jacobian.sumIntoValues(rowT, &col1_, 1, &val, false, true);
+
+              //filling dependency on v values, so, it is eqn n+1
+              const int col2_ = Index(cell, m, n+1);
+              val = this->sqrtHVcoef * KTGRKK(cell,node*2,m*2+1);
+              jacobian.sumIntoValues(rowT, &col2_, 1, &val, false, true);
+              JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col2_,1), Teuchos::arrayView(&val,1));
+            }
+
+            //filling v values
+            if (dim == 1) {
+              //filling dependencies on u values. The current eqn is n, so, we need to look at n-1 level IDs.
+              const int col1_ = Index(cell, m, n-1);
+              RealType val = this->sqrtHVcoef * KTGRKK(cell,node*2+1,m*2);
+              jacobian.sumIntoValues(rowT, &col1_, 1, &val, false, true);
+
+              //filling dependencies on v values.
+              const int col2_ = Index(cell, m, n);
+              val = this->sqrtHVcoef * KTGRKK(cell,node*2+1,m*2+1);
+              jacobian.sumIntoValues(rowT, &col2_, 1, &val, false, true);
+            }
+          }
+        }//dim loop
+      }
+
+      //dealing with temperature
+      for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
+        LO rowT = Index(cell, node, n);
+
+        //loop over nodes on the same level
+        for (unsigned int m=0; m< this->numNodes; m++) {
+          const int col_ = Index(cell, m, n);
+          RealType val = 0;
+          for (int qp = 0; qp < this->numNodes; qp++) {
+            val += this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
+                +  this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp);
+          }
+          val *= this->sqrtHVcoef;
+          jacobian.sumIntoValues(rowT, &col_, 1, &val, false, true);
+        }
+      }
+    }//end of level loop for velocity and temperature
+    eq += this->numVectorLevelVar+this->numScalarLevelVar;
+
+    for (int level = 0; level < this->numLevels; ++level) {
+      //dealing with tracers
+      for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
+        LO rowT = Index(cell, node, n);
+
+        //loop over nodes on the same level
+        for (unsigned int m=0; m< this->numNodes; m++) {
+          const int col_ = Index(cell, m, n);
+          RealType val = 0;
+          for (int qp = 0; qp < this->numNodes; qp++) {
+            val += this->GradBF(cell,node,qp,0)*this->GradBF(cell,m,qp,0)*this->wBF(cell,qp,qp)
+                +  this->GradBF(cell,node,qp,1)*this->GradBF(cell,m,qp,1)*this->wBF(cell,qp,qp);
+          }
+          val *= this->sqrtHVcoef;
+          jacobian.sumIntoValues(rowT, &col_, 1, &val, false, true);
+        }
+      }
+    }//end of level loop for tracers
+    eq += this->numTracerVar;
+  }//end of loop over nodes
+}
+
+#endif
+
 // **********************************************************************
 template<typename Traits>
 void ComputeAndScatterJac<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
 //First, we need to compute the local mass and laplacian matrices 
 //(checking the n_coeff flag for whether the laplacian is needed) as follows: 
 //Mass:
@@ -125,9 +339,7 @@ evaluateFields(typename Traits::EvalData workset)
 //
 //Then the values of these matrices need to be scattered into the global Jacobian.
 
-//FIXME, IKT, 5/24/16: uncomment out the following once Kokkos functors have been implemented
-//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Teuchos::RCP<Tpetra_Vector>      fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
@@ -135,161 +347,11 @@ evaluateFields(typename Traits::EvalData workset)
   LO rowT; 
   Teuchos::Array<LO> colT; 
 
-  std::cout << "DEBUG in ComputeAndScatterJac::EvaluateFields: " << __PRETTY_FUNCTION__ << "\n";
-  std::cout << "LOAD RESIDUAL? " << loadResid << "\n";
+  //std::cout << "DEBUG in ComputeAndScatterJac::EvaluateFields: " << __PRETTY_FUNCTION__ << "\n";
+  //std::cout << "LOAD RESIDUAL? " << loadResid << "\n";
 
-#define OLDSCATTER 0
-#if OLDSCATTER
-  for (int cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-
-    //OG (the way I understand this code): nodeID is an array of LIDs (row map, or map for Tpetra Vector),
-    //that is, wsElNodeEqID[cell][node][equation] gives a map to LIDs.
-    //If a proc owes cell, then it owes all nodes and equations (layers of eqns) at this cell.
-    //That is the jacobian is overlapped here, later jac->export(overlap_jac) is called for unique mapping.
-    //TPetra vector (say, residual vector) is ordered by
-    //ps(node0),u_lev0(node0),v_lev0(node0),T_lev0(node0),trA_lev0(node0),trB_lev0(node0),...,u_lev1(node0),v_lev1(node0),..., ps(node1),u_lev0(node1)...
-    //In our case of hydrostatic problem numNodeVar = 1 (ps), numVectorLevelVar = 1 (velocity),
-    //numScalarLevelVar = 1 (temperature), numTracerVar = # of tracers, tracers are also leveled vars.
-
-
-    const int neq = nodeID[0].size();
-    colT.resize(neq * this->numNodes);
-    
-    for (int node=0; node<this->numNodes; node++){
-      for (int eq_col=0; eq_col<neq; eq_col++) {
-        colT[neq * node + eq_col] =  nodeID[node][eq_col];
-      }
-    }
-    for (int node = 0; node < this->numNodes; ++node) {
-      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
-      int n = 0, eq = 0;
-      for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-        const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node);
-        rowT = eqID[n];
-        if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
-        if (valptr.hasFastAccess()) {
-          if (workset.is_adjoint) {
-            // Sum Jacobian transposed
-            for (unsigned int i=0; i<colT.size(); ++i) {
-              RealType val = valptr.fastAccessDx(i); 
-              if (val != 0.0) { 
-                JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
-              }
-            }
-          } 
-          else {
-            //Sum Jacobian entries 
-            for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-              RealType val = valptr.fastAccessDx(i);
-              if (val != 0.0) {
-                JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
-              }
-            }
-            // Sum Jacobian entries all at once
-            // JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
-          }
-        } // has fast access
-      }
-      eq += this->numNodeVar;
-      for (int level = 0; level < this->numLevels; level++) {
-        for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
-          for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-            const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
-            rowT = eqID[n];
-            if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
-            if (valptr.hasFastAccess()) {
-              if (workset.is_adjoint) {
-                // Sum Jacobian transposed
-                for (int i=0; i<colT.size(); ++i) {
-                  RealType val = valptr.fastAccessDx(i); 
-                  if (val != 0.0) { 
-                    JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
-                  }
-                }
-              } 
-              else {
-                //Sum Jacobian entries 
-                for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-                  RealType val = valptr.fastAccessDx(i);
-                  if (val != 0.0) {
-                    JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
-                  }
-                }
-                // Sum Jacobian entries all at once
-                //JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
-              }
-            }
-          }
-        }
-        for (int j = eq+this->numVectorLevelVar;
-                 j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-          const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
-          rowT = eqID[n];
-          if (loadResid) fT->sumIntoLocalValue(eqID[n], valptr.val());
-          if (valptr.hasFastAccess()) {
-            if (workset.is_adjoint) {
-              // Sum Jacobian transposed
-              for (unsigned int i=0; i<colT.size(); ++i) {
-                RealType val = valptr.fastAccessDx(i); 
-                if (val != 0.0) { 
-                  JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
-                }
-              }
-            } 
-            else {
-                //Sum Jacobian entries 
-                for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-                  RealType val = valptr.fastAccessDx(i);
-                  if (val != 0.0) {
-                    JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
-                  }
-                }
-              // Sum Jacobian entries all at once
-              //JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
-            }
-          } // has fast access
-        }
-      }
-      eq += this->numVectorLevelVar+this->numScalarLevelVar;
-      for (int level = 0; level < this->numLevels; ++level) {
-        for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
-          rowT = eqID[n];
-          if (loadResid) fT->sumIntoLocalValue(eqID[n], valptr.val());
-          if (valptr.hasFastAccess()) {
-            if (workset.is_adjoint) {
-              // Sum Jacobian transposed
-              for (unsigned int i=0; i<colT.size(); ++i) {
-                RealType val = valptr.fastAccessDx(i); 
-                if (val != 0.0) { 
-                  JacT->sumIntoLocalValues(colT[i], Teuchos::arrayView(&rowT,1), Teuchos::arrayView(&val,1));
-                }
-              }
-            } 
-            else {
-              //Sum Jacobian entries 
-                for (unsigned int i=0; i<neq*this->numNodes; ++i) {
-                  RealType val = valptr.fastAccessDx(i);
-                  if (val != 0.0) {
-                    JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&colT[i],1), Teuchos::arrayView(&val,1));
-                  }
-                }
-              // Sum Jacobian entries all at once
-              //JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), colT.size()));
-            }
-          } // has fast access
-        }
-      }
-      eq += this->numTracerVar;
-    }
-  }
-
-#endif
-
-#if !OLDSCATTER
-//AMET calls for mass with (j, m, n ) = (0, -1, 0)
-//HVDecorator calls for mass with 0, -1, 0 (for the time step as in AMET) and 0, 1, 0 for the HV operator
+  //AMET calls for mass with (j, m, n ) = (0, -1, 0)
+  //HVDecorator calls for mass with 0, -1, 0 (for the time step as in AMET) and 0, 1, 0 for the HV operator
 
   RealType mc = workset.m_coeff;
 
@@ -530,13 +592,38 @@ evaluateFields(typename Traits::EvalData workset)
     }//end of loop over cells
   }//end of if buildLaplace
 
-#endif
-//#else
+#else
+  fT = workset.fT;
+  JacT = workset.JacT;
+  jacobian = JacT->getLocalMatrix();
+  mc = workset.m_coeff;
+  neq = workset.wsElNodeEqID[0][0].size();
+  Index = workset.wsElNodeEqID_kokkos;
 
-  //FIXME, IKT, 5/9/16: this function needs to be Kokkos-ized!  Kokkos implementation goes here.
-  //std::cout << "ComputeAndScatterJac evaluateFields Jacobian specialization has not been Kokkos-ized yet!" << std::endl; 
- 
-//#endif
+  bool buildMass = ( ( workset.j_coeff == 0.0 )&&( workset.m_coeff != 0.0 )&&( workset.n_coeff == 0.0 ) );
+  if ( buildMass ) {
+    Kokkos::parallel_for(ComputeAndScatterJac_buildMass_Policy(0,workset.numCells),*this);
+    cudaCheckError();
+  }
+
+  bool buildLaplace = ( workset.j_coeff == 0.0 )&&( workset.m_coeff == 0.0 )&&( workset.n_coeff == 1.0 );
+  if ( buildLaplace ) {
+    // Temporary data structures
+    // FIXME: This is a lot of memory! Needs to be fixed.
+    numn = this->numNodes;
+    colT   = Kokkos::DynRankView<LO, PHX::Device>("colT", workset.numCells, neq*numn);
+    KK     = Kokkos::DynRankView<RealType, PHX::Device>("KK", workset.numCells, numn*3, numn*2);
+    GR     = Kokkos::DynRankView<RealType, PHX::Device>("GR", workset.numCells, numn*3, numn*3);
+    GRKK   = Kokkos::DynRankView<RealType, PHX::Device>("GRKK", workset.numCells, numn*3, numn*2);
+    KTGRKK = Kokkos::DynRankView<RealType, PHX::Device>("KTGRKK", workset.numCells, numn*2, numn*2);
+    Kokkos::deep_copy(KK, 0.0);
+    Kokkos::deep_copy(GR, 0.0);
+
+    Kokkos::parallel_for(ComputeAndScatterJac_buildLaplace_Policy(0,workset.numCells),*this);
+    cudaCheckError();
+  }
+
+#endif
 }
 
 #ifdef ALBANY_ENSEMBLE

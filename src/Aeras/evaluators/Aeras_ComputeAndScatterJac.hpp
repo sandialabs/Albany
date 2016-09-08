@@ -80,7 +80,6 @@ template<typename EvalT, typename Traits> class ComputeAndScatterJac;
 // **************************************************************
 // **************************************************************
 
-
 // **************************************************************
 // Jacobian
 // **************************************************************
@@ -95,21 +94,35 @@ public:
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
+  Teuchos::RCP<Tpetra_Vector> fT;
+  Teuchos::RCP<Tpetra_CrsMatrix> JacT;
+  typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
+  LocalMatrixType jacobian;
+  RealType mc;
+  int neq, numn;
 
-Teuchos::RCP<Tpetra_Vector> fT;
-Teuchos::RCP<Tpetra_CrsMatrix> JacT;
-typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
-LocalMatrixType jacobian;
-bool loadResid;
-int neq, nunk;
+  Kokkos::View<int***, PHX::Device> Index;
 
-//FIXME, IKT, 5/9/16: add Kokkos functor implementations here. 
+  struct ComputeAndScatterJac_buildMass_Tag{};
+  struct ComputeAndScatterJac_buildLaplace_Tag{};
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, ComputeAndScatterJac_buildMass_Tag> ComputeAndScatterJac_buildMass_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, ComputeAndScatterJac_buildLaplace_Tag> ComputeAndScatterJac_buildLaplace_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ComputeAndScatterJac_buildMass_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ComputeAndScatterJac_buildLaplace_Tag& tag, const int& i) const;
+
+private:
+  Kokkos::DynRankView<LO, PHX::Device> colT;
+  Kokkos::DynRankView<RealType, PHX::Device> KK, GR, GRKK, KTGRKK;
 
 #endif
-
-
 };
-
 
 // **************************************************************
 // GENERIC: Specializations for SG and MP not yet implemented
