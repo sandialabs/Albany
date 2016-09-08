@@ -281,6 +281,9 @@ Albany::LinearElasticityProblem::constructEvaluators(
      //Input
      p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
 
+     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
+     p->set<bool>("Static Topology", true);
+
      p->set< RCP<Cogent::Integrator> >("Cubature",     projector);
      p->set<std::string>("Coordinate Vector Name",   "Coord Vec");
      p->set<std::string>("Weights Name",               "Weights");
@@ -294,6 +297,8 @@ Albany::LinearElasticityProblem::constructEvaluators(
  
      ev = rcp(new ATO::ComputeBasisFunctions<EvalT,AlbanyTraits>(*p,dl,&meshSpecs));
      fm0.template registerEvaluator<EvalT>(ev);
+
+     atoUtils.SaveCellStateField(fm0, stateMgr, "Weights", elementBlockName, dl->qp_scalar);
  
    } else
 #endif
@@ -539,7 +544,7 @@ Albany::LinearElasticityProblem::constructEvaluators(
     if( params->isType<Teuchos::RCP<ATO::TopologyArray> > ("Topologies") )
       p->set<std::string>("Force Name", boundaryForceName+"_Weighted");
     else 
-      p->set<std::string>("Force Name", boundaryForceName);
+    p->set<std::string>("Force Name", boundaryForceName);
     p->set<std::string>("Weighted BF Name", "wBF");
     resid_names[0] = "Boundary Force";
     p->set<std::string>("Out Residual Name", resid_names[0]);

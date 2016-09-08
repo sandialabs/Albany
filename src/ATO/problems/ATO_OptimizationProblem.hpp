@@ -85,6 +85,8 @@ public virtual Albany::AbstractProblem {
 
    int nTopologies;
 
+   bool isNonconformal;
+
 };
 
 

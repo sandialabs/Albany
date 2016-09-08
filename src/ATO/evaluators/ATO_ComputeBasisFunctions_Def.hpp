@@ -6,6 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Albany_StateManager.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
@@ -24,8 +25,25 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   GradBF        (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient),
   wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient)
 {
-
   elementBlockName = meshSpecs->ebName;
+  
+  m_isStatic = false;
+  if(p.isType<bool>("Static Topology")) m_isStatic = p.get<bool>("Static Topology");
+
+  if(m_isStatic){
+    Albany::StateManager* stateMgr = p.get<Albany::StateManager*>("State Manager Ptr");
+    stateMgr->registerStateVariable("Gauss Weights", dl->qp_scalar, dl->dummy, 
+                                    "all", "scalar", 0.0, false, false);
+
+    // this should be registered as a workset_scalar, but the workset stateArrays all
+    // point to a single value.  that is, workset_scalar behaves more like 'global_scalar'.
+    // After some snooping around in Albany_StateManager, I can't figure out how to
+    // register workset_scalars so that they actually store a separate value for each
+    // workset, not a single value for all worksets.  
+    stateMgr->registerStateVariable("isSet", dl->cell_scalar, dl->dummy, 
+                                    "all", "scalar", 0.0, false, false);
+  }
+
 
   this->addDependentField(coordVec);
   this->addEvaluatedField(weighted_measure);
@@ -107,32 +125,47 @@ evaluateFields(typename Traits::EvalData workset)
   ICT::setJacobianInv (jacobian_inv, jacobian);
   ICT::setJacobianDet (jacobian_det, jacobian);
 
-  Teuchos::Array<Albany::MDArray> topo(numTopos);
-  for(int itopo=0; itopo<numTopos; itopo++){
-    topo[itopo] = (*workset.stateArrayPtr)[topoNames[itopo]];
+  bool isSet = false;
+  Albany::MDArray savedWeights;
+  if(m_isStatic){
+    savedWeights = (*workset.stateArrayPtr)["Gauss Weights"];
+    Albany::MDArray wsSet = (*workset.stateArrayPtr)["isSet"];
+    isSet = (wsSet(0,0) == 0) ? false : true;
   }
- 
-  for(int cell=0; cell<workset.numCells; cell++){
 
-    for(int node=0; node<numNodes; node++)
-      for(int dim=0; dim<numDims; dim++)
-        coordVals(node,dim) = coordVec(cell,node,dim);
+  if(m_isStatic && isSet){
+    for(int cell=0; cell<workset.numCells; cell++){
+      for(int qp=0; qp<numQPs; qp++)
+        weighted_measure(cell, qp) = savedWeights(cell,qp);
+    }
+  } else {
+    Teuchos::Array<Albany::MDArray> topo(numTopos);
+    for(int itopo=0; itopo<numTopos; itopo++){
+      topo[itopo] = (*workset.stateArrayPtr)[topoNames[itopo]];
+    }
 
-    for(int itopo=0; itopo<numTopos; itopo++)
+    for(int cell=0; cell<workset.numCells; cell++){
       for(int node=0; node<numNodes; node++)
-        topoVals(node,itopo) = topo[itopo](cell,node);
+        for(int dim=0; dim<numDims; dim++)
+          coordVals(node,dim) = coordVec(cell,node,dim);
+  
+      for(int itopo=0; itopo<numTopos; itopo++)
+        for(int node=0; node<numNodes; node++)
+          topoVals(node,itopo) = topo[itopo](cell,node);
 
-    // fix this.  refPoints is being passed back every call even though it doesn't change.
-    // do you need to send coordVals?
-    cubature->getCubature(weights, refPoints, topoVals, coordVals);
+      cubature->getCubatureWeights(weights, topoVals, coordVals);
 
-    for(int qp=0; qp<numQPs; qp++)
-      weighted_measure(cell, qp) = weights(qp);
-// weights are already in physical coordinates
-//      weighted_measure(cell, qp) = jacobian_det(cell,qp)*weights(qp);
+      for(int qp=0; qp<numQPs; qp++)
+        weighted_measure(cell, qp) = weights(qp);
+
+      if(m_isStatic && !isSet){
+        for(int qp=0; qp<numQPs; qp++)
+          savedWeights(cell,qp) = weighted_measure(cell, qp);
+      }
+    }
+    (*workset.stateArrayPtr)["isSet"](0,0) = 1;
   }
 
-//  IFST::computeCellMeasure<MeshScalarT> (weighted_measure, jacobian_det, weights);
   IFST::HGRADtransformVALUE<RealType>   (BF, val_at_cub_points);
   IFST::multiplyMeasure<MeshScalarT>    (wBF, weighted_measure, BF);
   IFST::HGRADtransformGRAD<MeshScalarT> (GradBF, jacobian_inv, grad_at_cub_points);

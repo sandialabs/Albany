@@ -1132,7 +1132,8 @@ namespace Albany {
 
     //! Data for Physics-Based Preconditioners
     bool physicsBasedPreconditioner;
-    Teuchos::RCP<Teuchos::ParameterList> tekoParams;
+    Teuchos::RCP<Teuchos::ParameterList> precParams;
+    std::string precType;
 
     //! Type of solution method
     SolutionMethod solMethod;

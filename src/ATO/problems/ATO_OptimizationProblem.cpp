@@ -66,6 +66,22 @@ ATO::OptimizationProblem::
 ComputeMeasure(std::string measureType, double& measure)
 /******************************************************************************/
 {
+  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
+        wsElNodeID = disc->getWsElNodeID();
+  int numWorksets = wsElNodeID.size();
+
+  if(isNonconformal){
+    for(int ws=0; ws<numWorksets; ws++){
+      Albany::StateArray& 
+      stateArrayRef = stateMgr->getStateArray(Albany::StateManager::ELEM, ws);
+      Albany::MDArray savedWeights = stateArrayRef["Gauss Weights"];
+      int numCells  = weighted_measure[ws].dimension(0);
+      int numQPs    = weighted_measure[ws].dimension(1);
+      for(int cell=0; cell<numCells; cell++)
+        for(int qp=0; qp<numQPs; qp++)
+          weighted_measure[ws](cell,qp) = savedWeights(cell,qp);
+    }
+  }
   
   if(measureType == "Volume"){
     double localm = 0.0;
@@ -97,30 +113,6 @@ ComputeMeasure(std::string measureType, double& measure)
     // mass constraints are absolute, not relative.
     
     measure = 1.0;
-
-    /*
-    double localm = 0.0;
-
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
-      wsElNodeEqID = disc->getWsElNodeEqID();
-    const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
-
-    int numWorksets = wsElNodeEqID.size();
-
-    for(int ws=0; ws<numWorksets; ws++){
-
-      int physIndex = wsPhysIndex[ws];
-
-      int numCells = wsElNodeEqID[ws].size();
-      int numQPs = cubatures[physIndex]->getNumPoints();
-    
-      for(int cell=0; cell<numCells; cell++)
-        for(int qp=0; qp<numQPs; qp++)
-          localm += weighted_measure[ws](cell,qp);
-    }
-  
-    comm->SumAll(&localm, &measure, 1);
-    */
   }
 }
 
@@ -154,12 +146,27 @@ computeMeasure(std::string measureType,
                double& measure, double* dmdp)
 /******************************************************************************/
 {
-  double localm = 0.0;
+
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
         wsElNodeID = disc->getWsElNodeID();
+  int numWorksets = wsElNodeID.size();
+
+  if(isNonconformal){
+    for(int ws=0; ws<numWorksets; ws++){
+      Albany::StateArray& 
+      stateArrayRef = stateMgr->getStateArray(Albany::StateManager::ELEM, ws);
+      Albany::MDArray savedWeights = stateArrayRef["Gauss Weights"];
+      int numCells  = weighted_measure[ws].dimension(0);
+      int numQPs    = weighted_measure[ws].dimension(1);
+      for(int cell=0; cell<numCells; cell++)
+        for(int qp=0; qp<numQPs; qp++)
+          weighted_measure[ws](cell,qp) = savedWeights(cell,qp);
+    }
+  }
+
+  double localm = 0.0;
   const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
   const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
-  int numWorksets = wsElNodeID.size();
 
   std::vector<double*> topoValues(nTopologies);
   Teuchos::Array<Teuchos::RCP<Topology> > topologies(nTopologies);
@@ -187,6 +194,11 @@ computeMeasure(std::string measureType,
     int numQPs    = weighted_measure[ws].dimension(1);
 
     std::string blockName = wsEBNames[ws];
+
+    // not all blocks are required to have all measures 
+    // (surface blocks, for example, don't have a mass)
+    if(measureModel->find(blockName) == measureModel->end()) continue;
+
     Teuchos::RCP<MeasureModel> blockMeasureModel = measureModel->at(blockName);
       
     for(int cell=0; cell<numCells; cell++){
@@ -243,6 +255,10 @@ computeConformalMeasure(std::string measureType,
                         double& measure, double* dmdp)
 /******************************************************************************/
 {
+TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParameter, std::endl <<
+"Error!  In ATO::OptimizationProblem setup: " << std::endl << 
+"Conformal integration not implemented for non-conformal geometry. " << std::endl);
+
   double localm = 0.0;
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
         wsElNodeID = disc->getWsElNodeID();
@@ -290,6 +306,11 @@ computeConformalMeasure(std::string measureType,
     dMdtopo.resize(numNodes);
 
     std::string blockName = wsEBNames[ws];
+
+    // not all blocks are required to have all measures 
+    // (surface blocks, for example, don't have a mass)
+    if(measureModel->find(blockName) == measureModel->end()) continue;
+
     Teuchos::RCP<MeasureModel> blockMeasureModel = measureModel->at(blockName);
 
  
@@ -387,6 +408,10 @@ double& v, double* dvdp)
 /******************************************************************************/
 {
 
+TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParameter, std::endl <<
+"Error!  In ATO::OptimizationProblem setup: " << std::endl << 
+"Conformal integration not implemented for non-conformal geometry. " << std::endl);
+
   Teuchos::RCP<Topology> topology = topologyStructs[0]->topology;
   double* p; topologyStructs[0]->dataVector->ExtractView(&p);
 
@@ -474,13 +499,27 @@ ComputeVolume(double* p, const double* dfdp,
               double& v, double threshhold, double minP)
 /******************************************************************************/
 {
-  double localv = 0.0;
-
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
     wsElNodeID = disc->getWsElNodeID();
+  int numWorksets = wsElNodeID.size();
+
+  if(isNonconformal){
+    for(int ws=0; ws<numWorksets; ws++){
+      Albany::StateArray& 
+      stateArrayRef = stateMgr->getStateArray(Albany::StateManager::ELEM, ws);
+      Albany::MDArray savedWeights = stateArrayRef["Gauss Weights"];
+      int numCells  = weighted_measure[ws].dimension(0);
+      int numQPs    = weighted_measure[ws].dimension(1);
+      for(int cell=0; cell<numCells; cell++)
+        for(int qp=0; qp<numQPs; qp++)
+          weighted_measure[ws](cell,qp) = savedWeights(cell,qp);
+    }
+  }
+
+  double localv = 0.0;
+
   const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
-  int numWorksets = wsElNodeID.size();
 
 
   for(int ws=0; ws<numWorksets; ws++){
@@ -524,6 +563,11 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
 
   Teuchos::RCP<TopologyArray> topologyArray = params->get<Teuchos::RCP<TopologyArray> >("Topologies");
 
+  const Teuchos::ParameterList& configSpec = params->sublist("Configuration");
+  isNonconformal = false;
+  if(configSpec.isType<bool>("Nonconformal"))
+    isNonconformal = configSpec.get<bool>("Nonconformal");
+
   Teuchos::ParameterList& aggParams = params->get<Teuchos::ParameterList>("Objective Aggregator");
   std::string derName = aggParams.get<std::string>("Output Derivative Name");
   std::string objName = aggParams.get<std::string>("Output Value Name");
@@ -539,9 +583,17 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
   refWeights.resize(numPhysSets);
   basisAtQPs.resize(numPhysSets);
   for(int i=0; i<numPhysSets; i++){
+
     cellTypes[i] = Teuchos::rcp(new shards::CellTopology (&meshSpecs[i]->ctd));
     Intrepid2::DefaultCubatureFactory<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > cubFactory;
-    cubatures[i] = cubFactory.create(*(cellTypes[i]), meshSpecs[i]->cubatureDegree);
+
+    // JR:  By incrementing the cubature degree by one, this creates a semantic coupling 
+    // to the projected integrator in Cogent.
+
+    int cubatureDegree = meshSpecs[i]->cubatureDegree;
+    if(isNonconformal) cubatureDegree += 1;  // non-conformal is degree n (vs 2n-1)
+   
+    cubatures[i] = cubFactory.create(*(cellTypes[i]), cubatureDegree);
     intrepidBasis[i] = Albany::getIntrepid2Basis(meshSpecs[i]->ctd);
 
     int wsSize   = meshSpecs[i]->worksetSize;
@@ -620,34 +672,51 @@ ATO::OptimizationProblem::InitTopOpt()
   const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
 
   int numWorksets = wsElNodeEqID.size();
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> jacobian;
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> jacobian_det;
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> coordCon;
-
   weighted_measure.resize(numWorksets);
-  for(int ws=0; ws<numWorksets; ws++){
 
-    int physIndex = wsPhysIndex[ws];
-    int numCells  = wsElNodeEqID[ws].size();
-    int numNodes  = wsElNodeEqID[ws][0].size();
-    int numDims   = cubatures[physIndex]->getDimension();
-    int numQPs    = cubatures[physIndex]->getNumPoints();
+  if(isNonconformal){
+    for(int ws=0; ws<numWorksets; ws++){
+      Albany::StateArray& 
+      stateArrayRef = stateMgr->getStateArray(Albany::StateManager::ELEM, ws);
+      Albany::MDArray savedWeights = stateArrayRef["Gauss Weights"];
 
-    coordCon.resize(numCells, numNodes, numDims);
-    jacobian.resize(numCells,numQPs,numDims,numDims);
-    jacobian_det.resize(numCells,numQPs);
-    weighted_measure[ws].resize(numCells,numQPs);
-
-    for(int cell=0; cell<numCells; cell++)
-      for(int node=0; node<numNodes; node++)
-        for(int dim=0; dim<numDims; dim++)
-          coordCon(cell,node,dim) = coords[ws][cell][node][dim];
-    Intrepid2::CellTools<double>::setJacobian(jacobian, refPoints[physIndex], 
-                                             coordCon, *(cellTypes[physIndex]));
-    Intrepid2::CellTools<double>::setJacobianDet(jacobian_det, jacobian);
-    Intrepid2::FunctionSpaceTools::computeCellMeasure<double>
-     (weighted_measure[ws], jacobian_det, refWeights[physIndex]);
- 
+      int physIndex = wsPhysIndex[ws];
+      int numCells  = wsElNodeEqID[ws].size();
+      int numQPs    = cubatures[physIndex]->getNumPoints();
+      weighted_measure[ws].resize(numCells,numQPs);
+      for(int cell=0; cell<numCells; cell++)
+        for(int qp=0; qp<numQPs; qp++)
+          weighted_measure[ws](cell,qp) = savedWeights(cell,qp);
+    }
+  } else {
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> jacobian;
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> jacobian_det;
+    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> coordCon;
+  
+    for(int ws=0; ws<numWorksets; ws++){
+  
+      int physIndex = wsPhysIndex[ws];
+      int numCells  = wsElNodeEqID[ws].size();
+      int numNodes  = wsElNodeEqID[ws][0].size();
+      int numDims   = cubatures[physIndex]->getDimension();
+      int numQPs    = cubatures[physIndex]->getNumPoints();
+  
+      coordCon.resize(numCells, numNodes, numDims);
+      jacobian.resize(numCells,numQPs,numDims,numDims);
+      jacobian_det.resize(numCells,numQPs);
+      weighted_measure[ws].resize(numCells,numQPs);
+  
+      for(int cell=0; cell<numCells; cell++)
+        for(int node=0; node<numNodes; node++)
+          for(int dim=0; dim<numDims; dim++)
+            coordCon(cell,node,dim) = coords[ws][cell][node][dim];
+      Intrepid2::CellTools<double>::setJacobian(jacobian, refPoints[physIndex], 
+                                               coordCon, *(cellTypes[physIndex]));
+      Intrepid2::CellTools<double>::setJacobianDet(jacobian_det, jacobian);
+      Intrepid2::FunctionSpaceTools::computeCellMeasure<double>
+       (weighted_measure[ws], jacobian_det, refWeights[physIndex]);
+   
+    }
   }
 
   overlapNodeMap = disc->getOverlapNodeMap();
@@ -729,9 +798,15 @@ create(const Teuchos::ParameterList& measureParams )
 
   std::string measureType = measureParams.get<std::string>("Linear Measure Type");
 
+  bool limitByBlock = false;
+  Teuchos::Array<std::string> blocks;
+  if(measureParams.isType<Teuchos::Array<std::string>>("Blocks")){
+    blocks = measureParams.get<Teuchos::Array<std::string>>("Blocks");
+    limitByBlock = true;
+  }
+
   Teuchos::RCP<BlockMeasureMap> blockMeasureMap = Teuchos::rcp(new BlockMeasureMap);
   
-
   Teuchos::ParameterList& blocksSpec = configParams.sublist("Element Blocks");
 
   int nBlocks = blocksSpec.get<int>("Number of Element Blocks");
@@ -739,6 +814,12 @@ create(const Teuchos::ParameterList& measureParams )
   for(int iblock=0; iblock<nBlocks; iblock++){
     const Teuchos::ParameterList& 
       blockSpec = blocksSpec.sublist(Albany::strint("Element Block", iblock));
+
+    std::string name = blockSpec.get<std::string>("Name");
+
+    if(limitByBlock){
+      if( find(blocks.begin(), blocks.end(),name) == blocks.end() ) continue;
+    }
     
     TEUCHOS_TEST_FOR_EXCEPTION( 
       blockSpec.isSublist("Material") && blockSpec.isSublist("Mixture"),
@@ -756,7 +837,6 @@ create(const Teuchos::ParameterList& measureParams )
         "Error in ATO::OptimizationProblem setup:  " << std::endl <<
         "  No 'Mixture' list or 'Material' list found." << std::endl);
 
-    std::string name = blockSpec.get<std::string>("Name");
 
     if( measureType == "Topology Weighted Integral" ){
       if( matType == "Mixture" ){
