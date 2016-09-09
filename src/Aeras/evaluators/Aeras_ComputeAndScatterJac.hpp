@@ -93,33 +93,36 @@ public:
   void evaluateFields(typename Traits::EvalData d); 
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-public:
   Teuchos::RCP<Tpetra_Vector> fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT;
   typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
   LocalMatrixType jacobian;
   RealType mc;
-  int neq, numn;
+  int neq;
 
   Kokkos::View<int***, PHX::Device> Index;
 
   struct ComputeAndScatterJac_buildMass_Tag{};
+
+  template<int numn>
   struct ComputeAndScatterJac_buildLaplace_Tag{};
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
   typedef Kokkos::RangePolicy<ExecutionSpace, ComputeAndScatterJac_buildMass_Tag> ComputeAndScatterJac_buildMass_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, ComputeAndScatterJac_buildLaplace_Tag> ComputeAndScatterJac_buildLaplace_Policy;
+
+  template<int numn>
+  using ComputeAndScatterJac_buildLaplace_Policy = Kokkos::RangePolicy<ExecutionSpace, ComputeAndScatterJac_buildLaplace_Tag<numn>>;
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const ComputeAndScatterJac_buildMass_Tag& tag, const int& i) const;
 
+  template<int numn>
   KOKKOS_INLINE_FUNCTION
-  void operator() (const ComputeAndScatterJac_buildLaplace_Tag& tag, const int& i) const;
+  void operator() (const ComputeAndScatterJac_buildLaplace_Tag<numn>& tag, const int& i) const;
 
 private:
   Kokkos::DynRankView<LO, PHX::Device> colT;
-  Kokkos::DynRankView<RealType, PHX::Device> KK, GR, GRKK, KTGRKK;
 
 #endif
 };

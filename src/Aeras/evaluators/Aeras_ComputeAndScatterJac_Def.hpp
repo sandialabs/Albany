@@ -137,9 +137,10 @@ operator() (const ComputeAndScatterJac_buildMass_Tag& tag, const int& cell) cons
 }
 
 template<typename Traits>
+template<int numn>
 KOKKOS_INLINE_FUNCTION
 void ComputeAndScatterJac<PHAL::AlbanyTraits::Jacobian, Traits>::
-operator() (const ComputeAndScatterJac_buildLaplace_Tag& tag, const int& cell) const{
+operator() (const ComputeAndScatterJac_buildLaplace_Tag<numn>& tag, const int& cell) const{
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
     for (int eq_col=0; eq_col<neq; eq_col++) {
       colT(cell, neq * node_col + eq_col) =  Index(cell,node_col,eq_col);
@@ -161,6 +162,7 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag& tag, const int& cell) c
   //component, and K^T is equivalent to K^{inverse}.
 
   //The biggest effort is to find how to insert values of the local matrix to the big matrix.
+  RealType KK[numn*3][numn*2] = {0};
   for (int node=0; node<this->numNodes; node++) {
     RealType lam = this->lambda_nodal(cell, node),
              th  = this->theta_nodal(cell, node);
@@ -169,13 +171,14 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag& tag, const int& cell) c
                    k21 =  cos(lam),
                    k22 = -sin(th)*sin(lam),
                    k32 =  cos(th);
-    KK(cell, node*3, node*2) = k11;
-    KK(cell, node*3, node*2+1) = k12;
-    KK(cell, node*3+1, node*2) = k21;
-    KK(cell, node*3+1, node*2+1) = k22;
-    KK(cell, node*3+2, node*2+1) = k32;
+    KK[node*3][node*2] = k11;
+    KK[node*3][node*2+1] = k12;
+    KK[node*3+1][node*2] = k21;
+    KK[node*3+1][node*2+1] = k22;
+    KK[node*3+2][node*2+1] = k32;
   }
 
+  RealType GR[numn*3][numn*3] = {0};
   for (int no = 0; no < this->numNodes; no++) {
     for (int mo = 0; mo< this->numNodes; mo++) {
       RealType val = 0;
@@ -183,27 +186,27 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag& tag, const int& cell) c
         val += this->GradBF(cell,no,qp,0)*this->GradBF(cell,mo,qp,0)*this->wBF(cell,qp,qp)
             +  this->GradBF(cell,no,qp,1)*this->GradBF(cell,mo,qp,1)*this->wBF(cell,qp,qp);
       }
-      GR(cell,no*3,mo*3) = val;
-      GR(cell,no*3+1,mo*3+1) = val;
-      GR(cell,no*3+2,mo*3+2) = val;
+      GR[no*3][mo*3] = val;
+      GR[no*3+1][mo*3+1] = val;
+      GR[no*3+2][mo*3+2] = val;
     }
   }
 
   //now let's multiply everything
+  RealType GRKK[numn*3][numn*2] = {0};
   for (int ii = 0; ii < 3*numn; ii++) {
     for (int jj = 0; jj < 2*numn; jj++) {
-      GRKK(cell,ii,jj) = 0;
       for(int cc = 0; cc < 3*numn; cc++) {
-        GRKK(cell,ii,jj) += GR(cell,ii,cc)*KK(cell,cc,jj);
+        GRKK[ii][jj] += GR[ii][cc]*KK[cc][jj];
       }
     }
   }
 
+  RealType KTGRKK[numn*2][numn*2] = {0};
   for(int ii = 0; ii < 2*numn; ii++) {
     for (int jj = 0; jj < 2*numn; jj++) {
-      KTGRKK(cell,ii,jj) = 0;
       for(int cc = 0; cc < 3*numn; cc++) {
-        KTGRKK(cell,ii,jj) += KK(cell,cc,ii)*GRKK(cell,cc,jj);
+        KTGRKK[ii][jj] += KK[cc][ii]*GRKK[cc][jj];
       }
     }
   }
@@ -243,12 +246,12 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag& tag, const int& cell) c
             if (dim == 0) {
               //filling dependency on u values
               const int col1_ = Index(cell, m, n);
-              RealType val = this->sqrtHVcoef * KTGRKK(cell,node*2,m*2);
+              RealType val = this->sqrtHVcoef * KTGRKK[node*2][m*2];
               jacobian.sumIntoValues(rowT, &col1_, 1, &val, false, true);
 
               //filling dependency on v values, so, it is eqn n+1
               const int col2_ = Index(cell, m, n+1);
-              val = this->sqrtHVcoef * KTGRKK(cell,node*2,m*2+1);
+              val = this->sqrtHVcoef * KTGRKK[node*2][m*2+1];
               jacobian.sumIntoValues(rowT, &col2_, 1, &val, false, true);
               JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col2_,1), Teuchos::arrayView(&val,1));
             }
@@ -257,12 +260,12 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag& tag, const int& cell) c
             if (dim == 1) {
               //filling dependencies on u values. The current eqn is n, so, we need to look at n-1 level IDs.
               const int col1_ = Index(cell, m, n-1);
-              RealType val = this->sqrtHVcoef * KTGRKK(cell,node*2+1,m*2);
+              RealType val = this->sqrtHVcoef * KTGRKK[node*2+1][m*2];
               jacobian.sumIntoValues(rowT, &col1_, 1, &val, false, true);
 
               //filling dependencies on v values.
               const int col2_ = Index(cell, m, n);
-              val = this->sqrtHVcoef * KTGRKK(cell,node*2+1,m*2+1);
+              val = this->sqrtHVcoef * KTGRKK[node*2+1][m*2+1];
               jacobian.sumIntoValues(rowT, &col2_, 1, &val, false, true);
             }
           }
@@ -608,19 +611,47 @@ evaluateFields(typename Traits::EvalData workset)
 
   bool buildLaplace = ( workset.j_coeff == 0.0 )&&( workset.m_coeff == 0.0 )&&( workset.n_coeff == 1.0 );
   if ( buildLaplace ) {
-    // Temporary data structures
-    // FIXME: This is a lot of memory! Needs to be fixed.
-    numn = this->numNodes;
-    colT   = Kokkos::DynRankView<LO, PHX::Device>("colT", workset.numCells, neq*numn);
-    KK     = Kokkos::DynRankView<RealType, PHX::Device>("KK", workset.numCells, numn*3, numn*2);
-    GR     = Kokkos::DynRankView<RealType, PHX::Device>("GR", workset.numCells, numn*3, numn*3);
-    GRKK   = Kokkos::DynRankView<RealType, PHX::Device>("GRKK", workset.numCells, numn*3, numn*2);
-    KTGRKK = Kokkos::DynRankView<RealType, PHX::Device>("KTGRKK", workset.numCells, numn*2, numn*2);
-    Kokkos::deep_copy(KK, 0.0);
-    Kokkos::deep_copy(GR, 0.0);
+    // Temporary data structure
+    colT   = Kokkos::DynRankView<LO, PHX::Device>("colT", workset.numCells, neq*this->numNodes);
 
-    Kokkos::parallel_for(ComputeAndScatterJac_buildLaplace_Policy(0,workset.numCells),*this);
-    cudaCheckError();
+    // numNodes must be known at compile time in order to construct static arrays inside kernel
+    switch (this->numNodes) {
+      case 9: {
+        Kokkos::parallel_for(ComputeAndScatterJac_buildLaplace_Policy<9>(0,workset.numCells),*this);
+        cudaCheckError();
+        break;
+      }
+      case 16: {
+        Kokkos::parallel_for(ComputeAndScatterJac_buildLaplace_Policy<16>(0,workset.numCells),*this);
+        cudaCheckError();
+        break;
+      }
+      case 25: {
+        Kokkos::parallel_for(ComputeAndScatterJac_buildLaplace_Policy<25>(0,workset.numCells),*this);
+        cudaCheckError();
+        break;
+      }
+      case 36: {
+        Kokkos::parallel_for(ComputeAndScatterJac_buildLaplace_Policy<36>(0,workset.numCells),*this);
+        cudaCheckError();
+        break;
+      }
+      case 49: {
+        Kokkos::parallel_for(ComputeAndScatterJac_buildLaplace_Policy<49>(0,workset.numCells),*this);
+        cudaCheckError();
+        break;
+      }
+      case 64: {
+        Kokkos::parallel_for(ComputeAndScatterJac_buildLaplace_Policy<64>(0,workset.numCells),*this);
+        cudaCheckError();
+        break;
+      }
+      default: {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, 
+          "ComputeAndScatterJac_buildLaplace Kokkos kernel not constructed for this case" << std::endl);
+        break;
+      }
+    }
   }
 
 #endif
