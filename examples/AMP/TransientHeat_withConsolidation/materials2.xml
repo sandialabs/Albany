@@ -1,5 +1,8 @@
 <ParameterList>
 
+  <!-- Specify if you want to compute consolidation -->
+  <Parameter name="Compute Consolidation" type="bool" value="true" />
+
   <ParameterList name="ElementBlocks">
 
     <ParameterList name="Powder_Region">
