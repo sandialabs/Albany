@@ -29,18 +29,41 @@ SimAdapt::SimAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                    const Teuchos::RCP<ParamLib>& paramLib_,
                    const Albany::StateManager& StateMgr_,
                    const Teuchos::RCP<const Teuchos_Comm>& commT_):
-  AbstractAdapterT(params_, paramLib_, StateMgr_, commT_)
+  AbstractAdapterT(params_, paramLib_, StateMgr_, commT_),
+  out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
   errorBound = params_->get<double>("Error Bound", 0.1);
   /* BRD */
   Simmetrix_numLayers = -1;
-  std::cout << "Pid = " << getpid() << "\n";
+  Simmetrix_currentLayer = 0;
+  Simmetrix_model = 0;
+  *out << "Pid = " << getpid() << std::endl;
   sleep(30.0);
   /* BRD */
 }
 
 bool SimAdapt::queryAdaptationCriteria(int iteration)
 {
+  /* BRD */
+  if (!Simmetrix_model) {
+    Teuchos::RCP<Albany::AbstractDiscretization> disc =
+      state_mgr_.getDiscretization();
+    Teuchos::RCP<Albany::SimDiscretization> sim_disc =
+      Teuchos::rcp_dynamic_cast<Albany::SimDiscretization>(disc);
+    Teuchos::RCP<Albany::APFMeshStruct> apf_ms =
+      sim_disc->getAPFMeshStruct();
+    apf::Mesh* apf_m = apf_ms->getMesh();
+    apf::MeshSIM* apf_msim = dynamic_cast<apf::MeshSIM*>(apf_m);
+    pParMesh sim_pm = apf_msim->getMesh();
+    Simmetrix_model =  M_model(sim_pm);
+    computeLayerTimes();
+  }
+  double currentTime = param_lib_->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+  if (currentTime >= Simmetrix_layerTimes[Simmetrix_currentLayer]) {
+    *out << "Need to remesh and add next layer" << std::endl;
+    return true;
+  }
+  /* BRD */
   std::string strategy = adapt_params_->get<std::string>("Remesh Strategy", "Step Number");
   if (strategy == "None")
     return false;
@@ -76,11 +99,12 @@ bool SimAdapt::queryAdaptationCriteria(int iteration)
 /* BRD */
 void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double sliceThickness)
 {
-  //Sim_logOn("meshLog.lua");
   pACase mcase = MS_newMeshCase(model);
   MS_setMeshSize(mcase,GM_domain(model),1,10.0*sliceThickness,0);  // at least an order of magnitude more than slice thickness
   MS_setMeshCurv(mcase,GM_domain(model),2,0.025);
   MS_setMinCurvSize(mcase,GM_domain(model),2,0.0025);
+  MS_setSurfaceShapeMetric(mcase, GM_domain(model),ShapeMetricType_AspectRatio, 25);
+  MS_setVolumeShapeMetric(mcase, GM_domain(model), ShapeMetricType_AspectRatio, 25);
 
   // Slice thickness
   // Bracket = 0.0003/0.0001 - real part but way too slow
@@ -102,10 +126,12 @@ void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double sl
         while (gf = static_cast<pGFace>(PList_next(regFaces,&fiter))) {
           if (GEN_numNativeIntAttribute(gf,"SimLayer")==1) {
             GEN_nativeIntAttribute(gf,"SimLayer",&layer);
+            /*
             if (layer==currentLayer+1) {
               MS_limitSurfaceMeshModification(mcase,gf,1);
               MS_useDiscreteGeometryMesh(mcase,gf,1);
             }
+            */
           }
         }
         PList_delete(regFaces);
@@ -115,8 +141,7 @@ void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double sl
     }
   }
   GRIter_delete(regions);
-  //PM_write(mesh, "beforeSurfaceMesh.sms", sthreadDefault, 0);
-
+  
   pSurfaceMesher sm = SurfaceMesher_new(mcase,mesh);
   // SurfaceMesher_setParamForDiscrete(sm, 1);
   SurfaceMesher_execute(sm,0);
@@ -124,11 +149,11 @@ void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double sl
   if (currentLayer==1)
     PM_setTotalNumParts(mesh,PMU_size());
   pVolumeMesher vm  = VolumeMesher_new(mcase,mesh);
+  VolumeMesher_setEnforceSize(vm, 1);
   VolumeMesher_execute(vm,0);
   VolumeMesher_delete(vm);
 
   MS_deleteMeshCase(mcase);
-  //Sim_logOff();
 }
 
 void adaptMesh2(pGModel model,pParMesh mesh,int currentLayer,double sliceThickness,pPList flds)
@@ -188,10 +213,10 @@ void adaptMesh2(pGModel model,pParMesh mesh,int currentLayer,double sliceThickne
   MS_deleteMeshCase(mcase);
 }
 
-void addNextLayer(pParMesh sim_pm,int nextLayer,int nSolFlds,pPList flds) {
-  double sliceThickness;
+void addNextLayer(pParMesh sim_pm,double sliceThickness,int nextLayer,int nSolFlds,pPList flds) {
+  //double sliceThickness;
   pGModel model = M_model(sim_pm);
-  GIP_nativeDoubleAttribute(GM_part(model),"SimLayerThickness",&sliceThickness);
+  //GIP_nativeDoubleAttribute(GM_part(model),"SimLayerThickness",&sliceThickness);
   
   // Collect the layer 0 regions
   GRIter regions = GM_regionIter(model);
@@ -211,15 +236,18 @@ void addNextLayer(pParMesh sim_pm,int nextLayer,int nSolFlds,pPList flds) {
   if ( nextLayer > maxLayer )
     return;
 
+  // output stream
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  
   PM_localizePartiallyConnected(sim_pm);
   //PM_merge(sim_pm);
   if (nextLayer>1) {
-    std::cout << "Combine layer " << nextLayer-1 << "\n";
+    *out << "Combine layer " << nextLayer-1 << "\n";
     pMesh oneMesh = PM_numParts(sim_pm) == 1 ? PM_mesh(sim_pm, 0) : 0;
     DM_undoSlicing(combinedRegions,nextLayer-1,oneMesh);
   }
   PList_clear(combinedRegions);
-  std::cout << "Mesh top layer\n";
+  *out << "Mesh top layer\n";
   meshCurrentLayerOnly(model,sim_pm,nextLayer,sliceThickness);
   /*
   if (nextLayer>1) {
@@ -230,7 +258,7 @@ void addNextLayer(pParMesh sim_pm,int nextLayer,int nSolFlds,pPList flds) {
   if (flds) {
     // Add temperature and residual fields to top layer
     // Add temperature HACK fields to top layer
-    std::cout << "Add field to top layer\n";
+    *out << "Add field to top layer\n";
     pField sim_sol_flds[3] = {0,0,0};  // at most 3 - see calling routine
     int i;
     for (i=0;i<nSolFlds;i++) {
@@ -243,7 +271,7 @@ void addNextLayer(pParMesh sim_pm,int nextLayer,int nSolFlds,pPList flds) {
     pMEntitySet topLayerVerts = MEntitySet_new(PM_mesh(sim_pm,0));
     regions = GM_regionIter(model);
     pVertex mv;
-    std::cout << "Collect new mesh verts\n";
+    *out << "Collect new mesh verts\n";
     while (gr1=GRIter_next(regions)) {
       if (GEN_numNativeIntAttribute(gr1,"SimLayer")==1) {
         GEN_nativeIntAttribute(gr1,"SimLayer",&layer);
@@ -260,7 +288,7 @@ void addNextLayer(pParMesh sim_pm,int nextLayer,int nSolFlds,pPList flds) {
     pPList unmapped = PList_new();
     pDofGroup dg;
     MESIter viter = MESIter_iter(topLayerVerts);
-    std::cout << "Create fields\n";
+    //*out << "Create fields\n";
     while ( mv = reinterpret_cast<pVertex>(MESIter_next(viter)) ) {
       dg = Field_entDof(sim_sol_flds[0],mv,0);
       if (!dg) {
@@ -279,7 +307,7 @@ void addNextLayer(pParMesh sim_pm,int nextLayer,int nSolFlds,pPList flds) {
     int nc2 = (sim_res_fld ? Field_numComp(sim_res_fld) : 0);
     int nc3 = (sim_hak_fld ? Field_numComp(sim_hak_fld) : 0);
     void *iter = 0;
-    std::cout << "Set field values\n";
+    //*out << "Set field values\n";
     while (vptr = PList_next(unmapped,&iter)) {
       ent = reinterpret_cast<pEntity>(vptr);
       for(i=0;i<nSolFlds;i++) {
@@ -306,9 +334,9 @@ void addNextLayer(pParMesh sim_pm,int nextLayer,int nSolFlds,pPList flds) {
   return;
 }
 
-void SimAdapt::computeLayerTimes(SGModel *model) {
+void SimAdapt::computeLayerTimes() {
 
-  GRIter regions = GM_regionIter(model);
+  GRIter regions = GM_regionIter(Simmetrix_model);
   pGRegion gr;
   int i, layer, maxLayer = -1;
   while (gr=GRIter_next(regions)) {
@@ -324,14 +352,14 @@ void SimAdapt::computeLayerTimes(SGModel *model) {
   for(i=0;i<Simmetrix_numLayers;i++)
     Simmetrix_layerTimes[i] = 0.0;
 
-  double ls = 85.;  // laser speed
-  double tw = 0.013;   // track width
-  if (GIP_numNativeDoubleAttribute(GM_part(model),"speed")==1)
-    GIP_nativeDoubleAttribute(GM_part(model),"speed",&ls);
-  if (GIP_numNativeDoubleAttribute(GM_part(model),"width")==1)
-    GIP_nativeDoubleAttribute(GM_part(model),"width",&tw);
-  std::cout << "Laser speed " << ls << "\n";
-  std::cout << "Track width " << tw << "\n";
+  double ls = 85.0; // 0.070995;  // laser speed
+  double tw = 0.013; // 0.00013;   // track width
+  if (GIP_numNativeDoubleAttribute(GM_part(Simmetrix_model),"speed")==1)
+    GIP_nativeDoubleAttribute(GM_part(Simmetrix_model),"speed",&ls);
+  if (GIP_numNativeDoubleAttribute(GM_part(Simmetrix_model),"width")==1)
+    GIP_nativeDoubleAttribute(GM_part(Simmetrix_model),"width",&tw);
+  *out << "Laser speed " << ls << "\n";
+  *out << "Track width " << tw << "\n";
 
   GRIter_reset(regions);
   while (gr=GRIter_next(regions)) {
@@ -381,9 +409,6 @@ bool SimAdapt::adaptMesh()
   /* dig through all the abstrations to obtain pointers
      to the various structures needed */
   static int callcount = 0;
-  /* BRD */
-  static int Simmetrix_currentLayer = 0;
- /* BRD */
   Teuchos::RCP<Albany::AbstractDiscretization> disc =
     state_mgr_.getDiscretization();
   Teuchos::RCP<Albany::SimDiscretization> sim_disc =
@@ -414,9 +439,18 @@ bool SimAdapt::adaptMesh()
   apf::writeVtkFiles(s.c_str(), apf_m);
 #endif
   /* create the Simmetrix adapter */
-  pMSAdapt adapter = MSA_new(sim_pm, 1);
   /* BRD */
-  MSA_setSizeGradation(adapter,1,0.6);  // no broomsticks allowed
+  pPartitionOpts popts = PM_newPartitionOpts();
+  PartitionOpts_setAdaptive(popts, 1);
+  PM_partition(sim_pm, popts, sthreadDefault, 0);
+  PartitionOpts_delete(popts);
+  //pMSAdapt adapter = MSA_new(sim_pm, 1);
+  //pGModel model = M_model(sim_pm);
+  pACase mcase = MS_newMeshCase(Simmetrix_model);
+  MS_setMeshCurv(mcase,GM_domain(Simmetrix_model),2,0.025);
+  MS_setMinCurvSize(mcase,GM_domain(Simmetrix_model),2,0.0025);
+  pMSAdapt adapter = MSA_createFromCase(mcase,sim_pm);
+  MSA_setSizeGradation(adapter,1,0.3);  // no broomsticks allowed
   /* BRD */
   /* copy the size field from APF to the Simmetrix adapter */
   apf::MeshEntity* v;
@@ -425,6 +459,8 @@ bool SimAdapt::adaptMesh()
   while ((v = apf_m->iterate(it))) {
     double size1 = apf::getScalar(size_fld, v, 0);
     double size = std::min(max_size, size1);
+    if (size < 0.01)
+      size = 0.01;
     MSA_setVertexSize(adapter, (pVertex) v, size);
   }
   apf_m->end(it);
@@ -451,16 +487,11 @@ bool SimAdapt::adaptMesh()
   /* BRD */
 
   /* BRD */
-  pGModel model = M_model(sim_pm);
-  GRIter regions = GM_regionIter(model);
+  GRIter regions = GM_regionIter(Simmetrix_model);
   pGRegion gr1;
 
-  // Calculate layer times
-  if (Simmetrix_numLayers < 0)
-    computeLayerTimes(model);
-
   double sliceThickness;
-  GIP_nativeDoubleAttribute(GM_part(model),"SimLayerThickness",&sliceThickness);
+  GIP_nativeDoubleAttribute(GM_part(Simmetrix_model),"SimLayerThickness",&sliceThickness);
 
   // Constrain the top face & reset sizes
   int layer;
@@ -507,14 +538,10 @@ bool SimAdapt::adaptMesh()
 #endif
   /* run the adapter */
   pProgress progress = Progress_new();
-  /* BRD */
+  /* BRD */ 
   MSA_setPrebalance(adapter, 0);
   /* BRD */
-  //PM_write(sim_pm,"debugMesh.sms",sthreadDefault,0);
   MSA_adapt(adapter, progress);
-  pPartitionOpts popts = PM_newPartitionOpts();
-  PartitionOpts_setAdaptive(popts,1);
-  PM_partition(sim_pm,popts,sthreadDefault,0);
   Progress_delete(progress);
   MSA_delete(adapter);
 #ifdef SIMDEBUG
@@ -531,16 +558,16 @@ bool SimAdapt::adaptMesh()
 
   /* BRD */
   double currentTime = param_lib_->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-  std::cout << "Current time = " << currentTime << "\n";
   if (currentTime >= Simmetrix_layerTimes[Simmetrix_currentLayer]) {
     char meshFile[80];
-    std::cout << "Adding layer " << Simmetrix_currentLayer+1 << "\n";
-    addNextLayer(sim_pm,Simmetrix_currentLayer+1,apf_ms->num_time_deriv+1,sim_fld_lst);
+    *out << "Adding layer " << Simmetrix_currentLayer+1 << "\n";
+    addNextLayer(sim_pm,sliceThickness,Simmetrix_currentLayer+1,apf_ms->num_time_deriv+1,sim_fld_lst);
     sprintf(meshFile, "layerMesh%d.sms", Simmetrix_currentLayer+1);
-    //PM_write(sim_pm, meshFile, sthreadDefault, 0);
+    PM_write(sim_pm, meshFile, sthreadDefault, 0);
     Simmetrix_currentLayer++;
   }
   PList_delete(sim_fld_lst);
+  MS_deleteMeshCase(mcase);
   /* BRD */
 
   /* run APF verification on the resulting mesh */

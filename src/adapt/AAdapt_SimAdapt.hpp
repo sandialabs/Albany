@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "AAdapt_AbstractAdapterT.hpp"
+#include "Teuchos_VerboseObject.hpp"
 /* BRD */
 class SGModel;
 /* BRD */
@@ -30,12 +31,17 @@ public:
       delete []  Simmetrix_layerTimes;
   };
 protected:
-  void computeLayerTimes(SGModel *model);
+  void computeLayerTimes();
   double *Simmetrix_layerTimes;
   int    Simmetrix_numLayers;
+  int    Simmetrix_currentLayer;
+  SGModel *Simmetrix_model;
 /* BRD */
 private:
   double errorBound;
+  
+  // output stream
+  Teuchos::RCP<Teuchos::FancyOStream> out;
 };
 
 }
