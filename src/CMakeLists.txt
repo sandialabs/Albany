@@ -975,13 +975,6 @@ IF (ALBANY_LCM)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} LCM)
 ENDIF()
 
-IF (ALBANY_CTM)
-  # CTM is inteded to be a demonstration of using Albany as a library, not
-  # adding a library to Albany. Thus, we do not set an additional library in
-  # the ALBANY_LIBRARIES list here.
-  add_subdirectory(CTM)
-ENDIF()
-
 # Can remove this once rebalance is in Trilnos again
 IF(ALBANY_STK_REBALANCE)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanySTKRebalance)
@@ -989,6 +982,14 @@ endif()
 
 # Repeat libraries twice to catch circular dependencies
 SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
+
+# this needs to come after the definition of ALBANY_LIBRARIES
+IF (ALBANY_CTM)
+  # CTM is inteded to be a demonstration of using Albany as a library, not
+  # adding a library to Albany. Thus, we do not set an additional library in
+  # the ALBANY_LIBRARIES list here.
+  add_subdirectory(CTM)
+ENDIF()
 
 MESSAGE("-- Albany Executables to link: ${ALBANY_EXECUTABLES}")
 
