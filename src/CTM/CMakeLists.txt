@@ -1,0 +1,2 @@
+add_executable(CoupledThermoMechanicsSolver CoupledThermoMechanicsSolver.cpp)
+target_link_libraries(CoupledThermoMechanicsSolver ${ALBANY_LIBRARIES})
