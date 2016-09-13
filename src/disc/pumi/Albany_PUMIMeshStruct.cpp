@@ -62,24 +62,17 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params,
     const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
-  PCU_Comm_Init();
   params->validateParameters(
       *(PUMIMeshStruct::getValidDiscretizationParameters()), 0);
 
   outputFileName = params->get<std::string>("PUMI Output File Name", "");
   outputInterval = params->get<int>("PUMI Write Interval", 1); // write every time step default
 
-  gmi_register_mesh();
-
   std::string model_file;
   if(params->isParameter("Mesh Model Input File Name"))
     model_file = params->get<std::string>("Mesh Model Input File Name");
 
 #ifdef SCOREC_SIMMODEL
-  Sim_readLicenseFile(0);
-  gmi_sim_start();
-  gmi_register_sim();
-
   if (params->isParameter("Acis Model Input File Name"))
     model_file = params->get<std::string>("Parasolid Model Input File Name");
 
@@ -170,11 +163,6 @@ Albany::PUMIMeshStruct::~PUMIMeshStruct()
   setMesh(0);
   if (model)
     gmi_destroy(model);
-  PCU_Comm_Free();
-#ifdef SCOREC_SIMMODEL
-  gmi_sim_stop();
-  Sim_unregisterAllKeys();
-#endif
 }
 
 Albany::AbstractMeshStruct::msType

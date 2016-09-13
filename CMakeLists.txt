@@ -793,14 +793,6 @@ ELSE()
   SET(ALBANY_AMP FALSE)
 ENDIF()
 
-# RPI APF mesh interface
-IF (ALBANY_APF)
-  ADD_DEFINITIONS(-DALBANY_APF)
-  MESSAGE("-- APF       is Enabled, compiling with -DALBANY_APF")
-ELSE()
-  MESSAGE("-- APF       is NOT Enabled.")
-ENDIF()
-
 
 # Set optional build of MOR (Model Order Reduction) defaults to OFF
 OPTION(ENABLE_MOR "Flag to turn on MOR Source code" OFF)
@@ -881,6 +873,14 @@ IF(ENABLE_SCOREC)
 ELSE()
   MESSAGE(STATUS "SCOREC    is NOT Enabled.")
   SET(ALBANY_SCOREC FALSE)
+ENDIF()
+
+# RPI APF mesh interface
+IF (ALBANY_APF)
+  ADD_DEFINITIONS(-DALBANY_APF)
+  MESSAGE("-- APF       is Enabled, compiling with -DALBANY_APF")
+ELSE()
+  MESSAGE("-- APF       is NOT Enabled.")
 ENDIF()
 
 # ParaView's Catalyst CoProcessing package

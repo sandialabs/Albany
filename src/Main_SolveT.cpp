@@ -45,6 +45,10 @@
 
 #include "Kokkos_Core.hpp"
 
+#ifdef ALBANY_APF
+#include "Albany_APFMeshStruct.hpp"
+#endif
+
 // Global variable that denotes this is the Tpetra executable
 bool TpetraBuild = true;
 const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
@@ -249,6 +253,10 @@ int main(int argc, char *argv[]) {
 
     }
 
+#endif
+
+#ifdef ALBANY_APF
+  Albany::APFMeshStruct::initialize_libraries(&argc, &argv);
 #endif
 
   using Teuchos::RCP;
@@ -504,6 +512,10 @@ int main(int argc, char *argv[]) {
   if (!success) status+=10000;
 
   Teuchos::TimeMonitor::summarize(*out,false,true,false/*zero timers*/);
+
+#ifdef ALBANY_APF
+  Albany::APFMeshStruct::finalize_libraries();
+#endif
 
   Kokkos::finalize_all();
 
