@@ -772,20 +772,6 @@ ELSE()
   SET(ALBANY_HYDRIDE FALSE)
 ENDIF()
 
-# Set optional dependency on GOAL, defaults to Disabled
-OPTION(ENABLE_GOAL "Flag to turn on goal-oriented error estimation source code" OFF)
-IF (ENABLE_GOAL)
-  IF(NOT ENABLE_SCOREC)
-    MESSAGE(FATAL_ERROR "\nError: GOAL requires ENABLE_SCOREC to be ON\n")
-  ENDIF()
-  ADD_DEFINITIONS(-DALBANY_GOAL)
-  MESSAGE("-- GOAL      is Enabled, compiling with -DALBANY_GOAL")
-  SET(ALBANY_GOAL TRUE)
-ELSE()
-  MESSAGE("-- GOAL      is NOT Enabled.")
-  SET(ALBANY_GOAL FALSE)
-ENDIF()
-
 # Set optional dependency on AMP, defaults to Disabled
 OPTION(ENABLE_AMP "Flag to turn on AMP (additive manufacturing processes) source code" OFF)
 OPTION(ENABLE_AMP_ADD_LAYER "Flag to turn on AMP ADD LAYER (additive manufacturing processes) source code" OFF)
