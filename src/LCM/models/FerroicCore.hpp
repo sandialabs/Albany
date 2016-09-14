@@ -172,10 +172,10 @@ computeResidual(
 //! Nonlinear Solver (NLS) class for the domain switching / phase transition model.
 //  Unknowns: transition rates
 //
-template<typename EvalT>
+template<typename EvalT, Intrepid2::Index M = FM::MAX_TRNS>
 class DomainSwitching:
     public Intrepid2::Function_Base<
-    DomainSwitching<EvalT>, typename EvalT::ScalarT>
+    DomainSwitching<EvalT, M>, typename EvalT::ScalarT, M>
 {
   using ArgT = typename EvalT::ScalarT;
 
@@ -192,8 +192,11 @@ public:
       Intrepid2::Vector<ArgT,THREE_D>    const & E,
       RealType dt);
 
-  static constexpr char const * const NAME =
-      "Domain Switching Nonlinear System";
+  static constexpr char const * const
+  NAME{"Domain Switching Nonlinear System"};
+
+  using Base = Intrepid2::Function_Base<
+      DomainSwitching<EvalT, M>, typename EvalT::ScalarT, M>;
 
   //! Default implementation of value function.
   template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
