@@ -10,8 +10,8 @@
 #include "Sacado_ParameterRegistration.hpp"
 
 const int MAX_MESH_REGIONS = 30;
-const int MAX_POINT_CHARGES = 10;
-const int MAX_CLOUD_CHARGES = 10;
+const int MAX_POINT_CHARGES = 500;
+const int MAX_CLOUD_CHARGES = 500;
 
 template<typename EvalT, typename Traits>
 QCAD::PoissonSource<EvalT, Traits>::
