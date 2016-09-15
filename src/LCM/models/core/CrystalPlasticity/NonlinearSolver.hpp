@@ -19,8 +19,7 @@ namespace CP
 	template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
 	class ResidualSlipNLS:
 			public Intrepid2::Function_Base<
-			ResidualSlipNLS<NumDimT, NumSlipT, EvalT>,
-			typename EvalT::ScalarT, NumSlipT>
+			ResidualSlipNLS<NumDimT, NumSlipT, EvalT>, typename EvalT::ScalarT>
 	{
 		using ScalarT = typename EvalT::ScalarT;
 
@@ -37,12 +36,8 @@ namespace CP
 				Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
 				RealType dt);
 
-		static constexpr char const * const
-		NAME{"Crystal Plasticity Nonlinear System"};
-
-	  using Base = Intrepid2::Function_Base<
-	      ResidualSlipNLS<NumDimT, NumSlipT, EvalT>,
-	      typename EvalT::ScalarT, NumSlipT>;
+		static constexpr char const * const NAME =
+				"Crystal Plasticity Nonlinear System";
 
 		//! Default implementation of value.
 		template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
@@ -102,8 +97,7 @@ namespace CP
 	template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
 	class ResidualSlipHardnessNLS:
 			public Intrepid2::Function_Base<
-			ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>,
-			typename EvalT::ScalarT, NumSlipT>
+			ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>, typename EvalT::ScalarT>
 	{
 		using ScalarT = typename EvalT::ScalarT;
 
@@ -120,12 +114,8 @@ namespace CP
 				Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
 				RealType dt);
 
-		static constexpr char const * const
-		NAME{"Slip and Hardness Residual Nonlinear System"};
-
-		using Base = Intrepid2::Function_Base<
-	      ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>,
-	      typename EvalT::ScalarT, NumSlipT>;
+		static constexpr char const * const NAME =
+				"Slip and Hardness Residual Nonlinear System";
 
 		//! Default implementation of value.
 		template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>

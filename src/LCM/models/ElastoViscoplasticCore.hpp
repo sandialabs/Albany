@@ -17,10 +17,9 @@ static constexpr Intrepid2::Index MAX_DIM = 3;
 //
 //! Nonlinear Solver (NLS) class for the ElastoViscoplastic model
 //
-template<typename EvalT, Intrepid2::Index M = MAX_DIM>
+template<typename EvalT>
 class ElastoViscoplasticNLS:
-    public Intrepid2::Function_Base<ElastoViscoplasticNLS<EvalT, M>,
-    typename EvalT::ScalarT, M>
+    public Intrepid2::Function_Base<ElastoViscoplasticNLS<EvalT>, typename EvalT::ScalarT>
 {
   using S = typename EvalT::ScalarT;
 
@@ -56,11 +55,8 @@ public:
       S p,
       Intrepid2::Tensor<S, MAX_DIM> const & s);
 
-  static constexpr char const * const
-  NAME{"ElastoViscoplastic Nonlinear System"};
-
-  using Base = Intrepid2::Function_Base<ElastoViscoplasticNLS<EvalT, M>,
-      typename EvalT::ScalarT, M>;
+  static constexpr char const * const NAME =
+      "ElastoViscoplastic Nonlinear System";
 
   //! Default implementation of value.
   template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>

@@ -113,9 +113,9 @@ init(Workset &workset,
 //
 // J2 nonlinear system
 //
-template<typename EvalT, Intrepid2::Index M = 1>
+template<typename EvalT>
 class J2NLS:
-    public Intrepid2::Function_Base<J2NLS<EvalT, M>, typename EvalT::ScalarT, M>
+    public Intrepid2::Function_Base<J2NLS<EvalT>, typename EvalT::ScalarT>
 {
   using S = typename EvalT::ScalarT;
 
@@ -138,18 +138,19 @@ public:
   {
   }
 
+  static constexpr Intrepid2::Index
+  DIMENSION{1};
+
   static constexpr
   char const * const
   NAME{"J2 NLS"};
-
-  using Base = Intrepid2::Function_Base<J2NLS<EvalT, M>, typename EvalT::ScalarT, M>;
 
   // Default value.
   template<typename T, Intrepid2::Index N>
   T
   value(Intrepid2::Vector<T, N> const & x)
   {
-    return Base::value(*this, x);
+    return Intrepid2::Function_Base<J2NLS<EvalT>, S>::value(*this, x);
   }
 
   // Explicit gradient.
@@ -161,7 +162,7 @@ public:
     Intrepid2::Index const
     dimension = x.get_dimension();
 
-    assert(dimension == Base::DIMENSION);
+    assert(dimension == DIMENSION);
 
     // Variables that potentially have Albany::Traits sensitivity
     // information need to be handled by the peel functor so that
@@ -204,7 +205,7 @@ public:
   Intrepid2::Tensor<T, N>
   hessian(Intrepid2::Vector<T, N> const & x)
   {
-    return Base::hessian(*this, x);
+    return Intrepid2::Function_Base<J2NLS<EvalT>, S>::hessian(*this, x);
   }
 
   // Constants.

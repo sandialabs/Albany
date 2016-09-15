@@ -9,8 +9,8 @@
 //
 // Define nonlinear system for EV with a Gurson failure surface
 //
-template<typename EvalT, Intrepid2::Index M>
-EV::ElastoViscoplasticNLS<EvalT, M>::ElastoViscoplasticNLS(
+template<typename EvalT>
+EV::ElastoViscoplasticNLS<EvalT>::ElastoViscoplasticNLS(
       RealType dt,
       RealType kw,
       RealType en,
@@ -70,19 +70,20 @@ EV::ElastoViscoplasticNLS<EvalT, M>::ElastoViscoplasticNLS(
   num_dim_ = s_.get_dimension();
 }
 
-template<typename EvalT, Intrepid2::Index M>
+template<typename EvalT>
 template<typename T, Intrepid2::Index N>
 T
-EV::ElastoViscoplasticNLS<EvalT, M>::value(
+EV::ElastoViscoplasticNLS<EvalT>::value(
     Intrepid2::Vector<T, N> const & x)
 {
-  return Base::value(*this,x);
+  return
+      Intrepid2::Function_Base<ElastoViscoplasticNLS<EvalT>, S>::value(*this,x);
 }
 
-template<typename EvalT, Intrepid2::Index M>
+template<typename EvalT>
 template<typename T, Intrepid2::Index N>
 Intrepid2::Vector<T, N>
-EV::ElastoViscoplasticNLS<EvalT, M>::gradient(
+EV::ElastoViscoplasticNLS<EvalT>::gradient(
     Intrepid2::Vector<T, N> const & x) const
 {
   auto const
@@ -95,11 +96,12 @@ EV::ElastoViscoplasticNLS<EvalT, M>::gradient(
 }
 
 // Nonlinear system, residual based on slip increments
-template<typename EvalT, Intrepid2::Index M>
+template<typename EvalT>
 template<typename T, Intrepid2::Index N>
 Intrepid2::Tensor<T, N>
-EV::ElastoViscoplasticNLS<EvalT, M>::hessian(
+EV::ElastoViscoplasticNLS<EvalT>::hessian(
     Intrepid2::Vector<T, N> const & x)
 {
-  return Base::hessian(*this,x);
+  return
+      Intrepid2::Function_Base<ElastoViscoplasticNLS<EvalT>, S>::hessian(*this,x);
 }
