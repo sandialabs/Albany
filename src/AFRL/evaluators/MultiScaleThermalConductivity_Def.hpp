@@ -5,20 +5,14 @@
 //*****************************************************************//
 
 #include <fstream>
+#include <sstream>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Sacado.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Albany_Utils.hpp"
 
-//Radom field types
-/*
-enum SG_RF {CONSTANT, UNIFORM, LOGNORMAL};
-const int num_sg_rf = 3;
-const SG_RF sg_rf_values[] = {CONSTANT, UNIFORM, LOGNORMAL};
-const char *sg_rf_names[] = {"Constant", "Uniform", "Log-Normal"};
-
-SG_RF randField = CONSTANT;
-*/
+#include <zmq.h>
 
 namespace AFRL {
 
@@ -28,7 +22,6 @@ MultiScaleThermalConductivity(Teuchos::ParameterList& p) :
   thermalCond(p.get<std::string>("QP Variable Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
-
   randField = CONSTANT;
 
   Teuchos::ParameterList* cond_list =
@@ -97,10 +90,12 @@ MultiScaleThermalConductivity(Teuchos::ParameterList& p) :
        init_constant(value, p);
 
     }
-    else if (typ == "Compute using SPPARKS") {
+    else if (typ == "Compute from RVE") {
       std::string mat = materialDB->getElementBlockParam<std::string>(ebName, "material");
-      std::cout<<"TJC: I AM MADE OF "<<mat<<std::endl;
-      init_spparks(mat, p);
+      std::string remoteAddress = cond_list->get("Remote Address", "");
+      std::string descriptionFile = subList.get("RVE Description File", "");
+      int descriptionId = subList.get("RVE ID", -1);
+      init_remote(mat, remoteAddress, descriptionFile, descriptionId, p);
     }
 #ifdef ALBANY_STOKHOS
     else if (typ == "Truncated KL Expansion" || typ == "Log Normal RF") {
@@ -119,6 +114,13 @@ MultiScaleThermalConductivity(Teuchos::ParameterList& p) :
   this->addEvaluatedField(thermalCond);
   this->setName("Thermal Conductivity" );
 }
+
+// template<typename EvalT, typename Traits>
+// MultiScaleThermalConductivity<EvalT, Traits>::
+// ~MultiScaleThermalConductivity()
+// {
+
+// }
 
 template<typename EvalT, typename Traits>
 void
@@ -180,10 +182,19 @@ init_KL_RF(std::string &type, Teuchos::ParameterList& sublist, Teuchos::Paramete
 template<typename EvalT, typename Traits>
 void
 MultiScaleThermalConductivity<EvalT, Traits>::
-init_spparks(std::string &type, Teuchos::ParameterList& p){
+init_remote(std::string &type, std::string& remoteAddress,
+            std::string& descriptionFile, int id, Teuchos::ParameterList& p){
 
     computeMode = Remote;
     constant_value = 1.;
+
+    RVE.material = type;
+    RVE.descriptionfile = descriptionFile;
+    RVE.id = id;
+    RVE.context = zmq_ctx_new();
+    RVE.socket = zmq_socket(RVE.context, ZMQ_REQ);
+    int rc = zmq_connect(RVE.socket, remoteAddress.c_str());
+    std::cout<<"connection to socket "<<remoteAddress<<": "<<rc<<std::endl;
 
     Teuchos::RCP<PHX::DataLayout> scalar_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
@@ -205,7 +216,50 @@ init_spparks(std::string &type, Teuchos::ParameterList& p){
 
     this->registerSacadoParameter("Thermal Conductivity", paramLib);
 
-} // init_spparks
+} // init_remote
+
+namespace
+{
+  template <class ScalarT>
+  double val(const ScalarT& v)
+  {
+    return Sacado::ScalarValue<Sacado::Fad::DFad<ScalarT> >::eval(v);
+  }
+}
+
+template<typename EvalT,typename Traits>
+double MultiScaleThermalConductivity<EvalT,Traits>::get_remote(
+  double time, double previousTime, const ScalarT& temperature,
+  const Teuchos::Array<ScalarT>& gradT) const
+{
+  // std::cout<<RVE.material<<":"<<std::endl;
+  // std::cout<<"description file: "<<RVE.descriptionfile<<std::endl;
+  // std::cout<<"id: "<<RVE.id<<std::endl;
+
+  // std::cout<<"time: "<<time<<std::endl;
+  // std::cout<<"previous time: "<<previousTime<<std::endl;
+  // std::cout<<"temperature: "<<val(temperature)<<std::endl;
+  // std::cout<<"gradient temp: "<<val(gradT[0])<<" "<<val(gradT[1])<<" "<<val(gradT[2])<<std::endl;
+
+  // Query remote system for thermal conductivity
+  std::stringstream s;
+  s << RVE.material << "," << RVE.descriptionfile << ","
+    << time << "," << previousTime << "," << val(temperature) << ","
+    << val(gradT[0]) << "," << val(gradT[1]) << "," << val(gradT[2]);
+  std::cout<<"sending <"<<s.str()<<">"<<" to "<<RVE.socket<<std::endl;
+  zmq_send(RVE.socket, s.str().c_str(), s.str().size(), 0);
+
+  s.clear(); s.str("");
+
+  char buffer[100];
+  zmq_recv(RVE.socket, buffer, 100, 0);
+  s.str(buffer);
+
+  double thermalConductivity;
+  s >> thermalConductivity;
+
+  return thermalConductivity;
+}
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
@@ -214,6 +268,8 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(thermalCond,fm);
+  // this->utils.setFieldData(time,fm);
+  // this->utils.setFieldData(deltaTime,fm);
   if (computeMode == Series)
     this->utils.setFieldData(coordVec,fm);
   if (computeMode == Remote)
@@ -252,26 +308,32 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
   else if (computeMode == Remote) {
 
+    ScalarT meanTemp = 0.;
     Teuchos::Array<ScalarT> meanGradTemp(numDims);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
+        meanTemp += Sacado::ScalarValue<ScalarT>::eval(temperature(cell,qp));
         for (std::size_t i=0; i<numDims; i++) {
           meanGradTemp[i] += Sacado::ScalarValue<ScalarT>::eval(gradTemperature(cell,qp,i));
         }
-        thermalCond(cell,qp) = constant_value;
       }
     }
 
+    meanTemp /= (workset.numCells*numQPs);
     for (std::size_t i=0; i<numDims; i++) {
       meanGradTemp[i] /= (workset.numCells*numQPs);
     }
 
-    std::cout<<"Average gradient temp: "<<meanGradTemp[0]<<" "<<meanGradTemp[1]<<" "<<meanGradTemp[2]<<std::endl;
+
+    double thermalConductivity = get_remote(workset.current_time,
+                                            workset.previous_time,
+                                            meanTemp,
+                                            meanGradTemp);
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-        thermalCond(cell,qp) = constant_value;
+        thermalCond(cell,qp) = thermalConductivity;
       }
     }
   }
@@ -313,6 +375,8 @@ MultiScaleThermalConductivity<EvalT,Traits>::getValidThermalCondParameters() con
 
   validPL->set<std::string>("Thermal Conductivity Type", "Constant",
                "Constant thermal conductivity across the entire domain");
+  validPL->set<std::string>("Remote Address", "",
+               "Address to send/recieve microscale simulation data");
   validPL->set<double>("Value", 1.0, "Constant thermal conductivity value");
 
 // Truncated KL parameters
@@ -323,6 +387,12 @@ MultiScaleThermalConductivity<EvalT,Traits>::getValidThermalCondParameters() con
   validPL->set<std::string>("Domain Lower Bounds", "{0.0 0.0}", "");
   validPL->set<std::string>("Domain Upper Bounds", "{1.0 1.0}", "");
   validPL->set<std::string>("Correlation Lengths", "{1.0 1.0}", "");
+
+// Remote parameters
+
+  validPL->set<std::string>("Microscale Executable", "",
+               "Executable for computing thermal conductivity from the microscale");
+
   return validPL;
 }
 

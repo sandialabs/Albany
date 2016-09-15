@@ -111,6 +111,7 @@ namespace Albany {
 #include "PHAL_Source.hpp"
 //#include "PHAL_Neumann.hpp"
 #include "PHAL_HeatEqResid.hpp"
+#include "PHAL_SaveStateField.hpp"
 
 #include "MultiScaleThermalConductivity.hpp"
 
@@ -212,10 +213,13 @@ Albany::MultiScaleHeatProblem::constructEvaluators(
     p->set<string>("Variable Name", "Temperature");
     p->set<string>("Variable Gradient Name", "Temperature Gradient");
     p->set<string>("QP Variable Name", "Thermal Conductivity");
+    // p->set<string>("Time Name", "Time");
+    // p->set<string>("Delta Time Name", "Delta Time");
     p->set<string>("QP Coordinate Vector Name", "Coord Vec");
     p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
     p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    // p->set< RCP<DataLayout> >("Workset Scalar Data Layout", dl->workset_scalar);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     //p->set<RCP<DistParamLib> >("Distributed Parameter Library", distParamLib);
@@ -231,6 +235,25 @@ Albany::MultiScaleHeatProblem::constructEvaluators(
     ev = rcp(new AFRL::MultiScaleThermalConductivity<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+  // { // Time
+  //   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Time"));
+
+  //   // Input
+  //   p->set<Teuchos::RCP<PHX::DataLayout>>("Workset Scalar Data Layout",
+  //       dl->workset_scalar);
+  //   p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
+
+  //   // Output
+  //   p->set<std::string>("Time Name", "Time");
+  //   p->set<std::string>("Delta Time Name", "Delta Time");
+
+  //   // Register state variable
+  //   p = stateMgr.registerStateVariable("Time", dl->workset_scalar,
+  //       dl->dummy, meshSpecs.ebName, "scalar", 0.0, true);
+  //   ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+  //   fm0.template registerEvaluator<EvalT>(ev);
+  // }
 
   if (haveAbsorption) { // Absorption
     RCP<ParameterList> p = rcp(new ParameterList);

@@ -21,6 +21,8 @@
 
 #include "QCAD_MaterialDatabase.hpp"
 
+#include <zmq.h>
+
 namespace AFRL {
 /**
  * \brief Evaluates thermal conductivity, either as a constant or a truncated
@@ -61,6 +63,7 @@ public:
   enum SG_RF {CONSTANT, UNIFORM, LOGNORMAL};
 
   MultiScaleThermalConductivity(Teuchos::ParameterList& p);
+  // virtual ~MultiScaleThermalConductivity();
 
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
@@ -102,6 +105,24 @@ private:
   //! Material database - holds thermal conductivity among other quantities
   Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
 
+  //! material, Description file and index for representative volume element
+  //  (RVE)
+  struct RepresentativeVolumeElement
+  {
+    RepresentativeVolumeElement() : context(0), socket(0) {}
+    ~RepresentativeVolumeElement()
+    {
+      if (socket) zmq_close(socket);
+      if (context) zmq_ctx_destroy(context);
+    }
+    std::string material;
+    std::string descriptionfile;
+    int id;
+    void* context;
+    void* socket;
+  };
+  RepresentativeVolumeElement RVE;
+
   //! Convenience function to initialize constant thermal conductivity
   void init_constant(ScalarT value, Teuchos::ParameterList& p);
 
@@ -110,11 +131,15 @@ private:
   void init_KL_RF(std::string &type, Teuchos::ParameterList& subList, Teuchos::ParameterList& p);
 
   //! Convenience function to initialize thermal conductivity based on
-  //  external spparks computation
-  void init_spparks(std::string &type, Teuchos::ParameterList& p);
+  //  external computation
+  void init_remote(std::string &type, std::string& microscaleExe,
+                   std::string& descriptionFile, int id,
+                   Teuchos::ParameterList& p);
+  double get_remote(double time, double previousTime, const ScalarT& temperature,
+                    const Teuchos::Array<ScalarT>& gradT) const;
+
 
   SG_RF randField;
-
 };
 }
 

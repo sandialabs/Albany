@@ -31,6 +31,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
   )
 
 add_library(AFRL ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+target_link_libraries(AFRL LINK_PUBLIC ${ZeroMQ_LIBRARIES})
 
 IF ( INSTALL_ALBANY )
     install(TARGETS AFRL EXPORT Albany
