@@ -41,8 +41,7 @@ T
 CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::value(
     Intrepid2::Vector<T, N> const & x)
 {
-  return Intrepid2::Function_Base<
-  ResidualSlipNLS<NumDimT, NumSlipT, EvalT>, ScalarT>::value(*this, x);
+  return Base::value(*this, x);
 }
 
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
@@ -54,8 +53,7 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // Get a convenience reference to the failed flag in case it is used more
   // than once.
   bool &
-  failed = Intrepid2::Function_Base<
-  ResidualSlipNLS<NumDimT, NumSlipT, EvalT>, ScalarT>::failed;
+  failed = Base::failed;
 
   // Tensor mechanical state variables
   Intrepid2::Tensor<T, NumDimT>
@@ -193,10 +191,7 @@ Intrepid2::Tensor<T, N>
 CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::hessian(
     Intrepid2::Vector<T, N> const & x)
 {
-  return Intrepid2::Function_Base<
-      ResidualSlipNLS<NumDimT, NumSlipT, EvalT>, ScalarT>::hessian(
-      *this,
-      x);
+  return Base::hessian(*this, x);
 }
 
 
@@ -237,10 +232,7 @@ T
 CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::value(
     Intrepid2::Vector<T, N> const & x)
 {
-  return Intrepid2::Function_Base<
-  ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>, ScalarT>::value(
-      *this,
-      x);
+  return Base::value(*this, x);
 }
 
 template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
@@ -252,8 +244,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // Get a convenience reference to the failed flag in case it is used more
   // than once.
   bool &
-  failed = Intrepid2::Function_Base<
-  ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>, ScalarT>::failed;
+  failed = Base::failed;
 
   // Tensor mechanical state variables
   Intrepid2::Tensor<T, NumDimT>
@@ -400,9 +391,6 @@ Intrepid2::Tensor<T, N>
 CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::hessian(
     Intrepid2::Vector<T, N> const & x)
 {
-  return Intrepid2::Function_Base<
-      ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>, ScalarT>::hessian(
-      *this,
-      x);
+  return Base::hessian(*this, x);
 }
 

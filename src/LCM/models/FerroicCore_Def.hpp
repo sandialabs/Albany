@@ -6,8 +6,8 @@
 
 
 /******************************************************************************/
-template<typename EvalT>
-FM::DomainSwitching<EvalT>::DomainSwitching(
+template<typename EvalT, Intrepid2::Index M>
+FM::DomainSwitching<EvalT, M>::DomainSwitching(
       Teuchos::Array<FM::CrystalVariant>  const & crystalVariants,
       Teuchos::Array<FM::Transition>      const & transitions,
       Teuchos::Array<RealType>            const & transBarriers,
@@ -70,21 +70,20 @@ FM::DomainSwitching<EvalT>::DomainSwitching(
 }
 
 /******************************************************************************/
-template<typename EvalT>
+template<typename EvalT, Intrepid2::Index M>
 template<typename T, Intrepid2::Index N>
 T
-FM::DomainSwitching<EvalT>::value(Intrepid2::Vector<T, N> const & x)
+FM::DomainSwitching<EvalT, M>::value(Intrepid2::Vector<T, N> const & x)
 /******************************************************************************/
 {
-  return Intrepid2::Function_Base<
-    DomainSwitching<EvalT>, typename EvalT::ScalarT>::value(*this, x);
+  return Base::value(*this, x);
 }
 
 /******************************************************************************/
-template<typename EvalT>
+template<typename EvalT, Intrepid2::Index M>
 template<typename T, Intrepid2::Index N>
 Intrepid2::Vector<T, N>
-FM::DomainSwitching<EvalT>::gradient(Intrepid2::Vector<T, N> const & xi) const
+FM::DomainSwitching<EvalT, M>::gradient(Intrepid2::Vector<T, N> const & xi) const
 /******************************************************************************/
 {
 
@@ -123,14 +122,14 @@ FM::DomainSwitching<EvalT>::gradient(Intrepid2::Vector<T, N> const & xi) const
 
 
 /******************************************************************************/
-template<typename EvalT>
+template<typename EvalT, Intrepid2::Index M>
 template<typename T, Intrepid2::Index N>
 Intrepid2::Tensor<T, N>
-FM::DomainSwitching<EvalT>::hessian(
+FM::DomainSwitching<EvalT, M>::hessian(
     Intrepid2::Vector<T, N> const & xi)
 /******************************************************************************/
 {
-  return Intrepid2::Function_Base<DomainSwitching<EvalT>,ArgT>::hessian(*this,xi);
+  return Base::hessian(*this,xi);
 }
 
 
