@@ -964,7 +964,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
 
   // Evaluate the functional
   double functionalValue(0.0);
-  displacementDiffScaled.Dot(displacementDiffScaled, &functionalValue);
+  displacementDiff.Dot(displacementDiffScaled, &functionalValue);
 
   return functionalValue;
 }
