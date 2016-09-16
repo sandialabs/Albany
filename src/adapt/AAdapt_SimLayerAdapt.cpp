@@ -29,14 +29,15 @@ SimLayerAdapt::SimLayerAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_
                    const Teuchos::RCP<ParamLib>& paramLib_,
                    const Albany::StateManager& StateMgr_,
                    const Teuchos::RCP<const Teuchos_Comm>& commT_):
-  AbstractAdapterT(params_, paramLib_, StateMgr_, commT_)
+  AbstractAdapterT(params_, paramLib_, StateMgr_, commT_),
+  out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
   errorBound = params_->get<double>("Error Bound", 0.1);
   /* BRD */
   Simmetrix_numLayers = -1;
   Simmetrix_currentLayer = 0;
   Simmetrix_model = 0;
-  std::cout << "Pid = " << getpid() << "\n";
+  *out << "Pid = " << getpid() << "\n";
   sleep(30.0);
   /* BRD */
 }
@@ -59,7 +60,7 @@ bool SimLayerAdapt::queryAdaptationCriteria(int iteration)
   }
   double currentTime = param_lib_->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
   if (currentTime >= Simmetrix_layerTimes[Simmetrix_currentLayer]) {
-    std::cout << "Need to remesh and add next layer\n";
+    *out << "Need to remesh and add next layer\n";
     return true;
   }
   /* BRD */
@@ -213,6 +214,9 @@ void adaptMesh2(pGModel model,pParMesh mesh,int currentLayer,double sliceThickne
 }
 
 void addNextLayer(pParMesh sim_pm,double sliceThickness,int nextLayer,int nSolFlds,pPList flds) {
+  //! Output stream, defaults to printing just Proc 0
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  
   //double sliceThickness;
   pGModel model = M_model(sim_pm);
   //GIP_nativeDoubleAttribute(GM_part(model),"SimLayerThickness",&sliceThickness);
@@ -238,12 +242,12 @@ void addNextLayer(pParMesh sim_pm,double sliceThickness,int nextLayer,int nSolFl
   PM_localizePartiallyConnected(sim_pm);
   //PM_merge(sim_pm);
   if (nextLayer>1) {
-    std::cout << "Combine layer " << nextLayer-1 << "\n";
+    *out << "Combine layer " << nextLayer-1 << "\n";
     pMesh oneMesh = PM_numParts(sim_pm) == 1 ? PM_mesh(sim_pm, 0) : 0;
     DM_undoSlicing(combinedRegions,nextLayer-1,oneMesh);
   }
   PList_clear(combinedRegions);
-  std::cout << "Mesh top layer\n";
+  *out << "Mesh top layer\n";
   meshCurrentLayerOnly(model,sim_pm,nextLayer,sliceThickness);
   /*
   if (nextLayer>1) {
@@ -254,7 +258,7 @@ void addNextLayer(pParMesh sim_pm,double sliceThickness,int nextLayer,int nSolFl
   if (flds) {
     // Add temperature and residual fields to top layer
     // Add temperature HACK fields to top layer
-    std::cout << "Add field to top layer\n";
+    *out << "Add field to top layer\n";
     pField sim_sol_flds[3] = {0,0,0};  // at most 3 - see calling routine
     int i;
     for (i=0;i<nSolFlds;i++) {
@@ -267,7 +271,7 @@ void addNextLayer(pParMesh sim_pm,double sliceThickness,int nextLayer,int nSolFl
     pMEntitySet topLayerVerts = MEntitySet_new(PM_mesh(sim_pm,0));
     regions = GM_regionIter(model);
     pVertex mv;
-    std::cout << "Collect new mesh verts\n";
+    *out << "Collect new mesh verts\n";
     while (gr1=GRIter_next(regions)) {
       if (GEN_numNativeIntAttribute(gr1,"SimLayer")==1) {
         GEN_nativeIntAttribute(gr1,"SimLayer",&layer);
@@ -284,7 +288,7 @@ void addNextLayer(pParMesh sim_pm,double sliceThickness,int nextLayer,int nSolFl
     pPList unmapped = PList_new();
     pDofGroup dg;
     MESIter viter = MESIter_iter(topLayerVerts);
-    //std::cout << "Create fields\n";
+    //*out << "Create fields\n";
     while ( mv = reinterpret_cast<pVertex>(MESIter_next(viter)) ) {
       dg = Field_entDof(sim_sol_flds[0],mv,0);
       if (!dg) {
@@ -303,7 +307,7 @@ void addNextLayer(pParMesh sim_pm,double sliceThickness,int nextLayer,int nSolFl
     int nc2 = (sim_res_fld ? Field_numComp(sim_res_fld) : 0);
     int nc3 = (sim_hak_fld ? Field_numComp(sim_hak_fld) : 0);
     void *iter = 0;
-    //std::cout << "Set field values\n";
+    //*out << "Set field values\n";
     while (vptr = PList_next(unmapped,&iter)) {
       ent = reinterpret_cast<pEntity>(vptr);
       for(i=0;i<nSolFlds;i++) {
@@ -354,8 +358,8 @@ void SimLayerAdapt::computeLayerTimes() {
     GIP_nativeDoubleAttribute(GM_part(Simmetrix_model),"speed",&ls);
   if (GIP_numNativeDoubleAttribute(GM_part(Simmetrix_model),"width")==1)
     GIP_nativeDoubleAttribute(GM_part(Simmetrix_model),"width",&tw);
-  std::cout << "Laser speed " << ls << "\n";
-  std::cout << "Track width " << tw << "\n";
+  *out << "Laser speed " << ls << "\n";
+  *out << "Track width " << tw << "\n";
 
   GRIter_reset(regions);
   while (gr=GRIter_next(regions)) {
@@ -556,7 +560,7 @@ bool SimLayerAdapt::adaptMesh()
   double currentTime = param_lib_->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
   if (currentTime >= Simmetrix_layerTimes[Simmetrix_currentLayer]) {
     char meshFile[80];
-    std::cout << "Adding layer " << Simmetrix_currentLayer+1 << "\n";
+    *out << "Adding layer " << Simmetrix_currentLayer+1 << "\n";
     addNextLayer(sim_pm,sliceThickness,Simmetrix_currentLayer+1,apf_ms->num_time_deriv+1,sim_fld_lst);
     sprintf(meshFile, "layerMesh%d.sms", Simmetrix_currentLayer+1);
     PM_write(sim_pm, meshFile, sthreadDefault, 0);
@@ -584,6 +588,7 @@ Teuchos::RCP<const Teuchos::ParameterList> SimLayerAdapt::getValidAdapterParamet
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
   validPL->set<double>("Max Size", 1e10, "Maximum allowed edge length (size field)");
+  validPL->set<bool>("Add Layer", true, "Turn on/off adding layer");
   return validPL;
 }
 

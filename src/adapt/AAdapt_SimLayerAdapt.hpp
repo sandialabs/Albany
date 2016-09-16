@@ -5,6 +5,8 @@
 //*****************************************************************//
 
 #include "AAdapt_AbstractAdapterT.hpp"
+#include "Teuchos_RCP.hpp"
+
 /* BRD */
 class SGModel;
 /* BRD */
@@ -38,6 +40,8 @@ protected:
 /* BRD */
 private:
   double errorBound;
+  //! Output stream, defaults to printing just Proc 0
+  Teuchos::RCP<Teuchos::FancyOStream> out;
 };
 
 }

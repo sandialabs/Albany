@@ -174,6 +174,7 @@ Teuchos::RCP<const Teuchos::ParameterList> SimAdapt::getValidAdapterParameters()
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
   validPL->set<double>("Max Size", 1e10, "Maximum allowed edge length (size field)");
+  validPL->set<bool>("Add Layer", false, "Turn on/off adding layer");
   return validPL;
 }
 
