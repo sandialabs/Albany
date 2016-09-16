@@ -112,6 +112,8 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT dt = delta_time_(0);
         if (dt == 0.0)
             dt = 1.e-15;
+        else
+           dt = 1.0;
         Albany::MDArray temperature_old = (*workset.stateArrayPtr)[temperature_name_];
         for (int cell = 0; cell < workset.numCells; ++cell)
         {

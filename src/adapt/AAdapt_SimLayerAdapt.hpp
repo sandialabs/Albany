@@ -5,14 +5,19 @@
 //*****************************************************************//
 
 #include "AAdapt_AbstractAdapterT.hpp"
+#include "Teuchos_RCP.hpp"
+
+/* BRD */
+class SGModel;
+/* BRD */
 
 namespace AAdapt {
 
 struct SimAdaptImpl;
 
-class SimAdapt : public AbstractAdapterT {
+class SimLayerAdapt : public AbstractAdapterT {
 public:
-  SimAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+  SimLayerAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
            const Teuchos::RCP<ParamLib>& paramLib_,
            const Albany::StateManager& StateMgr_,
            const Teuchos::RCP<const Teuchos_Comm>& commT_);
@@ -21,8 +26,22 @@ public:
   //                        const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution);
   virtual bool adaptMesh();
   virtual Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters();
+/* BRD */
+  virtual ~SimLayerAdapt() {
+    if (Simmetrix_numLayers > 0)
+      delete []  Simmetrix_layerTimes;
+  };
+protected:
+  void computeLayerTimes();
+  double *Simmetrix_layerTimes;
+  int    Simmetrix_numLayers;
+  int    Simmetrix_currentLayer;
+  SGModel *Simmetrix_model;
+/* BRD */
 private:
   double errorBound;
+  //! Output stream, defaults to printing just Proc 0
+  Teuchos::RCP<Teuchos::FancyOStream> out;
 };
 
 }
