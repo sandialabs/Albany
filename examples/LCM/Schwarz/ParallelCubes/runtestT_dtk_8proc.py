@@ -20,7 +20,8 @@ logfile = open(log_file_name, 'w')
 
 #specify tolerance to determine test failure / passing
 tolerance = 1.0e-8; 
-meanvalue = 0.000594484007237;
+#meanvalue = 0.000594484007237; #meanvalue for 10 LOCA steps 
+meanvalue = 0.000118897637152;
 
 # run AlbanyT 
 command = ["mpirun", "-np", "8", "AlbanyT", "cubes.xml"]

@@ -9,4 +9,6 @@
 #include "FELIX_EffectivePressure.hpp"
 #include "FELIX_EffectivePressure_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::EffectivePressure)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(FELIX::EffectivePressure,false,true)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(FELIX::EffectivePressure,true,true)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(FELIX::EffectivePressure,true,false)

@@ -66,10 +66,11 @@ include_directories(
   ${Albany_SOURCE_DIR}/src
   )
 
-add_library(pumi ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+add_library(albanyPUMI ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+target_link_libraries(albanyPUMI ${SCOREC_LIB})
 
 IF (INSTALL_ALBANY)
-  install(TARGETS pumi EXPORT albany-export
+  install(TARGETS albanyPUMI EXPORT albany-export
     LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
     ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
     PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")

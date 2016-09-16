@@ -68,10 +68,7 @@ void ObserverImpl::observeSolution (
   DistParamLib::const_iterator it;
   Teuchos::RCP<const Epetra_Comm> comm = app_->getEpetraComm();
   for(it = distParamLib->begin(); it != distParamLib->end(); ++it) {
-    Teuchos::RCP<Epetra_Vector> epetra_vec;
-    Petra::TpetraVector_To_EpetraVector(it->second->overlapped_vector(),
-                                        epetra_vec, comm);
-    app_->getDiscretization()->setField(*epetra_vec, it->second->name(),
+    app_->getDiscretization()->setFieldT(*it->second->overlapped_vector(), it->second->name(),
                                         /*overlapped*/ true);
   }
 

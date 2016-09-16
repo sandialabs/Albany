@@ -1,7 +1,7 @@
-#the following is run on the cori01 login
+#the following is run on the cori05 login
 
 05 00 * * 1-5  source /global/homes/i/ikalash/.bashrc; cd /project/projectdirs/piscees/nightlyCoriCDash; bash -l -c "source cori_modules.sh; bash nightly_cron_script_trilinos_cori.sh"
-35 03 * * 1-5  source /global/homes/i/ikalash/.bashrc; cd /project/projectdirs/piscees/nightlyCoriCDash; bash -l -c "source cori_modules.sh; bash nightly_cron_script_albany_cori.sh"
-15 04 * * 1-5  source /global/homes/i/ikalash/.bashrc; cd /project/projectdirs/piscees/nightlyCoriCDash; bash -l -c "source cori_modules.sh; bash nightly_cron_script_cismAlbany_cori.sh"
-00 05 * * 1-5 chmod -R 0755 /project/projectdirs/piscees/nightlyCoriCDash
+00 05 * * 1-5  source /global/homes/i/ikalash/.bashrc; cd /project/projectdirs/piscees/nightlyCoriCDash; bash -l -c "source cori_modules.sh; bash nightly_cron_script_albany_cori.sh"
+00 08 * * 1-5  source /global/homes/i/ikalash/.bashrc; cd /project/projectdirs/piscees/nightlyCoriCDash; bash -l -c "source cori_modules.sh; bash nightly_cron_script_cismAlbany_cori.sh"
+00 10 * * 1-5 chmod -R 0755 /project/projectdirs/piscees/nightlyCoriCDash
 

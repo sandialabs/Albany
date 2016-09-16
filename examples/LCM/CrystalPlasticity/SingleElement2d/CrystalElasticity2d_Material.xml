@@ -2,30 +2,66 @@
   <ParameterList name="ElementBlocks">
 
     <ParameterList name="Block0">
-      <Parameter name="material" type="string" value="Metal" />
+      <Parameter
+        name="material"
+        type="string"
+        value="Metal" />
     </ParameterList>
   </ParameterList>
 
   <ParameterList name="Materials">
 
     <ParameterList name="Metal">
-      <ParameterList name="Material Model"> 
-        <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
+      <ParameterList name="Material Model">
+        <Parameter
+          name="Model Name"
+          type="string"
+          value="CrystalPlasticity" />
       </ParameterList>
       <!-- Crystal Elasticity moduli and orientation -->
       <ParameterList name="Crystal Elasticity">
-        <Parameter name="C11" type="double" value="168.4"/>
-        <Parameter name="C12" type="double" value="121.4"/>
-        <Parameter name="C44" type="double" value="75.4"/>
-        <Parameter name="Basis Vector 1" type="Array(double)" value="{1.0,0.0,0.0}"/>
-        <Parameter name="Basis Vector 2" type="Array(double)" value="{0.0,1.0,0.0}"/>
-        <Parameter name="Basis Vector 3" type="Array(double)" value="{0.0,0.0,1.0}"/>
+        <Parameter
+          name="C11"
+          type="double"
+          value="168.4" />
+        <Parameter
+          name="C12"
+          type="double"
+          value="121.4" />
+        <Parameter
+          name="C44"
+          type="double"
+          value="75.4" />
+        <Parameter
+          name="Basis Vector 1"
+          type="Array(double)"
+          value="{1.0,0.0,0.0}" />
+        <Parameter
+          name="Basis Vector 2"
+          type="Array(double)"
+          value="{0.0,1.0,0.0}" />
+        <Parameter
+          name="Basis Vector 3"
+          type="Array(double)"
+          value="{0.0,0.0,1.0}" />
       </ParameterList>
       <!-- Specify output to Exodus -->
-      <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
-      <Parameter name="Output Fp" type="bool" value="true"/>
-      <Parameter name="Output L" type="bool" value="true"/>
-      <Parameter name="Output Mechanical Source" type="bool" value="true"/>
+      <Parameter
+        name="Output Cauchy Stress"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Output Fp"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Output L"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Output Mechanical Source"
+        type="bool"
+        value="true" />
 
     </ParameterList>
 

@@ -79,7 +79,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell = 0; cell < workset.numCells; ++cell)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       const LO lid = wsElDofs((int)cell,(int)node,0);
-      (this->val)(cell,node) = (lid >= 0 ) ? pvecT_constView[wsElDofs((int)cell,(int)node,0)] : 0;
+      (this->val)(cell,node) = (lid >= 0 ) ? pvecT_constView[lid] : 0;
     }
 }
 
@@ -198,7 +198,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
   Teuchos::ArrayRCP<const ST> pvecT_constView = pvecT->get1dView();
 
-  const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
+  //const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
 
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 

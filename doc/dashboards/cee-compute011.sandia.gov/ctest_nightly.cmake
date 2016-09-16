@@ -79,9 +79,6 @@ set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
 set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
 
-set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
-#set (PATH $ENV{PATH})
-
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
 set (CTEST_BUILD_NAME "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
@@ -94,11 +91,10 @@ set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210/compil
 
 #set (BOOST_ROOT /projects/albany/nightly)
 set (BOOST_ROOT /projects/albany)
-set (INTEL_BOOST_ROOT ${BOOST_ROOT}/intel5.0)
+set (INTEL_BOOST_ROOT ${BOOST_ROOT}/intel5.0/boost-1.60.0)
+set (CLANG_BOOST_ROOT ${BOOST_ROOT}/clang-3.7)
 
-#set (INTEL_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.8.8-intel-16.0-2016.3.210-RHEL6)
 set (INTEL_MPI_DIR /sierra/sntools/SDK/mpi/intel/5.0)
-#set (MKL_PATH /sierra/sntools/SDK/compilers/intel)
 set (MKL_PATH /sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210)
 
 set (USE_LAME OFF)
@@ -433,8 +429,8 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
   "-DTrilinos_ENABLE_Thyra:BOOL=ON"
   "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
-  "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
-  "-DTrilinos_ENABLE_GlobiPack:BOOL=ON"
+  "-DTrilinos_ENABLE_OptiPack:BOOL=OFF"
+  "-DTrilinos_ENABLE_GlobiPack:BOOL=OFF"
   "-DTrilinos_ENABLE_Stokhos:BOOL=ON"
   "-DTrilinos_ENABLE_Isorropia:BOOL=ON"
   "-DTrilinos_ENABLE_Piro:BOOL=ON"
@@ -490,42 +486,45 @@ if (BUILD_TRILINOS)
     "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
     "-DCMAKE_Fortran_COMPILER:STRING=${GCC_MPI_DIR}/bin/mpifort"
     "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm'"
+#
+    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/lib'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-  "-DBoost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
-  "-DBoost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
-  "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
-  "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
-  "-DBoostAlbLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
-  "-DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
+    "-DBoost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
+    "-DBoost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
+    "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
+    "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
+    "-DBoostAlbLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
+    "-DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
 #
-  "-DTPL_ENABLE_Netcdf:BOOL=ON"
-  "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  "-DTPL_Netcdf_PARALLEL:BOOL=ON"
-  "-DTPL_ENABLE_Pnetcdf:STRING=ON"
-  "-DPnetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DPnetcdf_LIBRARY_DIRS=${PREFIX_DIR}/lib"
-  #
-  "-DTPL_ENABLE_HDF5:BOOL=ON"
-  "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  "-DHDF5_LIBRARY_NAMES:STRING='hdf5_hl\\;hdf5\\;z'"
-  #
-  "-DTPL_ENABLE_Zlib:BOOL=ON"
-  "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  #
-  "-DTPL_ENABLE_ParMETIS:BOOL=ON"
-  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  #
-  "-DTPL_ENABLE_SuperLU:BOOL=ON"
-  "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
-  "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
+    "-DTPL_ENABLE_Netcdf:BOOL=ON"
+    "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+    "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+    "-DTPL_Netcdf_PARALLEL:BOOL=ON"
+    "-DTPL_ENABLE_Pnetcdf:STRING=ON"
+    "-DPnetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+    "-DPnetcdf_LIBRARY_DIRS=${PREFIX_DIR}/lib"
 #
+    "-DTPL_ENABLE_HDF5:BOOL=ON"
+    "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+    "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+    "-DHDF5_LIBRARY_NAMES:STRING='hdf5_hl\\;hdf5\\;z'"
+#
+    "-DTPL_ENABLE_Zlib:BOOL=ON"
+    "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+    "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+#
+    "-DTPL_ENABLE_ParMETIS:BOOL=ON"
+    "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+    "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+#
+    "-DTPL_ENABLE_SuperLU:BOOL=ON"
+    "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
+    "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
+#
+    "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"
+    "-DCMAKE_INSTALL_RPATH:STRING=${PREFIX_DIR}/lib"
     "${COMMON_CONFIGURE_OPTIONS}"
-    )
+  )
 
     if (BUILD_SCOREC)
       set (CONF_OPTS
@@ -609,21 +608,12 @@ if (BUILD_ALB64)
 
 endif (BUILD_ALB64)
 
-# Add the path to Clang libraries needed for the Clang configure, build and sest cycle
-#
-# Need to add the openmpi libraries at the front of LD_LIBRARY_PATH
-#
-
-set (ENV{LD_LIBRARY_PATH} 
-  ${PREFIX_DIR}/clang/lib:${INITIAL_LD_LIBRARY_PATH}
-  )
-
 if (BUILD_TRILINOSCLANG)
 
   set (CONFIGURE_OPTIONS
     "${COMMON_CONFIGURE_OPTIONS}"
     "-DTPL_ENABLE_MPI:BOOL=ON"
-    "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/clang"
+    "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/clang-3.7"
     #
     "-DCMAKE_CXX_COMPILER:STRING=/projects/albany/clang-3.7/bin/mpicxx"
     "-DCMAKE_CXX_FLAGS:STRING='-Os -w -DNDEBUG ${extra_cxx_flags}'"
@@ -634,42 +624,44 @@ if (BUILD_TRILINOSCLANG)
     "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
     "-DMDS_ID_TYPE:STRING='long long int'"
     "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
-    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm'"
+    "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/clang-3.7/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/clang-3.7/lib'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallC11"
     "-DBUILD_SHARED_LIBS:BOOL=OFF"
     "-DTPL_ENABLE_SuperLU:BOOL=OFF"
     "-DAmesos2_ENABLE_KLU2:BOOL=ON"
-  "-DBoost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
-  "-DBoost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
-  "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
-  "-DBoostLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
-  "-DBoostAlbLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
-  "-DBoostAlbLib_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
+  "-DBoost_INCLUDE_DIRS:PATH=${CLANG_BOOST_ROOT}/include"
+  "-DBoost_LIBRARY_DIRS:PATH=${CLANG_BOOST_ROOT}/lib"
+  "-DBoostLib_INCLUDE_DIRS:PATH=${CLANG_BOOST_ROOT}/include"
+  "-DBoostLib_LIBRARY_DIRS:PATH=${CLANG_BOOST_ROOT}/lib"
+  "-DBoostAlbLib_INCLUDE_DIRS:PATH=${CLANG_BOOST_ROOT}/include"
+  "-DBoostAlbLib_LIBRARY_DIRS:PATH=${CLANG_BOOST_ROOT}/lib"
 #
   "-DTPL_ENABLE_Netcdf:BOOL=ON"
-  "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang-3.7/include"
+  "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang-3.7/lib"
   "-DTPL_Netcdf_PARALLEL:BOOL=ON"
   "-DTPL_ENABLE_Pnetcdf:STRING=ON"
-  "-DPnetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DPnetcdf_LIBRARY_DIRS=${PREFIX_DIR}/lib"
+  "-DPnetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang-3.7/include"
+  "-DPnetcdf_LIBRARY_DIRS=${PREFIX_DIR}/clang-3.7/lib"
   #
   "-DTPL_ENABLE_HDF5:BOOL=ON"
-  "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang-3.7/include"
+  "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang-3.7/lib"
   "-DHDF5_LIBRARY_NAMES:STRING='hdf5_hl\\;hdf5\\;z'"
   #
   "-DTPL_ENABLE_Zlib:BOOL=ON"
-  "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang-3.7/include"
+  "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang-3.7/lib"
   #
   "-DTPL_ENABLE_ParMETIS:BOOL=ON"
-  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
-  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang-3.7/include"
+  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang-3.7/lib"
   #
   "-DTPL_ENABLE_SuperLU:BOOL=ON"
-  "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
-  "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
+  "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang-3.7/SuperLU_4.3/include"
+  "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang-3.7/SuperLU_4.3/lib"
+  "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"
+  "-DCMAKE_INSTALL_RPATH:STRING=${PREFIX_DIR}/clang-3.7/lib"
 )
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)

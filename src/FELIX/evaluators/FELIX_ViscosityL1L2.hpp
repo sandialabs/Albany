@@ -11,7 +11,6 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Sacado_ParameterAccessor.hpp" 
 #include "Albany_Layouts.hpp"
 
 namespace FELIX {
@@ -23,9 +22,8 @@ namespace FELIX {
 
 template<typename EvalT, typename Traits>
 class ViscosityL1L2 : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits>,
-		    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-
+        public PHX::EvaluatorDerived<EvalT, Traits>
+{
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
@@ -38,39 +36,36 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
-  ScalarT& getValue(const std::string &n); 
-
 private:
- 
+
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  ScalarT homotopyParam;
-
   //coefficients for Glen's law
-  double A; 
+  double A;
   double n;
 
   //coefficients for ISMIP-HOM test cases
-  double L; 
+  double L;
   double alpha;
 
-  std::size_t numQPsZ; //number of quadrature points for z-integral 
-  std::string surfType; //type of surface, e.g., Test A 
+  std::size_t numQPsZ; //number of quadrature points for z-integral
+  std::string surfType; //type of surface, e.g., Test A
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
-  PHX::MDField<ScalarT,Cell,QuadPoint> epsilonB;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,QuadPoint>         epsilonB;
+  PHX::MDField<ScalarT,Dim>                    homotopyParam;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
 
   unsigned int numQPs, numDims, numNodes;
-  
+
   enum VISCTYPE {CONSTANT, GLENSLAW};
   VISCTYPE visc_type;
   enum SURFTYPE {BOX, TESTA};
   SURFTYPE surf_type;
- 
+
 };
 }
 

@@ -24,11 +24,11 @@ BasalFrictionHeat(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::La
 
 	Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
-	velocity  = PHX::MDField<Type,Cell,Side,QuadPoint,VecDim>(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
-	beta 	  = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl_basal->qp_scalar);
-	BF        = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
-    GradBF    = PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Name"), dl_basal->node_qp_gradient);
-	w_measure = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint> (p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
+	velocity  	= PHX::MDField<Type,Cell,Side,QuadPoint,VecDim>(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
+	beta 	  	= PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl_basal->qp_scalar);
+	BF        	= PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
+    GradBF    	= PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Name"), dl_basal->node_qp_gradient);
+	w_measure 	= PHX::MDField<MeshScalarT,Cell,Side,QuadPoint> (p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
 
 	Teuchos::ParameterList* SUPG_list = p.get<Teuchos::ParameterList*>("SUPG Settings");
 	haveSUPG = SUPG_list->get("Have SUPG Stabilization", false);
@@ -59,7 +59,6 @@ BasalFrictionHeat(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::La
 
 	dl->node_vector->dimensions(dims);
 	vecDimFO     = std::min((int)dims[2],2);
-	//vecDim       = dims[2];
 
 	// Index of the nodes on the sides in the numeration of the cell
 	Teuchos::RCP<shards::CellTopology> cellType;
@@ -128,6 +127,8 @@ evaluateFields(typename Traits::EvalData d)
 
 	  if (haveSUPG)
 	  {
+		  ScalarT wSUPG;
+
 		  // Zero out, to avoid leaving stuff from previous workset!
 		  for (int cell = 0; cell < d.numCells; ++cell)
 			  for (int node = 0; node < numCellNodes; ++node)
@@ -146,11 +147,11 @@ evaluateFields(typename Traits::EvalData d)
 				  basalFricHeatSUPG(cell,sideNodes[side][node]) = 0.;
 				  for (int qp = 0; qp < numSideQPs; ++qp)
 				  {
-					  for (int dim = 0; dim < vecDimFO; ++dim)
-					  {
-						  basalFricHeatSUPG(cell,sideNodes[side][node]) += (1./(3.154*pow(10.0,4.0))) * beta(cell,side,qp) * velocity(cell,side,qp,dim) * velocity(cell,side,qp,dim) *
-								                                      (1./(3.154 * pow(10.0,10.0))) * velocity(cell,side,qp,dim)*GradBF(cell,side,node,qp,dim)*w_measure(cell,side,qp);
-					  }
+					  wSUPG = (1/(3.154 * pow(10.0,10.0))) *
+						      (velocity(cell,side,qp,0)*GradBF(cell,side,node,qp,0) + velocity(cell,side,qp,1)*GradBF(cell,side,node,qp,1))*w_measure(cell,side,qp);
+
+					  basalFricHeatSUPG(cell,sideNodes[side][node]) += (1./(3.154*pow(10.0,4.0))) * beta(cell,side,qp) *
+							  	  	  	  	  	  	  	  	  	  	   (velocity(cell,side,qp,0) * velocity(cell,side,qp,0) + velocity(cell,side,qp,1) * velocity(cell,side,qp,1)) * wSUPG;
 				  }
 			  }
 		  }

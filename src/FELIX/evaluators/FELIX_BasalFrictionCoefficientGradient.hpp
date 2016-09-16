@@ -37,8 +37,6 @@ public:
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& vm);
 
-  void setHomotopyParamPtr(ScalarT* h);
-
   void evaluateFields (typename Traits::EvalData d);
 
   typedef typename PHX::Device execution_space;
@@ -53,12 +51,16 @@ private:
   // Input:
   PHX::MDField<ParamScalarT,Cell,Side,Node>               beta_given;
   PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>  GradBF;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>               N;
+  PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>          N;
   PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>           U;
   PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>           gradN;
   PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim,Dim>       gradU;
   PHX::MDField<ScalarT,Cell,Side,QuadPoint>               u_norm;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>       coordVec;
+
+  PHX::MDField<ScalarT,Dim>                               lambdaParam;
+  PHX::MDField<ScalarT,Dim>                               muParam;
+  PHX::MDField<ScalarT,Dim>                               powerParam;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>           grad_beta;

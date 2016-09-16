@@ -40,7 +40,7 @@ case "$SCRIPT_NAME" in
     test-mail.sh)
 	;;
     *)
-	echo "Unrecognized script name"
+	echo "Unrecognized script name: $SCRIPT_NAME"
 	exit 1
 	;;
 esac
@@ -67,7 +67,7 @@ case "$SCRIPT_NAME" in
 	    albany)
 		;;
 	    *)
-		echo "Unrecognized package option"
+		echo "Unrecognized package option in config: $PACKAGE"
 		exit 1
 		;;
 	esac
@@ -119,34 +119,46 @@ case "$SCRIPT_NAME" in
 	sed -i -e "s|lcm_install_dir|$INSTALL_DIR|g;" "$CONFIG_FILE"
 	sed -i -e "s|lcm_build_type|$BUILD_STRING|g;" "$CONFIG_FILE"
 	sed -i -e "s|lcm_package_dir|$PACKAGE_DIR|g;" "$CONFIG_FILE"
+        # Check if a custom build netcdf with pnetcdf exists and use that
+        # instead of the system one to avoid failing horrible tests that
+        # need this (yuck!).
+	if [ -e "/usr/local/netcdf/lib/libnetcdf.so" ]; then
+            NETCDF_INC=/usr/local/netcdf/include
+            NETCDF_LIB=/usr/local/netcdf/lib
+        else
+            NETCDF_INC=/usr/include/openmpi-x86_64
+            NETCDF_LIB=/usr/lib64/openmpi/lib
+	fi            
+        sed -i -e "s|lcm_netcdf_inc|$NETCDF_INC|g;" "$CONFIG_FILE"
+        sed -i -e "s|lcm_netcdf_lib|$NETCDF_LIB|g;" "$CONFIG_FILE"        
 	case "$BUILD_TYPE" in
 	    debug)
 		sed -i -e "s|lcm_fpe_switch|ON|g;" "$CONFIG_FILE"
 		sed -i -e "s|lcm_denormal_switch|ON|g;" "$CONFIG_FILE"
-		sed -i -e "s|lcm_cxx_flags||g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_cxx_flags|-msse3|g;" "$CONFIG_FILE"
 		;;
 	    release)
 		sed -i -e "s|lcm_fpe_switch|OFF|g;" "$CONFIG_FILE"
 		sed -i -e "s|lcm_denormal_switch|ON|g;" "$CONFIG_FILE"
-		sed -i -e "s|lcm_cxx_flags|-DNDEBUG|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_cxx_flags|-msse3 -DNDEBUG|g;" "$CONFIG_FILE"
 		;;
 	    profile)
 		sed -i -e "s|lcm_fpe_switch|OFF|g;" "$CONFIG_FILE"
 		sed -i -e "s|lcm_denormal_switch|ON|g;" "$CONFIG_FILE"
-		sed -i -e "s|lcm_cxx_flags|-DNDEBUG|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_cxx_flags|-msse3 -DNDEBUG|g;" "$CONFIG_FILE"
 		;;
 	    small)
 		sed -i -e "s|lcm_fpe_switch|OFF|g;" "$CONFIG_FILE"
 		sed -i -e "s|lcm_denormal_switch|ON|g;" "$CONFIG_FILE"
-		sed -i -e "s|lcm_cxx_flags|-DNDEBUG|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_cxx_flags|-msse3 -DNDEBUG|g;" "$CONFIG_FILE"
 		;;
             mixed)
 		sed -i -e "s|lcm_fpe_switch|ON|g;" "$CONFIG_FILE"
 		sed -i -e "s|lcm_denormal_switch|ON|g;" "$CONFIG_FILE"
-		sed -i -e "s|lcm_cxx_flags|-std=c++11 -g -O0|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_cxx_flags|-msse3 -std=c++11 -g -O0|g;" "$CONFIG_FILE"
 		;;
 	    *)
-		echo "Unrecognized build type option"
+		echo "Unrecognized build type option in config: $BUILD_TYPE"
 		exit 1
 		;;
 	esac
@@ -212,7 +224,7 @@ case "$SCRIPT_NAME" in
 		sed -i -e "s|lcm_slfad_size|-D SLFAD_SIZE=48|g;" "$CONFIG_FILE"
 		;;
 	    *)
-		echo "Unrecognized architecture option"
+		echo "Unrecognized architecture option in config: $ARCH"
 		exit 1
 		;;
 	esac
@@ -250,7 +262,7 @@ case "$SCRIPT_NAME" in
 			echo "*** MAKE INSTALL COMMAND FAILED ***"
 			exit 1
 		    fi
-                    NETCDF_SYSLIB=/usr/lib64/libnetcdf.so
+                    NETCDF_SYSLIB=/usr/lib64/openmpi/lib/libnetcdf.so
                     NETCDF_LCMLIB="$INSTALL_DIR/lib/libnetcdf.so"
                     ln -sf "$INSTALL_DIR/include" "$INSTALL_DIR/inc"
                     ln -sf "$NETCDF_SYSLIB" "$NETCDF_LCMLIB"
@@ -267,7 +279,7 @@ case "$SCRIPT_NAME" in
 		echo SUCCESS > "$STATUS_LOG" 
 		;;
 	    *)
-		echo "Unrecognized package option"
+		echo "Unrecognized package option in build: $PACKAGE"
 		exit 1
 		;;
 	esac
@@ -290,7 +302,7 @@ case "$SCRIPT_NAME" in
 		ctest --timeout 600 . | tee "$TEST_LOG"
 		;;
 	    *)
-		echo "Unrecognized package option"
+		echo "Unrecognized package option in test: $PACKAGE"
 		exit 1
 		;;
 	esac

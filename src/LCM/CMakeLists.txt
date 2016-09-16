@@ -40,6 +40,94 @@ file (GLOB model-eval-headers
   "${LCM_DIR}/*.hpp"
 )
 
+# LCM special boundary conditions
+file (GLOB bc-sources
+  "${LCM_DIR}/evaluators/bc/*.cpp"
+)
+file (GLOB bc-headers
+  "${LCM_DIR}/evaluators/bc/*.hpp"
+)
+
+# LCM contact
+file (GLOB contact-sources
+  "${LCM_DIR}/evaluators/contact/*.cpp"
+)
+file (GLOB contact-headers
+  "${LCM_DIR}/evaluators/contact/*.hpp"
+)
+
+# LCM HMC evaluators
+file (GLOB hmc-sources
+  "${LCM_DIR}/evaluators/HMC/*.cpp"
+)
+file (GLOB hmc-headers
+  "${LCM_DIR}/evaluators/HMC/*.hpp"
+)
+
+# LCM kinematics evaluators
+file (GLOB kin-sources
+  "${LCM_DIR}/evaluators/kinematics/*.cpp"
+)
+file (GLOB kin-headers
+  "${LCM_DIR}/evaluators/knematics/*.hpp"
+)
+
+# LCM linear elasticity evaluators
+file (GLOB lin-sources
+  "${LCM_DIR}/evaluators/linear-elasticity/*.cpp"
+)
+file (GLOB lin-headers
+  "${LCM_DIR}/evaluators/linear-elasticity/*.hpp"
+)
+
+# LCM poro evaluators
+file (GLOB poro-sources
+  "${LCM_DIR}/evaluators/poro/*.cpp"
+)
+file (GLOB poro-headers
+  "${LCM_DIR}/evaluators/poro/*.hpp"
+)
+
+# LCM peridigm evaluators
+file (GLOB pd-sources
+  "${LCM_DIR}/evaluators/peridigm/*.cpp"
+)
+file (GLOB pd-headers
+  "${LCM_DIR}/evaluators/peridigm/*.hpp"
+)
+
+# LCM projection evaluators
+file (GLOB proj-sources
+  "${LCM_DIR}/evaluators/projection/*.cpp"
+)
+file (GLOB proj-headers
+  "${LCM_DIR}/evaluators/projection/*.hpp"
+)
+
+# LCM residual evaluators
+file (GLOB residual-sources
+  "${LCM_DIR}/evaluators/residuals/*.cpp"
+)
+file (GLOB residual-headers
+  "${LCM_DIR}/evaluators/residuals/*.hpp"
+)
+
+# LCM response evaluators
+file (GLOB response-sources
+  "${LCM_DIR}/evaluators/responses/*.cpp"
+)
+file (GLOB response-headers
+  "${LCM_DIR}/evaluators/responses/*.hpp"
+)
+
+# LCM mesh size field evaluators
+file (GLOB sf-sources
+  "${LCM_DIR}/evaluators/size-field/*.cpp"
+)
+file (GLOB sf-headers
+  "${LCM_DIR}/evaluators/size-field/*.hpp"
+)
+
 # LCM surface element evaluators
 file (GLOB surface-element-sources
   "${LCM_DIR}/evaluators/surface-element/*.cpp"
@@ -48,12 +136,12 @@ file (GLOB surface-element-headers
   "${LCM_DIR}/evaluators/surface-element/*.hpp"
 )
 
-# LCM special boundary conditions
-file (GLOB bc-sources
-  "${LCM_DIR}/evaluators/bc/*.cpp"
+# LCM transport evaluators
+file (GLOB transport-sources
+  "${LCM_DIR}/evaluators/transport/*.cpp"
 )
-file (GLOB bc-headers
-  "${LCM_DIR}/evaluators/bc/*.hpp"
+file (GLOB transport-headers
+  "${LCM_DIR}/evaluators/transport/*.hpp"
 )
 
 #LCM models
@@ -63,6 +151,7 @@ file (GLOB models-sources
 )
 file (GLOB models-headers
   "${LCM_DIR}/models/*.hpp"
+  "${LCM_DIR}/models/core/CrystalPlasticity/*.hpp"
   "${LCM_DIR}/parallel_models/*.hpp"
 )
 
@@ -91,10 +180,19 @@ ELSE()
   set(utils-headers ${utils-headers}
     ${LCM_DIR}/utils/LCM_Utils.h
     ${LCM_DIR}/utils/Projection.hpp
+    ${LCM_DIR}/utils/LocalNonlinearSolver.hpp
+    ${LCM_DIR}/utils/LocalNonlinearSolver_Def.hpp
+    ${LCM_DIR}/utils/NOXSolverPrePostOperator.h
+    ${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.h
+    ${LCM_DIR}/utils/MaterialDatabase.h
   )
   set(utils-sources ${utils-sources}
     ${LCM_DIR}/utils/LCM_Utils.cc
     ${LCM_DIR}/utils/Projection.cpp
+    ${LCM_DIR}/utils/LocalNonlinearSolver.cpp
+    ${LCM_DIR}/utils/NOXSolverPrePostOperator.cc
+    ${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.cc
+    ${LCM_DIR}/utils/MaterialDatabase.cc
   )
 ENDIF()
 
@@ -103,45 +201,67 @@ set(SOURCES ${SOURCES}
   ${evaluator-sources}
   ${model-eval-sources}
   ${surface-element-sources}
+  ${transport-sources}
+  ${hmc-sources}
+  ${pd-sources}
+  ${poro-sources}
   ${bc-sources}
   ${models-sources}
   ${utils-sources}
   ${topology-sources}
+  ${contact-sources}
+  ${residual-sources}
+  ${lin-sources}
+  ${proj-sources}
+  ${response-sources}
+  ${kin-sources}
+  ${sf-sources}
   )
 set(HEADERS ${HEADERS}
   ${problem-headers}
   ${evaluator-headers}
   ${model-eval-headers}
   ${surface-element-headers}
+  ${transport-headers}
+  ${hmc-headers}
+  ${pd-headers}       
+  ${poro-headers}
   ${bc-headers}
   ${models-headers}
   ${utils-headers}
   ${topology-headers}
+  ${contact-headers}
+  ${residual-headers}
+  ${lin-headers}
+  ${proj-headers}
+  ${response-headers}
+  ${kin-headers}
+  ${sf-headers}
  )
 
 IF(NOT ALBANY_PERIDIGM OR NOT ALBANY_EPETRA)
   list(REMOVE_ITEM SOURCES ${LCM_DIR}/problems/PeridigmProblem.cpp)
   list(REMOVE_ITEM SOURCES ${LCM_DIR}/utils/PeridigmManager.cpp)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/PeridigmForce.cpp)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/PeridigmPartialStress.cpp)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/AlbanyPeridigmOBCFunctional.cpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/peridigm/PeridigmForce.cpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/peridigm/PeridigmPartialStress.cpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/peridigm/AlbanyPeridigmOBCFunctional.cpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/problems/PeridigmProblem.hpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/utils/PeridigmManager.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmForce_Def.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmForce.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmPartialStress_Def.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmPartialStress.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/AlbanyPeridigmOBCFunctional_Def.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/AlbanyPeridigmOBCFunctional.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/peridigm/PeridigmForce_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/peridigm/PeridigmForce.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/peridigm/PeridigmPartialStress_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/peridigm/PeridigmPartialStress.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/peridigm/AlbanyPeridigmOBCFunctional_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/peridigm/AlbanyPeridigmOBCFunctional.hpp)
 ENDIF()
 
 IF(NOT ALBANY_CONTACT)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/MortarContactResidual.cpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/MortarContactResidual.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/MortarContactResidual_Def.hpp)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/MortarContactConstraints.cpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/MortarContactConstraints.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/MortarContactConstraints_Def.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/contact/MortarContactResidual.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/contact/MortarContactResidual.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/contact/MortarContactResidual_Def.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/contact/MortarContactConstraints.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/contact/MortarContactConstraints.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/contact/MortarContactConstraints_Def.hpp)
 ENDIF()
 
 IF(NOT ALBANY_HAVE_STK)
@@ -224,7 +344,20 @@ set(INCLUDE_DIRS
   ${LCM_DIR}/problems
   ${LCM_DIR}/evaluators
   ${LCM_DIR}/evaluators/bc
+  ${LCM_DIR}/evaluators/contact
+  ${LCM_DIR}/evaluators/HMC
+  ${LCM_DIR}/evaluators/kinematics
+  ${LCM_DIR}/evaluators/lame
+  ${LCM_DIR}/evaluators/linear-elasticity
+  ${LCM_DIR}/evaluators/peridigm
+  ${LCM_DIR}/evaluators/poro
+  ${LCM_DIR}/evaluators/projection
+  ${LCM_DIR}/evaluators/responses
+  ${LCM_DIR}/evaluators/residuals
   ${LCM_DIR}/evaluators/surface-element
+  ${LCM_DIR}/evaluators/size-field
+  ${LCM_DIR}/evaluators/transport
+  ${LCM_DIR}/evaluators/HMC
   ${LCM_DIR}/models
   ${LCM_DIR}/utils
   ${LCM_DIR}/utils/topology
@@ -407,14 +540,14 @@ ENDIF ()
 
 IF(BUILD_SHARED_LIBS)
   IF(ALBANY_SCOREC)
-    SET(LCM_UT_LIBS albanyLib albanyAdapt pumi albanySTK LCM albanyLib)
+    SET(LCM_UT_LIBS albanyLib albanyAdapt albanyPUMI albanySTK LCM albanyLib)
   ELSE()
     SET(LCM_UT_LIBS albanyLib albanyAdapt albanySTK LCM albanyLib)
   ENDIF()
 ELSE(BUILD_SHARED_LIBS)
   # We really don't link to anything in Hydride
   IF(ALBANY_SCOREC)
-    SET(LCM_UT_LIBS LCM albanyAdapt albanyLib pumi albanySTK albanyLib)
+    SET(LCM_UT_LIBS LCM albanyAdapt albanyLib albanyPUMI albanySTK albanyLib)
   ELSE()
     SET(LCM_UT_LIBS LCM albanyAdapt albanyLib albanySTK albanyLib )
   ENDIF()

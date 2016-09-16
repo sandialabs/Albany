@@ -96,7 +96,7 @@ public:
         infile >> ain[i] >> bin[i];      
         a[i] = (ScalarT) ain[i];
         b[i] = (ScalarT) bin[i];
-        std::cout << "level: " << i << "  " << a[i] << "  " << b[i] << std::endl;
+        //std::cout << "level: " << i << "  " << a[i] << "  " << b[i] << std::endl;
       }
       infile.close();
 
@@ -109,13 +109,15 @@ public:
         double half_step = i-0.5;
         a[i] = eta(half_step)*(1-(eta(half_step)-Etatop)/(1-Etatop));
         b[i] = eta(half_step)*(   eta(half_step)-Etatop)/(1-Etatop);
-        std::cout << "i: "          << i << "  " 
-                  << "level: "      << i+1 << "  "
-                  << "i+1/2: "      << half_step+1 << "  " 
-                  << "eta(i+1/2): " << eta(half_step) << "  " 
-                  << "a(i+1/2): "   << a[i] << "  " 
-                  << "b(i+1/2): "   << b[i] << "  " 
-                  << "a+b: "        << a[i]+b[i] << std::endl;
+
+        //std::cout << "i: "          << i << "  " 
+        //          << "level: "      << i+1 << "  "
+        //          << "i+1/2: "      << half_step+1 << "  " 
+        //          << "eta(i+1/2): " << eta(half_step) << "  " 
+        //          << "a(i+1/2): "   << a[i] << "  " 
+        //          << "b(i+1/2): "   << b[i] << "  " 
+        //          << "a+b: "        << a[i]+b[i] << std::endl;
+        
       }
     }
 

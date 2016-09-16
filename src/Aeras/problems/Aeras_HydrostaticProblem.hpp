@@ -37,7 +37,7 @@
 #include "Aeras_XZHydrostatic_TemperatureResid.hpp"
 #include "Aeras_XZHydrostatic_PiVel.hpp"
 #include "Aeras_XZHydrostatic_SPressureResid.hpp"
-#include "Aeras_XZHydrostatic_SurfaceGeopotential.hpp"
+#include "Aeras_Hydrostatic_SurfaceGeopotential.hpp"
 #include "Aeras_XZHydrostatic_KineticEnergy.hpp"
 #include "Aeras_XZHydrostatic_UTracer.hpp"
 #include "Aeras_XZHydrostatic_VirtualT.hpp"
@@ -719,12 +719,12 @@ Aeras::HydrostaticProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Hydrostatic Problem", &paramList);
     
     //Input
-    p->set<std::string>("Coordinate Vector Name", "Coordinate Vector Name");
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     
     //Output
     p->set<std::string>("SurfaceGeopotential", "SurfaceGeopotential");
     
-    ev = rcp(new Aeras::XZHydrostatic_SurfaceGeopotential<EvalT,AlbanyTraits>(*p,dl));
+    ev = rcp(new Aeras::Hydrostatic_SurfaceGeopotential<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

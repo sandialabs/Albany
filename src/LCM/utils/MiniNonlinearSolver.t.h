@@ -156,11 +156,11 @@ computeFADInfo(
   // Check whether dealing with AD type.
   if (Sacado::IsADType<T>::value == false) return;
 
-  //Deal with derivative information
+  // Deal with derivative information
   auto const
   dimension = r.get_dimension();
 
-  assert(dimension > 0);
+  if (0 == dimension) return;
 
   auto const
   order = r[0].size();

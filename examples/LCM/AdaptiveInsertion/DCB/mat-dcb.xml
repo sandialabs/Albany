@@ -2,12 +2,24 @@
 
   <ParameterList name="ElementBlocks">
     <ParameterList name="bulk-block">
-      <Parameter name="material" type="string" value="Ceramic" />
+      <Parameter
+        name="material"
+        type="string"
+        value="Ceramic" />
     </ParameterList>
     <ParameterList name="Surface Element">
-      <Parameter name="material" type="string" value="Cohesive" />
-      <Parameter name="Surface Element" type="bool" value="true" />
-      <Parameter name="Cohesive Element" type="bool" value="true" />
+      <Parameter
+        name="material"
+        type="string"
+        value="Cohesive" />
+      <Parameter
+        name="Surface Element"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Cohesive Element"
+        type="bool"
+        value="true" />
     </ParameterList>
   </ParameterList>
 
@@ -15,43 +27,96 @@
 
     <ParameterList name="Ceramic">
 
-      <ParameterList name="Material Model"> 
-        <Parameter name="Model Name"
-		   type="string" value="Saint Venant Kirchhoff"/>
+      <ParameterList name="Material Model">
+        <Parameter
+          name="Model Name"
+          type="string"
+          value="Saint Venant Kirchhoff" />
       </ParameterList>
 
       <ParameterList name="Elastic Modulus">
-        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="70e9"/>
+        <Parameter
+          name="Elastic Modulus Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="70e9" />
       </ParameterList>
 
       <ParameterList name="Poissons Ratio">
-        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="0.3"/>
+        <Parameter
+          name="Poissons Ratio Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="0.3" />
       </ParameterList>
 
-      <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
-      <Parameter name="Output FirstPK" type="bool" value="true"/>
+      <Parameter
+        name="Output Cauchy Stress"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Output FirstPK"
+        type="bool"
+        value="true" />
 
     </ParameterList>
 
     <ParameterList name="Cohesive">
-      <ParameterList name="Material Model"> 
-        <Parameter name="Model Name" type="string" value="Ortiz Pandolfi"/>
+      <ParameterList name="Material Model">
+        <Parameter
+          name="Model Name"
+          type="string"
+          value="Ortiz Pandolfi" />
       </ParameterList>
- 
-      <Parameter name="delta_c" type="double" value="0.01"/>
-      <Parameter name="sigma_c" type="double" value="100.0e06"/>
-      <Parameter name="beta" type="double" value="1.0"/>
-      <Parameter name="stiff_c" type="double" value="10e9"/>
+
+      <Parameter
+        name="delta_c"
+        type="double"
+        value="0.01" />
+      <Parameter
+        name="sigma_c"
+        type="double"
+        value="100.0e06" />
+      <Parameter
+        name="beta"
+        type="double"
+        value="1.0" />
+      <Parameter
+        name="stiff_c"
+        type="double"
+        value="10e9" />
 
       <!-- Output -->
-      <Parameter name="Output Cohesive Traction" type="bool" value="true"/>
-      <Parameter name="Output Normal Traction" type="bool" value="true"/>
-      <Parameter name="Output Shear Traction" type="bool" value="true"/>
-      <Parameter name="Output Normal Jump" type="bool" value="true"/>
-      <Parameter name="Output Shear Jump" type="bool" value="true"/>
-      <Parameter name="Output Max Jump" type="bool" value="true"/>
+      <Parameter
+        name="Output Cohesive Traction"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Output Normal Traction"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Output Shear Traction"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Output Normal Jump"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Output Shear Jump"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Output Max Jump"
+        type="bool"
+        value="true" />
 
     </ParameterList>
 

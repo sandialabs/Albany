@@ -11,7 +11,6 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Sacado_ParameterAccessor.hpp"
 #include "Albany_Layouts.hpp"
 
 namespace FELIX {
@@ -23,14 +22,14 @@ namespace FELIX {
 
 template<typename EvalT, typename Traits, typename VelT, typename TemprT>
 class ViscosityFO : public PHX::EvaluatorWithBaseImpl<Traits>,
-                    public PHX::EvaluatorDerived<EvalT, Traits>,
-                    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
-
+                    public PHX::EvaluatorDerived<EvalT, Traits>
+{
 public:
+
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
   typedef typename EvalT::ParamScalarT ParamScalarT;
-  
+
 
   ViscosityFO(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Albany::Layouts>& dl);
@@ -40,13 +39,7 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
-  typename EvalT::ScalarT& getValue(const std::string &n);
-
-
 private:
-
-  typename EvalT::ScalarT dummyParam;
-  ScalarT printedH;
 
   bool extractStrainRateSq;
   bool useStereographicMap;
@@ -62,12 +55,12 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
   PHX::MDField<TemprT,Cell> temperature;
   PHX::MDField<TemprT,Cell> flowFactorA;  //this is the coefficient A.  To distinguish it from the scalar flowFactor defined in the body of the function, it is called flowFactorA.  Probably this should be changed at some point...
+  PHX::MDField<ScalarT> homotopyParam;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
   PHX::MDField<ScalarT,Cell,QuadPoint> epsilonSq;
 
-  PHX::MDField<ScalarT,Dim> homotopy;
   ScalarT printedFF;
 
   unsigned int numQPs, numDims, numNodes, numCells;

@@ -1,37 +1,70 @@
 <ParameterList>
-  <Parameter name="Reference Material" type="string" value="Metal"/>
+  <Parameter
+    name="Reference Material"
+    type="string"
+    value="Metal" />
 
   <ParameterList name="ElementBlocks">
 
     <ParameterList name="block_1">
-      <Parameter name="material" type="string" value="Metal" />
+      <Parameter
+        name="material"
+        type="string"
+        value="Metal" />
     </ParameterList>
     <ParameterList name="block_2">
-      <Parameter name="material" type="string" value="Metal" />
+      <Parameter
+        name="material"
+        type="string"
+        value="Metal" />
     </ParameterList>
     <ParameterList name="block_3">
-      <Parameter name="material" type="string" value="Metal" />
+      <Parameter
+        name="material"
+        type="string"
+        value="Metal" />
     </ParameterList>
     <ParameterList name="block_4">
-      <Parameter name="material" type="string" value="Metal" />
+      <Parameter
+        name="material"
+        type="string"
+        value="Metal" />
     </ParameterList>
     <ParameterList name="block_5">
-      <Parameter name="material" type="string" value="Metal" />
+      <Parameter
+        name="material"
+        type="string"
+        value="Metal" />
     </ParameterList>
     <ParameterList name="block_6">
-      <Parameter name="material" type="string" value="Metal" />
+      <Parameter
+        name="material"
+        type="string"
+        value="Metal" />
     </ParameterList>
     <ParameterList name="block_7">
-      <Parameter name="material" type="string" value="Metal" />
+      <Parameter
+        name="material"
+        type="string"
+        value="Metal" />
     </ParameterList>
     <ParameterList name="block_8">
-      <Parameter name="material" type="string" value="Plastic" />
+      <Parameter
+        name="material"
+        type="string"
+        value="Plastic" />
     </ParameterList>
     <ParameterList name="block_9">
-      <Parameter name="material" type="string" value="Metal" />
+      <Parameter
+        name="material"
+        type="string"
+        value="Metal" />
     </ParameterList>
     <ParameterList name="block_10">
-      <Parameter name="material" type="string" value="Plastic" />
+      <Parameter
+        name="material"
+        type="string"
+        value="Plastic" />
     </ParameterList>
 
   </ParameterList>
@@ -39,18 +72,36 @@
   <ParameterList name="Materials">
 
     <ParameterList name="Plastic">
-      <Parameter name="Lame Material Model" type="string" value="Elastic"/>
+      <Parameter
+        name="Lame Material Model"
+        type="string"
+        value="Elastic" />
       <ParameterList name="Lame Material Parameters">
-        <Parameter name="Youngs Modulus" type="double" value="1.0"/>
-        <Parameter name="Poissons Ratio" type="double" value="0.25"/>
+        <Parameter
+          name="Youngs Modulus"
+          type="double"
+          value="1.0" />
+        <Parameter
+          name="Poissons Ratio"
+          type="double"
+          value="0.25" />
       </ParameterList>
     </ParameterList>
 
     <ParameterList name="Metal">
-      <Parameter name="Lame Material Model" type="string" value="Elastic"/>
+      <Parameter
+        name="Lame Material Model"
+        type="string"
+        value="Elastic" />
       <ParameterList name="Lame Material Parameters">
-        <Parameter name="Youngs Modulus" type="double" value="2.0"/>
-        <Parameter name="Poissons Ratio" type="double" value="0.25"/>
+        <Parameter
+          name="Youngs Modulus"
+          type="double"
+          value="2.0" />
+        <Parameter
+          name="Poissons Ratio"
+          type="double"
+          value="0.25" />
       </ParameterList>
     </ParameterList>
 

@@ -171,19 +171,10 @@ namespace Albany {
     constructDOFInterpolationEvaluator(
        const std::string& dof_names, int offsetToFirstDOF=0) const;
 
-    Teuchos::RCP< PHX::Evaluator<Traits> >
-      constructDOFInterpolationEvaluator_noDeriv(
-         const std::string& dof_names) const;
-
     //! Same as above, for Interpolating the Gradient
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFGradInterpolationEvaluator(
        const std::string& dof_names, int offsetToFirstDOF=0) const;
-
-    //! Interpolating the Gradient of quantity with no derivs
-    Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructDOFGradInterpolationEvaluator_noDeriv(
-       const std::string& dof_names) const;
 
     //! Interpolation functions for vector quantities
     Teuchos::RCP< PHX::Evaluator<Traits> >
@@ -264,6 +255,15 @@ namespace Albany {
        const Teuchos::RCP<shards::CellTopology>& cellType = Teuchos::null,
        const std::string& side_dof_name = "") const;
 
+    //! Combo: restriction to side plus interpolation
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructDOFCellToSideQPEvaluator(
+       const std::string& cell_dof_name,
+       const std::string& sideSetName,
+       const std::string& layout,
+       const Teuchos::RCP<shards::CellTopology>& cellType = Teuchos::null,
+       const std::string& side_dof_name = "") const;
+
     //! Function to create evaluator for prolongation to cell
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructDOFSideToCellEvaluator(
@@ -324,6 +324,6 @@ namespace Albany {
 template<typename EvalT, typename Traits>
 using EvaluatorUtils = EvaluatorUtilsBase<EvalT,Traits,typename EvalT::ScalarT>;
 
-}
+} // Namespace Albany
 
-#endif
+#endif // ALBANY_EVALUATORUTILS_HPP

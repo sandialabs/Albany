@@ -33,6 +33,7 @@
        evaluators/Aeras_XZHydrostatic_Pressure.cpp
        evaluators/Aeras_XZHydrostatic_KineticEnergy.cpp
        evaluators/Aeras_XZHydrostatic_SurfaceGeopotential.cpp
+       evaluators/Aeras_Hydrostatic_SurfaceGeopotential.cpp
        evaluators/Aeras_XZHydrostatic_UTracer.cpp
        evaluators/Aeras_XZHydrostatic_VirtualT.cpp
        evaluators/Aeras_EvaluatorUtilities.hpp
@@ -120,6 +121,8 @@
        evaluators/Aeras_XZHydrostatic_KineticEnergy.hpp
        evaluators/Aeras_XZHydrostatic_SurfaceGeopotential_Def.hpp
        evaluators/Aeras_XZHydrostatic_SurfaceGeopotential.hpp
+       evaluators/Aeras_Hydrostatic_SurfaceGeopotential_Def.hpp
+       evaluators/Aeras_Hydrostatic_SurfaceGeopotential.hpp
        evaluators/Aeras_XZHydrostatic_UTracer_Def.hpp
        evaluators/Aeras_XZHydrostatic_UTracer.hpp
        evaluators/Aeras_XZHydrostatic_VirtualT_Def.hpp
