@@ -157,6 +157,7 @@ private:
   bool hasPeridynamics;
 
   bool enableOptimizationBasedCoupling;
+  double obcScaleFactor;
 
   double previousTime;
   double currentTime;

@@ -10,7 +10,7 @@
 #    The path above is valid on the CEE LAN.  On other systems, you need to provide a path to a SEACAS build
 #    that includes shared libraries.
 import sys
-sys.path.append('/ascldap/users/djlittl/Albany_TPL/trilinos/trilinos-votd/GCC_4.7.2_OPT/lib')
+sys.path.append('/ascldap/users/djlittl/ATDM/seacas/seacas_gcc_5.4.0/lib')
 import exodus
 
 import string

@@ -29,6 +29,7 @@
 
     <ParameterList name="Peridigm Parameters">
       <ParameterList name="Optimization Based Coupling">
+	<Parameter name="Functional Scale Factor" type="double" value="1.0e7" />
       </ParameterList>
       <ParameterList name="Discretization">
 	<Parameter name="Type" type="string" value="Albany" />
@@ -127,20 +128,20 @@
     <Parameter name="Sensitivity Method" type="string" value="Adjoint"/>
 
     <!--Parameter name="Jacobian Operator" type="string" value="Finite Difference"/-->
-    
+
     <ParameterList name="Analysis">
       <Parameter name="Analysis Package" type="string" value="ROL"/>
       <ParameterList name="ROL">
         <Parameter name="Number of Parameters" type="int" value="3"/>
         <Parameter name="Check Gradient" type="bool" value="false"/>
-        <Parameter name="Gradient Tolerance" type="double" value="1e-7"/> <!-- 1e-7 -->
+        <Parameter name="Gradient Tolerance" type="double" value="1e-2"/>
         <Parameter name="Step Tolerance" type="double" value="1e-20"/>
         <Parameter name="Max Iterations" type="int" value="500"/>
         <Parameter name="Print Output" type="bool" value="true"/>
         <Parameter name="Parameter Initial Guess Type" type="string" value="From Model Evaluator"/> <!-- other choices are "Uniform Vector" or "Random Vector", default is "From Model Evaluator"/-->
         <Parameter name="Uniform Parameter Guess" type="double" value="0.000"/>
         <Parameter name="Min And Max Of Random Parameter Guess" type="Array(double)" value="{-0.005, 0.005}"/>
-        <Parameter name="Bound Constrained" type="bool" value="false"/>
+        <Parameter name="Bound Constrained" type="bool" value ="false"/>
         <Parameter name="x_lo" type="double" value="-200"/>
         <Parameter name="x_up" type="double" value="200"/>
         <Parameter name="bound_eps" type="double" value="0.1"/>
@@ -349,7 +350,7 @@
 	      <Parameter name="Test Type" type="string" value="NormF"/>
 	      <Parameter name="Norm Type" type="string" value="Two Norm"/>
 	      <Parameter name="Scale Type" type="string" value="Scaled"/>
-	      <Parameter name="Tolerance" type="double" value="1.0e-11"/>
+	      <Parameter name="Tolerance" type="double" value="1.0e-15"/>
 	    </ParameterList>
 	    <ParameterList name="Test 1">
 	      <Parameter name="Test Type" type="string" value="MaxIters"/>
