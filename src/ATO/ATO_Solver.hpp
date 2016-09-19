@@ -66,27 +66,35 @@ namespace ATO {
 
   class OptInterface {
   public:
-    virtual void Compute(double* p, double& g, double* dgdp, double& c, double* dcdp=NULL)=0;
     virtual void Compute(const double* p, double& g, double* dgdp, double& c, double* dcdp=NULL)=0;
 
+    virtual void ComputeMeasure(std::string measureType, double& measure)=0;
+
+    virtual void ComputeMeasure(std::string measureType, const double* p, 
+                                double& measure, double* dmdp, std::string integrationMethod)=0;
+    virtual void ComputeMeasure(std::string measureType, const double* p, 
+                                double& measure, std::string integrationMethod);
+
+    virtual void ComputeMeasure(std::string measureType, const double* p, double& measure);
+    virtual void ComputeMeasure(std::string measureType, const double* p, double& measure, double* dmdp);
+
+    virtual void InitializeOptDofs(double* p)=0;
+    virtual void getOptDofsLowerBound( Teuchos::Array<double>& b )=0;
+    virtual void getOptDofsUpperBound( Teuchos::Array<double>& b )=0;
+
+    virtual int GetNumOptDofs()=0;
+
+    /* legacy */
+
+    virtual void Compute(double* p, double& g, double* dgdp, double& c, double* dcdp=NULL)=0;
     virtual void ComputeConstraint(double* p, double& c, double* dcdp=NULL)=0;
 
     virtual void ComputeObjective(double* p, double& g, double* dgdp=NULL)=0;
     virtual void ComputeObjective(const double* p, double& g, double* dgdp=NULL)=0;
-    virtual void InitializeOptDofs(double* p)=0;
-    virtual void getOptDofsLowerBound( Teuchos::Array<double>& b )=0;
-    virtual void getOptDofsUpperBound( Teuchos::Array<double>& b )=0;
     virtual void ComputeVolume(double* p, const double* dfdp, double& v, double threshhold, double minP)=0;
 
-    virtual void ComputeMeasure(std::string measureType, double& measure)=0;
-    virtual void ComputeMeasure(std::string measureType, const double* p, 
-                                double& measure, double* dmdp, std::string integrationMethod)=0;
-
-    virtual void ComputeMeasure(std::string measureType, const double* p, double& measure);
-    virtual void ComputeMeasure(std::string measureType, const double* p, double& measure, double* dmdp);
-    virtual void ComputeMeasure(std::string measureType, const double* p, double& measure, std::string integrationMethod);
-
-    virtual int GetNumOptDofs()=0;
+   
+    /* end legacy */
   };
 
   class Solver : public EpetraExt::ModelEvaluator , public OptInterface {

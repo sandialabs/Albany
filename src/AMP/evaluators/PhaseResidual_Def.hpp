@@ -1,4 +1,4 @@
-////*****************************************************************//
+//*****************************************************************//
 //    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
@@ -55,6 +55,8 @@ PhaseResidual(const Teuchos::ParameterList& p,
   Teuchos::ParameterList* cond_list = p.get<Teuchos::ParameterList*>("Porosity Parameter List");
   
   Initial_porosity = cond_list->get("Value", 0.0);
+  
+  hasConsolidation_  = p.get<bool>("Compute Consolidation");
   
   std::vector<PHX::Device::size_type> dims;
   w_grad_bf_.fieldTag().dataLayout().dimensions(dims);
@@ -139,66 +141,103 @@ evaluateFields(typename Traits::EvalData workset)
 //      }
 //    }
    
-    
-    
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      for (int qp = 0; qp < num_qps_; ++qp) {
-        for (int node = 0; node < num_nodes_; ++node) {
-	    //Use if consolidation is considered
-            porosity_function1 = pow(((1.0 - porosity_(cell,qp))/(1.0 - Initial_porosity)),2);
-            porosity_function2 = (1.0 - Initial_porosity)/(1.0 - porosity_(cell,qp));
-	    //Use if No consolidation is considered
-            //porosity_function1 = 1.0;
-            //porosity_function2 = 1.0;
-            //In the model that is currently used, the Z-axis corresponds to the depth direction. Hence the term porosity
-            //function1 is multiplied with the second term. 
-            residual_(cell,node) += porosity_function2*(
-                       w_grad_bf_(cell,node,qp,0) * term1_(cell,qp,0)
-                     + w_grad_bf_(cell,node,qp,1) * term1_(cell,qp,1)
-                     + porosity_function1* w_grad_bf_(cell,node,qp,2) * term1_(cell,qp,2));
-        }
-      }
-    }
+    if (hasConsolidation_) {
+            for (int cell = 0; cell < workset.numCells; ++cell) {
+                for (int qp = 0; qp < num_qps_; ++qp) {
+                    for (int node = 0; node < num_nodes_; ++node) {
+                        //Use if consolidation is considered
+                        porosity_function1 = pow(((1.0 - porosity_(cell, qp)) / (1.0 - Initial_porosity)), 2);
+                                porosity_function2 = (1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
+                                //Use if No consolidation is considered
+                                //porosity_function1 = 1.0;
+                                //porosity_function2 = 1.0;
+                                //In the model that is currently used, the Z-axis corresponds to the depth direction. Hence the term porosity
+                                //function1 is multiplied with the second term. 
+                                residual_(cell, node) += porosity_function2 * (
+                                w_grad_bf_(cell, node, qp, 0) * term1_(cell, qp, 0)
+                                + w_grad_bf_(cell, node, qp, 1) * term1_(cell, qp, 1)
+                                + porosity_function1 * w_grad_bf_(cell, node, qp, 2) * term1_(cell, qp, 2));
+                    }
+                }
+            }
 
-    // heat source from laser 
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      for (int qp = 0; qp < num_qps_; ++qp) {
-        for (int node = 0; node < num_nodes_; ++node) {
-            //Use if consolidation is considered
-	    porosity_function2 = (1.0 - Initial_porosity)/(1.0 - porosity_(cell,qp));
-	    //Use if No consolidation is considered
-            //porosity_function2 = 1.0;
-            residual_(cell,node) -= porosity_function2*(w_bf_(cell,node,qp) * laser_source_(cell,qp));
-        }
-      }
-    }
+            // heat source from laser 
+            for (int cell = 0; cell < workset.numCells; ++cell) {
+                for (int qp = 0; qp < num_qps_; ++qp) {
+                    for (int node = 0; node < num_nodes_; ++node) {
+                        //Use if consolidation is considered
+                        porosity_function2 = (1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
+                                //Use if No consolidation is considered
+                                //porosity_function2 = 1.0;
+                                residual_(cell, node) -= porosity_function2 * (w_bf_(cell, node, qp) * laser_source_(cell, qp));
+                    }
+                }
+            }
 
-    // all other problem sources
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      for (int qp = 0; qp < num_qps_; ++qp) {
-        for (int node = 0; node < num_nodes_; ++node) {
-            //Use if consolidation is considered
-	    porosity_function2 = (1.0 - Initial_porosity)/(1.0 - porosity_(cell,qp));
-	    //Use if No consolidation is considered
-            //porosity_function2 = 1.0;
-            residual_(cell,node) -= porosity_function2*(w_bf_(cell,node,qp) * source_(cell,qp));
-        }
-      }
-    }
+            // all other problem sources
+            for (int cell = 0; cell < workset.numCells; ++cell) {
+                for (int qp = 0; qp < num_qps_; ++qp) {
+                    for (int node = 0; node < num_nodes_; ++node) {
+                        //Use if consolidation is considered
+                        porosity_function2 = (1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
+                                //Use if No consolidation is considered
+                                //porosity_function2 = 1.0;
+                                residual_(cell, node) -= porosity_function2 * (w_bf_(cell, node, qp) * source_(cell, qp));
+                    }
+                }
+            }
 
-    // transient term
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      for (int qp = 0; qp < num_qps_; ++qp) {
-        for (int node = 0; node < num_nodes_; ++node) {
-            //Use if consolidation is considered
-	    porosity_function2 = (1.0 - Initial_porosity)/(1.0 - porosity_(cell,qp));
-	    //Use if No consolidation is considered
-            //porosity_function2 = 1.0;
-            residual_(cell,node) += porosity_function2*(w_bf_(cell,node,qp) * energyDot_(cell,qp));
+            // transient term
+            for (int cell = 0; cell < workset.numCells; ++cell) {
+                for (int qp = 0; qp < num_qps_; ++qp) {
+                    for (int node = 0; node < num_nodes_; ++node) {
+                        //Use if consolidation is considered
+                        porosity_function2 = (1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
+                                //Use if No consolidation is considered
+                                //porosity_function2 = 1.0;
+                                residual_(cell, node) += porosity_function2 * (w_bf_(cell, node, qp) * energyDot_(cell, qp));
+                    }
+                }
+            }
+        } else { // does not have consolidation
+            for (int cell = 0; cell < workset.numCells; ++cell) {
+                for (int qp = 0; qp < num_qps_; ++qp) {
+                    for (int node = 0; node < num_nodes_; ++node) {
+                        //In the model that is currently used, the Z-axis corresponds to the depth direction. Hence the term porosity
+                        //function1 is multiplied with the second term. 
+                        residual_(cell, node) += (
+                                w_grad_bf_(cell, node, qp, 0) * term1_(cell, qp, 0)
+                                + w_grad_bf_(cell, node, qp, 1) * term1_(cell, qp, 1)
+                                + w_grad_bf_(cell, node, qp, 2) * term1_(cell, qp, 2));
+                    }
+                }
+            }
+            // heat source from laser 
+            for (int cell = 0; cell < workset.numCells; ++cell) {
+                for (int qp = 0; qp < num_qps_; ++qp) {
+                    for (int node = 0; node < num_nodes_; ++node) {
+                        residual_(cell, node) -= (w_bf_(cell, node, qp) * laser_source_(cell, qp));
+                    }
+                }
+            }
+            // all other problem sources
+            for (int cell = 0; cell < workset.numCells; ++cell) {
+                for (int qp = 0; qp < num_qps_; ++qp) {
+                    for (int node = 0; node < num_nodes_; ++node) {
+                        residual_(cell, node) -= (w_bf_(cell, node, qp) * source_(cell, qp));
+                    }
+                }
+            }
+            // transient term
+            for (int cell = 0; cell < workset.numCells; ++cell) {
+                for (int qp = 0; qp < num_qps_; ++qp) {
+                    for (int node = 0; node < num_nodes_; ++node) {
+                        residual_(cell, node) += (w_bf_(cell, node, qp) * energyDot_(cell, qp));
+                    }
+                }
+            }
         }
-      }
-    }
-
+         
     // heat source from laser 
     //PHAL::scale(laser_source_, -1.0);
     //FST::integrate(residual_, laser_source_, w_bf_, true);
@@ -211,5 +250,5 @@ evaluateFields(typename Traits::EvalData workset)
     //FST::integrate(residual_, energyDot_, w_bf_, true);
 }
 
-//**********************************************************************
+//*********************************************************************
 }

@@ -1,5 +1,9 @@
 <ParameterList>
 
+  <!-- Specify(true/false) if you want to compute consolidation or not -->
+  <Parameter name="Compute Consolidation" type="bool" value="true" />
+
+
   <ParameterList name="ElementBlocks">
 
     <ParameterList name="Powder_Region">
@@ -55,7 +59,7 @@
         <Parameter name="Laser Beam Radius Type" type="string" value="Constant"/>
         <Parameter name="Laser Beam Radius Value" type="double" value="60.0e-6"/>
         <Parameter name="Laser Power Type" type="string" value="Constant"/>
-        <Parameter name="Laser Power Value" type="double" value="100.0"/>
+        <Parameter name="Laser Power Value" type="double" value="60.0"/>
         <Parameter name="Powder Hemispherical Reflectivity Type" type="string" value="Constant"/>
         <Parameter name="Powder Hemispherical Reflectivity Value" type="double" value="0.70"/>
       </ParameterList>
@@ -65,7 +69,7 @@
         <Parameter name="Melting Temperature Value" type="double" value="1700.0"/>
 	<!-- Unit of Melting Temperature is K)-->
         <Parameter name="delta Temperature Type" type="string" value="Constant"/>
-        <Parameter name="delta Temperature Value" type="double" value="150.0"/>
+        <Parameter name="delta Temperature Value" type="double" value="300.0"/>
 	<!-- Unit of delta Temperature is K)-->
       </ParameterList>
 
@@ -105,7 +109,7 @@
 <!-- Heat in Substrate -->
       <ParameterList name="Source">
         <Parameter name="Phase Source Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="100.0"/>
+        <Parameter name="Value" type="double" value="60.0"/>
       </ParameterList>
 <!-- Should always put the value of Laser power = 0 in the substrate-->
       <ParameterList name="Laser Source">
@@ -127,7 +131,7 @@
         <Parameter name="Melting Temperature Value" type="double" value="1700.0"/>
 	<!-- Unit of Melting Temperature is K)-->
         <Parameter name="delta Temperature Type" type="string" value="Constant"/>
-        <Parameter name="delta Temperature Value" type="double" value="150.0"/>
+        <Parameter name="delta Temperature Value" type="double" value="300.0"/>
 	<!-- Unit of delta Temperature is K)-->
       </ParameterList>
 

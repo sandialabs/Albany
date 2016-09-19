@@ -2,30 +2,66 @@
   <ParameterList name="ElementBlocks">
 
     <ParameterList name="block_1">
-      <Parameter name="material" type="string" value="Metal" />
+      <Parameter
+        name="material"
+        type="string"
+        value="Metal" />
     </ParameterList>
   </ParameterList>
 
   <ParameterList name="Materials">
 
     <ParameterList name="Metal">
-      <ParameterList name="Material Model"> 
-        <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
+      <ParameterList name="Material Model">
+        <Parameter
+          name="Model Name"
+          type="string"
+          value="CrystalPlasticity" />
       </ParameterList>
       <!-- Crystal Elasticity moduli and orientation -->
       <ParameterList name="Crystal Elasticity">
-        <Parameter name="C11" type="double" value="168.4"/>
-        <Parameter name="C12" type="double" value="121.4"/>
-        <Parameter name="C44" type="double" value="75.4"/>
-        <Parameter name="Basis Vector 1" type="Array(double)" value="{0.9210758803014713, 0.3892948858447943, 0.008289425912465695}"/>
-        <Parameter name="Basis Vector 2" type="Array(double)" value="{-0.38936657366094257, 0.9206316613418735, 0.028827338594460284}"/>
-        <Parameter name="Basis Vector 3" type="Array(double)" value="{0.003590827537975983, -0.029779791637794085, 0.9995500337489875}"/>
+        <Parameter
+          name="C11"
+          type="double"
+          value="168.4" />
+        <Parameter
+          name="C12"
+          type="double"
+          value="121.4" />
+        <Parameter
+          name="C44"
+          type="double"
+          value="75.4" />
+        <Parameter
+          name="Basis Vector 1"
+          type="Array(double)"
+          value="{0.9210758803014713, 0.3892948858447943, 0.008289425912465695}" />
+        <Parameter
+          name="Basis Vector 2"
+          type="Array(double)"
+          value="{-0.38936657366094257, 0.9206316613418735, 0.028827338594460284}" />
+        <Parameter
+          name="Basis Vector 3"
+          type="Array(double)"
+          value="{0.003590827537975983, -0.029779791637794085, 0.9995500337489875}" />
       </ParameterList>
       <!-- Specify output to Exodus -->
-      <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
-      <Parameter name="Output Fp" type="bool" value="true"/>
-      <Parameter name="Output L" type="bool" value="true"/>
-      <Parameter name="Output Mechanical Source" type="bool" value="true"/>
+      <Parameter
+        name="Output Cauchy Stress"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Output Fp"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Output L"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Output Mechanical Source"
+        type="bool"
+        value="true" />
     </ParameterList>
 
   </ParameterList>

@@ -41,7 +41,6 @@ cmake \
  -D Boost_INCLUDE_DIRS:FILEPATH="/usr/include/boost" \
 \
  -D Trilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES=ON \
- -D Trilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF \
  -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
  -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
  -D Trilinos_ENABLE_CXX11:BOOL=ON \
@@ -65,6 +64,7 @@ cmake \
  -D EpetraExt_USING_HDF5:BOOL=OFF \
  -D Intrepid_ENABLE_TESTS:BOOL=OFF \
  -D Intrepid2_ENABLE_TESTS:BOOL=OFF \
+ -D ROL_ENABLE_TESTS:BOOL=OFF \
  -D Phalanx_INDEX_SIZE_TYPE:STRING="lcm_phalanx_index_type" \
  -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="lcm_kokkos_device" \
  -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \

@@ -56,6 +56,10 @@ public:
   Teuchos::RCP<const Teuchos::ParameterList> 
   getValidProblemParameters() const;
   
+  // This function return true if compute consolidation was specified in the
+  // input deck. By default consolidation is on.
+  bool hasConsolidation() const;
+  
 
 private:
 
@@ -85,6 +89,10 @@ protected:
   int num_dims_;
 
   Teuchos::RCP<QCAD::MaterialDatabase> material_db_;
+  
+  // this variable is used to specify if we want to include consolidation
+  // or not in the model. It may be removed in the future.
+  bool hasConsolidation_;
 
   Teuchos::RCP<Albany::Layouts> dl_;
 
@@ -374,6 +382,9 @@ Albany::PhaseProblem::constructEvaluators(
     p->set<string>("Coordinate Name","Coord Vec");
     p->set<string>("Porosity Name", "Porosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &param_list);
+    
+    // has consolidation?
+    p->set<bool>("Compute Consolidation",hasConsolidation());
 
     //Output
     p->set<string>("Rho Cp Name", "Rho Cp");
@@ -499,6 +510,8 @@ Albany::PhaseProblem::constructEvaluators(
     p->set<string>("Time Name","Time");
     p->set<string>("Delta Time Name","Delta Time");
     
+    // has consolidation?
+    p->set<bool>("Compute Consolidation",hasConsolidation());
     
     // take porosity parameter list
     Teuchos::ParameterList& param_list_porosity =

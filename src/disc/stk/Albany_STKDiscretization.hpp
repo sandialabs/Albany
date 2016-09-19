@@ -103,20 +103,6 @@ namespace Albany {
     //! Get Tpetra overlapped DOF map
     Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const;
 
-#if 0 //defined(ALBANY_EPETRA)
-    //! Get field DOF map
-    Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const;
-
-    //! Get field node map
-    Teuchos::RCP<const Epetra_Map> getNodeMap(const std::string& field_name) const;
-
-    //! Get field overlapped DOF map
-    Teuchos::RCP<const Epetra_Map> getOverlapMap(const std::string& field_name) const;
-
-    //! Get field overlapped node map
-    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap(const std::string& field_name) const;
-#endif
-
     //! Get field DOF map
     Teuchos::RCP<const Tpetra_Map> getMapT(const std::string& field_name) const;
 
@@ -245,9 +231,10 @@ namespace Albany {
     Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistory() const;
     Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistory(int maxStepCount) const;
     void getSolutionFieldHistory(Epetra_MultiVector &result) const;
-
-    void setResidualField(const Epetra_Vector& residual);
+    Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistoryImpl(int stepCount) const;
+    void getSolutionFieldHistoryImpl(Epetra_MultiVector &result) const;
 #endif
+
     //Tpetra analog
     void setResidualFieldT(const Tpetra_Vector& residualT);
 
@@ -337,21 +324,6 @@ namespace Albany {
 
     void getSolutionMV(Tpetra_MultiVector &resultT, bool overlapped=false) const;
 
-#if 0 //defined(ALBANY_EPETRA)
-    //! Copy field from STK Mesh field to given Epetra_Vector
-    void getField(Epetra_Vector &field_vector, const std::string& field_name) const;
-
-    // Copy field vector into STK Mesh field
-    void setField(const Epetra_Vector &field_vector, const std::string& field_name, bool overlapped=false);
-
-    Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistoryImpl(int stepCount) const;
-    void getSolutionFieldHistoryImpl(Epetra_MultiVector &result) const;
-
-    // Copy solution vector from Epetra_Vector into STK Mesh
-    // Here soln is the local (non overlapped) solution
-    void setSolutionField(const Epetra_Vector& soln);
-#endif
-
     //! Copy field from STK Mesh field to given Tpetra_Vector
     void getFieldT(Tpetra_Vector &field_vector, const std::string& field_name) const;
 
@@ -364,10 +336,6 @@ namespace Albany {
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local + neighbor (overlapped) solution
-#if 0 //defined(ALBANY_EPETRA)
-    void setOvlpSolutionField(const Epetra_Vector& soln);
-#endif
-    //Tpetra version of above
     void setOvlpSolutionFieldT(const Tpetra_Vector& solnT);
     void setOvlpSolutionFieldMV(const Tpetra_MultiVector& solnT);
 
@@ -393,9 +361,7 @@ namespace Albany {
     void setupExodusOutput();
     //! Call stk_io for creating NetCDF output file
     void setupNetCDFOutput();
-#if 0 //defined(ALBANY_EPETRA)
-    int processNetCDFOutputRequest(const Epetra_Vector&);
-#endif
+
     int processNetCDFOutputRequestT(const Tpetra_Vector&);
 
     int processNetCDFOutputRequestMV(const Tpetra_MultiVector&);

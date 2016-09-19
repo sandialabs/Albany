@@ -357,6 +357,7 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 
 }
 //------------------------------------------------------------------------------
+// Neumann BCs
 // Traction BCs
 void
 Albany::MechanicsProblem::
@@ -369,41 +370,53 @@ constructNeumannEvaluators(
   Albany::BCUtils<Albany::NeumannTraits> neuUtils;
 
   // Check to make sure that Neumann BCs are given in the input file
-
-  if (!neuUtils.haveBCSpecified(this->params))
-
-  return;
+  if (!neuUtils.haveBCSpecified(this->params)) {
+    return;
+  }
 
   // Construct BC evaluators for all side sets and names
   // Note that the string index sets up the equation offset,
   // so ordering is important
-  
+
   std::vector<std::string> neumannNames(neq + 1);
   Teuchos::Array<Teuchos::Array<int>> offsets;
   offsets.resize(neq + 1);
 
-  neumannNames[0] = "sig_x";
-  offsets[0].resize(1);
-  offsets[0][0] = 0;
-  // The Neumann BC code uses offsets[neq].size() as num dim, so use num_dims_
-  // here rather than neq.
-  offsets[neq].resize(num_dims_);
-  offsets[neq][0] = 0;
+  int index = 0;
 
-  if (num_dims_ > 1) {
-    neumannNames[1] = "sig_y";
-    offsets[1].resize(1);
-    offsets[1][0] = 1;
-    offsets[neq][1] = 1;
+  if (have_mech_eq_) {
+    neumannNames[index] = "sig_x";
+    offsets[index].resize(1);
+    offsets[index++][0] = 0;
+
+    // The Neumann BC code uses offsets[neq].size() as num dim, so use num_dims_
+    // here rather than neq.
+    offsets[neq].resize(num_dims_);
+    offsets[neq][0] = 0;
+
+    if (num_dims_ > 1) {
+      neumannNames[index] = "sig_y";
+      offsets[index].resize(1);
+      offsets[index++][0] = 1;
+      offsets[neq][1] = 1;
+    }
+
+    if (num_dims_ > 2) {
+      neumannNames[index] = "sig_z";
+      offsets[index].resize(1);
+      offsets[index++][0] = 2;
+      offsets[neq][2] = 2;
+    }
   }
 
-  if (num_dims_ > 2) {
-    neumannNames[2] = "sig_z";
-    offsets[2].resize(1);
-    offsets[2][0] = 2;
-    offsets[neq][2] = 2;
+  if (have_temperature_eq_) {
+    neumannNames[index] = "T";
+    offsets[index].resize(1);
+    offsets[index++][0] = 1;
+    // JTO, this can't be right...
+    //offsets[neq][3] = 1;
   }
-
+  
   neumannNames[neq] = "all";
 
   // Construct BC evaluators for all possible names of conditions
@@ -425,14 +438,16 @@ constructNeumannEvaluators(
   condNames[1] = "dudn";
   condNames[2] = "P";
 
+  // The resize below is not appropriate for MechanicsProblem
+  // not sure what the right thing to do is
   nfm.resize(1); // Elasticity problem only has one element block
 
   nfm[0] = neuUtils.constructBCEvaluators(
       meshSpecs,
       neumannNames,
       dof_names,
-      true,
-      0,
+      true,        // isVectorField
+      0,           // offsetToFirstDOF
       condNames,
       offsets,
       dl_,

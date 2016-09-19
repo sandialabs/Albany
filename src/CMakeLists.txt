@@ -680,7 +680,18 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./LCM/
                      ./LCM/evaluators
                      ./LCM/evaluators/bc
+                     ./LCM/evaluators/contact
+                     ./LCM/evaluators/HMC
+                     ./LCM/evaluators/kinematics
+                     ./LCM/evaluators/lame
+                     ./LCM/evaluators/linear-elasticity
+                     ./LCM/evaluators/peridigm
+                     ./LCM/evaluators/poro
+                     ./LCM/evaluators/projection
+                     ./LCM/evaluators/responses
+                     ./LCM/evaluators/residuals
                      ./LCM/evaluators/surface-element
+                     ./LCM/evaluators/size-field
                      ./LCM/evaluators/transport
                      ./LCM/evaluators/HMC
                      ./LCM/models
@@ -723,6 +734,14 @@ IF ( ENABLE_NLopt )
   set(NLOPT_LIB nlopt)
 ELSE()
   set(NLOPT_LIB )
+ENDIF()
+
+IF ( ENABLE_Cogent )
+  include_directories (${Cogent_INCLUDE_DIR})
+  link_directories (${Cogent_LIBRARY_DIR})
+  set(Cogent_LIB Cogent)
+ELSE()
+  set(Cogent_LIB )
 ENDIF()
 
 IF ( ENABLE_DOTK )
@@ -863,6 +882,7 @@ set(ALL_LIBRARIES
   ${LAME_LIB}
   ${MATH_TOOLKIT_LIB}
   ${NLOPT_LIB}
+  ${Cogent_LIB}
   ${DOTK_LIB}
   ${LAMENT_LIB}
   ${Trilinos_EXTRA_LD_FLAGS}
@@ -920,16 +940,12 @@ ENDIF()
 
 # RPI APF mesh interface
 IF(ALBANY_APF)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} pumi)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyPUMI)
 ENDIF()
 
 IF (ALBANY_AMP)
   add_subdirectory(AMP)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AMP)
-ENDIF()
-
-IF (ALBANY_GOAL)
-  add_subdirectory(GOAL)
 ENDIF()
 
 IF(ALBANY_CATALYST)
@@ -966,6 +982,14 @@ endif()
 
 # Repeat libraries twice to catch circular dependencies
 SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
+
+# this needs to come after the definition of ALBANY_LIBRARIES
+IF (ALBANY_CTM)
+  # CTM is inteded to be a demonstration of using Albany as a library, not
+  # adding a library to Albany. Thus, we do not set an additional library in
+  # the ALBANY_LIBRARIES list here.
+  add_subdirectory(CTM)
+ENDIF()
 
 MESSAGE("-- Albany Executables to link: ${ALBANY_EXECUTABLES}")
 

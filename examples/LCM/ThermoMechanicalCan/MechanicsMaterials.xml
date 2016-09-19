@@ -4,38 +4,98 @@
   <ParameterList name="ElementBlocks">
 
     <ParameterList name="Block_1">
-      <Parameter name="material" type="string" value="304-tube" />
-      <Parameter name="Weighted Volume Average J" type="bool" value="true"/>
-      <Parameter name="Average J Stabilization Parameter" type="double" value= "0.0"/>
-      <Parameter name="Volume Average Pressure" type="bool" value="true"/>
+      <Parameter
+        name="material"
+        type="string"
+        value="304-tube" />
+      <Parameter
+        name="Weighted Volume Average J"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Average J Stabilization Parameter"
+        type="double"
+        value="0.0" />
+      <Parameter
+        name="Volume Average Pressure"
+        type="bool"
+        value="true" />
     </ParameterList>
 
     <ParameterList name="Block_2">
-      <Parameter name="material" type="string" value="304-tube" />
-      <Parameter name="Weighted Volume Average J" type="bool" value="true"/>
-      <Parameter name="Average J Stabilization Parameter" type="double" value= "0.0"/>
-      <Parameter name="Volume Average Pressure" type="bool" value="true"/>
+      <Parameter
+        name="material"
+        type="string"
+        value="304-tube" />
+      <Parameter
+        name="Weighted Volume Average J"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Average J Stabilization Parameter"
+        type="double"
+        value="0.0" />
+      <Parameter
+        name="Volume Average Pressure"
+        type="bool"
+        value="true" />
     </ParameterList>
 
     <ParameterList name="Block_4">
-      <Parameter name="material" type="string" value="304-tube" />
-      <Parameter name="Weighted Volume Average J" type="bool" value="true"/>
-      <Parameter name="Average J Stabilization Parameter" type="double" value= "0.0"/>
-      <Parameter name="Volume Average Pressure" type="bool" value="true"/>
+      <Parameter
+        name="material"
+        type="string"
+        value="304-tube" />
+      <Parameter
+        name="Weighted Volume Average J"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Average J Stabilization Parameter"
+        type="double"
+        value="0.0" />
+      <Parameter
+        name="Volume Average Pressure"
+        type="bool"
+        value="true" />
     </ParameterList>
 
     <ParameterList name="Block_3">
-      <Parameter name="material" type="string" value="304-lid" />
-      <Parameter name="Weighted Volume Average J" type="bool" value="true"/>
-      <Parameter name="Average J Stabilization Parameter" type="double" value= "0.0"/>
-      <Parameter name="Volume Average Pressure" type="bool" value="true"/>
+      <Parameter
+        name="material"
+        type="string"
+        value="304-lid" />
+      <Parameter
+        name="Weighted Volume Average J"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Average J Stabilization Parameter"
+        type="double"
+        value="0.0" />
+      <Parameter
+        name="Volume Average Pressure"
+        type="bool"
+        value="true" />
     </ParameterList>
 
     <ParameterList name="Block_5">
-      <Parameter name="material" type="string" value="304-lid" />
-      <Parameter name="Weighted Volume Average J" type="bool" value="true"/>
-      <Parameter name="Average J Stabilization Parameter" type="double" value= "0.0"/>
-      <Parameter name="Volume Average Pressure" type="bool" value="true"/>
+      <Parameter
+        name="material"
+        type="string"
+        value="304-lid" />
+      <Parameter
+        name="Weighted Volume Average J"
+        type="bool"
+        value="true" />
+      <Parameter
+        name="Average J Stabilization Parameter"
+        type="double"
+        value="0.0" />
+      <Parameter
+        name="Volume Average Pressure"
+        type="bool"
+        value="true" />
     </ParameterList>
 
   </ParameterList>
@@ -43,49 +103,109 @@
   <ParameterList name="Materials">
 
     <ParameterList name="304-tube">
-      <ParameterList name="Material Model"> 
-        <Parameter name="Model Name" type="string" value="J2"/>
+      <ParameterList name="Material Model">
+        <Parameter
+          name="Model Name"
+          type="string"
+          value="J2" />
       </ParameterList>
       <ParameterList name="Elastic Modulus">
-        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="170.3e9"/>
+        <Parameter
+          name="Elastic Modulus Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="170.3e9" />
       </ParameterList>
       <ParameterList name="Poissons Ratio">
-        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="0.32"/>
+        <Parameter
+          name="Poissons Ratio Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="0.32" />
       </ParameterList>
       <ParameterList name="Yield Strength">
-        <Parameter name="Yield Strength Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="82.9374e6"/>
+        <Parameter
+          name="Yield Strength Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="82.9374e6" />
       </ParameterList>
       <ParameterList name="Hardening Modulus">
-        <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="1.08782e9"/>
+        <Parameter
+          name="Hardening Modulus Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="1.08782e9" />
       </ParameterList>
-      <Parameter name="Density" type="double" value="7920"/>
+      <Parameter
+        name="Density"
+        type="double"
+        value="7920" />
     </ParameterList>
 
     <ParameterList name="304-lid">
-      <ParameterList name="Material Model"> 
-        <Parameter name="Model Name" type="string" value="J2"/>
+      <ParameterList name="Material Model">
+        <Parameter
+          name="Model Name"
+          type="string"
+          value="J2" />
       </ParameterList>
       <ParameterList name="Elastic Modulus">
-        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="110.3e9"/>
+        <Parameter
+          name="Elastic Modulus Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="110.3e9" />
       </ParameterList>
       <ParameterList name="Poissons Ratio">
-        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="0.32"/>
+        <Parameter
+          name="Poissons Ratio Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="0.32" />
       </ParameterList>
       <ParameterList name="Yield Strength">
-        <Parameter name="Yield Strength Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="88.02e6"/>
+        <Parameter
+          name="Yield Strength Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="88.02e6" />
       </ParameterList>
       <ParameterList name="Hardening Modulus">
-        <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="232.8e6"/>
+        <Parameter
+          name="Hardening Modulus Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="232.8e6" />
       </ParameterList>
-      <Parameter name="Density" type="double" value="7920"/>
+      <Parameter
+        name="Density"
+        type="double"
+        value="7920" />
     </ParameterList>
 
   </ParameterList>

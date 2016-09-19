@@ -369,10 +369,11 @@ Optimizer_OCG::Optimize()
       // update topology
       for(int i=0; i<numOptDofs; i++) {
         double be = dfdp[i]/(dgdp[i]-gmax_dgdp)/vmid;
-        be = (be > 0.0) ? be : 0.0;
         double p_old = p_last[i];
         double offset = 0.01*(upperBound[i] - lowerBound[i]) - lowerBound[i];
-        double p_new = (p_old+offset)*pow(be,_stabExponent)-offset;
+        double sign = (be > 0.0) ? 1 : -1;
+        be = (be > 0.0) ? be : -be;
+        double p_new = (p_old+offset)*sign*pow(be,_stabExponent)-offset;
         // limit change
         double dval = p_new - p_old;
         if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
@@ -754,7 +755,9 @@ Optimizer_OC::computeUpdatedTopology()
         be = -dfdp[i]/vmid;
       double p_old = p_last[i];
       double offset = 0.01*(upperBound[i] - lowerBound[i]) - lowerBound[i];
-      double p_new = (p_old+offset)*pow(be,_stabExponent)-offset;
+      double sign = (be > 0.0) ? 1 : -1;
+      be = (be > 0.0) ? be : -be;
+      double p_new = (p_old+offset)*sign*pow(be,_stabExponent)-offset;
       // limit change
       double dval = p_new - p_old;
       if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
@@ -810,7 +813,9 @@ Optimizer_OC::computeUpdatedTopology()
         be = -dfdp[i]/lambda;
       double p_old = p_last[i];
       double offset = 0.01*(upperBound[i] - lowerBound[i]) - lowerBound[i];
-      double p_new = (p_old+offset)*pow(be,_stabExponent)-offset;
+      double sign = (be > 0.0) ? 1 : -1;
+      be = (be > 0.0) ? be : -be;
+      double p_new = (p_old+offset)*sign*pow(be,_stabExponent)-offset;
       // limit change
       double dval = p_new - p_old;
       if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
@@ -841,7 +846,9 @@ Optimizer_OC::computeUpdatedTopology()
         be = -dfdp[i]/plambda;
       double p_old = p_last[i];
       double offset = 0.01*(upperBound[i] - lowerBound[i]) - lowerBound[i];
-      double p_new = (p_old+offset)*pow(be,_stabExponent)-offset;
+      double sign = (be > 0.0) ? 1 : -1;
+      be = (be > 0.0) ? be : -be;
+      double p_new = (p_old+offset)*sign*pow(be,_stabExponent)-offset;
       // limit change
       double dval = p_new - p_old;
       if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
@@ -879,7 +886,9 @@ Optimizer_OC::computeUpdatedTopology()
           be = -dfdp[i]/vmid;
         double p_old = p_last[i];
         double offset = 0.01*(upperBound[i] - lowerBound[i]) - lowerBound[i];
-        double p_new = (p_old+offset)*pow(be,_stabExponent)-offset;
+      double sign = (be > 0.0) ? 1 : -1;
+        be = (be > 0.0) ? be : -be;
+        double p_new = (p_old+offset)*sign*pow(be,_stabExponent)-offset;
         // limit change
         double dval = p_new - p_old;
         if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;

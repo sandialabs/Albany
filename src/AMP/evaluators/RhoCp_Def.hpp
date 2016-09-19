@@ -20,7 +20,8 @@ RhoCp<EvalT, Traits>::
 RhoCp(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
   coord_      (p.get<std::string>("Coordinate Name"),dl->qp_vector),
   porosity_   (p.get<std::string>("Porosity Name"),dl->qp_scalar),
-  rho_cp_     (p.get<std::string>("Rho Cp Name"),dl->qp_scalar)
+  rho_cp_     (p.get<std::string>("Rho Cp Name"),dl->qp_scalar),
+  hasConsolidation_ (p.get<bool>("Compute Consolidation"))
 {
 
   this->addDependentField(coord_);
@@ -75,17 +76,26 @@ evaluateFields(typename Traits::EvalData workset)
   // current time
   const RealType time = workset.current_time;
 
-  // specific heat function
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-	//If No consolidation is considered
-        //rho_cp_(cell,qp) = constant_value_;
- 	// If consolidation is considered
-        rho_cp_(cell,qp) = constant_value_*(1.0 - porosity_(cell,qp));
+  if (hasConsolidation_) {
+            // specific heat function
+            for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+                for (std::size_t qp = 0; qp < num_qps_; ++qp) {
+                    //If No consolidation is considered
+                    //rho_cp_(cell,qp) = constant_value_;
+                    // If consolidation is considered
+                    rho_cp_(cell, qp) = constant_value_ * (1.0 - porosity_(cell, qp));
 
-    }
-  }
-
+                }
+            }
+        } else {
+            // specific heat function
+            for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+                for (std::size_t qp = 0; qp < num_qps_; ++qp) {
+                    //If No consolidation is considered
+                    rho_cp_(cell, qp) = constant_value_;
+                }
+            }
+        }
 }
 
 //**********************************************************************
@@ -96,7 +106,7 @@ getValidRhoCpParameters() const
 {
  
   Teuchos::RCP<Teuchos::ParameterList> valid_pl =
-    rcp(new Teuchos::ParameterList("Valid Rho Cp Params"));;
+    rcp(new Teuchos::ParameterList("Valid Rho Cp Params"));
 
   valid_pl->set<std::string>("Rho Cp Type", "Constant",
       "Constant rho cp across the element block");

@@ -25,6 +25,7 @@ update_wiki () {
 source ./env-all.sh
 
 cd "$LCM_DIR"
+SCRIPT_NAME=`basename $0`
 
 case "$SCRIPT_NAME" in
     build-all.sh)
@@ -59,7 +60,7 @@ case "$SCRIPT_NAME" in
 	COMMAND="$LCM_DIR/${SCRIPT_NAME%-*}.sh"
 	;;
     *)
-	echo "Unrecognized script name"
+	echo "Unrecognized script name in build-all: $SCRIPT_NAME"
 	exit 1
 	;;
 esac
@@ -76,52 +77,30 @@ for P in $PACKAGES; do
                 echo "MODULE: $MODULE"
                 module load "$MODULE"
                 "$COMMAND" "$P" "$NUM_PROCS"
-                # Update wiki after compiling Albany with gcc debug only.
-                case "$PACKAGE" in
+                # Update wiki after compiling Albany with gcc release only.
+                case "$P" in
                     albany)
-	                case "$ARCH" in
+	                case "$A" in
 	                    serial)
-		                case "$BUILD_TYPE" in
-		                    debug)
-			                case "$TOOL_CHAIN" in
+		                case "$BT" in
+		                    release)
+			                case "$TC" in
 			                    gcc)
 				                update_wiki
 				                ;;
-			                    clang)
-				                ;;
-			                    intel)
-				                ;;
-			                    pgi)
-				                ;;
 			                    *)
-				                echo "Unrecognized tool chain option"
-				                exit 1
 				                ;;
 			                esac
 			                ;;
-		                    release)
-			                ;;
 		                    *)
-			                echo "Unrecognized build type option"
-			                exit 1
 			                ;;
 		                esac
 		                ;;
-	                    openmp)
-		                ;;
-	                    cuda)
-		                ;;
 	                    *)
-		                echo "Unrecongnized architecture option"
-		                exit 1
 		                ;;
 	                esac
 	                ;;
-                    trilinos)
-	                ;;
                     *)
-	                echo "Unrecognized package option"
-	                exit 1
 	                ;;
                 esac
                 module purge

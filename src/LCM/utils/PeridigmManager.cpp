@@ -38,7 +38,7 @@ void LCM::PeridigmManager::initializeSingleton(
   }
 }
 
-LCM::PeridigmManager::PeridigmManager() : hasPeridynamics(false), enableOptimizationBasedCoupling(false), previousTime(0.0), currentTime(0.0), timeStep(0.0), cubatureDegree(-1)
+LCM::PeridigmManager::PeridigmManager() : hasPeridynamics(false), enableOptimizationBasedCoupling(false), obcScaleFactor(1.0), previousTime(0.0), currentTime(0.0), timeStep(0.0), cubatureDegree(-1)
 {}
 
 void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -58,6 +58,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
   if(peridigmParams->isSublist("Optimization Based Coupling")){
     enableOptimizationBasedCoupling = true;
+    obcScaleFactor = peridigmParams->sublist("Optimization Based Coupling").get<double>("Functional Scale Factor", 1.0);
   }
 
   // Read the material data base file, if any
@@ -802,8 +803,6 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 
 double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalDerivWrtDisplacement)
 {
-  double scaleFactor = 1.0;
-
   if(!enableOptimizationBasedCoupling){
     return 0.0;
   }
@@ -889,9 +888,8 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
     for(int dof=0 ; dof<3 ; dof++){
       displacementDiff[3*iEvalPt+dof] = physPoints(0,0,dof) - ((*obcDataPoints)[iEvalPt].currentCoords[dof] - (*obcDataPoints)[iEvalPt].initialCoords[dof]);
       // Multiply the displacement vector by the sphere element volume
-      displacementDiffScaled[3*iEvalPt+dof] = scaleFactor*displacementDiff[3*iEvalPt+dof]*(*obcDataPoints)[iEvalPt].sphereElementVolume;
+      displacementDiffScaled[3*iEvalPt+dof] = obcScaleFactor*displacementDiff[3*iEvalPt+dof]*(*obcDataPoints)[iEvalPt].sphereElementVolume;
     }
-
     if(obcFunctionalDerivWrtDisplacement != NULL) {
       Kokkos::DynRankView<RealType, PHX::Device> refPoint("PPP", numPoints, numDim);
       for(int dof=0 ; dof<3 ; dof++)
@@ -955,7 +953,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
 
   // Evaluate the functional
   double functionalValue(0.0);
-  displacementDiffScaled.Dot(displacementDiffScaled, &functionalValue);
+  displacementDiff.Dot(displacementDiffScaled, &functionalValue);
 
   return functionalValue;
 }

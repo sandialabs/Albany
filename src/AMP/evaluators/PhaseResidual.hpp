@@ -69,6 +69,9 @@ private:
   ScalarT Initial_porosity;
   ScalarT porosity_function1;
   ScalarT porosity_function2;
+  
+  // variable use to decide if consolidation must be computed
+  bool hasConsolidation_;
 
   bool enable_transient_;
   std::string Temperature_Name_;

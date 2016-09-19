@@ -18,19 +18,41 @@ PhaseProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     const int num_dims,
  	  Teuchos::RCP<const Teuchos::Comm<int> >& commT) :
   Albany::AbstractProblem(params_, param_lib),
-  num_dims_(num_dims)
+  num_dims_(num_dims), hasConsolidation_(true)
 {
   // Read the "MaterialDB Filename" parameter from the input deck and create the MaterialDatabase
   std::string filename = params->get<std::string>("MaterialDB Filename");
   material_db_ = Teuchos::rcp(new QCAD::MaterialDatabase(filename, commT));
 
+  // get consolidation flag from material input deck. If not specified then assign true.
+  hasConsolidation_ = material_db_->getParam<bool>("Compute Consolidation",true);
+  
+  // Tell user if consolidation is on or off
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  
+  if (! hasConsolidation_ ) {
+      *out << "*******************************" << std::endl;
+      *out << "WARNING: Consolidation is OFF" << std::endl;
+      *out << "*******************************" << std::endl;
+  }
+  
+  
   this->setNumEquations(1);
 }
 
 Albany::PhaseProblem::
 ~PhaseProblem()
+{ }
+
+// This function return true if compute consolidation was specified in the
+// input deck. By default consolidation is on.
+
+bool
+Albany::PhaseProblem::hasConsolidation() const
 {
+  return hasConsolidation_;
 }
+
 
 void Albany::PhaseProblem::
 buildProblem(

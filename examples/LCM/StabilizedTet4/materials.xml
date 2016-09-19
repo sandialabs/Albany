@@ -4,7 +4,10 @@
   <ParameterList name="ElementBlocks">
 
     <ParameterList name="block_1">
-      <Parameter name="material" type="string" value="elastic" />
+      <Parameter
+        name="material"
+        type="string"
+        value="elastic" />
     </ParameterList>
   </ParameterList>
 
@@ -12,18 +15,33 @@
 
     <ParameterList name="elastic">
       <ParameterList name="Material Model">
-        <Parameter name="Model Name" type="string" value="Neohookean"/>
+        <Parameter
+          name="Model Name"
+          type="string"
+          value="Neohookean" />
       </ParameterList>
       <ParameterList name="Elastic Modulus">
-        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="28.0e6"/>
+        <Parameter
+          name="Elastic Modulus Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="28.0e6" />
       </ParameterList>
       <ParameterList name="Poissons Ratio">
-        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="0.27"/>
+        <Parameter
+          name="Poissons Ratio Type"
+          type="string"
+          value="Constant" />
+        <Parameter
+          name="Value"
+          type="double"
+          value="0.27" />
       </ParameterList>
     </ParameterList>
-    
+
   </ParameterList>
 
 </ParameterList>
