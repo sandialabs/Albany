@@ -195,6 +195,7 @@ Albany::LinearElasticityProblem::getValidProblemParameters() const
   validPL->sublist("Apply Topology Weight Functions", false, "");
   validPL->sublist("Body Force", false, "");
   validPL->sublist("Residual Strain", false, "");
+  validPL->sublist("Implicit Boundary Conditions", false, "");
 
   return validPL;
 }

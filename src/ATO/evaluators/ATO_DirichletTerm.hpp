@@ -15,12 +15,12 @@
 namespace ATO {
 
 template<typename EvalT, typename Traits>
-class DirichletTerm : public PHX::EvaluatorWithBaseImpl<Traits>,
-                      public PHX::EvaluatorDerived<EvalT, Traits>  {
+class DirichletVectorTerm : public PHX::EvaluatorWithBaseImpl<Traits>,
+                            public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  DirichletTerm(const Teuchos::ParameterList& p);
+  DirichletVectorTerm(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm);
@@ -43,6 +43,37 @@ private:
 
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> dirVector;
+
+};
+
+template<typename EvalT, typename Traits>
+class DirichletScalarTerm : public PHX::EvaluatorWithBaseImpl<Traits>,
+                            public PHX::EvaluatorDerived<EvalT, Traits>  {
+
+public:
+
+  DirichletScalarTerm(const Teuchos::ParameterList& p);
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+                             PHX::FieldManager<Traits>& vm);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+private:
+
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+
+  unsigned int numQPs;
+
+  RealType constraintValue;
+  RealType penaltyValue;
+
+  // Output:
+  PHX::MDField<ScalarT,Cell,QuadPoint> outValue;
+
+  // Input:
+  PHX::MDField<ScalarT,Cell,QuadPoint> dirValue;
 
 };
 }

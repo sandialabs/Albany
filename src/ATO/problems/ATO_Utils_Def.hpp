@@ -312,7 +312,7 @@ void ATO::Utils<EvalT,Traits>::constructStressEvaluators(
 
 template<typename EvalT, typename Traits>
 void ATO::Utils<EvalT,Traits>::constructBoundaryConditionEvaluators(
-       const Teuchos::ParameterList& blockSpec,
+       const Teuchos::ParameterList& bcSpec,
        PHX::FieldManager<Traits>& fm0,
        Albany::StateManager& stateMgr,
        const std::string &elementBlockName, 
@@ -328,49 +328,63 @@ void ATO::Utils<EvalT,Traits>::constructBoundaryConditionEvaluators(
 
     // Parse boundary conditions and create the appropriate evaluators
     //
-    if( blockSpec.isSublist("Dirichlet BCs") )
-    { // Dirichlet
+    int numDirichlet = bcSpec.get<int>("Number of Dirichlet BCs");
+    for(int iDirichlet=0; iDirichlet<numDirichlet; iDirichlet++){
+      const Teuchos::ParameterList& dirichletSpec = bcSpec.sublist(Albany::strint("Dirichlet BC",iDirichlet));
 
-      const Teuchos::ParameterList& dirichletSpec = blockSpec.sublist("Dirichlet BCs");
+      if(dirichletSpec.get<std::string>("Block") != elementBlockName) continue;
 
       RCP<ParameterList> p = rcp(new ParameterList("Dirichlet Penalty Term"));
+
+      p->set<double>("Penalty Coefficient",dirichletSpec.get<double>("Penalty Coefficient"));
+      p->set<std::string>("Variable Name",dirichletSpec.get<std::string>("Variable Name"));
   
-      p->set<std::string>("Dirichlet Force Name", boundaryForceName);
-      if(dirichletSpec.get<std::string>("Layout") == "QP Scalar")
+      p->set<std::string>("Dirichlet Name", boundaryForceName);
+      if(dirichletSpec.get<std::string>("Layout") == "QP Scalar"){
         p->set< RCP<PHX::DataLayout> >("Data Layout", dl->qp_scalar);
-      else 
-      if(dirichletSpec.get<std::string>("Layout") == "QP Vector")
+        if(dirichletSpec.isType<double>("Scalar")) p->set<double>("Scalar",dirichletSpec.get<double>("Scalar"));
+        ev = rcp(new ATO::DirichletScalarTerm<EvalT,Traits>(*p));
+      } else 
+      if(dirichletSpec.get<std::string>("Layout") == "QP Vector"){
         p->set< RCP<PHX::DataLayout> >("Data Layout", dl->qp_vector);
-      else
+        if(dirichletSpec.isType<double>("X")) p->set<double>("X",dirichletSpec.get<double>("X"));
+        if(dirichletSpec.isType<double>("Y")) p->set<double>("Y",dirichletSpec.get<double>("Y"));
+        if(dirichletSpec.isType<double>("Z")) p->set<double>("Z",dirichletSpec.get<double>("Z"));
+        ev = rcp(new ATO::DirichletVectorTerm<EvalT,Traits>(*p));
+      } else
         TEUCHOS_TEST_FOR_EXCEPTION(
           true, std::logic_error,
           "'Layout' in Dirichlet BCs ParameterList can be 'QP Vector' or 'QP Scalar'"  << std::endl);
 
-      if(dirichletSpec.isType<double>("X")) p->set<double>("X",dirichletSpec.get<double>("X"));
-      if(dirichletSpec.isType<double>("Y")) p->set<double>("Y",dirichletSpec.get<double>("Y"));
-      if(dirichletSpec.isType<double>("Z")) p->set<double>("Z",dirichletSpec.get<double>("Z"));
-
-      p->set<double>("Penalty Coefficient",dirichletSpec.get<double>("Penalty Coefficient"));
-      p->set<std::string>("Variable Name",dirichletSpec.get<std::string>("Variable Name"));
-
-      ev = rcp(new ATO::DirichletTerm<EvalT,Traits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    if( blockSpec.isSublist("Neumann BCs") )
-    { // Neumann
 
-      const Teuchos::ParameterList& neumannSpec = blockSpec.sublist("Neumann BCs");
+
+    int numNeumann = bcSpec.get<int>("Number of Neumann BCs");
+    for(int iNeumann=0; iNeumann<numNeumann; iNeumann++){
+      const Teuchos::ParameterList& neumannSpec = bcSpec.sublist(Albany::strint("Neumann BC",iNeumann));
+
+      if(neumannSpec.get<std::string>("Block") != elementBlockName) continue;
 
       RCP<ParameterList> p = rcp(new ParameterList("Neumann Term"));
   
-      p->set<std::string>("Neumann Force Name", boundaryForceName);
-      p->set< RCP<PHX::DataLayout> >("Neumann Force Data Layout", dl->qp_vector);
+      p->set<std::string>("Neumann Name", boundaryForceName);
 
-      p->set<Teuchos::Array<double> >("Traction Vector",
-        neumannSpec.get<Teuchos::Array<double> >("Traction Vector"));
-
-      ev = rcp(new ATO::NeumannTerm<EvalT,Traits>(*p));
+      if(neumannSpec.get<std::string>("Layout") == "QP Vector"){
+        p->set< RCP<PHX::DataLayout> >("Data Layout", dl->qp_vector);
+        p->set<Teuchos::Array<double> >("Vector",
+          neumannSpec.get<Teuchos::Array<double> >("Vector"));
+        ev = rcp(new ATO::NeumannVectorTerm<EvalT,Traits>(*p));
+      } else 
+      if(neumannSpec.get<std::string>("Layout") == "QP Scalar"){
+        p->set< RCP<PHX::DataLayout> >("Data Layout", dl->qp_scalar);
+        p->set<double>("Scalar",neumannSpec.get<double>("Scalar"));
+        ev = rcp(new ATO::NeumannScalarTerm<EvalT,Traits>(*p));
+      } else
+        TEUCHOS_TEST_FOR_EXCEPTION(
+          true, std::logic_error,
+          "'Layout' in Neumann BCs ParameterList can be 'QP Vector' or 'QP Scalar'"  << std::endl);
       fm0.template registerEvaluator<EvalT>(ev);
     }
 }

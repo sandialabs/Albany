@@ -9,5 +9,6 @@
 #include "ATO_DirichletTerm.hpp"
 #include "ATO_DirichletTerm_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(ATO::DirichletTerm)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(ATO::DirichletVectorTerm)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(ATO::DirichletScalarTerm)
 

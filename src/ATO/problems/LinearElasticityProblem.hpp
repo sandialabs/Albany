@@ -194,7 +194,6 @@ Albany::LinearElasticityProblem::constructEvaluators(
      }
      Cogent::IntegratorFactory integratorFactory;
      projector = integratorFactory.create(cellType, intrepidBasis, geomSpec);
-//     projector = rcp(new Cogent::Integrator(cellType, intrepidBasis, geomSpec));
 
      int projectionOrder = geomSpec.get<int>("Projection Order");
      cubatureDegree = 2*projectionOrder;
@@ -279,8 +278,6 @@ Albany::LinearElasticityProblem::constructEvaluators(
      RCP<ParameterList> p = rcp(new ParameterList("Compute Basis Functions"));
 
      //Input
-     p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
-
      p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
      p->set<bool>("Static Topology", true);
 
@@ -374,7 +371,10 @@ Albany::LinearElasticityProblem::constructEvaluators(
   {
     // Boundary forces
     //
-    atoUtils.constructBoundaryConditionEvaluators( blockSpec, fm0, stateMgr, elementBlockName, boundaryForceName );
+    if(params->isSublist("Implicit Boundary Conditions")){
+      Teuchos::ParameterList& bcSpec = params->sublist("Implicit Boundary Conditions");
+      atoUtils.constructBoundaryConditionEvaluators( bcSpec, fm0, stateMgr, elementBlockName, boundaryForceName );
+    }
   }
 #else
   {
@@ -482,10 +482,10 @@ Albany::LinearElasticityProblem::constructEvaluators(
    {
     RCP<ParameterList> p = rcp(new ParameterList("Body Forces"));
     if( params->isType<Teuchos::RCP<ATO::TopologyArray> > ("Topologies") )
-      p->set<std::string>("Force Name", bodyForceName+"_Weighted");
+      p->set<std::string>("Vector Name", bodyForceName+"_Weighted");
     else 
-      p->set<std::string>("Force Name", bodyForceName);
-    p->set< RCP<DataLayout> >("Force Data Layout", dl->qp_vector);
+      p->set<std::string>("Vector Name", bodyForceName);
+    p->set< RCP<DataLayout> >("Vector Data Layout", dl->qp_vector);
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set< RCP<DataLayout> >("Weighted BF Data Layout", dl->node_qp_scalar);
     p->set<std::string>("In Residual Name", resid_names[0]);
@@ -494,7 +494,7 @@ Albany::LinearElasticityProblem::constructEvaluators(
     p->set<std::string>("Out Residual Name", resid_names[0]);
     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
     p->set<bool>("Negative",true);
-    ev = rcp(new ATO::AddForce<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new ATO::AddVector<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
    }
 
@@ -525,14 +525,14 @@ Albany::LinearElasticityProblem::constructEvaluators(
      }
      {
       RCP<ParameterList> p = rcp(new ParameterList("Add Residual Force"));
-      p->set<std::string>("Force Name", "Residual Force");
-      p->set< RCP<DataLayout> >("Force Data Layout", dl->node_vector);
+      p->set<std::string>("Vector Name", "Residual Force");
+      p->set< RCP<DataLayout> >("Vector Data Layout", dl->node_vector);
       p->set<std::string>("In Residual Name", resid_names[0]);
       p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
       resid_names[0] += " with Residual Force";
       p->set<std::string>("Out Residual Name", resid_names[0]);
       p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
-      ev = rcp(new ATO::AddForce<EvalT,AlbanyTraits>(*p));
+      ev = rcp(new ATO::AddVector<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
      }
    }
@@ -542,17 +542,17 @@ Albany::LinearElasticityProblem::constructEvaluators(
   {
     RCP<ParameterList> p = rcp(new ParameterList("Boundary Forces"));
     if( params->isType<Teuchos::RCP<ATO::TopologyArray> > ("Topologies") )
-      p->set<std::string>("Force Name", boundaryForceName+"_Weighted");
+      p->set<std::string>("Vector Name", boundaryForceName+"_Weighted");
     else 
-    p->set<std::string>("Force Name", boundaryForceName);
+    p->set<std::string>("Vector Name", boundaryForceName);
     p->set<std::string>("Weighted BF Name", "wBF");
-    resid_names[0] = "Boundary Force";
+    resid_names[0] = boundaryForceName;
     p->set<std::string>("Out Residual Name", resid_names[0]);
-    p->set< RCP<DataLayout> >("Force Data Layout", dl->qp_vector);
+    p->set< RCP<DataLayout> >("Vector Data Layout", dl->qp_vector);
     p->set< RCP<DataLayout> >("Weighted BF Data Layout", dl->node_qp_scalar);
     p->set< RCP<DataLayout> >("Node Vector Data Layout", dl->node_vector);
     p->set<bool>("Negative",true);
-    ev = rcp(new ATO::AddForce<EvalT,AlbanyTraits>(*p));
+    ev = rcp(new ATO::AddVector<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   
   }
