@@ -36,7 +36,7 @@ Teuchos::RCP<Epetra_Map> Petra::TpetraMap_To_EpetraMap(const Teuchos::RCP<const 
 //EpetraMap_To_TpetraMap: takes in Epetra_Map object, converts it to its equivalent Tpetra::Map object,
 //and returns an RCP pointer to this Tpetra::Map
 Teuchos::RCP<const Tpetra_Map> Petra::EpetraMap_To_TpetraMap(const Teuchos::RCP<const Epetra_Map>& epetraMap_,
-                                                      const Teuchos::RCP<const Tpetra::Comm<int> >& commT_,
+                                                      const Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
                                                       const Teuchos::RCP<KokkosNode>& nodeT_)
 {
   const std::size_t numElements = Teuchos::as<std::size_t>(epetraMap_->NumMyElements());
