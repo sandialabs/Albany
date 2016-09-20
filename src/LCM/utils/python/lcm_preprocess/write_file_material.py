@@ -316,27 +316,29 @@ if __name__ == "__main__":
     mat_params["C33"] = "unspecified"
     mat_params["C44"] = "unspecified"
 
-    mat_params["flow_rule"] = "unspecified"
-    mat_params["rate_slip_reference"] = "unspecified"
-    mat_params["exponent_rate"] = "unspecified"
-    mat_params["drag_coeff"] = "unspecified"
-    mat_params["energy_activation"] = "unspecified"
-    mat_params["resistance_thermal"] = "unspecified"
-    mat_params["exponent_p"] = "unspecified"
-    mat_params["exponent_q"] = "unspecified"
+    # Flow rule parameters
+    mat_params["flow_rule"] = "unspecified"                    # "Flow Rule" POWER_LAW, THERMAL_ACTIVATION, or POWER_LAW_DRAG
+    mat_params["rate_slip_reference"] = "unspecified"          # "Reference Slip Rate" power_law  power_law_drag  thermal_activation  and saturation hardening law
+    mat_params["exponent_rate"] = "unspecified"                # "Rate Exponent"       power_law  power_law_drag
+    mat_params["drag_coeff"] = "unspecified"                   # "Drag Coefficient"               power_law_drag
+    mat_params["energy_activation"] = "unspecified"            # "Activation Energy"                              thermal_activation
+    mat_params["resistance_thermal"] = "unspecified"           # "Thermal Resistance"                             thermal_activation
+    mat_params["exponent_p"] = "unspecified"                   # "P Exponent"                                     thermal_activation
+    mat_params["exponent_q"] = "unspecified"                   # "Q Exponent"                                     thermal_activation
 
-    mat_params["hardening_law"] = "unspecified"
-    mat_params["modulus_hardening"] = "unspecified"
-    mat_params["modulus_recovery"] = "unspecified"
-    mat_params["state_hardening_initial"] = "unspecified"
-    mat_params["rate_hardening"] = "unspecified"
-    mat_params["stress_saturation_initial"] = "unspecified"
-    mat_params["exponent_saturation"] = "unspecified"
-    mat_params["factor_geometric"] = "unspecified"
-    mat_params["factor_generation"] = "unspecified"
-    mat_params["factor_annihilation"] = "unspecified"
-    mat_params["magnitude_burgers"] = "unspecified"
-    mat_params["modulus_shear"] = "unspecified"
+    # Hardening law parameters
+    mat_params["hardening_law"] = "unspecified"                # "Hardening Rule" LINEAR_MINUS_RECOVERY, SATURATION, or DISLOCATION_DENSITY
+    mat_params["modulus_hardening"] = "unspecified"            # "Hardening Modulus"       linear_minus_recovery
+    mat_params["modulus_recovery"] = "unspecified"             # "Recovery Modulus"        linear_minus_recovery
+    mat_params["state_hardening_initial"] = "unspecified"      # "Initial Hardening State" linear_minus_recovery  saturation  dislocation_density
+    mat_params["rate_hardening"] = "unspecified"               # "Hardening Rate"                                 saturation
+    mat_params["stress_saturation_initial"] = "unspecified"    # "Initial Saturation Stress"                      saturation
+    mat_params["exponent_saturation"] = "unspecified"          # "Saturation Exponent"                            saturation
+    mat_params["factor_geometric"] = "unspecified"             # "Geometric Factor"                                           dislocation_density
+    mat_params["factor_generation"] = "unspecified"            # "Generation Factor"                                          dislocation_density
+    mat_params["factor_annihilation"] = "unspecified"          # "Annihilation Factor"                                        dislocation_density
+    mat_params["magnitude_burgers"] = "unspecified"            # "Burgers Vector Magnitute"                                   dislocation_density
+    mat_params["modulus_shear"] = "unspecified"                # "Shear Modulus"                                              dislocation_density
 
     mat_params["integration_scheme"] = "unspecified"
     mat_params["type_residual"] = "unspecified"

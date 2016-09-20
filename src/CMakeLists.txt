@@ -680,7 +680,18 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./LCM/
                      ./LCM/evaluators
                      ./LCM/evaluators/bc
+                     ./LCM/evaluators/contact
+                     ./LCM/evaluators/HMC
+                     ./LCM/evaluators/kinematics
+                     ./LCM/evaluators/lame
+                     ./LCM/evaluators/linear-elasticity
+                     ./LCM/evaluators/peridigm
+                     ./LCM/evaluators/poro
+                     ./LCM/evaluators/projection
+                     ./LCM/evaluators/responses
+                     ./LCM/evaluators/residuals
                      ./LCM/evaluators/surface-element
+                     ./LCM/evaluators/size-field
                      ./LCM/evaluators/transport
                      ./LCM/evaluators/HMC
                      ./LCM/models
@@ -937,10 +948,6 @@ IF (ALBANY_AMP)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AMP)
 ENDIF()
 
-IF (ALBANY_GOAL)
-  add_subdirectory(GOAL)
-ENDIF()
-
 IF(ALBANY_CATALYST)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyCatalyst)
 endif()
@@ -975,6 +982,14 @@ endif()
 
 # Repeat libraries twice to catch circular dependencies
 SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
+
+# this needs to come after the definition of ALBANY_LIBRARIES
+IF (ALBANY_CTM)
+  # CTM is inteded to be a demonstration of using Albany as a library, not
+  # adding a library to Albany. Thus, we do not set an additional library in
+  # the ALBANY_LIBRARIES list here.
+  add_subdirectory(CTM)
+ENDIF()
 
 MESSAGE("-- Albany Executables to link: ${ALBANY_EXECUTABLES}")
 

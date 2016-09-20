@@ -173,8 +173,8 @@ include_directories(${ALBANY_PUMI_INCLUDE_DIRS} ${PUMI_INCLUDE_DIR})
 ENDIF()
 
 IF(ALBANY_AMP)
-SET(SOURCES ${SOURCES} AAdapt_SimAdapt.cpp)
-SET(HEADERS ${HEADERS} AAdapt_SimAdapt.hpp)
+SET(SOURCES ${SOURCES} AAdapt_SimAdapt.cpp AAdapt_SimLayerAdapt.cpp)
+SET(HEADERS ${HEADERS} AAdapt_SimAdapt.hpp AAdapt_SimLayerAdapt.hpp)
 include_directories(${ALBANY_PUMI_INCLUDE_DIRS})
 ENDIF()
 

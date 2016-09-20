@@ -16,6 +16,23 @@
 
 #include <sstream>
 
+#if defined(ALBANY_SCOREC) || defined(ALBANY_AMP)
+#include <PCU.h>
+#endif
+#if (defined(ALBANY_SCOREC) && defined(SCOREC_SIMMODEL)) || defined(ALBANY_AMP)
+#include <SimUtil.h>
+#include <gmi_sim.h>
+#endif
+#ifdef ALBANY_SCOREC
+#include <gmi_mesh.h>
+#endif
+#ifdef ALBANY_AMP
+#include <SimPartitionedMesh.h>
+#include <MeshSim.h>
+#include <SimDiscrete.h>
+#include <SimField.h>
+#endif
+
 // Capitalize Solution so that it sorts before other fields in Paraview. Saves a
 // few button clicks, e.g. when warping by vector.
 const char* Albany::APFMeshStruct::solution_name[3] = {"Solution", "SolutionDot", "SolutionDotDot"};
@@ -530,3 +547,42 @@ Albany::APFMeshStruct::getValidDiscretizationParameters() const
   return validPL;
 }
 
+void
+Albany::APFMeshStruct::initialize_libraries(int* pargc, char*** pargv)
+{
+#if defined(ALBANY_SCOREC) || defined(ALBANY_AMP)
+  PCU_Comm_Init();
+#endif
+#if (defined(ALBANY_SCOREC) && defined(SCOREC_SIMMODEL)) || defined(ALBANY_AMP)
+  Sim_readLicenseFile(0);
+  gmi_sim_start();
+  gmi_register_sim();
+#endif
+#ifdef ALBANY_SCOREC
+  gmi_register_mesh();
+#endif
+#ifdef ALBANY_AMP
+  SimPartitionedMesh_start(pargc, pargv);
+  MS_init();
+  SimDiscrete_start(0);
+  SimField_start();
+#endif
+}
+
+void
+Albany::APFMeshStruct::finalize_libraries()
+{
+#ifdef ALBANY_AMP
+  SimField_stop();
+  SimDiscrete_stop(0);
+  MS_exit();
+  SimPartitionedMesh_stop();
+#endif
+#if (defined(ALBANY_SCOREC) && defined(SCOREC_SIMMODEL)) || defined(ALBANY_AMP)
+  gmi_sim_stop();
+  Sim_unregisterAllKeys();
+#endif
+#if defined(ALBANY_SCOREC) || defined(ALBANY_AMP)
+  PCU_Comm_Free();
+#endif
+}

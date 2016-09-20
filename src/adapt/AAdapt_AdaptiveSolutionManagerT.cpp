@@ -22,6 +22,7 @@
 #endif
 #ifdef ALBANY_AMP
 #include "AAdapt_SimAdapt.hpp"
+#include "AAdapt_SimLayerAdapt.hpp"
 #endif
 #if (defined(ALBANY_SCOREC) || defined(ALBANY_AMP))
 #include "Albany_APFDiscretization.hpp"
@@ -168,6 +169,14 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
 
   std::string& method = adaptParams_->get("Method", "");
   std::string first_three_chars = method.substr(0, 3);
+  // do I need to add layer?
+  bool hasAddLayer = adaptParams_->isType<bool>("Add Layer");
+  if (hasAddLayer)
+  {
+      *out << "************************" << std::endl;
+      *out << "    ADDING LAYER ON     " << std::endl;
+      *out << "************************" << std::endl;
+  }
 
 #if defined(HAVE_STK)
   if (method == "Copy Remesh") {
@@ -206,8 +215,14 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
 #endif
 #ifdef ALBANY_AMP
   if (method == "Sim") {
+     // do not add layer
+      if (!hasAddLayer){
     adapter_ = Teuchos::rcp(
       new AAdapt::SimAdapt(adaptParams_, paramLib_, stateMgr_, commT_));
+      } else { // add layer
+          adapter_ = Teuchos::rcp(
+      new AAdapt::SimLayerAdapt(adaptParams_, paramLib_, stateMgr_, commT_));
+      }
   } else
 #endif
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)

@@ -8,63 +8,75 @@ def create_slip_systems(
     if crystal_structure == 'fcc':
 
         # system 1
-        direction = (-1.0, 1.0, 0.0)
+        # { 1  1 1} < 1 -1  0>
+        direction = (1.0, -1.0, 0.0)
         normal = (1.0, 1.0, 1.0)
         slip_systems.append((direction, normal))
 
         # system 2
-        direction = (0.0, -1.0, 1.0)
+        # { 1  1 1} <-1  0  1>
+        direction = (-1.0, 0.0, 1.0)
         normal = (1.0, 1.0, 1.0)
         slip_systems.append((direction, normal))
 
         # system 3
-        direction = (1.0, 0.0, -1.0)
+        # { 1  1 1} < 0  1 -1>
+        direction = (0.0, 1.0, -1.0)
         normal = (1.0, 1.0, 1.0)
         slip_systems.append((direction, normal))
 
         # system 4
-        direction = (-1.0, -1.0, 0.0)
-        normal = (-1.0, 1.0, 1.0)
-        slip_systems.append((direction, normal))
-
-        # system 5
+        # {-1  1 1} < 1  0  1>
         direction = (1.0, 0.0, 1.0)
         normal = (-1.0, 1.0, 1.0)
         slip_systems.append((direction, normal))
 
+        # system 5
+        # {-1  1 1} <-1 -1  0>
+        direction = (-1.0, -1.0, 0.0)
+        normal = (-1.0, 1.0, 1.0)
+        slip_systems.append((direction, normal))
+
         # system 6
+        # {-1  1 1} < 0  1 -1>
         direction = (0.0, 1.0, -1.0)
         normal = (-1.0, 1.0, 1.0)
         slip_systems.append((direction, normal))
 
         # system 7
-        direction = (1.0, -1.0, 0.0)
-        normal = (-1.0, -1.0, 1.0)
-        slip_systems.append((direction, normal))
-
-        # system 8
-        direction = (0.0, 1.0, 1.0)
-        normal = (-1.0, -1.0, 1.0)
-        slip_systems.append((direction, normal))
-
-        # system 9
-        direction = (-1.0, 0.0, -1.0)
-        normal = (-1.0, -1.0, 1.0)
-        slip_systems.append((direction, normal))
-
-        # system 10
-        direction = (1.0, 1.0, 0.0)
-        normal = (1.0, -1.0, 1.0)
-        slip_systems.append((direction, normal))
-
-        # system 11
+        # { 1 -1 1} <-1  0  1>
         direction = (-1.0, 0.0, 1.0)
         normal = (1.0, -1.0, 1.0)
         slip_systems.append((direction, normal))
 
-        # system 12
+        # system 8
+        # { 1 -1 1} < 0 -1 -1>
         direction = (0.0, -1.0, -1.0)
         normal = (1.0, -1.0, 1.0)
+        slip_systems.append((direction, normal))
+
+        # system 9
+        # { 1 -1 1} < 1  1  0>
+        direction = (1.0, 1.0, 0.0)
+        normal = (1.0, -1.0, 1.0)
+        slip_systems.append((direction, normal))
+
+        # system 10
+        # {-1 -1 1} <-1  1  0>
+        direction = (-1.0, 1.0, 0.0)
+        normal = (-1.0, -1.0, 1.0)
+        slip_systems.append((direction, normal))
+
+        # system 11
+        # {-1 -1 1} < 1  0  1>
+        direction = (1.0, 0.0, 1.0)
+        normal = (-1.0, -1.0, 1.0)
+        slip_systems.append((direction, normal))
+
+        # system 12
+        # {-1 -1 1} < 0 -1 -1>
+        direction = (0.0, -1.0, -1.0)
+        normal = (-1.0, -1.0, 1.0)
         slip_systems.append((direction, normal))
 
     elif crystal_structure == 'bcc':

@@ -138,6 +138,13 @@ operator() (const Hydrostatic_VelResid_Tag& tag, const int& cell) const{
       Residual(cell,node,level,0) *= wBF(cell,node,node);
       Residual(cell,node,level,1) *= wBF(cell,node,node);
     }
+    for (int qp=0; qp < numQPs; ++qp) {
+      for (int level = 0; level < 2; ++level ) {
+        for (int dim = 0; dim < numDims; ++dim) {
+          Residual(cell, node, level, dim) += viscosity * DVelx(cell, qp, level, dim) * wGradBF(cell, node, qp, dim);  
+    	}
+      }
+    }
   }
 }
 
@@ -174,119 +181,31 @@ evaluateFields(typename Traits::EvalData workset)
   if ( !obtainLaplaceOp ) {
     if (!pureAdvection ) {
       for (int cell=0; cell < workset.numCells; ++cell) {
-        for (int node=0; node < numNodes; ++node) {
-          for (int level=0; level < numLevels; ++level) {
-  	    //get_vorticity(VelxNode, cell, level, vorticity);
- 	    for (int qp=0; qp < numQPs; ++qp) {
-	      for (int dim=0; dim < numDims; ++dim) {
-	        // OG commenting this out
-		//Residual(cell,node,level,dim) +=   viscosity * DVelx(cell,qp,level,dim) * wGradBF(cell,node,qp,dim);
-	      }
-	    }
-	  }
-	}
-      }
-      for (int cell=0; cell < workset.numCells; ++cell) {
-        /*// OG Old version of code
-	for (int level=0; level < numLevels; ++level) {
-	  get_coriolis(cell, coriolis);
-	  //get_vorticity(VelxNode, cell, level, vorticity);
-	  for (int qp=0; qp < numQPs; ++qp) {
-	    int node = qp;
-	    for (int dim=0; dim < numDims; ++dim) {
-	      Residual(cell,node,level,dim) += ( keGrad(cell,qp,level,dim) + PhiGrad(cell,qp,level,dim) )*wBF(cell,node,qp);
-	      Residual(cell,node,level,dim) += ( pGrad (cell,qp,level,dim)/density(cell,qp,level) )      *wBF(cell,node,qp);
-	      Residual(cell,node,level,dim) +=   etadotdVelx(cell,qp,level,dim)                          *wBF(cell,node,qp);
-	      Residual(cell,node,level,dim) +=   VelxDot(cell,qp,level,dim)                              *wBF(cell,node,qp);
-	    }
-	    Residual(cell,node,level,0) -= (vorticity(cell,qp,level) + coriolis(qp))*Velx(cell,qp,level,1)*wBF(cell,node,qp);
-	    Residual(cell,node,level,1) += (vorticity(cell,qp,level) + coriolis(qp))*Velx(cell,qp,level,0)*wBF(cell,node,qp);
-	  }
-	}*/
-	//OG New version, weights (large values) are multiplied last
-	for (int level=0; level < numLevels; ++level) {
-	  get_coriolis(cell, coriolis);
-	  //get_vorticity(VelxNode, cell, level, vorticity);
-	  for (int qp=0; qp < numQPs; ++qp) {
-	    int node = qp;
-	    for (int dim=0; dim < numDims; ++dim) {
-	      Residual(cell,node,level,dim) += ( keGrad(cell,qp,level,dim) + PhiGrad(cell,qp,level,dim) );
-	      Residual(cell,node,level,dim) += ( pGrad (cell,qp,level,dim)/density(cell,qp,level) )      ;
-	      Residual(cell,node,level,dim) +=   etadotdVelx(cell,qp,level,dim)                          ;
-	      Residual(cell,node,level,dim) +=   VelxDot(cell,qp,level,dim)                              ;
-	    }
-	    Residual(cell,node,level,0) -= (vorticity(cell,qp,level) + coriolis(qp))*Velx(cell,qp,level,1);
-	    Residual(cell,node,level,1) += (vorticity(cell,qp,level) + coriolis(qp))*Velx(cell,qp,level,0);
-	    Residual(cell,node,level,0) *= wBF(cell,node,qp);
-	    Residual(cell,node,level,1) *= wBF(cell,node,qp);
-	  }
-	}
-
-        /*// OG debugging statements
-        if (cell == 23) {
-	  std::cout << "Name? " << this->getName() << "-----------------------------------------------------\n";
-	  for (int level=0; level < numLevels; ++level) {
-	    std::cout << "Vel residual, lev= " << level << ", VRes 0 " << Residual(cell,0,level,0)/wBF(cell,0,0) << " dot = "<< VelxDot(cell,0,level,0) <<"\n";
-	    std::cout << "Vel residual, lev= " << level << ", VRes 1 " << Residual(cell,0,level,1)/wBF(cell,0,0) << " dot = "<< VelxDot(cell,0,level,1) <<"\n";
-	    std::cout << "Vel ITSELF lev= " << level << ", V0 " << Velx(cell,0,level,0) <<"\n";
-	    std::cout << "Vel ITSELF lev= " << level << ", V1 " << Velx(cell,0,level,1) <<"\n";
-
-	    std::cout << "Vel keGrad+phiGrad dim0, "<<keGrad(cell,0,level,0)+PhiGrad(cell,0,level,0) <<"\n";
-	    std::cout << "Vel keGrad+phiGrad dim1, "<<keGrad(cell,0,level,1)+PhiGrad(cell,0,level,1) <<"\n";
-
-	    std::cout << "Vel pGrad/rho dim0, lev= " << level << ", value= " << pGrad (cell,0,level,0)/density(cell,0,level) <<"\n";
-	    std::cout << "Vel pGrad/rho dim1, lev= " << level << ", value= " << pGrad (cell,0,level,1)/density(cell,0,level) <<"\n";
-
-	    std::cout << "Vel vertvel dim0, lev= " << level << ", value= " << etadotdVelx(cell,0,level,0) <<"\n";
-	    std::cout << "Vel vertvel dim1, lev= " << level << ", value= " << etadotdVelx(cell,0,level,1) <<"\n";
-	    std::cout << "Vel vort+cor, lev= " << level << ", value= " << vorticity(cell,0,level) + coriolis(0) << "\n";
-	  }
-
- 	  const double x = workset.wsCoords[cell][0][0];
-	  const double y = workset.wsCoords[cell][0][1];
-	  const double z = workset.wsCoords[cell][0][2];
- 
-	  const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
- 	  const double lam = std::atan2(y,x);
-
-	  std::cout << "LamTheta = " << lam <<", "<<theta <<"\n";
-        }*/
-
-	/*// OG debugging statements
-	if (cell == 23) {
-	  int level = 0;
-	  std::cout << "Vel VORT ----------------- lev= " << level << "\n";
-	  for (int qp=0; qp < numQPs; ++qp) {
-	    std::cout << "tvort qp= " << qp <<" "<< -(vorticity(cell,qp,level) )*Velx(cell,qp,level,1) <<" "
-	              <<  (vorticity(cell,qp,level) )*Velx(cell,qp,level,0) <<"\n";
-	  }
-	  std::cout << "Vel COR ----------------- lev= " << level << "\n";
-	  for (int qp=0; qp < numQPs; ++qp) {
-	    std::cout << "tcor qp= " << qp <<" "<< -(coriolis(qp))*Velx(cell,qp,level,1) <<" "
-	              <<  (coriolis(qp))*Velx(cell,qp,level,0) <<"\n";
-	  }
-	  std::cout << "Vel pGrad --------------- lev= " << level << "\n";
-	  for (int qp=0; qp < numQPs; ++qp) {
-	    std::cout << "pGrad qp= " << qp <<" "<< pGrad(cell,qp,level,0)/density(cell,qp,level) <<" "
-	              << pGrad(cell,qp,level,1)/density(cell,qp,level)  <<"\n";
-	  }
-	  std::cout << "Vel keGrad+phiGrad ---------------  lev= " << level << "\n";
-	  for (int qp=0; qp < numQPs; ++qp) {
-	    std::cout << "grad KE PE qp= " << qp <<" "<<keGrad(cell,qp,level,0)+PhiGrad(cell,qp,level,0) <<" "
-	              <<keGrad(cell,qp,level,1)+PhiGrad(cell,qp,level,1) <<"\n";
-	  }
-	  std::cout << "Vel VERT -------------- lev= " << level << "\n";
-	  for (int qp=0; qp < numQPs; ++qp) {
-	    std::cout << "vert qp= " << qp <<" "<< etadotdVelx(cell,qp,level,0) <<" "
-	              << etadotdVelx(cell,qp,level,1)  <<"\n";
-	  }
-	  std::cout << "Vel TOTAL ------------- lev= " << level << "\n";
-	  for (int qp=0; qp < numQPs; ++qp) {
-	    std::cout << "vert qp= " << qp <<" "<< Residual(cell,qp,level,0)/wBF(cell,qp,qp) <<" "
-	              << Residual(cell,qp,level,1)/wBF(cell,qp,qp) <<"\n";
-	  }
-
-	}*/
+		for (int level=0; level < numLevels; ++level) {
+	  	get_coriolis(cell, coriolis);
+	  	//get_vorticity(VelxNode, cell, level, vorticity);
+	  		for (int qp=0; qp < numQPs; ++qp) {
+				int node = qp;
+				for (int dim=0; dim < numDims; ++dim) {
+				  Residual(cell,node,level,dim) += ( keGrad(cell,qp,level,dim) + PhiGrad(cell,qp,level,dim) );
+				  Residual(cell,node,level,dim) += ( pGrad (cell,qp,level,dim)/density(cell,qp,level) )      ;
+				  Residual(cell,node,level,dim) +=   etadotdVelx(cell,qp,level,dim)                          ;
+				  Residual(cell,node,level,dim) +=   VelxDot(cell,qp,level,dim)                              ;
+				}
+				Residual(cell,node,level,0) -= (vorticity(cell,qp,level) + coriolis(qp))*Velx(cell,qp,level,1);
+				Residual(cell,node,level,1) += (vorticity(cell,qp,level) + coriolis(qp))*Velx(cell,qp,level,0);
+				Residual(cell,node,level,0) *= wBF(cell,node,qp);
+				Residual(cell,node,level,1) *= wBF(cell,node,qp);
+		    }
+		}
+		for (int level = 0; level < 2; ++level) {
+			for ( int dim = 0; dim < numDims; ++dim ) {
+				for ( int qp = 0; qp < numQPs; ++qp ) {
+					int node = qp;
+				Residual(cell, node, level, dim) += viscosity * DVelx(cell, qp, level, dim) * wGradBF(cell, node, qp, dim);
+				}
+			}
+		}
       }
     }//end of (if not pureAdvection)
 

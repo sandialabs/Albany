@@ -67,6 +67,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     const std::vector<double>& bedTopographyData,
     const std::vector<double>& smbData,
     const std::vector<double>& temperatureOnTetra,
+    std::vector<double>& dissipationHeatOnTetra,
     std::vector<double>& velocityOnVertices,
     const double& deltat) {
 
@@ -240,7 +241,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     for (int iTetra = 0; iTetra < 3; iTetra++) {
       stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, ++gId);
       double* dissipationHeat = stk::mesh::field_data(*dissipationHeatField, elem);
-//      dissipationHeatOnTetra[lId++] = dissipationHeat[0];
+      dissipationHeatOnTetra[lId++] = dissipationHeat[0];
     }
   }
 

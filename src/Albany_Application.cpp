@@ -4666,20 +4666,27 @@ void Albany::Application::setupBasicWorksetInfoT(
   workset.distParamLib = distParamLib;
   workset.disc = disc;
   
-  // MJJ (3/30/2016)
-  #if !defined ALBANY_AMP_ADD_LAYER
-// original version
+  //  original version
   if (!paramLib->isParameter("Time"))
     workset.current_time = current_time;
   else
     workset.current_time =
       paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-#else
-  // version needed when computing responses when we add a new mesh layer to a
-  // previous mesh model.
-  workset.current_time = current_time;
-  paramLib->setRealValue<PHAL::AlbanyTraits::Residual>("Time",current_time);
-#endif
+  
+//  // MJJ (3/30/2016)
+//  #if !defined ALBANY_AMP_ADD_LAYER
+//// original version
+//  if (!paramLib->isParameter("Time"))
+//    workset.current_time = current_time;
+//  else
+//    workset.current_time =
+//      paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+//#else
+//  // version needed when computing responses when we add a new mesh layer to a
+//  // previous mesh model.
+//  workset.current_time = current_time;
+//  paramLib->setRealValue<PHAL::AlbanyTraits::Residual>("Time",current_time);
+//#endif
   
   workset.transientTerms = Teuchos::nonnull(workset.xdotT);
   workset.accelerationTerms = Teuchos::nonnull(workset.xdotdotT);

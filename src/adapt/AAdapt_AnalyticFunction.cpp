@@ -1496,15 +1496,10 @@ void AAdapt::AerasHydrostatic3dDeformationalFlow::compute(double* solution, cons
 
   const int numLevels  = (int) data[0];
   const int numTracers = (int) data[1];
-  //const double SP0     =       data[2];
-  //const double U0      =       data[3];
-  //const double U1      =       data[4];
-  //const double T0      =       data[5];
 
   std::cout <<"AAdapt::AerasHydrostatic3dDeformationalFlow::compute()" << std::endl;
   std::cout <<"Number of tracers "<< numTracers <<" , numLevels "<<numLevels << std::endl;
   
-  std::vector<double> q0(numTracers,0.0);
   std::vector<double> Pressure(numLevels);
   std::vector<double> Pi(numLevels);
   std::vector<double> z_press(numLevels);
@@ -1580,48 +1575,50 @@ void AAdapt::AerasHydrostatic3dDeformationalFlow::compute(double* solution, cons
     solution[offset++] = T0; //T0;
   }
   
-  //for Tracers
-  const double Rt         = a/2.0;
-  const double Zt         = 1000.0;
-  const double zc         = 5000.0;
-  const double lambda_c1  = 5.0*PI/6.0;
-  const double lambda_c2  = 7.0*PI/6.0;
-  const double theta_c    = 0.0;
-  const double sinTheta_c = std::sin(theta_c);
-  const double cosTheta_c = std::cos(theta_c);
+  if (numTracers > 0) {
+    //for Tracers
+    std::vector<double> q0(5,0.0);
+    const double Rt         = a/2.0;
+    const double Zt         = 1000.0;
+    const double zc         = 5000.0;
+    const double lambda_c1  = 5.0*PI/6.0;
+    const double lambda_c2  = 7.0*PI/6.0;
+    const double theta_c    = 0.0;
+    const double sinTheta_c = std::sin(theta_c);
+    const double cosTheta_c = std::cos(theta_c);
 
-  for (int level=0; level<numLevels; ++level) {
+    for (int level=0; level<numLevels; ++level) {
 
-    double r1 = a*std::acos( sinTheta_c*sinTheta+cosTheta_c*cosTheta*cos(lambda-lambda_c1) );
-    double r2 = a*std::acos( sinTheta_c*sinTheta+cosTheta_c*cosTheta*cos(lambda-lambda_c2) );
-    double d1 = std::min( 1.0, (r1/Rt)*(r1/Rt) + (z_press[level] - zc)*(z_press[level] - zc)/(Zt*Zt) );
-    double d2 = std::min( 1.0, (r2/Rt)*(r2/Rt) + (z_press[level] - zc)*(z_press[level] - zc)/(Zt*Zt) );
+      double r1 = a*std::acos( sinTheta_c*sinTheta+cosTheta_c*cosTheta*cos(lambda-lambda_c1) );
+      double r2 = a*std::acos( sinTheta_c*sinTheta+cosTheta_c*cosTheta*cos(lambda-lambda_c2) );
+      double d1 = std::min( 1.0, (r1/Rt)*(r1/Rt) + (z_press[level] - zc)*(z_press[level] - zc)/(Zt*Zt) );
+      double d2 = std::min( 1.0, (r2/Rt)*(r2/Rt) + (z_press[level] - zc)*(z_press[level] - zc)/(Zt*Zt) );
 
-    q0[0] = 0.5*(1.0+cos(PI*d1)) + 0.5*(1.0+cos(PI*d2));
+      q0[0] = 0.5*(1.0+cos(PI*d1)) + 0.5*(1.0+cos(PI*d2));
 
-    q0[1] = 0.9 - 0.8*q0[0]*q0[0];
+      q0[1] = 0.9 - 0.8*q0[0]*q0[0];
 
-    if (d1 < 0.5 || d2 < 0.5) {
-      q0[2] = 1.0;
-    } else {
-      q0[2] = 0.1;
+      if (d1 < 0.5 || d2 < 0.5) {
+        q0[2] = 1.0;
+      } else {
+        q0[2] = 0.1;
+      }
+
+      if ( (z_press[level] > zc)            && 
+           (theta          > theta_c-0.125) &&
+           (theta          < theta_c+0.125) ) {
+        q0[2] = 0.1;
+      }
+
+      q0[3] = 1.0 - 0.3*( q0[0] + q0[1] + q0[2]);
+
+      q0[4] = 1.0;
+
+    //Tracers
+      for (int nt=0; nt<numTracers; ++nt) {
+        solution[offset++] = q0[nt]*Pi[level];
+      }
     }
-
-    if ( (z_press[level] > zc)            && 
-         (theta          > theta_c-0.125) &&
-         (theta          < theta_c+0.125) ) {
-      q0[2] = 0.1;
-    }
-
-    q0[3] = 1.0 - 0.3*( q0[0] + q0[1] + q0[2]);
-
-    q0[4] = 1.0;
-
-  //Tracers
-    for (int nt=0; nt<numTracers; ++nt) {
-      solution[offset++] = q0[nt]*Pi[level];
-    }
-
   }
   
 }

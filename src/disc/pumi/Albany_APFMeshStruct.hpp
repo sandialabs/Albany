@@ -151,6 +151,9 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     static const char* solution_name[3];
     static const char* residual_name;
 
+    static void initialize_libraries(int* pargc, char*** pargv);
+    static void finalize_libraries();
+
 protected:
 
     Teuchos::RCP<Teuchos::ParameterList>

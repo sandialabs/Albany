@@ -446,7 +446,7 @@ ELSE()
   MESSAGE("-- LCM       is NOT Enabled.")
   SET(ALBANY_LCM FALSE)
 ENDIF()
-  
+
 # Check if Trilinos has DTK
 LIST(FIND Trilinos_PACKAGE_LIST DataTransferKit DataTransferKit_List_ID)
 IF (DataTransferKit_List_ID GREATER -1)
@@ -758,32 +758,13 @@ ELSE()
   SET(ALBANY_HYDRIDE FALSE)
 ENDIF()
 
-# Set optional dependency on GOAL, defaults to Disabled
-OPTION(ENABLE_GOAL "Flag to turn on goal-oriented error estimation source code" OFF)
-IF (ENABLE_GOAL)
-  IF(NOT ENABLE_SCOREC)
-    MESSAGE(FATAL_ERROR "\nError: GOAL requires ENABLE_SCOREC to be ON\n")
-  ENDIF()
-  ADD_DEFINITIONS(-DALBANY_GOAL)
-  MESSAGE("-- GOAL      is Enabled, compiling with -DALBANY_GOAL")
-  SET(ALBANY_GOAL TRUE)
-ELSE()
-  MESSAGE("-- GOAL      is NOT Enabled.")
-  SET(ALBANY_GOAL FALSE)
-ENDIF()
-
 # Set optional dependency on AMP, defaults to Disabled
 OPTION(ENABLE_AMP "Flag to turn on AMP (additive manufacturing processes) source code" OFF)
-OPTION(ENABLE_AMP_ADD_LAYER "Flag to turn on AMP ADD LAYER (additive manufacturing processes) source code" OFF)
 IF (ENABLE_AMP)
   SET(ALBANY_APF TRUE)
   ADD_DEFINITIONS(-DALBANY_AMP)
   MESSAGE("-- AMP       is Enabled, compiling with -DALBANY_AMP")
   SET(ALBANY_AMP TRUE)
-  IF (ENABLE_AMP_ADD_LAYER)
-  ADD_DEFINITIONS(-DALBANY_AMP_ADD_LAYER)
-  MESSAGE("-- AMP       is Enabled, compiling with -DALBANY_AMP_ADD_LAYER")
-  ENDIF()
   LIST(FIND Trilinos_PACKAGE_LIST SCORECapf_sim SCORECapf_sim_List_ID)
   IF (NOT SCORECapf_sim_List_ID GREATER -1)
     MESSAGE(FATAL_ERROR "\nError: AMP option requires SCOREC/core-sim\n")
@@ -791,14 +772,6 @@ IF (ENABLE_AMP)
 ELSE()
   MESSAGE("-- AMP       is NOT Enabled.")
   SET(ALBANY_AMP FALSE)
-ENDIF()
-
-# RPI APF mesh interface
-IF (ALBANY_APF)
-  ADD_DEFINITIONS(-DALBANY_APF)
-  MESSAGE("-- APF       is Enabled, compiling with -DALBANY_APF")
-ELSE()
-  MESSAGE("-- APF       is NOT Enabled.")
 ENDIF()
 
 
@@ -881,6 +854,14 @@ IF(ENABLE_SCOREC)
 ELSE()
   MESSAGE(STATUS "SCOREC    is NOT Enabled.")
   SET(ALBANY_SCOREC FALSE)
+ENDIF()
+
+# RPI APF mesh interface
+IF (ALBANY_APF)
+  ADD_DEFINITIONS(-DALBANY_APF)
+  MESSAGE("-- APF       is Enabled, compiling with -DALBANY_APF")
+ELSE()
+  MESSAGE("-- APF       is NOT Enabled.")
 ENDIF()
 
 # ParaView's Catalyst CoProcessing package
@@ -1141,6 +1122,23 @@ IF (ALBANY_LIBRARIES_ONLY)
     SET (LCM_TEST_EXES FALSE)
     MESSAGE("--->  Disabling LCM_TEST_EXES")
   ENDIF()
+ENDIF()
+
+# set optional dependency on CTM, defaults to Disabled
+OPTION(ENABLE_CTM "Flag to turn on CTM, coupled thermomechanics source code" OFF)
+IF(ENABLE_CTM)
+  IF(NOT ENABLE_LCM)
+    MESSAGE(FATAL_ERROR "CTM requires -DALBANY_LCM to be turned ON")
+  ENDIF()
+  IF(NOT ALBANY_APF)
+    MESSAGE(FATAL_ERROR "CTM requires -DALBANY_APF to be turned ON")
+  ENDIF()
+  MESSAGE("-- CTM       is Enabled, compiling with -DALBANY_CTM")
+  ADD_DEFINITIONS(-DALBANY_CTM)
+  SET(ALBANY_CTM TRUE)
+ELSE()
+  MESSAGE("-- CTM       is NOT Enabled.")
+  SET(ALBANY_CTM FALSE)
 ENDIF()
 
 # Add option to include Dakota restart examples in the test suite

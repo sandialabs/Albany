@@ -27,9 +27,7 @@
 #include "Aeras_VorticityLevels.hpp"
 #include "Aeras_DOFDInterpolationLevels.hpp"
 #include "Aeras_DOFGradInterpolationLevels.hpp"
-#ifndef KOKKOS_UNDER_DEVELOPMENT
 #include "Aeras_Atmosphere_Moisture.hpp"
-#endif
 #include "Aeras_XZHydrostatic_Density.hpp"
 #include "Aeras_XZHydrostatic_EtaDotPi.hpp"
 #include "Aeras_XZHydrostatic_GeoPotential.hpp"
@@ -832,7 +830,6 @@ Aeras::HydrostaticProblem::constructEvaluators(
   }
  
 
-#ifndef KOKKOS_UNDER_DEVELOPMENT
   { // Hydrostatic Atmosphere Moisture Resid
     RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic_Atmosphere_Moisture"));
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -857,7 +854,6 @@ Aeras::HydrostaticProblem::constructEvaluators(
     ev = rcp(new Aeras::Atmosphere_Moisture<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-#endif
 
   for (int t=0; t<numTracers; ++t) {
     RCP<ParameterList> p = rcp(new ParameterList("Hydrostatic Tracer Resid"));

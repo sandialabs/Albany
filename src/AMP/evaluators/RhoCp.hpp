@@ -59,6 +59,9 @@ private:
   unsigned int num_dims_;
   unsigned int num_nodes_;
   unsigned int workset_size_;
+  
+  // variable use to decide if consolidation must be computed
+  bool hasConsolidation_;
 
   Teuchos::RCP<const Teuchos::ParameterList>
     getValidRhoCpParameters() const;
