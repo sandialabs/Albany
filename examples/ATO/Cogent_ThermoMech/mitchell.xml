@@ -1,7 +1,7 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Solution Method" type="string" value="ATO Problem" />
-    <Parameter name="Number of Subproblems" type="int" value="1" />
+    <Parameter name="Number of Subproblems" type="int" value="2" />
     <Parameter name="Verbose Output" type="bool" value="1" />
 
 
@@ -12,10 +12,9 @@
     <ParameterList name="Objective Aggregator">
       <Parameter name="Output Value Name" type="string" value="F" />
       <Parameter name="Output Derivative Name" type="string" value="dFdRho" />
-      <Parameter name="Values" type="Array(string)" value="{R0}"/>
-      <Parameter name="Derivatives" type="Array(string)" value="{dR0dRho}"/>
+      <Parameter name="Values" type="Array(string)" value="{R0,R1}"/>
+      <Parameter name="Derivatives" type="Array(string)" value="{dR0dRho,dR1dRho}"/>
       <Parameter name="Weighting" type="string" value="Uniform"/>
-      <!--Parameter name="Spatial Filter" type="int" value="0" /-->
     </ParameterList>
 
     <ParameterList name="Spatial Filters">
@@ -84,6 +83,7 @@
           <Parameter name="Name" type="string" value="block_0"/>
           <ParameterList name="Material">
             <Parameter name="Elastic Modulus" type="double" value="1e9"/>
+            <Parameter name="Isotropic Modulus" type="double" value="1e9"/>
             <Parameter name="Poissons Ratio" type="double" value="0.33"/>
           </ParameterList>
           <ParameterList name="Geometry Construction">
@@ -241,6 +241,73 @@
           <Parameter name="Function Index" type="int" value="0" />
           <Parameter name="Response Name" type="string" value="R0" />
           <Parameter name="Response Derivative Name" type="string" value="dR0dRho" />
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
+
+    <ParameterList name="Physics Problem 1">    
+      <Parameter name="Name" type="string" value="Poissons Equation 3D" />
+  
+      <ParameterList name="Implicit Boundary Conditions">    
+        <Parameter name="Number of Dirichlet BCs" type="int" value="2" />
+        <ParameterList name="Dirichlet BC 0">
+          <Parameter name="Block" type="string" value="block_100"/>
+          <Parameter name="Variable Name" type="string" value="Phi"/>
+          <Parameter name="Layout" type="string" value="QP Scalar"/>
+          <Parameter name="Scalar" type="double" value="0.0"/>
+          <Parameter name="Penalty Coefficient" type="double" value="1.0e6"/>
+        </ParameterList>
+        <ParameterList name="Dirichlet BC 1">
+          <Parameter name="Block" type="string" value="block_200"/>
+          <Parameter name="Variable Name" type="string" value="Phi"/>
+          <Parameter name="Layout" type="string" value="QP Scalar"/>
+          <Parameter name="Scalar" type="double" value="0.0"/>
+          <Parameter name="Penalty Coefficient" type="double" value="1.0e6"/>
+        </ParameterList>
+        <Parameter name="Number of Neumann BCs" type="int" value="1" />
+        <ParameterList name="Neumann BC 0">
+          <Parameter name="Block" type="string" value="block_300"/>
+          <Parameter name="Layout" type="string" value="QP Scalar"/>
+          <Parameter name="Scalar" type="double" value="5e4"/>
+        </ParameterList>
+      </ParameterList>
+  
+      <ParameterList name="Apply Topology Weight Functions">
+        <Parameter name="Number of Fields" type="int" value="2"/>
+        <ParameterList name="Field 0">
+          <Parameter name="Name" type="string" value="kinVar"/>
+          <Parameter name="Layout" type="string" value="QP Vector"/>
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+        </ParameterList>
+        <ParameterList name="Field 1">
+          <Parameter name="Name" type="string" value="Boundary Value"/>
+          <Parameter name="Type" type="string" value="Boundary"/>
+          <Parameter name="Layout" type="string" value="QP Scalar"/>
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+        </ParameterList>
+      </ParameterList>
+
+      <!--
+          This response provides an objective function and the derivative of the 
+          objective function wrt the topology defined above.  The variable is added
+          to the state manager, and can be accessed by the objective aggregator above.
+          You can define as many of these as you like.
+      -->
+      <ParameterList name="Response Functions">
+        <Parameter name="Number of Response Vectors" type="int" value="1"/>
+        <ParameterList name="Response Vector 0">
+          <Parameter name="Name" type="string" value="Stiffness Objective" />
+          <Parameter name="Blocks" type="Array(string)" value="{block_0}"/>
+          <Parameter name="Gradient Field Name" type="string" value="Phi Gradient" />
+          <Parameter name="Gradient Field Layout" type="string" value="QP Vector" />
+          <Parameter name="Work Conjugate Name" type="string" value="kinVar" />
+          <Parameter name="Work Conjugate Layout" type="string" value="QP Vector" />
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+          <Parameter name="Response Name" type="string" value="R1" />
+          <Parameter name="Response Derivative Name" type="string" value="dR1dRho" />
         </ParameterList>
       </ParameterList>
     </ParameterList>
