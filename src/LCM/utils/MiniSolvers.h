@@ -16,29 +16,27 @@ namespace LCM {
 //
 //
 //
-template<typename S>
-class BananaNLS : public Intrepid2::Function_Base<BananaNLS<S>, S>
+template<typename S, Intrepid2::Index M = 2>
+class Banana : public Intrepid2::Function_Base<Banana<S, M>, S, M>
 {
 public:
 
-  BananaNLS()
+  Banana()
   {
   }
 
   static constexpr
-  Intrepid2::Index
-  DIMENSION{2};
-
-  static constexpr
   char const * const
   NAME{"Rosenbrock's Banana"};
+
+  using Base = Intrepid2::Function_Base<Banana<S, M>, S, M>;
 
   // Default value.
   template<typename T, Intrepid2::Index N>
   T
   value(Intrepid2::Vector<T, N> const & x)
   {
-    return Intrepid2::Function_Base<BananaNLS<S>, S>::value(*this, x);
+    return Base::value(*this, x);
   }
 
   // Explicit gradient.
@@ -49,7 +47,7 @@ public:
     Intrepid2::Index const
     dimension = x.get_dimension();
 
-    assert(dimension == DIMENSION);
+    assert(dimension == Base::DIMENSION);
 
     Intrepid2::Vector<T, N>
     r(dimension);
@@ -65,7 +63,7 @@ public:
   Intrepid2::Tensor<T, N>
   hessian(Intrepid2::Vector<T, N> const & x)
   {
-    return Intrepid2::Function_Base<BananaNLS<S>, S>::hessian(*this, x);
+    return Base::hessian(*this, x);
   }
 
 };

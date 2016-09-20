@@ -24,18 +24,18 @@ TEST(AlbanyResidual, NewtonBanana)
 
   constexpr
   Intrepid2::Index
-  dim{2};
+  DIM{2};
 
-  using MIN = Intrepid2::Minimizer<ValueT, dim>;
-  using FN = LCM::BananaNLS<ValueT>;
-  using STEP = Intrepid2::StepBase<FN, ValueT, dim>;
+  using MIN = Intrepid2::Minimizer<ValueT, DIM>;
+  using FN = LCM::Banana<ValueT>;
+  using STEP = Intrepid2::StepBase<FN, ValueT, DIM>;
 
   MIN
   minimizer;
 
   std::unique_ptr<STEP>
   pstep =
-      Intrepid2::stepFactory<FN, ValueT, dim>(Intrepid2::StepType::NEWTON);
+      Intrepid2::stepFactory<FN, ValueT, DIM>(Intrepid2::StepType::NEWTON);
 
   assert(pstep->name() != nullptr);
 
@@ -45,13 +45,13 @@ TEST(AlbanyResidual, NewtonBanana)
   FN
   banana;
 
-  Intrepid2::Vector<ScalarT, dim>
+  Intrepid2::Vector<ScalarT, DIM>
   x;
 
   x(0) = 0.0;
   x(1) = 3.0;
 
-  LCM::MiniSolver<MIN, STEP, FN, EvalT, dim>
+  LCM::MiniSolver<MIN, STEP, FN, EvalT, DIM>
   mini_solver(minimizer, step, banana, x);
 
   minimizer.printReport(std::cout);
@@ -70,11 +70,11 @@ TEST(AlbanyJacobian, NewtonBanana)
 
   constexpr
   Intrepid2::Index
-  dim{2};
+  DIM{2};
 
-  using MIN = Intrepid2::Minimizer<ValueT, dim>;
-  using FN = LCM::BananaNLS<ValueT>;
-  using STEP = Intrepid2::NewtonStep<FN, ValueT, dim>;
+  using MIN = Intrepid2::Minimizer<ValueT, DIM>;
+  using FN = LCM::Banana<ValueT>;
+  using STEP = Intrepid2::NewtonStep<FN, ValueT, DIM>;
 
   MIN
   minimizer;
@@ -85,13 +85,13 @@ TEST(AlbanyJacobian, NewtonBanana)
   FN
   banana;
 
-  Intrepid2::Vector<ScalarT, dim>
+  Intrepid2::Vector<ScalarT, DIM>
   x;
 
   x(0) = 0.0;
   x(1) = 3.0;
 
-  LCM::MiniSolver<MIN, STEP, FN, EvalT, dim>
+  LCM::MiniSolver<MIN, STEP, FN, EvalT, DIM>
   mini_solver(minimizer, step, banana, x);
 
   minimizer.printReport(std::cout);
