@@ -716,7 +716,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::saveMultiVectorHelper(const Tpetr
 
   stk::mesh::BulkData& mesh = solution_field->get_mesh();
 
-  Tpetra::RCP<const Tpetra_Vector> solnT = solnMV.getVector(vector_component);
+  Teuchos::RCP<const Tpetra_Vector> solnT = solnMV.getVector(vector_component);
 
   //get const (read-only) view of solnT
   Teuchos::ArrayRCP<const ST> solnT_constView = solnT->get1dView();
@@ -752,7 +752,7 @@ void Albany::GenericSTKFieldContainer<Interleaved>::saveMultiVectorHelper(const 
 
   stk::mesh::BulkData& mesh = solution_field->get_mesh();
 
-  Tpetra::RCP<const Tpetra_Vector> solnT = solnMV.getVector(vector_component);
+  Teuchos::RCP<const Tpetra_Vector> solnT = solnMV.getVector(vector_component);
 
   //get const (read-only) view of solnT
   Teuchos::ArrayRCP<const ST> solnT_constView = solnT->get1dView();
