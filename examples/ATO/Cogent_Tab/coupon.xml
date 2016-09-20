@@ -2,17 +2,6 @@
   <ParameterList name="Problem">    
     <Parameter name="Name" type="string" value="LinearElasticity 3D" />
 
-    <!--
-    <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_1 for DOF Y" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_1 for DOF Z" type="double" value="0.0"/>
-    </ParameterList>
-    <ParameterList name="Neumann BCs">
-      <Parameter name="NBC on SS surface_1 for DOF sig_y set dudn" type="Array(double)" value="{4.5}"/>
-    </ParameterList>
-    -->
-
     <ParameterList name="Configuration">
       <Parameter name="Nonconformal" type="bool" value="true"/>
       <ParameterList name="Element Blocks">
@@ -68,14 +57,6 @@
               <Parameter name="Level Set Indices" type="Array(int)" value="{0,1,2}"/>
             </ParameterList>
           </ParameterList>
-          <ParameterList name="Dirichlet BCs">
-            <Parameter name="Variable Name" type="string" value="Displacement"/>
-            <Parameter name="Layout" type="string" value="QP Vector"/>
-            <Parameter name="X" type="double" value="0.0"/>
-            <Parameter name="Y" type="double" value="0.0"/>
-            <Parameter name="Z" type="double" value="0.0"/>
-            <Parameter name="Penalty Coefficient" type="double" value="1.0e8"/>
-          </ParameterList>
         </ParameterList>
         <ParameterList name="Element Block 2">
           <Parameter name="Name" type="string" value="block_200"/>
@@ -92,9 +73,6 @@
               <Parameter name="Level Set Indices" type="Array(int)" value="{0,1,2}"/>
             </ParameterList>
           </ParameterList>
-          <ParameterList name="Neumann BCs">
-            <Parameter name="Traction Vector" type="Array(double)" value="{4.5e5, 0.0, 0.0}"/>
-          </ParameterList>
         </ParameterList>
       </ParameterList>
 
@@ -110,6 +88,26 @@
         </ParameterList>
       </ParameterList>
     </ParameterList>
+
+    <ParameterList name="Implicit Boundary Conditions">
+      <Parameter name="Number of Dirichlet BCs" type="int" value="1"/>
+      <ParameterList name="Dirichlet BC 0">
+        <Parameter name="Variable Name" type="string" value="Displacement"/>
+        <Parameter name="Block" type="string" value="block_100"/>
+        <Parameter name="Layout" type="string" value="QP Vector"/>
+        <Parameter name="X" type="double" value="0.0"/>
+        <Parameter name="Y" type="double" value="0.0"/>
+        <Parameter name="Z" type="double" value="0.0"/>
+        <Parameter name="Penalty Coefficient" type="double" value="1.0e8"/>
+      </ParameterList>
+      <Parameter name="Number of Neumann BCs" type="int" value="1"/>
+      <ParameterList name="Neumann BC 0">
+        <Parameter name="Vector" type="Array(double)" value="{4.5e5, 0.0, 0.0}"/>
+        <Parameter name="Block" type="string" value="block_200"/>
+        <Parameter name="Layout" type="string" value="QP Vector"/>
+      </ParameterList>
+    </ParameterList>
+
   </ParameterList>
 
   <ParameterList name="Discretization">
