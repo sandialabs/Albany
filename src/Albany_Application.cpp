@@ -1759,7 +1759,7 @@ computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
   
     wrappedJac = buildWrappedOperator(jac, wrappedJac);
     blockPrec->rebuildInverseOperator(wrappedJac);
-  } else
+  } 
 #endif
 #if defined(ATO_USES_COGENT)
   if(precType == "XFEM"){
