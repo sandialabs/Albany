@@ -34,8 +34,8 @@ StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
   Teuchos::ParameterList* p_list =
       p.get<Teuchos::ParameterList*>("Physical Parameter List");
 
-  g = p_list->get("Gravity Acceleration", 9.8);
-  rho = p_list->get("Ice Density", 910.0);
+  g = p_list->get<double>("Gravity Acceleration");
+  rho = p_list->get<double>("Ice Density");
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 

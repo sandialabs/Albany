@@ -74,17 +74,9 @@ StokesFOStress(const Teuchos::ParameterList& p,
   *out << " numNodes = " << numNodes << std::endl;
 #endif
 
-  TEUCHOS_TEST_FOR_EXCEPTION (vecDimFO != 2, Teuchos::Exceptions::InvalidParameter,
-                              std::endl << "Error in FELIX::StokesFOStress constructor:  " <<
-                              "Invalid Parameter vecDim.  Problem implemented for 2 dofs per node (u and v). " << std::endl);
-
-  TEUCHOS_TEST_FOR_EXCEPTION (numDims != 3, Teuchos::Exceptions::InvalidParameter,
-                              std::endl << "Error in FELIX::StokesFOStress constructor:  " <<
-                              "Invalid Parameter numDims.  FELIX::StokesFOStress is for 3D " << std::endl);
-
   Teuchos::ParameterList* p_list =
     p.get<Teuchos::ParameterList*>("Physical Parameter List");
-  rho_g = p_list->get("Ice Density", 910.0)*p_list->get("Gravity Acceleration", 9.8);
+  rho_g = p_list->get<double>("Ice Density", 910.0)*p_list->get<double>("Gravity Acceleration", 9.8);
 }
 
 //**********************************************************************
@@ -115,6 +107,14 @@ evaluateFields(typename Traits::EvalData workset)
   output->setProcRankAndSize (procRank, numProcs);
   output->setOutputToRootOnly (0);
 #endif
+
+  TEUCHOS_TEST_FOR_EXCEPTION (vecDimFO != 2, Teuchos::Exceptions::InvalidParameter,
+                              std::endl << "Error in FELIX::StokesFOStress constructor:  " <<
+                              "Invalid Parameter vecDim.  Problem implemented for 2 dofs per node (u and v). " << std::endl);
+
+  TEUCHOS_TEST_FOR_EXCEPTION (numDims != 3, Teuchos::Exceptions::InvalidParameter,
+                              std::endl << "Error in FELIX::StokesFOStress constructor:  " <<
+                              "Invalid Parameter numDims.  FELIX::StokesFOStress is for 3D " << std::endl);
 
   // Initialize residual to 0.0
 

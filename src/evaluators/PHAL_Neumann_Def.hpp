@@ -261,7 +261,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
         bc_type = LATERAL;
         beta_type = LATERAL_BACKPRESSURE;
 
-        g = p.get<double>("Gravity");
+        g = p.get<double>("Gravity Acceleration");
         rho = p.get<double>("Ice Density");
         rho_w = p.get<double>("Water Density");
 

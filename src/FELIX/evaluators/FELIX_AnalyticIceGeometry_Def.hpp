@@ -27,8 +27,8 @@ AnalyticIceGeometry<EvalT, Traits>::AnalyticIceGeometry (const Teuchos::Paramete
   numQp  = dims[1];
   numDim = dims[2];
 
-  rho = p.get<Teuchos::ParameterList*>("Physical Parameters")->get<double>("Ice Density",910.0);
-  g = p.get<Teuchos::ParameterList*>("Physical Parameters")->get<double>("Gravity Acceleration",9.8);
+  rho = p.get<Teuchos::ParameterList*>("Physical Parameters")->get<double>("Ice Density");
+  g = p.get<Teuchos::ParameterList*>("Physical Parameters")->get<double>("Gravity Acceleration");
   L = p.get<Teuchos::ParameterList*>("Hydrology Parameters")->get<double>("Domain Length",1.0);
   dx = p.get<Teuchos::ParameterList*>("Hydrology Parameters")->get<double>("Domain dx",1.0);
 

@@ -764,10 +764,11 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (
           else if(conditions[k] == "basal") {
             Teuchos::ParameterList& mapParamList = params->sublist("Stereographic Map");
             p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
+            Teuchos::ParameterList& physics_list = params->sublist("FELIX Physical Parameters");
             string betaName = BCparams.get("BetaXY", "Constant");
             double L = BCparams.get("L", 1.0);
-            double rho = params->get("Ice Density", 910.0);
-            double rho_w = params->get("Water Density", 1028.0);
+            double rho = physics_list.get("Ice Density",910.0);
+            double rho_w = physics_list.get("Water Density",1028.0);
             p->set<double> ("Ice Density", rho);
             p->set<double> ("Water Density", rho_w);
             p->set<string> ("BetaXY", betaName);
@@ -798,11 +799,12 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (
           else if(conditions[k] == "lateral") {
             Teuchos::ParameterList& mapParamList = params->sublist("Stereographic Map");
             p->set<Teuchos::ParameterList*>("Stereographic Map", &mapParamList);
+            Teuchos::ParameterList& physics_list = params->sublist("FELIX Physical Parameters");
             string betaName = BCparams.get("BetaXY", "Constant");
-            double g = params->get("Gravity", 9.8);
-            double rho = params->get("Ice Density", 910.0);
-            double rho_w = params->get("Water Density", 1028.0);
-            p->set<double> ("Gravity", g);
+            double g = physics_list.get("Gravity Acceleration",9.8);
+            double rho = physics_list.get("Ice Density",910.0);
+            double rho_w = physics_list.get("Water Density",1028.0);
+            p->set<double> ("Gravity Acceleration", g);
             p->set<double> ("Ice Density", rho);
             p->set<double> ("Water Density", rho_w);
             p->set<string>("thickness Field Name", "thickness");
