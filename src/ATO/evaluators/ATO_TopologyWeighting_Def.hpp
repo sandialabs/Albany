@@ -32,23 +32,18 @@ BF(p.get<std::string> ("BF Name"), dl->node_qp_scalar)
   else
   if(strLayout == "QP Vector") layout = dl->qp_vector;
   else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                               std::endl <<
-                               "Error!  Unknown variable layout " << strLayout <<
-                               "!" << std::endl << "Options are (QP Tensor, QP Vector)" <<
-                               std::endl);
+  if(strLayout == "QP Scalar") layout = dl->qp_scalar;
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Error!  Unknown variable layout " << strLayout << "!" << 
+      std::endl << "Options are (QP Tensor3, QP Tensor, QP Vector, QP Scalar)" <<
+      std::endl);
 
   PHX::MDField<ScalarT> _unWeightedVar(p.get<std::string>("Unweighted Variable Name"), layout);
   unWeightedVar = _unWeightedVar;
   PHX::MDField<ScalarT> _weightedVar(p.get<std::string>("Weighted Variable Name"), layout);
   weightedVar = _weightedVar;
-
-
-  // Pull out numQPs and numDims from a Layout
-  std::vector<PHX::Device::size_type> dims;
-  layout->dimensions(dims);
-  numQPs  = dims[1];
-  numDims = dims[2];
 
   this->addDependentField(unWeightedVar);
   this->addDependentField(BF);
@@ -81,9 +76,21 @@ evaluateFields(typename Traits::EvalData workset)
 
   int numCells = dims[0];
   int numQPs   = dims[1];
-  int numDims  = dims[2];
+  int numDims  = 0.0;
+  if( size > 2 ) numDims = dims[2];
   int numNodes = topo.dimension(1);
 
+  if( size == 2 ){
+    for(int cell=0; cell<numCells; cell++){
+      for(int qp=0; qp<numQPs; qp++){
+        double topoVal = 0.0;
+        for(int node=0; node<numNodes; node++)
+          topoVal += topo(cell,node)*BF(cell,node,qp);
+        ScalarT P = topology->Penalize(functionIndex,topoVal);
+        weightedVar(cell,qp) = P*unWeightedVar(cell,qp);
+      }
+    }
+  } else
   if( size == 3 ){
     for(int cell=0; cell<numCells; cell++){
       for(int qp=0; qp<numQPs; qp++){
@@ -123,7 +130,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   } else {
-     TEUCHOS_TEST_FOR_EXCEPTION(size<3||size>5, Teuchos::Exceptions::InvalidParameter,
+     TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>5, Teuchos::Exceptions::InvalidParameter,
        "Unexpected array dimensions in TopologyWeighting:" << size << std::endl);
   }
 }

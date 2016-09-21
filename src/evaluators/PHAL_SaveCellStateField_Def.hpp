@@ -108,7 +108,10 @@ evaluateFields(typename Traits::EvalData workset)
 	  sta(cell, 0) += weights(cell,qp)*field(cell,qp);
           el_weight += weights(cell,qp);
         }
-        sta(cell, 0) /= el_weight;
+        if( el_weight == 0.0 )
+          sta(cell, 0) = 0.0;
+        else
+          sta(cell, 0) /= el_weight;
       }
       break;
     case 3:
@@ -119,7 +122,10 @@ evaluateFields(typename Traits::EvalData workset)
 	  sta(cell, 0) += weights(cell,qp)*field(cell,qp,i_index);
           el_weight += weights(cell,qp);
         }
-        sta(cell, 0) /= el_weight;
+        if( el_weight == 0.0 )
+          sta(cell, 0) = 0.0;
+        else 
+          sta(cell, 0) /= el_weight;
       }
       break;
     case 4:
@@ -130,7 +136,10 @@ evaluateFields(typename Traits::EvalData workset)
           sta(cell, 0) += weights(cell,qp)*field(cell,qp,i_index,j_index);
           el_weight += weights(cell,qp);
         }
-        sta(cell, 0) /= el_weight;
+        if( el_weight == 0.0 )
+          sta(cell, 0) = 0.0;
+        else
+          sta(cell, 0) /= el_weight;
       }
       break;
     case 5:
@@ -141,7 +150,10 @@ evaluateFields(typename Traits::EvalData workset)
           sta(cell, 0) += weights(cell,qp)*field(cell,qp,i_index,j_index,k_index);
           el_weight += weights(cell,qp);
         }
-        sta(cell, 0) /= el_weight;
+        if( el_weight == 0.0 )
+          sta(cell, 0) = 0.0;
+        else
+          sta(cell, 0) /= el_weight;
       }
       break;
     default:

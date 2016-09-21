@@ -1,16 +1,10 @@
+#include <Albany_APFMeshStruct.hpp>
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <Teuchos_GlobalMPISession.hpp>
 #include <Kokkos_Core.hpp>
 #include <PCU.h>
 
-#include <Albany_DataTypes.hpp>
-#include <Albany_DiscretizationFactory.hpp>
-#include <Albany_APFMeshStruct.hpp>
-
-static void validate_parameters(
-    Teuchos::RCP<const Teuchos::ParameterList> p) {
-  assert(p->isSublist("Discretization"));
-}
+#include "CTM_Solver.hpp"
 
 int main(int argc, char** argv) {
 
@@ -28,12 +22,10 @@ int main(int argc, char** argv) {
   auto input = argv[1];
   auto params = Teuchos::rcp(new Teuchos::ParameterList);
   Teuchos::updateParametersFromXmlFile(input, params.ptr());
-  validate_parameters(params);
 
-  // create a discretization factory
-  bool explicit_time_method = false;
-  auto disc_factory = Teuchos::rcp(new Albany::DiscretizationFactory(
-        params, comm, explicit_time_method));
+  // build the solver and solve the problem
+  auto solver = rcp(new CTM::Solver(comm, params));
+  solver->solve();
 
   // finalize the parallel services.
   Albany::APFMeshStruct::finalize_libraries();

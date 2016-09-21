@@ -9,5 +9,6 @@
 #include "ATO_AddForce.hpp"
 #include "ATO_AddForce_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(ATO::AddForce)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(ATO::AddVector)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(ATO::AddScalar)
 

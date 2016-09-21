@@ -15,12 +15,12 @@
 namespace ATO {
 
 template<typename EvalT, typename Traits>
-class NeumannTerm : public PHX::EvaluatorWithBaseImpl<Traits>,
-                    public PHX::EvaluatorDerived<EvalT, Traits>  {
+class NeumannVectorTerm : public PHX::EvaluatorWithBaseImpl<Traits>,
+                          public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  NeumannTerm(const Teuchos::ParameterList& p);
+  NeumannVectorTerm(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm);
@@ -39,6 +39,34 @@ private:
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> outVector;
+
+};
+
+
+template<typename EvalT, typename Traits>
+class NeumannScalarTerm : public PHX::EvaluatorWithBaseImpl<Traits>,
+                          public PHX::EvaluatorDerived<EvalT, Traits>  {
+
+public:
+
+  NeumannScalarTerm(const Teuchos::ParameterList& p);
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+                             PHX::FieldManager<Traits>& vm);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+private:
+
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+
+  unsigned int numQPs;
+
+  RealType boundaryValue;
+
+  // Output:
+  PHX::MDField<ScalarT,Cell,QuadPoint> outValue;
 
 };
 }

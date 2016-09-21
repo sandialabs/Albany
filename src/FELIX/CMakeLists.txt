@@ -38,6 +38,7 @@
        evaluators/FELIX_StokesMomentumResid.cpp
        evaluators/FELIX_StokesFOBasalResid.cpp
        evaluators/FELIX_StokesFOResid.cpp
+       evaluators/FELIX_StokesFOStress.cpp
        evaluators/FELIX_StokesContinuityResid.cpp
        evaluators/FELIX_StokesContravarientMetricTensor.cpp
        evaluators/FELIX_StokesBodyForce.cpp
@@ -161,6 +162,8 @@ ENDIF()
        evaluators/FELIX_StokesFOBasalResid_Def.hpp
        evaluators/FELIX_StokesFOResid.hpp
        evaluators/FELIX_StokesFOResid_Def.hpp
+       evaluators/FELIX_StokesFOStress.hpp
+       evaluators/FELIX_StokesFOStress_Def.hpp
        evaluators/FELIX_StokesL1L2Resid_Def.hpp
        evaluators/FELIX_StokesL1L2Resid.hpp
        evaluators/FELIX_StokesMomentumResid.hpp

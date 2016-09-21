@@ -338,6 +338,7 @@ FELIX::StokesFO::getValidProblemParameters () const
   validPL->sublist("FELIX Noise", false, "");
   validPL->sublist("Parameter Fields", false, "Parameter Fields to be registered");
   validPL->set<bool>("Use Time Parameter", false, "Solely to use Solver Method = Continuation");
+  validPL->set<bool>("Print Stress Tensor", false, "Whether to save stress tensor in the mesh");
 
   return validPL;
 }

@@ -16,9 +16,9 @@ namespace ATO {
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-DirichletTerm<EvalT, Traits>::
-DirichletTerm(const Teuchos::ParameterList& p) :
-  outVector        (p.get<std::string>                   ("Dirichlet Force Name"),
+DirichletVectorTerm<EvalT, Traits>::
+DirichletVectorTerm(const Teuchos::ParameterList& p) :
+  outVector        (p.get<std::string>                   ("Dirichlet Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("Data Layout") ),
   dirVector        (p.get<std::string>                   ("Variable Name"),
 	            p.get<Teuchos::RCP<PHX::DataLayout> >("Data Layout") )
@@ -56,13 +56,13 @@ DirichletTerm(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(outVector);
   this->addDependentField(dirVector);
 
-  this->setName("DirichletTerm"+PHX::typeAsString<EvalT>());
+  this->setName("DirichletVectorTerm"+PHX::typeAsString<EvalT>());
 
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void DirichletTerm<EvalT, Traits>::
+void DirichletVectorTerm<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -72,13 +72,70 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
-void DirichletTerm<EvalT, Traits>::
+void DirichletVectorTerm<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   for (std::size_t cell=0; cell < workset.numCells; ++cell)
     for (std::size_t qp=0; qp < numQPs; ++qp)
       for (std::size_t i=0; i < numDims; ++i)
-        outVector(cell,qp,i) = penaltyVector[i]*(dirVector(cell,qp,i) - constraintVector[i]);
+        outVector(cell,qp,i) = penaltyVector[i]*(constraintVector[i] - dirVector(cell,qp,i));
+}
+
+
+
+
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+DirichletScalarTerm<EvalT, Traits>::
+DirichletScalarTerm(const Teuchos::ParameterList& p) :
+  outValue         (p.get<std::string>                   ("Dirichlet Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("Data Layout") ),
+  dirValue         (p.get<std::string>                   ("Variable Name"),
+	            p.get<Teuchos::RCP<PHX::DataLayout> >("Data Layout") )
+{
+  // Pull out numQPs and numDims from a Layout
+  Teuchos::RCP<PHX::DataLayout> scalar_dl =
+    p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
+  std::vector<PHX::Device::size_type> dims;
+  scalar_dl->dimensions(dims);
+  numQPs  = dims[1];
+
+  double penaltyConstant = p.get<double>("Penalty Coefficient");
+
+  penaltyValue=0.0;
+  constraintValue=0.0;
+
+  if(p.isType<double>("Scalar") ){
+    constraintValue = p.get<double>("Scalar");
+    penaltyValue = penaltyConstant;
+  }
+
+  this->addEvaluatedField(outValue);
+  this->addDependentField(dirValue);
+
+  this->setName("DirichletScalarTerm"+PHX::typeAsString<EvalT>());
+
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+void DirichletScalarTerm<EvalT, Traits>::
+postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& fm)
+{
+  this->utils.setFieldData(outValue,fm);
+  this->utils.setFieldData(dirValue,fm);
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+void DirichletScalarTerm<EvalT, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  for (std::size_t cell=0; cell < workset.numCells; ++cell)
+    for (std::size_t qp=0; qp < numQPs; ++qp)
+      outValue(cell,qp) = penaltyValue*(constraintValue - dirValue(cell,qp));
 }
 
 //**********************************************************************

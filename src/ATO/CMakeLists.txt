@@ -44,6 +44,7 @@ ENDIF()
 IF (ENABLE_Cogent)
   SET(SOURCES ${SOURCES}       
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ComputeBasisFunctions.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_XFEM_Preconditioner.cpp
   )
 ENDIF()
 
@@ -113,6 +114,7 @@ IF (ENABLE_Cogent)
   SET(HEADERS ${HEADERS}
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ComputeBasisFunctions_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ComputeBasisFunctions.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_XFEM_Preconditioner.hpp
   )
 ENDIF()
 

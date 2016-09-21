@@ -43,6 +43,7 @@
 #include "FELIX_CismSurfaceGradFO.hpp"
 #endif
 #include "FELIX_StokesFOBodyForce.hpp"
+#include "FELIX_StokesFOStress.hpp"
 #include "FELIX_ViscosityFO.hpp"
 #include "FELIX_FieldNorm.hpp"
 #include "FELIX_FluxDiv.hpp"
@@ -939,6 +940,28 @@ if (basalSideName!="INVALID")
 
   // -------------------------------- FELIX evaluators ------------------------- //
 
+
+  // --- FO Stokes Stress --- //
+  p = Teuchos::rcp(new Teuchos::ParameterList("Stokes Stress"));
+
+  //Input
+  p->set<std::string>("Velocity QP Variable Name", "Velocity");
+  p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
+  p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
+  p->set<std::string>("Surface Height QP Name", "Surface Height");
+  p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+  p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
+  p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("FELIX Physical Parameters"));
+
+  //Output
+  p->set<std::string>("Stress Variable Name", "Stress Tensor");
+
+  ev = Teuchos::rcp(new FELIX::StokesFOStress<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  fm0.template registerEvaluator<EvalT>(ev);
+
+
+
+
   // --- FO Stokes Resid --- //
   p = Teuchos::rcp(new Teuchos::ParameterList("Stokes Resid"));
 
@@ -1176,6 +1199,29 @@ if (basalSideName!="INVALID")
       p->set("Field Layout", dl->cell_scalar2);
       p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
       ev = Teuchos::rcp(new PHAL::SaveCellStateField<EvalT,PHAL::AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+    if (fieldManagerChoice == Albany::BUILD_RESID_FM)
+    {
+      // Only PHAL::AlbanyTraits::Residual evaluates something
+      if (ev->evaluatedFields().size()>0)
+      {
+        // Require save friction heat
+        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+      }
+    }
+  }
+
+
+  // Saving the stress tensor in the output mesh
+  if(params->get<bool>("Print Stress Tensor", false))
+  {
+    {
+      std::string stateName = "Stress Tensor";
+      p = stateMgr.registerStateVariable(stateName, dl->qp_tensor, dl->dummy, elementBlockName, "tensor", 0.0, /* save state = */ false, /* write output = */ true);
+      p->set<std::string>("Field Name", "Stress Tensor");
+      p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
+      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
     if (fieldManagerChoice == Albany::BUILD_RESID_FM)

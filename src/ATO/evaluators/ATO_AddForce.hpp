@@ -15,12 +15,12 @@
 namespace ATO {
 
 template<typename EvalT, typename Traits>
-class AddForce :  public PHX::EvaluatorWithBaseImpl<Traits>,
-                  public PHX::EvaluatorDerived<EvalT, Traits>  {
+class AddVector :  public PHX::EvaluatorWithBaseImpl<Traits>,
+                   public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  AddForce(const Teuchos::ParameterList& p);
+  AddVector(const Teuchos::ParameterList& p);
 
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
@@ -33,7 +33,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> add_force;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> add_vector;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> w_bf;
 
   // Output:
@@ -43,6 +43,40 @@ private:
   std::size_t numNodes;
   std::size_t numQPs;
   std::size_t numDims;
+
+  bool projectFromQPs;
+  bool negative;
+  bool plusEquals;
+};
+
+template<typename EvalT, typename Traits>
+class AddScalar :  public PHX::EvaluatorWithBaseImpl<Traits>,
+                   public PHX::EvaluatorDerived<EvalT, Traits>  {
+
+public:
+
+  AddScalar(const Teuchos::ParameterList& p);
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+			     PHX::FieldManager<Traits>& vm);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+private:
+
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+
+  // Input:
+  PHX::MDField<ScalarT,Cell,QuadPoint> add_scalar;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> w_bf;
+
+  // Output:
+  PHX::MDField<ScalarT,Cell,Node> inResidual;
+  PHX::MDField<ScalarT,Cell,Node> outResidual;
+
+  std::size_t numNodes;
+  std::size_t numQPs;
 
   bool projectFromQPs;
   bool negative;

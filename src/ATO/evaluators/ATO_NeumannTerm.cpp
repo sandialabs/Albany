@@ -9,5 +9,6 @@
 #include "ATO_NeumannTerm.hpp"
 #include "ATO_NeumannTerm_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(ATO::NeumannTerm)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(ATO::NeumannVectorTerm)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(ATO::NeumannScalarTerm)
 

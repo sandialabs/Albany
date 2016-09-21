@@ -320,8 +320,25 @@ Optimizer_OC::Initialize()
     std::fill_n(dgdp, numOptDofs, 0.0);
   }
 
-  solverInterface->ComputeMeasure(_measureType, _optMeasure);
   solverInterface->InitializeOptDofs(p);
+
+  if( secondaryConstraintGradient == "Adjoint" )
+    solverInterface->Compute(p, f, dfdp, g, dgdp);
+  else 
+    solverInterface->Compute(p, f, dfdp, g);
+
+  solverInterface->ComputeMeasure(_measureType, _optMeasure);
+
+  double measure=0.0;
+  for(int i=0; i<numOptDofs; i++) p_last[i] = p[i];
+  solverInterface->ComputeMeasure(_measureType, p, measure, dmdp);
+
+  computeUpdatedTopology();
+
+  double global_f=0.0, pnorm = computeNorm(p, numOptDofs);
+  comm->SumAll(&f, &global_f, 1);
+  convergenceChecker->initNorm(global_f, pnorm);
+
 }
 /******************************************************************************/
 void
@@ -423,20 +440,6 @@ Optimizer_OC::Optimize()
 {
 
   double measure=0.0;
-
-  if( secondaryConstraintGradient == "Adjoint" )
-    solverInterface->Compute(p, f, dfdp, g, dgdp);
-  else 
-    solverInterface->Compute(p, f, dfdp, g);
-
-  for(int i=0; i<numOptDofs; i++) p_last[i] = p[i];
-  solverInterface->ComputeMeasure(_measureType, p, measure, dmdp);
-
-  computeUpdatedTopology();
-
-  double global_f=0.0, pnorm = computeNorm(p, numOptDofs);
-  comm->SumAll(&f, &global_f, 1);
-  convergenceChecker->initNorm(global_f, pnorm);
 
   int iter=0;
   double measureConstraint_last = _measureConstraint;
