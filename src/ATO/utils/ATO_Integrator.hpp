@@ -182,7 +182,7 @@ class SubIntegrator
                std::vector<Simplex<V,P> >& outpolys);
 
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > basis;
-  Teuchos::RCP<Intrepid2::Basis<PHX::Device, DFadType, DFadType> > > DFadBasis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, DFadType, DFadType> > DFadBasis;
 
   Kokkos::DynRankView<RealType, PHX::Device> parentCoords;
 

@@ -301,9 +301,9 @@ TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParamete
 
     SubIntegrator myDicer(cellTypes[physIndex],intrepidBasis[physIndex],/*maxRefs=*/1,/*maxErr=*/1e-5);
 
-    coordCon.resize(numNodes, numDims);
-    topoVals.resize(numNodes);
-    dMdtopo.resize(numNodes);
+    coordCon = Kokkos::DynRankView<RealType, PHX::Device>("coordCon", numNodes, numDims);
+    topoVals = Kokkos::DynRankView<RealType, PHX::Device>("topoVals", numNodes);
+    dMdtopo = Kokkos::DynRankView<RealType, PHX::Device>("dMdtopo", numNodes);
 
     std::string blockName = wsEBNames[ws];
 
@@ -444,9 +444,9 @@ TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParamete
 
     SubIntegrator myDicer(cellTypes[physIndex],intrepidBasis[physIndex],/*maxRefs=*/1,/*maxErr=*/1e-5);
 
-    coordCon.resize(numNodes, numDims);
-    topoVals.resize(numNodes);
-    dMdtopo.resize(numNodes);
+    coordCon = Kokkos::DynRankView<RealType, PHX::Device>("coordCon", numNodes, numDims);  //inefficient, reallocating memory. 
+    topoVals = Kokkos::DynRankView<RealType, PHX::Device>("topoVals", numNodes);   //inefficient, reallocating memory. 
+    dMdtopo = Kokkos::DynRankView<RealType, PHX::Device>("dMdtopo", numNodes);   //inefficient, reallocating memory. 
 
     for(int cell=0; cell<numCells; cell++){
       for(int node=0; node<numNodes; node++){
@@ -602,9 +602,9 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
     int numQPs   = cubatures[i]->getNumPoints();
     int numDims  = cubatures[i]->getDimension();
 
-    refPoints[i].resize(numQPs, numDims);
-    refWeights[i].resize(numQPs);
-    basisAtQPs[i].resize(numNodes, numQPs);
+    refPoints[i] = Kokkos::DynRankView<RealType, PHX::Device>("refPoints", numQPs, numDims);  //inefficient, reallocating memory.  
+    refWeights[i] = Kokkos::DynRankView<RealType, PHX::Device>("refWeights", numQPs); //inefficient, reallocating memory. 
+    basisAtQPs[i] = Kokkos::DynRankView<RealType, PHX::Device>("basisAtQPs", numNodes, numQPs); //inefficient, reallocating memory. 
     cubatures[i]->getCubature(refPoints[i],refWeights[i]);
 
     intrepidBasis[i]->getValues(basisAtQPs[i], refPoints[i], Intrepid2::OPERATOR_VALUE);
@@ -688,7 +688,7 @@ ATO::OptimizationProblem::InitTopOpt()
       int physIndex = wsPhysIndex[ws];
       int numCells  = wsElNodeEqID[ws].size();
       int numQPs    = cubatures[physIndex]->getNumPoints();
-      weighted_measure[ws].resize(numCells,numQPs);
+      weighted_measure[ws] = Kokkos::DynRankView<RealType, PHX::Device>("weighted_measure", numCells,numQPs); //inefficient, reallocating memory. 
       for(int cell=0; cell<numCells; cell++)
         for(int qp=0; qp<numQPs; qp++)
           weighted_measure[ws](cell,qp) = savedWeights(cell,qp);
@@ -703,20 +703,19 @@ ATO::OptimizationProblem::InitTopOpt()
       int numDims   = cubatures[physIndex]->getDimension();
       int numQPs    = cubatures[physIndex]->getNumPoints();
   
-      coordCon.resize(numCells, numNodes, numDims);
-      jacobian.resize(numCells,numQPs,numDims,numDims);
-      jacobian_det.resize(numCells,numQPs);
-      weighted_measure[ws].resize(numCells,numQPs);
+      coordCon = Kokkos::DynRankView<RealType, PHX::Device>("coordCon", numCells, numNodes, numDims); //inefficient, reallocating memory. 
+      jacobian = Kokkos::DynRankView<RealType, PHX::Device>("jacobian", numCells,numQPs,numDims,numDims); //inefficient, reallocating memory. 
+      jacobian_det = Kokkos::DynRankView<RealType, PHX::Device>("jacobian_det", numCells,numQPs); //inefficient, reallocating memory. 
+      weighted_measure[ws] = Kokkos::DynRankView<RealType, PHX::Device>("weighted_measure", numCells,numQPs); //inefficient, reallocating memory. 
   
       for(int cell=0; cell<numCells; cell++)
         for(int node=0; node<numNodes; node++)
           for(int dim=0; dim<numDims; dim++)
             coordCon(cell,node,dim) = coords[ws][cell][node][dim];
-      Intrepid2::CellTools<double>::setJacobian(jacobian, refPoints[physIndex], 
+      Intrepid2::CellTools<PHX::Device>::setJacobian(jacobian, refPoints[physIndex], 
                                                coordCon, *(cellTypes[physIndex]));
-      Intrepid2::CellTools<double>::setJacobianDet(jacobian_det, jacobian);
-      Intrepid2::FunctionSpaceTools::computeCellMeasure<double>
-       (weighted_measure[ws], jacobian_det, refWeights[physIndex]);
+      Intrepid2::CellTools<PHX::Device>::setJacobianDet(jacobian_det, jacobian);
+      Intrepid2::FunctionSpaceTools<PHX::Device>::computeCellMeasure(weighted_measure[ws], jacobian_det, refWeights[physIndex]);
    
     }
   }

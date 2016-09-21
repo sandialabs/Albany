@@ -117,8 +117,8 @@ void ATO::SubIntegrator::getMeasure(
 
   uint nTopoVals = topoVals.size();
   DFadType Mfad;
-  Kokkos::DynRankView<DFadType, PHX::Device> Tfad(nTopoVals);
-  Kokkos::DynRankView<RealType, PHX::Device> Tval(nTopoVals);
+  Kokkos::DynRankView<DFadType, PHX::Device> Tfad("Tfad", nTopoVals, nTopoVals);
+  Kokkos::DynRankView<RealType, PHX::Device> Tval("Tval", nTopoVals);
   for(uint i=0; i<nTopoVals; i++){
     Tval(i) = Sacado::ScalarValue<RealType>::eval(topoVals(i));
     Tfad(i) = DFadType(nTopoVals, i, Tval(i));
@@ -151,7 +151,7 @@ void ATO::SubIntegrator::getMeasure(
     measure = newVolume.val();
     if(newVolume.size()) {
     //IrinaD TOCHECK
-     dMdtopo.resize(newVolume.size());
+     dMdtopo = Kokkos::DynRankView<RealType, PHX::Device>("dMdtopo", newVolume.size());  //inefficient, reallocating memory. 
      for (int i=0;i<newVolume.size();i++)
       dMdtopo[i]=newVolume.dx(i);
     }
@@ -1036,8 +1036,9 @@ uint _maxRefs, RealType _maxErr):
   refinement.resize(1);
 
   nDims = cellTopology->getDimension();
-  parentCoords.resize(basis->getCardinality(),nDims);
-  
+  parentCoords = Kokkos::DynRankView<RealType, PHX::Device>("parentCoords", basis->getCardinality(),nDims);  //inefficient, reallocating memory. 
+  _basis->getDofCoords(parentCoords);
+  /* // getDofCoords implemented now.
   try {
     Teuchos::RCP<Intrepid2::DofCoordsInterface<Kokkos::DynRankView<RealType, PHX::Device> > > 
       coords_interface = 
@@ -1053,7 +1054,7 @@ uint _maxRefs, RealType _maxErr):
     parentCoords(1,0) = 1.0; parentCoords(1,1) = 0.0; parentCoords(1,2) = 0.0;
     parentCoords(2,0) = 0.0; parentCoords(2,1) = 1.0; parentCoords(2,2) = 0.0;
     parentCoords(3,0) = 0.0; parentCoords(3,1) = 0.0; parentCoords(3,2) = 1.0;
-  }
+  } */
 
   const CellTopologyData& topo = *(cellTopology->getBaseCellTopologyData());
 
@@ -1061,7 +1062,7 @@ uint _maxRefs, RealType _maxErr):
   if( cellTopology->getBaseName() == shards::getCellTopologyData< shards::Tetrahedron<4> >()->name ){
 
     DFadBasis = Teuchos::rcp(
-      new Intrepid2::Basis_HGRAD_TET_C1_FEM<DFadType, Kokkos::DynRankView<DFadType, PHX::Device> >() );
+      new Intrepid2::Basis_HGRAD_TET_C1_FEM<PHX::Device, DFadType, DFadType>() );
 
     int nVerts = topo.vertex_count;
 
@@ -1082,7 +1083,7 @@ uint _maxRefs, RealType _maxErr):
   if( cellTopology->getBaseName() == shards::getCellTopologyData< shards::Hexahedron<8> >()->name ){
 
     DFadBasis = Teuchos::rcp(
-     new Intrepid2::Basis_HGRAD_HEX_C1_FEM<DFadType, Kokkos::DynRankView<DFadType, PHX::Device> >() );
+     new Intrepid2::Basis_HGRAD_HEX_C1_FEM<PHX::Device, DFadType, DFadType>() );
 
     Vector3D<RealType>::Type bodyCenter(0.0, 0.0, 0.0);
 
@@ -1118,12 +1119,12 @@ uint _maxRefs, RealType _maxErr):
 
     if( cellTopology->getName() == shards::getCellTopologyData< shards::Quadrilateral<4> >()->name ){
       DFadBasis = Teuchos::rcp(
-       new Intrepid2::Basis_HGRAD_QUAD_C1_FEM<DFadType, Kokkos::DynRankView<DFadType, PHX::Device> >() );
+       new Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::Device, DFadType, DFadType>() );
     } else 
     if( cellTopology->getName() == shards::getCellTopologyData< shards::Quadrilateral<8> >()->name 
      || cellTopology->getName() == shards::getCellTopologyData< shards::Quadrilateral<9> >()->name ){
       DFadBasis = Teuchos::rcp(
-       new Intrepid2::Basis_HGRAD_QUAD_C2_FEM<DFadType, Kokkos::DynRankView<DFadType, PHX::Device> >() );
+       new Intrepid2::Basis_HGRAD_QUAD_C2_FEM<PHX::Device, DFadType, DFadType>() );
     }
 
     const int nVerts = topo.vertex_count;
@@ -1152,7 +1153,7 @@ uint _maxRefs, RealType _maxErr):
   if( cellTopology->getBaseName() == shards::getCellTopologyData< shards::Triangle<3> >()->name ){
 
     DFadBasis = Teuchos::rcp(
-     new Intrepid2::Basis_HGRAD_TRI_C1_FEM<DFadType, Kokkos::DynRankView<DFadType, PHX::Device> >() );
+     new Intrepid2::Basis_HGRAD_TRI_C1_FEM<PHX::Device, DFadType, DFadType>() );
 
     const int nVerts = topo.vertex_count;
     Simplex<RealType,RealType> tri(nVerts);
