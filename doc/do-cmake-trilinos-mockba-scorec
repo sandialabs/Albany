@@ -5,7 +5,8 @@
 #cd /path/to/Trilinos
 #git clone git@github.com:SCOREC/core.git SCOREC
 #
-#The following are sems modules 
+#The following are sems modules
+module load gcc 
 module load parmetis
 module load netcdf 
 module load hdf5
