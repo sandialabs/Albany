@@ -7,11 +7,23 @@
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
 #include <Intrepid2_MiniTensor.h>
-
-#include "LCM_Utils.h" 
+#include "MaterialDatabase.h"
 
 namespace LCM
 {
+
+template<typename T>
+T
+lcm_cbrt(T const & x)
+{
+  auto
+  zero = Teuchos::ScalarTraits<T>::zero();
+
+  if (x == zero) return zero;
+
+  return std::cbrt(x);
+}
+
 
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>

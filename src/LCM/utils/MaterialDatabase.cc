@@ -688,3 +688,26 @@ template std::vector<bool>
 LCM::MaterialDatabase::
 getAllMatchingParams(
     std::string const & param_name);
+
+//
+//
+//
+Teuchos::RCP<LCM::MaterialDatabase>
+LCM::createMaterialDatabase(
+    Teuchos::RCP<Teuchos::ParameterList> const & params,
+    Teuchos::RCP<Teuchos_Comm const> & commT)
+{
+  bool
+  is_valid_material_db = params->isType<std::string>("MaterialDB Filename");
+
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      is_valid_material_db == false,
+      std::logic_error,
+      "A required material database cannot be found.");
+
+  std::string
+  filename = params->get<std::string>("MaterialDB Filename");
+
+  return Teuchos::rcp(new LCM::MaterialDatabase(filename, commT));
+}
+
