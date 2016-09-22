@@ -564,6 +564,17 @@ IF(ALBANY_ASCR AND ALBANY_EPETRA)
     )
 ENDIF()
 
+IF(ALBANY_HYDRIDE AND (NOT ALBANY_DEMO_PDES))
+  SET(SOURCES ${SOURCES}
+    evaluators/PHAL_LangevinNoiseTerm.cpp
+    )
+  SET(HEADERS ${HEADERS}
+    evaluators/PHAL_LangevinNoiseTerm.hpp
+    evaluators/PHAL_LangevinNoiseTerm_Def.hpp
+    )
+ENDIF()
+
+
 SET(MESHMOVER_DIR ${Albany_SOURCE_DIR}/src/MeshMover/src)
 SET(CUTR_SRCS
   ${MESHMOVER_DIR}/CUTR_CubitMeshMover.cpp

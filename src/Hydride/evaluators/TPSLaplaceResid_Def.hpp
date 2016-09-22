@@ -34,12 +34,10 @@ TPSLaplaceResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layo
   numDims = dims[3];
 
   // Allocate Temporary FieldContainers
-  grad_at_cub_points.resize(numNodes, numQPs, numDims);
-  refPoints.resize(numQPs, numDims);
-  refWeights.resize(numQPs);
-  jacobian.resize(worksetSize, numQPs, numDims, numDims);
-  jacobian_det.resize(worksetSize, numQPs);
-
+  grad_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("grad_at_cub_points", numNodes, numQPs, numDims);
+  refPoints = Kokkos::DynRankView<RealType, PHX::Device>("refPoints", numQPs, numDims);
+  refWeights = Kokkos::DynRankView<RealType, PHX::Device>("refWeights", numQPs);
+  
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
@@ -55,6 +53,9 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm) {
   this->utils.setFieldData(solnVec, fm);
   this->utils.setFieldData(solnResidual, fm);
+  
+  jacobian = Kokkos::createDynRankView(solnVec.get_view(), "jacobian", worksetSize, numQPs, numDims, numDims);
+  jacobian_det = Kokkos::createDynRankView(solnVec.get_view(), "jacobian_det", worksetSize, numQPs);
 }
 
 //**********************************************************************
@@ -67,7 +68,7 @@ evaluateFields(typename Traits::EvalData workset) {
 
   // This adds significant time to the compile
 
-  Intrepid2::CellTools<ScalarT>::setJacobian(jacobian, refPoints, solnVec, *cellType);
+  Intrepid2::CellTools<PHX::Device>::setJacobian(jacobian, refPoints, solnVec.get_view(), *cellType);
 
   // Since Intrepid2 will perform calculations on the entire workset size and not
   // just the used portion, we must fill the excess with reasonable values.
@@ -79,7 +80,7 @@ evaluateFields(typename Traits::EvalData workset) {
       for (std::size_t i = 0; i < numDims; ++i)
         jacobian(cell, qp, i, i) = 1.0;
 
-  Intrepid2::CellTools<ScalarT>::setJacobianDet(jacobian_det, jacobian);
+  Intrepid2::CellTools<PHX::Device>::setJacobianDet(jacobian_det, jacobian);
 
    // Straight Laplace's equation evaluation for the nodal coord solution
 

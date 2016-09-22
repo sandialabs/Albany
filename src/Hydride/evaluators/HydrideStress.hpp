@@ -48,7 +48,7 @@ private:
   unsigned int numDims;
 
   // The elasticity tensor
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> ElastTensor;
+  Kokkos::DynRankView<RealType, PHX::Device> ElastTensor;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;

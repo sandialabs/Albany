@@ -32,11 +32,9 @@ LaplaceBeltramiResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany:
   numDims = dims[3];
 
   // Allocate Temporary FieldContainers
-  grad_at_cub_points.resize(numNodes, numQPs, numDims);
-  refPoints.resize(numQPs, numDims);
-  refWeights.resize(numQPs);
-  jacobian.resize(worksetSize, numQPs, numDims, numDims);
-  jacobian_det.resize(worksetSize, numQPs);
+  grad_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("grad_at_cub_points", numNodes, numQPs, numDims);
+  refPoints = Kokkos::DynRankView<RealType, PHX::Device>("refPoints", numQPs, numDims);
+  refWeights = Kokkos::DynRankView<RealType, PHX::Device>("refWeights", numQPs);
 
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
@@ -54,6 +52,10 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   this->utils.setFieldData(solnVec, fm);
   this->utils.setFieldData(Gc, fm);
+  
+  jacobian = Kokkos::createDynRankView(solnVec.get_view(), "jacobian", worksetSize, numQPs, numDims, numDims);
+  jacobian_det = Kokkos::createDynRankView(solnVec.get_view(), "jacobian_det", worksetSize, numQPs);
+
 
   this->utils.setFieldData(solnResidual, fm);
 }
@@ -64,7 +66,7 @@ void LaplaceBeltramiResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset) {
 
   // Need to be ScalarT!
-  Intrepid2::CellTools<ScalarT>::setJacobian(jacobian, refPoints, solnVec, *cellType);
+  Intrepid2::CellTools<PHX::Device>::setJacobian(jacobian, refPoints, solnVec.get_view(), *cellType);
   // Since Intrepid2 will perform calculations on the entire workset size and not
   // just the used portion, we must fill the excess with reasonable values.
   // Leaving this out leads to a floating point exception in
@@ -74,7 +76,7 @@ evaluateFields(typename Traits::EvalData workset) {
     for (std::size_t qp = 0; qp < numQPs; ++qp)
       for (std::size_t i = 0; i < numDims; ++i)
         jacobian(cell, qp, i, i) = 1.0;
-  Intrepid2::CellTools<ScalarT>::setJacobianDet(jacobian_det, jacobian);
+  Intrepid2::CellTools<PHX::Device>::setJacobianDet(jacobian_det, jacobian);
 
     for(std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for(std::size_t node_a = 0; node_a < numNodes; ++node_a) {

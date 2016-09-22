@@ -60,11 +60,11 @@ private:
   PHX::MDField<ScalarT,Cell,Node> FhResidual;
 
   unsigned int numQPs, numDims, numNodes, worksetSize;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> JGrad;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> fh_coef;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> fh_time_term;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> CHZr_coef;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> CH_time_term;
+  Kokkos::DynRankView<ScalarT, PHX::Device> JGrad;
+  Kokkos::DynRankView<ScalarT, PHX::Device> fh_coef;
+  Kokkos::DynRankView<ScalarT, PHX::Device> fh_time_term;
+  Kokkos::DynRankView<ScalarT, PHX::Device> CHZr_coef;
+  Kokkos::DynRankView<ScalarT, PHX::Device> CH_time_term;
 
  //! Conductivity type
   std::string type; 
