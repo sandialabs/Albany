@@ -6,6 +6,9 @@
 
 #include "CTM_Solver.hpp"
 
+// sad global variable that must be declared :(
+bool TpetraBuild = true;
+
 int main(int argc, char** argv) {
 
   // initialize the parallel services
