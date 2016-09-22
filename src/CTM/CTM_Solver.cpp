@@ -48,9 +48,21 @@ void Solver::initial_setup() {
   mesh_specs = disc_factory->createMeshSpecs();
 
   // create the problem objects
-  auto d = mesh_specs[0]->numDim;
-  temp_problem = rcp(new Albany::HeatProblem(temp_params, param_lib, d, comm));
+  auto dim = mesh_specs[0]->numDim;
+  temp_problem = rcp(new Albany::HeatProblem(temp_params, param_lib, dim, comm));
   temp_params->validateParameters(*(temp_problem->getValidProblemParameters()),0);
+  temp_problem->buildProblem(mesh_specs, *state_mgr);
+
+  // create the initial discretization object
+  auto neq = temp_problem->numEquations();
+  disc = disc_factory->createDiscretization(
+      neq,
+      temp_problem->getSideSetEquations(),
+      state_mgr->getStateInfoStruct(),
+      state_mgr->getSideSetStateInfoStruct(),
+      temp_problem->getFieldRequirements(),
+      temp_problem->getSideSetFieldRequirements(),
+      temp_problem->getNullSpace());
 
 }
 

@@ -10,7 +10,9 @@
 
 namespace Albany {
 class AbstractProblem;
+class AbstractDiscretization;
 class DiscretizationFactory;
+class StateManager;
 struct MeshSpecsStruct;
 }
 
@@ -62,7 +64,9 @@ class Solver {
     RCP<DistParamLib> dist_param_lib;
 
     RCP<Albany::DiscretizationFactory> disc_factory;
+    RCP<Albany::AbstractDiscretization> disc;
     ArrayRCP<RCP<Albany::MeshSpecsStruct> > mesh_specs;
+    RCP<Albany::StateManager> state_mgr;
 
     RCP<Albany::AbstractProblem> temp_problem;
     RCP<Albany::AbstractProblem> mech_problem;
