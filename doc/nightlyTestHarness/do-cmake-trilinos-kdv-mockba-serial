@@ -31,9 +31,15 @@
 rm -rf CMakeFiles
 rm -rf CMakeCache.txt
 
-NETCDF=/home/ikalash/Install/netcdf-4.2-hack
-HDF5DIR=/home/ikalash/Install/hdf5-1.8.6
-BOOSTDIR=/home/ikalash/Install/boost_1_55_0
+module purge 
+module load gcc/4.9.2/openmpi/1.8.7
+module load netcdf/4.3.2/gcc/4.9.2/openmpi/1.8.7
+module load hdf5/1.8.12/gcc/4.9.2/openmpi/1.8.7
+module load boost/1.55.0/gcc/4.9.2/base
+
+BOOSTDIR=$SEMS_BOOST_ROOT
+NETCDF=$SEMS_NETCDF_ROOT
+HDF5DIR=$SEMS_HDF5_ROOT
 
 
 BUILD_DIR=`pwd`
@@ -41,10 +47,12 @@ BUILD_DIR=`pwd`
 
 cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
-      -D TPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so.3 \
-      -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/atlas/liblapack.so.3 \
+      -D CMAKE_C_COMPILER="$SEMS_OPENMPI_ROOT/bin/mpicc" \
+      -D CMAKE_CXX_COMPILER="$SEMS_OPENMPI_ROOT/bin/mpicxx" \
+      -D CMAKE_Fortran_COMPILER="$SEMS_OPENMPI_ROOT/bin/mpif90" \
 \
       -D TPL_ENABLE_MPI:BOOL=ON \
+      -D MPI_BASE_DIR="$SEMS_OPENMPI_ROOT" \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
       -D TPL_Netcdf_INCLUDE_DIRS:PATH=$NETCDF/include \
@@ -134,6 +142,14 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
       -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
       -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
+\
+      -D Trilinos_EXTRA_REPOSITORIES="DataTransferKit" \
+      -D Trilinos_ENABLE_DataTransferKit:BOOL=ON \
+      -D DataTransferKit_ENABLE_DBC:BOOL=ON \
+      -D DataTransferKit_ENABLE_TESTS:BOOL=ON \
+      -D DataTransferKit_ENABLE_EXAMPLES:BOOL=ON \
+      -D TPL_ENABLE_MOAB:BOOL=OFF \
+      -D TPL_ENABLE_Libmesh:BOOL=OFF \
 \
       -D TPL_Netcdf_PARALLEL:BOOL=ON \
 \
