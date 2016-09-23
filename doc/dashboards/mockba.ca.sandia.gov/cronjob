@@ -1,10 +1,14 @@
 01 00 * * 1-5  cd /home/ikalash/Trilinos_Albany/nightlyAlbanyTests; bash -l -c "source modules_mockba.sh >& modules.out; ./run_kdv_serial.sh set_irinas_env.in MPI"
 00 01 * * 1-5  cd /home/ikalash/Trilinos_Albany/nightlyCDash; bash -l -c "source modules_mockba.sh >& modules.out; bash nightly_cron_script_albanyKDVNoFunctor.sh"
 00 02 * * 1-5  cd /home/ikalash/Trilinos_Albany/nightlyCDash; bash -l -c "source modules_mockba.sh >& modules.out; bash nightly_cron_script_albanyKDVFunctorSerial.sh"
-00 03 * * 1-5  cd /home/ikalash/Desktop/goodSpirit/nightlySpiritTests; bash -l -c "source modules_mockba.sh >& modules.out; ./run_master.sh set_irinas_env.in  MPI"
-00 05 * * 1-5  cd /home/ikalash/Desktop/goodSpirit/nightlySpiritTests; ./send_email_hack.sh set_irinas_env.in  MPI
-01 05 * * 1-5  cd /home/ikalash/Trilinos_Albany/nightlyCDash; bash process_results_kdv_no_functor.sh
-02 05 * * 1-5  cd /home/ikalash/Trilinos_Albany/nightlyCDash; bash process_results_kdv_functor_serial.sh
+00 03 * * 1-5  cd /home/ikalash/Trilinos_Albany/nightlyAlbanyTests; ./run_spirit.sh set_spirit_env.in MPI
+30 03 * * 1-5  cd /home/ikalash/Desktop/goodSpirit/nightlySpiritTests; ./run_master.sh set_irinas_env.in  MPI
+00 06 * * 1-5  cd /home/ikalash/Desktop/goodSpirit/nightlySpiritTests; ./send_email_hack.sh set_irinas_env.in  MPI
+01 06 * * 1-5  cd /home/ikalash/Trilinos_Albany/nightlyCDash; bash process_results_kdv_no_functor.sh
+02 06 * * 1-5  cd /home/ikalash/Trilinos_Albany/nightlyCDash; bash process_results_kdv_functor_serial.sh
+03 06 * * 1-5  cd /home/ikalash/Trilinos_Albany/nightlyCDash; bash send_email_kdv_no_functor.sh
+04 06 * * 1-5  cd /home/ikalash/Trilinos_Albany/nightlyCDash; bash send_email_kdv_functor_serial.sh
+15 06 * * 1-5  chmod -R 0755 /home/ikalash/Trilinos_Albany
 03 05 * * 1-5  cd /home/ikalash/Trilinos_Albany/nightlyCDash; bash send_email_kdv_no_functor.sh
 04 05 * * 1-5  cd /home/ikalash/Trilinos_Albany/nightlyCDash; bash send_email_kdv_functor_serial.sh
 15 06 * * 1-5  chmod -R 0755 /home/ikalash/Trilinos_Albany
