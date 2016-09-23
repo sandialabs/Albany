@@ -42,7 +42,7 @@ public:
 private:
 
   typedef typename EvalT::ScalarT ScalarT;
-  int  numDims, numQPs;
+  int  numDims, numQPs, containerSize;
 
   // Input:
   //! Coordinate vector at vertices
@@ -51,10 +51,10 @@ private:
   Teuchos::RCP<shards::CellTopology> cellType;
 
   // Temporary FieldContainers
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> jacobian;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> jacobian_inv;
+  Kokkos::DynRankView<RealType, PHX::Device> refPoints;
+  Kokkos::DynRankView<RealType, PHX::Device> refWeights;
+  Kokkos::DynRankView<ScalarT, PHX::Device> jacobian;
+  Kokkos::DynRankView<ScalarT, PHX::Device> jacobian_inv;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Gc;

@@ -37,7 +37,7 @@ HydrideStress(const Teuchos::ParameterList& p) :
   // Allocate and initialize elasticity tensor
   if(numDims == 2){
 
-    ElastTensor.resize(3, 3);  // C_{ijkl} => C_{ij}  i,j = 1..3
+    ElastTensor = Kokkos::DynRankView<RealType, PHX::Device>("ElastTensor2D", 3, 3);  // C_{ijkl} => C_{ij}  i,j = 1..3
 
     ElastTensor(0, 0) = 2.0;  // C_{1111}
     ElastTensor(0, 1) = 1.0;  // C_{1122}
@@ -50,7 +50,7 @@ HydrideStress(const Teuchos::ParameterList& p) :
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Hydride only works in 2D presently: "
             << "See line " << __LINE__ << " in file " << __FILE__ << std::endl);
 
-    ElastTensor.resize(6, 6);  // C_{ijkl} => C_{ij}  i,j = 1..6
+    ElastTensor = Kokkos::DynRankView<RealType, PHX::Device>("ElastTensor3D",6, 6);  // C_{ijkl} => C_{ij}  i,j = 1..6
 
   }
 
