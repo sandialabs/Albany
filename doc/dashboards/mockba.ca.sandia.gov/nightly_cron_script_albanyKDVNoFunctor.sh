@@ -7,7 +7,6 @@ rm -rf /home/ikalash/Trilinos_Albany/nightlyCDash/build
 rm -rf /home/ikalash/Trilinos_Albany/nightlyCDash/ctest_nightly.cmake.work
 rm -rf /home/ikalash/Trilinos_Albany/nightlyCDash/nightly_log*
 rm -rf /home/ikalash/Trilinos_Albany/nightlyCDash/results*
-rm -rf /home/ikalash/Trilinos_Albany/nightlyCDash/modules.out
 
 cat albanyKDVNoFunctor ctest_nightly.cmake.frag >& ctest_nightly.cmake  
 
