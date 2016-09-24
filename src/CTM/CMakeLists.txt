@@ -1,4 +1,5 @@
 set(CTM_SOURCES
+CTM_SolutionInfo.cpp
 CTM_ThermalProblem.cpp
 CTM_Solver.cpp)
 
