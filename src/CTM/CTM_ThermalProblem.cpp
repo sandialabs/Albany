@@ -5,9 +5,14 @@ namespace CTM {
 ThermalProblem::ThermalProblem(
     const RCP<ParameterList>& params,
     RCP<ParamLib> const& param_lib,
-    const int num_dims,
+    const int n_dims,
     RCP<const Teuchos::Comm<int> >& comm) :
-  Albany::AbstractProblem(params, param_lib) {
+  Albany::AbstractProblem(params, param_lib),
+  num_dims(n_dims) {
+
+    *out << "Problem name = Thermal Problem \n";
+    this->setNumEquations(1);
+    material_db = LCM::createMaterialDatabase(params, comm);
 }
 
 ThermalProblem::~ThermalProblem() {
@@ -24,6 +29,12 @@ Teuchos::Array<RCP<const PHX::FieldTag> > ThermalProblem::buildEvaluators(
     Albany::StateManager& state_mgr,
     Albany::FieldManagerChoice fm_choice,
     const RCP<ParameterList>& response_list) {
+
+  // Call constructEvaluators<EvalT>() for specific evaluation types
+  Albany::ConstructEvaluatorsOp<ThermalProblem> op(
+      *this, fm, mesh_specs, state_mgr, fm_choice, response_list);
+  Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
+  return *op.tags;
 }
 
 void ThermalProblem::constructDirichletEvaluators(

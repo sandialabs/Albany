@@ -107,7 +107,57 @@ class ThermalProblem : public Albany::AbstractProblem {
 
 }
 
+#include <Albany_EvaluatorUtils.hpp>
+#include <Intrepid2_FieldContainer.hpp>
+#include <Intrepid2_DefaultCubatureFactory.hpp>
+#include <Shards_CellTopology.hpp>
 
+template <typename EvalT>
+Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
+    PHX::FieldManager<PHAL::AlbanyTraits>& fm,
+    const Albany::MeshSpecsStruct& mesh_specs,
+    Albany::StateManager& state_mgr,
+    Albany::FieldManagerChoice fm_choice,
+    const RCP<ParameterList>& response_list) {
 
+  // convenience typedefs
+  typedef RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<
+    RealType, PHX::Layout, PHX::Device> > > Intrepid2Basis;
+
+  typedef Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<
+    RealType, PHX::Layout, PHX::Device> > CubatureFactory;
+
+  typedef RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<
+    RealType, PHX::Layout, PHX::Device> > > Cubature;
+
+  // get the name of the current element block
+  auto eb_name = mesh_specs.ebName;
+
+  // define cell topology
+  RCP<shards::CellTopology> cell_type =
+    rcp(new shards::CellTopology(&mesh_specs.ctd));
+
+  // get the intrepid basis for the cell topology
+  Intrepid2Basis basis = Albany::getIntrepid2Basis(mesh_specs.ctd);
+
+  // get the cubature
+  CubatureFactory cub_factory;
+  Cubature cubature = cub_factory.create(
+      *cell_type, mesh_specs.cubatureDegree);
+
+  // define a layouts structure
+  const int num_nodes = basis->getCardinality();
+  const int ws_size = mesh_specs.worksetSize;
+  const int num_qps = cubature->getNumPoints();
+  const int num_vtx = cell_type->getNodeCount();
+  dl = rcp(new Albany::Layouts(ws_size, num_vtx, num_nodes, num_qps, num_dims));
+
+  *out << "Field Dimensions: Workset= " << ws_size
+    << ", Vertices= " << num_vtx
+    << ", Nodes= " << num_nodes
+    << ", QPs= " << num_qps
+    << ", Dim= " << num_dims << std::endl;
+
+}
 
 #endif
