@@ -68,8 +68,8 @@ class Solver {
     ArrayRCP<RCP<Albany::MeshSpecsStruct> > mesh_specs;
     RCP<Albany::StateManager> state_mgr;
 
-    RCP<Albany::AbstractProblem> temp_problem;
-    RCP<Albany::AbstractProblem> mech_problem;
+    RCP<Albany::AbstractProblem> t_problem;
+    RCP<Albany::AbstractProblem> m_problem;
 
     double t_current;
     double t_previous;

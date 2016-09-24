@@ -1,7 +1,7 @@
 #include "CTM_Solver.hpp"
+#include "CTM_ThermalProblem.hpp"
 #include <Albany_DiscretizationFactory.hpp>
 #include <Albany_AbstractDiscretization.hpp>
-#include <Albany_HeatProblem.hpp>
 
 namespace CTM {
 
@@ -49,9 +49,11 @@ void Solver::initial_setup() {
 
   // create the problem objects
   auto dim = mesh_specs[0]->numDim;
-  temp_problem = rcp(new Albany::HeatProblem(temp_params, param_lib, dim, comm));
-  temp_params->validateParameters(*(temp_problem->getValidProblemParameters()),0);
-  temp_problem->buildProblem(mesh_specs, *state_mgr);
+  t_problem = rcp(new ThermalProblem(temp_params, param_lib, dim, comm));
+
+#if 0
+  t_params->validateParameters(*(temp_problem->getValidProblemParameters()),0);
+  t_problem->buildProblem(mesh_specs, *state_mgr);
 
   // create the initial discretization object
   auto neq = temp_problem->numEquations();
@@ -63,6 +65,7 @@ void Solver::initial_setup() {
       temp_problem->getFieldRequirements(),
       temp_problem->getSideSetFieldRequirements(),
       temp_problem->getNullSpace());
+#endif
 
 }
 
