@@ -1,4 +1,5 @@
 set(CTM_SOURCES
+CTM_ThermalProblem.cpp
 CTM_Solver.cpp)
 
 add_library(CTM ${CTM_SOURCES})
