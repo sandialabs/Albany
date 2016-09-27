@@ -19,7 +19,7 @@ SET(DOWNLOAD TRUE)
 SET(CLEAN_BUILD TRUE)
 
 # Begin User inputs:
-set( CTEST_SITE             "avatar.scorec.rpi.edu" ) # generally the output of hostname
+set( CTEST_SITE             "jenga.scorec.rpi.edu" ) # generally the output of hostname
 set( CTEST_DASHBOARD_ROOT   "$ENV{TEST_DIRECTORY}" ) # writable path
 set( CTEST_SCRIPT_DIRECTORY   "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set( CTEST_CMAKE_GENERATOR  "Unix Makefiles" ) # What is your compilation apps ?
@@ -566,8 +566,8 @@ ENDIF(BUILD_TRILINOSCLANG)
 IF (BUILD_ALB32)
   # Configure the Albany 32 Bit build 
   # Builds everything!
-  SET_PROPERTY (GLOBAL PROPERTY SubProject Albany32Bit)
-  SET_PROPERTY (GLOBAL PROPERTY Label Albany32Bit)
+  SET_PROPERTY (GLOBAL PROPERTY SubProject Albany32Bit-DynRankViewRefactor)
+  SET_PROPERTY (GLOBAL PROPERTY Label Albany32Bit-DynRankViewRefactor)
 
   SET(CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
@@ -588,12 +588,12 @@ IF (BUILD_ALB32)
     #  "-DENABLE_CHECK_FPE:BOOL=ON"
     )
 
-  if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany32Bit")
-    FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany32Bit)
+  if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany32Bit-DynRankViewRefactor")
+    FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany32Bit-DynRankViewRefactor)
   endif()
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany32Bit"
+    BUILD "${CTEST_BINARY_DIRECTORY}/Albany32Bit-DynRankViewRefactor"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
@@ -621,7 +621,7 @@ IF (BUILD_ALB32)
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany32Bit"
+    BUILD "${CTEST_BINARY_DIRECTORY}/Albany32Bit-DynRankViewRefactor"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -644,7 +644,7 @@ IF (BUILD_ALB32)
   # Run Albany tests
 
   CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany32Bit"
+    BUILD "${CTEST_BINARY_DIRECTORY}/Albany32Bit-DynRankViewRefactor"
     #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
     #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
     #NUMBER_FAILED  TEST_NUM_FAILED
