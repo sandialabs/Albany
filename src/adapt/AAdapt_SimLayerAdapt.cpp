@@ -33,6 +33,14 @@ SimLayerAdapt::SimLayerAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_
   out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
   errorBound = params_->get<double>("Error Bound", 0.1);
+  // get inititial temperature for new added layer
+  initTempNewLayer = params_->get<double>("Uniform Temperature New Layer", 20.0);
+
+  // Tell user that Uniform temperature is in effect
+  *out << "***********************" << std::endl;
+  *out << "Uniform Temperature New Layer = " << initTempNewLayer << std::endl;
+  *out << "***********************" << std::endl;
+
   /* BRD */
   Simmetrix_numLayers = -1;
   Simmetrix_currentLayer = 0;
@@ -213,7 +221,7 @@ void adaptMesh2(pGModel model,pParMesh mesh,int currentLayer,double sliceThickne
   MS_deleteMeshCase(mcase);
 }
 
-void addNextLayer(pParMesh sim_pm,double sliceThickness,int nextLayer,int nSolFlds,pPList flds) {
+  void addNextLayer(pParMesh sim_pm,double sliceThickness,int nextLayer, double initTempNewLayer,int nSolFlds,pPList flds) {
   //! Output stream, defaults to printing just Proc 0
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
   
@@ -314,7 +322,7 @@ void addNextLayer(pParMesh sim_pm,double sliceThickness,int nextLayer,int nSolFl
         dg = Field_entDof(sim_sol_flds[i],ent,0);
         ncs = Field_numComp(sim_sol_flds[i]);
         for (c=0; c < ncs; c++)
-          DofGroup_setValue(dg,c,0,20.0);
+          DofGroup_setValue(dg,c,0,initTempNewLayer);
       }
       if (sim_res_fld) {
         dg = Field_entDof(sim_res_fld,ent,0);
@@ -324,7 +332,7 @@ void addNextLayer(pParMesh sim_pm,double sliceThickness,int nextLayer,int nSolFl
       if (sim_hak_fld) {
         dg = Field_entDof(sim_hak_fld,ent,0);
         for (c=0; c < nc3; c++)
-          DofGroup_setValue(dg,c,0,20.0);
+          DofGroup_setValue(dg,c,0,initTempNewLayer);
       }
     }
     PList_delete(unmapped);
@@ -561,7 +569,7 @@ bool SimLayerAdapt::adaptMesh()
   if (currentTime >= Simmetrix_layerTimes[Simmetrix_currentLayer]) {
     char meshFile[80];
     *out << "Adding layer " << Simmetrix_currentLayer+1 << "\n";
-    addNextLayer(sim_pm,sliceThickness,Simmetrix_currentLayer+1,apf_ms->num_time_deriv+1,sim_fld_lst);
+    addNextLayer(sim_pm,sliceThickness,Simmetrix_currentLayer+1,initTempNewLayer,apf_ms->num_time_deriv+1,sim_fld_lst);
     sprintf(meshFile, "layerMesh%d.sms", Simmetrix_currentLayer+1);
     PM_write(sim_pm, meshFile, sthreadDefault, 0);
     Simmetrix_currentLayer++;
@@ -589,6 +597,7 @@ Teuchos::RCP<const Teuchos::ParameterList> SimLayerAdapt::getValidAdapterParamet
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
   validPL->set<double>("Max Size", 1e10, "Maximum allowed edge length (size field)");
   validPL->set<bool>("Add Layer", true, "Turn on/off adding layer");
+  validPL->set<double>("Uniform Temperature New Layer", 20.0, "Uniform Layer Temperature");
   return validPL;
 }
 
