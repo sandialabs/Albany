@@ -21,8 +21,6 @@
 
 #include "QCAD_MaterialDatabase.hpp"
 
-class RPCFunctor;
-
 namespace AFRL {
 /**
  * \brief Evaluates thermal conductivity, either as a constant or a truncated
@@ -63,7 +61,7 @@ public:
   enum SG_RF {CONSTANT, UNIFORM, LOGNORMAL};
 
   MultiScaleThermalConductivity(Teuchos::ParameterList& p);
-  virtual ~MultiScaleThermalConductivity();
+  // virtual ~MultiScaleThermalConductivity();
 
   void postRegistrationSetup(typename Traits::SetupData d,
 			     PHX::FieldManager<Traits>& vm);
@@ -109,12 +107,16 @@ private:
   //  (RVE)
   struct RepresentativeVolumeElement
   {
+    RepresentativeVolumeElement() : context(0), socket(0) {}
+    ~RepresentativeVolumeElement();
+
     std::string material;
     std::string descriptionfile;
     int id;
+    void* context;
+    void* socket;
   };
   RepresentativeVolumeElement RVE;
-  RPCFunctor* rpcFunctor;
 
   //! Convenience function to initialize constant thermal conductivity
   void init_constant(ScalarT value, Teuchos::ParameterList& p);
@@ -125,8 +127,8 @@ private:
 
   //! Convenience function to initialize thermal conductivity based on
   //  external computation
-  void init_remote(std::string &type, std::string& microscaleHostname,
-                   int microscalePort, std::string& descriptionFile, int id,
+  void init_remote(std::string &type, std::string& microscaleExe,
+                   std::string& descriptionFile, int id,
                    Teuchos::ParameterList& p);
   double get_remote(double time, double previousTime, const ScalarT& temperature,
                     const Teuchos::Array<ScalarT>& gradT) const;

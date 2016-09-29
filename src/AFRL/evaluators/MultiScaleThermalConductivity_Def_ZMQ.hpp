@@ -12,7 +12,7 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Albany_Utils.hpp"
 
-#include "RPCFunctor.hpp"
+#include <zmq.h>
 
 namespace AFRL {
 
@@ -20,8 +20,7 @@ template<typename EvalT, typename Traits>
 MultiScaleThermalConductivity<EvalT, Traits>::
 MultiScaleThermalConductivity(Teuchos::ParameterList& p) :
   thermalCond(p.get<std::string>("QP Variable Name"),
-              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
-  rpcFunctor(NULL)
+              p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
   randField = CONSTANT;
 
@@ -93,11 +92,10 @@ MultiScaleThermalConductivity(Teuchos::ParameterList& p) :
     }
     else if (typ == "Compute from RVE") {
       std::string mat = materialDB->getElementBlockParam<std::string>(ebName, "material");
-      std::string remoteHostname = cond_list->get("Microscale Cache Hostname", "");
-      int remotePort = cond_list->get("Microscale Cache Port", -1);
+      std::string remoteAddress = cond_list->get("Remote Address", "");
       std::string descriptionFile = subList.get("RVE Description File", "");
       int descriptionId = subList.get("RVE ID", -1);
-      init_remote(mat, remoteHostname, remotePort, descriptionFile, descriptionId, p);
+      init_remote(mat, remoteAddress, descriptionFile, descriptionId, p);
     }
 #ifdef ALBANY_STOKHOS
     else if (typ == "Truncated KL Expansion" || typ == "Log Normal RF") {
@@ -117,12 +115,12 @@ MultiScaleThermalConductivity(Teuchos::ParameterList& p) :
   this->setName("Thermal Conductivity" );
 }
 
-template<typename EvalT, typename Traits>
-MultiScaleThermalConductivity<EvalT, Traits>::
-~MultiScaleThermalConductivity()
-{
-  if (this->rpcFunctor) delete this->rpcFunctor;
-}
+// template<typename EvalT, typename Traits>
+// MultiScaleThermalConductivity<EvalT, Traits>::
+// ~MultiScaleThermalConductivity()
+// {
+
+// }
 
 template<typename EvalT, typename Traits>
 void
@@ -182,9 +180,17 @@ init_KL_RF(std::string &type, Teuchos::ParameterList& sublist, Teuchos::Paramete
 #endif
 
 template<typename EvalT, typename Traits>
+MultiScaleThermalConductivity<EvalT,Traits>::
+RepresentativeVolumeElement::~RepresentativeVolumeElement()
+{
+  if (socket) zmq_close(socket);
+  if (context) zmq_ctx_destroy(context);
+}
+
+template<typename EvalT, typename Traits>
 void
 MultiScaleThermalConductivity<EvalT, Traits>::
-init_remote(std::string &type, std::string& remoteHostname, int remotePort,
+init_remote(std::string &type, std::string& remoteAddress,
             std::string& descriptionFile, int id, Teuchos::ParameterList& p){
 
     computeMode = Remote;
@@ -193,8 +199,10 @@ init_remote(std::string &type, std::string& remoteHostname, int remotePort,
     RVE.material = type;
     RVE.descriptionfile = descriptionFile;
     RVE.id = id;
-
-    rpcFunctor = new RPCFunctor(remoteHostname, remotePort, "", "rpc_queue");
+    RVE.context = zmq_ctx_new();
+    RVE.socket = zmq_socket(RVE.context, ZMQ_REQ);
+    int rc = zmq_connect(RVE.socket, remoteAddress.c_str());
+    std::cout<<"connection to socket "<<remoteAddress<<": "<<rc<<std::endl;
 
     Teuchos::RCP<PHX::DataLayout> scalar_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
@@ -237,12 +245,17 @@ double MultiScaleThermalConductivity<EvalT,Traits>::get_remote(
   s << RVE.material << "," << RVE.descriptionfile << ","
     << time << "," << previousTime << "," << val(temperature) << ","
     << val(gradT[0]) << "," << val(gradT[1]) << "," << val(gradT[2]);
+  std::cout<<"sending <"<<s.str()<<">"<<" to "<<RVE.socket<<std::endl;
+  zmq_send(RVE.socket, s.str().c_str(), s.str().size(), 0);
 
-  std::stringstream s2;
-  s2 << this->rpcFunctor->operator()(s.str());
+  s.clear(); s.str("");
+
+  char buffer[100];
+  zmq_recv(RVE.socket, buffer, 100, 0);
+  s.str(buffer);
 
   double thermalConductivity;
-  s2 >> thermalConductivity;
+  s >> thermalConductivity;
 
   return thermalConductivity;
 }
@@ -361,10 +374,8 @@ MultiScaleThermalConductivity<EvalT,Traits>::getValidThermalCondParameters() con
 
   validPL->set<std::string>("Thermal Conductivity Type", "Constant",
                "Constant thermal conductivity across the entire domain");
-  validPL->set<std::string>("Microscale Cache Hostname", "",
+  validPL->set<std::string>("Remote Address", "",
                "Address to send/recieve microscale simulation data");
-  validPL->set<int>("Microscale Cache Port", -1,
-               "Port to send/recieve microscale simulation data");
   validPL->set<double>("Value", 1.0, "Constant thermal conductivity value");
 
 // Truncated KL parameters

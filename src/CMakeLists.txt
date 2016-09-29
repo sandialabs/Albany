@@ -685,6 +685,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
 		     ./AFRL/
 		     ./AFRL/problems
 		     ./AFRL/evaluators
+		     ./AFRL/communicators
                      ./AMP/
                      ./AMP/problems
                      ./AMP/evaluators
@@ -957,8 +958,6 @@ ENDIF()
 IF (ALBANY_AFRL)
   add_subdirectory(AFRL)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AFRL)
-  include_directories (${ZeroMQ_INCLUDE_DIR})
-  link_directories (${ZeroMQ_LIBRARIES})
 ENDIF()
 
 IF (ALBANY_AMP)

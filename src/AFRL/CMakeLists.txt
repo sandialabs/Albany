@@ -23,15 +23,31 @@ SET(HEADERS ${HEADERS}
   evaluators/MultiScaleThermalConductivity_Def.hpp
   )
 
+# communicators
+SET(SOURCES ${SOURCES}
+  communicators/RPCFunctor.cpp
+  )
+
+SET(HEADERS ${HEADERS}
+  communicators/RPCFunctor.hpp
+  )
+
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
   ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators
   ${Albany_SOURCE_DIR}/src/problems ${Albany_SOURCE_DIR}/src/responses
   ${Albany_SOURCE_DIR}/src/stk
-  ./problems ./evaluators
+  ./problems ./evaluators ./communicators
   )
 
 add_library(AFRL ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
-target_link_libraries(AFRL LINK_PUBLIC ${ZeroMQ_LIBRARIES})
+
+IF (AFRL_USE_RABBITMQ)
+  set_target_properties(AFRL PROPERTIES COMPILE_DEFINITIONS "USE_RABBITMQ")
+ENDIF()
+target_include_directories(AFRL PUBLIC ${ZeroMQ_INCLUDE_DIR}
+  ${RabbitMQ_INCLUDE_DIR})
+target_link_libraries(AFRL LINK_PUBLIC ${ZeroMQ_LIBRARIES}
+  ${RabbitMQ_LIBRARIES})
 
 IF ( INSTALL_ALBANY )
     install(TARGETS AFRL EXPORT Albany
