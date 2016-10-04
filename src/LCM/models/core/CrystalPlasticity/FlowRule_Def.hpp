@@ -217,7 +217,7 @@ computeRateSlip(
   }
 
   ArgT
-  pl_vd_ratio = coefficient_drag * std::pow(ratio_stress,m-1);
+  pl_vd_ratio = coefficient_drag * std::pow(std::fabs(ratio_stress),m-1);
 
   bool const
   pl_active = pl_vd_ratio < machine_eps;
