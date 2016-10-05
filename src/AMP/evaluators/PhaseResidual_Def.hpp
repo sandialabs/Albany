@@ -67,7 +67,6 @@ PhaseResidual(const Teuchos::ParameterList& p,
 
   Temperature_Name_ = p.get<std::string>("Temperature Name")+"_old";
 
-  term1_.resize(dims[0],num_qps_,num_dims_);
 
   this->setName("PhaseResidual"+PHX::typeAsString<EvalT>());
 }
@@ -94,6 +93,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(porosity_,fm);
   this->utils.setFieldData(energyDot_,fm);
   this->utils.setFieldData(residual_,fm);
+
+
+  term1_ = Kokkos::createDynRankView(k.get_view(), "term1_", workset_size_,num_qps_,num_dims_);
 }
 
 //**********************************************************************
