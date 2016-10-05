@@ -51,7 +51,7 @@ sigma_coord = 1-s_geo.sigma_coord(end:-1:1);
 
 velnormStruct = zeros(size(velnorm(:,:,1))+1);
 velnormStruct(2:end,2:end) = velnorm(:,:,1);
-mask = thk>ice_limit;
+mask = thk(1:ns:end,1:ns:end)>ice_limit;
 
 clear s_geo;
 
@@ -129,8 +129,8 @@ end
 
 
 acabStruct = acab(1:ns:end,1:ns:end);  %convert to km/yr
-% acabStruct = [];
-% acabStruct_RMS = [];
+ acabStruct = [];
+ acabStruct_RMS = [];
 % acab_RMS_mask_not = [];
 % if(~isempty(acab))
 %   acabStruct =  interp2(Xsmb, Ysmb, smb', xi, yi)';
@@ -146,7 +146,6 @@ clear  topg vx vy ex ey acab
 %% compute vertices mask and weitght for field reconstruction
 
 mask0 = mask(2:end,2:end);
-mask0 = mask0(1:ns:end,1:ns:end);
 numElements = sum(sum(mask0));
 
 vertex_mask = false(size(mask));
@@ -307,7 +306,10 @@ vel = reshape(vel, numel(vel), 1);
 
 sigmaVel = reshape(sigmaVel, numel(sigmaVel),1);
 
-tempr = reshape(temprUnstruct+T0, numel(temprUnstruct), 1); %convert to kelvin units
+if(~isempty(tempr))
+    tempr = reshape(temprUnstruct+T0, numel(temprUnstruct), 1); %convert to kelvin units
+end
+
 
 if(~isempty(flow))
   flow = reshape(flowUnstruct*kilo^4, numel(flowUnstruct), 1); %rescale using Albany units
@@ -321,11 +323,13 @@ thicknessRMS = max(0.1,thicknessRMS');
 %% write fieds into ascii files
 numComponents = size(thickness,1);
 
-fid = fopen ( [fdir_out, 'temperature.ascii'], 'wt' );
-fprintf(fid,'%d %d\n', numElements, nTemplevels);
-fprintf(fid,'%g\n', sigma_coord);
-fprintf(fid,'%g\n', tempr');
-fclose(fid);
+if(~isempty(tempr))
+  fid = fopen ( [fdir_out, 'temperature.ascii'], 'wt' );
+  fprintf(fid,'%d %d\n', numElements, nTemplevels);
+  fprintf(fid,'%g\n', sigma_coord);
+  fprintf(fid,'%g\n', tempr');
+  fclose(fid);
+end
 
 if(~isempty(flow))
   fid = fopen ( [fdir_out, 'flow_rate.ascii'], 'wt' );

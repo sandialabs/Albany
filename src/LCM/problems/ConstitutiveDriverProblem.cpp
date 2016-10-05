@@ -5,7 +5,7 @@
 //*****************************************************************//
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_Utils.hpp"
-#include "LCM_Utils.h"
+#include "MaterialDatabase.h"
 #include "ConstitutiveDriverProblem.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 

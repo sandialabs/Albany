@@ -6,7 +6,7 @@
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"
-#include "LCM_Utils.h"
+#include "MaterialDatabase.h"
 #include "MechanicsProblem.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "NOXSolverPrePostOperator.h"

@@ -2168,8 +2168,16 @@ void QCAD::PoissonSource<EvalT,Traits>::source_cloudcharges(typename Traits::Eva
 	if(numDims>2) distance2 += (cloudCharges[i].position[2] - coordVec(cell,qp,2)) * (cloudCharges[i].position[2] - coordVec(cell,qp,2));
 
         if (distance2 <= cutoff2) {
-	  poissonSource(cell, qp) += 1.0/Lambda2 * scaledCellVol * cloudCharges[i].amplitude * exp(-distance2/(2.0*width2));
-        }
+	  ScalarT qpChargeDen = cloudCharges[i].amplitude * exp(-distance2/(2.0*width2)) / scaledCellVol;
+	  std::cout << "DEBUG: ADDING POINT CHARGE (den=" << qpChargeDen << ", was " << chargeDensity(cell,0) << ") to ws "
+		    << workset.wsIndex << ", cell " << cell << std::endl;
+
+	  for (std::size_t qp=0; qp < numQPs; ++qp) {
+	    ScalarT scaleFactor = 1.0; //TODO: get appropriate scale factor from meshRegions (later?)
+	    poissonSource(cell, qp) += 1.0/Lambda2 * qpChargeDen;
+	    chargeDensity(cell, qp) += qpChargeDen;    
+	  }
+	}
       }
     }
   }

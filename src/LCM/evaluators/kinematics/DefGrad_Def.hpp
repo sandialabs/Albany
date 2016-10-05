@@ -9,7 +9,7 @@
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Intrepid2_RealSpaceTools.hpp"
-#include "LCM_Utils.h"
+#include "MaterialDatabase.h"
 
 #include <typeinfo>
 

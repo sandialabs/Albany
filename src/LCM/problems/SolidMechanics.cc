@@ -12,7 +12,7 @@
 #include "ConstitutiveModelInterface.hpp"
 #include "ConstitutiveModelParameters.hpp"
 #include "Kinematics.hpp"
-#include "LCM_Utils.h"
+#include "MaterialDatabase.h"
 #include "MechanicsResidual.hpp"
 #include "NOXSolverPrePostOperator.h"
 #include "PHAL_NSMaterialProperty.hpp"

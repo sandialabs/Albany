@@ -4,7 +4,17 @@
 /// \file CTM_Solver.hpp
 
 #include "CTM_Teuchos.hpp"
+
 #include <Albany_DataTypes.hpp>
+#include <PHAL_Workset.hpp>
+
+namespace Albany {
+class AbstractProblem;
+class AbstractDiscretization;
+class DiscretizationFactory;
+class StateManager;
+struct MeshSpecsStruct;
+}
 
 /// \brief All CTM symbols are contained in this namespace.
 namespace CTM {
@@ -50,8 +60,21 @@ class Solver {
     RCP<ParameterList> temp_params;
     RCP<ParameterList> mech_params;
 
+    RCP<ParamLib> param_lib;
+    RCP<DistParamLib> dist_param_lib;
+
+    RCP<Albany::DiscretizationFactory> disc_factory;
+    RCP<Albany::AbstractDiscretization> disc;
+    ArrayRCP<RCP<Albany::MeshSpecsStruct> > mesh_specs;
+    RCP<Albany::StateManager> state_mgr;
+
+    RCP<Albany::AbstractProblem> t_problem;
+    RCP<Albany::AbstractProblem> m_problem;
+
     double t_current;
     double t_previous;
+
+    void initial_setup();
 
 };
 

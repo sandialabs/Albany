@@ -42,6 +42,8 @@ private:
   double errorBound;
   //! Output stream, defaults to printing just Proc 0
   Teuchos::RCP<Teuchos::FancyOStream> out;
+  // When added a new layer we assign a uniform temperature to it
+  double initTempNewLayer;
 };
 
 }
