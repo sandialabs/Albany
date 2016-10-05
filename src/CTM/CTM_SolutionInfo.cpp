@@ -31,18 +31,18 @@ void SolutionInfo::scatter_J() {
   ghost_J->doImport(*owned_J, *importer, Tpetra::INSERT);
 }
 
-void SolutionInfo::resize(RCP<Albany::AbstractDiscretization> d, bool dt) {
+void SolutionInfo::resize(RCP<Albany::AbstractDiscretization> d, bool have_x_dot) {
   auto t0 = PCU_Time();
-  int nv = 1;
-  if (dt) nv = 2;
+  int number_vectors = 1;
+  if (have_x_dot) number_vectors = 2;
   auto map = d->getMapT();
   auto ghost_map = d->getOverlapMapT();
   auto graph = d->getJacobianGraphT();
   auto ghost_graph = d->getOverlapJacobianGraphT();
   exporter = rcp(new Tpetra_Export(ghost_map, map));
   importer = rcp(new Tpetra_Import(map, ghost_map));
-  owned_x = rcp(new Tpetra_MultiVector(map, nv));
-  ghost_x = rcp(new Tpetra_MultiVector(ghost_map, nv));
+  owned_x = rcp(new Tpetra_MultiVector(map, number_vectors));
+  ghost_x = rcp(new Tpetra_MultiVector(ghost_map, number_vectors));
   owned_f = rcp(new Tpetra_Vector(map));
   ghost_f = rcp(new Tpetra_Vector(ghost_map));
   owned_J = rcp(new Tpetra_CrsMatrix(graph));

@@ -5,43 +5,46 @@
 #include <Albany_DataTypes.hpp>
 
 namespace Albany {
-class AbstractDiscretization;
+    class AbstractDiscretization;
 }
 
 namespace CTM {
 
-class SolutionInfo {
+    class SolutionInfo {
+    public:
 
-  public:
+        // constructor
+        SolutionInfo();
+        // do not use copy constructor
+        SolutionInfo(const SolutionInfo&) = delete;
+        // do not use assignment operator
+        SolutionInfo& operator=(const SolutionInfo&) = delete;
+        // solution multi vector. First column corresponds to main variable.
+        // second column to time derivative of main variable.
+        RCP<Tpetra_MultiVector> owned_x;
+        RCP<Tpetra_MultiVector> ghost_x;
+        // Residual vector.
+        RCP<Tpetra_Vector> owned_f;
+        RCP<Tpetra_Vector> ghost_f;
+        // Jacobians
+        RCP<Tpetra_CrsMatrix> owned_J;
+        RCP<Tpetra_CrsMatrix> ghost_J;
 
-    SolutionInfo();
-    SolutionInfo(const SolutionInfo&) = delete;
-    SolutionInfo& operator=(const SolutionInfo&) = delete;
+        RCP<Tpetra_Export> exporter;
+        RCP<Tpetra_Import> importer;
 
-    RCP<Tpetra_MultiVector> owned_x;
-    RCP<Tpetra_MultiVector> ghost_x;
+        void gather_x();
+        void scatter_x();
 
-    RCP<Tpetra_Vector> owned_f;
-    RCP<Tpetra_Vector> ghost_f;
+        void gather_f();
+        void scatter_f();
 
-    RCP<Tpetra_CrsMatrix> owned_J;
-    RCP<Tpetra_CrsMatrix> ghost_J;
+        void gather_J();
+        void scatter_J();
 
-    RCP<Tpetra_Export> exporter;
-    RCP<Tpetra_Import> importer;
+        void resize(RCP<Albany::AbstractDiscretization> disc, bool have_x_dot);
 
-    void gather_x();
-    void scatter_x();
-
-    void gather_f();
-    void scatter_f();
-
-    void gather_J();
-    void scatter_J();
-
-    void resize(RCP<Albany::AbstractDiscretization> disc, bool have_x_dot);
-
-};
+    };
 
 }
 
