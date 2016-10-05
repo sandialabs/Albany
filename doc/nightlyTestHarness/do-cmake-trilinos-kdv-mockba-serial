@@ -31,11 +31,14 @@
 rm -rf CMakeFiles
 rm -rf CMakeCache.txt
 
-module purge 
-module load gcc/4.9.2/openmpi/1.8.7
-module load netcdf/4.3.2/gcc/4.9.2/openmpi/1.8.7
-module load hdf5/1.8.12/gcc/4.9.2/openmpi/1.8.7
-module load boost/1.55.0/gcc/4.9.2/base
+module purge
+module load sems-env
+module load sems-gcc/5.1.0
+module load sems-openmpi/1.6.5
+module load sems-netcdf/4.3.2/parallel
+module load sems-boost/1.59.0/base
+module load sems-hdf5/1.8.12/parallel
+module list 
 
 BOOSTDIR=$SEMS_BOOST_ROOT
 NETCDF=$SEMS_NETCDF_ROOT
