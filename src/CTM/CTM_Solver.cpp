@@ -51,21 +51,21 @@ void Solver::initial_setup() {
   auto dim = mesh_specs[0]->numDim;
   t_problem = rcp(new ThermalProblem(temp_params, param_lib, dim, comm));
 
-#if 0
-  t_params->validateParameters(*(temp_problem->getValidProblemParameters()),0);
+//#if 0
+  temp_params->validateParameters(*(t_problem->getValidProblemParameters()),0);
   t_problem->buildProblem(mesh_specs, *state_mgr);
 
   // create the initial discretization object
-  auto neq = temp_problem->numEquations();
+  auto neq = t_problem->numEquations();
   disc = disc_factory->createDiscretization(
       neq,
-      temp_problem->getSideSetEquations(),
+      t_problem->getSideSetEquations(),
       state_mgr->getStateInfoStruct(),
       state_mgr->getSideSetStateInfoStruct(),
-      temp_problem->getFieldRequirements(),
-      temp_problem->getSideSetFieldRequirements(),
-      temp_problem->getNullSpace());
-#endif
+      t_problem->getFieldRequirements(),
+      t_problem->getSideSetFieldRequirements(),
+      t_problem->getNullSpace());
+//#endif
 
 }
 

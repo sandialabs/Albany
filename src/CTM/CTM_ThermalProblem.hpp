@@ -54,14 +54,14 @@ namespace CTM {
         /// \brief Construct the volumetric evaluators.
         /// \param fm The field manager to register evaluators into.
         /// \param mesh_specs The mesh specs struct for this subset of the mesh.
-        /// \param fm_choice We assume this is always the residual choice
+        /// \param fm0_choice We assume this is always the residual choice
         /// \param response_list We ignore this.
         /// \details This constructs the Phalanx field managers responsible
         /// for volumetric contributions to the residual vector and the
         /// Jacobian matrix by calling constructEvaluators for the appropriate
         /// evaluation types.
         Teuchos::Array<RCP<const PHX::FieldTag> > buildEvaluators(
-                PHX::FieldManager<PHAL::AlbanyTraits>& fm,
+                PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                 const Albany::MeshSpecsStruct& mesh_specs,
                 Albany::StateManager& state_mgr,
                 Albany::FieldManagerChoice fm_choice,
@@ -72,7 +72,7 @@ namespace CTM {
         /// registration.
         template <typename EvalT>
         RCP<const PHX::FieldTag> constructEvaluators(
-                PHX::FieldManager<PHAL::AlbanyTraits>& fm,
+                PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
                 const Albany::MeshSpecsStruct& mesh_specs,
                 Albany::StateManager& state_mgr,
                 Albany::FieldManagerChoice fm_choice,
@@ -147,7 +147,7 @@ namespace CTM {
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
-        PHX::FieldManager<PHAL::AlbanyTraits>& fm,
+        PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         const Albany::MeshSpecsStruct& mesh_specs,
         Albany::StateManager& state_mgr,
         Albany::FieldManagerChoice fm_choice,
@@ -218,41 +218,41 @@ Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
 
     int offset = 0;
     if (isTransient_) {
-        fm.template registerEvaluator<EvalT>
+        fm0.template registerEvaluator<EvalT>
                 (evalUtils.constructGatherSolutionEvaluator_withAcceleration(
                 false,
                 dof_names,
                 dof_names_dot,
                 Teuchos::null,
                 offset));
-        fm.template registerEvaluator<EvalT>
+        fm0.template registerEvaluator<EvalT>
                 (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
     } else {
-        fm.template registerEvaluator<EvalT>
+        fm0.template registerEvaluator<EvalT>
                 (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
                 dof_names,
                 offset));
     }
 
-    fm.template registerEvaluator<EvalT>
+    fm0.template registerEvaluator<EvalT>
             (evalUtils.constructGatherCoordinateVectorEvaluator());
 
-    fm.template registerEvaluator<EvalT>
+    fm0.template registerEvaluator<EvalT>
             (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
-    fm.template registerEvaluator<EvalT>
+    fm0.template registerEvaluator<EvalT>
             (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
 
-    fm.template registerEvaluator<EvalT>
+    fm0.template registerEvaluator<EvalT>
             (evalUtils.constructMapToPhysicalFrameEvaluator(cell_type,
             cubature));
 
-    fm.template registerEvaluator<EvalT>
+    fm0.template registerEvaluator<EvalT>
             (evalUtils.constructComputeBasisFunctionsEvaluator(cell_type,
             intrepidBasis,
             cubature));
 
-    fm.template registerEvaluator<EvalT>
+    fm0.template registerEvaluator<EvalT>
             (evalUtils.constructScatterResidualEvaluator(false,
             resid_names,
             offset,
@@ -279,7 +279,7 @@ Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
             p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
             ev = Teuchos::rcp(new PHAL::Source<EvalT, PHAL::AlbanyTraits>(*p));
-            fm.template registerEvaluator<EvalT>(ev);
+            fm0.template registerEvaluator<EvalT>(ev);
 
             thermal_source_evaluated_ = true;
 
@@ -298,7 +298,7 @@ Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
                     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
                     ev = Teuchos::rcp(new PHAL::Source<EvalT, PHAL::AlbanyTraits>(*p));
-                    fm.template registerEvaluator<EvalT>(ev);
+                    fm0.template registerEvaluator<EvalT>(ev);
 
                     thermal_source_evaluated_ = true;
                 }
@@ -334,7 +334,7 @@ Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
                 new LCM::ConstitutiveModelParameters<EvalT, PHAL::AlbanyTraits>(
                 *p,
                 dl));
-        fm.template registerEvaluator<EvalT>(cmpEv);
+        fm0.template registerEvaluator<EvalT>(cmpEv);
     }
     
     {
@@ -363,7 +363,7 @@ Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
                 new LCM::ThermoMechanicalCoefficients<EvalT, PHAL::AlbanyTraits>(
                 *p,
                 dl));
-        fm.template registerEvaluator<EvalT>(ev);
+        fm0.template registerEvaluator<EvalT>(ev);
     }
 
     {
@@ -402,7 +402,7 @@ Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
 
         ev = Teuchos::rcp(
                 new LCM::TransportResidual<EvalT, PHAL::AlbanyTraits>(*p, dl));
-        fm.template registerEvaluator<EvalT>(ev);
+        fm0.template registerEvaluator<EvalT>(ev);
     }
     
     if (fm_choice == Albany::BUILD_RESID_FM) {
@@ -410,7 +410,7 @@ Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
 
         PHX::Tag<typename EvalT::ScalarT > temperature_tag("Scatter Temperature",
                 dl->dummy);
-        fm.requireField<EvalT>(temperature_tag);
+        fm0.requireField<EvalT>(temperature_tag);
         ret_tag = temperature_tag.clone();
 
         return ret_tag;

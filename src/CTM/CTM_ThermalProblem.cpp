@@ -53,22 +53,38 @@ ThermalProblem::ThermalProblem(
 
     ThermalProblem::~ThermalProblem() {
     }
+void ThermalProblem::buildProblem(
+            ArrayRCP<RCP<Albany::MeshSpecsStruct> > meshSpecs,
+            Albany::StateManager& stateMgr) {
+        // Construct All Phalanx Evaluators
+        int physSets = meshSpecs.size();
+        *out << "Num MeshSpecs: " << physSets << '\n';
+        fm.resize(physSets);
+        bool haveSidesets = false;
 
-    void ThermalProblem::buildProblem(
-            ArrayRCP<RCP<Albany::MeshSpecsStruct> > mesh_specs,
-            Albany::StateManager& state_mgr) {
+        *out << "Calling MechanicsProblem::buildEvaluators" << '\n';
+        for (int ps = 0; ps < physSets; ++ps) {
+            fm[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+            buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RESID_FM,
+                    Teuchos::null);
+            if (meshSpecs[ps]->ssNames.size() > 0) haveSidesets = true;
+        }
     }
 
     Teuchos::Array<RCP<const PHX::FieldTag> > ThermalProblem::buildEvaluators(
-            PHX::FieldManager<PHAL::AlbanyTraits>& fm,
-            const Albany::MeshSpecsStruct& mesh_specs,
-            Albany::StateManager& state_mgr,
-            Albany::FieldManagerChoice fm_choice,
-            const RCP<ParameterList>& response_list) {
-
-        // Call constructEvaluators<EvalT>() for specific evaluation types
-        Albany::ConstructEvaluatorsOp<ThermalProblem> op(
-                *this, fm, mesh_specs, state_mgr, fm_choice, response_list);
+            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+            const Albany::MeshSpecsStruct& meshSpecs,
+            Albany::StateManager& stateMgr,
+            Albany::FieldManagerChoice fmchoice,
+            const RCP<ParameterList>& responseList) {
+        // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
+        // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
+        Albany::ConstructEvaluatorsOp<ThermalProblem> op(*this,
+                fm0,
+                meshSpecs,
+                stateMgr,
+                fmchoice,
+                responseList);
         Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
         return *op.tags;
     }
