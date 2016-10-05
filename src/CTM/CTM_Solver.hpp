@@ -6,6 +6,7 @@
 #include "CTM_Teuchos.hpp"
 
 #include <Albany_DataTypes.hpp>
+#include "Albany_StateManager.hpp"
 #include <PHAL_Workset.hpp>
 
 namespace Albany {
@@ -66,7 +67,7 @@ class Solver {
     RCP<Albany::DiscretizationFactory> disc_factory;
     RCP<Albany::AbstractDiscretization> disc;
     ArrayRCP<RCP<Albany::MeshSpecsStruct> > mesh_specs;
-    RCP<Albany::StateManager> state_mgr;
+    Albany::StateManager state_mgr;
 
     RCP<Albany::AbstractProblem> t_problem;
     RCP<Albany::AbstractProblem> m_problem;

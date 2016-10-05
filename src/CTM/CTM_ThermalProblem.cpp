@@ -102,4 +102,18 @@ void ThermalProblem::buildProblem(
             ArrayRCP<ArrayRCP<RCP<FC> > > new_state) const {
     }
 
+    //------------------------------------------------------------------------------
+
+    Teuchos::RCP<const Teuchos::ParameterList>
+    ThermalProblem::getValidProblemParameters() const {
+        Teuchos::RCP<Teuchos::ParameterList> validPL =
+                this->getGenericProblemParams("ValidThermalProblemParams");
+
+        validPL->set<std::string>("MaterialDB Filename",
+                "materials.xml",
+                "Filename of material database xml file");
+
+        return validPL;
+    }
+
 }

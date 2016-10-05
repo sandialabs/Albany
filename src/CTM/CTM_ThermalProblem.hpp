@@ -91,6 +91,12 @@ namespace CTM {
         /// Neumann boundary conditions.
         void constructNeumannEvaluators(
                 const RCP<Albany::MeshSpecsStruct>& mesh_specs);
+        
+        /// \brief Get valid parameters for this problem
+        /// \details Each problem must generate it's list of valid parameters
+        ///
+        Teuchos::RCP<const Teuchos::ParameterList>
+        getValidProblemParameters() const;
 
         /// \brief I don't know what this does yet.
         void getAllocatedStates(
