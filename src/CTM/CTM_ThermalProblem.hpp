@@ -225,11 +225,10 @@ Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
     int offset = 0;
     if (isTransient_) {
         fm0.template registerEvaluator<EvalT>
-                (evalUtils.constructGatherSolutionEvaluator_withAcceleration(
+                (evalUtils.constructGatherSolutionEvaluator(
                 false,
                 dof_names,
                 dof_names_dot,
-                Teuchos::null,
                 offset));
         fm0.template registerEvaluator<EvalT>
                 (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
