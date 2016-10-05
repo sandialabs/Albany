@@ -48,7 +48,6 @@ class LaplaceBeltramiResid : public PHX::EvaluatorWithBaseImpl<Traits>,
     PHX::MDField<ScalarT, Cell, Node, Dim> solnVec;
 
     Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
-    Teuchos::RCP<shards::CellTopology> cellType;
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> Gc;
     Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
 

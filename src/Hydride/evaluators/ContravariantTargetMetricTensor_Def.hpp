@@ -18,7 +18,7 @@ ContravariantTargetMetricTensor(const Teuchos::ParameterList& p, const Teuchos::
 
   solnVec       (p.get<std::string> ("Solution Vector Name"), dl->node_vector),
   cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
-  cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
+  intrepidBasis(p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis")),
   Gc            (p.get<std::string> ("Contravariant Metric Tensor Name"), dl->qp_tensor)
 
 {
@@ -63,7 +63,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
 
   // Need to be ScalarT!
-  Intrepid2::CellTools<PHX::Device>::setJacobian(jacobian, refPoints, solnVec.get_view(), *cellType);
+  Intrepid2::CellTools<PHX::Device>::setJacobian(jacobian, refPoints, solnVec.get_view(), intrepidBasis);
   // Since Intrepid2 will perform calculations on the entire workset size and not
   // just the used portion, we must fill the excess with reasonable values.
   // Leaving this out leads to a floating point exception.

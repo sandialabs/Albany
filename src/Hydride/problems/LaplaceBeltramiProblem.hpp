@@ -376,7 +376,8 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
       p->set< std::string >("Solution Vector Name", tgt_name[0]);
       p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
 
-      p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+      p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
+         ("Intrepid2 Basis", intrepidBasis);
 
       // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
       p->set<std::string>("Contravariant Metric Tensor Name", "Gc");

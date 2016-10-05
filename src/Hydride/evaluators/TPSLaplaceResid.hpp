@@ -50,7 +50,6 @@ class TPSLaplaceResid : public PHX::EvaluatorWithBaseImpl<Traits>,
     PHX::MDField<ScalarT, Cell, Node, Dim> solnVec;
 
     Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
-    Teuchos::RCP<shards::CellTopology> cellType;
     Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
 
     // Temporary FieldContainers

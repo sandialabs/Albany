@@ -208,7 +208,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   fh_coef = Kokkos::createDynRankView(Temperature.get_view(), "fh_coef", worksetSize, numQPs, numDims);
   fh_time_term = Kokkos::createDynRankView(Fhdot.get_view(), "fh_time_term", worksetSize, numQPs, numDims);
   CHZr_coef = Kokkos::createDynRankView(Temperature.get_view(), "CHZr_coef", worksetSize, numQPs, numDims);
-  CH_time_term = Kokkos::createDynRankView(wBF.get_view(), "CH_time_term", worksetSize, numQPs, numDims);
+  CH_time_term = Kokkos::createDynRankView(Temperature.get_view(), "CH_time_term", worksetSize, numQPs, numDims);
 
   this->utils.setFieldData(FhResidual,fm);
 }
