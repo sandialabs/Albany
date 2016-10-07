@@ -283,13 +283,13 @@ def populate_tree(tree, parent, dic):
 
     try:
 
-        for key in dic:
+        for key in sorted(dic):
 
             uid = uuid.uuid4()
 
             if isinstance(dic[key], dict):
 
-                tree.insert(parent, 'end', uid, text=str(key) + '{}')
+                tree.insert(parent, 'end', uid, text = str(key) + '{}')
                 populate_tree(tree, uid, dic[key])
 
             elif isinstance(dic[key], et.Element):
@@ -305,11 +305,14 @@ def populate_tree(tree, parent, dic):
                     uid,
                     text = dic[key].attrib['name'],
                     value = value)
-                populate_tree(tree, uid, dict([(i, x) for i, x in enumerate(list_children)]))
+                populate_tree(
+                    tree,
+                    uid,
+                    dict([(i, x) for i, x in enumerate(list_children)]))
 
             elif isinstance(dic[key], (tuple, np.ndarray)):
                 
-                tree.insert(parent, 'end', uid, text=str(key) + '()')
+                tree.insert(parent, 'end', uid, text = str(key) + '()')
                 populate_tree(
                     tree,
                     uid,
@@ -317,7 +320,7 @@ def populate_tree(tree, parent, dic):
 
             elif isinstance(dic[key], list):
                 
-                tree.insert(parent, 'end', uid, text=str(key) + '[]')
+                tree.insert(parent, 'end', uid, text = str(key) + '[]')
                 populate_tree(
                     tree, 
                     uid,
@@ -325,15 +328,18 @@ def populate_tree(tree, parent, dic):
 
             elif isinstance(dic[key], ObjLocal):
 
-                tree.insert(parent, 'end', uid, text=str(key) + '<>')
-                populate_tree(tree, uid, dic[key].__dict__)
+                tree.insert(parent, 'end', uid, text = str(key) + '<>')
+                populate_tree(
+                    tree,
+                    uid,
+                    dic[key].__dict__)
 
             else:
                 
                 value = dic[key]
                 if isinstance(value, str):
                     value = value.replace(' ', '_')
-                tree.insert(parent, 0, uid, text=str(key), value=value)
+                tree.insert(parent, 0, uid, text = str(key), value = value)
 
     except KeyboardInterrupt:
 

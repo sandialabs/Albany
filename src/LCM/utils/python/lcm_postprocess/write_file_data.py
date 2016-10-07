@@ -20,12 +20,12 @@ def write_file_data(domain = None, name_file_input = None, name_file_output = No
     str_format = '%.'+str(precision)+'e'
 
     file.write('Deformation Gradient\n')
-    for step in domain.variables['F']:
+    for step in sorted(domain.variables['F']):
         domain.variables['F'][step].tofile(file, sep = ' ', format = str_format)
         file.write('\n')
 
     file.write('Cauchy Stress\n')
-    for step in domain.variables['Cauchy_Stress']:
+    for step in sorted(domain.variables['Cauchy_Stress']):
         domain.variables['Cauchy_Stress'][step].tofile(file, sep = ' ', format = str_format)
         file.write('\n')
 
