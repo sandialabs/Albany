@@ -62,7 +62,8 @@ typename CP::ParameterReader<EvalT, Traits>::Minimizer
 CP::ParameterReader<EvalT, Traits>::getMinimizer() const
 {
 	// TODO: This code works differently from the previous. Is this preferable?
-	Minimizer min;
+	Minimizer
+    min;
 
 	min.rel_tol = p_->get<RealType>("Implicit Integration Relative Tolerance", 1.0e-6);
 	min.abs_tol = p_->get<RealType>("Implicit Integration Absolute Tolerance", 1.0e-10);
@@ -76,12 +77,15 @@ template<typename EvalT, typename Traits>
 CP::SlipFamily<CP::MAX_DIM, CP::MAX_SLIP>
 CP::ParameterReader<EvalT, Traits>::getSlipFamily(int index)
 {
-	SlipFamily<MAX_DIM, MAX_SLIP> slip_family;
+	SlipFamily<MAX_DIM, MAX_SLIP>
+    slip_family;
 
-	auto family_plist = p_->sublist(Albany::strint("Slip System Family", index));
+	auto
+    family_plist = p_->sublist(Albany::strint("Slip System Family", index));
 
 	// Get flow rule parameters
-	auto f_list = family_plist.sublist("Flow Rule");
+	auto
+    f_list = family_plist.sublist("Flow Rule");
 
 	static utility::ParameterEnum<CP::FlowRuleType> const fmap(
 		"Type", CP::FlowRuleType::UNDEFINED,
@@ -93,12 +97,18 @@ CP::ParameterReader<EvalT, Traits>::getSlipFamily(int index)
 
   slip_family.setFlowRuleType(fmap.get(&f_list));
 
-  for (auto & param : slip_family.pflow_parameters_->param_map_) {
-    auto const index_param = param.second;
-    auto const value_param = f_list.get<RealType>(param.first);
+  for (auto & param : slip_family.pflow_parameters_->param_map_)
+  {
+    auto const
+    index_param = param.second;
+
+    auto const
+    value_param = f_list.get<RealType>(param.first);
     
     slip_family.pflow_parameters_->setParameter(index_param, value_param);
   }
+
+  slip_family.pflow_parameters_->setTolerance();
     
   // Obtain hardening law parameters
   Teuchos::ParameterList 
@@ -114,9 +124,13 @@ CP::ParameterReader<EvalT, Traits>::getSlipFamily(int index)
 
   slip_family.setHardeningLawType(hmap.get(&h_list));
 
-  for (auto & param : slip_family.phardening_parameters_->param_map_) {
-    auto const index_param = param.second;
-    auto const value_param = h_list.get<RealType>(param.first);
+  for (auto & param : slip_family.phardening_parameters_->param_map_)
+  {
+    auto const
+    index_param = param.second;
+
+    auto const
+    value_param = h_list.get<RealType>(param.first);
 
     slip_family.phardening_parameters_->setParameter(index_param, value_param);
   }

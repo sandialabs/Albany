@@ -56,6 +56,13 @@ struct FlowParameterBase
     return flow_params_[index_param];
   }
 
+  virtual
+  void
+  setTolerance() = 0;
+
+  RealType
+  min_tol_{0.0};
+
   std::map<std::string, ParamIndex>
   param_map_;
 
@@ -83,6 +90,14 @@ struct PowerLawFlowParameters final : public FlowParameterBase
     param_map_["Rate Exponent"] = EXPONENT_RATE;
     flow_params_.set_dimension(NUM_PARAMS);
     flow_params_.fill(Intrepid2::ZEROS);
+  }
+
+  virtual
+  void
+  setTolerance()
+  {
+    min_tol_ = 
+      std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / EXPONENT_RATE);
   }
 };
 
@@ -112,6 +127,13 @@ struct ThermalActivationFlowParameters final : public FlowParameterBase
     flow_params_.set_dimension(NUM_PARAMS);
     flow_params_.fill(Intrepid2::ZEROS);
   }
+
+  virtual
+  void
+  setTolerance()
+  {
+    min_tol_ = 2.0 * std::numeric_limits<RealType>::min();
+  }
 };
 
 
@@ -136,6 +158,14 @@ struct PowerLawDragFlowParameters final : public FlowParameterBase
     flow_params_.set_dimension(NUM_PARAMS);
     flow_params_.fill(Intrepid2::ZEROS);
   }
+
+  virtual
+  void
+  setTolerance()
+  {
+    min_tol_ =
+      std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / EXPONENT_RATE);
+  }
 };
 
 
@@ -145,6 +175,13 @@ struct PowerLawDragFlowParameters final : public FlowParameterBase
 struct NoFlowParameters final : public FlowParameterBase
 {
   NoFlowParameters()
+  {
+    return;
+  }
+
+  virtual
+  void
+  setTolerance()
   {
     return;
   }
