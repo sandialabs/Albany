@@ -153,7 +153,7 @@ namespace CTM {
                     "\nnewton's method failed in " << max_iter << " iterations" << std::endl);
             // updates
             t_old = t_current;
-            t_current = t_new + dt;
+            t_current = t_current + dt;
         }
 
     }
