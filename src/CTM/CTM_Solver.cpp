@@ -32,13 +32,14 @@ namespace CTM {
         assert(la_list.isType<int>("Linear Max. Iterations"));
         assert(la_list.isType<int>("Linear Krylov Size"));
         assert(la_list.isType<double>("Nonlinear Tolerance"));
-        assert(la_list.isType<int>("Nonlinear Max. Iterations"));     
+        assert(la_list.isType<int>("Nonlinear Max. Iterations"));
     }
 
     Solver::Solver(
             RCP<const Teuchos_Comm> c,
             RCP<ParameterList> p) :
     comm(c),
+    out(Teuchos::VerboseObjectBase::getDefaultOStream()),
     params(p) {
 
         validate_params(params);
@@ -87,12 +88,74 @@ namespace CTM {
 
         sol_info = Teuchos::rcp(new SolutionInfo());
         //
-        sol_info->resize(disc,true);
+        sol_info->resize(disc, true);
 
     }
 
     void Solver::solve() {
-        
+        // get some information
+        Teuchos::RCP<const Teuchos::ParameterList> p = Teuchos::rcpFromRef(params->sublist("Linear Algebra"));
+        int max_iter = p->get<int>("Nonlinear Max. Iterations");
+        double tolerance = p->get<double>("Nonlinear Tolerance");
+
+        // get the solution information
+        Teuchos::RCP<Tpetra_Vector> u = sol_info->owned_x->getVectorNonConst(0);
+        // IMPORTANT: For now I am assuming that we have x_dot
+        Teuchos::RCP<Tpetra_Vector> v = sol_info->owned_x->getVectorNonConst(1);
+        // get residual
+        Teuchos::RCP<Tpetra_Vector> r = sol_info->owned_f;
+        // get Jacobian
+        Teuchos::RCP<Tpetra_CrsMatrix> J = sol_info->owned_J;
+
+        // create new vectors
+        Teuchos::RCP<const Tpetra_Map> map_owned = disc->getMapT();
+        Teuchos::RCP<Tpetra_Vector> u_v = Teuchos::rcp(new Tpetra_Vector(map_owned));
+        // incremental solution
+        Teuchos::RCP<Tpetra_Vector> du = Teuchos::rcp(new Tpetra_Vector(map_owned));
+
+        // time loop
+        *out << std::endl;
+        for (int step = 1; step <= num_steps; ++step) {
+            *out << "*** Time Step: " << step << std::endl;
+            *out << "*** from time: " << t_old << std::endl;
+            *out << "*** to time: " << t_current << std::endl;
+
+            // compute fad coefficients
+            double beta = 1.0 / dt; // (m_coeff in workset)
+            double alpha = 1.0; // (j_coeff in workset))
+
+            // predictor phase
+            u_v->assign(*u);
+            u_v->update(dt, *v, 1.0);
+            //
+            int iter = 1;
+            bool converged = false;
+            // start newton loop
+            while ((iter <= max_iter) && (!converged)) {
+                *out << "  " << iter << " newton iteration" << std::endl;
+                v->update(beta, *u, -beta, *u_v, 0.0);
+                // solve the linear system of equations
+                // residual
+                r->scale(-1.0);
+                //
+                du->putScalar(0.0);
+                // update solution
+                u->update(1.0, *du, 1.0);
+                // compute residual
+                // compute norm
+                double norm = r->norm2();
+                *out << "  ||r|| = " << norm << std::endl;
+                if (norm < tolerance) converged = true;
+                iter++;
+                // 
+            } // end newton loop 
+            TEUCHOS_TEST_FOR_EXCEPTION((iter > max_iter) && (!converged), std::out_of_range,
+                    "\nnewton's method failed in " << max_iter << " iterations" << std::endl);
+            // updates
+            t_old = t_current;
+            t_current = t_new + dt;
+        }
+
     }
 
 }

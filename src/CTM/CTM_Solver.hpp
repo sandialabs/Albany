@@ -81,6 +81,9 @@ namespace CTM {
         double t_current;
         double dt;
         int num_steps;
+        
+        // Output stream, defaults to printing just Proc 0
+       Teuchos::RCP<Teuchos::FancyOStream> out;
 
         void initial_setup();
 
