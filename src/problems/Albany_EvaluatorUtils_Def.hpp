@@ -469,7 +469,7 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructComputeBasisFunctions
     RCP<ParameterList> p = rcp(new ParameterList("Compute Basis Functions Side"));
 
     // Inputs: X, Y at nodes, Cubature, and Basis
-    p->set<std::string>("Coordinate Vector Name","Coord Vec " + sideSetName);
+    p->set<std::string>("Side Coordinate Vector Name","Coord Vec " + sideSetName);
     p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature Side", cubatureSide);
     p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >("Intrepid Basis Side", intrepidBasisSide);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
@@ -481,6 +481,10 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructComputeBasisFunctions
     p->set<std::string>("BF Name",                   "BF "+sideSetName);
     p->set<std::string>("Gradient BF Name",          "Grad BF "+sideSetName);
     p->set<std::string>("Inverse Metric Name",       "Inv Metric "+sideSetName);
+
+   // p->set<std::string> ("Side Normals Name", "Side Normals");
+   // p->set<std::string>("Coordinate Vector Name","Coord Vec");
+   // p->set<Teuchos::RCP<Layouts> >("Layout Name",dl);
 
     return rcp(new PHAL::ComputeBasisFunctionsSide<EvalT,Traits>(*p,dl->side_layouts.at(sideSetName)));
 }
