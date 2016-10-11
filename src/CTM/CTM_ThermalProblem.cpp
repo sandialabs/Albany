@@ -75,16 +75,17 @@ namespace CTM {
         }
 
 
-        // Construct Dirichlet evaluators
-        *out << "Calling ThermalProblem::constructDirichletEvaluators" << '\n';
-        if (meshSpecs[0]->nsNames.size() > 0)
+        if (meshSpecs[0]->nsNames.size() > 0) {
+            // Construct Dirichlet evaluators
+            *out << "Calling ThermalProblem::constructDirichletEvaluators" << '\n';
             constructDirichletEvaluators(meshSpecs[0]);
-        //constructDirichletEvaluators(meshSpecs[0]->nsNames);
-        // Construct Neumann evaluators
-        *out << "Calling ThermalProblem::constructNeumannEvaluators" << '\n';
-        if (meshSpecs[0]->ssNames.size() > 0)
-            constructNeumannEvaluators(meshSpecs[0]);
+        }
 
+        if (meshSpecs[0]->ssNames.size() > 0) {
+            // Construct Neumann evaluators
+            *out << "Calling ThermalProblem::constructNeumannEvaluators" << '\n';
+            constructNeumannEvaluators(meshSpecs[0]);
+        }
     }
 
     Teuchos::Array<RCP<const PHX::FieldTag> > ThermalProblem::buildEvaluators(
@@ -117,7 +118,7 @@ namespace CTM {
 
     void ThermalProblem::constructNeumannEvaluators(
             const RCP<Albany::MeshSpecsStruct>& mesh_specs) {
-        
+
         Albany::BCUtils<Albany::NeumannTraits> bcUtils;
 
         if (!bcUtils.haveBCSpecified(this->params))
