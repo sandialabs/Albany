@@ -1,4 +1,5 @@
 #include "CTM_Solver.hpp"
+#include "CTM_Application.hpp"
 #include "CTM_ThermalProblem.hpp"
 #include <Albany_DiscretizationFactory.hpp>
 #include <Albany_AbstractDiscretization.hpp>
@@ -99,13 +100,13 @@ namespace CTM {
         double tolerance = p->get<double>("Nonlinear Tolerance");
 
         // get the solution information
-        Teuchos::RCP<Tpetra_Vector> u = sol_info->owned_x->getVectorNonConst(0);
+        Teuchos::RCP<Tpetra_Vector> u = sol_info->getOwnedMV()->getVectorNonConst(0);
         // IMPORTANT: For now I am assuming that we have x_dot
-        Teuchos::RCP<Tpetra_Vector> v = sol_info->owned_x->getVectorNonConst(1);
+        Teuchos::RCP<Tpetra_Vector> v = sol_info->getOwnedMV()->getVectorNonConst(1);
         // get residual
-        Teuchos::RCP<Tpetra_Vector> r = sol_info->owned_f;
+        Teuchos::RCP<Tpetra_Vector> r = sol_info->getOwnedResidual();
         // get Jacobian
-        Teuchos::RCP<Tpetra_CrsMatrix> J = sol_info->owned_J;
+        Teuchos::RCP<Tpetra_CrsMatrix> J = sol_info->getOwnedJacobian();
 
         // create new vectors
         Teuchos::RCP<const Tpetra_Map> map_owned = disc->getMapT();
@@ -113,6 +114,10 @@ namespace CTM {
         // incremental solution
         Teuchos::RCP<Tpetra_Vector> du = Teuchos::rcp(new Tpetra_Vector(map_owned));
 
+        // Set application
+        Teuchos::RCP<CTM::Application> t_application = 
+                Teuchos::rcp(new CTM::Application(params,sol_info,t_problem,disc));
+        
         // time loop
         *out << std::endl;
         for (int step = 1; step <= num_steps; ++step) {
