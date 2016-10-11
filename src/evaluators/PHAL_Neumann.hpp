@@ -60,7 +60,7 @@ protected:
   const Teuchos::RCP<Albany::Layouts>& dl;
   const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs;
 
-  int  cellDims,  numQPs, numNodes, numCells;
+  int  cellDims,  numQPs, numNodes, numCells, maxSideDim, maxNumQpSide;
   Teuchos::Array<int> offset;
   int numDOFsSet;
 
@@ -178,15 +178,46 @@ protected:
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
 
   // Temporary Views
-  Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsCell;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsCell_buffer;
 
-  Kokkos::DynRankView<ScalarT, PHX::Device> dofCell;
-  Kokkos::DynRankView<ScalarT, PHX::Device> dofCellVec;
+  Kokkos::DynRankView<ScalarT, PHX::Device> dofCell_buffer;
+  Kokkos::DynRankView<ScalarT, PHX::Device> dofCellVec_buffer;
+  
+  
+  Kokkos::DynRankView<RealType, PHX::Device> cubPointsSide_buffer;
+  Kokkos::DynRankView<RealType, PHX::Device> refPointsSide_buffer;
+  Kokkos::DynRankView<RealType, PHX::Device> cubWeightsSide_buffer;
+  Kokkos::DynRankView<RealType, PHX::Device> basis_refPointsSide_buffer;
+
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsSide_buffer;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobianSide_buffer;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobianSide_det_buffer;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> weighted_measure_buffer;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> trans_basis_refPointsSide_buffer;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> weighted_trans_basis_refPointsSide_buffer;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> side_normals_buffer;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> normal_lengths_buffer;
+  
+  Kokkos::DynRankView<ScalarT, PHX::Device> betaOnSide_buffer;
+  Kokkos::DynRankView<ScalarT, PHX::Device> thicknessOnSide_buffer;
+  Kokkos::DynRankView<ScalarT, PHX::Device> bedTopoOnSide_buffer;
+  Kokkos::DynRankView<ScalarT, PHX::Device> elevationOnSide_buffer;
+  Kokkos::DynRankView<ScalarT, PHX::Device> dofSide_buffer;
+  Kokkos::DynRankView<ScalarT, PHX::Device> dofSideVec_buffer;
+  Kokkos::DynRankView<ScalarT, PHX::Device> betaOnCell;
+  Kokkos::DynRankView<ScalarT, PHX::Device> thicknessOnCell;
+  Kokkos::DynRankView<ScalarT, PHX::Device> elevationOnCell;
+  Kokkos::DynRankView<ScalarT, PHX::Device> bedTopoOnCell;
+  
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> temporary_buffer;
+  Kokkos::DynRankView<ScalarT, PHX::Device> data_buffer;  
 
   Kokkos::DynRankView<ScalarT, PHX::Device> data;
 
   // Output:
-  Kokkos::DynRankView<ScalarT, PHX::Device>   neumann;
+  Kokkos::DynRankView<ScalarT, PHX::Device> neumann;
+
+  int numSidesOnElem;
 
   std::string sideSetID;
   Teuchos::Array<RealType> inputValues;
