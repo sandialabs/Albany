@@ -64,14 +64,14 @@ namespace CTM {
             }
         }
 #endif
-        // get mesh
-	Teuchos::RCP<Albany::SimDiscretization> sim_disc =
-	  Teuchos::rcp_dynamic_cast<Albany::SimDiscretization>(disc);
-        Teuchos::RCP<Albany::APFMeshStruct> apf_ms = sim_disc->getAPFMeshStruct();
-        
-        apf::Mesh* apf_m = apf_ms->getMesh();
-        
-        apf::writeVtkFiles("out",apf_m);
+//        // get mesh
+//	Teuchos::RCP<Albany::SimDiscretization> sim_disc =
+//	  Teuchos::rcp_dynamic_cast<Albany::SimDiscretization>(disc);
+//        Teuchos::RCP<Albany::APFMeshStruct> apf_ms = sim_disc->getAPFMeshStruct();
+//        
+//        apf::Mesh* apf_m = apf_ms->getMesh();
+//        
+//        apf::writeVtkFiles("out",apf_m);
 
     }
 

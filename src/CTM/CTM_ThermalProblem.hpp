@@ -2,6 +2,7 @@
 #define CTM_THERMAL_PROBLEM_HPP
 
 #include "CTM_Teuchos.hpp"
+#include "Albany_ProblemUtils.hpp"
 #include <Albany_AbstractProblem.hpp>
 #include <PHAL_AlbanyTraits.hpp>
 #include <MaterialDatabase.h>
@@ -83,7 +84,7 @@ namespace CTM {
         /// contributions to the residual vector and Jacobian matrix from the
         /// Dirichlet boundary conditions.
         void constructDirichletEvaluators(
-                const Albany::MeshSpecsStruct& mesh_specs);
+                const RCP<Albany::MeshSpecsStruct>& mesh_specs);
 
         /// \brief Construct the nuemann evaluators.
         /// \details This constructs the Phalanx field managers responsible for
