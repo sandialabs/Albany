@@ -1,6 +1,6 @@
 
 # Begin User inputs:
-set (CTEST_SITE "shannon.nersc.gov" ) # generally the output of hostname
+set (CTEST_SITE "shannon.sandia.gov" ) # generally the output of hostname
 set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
@@ -10,7 +10,7 @@ set (INITIAL_LD_LIBRARY_PATH $ENV{LD_LIBRARY_PATH})
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_NAME "edison-gcc-${CTEST_BUILD_CONFIGURATION}")
+set (CTEST_NAME "shannon-gcc-${CTEST_BUILD_CONFIGURATION}")
 set (CTEST_BINARY_NAME build)
 
 
