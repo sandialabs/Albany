@@ -101,8 +101,10 @@ namespace CTM {
 
         // get the solution information
         Teuchos::RCP<Tpetra_Vector> u = sol_info->getOwnedMV()->getVectorNonConst(0);
-        // IMPORTANT: For now I am assuming that we have x_dot
-        Teuchos::RCP<Tpetra_Vector> v = sol_info->getOwnedMV()->getVectorNonConst(1);
+        //
+        Teuchos::RCP<Tpetra_Vector> v = (sol_info->getOwnedMV()->getNumVectors() > 1) ? sol_info->getOwnedMV()->getVectorNonConst(1) : Teuchos::null;
+        //
+        Teuchos::RCP<Tpetra_Vector> xdotdot = (sol_info->getOwnedMV()->getNumVectors() > 2) ? sol_info->getOwnedMV()->getVectorNonConst(2) : Teuchos::null;
         // get residual
         Teuchos::RCP<Tpetra_Vector> r = sol_info->getOwnedResidual();
         // get Jacobian
@@ -144,6 +146,8 @@ namespace CTM {
                 r->scale(-1.0);
                 //
                 du->putScalar(0.0);
+                t_application->computeGlobalResidualT(t_current, u_v.get(), 
+                        xdotdot.get(),*u,*r);
                 // update solution
                 u->update(1.0, *du, 1.0);
                 // compute residual

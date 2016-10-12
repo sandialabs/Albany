@@ -73,7 +73,7 @@ namespace CTM {
 
         // Create debug output object
         RCP<Teuchos::ParameterList> debugParams =
-                Teuchos::sublist(params, "Debug Output", true);
+                Teuchos::sublist(params, "Debug Output", false);
         writeToMatrixMarketJac = debugParams->get("Write Jacobian to MatrixMarket", 0);
         writeToMatrixMarketRes = debugParams->get("Write Residual to MatrixMarket", 0);
         writeToCoutJac = debugParams->get("Write Jacobian to Standard Output", 0);
