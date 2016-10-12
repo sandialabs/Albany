@@ -152,29 +152,31 @@ namespace Albany {
   // Note, for all Evaluation types but one, ScalarT and ParamScalarT are the same,
   // and for those we want to keep the Fad derivatives (if any).
   // The only exception can be Jacobian (if mesh/param do not depend on solution),
-  // where ParamScalarT=RealType and ScalarT=FadType. In this case we are ASSUMING
-  // that the underlying value of ScalarT (i.e., dropping the derivatives) is
-  // a valid value for the param scalar type
-  template<typename ToST>
-  struct ScalarConverter
+  // where ParamScalarT=RealType and ScalarT=FadType.
+  // Notice also that if the two scalar types are different, the conversion works
+  // only if the target type has a constructor from the source type.
+  template<typename FromST,typename ToST>
+  struct ScalarConversionHelper
   {
-    template<typename FromST>
     static ToST apply (const FromST& x)
     {
-      ToST p = ADValue(x);
-      return p;
-    }
-
-    static ToST apply (const ToST& x)
-    {
-      return x;
+      return ToST(x);
     }
   };
 
-  template<typename FromST, typename ToST>
+  template<typename FromST>
+  struct ScalarConversionHelper<FromST,typename Sacado::ScalarType<FromST>::type>
+  {
+    static typename Sacado::ScalarType<FromST>::type apply (const FromST& x)
+    {
+      return ADValue(x);
+    }
+  };
+
+  template<typename FromST,typename ToST>
   ToST convertScalar (const FromST& x)
   {
-    return ScalarConverter<ToST>::eval(x);
+    return ScalarConversionHelper<FromST,ToST>::apply(x);
   }
 }
 
