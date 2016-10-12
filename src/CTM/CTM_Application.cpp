@@ -30,9 +30,6 @@ namespace CTM {
 
         meshSpecs = disc->getMeshStruct()->getMeshSpecs();
         
-        //
-        explicit_scheme = disc->isExplicitScheme();
-
         // get initial conditions
         Teuchos::ArrayRCP<
                 Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID =
@@ -69,14 +66,6 @@ namespace CTM {
             }
         }
 #endif
-        //        // get mesh
-        //	Teuchos::RCP<Albany::SimDiscretization> sim_disc =
-        //	  Teuchos::rcp_dynamic_cast<Albany::SimDiscretization>(disc);
-        //        Teuchos::RCP<Albany::APFMeshStruct> apf_ms = sim_disc->getAPFMeshStruct();
-        //        
-        //        apf::Mesh* apf_m = apf_ms->getMesh();
-        //        
-        //        apf::writeVtkFiles("out",apf_m);
 
     }
 
@@ -95,10 +84,47 @@ namespace CTM {
         return problem;
     }
 
+    Teuchos::RCP<SolutionInfo> Application::getSolutionInfo() const {
+        return solution_info;
+    }
+    
     void Application::loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws) {
 
         workset.sideSets = Teuchos::rcpFromRef(disc->getSideSets(ws));
 
+    }
+
+    void Application::loadBasicWorksetInfoT(
+            PHAL::Workset& workset,
+            double current_time) {
+        
+        workset.numEqs = neq;
+        
+        Teuchos::RCP<Tpetra_MultiVector> overlapped_MV = solution_info->getOwnedMV();
+        workset.xT = overlapped_MV->getVectorNonConst(0);
+        workset.xdotT =
+                (overlapped_MV->getNumVectors() > 1) ? overlapped_MV->getVectorNonConst(1) : Teuchos::null;
+        workset.xdotdotT =
+                (overlapped_MV->getNumVectors() > 2) ? overlapped_MV->getVectorNonConst(2) : Teuchos::null;
+        workset.current_time = current_time;
+        workset.distParamLib = Teuchos::null;
+        workset.disc = disc;
+        workset.transientTerms = Teuchos::nonnull(workset.xdotT);
+        workset.accelerationTerms = Teuchos::nonnull(workset.xdotdotT);
+    }
+
+    void Application::loadWorksetJacobianInfo(PHAL::Workset& workset,
+            const double& alpha, const double& beta, const double& omega) {
+        workset.m_coeff = alpha;
+        workset.n_coeff = omega;
+        workset.j_coeff = beta;
+        workset.ignore_residual = false;
+        workset.is_adjoint = false;
+    }
+
+    void Application::loadWorksetNodesetInfo(PHAL::Workset& workset) {
+        workset.nodeSets = Teuchos::rcpFromRef(disc->getNodeSets());
+        workset.nodeSetCoords = Teuchos::rcpFromRef(disc->getNodeSetCoords());
     }
 
     void Application::postRegSetup(std::string eval) {

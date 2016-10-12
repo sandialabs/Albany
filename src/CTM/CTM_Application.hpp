@@ -50,6 +50,9 @@ namespace CTM {
         int getSpatialDimension() const {
             return numDim;
         }
+        
+        // get solution info
+        Teuchos::RCP<SolutionInfo> getSolutionInfo() const;
 
         //! Routine to get workset (bucket) size info needed by all Evaluation types
         template <typename EvalT>
@@ -57,6 +60,15 @@ namespace CTM {
 
         //! Routine to load common sideset info into workset
         void loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws);
+
+        void loadBasicWorksetInfoT(PHAL::Workset& workset,
+                double current_time);
+
+        void loadWorksetJacobianInfo(PHAL::Workset& workset,
+                const double& alpha, const double& beta, const double& omega);
+
+        //! Routine to load common nodeset info into workset
+        void loadWorksetNodesetInfo(PHAL::Workset& workset);
 
         void postRegSetup(std::string eval);
 
@@ -78,7 +90,7 @@ namespace CTM {
 
         //! mesh specs
         Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
-        
+
         //! Phalanx Field Manager for volumetric fills
         Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > fm;
 
@@ -91,7 +103,6 @@ namespace CTM {
         std::set<std::string> setupSet;
         mutable int phxGraphVisDetail;
         mutable int stateGraphVisDetail;
-        bool explicit_scheme;
 
         unsigned int neq, numDim;
 
