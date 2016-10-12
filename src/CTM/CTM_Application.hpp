@@ -50,7 +50,7 @@ namespace CTM {
         int getSpatialDimension() const {
             return numDim;
         }
-        
+
         // get solution info
         Teuchos::RCP<SolutionInfo> getSolutionInfo() const;
 
@@ -72,7 +72,20 @@ namespace CTM {
 
         void postRegSetup(std::string eval);
 
+        void computeGlobalResidualT(const double current_time,
+                const Tpetra_Vector* xdotT,
+                const Tpetra_Vector* xdotdotT,
+                const Tpetra_Vector& xT,
+                Tpetra_Vector& fT);
+
     private:
+
+        void computeGlobalResidualImplT(const double current_time,
+                const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+                const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
+                const Teuchos::RCP<const Tpetra_Vector>& xT,
+                const Teuchos::RCP<Tpetra_Vector>& fT);
+
         // Problem parameter list
         Teuchos::RCP<Teuchos::ParameterList> params;
 
@@ -105,6 +118,18 @@ namespace CTM {
         mutable int stateGraphVisDetail;
 
         unsigned int neq, numDim;
+
+        //! Integer specifying whether user wants to write Jacobian to MatrixMarket file
+        // writeToMatrixMarketJac = 0: no writing to MatrixMarket (default)
+        // writeToMatrixMarketJac =-1: write to MatrixMarket every time a Jacobian arises
+        // writeToMatrixMarketJac = N: write N^th Jacobian to MatrixMarket
+        // ...and similarly for writeToMatrixMarketRes (integer specifying whether user wants to write
+        // residual to MatrixMarket file)
+        int writeToMatrixMarketJac;
+        int writeToMatrixMarketRes;
+        //! Integer specifying whether user wants to write Jacobian and residual to Standard output (cout)
+        int writeToCoutJac;
+        int writeToCoutRes;
 
     };
 

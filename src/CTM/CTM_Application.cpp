@@ -10,6 +10,10 @@
 
 namespace CTM {
 
+    int countJac; //counter which counts instances of Jacobian (for debug output)
+    int countRes; //counter which counts instances of residual (for debug output)
+    int countScale;
+
     Application::Application(Teuchos::RCP<Teuchos::ParameterList> p,
             Teuchos::RCP<SolutionInfo> sinfo,
             Teuchos::RCP<Albany::AbstractProblem> prob,
@@ -29,7 +33,7 @@ namespace CTM {
         nfm = problem->getNeumannFieldManager();
 
         meshSpecs = disc->getMeshStruct()->getMeshSpecs();
-        
+
         // get initial conditions
         Teuchos::ArrayRCP<
                 Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > > wsElNodeEqID =
@@ -67,8 +71,41 @@ namespace CTM {
         }
 #endif
 
-    }
+        // Create debug output object
+        RCP<Teuchos::ParameterList> debugParams =
+                Teuchos::sublist(params, "Debug Output", true);
+        writeToMatrixMarketJac = debugParams->get("Write Jacobian to MatrixMarket", 0);
+        writeToMatrixMarketRes = debugParams->get("Write Residual to MatrixMarket", 0);
+        writeToCoutJac = debugParams->get("Write Jacobian to Standard Output", 0);
+        writeToCoutRes = debugParams->get("Write Residual to Standard Output", 0);
+        //the above 4 parameters cannot have values < -1
+        if (writeToMatrixMarketJac < -1) {
+            TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                    std::endl << "Error in Albany::Application constructor:  " <<
+                    "Invalid Parameter Write Jacobian to MatrixMarket.  Acceptable values are -1, 0, 1, 2, ... " << std::endl);
+        }
+        if (writeToMatrixMarketRes < -1) {
+            TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                    std::endl << "Error in Albany::Application constructor:  " <<
+                    "Invalid Parameter Write Residual to MatrixMarket.  Acceptable values are -1, 0, 1, 2, ... " << std::endl);
+        }
+        if (writeToCoutJac < -1) {
+            TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                    std::endl << "Error in Albany::Application constructor:  " <<
+                    "Invalid Parameter Write Jacobian to Standard Output.  Acceptable values are -1, 0, 1, 2, ... " << std::endl);
+        }
+        if (writeToCoutRes < -1) {
+            TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                    std::endl << "Error in Albany::Application constructor:  " <<
+                    "Invalid Parameter Write Residual to Standard Output.  Acceptable values are -1, 0, 1, 2, ... " << std::endl);
+        }
+        if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0)
+            countJac = 0; //initiate counter that counts instances of Jacobian matrix to 0
+        if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
+            countRes = 0; //initiate counter that counts instances of Jacobian matrix to 0
 
+    }
+    
     Application::
     ~Application() {
         //
@@ -87,7 +124,167 @@ namespace CTM {
     Teuchos::RCP<SolutionInfo> Application::getSolutionInfo() const {
         return solution_info;
     }
+
+    namespace {
+        //amb-nfm I think right now there is some confusion about nfm. Long ago, nfm was
+        // like dfm, just a single field manager. Then it became an array like fm. At
+        // that time, it may have been true that nfm was indexed just like fm, using
+        // wsPhysIndex. However, it is clear at present (7 Nov 2014) that nfm is
+        // definitely not indexed like fm. As an example, compare nfm in
+        // Albany::MechanicsProblem::constructNeumannEvaluators and fm in
+        // Albany::MechanicsProblem::buildProblem. For now, I'm going to keep nfm as an
+        // array, but this this new function is a wrapper around the unclear intended
+        // behavior.
+
+        inline Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >&
+        deref_nfm(
+                Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > >& nfm,
+                const Albany::WorksetArray<int>::type& wsPhysIndex, int ws) {
+            return
+            nfm.size() == 1 ? // Currently, all problems seem to have one nfm ...
+                    nfm[0] : // ... hence this is the intended behavior ...
+                    nfm[wsPhysIndex[ws]]; // ... and this is not, but may one day be again.
+        }
+
+        // Convenience routine for setting dfm workset data. Cut down on redundant code.
+
+        void dfm_set(
+                PHAL::Workset& workset,
+                const Teuchos::RCP<const Tpetra_Vector>& x,
+                const Teuchos::RCP<const Tpetra_Vector>& xd,
+                const Teuchos::RCP<const Tpetra_Vector>& xdd) {
+            workset.xT = x;
+            workset.transientTerms = Teuchos::nonnull(xd);
+            workset.accelerationTerms = Teuchos::nonnull(xdd);
+        }
+
+    }
     
+    void Application::computeGlobalResidualT(const double current_time,
+            const Tpetra_Vector* xdotT,
+            const Tpetra_Vector* xdotdotT,
+            const Tpetra_Vector& xT,
+            Tpetra_Vector& fT) {
+        // Create non-owning RCPs to Tpetra objects
+        // to be passed to the implementation
+        this->computeGlobalResidualImplT(
+                current_time,
+                Teuchos::rcp(xdotT, false),
+                Teuchos::rcp(xdotdotT, false),
+                Teuchos::rcpFromRef(xT),
+                Teuchos::rcpFromRef(fT));
+
+        //Debut output
+        if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
+            char name[100]; //create string for file name
+            if (writeToMatrixMarketRes == -1) { //write residual to MatrixMarket every time it arises
+                sprintf(name, "rhs%i.mm", countRes);
+                Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(fT));
+            } else {
+                if (countRes == writeToMatrixMarketRes) { //write residual only at requested count#
+                    sprintf(name, "rhs%i.mm", countRes);
+                    Tpetra_MatrixMarket_Writer::writeDenseFile(
+                            name,
+                            Teuchos::rcpFromRef(fT));
+                }
+            }
+        }
+        if (writeToCoutRes != 0) { //If requesting writing of residual to cout...
+            if (writeToCoutRes == -1) { //cout residual time it arises
+                std::cout << "Global Residual #" << countRes << ": " << std::endl;
+                fT.describe(*out, Teuchos::VERB_EXTREME);
+            } else {
+                if (countRes == writeToCoutRes) { //cout residual only at requested count#
+                    std::cout << "Global Residual #" << countRes << ": " << std::endl;
+                    fT.describe(*out, Teuchos::VERB_EXTREME);
+                }
+            }
+        }
+        if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0) {
+            countRes++; //increment residual counter
+        }
+    }
+
+    void
+    Application::computeGlobalResidualImplT(
+            const double current_time,
+            const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+            const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
+            const Teuchos::RCP<const Tpetra_Vector>& xT,
+            const Teuchos::RCP<Tpetra_Vector>& fT) {
+
+        TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
+        postRegSetup("Residual");
+
+        // Load connectivity map and coordinates
+        const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
+                wsElNodeEqID = disc->getWsElNodeEqID();
+        const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+                coords = disc->getCoords();
+        const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
+        const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
+
+        int numWorksets = wsElNodeEqID.size();
+
+        const Teuchos::RCP<Tpetra_Vector> overlapped_fT = solution_info->getGhostResidual();
+        const Teuchos::RCP<Tpetra_Export> exporterT = solution_info->getExporter();
+        const Teuchos::RCP<Tpetra_Import> importerT = solution_info->getImporter();
+
+        // Scatter x and xdot to the overlapped distribution
+        solution_info->scatter_x(*xT, xdotT.get(), xdotdotT.get());
+
+        // Zero out overlapped residual - Tpetra
+        overlapped_fT->putScalar(0.0);
+        fT->putScalar(0.0);
+
+        // Set data in Workset struct, and perform fill via field manager
+        {
+            PHAL::Workset workset;
+
+            loadBasicWorksetInfoT(workset, current_time);
+            workset.fT = overlapped_fT;
+
+            for (int ws = 0; ws < numWorksets; ws++) {
+                loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
+
+                // FillType template argument used to specialize Sacado
+                fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+                if (nfm != Teuchos::null)
+                    deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+            }
+        }
+
+        // Assemble the residual into a non-overlapping vector
+        fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+
+#ifdef WRITE_TO_MATRIX_MARKET
+        char nameResUnscaled[100]; //create string for file name
+        sprintf(nameResUnscaled, "resUnscaled%i_residual.mm", countScale);
+        Tpetra_MatrixMarket_Writer::writeDenseFile(nameResUnscaled, fT);
+#endif
+
+#ifdef ALBANY_LCM
+        // Write the residual to the discretization, which will later (optionally) be written to the output file
+        disc->setResidualFieldT(*overlapped_fT);
+#endif
+
+        // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
+
+        if (dfm != Teuchos::null) {
+            PHAL::Workset workset;
+
+            workset.fT = fT;
+            loadWorksetNodesetInfo(workset);
+            dfm_set(workset, xT, xdotT, xdotdotT);
+            workset.current_time = current_time;
+            workset.distParamLib = Teuchos::null;
+            workset.disc = disc;
+
+            // FillType template argument used to specialize Sacado
+            dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+        }
+    }
+
     void Application::loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws) {
 
         workset.sideSets = Teuchos::rcpFromRef(disc->getSideSets(ws));
@@ -97,9 +294,9 @@ namespace CTM {
     void Application::loadBasicWorksetInfoT(
             PHAL::Workset& workset,
             double current_time) {
-        
+
         workset.numEqs = neq;
-        
+
         Teuchos::RCP<Tpetra_MultiVector> overlapped_MV = solution_info->getOwnedMV();
         workset.xT = overlapped_MV->getVectorNonConst(0);
         workset.xdotT =
@@ -205,5 +402,5 @@ namespace CTM {
                 phxGraphVisDetail = -2;
         }
     }
-
+    
 }

@@ -19,7 +19,7 @@ namespace CTM {
         SolutionInfo(const SolutionInfo&) = delete;
         // do not use assignment operator
         SolutionInfo& operator=(const SolutionInfo&) = delete;
-        
+
         // get solution vectors
         Teuchos::RCP<Tpetra_MultiVector> getOwnedMV();
         //
@@ -29,17 +29,23 @@ namespace CTM {
         Teuchos::RCP<Tpetra_Export> getExporter();
         // get importer
         Teuchos::RCP<Tpetra_Import> getImporter();
-        
+
+        // scatter
+        void scatter_x(
+                const Tpetra_Vector& xT, /* note that none are overlapped */
+                const Tpetra_Vector* x_dotT,
+                const Tpetra_Vector* x_dotdotT);
+
         // get residual vectors
         Teuchos::RCP<Tpetra_Vector> getOwnedResidual();
         //
         Teuchos::RCP<Tpetra_Vector> getGhostResidual();
-        
+
         // get Jacobian
         Teuchos::RCP<Tpetra_CrsMatrix> getOwnedJacobian();
         //
         Teuchos::RCP<Tpetra_CrsMatrix> getGhostJacobian();
-        
+
         void gather_x();
         void scatter_x();
 
