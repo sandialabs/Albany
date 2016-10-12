@@ -130,6 +130,7 @@ FieldNormBase (const Teuchos::ParameterList& p,
   if (type=="None")
   {
     regularization_type = NONE;
+    regularization = 0.0;
   }
   else if (type=="Given Value")
   {
@@ -176,19 +177,20 @@ template<typename EvalT, typename Traits, typename ScalarT>
 void FieldNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::EvalData workset)
 {
   if (regularization_type==GIVEN_PARAMETER)
-    regularization = Albany::ScalarConverter<ScalarT>::apply(regularizationParam(0));
+    regularization = Albany::convertScalar<EScalarT,ScalarT>(regularizationParam(0));
   else if (regularization_type==PARAMETER_EXPONENTIAL)
-    regularization = pow(10.0, -10.0*Albany::ScalarConverter<ScalarT>::apply(regularizationParam(0)));
+    regularization = pow(10.0, -10.0*Albany::convertScalar<EScalarT,ScalarT>(regularizationParam(0)));
 
 #ifdef OUTPUT_TO_SCREEN
+  if (regularization_type!=NONE)
+  {
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
-
-    if (regularization_type!=NONE)
-      if (std::fabs(printedReg-regularization)>1e-6*regularization)
-      {
-          *output << "[Field Norm<" << PHX::typeAsString<EvalT>() << ">]] reg = " << regularization << "\n";
-          printedReg = regularization;
-      }
+    if (std::fabs(printedReg-regularization)>1e-6*regularization)
+    {
+        *output << "[Field Norm<" << PHX::typeAsString<EvalT>() << ">]] reg = " << regularization << "\n";
+        printedReg = regularization;
+    }
+  }
 #endif
 
   ScalarT norm;
@@ -196,7 +198,7 @@ void FieldNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::Eva
   {
     case 2:
       // Cell Vector/Gradient
-      for (int cell(0); cell<dims[0]; ++cell)
+      for (int cell(0); cell<workset.numCells; ++cell)
       {
         norm = 0;
         for (int dim(0); dim<dims[1]; ++dim)
@@ -208,11 +210,11 @@ void FieldNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::Eva
       break;
     case 3:
       // Cell Node/QuadPoint Vector/Gradient
-      for (int cell(0); cell<dims[0]; ++cell)
+      for (int cell(0); cell<workset.numCells; ++cell)
       {
-        norm = 0;
         for (int i(0); i<dims[1]; ++i)
         {
+          norm = 0;
           for (int dim(0); dim<dims[2]; ++dim)
           {
             norm += std::pow(field(cell,i,dim),2);
@@ -238,9 +240,9 @@ void FieldNormBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::Eva
           const int cell = iter_s->elem_LID;
           const int side = iter_s->side_local_id;
 
-          norm = 0;
           for (int i(0); i<dims[2]; ++i)
           {
+            norm = 0;
             for (int dim(0); dim<dims[3]; ++dim)
             {
               norm += std::pow(field(cell,side,i,dim),2);
