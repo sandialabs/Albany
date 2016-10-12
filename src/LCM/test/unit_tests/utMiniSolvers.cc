@@ -11,13 +11,38 @@
 // Why is this needed?
 bool TpetraBuild = false;
 
-namespace
+int
+main(int ac, char * av[])
 {
+  Kokkos::initialize();
+
+  ::testing::GTEST_FLAG(print_time) = (ac > 1) ? true : false;
+
+  ::testing::InitGoogleTest(&ac, av);
+
+  auto const
+  retval = RUN_ALL_TESTS();
+
+  Kokkos::finalize();
+
+  return retval;
+}
+
 //
 // Test the LCM mini minimizer.
 //
 TEST(AlbanyResidual, NewtonBanana)
 {
+  bool const
+  print_output = ::testing::GTEST_FLAG(print_time);
+
+  // outputs nothing
+  Teuchos::oblackholestream
+  bhs;
+
+  std::ostream &
+  os = (print_output == true) ? std::cout : bhs;
+
   using EvalT = PHAL::AlbanyTraits::Residual;
   using ScalarT = typename EvalT::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
@@ -54,7 +79,7 @@ TEST(AlbanyResidual, NewtonBanana)
   LCM::MiniSolver<MIN, STEP, FN, EvalT, DIM>
   mini_solver(minimizer, step, banana, x);
 
-  minimizer.printReport(std::cout);
+  minimizer.printReport(os);
 
   ASSERT_EQ(minimizer.converged, true);
 }
@@ -64,6 +89,16 @@ TEST(AlbanyResidual, NewtonBanana)
 //
 TEST(AlbanyJacobian, NewtonBanana)
 {
+  bool const
+  print_output = ::testing::GTEST_FLAG(print_time);
+
+  // outputs nothing
+  Teuchos::oblackholestream
+  bhs;
+
+  std::ostream &
+  os = (print_output == true) ? std::cout : bhs;
+
   using EvalT = PHAL::AlbanyTraits::Jacobian;
   using ScalarT = typename EvalT::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
@@ -94,21 +129,7 @@ TEST(AlbanyJacobian, NewtonBanana)
   LCM::MiniSolver<MIN, STEP, FN, EvalT, DIM>
   mini_solver(minimizer, step, banana, x);
 
-  minimizer.printReport(std::cout);
+  minimizer.printReport(os);
 
   ASSERT_EQ(minimizer.converged, true);
-}
-
-} // anonymous namespace
-
-int
-main(int ac, char * av[])
-{
-  Kokkos::initialize();
-
-  ::testing::InitGoogleTest(&ac, av);
-
-  return RUN_ALL_TESTS();
-
-  Kokkos::finalize();
 }
