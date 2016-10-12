@@ -297,7 +297,7 @@ namespace CTM {
 
         workset.numEqs = neq;
 
-        Teuchos::RCP<Tpetra_MultiVector> overlapped_MV = solution_info->getOwnedMV();
+        Teuchos::RCP<Tpetra_MultiVector> overlapped_MV = solution_info->getGhostMV();
         workset.xT = overlapped_MV->getVectorNonConst(0);
         workset.xdotT =
                 (overlapped_MV->getNumVectors() > 1) ? overlapped_MV->getVectorNonConst(1) : Teuchos::null;

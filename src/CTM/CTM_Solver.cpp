@@ -142,12 +142,12 @@ namespace CTM {
                 *out << "  " << iter << " newton iteration" << std::endl;
                 v->update(beta, *u, -beta, *u_v, 0.0);
                 // solve the linear system of equations
-                // residual
-                r->scale(-1.0);
                 //
                 du->putScalar(0.0);
                 t_application->computeGlobalResidualT(t_current, u_v.get(), 
                         xdotdot.get(),*u,*r);
+                // residual
+                r->scale(-1.0);
                 // update solution
                 u->update(1.0, *du, 1.0);
                 // compute residual
