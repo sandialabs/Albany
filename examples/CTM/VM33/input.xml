@@ -1,0 +1,55 @@
+<ParameterList>
+  <!--
+  <ParameterList name="Debug Output">
+    <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
+  </ParameterList>
+  -->
+  
+  <ParameterList name="Temperature Problem">
+    <Parameter name="Transient" type="bool" value="true"/>
+    <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
+    <ParameterList name="Dirichlet BCs">
+      <ParameterList name="Time Dependent DBC on NS face_2 for DOF T">
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 430.0 }"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 70.0, 500.0 }"/>
+      </ParameterList>
+    </ParameterList>
+    <ParameterList name="Neumann BCs">
+    </ParameterList>
+
+    
+    <ParameterList name="Initial Condition">
+      <Parameter name="Function" type="string" value="Constant"/>
+      <Parameter name="Function Data" type="Array(double)" value="{70.0}"/>
+    </ParameterList>
+
+  </ParameterList> <!-- End Temperature Problem -->
+
+  <ParameterList name="Discretization">
+    <Parameter name="Solution Vector Components" type="Array(string)" value="{Temperature,S}"/>
+    <Parameter name="Cubature Degree" type="int" value="1"/>
+    <Parameter name="Method" type="string" value="Sim"/>
+    <Parameter name="Sim Input File Name" type="string" value="wedgeMesh.sms"/>
+    <Parameter name="Sim Model Input File Name" type="string" value="wedge.smd"/>
+    <Parameter name="Sim Output File Name" type="string" value="out.vtk"/>
+    <Parameter name="Separate Evaluators by Element Block" type="bool" value="false"/>
+    <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{ 5, Region_5}"/>
+    <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x5:{424, 243, 2, 15, 9, face_424, face_243, face_2, face_15, face_9}"/>
+  </ParameterList>
+  
+  <ParameterList name="Linear Algebra">
+    <Parameter name="Linear Tolerance" type="double" value="1.0e-8"/>
+    <Parameter name="Linear Max. Iterations" type="int" value="400"/>
+    <Parameter name="Linear Krylov Size" type="int" value="400"/>
+    <Parameter name="Nonlinear Tolerance" type="double" value="1.0e-4"/>
+    <Parameter name="Nonlinear Max. Iterations" type="int" value="10"/>
+  </ParameterList>
+
+   <ParameterList name="Time">
+     <Parameter name="Initial Time" type="double" value="0.0"/>
+     <Parameter name="Step Size" type="double" value="1.0"/>
+     <Parameter name="Number of Steps" type="int" value="5"/>
+  </ParameterList>
+
+</ParameterList>
+    
