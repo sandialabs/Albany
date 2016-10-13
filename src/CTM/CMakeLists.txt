@@ -2,6 +2,7 @@ set(CTM_SOURCES
 CTM_SolutionInfo.cpp
 CTM_ThermalProblem.cpp
 CTM_Application.cpp
+linear_solver.cpp
 CTM_Solver.cpp)
 
 add_library(CTM ${CTM_SOURCES})
