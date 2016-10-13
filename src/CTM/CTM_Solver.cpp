@@ -172,7 +172,8 @@ namespace CTM {
                 iter++;
                 // 
             } // end newton loop
-            apf_disc->writeAnySolutionToFile(t_current);
+            apf_disc->writeSolutionT(*(sol_info->getGhostMV()->getVector(0)),t_current,true);
+            //apf_disc->writeSolutionToFileT(*u,t_current,false);
             TEUCHOS_TEST_FOR_EXCEPTION((iter > max_iter) && (!converged), std::out_of_range,
                     "\nnewton's method failed in " << max_iter << " iterations" << std::endl);
             // updates
