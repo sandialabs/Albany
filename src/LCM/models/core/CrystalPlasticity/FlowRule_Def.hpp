@@ -209,12 +209,15 @@ computeRateSlip(
   ArgT
   power_law{0.0 * ratio_stress};
 
+  ArgT
+  pow_ratio_stress = std::pow(std::fabs(ratio_stress), m - 1);
+
   if (finite_power_law == true) {
-    power_law = std::pow(std::fabs(ratio_stress), m - 1) * ratio_stress;
+    power_law = pow_ratio_stress * ratio_stress;
   }
 
   ArgT
-  pl_vd_ratio = coefficient_drag * std::pow(std::fabs(ratio_stress), m - 1);
+  pl_vd_ratio = coefficient_drag * pow_ratio_stress;
 
   bool const
   pl_active = pl_vd_ratio < CP::MACHINE_EPS;
