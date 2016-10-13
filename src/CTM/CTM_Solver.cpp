@@ -140,14 +140,13 @@ namespace CTM {
 
             // predictor phase
             u_v->assign(*u);
-            u_v->update(dt, *v, 1.0);
             //
             int iter = 1;
             bool converged = false;
             // start newton loop
+            v->update(beta, *u, -beta, *u_v, 0.0);
             while ((iter <= max_iter) && (!converged)) {
                 *out << "  " << iter << " newton iteration" << std::endl;
-                v->update(beta, *u, -beta, *u_v, 0.0);
                 // compute residual
                 t_application->computeGlobalResidualT(t_current, v.get(), 
                         xdotdot.get(),*u,*r);
@@ -162,6 +161,7 @@ namespace CTM {
                 solve_linear_system(p,J,du,r);
                 // update solution
                 u->update(1.0, *du, 1.0);
+                v->update(beta, *u, -beta, *u_v, 0.0);
                 // compute residual
                 t_application->computeGlobalResidualT(t_current, v.get(), 
                         xdotdot.get(),*u,*r);
