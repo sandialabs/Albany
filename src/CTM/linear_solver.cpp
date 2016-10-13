@@ -33,9 +33,9 @@ static RCP<ParameterList> get_ifpack2_params()
 static RCP<ParameterList> get_belos_params(RCP<const ParameterList> in)
 {
   RCP<ParameterList> p = rcp(new ParameterList);
-  int max_iters = in->get<unsigned>("linear: max iters");
-  int krylov = in->get<unsigned>("linear: krylov size");
-  double tol = in->get<double>("linear: tolerance");
+  int max_iters = in->get<int>("Linear Max. Iterations");
+  int krylov = in->get<int>("Linear Krylov Size");
+  double tol = in->get<double>("Linear Tolerance");
   p->set("Block Size", 1);
   p->set("Num Blocks", krylov);
   p->set("Maximum Iterations", max_iters);
@@ -89,7 +89,7 @@ void solve_linear_system(
   unsigned iters = solver->getNumIters();
   double t1 = PCU_Time();
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-  if (iters >= in->get<unsigned>("linear: max iters")) {
+  if (iters >= in->get<int>("Linear Max. Iterations")) {
       *out << "  linear solve failed to converge in " << iters << " iterations" << std::endl;
       *out << "  continuing using the incomplete solve..." << std::endl;
   } else {

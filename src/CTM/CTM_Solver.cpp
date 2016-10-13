@@ -5,6 +5,7 @@
 #include "Albany_APFDiscretization.hpp"
 #include <Albany_AbstractDiscretization.hpp>
 #include "CTM_SolutionInfo.hpp"
+#include "linear_solver.hpp"
 
 namespace CTM {
 
@@ -147,7 +148,6 @@ namespace CTM {
             while ((iter <= max_iter) && (!converged)) {
                 *out << "  " << iter << " newton iteration" << std::endl;
                 v->update(beta, *u, -beta, *u_v, 0.0);
-                // solve the linear system of equations
                 // compute residual
                 t_application->computeGlobalResidualT(t_current, v.get(), 
                         xdotdot.get(),*u,*r);
@@ -158,9 +158,13 @@ namespace CTM {
                 r->scale(-1.0);
                 //
                 du->putScalar(0.0);
+                // solve the linear system of equations
+                solve_linear_system(p,J,du,r);
                 // update solution
                 u->update(1.0, *du, 1.0);
                 // compute residual
+                t_application->computeGlobalResidualT(t_current, v.get(), 
+                        xdotdot.get(),*u,*r);
                 // compute norm
                 double norm = r->norm2();
                 *out << "  ||r|| = " << norm << std::endl;
