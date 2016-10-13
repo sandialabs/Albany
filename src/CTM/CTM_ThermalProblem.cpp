@@ -50,7 +50,7 @@ namespace CTM {
         // Is it a transient analysis?
         if (params->isParameter("Transient")) {
             isTransient_ = params->get<bool>("Transient", true);
-            *out << "Solving a transient analysis = " << isTransient_ << std::endl;
+            *out << "Solving a transient analysis" << std::endl;
         }
     }
 
@@ -174,6 +174,10 @@ namespace CTM {
         validPL->set<std::string>("MaterialDB Filename",
                 "materials.xml",
                 "Filename of material database xml file");
+        
+        validPL->set<bool>("Transient",
+                true,
+                "Specify if you want a transient analysis or not");
 
         return validPL;
     }

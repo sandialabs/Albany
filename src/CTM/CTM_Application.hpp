@@ -78,6 +78,16 @@ namespace CTM {
                 const Tpetra_Vector& xT,
                 Tpetra_Vector& fT);
 
+        void computeGlobalJacobianT(const double alpha,
+                const double beta,
+                const double omega,
+                const double current_time,
+                const Tpetra_Vector* xdotT,
+                const Tpetra_Vector* xdotdotT,
+                const Tpetra_Vector& xT,
+                Tpetra_Vector* fT,
+                Tpetra_CrsMatrix& jacT);
+
     private:
 
         void computeGlobalResidualImplT(const double current_time,
@@ -85,6 +95,16 @@ namespace CTM {
                 const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
                 const Teuchos::RCP<const Tpetra_Vector>& xT,
                 const Teuchos::RCP<Tpetra_Vector>& fT);
+
+        void computeGlobalJacobianImplT(const double alpha,
+                const double beta,
+                const double omega,
+                const double current_time,
+                const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+                const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
+                const Teuchos::RCP<const Tpetra_Vector>& xT,
+                const Teuchos::RCP<Tpetra_Vector>& fT,
+                const Teuchos::RCP<Tpetra_CrsMatrix>& jacT);
 
         // Problem parameter list
         Teuchos::RCP<Teuchos::ParameterList> params;

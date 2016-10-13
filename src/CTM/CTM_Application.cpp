@@ -105,7 +105,7 @@ namespace CTM {
             countRes = 0; //initiate counter that counts instances of Jacobian matrix to 0
 
     }
-    
+
     Application::
     ~Application() {
         //
@@ -159,7 +159,7 @@ namespace CTM {
         }
 
     }
-    
+
     void Application::computeGlobalResidualT(const double current_time,
             const Tpetra_Vector* xdotT,
             const Tpetra_Vector* xdotdotT,
@@ -285,6 +285,195 @@ namespace CTM {
         }
     }
 
+    void
+    Application::computeGlobalJacobianT(
+            const double alpha,
+            const double beta,
+            const double omega,
+            const double current_time,
+            const Tpetra_Vector* xdotT,
+            const Tpetra_Vector* xdotdotT,
+            const Tpetra_Vector& xT,
+            Tpetra_Vector* fT,
+            Tpetra_CrsMatrix& jacT) {
+        // Create non-owning RCPs to Tpetra objects
+        // to be passed to the implementation
+        this->computeGlobalJacobianImplT(
+                alpha,
+                beta,
+                omega,
+                current_time,
+                Teuchos::rcp(xdotT, false),
+                Teuchos::rcp(xdotdotT, false),
+                Teuchos::rcpFromRef(xT),
+                Teuchos::rcp(fT, false),
+                Teuchos::rcpFromRef(jacT));
+        //Debut output
+        if (writeToMatrixMarketJac != 0) { //If requesting writing to MatrixMarket of Jacobian...
+            char name[100]; //create string for file name
+            if (writeToMatrixMarketJac == -1) { //write jacobian to MatrixMarket every time it arises
+                sprintf(name, "jac%i.mm", countJac);
+                Tpetra_MatrixMarket_Writer::writeSparseFile(
+                        name,
+                        Teuchos::rcpFromRef(jacT));
+            } else {
+                if (countJac == writeToMatrixMarketJac) { //write jacobian only at requested count#
+                    sprintf(name, "jac%i.mm", countJac);
+                    Tpetra_MatrixMarket_Writer::writeSparseFile(
+                            name,
+                            Teuchos::rcpFromRef(jacT));
+                }
+            }
+        }
+        if (writeToCoutJac != 0) { //If requesting writing Jacobian to standard output (cout)...
+            if (writeToCoutJac == -1) { //cout jacobian every time it arises
+                *out << "Global Jacobian #" << countJac << ": " << std::endl;
+                jacT.describe(*out, Teuchos::VERB_EXTREME);
+            } else {
+                if (countJac == writeToCoutJac) { //cout jacobian only at requested count#
+                    *out << "Global Jacobian #" << countJac << ": " << std::endl;
+                    jacT.describe(*out, Teuchos::VERB_EXTREME);
+                }
+            }
+        }
+        if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0) {
+            countJac++; //increment Jacobian counter
+        }
+    }
+
+    void
+    Application::computeGlobalJacobianImplT(
+            const double alpha,
+            const double beta,
+            const double omega,
+            const double current_time,
+            const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+            const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
+            const Teuchos::RCP<const Tpetra_Vector>& xT,
+            const Teuchos::RCP<Tpetra_Vector>& fT,
+            const Teuchos::RCP<Tpetra_CrsMatrix>& jacT) {
+        TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian");
+
+        postRegSetup("Jacobian");
+
+        // Load connectivity map and coordinates
+        const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
+                wsElNodeEqID = disc->getWsElNodeEqID();
+        const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+                coords = disc->getCoords();
+        const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
+        const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
+
+        int numWorksets = wsElNodeEqID.size();
+
+        //Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
+        Teuchos::RCP<Tpetra_Vector> overlapped_fT;
+        if (Teuchos::nonnull(fT)) {
+            overlapped_fT = solution_info->getGhostResidual();
+        } else {
+            overlapped_fT = Teuchos::null;
+        }
+        Teuchos::RCP<Tpetra_CrsMatrix> overlapped_jacT = solution_info->getGhostJacobian();
+        Teuchos::RCP<Tpetra_Export> exporterT = solution_info->getExporter();
+
+        // Scatter x and xdot to the overlapped distribution
+        solution_info->scatter_x(*xT, xdotT.get(), xdotdotT.get());
+
+        // Zero out overlapped residual
+        if (Teuchos::nonnull(fT)) {
+            overlapped_fT->putScalar(0.0);
+            fT->putScalar(0.0);
+        }
+
+        // Zero out Jacobian
+        jacT->resumeFill();
+        jacT->setAllToScalar(0.0);
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+        if (!overlapped_jacT->isFillActive())
+            overlapped_jacT->resumeFill();
+#endif
+        overlapped_jacT->setAllToScalar(0.0);
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+        if (overlapped_jacT->isFillActive()) {
+            // Makes getLocalMatrix() valid.
+            overlapped_jacT->fillComplete();
+        }
+        if (!overlapped_jacT->isFillActive())
+            overlapped_jacT->resumeFill();
+
+#endif
+
+        // Set data in Workset struct, and perform fill via field manager
+        {
+            PHAL::Workset workset;
+            loadBasicWorksetInfoT(workset, current_time);
+            
+            workset.fT = overlapped_fT;
+            workset.JacT = overlapped_jacT;
+            loadWorksetJacobianInfo(workset, alpha, beta, omega);
+
+            //fill Jacobian derivative dimensions:
+            for (int ps = 0; ps < fm.size(); ps++) {
+                // get derivative dimension
+                int node_count = this->getEnrichedMeshSpecs()[ps].get()->ctd.node_count;
+                int derivDimenensions = neq * node_count;
+                (workset.Jacobian_deriv_dims).push_back(derivDimenensions);
+            }
+
+
+            for (int ws = 0; ws < numWorksets; ws++) {
+                loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(workset, ws);
+                // FillType template argument used to specialize Sacado
+                fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+                if (Teuchos::nonnull(nfm))
+                    deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+            }
+        }
+
+        {
+            TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian Export");
+            
+            // Assemble global residual
+            if (Teuchos::nonnull(fT))
+                fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+
+            // Assemble global Jacobian
+            jacT->doExport(*overlapped_jacT, *exporterT, Tpetra::ADD);
+            
+        } // End timer
+        // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
+        if (Teuchos::nonnull(dfm)) {
+            PHAL::Workset workset;
+
+            workset.fT = fT;
+            workset.JacT = jacT;
+            workset.m_coeff = alpha;
+            workset.n_coeff = omega;
+            workset.j_coeff = beta;
+            workset.current_time = current_time;
+
+            dfm_set(workset, xT, xdotT, xdotdotT);
+
+            loadWorksetNodesetInfo(workset);
+            workset.distParamLib = Teuchos::null;
+            workset.disc = disc;
+
+            // FillType template argument used to specialize Sacado
+            dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+        }
+        jacT->fillComplete();
+
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+        if (overlapped_jacT->isFillActive()) {
+            // Makes getLocalMatrix() valid.
+            overlapped_jacT->fillComplete();
+        }
+#endif
+
+    }
+
     void Application::loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws) {
 
         workset.sideSets = Teuchos::rcpFromRef(disc->getSideSets(ws));
@@ -402,5 +591,5 @@ namespace CTM {
                 phxGraphVisDetail = -2;
         }
     }
-    
+
 }

@@ -2,6 +2,7 @@
 #include "CTM_Application.hpp"
 #include "CTM_ThermalProblem.hpp"
 #include <Albany_DiscretizationFactory.hpp>
+#include "Albany_APFDiscretization.hpp"
 #include <Albany_AbstractDiscretization.hpp>
 #include "CTM_SolutionInfo.hpp"
 
@@ -120,6 +121,10 @@ namespace CTM {
         Teuchos::RCP<CTM::Application> t_application = 
                 Teuchos::rcp(new CTM::Application(params,sol_info,t_problem,disc));
         
+        // Get discretization
+        Teuchos::RCP<Albany::APFDiscretization> apf_disc = 
+                Teuchos::rcp_dynamic_cast<Albany::APFDiscretization>(disc);
+        
         // time loop
         *out << std::endl;
         for (int step = 1; step <= num_steps; ++step) {
@@ -128,6 +133,7 @@ namespace CTM {
             *out << "*** to time: " << t_current << std::endl;
 
             // compute fad coefficients
+            double omega = 0.0;
             double beta = 1.0 / dt; // (m_coeff in workset)
             double alpha = 1.0; // (j_coeff in workset))
 
@@ -142,12 +148,16 @@ namespace CTM {
                 *out << "  " << iter << " newton iteration" << std::endl;
                 v->update(beta, *u, -beta, *u_v, 0.0);
                 // solve the linear system of equations
+                // compute residual
+                t_application->computeGlobalResidualT(t_current, v.get(), 
+                        xdotdot.get(),*u,*r);
+                // compute Jacobian
+                t_application->computeGlobalJacobianT(alpha,beta,omega,
+                t_current,v.get(),xdotdot.get(),*u,r.get(),*J);
+                // scale residual
+                r->scale(-1.0);
                 //
                 du->putScalar(0.0);
-                t_application->computeGlobalResidualT(t_current, u_v.get(), 
-                        xdotdot.get(),*u,*r);
-                // residual
-                r->scale(-1.0);
                 // update solution
                 u->update(1.0, *du, 1.0);
                 // compute residual
@@ -157,7 +167,8 @@ namespace CTM {
                 if (norm < tolerance) converged = true;
                 iter++;
                 // 
-            } // end newton loop 
+            } // end newton loop
+            apf_disc->writeAnySolutionToFile(t_current);
             TEUCHOS_TEST_FOR_EXCEPTION((iter > max_iter) && (!converged), std::out_of_range,
                     "\nnewton's method failed in " << max_iter << " iterations" << std::endl);
             // updates
