@@ -140,6 +140,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_Tpetra:BOOL=ON \
       -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
       -D Trilinos_ENABLE_Zoltan:BOOL=ON \
+      -D Intrepid2_ENABLE_KokkosDynRankView:BOOL=ON \
        ..
 
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \
