@@ -11,6 +11,7 @@ namespace CTM {
             RCP<const Teuchos::Comm<int> >& comm) :
     Albany::AbstractProblem(params, param_lib),
     num_dims(n_dims),
+    comm_(comm),
     have_source_(false),
     thermal_source_(SOURCE_TYPE_NONE),
     thermal_source_evaluated_(false),
@@ -20,6 +21,11 @@ namespace CTM {
         this->setNumEquations(1);
         material_db_ = LCM::createMaterialDatabase(params, comm);
 
+        /*This is needed because right now the function constructBCEvaluators
+         require a QCAD::MaterialDataBase instead of LCM::MaterialDataBase if
+         a robin boundary conditions is used. This need to be corrected.*/
+        materialFileName_ = params->get<std::string>("MaterialDB Filename");
+        
         // Are any source functions specified?
         have_source_ = params->isSublist("Source Functions");
 
@@ -129,8 +135,8 @@ namespace CTM {
         Teuchos::Array<Teuchos::Array<int> > offsets;
         offsets.resize(neq);
 
-        bcNames[0] = "U";
-        dof_names[0] = "u";
+        bcNames[0] = "T";
+        dof_names[0] = "Temperature";
         offsets[0].resize(1);
         offsets[0][0] = 0;
 
@@ -154,9 +160,18 @@ namespace CTM {
 
         condNames[3] = "robin";
 
+        /*This is needed because right now the function constructBCEvaluators
+         require a QCAD::MaterialDataBase instead of LCM::MaterialDataBase
+         this need to be corrected.*/
+        Teuchos::RCP<QCAD::MaterialDatabase> materialDB
+                = Teuchos::rcp(new QCAD::MaterialDatabase(materialFileName_, comm_));
         nfm.resize(1); // Heat problem only has one physics set   
         nfm[0] = bcUtils.constructBCEvaluators(mesh_specs, bcNames, dof_names, false, 0,
-                condNames, offsets, dl, this->params, Teuchos::null);
+                condNames, offsets, dl, this->params, Teuchos::null, materialDB);
+        
+        // release temporal material data base
+         materialDB = Teuchos::null;
+        
     }
 
     void ThermalProblem::getAllocatedStates(

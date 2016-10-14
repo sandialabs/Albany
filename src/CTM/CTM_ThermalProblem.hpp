@@ -109,6 +109,8 @@ namespace CTM {
         int num_dims;
         RCP<Albany::Layouts> dl;
         RCP<LCM::MaterialDatabase> material_db_;
+        std::string materialFileName_;
+        RCP<const Teuchos::Comm<int>> comm_;
         ArrayRCP<ArrayRCP<RCP<FC> > > old_state;
         ArrayRCP<ArrayRCP<RCP<FC> > > new_state;
 
