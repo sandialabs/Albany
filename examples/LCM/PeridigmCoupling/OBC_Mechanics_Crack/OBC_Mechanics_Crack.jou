@@ -29,7 +29,7 @@ nodeset 6 curve 33
 nodeset 7 curve 31
 nodeset 8 curve 22
 nodeset 9 curve 17 
-export genesis 'OBC_Crack_AllHex.g' overwrite
+export genesis 'OBC_Mechanics_Crack_AllHex.g' overwrite
 
 # The path to spheregen.py is toolset/contrib/testTools/adagio/spheregen.py
-# spheregen.py --ignore-blocks 2 -o OBC_Crack.g OBC_Crack_AllHex.g
+# spheregen.py --ignore-blocks 2 -o OBC_Mechanics_Crack.g OBC_Mechanics_Crack_AllHex.g
