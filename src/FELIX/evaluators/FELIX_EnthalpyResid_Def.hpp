@@ -13,14 +13,13 @@
 namespace FELIX
 {
 
-double distance (const double& x0, const double& x1, const double& x2,
-				 const double& y0, const double& y1, const double& y2)
+template<typename Type>
+Type distance (const Type& x0, const Type& x1, const Type& x2,
+				 const Type& y0, const Type& y1, const Type& y2)
 {
-	const double d = std::sqrt((x0-y0)*(x0-y0) +
-                               (x1-y1)*(x1-y1) +
-                               (x2-y2)*(x2-y2));
-
-	return d;
+	return std::sqrt(std::pow(x0-y0,2) +
+                         std::pow(x1-y1,2) +
+                         std::pow(x2-y2,2));
 }
 
 
@@ -264,7 +263,7 @@ evaluateFields(typename Traits::EvalData d)
     		{
         		for (std::size_t j = i + 1; j < numNodes; ++j)
         		{
-					diam = std::max(diam,distance(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
+					diam = std::max(diam,distance<ParamScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
 												  coordVec(cell,j,0),coordVec(cell,j,1),coordVec(cell,j,2)));
         		}
         	}
@@ -301,7 +300,7 @@ evaluateFields(typename Traits::EvalData d)
 				{
 					for (std::size_t j = i + 1; j < numNodes; ++j)
 					{
-						diam = std::max(diam,distance(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
+						diam = std::max(diam,distance<ParamScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
 													  coordVec(cell,j,0),coordVec(cell,j,1),coordVec(cell,j,2)));
 					}
 				}
@@ -337,7 +336,7 @@ evaluateFields(typename Traits::EvalData d)
 				{
 					for (std::size_t j = i + 1; j < numNodes; ++j)
 					{
-						diam = std::max(diam,distance(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
+						diam = std::max(diam,distance<ParamScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
 													  coordVec(cell,j,0),coordVec(cell,j,1),coordVec(cell,j,2)));
 					}
 				}
@@ -369,7 +368,7 @@ evaluateFields(typename Traits::EvalData d)
 				{
 					for (std::size_t j = i + 1; j < numNodes; ++j)
 					{
-						diam = std::max(diam,distance(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
+						diam = std::max(diam,distance<ParamScalarT>(coordVec(cell,i,0),coordVec(cell,i,1),coordVec(cell,i,2),
 													  coordVec(cell,j,0),coordVec(cell,j,1),coordVec(cell,j,2)));
 					}
 				}

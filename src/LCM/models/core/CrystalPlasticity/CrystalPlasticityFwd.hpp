@@ -9,6 +9,9 @@
 
 namespace CP
 {
+static constexpr RealType
+MACHINE_EPS = std::numeric_limits<RealType>::epsilon();
+
 static constexpr Intrepid2::Index 
 MAX_DIM = 3;
 
@@ -40,8 +43,6 @@ enum class ResidualType
   SLIP = 1, 
   SLIP_HARDNESS = 2
 };
-
-
 
 struct FlowParameterBase;
 

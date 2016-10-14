@@ -95,11 +95,11 @@ computeRateSlip(
   RealType const
   g0 = pflow_parameters->getParameter(Params::RATE_SLIP_REFERENCE);
 
+  RealType const
+  min_tol = pflow_parameters->min_tol_;
+
   ArgT const
   ratio_stress = shear / slip_resistance;
-
-  RealType const
-  min_tol = std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / m);
 
   bool const
   finite_rate = std::fabs(ratio_stress) > min_tol;
@@ -147,15 +147,15 @@ computeRateSlip(
   RealType const
   q = pflow_parameters->getParameter(Params::EXPONENT_Q);
 
+  RealType const
+  min_tol = pflow_parameters->min_tol_;
+
   ArgT const
   ratio_stress = std::max(0.0, (std::fabs(shear) - slip_resistance) / s_t);
 
   // carry derivative info from ratio_stress
   ArgT
   rate_slip{0.0 * ratio_stress};
-
-  RealType const
-  min_tol = 2.0 * std::numeric_limits<RealType>::min();
 
   // Compute slip increment
   if (ratio_stress > min_tol) {
@@ -192,18 +192,15 @@ computeRateSlip(
   RealType const
   coefficient_drag = pflow_parameters->getParameter(Params::COEFFICIENT_DRAG);
 
+  RealType const
+  min_tol = pflow_parameters->min_tol_;
+
   ArgT const
   ratio_stress = shear / slip_resistance;
 
   // Compute drag term
   ArgT const
   viscous_drag = ratio_stress / coefficient_drag;
-
-  RealType const
-  min_tol = std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / m);
-
-  RealType const
-  machine_eps = std::numeric_limits<RealType>::epsilon();
 
   bool const
   finite_power_law = std::fabs(ratio_stress) > min_tol;
@@ -212,18 +209,21 @@ computeRateSlip(
   ArgT
   power_law{0.0 * ratio_stress};
 
+  ArgT
+  pow_ratio_stress = std::pow(std::fabs(ratio_stress), m - 1);
+
   if (finite_power_law == true) {
-    power_law = std::pow(std::fabs(ratio_stress), m - 1) * ratio_stress;
+    power_law = pow_ratio_stress * ratio_stress;
   }
 
   ArgT
-  pl_vd_ratio = coefficient_drag * std::pow(std::fabs(ratio_stress),m-1);
+  pl_vd_ratio = coefficient_drag * pow_ratio_stress;
 
   bool const
-  pl_active = pl_vd_ratio < machine_eps;
+  pl_active = pl_vd_ratio < CP::MACHINE_EPS;
 
   bool const
-  vd_active = pl_vd_ratio > 1.0 / machine_eps;
+  vd_active = pl_vd_ratio > 1.0 / CP::MACHINE_EPS;
       
   bool const
   eff_active = !pl_active && !vd_active;
