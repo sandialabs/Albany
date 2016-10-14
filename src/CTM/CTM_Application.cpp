@@ -22,6 +22,8 @@ namespace CTM {
     solution_info(sinfo),
     problem(prob),
     disc(d),
+    phxGraphVisDetail(0),
+    stateGraphVisDetail(0),
     out(Teuchos::VerboseObjectBase::getDefaultOStream()) {
 
         // Set up memory for workset

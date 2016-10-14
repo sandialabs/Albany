@@ -203,12 +203,13 @@ Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
     const int num_vtx = cell_type->getNodeCount();
     dl = rcp(new Albany::Layouts(ws_size, num_vtx, num_nodes, num_qps, num_dims));
 
-    *out << "Field Dimensions: Workset= " << ws_size
+    /*
+     *out << "Field Dimensions: Workset= " << ws_size
             << ", Vertices= " << num_vtx
             << ", Nodes= " << num_nodes
             << ", QPs= " << num_qps
             << ", Dim= " << num_dims << std::endl;
-
+     */
     // evaluator utility
     Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
     // Temporary variable used numerous times below
