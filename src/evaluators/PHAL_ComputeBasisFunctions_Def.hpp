@@ -93,9 +93,12 @@ evaluateFields(typename Traits::EvalData workset)
     */
 
   typedef typename Intrepid2::CellTools<MeshScalarT>   ICT;
+  typedef typename Intrepid2::CellTools<RealType>      ICTRealT;
   typedef Intrepid2::FunctionSpaceTools                IFST;
 
-  ICT::setJacobian(jacobian, refPoints, coordVec, intrepidBasis);
+
+  //Note, in the following, CellTools need to be templated with RealType, otherwise we get an error when MeshScalarT=FAD,
+  ICTRealT::setJacobian(jacobian, refPoints, coordVec, intrepidBasis);
   ICT::setJacobianInv (jacobian_inv, jacobian);
   ICT::setJacobianDet (jacobian_det, jacobian);
 
