@@ -95,7 +95,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(residual_,fm);
 
 
-  term1_ = Kokkos::createDynRankView(k.get_view(), "term1_", workset_size_,num_qps_,num_dims_);
+  term1_ = Kokkos::createDynRankView(k_.get_view(), "term1_", workset_size_,num_qps_,num_dims_);
 }
 
 //**********************************************************************
@@ -121,7 +121,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
 
     // diffusive term
-    FST::scalarMultiplyDataData<ScalarT> (term1_, k_, T_grad_);
+    FST::scalarMultiplyDataData<ScalarT> (term1_, k_.get_view(), T_grad_.get_view());
     // FST::integrate(residual_, term1_, w_grad_bf_, false);
     //Using for loop to calculate the residual 
 
