@@ -1,0 +1,2 @@
+01 00 * * 1-5  cd /home/ikalash/nightlyCDash; sbatch trilinos.batch 
+00 03 * * 1-5  cd /home/ikalash/nightlyCDash; sbatch albany.batch 
