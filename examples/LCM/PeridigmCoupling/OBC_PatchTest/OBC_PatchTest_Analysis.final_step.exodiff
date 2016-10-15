@@ -33,7 +33,7 @@ NODAL VARIABLES relative 1.e-6 floor 0.0
 	DISPLACEMENT_Z           absolute 0.000000000000e+00    # min:               0 @ t1,n1	max:               0 @ t1,n1
 	DIRICHLET_CONTROL_FIELD  absolute 1.0e-8
 	DIRICHLET_FIELD          absolute 8.125000000000e-10    # min:               0 @ t1,n1	max:       0.0008125 @ t1,n633
-	FORCE_X                  absolute 1.0e-10
+	FORCE_X                  absolute 1.0e-9
 	FORCE_Y                  absolute 0.000000000000e+00    # min:               0 @ t1,n1	max:               0 @ t1,n1
 	FORCE_Z                  absolute 0.000000000000e+00    # min:               0 @ t1,n1	max:               0 @ t1,n1
 
