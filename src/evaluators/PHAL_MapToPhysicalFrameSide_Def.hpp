@@ -32,7 +32,7 @@ MapToPhysicalFrameSide(const Teuchos::ParameterList& p,
   int numSides = dl_side->qp_coords->dimension(1);
   numSideQPs   = dl_side->qp_coords->dimension(2);
   numDim       = dl_side->qp_coords->dimension(3);
-  int sideDim  = dl_side->qp_gradient->dimension(3);
+  int sideDim  = numDim-1;
 
   // Compute cubature points in reference elements
   auto cubature = p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature");

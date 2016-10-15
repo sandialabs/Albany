@@ -53,8 +53,8 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
   numSides     = dl_side->node_qp_gradient->dimension(1);
   numSideNodes = dl_side->node_qp_gradient->dimension(2);
   numSideQPs   = dl_side->node_qp_gradient->dimension(3);
-  sideDims     = dl_side->node_qp_gradient->dimension(4);
-  cellDims     = sideDims+1;
+  cellDims     = dl_side->node_qp_gradient->dimension(4);
+  sideDims     = cellDims-1;
 
   cubature = p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature Side");
   intrepidBasis = p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid Basis Side");

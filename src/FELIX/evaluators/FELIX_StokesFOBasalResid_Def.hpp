@@ -42,7 +42,7 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
   int numSides = dims[1];
   numSideNodes = dims[2];
   numSideQPs   = dims[3];
-  sideDim      = dims[4];
+  sideDim      = dims[4]-1; //gradient is in physical space
   numCellNodes = basalResid.fieldTag().dataLayout().dimension(1);
 
   dl->node_vector->dimensions(dims);
