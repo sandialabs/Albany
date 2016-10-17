@@ -565,6 +565,8 @@ bool SimLayerAdapt::adaptMesh()
 #endif
 
   /* BRD */
+  /*IMPORTANT: next line will not work with current implementation of CTM, because
+   CTM does not use param_lib*/
   double currentTime = param_lib_->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
   if (currentTime >= Simmetrix_layerTimes[Simmetrix_currentLayer]) {
     char meshFile[80];
