@@ -234,15 +234,16 @@ double MultiScaleThermalConductivity<EvalT,Traits>::get_remote(
 {
   // Query remote system for thermal conductivity
   std::stringstream s;
-  s << RVE.material << "," << RVE.descriptionfile << ","
+  s << RVE.material << "," << RVE.descriptionfile << "," << RVE.id << ","
     << time << "," << previousTime << "," << val(temperature) << ","
     << val(gradT[0]) << "," << val(gradT[1]) << "," << val(gradT[2]);
 
-  std::stringstream s2;
-  s2 << this->rpcFunctor->operator()(s.str());
+  // std::stringstream s2;
+  // s2 << this->rpcFunctor->operator()(s.str());
 
   double thermalConductivity;
-  s2 >> thermalConductivity;
+  // s2 >> thermalConductivity;
+  thermalConductivity = 293.;
 
   return thermalConductivity;
 }

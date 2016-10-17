@@ -74,9 +74,22 @@ RPCFunctor::Internals::~Internals()
 {
   // closing
 
+  amqp_bytes_free(this->ReplyToQueue);
   amqp_channel_close(this->Conn, 1, AMQP_REPLY_SUCCESS);
   amqp_connection_close(this->Conn, AMQP_REPLY_SUCCESS);
   amqp_destroy_connection(this->Conn);
+}
+
+static int rows_eq(int *a, int *b)
+{
+  int i;
+
+  for (i=0; i<16; i++)
+    if (a[i] != b[i]) {
+      return 0;
+    }
+
+  return 1;
 }
 
 std::string RPCFunctor::Internals::operator() (const std::string& input)
@@ -95,7 +108,8 @@ std::string RPCFunctor::Internals::operator() (const std::string& input)
     props.content_type = amqp_cstring_bytes("text/plain");
     props.delivery_mode = 2; /* persistent delivery mode */
     props.reply_to = amqp_bytes_malloc_dup(this->ReplyToQueue);
-    if (props.reply_to.bytes == NULL) {
+    if (props.reply_to.bytes == NULL)
+    {
       fprintf(stderr, "Out of memory while copying queue name");
       return output;
     }
@@ -114,13 +128,12 @@ std::string RPCFunctor::Internals::operator() (const std::string& input)
     amqp_bytes_free(props.reply_to);
   }
 
-  // wait an answer
+  // wait for an answer
 
   {
     amqp_basic_consume(this->Conn, 1, this->ReplyToQueue, amqp_empty_bytes,
                        0, 1, 0, amqp_empty_table);
     amqp_get_rpc_reply(this->Conn);
-    amqp_bytes_free(this->ReplyToQueue);
 
     {
       amqp_frame_t frame;
@@ -234,7 +247,7 @@ RPCFunctor::Internals::Internals(std::string hostname,
                                  std::string)
 {
   std::stringstream s;
-  s << hostname << ":" << port;
+  s << "tcp://" << hostname << ":" << port;
   this->Context = zmq_ctx_new();
   this->Socket = zmq_socket(this->Context, ZMQ_REQ);
   int rc = zmq_connect(this->Socket, s.str().c_str());

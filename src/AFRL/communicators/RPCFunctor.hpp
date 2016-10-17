@@ -1,5 +1,5 @@
-#ifndef __RPCFunctor_hpp
-#define __RPCFunctor_hpp
+#ifndef __AFRL_RPCFunctor_hpp
+#define __AFRL_RPCFunctor_hpp
 
 #include <string>
 
