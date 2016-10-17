@@ -4,13 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include <random>
+#include <typeinfo>
+
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include <Intrepid2_MiniTensor.h>
+#include "Intrepid2_MiniTensor.h"
 #include "LocalNonlinearSolver.hpp"
-
-#include <typeinfo>
 
 namespace LCM {
 
