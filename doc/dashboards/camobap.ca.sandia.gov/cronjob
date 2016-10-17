@@ -1,3 +1,4 @@
+00 03 * * 1-5  cd /home/ikalash/nightlyCDash; sbatch albany.batch 
 00 21 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyAlbanyTests; ./run_tpetra.sh set_irinas_env.in  MPI
 45 21 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyAlbanyTests; ./run_tpetra_openmp.sh set_irinas_env.in  MPI
 15 22 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyAlbanyTests; ./run_kdv_openmp.sh set_irinas_env.in  MPI
@@ -30,5 +31,3 @@
 47 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash send_email_kdv_functor_openmp.sh
 12 00 * * 6    source /home/ikalash/.bashrc; scp -r /home/ikalash/Desktop ikalash@mockba:/media/a078b7aa-fb53-4281-8356-a5e964c1549f/camobap
 12 00 * * 7    source /home/ikalash/.bashrc; scp -r /extradrive ikalash@mockba:/media/a078b7aa-fb53-4281-8356-a5e964c1549f/camobap
-00 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCoriCDash; rm -rf test_summary.txt; scp ikalash@cori.nersc.gov:/project/projectdirs/piscees/nightlyCoriCDash/test_summary.txt .; bash send_email.sh
-~                                                                                 
