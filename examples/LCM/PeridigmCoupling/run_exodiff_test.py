@@ -32,7 +32,7 @@ def runtest(albany_command, xml_file_name, final_step_only):
         num_processors = int(command[index+1])
 
     # open the log file
-    log_file_name = base_name + "_np" + str(num_processors) + ".log"
+    log_file_name = base_name + ".np" + str(num_processors) + ".log"
     if os.path.exists(log_file_name):
         os.remove(log_file_name)
     logfile = open(log_file_name, 'w')
