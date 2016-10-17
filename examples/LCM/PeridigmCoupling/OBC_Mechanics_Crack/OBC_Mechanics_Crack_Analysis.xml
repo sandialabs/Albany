@@ -147,7 +147,7 @@
         <Parameter name="Check Gradient" type="bool" value="false"/>
         <Parameter name="Gradient Tolerance" type="double" value="1e-9"/> <!-- 1e-7 -->
         <Parameter name="Step Tolerance" type="double" value="1e-20"/>
-        <Parameter name="Max Iterations" type="int" value="25"/>
+        <Parameter name="Max Iterations" type="int" value="35"/>
         <Parameter name="Print Output" type="bool" value="true"/>
         <Parameter name="Parameter Initial Guess Type" type="string" value="From Model Evaluator"/> <!-- other choices are "Uniform Vector" or "Random Vector", default is "From Model Evaluator"/-->
         <Parameter name="Uniform Parameter Guess" type="double" value="0.000"/>

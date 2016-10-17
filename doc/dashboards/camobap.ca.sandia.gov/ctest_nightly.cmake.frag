@@ -31,7 +31,6 @@ set (CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 set (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
 set (CTEST_BUILD_FLAGS "-j16")
-set (CTEST_FLAGS "-j16")
 
 set (CTEST_DROP_METHOD "http")
 
@@ -211,7 +210,7 @@ if (BUILD_ALB64)
     "-DENABLE_AMP:BOOL=OFF"
     "-DENABLE_GOAL:BOOL=OFF"
     "-DENABLE_ASCR:BOOL=OFF"
-    "-DENABLE_CHECK_FPE:BOOL=ON"
+    "-DENABLE_CHECK_FPE:BOOL=OFF"
     "-DENABLE_MPAS_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_INTERFACE:BOOL=OFF"
     "-DCISM_INCLUDE_DIR:FILEPATH=${CTEST_SOURCE_DIRECTORY}/cism-piscees/libdycore"
@@ -333,7 +332,7 @@ if (BUILD_ALB32)
     "-DENABLE_AMP:BOOL=OFF"
     "-DENABLE_GOAL:BOOL=OFF"
     "-DENABLE_ASCR:BOOL=OFF"
-    "-DENABLE_CHECK_FPE:BOOL=ON"
+    "-DENABLE_CHECK_FPE:BOOL=OFF"
     "-DENABLE_MPAS_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_EPETRA:BOOL=ON"
@@ -463,7 +462,7 @@ if (BUILD_ALB32_NOEPETRA)
     "-DENABLE_AMP:BOOL=OFF"
     "-DENABLE_GOAL:BOOL=OFF"
     "-DENABLE_ASCR:BOOL=OFF"
-    "-DENABLE_CHECK_FPE:BOOL=ON"
+    "-DENABLE_CHECK_FPE:BOOL=OFF"
     "-DENABLE_MPAS_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_EPETRA:BOOL=OFF"
@@ -588,7 +587,7 @@ if (BUILD_ALB64_NOEPETRA)
     "-DENABLE_GOAL:BOOL=OFF"
     "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
     "-DENABLE_ASCR:BOOL=OFF"
-    "-DENABLE_CHECK_FPE:BOOL=ON"
+    "-DENABLE_CHECK_FPE:BOOL=OFF"
     "-DENABLE_MPAS_INTERFACE:BOOL=ON"
     "-DENABLE_CISM_INTERFACE:BOOL=OFF"
     "-DENABLE_64BIT_INT:BOOL=ON"
@@ -1144,7 +1143,7 @@ if (BUILD_ALB_KDV_NOFUNCTOR)
   set_property (GLOBAL PROPERTY SubProject IKT_AlbanyDynRankView_NoFunctor)
   set_property (GLOBAL PROPERTY Label IKT_AlbanyDynRankView_NoFunctor)
 
-  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build-kdv/install")
+  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
@@ -1152,7 +1151,7 @@ if (BUILD_ALB_KDV_NOFUNCTOR)
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_FELIX:BOOL=ON"
     "-DENABLE_QCAD:BOOL=ON"
-    "-DENABLE_LCM:BOOL=OFF"
+    "-DENABLE_LCM:BOOL=ON"
     "-DENABLE_AERAS:BOOL=ON"
     "-DENABLE_SG:BOOL=OFF"
     "-DENABLE_ENSEMBLE:BOOL=OFF"
@@ -1257,7 +1256,7 @@ if (BUILD_ALB_KDV_FUNCTOR_SERIAL)
   set_property (GLOBAL PROPERTY SubProject IKT_AlbanyDynRankView_FunctorSerial)
   set_property (GLOBAL PROPERTY Label IKT_AlbanyDynRankView_FunctorSerial)
 
-  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build-kdv/install")
+  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"
@@ -1265,7 +1264,7 @@ if (BUILD_ALB_KDV_FUNCTOR_SERIAL)
     "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_FELIX:BOOL=ON"
     "-DENABLE_QCAD:BOOL=ON"
-    "-DENABLE_LCM:BOOL=OFF"
+    "-DENABLE_LCM:BOOL=ON"
     "-DENABLE_AERAS:BOOL=ON"
     "-DENABLE_SG:BOOL=OFF"
     "-DENABLE_ENSEMBLE:BOOL=OFF"
@@ -1371,7 +1370,7 @@ if (BUILD_ALB_KDV_FUNCTOR_OPENMP)
   set_property (GLOBAL PROPERTY SubProject IKT_AlbanyDynRankView_FunctorOpenMP)
   set_property (GLOBAL PROPERTY Label IKT_AlbanyDynRankView_FunctorOpenMP)
 
-  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build-openmp-kdv/install")
+  set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build-openmp/install")
 
   set (CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${TRILINSTALLDIR}"

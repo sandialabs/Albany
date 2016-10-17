@@ -1,22 +1,22 @@
-00 03 * * 1-5  cd /home/ikalash/nightlyCDash; sbatch albany.batch 
-00 21 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyAlbanyTests; ./run_tpetra.sh set_irinas_env.in  MPI
-45 21 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyAlbanyTests; ./run_tpetra_openmp.sh set_irinas_env.in  MPI
-15 22 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyAlbanyTests; ./run_kdv_openmp.sh set_irinas_env.in  MPI
-00 23 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albany32bitT.sh
-45 23 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_cismAlbany.sh
-15 00 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albany32bit.sh
-00 01 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albany64bit.sh
-45 01 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albany64bitT.sh
-30 02 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albanyFunctor.sh
-15 03 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albanyFunctorOpenMP.sh
+00 20 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyAlbanyTests; ./run_tpetra.sh set_irinas_env.in  MPI
+45 20 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyAlbanyTests; ./run_tpetra_openmp.sh set_irinas_env.in  MPI
+00 22 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albany32bitT.sh
+45 22 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_cismAlbany.sh
+15 23 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albany32bit.sh
+01 00 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albany64bit.sh
+45 00 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albany64bitT.sh
+30 01 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albanyFunctor.sh
+30 02 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albanyFunctorOpenMP.sh
 00 04 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_cismAlbanyEpetra.sh
-30 04 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albanyKDVFunctorOpenMP.sh
 30 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash process_results_32bitT.sh
 31 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash send_email_32bitT.sh
 32 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash process_results_64bitT.sh
 33 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash send_email_64bitT.sh
 34 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash process_results_64bit.sh
 35 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash send_email_64bit.sh
+36 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash process_results_functor.sh
+37 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash send_email_functor.sh
+38 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash process_results_32bit.sh
 36 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash process_results_functor.sh
 37 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash send_email_functor.sh
 38 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash process_results_32bit.sh
@@ -27,7 +27,13 @@
 43 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash send_email_cismAlbany.sh
 44 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash process_results_cismAlbanyEpetra.sh
 45 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash send_email_cismAlbanyEpetra.sh
-46 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash process_results_kdv_functor_openmp.sh
-47 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash send_email_kdv_functor_openmp.sh
 12 00 * * 6    source /home/ikalash/.bashrc; scp -r /home/ikalash/Desktop ikalash@mockba:/media/a078b7aa-fb53-4281-8356-a5e964c1549f/camobap
 12 00 * * 7    source /home/ikalash/.bashrc; scp -r /extradrive ikalash@mockba:/media/a078b7aa-fb53-4281-8356-a5e964c1549f/camobap
+#00 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCoriCDash; rm -rf test_summary.txt; scp ikalash@cori.nersc.gov:/project/projectdirs/piscees/nightlyCoriCDash/test_summary.txt .; bash send_email.sh
+30 02 * * 1-5  cd /home/ikalash/nightlyCDashRide; rm -rf Results; rm -rf submit*.log
+00 03 * * 1-5  cd /home/ikalash/nightlyCDashRide; mv 20* Results
+30 03 * * 1-5  cd /home/ikalash/nightlyCDashRide; bash submit_script.sh 
+30 04 * * 1-5  cd /home/ikalash/nightlyCDashRide; rm -rf Results; mv submit.log submit_trilinos.log
+30 05 * * 1-5  cd /home/ikalash/nightlyCDashRide; mv 20* Results
+35 05 * * 1-5  cd /home/ikalash/nightlyCDashRide; bash submit_script.sh
+~                                                          
