@@ -135,8 +135,8 @@ namespace CTM {
 
             // compute fad coefficients
             double omega = 0.0;
-            double beta = 1.0 / dt; // (m_coeff in workset)
-            double alpha = 1.0; // (j_coeff in workset))
+            double beta = 1.0; // (j_coeff in workset)
+            double alpha = 1.0 / dt; // (m_coeff in workset))
 
             // predictor phase
             u_v->assign(*u);
@@ -144,7 +144,7 @@ namespace CTM {
             int iter = 1;
             bool converged = false;
             // start newton loop
-            v->update(beta, *u, -beta, *u_v, 0.0);
+            v->update(alpha, *u, -alpha, *u_v, 0.0);
             while ((iter <= max_iter) && (!converged)) {
                 *out << "  " << iter << " newton iteration" << std::endl;
                 // compute residual
@@ -161,7 +161,7 @@ namespace CTM {
                 solve_linear_system(p,J,du,r);
                 // update solution
                 u->update(1.0, *du, 1.0);
-                v->update(beta, *u, -beta, *u_v, 0.0);
+                v->update(alpha, *u, -alpha, *u_v, 0.0);
                 // compute residual
                 t_application->computeGlobalResidualT(t_current, v.get(), 
                         xdotdot.get(),*u,*r);
