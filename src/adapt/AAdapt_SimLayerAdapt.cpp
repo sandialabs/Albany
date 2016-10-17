@@ -17,7 +17,7 @@
 #include <EnergyIntegral.hpp>
 
 /* BRD */
-#include "PHAL_Utilities.hpp"
+#include "PHAL_AlbanyTraits.hpp"
 extern void DM_undoSlicing(pPList regions,int layerNum, pMesh mesh);
 extern void PM_localizePartiallyConnected(pParMesh);
 extern void MSA_setPrebalance(pMSAdapt,int);

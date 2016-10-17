@@ -136,7 +136,7 @@ namespace CTM {
             // compute fad coefficients
             double omega = 0.0;
             double beta = 1.0; // (j_coeff in workset)
-            double alpha = 1.0 / dt; // (m_coeff in workset))
+            double alpha = 1.0 / dt; // (m_coeff in workset)
 
             // predictor phase
             u_v->assign(*u);
