@@ -174,10 +174,10 @@ namespace CTM {
         
     }
 
-    void ThermalProblem::getAllocatedStates(
-            ArrayRCP<ArrayRCP<RCP<FC> > > old_state,
-            ArrayRCP<ArrayRCP<RCP<FC> > > new_state) const {
-    }
+//    void ThermalProblem::getAllocatedStates(
+//            ArrayRCP<ArrayRCP<RCP<FC> > > old_state,
+//            ArrayRCP<ArrayRCP<RCP<FC> > > new_state) const {
+//    }
 
     //------------------------------------------------------------------------------
 

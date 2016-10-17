@@ -14,7 +14,8 @@ namespace CTM {
     public:
 
         /// \brief Convenience typedef.
-        typedef Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> FC;
+        //typedef Kokkos::DynRankView<RealType, PHX::Device> FC;
+        //typedef Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> FC;
 
         /// \brief Constructor.
         /// \param params The parameterlist that defines this Albany problem.
@@ -99,10 +100,10 @@ namespace CTM {
         Teuchos::RCP<const Teuchos::ParameterList>
         getValidProblemParameters() const;
 
-        /// \brief I don't know what this does yet.
-        void getAllocatedStates(
-                ArrayRCP<ArrayRCP<RCP<FC> > > old_state,
-                ArrayRCP<ArrayRCP<RCP<FC> > > new_state) const;
+//        /// \brief I don't know what this does yet.
+//        void getAllocatedStates(
+//                ArrayRCP<ArrayRCP<RCP<FC> > > old_state,
+//                ArrayRCP<ArrayRCP<RCP<FC> > > new_state) const;
 
     private:
 
@@ -111,8 +112,8 @@ namespace CTM {
         RCP<LCM::MaterialDatabase> material_db_;
         std::string materialFileName_;
         RCP<const Teuchos::Comm<int>> comm_;
-        ArrayRCP<ArrayRCP<RCP<FC> > > old_state;
-        ArrayRCP<ArrayRCP<RCP<FC> > > new_state;
+//        ArrayRCP<ArrayRCP<RCP<FC> > > old_state;
+//        ArrayRCP<ArrayRCP<RCP<FC> > > new_state;
 
     protected:
 
@@ -163,14 +164,9 @@ Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
         const RCP<ParameterList>& response_list) {
 
     // convenience typedefs
-    typedef RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<
-            RealType, PHX::Layout, PHX::Device> > > Intrepid2Basis;
-
-    typedef Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<
-            RealType, PHX::Layout, PHX::Device> > CubatureFactory;
-
-    typedef RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<
-            RealType, PHX::Layout, PHX::Device> > > Cubature;
+    typedef Teuchos::RCP<
+            Intrepid2::Basis<PHX::Device, RealType, RealType> >
+            Intrepid2Basis;
 
     // get the name of the current element block
     auto eb_name = mesh_specs.ebName;
@@ -194,9 +190,9 @@ Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
     Intrepid2Basis intrepidBasis = Albany::getIntrepid2Basis(mesh_specs.ctd);
 
     // get the cubature
-    CubatureFactory cub_factory;
-    Cubature cubature = cub_factory.create(
-            *cell_type, mesh_specs.cubatureDegree);
+    Intrepid2::DefaultCubatureFactory cubFactory;
+    Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature =
+            cubFactory.create<PHX::Device, RealType, RealType>(*cell_type, mesh_specs.cubatureDegree);
 
     // define a layouts structure
     const int num_nodes = intrepidBasis->getCardinality();
