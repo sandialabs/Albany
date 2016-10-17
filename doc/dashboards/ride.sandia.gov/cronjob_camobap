@@ -1,0 +1,7 @@
+30 02 * * 1-5  cd /home/ikalash/nightlyCDashRide; rm -rf Results; rm -rf submit*.log
+00 03 * * 1-5  cd /home/ikalash/nightlyCDashRide; mv 20* Results
+30 03 * * 1-5  cd /home/ikalash/nightlyCDashRide; bash submit_script.sh 
+30 04 * * 1-5  cd /home/ikalash/nightlyCDashRide; rm -rf Results; mv submit.log submit_trilinos.log
+30 05 * * 1-5  cd /home/ikalash/nightlyCDashRide; mv 20* Results
+35 05 * * 1-5  cd /home/ikalash/nightlyCDashRide; bash submit_script.sh
+~                                       
