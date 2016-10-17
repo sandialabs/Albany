@@ -12,7 +12,6 @@
 #include <apfSIM.h>
 #include <spr.h>
 #include <EnergyIntegral.hpp>
-#include "PHAL_Utilities.hpp"
 
 namespace AAdapt {
 
