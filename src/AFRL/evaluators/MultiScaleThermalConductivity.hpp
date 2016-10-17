@@ -87,6 +87,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> thermalCond;
   PHX::MDField<ScalarT,Cell,QuadPoint> temperature;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> gradTemperature;
+  PHX::MDField<ScalarT,Dummy> deltaTime;
 
   //! Conductivity type
   std::string type;

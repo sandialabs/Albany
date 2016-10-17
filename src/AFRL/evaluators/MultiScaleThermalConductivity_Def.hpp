@@ -210,6 +210,12 @@ init_remote(std::string &type, std::string& remoteHostname, int remotePort,
     gradTemperature = gradTemp;
     this->addDependentField(gradTemperature);
 
+    PHX::MDField<ScalarT,Dummy> deltaT(p.get<std::string>("Delta Time Name"),
+                                       p.get<Teuchos::RCP<PHX::DataLayout>>(
+                                         "Workset Scalar Data Layout"));
+    deltaTime = deltaT;
+    this->addDependentField(deltaTime);
+
     // Add thermal conductivity as a Sacado-ized parameter
     Teuchos::RCP<ParamLib> paramLib =
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
@@ -255,14 +261,13 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(thermalCond,fm);
-  // this->utils.setFieldData(time,fm);
-  // this->utils.setFieldData(deltaTime,fm);
   if (computeMode == Series)
     this->utils.setFieldData(coordVec,fm);
   if (computeMode == Remote)
   {
     this->utils.setFieldData(temperature,fm);
     this->utils.setFieldData(gradTemperature,fm);
+    this->utils.setFieldData(deltaTime,fm);
   }
 }
 
@@ -295,6 +300,7 @@ evaluateFields(typename Traits::EvalData workset)
 #endif
   else if (computeMode == Remote) {
 
+    ScalarT dt = deltaTime(0);
     ScalarT meanTemp = 0.;
     Teuchos::Array<ScalarT> meanGradTemp(numDims);
 
@@ -314,7 +320,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 
     double thermalConductivity = get_remote(workset.current_time,
-                                            workset.previous_time,
+                                            workset.current_time - val(dt),
                                             meanTemp,
                                             meanGradTemp);
 

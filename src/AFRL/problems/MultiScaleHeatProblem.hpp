@@ -113,6 +113,8 @@ namespace Albany {
 #include "PHAL_HeatEqResid.hpp"
 #include "PHAL_SaveStateField.hpp"
 
+#include "Time.hpp"
+
 #include "MultiScaleThermalConductivity.hpp"
 
 
@@ -235,6 +237,29 @@ Albany::MultiScaleHeatProblem::constructEvaluators(
     ev = rcp(new AFRL::MultiScaleThermalConductivity<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+  { // Time
+    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+        new Teuchos::ParameterList("Time"));
+    p->set<std::string>("Time Name", "Time");
+    p->set<std::string>("Delta Time Name", "Delta Time");
+    p->set<Teuchos::RCP<PHX::DataLayout>>(
+        "Workset Scalar Data Layout",
+        dl->workset_scalar);
+    p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);
+    p->set<bool>("Disable Transient", true);
+    ev = Teuchos::rcp(new LCM::Time<EvalT, PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable("Time",
+        dl->workset_scalar,
+        dl->dummy,
+        meshSpecs.ebName,
+        "scalar",
+        0.0,
+        true);
+    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    }
 
   // { // Time
   //   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Time"));
