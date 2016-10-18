@@ -107,7 +107,7 @@ public:
     b = peel<EvalT, T, N>()(b_);
 
     T const
-    c = (a_ - x(0));
+    c = (a - x(0));
 
     T const
     d = (x(1) - x(0) * x(0));

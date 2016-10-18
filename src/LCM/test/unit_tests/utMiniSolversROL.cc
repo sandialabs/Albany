@@ -96,4 +96,66 @@ TEST(AlbanyResidualROL, LineSearchRosenbrock)
   ASSERT_EQ(minimizer.converged, true);
 }
 
+TEST(AlbanyJacobianROL, LineSearchRosenbrock)
+{
+  bool const
+  print_output = ::testing::GTEST_FLAG(print_time);
 
+  // outputs nothing
+  Teuchos::oblackholestream
+  bhs;
+
+  std::ostream &
+  os = (print_output == true) ? std::cout : bhs;
+
+  using EvalT = PHAL::AlbanyTraits::Jacobian;
+  using ScalarT = typename EvalT::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+
+  constexpr
+  Intrepid2::Index
+  DIM{2};
+
+  using FN = LCM::Banana_Traits<EvalT>;
+  using MIN = ROL::MiniTensor_Minimizer<ValueT, DIM>;
+
+  ValueT const
+  a = 1.0;
+
+  ValueT const
+  b = 100.0;
+
+  FN
+  fn(a, b);
+
+  MIN
+  minimizer;
+
+  // Define algorithm.
+  std::string const
+  algoname{"Line Search"};
+
+  // Set parameters.
+  Teuchos::ParameterList
+  params;
+
+  params.sublist("Step").sublist("Line Search").sublist("Descent Method").
+    set("Type", "Newton-Krylov");
+
+  params.sublist("Status Test").set("Gradient Tolerance", 1.0e-16);
+  params.sublist("Status Test").set("Step Tolerance", 1.0e-16);
+  params.sublist("Status Test").set("Iteration Limit", 128);
+
+  Intrepid2::Vector<ScalarT, DIM>
+  x;
+
+  x(0) = 0.0;
+  x(1) = 3.0;
+
+  LCM::MiniSolverROL<MIN, FN, EvalT, DIM>
+  mini_solver(minimizer, algoname, params, fn, x);
+
+  minimizer.printReport(os);
+
+  ASSERT_EQ(minimizer.converged, true);
+}
