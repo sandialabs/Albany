@@ -6,6 +6,7 @@ add_subdirectory(VectorPoisson)
 add_subdirectory(OBCPatchTestSetup)
 add_subdirectory(OBC_PatchTest)
 add_subdirectory(OBC_Crack)
+add_subdirectory(OBC_Mechanics_PatchTest)
 add_subdirectory(OBC_Mechanics_Crack)
 
 #add_subdirectory(TensileBarPD)

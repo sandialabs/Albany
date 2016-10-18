@@ -1,0 +1,56 @@
+
+#  *****************************************************************
+#             EXODIFF	(Version: 2.85) Modified: 2016-08-08
+#             Authors:  Richard Drake, rrdrake@sandia.gov           
+#                       Greg Sjaardema, gdsjaar@sandia.gov          
+#             Run on    2016/10/17   15:22:38 MDT
+#  *****************************************************************
+
+#  FILE 1: /scratch/djlittl/Albany/examples/LCM/PeridigmCoupling/OBC_Mechanics_PatchTest/OBC_Mechanics_PatchTest_Analysis.final_step.e
+#   Title: Sierra Output Default Title
+#          Dim = 3, Blocks = 2, Nodes = 647, Elements = 576, Nodesets = 9, Sidesets = 0
+#          Vars: Global = 0, Nodal = 10, Element = 80, Nodeset = 0, Sideset = 0, Times = 1
+
+
+# ==============================================================
+#  NOTE: All node and element ids are reported as global ids.
+
+# NOTES:  - The min/max values are reporting the min/max in absolute value.
+#         - Time values (t) are 1-offset time step numbers.
+#         - Element block numbers are the block ids.
+#         - Node(n) and element(e) numbers are 1-offset.
+
+COORDINATES absolute 1.e-6    # min separation not calculated
+
+# Effectively do not compare time steps
+TIME STEPS absolute 1.0e10
+
+# No GLOBAL VARIABLES
+
+NODAL VARIABLES relative 1.e-6 floor 0.0
+	DISPLACEMENT_X             absolute 5.0e-8
+	DISPLACEMENT_Y             absolute 1.319548300000e-10    # min:               0 @ t1,n1	max:   0.00013195483 @ t1,n647
+	DISPLACEMENT_Z             absolute 8.370860900000e-11    # min:               0 @ t1,n1	max:   8.3708609e-05 @ t1,n633
+	DIRICHLET_CONTROL_FIELD_X  absolute 0.5e-8
+	DIRICHLET_CONTROL_FIELD_Y  absolute 0.000000000000e+00    # min:               0 @ t1,n1	max:               0 @ t1,n1
+	DIRICHLET_CONTROL_FIELD_Z  absolute 0.000000000000e+00    # min:               0 @ t1,n1	max:               0 @ t1,n1
+	DIRICHLET_FIELD            absolute 9.999998100000e-10    # min:               0 @ t1,n1	max:   0.00099999981 @ t1,n633
+	FORCE_X                    absolute 5.0e-4
+	FORCE_Y                    absolute 5.0e-5
+	FORCE_Z                    absolute 5.0e-5
+
+ELEMENT VARIABLES relative 1.e-6 floor 0.0
+	PERIDIGM_DISPLACEMENT_1       absolute 9.615382800000e-10    # min:               0 @ t1,b2,e513	max:   0.00096153828 @ t1,b1,e66
+	PERIDIGM_DISPLACEMENT_2       absolute 1.279187500000e-10    # min:               0 @ t1,b1,e1	max:   0.00012791875 @ t1,b1,e140
+	PERIDIGM_DISPLACEMENT_3       absolute 5.745798600000e-11    # min:               0 @ t1,b1,e1	max:   5.7457986e-05 @ t1,b1,e65
+	PERIDIGM_NUMBER_OF_NEIGHBORS  absolute 1.800000000000e-05    # min:               0 @ t1,b2,e513	max:              18 @ t1,b1,e38
+	PERIDIGM_OBC_FUNCTIONAL_1     absolute 5.0e-9
+	PERIDIGM_OBC_FUNCTIONAL_2     absolute 5.0e-9
+	PERIDIGM_OBC_FUNCTIONAL_3     absolute 1.0e-10
+	PERIDIGM_RADIUS               absolute 4.771926000000e-08    # min:               0 @ t1,b2,e513	max:      0.04771926 @ t1,b1,e112
+
+# No NODESET VARIABLES
+
+# No SIDESET VARIABLES
+
+
