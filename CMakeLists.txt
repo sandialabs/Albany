@@ -458,6 +458,17 @@ IF (DataTransferKit_List_ID GREATER -1)
     SET(ALBANY_DTK FALSE)
 ENDIF()
 
+# Check if Trilinos has ROL
+LIST(FIND Trilinos_PACKAGE_LIST ROL ROL_List_ID)
+IF (ROL_List_ID GREATER -1)
+  ADD_DEFINITIONS(-DALBANY_ROL)
+  MESSAGE("-- Looking for ROL in Trilinos: Found, compiling with -DALBANY_ROL")
+    SET(ALBANY_ROL TRUE)
+  ELSE()
+    MESSAGE("-- Looking for ROL in Trilinos: NOT found.")
+    SET(ALBANY_ROL FALSE)
+ENDIF()
+
 # set optional dependency on ATO, defaults to Disabled
 OPTION(ENABLE_ATO "Flag to turn on ATO source code" OFF)
 IF (ENABLE_ATO)

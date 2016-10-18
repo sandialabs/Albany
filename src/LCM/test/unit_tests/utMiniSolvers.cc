@@ -3,10 +3,10 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include <gtest/gtest.h>
-#include <MiniLinearSolver.h>
-#include <MiniNonlinearSolver.h>
-#include <MiniSolvers.h>
+#include "gtest/gtest.h"
+#include "MiniLinearSolver.h"
+#include "MiniNonlinearSolver.h"
+#include "MiniSolvers.h"
 
 // Why is this needed?
 bool TpetraBuild = false;

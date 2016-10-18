@@ -148,7 +148,7 @@ MiniSolverROL<MIN, FN, EvalT, N>::
 MiniSolverROL(
     MIN & minimizer,
     std::string const & algoname,
-    Teuchos::ParameterList const & params,
+    Teuchos::ParameterList & params,
     FN & function,
     Intrepid2::Vector<typename EvalT::ScalarT, N> & soln)
 {
@@ -161,7 +161,7 @@ MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::Residual, N>::
 MiniSolverROL(
     MIN & minimizer,
     std::string const & algoname,
-    Teuchos::ParameterList const & params,
+    Teuchos::ParameterList & params,
     FN & function,
     Intrepid2::Vector<typename PHAL::AlbanyTraits::Residual::ScalarT, N> & soln)
 {
@@ -174,7 +174,7 @@ MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::Jacobian, N>::
 MiniSolverROL(
     MIN & minimizer,
     std::string const & algoname,
-    Teuchos::ParameterList const & params,
+    Teuchos::ParameterList & params,
     FN & function,
     Intrepid2::Vector<typename PHAL::AlbanyTraits::Jacobian::ScalarT, N> & soln)
 {
@@ -222,7 +222,7 @@ MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::Tangent, N>::
 MiniSolverROL(
     MIN & minimizer,
     std::string const & algoname,
-    Teuchos::ParameterList const & params,
+    Teuchos::ParameterList & params,
     FN & function,
     Intrepid2::Vector<typename PHAL::AlbanyTraits::Tangent::ScalarT, N> & soln)
 {
@@ -270,7 +270,7 @@ MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::DistParamDeriv, N>::
 MiniSolverROL(
     MIN & minimizer,
     std::string const & algoname,
-    Teuchos::ParameterList const & params,
+    Teuchos::ParameterList & params,
     FN & function,
     Intrepid2::Vector<typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln)
 {
