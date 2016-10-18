@@ -27,7 +27,8 @@ set( CTEST_TEST_TIMEOUT 1200)
 
 SET(PREFIX_DIR /home/gahanse)
 SET(CMAKE_SW_INSTALL_DIR /usr/local)
-SET(MPI_BASE_DIR /opt/intel/compilers_and_libraries/linux/mpi/intel64)
+#SET(MPI_BASE_DIR /opt/intel/compilers_and_libraries/linux/mpi/intel64)
+SET(MPI_BASE_DIR /opt/intel/impi/5.1.3.210)
 SET(BOOST_DIR /usr/local/mic/boost-1.58.0)
 SET(NETCDF /usr/local/mic)
 SET(HDFDIR /usr/local/mic)
@@ -75,8 +76,8 @@ ENDIF()
 find_program(CTEST_GIT_COMMAND NAMES git)
 
 # Point at the public Repo
-SET(Trilinos_REPOSITORY_LOCATION https://github.com/trilinos/Trilinos.git)
-SET(SCOREC_REPOSITORY_LOCATION https://github.com/SCOREC/core.git)
+SET(Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
+SET(SCOREC_REPOSITORY_LOCATION git@github.com:SCOREC/core.git)
 SET(Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 
 SET(TRILINOS_HOME "${CTEST_SOURCE_DIRECTORY}/Trilinos")
@@ -159,7 +160,7 @@ IF(CTEST_DO_SUBMIT)
   )
 
   if(HAD_ERROR)
-    message(FATAL_ERROR "Cannot submit miniContact Project.xml!")
+    message("Cannot submit miniContact Project.xml!")
   endif()
 ENDIF()
 
@@ -183,7 +184,7 @@ IF(CTEST_DO_SUBMIT)
   )
 
   if(HAD_ERROR)
-    message(FATAL_ERROR "Cannot submit Trilinos update results!")
+    message("Cannot submit Trilinos update results!")
   endif()
 ENDIF()
 
@@ -223,7 +224,7 @@ IF(CTEST_DO_SUBMIT)
   )
 
   if(HAD_ERROR)
-    message(FATAL_ERROR "Cannot update Albany repository!")
+    message("Cannot update Albany repository!")
   endif()
 ENDIF()
 
@@ -244,9 +245,9 @@ SET(CONFIGURE_OPTIONS
   -DTrilinos_ENABLE_SCOREC:BOOL=ON
   -DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON
   -DCMAKE_BUILD_TYPE:STRING=NONE
-  -DCMAKE_CXX_COMPILER:FILEPATH=${MPI_BASE_DIR}/bin/mpiicpc
-  -DCMAKE_C_COMPILER:FILEPATH=${MPI_BASE_DIR}/bin/mpiicc
-  -DCMAKE_Fortran_COMPILER:FILEPATH=${MPI_BASE_DIR}/bin/mpiifort
+  -DCMAKE_CXX_COMPILER:FILEPATH=${MPI_BASE_DIR}/bin64/mpiicpc
+  -DCMAKE_C_COMPILER:FILEPATH=${MPI_BASE_DIR}/bin64/mpiicc
+  -DCMAKE_Fortran_COMPILER:FILEPATH=${MPI_BASE_DIR}/bin64/mpiifort
   -DCMAKE_AR:FILEPATH=/opt/intel/compilers_and_libraries_2016.3.210/linux/bin/intel64_mic/xiar
   -DCMAKE_LINKER:FILEPATH=/opt/intel/compilers_and_libraries_2016.3.210/linux/bin/intel64_mic/xild
   -DTrilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF
@@ -263,7 +264,7 @@ SET(CONFIGURE_OPTIONS
   -DTpetra_INST_COMPLEX_DOUBLE:BOOL=OFF
   -DTpetra_INST_INT_LONG:BOOL=OFF
   -DTpetra_INST_INT_UNSIGNED:BOOL=OFF
-  -DZoltan_ENABLE_ULONG_IDS:BOOL=OFF
+  -DZoltan_ENABLE_ULONG_IDS:BOOL=ON
   -DTeuchos_ENABLE_LONG_LONG_INT:BOOL=ON
 #
   -DTrilinos_ENABLE_Kokkos:BOOL=ON
@@ -299,8 +300,8 @@ SET(CONFIGURE_OPTIONS
   -DNetcdf_INCLUDE_DIRS:PATH=${NETCDF}/include
   "-DTPL_Netcdf_LIBRARIES:FILEPATH='${NETCDF}/lib/libnetcdf.a\\;${NETCDF}/lib/libpnetcdf.a\\;${HDFDIR}/lib/libhdf5_hl.a\\;${HDFDIR}/lib/libhdf5.a\\;${ZLIB_DIR}/lib/libz.a'"
   -DTPL_ENABLE_Pnetcdf:STRING=ON
-  -DPnetcdf_INCLUDE_DIRS:PATH=${NETCDF}/include \
-  -DPnetcdf_LIBRARY_DIRS:PATH=${NETCDF}/lib \
+  -DPnetcdf_INCLUDE_DIRS:PATH=${NETCDF}/include
+  -DPnetcdf_LIBRARY_DIRS:PATH=${NETCDF}/lib
 #
   -DTPL_ENABLE_HDF5:STRING=ON
   -DHDF5_INCLUDE_DIRS:PATH=${HDFDIR}/include
@@ -394,7 +395,7 @@ IF(CTEST_DO_SUBMIT)
   )
 
   if(S_HAD_ERROR)
-    message(FATAL_ERROR "Cannot submit Trilinos configure results!")
+    message("Cannot submit Trilinos configure results!")
   endif()
 ENDIF(CTEST_DO_SUBMIT)
 
@@ -419,7 +420,7 @@ IF(CTEST_DO_SUBMIT)
   )
 
   if(S_HAD_ERROR)
-    message(FATAL_ERROR "Cannot submit Trilinos build results!")
+    message("Cannot submit Trilinos build results!")
   endif()
 
 ENDIF(CTEST_DO_SUBMIT)
@@ -464,10 +465,12 @@ SET(CONFIGURE_OPTIONS
   "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
   "-DENABLE_CROSS_COMPILE:BOOL=ON"
   "-DALBANY_MPI_OPTIONS:BOOL=ON"
-  "-DALBANY_MPI_EXEC:STRING=${MPI_BASE_DIR}/bin/mpiexec.hydra"
+  "-DALBANY_MPI_EXEC:STRING=${MPI_BASE_DIR}/bin64/mpiexec.hydra"
   "-DALBANY_MPI_EXEC_NUMPROCS_FLAG:STRING=-n"
   "-DALBANY_MPI_EXEC_MAX_NUMPROCS:STRING=4"
-  "-DALBANY_MPI_TRAILING_OPTIONS:STRING='-hosts mic1 -ppn 4 -env OMP_NUM_THREADS 56 -env KMP_AFFINITY balanced -binding domain=omp -env LD_LIBRARY_PATH ${INTEL_DIR}'"
+  "-DALBANY_MPI_TRAILING_OPTIONS:STRING='-hosts mic1 -ppn 4 -env OMP_NUM_THREADS 56 -env KMP_AFFINITY balanced -binding domain=omp -env LD_LIBRARY_PATH ${INTEL_DIR}:/opt/intel/compilers_and_libraries/linux/lib/mic'"
+  "-DALBANY_PRETEST_EXEC:STRING='${MPI_BASE_DIR}/bin64/mpiexec.hydra -n 1 -hosts mic1 -env LD_LIBRARY_PATH ${INTEL_DIR}:/opt/intel/compilers_and_libraries/linux/lib/mic'"
+  "-DALBANY_SEACAS_PATH:PATH=/usr/local/trilinos/MPI_REL/bin"
    )
  
 if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany")
@@ -501,7 +504,7 @@ IF(CTEST_DO_SUBMIT)
   )
 
   if(S_HAD_ERROR)
-    message(FATAL_ERROR "Cannot submit Albany configure results!")
+    message("Cannot submit Albany configure results!")
   endif()
 ENDIF()
 
@@ -531,7 +534,7 @@ IF(CTEST_DO_SUBMIT)
   )
 
   if(S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany build results!")
+      message("Cannot submit Albany build results!")
   endif()
 ENDIF(CTEST_DO_SUBMIT)
 
@@ -559,7 +562,7 @@ IF(CTEST_DO_SUBMIT)
   )
 
   if(HAD_ERROR)
-    message(FATAL_ERROR "Cannot submit Albany test results!")
+    message("Cannot submit Albany test results!")
   endif()
 ENDIF(CTEST_DO_SUBMIT)
 
