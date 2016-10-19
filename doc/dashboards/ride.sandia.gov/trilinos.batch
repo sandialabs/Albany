@@ -11,8 +11,5 @@ rm -rf results*
 rm -rf slurm* 
 rm -rf modules*out 
 
-export https_proxy="https://wwwproxy.sandia.gov:80"
-export http_proxy="http://wwwproxy.sandia.gov:80"
-
 cat trilinos ctest_nightly.cmake.frag >& ctest_nightly.cmake  
 bash -c -l "source ride_modules_salloc.sh >& modules_trilinos.out; bash nightly_cron_script_trilinos_ride.sh" 

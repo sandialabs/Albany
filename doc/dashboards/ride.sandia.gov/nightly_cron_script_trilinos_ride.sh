@@ -3,8 +3,8 @@
 BASE_DIR=/home/ikalash/nightlyCDash
 cd $BASE_DIR
 
-export https_proxy="https://wwwproxy.sandia.gov:80"
-export http_proxy="http://wwwproxy.sandia.gov:80"
+unset http_proxy
+unset https_proxy
 
 cat trilinos ctest_nightly.cmake.frag >& ctest_nightly.cmake  
 
