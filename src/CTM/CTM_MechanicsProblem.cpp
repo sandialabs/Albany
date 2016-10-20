@@ -1,0 +1,179 @@
+#include "CTM_MechanicsProblem.hpp"
+#include "Albany_Utils.hpp"
+#include "Albany_BCUtils.hpp"
+
+namespace CTM {
+
+    MechanicsProblem::MechanicsProblem(
+            const RCP<ParameterList>& params,
+            RCP<ParamLib> const& param_lib,
+            const int n_dims,
+            RCP<const Teuchos::Comm<int> >& comm) :
+    Albany::AbstractProblem(params, param_lib),
+    num_dims(n_dims),
+    comm_(comm),
+    have_source_(false),
+    isTransient_(false) {
+
+        *out << "Problem name = Mechanics Problem \n";
+        this->setNumEquations(1);
+        material_db_ = LCM::createMaterialDatabase(params, comm);
+
+        /*This is needed because right now the function constructBCEvaluators
+         require a QCAD::MaterialDataBase instead of LCM::MaterialDataBase if
+         a robin boundary conditions is used. This need to be corrected.*/
+        materialFileName_ = params->get<std::string>("MaterialDB Filename");
+
+        // Are any source functions specified?
+        have_source_ = params->isSublist("Source Functions");
+
+        // Is it a transient analysis?
+        if (params->isParameter("Transient")) {
+            isTransient_ = params->get<bool>("Transient", true);
+            *out << "Solving a transient analysis" << std::endl;
+        }
+    }
+
+    MechanicsProblem::~MechanicsProblem() {
+    }
+
+    void MechanicsProblem::buildProblem(
+            ArrayRCP<RCP<Albany::MeshSpecsStruct> > meshSpecs,
+            Albany::StateManager& stateMgr) {
+        // Construct All Phalanx Evaluators
+        int physSets = meshSpecs.size();
+        *out << "Num MeshSpecs: " << physSets << '\n';
+        fm.resize(physSets);
+        bool haveSidesets = false;
+
+        *out << "Calling MechanicsProblem::buildEvaluators" << '\n';
+        for (int ps = 0; ps < physSets; ++ps) {
+            fm[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+            buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, Albany::BUILD_RESID_FM,
+                    Teuchos::null);
+            if (meshSpecs[ps]->ssNames.size() > 0) haveSidesets = true;
+        }
+
+
+        if (meshSpecs[0]->nsNames.size() > 0) {
+            // Construct Dirichlet evaluators
+            *out << "Calling MechanicsProblem::constructDirichletEvaluators" << '\n';
+            constructDirichletEvaluators(meshSpecs[0]);
+        }
+
+        if (meshSpecs[0]->ssNames.size() > 0) {
+            // Construct Neumann evaluators
+            *out << "Calling MechanicsProblem::constructNeumannEvaluators" << '\n';
+            constructNeumannEvaluators(meshSpecs[0]);
+        }
+    }
+
+    Teuchos::Array<RCP<const PHX::FieldTag> > MechanicsProblem::buildEvaluators(
+            PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+            const Albany::MeshSpecsStruct& meshSpecs,
+            Albany::StateManager& stateMgr,
+            Albany::FieldManagerChoice fmchoice,
+            const RCP<ParameterList>& responseList) {
+        // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
+        // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
+        Albany::ConstructEvaluatorsOp<MechanicsProblem> op(*this,
+                fm0,
+                meshSpecs,
+                stateMgr,
+                fmchoice,
+                responseList);
+        Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
+        return *op.tags;
+    }
+
+    void MechanicsProblem::constructDirichletEvaluators(
+            const RCP<Albany::MeshSpecsStruct>& mesh_specs) {
+        // Construct Dirichlet evaluators for all nodesets and names
+        std::vector<std::string> dirichletNames(neq);
+        int index = 0;
+        dirichletNames[index++] = "X";
+        if (num_dims > 1) dirichletNames[index++] = "Y";
+        if (num_dims > 2) dirichletNames[index++] = "Z";
+
+        Albany::BCUtils<Albany::DirichletTraits> bcUtils;
+        std::vector<std::string>& nodeSetIDs = mesh_specs->nsNames;
+        dfm = bcUtils.constructBCEvaluators(nodeSetIDs, dirichletNames,
+                this->params, Teuchos::null);
+    }
+
+    void MechanicsProblem::constructNeumannEvaluators(
+            const RCP<Albany::MeshSpecsStruct>& mesh_specs) {
+
+        Albany::BCUtils<Albany::NeumannTraits> bcUtils;
+
+        if (!bcUtils.haveBCSpecified(this->params))
+            return;
+
+        std::vector<std::string> bcNames(neq);
+        Teuchos::ArrayRCP<std::string> dof_names(neq);
+        Teuchos::Array<Teuchos::Array<int> > offsets;
+        offsets.resize(neq);
+
+        bcNames[0] = "T";
+        dof_names[0] = "Temperature";
+        offsets[0].resize(1);
+        offsets[0][0] = 0;
+
+        // Construct BC evaluators for all possible names of conditions
+        // Should only specify flux vector components (dudx, dudy, dudz), or dudn, not both
+        std::vector<std::string> condNames(4);
+        //dudx, dudy, dudz, dudn, scaled jump (internal surface), or robin (like DBC plus scaled jump)
+
+        // Note that sidesets are only supported for two and 3D currently
+        if (num_dims == 2)
+            condNames[0] = "(dudx, dudy)";
+        else if (num_dims == 3)
+            condNames[0] = "(dudx, dudy, dudz)";
+        else
+            TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                std::endl << "Error: Sidesets only supported in 2 and 3D." << std::endl);
+
+        condNames[1] = "dudn";
+
+        condNames[2] = "scaled jump";
+
+        condNames[3] = "robin";
+
+        /*This is needed because right now the function constructBCEvaluators
+         require a QCAD::MaterialDataBase instead of LCM::MaterialDataBase
+         this need to be corrected.*/
+        Teuchos::RCP<QCAD::MaterialDatabase> materialDB
+                = Teuchos::rcp(new QCAD::MaterialDatabase(materialFileName_, comm_));
+        nfm.resize(1); // Heat problem only has one physics set   
+        nfm[0] = bcUtils.constructBCEvaluators(mesh_specs, bcNames, dof_names, false, 0,
+                condNames, offsets, dl, this->params, Teuchos::null, materialDB);
+
+        // release temporal material data base
+        materialDB = Teuchos::null;
+
+    }
+
+    //    void MechanicsProblem::getAllocatedStates(
+    //            ArrayRCP<ArrayRCP<RCP<FC> > > old_state,
+    //            ArrayRCP<ArrayRCP<RCP<FC> > > new_state) const {
+    //    }
+
+    //------------------------------------------------------------------------------
+
+    Teuchos::RCP<const Teuchos::ParameterList>
+    MechanicsProblem::getValidProblemParameters() const {
+        Teuchos::RCP<Teuchos::ParameterList> validPL =
+                this->getGenericProblemParams("ValidMechanicsProblemParams");
+
+        validPL->set<std::string>("MaterialDB Filename",
+                "materials.xml",
+                "Filename of material database xml file");
+
+        validPL->set<bool>("Transient",
+                true,
+                "Specify if you want a transient analysis or not");
+
+        return validPL;
+    }
+
+}
