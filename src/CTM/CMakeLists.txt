@@ -6,6 +6,7 @@ CTM_Application.cpp
 linear_solver.cpp
 CTM_Solver.cpp)
 
+include_directories(../LCM/problems)
 add_library(CTM ${CTM_SOURCES})
 target_link_libraries(CTM PUBLIC ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
 
