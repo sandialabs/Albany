@@ -20,7 +20,7 @@ CP::Integrator<EvalT, NumDimT, NumSlipT>::forceGlobalLoadStepReduction() const
 template<typename EvalT, Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
 CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::IntegratorFactory(
       utility::StaticAllocator & allocator,
-      const Minimizer & minimizer,
+      Minimizer const & minimizer,
       Intrepid2::StepType step_type,
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,

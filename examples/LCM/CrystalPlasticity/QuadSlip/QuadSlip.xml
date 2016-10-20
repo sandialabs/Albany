@@ -233,32 +233,12 @@
         <Parameter
           name="Method"
           type="string"
-          value="Adaptive" />
+          value="Constant" />
 
         <Parameter
           name="Initial Step Size"
           type="double"
           value="0.01" />
-
-        <Parameter
-          name="Max Step Size"
-          type="double"
-          value="0.01" />
-
-        <Parameter
-          name="Min Step Size"
-          type="double"
-          value="0.0001" />
-
-        <Parameter
-          name="Failed Step Reduction Factor"
-          type="double"
-          value="0.5" />
-
-        <Parameter
-          name="Aggressiveness"
-          type="double"
-          value="1.0" />
 
       </ParameterList>
 
