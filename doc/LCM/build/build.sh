@@ -90,6 +90,9 @@ case "$SCRIPT_NAME" in
 	        if [ -e "$PACKAGE_DIR/DataTransferKit" ]; then
                     cp -p "$DTK_FRAG" "$BUILD_DIR"
 	        fi
+	        if [ -e "$PACKAGE_DIR/tempus" ]; then
+                    cp -p "$TEMPUS_FRAG" "$BUILD_DIR"
+	        fi
 		;;
 	    *)
 		;;
@@ -97,6 +100,7 @@ case "$SCRIPT_NAME" in
 	cd "$BUILD_DIR"
         # Add DTK fragment to Trilinos config script and disable ETI as
         # it is not supported for DTK due to incompatible Global Index types.
+        # Also add tempus fragment if needed.
 	case "$PACKAGE" in
 	    trilinos)
 	        if [ -e "$PACKAGE_DIR/DataTransferKit" ]; then
@@ -108,6 +112,13 @@ case "$SCRIPT_NAME" in
                     mv "$TMP_FILE" "$CONFIG_FILE"
                     chmod 0755 "$CONFIG_FILE"
                     sed -i -e "s|$ETION|$ETIOFF|g;" "$CONFIG_FILE"
+	        fi
+	        if [ -e "$PACKAGE_DIR/tempus" ]; then
+                    TMP_FILE="/tmp/_TMP_FILE_"
+                    sed -i -e "/lcm_package_dir/d" "$CONFIG_FILE"
+                    cat "$CONFIG_FILE" "$TEMPUS_FRAG" > "$TMP_FILE"
+                    mv "$TMP_FILE" "$CONFIG_FILE"
+                    chmod 0755 "$CONFIG_FILE"
 	        fi
 		;;
 	    *)

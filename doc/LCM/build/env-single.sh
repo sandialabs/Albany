@@ -214,6 +214,7 @@ esac
 # Setup flags with the info gathered above.
 CONFIG_FILE="$PACKAGE-config.sh"
 DTK_FRAG="dtk-frag.sh"
+TEMPUS_FRAG="tempus-frag.sh"
 BUILD=$ARCH-$TOOL_CHAIN-$BUILD_TYPE
 PACKAGE_DIR="$LCM_DIR/$PACKAGE_NAME"
 # Install directory for trilinos only
