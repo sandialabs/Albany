@@ -933,7 +933,7 @@ if (BUILD_CISM_PISCEES)
     "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoEpetraInstall"
     "-DCISM_NETCDF_DIR=${NETCDF_DIR}"
     "-DCISM_NETCDF_LIBS='netcdff'"
-    "-DCMAKE_Fortran_FLAGS='-g -O2 -ffree-line-length-none -fPIC -fno-range-check'"
+    "-DCMAKE_Fortran_FLAGS='-O2 -ffree-line-length-none -fPIC -fno-range-check'"
     "-DCMAKE_VERBOSE_MAKEFILE=OFF"
   )
 
@@ -1046,7 +1046,7 @@ if (BUILD_CISM_PISCEES_EPETRA)
     "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitInstall"
     "-DCISM_NETCDF_DIR=${NETCDF_DIR}"
     "-DCISM_NETCDF_LIBS='netcdff'"
-    "-DCMAKE_Fortran_FLAGS='-g -O2 -ffree-line-length-none -fPIC -fno-range-check'"
+    "-DCMAKE_Fortran_FLAGS='-O2 -ffree-line-length-none -fPIC -fno-range-check'"
     "-DCMAKE_VERBOSE_MAKEFILE=OFF"
   )
 
