@@ -69,7 +69,7 @@ add_test(${testName}_GisRestartUnstructured ${Albany.exe} input_fo_gis_unstruct_
 add_test(${testName}_GisAdjointSensitivity ${Albany.exe} input_fo_gis_adjoint_sensitivity.xml)
 add_test(${testName}_GisWedgeAdjointSensitivity ${Albany.exe} input_fo_gis_wedge_adjoint_sensitivity.xml)
 if (ALBANY_EPETRA)
-add_test(${testName}_GisAdjointSensitivityBasalFriction ${Albany.exe} input_fo_gis_adjoint_sensitivity_beta.xml)
+add_test(${testName}_GisAdjointSensitivityBasalFriction ${Albany.exe} input_fo_gis_analysis_beta.xml)
 add_test(${testName}_GisSensSMBwrtBeta ${Albany.exe} input_fo_gis_beta_smb.xml)
 add_test(${testName}_GisSensSMBwrtBetaRestart ${Albany.exe} input_fo_gis_beta_smb_restart.xml)
 set_tests_properties(${testName}_GisSensSMBwrtBetaRestart  PROPERTIES DEPENDS ${testName}_GisSensSMBwrtBeta)
