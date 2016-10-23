@@ -39,6 +39,7 @@
 #include "FELIX_EffectivePressure.hpp"
 #include "FELIX_StokesFOResid.hpp"
 #include "FELIX_StokesFOBasalResid.hpp"
+#include "FELIX_L2ProjectedBoundaryLaplacianResidual.hpp"
 #ifdef CISM_HAS_FELIX
 #include "FELIX_CismSurfaceGradFO.hpp"
 #endif
@@ -132,7 +133,8 @@ protected:
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > surfaceSideBasis;
 
   int numDim;
-  Teuchos::RCP<Albany::Layouts> dl,dl_basal,dl_surface;
+  int vecDimFO;
+  Teuchos::RCP<Albany::Layouts> dl, dl_scalar, dl_side_scalar,dl_basal,dl_surface;
 
   //! Discretization parameters
   Teuchos::RCP<Teuchos::ParameterList> discParams;
@@ -160,6 +162,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
                                       const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+  Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils_scalar(dl_scalar);
 
   int offset=0;
 
@@ -696,10 +699,11 @@ if (basalSideName!="INVALID")
 */
 
   // ----------  Define Field Names ----------- //
-  Teuchos::ArrayRCP<std::string> dof_names(1);
+  Teuchos::ArrayRCP<std::string> dof_names(1),dof_name_auxiliary(1);
   Teuchos::ArrayRCP<std::string> resid_names(1);
   Teuchos::RCP<std::map<std::string, int> > extruded_params_levels = Teuchos::rcp(new std::map<std::string, int> ());
   dof_names[0] = "Velocity";
+  dof_name_auxiliary[0] = "L2 Projected Boundary Laplacian";
   resid_names[0] = "Stokes Residual";
   if(isThicknessAParameter)
   {
@@ -731,6 +735,15 @@ if (basalSideName!="INVALID")
   ev = evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names, offset);
   fm0.template registerEvaluator<EvalT> (ev);
 
+  // Gather solution field
+  if(neq > vecDimFO) {
+    ev = evalUtils_scalar.constructGatherSolutionEvaluator_noTransient(false, dof_name_auxiliary, 2);
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    ev = evalUtils.constructDOFCellToSideEvaluator(dof_name_auxiliary[0],basalSideName,"Node Scalar",cellType, dof_name_auxiliary[0]);
+    fm0.template registerEvaluator<EvalT> (ev);
+  }
+
   // Interpolate solution field
   ev = evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]);
   fm0.template registerEvaluator<EvalT> (ev);
@@ -741,6 +754,13 @@ if (basalSideName!="INVALID")
 
   // Scatter residual
   ev = evalUtils.constructScatterResidualEvaluatorWithExtrudedParams(true, resid_names, extruded_params_levels, offset, "Scatter Stokes");
+  fm0.template registerEvaluator<EvalT> (ev);
+
+
+  // Scatter residual
+  Teuchos::ArrayRCP<std::string> resid2_name(1);
+  resid2_name[0] = "L2 Projected Boundary Laplacian Residual";
+  ev = evalUtils_scalar.constructScatterResidualEvaluatorWithExtrudedParams(false, resid2_name, extruded_params_levels, vecDimFO, "Auxiliary Residual");
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Interpolate temperature from nodes to cell
@@ -983,6 +1003,31 @@ if (basalSideName!="INVALID")
 
   ev = Teuchos::rcp(new FELIX::StokesFOResid<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
+
+  if(neq > vecDimFO) {
+
+    p = Teuchos::rcp(new Teuchos::ParameterList("L2 Projected Boundary Laplacian Residual"));
+
+   // const std::string& residual_name = params->get<std::string>("L2 Projected Boundary Laplacian Residual Name");
+
+    //Input
+    p->set<std::string>("Solution Variable Name", "L2 Projected Boundary Laplacian");
+    p->set<std::string>("Field Name", "Beta Given");
+    p->set<std::string>("Field Gradient Name", "Beta Gradient");
+    p->set<std::string>("Gradient BF Side Name", "Grad BF "+basalSideName);
+    p->set<std::string>("Weighted Measure Side Name", "Weighted Measure "+basalSideName);
+    p->set<std::string>("Side Set Name", basalSideName);
+    p->set<double>("Mass Coefficient", params->sublist("FELIX L2 Projected Boundary Laplacian").get<double>("Mass Coefficient",1.0));
+    p->set<double>("Laplacian Coefficient", params->sublist("FELIX L2 Projected Boundary Laplacian").get<double>("Laplacian Coefficient",1.0));
+    p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
+
+    //Output
+    p->set<std::string>("L2 Projected Boundary Laplacian Residual Name", "L2 Projected Boundary Laplacian Residual");
+
+    ev = Teuchos::rcp(new FELIX::L2ProjectedBoundaryLaplacianResidual<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   if (sliding)
   {
@@ -1373,6 +1418,11 @@ if (basalSideName!="INVALID")
     // Require scattering of residual
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter Stokes", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
+    
+    if(neq > vecDimFO) {
+      PHX::Tag<typename EvalT::ScalarT> res_tag2("Auxiliary Residual", dl_scalar->dummy);
+      fm0.requireField<EvalT>(res_tag2);
+    }
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM)
   {
