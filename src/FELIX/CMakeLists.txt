@@ -32,8 +32,10 @@
        evaluators/FELIX_PressureMeltingTemperature.cpp
        evaluators/FELIX_PressureMeltingEnthalpy.cpp
        evaluators/FELIX_ProlongateVector.cpp
+       evaluators/FELIX_L2ProjectedBoundaryLaplacianResidual.cpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
        evaluators/FELIX_ResponseSMBMismatch.cpp
+       evaluators/FELIX_ResponseBoundarySquaredL2Norm.cpp
        evaluators/FELIX_StackFields.cpp
        evaluators/FELIX_StokesMomentumResid.cpp
        evaluators/FELIX_StokesFOBasalResid.cpp
@@ -143,8 +145,12 @@ ENDIF()
        evaluators/FELIX_PressureMeltingEnthalpy_Def.hpp
        evaluators/FELIX_ProlongateVector.hpp
        evaluators/FELIX_ProlongateVector_Def.hpp
+       evaluators/FELIX_L2ProjectedBoundaryLaplacianResidual.hpp
+       evaluators/FELIX_L2ProjectedBoundaryLaplacianResidual_Def.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
+       evaluators/FELIX_ResponseBoundarySquaredL2Norm.hpp
+       evaluators/FELIX_ResponseBoundarySquaredL2Norm_Def.hpp
        evaluators/FELIX_ResponseSMBMismatch.hpp
        evaluators/FELIX_ResponseSMBMismatch_Def.hpp
        evaluators/FELIX_SharedParameter.hpp
