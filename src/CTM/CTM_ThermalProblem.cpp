@@ -25,7 +25,7 @@ namespace CTM {
          require a QCAD::MaterialDataBase instead of LCM::MaterialDataBase if
          a robin boundary conditions is used. This need to be corrected.*/
         materialFileName_ = params->get<std::string>("MaterialDB Filename");
-        
+
         // Are any source functions specified?
         have_source_ = params->isSublist("Source Functions");
 
@@ -56,6 +56,8 @@ namespace CTM {
         // Is it a transient analysis?
         if (params->isParameter("Transient")) {
             isTransient_ = params->get<bool>("Transient", true);
+        }
+        if (isTransient_) {
             *out << "Solving a transient analysis" << std::endl;
         }
     }
@@ -168,16 +170,16 @@ namespace CTM {
         nfm.resize(1); // Heat problem only has one physics set   
         nfm[0] = bcUtils.constructBCEvaluators(mesh_specs, bcNames, dof_names, false, 0,
                 condNames, offsets, dl, this->params, Teuchos::null, materialDB);
-        
+
         // release temporal material data base
-         materialDB = Teuchos::null;
-        
+        materialDB = Teuchos::null;
+
     }
 
-//    void ThermalProblem::getAllocatedStates(
-//            ArrayRCP<ArrayRCP<RCP<FC> > > old_state,
-//            ArrayRCP<ArrayRCP<RCP<FC> > > new_state) const {
-//    }
+    //    void ThermalProblem::getAllocatedStates(
+    //            ArrayRCP<ArrayRCP<RCP<FC> > > old_state,
+    //            ArrayRCP<ArrayRCP<RCP<FC> > > new_state) const {
+    //    }
 
     //------------------------------------------------------------------------------
 
@@ -189,7 +191,7 @@ namespace CTM {
         validPL->set<std::string>("MaterialDB Filename",
                 "materials.xml",
                 "Filename of material database xml file");
-        
+
         validPL->set<bool>("Transient",
                 true,
                 "Specify if you want a transient analysis or not");
