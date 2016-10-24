@@ -30,8 +30,10 @@ namespace CTM {
         // Is it a transient analysis?
         if (params->isParameter("Transient")) {
             isTransient_ = params->get<bool>("Transient", true);
-            TEUCHOS_TEST_FOR_EXCEPTION(isTransient_,std::out_of_range,
+            TEUCHOS_TEST_FOR_EXCEPTION(isTransient_, std::out_of_range,
                     "We apologize but transient analysis is not implemented yet for CTM_MechanicsProblem");
+        }
+        if (isTransient_) {
             *out << "Solving a transient analysis" << std::endl;
         }
     }
@@ -188,7 +190,7 @@ namespace CTM {
                 this->params,
                 this->paramLib);
     }
-        
+
     //    void MechanicsProblem::getAllocatedStates(
     //            ArrayRCP<ArrayRCP<RCP<FC> > > old_state,
     //            ArrayRCP<ArrayRCP<RCP<FC> > > new_state) const {
@@ -208,6 +210,8 @@ namespace CTM {
         validPL->set<bool>("Transient",
                 true,
                 "Specify if you want a transient analysis or not");
+        
+        validPL->sublist("Temperature", false, "");
 
         return validPL;
     }

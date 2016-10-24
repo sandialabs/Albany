@@ -160,6 +160,7 @@ namespace CTM {
 #include "Kinematics.hpp"
 #include "ConstitutiveModelInterface.hpp"
 #include "ConstitutiveModelParameters.hpp"
+#include "Strain.hpp"
 #include "FirstPK.hpp"
 
 template <typename EvalT>
@@ -304,6 +305,39 @@ Teuchos::RCP<const PHX::FieldTag> CTM::MechanicsProblem::constructEvaluators(
         fm0.template registerEvaluator<EvalT>(ev);
     }
 
+    {
+        Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+                new Teuchos::ParameterList);
+
+        p->set<std::string>("Material Property Name", temperature);
+        p->set<Teuchos::RCP < PHX::DataLayout >> ("Data Layout", dl->qp_scalar);
+        p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+        p->set<Teuchos::RCP < PHX::DataLayout >> (
+                "Coordinate Vector Data Layout",
+                dl->qp_vector);
+
+        p->set<Teuchos::RCP < ParamLib >> ("Parameter Library", paramLib);
+        Teuchos::ParameterList& paramList = params->sublist("Temperature");
+
+        // This evaluator is called to set a constant temperature when "Variable Type"
+        // is set to "Constant." It is also called when "Variable Type" is set to
+        // "Time Dependent." There are two "Type" variables in the PL - "Type" and
+        // "Variable Type". For the last case, lets set "Type" to "Time Dependent" to hopefully
+        // make the evaluator call a little more general (GAH)
+        std::string temp_type = paramList.get<std::string>("Variable Type", "None");
+        if (temp_type == "Time Dependent") {
+
+            paramList.set<std::string>("Type", temp_type);
+
+        }
+
+        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+        ev = Teuchos::rcp(
+                new PHAL::NSMaterialProperty<EvalT, PHAL::AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+    }
+
     { // Constitutive Model Parameters
         Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
                 new Teuchos::ParameterList("Constitutive Model Parameters"));
@@ -398,6 +432,19 @@ Teuchos::RCP<const PHX::FieldTag> CTM::MechanicsProblem::constructEvaluators(
         fm0.template registerEvaluator<EvalT>(ev);
     }
 
+    { // Strain
+        Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Strain"));
+
+        //Input
+        p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
+
+        //Output
+        p->set<std::string>("Strain Name", "Strain");
+
+        ev = rcp(new LCM::Strain<EvalT, PHAL::AlbanyTraits>(*p, dl));
+        fm0.template registerEvaluator<EvalT>(ev);
+    }
+
     {
         // convert Cauchy stress to first Piola-Kirchhoff
         Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
@@ -408,6 +455,7 @@ Teuchos::RCP<const PHX::FieldTag> CTM::MechanicsProblem::constructEvaluators(
 
         //Output
         p->set<std::string>("First PK Stress Name", firstPK);
+        p->set<bool>("Small Strain", false);
 
         p->set<Teuchos::RCP < ParamLib >> ("Parameter Library", paramLib);
 
@@ -423,6 +471,8 @@ Teuchos::RCP<const PHX::FieldTag> CTM::MechanicsProblem::constructEvaluators(
         p->set<std::string>("Stress Name", firstPK);
         p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
         p->set<std::string>("Weighted BF Name", "wBF");
+        p->set<std::string>("Acceleration Name", "Acceleration");
+        p->set<bool>("Disable Dynamics", true);
         p->set<Teuchos::RCP < ParamLib >> ("Parameter Library", paramLib);
         //Output
         p->set<std::string>("Residual Name", "Displacement Residual");
