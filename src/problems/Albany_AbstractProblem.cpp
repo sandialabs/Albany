@@ -51,6 +51,11 @@ Albany::AbstractProblem::AbstractProblem(
     number_of_time_deriv = 1;
     SolutionMethodName = Transient;
   }
+  else if(solutionMethod == "Transient Tempus")
+  {
+    number_of_time_deriv = 1;
+    SolutionMethodName = TransientTempus;
+  }
   else if(solutionMethod == "Eigensolve")
   {
     number_of_time_deriv = 0;
@@ -63,7 +68,7 @@ Albany::AbstractProblem::AbstractProblem(
   }
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,
-            std::logic_error, "Solution Method must be Steady, Transient, "
+            std::logic_error, "Solution Method must be Steady, Transient, Transient Tempus, "
             << "Continuation, Eigensolve, or Aeras Hyperviscosity, not : " << solutionMethod);
 
    // Set the number in the Problem PL

@@ -48,7 +48,7 @@
 namespace Albany {
 
 // Define enumerator to store solution method name
-enum SolutionMethodType {Steady, Continuation, Transient, Eigensolve, AerasHyperviscosity, Unknown};
+enum SolutionMethodType {Steady, Continuation, Transient, TransientTempus, Eigensolve, AerasHyperviscosity, Unknown};
 
 #if defined(ALBANY_LCM)
   class Application;
