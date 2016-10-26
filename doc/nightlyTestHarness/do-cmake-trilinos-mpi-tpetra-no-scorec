@@ -29,7 +29,7 @@
 # All paths must me changed for your build (search "agsalin")
 #
 rm -f CMakeCache.txt
-
+rm -rf CMakeFiles
 
 
 BUILD_DIR=`pwd`
