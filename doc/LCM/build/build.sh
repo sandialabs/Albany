@@ -103,11 +103,33 @@ case "$SCRIPT_NAME" in
         # Also add tempus fragment if needed.
 	case "$PACKAGE" in
 	    trilinos)
+                # First build extra repos string
+                ER=""
+	        if [ -e "$PACKAGE_DIR/DataTransferKit" ]; then
+                    if [ -z $ER ]; then
+                        ER="DataTransferKit"
+                    else
+                        ER="$ER,DataTransferKit"
+                    fi
+                fi 
+	        if [ -e "$PACKAGE_DIR/tempus" ]; then
+                    if [ -z $ER ]; then
+                        ER="tempus"
+                    else
+                        ER="$ER,tempus"
+                    fi
+                fi
+                if [ ! -z $ER ]; then
+                    TER=" -D Trilinos_EXTRA_REPOSITORIES:STRING=\"$ER\" \\"
+                    sed -i -e "/lcm_package_dir/d" "$CONFIG_FILE"
+                    echo "\\" >> "$CONFIG_FILE"
+                    echo "$TER" >> "$CONFIG_FILE"
+                fi
+                
 	        if [ -e "$PACKAGE_DIR/DataTransferKit" ]; then
                     TMP_FILE="/tmp/_TMP_FILE_"
                     ETION="Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
                     ETIOFF="Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=OFF"
-                    sed -i -e "/lcm_package_dir/d" "$CONFIG_FILE"
                     cat "$CONFIG_FILE" "$DTK_FRAG" > "$TMP_FILE"
                     mv "$TMP_FILE" "$CONFIG_FILE"
                     chmod 0755 "$CONFIG_FILE"
@@ -115,11 +137,13 @@ case "$SCRIPT_NAME" in
 	        fi
 	        if [ -e "$PACKAGE_DIR/tempus" ]; then
                     TMP_FILE="/tmp/_TMP_FILE_"
-                    sed -i -e "/lcm_package_dir/d" "$CONFIG_FILE"
                     cat "$CONFIG_FILE" "$TEMPUS_FRAG" > "$TMP_FILE"
                     mv "$TMP_FILE" "$CONFIG_FILE"
                     chmod 0755 "$CONFIG_FILE"
 	        fi
+                if [ ! -z $ER ]; then
+                    echo "lcm_package_dir" >> "$CONFIG_FILE"
+                fi
 		;;
 	    *)
 		;;
