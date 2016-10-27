@@ -39,6 +39,8 @@ mkdir $TRILOUTDIR
 
 #checks out master
 git clone git@github.com:trilinos/Trilinos.git > $TRILOUTDIR/trilinos_checkout.out 2>&1
+cd $TRILDIR
+git checkout $TRILINOS_BRANCH
 
 #check out Dakota
 echo; echo "   Starting Dakota checkout..."
@@ -51,12 +53,17 @@ rm -rf dakota-6.2-public.src.tar.gz
 mv dakota-6.2.0.src Dakota
 echo; echo "   ...finished Dakota checkout."
 
-echo; echo "   Starting DTK checkout..."
+echo; echo "   Copying DTK directory into Trilinos..."
 cd $TRILDIR
-git clone git@github.com:ORNL-CEES/DataTransferKit.git
-cd DataTransferKit
-git clone git@github.com:ORNL-CEES/DTKData.git
-echo; echo "   ...finished DTK checkout."
+cp -r /home/ikalash/nightlyAlbanyTests/DataTransferKit-2.0.0 DataTransferKit 
+#git clone git@github.com:ORNL-CEES/DataTransferKit.git
+#cd DataTransferKit
+#git clone git@github.com:ORNL-CEES/DTKData.git
+echo; echo "   ...finished DTK copy into Trilinos."
+echo; echo "   Starting tempus checkout..." 
+cd $TRILDIR 
+git clone software.sandia.gov:/git/tempus
+echo; echo "   ...finished tempus checkout."
 
 
 
