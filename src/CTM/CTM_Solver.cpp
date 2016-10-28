@@ -1,6 +1,7 @@
 #include "CTM_Solver.hpp"
 #include "CTM_Application.hpp"
 #include "CTM_ThermalProblem.hpp"
+#include "CTM_MechanicsProblem.hpp"
 #include <Albany_DiscretizationFactory.hpp>
 #include "Albany_APFDiscretization.hpp"
 #include <Albany_AbstractDiscretization.hpp>
@@ -31,9 +32,18 @@ namespace CTM {
         assert(time_list.isType<int>("Number of Steps"));
         //
         const Teuchos::ParameterList &la_list = p->sublist("Linear Algebra");
-        assert(la_list.isType<double>("Linear Tolerance"));
-        assert(la_list.isType<int>("Linear Max. Iterations"));
-        assert(la_list.isType<int>("Linear Krylov Size"));
+        // check if solver was specified
+        assert((la_list.isSublist("GMRES Solver")) ||
+                (la_list.isType<std::string>("Solver")));
+        // Get GMRES solver
+        if (la_list.isSublist("GMRES Solver")) {
+            const Teuchos::ParameterList &params = la_list.sublist("GMRES Solver");
+            assert(params.isType<double>("Linear Tolerance"));
+            assert(params.isType<int>("Linear Max. Iterations"));
+            assert(params.isType<int>("Linear Krylov Size"));
+        } else {
+            assert( la_list.get<std::string>("Solver") == "SuperLU_DIST");
+        }
         assert(la_list.isType<double>("Nonlinear Tolerance"));
         assert(la_list.isType<int>("Nonlinear Max. Iterations"));
     }
@@ -76,15 +86,15 @@ namespace CTM {
         t_problem = rcp(new ThermalProblem(temp_params, param_lib, dim, comm));
 
         temp_params->validateParameters(*(t_problem->getValidProblemParameters()), 0);
-        t_problem->buildProblem(mesh_specs, state_mgr);
+        t_problem->buildProblem(mesh_specs, t_state_mgr);
 
         // create the initial discretization object
         auto neq = t_problem->numEquations();
         disc = disc_factory->createDiscretization(
                 neq,
                 t_problem->getSideSetEquations(),
-                state_mgr.getStateInfoStruct(),
-                state_mgr.getSideSetStateInfoStruct(),
+                t_state_mgr.getStateInfoStruct(),
+                t_state_mgr.getSideSetStateInfoStruct(),
                 t_problem->getFieldRequirements(),
                 t_problem->getSideSetFieldRequirements(),
                 t_problem->getNullSpace());
@@ -119,13 +129,13 @@ namespace CTM {
         Teuchos::RCP<Tpetra_Vector> du = Teuchos::rcp(new Tpetra_Vector(map_owned));
 
         // Set application
-        Teuchos::RCP<CTM::Application> t_application = 
-                Teuchos::rcp(new CTM::Application(params,sol_info,t_problem,disc));
-        
+        Teuchos::RCP<CTM::Application> t_application =
+                Teuchos::rcp(new CTM::Application(params, sol_info, t_problem, disc));
+
         // Get discretization
-        Teuchos::RCP<Albany::APFDiscretization> apf_disc = 
+        Teuchos::RCP<Albany::APFDiscretization> apf_disc =
                 Teuchos::rcp_dynamic_cast<Albany::APFDiscretization>(disc);
-        
+
         // time loop
         *out << std::endl;
         for (int step = 1; step <= num_steps; ++step) {
@@ -148,23 +158,23 @@ namespace CTM {
             while ((iter <= max_iter) && (!converged)) {
                 *out << "  " << iter << " newton iteration" << std::endl;
                 // compute residual
-                t_application->computeGlobalResidualT(t_current, v.get(), 
-                        xdotdot.get(),*u,*r);
+                t_application->computeGlobalResidualT(t_current, v.get(),
+                        xdotdot.get(), *u, *r);
                 // compute Jacobian
-                t_application->computeGlobalJacobianT(alpha,beta,omega,
-                t_current,v.get(),xdotdot.get(),*u,r.get(),*J);
+                t_application->computeGlobalJacobianT(alpha, beta, omega,
+                        t_current, v.get(), xdotdot.get(), *u, r.get(), *J);
                 // scale residual
                 r->scale(-1.0);
                 //
                 du->putScalar(0.0);
                 // solve the linear system of equations
-                solve_linear_system(p,J,du,r);
+                solve_linear_system(p, J, du, r);
                 // update solution
                 u->update(1.0, *du, 1.0);
                 v->update(alpha, *u, -alpha, *u_v, 0.0);
                 // compute residual
-                t_application->computeGlobalResidualT(t_current, v.get(), 
-                        xdotdot.get(),*u,*r);
+                t_application->computeGlobalResidualT(t_current, v.get(),
+                        xdotdot.get(), *u, *r);
                 // compute norm
                 double norm = r->norm2();
                 *out << "  ||r|| = " << norm << std::endl;
@@ -172,7 +182,7 @@ namespace CTM {
                 iter++;
                 // 
             } // end newton loop
-            apf_disc->writeSolutionT(*(sol_info->getGhostMV()->getVector(0)),t_current,true);
+            apf_disc->writeSolutionT(*(sol_info->getGhostMV()->getVector(0)), t_current, true);
             //apf_disc->writeSolutionToFileT(*u,t_current,false);
             TEUCHOS_TEST_FOR_EXCEPTION((iter > max_iter) && (!converged), std::out_of_range,
                     "\nnewton's method failed in " << max_iter << " iterations" << std::endl);
