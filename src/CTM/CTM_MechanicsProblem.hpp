@@ -139,7 +139,7 @@ namespace CTM {
 }
 
 #include <Albany_EvaluatorUtils.hpp>
-#include <Intrepid2_FieldContainer.hpp>
+//#include <Intrepid2_FieldContainer.hpp>
 #include <Intrepid2_DefaultCubatureFactory.hpp>
 #include <Shards_CellTopology.hpp>
 #include "PHAL_Source.hpp"
