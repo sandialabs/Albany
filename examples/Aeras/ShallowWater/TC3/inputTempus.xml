@@ -48,6 +48,7 @@
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="Tempus">
+      <Parameter name="Integrator Name" type="string" value="Tempus Integrator"/>
       <ParameterList name="Tempus Integrator">
         <Parameter name="Integrator Type" type="string" value="Integrator Basic"/>
         <Parameter name="Initial Time"       type="double" value="0.0"/>
@@ -84,8 +85,7 @@
         </ParameterList>
       </ParameterList>
       <ParameterList name="Tempus Stepper">
-         <!--Demo Stepper Type seems to be RK4-->
-        <Parameter name="Stepper Type" type="string" value="Demo"/>
+        <Parameter name="Stepper Type" type="string" value="RK Explicit Trapezoidal"/>
       </ParameterList>
       <ParameterList name="Stratimikos">
         <Parameter name="Linear Solver Type" type="string" value="Belos"/>
