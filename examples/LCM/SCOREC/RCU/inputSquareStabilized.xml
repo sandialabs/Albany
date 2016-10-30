@@ -54,7 +54,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="1"/>
-    <Parameter name="Test Values" type="Array(double)" value="{0.0827044913953}"/>
+    <Parameter name="Test Values" type="Array(double)" value="{2.392700063355e-02}"/>
     <Parameter name="Relative Tolerance" type="double" value="0.05"/>
   </ParameterList>
   <ParameterList name="Piro">
