@@ -4,9 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "gtest/gtest.h"
-#include "MiniLinearSolver.h"
-#include "MiniNonlinearSolver.h"
 #include "MiniSolvers.h"
+#include "MiniNonlinearSolver.h"
+#include "PHAL_AlbanyTraits.hpp"
+#include "ROL_MiniTensor_MiniSolver.hpp"
 
 // Why is this needed?
 bool TpetraBuild = false;
@@ -29,9 +30,9 @@ main(int ac, char * av[])
 }
 
 //
-// Test the LCM mini minimizer.
+// Test the LCM ROL mini minimizer.
 //
-TEST(AlbanyResidual, NewtonBanana)
+TEST(AlbanyResidualROL, LineSearchRosenbrock)
 {
   bool const
   print_output = ::testing::GTEST_FLAG(print_time);
@@ -51,24 +52,35 @@ TEST(AlbanyResidual, NewtonBanana)
   Intrepid2::Index
   DIM{2};
 
-  using MIN = Intrepid2::Minimizer<ValueT, DIM>;
-  using FN = LCM::Banana<ValueT>;
-  using STEP = Intrepid2::StepBase<FN, ValueT, DIM>;
+  using FN = LCM::Banana_Traits<EvalT>;
+  using MIN = ROL::MiniTensor_Minimizer<ValueT, DIM>;
+
+  ValueT const
+  a = 1.0;
+
+  ValueT const
+  b = 100.0;
+
+  FN
+  fn(a, b);
 
   MIN
   minimizer;
 
-  std::unique_ptr<STEP>
-  pstep =
-      Intrepid2::stepFactory<FN, ValueT, DIM>(Intrepid2::StepType::NEWTON);
+  // Define algorithm.
+  std::string const
+  algoname{"Line Search"};
 
-  assert(pstep->name() != nullptr);
+  // Set parameters.
+  Teuchos::ParameterList
+  params;
 
-  STEP &
-  step = *pstep;
+  params.sublist("Step").sublist("Line Search").sublist("Descent Method").
+    set("Type", "Newton-Krylov");
 
-  FN
-  banana;
+  params.sublist("Status Test").set("Gradient Tolerance", 1.0e-16);
+  params.sublist("Status Test").set("Step Tolerance", 1.0e-16);
+  params.sublist("Status Test").set("Iteration Limit", 128);
 
   Intrepid2::Vector<ScalarT, DIM>
   x;
@@ -76,18 +88,15 @@ TEST(AlbanyResidual, NewtonBanana)
   x(0) = 0.0;
   x(1) = 3.0;
 
-  LCM::MiniSolver<MIN, STEP, FN, EvalT, DIM>
-  mini_solver(minimizer, step, banana, x);
+  LCM::MiniSolverROL<MIN, FN, EvalT, DIM>
+  mini_solver(minimizer, algoname, params, fn, x);
 
   minimizer.printReport(os);
 
   ASSERT_EQ(minimizer.converged, true);
 }
 
-//
-// Test the LCM mini minimizer.
-//
-TEST(AlbanyJacobian, NewtonBanana)
+TEST(AlbanyJacobianROL, LineSearchRosenbrock)
 {
   bool const
   print_output = ::testing::GTEST_FLAG(print_time);
@@ -107,18 +116,35 @@ TEST(AlbanyJacobian, NewtonBanana)
   Intrepid2::Index
   DIM{2};
 
-  using MIN = Intrepid2::Minimizer<ValueT, DIM>;
-  using FN = LCM::Banana<ValueT>;
-  using STEP = Intrepid2::NewtonStep<FN, ValueT, DIM>;
+  using FN = LCM::Banana_Traits<EvalT>;
+  using MIN = ROL::MiniTensor_Minimizer<ValueT, DIM>;
+
+  ValueT const
+  a = 1.0;
+
+  ValueT const
+  b = 100.0;
+
+  FN
+  fn(a, b);
 
   MIN
   minimizer;
 
-  STEP
-  step;
+  // Define algorithm.
+  std::string const
+  algoname{"Line Search"};
 
-  FN
-  banana;
+  // Set parameters.
+  Teuchos::ParameterList
+  params;
+
+  params.sublist("Step").sublist("Line Search").sublist("Descent Method").
+    set("Type", "Newton-Krylov");
+
+  params.sublist("Status Test").set("Gradient Tolerance", 1.0e-16);
+  params.sublist("Status Test").set("Step Tolerance", 1.0e-16);
+  params.sublist("Status Test").set("Iteration Limit", 128);
 
   Intrepid2::Vector<ScalarT, DIM>
   x;
@@ -126,8 +152,8 @@ TEST(AlbanyJacobian, NewtonBanana)
   x(0) = 0.0;
   x(1) = 3.0;
 
-  LCM::MiniSolver<MIN, STEP, FN, EvalT, DIM>
-  mini_solver(minimizer, step, banana, x);
+  LCM::MiniSolverROL<MIN, FN, EvalT, DIM>
+  mini_solver(minimizer, algoname, params, fn, x);
 
   minimizer.printReport(os);
 

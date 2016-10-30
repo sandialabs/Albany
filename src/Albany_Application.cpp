@@ -227,13 +227,15 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     solMethod = Continuation;
   else if(solutionMethod == "Transient")
     solMethod = Transient;
+  else if(solutionMethod == "Transient Tempus")
+    solMethod = TransientTempus;
   else if(solutionMethod == "Eigensolve")
     solMethod = Eigensolve;
   else if(solutionMethod == "Aeras Hyperviscosity")
     solMethod = Transient;
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,
-            std::logic_error, "Solution Method must be Steady, Transient, "
+            std::logic_error, "Solution Method must be Steady, Transient, Transient Tempus "
             << "Continuation, Eigensolve, or Aeras Hyperviscosity, not : " << solutionMethod);
 
   bool expl = false;
@@ -264,7 +266,17 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     if (stepperType.find("Explicit") != std::string::npos)
       expl = true;
   }
-  //*out << "stepperType, expl: " <<stepperType << ", " <<  expl << std::endl;
+  else if (solMethod == TransientTempus) {
+    //Get Piro PL
+    Teuchos::RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(params, "Piro", true);
+    //Check if there is Rythmos Solver sublist, and get the stepper type
+    if (piroParams->isSublist("Tempus")) {
+      Teuchos::RCP<Teuchos::ParameterList> rythmosSolverParams = Teuchos::sublist(piroParams, "Tempus", true);
+    }
+    //IKT, 10/26/16, FIXME: get whether method is explicit from Tempus parameter list 
+    //expl = true; 
+  }
+   //*out << "stepperType, expl: " <<stepperType << ", " <<  expl << std::endl;
 
   // Register shape parameters for manipulation by continuation/optimization
   if (problemParams->get("Enable Cubit Shape Parameters",false)) {
@@ -4383,6 +4395,8 @@ Albany::Application::determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterLi
       piroSolverToken = "LOCA";
     } else if (solMethod == Transient) {
       piroSolverToken = (secondOrder == "No") ? "Rythmos" : secondOrder;
+    } else if (solMethod == TransientTempus) {
+      piroSolverToken = (secondOrder == "No") ? "Tempus" : secondOrder;
     } else {
       // Piro cannot handle the corresponding problem
       piroSolverToken = "Unsupported";

@@ -7,20 +7,27 @@
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Peridigm Code Coupling"/>
 
-    <Parameter name="MaterialDB Filename" type="string" value="OBC_PatchTest_ElasticMaterials.xml"/>
-
+    <Parameter name="MaterialDB Filename" type="string" value="OBC_Mechanics_PatchTest_ElasticMaterials.xml"/>
 
     <ParameterList name="Distributed Parameters">
-      <Parameter name="Number of Parameter Vectors" type="int" value="1"/>
+      <Parameter name="Number of Parameter Vectors" type="int" value="3"/>
       <ParameterList name="Distributed Parameter 0">
-        <Parameter name="Name" type="string" value="dirichlet_control_field"/>
+        <Parameter name="Name" type="string" value="dirichlet_control_field_x"/>
+        <Parameter name="Mesh Part" type="string" value="nodelist_5"/>
+      </ParameterList>
+      <ParameterList name="Distributed Parameter 1">
+        <Parameter name="Name" type="string" value="dirichlet_control_field_y"/>
+        <Parameter name="Mesh Part" type="string" value="nodelist_5"/>
+      </ParameterList>
+      <ParameterList name="Distributed Parameter 2">
+        <Parameter name="Name" type="string" value="dirichlet_control_field_z"/>
         <Parameter name="Mesh Part" type="string" value="nodelist_5"/>
       </ParameterList>
     </ParameterList>
 
-
     <ParameterList name="Peridigm Parameters">
       <ParameterList name="Optimization Based Coupling">
+	<Parameter name="Functional Scale Factor" type="double" value="1.0e7" />
       </ParameterList>
       <ParameterList name="Discretization">
 	<Parameter name="Type" type="string" value="Albany" />
@@ -42,7 +49,7 @@
       </ParameterList>
       <ParameterList name="Output">
 <!--
-        <Parameter name="Output Filename" type="string" value="OBC_PatchTest_PeridigmResults"/>
+        <Parameter name="Output Filename" type="string" value="OBC_Mechanics_PatchTest_PeridigmResults"/>
         <Parameter name="Output Frequency" type="int" value="1"/>
 -->
         <ParameterList name="Output Variables">
@@ -63,8 +70,12 @@
       <Parameter name="DBC on NS nodelist_2 for DOF X prescribe Field" type="string" value="dirichlet_field"/>
       <Parameter name="DBC on NS nodelist_8 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_9 for DOF Z" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_3 for DOF X prescribe Field" type="string" value="dirichlet_control_field"/>
-      <Parameter name="DBC on NS nodelist_4 for DOF X prescribe Field" type="string" value="dirichlet_control_field"/>
+      <Parameter name="DBC on NS nodelist_3 for DOF X prescribe Field" type="string" value="dirichlet_control_field_x"/>
+      <Parameter name="DBC on NS nodelist_4 for DOF X prescribe Field" type="string" value="dirichlet_control_field_x"/>
+      <Parameter name="DBC on NS nodelist_3 for DOF Y prescribe Field" type="string" value="dirichlet_control_field_y"/>
+      <Parameter name="DBC on NS nodelist_4 for DOF Y prescribe Field" type="string" value="dirichlet_control_field_y"/>
+      <Parameter name="DBC on NS nodelist_3 for DOF Z prescribe Field" type="string" value="dirichlet_control_field_z"/>
+      <Parameter name="DBC on NS nodelist_4 for DOF Z prescribe Field" type="string" value="dirichlet_control_field_z"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
@@ -78,9 +89,9 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="OBC_PatchTest.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="OBC_Mechanics_PatchTest.g"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
-    <Parameter name="Exodus Output File Name" type="string" value="OBC_PatchTest_Analysis.e"/>
+    <Parameter name="Exodus Output File Name" type="string" value="OBC_Mechanics_PatchTest_Analysis.e"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
@@ -100,14 +111,14 @@
     <Parameter name="Sensitivity Method" type="string" value="Adjoint"/>
 
     <!--Parameter name="Jacobian Operator" type="string" value="Finite Difference"/-->
-    
+
     <ParameterList name="Analysis">
       <Parameter name="Analysis Package" type="string" value="ROL"/>
       <ParameterList name="ROL">
         <Parameter name="Check Gradient" type="bool" value="false"/>
         <Parameter name="Gradient Tolerance" type="double" value="1e-9"/> <!-- DJL -->
         <Parameter name="Step Tolerance" type="double" value="1e-20"/>
-        <Parameter name="Max Iterations" type="int" value="500"/>
+        <Parameter name="Max Iterations" type="int" value="25"/>
         <Parameter name="Print Output" type="bool" value="true"/>
         <Parameter name="Parameter Initial Guess Type" type="string" value="From Model Evaluator"/> <!-- other choices are "Uniform Vector" or "Random Vector", default is "From Model Evaluator"/-->
         <Parameter name="Uniform Parameter Guess" type="double" value="0.000"/>

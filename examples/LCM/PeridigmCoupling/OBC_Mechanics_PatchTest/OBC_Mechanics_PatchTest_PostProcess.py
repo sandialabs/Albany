@@ -10,14 +10,14 @@
 #    The path above is valid on the CEE LAN.  On other systems, you need to provide a path to a SEACAS build
 #    that includes shared libraries.
 import sys
-sys.path.append('/ascldap/users/djlittl/ATDM/seacas/lib')
+sys.path.append('/ascldap/users/djlittl/ATDM/seacas/seacas_gcc_5.4.0/lib')
 import exodus
 
 import string
 
 if __name__ == "__main__":
 
-    inFileName = "OBC_PatchTest_Analysis.e"
+    inFileName = "OBC_Mechanics_PatchTest_Analysis.e"
     inFile = exodus.exodus(inFileName, mode='r')
 
     outFileLabel = string.splitfields(inFileName, '.')[0]
@@ -123,7 +123,7 @@ if __name__ == "__main__":
     for i in range(len(ave_initial_data)):
         if i > 2 and i < len(ave_initial_data)-1:
             ave_initial_data[i][1] = 0.0
-            
+
     all_final_data.sort()
     last_x = all_final_data[0][0]
     tol = 1.0e-8
@@ -149,15 +149,13 @@ if __name__ == "__main__":
 
     outFile = open(outFileLabel + "_fem.txt", 'w')
     for i in range(len(fem_initial_data)):
-        outFile.write(str(fem_initial_data[i][0]) + " " + str(fem_initial_data[i][3]) + " " + str(fem_final_data[i][3]) + "\n")        
+        outFile.write(str(fem_initial_data[i][0]) + " " + str(fem_initial_data[i][3]) + " " + str(fem_final_data[i][3]) + "\n")
     outFile.close()
 
     outFile = open(outFileLabel + "_all.txt", 'w')
     for i in range(len(ave_initial_data)):
-        outFile.write(str(ave_initial_data[i][0]) + " " + str(ave_initial_data[i][1]) + " " + str(ave_final_data[i][1]) + "\n")        
+        outFile.write(str(ave_initial_data[i][0]) + " " + str(ave_initial_data[i][1]) + " " + str(ave_final_data[i][1]) + "\n")
     outFile.close()
 
     print "\nData written to " + outFileLabel + "_pd.txt" + " and " + outFileLabel + "_fem.txt" +  " and " + outFileLabel + "_all.txt"
-    
     print
-    

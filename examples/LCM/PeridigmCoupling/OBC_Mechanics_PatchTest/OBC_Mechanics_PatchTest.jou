@@ -29,6 +29,6 @@ nodeset 6 curve 9                     # z axis on PD side
 nodeset 7 curve 7                     # y axis on PD side
 nodeset 8 curve 22                    # z axis on FEM side
 nodeset 9 curve 17                    # y axis on FEM side
-export genesis 'OBC_PatchTest_AllHex.g' overwrite
+export genesis 'OBC_Mechanics_PatchTest_AllHex.g' overwrite
 
-# spheregen.py --ignore-blocks 2 -o OBC_PatchTest.g OBC_PatchTest_AllHex.g
+# spheregen.py --ignore-blocks 2 -o OBC_Mechanics_PatchTest.g OBC_Mechanics_PatchTest_AllHex.g

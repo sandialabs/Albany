@@ -15,7 +15,7 @@
 namespace LCM{
 
 //
-// Class for dealing with Albany traits.
+// Class for dealing with Albany traits. Native implementation.
 //
 template<
 typename MIN, typename STEP, typename FN, typename EvalT, Intrepid2::Index N>
@@ -29,7 +29,7 @@ struct MiniSolver
 };
 
 //
-// MiniSolver class specializations for Albany traits.
+// MiniSolver class specializations for Albany traits. Native implementation.
 //
 
 template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
@@ -68,6 +68,69 @@ struct MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::DistParamDeriv, N>
   MiniSolver(
       MIN & minimizer,
       STEP & step_method,
+      FN & function,
+      Intrepid2::Vector<PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln);
+};
+
+//
+// Class for dealing with Albany traits. ROL implementation.
+//
+template<
+typename MIN, typename FN, typename EvalT, Intrepid2::Index N>
+struct MiniSolverROL
+{
+  MiniSolverROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      FN & function,
+      Intrepid2::Vector<typename EvalT::ScalarT, N> & soln);
+};
+
+//
+// MiniSolver class specializations for Albany traits. ROL implementation.
+//
+
+template<typename MIN, typename FN, Intrepid2::Index N>
+struct MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::Residual, N>
+{
+  MiniSolverROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      FN & function,
+      Intrepid2::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln);
+};
+
+template<typename MIN, typename FN, Intrepid2::Index N>
+struct MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::Jacobian, N>
+{
+  MiniSolverROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      FN & function,
+      Intrepid2::Vector<PHAL::AlbanyTraits::Jacobian::ScalarT, N> & soln);
+};
+
+template<typename MIN, typename FN, Intrepid2::Index N>
+struct MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::Tangent, N>
+{
+  MiniSolverROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      FN & function,
+      Intrepid2::Vector<PHAL::AlbanyTraits::Tangent::ScalarT, N> & soln);
+};
+
+template<typename MIN, typename FN, Intrepid2::Index N>
+struct MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::DistParamDeriv, N>
+{
+  MiniSolverROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
       FN & function,
       Intrepid2::Vector<PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln);
 };

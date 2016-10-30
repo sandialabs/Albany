@@ -133,6 +133,7 @@ createResponseFunction(
      name == "Squared L2 Error Side Target PST" ||
      name == "Surface Velocity Mismatch" ||
      name == "Surface Mass Balance Mismatch" ||
+     name == "Boundary Squared L2 Norm" ||
            name == "Aeras Shallow Water L2 Error" ||
            name == "Aeras Shallow Water L2 Norm" ||
            name == "Aeras Hydrostatic L2 Norm" ||

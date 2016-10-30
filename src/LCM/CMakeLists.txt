@@ -379,7 +379,7 @@ add_library(LCM ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 set_target_properties(LCM PROPERTIES
   PUBLIC_HEADER "${HEADERS}")
 
-IF ( INSTALL_ALBANY )
+IF (INSTALL_ALBANY)
   install(TARGETS LCM EXPORT albany-export
     LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
     ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
@@ -415,6 +415,13 @@ IF (LCM_TEST_EXES AND ALBANY_BGL)
     utMiniSolvers
     test/unit_tests/utMiniSolvers.cc
     )
+
+  IF (ALBANY_ROL)
+    add_executable(
+      utMiniSolversROL
+      test/unit_tests/utMiniSolversROL.cc
+      )
+  ENDIF()
 
   add_executable(
     utSurfaceElement
@@ -577,6 +584,9 @@ IF (LCM_TEST_EXES AND ALBANY_BGL)
   target_link_libraries(TopologyBase ${repeat_libs} ${ALL_LIBRARIES})
   target_link_libraries(utLocalNonlinearSolver ${repeat_libs} ${ALL_LIBRARIES})
   target_link_libraries(utMiniSolvers ${repeat_libs} ${ALL_LIBRARIES})
+  IF (ALBANY_ROL)
+    target_link_libraries(utMiniSolversROL ${repeat_libs} ${ALL_LIBRARIES})
+  ENDIF()
   target_link_libraries(utSurfaceElement ${repeat_libs} ${ALL_LIBRARIES})
   target_link_libraries(utHeliumODEs ${repeat_libs} ${ALL_LIBRARIES})
   IF(NOT BUILD_SHARED_LIBS)

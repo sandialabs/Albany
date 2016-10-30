@@ -6,8 +6,6 @@
 #See cronjob_camobap for the cronjob on that machine.
 
 01 00 * * 1-5  cd /home/ikalash/nightlyCDash; sbatch trilinos.batch
-00 03 * * 1-5  scp -r /home/ikalash/nightlyCDash/build/Testing/20* ikalash@camobap.ca.sandia.gov:/home/ikalash/nightlyCDashRide
 30 03 * * 1-5  cd /home/ikalash/nightlyCDash; sbatch albany.batch
-00 06 * * 1-5  scp -r /home/ikalash/nightlyCDash/build/Testing/20* ikalash@camobap.ca.sandia.gov:/home/ikalash/nightlyCDashRide
 01 06 * * 1-5  cd /home/ikalash/nightlyCDash; bash process_results_ctest.sh 
 02 06 * * 1-5  cd /home/ikalash/nightlyCDash; bash send_email_ctest.sh 

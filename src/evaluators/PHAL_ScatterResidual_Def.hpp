@@ -645,11 +645,12 @@ evaluateFields(typename Traits::EvalData workset)
   int numDim= (this->tensorRank==2) ? this->valTensor[0].dimension(2) : 0;
 
   if (trans) {
+    const int neq = workset.wsElNodeEqID[0][0].size(); 
     const Albany::IDArray&  wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
         workset.local_Vp[cell];
-      const int num_deriv = local_Vp.size()/numFields;
+      const int num_deriv = this->numNodes;//local_Vp.size()/numFields;
       for (int i=0; i<num_deriv; i++) {
         for (int col=0; col<num_cols; col++) {
           double val = 0.0;
@@ -659,7 +660,7 @@ evaluateFields(typename Traits::EvalData workset)
                         valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                                   this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                                   this->valTensor[0](cell,node, eq/numDim, eq%numDim));
-              val += valref.dx(i)*local_Vp[node*numFields+eq][col];
+              val += valref.dx(i)*local_Vp[node*neq+eq+this->offset][col];  //numField can be less then neq
             }
           }
           const LO row = wsElDofs((int)cell,i,0);
@@ -715,6 +716,7 @@ evaluateFields(typename Traits::EvalData workset)
   int numDim= (this->tensorRank==2) ? this->valTensor[0].dimension(2) : 0;
 
   if (trans) {
+    const int neq = workset.wsElNodeEqID[0][0].size();
     const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
     int numLayers = layeredMeshNumbering.numLayers;
@@ -725,7 +727,7 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
         workset.local_Vp[cell];
-      const int num_deriv = local_Vp.size()/this->numFields;
+      const int num_deriv = this->numNodes;//local_Vp.size()/this->numFields;
       for (int i=0; i<num_deriv; i++) {
         LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[i]);
         LO base_id, ilayer;
@@ -741,7 +743,7 @@ evaluateFields(typename Traits::EvalData workset)
                         valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                                   this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                                   this->valTensor[0](cell,node, eq/numDim, eq%numDim));
-              val += valref.dx(i)*local_Vp[node*this->numFields+eq][col];
+              val += valref.dx(i)*local_Vp[node*neq+eq+this->offset][col];  //numField can be less then neq
             }
           }
           const LO row = workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_map()->getLocalElement(ginode);

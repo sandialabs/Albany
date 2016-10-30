@@ -7,6 +7,8 @@
 #ifndef PHAL_ADD_NOISE_HPP
 #define PHAL_ADD_NOISE_HPP 1
 
+#include <random>
+
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"

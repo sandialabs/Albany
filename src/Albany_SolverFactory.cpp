@@ -886,6 +886,8 @@ Albany::SolverFactory::createAlbanyAppAndModelT(
       piroSolverToken = "NOX";
     } else if (solutionMethod == "Transient") {
       piroSolverToken = "Rythmos";
+    } else if (solutionMethod == "Transient Tempus") {
+      piroSolverToken = "Tempus";
     } else {
       // Piro cannot handle the corresponding problem
       piroSolverToken = "Unsupported";

@@ -658,21 +658,22 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   state_internal.slip_np1_ = slip_np1;
 
 
-  auto integratorFactory = CP::IntegratorFactory<EvalT, CP::MAX_DIM, CP::MAX_SLIP>(
-                              allocator,
-                              minimizer_,
-                              step_type_,
-                              nox_status_test_,
-                              element_slip_systems,
-                              slip_families_,
-                              state_mechanical,
-                              state_internal,
-                              C,
-                              F_np1,
-                              dt_);
+  auto
+  integratorFactory = CP::IntegratorFactory<EvalT, CP::MAX_DIM, CP::MAX_SLIP>(
+    allocator,
+    minimizer_,
+    step_type_,
+    nox_status_test_,
+    element_slip_systems,
+    slip_families_,
+    state_mechanical,
+    state_internal,
+    C,
+    F_np1,
+    dt_);
 
-  auto integrator = integratorFactory(integration_scheme_,
-      residual_type_);
+  auto
+  integrator = integratorFactory(integration_scheme_, residual_type_);
 
   update_state_successful = integrator->update(norm_slip_residual);
   

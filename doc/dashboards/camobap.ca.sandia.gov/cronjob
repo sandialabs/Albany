@@ -30,10 +30,4 @@
 12 00 * * 6    source /home/ikalash/.bashrc; scp -r /home/ikalash/Desktop ikalash@mockba:/media/a078b7aa-fb53-4281-8356-a5e964c1549f/camobap
 12 00 * * 7    source /home/ikalash/.bashrc; scp -r /extradrive ikalash@mockba:/media/a078b7aa-fb53-4281-8356-a5e964c1549f/camobap
 #00 05 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCoriCDash; rm -rf test_summary.txt; scp ikalash@cori.nersc.gov:/project/projectdirs/piscees/nightlyCoriCDash/test_summary.txt .; bash send_email.sh
-30 02 * * 1-5  cd /home/ikalash/nightlyCDashRide; rm -rf Results; rm -rf submit*.log
-00 03 * * 1-5  cd /home/ikalash/nightlyCDashRide; mv 20* Results
-30 03 * * 1-5  cd /home/ikalash/nightlyCDashRide; bash submit_script.sh 
-30 04 * * 1-5  cd /home/ikalash/nightlyCDashRide; rm -rf Results; mv submit.log submit_trilinos.log
-30 05 * * 1-5  cd /home/ikalash/nightlyCDashRide; mv 20* Results
-35 05 * * 1-5  cd /home/ikalash/nightlyCDashRide; bash submit_script.sh
 ~                                                          
