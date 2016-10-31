@@ -62,6 +62,7 @@
 
 #ifdef ALBANY_AFRL
 #include "AFRL/problems/MultiScaleHeatProblem.hpp"
+#include "AFRL/problems/RotationMechanicsProblem.hpp"
 #endif
 
 #ifdef ALBANY_AMP
@@ -304,6 +305,9 @@ Albany::ProblemFactory::create()
   }
   else if (method == "MultiScale Heat 3D") {
     strategy = rcp(new Albany::MultiScaleHeatProblem(problemParams, paramLib, 3, commT));
+  }
+  else if (method == "Rotation Mechanics 3D") {
+    strategy = rcp(new Albany::RotationMechanicsProblem(problemParams, paramLib, getNumDim(method), rc_mgr, commT));
   }
 #endif
 #ifdef ALBANY_AMP

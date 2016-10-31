@@ -318,7 +318,6 @@ evaluateFields(typename Traits::EvalData workset)
       meanGradTemp[i] /= (workset.numCells*numQPs);
     }
 
-
     double thermalConductivity = get_remote(workset.current_time,
                                             workset.current_time - val(dt),
                                             meanTemp,

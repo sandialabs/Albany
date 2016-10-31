@@ -8,19 +8,24 @@
 # problems
 SET(SOURCES
   problems/MultiScaleHeatProblem.cpp
+  problems/RotationMechanicsProblem.cpp
   )
 SET(HEADERS
   problems/MultiScaleHeatProblem.hpp
+  problems/RotationMechanicsProblem.hpp
   )
 
 # evaluators
 SET(SOURCES ${SOURCES}
   evaluators/MultiScaleThermalConductivity.cpp
+  evaluators/RotatingReferenceFrame.cpp
   )
 
 SET(HEADERS ${HEADERS}
   evaluators/MultiScaleThermalConductivity.hpp
   evaluators/MultiScaleThermalConductivity_Def.hpp
+  evaluators/RotatingReferenceFrame.hpp
+  evaluators/RotatingReferenceFrame_Def.hpp
   )
 
 # communicators
@@ -35,7 +40,8 @@ SET(HEADERS ${HEADERS}
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
   ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators
   ${Albany_SOURCE_DIR}/src/problems ${Albany_SOURCE_DIR}/src/responses
-  ${Albany_SOURCE_DIR}/src/stk
+  ${Albany_SOURCE_DIR}/src/stk ${Albany_SOURCE_DIR}/src/LCM/problems
+  ${Albany_SOURCE_DIR}/src/LCM/evaluators
   ./problems ./evaluators ./communicators
   )
 
