@@ -1,5 +1,5 @@
-#ifndef CTM_THERMAL_PROBLEM_HPP
-#define CTM_THERMAL_PROBLEM_HPP
+#ifndef CTM_MECHANICS_PROBLEM_HPP
+#define CTM_MECHANICS_PROBLEM_HPP
 
 #include "CTM_Teuchos.hpp"
 #include "Albany_ProblemUtils.hpp"
@@ -10,7 +10,7 @@
 
 namespace CTM {
 
-    class ThermalProblem : public Albany::AbstractProblem {
+    class MechanicsProblem : public Albany::AbstractProblem {
     public:
 
         /// \brief Convenience typedef.
@@ -22,20 +22,20 @@ namespace CTM {
         /// \param param_lib We ignore this.
         /// \param num_dims The number of spatial dimensions of the problem.
         /// \param comm The Teuchos communicator object.
-        ThermalProblem(
+        MechanicsProblem(
                 const RCP<ParameterList>& params,
                 RCP<ParamLib> const& param_lib,
                 const int num_dims,
                 RCP<const Teuchos::Comm<int> >& comm);
 
         /// \brief Explicitly prohibit copying.
-        ThermalProblem(const ThermalProblem&) = delete;
+        MechanicsProblem(const MechanicsProblem&) = delete;
 
         /// \brief Explicitly prohibit assignment.
-        ThermalProblem& operator=(const ThermalProblem&) = delete;
+        MechanicsProblem& operator=(const MechanicsProblem&) = delete;
 
         /// \brief Destructor.
-        ~ThermalProblem();
+        ~MechanicsProblem();
 
         /// \brief Get the number of spatial dimensions for this problem.
 
@@ -93,17 +93,17 @@ namespace CTM {
         /// Neumann boundary conditions.
         void constructNeumannEvaluators(
                 const RCP<Albany::MeshSpecsStruct>& mesh_specs);
-        
+
         /// \brief Get valid parameters for this problem
         /// \details Each problem must generate it's list of valid parameters
         ///
         Teuchos::RCP<const Teuchos::ParameterList>
         getValidProblemParameters() const;
 
-//        /// \brief I don't know what this does yet.
-//        void getAllocatedStates(
-//                ArrayRCP<ArrayRCP<RCP<FC> > > old_state,
-//                ArrayRCP<ArrayRCP<RCP<FC> > > new_state) const;
+        //        /// \brief I don't know what this does yet.
+        //        void getAllocatedStates(
+        //                ArrayRCP<ArrayRCP<RCP<FC> > > old_state,
+        //                ArrayRCP<ArrayRCP<RCP<FC> > > new_state) const;
 
     private:
 
@@ -112,8 +112,8 @@ namespace CTM {
         RCP<LCM::MaterialDatabase> material_db_;
         std::string materialFileName_;
         RCP<const Teuchos::Comm<int>> comm_;
-//        ArrayRCP<ArrayRCP<RCP<FC> > > old_state;
-//        ArrayRCP<ArrayRCP<RCP<FC> > > new_state;
+        //        ArrayRCP<ArrayRCP<RCP<FC> > > old_state;
+        //        ArrayRCP<ArrayRCP<RCP<FC> > > new_state;
 
     protected:
 
@@ -128,7 +128,7 @@ namespace CTM {
         bool have_source_;
         // Type of thermal source that is in effect
         SOURCE_TYPE thermal_source_;
-        
+
         // Has the thermal source been evaluated in this element block?
         bool thermal_source_evaluated_;
 
@@ -143,20 +143,28 @@ namespace CTM {
 #include <Intrepid2_DefaultCubatureFactory.hpp>
 #include <Shards_CellTopology.hpp>
 #include "PHAL_Source.hpp"
+//
+#include "PHAL_NSMaterialProperty.hpp"
+#include "PHAL_Source.hpp"
+#include "PHAL_SaveStateField.hpp"
+//
+#include "FieldNameMap.hpp"
+//
+#include "MechanicsResidual.hpp"
+#include "CurrentCoords.hpp"
+//#include "TvergaardHutchinson.hpp"
+#include "MeshSizeField.hpp"
+//#include "SurfaceCohesiveResidual.hpp"
 
 // Constitutive Model Interface and parameters
 #include "Kinematics.hpp"
 #include "ConstitutiveModelInterface.hpp"
 #include "ConstitutiveModelParameters.hpp"
-
-// Generic Transport Residual
-#include "TransportResidual.hpp"
-
-// Thermomechanics specific evaluators
-#include "ThermoMechanicalCoefficients.hpp"
+#include "Strain.hpp"
+#include "FirstPK.hpp"
 
 template <typename EvalT>
-Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
+Teuchos::RCP<const PHX::FieldTag> CTM::MechanicsProblem::constructEvaluators(
         PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         const Albany::MeshSpecsStruct& mesh_specs,
         Albany::StateManager& state_mgr,
@@ -208,6 +216,20 @@ Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
             << ", QPs= " << num_qps
             << ", Dim= " << num_dims << std::endl;
      */
+
+    // Define Field Names
+    // generate the field name map
+    LCM::FieldNameMap field_name_map(false);
+    Teuchos::RCP<std::map < std::string, std::string>> fnm =
+            field_name_map.getMap();
+    const std::string cauchy = (*fnm)["Cauchy_Stress"];
+    const std::string firstPK = (*fnm)["FirstPK"];
+    const std::string temperature = (*fnm)["Temperature"];
+    const std::string mech_source = (*fnm)["Mechanical_Source"];
+    const std::string defgrad = (*fnm)["F"];
+    const std::string J = (*fnm)["J"];
+
+
     // evaluator utility
     Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
     // Temporary variable used numerous times below
@@ -216,37 +238,46 @@ Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
     // register variable names
     Teuchos::ArrayRCP<std::string> dof_names(1);
     Teuchos::ArrayRCP<std::string> dof_names_dot(1);
+    Teuchos::ArrayRCP<std::string> dof_names_dotdot(1);
     Teuchos::ArrayRCP<std::string> resid_names(1);
-
-    dof_names[0] = "Temperature";
-    dof_names_dot[0] = "Temperature Dot";
+    dof_names[0] = "Displacement";
+    dof_names_dot[0] = "Velocity";
+    dof_names_dotdot[0] = "Acceleration";
     resid_names[0] = dof_names[0] + " Residual";
 
     int offset = 0;
     if (isTransient_) {
         fm0.template registerEvaluator<EvalT>
-                (evalUtils.constructGatherSolutionEvaluator(
-                false,
+                (evalUtils.constructGatherSolutionEvaluator_withAcceleration(
+                true,
                 dof_names,
                 dof_names_dot,
-                offset));
+                dof_names_dotdot));
+        //
         fm0.template registerEvaluator<EvalT>
-                (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[0], offset));
+                (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0]));
+        //
+        fm0.template registerEvaluator<EvalT>
+                (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dotdot[0]));
+        //
+        fm0.template registerEvaluator<EvalT>
+                (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names_dot[0]));
+        //
     } else {
         fm0.template registerEvaluator<EvalT>
-                (evalUtils.constructGatherSolutionEvaluator_noTransient(false,
-                dof_names,
-                offset));
+                (evalUtils.constructGatherSolutionEvaluator_noTransient(true,
+                dof_names));
     }
 
     fm0.template registerEvaluator<EvalT>
             (evalUtils.constructGatherCoordinateVectorEvaluator());
 
-    fm0.template registerEvaluator<EvalT>
-            (evalUtils.constructDOFInterpolationEvaluator(dof_names[0], offset));
 
     fm0.template registerEvaluator<EvalT>
-            (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0], offset));
+            (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
+
+    fm0.template registerEvaluator<EvalT>
+            (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
 
     fm0.template registerEvaluator<EvalT>
             (evalUtils.constructMapToPhysicalFrameEvaluator(cell_type,
@@ -258,62 +289,53 @@ Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
             cubature));
 
     fm0.template registerEvaluator<EvalT>
-            (evalUtils.constructScatterResidualEvaluator(false,
-            resid_names,
-            offset,
-            "Scatter Temperature"));
+            (evalUtils.constructScatterResidualEvaluator(true,
+            resid_names));
+    offset += num_dims;
+    //
 
-    // Heat Source in Heat Equation
-    if (thermal_source_ != SOURCE_TYPE_NONE) {
+    { // Current Coordinates
+        Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+                new Teuchos::ParameterList("Current Coordinates"));
+        p->set<std::string>("Reference Coordinates Name", "Coord Vec");
+        p->set<std::string>("Displacement Name", "Displacement");
+        p->set<std::string>("Current Coordinates Name", "Current Coordinates");
+        ev = Teuchos::rcp(
+                new LCM::CurrentCoords<EvalT, PHAL::AlbanyTraits>(*p, dl));
+        fm0.template registerEvaluator<EvalT>(ev);
+    }
 
+    {
         Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
                 new Teuchos::ParameterList);
 
-        p->set<std::string>("Source Name", "Heat Source");
-        p->set<std::string>("Variable Name", "Temperature");
+        p->set<std::string>("Material Property Name", temperature);
+        p->set<Teuchos::RCP < PHX::DataLayout >> ("Data Layout", dl->qp_scalar);
+        p->set<std::string>("Coordinate Vector Name", "Coord Vec");
         p->set<Teuchos::RCP < PHX::DataLayout >> (
-                "QP Scalar Data Layout",
-                dl->qp_scalar);
+                "Coordinate Vector Data Layout",
+                dl->qp_vector);
 
         p->set<Teuchos::RCP < ParamLib >> ("Parameter Library", paramLib);
+        Teuchos::ParameterList& paramList = params->sublist("Temperature");
 
-        if (thermal_source_ == SOURCE_TYPE_INPUT) { // Thermal source in input file
+        // This evaluator is called to set a constant temperature when "Variable Type"
+        // is set to "Constant." It is also called when "Variable Type" is set to
+        // "Time Dependent." There are two "Type" variables in the PL - "Type" and
+        // "Variable Type". For the last case, lets set "Type" to "Time Dependent" to hopefully
+        // make the evaluator call a little more general (GAH)
+        std::string temp_type = paramList.get<std::string>("Variable Type", "None");
+        if (temp_type == "Time Dependent") {
 
-            Teuchos::ParameterList& paramList = params->sublist("Source Functions")
-                    .sublist("Thermal Source");
-            p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+            paramList.set<std::string>("Type", temp_type);
 
-            ev = Teuchos::rcp(new PHAL::Source<EvalT, PHAL::AlbanyTraits>(*p));
-            fm0.template registerEvaluator<EvalT>(ev);
+        }
 
-            thermal_source_evaluated_ = true;
+        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-        } else if (thermal_source_ == SOURCE_TYPE_MATERIAL) {
-
-            // There may not be a source in every element block
-            if (material_db_->isElementBlockSublist(eb_name, "Source Functions")) { // Thermal source in matDB
-
-                Teuchos::ParameterList& srcParamList = material_db_->
-                        getElementBlockSublist(eb_name, "Source Functions");
-
-                if (srcParamList.isSublist("Thermal Source")) {
-
-                    Teuchos::ParameterList& paramList = srcParamList.sublist(
-                            "Thermal Source");
-                    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-                    ev = Teuchos::rcp(new PHAL::Source<EvalT, PHAL::AlbanyTraits>(*p));
-                    fm0.template registerEvaluator<EvalT>(ev);
-
-                    thermal_source_evaluated_ = true;
-                }
-            } else // Do not evaluate heat source in TransportResidual
-            {
-                thermal_source_evaluated_ = false;
-            }
-        } else
-            TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                "Unrecognized thermal source specified in input file");
+        ev = Teuchos::rcp(
+                new PHAL::NSMaterialProperty<EvalT, PHAL::AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
     }
 
     { // Constitutive Model Parameters
@@ -323,8 +345,7 @@ Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
                 eb_name, "material");
         Teuchos::ParameterList& param_list =
                 material_db_->getElementBlockSublist(eb_name, matName);
-        // for quantities that depends on temperature
-        p->set<std::string>("Temperature Name", dof_names[0]);
+        p->set<std::string>("Temperature Name", temperature);
         param_list.set<bool>("Have Temperature", true);
 
         // optional spatial dependence
@@ -341,88 +362,137 @@ Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
                 dl));
         fm0.template registerEvaluator<EvalT>(cmpEv);
     }
-    
+
     {
         Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
-                new Teuchos::ParameterList("ThermoMechanical Coefficients"));
-
-        std::string matName =
-                material_db_->getElementBlockParam<std::string>(eb_name, "material");
+                new Teuchos::ParameterList("Constitutive Model Interface"));
+        std::string matName = material_db_->getElementBlockParam<std::string>(
+                eb_name, "material");
         Teuchos::ParameterList& param_list =
                 material_db_->getElementBlockSublist(eb_name, matName);
+
+        // FIXME: figure out how to do this better
+        param_list.set<bool>("Have Temperature", false);
+        p->set<std::string>("Temperature Name", temperature);
+        param_list.set<bool>("Have Temperature", true);
+
+        param_list.set<Teuchos::RCP<std::map < std::string, std::string>>>(
+                "Name Map",
+                fnm);
         p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);
 
-        // Input
-        p->set<std::string>("Temperature Name", "Temperature");
-        p->set<std::string>("Temperature Dot Name", "Temperature Dot");
-        // next line is important
-        p->set<std::string>("Solution Method Type", "No Continuation");
-        p->set<std::string>("Thermal Conductivity Name", "Thermal Conductivity");
-        p->set<std::string>("Thermal Transient Coefficient Name",
-                "Thermal Transient Coefficient");
-
-        // Output
-        p->set<std::string>("Thermal Diffusivity Name", "Thermal Diffusivity");
-
-        ev = Teuchos::rcp(
-                new LCM::ThermoMechanicalCoefficients<EvalT, PHAL::AlbanyTraits>(
+        Teuchos::RCP<LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits>>
+                cmiEv =
+                Teuchos::rcp(
+                new LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits>(
                 *p,
                 dl));
+        fm0.template registerEvaluator<EvalT>(cmiEv);
+
+        // register state variables
+        for (int sv = 0; sv < cmiEv->getNumStateVars(); ++sv) {
+            cmiEv->fillStateVariableStruct(sv);
+            p = state_mgr.registerStateVariable(cmiEv->getName(),
+                    cmiEv->getLayout(),
+                    dl->dummy,
+                    eb_name,
+                    cmiEv->getInitType(),
+                    cmiEv->getInitValue(),
+                    cmiEv->getStateFlag(),
+                    cmiEv->getOutputFlag());
+            ev = Teuchos::rcp(
+                    new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+            fm0.template registerEvaluator<EvalT>(ev);
+        }
+    }
+
+    { // Kinematics quantities
+        Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+                new Teuchos::ParameterList("Kinematics"));
+
+        // send in integration weights and the displacement gradient
+        p->set<std::string>("Weights Name", "Weights");
+        p->set<Teuchos::RCP < PHX::DataLayout >> (
+                "QP Scalar Data Layout",
+                dl->qp_scalar);
+        p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
+        p->set<Teuchos::RCP < PHX::DataLayout >> (
+                "QP Tensor Data Layout",
+                dl->qp_tensor);
+
+        //Outputs: F, J
+        p->set<std::string>("DefGrad Name", defgrad); //dl_->qp_tensor also
+        p->set<std::string>("DetDefGrad Name", J);
+        p->set<Teuchos::RCP < PHX::DataLayout >> (
+                "QP Scalar Data Layout",
+                dl->qp_scalar);
+
+        ev = Teuchos::rcp(
+                new LCM::Kinematics<EvalT, PHAL::AlbanyTraits>(*p, dl));
+        fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    { // Strain
+        Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Strain"));
+
+        //Input
+        p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
+
+        //Output
+        p->set<std::string>("Strain Name", "Strain");
+
+        ev = rcp(new LCM::Strain<EvalT, PHAL::AlbanyTraits>(*p, dl));
         fm0.template registerEvaluator<EvalT>(ev);
     }
 
     {
+        // convert Cauchy stress to first Piola-Kirchhoff
         Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
-                new Teuchos::ParameterList("Temperature Residual"));
+                new Teuchos::ParameterList("First PK Stress"));
+        //Input
+        p->set<std::string>("Stress Name", cauchy);
+        p->set<std::string>("DefGrad Name", defgrad);
 
-        // Input
-        p->set<std::string>("Scalar Variable Name", "Temperature");
-        p->set<std::string>("Scalar Gradient Variable Name",
-                "Temperature Gradient");
-        p->set<std::string>("Weights Name", "Weights");
-        p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-        p->set<std::string>("Weighted BF Name", "wBF");
+        //Output
+        p->set<std::string>("First PK Stress Name", firstPK);
+        p->set<bool>("Small Strain", false);
 
-        // Transient
-        if (isTransient_) {
-            p->set<bool>("Have Transient", true);
-        }
-        p->set<std::string>("Scalar Dot Name", "Temperature Dot");
-        p->set<std::string>("Transient Coefficient Name",
-                "Thermal Transient Coefficient");
-        p->set<std::string>("Solution Method Type", "No Continuation");
+        p->set<Teuchos::RCP < ParamLib >> ("Parameter Library", paramLib);
 
-        // Diffusion
-        p->set<bool>("Have Diffusion", true);
-        p->set<std::string>("Diffusivity Name", "Thermal Diffusivity");
-
-        // Thermal Source (internal energy generation)
-        if (thermal_source_evaluated_) {
-            p->set<bool>("Have Second Source", true);
-            p->set<std::string>("Second Source Name", "Heat Source");
-        }
-
-        // Output
-        p->set<std::string>("Residual Name", "Temperature Residual");
-
-        ev = Teuchos::rcp(
-                new LCM::TransportResidual<EvalT, PHAL::AlbanyTraits>(*p, dl));
+        ev = Teuchos::rcp(new LCM::FirstPK<EvalT, PHAL::AlbanyTraits>(*p, dl));
         fm0.template registerEvaluator<EvalT>(ev);
     }
-    
+
+
+    { // Residual
+        Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+                new Teuchos::ParameterList("Displacement Residual"));
+        //Input
+        p->set<std::string>("Stress Name", firstPK);
+        p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+        p->set<std::string>("Weighted BF Name", "wBF");
+        p->set<std::string>("Acceleration Name", "Acceleration");
+        p->set<bool>("Disable Dynamics", true);
+        p->set<Teuchos::RCP < ParamLib >> ("Parameter Library", paramLib);
+        //Output
+        p->set<std::string>("Residual Name", "Displacement Residual");
+        ev = Teuchos::rcp(
+                new LCM::MechanicsResidual<EvalT, PHAL::AlbanyTraits>(*p, dl));
+        fm0.template registerEvaluator<EvalT>(ev);
+    }
+
     if (fm_choice == Albany::BUILD_RESID_FM) {
+
         Teuchos::RCP<const PHX::FieldTag> ret_tag;
 
-        PHX::Tag<typename EvalT::ScalarT > temperature_tag("Scatter Temperature",
-                dl->dummy);
-        fm0.requireField<EvalT>(temperature_tag);
-        ret_tag = temperature_tag.clone();
+        PHX::Tag<typename EvalT::ScalarT > res_tag("Scatter", dl->dummy);
+        fm0.requireField<EvalT>(res_tag);
+        ret_tag = res_tag.clone();
 
         return ret_tag;
     }
 
-    return Teuchos::null;
-    
-}
 
+    return Teuchos::null;
+}
 #endif

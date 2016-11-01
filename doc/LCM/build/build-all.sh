@@ -1,11 +1,16 @@
 #!/bin/bash
 
 update_wiki () {
+    echo "IN UPDATE WIKI"
     cd "$LCM_DIR"
     STATUS_LOG="$PACKAGE-$ARCH-$TOOL_CHAIN-$BUILD_TYPE-status.log"
-    if [[ -f "$STATUS_LOG" && "$WIKI"=="1" ]]; then
-	SRC="Albany/doc/LCM/test/$WIKI_TEMPLATE"
+    echo "STATUS_LOG=$STATUS_LOG"
+    if [[ -f "$STATUS_LOG" && -d "$LCM_DIR/Albany.wiki" ]]; then
+        echo "IN IF UPDATE"
+	SRC="$LCM_DIR/Albany/doc/LCM/test/$WIKI_TEMPLATE"
 	DEST="$LCM_DIR/Albany.wiki/$WIKI_TEMPLATE"
+	cd "$LCM_DIR/Albany.wiki"
+        git pull
 	cp -p "$SRC" "$DEST"
 	cd "$LCM_DIR/Trilinos"
 	TRILINOS_TAG=`git rev-parse HEAD`
@@ -86,6 +91,8 @@ for P in $PACKAGES; do
 		                    release)
 			                case "$TC" in
 			                    gcc)
+                                                # PACKAGE is not set in modules
+                                                PACKAGE="$P"
 				                update_wiki
 				                ;;
 			                    *)

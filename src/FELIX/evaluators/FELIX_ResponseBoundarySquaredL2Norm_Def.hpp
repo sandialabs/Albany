@@ -124,7 +124,7 @@ void FELIX::ResponseBoundarySquaredL2Norm<EvalT, Traits>::evaluateFields(typenam
       ScalarT t = 0;
       for (int inode=0; inode<numSideNodes; ++inode) {
         //using trapezoidal rule to get diagonal mass matrix
-        t += std::pow(solution(cell,side,inode,offset),2)* trapezoid_weight;
+        t += std::pow(solution(cell,side,inode),2)* trapezoid_weight;
       }
       this->local_response(cell, 0) += t*scaling;
       this->global_response(0) += t*scaling;

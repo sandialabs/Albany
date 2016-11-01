@@ -71,7 +71,8 @@ namespace CTM {
         RCP<Albany::DiscretizationFactory> disc_factory;
         RCP<Albany::AbstractDiscretization> disc;
         ArrayRCP<RCP<Albany::MeshSpecsStruct> > mesh_specs;
-        Albany::StateManager state_mgr;
+        Albany::StateManager m_state_mgr;
+        Albany::StateManager t_state_mgr;
         Teuchos::RCP<SolutionInfo> sol_info;
 
         RCP<Albany::AbstractProblem> t_problem;
