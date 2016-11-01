@@ -7,7 +7,7 @@ cd "$LCM_DIR"
 if [ -f "$STATUS_LOG" ]; then
     rm "$STATUS_LOG" -f
 fi
-		
+
 case "$SCRIPT_NAME" in
     build.sh)
 	;;
@@ -111,21 +111,26 @@ case "$SCRIPT_NAME" in
                     else
                         ER="$ER,DataTransferKit"
                     fi
-                fi 
-	        if [ -e "$PACKAGE_DIR/tempus" ]; then
-                    if [ -z $ER ]; then
-                        ER="tempus"
-                    else
-                        ER="$ER,tempus"
-                    fi
                 fi
+                #
+                # Disable this temporarily because for now Tempus
+                # is considered part of Trilinos as a hack while it
+                # gets copyright.
+                #
+	        #if [ -e "$PACKAGE_DIR/tempus" ]; then
+                #    if [ -z $ER ]; then
+                #        ER="tempus"
+                #    else
+                #        ER="$ER,tempus"
+                #    fi
+                #fi
                 if [ ! -z $ER ]; then
                     TER=" -D Trilinos_EXTRA_REPOSITORIES:STRING=\"$ER\" \\"
                     sed -i -e "/lcm_package_dir/d" "$CONFIG_FILE"
                     echo "\\" >> "$CONFIG_FILE"
                     echo "$TER" >> "$CONFIG_FILE"
                 fi
-                
+
 	        if [ -e "$PACKAGE_DIR/DataTransferKit" ]; then
                     TMP_FILE="/tmp/_TMP_FILE_"
                     ETION="Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
@@ -163,9 +168,9 @@ case "$SCRIPT_NAME" in
         else
             NETCDF_INC=/usr/include/openmpi-x86_64
             NETCDF_LIB=/usr/lib64/openmpi/lib
-	fi            
+	fi
         sed -i -e "s|lcm_netcdf_inc|$NETCDF_INC|g;" "$CONFIG_FILE"
-        sed -i -e "s|lcm_netcdf_lib|$NETCDF_LIB|g;" "$CONFIG_FILE"        
+        sed -i -e "s|lcm_netcdf_lib|$NETCDF_LIB|g;" "$CONFIG_FILE"
 	case "$BUILD_TYPE" in
 	    debug)
 		sed -i -e "s|lcm_fpe_switch|ON|g;" "$CONFIG_FILE"
@@ -301,7 +306,7 @@ case "$SCRIPT_NAME" in
                     NETCDF_LCMLIB="$INSTALL_DIR/lib/libnetcdf.so"
                     ln -sf "$INSTALL_DIR/include" "$INSTALL_DIR/inc"
                     ln -sf "$NETCDF_SYSLIB" "$NETCDF_LCMLIB"
-		    echo SUCCESS > "$STATUS_LOG" 
+		    echo SUCCESS > "$STATUS_LOG"
 		fi
 		;;
 	    albany)
@@ -311,7 +316,7 @@ case "$SCRIPT_NAME" in
 		    echo "*** MAKE COMMAND FAILED ***"
 		    exit 1
 		fi
-		echo SUCCESS > "$STATUS_LOG" 
+		echo SUCCESS > "$STATUS_LOG"
 		;;
 	    *)
 		echo "Unrecognized package option in build: $PACKAGE"
