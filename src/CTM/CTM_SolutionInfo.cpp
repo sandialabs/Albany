@@ -113,7 +113,7 @@ namespace CTM {
         ghost_J = rcp(new Tpetra_CrsMatrix(ghost_graph));
         auto t1 = PCU_Time();
         if (!PCU_Comm_Self())
-            printf("Solution containers resized in %f seconds", t1 - t0);
+            printf("Solution containers resized in %f seconds\n", t1 - t0);
     }
 
 }
