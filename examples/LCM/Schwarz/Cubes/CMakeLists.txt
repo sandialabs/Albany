@@ -24,6 +24,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.xml
                ${CMAKE_CURRENT_BINARY_DIR}/cube1.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cubes.xml
                ${CMAKE_CURRENT_BINARY_DIR}/cubes.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cubes_matrix-free.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/cubes_matrix-free.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube-single.xml
                ${CMAKE_CURRENT_BINARY_DIR}/cube-single.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
