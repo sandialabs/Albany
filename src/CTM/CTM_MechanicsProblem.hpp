@@ -305,6 +305,38 @@ Teuchos::RCP<const PHX::FieldTag> CTM::MechanicsProblem::constructEvaluators(
         fm0.template registerEvaluator<EvalT>(ev);
     }
 
+    // set flag for small strain option
+    bool small_strain(false);
+    if (material_model_name == "Linear Elastic") {
+        small_strain = true;
+    }
+
+    if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
+        small_strain = true;
+    }
+    
+    
+//    {
+//        double temp(0.0);
+//        if (material_db_->isElementBlockParam(eb_name, "Initial Temperature")) {
+//            temp = material_db_->
+//                    getElementBlockParam<double>(eb_name, "Initial Temperature");
+//        }
+//        Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+//                new Teuchos::ParameterList("Save Temperature"));
+//        p = state_mgr.registerStateVariable(temperature,
+//                dl->qp_scalar,
+//                dl->dummy,
+//                eb_name,
+//                "scalar",
+//                temp,
+//                true,
+//                false);
+//        ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+//        fm0.template registerEvaluator<EvalT>(ev);
+//    }
+
+
     {
         Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
                 new Teuchos::ParameterList);
@@ -410,6 +442,11 @@ Teuchos::RCP<const PHX::FieldTag> CTM::MechanicsProblem::constructEvaluators(
         Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
                 new Teuchos::ParameterList("Kinematics"));
 
+        // strain
+        if (small_strain) {
+            p->set<std::string>("Strain Name", "Strain");
+        }
+
         // send in integration weights and the displacement gradient
         p->set<std::string>("Weights Name", "Weights");
         p->set<Teuchos::RCP < PHX::DataLayout >> (
@@ -423,25 +460,13 @@ Teuchos::RCP<const PHX::FieldTag> CTM::MechanicsProblem::constructEvaluators(
         //Outputs: F, J
         p->set<std::string>("DefGrad Name", defgrad); //dl_->qp_tensor also
         p->set<std::string>("DetDefGrad Name", J);
+        p->set<std::string>("Strain Name", "Strain"); 
         p->set<Teuchos::RCP < PHX::DataLayout >> (
                 "QP Scalar Data Layout",
                 dl->qp_scalar);
 
         ev = Teuchos::rcp(
                 new LCM::Kinematics<EvalT, PHAL::AlbanyTraits>(*p, dl));
-        fm0.template registerEvaluator<EvalT>(ev);
-    }
-
-    { // Strain
-        Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Strain"));
-
-        //Input
-        p->set<std::string>("Gradient QP Variable Name", "Displacement Gradient");
-
-        //Output
-        p->set<std::string>("Strain Name", "Strain");
-
-        ev = rcp(new LCM::Strain<EvalT, PHAL::AlbanyTraits>(*p, dl));
         fm0.template registerEvaluator<EvalT>(ev);
     }
 
@@ -455,8 +480,9 @@ Teuchos::RCP<const PHX::FieldTag> CTM::MechanicsProblem::constructEvaluators(
 
         //Output
         p->set<std::string>("First PK Stress Name", firstPK);
-        p->set<bool>("Small Strain", false);
-
+        if (small_strain) {
+            p->set<bool>("Small Strain", true);
+        }
         p->set<Teuchos::RCP < ParamLib >> ("Parameter Library", paramLib);
 
         ev = Teuchos::rcp(new LCM::FirstPK<EvalT, PHAL::AlbanyTraits>(*p, dl));

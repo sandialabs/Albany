@@ -23,7 +23,8 @@ namespace CTM {
         Application(Teuchos::RCP<Teuchos::ParameterList> p,
                 Teuchos::RCP<SolutionInfo> sinfo,
                 Teuchos::RCP<Albany::AbstractProblem> prob,
-                Teuchos::RCP<Albany::AbstractDiscretization> d);
+                Teuchos::RCP<Albany::AbstractDiscretization> d,
+                bool isThermal);
         // prohibit copy constructor
         Application(const Application& app) = delete;
         //! Destructor
@@ -53,7 +54,7 @@ namespace CTM {
 
         // get solution info
         Teuchos::RCP<SolutionInfo> getSolutionInfo() const;
-
+        
         //! Routine to get workset (bucket) size info needed by all Evaluation types
         template <typename EvalT>
         void loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws);
@@ -111,7 +112,7 @@ namespace CTM {
 
         // solution info
         Teuchos::RCP<SolutionInfo> solution_info;
-
+        
         //! Output stream, defaults to pronting just Proc 0
         Teuchos::RCP<Teuchos::FancyOStream> out;
 

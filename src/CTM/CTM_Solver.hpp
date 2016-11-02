@@ -69,11 +69,13 @@ namespace CTM {
         RCP<DistParamLib> dist_param_lib;
 
         RCP<Albany::DiscretizationFactory> disc_factory;
-        RCP<Albany::AbstractDiscretization> disc;
+        RCP<Albany::AbstractDiscretization> t_disc;
+        RCP<Albany::AbstractDiscretization> m_disc;
         ArrayRCP<RCP<Albany::MeshSpecsStruct> > mesh_specs;
         Albany::StateManager m_state_mgr;
         Albany::StateManager t_state_mgr;
-        Teuchos::RCP<SolutionInfo> sol_info;
+        Teuchos::RCP<SolutionInfo> t_sol_info;
+        Teuchos::RCP<SolutionInfo> m_sol_info;
 
         RCP<Albany::AbstractProblem> t_problem;
         RCP<Albany::AbstractProblem> m_problem;
@@ -82,9 +84,9 @@ namespace CTM {
         double t_current;
         double dt;
         int num_steps;
-        
+
         // Output stream, defaults to printing just Proc 0
-       Teuchos::RCP<Teuchos::FancyOStream> out;
+        Teuchos::RCP<Teuchos::FancyOStream> out;
 
         void initial_setup();
 

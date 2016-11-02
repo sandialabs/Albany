@@ -77,7 +77,7 @@
     </ParameterList>
     <ParameterList name="FELIX Basal Friction Coefficient">
       <Parameter name="Basal Side Name" type="string" value="basalside"/>
-      <Parameter name="Type" type="string" value="Exponent of Given Field"/> <!-- "Constant", "Given Field","Power Law","Regularized Coulomb"-->
+      <Parameter name="Type" type="string" value="Exponent Of Given Field"/> <!-- "Constant", "Given Field","Power Law","Regularized Coulomb"-->
       <Parameter name="Side Cubature Degree" type="int" value="3"/>
     </ParameterList>
     <ParameterList name="Body Force">

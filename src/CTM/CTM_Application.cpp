@@ -17,7 +17,8 @@ namespace CTM {
     Application::Application(Teuchos::RCP<Teuchos::ParameterList> p,
             Teuchos::RCP<SolutionInfo> sinfo,
             Teuchos::RCP<Albany::AbstractProblem> prob,
-            Teuchos::RCP<Albany::AbstractDiscretization> d) :
+            Teuchos::RCP<Albany::AbstractDiscretization> d,
+            bool isThermal) :
     params(p),
     solution_info(sinfo),
     problem(prob),
@@ -47,9 +48,14 @@ namespace CTM {
         neq = disc->getNumEq();
 
         // Create problem PL
-        Teuchos::RCP<Teuchos::ParameterList> problemParams =
-                Teuchos::sublist(params, "Temperature Problem", true);
-
+        Teuchos::RCP<Teuchos::ParameterList> problemParams;
+        if (isThermal) {
+            problemParams = Teuchos::sublist(params, "Temperature Problem", true);
+        } else {
+            // Create problem PL
+            problemParams =
+                    Teuchos::sublist(params, "Mechanics Problem", true);
+        }
         // get solution ghost vector
         Teuchos::RCP<Tpetra_MultiVector> ghost_soln = solution_info->getGhostMV();
         AAdapt::InitialConditionsT(
@@ -64,13 +70,13 @@ namespace CTM {
         owned_soln->getVectorNonConst(0)->doExport(*ghost_soln->getVector(0), *exporter, Tpetra::INSERT);
 
 #if (defined(ALBANY_SCOREC) || defined(ALBANY_AMP))
-        {
-            const Teuchos::RCP< Albany::APFDiscretization > apf_disc =
-                    Teuchos::rcp_dynamic_cast< Albany::APFDiscretization >(disc);
-            if (!apf_disc.is_null()) {
-                apf_disc->writeSolutionMVToMeshDatabase(*ghost_soln, 0, true);
-            }
-        }
+//        {
+//            const Teuchos::RCP< Albany::APFDiscretization > apf_disc =
+//                    Teuchos::rcp_dynamic_cast< Albany::APFDiscretization >(disc);
+//            if (!apf_disc.is_null()) {
+//                apf_disc->writeSolutionMVToMeshDatabase(*ghost_soln, 0, true);
+//            }
+//        }
 #endif
 
         // Create debug output object
@@ -410,7 +416,7 @@ namespace CTM {
         {
             PHAL::Workset workset;
             loadBasicWorksetInfoT(workset, current_time);
-            
+
             workset.fT = overlapped_fT;
             workset.JacT = overlapped_jacT;
             loadWorksetJacobianInfo(workset, alpha, beta, omega);
@@ -435,14 +441,14 @@ namespace CTM {
 
         {
             TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian Export");
-            
+
             // Assemble global residual
             if (Teuchos::nonnull(fT))
                 fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
 
             // Assemble global Jacobian
             jacT->doExport(*overlapped_jacT, *exporterT, Tpetra::ADD);
-            
+
         } // End timer
         // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
         if (Teuchos::nonnull(dfm)) {
