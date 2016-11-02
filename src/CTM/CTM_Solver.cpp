@@ -12,17 +12,19 @@ namespace CTM {
 
     static RCP<ParameterList> get_valid_params() {
         auto p = rcp(new ParameterList);
-        p->sublist("Discretization");
         p->sublist("Temperature Problem");
-        //  p->sublist("Mechanics");
+        p->sublist("Temperature Problem").sublist("Thermal Discretization");
+        p->sublist("Mechanics Problem");
+        p->sublist("Mechanics Problem").sublist("Mechanics Discretization");
         p->sublist("Linear Algebra");
         p->sublist("Time");
     }
 
     static void validate_params(RCP<const ParameterList> p) {
-        assert(p->isSublist("Discretization"));
         assert(p->isSublist("Temperature Problem"));
-        //  assert(p->isSublist("Mechanics"));
+        assert(p->isSublist("Mechanics Problem"));
+        assert(p->isSublist("Thermal Discretization"));
+        assert(p->isSublist("Mechanics Discretization"));
         assert(p->isSublist("Linear Algebra"));
         assert(p->isSublist("Time"));
         //
@@ -42,7 +44,7 @@ namespace CTM {
             assert(params.isType<int>("Linear Max. Iterations"));
             assert(params.isType<int>("Linear Krylov Size"));
         } else {
-            assert( la_list.get<std::string>("Solver") == "SuperLU_DIST");
+            assert(la_list.get<std::string>("Solver") == "SuperLU_DIST");
         }
         assert(la_list.isType<double>("Nonlinear Tolerance"));
         assert(la_list.isType<int>("Nonlinear Max. Iterations"));
@@ -57,6 +59,8 @@ namespace CTM {
 
         validate_params(params);
         temp_params = rcpFromRef(params->sublist("Temperature Problem", true));
+        //
+        mech_params = rcpFromRef(params->sublist("Mechanics Problem", true));
         //
         Teuchos::ParameterList &time_list = params->sublist("Time");
         t_old = time_list.get<double>("Initial Time");
@@ -77,8 +81,12 @@ namespace CTM {
         dist_param_lib = rcp(new DistParamLib);
 
         // create the mesh specs struct
-        bool explicit_scheme = false;
-        disc_factory = rcp(new Albany::DiscretizationFactory(params, comm, false));
+        // We use the thermal discretization parameter list to load the model
+        // and mesh. Later we will build a mechanics discretization using same
+        // discretization factory. The purpose is to reuse mesh structure.
+        Teuchos::RCP<Teuchos::ParameterList> disc_t_params = Teuchos::rcp(new Teuchos::ParameterList);
+        disc_t_params = rcpFromRef(params->sublist("Thermal Discretization"));
+        disc_factory = rcp(new Albany::DiscretizationFactory(disc_t_params, comm, false));
         mesh_specs = disc_factory->createMeshSpecs();
 
         // create the problem objects
@@ -88,9 +96,18 @@ namespace CTM {
         temp_params->validateParameters(*(t_problem->getValidProblemParameters()), 0);
         t_problem->buildProblem(mesh_specs, t_state_mgr);
 
+
+        // Mechanics problem
+        Teuchos::RCP<Teuchos::ParameterList> disc_m_params = Teuchos::rcp(new Teuchos::ParameterList);
+        disc_m_params = rcpFromRef(params->sublist("Mechanics Discretization").sublist("Discretization"));
+        //
+        m_problem = rcp(new CTM::MechanicsProblem(mech_params, param_lib, dim, comm));
+        mech_params->validateParameters(*(m_problem->getValidProblemParameters()), 0);
+        m_problem->buildProblem(mesh_specs, m_state_mgr);
+
         // create the initial discretization object
         auto neq = t_problem->numEquations();
-        disc = disc_factory->createDiscretization(
+        t_disc = disc_factory->createDiscretization(
                 neq,
                 t_problem->getSideSetEquations(),
                 t_state_mgr.getStateInfoStruct(),
@@ -99,9 +116,27 @@ namespace CTM {
                 t_problem->getSideSetFieldRequirements(),
                 t_problem->getNullSpace());
 
-        sol_info = Teuchos::rcp(new SolutionInfo());
+        t_sol_info = Teuchos::rcp(new SolutionInfo());
         //
-        sol_info->resize(disc, true);
+        t_sol_info->resize(t_disc, true);
+
+        // create the initial discretization object
+        neq = m_problem->numEquations();
+        // set new discretization parameter list
+        disc_factory->setDiscretizationParameters(disc_m_params);
+        m_disc = disc_factory->createDiscretization(
+                neq,
+                m_problem->getSideSetEquations(),
+                m_state_mgr.getStateInfoStruct(),
+                m_state_mgr.getSideSetStateInfoStruct(),
+                m_problem->getFieldRequirements(),
+                m_problem->getSideSetFieldRequirements(),
+                m_problem->getNullSpace());
+
+        m_sol_info = Teuchos::rcp(new SolutionInfo());
+        //
+        m_sol_info->resize(m_disc, false);
+
 
     }
 
@@ -111,32 +146,71 @@ namespace CTM {
         int max_iter = p->get<int>("Nonlinear Max. Iterations");
         double tolerance = p->get<double>("Nonlinear Tolerance");
 
-        // get the solution information
-        Teuchos::RCP<Tpetra_Vector> u = sol_info->getOwnedMV()->getVectorNonConst(0);
+
+        ///////////////////
+        // get the solution information for thermal problem
+        ///////////////////
+        Teuchos::RCP<Tpetra_Vector> u_t = t_sol_info->getOwnedMV()->getVectorNonConst(0);
         //
-        Teuchos::RCP<Tpetra_Vector> v = (sol_info->getOwnedMV()->getNumVectors() > 1) ? sol_info->getOwnedMV()->getVectorNonConst(1) : Teuchos::null;
+        Teuchos::RCP<Tpetra_Vector> v_t = (t_sol_info->getOwnedMV()->getNumVectors() > 1) ? t_sol_info->getOwnedMV()->getVectorNonConst(1) : Teuchos::null;
         //
-        Teuchos::RCP<Tpetra_Vector> xdotdot = (sol_info->getOwnedMV()->getNumVectors() > 2) ? sol_info->getOwnedMV()->getVectorNonConst(2) : Teuchos::null;
+        Teuchos::RCP<Tpetra_Vector> xdotdot_t = (t_sol_info->getOwnedMV()->getNumVectors() > 2) ? t_sol_info->getOwnedMV()->getVectorNonConst(2) : Teuchos::null;
         // get residual
-        Teuchos::RCP<Tpetra_Vector> r = sol_info->getOwnedResidual();
+        Teuchos::RCP<Tpetra_Vector> r_t = t_sol_info->getOwnedResidual();
         // get Jacobian
-        Teuchos::RCP<Tpetra_CrsMatrix> J = sol_info->getOwnedJacobian();
+        Teuchos::RCP<Tpetra_CrsMatrix> J_t = t_sol_info->getOwnedJacobian();
 
         // create new vectors
-        Teuchos::RCP<const Tpetra_Map> map_owned = disc->getMapT();
-        Teuchos::RCP<Tpetra_Vector> u_v = Teuchos::rcp(new Tpetra_Vector(map_owned));
+        Teuchos::RCP<const Tpetra_Map> t_map_owned = t_disc->getMapT();
+        Teuchos::RCP<Tpetra_Vector> u_v_t = Teuchos::rcp(new Tpetra_Vector(t_map_owned));
         // incremental solution
-        Teuchos::RCP<Tpetra_Vector> du = Teuchos::rcp(new Tpetra_Vector(map_owned));
+        Teuchos::RCP<Tpetra_Vector> du_t = Teuchos::rcp(new Tpetra_Vector(t_map_owned));
+        ///////////////////
 
-        // Set application
+
+        ///////////////////
+        // get the solution information for mechanics problem
+        ///////////////////
+        Teuchos::RCP<Tpetra_Vector> u_m = m_sol_info->getOwnedMV()->getVectorNonConst(0);
+        //
+        Teuchos::RCP<Tpetra_Vector> v_m = (m_sol_info->getOwnedMV()->getNumVectors() > 1) ? m_sol_info->getOwnedMV()->getVectorNonConst(1) : Teuchos::null;
+        //
+        Teuchos::RCP<Tpetra_Vector> xdotdot_m = (m_sol_info->getOwnedMV()->getNumVectors() > 2) ? m_sol_info->getOwnedMV()->getVectorNonConst(2) : Teuchos::null;
+        // get residual
+        Teuchos::RCP<Tpetra_Vector> r_m = m_sol_info->getOwnedResidual();
+        // get Jacobian
+        Teuchos::RCP<Tpetra_CrsMatrix> J_m = m_sol_info->getOwnedJacobian();
+
+        // create new vectors
+        Teuchos::RCP<const Tpetra_Map> m_map_owned = m_disc->getMapT();
+        Teuchos::RCP<Tpetra_Vector> u_v_m = Teuchos::rcp(new Tpetra_Vector(m_map_owned));
+        // incremental solution
+        Teuchos::RCP<Tpetra_Vector> du_m = Teuchos::rcp(new Tpetra_Vector(m_map_owned));
+        ///////////////////
+
+        // Set thermal application
         Teuchos::RCP<CTM::Application> t_application =
-                Teuchos::rcp(new CTM::Application(params, sol_info, t_problem, disc));
+                Teuchos::rcp(new CTM::Application(params, t_sol_info, t_problem, t_disc, true));
 
-        // Get discretization
-        Teuchos::RCP<Albany::APFDiscretization> apf_disc =
-                Teuchos::rcp_dynamic_cast<Albany::APFDiscretization>(disc);
 
+        // Set mechanics application
+        Teuchos::RCP<CTM::Application> m_application =
+                Teuchos::rcp(new CTM::Application(params, m_sol_info, m_problem, m_disc, false));
+
+        // Get thermal discretization
+        Teuchos::RCP<Albany::APFDiscretization> apf_t_disc =
+                Teuchos::rcp_dynamic_cast<Albany::APFDiscretization>(t_disc);
+
+        t_state_mgr.setStateArrays(t_disc);
+
+        // Get mechanics discretization
+        Teuchos::RCP<Albany::APFDiscretization> apf_m_disc =
+                Teuchos::rcp_dynamic_cast<Albany::APFDiscretization>(m_disc);
+
+        m_state_mgr.setStateArrays(m_disc);
+        
         // time loop
+        double norm;
         *out << std::endl;
         for (int step = 1; step <= num_steps; ++step) {
             *out << "*** Time Step: " << step << std::endl;
@@ -149,48 +223,84 @@ namespace CTM {
             double alpha = 1.0 / dt; // (m_coeff in workset)
 
             // predictor phase
-            u_v->assign(*u);
+            u_v_t->assign(*u_t);
             //
             int iter = 1;
             bool converged = false;
             // start newton loop
-            v->update(alpha, *u, -alpha, *u_v, 0.0);
+            v_t->update(alpha, *u_t, -alpha, *u_v_t, 0.0);
+            *out << "Solving thermal problem" << std::endl;
             while ((iter <= max_iter) && (!converged)) {
                 *out << "  " << iter << " newton iteration" << std::endl;
                 // compute residual
-                t_application->computeGlobalResidualT(t_current, v.get(),
-                        xdotdot.get(), *u, *r);
+                t_application->computeGlobalResidualT(t_current, v_t.get(),
+                        xdotdot_t.get(), *u_t, *r_t);
                 // compute Jacobian
                 t_application->computeGlobalJacobianT(alpha, beta, omega,
-                        t_current, v.get(), xdotdot.get(), *u, r.get(), *J);
+                        t_current, v_t.get(), xdotdot_t.get(), *u_t, r_t.get(), *J_t);
                 // scale residual
-                r->scale(-1.0);
+                r_t->scale(-1.0);
                 //
-                du->putScalar(0.0);
+                du_t->putScalar(0.0);
                 // solve the linear system of equations
-                solve_linear_system(p, J, du, r);
+                solve_linear_system(p, J_t, du_t, r_t);
                 // update solution
-                u->update(1.0, *du, 1.0);
-                v->update(alpha, *u, -alpha, *u_v, 0.0);
+                u_t->update(1.0, *du_t, 1.0);
+                v_t->update(alpha, *u_t, -alpha, *u_v_t, 0.0);
                 // compute residual
-                t_application->computeGlobalResidualT(t_current, v.get(),
-                        xdotdot.get(), *u, *r);
+                t_application->computeGlobalResidualT(t_current, v_t.get(),
+                        xdotdot_t.get(), *u_t, *r_t);
                 // compute norm
-                double norm = r->norm2();
+                norm = r_t->norm2();
                 *out << "  ||r|| = " << norm << std::endl;
                 if (norm < tolerance) converged = true;
                 iter++;
                 // 
             } // end newton loop
-            apf_disc->writeSolutionT(*(sol_info->getGhostMV()->getVector(0)), t_current, true);
-            //apf_disc->writeSolutionToFileT(*u,t_current,false);
+            TEUCHOS_TEST_FOR_EXCEPTION((iter > max_iter) && (!converged), std::out_of_range,
+                    "\nnewton's method failed in " << max_iter << " iterations" << std::endl);
+            // predictor
+            u_v_m->assign(*u_m);
+            iter = 1;
+            converged = false;
+            *out << "Solving mechanics problem" << std::endl;
+            while ((iter <= max_iter) && (!converged)) {
+                *out << "  " << iter << " newton iteration" << std::endl;
+                // compute residual
+                m_application->computeGlobalResidualT(t_current, v_m.get(),
+                        xdotdot_m.get(), *u_m, *r_m);
+                // compute Jacobian
+                m_application->computeGlobalJacobianT(alpha, beta, omega,
+                        t_current, v_m.get(), xdotdot_m.get(), *u_m, r_m.get(), *J_m);
+                // scale residual
+                r_m->scale(-1.0);
+                //
+                du_m->putScalar(0.0);
+                // solve the linear system of equations
+                solve_linear_system(p, J_m, du_m, r_m);
+                // update solution
+                u_m->update(1.0, *du_m, 1.0);
+                // compute residual
+                m_application->computeGlobalResidualT(t_current, v_m.get(),
+                        xdotdot_m.get(), *u_m, *r_m);
+                // compute norm
+                norm = r_m->norm2();
+                *out << "  ||r|| = " << norm << std::endl;
+                if (norm < tolerance) converged = true;
+                iter++;
+                // 
+            } // end newton loop
+
+            t_state_mgr.updateStates();
+            m_state_mgr.updateStates();
+            //apf_t_disc->writeSolutionToMeshDatabaseT(*(t_sol_info->getGhostMV()->getVector(0)), t_current, true);
+            //apf_t_disc->writeSolutionT(*(t_sol_info->getGhostMV()->getVector(0)), t_current, true);
+            apf_m_disc->writeSolutionT(*(m_sol_info->getGhostMV()->getVector(0)), t_current, true);
             TEUCHOS_TEST_FOR_EXCEPTION((iter > max_iter) && (!converged), std::out_of_range,
                     "\nnewton's method failed in " << max_iter << " iterations" << std::endl);
             // updates
             t_old = t_current;
             t_current = t_current + dt;
         }
-
     }
-
 }
