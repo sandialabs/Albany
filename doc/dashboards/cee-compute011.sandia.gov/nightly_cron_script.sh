@@ -20,9 +20,9 @@ THE_TEST_TYPE=Nightly
 
 export LM_LICENSE_FILE=7500@sitelicense.sandia.gov
 
-export PATH=/projects/albany/bin:/projects/albany/trilinos/MPI_REL/bin:/sierra/sntools/SDK/mpi/openmpi/1.8.8-gcc-5.2.0-RHEL6/bin:/projects/sierra/linux_rh6/install/SNTOOLS_dir/master/sntools/job_scripts/linux_rh6/openmpi:/sierra/sntools/SDK/compilers/gcc/5.2.0-RHEL6/bin:/sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210/compilers_and_libraries/linux/bin/intel64:/projects/sierra/linux_rh6/install/git/2.6.1/bin:/projects/sierra/linux_rh6/install/git/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin
+export PATH=/projects/albany/bin:/projects/albany/trilinos/MPI_REL/bin:/sierra/sntools/SDK/compilers/clang/3.7-RHEL6/bin:/sierra/sntools/SDK/mpi/openmpi/1.8.8-gcc-5.2.0-RHEL6/bin:/sierra/sntools/SDK/compilers/gcc/5.2.0-RHEL6/bin:/projects/sierra/linux_rh6/install/git/2.6.1/bin:/projects/sierra/linux_rh6/install/git/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/sbin
 
-export LD_LIBRARY_PATH=/sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210/mkl/lib/intel64:/sierra/sntools/SDK/compilers/clang/3.7-RHEL6/lib:/sierra/sntools/SDK/hwloc/lib:/sierra/sntools/SDK/compilers/gcc/5.2.0-RHEL6/lib64:/sierra/sntools/SDK/compilers/gcc/5.2.0-RHEL6/lib:/sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210/compilers_and_libraries/linux/lib/intel64
+export LD_LIBRARY_PATH=/sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210/compilers_and_libraries/linux/mkl/lib/intel64:/sierra/sntools/SDK/compilers/clang/3.7-RHEL6/lib:/sierra/sntools/SDK/hwloc/lib:/sierra/sntools/SDK/mpi/openmpi/1.8.8-gcc-5.2.0-RHEL6/lib:/sierra/sntools/SDK/compilers/gcc/5.2.0-RHEL6/lib64:/sierra/sntools/SDK/compilers/gcc/5.2.0-RHEL6/lib:/projects/albany/lib
 
 
 if [ ! -d "$TEST_DIR" ]; then

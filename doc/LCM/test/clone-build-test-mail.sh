@@ -34,8 +34,6 @@ if [ -d "Albany.wiki" ]; then
 fi
 git clone git@github.com:gahansen/Albany.wiki.git
 
-WIKI="1"
-
 ./clean-config-build-test-mail-all.sh
 
 cd "$LCM_DIR"

@@ -33,6 +33,7 @@
        evaluators/FELIX_PressureMeltingEnthalpy.cpp
        evaluators/FELIX_ProlongateVector.cpp
        evaluators/FELIX_L2ProjectedBoundaryLaplacianResidual.cpp
+       evaluators/FELIX_LaplacianRegularizationResidual.cpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
        evaluators/FELIX_ResponseSMBMismatch.cpp
        evaluators/FELIX_ResponseBoundarySquaredL2Norm.cpp
@@ -62,6 +63,7 @@
        problems/FELIX_Hydrology.cpp
        problems/FELIX_Stokes.cpp
        problems/FELIX_StokesFO.cpp
+       problems/FELIX_LaplacianSampling.cpp
        problems/FELIX_StokesFOThermoCoupled.cpp
        problems/FELIX_StokesL1L2.cpp
    )
@@ -147,6 +149,8 @@ ENDIF()
        evaluators/FELIX_ProlongateVector_Def.hpp
        evaluators/FELIX_L2ProjectedBoundaryLaplacianResidual.hpp
        evaluators/FELIX_L2ProjectedBoundaryLaplacianResidual_Def.hpp
+       evaluators/FELIX_LaplacianRegularizationResidual.hpp
+       evaluators/FELIX_LaplacianRegularizationResidual_Def.hpp       
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
        evaluators/FELIX_ResponseBoundarySquaredL2Norm.hpp
@@ -199,6 +203,7 @@ ENDIF()
        problems/FELIX_ParamEnum.hpp
        problems/FELIX_Stokes.hpp
        problems/FELIX_StokesFO.hpp
+       problems/FELIX_LaplacianSampling.hpp
        problems/FELIX_StokesL1L2.hpp
   )
 

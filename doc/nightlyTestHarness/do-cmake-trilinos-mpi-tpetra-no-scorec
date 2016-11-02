@@ -131,7 +131,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
       -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
 \
-      -D Trilinos_EXTRA_REPOSITORIES="tempus,DataTransferKit" \
+      -D Trilinos_EXTRA_REPOSITORIES="DataTransferKit" \
       -D Trilinos_ENABLE_DataTransferKit:BOOL=ON \
       -D DataTransferKit_ENABLE_DBC:BOOL=ON \
       -D DataTransferKit_ENABLE_TESTS:BOOL=OFF \

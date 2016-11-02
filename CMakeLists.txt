@@ -458,6 +458,19 @@ IF (DataTransferKit_List_ID GREATER -1)
     SET(ALBANY_DTK FALSE)
 ENDIF()
 
+# Check if Trilinos has Tempus
+LIST(FIND Trilinos_PACKAGE_LIST Tempus Tempus_List_ID)
+IF (Tempus_List_ID GREATER -1)
+  ADD_DEFINITIONS(-DALBANY_TEMPUS)
+  MESSAGE("-- Looking for Tempus in Trilinos: Found, compiling with -DALBANY_TEMPUS")
+  SET(ALBANY_TEMPUS TRUE)
+ELSE()
+  MESSAGE("-- Looking for Tempus in Trilinos: NOT found.")
+  SET(ALBANY_TEMPUS FALSE)
+ENDIF()
+
+# Check if Trilinos has ROL
+
 # Check if Trilinos has ROL
 LIST(FIND Trilinos_PACKAGE_LIST ROL ROL_List_ID)
 IF (ROL_List_ID GREATER -1)

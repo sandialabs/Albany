@@ -1,39 +1,15 @@
 <ParameterList>
   <ParameterList name="Debug Output">
-    <!--Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/-->
-    <Parameter name="Write Solution to MatrixMarket" type="bool" value="false"/>
+    <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
+    <!--Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/>
+    <Parameter name="Write Solution to MatrixMarket" type="bool" value="true"/-->
   </ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <Parameter name="Solution Method" type="string" value="Steady"/>
-    <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
-    <Parameter name="Extruded Column Coupled in 2D Response" type="bool" value="true"/>
-    <Parameter name="Required Fields"         type="Array(string)" value="{temperature}"/>
-    <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction,thickness, observed_thickness, thickness_RMS, temperature,surface_height, surface_mass_balance, surface_mass_balance_RMS}"/>
-    <Parameter name="Required Surface Fields" type="Array(string)" value="{surface_velocity,surface_velocity_rms}"/>
-    <Parameter name="Basal Side Name"         type="string" value="basalside"/>
-    <Parameter name="Surface Side Name"       type="string" value="upperside"/>
-
+    <Parameter name="Name" type="string" value="FELIX Laplacian Sampling"/>
+    <Parameter name="Required Fields"         type="Array(string)" value="{weighted_normal_sample}"/>
     <ParameterList name="Response Functions">
-      <Parameter name="Collection Method" type="string" value="Sum Responses"/>
-      <Parameter name="Number" type="int" value="2"/>
-      <Parameter name="Response 0" type="string" value="Surface Velocity Mismatch"/>
-      <ParameterList name="ResponseParams 0">
-        <Parameter name="Regularization Coefficient" type="double" value="1.0"/>
-        <Parameter name="Asinh Scaling" type="double" value="10.0"/>
-        <Parameter name="Scaling Coefficient" type="double" value=" 5.8824e-07"/> 
-        <Parameter name="Cubature Degree" type="int" value="3"/>
-        <Parameter name="Field Name" type="string" value="Velocity"/>
-      </ParameterList>
-      <Parameter name="Response 1" type="string" value="Surface Mass Balance Mismatch"/>
-      <ParameterList name="ResponseParams 1">
-        <Parameter name="Regularization Coefficient" type="double" value="1.0"/>
-        <Parameter name="H Coefficient" type="double" value="1.0"/>
-        <Parameter name="SMB Coefficient" type="double" value="100.0"/>
-        <Parameter name="Scaling Coefficient" type="double" value=" 5.8824e-7"/> 
-        <Parameter name="Cubature Degree" type="int" value="3"/>
-        <Parameter name="Field Name" type="string" value="Velocity"/>
-      </ParameterList>
     </ParameterList>
 
     <ParameterList name="Dirichlet BCs">
@@ -41,156 +17,42 @@
       <!--Parameter name="DBC on NS bottom for DOF U1" type="double" value="0.0"/-->
     </ParameterList>
     <ParameterList name="Neumann BCs">
-       <Parameter name="NBC on SS lateralside for DOF all set lateral" type="Array(double)" value="{0.0, 0.0, 0.0, 0.0, 0.0}"/>
-       <Parameter name="Cubature Degree" type="int" value="3"/>
+       <!--Parameter name="NBC on SS lateralside for DOF all set lateral" type="Array(double)" value="{0.0, 0.0, 0.0, 0.0, 0.0}"/>
+       <Parameter name="Cubature Degree" type="int" value="3"/-->
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="0"/>
-      <Parameter name="Parameter 0" type="string" value="Glen's Law Homotopy Parameter"/>
     </ParameterList>
     <ParameterList name="Distributed Parameters">
-      <Parameter name="Number of Parameter Vectors" type="int" value="2"/>
-      <ParameterList name="Distributed Parameter 0">
-        <Parameter name="Name" type="string" value="basal_friction"/>
-        <Parameter name="Lower Bound" type="double" value="-12"/>
-        <Parameter name="Upper Bound" type="double" value="12"/>
-        <Parameter name="Mesh Part" type="string" value="bottom"/>
-      </ParameterList> 
-      <ParameterList name="Distributed Parameter 1">
-        <Parameter name="Name" type="string" value="thickness"/>
-        <Parameter name="Lower Bound" type="double" value="0.01"/>
-        <Parameter name="Upper Bound" type="double" value="4.0"/>
-        <Parameter name="Mesh Part" type="string" value="bottom"/>
-      </ParameterList> 
+      <Parameter name="Number of Parameter Vectors" type="int" value="0"/>
     </ParameterList>
-    <ParameterList name="FELIX Physical Parameters">
-      <Parameter name="Water Density" type="double" value="1028"/>
-      <Parameter name="Ice Density" type="double" value="910"/>
-      <Parameter name="Gravity Acceleration" type="double" value="9.8"/>
-    </ParameterList>
-    <ParameterList name="FELIX Viscosity">
-      <Parameter name="Type" type="string" value="Glen's Law"/>
-      <Parameter name="Glen's Law Homotopy Parameter" type="double" value="0.1"/>
-      <Parameter name="Glen's Law A" type="double" value="0.0001"/>
-      <Parameter name="Glen's Law n" type="double" value="3"/>
-      <Parameter name="Flow Rate Type" type="string" value="Temperature Based"/>
-    </ParameterList>
-    <ParameterList name="FELIX Basal Friction Coefficient">
-      <Parameter name="Basal Side Name" type="string" value="basalside"/>
-      <Parameter name="Type" type="string" value="Exponent Of Given Field"/> <!-- "Constant", "Given Field","Power Law","Regularized Coulomb"-->
-      <Parameter name="Side Cubature Degree" type="int" value="3"/>
-    </ParameterList>
-    <ParameterList name="Body Force">
-      <Parameter name="Type" type="string" value="FO INTERP SURF GRAD"/>
+    <ParameterList name="FELIX Laplacian Regularization">
+        <Parameter name="Mass Coefficient" type="double" value="7.6697e-06"/> <!-- sqrt(5.8824e-7)* 0.01  -->
+        <Parameter name="Laplacian Coefficient" type="double" value="7.6697e-03"/>  <!-- sqrt(5.8824e-7)* 10.0  -->
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="Columnwise Ordering" type="bool" value="true"/>
-    <Parameter name="Method" type="string" value="Extruded"/>
+    <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
-    <Parameter name="Cubature Degree" type="int" value="1"/>
-    <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_analysis_two_params.exo"/>
-    <Parameter name="Element Shape" type="string" value="Tetrahedron"/>
-    <Parameter name="NumLayers" type="int" value="5"/>
-    <Parameter name="Use Glimmer Spacing" type="bool" value="true"/>
-    <Parameter name="Extrude Basal Node Fields"             type="Array(string)" value="{basal_friction,thickness,surface_height}"/>
-    <Parameter name="Basal Node Fields Ranks"               type="Array(int)"    value="{1,1,1}"/>
-    <Parameter name="Interpolate Basal Node Layered Fields" type="Array(string)" value="{temperature}"/>
-    <Parameter name="Basal Node Layered Fields Ranks"       type="Array(int)"    value="{1}"/>
-    <Parameter name="Use Glimmer Spacing" type="bool" value="true"/>
+    <Parameter name="Cubature Degree" type="int" value="3"/>
+    <Parameter name="Exodus Output File Name" type="string" value="gis_laplacian_sample.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/gis_unstruct_2d.exo"/>
     <ParameterList name="Required Fields Info">
      <Parameter name="Number Of Fields" type="int" value="1"/>
       <ParameterList name="Field 0">
-        <Parameter name="Field Name" type="string" value="temperature"/>
+        <Parameter name="Field Name" type="string" value="weighted_normal_sample"/>
         <Parameter name="Field Type" type="string" value="Node Scalar"/>
-        <Parameter name="Field Origin"  type="string" value="Output"/>
+        <Parameter name="Field Origin"  type="string" value="File"/>
+        <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/basal_friction_log.ascii"/>
       </ParameterList>
     </ParameterList>
-    <ParameterList name="Side Set Discretizations">
-      <Parameter name="Side Sets" type="Array(string)" value="{basalside,upperside}"/>
-      <ParameterList name="basalside">
-        <Parameter name="Method" type="string" value="Ioss"/>
-        <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
-        <Parameter name="Use Serial Mesh" type="bool" value="true"/>
-        <Parameter name="Exodus Input File Name" type="string" value="../ExoMeshes/gis_unstruct_2d.exo"/>
-        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_analysis_two_params_basal.exo"/>
-        <Parameter name="Cubature Degree" type="int" value="3"/>
-        <ParameterList name="Required Fields Info">
-          <Parameter name="Number Of Fields" type="int" value="8"/>
-          <ParameterList name="Field 0">
-            <Parameter name="Field Name" type="string" value="thickness"/>
-            <Parameter name="Field Type" type="string" value="Node Scalar"/>
-            <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/thickness.ascii"/>
-          </ParameterList>
-          <ParameterList name="Field 1">
-            <Parameter name="Field Name" type="string" value="surface_height"/>
-            <Parameter name="Field Type" type="string" value="Node Scalar"/>
-            <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/surface_height.ascii"/>
-          </ParameterList>
-          <ParameterList name="Field 2">
-            <Parameter name="Field Name" type="string" value="temperature"/>
-            <Parameter name="Field Type" type="string" value="Node Layered Scalar"/>
-            <Parameter name="Number Of Layers" type="int" value="11"/>
-            <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/temperature.ascii"/>
-          </ParameterList>
-          <ParameterList name="Field 3">
-            <Parameter name="Field Name" type="string" value="basal_friction"/>
-            <Parameter name="Field Type" type="string" value="Node Scalar"/>
-            <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/basal_friction_log.ascii"/>
-          </ParameterList>
-          <ParameterList name="Field 4">
-            <Parameter name="Field Name" type="string" value="observed_thickness"/>
-            <Parameter name="Field Type" type="string" value="Node Scalar"/>
-            <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/thickness.ascii"/>
-          </ParameterList>
-          <ParameterList name="Field 5">
-            <Parameter name="Field Name" type="string" value="thickness_RMS"/>
-            <Parameter name="Field Type" type="string" value="Node Scalar"/>
-            <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/thickness_RMS.ascii"/>
-          </ParameterList>
-          <ParameterList name="Field 6">
-            <Parameter name="Field Name" type="string" value="surface_mass_balance"/>
-            <Parameter name="Field Type" type="string" value="Node Scalar"/>
-            <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/surface_mass_balance.ascii"/>
-          </ParameterList>
-          <ParameterList name="Field 7">
-            <Parameter name="Field Name" type="string" value="surface_mass_balance_RMS"/>
-            <Parameter name="Field Type" type="string" value="Node Scalar"/>
-            <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/surface_mass_balance_RMS.ascii"/>
-          </ParameterList>
-        </ParameterList>
-      </ParameterList>
-      <ParameterList name="upperside">
-        <Parameter name="Method" type="string" value="SideSetSTK"/>
-        <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
-        <Parameter name="Exodus Output File Name" type="string" value="gis_unstruct_analysis_two_params_surface.exo"/>
-        <Parameter name="Cubature Degree" type="int" value="3"/>
-        <ParameterList name="Required Fields Info">
-          <Parameter name="Number Of Fields" type="int" value="2"/>
-          <ParameterList name="Field 0">
-            <Parameter name="Field Name" type="string" value="surface_velocity"/>
-            <Parameter name="Field Type" type="string" value="Node Vector"/>
-            <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/surface_velocity.ascii"/>
-          </ParameterList>
-          <ParameterList name="Field 1">
-            <Parameter name="Field Name" type="string" value="surface_velocity_rms"/>
-            <Parameter name="Field Type" type="string" value="Node Vector"/>
-            <Parameter name="File Name"  type="string" value="../AsciiMeshes/GisUnstructFiles/velocity_RMS.ascii"/>
-          </ParameterList>
-        </ParameterList>
-      </ParameterList>
-    </ParameterList>
-  </ParameterList>
+  </ParameterList> <!--Discretization -->
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{358.687389208}"/>
+    <Parameter  name="Number of Comparisons" type="int" value="0"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{68.2006020544}"/>
     <ParameterList name="Sensitivity Comparisons 0">
       <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{94.2764124001}"/>
-    </ParameterList>
-    <ParameterList name="Sensitivity Comparisons 1">
-      <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{317.658964514}"/>
+      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{2.14480231821}"/>
     </ParameterList>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
@@ -200,13 +62,12 @@
     <ParameterList name="Analysis">
       <Parameter name="Analysis Package" type="string" value="ROL"/>
       <ParameterList name="ROL">
-        <Parameter name="Number of Parameters" type="int" value="2"/>
         <Parameter name="Check Gradient" type="bool" value="true"/>
         <Parameter name="Gradient Tolerance" type="double" value="1e-4"/>
         <Parameter name="Step Tolerance" type="double" value="1e-4"/>
-        <Parameter name="Max Iterations" type="int" value="100"/>
+        <Parameter name="Max Iterations" type="int" value="10"/>
         <Parameter name="Print Output" type="bool" value="true"/>
-        <Parameter name="Parameter Initial Guess Type" type="string" value="From Model Evaluator"/> <!-- other choices are "Uniform Vector" or "Random Vector", default is "From Model Evaluator"/-->
+        <Parameter name="Parameter Initial Guess Type" type="string" value="Uniform Vector"/> <!-- other choices are "Uniform Vector" or "Random Vector", default is "From Model Evaluator"/-->
         <Parameter name="Uniform Parameter Guess" type="double" value="2.0"/>
         <Parameter name="Min And Max Of Random Parameter Guess" type="Array(double)" value="{1.0, 2.0}"/>     
         <Parameter name="Bound Constrained" type="bool" value="true"/>
@@ -354,12 +215,12 @@
   <ParameterList name="Test 0">
     <Parameter name="Test Type" type="string" value="Combo"/>
     <Parameter name="Combo Type" type="string" value="OR"/>
-    <Parameter name="Number of Tests" type="int" value="1"/>
+    <Parameter name="Number of Tests" type="int" value="2"/>
     <ParameterList name="Test 0">
       <Parameter name="Test Type" type="string" value="NormF"/>
       <Parameter name="Norm Type" type="string" value="Two Norm"/>
       <Parameter name="Scale Type" type="string" value="Scaled"/>
-      <Parameter name="Tolerance" type="double" value="1e-7"/>
+      <Parameter name="Tolerance" type="double" value="1e-5"/>
     </ParameterList>
     <ParameterList name="Test 1">
       <Parameter name="Test Type" type="string" value="NormWRMS"/>
@@ -369,7 +230,7 @@
   </ParameterList>
   <ParameterList name="Test 1">
     <Parameter name="Test Type" type="string" value="MaxIters"/>
-    <Parameter name="Maximum Iterations" type="int" value="25"/>
+    <Parameter name="Maximum Iterations" type="int" value="50"/>
   </ParameterList>
       </ParameterList>
       <ParameterList name="Direction">
