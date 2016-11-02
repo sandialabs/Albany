@@ -60,7 +60,9 @@ private:
   double A;               // Constant value for the flowFactorA field (for REGULARIZED_COULOMB only)
 
   // Input:
-  PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>      beta_given_field;
+  PHX::MDField<ParamScalarT>      beta_given_field;
+  PHX::MDField<ParamScalarT,Cell,Node>  beta_given_node_field;
+  PHX::MDField<RealType,Cell,Node,Side,QuadPoint> bF;
   PHX::MDField<ScalarT,Cell,Side,QuadPoint>           u_norm;
   PHX::MDField<HydroScalarT,Cell,Side,QuadPoint>      N;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>   coordVec;
@@ -81,7 +83,7 @@ private:
 
   bool regularize;
 
-  enum BETA_TYPE {GIVEN_CONSTANT, EXP_GIVEN_FIELD, GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
+  enum BETA_TYPE {GIVEN_CONSTANT, GIVEN_FIELD, EXP_GIVEN_FIELD, GAL_PROJ_EXP_GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
   BETA_TYPE beta_type;
 };
 
@@ -109,7 +111,8 @@ private:
   double beta_given_val;  // Constant value (for CONSTANT only)
 
   // Input:
-  PHX::MDField<ParamScalarT,Cell,QuadPoint>     beta_given_field;
+  PHX::MDField<ParamScalarT> beta_given_field;
+  PHX::MDField<RealType,Cell,Node, QuadPoint> bF;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>  coordVec;
 
   // Output:
@@ -124,7 +127,7 @@ private:
   int numNodes;
   int numQPs;
 
-  enum BETA_TYPE {GIVEN_CONSTANT, EXP_GIVEN_FIELD, GIVEN_FIELD};
+  enum BETA_TYPE {GIVEN_CONSTANT, GIVEN_FIELD, EXP_GIVEN_FIELD, GAL_PROJ_EXP_GIVEN_FIELD};
   BETA_TYPE beta_type;
 };
 

@@ -55,19 +55,28 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     beta_type = GIVEN_CONSTANT;
     beta_given_val = beta_list.get<double>("Constant Given Beta Value");
   }
-  else if ((betaType == "Given Field")|| (betaType == "Exponent of Given Field"))
+  else if ((betaType == "Given Field")|| (betaType == "Exponent Of Given Field") || (betaType == "Galerkin Projection Of Exponent Of Given Field"))
   {
 #ifdef OUTPUT_TO_SCREEN
     *output << "Given constant beta field, loaded from mesh or file.\n";
 #endif
     if (betaType == "Given Field")
       beta_type = GIVEN_FIELD;
+    else if (betaType == "Galerkin Projection Of Exponent Of Given Field")
+      beta_type = GAL_PROJ_EXP_GIVEN_FIELD;
     else
       beta_type = EXP_GIVEN_FIELD;
 
-    beta_given_field = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->qp_scalar);
-
-    this->addDependentField (beta_given_field);
+    if(beta_type == GAL_PROJ_EXP_GIVEN_FIELD) {
+      beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->node_scalar);
+      this->addDependentField (beta_given_field);
+      bF = PHX::MDField<RealType,Cell,Node,Side,QuadPoint>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
+      this->addDependentField (bF);
+    }
+    else {
+      beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->qp_scalar);
+      this->addDependentField (beta_given_field);
+    }
   }
   else if (betaType == "Power Law")
   {
@@ -169,6 +178,10 @@ postRegistrationSetup (typename Traits::SetupData d,
     case EXP_GIVEN_FIELD:
       this->utils.setFieldData(beta_given_field,fm);
       break;
+    case GAL_PROJ_EXP_GIVEN_FIELD:
+      this->utils.setFieldData(bF,fm);
+      this->utils.setFieldData(beta_given_field,fm);
+      break;
     case POWER_LAW:
     case REGULARIZED_COULOMB:
       this->utils.setFieldData(muParam,fm);
@@ -265,6 +278,15 @@ evaluateFields (typename Traits::EvalData workset)
           beta(cell,side,qp) = std::exp(beta_given_field(cell,side,qp));
         }
         break;
+
+      case GAL_PROJ_EXP_GIVEN_FIELD:
+        for (int qp=0; qp<numQPs; ++qp)
+        {
+          beta(cell,side,qp) = 0;
+          for (int node=0; node<numNodes; ++node) 
+            beta(cell,side,qp) += std::exp(beta_given_field(cell,side,node))*bF(cell,side,node,qp);
+        }
+      break;
     }
 
     // Correct the value if we are using a stereographic map
@@ -311,19 +333,31 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     beta_type = GIVEN_CONSTANT;
     beta_given_val = beta_list.get<double>("Constant Given Beta Value");
   }
-  else if ((betaType == "Given Field")|| (betaType == "Exponent of Given Field"))
+  else if ((betaType == "Given Field")|| (betaType == "Exponent Of Given Field")|| (betaType == "Galerkin Projection Of Exponent Of Given Field"))
   {
 #ifdef OUTPUT_TO_SCREEN
     *output << "Given constant beta field, loaded from mesh or file.\n";
 #endif
     if (betaType == "Given Field")
       beta_type = GIVEN_FIELD;
-    else
+    else if (betaType == "Exponent Of Given Field")
       beta_type = EXP_GIVEN_FIELD;
+    else
+      beta_type = GAL_PROJ_EXP_GIVEN_FIELD;
 
-    beta_given_field = PHX::MDField<ParamScalarT,Cell,QuadPoint>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->qp_scalar);
+    if(beta_type == GAL_PROJ_EXP_GIVEN_FIELD) {
+      beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->node_scalar);
+      this->addDependentField (beta_given_field);
+      bF = PHX::MDField<RealType,Cell,Node,QuadPoint>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
+      this->addDependentField (bF);
+    }
+    else {
+      beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->qp_scalar);
+      this->addDependentField (beta_given_field);
+    }
 
-    this->addDependentField (beta_given_field);
+
+
   }
   else
   {
@@ -365,6 +399,10 @@ postRegistrationSetup (typename Traits::SetupData d,
     case EXP_GIVEN_FIELD:
       this->utils.setFieldData(beta_given_field,fm);
       break;
+    case GAL_PROJ_EXP_GIVEN_FIELD:
+      this->utils.setFieldData(bF,fm);
+      this->utils.setFieldData(beta_given_field,fm);
+      break;
   }
 
   if (use_stereographic_map)
@@ -389,11 +427,13 @@ evaluateFields (typename Traits::EvalData workset)
           }
       break;
 
-    case EXP_GIVEN_FIELD:
+    case GAL_PROJ_EXP_GIVEN_FIELD:
       for (int cell=0; cell<workset.numCells; ++cell)
         for (int qp=0; qp<numQPs; ++qp)
         {
-          beta(cell,qp) = std::exp(beta_given_field(cell,qp));
+          beta(cell,qp) = 0;
+          for (int node=0; node<numNodes; ++node) 
+            beta(cell,qp) += std::exp(beta_given_field(cell,node))*bF(cell,node,qp);
         }
       break;
   }
