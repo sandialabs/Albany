@@ -539,9 +539,6 @@ LCM::SchwarzMultiscale::create_W_op() const
 Teuchos::RCP<Thyra::PreconditionerBase<ST>>
 LCM::SchwarzMultiscale::create_W_prec() const
 {
-  //Analog of EpetraExt::ModelEvaluator::Preconditioner does not exist
-  //in Thyra yet!  So problem will run for now with no
-  //preconditioner...
   bool const
   W_prec_not_supported = true;
 
@@ -664,6 +661,7 @@ createOutArgsImpl() const
 
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f, true);
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_op, true);
+  result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_prec, true);
 
   result.set_W_properties(
       Thyra::ModelEvaluatorBase::DerivativeProperties(
