@@ -1115,20 +1115,14 @@ void Albany::APFDiscretization::computeNodeSets()
   apf::StkModels& sets = meshStruct->getSets();
   apf::Mesh* m = meshStruct->getMesh();
   int mesh_dim = m->getDimension();
-  //loop over mesh nodes
-  for (size_t i = 0; i < overlapNodes.getSize(); ++i) {
-    apf::Node node = overlapNodes[i];
+  //loop over owned mesh nodes
+  for (size_t i = 0; i < ownedNodes.getSize(); ++i) {
+    apf::Node node = ownedNodes[i];
     apf::MeshEntity* e = node.entity;
-    if (!m->isOwned(e))
-      continue;
     std::set<apf::StkModel*> mset;
     apf::collectEntityModels(m, sets.invMaps[0], m->toModel(e), mset);
     if (mset.empty())
       continue;
-    GO node_gid = apf::getNumber(globalNumbering,node);
-    int node_lid = node_mapT->getLocalElement(node_gid);
-    assert(node_lid >= 0);
-    assert(node_lid < numOwnedNodes);
     APF_ITERATE(std::set<apf::StkModel*>, mset, mit) {
       apf::StkModel* ns = *mit;
       std::string const& NS_name = ns->stkName;
@@ -1140,7 +1134,7 @@ void Albany::APFDiscretization::computeNodeSets()
       nodeSetCoords[NS_name].push_back(node_coords);
       dofLids.resize(neq);
       for (std::size_t eq=0; eq < neq; eq++)
-        dofLids[eq] = getDOF(node_lid, eq);
+        dofLids[eq] = getDOF(i, eq);
       double buf[3];
       apf::getComponents(m->getCoordinateField(), e, node.node, buf);
       for (int j = 0; j < mesh_dim; ++j) node_coords[j] = buf[j];
