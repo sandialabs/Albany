@@ -71,9 +71,7 @@ continuationStep(0)
 
 Albany::APFDiscretization::~APFDiscretization() {
   delete meshOutput;
-  if (globalNumbering) {
-      apf::destroyGlobalNumbering(globalNumbering);
-  }
+  assert(!globalNumbering);
   if (elementNumbering) {
       apf::destroyGlobalNumbering(elementNumbering);
   }
@@ -736,7 +734,7 @@ static void offsetNumbering(
 void Albany::APFDiscretization::computeOwnedNodesAndUnknowns()
 {
   apf::Mesh* m = meshStruct->getMesh();
-  if (globalNumbering) apf::destroyGlobalNumbering(globalNumbering);
+  assert(!globalNumbering);
   globalNumbering = apf::makeGlobal(apf::numberOwnedNodes(m,"owned"));
   apf::getNodes(globalNumbering,ownedNodes);
   if (meshStruct->useDOFOffsetHack)
@@ -1500,6 +1498,9 @@ Albany::APFDiscretization::updateMesh(bool shouldTransferIPData,
   // Use the parameter library to re-initialize Time state arrays
   if (Teuchos::nonnull(paramLib))
     initTimeFromParamLib(paramLib);
+
+  apf::destroyGlobalNumbering(globalNumbering);
+  globalNumbering = 0;
 }
 
 void
