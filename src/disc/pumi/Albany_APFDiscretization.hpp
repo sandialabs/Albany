@@ -180,8 +180,6 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     //! PUMI does not support MOR
     virtual bool supportsMOR() const { return false; }
 
-    apf::GlobalNumbering* getAPFGlobalNumbering() {return elementNumbering;}
-
     // Before mesh modification, qp data may be needed for solution transfer
     void attachQPData();
 
@@ -331,7 +329,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);
 
-  protected:
+  public:
 
     //! Transfer PUMIQPData to APF
     void copyQPScalarToAPF(unsigned nqp, std::string const& state, apf::Field* f);
@@ -345,6 +343,8 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void copyQPVectorFromAPF(unsigned nqp, std::string const& stateName, apf::Field* f);
     void copyQPTensorFromAPF(unsigned nqp, std::string const& stateName, apf::Field* f);
     void copyQPStatesFromAPF();
+
+  protected:
 
     //! Write stabilized stress out to file
     void saveStabilizedStress();

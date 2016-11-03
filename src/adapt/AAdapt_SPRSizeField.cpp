@@ -13,8 +13,6 @@
 
 AAdapt::SPRSizeField::SPRSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc) :
   MeshAdaptMethod(disc),
-  global_numbering(disc->getAPFGlobalNumbering()),
-  esa(disc->getStateArrays().elemStateArrays),
   elemGIDws(disc->getElemGIDws()),
   cub_degree(disc->getAPFMeshStruct()->cubatureDegree),
   pumi_disc(disc),
@@ -66,12 +64,6 @@ AAdapt::SPRSizeField::setParams(
   }
   state_name = p->get<std::string>("State Variable", "");
   using_state = !state_name.empty();
-  if ( using_state ) {
-    std::vector<int> dims;
-    esa[0][state_name].dimensions(dims);
-    num_qp = dims[1];
-  }
-
 }
 
 void
@@ -81,26 +73,12 @@ AAdapt::SPRSizeField::preProcessOriginalMesh()
     return;
   }
   apf::Mesh2* mesh = mesh_struct->getMesh();
-  apf::FieldShape* fs = apf::getVoronoiShape(mesh->getDimension(), cub_degree);
+  int dim = mesh->getDimension();
+  apf::FieldShape* fs = apf::getVoronoiShape(dim, cub_degree);
+  enum apf::Mesh::Type type = apf::Mesh::simplexTypes[dim];
+  unsigned nqp = fs->countNodesOn(type);
   apf::Field* eps = apf::createField(mesh, "eps", apf::MATRIX, fs);
-  global_numbering = pumi_disc->getAPFGlobalNumbering();
-  apf::MeshIterator* it = mesh->begin(mesh->getDimension());
-  apf::MeshEntity* e;
-  while ((e = mesh->iterate(it))) {
-    long elemID = apf::getNumber(global_numbering,apf::Node(e,0));
-    int ws = elemGIDws[elemID].ws;
-    int lid = elemGIDws[elemID].LID;
-    for (int qp=0; qp < num_qp; qp++) {
-      apf::Matrix3x3 value;
-      for (int i=0; i<3; i++) {
-        for (int j=0; j<3; j++) {
-          value[i][j] = esa[ws][state_name](lid,qp,i,j);
-        }
-      }
-      apf::setMatrix(eps,e,qp,value);
-    }
-  }
-  mesh->end(it);
+  pumi_disc->copyQPTensorToAPF(nqp, state_name, eps);
 }
 
 void AAdapt::SPRSizeField::postProcessShrunkenMesh()
