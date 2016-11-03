@@ -109,12 +109,13 @@ class DiscretizationFactory {
     void
     setDiscretizationParameters(Teuchos::RCP<Teuchos::ParameterList> disc_params);
     
-    /* This function overwrite previous number of equations in mesh structure */
-    void
-    setNumberOfEquations(int neq);
+#ifdef ALBANY_AMP
+        /* This function overwrite previous number of equations in mesh structure */
+        void
+        setNumberOfEquations(int neq);
+#endif
 
-
-  private:
+    private:
 
     //! Private to prohibit copying
     DiscretizationFactory(const DiscretizationFactory&);

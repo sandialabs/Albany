@@ -543,6 +543,7 @@ Albany::DiscretizationFactory::setDiscretizationParameters(Teuchos::RCP<Teuchos:
     discParams = disc_params;
 }
 
+#ifdef ALBANY_AMP
 /* This function overwrite previous number of equations in mesh structure */
 void
 Albany::DiscretizationFactory::setNumberOfEquations(int neq) {
@@ -551,3 +552,4 @@ Albany::DiscretizationFactory::setNumberOfEquations(int neq) {
             Teuchos::rcp_dynamic_cast<Albany::APFMeshStruct>(meshStruct);
     apf_ms->neq = neq;
 }
+#endif
