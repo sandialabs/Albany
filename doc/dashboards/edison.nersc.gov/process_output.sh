@@ -7,8 +7,8 @@ echo "----Edison Albany build----" >& d
 grep "Compiler errors" nightly_log_edisonAlbany.txt >& e
 grep "Compiler warnings" nightly_log_edisonAlbany.txt >& f
 echo "----Edison CISM-Albany build----" >& g
-grep "Compiler errors" nightly_log_edisonAlbany.txt >& h
-grep "Compiler warnings" nightly_log_edisonAlbany.txt >& i
+grep "Compiler errors" nightly_log_edisonCismAlbany.txt >& h
+grep "Compiler warnings" nightly_log_edisonCismAlbany.txt >& i
 cat a b >& out 
 rm a b 
 cat out c >& out2 
