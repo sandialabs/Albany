@@ -400,17 +400,10 @@ void Albany::APFDiscretization::getField(
   const int albany_nc = albanyCountComponents(problem_dim, pumi_value_type);
   assert(albany_nc <= 3);
   const int total_comps = (neq_sized ? neq : albany_nc);
-  for (size_t i = 0; i < overlapNodes.getSize(); ++i) {
-    apf::Node node = overlapNodes[i];
-    GO node_gid = apf::getNumber(globalNumbering,node);
-    int node_lid;
-    if (overlapped) {
-      node_lid = overlap_node_mapT->getLocalElement(node_gid);
-    } else {
-      if ( ! m->isOwned(node.entity)) continue;
-      node_lid = node_mapT->getLocalElement(node_gid);
-    }
-    const int first_dof = getDOF(node_lid, offset, total_comps);
+  apf::DynamicArray<apf::Node> const& nodes = overlapped ? overlapNodes : ownedNodes;
+  for (size_t i = 0; i < nodes.getSize(); ++i) {
+    apf::Node node = nodes[i];
+    const int first_dof = getDOF(i, offset, total_comps);
     double buf[3];
     apf::getComponents(f, node.entity, node.node, buf);
     for (int j = 0; j < albany_nc; ++j) data[first_dof + j] = buf[j];
