@@ -1,0 +1,280 @@
+****************************************************************************
+Preparing to build on skybridge.sandia.gov
+****************************************************************************
+
+Consider a few source files and put them in ~/bin
+
+filename: buildAlbany (file loads modules and modifies paths)
+
+---
+#!/bin/bash
+
+module purge
+module load gnu/4.9.2
+module load openmpi-gnu/1.8
+module load python/2.7
+module load git/1.9.4
+
+# Building Trilinos, add environmental variable and path
+export REMOTE=/gscratch/jwfoulk/albany
+export LD_LIBRARY_PATH=/opt/python-2.7/lib:$LD_LIBRARY_PATH
+
+## Using Trilinos
+LD_LIBRARY_PATH=$REMOTE/trilinos-install-gcc-release/lib:$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=$REMOTE/lib:$LD_LIBRARY_PATH
+LD_LIBRARY_PATH=$REMOTE/lib64:$LD_LIBRARY_PATH
+PATH=$REMOTE/trilinos-install-gcc-release/bin:$PATH
+
+## Python paths for exodus.py within Trilinos
+export PYTHONPATH=$REMOTE/trilinos-install-gcc-release/lib:$PYTHONPATH
+
+## Python utils from LCM
+export LCM_DIR=$REMOTE/src
+export PYTHONPATH=$LCM_DIR/Albany/src/LCM/utils/python:$PYTHONPATH
+export PATH=$LCM_DIR/Albany/src/LCM/utils/python:$PATH
+export PYTHONPATH=$LCM_DIR/Albany/src/LCM/utils/python/lcm_postprocess:$PYTHONPATH
+export PATH=$LCM_DIR/Albany/src/LCM/utils/python/lcm_postprocess:$PATH
+
+## Python tools in robustness suite
+export PYTHONPATH=/ascldap/users/jwfoulk/SolidMechanicsExamples/LCM/CrystalPlasticity/robustnessTests/Tools:$PYTHONPATH
+export PATH=/ascldap/users/jwfoulk/SolidMechanicsExamples/LCM/CrystalPlasticity/robustnessTests/Tools:$PATH
+
+## Account information needed for simulations and robustness suite
+export MYWCID=fy150167
+---
+
+filename: postAlbany (file sources buildAlbany and swaps python modules for numpy, etc.)
+
+---
+#!/bin/bash
+
+source ~/bin/buildAlbany
+
+module unload python/2.7
+module load canopy/1.6.2
+---
+
+****************************************************************************
+Building on skybridge.sandia.gov
+****************************************************************************
+
+Building Albany on skybridge.sandia.gov
+
+1. zlib first:
+
+cd $REMOTE
+curl http://zlib.net/zlib-1.2.8.tar.gz -O
+tar -xvf zlib-1.2.8.tar.gz
+cd zlib-1.2.8
+CC=mpicc CXX=mpicxx CFLAGS=-O3 CXXFLAGS=-O3 ./configure --64 --prefix=$REMOTE
+make install
+
+2. hdf5
+
+---
+cd $REMOTE
+curl https://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.14/src/hdf5-1.8.14.tar.gz -O
+tar -xvf hdf5-1.8.14.tar.gz
+cd hdf5-1.8.14
+./configure CC=mpicc FC=mpif90 CXX=mpicxx CXXFLAGS="-fPIC -O3" CFLAGS="-fPIC -O3" FCFLAGS="-fPIC -O3" --enable-parallel --enable-shared=yes --with-zlib=$REMOTE --prefix=$REMOTE
+make -j 8
+make install
+---
+
+Prior to moving on to netcdf, we need to modify both the path and LD_LIBRARY_PATH so that we grab both zlib and hdf5 from our local build and not the system build.
+
+---
+export LD_LIBRARY_PATH=$REMOTE/lib:$LD_LIBRARY_PATH
+---
+
+3. netcdf
+
+Grab the latest NetCDF release: https://github.com/Unidata/netcdf-c/releases - netcdf-c-4.4.0.tar.gz
+Tribits hoses a library path. Add it to your LD_LIBRARY_PATH: export LD_LIBRARY_PATH=/opt/python-2.7/lib:$LD_LIBRARY_PATH
+
+This info might need to be updated:
+
+Edit the file include/netcdf.h. Make the following changes near line 265:
+
+#define NC_MAX_DIMS      65536    /* max dimensions per file */
+#define NC_MAX_ATTRS      8192    
+#define NC_MAX_VARS     524288    /* max variables per file */
+#define NC_MAX_NAME        256 
+#define NC_MAX_VAR_DIMS      8    /* max per variable dimensions */
+
+Netcdf incorrectly deduces that the version of HDF5 just installed above is not parallel. To correct this, disable the checks that follow the comment around line 607 in CMakeLists.txt:
+
+# Find out if HDF5 was built with parallel support.
+# Do that by checking for the targets H5Pget_fapl_mpiposx and
+# H5Pget_fapl_mpio in ${HDF5_LIB}.
+#    CHECK_LIBRARY_EXISTS(hdf5 H5Pget_fapl_mpiposix "" HDF5_IS_PARALLEL_MPIPOSIX)
+#    CHECK_LIBRARY_EXISTS(hdf5 H5Pget_fapl_mpio "" HDF5_IS_PARALLEL_MPIO)
+#    IF(HDF5_IS_PARALLEL_MPIPOSIX OR HDF5_IS_PARALLEL_MPIO)
+      SET(HDF5_IS_PARALLEL ON)
+#    ENDIF()
+
+#    IF(HDF5_IS_PARALLEL_MPIO)
+      SET(USE_PARALLEL_MPIO ON)
+#    ENDIF()
+
+#    IF(HDF5_IS_PARALLEL_MPIPOSIX)
+#      SET(USE_PARALLEL_POSIX ON)
+#    ENDIF()
+
+Netcdf also incorrectly deduces that the HDF5 version is too old. Disable the checks for the HDF5 version around lines 555 -- 564 to avoid this:
+
+#  IF("${HDF5_VERSION}" STREQUAL "")
+#    MESSAGE(STATUS "Unable to determine hdf5 version.  NetCDF requires at least version ${HDF5_VERSION_REQUIRED}")
+#  ELSE()
+#    IF(${HDF5_VERSION} VERSION_LESS ${HDF5_VERSION_REQUIRED})
+#      MESSAGE(FATAL_ERROR
+#       "netCDF requires at least HDF5 ${HDF5_VERSION_REQUIRED}. Found ${HDF5_VERSION}.")
+#    ELSE()
+        MESSAGE(STATUS "Found HDF5 libraries version ${HDF5_VERSION}")
+#    ENDIF()
+#  ENDIF()
+
+Comment out the MPI typedefs and defines at line 90 in include/ncdispatch.h, and add an include statement for mpi.h
+
+  #include "mpi.h"
+  /* #if !defined HDF5_PARALLEL && !defined USE_PNETCDF
+  typedef int MPI_Comm;
+  typedef int MPI_Info;
+  #define MPI_COMM_WORLD 0
+  #define MPI_INFO_NULL 0
+  #endif */
+
+Now, configure using CMake and build:
+
+---
+mkdir build
+cd build
+cmake \
+-DCMAKE_C_COMPILER=mpicc \
+-DCMAKE_C_FLAGS="-I$REMOTE/include -O3" \
+-DCMAKE_PREFIX_PATH="$REMOTE/lib" \
+-DCMAKE_EXE_LINKER_FLAGS="-L$REMOTE/lib -O3" \
+-DCMAKE_INSTALL_PREFIX=$REMOTE \
+-DENABLE_DAP=OFF -DBUILD_SHARED_LIBS=ON -DENABLE_FSYNC=OFF -DENABLE_CDMREMOTE=OFF \
+-DENABLE_DOXYGEN=OFF -DENABLE_NETCDF_4=ON -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_EXAMPLES=OFF \
+-DENABLE_TESTS=OFF -DCMAKE_SKIP_INSTALL_RPATH=ON \
+-DZLIB_INCLUDE_DIRS=$REMOTE/include \
+-DZLIB_LIBRARY=$REMOTE/lib/libz.so \
+-DBUILD_UTILITIES=OFF \
+..
+---
+
+---
+make -j 8
+make install
+---
+
+Before leaving netcdf, fix a header. This will bite you in the Trilinos build
+
+---
+cp $REMOTE/src/netcdf-c-4.4.0/include/netcdf_par.h $REMOTE/include/
+---
+
+4. boost
+
+---
+cd $REMOTE/src/
+wget http://sourceforge.net/projects/boost/files/boost/1.57.0/boost_1_57_0.tar.gz/download
+mv download boost_1_57_0.tar.gz
+tar -xvf boost_1_57_0.tar.gz
+cd boost_1_57_0
+---
+
+---
+echo "using gcc : /opt/rh/devtoolset-3/root/usr/bin/g++ ;" >> ./tools/build/user-config.jam
+echo "using mpi : /opt/openmpi-1.8-gnu/bin/mpicxx ;" >> ./tools/build/user-config.jam
+./bootstrap.sh --with-toolset=gcc --with-libraries=signals,regex,filesystem,system,mpi,serialization,thread,program_options,exception --prefix=$REMOTE
+./b2 -j 8
+./b2 -j 8 install
+---
+
+5. Trilinos
+
+---
+cd $REMOTE/src
+git clone git@github.com:trilinos/Trilinos.git
+---
+
+---
+mkdir build
+cd build
+./trilinos-config.sh
+---
+
+The config script, ever changing, is located in this build directory - trilinos-config.sh
+
+NOTE: There are now very few differences between the Fedora & skybridge configurations. We will 
+keep working so that it is easier to maintain.
+
+Now Build Trilinos
+
+---
+make -j 8
+make install
+---
+
+6. Albany
+
+---
+cd /ascldap/users/$USER/src
+git clone git@github.com:gahansen/Albany.git
+cd Albany
+---
+
+Configure the Albany build
+
+---
+cd $REMOTE
+mkdir albany-build-gcc-release
+cd albany-build-gcc-release
+./albany-config.sh
+---
+
+The Albany config file is also located in this build build directory - albany-config.sh
+
+Build Albany
+
+---
+make -j 8
+---
+
+7. DTK
+
+Pull DTK from repository
+
+cd $REMOTE/src/Trilinos
+git clone git@github.com:ORNL-CEES/DataTransferKit.git
+
+Configure DTK
+
+Add the following dependencies to your trilinos configuration script in $REMOTE/scr/build
+
+---
+\
+ -D Trilinos_EXTRA_REPOSITORIES:STRING="DataTransferKit" \
+ -D Trilinos_ENABLE_DataTransferKit:BOOL=ON \
+ -D DataTransferKit_ENABLE_DBC:BOOL=ON \
+ -D DataTransferKit_ENABLE_TESTS:BOOL=OFF \
+ -D DataTransferKit_ENABLE_EXAMPLES:BOOL=OFF \
+ -D TPL_ENABLE_MOAB:BOOL=OFF \
+ -D TPL_ENABLE_Libmesh:BOOL=OFF \
+ ---
+
+ Re-run the configuratin script and build in $REMOTE/scr/build 
+
+---
+./trilinos-config/sh
+ make -j 8
+ make install
+ ---
+
+ Reminder: If you decide to go with DTK, you need to make sure that 
+
+    -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=OFF \
+
+Rebuild albany
