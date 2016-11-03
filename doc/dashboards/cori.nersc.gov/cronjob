@@ -1,4 +1,4 @@
-#the following is run on the cori05 login
+#the following is run on the cori02 login
 
 05 00 * * 1-5  source /global/homes/i/ikalash/.bashrc; cd /project/projectdirs/piscees/nightlyCoriCDash; bash -l -c "source cori_modules.sh; bash nightly_cron_script_trilinos_cori.sh"
 00 05 * * 1-5  source /global/homes/i/ikalash/.bashrc; cd /project/projectdirs/piscees/nightlyCoriCDash; bash -l -c "source cori_modules.sh; bash nightly_cron_script_albany_cori.sh"
