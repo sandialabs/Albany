@@ -466,7 +466,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     apf::GlobalNumbering* elementNumbering;
 
     //! list of all overlap nodes, saved for setting solution
-    apf::DynamicArray<apf::Node> nodes;
+    apf::DynamicArray<apf::Node> overlapNodes;
 
     //! Number of elements on this processor
     int numOwnedNodes;
