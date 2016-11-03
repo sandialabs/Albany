@@ -69,11 +69,14 @@ Albany::APFDiscretization::APFDiscretization(Teuchos::RCP<Albany::APFMeshStruct>
 {
 }
 
-Albany::APFDiscretization::~APFDiscretization()
-{
-  delete meshOutput;
-  apf::destroyGlobalNumbering(globalNumbering);
-  apf::destroyGlobalNumbering(elementNumbering);
+Albany::APFDiscretization::~APFDiscretization() {
+    delete meshOutput;
+    if (globalNumbering) {
+        apf::destroyGlobalNumbering(globalNumbering);
+    }
+    if (elementNumbering) {
+        apf::destroyGlobalNumbering(elementNumbering);
+    }
 }
 
 void Albany::APFDiscretization::init()
