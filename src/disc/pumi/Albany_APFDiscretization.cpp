@@ -1519,17 +1519,6 @@ Albany::APFDiscretization::detachQPData() {
   removeQPStatesFromAPF();
 }
 
-void Albany::APFDiscretization::releaseMesh () {
-  if (globalNumbering) {
-    apf::destroyGlobalNumbering(globalNumbering);
-    globalNumbering = 0;
-  }
-  if (elementNumbering) {
-    apf::destroyGlobalNumbering(elementNumbering);
-    elementNumbering = 0;
-  }
-}
-
 static apf::Field* interpolate(
     apf::Field* nf,
     int cubatureDegree,

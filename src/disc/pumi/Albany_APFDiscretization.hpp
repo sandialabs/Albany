@@ -305,11 +305,6 @@ class APFDiscretization : public Albany::AbstractDiscretization {
       return Teuchos::null;
     }
 
-    //! There can be situations where we want to create a new apf::Mesh2 from
-    //! scratch. Clean up everything that depends on the current mesh first,
-    //! thereby releasing the mesh.
-    virtual void releaseMesh();
-
     void initTemperatureHack();
 
     //! Set any FELIX Data
