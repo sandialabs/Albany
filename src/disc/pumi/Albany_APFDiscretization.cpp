@@ -353,23 +353,14 @@ void Albany::APFDiscretization::setField(
   // that we are passing data straight through if dealing with a tensor
   if (pumi_value_type == apf::MATRIX) assert(albany_nc == 9);
 
-  for (size_t i = 0; i < overlapNodes.getSize(); ++i) {
-    apf::Node node = overlapNodes[i];
-    GO node_gid = apf::getNumber(globalNumbering, node);
-    int node_lid;
-    if (overlapped) {
-      node_lid = overlap_node_mapT->getLocalElement(node_gid);
-    } else {
-      if ( ! m->isOwned(node.entity)) continue;
-      node_lid = node_mapT->getLocalElement(node_gid);
-    }
-    const int first_dof = getDOF(node_lid, offset, total_comps);
-
+  apf::DynamicArray<apf::Node> const& nodes = overlapped ? overlapNodes : ownedNodes;
+  for (size_t i = 0; i < nodes.getSize(); ++i) {
+    apf::Node node = nodes[i];
+    const int first_dof = getDOF(i, offset, total_comps);
     const double* datap = data + first_dof;
     for (int j = 0; j < albany_nc; ++j) {
       data_buf[j] = datap[j];
     }
-
     apf::setComponents(f, node.entity, node.node, data_buf);
   }
 
