@@ -297,16 +297,12 @@ void Albany::APFDiscretization::setupMLCoords()
   apf::Mesh* m = meshStruct->getMesh();
   apf::Field* f = meshStruct->getMesh()->getCoordinateField();
 
-  for (std::size_t i = 0; i < overlapNodes.getSize(); ++i) {
-    apf::Node node = overlapNodes[i];
-    if ( ! m->isOwned(node.entity)) continue; // Skip nodes that are not local
-
-    const GO node_gid = apf::getNumber(globalNumbering, node);
-    const LO node_lid = node_mapT->getLocalElement(node_gid);
+  for (std::size_t i = 0; i < ownedNodes.getSize(); ++i) {
+    apf::Node node = ownedNodes[i];
     double lcoords[3];
-    apf::getComponents(f, overlapNodes[i].entity, overlapNodes[i].node, lcoords);
+    apf::getComponents(f, ownedNodes[i].entity, ownedNodes[i].node, lcoords);
     for (std::size_t j = 0; j < mesh_dim; ++j)
-      coordMV->replaceLocalValue(node_lid, j, lcoords[j]);
+      coordMV->replaceLocalValue(i, j, lcoords[j]);
   }
 
   if (meshStruct->useNullspaceTranslationOnly)
