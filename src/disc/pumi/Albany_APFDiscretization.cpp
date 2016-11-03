@@ -758,7 +758,6 @@ void Albany::APFDiscretization::computeOwnedNodesAndUnknowns()
   apf::Mesh* m = meshStruct->getMesh();
   if (globalNumbering) apf::destroyGlobalNumbering(globalNumbering);
   globalNumbering = apf::makeGlobal(apf::numberOwnedNodes(m,"owned"));
-  apf::DynamicArray<apf::Node> ownedNodes;
   apf::getNodes(globalNumbering,ownedNodes);
   if (meshStruct->useDOFOffsetHack)
     offsetNumbering(globalNumbering, ownedNodes);
