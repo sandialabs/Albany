@@ -72,9 +72,7 @@ continuationStep(0)
 Albany::APFDiscretization::~APFDiscretization() {
   delete meshOutput;
   assert(!globalNumbering);
-  if (elementNumbering) {
-      apf::destroyGlobalNumbering(elementNumbering);
-  }
+  assert(!elementNumbering);
 }
 
 void Albany::APFDiscretization::init()
@@ -866,7 +864,7 @@ void Albany::APFDiscretization::computeWorksetInfo()
   apf::Mesh* m = meshStruct->getMesh();
   apf::FieldShape* shape = m->getShape();
   int numDim = m->getDimension();
-  if (elementNumbering) apf::destroyGlobalNumbering(elementNumbering);
+  assert(!elementNumbering);
   elementNumbering = apf::makeGlobal(apf::numberElements(m,"element"));
 
 /*
@@ -970,11 +968,12 @@ void Albany::APFDiscretization::computeWorksetInfo()
       element = buck[i];
       apf::Node node(element,0);
 
+      GO elem_gid = apf::getNumber(elementNumbering,node);
       // Now, save a map from element GID to workset on this PE
-      elemGIDws[apf::getNumber(elementNumbering,node)].ws = b;
+      elemGIDws[elem_gid].ws = b;
 
       // Now, save a map element GID to local id on this workset on this PE
-      elemGIDws[apf::getNumber(elementNumbering,node)].LID = i;
+      elemGIDws[elem_gid].LID = i;
 
       // get global node numbers
       apf::NewArray<long> nodeIDs;
@@ -1501,6 +1500,8 @@ Albany::APFDiscretization::updateMesh(bool shouldTransferIPData,
 
   apf::destroyGlobalNumbering(globalNumbering);
   globalNumbering = 0;
+  apf::destroyGlobalNumbering(elementNumbering);
+  elementNumbering = 0;
 }
 
 void
