@@ -305,11 +305,6 @@ class APFDiscretization : public Albany::AbstractDiscretization {
       return Teuchos::null;
     }
 
-    //! There can be situations where we want to create a new apf::Mesh2 from
-    //! scratch. Clean up everything that depends on the current mesh first,
-    //! thereby releasing the mesh.
-    virtual void releaseMesh();
-
     void initTemperatureHack();
 
     //! Set any FELIX Data
@@ -466,7 +461,8 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     apf::GlobalNumbering* elementNumbering;
 
     //! list of all overlap nodes, saved for setting solution
-    apf::DynamicArray<apf::Node> nodes;
+    apf::DynamicArray<apf::Node> overlapNodes;
+    apf::DynamicArray<apf::Node> ownedNodes;
 
     //! Number of elements on this processor
     int numOwnedNodes;

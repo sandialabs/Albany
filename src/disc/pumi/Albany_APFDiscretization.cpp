@@ -39,202 +39,198 @@ typedef int EpetraInt;
 #ifdef ALBANY_64BIT_INT
 Teuchos::RCP< Teuchos::Array<int> >
 convert (const Teuchos::Array<GO>& indicesAV) {
-  Teuchos::RCP< Teuchos::Array<int> > ind = Teuchos::rcp(
-    new Teuchos::Array<int>(indicesAV.size()));
-  for (std::size_t i = 0; i < indicesAV.size(); ++i)
-    (*ind)[i] = Teuchos::as<int>(indicesAV[i]);
-  return ind;
+Teuchos::RCP< Teuchos::Array<int> > ind = Teuchos::rcp(
+  new Teuchos::Array<int>(indicesAV.size()));
+for (std::size_t i = 0; i < indicesAV.size(); ++i)
+  (*ind)[i] = Teuchos::as<int>(indicesAV[i]);
+return ind;
 };
 #else // not ALBANY_64BIT_INT
 Teuchos::RCP< Teuchos::Array<GO> >
 convert (Teuchos::Array<GO>& indicesAV) {
-  return Teuchos::rcp(&indicesAV, false);
+return Teuchos::rcp(&indicesAV, false);
 }
 #endif // not ALBANY_64BIT_INT
 } // namespace
 #endif // ALBANY_EPETRA
 
 Albany::APFDiscretization::APFDiscretization(Teuchos::RCP<Albany::APFMeshStruct> meshStruct_,
-            const Teuchos::RCP<const Teuchos_Comm>& commT_,
-            const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_) :
-  out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-  previous_time_label(-1.0e32),
-  commT(commT_),
-  rigidBodyModes(rigidBodyModes_),
-  neq(meshStruct_->neq),
-  meshStruct(meshStruct_),
-  interleavedOrdering(meshStruct_->interleavedOrdering),
-  outputInterval(0),
-  continuationStep(0)
+          const Teuchos::RCP<const Teuchos_Comm>& commT_,
+          const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_) :
+out(Teuchos::VerboseObjectBase::getDefaultOStream()),
+previous_time_label(-1.0e32),
+commT(commT_),
+rigidBodyModes(rigidBodyModes_),
+neq(meshStruct_->neq),
+meshStruct(meshStruct_),
+interleavedOrdering(meshStruct_->interleavedOrdering),
+outputInterval(0),
+continuationStep(0)
 {
 }
 
 Albany::APFDiscretization::~APFDiscretization() {
-    delete meshOutput;
-    if (globalNumbering) {
-        apf::destroyGlobalNumbering(globalNumbering);
-    }
-    if (elementNumbering) {
-        apf::destroyGlobalNumbering(elementNumbering);
-    }
+  delete meshOutput;
+  assert(!globalNumbering);
+  assert(!elementNumbering);
 }
 
 void Albany::APFDiscretization::init()
 {
-  meshOutput = PUMIOutput::create(meshStruct, commT);
+meshOutput = PUMIOutput::create(meshStruct, commT);
 #if defined(ALBANY_EPETRA)
-  comm = Albany::createEpetraCommFromTeuchosComm(commT);
+comm = Albany::createEpetraCommFromTeuchosComm(commT);
 #endif
-  globalNumbering = 0;
-  elementNumbering = 0;
+globalNumbering = 0;
+elementNumbering = 0;
 
-  // Initialize the mesh and all data structures
-  bool shouldTransferIPData = false;
-  this->updateMesh(shouldTransferIPData);
+// Initialize the mesh and all data structures
+bool shouldTransferIPData = false;
+this->updateMesh(shouldTransferIPData);
 
 // layout[num deriv vectors][DOF_component]
-  Teuchos::Array<Teuchos::Array<std::string> > layout = meshStruct->solVectorLayout;
-  int number_of_solution_vecs = layout.size();
-  solLayout.resize(number_of_solution_vecs);
+Teuchos::Array<Teuchos::Array<std::string> > layout = meshStruct->solVectorLayout;
+int number_of_solution_vecs = layout.size();
+solLayout.resize(number_of_solution_vecs);
 
 
-  for (std::size_t i=0; i < layout[0].size(); i+=2) {
+for (std::size_t i=0; i < layout[0].size(); i+=2) {
 
-    std::string res_name = layout[0][i];
-    res_name.append("Res");
+  std::string res_name = layout[0][i];
+  res_name.append("Res");
 
-    resNames.push_back(res_name);
+  resNames.push_back(res_name);
 
-  }
+}
 
-  for (int j=0; j < number_of_solution_vecs; j++) {
-    int total_ndofs = 0;
-    for (std::size_t i = 0; i < layout[j].size(); i += 2) {
-      solLayout.getDerivNames(j).push_back(layout[j][i]);
-      int ndofs = 0;
-      if (layout[j][i + 1] == "S") {
-        ndofs = 1;
-      } else if (layout[j][i + 1] == "V") {
-        ndofs = getNumDim();
-      } else {
-        TEUCHOS_TEST_FOR_EXCEPTION(
-          true, std::logic_error,
-          "Layout '" << layout[j][i+1] << "' is not supported.");
-      }
-      solLayout.getDerivSizes(j).push_back(ndofs);
-      total_ndofs += ndofs;
+for (int j=0; j < number_of_solution_vecs; j++) {
+  int total_ndofs = 0;
+  for (std::size_t i = 0; i < layout[j].size(); i += 2) {
+    solLayout.getDerivNames(j).push_back(layout[j][i]);
+    int ndofs = 0;
+    if (layout[j][i + 1] == "S") {
+      ndofs = 1;
+    } else if (layout[j][i + 1] == "V") {
+      ndofs = getNumDim();
+    } else {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        true, std::logic_error,
+        "Layout '" << layout[j][i+1] << "' is not supported.");
     }
-    if (layout[0].size()) {
-      TEUCHOS_TEST_FOR_EXCEPTION(total_ndofs != neq, std::logic_error,
-          "Layout size " << total_ndofs <<
-          " does not match number of equations " << neq << '\n');
-    }
+    solLayout.getDerivSizes(j).push_back(ndofs);
+    total_ndofs += ndofs;
   }
+  if (layout[0].size()) {
+    TEUCHOS_TEST_FOR_EXCEPTION(total_ndofs != neq, std::logic_error,
+        "Layout size " << total_ndofs <<
+        " does not match number of equations " << neq << '\n');
+  }
+}
 
-  // zero the residual field for Rhythmos
-  if (resNames.size())
-    for (size_t i = 0; i < resNames.size(); ++i)
-      apf::zeroField(meshStruct->getMesh()->findField(resNames[i].c_str()));
-  else
-    apf::zeroField(
-      meshStruct->getMesh()->findField(APFMeshStruct::residual_name));
+// zero the residual field for Rhythmos
+if (resNames.size())
+  for (size_t i = 0; i < resNames.size(); ++i)
+    apf::zeroField(meshStruct->getMesh()->findField(resNames[i].c_str()));
+else
+  apf::zeroField(
+    meshStruct->getMesh()->findField(APFMeshStruct::residual_name));
 
-  // set all of the restart fields here
-  if (meshStruct->hasRestartSolution)
-    setRestartData();
+// set all of the restart fields here
+if (meshStruct->hasRestartSolution)
+  setRestartData();
 }
 
 Teuchos::RCP<const Tpetra_Map>
 Albany::APFDiscretization::getMapT() const
 {
-  return mapT;
+return mapT;
 }
 
 Teuchos::RCP<const Tpetra_Map>
 Albany::APFDiscretization::getOverlapMapT() const
 {
-  return overlap_mapT;
+return overlap_mapT;
 }
 
 #if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_Map>
 Albany::APFDiscretization::getOverlapNodeMap() const
 {
-  return Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
+return Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
 }
 #endif
 
 Teuchos::RCP<const Tpetra_CrsGraph>
 Albany::APFDiscretization::getJacobianGraphT() const
 {
-  return graphT;
+return graphT;
 }
 
 Teuchos::RCP<const Tpetra_CrsGraph>
 Albany::APFDiscretization::getOverlapJacobianGraphT() const
 {
-  return overlap_graphT;
+return overlap_graphT;
 }
 
 Teuchos::RCP<const Tpetra_Map>
 Albany::APFDiscretization::getNodeMapT() const
 {
-  return node_mapT;
+return node_mapT;
 }
 
 Teuchos::RCP<const Tpetra_Map>
 Albany::APFDiscretization::getOverlapNodeMapT() const
 {
-  return overlap_node_mapT;
+return overlap_node_mapT;
 }
 
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
 Albany::APFDiscretization::getWsElNodeEqID() const
 {
-  return wsElNodeEqID;
+return wsElNodeEqID;
 }
 
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
 Albany::APFDiscretization::getWsElNodeID() const
 {
-  return wsElNodeID;
+return wsElNodeID;
 }
 
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
 Albany::APFDiscretization::getCoords() const
 {
-  return coords;
+return coords;
 }
 
 void
 Albany::APFDiscretization::printCoords() const
 {
-  int mesh_dim = meshStruct->getMesh()->getDimension();
+int mesh_dim = meshStruct->getMesh()->getDimension();
 
-  std::cout << "Processor " << PCU_Comm_Self() << " has " << coords.size()
-      << " worksets." << std::endl;
+std::cout << "Processor " << PCU_Comm_Self() << " has " << coords.size()
+    << " worksets." << std::endl;
 
-  for (int ws=0; ws<coords.size(); ws++)  //workset
-    for (int e=0; e<coords[ws].size(); e++) //cell
-      for (int j=0; j<coords[ws][e].size(); j++) //node
-        for (int d=0; d<mesh_dim; d++) //dim
-          std::cout << "Coord for workset: " << ws << " element: " << e
-              << " node: " << j << " DOF: " << d << " is: " <<
-              coords[ws][e][j][d] << std::endl;
+for (int ws=0; ws<coords.size(); ws++)  //workset
+  for (int e=0; e<coords[ws].size(); e++) //cell
+    for (int j=0; j<coords[ws][e].size(); j++) //node
+      for (int d=0; d<mesh_dim; d++) //dim
+        std::cout << "Coord for workset: " << ws << " element: " << e
+            << " node: " << j << " DOF: " << d << " is: " <<
+            coords[ws][e][j][d] << std::endl;
 }
 
 const Teuchos::ArrayRCP<double>&
 Albany::APFDiscretization::getCoordinates() const
 {
-  const int spdim = getNumDim();
-  coordinates.resize(spdim * numOverlapNodes);
-  apf::Field* f = meshStruct->getMesh()->getCoordinateField();
-  for (size_t i = 0; i < nodes.getSize(); ++i) {
+const int spdim = getNumDim();
+coordinates.resize(spdim * numOverlapNodes);
+apf::Field* f = meshStruct->getMesh()->getCoordinateField();
+for (size_t i = 0; i < overlapNodes.getSize(); ++i) {
     if (spdim == 3)
-      apf::getComponents(f, nodes[i].entity, nodes[i].node, &coordinates[3*i]);
+      apf::getComponents(f, overlapNodes[i].entity, overlapNodes[i].node, &coordinates[3*i]);
     else {
       double buf[3];
-      apf::getComponents(f, nodes[i].entity, nodes[i].node, buf);
+      apf::getComponents(f, overlapNodes[i].entity, overlapNodes[i].node, buf);
       double* const c = &coordinates[spdim*i];
       for (int j = 0; j < spdim; ++j) c[j] = buf[j];
     }
@@ -249,13 +245,13 @@ Albany::APFDiscretization::setCoordinates(
   const int spdim = getNumDim();
   double buf[3] = {0};
   apf::Field* f = meshStruct->getMesh()->getCoordinateField();
-  for (size_t i = 0; i < nodes.getSize(); ++i) {
+  for (size_t i = 0; i < overlapNodes.getSize(); ++i) {
     if (spdim == 3)
-      apf::setComponents(f, nodes[i].entity, nodes[i].node, &c[spdim*i]);
+      apf::setComponents(f, overlapNodes[i].entity, overlapNodes[i].node, &c[spdim*i]);
     else {
       const double* const cp = &c[spdim*i];
       for (int j = 0; j < spdim; ++j) buf[j] = cp[j];
-      apf::setComponents(f, nodes[i].entity, nodes[i].node, buf);
+      apf::setComponents(f, overlapNodes[i].entity, overlapNodes[i].node, buf);
     }
   }
 }
@@ -297,16 +293,12 @@ void Albany::APFDiscretization::setupMLCoords()
   apf::Mesh* m = meshStruct->getMesh();
   apf::Field* f = meshStruct->getMesh()->getCoordinateField();
 
-  for (std::size_t i = 0; i < nodes.getSize(); ++i) {
-    apf::Node node = nodes[i];
-    if ( ! m->isOwned(node.entity)) continue; // Skip nodes that are not local
-
-    const GO node_gid = apf::getNumber(globalNumbering, node);
-    const LO node_lid = node_mapT->getLocalElement(node_gid);
+  for (std::size_t i = 0; i < ownedNodes.getSize(); ++i) {
+    apf::Node node = ownedNodes[i];
     double lcoords[3];
-    apf::getComponents(f, nodes[i].entity, nodes[i].node, lcoords);
+    apf::getComponents(f, ownedNodes[i].entity, ownedNodes[i].node, lcoords);
     for (std::size_t j = 0; j < mesh_dim; ++j)
-      coordMV->replaceLocalValue(node_lid, j, lcoords[j]);
+      coordMV->replaceLocalValue(i, j, lcoords[j]);
   }
 
   if (meshStruct->useNullspaceTranslationOnly)
@@ -353,23 +345,14 @@ void Albany::APFDiscretization::setField(
   // that we are passing data straight through if dealing with a tensor
   if (pumi_value_type == apf::MATRIX) assert(albany_nc == 9);
 
+  apf::DynamicArray<apf::Node> const& nodes = overlapped ? overlapNodes : ownedNodes;
   for (size_t i = 0; i < nodes.getSize(); ++i) {
     apf::Node node = nodes[i];
-    GO node_gid = apf::getNumber(globalNumbering, node);
-    int node_lid;
-    if (overlapped) {
-      node_lid = overlap_node_mapT->getLocalElement(node_gid);
-    } else {
-      if ( ! m->isOwned(node.entity)) continue;
-      node_lid = node_mapT->getLocalElement(node_gid);
-    }
-    const int first_dof = getDOF(node_lid, offset, total_comps);
-
+    const int first_dof = getDOF(i, offset, total_comps);
     const double* datap = data + first_dof;
     for (int j = 0; j < albany_nc; ++j) {
       data_buf[j] = datap[j];
     }
-
     apf::setComponents(f, node.entity, node.node, data_buf);
   }
 
@@ -400,17 +383,10 @@ void Albany::APFDiscretization::getField(
   const int albany_nc = albanyCountComponents(problem_dim, pumi_value_type);
   assert(albany_nc <= 3);
   const int total_comps = (neq_sized ? neq : albany_nc);
+  apf::DynamicArray<apf::Node> const& nodes = overlapped ? overlapNodes : ownedNodes;
   for (size_t i = 0; i < nodes.getSize(); ++i) {
     apf::Node node = nodes[i];
-    GO node_gid = apf::getNumber(globalNumbering,node);
-    int node_lid;
-    if (overlapped) {
-      node_lid = overlap_node_mapT->getLocalElement(node_gid);
-    } else {
-      if ( ! m->isOwned(node.entity)) continue;
-      node_lid = node_mapT->getLocalElement(node_gid);
-    }
-    const int first_dof = getDOF(node_lid, offset, total_comps);
+    const int first_dof = getDOF(i, offset, total_comps);
     double buf[3];
     apf::getComponents(f, node.entity, node.node, buf);
     for (int j = 0; j < albany_nc; ++j) data[first_dof + j] = buf[j];
@@ -756,9 +732,8 @@ static void offsetNumbering(
 void Albany::APFDiscretization::computeOwnedNodesAndUnknowns()
 {
   apf::Mesh* m = meshStruct->getMesh();
-  if (globalNumbering) apf::destroyGlobalNumbering(globalNumbering);
+  assert(!globalNumbering);
   globalNumbering = apf::makeGlobal(apf::numberOwnedNodes(m,"owned"));
-  apf::DynamicArray<apf::Node> ownedNodes;
   apf::getNodes(globalNumbering,ownedNodes);
   if (meshStruct->useDOFOffsetHack)
     offsetNumbering(globalNumbering, ownedNodes);
@@ -791,12 +766,12 @@ void Albany::APFDiscretization::computeOverlapNodesAndUnknowns()
   apf::Numbering* overlap = m->findNumbering("overlap");
   if (overlap) apf::destroyNumbering(overlap);
   overlap = apf::numberOverlapNodes(m,"overlap");
-  apf::getNodes(overlap,nodes);
-  numOverlapNodes = nodes.getSize();
+  apf::getNodes(overlap,overlapNodes);
+  numOverlapNodes = overlapNodes.getSize();
   Teuchos::Array<GO> nodeIndices(numOverlapNodes);
   Teuchos::Array<GO> dofIndices(numOverlapNodes*neq);
   for (int i=0; i < numOverlapNodes; ++i) {
-    GO global = apf::getNumber(globalNumbering,nodes[i]);
+    GO global = apf::getNumber(globalNumbering,overlapNodes[i]);
     nodeIndices[i] = global;
     for (int j=0; j < neq; ++j)
       dofIndices[getDOF(i,j)] = getDOF(global,j);
@@ -889,7 +864,7 @@ void Albany::APFDiscretization::computeWorksetInfo()
   apf::Mesh* m = meshStruct->getMesh();
   apf::FieldShape* shape = m->getShape();
   int numDim = m->getDimension();
-  if (elementNumbering) apf::destroyGlobalNumbering(elementNumbering);
+  assert(!elementNumbering);
   elementNumbering = apf::makeGlobal(apf::numberElements(m,"element"));
 
 /*
@@ -993,11 +968,12 @@ void Albany::APFDiscretization::computeWorksetInfo()
       element = buck[i];
       apf::Node node(element,0);
 
+      GO elem_gid = apf::getNumber(elementNumbering,node);
       // Now, save a map from element GID to workset on this PE
-      elemGIDws[apf::getNumber(elementNumbering,node)].ws = b;
+      elemGIDws[elem_gid].ws = b;
 
       // Now, save a map element GID to local id on this workset on this PE
-      elemGIDws[apf::getNumber(elementNumbering,node)].LID = i;
+      elemGIDws[elem_gid].LID = i;
 
       // get global node numbers
       apf::NewArray<long> nodeIDs;
@@ -1089,10 +1065,10 @@ void Albany::APFDiscretization::computeWorksetInfo()
     int node_in_bucket = 0;
 
     // iterate over all nodes and save the owned ones into buckets
-    for (size_t i=0; i < nodes.getSize(); ++i)
-      if (m->isOwned(nodes[i].entity))
+    for (size_t i=0; i < overlapNodes.getSize(); ++i)
+      if (m->isOwned(overlapNodes[i].entity))
       {
-        nbuckets[node_bucket_counter].push_back(nodes[i]);
+        nbuckets[node_bucket_counter].push_back(overlapNodes[i]);
         node_in_bucket++;
         if (node_in_bucket >= worksetSize) {
           ++node_bucket_counter;
@@ -1136,20 +1112,14 @@ void Albany::APFDiscretization::computeNodeSets()
   apf::StkModels& sets = meshStruct->getSets();
   apf::Mesh* m = meshStruct->getMesh();
   int mesh_dim = m->getDimension();
-  //loop over mesh nodes
-  for (size_t i = 0; i < nodes.getSize(); ++i) {
-    apf::Node node = nodes[i];
+  //loop over owned mesh nodes
+  for (size_t i = 0; i < ownedNodes.getSize(); ++i) {
+    apf::Node node = ownedNodes[i];
     apf::MeshEntity* e = node.entity;
-    if (!m->isOwned(e))
-      continue;
     std::set<apf::StkModel*> mset;
     apf::collectEntityModels(m, sets.invMaps[0], m->toModel(e), mset);
     if (mset.empty())
       continue;
-    GO node_gid = apf::getNumber(globalNumbering,node);
-    int node_lid = node_mapT->getLocalElement(node_gid);
-    assert(node_lid >= 0);
-    assert(node_lid < numOwnedNodes);
     APF_ITERATE(std::set<apf::StkModel*>, mset, mit) {
       apf::StkModel* ns = *mit;
       std::string const& NS_name = ns->stkName;
@@ -1161,7 +1131,7 @@ void Albany::APFDiscretization::computeNodeSets()
       nodeSetCoords[NS_name].push_back(node_coords);
       dofLids.resize(neq);
       for (std::size_t eq=0; eq < neq; eq++)
-        dofLids[eq] = getDOF(node_lid, eq);
+        dofLids[eq] = getDOF(i, eq);
       double buf[3];
       apf::getComponents(m->getCoordinateField(), e, node.node, buf);
       for (int j = 0; j < mesh_dim; ++j) node_coords[j] = buf[j];
@@ -1527,6 +1497,11 @@ Albany::APFDiscretization::updateMesh(bool shouldTransferIPData,
   // Use the parameter library to re-initialize Time state arrays
   if (Teuchos::nonnull(paramLib))
     initTimeFromParamLib(paramLib);
+
+  apf::destroyGlobalNumbering(globalNumbering);
+  globalNumbering = 0;
+  apf::destroyGlobalNumbering(elementNumbering);
+  elementNumbering = 0;
 }
 
 void
@@ -1542,17 +1517,6 @@ Albany::APFDiscretization::attachQPData() {
 void
 Albany::APFDiscretization::detachQPData() {
   removeQPStatesFromAPF();
-}
-
-void Albany::APFDiscretization::releaseMesh () {
-  if (globalNumbering) {
-    apf::destroyGlobalNumbering(globalNumbering);
-    globalNumbering = 0;
-  }
-  if (elementNumbering) {
-    apf::destroyGlobalNumbering(elementNumbering);
-    elementNumbering = 0;
-  }
 }
 
 static apf::Field* interpolate(
