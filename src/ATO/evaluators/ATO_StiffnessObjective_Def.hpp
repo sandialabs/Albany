@@ -69,7 +69,7 @@ StiffnessObjectiveBase(Teuchos::ParameterList& p,
 
   int nFields = depFields.size();
   for(int ifield=0; ifield<nFields; ifield++)
-    this->addDependentField(depFields[ifield]);
+    this->addDependentField(depFields[ifield].fieldTag());
 
   stiffness_objective_tag =
     Teuchos::rcp(new PHX::Tag<ScalarT>(className, dl->dummy));

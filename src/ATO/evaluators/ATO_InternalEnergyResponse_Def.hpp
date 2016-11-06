@@ -94,7 +94,7 @@ InternalEnergyResponse(Teuchos::ParameterList& p,
 
   int nFields = depFields.size();
   for(int ifield=0; ifield<nFields; ifield++)
-    this->addDependentField(depFields[ifield]);
+    this->addDependentField(depFields[ifield].fieldTag());
 
   // Create tag
   stiffness_objective_tag =
