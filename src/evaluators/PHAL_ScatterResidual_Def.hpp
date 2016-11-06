@@ -642,6 +642,8 @@ evaluateFields(typename Traits::EvalData workset)
   bool trans = workset.transpose_dist_param_deriv;
   int num_cols = workset.VpT->getNumVectors();
 
+  if(workset.local_Vp[0].size() == 0) return; //In case the parameter has not been gathered, e.g. parameter is used only in Dirichlet conditions.
+
   int numDim= (this->tensorRank==2) ? this->valTensor[0].dimension(2) : 0;
 
   if (trans) {
@@ -702,6 +704,9 @@ template<typename Traits>
 void ScatterResidualWithExtrudedParams<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+ 
+  if(workset.local_Vp[0].size() == 0) return; //In case the parameter has not been gathered, e.g. parameter is used only in Dirichlet conditions.
+
   auto level_it = extruded_params_levels->find(workset.dist_param_deriv_name);
   if(level_it == extruded_params_levels->end()) //if parameter is not extruded use usual scatter.
     return ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(workset);
