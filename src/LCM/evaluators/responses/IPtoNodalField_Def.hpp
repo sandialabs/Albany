@@ -128,7 +128,7 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
           "Field Layout unknown");
     }
 
-    this->addDependentField(ip_fields_[field]);
+    this->addDependentField(ip_fields_[field].fieldTag());
 
     if (ip_field_layouts_[field] == "Scalar") {
       this->p_state_mgr_->registerNodalVectorStateVariable(
