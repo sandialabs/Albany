@@ -2,6 +2,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basal_friction.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/basal_friction.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basal_friction_log.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/basal_friction_log.ascii COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/stiffening_factor.ascii
+               ${CMAKE_CURRENT_BINARY_DIR}/stiffening_factor.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface_height.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/surface_height.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface_velocity.ascii

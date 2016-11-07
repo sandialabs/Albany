@@ -54,6 +54,7 @@ private:
 
   bool extractStrainRateSq;
   bool useStereographicMap;
+  bool useStiffeningFactor;
   Teuchos::ParameterList* stereographicMapList;
 
   //coefficients for Glen's law
@@ -70,6 +71,7 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
   PHX::MDField<ScalarT,Cell,QuadPoint> epsilonSq;
+  PHX::MDField<ParamScalarT,Cell,QuadPoint> stiffeningFactor;
 
   PHX::MDField<ScalarT> homotopyParam;
   ScalarT printedFF;
