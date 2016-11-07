@@ -35,6 +35,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 #endif
 
   Teuchos::ParameterList& beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
+  zero_on_floating = beta_list.get<bool> ("Zero Beta On Floating Ice", false);
+
 
   std::string betaType = (beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "Given Field");
 
@@ -144,6 +146,16 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
         std::endl << "Error in FELIX::BasalFrictionCoefficient:  \"" << betaType << "\" is not a valid parameter for Beta Type\n");
   }
 
+  if(zero_on_floating) {
+    bed_topo_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Bed Topography QP Name"), dl->qp_scalar);
+    thickness_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Thickness QP Name"), dl->qp_scalar);
+    Teuchos::ParameterList& phys_param_list = *p.get<Teuchos::ParameterList*>("Physical Parameter List");
+    rho_i = phys_param_list.get<double> ("Ice Density");
+    rho_w = phys_param_list.get<double> ("Water Density");
+    this->addDependentField (bed_topo_field);
+    this->addDependentField (thickness_field);
+  }
+
   auto& stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
   use_stereographic_map = stereographicMapList->get("Use Stereographic Map", false);
   if(use_stereographic_map)
@@ -189,6 +201,11 @@ postRegistrationSetup (typename Traits::SetupData d,
       this->utils.setFieldData(powerParam,fm);
       this->utils.setFieldData(N,fm);
       this->utils.setFieldData(u_norm,fm);
+  }
+
+  if(zero_on_floating) {
+    this->utils.setFieldData(bed_topo_field,fm);
+    this->utils.setFieldData(thickness_field,fm);
   }
 
   if (use_stereographic_map)
@@ -288,6 +305,12 @@ evaluateFields (typename Traits::EvalData workset)
         }
       break;
     }
+
+    if(zero_on_floating)
+      for (int qp=0; qp<numQPs; ++qp) {
+        double isGrounded = rho_i*thickness_field(cell,side,qp) > -rho_w*bed_topo_field(cell,side,qp);
+        beta(cell,side,qp) *=  isGrounded;
+      }
 
     // Correct the value if we are using a stereographic map
     if (use_stereographic_map)

@@ -67,16 +67,21 @@ private:
   PHX::MDField<HydroScalarT,Cell,Side,QuadPoint>      N;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>   coordVec;
 
+  PHX::MDField<ParamScalarT> bed_topo_field;
+  PHX::MDField<ParamScalarT> thickness_field;
+
   // Output:
   PHX::MDField<ScalarT,Cell,Side,QuadPoint>           beta;
 
   std::string                         basalSideName;
 
-  bool use_stereographic_map;
+  bool use_stereographic_map, zero_on_floating;
 
   double x_0;
   double y_0;
   double R2;
+
+  double rho_i, rho_w;
 
   int numNodes;
   int numQPs;
