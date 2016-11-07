@@ -18,11 +18,13 @@ namespace CTM {
             Teuchos::RCP<SolutionInfo> sinfo,
             Teuchos::RCP<Albany::AbstractProblem> prob,
             Teuchos::RCP<Albany::AbstractDiscretization> d,
+            const Albany::StateManager& state_mgr,
             bool isThermal) :
     params(p),
     solution_info(sinfo),
     problem(prob),
     disc(d),
+    stateMgr(state_mgr),
     phxGraphVisDetail(0),
     stateGraphVisDetail(0),
     out(Teuchos::VerboseObjectBase::getDefaultOStream()) {
@@ -69,14 +71,16 @@ namespace CTM {
 
         owned_soln->getVectorNonConst(0)->doExport(*ghost_soln->getVector(0), *exporter, Tpetra::INSERT);
 
+        
 #if (defined(ALBANY_SCOREC) || defined(ALBANY_AMP))
-//        {
-//            const Teuchos::RCP< Albany::APFDiscretization > apf_disc =
-//                    Teuchos::rcp_dynamic_cast< Albany::APFDiscretization >(disc);
-//            if (!apf_disc.is_null()) {
-//                apf_disc->writeSolutionMVToMeshDatabase(*ghost_soln, 0, true);
-//            }
-//        }
+        {
+            const Teuchos::RCP< Albany::APFDiscretization > apf_disc =
+                    Teuchos::rcp_dynamic_cast< Albany::APFDiscretization >(disc);
+            if (!apf_disc.is_null()) {
+                apf_disc->writeSolutionMVToMeshDatabase(*ghost_soln, 0, true);
+            }
+//            apf_disc->initTemperatureHack();
+        }
 #endif
 
         // Create debug output object

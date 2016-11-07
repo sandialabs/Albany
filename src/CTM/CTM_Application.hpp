@@ -13,6 +13,8 @@
 //
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_AbstractDiscretization.hpp"
+//
+#include "Albany_StateManager.hpp"
 
 namespace CTM {
 
@@ -24,6 +26,7 @@ namespace CTM {
                 Teuchos::RCP<SolutionInfo> sinfo,
                 Teuchos::RCP<Albany::AbstractProblem> prob,
                 Teuchos::RCP<Albany::AbstractDiscretization> d,
+                const Albany::StateManager& state_mgr,
                 bool isThermal);
         // prohibit copy constructor
         Application(const Application& app) = delete;
@@ -52,6 +55,9 @@ namespace CTM {
             return numDim;
         }
 
+        //! Class to manage state variables (a.k.a. history)
+        const Albany::StateManager& getStateMgr() {return stateMgr; }
+        
         // get solution info
         Teuchos::RCP<SolutionInfo> getSolutionInfo() const;
         
@@ -133,6 +139,9 @@ namespace CTM {
 
         //! Phalanx Field Manager for Neumann Conditions
         Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > nfm;
+        
+        // State manager
+        const Albany::StateManager& stateMgr;
 
         std::set<std::string> setupSet;
         mutable int phxGraphVisDetail;
@@ -177,7 +186,7 @@ namespace CTM {
 
         // Sidesets are integrated within the Cells
         loadWorksetSidesetInfo(workset, ws);
-        //        workset.stateArrayPtr = &stateMgr.getStateArray(Albany::StateManager::ELEM, ws);
+        workset.stateArrayPtr = &stateMgr.getStateArray(Albany::StateManager::ELEM, ws);
 
 
         //  workset.wsElNodeEqID_kokkos =
