@@ -1,5 +1,6 @@
 set(CTM_SOURCES
 CTM_SolutionInfo.cpp
+CTM_TemperatureEvaluator.cpp
 CTM_ThermalProblem.cpp
 CTM_MechanicsProblem.cpp
 CTM_Application.cpp
