@@ -144,6 +144,10 @@ namespace CTM {
 #include <Shards_CellTopology.hpp>
 #include "PHAL_Source.hpp"
 //
+#include <Albany_DiscretizationFactory.hpp>
+#include "Albany_APFDiscretization.hpp"
+#include <Albany_AbstractDiscretization.hpp>
+//
 #include "PHAL_NSMaterialProperty.hpp"
 #include "PHAL_Source.hpp"
 #include "PHAL_SaveStateField.hpp"
@@ -162,6 +166,8 @@ namespace CTM {
 #include "ConstitutiveModelParameters.hpp"
 #include "Strain.hpp"
 #include "FirstPK.hpp"
+//
+#include "CTM_TemperatureEvaluator.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag> CTM::MechanicsProblem::constructEvaluators(
@@ -316,6 +322,21 @@ Teuchos::RCP<const PHX::FieldTag> CTM::MechanicsProblem::constructEvaluators(
     }
     
     
+    {
+        // temperature
+        Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+                new Teuchos::ParameterList("Current Temperature"));
+        
+        p->set<std::string>("Temperature Name", temperature);
+        p->set<Teuchos::RCP < PHX::DataLayout >> ("Data Layout", dl->qp_scalar);
+        
+        ev = Teuchos::rcp(
+                new CTM::Temperature<EvalT, PHAL::AlbanyTraits>(*p, dl));
+        fm0.template registerEvaluator<EvalT>(ev);
+        
+    }
+    
+    
 //    {
 //        double temp(0.0);
 //        if (material_db_->isElementBlockParam(eb_name, "Initial Temperature")) {
@@ -337,38 +358,38 @@ Teuchos::RCP<const PHX::FieldTag> CTM::MechanicsProblem::constructEvaluators(
 //    }
 
 
-    {
-        Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
-                new Teuchos::ParameterList);
-
-        p->set<std::string>("Material Property Name", temperature);
-        p->set<Teuchos::RCP < PHX::DataLayout >> ("Data Layout", dl->qp_scalar);
-        p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-        p->set<Teuchos::RCP < PHX::DataLayout >> (
-                "Coordinate Vector Data Layout",
-                dl->qp_vector);
-
-        p->set<Teuchos::RCP < ParamLib >> ("Parameter Library", paramLib);
-        Teuchos::ParameterList& paramList = params->sublist("Temperature");
-
-        // This evaluator is called to set a constant temperature when "Variable Type"
-        // is set to "Constant." It is also called when "Variable Type" is set to
-        // "Time Dependent." There are two "Type" variables in the PL - "Type" and
-        // "Variable Type". For the last case, lets set "Type" to "Time Dependent" to hopefully
-        // make the evaluator call a little more general (GAH)
-        std::string temp_type = paramList.get<std::string>("Variable Type", "None");
-        if (temp_type == "Time Dependent") {
-
-            paramList.set<std::string>("Type", temp_type);
-
-        }
-
-        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
-        ev = Teuchos::rcp(
-                new PHAL::NSMaterialProperty<EvalT, PHAL::AlbanyTraits>(*p));
-        fm0.template registerEvaluator<EvalT>(ev);
-    }
+//    {
+//        Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+//                new Teuchos::ParameterList);
+//
+//        p->set<std::string>("Material Property Name", temperature);
+//        p->set<Teuchos::RCP < PHX::DataLayout >> ("Data Layout", dl->qp_scalar);
+//        p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+//        p->set<Teuchos::RCP < PHX::DataLayout >> (
+//                "Coordinate Vector Data Layout",
+//                dl->qp_vector);
+//
+//        p->set<Teuchos::RCP < ParamLib >> ("Parameter Library", paramLib);
+//        Teuchos::ParameterList& paramList = params->sublist("Temperature");
+//
+//        // This evaluator is called to set a constant temperature when "Variable Type"
+//        // is set to "Constant." It is also called when "Variable Type" is set to
+//        // "Time Dependent." There are two "Type" variables in the PL - "Type" and
+//        // "Variable Type". For the last case, lets set "Type" to "Time Dependent" to hopefully
+//        // make the evaluator call a little more general (GAH)
+//        std::string temp_type = paramList.get<std::string>("Variable Type", "None");
+//        if (temp_type == "Time Dependent") {
+//
+//            paramList.set<std::string>("Type", temp_type);
+//
+//        }
+//
+//        p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+//
+//        ev = Teuchos::rcp(
+//                new PHAL::NSMaterialProperty<EvalT, PHAL::AlbanyTraits>(*p));
+//        fm0.template registerEvaluator<EvalT>(ev);
+//    }
 
     { // Constitutive Model Parameters
         Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(

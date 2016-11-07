@@ -143,6 +143,7 @@ namespace CTM {
 #include <Intrepid2_DefaultCubatureFactory.hpp>
 #include <Shards_CellTopology.hpp>
 #include "PHAL_Source.hpp"
+#include "PHAL_SaveStateField.hpp"
 
 // Constitutive Model Interface and parameters
 #include "Kinematics.hpp"
@@ -315,6 +316,29 @@ Teuchos::RCP<const PHX::FieldTag> CTM::ThermalProblem::constructEvaluators(
             TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                 "Unrecognized thermal source specified in input file");
     }
+    
+    
+    {
+        double temp(0.0);
+        if (material_db_->isElementBlockParam(eb_name, "Initial Temperature")) {
+            temp = material_db_->
+                    getElementBlockParam<double>(eb_name, "Initial Temperature");
+        }
+        Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+                new Teuchos::ParameterList("Save Temperature"));
+        p = state_mgr.registerStateVariable("Temperature",
+                dl->qp_scalar,
+                dl->dummy,
+                eb_name,
+                "scalar",
+                temp,
+                true,
+                false);
+        ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+    }
+    
+    
 
     { // Constitutive Model Parameters
         Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
