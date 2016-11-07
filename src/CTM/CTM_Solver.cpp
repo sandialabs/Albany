@@ -190,12 +190,12 @@ namespace CTM {
 
         // Set thermal application
         Teuchos::RCP<CTM::Application> t_application =
-                Teuchos::rcp(new CTM::Application(params, t_sol_info, t_problem, t_disc, true));
+                Teuchos::rcp(new CTM::Application(params, t_sol_info, t_problem, t_disc, t_state_mgr, true));
 
 
         // Set mechanics application
         Teuchos::RCP<CTM::Application> m_application =
-                Teuchos::rcp(new CTM::Application(params, m_sol_info, m_problem, m_disc, false));
+                Teuchos::rcp(new CTM::Application(params, m_sol_info, m_problem, m_disc, t_state_mgr, false));
 
         // Get thermal discretization
         Teuchos::RCP<Albany::APFDiscretization> apf_t_disc =
@@ -208,6 +208,8 @@ namespace CTM {
                 Teuchos::rcp_dynamic_cast<Albany::APFDiscretization>(m_disc);
 
         m_state_mgr.setStateArrays(m_disc);
+        
+        apf_t_disc->initTemperatureHack();
         
         // time loop
         double norm;
@@ -264,6 +266,7 @@ namespace CTM {
             iter = 1;
             converged = false;
             *out << "Solving mechanics problem" << std::endl;
+            apf_t_disc->initTemperatureHack();
             while ((iter <= max_iter) && (!converged)) {
                 *out << "  " << iter << " newton iteration" << std::endl;
                 // compute residual
@@ -295,9 +298,19 @@ namespace CTM {
             m_state_mgr.updateStates();
             //apf_t_disc->writeSolutionToMeshDatabaseT(*(t_sol_info->getGhostMV()->getVector(0)), t_current, true);
             //apf_t_disc->writeSolutionT(*(t_sol_info->getGhostMV()->getVector(0)), t_current, true);
+            apf_t_disc->writeSolutionToMeshDatabaseT(*(t_sol_info->getGhostMV()->getVector(0)), t_current, true);
+            apf_m_disc->writeSolutionToMeshDatabaseT(*(t_sol_info->getGhostMV()->getVector(0)), t_current, true);
             apf_m_disc->writeSolutionT(*(m_sol_info->getGhostMV()->getVector(0)), t_current, true);
             TEUCHOS_TEST_FOR_EXCEPTION((iter > max_iter) && (!converged), std::out_of_range,
                     "\nnewton's method failed in " << max_iter << " iterations" << std::endl);
+
+           
+//            Teuchos::RCP<Albany::APFMeshStruct> apf_ms =
+//                    apf_t_disc->getAPFMeshStruct();
+//            apf::Mesh* apf_m = apf_ms->getMesh();
+//            apf::writeVtkFiles("after",apf_m);
+            
+            
             // updates
             t_old = t_current;
             t_current = t_current + dt;
