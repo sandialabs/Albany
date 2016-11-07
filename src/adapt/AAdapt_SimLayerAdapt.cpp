@@ -164,62 +164,62 @@ void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double sl
   MS_deleteMeshCase(mcase);
 }
 
-void adaptMesh2(pGModel model,pParMesh mesh,int currentLayer,double sliceThickness,pPList flds)
-{
-  pACase mcase = MS_newMeshCase(model);
-  MS_setMeshSize(mcase,GM_domain(model),1,100*sliceThickness,0);
-  MS_setMeshCurv(mcase,GM_domain(model),2,0.025);
-  MS_setMinCurvSize(mcase,GM_domain(model),2,0.0025);
-  //MS_setGlobalSizeGradationRate(mcase,0.1);
-  
-  //M_write(mesh,"beforeSizes.sms",0,0);
-  pMSAdapt adaptM = MSA_createFromCase(mcase,mesh);
-  MSA_setSizeGradation(adaptM,1,0.1);
-  pVertex v;
-  for(int np=0;np<PM_numParts(mesh);np++) {
-    VIter vertices = M_vertexIter(PM_mesh(mesh,np));
-    while (v = VIter_next(vertices) ) {
-      double xyz[3];
-      V_coord(v,xyz);
-      //  Commented out condition as it skips some points we want - SST
-      // if (xyz[2] >= 0.0) {  // ignore everything below the plate
-      // AND only set sizes for those mesh vertices that are in the 
-      // closure of a SimLayer region and below the current layer.
-      bool adaptMesh = false;
-      pPList mfaces = V_faces(v);
-      for(int i=0;i<PList_size(mfaces) && !adaptMesh;i++) {
-        pFace mf = static_cast<pFace>(PList_item(mfaces,i));
-        if (F_whatInType(mf)==Gface) {
-          pGFace gf = static_cast<pGFace>(F_whatIn(mf));
-          for(int j=0;j<2;j++) {
-            pGRegion gr = GF_region(gf,j);
-            if (gr && (GEN_numNativeIntAttribute(gr,"SimLayer")==1))
-              adaptMesh = true;
-          }
-        } else if (F_whatInType(mf)==Gregion) {
-          pGRegion gr = static_cast<pGRegion>(F_whatIn(mf));
-          if (GEN_numNativeIntAttribute(gr,"SimLayer")==1)
-            adaptMesh = true;
-        }
-      }
-      PList_delete(mfaces);
-      if (adaptMesh) {
-        // make sure the mesh vertex is below the current layer
-        int layer = xyz[2]/sliceThickness;
-        if (layer < currentLayer)
-          MSA_setVertexSize(adaptM,v,100*sliceThickness);
-      }
-      // }
-    }
-    VIter_delete(vertices);
-  }
-  //M_write(mesh,"afterSizes.sms",0,0);
-  if (flds)
-    MSA_setMapFields(adaptM,flds);
-  MSA_adapt(adaptM,0);
-  MSA_delete(adaptM);
-  MS_deleteMeshCase(mcase);
-}
+//void adaptMesh2(pGModel model,pParMesh mesh,int currentLayer,double sliceThickness,pPList flds)
+//{
+//  pACase mcase = MS_newMeshCase(model);
+//  MS_setMeshSize(mcase,GM_domain(model),1,100*sliceThickness,0);
+//  MS_setMeshCurv(mcase,GM_domain(model),2,0.025);
+//  MS_setMinCurvSize(mcase,GM_domain(model),2,0.0025);
+//  //MS_setGlobalSizeGradationRate(mcase,0.1);
+//  
+//  //M_write(mesh,"beforeSizes.sms",0,0);
+//  pMSAdapt adaptM = MSA_createFromCase(mcase,mesh);
+//  MSA_setSizeGradation(adaptM,1,0.1);
+//  pVertex v;
+//  for(int np=0;np<PM_numParts(mesh);np++) {
+//    VIter vertices = M_vertexIter(PM_mesh(mesh,np));
+//    while (v = VIter_next(vertices) ) {
+//      double xyz[3];
+//      V_coord(v,xyz);
+//      //  Commented out condition as it skips some points we want - SST
+//      // if (xyz[2] >= 0.0) {  // ignore everything below the plate
+//      // AND only set sizes for those mesh vertices that are in the 
+//      // closure of a SimLayer region and below the current layer.
+//      bool adaptMesh = false;
+//      pPList mfaces = V_faces(v);
+//      for(int i=0;i<PList_size(mfaces) && !adaptMesh;i++) {
+//        pFace mf = static_cast<pFace>(PList_item(mfaces,i));
+//        if (F_whatInType(mf)==Gface) {
+//          pGFace gf = static_cast<pGFace>(F_whatIn(mf));
+//          for(int j=0;j<2;j++) {
+//            pGRegion gr = GF_region(gf,j);
+//            if (gr && (GEN_numNativeIntAttribute(gr,"SimLayer")==1))
+//              adaptMesh = true;
+//          }
+//        } else if (F_whatInType(mf)==Gregion) {
+//          pGRegion gr = static_cast<pGRegion>(F_whatIn(mf));
+//          if (GEN_numNativeIntAttribute(gr,"SimLayer")==1)
+//            adaptMesh = true;
+//        }
+//      }
+//      PList_delete(mfaces);
+//      if (adaptMesh) {
+//        // make sure the mesh vertex is below the current layer
+//        int layer = xyz[2]/sliceThickness;
+//        if (layer < currentLayer)
+//          MSA_setVertexSize(adaptM,v,100*sliceThickness);
+//      }
+//      // }
+//    }
+//    VIter_delete(vertices);
+//  }
+//  //M_write(mesh,"afterSizes.sms",0,0);
+//  if (flds)
+//    MSA_setMapFields(adaptM,flds);
+//  MSA_adapt(adaptM,0);
+//  MSA_delete(adaptM);
+//  MS_deleteMeshCase(mcase);
+//}
 
   void addNextLayer(pParMesh sim_pm,double sliceThickness,int nextLayer, double initTempNewLayer,int nSolFlds,pPList flds) {
   //! Output stream, defaults to printing just Proc 0
