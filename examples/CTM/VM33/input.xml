@@ -27,7 +27,7 @@
 
   <ParameterList name="Thermal Discretization">
     <ParameterList name="Discretization">
-      <Parameter name="Solution Vector Components" type="Array(string)" value="{Temperature,S}"/>
+      <Parameter name="Solution Vector Components" type="Array(string)" value="{temp,S}"/>
       <Parameter name="Cubature Degree" type="int" value="1"/>
       <Parameter name="Method" type="string" value="Sim"/>
       <Parameter name="Sim Input File Name" type="string" value="wedgeMesh.sms"/>
@@ -36,17 +36,13 @@
       <Parameter name="Separate Evaluators by Element Block" type="bool" value="false"/>
       <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{ 5, Region_5}"/>
       <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x5:{424, 243, 2, 15, 9, face_424, face_243, face_2, face_15, face_9}"/>
+      <Parameter name="QP Temperature from Nodes" type="bool" value="true"/>
     </ParameterList>
   </ParameterList> <!-- End Thermal Discretization -->
   
 
   <ParameterList name="Mechanics Problem">
     <Parameter name="Transient" type="bool" value="false"/>
-    <ParameterList name="Temperature">
-      <Parameter name="Variable Type" type="string" value="Time Dependent"/>
-      <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 430.0 }"/>
-      <Parameter name="Dependent Values" type="Array(double)" value="{ 70.0, 500.0 }"/>
-    </ParameterList>
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS face_424 for DOF Y" type="double" value=" 0.0"/>
@@ -71,6 +67,7 @@
   </ParameterList> <!-- End Mechanical Discretization -->
 
 
+
   <ParameterList name="Linear Algebra">
     <ParameterList name="GMRES Solver">
       <Parameter name="Linear Tolerance" type="double" value="1.0e-8"/>
@@ -79,13 +76,13 @@
     </ParameterList>
     <Parameter name="Nonlinear Tolerance" type="double" value="1.0e-4"/>
     <Parameter name="Nonlinear Max. Iterations" type="int" value="10"/>
-  </ParameterList> <!-- End Linear Algebra -->
+  </ParameterList>
 
    <ParameterList name="Time">
      <Parameter name="Initial Time" type="double" value="0.0"/>
      <Parameter name="Step Size" type="double" value="1.0"/>
-     <Parameter name="Number of Steps" type="int" value="1"/>
-  </ParameterList> <!-- End Time -->
+     <Parameter name="Number of Steps" type="int" value="2"/>
+  </ParameterList>
 
 </ParameterList>
     
