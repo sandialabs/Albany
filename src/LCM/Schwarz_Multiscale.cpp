@@ -661,7 +661,7 @@ createOutArgsImpl() const
 
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f, true);
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_op, true);
-  result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_prec, true);
+  //result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_prec, true);
 
   result.set_W_properties(
       Thyra::ModelEvaluatorBase::DerivativeProperties(

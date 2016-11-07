@@ -112,12 +112,12 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   //for(it = fieldNames.begin(); it != fieldNames.end(); ++it) {
   for(std::size_t i=0; i<fieldNames.size(); i++) {
     PHX::MDField<ScalarT,Cell,QuadPoint> f(fieldNames[i], scalar_dl);
-    fields.push_back(f); this->addDependentField(f);
+    fields.push_back(f); this->addDependentField(f.fieldTag());
 
     PHX::MDField<ScalarT,Cell,QuadPoint> fi(fieldNames_Imag[i], scalar_dl);
     fields_Imag.push_back(fi);
 
-    if(fieldIsComplex[i]) this->addDependentField(fi);
+    if(fieldIsComplex[i]) this->addDependentField(fi.fieldTag());
   }
 
   this->addDependentField(coordVec);
