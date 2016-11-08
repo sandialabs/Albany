@@ -263,6 +263,9 @@ namespace CTM {
                     "\nnewton's method failed in " << max_iter << " iterations" << std::endl);
             // predictor
             u_v_m->assign(*u_m);
+            // update thermal states
+            t_state_mgr.updateStates();
+            apf_t_disc->writeSolutionToMeshDatabaseT(*(t_sol_info->getGhostMV()->getVector(0)), t_current, true);
             iter = 1;
             converged = false;
             *out << "Solving mechanics problem" << std::endl;
@@ -293,23 +296,10 @@ namespace CTM {
                 iter++;
                 // 
             } // end newton loop
-
-            t_state_mgr.updateStates();
             m_state_mgr.updateStates();
-            //apf_t_disc->writeSolutionToMeshDatabaseT(*(t_sol_info->getGhostMV()->getVector(0)), t_current, true);
-            //apf_t_disc->writeSolutionT(*(t_sol_info->getGhostMV()->getVector(0)), t_current, true);
-            apf_t_disc->writeSolutionToMeshDatabaseT(*(t_sol_info->getGhostMV()->getVector(0)), t_current, true);
-            apf_m_disc->writeSolutionToMeshDatabaseT(*(t_sol_info->getGhostMV()->getVector(0)), t_current, true);
             apf_m_disc->writeSolutionT(*(m_sol_info->getGhostMV()->getVector(0)), t_current, true);
             TEUCHOS_TEST_FOR_EXCEPTION((iter > max_iter) && (!converged), std::out_of_range,
                     "\nnewton's method failed in " << max_iter << " iterations" << std::endl);
-
-           
-//            Teuchos::RCP<Albany::APFMeshStruct> apf_ms =
-//                    apf_t_disc->getAPFMeshStruct();
-//            apf::Mesh* apf_m = apf_ms->getMesh();
-//            apf::writeVtkFiles("after",apf_m);
-            
             
             // updates
             t_old = t_current;
