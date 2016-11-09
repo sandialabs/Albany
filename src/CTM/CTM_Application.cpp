@@ -16,6 +16,7 @@ namespace CTM {
     int countScale;
 
     Application::Application(Teuchos::RCP<Teuchos::ParameterList> p,
+            Teuchos::RCP<const Teuchos_Comm> comm,
             Teuchos::RCP<SolutionInfo> sinfo,
             Teuchos::RCP<Albany::AbstractProblem> prob,
             Teuchos::RCP<Albany::AbstractDiscretization> d,
@@ -23,6 +24,7 @@ namespace CTM {
             Albany::StateManager& state_mgr_m,
             bool isThermal) :
     params(p),
+    comm_(comm),
     solution_info(sinfo),
     problem(prob),
     disc(d),
@@ -89,7 +91,10 @@ namespace CTM {
             }
         }
 
-
+        if (comm_->getRank() == 0) {
+            phxGraphVisDetail = params->get("Phalanx Graph Visualization Detail", 0);
+            stateGraphVisDetail = phxGraphVisDetail;
+        }
 
         // get initial conditions
         Teuchos::ArrayRCP<

@@ -23,6 +23,7 @@ namespace CTM {
     class Application {
     public:
         Application(Teuchos::RCP<Teuchos::ParameterList> p,
+                Teuchos::RCP<const Teuchos_Comm> comm,
                 Teuchos::RCP<SolutionInfo> sinfo,
                 Teuchos::RCP<Albany::AbstractProblem> prob,
                 Teuchos::RCP<Albany::AbstractDiscretization> d,
@@ -131,6 +132,9 @@ namespace CTM {
         // Problem parameter list
         Teuchos::RCP<Teuchos::ParameterList> params;
 
+        // communicator
+        Teuchos::RCP<const Teuchos_Comm> comm_;
+        
         // solution info
         Teuchos::RCP<SolutionInfo> solution_info;
         
