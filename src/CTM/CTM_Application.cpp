@@ -1,5 +1,6 @@
 // CTM
 #include "CTM_Application.hpp"
+#include "Albany_AbstractProblem.hpp"
 #include "CTM_SolutionInfo.hpp"
 // Albany
 #include "AAdapt_InitialCondition.cpp"
@@ -18,13 +19,16 @@ namespace CTM {
             Teuchos::RCP<SolutionInfo> sinfo,
             Teuchos::RCP<Albany::AbstractProblem> prob,
             Teuchos::RCP<Albany::AbstractDiscretization> d,
-            const Albany::StateManager& state_mgr,
+            Albany::StateManager& state_mgr_t,
+            Albany::StateManager& state_mgr_m,
             bool isThermal) :
     params(p),
     solution_info(sinfo),
     problem(prob),
     disc(d),
-    stateMgr(state_mgr),
+    stateMgr_t(state_mgr_t),
+    stateMgr_m(state_mgr_m),
+    isThermal_(isThermal),
     phxGraphVisDetail(0),
     stateGraphVisDetail(0),
     out(Teuchos::VerboseObjectBase::getDefaultOStream()) {
@@ -38,6 +42,54 @@ namespace CTM {
         nfm = problem->getNeumannFieldManager();
 
         meshSpecs = disc->getMeshStruct()->getMeshSpecs();
+
+        // create PHALANX field manager for states
+        sfm.resize(meshSpecs.size());
+        if (isThermal) {
+            Teuchos::RCP<PHX::DataLayout> dummy =
+                    Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
+            for (int ps = 0; ps < meshSpecs.size(); ps++) {
+                std::string elementBlockName = meshSpecs[ps]->ebName;
+                std::vector<std::string>responseIDs_to_require =
+                        stateMgr_t.getResidResponseIDsToRequire(elementBlockName);
+                sfm[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+                Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> > tags =
+                        problem->buildEvaluators(*sfm[ps], *meshSpecs[ps], stateMgr_t,
+                        Albany::BUILD_STATE_FM, Teuchos::null);
+                std::vector<std::string>::const_iterator it;
+                for (it = responseIDs_to_require.begin();
+                        it != responseIDs_to_require.end();
+                        it++) {
+                    const std::string& responseID = *it;
+                    PHX::Tag<PHAL::AlbanyTraits::Residual::ScalarT> res_response_tag(
+                            responseID, dummy);
+                    sfm[ps]->requireField<PHAL::AlbanyTraits::Residual>(res_response_tag);
+                }
+            }
+        } else {
+            Teuchos::RCP<PHX::DataLayout> dummy =
+                    Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
+            for (int ps = 0; ps < meshSpecs.size(); ps++) {
+                std::string elementBlockName = meshSpecs[ps]->ebName;
+                std::vector<std::string>responseIDs_to_require =
+                        stateMgr_m.getResidResponseIDsToRequire(elementBlockName);
+                sfm[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+                Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> > tags =
+                        problem->buildEvaluators(*sfm[ps], *meshSpecs[ps], stateMgr_m,
+                        Albany::BUILD_STATE_FM, Teuchos::null);
+                std::vector<std::string>::const_iterator it;
+                for (it = responseIDs_to_require.begin();
+                        it != responseIDs_to_require.end();
+                        it++) {
+                    const std::string& responseID = *it;
+                    PHX::Tag<PHAL::AlbanyTraits::Residual::ScalarT> res_response_tag(
+                            responseID, dummy);
+                    sfm[ps]->requireField<PHAL::AlbanyTraits::Residual>(res_response_tag);
+                }
+            }
+        }
+
+
 
         // get initial conditions
         Teuchos::ArrayRCP<
@@ -71,7 +123,7 @@ namespace CTM {
 
         owned_soln->getVectorNonConst(0)->doExport(*ghost_soln->getVector(0), *exporter, Tpetra::INSERT);
 
-        
+
 #if (defined(ALBANY_SCOREC) || defined(ALBANY_AMP))
         {
             const Teuchos::RCP< Albany::APFDiscretization > apf_disc =
@@ -79,7 +131,7 @@ namespace CTM {
             if (!apf_disc.is_null()) {
                 apf_disc->writeSolutionMVToMeshDatabase(*ghost_soln, 0, true);
             }
-//            apf_disc->initTemperatureHack();
+            //            apf_disc->initTemperatureHack();
         }
 #endif
 
@@ -484,6 +536,89 @@ namespace CTM {
         }
 #endif
 
+    }
+
+    void
+    Application::evaluateStateFieldManagerT(
+            const double current_time,
+            const Tpetra_MultiVector& xT) {
+        int num_vecs = xT.getNumVectors();
+
+        if (num_vecs == 1)
+            this->evaluateStateFieldManagerT(current_time, Teuchos::null,
+                Teuchos::null, *xT.getVector(0));
+        else if (num_vecs == 2)
+            this->evaluateStateFieldManagerT(current_time, xT.getVector(1).ptr(),
+                Teuchos::null, *xT.getVector(0));
+        else
+            this->evaluateStateFieldManagerT(current_time, xT.getVector(1).ptr(),
+                xT.getVector(2).ptr(), *xT.getVector(0));
+    }
+
+    void
+    Application::evaluateStateFieldManagerT(
+            const double current_time,
+            Teuchos::Ptr<const Tpetra_Vector> xdotT,
+            Teuchos::Ptr<const Tpetra_Vector> xdotdotT,
+            const Tpetra_Vector& xT) {
+        {
+            const std::string eval = "SFM_Jacobian";
+            if (setupSet.find(eval) == setupSet.end()) {
+                setupSet.insert(eval);
+                for (int ps = 0; ps < sfm.size(); ++ps) {
+                    // get derivative dimension
+                    int node_count = this->getEnrichedMeshSpecs()[ps].get()->ctd.node_count;
+                    int derivDimenensions = neq * node_count;
+                    std::vector<PHX::index_size_type> derivative_dimensions;
+                    derivative_dimensions.push_back(derivDimenensions);
+                    sfm[ps]->setKokkosExtendedDataTypeDimensions
+                            <PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
+                    sfm[ps]->postRegistrationSetup("");
+                }
+                // visualize state field manager
+                if (stateGraphVisDetail > 0) {
+                    bool detail = false;
+                    if (stateGraphVisDetail > 1) detail = true;
+                    *out << "Phalanx writing graphviz file for graph of Residual fill "
+                            "(detail =" << stateGraphVisDetail << ")" << std::endl;
+                    *out << "Process using 'dot -Tpng -O state_phalanx_graph' \n"
+                            << std::endl;
+                    for (int ps = 0; ps < sfm.size(); ps++) {
+                        std::stringstream pg;
+                        pg << "state_phalanx_graph_" << ps;
+                        sfm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Residual>(
+                                pg.str(), detail, detail);
+                    }
+                    stateGraphVisDetail = -1;
+                }
+            }
+        }
+
+        Teuchos::RCP<Tpetra_Vector> overlapped_fT = solution_info->getGhostResidual();
+
+        // Load connectivity map and coordinates
+        const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
+                wsElNodeEqID = disc->getWsElNodeEqID();
+        const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+                coords = disc->getCoords();
+        const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
+        const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
+
+        int numWorksets = wsElNodeEqID.size();
+
+        // Scatter xT and xdotT to the overlapped distrbution
+        solution_info->scatter_x(xT, xdotT.get(), xdotdotT.get());
+
+        // Set data in Workset struct
+        PHAL::Workset workset;
+        loadBasicWorksetInfoT(workset, current_time);
+        workset.fT = overlapped_fT;
+
+        // Perform fill via field manager
+        for (int ws = 0; ws < numWorksets; ws++) {
+            loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
+            sfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+        }
     }
 
     void Application::loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws) {

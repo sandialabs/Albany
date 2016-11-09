@@ -26,7 +26,8 @@ namespace CTM {
                 Teuchos::RCP<SolutionInfo> sinfo,
                 Teuchos::RCP<Albany::AbstractProblem> prob,
                 Teuchos::RCP<Albany::AbstractDiscretization> d,
-                const Albany::StateManager& state_mgr,
+                Albany::StateManager& state_mgr_t,
+                Albany::StateManager& state_mgr_m,
                 bool isThermal);
         // prohibit copy constructor
         Application(const Application& app) = delete;
@@ -56,7 +57,10 @@ namespace CTM {
         }
 
         //! Class to manage state variables (a.k.a. history)
-        const Albany::StateManager& getStateMgr() {return stateMgr; }
+        const Albany::StateManager& getStateMgr_t() {return stateMgr_t; }
+        
+        //! Class to manage state variables (a.k.a. history)
+        const Albany::StateManager& getStateMgr_m() {return stateMgr_m; }
         
         // get solution info
         Teuchos::RCP<SolutionInfo> getSolutionInfo() const;
@@ -95,6 +99,10 @@ namespace CTM {
                 Tpetra_Vector* fT,
                 Tpetra_CrsMatrix& jacT);
 
+        void evaluateStateFieldManagerT(
+                const double current_time,
+                const Tpetra_MultiVector& x);
+
     private:
 
         void computeGlobalResidualImplT(const double current_time,
@@ -112,6 +120,13 @@ namespace CTM {
                 const Teuchos::RCP<const Tpetra_Vector>& xT,
                 const Teuchos::RCP<Tpetra_Vector>& fT,
                 const Teuchos::RCP<Tpetra_CrsMatrix>& jacT);
+        
+        //! Evaluate state field manager
+        void evaluateStateFieldManagerT(
+                const double current_time,
+                Teuchos::Ptr<const Tpetra_Vector> xdot,
+                Teuchos::Ptr<const Tpetra_Vector> xdotdot,
+                const Tpetra_Vector& x);
 
         // Problem parameter list
         Teuchos::RCP<Teuchos::ParameterList> params;
@@ -140,14 +155,22 @@ namespace CTM {
         //! Phalanx Field Manager for Neumann Conditions
         Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > nfm;
         
+        //! Phalanx Field Manager for states
+        Teuchos::Array< Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > sfm;
+        
         // State manager
-        const Albany::StateManager& stateMgr;
+        Albany::StateManager& stateMgr_t;
+        
+        // State manager
+        Albany::StateManager& stateMgr_m;
 
         std::set<std::string> setupSet;
         mutable int phxGraphVisDetail;
         mutable int stateGraphVisDetail;
 
         unsigned int neq, numDim;
+
+        bool isThermal_;
 
         //! Integer specifying whether user wants to write Jacobian to MatrixMarket file
         // writeToMatrixMarketJac = 0: no writing to MatrixMarket (default)
@@ -186,8 +209,11 @@ namespace CTM {
 
         // Sidesets are integrated within the Cells
         loadWorksetSidesetInfo(workset, ws);
-        workset.stateArrayPtr = &stateMgr.getStateArray(Albany::StateManager::ELEM, ws);
-
+	if (isThermal_) {
+	  workset.stateArrayPtr = &stateMgr_t.getStateArray(Albany::StateManager::ELEM, ws);
+	} else {
+	  workset.stateArrayPtr = &stateMgr_m.getStateArray(Albany::StateManager::ELEM, ws);
+	}
 
         //  workset.wsElNodeEqID_kokkos =
         Kokkos::View<int***, PHX::Device> wsElNodeEqID_kokkos("wsElNodeEqID_kokkos", workset.numCells, wsElNodeEqID[ws][0].size(), wsElNodeEqID[ws][0][0].size());
