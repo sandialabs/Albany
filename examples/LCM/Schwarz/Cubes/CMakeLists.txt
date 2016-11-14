@@ -30,6 +30,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube-single.xml
                ${CMAKE_CURRENT_BINARY_DIR}/cube-single.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT_matrix-free.py
+               ${CMAKE_CURRENT_BINARY_DIR}/runtestT_matrix-free.py COPYONLY)
 
 #create symlink to AlbanyT
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
@@ -38,3 +40,4 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 # Teko needs Epetra
 add_test(NAME Schwarz_${testName} COMMAND "python" "runtestT.py")
+add_test(NAME Schwarz_${testName}_MatrixFree COMMAND "python" "runtestT_matrix-free.py")
