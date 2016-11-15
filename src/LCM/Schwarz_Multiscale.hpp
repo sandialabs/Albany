@@ -197,6 +197,8 @@ private:
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST>>
   solver_outargs_;
+
+  bool w_prec_supports_; 
 };
 
 } // namespace LCM
