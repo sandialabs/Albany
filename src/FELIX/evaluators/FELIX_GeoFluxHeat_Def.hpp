@@ -63,7 +63,6 @@ GeoFluxHeat(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 	int numSides = dims[1];
 	numSideNodes = dims[2];
 	numSideQPs   = dims[3];
-	sideDim      = dims[4];
 	numCellNodes = geoFluxHeat.fieldTag().dataLayout().dimension(1);
 
 	dl->node_vector->dimensions(dims);
@@ -72,6 +71,7 @@ GeoFluxHeat(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>
 	// Index of the nodes on the sides in the numeration of the cell
 	Teuchos::RCP<shards::CellTopology> cellType;
 	cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
+  sideDim      = cellType->getDimension()-1;
 	sideNodes.resize(numSides);
 	for (int side=0; side<numSides; ++side)
 	{
