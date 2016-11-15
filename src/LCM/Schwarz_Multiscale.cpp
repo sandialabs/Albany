@@ -63,6 +63,36 @@ SchwarzMultiscale(
 
     app_name_index_map->insert(app_name_index);
   }
+ 
+  //------------Get Preconditioner Type to tell code whether to set OUT_ARG_W_prec supports or not-------------
+  //------------This is really only relevant for matrix-free GMRES---------------------------------------------
+  // Get "Piro" parameter sublist
+  Teuchos::ParameterList &piroPL = app_params->sublist("Piro");
+  std::string prec_type; 
+  //IKT, 11/14/16, FIXME: may want to add more cases, e.g., for Tempus
+  if (piroPL.isSublist("NOX")) {
+    Teuchos::ParameterList &noxPL = piroPL.sublist("NOX", true);
+    if (noxPL.isSublist("Direction")) {
+      Teuchos::ParameterList &dirPL = noxPL.sublist("Direction", true);
+      if (dirPL.isSublist("Newton")) {
+        Teuchos::ParameterList &newPL = dirPL.sublist("Newton", true);
+        if (newPL.isSublist("Stratimikos Linear Solver")) {
+          Teuchos::ParameterList &stratLSPL = newPL.sublist("Stratimikos Linear Solver", true);
+          if (stratLSPL.isSublist("Stratimikos")) {
+            Teuchos::ParameterList &stratPL = stratLSPL.sublist("Stratimikos", true);
+            prec_type = stratPL.get<std::string>("Preconditioner Type");
+          }
+        }
+      } 
+    }
+  }
+    
+  if (prec_type == "None") 
+    w_prec_supports_ = false;
+  else
+    w_prec_supports_ = true; 
+
+  //------------End getting of Preconditioner type-------------------------------------------------------------
 
   //----------------Parameters------------------------
   //Get "Problem" parameter list
@@ -405,13 +435,6 @@ SchwarzMultiscale(
 
   //--------------End setting of nominal values------------------
 
-  //FIXME: Add discretization parameterlist and discretization object
-  //for the "combined" solution vector from all the coupled Model
-  //Evaluators.  Refer to QCAD_CoupledPoissonSchrodinger.cpp.
-
-  //FIXME: How are we going to collect output?  Write exodus files for
-  //each model evaluator?  Joined exodus file?
-
 }
 
 LCM::SchwarzMultiscale::~SchwarzMultiscale()
@@ -539,11 +562,18 @@ LCM::SchwarzMultiscale::create_W_op() const
 Teuchos::RCP<Thyra::PreconditionerBase<ST>>
 LCM::SchwarzMultiscale::create_W_prec() const
 {
-  bool const
-  W_prec_not_supported = true;
-
-  TEUCHOS_TEST_FOR_EXCEPT(W_prec_not_supported);
-  return Teuchos::null;
+  Teuchos::RCP< Thyra::PreconditionerBase<ST> > W_prec;
+  if (w_prec_supports_) {
+    //Get preconditioner factory from solver_factory_.  For Teko, this will get the TekoFactory.
+    Teuchos::RCP<Thyra::PreconditionerFactoryBase<ST> > prec_factory = solver_factory_->getPreconditionerFactory(); 
+    //Get the preconditioner operator from the prec_factory 
+    W_prec = prec_factory->createPrec(); 
+  }
+  else {
+    TEUCHOS_TEST_FOR_EXCEPT(w_prec_supports_);
+    W_prec = Teuchos::null; 
+  }
+  return W_prec; 
 }
 
 Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST>>
@@ -661,7 +691,7 @@ createOutArgsImpl() const
 
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f, true);
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_op, true);
-  //result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_prec, true);
+  result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_prec, w_prec_supports_);
 
   result.set_W_properties(
       Thyra::ModelEvaluatorBase::DerivativeProperties(
