@@ -386,6 +386,11 @@ Albany::PhaseProblem::constructEvaluators(
     // has consolidation?
     p->set<bool>("Compute Consolidation",hasConsolidation());
 
+    // take porosity parameter list
+    Teuchos::ParameterList& param_list_porosity =
+    material_db_->getElementBlockSublist(eb_name, "Porosity");
+    p->set<Teuchos::ParameterList*>("Porosity Parameter List", &param_list_porosity);
+
     //Output
     p->set<string>("Rho Cp Name", "Rho Cp");
 
