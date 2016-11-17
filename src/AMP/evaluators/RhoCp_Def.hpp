@@ -94,8 +94,11 @@ evaluateFields(typename Traits::EvalData workset)
             // specific heat function
             for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
                 for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-                    //If No consolidation is considered
-                    rho_cp_(cell, qp) = constant_value_*(1 - Initial_porosity);
+                    //If No consolidation is considered 
+                      //~ actual case
+                    //rho_cp_(cell, qp) = constant_value_*(1 - Initial_porosity);
+                      //~ Gusarov 2009 paper on Selective Laser Melting
+                    rho_cp_(cell, qp) = constant_value_;
                 }
             }
         }
