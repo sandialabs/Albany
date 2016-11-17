@@ -29,12 +29,16 @@ namespace AMP {
                     dl->qp_scalar),
     phi_dot_        (p.get<std::string>("Phi Dot Name"),
 		     dl->qp_scalar),
+    psi_dot_        (p.get<std::string>("Psi Dot Name"),
+                     dl->qp_scalar),
     rho_Cp_         (p.get<std::string>("Rho Cp Name"),
                     dl->qp_scalar),
     deltaTime_      (p.get<std::string>("Delta Time Name"),
                     dl->workset_scalar),
     energyDot_      (p.get<std::string>("Energy Rate Name"),
-                    dl->qp_scalar) {
+                    dl->qp_scalar),
+    hasConsolidation_ (p.get<bool>("Compute Consolidation"))
+ {
         
       // dependent field
         this->addDependentField(T_);
@@ -48,6 +52,7 @@ namespace AMP {
 	// evaluated field
         this->addEvaluatedField(energyDot_);
 	this->addEvaluatedField(phi_dot_);
+        this->addEvaluatedField(psi_dot_);
 
         std::vector<PHX::Device::size_type> dims;
         Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
@@ -59,6 +64,8 @@ namespace AMP {
         Temperature_Name_ = p.get<std::string>("Temperature Name") + "_old";
 	// Get phi old variable name
 	Phi_old_name_ =  p.get<std::string>("Phi Name") + "_old";
+        // Get psi old variable name
+        Psi_old_name_ = p.get<std::string>("Psi Name") + "_old";
 
 
         // Only verify Change Phase Parameter list because initial Phi already
@@ -93,6 +100,14 @@ namespace AMP {
         
         Temperature_Name_ = p.get<std::string>("Temperature Name") + "_old";
 
+        // Get the Volumetic Heat Capacity at the dense state of the material. 
+        cond_list = p.get<Teuchos::ParameterList*>("Volumetric Heat Capacity Dense Parameter List");
+        Cd = cond_list->get("Value",4.25e6);
+
+        cond_list = p.get<Teuchos::ParameterList*>("Porosity Parameter List");
+        Initial_porosity = cond_list->get("Value", 0.0);
+
+
         this->setName("EnergyDot" + PHX::typeAsString<EvalT>());
 
     }
@@ -109,6 +124,7 @@ namespace AMP {
         this->utils.setFieldData(deltaTime_, fm);
         this->utils.setFieldData(phi_, fm);
 	this->utils.setFieldData(phi_dot_, fm);
+        this->utils.setFieldData(psi_dot_,fm);
         this->utils.setFieldData(psi_, fm);
         this->utils.setFieldData(rho_Cp_, fm);
         this->utils.setFieldData(energyDot_, fm);
@@ -129,8 +145,11 @@ evaluateFields(typename Traits::EvalData workset)
     //grab old temperature
     Albany::MDArray T_old = (*workset.stateArrayPtr)[Temperature_Name_];
 
-    // grab old value opf phi
+    // grab old value of phi
      Albany::MDArray phi_old = (*workset.stateArrayPtr)[Phi_old_name_];
+
+    // grab old value of psi
+     Albany::MDArray psi_old = (*workset.stateArrayPtr)[Psi_old_name_];
 
     // Compute Temp rate
 
@@ -140,7 +159,7 @@ evaluateFields(typename Traits::EvalData workset)
     // Store value of volumetric heat capacity at Gauss point, i.e., Cs = Rhp_Cp_(cell,qp)
     ScalarT Cs;
     // Volumetric heat capacity of solid. For now same as powder.
-    ScalarT Cd;
+  //  ScalarT Cd;
     // Variable used to store dp/dphi = 30*phi^2*(1-2*phi+phi^2)
     ScalarT dpdphi;
     // Variable used to store time derivative of phi
@@ -148,33 +167,73 @@ evaluateFields(typename Traits::EvalData workset)
     // Variable used to compute p = phi^3 * (10-15*phi+6*phi^2)
     ScalarT p;
 
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell)
-    {
-        for (std::size_t qp = 0; qp < num_qps_; ++qp)
-        {
+    if (hasConsolidation_) {
 
-            // compute dT/dt using finite difference
-            T_dot_(cell, qp) = (T_(cell, qp) - T_old(cell, qp)) / dt;
+    		for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+    		{
+        	for (std::size_t qp = 0; qp < num_qps_; ++qp)
+        	{
 
-            // compute dp/dphi
-            phi = phi_(cell, qp);
-            dpdphi = 30.0 * phi * phi * (1.0 - 2.0 * phi + phi * phi);
+            	// compute dT/dt using finite difference
+            	T_dot_(cell, qp) = (T_(cell, qp) - T_old(cell, qp)) / dt;
 
-            // compute phi_dot
-            //phi_dot = (1.0 / (2.0 * Tc_)) * std::pow(std::cosh((T_(cell, qp) - Tm_) / Tc_), -2.0) * T_dot_(cell, qp);
-	    phi_dot_(cell,qp) = ( phi_(cell,qp) - phi_old(cell,qp) ) / dt;
+            	// compute dp/dphi
+            	phi = phi_(cell, qp);
+            	dpdphi = 30.0 * phi * phi * (1.0 - 2.0 * phi + phi * phi);
 
-            // compute energy dot
-            Cs = rho_Cp_(cell, qp);
-            Cd = Cs;
-            // p
-            p = phi * phi * phi * (10.0 - 15.0 * phi + 6.0 * phi * phi);
-            energyDot_(cell, qp) = (Cs + p * (Cl_ - Cs)) * T_dot_(cell, qp) +
-	      dpdphi * (L_ + (Cl_ - Cs) * (T_(cell, qp) - Tm_)) * phi_dot_(cell,qp);
+            	// compute phi_dot
+            	//phi_dot = (1.0 / (2.0 * Tc_)) * std::pow(std::cosh((T_(cell, qp) - Tm_) / Tc_), -2.0) * T_dot_(cell, qp);
+            	phi_dot_(cell,qp) = ( phi_(cell,qp) - phi_old(cell,qp) ) / dt;
+
+            	// compute psi_dot
+            	psi_dot_(cell,qp) = ( psi_(cell,qp) - psi_old(cell,qp) ) / dt;
 		
-        }
-    }
+
+            	// compute energy dot
+            	Cs = rho_Cp_(cell, qp);
+
+            	// p
+            	p = phi * phi * phi * (10.0 - 15.0 * phi + 6.0 * phi * phi);
+            	energyDot_(cell, qp) = (Cs + p * (Cl_ - Cs)) * T_dot_(cell, qp) +
+              	dpdphi * (L_ + (Cl_ - Cs) * (T_(cell, qp) - Tm_)) * phi_dot_(cell,qp) -
+                	(p*(T_(cell,qp) - Tm_) - T_(cell,qp))*Cd*Initial_porosity*psi_dot_(cell,qp);
+
+        	} //end for loop
+    		} //end for loop
+    } else {
+
+		for (std::size_t cell = 0; cell < workset.numCells; ++cell)
+    		{
+        	for (std::size_t qp = 0; qp < num_qps_; ++qp)
+        	{
+
+            	// compute dT/dt using finite difference
+            	T_dot_(cell, qp) = (T_(cell, qp) - T_old(cell, qp)) / dt;
+
+            	// compute dp/dphi
+            	phi = phi_(cell, qp);
+            	dpdphi = 30.0 * phi * phi * (1.0 - 2.0 * phi + phi * phi);
+
+            	// compute phi_dot
+            	//phi_dot = (1.0 / (2.0 * Tc_)) * std::pow(std::cosh((T_(cell, qp) - Tm_) / Tc_), -2.0) * T_dot_(cell, qp);
+            	phi_dot_(cell,qp) = ( phi_(cell,qp) - phi_old(cell,qp) ) / dt;
+
+		
+            	// compute energy dot
+            	Cs = rho_Cp_(cell, qp);
+
+            	// p
+            	p = phi * phi * phi * (10.0 - 15.0 * phi + 6.0 * phi * phi);
+            	energyDot_(cell, qp) = (Cs + p * (Cl_ - Cs)) * T_dot_(cell, qp) +
+              	dpdphi * (L_ + (Cl_ - Cs) * (T_(cell, qp) - Tm_)) * phi_dot_(cell,qp);
+		
+        	} //end for loop
+    		} //end for loop
+
+
+     } //end if loop
 }
+
 
     //**********************************************************************
 
