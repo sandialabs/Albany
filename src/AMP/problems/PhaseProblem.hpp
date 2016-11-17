@@ -323,7 +323,7 @@ Albany::PhaseProblem::constructEvaluators(
 	  material_db_->getElementBlockSublist(eb_name, "Initial Psi"); 
         psi_initial = param.get<double>("Psi");
       }
-
+    
     Teuchos::ParameterList& param_list = 
       material_db_->getElementBlockSublist(eb_name, "Initial Psi"); 
 
@@ -337,11 +337,11 @@ Albany::PhaseProblem::constructEvaluators(
 
     ev = rcp(new AMP::Psi<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
-    
 
     p = stateMgr.registerStateVariable("Psi", dl_->qp_scalar,
 				       dl_->dummy, eb_name, "scalar", psi_initial, true);
-    
+   
+
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev); 
   }
@@ -385,6 +385,11 @@ Albany::PhaseProblem::constructEvaluators(
     
     // has consolidation?
     p->set<bool>("Compute Consolidation",hasConsolidation());
+
+    // take porosity parameter list
+    Teuchos::ParameterList& param_list_porosity =
+    material_db_->getElementBlockSublist(eb_name, "Porosity");
+    p->set<Teuchos::ParameterList*>("Porosity Parameter List", &param_list_porosity);
 
     //Output
     p->set<string>("Rho Cp Name", "Rho Cp");
@@ -451,40 +456,59 @@ Albany::PhaseProblem::constructEvaluators(
   }  
   
   
-  { // Energy dot
+   { // Energy dot
     RCP<ParameterList> p = rcp(new ParameterList("Energy Rate Params"));
 
     // take phase change parameter list
     Teuchos::ParameterList& param_list_phase =
-      material_db_->getElementBlockSublist(eb_name, "Phase Change Properties"); 
-    
+      material_db_->getElementBlockSublist(eb_name, "Phase Change Properties");
+	
     //Input
     p->set<string>("Temperature Name","Temperature");
     p->set<string>("Temperature Time Derivative Name","Temperature_dot");
     p->set<string>("Phi Name","Phi");
     p->set<string>("Phi Dot Name","Phi_dot");
     p->set<string>("Psi Name","Psi");
+    p->set<string>("Psi Dot Name","Psi_dot");
     p->set<string>("Time Name","Time");
     p->set<string>("Delta Time Name","Delta Time");
     p->set<string>("Rho Cp Name", "Rho Cp");
     p->set<Teuchos::ParameterList*>("Phase Change Parameter List", &param_list_phase);
-    
+
+    // has consolidation?
+    p->set<bool>("Compute Consolidation",hasConsolidation());
+
+    // take initial Phi parameter list
+    Teuchos::ParameterList& param_list_phi =
+      material_db_->getElementBlockSublist(eb_name, "Initial Phi");
+    p->set<Teuchos::ParameterList*>("Initial Phi Parameter List", &param_list_phi);
+
     // take initial Psi parameter list
     Teuchos::ParameterList& param_list_psi =
-      material_db_->getElementBlockSublist(eb_name, "Initial Phi");
-    p->set<Teuchos::ParameterList*>("Initial Phi Parameter List", &param_list_psi);
-    
+      material_db_->getElementBlockSublist(eb_name, "Initial Psi");
+    p->set<Teuchos::ParameterList*>("Initial Psi Parameter List", &param_list_psi);
+
+    // take porosity parameter list
+         Teuchos::ParameterList& param_list_porosity =
+           material_db_->getElementBlockSublist(eb_name, "Porosity");
+         p->set<Teuchos::ParameterList*>("Porosity Parameter List", &param_list_porosity);
+
+    // take RhoCp parameter list
+         Teuchos::ParameterList& param_list_rhocp =
+           material_db_->getElementBlockSublist(eb_name, "Rho Cp");
+         p->set<Teuchos::ParameterList*>("Volumetric Heat Capacity Dense Parameter List", &param_list_rhocp);
+
     //Output
     p->set<string>("Energy Rate Name", "Energy Rate");
 
     //  //Need these to compute responses later:
-    RealType Cl = param_list_phase.get<RealType>("Volumetric Heat Capacity Liquid Value");	  // Volumetric heat capacity in liquid
+    RealType Cl = param_list_phase.get<RealType>("Volumetric Heat Capacity Liquid Value");        // Volumetric heat capacity in liquid
     RealType L  = param_list_phase.get<RealType>("Latent Heat Value");    // Latent heat of fusion/melting
-  
-   
+
+
     pFromProb->set<RealType>("Volumetric Heat Capacity Liquid Value",Cl);
     pFromProb->set<RealType>("Latent Heat Value",L);
-    
+
     ev = rcp(new AMP::EnergyDot<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }

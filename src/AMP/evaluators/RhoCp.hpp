@@ -49,6 +49,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   ScalarT constant_value_;
+  ScalarT Initial_porosity;
   void init_constant(ScalarT value, Teuchos::ParameterList& p);
 
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_;

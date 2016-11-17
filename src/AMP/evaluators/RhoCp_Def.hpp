@@ -46,6 +46,9 @@ RhoCp(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
   ScalarT value = cond_list->get("Value", 1.0);
   init_constant(value,p);
 
+  cond_list = p.get<Teuchos::ParameterList*>("Porosity Parameter List");
+  Initial_porosity = cond_list->get("Value", 0.0);
+
   this->setName("RhoCp"+PHX::typeAsString<EvalT>());
 }
 
@@ -92,7 +95,7 @@ evaluateFields(typename Traits::EvalData workset)
             for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
                 for (std::size_t qp = 0; qp < num_qps_; ++qp) {
                     //If No consolidation is considered
-                    rho_cp_(cell, qp) = constant_value_;
+                    rho_cp_(cell, qp) = constant_value_*(1 - Initial_porosity);
                 }
             }
         }

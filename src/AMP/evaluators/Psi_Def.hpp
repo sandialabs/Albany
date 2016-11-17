@@ -83,15 +83,17 @@ evaluateFields(typename Traits::EvalData workset)
     // current time
     const RealType t = workset.current_time;
 
-    // // do this only at the beginning
+    // do this only at the beginning
     if (t == 0.0)
     {
-        //     // initializing psi_ values:
+        // initializing psi_ values:
         for (std::size_t cell = 0; cell < workset.numCells; ++cell)
         {
             for (std::size_t qp = 0; qp < num_qps_; ++qp)
             {
                 psi_(cell, qp) = constant_value_;
+		psi_old(cell, qp) = constant_value_;
+	        
             }
         }
     }
@@ -107,6 +109,7 @@ evaluateFields(typename Traits::EvalData workset)
             }
         }
     }
+  
 }
 //**********************************************************************
 template<typename EvalT, typename Traits>

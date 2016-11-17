@@ -48,7 +48,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // This store the value of Psi per block
-  ScalarT constant_value_;
+  double constant_value_;
 
   PHX::MDField<ScalarT,Cell,QuadPoint> T_;
   PHX::MDField<ScalarT,Cell,QuadPoint> phi_;
