@@ -938,8 +938,8 @@ evalModelImpl(
  
     //IKT, 11/16/16: it may be desirable to move the following code into a separate 
     //function, especially as we implement more preconditioners. 
-    for (auto m = 0; m < num_models_; ++m) {
-      if (Teuchos::nonnull(W_prec_outT) == true) {
+    if (Teuchos::nonnull(W_prec_outT) == true) {
+      for (auto m = 0; m < num_models_; ++m) {
         if (!precs_[m]->isFillActive()) 
           precs_[m]->resumeFill();
         if (mf_prec_type_ == JACOBI) {
