@@ -311,7 +311,7 @@
                       <Parameter
                         name="Overlap"
                         type="int"
-                        value="2" />
+                        value="0" />
                       <Parameter
                         name="Prec Type"
                         type="string"
@@ -324,7 +324,7 @@
                         <Parameter
                           name="fact: ilut level-of-fill"
                           type="double"
-                          value="1" />
+                          value="0" />
                         <Parameter
                           name="fact: level-of-fill"
                           type="int"
@@ -339,7 +339,7 @@
                       <Parameter
                         name="Overlap"
                         type="int"
-                        value="1" />
+                        value="0" />
                       <Parameter
                         name="Prec Type"
                         type="string"
@@ -352,7 +352,7 @@
                         <Parameter
                           name="fact: ilut level-of-fill"
                           type="double"
-                          value="3" />
+                          value="1" />
                         <Parameter
                           name="fact: level-of-fill"
                           type="int"

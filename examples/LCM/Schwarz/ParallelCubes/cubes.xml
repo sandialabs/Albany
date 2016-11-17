@@ -154,26 +154,26 @@
 		     </ParameterList-->
 		     <ParameterList name="My-Ifpack2-1">
 		       <Parameter name="Type" type="string" value="Ifpack2"/>
-		       <Parameter name="Overlap" type="int" value="2"/>
+		       <Parameter name="Overlap" type="int" value="0"/>
 		       <Parameter name="Prec Type" type="string" value="ILUT"/>
 		       <ParameterList name="Ifpack2 Settings">
 		         <Parameter name="fact: drop tolerance"
 				    type="double" value="0"/>
 		         <Parameter name="fact: ilut level-of-fill"
-				    type="double" value="10"/>
+				    type="double" value="1"/>
 		         <Parameter name="fact: level-of-fill"
 				    type="int" value="1"/>
 		       </ParameterList>
 		     </ParameterList>
 		     <ParameterList name="My-Ifpack2-2">
 		       <Parameter name="Type" type="string" value="Ifpack2"/>
-		       <Parameter name="Overlap" type="int" value="1"/>
+		       <Parameter name="Overlap" type="int" value="0"/>
 		       <Parameter name="Prec Type" type="string" value="ILUT"/>
 		       <ParameterList name="Ifpack2 Settings">
 		         <Parameter name="fact: drop tolerance"
 				    type="double" value="0"/>
 		         <Parameter name="fact: ilut level-of-fill"
-				    type="double" value="10"/>
+				    type="double" value="1"/>
 		         <Parameter name="fact: level-of-fill"
 				    type="int" value="1"/>
 		       </ParameterList>

@@ -168,6 +168,10 @@ private:
   /// Teuchos array holding main diagonal jacobians (non-coupled models)
   Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
   jacs_;
+  
+  /// Teuchos array holding main diagonal preconditioners (non-coupled models)
+  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
+  precs_;
 
   int
   num_models_;
@@ -197,6 +201,13 @@ private:
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST>>
   solver_outargs_;
+
+  bool w_prec_supports_; 
+    
+  enum MF_PREC_TYPE {NONE, JACOBI}; 
+    
+  MF_PREC_TYPE mf_prec_type_; 
+
 };
 
 } // namespace LCM
