@@ -82,6 +82,8 @@ SchwarzMultiscale(
     mf_prec_type_ = NONE; 
   else if (mf_prec == "Jacobi") 
     mf_prec_type_ = JACOBI;  
+  else if (mf_prec == "Identity") 
+    mf_prec_type_ = ID;  
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
 		       "Unknown Matrix-Free Preconditioner type " << mf_prec 
@@ -969,6 +971,17 @@ evalModelImpl(
             precs_[m]->replaceLocalValues(row, matrixIndicesT(), matrixEntriesT());
           }
         } 
+        else if (mf_prec_type_ == ID) {
+          //Create Identity
+          for (auto row=0; row<jacs_[m]->getNodeNumRows(); ++row) {
+            Teuchos::Array<ST> matrixEntriesT(1);
+            Teuchos::Array<LO> matrixIndicesT(1);
+            ST diag = 1.0;
+            matrixEntriesT[0] = diag; 
+            matrixIndicesT[0] = row; 
+            precs_[m]->replaceLocalValues(row, matrixIndicesT(), matrixEntriesT());
+          }
+        }
         if (precs_[m]->isFillActive()) 
           precs_[m]->fillComplete();
       }
