@@ -73,7 +73,6 @@ SchwarzMultiscale(
   std::string jacob_op = ""; 
   if (piroPL.isParameter("Jacobian Operator")) 
     jacob_op = piroPL.get<std::string>("Jacobian Operator");
-  std::cout << "jacob_op = " << jacob_op << std::endl;
   //Get matrix-free preconditioner from input file
   std::string mf_prec = "None"; 
   if (coupled_system_params.isParameter("Matrix-Free Preconditioner")) 
@@ -88,7 +87,6 @@ SchwarzMultiscale(
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
 		       "Unknown Matrix-Free Preconditioner type " << mf_prec 
                        << "!  Valid options are None and Jacobi. \n");
-  std::cout << "mf_prec = " << mf_prec << std::endl; 
   //If using matrix-free, get NOX sublist and set "Preconditioner Type" to "None" regardless 
   //of what is specified in the input file.  Currently preconditioners for matrix-free 
   //are implemented in this ModelEvaluator, which requires the type to be "None".
@@ -115,7 +113,6 @@ SchwarzMultiscale(
     }
   }
 
-  std::cout << "w_prec_supports_ = " << w_prec_supports_ << std::endl;
 
   //------------End getting of Preconditioner type-------------------------------------------------------------
 
@@ -732,7 +729,6 @@ createOutArgsImpl() const
 
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f, true);
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_op, true);
-  std::cout << "w_prec_supports_ = " << w_prec_supports_ << std::endl; 
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_prec, w_prec_supports_);
 
   result.set_W_properties(
@@ -862,8 +858,6 @@ evalModelImpl(
       out_args.get_W_op() :
       Teuchos::null;
 
-  std::cout << "W_op_outT = " << W_op_outT << std::endl; 
-
   // Compute the functions
 
   Teuchos::Array<bool>
@@ -883,21 +877,16 @@ evalModelImpl(
   }
 
   // W matrix for each individual model
-  for (auto m = 0; m < num_models_; ++m) {
-    if (Teuchos::nonnull(W_op_outT) == true) {
-
+  if (Teuchos::nonnull(W_op_outT) == true) {
+    for (auto m = 0; m < num_models_; ++m) {
       //computeGlobalJacobianT sets fTs_out[m] and jacs_[m]
       apps_[m]->computeGlobalJacobianT(
           alpha, beta, omega, curr_time,
           x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
           sacado_param_vecs_[m], fTs_out[m].get(), *jacs_[m]);
-
       fs_already_computed[m] = true;
     }
-  }
-
-  // FIXME: create coupled W matrix from array of model W matrices
-  if (W_op_outT != Teuchos::null) {
+    // FIXME: create coupled W matrix from array of model W matrices
     LCM::Schwarz_CoupledJacobian csJac(commT_);
     W_op_outT = csJac.getThyraCoupledJacobian(jacs_, apps_);
   }
@@ -936,14 +925,6 @@ evalModelImpl(
     W_prec_outT = Teuchos::nonnull(out_args.get_W_prec()) ?
         out_args.get_W_prec() :
         Teuchos::null;
-    std::cout << "IKT, W_prec_outT = " << W_prec_outT << std::endl; 
-    if (W_prec_outT != Teuchos::null) {
-      LCM::Schwarz_CoupledJacobian csJac(commT_);
-      Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = csJac.getThyraCoupledJacobian(precs_, apps_);
-      Teuchos::RCP<Thyra::DefaultPreconditioner<ST> > W_prec = Teuchos::rcp(new Thyra::DefaultPreconditioner<ST>);
-      W_prec->initializeRight(W_op); 
-      W_prec_outT = Teuchos::rcp_dynamic_cast<Thyra::PreconditionerBase<ST>>(W_prec, true); 
-    }
  
     //IKT, 11/16/16: it may be desirable to move the following code into a separate 
     //function, especially as we implement more preconditioners. 
@@ -952,6 +933,17 @@ evalModelImpl(
         if (!precs_[m]->isFillActive()) 
           precs_[m]->resumeFill();
         if (mf_prec_type_ == JACOBI) {
+          //With matrix-free, W_op_outT is null, so computeJacobianT does not
+          //get called earlier.  We need to call it here to get the Jacobians.
+          //Create fTtemp vector, so that this call to computeGlobalJacobianT 
+          //doesn't overwrite the real residual.
+          Teuchos::RCP<Tpetra_Vector> fTtemp;
+          if (fT_out != Teuchos::null) {
+            fTtemp = Teuchos::rcp_dynamic_cast<ThyraVector>(fT_out->getNonconstVectorBlock(m), true)->getTpetraVector();
+          }
+          apps_[m]->computeGlobalJacobianT(alpha, beta, omega, curr_time,
+              x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
+              sacado_param_vecs_[m], fTtemp.get(), *jacs_[m]);
           //Extract diagonal froms jacs_[m] 
           //IKT, 11/16/16, FIXME?: change to global?
           Teuchos::RCP<Tpetra_Vector> diagVec = Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap()));
@@ -985,6 +977,11 @@ evalModelImpl(
         if (precs_[m]->isFillActive()) 
           precs_[m]->fillComplete();
       }
+      LCM::Schwarz_CoupledJacobian csJac(commT_);
+      Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = csJac.getThyraCoupledJacobian(precs_, apps_);
+      Teuchos::RCP<Thyra::DefaultPreconditioner<ST> > W_prec = Teuchos::rcp(new Thyra::DefaultPreconditioner<ST>);
+      W_prec->initializeRight(W_op); 
+      W_prec_outT = Teuchos::rcp_dynamic_cast<Thyra::PreconditionerBase<ST>>(W_prec, true); 
 #ifdef WRITE_TO_MATRIX_MARKET
       char prec_name[100];  //create string for file name
       char jac_name[100];  //create string for file name
