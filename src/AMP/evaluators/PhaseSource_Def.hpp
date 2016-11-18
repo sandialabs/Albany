@@ -127,16 +127,30 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT C = b1*c2*exp(-2*a*lambda) - b2*c1*exp(2*a*lambda);
   
   //  Code for heat into substrate
-  ScalarT Absorptivity_substrate = 0.77;
+  ScalarT Substrate_Top = 0.00005;
+
+  /* The "Thin layer" upto which the volumetric heat in the substrate penetrates is given for optical thickness values for 2.5, 2, and 3. Choose only one at a time based on the porosity
+  value defined in the material input file */
+  //This is for optical thickness = 2.5 (porosity = 0.6, particle dia = 20 microns, powder bed thickness = 50 microns)
+  ScalarT Absorptivity_PowderSurface = 0.7728; 
+  ScalarT Substrate_Bot = 0.0000575;
+  /*
+  //This is for optical thickness = 2 (porosity = 0.652, particle dia = 20 microns, powder bed thickness = 50 microns)
+  ScalarT Absorptivity_PowderSurface = 0.7570; 
+  ScalarT Substrate_Bot = 0.000060;
+
+  //This is for optical thickness = 3 (porosity = 0.556, particle dia = 20 microns, powder bed thickness = 50 microns)
+  ScalarT Absorptivity_PowderSurface = 0.7795; 
+  ScalarT Substrate_Bot = 0.0000565;
+  */
+
   ScalarT S1 = 1.0/(3.0-4.0*powder_hemispherical_reflectivity);
   ScalarT S2 = powder_hemispherical_reflectivity*a/C;
   ScalarT S3 = (A*b2 + B*c1)*(exp(2.0*a*lambda) - 1.0); 
   ScalarT S4 = (A*b1 + B*c2)*(exp(-2.0*a*lambda) - 1.0); 
   ScalarT S5 = 3.0*(1.0 - powder_hemispherical_reflectivity)*(1.0 - exp(-lambda))*(1.0 + powder_hemispherical_reflectivity*exp(-lambda)); 
   ScalarT I_value = S1*(S2*(S3 + S4) + S5);
-  ScalarT Substrate_Top = 0.00005;
-  ScalarT Substrate_Bot = 0.0000575;
-
+  
   // source function
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t qp = 0; qp < num_qps_; ++qp) {
@@ -146,7 +160,7 @@ evaluateFields(typename Traits::EvalData workset)
                            
         ScalarT radius = sqrt((X - Laser_center_x)*(X - Laser_center_x) + (Y - Laser_center_y)*(Y - Laser_center_y));
         if (radius < laser_beam_radius && Z >= Substrate_Top && Z <= Substrate_Bot)
-              source_(cell,qp) = beta*LaserFlux_Max*pow((1.0-(radius*radius)/(laser_beam_radius*laser_beam_radius)),2)*(Absorptivity_substrate - I_value);
+              source_(cell,qp) = beta*LaserFlux_Max*pow((1.0-(radius*radius)/(laser_beam_radius*laser_beam_radius)),2)*(Absorptivity_PowderSurface - I_value);
         else  source_(cell,qp) =0.0;
          
     }
