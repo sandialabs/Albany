@@ -92,7 +92,7 @@ evaluateFields(typename Traits::EvalData workset)
             for (std::size_t qp = 0; qp < num_qps_; ++qp)
             {
                 psi_(cell, qp) = constant_value_;
-		psi_old(cell, qp) = constant_value_;
+		//psi_old(cell, qp) = constant_value_;
 	        
             }
         }
