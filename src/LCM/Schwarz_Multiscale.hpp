@@ -204,7 +204,7 @@ private:
 
   bool w_prec_supports_; 
     
-  enum MF_PREC_TYPE {NONE, JACOBI}; 
+  enum MF_PREC_TYPE {NONE, JACOBI, ID}; 
     
   MF_PREC_TYPE mf_prec_type_; 
 

@@ -16,8 +16,8 @@
 //#define WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
-static
-int mm_counter = 0;
+static int mm_counter = 0;
+static int prec_mm_counter = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
 LCM::
@@ -73,6 +73,7 @@ SchwarzMultiscale(
   std::string jacob_op = ""; 
   if (piroPL.isParameter("Jacobian Operator")) 
     jacob_op = piroPL.get<std::string>("Jacobian Operator");
+  std::cout << "jacob_op = " << jacob_op << std::endl;
   //Get matrix-free preconditioner from input file
   std::string mf_prec = "None"; 
   if (coupled_system_params.isParameter("Matrix-Free Preconditioner")) 
@@ -81,10 +82,13 @@ SchwarzMultiscale(
     mf_prec_type_ = NONE; 
   else if (mf_prec == "Jacobi") 
     mf_prec_type_ = JACOBI;  
+  else if (mf_prec == "Identity") 
+    mf_prec_type_ = ID;  
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
 		       "Unknown Matrix-Free Preconditioner type " << mf_prec 
                        << "!  Valid options are None and Jacobi. \n");
+  std::cout << "mf_prec = " << mf_prec << std::endl; 
   //If using matrix-free, get NOX sublist and set "Preconditioner Type" to "None" regardless 
   //of what is specified in the input file.  Currently preconditioners for matrix-free 
   //are implemented in this ModelEvaluator, which requires the type to be "None".
@@ -111,6 +115,7 @@ SchwarzMultiscale(
     }
   }
 
+  std::cout << "w_prec_supports_ = " << w_prec_supports_ << std::endl;
 
   //------------End getting of Preconditioner type-------------------------------------------------------------
 
@@ -727,6 +732,7 @@ createOutArgsImpl() const
 
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f, true);
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_op, true);
+  std::cout << "w_prec_supports_ = " << w_prec_supports_ << std::endl; 
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_prec, w_prec_supports_);
 
   result.set_W_properties(
@@ -856,6 +862,8 @@ evalModelImpl(
       out_args.get_W_op() :
       Teuchos::null;
 
+  std::cout << "W_op_outT = " << W_op_outT << std::endl; 
+
   // Compute the functions
 
   Teuchos::Array<bool>
@@ -928,6 +936,7 @@ evalModelImpl(
     W_prec_outT = Teuchos::nonnull(out_args.get_W_prec()) ?
         out_args.get_W_prec() :
         Teuchos::null;
+    std::cout << "IKT, W_prec_outT = " << W_prec_outT << std::endl; 
     if (W_prec_outT != Teuchos::null) {
       LCM::Schwarz_CoupledJacobian csJac(commT_);
       Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = csJac.getThyraCoupledJacobian(precs_, apps_);
@@ -962,9 +971,35 @@ evalModelImpl(
             precs_[m]->replaceLocalValues(row, matrixIndicesT(), matrixEntriesT());
           }
         } 
+        else if (mf_prec_type_ == ID) {
+          //Create Identity
+          for (auto row=0; row<jacs_[m]->getNodeNumRows(); ++row) {
+            Teuchos::Array<ST> matrixEntriesT(1);
+            Teuchos::Array<LO> matrixIndicesT(1);
+            ST diag = 1.0;
+            matrixEntriesT[0] = diag; 
+            matrixIndicesT[0] = row; 
+            precs_[m]->replaceLocalValues(row, matrixIndicesT(), matrixEntriesT());
+          }
+        }
         if (precs_[m]->isFillActive()) 
           precs_[m]->fillComplete();
       }
+#ifdef WRITE_TO_MATRIX_MARKET
+      char prec_name[100];  //create string for file name
+      char jac_name[100];  //create string for file name
+      sprintf(prec_name, "prec0_%i.mm", prec_mm_counter);
+      Tpetra_MatrixMarket_Writer::writeSparseFile(prec_name, precs_[0]);
+      sprintf(jac_name, "jac0_%i.mm", prec_mm_counter);
+      Tpetra_MatrixMarket_Writer::writeSparseFile(jac_name, jacs_[0]);
+      if (num_models_ > 1) {
+        sprintf(prec_name, "prec1_%i.mm", prec_mm_counter);
+        Tpetra_MatrixMarket_Writer::writeSparseFile(prec_name, precs_[1]);
+        sprintf(jac_name, "jac1_%i.mm", prec_mm_counter);
+        Tpetra_MatrixMarket_Writer::writeSparseFile(jac_name, jacs_[1]);
+      }
+      prec_mm_counter++;
+#endif 
     }
   }
 
