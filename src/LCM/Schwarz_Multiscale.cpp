@@ -16,8 +16,8 @@
 //#define WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
-static
-int mm_counter = 0;
+static int mm_counter = 0;
+static int prec_mm_counter = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
 LCM::
@@ -947,8 +947,8 @@ evalModelImpl(
  
     //IKT, 11/16/16: it may be desirable to move the following code into a separate 
     //function, especially as we implement more preconditioners. 
-    for (auto m = 0; m < num_models_; ++m) {
-      if (Teuchos::nonnull(W_prec_outT) == true) {
+    if (Teuchos::nonnull(W_prec_outT) == true) {
+      for (auto m = 0; m < num_models_; ++m) {
         if (!precs_[m]->isFillActive()) 
           precs_[m]->resumeFill();
         if (mf_prec_type_ == JACOBI) {
@@ -985,6 +985,21 @@ evalModelImpl(
         if (precs_[m]->isFillActive()) 
           precs_[m]->fillComplete();
       }
+#ifdef WRITE_TO_MATRIX_MARKET
+      char prec_name[100];  //create string for file name
+      char jac_name[100];  //create string for file name
+      sprintf(prec_name, "prec0_%i.mm", prec_mm_counter);
+      Tpetra_MatrixMarket_Writer::writeSparseFile(prec_name, precs_[0]);
+      sprintf(jac_name, "jac0_%i.mm", prec_mm_counter);
+      Tpetra_MatrixMarket_Writer::writeSparseFile(jac_name, jacs_[0]);
+      if (num_models_ > 1) {
+        sprintf(prec_name, "prec1_%i.mm", prec_mm_counter);
+        Tpetra_MatrixMarket_Writer::writeSparseFile(prec_name, precs_[1]);
+        sprintf(jac_name, "jac1_%i.mm", prec_mm_counter);
+        Tpetra_MatrixMarket_Writer::writeSparseFile(jac_name, jacs_[1]);
+      }
+      prec_mm_counter++;
+#endif 
     }
   }
 
