@@ -886,7 +886,6 @@ evalModelImpl(
           sacado_param_vecs_[m], fTs_out[m].get(), *jacs_[m]);
       fs_already_computed[m] = true;
     }
-
     // FIXME: create coupled W matrix from array of model W matrices
     LCM::Schwarz_CoupledJacobian csJac(commT_);
     W_op_outT = csJac.getThyraCoupledJacobian(jacs_, apps_);
@@ -934,6 +933,17 @@ evalModelImpl(
         if (!precs_[m]->isFillActive()) 
           precs_[m]->resumeFill();
         if (mf_prec_type_ == JACOBI) {
+          //With matrix-free, W_op_outT is null, so computeJacobianT does not
+          //get called earlier.  We need to call it here to get the Jacobians.
+          //Create fTtemp vector, so that this call to computeGlobalJacobianT 
+          //doesn't overwrite the real residual.
+          Teuchos::RCP<Tpetra_Vector> fTtemp;
+          if (fT_out != Teuchos::null) {
+            fTtemp = Teuchos::rcp_dynamic_cast<ThyraVector>(fT_out->getNonconstVectorBlock(m), true)->getTpetraVector();
+          }
+          apps_[m]->computeGlobalJacobianT(alpha, beta, omega, curr_time,
+              x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
+              sacado_param_vecs_[m], fTtemp.get(), *jacs_[m]);
           //Extract diagonal froms jacs_[m] 
           //IKT, 11/16/16, FIXME?: change to global?
           Teuchos::RCP<Tpetra_Vector> diagVec = Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap()));
