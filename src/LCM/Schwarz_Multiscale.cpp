@@ -73,7 +73,6 @@ SchwarzMultiscale(
   std::string jacob_op = ""; 
   if (piroPL.isParameter("Jacobian Operator")) 
     jacob_op = piroPL.get<std::string>("Jacobian Operator");
-  std::cout << "jacob_op = " << jacob_op << std::endl;
   //Get matrix-free preconditioner from input file
   std::string mf_prec = "None"; 
   if (coupled_system_params.isParameter("Matrix-Free Preconditioner")) 
@@ -88,7 +87,6 @@ SchwarzMultiscale(
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
 		       "Unknown Matrix-Free Preconditioner type " << mf_prec 
                        << "!  Valid options are None and Jacobi. \n");
-  std::cout << "mf_prec = " << mf_prec << std::endl; 
   //If using matrix-free, get NOX sublist and set "Preconditioner Type" to "None" regardless 
   //of what is specified in the input file.  Currently preconditioners for matrix-free 
   //are implemented in this ModelEvaluator, which requires the type to be "None".
@@ -115,7 +113,6 @@ SchwarzMultiscale(
     }
   }
 
-  std::cout << "w_prec_supports_ = " << w_prec_supports_ << std::endl;
 
   //------------End getting of Preconditioner type-------------------------------------------------------------
 
@@ -732,7 +729,6 @@ createOutArgsImpl() const
 
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f, true);
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_op, true);
-  std::cout << "w_prec_supports_ = " << w_prec_supports_ << std::endl; 
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_prec, w_prec_supports_);
 
   result.set_W_properties(
@@ -862,8 +858,6 @@ evalModelImpl(
       out_args.get_W_op() :
       Teuchos::null;
 
-  std::cout << "W_op_outT = " << W_op_outT << std::endl; 
-
   // Compute the functions
 
   Teuchos::Array<bool>
@@ -936,7 +930,6 @@ evalModelImpl(
     W_prec_outT = Teuchos::nonnull(out_args.get_W_prec()) ?
         out_args.get_W_prec() :
         Teuchos::null;
-    std::cout << "IKT, W_prec_outT = " << W_prec_outT << std::endl; 
     if (W_prec_outT != Teuchos::null) {
       LCM::Schwarz_CoupledJacobian csJac(commT_);
       Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = csJac.getThyraCoupledJacobian(precs_, apps_);
