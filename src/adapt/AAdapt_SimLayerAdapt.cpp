@@ -393,13 +393,15 @@ bool SimLayerAdapt::adaptMesh()
   PartitionOpts_setAdaptive(popts, 1);
   PM_partition(sim_pm, popts, sthreadDefault, 0);
   PartitionOpts_delete(popts);
-  //pMSAdapt adapter = MSA_new(sim_pm, 1);
-  //pGModel model = M_model(sim_pm);
+#if 1
+  pMSAdapt adapter = MSA_new(sim_pm, 1);
+#else
   pACase mcase = MS_newMeshCase(Simmetrix_model);
   MS_setMeshCurv(mcase,GM_domain(Simmetrix_model),2,0.025);
   MS_setMinCurvSize(mcase,GM_domain(Simmetrix_model),2,0.0025);
   pMSAdapt adapter = MSA_createFromCase(mcase,sim_pm);
   MSA_setSizeGradation(adapter,1,0.3);  // no broomsticks allowed
+#endif
   /* BRD */
   /* copy the size field from APF to the Simmetrix adapter */
   apf::MeshEntity* v;
@@ -504,6 +506,9 @@ bool SimLayerAdapt::adaptMesh()
   MSA_adapt(adapter, progress);
   Progress_delete(progress);
   MSA_delete(adapter);
+#if 0
+  MS_deleteMeshCase(mcase);
+#endif
 #ifdef SIMDEBUG
   sprintf(simname, "adapted_%d.sms", callcount);
   PM_write(sim_pm, simname, sthreadDefault, 0);
@@ -529,7 +534,6 @@ bool SimLayerAdapt::adaptMesh()
     Simmetrix_currentLayer++;
   }
   PList_delete(sim_fld_lst);
-  MS_deleteMeshCase(mcase);
   /* BRD */
 
   /* run APF verification on the resulting mesh */
