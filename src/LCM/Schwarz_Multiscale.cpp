@@ -965,7 +965,7 @@ evalModelImpl(
               inv_diag /= diag; 
             //Populate precs_[m] using inverse of diagonal value 
             Teuchos::Array<ST> matrixEntriesT(1);
-            Teuchos::Array<LO> matrixIndicesT(1);
+            Teuchos::Array<GO> matrixIndicesT(1);
             matrixEntriesT[0] = inv_diag; 
             matrixIndicesT[0] = global_row; 
             precs_[m]->replaceGlobalValues(global_row, matrixIndicesT(), matrixEntriesT());
@@ -1002,7 +1002,7 @@ evalModelImpl(
               inv_row_sum /= row_sum; 
             //Populate precs_[m] using inverse of abs row sum 
             Teuchos::Array<ST> matrixEntriesT(1);
-            Teuchos::Array<LO> matrixIndicesT(1);
+            Teuchos::Array<GO> matrixIndicesT(1);
             matrixEntriesT[0] = inv_row_sum; 
             matrixIndicesT[0] = global_row; 
             precs_[m]->replaceGlobalValues(global_row, matrixIndicesT(), matrixEntriesT());
@@ -1078,7 +1078,7 @@ evalModelImpl(
           for (auto i=0; i<jacs_[m]->getNodeNumRows(); ++i) {
             GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
             Teuchos::Array<ST> matrixEntriesT(1);
-            Teuchos::Array<LO> matrixIndicesT(1);
+            Teuchos::Array<GO> matrixIndicesT(1);
             ST diag = 1.0;
             matrixEntriesT[0] = diag; 
             matrixIndicesT[0] = global_row; 
