@@ -371,13 +371,6 @@ bool SimLayerAdapt::adaptMesh()
       apf_ms->cubatureDegree);
   apf::Field* size_fld = spr::getSPRSizeField(grad_ip_fld, errorBound);
   apf::destroyField(grad_ip_fld);
-#ifdef SIMDEBUG
-  /* write the mesh with size field to file */
-  std::stringstream ss;
-  ss << "size_" << callcount << '_';
-  std::string s = ss.str();
-  apf::writeVtkFiles(s.c_str(), apf_m);
-#endif
 
   pPartitionOpts popts = PM_newPartitionOpts();
   PartitionOpts_setAdaptive(popts, 1);
@@ -399,6 +392,8 @@ bool SimLayerAdapt::adaptMesh()
   double min_size = adapt_params_->get<double>("Min Size", 1e-2);
   double gradation = adapt_params_->get<double>("Gradation", 0.3);
   assert(min_size <= max_size);
+
+  bool should_debug = adapt_params_->get<bool>("Debug", false);
 
   /* create the Simmetrix adapter */
   pACase mcase = MS_newMeshCase(Simmetrix_model);
@@ -479,25 +474,15 @@ bool SimLayerAdapt::adaptMesh()
   GRIter_delete(regions);
   /* BRD */
 
-#ifdef SIMDEBUG
-  char simname[80];
-  sprintf(simname, "preadapt_%d.sms", callcount);
-  PM_write(sim_pm, simname, sthreadDefault, 0);
-  for (int i = 0; i <= apf_ms->num_time_deriv; ++i) {
-    sprintf(simname, "preadapt_sol%d_%d.fld", i, callcount);
-    Field_write(sim_sol_flds[i], simname, 0, 0, 0);
-  }
-  sprintf(simname, "preadapt_res_%d.fld", callcount);
-  Field_write(sim_res_fld, simname, 0, 0, 0);
-  Albany::debugAMPMesh(apf_m, "before");
-#endif
-  {
+  if (should_debug) {
     std::stringstream ss;
     ss << "preadapt_" << callcount;
     std::string s = ss.str();
     apf::writeVtkFiles(s.c_str(), apf_m);
   }
+
   apf::destroyField(size_fld);
+
   /* run the adapter */
   pProgress progress = Progress_new();
   /* BRD */ 
@@ -510,23 +495,12 @@ bool SimLayerAdapt::adaptMesh()
   MSA_delete(adapter);
   MS_deleteMeshCase(mcase);
 
-  {
+  if (should_debug) {
     std::stringstream ss;
     ss << "postadapt_" << callcount;
     std::string s = ss.str();
     apf::writeVtkFiles(s.c_str(), apf_m);
   }
-#ifdef SIMDEBUG
-  sprintf(simname, "adapted_%d.sms", callcount);
-  PM_write(sim_pm, simname, sthreadDefault, 0);
-  for (int i = 0; i <= apf_ms->num_time_deriv; ++i) {
-    sprintf(simname, "adapted_sol%d_%d.fld", i, callcount);
-    Field_write(sim_sol_flds[i], simname, 0, 0, 0);
-  }
-  sprintf(simname, "adapted_res_%d.fld", callcount);
-  Field_write(sim_res_fld, simname, 0, 0, 0);
-  Albany::debugAMPMesh(apf_m, "after");
-#endif
 
   /* BRD */
   /*IMPORTANT: next line will not work with current implementation of CTM, because
@@ -542,6 +516,13 @@ bool SimLayerAdapt::adaptMesh()
   }
   PList_delete(sim_fld_lst);
   /* BRD */
+
+  if (should_debug) {
+    std::stringstream ss;
+    ss << "postlayer_" << callcount;
+    std::string s = ss.str();
+    apf::writeVtkFiles(s.c_str(), apf_m);
+  }
 
   /* run APF verification on the resulting mesh */
   apf_m->verify();
@@ -564,6 +545,7 @@ Teuchos::RCP<const Teuchos::ParameterList> SimLayerAdapt::getValidAdapterParamet
   validPL->set<double>("Min Size", 1e-2, "Minimum allowed edge length (size field)");
   validPL->set<double>("Layer Mesh Size", 1e-2, "Mesh size to use for top layer (default thickness/3)");
   validPL->set<double>("Gradation", 0.3, "Mesh size gradation parameter");
+  validPL->set<bool>("Debug", false, "Print debug VTK files");
   validPL->set<bool>("Add Layer", true, "Turn on/off adding layer");
   validPL->set<double>("Uniform Temperature New Layer", 20.0, "Uniform Layer Temperature");
   return validPL;
