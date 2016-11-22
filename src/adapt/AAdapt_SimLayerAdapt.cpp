@@ -409,8 +409,8 @@ bool SimLayerAdapt::adaptMesh()
   assert(min_size <= max_size);
   while ((v = apf_m->iterate(it))) {
     double size = apf::getScalar(size_fld, v, 0);
-    double size = std::min(max_size, size);
-    double size = std::max(min_size, size);
+    size = std::min(max_size, size);
+    size = std::max(min_size, size);
     MSA_setVertexSize(adapter, (pVertex) v, size);
     apf::setScalar(size_fld, v, 0, size);
   }
