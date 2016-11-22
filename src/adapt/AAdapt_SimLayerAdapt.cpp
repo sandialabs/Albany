@@ -502,6 +502,8 @@ bool SimLayerAdapt::adaptMesh()
   pProgress progress = Progress_new();
   /* BRD */ 
   MSA_setPrebalance(adapter, 0);
+  auto est_nelems = MSA_estimate(adapter);
+  std::cout << "MSA estimates " << est_nelems << " elements\n";
   /* BRD */
   MSA_adapt(adapter, progress);
   Progress_delete(progress);
