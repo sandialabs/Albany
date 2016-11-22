@@ -116,12 +116,6 @@ void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double la
   MS_setSurfaceShapeMetric(mcase, GM_domain(model),ShapeMetricType_AspectRatio, 25);
   MS_setVolumeShapeMetric(mcase, GM_domain(model), ShapeMetricType_AspectRatio, 25);
 
-  // Slice thickness
-  // Bracket = 0.0003/0.0001 - real part but way too slow
-  // sliced_cube.smd = 0.003/0.001 - best model/settings for testing
-  // sliced_cube300microns.smd = 0.0003/0.0001 - realistic slices but way too slow
-  // Clevis  = 0.03/0.01 
-  // Use a mesh size for the current layer that is 1/3 the slice thickness
   GRIter regions = GM_regionIter(model);
   pGRegion gr;
   int layer;
@@ -392,7 +386,15 @@ bool SimLayerAdapt::adaptMesh()
 
   double sliceThickness;
   GIP_nativeDoubleAttribute(GM_part(Simmetrix_model),"SimLayerThickness",&sliceThickness);
+
+  // Slice thickness
+  // Bracket = 0.0003/0.0001 - real part but way too slow
+  // sliced_cube.smd = 0.003/0.001 - best model/settings for testing
+  // sliced_cube300microns.smd = 0.0003/0.0001 - realistic slices but way too slow
+  // Clevis  = 0.03/0.01
+  // Use a mesh size for the current layer that is 1/3 the slice thickness
   double layerSize = adapt_params_->get<double>("Layer Mesh Size", sliceThickness / 3.0);
+
   double max_size = adapt_params_->get<double>("Max Size", 1e10);
   double min_size = adapt_params_->get<double>("Min Size", 1e-2);
   double gradation = adapt_params_->get<double>("Gradation", 0.3);
