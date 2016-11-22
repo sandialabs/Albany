@@ -413,9 +413,9 @@ bool SimLayerAdapt::adaptMesh()
     if (size < 0.01)
       size = 0.01;
     MSA_setVertexSize(adapter, (pVertex) v, size);
+    apf::setScalar(size_fld, v, 0, size);
   }
   apf_m->end(it);
-  apf::destroyField(size_fld);
   /* tell the adapter to transfer the solution and residual fields */
   apf::Field* res_fld = apf_m->findField(Albany::APFMeshStruct::residual_name);
   pField sim_sol_flds[3];
@@ -461,8 +461,11 @@ bool SimLayerAdapt::adaptMesh()
               for(int np=0;np<PM_numParts(sim_pm);np++) {
                 pVertex mv;
                 VIter allVerts = M_classifiedVertexIter(PM_mesh(sim_pm,np),gf,1);
-                while ( mv = VIter_next(allVerts) )
+                while ( mv = VIter_next(allVerts) ) {
+                  double size = sliceThickness / 3.0;
                   MSA_setVertexSize(adapter,mv,sliceThickness/3.0);  // should be same as top layer size in meshModel
+                  apf::setScalar(size_fld, reinterpret_cast<apf::MeshEntity*>(mv), 0, size);
+                }
                 VIter_delete(allVerts);
               }
             }
@@ -487,6 +490,13 @@ bool SimLayerAdapt::adaptMesh()
   Field_write(sim_res_fld, simname, 0, 0, 0);
   Albany::debugAMPMesh(apf_m, "before");
 #endif
+  {
+    std::stringstream ss;
+    ss << "preadapt_" << callcount;
+    std::string s = ss.str();
+    apf::writeVtkFiles(s.c_str(), apf_m);
+  }
+  apf::destroyField(size_fld);
   /* run the adapter */
   pProgress progress = Progress_new();
   /* BRD */ 
