@@ -25,6 +25,9 @@ extern void MSA_setPrebalance(pMSAdapt,int);
 
 namespace AAdapt {
 
+enum { ABSOLUTE = 1, RELATIVE = 2 };
+enum { ONLY_CURV_TYPE = 2 };
+
 SimLayerAdapt::SimLayerAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                    const Teuchos::RCP<ParamLib>& paramLib_,
                    const Albany::StateManager& StateMgr_,
@@ -106,9 +109,9 @@ bool SimLayerAdapt::queryAdaptationCriteria(int iteration)
 void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double layerSize)
 {
   pACase mcase = MS_newMeshCase(model);
-  MS_setMeshSize(mcase,GM_domain(model),1,30.0*layerSize,0);  // at least an order of magnitude more than layer size
-  MS_setMeshCurv(mcase,GM_domain(model),2,0.025);
-  MS_setMinCurvSize(mcase,GM_domain(model),2,0.0025);
+  MS_setMeshSize(mcase,GM_domain(model), RELATIVE, 1.0, NULL);
+  MS_setMeshCurv(mcase,GM_domain(model), ONLY_CURV_TYPE, 0.025);
+  MS_setMinCurvSize(mcase,GM_domain(model), ONLY_CURV_TYPE, 0.0025);
   MS_setSurfaceShapeMetric(mcase, GM_domain(model),ShapeMetricType_AspectRatio, 25);
   MS_setVolumeShapeMetric(mcase, GM_domain(model), ShapeMetricType_AspectRatio, 25);
 
@@ -125,7 +128,7 @@ void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double la
     if (GEN_numNativeIntAttribute(gr,"SimLayer")==1) {
       GEN_nativeIntAttribute(gr,"SimLayer",&layer);
       if (layer==currentLayer) {
-        MS_setMeshSize(mcase,gr,1,layerSize,0);
+        MS_setMeshSize(mcase,gr, ABSOLUTE, layerSize, NULL);
         pPList regFaces = GR_faces(gr);
         void *fiter = 0;
         pGFace gf;
@@ -380,28 +383,35 @@ bool SimLayerAdapt::adaptMesh()
   std::string s = ss.str();
   apf::writeVtkFiles(s.c_str(), apf_m);
 #endif
-  /* create the Simmetrix adapter */
-  /* BRD */
+
   pPartitionOpts popts = PM_newPartitionOpts();
   PartitionOpts_setAdaptive(popts, 1);
   PM_partition(sim_pm, popts, sthreadDefault, 0);
   PartitionOpts_delete(popts);
-#if 1
+
+  double sliceThickness;
+  GIP_nativeDoubleAttribute(GM_part(Simmetrix_model),"SimLayerThickness",&sliceThickness);
+  double layerSize = adapt_params_->get<double>("Layer Mesh Size", sliceThickness / 3.0);
+  double max_size = adapt_params_->get<double>("Max Size", 1e10);
+  double min_size = adapt_params_->get<double>("Min Size", 1e-2);
+  assert(min_size <= max_size);
+
+  /* create the Simmetrix adapter */
+#if 0
   pMSAdapt adapter = MSA_new(sim_pm, 1);
 #else
   pACase mcase = MS_newMeshCase(Simmetrix_model);
-  MS_setMeshCurv(mcase,GM_domain(Simmetrix_model),2,0.025);
-  MS_setMinCurvSize(mcase,GM_domain(Simmetrix_model),2,0.0025);
+  pModelItem domain = GM_domain(Simmetrix_model);
+  MS_setMeshCurv(mcase,domain, ONLY_CURV_TYPE, 0.025);
+  MS_setMinCurvSize(mcase,domain, ONLY_CURV_TYPE, 0.0025);
+  MS_setMeshSize(mcase,domain, RELATIVE, 1.0, NULL);
   pMSAdapt adapter = MSA_createFromCase(mcase,sim_pm);
-  MSA_setSizeGradation(adapter,1,0.3);  // no broomsticks allowed
+//MSA_setSizeGradation(adapter,1,0.3);  // no broomsticks allowed
 #endif
   /* BRD */
   /* copy the size field from APF to the Simmetrix adapter */
   apf::MeshEntity* v;
   apf::MeshIterator* it = apf_m->begin(0);
-  double max_size = adapt_params_->get<double>("Max Size", 1e10);
-  double min_size = adapt_params_->get<double>("Min Size", 1e-2);
-  assert(min_size <= max_size);
   while ((v = apf_m->iterate(it))) {
     double size = apf::getScalar(size_fld, v, 0);
     size = std::min(max_size, size);
@@ -434,10 +444,6 @@ bool SimLayerAdapt::adaptMesh()
   /* BRD */
   GRIter regions = GM_regionIter(Simmetrix_model);
   pGRegion gr1;
-
-  double sliceThickness;
-  GIP_nativeDoubleAttribute(GM_part(Simmetrix_model),"SimLayerThickness",&sliceThickness);
-  double layerSize = adapt_params_->get<double>("Layer Mesh Size", sliceThickness / 3.0);
 
   // Constrain the top face & reset sizes
   int layer;
@@ -501,7 +507,7 @@ bool SimLayerAdapt::adaptMesh()
   MSA_adapt(adapter, progress);
   Progress_delete(progress);
   MSA_delete(adapter);
-#if 0
+#if 1
   MS_deleteMeshCase(mcase);
 #endif
   {
