@@ -26,6 +26,7 @@ extern void MSA_setPrebalance(pMSAdapt,int);
 namespace AAdapt {
 
 enum { ABSOLUTE = 1, RELATIVE = 2 };
+enum { DONT_GRADE = 0, DO_GRADE = 1 };
 enum { ONLY_CURV_TYPE = 2 };
 
 SimLayerAdapt::SimLayerAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -394,20 +395,18 @@ bool SimLayerAdapt::adaptMesh()
   double layerSize = adapt_params_->get<double>("Layer Mesh Size", sliceThickness / 3.0);
   double max_size = adapt_params_->get<double>("Max Size", 1e10);
   double min_size = adapt_params_->get<double>("Min Size", 1e-2);
+  double gradation = adapt_params_->get<double>("Gradation", 0.3);
   assert(min_size <= max_size);
 
   /* create the Simmetrix adapter */
-#if 0
-  pMSAdapt adapter = MSA_new(sim_pm, 1);
-#else
   pACase mcase = MS_newMeshCase(Simmetrix_model);
   pModelItem domain = GM_domain(Simmetrix_model);
   MS_setMeshCurv(mcase,domain, ONLY_CURV_TYPE, 0.025);
   MS_setMinCurvSize(mcase,domain, ONLY_CURV_TYPE, 0.0025);
   MS_setMeshSize(mcase,domain, RELATIVE, 1.0, NULL);
   pMSAdapt adapter = MSA_createFromCase(mcase,sim_pm);
-//MSA_setSizeGradation(adapter,1,0.3);  // no broomsticks allowed
-#endif
+  MSA_setSizeGradation(adapter, DO_GRADE, gradation);  // no broomsticks allowed
+
   /* BRD */
   /* copy the size field from APF to the Simmetrix adapter */
   apf::MeshEntity* v;
@@ -507,9 +506,8 @@ bool SimLayerAdapt::adaptMesh()
   MSA_adapt(adapter, progress);
   Progress_delete(progress);
   MSA_delete(adapter);
-#if 1
   MS_deleteMeshCase(mcase);
-#endif
+
   {
     std::stringstream ss;
     ss << "postadapt_" << callcount;
@@ -563,6 +561,7 @@ Teuchos::RCP<const Teuchos::ParameterList> SimLayerAdapt::getValidAdapterParamet
   validPL->set<double>("Max Size", 1e10, "Maximum allowed edge length (size field)");
   validPL->set<double>("Min Size", 1e-2, "Minimum allowed edge length (size field)");
   validPL->set<double>("Layer Mesh Size", 1e-2, "Mesh size to use for top layer (default thickness/3)");
+  validPL->set<double>("Gradation", 0.3, "Mesh size gradation parameter");
   validPL->set<bool>("Add Layer", true, "Turn on/off adding layer");
   validPL->set<double>("Uniform Temperature New Layer", 20.0, "Uniform Layer Temperature");
   return validPL;
