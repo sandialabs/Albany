@@ -45,8 +45,6 @@ SimLayerAdapt::SimLayerAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_
   Simmetrix_numLayers = -1;
   Simmetrix_currentLayer = 0;
   Simmetrix_model = 0;
-  *out << "Pid = " << getpid() << "\n";
-  sleep(30.0);
   /* BRD */
 }
 
