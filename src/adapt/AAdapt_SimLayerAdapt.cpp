@@ -25,6 +25,10 @@ extern void MSA_setPrebalance(pMSAdapt,int);
 
 namespace AAdapt {
 
+enum { ABSOLUTE = 1, RELATIVE = 2 };
+enum { DONT_GRADE = 0, DO_GRADE = 1 };
+enum { ONLY_CURV_TYPE = 2 };
+
 SimLayerAdapt::SimLayerAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                    const Teuchos::RCP<ParamLib>& paramLib_,
                    const Albany::StateManager& StateMgr_,
@@ -45,8 +49,6 @@ SimLayerAdapt::SimLayerAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_
   Simmetrix_numLayers = -1;
   Simmetrix_currentLayer = 0;
   Simmetrix_model = 0;
-  *out << "Pid = " << getpid() << "\n";
-  sleep(30.0);
   /* BRD */
 }
 
@@ -105,21 +107,15 @@ bool SimLayerAdapt::queryAdaptationCriteria(int iteration)
 }
 
 /* BRD */
-void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double sliceThickness)
+void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double layerSize)
 {
   pACase mcase = MS_newMeshCase(model);
-  MS_setMeshSize(mcase,GM_domain(model),1,10.0*sliceThickness,0);  // at least an order of magnitude more than slice thickness
-  MS_setMeshCurv(mcase,GM_domain(model),2,0.025);
-  MS_setMinCurvSize(mcase,GM_domain(model),2,0.0025);
+  MS_setMeshSize(mcase,GM_domain(model), RELATIVE, 1.0, NULL);
+  MS_setMeshCurv(mcase,GM_domain(model), ONLY_CURV_TYPE, 0.025);
+  MS_setMinCurvSize(mcase,GM_domain(model), ONLY_CURV_TYPE, 0.0025);
   MS_setSurfaceShapeMetric(mcase, GM_domain(model),ShapeMetricType_AspectRatio, 25);
   MS_setVolumeShapeMetric(mcase, GM_domain(model), ShapeMetricType_AspectRatio, 25);
 
-  // Slice thickness
-  // Bracket = 0.0003/0.0001 - real part but way too slow
-  // sliced_cube.smd = 0.003/0.001 - best model/settings for testing
-  // sliced_cube300microns.smd = 0.0003/0.0001 - realistic slices but way too slow
-  // Clevis  = 0.03/0.01 
-  // Use a mesh size for the current layer that is 1/3 the slice thickness
   GRIter regions = GM_regionIter(model);
   pGRegion gr;
   int layer;
@@ -127,7 +123,7 @@ void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double sl
     if (GEN_numNativeIntAttribute(gr,"SimLayer")==1) {
       GEN_nativeIntAttribute(gr,"SimLayer",&layer);
       if (layer==currentLayer) {
-        MS_setMeshSize(mcase,gr,1,sliceThickness/3.0,0);
+        MS_setMeshSize(mcase,gr, ABSOLUTE, layerSize, NULL);
         pPList regFaces = GR_faces(gr);
         void *fiter = 0;
         pGFace gf;
@@ -164,70 +160,11 @@ void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double sl
   MS_deleteMeshCase(mcase);
 }
 
-//void adaptMesh2(pGModel model,pParMesh mesh,int currentLayer,double sliceThickness,pPList flds)
-//{
-//  pACase mcase = MS_newMeshCase(model);
-//  MS_setMeshSize(mcase,GM_domain(model),1,100*sliceThickness,0);
-//  MS_setMeshCurv(mcase,GM_domain(model),2,0.025);
-//  MS_setMinCurvSize(mcase,GM_domain(model),2,0.0025);
-//  //MS_setGlobalSizeGradationRate(mcase,0.1);
-//  
-//  //M_write(mesh,"beforeSizes.sms",0,0);
-//  pMSAdapt adaptM = MSA_createFromCase(mcase,mesh);
-//  MSA_setSizeGradation(adaptM,1,0.1);
-//  pVertex v;
-//  for(int np=0;np<PM_numParts(mesh);np++) {
-//    VIter vertices = M_vertexIter(PM_mesh(mesh,np));
-//    while (v = VIter_next(vertices) ) {
-//      double xyz[3];
-//      V_coord(v,xyz);
-//      //  Commented out condition as it skips some points we want - SST
-//      // if (xyz[2] >= 0.0) {  // ignore everything below the plate
-//      // AND only set sizes for those mesh vertices that are in the 
-//      // closure of a SimLayer region and below the current layer.
-//      bool adaptMesh = false;
-//      pPList mfaces = V_faces(v);
-//      for(int i=0;i<PList_size(mfaces) && !adaptMesh;i++) {
-//        pFace mf = static_cast<pFace>(PList_item(mfaces,i));
-//        if (F_whatInType(mf)==Gface) {
-//          pGFace gf = static_cast<pGFace>(F_whatIn(mf));
-//          for(int j=0;j<2;j++) {
-//            pGRegion gr = GF_region(gf,j);
-//            if (gr && (GEN_numNativeIntAttribute(gr,"SimLayer")==1))
-//              adaptMesh = true;
-//          }
-//        } else if (F_whatInType(mf)==Gregion) {
-//          pGRegion gr = static_cast<pGRegion>(F_whatIn(mf));
-//          if (GEN_numNativeIntAttribute(gr,"SimLayer")==1)
-//            adaptMesh = true;
-//        }
-//      }
-//      PList_delete(mfaces);
-//      if (adaptMesh) {
-//        // make sure the mesh vertex is below the current layer
-//        int layer = xyz[2]/sliceThickness;
-//        if (layer < currentLayer)
-//          MSA_setVertexSize(adaptM,v,100*sliceThickness);
-//      }
-//      // }
-//    }
-//    VIter_delete(vertices);
-//  }
-//  //M_write(mesh,"afterSizes.sms",0,0);
-//  if (flds)
-//    MSA_setMapFields(adaptM,flds);
-//  MSA_adapt(adaptM,0);
-//  MSA_delete(adaptM);
-//  MS_deleteMeshCase(mcase);
-//}
-
-  void addNextLayer(pParMesh sim_pm,double sliceThickness,int nextLayer, double initTempNewLayer,int nSolFlds,pPList flds) {
+void addNextLayer(pParMesh sim_pm,double layerSize,int nextLayer, double initTempNewLayer,int nSolFlds,pPList flds) {
   //! Output stream, defaults to printing just Proc 0
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
   
-  //double sliceThickness;
   pGModel model = M_model(sim_pm);
-  //GIP_nativeDoubleAttribute(GM_part(model),"SimLayerThickness",&sliceThickness);
   
   // Collect the layer 0 regions
   GRIter regions = GM_regionIter(model);
@@ -256,12 +193,7 @@ void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double sl
   }
   PList_clear(combinedRegions);
   *out << "Mesh top layer\n";
-  meshCurrentLayerOnly(model,sim_pm,nextLayer,sliceThickness);
-  /*
-  if (nextLayer>1) {
-    adaptMesh2(model,sim_pm,nextLayer,sliceThickness,0);
-  }
-  */
+  meshCurrentLayerOnly(model,sim_pm,nextLayer,layerSize);
 
   if (flds) {
     // Add temperature and residual fields to top layer
@@ -439,40 +371,51 @@ bool SimLayerAdapt::adaptMesh()
       apf_ms->cubatureDegree);
   apf::Field* size_fld = spr::getSPRSizeField(grad_ip_fld, errorBound);
   apf::destroyField(grad_ip_fld);
-#ifdef SIMDEBUG
-  /* write the mesh with size field to file */
-  std::stringstream ss;
-  ss << "size_" << callcount << '_';
-  std::string s = ss.str();
-  apf::writeVtkFiles(s.c_str(), apf_m);
-#endif
-  /* create the Simmetrix adapter */
-  /* BRD */
+
   pPartitionOpts popts = PM_newPartitionOpts();
   PartitionOpts_setAdaptive(popts, 1);
   PM_partition(sim_pm, popts, sthreadDefault, 0);
   PartitionOpts_delete(popts);
-  //pMSAdapt adapter = MSA_new(sim_pm, 1);
-  //pGModel model = M_model(sim_pm);
+
+  double sliceThickness;
+  GIP_nativeDoubleAttribute(GM_part(Simmetrix_model),"SimLayerThickness",&sliceThickness);
+
+  // Slice thickness
+  // Bracket = 0.0003/0.0001 - real part but way too slow
+  // sliced_cube.smd = 0.003/0.001 - best model/settings for testing
+  // sliced_cube300microns.smd = 0.0003/0.0001 - realistic slices but way too slow
+  // Clevis  = 0.03/0.01
+  // Use a mesh size for the current layer that is 1/3 the slice thickness
+  double layerSize = adapt_params_->get<double>("Layer Mesh Size", sliceThickness / 3.0);
+
+  double max_size = adapt_params_->get<double>("Max Size", 1e10);
+  double min_size = adapt_params_->get<double>("Min Size", 1e-2);
+  double gradation = adapt_params_->get<double>("Gradation", 0.3);
+  assert(min_size <= max_size);
+
+  bool should_debug = adapt_params_->get<bool>("Debug", false);
+
+  /* create the Simmetrix adapter */
   pACase mcase = MS_newMeshCase(Simmetrix_model);
-  MS_setMeshCurv(mcase,GM_domain(Simmetrix_model),2,0.025);
-  MS_setMinCurvSize(mcase,GM_domain(Simmetrix_model),2,0.0025);
+  pModelItem domain = GM_domain(Simmetrix_model);
+  MS_setMeshCurv(mcase,domain, ONLY_CURV_TYPE, 0.025);
+  MS_setMinCurvSize(mcase,domain, ONLY_CURV_TYPE, 0.0025);
+  MS_setMeshSize(mcase,domain, RELATIVE, 1.0, NULL);
   pMSAdapt adapter = MSA_createFromCase(mcase,sim_pm);
-  MSA_setSizeGradation(adapter,1,0.3);  // no broomsticks allowed
+  MSA_setSizeGradation(adapter, DO_GRADE, gradation);  // no broomsticks allowed
+
   /* BRD */
   /* copy the size field from APF to the Simmetrix adapter */
   apf::MeshEntity* v;
   apf::MeshIterator* it = apf_m->begin(0);
-  double max_size = adapt_params_->get<double>("Max Size", 1e10);
   while ((v = apf_m->iterate(it))) {
-    double size1 = apf::getScalar(size_fld, v, 0);
-    double size = std::min(max_size, size1);
-    if (size < 0.01)
-      size = 0.01;
+    double size = apf::getScalar(size_fld, v, 0);
+    size = std::min(max_size, size);
+    size = std::max(min_size, size);
     MSA_setVertexSize(adapter, (pVertex) v, size);
+    apf::setScalar(size_fld, v, 0, size);
   }
   apf_m->end(it);
-  apf::destroyField(size_fld);
   /* tell the adapter to transfer the solution and residual fields */
   apf::Field* res_fld = apf_m->findField(Albany::APFMeshStruct::residual_name);
   pField sim_sol_flds[3];
@@ -498,9 +441,6 @@ bool SimLayerAdapt::adaptMesh()
   GRIter regions = GM_regionIter(Simmetrix_model);
   pGRegion gr1;
 
-  double sliceThickness;
-  GIP_nativeDoubleAttribute(GM_part(Simmetrix_model),"SimLayerThickness",&sliceThickness);
-
   // Constrain the top face & reset sizes
   int layer;
   while (gr1=GRIter_next(regions)) {
@@ -518,8 +458,10 @@ bool SimLayerAdapt::adaptMesh()
               for(int np=0;np<PM_numParts(sim_pm);np++) {
                 pVertex mv;
                 VIter allVerts = M_classifiedVertexIter(PM_mesh(sim_pm,np),gf,1);
-                while ( mv = VIter_next(allVerts) )
-                  MSA_setVertexSize(adapter,mv,sliceThickness/3.0);  // should be same as top layer size in meshModel
+                while ( mv = VIter_next(allVerts) ) {
+                  MSA_setVertexSize(adapter,mv,layerSize);  // should be same as top layer size in meshModel
+                  apf::setScalar(size_fld, reinterpret_cast<apf::MeshEntity*>(mv), 0, layerSize);
+                }
                 VIter_delete(allVerts);
               }
             }
@@ -532,37 +474,33 @@ bool SimLayerAdapt::adaptMesh()
   GRIter_delete(regions);
   /* BRD */
 
-#ifdef SIMDEBUG
-  char simname[80];
-  sprintf(simname, "preadapt_%d.sms", callcount);
-  PM_write(sim_pm, simname, sthreadDefault, 0);
-  for (int i = 0; i <= apf_ms->num_time_deriv; ++i) {
-    sprintf(simname, "preadapt_sol%d_%d.fld", i, callcount);
-    Field_write(sim_sol_flds[i], simname, 0, 0, 0);
+  if (should_debug) {
+    std::stringstream ss;
+    ss << "preadapt_" << callcount;
+    std::string s = ss.str();
+    apf::writeVtkFiles(s.c_str(), apf_m);
   }
-  sprintf(simname, "preadapt_res_%d.fld", callcount);
-  Field_write(sim_res_fld, simname, 0, 0, 0);
-  Albany::debugAMPMesh(apf_m, "before");
-#endif
+
+  apf::destroyField(size_fld);
+
   /* run the adapter */
   pProgress progress = Progress_new();
   /* BRD */ 
   MSA_setPrebalance(adapter, 0);
+  auto est_nelems = MSA_estimate(adapter);
+  std::cout << "MSA estimates " << est_nelems << " elements\n";
   /* BRD */
   MSA_adapt(adapter, progress);
   Progress_delete(progress);
   MSA_delete(adapter);
-#ifdef SIMDEBUG
-  sprintf(simname, "adapted_%d.sms", callcount);
-  PM_write(sim_pm, simname, sthreadDefault, 0);
-  for (int i = 0; i <= apf_ms->num_time_deriv; ++i) {
-    sprintf(simname, "adapted_sol%d_%d.fld", i, callcount);
-    Field_write(sim_sol_flds[i], simname, 0, 0, 0);
+  MS_deleteMeshCase(mcase);
+
+  if (should_debug) {
+    std::stringstream ss;
+    ss << "postadapt_" << callcount;
+    std::string s = ss.str();
+    apf::writeVtkFiles(s.c_str(), apf_m);
   }
-  sprintf(simname, "adapted_res_%d.fld", callcount);
-  Field_write(sim_res_fld, simname, 0, 0, 0);
-  Albany::debugAMPMesh(apf_m, "after");
-#endif
 
   /* BRD */
   /*IMPORTANT: next line will not work with current implementation of CTM, because
@@ -571,14 +509,20 @@ bool SimLayerAdapt::adaptMesh()
   if (currentTime >= Simmetrix_layerTimes[Simmetrix_currentLayer]) {
     char meshFile[80];
     *out << "Adding layer " << Simmetrix_currentLayer+1 << "\n";
-    addNextLayer(sim_pm,sliceThickness,Simmetrix_currentLayer+1,initTempNewLayer,apf_ms->num_time_deriv+1,sim_fld_lst);
+    addNextLayer(sim_pm,layerSize,Simmetrix_currentLayer+1,initTempNewLayer,apf_ms->num_time_deriv+1,sim_fld_lst);
     sprintf(meshFile, "layerMesh%d.sms", Simmetrix_currentLayer+1);
     PM_write(sim_pm, meshFile, sthreadDefault, 0);
     Simmetrix_currentLayer++;
   }
   PList_delete(sim_fld_lst);
-  MS_deleteMeshCase(mcase);
   /* BRD */
+
+  if (should_debug) {
+    std::stringstream ss;
+    ss << "postlayer_" << callcount;
+    std::string s = ss.str();
+    apf::writeVtkFiles(s.c_str(), apf_m);
+  }
 
   /* run APF verification on the resulting mesh */
   apf_m->verify();
@@ -598,6 +542,10 @@ Teuchos::RCP<const Teuchos::ParameterList> SimLayerAdapt::getValidAdapterParamet
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
   validPL->set<double>("Max Size", 1e10, "Maximum allowed edge length (size field)");
+  validPL->set<double>("Min Size", 1e-2, "Minimum allowed edge length (size field)");
+  validPL->set<double>("Layer Mesh Size", 1e-2, "Mesh size to use for top layer (default thickness/3)");
+  validPL->set<double>("Gradation", 0.3, "Mesh size gradation parameter");
+  validPL->set<bool>("Debug", false, "Print debug VTK files");
   validPL->set<bool>("Add Layer", true, "Turn on/off adding layer");
   validPL->set<double>("Uniform Temperature New Layer", 20.0, "Uniform Layer Temperature");
   return validPL;
