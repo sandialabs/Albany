@@ -488,7 +488,7 @@ bool SimLayerAdapt::adaptMesh()
   /* BRD */ 
   MSA_setPrebalance(adapter, 0);
   auto est_nelems = MSA_estimate(adapter);
-  std::cout << "MSA estimates " << est_nelems << " elements\n";
+  *out << "MSA estimates " << est_nelems << " elements\n";
   /* BRD */
   MSA_adapt(adapter, progress);
   Progress_delete(progress);
@@ -507,11 +507,13 @@ bool SimLayerAdapt::adaptMesh()
    CTM does not use param_lib*/
   double currentTime = param_lib_->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
   if (currentTime >= Simmetrix_layerTimes[Simmetrix_currentLayer]) {
-    char meshFile[80];
     *out << "Adding layer " << Simmetrix_currentLayer+1 << "\n";
     addNextLayer(sim_pm,layerSize,Simmetrix_currentLayer+1,initTempNewLayer,apf_ms->num_time_deriv+1,sim_fld_lst);
-    sprintf(meshFile, "layerMesh%d.sms", Simmetrix_currentLayer+1);
-    PM_write(sim_pm, meshFile, sthreadDefault, 0);
+    if (should_debug) {
+      char meshFile[80];
+      sprintf(meshFile, "layerMesh%d.sms", Simmetrix_currentLayer + 1);
+      PM_write(sim_pm, meshFile, sthreadDefault, 0);
+    }
     Simmetrix_currentLayer++;
   }
   PList_delete(sim_fld_lst);
