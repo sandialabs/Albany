@@ -285,7 +285,6 @@ using Intrepid2::eye;
 
   Teuchos::RCP<Albany::AbstractDiscretization> discretization = Teuchos::rcp(
       new Albany::STKDiscretization(stkMeshStruct, commT));
-  discretization->updateMesh();
 
   //---------------------------------------------------------------------------
   // Associate the discretization with the StateManager

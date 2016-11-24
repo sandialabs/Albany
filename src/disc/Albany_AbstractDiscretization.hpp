@@ -262,9 +262,6 @@ class AbstractDiscretization {
     virtual void writeSolutionToFileT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
     virtual void writeSolutionMVToFile(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false) = 0;
 
-    //! update the mesh
-    virtual void updateMesh(bool shouldTransferIPData = false) = 0;
-
     //! Get Numbering for layered mesh (mesh structred in one direction)
     virtual Teuchos::RCP<LayeredMeshNumbering<LO> > getLayeredMeshNumbering() = 0;
 

@@ -186,9 +186,14 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     // After mesh modification, qp data needs to be removed
     void detachQPData();
 
-    // After mesh modification, need to update the element connectivity and nodal coordinates
-    void updateMesh(bool shouldTransferIPData);
-    // The parameter library is used to update Time after adapting
+    // Communicates most APF data structures to Albany,
+    // including worksets, sidesets, nodesets, blocks, graphs, etc.
+    // This function is called by the constructor and by updateMesh.
+    void initMesh();
+
+    // After mesh modification, calls initMesh() plus two other things.
+    // First, integration/quadrature point data must be copied into state arrays.
+    // Second, the parameter library is used to set Time on each workset.
     void updateMesh(bool shouldTransferIPData, Teuchos::RCP<ParamLib> paramLib);
 
     // Function that transforms a mesh of a unit cube (for FELIX problems)

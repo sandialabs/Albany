@@ -3414,7 +3414,7 @@ void Aeras::SpectralDiscretization::reNameExodusOutput(std::string& filename)
 
 
 void
-Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
+Aeras::SpectralDiscretization::updateMesh()
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;

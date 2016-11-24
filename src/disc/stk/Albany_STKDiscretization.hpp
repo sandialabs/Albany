@@ -267,7 +267,7 @@ namespace Albany {
     double restartDataTime() const {return stkMeshStruct->restartDataTime();}
 
     //! After mesh modification, need to update the element connectivity and nodal coordinates
-    void updateMesh(bool shouldTransferIPData = false);
+    void updateMesh();
 
     //! Function that transforms an STK mesh of a unit cube (for FELIX problems)
     void transformMesh();

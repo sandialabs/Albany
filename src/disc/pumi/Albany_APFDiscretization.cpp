@@ -84,9 +84,8 @@ comm = Albany::createEpetraCommFromTeuchosComm(commT);
 globalNumbering = 0;
 elementNumbering = 0;
 
-// Initialize the mesh and all data structures
-bool shouldTransferIPData = false;
-this->updateMesh(shouldTransferIPData);
+// Initialize the mesh and all data structures for Albany
+initMesh();
 
 // layout[num deriv vectors][DOF_component]
 Teuchos::Array<Teuchos::Array<std::string> > layout = meshStruct->solVectorLayout;
@@ -1459,17 +1458,9 @@ initTimeFromParamLib(Teuchos::RCP<ParamLib> paramLib) {
 }
 
 void
-Albany::APFDiscretization::updateMesh(bool shouldTransferIPData) {
-  updateMesh(shouldTransferIPData, Teuchos::null);
-}
+Albany::APFDiscretization::initMesh() {
 
-void
-Albany::APFDiscretization::updateMesh(bool shouldTransferIPData,
-    Teuchos::RCP<ParamLib> paramLib) {
-  // This function is called both to initialize the mesh at the beginning of the simulation
-  // and then each time the mesh is adapted (called from AAdapt_MeshAdapt_Def.hpp - afterAdapt())
-
-  TEUCHOS_FUNC_TIME_MONITOR("AlbanyAdapt: Transfer to Albany");
+  TEUCHOS_FUNC_TIME_MONITOR("APFDiscretization::initMesh");
   computeOwnedNodesAndUnknowns();
   computeOverlapNodesAndUnknowns();
   setupMLCoords();
@@ -1478,10 +1469,6 @@ Albany::APFDiscretization::updateMesh(bool shouldTransferIPData,
   computeWorksetInfo();
   computeNodeSets();
   computeSideSets();
-
-  // transfer of internal variables
-  if (shouldTransferIPData)
-    copyQPStatesFromAPF();
 
   // load the FELIX Data and tell the state manager to not initialize
   // these fields
@@ -1494,14 +1481,26 @@ Albany::APFDiscretization::updateMesh(bool shouldTransferIPData,
   if (Teuchos::nonnull(meshStruct->nodal_data_base))
     meshStruct->nodal_data_base->updateNodalGraph(Teuchos::null);
 
-  // Use the parameter library to re-initialize Time state arrays
-  if (Teuchos::nonnull(paramLib))
-    initTimeFromParamLib(paramLib);
-
   apf::destroyGlobalNumbering(globalNumbering);
   globalNumbering = 0;
   apf::destroyGlobalNumbering(elementNumbering);
   elementNumbering = 0;
+}
+
+void
+Albany::APFDiscretization::updateMesh(bool shouldTransferIPData,
+    Teuchos::RCP<ParamLib> paramLib) {
+
+  TEUCHOS_FUNC_TIME_MONITOR("APFDiscretization::updateMesh");
+  initMesh();
+
+  // transfer of internal variables
+  if (shouldTransferIPData)
+    copyQPStatesFromAPF();
+
+  // Use the parameter library to re-initialize Time state arrays
+  if (Teuchos::nonnull(paramLib))
+    initTimeFromParamLib(paramLib);
 }
 
 void

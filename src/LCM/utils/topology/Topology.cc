@@ -400,9 +400,6 @@ void Topology::restoreElementToNodeConnectivity()
   Teuchos::RCP<Teuchos_Comm> 
   communicatorT = Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
-  //stk_discretization.updateMesh(stkMeshStruct_, communicator);
-  stk_discretization.updateMesh();
-
   Albany::fix_node_sharing(get_bulk_data());
   get_bulk_data().modification_end();
 

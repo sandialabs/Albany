@@ -122,7 +122,6 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
                                      stkMeshStruct->getMeshSpecs()[0]->worksetSize);
   Teuchos::RCP<Albany::AbstractDiscretization> discretization =
     Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, commT));
-  discretization->updateMesh();
 
   // Associate the discretization with the StateManager
   stateMgr.setStateArrays(discretization);

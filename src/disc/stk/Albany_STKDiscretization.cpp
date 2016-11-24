@@ -84,8 +84,7 @@ STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
 #endif
-//  Albany::STKDiscretization::updateMesh();  //Mauro: cannot call virtual function in constructor
-
+  Albany::STKDiscretization::updateMesh();
 }
 
 Albany::STKDiscretization::~STKDiscretization()
@@ -2958,7 +2957,7 @@ void Albany::STKDiscretization::buildSideSetProjectors()
 }
 
 void
-Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
+Albany::STKDiscretization::updateMesh()
 {
   const Albany::StateInfoStruct& nodal_param_states = stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
   nodalDOFsStructContainer.addEmptyDOFsStruct("ordinary_solution", "", neq);
