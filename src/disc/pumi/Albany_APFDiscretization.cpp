@@ -77,66 +77,66 @@ Albany::APFDiscretization::~APFDiscretization() {
 
 void Albany::APFDiscretization::init()
 {
-meshOutput = PUMIOutput::create(meshStruct, commT);
+  meshOutput = PUMIOutput::create(meshStruct, commT);
 #if defined(ALBANY_EPETRA)
-comm = Albany::createEpetraCommFromTeuchosComm(commT);
+  comm = Albany::createEpetraCommFromTeuchosComm(commT);
 #endif
-globalNumbering = 0;
-elementNumbering = 0;
+  globalNumbering = 0;
+  elementNumbering = 0;
 
-// Initialize the mesh and all data structures for Albany
-initMesh();
+  // Initialize the mesh and all data structures for Albany
+  initMesh();
 
-// layout[num deriv vectors][DOF_component]
-Teuchos::Array<Teuchos::Array<std::string> > layout = meshStruct->solVectorLayout;
-int number_of_solution_vecs = layout.size();
-solLayout.resize(number_of_solution_vecs);
+  // layout[num deriv vectors][DOF_component]
+  Teuchos::Array<Teuchos::Array<std::string> > layout = meshStruct->solVectorLayout;
+  int number_of_solution_vecs = layout.size();
+  solLayout.resize(number_of_solution_vecs);
 
 
-for (std::size_t i=0; i < layout[0].size(); i+=2) {
+  for (std::size_t i=0; i < layout[0].size(); i+=2) {
 
-  std::string res_name = layout[0][i];
-  res_name.append("Res");
+    std::string res_name = layout[0][i];
+    res_name.append("Res");
 
-  resNames.push_back(res_name);
+    resNames.push_back(res_name);
 
-}
+  }
 
-for (int j=0; j < number_of_solution_vecs; j++) {
-  int total_ndofs = 0;
-  for (std::size_t i = 0; i < layout[j].size(); i += 2) {
-    solLayout.getDerivNames(j).push_back(layout[j][i]);
-    int ndofs = 0;
-    if (layout[j][i + 1] == "S") {
-      ndofs = 1;
-    } else if (layout[j][i + 1] == "V") {
-      ndofs = getNumDim();
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::logic_error,
-        "Layout '" << layout[j][i+1] << "' is not supported.");
+  for (int j=0; j < number_of_solution_vecs; j++) {
+    int total_ndofs = 0;
+    for (std::size_t i = 0; i < layout[j].size(); i += 2) {
+      solLayout.getDerivNames(j).push_back(layout[j][i]);
+      int ndofs = 0;
+      if (layout[j][i + 1] == "S") {
+        ndofs = 1;
+      } else if (layout[j][i + 1] == "V") {
+        ndofs = getNumDim();
+      } else {
+        TEUCHOS_TEST_FOR_EXCEPTION(
+            true, std::logic_error,
+            "Layout '" << layout[j][i+1] << "' is not supported.");
+      }
+      solLayout.getDerivSizes(j).push_back(ndofs);
+      total_ndofs += ndofs;
     }
-    solLayout.getDerivSizes(j).push_back(ndofs);
-    total_ndofs += ndofs;
+    if (layout[0].size()) {
+      TEUCHOS_TEST_FOR_EXCEPTION(total_ndofs != neq, std::logic_error,
+          "Layout size " << total_ndofs <<
+          " does not match number of equations " << neq << '\n');
+    }
   }
-  if (layout[0].size()) {
-    TEUCHOS_TEST_FOR_EXCEPTION(total_ndofs != neq, std::logic_error,
-        "Layout size " << total_ndofs <<
-        " does not match number of equations " << neq << '\n');
-  }
-}
 
-// zero the residual field for Rhythmos
-if (resNames.size())
-  for (size_t i = 0; i < resNames.size(); ++i)
-    apf::zeroField(meshStruct->getMesh()->findField(resNames[i].c_str()));
-else
-  apf::zeroField(
-    meshStruct->getMesh()->findField(APFMeshStruct::residual_name));
+  // zero the residual field for Rhythmos
+  if (resNames.size())
+    for (size_t i = 0; i < resNames.size(); ++i)
+      apf::zeroField(meshStruct->getMesh()->findField(resNames[i].c_str()));
+  else
+    apf::zeroField(
+        meshStruct->getMesh()->findField(APFMeshStruct::residual_name));
 
-// set all of the restart fields here
-if (meshStruct->hasRestartSolution)
-  setRestartData();
+  // set all of the restart fields here
+  if (meshStruct->hasRestartSolution)
+    setRestartData();
 }
 
 Teuchos::RCP<const Tpetra_Map>
