@@ -341,6 +341,9 @@ void SimLayerAdapt::computeLayerTimes() {
     totalTime += Simmetrix_layerTimes[i];
     Simmetrix_layerTimes[i] = totalTime;
   }
+  if (adapt_params_->isParameter("First Layer Time")) {
+    Simmetrix_layerTimes[0] = adapt_params_->get<double>("First Layer Time", 0.0);
+  }
 }
 /* BRD */
 
@@ -548,6 +551,7 @@ Teuchos::RCP<const Teuchos::ParameterList> SimLayerAdapt::getValidAdapterParamet
   validPL->set<bool>("Debug", false, "Print debug VTK files");
   validPL->set<bool>("Add Layer", true, "Turn on/off adding layer");
   validPL->set<double>("Uniform Temperature New Layer", 20.0, "Uniform Layer Temperature");
+  validPL->set<double>("First Layer Time", 0.0, "Overrides time to place first layer");
   return validPL;
 }
 
