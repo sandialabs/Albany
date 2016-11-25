@@ -19,6 +19,7 @@
 #include <stk_mesh/base/GetEntities.hpp>
 #include "Piro_PerformSolve.hpp"
 #include "Albany_OrdinarySTKFieldContainer.hpp"
+#include "Albany_STKDiscretization.hpp"
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
@@ -183,9 +184,11 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
   if(!keptMesh) {
     albanyApp->createDiscretization();
     albanyApp->finalSetUp(paramList); //, albanyApp->getDiscretization()->getSolutionFieldT());
+  } else {
+    auto abs_disc = albanyApp->getDiscretization();
+    auto stk_disc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(abs_disc);
+    stk_disc->updateMesh();
   }
-  else
-    albanyApp->getDiscretization()->updateMesh();
 
 #ifdef MPAS_USE_EPETRA
   solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiCommT, mpiCommT, Teuchos::null, false);
