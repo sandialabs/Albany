@@ -23,8 +23,6 @@ Enthalpy(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
 	basalSideName = params->isParameter("Basal Side Name") ? params->get<std::string>("Basal Side Name") : "INVALID";
 	basalEBName = "INVALID";
-	Teuchos::ParameterList SUPG_list = params->get<Teuchos::ParameterList>("SUPG Settings");
-	haveSUPG = SUPG_list.get("Have SUPG Stabilization",false);
 	needsDiss = params->get<bool> ("Needs Dissipation",true);
 	needsBasFric = params->get<bool> ("Needs Basal Friction",true);
 	isGeoFluxConst = params->get<bool> ("Constant Geothermal Flux",true);
@@ -219,7 +217,7 @@ FELIX::Enthalpy::getValidProblemParameters() const
 {
 	Teuchos::RCP<Teuchos::ParameterList> validPL = this->getGenericProblemParams("ValidEnthalpyParams");
 	validPL->sublist("FELIX Physical Parameters", false, "");
-	validPL->sublist("SUPG Settings", false, "");
+	validPL->sublist("FELIX Enthalpy Stabilization", false, "Stabilization used for Enthalpy equation. Options: Streamline Upwind, SUPG, None");
 	validPL->sublist("FELIX Viscosity", false, "");
 	validPL->sublist("Stereographic Map", false, "");
 	validPL->set<std::string> ("Basal Side Name", "", "Name of the basal side set");

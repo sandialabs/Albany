@@ -13,66 +13,66 @@
 namespace FELIX
 {
 
-template<typename EvalT, typename Traits, typename Type>
-Temperature<EvalT,Traits,Type>::
-Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
-	meltingTemp    (p.get<std::string> ("Melting Temperature Variable Name"), dl->node_scalar),
-	enthalpyHs	   (p.get<std::string> ("Enthalpy Hs Variable Name"), dl->node_scalar),
-	enthalpy	   (p.get<std::string> ("Enthalpy Variable Name"), dl->node_scalar),
-	temperature	   (p.get<std::string> ("Temperature Variable Name"), dl->node_scalar),
-	diffEnth  	   (p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar)
-{
-	std::vector<PHX::Device::size_type> dims;
-	dl->node_qp_vector->dimensions(dims);
+  template<typename EvalT, typename Traits, typename Type>
+  Temperature<EvalT,Traits,Type>::
+  Temperature(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl):
+  meltingTemp    (p.get<std::string> ("Melting Temperature Variable Name"), dl->node_scalar),
+  enthalpyHs	   (p.get<std::string> ("Enthalpy Hs Variable Name"), dl->node_scalar),
+  enthalpy	   (p.get<std::string> ("Enthalpy Variable Name"), dl->node_scalar),
+  temperature	   (p.get<std::string> ("Temperature Variable Name"), dl->node_scalar),
+  diffEnth  	   (p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar)
+  {
+    std::vector<PHX::Device::size_type> dims;
+    dl->node_qp_vector->dimensions(dims);
 
-	numNodes = dims[1];
+    numNodes = dims[1];
 
-	this->addDependentField(meltingTemp);
-	this->addDependentField(enthalpyHs);
-	this->addDependentField(enthalpy);
+    this->addDependentField(meltingTemp);
+    this->addDependentField(enthalpyHs);
+    this->addDependentField(enthalpy);
 
-	this->addEvaluatedField(temperature);
-	this->addEvaluatedField(diffEnth);
-	this->setName("Temperature");
+    this->addEvaluatedField(temperature);
+    this->addEvaluatedField(diffEnth);
+    this->setName("Temperature");
 
-	// Setting parameters
-	Teuchos::ParameterList& physics = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
-	rho_i 	= physics.get<double>("Ice Density", 916.0);
-	c_i 	= physics.get<double>("Heat capacity of ice", 2009.0);
-	T0 		= physics.get<double>("Reference Temperature", 240.0);
-}
+    // Setting parameters
+    Teuchos::ParameterList& physics = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");
+    rho_i 	= physics.get<double>("Ice Density", 916.0);
+    c_i 	= physics.get<double>("Heat capacity of ice", 2009.0);
+    T0 		= physics.get<double>("Reference Temperature", 240.0);
+  }
 
-template<typename EvalT, typename Traits, typename Type>
-void Temperature<EvalT,Traits,Type>::
-postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
-{
-  this->utils.setFieldData(meltingTemp,fm);
-  this->utils.setFieldData(enthalpyHs,fm);
-  this->utils.setFieldData(enthalpy,fm);
+  template<typename EvalT, typename Traits, typename Type>
+  void Temperature<EvalT,Traits,Type>::
+  postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+  {
+    this->utils.setFieldData(meltingTemp,fm);
+    this->utils.setFieldData(enthalpyHs,fm);
+    this->utils.setFieldData(enthalpy,fm);
 
-  this->utils.setFieldData(temperature,fm);
-  this->utils.setFieldData(diffEnth,fm);
-}
+    this->utils.setFieldData(temperature,fm);
+    this->utils.setFieldData(diffEnth,fm);
+  }
 
-template<typename EvalT, typename Traits, typename Type>
-void Temperature<EvalT,Traits,Type>::
-evaluateFields(typename Traits::EvalData d)
-{
-	double pow6 = pow(10.0,6.0);
+  template<typename EvalT, typename Traits, typename Type>
+  void Temperature<EvalT,Traits,Type>::
+  evaluateFields(typename Traits::EvalData d)
+  {
+    double pow6 = 1e6; //[k^{-2}], k=1000
 
     for (std::size_t cell = 0; cell < d.numCells; ++cell)
     {
-   		for (std::size_t node = 0; node < numNodes; ++node)
-   		{
-   			if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
-   				temperature(cell,node) = pow6 * enthalpy(cell,node)/(rho_i * c_i) + T0;
-   			else
-   				temperature(cell,node) = meltingTemp(cell,node);
+      for (std::size_t node = 0; node < numNodes; ++node)
+      {
+        if ( enthalpy(cell,node) < enthalpyHs(cell,node) )
+          temperature(cell,node) = pow6 * enthalpy(cell,node)/(rho_i * c_i) + T0;
+        else
+          temperature(cell,node) = meltingTemp(cell,node);
 
-   			diffEnth(cell,node) = enthalpy(cell,node) - enthalpyHs(cell,node);
-   		}
-   	}
-}
+        diffEnth(cell,node) = enthalpy(cell,node) - enthalpyHs(cell,node);
+      }
+    }
+  }
 
 
 }  // end namespace FELIX
