@@ -31,6 +31,7 @@ namespace FELIX
   Enthalpy        (p.get<std::string> ("Enthalpy QP Variable Name"), dl->qp_scalar),
   EnthalpyGrad    (p.get<std::string> ("Enthalpy Gradient QP Variable Name"), dl->qp_gradient),
   EnthalpyHs		(p.get<std::string> ("Enthalpy Hs QP Variable Name"), dl->qp_scalar ),
+  diffEnth      (p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar),
   Velocity		(p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector),
   velGrad    (p.get<std::string> ("Velocity Gradient QP Variable Name"), dl->qp_vecgradient),
   verticalVel		(p.get<std::string> ("Vertical Velocity QP Variable Name"),  dl->qp_scalar),
@@ -38,6 +39,7 @@ namespace FELIX
   meltTempGrad	(p.get<std::string> ("Melting Temperature Gradient QP Variable Name"), dl->qp_gradient),
   phi			    (p.get<std::string> ("Water Content QP Variable Name"), dl->qp_scalar ),
   phiGrad		    (p.get<std::string> ("Water Content Gradient QP Variable Name"), dl->qp_gradient ),
+  basalResid    (p.get<std::string>("Enthalpy Basal Residual Variable Name"), dl->node_scalar),
   Residual 		(p.get<std::string> ("Residual Variable Name"), dl->node_scalar),
   homotopy		(p.get<std::string> ("Continuation Parameter Name"), dl->shared_param)
   {
@@ -69,6 +71,7 @@ namespace FELIX
     this->addDependentField(Enthalpy);
     this->addDependentField(EnthalpyGrad);
     this->addDependentField(EnthalpyHs);
+    this->addDependentField(diffEnth);
     this->addDependentField(wBF);
     this->addDependentField(wGradBF);
     this->addDependentField(Velocity);
@@ -79,6 +82,7 @@ namespace FELIX
     this->addDependentField(phi);
     this->addDependentField(phiGrad);
     this->addDependentField(homotopy);
+    this->addDependentField(basalResid);
 
     if (needsDiss)
     {
@@ -89,22 +93,24 @@ namespace FELIX
     if (needsBasFric)
     {
       basalFricHeat = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Basal Friction Heat QP Variable Name"),dl->node_scalar);
-      this->addDependentField(basalFricHeat);
+      //this->addDependentField(basalFricHeat);
 
       if(haveSUPG)
       {
         basalFricHeatSUPG = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Basal Friction Heat QP SUPG Variable Name"),dl->node_scalar);
-        this->addDependentField(basalFricHeatSUPG);
+        //this->addDependentField(basalFricHeatSUPG);
       }
     }
 
     geoFluxHeat = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Geothermal Flux Heat QP Variable Name"),dl->node_scalar);
-    this->addDependentField(geoFluxHeat);
+    //this->addDependentField(geoFluxHeat);
 
     if(haveSUPG)
     {
       geoFluxHeatSUPG = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Geothermal Flux Heat QP SUPG Variable Name"),dl->node_scalar);
-      this->addDependentField(geoFluxHeatSUPG);
+      basalResidSUPG = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Enthalpy Basal Residual SUPG Variable Name"),dl->node_scalar);
+      //this->addDependentField(geoFluxHeatSUPG);
+      this->addDependentField(basalFricHeatSUPG);
     }
 
     this->addEvaluatedField(Residual);
@@ -140,6 +146,7 @@ namespace FELIX
     this->utils.setFieldData(Enthalpy,fm);
     this->utils.setFieldData(EnthalpyGrad,fm);
     this->utils.setFieldData(EnthalpyHs,fm);
+    this->utils.setFieldData(diffEnth,fm);
     this->utils.setFieldData(wBF,fm);
     this->utils.setFieldData(wGradBF,fm);
     this->utils.setFieldData(Velocity,fm);
@@ -150,20 +157,23 @@ namespace FELIX
     this->utils.setFieldData(phi,fm);
     this->utils.setFieldData(phiGrad,fm);
     this->utils.setFieldData(homotopy,fm);
+    this->utils.setFieldData(basalResid,fm);
 
     if (needsDiss)
       this->utils.setFieldData(diss,fm);
 
     if (needsBasFric)
     {
-      this->utils.setFieldData(basalFricHeat,fm);
-      if(haveSUPG)
-        this->utils.setFieldData(basalFricHeatSUPG,fm);
+      //this->utils.setFieldData(basalFricHeat,fm);
+      if(haveSUPG) {
+        //this->utils.setFieldData(basalFricHeatSUPG,fm);
+        this->utils.setFieldData(basalResidSUPG,fm);
+      }
     }
 
-    this->utils.setFieldData(geoFluxHeat,fm);
-    if(haveSUPG)
-      this->utils.setFieldData(geoFluxHeatSUPG,fm);
+    //this->utils.setFieldData(geoFluxHeat,fm);
+    //if(haveSUPG)
+      //this->utils.setFieldData(geoFluxHeatSUPG,fm);
 
     this->utils.setFieldData(Residual,fm);
   }
@@ -223,12 +233,14 @@ namespace FELIX
         for (std::size_t qp = 0; qp < numQPs; ++qp)
           diffEnt += Enthalpy(cell,qp) - EnthalpyHs(cell,qp);
         diffEnt /= numQPs;
-        ScalarT scale = - atan(alpha * diffEnt)/pi + 0.5;
+        //ScalarT scale = - atan(alpha * diffEnt)/pi + 0.5;
         //scale = Albany::ADValue(scale);
         for (std::size_t node = 0; node < numNodes; ++node)
         {
+          ScalarT scale = - atan(alpha * diffEnth(cell,node))/pi + 0.5;
           // Modify here if you want to impose different basal BC. NB: in case of temperate ice, we disregard the extra boundary term related to the gradient of the T_m. You might want to reconsider this in the future
-          Residual(cell,node) -= powm6*( basalFricHeat(cell,node) + geoFluxHeat(cell,node) ) * scale;  //go to zero in temperate region
+          //Residual(cell,node) -= powm6*( basalFricHeat(cell,node) + geoFluxHeat(cell,node) ) * scale;  //go to zero in temperate region
+          Residual(cell,node) -= powm6*basalResid(cell,node);  //go to zero in temperate region
         }
       }
     }
@@ -341,11 +353,14 @@ namespace FELIX
           // additional contributions of dissipation, basal friction heat and geothermal flux
           if (needsDiss && needsBasFric)
           {
-            ScalarT scale = - atan(alpha * diffEnt)/pi + 0.5;
+            //ScalarT scale = - atan(alpha * diffEnt)/pi + 0.5;
             //scale = Albany::ADValue(scale);
             for (std::size_t node=0; node < numNodes; ++node)
             {
-              Residual(cell,node) -= powm3*scale*(delta*diam/vmax*scyr)*( basalFricHeatSUPG(cell,node) + geoFluxHeatSUPG(cell,node) );
+              ScalarT scale = - atan(alpha * diffEnth(cell,node))/pi + 0.5;
+              //scale = Albany::ADValue(scale);
+              //Residual(cell,node) -= powm3*scale*(delta*diam/vmax*scyr)*( basalFricHeatSUPG(cell,node) + geoFluxHeatSUPG(cell,node) );
+              Residual(cell,node) -= powm3*(delta*diam/vmax*scyr)*basalResidSUPG(cell,node);
 
               for (std::size_t qp=0; qp < numQPs; ++qp)
               {
@@ -359,13 +374,16 @@ namespace FELIX
           }
           else if (needsBasFric)
           {
-            ScalarT scale = - atan(alpha * diffEnt)/pi + 0.5;
+            //ScalarT scale = - atan(alpha * diffEnt)/pi + 0.5;
             //scale = Albany::ADValue(scale);
 
             for (std::size_t node=0; node < numNodes; ++node)
             {
+              ScalarT scale = - atan(alpha * diffEnth(cell,node))/pi + 0.5;
+              //scale = Albany::ADValue(scale);
               // Modify here if you want to impose different basal BC
-              Residual(cell,node) -= powm3*scale*(delta*diam/vmax*scyr)*( basalFricHeatSUPG(cell,node) + geoFluxHeatSUPG(cell,node) );
+              //Residual(cell,node) -= powm3*scale*(delta*diam/vmax*scyr)*( basalFricHeatSUPG(cell,node) + geoFluxHeatSUPG(cell,node) );
+              Residual(cell,node) -= powm3*(delta*diam/vmax*scyr)*basalResidSUPG(cell,node);
             }
           }
           else if (needsDiss)

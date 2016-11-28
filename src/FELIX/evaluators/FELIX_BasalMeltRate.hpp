@@ -40,6 +40,7 @@ namespace FELIX
     PHX::MDField<VelocityType,Cell,Side,Node,VecDim>	velocity; // [m/yr]
     PHX::MDField<ParamScalarT,Cell,Side,Node> 			geoFluxHeat; // [W m^{-2}] = [Pa m s^{-1}]
     PHX::MDField<ScalarT,Cell,Side,Node> 				Enthalpy; //[MW s m^{-3}]
+    PHX::MDField<ScalarT,Cell,Side,Node>                basal_dTdz; // [K km^{-1}]
     PHX::MDField<ParamScalarT,Cell,Side,Node> 			EnthalpyHs; ////[MW s m^{-3}]
 
     // Output:
@@ -59,6 +60,7 @@ namespace FELIX
     double a;       // [adim], Diffusivity homotopy exponent
 
     double k_0;     //[m^2], Permeability factor
+    double k_i;   //[W m^{-1} K^{-1}], Conductivity of ice
     double eta_w;   //[Pa s], Viscosity of water
     double alpha_om; //[adim], Omega exponent alpha
 

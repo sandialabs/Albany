@@ -46,6 +46,7 @@ namespace FELIX
     PHX::MDField<ScalarT,Cell,QuadPoint> Enthalpy;  //[MW s m^{-3}]
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim> EnthalpyGrad; //[kW s m^{-4}]
     PHX::MDField<ParamScalarT,Cell,QuadPoint> EnthalpyHs;  //[MW s m^{-3}]
+    PHX::MDField<ScalarT,Cell,Node> diffEnth;  //[MW s m^{-3}]
 
     PHX::MDField<VelocityType,Cell,QuadPoint,VecDim> Velocity; //[m yr^{-1}]
     PHX::MDField<VelocityType,Cell,QuadPoint,VecDim, Dim> velGrad; //[m yr^{-1}]
@@ -59,6 +60,8 @@ namespace FELIX
     PHX::MDField<ScalarT,Cell,QuadPoint> phi;                //[]
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim> phiGrad;        //[km^{-1}
     PHX::MDField<ParamScalarT,Cell,QuadPoint,Dim> meltTempGrad; // [K km^{-1}]
+    PHX::MDField<ScalarT,Cell,Node> basalResid; // [k^{2} W], k =1000
+    PHX::MDField<ScalarT,Cell,Node> basalResidSUPG; // [k^{2} W], k =1000
 
     PHX::MDField<ScalarT,Dim> homotopy;
 

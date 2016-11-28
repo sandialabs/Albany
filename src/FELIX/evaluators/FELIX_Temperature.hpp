@@ -44,12 +44,18 @@ namespace FELIX
     PHX::MDField<Type,Cell,Node> 		meltingTemp; //[K]
     PHX::MDField<Type,Cell,Node> 		enthalpyHs;  //[MW s m^{-3}]
     PHX::MDField<ScalarT,Cell,Node> 	enthalpy;  //[MW s m^{-3}]
+    PHX::MDField<ParamScalarT,Cell,Node>   thickness;  //[km]
 
     // Output:
     PHX::MDField<ScalarT,Cell,Node> 	temperature; //[K]
     PHX::MDField<ScalarT,Cell,Node> 	diffEnth;    //[MW s m^{-3}]
+    PHX::MDField<ScalarT,Cell, Side, Node> dTdz;   //[K km^{-1}]
 
     int numNodes;
+
+    std::string sideName;
+    std::vector<std::vector<int> >  sideNodes;
+    int numSideNodes;
 
     double c_i;   //[J Kg^{-1} K^{-1}], Heat capacity of ice
     double rho_i; //[kg m^{-3}]

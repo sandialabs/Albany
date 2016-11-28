@@ -23,6 +23,7 @@ namespace FELIX
   beta				(p.get<std::string> ("Basal Friction Coefficient Side Variable Name"),dl_basal->node_scalar),
   EnthalpyHs			(p.get<std::string> ("Enthalpy Hs Side Variable Name"),dl_basal->node_scalar),
   Enthalpy			(p.get<std::string> ("Enthalpy Side Variable Name"),dl_basal->node_scalar),
+  basal_dTdz   (p.get<std::string> ("Basal dTdz Variable Name"),dl_basal->node_scalar),
   basalMeltRate		(p.get<std::string> ("Basal Melt Rate Variable Name"),dl_basal->node_scalar),
   homotopy			(p.get<std::string> ("Continuation Parameter Name"),dl_basal->shared_param)
   {
@@ -33,6 +34,7 @@ namespace FELIX
     this->addDependentField(EnthalpyHs);
     this->addDependentField(Enthalpy);
     this->addDependentField(homotopy);
+    this->addEvaluatedField(basal_dTdz);
 
     this->addEvaluatedField(basalMeltRate);
     this->setName("Basal Melt Rate");
@@ -52,6 +54,7 @@ namespace FELIX
     L = physics_list->get("Latent heat of fusion", 3e5);
 
     k_0 = physics_list->get("Permeability factor", 0.0);
+    k_i = physics_list->get("Conductivity of ice", 1.0); //[W m^{-1} K^{-1}]
     eta_w = physics_list->get("Viscosity of water", 0.0018);
     g = physics_list->get("Gravity Acceleration", 9.8);
     alpha_om = physics_list->get("Omega exponent alpha", 2.0);
@@ -69,6 +72,7 @@ namespace FELIX
     this->utils.setFieldData(beta,fm);
     this->utils.setFieldData(EnthalpyHs,fm);
     this->utils.setFieldData(Enthalpy,fm);
+    this->utils.setFieldData(basal_dTdz,fm);
     this->utils.setFieldData(homotopy,fm);
     this->utils.setFieldData(basalMeltRate,fm);
   }
@@ -112,7 +116,7 @@ namespace FELIX
 
           phiExp = pow(phi(cell,side,node),alpha_om);
 
-          basalMeltRate(cell,side,node) = - scyr*( ((1 - scale)*( basalHeat + geoFluxHeat(cell,side,node) ) / ((1 - rho_w/rho_i*phi(cell,side,node))*L*rho_w)) +
+          basalMeltRate(cell,side,node) = - scyr*( ((1 - scale)*( basalHeat + geoFluxHeat(cell,side,node) + 1e-3* k_i * basal_dTdz(cell,side,node) ) / ((1 - rho_w/rho_i*phi(cell,side,node))*L*rho_w)) +
               k_0 * (rho_w - rho_i) * g / eta_w * phiExp );
         }
       }
