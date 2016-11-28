@@ -74,7 +74,7 @@ namespace CTM {
         void loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws);
 
         void loadBasicWorksetInfoT(PHAL::Workset& workset,
-                double current_time);
+                double current_time, double previous_time);
 
         void loadWorksetJacobianInfo(PHAL::Workset& workset,
                 const double& alpha, const double& beta, const double& omega);
@@ -85,6 +85,7 @@ namespace CTM {
         void postRegSetup(std::string eval);
 
         void computeGlobalResidualT(const double current_time,
+                const double previous_time,
                 const Tpetra_Vector* xdotT,
                 const Tpetra_Vector* xdotdotT,
                 const Tpetra_Vector& xT,
@@ -94,6 +95,7 @@ namespace CTM {
                 const double beta,
                 const double omega,
                 const double current_time,
+                const double previous_time,
                 const Tpetra_Vector* xdotT,
                 const Tpetra_Vector* xdotdotT,
                 const Tpetra_Vector& xT,
@@ -102,11 +104,13 @@ namespace CTM {
 
         void evaluateStateFieldManagerT(
                 const double current_time,
+                const double previous_time,
                 const Tpetra_MultiVector& x);
 
     private:
 
         void computeGlobalResidualImplT(const double current_time,
+                const double previous_time,
                 const Teuchos::RCP<const Tpetra_Vector>& xdotT,
                 const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
                 const Teuchos::RCP<const Tpetra_Vector>& xT,
@@ -116,6 +120,7 @@ namespace CTM {
                 const double beta,
                 const double omega,
                 const double current_time,
+                const double previous_time,
                 const Teuchos::RCP<const Tpetra_Vector>& xdotT,
                 const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
                 const Teuchos::RCP<const Tpetra_Vector>& xT,
@@ -125,6 +130,7 @@ namespace CTM {
         //! Evaluate state field manager
         void evaluateStateFieldManagerT(
                 const double current_time,
+                const double previous_time,
                 Teuchos::Ptr<const Tpetra_Vector> xdot,
                 Teuchos::Ptr<const Tpetra_Vector> xdotdot,
                 const Tpetra_Vector& x);
