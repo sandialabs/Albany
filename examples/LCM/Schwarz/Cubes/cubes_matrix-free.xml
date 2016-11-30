@@ -1,7 +1,7 @@
 <ParameterList>
   <ParameterList name="Coupled System">
     <Parameter name="Model XML Files" type="Array(string)" value="{cube0.xml, cube1.xml}" />
-    <Parameter name="Matrix-Free Preconditioner" type="string" value="None" />
+    <Parameter name="Matrix-Free Preconditioner" type="string" value="Jacobi" />
   </ParameterList>
 
   <!-- MODEL DECLARATION, Look in the "Problem" directory -->
