@@ -126,6 +126,15 @@ protected:
       Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
       Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
 
+  //Helper function, similar to Epetra_CrsMatrix::ExtractDiatonalCopy
+  Teuchos::RCP<Tpetra_Vector>  
+  ExtractDiagonalCopy(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix) const; 
+
+  //Helper function, similar to Epetra_CrstMatrix::ReplaceDiagonalEntries
+  void 
+  ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix, 
+                         const Teuchos::RCP<Tpetra_Vector>& diag) const;  
+
 private:
 
   Teuchos::RCP<Teuchos::ParameterList const>
@@ -169,10 +178,6 @@ private:
   Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
   jacs_;
   
-  /// Teuchos array holding main diagonal preconditioners (non-coupled models)
-  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
-  precs_;
-
   int
   num_models_;
 
@@ -204,7 +209,7 @@ private:
 
   bool w_prec_supports_; 
     
-  enum MF_PREC_TYPE {NONE, JACOBI, JACOBI_LOCAL, ABS_ROW_SUM, ABS_ROW_SUM_LOCAL, ID}; 
+  enum MF_PREC_TYPE {NONE, JACOBI, ID}; 
     
   MF_PREC_TYPE mf_prec_type_; 
 
