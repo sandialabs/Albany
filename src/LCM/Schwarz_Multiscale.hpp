@@ -125,15 +125,16 @@ protected:
   evalModelImpl(
       Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
       Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
-
-  //Helper function, similar to Epetra_CrsMatrix::ExtractDiatonalCopy
+  
+  //Helper function which extracts diagonal of a matrix into a vector 
   Teuchos::RCP<Tpetra_Vector>  
   ExtractDiagonalCopy(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix) const; 
 
-  //Helper function, similar to Epetra_CrstMatrix::ReplaceDiagonalEntries
-  void 
-  ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix, 
-                         const Teuchos::RCP<Tpetra_Vector>& diag) const;  
+  //Helper function which replaces the diagonal of a matrix 
+  void
+  ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
+                         const Teuchos::RCP<Tpetra_Vector>& diag) const;
+
 
 private:
 
@@ -178,6 +179,10 @@ private:
   Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
   jacs_;
   
+  /// Teuchos array holding main diagonal preconditioners (non-coupled models)
+  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
+  precs_;
+
   int
   num_models_;
 

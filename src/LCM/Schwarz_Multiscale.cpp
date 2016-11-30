@@ -11,9 +11,6 @@
 #include "Schwarz_Multiscale.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
-#include "Petra_Converters.hpp" 
-#include "EpetraExt_MultiVectorOut.h"
-#include "EpetraExt_RowMatrixOut.h"
 
 //uncomment the following to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET
@@ -242,6 +239,8 @@ SchwarzMultiscale(
 
   jacs_.resize(num_models_);
   
+  precs_.resize(num_models_);
+
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const>>
   disc_overlap_maps(num_models_);
 
@@ -365,6 +364,13 @@ SchwarzMultiscale(
             Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(jac_temp, true) :
             Teuchos::null;
     
+    //create array of individual model preconditioners - these will have same graph as Jacobians for now
+    precs_[m] =
+        Teuchos::nonnull(jac_temp) ?
+            Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(jac_temp, true) :
+            Teuchos::null;
+    if (precs_[m]->isFillActive()) 
+      precs_[m]->fillComplete();
   }
 
   //Now get maps, InArgs, OutArgs for each model.
@@ -591,13 +597,12 @@ LCM::SchwarzMultiscale::create_W_prec() const
   //Teuchos::RCP< Thyra::PreconditionerBase<ST> > W_prec;
   Teuchos::RCP<Thyra::DefaultPreconditioner<ST> > W_prec = Teuchos::rcp(new Thyra::DefaultPreconditioner<ST>);
   if (w_prec_supports_) {
-    Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> precs(num_models_); 
-    for (int m=0; m<num_models_; m++) { 
-      precs[m] = Teuchos::rcp(new Tpetra_CrsMatrix(jacs_[m]->getCrsGraph()));  
-      precs[m]->fillComplete(); 
-    }
     LCM::Schwarz_CoupledJacobian csJac(commT_);
-    Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = csJac.getThyraCoupledJacobian(precs, apps_);
+    for (auto m = 0; m<num_models_; m++) {
+      if (precs_[m]->isFillActive()) 
+        precs_[m]->fillComplete();
+    }
+    Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = csJac.getThyraCoupledJacobian(precs_, apps_);
     W_prec->initializeRight(W_op);
     //IKT, 11/16/16: the following code is for Teko. 
     //We may want to switch to this once I figure out how to hook up Teko with natrix-free.  
@@ -930,12 +935,9 @@ evalModelImpl(
     //IKT, 11/16/16: it may be desirable to move the following code into a separate 
     //function, especially as we implement more preconditioners. 
     if (Teuchos::nonnull(W_prec_outT) == true) {
-      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> precs(num_models_); 
       for (auto m = 0; m < num_models_; ++m) {
-        precs[m] = Teuchos::rcp(new Tpetra_CrsMatrix(jacs_[m]->getCrsGraph())); 
-        precs[m]->fillComplete();  
-        if (!precs[m]->isFillActive()) 
-          precs[m]->resumeFill();
+        if (!precs_[m]->isFillActive()) 
+          precs_[m]->resumeFill();
         if (mf_prec_type_ == JACOBI) {
           //With matrix-free, W_op_outT is null, so computeJacobianT does not
           //get called earlier.  We need to call it here to get the Jacobians.
@@ -948,26 +950,42 @@ evalModelImpl(
           apps_[m]->computeGlobalJacobianT(alpha, beta, omega, curr_time,
               x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
               sacado_param_vecs_[m], fTtemp.get(), *jacs_[m]);
-          //Extract diagonal froms jacs_[m] and invert to create precs[m]  
-          Teuchos::RCP<Tpetra_Vector> diag = ExtractDiagonalCopy(jacs_[m]);
-          //Invert diagonal 
-          Teuchos::RCP<Tpetra_Vector> diagInv = Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap()));
-          diagInv->reciprocal(*diag);
-          //Create diagonal preconditioner
-          ReplaceDiagonalEntries(precs[m], diagInv);  
+          //Get diagonal of jacs_[m]  
+          Teuchos::RCP<Tpetra_Vector> diag = Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap())); 
+          jacs_[m]->getLocalDiagCopy(*diag); 
+          //Take reciprocal of diagonal 
+          Teuchos::RCP<Tpetra_Vector> invdiag = Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap())); 
+          invdiag->reciprocal(*diag);
+          Teuchos::ArrayRCP<const ST> invdiag_constView = invdiag->get1dView(); 
+          //Zero out precs_[m] 
+          precs_[m]->resumeFill();
+          precs_[m]->scale(0.0);
+          //Create Jacobi preconditioner 
+          for (auto i=0; i<jacs_[m]->getNodeNumRows(); ++i) {
+            GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
+            Teuchos::Array<ST> matrixEntriesT(1);
+            Teuchos::Array<GO> matrixIndicesT(1);
+            matrixEntriesT[0] = invdiag_constView[i]; 
+            matrixIndicesT[0] = global_row; 
+            precs_[m]->replaceGlobalValues(global_row, matrixIndicesT(), matrixEntriesT());
+          }
         } 
         else if (mf_prec_type_ == ID) {
-          //Create vector of all 1s
-          Teuchos::RCP<Tpetra_Vector> ones = Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap()));
-          ones->putScalar(1.0); 
-          //Create identity perconditioner 
-          ReplaceDiagonalEntries(precs[m], ones);  
+          //Create Identity
+          for (auto i=0; i<jacs_[m]->getNodeNumRows(); ++i) {
+            GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
+            Teuchos::Array<ST> matrixEntriesT(1);
+            Teuchos::Array<GO> matrixIndicesT(1);
+            matrixEntriesT[0] = 1.0; 
+            matrixIndicesT[0] = global_row; 
+            precs_[m]->replaceGlobalValues(global_row, matrixIndicesT(), matrixEntriesT());
+          }
         }
-        if (precs[m]->isFillActive()) 
-          precs[m]->fillComplete();
+        if (precs_[m]->isFillActive()) 
+          precs_[m]->fillComplete();
       }
       LCM::Schwarz_CoupledJacobian csJac(commT_);
-      Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = csJac.getThyraCoupledJacobian(precs, apps_);
+      Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = csJac.getThyraCoupledJacobian(precs_, apps_);
       Teuchos::RCP<Thyra::DefaultPreconditioner<ST> > W_prec = Teuchos::rcp(new Thyra::DefaultPreconditioner<ST>);
       W_prec->initializeRight(W_op); 
       W_prec_outT = Teuchos::rcp_dynamic_cast<Thyra::PreconditionerBase<ST>>(W_prec, true); 
@@ -975,12 +993,12 @@ evalModelImpl(
       char prec_name[100];  //create string for file name
       char jac_name[100];  //create string for file name
       sprintf(prec_name, "prec0_%i.mm", prec_mm_counter);
-      Tpetra_MatrixMarket_Writer::writeSparseFile(prec_name, precs[0]);
+      Tpetra_MatrixMarket_Writer::writeSparseFile(prec_name, precs_[0]);
       sprintf(jac_name, "jac0_%i.mm", prec_mm_counter);
       Tpetra_MatrixMarket_Writer::writeSparseFile(jac_name, jacs_[0]);
       if (num_models_ > 1) {
         sprintf(prec_name, "prec1_%i.mm", prec_mm_counter);
-        Tpetra_MatrixMarket_Writer::writeSparseFile(prec_name, precs[1]);
+        Tpetra_MatrixMarket_Writer::writeSparseFile(prec_name, precs_[1]);
         sprintf(jac_name, "jac1_%i.mm", prec_mm_counter);
         Tpetra_MatrixMarket_Writer::writeSparseFile(jac_name, jacs_[1]);
       }
@@ -1117,54 +1135,54 @@ getValidProblemParameters() const
   return list;
 }
 
-Teuchos::RCP<Tpetra_Vector>  
+Teuchos::RCP<Tpetra_Vector>
 LCM::SchwarzMultiscale::
-ExtractDiagonalCopy(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix) const 
+ExtractDiagonalCopy(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix) const
 {
-  Teuchos::RCP<Tpetra_Vector> diag = Teuchos::rcp(new Tpetra_Vector(matrix->getRowMap())); 
-  diag->putScalar(0.0);
-  Teuchos::ArrayRCP<ST> diag_nonconstView = diag->get1dViewNonConst(); 
+  Teuchos::RCP<Tpetra_Vector> diag = Teuchos::rcp(new Tpetra_Vector(matrix->getRowMap()));
+  diag->putScalar(0.0); 
+  Teuchos::ArrayRCP<ST> diag_nonconstView = diag->get1dViewNonConst();
   for (auto i=0; i<matrix->getNodeNumRows(); i++) {
     auto NumEntries = matrix->getNumEntriesInLocalRow(i);
-    Teuchos::Array<LO> Indices(NumEntries); 
+    Teuchos::Array<LO> Indices(NumEntries);
     Teuchos::Array<ST> Values(NumEntries); 
     matrix->getLocalRowCopy(i, Indices(), Values(), NumEntries);
     GO global_row = matrix->getRowMap()->getGlobalElement(i);
     for (auto j=0; j<NumEntries; j++) {
-      GO global_col = matrix->getColMap()->getGlobalElement(Indices[j]); 
+      GO global_col = matrix->getColMap()->getGlobalElement(Indices[j]);
       if (global_row == global_col) {
-        diag_nonconstView[i] = Values[j]; 
+        diag_nonconstView[i] = Values[j];
       }
     }
   }
-  ///Tpetra_MatrixMarket_Writer::writeSparseFile("matrix.mm", matrix);
+  //Tpetra_MatrixMarket_Writer::writeSparseFile("matrix.mm", matrix);
   //Tpetra_MatrixMarket_Writer::writeDenseFile("diag.mm", diag);
-  return diag; 
 }
 
-void 
+
+void
 LCM::SchwarzMultiscale::
-ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix, 
-                       const Teuchos::RCP<Tpetra_Vector>& diag) const 
+ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
+                       const Teuchos::RCP<Tpetra_Vector>& diag) const
 {
-  Tpetra_MatrixMarket_Writer::writeSparseFile("precBefore.mm", matrix);
-  Teuchos::ArrayRCP<const ST> diag_constView = diag->get1dView(); 
+  Teuchos::ArrayRCP<const ST> diag_constView = diag->get1dView();
   for (auto i=0; i<matrix->getNodeNumRows(); i++) {
     auto NumEntries = matrix->getNumEntriesInLocalRow(i);
-    Teuchos::Array<LO> Indices(NumEntries); 
-    Teuchos::Array<ST> Values(NumEntries); 
+    Teuchos::Array<LO> Indices(NumEntries);
+    Teuchos::Array<ST> Values(NumEntries);
     matrix->getLocalRowCopy(i, Indices(), Values(), NumEntries);
     GO global_row = matrix->getRowMap()->getGlobalElement(i);
     for (auto j=0; j<NumEntries; j++) {
-      GO global_col = matrix->getColMap()->getGlobalElement(Indices[j]); 
+      GO global_col = matrix->getColMap()->getGlobalElement(Indices[j]);
       if (global_row == global_col) {
         Teuchos::Array<ST> matrixEntriesT(1);
         Teuchos::Array<LO> matrixIndicesT(1);
-        matrixEntriesT[0] = diag_constView[i]; 
-        matrixIndicesT[0] = Indices[j]; 
+        matrixEntriesT[0] = diag_constView[i];
+        matrixIndicesT[0] = Indices[j];
         matrix->replaceLocalValues(i, matrixIndicesT(), matrixEntriesT());
       }
     }
   }
   //Tpetra_MatrixMarket_Writer::writeSparseFile("prec.mm", matrix);
 }
+
