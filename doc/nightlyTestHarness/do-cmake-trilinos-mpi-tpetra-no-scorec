@@ -59,6 +59,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D BoostLib_INCLUDE_DIRS:FILEPATH=/usr/include \
       -D BoostLib_LIBRARY_DIRS:FILEPATH=/usr/lib64 \
 \
+      -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \
       -D Piro_ENABLE_TESTS:BOOL=ON \
       -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
