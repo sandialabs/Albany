@@ -81,12 +81,14 @@ SchwarzMultiscale(
     mf_prec_type_ = NONE; 
   else if (mf_prec == "Jacobi") 
     mf_prec_type_ = JACOBI;  
+  else if (mf_prec == "AbsRowSum") 
+    mf_prec_type_ = ABS_ROW_SUM;  
   else if (mf_prec == "Identity") 
     mf_prec_type_ = ID;  
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
 		       "Unknown Matrix-Free Preconditioner type " << mf_prec 
-                       << "!  Valid options are None and Jacobi. \n");
+                       << "!  Valid options are None, Identity, AbsRowSum, and Jacobi. \n");
   //If using matrix-free, get NOX sublist and set "Preconditioner Type" to "None" regardless 
   //of what is specified in the input file.  Currently preconditioners for matrix-free 
   //are implemented in this ModelEvaluator, which requires the type to be "None".
@@ -966,6 +968,50 @@ evalModelImpl(
             Teuchos::Array<ST> matrixEntriesT(1);
             Teuchos::Array<GO> matrixIndicesT(1);
             matrixEntriesT[0] = invdiag_constView[i]; 
+            matrixIndicesT[0] = global_row; 
+            precs_[m]->replaceGlobalValues(global_row, matrixIndicesT(), matrixEntriesT());
+          }
+        } 
+        else if (mf_prec_type_ == ABS_ROW_SUM) {
+          //With matrix-free, W_op_outT is null, so computeJacobianT does not
+          //get called earlier.  We need to call it here to get the Jacobians.
+          //Create fTtemp vector, so that this call to computeGlobalJacobianT 
+          //doesn't overwrite the real residual.
+          Teuchos::RCP<Tpetra_Vector> fTtemp;
+          if (fT_out != Teuchos::null) {
+            fTtemp = Teuchos::rcp_dynamic_cast<ThyraVector>(fT_out->getNonconstVectorBlock(m), true)->getTpetraVector();
+          }
+          apps_[m]->computeGlobalJacobianT(alpha, beta, omega, curr_time,
+              x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
+              sacado_param_vecs_[m], fTtemp.get(), *jacs_[m]);
+          //Create vector to store absrowsum 
+          Teuchos::RCP<Tpetra_Vector> absrowsum = Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap())); 
+          absrowsum->putScalar(0.0); 
+          Teuchos::ArrayRCP<ST> absrowsum_nonconstView = absrowsum->get1dViewNonConst(); 
+          //Compute abs sum of each row and store in absrowsum vector 
+          for (auto i=0; i<jacs_[m]->getNodeNumRows(); ++i) {
+            std::size_t NumEntries = jacs_[m]->getNumEntriesInLocalRow(i);
+            Teuchos::Array<LO> Indices(NumEntries); 
+            Teuchos::Array<ST> Values(NumEntries); 
+            //Get local row
+            jacs_[m]->getLocalRowCopy(i, Indices(), Values(), NumEntries);
+            //Compute abs row rum 
+            for (auto j=0; j<NumEntries; j++) 
+              absrowsum_nonconstView[i] += abs(Values[j]);
+          }
+          //Invert absrowsum 
+          Teuchos::RCP<Tpetra_Vector> invabsrowsum = Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap())); 
+          invabsrowsum->reciprocal(*absrowsum); 
+          Teuchos::ArrayRCP<const ST> invabsrowsum_constView = invabsrowsum->get1dView(); 
+          //Zero out precs_[m] 
+          precs_[m]->resumeFill();
+          precs_[m]->scale(0.0);
+          //Create diagonal abs row sum preconditioner 
+          for (auto i=0; i<jacs_[m]->getNodeNumRows(); ++i) {
+            GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
+            Teuchos::Array<ST> matrixEntriesT(1);
+            Teuchos::Array<GO> matrixIndicesT(1);
+            matrixEntriesT[0] = invabsrowsum_constView[i]; 
             matrixIndicesT[0] = global_row; 
             precs_[m]->replaceGlobalValues(global_row, matrixIndicesT(), matrixEntriesT());
           }
