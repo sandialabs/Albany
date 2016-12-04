@@ -25,6 +25,8 @@
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_SaveCellStateField.hpp"
+#include "PHAL_SaveStateField.hpp"
+#include "PHAL_ScatterScalarNodalParameter.hpp"
 #include "FELIX_SharedParameter.hpp"
 #include "FELIX_ParamEnum.hpp"
 
@@ -140,10 +142,9 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   bool compute_w = false;
 
   // Here is how to register the field for dirichlet condition.
-  // Enthalpy Dirichlet field on the surface
   {
-    entity = Albany::StateStruct::NodalDistParameter;
-    std::string stateName = "surface_air_enthalpy";
+    entity = Albany::StateStruct::NodalDataToElemNode;
+    std::string stateName = "surface_air_temperature";
     p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
     ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -232,13 +233,13 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     offset++;
   }
 
-  
+
   {
     Teuchos::ArrayRCP<string> dof_names(1);
     Teuchos::ArrayRCP<string> resid_names(1);
     std::string scatter_name;
 
-// w
+    // w
     if(compute_w) {   //w
       dof_names[0] = "w";
       resid_names[0] = "w Residual";
@@ -466,7 +467,7 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-    
+
   if(!compute_w)  // --- w_z Residual ---
   {
     p = rcp(new ParameterList("w_z Resid"));
@@ -641,19 +642,19 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     ev = Teuchos::rcp(new FELIX::PressureMeltingTemperature<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    // Saving the melting temperature in the output mesh
-    {
-      fm0.template registerEvaluator<EvalT> (evalUtils.constructNodesToCellInterpolationEvaluator("melting temp",false));
-
-      std::string stateName = "MeltingTemperature_Cell";
-      p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
+    { // Saving the melting temperature in the output mesh
+      std::string stateName = "melting temp";
+      entity = Albany::StateStruct::NodalDataToElemNode;
+      p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
       p->set<std::string>("Field Name", "melting temp");
-      p->set<std::string>("Weights Name","Weights");
-      p->set("Weights Layout", dl->qp_scalar);
-      p->set("Field Layout", dl->cell_scalar2);
-      p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
-      ev = rcp(new PHAL::SaveCellStateField<EvalT,AlbanyTraits>(*p));
+      p->set("Field Layout", dl->node_scalar);
+      p->set<bool>("Nodal State", true);
+
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
+
+      if ((fieldManagerChoice == Albany::BUILD_RESID_FM)&&(ev->evaluatedFields().size()>0))
+        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
     }
   }
 
@@ -664,10 +665,15 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     //Input
     p->set<std::string>("Melting Temperature Variable Name", "melting temp");
 
+    p->set<std::string>("Surface Air Temperature Name", "surface_air_temperature");
+
     p->set<ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
 
     //Output
     p->set<std::string>("Enthalpy Hs Variable Name", "melting enthalpy");
+
+    p->set<std::string>("Surface Air Enthalpy Name", "surface_enthalpy");
+
     ev = Teuchos::rcp(new FELIX::PressureMeltingEnthalpy<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -698,41 +704,47 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     // Saving the temperature in the output mesh
     {
-      std::string stateName = "Temperature_Cell";
-      p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
+      std::string stateName = "Temperature";
+      entity = Albany::StateStruct::NodalDataToElemNode;
+      p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
       p->set<std::string>("Field Name", "Temperature");
-      p->set<std::string>("Weights Name","Weights");
-      p->set("Weights Layout", dl->qp_scalar);
-      p->set("Field Layout", dl->cell_scalar2);
-      p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
+      p->set("Field Layout", dl->node_scalar);
+      p->set<bool>("Nodal State", true);
 
-      ev = rcp(new PHAL::SaveCellStateField<EvalT,AlbanyTraits>(*p));
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
 
-      // Forcing the execution of the evaluator
-      if (fieldManagerChoice == Albany::BUILD_RESID_FM)
-      {
-        if (ev->evaluatedFields().size()>0)
-        {
-          fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
-        }
-      }
+      if ((fieldManagerChoice == Albany::BUILD_RESID_FM)&&(ev->evaluatedFields().size()>0))
+        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+    }
+
+    {
+      std::string stateName = "surface_enthalpy";
+      entity = Albany::StateStruct::NodalDistParameter;
+      p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
+      p->set<std::string>("Parameter Name", stateName);
+
+      ev = rcp(new PHAL::ScatterScalarNodalParameter<EvalT,PHAL::AlbanyTraits>(*p, dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      if ((fieldManagerChoice == Albany::BUILD_RESID_FM)&&(ev->evaluatedFields().size()>0))
+        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
     }
 
     // Saving the diff enthalpy field in the output mesh
     {
-      fm0.template registerEvaluator<EvalT> (evalUtils.constructNodesToCellInterpolationEvaluator("Diff Enth",false));
-
-      std::string stateName = "h-hs_Cell";
-      p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
+      std::string stateName = "h-h_s";
+      entity = Albany::StateStruct::NodalDataToElemNode;
+      p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
       p->set<std::string>("Field Name", "Diff Enth");
-      p->set<std::string>("Weights Name","Weights");
-      p->set("Weights Layout", dl->qp_scalar);
-      p->set("Field Layout", dl->cell_scalar2);
-      p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
+      p->set("Field Layout", dl->node_scalar);
+      p->set<bool>("Nodal State", true);
 
-      ev = rcp(new PHAL::SaveCellStateField<EvalT,AlbanyTraits>(*p));
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
+
+      if ((fieldManagerChoice == Albany::BUILD_RESID_FM)&&(ev->evaluatedFields().size()>0))
+        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
     }
   }
 
@@ -754,29 +766,19 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     ev = Teuchos::rcp(new FELIX::LiquidWaterFraction<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    // Saving phi in the output mesh
-    {
-      fm0.template registerEvaluator<EvalT> (evalUtils.constructNodesToCellInterpolationEvaluator("phi",false));
-
+    { // Saving the melting temperature in the output mesh
       std::string stateName = "phi";
-      p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
+      entity = Albany::StateStruct::NodalDataToElemNode;
+      p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
+      p->set<std::string>("Field Name", "phi");
+      p->set("Field Layout", dl->node_scalar);
+      p->set<bool>("Nodal State", true);
 
-      p->set<std::string>("Weights Name","Weights");
-      p->set("Weights Layout", dl->qp_scalar);
-      p->set("Field Layout", dl->cell_scalar2);
-      p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
-
-      ev = rcp(new PHAL::SaveCellStateField<EvalT,AlbanyTraits>(*p));
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-    }
 
-    // Forcing the execution of the evaluator
-    if (fieldManagerChoice == Albany::BUILD_RESID_FM)
-    {
-      if (ev->evaluatedFields().size()>0)
-      {
+      if ((fieldManagerChoice == Albany::BUILD_RESID_FM)&&(ev->evaluatedFields().size()>0))
         fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
-      }
     }
   }
 
@@ -795,35 +797,20 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     p->set<std::string>("Integral1D w_z Variable Name", "w");
     ev = Teuchos::rcp(new FELIX::Integral1Dw_Z<EvalT,PHAL::AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-  }
 
-  // --- FELIX Vertical Velocity
-  {
-    /*    p = rcp(new ParameterList("FELIX Vertical Velocity"));
-
-      //Input
-      p->set<std::string>("Thickness Variable Name", "thickness");
-      p->set<std::string>("Integral1D w_z Variable Name", "int1Dw_z");
-
-      //Output
-      p->set<std::string>("Vertical Velocity Variable Name", "w");
-      ev = Teuchos::rcp(new FELIX::VerticalVelocity<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
-      fm0.template registerEvaluator<EvalT>(ev);
-     */
-    {
-      fm0.template registerEvaluator<EvalT> (evalUtils.constructNodesToCellInterpolationEvaluator("w",false));
-
+    { //save
       std::string stateName = "w";
       entity = Albany::StateStruct::NodalDataToElemNode;
-      p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
+      p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
+      p->set<std::string>("Field Name", "w");
+      p->set("Field Layout", dl->node_scalar);
+      p->set<bool>("Nodal State", true);
 
-      p->set<std::string>("Weights Name","Weights");
-      p->set("Weights Layout", dl->qp_scalar);
-      p->set("Field Layout", dl->cell_scalar2);
-      p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
-
-      ev = rcp(new PHAL::SaveCellStateField<EvalT,PHAL::AlbanyTraits>(*p));
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
+
+      if ((fieldManagerChoice == Albany::BUILD_RESID_FM)&&(ev->evaluatedFields().size()>0))
+        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
     }
   }
 
@@ -851,19 +838,19 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     ev = Teuchos::rcp(new FELIX::BasalMeltRate<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl_basal));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    {
-      fm0.template registerEvaluator<EvalT> (evalUtils.constructNodesToCellInterpolationEvaluator("basal_melt_rate",false));
-
+    { //save
       std::string stateName = "basal_melt_rate";
       entity = Albany::StateStruct::NodalDataToElemNode;
-      p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
+      p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
+      p->set<std::string>("Field Name", "basal_melt_rate");
+      p->set("Field Layout", dl->node_scalar);
+      p->set<bool>("Nodal State", true);
 
-      p->set<std::string>("Weights Name","Weights");
-      p->set("Weights Layout", dl->qp_scalar);
-      p->set("Field Layout", dl->cell_scalar2);
-      p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
-      ev = rcp(new PHAL::SaveCellStateField<EvalT,PHAL::AlbanyTraits>(*p));
+      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
+
+      if ((fieldManagerChoice == Albany::BUILD_RESID_FM)&&(ev->evaluatedFields().size()>0))
+        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
     }
   }
 
