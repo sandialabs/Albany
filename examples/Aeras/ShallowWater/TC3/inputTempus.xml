@@ -39,7 +39,7 @@
     <Parameter name="NetCDF Output Number of Longitudes" type="int" value="256"/-->
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="3"/>
+    <Parameter  name="Number of Comparisons" type="int" value="0"/>
     <!--Parameter  name="Test Values" type="Array(double)" value="{932.482466371, 2998.46301241, 137651.103706}"/-->
     <Parameter  name="Test Values" type="Array(double)" value="{9.324844074176e+02, 2.998168351636e+03, 1.376511855777e+05}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
