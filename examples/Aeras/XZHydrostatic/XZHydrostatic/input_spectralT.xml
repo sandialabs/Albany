@@ -89,7 +89,7 @@
               <!--Parameter name="Runge Kutta Butcher Tableau Type" type="string"
                    value="Singly Diagonal IRK 2 Stage 3rd order"/-->
               <Parameter name="Runge Kutta Butcher Tableau Type" type="string"
-                   value="Explicit Trapezoidal"/>
+                   value="Explicit 4 Stage"/>
               <!-- value="Explicit 2 Stage 2nd order by Runge"/> -->
               <!--Parameter name="Runge Kutta Butcher Tableau Type" type="string"
                    value="IRK 1 Stage Theta Method"/-->
