@@ -12,14 +12,14 @@ endif()
 
 if (ALBANY_IFPACK2)
 # 1'. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rythmos_be.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/rythmos_be.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tempus_be.xml
                ${CMAKE_CURRENT_BINARY_DIR}/tempus_be.xml COPYONLY)
 # 2'. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3'. Create the test with this name and standard executable
-add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+add_test(${testName}_Tpetra_Rythmos_BackwardEuler ${AlbanyT.exe} rythmos_be.xml)
 if (ALBANY_TEMPUS)
 add_test(${testName}_Tpetra_Tempus_BackwardEuler ${AlbanyT.exe} tempus_be.xml)
 endif () 

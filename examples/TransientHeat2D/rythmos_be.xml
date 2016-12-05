@@ -29,7 +29,7 @@
     <Parameter name="2D Scale" type="double" value="1.0"/>
     <Parameter name="Workset Size" type="int" value="50"/>
     <Parameter name="Method" type="string" value="STK2D"/>
-    <Parameter name="Exodus Output File Name" type="string" value="tran2d_tpetra.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="tran2d_tpetra_rythmos_be.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
