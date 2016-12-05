@@ -16,12 +16,18 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rythmos_be.xml
                ${CMAKE_CURRENT_BINARY_DIR}/rythmos_be.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tempus_be.xml
                ${CMAKE_CURRENT_BINARY_DIR}/tempus_be.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rythmos_rk4.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/rythmos_rk4.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tempus_rk4.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/tempus_rk4.xml COPYONLY)
 # 2'. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3'. Create the test with this name and standard executable
 add_test(${testName}_Tpetra_Rythmos_BackwardEuler ${AlbanyT.exe} rythmos_be.xml)
+add_test(${testName}_Tpetra_Rythmos_RK4 ${AlbanyT.exe} rythmos_rk4.xml)
 if (ALBANY_TEMPUS)
 add_test(${testName}_Tpetra_Tempus_BackwardEuler ${AlbanyT.exe} tempus_be.xml)
+add_test(${testName}_Tpetra_Tempus_RK4 ${AlbanyT.exe} tempus_rk4.xml)
 endif () 
 endif ()
 
