@@ -8,6 +8,10 @@
 #include "CTM_SolutionInfo.hpp"
 #include "linear_solver.hpp"
 
+#ifdef ALBANY_AMP
+#include "AMP/problems/PhaseProblem.hpp"
+#endif
+
 namespace CTM {
 
     static RCP<ParameterList> get_valid_params() {
@@ -91,8 +95,24 @@ namespace CTM {
 
         // create the problem objects
         auto dim = mesh_specs[0]->numDim;
-        t_problem = rcp(new ThermalProblem(temp_params, param_lib, dim, comm));
 
+        std::string& method = temp_params->get("Name", "Thermal");
+        if (method == "Thermal") {
+            t_problem = rcp(new ThermalProblem(temp_params, param_lib, dim, comm));
+        }
+#ifdef ALBANY_AMP
+        else if (method == "Phase3D") {
+            t_problem = rcp(new Albany::PhaseProblem(temp_params, param_lib, 3, comm));
+        }
+#endif
+        else {
+            TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                    std::endl <<
+                    "Error!  Unknown problem " << method <<
+                    "!" << std::endl << "Supplied parameter list is " <<
+                    std::endl << *temp_params);
+        }
+        
         temp_params->validateParameters(*(t_problem->getValidProblemParameters()), 0);
         t_problem->buildProblem(mesh_specs, t_state_mgr);
 
