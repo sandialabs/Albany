@@ -66,7 +66,14 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
 
   // Want the initial time in the parameter library to be correct
   // if this is a restart solution
-  if (disc_->hasRestartSolution()) {
+  // MJJ (12/06/16) I'll go an remove this conditional "if (disc_->hasRestartSolution())"
+  // Independent of restarting analysis you want to have the capability of specify
+  // an initial time. Not doing so was causing that the initial time was always set to zero
+  // and the latter cause many problem because for time 0, dt is set up as 1.0e-15, creating
+  // serious problem when a body source is specified at time 0. For example, in a heat
+  // transfer problem at time 0 and specifying a heat source the problem may corresponds to
+  // a "thermal shock" problem, causing some instabilities in the time integrator.
+//  if (disc_->hasRestartSolution()) {
     if (paramLib_->isParameter("Time")) {
 
       double initialValue = 0.0;
@@ -87,7 +94,7 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
       }
       paramLib_->setRealValue<PHAL::AlbanyTraits::Residual>("Time", initialValue);
     }
-  }
+//  }
 
   const Teuchos::RCP<const Tpetra_Map> mapT = disc_->getMapT();
   const Teuchos::RCP<const Tpetra_Map> overlapMapT = disc_->getOverlapMapT();

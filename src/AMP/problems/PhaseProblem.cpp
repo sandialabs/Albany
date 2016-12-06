@@ -158,6 +158,10 @@ Albany::PhaseProblem::getValidProblemParameters() const
   validPL->set<std::string>("MaterialDB Filename",
                             "materials.xml",
                             "Filename of material database xml file");
+  // this is for use in CTM project
+  validPL->set<bool>("Transient",
+                true,
+                "Specify if you want a transient analysis or not");
 
   return validPL;
 }
