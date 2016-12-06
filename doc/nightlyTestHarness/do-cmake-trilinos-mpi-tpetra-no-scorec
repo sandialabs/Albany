@@ -59,15 +59,17 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D BoostLib_INCLUDE_DIRS:FILEPATH=/usr/include \
       -D BoostLib_LIBRARY_DIRS:FILEPATH=/usr/lib64 \
 \
-      -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \
-      -D Piro_ENABLE_TESTS:BOOL=ON \
+      -D Piro_ENABLE_TESTS:BOOL=OFF \
+      -D Rythmos_ENABLE_TESTS:BOOL=OFF \
+      -D ROL_ENABLE_TESTS:BOOL=OFF \
       -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
       -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
       -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
       -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
       -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
+      -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
 \
       -D Trilinos_ENABLE_Amesos:BOOL=ON \
       -D Trilinos_ENABLE_Amesos2:BOOL=ON \
@@ -99,6 +101,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_Phalanx:BOOL=ON \
       -D Trilinos_ENABLE_Piro:BOOL=ON \
       -D Anasazi_ENABLE_RBGen:BOOL=ON \
+      -D Trilinos_ENABLE_ROL:BOOL=ON \
       -D Trilinos_ENABLE_Rythmos:BOOL=ON \
       -D Trilinos_ENABLE_Sacado:BOOL=ON \
       -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
@@ -137,9 +140,12 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D DataTransferKit_ENABLE_DBC:BOOL=ON \
       -D DataTransferKit_ENABLE_TESTS:BOOL=OFF \
       -D DataTransferKit_ENABLE_EXAMPLES:BOOL=OFF \
+\
       -D Trilinos_ENABLE_Tempus:BOOL=ON \
-      -D Tempus_ENABLE_TESTS:BOOL=ON \
+      -D Tempus_ENABLE_TESTS:BOOL=OFF \
       -D Tempus_ENABLE_EXAMPLES:BOOL=ON \
+      -D Tempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
+\
       -D TPL_ENABLE_MOAB:BOOL=OFF \
       -D TPL_ENABLE_Libmesh:BOOL=OFF \
       -D TPL_Netcdf_PARALLEL:BOOL=ON \
