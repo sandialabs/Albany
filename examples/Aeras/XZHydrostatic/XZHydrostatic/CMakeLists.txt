@@ -19,7 +19,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectral_ho_BE_T.xml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
-add_test(Aeras_${testName}_Spectral_np2_RungeKutta4 ${AlbanyT.exe} input_spectralT.xml) 
+add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Rythmos ${AlbanyT.exe} input_spectralT.xml) 
 if (ALBANY_TEMPUS)
 add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Tempus ${AlbanyT.exe} input_spectralT_tempus.xml) 
 endif () 
