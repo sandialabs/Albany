@@ -1,61 +1,57 @@
 <ParameterList>
   <ParameterList name="Problem">
-    <Parameter name="Name" type="string" value="Aeras Shallow Water 3D"/>
-    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
+    <Parameter name="Name" type="string" value="Heat 2D"/>
     <Parameter name="Solution Method" type="string" value="Transient Tempus"/>
-    <ParameterList name="Shallow Water Problem">
-      <Parameter name="Use Prescribed Velocity" type="bool" value="False"/>
-      <Parameter name="Rotation Angle" type="double" value="0.0"/>      
-    </ParameterList>
     <ParameterList name="Dirichlet BCs">
+      <Parameter name="DBC on NS NodeSet0 for DOF T" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet1 for DOF T" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet2 for DOF T" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet3 for DOF T" type="double" value="0.0"/>
     </ParameterList>
-    <ParameterList name="Initial Condition"> 
-       <Parameter name="Function" type="string" value="Aeras TC3Init"/>
-       <!-- alpha angle for rotation -->
-       <Parameter name="Function Data" type="Array(double)" value="{0.0}"/>
+    <ParameterList name="Initial Condition">
+       <Parameter name="Function" type="string" value="Constant"/>
+       <Parameter name="Function Data" type="Array(double)" value="{1.0}"/>
     </ParameterList>
-    
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="3"/>
+      <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
-      <Parameter name="Response 1" type="string" value="Solution Max Value"/>
-      <Parameter name="Response 2" type="string" value="Solution Two Norm"/>
     </ParameterList>
     <ParameterList name="Parameters">
-      <Parameter name="Number" type="int" value="0"/>
-      <Parameter name="Parameter 0" type="string" value="DBC on NS NodeSet0 for DOF Depth"/>
-      <Parameter name="Parameter 1" type="string" value="Gravity"/>
+      <Parameter name="Number" type="int" value="2"/>
+      <Parameter name="Parameter 0" type="string" value="DBC on NS NodeSet0 for DOF T"/>
+      <Parameter name="Parameter 1" type="string" value="DBC on NS NodeSet2 for DOF T"/>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="Method" type="string" value="Exodus Aeras"/>
-    <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD4/uniform_10_quad4.g"/>
-    <Parameter name="Element Degree" type="int" value="2"/>
-    <Parameter name="Workset Size" type="int" value="-1"/>
-    <Parameter name="Exodus Output File Name" type="string" value="spectral_uniform_10_out.exo"/>
-    <Parameter name="Exodus Write Interval" type="int" value="1"/>
-    <!--Parameter name="NetCDF Write Interval" type="int" value="10"/>
-    <Parameter name="NetCDF Output Number of Latitudes" type="int"  value="128"/>
-    <Parameter name="NetCDF Output Number of Longitudes" type="int" value="256"/-->
+    <Parameter name="1D Elements" type="int" value="60"/>
+    <Parameter name="2D Elements" type="int" value="60"/>
+    <Parameter name="1D Scale" type="double" value="10.0"/>
+    <Parameter name="2D Scale" type="double" value="1.0"/>
+    <Parameter name="Workset Size" type="int" value="50"/>
+    <Parameter name="Method" type="string" value="STK2D"/>
+    <Parameter name="Exodus Output File Name" type="string" value="tran2d_tpetra_tempus_rk4.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="3"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{932.482466371, 2998.46301241, 137651.103706}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
-    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
+    <Parameter  name="Number of Comparisons" type="int" value="1"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{1.004099114169e+00}"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
+    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.423961575,0.0035656993}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.03053790, 0.33026211}"/>
   </ParameterList>
   <ParameterList name="Piro">
+    <ParameterList name="Analysis">
+      <Parameter name="Compute Sensitivities" type="bool" value="false" />
+    </ParameterList>
     <ParameterList name="Tempus">
       <Parameter name="Integrator Name" type="string" value="Tempus Integrator"/>
       <ParameterList name="Tempus Integrator">
         <Parameter name="Integrator Type" type="string" value="Integrator Basic"/>
         <Parameter name="Initial Time"       type="double" value="0.0"/>
         <Parameter name="Initial Time Index" type="int"    value="0"/>
-        <Parameter name="Initial Time Step"  type="double" value="900"/>
+        <Parameter name="Initial Time Step"  type="double" value="0.005"/>
         <Parameter name="Initial Order"      type="int"    value="0"/>
-        <Parameter name="Final Time"         type="double" value="1800"/>
+        <Parameter name="Final Time"         type="double" value="0.1"/>
         <Parameter name="Final Time Index"   type="int"    value="10000"/>
         <Parameter name="Screen Output Index List"    type="string" value="1"/>
         <Parameter name="Screen Output Index Interval" type="int"   value="100"/>
@@ -66,9 +62,9 @@
         </ParameterList>
         <ParameterList name="Time Step Control">
           <Parameter name="Minimum Simulation Time" type="double" value="0.0"/>
-          <Parameter name="Maximum Simulation Time" type="double" value="1800"/>
-          <Parameter name="Minimum Time Step"       type="double" value="900"/>
-          <Parameter name="Maximum Time Step"       type="double" value="900"/>
+          <Parameter name="Maximum Simulation Time" type="double" value="0.1"/>
+          <Parameter name="Minimum Time Step"       type="double" value="0.005"/>
+          <Parameter name="Maximum Time Step"       type="double" value="0.005"/>
           <Parameter name="Minimum Time Step Index" type="int"    value="0"/>
           <Parameter name="Maximum Time Step Index" type="int"    value="10000"/>
           <Parameter name="Maximum Absolute Error"  type="double" value="1.0e-8"/>

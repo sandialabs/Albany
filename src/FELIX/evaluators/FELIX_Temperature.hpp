@@ -17,42 +17,50 @@
 namespace FELIX
 {
 
-/** \brief Temperature
+  /** \brief Temperature
 
     This evaluator computes the temperature from enthalpy
-*/
+   */
 
-template<typename EvalT, typename Traits, typename Type>
-class Temperature: public PHX::EvaluatorWithBaseImpl<Traits>,
-                   public PHX::EvaluatorDerived<EvalT, Traits>
-{
-public:
+  template<typename EvalT, typename Traits, typename Type>
+  class Temperature: public PHX::EvaluatorWithBaseImpl<Traits>,
+  public PHX::EvaluatorDerived<EvalT, Traits>
+  {
+  public:
 
-  typedef typename EvalT::ParamScalarT ParamScalarT;
-  typedef typename EvalT::ScalarT ScalarT;
+    typedef typename EvalT::ParamScalarT ParamScalarT;
+    typedef typename EvalT::ScalarT ScalarT;
 
-  Temperature (const Teuchos::ParameterList& p,
-               const Teuchos::RCP<Albany::Layouts>& dl);
+    Temperature (const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
+    void postRegistrationSetup (typename Traits::SetupData d,
+                                PHX::FieldManager<Traits>& fm);
 
-  void evaluateFields(typename Traits::EvalData d);
+    void evaluateFields(typename Traits::EvalData d);
 
-private:
-  // Input:
-  PHX::MDField<Type,Cell,Node> 		meltingTemp;
-  PHX::MDField<Type,Cell,Node> 		enthalpyHs;
-  PHX::MDField<ScalarT,Cell,Node> 	enthalpy;
+  private:
+    // Input:
+    PHX::MDField<Type,Cell,Node> 		meltingTemp; //[K]
+    PHX::MDField<Type,Cell,Node> 		enthalpyHs;  //[MW s m^{-3}]
+    PHX::MDField<ScalarT,Cell,Node> 	enthalpy;  //[MW s m^{-3}]
+    PHX::MDField<ParamScalarT,Cell,Node>   thickness;  //[km]
 
-  // Output:
-  PHX::MDField<ScalarT,Cell,Node> 	temperature;
-  PHX::MDField<ScalarT,Cell,Node> 	diffEnth;
+    // Output:
+    PHX::MDField<ScalarT,Cell,Node> 	temperature; //[K]
+    PHX::MDField<ScalarT,Cell,Node> 	diffEnth;    //[MW s m^{-3}]
+    PHX::MDField<ScalarT,Cell, Side, Node> dTdz;   //[K km^{-1}]
 
-  int numNodes;
+    int numNodes;
 
-  double c_i, rho_i, T0;
-};
+    std::string sideName;
+    std::vector<std::vector<int> >  sideNodes;
+    int numSideNodes;
+
+    double c_i;   //[J Kg^{-1} K^{-1}], Heat capacity of ice
+    double rho_i; //[kg m^{-3}]
+    double T0;    //[K]
+  };
 
 } // Namespace FELIX
 

@@ -113,7 +113,7 @@ evaluateFields(typename Traits::EvalData workset)
     			int1D += 0.5 * ( xT_constView[solDOFManager.getLocalDOF(inode0, this->offset)] + xT_constView[solDOFManager.getLocalDOF(inode1, this->offset)] ) * layers_ratio[il];
     		}
 
-    		this->int1Dw_z(cell,node) = int1D;
+    		this->int1Dw_z(cell,node) = int1D * this->thickness(cell,node);
     	}
     }
 
@@ -125,7 +125,7 @@ evaluateFields(typename Traits::EvalData workset)
     	{
     		LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[node]);
     		layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
-        	this->int1Dw_z(cell,node) += this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second) / this->thickness(cell,node);
+        this->int1Dw_z(cell,node) += this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second);
     	}
     }
 }
@@ -192,9 +192,6 @@ evaluateFields(typename Traits::EvalData workset)
     		LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[node]);
     		layeredMeshNumbering.getIndices(lnodeId, baseId, ilevel);
 
-    		FadType mb = this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second) / this->thickness(cell,node);
-
-    		this->int1Dw_z(cell,node) += mb;
 
     		// TODO implement the derivative for the extra term mb
     		for (std::size_t node_curr = 0; node_curr < this->numNodes; ++node_curr)
@@ -213,6 +210,16 @@ evaluateFields(typename Traits::EvalData workset)
         	    		this->int1Dw_z(cell,node).fastAccessDx(idx) += 0.5 * layers_ratio[ilevel_curr - 1] * workset.j_coeff;
         	    }
         	}
+
+    		this->int1Dw_z(cell,node) *= this->thickness(cell,node);
+        //FadType mb = (lnodeId == baseId) ? this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second)  :
+            //                 Albany::ADValue(this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second)) ;
+
+          if (0)//lnodeId == baseId)
+            this->int1Dw_z(cell,node) += this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second);
+          else
+            this->int1Dw_z(cell,node) += Albany::ADValue(this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second));
+
     	}
     }
 }

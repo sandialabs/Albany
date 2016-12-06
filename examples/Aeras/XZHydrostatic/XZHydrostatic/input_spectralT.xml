@@ -47,8 +47,8 @@
     <Parameter name="Element Degree" type="int" value="1"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="2"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{752.746688742, 9000}"/>
+    <Parameter  name="Number of Comparisons" type="int" value="4"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{7.527466887416e+02, 9.000000000000e+03, 5.301027439024e+03, 2.754189410332e+14}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
@@ -89,7 +89,7 @@
               <!--Parameter name="Runge Kutta Butcher Tableau Type" type="string"
                    value="Singly Diagonal IRK 2 Stage 3rd order"/-->
               <Parameter name="Runge Kutta Butcher Tableau Type" type="string"
-                   value="Explicit Trapezoidal"/>
+                   value="Explicit 4 Stage"/>
               <!-- value="Explicit 2 Stage 2nd order by Runge"/> -->
               <!--Parameter name="Runge Kutta Butcher Tableau Type" type="string"
                    value="IRK 1 Stage Theta Method"/-->

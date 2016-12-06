@@ -27,7 +27,7 @@ TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:        
 
 # No GLOBAL VARIABLES
 
-NODAL VARIABLES relative 1.e-6 floor 1.0e-9
+NODAL VARIABLES relative 1.e-6 floor 1.0e-5
 	displacement_x     # min:               0 @ t1,n1	max:     0.040810774 @ t8,n1
 	displacement_y     # min:               0 @ t1,n1	max:   0.00073105541 @ t6,n5
 	displacement_z     # min:               0 @ t1,n1	max:     0.038715407 @ t8,n3

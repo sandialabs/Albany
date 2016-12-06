@@ -16,6 +16,7 @@
        evaluators/FELIX_EffectivePressure.cpp
        evaluators/FELIX_Elliptic2DResidual.cpp
        evaluators/FELIX_EnthalpyResid.cpp
+       evaluators/FELIX_EnthalpyBasalResid.cpp
        evaluators/FELIX_EpsilonL1L2.cpp
        evaluators/FELIX_FieldNorm.cpp
        evaluators/FELIX_FlowRate.cpp
@@ -57,6 +58,7 @@
        evaluators/FELIX_ViscosityFO.cpp
        evaluators/FELIX_ViscosityL1L2.cpp
        evaluators/FELIX_w_ZResid.cpp
+       evaluators/FELIX_w_Resid.cpp
        evaluators/FELIX_Time.cpp
        problems/FELIX_Elliptic2D.cpp
        problems/FELIX_Enthalpy.cpp
@@ -115,6 +117,8 @@ ENDIF()
        evaluators/FELIX_Elliptic2DResidual_Def.hpp
        evaluators/FELIX_EnthalpyResid.hpp
        evaluators/FELIX_EnthalpyResid_Def.hpp
+       evaluators/FELIX_EnthalpyBasalResid.hpp
+       evaluators/FELIX_EnthalpyBasalResid_Def.hpp
        evaluators/FELIX_EpsilonL1L2.hpp
        evaluators/FELIX_EpsilonL1L2_Def.hpp
        evaluators/FELIX_FieldNorm.hpp
@@ -194,6 +198,8 @@ ENDIF()
        evaluators/FELIX_ViscosityL1L2_Def.hpp
        evaluators/FELIX_w_ZResid.hpp
        evaluators/FELIX_w_ZResid_Def.hpp
+       evaluators/FELIX_w_Resid.hpp
+       evaluators/FELIX_w_Resid_Def.hpp
        evaluators/FELIX_Time.hpp
        evaluators/FELIX_Time_Def.hpp
        problems/FELIX_Elliptic2D.hpp

@@ -17,36 +17,38 @@
 namespace FELIX
 {
 
-/** \brief Pressure-melting enthalpy
+  /** \brief Pressure-melting enthalpy
 
     This evaluator computes enthalpy of the ice at pressure-melting temperature Tm(p).
-*/
+   */
 
-template<typename EvalT, typename Traits, typename Type>
-class PressureMeltingEnthalpy: public PHX::EvaluatorWithBaseImpl<Traits>,
-                               public PHX::EvaluatorDerived<EvalT, Traits>
-{
-public:
+  template<typename EvalT, typename Traits, typename Type>
+  class PressureMeltingEnthalpy: public PHX::EvaluatorWithBaseImpl<Traits>,
+  public PHX::EvaluatorDerived<EvalT, Traits>
+  {
+  public:
 
-  PressureMeltingEnthalpy (const Teuchos::ParameterList& p,
-                       	   const Teuchos::RCP<Albany::Layouts>& dl);
+    PressureMeltingEnthalpy (const Teuchos::ParameterList& p,
+                             const Teuchos::RCP<Albany::Layouts>& dl);
 
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
+    void postRegistrationSetup (typename Traits::SetupData d,
+                                PHX::FieldManager<Traits>& fm);
 
-  void evaluateFields(typename Traits::EvalData d);
+    void evaluateFields(typename Traits::EvalData d);
 
-private:
-  // Input:
-  PHX::MDField<Type,Cell,Node> meltingTemp;
+  private:
+    // Input:
+    PHX::MDField<Type,Cell,Node> meltingTemp; //[K]
 
-  // Output:
-  PHX::MDField<Type,Cell,Node> enthalpyHs;
+    // Output:
+    PHX::MDField<Type,Cell,Node> enthalpyHs;  //[MW s m^{-3}]
 
-  int numNodes;
+    int numNodes;
 
-  double c_i, rho_i, T0;
-};
+    double c_i;   //[J Kg^{-1} K^{-1}], Heat capacity of ice
+    double rho_i; //[kg m^{-3}]
+    double T0;    //[K]
+  };
 
 } // Namespace FELIX
 
