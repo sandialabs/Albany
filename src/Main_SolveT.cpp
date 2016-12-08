@@ -370,7 +370,6 @@ int main(int argc, char *argv[]) {
       Albany::APFMeshStruct::finalize_libraries();
 #endif
       Kokkos::finalize_all();
-      status++; 
       return status; 
    }
 

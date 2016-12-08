@@ -26,8 +26,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tempus_be.xml
                ${CMAKE_CURRENT_BINARY_DIR}/tempus_be.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tempus_rk4.xml
                ${CMAKE_CURRENT_BINARY_DIR}/tempus_rk4.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tempus_rk4_no_piro.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/tempus_rk4_no_piro.xml COPYONLY)
 add_test(${testName}_Tpetra_Tempus_BackwardEuler ${AlbanyT.exe} tempus_be.xml)
 add_test(${testName}_Tpetra_Tempus_RK4 ${AlbanyT.exe} tempus_rk4.xml)
+add_test(${testName}_Tpetra_Tempus_NoPiro_RK4 ${AlbanyT.exe} tempus_rk4_no_piro.xml)
 endif () 
 endif ()
 
