@@ -227,8 +227,15 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     solMethod = Continuation;
   else if(solutionMethod == "Transient")
     solMethod = Transient;
-  else if(solutionMethod == "Transient Tempus" || "Transient Tempus No Piro")
+  else if(solutionMethod == "Transient Tempus" || "Transient Tempus No Piro") {
+#ifdef ALBANY_TEMPUS
     solMethod = TransientTempus;
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+            std::logic_error, "Solution Method = " << solutionMethod << " is not valid because " 
+            << "Trilinos was not build with Tempus turned ON.\n");
+#endif
+  }
   else if(solutionMethod == "Eigensolve")
     solMethod = Eigensolve;
   else if(solutionMethod == "Aeras Hyperviscosity")
