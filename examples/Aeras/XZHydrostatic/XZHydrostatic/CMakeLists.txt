@@ -24,7 +24,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Rythmos ${AlbanyT.exe} input_spectralT_rythmos.xml) 
 if (ALBANY_TEMPUS)
 add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Tempus ${AlbanyT.exe} input_spectralT_tempus.xml) 
-add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Tempus_No_Piro ${AlbanyT.exe} input_spectralT_tempus_no_piro.xml) 
+add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Tempus_No_Piro ${AlbanyTempus.exe} input_spectralT_tempus_no_piro.xml) 
 endif () 
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists

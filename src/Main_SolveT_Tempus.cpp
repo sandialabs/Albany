@@ -23,6 +23,9 @@
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
 
+#include "Tempus_IntegratorBasic.hpp" 
+#include "Piro_ObserverToTempusIntegrationObserverAdapter.hpp"
+
 // Uncomment for run time nan checking
 // This is set in the toplevel CMakeLists.txt file
 //#define ALBANY_CHECK_FPE
@@ -290,224 +293,76 @@ int main(int argc, char *argv[]) {
     RCP<Albany::Application> app;
     const RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > solver =
       slvrfctry.createAndGetAlbanyAppT(app, comm, comm);
-
+    
     setupTimer.~TimeMonitor();
 
-    Teuchos::ParameterList &solveParams =
-      slvrfctry.getAnalysisParameters().sublist("Solve", /*mustAlreadyExist =*/ false);
-    // By default, request the sensitivities if not explicitly disabled
-    if (solveParams.isParameter("Compute Sensitivities")) 
-      computeSensitivities = solveParams.get<bool>("Compute Sensitivities"); 
-
-    Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST> > > thyraResponses;
-    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<ST> > > > thyraSensitivities;
-    Piro::PerformSolve(*solver, solveParams, thyraResponses, thyraSensitivities);
-
-    Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > responses;
-    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Tpetra_MultiVector> > > sensitivities;
-
-    //Check if thyraResponses are product vectors or regular vectors
-    Teuchos::RCP<const Thyra::ProductVectorBase<ST> > r_prod; 
-    if (thyraResponses.size() > 0) {
-      r_prod = Teuchos::nonnull(thyraResponses[0]) ?
-           Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(thyraResponses[0],false) :
-           Teuchos::null;
-    }
-    if (r_prod == Teuchos::null) tpetraFromThyra(thyraResponses, thyraSensitivities, responses, sensitivities);
-    else tpetraFromThyraProdVec(thyraResponses, thyraSensitivities, responses, sensitivities);
-
-    const int num_p = solver->Np(); // Number of *vectors* of parameters
-    int num_g = solver->Ng();  // Number of *vectors* of responses
-    if (r_prod != Teuchos::null && num_g > 0) { 
-      *out << "WARNING: For Thyra::ProductVectorBase, printing of responses does not work yet!  " <<
-              "No responses will be printed even though you requested " << num_g << " responses. \n"; 
-      num_g = 1; 
-    }
-
-    *out << "Finished eval of first model: Params, Responses "
-      << std::setprecision(12) << std::endl;
-
-
-    Teuchos::ParameterList& parameterParams = slvrfctry.getParameters().sublist("Problem").sublist("Parameters");
-    Teuchos::ParameterList& responseParams = slvrfctry.getParameters().sublist("Problem").sublist("Response Functions");
-
-
-    int num_param_vecs =
-       parameterParams.get("Number of Parameter Vectors", 0);
-    bool using_old_parameter_list = false;
-    if (parameterParams.isType<int>("Number")) {
-      int numParameters = parameterParams.get<int>("Number");
-      if (numParameters > 0) {
-        num_param_vecs = 1;
-        using_old_parameter_list = true;
-      }
-    }
-
-    int num_response_vecs =
-       responseParams.get("Number of Response Vectors", 0);
-    bool using_old_response_list = false;
-    if (responseParams.isType<int>("Number")) {
-      int numParameters = responseParams.get<int>("Number");
-      if (numParameters > 0) {
-        num_response_vecs = 1;
-        using_old_response_list = true;
-      }
-    }
-
-    Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > > param_names;
-    param_names.resize(num_param_vecs);
-    for (int l = 0; l < num_param_vecs; ++l) {
-      const Teuchos::ParameterList* pList =
-        using_old_parameter_list ?
-        &parameterParams :
-        &(parameterParams.sublist(Albany::strint("Parameter Vector", l)));
-
-      const int numParameters = pList->get<int>("Number");
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          numParameters == 0,
-          Teuchos::Exceptions::InvalidParameter,
-          std::endl << "Error!  In Albany::ModelEvaluatorT constructor:  " <<
-          "Parameter vector " << l << " has zero parameters!" << std::endl);
-
-      param_names[l] = Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
-      for (int k = 0; k < numParameters; ++k) {
-        (*param_names[l])[k] =
-          pList->get<std::string>(Albany::strint("Parameter", k));
-      }
-    }
-
-    Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > > response_names;
-    response_names.resize(num_response_vecs);
-    for (int l = 0; l < num_response_vecs; ++l) {
-      const Teuchos::ParameterList* pList =
-        using_old_response_list ?
-        &responseParams :
-        &(responseParams.sublist(Albany::strint("Response Vector", l)));
-
-      bool number_exists = pList->getEntryPtr("Number");
-
-      if(number_exists){
-
-        const int numParameters = pList->get<int>("Number");
-        TEUCHOS_TEST_FOR_EXCEPTION(
-          numParameters == 0,
-          Teuchos::Exceptions::InvalidParameter,
-          std::endl << "Error!  In Albany::ModelEvaluatorT constructor:  " <<
-          "Response vector " << l << " has zero parameters!" << std::endl);
-
-        response_names[l] = Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
-        for (int k = 0; k < numParameters; ++k) {
-          (*response_names[l])[k] =
-            pList->get<std::string>(Albany::strint("Response", k));
-        }
-      }
-      else response_names[l] = Teuchos::null;
-    }
-
-    const Thyra::ModelEvaluatorBase::InArgs<double> nominal = solver->getNominalValues();
-
-    //Check if parameters are product vectors or regular vectors
-    Teuchos::RCP<const Thyra::ProductVectorBase<ST> > p_prod;
-    if (num_p > 0) { 
-       p_prod =  Teuchos::nonnull(nominal.get_p(0)) ?
-                        Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(nominal.get_p(0),false) :
-                        Teuchos::null;
-      //If p_prod is not product vector, print out parameter vector by converting thyra vector to tpetra vector
-      if (p_prod == Teuchos::null) { //Thyra vector case (default -- for everything except CoupledSchwarz right now)
-        for (int i=0; i<num_p; i++) {
-          Albany::printTpetraVector(*out << "\nParameter vector " << i << ":\n", *param_names[i],
-             ConverterT::getConstTpetraVector(nominal.get_p(i)));
-        }
-      }
-      else { //Thyra product vector case
-        for (int i=0; i<num_p; i++) {
-           Teuchos::RCP<const Thyra::ProductVectorBase<ST> > pT =
-                Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(
-                nominal.get_p(i), true);
-           //IKT: note that we are assuming the parameters are all the same for all the models 
-           //that are being coupled (in CoupledSchwarz) so we print the parameters from the 0th 
-           //model only.  LOCA does not populate p for more than 1 model at the moment so we cannot
-           //allow for different parameters in different models.
-           Teuchos::RCP<const Tpetra_Vector> p = Teuchos::rcp_dynamic_cast<const ThyraVector>(
-                                       pT->getVectorBlock(0),true)->getConstTpetraVector();
-           Albany::printTpetraVector(*out << "\nParameter vector " << i << ":\n", *param_names[i], p); 
-        }
-      }
-    }
-
-    for (int i=0; i<num_g-1; i++) {
-      const RCP<const Tpetra_Vector> g = responses[i];
-      bool is_scalar = true;
-
-      if (app != Teuchos::null)
-        is_scalar = app->getResponse(i)->isScalarResponse();
-
-      if (is_scalar) {
-
-        if(response_names[i] != Teuchos::null) {
-          *out << "\n Response vector " << i << ": " << *response_names[i] << "\n"; 
-          Albany::printTpetraVector(*out, g);
-        }
-        else {
-          *out << "\n Response vector " << i << ":\n"; 
-          Albany::printTpetraVector(*out, g);
-        }
-
-        if (num_p == 0) {
-          // Just calculate regression data
-          status += slvrfctry.checkSolveTestResultsT(i, 0, g.get(), NULL);
-        } 
-        else if (computeSensitivities == true) {
-          if (sensitivities[0][0] != Teuchos::null) {
-            for (int j=0; j<num_p; j++) {
-              const RCP<const Tpetra_MultiVector> dgdp = sensitivities[i][j];
-              if (Teuchos::nonnull(dgdp)) {
-                Albany::printTpetraVector(*out << "\nSensitivities (" << i << "," << j << "):!\n", dgdp);
-              }
-              status += slvrfctry.checkSolveTestResultsT(i, j, g.get(), dgdp.get());
-            }
-          }
-        }
-      }
-    }
-
+    Teuchos::ParameterList &appPL = slvrfctry.getParameters();
     // Create debug output object
     Teuchos::ParameterList &debugParams =
-      slvrfctry.getParameters().sublist("Debug Output", true);
+      appPL.sublist("Debug Output", true);
     bool writeToMatrixMarketSoln = debugParams.get("Write Solution to MatrixMarket", false);
     bool writeToMatrixMarketDistrSolnMap = debugParams.get("Write Distributed Solution and Map to MatrixMarket", false);
     bool writeToCoutSoln = debugParams.get("Write Solution to Standard Output", false);
 
-    const RCP<const Tpetra_Vector> xfinal = responses.back();
-    double mnv = xfinal->meanValue();
-    *out << "\nMain_Solve: MeanValue of final solution " << mnv << std::endl;
-    *out << "\nNumber of Failed Comparisons: " << status << std::endl;
-    if (writeToCoutSoln == true) { 
-       Albany::printTpetraVector(*out << "\nxfinal:\n", xfinal);
+    std::string solnMethod = appPL.sublist("Problem").get<std::string>("Solution Method"); 
+    if (solnMethod == "Transient Tempus No Piro") { 
+      //Start of code to use Tempus to perform time-integration without going through Piro
+      Teuchos::RCP<Thyra::ModelEvaluator<ST>> model = slvrfctry.returnModelT();
+      Teuchos::RCP<Teuchos::ParameterList> tempusPL = Teuchos::null; 
+      if (appPL.sublist("Piro").isSublist("Tempus")) {
+        tempusPL = Teuchos::rcp(&(appPL.sublist("Piro").sublist("Tempus")), false); 
+      }
+      else {
+        TEUCHOS_TEST_FOR_EXCEPTION(true,
+          Teuchos::Exceptions::InvalidParameter,
+          std::endl << "Error!  No Tempus sublist when attempting to run problem with Transient Tempus No Piro " <<
+          "Solution Method. " << std::endl);
+      }   
+      Teuchos::RCP<Tempus::IntegratorBasic<double> > integrator =
+        Tempus::integratorBasic<double>(tempusPL, model);
+      Teuchos::RCP<Piro::ObserverBase<double> > piro_observer = slvrfctry.returnObserverT(); 
+      Teuchos::RCP<Tempus::IntegratorObserver<double> > tempus_observer = Teuchos::null;
+      if (Teuchos::nonnull(piro_observer)) {
+        const RCP<Tempus::SolutionHistory<double> > solutionHistory = integrator->getSolutionHistory();
+        const Teuchos::RCP<Tempus::TimeStepControl<double> > timeStepControl = integrator->getTimeStepControl();
+        tempus_observer = Teuchos::rcp(new Piro::ObserverToTempusIntegrationObserverAdapter<double>(solutionHistory, 
+                                           timeStepControl, piro_observer));
+      }
+      if (Teuchos::nonnull(tempus_observer)) {
+        integrator->setObserver(tempus_observer); 
+        integrator->initialize(); 
+      }
+      bool integratorStatus = integrator->advanceTime(); 
+      double time = integrator->getTime();
+      *out << "\n Final time = " << time << "\n"; 
+      Teuchos::RCP<Thyra::VectorBase<double> > x = integrator->getX();
+      Teuchos::RCP<const Tpetra_Vector> x_tpetra = ConverterT::getConstTpetraVector(x);  
+      if (writeToCoutSoln == true)  
+        Albany::printTpetraVector(*out << "\nxfinal = \n", x_tpetra);
+      if (writeToMatrixMarketSoln == true) { 
+        //create serial map that puts the whole solution on processor 0
+        int numMyElements = (x_tpetra->getMap()->getComm()->getRank() == 0) ? x_tpetra->getMap()->getGlobalNumElements() : 0;
+        Teuchos::RCP<const Tpetra_Map> serial_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm));
+        //create importer from parallel map to serial map and populate serial solution x_tpetra_serial
+        Teuchos::RCP<Tpetra_Import> importOperator = Teuchos::rcp(new Tpetra_Import(x_tpetra->getMap(), serial_map)); 
+        Teuchos::RCP<Tpetra_Vector> x_tpetra_serial = Teuchos::rcp(new Tpetra_Vector(serial_map)); 
+        x_tpetra_serial->doImport(*x_tpetra, *importOperator, Tpetra::INSERT);
+        //writing to MatrixMarket file
+         Tpetra_MatrixMarket_Writer::writeDenseFile("xfinal_tempus.mm", x_tpetra_serial);
+      }
+      if (writeToMatrixMarketDistrSolnMap == true) {
+        //writing to MatrixMarket file
+        Tpetra_MatrixMarket_Writer::writeDenseFile("xfinal_tempus_distributed.mm", *x_tpetra);
+        Tpetra_MatrixMarket_Writer::writeMapFile("xfinal_tempus_distributed_map.mm", *x_tpetra->getMap());
+      }
+      *out << "\n Finish Transient Tempus No Piro time integration!\n";
+      //End of code to use Tempus to perform time-integration without going through Piro
     }
-
-    if (debugParams.get<bool>("Analyze Memory", false))
-      Albany::printMemoryAnalysis(std::cout, comm);
-
-    if (writeToMatrixMarketSoln == true) { 
-
-      //create serial map that puts the whole solution on processor 0
-      int numMyElements = (xfinal->getMap()->getComm()->getRank() == 0) ? xfinal->getMap()->getGlobalNumElements() : 0;
-
-     Teuchos::RCP<const Tpetra_Map> serial_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm));
- 
-      //create importer from parallel map to serial map and populate serial solution xfinal_serial
-      Teuchos::RCP<Tpetra_Import> importOperator = Teuchos::rcp(new Tpetra_Import(xfinal->getMap(), serial_map)); 
-      Teuchos::RCP<Tpetra_Vector> xfinal_serial = Teuchos::rcp(new Tpetra_Vector(serial_map)); 
-      xfinal_serial->doImport(*xfinal, *importOperator, Tpetra::INSERT);
-
-      //writing to MatrixMarket file
-       Tpetra_MatrixMarket_Writer::writeDenseFile("xfinal.mm", xfinal_serial);
-    }
-    if (writeToMatrixMarketDistrSolnMap == true) {
-      //writing to MatrixMarket file
-      Tpetra_MatrixMarket_Writer::writeDenseFile("xfinal_distributed.mm", *xfinal);
-      Tpetra_MatrixMarket_Writer::writeMapFile("xfinal_distributed_map.mm", *xfinal->getMap());
+    else {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, 
+            Teuchos::Exceptions::InvalidParameter,
+            "\n Error!  AlbanyTempus executable can only be run with 'Transient Tempus No Piro' Solution Method.  " <<
+            "You have selected Solution Method = " <<  solnMethod << "\n");
     }
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
