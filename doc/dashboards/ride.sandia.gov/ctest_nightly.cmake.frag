@@ -232,6 +232,7 @@ if (BUILD_TRILINOS)
     "-DTPL_ENABLE_Netcdf:BOOL=ON"
     "-DTPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDF_DIR}/include"
     "-DTPL_Netcdf_LIBRARIES=${NETCDF_DIR}/lib/libnetcdf.a"
+    "-DTPL_Netcdf_PARALLEL:BOOL=ON"
     "-DTPL_ENABLE_Pnetcdf:STRING=ON"
     "-DTPL_Pnetcdf_INCLUDE_DIRS:PATH=${PNETCDF_DIR}/include"
     "-DTPL_Pnetcdf_LIBRARIES=${PNETCDF_DIR}/lib/libpnetcdf.a"
