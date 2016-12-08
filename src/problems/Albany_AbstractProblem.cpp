@@ -51,7 +51,7 @@ Albany::AbstractProblem::AbstractProblem(
     number_of_time_deriv = 1;
     SolutionMethodName = Transient;
   }
-  else if(solutionMethod == "Transient Tempus")
+  else if(solutionMethod == "Transient Tempus" || solutionMethod == "Transient Tempus No Piro")
   {
     number_of_time_deriv = 1;
     SolutionMethodName = TransientTempus;

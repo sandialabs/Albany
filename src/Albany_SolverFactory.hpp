@@ -21,6 +21,7 @@
 #endif
 #endif
 
+#include "Albany_PiroObserverT.hpp"
 #include "Thyra_ModelEvaluator.hpp"
 #include "Thyra_ResponseOnlyModelEvaluatorBase.hpp"
 #include "Teuchos_SerialDenseVector.hpp"
@@ -176,6 +177,10 @@ namespace Albany {
       int response_index,
       const Teuchos::RCP<Thyra::VectorBase<double> >& tvec) const;
 
+    Teuchos::RCP<Thyra::ModelEvaluator<ST>> returnModelT() const {return modelT_;}; 
+    
+    Teuchos::RCP<Piro::ObserverBase<double> > returnObserverT() const {return observerT_;}; 
+
 #if defined(ALBANY_EPETRA)
     /** \brief Function that does regression testing for SG runs. */
     int checkSGTestResults(
@@ -195,6 +200,10 @@ namespace Albany {
         Teuchos::ParameterList* testParams,
         int failures,
         int comparisons) const;
+ 
+    Teuchos::RCP<Thyra::ModelEvaluator<ST> > modelT_;
+
+    Teuchos::RCP<Piro::ObserverBase<double> > observerT_;  
 
   protected:
     //! Parameter list specifying what solver to create

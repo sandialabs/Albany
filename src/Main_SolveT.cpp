@@ -22,6 +22,10 @@
 #include "Teuchos_FancyOStream.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
+#ifdef ALBANY_TEMPUS
+#include "Tempus_IntegratorBasic.hpp" 
+#include "Piro_ObserverToTempusIntegrationObserverAdapter.hpp"
+#endif
 
 // Uncomment for run time nan checking
 // This is set in the toplevel CMakeLists.txt file
@@ -290,17 +294,94 @@ int main(int argc, char *argv[]) {
     RCP<Albany::Application> app;
     const RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > solver =
       slvrfctry.createAndGetAlbanyAppT(app, comm, comm);
-
+    
     setupTimer.~TimeMonitor();
 
-    Teuchos::ParameterList &solveParams =
-      slvrfctry.getAnalysisParameters().sublist("Solve", /*mustAlreadyExist =*/ false);
-    // By default, request the sensitivities if not explicitly disabled
-    if (solveParams.isParameter("Compute Sensitivities")) 
-      computeSensitivities = solveParams.get<bool>("Compute Sensitivities"); 
+    Teuchos::ParameterList &appPL = slvrfctry.getParameters();
+    // Create debug output object
+    Teuchos::ParameterList &debugParams =
+      appPL.sublist("Debug Output", true);
+    bool writeToMatrixMarketSoln = debugParams.get("Write Solution to MatrixMarket", false);
+    bool writeToMatrixMarketDistrSolnMap = debugParams.get("Write Distributed Solution and Map to MatrixMarket", false);
+    bool writeToCoutSoln = debugParams.get("Write Solution to Standard Output", false);
 
-    Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST> > > thyraResponses;
-    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<ST> > > > thyraSensitivities;
+    std::string solnMethod = appPL.sublist("Problem").get<std::string>("Solution Method"); 
+    if (solnMethod == "Transient Tempus No Piro") { 
+#ifdef ALBANY_TEMPUS
+      //Start of code to use Tempus to perform time-integration without going through Piro
+      Teuchos::RCP<Thyra::ModelEvaluator<ST>> model = slvrfctry.returnModelT();
+      Teuchos::RCP<Teuchos::ParameterList> tempusPL = Teuchos::null; 
+      if (appPL.sublist("Piro").isSublist("Tempus")) {
+        tempusPL = Teuchos::rcp(&(appPL.sublist("Piro").sublist("Tempus")), false); 
+      }
+      else {
+        TEUCHOS_TEST_FOR_EXCEPTION(true,
+          Teuchos::Exceptions::InvalidParameter,
+          std::endl << "Error!  No Tempus sublist when attempting to run problem with Transient Tempus No Piro " <<
+          "Solution Method. " << std::endl);
+      }   
+      Teuchos::RCP<Tempus::IntegratorBasic<double> > integrator =
+        Tempus::integratorBasic<double>(tempusPL, model);
+      Teuchos::RCP<Piro::ObserverBase<double> > piro_observer = slvrfctry.returnObserverT(); 
+      Teuchos::RCP<Tempus::IntegratorObserver<double> > tempus_observer = Teuchos::null;
+      if (Teuchos::nonnull(piro_observer)) {
+        const RCP<Tempus::SolutionHistory<double> > solutionHistory = integrator->getSolutionHistory();
+        const Teuchos::RCP<Tempus::TimeStepControl<double> > timeStepControl = integrator->getTimeStepControl();
+        tempus_observer = Teuchos::rcp(new Piro::ObserverToTempusIntegrationObserverAdapter<double>(solutionHistory, 
+                                           timeStepControl, piro_observer));
+      }
+      if (Teuchos::nonnull(tempus_observer)) {
+        integrator->setObserver(tempus_observer); 
+        integrator->initialize(); 
+      }
+      bool integratorStatus = integrator->advanceTime(); 
+      double time = integrator->getTime();
+      *out << "\n Final time = " << time << "\n"; 
+      Teuchos::RCP<Thyra::VectorBase<double> > x = integrator->getX();
+      Teuchos::RCP<const Tpetra_Vector> x_tpetra = ConverterT::getConstTpetraVector(x);  
+      if (writeToCoutSoln == true)  
+        Albany::printTpetraVector(*out << "\nxfinal = \n", x_tpetra);
+      if (writeToMatrixMarketSoln == true) { 
+        //create serial map that puts the whole solution on processor 0
+        int numMyElements = (x_tpetra->getMap()->getComm()->getRank() == 0) ? x_tpetra->getMap()->getGlobalNumElements() : 0;
+        Teuchos::RCP<const Tpetra_Map> serial_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm));
+        //create importer from parallel map to serial map and populate serial solution x_tpetra_serial
+        Teuchos::RCP<Tpetra_Import> importOperator = Teuchos::rcp(new Tpetra_Import(x_tpetra->getMap(), serial_map)); 
+        Teuchos::RCP<Tpetra_Vector> x_tpetra_serial = Teuchos::rcp(new Tpetra_Vector(serial_map)); 
+        x_tpetra_serial->doImport(*x_tpetra, *importOperator, Tpetra::INSERT);
+        //writing to MatrixMarket file
+         Tpetra_MatrixMarket_Writer::writeDenseFile("xfinal_tempus.mm", x_tpetra_serial);
+      }
+      if (writeToMatrixMarketDistrSolnMap == true) {
+        //writing to MatrixMarket file
+        Tpetra_MatrixMarket_Writer::writeDenseFile("xfinal_tempus_distributed.mm", *x_tpetra);
+        Tpetra_MatrixMarket_Writer::writeMapFile("xfinal_tempus_distributed_map.mm", *x_tpetra->getMap());
+      }
+      *out << "\n Finish Transient Tempus No Piro time integration!\n";
+      //End of code to use Tempus to perform time-integration without going through Piro
+#else
+      TEUCHOS_TEST_FOR_EXCEPTION(true,
+          Teuchos::Exceptions::InvalidParameter,
+          std::endl << "Error! Attempting to run problem with Transient Tempus No Piro " <<
+          "Solution Method when Trilinos was not built with Tempus. " << std::endl);
+#endif
+      Teuchos::TimeMonitor::summarize(*out,false,true,false/*zero timers*/);
+#ifdef ALBANY_APF
+      Albany::APFMeshStruct::finalize_libraries();
+#endif
+      Kokkos::finalize_all();
+      status++; 
+      return status; 
+   }
+
+      Teuchos::ParameterList &solveParams =
+        slvrfctry.getAnalysisParameters().sublist("Solve", /*mustAlreadyExist =*/ false);
+      // By default, request the sensitivities if not explicitly disabled
+      if (solveParams.isParameter("Compute Sensitivities")) 
+        computeSensitivities = solveParams.get<bool>("Compute Sensitivities"); 
+
+      Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST> > > thyraResponses;
+      Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<ST> > > > thyraSensitivities;
     Piro::PerformSolve(*solver, solveParams, thyraResponses, thyraSensitivities);
 
     Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > responses;
@@ -328,8 +409,8 @@ int main(int argc, char *argv[]) {
       << std::setprecision(12) << std::endl;
 
 
-    Teuchos::ParameterList& parameterParams = slvrfctry.getParameters().sublist("Problem").sublist("Parameters");
-    Teuchos::ParameterList& responseParams = slvrfctry.getParameters().sublist("Problem").sublist("Response Functions");
+    Teuchos::ParameterList& parameterParams = appPL.sublist("Problem").sublist("Parameters");
+    Teuchos::ParameterList& responseParams = appPL.sublist("Problem").sublist("Response Functions");
 
 
     int num_param_vecs =
@@ -470,13 +551,6 @@ int main(int argc, char *argv[]) {
         }
       }
     }
-
-    // Create debug output object
-    Teuchos::ParameterList &debugParams =
-      slvrfctry.getParameters().sublist("Debug Output", true);
-    bool writeToMatrixMarketSoln = debugParams.get("Write Solution to MatrixMarket", false);
-    bool writeToMatrixMarketDistrSolnMap = debugParams.get("Write Distributed Solution and Map to MatrixMarket", false);
-    bool writeToCoutSoln = debugParams.get("Write Solution to Standard Output", false);
 
     const RCP<const Tpetra_Vector> xfinal = responses.back();
     double mnv = xfinal->meanValue();

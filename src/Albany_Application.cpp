@@ -227,7 +227,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     solMethod = Continuation;
   else if(solutionMethod == "Transient")
     solMethod = Transient;
-  else if(solutionMethod == "Transient Tempus")
+  else if(solutionMethod == "Transient Tempus" || "Transient Tempus No Piro")
     solMethod = TransientTempus;
   else if(solutionMethod == "Eigensolve")
     solMethod = Eigensolve;
@@ -235,7 +235,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     solMethod = Transient;
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,
-            std::logic_error, "Solution Method must be Steady, Transient, Transient Tempus "
+            std::logic_error, "Solution Method must be Steady, Transient, Transient Tempus, Transient Tempus No Piro, "
             << "Continuation, Eigensolve, or Aeras Hyperviscosity, not : " << solutionMethod);
 
   bool expl = false;
