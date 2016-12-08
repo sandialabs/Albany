@@ -48,6 +48,8 @@
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="Tempus">
+      <Parameter name="Invert Mass Matrix" type="bool" value="true"/>
+      <Parameter name="Lump Mass Matrix" type="bool" value="true"/>
       <Parameter name="Integrator Name" type="string" value="Tempus Integrator"/>
       <ParameterList name="Tempus Integrator">
         <Parameter name="Integrator Type" type="string" value="Integrator Basic"/>
