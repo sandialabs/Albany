@@ -12,23 +12,26 @@ endif()
 
 if (ALBANY_IFPACK2)
 # 1'. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rythmos_be.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/rythmos_be.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rythmos_be_nox_solver.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/rythmos_be_nox_solver.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rythmos_be_rythmos_solver.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/rythmos_be_rythmos_solver.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rythmos_rk4.xml
                ${CMAKE_CURRENT_BINARY_DIR}/rythmos_rk4.xml COPYONLY)
 # 2'. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3'. Create the test with this name and standard executable
-add_test(${testName}_Tpetra_Rythmos_BackwardEuler ${AlbanyT.exe} rythmos_be.xml)
+add_test(${testName}_Tpetra_Rythmos_BackwardEuler_RythmosSolver ${AlbanyT.exe} rythmos_be_rythmos_solver.xml)
+add_test(${testName}_Tpetra_Rythmos_BackwardEuler_NOXSolver ${AlbanyT.exe} rythmos_be_nox_solver.xml)
 add_test(${testName}_Tpetra_Rythmos_RK4 ${AlbanyT.exe} rythmos_rk4.xml)
 if (ALBANY_TEMPUS)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tempus_be.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/tempus_be.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tempus_be_nox_solver.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/tempus_be_nox_solver.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tempus_rk4.xml
                ${CMAKE_CURRENT_BINARY_DIR}/tempus_rk4.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tempus_rk4_no_piro.xml
                ${CMAKE_CURRENT_BINARY_DIR}/tempus_rk4_no_piro.xml COPYONLY)
-add_test(${testName}_Tpetra_Tempus_BackwardEuler ${AlbanyT.exe} tempus_be.xml)
+add_test(${testName}_Tpetra_Tempus_BackwardEuler_NOXSolver ${AlbanyT.exe} tempus_be_nox_solver.xml)
 add_test(${testName}_Tpetra_Tempus_RK4 ${AlbanyT.exe} tempus_rk4.xml)
 add_test(${testName}_Tpetra_Tempus_NoPiro_RK4 ${AlbanyTempus.exe} tempus_rk4_no_piro.xml)
 endif () 
