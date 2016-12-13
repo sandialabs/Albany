@@ -61,7 +61,3 @@ find albany-build-gcc-release -perm /a=x -exec chmod a+rx {} \;
 find lib -perm /a=x -exec chmod a+rx {} \; 
 find lib64 -perm /a=x -exec chmod a+rx {} \;
 find trilinos-install-gcc-release -perm /a=x -exec chmod a+rx {} \;
-
-
-
-
