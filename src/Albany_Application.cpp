@@ -221,29 +221,35 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
 
   // Save the solution method to be used
   std::string solutionMethod = problemParams->get("Solution Method", "Steady");
-  if(solutionMethod == "Steady")
+  if(solutionMethod == "Steady") {
     solMethod = Steady;
-  else if(solutionMethod == "Continuation")
+  }
+  else if(solutionMethod == "Continuation") {
     solMethod = Continuation;
-  else if(solutionMethod == "Transient")
+  }
+  else if(solutionMethod == "Transient") {
     solMethod = Transient;
+  }
+  else if(solutionMethod == "Eigensolve") {
+    solMethod = Eigensolve;
+  }
+  else if(solutionMethod == "Aeras Hyperviscosity") {
+    solMethod = Transient;
+  }
   else if(solutionMethod == "Transient Tempus" || "Transient Tempus No Piro") {
 #ifdef ALBANY_TEMPUS
     solMethod = TransientTempus;
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(true,
             std::logic_error, "Solution Method = " << solutionMethod << " is not valid because " 
-            << "Trilinos was not build with Tempus turned ON.\n");
+            << "Trilinos was not built with Tempus turned ON.\n");
 #endif
   }
-  else if(solutionMethod == "Eigensolve")
-    solMethod = Eigensolve;
-  else if(solutionMethod == "Aeras Hyperviscosity")
-    solMethod = Transient;
-  else
+  else {
     TEUCHOS_TEST_FOR_EXCEPTION(true,
             std::logic_error, "Solution Method must be Steady, Transient, Transient Tempus, Transient Tempus No Piro, "
             << "Continuation, Eigensolve, or Aeras Hyperviscosity, not : " << solutionMethod);
+  }
 
   bool expl = false;
   std::string stepperType;
