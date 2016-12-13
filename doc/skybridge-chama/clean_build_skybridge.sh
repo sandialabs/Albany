@@ -1,3 +1,5 @@
+#!/bin/bash
+
 module purge
 module load gnu/4.9.2
 module load openmpi-gnu/1.8
@@ -61,7 +63,3 @@ find albany-build-gcc-release -perm /a=x -exec chmod a+rx {} \;
 find lib -perm /a=x -exec chmod a+rx {} \; 
 find lib64 -perm /a=x -exec chmod a+rx {} \;
 find trilinos-install-gcc-release -perm /a=x -exec chmod a+rx {} \;
-
-
-
-
