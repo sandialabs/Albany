@@ -1,0 +1,121 @@
+<ParameterList>
+
+<!-- Set material per element block ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+     <ParameterList name="ElementBlocks">
+ 
+          <ParameterList name="block_1">
+
+               <Parameter name="material" 
+                          type="string" 
+                          value="base"/>
+
+               <Parameter name="Weighted Volume Average J"
+                          type="bool"
+                          value="true" />
+
+               <Parameter name="Average J Stabilization Parameter" 
+                          type="double" 
+                          value="0.0"/>
+
+               <Parameter name="Volume Average Pressure" 
+                          type="bool" 
+                          value="true"/>
+
+          </ParameterList>
+
+     </ParameterList>
+
+     <ParameterList name="Materials">
+
+          <ParameterList name="base">
+
+          <!-- MATERIAL MODEL/PROPERTIES -->
+
+               <ParameterList name="Material Model"> 
+
+                    <Parameter name="Model Name" 
+                               type="string" 
+                               value="J2"/>
+
+               </ParameterList>
+
+               <ParameterList name="Elastic Modulus">
+
+                    <Parameter name="Elastic Modulus Type"
+                               type="string" 
+                               value="Constant"/>
+
+                    <Parameter name="Value" 
+                               type="double"
+                               value="1.0e3"/>
+
+               </ParameterList>
+
+               <ParameterList name="Poissons Ratio">
+
+                    <Parameter name="Bulk Modulus Type"
+                               type="string" 
+                               value="Constant"/>
+
+                    <Parameter name="Value"
+                               type="double"
+                               value="0.33"/>
+
+               </ParameterList>
+
+               <ParameterList name="Yield Strength">
+
+                    <Parameter name="Yield Strength Type"
+                               type="string" 
+                               value="Constant"/>
+
+                    <Parameter name="Value"
+                               type="double"
+                               value="1.0e1"/>
+
+               </ParameterList>
+
+               <ParameterList name="Hardening Modulus">
+
+                    <Parameter name="Hardening Modulus Type"
+                               type="string"
+                               value="Constant"/>
+
+                    <Parameter name="Value"
+                               type="double"
+                               value="1.0e2"/>
+
+               </ParameterList>
+
+               <Parameter name="Saturation Modulus"
+                          type="double"
+                          value="0.0"/>
+
+               <Parameter name="Saturation Exponent"
+                          type="double"
+                          value="0.0"/>
+
+<!-- ~~~~~~~~~ Output Flags ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+               <Parameter name="Output Cauchy Stress"
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output Deformation Gradient"
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output Integration Weights"
+                          type="bool"
+                          value="true"/>
+
+               <Parameter name="Output eqps"
+                          type="bool"
+                          value="true"/>
+
+          </ParameterList>
+
+     </ParameterList>
+
+</ParameterList>
