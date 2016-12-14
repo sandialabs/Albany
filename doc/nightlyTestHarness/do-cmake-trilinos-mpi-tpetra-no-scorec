@@ -93,6 +93,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
       -D Kokkos_ENABLE_Pthread:BOOL=OFF \
       -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
+      -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
       -D Trilinos_ENABLE_ML:BOOL=ON \
       -D Trilinos_ENABLE_MueLu:BOOL=ON \
       -D Trilinos_ENABLE_NOX:BOOL=ON \
