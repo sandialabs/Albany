@@ -75,13 +75,13 @@ def read_file_output_exodus(
 
                     name_index = match.group(2)
                 
-                if name_base not in names_variable_node:
+                    if name_base not in names_variable_node:
 
-                    names_variable_node[name_base] = [name_index]
+                        names_variable_node[name_base] = [name_index]
 
-                else:
+                    else:
 
-                    names_variable_node[name_base].append(name_index)
+                        names_variable_node[name_base].append(name_index)
 
         # Get list of element variables
         elif name == 'elem_var_names':
@@ -143,10 +143,10 @@ def read_file_output_exodus(
 
     coords = file_input.get_coords()
 
-    for node_id in node_ids:
+    for index_node, node_id in enumerate(node_ids):
 
         domain.nodes[node_id] = lcm_postprocess.ObjNode(
-            coords = np.array([coords[x][node_id - 1] for x in range(num_dims)]))
+            coords = np.array([coords[x][index_node] for x in range(num_dims)]))
 
         node = domain.nodes[node_id]
 
@@ -154,32 +154,37 @@ def read_file_output_exodus(
 
             indices_variable = names_variable_node[name_variable_node]
 
-            if len(indices_variable) == num_dims:
+            if len(indices_variable) == num_dims: #TODO: write code to store nodal scalars, etc.
 
                 node.variables[name_variable_node] = \
                     dict([(step, np.zeros(num_dims)) for step in times])
 
-            for step in range(len(times)):
+    for name_variable_node in names_variable_node:
 
-                time = times[step]
+        for step in range(len(times)):
 
-                for dim_i in range(num_dims):
+            time = times[step]
 
-                    name_variable = name_variable_node + '_' + names_variable_node[name_variable_node][dim_i]
+            for dim_i in range(num_dims):
 
-                    values = file_input.get_node_variable_values(
-                        name_variable,
-                        step + 1)
+                name_variable = name_variable_node + '_' + names_variable_node[name_variable_node][dim_i]
 
-                    for key_node in domain.nodes:
+                values = file_input.get_node_variable_values(
+                    name_variable,
+                    step + 1)
 
-                        node = domain.nodes[key_node]
+                for index_node, key_node in enumerate(domain.nodes):
 
-                        try:
-                            node.variables[name_variable_node][time][dim_i] = values[int(key_node)-1] #FIXME: should be indexed by node id map
-                        except:
-                            print key_node
+                    node = domain.nodes[key_node]
 
+                    try:
+                        node.variables[name_variable_node][time][dim_i] = values[index_node] #FIXME: should be indexed by node id map
+                    except:
+                        print key_node
+
+#-------------------------------------------------------------------------------
+# Store the element variable values
+#-------------------------------------------------------------------------------
 
     element_start_id = 0
 
@@ -215,11 +220,11 @@ def read_file_output_exodus(
 
             connectivity, num_elements_block, num_nodes_element = file_input.get_elem_connectivity(block_id)
 
-            connectivity_array = np.reshape([x for x in connectivity], (num_elements_block, num_nodes_element))
+            connectivity_array = np.reshape([x - 1 for x in connectivity], (num_elements_block, num_nodes_element))
 
             for index_node in range(block.num_nodes_per_elem):
 
-                node_id = connectivity_array[index_element, index_node]
+                node_id = node_ids[connectivity_array[index_element, index_node]]
 
                 element.nodes[node_id] = domain.nodes[node_id]
 
@@ -257,6 +262,9 @@ def read_file_output_exodus(
     # Set the values of the variables in the domain object
     #
     for key_variable in names_variable_element:
+
+        # print 'Reading variable:'
+        # print '  ', key_variable
 
         indices_variable = names_variable_element[key_variable]
 
@@ -296,7 +304,7 @@ def read_file_output_exodus(
 
 
 # Create tensor-valued field in the domain object
-#@profile
+# @profile
 def _set_values_tensor(file_input, name_variable, indices_variable, domain):
 
     num_dims = domain.num_dims
@@ -316,6 +324,10 @@ def _set_values_tensor(file_input, name_variable, indices_variable, domain):
         num_elements_block = get_num_elements_block(file_input, key_block)
 
         block = domain.blocks[key_block]
+
+        map_element_ids = block.map_element_ids
+
+        variables_block = block.variables
 
         keys_variable = []
 
@@ -378,7 +390,7 @@ def _set_values_tensor(file_input, name_variable, indices_variable, domain):
                             point = element.points[index_point]
 
                             point.variables[name_variable][time][dim_i, dim_j] = \
-                                values_block[block.map_element_ids[key_element]]
+                                values_block[map_element_ids[key_element]]
 
                     for key_element in block.elements:
 
@@ -390,11 +402,12 @@ def _set_values_tensor(file_input, name_variable, indices_variable, domain):
 
                             element.variables[name_variable][time][dim_i, dim_j] += \
                                 point.variables[name_variable][time][dim_i, dim_j] * \
-                                point.weight / element.volume
+                                point.weight
+
+                        element.variables[name_variable][time][dim_i, dim_j] /= element.volume
 
                         block.variables[name_variable][time][dim_i, dim_j] += \
-                            element.variables[name_variable][time][dim_i, dim_j] * \
-                            element.volume / block.volume
+                            element.variables[name_variable][time][dim_i, dim_j] * element.volume / block.volume
 
                     domain.variables[name_variable][time][dim_i, dim_j] += \
                         block.variables[name_variable][time][dim_i, dim_j] * \

@@ -76,8 +76,10 @@ def read_file_input_material(
                                                 np.fromstring(
                                                     parameter.attrib['value'].translate(None,'{}'),
                                                     sep = ',')
-
-                            domain.blocks[block_id].material.orientation = orientation
+                            try:
+                                domain.blocks[block_id].material.orientation = orientation
+                            except:
+                                domain.blocks[block_id].material.orientation = np.eye(domain.num_dims)
 
         if name == 'num_slip_systems':
 

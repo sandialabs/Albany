@@ -9,8 +9,8 @@ import numpy as np
 from operator import itemgetter
 
 def set_num_ticks(axis, num_xticks = 5, num_yticks = 5, integer = (False, False)):
-    xticks = [x for x in np.linspace(axis.get_xlim()[0], axis.get_xlim()[1], 5)]
-    yticks = [y for y in np.linspace(axis.get_ylim()[0], axis.get_ylim()[1], 5)]
+    xticks = [x for x in np.linspace(axis.get_xlim()[0], axis.get_xlim()[1], num_xticks)]
+    yticks = [y for y in np.linspace(axis.get_ylim()[0], axis.get_ylim()[1], num_yticks)]
     if integer[0] is True:
         xticks = [np.floor(x) for x in xticks]
     if integer[1] is True:
@@ -189,8 +189,12 @@ def plot_data_run(run = None, filename = None):
                 values_plot[1:-1],
                 values_plot[2:])
 
-    ax.set_xscale('log')
-    ax.set_yscale('log')
+    try:
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+    except:
+        ax.set_xscale('linear')
+        ax.set_yscale('linear')
     ax.set_xlabel(r'Increment Norm $\left\| \Delta u^{(n)} \right\|$')
     ax.set_ylabel(r'Increment Norm $\left\| \Delta u^{(n+1)} \right\|$')
 
@@ -223,8 +227,12 @@ def plot_data_run(run = None, filename = None):
                 values_plot[1:-1],
                 values_plot[2:])
 
-    ax.set_xscale('log')
-    ax.set_yscale('log')
+    try:
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+    except:
+        ax.set_xscale('linear')
+        ax.set_yscale('linear')
     ax.set_ylabel(r'Residual Norm $\left\| F^{(n)} \right\|$')
     ax.set_ylabel(r'Residual Norm $\left\| F^{(n+1)} \right\|$')
 

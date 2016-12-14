@@ -141,7 +141,13 @@ def read_file_log(filename = None):
 
             match = re.search(':\s+(\d+\.\d+e[\+,-]\d+)', line)
 
-            iter_linear.norm_residual = float(match.group(1))
+            try:
+                iter_linear.norm_residual = float(match.group(1))
+            except:
+                print '***WARNING***'
+                print 'Exception while reading linear iteration line:'
+                print line
+                pass
 
             iter_nonlinear.num_iters_linear = key_iter_linear
 
