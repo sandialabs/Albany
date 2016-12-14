@@ -6,15 +6,15 @@
 
 
 /******************************************************************************/
-template<typename EvalT, Intrepid2::Index M>
+template<typename EvalT, minitensor::Index M>
 FM::DomainSwitching<EvalT, M>::DomainSwitching(
       Teuchos::Array<FM::CrystalVariant>  const & crystalVariants,
       Teuchos::Array<FM::Transition>      const & transitions,
       Teuchos::Array<RealType>            const & transBarriers,
       Teuchos::Array<RealType>            const & binFractions,
       Kokkos::DynRankView<RealType>       const & aMatrix,
-      Intrepid2::Tensor<ArgT,THREE_D>     const & x,
-      Intrepid2::Vector<ArgT,THREE_D>     const & E,
+      minitensor::Tensor<ArgT,THREE_D>     const & x,
+      minitensor::Vector<ArgT,THREE_D>     const & E,
       RealType dt)
   :
       m_crystalVariants(crystalVariants),
@@ -28,8 +28,8 @@ FM::DomainSwitching<EvalT, M>::DomainSwitching(
 
   // compute trial state
   //
-  Intrepid2::Tensor<ArgT, FM::THREE_D> X, linear_x;
-  Intrepid2::Vector<ArgT, FM::THREE_D> linear_D;
+  minitensor::Tensor<ArgT, FM::THREE_D> X, linear_x;
+  minitensor::Vector<ArgT, FM::THREE_D> linear_D;
   FM::computeInitialState(m_binFractions, m_crystalVariants,
                           m_x,X,linear_x, E,m_D,linear_D);
 
@@ -44,10 +44,10 @@ FM::DomainSwitching<EvalT, M>::DomainSwitching(
 
   // evaluate residual at current bin fractions
   //
-  Intrepid2::Vector<ArgT, FM::MAX_TRNS> zero; 
+  minitensor::Vector<ArgT, FM::MAX_TRNS> zero; 
   zero.set_dimension(nTransitions); 
   zero.clear();
-  Intrepid2::Vector<ArgT, FM::MAX_TRNS> 
+  minitensor::Vector<ArgT, FM::MAX_TRNS> 
   residual = this->gradient(zero);
 
   // find active transitions
@@ -70,38 +70,38 @@ FM::DomainSwitching<EvalT, M>::DomainSwitching(
 }
 
 /******************************************************************************/
-template<typename EvalT, Intrepid2::Index M>
-template<typename T, Intrepid2::Index N>
+template<typename EvalT, minitensor::Index M>
+template<typename T, minitensor::Index N>
 T
-FM::DomainSwitching<EvalT, M>::value(Intrepid2::Vector<T, N> const & x)
+FM::DomainSwitching<EvalT, M>::value(minitensor::Vector<T, N> const & x)
 /******************************************************************************/
 {
   return Base::value(*this, x);
 }
 
 /******************************************************************************/
-template<typename EvalT, Intrepid2::Index M>
-template<typename T, Intrepid2::Index N>
-Intrepid2::Vector<T, N>
-FM::DomainSwitching<EvalT, M>::gradient(Intrepid2::Vector<T, N> const & xi) const
+template<typename EvalT, minitensor::Index M>
+template<typename T, minitensor::Index N>
+minitensor::Vector<T, N>
+FM::DomainSwitching<EvalT, M>::gradient(minitensor::Vector<T, N> const & xi) const
 /******************************************************************************/
 {
 
-  Intrepid2::Tensor<T, FM::THREE_D> X;         X.clear();
-  Intrepid2::Tensor<T, FM::THREE_D> linear_x;  linear_x.clear();
+  minitensor::Tensor<T, FM::THREE_D> X;         X.clear();
+  minitensor::Tensor<T, FM::THREE_D> linear_x;  linear_x.clear();
 
-  Intrepid2::Vector<T, FM::THREE_D> E;         E.clear();
-  Intrepid2::Vector<T, FM::THREE_D> linear_D;  linear_D.clear();
+  minitensor::Vector<T, FM::THREE_D> E;         E.clear();
+  minitensor::Vector<T, FM::THREE_D> linear_D;  linear_D.clear();
 
   // apply transition increment
   //
   Teuchos::Array<T> fractionsNew(m_binFractions.size());
   computeBinFractions(xi, fractionsNew, m_binFractions, m_transitionMap, m_aMatrix);
 
-  Intrepid2::Tensor<T, FM::THREE_D> const
+  minitensor::Tensor<T, FM::THREE_D> const
   x_peeled = LCM::peel_tensor<EvalT, T, N, FM::THREE_D>()(m_x);
 
-  Intrepid2::Vector<T, FM::THREE_D> const
+  minitensor::Vector<T, FM::THREE_D> const
   D_peeled = LCM::peel_vector<EvalT, T, N, FM::THREE_D>()(m_D);
 
   // compute new state
@@ -111,7 +111,7 @@ FM::DomainSwitching<EvalT, M>::gradient(Intrepid2::Vector<T, N> const & xi) cons
   // compute new residual
   //
   auto const num_unknowns = xi.get_dimension();
-  Intrepid2::Vector<T, N> residual(num_unknowns);
+  minitensor::Vector<T, N> residual(num_unknowns);
   computeResidual(residual, fractionsNew, 
                   m_transitionMap, m_transitions, m_crystalVariants,
                   m_transBarriers, m_aMatrix,
@@ -122,11 +122,11 @@ FM::DomainSwitching<EvalT, M>::gradient(Intrepid2::Vector<T, N> const & xi) cons
 
 
 /******************************************************************************/
-template<typename EvalT, Intrepid2::Index M>
-template<typename T, Intrepid2::Index N>
-Intrepid2::Tensor<T, N>
+template<typename EvalT, minitensor::Index M>
+template<typename T, minitensor::Index N>
+minitensor::Tensor<T, N>
 FM::DomainSwitching<EvalT, M>::hessian(
-    Intrepid2::Vector<T, N> const & xi)
+    minitensor::Vector<T, N> const & xi)
 /******************************************************************************/
 {
   return Base::hessian(*this,xi);
@@ -138,9 +138,9 @@ FM::DomainSwitching<EvalT, M>::hessian(
 /******************************************************************************/
 template<typename DataT>
 void 
-FM::changeBasis(       Intrepid2::Tensor4<DataT, FM::THREE_D>& inMatlBasis, 
-                 const Intrepid2::Tensor4<DataT, FM::THREE_D>& inGlobalBasis,
-                 const Intrepid2::Tensor <DataT, FM::THREE_D>& R)
+FM::changeBasis(       minitensor::Tensor4<DataT, FM::THREE_D>& inMatlBasis, 
+                 const minitensor::Tensor4<DataT, FM::THREE_D>& inGlobalBasis,
+                 const minitensor::Tensor <DataT, FM::THREE_D>& R)
 /******************************************************************************/
 {
     int num_dims = R.get_dimension();
@@ -158,9 +158,9 @@ FM::changeBasis(       Intrepid2::Tensor4<DataT, FM::THREE_D>& inMatlBasis,
 /******************************************************************************/
 template<typename DataT>
 void
-FM::changeBasis(       Intrepid2::Tensor3<DataT, FM::THREE_D>& inMatlBasis, 
-                 const Intrepid2::Tensor3<DataT, FM::THREE_D>& inGlobalBasis,
-                 const Intrepid2::Tensor <DataT, FM::THREE_D>& R)
+FM::changeBasis(       minitensor::Tensor3<DataT, FM::THREE_D>& inMatlBasis, 
+                 const minitensor::Tensor3<DataT, FM::THREE_D>& inGlobalBasis,
+                 const minitensor::Tensor <DataT, FM::THREE_D>& R)
 /******************************************************************************/
 {
     int num_dims = R.get_dimension();
@@ -176,9 +176,9 @@ FM::changeBasis(       Intrepid2::Tensor3<DataT, FM::THREE_D>& inMatlBasis,
 /******************************************************************************/
 template<typename DataT>
 void
-FM::changeBasis(       Intrepid2::Tensor<DataT, FM::THREE_D>& inMatlBasis, 
-                 const Intrepid2::Tensor<DataT, FM::THREE_D>& inGlobalBasis,
-                 const Intrepid2::Tensor<DataT, FM::THREE_D>& R)
+FM::changeBasis(       minitensor::Tensor<DataT, FM::THREE_D>& inMatlBasis, 
+                 const minitensor::Tensor<DataT, FM::THREE_D>& inGlobalBasis,
+                 const minitensor::Tensor<DataT, FM::THREE_D>& R)
 /******************************************************************************/
 {
     int num_dims = R.get_dimension();
@@ -192,9 +192,9 @@ FM::changeBasis(       Intrepid2::Tensor<DataT, FM::THREE_D>& inMatlBasis,
 /******************************************************************************/
 template<typename DataT>
 void 
-FM::changeBasis(       Intrepid2::Vector<DataT, FM::THREE_D>& inMatlBasis, 
-                 const Intrepid2::Vector<DataT, FM::THREE_D>& inGlobalBasis,
-                 const Intrepid2::Tensor<DataT, FM::THREE_D>& R)
+FM::changeBasis(       minitensor::Vector<DataT, FM::THREE_D>& inMatlBasis, 
+                 const minitensor::Vector<DataT, FM::THREE_D>& inGlobalBasis,
+                 const minitensor::Tensor<DataT, FM::THREE_D>& R)
 /******************************************************************************/
 {
     int num_dims = R.get_dimension();
@@ -208,16 +208,16 @@ FM::changeBasis(       Intrepid2::Vector<DataT, FM::THREE_D>& inMatlBasis,
 /******************************************************************************/
 template<typename NLS, typename DataT>
 void 
-FM::DescentNorm(NLS & nls, Intrepid2::Vector<DataT, FM::MAX_TRNS> & xi){}
+FM::DescentNorm(NLS & nls, minitensor::Vector<DataT, FM::MAX_TRNS> & xi){}
 /******************************************************************************/
 
 /******************************************************************************/
 template<typename NLS, typename DataT>
 void 
-FM::ScaledDescent(NLS & nls, Intrepid2::Vector<DataT, FM::MAX_TRNS> & xi)
+FM::ScaledDescent(NLS & nls, minitensor::Vector<DataT, FM::MAX_TRNS> & xi)
 /******************************************************************************/
 {
-//  Intrepid2::Vector<ArgT, FM::MAX_TRNS> 
+//  minitensor::Vector<ArgT, FM::MAX_TRNS> 
 //  residual = nls.gradient(xi);
 }
 
@@ -226,7 +226,7 @@ FM::ScaledDescent(NLS & nls, Intrepid2::Vector<DataT, FM::MAX_TRNS> & xi)
 template<typename DataT, typename ArgT>
 void
 FM::computeBinFractions(
-    Intrepid2::Vector<ArgT, FM::MAX_TRNS> const & xi,
+    minitensor::Vector<ArgT, FM::MAX_TRNS> const & xi,
     Teuchos::Array<ArgT>                        & newFractions,
     Teuchos::Array<DataT>                 const & oldFractions,
     Teuchos::Array<int>                   const & transitionMap,
@@ -251,20 +251,20 @@ void
 FM::computeInitialState(
     Teuchos::Array<RealType>            const & fractions,
     Teuchos::Array<FM::CrystalVariant>  const & crystalVariants,
-    Intrepid2::Tensor<ArgT,FM::THREE_D> const & x, 
-    Intrepid2::Tensor<ArgT,FM::THREE_D>       & X, 
-    Intrepid2::Tensor<ArgT,FM::THREE_D>       & linear_x,
-    Intrepid2::Vector<ArgT,FM::THREE_D> const & E, 
-    Intrepid2::Vector<ArgT,FM::THREE_D>       & D, 
-    Intrepid2::Vector<ArgT,FM::THREE_D>       & linear_D)
+    minitensor::Tensor<ArgT,FM::THREE_D> const & x, 
+    minitensor::Tensor<ArgT,FM::THREE_D>       & X, 
+    minitensor::Tensor<ArgT,FM::THREE_D>       & linear_x,
+    minitensor::Vector<ArgT,FM::THREE_D> const & E, 
+    minitensor::Vector<ArgT,FM::THREE_D>       & D, 
+    minitensor::Vector<ArgT,FM::THREE_D>       & linear_D)
 /******************************************************************************/
 {
-  Intrepid2::Tensor4<ArgT,FM::THREE_D> C; C.clear();
-  Intrepid2::Tensor3<ArgT,FM::THREE_D> h; h.clear();
-  Intrepid2::Tensor <ArgT,FM::THREE_D> b; b.clear();
+  minitensor::Tensor4<ArgT,FM::THREE_D> C; C.clear();
+  minitensor::Tensor3<ArgT,FM::THREE_D> h; h.clear();
+  minitensor::Tensor <ArgT,FM::THREE_D> b; b.clear();
 
-  Intrepid2::Tensor <ArgT,FM::THREE_D> remanent_x; remanent_x.clear();
-  Intrepid2::Vector <ArgT,FM::THREE_D> remanent_D; remanent_D.clear();
+  minitensor::Tensor <ArgT,FM::THREE_D> remanent_x; remanent_x.clear();
+  minitensor::Vector <ArgT,FM::THREE_D> remanent_D; remanent_D.clear();
 
   int nVariants = crystalVariants.size();
   for(int i=0; i<nVariants; i++){
@@ -276,7 +276,7 @@ FM::computeInitialState(
     b += fractions[i]*variant.b;
   }
 
-  Intrepid2::Tensor<ArgT,FM::THREE_D> eps = Intrepid2::inverse(b);
+  minitensor::Tensor<ArgT,FM::THREE_D> eps = minitensor::inverse(b);
 
   linear_x = x - remanent_x;
 
@@ -292,20 +292,20 @@ void
 FM::computeRelaxedState(
     Teuchos::Array<ArgT>                const & fractions,
     Teuchos::Array<FM::CrystalVariant>  const & crystalVariants,
-    Intrepid2::Tensor<ArgT,FM::THREE_D> const & x, 
-    Intrepid2::Tensor<ArgT,FM::THREE_D>       & X, 
-    Intrepid2::Tensor<ArgT,FM::THREE_D>       & linear_x,
-    Intrepid2::Vector<ArgT,FM::THREE_D>       & E, 
-    Intrepid2::Vector<ArgT,FM::THREE_D> const & D, 
-    Intrepid2::Vector<ArgT,FM::THREE_D>       & linear_D)
+    minitensor::Tensor<ArgT,FM::THREE_D> const & x, 
+    minitensor::Tensor<ArgT,FM::THREE_D>       & X, 
+    minitensor::Tensor<ArgT,FM::THREE_D>       & linear_x,
+    minitensor::Vector<ArgT,FM::THREE_D>       & E, 
+    minitensor::Vector<ArgT,FM::THREE_D> const & D, 
+    minitensor::Vector<ArgT,FM::THREE_D>       & linear_D)
 /******************************************************************************/
 {
-  Intrepid2::Tensor4<ArgT,FM::THREE_D> C; C.clear();
-  Intrepid2::Tensor3<ArgT,FM::THREE_D> h; h.clear();
-  Intrepid2::Tensor <ArgT,FM::THREE_D> b; b.clear();
+  minitensor::Tensor4<ArgT,FM::THREE_D> C; C.clear();
+  minitensor::Tensor3<ArgT,FM::THREE_D> h; h.clear();
+  minitensor::Tensor <ArgT,FM::THREE_D> b; b.clear();
 
-  Intrepid2::Tensor <ArgT,FM::THREE_D> remanent_x; remanent_x.clear();
-  Intrepid2::Vector <ArgT,FM::THREE_D> remanent_D; remanent_D.clear();
+  minitensor::Tensor <ArgT,FM::THREE_D> remanent_x; remanent_x.clear();
+  minitensor::Vector <ArgT,FM::THREE_D> remanent_D; remanent_D.clear();
 
   int nVariants = crystalVariants.size();
   for(int i=0; i<nVariants; i++){
@@ -329,17 +329,17 @@ FM::computeRelaxedState(
 template<typename DataT, typename ArgT>
 void
 FM::computeResidual(
-    Intrepid2::Vector<ArgT, FM::MAX_TRNS>       & residual,
+    minitensor::Vector<ArgT, FM::MAX_TRNS>       & residual,
     Teuchos::Array<ArgT>                  const & fractions,
     Teuchos::Array<int>                   const & transitionMap,
     Teuchos::Array<FM::Transition>        const & transitions,
     Teuchos::Array<FM::CrystalVariant>    const & crystalVariants,
     Teuchos::Array<DataT>                 const & tBarrier,
     Kokkos::DynRankView<DataT>            const & aMatrix,
-    Intrepid2::Tensor<ArgT,FM::THREE_D>   const & X, 
-    Intrepid2::Tensor<ArgT,FM::THREE_D>   const & linear_x,
-    Intrepid2::Vector<ArgT,FM::THREE_D>   const & E,
-    Intrepid2::Vector<ArgT,FM::THREE_D>   const & linear_D)
+    minitensor::Tensor<ArgT,FM::THREE_D>   const & X, 
+    minitensor::Tensor<ArgT,FM::THREE_D>   const & linear_x,
+    minitensor::Vector<ArgT,FM::THREE_D>   const & E,
+    minitensor::Vector<ArgT,FM::THREE_D>   const & linear_D)
 /******************************************************************************/
 {
   int nVariants = fractions.size();

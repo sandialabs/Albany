@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include <Phalanx_DataLayout.hpp>
 #include <Teuchos_TestForException.hpp>
 
@@ -87,17 +87,17 @@ namespace LCM {
   void SurfaceScalarGradientOperator<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    Intrepid2::Vector<MeshScalarT> Parent_Grad_plus(3);
-    Intrepid2::Vector<MeshScalarT> Parent_Grad_minor(3);
+    minitensor::Vector<MeshScalarT> Parent_Grad_plus(3);
+    minitensor::Vector<MeshScalarT> Parent_Grad_minor(3);
 
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int pt=0; pt < numQPs; ++pt) {
 
-        Intrepid2::Tensor<MeshScalarT> gBasis(3, refDualBasis,cell, pt,0,0);
+        minitensor::Tensor<MeshScalarT> gBasis(3, refDualBasis,cell, pt,0,0);
 
-        Intrepid2::Vector<MeshScalarT> N(3, refNormal,cell, pt,0);
+        minitensor::Vector<MeshScalarT> N(3, refNormal,cell, pt,0);
 
-        gBasis = Intrepid2::transpose(gBasis);
+        gBasis = minitensor::transpose(gBasis);
 
         // in-plane (parallel) contribution
         for (int node(0); node < numPlaneNodes; ++node) {
@@ -115,8 +115,8 @@ namespace LCM {
           Parent_Grad_minor(numPlaneDims) = -invh * refValues(node,pt);
 
           // Mapping from parent to the physical domain
-          Intrepid2::Vector<MeshScalarT> Transformed_Grad_plus(Intrepid2::dot(gBasis, Parent_Grad_plus));
-          Intrepid2::Vector<MeshScalarT> Transformed_Grad_minor(Intrepid2::dot(gBasis,Parent_Grad_minor));
+          minitensor::Vector<MeshScalarT> Transformed_Grad_plus(minitensor::dot(gBasis, Parent_Grad_plus));
+          minitensor::Vector<MeshScalarT> Transformed_Grad_minor(minitensor::dot(gBasis,Parent_Grad_minor));
 
           // assign components to MDfield ScalarGrad
           for (int j(0); j < numDims; ++j ){

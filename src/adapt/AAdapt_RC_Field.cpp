@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Phalanx_MDField.hpp"
-#include "Intrepid2_MiniTensor_Tensor.h"
+#include "MiniTensor_Tensor.h"
 #include "AAdapt_RC_DataTypes_impl.hpp"
 #include "Albany_Layouts.hpp"
 #include "AAdapt_RC_Manager.hpp"
@@ -72,8 +72,8 @@ void Field<2>::addTo (typename Tensor<ad_type, 2>::type& f_incr,
 
 namespace {
 template<typename ad_type> struct MultiplyWork {
-  Intrepid2::Tensor<ad_type> f_incr_mt;
-  Intrepid2::Tensor<RealType> f_accum_mt;
+  minitensor::Tensor<ad_type> f_incr_mt;
+  minitensor::Tensor<RealType> f_accum_mt;
   MultiplyWork(const std::size_t dim) : f_incr_mt(dim), f_accum_mt(dim) {}
 };
 
@@ -85,7 +85,7 @@ multiplyIntoImpl (
 {
   loopf(i0, 2) loopf(i1, 3) w.f_incr_mt(i0, i1) = f_incr(cell, qp, i0, i1);
   loopf(i0, 2) loopf(i1, 3) w.f_accum_mt(i0, i1) = f_(cell, qp, i0, i1);
-  Intrepid2::Tensor<ad_type> C = Intrepid2::dot(w.f_incr_mt, w.f_accum_mt);
+  minitensor::Tensor<ad_type> C = minitensor::dot(w.f_incr_mt, w.f_accum_mt);
   loopf(i0, 2) loopf(i1, 3) f_incr(cell, qp, i0, i1) = C(i0, i1);  
 }
 } // namespace

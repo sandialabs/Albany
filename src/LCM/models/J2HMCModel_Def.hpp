@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Utils.hpp"
@@ -291,16 +291,16 @@ void J2HMCModel<EvalT, Traits>::radialReturn( typename Traits::EvalData workset,
 {
   // macro 
   ScalarT macroAlpha;
-  Intrepid2::Tensor<ScalarT> elTrialMacroStress(num_dims_);
-  Intrepid2::Tensor<ScalarT> macroBackStress(num_dims_);
+  minitensor::Tensor<ScalarT> elTrialMacroStress(num_dims_);
+  minitensor::Tensor<ScalarT> macroBackStress(num_dims_);
 
   std::vector<ScalarT> microAlpha(numMicroScales);
-  std::vector<Intrepid2::Tensor<ScalarT>> elTrialMicroStress(numMicroScales);
-  std::vector<Intrepid2::Tensor<ScalarT>> microBackStress(numMicroScales);
+  std::vector<minitensor::Tensor<ScalarT>> elTrialMicroStress(numMicroScales);
+  std::vector<minitensor::Tensor<ScalarT>> microBackStress(numMicroScales);
 
   std::vector<ScalarT> doubleAlpha(numMicroScales);
-  std::vector<Intrepid2::Tensor3<ScalarT>> elTrialDoubleStress(numMicroScales);
-  std::vector<Intrepid2::Tensor3<ScalarT>> doubleBackStress(numMicroScales);
+  std::vector<minitensor::Tensor3<ScalarT>> elTrialDoubleStress(numMicroScales);
+  std::vector<minitensor::Tensor3<ScalarT>> doubleBackStress(numMicroScales);
 
   for(int i=0; i<numMicroScales; i++){
     elTrialMicroStress[i].set_dimension(num_dims_);
@@ -413,13 +413,13 @@ void J2HMCModel<EvalT, Traits>::radialReturn( typename Traits::EvalData workset,
         // update macro scale
         ScalarT dGamma(0.0);
         if(yieldMask[0]) dGamma = X[0];
-        Intrepid2::Tensor<ScalarT> returnDir = devNorm(elTrialMacroStress - macroBackStress);
+        minitensor::Tensor<ScalarT> returnDir = devNorm(elTrialMacroStress - macroBackStress);
         macroAlpha += dGamma;
         // JR: todo: create a plasticity submodel object to encapsulate this.
         // Hval = macroKinematicHardening->H(macroAlpha);
         Hval = macroKinematicModulus*macroAlpha;
         macroBackStress += sq32*dGamma*Hval*returnDir;
-        elTrialMacroStress -= dGamma * Intrepid2::dotdot(macroCelastic,returnDir);
+        elTrialMacroStress -= dGamma * minitensor::dotdot(macroCelastic,returnDir);
         new_macroAlpha(cell,qp) = macroAlpha;
         for(int i=0; i<num_dims_; i++)
           for(int j=0; j<num_dims_; j++){
@@ -433,13 +433,13 @@ void J2HMCModel<EvalT, Traits>::radialReturn( typename Traits::EvalData workset,
           int xIndex = 2*ims+1;
           if(yieldMask[xIndex]){ 
             ScalarT dGamma = X[yieldMap[xIndex]];
-            Intrepid2::Tensor<ScalarT> returnDir = devNorm(elTrialMicroStress[ims] - microBackStress[ims]);
+            minitensor::Tensor<ScalarT> returnDir = devNorm(elTrialMicroStress[ims] - microBackStress[ims]);
             microAlpha[ims] += dGamma;
             // JR: todo: create a plasticity submodel object to encapsulate this.
             // Hval = microKinematicHardening->H(microAlpha[ims]);
             Hval = microKinematicModulus[ims]*microAlpha[ims];
             microBackStress[ims] += sq32*dGamma*Hval*returnDir;
-            elTrialMicroStress[ims] -= dGamma * Intrepid2::dotdot(microCelastic[ims],returnDir);
+            elTrialMicroStress[ims] -= dGamma * minitensor::dotdot(microCelastic[ims],returnDir);
           }
           new_microAlpha[ims](cell,qp) = microAlpha[ims];
           for(int i=0; i<num_dims_; i++)
@@ -452,7 +452,7 @@ void J2HMCModel<EvalT, Traits>::radialReturn( typename Traits::EvalData workset,
           xIndex = 2*ims+2;
           if(yieldMask[xIndex]){
             ScalarT dGamma = X[yieldMap[xIndex]];
-            Intrepid2::Tensor3<ScalarT> returnDir = devNorm(elTrialDoubleStress[ims] - doubleBackStress[ims]);
+            minitensor::Tensor3<ScalarT> returnDir = devNorm(elTrialDoubleStress[ims] - doubleBackStress[ims]);
             doubleAlpha[ims] += dGamma;
             // JR: todo: create a plasticity submodel object to encapsulate this.
             // Hval = doubleKinematicHardening->H(doubleAlpha[ims]);
@@ -529,14 +529,14 @@ template<typename EvalT, typename Traits>
 void J2HMCModel<EvalT, Traits>::computeResidualandJacobian(
   std::vector<int> & yieldMask, std::vector<int> & yieldMap,
   std::vector<ScalarT> & X, std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX,
-  Intrepid2::Tensor<ScalarT> & elTrialMacroStress,
-  Intrepid2::Tensor<ScalarT> & macroBackStress, 
+  minitensor::Tensor<ScalarT> & elTrialMacroStress,
+  minitensor::Tensor<ScalarT> & macroBackStress, 
   ScalarT & alpha,
-  std::vector<Intrepid2::Tensor<ScalarT>> & elTrialMicroStress,
-  std::vector<Intrepid2::Tensor<ScalarT>> & microBackStress, 
+  std::vector<minitensor::Tensor<ScalarT>> & elTrialMicroStress,
+  std::vector<minitensor::Tensor<ScalarT>> & microBackStress, 
   std::vector<ScalarT> & microAlpha,
-  std::vector<Intrepid2::Tensor3<ScalarT>> & elTrialDoubleStress,
-  std::vector<Intrepid2::Tensor3<ScalarT>> & doubleBackStress, 
+  std::vector<minitensor::Tensor3<ScalarT>> & elTrialDoubleStress,
+  std::vector<minitensor::Tensor3<ScalarT>> & doubleBackStress, 
   std::vector<ScalarT> & doubleAlpha)
 /******************************************************************************/
 {
@@ -553,11 +553,11 @@ void J2HMCModel<EvalT, Traits>::computeResidualandJacobian(
 
   // Macro scale
   if( yieldMask[0] > 0 ){
-    Intrepid2::Tensor<ScalarT> returnDir = devNorm(elTrialMacroStress - macroBackStress);
-    Intrepid2::Tensor<ScalarT> stressDir;
-    stressDir = Intrepid2::dotdot(macroCelastic, returnDir);
+    minitensor::Tensor<ScalarT> returnDir = devNorm(elTrialMacroStress - macroBackStress);
+    minitensor::Tensor<ScalarT> stressDir;
+    stressDir = minitensor::dotdot(macroCelastic, returnDir);
     DFadType dGamma = Xfad[0];
-    Intrepid2::Tensor<DFadType> stressNew(num_dims_);
+    minitensor::Tensor<DFadType> stressNew(num_dims_);
     for(size_t i=0; i<num_dims_; i++)
       for(size_t j=0; j<num_dims_; j++)
         stressNew(i,j) = elTrialMacroStress(i,j) - dGamma * stressDir(i,j);
@@ -567,7 +567,7 @@ void J2HMCModel<EvalT, Traits>::computeResidualandJacobian(
     //  DFadType Kval = macroIsotropicHardening->K(alphaNew);
     DFadType Hval = macroKinematicModulus*alphaNew;
     DFadType Kval = macroYieldStress0 + macroIsotropicModulus*alphaNew;
-    Intrepid2::Tensor<DFadType> backStressNew(num_dims_); 
+    minitensor::Tensor<DFadType> backStressNew(num_dims_); 
     for(size_t i=0; i<num_dims_; i++)
       for(size_t j=0; j<num_dims_; j++)
         backStressNew(i,j) = macroBackStress(i,j) + sq32*dGamma*Hval*returnDir(i,j);
@@ -582,10 +582,10 @@ void J2HMCModel<EvalT, Traits>::computeResidualandJacobian(
     xIndex = 2*ims+1;
     if( yieldMask[xIndex] > 0 ){
       xIndex = yieldMap[xIndex];
-      Intrepid2::Tensor<ScalarT> returnDir = devNorm(elTrialMicroStress[ims] - microBackStress[ims]);
-      Intrepid2::Tensor<ScalarT> stressDir = Intrepid2::dotdot(microCelastic[ims], returnDir);
+      minitensor::Tensor<ScalarT> returnDir = devNorm(elTrialMicroStress[ims] - microBackStress[ims]);
+      minitensor::Tensor<ScalarT> stressDir = minitensor::dotdot(microCelastic[ims], returnDir);
       DFadType dGamma = Xfad[xIndex];
-      Intrepid2::Tensor<DFadType> stressNew(num_dims_);
+      minitensor::Tensor<DFadType> stressNew(num_dims_);
       for(size_t i=0; i<num_dims_; i++)
         for(size_t j=0; j<num_dims_; j++)
           stressNew(i,j) = elTrialMicroStress[ims](i,j) - dGamma * stressDir(i,j);
@@ -595,7 +595,7 @@ void J2HMCModel<EvalT, Traits>::computeResidualandJacobian(
       //  DFadType Kval = microIsotropicHardening[ims]->(alphaNew);
        DFadType Hval = microKinematicModulus[ims]*alphaNew;
        DFadType Kval = microYieldStress0[ims] + microIsotropicModulus[ims]*alphaNew;
-      Intrepid2::Tensor<DFadType> microBackStressNew(num_dims_);
+      minitensor::Tensor<DFadType> microBackStressNew(num_dims_);
       for(size_t i=0; i<num_dims_; i++)
         for(size_t j=0; j<num_dims_; j++)
           microBackStressNew(i,j) = microBackStress[ims](i,j) + sq32*dGamma*Hval*returnDir(i,j);
@@ -608,12 +608,12 @@ void J2HMCModel<EvalT, Traits>::computeResidualandJacobian(
     xIndex = 2*ims+2;
     if( yieldMask[xIndex] > 0 ){
       xIndex = yieldMap[xIndex];
-      Intrepid2::Tensor3<ScalarT> returnDir = devNorm(elTrialDoubleStress[ims] - doubleBackStress[ims]);
+      minitensor::Tensor3<ScalarT> returnDir = devNorm(elTrialDoubleStress[ims] - doubleBackStress[ims]);
       returnDir *= a/lengthScale[ims];
-      Intrepid2::Tensor3<ScalarT> stressDir;
+      minitensor::Tensor3<ScalarT> stressDir;
       stressDir = dotdotdot(doubleCelastic[ims], returnDir);
       DFadType dGamma = Xfad[xIndex];
-      Intrepid2::Tensor3<DFadType> stressNew(num_dims_);
+      minitensor::Tensor3<DFadType> stressNew(num_dims_);
       for(size_t i=0; i<num_dims_; i++)
         for(size_t j=0; j<num_dims_; j++)
           for(size_t k=0; k<num_dims_; k++)
@@ -624,7 +624,7 @@ void J2HMCModel<EvalT, Traits>::computeResidualandJacobian(
  //     DFadType Kval = doubleIsotropicHardening[ims]->(alphaNew);
        DFadType Hval = doubleKinematicModulus[ims]*alphaNew;
        DFadType Kval = doubleYieldStress0[ims] + doubleIsotropicModulus[ims]*alphaNew;
-      Intrepid2::Tensor3<DFadType> doubleBackStressNew(num_dims_);
+      minitensor::Tensor3<DFadType> doubleBackStressNew(num_dims_);
       for(size_t i=0; i<num_dims_; i++)
         for(size_t j=0; j<num_dims_; j++)
           for(size_t k=0; k<num_dims_; k++)
@@ -649,7 +649,7 @@ void J2HMCModel<EvalT, Traits>::computeResidualandJacobian(
 template<typename EvalT, typename Traits>
 template<typename T>
 T J2HMCModel<EvalT, Traits>::
-devMag( const Intrepid2::Tensor<T> & t )
+devMag( const minitensor::Tensor<T> & t )
 /******************************************************************************/
 {
   // returns magnitude of the deviatoric part
@@ -677,7 +677,7 @@ devMag( const Intrepid2::Tensor<T> & t )
 template<typename EvalT, typename Traits>
 template<typename T>
 T J2HMCModel<EvalT, Traits>::
-devMag( const Intrepid2::Tensor3<T> & t )
+devMag( const minitensor::Tensor3<T> & t )
 /******************************************************************************/
 {
   // returns magnitude of the deviatoric part
@@ -706,13 +706,13 @@ devMag( const Intrepid2::Tensor3<T> & t )
 /******************************************************************************/
 template<typename EvalT, typename Traits>
 template<typename T>
-Intrepid2::Tensor<T> J2HMCModel<EvalT, Traits>::
-devNorm( const Intrepid2::Tensor<T> & t )
+minitensor::Tensor<T> J2HMCModel<EvalT, Traits>::
+devNorm( const minitensor::Tensor<T> & t )
 /******************************************************************************/
 {
   // returns normalized deviatoric part
 
-  Intrepid2::Tensor<T> n(t);
+  minitensor::Tensor<T> n(t);
 
   int dim = t.get_dimension();
   T tr = 0.0;
@@ -732,13 +732,13 @@ devNorm( const Intrepid2::Tensor<T> & t )
 /******************************************************************************/
 template<typename EvalT, typename Traits>
 template<typename T>
-Intrepid2::Tensor3<T> J2HMCModel<EvalT, Traits>::
-devNorm( const Intrepid2::Tensor3<T> & t )
+minitensor::Tensor3<T> J2HMCModel<EvalT, Traits>::
+devNorm( const minitensor::Tensor3<T> & t )
 /******************************************************************************/
 {
   // returns normalized deviatoric part
 
-  Intrepid2::Tensor3<T> n(t);
+  minitensor::Tensor3<T> n(t);
 
   int dim = t.get_dimension();
   T tr;
@@ -761,14 +761,14 @@ devNorm( const Intrepid2::Tensor3<T> & t )
 
 /******************************************************************************/
 template<typename EvalT, typename Traits>
-Intrepid2::Tensor3<typename EvalT::ScalarT>
+minitensor::Tensor3<typename EvalT::ScalarT>
 J2HMCModel<EvalT, Traits>::
 dotdotdot( 
-  Intrepid2::Tensor4<ScalarT> & C,            
-  Intrepid2::Tensor3<ScalarT> & dir)
+  minitensor::Tensor4<ScalarT> & C,            
+  minitensor::Tensor3<ScalarT> & dir)
 /******************************************************************************/
 {
-  Intrepid2::Tensor3<ScalarT> retVal(num_dims_);
+  minitensor::Tensor3<ScalarT> retVal(num_dims_);
 
   for(int k=0; k<num_dims_; k++)
     for(int i=0; i<num_dims_; i++)
@@ -785,15 +785,15 @@ dotdotdot(
 template<typename EvalT, typename Traits>
 void J2HMCModel<EvalT, Traits>::
 yieldFunction( std::vector<typename EvalT::ScalarT>&      Fval,
-               Intrepid2::Tensor<ScalarT>&                 macStress, 
+               minitensor::Tensor<ScalarT>&                 macStress, 
                ScalarT&                                   macroAlpha,
-               Intrepid2::Tensor<ScalarT>&                 macroBackStress,
-               std::vector< Intrepid2::Tensor<ScalarT>>&  micStress,
+               minitensor::Tensor<ScalarT>&                 macroBackStress,
+               std::vector< minitensor::Tensor<ScalarT>>&  micStress,
                std::vector<ScalarT>&                      microAlpha,
-               std::vector< Intrepid2::Tensor<ScalarT>>&  microBackStress,
-               std::vector< Intrepid2::Tensor3<ScalarT>>& doubleStress,
+               std::vector< minitensor::Tensor<ScalarT>>&  microBackStress,
+               std::vector< minitensor::Tensor3<ScalarT>>& doubleStress,
                std::vector<ScalarT>&                      doubleAlpha,
-               std::vector< Intrepid2::Tensor3<ScalarT>>& doubleBackStress)
+               std::vector< minitensor::Tensor3<ScalarT>>& doubleBackStress)
 /******************************************************************************/
 {
 
@@ -1076,8 +1076,8 @@ computeVolumeAverage(typename Traits::EvalData workset,
 /******************************************************************************/
 {
 
-  Intrepid2::Tensor<ScalarT> sig(num_dims_);
-  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
+  minitensor::Tensor<ScalarT> sig(num_dims_);
+  minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
 
   std::string cauchy("Stress");
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy];
@@ -1088,7 +1088,7 @@ computeVolumeAverage(typename Traits::EvalData workset,
     volume = pbar = 0.0;
     for (int pt(0); pt < num_pts_; ++pt) {
       sig.fill(stress,cell,pt,0,0);
-      pbar += weights_(cell,pt) * (1./num_dims_) * Intrepid2::trace(sig);
+      pbar += weights_(cell,pt) * (1./num_dims_) * minitensor::trace(sig);
       volume += weights_(cell,pt);
     }
 
@@ -1096,7 +1096,7 @@ computeVolumeAverage(typename Traits::EvalData workset,
 
     for (int pt(0); pt < num_pts_; ++pt) {
       sig.fill(stress,cell,pt,0,0);
-      p = (1./num_dims_) * Intrepid2::trace(sig);
+      p = (1./num_dims_) * minitensor::trace(sig);
       sig += (pbar - p)*I;
 
       for (int i = 0; i < num_dims_; ++i) {

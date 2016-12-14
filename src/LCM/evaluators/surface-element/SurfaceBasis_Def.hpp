@@ -3,7 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "Intrepid2_MiniTensor.h"
+#include "MiniTensor.h"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -202,26 +202,26 @@ computeBasisVectors(Kokkos::DynRankView<ST, PHX::Device> const & midplane_coords
 {
   for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
     // get the midplane coordinates
-    std::vector<Intrepid2::Vector<ST>>
+    std::vector<minitensor::Vector<ST>>
     midplane_nodes(num_surf_nodes_);
 
     for (int node(0); node < num_surf_nodes_; ++node) {
       midplane_nodes[node] =
-          Intrepid2::Vector<ST>(3, midplane_coords, cell, node, 0);
+          minitensor::Vector<ST>(3, midplane_coords, cell, node, 0);
     }
 
-    Intrepid2::Vector<ST>
+    minitensor::Vector<ST>
     g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
 
     //compute the base vectors
     for (int pt(0); pt < num_qps_; ++pt) {
-      g_0.fill(Intrepid2::ZEROS);
-      g_1.fill(Intrepid2::ZEROS);
+      g_0.fill(minitensor::ZEROS);
+      g_1.fill(minitensor::ZEROS);
       for (int node(0); node < num_surf_nodes_; ++node) {
         g_0 += ref_grads_(node, pt, 0) * midplane_nodes[node];
         g_1 += ref_grads_(node, pt, 1) * midplane_nodes[node];
       }
-      g_2 = Intrepid2::unit(Intrepid2::cross(g_0, g_1));
+      g_2 = minitensor::unit(minitensor::cross(g_0, g_1));
 
       basis(cell, pt, 0, 0) = g_0(0);
       basis(cell, pt, 0, 1) = g_0(1);
@@ -250,25 +250,25 @@ computeDualBasisVectors(
 {
   int worksetSize = midplane_coords.dimension(0);
 
-  Intrepid2::Vector<MeshScalarT>
+  minitensor::Vector<MeshScalarT>
   g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
 
-  Intrepid2::Vector<MeshScalarT>
+  minitensor::Vector<MeshScalarT>
   g0(0, 0, 0), g1(0, 0, 0), g2(0, 0, 0);
 
   for (int cell(0); cell < worksetSize; ++cell) {
     for (int pt(0); pt < num_qps_; ++pt) {
-      g_0 = Intrepid2::Vector<MeshScalarT>(3, basis, cell, pt, 0, 0);
-      g_1 = Intrepid2::Vector<MeshScalarT>(3, basis, cell, pt, 1, 0);
-      g_2 = Intrepid2::Vector<MeshScalarT>(3, basis, cell, pt, 2, 0);
+      g_0 = minitensor::Vector<MeshScalarT>(3, basis, cell, pt, 0, 0);
+      g_1 = minitensor::Vector<MeshScalarT>(3, basis, cell, pt, 1, 0);
+      g_2 = minitensor::Vector<MeshScalarT>(3, basis, cell, pt, 2, 0);
 
       normal(cell, pt, 0) = g_2(0);
       normal(cell, pt, 1) = g_2(1);
       normal(cell, pt, 2) = g_2(2);
 
-      g0 = Intrepid2::cross(g_1, g_2);
-      g1 = Intrepid2::cross(g_0, g_2);
-      g2 = Intrepid2::cross(g_0, g_1);
+      g0 = minitensor::cross(g_1, g_2);
+      g1 = minitensor::cross(g_0, g_2);
+      g2 = minitensor::cross(g_0, g_1);
 
       g0 = g0 / dot(g_0, g0);
       g1 = g1 / dot(g_1, g1);
@@ -302,14 +302,14 @@ computeJacobian(
 
   for (int cell(0); cell < worksetSize; ++cell) {
     for (int pt(0); pt < num_qps_; ++pt) {
-      Intrepid2::Tensor<MeshScalarT> dPhiInv(3, dual_basis, cell, pt, 0, 0);
-      Intrepid2::Tensor<MeshScalarT> dPhi(3, basis, cell, pt, 0, 0);
-      Intrepid2::Vector<MeshScalarT> G_2(3, basis, cell, pt, 2, 0);
-      MeshScalarT j0 = Intrepid2::det(dPhi);
+      minitensor::Tensor<MeshScalarT> dPhiInv(3, dual_basis, cell, pt, 0, 0);
+      minitensor::Tensor<MeshScalarT> dPhi(3, basis, cell, pt, 0, 0);
+      minitensor::Vector<MeshScalarT> G_2(3, basis, cell, pt, 2, 0);
+      MeshScalarT j0 = minitensor::det(dPhi);
       MeshScalarT jacobian = j0
           * std::sqrt(
-              Intrepid2::dot(
-                  Intrepid2::dot(G_2, Intrepid2::transpose(dPhiInv) * dPhiInv),
+              minitensor::dot(
+                  minitensor::dot(G_2, minitensor::transpose(dPhiInv) * dPhiInv),
                   G_2));
       area(cell, pt) = jacobian * ref_weights_(pt);
     }

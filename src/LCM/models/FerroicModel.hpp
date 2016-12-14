@@ -33,17 +33,17 @@ public:
   //
   void
   computeState(
-      const Intrepid2::Tensor<ScalarT, FM::THREE_D>& x,
-      const Intrepid2::Vector<ScalarT, FM::THREE_D>& E,
+      const minitensor::Tensor<ScalarT, FM::THREE_D>& x,
+      const minitensor::Vector<ScalarT, FM::THREE_D>& E,
       const Teuchos::Array<RealType>& oldfractions,
-            Intrepid2::Tensor<ScalarT, FM::THREE_D>& X,
-            Intrepid2::Vector<ScalarT, FM::THREE_D>& D,
+            minitensor::Tensor<ScalarT, FM::THREE_D>& X,
+            minitensor::Vector<ScalarT, FM::THREE_D>& D,
             Teuchos::Array<ScalarT>& newfractions);
      
 
   // Accessors
   //
-  Intrepid2::Tensor<RealType, FM::THREE_D>&          
+  minitensor::Tensor<RealType, FM::THREE_D>&          
   getBasis() { return R; }
 
   Teuchos::Array<RealType>&
@@ -77,7 +77,7 @@ private:
 
   // parameters
   //
-  Intrepid2::Tensor<RealType, FM::THREE_D>        R;
+  minitensor::Tensor<RealType, FM::THREE_D>        R;
   Teuchos::Array<Teuchos::RCP<FM::CrystalPhase> > crystalPhases;
   Teuchos::Array<FM::CrystalVariant>              crystalVariants;
   Teuchos::Array<FM::Transition>                  transitions;
@@ -89,7 +89,7 @@ private:
   //
   IntegrationType       m_integrationType;
   ExplicitMethod        m_explicitMethod;
-  Intrepid2::StepType   m_step_type;
+  minitensor::StepType   m_step_type;
 
   RealType              m_implicit_nonlinear_solver_relative_tolerance_;
   RealType              m_implicit_nonlinear_solver_absolute_tolerance_;

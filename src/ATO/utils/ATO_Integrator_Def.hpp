@@ -5,7 +5,7 @@
 //*****************************************************************/
 
 #include <Shards_CellTopology.hpp>
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include <Shards_CellTopologyData.h>
 #include <map>
 #include <Intrepid2_HGRAD_TET_C1_FEM.hpp>
@@ -614,18 +614,18 @@ void SubIntegrator::SortMap<RealType>(const std::vector<typename Vector3D<RealTy
   // sort by counterclockwise angle about surface normal
   RealType pi = acos(-1.0);
   typename Vector3D<RealType>::Type X(points[0]-center);
-  RealType xnorm = Intrepid2::norm(X);
+  RealType xnorm = minitensor::norm(X);
   X /= xnorm;
   bool foundNormal = false;
   typename Vector3D<RealType>::Type Y, Z;
   for(uint i=1; i<nPoints; i++){
     typename Vector3D<RealType>::Type X1(points[i]-center);
-    Z = Intrepid2::cross(X, X1);
-    RealType znorm = Intrepid2::norm(Z);
+    Z = minitensor::cross(X, X1);
+    RealType znorm = minitensor::norm(Z);
     if( znorm == 0 ) continue;
     foundNormal = true;
     Z /= znorm;
-    Y = Intrepid2::cross(Z, X);
+    Y = minitensor::cross(Z, X);
     break;
   }
 
@@ -638,7 +638,7 @@ void SubIntegrator::SortMap<RealType>(const std::vector<typename Vector3D<RealTy
   angles.insert( std::pair<RealType, uint>(0.0,0) );
   for(uint i=1; i<nPoints; i++){
     typename Vector3D<RealType>::Type comp = points[i] - center;
-    RealType compnorm = Intrepid2::norm(comp);
+    RealType compnorm = minitensor::norm(comp);
     comp /= compnorm;
     RealType prod = X*comp;
     RealType angle = acos((float)prod);
@@ -687,12 +687,12 @@ bool SubIntegrator::areColinear<RealType>(
   center /= nPoints;
      
   typename Vector3D<RealType>::Type X(points[0]-center);
-  RealType xnorm = Intrepid2::norm(X);
+  RealType xnorm = minitensor::norm(X);
   X /= xnorm;
   for(uint i=1; i<nPoints; i++){
     typename Vector3D<RealType>::Type X1(points[i]-center);
-    typename Vector3D<RealType>::Type Z = Intrepid2::cross(X, X1);
-    RealType znorm = Intrepid2::norm(Z);
+    typename Vector3D<RealType>::Type Z = minitensor::cross(X, X1);
+    RealType znorm = minitensor::norm(Z);
     if(znorm != 0) return false;
   }
 
@@ -739,7 +739,7 @@ void ATO::Integrator::getSurfaceTris(
     for(uint edge=0; edge<nEdges; edge++){
       uint i = cellData.edge[edge].node[0], j = cellData.edge[edge].node[1];
       if((topoVals(i)-zeroVal)*(topoVals(j)-zeroVal) < 0.0){
-        Vector3D newpoint(Intrepid2::ZEROS);
+        Vector3D newpoint(minitensor::ZEROS);
         RealType factor = fabs(topoVals(i)-zeroVal)/(fabs(topoVals(i)-zeroVal)+fabs(topoVals(j)-zeroVal));
         for(int k=0; k<nDims; k++) newpoint(k) = (1.0-factor)*coordCon(i,k) + factor*coordCon(j,k);
         std::pair<int,int> newIntx(i,j);
@@ -871,19 +871,19 @@ void ATO::Integrator::trisFromPoly(
   // sort by counterclockwise angle about surface normal
   RealType pi = acos(-1.0);
   Vector3D X(polyPoints[0]-center);
-  RealType xnorm = Intrepid2::norm(X);
+  RealType xnorm = minitensor::norm(X);
   X /= xnorm;
   Vector3D X1(polyPoints[1]-center);
-  Vector3D Z = Intrepid2::cross(X, X1);
-  RealType znorm = Intrepid2::norm(Z);
+  Vector3D Z = minitensor::cross(X, X1);
+  RealType znorm = minitensor::norm(Z);
   Z /= znorm;
-  Vector3D Y = Intrepid2::cross(Z, X);
+  Vector3D Y = minitensor::cross(Z, X);
 
   std::map<RealType, uint> angles;
   angles.insert( std::pair<RealType, uint>(0.0,0) );
   for(uint i=1; i<nPoints; i++){
     Vector3D comp = polyPoints[i] - center;
-    RealType compnorm = Intrepid2::norm(comp);
+    RealType compnorm = minitensor::norm(comp);
     comp /= compnorm;
     RealType prod = X*comp;
     RealType angle = acos((float)prod);
@@ -936,7 +936,7 @@ void ATO::Integrator::partitionBySegment(
     }
     std::vector<int> map = poly->mapToBase;
     Vector3D relvec = pnt[0] - p1;
-    Vector3D dotvec = Intrepid2::cross(relvec,crossvec);
+    Vector3D dotvec = minitensor::cross(relvec,crossvec);
 
     Teuchos::RCP<MiniPoly> apoly = Teuchos::rcp(new MiniPoly);
     Teuchos::RCP<MiniPoly> bpoly = Teuchos::rcp(new MiniPoly);
@@ -948,7 +948,7 @@ void ATO::Integrator::partitionBySegment(
     amap.push_back(map[0]);
     for(int pt=1; pt<npoints; pt++){
       Vector3D relvec = pnt[pt] - p1;
-      RealType proj = dotvec*Intrepid2::cross(relvec,crossvec);
+      RealType proj = dotvec*minitensor::cross(relvec,crossvec);
       if(proj > 0.0){
         apnt.push_back(pnt[pt]);
         amap.push_back(map[pt]);
@@ -980,7 +980,7 @@ RealType ATO::Integrator::getTriMeasure(
          const Tri& tri)
 //******************************************************************************//
 {
-  return Intrepid2::norm(Intrepid2::cross(points[tri(1)]-points[tri(0)],points[tri(2)]-points[tri(0)]))/2.0;
+  return minitensor::norm(minitensor::cross(points[tri(1)]-points[tri(0)],points[tri(2)]-points[tri(0)]))/2.0;
 }
 
 //******************************************************************************//

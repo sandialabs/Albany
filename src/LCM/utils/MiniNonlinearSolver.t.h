@@ -11,41 +11,41 @@ namespace LCM
 // Native MiniSolver
 //
 template<
-    typename MIN, typename STEP, typename FN, typename EvalT, Intrepid2::Index N>
+    typename MIN, typename STEP, typename FN, typename EvalT, minitensor::Index N>
 MiniSolver<MIN, STEP, FN, EvalT, N>::
 MiniSolver(
     MIN & minimizer,
     STEP & step_method,
     FN & function,
-    Intrepid2::Vector<typename EvalT::ScalarT, N> & soln)
+    minitensor::Vector<typename EvalT::ScalarT, N> & soln)
 {
   MT_ERROR_EXIT("Missing specialization for MiniSolver class.");
   return;
 }
 
-template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+template<typename MIN, typename STEP, typename FN, minitensor::Index N>
 MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::Residual, N>::
 MiniSolver(
     MIN & minimizer,
     STEP & step_method,
     FN & function,
-    Intrepid2::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln)
+    minitensor::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln)
 {
   minimizer.solve(step_method, function, soln);
   return;
 }
 
-template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+template<typename MIN, typename STEP, typename FN, minitensor::Index N>
 MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::Jacobian, N>::
 MiniSolver(
     MIN & minimizer,
     STEP & step_method,
     FN & function,
-    Intrepid2::Vector<PHAL::AlbanyTraits::Jacobian::ScalarT, N> & soln)
+    minitensor::Vector<PHAL::AlbanyTraits::Jacobian::ScalarT, N> & soln)
 {
   // Make sure that if Albany is compiled with a static FAD type
   // there won't be confusion with MiniSolver's FAD.
-  using AD = Intrepid2::FAD<RealType, N>;
+  using AD = minitensor::FAD<RealType, N>;
 
   using T = PHAL::AlbanyTraits::Jacobian::ScalarT;
 
@@ -55,8 +55,8 @@ MiniSolver(
 
   using ValueT = typename Sacado::ValueType<T>::type;
 
-  Intrepid2::Vector<ValueT, N>
-  soln_val = Sacado::Value<Intrepid2::Vector<T, N>>::eval(soln);
+  minitensor::Vector<ValueT, N>
+  soln_val = Sacado::Value<minitensor::Vector<T, N>>::eval(soln);
 
   minimizer.solve(step_method, function, soln_val);
 
@@ -69,11 +69,11 @@ MiniSolver(
   }
 
   // Get the Hessian evaluated at the solution.
-  Intrepid2::Tensor<ValueT, N>
+  minitensor::Tensor<ValueT, N>
   DrDx = function.hessian(soln_val);
 
   // Now compute gradient with solution that has Albany sensitivities.
-  Intrepid2::Vector<T, N>
+  minitensor::Vector<T, N>
   resi = function.gradient(soln);
 
   // Solve for solution sensitivities.
@@ -82,17 +82,17 @@ MiniSolver(
   return;
 }
 
-template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+template<typename MIN, typename STEP, typename FN, minitensor::Index N>
 MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::Tangent, N>::
 MiniSolver(
     MIN & minimizer,
     STEP & step_method,
     FN & function,
-    Intrepid2::Vector<PHAL::AlbanyTraits::Tangent::ScalarT, N> & soln)
+    minitensor::Vector<PHAL::AlbanyTraits::Tangent::ScalarT, N> & soln)
 {
   // Make sure that if Albany is compiled with a static FAD type
   // there won't be confusion with MiniSolver's FAD.
-  using AD = Intrepid2::FAD<RealType, N>;
+  using AD = minitensor::FAD<RealType, N>;
 
   using T = PHAL::AlbanyTraits::Tangent::ScalarT;
 
@@ -102,8 +102,8 @@ MiniSolver(
 
   using ValueT = typename Sacado::ValueType<T>::type;
 
-  Intrepid2::Vector<ValueT, N>
-  soln_val = Sacado::Value<Intrepid2::Vector<T, N>>::eval(soln);
+  minitensor::Vector<ValueT, N>
+  soln_val = Sacado::Value<minitensor::Vector<T, N>>::eval(soln);
 
   minimizer.solve(step_method, function, soln_val);
 
@@ -116,11 +116,11 @@ MiniSolver(
   }
 
   // Get the Hessian evaluated at the solution.
-  Intrepid2::Tensor<ValueT, N>
+  minitensor::Tensor<ValueT, N>
   DrDx = function.hessian(soln_val);
 
   // Now compute gradient with solution that has Albany sensitivities.
-  Intrepid2::Vector<T, N>
+  minitensor::Vector<T, N>
   resi = function.gradient(soln);
 
   // Solve for solution sensitivities.
@@ -129,13 +129,13 @@ MiniSolver(
   return;
 }
 
-template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+template<typename MIN, typename STEP, typename FN, minitensor::Index N>
 MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::DistParamDeriv, N>::
 MiniSolver(
     MIN & minimizer,
     STEP & step_method,
     FN & function,
-    Intrepid2::Vector<PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln)
+    minitensor::Vector<PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln)
 {
   return;
 }
@@ -143,44 +143,44 @@ MiniSolver(
 //
 // MiniSolver through ROL.
 //
-template<typename MIN, typename FN, typename EvalT, Intrepid2::Index N>
+template<typename MIN, typename FN, typename EvalT, minitensor::Index N>
 MiniSolverROL<MIN, FN, EvalT, N>::
 MiniSolverROL(
     MIN & minimizer,
     std::string const & algoname,
     Teuchos::ParameterList & params,
     FN & function,
-    Intrepid2::Vector<typename EvalT::ScalarT, N> & soln)
+    minitensor::Vector<typename EvalT::ScalarT, N> & soln)
 {
   MT_ERROR_EXIT("Missing specialization for MiniSolver class.");
   return;
 }
 
-template<typename MIN, typename FN, Intrepid2::Index N>
+template<typename MIN, typename FN, minitensor::Index N>
 MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::Residual, N>::
 MiniSolverROL(
     MIN & minimizer,
     std::string const & algoname,
     Teuchos::ParameterList & params,
     FN & function,
-    Intrepid2::Vector<typename PHAL::AlbanyTraits::Residual::ScalarT, N> & soln)
+    minitensor::Vector<typename PHAL::AlbanyTraits::Residual::ScalarT, N> & soln)
 {
   minimizer.solve(algoname, params, function, soln);
   return;
 }
 
-template<typename MIN, typename FN, Intrepid2::Index N>
+template<typename MIN, typename FN, minitensor::Index N>
 MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::Jacobian, N>::
 MiniSolverROL(
     MIN & minimizer,
     std::string const & algoname,
     Teuchos::ParameterList & params,
     FN & function,
-    Intrepid2::Vector<typename PHAL::AlbanyTraits::Jacobian::ScalarT, N> & soln)
+    minitensor::Vector<typename PHAL::AlbanyTraits::Jacobian::ScalarT, N> & soln)
 {
   // Make sure that if Albany is compiled with a static FAD type
   // there won't be confusion with MiniSolver's FAD.
-  using AD = Intrepid2::FAD<RealType, N>;
+  using AD = minitensor::FAD<RealType, N>;
 
   using T = PHAL::AlbanyTraits::Jacobian::ScalarT;
 
@@ -190,8 +190,8 @@ MiniSolverROL(
 
   using ValueT = typename Sacado::ValueType<T>::type;
 
-  Intrepid2::Vector<ValueT, N>
-  soln_val = Sacado::Value<Intrepid2::Vector<T, N>>::eval(soln);
+  minitensor::Vector<ValueT, N>
+  soln_val = Sacado::Value<minitensor::Vector<T, N>>::eval(soln);
 
   minimizer.solve(algoname, params, function, soln_val);
 
@@ -204,11 +204,11 @@ MiniSolverROL(
   }
 
   // Get the Hessian evaluated at the solution.
-  Intrepid2::Tensor<ValueT, N>
+  minitensor::Tensor<ValueT, N>
   DrDx = function.hessian(soln_val);
 
   // Now compute gradient with solution that has Albany sensitivities.
-  Intrepid2::Vector<T, N>
+  minitensor::Vector<T, N>
   resi = function.gradient(soln);
 
   // Solve for solution sensitivities.
@@ -217,18 +217,18 @@ MiniSolverROL(
   return;
 }
 
-template<typename MIN, typename FN, Intrepid2::Index N>
+template<typename MIN, typename FN, minitensor::Index N>
 MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::Tangent, N>::
 MiniSolverROL(
     MIN & minimizer,
     std::string const & algoname,
     Teuchos::ParameterList & params,
     FN & function,
-    Intrepid2::Vector<typename PHAL::AlbanyTraits::Tangent::ScalarT, N> & soln)
+    minitensor::Vector<typename PHAL::AlbanyTraits::Tangent::ScalarT, N> & soln)
 {
   // Make sure that if Albany is compiled with a static FAD type
   // there won't be confusion with MiniSolver's FAD.
-  using AD = Intrepid2::FAD<RealType, N>;
+  using AD = minitensor::FAD<RealType, N>;
 
   using T = PHAL::AlbanyTraits::Jacobian::ScalarT;
 
@@ -238,8 +238,8 @@ MiniSolverROL(
 
   using ValueT = typename Sacado::ValueType<T>::type;
 
-  Intrepid2::Vector<ValueT, N>
-  soln_val = Sacado::Value<Intrepid2::Vector<T, N>>::eval(soln);
+  minitensor::Vector<ValueT, N>
+  soln_val = Sacado::Value<minitensor::Vector<T, N>>::eval(soln);
 
   minimizer.solve(algoname, params, function, soln_val);
 
@@ -252,11 +252,11 @@ MiniSolverROL(
   }
 
   // Get the Hessian evaluated at the solution.
-  Intrepid2::Tensor<ValueT, N>
+  minitensor::Tensor<ValueT, N>
   DrDx = function.hessian(soln_val);
 
   // Now compute gradient with solution that has Albany sensitivities.
-  Intrepid2::Vector<T, N>
+  minitensor::Vector<T, N>
   resi = function.gradient(soln);
 
   // Solve for solution sensitivities.
@@ -265,14 +265,14 @@ MiniSolverROL(
   return;
 }
 
-template<typename MIN, typename FN, Intrepid2::Index N>
+template<typename MIN, typename FN, minitensor::Index N>
 MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::DistParamDeriv, N>::
 MiniSolverROL(
     MIN & minimizer,
     std::string const & algoname,
     Teuchos::ParameterList & params,
     FN & function,
-    Intrepid2::Vector<typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln)
+    minitensor::Vector<typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln)
 {
   return;
 }
@@ -280,12 +280,12 @@ MiniSolverROL(
 //
 //
 //
-template<typename T, typename S, Intrepid2::Index N>
+template<typename T, typename S, minitensor::Index N>
 void
 computeFADInfo(
-    Intrepid2::Vector<T, N> const & r,
-    Intrepid2::Tensor<S, N> const & DrDx,
-    Intrepid2::Vector<T, N> & x)
+    minitensor::Vector<T, N> const & r,
+    minitensor::Tensor<S, N> const & DrDx,
+    minitensor::Vector<T, N> & x)
 {
   // Check whether dealing with AD type.
   if (Sacado::IsADType<T>::value == false) return;
@@ -303,7 +303,7 @@ computeFADInfo(
   if (order == 0) return;
 
   // Extract sensitivities of r wrt p
-  Intrepid2::Matrix<S, N>
+  minitensor::Matrix<S, N>
   DrDp(dimension, order);
 
   for (auto i = 0; i < dimension; ++i) {
@@ -313,8 +313,8 @@ computeFADInfo(
   }
 
   // Solve for all DxDp
-  Intrepid2::Matrix<S, N>
-  DxDp = Intrepid2::solve(DrDx, DrDp);
+  minitensor::Matrix<S, N>
+  DxDp = minitensor::solve(DrDx, DrDp);
 
   // Pack into x.
   for (auto i = 0; i < dimension; ++i) {

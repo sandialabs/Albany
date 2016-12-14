@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -154,7 +154,7 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
 //
 // template<typename EvalT>
 // class EVNLS:
-//     public Intrepid2::Function_Base<EVNLS<EvalT>, typename EvalT::ScalarT>
+//     public minitensor::Function_Base<EVNLS<EvalT>, typename EvalT::ScalarT>
 // {
 //   using S = typename EvalT::ScalarT;
 
@@ -175,7 +175,7 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
 //       // mubar_(mubar),
 //       // Y_(Y)
 //       RealType dt,
-//       Intrepid2::Tensor<S,3> const & s,
+//       minitensor::Tensor<S,3> const & s,
 //       S const & Y,
 //       S const & H,
 //       S const & Rd,
@@ -187,7 +187,7 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
 //   {
 //   }
 
-//   static constexpr Intrepid2::Index
+//   static constexpr minitensor::Index
 //   DIMENSION{5};
 
 //   static constexpr
@@ -195,20 +195,20 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
 //   NAME{"ElastoViscoplastic NLS"};
 
 //   // Default value.
-//   template<typename T, Intrepid2::Index N>
+//   template<typename T, minitensor::Index N>
 //   T
-//   value(Intrepid2::Vector<T, N> const & x)
+//   value(minitensor::Vector<T, N> const & x)
 //   {
-//     return Intrepid2::Function_Base<EVNLS<EvalT>, S>::value(*this, x);
+//     return minitensor::Function_Base<EVNLS<EvalT>, S>::value(*this, x);
 //   }
 
 //   // Explicit gradient.
-//   template<typename T, Intrepid2::Index N>
-//   Intrepid2::Vector<T, N>
-//   gradient(Intrepid2::Vector<T, N> const & x)
+//   template<typename T, minitensor::Index N>
+//   minitensor::Vector<T, N>
+//   gradient(minitensor::Vector<T, N> const & x)
 //   {
 //     // Firewalls.
-//     Intrepid2::Index const
+//     minitensor::Index const
 //     dimension = x.get_dimension();
 
 //     assert(dimension == DIMENSION);
@@ -229,7 +229,7 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
 //     Y = peel<EvalT, T, N>()(Y_);
 
 //     // This is the actual computation of the gradient.
-//     Intrepid2::Vector<T, N>
+//     minitensor::Vector<T, N>
 //     r(dimension);
 
 //     T const &
@@ -250,11 +250,11 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
 //   }
 
 //   // Default AD hessian.
-//   template<typename T, Intrepid2::Index N>
-//   Intrepid2::Tensor<T, N>
-//   hessian(Intrepid2::Vector<T, N> const & x)
+//   template<typename T, minitensor::Index N>
+//   minitensor::Tensor<T, N>
+//   hessian(minitensor::Vector<T, N> const & x)
 //   {
-//     return Intrepid2::Function_Base<EVNLS<EvalT>, S>::hessian(*this, x);
+//     return minitensor::Function_Base<EVNLS<EvalT>, S>::hessian(*this, x);
 //   }
 
 //   // Constants.
@@ -351,12 +351,12 @@ computeState(typename Traits::EvalData workset,
   
   // pre-define some tensors that will be re-used below
   //
-  Intrepid2::Tensor<ScalarT> F(num_dims_), be(num_dims_), bebar(num_dims_);
-  Intrepid2::Tensor<ScalarT> s(num_dims_), sigma(num_dims_);
-  Intrepid2::Tensor<ScalarT> N(num_dims_), A(num_dims_);
-  Intrepid2::Tensor<ScalarT> expA(num_dims_), Fpnew(num_dims_);
-  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
-  Intrepid2::Tensor<ScalarT> Fpn(num_dims_), Cpinv(num_dims_), Fpinv(num_dims_);
+  minitensor::Tensor<ScalarT> F(num_dims_), be(num_dims_), bebar(num_dims_);
+  minitensor::Tensor<ScalarT> s(num_dims_), sigma(num_dims_);
+  minitensor::Tensor<ScalarT> N(num_dims_), A(num_dims_);
+  minitensor::Tensor<ScalarT> expA(num_dims_), Fpnew(num_dims_);
+  minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
+  minitensor::Tensor<ScalarT> Fpn(num_dims_), Cpinv(num_dims_), Fpinv(num_dims_);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
@@ -420,22 +420,22 @@ computeState(typename Traits::EvalData workset,
         //
         // calculate \f$ Cp_n^{-1} \f$
         //
-        Cpinv = Intrepid2::inverse(Fpn) * Intrepid2::transpose(Intrepid2::inverse(Fpn));
+        Cpinv = minitensor::inverse(Fpn) * minitensor::transpose(minitensor::inverse(Fpn));
 
         // calculate \f$ b^{e} = F {C^{p}}^{-1} F^{T} \f$
         //
-        be = F * Cpinv * Intrepid2::transpose(F);
+        be = F * Cpinv * minitensor::transpose(F);
 
         // calculate the determinant of the deformation gradient: \f$ J = det[F] \f$
         //
-        ScalarT Je = std::sqrt(Intrepid2::det(be));
+        ScalarT Je = std::sqrt(minitensor::det(be));
         bebar = std::pow(Je, -2.0/3.0) * be;
-        ScalarT mubar = Intrepid2::trace(be) * mu / (num_dims_);
+        ScalarT mubar = minitensor::trace(be) * mu / (num_dims_);
 
         // calculate trial deviatoric stress \f$ s^{tr} = \mu dev(b^{e}) \f$
         //
-        s = mu * Intrepid2::dev(bebar);
-        ScalarT smag = Intrepid2::norm(s);
+        s = mu * minitensor::dev(bebar);
+        ScalarT smag = minitensor::norm(s);
 
         // calculate trial (Kirchhoff) pressure
         //
@@ -452,7 +452,7 @@ computeState(typename Traits::EvalData workset,
 
         // Gurson quadratic yield surface
         //
-        ScalarT Phi = 0.5 * Intrepid2::dotdot(s,s) - psi * Ybar * Ybar / 3.0;
+        ScalarT Phi = 0.5 * minitensor::dotdot(s,s) - psi * Ybar * Ybar / 3.0;
 
 #ifdef PRINT_DEBUG
         std::cout << "        F:\n" << F << std::endl;
@@ -528,17 +528,17 @@ computeState(typename Traits::EvalData workset,
           // this is specifically for the nonlinear solve for our constitutive model
           // create a copy of be as a Fad
           //
-          Intrepid2::Tensor<Fad> beF(num_dims_);
+          minitensor::Tensor<Fad> beF(num_dims_);
           for (std::size_t i = 0; i < num_dims_; ++i) {
             for (std::size_t j = 0; j < num_dims_; ++j) {
               beF(i, j) = be(i, j);
             }
           }
-          Fad two_mubarF = 2.0 * Intrepid2::trace(beF) * mu / (num_dims_);
+          Fad two_mubarF = 2.0 * minitensor::trace(beF) * mu / (num_dims_);
 
           // FIXME this seems to be necessary to get PhiF to compile below
           // need to look into this more, it appears to be a conflict
-          // between the Intrepid2::norm and FadType operations
+          // between the minitensor::norm and FadType operations
           //
           Fad smagF = smag;
 
@@ -595,7 +595,7 @@ computeState(typename Traits::EvalData workset,
 
             // deviatoric stress
             // 
-            Intrepid2::Tensor<Fad> sF(num_dims_);
+            minitensor::Tensor<Fad> sF(num_dims_);
             for (int k(0); k < num_dims_; ++k) {
               for (int l(0); l < num_dims_; ++l ) {
                 sF(k,l) = factor * s(k,l);
@@ -605,8 +605,8 @@ computeState(typename Traits::EvalData workset,
             // shear dependent term for void growth
             //
             Fad omega(0.0), taue(0.0), smag(0.0);
-            Fad J3 = Intrepid2::det(sF);
-            Fad smag2 = Intrepid2::dotdot(sF,sF);
+            Fad J3 = minitensor::det(sF);
+            Fad smag2 = minitensor::dotdot(sF,sF);
             if ( smag2 > 0.0 ) {
               smag = std::sqrt(smag2);
               taue = sq32 * smag;
@@ -829,8 +829,8 @@ computeState(typename Traits::EvalData workset,
           Ybar = Je * (Y + kappa);
           arg = 1.5 * q2_ * p / Ybar;
           ScalarT sinh_arg = std::min(std::sinh(arg), max_value);
-          Intrepid2::Tensor<ScalarT> dPhi = s + 1.0 / 3.0 * q1_ * q2_ * Ybar * fstar * sinh_arg * I;
-          Fpnew = Intrepid2::exp(dgam * dPhi) * Fpn;
+          minitensor::Tensor<ScalarT> dPhi = s + 1.0 / 3.0 * q1_ * q2_ * Ybar * fstar * sinh_arg * I;
+          Fpnew = minitensor::exp(dgam * dPhi) * Fpn;
           for (std::size_t i(0); i < num_dims_; ++i) {
             for (std::size_t j(0); j < num_dims_; ++j) {
               Fp_field(cell, pt, i, j) = Fpnew(i, j);
@@ -888,7 +888,7 @@ computeState(typename Traits::EvalData workset,
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
         F.fill(def_grad_field,cell,pt,0,0);
-        ScalarT J = Intrepid2::det(F);
+        ScalarT J = minitensor::det(F);
         sigma.fill(stress_field,cell,pt,0,0);
         sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
           * (temperature_(cell,pt) - ref_temperature_) * I;

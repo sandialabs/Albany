@@ -3,7 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Utils.hpp"
@@ -30,7 +30,7 @@ FerroicDriver(Teuchos::ParameterList* p,
 
   // PARSE MATERIAL BASIS
   //
-  Intrepid2::Tensor<RealType, FM::THREE_D>& R = ferroicModel->getBasis();
+  minitensor::Tensor<RealType, FM::THREE_D>& R = ferroicModel->getBasis();
   R.set_dimension(FM::THREE_D); R.clear();
   if(p->isType<Teuchos::ParameterList>("Material Basis")){
     const Teuchos::ParameterList& pBasis = p->get<Teuchos::ParameterList>("Material Basis");
@@ -56,9 +56,9 @@ FerroicDriver(Teuchos::ParameterList* p,
   int nphases = p->get<int>("Number of Phases");
   for(int i=0; i<nphases; i++){
     Teuchos::ParameterList& pParam = p->get<Teuchos::ParameterList>(Albany::strint("Phase",i+1));
-    Intrepid2::Tensor4<RealType, FM::THREE_D> C;   LCM::parseTensor4(pParam, C  );
-    Intrepid2::Tensor3<RealType, FM::THREE_D> h;   LCM::parseTensor3(pParam, h  );
-    Intrepid2::Tensor <RealType, FM::THREE_D> eps; LCM::parseTensor (pParam, eps);
+    minitensor::Tensor4<RealType, FM::THREE_D> C;   LCM::parseTensor4(pParam, C  );
+    minitensor::Tensor3<RealType, FM::THREE_D> h;   LCM::parseTensor3(pParam, h  );
+    minitensor::Tensor <RealType, FM::THREE_D> eps; LCM::parseTensor (pParam, eps);
     crystalPhases.push_back(Teuchos::rcp(new FM::CrystalPhase(R, C, h, eps)));
   }
 
@@ -198,8 +198,8 @@ computeState(typename Traits::EvalData workset,
 
   int numCells = workset.numCells;
 
-  Intrepid2::Tensor<ScalarT,FM::THREE_D> X, x;
-  Intrepid2::Vector<ScalarT,FM::THREE_D> E, D;
+  minitensor::Tensor<ScalarT,FM::THREE_D> X, x;
+  minitensor::Vector<ScalarT,FM::THREE_D> E, D;
   Teuchos::Array<RealType> oldfractions(nVariants);
   Teuchos::Array<ScalarT> newfractions(nVariants);
 
@@ -246,7 +246,7 @@ computeStateParallel(typename Traits::EvalData workset,
 
 /******************************************************************************/
 void parseBasis(const Teuchos::ParameterList& pBasis,
-                      Intrepid2::Tensor<RealType, FM::THREE_D>& R)
+                      minitensor::Tensor<RealType, FM::THREE_D>& R)
 /******************************************************************************/
 {
   if(pBasis.isType<Teuchos::Array<RealType>>("X axis")){
@@ -266,7 +266,7 @@ void parseBasis(const Teuchos::ParameterList& pBasis,
 /******************************************************************************/
 void
 parseTensor4(const Teuchos::ParameterList& cParam,
-                   Intrepid2::Tensor4<RealType, FM::THREE_D>& C)
+                   minitensor::Tensor4<RealType, FM::THREE_D>& C)
 /******************************************************************************/
 {
 
@@ -294,7 +294,7 @@ parseTensor4(const Teuchos::ParameterList& cParam,
 /******************************************************************************/
 void
 parseTensor3(const Teuchos::ParameterList& cParam,
-                   Intrepid2::Tensor3<RealType, FM::THREE_D>& h)
+                   minitensor::Tensor3<RealType, FM::THREE_D>& h)
 /******************************************************************************/
 {
   // JR:  This should be generalized to read piezoelectric tensors of various 
@@ -314,7 +314,7 @@ parseTensor3(const Teuchos::ParameterList& cParam,
 /******************************************************************************/
 void
 parseTensor(const Teuchos::ParameterList& cParam,
-                   Intrepid2::Tensor<RealType, FM::THREE_D>& e)
+                   minitensor::Tensor<RealType, FM::THREE_D>& e)
 /******************************************************************************/
 {
   // JR:  This should be generalized to read permittivity tensors of various 

@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
 #include <typeinfo>
@@ -180,15 +180,15 @@ computeState(typename Traits::EvalData workset,
   ScalarT alpha_f1, alpha_f2, alpha_m;
 
   // Define some tensors for use
-  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
-  Intrepid2::Tensor<ScalarT> F(num_dims_), s(num_dims_), b(num_dims_), C(
+  minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
+  minitensor::Tensor<ScalarT> F(num_dims_), s(num_dims_), b(num_dims_), C(
       num_dims_);
-  Intrepid2::Tensor<ScalarT> sigma_m(num_dims_), sigma_f1(num_dims_), sigma_f2(
+  minitensor::Tensor<ScalarT> sigma_m(num_dims_), sigma_f1(num_dims_), sigma_f2(
       num_dims_);
-  Intrepid2::Tensor<ScalarT> M1dyadM1(num_dims_), M2dyadM2(num_dims_);
-  Intrepid2::Tensor<ScalarT> S0_f1(num_dims_), S0_f2(num_dims_);
+  minitensor::Tensor<ScalarT> M1dyadM1(num_dims_), M2dyadM2(num_dims_);
+  minitensor::Tensor<ScalarT> S0_f1(num_dims_), S0_f2(num_dims_);
 
-  Intrepid2::Vector<ScalarT> M1(num_dims_), M2(num_dims_);
+  minitensor::Vector<ScalarT> M1(num_dims_), M2(num_dims_);
 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int pt = 0; pt < num_pts_; ++pt) {
@@ -201,8 +201,8 @@ computeState(typename Traits::EvalData workset,
       F.fill(def_grad,cell, pt,0,0);
 
       // compute deviatoric stress
-      b = F * Intrepid2::transpose(F);
-      s = mu * Jm53 * Intrepid2::dev(b);
+      b = F * minitensor::transpose(F);
+      s = mu * Jm53 * minitensor::dev(b);
       // compute pressure
       p = 0.5 * kappa * (J(cell, pt) - 1. / (J(cell, pt)));
 
@@ -211,7 +211,7 @@ computeState(typename Traits::EvalData workset,
       // compute energy for M
       energy_m(cell, pt) = 0.5 * kappa
           * (0.5 * (J(cell, pt) * J(cell, pt) - 1.0) - std::log(J(cell, pt)))
-          + 0.5 * mu * (Jm23 * Intrepid2::trace(b) - 3.0);
+          + 0.5 * mu * (Jm23 * minitensor::trace(b) - 3.0);
 
       // damage term in M
       alpha_m = energy_m_old(cell, pt);
@@ -223,7 +223,7 @@ computeState(typename Traits::EvalData workset,
       //-----------compute stress in Fibers
 
       // Right Cauchy-Green Tensor C = F^{T} * F
-      C = Intrepid2::transpose(F) * F;
+      C = minitensor::transpose(F) * F;
 
       // Fiber orientation vectors
       //
@@ -240,10 +240,10 @@ computeState(typename Traits::EvalData workset,
       M2 = M2 / norm(M2);
 
       // Anisotropic invariants I4 = M_{i} * C * M_{i}
-      I4_f1 = Intrepid2::dot(M1, Intrepid2::dot(C, M1));
-      I4_f2 = Intrepid2::dot(M2, Intrepid2::dot(C, M2));
-      M1dyadM1 = Intrepid2::dyad(M1, M1);
-      M2dyadM2 = Intrepid2::dyad(M2, M2);
+      I4_f1 = minitensor::dot(M1, minitensor::dot(C, M1));
+      I4_f2 = minitensor::dot(M2, minitensor::dot(C, M2));
+      M1dyadM1 = minitensor::dyad(M1, M1);
+      M2dyadM2 = minitensor::dyad(M2, M2);
 
       // undamaged stress (2nd PK stress)
       S0_f1 = (4.0 * k_f1_ * (I4_f1 - 1.0)
@@ -259,9 +259,9 @@ computeState(typename Traits::EvalData workset,
 
       // Fiber Cauchy stress
       sigma_f1 = (1.0 / J(cell, pt))
-          * Intrepid2::dot(F, Intrepid2::dot(S0_f1, Intrepid2::transpose(F)));
+          * minitensor::dot(F, minitensor::dot(S0_f1, minitensor::transpose(F)));
       sigma_f2 = (1.0 / J(cell, pt))
-          * Intrepid2::dot(F, Intrepid2::dot(S0_f2, Intrepid2::transpose(F)));
+          * minitensor::dot(F, minitensor::dot(S0_f2, minitensor::transpose(F)));
 
       // maximum thermodynamic forces
       alpha_f1 = energy_f1_old(cell, pt);

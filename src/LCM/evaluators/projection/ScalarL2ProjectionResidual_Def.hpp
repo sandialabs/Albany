@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 // #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Intrepid2_RealSpaceTools.hpp"
@@ -92,8 +92,8 @@ evaluateFields(typename Traits::EvalData workset)
   {
 	  for (int qp=0; qp < numQPs; ++qp)
 	  {
-		  Intrepid2::Tensor<ScalarT> F(numDims, DefGrad,cell, qp,0,0);
-		  J = Intrepid2::det(F);
+		  minitensor::Tensor<ScalarT> F(numDims, DefGrad,cell, qp,0,0);
+		  J = minitensor::det(F);
 		  tauH(cell,qp) = 0.0;
 		  for (int i=0; i<numDims; i++){
 			  tauH(cell,qp) += J*Pstress(cell, qp, i,i)/numDims;

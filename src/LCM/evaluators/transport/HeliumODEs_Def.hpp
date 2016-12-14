@@ -6,7 +6,7 @@
 #include <cmath>
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include "MaterialDatabase.h"
 
 namespace LCM
@@ -111,10 +111,10 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT dt;
   ScalarT atomic_omega;
   // Declaring tangent, residual, norms, and increment for N-R
-  Intrepid2::Tensor<ScalarT> tangent(3);
-  Intrepid2::Vector<ScalarT> residual(3);
+  minitensor::Tensor<ScalarT> tangent(3);
+  minitensor::Vector<ScalarT> residual(3);
   ScalarT norm_residual_2, norm_residual_goal_2;
-  Intrepid2::Vector<ScalarT> increment(3);
+  minitensor::Vector<ScalarT> increment(3);
 
   // tolarences and iterations for newton
   const double tolerance = 1.0e-12, tolerance_2 = tolerance * tolerance;
@@ -247,7 +247,7 @@ evaluateFields(typename Traits::EvalData workset)
         residual(2) = sb - sb_old
             - atomic_omega / eta_ * dt * (32. * pi * he_radius_ * d * n1 * n1 +
                 4.0 * pi * d * n1 * cub_tfpi * cube_root_sb * cube_root_nb2);
-        norm_residual_2 = Intrepid2::norm_square(residual);
+        norm_residual_2 = minitensor::norm_square(residual);
         norm_residual_goal_2 = tolerance_2 * norm_residual_2;
         int iter(0);
 
@@ -283,7 +283,7 @@ evaluateFields(typename Traits::EvalData workset)
                   atomic_omega * cube_root_pi2_9 / eta_ / cube_root_sb2;
 
           // find increment
-          increment = -Intrepid2::inverse(tangent) * residual;
+          increment = -minitensor::inverse(tangent) * residual;
 
           // update quantities
           n1 = n1 + increment(0);
@@ -306,7 +306,7 @@ evaluateFields(typename Traits::EvalData workset)
                       +
                       4.0 * pi * d * n1 * cub_tfpi * cube_root_sb
                           * cube_root_nb2);
-          norm_residual_2 = Intrepid2::norm_square(residual);
+          norm_residual_2 = minitensor::norm_square(residual);
           iter++;
         }
       }

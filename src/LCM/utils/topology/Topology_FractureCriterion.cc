@@ -76,11 +76,11 @@ FractureCriterionTraction::check(
   EntityVectorIndex const
   number_nodes = nodes.size();
 
-  Intrepid2::Tensor<double>
-  stress(get_space_dimension(), Intrepid2::ZEROS);
+  minitensor::Tensor<double>
+  stress(get_space_dimension(), minitensor::ZEROS);
 
-  Intrepid2::Tensor<double>
-  nodal_stress(get_space_dimension(), Intrepid2::ZEROS);
+  minitensor::Tensor<double>
+  nodal_stress(get_space_dimension(), minitensor::ZEROS);
 
   // The traction is evaluated at centroid of face, so a simple
   // average yields the value.
@@ -105,23 +105,23 @@ FractureCriterionTraction::check(
   stk::mesh::EntityId const
   face_id = get_bulk_data().identifier(interface);
 
-  Intrepid2::Vector<double> const &
+  minitensor::Vector<double> const &
   normal = getNormal(face_id);
 
-  Intrepid2::Vector<double> const
+  minitensor::Vector<double> const
   traction = stress * normal;
 
   double
-  t_n = Intrepid2::dot(traction, normal);
+  t_n = minitensor::dot(traction, normal);
 
-  Intrepid2::Vector<double> const
+  minitensor::Vector<double> const
   traction_normal = t_n * normal;
 
-  Intrepid2::Vector<double> const
+  minitensor::Vector<double> const
   traction_shear = traction - traction_normal;
 
   double const
-  t_s = Intrepid2::norm(traction_shear);
+  t_s = minitensor::norm(traction_shear);
 
   // Ignore compression
   t_n = std::max(t_n, 0.0);
@@ -132,10 +132,10 @@ FractureCriterionTraction::check(
   return effective_traction >= critical_traction_;
 }
 
-Intrepid2::Vector<double> const &
+minitensor::Vector<double> const &
 FractureCriterionTraction::getNormal(stk::mesh::EntityId const entity_id)
 {
-  std::map<stk::mesh::EntityId, Intrepid2::Vector<double>>::const_iterator
+  std::map<stk::mesh::EntityId, minitensor::Vector<double>>::const_iterator
   it = normals_.find(entity_id);
 
   assert(it != normals_.end());
@@ -160,7 +160,7 @@ FractureCriterionTraction::computeNormals()
   EntityVectorIndex const
   number_nodes = nodes.size();
 
-  std::vector<Intrepid2::Vector<double>>
+  std::vector<minitensor::Vector<double>>
   coordinates(number_nodes);
 
   const Teuchos::ArrayRCP<double> &
@@ -201,7 +201,7 @@ FractureCriterionTraction::computeNormals()
     stk::mesh::EntityVector
     nodes = get_topology().getBoundaryEntityNodes(face);
 
-    Intrepid2::Vector<double>
+    minitensor::Vector<double>
     normal(get_space_dimension());
 
     Tpetra_Map const &
@@ -235,13 +235,13 @@ FractureCriterionTraction::computeNormals()
 
         assert(lid1 < number_nodes);
 
-        Intrepid2::Vector<double>
+        minitensor::Vector<double>
         v = coordinates[lid1] - coordinates[lid0];
 
         normal(0) = -v(1);
         normal(1) = v(0);
 
-        normal = Intrepid2::unit(normal);
+        normal = minitensor::unit(normal);
       }
       break;
 
@@ -271,15 +271,15 @@ FractureCriterionTraction::computeNormals()
 
         assert(lid2 < number_nodes);
 
-        Intrepid2::Vector<double>
+        minitensor::Vector<double>
         v1 = coordinates[lid1] - coordinates[lid0];
 
-        Intrepid2::Vector<double>
+        minitensor::Vector<double>
         v2 = coordinates[lid2] - coordinates[lid0];
 
-        normal = Intrepid2::cross(v1, v2);
+        normal = minitensor::cross(v1, v2);
 
-        normal = Intrepid2::unit(normal);
+        normal = minitensor::unit(normal);
       }
       break;
 

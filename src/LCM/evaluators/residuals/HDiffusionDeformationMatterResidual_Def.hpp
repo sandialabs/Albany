@@ -9,7 +9,7 @@
 
 #include <Intrepid2_FunctionSpaceTools.hpp>
 //#include <Intrepid2_RealSpaceTools.hpp>
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 #include <typeinfo>
 
@@ -204,12 +204,12 @@ namespace LCM {
       for (int qp=0; qp < numQPs; ++qp) {
 
 
-        Intrepid2::Tensor<ScalarT> F(numDims, DefGrad,cell, qp,0,0);
-        Intrepid2::Tensor<ScalarT> C_tensor_ = Intrepid2::t_dot(F,F);
-        Intrepid2::Tensor<ScalarT> C_inv_tensor_ = Intrepid2::inverse(C_tensor_);
+        minitensor::Tensor<ScalarT> F(numDims, DefGrad,cell, qp,0,0);
+        minitensor::Tensor<ScalarT> C_tensor_ = minitensor::t_dot(F,F);
+        minitensor::Tensor<ScalarT> C_inv_tensor_ = minitensor::inverse(C_tensor_);
 
-        Intrepid2::Vector<ScalarT> C_grad_(numDims, CLGrad,cell, qp, 0);
-        Intrepid2::Vector<ScalarT> C_grad_in_ref_ = Intrepid2::dot(C_inv_tensor_, C_grad_ );
+        minitensor::Vector<ScalarT> C_grad_(numDims, CLGrad,cell, qp, 0);
+        minitensor::Vector<ScalarT> C_grad_in_ref_ = minitensor::dot(C_inv_tensor_, C_grad_ );
         temp =  ( DL(cell,qp)  + artificalDL(cell,qp)  ); //**GB changed 08/14/2015
         // Note: Now temp is the diffusivity
 
@@ -247,11 +247,11 @@ namespace LCM {
           // Need to be done: Add C_inverse term into hydrostatic residual
           // This is horribly inefficient - will refactor to a single loop 
                      
-          Intrepid2::Tensor<ScalarT> F(numDims, DefGrad,cell, qp,0,0);
-          Intrepid2::Tensor<ScalarT> C_tensor = Intrepid2::t_dot(F,F);
-          Intrepid2::Tensor<ScalarT> C_inv_tensor = Intrepid2::inverse(C_tensor);
-          Intrepid2::Vector<ScalarT> stress_grad(numDims, stressGrad, cell, qp, 0);
-          Intrepid2::Vector<ScalarT> C_inv_stress_grad = Intrepid2::dot(C_inv_tensor, stress_grad);
+          minitensor::Tensor<ScalarT> F(numDims, DefGrad,cell, qp,0,0);
+          minitensor::Tensor<ScalarT> C_tensor = minitensor::t_dot(F,F);
+          minitensor::Tensor<ScalarT> C_inv_tensor = minitensor::inverse(C_tensor);
+          minitensor::Vector<ScalarT> stress_grad(numDims, stressGrad, cell, qp, 0);
+          minitensor::Vector<ScalarT> C_inv_stress_grad = minitensor::dot(C_inv_tensor, stress_grad);
 
           for (int dim=0; dim < numDims; ++dim) {
             TResidual(cell,node) -= tauFactor(cell,qp)*Clattice(cell,qp)*

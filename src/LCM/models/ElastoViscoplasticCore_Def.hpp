@@ -9,7 +9,7 @@
 //
 // Define nonlinear system for EV with a Gurson failure surface
 //
-template<typename EvalT, Intrepid2::Index M>
+template<typename EvalT, minitensor::Index M>
 EV::ElastoViscoplasticNLS<EvalT, M>::ElastoViscoplasticNLS(
       RealType dt,
       RealType kw,
@@ -37,7 +37,7 @@ EV::ElastoViscoplasticNLS<EvalT, M>::ElastoViscoplasticNLS(
       S rate_coeff,
       S rate_exp,
       S p,
-      Intrepid2::Tensor<S, MAX_DIM> const & s)
+      minitensor::Tensor<S, MAX_DIM> const & s)
     :
     dt_(dt),
     kw_(kw),
@@ -70,36 +70,36 @@ EV::ElastoViscoplasticNLS<EvalT, M>::ElastoViscoplasticNLS(
   num_dim_ = s_.get_dimension();
 }
 
-template<typename EvalT, Intrepid2::Index M>
-template<typename T, Intrepid2::Index N>
+template<typename EvalT, minitensor::Index M>
+template<typename T, minitensor::Index N>
 T
 EV::ElastoViscoplasticNLS<EvalT, M>::value(
-    Intrepid2::Vector<T, N> const & x)
+    minitensor::Vector<T, N> const & x)
 {
   return Base::value(*this,x);
 }
 
-template<typename EvalT, Intrepid2::Index M>
-template<typename T, Intrepid2::Index N>
-Intrepid2::Vector<T, N>
+template<typename EvalT, minitensor::Index M>
+template<typename T, minitensor::Index N>
+minitensor::Vector<T, N>
 EV::ElastoViscoplasticNLS<EvalT, M>::gradient(
-    Intrepid2::Vector<T, N> const & x) const
+    minitensor::Vector<T, N> const & x) const
 {
   auto const
   num_unknowns = x.get_dimension();
 
-  Intrepid2::Vector<T, N> residual(num_unknowns);
+  minitensor::Vector<T, N> residual(num_unknowns);
 
   return residual;
 
 }
 
 // Nonlinear system, residual based on slip increments
-template<typename EvalT, Intrepid2::Index M>
-template<typename T, Intrepid2::Index N>
-Intrepid2::Tensor<T, N>
+template<typename EvalT, minitensor::Index M>
+template<typename T, minitensor::Index N>
+minitensor::Tensor<T, N>
 EV::ElastoViscoplasticNLS<EvalT, M>::hessian(
-    Intrepid2::Vector<T, N> const & x)
+    minitensor::Vector<T, N> const & x)
 {
   return Base::hessian(*this,x);
 }

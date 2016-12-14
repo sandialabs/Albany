@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -68,13 +68,13 @@ computeState(typename Traits::EvalData workset,
   ScalarT Jm53, Jm23;
   ScalarT smag;
 
-  Intrepid2::Tensor<ScalarT> F(num_dims_), b(num_dims_), sigma(num_dims_);
-  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
-  Intrepid2::Tensor<ScalarT> s(num_dims_), n(num_dims_);
+  minitensor::Tensor<ScalarT> F(num_dims_), b(num_dims_), sigma(num_dims_);
+  minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
+  minitensor::Tensor<ScalarT> s(num_dims_), n(num_dims_);
 
-  Intrepid2::Tensor4<ScalarT> dsigmadb;
-  Intrepid2::Tensor4<ScalarT> I1(Intrepid2::identity_1<ScalarT>(num_dims_));
-  Intrepid2::Tensor4<ScalarT> I3(Intrepid2::identity_3<ScalarT>(num_dims_));
+  minitensor::Tensor4<ScalarT> dsigmadb;
+  minitensor::Tensor4<ScalarT> I1(minitensor::identity_1<ScalarT>(num_dims_));
+  minitensor::Tensor4<ScalarT> I3(minitensor::identity_3<ScalarT>(num_dims_));
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
@@ -88,10 +88,10 @@ computeState(typename Traits::EvalData workset,
 
       F.fill(def_grad,cell, pt,0,0);
       b = F * transpose(F);
-      mubar = (1.0 / 3.0) * mu * Jm23 * Intrepid2::trace(b);
+      mubar = (1.0 / 3.0) * mu * Jm23 * minitensor::trace(b);
 
       sigma = 0.5 * kappa * (J(cell, pt) - 1. / J(cell, pt)) * I
-          + mu * Jm53 * Intrepid2::dev(b);
+          + mu * Jm53 * minitensor::dev(b);
 
       for (int i = 0; i < num_dims_; ++i) {
         for (int j = 0; j < num_dims_; ++j) {
@@ -104,13 +104,13 @@ computeState(typename Traits::EvalData workset,
             0.5 * kappa
                 * (0.5 * (J(cell, pt) * J(cell, pt) - 1.0)
                     - std::log(J(cell, pt)))
-                + 0.5 * mu * (Jm23 * Intrepid2::trace(b) - 3.0);
+                + 0.5 * mu * (Jm23 * minitensor::trace(b) - 3.0);
       }
 
       if (compute_tangent_) { // compute tangent
 
-        s = Intrepid2::dev(sigma);
-        smag = Intrepid2::norm(s);
+        s = minitensor::dev(sigma);
+        smag = minitensor::norm(s);
         n = s / smag;
 
         dsigmadb =
@@ -118,7 +118,7 @@ computeState(typename Traits::EvalData workset,
                 - kappa * (J(cell, pt) * J(cell, pt) - 1.0) * I1
                 + 2.0 * mubar * (I1 - (1.0 / 3.0) * I3)
                 - 2.0 / 3.0 * smag
-                    * (Intrepid2::tensor(n, I) + Intrepid2::tensor(I, n));
+                    * (minitensor::tensor(n, I) + minitensor::tensor(I, n));
 
         for (int i = 0; i < num_dims_; ++i) {
           for (int j = 0; j < num_dims_; ++j) {
@@ -137,7 +137,7 @@ computeState(typename Traits::EvalData workset,
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
         F.fill(def_grad,cell,pt,0,0);
-        ScalarT J = Intrepid2::det(F);
+        ScalarT J = minitensor::det(F);
         sigma.fill(stress,cell,pt,0,0);
         sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
           * (temperature_(cell,pt) - ref_temperature_) * I;

@@ -65,12 +65,12 @@ void ConstitutiveModelDriverPre<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   std::cout << "ConstitutiveModelDriverPre<EvalT, Traits>::evaluateFields" << std::endl;
-  Intrepid2::Tensor<ScalarT> F(num_dims_);
+  minitensor::Tensor<ScalarT> F(num_dims_);
 
   RealType alpha = Sacado::ScalarValue<ScalarT>::eval(time_(0)) / final_time_;
-  Intrepid2::Tensor<ScalarT> log_F_tensor = Intrepid2::log(F0_);
-  Intrepid2::Tensor<ScalarT> scaled_log_F_tensor = alpha * log_F_tensor;
-  Intrepid2::Tensor<ScalarT> current_F = Intrepid2::exp(scaled_log_F_tensor);
+  minitensor::Tensor<ScalarT> log_F_tensor = minitensor::log(F0_);
+  minitensor::Tensor<ScalarT> scaled_log_F_tensor = alpha * log_F_tensor;
+  minitensor::Tensor<ScalarT> current_F = minitensor::exp(scaled_log_F_tensor);
 
 
   // FIXME, I really need to figure out which components are prescribed, and
@@ -84,7 +84,7 @@ evaluateFields(typename Traits::EvalData workset)
             def_grad_(cell,pt,dim1,dim2) = solution_(cell,node,dim1,dim2);
             prescribed_def_grad_(cell,pt,dim1,dim2) = current_F(dim1,dim2);
             F.fill(def_grad_,cell,pt,0,0);
-            j_(cell,pt) = Intrepid2::det(F);
+            j_(cell,pt) = minitensor::det(F);
           }
         }
       }
@@ -94,12 +94,12 @@ evaluateFields(typename Traits::EvalData workset)
 
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
-Intrepid2::Tensor<typename EvalT::ScalarT>
+minitensor::Tensor<typename EvalT::ScalarT>
 ConstitutiveModelDriverPre<EvalT, Traits>::
 computeLoading(std::string load_case, double inc)
 {
-  Intrepid2::Tensor<ScalarT> F0(num_dims_);
-  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
+  minitensor::Tensor<ScalarT> F0(num_dims_);
+  minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
   
   F0 = I;
   if (load_case == "uniaxial-strain") {

@@ -8,7 +8,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 //#include "Intrepid2_FunctionSpaceTools.hpp"
 //#include "Intrepid2_RealSpaceTools.hpp"
@@ -193,11 +193,11 @@ namespace LCM {
      for (int cell=0; cell < workset.numCells; ++cell) {
        for (int pt=0; pt < numQPs; ++pt) {
 
-    	  Intrepid2::Tensor<ScalarT> F(numDims, defGrad,cell, pt,0,0);
-    	  Intrepid2::Tensor<ScalarT> C_tensor_ = Intrepid2::t_dot(F,F);
-    	  Intrepid2::Tensor<ScalarT> C_inv_tensor_ = Intrepid2::inverse(C_tensor_);
-    	  Intrepid2::Vector<ScalarT> C_grad_(numDims, scalarGrad,cell, pt,0);
-    	  Intrepid2::Vector<ScalarT> C_grad_in_ref_ = Intrepid2::dot(C_inv_tensor_, C_grad_ );
+    	  minitensor::Tensor<ScalarT> F(numDims, defGrad,cell, pt,0,0);
+    	  minitensor::Tensor<ScalarT> C_tensor_ = minitensor::t_dot(F,F);
+    	  minitensor::Tensor<ScalarT> C_inv_tensor_ = minitensor::inverse(C_tensor_);
+    	  minitensor::Vector<ScalarT> C_grad_(numDims, scalarGrad,cell, pt,0);
+    	  minitensor::Vector<ScalarT> C_grad_in_ref_ = minitensor::dot(C_inv_tensor_, C_grad_ );
 
          for (int j=0; j<numDims; j++){
              flux(cell,pt,j) = (1-stabilizedDL(cell,pt))*C_grad_in_ref_(j);
@@ -270,11 +270,11 @@ namespace LCM {
 		        // MUST BE FIXED: Add C_inverse term into hydrostatic residual - added but need to do this nicely. 
         		for (int dim=0; dim < numDims; ++dim) {
 
-                                    Intrepid2::Tensor<ScalarT> F(numDims, defGrad,cell, pt,0,0);
-                                    Intrepid2::Tensor<ScalarT> C_tensor = Intrepid2::t_dot(F,F);
-                                    Intrepid2::Tensor<ScalarT> C_inv_tensor = Intrepid2::inverse(C_tensor);
-                                    Intrepid2::Vector<ScalarT> hydro_stress_grad(numDims, hydro_stress_gradient_,cell, pt,0);
-                                    Intrepid2::Vector<ScalarT> C_inv_hydro_stress_grad = Intrepid2::dot(C_inv_tensor, hydro_stress_grad);
+                                    minitensor::Tensor<ScalarT> F(numDims, defGrad,cell, pt,0,0);
+                                    minitensor::Tensor<ScalarT> C_tensor = minitensor::t_dot(F,F);
+                                    minitensor::Tensor<ScalarT> C_inv_tensor = minitensor::inverse(C_tensor);
+                                    minitensor::Vector<ScalarT> hydro_stress_grad(numDims, hydro_stress_gradient_,cell, pt,0);
+                                    minitensor::Vector<ScalarT> C_inv_hydro_stress_grad = minitensor::dot(C_inv_tensor, hydro_stress_grad);
 
         			    transport_residual_(cell, node) -= surface_Grad_BF(cell, node, pt, dim)*
         			    				              convection_coefficient_(cell,pt)*transport_(cell,pt)*

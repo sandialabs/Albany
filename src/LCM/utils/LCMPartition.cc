@@ -103,43 +103,43 @@ void PrintPartitionInfo(
 // 1) Find the bounding box of the indexed points.
 // 2) Compute the vector sum of the indexed points.
 //
-boost::tuple<Intrepid2::Vector<double>, Intrepid2::Vector<double>,
-    Intrepid2::Vector<double>>
+boost::tuple<minitensor::Vector<double>, minitensor::Vector<double>,
+    minitensor::Vector<double>>
 bounds_and_sum_subset(
-    std::vector<Intrepid2::Vector<double>> const & points,
-    std::set<Intrepid2::Index> const & indices)
+    std::vector<minitensor::Vector<double>> const & points,
+    std::set<minitensor::Index> const & indices)
 {
   assert(points.size() > 0);
   assert(indices.size() > 0);
 
-  Intrepid2::Index const
+  minitensor::Index const
   first = *indices.begin();
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   sum = points[first];
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   lower_corner = sum;
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   upper_corner = sum;
 
-  Intrepid2::Index const
+  minitensor::Index const
   N = sum.get_dimension();
 
-  for (std::set<Intrepid2::Index>::const_iterator it = ++indices.begin();
+  for (std::set<minitensor::Index>::const_iterator it = ++indices.begin();
       it != indices.end();
       ++it) {
 
-    Intrepid2::Index const
+    minitensor::Index const
     index = *it;
 
-    Intrepid2::Vector<double> const &
+    minitensor::Vector<double> const &
     p = points[index];
 
     sum += p;
 
-    for (Intrepid2::Index i = 0; i < N; ++i) {
+    for (minitensor::Index i = 0; i < N; ++i) {
       lower_corner(i) = std::min(lower_corner(i), p(i));
       upper_corner(i) = std::max(upper_corner(i), p(i));
     }
@@ -154,32 +154,32 @@ bounds_and_sum_subset(
 // Return the index of the center closest to the point among the
 // indexed centers.
 //
-Intrepid2::Index
+minitensor::Index
 closest_subset(
-    Intrepid2::Vector<double> const & point,
+    minitensor::Vector<double> const & point,
     std::vector<ClusterCenter> const & centers,
-    std::set<Intrepid2::Index> const & indices)
+    std::set<minitensor::Index> const & indices)
 {
   assert(centers.size() > 0);
   assert(indices.size() > 0);
 
-  Intrepid2::Index const
+  minitensor::Index const
   first = *indices.begin();
 
   double
   minimum = norm_square(centers[first].position - point);
 
-  Intrepid2::Index
+  minitensor::Index
   index_minimum = first;
 
-  for (std::set<Intrepid2::Index>::const_iterator it = ++indices.begin();
+  for (std::set<minitensor::Index>::const_iterator it = ++indices.begin();
       it != indices.end();
       ++it) {
 
-    Intrepid2::Index const
+    minitensor::Index const
     index = *it;
 
-    Intrepid2::Vector<double> const &
+    minitensor::Vector<double> const &
     p = centers[index].position;
 
     double const
@@ -201,10 +201,10 @@ closest_subset(
 // 2) Divide the bounding box along its largest dimension, using median.
 // 3) Assign points to one side or the other, and return index sets.
 //
-std::pair<std::set<Intrepid2::Index>, std::set<Intrepid2::Index>>
+std::pair<std::set<minitensor::Index>, std::set<minitensor::Index>>
 split_box(
-    std::vector<Intrepid2::Vector<double>> const & points,
-    std::set<Intrepid2::Index> const & indices)
+    std::vector<minitensor::Vector<double>> const & points,
+    std::set<minitensor::Index> const & indices)
 {
   assert(points.size() > 0);
   assert(indices.size() > 0);
@@ -212,29 +212,29 @@ split_box(
   //
   // Compute bounding box
   //
-  Intrepid2::Index const
+  minitensor::Index const
   first = *indices.begin();
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   lower_corner = points[first];
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   upper_corner = lower_corner;
 
-  Intrepid2::Index const
+  minitensor::Index const
   N = lower_corner.get_dimension();
 
-  for (std::set<Intrepid2::Index>::const_iterator it = ++indices.begin();
+  for (std::set<minitensor::Index>::const_iterator it = ++indices.begin();
       it != indices.end();
       ++it) {
 
-    Intrepid2::Index const
+    minitensor::Index const
     index = *it;
 
-    Intrepid2::Vector<double> const &
+    minitensor::Vector<double> const &
     p = points[index];
 
-    for (Intrepid2::Index i = 0; i < N; ++i) {
+    for (minitensor::Index i = 0; i < N; ++i) {
       lower_corner(i) = std::min(lower_corner(i), p(i));
       upper_corner(i) = std::max(upper_corner(i), p(i));
     }
@@ -244,7 +244,7 @@ split_box(
   //
   // Find largest dimension
   //
-  Intrepid2::Vector<double> const
+  minitensor::Vector<double> const
   span = upper_corner - lower_corner;
 
   assert(norm_square(span) > 0.0);
@@ -252,10 +252,10 @@ split_box(
   double
   maximum_span = span(0);
 
-  Intrepid2::Index
+  minitensor::Index
   largest_dimension = 0;
 
-  for (Intrepid2::Index i = 1; i < N; ++i) {
+  for (minitensor::Index i = 1; i < N; ++i) {
 
     double const
     s = span(i);
@@ -273,14 +273,14 @@ split_box(
   std::vector<double>
   coordinates;
 
-  for (std::set<Intrepid2::Index>::const_iterator it = indices.begin();
+  for (std::set<minitensor::Index>::const_iterator it = indices.begin();
       it != indices.end();
       ++it) {
 
-    Intrepid2::Index const
+    minitensor::Index const
     index = *it;
 
-    Intrepid2::Vector<double> const &
+    minitensor::Vector<double> const &
     p = points[index];
 
     coordinates.push_back(p(largest_dimension));
@@ -291,7 +291,7 @@ split_box(
 
   double
   split_coordinate =
-      Intrepid2::median<double>(coordinates.begin(), coordinates.end());
+      minitensor::median<double>(coordinates.begin(), coordinates.end());
 
   //
   // Check whether splitting the box will result in one box of
@@ -315,25 +315,25 @@ split_box(
   //
   // Assign points to lower or upper half.
   //
-  std::set<Intrepid2::Index>
+  std::set<minitensor::Index>
   indices_lower;
 
-  std::set<Intrepid2::Index>
+  std::set<minitensor::Index>
   indices_upper;
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   split_limit = upper_corner;
 
   split_limit(largest_dimension) = split_coordinate;
 
-  for (std::set<Intrepid2::Index>::const_iterator it = indices.begin();
+  for (std::set<minitensor::Index>::const_iterator it = indices.begin();
       it != indices.end();
       ++it) {
 
-    Intrepid2::Index const
+    minitensor::Index const
     index = *it;
 
-    Intrepid2::Vector<double> const &
+    minitensor::Vector<double> const &
     p = points[index];
 
     if (in_box(p, lower_corner, split_limit) == true) {
@@ -356,19 +356,19 @@ split_box(
 //
 template<typename Node>
 boost::shared_ptr<Node>
-BuildKDTree(std::vector<Intrepid2::Vector<double>> const & points)
+BuildKDTree(std::vector<minitensor::Vector<double>> const & points)
 {
 
   //
   // Initially all points are in the index set.
   //
-  Intrepid2::Index const
+  minitensor::Index const
   number_points = points.size();
 
-  std::set<Intrepid2::Index>
+  std::set<minitensor::Index>
   points_indices;
 
-  for (Intrepid2::Index i = 0; i < number_points; ++i) {
+  for (minitensor::Index i = 0; i < number_points; ++i) {
     points_indices.insert(i);
   }
 
@@ -394,8 +394,8 @@ boost::shared_ptr<Node>
 CreateKDTreeNode(
     std::string const & name,
     boost::shared_ptr<Node> parent,
-    std::vector<Intrepid2::Vector<double>> const & points,
-    std::set<Intrepid2::Index> const & points_indices)
+    std::vector<minitensor::Vector<double>> const & points,
+    std::set<minitensor::Index> const & points_indices)
 {
   if (name.length() >= 64) {
     std::cout << "Name is too long: " << name << '\n';
@@ -411,7 +411,7 @@ CreateKDTreeNode(
 
   node->parent = parent;
 
-  Intrepid2::Index const
+  minitensor::Index const
   count = points_indices.size();
 
   node->count = count;
@@ -426,7 +426,7 @@ CreateKDTreeNode(
     // Leaf node
   case 1:
     {
-      Intrepid2::Vector<double> const &
+      minitensor::Vector<double> const &
       p = points[*points_indices.begin()];
       node->lower_corner = p;
       node->upper_corner = p;
@@ -442,10 +442,10 @@ CreateKDTreeNode(
           node->weighted_centroid) =
           bounds_and_sum_subset(points, points_indices);
 
-      std::set<Intrepid2::Index>
+      std::set<minitensor::Index>
       indices_left;
 
-      std::set<Intrepid2::Index>
+      std::set<minitensor::Index>
       indices_right;
 
       boost::tie(indices_left, indices_right) =
@@ -475,16 +475,16 @@ CreateKDTreeNode(
 //
 template<typename Node>
 KDTree<Node>::KDTree(
-    std::vector<Intrepid2::Vector<double>> const & points,
-    Intrepid2::Index const number_centers)
+    std::vector<minitensor::Vector<double>> const & points,
+    minitensor::Index const number_centers)
 {
   root_ = BuildKDTree<Node>(points);
 
   // Set candidate centers to all
-  std::set<Intrepid2::Index>
+  std::set<minitensor::Index>
   candidate_centers;
 
-  for (Intrepid2::Index i = 0; i < number_centers; ++i) {
+  for (minitensor::Index i = 0; i < number_centers; ++i) {
     candidate_centers.insert(i);
   }
 
@@ -536,7 +536,7 @@ OutputVisitor<Node>::operator()(Node const & node) const
   std::cout << "Lower corner: " << node->lower_corner << '\n';
   std::cout << "Upper corner: " << node->upper_corner << '\n';
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   centroid = node->weighted_centroid / node->count;
 
   std::cout << "Centroid    : " << centroid << '\n';
@@ -569,7 +569,7 @@ OutputVisitor<Node>::post_stop(Node const & node) const
 //
 template<typename Node, typename Center>
 FilterVisitor<Node, Center>::FilterVisitor(
-    std::vector<Intrepid2::Vector<double>> & p,
+    std::vector<minitensor::Vector<double>> & p,
     std::vector<Center> & c) :
     points(p),
     centers(c)
@@ -579,16 +579,16 @@ FilterVisitor<Node, Center>::FilterVisitor(
 namespace {
 
 template<typename Center, typename Iterator>
-Intrepid2::Index
+minitensor::Index
 closest_center_from_subset(
-    Intrepid2::Vector<double> const & point,
+    minitensor::Vector<double> const & point,
     std::vector<Center> const & centers,
     Iterator begin,
     Iterator end)
 {
   assert(std::distance(begin, end) > 0);
 
-  Intrepid2::Index
+  minitensor::Index
   closest_index = *begin;
 
   double
@@ -596,7 +596,7 @@ closest_center_from_subset(
 
   for (Iterator it = ++begin; it != end; ++it) {
 
-    Intrepid2::Index const
+    minitensor::Index const
     i = *it;
 
     double const
@@ -623,33 +623,33 @@ closest_center_from_subset(
 // where the closest center to the midcell lies as well.
 //
 template<typename Center>
-std::pair<Intrepid2::Index, std::set<Intrepid2::Index>>
+std::pair<minitensor::Index, std::set<minitensor::Index>>
 box_proximity_to_centers(
-    Intrepid2::Vector<double> const & lower_corner,
-    Intrepid2::Vector<double> const & upper_corner,
+    minitensor::Vector<double> const & lower_corner,
+    minitensor::Vector<double> const & upper_corner,
     std::vector<Center> const & centers,
-    std::set<Intrepid2::Index> const & index_subset)
+    std::set<minitensor::Index> const & index_subset)
 {
   assert(centers.size() > 0);
   assert(index_subset.size() > 0);
 
-  Intrepid2::Vector<double> const
+  minitensor::Vector<double> const
   midcell = 0.5 * (lower_corner + upper_corner);
 
   // Determine the closest point to box center only among those
   // listed in the index subset.
-  Intrepid2::Index
+  minitensor::Index
   index_closest = *index_subset.begin();
 
   double
   minimum = norm_square(midcell - centers[index_closest].position);
 
-  for (std::set<Intrepid2::Index>::const_iterator
+  for (std::set<minitensor::Index>::const_iterator
   index_iterator = ++index_subset.begin();
       index_iterator != index_subset.end();
       ++index_iterator) {
 
-    Intrepid2::Index const
+    minitensor::Index const
     i = *index_iterator;
 
     double const
@@ -662,19 +662,19 @@ box_proximity_to_centers(
 
   }
 
-  Intrepid2::Vector<double> const &
+  minitensor::Vector<double> const &
   closest_to_midcell = centers[index_closest].position;
 
-  std::set<Intrepid2::Index>
+  std::set<minitensor::Index>
   indices_candidates;
 
   // Determine where the box lies
-  for (std::set<Intrepid2::Index>::const_iterator
+  for (std::set<minitensor::Index>::const_iterator
       index_iterator = index_subset.begin();
       index_iterator != index_subset.end();
       ++index_iterator) {
 
-    Intrepid2::Index const
+    minitensor::Index const
     i = *index_iterator;
 
     if (i == index_closest) {
@@ -682,19 +682,19 @@ box_proximity_to_centers(
       continue;
     }
 
-    Intrepid2::Vector<double> const &
+    minitensor::Vector<double> const &
     p = centers[i].position;
 
-    Intrepid2::Vector<double> const
+    minitensor::Vector<double> const
     u = p - closest_to_midcell;
 
-    Intrepid2::Index const
+    minitensor::Index const
     N = u.get_dimension();
 
-    Intrepid2::Vector<double>
+    minitensor::Vector<double>
     v(N);
 
-    for (Intrepid2::Index j = 0; j < N; ++j) {
+    for (minitensor::Index j = 0; j < N; ++j) {
 
       v(j) = u(j) >= 0.0 ? upper_corner(j) : lower_corner(j);
 
@@ -731,14 +731,14 @@ FilterVisitor<Node, Center>::operator()(Node const & node) const
   if (node_is_leaf == true) {
 
     // Get point
-    Intrepid2::Index const
+    minitensor::Index const
     point_index = *(node->cell_points.begin());
 
-    Intrepid2::Vector<double> const &
+    minitensor::Vector<double> const &
     point = points[point_index];
 
     // Find closest center to it
-    Intrepid2::Index
+    minitensor::Index
     index_closest =
         closest_center_from_subset(
             point,
@@ -758,10 +758,10 @@ FilterVisitor<Node, Center>::operator()(Node const & node) const
   } else { // node_is_leaf == false
 
     // Get midpoint of cell
-    Intrepid2::Index
+    minitensor::Index
     index_closest_midcell = 0;
 
-    std::set<Intrepid2::Index>
+    std::set<minitensor::Index>
     candidate_indices;
 
     boost::tie(index_closest_midcell, candidate_indices) =
@@ -830,7 +830,7 @@ FilterVisitor<Node, Center>::post_stop(Node const & node) const
 // Default constructor for Connectivity Array
 //
 ConnectivityArray::ConnectivityArray() :
-    type_(Intrepid2::ELEMENT::UNKNOWN),
+    type_(minitensor::ELEMENT::UNKNOWN),
     dimension_(0),
     discretization_ptr_(Teuchos::null),
     tolerance_(0.0),
@@ -849,7 +849,7 @@ ConnectivityArray::ConnectivityArray() :
 ConnectivityArray::ConnectivityArray(
     std::string const & input_file,
     std::string const & output_file) :
-    type_(Intrepid2::ELEMENT::UNKNOWN),
+    type_(minitensor::ELEMENT::UNKNOWN),
     dimension_(0),
     discretization_ptr_(Teuchos::null),
     tolerance_(0.0),
@@ -928,7 +928,7 @@ ConnectivityArray::ConnectivityArray(
   const CellTopologyData
   cell_topology = mesh_specs[0]->ctd;
 
-  Intrepid2::Index const
+  minitensor::Index const
   dimension = cell_topology.dimension;
 
   assert(dimension == dimension_);
@@ -936,7 +936,7 @@ ConnectivityArray::ConnectivityArray(
   int const
   vertices_per_element = cell_topology.vertex_count;
 
-  type_ = Intrepid2::find_type(dimension, vertices_per_element);
+  type_ = minitensor::find_type(dimension, vertices_per_element);
 
   // Assume all the elements have the same number of nodes and eqs
   Teuchos::ArrayRCP<int>::size_type
@@ -963,9 +963,9 @@ ConnectivityArray::ConnectivityArray(
       node < number_nodes;
       ++node) {
 
-    Intrepid2::Vector<double> point(0.0, 0.0, 0.0);
+    minitensor::Vector<double> point(0.0, 0.0, 0.0);
 
-    for (Intrepid2::Index j = 0; j < dimension; ++j) {
+    for (minitensor::Index j = 0; j < dimension; ++j) {
       point(j) = coordinates[node * dimension + j];
     }
 
@@ -1014,7 +1014,7 @@ ConnectivityArray::ConnectivityArray(
 //
 // \return Number of nodes on the array
 //
-Intrepid2::Index
+minitensor::Index
 ConnectivityArray::GetNumberNodes() const
 {
   return nodes_.size();
@@ -1023,7 +1023,7 @@ ConnectivityArray::GetNumberNodes() const
 //
 // \return Number of elements in the array
 //
-Intrepid2::Index
+minitensor::Index
 ConnectivityArray::GetNumberElements() const
 {
   return connectivity_.size();
@@ -1032,7 +1032,7 @@ ConnectivityArray::GetNumberElements() const
 //
 // \return Space dimension
 //
-Intrepid2::Index
+minitensor::Index
 ConnectivityArray::GetDimension() const
 {
   return dimension_;
@@ -1059,7 +1059,7 @@ ConnectivityArray::GetCellSize() const
 //
 // \return maximum iterations for K-means
 //
-Intrepid2::Index
+minitensor::Index
 ConnectivityArray::GetMaximumIterations() const
 {
   return maximum_iterations_;
@@ -1087,7 +1087,7 @@ ConnectivityArray::SetCellSize(double requested_cell_size)
 // \param maximum itearions for K-means
 //
 void
-ConnectivityArray::SetMaximumIterations(Intrepid2::Index maximum_iterarions)
+ConnectivityArray::SetMaximumIterations(minitensor::Index maximum_iterarions)
 {
   maximum_iterations_ = maximum_iterarions;
 }
@@ -1114,7 +1114,7 @@ ConnectivityArray::GetInitializerScheme() const
 // \return Type of finite element in the array
 // (assume same type for all elements)
 //
-Intrepid2::ELEMENT::Type
+minitensor::ELEMENT::Type
 ConnectivityArray::GetType() const
 {
   return type_;
@@ -1151,10 +1151,10 @@ ConnectivityArray::GetDiscretization()
 // \return Number of nodes that define element topology
 // (assume same type for all elements)
 //
-Intrepid2::Index
+minitensor::Index
 ConnectivityArray::GetNodesPerElement() const
 {
-  Intrepid2::Index
+  minitensor::Index
   nodes_per_element;
 
   switch (GetType()) {
@@ -1165,23 +1165,23 @@ ConnectivityArray::GetNodesPerElement() const
     exit(1);
     break;
 
-  case Intrepid2::ELEMENT::SEGMENTAL:
+  case minitensor::ELEMENT::SEGMENTAL:
     nodes_per_element = 2;
     break;
 
-  case Intrepid2::ELEMENT::TRIANGULAR:
+  case minitensor::ELEMENT::TRIANGULAR:
     nodes_per_element = 3;
     break;
 
-  case Intrepid2::ELEMENT::QUADRILATERAL:
+  case minitensor::ELEMENT::QUADRILATERAL:
     nodes_per_element = 4;
     break;
 
-  case Intrepid2::ELEMENT::TETRAHEDRAL:
+  case minitensor::ELEMENT::TETRAHEDRAL:
     nodes_per_element = 4;
     break;
 
-  case Intrepid2::ELEMENT::HEXAHEDRAL:
+  case minitensor::ELEMENT::HEXAHEDRAL:
     nodes_per_element = 8;
     break;
 
@@ -1208,7 +1208,7 @@ ConnectivityArray::GetVolumes() const
     IDList const &
     node_list = (*elements_iter).second;
 
-    std::vector<Intrepid2::Vector<double>>
+    std::vector<minitensor::Vector<double>>
     points;
 
     for (IDList::size_type
@@ -1228,24 +1228,24 @@ ConnectivityArray::GetVolumes() const
 
     switch (type_) {
 
-    case Intrepid2::ELEMENT::SEGMENTAL:
-      volume = Intrepid2::length(points[0], points[1]);
+    case minitensor::ELEMENT::SEGMENTAL:
+      volume = minitensor::length(points[0], points[1]);
       break;
 
-    case Intrepid2::ELEMENT::TRIANGULAR:
-      volume = Intrepid2::area(points[0], points[1], points[2]);
+    case minitensor::ELEMENT::TRIANGULAR:
+      volume = minitensor::area(points[0], points[1], points[2]);
       break;
 
-    case Intrepid2::ELEMENT::QUADRILATERAL:
-      volume = Intrepid2::area(points[0], points[1], points[2], points[3]);
+    case minitensor::ELEMENT::QUADRILATERAL:
+      volume = minitensor::area(points[0], points[1], points[2], points[3]);
       break;
 
-    case Intrepid2::ELEMENT::TETRAHEDRAL:
-      volume = Intrepid2::volume(points[0], points[1], points[2], points[3]);
+    case minitensor::ELEMENT::TETRAHEDRAL:
+      volume = minitensor::volume(points[0], points[1], points[2], points[3]);
       break;
 
-    case Intrepid2::ELEMENT::HEXAHEDRAL:
-      volume = Intrepid2::volume(points[0], points[1], points[2], points[3],
+    case minitensor::ELEMENT::HEXAHEDRAL:
+      volume = minitensor::volume(points[0], points[1], points[2], points[3],
           points[4], points[5], points[6], points[7]);
       break;
 
@@ -1344,7 +1344,7 @@ ConnectivityArray::GetPartitionVolumes() const
 //
 // \return Partition centroids
 //
-std::vector<Intrepid2::Vector<double>>
+std::vector<minitensor::Vector<double>>
 ConnectivityArray::GetPartitionCentroids() const
 {
   std::map<int, int>
@@ -1356,19 +1356,19 @@ ConnectivityArray::GetPartitionCentroids() const
   ScalarMap
   partition_volumes = GetPartitionVolumes();
 
-  Intrepid2::Index const
+  minitensor::Index const
   number_partitions = partition_volumes.size();
 
-  std::vector<Intrepid2::Vector<double>>
+  std::vector<minitensor::Vector<double>>
   partition_centroids(number_partitions);
 
-  for (Intrepid2::Index i = 0; i < number_partitions; ++i) {
+  for (minitensor::Index i = 0; i < number_partitions; ++i) {
     partition_centroids[i].set_dimension(GetDimension());
     partition_centroids[i].clear();
   }
 
   // Determine number of nodes that define element topology
-  Intrepid2::Index const
+  minitensor::Index const
   nodes_per_element = GetNodesPerElement();
 
   for (std::map<int, int>::const_iterator partitions_iterator =
@@ -1394,7 +1394,7 @@ ConnectivityArray::GetPartitionCentroids() const
     IDList const &
     node_list = (*elements_iterator).second;
 
-    std::vector<Intrepid2::Vector<double>>
+    std::vector<minitensor::Vector<double>>
     element_nodes;
 
     for (IDList::size_type i = 0; i < nodes_per_element; ++i) {
@@ -1408,7 +1408,7 @@ ConnectivityArray::GetPartitionCentroids() const
 
     }
 
-    Intrepid2::Vector<double> const
+    minitensor::Vector<double> const
     element_centroid = centroid(element_nodes);
 
     ScalarMap::const_iterator
@@ -1427,7 +1427,7 @@ ConnectivityArray::GetPartitionCentroids() const
 
   }
 
-  for (Intrepid2::Index i = 0; i < number_partitions; ++i) {
+  for (minitensor::Index i = 0; i < number_partitions; ++i) {
     partition_centroids[i] = partition_centroids[i] / partition_volumes[i];
   }
 
@@ -1455,7 +1455,7 @@ ConnectivityArray::GetCentroids() const
     IDList const &
     node_list = (*elements_iter).second;
 
-    std::vector<Intrepid2::Vector<double>>
+    std::vector<minitensor::Vector<double>>
     points;
 
     // Collect element nodes
@@ -1472,15 +1472,15 @@ ConnectivityArray::GetCentroids() const
 
       assert(nodes_iter != nodes_.end());
 
-      Intrepid2::Vector<double> const
+      minitensor::Vector<double> const
       point = (*nodes_iter).second;
 
       points.push_back(point);
 
     }
 
-    Intrepid2::Vector<double> const
-    centroid = Intrepid2::centroid(points);
+    minitensor::Vector<double> const
+    centroid = minitensor::centroid(points);
 
     centroids.insert(std::make_pair(element, centroid));
 
@@ -1493,29 +1493,29 @@ ConnectivityArray::GetCentroids() const
 ///
 /// \return Bounding box for all nodes
 ///
-std::pair<Intrepid2::Vector<double>, Intrepid2::Vector<double>>
+std::pair<minitensor::Vector<double>, minitensor::Vector<double>>
 ConnectivityArray::BoundingBox() const
 {
   PointMap::const_iterator
   it = nodes_.begin();
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   min = (*it).second;
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   max = min;
 
-  Intrepid2::Index const
+  minitensor::Index const
   N = min.get_dimension();
 
   ++it;
 
   for (; it != nodes_.end(); ++it) {
 
-    Intrepid2::Vector<double> const &
+    minitensor::Vector<double> const &
     node = (*it).second;
 
-    for (Intrepid2::Index i = 0; i < N; ++i) {
+    for (minitensor::Index i = 0; i < N; ++i) {
       min(i) = std::min(min(i), node(i));
       max(i) = std::max(max(i), node(i));
     }
@@ -1527,10 +1527,10 @@ ConnectivityArray::BoundingBox() const
 
 namespace {
 
-boost::tuple<Intrepid2::Index, double, double>
-parametric_limits(Intrepid2::ELEMENT::Type const element_type)
+boost::tuple<minitensor::Index, double, double>
+parametric_limits(minitensor::ELEMENT::Type const element_type)
 {
-  Intrepid2::Index
+  minitensor::Index
   parametric_dimension = 3;
 
   double
@@ -1547,25 +1547,25 @@ parametric_limits(Intrepid2::ELEMENT::Type const element_type)
     exit(1);
     break;
 
-  case Intrepid2::ELEMENT::TRIANGULAR:
+  case minitensor::ELEMENT::TRIANGULAR:
     lower_limit = 0.0;
     parametric_size = 1.0;
     parametric_dimension = 3;
     break;
 
-  case Intrepid2::ELEMENT::QUADRILATERAL:
+  case minitensor::ELEMENT::QUADRILATERAL:
     lower_limit = -1.0;
     parametric_size = 2.0;
     parametric_dimension = 2;
     break;
 
-  case Intrepid2::ELEMENT::TETRAHEDRAL:
+  case minitensor::ELEMENT::TETRAHEDRAL:
     lower_limit = 0.0;
     parametric_size = 1.0;
     parametric_dimension = 4;
     break;
 
-  case Intrepid2::ELEMENT::HEXAHEDRAL:
+  case minitensor::ELEMENT::HEXAHEDRAL:
     lower_limit = -1.0;
     parametric_size = 2.0;
     parametric_dimension = 3;
@@ -1586,7 +1586,7 @@ parametric_limits(Intrepid2::ELEMENT::Type const element_type)
 // of points being inside or outside the domain.
 // \return points inside the domain.
 //
-std::vector<Intrepid2::Vector<double>>
+std::vector<minitensor::Vector<double>>
 ConnectivityArray::CreateGrid()
 {
   std::cout << '\n';
@@ -1595,24 +1595,24 @@ ConnectivityArray::CreateGrid()
   //
   // First determine the maximum dimension of the bounding box.
   //
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   lower_corner;
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   upper_corner;
 
   boost::tie(lower_corner, upper_corner) = BoundingBox();
 
-  Intrepid2::Vector<double> const
+  minitensor::Vector<double> const
   bounding_box_span = upper_corner - lower_corner;
 
-  Intrepid2::Index const
+  minitensor::Index const
   dimension = lower_corner.get_dimension();
 
   double
   maximum_dimension = 0.0;
 
-  for (Intrepid2::Index i = 0; i < dimension; ++i) {
+  for (minitensor::Index i = 0; i < dimension; ++i) {
     maximum_dimension = std::max(maximum_dimension, bounding_box_span(i));
   }
 
@@ -1622,14 +1622,14 @@ ConnectivityArray::CreateGrid()
   //
   // Determine number of cells for each dimension.
   //
-  Intrepid2::Vector<Intrepid2::Index>
+  minitensor::Vector<minitensor::Index>
   cells_per_dimension(dimension);
 
   cell_size_.set_dimension(dimension);
 
-  for (Intrepid2::Index i = 0; i < dimension; ++i) {
+  for (minitensor::Index i = 0; i < dimension; ++i) {
 
-    Intrepid2::Index const
+    minitensor::Index const
     number_cells = std::ceil((bounding_box_span(i)) / delta);
 
     cells_per_dimension(i) = number_cells;
@@ -1643,21 +1643,21 @@ ConnectivityArray::CreateGrid()
   // This is specific to 3D.
   //
   cells_.resize(cells_per_dimension(0));
-  for (Intrepid2::Index i = 0; i < cells_per_dimension(0); ++i) {
+  for (minitensor::Index i = 0; i < cells_per_dimension(0); ++i) {
     cells_[i].resize(cells_per_dimension(1));
-    for (Intrepid2::Index j = 0; j < cells_per_dimension(1); ++j) {
+    for (minitensor::Index j = 0; j < cells_per_dimension(1); ++j) {
       cells_[i][j].resize(cells_per_dimension(2));
-      for (Intrepid2::Index k = 0; k < cells_per_dimension(2); ++k) {
+      for (minitensor::Index k = 0; k < cells_per_dimension(2); ++k) {
         cells_[i][j][k] = false;
       }
     }
   }
 
   // Iterate through elements to set array.
-  Intrepid2::Index const
+  minitensor::Index const
   nodes_per_element = GetNodesPerElement();
 
-  Intrepid2::Index const
+  minitensor::Index const
   number_of_elements = connectivity_.size();
 
   for (AdjacencyMap::const_iterator
@@ -1676,7 +1676,7 @@ ConnectivityArray::CreateGrid()
     IDList const &
     node_list = (*elements_iter).second;
 
-    std::vector<Intrepid2::Vector<double>>
+    std::vector<minitensor::Vector<double>>
     element_nodes;
 
     for (IDList::size_type i = 0;
@@ -1692,25 +1692,25 @@ ConnectivityArray::CreateGrid()
 
     }
 
-    Intrepid2::Vector<double>
+    minitensor::Vector<double>
     min;
 
-    Intrepid2::Vector<double>
+    minitensor::Vector<double>
     max;
 
     boost::tie(min, max) =
-        Intrepid2::bounding_box<double>(element_nodes.begin(),
+        minitensor::bounding_box<double>(element_nodes.begin(),
             element_nodes.end());
 
-    Intrepid2::Vector<double> const
+    minitensor::Vector<double> const
     element_span = max - min;
 
-    Intrepid2::Vector<Intrepid2::Index>
+    minitensor::Vector<minitensor::Index>
     divisions(dimension);
 
     // Determine number of divisions on each dimension.
     // One division if voxel is large.
-    for (Intrepid2::Index i = 0; i < dimension; ++i) {
+    for (minitensor::Index i = 0; i < dimension; ++i) {
       divisions(i) =
           cell_size_(i) > element_span(i) ?
               1 :
@@ -1720,10 +1720,10 @@ ConnectivityArray::CreateGrid()
     // Generate points inside the element according to
     // the divisions and mark the corresponding voxel
     // as being inside the domain.
-    Intrepid2::ELEMENT::Type
+    minitensor::ELEMENT::Type
     element_type = GetType();
 
-    Intrepid2::Index
+    minitensor::Index
     parametric_dimension = 3;
 
     double
@@ -1735,33 +1735,33 @@ ConnectivityArray::CreateGrid()
     boost::tie(parametric_dimension, parametric_size, lower_limit) =
         parametric_limits(element_type);
 
-    Intrepid2::Vector<double>
+    minitensor::Vector<double>
     origin(parametric_dimension);
 
-    for (Intrepid2::Index i = 0; i < dimension; ++i) {
+    for (minitensor::Index i = 0; i < dimension; ++i) {
       origin(i) = lower_limit;
     }
 
-    Intrepid2::Vector<double>
+    minitensor::Vector<double>
     xi(parametric_dimension);
 
-    for (Intrepid2::Index i = 0; i <= divisions(0); ++i) {
+    for (minitensor::Index i = 0; i <= divisions(0); ++i) {
       xi(0) = origin(0) + double(i) / divisions(0) * parametric_size;
-      for (Intrepid2::Index j = 0; j <= divisions(1); ++j) {
+      for (minitensor::Index j = 0; j <= divisions(1); ++j) {
         xi(1) = origin(1) + double(j) / divisions(1) * parametric_size;
-        for (Intrepid2::Index k = 0; k <= divisions(2); ++k) {
+        for (minitensor::Index k = 0; k <= divisions(2); ++k) {
           xi(2) = origin(2) + double(k) / divisions(2) * parametric_size;
-          Intrepid2::Vector<double>
+          minitensor::Vector<double>
           p = interpolate_element(element_type, xi, element_nodes);
-          for (Intrepid2::Index l = 0; l < dimension; ++l) {
+          for (minitensor::Index l = 0; l < dimension; ++l) {
             p(l) = std::max(p(l), lower_corner(l));
             p(l) = std::min(p(l), upper_corner(l));
           }
 
-          Intrepid2::Vector<int>
+          minitensor::Vector<int>
           index = PointToIndex(p);
 
-          for (Intrepid2::Index l = 0; l < dimension; ++l) {
+          for (minitensor::Index l = 0; l < dimension; ++l) {
             assert(index(l) >= 0);
             assert(index(l) <= int(cells_per_dimension(l)));
 
@@ -1779,20 +1779,20 @@ ConnectivityArray::CreateGrid()
   std::cout << connectivity_.size() << " elements processed." << '\n';
 
   // Create points and output voxelization for debugging
-  std::vector<Intrepid2::Vector<double>>
+  std::vector<minitensor::Vector<double>>
   domain_points;
 
   std::ofstream ofs("cells.csv");
   ofs << "X, Y, Z, I" << '\n';
-  Intrepid2::Vector<double> p(dimension);
+  minitensor::Vector<double> p(dimension);
 
-  for (Intrepid2::Index i = 0; i < cells_per_dimension(0); ++i) {
+  for (minitensor::Index i = 0; i < cells_per_dimension(0); ++i) {
     p(0) = (i + 0.5) * bounding_box_span(0) / cells_per_dimension(0) +
         lower_corner(0);
-    for (Intrepid2::Index j = 0; j < cells_per_dimension(1); ++j) {
+    for (minitensor::Index j = 0; j < cells_per_dimension(1); ++j) {
       p(1) = (j + 0.5) * bounding_box_span(1) / cells_per_dimension(1) +
           lower_corner(1);
-      for (Intrepid2::Index k = 0; k < cells_per_dimension(2); ++k) {
+      for (minitensor::Index k = 0; k < cells_per_dimension(2); ++k) {
         p(2) = (k + 0.5) * bounding_box_span(2) / cells_per_dimension(2) +
             lower_corner(2);
 
@@ -1805,13 +1805,13 @@ ConnectivityArray::CreateGrid()
     }
   }
 
-  Intrepid2::Index const
+  minitensor::Index const
   number_generated_points =
       cells_per_dimension(0) *
           cells_per_dimension(1) *
           cells_per_dimension(2);
 
-  Intrepid2::Index const
+  minitensor::Index const
   number_points_in_domain = domain_points.size();
 
   double const
@@ -1833,8 +1833,8 @@ ConnectivityArray::CreateGrid()
 //
 // Convert point to index into voxel array
 //
-Intrepid2::Vector<int>
-ConnectivityArray::PointToIndex(Intrepid2::Vector<double> const & point) const
+minitensor::Vector<int>
+ConnectivityArray::PointToIndex(minitensor::Vector<double> const & point) const
     {
   int const
   i = (point(0) - lower_corner_(0)) / cell_size_(0);
@@ -1845,7 +1845,7 @@ ConnectivityArray::PointToIndex(Intrepid2::Vector<double> const & point) const
   int const
   k = (point(2) - lower_corner_(2)) / cell_size_(2);
 
-  return Intrepid2::Vector<int>(i, j, k);
+  return minitensor::Vector<int>(i, j, k);
 }
 
 //
@@ -1853,7 +1853,7 @@ ConnectivityArray::PointToIndex(Intrepid2::Vector<double> const & point) const
 // 3D only for now.
 //
 bool
-ConnectivityArray::IsInsideMesh(Intrepid2::Vector<double> const & point) const
+ConnectivityArray::IsInsideMesh(minitensor::Vector<double> const & point) const
     {
   int
   i = (point(0) - lower_corner_(0)) / cell_size_(0);
@@ -1900,7 +1900,7 @@ ConnectivityArray::IsInsideMesh(Intrepid2::Vector<double> const & point) const
 //
 bool
 ConnectivityArray::IsInsideMeshByElement(
-    Intrepid2::Vector<double> const & point) const
+    minitensor::Vector<double> const & point) const
     {
 
   // Check bounding box first
@@ -1917,7 +1917,7 @@ ConnectivityArray::IsInsideMeshByElement(
     IDList const &
     node_list = (*elements_iter).second;
 
-    std::vector<Intrepid2::Vector<double>>
+    std::vector<minitensor::Vector<double>>
     node;
 
     for (IDList::size_type
@@ -1935,13 +1935,13 @@ ConnectivityArray::IsInsideMeshByElement(
 
     switch (type_) {
 
-    case Intrepid2::ELEMENT::TETRAHEDRAL:
+    case minitensor::ELEMENT::TETRAHEDRAL:
       if (in_tetrahedron(point, node[0], node[1], node[2], node[3]) == true) {
         return true;
       }
       break;
 
-    case Intrepid2::ELEMENT::HEXAHEDRAL:
+    case minitensor::ELEMENT::HEXAHEDRAL:
       if (in_hexahedron(point, node[0], node[1], node[2], node[3],
           node[4], node[5], node[6], node[7])) {
         return true;
@@ -1966,15 +1966,15 @@ ConnectivityArray::IsInsideMeshByElement(
 // \return Number of partitions defined as total volume
 // of the array divided by the cube of the length scale
 //
-Intrepid2::Index
+minitensor::Index
 ConnectivityArray::GetNumberPartitions(double const length_scale) const
     {
   double const
   ball_volume = length_scale * length_scale * length_scale;
 
-  Intrepid2::Index const
+  minitensor::Index const
   number_partitions =
-      static_cast<Intrepid2::Index>(round(GetVolume() / ball_volume));
+      static_cast<minitensor::Index>(round(GetVolume() / ball_volume));
 
   return number_partitions;
 }
@@ -2111,14 +2111,14 @@ ConnectivityArray::CheckNullVolume() const
   ScalarMap const
   partition_volumes = GetPartitionVolumes();
 
-  std::vector<Intrepid2::Index>
+  std::vector<minitensor::Index>
   zero_volume;
 
   for (ScalarMap::const_iterator it = partition_volumes.begin();
       it != partition_volumes.end();
       ++it) {
 
-    Intrepid2::Index const
+    minitensor::Index const
     partition = (*it).first;
 
     double const
@@ -2130,7 +2130,7 @@ ConnectivityArray::CheckNullVolume() const
 
   }
 
-  Intrepid2::Index const
+  minitensor::Index const
   number_null_partitions = zero_volume.size();
 
   if (number_null_partitions > 0) {
@@ -2139,7 +2139,7 @@ ConnectivityArray::CheckNullVolume() const
     std::cerr << "Length scale may be too small:";
     std::cerr << '\n';
 
-    for (Intrepid2::Index i = 0; i < number_null_partitions; ++i) {
+    for (minitensor::Index i = 0; i < number_null_partitions; ++i) {
       std::cerr << " " << zero_volume[i];
     }
 
@@ -2216,9 +2216,9 @@ ConnectivityArray::Partition(
 //
 std::map<int, int>
 ConnectivityArray::PartitionByCenters(
-    std::vector<Intrepid2::Vector<double>> const & centers)
+    std::vector<minitensor::Vector<double>> const & centers)
 {
-  Intrepid2::Index const
+  minitensor::Index const
   number_partitions = centers.size();
 
   // Partition map.
@@ -2226,16 +2226,16 @@ ConnectivityArray::PartitionByCenters(
   partitions;
 
   // Keep track of which partitions have been assigned elements.
-  std::set<Intrepid2::Index>
+  std::set<minitensor::Index>
   unassigned_partitions;
 
-  for (Intrepid2::Index partition = 0; partition < number_partitions;
+  for (minitensor::Index partition = 0; partition < number_partitions;
       ++partition) {
     unassigned_partitions.insert(partition);
   }
 
   // Determine number of nodes that define element topology
-  Intrepid2::Index const
+  minitensor::Index const
   nodes_per_element = GetNodesPerElement();
 
   std::ofstream centroids_ofs("centroids.csv");
@@ -2252,7 +2252,7 @@ ConnectivityArray::PartitionByCenters(
     IDList const &
     node_list = (*elements_iter).second;
 
-    std::vector<Intrepid2::Vector<double>>
+    std::vector<minitensor::Vector<double>>
     element_nodes;
 
     for (IDList::size_type i = 0; i < nodes_per_element; ++i) {
@@ -2266,17 +2266,17 @@ ConnectivityArray::PartitionByCenters(
 
     }
 
-    Intrepid2::Vector<double> const
+    minitensor::Vector<double> const
     element_centroid = centroid(element_nodes);
 
     centroids_ofs << element_centroid << '\n';
 
-    Intrepid2::Index const
+    minitensor::Index const
     partition = closest_point(element_centroid, centers);
 
     partitions[element] = partition;
 
-    std::set<Intrepid2::Index>::const_iterator
+    std::set<minitensor::Index>::const_iterator
     it = unassigned_partitions.find(partition);
 
     if (it != unassigned_partitions.end()) {
@@ -2289,7 +2289,7 @@ ConnectivityArray::PartitionByCenters(
     std::cout << "WARNING: The following partitions were not" << '\n';
     std::cout << "assigned any elements (mesh too coarse?):" << '\n';
 
-    for (std::set<Intrepid2::Index>::const_iterator it = unassigned_partitions
+    for (std::set<minitensor::Index>::const_iterator it = unassigned_partitions
         .begin();
         it != unassigned_partitions.end();
         ++it) {
@@ -2300,7 +2300,7 @@ ConnectivityArray::PartitionByCenters(
 
   std::ofstream generators_ofs("centers.csv");
   generators_ofs << "X,Y,Z" << '\n';
-  for (Intrepid2::Index i = 0; i < centers.size(); ++i) {
+  for (minitensor::Index i = 0; i < centers.size(); ++i) {
     generators_ofs << centers[i] << '\n';
   }
 
@@ -2582,16 +2582,16 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
 
   // Compute partition centroids and use those as initial centers
 
-  std::vector<Intrepid2::Vector<double>>
+  std::vector<minitensor::Vector<double>>
   centers = GetPartitionCentroids();
 
-  Intrepid2::Index const
+  minitensor::Index const
   number_partitions = centers.size();
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   lower_corner;
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   upper_corner;
 
   boost::tie(lower_corner, upper_corner) = BoundingBox();
@@ -2599,7 +2599,7 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
   lower_corner_ = lower_corner;
   upper_corner_ = upper_corner;
 
-  std::vector<Intrepid2::Vector<double>>
+  std::vector<minitensor::Vector<double>>
   domain_points = CreateGrid();
 
   //
@@ -2607,10 +2607,10 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
   //
   std::cout << "Main K-means Iteration." << '\n';
 
-  Intrepid2::Index const
+  minitensor::Index const
   max_iterations = GetMaximumIterations();
 
-  Intrepid2::Index
+  minitensor::Index
   number_iterations = 0;
 
   double const
@@ -2625,11 +2625,11 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
   std::vector<double>
   steps(number_partitions);
 
-  for (Intrepid2::Index i = 0; i < number_partitions; ++i) {
+  for (minitensor::Index i = 0; i < number_partitions; ++i) {
     steps[i] = diagonal_distance;
   }
 
-  Intrepid2::Index const
+  minitensor::Index const
   number_points = domain_points.size();
 
   while (step_norm >= tolerance && number_iterations < max_iterations) {
@@ -2638,19 +2638,19 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
     std::vector<double>
     point_to_generator(number_points);
 
-    for (Intrepid2::Index i = 0; i < domain_points.size(); ++i) {
+    for (minitensor::Index i = 0; i < domain_points.size(); ++i) {
       point_to_generator[i] = closest_point(domain_points[i], centers);
     }
 
     // Determine cluster of points for each generator
-    std::vector<std::vector<Intrepid2::Vector<double>>>
+    std::vector<std::vector<minitensor::Vector<double>>>
     clusters;
 
     clusters.resize(number_partitions);
 
-    for (Intrepid2::Index p = 0; p < point_to_generator.size(); ++p) {
+    for (minitensor::Index p = 0; p < point_to_generator.size(); ++p) {
 
-      Intrepid2::Index const
+      minitensor::Index const
       c = point_to_generator[p];
 
       clusters[c].push_back(domain_points[p]);
@@ -2659,7 +2659,7 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
 
     // Compute centroids of each cluster and set generators to
     // these centroids.
-    for (Intrepid2::Index i = 0; i < clusters.size(); ++i) {
+    for (minitensor::Index i = 0; i < clusters.size(); ++i) {
 
       // If center is empty then generator does not move.
       if (clusters[i].size() == 0) {
@@ -2669,11 +2669,11 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
         continue;
       }
 
-      Intrepid2::Vector<double> const
+      minitensor::Vector<double> const
       cluster_centroid = centroid(clusters[i]);
 
       // Update the generator
-      Intrepid2::Vector<double> const
+      minitensor::Vector<double> const
       old_generator = centers[i];
 
       centers[i] = cluster_centroid;
@@ -2681,7 +2681,7 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
       steps[i] = norm(centers[i] - old_generator);
     }
 
-    step_norm = norm(Intrepid2::Vector<double>(number_partitions, &steps[0]));
+    step_norm = norm(minitensor::Vector<double>(number_partitions, &steps[0]));
 
     std::cout << "Iteration: " << number_iterations;
     std::cout << ". Step: " << step_norm << ". Tol: " << tolerance;
@@ -2721,10 +2721,10 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
 
   // Compute partition centroids and use those as initial centers
 
-  std::vector<Intrepid2::Vector<double>>
+  std::vector<minitensor::Vector<double>>
   center_positions = GetPartitionCentroids();
 
-  Intrepid2::Index const
+  minitensor::Index const
   number_partitions = center_positions.size();
 
   // Initialize centers
@@ -2733,15 +2733,15 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
   std::vector<ClusterCenter>
   centers(number_partitions);
 
-  for (Intrepid2::Index i = 0; i < number_partitions; ++i) {
+  for (minitensor::Index i = 0; i < number_partitions; ++i) {
     centers[i].position = center_positions[i];
     centers[i].weighted_centroid = 0.0 * center_positions[i];
   }
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   lower_corner;
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   upper_corner;
 
   boost::tie(lower_corner, upper_corner) = BoundingBox();
@@ -2749,7 +2749,7 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
   lower_corner_ = lower_corner;
   upper_corner_ = upper_corner;
 
-  std::vector<Intrepid2::Vector<double>>
+  std::vector<minitensor::Vector<double>>
   domain_points = CreateGrid();
 
   //
@@ -2766,10 +2766,10 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
   //
   // K-means iteration
   //
-  Intrepid2::Index const
+  minitensor::Index const
   max_iterations = GetMaximumIterations();
 
-  Intrepid2::Index
+  minitensor::Index
   number_iterations = 0;
 
   double const
@@ -2784,14 +2784,14 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
   std::vector<double>
   steps(number_partitions);
 
-  for (Intrepid2::Index i = 0; i < number_partitions; ++i) {
+  for (minitensor::Index i = 0; i < number_partitions; ++i) {
     steps[i] = diagonal_distance;
   }
 
   while (step_norm >= tolerance && number_iterations < max_iterations) {
 
     // Initialize centers
-    for (Intrepid2::Index i = 0; i < number_partitions; ++i) {
+    for (minitensor::Index i = 0; i < number_partitions; ++i) {
       ClusterCenter &
       center = centers[i];
 
@@ -2802,7 +2802,7 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
     TraverseTree(kdtree, filter_visitor);
 
     // Update centers
-    for (Intrepid2::Index i = 0; i < centers.size(); ++i) {
+    for (minitensor::Index i = 0; i < centers.size(); ++i) {
 
       ClusterCenter &
       center = centers[i];
@@ -2815,7 +2815,7 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
         continue;
       }
 
-      Intrepid2::Vector<double> const
+      minitensor::Vector<double> const
       new_position = center.weighted_centroid / center.count;
 
       steps[i] = norm(new_position - center.position);
@@ -2824,7 +2824,7 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
 
     }
 
-    step_norm = norm(Intrepid2::Vector<double>(number_partitions, &steps[0]));
+    step_norm = norm(minitensor::Vector<double>(number_partitions, &steps[0]));
 
     std::cout << "Iteration: " << number_iterations;
     std::cout << ". Step: " << step_norm << ". Tol: " << tolerance;
@@ -2834,7 +2834,7 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
 
   }
 
-  for (Intrepid2::Index i = 0; i < number_partitions; i++) {
+  for (minitensor::Index i = 0; i < number_partitions; i++) {
     center_positions[i] = centers[i].position;
   }
 
@@ -2858,10 +2858,10 @@ ConnectivityArray::PartitionSequential(double const length_scale)
   int const
   number_partitions = GetNumberPartitions(length_scale);
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   lower_corner;
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   upper_corner;
 
   boost::tie(lower_corner, upper_corner) = BoundingBox();
@@ -2881,10 +2881,10 @@ ConnectivityArray::PartitionSequential(double const length_scale)
 
   // Compute partition centroids and use those as initial centers
 
-  std::vector<Intrepid2::Vector<double>>
+  std::vector<minitensor::Vector<double>>
   centers = GetPartitionCentroids();
 
-  std::vector<Intrepid2::Index>
+  std::vector<minitensor::Index>
   weights(number_partitions);
 
   for (int i = 0; i < number_partitions; ++i) {
@@ -2892,13 +2892,13 @@ ConnectivityArray::PartitionSequential(double const length_scale)
   }
 
   // K-means sequential iteration
-  Intrepid2::Index const
+  minitensor::Index const
   number_random_points = GetMaximumIterations() * number_partitions;
 
-  Intrepid2::Index const
+  minitensor::Index const
   max_iterations = number_random_points;
 
-  Intrepid2::Index
+  minitensor::Index
   number_iterations = 0;
 
   double const
@@ -2925,7 +2925,7 @@ ConnectivityArray::PartitionSequential(double const length_scale)
     bool
     is_point_in_domain = false;
 
-    Intrepid2::Vector<double>
+    minitensor::Vector<double>
     random_point(lower_corner.get_dimension());
 
     while (is_point_in_domain == false) {
@@ -2934,11 +2934,11 @@ ConnectivityArray::PartitionSequential(double const length_scale)
     }
 
     // Determine index to closest generator
-    Intrepid2::Index const
+    minitensor::Index const
     i = closest_point(random_point, centers);
 
     // Update the generator and the weight
-    Intrepid2::Vector<double> const
+    minitensor::Vector<double> const
     old_generator = centers[i];
 
     centers[i] =
@@ -2947,7 +2947,7 @@ ConnectivityArray::PartitionSequential(double const length_scale)
     weights[i] += 1;
 
     steps[i] = norm(centers[i] - old_generator);
-    step_norm = norm(Intrepid2::Vector<double>(number_partitions, &steps[0]));
+    step_norm = norm(minitensor::Vector<double>(number_partitions, &steps[0]));
 
     if (number_iterations % 10000 == 0) {
       std::cout << "Random point: " << number_iterations;
@@ -2983,10 +2983,10 @@ ConnectivityArray::PartitionRandom(double const length_scale)
   int const
   number_partitions = GetNumberPartitions(length_scale);
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   lower_corner;
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   upper_corner;
 
   boost::tie(lower_corner, upper_corner) = BoundingBox();
@@ -3000,12 +3000,12 @@ ConnectivityArray::PartitionRandom(double const length_scale)
   int
   number_generators = 0;
 
-  std::vector<Intrepid2::Vector<double>>
+  std::vector<minitensor::Vector<double>>
   centers;
 
   while (number_generators < number_partitions) {
 
-    Intrepid2::Vector<double>
+    minitensor::Vector<double>
     p = random_in_box(lower_corner, upper_corner);
 
     if (IsInsideMesh(p) == true) {
@@ -3188,10 +3188,10 @@ ConnectivityArray::GetGeometry(
       centroids_iter != centroids.end();
       ++centroids_iter) {
 
-    Intrepid2::Vector<double> const
+    minitensor::Vector<double> const
     centroid = (*centroids_iter).second;
 
-    for (Intrepid2::Index i = 0; i < 3; ++i) {
+    for (minitensor::Index i = 0; i < 3; ++i) {
 
       geom_vec[index_geom_vec] = centroid(i);
       ++index_geom_vec;
@@ -3233,7 +3233,7 @@ operator<<(
 
     output_stream << std::setw(12) << node;
 
-    Intrepid2::Vector<double> const &
+    minitensor::Vector<double> const &
     point = (*nodes_iter).second;
 
     for (int j = 0; j < dimension; ++j) {
@@ -3685,7 +3685,7 @@ DualGraph::Print() const
 //
 //
 std::vector<std::vector<int>>
-DualGraph::GetFaceConnectivity(Intrepid2::ELEMENT::Type const type) const
+DualGraph::GetFaceConnectivity(minitensor::ELEMENT::Type const type) const
     {
 
   std::vector<std::vector<int>>
@@ -3701,27 +3701,27 @@ DualGraph::GetFaceConnectivity(Intrepid2::ELEMENT::Type const type) const
 
   switch (type) {
 
-  case Intrepid2::ELEMENT::SEGMENTAL:
+  case minitensor::ELEMENT::SEGMENTAL:
     number_faces = 2;
     nodes_per_face = 1;
     break;
 
-  case Intrepid2::ELEMENT::TRIANGULAR:
+  case minitensor::ELEMENT::TRIANGULAR:
     number_faces = 3;
     nodes_per_face = 2;
     break;
 
-  case Intrepid2::ELEMENT::QUADRILATERAL:
+  case minitensor::ELEMENT::QUADRILATERAL:
     number_faces = 4;
     nodes_per_face = 2;
     break;
 
-  case Intrepid2::ELEMENT::TETRAHEDRAL:
+  case minitensor::ELEMENT::TETRAHEDRAL:
     number_faces = 4;
     nodes_per_face = 3;
     break;
 
-  case Intrepid2::ELEMENT::HEXAHEDRAL:
+  case minitensor::ELEMENT::HEXAHEDRAL:
     number_faces = 6;
     nodes_per_face = 4;
     break;
@@ -3744,12 +3744,12 @@ DualGraph::GetFaceConnectivity(Intrepid2::ELEMENT::Type const type) const
 
   switch (type) {
 
-  case Intrepid2::ELEMENT::SEGMENTAL:
+  case minitensor::ELEMENT::SEGMENTAL:
     f[0][0] = 0;
     f[1][0] = 1;
     break;
 
-  case Intrepid2::ELEMENT::TRIANGULAR:
+  case minitensor::ELEMENT::TRIANGULAR:
     f[0][0] = 0;
     f[0][1] = 1;
     f[1][0] = 1;
@@ -3758,7 +3758,7 @@ DualGraph::GetFaceConnectivity(Intrepid2::ELEMENT::Type const type) const
     f[2][1] = 0;
     break;
 
-  case Intrepid2::ELEMENT::QUADRILATERAL:
+  case minitensor::ELEMENT::QUADRILATERAL:
     f[0][0] = 0;
     f[0][1] = 1;
     f[1][0] = 1;
@@ -3769,7 +3769,7 @@ DualGraph::GetFaceConnectivity(Intrepid2::ELEMENT::Type const type) const
     f[3][1] = 0;
     break;
 
-  case Intrepid2::ELEMENT::TETRAHEDRAL:
+  case minitensor::ELEMENT::TETRAHEDRAL:
     f[0][0] = 0;
     f[0][1] = 1;
     f[0][2] = 2;
@@ -3784,7 +3784,7 @@ DualGraph::GetFaceConnectivity(Intrepid2::ELEMENT::Type const type) const
     f[3][2] = 0;
     break;
 
-  case Intrepid2::ELEMENT::HEXAHEDRAL:
+  case minitensor::ELEMENT::HEXAHEDRAL:
     f[0][0] = 0;
     f[0][1] = 1;
     f[0][2] = 2;
@@ -3889,7 +3889,7 @@ ZoltanHyperGraph::GetVertexWeights() const
 }
 
 //
-// Intrepid2::Vector with edge IDs
+// minitensor::Vector with edge IDs
 //
 std::vector<ZOLTAN_ID_TYPE>
 ZoltanHyperGraph::GetEdgeIDs() const
@@ -3921,7 +3921,7 @@ ZoltanHyperGraph::GetEdgeIDs() const
 }
 
 //
-// Intrepid2::Vector with edge pointers
+// minitensor::Vector with edge pointers
 //
 std::vector<int>
 ZoltanHyperGraph::GetEdgePointers() const

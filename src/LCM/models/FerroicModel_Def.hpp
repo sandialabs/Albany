@@ -3,7 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Utils.hpp"
@@ -60,11 +60,11 @@ FerroicModel<EvalT>::PostParseInitialize()
 template<typename EvalT>
 void FerroicModel<EvalT>::
 computeState(
-      const Intrepid2::Tensor<ScalarT, FM::THREE_D>& x,
-      const Intrepid2::Vector<ScalarT, FM::THREE_D>& E,
+      const minitensor::Tensor<ScalarT, FM::THREE_D>& x,
+      const minitensor::Vector<ScalarT, FM::THREE_D>& E,
       const Teuchos::Array<RealType>& oldfractions,
-            Intrepid2::Tensor<ScalarT, FM::THREE_D>& X,
-            Intrepid2::Vector<ScalarT, FM::THREE_D>& D,
+            minitensor::Tensor<ScalarT, FM::THREE_D>& X,
+            minitensor::Vector<ScalarT, FM::THREE_D>& D,
             Teuchos::Array<ScalarT>& newfractions)
 /******************************************************************************/
 {
@@ -77,7 +77,7 @@ computeState(
   
   // solution variable
   //
-  Intrepid2::Vector<ScalarT,FM::MAX_TRNS> xi;
+  minitensor::Vector<ScalarT,FM::MAX_TRNS> xi;
 
   // solve for xi
   //
@@ -110,13 +110,13 @@ computeState(
 
       // create minimizer
       using ValueT = typename Sacado::ValueType<ScalarT>::type;
-      using MIN = Intrepid2::Minimizer<ValueT, MAX_TRNS>;
+      using MIN = minitensor::Minimizer<ValueT, MAX_TRNS>;
       MIN minimizer;
 
       // create stepper
-      using STEP = Intrepid2::StepBase<NLS, ValueT, MAX_TRNS>;
+      using STEP = minitensor::StepBase<NLS, ValueT, MAX_TRNS>;
       std::unique_ptr<STEP> 
-        pstep = Intrepid2::stepFactory<NLS, ValueT, MAX_TRNS>(m_step_type);
+        pstep = minitensor::stepFactory<NLS, ValueT, MAX_TRNS>(m_step_type);
       STEP &step = *pstep;
 
       // create solution vector with initial guess

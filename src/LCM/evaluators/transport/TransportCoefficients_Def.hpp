@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 #include <typeinfo>
 
@@ -237,7 +237,7 @@ namespace LCM {
     }
 
     // deformation gradient volumetric split for lattice concentration
-    Intrepid2::Tensor<ScalarT> Fmech(num_dims_);
+    minitensor::Tensor<ScalarT> Fmech(num_dims_);
 
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {

@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include <typeinfo>
@@ -57,8 +57,8 @@ computeState(typename Traits::EvalData workset,
   ScalarT lambda;
   ScalarT mu;
 
-  Intrepid2::Tensor<ScalarT> eps(num_dims_), sigma(num_dims_);
-  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
+  minitensor::Tensor<ScalarT> eps(num_dims_), sigma(num_dims_);
+  minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
 
   if (print) {
     std::cout << "========" << std::endl;
@@ -72,7 +72,7 @@ computeState(typename Traits::EvalData workset,
 
       eps.fill( strain,cell,pt,0,0);
       
-      sigma = 2.0 * mu * eps + lambda * Intrepid2::trace(eps) * I;
+      sigma = 2.0 * mu * eps + lambda * minitensor::trace(eps) * I;
 
       if (print) {
         std::cout << "E      : " << elastic_modulus(cell,pt) << std::endl;
