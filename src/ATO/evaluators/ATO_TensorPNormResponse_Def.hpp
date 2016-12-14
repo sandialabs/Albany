@@ -11,7 +11,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "PHAL_Utilities.hpp"
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include "Albany_Utils.hpp"
 
 template<typename EvalT, typename Traits>
@@ -382,7 +382,7 @@ TransformResponse(int Cell, int QP, ScalarT& response_eff)
   ScalarT nullVal = 0.0;
   //Transform the tensor into Voigt notation.
   //This transform generalizes 2d/3d by leaving blanks, which is still correct.
-  Intrepid2::Vector<ScalarT> voigt_tensor(6);
+  minitensor::Vector<ScalarT> voigt_tensor(6);
 
   voigt_tensor[0] = tensor(Cell,QP,0,0);
   voigt_tensor[1] = tensor(Cell,QP,1,1);
@@ -398,7 +398,7 @@ TransformResponse(int Cell, int QP, ScalarT& response_eff)
 
 
   //Transform input tensor into its deviator. T is a constant transformation matrix.
-  Intrepid2::Matrix<double> T (6,6);
+  minitensor::Matrix<double> T (6,6);
   for (int i=0;i<6;i++)
     for (int j=0;j<6;j++)
       if (i<3 && j<3)
@@ -412,11 +412,11 @@ TransformResponse(int Cell, int QP, ScalarT& response_eff)
         else
           T(i,j)=0.0;
 
-  Intrepid2::Vector<ScalarT> _s = T*voigt_tensor;
+  minitensor::Vector<ScalarT> _s = T*voigt_tensor;
 
   //Use supplied linear transformations to get effective deviators
-  Intrepid2::Vector<ScalarT> _sp =Cp*_s;
-  Intrepid2::Vector<ScalarT> _spp =Cpp*_s;
+  minitensor::Vector<ScalarT> _sp =Cp*_s;
+  minitensor::Vector<ScalarT> _spp =Cpp*_s;
 
   //Get invariates of the deviators. These are analytic equations, given in appendix A of Barlat, 2004.
   ScalarT Hp1 = (_sp[0]+_sp[1]+_sp[2]) / 3.0;

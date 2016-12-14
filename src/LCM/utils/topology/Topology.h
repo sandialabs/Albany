@@ -142,7 +142,7 @@ public:
   stk::mesh::EntityVector
   getBoundaryEntityNodes(stk::mesh::Entity boundary_entity);
 
-  std::vector<Intrepid2::Vector<double>>
+  std::vector<minitensor::Vector<double>>
   getNodalCoordinates();
 
   ///
@@ -863,7 +863,7 @@ public:
   ///
   /// Compute normal using first 3 nodes of boundary entity.
   ///
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   get_normal(stk::mesh::Entity boundary_entity);
 
 private:

@@ -88,14 +88,14 @@ CrystalPlasticityKernel(
       b_temp = e_list.get<Teuchos::Array<RealType>>(
         Albany::strint("Basis Vector", i + 1)).toVector();
 
-      Intrepid2::Vector<RealType, CP::MAX_DIM>
+      minitensor::Vector<RealType, CP::MAX_DIM>
       basis(num_dims_);
 
       for (int dim = 0; dim < num_dims_; ++dim){
         basis[dim] = b_temp[dim];
       }
 
-      basis = Intrepid2::unit(basis);
+      basis = minitensor::unit(basis);
 
       // TODO check zero, rh system
       // Filling columns of transformation with basis vectors
@@ -180,7 +180,7 @@ CrystalPlasticityKernel(
     CP::SlipFamily<CP::MAX_DIM, CP::MAX_SLIP> &
     slip_family = slip_families_[slip_system.slip_family_index_];
 
-    Intrepid2::Index 
+    minitensor::Index 
     slip_system_index = slip_family.num_slip_sys_;
 
     slip_family.slip_system_indices_[slip_system_index] = num_ss;
@@ -193,13 +193,13 @@ CrystalPlasticityKernel(
     std::vector<RealType>
     s_temp = ss_list.get<Teuchos::Array<RealType>>("Slip Direction").toVector();
 
-    Intrepid2::Vector<RealType, CP::MAX_DIM>
+    minitensor::Vector<RealType, CP::MAX_DIM>
     s_temp_normalized(num_dims_);
 
     for (int i = 0; i < num_dims_; ++i) {
       s_temp_normalized[i] = s_temp[i];
     }
-    s_temp_normalized = Intrepid2::unit(s_temp_normalized);
+    s_temp_normalized = minitensor::unit(s_temp_normalized);
     slip_systems_.at(num_ss).s_.set_dimension(num_dims_);
     slip_systems_.at(num_ss).s_ = s_temp_normalized;
 
@@ -209,20 +209,20 @@ CrystalPlasticityKernel(
     std::vector<RealType> 
     n_temp = ss_list.get<Teuchos::Array<RealType>>("Slip Normal").toVector();
 
-    Intrepid2::Vector<RealType, CP::MAX_DIM>
+    minitensor::Vector<RealType, CP::MAX_DIM>
     n_temp_normalized(num_dims_);
 
     for (int i = 0; i < num_dims_; ++i) {
       n_temp_normalized[i] = n_temp[i];
     }
 
-    n_temp_normalized = Intrepid2::unit(n_temp_normalized);
+    n_temp_normalized = minitensor::unit(n_temp_normalized);
     slip_systems_.at(num_ss).n_.set_dimension(num_dims_);
     slip_systems_.at(num_ss).n_ = n_temp_normalized;
 
     slip_systems_.at(num_ss).projector_.set_dimension(num_dims_);
     slip_systems_.at(num_ss).projector_ =
-      Intrepid2::dyad(slip_systems_.at(num_ss).s_, slip_systems_.at(num_ss).n_);
+      minitensor::dyad(slip_systems_.at(num_ss).s_, slip_systems_.at(num_ss).n_);
 
     auto const
     index_param = 
@@ -473,58 +473,58 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   //
   // Known quantities
   //
-  Intrepid2::Tensor<RealType, CP::MAX_DIM> 
+  minitensor::Tensor<RealType, CP::MAX_DIM> 
   Fp_n(num_dims_);
 
-  Intrepid2::Vector<RealType, CP::MAX_SLIP>
+  minitensor::Vector<RealType, CP::MAX_SLIP>
   slip_n(num_slip_);
 
-  Intrepid2::Vector<RealType, CP::MAX_SLIP>
+  minitensor::Vector<RealType, CP::MAX_SLIP>
   slip_dot_n(num_slip_);
 
-  Intrepid2::Vector<RealType, CP::MAX_SLIP>
+  minitensor::Vector<RealType, CP::MAX_SLIP>
   state_hardening_n(num_slip_);
 
-  Intrepid2::Tensor<ScalarT, CP::MAX_DIM>
+  minitensor::Tensor<ScalarT, CP::MAX_DIM>
   F_np1(num_dims_);
 
   //
   // Unknown quantities
   //
-  Intrepid2::Tensor<ScalarT, CP::MAX_DIM>
+  minitensor::Tensor<ScalarT, CP::MAX_DIM>
   Lp_np1(num_dims_);
 
-  Intrepid2::Tensor<ScalarT, CP::MAX_DIM>
+  minitensor::Tensor<ScalarT, CP::MAX_DIM>
   Fp_np1(num_dims_);
 
-  Intrepid2::Tensor<ScalarT, CP::MAX_DIM>
+  minitensor::Tensor<ScalarT, CP::MAX_DIM>
   sigma_np1(num_dims_);
 
-  Intrepid2::Tensor<ScalarT, CP::MAX_DIM>
+  minitensor::Tensor<ScalarT, CP::MAX_DIM>
   S_np1(num_dims_);
 
-  Intrepid2::Vector<ScalarT, CP::MAX_SLIP>
+  minitensor::Vector<ScalarT, CP::MAX_SLIP>
   slip_np1(num_slip_);
 
-  Intrepid2::Vector<ScalarT, CP::MAX_SLIP>
+  minitensor::Vector<ScalarT, CP::MAX_SLIP>
   shear_np1(num_slip_);
 
-  Intrepid2::Vector<ScalarT, CP::MAX_SLIP>
+  minitensor::Vector<ScalarT, CP::MAX_SLIP>
   state_hardening_np1(num_slip_);
 
-  Intrepid2::Vector<ScalarT, CP::MAX_SLIP>
+  minitensor::Vector<ScalarT, CP::MAX_SLIP>
   slip_resistance(num_slip_);
 
-  Intrepid2::Vector<ScalarT, CP::MAX_SLIP>
+  minitensor::Vector<ScalarT, CP::MAX_SLIP>
   slip_computed(num_slip_);
 
   ///
   /// Elasticity tensor
   ///
-  Intrepid2::Tensor4<ScalarT, CP::MAX_DIM>
+  minitensor::Tensor4<ScalarT, CP::MAX_DIM>
   C_unrotated = C_unrotated_;
 
-  Intrepid2::Tensor4<ScalarT, CP::MAX_DIM>
+  minitensor::Tensor4<ScalarT, CP::MAX_DIM>
   C(num_dims_);
 
   RealType
@@ -539,7 +539,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   bool
   update_state_successful{true};
 
-  Intrepid2::Tensor<RealType, CP::MAX_DIM>
+  minitensor::Tensor<RealType, CP::MAX_DIM>
   orientation_matrix(num_dims_);
 
   std::vector<CP::SlipSystem<CP::MAX_DIM>>
@@ -591,14 +591,14 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // Set the rotated elasticity tensor, slip normals, slip directions, 
   // and projection operator
-  C = Intrepid2::kronecker(orientation_matrix, C_unrotated);
+  C = minitensor::kronecker(orientation_matrix, C_unrotated);
   for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
     element_slip_systems.at(num_ss).s_ = 
       orientation_matrix * slip_systems_.at(num_ss).s_;
     element_slip_systems.at(num_ss).n_ = 
       orientation_matrix * slip_systems_.at(num_ss).n_;
     element_slip_systems.at(num_ss).projector_ =
-      Intrepid2::dyad(element_slip_systems.at(num_ss).s_,
+      minitensor::dyad(element_slip_systems.at(num_ss).s_,
                       element_slip_systems.at(num_ss).n_);
   }
 
@@ -652,7 +652,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
     state_internal.rate_slip_ = (slip_np1 - slip_n) / dt_;
   }
   else {
-    state_internal.rate_slip_.fill(Intrepid2::ZEROS);
+    state_internal.rate_slip_.fill(minitensor::ZEROS);
   }
 
   state_internal.slip_np1_ = slip_np1;
@@ -696,29 +696,29 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   // Compute the equivalent plastic strain from the velocity gradient:
   //  eqps_dot = sqrt[2/3* sym(Lp) : sym(Lp)]
-  Intrepid2::Tensor<ScalarT, CP::MAX_DIM> const
-  Dp = Intrepid2::sym(Lp_np1);
+  minitensor::Tensor<ScalarT, CP::MAX_DIM> const
+  Dp = minitensor::sym(Lp_np1);
 
   RealType const
   delta_eqps = dt_ * std::sqrt(2.0 / 3.0 *
-    Sacado::ScalarValue<ScalarT>::eval(Intrepid2::dotdot(Dp,Dp)));
+    Sacado::ScalarValue<ScalarT>::eval(minitensor::dotdot(Dp,Dp)));
 
   equivalent_plastic_strain += delta_eqps;
 
   eqps_(cell, pt) = equivalent_plastic_strain;
 
   // The xtal rotation from the polar decomp of Fe.
-  Intrepid2::Tensor<ScalarT, CP::MAX_DIM>
+  minitensor::Tensor<ScalarT, CP::MAX_DIM>
   Fe(num_dims_);
 
-  Intrepid2::Tensor<ScalarT, CP::MAX_DIM>
+  minitensor::Tensor<ScalarT, CP::MAX_DIM>
   Re_np1(num_dims_);
 
   // Multiplicatively decompose F to get Fe
-  Fe = F_np1 * Intrepid2::inverse(Fp_np1);
+  Fe = F_np1 * minitensor::inverse(Fp_np1);
 
   // Compute polar rotation to get Re
-  Re_np1 = Intrepid2::polar_rotation(Fe);
+  Re_np1 = minitensor::polar_rotation(Fe);
 
   ///
   /// Copy data from local data structures back into Albany fields
@@ -768,7 +768,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
       std::ofstream
       data_file("output.dat", std::fstream::app);
 
-      Intrepid2::Tensor<RealType, CP::MAX_DIM>
+      minitensor::Tensor<RealType, CP::MAX_DIM>
       P(num_dims_);
 
       data_file << "\n" << "time: ";

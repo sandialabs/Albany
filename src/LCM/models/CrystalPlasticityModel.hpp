@@ -141,7 +141,7 @@ private:
   RealType
   reference_temperature_;
   
-  Intrepid2::Tensor<RealType, CP::MAX_DIM>
+  minitensor::Tensor<RealType, CP::MAX_DIM>
   element_block_orientation_;
 
   /// Number of slip families
@@ -153,7 +153,7 @@ private:
   num_slip_;
 
   /// Unrotated elasticity tensor
-  Intrepid2::Tensor4<ScalarT, CP::MAX_DIM>
+  minitensor::Tensor4<ScalarT, CP::MAX_DIM>
   C_unrotated_;
 
   /// Vector of structs holding slip system family data
@@ -180,11 +180,11 @@ private:
   bool
   apply_slip_predictor_;
   
-  Intrepid2::StepType
+  minitensor::StepType
   step_type_;
 
   /// Minisolver Minimizer
-  Intrepid2::Minimizer<ValueT, CP::NLS_DIM>
+  minitensor::Minimizer<ValueT, CP::NLS_DIM>
   minimizer_;
 
   /// Pointer to NOX status test, allows the material model to force a global load step reduction

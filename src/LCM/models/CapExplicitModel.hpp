@@ -6,7 +6,7 @@
 #if !defined(CapExplicitModel_hpp)
 #define CapExplicitModel_hpp
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -82,26 +82,26 @@ private:
   /// functions for integrating cap model stress
   ///
   ScalarT
-  compute_f(Intrepid2::Tensor<ScalarT> & sigma,
-      Intrepid2::Tensor<ScalarT> & alpha, ScalarT & kappa);
+  compute_f(minitensor::Tensor<ScalarT> & sigma,
+      minitensor::Tensor<ScalarT> & alpha, ScalarT & kappa);
 
-  Intrepid2::Tensor<ScalarT>
-  compute_dfdsigma(Intrepid2::Tensor<ScalarT> & sigma,
-      Intrepid2::Tensor<ScalarT> & alpha, ScalarT & kappa);
+  minitensor::Tensor<ScalarT>
+  compute_dfdsigma(minitensor::Tensor<ScalarT> & sigma,
+      minitensor::Tensor<ScalarT> & alpha, ScalarT & kappa);
 
-  Intrepid2::Tensor<ScalarT>
-  compute_dgdsigma(Intrepid2::Tensor<ScalarT> & sigma,
-      Intrepid2::Tensor<ScalarT> & alpha, ScalarT & kappa);
+  minitensor::Tensor<ScalarT>
+  compute_dgdsigma(minitensor::Tensor<ScalarT> & sigma,
+      minitensor::Tensor<ScalarT> & alpha, ScalarT & kappa);
 
   ScalarT
-  compute_dfdkappa(Intrepid2::Tensor<ScalarT> & sigma,
-      Intrepid2::Tensor<ScalarT> & alpha, ScalarT & kappa);
+  compute_dfdkappa(minitensor::Tensor<ScalarT> & sigma,
+      minitensor::Tensor<ScalarT> & alpha, ScalarT & kappa);
 
   ScalarT
   compute_Galpha(ScalarT & J2_alpha);
 
-  Intrepid2::Tensor<ScalarT>
-  compute_halpha(Intrepid2::Tensor<ScalarT> & dgdsigma, ScalarT & J2_alpha);
+  minitensor::Tensor<ScalarT>
+  compute_halpha(minitensor::Tensor<ScalarT> & dgdsigma, ScalarT & J2_alpha);
 
   ScalarT compute_dedkappa(ScalarT & kappa);
 
@@ -130,14 +130,14 @@ private:
   ///
   /// Tensors for local computations
   ///
-  Intrepid2::Tensor4<ScalarT> Celastic, compliance, id1, id2, id3;
-  Intrepid2::Tensor<ScalarT> I;
-  Intrepid2::Tensor<ScalarT> depsilon, sigmaN, strainN, sigmaVal, alphaVal;
-  Intrepid2::Tensor<ScalarT> deps_plastic, sigmaTr, alphaTr;
-  Intrepid2::Tensor<ScalarT> dfdsigma, dgdsigma, dfdalpha, halpha;
-  Intrepid2::Tensor<ScalarT> dfdotCe, sigmaK, alphaK, dsigma, dev_plastic;
-  Intrepid2::Tensor<ScalarT> xi, sN, s, strainCurrent;
-  Intrepid2::Tensor<ScalarT> dJ3dsigma, eps_dev;
+  minitensor::Tensor4<ScalarT> Celastic, compliance, id1, id2, id3;
+  minitensor::Tensor<ScalarT> I;
+  minitensor::Tensor<ScalarT> depsilon, sigmaN, strainN, sigmaVal, alphaVal;
+  minitensor::Tensor<ScalarT> deps_plastic, sigmaTr, alphaTr;
+  minitensor::Tensor<ScalarT> dfdsigma, dgdsigma, dfdalpha, halpha;
+  minitensor::Tensor<ScalarT> dfdotCe, sigmaK, alphaK, dsigma, dev_plastic;
+  minitensor::Tensor<ScalarT> xi, sN, s, strainCurrent;
+  minitensor::Tensor<ScalarT> dJ3dsigma, eps_dev;
 
 };
 }

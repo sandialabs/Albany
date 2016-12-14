@@ -13,7 +13,7 @@
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 #include "LCM/models/ConstitutiveModel.hpp"
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 #include "Sacado.hpp"
 
@@ -106,32 +106,32 @@ void
 computeResidualandJacobian(
   std::vector<int> & yieldMask, std::vector<int> & yieldMap,
   std::vector<ScalarT> & X, std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX,
-  Intrepid2::Tensor<ScalarT> & elTrialMacroStress,
-  Intrepid2::Tensor<ScalarT> & macroBackStress, ScalarT & alpha,
-  std::vector<Intrepid2::Tensor<ScalarT>> & elTrialMicroStress,
-  std::vector<Intrepid2::Tensor<ScalarT>> & microBackStress,
+  minitensor::Tensor<ScalarT> & elTrialMacroStress,
+  minitensor::Tensor<ScalarT> & macroBackStress, ScalarT & alpha,
+  std::vector<minitensor::Tensor<ScalarT>> & elTrialMicroStress,
+  std::vector<minitensor::Tensor<ScalarT>> & microBackStress,
   std::vector<ScalarT> & microAlpha,
-  std::vector<Intrepid2::Tensor3<ScalarT>> & elTrialDoubleStress,
-  std::vector<Intrepid2::Tensor3<ScalarT>> & doubleBackStress,
+  std::vector<minitensor::Tensor3<ScalarT>> & elTrialDoubleStress,
+  std::vector<minitensor::Tensor3<ScalarT>> & doubleBackStress,
   std::vector<ScalarT> & doubleAlpha);
 
-template <typename T> T devMag( const Intrepid2::Tensor<T> & );
-template <typename T> T devMag( const Intrepid2::Tensor3<T> & );
+template <typename T> T devMag( const minitensor::Tensor<T> & );
+template <typename T> T devMag( const minitensor::Tensor3<T> & );
 
-template <typename T> Intrepid2::Tensor<T> devNorm( const Intrepid2::Tensor<T> & t );
-template <typename T> Intrepid2::Tensor3<T> devNorm( const Intrepid2::Tensor3<T> & t );
+template <typename T> minitensor::Tensor<T> devNorm( const minitensor::Tensor<T> & t );
+template <typename T> minitensor::Tensor3<T> devNorm( const minitensor::Tensor3<T> & t );
 
 void
 yieldFunction( std::vector<typename EvalT::ScalarT>&      Fvals,
-               Intrepid2::Tensor<ScalarT>&                 macStress,
+               minitensor::Tensor<ScalarT>&                 macStress,
                ScalarT&                                   macroAlpha,
-               Intrepid2::Tensor<ScalarT>&                 macroBackStress,
-               std::vector< Intrepid2::Tensor<ScalarT>>&  micStress,
+               minitensor::Tensor<ScalarT>&                 macroBackStress,
+               std::vector< minitensor::Tensor<ScalarT>>&  micStress,
                std::vector<ScalarT>&                      microAlpha,
-               std::vector< Intrepid2::Tensor<ScalarT>>&  microBackStress,
-               std::vector< Intrepid2::Tensor3<ScalarT>>& doubleStress,
+               std::vector< minitensor::Tensor<ScalarT>>&  microBackStress,
+               std::vector< minitensor::Tensor3<ScalarT>>& doubleStress,
                std::vector<ScalarT>&                      doubleAlpha,
-               std::vector< Intrepid2::Tensor3<ScalarT>>& doubleBackStress);
+               std::vector< minitensor::Tensor3<ScalarT>>& doubleBackStress);
 
 void initializeElasticConstants();
 
@@ -139,10 +139,10 @@ void initializeElasticConstants();
 bool 
 converged(std::vector<ScalarT> & R, int iteration, ScalarT& initNorm);
 
-Intrepid2::Tensor3<typename EvalT::ScalarT> 
+minitensor::Tensor3<typename EvalT::ScalarT> 
 dotdotdot( 
-  Intrepid2::Tensor4<ScalarT> & doubleCelastic, 
-  Intrepid2::Tensor3<ScalarT> & elTrialDoubleStress);
+  minitensor::Tensor4<ScalarT> & doubleCelastic, 
+  minitensor::Tensor3<ScalarT> & elTrialDoubleStress);
 
   ///
   /// Private to prohibit copying
@@ -170,9 +170,9 @@ dotdotdot(
   std::vector<RealType> doubleKinematicModulus;
   std::vector<RealType> doubleIsotropicModulus;
 
-  Intrepid2::Tensor4<ScalarT> macroCelastic;
-  std::vector<Intrepid2::Tensor4<ScalarT>> microCelastic;
-  std::vector<Intrepid2::Tensor4<ScalarT>> doubleCelastic;
+  minitensor::Tensor4<ScalarT> macroCelastic;
+  std::vector<minitensor::Tensor4<ScalarT>> microCelastic;
+  std::vector<minitensor::Tensor4<ScalarT>> doubleCelastic;
   ///
   /// model parameters
   ///

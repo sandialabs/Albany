@@ -466,7 +466,7 @@ Topology::getBoundaryEntityNodes(stk::mesh::Entity boundary_entity)
 //
 // Get nodal coordinates
 //
-std::vector<Intrepid2::Vector<double>>
+std::vector<minitensor::Vector<double>>
 Topology::getNodalCoordinates()
 {
   stk::mesh::Selector
@@ -483,13 +483,13 @@ Topology::getNodalCoordinates()
   EntityVectorIndex const
   number_nodes = entities.size();
 
-  std::vector<Intrepid2::Vector<double>>
+  std::vector<minitensor::Vector<double>>
   coordinates(number_nodes);
 
   size_t const
   dimension = get_space_dimension();
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   X(dimension);
 
   VectorFieldType &
@@ -551,10 +551,10 @@ Topology::outputBoundary(std::string const & output_filename)
 
   for (CoordinatesIndex i = 0; i < number_nodes; ++i) {
 
-    Intrepid2::Vector<double> const &
+    minitensor::Vector<double> const &
     X = coordinates[i];
 
-    for (Intrepid2::Index j = 0; j < X.get_dimension(); ++j) {
+    for (minitensor::Index j = 0; j < X.get_dimension(); ++j) {
       ofs << std::setw(24) << std::scientific << std::setprecision(16) << X(j);
     }
     ofs << '\n';
@@ -747,7 +747,7 @@ Topology::getBoundary()
 ///
 /// Compute normal using first 3 nodes of boundary entity.
 ///
-Intrepid2::Vector<double>
+minitensor::Vector<double>
 Topology::get_normal(stk::mesh::Entity boundary_entity)
 {
   shards::CellTopology const
@@ -770,7 +770,7 @@ Topology::get_normal(stk::mesh::Entity boundary_entity)
   size_t const
   dimension = get_space_dimension();
 
-  std::vector<Intrepid2::Vector<double>>
+  std::vector<minitensor::Vector<double>>
   nodal_coords(num_corner_nodes);
 
   stk::mesh::EntityVector
@@ -787,7 +787,7 @@ Topology::get_normal(stk::mesh::Entity boundary_entity)
     double const * const
     pointer_coordinates = stk::mesh::field_data(coordinates, node);
 
-    Intrepid2::Vector<double> &
+    minitensor::Vector<double> &
     X = nodal_coords[i];
 
     X.set_dimension(dimension);
@@ -798,14 +798,14 @@ Topology::get_normal(stk::mesh::Entity boundary_entity)
 
   }
 
-  Intrepid2::Vector<double> const
+  minitensor::Vector<double> const
   v1 = nodal_coords[1] - nodal_coords[0];
 
-  Intrepid2::Vector<double> const
+  minitensor::Vector<double> const
   v2 = nodal_coords[2] - nodal_coords[0];
 
-  Intrepid2::Vector<double>
-  normal = Intrepid2::unit(Intrepid2::cross(v1, v2));
+  minitensor::Vector<double>
+  normal = minitensor::unit(minitensor::cross(v1, v2));
 
   return normal;
 }
@@ -819,13 +819,13 @@ Topology::createSurfaceElementConnectivity(
     stk::mesh::Entity face_bottom)
 {
   // Check first if normals point in the same direction, just in case.
-  Intrepid2::Vector<double> const
+  minitensor::Vector<double> const
   normal_top = get_normal(face_top);
 
-  Intrepid2::Vector<double> const
+  minitensor::Vector<double> const
   normal_bottom = get_normal(face_bottom);
 
-  if (Intrepid2::dot(normal_top, normal_bottom) > 0.0) {
+  if (minitensor::dot(normal_top, normal_bottom) > 0.0) {
     std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
     std::cerr << '\n';
     std::cerr << "Face normals have the same instead of opposite directions:\n";
@@ -866,7 +866,7 @@ Topology::createSurfaceElementConnectivity(
     double const * const
     p_top = stk::mesh::field_data(coordinates, node_top);
 
-    Intrepid2::Vector<double>
+    minitensor::Vector<double>
     X(dimension);
 
     for (size_t n = 0; n < dimension; ++n) {
@@ -883,7 +883,7 @@ Topology::createSurfaceElementConnectivity(
       double const * const
       p_bottom = stk::mesh::field_data(coordinates, node_bottom);
 
-      Intrepid2::Vector<double>
+      minitensor::Vector<double>
       Y(dimension);
 
       for (size_t n = 0; n < dimension; ++n) {

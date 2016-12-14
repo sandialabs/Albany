@@ -18,23 +18,23 @@ namespace CP
 //
 //! Struct containing slip system information.
 //
-template<Intrepid2::Index NumDimT>
+template<minitensor::Index NumDimT>
 struct SlipSystem
 {
   SlipSystem() {}
 
-  Intrepid2::Index
+  minitensor::Index
   slip_family_index_;
 
   //! Slip system vectors.
-  Intrepid2::Vector<RealType, NumDimT>
+  minitensor::Vector<RealType, NumDimT>
   s_;
 
-  Intrepid2::Vector<RealType, NumDimT>
+  minitensor::Vector<RealType, NumDimT>
   n_;
 
   //! Schmid Tensor.
-  Intrepid2::Tensor<RealType, NumDimT> 
+  minitensor::Tensor<RealType, NumDimT> 
   projector_;
 
   //
@@ -46,7 +46,7 @@ struct SlipSystem
 // Slip system family - collection of slip systems grouped by flow and
 // hardening characteristics
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 class SlipFamily
 {
 public:
@@ -59,10 +59,10 @@ public:
   void setFlowRuleType(FlowRuleType rule);
   FlowRuleType getFlowRuleType() const { return type_flow_rule_; }
 
-  Intrepid2::Index
+  minitensor::Index
   num_slip_sys_{0};
 
-  Intrepid2::Vector<Intrepid2::Index, NumSlipT>
+  minitensor::Vector<minitensor::Index, NumSlipT>
   slip_system_indices_;
 
   std::shared_ptr<HardeningParameterBase<NumDimT, NumSlipT>>
@@ -71,7 +71,7 @@ public:
   std::shared_ptr<FlowParameterBase>
   pflow_parameters_{nullptr};
 
-  Intrepid2::Tensor<RealType, NumSlipT>
+  minitensor::Tensor<RealType, NumSlipT>
   latent_matrix_;
 
 private:
@@ -84,11 +84,11 @@ private:
 };
 
 
-template<typename ScalarT, Intrepid2::Index NumDimT>
+template<typename ScalarT, minitensor::Index NumDimT>
 struct StateMechanical
 {
-  using TensorType = Intrepid2::Tensor<ScalarT, NumDimT>;
-  using InputTensorType = Intrepid2::Tensor<RealType, NumDimT>;
+  using TensorType = minitensor::Tensor<ScalarT, NumDimT>;
+  using InputTensorType = minitensor::Tensor<RealType, NumDimT>;
 
   StateMechanical(int num_dim, InputTensorType const & Fp_n)
     : num_dim_(num_dim),
@@ -119,11 +119,11 @@ struct StateMechanical
 };
 
 
-template<typename ScalarT, Intrepid2::Index NumSlipT>
+template<typename ScalarT, minitensor::Index NumSlipT>
 struct StateInternal
 {
-  using VectorType = Intrepid2::Vector<ScalarT, NumSlipT>;
-  using InputVectorType = Intrepid2::Vector<RealType, NumSlipT>;
+  using VectorType = minitensor::Vector<ScalarT, NumSlipT>;
+  using InputVectorType = minitensor::Vector<RealType, NumSlipT>;
 
   StateInternal(int num_slip, InputVectorType const & hardening_n,
       InputVectorType const & slip_n)
@@ -165,81 +165,81 @@ struct StateInternal
 //
 //! Check tensor for NaN and inf values.
 //
-template<Intrepid2::Index NumDimT, typename ArgT>
+template<minitensor::Index NumDimT, typename ArgT>
 void
 confirmTensorSanity(
-    Intrepid2::Tensor<ArgT, NumDimT> const & input,
+    minitensor::Tensor<ArgT, NumDimT> const & input,
     std::string const & message);
 
 
 //
 //! Compute Lp_np1 and Fp_np1 based on computed slip increment.
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename ArgT>
 void
 applySlipIncrement(
     std::vector<SlipSystem<NumDimT>> const & slip_systems,
     RealType dt,
-    Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
-    Intrepid2::Vector<ArgT, NumSlipT> const & slip_np1,
-    Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
-    Intrepid2::Tensor<ArgT, NumDimT> & Lp_np1,
-    Intrepid2::Tensor<ArgT, NumDimT> & Fp_np1);
+    minitensor::Vector<RealType, NumSlipT> const & slip_n,
+    minitensor::Vector<ArgT, NumSlipT> const & slip_np1,
+    minitensor::Tensor<RealType, NumDimT> const & Fp_n,
+    minitensor::Tensor<ArgT, NumDimT> & Lp_np1,
+    minitensor::Tensor<ArgT, NumDimT> & Fp_np1);
 
 
 
 //
 //! Update the hardness.
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename ArgT>
 void
 updateHardness(
     std::vector<SlipSystem<NumDimT>> const & slip_systems,
     std::vector<SlipFamily<NumDimT, NumSlipT>> const & slip_families,
     RealType dt,
-    Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance);
+    minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
+    minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
+    minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
+    minitensor::Vector<ArgT, NumSlipT> & slip_resistance);
 
 
 
 ///
 /// Update the plastic slips
 ///
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename ArgT>
 void
 updateSlip(
     std::vector<SlipSystem<NumDimT>> const & slip_systems,
     std::vector<SlipFamily<NumDimT, NumSlipT>> const & slip_families,
     RealType dt,
-    Intrepid2::Vector<ArgT, NumSlipT> const & slip_resistance,
-    Intrepid2::Vector<ArgT, NumSlipT> const & shear,
-    Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & slip_np1);
+    minitensor::Vector<ArgT, NumSlipT> const & slip_resistance,
+    minitensor::Vector<ArgT, NumSlipT> const & shear,
+    minitensor::Vector<RealType, NumSlipT> const & slip_n,
+    minitensor::Vector<ArgT, NumSlipT> & slip_np1);
 
 
 
 //
 //! Compute stress.
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename ArgT>
 void
 computeStress(
     std::vector<SlipSystem<NumDimT>> const & slip_systems,
-    Intrepid2::Tensor4<ArgT, NumDimT> const & C,
-    Intrepid2::Tensor<ArgT, NumDimT> const & F,
-    Intrepid2::Tensor<ArgT, NumDimT> const & Fp,
-    Intrepid2::Tensor<ArgT, NumDimT> & sigma,
-    Intrepid2::Tensor<ArgT, NumDimT> & S,
-    Intrepid2::Vector<ArgT, NumSlipT> & shear);
+    minitensor::Tensor4<ArgT, NumDimT> const & C,
+    minitensor::Tensor<ArgT, NumDimT> const & F,
+    minitensor::Tensor<ArgT, NumDimT> const & Fp,
+    minitensor::Tensor<ArgT, NumDimT> & sigma,
+    minitensor::Tensor<ArgT, NumDimT> & S,
+    minitensor::Vector<ArgT, NumSlipT> & shear);
 
 
 
 //
 //! Construct elasticity tensor
 //
-template<Intrepid2::Index NumDimT, typename DataT, typename ArgT>
+template<minitensor::Index NumDimT, typename DataT, typename ArgT>
 void
 computeElasticityTensor(
     DataT c11, 
@@ -248,7 +248,7 @@ computeElasticityTensor(
     DataT c33,
     DataT c44,
     DataT c66,
-    Intrepid2::Tensor4<ArgT, NumDimT> & C);
+    minitensor::Tensor4<ArgT, NumDimT> & C);
 
 } // namespace CP
 

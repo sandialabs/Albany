@@ -11,15 +11,15 @@
 //
 // Define nonlinear system based on residual of slip values
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename EvalT>
 CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::ResidualSlipNLS(
-      Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor4<ScalarT, NumDimT> const & C,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
       std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
-      Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
-      Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
-      Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
-      Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
+      minitensor::Tensor<RealType, NumDimT> const & Fp_n,
+      minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
+      minitensor::Vector<RealType, NumSlipT> const & slip_n,
+      minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt)
   :
       C_(C),
@@ -35,20 +35,20 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::ResidualSlipNLS(
   num_slip_ = state_hardening_n_.get_dimension();
 }
 
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
-template<typename T, Intrepid2::Index N>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename EvalT>
+template<typename T, minitensor::Index N>
 T
 CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::value(
-    Intrepid2::Vector<T, N> const & x)
+    minitensor::Vector<T, N> const & x)
 {
   return Base::value(*this, x);
 }
 
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
-template<typename T, Intrepid2::Index N>
-Intrepid2::Vector<T, N>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename EvalT>
+template<typename T, minitensor::Index N>
+minitensor::Vector<T, N>
 CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
-    Intrepid2::Vector<T, N> const & x)
+    minitensor::Vector<T, N> const & x)
 {
   // Get a convenience reference to the failed flag in case it is used more
   // than once.
@@ -56,53 +56,53 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
   failed = Base::failed;
 
   // Tensor mechanical state variables
-  Intrepid2::Tensor<T, NumDimT>
+  minitensor::Tensor<T, NumDimT>
   Fp_np1(num_dim_);
 
-  Intrepid2::Tensor<T, NumDimT>
+  minitensor::Tensor<T, NumDimT>
   Lp_np1(num_dim_);
 
-  Intrepid2::Tensor<T, NumDimT>
+  minitensor::Tensor<T, NumDimT>
   sigma_np1(num_dim_);
 
-  Intrepid2::Tensor<T, NumDimT>
+  minitensor::Tensor<T, NumDimT>
   S_np1(num_dim_);
 
   // Slip system state variables
-  Intrepid2::Vector<T, NumSlipT>
+  minitensor::Vector<T, NumSlipT>
   state_hardening_np1(num_slip_);
 
-  Intrepid2::Vector<T, NumSlipT>
+  minitensor::Vector<T, NumSlipT>
   slip_resistance(num_slip_);
 
-  Intrepid2::Vector<T, NumSlipT>
+  minitensor::Vector<T, NumSlipT>
   slip_np1(num_slip_);
 
-  Intrepid2::Vector<T, NumSlipT>
+  minitensor::Vector<T, NumSlipT>
   slip_computed(num_slip_);
 
-  Intrepid2::Vector<T, NumSlipT>
+  minitensor::Vector<T, NumSlipT>
   shear_np1(num_slip_);
 
-  Intrepid2::Vector<T, NumSlipT>
+  minitensor::Vector<T, NumSlipT>
   rate_slip(num_slip_);
 
   auto const
   num_unknowns = x.get_dimension();
 
-  Intrepid2::Vector<T, N>
+  minitensor::Vector<T, N>
   residual(num_unknowns);
 
   // Return immediately if something failed catastrophically.
   if (failed == true) {
-    residual.fill(Intrepid2::ZEROS);
+    residual.fill(minitensor::ZEROS);
     return residual;
   }
 
-  Intrepid2::Tensor<T, NumDimT> const
+  minitensor::Tensor<T, NumDimT> const
   F_np1_peeled = LCM::peel_tensor<EvalT, T, N, NumDimT>()(F_np1_);
 
-  Intrepid2::Tensor4<T, NumDimT> const
+  minitensor::Tensor4<T, NumDimT> const
   C_peeled = LCM::peel_tensor4<EvalT, T, N, NumDimT>()(C_);
 
   for (int i = 0; i< num_slip_; ++i){
@@ -113,11 +113,11 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
     rate_slip = (slip_np1 - slip_n_) / dt_;
   }
   else{
-    rate_slip.fill(Intrepid2::ZEROS);
+    rate_slip.fill(minitensor::ZEROS);
   }
 
   // Ensure that the slip increment is bounded
-   if (Intrepid2::norm(rate_slip * dt_) > 1.0) {
+   if (minitensor::norm(rate_slip * dt_) > 1.0) {
        failed =  true;
        return residual;
    }
@@ -170,7 +170,7 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // ***** Residual scaling done below is commented out for now since it is in a preliminary stage.  
 
   // RealType
-  // norm_resid = Sacado::ScalarValue<T>::eval(Intrepid2::norm(residual));
+  // norm_resid = Sacado::ScalarValue<T>::eval(minitensor::norm(residual));
 
   // RealType
   // max_tol = std::numeric_limits<RealType>::max();
@@ -185,11 +185,11 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
 }
 
 // Nonlinear system, residual based on slip increments
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
-template<typename T, Intrepid2::Index N>
-Intrepid2::Tensor<T, N>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename EvalT>
+template<typename T, minitensor::Index N>
+minitensor::Tensor<T, N>
 CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::hessian(
-    Intrepid2::Vector<T, N> const & x)
+    minitensor::Vector<T, N> const & x)
 {
   return Base::hessian(*this, x);
 }
@@ -202,15 +202,15 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::hessian(
 //
 // Define nonlinear system based on residual of slip and hardness values
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename EvalT>
 CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::ResidualSlipHardnessNLS(
-      Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor4<ScalarT, NumDimT> const & C,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
       std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
-      Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
-      Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
-      Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
-      Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
+      minitensor::Tensor<RealType, NumDimT> const & Fp_n,
+      minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
+      minitensor::Vector<RealType, NumSlipT> const & slip_n,
+      minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt)
   :
       C_(C),
@@ -226,20 +226,20 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::ResidualSlipHardnessNLS(
   num_slip_ = state_hardening_n_.get_dimension();
 }
 
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
-template<typename T, Intrepid2::Index N>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename EvalT>
+template<typename T, minitensor::Index N>
 T
 CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::value(
-    Intrepid2::Vector<T, N> const & x)
+    minitensor::Vector<T, N> const & x)
 {
   return Base::value(*this, x);
 }
 
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
-template<typename T, Intrepid2::Index N>
-Intrepid2::Vector<T, N>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename EvalT>
+template<typename T, minitensor::Index N>
+minitensor::Vector<T, N>
 CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
-    Intrepid2::Vector<T, N> const & x)
+    minitensor::Vector<T, N> const & x)
 {
   // Get a convenience reference to the failed flag in case it is used more
   // than once.
@@ -247,59 +247,59 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   failed = Base::failed;
 
   // Tensor mechanical state variables
-  Intrepid2::Tensor<T, NumDimT>
+  minitensor::Tensor<T, NumDimT>
   Fp_np1(num_dim_);
 
-  Intrepid2::Tensor<T, NumDimT>
+  minitensor::Tensor<T, NumDimT>
   Lp_np1(num_dim_);
 
-  Intrepid2::Tensor<T, NumDimT>
+  minitensor::Tensor<T, NumDimT>
   sigma_np1(num_dim_);
 
-  Intrepid2::Tensor<T, NumDimT>
+  minitensor::Tensor<T, NumDimT>
   S_np1(num_dim_);
 
   // Slip system state variables
-  Intrepid2::Vector<T, NumSlipT>
+  minitensor::Vector<T, NumSlipT>
   state_hardening_np1(num_slip_);
 
-  Intrepid2::Vector<T, NumSlipT>
+  minitensor::Vector<T, NumSlipT>
   state_hardening_computed(num_slip_);
 
-  Intrepid2::Vector<T, NumSlipT>
+  minitensor::Vector<T, NumSlipT>
   slip_resistance(num_slip_);
 
-  Intrepid2::Vector<T, NumSlipT>
+  minitensor::Vector<T, NumSlipT>
   slip_np1(num_slip_);
 
-  Intrepid2::Vector<T, NumSlipT>
+  minitensor::Vector<T, NumSlipT>
   slip_computed(num_slip_);
 
-  Intrepid2::Vector<T, NumSlipT>
+  minitensor::Vector<T, NumSlipT>
   shear_np1(num_slip_);
 
-  Intrepid2::Vector<T, NumSlipT>
+  minitensor::Vector<T, NumSlipT>
   slip_residual(num_slip_);
 
-  Intrepid2::Vector<T, NumSlipT>
+  minitensor::Vector<T, NumSlipT>
   rate_slip(num_slip_);
 
   auto const
   num_unknowns = x.get_dimension();
 
-  Intrepid2::Vector<T, N>
+  minitensor::Vector<T, N>
   residual(num_unknowns);
 
   // Return immediately if something failed catastrophically.
   if (failed == true) {
-    residual.fill(Intrepid2::ZEROS);
+    residual.fill(minitensor::ZEROS);
     return residual;
   }
 
-  Intrepid2::Tensor<T, NumDimT> const
+  minitensor::Tensor<T, NumDimT> const
   F_np1_peeled = LCM::peel_tensor<EvalT, T, N, NumDimT>()(F_np1_);
 
-  Intrepid2::Tensor4<T, NumDimT> const
+  minitensor::Tensor4<T, NumDimT> const
   C_peeled = LCM::peel_tensor4<EvalT, T, N, NumDimT>()(C_);
 
   for (int i = 0; i< num_slip_; ++i){
@@ -311,11 +311,11 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
     rate_slip = (slip_np1 - slip_n_) / dt_;
   }
   else{
-    rate_slip.fill(Intrepid2::ZEROS);
+    rate_slip.fill(minitensor::ZEROS);
   }
 
   // Ensure that the slip increment is bounded
-  if (Intrepid2::norm(rate_slip * dt_) > 1.0) {
+  if (minitensor::norm(rate_slip * dt_) > 1.0) {
     failed =  true;
     return residual;
   }
@@ -370,7 +370,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   // ***** Residual scaling done below is commented out for now since it is in a preliminary stage.
   
   // RealType
-  // norm_resid = Sacado::ScalarValue<T>::eval(Intrepid2::norm(residual));
+  // norm_resid = Sacado::ScalarValue<T>::eval(minitensor::norm(residual));
 
   // RealType
   // max_tol = std::numeric_limits<RealType>::max();
@@ -385,11 +385,11 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
 }
 
 // Nonlinear system, residual based on slip increments and hardnesses
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
-template<typename T, Intrepid2::Index N>
-Intrepid2::Tensor<T, N>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename EvalT>
+template<typename T, minitensor::Index N>
+minitensor::Tensor<T, N>
 CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::hessian(
-    Intrepid2::Vector<T, N> const & x)
+    minitensor::Vector<T, N> const & x)
 {
   return Base::hessian(*this, x);
 }

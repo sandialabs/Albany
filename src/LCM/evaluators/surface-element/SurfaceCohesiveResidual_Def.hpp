@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -80,7 +80,7 @@ template<typename EvalT, typename Traits>
 void SurfaceCohesiveResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Intrepid2::Vector<ScalarT>
+  minitensor::Vector<ScalarT>
   f_plus(0, 0, 0);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
@@ -89,7 +89,7 @@ evaluateFields(typename Traits::EvalData workset)
       int top_node = bottom_node + num_surf_nodes_;
 
       // initialize force vector
-      f_plus.fill(Intrepid2::ZEROS);
+      f_plus.fill(minitensor::ZEROS);
 
       for (int pt(0); pt < num_qps_; ++pt) {
 

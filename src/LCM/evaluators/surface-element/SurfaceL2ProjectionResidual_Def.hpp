@@ -8,7 +8,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 // THESE NEED TO BE REMOVED!!!
 #include "Intrepid2_FunctionSpaceTools.hpp"

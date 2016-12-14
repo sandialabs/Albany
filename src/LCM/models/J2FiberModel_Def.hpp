@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -226,18 +226,18 @@ computeState(typename Traits::EvalData workset,
   ScalarT sq23 = std::sqrt(2. / 3.);
 
   // Define some tensors for use
-  Intrepid2::Tensor<ScalarT> F(num_dims_), Fpn(num_dims_), Fpnew(num_dims_);
-  Intrepid2::Tensor<ScalarT> Cpinv(num_dims_), be(num_dims_);
-  Intrepid2::Tensor<ScalarT> s(num_dims_), N(num_dims_);
-  Intrepid2::Tensor<ScalarT> expA(num_dims_);
-  Intrepid2::Tensor<ScalarT> sigma_m(num_dims_);
-  Intrepid2::Tensor<ScalarT> C(num_dims_);
-  Intrepid2::Tensor<ScalarT> sigma_f1(num_dims_), sigma_f2(num_dims_);
-  Intrepid2::Tensor<ScalarT> M1dyadM1(num_dims_), M2dyadM2(num_dims_);
-  Intrepid2::Tensor<ScalarT> S0_f1(num_dims_), S0_f2(num_dims_);
-  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
+  minitensor::Tensor<ScalarT> F(num_dims_), Fpn(num_dims_), Fpnew(num_dims_);
+  minitensor::Tensor<ScalarT> Cpinv(num_dims_), be(num_dims_);
+  minitensor::Tensor<ScalarT> s(num_dims_), N(num_dims_);
+  minitensor::Tensor<ScalarT> expA(num_dims_);
+  minitensor::Tensor<ScalarT> sigma_m(num_dims_);
+  minitensor::Tensor<ScalarT> C(num_dims_);
+  minitensor::Tensor<ScalarT> sigma_f1(num_dims_), sigma_f2(num_dims_);
+  minitensor::Tensor<ScalarT> M1dyadM1(num_dims_), M2dyadM2(num_dims_);
+  minitensor::Tensor<ScalarT> S0_f1(num_dims_), S0_f2(num_dims_);
+  minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
 
-  Intrepid2::Vector<ScalarT> M1(num_dims_), M2(num_dims_);
+  minitensor::Vector<ScalarT> M1(num_dims_), M2(num_dims_);
 
   volume_fraction_m_ = 1.0 - volume_fraction_f1_ - volume_fraction_f2_;
 
@@ -261,20 +261,20 @@ computeState(typename Traits::EvalData workset,
       }
 
       // compute Cpinv = inv(Fp) * inv(Fp)^T
-      Cpinv = Intrepid2::inverse(Fpn)
-          * Intrepid2::transpose(Intrepid2::inverse(Fpn));
+      Cpinv = minitensor::inverse(Fpn)
+          * minitensor::transpose(minitensor::inverse(Fpn));
 
       // compute trial state
-      be = Jm23 * F * Cpinv * Intrepid2::transpose(F);
-      trbe = Intrepid2::trace(be);
+      be = Jm23 * F * Cpinv * minitensor::transpose(F);
+      trbe = minitensor::trace(be);
       trbeby3 = trbe / num_dims_;
       mubar = trbeby3 * mu;
 
       // compute trial deviatoric stress
-      s = mu * Intrepid2::dev(be);
+      s = mu * minitensor::dev(be);
 
       // check for yielding
-      smag = Intrepid2::norm(s);
+      smag = minitensor::norm(s);
       Phi = smag - sq23 * (Y + K * eqps_old(cell, pt)
           + sat_mod_ * (1.0 - std::exp(-sat_exp_ * eqps_old(cell, pt))));
 
@@ -322,7 +322,7 @@ computeState(typename Traits::EvalData workset,
         eqps(cell, pt) = alpha;
 
         // exponential map to get Fp
-        expA = Intrepid2::exp(dgam * N);
+        expA = minitensor::exp(dgam * N);
         Fpnew = expA * Fpn;
 
         for (int i(0); i < num_dims_; ++i)
@@ -359,18 +359,18 @@ computeState(typename Traits::EvalData workset,
       //-----------compute stress in Fibers
 
       // Right Cauchy-Green Tensor C = F^{T} * F
-      C = Intrepid2::transpose(F) * F;
+      C = minitensor::transpose(F) * F;
 
       // Fiber orientation vectors
       if (local_coord_flag_) {
         // compute fiber orientation based on local coordinates
         // special case of plane strain M1(3) = 0; M2(3) = 0;
-        Intrepid2::Vector<ScalarT> gpt(gpt_location(cell, pt, 0),
+        minitensor::Vector<ScalarT> gpt(gpt_location(cell, pt, 0),
             gpt_location(cell, pt, 1), gpt_location(cell, pt, 2));
-        Intrepid2::Vector<ScalarT> OA(gpt(0) - ring_center_[0],
+        minitensor::Vector<ScalarT> OA(gpt(0) - ring_center_[0],
             gpt(1) - ring_center_[1], 0);
 
-        M1 = OA / Intrepid2::norm(OA);
+        M1 = OA / minitensor::norm(OA);
         M2(0) = -M1(1);
         M2(1) = M1(0);
         M2(2) = M1(2);
@@ -379,15 +379,15 @@ computeState(typename Traits::EvalData workset,
           M1(i) = direction_f1_[i];
           M2(i) = direction_f2_[i];
         }
-        M1 = M1 / Intrepid2::norm(M1);
-        M2 = M2 / Intrepid2::norm(M2);
+        M1 = M1 / minitensor::norm(M1);
+        M2 = M2 / minitensor::norm(M2);
       }
 
       // Anisotropic invariants I4 = M_{i} * C * M_{i}
-      I4_f1 = Intrepid2::dot(M1, Intrepid2::dot(C, M1));
-      I4_f2 = Intrepid2::dot(M2, Intrepid2::dot(C, M2));
-      M1dyadM1 = Intrepid2::dyad(M1, M1);
-      M2dyadM2 = Intrepid2::dyad(M2, M2);
+      I4_f1 = minitensor::dot(M1, minitensor::dot(C, M1));
+      I4_f2 = minitensor::dot(M2, minitensor::dot(C, M2));
+      M1dyadM1 = minitensor::dyad(M1, M1);
+      M2dyadM2 = minitensor::dyad(M2, M2);
 
       // undamaged stress (2nd PK stress)
       S0_f1 = (4.0 * k_f1_ * (I4_f1 - 1.0)
@@ -403,9 +403,9 @@ computeState(typename Traits::EvalData workset,
 
       // Fiber Cauchy stress
       sigma_f1 = (1.0 / J(cell, pt))
-          * Intrepid2::dot(F, Intrepid2::dot(S0_f1, Intrepid2::transpose(F)));
+          * minitensor::dot(F, minitensor::dot(S0_f1, minitensor::transpose(F)));
       sigma_f2 = (1.0 / J(cell, pt))
-          * Intrepid2::dot(F, Intrepid2::dot(S0_f2, Intrepid2::transpose(F)));
+          * minitensor::dot(F, minitensor::dot(S0_f2, minitensor::transpose(F)));
 
       // maximum thermodynamic forces
       alpha_f1 = energy_f1_old(cell, pt);

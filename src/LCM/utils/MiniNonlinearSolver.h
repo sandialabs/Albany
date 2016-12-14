@@ -9,7 +9,7 @@
 
 #include <type_traits>
 
-#include "Intrepid2_MiniTensor_Solvers.h"
+#include "MiniTensor_Solvers.h"
 #include "PHAL_AlbanyTraits.hpp"
 
 namespace LCM{
@@ -18,65 +18,65 @@ namespace LCM{
 // Class for dealing with Albany traits. Native implementation.
 //
 template<
-typename MIN, typename STEP, typename FN, typename EvalT, Intrepid2::Index N>
+typename MIN, typename STEP, typename FN, typename EvalT, minitensor::Index N>
 struct MiniSolver
 {
   MiniSolver(
       MIN & minimizer,
       STEP & step_method,
       FN & function,
-      Intrepid2::Vector<typename EvalT::ScalarT, N> & soln);
+      minitensor::Vector<typename EvalT::ScalarT, N> & soln);
 };
 
 //
 // MiniSolver class specializations for Albany traits. Native implementation.
 //
 
-template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+template<typename MIN, typename STEP, typename FN, minitensor::Index N>
 struct MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::Residual, N>
 {
   MiniSolver(
       MIN & minimizer,
       STEP & step_method,
       FN & function,
-      Intrepid2::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln);
+      minitensor::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln);
 };
 
-template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+template<typename MIN, typename STEP, typename FN, minitensor::Index N>
 struct MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::Jacobian, N>
 {
   MiniSolver(
       MIN & minimizer,
       STEP & step_method,
       FN & function,
-      Intrepid2::Vector<PHAL::AlbanyTraits::Jacobian::ScalarT, N> & soln);
+      minitensor::Vector<PHAL::AlbanyTraits::Jacobian::ScalarT, N> & soln);
 };
 
-template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+template<typename MIN, typename STEP, typename FN, minitensor::Index N>
 struct MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::Tangent, N>
 {
   MiniSolver(
       MIN & minimizer,
       STEP & step_method,
       FN & function,
-      Intrepid2::Vector<PHAL::AlbanyTraits::Tangent::ScalarT, N> & soln);
+      minitensor::Vector<PHAL::AlbanyTraits::Tangent::ScalarT, N> & soln);
 };
 
-template<typename MIN, typename STEP, typename FN, Intrepid2::Index N>
+template<typename MIN, typename STEP, typename FN, minitensor::Index N>
 struct MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::DistParamDeriv, N>
 {
   MiniSolver(
       MIN & minimizer,
       STEP & step_method,
       FN & function,
-      Intrepid2::Vector<PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln);
+      minitensor::Vector<PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln);
 };
 
 //
 // Class for dealing with Albany traits. ROL implementation.
 //
 template<
-typename MIN, typename FN, typename EvalT, Intrepid2::Index N>
+typename MIN, typename FN, typename EvalT, minitensor::Index N>
 struct MiniSolverROL
 {
   MiniSolverROL(
@@ -84,14 +84,14 @@ struct MiniSolverROL
       std::string const & algoname,
       Teuchos::ParameterList & params,
       FN & function,
-      Intrepid2::Vector<typename EvalT::ScalarT, N> & soln);
+      minitensor::Vector<typename EvalT::ScalarT, N> & soln);
 };
 
 //
 // MiniSolver class specializations for Albany traits. ROL implementation.
 //
 
-template<typename MIN, typename FN, Intrepid2::Index N>
+template<typename MIN, typename FN, minitensor::Index N>
 struct MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::Residual, N>
 {
   MiniSolverROL(
@@ -99,10 +99,10 @@ struct MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::Residual, N>
       std::string const & algoname,
       Teuchos::ParameterList & params,
       FN & function,
-      Intrepid2::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln);
+      minitensor::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln);
 };
 
-template<typename MIN, typename FN, Intrepid2::Index N>
+template<typename MIN, typename FN, minitensor::Index N>
 struct MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::Jacobian, N>
 {
   MiniSolverROL(
@@ -110,10 +110,10 @@ struct MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::Jacobian, N>
       std::string const & algoname,
       Teuchos::ParameterList & params,
       FN & function,
-      Intrepid2::Vector<PHAL::AlbanyTraits::Jacobian::ScalarT, N> & soln);
+      minitensor::Vector<PHAL::AlbanyTraits::Jacobian::ScalarT, N> & soln);
 };
 
-template<typename MIN, typename FN, Intrepid2::Index N>
+template<typename MIN, typename FN, minitensor::Index N>
 struct MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::Tangent, N>
 {
   MiniSolverROL(
@@ -121,10 +121,10 @@ struct MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::Tangent, N>
       std::string const & algoname,
       Teuchos::ParameterList & params,
       FN & function,
-      Intrepid2::Vector<PHAL::AlbanyTraits::Tangent::ScalarT, N> & soln);
+      minitensor::Vector<PHAL::AlbanyTraits::Tangent::ScalarT, N> & soln);
 };
 
-template<typename MIN, typename FN, Intrepid2::Index N>
+template<typename MIN, typename FN, minitensor::Index N>
 struct MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::DistParamDeriv, N>
 {
   MiniSolverROL(
@@ -132,7 +132,7 @@ struct MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::DistParamDeriv, N>
       std::string const & algoname,
       Teuchos::ParameterList & params,
       FN & function,
-      Intrepid2::Vector<PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln);
+      minitensor::Vector<PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln);
 };
 
 ///
@@ -141,12 +141,12 @@ struct MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::DistParamDeriv, N>
 /// typed on a FAD type.
 /// Assuming that T is a FAD type and S is a simple type.
 ///
-template<typename T, typename S, Intrepid2::Index N>
+template<typename T, typename S, minitensor::Index N>
 void
 computeFADInfo(
-    Intrepid2::Vector<T, N> const & r,
-    Intrepid2::Tensor<S, N> const & DrDx,
-    Intrepid2::Vector<T, N> & x);
+    minitensor::Vector<T, N> const & r,
+    minitensor::Tensor<S, N> const & DrDx,
+    minitensor::Vector<T, N> & x);
 
 ///
 /// Auxiliary functors that peel off derivative information from Albany::Traits
@@ -162,7 +162,7 @@ struct peel
   // This ugly return type is to avoid matching Tensor types.
   // If it does not match then it just becomes T.
   using RET = typename
-      Intrepid2::disable_if_c<Intrepid2::order_1234<T>::value, T>::type;
+      minitensor::disable_if_c<minitensor::order_1234<T>::value, T>::type;
 
   RET
   operator()(S const & s)
@@ -194,7 +194,7 @@ using MPTE = PHAL::AlbanyTraits::MPTangent;
 #endif // ALBANY_ENSEMBLE
 
 template<int N>
-using AD = Intrepid2::FAD<RealType, N>;
+using AD = minitensor::FAD<RealType, N>;
 
 } // anonymous namespace
 
@@ -393,19 +393,19 @@ struct peel_vector
 {
   using S = typename EvalT::ScalarT;
 
-  Intrepid2::Vector<T, N>
-  operator()(Intrepid2::Vector<S, N> const & s)
+  minitensor::Vector<T, N>
+  operator()(minitensor::Vector<S, N> const & s)
   {
-    Intrepid2::Index const
+    minitensor::Index const
     dimension = s.get_dimension();
 
-    Intrepid2::Vector<T, N>
+    minitensor::Vector<T, N>
     t(dimension);
 
-    Intrepid2::Index const
+    minitensor::Index const
     num_components = s.get_number_components();
 
-    for (Intrepid2::Index i = 0; i < num_components; ++i) {
+    for (minitensor::Index i = 0; i < num_components; ++i) {
       t[i] = peel<EvalT, T, M>()(s[i]);
     }
 
@@ -418,19 +418,19 @@ struct peel_tensor
 {
   using S = typename EvalT::ScalarT;
 
-  Intrepid2::Tensor<T, N>
-  operator()(Intrepid2::Tensor<S, N> const & s)
+  minitensor::Tensor<T, N>
+  operator()(minitensor::Tensor<S, N> const & s)
   {
-    Intrepid2::Index const
+    minitensor::Index const
     dimension = s.get_dimension();
 
-    Intrepid2::Tensor<T, N>
+    minitensor::Tensor<T, N>
     t(dimension);
 
-    Intrepid2::Index const
+    minitensor::Index const
     num_components = s.get_number_components();
 
-    for (Intrepid2::Index i = 0; i < num_components; ++i) {
+    for (minitensor::Index i = 0; i < num_components; ++i) {
       t[i] = peel<EvalT, T, M>()(s[i]);
     }
 
@@ -443,19 +443,19 @@ struct peel_tensor3
 {
   using S = typename EvalT::ScalarT;
 
-  Intrepid2::Tensor3<T, N>
-  operator()(Intrepid2::Tensor3<S, N> const & s)
+  minitensor::Tensor3<T, N>
+  operator()(minitensor::Tensor3<S, N> const & s)
   {
-    Intrepid2::Index const
+    minitensor::Index const
     dimension = s.get_dimension();
 
-    Intrepid2::Tensor3<T, N>
+    minitensor::Tensor3<T, N>
     t(dimension);
 
-    Intrepid2::Index const
+    minitensor::Index const
     num_components = s.get_number_components();
 
-    for (Intrepid2::Index i = 0; i < num_components; ++i) {
+    for (minitensor::Index i = 0; i < num_components; ++i) {
       t[i] = peel<EvalT, T, M>()(s[i]);
     }
 
@@ -468,19 +468,19 @@ struct peel_tensor4
 {
   using S = typename EvalT::ScalarT;
 
-  Intrepid2::Tensor4<T, N>
-  operator()(Intrepid2::Tensor4<S, N> const & s)
+  minitensor::Tensor4<T, N>
+  operator()(minitensor::Tensor4<S, N> const & s)
   {
-    Intrepid2::Index const
+    minitensor::Index const
     dimension = s.get_dimension();
 
-    Intrepid2::Tensor4<T, N>
+    minitensor::Tensor4<T, N>
     t(dimension);
 
-    Intrepid2::Index const
+    minitensor::Index const
     num_components = s.get_number_components();
 
-    for (Intrepid2::Index i = 0; i < num_components; ++i) {
+    for (minitensor::Index i = 0; i < num_components; ++i) {
       t[i] = peel<EvalT, T, M>()(s[i]);
     }
 

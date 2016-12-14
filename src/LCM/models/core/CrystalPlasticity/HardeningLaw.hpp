@@ -32,7 +32,7 @@ enum class HardeningLawType
  *	\tparam NumSlipT	Static number of slip systems in a slip family
  *	\param type_hardening_law	Which hardening law to instantiate.
  */
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 std::shared_ptr<HardeningParameterBase<NumDimT, NumSlipT>>
 hardeningParameterFactory(HardeningLawType type_hardening_law);
 
@@ -46,7 +46,7 @@ hardeningParameterFactory(HardeningLawType type_hardening_law);
  *	\tparam	NumDimT		Static number of elements in a slip system
  *	\tparam NumSlipT	Static number of slip systems in a slip family
  */
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 struct HardeningParameterBase
 {
   using ParamIndex = int;
@@ -75,7 +75,7 @@ struct HardeningParameterBase
   std::map<std::string, ParamIndex>
   param_map_;
 
-  Intrepid2::Vector<RealType>
+  minitensor::Vector<RealType>
   hardening_params_;
 };
 
@@ -86,7 +86,7 @@ struct HardeningParameterBase
  *	\tparam	NumDimT		Static number of elements in a slip system
  *	\tparam NumSlipT	Static number of slip systems in a slip family
  */
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 struct LinearMinusRecoveryHardeningParameters final :
   public HardeningParameterBase<NumDimT, NumSlipT>
 {
@@ -106,7 +106,7 @@ struct LinearMinusRecoveryHardeningParameters final :
     this->param_map_["Recovery Modulus"] = MODULUS_RECOVERY;
     this->param_map_["Initial Hardening State"] = STATE_HARDENING_INITIAL;
     this->hardening_params_.set_dimension(NUM_PARAMS);
-    this->hardening_params_.fill(Intrepid2::ZEROS);
+    this->hardening_params_.fill(minitensor::ZEROS);
   }
 
   virtual
@@ -126,7 +126,7 @@ struct LinearMinusRecoveryHardeningParameters final :
  *	\tparam	NumDimT		Static number of elements in a slip system
  *	\tparam NumSlipT	Static number of slip systems in a slip family
  */
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 struct SaturationHardeningParameters final :
   public HardeningParameterBase<NumDimT, NumSlipT>
 {
@@ -150,7 +150,7 @@ struct SaturationHardeningParameters final :
     this->param_map_["Reference Slip Rate"] = RATE_SLIP_REFERENCE;
     this->param_map_["Initial Hardening State"] = STATE_HARDENING_INITIAL;
     this->hardening_params_.set_dimension(NUM_PARAMS);
-    this->hardening_params_.fill(Intrepid2::ZEROS);
+    this->hardening_params_.fill(minitensor::ZEROS);
   }
 
   virtual
@@ -170,7 +170,7 @@ struct SaturationHardeningParameters final :
  *	\tparam	NumDimT		Static number of elements in a slip system
  *	\tparam NumSlipT	Static number of slip systems in a slip family
  */
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 struct DislocationDensityHardeningParameters final :
   public HardeningParameterBase<NumDimT, NumSlipT>
 {
@@ -196,7 +196,7 @@ struct DislocationDensityHardeningParameters final :
     this->param_map_["Burgers Vector Magnitude"] = MAGNITUDE_BURGERS;
     this->param_map_["Initial Hardening State"] = STATE_HARDENING_INITIAL;
     this->hardening_params_.set_dimension(NUM_PARAMS);
-    this->hardening_params_.fill(Intrepid2::ZEROS);
+    this->hardening_params_.fill(minitensor::ZEROS);
   }
 
   virtual
@@ -216,7 +216,7 @@ struct DislocationDensityHardeningParameters final :
  *	\tparam	NumDimT		Static number of elements in a slip system
  *	\tparam NumSlipT	Static number of slip systems in a slip family
  */
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 struct NoHardeningParameters final :
   public HardeningParameterBase<NumDimT, NumSlipT>
 {
@@ -243,7 +243,7 @@ struct NoHardeningParameters final :
  *	\tparam NumSlipT	Static number of slip systems in a slip family
  *	\tparam ArgT		Scalar type used for hardening
  */
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename ArgT>
 struct HardeningLawBase
 {
   HardeningLawBase() {}
@@ -254,10 +254,10 @@ struct HardeningLawBase
     SlipFamily<NumDimT, NumSlipT> const & slip_family,
     std::vector<SlipSystem<NumDimT>> const & slip_systems,
     RealType dt,
-    Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance) = 0;
+    minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
+    minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
+    minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
+    minitensor::Vector<ArgT, NumSlipT> & slip_resistance) = 0;
 
   virtual
   ~HardeningLawBase() {}
@@ -267,7 +267,7 @@ struct HardeningLawBase
 /**
  *  Factory class for instantiating hardening laws.
  */
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 class HardeningLawFactory
 {
 
@@ -292,7 +292,7 @@ private:
  *	\tparam NumSlipT	Static number of slip systems in a slip family
  *	\tparam ArgT		Scalar type used for hardening
  */
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename ArgT>
 struct LinearMinusRecoveryHardeningLaw final : public HardeningLawBase<NumDimT, NumSlipT, ArgT>
 {
   virtual
@@ -301,10 +301,10 @@ struct LinearMinusRecoveryHardeningLaw final : public HardeningLawBase<NumDimT, 
     SlipFamily<NumDimT, NumSlipT> const & slip_family, 
     std::vector<SlipSystem<NumDimT>> const & slip_systems,
     RealType dt,
-    Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance);
+    minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
+    minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
+    minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
+    minitensor::Vector<ArgT, NumSlipT> & slip_resistance);
 
   virtual
   ~LinearMinusRecoveryHardeningLaw() {}
@@ -318,7 +318,7 @@ struct LinearMinusRecoveryHardeningLaw final : public HardeningLawBase<NumDimT, 
  *	\tparam NumSlipT	Static number of slip systems in a slip family
  *	\tparam ArgT		Scalar type used for hardening
  */
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename ArgT>
 struct SaturationHardeningLaw final : public HardeningLawBase<NumDimT, NumSlipT, ArgT>
 {
   virtual
@@ -327,10 +327,10 @@ struct SaturationHardeningLaw final : public HardeningLawBase<NumDimT, NumSlipT,
     SlipFamily<NumDimT, NumSlipT> const & slip_family,
     std::vector<SlipSystem<NumDimT>> const & slip_systems,
     RealType dt,
-    Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance);
+    minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
+    minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
+    minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
+    minitensor::Vector<ArgT, NumSlipT> & slip_resistance);
 
   virtual
   ~SaturationHardeningLaw() {}
@@ -344,7 +344,7 @@ struct SaturationHardeningLaw final : public HardeningLawBase<NumDimT, NumSlipT,
  *	\tparam NumSlipT	Static number of slip systems in a slip family
  *	\tparam ArgT		Scalar type used for hardening
  */
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename ArgT>
 struct DislocationDensityHardeningLaw final : public HardeningLawBase<NumDimT, NumSlipT, ArgT>
 {
   virtual
@@ -353,10 +353,10 @@ struct DislocationDensityHardeningLaw final : public HardeningLawBase<NumDimT, N
     SlipFamily<NumDimT, NumSlipT> const & slip_family,
     std::vector<SlipSystem<NumDimT>> const & slip_systems,
     RealType dt,
-    Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance);
+    minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
+    minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
+    minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
+    minitensor::Vector<ArgT, NumSlipT> & slip_resistance);
 
   virtual
   ~DislocationDensityHardeningLaw() {}
@@ -370,7 +370,7 @@ struct DislocationDensityHardeningLaw final : public HardeningLawBase<NumDimT, N
  *	\tparam NumSlipT	Static number of slip systems in a slip family
  *	\tparam ArgT		Scalar type used for hardening
  */
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename ArgT>
 struct NoHardeningLaw final : public HardeningLawBase<NumDimT, NumSlipT, ArgT>
 {
   virtual
@@ -379,10 +379,10 @@ struct NoHardeningLaw final : public HardeningLawBase<NumDimT, NumSlipT, ArgT>
     SlipFamily<NumDimT, NumSlipT> const & slip_family,
     std::vector<SlipSystem<NumDimT>> const & slip_systems,
     RealType dt,
-    Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-    Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
-    Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance);
+    minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
+    minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
+    minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
+    minitensor::Vector<ArgT, NumSlipT> & slip_resistance);
 
   virtual
   ~NoHardeningLaw() {}

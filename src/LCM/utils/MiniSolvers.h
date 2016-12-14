@@ -6,7 +6,7 @@
 #if !defined(LCM_MiniSolvers_h)
 #define LCM_MiniSolvers_h
 
-#include "Intrepid2_MiniTensor_Solvers.h"
+#include "MiniTensor_Solvers.h"
 #include "MiniNonlinearSolver.h"
 #include "PHAL_AlbanyTraits.hpp"
 
@@ -18,8 +18,8 @@ namespace LCM {
 //
 //
 //
-template<typename S, Intrepid2::Index M = 2>
-class Banana : public Intrepid2::Function_Base<Banana<S, M>, S, M>
+template<typename S, minitensor::Index M = 2>
+class Banana : public minitensor::Function_Base<Banana<S, M>, S, M>
 {
 public:
 
@@ -31,27 +31,27 @@ public:
   char const * const
   NAME{"Rosenbrock's Banana"};
 
-  using Base = Intrepid2::Function_Base<Banana<S, M>, S, M>;
+  using Base = minitensor::Function_Base<Banana<S, M>, S, M>;
 
   // Default value.
-  template<typename T, Intrepid2::Index N>
+  template<typename T, minitensor::Index N>
   T
-  value(Intrepid2::Vector<T, N> const & x)
+  value(minitensor::Vector<T, N> const & x)
   {
     return Base::value(*this, x);
   }
 
   // Explicit gradient.
-  template<typename T, Intrepid2::Index N>
-  Intrepid2::Vector<T, N>
-  gradient(Intrepid2::Vector<T, N> const & x) const
+  template<typename T, minitensor::Index N>
+  minitensor::Vector<T, N>
+  gradient(minitensor::Vector<T, N> const & x) const
   {
-    Intrepid2::Index const
+    minitensor::Index const
     dimension = x.get_dimension();
 
     assert(dimension == Base::DIMENSION);
 
-    Intrepid2::Vector<T, N>
+    minitensor::Vector<T, N>
     r(dimension);
 
     r(0) = 2.0 * (x(0) - 1.0) + 400.0 * x(0) * (x(0) * x(0) - x(1));
@@ -61,9 +61,9 @@ public:
   }
 
   // Default AD hessian.
-  template<typename T, Intrepid2::Index N>
-  Intrepid2::Tensor<T, N>
-  hessian(Intrepid2::Vector<T, N> const & x)
+  template<typename T, minitensor::Index N>
+  minitensor::Tensor<T, N>
+  hessian(minitensor::Vector<T, N> const & x)
   {
     return Base::hessian(*this, x);
   }
@@ -73,9 +73,9 @@ public:
 //
 //
 //
-template<typename EvalT, Intrepid2::Index M = 2>
+template<typename EvalT, minitensor::Index M = 2>
 class Banana_Traits : public
-Intrepid2::Function_Base<Banana_Traits<EvalT, M>, typename EvalT::ScalarT, M>
+minitensor::Function_Base<Banana_Traits<EvalT, M>, typename EvalT::ScalarT, M>
 {
   using S = typename EvalT::ScalarT;
 
@@ -90,12 +90,12 @@ public:
   NAME{"Banana_Traits' Function 2D"};
 
   using Base =
-    Intrepid2::Function_Base<Banana_Traits<EvalT, M>, typename EvalT::ScalarT, M>;
+    minitensor::Function_Base<Banana_Traits<EvalT, M>, typename EvalT::ScalarT, M>;
 
   // Explicit value.
-  template<typename T, Intrepid2::Index N>
+  template<typename T, minitensor::Index N>
   T
-  value(Intrepid2::Vector<T, N> const & x)
+  value(minitensor::Vector<T, N> const & x)
   {
     // Variables that potentially have Albany::Traits sensitivity
     // information need to be handled by the peel functor so that
@@ -116,17 +116,17 @@ public:
   }
 
   // Default AD gradient.
-  template<typename T, Intrepid2::Index N>
-  Intrepid2::Vector<T, N>
-  gradient(Intrepid2::Vector<T, N> const & x)
+  template<typename T, minitensor::Index N>
+  minitensor::Vector<T, N>
+  gradient(minitensor::Vector<T, N> const & x)
   {
     return Base::gradient(*this, x);
   }
 
   // Default AD hessian.
-  template<typename T, Intrepid2::Index N>
-  Intrepid2::Tensor<T, N>
-  hessian(Intrepid2::Vector<T, N> const & x)
+  template<typename T, minitensor::Index N>
+  minitensor::Tensor<T, N>
+  hessian(minitensor::Vector<T, N> const & x)
   {
     return Base::hessian(*this, x);
   }

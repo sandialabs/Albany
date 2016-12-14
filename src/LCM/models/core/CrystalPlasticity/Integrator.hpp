@@ -13,7 +13,7 @@
 namespace CP
 {
 
-template<typename EvalT, Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 class Integrator
 {
   public:
@@ -25,8 +25,8 @@ class Integrator
       std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
-      Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
-      Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
+      minitensor::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt)
       : nox_status_test_(nox_status_test),
         num_slip_(state_internal.slip_n_.get_dimension()),
@@ -58,32 +58,32 @@ class Integrator
     std::vector<SlipFamily<NumDimT, NumSlipT>> const & slip_families_;
     StateMechanical<ScalarT, NumDimT> & state_mechanical_;
     StateInternal<ScalarT, NumSlipT> & state_internal_;
-    Intrepid2::Tensor4<ScalarT, NumDimT> const & C_;
-    Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1_;
+    minitensor::Tensor4<ScalarT, NumDimT> const & C_;
+    minitensor::Tensor<ScalarT, NumDimT> const & F_np1_;
     RealType dt_;
 };
 
 
-template<typename EvalT, Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 class IntegratorFactory
 {
   public:
     
     using ScalarT = typename EvalT::ScalarT;
     using ValueT = typename Sacado::ValueType<ScalarT>::type;
-    using Minimizer = Intrepid2::Minimizer<ValueT, CP::NlsDim<NumSlipT>::value>;
+    using Minimizer = minitensor::Minimizer<ValueT, CP::NlsDim<NumSlipT>::value>;
     using IntegratorBase = Integrator<EvalT, NumDimT, NumSlipT>;
 
     IntegratorFactory(utility::StaticAllocator & allocator,
       const Minimizer & minimizer,
-      Intrepid2::StepType step_type,
+      minitensor::StepType step_type,
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
       std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
       CP::StateMechanical<ScalarT, NumDimT> & state_mechanical,
       CP::StateInternal<ScalarT, NumSlipT> & state_internal,
-      Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
-      Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
+      minitensor::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt);
 
     utility::StaticPointer<IntegratorBase>
@@ -95,7 +95,7 @@ class IntegratorFactory
     utility::StaticAllocator & allocator_;
 
     const Minimizer & minimizer_;
-    Intrepid2::StepType step_type_;
+    minitensor::StepType step_type_;
     Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test_;
 
     std::vector<CP::SlipSystem<NumDimT>> const & slip_systems_;
@@ -104,12 +104,12 @@ class IntegratorFactory
     CP::StateMechanical<ScalarT, NumDimT> & state_mechanical_;
     CP::StateInternal<ScalarT, NumSlipT> & state_internal_;
     
-    Intrepid2::Tensor4<ScalarT, NumDimT> const & C_;
-    Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1_;
+    minitensor::Tensor4<ScalarT, NumDimT> const & C_;
+    minitensor::Tensor<ScalarT, NumDimT> const & F_np1_;
     RealType dt_;
 };
 
-template<typename EvalT, Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 class ExplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
 {
   public:
@@ -123,8 +123,8 @@ class ExplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
       std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
-      Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
-      Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
+      minitensor::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt);
 
     virtual bool update(RealType & residual_norm) const override;
@@ -140,7 +140,7 @@ class ExplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
     using Base::dt_;
 };
 
-template<typename EvalT, Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 class ImplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
 {
   public:
@@ -148,18 +148,18 @@ class ImplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
     using Base = Integrator<EvalT, NumDimT, NumSlipT>;
     using ScalarT = typename Base::ScalarT;
     using ValueT = typename Sacado::ValueType<ScalarT>::type;
-    using Minimizer = Intrepid2::Minimizer<ValueT, CP::NlsDim<NumSlipT>::value>;
+    using Minimizer = minitensor::Minimizer<ValueT, CP::NlsDim<NumSlipT>::value>;
 
     ImplicitIntegrator(
       const Minimizer & minimizer,
-      Intrepid2::StepType step_type,
+      minitensor::StepType step_type,
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
       std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
-      Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
-      Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
+      minitensor::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt);
     
     bool reevaluateState(RealType & residual_norm) const;
@@ -175,11 +175,11 @@ class ImplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
     using Base::dt_;
 
     mutable Minimizer minimizer_;
-    Intrepid2::StepType step_type_;
+    minitensor::StepType step_type_;
 };
 
 
-template<typename EvalT, Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 class ImplicitSlipIntegrator : public ImplicitIntegrator<EvalT, NumDimT, NumSlipT>
 {
   public:
@@ -191,14 +191,14 @@ class ImplicitSlipIntegrator : public ImplicitIntegrator<EvalT, NumDimT, NumSlip
 
     ImplicitSlipIntegrator(
       const Minimizer &minimizer,
-      Intrepid2::StepType step_type,
+      minitensor::StepType step_type,
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
       std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
-      Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
-      Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
+      minitensor::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt);
 
     virtual bool update(RealType & residual_norm) const override;
@@ -217,7 +217,7 @@ class ImplicitSlipIntegrator : public ImplicitIntegrator<EvalT, NumDimT, NumSlip
 };
 
 
-template<typename EvalT, Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 class ImplicitSlipHardnessIntegrator : public ImplicitIntegrator<EvalT, NumDimT, NumSlipT>
 {
   public:
@@ -229,14 +229,14 @@ class ImplicitSlipHardnessIntegrator : public ImplicitIntegrator<EvalT, NumDimT,
 
     ImplicitSlipHardnessIntegrator(
       const Minimizer &minimizer,
-      Intrepid2::StepType step_type,
+      minitensor::StepType step_type,
       Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test,
       std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
       std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
-      Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
-      Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
+      minitensor::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt);
 
     virtual bool update(RealType & residual_norm) const override;

@@ -41,17 +41,17 @@ CP::ParameterReader<EvalT, Traits>::getResidualType() const
 }
 
 template<typename EvalT, typename Traits>
-Intrepid2::StepType
+minitensor::StepType
 CP::ParameterReader<EvalT, Traits>::getStepType() const
 {
-	static utility::ParameterEnum<Intrepid2::StepType> const smap(
-		"Nonlinear Solver Step Type", Intrepid2::StepType::NEWTON,
+	static utility::ParameterEnum<minitensor::StepType> const smap(
+		"Nonlinear Solver Step Type", minitensor::StepType::NEWTON,
 		{
-			{"Newton", Intrepid2::StepType::NEWTON},
-			{"Trust Region", Intrepid2::StepType::TRUST_REGION},
-			{"Conjugate Gradient", Intrepid2::StepType::CG},
-			{"Line Search Regularized", Intrepid2::StepType::LINE_SEARCH_REG},
-			{"Newton with Line Search", Intrepid2::StepType::NEWTON_LS}
+			{"Newton", minitensor::StepType::NEWTON},
+			{"Trust Region", minitensor::StepType::TRUST_REGION},
+			{"Conjugate Gradient", minitensor::StepType::CG},
+			{"Line Search Regularized", minitensor::StepType::LINE_SEARCH_REG},
+			{"Newton with Line Search", minitensor::StepType::NEWTON_LS}
 		});
 
 	return smap.get(p_);

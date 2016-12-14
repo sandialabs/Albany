@@ -6,7 +6,7 @@
 
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 namespace LCM
 {
@@ -77,10 +77,10 @@ template<typename EvalT, typename Traits>
 void DamageCoefficients<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Intrepid2::Tensor<ScalarT> diffusivity(num_dims_);
-  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
-  Intrepid2::Tensor<ScalarT> tensor;
-  Intrepid2::Tensor<ScalarT> F(num_dims_);
+  minitensor::Tensor<ScalarT> diffusivity(num_dims_);
+  minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
+  minitensor::Tensor<ScalarT> tensor;
+  minitensor::Tensor<ScalarT> F(num_dims_);
 
   ScalarT dt = delta_time_(0);
   if (dt == 0.0) dt = 1.e-15;
@@ -96,7 +96,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int pt = 0; pt < num_pts_; ++pt) {
         F.fill(def_grad_,cell, pt,0,0);
-        tensor = Intrepid2::inverse(Intrepid2::transpose(F) * F);
+        tensor = minitensor::inverse(minitensor::transpose(F) * F);
         damage_transient_coeff_(cell, pt) = transient_coeff_;
         diffusivity = diffusivity_coeff_ * tensor;
         for (int i = 0; i < num_dims_; ++i) {
