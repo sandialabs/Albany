@@ -1,0 +1,13 @@
+
+#!/bin/bash                                           
+#BSUB -a "openmpi"                                    
+#BSUB -n 32
+#BSUB -W 02:00                                                           
+#BSUB -R "span[ptile=16]"                             
+#BSUB -o trilinosCUDA.out                                 
+#BSUB -e trilinosCUDA.err                                 
+
+cd /ascldap/users/ikalash/nightlyCDash 
+
+cat albany ctest_nightly.cmake.frag >& ctest_nightly.cmake  
+bash -c -l "source ride_modules_cuda.sh >& modules_albany.out; bash nightly_cron_script_albany_ride.sh" 

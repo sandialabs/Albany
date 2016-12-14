@@ -48,17 +48,14 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 
-set (BOOST_DIR "/home/projects/pwr8-rhel72/boost/1.60.0/openmpi/1.10.2/gcc/4.9.2/cuda/7.5.7")
-set (NETCDF_DIR "/home/projects/pwr8-rhel72/netcdf-exo/4.3.3.1/openmpi/1.10.2/gcc/4.9.2/cuda/7.5.7") 
-set (PNETCDF_DIR "/home/projects/pwr8-rhel72/pnetcdf/1.6.1/openmpi/1.10.2/gcc/4.9.2/cuda/7.5.7") 
-set (HDF5_DIR "/home/projects/pwr8-rhel72/hdf5/1.8.16/openmpi/1.10.2/gcc/4.9.2/cuda/7.5.7") 
-set (BLAS_DIR "/home/projects/pwr8-rhel72/openblas/0.2.15/gcc/4.9.2")  
-
-set (LAPACK_DIR "/home/projects/pwr8-rhel72/openblas/0.2.15/gcc/4.9.2")
-
-set (ZLIB_DIR "/home/projects/pwr8-rhel72/zlib/1.2.8") 
-
-set(MPI_DIR "/home/projects/pwr8-rhel72/openmpi/1.10.2/gcc/4.9.2/cuda/7.5.7") 
+set(BOOST_DIR "/home/projects/pwr8-rhel73-lsf/boost/1.60.0/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44")
+set(NETCDF_DIR "/home/projects/pwr8-rhel73-lsf/netcdf/4.4.1/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
+set(PNETCDF_DIR "/home/projects/pwr8-rhel73-lsf/pnetcdf/1.6.1/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
+set(HDF5_DIR "/home/projects/pwr8-rhel73-lsf/hdf5/1.8.17/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
+set(BLAS_DIR "/home/projects/pwr8-rhel73-lsf/openblas/0.2.19/gcc/5.3.0")  
+set(LAPACK_DIR "/home/projects/pwr8-rhel73-lsf/openblas/0.2.19/gcc/5.3.0")
+set(ZLIB_DIR "/home/projects/pwr8-rhel73-lsf/zlib/1.2.8") 
+set(MPI_DIR "/home/projects/pwr8-rhel73-lsf/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -84,7 +81,7 @@ if (DOWNLOAD_TRILINOS)
   
   if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Trilinos")
     execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Trilinos_REPOSITORY_LOCATION} -b develop ${CTEST_SOURCE_DIRECTORY}/Trilinos
+      clone ${Trilinos_REPOSITORY_LOCATION} -b master ${CTEST_SOURCE_DIRECTORY}/Trilinos
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -183,11 +180,11 @@ if (BUILD_TRILINOS)
     "-DMPI_EXEC_NUMPROCS_FLAG:STRING=-n"
     #
     "-DTPL_ENABLE_BLAS:BOOL=ON"
-    "-DBLAS_LIBRARY_DIRS:PATH=$BLAS_DIR/lib"
+    "-DBLAS_LIBRARY_DIRS:PATH=${BLAS_DIR}/lib"
     "-DBLAS_LIBRARY_NAMES:STRING=blas"
     #
     "-DTPL_ENABLE_LAPACK:BOOL=ON"
-    "-DLAPACK_LIBRARY_DIRS:PATH=$LAPACK_DIR/lib"
+    "-DLAPACK_LIBRARY_DIRS:PATH=${LAPACK_DIR}/lib"
     "-DLAPACK_LIBRARY_NAMES:STRING=lapack"
     #
     "-DTPL_ENABLE_Boost:BOOL=ON"
