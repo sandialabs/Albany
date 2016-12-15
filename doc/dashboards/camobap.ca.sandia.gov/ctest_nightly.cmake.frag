@@ -108,6 +108,51 @@ if (DOWNLOAD)
 
 endif ()
 
+ctest_start(${CTEST_TEST_TYPE})
+
+#
+# Send the project structure to CDash
+#
+
+if (CTEST_DO_SUBMIT)
+  ctest_submit (FILES "${CTEST_SCRIPT_DIRECTORY}/Project.xml"
+    RETURN_VALUE  HAD_ERROR
+    )
+
+  if (HAD_ERROR)
+    message(FATAL_ERROR "Cannot submit Albany Project.xml!")
+  endif ()
+endif ()
+
+if (DOWNLOAD)
+
+  #
+  # Update Albany 
+  #
+
+  set_property (GLOBAL PROPERTY SubProject IKTAlbany32BitNoEpetra)
+  set_property (GLOBAL PROPERTY Label IKTAlbany32BitNoEpetra)
+
+  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+  CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE count)
+  message("Found ${count} changed files")
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Update
+      RETURN_VALUE  HAD_ERROR
+      )
+
+    if (HAD_ERROR)
+      message(FATAL_ERROR "Cannot update Albany repository!")
+    endif ()
+  endif ()
+
+  if (count LESS 0)
+    message(FATAL_ERROR "Cannot update Albany!")
+  endif ()
+
+endif ()
+
 if (BUILD_ALB64)
 
   # Configure the Albany 64 Bit build 
@@ -1063,6 +1108,4 @@ if (BUILD_CISM_PISCEES_EPETRA)
 #  endif ()
 
 endif ()
-
-
 
