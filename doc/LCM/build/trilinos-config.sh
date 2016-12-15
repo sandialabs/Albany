@@ -65,7 +65,7 @@ cmake \
  -D Intrepid_ENABLE_TESTS:BOOL=OFF \
  -D Intrepid2_ENABLE_TESTS:BOOL=OFF \
  -D Intrepid2_ENABLE_KokkosDynRankView:BOOL=ON \
- -D MiniTensor_ENABLE_TESTS:BOOL=OFF \
+ -D MiniTensor_ENABLE_TESTS:BOOL=ON \
  -D ROL_ENABLE_TESTS:BOOL=OFF \
  -D Phalanx_INDEX_SIZE_TYPE:STRING="lcm_phalanx_index_type" \
  -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="lcm_kokkos_device" \
