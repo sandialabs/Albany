@@ -62,7 +62,6 @@ cmake \
 \
  -D Amesos2_ENABLE_KLU2:BOOL=ON \
  -D EpetraExt_USING_HDF5:BOOL=OFF \
- -D Intrepid_ENABLE_TESTS:BOOL=OFF \
  -D Intrepid2_ENABLE_TESTS:BOOL=OFF \
  -D Intrepid2_ENABLE_KokkosDynRankView:BOOL=ON \
  -D MiniTensor_ENABLE_TESTS:BOOL=ON \
@@ -96,7 +95,6 @@ cmake \
  -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
  -D Trilinos_ENABLE_Ifpack:BOOL=ON \
  -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
- -D Trilinos_ENABLE_Intrepid:BOOL=ON \
  -D Trilinos_ENABLE_Kokkos:BOOL=ON \
  -D Trilinos_ENABLE_KokkosAlgorithms:BOOL=ON \
  -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
