@@ -254,7 +254,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   Teuchos::RCP<Albany::AbstractProblem> problem = _subProblems[0].app->getProblem();
   _atoProblem = dynamic_cast<ATO::OptimizationProblem*>(problem.get());
   _atoProblem->setDiscretization(_subProblems[0].app->getDiscretization());
-  _atoProblem->setCommunicator(commE);
+  _atoProblem->setCommunicator(comm);
   _atoProblem->InitTopOpt();
   
 

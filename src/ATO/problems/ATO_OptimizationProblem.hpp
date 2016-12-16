@@ -43,7 +43,7 @@ public virtual Albany::AbstractProblem {
    void ComputeMeasure(std::string measure, double& v);
    void setDiscretization(Teuchos::RCP<Albany::AbstractDiscretization> _disc)
           {disc = _disc;}
-   void setCommunicator(const Teuchos::RCP<const Epetra_Comm>& _comm) {comm = _comm;}
+   void setCommunicator(const Teuchos::RCP<const Teuchos_Comm>& _comm) {comm = _comm;}
 
 
    void InitTopOpt();
@@ -53,7 +53,7 @@ public virtual Albany::AbstractProblem {
                      Albany::StateManager& _stateMgr);
 
    Teuchos::RCP<Albany::AbstractDiscretization> disc;
-   Teuchos::RCP<const Epetra_Comm> comm;
+   Teuchos::RCP<const Teuchos_Comm> comm;
 
    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
    Albany::StateManager* stateMgr;

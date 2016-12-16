@@ -105,7 +105,7 @@ ComputeMeasure(std::string measureType, double& measure)
           localm += weighted_measure[ws](cell,qp);
     }
   
-    comm->SumAll(&localm, &measure, 1);
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &localm, &measure);
   } else
 
   if(measureType == "Mass"){
@@ -235,7 +235,7 @@ computeMeasure(std::string measureType,
     }
   }
 
-  comm->SumAll(&localm, &measure, 1);
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &localm, &measure);
 
   if( dmdp != NULL ){
     int numLocalNodes = localVec->MyLength();
@@ -389,7 +389,7 @@ TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParamete
     }
   }
 
-  comm->SumAll(&localm, &measure, 1);
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &localm, &measure);
 
   if( dmdp != NULL ){
     int numLocalNodes = localVec->MyLength();
@@ -488,7 +488,7 @@ TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParamete
     std::memcpy((void*)dvdp, (void*)lvec, numLocalNodes*sizeof(double));
   }
 
-  comm->SumAll(&localv, &v, 1);
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &localv, &v);
 
 }
 
@@ -548,7 +548,7 @@ ComputeVolume(double* p, const double* dfdp,
       localv += elVol;
     }
   }
-  comm->SumAll(&localv, &v, 1);
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &localv, &v);
 }
 
 
