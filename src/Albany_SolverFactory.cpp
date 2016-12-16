@@ -356,7 +356,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       RCP<Epetra_Vector> initial_guessE;
       if(Teuchos::nonnull(initial_guess))
         Petra::TpetraVector_To_EpetraVector(initial_guess, *initial_guessE, appComm);
-      return rcp(new ATO::Solver(appParams, solverComm, initial_guessE));
+      return rcp(new ATO::Solver(appParams, solverCommT, initial_guessE));
 #else /* ALBANY_ATO */
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate ATO (topological optimization)\n");
 #endif /* ALBANY_ATO */

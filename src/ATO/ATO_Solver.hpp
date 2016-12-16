@@ -101,7 +101,7 @@ namespace ATO {
   public:
 
      Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
-            const Teuchos::RCP<const Epetra_Comm>& comm,
+            const Teuchos::RCP<const Teuchos_Comm>& comm,
             const Teuchos::RCP<const Epetra_Vector>& initial_guess);
 
     ~Solver();
@@ -195,7 +195,7 @@ namespace ATO {
 
     OptimizationProblem* _atoProblem;
 
-    Teuchos::RCP<const Epetra_Comm> _solverComm;
+    Teuchos::RCP<const Teuchos_Comm> _solverComm; 
     Teuchos::RCP<Teuchos::ParameterList> _mainAppParams;
 
     Teuchos::RCP<Epetra_Map> overlapNodeMap;
@@ -235,7 +235,7 @@ namespace ATO {
       createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const;
 
     SolverSubSolver CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appParams, 
-                                    const Epetra_Comm& comm,
+                                    const Teuchos::RCP<const Teuchos_Comm>& comm,
 				    const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
 
     Teuchos::RCP<Teuchos::ParameterList> 
