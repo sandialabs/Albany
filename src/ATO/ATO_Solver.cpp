@@ -101,7 +101,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   //IKT, create Epetra_Comm from Teuchos::Comm 
   //This will ultimately be removed when everything is in Tpetra/Thyra 
   Teuchos::RCP<const Epetra_Comm> commE = Albany::createEpetraCommFromTeuchosComm(comm);
-  _optimizer->SetCommunicator(commE);
+  _optimizer->SetCommunicator(comm);
 
   _writeDesignFrequency = problemParams.get<int>("Design Output Frequency", 0);
 

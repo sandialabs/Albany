@@ -268,7 +268,7 @@ Optimizer::computeNorm(const double* p, int n)
     norm += p[i]*p[i];
   }
   double gnorm = 0.0;
-  comm->SumAll(&norm, &gnorm, 1);
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &norm, &gnorm);
   gnorm = (gnorm > 0.0) ? sqrt(gnorm) : 0.0;
   return gnorm;
 }
@@ -284,9 +284,9 @@ Optimizer::computeDiffNorm(const double* p, const double* p_last, int n, bool pr
     norm += pow(p[i]-p_last[i],2);
   }
   double gnorm = 0.0;
-  comm->SumAll(&norm, &gnorm, 1);
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &norm, &gnorm);
   gnorm = (gnorm > 0.0) ? sqrt(gnorm) : 0.0;
-  if(printResult && comm->MyPID()==0){
+  if(printResult && comm->getRank()==0){
     std::cout << "************************************************************************" << std::endl;
     std::cout << "  Optimizer:  computed diffnorm is: " << gnorm << std::endl;
     std::cout << "************************************************************************" << std::endl;
@@ -336,7 +336,7 @@ Optimizer_OC::Initialize()
   computeUpdatedTopology();
 
   double global_f=0.0, pnorm = computeNorm(p, numOptDofs);
-  comm->SumAll(&f, &global_f, 1);
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &f, &global_f);
   convergenceChecker->initNorm(global_f, pnorm);
 
 }
@@ -348,7 +348,7 @@ Optimizer_OCG::Optimize()
   solverInterface->Compute(p, f, dfdp, g, dgdp);
 
   double global_f=0.0, pnorm = computeNorm(p, numOptDofs);
-  comm->SumAll(&f, &global_f, 1);
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &f, &global_f);
   convergenceChecker->initNorm(global_f, pnorm);
 
   Teuchos::Array<double> upperBound, lowerBound;
@@ -364,7 +364,7 @@ Optimizer_OCG::Optimize()
     for(int i=0; i<numOptDofs; i++) p_last[i] = p[i];
 
     double gmax_dgdp =0.0;
-    comm->MaxAll(std::max_element(dgdp, dgdp+numOptDofs), &gmax_dgdp, 1);
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, *std::max_element(dgdp, dgdp+numOptDofs), Teuchos::ptr(&gmax_dgdp));
 
     double vmid, v1=0.0, v2=0.0;
     double dfdp_tot = 0.0, dgdp_tot = 0.0;
@@ -374,8 +374,8 @@ Optimizer_OCG::Optimize()
     }
 
     double g_dfdp_tot = 0.0, g_dgdp_tot = 0.0;
-    comm->SumAll(&dfdp_tot, &g_dfdp_tot, 1);
-    comm->SumAll(&dgdp_tot, &g_dgdp_tot, 1);
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &dfdp_tot, &g_dfdp_tot);
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &dgdp_tot, &g_dgdp_tot);
 
     v2 = 1.0e4 * g_dfdp_tot / g_dgdp_tot;
     int niters=0;
@@ -408,23 +408,23 @@ Optimizer_OCG::Optimize()
         v1 = vmid;
       } else v2 = vmid;
 
-      if(comm->MyPID()==0){
+      if(comm->getRank()==0){
         std::cout << "Constraint enforcement (iteration " << niters << "): Residual = " << newResidual << std::endl;
       }
 
     } while ( niters < _measureMaxIter && fabs(newResidual) > 1e-2  );
   
-    if(comm->MyPID()==0.0){
+    if(comm->getRank()==0.0){
       std::cout << "************************************************************************" << std::endl;
       std::cout << "** Optimization Status Check *******************************************" << std::endl;
       std::cout << "Status: Objective = " << f << std::endl;
     }
 
     double delta_f, ldelta_f = f-f_last;
-    comm->SumAll(&ldelta_f, &delta_f, 1);
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &ldelta_f, &delta_f);
     double delta_p = computeDiffNorm(p, p_last, numOptDofs, /*result to cout*/ false);
 
-    optimization_converged = convergenceChecker->isConverged(delta_f, delta_p, iter, comm->MyPID());
+    optimization_converged = convergenceChecker->isConverged(delta_f, delta_p, iter, comm->getRank());
 
     iter++;
   }
@@ -473,7 +473,7 @@ Optimizer_OC::Optimize()
           dg += dgdp[i]*(p[i]-p_last[i]);
         }
         double global_dg = 0.0;
-        comm->SumAll(&dg, &global_dg, 1);
+        Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &dg, &global_dg);
         double dgdm = global_dg/dm;
         deltam = -g / dgdm;
 
@@ -509,17 +509,17 @@ Optimizer_OC::Optimize()
     computeUpdatedTopology();
 
 
-    if(comm->MyPID()==0.0){
+    if(comm->getRank()==0.0){
       std::cout << "************************************************************************" << std::endl;
       std::cout << "** Optimization Status Check *******************************************" << std::endl;
       std::cout << "Status: Objective = " << f << std::endl;
     }
 
     double delta_f, ldelta_f = f-f_last;
-    comm->SumAll(&ldelta_f, &delta_f, 1);
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &ldelta_f, &delta_f);
     double delta_p = computeDiffNorm(p, p_last, numOptDofs, /*result to cout*/ false);
 
-    optimization_converged = convergenceChecker->isConverged(delta_f, delta_p, iter, comm->MyPID());
+    optimization_converged = convergenceChecker->isConverged(delta_f, delta_p, iter, comm->getRank());
 
     iter++;
   }
@@ -733,12 +733,12 @@ Optimizer_OC::computeUpdatedTopology()
     dmdp_tot += dmdp[i];
   }
   double g_dfdp_tot = 0.0, g_dmdp_tot = 0.0;
-  comm->SumAll(&dfdp_tot, &g_dfdp_tot, 1);
-  comm->SumAll(&dmdp_tot, &g_dmdp_tot, 1);
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &dfdp_tot, &g_dfdp_tot);
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &dmdp_tot, &g_dmdp_tot);
 
   v2 = -1000.0* g_dfdp_tot / g_dmdp_tot;
 
-  if(comm->MyPID()==0){
+  if(comm->getRank()==0){
     std::cout << "Measure enforcement: Target = " << _measureConstraint <<  std::endl;
     std::cout << "Measure enforcement: Beginning search with recursive bisection." <<  std::endl;
   }
@@ -790,7 +790,7 @@ Optimizer_OC::computeUpdatedTopology()
     }
     niters++;
 
-    if(comm->MyPID()==0){
+    if(comm->getRank()==0){
       double resid = (measure - _measureConstraint*_optMeasure)/_optMeasure;
       std::cout << "Measure enforcement (iteration " << niters << "): Residual = " << resid << std::endl;
     }
@@ -800,7 +800,7 @@ Optimizer_OC::computeUpdatedTopology()
 
   if(_useNewtonSearch){
 
-  if(comm->MyPID()==0){
+  if(comm->getRank()==0){
     std::cout << "Measure enforcement: Bounds found.  Switching to Newton search." << std::endl;
   }
 
@@ -831,7 +831,7 @@ Optimizer_OC::computeUpdatedTopology()
     solverInterface->ComputeMeasure(_measureType, p, measure, _measureIntMethod);
     double f0 =  (measure - _measureConstraint*_optMeasure);
 
-    if(comm->MyPID()==0){
+    if(comm->getRank()==0){
       std::cout << "Measure Enforcement (iteration " << niters << "): Residual = " << f0/_optMeasure << std::endl;
     }
 
@@ -871,7 +871,7 @@ Optimizer_OC::computeUpdatedTopology()
   } while ( niters < newtonMaxIters );
 
   if(!converged){
-    if(comm->MyPID()==0){
+    if(comm->getRank()==0){
       std::cout << "Measure enforcement: Newton search failed.  Switching back to recursive bisection." << std::endl;
     }
   
@@ -909,7 +909,7 @@ Optimizer_OC::computeUpdatedTopology()
       } else v2 = vmid;
       niters++;
   
-      if(comm->MyPID()==0){
+      if(comm->getRank()==0){
         double resid = (measure - _measureConstraint*_optMeasure)/_optMeasure;
         std::cout << "Measure enforcement (iteration " << niters << "): Residual = " << resid << std::endl;
       }
@@ -940,10 +940,10 @@ Optimizer_NLopt::Initialize()
     << "Error! Optimizer requires valid Solver Interface" << std::endl);
 
   TEUCHOS_TEST_FOR_EXCEPTION (
-    (comm->NumProc() != 1) && (comm->MyPID()==0), 
+    (comm->getSize() != 1) && (comm->getRank()==0), 
     Teuchos::Exceptions::InvalidParameter, std::endl
     << "Error! NLopt package doesn't work in parallel.  Use OC package." << std::endl);
-  TEUCHOS_TEST_FOR_EXCEPT ( (comm->NumProc() != 1) );
+  TEUCHOS_TEST_FOR_EXCEPT ( (comm->getSize() != 1) );
   
   // JR: todo -- add a distributed/local mode to the solver interface so 
   // serial optimization libraries can be used for testing.  
@@ -1017,13 +1017,13 @@ Optimizer_NLopt::Optimize()
   solverInterface->ComputeObjective(p, f, dfdp_init);
   delete [] dfdp_init;
   double global_f=0.0, pnorm = computeNorm(p, numOptDofs);
-  comm->SumAll(&f, &global_f, 1);
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &f, &global_f);
   convergenceChecker->initNorm(global_f, pnorm);
 
   double minf;
   int errorcode = nlopt_optimize(opt, p, &minf);
 
-  if( errorcode == NLOPT_FORCED_STOP && comm->MyPID()==0 ){
+  if( errorcode == NLOPT_FORCED_STOP && comm->getRank()==0 ){
     int forcestop_errorcode = nlopt_get_force_stop(opt);
     std::cout << "************************************************************************" << std::endl;
     std::cout << "  Optimizer converged.  Objective value = " << minf << std::endl;
@@ -1063,7 +1063,7 @@ Optimizer_NLopt::evaluate_backend( unsigned int n, const double* x, double* grad
     objectiveValue = f;
   }
 
-  if(comm->MyPID()==0){
+  if(comm->getRank()==0){
     std::cout << "************************************************************************" << std::endl;
     std::cout << "  Optimizer:     measure: " << measure << std::endl;
     std::cout << "  Optimizer:   objective: " << objectiveValue << std::endl;
@@ -1072,10 +1072,10 @@ Optimizer_NLopt::evaluate_backend( unsigned int n, const double* x, double* grad
   }
 
   double delta_objective, ldelta_objective = objectiveValue-objectiveValue_last;
-  comm->SumAll(&ldelta_objective, &delta_objective, 1);
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &ldelta_objective, &delta_objective);
   double delta_p = computeDiffNorm(x, p_last, numOptDofs, /*result to cout*/ false);
 
-  if( convergenceChecker->isConverged(delta_objective, delta_p, _nIterations , comm->MyPID()) ){
+  if( convergenceChecker->isConverged(delta_objective, delta_p, _nIterations , comm->getRank()) ){
     nlopt_set_force_stop(opt, ATO_XTOL_REACHED);
     nlopt_force_stop(opt);
   }
@@ -1105,7 +1105,7 @@ Optimizer_NLopt::constraint_backend( unsigned int n, const double* x, double* gr
     if( changed ) solverInterface->ComputeMeasure(_measureType, x, measure, dmdp);
     std::memcpy((void*)grad, (void*)dmdp, numOptDofs*sizeof(double));
     constraintValue = measure - _measureConstraint*_optMeasure;
-    if(comm->MyPID()==0){
+    if(comm->getRank()==0){
       std::cout << "************************************************************************" << std::endl;
       std::cout << "  Optimizer:  computed measure is: " << measure << std::endl;
       std::cout << "  Optimizer:    target measure is: " << _measureConstraint*_optMeasure << std::endl;
@@ -1116,7 +1116,7 @@ Optimizer_NLopt::constraint_backend( unsigned int n, const double* x, double* gr
     if( changed ) solverInterface->Compute(x, f, dfdp, g, dgdp);
     std::memcpy((void*)grad, (void*)dgdp, numOptDofs*sizeof(double));
     constraintValue = g;
-    if(comm->MyPID()==0){
+    if(comm->getRank()==0){
       std::cout << "************************************************************************" << std::endl;
       std::cout << "  Optimizer:  computed constraint is: " << constraintValue << std::endl;
       std::cout << "************************************************************************" << std::endl;
