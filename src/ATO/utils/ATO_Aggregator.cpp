@@ -330,11 +330,11 @@ Aggregator_Scaled::Evaluate()
       double val = valSrc(0);
       double globalVal = val;
       if( comm != Teuchos::null )
-        comm->SumAll(&val, &globalVal, /*numvals=*/ 1);
+        Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, /*numvals=*/ 1, &val, &globalVal);
       normalize[i] = (globalVal != 0.0) ? 1.0/fabs(globalVal) : 1.0;
     }
     if( comm != Teuchos::null ){
-      if( comm->MyPID()==0 ){
+      if( comm->getRank()==0 ){
         std::cout << "************************************************************************" << std::endl;
         std::cout << "  Normalizing:" << std::endl;
         for(int i=0; i<numValues; i++){
@@ -350,8 +350,8 @@ Aggregator_Scaled::Evaluate()
     Albany::MDArray& valSrc = src[0][values[sv].name];
     double globalVal, val = valSrc(0);
     if( comm != Teuchos::null ){
-      comm->SumAll(&val, &globalVal, /*numvals=*/ 1);
-      if( comm->MyPID()==0 ){
+      Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, /*numvals=*/ 1, &val, &globalVal);
+      if( comm->getRank()==0 ){
         std::cout << "************************************************************************" << std::endl;
         std::cout << "  Aggregator: " << values[sv].name << " = " << globalVal << std::endl;
         std::cout << "************************************************************************" << std::endl;
@@ -364,7 +364,7 @@ Aggregator_Scaled::Evaluate()
   *valueAggregated *= scaleValueAggregated;
 
   if( comm != Teuchos::null ){
-    if( comm->MyPID()==0 ){
+    if( comm->getRank()==0 ){
       std::cout << "************************************************************************" << std::endl;
       std::cout << "  Aggregator: " << outputValueName << " = " << *valueAggregated << std::endl;
       std::cout << "************************************************************************" << std::endl;
@@ -417,8 +417,8 @@ void Aggregator_Extremum<C>::Evaluate()
     for(int sv=0; sv<numValues; sv++){
       double globalVal, val = valSrc(0);
       if( comm != Teuchos::null ){
-        comm->SumAll(&val, &globalVal, /*numvals=*/ 1);
-        if( comm->MyPID()==0 ){
+        Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, /*numvals=*/ 1, &val, &globalVal);
+        if( comm->getRank()==0 ){
           std::cout << "************************************************************************" << std::endl;
           std::cout << "  Aggregator: " << values[sv].name << " = " << globalVal << std::endl;
           std::cout << "************************************************************************" << std::endl;
@@ -434,7 +434,7 @@ void Aggregator_Extremum<C>::Evaluate()
     *valueAggregated += extremum;
   
     if( comm != Teuchos::null ){
-      if( comm->MyPID()==0 ){
+      if( comm->getRank()==0 ){
         std::cout << "************************************************************************" << std::endl;
         std::cout << "  Aggregator: " << outputValueName << " = " << *valueAggregated << std::endl;
         std::cout << "************************************************************************" << std::endl;
@@ -493,7 +493,7 @@ void Aggregator_DistExtremum<C>::Evaluate()
       }
 
       if( comm != Teuchos::null ){
-        if( comm->MyPID()==0 ){
+        if( comm->getRank()==0 ){
           std::cout << "************************************************************************" << std::endl;
           std::cout << "  Aggregator: Input variable " << i << std::endl;
           std::cout << "   " << value.name << " = " << valView[0] << std::endl;
@@ -505,7 +505,7 @@ void Aggregator_DistExtremum<C>::Evaluate()
     *valueAggregated += extremum;
 
     if( comm != Teuchos::null ){
-      if( comm->MyPID()==0 ){
+      if( comm->getRank()==0 ){
         std::cout << "************************************************************************" << std::endl;
         std::cout << "  Aggregator: Output " << std::endl;
         std::cout << "   Value = " << *valueAggregated << std::endl;
@@ -563,7 +563,7 @@ Aggregator_DistScaled::Evaluate()
     *valueAggregated += valView[0]*normalize[i]*weights[i];
 
     if( comm != Teuchos::null ){
-      if( comm->MyPID()==0 ){
+      if( comm->getRank()==0 ){
         std::cout << "************************************************************************" << std::endl;
         std::cout << "  Aggregator: Input variable " << i << std::endl;
         std::cout << "   " << value.name << " = " << valView[0] << std::endl;
@@ -577,7 +577,7 @@ Aggregator_DistScaled::Evaluate()
   *valueAggregated *= scaleValueAggregated;
 
   if( comm != Teuchos::null ){
-    if( comm->MyPID()==0 ){
+    if( comm->getRank()==0 ){
       std::cout << "************************************************************************" << std::endl;
       std::cout << "  Aggregator: Output " << std::endl;
       std::cout << "   Value = " << *valueAggregated << std::endl;

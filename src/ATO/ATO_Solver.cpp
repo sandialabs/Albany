@@ -98,7 +98,6 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   ATO::OptimizerFactory optimizerFactory;
   _optimizer = optimizerFactory.create(optimizerParams);
   _optimizer->SetInterface(this);
-  //IKT, create Epetra_Comm from Teuchos::Comm 
   //This will ultimately be removed when everything is in Tpetra/Thyra 
   Teuchos::RCP<const Epetra_Comm> commE = Albany::createEpetraCommFromTeuchosComm(comm);
   _optimizer->SetCommunicator(comm);
@@ -351,7 +350,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     _objAggregator->SetInputVariables(_subProblems, responseMap, responseDerivMap);
     _objAggregator->SetOutputVariables(objectiveValue, ObjectiveGradientVec);
   }
-  _objAggregator->SetCommunicator(commE);
+  _objAggregator->SetCommunicator(comm);
   
   // pass subProblems to the constraint aggregator
   if( !_conAggregator.is_null() ){
@@ -363,7 +362,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
       _conAggregator->SetInputVariables(_subProblems, responseMap, responseDerivMap);
       _conAggregator->SetOutputVariables(constraintValue, ConstraintGradientVec);
     }
-    _conAggregator->SetCommunicator(commE);
+    _conAggregator->SetCommunicator(comm);
   }
   
 
@@ -652,8 +651,6 @@ ATO::Solver::ComputeObjective(double* p, double& g, double* dgdp)
       fclose(fp);
     }
   }
-  //IKT, FIXME: fix the following line!
-  //_solverComm->Broadcast(&new_frequency, /*nvals=*/ 1, /*root_process=*/ 0);
   Teuchos::broadcast(*_solverComm, 0, 1, &new_frequency);
 
   if(new_frequency != -1)
