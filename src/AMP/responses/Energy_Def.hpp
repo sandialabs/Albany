@@ -18,7 +18,8 @@ namespace AMP {
  weighted_measure	("Weights", dl->qp_scalar),
  T_			("Temperature", dl->qp_scalar),
  phi_			("Phi", dl->qp_scalar),
- rho_Cp_		("Rho Cp", dl->qp_scalar)
+ rho_Cp_		("Rho Cp", dl->qp_scalar),
+ laser_source_ 		("Laser Source", dl->qp_scalar)
 
 {
  // get parameters from problem
@@ -33,6 +34,7 @@ namespace AMP {
  this->addDependentField(T_);
  this->addDependentField(phi_);
  this->addDependentField(rho_Cp_);
+ this->addDependentField(laser_source_);
 
  // number of quad points per cell and dimension of space 
  std::vector<PHX::Device::size_type> dims;
@@ -79,6 +81,7 @@ postRegistrationSetup(typename Traits::SetupData d,
     this->utils.setFieldData(T_, fm);
     this->utils.setFieldData(phi_, fm);
     this->utils.setFieldData(rho_Cp_, fm);
+    this->utils.setFieldData(laser_source_, fm);
     PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postRegistrationSetup(d, fm);
 }
 
@@ -102,34 +105,45 @@ evaluateFields(typename Traits::EvalData workset)
 {
     PHAL::set(this->local_response, 0.0);
 
-    ScalarT volume;
+    ScalarT source;
     ScalarT energy;
-
+    
+   // std::cout<<" current time ="<<workset.current_time<<std::endl;
+   // std::cout<<" ebname ="<<workset.EBName<<std::endl; 
     // temporal variables
     ScalarT phi; // phi = phi_(cell,qp)
     ScalarT Cs; // Cs = Rho_Cp_(cell,qp)
     ScalarT Cd; // Volumetric heat capacity of solid. For now same as powder.
     ScalarT p; // Variable used to compute p = phi^3 * (10-15*phi+6*phi^2)
+  	ScalarT laser_source; 
 
     for (std::size_t cell = 0; cell < workset.numCells; ++cell)
     {
         for (std::size_t qp = 0; qp < num_qps_; ++qp)
         {
-            volume = weighted_measure(cell, qp);
+            
             phi = phi_(cell, qp);
             Cs = rho_Cp_(cell, qp);
             Cd = Cs;
-	    
-	    this->local_response(cell, 0) += volume;
-            this->global_response(0) += volume;
-
             // Compute Phase function, p
             p = phi * phi * phi * (10.0 - 15.0 * phi + 6.0 * phi * phi);
+
+	        	laser_source = laser_source_(cell,qp);
+            //		std::cout<<"input ="<<laser_source<<" weight ="<<weighted_measure(cell, qp)<<std::endl;
+            source = laser_source * weighted_measure(cell, qp);
+	          this->local_response(cell, 0) += source;
+          	//    std::cout<<"local response ="<<this->local_response(cell, 0)<<std::endl;
+
+            this->global_response(0) += source;
+        	  //  std::cout<<" global response ="<<this->global_response(0)<<std::endl;
+
+
             // compute energy
             energy = (Cs * T_(cell, qp) + p * (L_ + (Cl_ - Cs) * (T_(cell, qp) - Tm_))) * weighted_measure(cell, qp);
 	    
             this->local_response(cell, 1) += energy;
             this->global_response(1) += energy;
+            //std::cout<<"Cs = "<<Cs<<std::endl;
         }
     }
 
@@ -149,9 +163,7 @@ postEvaluate(typename Traits::PostEvalData workset)
     PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postEvaluate(workset);
 
     PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
-    std::cout << "Total Volume is " << *gr << std::endl;
-    ++gr;
-    std::cout << "Total Energy is " << *gr << std::endl;  
+        ++gr; 
 
 }
 //**********************************************************************

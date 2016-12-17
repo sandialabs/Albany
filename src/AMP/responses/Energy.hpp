@@ -41,6 +41,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> T_;
   PHX::MDField<ScalarT,Cell,QuadPoint> phi_;
   PHX::MDField<ScalarT,Cell,QuadPoint> rho_Cp_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> laser_source_;
 
   unsigned int num_qps_;
   unsigned int num_dims_;
