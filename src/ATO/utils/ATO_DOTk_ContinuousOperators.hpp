@@ -11,8 +11,6 @@
 #include "DOTk/DOTk_ContinuousOperators.hpp"
 #include "ATO_DOTk_vector.hpp"
 
-class Epetra_Comm;
-
 namespace ATO {
 
 class OptInterface;
@@ -22,7 +20,7 @@ class ATO_DOTk_ContinuousOperators : public dotk::DOTk_ContinuousOperators
 public:
     ATO_DOTk_ContinuousOperators(
       OptInterface* interface,
-      Teuchos::RCP<const Epetra_Comm> comm);
+      Teuchos::RCP<const Teuchos_Comm> comm);
     virtual ~ATO_DOTk_ContinuousOperators();
 
     virtual Real Fval(const dotk::vector<Real> & z_);
@@ -50,7 +48,7 @@ private:
     ATO::vector* current_dfdz;
 
     OptInterface* solverInterface;
-    Teuchos::RCP<const Epetra_Comm> myComm;
+    Teuchos::RCP<const Teuchos_Comm> myComm; 
 };
 
 }

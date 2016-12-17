@@ -43,7 +43,7 @@ public:
   virtual void SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
                                  const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > valueMap,
                                  const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > derivMap){};
-  void SetCommunicator(const Teuchos::RCP<const Epetra_Comm>& _comm){comm = _comm;}
+  void SetCommunicator(const Teuchos::RCP<const Teuchos_Comm>& _comm){comm = _comm;}
   void SetOutputVariables(Teuchos::RCP<double> g, Teuchos::Array<Teuchos::RCP<Epetra_Vector> > deriv)
          {valueAggregated = g; derivAggregated = deriv;}
 
@@ -60,7 +60,7 @@ protected:
   Teuchos::Array<Teuchos::RCP<Epetra_Vector> > derivAggregated;
 
   Teuchos::RCP<Albany::Application> outApp;
-  Teuchos::RCP<const Epetra_Comm> comm;
+  Teuchos::RCP<const Teuchos_Comm> comm;
 
   Teuchos::Array<double> normalize;
   double shiftValueAggregated;

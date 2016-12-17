@@ -41,7 +41,7 @@ ATO::GlobalPoint::GlobalPoint(){coords[0]=0.0; coords[1]=0.0; coords[2]=0.0;}
 /******************************************************************************/
 ATO::Solver::
 Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
-       const Teuchos::RCP<const Epetra_Comm>& comm,
+       const Teuchos::RCP<const Teuchos_Comm>& comm,
        const Teuchos::RCP<const Epetra_Vector>& initial_guess)
 : _solverComm(comm), _mainAppParams(appParams)
 /******************************************************************************/
@@ -98,6 +98,8 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   ATO::OptimizerFactory optimizerFactory;
   _optimizer = optimizerFactory.create(optimizerParams);
   _optimizer->SetInterface(this);
+  //This will ultimately be removed when everything is in Tpetra/Thyra 
+  Teuchos::RCP<const Epetra_Comm> commE = Albany::createEpetraCommFromTeuchosComm(comm);
   _optimizer->SetCommunicator(comm);
 
   _writeDesignFrequency = problemParams.get<int>("Design Output Frequency", 0);
@@ -166,17 +168,15 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   // Get and set the default Piro parameters from a file, if given
   std::string piroFilename  = problemParams.get<std::string>("Piro Defaults Filename", "");
   if(piroFilename.length() > 0) {
-    const Albany_MPI_Comm mpiComm = Albany::getMpiCommFromEpetraComm(*comm);
-    Teuchos::RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mpiComm);
     Teuchos::RCP<Teuchos::ParameterList> defaultPiroParams = 
       Teuchos::createParameterList("Default Piro Parameters");
-    Teuchos::updateParametersFromXmlFileAndBroadcast(piroFilename, defaultPiroParams.ptr(), *tcomm);
+    Teuchos::updateParametersFromXmlFileAndBroadcast(piroFilename, defaultPiroParams.ptr(), *comm);
     Teuchos::ParameterList& piroList = appParams->sublist("Piro", false);
     piroList.setParametersNotAlreadySet(*defaultPiroParams);
   }
   
   // set verbosity
-  _is_verbose = (comm->MyPID() == 0) && problemParams.get<bool>("Verbose Output", false);
+  _is_verbose = (comm->getRank() == 0) && problemParams.get<bool>("Verbose Output", false);
 
 
 
@@ -188,7 +188,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   for(int i=0; i<_numPhysics; i++){
 
     _subProblemAppParams[i] = createInputFile(appParams, i);
-    _subProblems[i] = CreateSubSolver( _subProblemAppParams[i], *_solverComm);
+    _subProblems[i] = CreateSubSolver( _subProblemAppParams[i], _solverComm);
 
     // ensure that all subproblems are topology based (i.e., optimizable)
     Teuchos::RCP<Albany::AbstractProblem> problem = _subProblems[i].app->getProblem();
@@ -243,12 +243,11 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     for(int iSub=0; iSub<nHomogSubProblems; iSub++){
 
       hs.homogenizationAppParams[iSub] = createHomogenizationInputFile(appParams, homogParams, iProb, iSub, hs.homogDim);
-      hs.homogenizationProblems[iSub] = CreateSubSolver( hs.homogenizationAppParams[iSub], *_solverComm);
+      hs.homogenizationProblems[iSub] = CreateSubSolver( hs.homogenizationAppParams[iSub], _solverComm);
     }
 
 
   }
-
 
 
   // store a pointer to the first problem as an ATO::OptimizationProblem for callbacks
@@ -276,7 +275,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   int num_my_elements     = local_node_blockmap->NumMyElements();
   int *global_node_ids    = new int[num_my_elements]; 
   local_node_blockmap->MyGlobalElements(global_node_ids);
-  localNodeMap = Teuchos::rcp(new Epetra_Map(num_global_elements,num_my_elements,global_node_ids,0,*comm));
+  localNodeMap = Teuchos::rcp(new Epetra_Map(num_global_elements,num_my_elements,global_node_ids,0,*commE));
   delete [] global_node_ids;
 
   Teuchos::RCP<const Epetra_BlockMap>
@@ -285,7 +284,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   num_my_elements     = overlap_node_blockmap->NumMyElements();
   global_node_ids     = new int[num_my_elements]; 
   overlap_node_blockmap->MyGlobalElements(global_node_ids);
-  overlapNodeMap = Teuchos::rcp(new Epetra_Map(num_global_elements,num_my_elements,global_node_ids,0,*comm));
+  overlapNodeMap = Teuchos::rcp(new Epetra_Map(num_global_elements,num_my_elements,global_node_ids,0,*commE));
   delete [] global_node_ids;
 
   for(int itopo=0; itopo<ntopos; itopo++){
@@ -421,7 +420,7 @@ ATO::Solver::evalModel(const InArgs& inArgs,
           Cvals(i,j) = (*g)[j];
         }
       }
-      if(_solverComm->MyPID() == 0){
+      if(_solverComm->getRank() == 0){
         Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
         *out << "*****************************************" << std::endl;
         *out << " Homogenized parameters (" << hs.name << ") are: " << std::endl; 
@@ -643,8 +642,8 @@ ATO::Solver::ComputeObjective(double* p, double& g, double* dgdp)
   copyObjectiveFromStateMgr( g, dgdp );
 
   // See if the user specified a new design frequency.
-  int new_frequency = -1;
-  if( _solverComm->MyPID() == 0){
+  GO new_frequency = -1;
+  if( _solverComm->getRank() == 0){
     FILE *fp = fopen("update_frequency.txt", "r");
     if(fp)
     {
@@ -652,7 +651,7 @@ ATO::Solver::ComputeObjective(double* p, double& g, double* dgdp)
       fclose(fp);
     }
   }
-  _solverComm->Broadcast(&new_frequency, /*nvals=*/ 1, /*root_process=*/ 0);
+  Teuchos::broadcast(*_solverComm, 0, 1, &new_frequency);
 
   if(new_frequency != -1)
   {
@@ -680,7 +679,7 @@ ATO::Solver::writeCurrentDesign()
     stkmesh == NULL, Teuchos::Exceptions::InvalidParameter, std::endl
     << "Error!  Attempted to cast non STK mesh." << std::endl);
 
-  MPI_Comm mpi_comm = Albany::getMpiCommFromEpetraComm(*_solverComm);
+  MPI_Comm mpi_comm = Albany::getMpiCommFromTeuchosComm(*_solverComm);
   iso::STKExtract ex;
   ex.create_mesh_apis_Albany(&mpi_comm,
              &(stkmesh->getSTKBulkData()),
@@ -1203,7 +1202,7 @@ ATO::Solver::GetNumOptDofs()
 /******************************************************************************/
 ATO::SolverSubSolver
 ATO::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appParams, 
-                              const Epetra_Comm& comm,
+                              const Teuchos::RCP<const Teuchos_Comm>& commT,
                               const Teuchos::RCP<const Epetra_Vector>& initial_guess)
 /******************************************************************************/
 {
@@ -1218,8 +1217,6 @@ ATO::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPara
 
   //! Create solver and application objects via solver factory
   {
-    RCP<const Teuchos_Comm> commT = Albany::createTeuchosCommFromEpetraComm(comm);
-    const RCP<const Epetra_Comm> appComm = Teuchos::rcpFromRef(comm);
 
     //! Create solver factory, which reads xml input filen
     Albany::SolverFactory slvrfctry(appParams, commT);

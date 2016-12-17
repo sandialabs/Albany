@@ -48,6 +48,11 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 
+set (OMPI_CXX /home/ikalash/Trilinos/packages/kokkos/config/nvcc_wrapper)
+set (CUDA_MANAGED_FORCE_DEVICE_ALLOC 1)
+set( CUDA_LAUNCH_BLOCKING 1)
+
+
 set(BOOST_DIR "/home/projects/pwr8-rhel73-lsf/boost/1.60.0/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44")
 set(NETCDF_DIR "/home/projects/pwr8-rhel73-lsf/netcdf/4.4.1/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
 set(PNETCDF_DIR "/home/projects/pwr8-rhel73-lsf/pnetcdf/1.6.1/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
@@ -162,9 +167,7 @@ if (BUILD_TRILINOS)
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     #
-    "-DCMAKE_CXX_COMPILER:FILEPATH=mpicxx"
-    "-DCMAKE_C_COMPILER:FILEPATH=mpicc"
-    "-DCMAKE_C_COMPILER:FILEPATH=mpif90"
+    "-DCMAKE_CXX_COMPILER:FILEPATH=/home/ikalash/nightlyHOMMEXXCDash/repos/Trilinos/packages/kokkos/config/nvcc_wrapper"
     "-DCMAKE_CXX_FLAGS:STRING=-fopenmp -mcpu=power8 -lgfortran" 
     "-DCMAKE_C_FLAGS:STRING=-fopenmp -mcpu=power8 -lgfortran" 
     "-DCMAKE_Fortran_FLAGS:STRING=-lgfortran -fopenmp -mcpu=power8"
@@ -172,8 +175,6 @@ if (BUILD_TRILINOS)
     "-DTrilinos_EXTRA_LINK_FLAGS:STRING=-fopenmp -mcpu=power8 -ldl -lgfortran"
     "-DCMAKE_SKIP_RULE_DEPENDENCY=ON"
     "-DTPL_ENABLE_MPI:BOOL=ON"
-    "-DMPI_BASE_DIR:PATH=$MPI_DIR"
-    "-DMPI_BIN_DIR:FILEPATH=$MPI_DIR/bin"
     #
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_EXEC=mpirun"
@@ -292,7 +293,7 @@ if (BUILD_TRILINOS)
 
   CTEST_CONFIGURE(
     BUILD "${CTEST_BINARY_DIRECTORY}/TriBuild"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos"
+    SOURCE "/home/ikalash/nightlyHOMMEXXCDash/repos/Trilinos"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     )

@@ -1,6 +1,0 @@
-#This cronjob runs on ride1 
-
-01 00 * * 1-5  cd /home/ikalash/nightlyCDash; sbatch trilinos.batch
-30 03 * * 1-5  cd /home/ikalash/nightlyCDash; sbatch albany.batch
-01 06 * * 1-5  cd /home/ikalash/nightlyCDash; bash process_results_ctest.sh 
-02 06 * * 1-5  cd /home/ikalash/nightlyCDash; bash send_email_ctest.sh 
