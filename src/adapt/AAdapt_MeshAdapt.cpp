@@ -54,20 +54,16 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     szField = Teuchos::rcp(new AAdapt::NonUnifRefSizeField(pumi_discretization));
   else if (method == "RPI Albany Size")
     szField = Teuchos::rcp(new AAdapt::AlbanySizeField(pumi_discretization));
-  else if (method == "RPI SPR Size")
+  else if (method == "RPI SPR Size") {
+    checkValidStateVariable(StateMgr_,params_->get<std::string>("State Variable",""));
     szField = Teuchos::rcp(new AAdapt::SPRSizeField(pumi_discretization));
-  else if (method == "RPI Extruded")
+  } else if (method == "RPI Extruded")
     szField = Teuchos::rcp(new AAdapt::ExtrudedAdapt(pumi_discretization));
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "unknown RPI adapt method" << method);
 
   // Save the initial output file name
   base_exo_filename = pumiMeshStruct->outputFileName;
-
-  adaptation_method = params_->get<std::string>("Method");
-
-  if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 )
-    checkValidStateVariable(StateMgr_,params_->get<std::string>("State Variable",""));
 
   initRcMgr();
 }
