@@ -168,6 +168,11 @@ SET(HEADERS ${HEADERS}
 SET(SOURCES ${SOURCES} AAdapt_SPRSizeField.cpp)
 SET(HEADERS ${HEADERS} AAdapt_SPRSizeField.hpp)
 
+IF(ALBANY_OMEGA_H)
+  SET(SOURCES ${SOURCES} AAdapt_Omega_h_Method.cpp)
+  SET(HEADERS ${HEADERS} AAdapt_Omega_h_Method.hpp)
+ENDIF()
+
 include_directories(${ALBANY_PUMI_INCLUDE_DIRS} ${PUMI_INCLUDE_DIR})
 
 ENDIF()
@@ -192,6 +197,10 @@ add_library(albanyAdapt ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 set_target_properties(albanyAdapt PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
 target_link_libraries(albanyAdapt ${SCOREC_LIB})
+
+IF(ALBANY_OMEGA_H)
+  target_link_libraries(albanyAdapt Omega_h::omega_h)
+ENDIF()
 
 IF(INSTALL_ALBANY)
 install(TARGETS albanyAdapt EXPORT albany-export

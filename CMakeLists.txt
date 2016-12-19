@@ -804,7 +804,6 @@ ELSE()
   SET(ALBANY_AMP FALSE)
 ENDIF()
 
-
 # Set optional build of MOR (Model Order Reduction) defaults to OFF
 OPTION(ENABLE_MOR "Flag to turn on MOR Source code" OFF)
 IF (ENABLE_MOR)
@@ -892,6 +891,14 @@ IF (ALBANY_APF)
   MESSAGE("-- APF       is Enabled, compiling with -DALBANY_APF")
 ELSE()
   MESSAGE("-- APF       is NOT Enabled.")
+ENDIF()
+
+OPTION(ENABLE_OMEGA_H "Enable Omega_h dependency for adaptation" OFF)
+SET(ALBANY_OMEGA_H_DIR "" CACHE PATH "Path to Omega_h installation")
+IF(ENABLE_OMEGA_H)
+  FIND_PACKAGE(Omega_h 6.3.0 REQUIRED PATHS "${ALBANY_OMEGA_H_DIR}")
+  MESSAGE(STATUS "Omega_h found at ${Omega_h_CONFIG}")
+  SET(ALBANY_OMEGA_H TRUE)
 ENDIF()
 
 # ParaView's Catalyst CoProcessing package
