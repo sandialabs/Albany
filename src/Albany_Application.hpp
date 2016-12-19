@@ -140,6 +140,8 @@ namespace Albany {
     Teuchos::RCP<const Epetra_Vector> getInitialSolutionDotDot() const;
 
 #endif
+    //! Get Preconditioner Operator
+    Teuchos::RCP<Tpetra_Operator> getPreconditionerT();
 
     bool observeResponses() const {return observe_responses;} 
     
@@ -268,6 +270,9 @@ namespace Albany {
     /*!
      * Set xdot to NULL for steady-state problems
      */
+    void computeGlobalPreconditionerT(const Teuchos::RCP<Tpetra_CrsMatrix>& jac,
+                                     const Teuchos::RCP<Tpetra_Operator>& prec);
+
 #if defined(ALBANY_EPETRA)
     void computeGlobalPreconditioner(const Teuchos::RCP<Epetra_CrsMatrix>& jac,
                                      const Teuchos::RCP<Epetra_Operator>& prec);

@@ -102,6 +102,12 @@ protected:
 
   //! Sacado parameter vector
   mutable Teuchos::Array<ParamVec> sacado_param_vec;
+    
+  //! Allocated Jacobian for sending to user preconditioner
+  mutable Teuchos::RCP<Tpetra_CrsMatrix> Extra_W_crs;
+    
+  //! Whether the problem supplies its own preconditioner
+  bool supplies_prec;
 
   //@}
 
