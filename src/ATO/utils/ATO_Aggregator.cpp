@@ -121,6 +121,47 @@ Aggregator::parse(const Teuchos::ParameterList& aggregatorParams)
 //**********************************************************************
 void 
 Aggregator_DistParamBased::
+SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,
+                   const std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > valueMap,
+                   const std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > derivMap)
+//**********************************************************************
+{
+  outApp = subProblems[0].app;
+
+  // loop through sub variable names and find the containing state manager
+  int numVars = aggregatedValuesNames.size();
+  valuesT.resize(numVars);
+
+  std::map<std::string, Teuchos::RCP<const Tpetra_Vector> >::const_iterator git;
+  for(int ir=0; ir<numVars; ir++){
+    git = valueMap.find(aggregatedValuesNames[ir]);
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      git == valueMap.end(), Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Aggregator: Requested response (" << aggregatedValuesNames[ir] 
+      << ") not defined." << std::endl);
+    valuesT[ir].name = git->first;
+    valuesT[ir].value = git->second;
+  }
+
+
+  numVars = aggregatedDerivativesNames.size();
+  derivativesT.resize(numVars);
+
+  std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> >::const_iterator gpit;
+  for(int ir=0; ir<numVars; ir++){
+    gpit = derivMap.find(aggregatedDerivativesNames[ir]);
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      gpit == derivMap.end(), Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Aggregator: Requested response derivative (" << aggregatedDerivativesNames[ir] 
+      << ") not defined." << std::endl);
+    derivativesT[ir].name = gpit->first;
+    derivativesT[ir].value = gpit->second;
+  }
+}
+
+//**********************************************************************
+void 
+Aggregator_DistParamBased::
 SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
                   const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > valueMap,
                   const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > derivMap)

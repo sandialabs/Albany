@@ -43,6 +43,9 @@ public:
   virtual void SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
                                  const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > valueMap,
                                  const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > derivMap){};
+  virtual void SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,
+                                 const std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > valueMap,
+                                 const std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > derivMap){};
   void SetCommunicator(const Teuchos::RCP<const Teuchos_Comm>& _comm){comm = _comm;}
   void SetOutputVariables(Teuchos::RCP<double> g, Teuchos::Array<Teuchos::RCP<Epetra_Vector> > deriv)
          {valueAggregated = g; derivAggregated = deriv;}
@@ -92,12 +95,19 @@ class Aggregator_DistParamBased : public virtual Aggregator {
   void SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
                          const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > valueMap,
                          const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > derivMap);
+  void SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,
+                          const std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > valueMap,
+                          const std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > derivMap);
  protected:
   typedef struct { std::string name; Teuchos::RCP<const Epetra_Vector> value; } SubValue;
+  typedef struct { std::string name; Teuchos::RCP<const Tpetra_Vector> value; } SubValueT;
   typedef struct { std::string name; Teuchos::RCP<Epetra_MultiVector> value; } SubDerivative;
+  typedef struct { std::string name; Teuchos::RCP<Tpetra_MultiVector> value; } SubDerivativeT;
 
   std::vector<SubValue> values;
   std::vector<SubDerivative> derivatives;
+  std::vector<SubValueT> valuesT;
+  std::vector<SubDerivativeT> derivativesT;
 };
 /******************************************************************************/
 
