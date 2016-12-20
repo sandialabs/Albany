@@ -41,8 +41,10 @@
 #endif
 
 //#if defined(ATO_USES_COGENT)
+#ifdef ALBANY_ATO
 #include "ATO_XFEM_Preconditioner.hpp"
 #include "ATOT_XFEM_Preconditioner.hpp"
+#endif
 //#endif
 
 #include "Albany_ScalarResponseFunction.hpp"
@@ -320,8 +322,10 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
       precParams = Teuchos::sublist(problemParams, "Teko", true);
 #endif
 //#ifdef ATO_USES_COGENT
+#ifdef ALBANY_ATO
     if(precType == "XFEM")
       precParams = Teuchos::sublist(problemParams, "XFEM", true);
+#endif
 //#endif
   }
 
@@ -777,9 +781,11 @@ Albany::Application::
 getPreconditionerT()
 {
 //#if defined(ATO_USES_COGENT)
+#ifdef ALBANY_ATO
   if(precType == "XFEM"){
     return rcp(new ATOT::XFEM::Preconditioner(precParams));
   } else
+#endif
 //#endif
    return Teuchos::null;
 }
@@ -815,9 +821,11 @@ getPreconditioner()
   } else
 #endif
 //#if defined(ATO_USES_COGENT)
+#ifdef ALBANY_ATO
   if(precType == "XFEM"){
     return rcp(new ATO::XFEM::Preconditioner(precParams));
   } else
+#endif
 //#endif
    return Teuchos::null;
 }
@@ -1784,6 +1792,7 @@ computeGlobalPreconditionerT(const RCP<Tpetra_CrsMatrix>& jac,
                              const RCP<Tpetra_Operator>& prec)
 {
 //#if defined(ATO_USES_COGENT)
+#ifdef ALBANY_ATO 
   if(precType == "XFEM"){
     TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
   
@@ -1794,6 +1803,7 @@ computeGlobalPreconditionerT(const RCP<Tpetra_CrsMatrix>& jac,
   
     cogentPrec->BuildPreconditioner(jac, disc, stateMgr);
   }
+#endif
 //#endif
 }
 
@@ -1819,6 +1829,7 @@ computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
   } 
 #endif
 //#if defined(ATO_USES_COGENT)
+#ifdef ALBANY_ATO
   if(precType == "XFEM"){
     TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
   
@@ -1829,6 +1840,7 @@ computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
   
     cogentPrec->BuildPreconditioner(jac, disc, stateMgr);
   }
+#endif
 //#endif
 }
 #endif
