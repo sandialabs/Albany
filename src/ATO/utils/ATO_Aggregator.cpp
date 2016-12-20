@@ -647,4 +647,72 @@ Aggregator_DistScaled::Evaluate()
     }
   }
 }
+//**********************************************************************
+void
+Aggregator_DistScaled::EvaluateT()
+//**********************************************************************
+{
+  *valueAggregated = shiftValueAggregated;
+
+  int nValues = valuesT.size();
+  if(normalize.size() == 0){
+    normalize.resize(nValues);
+    for(int i=0; i<nValues; i++){
+      Teuchos::ArrayRCP<const double> valView = valuesT[i].value->get1dView(); 
+      normalize[i] = (valView[0] != 0.0) ? 1.0/fabs(valView[0]) : 1.0;
+    }
+  }
+
+  for(int i=0; i<valuesT.size(); i++){
+    SubValueT& value = valuesT[i];
+
+    Teuchos::ArrayRCP<const double> valView = valuesT[i].value->get1dView(); 
+    *valueAggregated += valView[0]*normalize[i]*weights[i];
+
+    if( comm != Teuchos::null ){
+      if( comm->getRank()==0 ){
+        std::cout << "************************************************************************" << std::endl;
+        std::cout << "  Aggregator: Input variable " << i << std::endl;
+        std::cout << "   " << value.name << " = " << valView[0] << std::endl;
+        std::cout << "   " << value.name << " (scaled) = " << valView[0]*normalize[i] << std::endl;
+        std::cout << "   Weight = " << weights[i] << std::endl;
+        std::cout << "************************************************************************" << std::endl;
+      }
+    }
+  }
+
+ 
+  *valueAggregated *= scaleValueAggregated;
+
+  if( comm != Teuchos::null ){
+    if( comm->getRank()==0 ){
+      std::cout << "************************************************************************" << std::endl;
+      std::cout << "  Aggregator: Output " << std::endl;
+      std::cout << "   Value = " << *valueAggregated << std::endl;
+      std::cout << "************************************************************************" << std::endl;
+    }
+  }
+
+
+  for(int itopo=0; itopo<numTopologies; itopo++){
+
+    Tpetra_Vector& derivT = *(derivAggregatedT[itopo]);
+
+    derivT.putScalar(0.0);
+    Teuchos::ArrayRCP<double> derDest = derivT.get1dViewNonConst(); 
+    int nLocalVals = derivT.getLocalLength();
+
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
+      wsElNodeID = outApp->getStateMgr().getDiscretization()->getWsElNodeID();
+
+    for(int i=0; i<derivatives.size(); i++){
+      SubDerivativeT& derivative = derivativesT[i];
+
+      Teuchos::ArrayRCP<const double> srcView = derivative.value->getData(0); 
+
+      for(int lid=0; lid<nLocalVals; lid++)
+        derDest[lid] += srcView[lid]*normalize[i]*weights[i]*scaleValueAggregated;
+    }
+  } 
+}
 }

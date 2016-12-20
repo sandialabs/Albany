@@ -49,6 +49,8 @@ public:
   void SetCommunicator(const Teuchos::RCP<const Teuchos_Comm>& _comm){comm = _comm;}
   void SetOutputVariables(Teuchos::RCP<double> g, Teuchos::Array<Teuchos::RCP<Epetra_Vector> > deriv)
          {valueAggregated = g; derivAggregated = deriv;}
+  void SetOutputVariablesT(Teuchos::RCP<double> g, Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > derivT)
+         {valueAggregated = g; derivAggregatedT = derivT;}
 
 protected:
 
@@ -61,6 +63,7 @@ protected:
 
   Teuchos::RCP<double> valueAggregated;
   Teuchos::Array<Teuchos::RCP<Epetra_Vector> > derivAggregated;
+  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > derivAggregatedT;
 
   Teuchos::RCP<Albany::Application> outApp;
   Teuchos::RCP<const Teuchos_Comm> comm;
@@ -151,6 +154,7 @@ class Aggregator_DistScaled : public virtual Aggregator,
   Aggregator_DistScaled(){}
   Aggregator_DistScaled(const Teuchos::ParameterList& aggregatorParams, int nTopos);
   void Evaluate();
+  void EvaluateT();
  protected:
   Teuchos::Array<double> weights;
 };
