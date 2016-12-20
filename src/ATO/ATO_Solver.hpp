@@ -46,8 +46,8 @@ namespace ATO {
       SpatialFilter(Teuchos::ParameterList& params);
       void buildOperator(
              Teuchos::RCP<Albany::Application> app,
-             Teuchos::RCP<Epetra_Map>          overlapNodeMap,
-             Teuchos::RCP<Epetra_Map>          localNodeMap,
+             Teuchos::RCP<const Epetra_Map>    overlapNodeMap,
+             Teuchos::RCP<const Epetra_Map>    localNodeMap,
              Teuchos::RCP<Epetra_Import>       importer,
              Teuchos::RCP<Epetra_Export>       exporter);
       Teuchos::RCP<Epetra_CrsMatrix> FilterOperator(){return filterOperator;}
@@ -55,8 +55,8 @@ namespace ATO {
     protected:
       void importNeighbors(
              std::map< GlobalPoint, std::set<GlobalPoint> >& neighbors,
-             Teuchos::RCP<Epetra_Import>       importer,
-             Teuchos::RCP<Epetra_Export>       exporter);
+             Teuchos::RCP<Epetra_Import>       importer, const Epetra_Map& localNodeMap,
+             Teuchos::RCP<Epetra_Export>       exporter, const Epetra_Map& overlapNodeMap);
 
       Teuchos::RCP<Epetra_CrsMatrix> filterOperator;
       int iterations;
@@ -198,8 +198,8 @@ namespace ATO {
     Teuchos::RCP<const Teuchos_Comm> _solverComm; 
     Teuchos::RCP<Teuchos::ParameterList> _mainAppParams;
 
-    Teuchos::RCP<Epetra_Map> overlapNodeMap;
-    Teuchos::RCP<Epetra_Map> localNodeMap;
+    Teuchos::RCP<const Epetra_Map> overlapNodeMap;
+    Teuchos::RCP<const Epetra_Map> localNodeMap;
 
 
     Teuchos::Array< Teuchos::RCP<Epetra_Vector> > overlapObjectiveGradientVec;

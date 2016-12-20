@@ -266,26 +266,10 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   _epetra_x_map = Teuchos::rcp(new Epetra_Map( *sub_x_map ));
 
   Teuchos::RCP<Albany::Application> app = _subProblems[0].app;
-  Albany::StateManager& stateMgr = app->getStateMgr();
+  Teuchos::RCP<Albany::AbstractDiscretization> disc = app->getDiscretization();
 
-  // construct epetra maps for node ids. 
-  Teuchos::RCP<const Epetra_BlockMap>
-    local_node_blockmap   = stateMgr.getNodalDataBase()->getNodalDataVector()->getLocalBlockMapE();
-  int num_global_elements = local_node_blockmap->NumGlobalElements();
-  int num_my_elements     = local_node_blockmap->NumMyElements();
-  int *global_node_ids    = new int[num_my_elements]; 
-  local_node_blockmap->MyGlobalElements(global_node_ids);
-  localNodeMap = Teuchos::rcp(new Epetra_Map(num_global_elements,num_my_elements,global_node_ids,0,*commE));
-  delete [] global_node_ids;
-
-  Teuchos::RCP<const Epetra_BlockMap>
-    overlap_node_blockmap = stateMgr.getNodalDataBase()->getNodalDataVector()->getOverlapBlockMapE();
-  num_global_elements = overlap_node_blockmap->NumGlobalElements();
-  num_my_elements     = overlap_node_blockmap->NumMyElements();
-  global_node_ids     = new int[num_my_elements]; 
-  overlap_node_blockmap->MyGlobalElements(global_node_ids);
-  overlapNodeMap = Teuchos::rcp(new Epetra_Map(num_global_elements,num_my_elements,global_node_ids,0,*commE));
-  delete [] global_node_ids;
+  localNodeMap   = disc->getNodeMap();
+  overlapNodeMap = disc->getOverlapNodeMap();
 
   for(int itopo=0; itopo<ntopos; itopo++){
     Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];
@@ -1718,8 +1702,8 @@ ATO::Solver::CreateSubSolverData(const ATO::SolverSubSolver& sub) const
 void
 ATO::SpatialFilter::buildOperator(
              Teuchos::RCP<Albany::Application> app,
-             Teuchos::RCP<Epetra_Map>          overlapNodeMap,
-             Teuchos::RCP<Epetra_Map>          localNodeMap,
+             Teuchos::RCP<const Epetra_Map>    overlapNodeMap,
+             Teuchos::RCP<const Epetra_Map>    localNodeMap,
              Teuchos::RCP<Epetra_Import>       importer,
              Teuchos::RCP<Epetra_Export>       exporter)
 /******************************************************************************/
@@ -1820,7 +1804,7 @@ ATO::SpatialFilter::buildOperator(
     }
 
     // communicate neighbor data
-    importNeighbors(neighbors,importer,exporter);
+    importNeighbors(neighbors,importer,*localNodeMap,exporter,*overlapNodeMap);
 
     
     // for each interior node, search boundary nodes for additional interactions off processor.
@@ -1882,8 +1866,8 @@ ATO::SpatialFilter::SpatialFilter( Teuchos::ParameterList& params )
 void 
 ATO::SpatialFilter::importNeighbors( 
   std::map< ATO::GlobalPoint, std::set<ATO::GlobalPoint> >& neighbors,
-  Teuchos::RCP<Epetra_Import> importer,
-  Teuchos::RCP<Epetra_Export> exporter)
+  Teuchos::RCP<Epetra_Import> importer, const Epetra_Map& impNodeMap,
+  Teuchos::RCP<Epetra_Export> exporter, const Epetra_Map& expNodeMap)
 /******************************************************************************/
 {
   // get from the exporter the node global ids and the associated processor ids
@@ -1892,8 +1876,6 @@ ATO::SpatialFilter::importNeighbors(
   const int* exportLIDs = exporter->ExportLIDs();
   const int* exportPIDs = exporter->ExportPIDs();
   int numExportIDs = exporter->NumExportIDs();
-
-  const Epetra_BlockMap& expNodeMap = exporter->SourceMap();
 
   std::map<int, std::set<int> >::iterator procIter;
   for(int i=0; i<numExportIDs; i++){
@@ -1907,8 +1889,6 @@ ATO::SpatialFilter::importNeighbors(
       procIter->second.insert(exportGID);
     }
   }
-
-  const Epetra_BlockMap& impNodeMap = importer->SourceMap();
 
   exportLIDs = importer->ExportLIDs();
   exportPIDs = importer->ExportPIDs();

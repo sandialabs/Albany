@@ -531,7 +531,6 @@ void Aggregator_DistExtremum<C>::Evaluate()
 
       SubDerivative& derivative = derivatives[extremum_index];
 
-      const Epetra_BlockMap& srcMap = derivative.value->Map();
       double* srcView; (*derivative.value)(0)->ExtractView(&srcView);
 
       int nLocalVals = deriv.MyLength();
@@ -600,7 +599,6 @@ Aggregator_DistScaled::Evaluate()
     for(int i=0; i<derivatives.size(); i++){
       SubDerivative& derivative = derivatives[i];
 
-      const Epetra_BlockMap& srcMap = derivative.value->Map();
       double* srcView; (*derivative.value)(0)->ExtractView(&srcView);
   
       for(int lid=0; lid<nLocalVals; lid++)
