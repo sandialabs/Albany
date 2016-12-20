@@ -44,6 +44,7 @@ macro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)
 #
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${INTEL_MPI_DIR}"
+    "-DMPI_BIN_DIR:PATH=${INTEL_MPI_DIR}/bin64"
     "-DMPI_EXEC:FILEPATH=${INTEL_MPI_DIR}/bin64/mpiexec.hydra"
     "-DCMAKE_CXX_COMPILER:STRING=${INTEL_MPI_DIR}/bin64/mpiicpc"
 #    "-DCMAKE_CXX_FLAGS:STRING='-axAVX -O3 -DNDEBUG -diag-disable=cpu-dispatch -mkl=sequential ${extra_cxx_flags}'"
