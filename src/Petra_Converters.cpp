@@ -356,7 +356,6 @@ Teuchos::RCP<Tpetra_CrsMatrix> Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(Epetra_
    return tpetraCrsMatrix_;
 
 }
-}
 
 #include "Albany_Utils.hpp"
 
