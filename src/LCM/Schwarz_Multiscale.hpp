@@ -126,15 +126,6 @@ protected:
       Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
       Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
   
-  //Helper function which extracts diagonal of a matrix into a vector 
-  Teuchos::RCP<Tpetra_Vector>  
-  ExtractDiagonalCopy(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix) const; 
-
-  //Helper function which replaces the diagonal of a matrix 
-  void
-  ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
-                         const Teuchos::RCP<Tpetra_Vector>& diag) const;
-
 
 private:
 

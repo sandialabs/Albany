@@ -1,6 +1,7 @@
 #include "ATOT_XFEM_Preconditioner.hpp"
 
 #include <string>
+#include "Petra_Converters.hpp" 
 
 namespace ATOT {
 namespace XFEM {
@@ -36,19 +37,15 @@ int Preconditioner::BuildPreconditioner(
   operator_->fillComplete();
   
   // for now, just do inverse row sum.  Later, we'll hook in Cogent.
-  RCP<Tpetra_Vector> invRowSums = rcp(new Tpetra_Vector(jacT->getRowMap()));
-  //IKT, FIXME: implement the following routines, since they do not exist in Tpetra 
-  /*jac->InvRowSums(invRowSums);
-  err = operator_->ReplaceDiagonalValues(invRowSums);
-  */
+  RCP<Tpetra_Vector> invRowSums = Petra::InvRowSum(jacT);
+  Petra::ReplaceDiagonalEntries(operator_, invRowSums);
 
   invOperator_ = rcp(new Tpetra_CrsMatrix(jacT->getRowMap(), jacT->getColMap(), numEntriesPerRow, Tpetra::ProfileType::StaticProfile));
   invOperator_->fillComplete();
   
   RCP<Tpetra_Vector> rowSums = rcp(new Tpetra_Vector(*invRowSums));
-  //IKT, FIXME: implement the following routines, since they do not exist in Tpetra 
-  /*rowSums.Reciprocal(invRowSums);
-  invOperator_->ReplaceDiagonalValues(rowSums);*/
+  rowSums->reciprocal(*invRowSums);
+  Petra::ReplaceDiagonalEntries(invOperator_, rowSums);
   return 0; 
 }
 

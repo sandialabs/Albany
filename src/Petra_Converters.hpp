@@ -96,6 +96,19 @@ Teuchos::RCP<Tpetra_MultiVector> EpetraMultiVector_To_TpetraMultiVector(const Ep
 Teuchos::RCP<Tpetra_CrsMatrix> EpetraCrsMatrix_To_TpetraCrsMatrix(Epetra_CrsMatrix& epetraMatrix_,
                                                                const Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
                                                                const Teuchos::RCP< KokkosNode > &node = KokkosClassic::Details::getNode< KokkosNode >());
+  
+//Helper function which extracts diagonal of a matrix into a vector 
+Teuchos::RCP<Tpetra_Vector>  
+ExtractDiagonalCopy(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix); 
+
+//Helper function which replaces the diagonal of a matrix 
+void
+ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
+                       const Teuchos::RCP<Tpetra_Vector>& diag);
+
+Teuchos::RCP<Tpetra_Vector> 
+InvRowSum(const Teuchos::RCP<const Tpetra_CrsMatrix>& matrix); 
+
 
 // Convenience class for conversions. One use case is to inherit from this class
 // and implement situation-specific conversion functionality using concise
