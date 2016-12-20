@@ -30,10 +30,10 @@ def postprocess(
     pickling = True,
     write_data = True,
     verbosity = 1,
+    fmt = 'pdf',
     **kwargs):
 
     print ''
-
 
 
     #
@@ -167,7 +167,7 @@ def postprocess(
             
             for step in [domain.times[0], domain.times[-1]]:
 
-                plot_inverse_pole_figure(domain = domain, time = step)
+                plot_inverse_pole_figure(domain = domain, time = step, fmt = fmt)
 
         if verbosity > 0:
             print '    Elapsed time: ' + str(timer.interval) + 's\n'
@@ -257,8 +257,8 @@ if __name__ == '__main__':
 
     if len(sys.argv) == 3:
 
-        postprocess(name_file_output_exodus, plotting = sys.argv[2])
+        postprocess(name_file_output_exodus, plotting = sys.argv[2], fmt = 'png')
 
     else:
 
-        postprocess(name_file_output_exodus, plotting = True)
+        postprocess(name_file_output_exodus, plotting = True, fmt = 'png')

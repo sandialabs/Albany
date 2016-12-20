@@ -7,6 +7,8 @@ import numpy as np
 # Plot inverse pole figures for simulations with defined local orientations
 def plot_inverse_pole_figure(**kwargs):
 
+    fmt = kwargs.get('fmt', 'pdf')
+
     #
     # Read data 
     #

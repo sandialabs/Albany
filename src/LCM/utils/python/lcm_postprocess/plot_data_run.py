@@ -120,7 +120,12 @@ def plot_data_run(run = None, filename = None):
                 points_plot[1:],
                 values_plot[1:])
 
-    ax.set_yscale('log')
+    try:
+        ax.set_yscale('log')
+    except ValueError:
+        ax.set_yscale('linear')
+        pass
+
     ax.set_xlabel('Iteration')
     ax.set_ylabel(r'Increment Norm $\left\| \Delta u^{(n)} \right\|$')
 
@@ -156,7 +161,11 @@ def plot_data_run(run = None, filename = None):
                 points_plot[1:],
                 values_plot[1:])
 
-    ax.set_yscale('log')
+    try:
+        ax.set_yscale('log')
+    except ValueError:
+        ax.set_yscale('linear')
+        pass
     ax.set_xlabel('Iteration')
     ax.set_ylabel(r'Residual Norm $\left\| F^{(n)} \right\|$')
 

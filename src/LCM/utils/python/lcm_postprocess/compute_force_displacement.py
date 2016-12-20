@@ -36,8 +36,10 @@ def compute_force_displacement(
         sys.exit(1)
     force_label = 'force_' + direction
     if force_label not in nodeVariableNames:
-        print "\nERROR:  Failed to extract " + force_label + " data\n"
-        sys.exit(1)
+        force_label = 'resid_' + direction
+        if force_label not in nodeVariableNames:
+            print "\nERROR:  Failed to extract " + force_label + " data\n"
+            sys.exit(1)
 
     # Read node sets
     nodeSetIds = file_input.get_node_set_ids()
