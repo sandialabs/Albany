@@ -21,6 +21,75 @@
   // Start of Utils to do with Communicators
 #ifdef ALBANY_MPI
 
+  Teuchos::RCP<Tpetra_Vector>  
+  Albany::ExtractDiagonalCopy(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix) {
+    Teuchos::RCP<Tpetra_Vector> diag = Teuchos::rcp(new Tpetra_Vector(matrix->getRowMap()));
+    diag->putScalar(0.0); 
+    Teuchos::ArrayRCP<ST> diag_nonconstView = diag->get1dViewNonConst();
+    for (auto i=0; i<matrix->getNodeNumRows(); i++) {
+      auto NumEntries = matrix->getNumEntriesInLocalRow(i);
+      Teuchos::Array<LO> Indices(NumEntries);
+      Teuchos::Array<ST> Values(NumEntries); 
+      matrix->getLocalRowCopy(i, Indices(), Values(), NumEntries);
+      GO global_row = matrix->getRowMap()->getGlobalElement(i);
+      for (auto j=0; j<NumEntries; j++) {
+        GO global_col = matrix->getColMap()->getGlobalElement(Indices[j]);
+        if (global_row == global_col) {
+          diag_nonconstView[i] = Values[j];
+        }
+      }
+    }
+    //Tpetra_MatrixMarket_Writer::writeSparseFile("matrix.mm", matrix);
+    //Tpetra_MatrixMarket_Writer::writeDenseFile("diag.mm", diag);
+  }
+
+  void
+  Albany::ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
+                                 const Teuchos::RCP<Tpetra_Vector>& diag) {
+    Teuchos::ArrayRCP<const ST> diag_constView = diag->get1dView();
+    for (auto i=0; i<matrix->getNodeNumRows(); i++) {
+      auto NumEntries = matrix->getNumEntriesInLocalRow(i);
+      Teuchos::Array<LO> Indices(NumEntries);
+      Teuchos::Array<ST> Values(NumEntries);
+      matrix->getLocalRowCopy(i, Indices(), Values(), NumEntries);
+      GO global_row = matrix->getRowMap()->getGlobalElement(i);
+      for (auto j=0; j<NumEntries; j++) {
+        GO global_col = matrix->getColMap()->getGlobalElement(Indices[j]);
+        if (global_row == global_col) {
+          Teuchos::Array<ST> matrixEntriesT(1);
+          Teuchos::Array<LO> matrixIndicesT(1);
+          matrixEntriesT[0] = diag_constView[i];
+          matrixIndicesT[0] = Indices[j];
+          matrix->replaceLocalValues(i, matrixIndicesT(), matrixEntriesT());
+        }
+      }
+    }
+    //Tpetra_MatrixMarket_Writer::writeSparseFile("prec.mm", matrix);
+  }
+
+  Teuchos::RCP<Tpetra_Vector> 
+  Albany::InvRowSum(const Teuchos::RCP<const Tpetra_CrsMatrix>& matrix) {
+    //Create vector to store absrowsum 
+    Teuchos::RCP<Tpetra_Vector> absrowsum = Teuchos::rcp(new Tpetra_Vector(matrix->getRowMap())); 
+    absrowsum->putScalar(0.0); 
+    Teuchos::ArrayRCP<ST> absrowsum_nonconstView = absrowsum->get1dViewNonConst(); 
+    //Compute abs sum of each row and store in absrowsum vector 
+    for (auto i=0; i<matrix->getNodeNumRows(); ++i) {
+      std::size_t NumEntries = matrix->getNumEntriesInLocalRow(i);
+      Teuchos::Array<LO> Indices(NumEntries); 
+      Teuchos::Array<ST> Values(NumEntries); 
+      //Get local row
+      matrix->getLocalRowCopy(i, Indices(), Values(), NumEntries);
+      //Compute abs row rum 
+      for (auto j=0; j<NumEntries; j++) 
+        absrowsum_nonconstView[i] += abs(Values[j]);
+    }
+    //Invert absrowsum 
+    Teuchos::RCP<Tpetra_Vector> invabsrowsum = Teuchos::rcp(new Tpetra_Vector(matrix->getRowMap())); 
+    invabsrowsum->reciprocal(*absrowsum); 
+  }
+
+
 #if defined(ALBANY_EPETRA)
   Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) {
     const Epetra_MpiComm& emc = dynamic_cast<const Epetra_MpiComm&>(ec);
