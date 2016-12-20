@@ -15,8 +15,6 @@ rm -rf nightly_log*
 rm -rf results*
 rm -rf slurm* 
 rm -rf modules*out 
-rm -rf *err
-rm -rf *out 
 
 ulimit -c 0
 
@@ -30,5 +28,5 @@ scp results_cuda ikalash@mockba.ca.sandia.gov:rideCDash/Albany
 bash send_email_ctest.sh  
 
 # recursively resubmit this script
-X=$( date -d "1 days 12 pm" "+%m:%d:%H:%M" )
+X=$( date -d "1 days 9 am" "+%m:%d:%H:%M" )
 bsub -b $X -q rhel7G < /ascldap/users/ikalash/nightlyCDash/cronjob_hack.batch
