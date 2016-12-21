@@ -35,6 +35,7 @@ public:
   virtual ~Aggregator(){};
 
   virtual void Evaluate()=0;
+  virtual void EvaluateT()=0;
 
   virtual std::string getOutputValueName(){return outputValueName;}
   virtual std::string getOutputDerivativeName(){return outputDerivativeName;}
@@ -122,6 +123,7 @@ class Aggregator_Scaled : public virtual Aggregator,
   Aggregator_Scaled(){}
   Aggregator_Scaled(const Teuchos::ParameterList& aggregatorParams, int nTopos);
   virtual void Evaluate();
+  virtual void EvaluateT();
  protected:
   Teuchos::Array<double> weights;
 };
@@ -135,6 +137,7 @@ class Aggregator_Extremum : public virtual Aggregator,
   Aggregator_Extremum(){}
   Aggregator_Extremum(const Teuchos::ParameterList& aggregatorParams, int nTopos);
   virtual void Evaluate();
+  virtual void EvaluateT();
  protected:
   C compare;
 };
@@ -168,6 +171,7 @@ class Aggregator_DistExtremum : public virtual Aggregator,
   Aggregator_DistExtremum(){}
   Aggregator_DistExtremum(const Teuchos::ParameterList& aggregatorParams, int nTopos);
   void Evaluate();
+  void EvaluateT();
  protected:
   C compare;
 };

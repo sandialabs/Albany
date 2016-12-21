@@ -353,6 +353,91 @@ Aggregator(aggregatorParams, nTopos)
 }
 
 
+//**********************************************************************
+void
+Aggregator_Scaled::EvaluateT()
+//**********************************************************************
+{
+   int numValues = values.size();
+
+  *valueAggregated=shiftValueAggregated;
+
+  if(normalize.size() == 0){
+    normalize.resize(numValues);
+    for(int i=0; i<numValues; i++){
+      Albany::StateArrayVec& src = values[i].app->getStateMgr().getStateArrays().elemStateArrays;
+      Albany::MDArray& valSrc = src[0][values[i].name];
+      double val = valSrc(0);
+      double globalVal = val;
+      if( comm != Teuchos::null )
+        Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, /*numvals=*/ 1, &val, &globalVal);
+      normalize[i] = (globalVal != 0.0) ? 1.0/fabs(globalVal) : 1.0;
+    }
+    if( comm != Teuchos::null ){
+      if( comm->getRank()==0 ){
+        std::cout << "************************************************************************" << std::endl;
+        std::cout << "  Normalizing:" << std::endl;
+        for(int i=0; i<numValues; i++){
+          std::cout << "   " << values[i].name << " init = " << normalize[i] << std::endl;
+        }
+        std::cout << "************************************************************************" << std::endl;
+      }
+    }
+  }
+  for(int sv=0; sv<numValues; sv++){
+    Albany::StateArrayVec& src = values[sv].app->getStateMgr().getStateArrays().elemStateArrays;
+    Albany::MDArray& valSrc = src[0][values[sv].name];
+    double globalVal, val = valSrc(0);
+    if( comm != Teuchos::null ){
+      Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, /*numvals=*/ 1, &val, &globalVal);
+      if( comm->getRank()==0 ){
+        std::cout << "************************************************************************" << std::endl;
+        std::cout << "  Aggregator: " << values[sv].name << " = " << globalVal << std::endl;
+        std::cout << "************************************************************************" << std::endl;
+      }
+    } else globalVal = val;
+    *valueAggregated += normalize[sv]*weights[sv]*globalVal;
+    valSrc(0)=0.0;
+  }
+
+  *valueAggregated *= scaleValueAggregated;
+
+  if( comm != Teuchos::null ){
+    if( comm->getRank()==0 ){
+      std::cout << "************************************************************************" << std::endl;
+      std::cout << "  Aggregator: " << outputValueName << " = " << *valueAggregated << std::endl;
+      std::cout << "************************************************************************" << std::endl;
+    }
+  }
+
+
+  int numDerivatives = derivatives.size();
+
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
+    wsElNodeID = outApp->getStateMgr().getDiscretization()->getWsElNodeID();
+
+  for(int itopo=0; itopo<numTopologies; itopo++){
+
+    Tpetra_Vector& deriv = *(derivAggregatedT[itopo]);
+
+    deriv.putScalar(0.0);
+
+    for(int sv=0; sv<numDerivatives; sv++){
+      Albany::StateArrayVec& src = derivatives[sv].app->getStateMgr().getStateArrays().elemStateArrays;
+      int numWorksets = src.size();
+      for(int ws=0; ws<numWorksets; ws++){
+        Albany::MDArray& derSrc = src[ws][derivatives[sv].name[itopo]];
+        int numCells = derSrc.dimension(0);
+        int numNodes = derSrc.dimension(1);
+        for(int cell=0; cell<numCells; cell++)
+          for(int node=0; node<numNodes; node++)
+            deriv.sumIntoGlobalValue(wsElNodeID[ws][cell][node], 0,
+                                     scaleValueAggregated*normalize[sv]*weights[sv]*derSrc(cell,node));
+      }
+    }
+  }
+
+}
 
 //**********************************************************************
 void
@@ -443,6 +528,76 @@ Aggregator_Scaled::Evaluate()
 
 //**********************************************************************
 template <typename C>
+void Aggregator_Extremum<C>::EvaluateT()
+//**********************************************************************
+{
+   *valueAggregated=shiftValueAggregated;
+
+  int extremum_index = 0;
+  int numValues = values.size();
+  if(numValues > 0){
+    Albany::StateArrayVec& src = values[0].app->getStateMgr().getStateArrays().elemStateArrays;
+    Albany::MDArray& valSrc = src[0][values[0].name];
+    double extremum = valSrc(0);
+    for(int sv=0; sv<numValues; sv++){
+      double globalVal, val = valSrc(0);
+      if( comm != Teuchos::null ){
+        Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, /*numvals=*/ 1, &val, &globalVal);
+        if( comm->getRank()==0 ){
+          std::cout << "************************************************************************" << std::endl;
+          std::cout << "  Aggregator: " << values[sv].name << " = " << globalVal << std::endl;
+          std::cout << "************************************************************************" << std::endl;
+        }
+      } else globalVal = val;
+      if( compare(globalVal,extremum) ){
+        extremum_index = sv;
+        extremum = globalVal;
+      }
+      valSrc(0)=0.0;
+    }
+
+    *valueAggregated += extremum;
+    
+    if( comm != Teuchos::null ){
+      if( comm->getRank()==0 ){
+        std::cout << "************************************************************************" << std::endl;
+        std::cout << "  Aggregator: " << outputValueName << " = " << *valueAggregated << std::endl;
+        std::cout << "************************************************************************" << std::endl;
+      }
+    }
+  }
+
+
+  int numDerivatives = derivatives.size();
+
+  if(numDerivatives > 0){
+
+    for(int itopo=0; itopo<numTopologies; itopo++){
+
+      Tpetra_Vector& derivT = *(derivAggregatedT[itopo]);
+
+      derivT.putScalar(0.0);
+
+      const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
+       wsElNodeID = outApp->getStateMgr().getDiscretization()->getWsElNodeID();
+
+      Albany::StateArrayVec& src = derivatives[extremum_index].app->getStateMgr().getStateArrays().elemStateArrays;
+      int numWorksets = src.size();
+      for(int ws=0; ws<numWorksets; ws++){
+        Albany::MDArray& derSrc = src[ws][derivatives[extremum_index].name[itopo]];
+        int numCells = derSrc.dimension(0);
+        int numNodes = derSrc.dimension(1);
+        for(int cell=0; cell<numCells; cell++)
+            for(int node=0; node<numNodes; node++)
+            derivT.sumIntoGlobalValue(wsElNodeID[ws][cell][node], 0, derSrc(cell,node));
+      }
+    }
+  }
+
+}
+
+//**********************************************************************
+template <typename C>
 void Aggregator_Extremum<C>::Evaluate()
 //**********************************************************************
 {
@@ -510,7 +665,75 @@ void Aggregator_Extremum<C>::Evaluate()
     }
   }
 }
+//**********************************************************************
+template <typename C>
+void Aggregator_DistExtremum<C>::EvaluateT()
+//**********************************************************************
+{
+  *valueAggregated = shiftValueAggregated;
 
+  int extremum_index = 0;
+  int numValues = valuesT.size();
+  if(numValues > 0){
+    SubValueT& value = valuesT[0];
+    Teuchos::ArrayRCP<const double> valView = value.value->get1dView(); 
+    double extremum = valView[0];
+    for(int i=0; i<numValues; i++){
+      SubValueT& value = valuesT[i];
+      Teuchos::ArrayRCP<const double> valView = value.value->get1dView(); 
+      if( compare(valView[0],extremum) ){
+        extremum = valView[0];
+        extremum_index = i;
+      }
+
+      if( comm != Teuchos::null ){
+        if( comm->getRank()==0 ){
+          std::cout << "************************************************************************" << std::endl;
+          std::cout << "  Aggregator: Input variable " << i << std::endl;
+          std::cout << "   " << value.name << " = " << valView[0] << std::endl;
+          std::cout << "************************************************************************" << std::endl;
+        }
+      }
+    }
+
+    *valueAggregated += extremum;
+
+    if( comm != Teuchos::null ){
+      if( comm->getRank()==0 ){
+        std::cout << "************************************************************************" << std::endl;
+        std::cout << "  Aggregator: Output " << std::endl;
+        std::cout << "   Value = " << *valueAggregated << std::endl;
+        std::cout << "************************************************************************" << std::endl;
+      }
+    }
+  }
+
+  int numDerivatives = derivativesT.size();
+
+  if(numDerivatives > 0){
+
+    for(int itopo=0; itopo<numTopologies; itopo++){
+
+      Tpetra_Vector& derivT = *(derivAggregatedT[itopo]);
+
+      derivT.putScalar(0.0);
+
+      Teuchos::ArrayRCP<double> derDest = derivT.get1dViewNonConst(); 
+
+      const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
+        wsElNodeID = outApp->getStateMgr().getDiscretization()->getWsElNodeID();
+
+      SubDerivativeT& derivative = derivativesT[extremum_index];
+
+      Teuchos::ArrayRCP<const double> srcView = derivative.value->getData(0); 
+
+      int nLocalVals = derivT.getLocalLength();
+      for(int lid=0; lid<nLocalVals; lid++)
+        derDest[lid] += srcView[lid];
+    }
+  }
+
+}
 //**********************************************************************
 template <typename C>
 void Aggregator_DistExtremum<C>::Evaluate()
