@@ -48,10 +48,9 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 
-set (OMPI_CXX /home/ikalash/Trilinos/packages/kokkos/config/nvcc_wrapper)
+set (NVCC_WRAPPER "/home/ikalash/nightlyHOMMEXXCDash/repos/Trilinos/packages/kokkos/config/nvcc_wrapper")
 set (CUDA_MANAGED_FORCE_DEVICE_ALLOC 1)
 set( CUDA_LAUNCH_BLOCKING 1)
-
 
 set(BOOST_DIR "/home/projects/pwr8-rhel73-lsf/boost/1.60.0/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44")
 set(NETCDF_DIR "/home/projects/pwr8-rhel73-lsf/netcdf/4.4.1/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
@@ -60,7 +59,6 @@ set(HDF5_DIR "/home/projects/pwr8-rhel73-lsf/hdf5/1.8.17/openmpi/1.10.4/gcc/5.4.
 set(BLAS_DIR "/home/projects/pwr8-rhel73-lsf/openblas/0.2.19/gcc/5.3.0")  
 set(LAPACK_DIR "/home/projects/pwr8-rhel73-lsf/openblas/0.2.19/gcc/5.3.0")
 set(ZLIB_DIR "/home/projects/pwr8-rhel73-lsf/zlib/1.2.8") 
-set(MPI_DIR "/home/projects/pwr8-rhel73-lsf/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -167,7 +165,7 @@ if (BUILD_TRILINOS)
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     #
-    "-DCMAKE_CXX_COMPILER:FILEPATH=/home/ikalash/nightlyHOMMEXXCDash/repos/Trilinos/packages/kokkos/config/nvcc_wrapper"
+    "-DCMAKE_CXX_COMPILER:FILEPATH=${NVCC_WRAPPER}"
     "-DCMAKE_CXX_FLAGS:STRING=-fopenmp -mcpu=power8 -lgfortran" 
     "-DCMAKE_C_FLAGS:STRING=-fopenmp -mcpu=power8 -lgfortran" 
     "-DCMAKE_Fortran_FLAGS:STRING=-lgfortran -fopenmp -mcpu=power8"

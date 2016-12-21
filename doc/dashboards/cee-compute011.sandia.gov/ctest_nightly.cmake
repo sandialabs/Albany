@@ -87,15 +87,15 @@ set (CTEST_BINARY_NAME build)
 set (PREFIX_DIR /projects/albany)
 set (INTEL_PREFIX_DIR ${PREFIX_DIR}/intel5.0)
 set (GCC_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.8.8-gcc-5.2.0-RHEL6)
-set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210/compilers_and_libraries/linux)
+set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2017.1.132/compilers_and_libraries/linux)
 
 #set (BOOST_ROOT /projects/albany/nightly)
 set (BOOST_ROOT /projects/albany)
 set (INTEL_BOOST_ROOT ${BOOST_ROOT}/intel5.0/boost-1.60.0)
 set (CLANG_BOOST_ROOT ${BOOST_ROOT}/clang-3.7)
 
-set (INTEL_MPI_DIR /sierra/sntools/SDK/mpi/intel/5.0)
-set (MKL_PATH /sierra/sntools/SDK/compilers/intel/composer_xe_2016.3.210)
+set (INTEL_MPI_DIR ${INTEL_DIR}/mpi)
+set (MKL_PATH ${INTEL_DIR})
 
 set (USE_LAME OFF)
 set (LAME_INC_DIR "/projects/sierra/linux_rh6/install/master/lame/include\;/projects/sierra/linux_rh6/install/master/Sierra/sierra_util/include\;/projects/sierra/linux_rh6/install/master/stk/stk_expreval/include\;/projects/sierra/linux_rh6/install/master/utility/include\;/projects/sierra/linux_rh6/install/master/Sierra/include")
@@ -425,6 +425,7 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
   "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
   "-DIntrepid2_ENABLE_KokkosDynRankView:BOOL=ON"
+  "-DTrilinos_ENABLE_MiniTensor:BOOL=ON"
   "-DTrilinos_ENABLE_NOX:BOOL=ON"
   "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
   "-DTrilinos_ENABLE_Thyra:BOOL=ON"
