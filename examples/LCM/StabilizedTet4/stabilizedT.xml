@@ -11,7 +11,7 @@
     <Parameter
       name="MaterialDB Filename"
       type="string"
-      value="materials.xml" />
+      value="stabilized-materials.xml" />
 
     <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
     <ParameterList name="Dirichlet BCs">
@@ -35,13 +35,20 @@
         <Parameter
           name="Time Values"
           type="Array(double)"
-          value="{ 0.0, 1.0, 2.0, 3.0}" />
-        <!-- the 3.0 data point is a workaround for LOCA's DfDp perturbation -->
+          value="{ 0.0, 1.0, 2.0}" />
         <Parameter
           name="BC Values"
           type="Array(double)"
-          value="{ 0.0, 0.5, 1.0, 1.0}" />
+          value="{ 0.0, 0.5, 1.0}" />
       </ParameterList>
+    </ParameterList>
+
+    <!-- Specify Stabilized Pressure as a nodal DOF -->
+    <ParameterList name="Stabilized Pressure">
+      <Parameter
+        name="Variable Type"
+        type="string"
+        value="DOF" />
     </ParameterList>
 
     <!-- PARAMETER -->
@@ -110,7 +117,7 @@
     <Parameter
       name="Exodus Output File Name"
       type="string"
-      value="galerkin.e" />
+      value="stabilized.e" />
     <Parameter
       name="Separate Evaluators by Element Block"
       type="bool"
@@ -120,13 +127,13 @@
       type="bool"
       value="true" />
     <Parameter
-      name="Exodus Solution Name"
-      type="string"
-      value="disp" />
+      name="Solution Vector Components"
+      type="Array(string)"
+      value="{disp, V, pressure, S}" />
     <Parameter
-      name="Exodus Residual Name"
-      type="string"
-      value="force" />
+      name="Residual Vector Components"
+      type="Array(string)"
+      value="{force, V, q, S}" />
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
