@@ -107,5 +107,12 @@ namespace Albany {
 
   // Do a nice stack trace for debugging
   void do_stack_trace();
+
+  // Check returns codes and throw Teuchos exceptions
+  // Useful for silencing compiler warnings about unused return codes
+  void safe_fscanf(int nitems, FILE* file, const char* format, ...);
+  void safe_sscanf(int nitems, const char* str, const char* format, ...);
+  void safe_fgets(char* str, int size, FILE* stream);
+  void safe_system(char const* str);
 }
 #endif //ALBANY_UTILS

@@ -15,10 +15,10 @@
 
 // For stack trace
 #include <execinfo.h>
-#include <stdio.h>
+#include <cstdio>
+#include <cstdarg>
 
-
-  // Start of Utils to do with Communicators
+// Start of Utils to do with Communicators
 #ifdef ALBANY_MPI
 
 #if defined(ALBANY_EPETRA)
@@ -270,4 +270,35 @@
         }
         free(strs);
   }
-  
+
+void Albany::safe_fscanf(int nitems, FILE* file, const char* format, ...) {
+  va_list ap;
+  va_start(ap, format);
+  int ret = vfscanf(file, format, ap);
+  va_end(ap);
+  TEUCHOS_TEST_FOR_EXCEPTION(ret != nitems, std::runtime_error,
+		  ret << "=safe_fscanf(" << nitems << ", " << file << ", \"" << format << "\")\n");
+}
+
+void Albany::safe_sscanf(int nitems, const char* str, const char* format, ...) {
+  va_list ap;
+  va_start(ap, format);
+  int ret = vsscanf(str, format, ap);
+  va_end(ap);
+  TEUCHOS_TEST_FOR_EXCEPTION(ret != nitems, std::runtime_error,
+		  ret << "=safe_sscanf(" << nitems << ", \"" << str << "\", \"" << format << "\")\n");
+}
+
+void Albany::safe_fgets(char* str, int size, FILE* stream) {
+  char* ret = fgets(str, size, stream);
+  TEUCHOS_TEST_FOR_EXCEPTION(ret != str, std::runtime_error,
+		  ret << "=safe_fgets(" << static_cast<void*>(str) << ", " << size << ", " << stream << ")\n");
+}
+
+void Albany::safe_system(char const* str) {
+  TEUCHOS_TEST_FOR_EXCEPTION(!str, std::runtime_error,
+		  "safe_system called with null command string\n");
+  int ret = system(str);
+  TEUCHOS_TEST_FOR_EXCEPTION(ret != 0, std::runtime_error,
+		  ret << "=safe_system(\"" << str << "\")\n");
+}

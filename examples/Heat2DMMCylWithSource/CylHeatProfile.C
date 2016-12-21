@@ -51,7 +51,10 @@ int main(){
 
     if(strcmp(word, "num_nodes") == 0){
 
-      fscanf(ifp, "%*s%d", &num_nodes);
+      if(fscanf(ifp, "%*s%d", &num_nodes) != 1){
+        cout << "Error" << endl;
+        return -1;
+      }
 
       break;
 
@@ -67,7 +70,10 @@ int main(){
 
     if(strcmp(word, "coord") == 0){
 
-      fscanf(ifp, "%*s"); // gobble the equal sign
+      if(fscanf(ifp, "%*s") != 0) { // gobble the equal sign
+        cout << "Error" << endl;
+        return -1;
+      }
 
       for(int i = 0; i < num_nodes; i++) // grab the x coordinate values
 
@@ -83,7 +89,10 @@ int main(){
           return -1;
         }
 
-      fscanf(ifp, "%lf", &y[num_nodes - 1]); // Get the last one
+      if(fscanf(ifp, "%lf", &y[num_nodes - 1]) != 1){ // Get the last one
+        cout << "Error" << endl;
+        return -1;
+      }
 
       break;
 
