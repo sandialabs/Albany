@@ -202,6 +202,67 @@ SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
   }
 }
 
+//**********************************************************************
+void
+Aggregator_StateVarBased::SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems)
+//**********************************************************************
+{
+  outApp = subProblems[0].app;
+
+  // loop through sub variable names and find the containing state manager
+
+  int numVars = aggregatedValuesNames.size();
+  valuesT.resize(numVars);
+    
+  int numSubs = subProblems.size();
+  for(int iv=0; iv<numVars; iv++){
+    bool objFound = false;
+    std::string& objName = aggregatedValuesNames[iv];
+    for(int is=0; is<numSubs; is++){
+      const Teuchos::RCP<Albany::Application>& app = subProblems[is].app;
+      Albany::StateArray& src = app->getStateMgr().getStateArrays().elemStateArrays[0];
+      if(src.count(objName) > 0){
+        TEUCHOS_TEST_FOR_EXCEPTION(
+          objFound, Teuchos::Exceptions::InvalidParameter, std::endl
+          << "Value '" << objName << "' found in two state managers." << std::endl
+          << "Value names must be unique to avoid ambiguity." << std::endl);
+        valuesT[iv].name = objName;
+        valuesT[iv].app = app;
+        objFound = true;
+      }
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      !objFound, Teuchos::Exceptions::InvalidParameter, std::endl
+      << "Value '" << objName << "' not found in any state manager." << std::endl);
+  }
+
+  numVars = aggregatedDerivativesNames.size();
+  derivativesT.resize(numVars);
+  
+  for(int iv=0; iv<numVars; iv++){
+    bool derFound = false;
+    std::string derName = aggregatedDerivativesNames[iv];
+    for(int is=0; is<numSubs; is++){
+      const Teuchos::RCP<Albany::Application>& app = subProblems[is].app;
+      Albany::StateArray& src = app->getStateMgr().getStateArrays().elemStateArrays[0];
+      if(src.count(Albany::strint(derName,0)) > 0){
+        TEUCHOS_TEST_FOR_EXCEPTION(
+          derFound, Teuchos::Exceptions::InvalidParameter, std::endl
+          << "Derivative '" << derName << "' found in two state managers." << std::endl
+          << "Derivative names must be unique to avoid ambiguity." << std::endl);
+        derivativesT[iv].name.resize(numTopologies);
+        for(int itopo=0; itopo<numTopologies; itopo++)
+          derivativesT[iv].name[itopo] = Albany::strint(derName, itopo);
+        derivatives[iv].app = app;
+        derFound = true;
+      }
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      !derFound, Teuchos::Exceptions::InvalidParameter, std::endl
+      << "Derivative '" << derName << "' not found in any state manager." << std::endl);
+  }
+
+}
 
 //**********************************************************************
 void
@@ -358,15 +419,15 @@ void
 Aggregator_Scaled::EvaluateT()
 //**********************************************************************
 {
-   int numValues = values.size();
+   int numValues = valuesT.size();
 
   *valueAggregated=shiftValueAggregated;
 
   if(normalize.size() == 0){
     normalize.resize(numValues);
     for(int i=0; i<numValues; i++){
-      Albany::StateArrayVec& src = values[i].app->getStateMgr().getStateArrays().elemStateArrays;
-      Albany::MDArray& valSrc = src[0][values[i].name];
+      Albany::StateArrayVec& src = valuesT[i].app->getStateMgr().getStateArrays().elemStateArrays;
+      Albany::MDArray& valSrc = src[0][valuesT[i].name];
       double val = valSrc(0);
       double globalVal = val;
       if( comm != Teuchos::null )
@@ -378,21 +439,21 @@ Aggregator_Scaled::EvaluateT()
         std::cout << "************************************************************************" << std::endl;
         std::cout << "  Normalizing:" << std::endl;
         for(int i=0; i<numValues; i++){
-          std::cout << "   " << values[i].name << " init = " << normalize[i] << std::endl;
+          std::cout << "   " << valuesT[i].name << " init = " << normalize[i] << std::endl;
         }
         std::cout << "************************************************************************" << std::endl;
       }
     }
   }
   for(int sv=0; sv<numValues; sv++){
-    Albany::StateArrayVec& src = values[sv].app->getStateMgr().getStateArrays().elemStateArrays;
-    Albany::MDArray& valSrc = src[0][values[sv].name];
+    Albany::StateArrayVec& src = valuesT[sv].app->getStateMgr().getStateArrays().elemStateArrays;
+    Albany::MDArray& valSrc = src[0][valuesT[sv].name];
     double globalVal, val = valSrc(0);
     if( comm != Teuchos::null ){
       Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, /*numvals=*/ 1, &val, &globalVal);
       if( comm->getRank()==0 ){
         std::cout << "************************************************************************" << std::endl;
-        std::cout << "  Aggregator: " << values[sv].name << " = " << globalVal << std::endl;
+        std::cout << "  Aggregator: " << valuesT[sv].name << " = " << globalVal << std::endl;
         std::cout << "************************************************************************" << std::endl;
       }
     } else globalVal = val;
@@ -411,7 +472,7 @@ Aggregator_Scaled::EvaluateT()
   }
 
 
-  int numDerivatives = derivatives.size();
+  int numDerivatives = derivativesT.size();
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
     wsElNodeID = outApp->getStateMgr().getDiscretization()->getWsElNodeID();
@@ -423,10 +484,10 @@ Aggregator_Scaled::EvaluateT()
     deriv.putScalar(0.0);
 
     for(int sv=0; sv<numDerivatives; sv++){
-      Albany::StateArrayVec& src = derivatives[sv].app->getStateMgr().getStateArrays().elemStateArrays;
+      Albany::StateArrayVec& src = derivativesT[sv].app->getStateMgr().getStateArrays().elemStateArrays;
       int numWorksets = src.size();
       for(int ws=0; ws<numWorksets; ws++){
-        Albany::MDArray& derSrc = src[ws][derivatives[sv].name[itopo]];
+        Albany::MDArray& derSrc = src[ws][derivativesT[sv].name[itopo]];
         int numCells = derSrc.dimension(0);
         int numNodes = derSrc.dimension(1);
         for(int cell=0; cell<numCells; cell++)
@@ -534,10 +595,10 @@ void Aggregator_Extremum<C>::EvaluateT()
    *valueAggregated=shiftValueAggregated;
 
   int extremum_index = 0;
-  int numValues = values.size();
+  int numValues = valuesT.size();
   if(numValues > 0){
-    Albany::StateArrayVec& src = values[0].app->getStateMgr().getStateArrays().elemStateArrays;
-    Albany::MDArray& valSrc = src[0][values[0].name];
+    Albany::StateArrayVec& src = valuesT[0].app->getStateMgr().getStateArrays().elemStateArrays;
+    Albany::MDArray& valSrc = src[0][valuesT[0].name];
     double extremum = valSrc(0);
     for(int sv=0; sv<numValues; sv++){
       double globalVal, val = valSrc(0);
@@ -545,7 +606,7 @@ void Aggregator_Extremum<C>::EvaluateT()
         Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, /*numvals=*/ 1, &val, &globalVal);
         if( comm->getRank()==0 ){
           std::cout << "************************************************************************" << std::endl;
-          std::cout << "  Aggregator: " << values[sv].name << " = " << globalVal << std::endl;
+          std::cout << "  Aggregator: " << valuesT[sv].name << " = " << globalVal << std::endl;
           std::cout << "************************************************************************" << std::endl;
         }
       } else globalVal = val;
@@ -568,7 +629,7 @@ void Aggregator_Extremum<C>::EvaluateT()
   }
 
 
-  int numDerivatives = derivatives.size();
+  int numDerivatives = derivativesT.size();
 
   if(numDerivatives > 0){
 
@@ -581,10 +642,10 @@ void Aggregator_Extremum<C>::EvaluateT()
       const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
        wsElNodeID = outApp->getStateMgr().getDiscretization()->getWsElNodeID();
 
-      Albany::StateArrayVec& src = derivatives[extremum_index].app->getStateMgr().getStateArrays().elemStateArrays;
+      Albany::StateArrayVec& src = derivativesT[extremum_index].app->getStateMgr().getStateArrays().elemStateArrays;
       int numWorksets = src.size();
       for(int ws=0; ws<numWorksets; ws++){
-        Albany::MDArray& derSrc = src[ws][derivatives[extremum_index].name[itopo]];
+        Albany::MDArray& derSrc = src[ws][derivativesT[extremum_index].name[itopo]];
         int numCells = derSrc.dimension(0);
         int numNodes = derSrc.dimension(1);
         for(int cell=0; cell<numCells; cell++)
@@ -689,7 +750,7 @@ void Aggregator_DistExtremum<C>::EvaluateT()
       if( comm != Teuchos::null ){
         if( comm->getRank()==0 ){
           std::cout << "************************************************************************" << std::endl;
-          std::cout << "  Aggregator: Input variable " << i << std::endl;
+          std::cout << "  DistExtremum Aggregator: Input variable " << i << std::endl;
           std::cout << "   " << value.name << " = " << valView[0] << std::endl;
           std::cout << "************************************************************************" << std::endl;
         }
@@ -701,7 +762,7 @@ void Aggregator_DistExtremum<C>::EvaluateT()
     if( comm != Teuchos::null ){
       if( comm->getRank()==0 ){
         std::cout << "************************************************************************" << std::endl;
-        std::cout << "  Aggregator: Output " << std::endl;
+        std::cout << "  DistExtremum Aggregator: Output " << std::endl;
         std::cout << "   Value = " << *valueAggregated << std::endl;
         std::cout << "************************************************************************" << std::endl;
       }
@@ -759,7 +820,7 @@ void Aggregator_DistExtremum<C>::Evaluate()
       if( comm != Teuchos::null ){
         if( comm->getRank()==0 ){
           std::cout << "************************************************************************" << std::endl;
-          std::cout << "  Aggregator: Input variable " << i << std::endl;
+          std::cout << "  DistExtremum Aggregator: Input variable " << i << std::endl;
           std::cout << "   " << value.name << " = " << valView[0] << std::endl;
           std::cout << "************************************************************************" << std::endl;
         }
@@ -771,7 +832,7 @@ void Aggregator_DistExtremum<C>::Evaluate()
     if( comm != Teuchos::null ){
       if( comm->getRank()==0 ){
         std::cout << "************************************************************************" << std::endl;
-        std::cout << "  Aggregator: Output " << std::endl;
+        std::cout << "  DistExtremum Aggregator: Output " << std::endl;
         std::cout << "   Value = " << *valueAggregated << std::endl;
         std::cout << "************************************************************************" << std::endl;
       }
@@ -828,7 +889,7 @@ Aggregator_DistScaled::Evaluate()
     if( comm != Teuchos::null ){
       if( comm->getRank()==0 ){
         std::cout << "************************************************************************" << std::endl;
-        std::cout << "  Aggregator: Input variable " << i << std::endl;
+        std::cout << "  DistScaled Aggregator: Input variable " << i << std::endl;
         std::cout << "   " << value.name << " = " << valView[0] << std::endl;
         std::cout << "   " << value.name << " (scaled) = " << valView[0]*normalize[i] << std::endl;
         std::cout << "   Weight = " << weights[i] << std::endl;
@@ -842,7 +903,7 @@ Aggregator_DistScaled::Evaluate()
   if( comm != Teuchos::null ){
     if( comm->getRank()==0 ){
       std::cout << "************************************************************************" << std::endl;
-      std::cout << "  Aggregator: Output " << std::endl;
+      std::cout << "  DistScaled Aggregator: Output " << std::endl;
       std::cout << "   Value = " << *valueAggregated << std::endl;
       std::cout << "************************************************************************" << std::endl;
     }
@@ -895,7 +956,7 @@ Aggregator_DistScaled::EvaluateT()
     if( comm != Teuchos::null ){
       if( comm->getRank()==0 ){
         std::cout << "************************************************************************" << std::endl;
-        std::cout << "  Aggregator: Input variable " << i << std::endl;
+        std::cout << "  DistScaled Aggregator: Input variable " << i << std::endl;
         std::cout << "   " << value.name << " = " << valView[0] << std::endl;
         std::cout << "   " << value.name << " (scaled) = " << valView[0]*normalize[i] << std::endl;
         std::cout << "   Weight = " << weights[i] << std::endl;
@@ -910,7 +971,7 @@ Aggregator_DistScaled::EvaluateT()
   if( comm != Teuchos::null ){
     if( comm->getRank()==0 ){
       std::cout << "************************************************************************" << std::endl;
-      std::cout << "  Aggregator: Output " << std::endl;
+      std::cout << "  DistScaled Aggregator: Output " << std::endl;
       std::cout << "   Value = " << *valueAggregated << std::endl;
       std::cout << "************************************************************************" << std::endl;
     }

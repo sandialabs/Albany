@@ -44,6 +44,7 @@ public:
   virtual void SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
                                  const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > valueMap,
                                  const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > derivMap){};
+  virtual void SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems){};
   virtual void SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,
                                  const std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > valueMap,
                                  const std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > derivMap){};
@@ -82,12 +83,17 @@ class Aggregator_StateVarBased : public virtual Aggregator {
  public:
   Aggregator_StateVarBased(){}
   void SetInputVariables(const std::vector<SolverSubSolver>& subProblems);
+  void SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems);
  protected:
   typedef struct { std::string name; Teuchos::RCP<Albany::Application> app; } SubValue;
   typedef struct { Teuchos::Array<std::string> name; Teuchos::RCP<Albany::Application> app; } SubDerivative;
+  typedef struct { std::string name; Teuchos::RCP<Albany::Application> app; } SubValueT;
+  typedef struct { Teuchos::Array<std::string> name; Teuchos::RCP<Albany::Application> app; } SubDerivativeT;
 
   std::vector<SubValue> values;
   std::vector<SubDerivative> derivatives;
+  std::vector<SubValueT> valuesT;
+  std::vector<SubDerivativeT> derivativesT;
 };
 /******************************************************************************/
 
