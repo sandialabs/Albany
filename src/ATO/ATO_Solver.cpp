@@ -42,7 +42,7 @@ ATO::GlobalPoint::GlobalPoint(){coords[0]=0.0; coords[1]=0.0; coords[2]=0.0;}
 ATO::Solver::
 Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
        const Teuchos::RCP<const Teuchos_Comm>& comm,
-       const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+       const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 : _solverComm(comm), _mainAppParams(appParams)
 /******************************************************************************/
 {
@@ -731,8 +731,6 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
       nodeContainer = stateMgr.getNodalDataBase()->getNodeContainer();
 
     Teuchos::RCP<Epetra_Vector> overlapTopoVec = topoStruct->overlapVector;
-    const Teuchos::RCP<const Teuchos_Comm>
-      commT = Albany::createTeuchosCommFromEpetraComm(overlapTopoVec->Comm());
 
     // JR: fix this.  you don't need to do this every time.  Just once at setup, after topoVec is built
     int distParamIndex = subSolver.params_in->Np()-1;
@@ -742,7 +740,7 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
     std::string nodal_topoName = topology->getName()+"_node";
     const Teuchos::RCP<const Tpetra_Vector>
       overlapTopoVecT = Petra::EpetraVector_To_TpetraVectorConst(
-        *overlapTopoVec, commT);
+        *overlapTopoVec, _solverComm);
     (*nodeContainer)[nodal_topoName]->saveFieldVector(overlapTopoVecT,/*offset=*/0);
   }
 
@@ -1187,7 +1185,7 @@ ATO::Solver::GetNumOptDofs()
 ATO::SolverSubSolver
 ATO::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appParams, 
                               const Teuchos::RCP<const Teuchos_Comm>& commT,
-                              const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+                              const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 /******************************************************************************/
 {
   using Teuchos::RCP;
@@ -1205,10 +1203,7 @@ ATO::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPara
     //! Create solver factory, which reads xml input filen
     Albany::SolverFactory slvrfctry(appParams, commT);
 
-    RCP<const Tpetra_Vector> initial_guessT = Teuchos::null;
-    if (!initial_guess.is_null())
-      initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, commT);
-    ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, commT, commT, initial_guessT);
+    ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, commT, commT, initial_guess);
   }
 
 
