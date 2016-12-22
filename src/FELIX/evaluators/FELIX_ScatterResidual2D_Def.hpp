@@ -107,7 +107,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int i = 0; i < numSideNodes; ++i) {
         std::size_t node = side.node[i];
         for (std::size_t eq = 0; eq < numFields; eq++) {
-          typename PHAL::Ref<ScalarT>::type
+          typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](elem_LID,node) :
                     this->tensorRank == 1 ? this->valVec(elem_LID,node,eq) :
                     this->valTensor[0](elem_LID,node, eq/numDim, eq%numDim));
@@ -290,7 +290,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if(this->offset + eq != offset2DField) {
-          typename PHAL::Ref<ScalarT>::type
+          typename PHAL::Ref<ScalarT const>::type
             valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                       this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                       this->valTensor[0](cell,node, eq/numDim, eq%numDim));
@@ -346,7 +346,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t eq = 0; eq < numFields; eq++) {
         const LO rowT = nodeID[node][eq];
         if(eq != offset2DField) {
-          typename PHAL::Ref<ScalarT>::type valptr = this->valVec(cell,node,eq);
+          typename PHAL::Ref<ScalarT const>::type valptr = this->valVec(cell,node,eq);
 
           if (loadResid)
             fT->sumIntoLocalValue(rowT, valptr.val());
