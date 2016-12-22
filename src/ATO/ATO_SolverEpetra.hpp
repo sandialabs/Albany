@@ -91,7 +91,6 @@ namespace ATO {
 
     virtual void ComputeObjective(double* p, double& g, double* dgdp=NULL)=0;
     virtual void ComputeObjective(const double* p, double& g, double* dgdp=NULL)=0;
-    virtual void updateTpetraResponseMaps() = 0; 
     virtual void ComputeVolume(double* p, const double* dfdp, double& v, double threshhold, double minP)=0;
 
    
@@ -125,7 +124,6 @@ namespace ATO {
 
     void ComputeObjective(double* p, double& g, double* dgdp=NULL);
     void ComputeObjective(const double* p, double& g, double* dgdp=NULL);
-    void updateTpetraResponseMaps(); 
     void writeCurrentDesign();
     void InitializeOptDofs(double* p);
     void getOptDofsLowerBound( Teuchos::Array<double>& b );
@@ -202,28 +200,22 @@ namespace ATO {
 
     Teuchos::RCP<const Epetra_Map> overlapNodeMap;
     Teuchos::RCP<const Epetra_Map> localNodeMap;
-    Teuchos::RCP<const Tpetra_Map> overlapNodeMapT;
-    Teuchos::RCP<const Tpetra_Map> localNodeMapT;
 
 
-    Teuchos::Array< Teuchos::RCP<Tpetra_Vector> > overlapObjectiveGradientVecT;
-    Teuchos::Array< Teuchos::RCP<Tpetra_Vector> > ObjectiveGradientVecT;
+    Teuchos::Array< Teuchos::RCP<Epetra_Vector> > overlapObjectiveGradientVec;
+    Teuchos::Array< Teuchos::RCP<Epetra_Vector> > ObjectiveGradientVec;
 
-    Teuchos::Array< Teuchos::RCP<Tpetra_Vector> > overlapConstraintGradientVecT;
-    Teuchos::Array< Teuchos::RCP<Tpetra_Vector> > ConstraintGradientVecT;
+    Teuchos::Array< Teuchos::RCP<Epetra_Vector> > overlapConstraintGradientVec;
+    Teuchos::Array< Teuchos::RCP<Epetra_Vector> > ConstraintGradientVec;
 
     Teuchos::RCP<double> objectiveValue;
     Teuchos::RCP<double> constraintValue;
 
     Teuchos::RCP<Epetra_Import> importer;
-    Teuchos::RCP<Tpetra_Import> importerT;
     Teuchos::RCP<Epetra_Export> exporter;
-    Teuchos::RCP<Tpetra_Export> exporterT;
 
     std::map<std::string, Teuchos::RCP<const Epetra_Vector> > responseMap;
     std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > responseDerivMap;
-    std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > responseMapT;
-    std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > responseDerivMapT;
 
 
     // methods

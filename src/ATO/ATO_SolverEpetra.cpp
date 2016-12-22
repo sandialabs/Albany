@@ -1,4 +1,4 @@
-////*****************************************************************//
+//*****************************************************************//
 //    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
@@ -98,6 +98,8 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   ATO::OptimizerFactory optimizerFactory;
   _optimizer = optimizerFactory.create(optimizerParams);
   _optimizer->SetInterface(this);
+  //This will ultimately be removed when everything is in Tpetra/Thyra 
+  Teuchos::RCP<const Epetra_Comm> commE = Albany::createEpetraCommFromTeuchosComm(comm);
   _optimizer->SetCommunicator(comm);
 
   _writeDesignFrequency = problemParams.get<int>("Design Output Frequency", 0);
@@ -268,8 +270,6 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   localNodeMap   = disc->getNodeMap();
   overlapNodeMap = disc->getOverlapNodeMap();
-  localNodeMapT   = disc->getNodeMapT();
-  overlapNodeMapT = disc->getOverlapNodeMapT();
 
   for(int itopo=0; itopo<ntopos; itopo++){
     Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];
@@ -287,26 +287,24 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   } 
 
-  overlapObjectiveGradientVecT.resize(ntopos);
-  ObjectiveGradientVecT.resize(ntopos);
-  overlapConstraintGradientVecT.resize(ntopos);
-  ConstraintGradientVecT.resize(ntopos);
+  overlapObjectiveGradientVec.resize(ntopos);
+  ObjectiveGradientVec.resize(ntopos);
+  overlapConstraintGradientVec.resize(ntopos);
+  ConstraintGradientVec.resize(ntopos);
   for(int itopo=0; itopo<ntopos; itopo++){
-    overlapObjectiveGradientVecT[itopo] = Teuchos::rcp(new Tpetra_Vector(overlapNodeMapT));
-    ObjectiveGradientVecT[itopo]  = Teuchos::rcp(new Tpetra_Vector(localNodeMapT));
-    overlapConstraintGradientVecT[itopo] = Teuchos::rcp(new Tpetra_Vector(overlapNodeMapT));
-    ConstraintGradientVecT[itopo]  = Teuchos::rcp(new Tpetra_Vector(localNodeMapT));
+    overlapObjectiveGradientVec[itopo] = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
+    ObjectiveGradientVec[itopo]  = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
+    overlapConstraintGradientVec[itopo] = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
+    ConstraintGradientVec[itopo]  = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
   } 
   
                                             //* target *//   //* source *//
   importer = Teuchos::rcp(new Epetra_Import(*overlapNodeMap, *localNodeMap));
-  importerT = Teuchos::rcp(new Tpetra_Import(overlapNodeMapT, localNodeMapT));
 
 
   // create exporter (for integration type operations):
                                             //* source *//   //* target *//
   exporter = Teuchos::rcp(new Epetra_Export(*overlapNodeMap, *localNodeMap));
-  exporterT = Teuchos::rcp(new Tpetra_Export(overlapNodeMapT, localNodeMapT));
 
   // this should go somewhere else.  for now ...
   GlobalPoint gp;
@@ -327,27 +325,26 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   }
 
 
-  auto nVecs = ObjectiveGradientVecT.size();
   // pass subProblems to the objective aggregator
   if( entityType == "State Variable" ){
-    _objAggregator->SetInputVariablesT(_subProblems);
-    _objAggregator->SetOutputVariablesT(objectiveValue, overlapObjectiveGradientVecT);
+    _objAggregator->SetInputVariables(_subProblems);
+    _objAggregator->SetOutputVariables(objectiveValue, overlapObjectiveGradientVec);
   } else 
   if( entityType == "Distributed Parameter" ){
-    _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
-    _objAggregator->SetOutputVariablesT(objectiveValue, ObjectiveGradientVecT);
+    _objAggregator->SetInputVariables(_subProblems, responseMap, responseDerivMap);
+    _objAggregator->SetOutputVariables(objectiveValue, ObjectiveGradientVec);
   }
   _objAggregator->SetCommunicator(comm);
   
   // pass subProblems to the constraint aggregator
   if( !_conAggregator.is_null() ){
     if( entityType == "State Variable" ){
-      _conAggregator->SetInputVariablesT(_subProblems);
-      _conAggregator->SetOutputVariablesT(constraintValue, overlapConstraintGradientVecT);
+      _conAggregator->SetInputVariables(_subProblems);
+      _conAggregator->SetOutputVariables(constraintValue, overlapConstraintGradientVec);
     } else 
     if( entityType == "Distributed Parameter" ){
-      _conAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
-      _conAggregator->SetOutputVariablesT(constraintValue, ConstraintGradientVecT);
+      _conAggregator->SetInputVariables(_subProblems, responseMap, responseDerivMap);
+      _conAggregator->SetOutputVariables(constraintValue, ConstraintGradientVec);
     }
     _conAggregator->SetCommunicator(comm);
   }
@@ -576,9 +573,6 @@ ATO::Solver::ComputeObjective(const double* p, double& g, double* dgdp)
 /******************************************************************************/
 {
 
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-  *out << "IKT, 12/22/16, WARNING: Tpetra-converted ComputeObjective has not been tested " 
-       << "yet and may not work correctly! \n"; 
   for(int i=0; i<_numPhysics; i++){
 
     // copy data from p into each stateManager
@@ -595,11 +589,7 @@ ATO::Solver::ComputeObjective(const double* p, double& g, double* dgdp)
                                     (*_subProblems[i].responses_out));
   }
 
-  if ( entityType == "Distributed Parameter" ) {
-    updateTpetraResponseMaps(); 
-    _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
-  }
-  _objAggregator->EvaluateT();
+  _objAggregator->Evaluate();
   copyObjectiveFromStateMgr( g, dgdp );
 
   _iteration++;
@@ -612,9 +602,7 @@ void
 ATO::Solver::ComputeObjective(double* p, double& g, double* dgdp)
 /******************************************************************************/
 {
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-  *out << "IKT, 12/22/16, WARNING: Tpetra-converted ComputeObjective has not been tested " 
-       << "yet and may not work correctly! \n"; 
+
   if(_iteration!=1) smoothTopology(p);
 
   for(int i=0; i<_numPhysics; i++){
@@ -634,11 +622,7 @@ ATO::Solver::ComputeObjective(double* p, double& g, double* dgdp)
                                     (*_subProblems[i].responses_out));
   }
 
-  if ( entityType == "Distributed Parameter" ) {
-    updateTpetraResponseMaps(); 
-    _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
-  }
-  _objAggregator->EvaluateT();
+  _objAggregator->Evaluate();
   copyObjectiveFromStateMgr( g, dgdp );
 
   // See if the user specified a new design frequency.
@@ -962,18 +946,18 @@ ATO::Solver::copyConstraintFromStateMgr( double& c, double* dcdp )
 
   c = *constraintValue;
 
-  auto nVecs = ConstraintGradientVecT.size();
+  int nVecs = ConstraintGradientVec.size();
   for(int ivec=0; ivec<nVecs; ivec++){
 
     if( entityType == "State Variable" ) {
-      ConstraintGradientVecT[ivec]->putScalar(0.0);
-      ConstraintGradientVecT[ivec]->doExport(*overlapConstraintGradientVecT[ivec], *exporterT, Tpetra::ADD);
+      ConstraintGradientVec[ivec]->PutScalar(0.0);
+      ConstraintGradientVec[ivec]->Export(*overlapConstraintGradientVec[ivec], *exporter, Add);
     }
 
     if( dcdp != NULL ){
-      auto numLocalNodes = ConstraintGradientVecT[ivec]->getLocalLength();
-      Teuchos::ArrayRCP<const double> lvec = ConstraintGradientVecT[ivec]->get1dView(); 
-      std::memcpy((void*)(dcdp+ivec*numLocalNodes), lvec.getRawPtr(), numLocalNodes*sizeof(double));
+      int numLocalNodes = ConstraintGradientVec[ivec]->MyLength();
+      double* lvec; ConstraintGradientVec[ivec]->ExtractView(&lvec);
+      std::memcpy((void*)(dcdp+ivec*numLocalNodes), (void*)lvec, numLocalNodes*sizeof(double));
     }
   }
 }
@@ -989,45 +973,45 @@ ATO::Solver::copyObjectiveFromStateMgr( double& g, double* dgdp )
 
   g = *objectiveValue;
 
-  auto nVecs = ObjectiveGradientVecT.size();
+  int nVecs = ObjectiveGradientVec.size();
   for(int ivec=0; ivec<nVecs; ivec++){
 
     if( entityType == "State Variable" ) {
-      ObjectiveGradientVecT[ivec]->putScalar(0.0);
-      ObjectiveGradientVecT[ivec]->doExport(*overlapObjectiveGradientVecT[ivec], *exporterT, Tpetra::ADD);
+      ObjectiveGradientVec[ivec]->PutScalar(0.0);
+      ObjectiveGradientVec[ivec]->Export(*overlapObjectiveGradientVec[ivec], *exporter, Add);
     }
 
-    auto numLocalNodes = ObjectiveGradientVecT[ivec]->getLocalLength();
-    Teuchos::ArrayRCP<const double> lvec = ObjectiveGradientVecT[ivec]->get1dView(); 
+    int numLocalNodes = ObjectiveGradientVec[ivec]->MyLength();
+    double* lvec; ObjectiveGradientVec[ivec]->ExtractView(&lvec);
+
     // apply filter if requested
-    Teuchos::RCP<Epetra_Vector> ObjectiveGradientVecE = Teuchos::rcp(new Epetra_Vector(*localNodeMap)); 
-    Petra::TpetraVector_To_EpetraVector(ObjectiveGradientVecT[ivec],
-                                        *ObjectiveGradientVecE, Teuchos::rcpFromRef(localNodeMap->Comm()));
-    Epetra_Vector filtered_ObjectiveGradientVec(*ObjectiveGradientVecE);
+    Epetra_Vector filtered_ObjectiveGradientVec(*ObjectiveGradientVec[ivec]);
     if(_derivativeFilter != Teuchos::null){
+
       int num = _derivativeFilter->getNumIterations();
       for(int i=0; i<num; i++){
         _derivativeFilter->FilterOperator()->Multiply(/*UseTranspose=*/true, 
-                                                      *ObjectiveGradientVecE,
+                                                      *ObjectiveGradientVec[ivec],
                                                        filtered_ObjectiveGradientVec);
-        *ObjectiveGradientVecE = filtered_ObjectiveGradientVec; 
+        *ObjectiveGradientVec[ivec] = filtered_ObjectiveGradientVec;
       }
-      double* lvecE; filtered_ObjectiveGradientVec.ExtractView(&lvecE);
-      for (int i=0; i< numLocalNodes; i++) 
-      std::memcpy((void*)(dgdp+ivec*numLocalNodes), (void*)lvecE, numLocalNodes*sizeof(double));
+      filtered_ObjectiveGradientVec.ExtractView(&lvec);
+      std::memcpy((void*)(dgdp+ivec*numLocalNodes), (void*)lvec, numLocalNodes*sizeof(double));
     } else {
-      for (int i=0; i< numLocalNodes; i++) 
-      std::memcpy((void*)(dgdp+ivec*numLocalNodes), lvec.getRawPtr(), numLocalNodes*sizeof(double));
+      std::memcpy((void*)(dgdp+ivec*numLocalNodes), (void*)lvec, numLocalNodes*sizeof(double));
     }
 
     // save dgdp to nodal data for output sake
-    Teuchos::RCP<const Tpetra_Vector> filtered_ObjectiveGradientVecT =  
-                Petra::EpetraVector_To_TpetraVectorConst(filtered_ObjectiveGradientVec, _solverComm); 
-    overlapObjectiveGradientVecT[ivec]->doImport(*filtered_ObjectiveGradientVecT, *importerT, Tpetra::INSERT);
-    Teuchos::RCP<Albany::NodeFieldContainer>
+    overlapObjectiveGradientVec[ivec]->Import(filtered_ObjectiveGradientVec, *importer, Insert);
+    Teuchos::RCP<Albany::NodeFieldContainer> 
       nodeContainer = stateMgr.getNodalDataBase()->getNodeContainer();
+    const Teuchos::RCP<const Teuchos_Comm>
+      commT = Albany::createTeuchosCommFromEpetraComm(overlapObjectiveGradientVec[ivec]->Comm());
     std::string nodal_derName = Albany::strint(_objAggregator->getOutputDerivativeName()+"_node", ivec);
-    (*nodeContainer)[nodal_derName]->saveFieldVector(overlapObjectiveGradientVecT[ivec],/*offset=*/0);
+    const Teuchos::RCP<const Tpetra_Vector>
+      overlapObjectiveGradientVecT = Petra::EpetraVector_To_TpetraVectorConst(
+        *overlapObjectiveGradientVec[ivec], commT);
+    (*nodeContainer)[nodal_derName]->saveFieldVector(overlapObjectiveGradientVecT,/*offset=*/0);
   }
 }
 /******************************************************************************/
@@ -1162,19 +1146,11 @@ ATO::Solver::Compute(const double* p, double& g, double* dgdp, double& c, double
                                     (*_subProblems[i].responses_out));
   }
 
-  if ( entityType == "Distributed Parameter" ) {
-    updateTpetraResponseMaps(); 
-    _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
-  }
-  _objAggregator->EvaluateT();
+  _objAggregator->Evaluate();
   copyObjectiveFromStateMgr( g, dgdp );
   
   if( !_conAggregator.is_null()){
-    if ( entityType == "Distributed Parameter" ) {
-      updateTpetraResponseMaps(); 
-      _conAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
-    }
-    _conAggregator->EvaluateT();
+    _conAggregator->Evaluate();
     copyConstraintFromStateMgr( c, dcdp );
   } else c = 0.0;
 
@@ -1196,8 +1172,8 @@ ATO::Solver::GetNumOptDofs()
 /******************************************************************************/
 {
 //  return _subProblems[0].app->getDiscretization()->getNodeMap()->NumMyElements();
-  auto nVecs = ObjectiveGradientVecT.size();
-  return nVecs*ObjectiveGradientVecT[0]->getLocalLength();
+  int nVecs = ObjectiveGradientVec.size();
+  return nVecs*ObjectiveGradientVec[0]->MyLength();
 }
 
 /******************************************************************************/
@@ -1283,11 +1259,7 @@ ATO::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPara
         } else 
           ret.responses_out->set_DgDp(ig,ip,dgdp);
         responseMap.insert(std::pair<std::string,RCP<const Epetra_Vector> >(gName,g));
-        RCP<const Tpetra_Vector> gT = Petra::EpetraVector_To_TpetraVectorConst(*g, _solverComm); 
-        responseMapT.insert(std::pair<std::string,RCP<const Tpetra_Vector> >(gName, gT));
         responseDerivMap.insert(std::pair<std::string,RCP<Epetra_MultiVector> >(dgdpName,dgdp));
-        RCP<Tpetra_MultiVector> dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp, _solverComm); 
-        responseDerivMapT.insert(std::pair<std::string,RCP<Tpetra_MultiVector> >(dgdpName, dgdpT));
       }
     }
   }
@@ -1297,27 +1269,6 @@ ATO::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPara
   ret.responses_out->set_g(ss_num_g-1,xfinal);
 
   return ret;
-}
-
-void 
-ATO::Solver::updateTpetraResponseMaps()
-{
-  std::map<std::string, Teuchos::RCP<const Epetra_Vector> >::const_iterator git;
-  git = responseMap.cbegin();  
-  for (int i = 0; i<responseMap.size(); i++) {
-    std::string gName = git->first;
-    Teuchos::RCP<const Tpetra_Vector> gT = Petra::EpetraVector_To_TpetraVectorConst(*(git->second), _solverComm); 
-    responseMapT[gName] = gT;
-    git++; 
-  }
-  std::map<std::string, Teuchos::RCP<Epetra_MultiVector> >::const_iterator git2;
-  git2 = responseDerivMap.cbegin();  
-  for (int i = 0; i<responseDerivMap.size(); i++) {
-    std::string gName = git2->first; 
-    Teuchos::RCP<Tpetra_MultiVector> dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*(git2->second), _solverComm); 
-    responseDerivMapT[gName] = dgdpT;
-    git2++; 
-  }
 }
 
 /******************************************************************************/

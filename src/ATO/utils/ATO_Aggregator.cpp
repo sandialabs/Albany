@@ -168,7 +168,6 @@ SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
 //**********************************************************************
 {
 
-
   outApp = subProblems[0].app;
 
   // loop through sub variable names and find the containing state manager
@@ -253,7 +252,7 @@ Aggregator_StateVarBased::SetInputVariablesT(const std::vector<SolverSubSolver>&
         derivativesT[iv].name.resize(numTopologies);
         for(int itopo=0; itopo<numTopologies; itopo++)
           derivativesT[iv].name[itopo] = Albany::strint(derName, itopo);
-        derivatives[iv].app = app;
+        derivativesT[iv].app = app;
         derFound = true;
       }
     }
@@ -491,9 +490,10 @@ Aggregator_Scaled::EvaluateT()
         int numCells = derSrc.dimension(0);
         int numNodes = derSrc.dimension(1);
         for(int cell=0; cell<numCells; cell++)
-          for(int node=0; node<numNodes; node++)
-            deriv.sumIntoGlobalValue(wsElNodeID[ws][cell][node], 0,
+          for(int node=0; node<numNodes; node++) {
+            deriv.sumIntoGlobalValue(wsElNodeID[ws][cell][node],
                                      scaleValueAggregated*normalize[sv]*weights[sv]*derSrc(cell,node));
+            }
       }
     }
   }
@@ -950,7 +950,7 @@ Aggregator_DistScaled::EvaluateT()
   for(int i=0; i<valuesT.size(); i++){
     SubValueT& value = valuesT[i];
 
-    Teuchos::ArrayRCP<const double> valView = valuesT[i].value->get1dView(); 
+    Teuchos::ArrayRCP<const double> valView = value.value->get1dView(); 
     *valueAggregated += valView[0]*normalize[i]*weights[i];
 
     if( comm != Teuchos::null ){
@@ -989,13 +989,14 @@ Aggregator_DistScaled::EvaluateT()
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
       wsElNodeID = outApp->getStateMgr().getDiscretization()->getWsElNodeID();
 
-    for(int i=0; i<derivatives.size(); i++){
+    for(int i=0; i<derivativesT.size(); i++){
       SubDerivativeT& derivative = derivativesT[i];
 
       Teuchos::ArrayRCP<const double> srcView = derivative.value->getData(0); 
 
-      for(int lid=0; lid<nLocalVals; lid++)
+      for(int lid=0; lid<nLocalVals; lid++) {
         derDest[lid] += srcView[lid]*normalize[i]*weights[i]*scaleValueAggregated;
+      }
     }
   } 
 }
