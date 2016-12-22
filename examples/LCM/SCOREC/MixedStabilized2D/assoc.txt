@@ -1,0 +1,8 @@
+element block plate 1
+2 12
+node set xmin 1
+1 9
+node set ymin 1
+1 6
+node set ymax 1
+1 8
