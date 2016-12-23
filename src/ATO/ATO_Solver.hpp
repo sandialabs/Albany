@@ -170,8 +170,21 @@ namespace ATO {
       bool                        filterIsRecursive;
     } TopologyInfoStruct;
 
+    typedef struct TopologyInfoStructT {
+      Teuchos::RCP<Topology>      topologyT;
+      Teuchos::RCP<SpatialFilter> filterT;
+      Teuchos::RCP<SpatialFilter> postFilterT;
+      Teuchos::RCP<Tpetra_Vector> filteredOverlapVectorT;
+      Teuchos::RCP<Tpetra_Vector> filteredVectorT;
+      Teuchos::RCP<Tpetra_Vector> overlapVectorT;
+      Teuchos::RCP<Tpetra_Vector> localVectorT;
+      bool                        filterIsRecursiveT;
+    } TopologyInfoStructT;
+
     std::vector<Teuchos::RCP<TopologyInfoStruct> > _topologyInfoStructs;
+    std::vector<Teuchos::RCP<TopologyInfoStructT> > _topologyInfoStructsT;
     Teuchos::RCP<TopologyArray> _topologyArray;
+    Teuchos::RCP<TopologyArray> _topologyArrayT;
 
     // currently all topologies must have the same entity type
     std::string entityType;
@@ -228,7 +241,9 @@ namespace ATO {
     // methods
     void copyTopologyIntoStateMgr(const double* p, Albany::StateManager& stateMgr );
     void smoothTopology(double* p);
+    void smoothTopologyT(double* p);
     void smoothTopology(Teuchos::RCP<TopologyInfoStruct> topoStruct);
+    void smoothTopologyT(Teuchos::RCP<TopologyInfoStructT> topoStructT);
     void copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr );
     void copyTopologyIntoParameter(const double* p, SolverSubSolver& sub);
     void copyObjectiveFromStateMgr( double& g, double* dgdp );
