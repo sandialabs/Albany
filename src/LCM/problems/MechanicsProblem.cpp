@@ -309,6 +309,7 @@ buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     Albany::FieldManagerChoice fmchoice,
     const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
+  std::cout << "START Albany::MechanicsProblem::buildEvaluators\n";
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
   ConstructEvaluatorsOp<MechanicsProblem> op(*this,
@@ -318,6 +319,7 @@ buildEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       fmchoice,
       responseList);
   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);
+  std::cout << "STOP Albany::MechanicsProblem::buildEvaluators\n";
   return *op.tags;
 }
 //------------------------------------------------------------------------------

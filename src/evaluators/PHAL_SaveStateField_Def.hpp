@@ -68,6 +68,8 @@ template<typename Traits>
 void SaveStateField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  std::cout << "SaveStateField field " << fieldName << " to state " << stateName
+    << " ws " << workset.wsIndex << '\n';
   // Get shards Array (from STK) for this state
   // Need to check if we can just copy full size -- can assume same ordering?
     Albany::StateArray::const_iterator it;

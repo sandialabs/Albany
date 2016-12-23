@@ -61,6 +61,7 @@ public:
     return field_tag_;
   }
 
+  std::vector<std::string> ip_field_names_;
 protected:
 
   Teuchos::RCP<const Teuchos::ParameterList>
@@ -68,7 +69,6 @@ protected:
 
   int number_of_fields_;
 
-  std::vector<std::string> ip_field_names_;
   std::vector<std::string> ip_field_layouts_;
   std::vector<std::string> nodal_field_names_;
 
@@ -88,7 +88,7 @@ protected:
   Teuchos::RCP<PHX::Tag<ScalarT>> field_tag_;
   Albany::StateManager* p_state_mgr_;
 
-  Teuchos::RCP<IPtoNodalFieldManager> mgr_;
+  std::string field_name_prefix;
 };
 
 template<typename EvalT, typename Traits>
@@ -127,6 +127,9 @@ public:
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
   void evaluateFields(typename Traits::EvalData d);
+
+protected:
+  Teuchos::RCP<IPtoNodalFieldManager> mgr_;
 };
 }
 

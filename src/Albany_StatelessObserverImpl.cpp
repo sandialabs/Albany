@@ -59,6 +59,7 @@ void StatelessObserverImpl::observeSolutionT (
   double stamp, const Tpetra_Vector &nonOverlappedSolutionT,
   const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT)
 {
+  std::cout << "StatelessObserverImpl::observeSolutionT\n";
   Teuchos::TimeMonitor timer(*solOutTime_);
   const Teuchos::RCP<const Tpetra_Vector> overlappedSolutionT =
     app_->getAdaptSolMgrT()->updateAndReturnOverlapSolutionT(nonOverlappedSolutionT);

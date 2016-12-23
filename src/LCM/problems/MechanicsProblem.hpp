@@ -3116,6 +3116,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     return ret_tag;
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
+    std::cout << "constructEvaluators BUILD_RESPONSE_FM EvalT = " << typeid(EvalT).name() << '\n';
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl_);
     return respUtils.constructResponses(
         fm0, *responseList, pFromProb, stateMgr, &meshSpecs);
