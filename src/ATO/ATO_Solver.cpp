@@ -1082,11 +1082,11 @@ ATO::Solver::ComputeMeasure(std::string measureType, const double* p,
 
   int ntopos = _topologyInfoStructs.size();
 
-  std::vector<Teuchos::RCP<TopologyStruct> > topologyStructs(ntopos);
+  std::vector<Teuchos::RCP<TopologyStructT> > topologyStructsT(ntopos);
 
   for(int itopo=0; itopo<ntopos; itopo++){
 
-    topologyStructs[itopo] = Teuchos::rcp(new TopologyStruct);
+    topologyStructsT[itopo] = Teuchos::rcp(new TopologyStructT);
   
     Teuchos::RCP<Epetra_Vector> topoVec = _topologyInfoStructs[itopo]->localVector;
     int numLocalNodes = topoVec->MyLength();
@@ -1109,11 +1109,13 @@ ATO::Solver::ComputeMeasure(std::string measureType, const double* p,
     Teuchos::RCP<Epetra_Vector> overlapTopoVec = _topologyInfoStructs[itopo]->overlapVector;
     overlapTopoVec->Import(*topoVec, *importer, Insert);
 
-    topologyStructs[itopo]->topology = _topologyInfoStructs[itopo]->topology;
-    topologyStructs[itopo]->dataVector = overlapTopoVec;
+    topologyStructsT[itopo]->topologyT = _topologyInfoStructs[itopo]->topology; 
+    Teuchos::RCP<Tpetra_Vector> overlapTopoVecT = 
+        Petra::EpetraVector_To_TpetraVectorNonConst(*overlapTopoVec, _solverComm);  
+    topologyStructsT[itopo]->dataVectorT = overlapTopoVecT;
   }
 
-  return _atoProblem->ComputeMeasure(measureType, topologyStructs, 
+  return _atoProblem->ComputeMeasureT(measureType, topologyStructsT, 
                                      measure, dmdp, integrationMethod);
 }
 

@@ -171,7 +171,6 @@ namespace ATO {
     } TopologyInfoStruct;
 
     std::vector<Teuchos::RCP<TopologyInfoStruct> > _topologyInfoStructs;
-    std::vector<Teuchos::RCP<TopologyStruct> > _topologyStructs;
     Teuchos::RCP<TopologyArray> _topologyArray;
 
     // currently all topologies must have the same entity type
