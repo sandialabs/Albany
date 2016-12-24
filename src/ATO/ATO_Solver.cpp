@@ -24,13 +24,17 @@ Please remove when issue is resolved
 #include "Adapt_NodalDataVector.hpp"
 #include "Petra_Converters.hpp"
 #include "EpetraExt_RowMatrixOut.h"
+#include "EpetraExt_MultiVectorOut.h"
 #include "Epetra_LinearProblem.h"
 #include "AztecOO.h"
+#include "TpetraExt_MatrixMatrix_def.hpp"
 
 #ifdef ATO_USES_ISOLIB
 #include "Albany_STKDiscretization.hpp"
 #include "STKExtract.hpp"
 #endif
+
+//#define TPETRA_CRS_APPLY  
 
 MPI_Datatype MPI_GlobalPoint;
 
@@ -344,6 +348,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
       _subProblems[0].app, 
       overlapNodeMap, localNodeMap,
       importer, exporter); 
+    filters[ifltr]->createFilterOpTfromFilterOp(_solverComm); 
   }
 
 
@@ -1072,6 +1077,28 @@ ATO::Solver::copyObjectiveFromStateMgr( double& g, double* dgdp )
 
     auto numLocalNodes = ObjectiveGradientVecT[ivec]->getLocalLength();
     Teuchos::ArrayRCP<const double> lvec = ObjectiveGradientVecT[ivec]->get1dView(); 
+#ifdef TPETRA_CRS_APPLY  
+    // apply filter if requested
+    Teuchos::RCP<Tpetra_Vector> filtered_ObjectiveGradientVecT = 
+        Teuchos::rcp(new Tpetra_Vector(*ObjectiveGradientVecT[ivec]));
+    if(_derivativeFilter != Teuchos::null){
+      int num = _derivativeFilter->getNumIterations();
+      for(int i=0; i<num; i++){
+        //IKT, FIXME 12/23/16:
+        //Tpetra::CrsMatrix apply method with Teuchos::TRANS mode does not work correctly - 
+        //gives a vector of all 0s here.  Waiting to hear back from Mark Hoemmenn
+        //about this.  
+        _derivativeFilter->FilterOperatorT()->apply(*ObjectiveGradientVecT[ivec],
+                                                    *filtered_ObjectiveGradientVecT,
+                                                    Teuchos::TRANS); 
+        *ObjectiveGradientVecT[ivec] = *filtered_ObjectiveGradientVecT; 
+        //Tpetra_MatrixMarket_Writer::writeDenseFile("filtered_ObjectiveGradientVecT.mm",  
+        //    filtered_ObjectiveGradientVecT);
+      }
+      Teuchos::ArrayRCP<const double> lvec = filtered_ObjectiveGradientVecT->get1dView(); 
+      for (int i=0; i< numLocalNodes; i++) 
+      std::memcpy((void*)(dgdp+ivec*numLocalNodes), lvec.getRawPtr(), numLocalNodes*sizeof(double));
+#else 
     // apply filter if requested
     Teuchos::RCP<Epetra_Vector> ObjectiveGradientVecE = Teuchos::rcp(new Epetra_Vector(*localNodeMap)); 
     Petra::TpetraVector_To_EpetraVector(ObjectiveGradientVecT[ivec],
@@ -1088,14 +1115,16 @@ ATO::Solver::copyObjectiveFromStateMgr( double& g, double* dgdp )
       double* lvecE; filtered_ObjectiveGradientVec.ExtractView(&lvecE);
       for (int i=0; i< numLocalNodes; i++) 
       std::memcpy((void*)(dgdp+ivec*numLocalNodes), (void*)lvecE, numLocalNodes*sizeof(double));
+#endif
     } else {
       for (int i=0; i< numLocalNodes; i++) 
       std::memcpy((void*)(dgdp+ivec*numLocalNodes), lvec.getRawPtr(), numLocalNodes*sizeof(double));
     }
-
-    // save dgdp to nodal data for output sake
+#ifndef TPETRA_CRS_APPLY
     Teuchos::RCP<const Tpetra_Vector> filtered_ObjectiveGradientVecT =  
                 Petra::EpetraVector_To_TpetraVectorConst(filtered_ObjectiveGradientVec, _solverComm); 
+#endif
+    // save dgdp to nodal data for output sake
     overlapObjectiveGradientVecT[ivec]->doImport(*filtered_ObjectiveGradientVecT, *importerT, Tpetra::INSERT);
     Teuchos::RCP<Albany::NodeFieldContainer>
       nodeContainer = stateMgr.getNodalDataBase()->getNodeContainer();
@@ -1964,9 +1993,17 @@ ATO::SpatialFilter::buildOperator(
     filterOperator->InvRowSums(rowSums);
     filterOperator->LeftScale(rowSums);
 
+
   return;
 
 }
+
+void 
+ATO::SpatialFilter::createFilterOpTfromFilterOp(Teuchos::RCP<const Teuchos_Comm> commT) 
+{
+  filterOperatorT = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*filterOperator, commT); 
+}
+
 /******************************************************************************/
 ATO::SpatialFilter::SpatialFilter( Teuchos::ParameterList& params )
 /******************************************************************************/

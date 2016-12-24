@@ -50,7 +50,9 @@ namespace ATO {
              Teuchos::RCP<const Epetra_Map>    localNodeMap,
              Teuchos::RCP<Epetra_Import>       importer,
              Teuchos::RCP<Epetra_Export>       exporter);
+      void createFilterOpTfromFilterOp(Teuchos::RCP<const Teuchos_Comm> commT);  
       Teuchos::RCP<Epetra_CrsMatrix> FilterOperator(){return filterOperator;}
+      Teuchos::RCP<Tpetra_CrsMatrix> FilterOperatorT(){return filterOperatorT;}
       int getNumIterations(){return iterations;}
     protected:
       void importNeighbors(
@@ -59,6 +61,7 @@ namespace ATO {
              Teuchos::RCP<Epetra_Export>       exporter, const Epetra_Map& overlapNodeMap);
 
       Teuchos::RCP<Epetra_CrsMatrix> filterOperator;
+      Teuchos::RCP<Tpetra_CrsMatrix> filterOperatorT;
       int iterations;
       double filterRadius;
       Teuchos::Array<std::string> blocks;
