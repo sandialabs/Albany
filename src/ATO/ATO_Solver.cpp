@@ -324,7 +324,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   
                                             //* target *//   //* source *//
   importer = Teuchos::rcp(new Epetra_Import(*overlapNodeMap, *localNodeMap));
-  importerT = Teuchos::rcp(new Tpetra_Import(overlapNodeMapT, localNodeMapT));
+  importerT = Teuchos::rcp(new Tpetra_Import(localNodeMapT, overlapNodeMapT));
 
 
   // create exporter (for integration type operations):
@@ -346,8 +346,8 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   for(int ifltr=0; ifltr<nFilters; ifltr++){
     filters[ifltr]->buildOperator(
       _subProblems[0].app, 
-      overlapNodeMap, localNodeMap,
-      importer, exporter); 
+      overlapNodeMapT, localNodeMapT,
+      importerT, exporterT); 
     filters[ifltr]->createFilterOpTfromFilterOp(_solverComm); 
   }
 
@@ -1851,10 +1851,10 @@ ATO::Solver::CreateSubSolverData(const ATO::SolverSubSolver& sub) const
 void
 ATO::SpatialFilter::buildOperator(
              Teuchos::RCP<Albany::Application> app,
-             Teuchos::RCP<const Epetra_Map>    overlapNodeMap,
-             Teuchos::RCP<const Epetra_Map>    localNodeMap,
-             Teuchos::RCP<Epetra_Import>       importer,
-             Teuchos::RCP<Epetra_Export>       exporter)
+             Teuchos::RCP<const Tpetra_Map>    overlapNodeMapT,
+             Teuchos::RCP<const Tpetra_Map>    localNodeMapT,
+             Teuchos::RCP<Tpetra_Import>       importerT,
+             Teuchos::RCP<Tpetra_Export>       exporterT)
 /******************************************************************************/
 {
 
@@ -1953,14 +1953,16 @@ ATO::SpatialFilter::buildOperator(
     }
 
     // communicate neighbor data
-    importNeighbors(neighbors,importer,*localNodeMap,exporter,*overlapNodeMap);
-
+    importNeighbors(neighbors,importerT,*localNodeMapT,exporterT,*overlapNodeMapT);
     
     // for each interior node, search boundary nodes for additional interactions off processor.
     
   
     // now build filter operator
     int numnonzeros = 0;
+    Teuchos::RCP<Epetra_Comm> comm = 
+      Albany::createEpetraCommFromTeuchosComm(localNodeMapT->getComm());
+    Teuchos::RCP<Epetra_Map> localNodeMap = Petra::TpetraMap_To_EpetraMap(localNodeMapT, comm); 
     filterOperator = Teuchos::rcp(new Epetra_CrsMatrix(Copy,*localNodeMap,numnonzeros));
     for (std::map<GlobalPoint,std::set<GlobalPoint> >::iterator 
         it=neighbors.begin(); it!=neighbors.end(); ++it) { 
@@ -2023,43 +2025,44 @@ ATO::SpatialFilter::SpatialFilter( Teuchos::ParameterList& params )
 void 
 ATO::SpatialFilter::importNeighbors( 
   std::map< ATO::GlobalPoint, std::set<ATO::GlobalPoint> >& neighbors,
-  Teuchos::RCP<Epetra_Import> importer, const Epetra_Map& impNodeMap,
-  Teuchos::RCP<Epetra_Export> exporter, const Epetra_Map& expNodeMap)
+  Teuchos::RCP<Tpetra_Import> importerT, 
+  const Tpetra_Map& impNodeMapT,
+  Teuchos::RCP<Tpetra_Export> exporterT, 
+  const Tpetra_Map& expNodeMapT)
 /******************************************************************************/
 {
   // get from the exporter the node global ids and the associated processor ids
   std::map<int, std::set<int> > boundaryNodesByProc;
 
-  const int* exportLIDs = exporter->ExportLIDs();
-  const int* exportPIDs = exporter->ExportPIDs();
-  int numExportIDs = exporter->NumExportIDs();
-
+  Teuchos::ArrayView<const LO> exportLIDsT = exporterT->getExportLIDs(); 
+  Teuchos::ArrayView<const int> exportPIDsT = exporterT->getExportPIDs(); 
+  int numExportIDsT = exporterT->getNumExportIDs();
   std::map<int, std::set<int> >::iterator procIter;
-  for(int i=0; i<numExportIDs; i++){
-    procIter = boundaryNodesByProc.find(exportPIDs[i]);
-    int exportGID = expNodeMap.GID(exportLIDs[i]);
+  for(int i=0; i<numExportIDsT; i++){
+    procIter = boundaryNodesByProc.find(exportPIDsT[i]);
+    int exportGIDT = expNodeMapT.getGlobalElement(exportLIDsT[i]);
     if( procIter == boundaryNodesByProc.end() ){
       std::set<int> newSet;
-      newSet.insert(exportGID);
-      boundaryNodesByProc.insert( std::pair<int,std::set<int> >(exportPIDs[i],newSet) );
+      newSet.insert(exportGIDT);
+      boundaryNodesByProc.insert( std::pair<int,std::set<int> >(exportPIDsT[i],newSet) );
     } else {
-      procIter->second.insert(exportGID);
+      procIter->second.insert(exportGIDT);
     }
   }
 
-  exportLIDs = importer->ExportLIDs();
-  exportPIDs = importer->ExportPIDs();
-  numExportIDs = importer->NumExportIDs();
+  exportLIDsT = importerT->getExportLIDs();
+  exportPIDsT = importerT->getExportPIDs();
+  numExportIDsT = importerT->getNumExportIDs();
 
-  for(int i=0; i<numExportIDs; i++){
-    procIter = boundaryNodesByProc.find(exportPIDs[i]);
-    int exportGID = impNodeMap.GID(exportLIDs[i]);
+  for(int i=0; i<numExportIDsT; i++){
+    procIter = boundaryNodesByProc.find(exportPIDsT[i]);
+    int exportGIDT = impNodeMapT.getGlobalElement(exportLIDsT[i]);
     if( procIter == boundaryNodesByProc.end() ){
       std::set<int> newSet;
-      newSet.insert(exportGID);
-      boundaryNodesByProc.insert( std::pair<int,std::set<int> >(exportPIDs[i],newSet) );
+      newSet.insert(exportGIDT);
+      boundaryNodesByProc.insert( std::pair<int,std::set<int> >(exportPIDsT[i],newSet) );
     } else {
-      procIter->second.insert(exportGID);
+      procIter->second.insert(exportGIDT);
     }
   }
 
@@ -2233,7 +2236,7 @@ ATO::SpatialFilter::importNeighbors(
       newPoints += (pointSet.size() - pointSetSize);
     }
     int globalNewPoints=0;
-    impNodeMap.Comm().SumAll(&newPoints, &globalNewPoints, 1);
+    Teuchos::reduceAll(*(impNodeMapT.getComm()), Teuchos::REDUCE_SUM, 1, &newPoints, &globalNewPoints); 
     newPoints = globalNewPoints;
   }
 }

@@ -46,10 +46,10 @@ namespace ATO {
       SpatialFilter(Teuchos::ParameterList& params);
       void buildOperator(
              Teuchos::RCP<Albany::Application> app,
-             Teuchos::RCP<const Epetra_Map>    overlapNodeMap,
-             Teuchos::RCP<const Epetra_Map>    localNodeMap,
-             Teuchos::RCP<Epetra_Import>       importer,
-             Teuchos::RCP<Epetra_Export>       exporter);
+             Teuchos::RCP<const Tpetra_Map>    overlapNodeMapT,
+             Teuchos::RCP<const Tpetra_Map>    localNodeMapT, 
+             Teuchos::RCP<Tpetra_Import>       importerT,
+             Teuchos::RCP<Tpetra_Export>       exporterT);  
       void createFilterOpTfromFilterOp(Teuchos::RCP<const Teuchos_Comm> commT);  
       Teuchos::RCP<Epetra_CrsMatrix> FilterOperator(){return filterOperator;}
       Teuchos::RCP<Tpetra_CrsMatrix> FilterOperatorT(){return filterOperatorT;}
@@ -57,8 +57,10 @@ namespace ATO {
     protected:
       void importNeighbors(
              std::map< GlobalPoint, std::set<GlobalPoint> >& neighbors,
-             Teuchos::RCP<Epetra_Import>       importer, const Epetra_Map& localNodeMap,
-             Teuchos::RCP<Epetra_Export>       exporter, const Epetra_Map& overlapNodeMap);
+             Teuchos::RCP<Tpetra_Import>       importerT, 
+             const Tpetra_Map& localNodeMapT,
+             Teuchos::RCP<Tpetra_Export>       exporterT, 
+             const Tpetra_Map& overlapNodeMapT);
 
       Teuchos::RCP<Epetra_CrsMatrix> filterOperator;
       Teuchos::RCP<Tpetra_CrsMatrix> filterOperatorT;
