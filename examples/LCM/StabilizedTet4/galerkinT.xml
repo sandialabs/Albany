@@ -100,10 +100,6 @@
       type="string"
       value="Exodus" />
     <Parameter
-      name="Workset Size"
-      type="int"
-      value="10000" />
-    <Parameter
       name="Cubature Degree"
       type="int"
       value="1" />

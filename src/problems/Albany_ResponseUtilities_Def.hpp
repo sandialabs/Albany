@@ -426,10 +426,6 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 #if defined(ALBANY_LCM)
   else if (responseName == "IP to Nodal Field")
   {
-    std::cout << "From Albany::ResponseUtilities<" << typeid(EvalT).name() << ",Traits>::constructResponses\n";
-    std::cout << "REGISTERING IP to Nodal Field\n";
-    std::cout << "with params:\n";
-    responseParams.print(std::cout);
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
     //p->set<std::string>("Stress Name", "Cauchy_Stress");

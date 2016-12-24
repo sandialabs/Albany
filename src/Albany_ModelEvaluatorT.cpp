@@ -560,8 +560,6 @@ Albany::ModelEvaluatorT::evalModelImpl(
     const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgsT,
     const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgsT) const
 {
-  static int ncalls = 0;
-  std::cout << "Albany::ModelEvaluatorT START CALL #" << ++ncalls << '\n';
 
   #ifdef OUTPUT_TO_SCREEN
     std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
@@ -656,7 +654,6 @@ Albany::ModelEvaluatorT::evalModelImpl(
   bool f_already_computed = false;
 
   // W matrix
-  std::cout << "before W matrix\n";
   if (Teuchos::nonnull(W_op_out_crsT)) {
     app->computeGlobalJacobianT(
         alpha, beta, omega, curr_time, x_dotT.get(), x_dotdotT.get(),  *xT,
@@ -674,7 +671,6 @@ Albany::ModelEvaluatorT::evalModelImpl(
     Tpetra_MatrixMarket_Writer::writeMapFile("colmap.mm", *Mass_crs->getColMap());
 #endif
   }
-  std::cout << "after W matrix\n";
   if (Teuchos::nonnull(WPrec_out)) {
     app->computeGlobalJacobianT(alpha, beta, omega, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
                                sacado_param_vec, fT_out.get(), *Extra_W_crs);
@@ -684,7 +680,6 @@ Albany::ModelEvaluatorT::evalModelImpl(
   }
 
 
-  std::cout << "before ALL df/dp\n";
   // df/dp
   for (int l = 0; l < outArgsT.Np(); ++l) {
     const Teuchos::RCP<Thyra::MultiVectorBase<ST> > dfdp_out =
@@ -707,7 +702,6 @@ Albany::ModelEvaluatorT::evalModelImpl(
       f_already_computed = true;
     }
   }
-  std::cout << "after ALL df/dp\n";
 
   // f
   if (app->is_adjoint) {
@@ -718,24 +712,19 @@ Albany::ModelEvaluatorT::evalModelImpl(
     const Thyra::ModelEvaluatorBase::Derivative<ST> dummy_derivT;
 
     const int response_index = 0; // need to add capability for sending this in
-    std::cout << "before evaluateResponseDerivativeT\n";
     app->evaluateResponseDerivativeT(
         response_index, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
         sacado_param_vec, NULL,
         NULL, f_derivT, dummy_derivT, dummy_derivT, dummy_derivT);
-    std::cout << "after evaluateResponseDerivativeT\n";
   } else {
     if (Teuchos::nonnull(fT_out) && !f_already_computed) {
-      std::cout << "before app->computeGlobalResidualT\n";
       app->computeGlobalResidualT(
           curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
           sacado_param_vec, *fT_out);
-      std::cout << "after app->computeGlobalResidualT\n";
     }
   }
 
   // Response functions
-  std::cout << "before ALL response functions\n";
   for (int j = 0; j < outArgsT.Ng(); ++j) {
     const Teuchos::RCP<Thyra::VectorBase<ST> > g_out = outArgsT.get_g(j);
     Teuchos::RCP<Tpetra_Vector> gT_out =
@@ -790,16 +779,12 @@ Albany::ModelEvaluatorT::evalModelImpl(
     }
 
     if (Teuchos::nonnull(gT_out)) {
-      std::cout << "before app->evaluateResponseT\n";
       app->evaluateResponseT(
           j, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
           sacado_param_vec, *gT_out);
-      std::cout << "after app->evaluateResponseT\n";
     }
   }
-  std::cout << "after ALL response functions\n";
 
-  std::cout << "Albany::ModelEvaluatorT STOP CALL #" << ncalls << '\n';
 }
 
 

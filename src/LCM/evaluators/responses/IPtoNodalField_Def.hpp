@@ -64,6 +64,7 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
   bool const
   is_surface_block = mesh_specs->ebName == "Surface Element";
 
+  std::string const
   field_name_prefix = is_surface_block == true ? "surf_" : "";
 
   //! Register with state manager
@@ -71,6 +72,29 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
 
   // loop over the number of fields and register
   number_of_fields_ = plist->get<int>("Number of Fields", 0);
+
+  // Initialize manager.
+  bool first;
+  {
+    const std::string key_suffix = field_name_prefix +
+      (number_of_fields_ > 0 ?
+       plist->get<std::string>(Albany::strint("IP Field Name", 0)) :
+       "");
+    const std::string key = "IPtoNodalField_" + key_suffix;
+    const Teuchos::RCP<Adapt::NodalDataBase>
+      ndb = this->p_state_mgr_->getNodalDataBase();
+    first = ! ndb->isManagerRegistered(key);
+    if (first) {
+      this->mgr_ = Teuchos::rcp(new IPtoNodalFieldManager());
+      // Find out our starting position in the nodal database.
+      this->mgr_->ndb_start = ndb->getVecsize();
+      ndb->registerManager(key, this->mgr_);
+    } else {
+      this->mgr_ = Teuchos::rcp_dynamic_cast<IPtoNodalFieldManager>(
+        ndb->getManager(key));
+    }
+    this->mgr_->registerWorker();
+  }
 
   // resize field vectors
   ip_field_names_.resize(number_of_fields_);
@@ -151,6 +175,11 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
       "scalar", 0.0, false,
       true);
 
+  if (first)
+    this->mgr_->ndb_numvecs =
+      p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getVecsize() -
+      this->mgr_->ndb_start;
+
   // Create field tag
   field_tag_ =
       Teuchos::rcp(new PHX::Tag<ScalarT>("IP to Nodal Field", dl->dummy));
@@ -181,36 +210,7 @@ IPtoNodalField(
     const Teuchos::RCP<Albany::Layouts>& dl,
     const Albany::MeshSpecsStruct* mesh_specs) :
     IPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p, dl, mesh_specs)
-{
-  Teuchos::ParameterList* plist =
-      p.get<Teuchos::ParameterList*>("Parameter List");
-  // Initialize manager.
-  const std::string key_suffix = this->field_name_prefix +
-    (this->number_of_fields_ > 0 ?
-     plist->get<std::string>(Albany::strint("IP Field Name", 0)) :
-     "");
-  const std::string key = "IPtoNodalField_" + key_suffix;
-  const Teuchos::RCP<Adapt::NodalDataBase>
-    ndb = this->p_state_mgr_->getNodalDataBase();
-  bool first = ! ndb->isManagerRegistered(key);
-  if (first) {
-    this->mgr_ = Teuchos::rcp(new IPtoNodalFieldManager());
-    // Find out our starting position in the nodal database.
-    this->mgr_->ndb_start = ndb->getVecsize();
-    ndb->registerManager(key, this->mgr_);
-    std::cout << "FIRST! registerManager\n";
-  } else {
-    this->mgr_ = Teuchos::rcp_dynamic_cast<IPtoNodalFieldManager>(
-      ndb->getManager(key));
-  }
-  this->mgr_->registerWorker();
-  std::cout << "this->mgr_->registerWorker(), this->mgr_->nWorker() = " << this->mgr_->nWorker() << '\n';
-  if (first) {
-    this->mgr_->ndb_numvecs =
-      this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getVecsize() -
-      this->mgr_->ndb_start;
-  }
-}
+{}
 
 //------------------------------------------------------------------------------
 template<typename Traits>
@@ -232,7 +232,6 @@ template<typename Traits>
 void IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  std::cout << "EVALUATING IPtoNodalField (Residual) ws " << workset.wsIndex << '\n';
   // volume averaged field, store as nodal data that will be scattered
   // and summed
 
@@ -269,7 +268,6 @@ evaluateFields(typename Traits::EvalData workset)
   // deal with each of the fields
 
   for (int field(0); field < this->number_of_fields_; ++field) {
-    std::cout << "IPtoNodalField field " << this->ip_field_names_[field] << '\n';
     int node_var_offset;
     int node_var_ndofs;
     node_data->getNDofsAndOffset(
@@ -317,13 +315,9 @@ template<typename Traits>
 void IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-  std::cout << "IPtoNodalField Residual postEvaluate\n";
   const int ctr = this->mgr_->incrPostCounter();
   const bool am_last = ctr == this->mgr_->nWorker();
-  std::cout << "this->mgr_->incrPostCounter() = " << ctr << ", this->mgr_->nWorkder() = " << this->mgr_->nWorker()
-    << ", am_last = " << am_last << '\n';
   if ( ! am_last) return;
-  std::cout << "AM LAST! this->mgr_->initCounters()\n";
   this->mgr_->initCounters();
 
   // Get the node data vector container.
@@ -367,7 +361,6 @@ postEvaluate(typename Traits::PostEvalData workset)
       Teuchos::ArrayRCP<ST> v = data->getDataNonConst(node_var_offset + k);
       for (LO overlap_node = 0; overlap_node < num_nodes; ++overlap_node)
         v[overlap_node] /= weights[overlap_node];
-      std::cout << "k = " << k << ", v[0] = " << v[0] << '\n';
     }
   }
 

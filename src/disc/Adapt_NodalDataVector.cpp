@@ -149,7 +149,6 @@ saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv,
   for (NodeFieldSizeVector::const_iterator i = nodeVectorLayout.begin();
        i != nodeVectorLayout.end(); ++i) {
     if (i->offset < start_col || i->offset >= start_col + nv) continue;
-    std::cout << "saveNodalDataState, nodeContainer[" << i->name << "]->saveFieldVector\n";
     (*nodeContainer)[i->name]->saveFieldVector(mv, i->offset - start_col);
   }
 }
