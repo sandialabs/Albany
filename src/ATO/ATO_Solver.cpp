@@ -27,7 +27,6 @@ Please remove when issue is resolved
 #include "EpetraExt_MultiVectorOut.h"
 #include "Epetra_LinearProblem.h"
 #include "AztecOO.h"
-#include "TpetraExt_MatrixMatrix_def.hpp"
 
 #ifdef ATO_USES_ISOLIB
 #include "Albany_STKDiscretization.hpp"
@@ -40,6 +39,8 @@ MPI_Datatype MPI_GlobalPoint;
 
 bool ATO::operator< (ATO::GlobalPoint const & a, ATO::GlobalPoint const & b){return a.gid < b.gid;}
 ATO::GlobalPoint::GlobalPoint(){coords[0]=0.0; coords[1]=0.0; coords[2]=0.0;}
+
+int countFilterOp;
 
 
 /******************************************************************************/
@@ -343,12 +344,13 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   // initialize/build the filter operators. these are built once.
   int nFilters = filters.size();
+  countFilterOp = 0; 
   for(int ifltr=0; ifltr<nFilters; ifltr++){
     filters[ifltr]->buildOperator(
       _subProblems[0].app, 
       overlapNodeMapT, localNodeMapT,
       importerT, exporterT); 
-    filters[ifltr]->createFilterOpTfromFilterOp(_solverComm); 
+    //filters[ifltr]->createFilterOpTfromFilterOp(_solverComm); 
   }
 
 
@@ -1093,7 +1095,7 @@ ATO::Solver::copyObjectiveFromStateMgr( double& g, double* dgdp )
                                                     Teuchos::TRANS); 
         *ObjectiveGradientVecT[ivec] = *filtered_ObjectiveGradientVecT; 
         //Tpetra_MatrixMarket_Writer::writeDenseFile("filtered_ObjectiveGradientVecT.mm",  
-        //    filtered_ObjectiveGradientVecT);
+        //    filtered_ObjectiveGradientVecT); exit(1); 
       }
       Teuchos::ArrayRCP<const double> lvec = filtered_ObjectiveGradientVecT->get1dView(); 
       for (int i=0; i< numLocalNodes; i++) 
@@ -1957,45 +1959,66 @@ ATO::SpatialFilter::buildOperator(
     
     // for each interior node, search boundary nodes for additional interactions off processor.
     
-  
     // now build filter operator
     int numnonzeros = 0;
     Teuchos::RCP<Epetra_Comm> comm = 
       Albany::createEpetraCommFromTeuchosComm(localNodeMapT->getComm());
     Teuchos::RCP<Epetra_Map> localNodeMap = Petra::TpetraMap_To_EpetraMap(localNodeMapT, comm); 
     filterOperator = Teuchos::rcp(new Epetra_CrsMatrix(Copy,*localNodeMap,numnonzeros));
+    filterOperatorT = Teuchos::rcp(new Tpetra_CrsMatrix(localNodeMapT,numnonzeros));
     for (std::map<GlobalPoint,std::set<GlobalPoint> >::iterator 
         it=neighbors.begin(); it!=neighbors.end(); ++it) { 
       GlobalPoint homeNode = it->first;
       int home_node_gid = homeNode.gid;
+      GO home_node_gidT = homeNode.gid;
       std::set<GlobalPoint> connected_nodes = it->second;
+      Teuchos::Array<GO> neighbor_node_gidT(1);
+      double weight; 
+      Teuchos::Array<ST> weightT(1);
       if( connected_nodes.size() > 0 ){
         for (std::set<GlobalPoint>::iterator 
              set_it=connected_nodes.begin(); set_it!=connected_nodes.end(); ++set_it) {
            int neighbor_node_gid = set_it->gid;
+           neighbor_node_gidT[0] = set_it->gid; 
            const double* coords = &(set_it->coords[0]);
            double distance = 0.0;
            for (int dim=0; dim<dimension; dim++) 
              distance += (coords[dim]-homeNode.coords[dim])*(coords[dim]-homeNode.coords[dim]);
            distance = (distance > 0.0) ? sqrt(distance) : 0.0;
-           double weight = filterRadius - distance;
+           weight = filterRadius - distance;
+           weightT[0] = filterRadius - distance;
            filterOperator->InsertGlobalValues(home_node_gid,1,&weight,&neighbor_node_gid);
+           filterOperatorT->insertGlobalValues(home_node_gidT, neighbor_node_gidT(), weightT());
         }
       } else {
          // if the list of connected nodes is empty, still add a one on the diagonal.
-         double weight = 1.0;
+         weight = 1.0;
+         neighbor_node_gidT[0] = home_node_gidT; 
+         weightT[0] = 1.0; 
          filterOperator->InsertGlobalValues(home_node_gid,1,&weight,&home_node_gid);
+         filterOperatorT->insertGlobalValues(home_node_gidT, neighbor_node_gidT(), weightT());
       }
     }
   
     filterOperator->FillComplete();
+    filterOperatorT->fillComplete();
 
     // scale filter operator so rows sum to one.
     Epetra_Vector rowSums(*localNodeMap);
     filterOperator->InvRowSums(rowSums);
     filterOperator->LeftScale(rowSums);
 
-
+    //IKT: this is temporary until InvRowSums 
+    Teuchos::RCP<Tpetra_Vector> rowSumsT = 
+      Petra::EpetraVector_To_TpetraVectorNonConst(rowSums, localNodeMapT->getComm()); 
+    filterOperatorT->leftScale(*rowSumsT);
+    
+    /*char name[100];  
+    sprintf(name, "rowSums%i.mm", countFilterOp);
+    EpetraExt::MultiVectorToMatrixMarketFile(name, rowSums);
+    sprintf(name, "rowSumsT%i.mm", countFilterOp);
+    Tpetra_MatrixMarket_Writer::writeDenseFile(name, rowSumsT);
+    countFilterOp++;*/
   return;
 
 }
