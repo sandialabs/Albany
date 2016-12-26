@@ -32,40 +32,16 @@ private:
   int nwrkr_, prectr_, postctr_;
 };
 
-//------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 IPtoNodalFieldBase<EvalT, Traits>::
-IPtoNodalFieldBase(Teuchos::ParameterList& p,
+IPtoNodalFieldBase(
+    Teuchos::ParameterList& p,
     const Teuchos::RCP<Albany::Layouts>& dl,
-    const Albany::MeshSpecsStruct* mesh_specs) :
+    const Albany::MeshSpecsStruct* mesh_specs):
     weights_("Weights", dl->qp_scalar)
 {
-  //! get and validate IPtoNodalField parameter list
   Teuchos::ParameterList* plist =
       p.get<Teuchos::ParameterList*>("Parameter List");
-  Teuchos::RCP<const Teuchos::ParameterList> reflist =
-      this->getValidIPtoNodalFieldParameters();
-  plist->validateParameters(*reflist, 0);
-
-  output_to_exodus_ = plist->get<bool>("Output to File", true);
-
-  //! number of quad points per cell and dimension
-  Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
-  Teuchos::RCP<PHX::DataLayout> vector_dl = dl->qp_vector;
-  Teuchos::RCP<PHX::DataLayout> cell_dl = dl->cell_scalar;
-  Teuchos::RCP<PHX::DataLayout> node_dl = dl->node_qp_vector;
-  Teuchos::RCP<PHX::DataLayout> vert_vector_dl = dl->vertices_vector;
-  num_pts_ = vector_dl->dimension(1);
-  num_dims_ = vector_dl->dimension(2);
-  num_nodes_ = node_dl->dimension(1);
-  num_vertices_ = vert_vector_dl->dimension(2);
-
-  // Surface element prefix, if any.
-  bool const
-  is_surface_block = mesh_specs->ebName == "Surface Element";
-
-  std::string const
-  field_name_prefix = is_surface_block == true ? "surf_" : "";
 
   //! Register with state manager
   this->p_state_mgr_ = p.get<Albany::StateManager*>("State Manager Ptr");
@@ -73,28 +49,14 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
   // loop over the number of fields and register
   number_of_fields_ = plist->get<int>("Number of Fields", 0);
 
-  // Initialize manager.
-  bool first;
-  {
-    const std::string key_suffix = field_name_prefix +
-      (number_of_fields_ > 0 ?
-       plist->get<std::string>(Albany::strint("IP Field Name", 0)) :
-       "");
-    const std::string key = "IPtoNodalField_" + key_suffix;
-    const Teuchos::RCP<Adapt::NodalDataBase>
-      ndb = this->p_state_mgr_->getNodalDataBase();
-    first = ! ndb->isManagerRegistered(key);
-    if (first) {
-      this->mgr_ = Teuchos::rcp(new IPtoNodalFieldManager());
-      // Find out our starting position in the nodal database.
-      this->mgr_->ndb_start = ndb->getVecsize();
-      ndb->registerManager(key, this->mgr_);
-    } else {
-      this->mgr_ = Teuchos::rcp_dynamic_cast<IPtoNodalFieldManager>(
-        ndb->getManager(key));
-    }
-    this->mgr_->registerWorker();
-  }
+  output_to_exodus_ = plist->get<bool>("Output to File", true);
+
+  // Surface element prefix, if any.
+  bool const
+  is_surface_block = mesh_specs->ebName == "Surface Element";
+
+  std::string const
+  field_name_prefix = is_surface_block == true ? "surf_" : "";
 
   // resize field vectors
   ip_field_names_.resize(number_of_fields_);
@@ -113,13 +75,13 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
     nodal_field_names_[field] = "nodal_" + ip_field_names_[field];
 
     if (ip_field_layouts_[field] == "Scalar") {
-      PHX::MDField<ScalarT> s(ip_field_names_[field], dl->qp_scalar);
+      PHX::MDField<ScalarT const> s(ip_field_names_[field], dl->qp_scalar);
       ip_fields_[field] = s;
     } else if (ip_field_layouts_[field] == "Vector") {
-      PHX::MDField<ScalarT> v(ip_field_names_[field], dl->qp_vector);
+      PHX::MDField<ScalarT const> v(ip_field_names_[field], dl->qp_vector);
       ip_fields_[field] = v;
     } else if (ip_field_layouts_[field] == "Tensor") {
-      PHX::MDField<ScalarT> t(ip_field_names_[field], dl->qp_tensor);
+      PHX::MDField<ScalarT const> t(ip_field_names_[field], dl->qp_tensor);
       ip_fields_[field] = t;
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION(
@@ -130,55 +92,9 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
 
     this->addDependentField(ip_fields_[field].fieldTag());
 
-    if (ip_field_layouts_[field] == "Scalar") {
-      this->p_state_mgr_->registerNodalVectorStateVariable(
-          nodal_field_names_[field],
-          dl->node_node_scalar,
-          dl->dummy,
-          "all",
-          "scalar",
-          0.0,
-          false,
-          output_to_exodus_);
-    } else if (ip_field_layouts_[field] == "Vector") {
-      this->p_state_mgr_->registerNodalVectorStateVariable(
-          nodal_field_names_[field],
-          dl->node_node_vector,
-          dl->dummy,
-          "all",
-          "scalar",
-          0.0,
-          false,
-          output_to_exodus_);
-    } else if (ip_field_layouts_[field] == "Tensor") {
-      this->p_state_mgr_->registerNodalVectorStateVariable(
-          nodal_field_names_[field],
-          dl->node_node_tensor,
-          dl->dummy,
-          "all",
-          "scalar",
-          0.0,
-          false,
-          output_to_exodus_);
-    }
   }
 
-  // Register the nodal weights. Need a unique name so it doesn't conflict with
-  // the weights vector of another IPtoNodalField response function. Even though
-  // the weight vectors would be the same, coordination would be required to
-  // prevent multiple sums.
-  nodal_weights_name_ = "nw_" + ip_field_names_[0];
   this->addDependentField(weights_);
-  this->p_state_mgr_->registerNodalVectorStateVariable(nodal_weights_name_,
-      dl->node_node_scalar,
-      dl->dummy, "all",
-      "scalar", 0.0, false,
-      true);
-
-  if (first)
-    this->mgr_->ndb_numvecs =
-      p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getVecsize() -
-      this->mgr_->ndb_start;
 
   // Create field tag
   field_tag_ =
@@ -208,9 +124,108 @@ IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 IPtoNodalField(
     Teuchos::ParameterList& p,
     const Teuchos::RCP<Albany::Layouts>& dl,
-    const Albany::MeshSpecsStruct* mesh_specs) :
-    IPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p, dl, mesh_specs)
-{}
+    const Albany::MeshSpecsStruct* mesh_specs):
+  IPtoNodalFieldBase<PHAL::AlbanyTraits::Residual,Traits>(p, dl, mesh_specs)
+{
+  //! get and validate IPtoNodalField parameter list
+  Teuchos::ParameterList* plist =
+      p.get<Teuchos::ParameterList*>("Parameter List");
+  Teuchos::RCP<const Teuchos::ParameterList> reflist =
+      this->getValidIPtoNodalFieldParameters();
+  plist->validateParameters(*reflist, 0);
+
+  //! number of quad points per cell and dimension
+  Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
+  Teuchos::RCP<PHX::DataLayout> vector_dl = dl->qp_vector;
+  Teuchos::RCP<PHX::DataLayout> cell_dl = dl->cell_scalar;
+  Teuchos::RCP<PHX::DataLayout> node_dl = dl->node_qp_vector;
+  Teuchos::RCP<PHX::DataLayout> vert_vector_dl = dl->vertices_vector;
+  num_pts_ = vector_dl->dimension(1);
+  num_dims_ = vector_dl->dimension(2);
+  num_nodes_ = node_dl->dimension(1);
+  num_vertices_ = vert_vector_dl->dimension(2);
+
+  // Surface element prefix, if any.
+  bool const
+  is_surface_block = mesh_specs->ebName == "Surface Element";
+
+  std::string const
+  field_name_prefix = is_surface_block == true ? "surf_" : "";
+
+  // Initialize manager.
+  bool first;
+  {
+    const std::string key_suffix = field_name_prefix +
+      (this->number_of_fields_ > 0 ?
+       plist->get<std::string>(Albany::strint("IP Field Name", 0)) :
+       "");
+    const std::string key = "IPtoNodalField_" + key_suffix;
+    const Teuchos::RCP<Adapt::NodalDataBase>
+      ndb = this->p_state_mgr_->getNodalDataBase();
+    first = ! ndb->isManagerRegistered(key);
+    if (first) {
+      this->mgr_ = Teuchos::rcp(new IPtoNodalFieldManager());
+      // Find out our starting position in the nodal database.
+      this->mgr_->ndb_start = ndb->getVecsize();
+      ndb->registerManager(key, this->mgr_);
+    } else {
+      this->mgr_ = Teuchos::rcp_dynamic_cast<IPtoNodalFieldManager>(
+        ndb->getManager(key));
+    }
+    this->mgr_->registerWorker();
+  }
+
+  for (int field(0); field < this->number_of_fields_; ++field) {
+    if (this->ip_field_layouts_[field] == "Scalar") {
+      this->p_state_mgr_->registerNodalVectorStateVariable(
+          this->nodal_field_names_[field],
+          dl->node_node_scalar,
+          dl->dummy,
+          "all",
+          "scalar",
+          0.0,
+          false,
+          this->output_to_exodus_);
+    } else if (this->ip_field_layouts_[field] == "Vector") {
+      this->p_state_mgr_->registerNodalVectorStateVariable(
+          this->nodal_field_names_[field],
+          dl->node_node_vector,
+          dl->dummy,
+          "all",
+          "scalar",
+          0.0,
+          false,
+          this->output_to_exodus_);
+    } else if (this->ip_field_layouts_[field] == "Tensor") {
+      this->p_state_mgr_->registerNodalVectorStateVariable(
+          this->nodal_field_names_[field],
+          dl->node_node_tensor,
+          dl->dummy,
+          "all",
+          "scalar",
+          0.0,
+          false,
+          this->output_to_exodus_);
+    }
+  }
+
+  // Register the nodal weights. Need a unique name so it doesn't conflict with
+  // the weights vector of another IPtoNodalField response function. Even though
+  // the weight vectors would be the same, coordination would be required to
+  // prevent multiple sums.
+  nodal_weights_name_ = "nw_" + this->ip_field_names_[0];
+  this->p_state_mgr_->registerNodalVectorStateVariable(nodal_weights_name_,
+      dl->node_node_scalar,
+      dl->dummy, "all",
+      "scalar", 0.0, false,
+      true);
+
+  if (first) {
+    this->mgr_->ndb_numvecs =
+      this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getVecsize() -
+      this->mgr_->ndb_start;
+  }
+}
 
 //------------------------------------------------------------------------------
 template<typename Traits>
@@ -297,10 +312,12 @@ evaluateFields(typename Traits::EvalData workset)
             for (int dim0 = 0; dim0 < num_dims; ++dim0) {
               for (int dim1 = 0; dim1 < num_dims; ++dim1) {
                 // save the tensor component
+                PHX::MDField<ScalarT const>& tensor_field = this->ip_fields_[field];
+                ScalarT ipval = tensor_field(cell, pt, dim0, dim1);
+                ScalarT weight = this->weights_(cell, pt);
                 data->sumIntoGlobalValue(
                   global_row, node_var_offset + dim0 * num_dims + dim1,
-                  (this->ip_fields_[field](cell, pt, dim0, dim1) *
-                   this->weights_(cell, pt)));
+                  ipval * weight);
               }
             }
           }
@@ -317,7 +334,9 @@ postEvaluate(typename Traits::PostEvalData workset)
 {
   const int ctr = this->mgr_->incrPostCounter();
   const bool am_last = ctr == this->mgr_->nWorker();
+  std::cout << "this->mgr_->incrPostCounter() = " << ctr << '\n';
   if ( ! am_last) return;
+  std::cout << "AM LAST, this->mgr_->initCounters()\n";
   this->mgr_->initCounters();
 
   // Get the node data vector container.
@@ -359,8 +378,9 @@ postEvaluate(typename Traits::PostEvalData workset)
 
     for (int k = 0; k < node_var_ndofs; ++k) {
       Teuchos::ArrayRCP<ST> v = data->getDataNonConst(node_var_offset + k);
-      for (LO overlap_node = 0; overlap_node < num_nodes; ++overlap_node)
+      for (LO overlap_node = 0; overlap_node < num_nodes; ++overlap_node) {
         v[overlap_node] /= weights[overlap_node];
+      }
     }
   }
 
@@ -371,11 +391,11 @@ postEvaluate(typename Traits::PostEvalData workset)
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 Teuchos::RCP<const Teuchos::ParameterList>
-IPtoNodalFieldBase<EvalT, Traits>::getValidIPtoNodalFieldParameters() const
+IPtoNodalFieldBase<EvalT, Traits>::
+getValidIPtoNodalFieldParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
       rcp(new Teuchos::ParameterList("Valid IPtoNodalField Params"));
-  ;
 
   validPL->set<std::string>("Name", "", "Name of field Evaluator");
   validPL->set<int>("Number of Fields", 0);
