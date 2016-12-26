@@ -92,37 +92,6 @@ IPtoNodalFieldBase(
 
     this->addDependentField(ip_fields_[field].fieldTag());
 
-    if (ip_field_layouts_[field] == "Scalar") {
-      this->p_state_mgr_->registerNodalVectorStateVariable(
-          nodal_field_names_[field],
-          dl->node_node_scalar,
-          dl->dummy,
-          "all",
-          "scalar",
-          0.0,
-          false,
-          output_to_exodus_);
-    } else if (ip_field_layouts_[field] == "Vector") {
-      this->p_state_mgr_->registerNodalVectorStateVariable(
-          nodal_field_names_[field],
-          dl->node_node_vector,
-          dl->dummy,
-          "all",
-          "scalar",
-          0.0,
-          false,
-          output_to_exodus_);
-    } else if (ip_field_layouts_[field] == "Tensor") {
-      this->p_state_mgr_->registerNodalVectorStateVariable(
-          nodal_field_names_[field],
-          dl->node_node_tensor,
-          dl->dummy,
-          "all",
-          "scalar",
-          0.0,
-          false,
-          output_to_exodus_);
-    }
   }
 
   this->addDependentField(weights_);
@@ -206,6 +175,40 @@ IPtoNodalField(
     this->mgr_->registerWorker();
   }
 
+  for (int field(0); field < this->number_of_fields_; ++field) {
+    if (this->ip_field_layouts_[field] == "Scalar") {
+      this->p_state_mgr_->registerNodalVectorStateVariable(
+          this->nodal_field_names_[field],
+          dl->node_node_scalar,
+          dl->dummy,
+          "all",
+          "scalar",
+          0.0,
+          false,
+          this->output_to_exodus_);
+    } else if (this->ip_field_layouts_[field] == "Vector") {
+      this->p_state_mgr_->registerNodalVectorStateVariable(
+          this->nodal_field_names_[field],
+          dl->node_node_vector,
+          dl->dummy,
+          "all",
+          "scalar",
+          0.0,
+          false,
+          this->output_to_exodus_);
+    } else if (this->ip_field_layouts_[field] == "Tensor") {
+      this->p_state_mgr_->registerNodalVectorStateVariable(
+          this->nodal_field_names_[field],
+          dl->node_node_tensor,
+          dl->dummy,
+          "all",
+          "scalar",
+          0.0,
+          false,
+          this->output_to_exodus_);
+    }
+  }
+
   // Register the nodal weights. Need a unique name so it doesn't conflict with
   // the weights vector of another IPtoNodalField response function. Even though
   // the weight vectors would be the same, coordination would be required to
@@ -221,7 +224,6 @@ IPtoNodalField(
     this->mgr_->ndb_numvecs =
       this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getVecsize() -
       this->mgr_->ndb_start;
-    std::cout << "set this->mgr_->ndb_numvecs = " << this->mgr_->ndb_numvecs << '\n';
   }
 }
 
@@ -310,10 +312,12 @@ evaluateFields(typename Traits::EvalData workset)
             for (int dim0 = 0; dim0 < num_dims; ++dim0) {
               for (int dim1 = 0; dim1 < num_dims; ++dim1) {
                 // save the tensor component
+                PHX::MDField<ScalarT const>& tensor_field = this->ip_fields_[field];
+                ScalarT ipval = tensor_field(cell, pt, dim0, dim1);
+                ScalarT weight = this->weights_(cell, pt);
                 data->sumIntoGlobalValue(
                   global_row, node_var_offset + dim0 * num_dims + dim1,
-                  (this->ip_fields_[field](cell, pt, dim0, dim1) *
-                   this->weights_(cell, pt)));
+                  ipval * weight);
               }
             }
           }
@@ -374,9 +378,9 @@ postEvaluate(typename Traits::PostEvalData workset)
 
     for (int k = 0; k < node_var_ndofs; ++k) {
       Teuchos::ArrayRCP<ST> v = data->getDataNonConst(node_var_offset + k);
-      for (LO overlap_node = 0; overlap_node < num_nodes; ++overlap_node)
+      for (LO overlap_node = 0; overlap_node < num_nodes; ++overlap_node) {
         v[overlap_node] /= weights[overlap_node];
-      std::cout << "field " << field << " k " << k << " v[0] = " << v[0] << '\n';
+      }
     }
   }
 

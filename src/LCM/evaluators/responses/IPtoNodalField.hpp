@@ -85,9 +85,6 @@ public:
       const Albany::MeshSpecsStruct* mesh_specs):
   IPtoNodalFieldBase<EvalT, Traits>(p, dl, mesh_specs) {}
 
-  void postRegistrationSetup(typename Traits::SetupData d,
-      PHX::FieldManager<Traits>& vm) {}
-
   void preEvaluate(typename Traits::PreEvalData d) {}
 
   void postEvaluate(typename Traits::PostEvalData d) {}
@@ -109,12 +106,13 @@ template<typename Traits>
 class IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>
 : public IPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits> {
 public:
+  typedef IPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits> Base;
+  typedef typename Base::ScalarT ScalarT;
+  typedef typename Base::MeshScalarT MeshScalarT;
 
   IPtoNodalField(Teuchos::ParameterList& p,
       const Teuchos::RCP<Albany::Layouts>& dl,
       const Albany::MeshSpecsStruct* mesh_specs);
-  void postRegistrationSetup(typename Traits::SetupData d,
-      PHX::FieldManager<Traits>& vm);
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
   void evaluateFields(typename Traits::EvalData d);
