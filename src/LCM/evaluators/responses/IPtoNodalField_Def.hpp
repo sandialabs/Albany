@@ -334,9 +334,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 {
   const int ctr = this->mgr_->incrPostCounter();
   const bool am_last = ctr == this->mgr_->nWorker();
-  std::cout << "this->mgr_->incrPostCounter() = " << ctr << '\n';
   if ( ! am_last) return;
-  std::cout << "AM LAST, this->mgr_->initCounters()\n";
   this->mgr_->initCounters();
 
   // Get the node data vector container.
