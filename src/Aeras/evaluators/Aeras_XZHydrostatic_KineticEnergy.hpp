@@ -60,11 +60,21 @@ public:
 
   struct XZHydrostatic_KineticEnergy_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_KineticEnergy_Tag> XZHydrostatic_KineticEnergy_Policy;
+ 
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA) 
+  using XZHydrostatic_KineticEnergy_Policy =
+	Kokkos::Experimental::MDRangePolicy<
+	Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Left,
+	Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int> >;
+#else
+  using XZHydrostatic_KineticEnergy_Policy =
+	Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Left,
+        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int> >;
+#endif
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const XZHydrostatic_KineticEnergy_Tag& tag, const int& i) const;
-
+  void operator() (const int cell, const int node, const int level) const;
 #endif
 };
 }

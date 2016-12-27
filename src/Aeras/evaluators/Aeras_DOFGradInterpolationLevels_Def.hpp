@@ -51,15 +51,24 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void DOFGradInterpolationLevels<EvalT, Traits>::
-operator() (const DOFGradInterpolationLevels_Tag& tag, const int& cell) const{
-  for (int qp=0; qp < numQPs; ++qp) {
-    for (int level=0; level < numLevels; ++level) {
-      for (int dim=0; dim<numDims; dim++) {
-        grad_val_qp(cell,qp,level,dim) = 0;
-        for (int node= 0 ; node < numNodes; ++node) {
-          grad_val_qp(cell,qp,level,dim) += val_node(cell, node, level) * GradBF(cell, node, qp, dim);
-        }
+operator() (const int cell, const int qp, const int level) const{
+  if (numDims==2){
+    ScalarT grad_val0=0;
+    ScalarT grad_val1=0;
+    for (int node= 0 ; node < numNodes; ++node) {
+      grad_val0 += val_node(cell, node, level) * GradBF(cell, node, qp, 0);
+      grad_val1 += val_node(cell, node, level) * GradBF(cell, node, qp, 1);   
       }
+    grad_val_qp(cell,qp,level,0)=grad_val0;
+    grad_val_qp(cell,qp,level,1)=grad_val1;
+  }
+  else{
+    for (int dim=0; dim<numDims; dim++) {
+      ScalarT grad_val = 0;
+      for (int node= 0 ; node < numNodes; ++node) {
+        grad_val += val_node(cell, node, level) * GradBF(cell, node, qp, dim);
+      }
+      grad_val_qp(cell,qp,level,dim) = grad_val;
     }
   }
 }
@@ -123,8 +132,14 @@ evaluateFields(typename Traits::EvalData workset)
 */
 
 #else
-  Kokkos::parallel_for(DOFGradInterpolationLevels_Policy(0,workset.numCells),*this);
-
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  DOFGradInterpolationLevels_Policy range(
+                {0,0,0}, {workset.numCells,numQPs,numLevels}, {256,1,1} );
+#else
+  DOFGradInterpolationLevels_Policy range ({(int)workset.numCells,
+		(int)numQPs,(int)numLevels});
+#endif
+  Kokkos::Experimental::md_parallel_for(range,*this);
 #endif
 }
 
@@ -167,16 +182,25 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void DOFGradInterpolationLevels_noDeriv<EvalT, Traits>::
-operator() (const DOFGradInterpolationLevels_noDeriv_Tag& tag, const int& cell) const{
-  for (int qp=0; qp < numQPs; ++qp) {
-    for (int level=0; level < numLevels; ++level) {
-      for (int dim=0; dim<numDims; dim++) {
-        typename PHAL::Ref<MeshScalarT>::type gvqp = grad_val_qp(cell,qp,level,dim) = 0;
-        for (int node=0 ; node < numNodes; ++node) {
-          gvqp += val_node(cell, node, level) * GradBF(cell, node, qp, dim);
-        }
-      }
-    }
+operator() (const int cell, const int qp, const int level) const{
+  if(numDims==2){
+    MeshScalarT gvqp0 = 0;
+    MeshScalarT gvqp1 = 0;
+    for (int node=0 ; node < numNodes; ++node) {
+      gvqp0 += val_node(cell, node, level) * GradBF(cell, node, qp, 0);
+      gvqp1 += val_node(cell, node, level) * GradBF(cell, node, qp, 1);
+    }//end for
+    grad_val_qp(cell,qp,level,0) = gvqp0;
+    grad_val_qp(cell,qp,level,1) = gvqp1;
+  }
+  else{
+   for (int dim=0; dim<numDims; dim++) {
+     MeshScalarT gvqp =  0;
+     for (int node=0 ; node < numNodes; ++node) {
+       gvqp += val_node(cell, node, level) * GradBF(cell, node, qp, dim);
+     }
+     grad_val_qp(cell,qp,level,dim)=gvqp;
+   }
   }
 }
 
@@ -206,8 +230,14 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 #else
-  Kokkos::parallel_for(DOFGradInterpolationLevels_noDeriv_Policy(0,workset.numCells),*this);
-
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  DOFGradInterpolationLevels_noDeriv_Policy range(
+                {0,0,0}, {workset.numCells,numQPs,numLevels}, {256,1,1} );
+#else 
+  DOFGradInterpolationLevels_noDeriv_Policy range ({(int)workset.numCells,
+                (int)numQPs,(int)numLevels});
+#endif
+  Kokkos::Experimental::md_parallel_for(range,*this);
 #endif
 }
 

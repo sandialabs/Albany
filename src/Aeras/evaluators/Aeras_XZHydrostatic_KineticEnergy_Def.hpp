@@ -53,15 +53,19 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_KineticEnergy<EvalT, Traits>::
-operator() (const XZHydrostatic_KineticEnergy_Tag& tag, const int& cell) const{
-  for (int node=0; node < numNodes; ++node) {
-    for (int level=0; level < numLevels; ++level) {
-      ke(cell,node,level) = 0;
-      for (int dim=0; dim < numDims; ++dim) {
-        ke(cell,node,level) += 0.5*u(cell,node,level,dim)*u(cell,node,level,dim);
-      }
-    }
-  }
+operator() (const int cell, const int node, const int level) const{
+ if (numDims==2){
+  const ScalarT u_0 = u(cell,node,level,0);
+  const ScalarT u_1 = u(cell,node,level,1);
+  ke(cell,node,level) = 0.5 * ( u_0*u_0 + u_1*u_1);
+ }
+ else
+ {
+  ScalarT temp=0;
+  for (int dim=0; dim < numDims; ++dim) 
+        temp += 0.5*u(cell,node,level,dim)*u(cell,node,level,dim);
+  ke(cell,node,level) = temp;
+ }
 }
 
 #endif
@@ -84,8 +88,13 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 #else
-  Kokkos::parallel_for(XZHydrostatic_KineticEnergy_Policy(0,workset.numCells),*this);
-
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  XZHydrostatic_KineticEnergy_Policy range(
+                {0,0,0}, {workset.numCells,numNodes,numLevels}, {256,1,1} );
+#else
+  XZHydrostatic_KineticEnergy_Policy  range ({(int)workset.numCells,(int)numNodes,(int)numLevels});
+#endif
+  Kokkos::Experimental::md_parallel_for(range,*this);
 #endif
 }
 
