@@ -5,21 +5,21 @@
 //*****************************************************************//
 
 
-#include "AAdapt_NonUnifRefSizeField.hpp"
+#include "AAdapt_UniformRefine.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
 
 #include "Albany_Utils.hpp"
 
-AAdapt::NonUnifRefSizeField::NonUnifRefSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc) :
+AAdapt::UniformRefine::UniformRefine(const Teuchos::RCP<Albany::APFDiscretization>& disc) :
   MeshAdaptMethod(disc) {
 }
 
-AAdapt::NonUnifRefSizeField::
-~NonUnifRefSizeField() {
+AAdapt::UniformRefine::
+~UniformRefine() {
 }
 
 void
-AAdapt::NonUnifRefSizeField::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_) {
+AAdapt::UniformRefine::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_) {
 
      int num_iters = adapt_params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
 
@@ -38,17 +38,17 @@ AAdapt::NonUnifRefSizeField::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList
 }
 
 void
-AAdapt::NonUnifRefSizeField::preProcessShrunkenMesh() {
+AAdapt::UniformRefine::preProcessShrunkenMesh() {
 }
 
 void
-AAdapt::NonUnifRefSizeField::setParams(
+AAdapt::UniformRefine::setParams(
     const Teuchos::RCP<Teuchos::ParameterList>& p) {
 
 }
 
 void
-AAdapt::NonUnifRefSizeField::preProcessOriginalMesh() {
+AAdapt::UniformRefine::preProcessOriginalMesh() {
 
 }
 

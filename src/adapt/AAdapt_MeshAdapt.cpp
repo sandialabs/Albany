@@ -16,9 +16,9 @@
 #include <apfZoltan.h>
 #include <apfMDS.h> // for reorderMdsMesh
 
-#include "AAdapt_UnifSizeField.hpp"
-#include "AAdapt_UnifRefSizeField.hpp"
-#include "AAdapt_NonUnifRefSizeField.hpp"
+#include "AAdapt_ConstantSizeField.hpp"
+#include "AAdapt_ScaledSizeField.hpp"
+#include "AAdapt_UniformRefine.hpp"
 #include "AAdapt_AlbanySizeField.hpp"
 #include "AAdapt_SPRSizeField.hpp"
 #include "AAdapt_ExtrudedAdapt.hpp"
@@ -46,12 +46,12 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   mesh = pumiMeshStruct->getMesh();
 
   const std::string& method = params_->get("Method", "");
-  if (method == "RPI Unif Size")
-    szField = Teuchos::rcp(new AAdapt::UnifSizeField(pumi_discretization));
-  else if (method == "RPI UnifRef Size")
-    szField = Teuchos::rcp(new AAdapt::UnifRefSizeField(pumi_discretization));
-  else if (method == "RPI NonUnifRef Size")
-    szField = Teuchos::rcp(new AAdapt::NonUnifRefSizeField(pumi_discretization));
+  if (method == "RPI Constant Size")
+    szField = Teuchos::rcp(new AAdapt::ConstantSizeField(pumi_discretization));
+  else if (method == "RPI Scaled Size")
+    szField = Teuchos::rcp(new AAdapt::ScaledSizeField(pumi_discretization));
+  else if (method == "RPI Uniform Refine")
+    szField = Teuchos::rcp(new AAdapt::UniformRefine(pumi_discretization));
   else if (method == "RPI Albany Size")
     szField = Teuchos::rcp(new AAdapt::AlbanySizeField(pumi_discretization));
   else if (method == "RPI SPR Size") {
@@ -501,7 +501,8 @@ AAdapt::MeshAdapt::getValidAdapterParameters() const
   validPL->set<bool>("AdaptNow", false, "Used to force an adaptation step");
   validPL->set<bool>("Should Coarsen", true, "Set to false to disable mesh coarsening operations.");
   validPL->set<int>("Max Number of Mesh Adapt Iterations", 1, "Number of iterations to limit meshadapt to");
-  validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
+  validPL->set<double>("Target Element Size", 0.1, "Value of the constant size field");
+  validPL->set<double>("Mesh Size Scaling", 0.7, "Scales the current average size to make the new size field");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
   validPL->set<long int>("Target Element Count", 1000, "Desired number of elements for error-based adaptivity");
   validPL->set<std::string>("State Variable", "", "SPR operates on this variable");

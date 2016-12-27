@@ -38,10 +38,10 @@
       <Parameter name="Response 1" type="string" value="Solution Max Value"/>
     </ParameterList>
     <ParameterList name="Adaptation">
-      <Parameter name="Method" type="string" value="RPI UnifRef Size"/>
+      <Parameter name="Method" type="string" value="RPI Scaled Size"/>
       <Parameter name="Remesh Step Number" type="Array(int)" value="{1}"/>
       <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="5"/>
-     <Parameter name="Target Element Size" type="double" value="0.6"/>
+      <Parameter name="Mesh Size Scaling" type="double" value="0.6"/>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">

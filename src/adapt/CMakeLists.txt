@@ -121,13 +121,13 @@ IF(ALBANY_LCM AND ALBANY_STK_PERCEPT AND ALBANY_HAVE_STK)
 
 SET(SOURCES ${SOURCES}
     AAdapt_STKAdaptT.cpp
-    AAdapt_STKUnifSizeField.cpp
+    AAdapt_STKConstantSizeField.cpp
    )
 
 SET(HEADERS ${HEADERS}
     AAdapt_STKAdaptT.hpp
     AAdapt_STKAdaptT_Def.hpp
-    AAdapt_STKUnifSizeField.hpp
+    AAdapt_STKConstantSizeField.hpp
    )
 
 IF (ALBANY_EPETRA) 
@@ -148,9 +148,9 @@ IF(ALBANY_SCOREC)
 SET(SOURCES ${SOURCES}
     AAdapt_MeshAdapt.cpp
     AAdapt_MeshAdaptMethod.cpp
-    AAdapt_UnifSizeField.cpp
-    AAdapt_UnifRefSizeField.cpp
-    AAdapt_NonUnifRefSizeField.cpp
+    AAdapt_ConstantSizeField.cpp
+    AAdapt_ScaledSizeField.cpp
+    AAdapt_UniformRefine.cpp
     AAdapt_AlbanySizeField.cpp
     AAdapt_ExtrudedAdapt.cpp
    )
@@ -158,9 +158,9 @@ SET(SOURCES ${SOURCES}
 SET(HEADERS ${HEADERS}
     AAdapt_MeshAdaptMethod.hpp
     AAdapt_MeshAdapt.hpp
-    AAdapt_UnifSizeField.hpp
-    AAdapt_UnifRefSizeField.hpp
-    AAdapt_NonUnifRefSizeField.hpp
+    AAdapt_ConstantSizeField.hpp
+    AAdapt_ScaledSizeField.hpp
+    AAdapt_UniformRefine.hpp
     AAdapt_AlbanySizeField.hpp
     AAdapt_ExtrudedAdapt.hpp
    )

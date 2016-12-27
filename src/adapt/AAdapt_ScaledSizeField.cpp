@@ -5,23 +5,21 @@
 //*****************************************************************//
 
 
-#include "AAdapt_UnifSizeField.hpp"
+#include "AAdapt_ScaledSizeField.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
 
-AAdapt::UnifSizeField::UnifSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc) :
+#include "Albany_Utils.hpp"
+
+AAdapt::ScaledSizeField::ScaledSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc) :
   MeshAdaptMethod(disc) {
 }
 
-AAdapt::UnifSizeField::
-~UnifSizeField() {
-}
-
 void
-AAdapt::UnifSizeField::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
+AAdapt::ScaledSizeField::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
 {
 
   ma::IsotropicFunction*
-    isf = dynamic_cast<ma::IsotropicFunction*>(&unifIsoFunc);
+    isf = dynamic_cast<ma::IsotropicFunction*>(&scaledIsoFunc);
   ma::Input *in = ma::configure(mesh_struct->getMesh(), isf);
 
   in->maximumIterations = adapt_params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
@@ -35,13 +33,26 @@ AAdapt::UnifSizeField::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& ada
 }
 
 void
-AAdapt::UnifSizeField::preProcessShrunkenMesh() {
+AAdapt::ScaledSizeField::preProcessOriginalMesh()
+{
+
+  scaledIsoFunc.averageEdgeLength_ = ma::getAverageEdgeLength(mesh_struct->getMesh());
+
 }
 
+AAdapt::ScaledSizeField::
+~ScaledSizeField() {
+}
 
 void
-AAdapt::UnifSizeField::setParams(
+AAdapt::ScaledSizeField::preProcessShrunkenMesh() {
+}
+
+void
+AAdapt::ScaledSizeField::setParams(
     const Teuchos::RCP<Teuchos::ParameterList>& p) {
-  unifIsoFunc.elem_size = p->get<double>("Target Element Size", 0.1);
+
+  scaledIsoFunc.factor_ = p->get<double>("Element Size Scaling", 0.7);
+
 }
 

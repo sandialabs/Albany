@@ -42,7 +42,7 @@
 
     <!-- Adapt mesh using meshAdapt -->
     <ParameterList name="Adaptation">
-      <Parameter name="Method" type="string" value="RPI Unif Size"/>
+      <Parameter name="Method" type="string" value="RPI Constant Size"/>
       <Parameter name="Remesh Step Number" type="Array(int)" value="{5}"/>
       <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="10"/>
       <Parameter name="Target Element Size" type="double" value="0.001"/>

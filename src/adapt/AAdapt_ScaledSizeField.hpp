@@ -4,20 +4,20 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AADAPT_UNIFSIZEFIELD_HPP
-#define AADAPT_UNIFSIZEFIELD_HPP
+#ifndef AADAPT_SCALEDSIZEFIELD_HPP
+#define AADAPT_SCALEDSIZEFIELD_HPP
 
 #include "AAdapt_MeshAdaptMethod.hpp"
 
 namespace AAdapt {
 
-class UnifSizeField : public MeshAdaptMethod {
+class ScaledSizeField : public MeshAdaptMethod {
 
   public:
 
-    UnifSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
+    ScaledSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
 
-    ~UnifSizeField();
+    ~ScaledSizeField();
 
     void adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
@@ -25,24 +25,26 @@ class UnifSizeField : public MeshAdaptMethod {
 
     void preProcessShrunkenMesh();
 
-    void preProcessOriginalMesh() {}
+    void preProcessOriginalMesh();
     void postProcessFinalMesh() {}
     void postProcessShrunkenMesh() {}
 
-    class UnifIsoFunc : public ma::IsotropicFunction
+    class ScaledIsoFunc : public ma::IsotropicFunction
     {
       public:
-        virtual ~UnifIsoFunc(){}
+        virtual ~ScaledIsoFunc(){}
 
     /** \brief get the desired element size at this vertex */
 
         virtual double getValue(ma::Entity* vert){
-           return elem_size;
-        } 
+            return factor_ * averageEdgeLength_;
+        }
 
-        double elem_size;
+        double factor_;
+        double averageEdgeLength_;
 
-    } unifIsoFunc;
+    } scaledIsoFunc;
+
 
 };
 
