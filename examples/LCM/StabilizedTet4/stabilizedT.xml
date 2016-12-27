@@ -31,15 +31,16 @@
         <Parameter
           name="Number of points"
           type="int"
-          value="2" />
+          value="4" />
         <Parameter
           name="Time Values"
           type="Array(double)"
-          value="{ 0.0, 1.0, 2.0}" />
+          value="{ 0.0, 1.0, 2.0, 3.0}" />
+        <!-- the 3.0 data point is a workaround for LOCA's DfDp perturbation -->
         <Parameter
           name="BC Values"
           type="Array(double)"
-          value="{ 0.0, 0.5, 1.0}" />
+          value="{ 0.0, 0.5, 1.0, 1.0}" />
       </ParameterList>
     </ParameterList>
 

@@ -31,7 +31,7 @@
         <Parameter
           name="Number of points"
           type="int"
-          value="2" />
+          value="4" />
         <Parameter
           name="Time Values"
           type="Array(double)"
