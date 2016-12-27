@@ -615,14 +615,8 @@ void anlzCoords (
 }
 
 void writeMesh (
-  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc)
+  const Teuchos::RCP<Albany::PUMIDiscretization>&)
 {
-  return;
-  static int ncalls = 0;
-  std::stringstream ss;
-  ss << "mesh_" << ncalls << ".vtk";
-  ++ncalls;
-  pumi_disc->writeMeshDebug(ss.str());
 }
 
 // Helper struct for updateCoordinates. Keep track of data relevant to update
