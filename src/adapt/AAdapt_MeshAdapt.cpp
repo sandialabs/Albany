@@ -262,6 +262,8 @@ void AAdapt::MeshAdapt::afterAdapt()
   // Throw away some Albany data structures and re-build them from the mesh
   // Note that the solution transfer for the QP fields happens in this call
   pumi_discretization->updateMesh(should_transfer_ip_data, param_lib_);
+  /* see the comment in Albany_APFDiscretization.cpp */
+  pumi_discretization->initTemperatureHack();
 
   // detach QP fields from the apf mesh
   if (should_transfer_ip_data)
