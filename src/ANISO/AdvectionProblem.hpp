@@ -93,6 +93,7 @@ class AdvectionProblem : public AbstractProblem {
 #include "PHAL_SaveStateField.hpp"
 
 #include "ANISO_Time.hpp"
+#include "AdvectionTau.hpp"
 #include "AdvectionResidual.hpp"
 
 template <typename EvalT>
@@ -193,6 +194,16 @@ Albany::AdvectionProblem::constructEvaluators(
   alpha[0] = alpha_x;
   alpha[1] = alpha_y;
 
+  { // SUPG tau
+    RCP<ParameterList> p = rcp(new ParameterList("Tau"));
+    p->set<double>("Kappa", kappa);
+    p->set<Teuchos::Array<double> >("Alpha", alpha);
+    p->set<std::string>("Gradient BF Name", "Grad BF");
+    p->set<std::string>("Tau Name", "Tau");
+    ev = rcp(new ANISO::AdvectionTau<EvalT, PHAL::AlbanyTraits>(*p, dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   { // SUPG stabilized advection-diffusion residual
     RCP<ParameterList> p = rcp(new ParameterList("Advection Residual"));
     p->set<double>("Kappa", kappa);
@@ -201,6 +212,7 @@ Albany::AdvectionProblem::constructEvaluators(
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<std::string>("Concentration Name", "Phi");
     p->set<std::string>("Concentration Gradient Name", "Phi Gradient");
+    p->set<std::string>("Tau Name", "Tau");
     p->set<std::string>("Residual Name", "Phi Residual");
     ev = rcp(new ANISO::AdvectionResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
     fm0.template registerEvaluator<EvalT>(ev);

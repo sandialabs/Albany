@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ADVECTION_RESIDUAL_HPP
-#define ADVECTION_RESIDUAL_HPP
+#ifndef ADVECTION_TAU_HPP
+#define ADVECTION_TAU_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -16,14 +16,14 @@
 namespace ANISO {
 
 template<typename EvalT, typename Traits>
-class AdvectionResidual : 
+class AdvectionTau : 
   public PHX::EvaluatorWithBaseImpl<Traits>,
   public PHX::EvaluatorDerived<EvalT, Traits>
 {
 
   public:
 
-    AdvectionResidual(
+    AdvectionTau(
         const Teuchos::ParameterList& p,
         const Teuchos::RCP<Albany::Layouts>& dl);
 
@@ -47,12 +47,8 @@ class AdvectionResidual :
     double kappa;
     Teuchos::Array<double> alpha;
 
-    PHX::MDField<MeshScalarT, Cell, Node, QuadPoint> w_bf;
-    PHX::MDField<MeshScalarT, Cell, Node, QuadPoint, Dim> w_grad_bf;
-    PHX::MDField<ScalarT, Cell, QuadPoint> phi;
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim> grad_phi;
+    PHX::MDField<MeshScalarT, Cell, Node, QuadPoint, Dim> grad_bf;
     PHX::MDField<ScalarT, Cell, QuadPoint> tau;
-    PHX::MDField<ScalarT, Cell, Node> residual;
 
 };
 
