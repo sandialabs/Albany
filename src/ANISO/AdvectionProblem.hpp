@@ -198,6 +198,7 @@ Albany::AdvectionProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Tau"));
     p->set<double>("Kappa", kappa);
     p->set<Teuchos::Array<double> >("Alpha", alpha);
+    p->set<std::string>("Coordinate Name", "Coord Vec");
     p->set<std::string>("Gradient BF Name", "Grad BF");
     p->set<std::string>("Tau Name", "Tau");
     ev = rcp(new ANISO::AdvectionTau<EvalT, PHAL::AlbanyTraits>(*p, dl_));

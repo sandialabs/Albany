@@ -43,10 +43,12 @@ class AdvectionTau :
     int num_nodes;
     int num_qps;
     int num_dims;
+    int num_vertices;
 
     double kappa;
     Teuchos::Array<double> alpha;
 
+    PHX::MDField<MeshScalarT, Cell, Vertex, Dim> coord;
     PHX::MDField<MeshScalarT, Cell, Node, QuadPoint, Dim> grad_bf;
     PHX::MDField<ScalarT, Cell, QuadPoint> tau;
 
