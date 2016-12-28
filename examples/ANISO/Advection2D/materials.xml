@@ -1,0 +1,14 @@
+<ParameterList>
+  <ParameterList name="ElementBlocks">
+    <ParameterList name="square">
+      <Parameter name="material" type="string" value="AdvectiveLimit"/>
+    </ParameterList>
+  </ParameterList>
+  <ParameterList name="Materials">
+    <ParameterList name="AdvectiveLimit">
+      <Parameter name="Kappa" type="double" value="1.0e-3"/>
+      <Parameter name="Alpha_x" type="double" value="1.0"/>
+      <Parameter name="Alpha_y" type="double" value="0.0"/>
+    </ParameterList>
+  </ParameterList>
+</ParameterList>
