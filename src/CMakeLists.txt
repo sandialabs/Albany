@@ -718,6 +718,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./AMP/problems
                      ./AMP/evaluators
                      ./AMP/responses
+                     ./ANISO
                      ./QCAD
                      ./QCAD/problems
                      ./QCAD/evaluators

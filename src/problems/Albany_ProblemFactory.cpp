@@ -62,7 +62,7 @@
 #include "AMP/problems/PhaseProblem.hpp"
 #endif
 
-#ifndef ALBANY_ANISO
+#ifdef ALBANY_ANISO
 #include "ANISO/AdvectionProblem.hpp"
 #endif
 
@@ -307,11 +307,11 @@ Albany::ProblemFactory::create()
   }
 #endif
 #ifdef ALBANY_ANISO
-  else if (method == "Advection 2D") {
-    strategy = rcp(new Albany::PhaseProblem(problemParams, paramLib, 2, commT));
+  else if (method == "ANISO Advection 2D") {
+    strategy = rcp(new Albany::AdvectionProblem(problemParams, paramLib, 2, commT));
   }
-  else if (method == "Advection 3D") {
-    strategy = rcp(new Albany::PhaseProblem(problemParams, paramLib, 3, commT));
+  else if (method == "ANISO Advection 3D") {
+    strategy = rcp(new Albany::AdvectionProblem(problemParams, paramLib, 3, commT));
   }
 #endif
 #ifdef ALBANY_HYDRIDE
