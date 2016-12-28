@@ -1972,15 +1972,15 @@ ATO::SpatialFilter::buildOperator(
     for (std::map<GlobalPoint,std::set<GlobalPoint> >::iterator 
         it=neighbors.begin(); it!=neighbors.end(); ++it) { 
       GlobalPoint homeNode = it->first;
-      int home_node_gid = homeNode.gid;
+      GO home_node_gid = homeNode.gid;
       std::set<GlobalPoint> connected_nodes = it->second;
-      double weight; 
+      ST weight; 
       ST zero = 0.0;  
       Teuchos::Array<ST> weightT(1);
       if( connected_nodes.size() > 0 ){
         for (std::set<GlobalPoint>::iterator 
              set_it=connected_nodes.begin(); set_it!=connected_nodes.end(); ++set_it) {
-           int neighbor_node_gid = set_it->gid;
+           GO neighbor_node_gid = set_it->gid;
            const double* coords = &(set_it->coords[0]);
            double distance = 0.0;
            for (int dim=0; dim<dimension; dim++) 
