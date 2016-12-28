@@ -40,6 +40,19 @@ class AdvectionResidual :
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
+    int num_nodes;
+    int num_qps;
+    int num_dims;
+
+    double kappa;
+    Teuchos::Array<double> alpha;
+
+    PHX::MDField<MeshScalarT, Cell, Node, QuadPoint> w_bf;
+    PHX::MDField<MeshScalarT, Cell, Node, QuadPoint, Dim> w_grad_bf;
+    PHX::MDField<ScalarT, Cell, QuadPoint> phi;
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim> grad_phi;
+    PHX::MDField<ScalarT, Cell, Node> residual;
+
 };
 
 }

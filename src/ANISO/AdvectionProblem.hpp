@@ -93,6 +93,7 @@ class AdvectionProblem : public AbstractProblem {
 #include "PHAL_SaveStateField.hpp"
 
 #include "ANISO_Time.hpp"
+#include "AdvectionResidual.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -200,7 +201,6 @@ Albany::AdvectionProblem::constructEvaluators(
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<std::string>("Concentration Name", "Phi");
     p->set<std::string>("Concentration Gradient Name", "Phi Gradient");
-    p->set<std::string>("Coordinates Name", "Coord Vec");
     p->set<std::string>("Residual Name", "Phi Residual");
     ev = rcp(new ANISO::AdvectionResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
     fm0.template registerEvaluator<EvalT>(ev);
