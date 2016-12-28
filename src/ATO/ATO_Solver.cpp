@@ -1409,8 +1409,10 @@ ATO::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPara
   return ret;
 }
 
+/******************************************************************************/
 void 
 ATO::Solver::updateTpetraResponseMaps()
+/******************************************************************************/
 {
   std::map<std::string, Teuchos::RCP<const Epetra_Vector> >::const_iterator git;
   git = responseMap.cbegin();  
@@ -2264,7 +2266,346 @@ ATO::SpatialFilter::importNeighbors(
   }
 }
   
+/******************************************************************************/
+ATO::SolverT::
+SolverT(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+       const Teuchos::RCP<const Teuchos_Comm>& comm,
+       const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+: _solverComm(comm), _mainAppParams(appParams)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}  
   
-  
-  
-  
+/******************************************************************************/
+void
+ATO::SolverT::zeroSet()
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}  
+
+void 
+ATO::SolverT::evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
+                            Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const 
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+///*************** SOLVER - OPTIMIZER INTERFACE FUNCTIONS *******************///
+/******************************************************************************/
+
+/******************************************************************************/
+void ATO::SolverT::getOptDofsUpperBound( Teuchos::Array<double>& b )
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}  
+
+/******************************************************************************/
+void ATO::SolverT::getOptDofsLowerBound( Teuchos::Array<double>& b )
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::InitializeOptDofs(double* p)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::ComputeObjective(const double* p, double& g, double* dgdp)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::ComputeObjective(double* p, double& g, double* dgdp)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::writeCurrentDesign()
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::copyTopologyIntoParameter( const double* p, SolverSubSolverT& subSolver )
+/******************************************************************************/
+{
+  //IKT, fill in!
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr )
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::smoothTopology(double* p)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::smoothTopologyT(double* p)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::smoothTopology(Teuchos::RCP<TopologyInfoStruct> topoStruct)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::smoothTopologyT(Teuchos::RCP<TopologyInfoStructT> topoStructT)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& stateMgr )
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::copyConstraintFromStateMgr( double& c, double* dcdp )
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::copyObjectiveFromStateMgr( double& g, double* dgdp )
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::ComputeMeasure(std::string measureType, double& measure)
+/******************************************************************************/
+{
+  return _atoProblem->ComputeMeasure(measureType, measure);
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::ComputeMeasure(std::string measureType, const double* p, 
+                            double& measure, double* dmdp, 
+                            std::string integrationMethod)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::ComputeVolume(double* p, const double* dfdp, 
+                           double& v, double threshhold, double minP)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::Compute(double* p, double& g, double* dgdp, double& c, double* dcdp)
+/******************************************************************************/
+{
+  Compute((const double*)p, g, dgdp, c, dcdp);
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::Compute(const double* p, double& g, double* dgdp, double& c, double* dcdp)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::ComputeConstraint(double* p, double& c, double* dcdp)
+/******************************************************************************/
+{
+}
+
+/******************************************************************************/
+int
+ATO::SolverT::GetNumOptDofs()
+/******************************************************************************/
+{
+//  return _subProblems[0].app->getDiscretization()->getNodeMap()->NumMyElements();
+  auto nVecs = ObjectiveGradientVecT.size();
+  return nVecs*ObjectiveGradientVecT[0]->getLocalLength();
+}
+
+/******************************************************************************/
+///*********************** SETUP AND UTILITY FUNCTIONS **********************///
+/******************************************************************************/
+
+
+/******************************************************************************/
+ATO::SolverSubSolverT
+ATO::SolverT::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appParams, 
+                              const Teuchos::RCP<const Teuchos_Comm>& commT,
+                              const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void 
+ATO::SolverT::updateTpetraResponseMaps()
+/******************************************************************************/
+{
+  std::map<std::string, Teuchos::RCP<const Epetra_Vector> >::const_iterator git;
+  git = responseMap.cbegin();  
+  for (int i = 0; i<responseMap.size(); i++) {
+    std::string gName = git->first;
+    Teuchos::RCP<const Tpetra_Vector> gT = Petra::EpetraVector_To_TpetraVectorConst(*(git->second), _solverComm); 
+    responseMapT[gName] = gT;
+    git++; 
+  }
+  std::map<std::string, Teuchos::RCP<Epetra_MultiVector> >::const_iterator git2;
+  git2 = responseDerivMap.cbegin();  
+  for (int i = 0; i<responseDerivMap.size(); i++) {
+    std::string gName = git2->first; 
+    Teuchos::RCP<Tpetra_MultiVector> dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*(git2->second), _solverComm); 
+    responseDerivMapT[gName] = dgdpT;
+    git2++; 
+  }
+}
+
+/******************************************************************************/
+Teuchos::RCP<Teuchos::ParameterList> 
+ATO::SolverT::createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}   
+
+/******************************************************************************/
+Teuchos::RCP<Teuchos::ParameterList> 
+ATO::SolverT::createHomogenizationInputFile( 
+    const Teuchos::RCP<Teuchos::ParameterList>& appParams, 
+    const Teuchos::ParameterList& homog_subList, 
+    int homogProblemIndex, 
+    int homogSubIndex, 
+    int homogDim) const
+/******************************************************************************/
+{
+  //IKT, fill in!    
+}
+
+/******************************************************************************/
+Teuchos::RCP<const Teuchos::ParameterList>
+ATO::SolverT::getValidProblemParameters() const
+/******************************************************************************/
+{
+  //IKT, fill in!
+}
+
+/******************************************************************************/
+///*************                   BOILERPLATE                  *************///
+/******************************************************************************/
+
+
+
+/******************************************************************************/
+ATO::SolverT::~SolverT() { }
+/******************************************************************************/
+
+
+/******************************************************************************/
+Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> ATO::SolverT::get_x_space() const
+/******************************************************************************/
+{
+  //IKT, fill in!
+//  Teuchos::RCP<const Epetra_Map> dummy;
+//  return dummy;
+}
+
+/******************************************************************************/
+Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> ATO::SolverT::get_f_space() const
+/******************************************************************************/
+{
+  //IKT, fill in! 
+  //Teuchos::RCP<const Epetra_Map> dummy;
+  //return dummy;
+}
+
+/******************************************************************************/
+Thyra::ModelEvaluatorBase::InArgs<ST> 
+ATO::SolverT::createInArgs() const
+/******************************************************************************/
+{
+  //IKT, fill in! 
+  /*EpetraExt::ModelEvaluator::InArgsSetup inArgs;
+  inArgs.setModelEvalDescription("ATO Solver Model Evaluator Description");
+  inArgs.set_Np(_num_parameters);
+  return inArgs;*/
+}
+
+/******************************************************************************/
+Thyra::ModelEvaluatorBase::OutArgs<ST> 
+ATO::SolverT::createOutArgsImpl() const
+/******************************************************************************/
+{
+  //IKT, fill in! 
+  /*EpetraExt::ModelEvaluator::OutArgsSetup outArgs;
+  outArgs.setModelEvalDescription("ATO Solver Multipurpose Model Evaluator");
+  outArgs.set_Np_Ng(_num_parameters, _num_responses+1);  //TODO: is the +1 necessary still??
+  return outArgs;*/
+}
+
+/******************************************************************************/
+Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> 
+ATO::SolverT::get_g_space(int j) const 
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+ATO::SolverSubSolverDataT
+ATO::SolverT::CreateSubSolverData(const ATO::SolverSubSolverT& sub) const
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
