@@ -899,6 +899,7 @@ IF(ENABLE_OMEGA_H)
   FIND_PACKAGE(Omega_h 6.3.0 REQUIRED PATHS "${ALBANY_OMEGA_H_DIR}")
   MESSAGE(STATUS "Omega_h found at ${Omega_h_CONFIG}")
   SET(ALBANY_OMEGA_H TRUE)
+  ADD_DEFINITIONS(-DALBANY_OMEGA_H)
 ENDIF()
 
 # ParaView's Catalyst CoProcessing package
