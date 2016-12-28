@@ -804,6 +804,16 @@ ELSE()
   SET(ALBANY_AMP FALSE)
 ENDIF()
 
+OPTION(ENABLE_ANISO "Flag to turn on anisotropic adaptive example" OFF)
+IF (ENABLE_ANISO)
+  SET(ALBANY_ANISO TRUE)
+  ADD_DEFINITIONS(-DALBANY_ANISO)
+  MESSAGE("-- ANISO     is Enabled, compiling with -DALBANY_ANISO")
+ELSE()
+  MESSAGE("-- ANISO     is NOT Enabled.")
+  SET(ALBANY_ANISO FALSE)
+ENDIF()
+
 # Set optional build of MOR (Model Order Reduction) defaults to OFF
 OPTION(ENABLE_MOR "Flag to turn on MOR Source code" OFF)
 IF (ENABLE_MOR)
