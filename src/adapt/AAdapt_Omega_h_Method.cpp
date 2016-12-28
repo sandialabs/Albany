@@ -9,7 +9,6 @@
 #include "AAdapt_SPRSizeField.hpp"
 #include "AAdapt_ConstantSizeField.hpp"
 #include <apfOmega_h.h>
-#include <apfMDS.h>
 
 namespace AAdapt {
 
@@ -47,14 +46,18 @@ void Omega_h_Method::preProcessShrunkenMesh() {
 
 void Omega_h_Method::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_) {
   apf::to_omega_h(&mesh_osh, mesh_apf);
-  auto model_gmi = mesh_apf->getModel();
-  mesh_apf->destroyNative();
-  apf::destroyMesh(mesh_apf);
+  Omega_h::vtk::write_vtu("to_omega_h.vtu", &mesh_osh, mesh_osh.dim());
+  apf::clear(mesh_apf);
+  assert(mesh_apf->count(0) == 0);
+  assert(mesh_apf->count(1) == 0);
+  assert(mesh_apf->count(2) == 0);
+  assert(mesh_apf->count(3) == 0);
   Omega_h::AdaptOpts opts(&mesh_osh);
   Omega_h::adapt(&mesh_osh, opts);
-  mesh_apf = apf::makeEmptyMdsMesh(model_gmi, mesh_osh.dim(), false);
+  Omega_h::vtk::write_vtu("adapted.vtu", &mesh_osh, mesh_osh.dim());
   apf::from_omega_h(mesh_apf, &mesh_osh);
   mesh_osh = Omega_h::Mesh(&library_osh);
+  apf::writeVtkFiles("from_omega_h", mesh_apf);
 }
 
 void Omega_h_Method::postProcessShrunkenMesh() {

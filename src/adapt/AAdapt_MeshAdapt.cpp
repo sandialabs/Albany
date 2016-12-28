@@ -22,6 +22,9 @@
 #include "AAdapt_AlbanySizeField.hpp"
 #include "AAdapt_SPRSizeField.hpp"
 #include "AAdapt_ExtrudedAdapt.hpp"
+#ifdef ALBANY_OMEGA_H
+#include "AAdapt_Omega_h_Method.hpp"
+#endif
 
 #include "AAdapt_RC_Manager.hpp"
 
@@ -59,8 +62,13 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     szField = Teuchos::rcp(new AAdapt::SPRSizeField(pumi_discretization));
   } else if (method == "RPI Extruded")
     szField = Teuchos::rcp(new AAdapt::ExtrudedAdapt(pumi_discretization));
+#ifdef ALBANY_OMEGA_H
+  else if (method == "RPI Omega_h")
+    szField = Teuchos::rcp(new AAdapt::Omega_h_Method(pumi_discretization));
+#endif
   else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "unknown RPI adapt method" << method);
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "unknown RPI adapt method \"" << method << "\"\n");
 
   // Save the initial output file name
   base_exo_filename = pumiMeshStruct->outputFileName;
