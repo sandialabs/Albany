@@ -15,10 +15,13 @@ ${ANISO_DIR}/AdvectionProblem.hpp
 
 set(aniso-evaluator-sources
 ${ANISO_DIR}/ANISO_Time.cpp
+${ANISO_DIR}/AdvectionResidual.cpp
 )
 set(aniso-evaluator-headers
 ${ANISO_DIR}/ANISO_Time.hpp
 ${ANISO_DIR}/ANISO_Time_Def.hpp
+${ANISO_DIR}/AdvectionResidual.hpp
+${ANISO_DIR}/AdvectionResidual_Def.hpp
 )
 
 set(aniso-response-sources
