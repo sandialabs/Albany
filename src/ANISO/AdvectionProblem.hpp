@@ -92,6 +92,8 @@ class AdvectionProblem : public AbstractProblem {
 #include "Albany_ResponseUtilities.hpp"
 #include "PHAL_SaveStateField.hpp"
 
+#include "ANISO_Time.hpp"
+
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
 Albany::AdvectionProblem::constructEvaluators(
@@ -112,8 +114,8 @@ Albany::AdvectionProblem::constructEvaluators(
 
   const CellTopologyData* const elem_top = &meshSpecs.ctd;
   std::string eb_name = meshSpecs.ebName;
-  std::string material_name;
-  material_name = material_db_->getElementBlockParam<std::string>(
+  std::string material_name =
+    material_db_->getElementBlockParam<std::string>(
       eb_name, "material");
 
   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
@@ -133,13 +135,6 @@ Albany::AdvectionProblem::constructEvaluators(
   const int num_vertices = elem_type->getNodeCount();
   const int num_nodes = intrepid_basis->getCardinality();
   const int num_qps = elem_cubature->getNumPoints();
-
-  *out  << "Field Dimensions: Workset=" << workset_size
-        << ", Vertices= " << num_vertices
-        << ", Nodes= " << num_nodes
-        << ", QuadPts= " << num_qps
-        << ", Dim= " << num_dims_
-        << std::endl;
 
   dl_ = rcp(new Albany::Layouts(
         workset_size, num_vertices, num_nodes, num_qps, num_dims_));
@@ -172,6 +167,58 @@ Albany::AdvectionProblem::constructEvaluators(
   fm0.template registerEvaluator<EvalT>(
       eval_utils.constructComputeBasisFunctionsEvaluator(
         elem_type, intrepid_basis, elem_cubature));
+
+  { // Time
+    RCP<ParameterList> p = rcp(new ParameterList("Time"));
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    p->set<std::string>("Time Name", "Time");
+    p->set<std::string>("Delta Time Name", "Delta Time");
+    ev = rcp(new ANISO::Time<EvalT, PHAL::AlbanyTraits>(*p, dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerStateVariable(
+        "Time", dl_->workset_scalar, dl_->dummy, eb_name, "scalar", 0.0, true);
+    ev = rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  // set up the material variables
+  double kappa = material_db_->getElementBlockParam<double>(
+      eb_name, "Kappa");
+  double alpha_x =  material_db_->getElementBlockParam<double>(
+      eb_name, "Alpha_x");
+  double alpha_y = material_db_->getElementBlockParam<double>(
+      eb_name, "Alpha_y");
+  Teuchos::Array<double> alpha(2);
+  alpha[0] = alpha_x;
+  alpha[1] = alpha_y;
+
+  { // SUPG stabilized advection-diffusion residual
+    RCP<ParameterList> p = rcp(new ParameterList("Advection Residual"));
+    p->set<double>("Kappa", kappa);
+    p->set<Teuchos::Array<double> >("Alpha", alpha);
+    p->set<std::string>("Weighted BF Name", "wBF");
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("Concentration Name", "Phi");
+    p->set<std::string>("Concentration Gradient Name", "Phi Gradient");
+    p->set<std::string>("Coordinates Name", "Coord Vec");
+    p->set<std::string>("Residual Name", "Phi Residual");
+    ev = rcp(new ANISO::AdvectionResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
+    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl_->dummy);
+    fm0.requireField<EvalT>(res_tag);
+    return res_tag.clone();
+  }
+
+  else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
+    RCP<ParameterList> pFromProb = rcp(new ParameterList("Params from problem"));
+    Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> resp_utils(dl_);
+    return resp_utils.constructResponses(fm0, *responseList, pFromProb, stateMgr);
+  }
+
+  return Teuchos::null;
 
 }
 

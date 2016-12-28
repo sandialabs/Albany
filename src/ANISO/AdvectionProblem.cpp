@@ -91,6 +91,6 @@ Albany::AdvectionProblem::getValidProblemParameters() const {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericProblemParams("ValidAdvectionProblemParams");
   validPL->set<std::string>(
-      "MaterialDB FileName", "materials.xml", "XML file name");
+      "MaterialDB Filename", "materials.xml", "XML file name");
   return validPL;
 }
