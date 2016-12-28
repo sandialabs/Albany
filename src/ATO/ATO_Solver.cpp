@@ -2556,18 +2556,16 @@ ATO::SolverT::~SolverT() { }
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> ATO::SolverT::get_x_space() const
 /******************************************************************************/
 {
-  //IKT, fill in!
-//  Teuchos::RCP<const Epetra_Map> dummy;
-//  return dummy;
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > dummy; 
+  return dummy;
 }
 
 /******************************************************************************/
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> ATO::SolverT::get_f_space() const
 /******************************************************************************/
 {
-  //IKT, fill in! 
-  //Teuchos::RCP<const Epetra_Map> dummy;
-  //return dummy;
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > dummy; 
+  return dummy;
 }
 
 /******************************************************************************/
@@ -2575,11 +2573,10 @@ Thyra::ModelEvaluatorBase::InArgs<ST>
 ATO::SolverT::createInArgs() const
 /******************************************************************************/
 {
-  //IKT, fill in! 
-  /*EpetraExt::ModelEvaluator::InArgsSetup inArgs;
+  Thyra::ModelEvaluatorBase::InArgsSetup<ST> inArgs; 
   inArgs.setModelEvalDescription("ATO Solver Model Evaluator Description");
   inArgs.set_Np(_num_parameters);
-  return inArgs;*/
+  return inArgs;
 }
 
 /******************************************************************************/
@@ -2587,11 +2584,10 @@ Thyra::ModelEvaluatorBase::OutArgs<ST>
 ATO::SolverT::createOutArgsImpl() const
 /******************************************************************************/
 {
-  //IKT, fill in! 
-  /*EpetraExt::ModelEvaluator::OutArgsSetup outArgs;
+  Thyra::ModelEvaluatorBase::OutArgsSetup<ST> outArgs; 
   outArgs.setModelEvalDescription("ATO Solver Multipurpose Model Evaluator");
   outArgs.set_Np_Ng(_num_parameters, _num_responses+1);  //TODO: is the +1 necessary still??
-  return outArgs;*/
+  return outArgs;
 }
 
 /******************************************************************************/

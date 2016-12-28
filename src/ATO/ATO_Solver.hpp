@@ -305,16 +305,16 @@ namespace ATO {
             const Teuchos::RCP<const Teuchos_Comm>& comm,
             const Teuchos::RCP<const Tpetra_Vector>& initial_guess);
 
-    ~SolverT();
+    ~SolverT(); //done 
 
     //pure virtual from Thyra::ModelEvaluator
-    virtual Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> get_x_space() const;
+    virtual Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> get_x_space() const; //done
     //pure virtual from Thyra::ModelEvaluator
-    virtual Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> get_f_space() const;
+    virtual Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> get_f_space() const; //done 
     //pure virtual from Thyra::ModelEvaluator
-    virtual Thyra::ModelEvaluatorBase::InArgs<ST> createInArgs() const;
+    virtual Thyra::ModelEvaluatorBase::InArgs<ST> createInArgs() const; //done  
     //pure virtual from Thyra::ModelEvaluator
-    virtual Thyra::ModelEvaluatorBase::OutArgs<ST> createOutArgsImpl() const;
+    virtual Thyra::ModelEvaluatorBase::OutArgs<ST> createOutArgsImpl() const; //done 
     //pure virtual from Thyra::ModelEvaluator
     void evalModelImpl(
       Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
