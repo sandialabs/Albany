@@ -74,6 +74,7 @@ void Omega_h_Method::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt
   if (mesh_osh.has_tag(0, "size")) {
     mesh_osh.add_tag(0, "target_size", 1, OMEGA_H_SIZE,
         OMEGA_H_DO_OUTPUT, mesh_osh.get_array<double>(0, "size"));
+    mesh_osh.remove_tag(0, "size");
   }
   if (size_method == "Hessian") {
     auto sol_name = Albany::APFMeshStruct::solution_name[0];
@@ -117,7 +118,7 @@ void Omega_h_Method::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt
   }
   if (mesh_osh.has_tag(0, "target_size")) {
     auto implied_size = Omega_h::find_implied_size(&mesh_osh);
-    mesh_osh.add_tag(0, "size", Omega_h::symm_dofs(mesh_osh.dim()),
+    mesh_osh.add_tag(0, "size", 1,
         OMEGA_H_SIZE, OMEGA_H_DO_OUTPUT, implied_size);
   }
   Omega_h::AdaptOpts opts(&mesh_osh);
