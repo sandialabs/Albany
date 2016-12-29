@@ -320,8 +320,8 @@ namespace ATO {
       Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
       Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const; //done 
 
-    void Compute(double* p, double& f, double* dfdp, double& g, double* dgdp=NULL);
-    void Compute(const double* p, double& f, double* dfdp, double& g, double* dgdp=NULL);
+    void Compute(double* p, double& f, double* dfdp, double& g, double* dgdp=NULL); //done
+    void Compute(const double* p, double& f, double* dfdp, double& g, double* dgdp=NULL); //done 
 
     void ComputeConstraint(double* p, double& c, double* dcdp=NULL);
 

@@ -2645,7 +2645,39 @@ void
 ATO::SolverT::Compute(const double* p, double& g, double* dgdp, double& c, double* dcdp)
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  for(int i=0; i<_numPhysics; i++){
+
+    // copy data from p into each stateManager
+    if( entityType == "State Variable" ){
+      Albany::StateManager& stateMgr = _subProblems[i].app->getStateMgr();
+      copyTopologyIntoStateMgr( p, stateMgr );
+    } else 
+    if( entityType == "Distributed Parameter"){
+      copyTopologyIntoParameter( p, _subProblems[i] );
+    }
+
+    // enforce PDE constraints
+    _subProblems[i].modelT->evalModel((*_subProblems[i].params_inT),
+                                      (*_subProblems[i].responses_outT));
+  }
+
+  if ( entityType == "Distributed Parameter" ) {
+    updateTpetraResponseMaps(); 
+    _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
+  }
+  _objAggregator->EvaluateT();
+  copyObjectiveFromStateMgr( g, dgdp );
+  
+  if( !_conAggregator.is_null()){
+    if ( entityType == "Distributed Parameter" ) {
+      updateTpetraResponseMaps(); 
+      _conAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
+    }
+    _conAggregator->EvaluateT();
+    copyConstraintFromStateMgr( c, dcdp );
+  } else c = 0.0;
+
+  _iteration++;
 }
 
 /******************************************************************************/
