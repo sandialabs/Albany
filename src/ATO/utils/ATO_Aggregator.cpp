@@ -121,6 +121,17 @@ Aggregator::parse(const Teuchos::ParameterList& aggregatorParams)
 //**********************************************************************
 void 
 Aggregator_DistParamBased::
+SetInputVariablesT(const std::vector<SolverSubSolverT>& subProblems,
+                   const std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > valueMap,
+                   const std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > derivMap)
+
+//**********************************************************************
+{
+  //IKT, fill in! 
+}
+
+void 
+Aggregator_DistParamBased::
 SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,
                    const std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > valueMap,
                    const std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > derivMap)
@@ -199,6 +210,13 @@ SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
     derivatives[ir].name = gpit->first;
     derivatives[ir].value = gpit->second;
   }
+}
+//**********************************************************************
+void
+Aggregator_StateVarBased::SetInputVariablesT(const std::vector<SolverSubSolverT>& subProblems)
+//**********************************************************************
+{
+  //IKT, fill in! 
 }
 
 //**********************************************************************

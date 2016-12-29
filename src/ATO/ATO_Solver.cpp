@@ -2285,11 +2285,125 @@ ATO::SolverT::zeroSet()
   //IKT, fill in! 
 }  
 
+/******************************************************************************/
 void 
 ATO::SolverT::evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
                             Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const 
+/******************************************************************************/
 {
-  //IKT, fill in! 
+  int numHomogenizationSets = _homogenizationSets.size();
+  for (int iHomog=0; iHomog<numHomogenizationSets; iHomog++){
+    const HomogenizationSet& hs = _homogenizationSets[iHomog];
+    int numColumns = hs.homogenizationProblems.size();
+    for (int i=0; i<numColumns; i++){
+
+      // enforce PDE constraints
+      hs.homogenizationProblems[i].modelT->evalModel((*hs.homogenizationProblems[i].params_inT),
+                                                     (*hs.homogenizationProblems[i].responses_outT));
+    }
+
+    if (numColumns > 0){
+      // collect homogenized values
+      Kokkos::DynRankView<RealType, PHX::Device> Cvals("ZZZ", numColumns,numColumns);
+      for(int i=0; i<numColumns; i++){
+        Teuchos::RCP<Thyra::VectorBase<ST> > g = hs.homogenizationProblems[i].responses_outT->get_g(hs.responseIndex);
+        Teuchos::RCP<const Tpetra_Vector> g_tpetra = ConverterT::getConstTpetraVector(g);
+        Teuchos::ArrayRCP<const double> g_constView = g_tpetra->get1dView(); 
+        for(int j=0; j<numColumns; j++){
+          Cvals(i,j) = g_constView[j];
+        }
+      }
+      if (_solverComm->getRank() == 0){
+        Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+        *out << "*****************************************" << std::endl;
+        *out << " Homogenized parameters (" << hs.name << ") are: " << std::endl; 
+        for(int i=0; i<numColumns; i++){
+          for(int j=0; j<numColumns; j++){
+            *out << std::setprecision(10) << 1.0/2.0*(Cvals(i,j)+Cvals(j,i)) << " ";
+          }
+          *out << std::endl;
+        }
+        *out << "*****************************************" << std::endl;
+      }
+
+      for (int iPhys=0; iPhys<_numPhysics; iPhys++){
+        Albany::StateManager& stateMgr = _subProblems[iPhys].app->getStateMgr();
+        Albany::StateArrays& stateArrays = stateMgr.getStateArrays();
+        Albany::StateArrayVec& src = stateArrays.elemStateArrays;
+        int numWorksets = src.size();
+
+        for(int ws=0; ws<numWorksets; ws++){
+          for(int i=0; i<numColumns; i++){
+            for(int j=i; j<numColumns; j++){
+              std::stringstream valname;
+              valname << hs.name << " " << i+1 << j+1;
+              Albany::MDArray& wsC = src[ws][valname.str()]; 
+              if( wsC.size() != 0 ) wsC(0) = (Cvals(j,i)+Cvals(i,j))/2.0;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  for(int i=0; i<_numPhysics; i++){
+    Albany::StateManager& stateMgr = _subProblems[i].app->getStateMgr();
+    const Albany::WorksetArray<std::string>::type& 
+      wsEBNames = stateMgr.getDiscretization()->getWsEBNames();
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
+    wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();
+    Albany::StateArrays& stateArrays = stateMgr.getStateArrays();
+    Albany::StateArrayVec& dest = stateArrays.elemStateArrays;
+    int numWorksets = dest.size();
+  
+    // initialize topology of fixed blocks
+    int ntopos = _topologyInfoStructsT.size();
+
+    for(int ws=0; ws<numWorksets; ws++){
+
+      for(int itopo=0; itopo<ntopos; itopo++){
+        Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
+        Teuchos::RCP<Topology> topology = topoStructT->topologyT;
+        const Teuchos::Array<std::string>& fixedBlocks = topology->getFixedBlocks();
+
+        if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) != fixedBlocks.end() ){
+
+          if( topology->getEntityType() == "State Variable" ){
+            double matVal = topology->getMaterialValue();
+            Albany::MDArray& wsTopo = dest[ws][topology->getName()];
+            int numCells = wsTopo.dimension(0);
+            int numNodes = wsTopo.dimension(1);
+            for(int cell=0; cell<numCells; cell++)
+              for(int node=0; node<numNodes; node++){
+                wsTopo(cell,node) = matVal;
+              }
+          } else if( topology->getEntityType() == "Distributed Parameter" ){
+            Teuchos::ArrayRCP<double> ltopo = topoStructT->localVectorT->get1dViewNonConst(); 
+            double matVal = topology->getMaterialValue();
+            const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& elNodeID = wsElNodeID[ws];
+            int numCells = elNodeID.size();
+            int numNodes = elNodeID[0].size();
+            for(int cell=0; cell<numCells; cell++)
+              for(int node=0; node<numNodes; node++){
+                int gid = wsElNodeID[ws][cell][node];
+                int lid = localNodeMapT->getLocalElement(gid);
+                if(lid != -1) ltopo[lid] = matVal;
+              }
+          }
+        }
+      }
+    }
+  }
+
+  if(_is_verbose){
+    Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+    *out << "*** Performing Topology Optimization Loop ***" << std::endl;
+  }
+
+  _optimizer->Initialize();
+
+  _optimizer->Optimize();
+
 }
 
 /******************************************************************************/
@@ -2323,7 +2437,34 @@ void
 ATO::SolverT::ComputeObjective(const double* p, double& g, double* dgdp)
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  *out << "IKT, 12/22/16, WARNING: Tpetra-converted ComputeObjective has not been tested " 
+       << "yet and may not work correctly! \n"; 
+  for(int i=0; i<_numPhysics; i++){
+
+    // copy data from p into each stateManager
+    if( entityType == "State Variable" ){
+      Albany::StateManager& stateMgr = _subProblems[i].app->getStateMgr();
+      copyTopologyIntoStateMgr( p, stateMgr );
+    } else 
+    if( entityType == "Distributed Parameter"){
+      copyTopologyIntoParameter( p, _subProblems[i] );
+    }
+
+    // enforce PDE constraints
+    _subProblems[i].modelT->evalModel((*_subProblems[i].params_inT),
+                                      (*_subProblems[i].responses_outT));
+  }
+
+  if ( entityType == "Distributed Parameter" ) {
+    updateTpetraResponseMaps(); 
+    _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
+  }
+  _objAggregator->EvaluateT();
+  copyObjectiveFromStateMgr( g, dgdp );
+
+  _iteration++;
+
 }
 
 /******************************************************************************/
@@ -2331,7 +2472,57 @@ void
 ATO::SolverT::ComputeObjective(double* p, double& g, double* dgdp)
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  *out << "IKT, 12/22/16, WARNING: Tpetra-converted ComputeObjective has not been tested " 
+       << "yet and may not work correctly! \n"; 
+  if(_iteration!=1) smoothTopologyT(p);
+
+  for(int i=0; i<_numPhysics; i++){
+    
+
+    // copy data from p into each stateManager
+    if( entityType == "State Variable" ){
+      Albany::StateManager& stateMgr = _subProblems[i].app->getStateMgr();
+      copyTopologyIntoStateMgr( p, stateMgr );
+    } else 
+    if( entityType == "Distributed Parameter"){
+      copyTopologyIntoParameter( p, _subProblems[i] );
+    }
+
+    // enforce PDE constraints
+    _subProblems[i].modelT->evalModel((*_subProblems[i].params_inT),
+                                      (*_subProblems[i].responses_outT));
+  }
+
+  if ( entityType == "Distributed Parameter" ) {
+    updateTpetraResponseMaps(); 
+    _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
+  }
+  _objAggregator->EvaluateT();
+  copyObjectiveFromStateMgr( g, dgdp );
+
+  // See if the user specified a new design frequency.
+  GO new_frequency = -1;
+  if( _solverComm->getRank() == 0){
+    FILE *fp = fopen("update_frequency.txt", "r");
+    if(fp)
+    {
+      fscanf(fp, "%d", &new_frequency);
+      fclose(fp);
+    }
+  }
+  Teuchos::broadcast(*_solverComm, 0, 1, &new_frequency);
+
+  if(new_frequency != -1)
+  {
+    // the user has specified a new frequency to use
+    _writeDesignFrequency = new_frequency;
+   }
+
+   // Output a new result file if requested
+   if(_writeDesignFrequency && (_iteration % _writeDesignFrequency == 0) )
+     writeCurrentDesign();
+  _iteration++;
 }
 
 /******************************************************************************/

@@ -318,16 +318,16 @@ namespace ATO {
     //pure virtual from Thyra::ModelEvaluator
     void evalModelImpl(
       Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
-      Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
+      Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const; //done 
 
     void Compute(double* p, double& f, double* dfdp, double& g, double* dgdp=NULL);
     void Compute(const double* p, double& f, double* dfdp, double& g, double* dgdp=NULL);
 
     void ComputeConstraint(double* p, double& c, double* dcdp=NULL);
 
-    void ComputeObjective(double* p, double& g, double* dgdp=NULL);
-    void ComputeObjective(const double* p, double& g, double* dgdp=NULL);
-    void updateTpetraResponseMaps(); 
+    void ComputeObjective(double* p, double& g, double* dgdp=NULL); //done 
+    void ComputeObjective(const double* p, double& g, double* dgdp=NULL); //done 
+    void updateTpetraResponseMaps(); //done  
     void writeCurrentDesign();
     void InitializeOptDofs(double* p);
     void getOptDofsLowerBound( Teuchos::Array<double>& b );
