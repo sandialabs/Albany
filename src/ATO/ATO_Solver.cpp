@@ -1432,6 +1432,8 @@ ATO::Solver::updateTpetraResponseMaps()
   }
 }
 
+
+
 /******************************************************************************/
 Teuchos::RCP<Teuchos::ParameterList> 
 ATO::Solver::createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const
@@ -2709,8 +2711,93 @@ ATO::SolverT::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPar
                               const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  using Teuchos::RCP;
+  using Teuchos::rcp;
+
+  ATO::SolverSubSolverT ret; //value to return
+
+  RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  *out << "ATO Solver creating solver from " << appParams->name()
+       << " parameter list" << std::endl;
+
+  /*//! Create solver and application objects via solver factory
+  {
+
+    //! Create solver factory, which reads xml input filen
+    Albany::SolverFactory slvrfctry(appParams, commT);
+
+    ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, commT, commT, initial_guess);
+  }
+
+
+  Teuchos::ParameterList& problemParams = appParams->sublist("Problem");
+
+  int numParameters = 0;
+  if( problemParams.isType<Teuchos::ParameterList>("Parameters") )
+    numParameters = problemParams.sublist("Parameters").get<int>("Number of Parameter Vectors");
+
+  int numResponses = 0;
+  if( problemParams.isType<Teuchos::ParameterList>("Response Functions") )
+    numResponses = problemParams.sublist("Response Functions").get<int>("Number of Response Vectors");
+
+  ret.params_in = rcp(new EpetraExt::ModelEvaluator::InArgs);
+  ret.responses_out = rcp(new EpetraExt::ModelEvaluator::OutArgs);
+
+  *(ret.params_in) = ret.model->createInArgs();
+  *(ret.responses_out) = ret.model->createOutArgs();
+
+  // the createOutArgs() function doesn't allocate storage
+  RCP<Epetra_Vector> g1;
+  int ss_num_g = ret.responses_out->Ng(); // Number of *vectors* of responses
+  for(int ig=0; ig<ss_num_g; ig++){
+    g1 = rcp(new Epetra_Vector(*(ret.model->get_g_map(ig))));
+    ret.responses_out->set_g(ig,g1);
+  }
+
+  RCP<Epetra_Vector> p1;
+  int ss_num_p = ret.params_in->Np();     // Number of *vectors* of parameters
+  TEUCHOS_TEST_FOR_EXCEPTION (
+    ss_num_p - numParameters > 1,
+    Teuchos::Exceptions::InvalidParameter, std::endl 
+    << "Error! Cannot have more than one distributed Parameter for topology optimization" << std::endl);
+  for(int ip=0; ip<ss_num_p; ip++){
+    p1 = rcp(new Epetra_Vector(*(ret.model->get_p_init(ip))));
+    ret.params_in->set_p(ip,p1);
+  }
+
+  for(int ig=0; ig<numResponses; ig++){
+    if(ss_num_p > numParameters){
+      int ip = ss_num_p-1;
+      Teuchos::ParameterList& resParams = 
+        problemParams.sublist("Response Functions").sublist(Albany::strint("Response Vector",ig));
+      std::string gName = resParams.get<std::string>("Response Name");
+      std::string dgdpName = resParams.get<std::string>("Response Derivative Name");
+      if(!ret.responses_out->supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, ig, ip).none()){
+        RCP<const Epetra_Vector> p = ret.params_in->get_p(ip);
+        RCP<const Epetra_Vector> g = ret.responses_out->get_g(ig);
+        RCP<Epetra_MultiVector> dgdp = rcp(new Epetra_MultiVector(p->Map(), g->GlobalLength() ));
+        if(ret.responses_out->supports(OUT_ARG_DgDp,ig,ip).supports(DERIV_TRANS_MV_BY_ROW)){
+          Derivative dgdp_out(dgdp, DERIV_TRANS_MV_BY_ROW);
+          ret.responses_out->set_DgDp(ig,ip,dgdp_out);
+        } else 
+          ret.responses_out->set_DgDp(ig,ip,dgdp);
+        responseMap.insert(std::pair<std::string,RCP<const Epetra_Vector> >(gName,g));
+        RCP<const Tpetra_Vector> gT = Petra::EpetraVector_To_TpetraVectorConst(*g, _solverComm); 
+        responseMapT.insert(std::pair<std::string,RCP<const Tpetra_Vector> >(gName, gT));
+        responseDerivMap.insert(std::pair<std::string,RCP<Epetra_MultiVector> >(dgdpName,dgdp));
+        RCP<Tpetra_MultiVector> dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp, _solverComm); 
+        responseDerivMapT.insert(std::pair<std::string,RCP<Tpetra_MultiVector> >(dgdpName, dgdpT));
+      }
+    }
+  }
+
+  RCP<Epetra_Vector> xfinal =
+    rcp(new Epetra_Vector(*(ret.model->get_g_map(ss_num_g-1)),true) );
+  ret.responses_out->set_g(ss_num_g-1,xfinal); */
+
+  return ret;
 }
+
 
 /******************************************************************************/
 void 
