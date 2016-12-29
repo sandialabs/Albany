@@ -34,9 +34,7 @@
       <Parameter name="Reference Configuration: Update" type="bool" value="1"/>
       <Parameter name="Reference Configuration: Transform" type="bool" value="0"/>
       <Parameter name="Reference Configuration: Project" type="bool" value="0"/>
-      <Parameter name="Previous mesh is recoverable" type="bool" value="0"/>
       <Parameter name="Should Coarsen" type="bool" value="1"/>
-      <Parameter name="Print Relaxation Solution" type="bool" value="0"/>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">

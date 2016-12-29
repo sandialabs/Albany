@@ -30,8 +30,6 @@
       <Parameter name="Remesh Step Number" type="Array(int)" value="{5}"/>
       <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="10"/>
       <Parameter name="Target Element Size" type="double" value="0.001"/>
-      <!-- Maximum number of nodes on any given rank -->
-      <Parameter name="High Water Mark" type="int" value="10000"/>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
