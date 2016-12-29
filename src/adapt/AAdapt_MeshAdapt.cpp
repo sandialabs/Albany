@@ -523,6 +523,11 @@ AAdapt::MeshAdapt::getValidAdapterParameters() const
   validPL->set<double>("Minimum Part Density", 1000, "Minimum elements per part: triggers partition shrinking");
   validPL->set<bool>("Write Adapted SMB Files", false, "Write .smb mesh files after adaptation");
   validPL->set<std::string>("Extruded Size Method", "SPR", "Error estimator for extruded meshes");
+
+  /* Omega_h_Method options */
+  validPL->set<double>("Maximum Size", 1.0, "Max element size, prevents infinity when error is zero");
+  validPL->set<double>("Gradation Rate Limit", 1.01, "Max metric gradation rate");
+
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->getValidParameters(validPL);
 
   return validPL;
