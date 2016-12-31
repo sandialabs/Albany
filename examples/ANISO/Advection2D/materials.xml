@@ -6,9 +6,9 @@
   </ParameterList>
   <ParameterList name="Materials">
     <ParameterList name="AdvectiveLimit">
-      <Parameter name="Kappa" type="double" value="1.0e-3"/>
-      <Parameter name="Alpha_x" type="double" value="1.0"/>
-      <Parameter name="Alpha_y" type="double" value="0.0"/>
+      <Parameter name="Kappa" type="string" value="1.0e-3"/>
+      <Parameter name="Alpha_x" type="string" value="1.0"/>
+      <Parameter name="Alpha_y" type="string" value="0.0"/>
     </ParameterList>
   </ParameterList>
 </ParameterList>
