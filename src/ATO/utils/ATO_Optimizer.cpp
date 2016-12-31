@@ -237,6 +237,19 @@ Optimizer::SetInterface(Solver* mySolverInterface)
     << "Error! Dynamic cast of Solver* to OptInterface* failed." << std::endl);
 }
 
+/**********************************************************************/
+void
+Optimizer::SetInterface(SolverT* mySolverInterface)
+/**********************************************************************/
+{
+  solverInterfaceT = dynamic_cast<OptInterface*>(mySolverInterface);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    solverInterface == NULL, Teuchos::Exceptions::InvalidParameter, std::endl 
+    << "Error! Dynamic cast of Solver* to OptInterface* failed." << std::endl);
+}
+
+/******************************************************************************/
+
 /******************************************************************************/
 Optimizer_OC::~Optimizer_OC()
 /******************************************************************************/

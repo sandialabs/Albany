@@ -29,6 +29,14 @@ class Omega_h_Method : public MeshAdaptMethod {
     void postProcessFinalMesh();
 
   private:
+    std::string size_method;
+    double maximum_size;
+    bool should_target_count;
+    double target_count;
+    bool should_target_error;
+    double target_error;
+    bool should_limit_gradation;
+    double gradation_rate;
     MeshAdaptMethod* helper;
     ma::Mesh* mesh_apf;
     Omega_h::Library library_osh;
