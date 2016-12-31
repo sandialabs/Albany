@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "ANISO_Expression.hpp"
 #include "AdvectionProblem.hpp"
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
@@ -22,6 +23,7 @@ Albany::AdvectionProblem::AdvectionProblem(
     std::string fname = params->get<std::string>("MaterialDB Filename");
     material_db_ = Teuchos::rcp(new QCAD::MaterialDatabase(fname, commT));
     this->setNumEquations(1);
+    ANISO::expression_init();
 }
 
 Albany::AdvectionProblem::~AdvectionProblem() {

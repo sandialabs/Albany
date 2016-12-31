@@ -93,6 +93,8 @@ class AdvectionProblem : public AbstractProblem {
 #include "PHAL_SaveStateField.hpp"
 
 #include "ANISO_Time.hpp"
+#include "AdvectionKappa.hpp"
+#include "AdvectionAlpha.hpp"
 #include "AdvectionTau.hpp"
 #include "AdvectionResidual.hpp"
 
@@ -164,11 +166,26 @@ Albany::AdvectionProblem::constructEvaluators(
       eval_utils.constructDOFGradInterpolationEvaluator(dof_names[0]));
 
   fm0.template registerEvaluator<EvalT>(
+      eval_utils.constructComputeBasisFunctionsEvaluator(
+        elem_type, intrepid_basis, elem_cubature));
+
+  fm0.template registerEvaluator<EvalT>(
       eval_utils.constructGatherCoordinateVectorEvaluator());
 
   fm0.template registerEvaluator<EvalT>(
-      eval_utils.constructComputeBasisFunctionsEvaluator(
-        elem_type, intrepid_basis, elem_cubature));
+      eval_utils.constructMapToPhysicalFrameEvaluator(
+        elem_type, elem_cubature));
+
+  // set up the problem variables
+  std::string kappa_val = material_db_->getElementBlockParam<std::string>(
+      eb_name, "Kappa");
+  std::string alpha_x =  material_db_->getElementBlockParam<std::string>(
+      eb_name, "Alpha_x");
+  std::string alpha_y = material_db_->getElementBlockParam<std::string>(
+      eb_name, "Alpha_y");
+  Teuchos::Array<std::string> alpha_val(2);
+  alpha_val[0] = alpha_x;
+  alpha_val[1] = alpha_y;
 
   { // Time
     RCP<ParameterList> p = rcp(new ParameterList("Time"));
@@ -183,21 +200,29 @@ Albany::AdvectionProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  // set up the material variables
-  double kappa = material_db_->getElementBlockParam<double>(
-      eb_name, "Kappa");
-  double alpha_x =  material_db_->getElementBlockParam<double>(
-      eb_name, "Alpha_x");
-  double alpha_y = material_db_->getElementBlockParam<double>(
-      eb_name, "Alpha_y");
-  Teuchos::Array<double> alpha(2);
-  alpha[0] = alpha_x;
-  alpha[1] = alpha_y;
+  { // Kappa - diffusivity coeffecient
+    RCP<ParameterList> p = rcp(new ParameterList("Kappa"));
+    p->set<std::string>("Coordinate Name", "Coord Vec");
+    p->set<std::string>("Kappa Value", kappa_val);
+    p->set<std::string>("Kappa Name", "Kappa");
+    ev = rcp(new ANISO::AdvectionKappa<EvalT, PHAL::AlbanyTraits>(*p, dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  { // Alpha - advective coefficient
+    RCP<ParameterList> p = rcp(new ParameterList("Alpha"));
+    p->set<std::string>("Coordinate Name", "Coord Vec");
+    p->set<Teuchos::Array<std::string> >("Alpha Value", alpha_val);
+    p->set<std::string>("Alpha Name", "Alpha");
+    p->set<std::string>("Alpha Magnitude Name", "Alpha Magnitude");
+    ev = rcp(new ANISO::AdvectionAlpha<EvalT, PHAL::AlbanyTraits>(*p, dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   { // SUPG tau
     RCP<ParameterList> p = rcp(new ParameterList("Tau"));
-    p->set<double>("Kappa", kappa);
-    p->set<Teuchos::Array<double> >("Alpha", alpha);
+    p->set<std::string>("Kappa Name", "Kappa");
+    p->set<std::string>("Alpha Magnitude Name", "Alpha Magnitude");
     p->set<std::string>("Coordinate Name", "Coord Vec");
     p->set<std::string>("Gradient BF Name", "Grad BF");
     p->set<std::string>("Tau Name", "Tau");
@@ -207,13 +232,15 @@ Albany::AdvectionProblem::constructEvaluators(
 
   { // SUPG stabilized advection-diffusion residual
     RCP<ParameterList> p = rcp(new ParameterList("Advection Residual"));
-    p->set<double>("Kappa", kappa);
-    p->set<Teuchos::Array<double> >("Alpha", alpha);
+    p->set<std::string>("Kappa Name", "Kappa");
+    p->set<std::string>("Alpha Name", "Alpha");
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("Kappa Name", "Kappa");
     p->set<std::string>("Concentration Name", "Phi");
     p->set<std::string>("Concentration Gradient Name", "Phi Gradient");
     p->set<std::string>("Tau Name", "Tau");
+    p->set<std::string>("Source Name", "Source");
     p->set<std::string>("Residual Name", "Phi Residual");
     ev = rcp(new ANISO::AdvectionResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
     fm0.template registerEvaluator<EvalT>(ev);
