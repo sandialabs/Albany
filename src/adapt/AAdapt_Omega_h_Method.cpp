@@ -52,6 +52,10 @@ void Omega_h_Method::setParams(const Teuchos::RCP<Teuchos::ParameterList>& p) {
   } else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "Unknown Omega_h \"Size Method\" option " << size_method << '\n');
+  should_smooth_metric = p->isType<int>("Metric Smooth Steps");
+  if (should_smooth_metric) {
+    metric_smooth_steps = p->get<int>("Metric Smooth Steps");
+  }
   should_limit_gradation = p->isType<double>("Gradation Rate Limit");
   if (should_limit_gradation) {
     gradation_rate = p->get<double>("Gradation Rate Limit");
@@ -100,6 +104,20 @@ void Omega_h_Method::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt
     }
     mesh_osh.add_tag(0, "target_metric", Omega_h::symm_dofs(mesh_osh.dim()),
         OMEGA_H_METRIC, OMEGA_H_DO_OUTPUT, metrics);
+  }
+  if (should_smooth_metric) {
+    for (int i = 0; i < metric_smooth_steps; ++i) {
+      if (mesh_osh.has_tag(0, "target_metric")) {
+        auto metrics =  mesh_osh.get_array<double>(0, "target_metric");
+        metrics = Omega_h::smooth_metric_once(&mesh_osh, metrics);
+        mesh_osh.set_tag(0, "target_metric", metrics);
+      }
+      if (mesh_osh.has_tag(0, "target_size")) {
+        auto isos =  mesh_osh.get_array<double>(0, "target_size");
+        isos = Omega_h::smooth_isos_once(&mesh_osh, isos);
+        mesh_osh.set_tag(0, "target_size", isos);
+      }
+    }
   }
   if (should_limit_gradation) {
     if (mesh_osh.has_tag(0, "target_metric")) {

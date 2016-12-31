@@ -526,6 +526,7 @@ AAdapt::MeshAdapt::getValidAdapterParameters() const
 
   /* Omega_h_Method options */
   validPL->set<double>("Maximum Size", 1.0, "Max element size, prevents infinity when error is zero");
+  validPL->set<int>("Metric Smooth Steps", 0, "Metric smoothing, number of iterations");
   validPL->set<double>("Gradation Rate Limit", 1.01, "Max metric gradation rate");
   validPL->set<std::string>("Size Method", "SPR", "Size field for Omega_h adaptation");
   validPL->set<double>("Overshoot Allowance", 3.0, "Max allowed metric edge length");

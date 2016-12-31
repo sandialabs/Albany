@@ -35,6 +35,8 @@ class Omega_h_Method : public MeshAdaptMethod {
     double target_count;
     bool should_target_error;
     double target_error;
+    bool should_smooth_metric;
+    int metric_smooth_steps;
     bool should_limit_gradation;
     double gradation_rate;
     bool should_prevent_overshoot;
