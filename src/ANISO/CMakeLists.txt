@@ -14,13 +14,21 @@ ${ANISO_DIR}/AdvectionProblem.hpp
 )
 
 set(aniso-evaluator-sources
+${ANISO_DIR}/ANISO_Expression.cpp
 ${ANISO_DIR}/ANISO_Time.cpp
+${ANISO_DIR}/AdvectionKappa.cpp
+${ANISO_DIR}/AdvectionAlpha.cpp
 ${ANISO_DIR}/AdvectionTau.cpp
 ${ANISO_DIR}/AdvectionResidual.cpp
 )
 set(aniso-evaluator-headers
+${ANISO_DIR}/ANISO_Expression.hpp
 ${ANISO_DIR}/ANISO_Time.hpp
 ${ANISO_DIR}/ANISO_Time_Def.hpp
+${ANISO_DIR}/AdvectionKappa.hpp
+${ANISO_DIR}/AdvectionKappa_Def.hpp
+${ANISO_DIR}/AdvectionAlpha.hpp
+${ANISO_DIR}/AdvectionAlpha_Def.hpp
 ${ANISO_DIR}/AdvectionTau.hpp
 ${ANISO_DIR}/AdvectionTau_Def.hpp
 ${ANISO_DIR}/AdvectionResidual.hpp
