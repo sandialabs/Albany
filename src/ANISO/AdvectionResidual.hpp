@@ -27,13 +27,11 @@ class AdvectionResidual :
         const Teuchos::ParameterList& p,
         const Teuchos::RCP<Albany::Layouts>& dl);
 
-    void 
-      postRegistrationSetup(
-          typename Traits::SetupData d,
-          PHX::FieldManager<Traits>& vm);
+    void postRegistrationSetup(
+        typename Traits::SetupData d,
+        PHX::FieldManager<Traits>& vm);
 
-    void 
-      evaluateFields(typename Traits::EvalData d);
+    void  evaluateFields(typename Traits::EvalData d);
 
   private:
 
@@ -44,14 +42,14 @@ class AdvectionResidual :
     int num_qps;
     int num_dims;
 
-    double kappa;
-    Teuchos::Array<double> alpha;
-
     PHX::MDField<MeshScalarT, Cell, Node, QuadPoint> w_bf;
     PHX::MDField<MeshScalarT, Cell, Node, QuadPoint, Dim> w_grad_bf;
+    PHX::MDField<ScalarT, Cell, QuadPoint> kappa;
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim> alpha;
     PHX::MDField<ScalarT, Cell, QuadPoint> phi;
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim> grad_phi;
     PHX::MDField<ScalarT, Cell, QuadPoint> tau;
+    PHX::MDField<ScalarT, Cell, QuadPoint> source;
     PHX::MDField<ScalarT, Cell, Node> residual;
 
 };

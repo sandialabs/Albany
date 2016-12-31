@@ -18,6 +18,8 @@ AdvectionResidual(
     const Teuchos::RCP<Albany::Layouts>& dl) :
   w_bf      (p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
   w_grad_bf (p.get<std::string>("Weighted Gradient BF Name"), dl->node_qp_vector),
+  kappa     (p.get<std::string>("Kappa Name"), dl->qp_scalar),
+  alpha     (p.get<std::string>("Alpha Name"), dl->qp_vector),
   phi       (p.get<std::string>("Concentration Name"), dl->qp_scalar),
   grad_phi  (p.get<std::string>("Concentration Gradient Name"), dl->qp_vector),
   tau       (p.get<std::string>("Tau Name"), dl->qp_scalar),
@@ -27,12 +29,10 @@ AdvectionResidual(
   num_qps = dl->node_qp_vector->dimension(2);
   num_dims = dl->node_qp_vector->dimension(3);
 
-  kappa = p.get<double>("Kappa");
-  alpha = p.get<Teuchos::Array<double> >("Alpha");
-  assert(alpha.size() == num_dims);
-
   this->addDependentField(w_bf);
   this->addDependentField(w_grad_bf);
+  this->addDependentField(kappa);
+  this->addDependentField(alpha);
   this->addDependentField(phi);
   this->addDependentField(grad_phi);
   this->addDependentField(tau);
@@ -48,6 +48,8 @@ postRegistrationSetup(
 
   this->utils.setFieldData(w_bf, fm);
   this->utils.setFieldData(w_grad_bf, fm);
+  this->utils.setFieldData(kappa, fm);
+  this->utils.setFieldData(alpha, fm);
   this->utils.setFieldData(phi, fm);
   this->utils.setFieldData(grad_phi, fm);
   this->utils.setFieldData(tau, fm);
@@ -70,12 +72,12 @@ evaluateFields(typename Traits::EvalData workset) {
         ScalarT adv2 = 0.0;
         ScalarT diff = 0.0;
         for (int dim=0; dim < num_dims; ++dim) {
-          adv1 += alpha[dim] * grad_phi(cell, qp, dim);
-          adv2 += alpha[dim] * w_grad_bf(cell, node, qp, dim);
+          adv1 += alpha(cell, qp, dim) * grad_phi(cell, qp, dim);
+          adv2 += alpha(cell, qp, dim) * w_grad_bf(cell, node, qp, dim);
           diff += grad_phi(cell, qp, dim) * w_grad_bf(cell, node, qp, dim);
         }
         residual(cell, node) +=
-          kappa*diff +
+          kappa(cell, qp)*diff +
           adv1*w_bf(cell, node, qp) +
           tau(cell, qp) * adv1 * adv2;
       }
