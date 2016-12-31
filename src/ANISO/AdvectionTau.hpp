@@ -27,13 +27,11 @@ class AdvectionTau :
         const Teuchos::ParameterList& p,
         const Teuchos::RCP<Albany::Layouts>& dl);
 
-    void 
-      postRegistrationSetup(
-          typename Traits::SetupData d,
-          PHX::FieldManager<Traits>& vm);
+    void postRegistrationSetup(
+        typename Traits::SetupData d,
+        PHX::FieldManager<Traits>& vm);
 
-    void 
-      evaluateFields(typename Traits::EvalData d);
+    void evaluateFields(typename Traits::EvalData d);
 
   private:
 
@@ -45,11 +43,12 @@ class AdvectionTau :
     int num_dims;
     int num_vertices;
 
-    double kappa;
     Teuchos::Array<double> alpha;
 
     PHX::MDField<MeshScalarT, Cell, Vertex, Dim> coord;
     PHX::MDField<MeshScalarT, Cell, Node, QuadPoint, Dim> grad_bf;
+    PHX::MDField<ScalarT, Cell, QuadPoint> kappa;
+    PHX::MDField<ScalarT, Cell, QuadPoint> alpha_mag;
     PHX::MDField<ScalarT, Cell, QuadPoint> tau;
 
 };
