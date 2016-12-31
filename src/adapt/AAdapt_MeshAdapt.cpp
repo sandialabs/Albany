@@ -528,6 +528,7 @@ AAdapt::MeshAdapt::getValidAdapterParameters() const
   validPL->set<double>("Maximum Size", 1.0, "Max element size, prevents infinity when error is zero");
   validPL->set<double>("Gradation Rate Limit", 1.01, "Max metric gradation rate");
   validPL->set<std::string>("Size Method", "SPR", "Size field for Omega_h adaptation");
+  validPL->set<double>("Overshoot Allowance", 3.0, "Max allowed metric edge length");
 
   /* RCU options */
   validPL->set<bool>("Reference Configuration: Update", false, "Activate RCU");

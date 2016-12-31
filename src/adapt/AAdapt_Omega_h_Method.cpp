@@ -56,6 +56,10 @@ void Omega_h_Method::setParams(const Teuchos::RCP<Teuchos::ParameterList>& p) {
   if (should_limit_gradation) {
     gradation_rate = p->get<double>("Gradation Rate Limit");
   }
+  should_prevent_overshoot = p->isType<double>("Overshoot Allowance");
+  if (should_prevent_overshoot) {
+    overshoot_allowance = p->get<double>("Overshoot Allowance");
+  }
   if (helper) helper->setParams(p);
 }
 
@@ -122,6 +126,9 @@ void Omega_h_Method::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt
         OMEGA_H_SIZE, OMEGA_H_DO_OUTPUT, implied_size);
   }
   Omega_h::AdaptOpts opts(&mesh_osh);
+  if (should_prevent_overshoot) {
+    opts.max_length_allowed = overshoot_allowance;
+  }
   while (Omega_h::approach_size_field(&mesh_osh, opts)) {
     Omega_h::adapt(&mesh_osh, opts);
   }
