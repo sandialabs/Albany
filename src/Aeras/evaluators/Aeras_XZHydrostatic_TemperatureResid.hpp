@@ -81,12 +81,24 @@ public:
   struct XZHydrostatic_TemperatureResid_pureAdvection_Tag{};
   struct XZHydrostatic_TemperatureResid_Laplace_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_TemperatureResid_Tag> XZHydrostatic_TemperatureResid_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_TemperatureResid_Tag> XZHydrostatic_TemperatureResid_pureAdvection_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_TemperatureResid_Tag> XZHydrostatic_TemperatureResid_Laplace_Policy;
 
+
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA) 
+  using XZHydrostatic_TemperatureResid_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Left,
+        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int> >;
+#else
+  using XZHydrostatic_TemperatureResid_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Left,
+        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int> >;
+#endif
+
   KOKKOS_INLINE_FUNCTION
-  void operator() (const XZHydrostatic_TemperatureResid_Tag& tag, const int& i) const;
+  void operator() (const int cell, const int node, const int level) const;
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const XZHydrostatic_TemperatureResid_pureAdvection_Tag& tag, const int& i) const;
