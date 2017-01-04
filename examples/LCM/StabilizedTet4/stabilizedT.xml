@@ -35,12 +35,11 @@
         <Parameter
           name="Time Values"
           type="Array(double)"
-          value="{ 0.0, 1.0, 2.0, 3.0}" />
-        <!-- the 3.0 data point is a workaround for LOCA's DfDp perturbation -->
+          value="{ 0.0, 1.0, 2.0}" />
         <Parameter
           name="BC Values"
           type="Array(double)"
-          value="{ 0.0, 0.5, 1.0, 1.0}" />
+          value="{ 0.0, 0.5, 1.0}" />
       </ParameterList>
     </ParameterList>
 
@@ -148,6 +147,7 @@
       </ParameterList>
       <!-- PARAMETER STEPPING -->
       <ParameterList name="Stepper">
+        <Parameter name="Continuation Method" type="string" value="Natural"/>
         <Parameter
           name="Initial Value"
           type="double"
