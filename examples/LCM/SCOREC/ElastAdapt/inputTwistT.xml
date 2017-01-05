@@ -9,18 +9,20 @@
       <!-- ? is problem well posed with two torsion BC ?        -->
       <!-- i.e. is rigid body translation/rotation constrained  -->
       <!-- the problem converges... so there's that             -->
+
+
+      <Parameter name="DBC on NS ns_bottom for DOF X" type="double" value="0"/>
+      <Parameter name="DBC on NS ns_bottom for DOF Y" type="double" value="0"/>
+      <Parameter name="DBC on NS ns_bottom for DOF Z" type="double" value="0"/>
+      <Parameter name="DBC on NS ns_top for DOF Z" type="double" value="0"/>
+
       <ParameterList name="DBC on NS ns_top for DOF twist">
         <Parameter name="BC Function" type="string" value="Torsion"/>
         <Parameter name="Theta Dot"   type="double" value="1.0"/>
         <Parameter name="X0"          type="double" value="0.0"/>
         <Parameter name="Y0"          type="double" value="0.0"/>
       </ParameterList>
-      <ParameterList name="DBC on NS ns_bottom for DOF twist">
-        <Parameter name="BC Function" type="string" value="Torsion"/>
-        <Parameter name="Theta Dot"   type="double" value="-1.0"/>
-        <Parameter name="X0"          type="double" value="0.0"/>
-        <Parameter name="Y0"          type="double" value="0.0"/>
-      </ParameterList>
+
     </ParameterList>
 
     <ParameterList name="Parameters">
@@ -33,6 +35,7 @@
       <Parameter name="Response 0"  type="string" value="Solution Average"/>
     </ParameterList>
 
+<!--
     <ParameterList name="Adaptation">
       <Parameter name="Method"                              type="string" value="RPI SPR Size"/>
       <Parameter name="Remesh Strategy"                     type="string" value="Continuous"/>
@@ -41,6 +44,7 @@
       <Parameter name="State Variable"                      type="string" value="Cauchy_Stress"/>
       <Parameter name="Reference Configuration: Update" type="bool" value="true"/>
     </ParameterList>
+-->
 
   </ParameterList>
 
@@ -74,7 +78,7 @@
           <ParameterList name="Stepper">
             <Parameter  name="Initial Value"              type="double" value="0.0"/>
             <Parameter  name="Continuation Parameter"     type="string" value="Time"/>
-            <Parameter  name="Max Steps"                  type="int"    value="20"/>
+            <Parameter  name="Max Steps"                  type="int"    value="1"/>
             <Parameter  name="Max Value"                  type="double" value="50.0"/>
             <Parameter  name="Min Value"                  type="double" value="0"/>
             <Parameter  name="Compute Eigenvalues"        type="bool"   value="0"/>
