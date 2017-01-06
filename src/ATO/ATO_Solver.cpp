@@ -909,12 +909,21 @@ ATO::Solver::smoothTopologyT(Teuchos::RCP<TopologyInfoStructT> topoStructT)
   if(topoStructT->filterT != Teuchos::null){
     Teuchos::RCP<Tpetra_Vector> topoVecT = topoStructT->localVectorT;
     Teuchos::RCP<Tpetra_Vector> filtered_topoVecT = 
-        Teuchos::rcp(new Tpetra_Vector(*topoVecT));
+        Teuchos::rcp(new Tpetra_Vector(localNodeMapT));
     int num = topoStructT->filterT->getNumIterations();
     for(int i=0; i<num; i++){
-      topoStructT->filterT->FilterOperatorT()->apply(*topoVecT, *filtered_topoVecT, Teuchos::NO_TRANS);
-      *topoVecT = *filtered_topoVecT;
+      //IKT, 1/5/17: the use of copies here is somewhat hacky, to get apply 
+      //to do the right thing and not throw an exception in a debug build. 
+      std::vector<double> vec(topoVecT->getLocalLength()); 
+      Teuchos::ArrayView<double> view = Teuchos::arrayViewFromVector(vec); 
+      if (i == 0) 
+        topoVecT->get1dCopy(view);
+      else 
+        filtered_topoVecT->get1dCopy(view); 
+      Teuchos::RCP<Tpetra_Vector> temp = Teuchos::rcp(new Tpetra_Vector(localNodeMapT, view)); 
+      topoStructT->filterT->FilterOperatorT()->apply(*temp, *filtered_topoVecT, Teuchos::NO_TRANS);
     }
+    *topoVecT = *filtered_topoVecT; 
   } else
   if(topoStructT->postFilterT != Teuchos::null){
     Teuchos::RCP<Tpetra_Vector> topoVecT = topoStructT->localVectorT;
