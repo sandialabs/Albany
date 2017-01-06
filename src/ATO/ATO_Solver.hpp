@@ -454,6 +454,8 @@ namespace ATO {
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
     Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> get_g_space(int j) const;
+    
+    Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> get_p_space(int j) const;
 
     Teuchos::RCP<Teuchos::ParameterList> 
       createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const;
