@@ -2436,14 +2436,40 @@ ATO::SolverT::evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_arg
 void ATO::SolverT::getOptDofsUpperBound( Teuchos::Array<double>& b )
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  int nLocal = _topologyInfoStructsT[0]->localVectorT->getLocalLength();
+  int nTopos = _topologyInfoStructsT.size();
+  int nTerms = nTopos*nLocal;
+ 
+  b.resize(nTerms);
+
+  Teuchos::Array<double>::iterator from = b.begin();
+  Teuchos::Array<double>::iterator to = from+nLocal;
+  for(int itopo=0; itopo<nTopos; itopo++){
+    TopologyInfoStructT& topoIS = *_topologyInfoStructsT[itopo];
+    Teuchos::Array<double> bounds = topoIS.topologyT->getBounds();
+    std::fill(from, to, bounds[1]);
+    from += nLocal; to += nLocal;
+  }
 }  
 
 /******************************************************************************/
 void ATO::SolverT::getOptDofsLowerBound( Teuchos::Array<double>& b )
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  int nLocal = _topologyInfoStructsT[0]->localVectorT->getLocalLength();
+  int nTopos = _topologyInfoStructsT.size();
+  int nTerms = nTopos*nLocal;
+ 
+  b.resize(nTerms);
+
+  Teuchos::Array<double>::iterator from = b.begin();
+  Teuchos::Array<double>::iterator to = from+nLocal;
+  for(int itopo=0; itopo<nTopos; itopo++){
+    TopologyInfoStructT& topoIS = *_topologyInfoStructsT[itopo];
+    Teuchos::Array<double> bounds = topoIS.topologyT->getBounds();
+    std::fill(from, to, bounds[0]);
+    from += nLocal; to += nLocal;
+  }
 }
 
 /******************************************************************************/
@@ -2931,13 +2957,6 @@ ATO::SolverT::updateTpetraResponseMaps()
   }
 }
 
-/******************************************************************************/
-Teuchos::RCP<Teuchos::ParameterList> 
-ATO::SolverT::createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const
-/******************************************************************************/
-{
-  //IKT, fill in! 
-}   
 
 /******************************************************************************/
 Teuchos::RCP<Teuchos::ParameterList> 
@@ -3088,4 +3107,120 @@ ATO::SolverT::CreateSubSolverData(const ATO::SolverSubSolverT& sub) const
   else ret.p_initT = Teuchos::null;
 
   return ret;
+}
+
+
+/******************************************************************************/
+Teuchos::RCP<Teuchos::ParameterList> 
+ATO::SolverT::createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const
+/******************************************************************************/
+{   
+
+
+  ///*** CREATE INPUT FILE FOR SUBPROBLEM: ***///
+  
+
+  // Get physics (pde) problem sublist, i.e., Physics Problem N, where N = physIndex.
+  std::stringstream physStream;
+  physStream << "Physics Problem " << physIndex;
+  Teuchos::ParameterList& physics_subList = appParams->sublist("Problem").sublist(physStream.str(), false);
+
+  // Create input parameter list for physics app which mimics a separate input file
+  std::stringstream appStream;
+  appStream << "Parameters for Subapplication " << physIndex;
+  Teuchos::RCP<Teuchos::ParameterList> physics_appParams = Teuchos::createParameterList(appStream.str());
+
+  // get reference to Problem ParameterList in new input file and initialize it 
+  // from Parameters in Physics Problem N.
+  Teuchos::ParameterList& physics_probParams = physics_appParams->sublist("Problem",false);
+  physics_probParams.setParameters(physics_subList);
+
+  // Add topology information
+  physics_probParams.set<Teuchos::RCP<TopologyArray> >("Topologies",_topologyArray);
+
+  Teuchos::ParameterList& topoParams = 
+    appParams->sublist("Problem").get<Teuchos::ParameterList>("Topologies");
+  physics_probParams.set<Teuchos::ParameterList>("Topologies Parameters",topoParams);
+
+  // Check topology.  If the topology is a distributed parameter, then 1) check for existing 
+  // "Distributed Parameter" list and error out if found, and 2) add a "Distributed Parameter" 
+  // list to the input file, 
+  if( entityType == "Distributed Parameter" ){
+    TEUCHOS_TEST_FOR_EXCEPTION (
+      physics_subList.isType<Teuchos::ParameterList>("Distributed Parameters"),
+      Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Error! Cannot have 'Distributed Parameters' in both Topology and subproblems" << std::endl);
+    Teuchos::ParameterList distParams;
+    int ntopos = _topologyInfoStructsT.size();
+    distParams.set("Number of Parameter Vectors",ntopos);
+    for(int itopo=0; itopo<ntopos; itopo++){
+      distParams.set(Albany::strint("Parameter",itopo), _topologyInfoStructsT[itopo]->topologyT->getName());
+    }
+    physics_probParams.set<Teuchos::ParameterList>("Distributed Parameters", distParams);
+  }
+
+  // Add aggregator information
+  Teuchos::ParameterList& aggParams = 
+    appParams->sublist("Problem").get<Teuchos::ParameterList>("Objective Aggregator");
+  physics_probParams.set<Teuchos::ParameterList>("Objective Aggregator",aggParams);
+
+  // Add configuration information
+  Teuchos::ParameterList& conParams = 
+    appParams->sublist("Problem").get<Teuchos::ParameterList>("Configuration");
+  physics_probParams.set<Teuchos::ParameterList>("Configuration",conParams);
+
+  // Discretization sublist processing
+  Teuchos::ParameterList& discList = appParams->sublist("Discretization");
+  Teuchos::ParameterList& physics_discList = physics_appParams->sublist("Discretization", false);
+  physics_discList.setParameters(discList);
+  // find the output file name and append "Physics_n_" to it. This only checks for exodus output.
+  if( physics_discList.isType<std::string>("Exodus Output File Name") ){
+    std::stringstream newname;
+    newname << "physics_" << physIndex << "_" 
+            << physics_discList.get<std::string>("Exodus Output File Name");
+    physics_discList.set("Exodus Output File Name",newname.str());
+  }
+
+  int ntopos = _topologyInfoStructsT.size();
+  for(int itopo=0; itopo<ntopos; itopo++){
+    if( _topologyInfoStructsT[itopo]->topologyT->getFixedBlocks().size() > 0 ){
+      physics_discList.set("Separate Evaluators by Element Block", true);
+      break;
+    }
+  }
+
+  if( _writeDesignFrequency != 0 )
+    physics_discList.set("Use Automatic Aura", true);
+
+  // Piro sublist processing
+  physics_appParams->set("Piro",appParams->sublist("Piro"));
+
+
+
+  ///*** VERIFY SUBPROBLEM: ***///
+
+
+  // extract physics and dimension of the subproblem
+  Teuchos::ParameterList& subProblemParams = appParams->sublist("Problem").sublist(physStream.str());
+  std::string problemName = subProblemParams.get<std::string>("Name");
+  // "xD" where x = 1, 2, or 3
+  std::string problemDimStr = problemName.substr( problemName.length()-2 );
+  //remove " xD" where x = 1, 2, or 3
+  std::string problemNameBase = problemName.substr( 0, problemName.length()-3 );
+  
+  //// check dimensions
+  int numDimensions = 0;
+  if(problemDimStr == "1D") numDimensions = 1;
+  else if(problemDimStr == "2D") numDimensions = 2;
+  else if(problemDimStr == "3D") numDimensions = 3;
+  else TEUCHOS_TEST_FOR_EXCEPTION (
+         true, Teuchos::Exceptions::InvalidParameter, std::endl 
+         << "Error!  Cannot extract dimension from problem name: " << problemName << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION (
+    numDimensions == 1, Teuchos::Exceptions::InvalidParameter, std::endl 
+    << "Error!  Topology optimization is not avaliable in 1D." << std::endl);
+
+  
+  return physics_appParams;
+
 }
