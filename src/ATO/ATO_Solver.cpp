@@ -2295,7 +2295,16 @@ void
 ATO::SolverT::zeroSet()
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  // set parameters and responses
+  _num_parameters = 0; //TEV: assume no parameters or responses for now...
+  _num_responses  = 0; //TEV: assume no parameters or responses for now...
+  _iteration      = 1;
+
+  _is_verbose = false;
+  _is_restart = false;
+
+  _derivativeFilter   = Teuchos::null;
+  _objAggregator      = Teuchos::null;
 }  
 
 /******************************************************************************/
@@ -2442,7 +2451,22 @@ void
 ATO::SolverT::InitializeOptDofs(double* p)
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  if( _is_restart ){
+// JR: this needs to be tested for multimaterial
+    Albany::StateManager& stateMgr = _subProblems[0].app->getStateMgr();
+    copyTopologyFromStateMgr( p, stateMgr );
+  } else {
+    int ntopos = _topologyInfoStructsT.size();
+    for(int itopo=0; itopo<ntopos; itopo++){
+      Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
+      int numLocalNodes = topoStructT->localVectorT->getLocalLength();
+      double initVal = topoStructT->topologyT->getInitialValue();
+      int fromIndex=itopo*numLocalNodes;
+      int toIndex=fromIndex+numLocalNodes;
+      for(int lid=fromIndex; lid<toIndex; lid++)
+        p[lid] = initVal;
+    }
+  }
 }
 
 /******************************************************************************/
@@ -2543,7 +2567,27 @@ void
 ATO::SolverT::writeCurrentDesign()
 /******************************************************************************/
 {
-  //IKT, fill in! 
+#ifdef ATO_USES_ISOLIB
+  Teuchos::RCP<Albany::AbstractDiscretization>
+    disc = _subProblems[0].app->getDiscretization();
+
+  Albany::STKDiscretization *stkmesh = dynamic_cast<Albany::STKDiscretization*>(disc.get());
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    stkmesh == NULL, Teuchos::Exceptions::InvalidParameter, std::endl
+    << "Error!  Attempted to cast non STK mesh." << std::endl);
+
+  MPI_Comm mpi_comm = Albany::getMpiCommFromTeuchosComm(*_solverComm);
+  iso::STKExtract ex;
+  ex.create_mesh_apis_Albany(&mpi_comm,
+             &(stkmesh->getSTKBulkData()),
+             &(stkmesh->getSTKMetaData()),
+             "", "iso.exo", "Rho_node", 1e-5, 0.5,
+              0, 0, 1, 0);
+  ex.run_Albany(_iteration);
+#else
+  TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+         << "Error! Albany must be compiled with IsoLib support for runtime output." << std::endl);
+#endif
 }
 
 /******************************************************************************/
@@ -2559,7 +2603,36 @@ void
 ATO::SolverT::copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr )
 /******************************************************************************/
 {
-  //IKT, fill in! 
+
+  Albany::StateArrays& stateArrays = stateMgr.getStateArrays();
+  Albany::StateArrayVec& src = stateArrays.elemStateArrays;
+  int numWorksets = src.size();
+
+  Teuchos::RCP<Albany::AbstractDiscretization> disc = stateMgr.getDiscretization();
+  const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
+
+  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
+    wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();
+
+  // copy the topology from the state manager
+  int ntopos = _topologyInfoStructsT.size();
+  for(int itopo=0; itopo<ntopos; itopo++){
+    Teuchos::RCP<TopologyInfoStructT> topologyInfoStructT = _topologyInfoStructsT[itopo];
+    int numLocalNodes = topologyInfoStructT->localVectorT->getLocalLength();
+    Teuchos::RCP<Topology> topology = topologyInfoStructT->topologyT;
+    int offset = itopo*numLocalNodes;
+    for(int ws=0; ws<numWorksets; ws++){
+      Albany::MDArray& wsTopo = src[ws][topology->getName()+"_node"];
+      int numCells = wsTopo.dimension(0), numNodes = wsTopo.dimension(1);
+        for(int cell=0; cell<numCells; cell++)
+          for(int node=0; node<numNodes; node++){
+            int gid = wsElNodeID[ws][cell][node];
+            int lid = localNodeMapT->getLocalElement(gid);
+            if(lid >= 0) p[lid+offset] = wsTopo(cell,node);
+          }
+    }
+  }
+
 }
 
 /******************************************************************************/
@@ -2607,7 +2680,22 @@ void
 ATO::SolverT::copyConstraintFromStateMgr( double& c, double* dcdp )
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  c = *constraintValue;
+
+  auto nVecs = ConstraintGradientVecT.size();
+  for(int ivec=0; ivec<nVecs; ivec++){
+
+    if( entityType == "State Variable" ) {
+      ConstraintGradientVecT[ivec]->putScalar(0.0);
+      ConstraintGradientVecT[ivec]->doExport(*overlapConstraintGradientVecT[ivec], *exporterT, Tpetra::ADD);
+    }
+
+    if( dcdp != NULL ){
+      auto numLocalNodes = ConstraintGradientVecT[ivec]->getLocalLength();
+      Teuchos::ArrayRCP<const double> lvec = ConstraintGradientVecT[ivec]->get1dView(); 
+      std::memcpy((void*)(dcdp+ivec*numLocalNodes), lvec.getRawPtr(), numLocalNodes*sizeof(double));
+    }
+  }
 }
 
 /******************************************************************************/
@@ -2642,7 +2730,13 @@ ATO::SolverT::ComputeVolume(double* p, const double* dfdp,
                            double& v, double threshhold, double minP)
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  /*  Assumptions:
+      -- dfdp is already consistent across proc boundaries.
+      -- the volume computation that's done by the atoProblem updates the topology, p.
+      -- Since dfdp is 'boundary consistent', the resulting topology, p, is also
+         'boundary consistent', so no communication is necessary.
+  */
+  return _atoProblem->ComputeVolume(p, dfdp, v, threshhold, minP);
 }
 
 /******************************************************************************/
@@ -2855,7 +2949,7 @@ ATO::SolverT::createHomogenizationInputFile(
     int homogDim) const
 /******************************************************************************/
 {
-  //IKT, fill in!    
+  //IKT, fill in!
 }
 
 /******************************************************************************/
