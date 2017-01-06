@@ -2287,8 +2287,346 @@ SolverT(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 : _solverComm(comm), _mainAppParams(appParams)
 /******************************************************************************/
 {
-  //IKT, fill in! 
-}  
+  //IKT, FIXME: this routine still has Epetra in it, which should ultimately be removed. 
+
+  zeroSet();
+
+  objectiveValue = Teuchos::rcp(new double[1]);
+  *objectiveValue = 0.0;
+
+  constraintValue = Teuchos::rcp(new double[1]);
+  *constraintValue = 0.0;
+
+  ///*** PROCESS TOP LEVEL PROBLEM ***///
+ 
+
+  // Validate Problem parameters
+  Teuchos::ParameterList& problemParams = appParams->sublist("Problem");
+  _numPhysics = problemParams.get<int>("Number of Subproblems", 1);
+
+  int numHomogProblems = problemParams.get<int>("Number of Homogenization Problems", 0);
+  _homogenizationSets.resize(numHomogProblems);
+
+  problemParams.validateParameters(*getValidProblemParameters(),0);
+
+
+  // Parse topologies
+  Teuchos::ParameterList& topoParams = problemParams.get<Teuchos::ParameterList>("Topologies");
+  int ntopos = topoParams.get<int>("Number of Topologies");
+
+  if( topoParams.isType<bool>("Read From Restart") )
+     _is_restart = topoParams.get<bool>("Read From Restart");
+
+  _topologyInfoStructs.resize(ntopos);
+  _topologyInfoStructsT.resize(ntopos);
+  _topologyArray = Teuchos::rcp( new Teuchos::Array<Teuchos::RCP<ATO::Topology> >(ntopos) );
+  _topologyArrayT = Teuchos::rcp( new Teuchos::Array<Teuchos::RCP<ATO::Topology> >(ntopos) );
+  for(int itopo=0; itopo<ntopos; itopo++){
+    _topologyInfoStructs[itopo] = Teuchos::rcp(new TopologyInfoStruct);
+    _topologyInfoStructsT[itopo] = Teuchos::rcp(new TopologyInfoStructT);
+    Teuchos::ParameterList& tParams = topoParams.sublist(Albany::strint("Topology",itopo));
+    _topologyInfoStructs[itopo]->topology = Teuchos::rcp(new Topology(tParams, itopo));
+    _topologyInfoStructsT[itopo]->topologyT = Teuchos::rcp(new Topology(tParams, itopo));
+    (*_topologyArray)[itopo] = _topologyInfoStructs[itopo]->topology;
+    (*_topologyArrayT)[itopo] = _topologyInfoStructsT[itopo]->topologyT;
+  }
+
+  // currently all topologies must have the same entity type
+  entityType = _topologyInfoStructsT[0]->topologyT->getEntityType();
+  for(int itopo=1; itopo<ntopos; itopo++){
+    TEUCHOS_TEST_FOR_EXCEPTION(
+    _topologyInfoStructsT[itopo]->topologyT->getEntityType() != entityType,
+    Teuchos::Exceptions::InvalidParameter, std::endl
+    << "Error!  Topologies must all have the same entity type." << std::endl);
+  }
+
+  // Parse and create optimizer
+  Teuchos::ParameterList& optimizerParams = 
+    problemParams.get<Teuchos::ParameterList>("Topological Optimization");
+  ATO::OptimizerFactory optimizerFactory;
+  _optimizer = optimizerFactory.create(optimizerParams);
+  _optimizer->SetInterface(this);
+  _optimizer->SetCommunicator(comm);
+
+  _writeDesignFrequency = problemParams.get<int>("Design Output Frequency", 0);
+
+  // Parse and create aggregator
+  Teuchos::ParameterList& aggregatorParams = problemParams.get<Teuchos::ParameterList>("Objective Aggregator");
+
+  ATO::AggregatorFactory aggregatorFactory;
+  // Parse and create objective aggregator
+  Teuchos::ParameterList& objAggregatorParams = problemParams.get<Teuchos::ParameterList>("Objective Aggregator");
+  _objAggregator = aggregatorFactory.create(objAggregatorParams, entityType, ntopos);
+
+  // Parse and create constraint aggregator
+  if(problemParams.isType<Teuchos::ParameterList>("Constraint Aggregator")){
+    Teuchos::ParameterList& conAggregatorParams = problemParams.get<Teuchos::ParameterList>("Constraint Aggregator");
+    _conAggregator = aggregatorFactory.create(conAggregatorParams, entityType, ntopos);
+  } else {
+    _conAggregator = Teuchos::null;
+  }
+
+  // Parse filters
+  if( problemParams.isType<Teuchos::ParameterList>("Spatial Filters")){
+    Teuchos::ParameterList& filtersParams = problemParams.get<Teuchos::ParameterList>("Spatial Filters");
+    int nFilters = filtersParams.get<int>("Number of Filters");
+    for(int ifltr=0; ifltr<nFilters; ifltr++){
+      std::stringstream filterStream;
+      filterStream << "Filter " << ifltr;
+      Teuchos::ParameterList& filterParams = filtersParams.get<Teuchos::ParameterList>(filterStream.str());
+      Teuchos::RCP<ATO::SpatialFilter> newFilter = Teuchos::rcp( new ATO::SpatialFilter(filterParams) );
+      filters.push_back(newFilter);
+    }
+  }
+  
+  // Assign requested filters to topologies
+  for(int itopo=0; itopo<ntopos; itopo++){
+    Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];
+    Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
+    Teuchos::RCP<Topology> topo = topoStruct->topology;
+    Teuchos::RCP<Topology> topoT = topoStructT->topologyT;
+
+    topoStruct->filterIsRecursive = topoParams.get<bool>("Apply Filter Recursively", true);
+    topoStructT->filterIsRecursiveT = topoParams.get<bool>("Apply Filter Recursively", true);
+    int topologyFilterIndex = topo->SpatialFilterIndex();
+    if( topologyFilterIndex >= 0 ){
+      TEUCHOS_TEST_FOR_EXCEPTION( topologyFilterIndex >= filters.size(),
+        Teuchos::Exceptions::InvalidParameter, std::endl 
+        << "Error!  Spatial filter " << topologyFilterIndex << "requested but not defined." << std::endl);
+      topoStruct->filter = filters[topologyFilterIndex];
+      topoStructT->filterT = filters[topologyFilterIndex];
+    }
+
+    int topologyOutputFilter = topo->TopologyOutputFilter();
+    if( topologyOutputFilter >= 0 ){
+      TEUCHOS_TEST_FOR_EXCEPTION( topologyOutputFilter >= filters.size(),
+        Teuchos::Exceptions::InvalidParameter, std::endl 
+        << "Error!  Spatial filter " << topologyFilterIndex << "requested but not defined." << std::endl);
+      topoStruct->postFilter = filters[topologyOutputFilter];
+      topoStructT->postFilterT = filters[topologyOutputFilter];
+    }
+  }
+
+  int derivativeFilterIndex = objAggregatorParams.get<int>("Spatial Filter", -1);
+  if( derivativeFilterIndex >= 0 ){
+    TEUCHOS_TEST_FOR_EXCEPTION( derivativeFilterIndex >= filters.size(),
+      Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Error!  Spatial filter " << derivativeFilterIndex << "requested but not defined." << std::endl);
+    _derivativeFilter = filters[derivativeFilterIndex];
+  }
+
+  // Get and set the default Piro parameters from a file, if given
+  std::string piroFilename  = problemParams.get<std::string>("Piro Defaults Filename", "");
+  if(piroFilename.length() > 0) {
+    Teuchos::RCP<Teuchos::ParameterList> defaultPiroParams = 
+      Teuchos::createParameterList("Default Piro Parameters");
+    Teuchos::updateParametersFromXmlFileAndBroadcast(piroFilename, defaultPiroParams.ptr(), *comm);
+    Teuchos::ParameterList& piroList = appParams->sublist("Piro", false);
+    piroList.setParametersNotAlreadySet(*defaultPiroParams);
+  }
+  
+  // set verbosity
+  _is_verbose = (comm->getRank() == 0) && problemParams.get<bool>("Verbose Output", false);
+
+
+
+
+  ///*** PROCESS SUBPROBLEM(S) ***///
+   
+  _subProblemAppParams.resize(_numPhysics);
+  _subProblems.resize(_numPhysics);
+  for(int i=0; i<_numPhysics; i++){
+
+    _subProblemAppParams[i] = createInputFile(appParams, i);
+    _subProblems[i] = CreateSubSolver( _subProblemAppParams[i], _solverComm);
+
+    // ensure that all subproblems are topology based (i.e., optimizable)
+    Teuchos::RCP<Albany::AbstractProblem> problem = _subProblems[i].app->getProblem();
+    ATO::OptimizationProblem* atoProblem = 
+      dynamic_cast<ATO::OptimizationProblem*>(problem.get());
+    TEUCHOS_TEST_FOR_EXCEPTION( 
+      atoProblem == NULL, Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Error!  Requested subproblem does not support topologies." << std::endl);
+  }
+  
+  ///*** PROCESS HOMOGENIZATION SUBPROBLEM(S) ***///
+
+  for(int iProb=0; iProb<numHomogProblems; iProb++){
+    HomogenizationSet& hs = _homogenizationSets[iProb];
+    std::stringstream homogStream;
+    homogStream << "Homogenization Problem " << iProb;
+    Teuchos::ParameterList& 
+      homogParams = problemParams.get<Teuchos::ParameterList>(homogStream.str());
+    hs.homogDim = homogParams.get<int>("Number of Spatial Dimensions");
+    
+    // parse the name and type of the homogenized constants
+    Teuchos::ParameterList& responsesList = homogParams.sublist("Problem").sublist("Response Functions");
+    int nResponses = responsesList.get<int>("Number of Response Vectors");
+    bool responseFound = false;
+    for(int iResponse=0; iResponse<nResponses; iResponse){
+      Teuchos::ParameterList& responseList = responsesList.sublist(Albany::strint("Response Vector",iResponse));
+      std::string rname = responseList.get<std::string>("Name");
+      if(rname == "Homogenized Constants Response"){
+        hs.name = responseList.get<std::string>("Homogenized Constants Name");
+        hs.type = responseList.get<std::string>("Homogenized Constants Type");
+        responseFound = true; break;
+      }
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION (responseFound == false,
+    Teuchos::Exceptions::InvalidParameter, std::endl 
+    << "Error! Could not find viable homogenization response." << std::endl);
+
+    int nHomogSubProblems = 0;
+    if( hs.type == "4th Rank Voigt" ){
+      for(int i=1; i<=hs.homogDim; i++) nHomogSubProblems += i;
+    } else
+    if( hs.type == "2nd Rank Tensor" ){
+      nHomogSubProblems = hs.homogDim;
+    } else
+      TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+        std::endl << "Error! Unknown type (" << hs.type << ").  " << 
+        std::endl << "Options are '4th Rank Voigt' or '2nd Rank Tensor'" << std::endl);
+
+    hs.homogenizationAppParams.resize(nHomogSubProblems);
+    hs.homogenizationProblems.resize(nHomogSubProblems);
+ 
+    for(int iSub=0; iSub<nHomogSubProblems; iSub++){
+
+      hs.homogenizationAppParams[iSub] = createHomogenizationInputFile(appParams, homogParams, iProb, iSub, hs.homogDim);
+      hs.homogenizationProblems[iSub] = CreateSubSolver( hs.homogenizationAppParams[iSub], _solverComm);
+    }
+
+
+  }
+
+
+  // store a pointer to the first problem as an ATO::OptimizationProblem for callbacks
+  Teuchos::RCP<Albany::AbstractProblem> problem = _subProblems[0].app->getProblem();
+  _atoProblem = dynamic_cast<ATO::OptimizationProblem*>(problem.get());
+  _atoProblem->setDiscretization(_subProblems[0].app->getDiscretization());
+  _atoProblem->setCommunicator(comm);
+  _atoProblem->InitTopOpt();
+  
+
+
+  // get solution map from first subproblem
+  const SolverSubSolverT& sub = _subProblems[0];
+  Teuchos::RCP<const Tpetra_Map> sub_x_mapT = sub.app->getMapT();
+  TEUCHOS_TEST_FOR_EXCEPT( sub_x_mapT == Teuchos::null );
+  _tpetra_x_map = Teuchos::rcp(new Tpetra_Map( *sub_x_mapT ));
+
+  Teuchos::RCP<Albany::Application> app = _subProblems[0].app;
+  Teuchos::RCP<Albany::AbstractDiscretization> disc = app->getDiscretization();
+
+  localNodeMap   = disc->getNodeMap();
+  overlapNodeMap = disc->getOverlapNodeMap();
+  localNodeMapT   = disc->getNodeMapT();
+  overlapNodeMapT = disc->getOverlapNodeMapT();
+
+  for(int itopo=0; itopo<ntopos; itopo++){
+    Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];
+    Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
+    if(topoStruct->postFilter != Teuchos::null ){
+      topoStruct->filteredOverlapVector = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
+      topoStruct->filteredVector  = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
+    } else {
+      topoStruct->filteredOverlapVector = Teuchos::null;
+      topoStruct->filteredVector = Teuchos::null;
+    }
+    if(topoStructT->postFilterT != Teuchos::null ){
+      topoStructT->filteredOverlapVectorT = Teuchos::rcp(new Tpetra_Vector(overlapNodeMapT));
+      topoStructT->filteredVectorT  = Teuchos::rcp(new Tpetra_Vector(localNodeMapT));
+    } else {
+      topoStructT->filteredOverlapVectorT = Teuchos::null;
+      topoStructT->filteredVectorT = Teuchos::null;
+    }
+
+    // create overlap topo vector for output purposes
+    topoStruct->overlapVector = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
+    topoStruct->localVector   = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
+    topoStructT->overlapVectorT = Teuchos::rcp(new Tpetra_Vector(overlapNodeMapT));
+    topoStructT->localVectorT   = Teuchos::rcp(new Tpetra_Vector(localNodeMapT));
+
+  } 
+
+  overlapObjectiveGradientVecT.resize(ntopos);
+  ObjectiveGradientVecT.resize(ntopos);
+  overlapConstraintGradientVecT.resize(ntopos);
+  ConstraintGradientVecT.resize(ntopos);
+  for(int itopo=0; itopo<ntopos; itopo++){
+    overlapObjectiveGradientVecT[itopo] = Teuchos::rcp(new Tpetra_Vector(overlapNodeMapT));
+    ObjectiveGradientVecT[itopo]  = Teuchos::rcp(new Tpetra_Vector(localNodeMapT));
+    overlapConstraintGradientVecT[itopo] = Teuchos::rcp(new Tpetra_Vector(overlapNodeMapT));
+    ConstraintGradientVecT[itopo]  = Teuchos::rcp(new Tpetra_Vector(localNodeMapT));
+  } 
+  
+                                            //* target *//   //* source *//
+  importer = Teuchos::rcp(new Epetra_Import(*overlapNodeMap, *localNodeMap));
+  importerT = Teuchos::rcp(new Tpetra_Import(localNodeMapT, overlapNodeMapT));
+
+
+  // create exporter (for integration type operations):
+                                            //* source *//   //* target *//
+  exporter = Teuchos::rcp(new Epetra_Export(*overlapNodeMap, *localNodeMap));
+  exporterT = Teuchos::rcp(new Tpetra_Export(overlapNodeMapT, localNodeMapT));
+
+  // this should go somewhere else.  for now ...
+  GlobalPoint gp;
+  int blockcounts[2] = {1,3};
+  MPI_Datatype oldtypes[2] = {MPI_INT, MPI_DOUBLE};
+  MPI_Aint offsets[3] = {(MPI_Aint)&(gp.gid)    - (MPI_Aint)&gp, 
+                         (MPI_Aint)&(gp.coords) - (MPI_Aint)&gp};
+  MPI_Type_create_struct(2,blockcounts,offsets,oldtypes,&MPI_GlobalPoint);
+  MPI_Type_commit(&MPI_GlobalPoint);
+
+  // initialize/build the filter operators. these are built once.
+  int nFilters = filters.size();
+  countFilterOp = 0; 
+  for(int ifltr=0; ifltr<nFilters; ifltr++){
+    filters[ifltr]->buildOperator(
+      _subProblems[0].app, 
+      overlapNodeMapT, localNodeMapT,
+      importerT, exporterT);
+    //IKT, FIXME: the following call is still here b/c filterOperatorT 
+    //is not constructed correctly yet in buildOperator for parallel runs.
+    //Need to debug.  
+    //filters[ifltr]->createFilterOpTfromFilterOp(_solverComm); 
+  }
+
+
+  auto nVecs = ObjectiveGradientVecT.size();
+  // pass subProblems to the objective aggregator
+  if( entityType == "State Variable" ){
+    _objAggregator->SetInputVariablesT(_subProblems);
+    _objAggregator->SetOutputVariablesT(objectiveValue, overlapObjectiveGradientVecT);
+  } else 
+  if( entityType == "Distributed Parameter" ){
+    _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
+    _objAggregator->SetOutputVariablesT(objectiveValue, ObjectiveGradientVecT);
+  }
+  _objAggregator->SetCommunicator(comm);
+  
+  // pass subProblems to the constraint aggregator
+  if( !_conAggregator.is_null() ){
+    if( entityType == "State Variable" ){
+      _conAggregator->SetInputVariablesT(_subProblems);
+      _conAggregator->SetOutputVariablesT(constraintValue, overlapConstraintGradientVecT);
+    } else 
+    if( entityType == "Distributed Parameter" ){
+      _conAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
+      _conAggregator->SetOutputVariablesT(constraintValue, ConstraintGradientVecT);
+    }
+    _conAggregator->SetCommunicator(comm);
+  }
+  
+
+
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+  typedef int GlobalIndex;
+#else
+  typedef long long GlobalIndex;
+#endif
+}
   
 /******************************************************************************/
 void
