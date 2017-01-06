@@ -1818,6 +1818,8 @@ Teuchos::RCP<const Epetra_Map> ATO::Solver::get_g_map(int j) const
                      j << std::endl);
   //TEV: Hardwired for now
   int _num_responses = 0;
+  //IKT, 1/6/17, to ask Josh: _epetra_response_map is not populated anywhere,
+  //so it will be null.  Is that the intention?   
   //no index because num_g == 1 so j must be zero
   if      (j <  _num_responses) return _epetra_response_map; 
   else if (j == _num_responses) return _epetra_x_map;
@@ -2729,13 +2731,13 @@ ATO::SolverT::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPar
   *out << "ATO Solver creating solver from " << appParams->name()
        << " parameter list" << std::endl;
 
-  /*//! Create solver and application objects via solver factory
+  //! Create solver and application objects via solver factory
   {
 
     //! Create solver factory, which reads xml input filen
     Albany::SolverFactory slvrfctry(appParams, commT);
 
-    ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, commT, commT, initial_guess);
+    ret.modelT = slvrfctry.createAndGetAlbanyAppT(ret.app, commT, commT, initial_guess);
   }
 
 
@@ -2749,31 +2751,30 @@ ATO::SolverT::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPar
   if( problemParams.isType<Teuchos::ParameterList>("Response Functions") )
     numResponses = problemParams.sublist("Response Functions").get<int>("Number of Response Vectors");
 
-  ret.params_in = rcp(new EpetraExt::ModelEvaluator::InArgs);
-  ret.responses_out = rcp(new EpetraExt::ModelEvaluator::OutArgs);
+  ret.params_inT = rcp(new Thyra::ModelEvaluatorBase::InArgs<ST>);
+  ret.responses_outT = rcp(new Thyra::ModelEvaluatorBase::OutArgs<ST>);
 
-  *(ret.params_in) = ret.model->createInArgs();
-  *(ret.responses_out) = ret.model->createOutArgs();
+  *(ret.params_inT) = ret.modelT->createInArgs();
+  *(ret.responses_outT) = ret.modelT->createOutArgs();
 
   // the createOutArgs() function doesn't allocate storage
-  RCP<Epetra_Vector> g1;
-  int ss_num_g = ret.responses_out->Ng(); // Number of *vectors* of responses
+  RCP<Thyra::VectorBase<ST>> g1;
+  int ss_num_g = ret.responses_outT->Ng(); // Number of *vectors* of responses
   for(int ig=0; ig<ss_num_g; ig++){
-    g1 = rcp(new Epetra_Vector(*(ret.model->get_g_map(ig))));
-    ret.responses_out->set_g(ig,g1);
+    g1 = Thyra::createMember<ST>(ret.modelT->get_g_space(ig));//rcp(new Epetra_Vector(*(ret.model->get_g_map(ig))));
+    ret.responses_outT->set_g(ig,g1);
   }
 
-  RCP<Epetra_Vector> p1;
-  int ss_num_p = ret.params_in->Np();     // Number of *vectors* of parameters
+  int ss_num_p = ret.params_inT->Np();     // Number of *vectors* of parameters
   TEUCHOS_TEST_FOR_EXCEPTION (
     ss_num_p - numParameters > 1,
     Teuchos::Exceptions::InvalidParameter, std::endl 
     << "Error! Cannot have more than one distributed Parameter for topology optimization" << std::endl);
-  for(int ip=0; ip<ss_num_p; ip++){
-    p1 = rcp(new Epetra_Vector(*(ret.model->get_p_init(ip))));
-    ret.params_in->set_p(ip,p1);
+  for (int ip=0; ip<ss_num_p; ip++){
+    RCP<const Thyra::VectorBase<ST>> p1 = ret.modelT->getNominalValues().get_p(ip); 
+    ret.params_inT->set_p(ip,p1);
   }
-
+  
   for(int ig=0; ig<numResponses; ig++){
     if(ss_num_p > numParameters){
       int ip = ss_num_p-1;
@@ -2781,28 +2782,32 @@ ATO::SolverT::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPar
         problemParams.sublist("Response Functions").sublist(Albany::strint("Response Vector",ig));
       std::string gName = resParams.get<std::string>("Response Name");
       std::string dgdpName = resParams.get<std::string>("Response Derivative Name");
-      if(!ret.responses_out->supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, ig, ip).none()){
-        RCP<const Epetra_Vector> p = ret.params_in->get_p(ip);
-        RCP<const Epetra_Vector> g = ret.responses_out->get_g(ig);
-        RCP<Epetra_MultiVector> dgdp = rcp(new Epetra_MultiVector(p->Map(), g->GlobalLength() ));
-        if(ret.responses_out->supports(OUT_ARG_DgDp,ig,ip).supports(DERIV_TRANS_MV_BY_ROW)){
-          Derivative dgdp_out(dgdp, DERIV_TRANS_MV_BY_ROW);
-          ret.responses_out->set_DgDp(ig,ip,dgdp_out);
-        } else 
-          ret.responses_out->set_DgDp(ig,ip,dgdp);
-        responseMap.insert(std::pair<std::string,RCP<const Epetra_Vector> >(gName,g));
-        RCP<const Tpetra_Vector> gT = Petra::EpetraVector_To_TpetraVectorConst(*g, _solverComm); 
+      if (!ret.responses_outT->supports(Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, ig, ip).none()){
+        RCP<const Thyra::VectorBase<ST>> p = ret.params_inT->get_p(ip);
+        RCP<const Thyra::VectorBase<ST>> g = ret.responses_outT->get_g(ig);
+        //RCP<Epetra_MultiVector> dgdp = rcp(new Epetra_MultiVector(p->Map(), g->GlobalLength() ));
+        //IKT, 1/6/17: double check that the following is correct 
+        RCP<Thyra::MultiVectorBase<ST>> dgdp = Thyra::createMembers(ret.modelT->get_p_space(ip), ss_num_g); 
+        if(ret.responses_outT->supports(OUT_ARG_DgDp,ig,ip).supports(DERIV_TRANS_MV_BY_ROW)){
+          Derivative<ST> dgdp_out(dgdp, DERIV_TRANS_MV_BY_ROW);
+          ret.responses_outT->set_DgDp(ig,ip,dgdp_out);
+        } 
+        else 
+          ret.responses_outT->set_DgDp(ig,ip,dgdp);
+        //IKT, 1/6/17: note that responseMap and responseDerivMap are not populated here.  Need to make 
+        //sure that the rest of the code does not use this object; otherwise, need to populate it.  
+        RCP<const Tpetra_Vector> gT = ConverterT::getConstTpetraVector(g);
         responseMapT.insert(std::pair<std::string,RCP<const Tpetra_Vector> >(gName, gT));
-        responseDerivMap.insert(std::pair<std::string,RCP<Epetra_MultiVector> >(dgdpName,dgdp));
-        RCP<Tpetra_MultiVector> dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp, _solverComm); 
-        responseDerivMapT.insert(std::pair<std::string,RCP<Tpetra_MultiVector> >(dgdpName, dgdpT));
+        //responseMap.insert(std::pair<std::string,RCP<const Epetra_Vector> >(gName,g));
+        RCP<Tpetra_MultiVector> dgdpT = ConverterT::getTpetraMultiVector(dgdp);
+        responseDerivMapT.insert(std::pair<std::string,RCP<Tpetra_MultiVector> >(dgdpName, dgdpT)); 
+        //responseDerivMap.insert(std::pair<std::string,RCP<Epetra_MultiVector> >(dgdpName,dgdp));
       }
     }
   }
 
-  RCP<Epetra_Vector> xfinal =
-    rcp(new Epetra_Vector(*(ret.model->get_g_map(ss_num_g-1)),true) );
-  ret.responses_out->set_g(ss_num_g-1,xfinal); */
+  RCP<Thyra::VectorBase<ST>> xfinal = Thyra::createMember(ret.modelT->get_g_space(ss_num_g-1)); 
+  ret.responses_outT->set_g(ss_num_g-1,xfinal); 
 
   return ret;
 }
@@ -2813,6 +2818,7 @@ void
 ATO::SolverT::updateTpetraResponseMaps()
 /******************************************************************************/
 {
+  //IKT, FIXME: this functions should not be needed in the Thyra model evaluator version of the code. 
   std::map<std::string, Teuchos::RCP<const Epetra_Vector> >::const_iterator git;
   git = responseMap.cbegin();  
   for (int i = 0; i<responseMap.size(); i++) {
@@ -2914,13 +2920,78 @@ Teuchos::RCP<const Thyra::VectorSpaceBase<ST>>
 ATO::SolverT::get_g_space(int j) const 
 /******************************************************************************/
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(j > _num_responses || j < 0, Teuchos::Exceptions::InvalidParameter,
+                     std::endl <<
+                     "Error in ATO::SolverT::get_g_space():  " <<
+                     "Invalid response index j = " <<
+                     j << std::endl);
+  //TEV: Hardwired for now
+  int _num_responses = 0;
+  //IKT, 1/6/17, to ask Josh: _tpetra_response_map is not populated anywhere,
+  //so it will be null.  Is that the intention?   
+  //no index because num_g == 1 so j must be zero
+  //IKT, 1/6/17: does _tpetra_response_map need to be a LocalMap?  It is not 
+  //populated.  LocalMap cannot be cast to Thyra::VectorSpaceBase.  Ask Josh.  
+  //if (j <  _num_responses) 
+  //  return Thyra::createVectorSpace<ST>(_tpetra_response_map);
+  if (j == _num_responses) 
+    return Thyra::createVectorSpace<ST>(_tpetra_x_map); 
+  return Teuchos::null; 
+}
+
+/******************************************************************************/
+Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> 
+ATO::SolverT::get_p_space(int j) const 
+/******************************************************************************/
+{
   //IKT, fill in! 
 }
+
 
 /******************************************************************************/
 ATO::SolverSubSolverDataT
 ATO::SolverT::CreateSubSolverData(const ATO::SolverSubSolverT& sub) const
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  ATO::SolverSubSolverDataT ret;
+  if( sub.params_inT->Np() > 0 && sub.responses_outT->Ng() > 0 ) 
+  {
+    ret.deriv_supportT = sub.modelT->createOutArgs().supports(OUT_ARG_DgDp, 0, 0);
+  }
+  else ret.deriv_supportT = Thyra::ModelEvaluatorBase::DerivativeSupport();
+
+  ret.Np = sub.params_inT->Np();
+  ret.pLength = std::vector<int>(ret.Np);
+  for (int i=0; i<ret.Np; i++) {
+    Teuchos::RCP<const Thyra::VectorBase<ST>> solver_p = sub.params_inT->get_p(i);
+    //IKT, 1/6/17: is there really no equivalent of getLocalLength() for Thyra::VectorBase??
+    Teuchos::RCP<const Tpetra_Vector> solver_p_tpetra = ConverterT::getConstTpetraVector(solver_p);
+    //uses local length (need to modify to work with distributed params)
+    if(solver_p != Teuchos::null) ret.pLength[i] = solver_p_tpetra->getLocalLength();
+    else ret.pLength[i] = 0;
+  }
+  
+  ret.Ng = sub.responses_outT->Ng();
+  ret.gLength = std::vector<int>(ret.Ng);
+  for (int i=0; i<ret.Ng; i++) {
+    Teuchos::RCP<const Thyra::VectorBase<ST>> solver_g = sub.responses_outT->get_g(i);
+    //IKT, 1/6/17: is there really no equivalent of getLocalLength() for Thyra::VectorBase??
+    Teuchos::RCP<const Tpetra_Vector> solver_g_tpetra = ConverterT::getConstTpetraVector(solver_g);
+    //uses local length (need to modify to work with distributed responses)
+    if(solver_g != Teuchos::null) ret.gLength[i] = solver_g_tpetra->getLocalLength();
+    else ret.gLength[i] = 0;
+  }
+  
+  if(ret.Np > 0) {
+    Teuchos::RCP<const Thyra::VectorBase<ST>> p_init =
+      //only first p vector used - in the future could make ret.p_init an array of Np vectors
+      sub.modelT->getNominalValues().get_p(0);
+    if(p_init != Teuchos::null) 
+      ret.p_initT = ConverterT::getConstTpetraVector(p_init); 
+    else 
+      ret.p_initT = Teuchos::null;
+  }
+  else ret.p_initT = Teuchos::null;
+
+  return ret;
 }
