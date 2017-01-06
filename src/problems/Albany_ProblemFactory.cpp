@@ -62,6 +62,10 @@
 #include "AMP/problems/PhaseProblem.hpp"
 #endif
 
+#ifdef ALBANY_ANISO
+#include "ANISO/AdvectionProblem.hpp"
+#endif
+
 #ifdef ALBANY_FELIX
 #include "FELIX/problems/FELIX_Stokes.hpp"
 #include "FELIX/problems/FELIX_StokesFO.hpp"
@@ -300,6 +304,14 @@ Albany::ProblemFactory::create()
   }
   else if (method == "Phase 3D") {
     strategy = rcp(new Albany::PhaseProblem(problemParams, paramLib, 3, commT));
+  }
+#endif
+#ifdef ALBANY_ANISO
+  else if (method == "ANISO Advection 2D") {
+    strategy = rcp(new Albany::AdvectionProblem(problemParams, paramLib, 2, commT));
+  }
+  else if (method == "ANISO Advection 3D") {
+    strategy = rcp(new Albany::AdvectionProblem(problemParams, paramLib, 3, commT));
   }
 #endif
 #ifdef ALBANY_HYDRIDE

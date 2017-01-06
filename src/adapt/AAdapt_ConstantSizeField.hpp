@@ -4,23 +4,20 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#ifndef AADAPT_CONSTANTSIZEFIELD_HPP
+#define AADAPT_CONSTANTSIZEFIELD_HPP
 
-#ifndef AADAPT_NONUNIFREFSIZEFIELD_HPP
-#define AADAPT_NONUNIFREFSIZEFIELD_HPP
-
-#include "Albany_APFDiscretization.hpp"
-#include <ma.h>
-#include "Albany_StateManager.hpp"
 #include "AAdapt_MeshAdaptMethod.hpp"
 
 namespace AAdapt {
 
-class NonUnifRefSizeField : public MeshAdaptMethod {
+class ConstantSizeField : public MeshAdaptMethod {
 
   public:
-    NonUnifRefSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
 
-    ~NonUnifRefSizeField();
+    ConstantSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
+
+    ~ConstantSizeField();
 
     void adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
@@ -28,11 +25,24 @@ class NonUnifRefSizeField : public MeshAdaptMethod {
 
     void preProcessShrunkenMesh();
 
-    void preProcessOriginalMesh();
+    void preProcessOriginalMesh() {}
     void postProcessFinalMesh() {}
     void postProcessShrunkenMesh() {}
 
-  private:
+    class ConstantIsoFunc : public ma::IsotropicFunction
+    {
+      public:
+        virtual ~ConstantIsoFunc(){}
+
+    /** \brief get the desired element size at this vertex */
+
+        virtual double getValue(ma::Entity* vert){
+           return value_;
+        } 
+
+        double value_;
+
+    } constantIsoFunc;
 
 };
 

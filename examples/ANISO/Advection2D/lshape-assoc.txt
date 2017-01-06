@@ -1,0 +1,8 @@
+element block lshape 1
+2 13
+node set left 1
+1 10
+node set homogeneous 3
+1 9
+1 11
+1 6

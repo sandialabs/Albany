@@ -32,6 +32,8 @@ SET(SOURCES
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Aggregator.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Optimizer.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Pareto_Optimizer.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_XFEM_Preconditioner.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_XFEM_Preconditioner.cpp
 )
 
 IF (ENABLE_DOTK)
@@ -44,7 +46,6 @@ ENDIF()
 IF (ENABLE_Cogent)
   SET(SOURCES ${SOURCES}       
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ComputeBasisFunctions.cpp
-  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_XFEM_Preconditioner.cpp
   )
 ENDIF()
 
@@ -100,6 +101,8 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Aggregator.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Optimizer.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Pareto_Optimizer.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_XFEM_Preconditioner.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_XFEM_Preconditioner.hpp
 )
 
 IF (ENABLE_DOTK)
@@ -114,7 +117,6 @@ IF (ENABLE_Cogent)
   SET(HEADERS ${HEADERS}
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ComputeBasisFunctions_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ComputeBasisFunctions.hpp
-  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_XFEM_Preconditioner.hpp
   )
 ENDIF()
 

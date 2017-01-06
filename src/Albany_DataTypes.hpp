@@ -107,20 +107,21 @@ typedef int                                         GO;
 typedef int                                         LO;
 typedef Kokkos::Compat::KokkosDeviceWrapperNode<PHX::Device> KokkosNode;
 
-typedef Teuchos::Comm<int>                          Teuchos_Comm;
-typedef Tpetra::Map<LO, GO, KokkosNode>             Tpetra_Map;
-typedef Tpetra::Export<LO, GO, KokkosNode>          Tpetra_Export;
-typedef Tpetra::Import<LO, GO, KokkosNode>          Tpetra_Import;
-typedef Tpetra::CrsGraph<LO, GO, KokkosNode>        Tpetra_CrsGraph;
-typedef Tpetra::CrsMatrix<ST, LO, GO, KokkosNode>   Tpetra_CrsMatrix;
-typedef Tpetra::RowMatrix<ST, LO, GO, KokkosNode>   Tpetra_RowMatrix;
-typedef Tpetra::Operator<ST, LO, GO, KokkosNode>    Tpetra_Operator;
-typedef Tpetra::Vector<ST, LO, GO, KokkosNode>      Tpetra_Vector;
-typedef Tpetra::MultiVector<ST, LO, GO, KokkosNode> Tpetra_MultiVector;
+typedef Teuchos::Comm<int>                                            Teuchos_Comm;
+typedef Tpetra::Map<LO, GO, KokkosNode>                               Tpetra_Map;
+typedef Tpetra::Details::LocalMap<LO, GO, KokkosNode>                 Tpetra_LocalMap; 
+typedef Tpetra::Export<LO, GO, KokkosNode>                            Tpetra_Export;
+typedef Tpetra::Import<LO, GO, KokkosNode>                            Tpetra_Import;
+typedef Tpetra::CrsGraph<LO, GO, KokkosNode>                          Tpetra_CrsGraph;
+typedef Tpetra::CrsMatrix<ST, LO, GO, KokkosNode>                     Tpetra_CrsMatrix;
+typedef Tpetra::RowMatrix<ST, LO, GO, KokkosNode>                     Tpetra_RowMatrix;
+typedef Tpetra::Operator<ST, LO, GO, KokkosNode>                      Tpetra_Operator;
+typedef Tpetra::Vector<ST, LO, GO, KokkosNode>                        Tpetra_Vector;
+typedef Tpetra::MultiVector<ST, LO, GO, KokkosNode>                   Tpetra_MultiVector;
 typedef Thyra::TpetraOperatorVectorExtraction<ST, LO, GO, KokkosNode> ConverterT;
-typedef Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix> Tpetra_MatrixMarket_Writer;
-typedef Thyra::TpetraVector<ST,LO,GO,KokkosNode> ThyraVector;
-typedef Thyra::TpetraMultiVector<ST,LO,GO,KokkosNode> ThyraMultiVector;
+typedef Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>                Tpetra_MatrixMarket_Writer;
+typedef Thyra::TpetraVector<ST,LO,GO,KokkosNode>                      ThyraVector;
+typedef Thyra::TpetraMultiVector<ST,LO,GO,KokkosNode>                 ThyraMultiVector;
 
 
 // Include ScalarParameterLibrary to specialize its traits

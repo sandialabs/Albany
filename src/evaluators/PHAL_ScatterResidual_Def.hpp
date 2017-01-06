@@ -39,7 +39,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
     const std::size_t num_val = numFieldsBase;
     val.resize(num_val);
     for (std::size_t eq = 0; eq < numFieldsBase; ++eq) {
-      PHX::MDField<ScalarT,Cell,Node> mdf(names[eq],dl->node_scalar);
+      PHX::MDField<ScalarT const,Cell,Node> mdf(names[eq],dl->node_scalar);
       val[eq] = mdf;
       this->addDependentField(val[eq]);
     }
@@ -48,7 +48,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
   else
   if (tensorRank == 1 ) {
 //    valVec.resize(1);
-    PHX::MDField<ScalarT,Cell,Node,Dim> mdf(names[0],dl->node_vector);
+    PHX::MDField<ScalarT const,Cell,Node,Dim> mdf(names[0],dl->node_vector);
     valVec= mdf;
     this->addDependentField(valVec);
     numFieldsBase = dl->node_vector->dimension(2);
@@ -57,7 +57,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
   else
   if (tensorRank == 2 ) {
     valTensor.resize(1);
-    PHX::MDField<ScalarT,Cell,Node,Dim,Dim> mdf(names[0],dl->node_tensor);
+    PHX::MDField<ScalarT const,Cell,Node,Dim,Dim> mdf(names[0],dl->node_tensor);
     valTensor[0] = mdf;
     this->addDependentField(valTensor[0]);
     numFieldsBase = (dl->node_tensor->dimension(2))*(dl->node_tensor->dimension(3));
@@ -493,7 +493,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        typename PHAL::Ref<ScalarT>::type
+        typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                     this->valTensor[0](cell,node, eq/numDim, eq%numDim));
@@ -598,7 +598,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        typename PHAL::Ref<ScalarT>::type valref = (
+        typename PHAL::Ref<ScalarT const>::type valref = (
             this->tensorRank == 0 ? this->val[eq] (cell, node) :
             this->tensorRank == 1 ? this->valVec (cell, node, eq) :
             this->valTensor[0] (cell, node, eq / numDim, eq % numDim));
@@ -658,7 +658,7 @@ evaluateFields(typename Traits::EvalData workset)
           double val = 0.0;
           for (std::size_t node = 0; node < this->numNodes; ++node) {
             for (std::size_t eq = 0; eq < numFields; eq++) {
-              typename PHAL::Ref<ScalarT>::type
+              typename PHAL::Ref<ScalarT const>::type
                         valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                                   this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                                   this->valTensor[0](cell,node, eq/numDim, eq%numDim));
@@ -682,7 +682,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       for (std::size_t node = 0; node < this->numNodes; ++node) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-          typename PHAL::Ref<ScalarT>::type
+          typename PHAL::Ref<ScalarT const>::type
                     valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                               this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                               this->valTensor[0](cell,node, eq/numDim, eq%numDim));
@@ -744,7 +744,7 @@ evaluateFields(typename Traits::EvalData workset)
           double val = 0.0;
           for (std::size_t node = 0; node < this->numNodes; ++node) {
             for (std::size_t eq = 0; eq < this->numFields; eq++) {
-              typename PHAL::Ref<ScalarT>::type
+              typename PHAL::Ref<ScalarT const>::type
                         valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                                   this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                                   this->valTensor[0](cell,node, eq/numDim, eq%numDim));
@@ -768,7 +768,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       for (std::size_t node = 0; node < this->numNodes; ++node) {
         for (std::size_t eq = 0; eq < this->numFields; eq++) {
-          typename PHAL::Ref<ScalarT>::type
+          typename PHAL::Ref<ScalarT const>::type
                     valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                               this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                               this->valTensor[0](cell,node, eq/numDim, eq%numDim));
@@ -817,7 +817,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        typename PHAL::Ref<ScalarT>::type
+        typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                     this->valTensor[0](cell,node, eq/numDim, eq%numDim));
@@ -868,7 +868,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        typename PHAL::Ref<ScalarT>::type
+        typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                     this->valTensor[0](cell,node, eq/numDim, eq%numDim));
@@ -955,7 +955,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        typename PHAL::Ref<ScalarT>::type
+        typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                     this->valTensor[0](cell,node, eq/numDim, eq%numDim));
@@ -1013,7 +1013,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        typename PHAL::Ref<ScalarT>::type
+        typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                     this->valTensor[0](cell,node, eq/numDim, eq%numDim));
@@ -1066,7 +1066,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        typename PHAL::Ref<ScalarT>::type
+        typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                     this->valTensor[0](cell,node, eq/numDim, eq%numDim));
@@ -1161,7 +1161,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        typename PHAL::Ref<ScalarT>::type
+        typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                     this->valTensor[0](cell,node, eq/numDim, eq%numDim));

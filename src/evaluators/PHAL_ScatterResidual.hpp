@@ -51,10 +51,10 @@ protected:
 
   typedef typename EvalT::ScalarT ScalarT;
   Teuchos::RCP<PHX::FieldTag> scatter_operation;
-  std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
-  PHX::MDField<ScalarT,Cell,Node,Dim>  valVec;
+  std::vector< PHX::MDField<ScalarT const,Cell,Node> > val;
+  PHX::MDField<ScalarT const,Cell,Node,Dim>  valVec;
   //typedef Kokkos::View < ScalarT***, Kokkos::LayoutRight, PHX::Device > temp_view_type;
-  std::vector< PHX::MDField<ScalarT,Cell,Node,Dim,Dim> > valTensor;
+  std::vector< PHX::MDField<ScalarT const,Cell,Node,Dim,Dim> > valTensor;
   std::size_t numNodes;
   std::size_t numFieldsBase; // Number of fields gathered in this call
   std::size_t offset; // Offset of first DOF being gathered when numFields<neq

@@ -718,6 +718,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./AMP/problems
                      ./AMP/evaluators
                      ./AMP/responses
+                     ./ANISO
                      ./QCAD
                      ./QCAD/problems
                      ./QCAD/evaluators
@@ -965,6 +966,11 @@ ENDIF()
 IF (ALBANY_AMP)
   add_subdirectory(AMP)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AMP)
+ENDIF()
+
+IF (ALBANY_ANISO)
+  add_subdirectory(ANISO)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ANISO)
 ENDIF()
 
 IF(ALBANY_CATALYST)

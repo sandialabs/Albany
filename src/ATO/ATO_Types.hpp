@@ -11,6 +11,11 @@ typedef struct TopologyStruct {
   Teuchos::RCP<Epetra_Vector> dataVector;
 } TopologyStruct;
 
+typedef struct TopologyStructT {
+  Teuchos::RCP<ATO::Topology> topologyT;
+  Teuchos::RCP<Tpetra_Vector> dataVectorT;
+} TopologyStructT;
+
 }
 
 #endif

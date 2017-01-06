@@ -31,13 +31,25 @@ public virtual Albany::AbstractProblem {
                        std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
                        double& v, double* dvdp=NULL, 
                        std::string strIntegrationMethod="Gauss Quadrature");
+   void ComputeMeasureT(std::string measure, 
+                       std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
+                       double& v, double* dvdp=NULL, 
+                       std::string strIntegrationMethod="Gauss Quadrature");
    void computeMeasure(std::string measure, 
                        std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
                        double& v, double* dvdp=NULL);
+   void computeMeasureT(std::string measure, 
+                       std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
+                       double& v, double* dvdp=NULL);
    void computeConformalVolume(std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
+                      double& m, double* dmdp);
+   void computeConformalVolumeT(std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
                       double& m, double* dmdp);
    void computeConformalMeasure(std::string measure, 
                       std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
+                      double& m, double* dmdp);
+   void computeConformalMeasureT(std::string measure, 
+                      std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
                       double& m, double* dmdp);
    void ComputeMeasure(std::string measure, double& v);
    void setDiscretization(Teuchos::RCP<Albany::AbstractDiscretization> _disc)

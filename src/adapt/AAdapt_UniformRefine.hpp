@@ -5,20 +5,22 @@
 //*****************************************************************//
 
 
-#ifndef AADAPT_UNIFREFSIZEFIELD_HPP
-#define AADAPT_UNIFREFSIZEFIELD_HPP
+#ifndef AADAPT_UNIFORMREFINE_HPP
+#define AADAPT_UNIFORMREFINE_HPP
 
+#include "Albany_APFDiscretization.hpp"
+#include <ma.h>
+#include "Albany_StateManager.hpp"
 #include "AAdapt_MeshAdaptMethod.hpp"
 
 namespace AAdapt {
 
-class UnifRefSizeField : public MeshAdaptMethod {
+class UniformRefine : public MeshAdaptMethod {
 
   public:
+    UniformRefine(const Teuchos::RCP<Albany::APFDiscretization>& disc);
 
-    UnifRefSizeField(const Teuchos::RCP<Albany::APFDiscretization>& disc);
-
-    ~UnifRefSizeField();
+    ~UniformRefine();
 
     void adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
@@ -30,22 +32,7 @@ class UnifRefSizeField : public MeshAdaptMethod {
     void postProcessFinalMesh() {}
     void postProcessShrunkenMesh() {}
 
-    class UnifRefIsoFunc : public ma::IsotropicFunction
-    {
-      public:
-        virtual ~UnifRefIsoFunc(){}
-
-    /** \brief get the desired element size at this vertex */
-
-        virtual double getValue(ma::Entity* vert){
-            return elem_size * averageEdgeLength;
-        }
-
-        double elem_size;
-        double averageEdgeLength;
-
-    } unifRefIsoFunc;
-
+  private:
 
 };
 

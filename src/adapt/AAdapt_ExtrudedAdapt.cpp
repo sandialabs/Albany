@@ -7,7 +7,7 @@
 #include "AAdapt_ExtrudedAdapt.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
 #include "AAdapt_SPRSizeField.hpp"
-#include "AAdapt_UnifSizeField.hpp"
+#include "AAdapt_ConstantSizeField.hpp"
 
 namespace AAdapt {
 
@@ -37,8 +37,8 @@ void ExtrudedAdapt::setParams(const Teuchos::RCP<Teuchos::ParameterList>& p) {
       "Extruded Size Method", "SPR");
   if (size_method == "SPR")
     helper = new SPRSizeField(apf_disc);
-  else if (size_method == "Unif")
-    helper = new UnifSizeField(apf_disc);
+  else if (size_method == "Constant")
+    helper = new ConstantSizeField(apf_disc);
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "Unknown \"Extruded Size Method\" option " << size_method << '\n');

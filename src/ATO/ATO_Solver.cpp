@@ -1,4 +1,4 @@
-//*****************************************************************//
+////*****************************************************************//
 //    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
@@ -24,6 +24,7 @@ Please remove when issue is resolved
 #include "Adapt_NodalDataVector.hpp"
 #include "Petra_Converters.hpp"
 #include "EpetraExt_RowMatrixOut.h"
+#include "EpetraExt_MultiVectorOut.h"
 #include "Epetra_LinearProblem.h"
 #include "AztecOO.h"
 
@@ -32,17 +33,21 @@ Please remove when issue is resolved
 #include "STKExtract.hpp"
 #endif
 
+//#define TPETRA_CRS_APPLY  
+
 MPI_Datatype MPI_GlobalPoint;
 
 bool ATO::operator< (ATO::GlobalPoint const & a, ATO::GlobalPoint const & b){return a.gid < b.gid;}
 ATO::GlobalPoint::GlobalPoint(){coords[0]=0.0; coords[1]=0.0; coords[2]=0.0;}
+
+int countFilterOp;
 
 
 /******************************************************************************/
 ATO::Solver::
 Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
        const Teuchos::RCP<const Teuchos_Comm>& comm,
-       const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+       const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 : _solverComm(comm), _mainAppParams(appParams)
 /******************************************************************************/
 {
@@ -75,19 +80,24 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
      _is_restart = topoParams.get<bool>("Read From Restart");
 
   _topologyInfoStructs.resize(ntopos);
+  _topologyInfoStructsT.resize(ntopos);
   _topologyArray = Teuchos::rcp( new Teuchos::Array<Teuchos::RCP<ATO::Topology> >(ntopos) );
+  _topologyArrayT = Teuchos::rcp( new Teuchos::Array<Teuchos::RCP<ATO::Topology> >(ntopos) );
   for(int itopo=0; itopo<ntopos; itopo++){
     _topologyInfoStructs[itopo] = Teuchos::rcp(new TopologyInfoStruct);
+    _topologyInfoStructsT[itopo] = Teuchos::rcp(new TopologyInfoStructT);
     Teuchos::ParameterList& tParams = topoParams.sublist(Albany::strint("Topology",itopo));
     _topologyInfoStructs[itopo]->topology = Teuchos::rcp(new Topology(tParams, itopo));
+    _topologyInfoStructsT[itopo]->topologyT = Teuchos::rcp(new Topology(tParams, itopo));
     (*_topologyArray)[itopo] = _topologyInfoStructs[itopo]->topology;
+    (*_topologyArrayT)[itopo] = _topologyInfoStructsT[itopo]->topologyT;
   }
 
   // currently all topologies must have the same entity type
-  entityType = _topologyInfoStructs[0]->topology->getEntityType();
+  entityType = _topologyInfoStructsT[0]->topologyT->getEntityType();
   for(int itopo=1; itopo<ntopos; itopo++){
     TEUCHOS_TEST_FOR_EXCEPTION(
-    _topologyInfoStructs[itopo]->topology->getEntityType() != entityType,
+    _topologyInfoStructsT[itopo]->topologyT->getEntityType() != entityType,
     Teuchos::Exceptions::InvalidParameter, std::endl
     << "Error!  Topologies must all have the same entity type." << std::endl);
   }
@@ -98,8 +108,6 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   ATO::OptimizerFactory optimizerFactory;
   _optimizer = optimizerFactory.create(optimizerParams);
   _optimizer->SetInterface(this);
-  //This will ultimately be removed when everything is in Tpetra/Thyra 
-  Teuchos::RCP<const Epetra_Comm> commE = Albany::createEpetraCommFromTeuchosComm(comm);
   _optimizer->SetCommunicator(comm);
 
   _writeDesignFrequency = problemParams.get<int>("Design Output Frequency", 0);
@@ -136,9 +144,12 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   // Assign requested filters to topologies
   for(int itopo=0; itopo<ntopos; itopo++){
     Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];
+    Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
     Teuchos::RCP<Topology> topo = topoStruct->topology;
+    Teuchos::RCP<Topology> topoT = topoStructT->topologyT;
 
     topoStruct->filterIsRecursive = topoParams.get<bool>("Apply Filter Recursively", true);
+    topoStructT->filterIsRecursiveT = topoParams.get<bool>("Apply Filter Recursively", true);
 
     int topologyFilterIndex = topo->SpatialFilterIndex();
     if( topologyFilterIndex >= 0 ){
@@ -146,6 +157,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
         Teuchos::Exceptions::InvalidParameter, std::endl 
         << "Error!  Spatial filter " << topologyFilterIndex << "requested but not defined." << std::endl);
       topoStruct->filter = filters[topologyFilterIndex];
+      topoStructT->filterT = filters[topologyFilterIndex];
     }
 
     int topologyOutputFilter = topo->TopologyOutputFilter();
@@ -154,6 +166,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
         Teuchos::Exceptions::InvalidParameter, std::endl 
         << "Error!  Spatial filter " << topologyFilterIndex << "requested but not defined." << std::endl);
       topoStruct->postFilter = filters[topologyOutputFilter];
+      topoStructT->postFilterT = filters[topologyOutputFilter];
     }
   }
 
@@ -266,29 +279,16 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   _epetra_x_map = Teuchos::rcp(new Epetra_Map( *sub_x_map ));
 
   Teuchos::RCP<Albany::Application> app = _subProblems[0].app;
-  Albany::StateManager& stateMgr = app->getStateMgr();
+  Teuchos::RCP<Albany::AbstractDiscretization> disc = app->getDiscretization();
 
-  // construct epetra maps for node ids. 
-  Teuchos::RCP<const Epetra_BlockMap>
-    local_node_blockmap   = stateMgr.getNodalDataBase()->getNodalDataVector()->getLocalBlockMapE();
-  int num_global_elements = local_node_blockmap->NumGlobalElements();
-  int num_my_elements     = local_node_blockmap->NumMyElements();
-  int *global_node_ids    = new int[num_my_elements]; 
-  local_node_blockmap->MyGlobalElements(global_node_ids);
-  localNodeMap = Teuchos::rcp(new Epetra_Map(num_global_elements,num_my_elements,global_node_ids,0,*commE));
-  delete [] global_node_ids;
-
-  Teuchos::RCP<const Epetra_BlockMap>
-    overlap_node_blockmap = stateMgr.getNodalDataBase()->getNodalDataVector()->getOverlapBlockMapE();
-  num_global_elements = overlap_node_blockmap->NumGlobalElements();
-  num_my_elements     = overlap_node_blockmap->NumMyElements();
-  global_node_ids     = new int[num_my_elements]; 
-  overlap_node_blockmap->MyGlobalElements(global_node_ids);
-  overlapNodeMap = Teuchos::rcp(new Epetra_Map(num_global_elements,num_my_elements,global_node_ids,0,*commE));
-  delete [] global_node_ids;
+  localNodeMap   = disc->getNodeMap();
+  overlapNodeMap = disc->getOverlapNodeMap();
+  localNodeMapT   = disc->getNodeMapT();
+  overlapNodeMapT = disc->getOverlapNodeMapT();
 
   for(int itopo=0; itopo<ntopos; itopo++){
     Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];
+    Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
     if(topoStruct->postFilter != Teuchos::null ){
       topoStruct->filteredOverlapVector = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
       topoStruct->filteredVector  = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
@@ -296,31 +296,42 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
       topoStruct->filteredOverlapVector = Teuchos::null;
       topoStruct->filteredVector = Teuchos::null;
     }
+    if(topoStructT->postFilterT != Teuchos::null ){
+      topoStructT->filteredOverlapVectorT = Teuchos::rcp(new Tpetra_Vector(overlapNodeMapT));
+      topoStructT->filteredVectorT  = Teuchos::rcp(new Tpetra_Vector(localNodeMapT));
+    } else {
+      topoStructT->filteredOverlapVectorT = Teuchos::null;
+      topoStructT->filteredVectorT = Teuchos::null;
+    }
 
     // create overlap topo vector for output purposes
     topoStruct->overlapVector = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
     topoStruct->localVector   = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
+    topoStructT->overlapVectorT = Teuchos::rcp(new Tpetra_Vector(overlapNodeMapT));
+    topoStructT->localVectorT   = Teuchos::rcp(new Tpetra_Vector(localNodeMapT));
 
   } 
 
-  overlapObjectiveGradientVec.resize(ntopos);
-  ObjectiveGradientVec.resize(ntopos);
-  overlapConstraintGradientVec.resize(ntopos);
-  ConstraintGradientVec.resize(ntopos);
+  overlapObjectiveGradientVecT.resize(ntopos);
+  ObjectiveGradientVecT.resize(ntopos);
+  overlapConstraintGradientVecT.resize(ntopos);
+  ConstraintGradientVecT.resize(ntopos);
   for(int itopo=0; itopo<ntopos; itopo++){
-    overlapObjectiveGradientVec[itopo] = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
-    ObjectiveGradientVec[itopo]  = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
-    overlapConstraintGradientVec[itopo] = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
-    ConstraintGradientVec[itopo]  = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
+    overlapObjectiveGradientVecT[itopo] = Teuchos::rcp(new Tpetra_Vector(overlapNodeMapT));
+    ObjectiveGradientVecT[itopo]  = Teuchos::rcp(new Tpetra_Vector(localNodeMapT));
+    overlapConstraintGradientVecT[itopo] = Teuchos::rcp(new Tpetra_Vector(overlapNodeMapT));
+    ConstraintGradientVecT[itopo]  = Teuchos::rcp(new Tpetra_Vector(localNodeMapT));
   } 
   
                                             //* target *//   //* source *//
   importer = Teuchos::rcp(new Epetra_Import(*overlapNodeMap, *localNodeMap));
+  importerT = Teuchos::rcp(new Tpetra_Import(localNodeMapT, overlapNodeMapT));
 
 
   // create exporter (for integration type operations):
                                             //* source *//   //* target *//
   exporter = Teuchos::rcp(new Epetra_Export(*overlapNodeMap, *localNodeMap));
+  exporterT = Teuchos::rcp(new Tpetra_Export(overlapNodeMapT, localNodeMapT));
 
   // this should go somewhere else.  for now ...
   GlobalPoint gp;
@@ -333,34 +344,40 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   // initialize/build the filter operators. these are built once.
   int nFilters = filters.size();
+  countFilterOp = 0; 
   for(int ifltr=0; ifltr<nFilters; ifltr++){
     filters[ifltr]->buildOperator(
       _subProblems[0].app, 
-      overlapNodeMap, localNodeMap,
-      importer, exporter); 
+      overlapNodeMapT, localNodeMapT,
+      importerT, exporterT);
+    //IKT, FIXME: the following call is still here b/c filterOperatorT 
+    //is not constructed correctly yet in buildOperator for parallel runs.
+    //Need to debug.  
+    //filters[ifltr]->createFilterOpTfromFilterOp(_solverComm); 
   }
 
 
+  auto nVecs = ObjectiveGradientVecT.size();
   // pass subProblems to the objective aggregator
   if( entityType == "State Variable" ){
-    _objAggregator->SetInputVariables(_subProblems);
-    _objAggregator->SetOutputVariables(objectiveValue, overlapObjectiveGradientVec);
+    _objAggregator->SetInputVariablesT(_subProblems);
+    _objAggregator->SetOutputVariablesT(objectiveValue, overlapObjectiveGradientVecT);
   } else 
   if( entityType == "Distributed Parameter" ){
-    _objAggregator->SetInputVariables(_subProblems, responseMap, responseDerivMap);
-    _objAggregator->SetOutputVariables(objectiveValue, ObjectiveGradientVec);
+    _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
+    _objAggregator->SetOutputVariablesT(objectiveValue, ObjectiveGradientVecT);
   }
   _objAggregator->SetCommunicator(comm);
   
   // pass subProblems to the constraint aggregator
   if( !_conAggregator.is_null() ){
     if( entityType == "State Variable" ){
-      _conAggregator->SetInputVariables(_subProblems);
-      _conAggregator->SetOutputVariables(constraintValue, overlapConstraintGradientVec);
+      _conAggregator->SetInputVariablesT(_subProblems);
+      _conAggregator->SetOutputVariablesT(constraintValue, overlapConstraintGradientVecT);
     } else 
     if( entityType == "Distributed Parameter" ){
-      _conAggregator->SetInputVariables(_subProblems, responseMap, responseDerivMap);
-      _conAggregator->SetOutputVariables(constraintValue, ConstraintGradientVec);
+      _conAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
+      _conAggregator->SetOutputVariablesT(constraintValue, ConstraintGradientVecT);
     }
     _conAggregator->SetCommunicator(comm);
   }
@@ -464,13 +481,13 @@ ATO::Solver::evalModel(const InArgs& inArgs,
     int numWorksets = dest.size();
   
     // initialize topology of fixed blocks
-    int ntopos = _topologyInfoStructs.size();
+    int ntopos = _topologyInfoStructsT.size();
 
     for(int ws=0; ws<numWorksets; ws++){
 
       for(int itopo=0; itopo<ntopos; itopo++){
-        Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];
-        Teuchos::RCP<Topology> topology = topoStruct->topology;
+        Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
+        Teuchos::RCP<Topology> topology = topoStructT->topologyT;
         const Teuchos::Array<std::string>& fixedBlocks = topology->getFixedBlocks();
 
         if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) != fixedBlocks.end() ){
@@ -485,7 +502,7 @@ ATO::Solver::evalModel(const InArgs& inArgs,
                 wsTopo(cell,node) = matVal;
               }
           } else if( topology->getEntityType() == "Distributed Parameter" ){
-            double* ltopo; topoStruct->localVector->ExtractView(&ltopo);
+            Teuchos::ArrayRCP<double> ltopo = topoStructT->localVectorT->get1dViewNonConst(); 
             double matVal = topology->getMaterialValue();
             const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& elNodeID = wsElNodeID[ws];
             int numCells = elNodeID.size();
@@ -493,7 +510,7 @@ ATO::Solver::evalModel(const InArgs& inArgs,
             for(int cell=0; cell<numCells; cell++)
               for(int node=0; node<numNodes; node++){
                 int gid = wsElNodeID[ws][cell][node];
-                int lid = localNodeMap->LID(gid);
+                int lid = localNodeMapT->getLocalElement(gid);
                 if(lid != -1) ltopo[lid] = matVal;
               }
           }
@@ -523,8 +540,8 @@ ATO::Solver::evalModel(const InArgs& inArgs,
 void ATO::Solver::getOptDofsUpperBound( Teuchos::Array<double>& b )
 /******************************************************************************/
 {
-  int nLocal = _topologyInfoStructs[0]->localVector->MyLength();
-  int nTopos = _topologyInfoStructs.size();
+  int nLocal = _topologyInfoStructsT[0]->localVectorT->getLocalLength();
+  int nTopos = _topologyInfoStructsT.size();
   int nTerms = nTopos*nLocal;
  
   b.resize(nTerms);
@@ -532,8 +549,8 @@ void ATO::Solver::getOptDofsUpperBound( Teuchos::Array<double>& b )
   Teuchos::Array<double>::iterator from = b.begin();
   Teuchos::Array<double>::iterator to = from+nLocal;
   for(int itopo=0; itopo<nTopos; itopo++){
-    TopologyInfoStruct& topoIS = *_topologyInfoStructs[itopo];
-    Teuchos::Array<double> bounds = topoIS.topology->getBounds();
+    TopologyInfoStructT& topoIS = *_topologyInfoStructsT[itopo];
+    Teuchos::Array<double> bounds = topoIS.topologyT->getBounds();
     std::fill(from, to, bounds[1]);
     from += nLocal; to += nLocal;
   }
@@ -544,8 +561,8 @@ void ATO::Solver::getOptDofsLowerBound( Teuchos::Array<double>& b )
 /******************************************************************************/
 {
 
-  int nLocal = _topologyInfoStructs[0]->localVector->MyLength();
-  int nTopos = _topologyInfoStructs.size();
+  int nLocal = _topologyInfoStructsT[0]->localVectorT->getLocalLength();
+  int nTopos = _topologyInfoStructsT.size();
   int nTerms = nTopos*nLocal;
  
   b.resize(nTerms);
@@ -553,8 +570,8 @@ void ATO::Solver::getOptDofsLowerBound( Teuchos::Array<double>& b )
   Teuchos::Array<double>::iterator from = b.begin();
   Teuchos::Array<double>::iterator to = from+nLocal;
   for(int itopo=0; itopo<nTopos; itopo++){
-    TopologyInfoStruct& topoIS = *_topologyInfoStructs[itopo];
-    Teuchos::Array<double> bounds = topoIS.topology->getBounds();
+    TopologyInfoStructT& topoIS = *_topologyInfoStructsT[itopo];
+    Teuchos::Array<double> bounds = topoIS.topologyT->getBounds();
     std::fill(from, to, bounds[0]);
     from += nLocal; to += nLocal;
   }
@@ -570,11 +587,11 @@ ATO::Solver::InitializeOptDofs(double* p)
     Albany::StateManager& stateMgr = _subProblems[0].app->getStateMgr();
     copyTopologyFromStateMgr( p, stateMgr );
   } else {
-    int ntopos = _topologyInfoStructs.size();
+    int ntopos = _topologyInfoStructsT.size();
     for(int itopo=0; itopo<ntopos; itopo++){
-      Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];
-      int numLocalNodes = topoStruct->localVector->MyLength();
-      double initVal = topoStruct->topology->getInitialValue();
+      Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
+      int numLocalNodes = topoStructT->localVectorT->getLocalLength();
+      double initVal = topoStructT->topologyT->getInitialValue();
       int fromIndex=itopo*numLocalNodes;
       int toIndex=fromIndex+numLocalNodes;
       for(int lid=fromIndex; lid<toIndex; lid++)
@@ -589,6 +606,9 @@ ATO::Solver::ComputeObjective(const double* p, double& g, double* dgdp)
 /******************************************************************************/
 {
 
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  *out << "IKT, 12/22/16, WARNING: Tpetra-converted ComputeObjective has not been tested " 
+       << "yet and may not work correctly! \n"; 
   for(int i=0; i<_numPhysics; i++){
 
     // copy data from p into each stateManager
@@ -605,7 +625,11 @@ ATO::Solver::ComputeObjective(const double* p, double& g, double* dgdp)
                                     (*_subProblems[i].responses_out));
   }
 
-  _objAggregator->Evaluate();
+  if ( entityType == "Distributed Parameter" ) {
+    updateTpetraResponseMaps(); 
+    _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
+  }
+  _objAggregator->EvaluateT();
   copyObjectiveFromStateMgr( g, dgdp );
 
   _iteration++;
@@ -618,8 +642,10 @@ void
 ATO::Solver::ComputeObjective(double* p, double& g, double* dgdp)
 /******************************************************************************/
 {
-
-  if(_iteration!=1) smoothTopology(p);
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  *out << "IKT, 12/22/16, WARNING: Tpetra-converted ComputeObjective has not been tested " 
+       << "yet and may not work correctly! \n"; 
+  if(_iteration!=1) smoothTopologyT(p);
 
   for(int i=0; i<_numPhysics; i++){
     
@@ -638,7 +664,11 @@ ATO::Solver::ComputeObjective(double* p, double& g, double* dgdp)
                                     (*_subProblems[i].responses_out));
   }
 
-  _objAggregator->Evaluate();
+  if ( entityType == "Distributed Parameter" ) {
+    updateTpetraResponseMaps(); 
+    _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
+  }
+  _objAggregator->EvaluateT();
   copyObjectiveFromStateMgr( g, dgdp );
 
   // See if the user specified a new design frequency.
@@ -706,10 +736,10 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
 
   const Albany::WorksetArray<std::string>::type& wsEBNames = stateMgr.getDiscretization()->getWsEBNames();
 
-  int ntopos = _topologyInfoStructs.size();
+  int ntopos = _topologyInfoStructsT.size();
   for(int itopo=0; itopo<ntopos; itopo++ ){
-    Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];
-    Teuchos::RCP<Topology> topology = topoStruct->topology;
+    Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
+    Teuchos::RCP<Topology> topology = topoStructT->topologyT;
     const Teuchos::Array<std::string>& fixedBlocks = topology->getFixedBlocks();
 
     const std::vector<Albany::IDArray>& 
@@ -719,12 +749,12 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
       wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();
 
     // enforce fixed blocks
-    Teuchos::RCP<Epetra_Vector> topoVec = topoStruct->localVector;
-    double* ltopo; topoVec->ExtractView(&ltopo);
-    int numMyNodes = topoVec->MyLength();
+    Teuchos::RCP<Tpetra_Vector> topoVecT = topoStructT->localVectorT;
+    Teuchos::ArrayRCP<double> ltopo = topoVecT->get1dViewNonConst(); 
+    int numMyNodes = topoVecT->getLocalLength();
     for(int i=0; i<numMyNodes; i++) ltopo[i] = p[i];
   
-    smoothTopology(topoStruct);
+    smoothTopologyT(topoStructT);
   
     int numWorksets = wsElDofs.size();
     double matVal = topology->getMaterialValue();
@@ -736,7 +766,7 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
         for(int cell=0; cell<numCells; cell++)
           for(int node=0; node<numNodes; node++){
             int gid = wsElNodeID[ws][cell][node];
-            int lid = localNodeMap->LID(gid);
+            int lid = localNodeMapT->getLocalElement(gid);
             if(lid != -1) ltopo[lid] = matVal;
           }
       }
@@ -746,19 +776,16 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
     Teuchos::RCP<Albany::NodeFieldContainer> 
       nodeContainer = stateMgr.getNodalDataBase()->getNodeContainer();
 
-    Teuchos::RCP<Epetra_Vector> overlapTopoVec = topoStruct->overlapVector;
-    const Teuchos::RCP<const Teuchos_Comm>
-      commT = Albany::createTeuchosCommFromEpetraComm(overlapTopoVec->Comm());
+    Teuchos::RCP<Tpetra_Vector> overlapTopoVecT = topoStructT->overlapVectorT;
 
     // JR: fix this.  you don't need to do this every time.  Just once at setup, after topoVec is built
     int distParamIndex = subSolver.params_in->Np()-1;
+    Teuchos::RCP<Epetra_Vector> topoVec = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
+    Petra::TpetraVector_To_EpetraVector(topoVecT, *topoVec, Teuchos::rcpFromRef(localNodeMap->Comm())); 
     subSolver.params_in->set_p(distParamIndex,topoVec);
   
-    overlapTopoVec->Import(*topoVec, *importer, Insert);
+    overlapTopoVecT->doImport(*topoVecT, *importerT, Tpetra::INSERT);
     std::string nodal_topoName = topology->getName()+"_node";
-    const Teuchos::RCP<const Tpetra_Vector>
-      overlapTopoVecT = Petra::EpetraVector_To_TpetraVectorConst(
-        *overlapTopoVec, commT);
     (*nodeContainer)[nodal_topoName]->saveFieldVector(overlapTopoVecT,/*offset=*/0);
   }
 
@@ -780,11 +807,11 @@ ATO::Solver::copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr 
     wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();
 
   // copy the topology from the state manager
-  int ntopos = _topologyInfoStructs.size();
+  int ntopos = _topologyInfoStructsT.size();
   for(int itopo=0; itopo<ntopos; itopo++){
-    Teuchos::RCP<TopologyInfoStruct> topologyInfoStruct = _topologyInfoStructs[itopo];
-    int numLocalNodes = topologyInfoStruct->localVector->MyLength();
-    Teuchos::RCP<Topology> topology = topologyInfoStruct->topology;
+    Teuchos::RCP<TopologyInfoStructT> topologyInfoStructT = _topologyInfoStructsT[itopo];
+    int numLocalNodes = topologyInfoStructT->localVectorT->getLocalLength();
+    Teuchos::RCP<Topology> topology = topologyInfoStructT->topologyT;
     int offset = itopo*numLocalNodes;
     for(int ws=0; ws<numWorksets; ws++){
       Albany::MDArray& wsTopo = src[ws][topology->getName()+"_node"];
@@ -792,7 +819,7 @@ ATO::Solver::copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr 
         for(int cell=0; cell<numCells; cell++)
           for(int node=0; node<numNodes; node++){
             int gid = wsElNodeID[ws][cell][node];
-            int lid = localNodeMap->LID(gid);
+            int lid = localNodeMapT->getLocalElement(gid);
             if(lid >= 0) p[lid+offset] = wsTopo(cell,node);
           }
     }
@@ -826,6 +853,31 @@ ATO::Solver::smoothTopology(double* p)
 }
 /******************************************************************************/
 void
+ATO::Solver::smoothTopologyT(double* p)
+/******************************************************************************/
+{
+  // copy topology into Epetra_Vectors to apply the filter and/or communicate boundary data
+  int ntopos = _topologyInfoStructsT.size();
+  
+  for(int itopo=0; itopo<ntopos; itopo++){
+    Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
+    Teuchos::RCP<Tpetra_Vector> topoVecT = topoStructT->localVectorT;
+    Teuchos::ArrayRCP<double> ltopo = topoVecT->get1dViewNonConst(); 
+    int numLocalNodes = topoVecT->getLocalLength();
+    int offset = itopo*numLocalNodes;
+    p += offset;
+    for(int lid=0; lid<numLocalNodes; lid++)
+      ltopo[lid] = p[lid];
+
+    smoothTopologyT(topoStructT);
+
+    // copy the topology back from the epetra vectors
+    for(int lid=0; lid<numLocalNodes; lid++)
+      p[lid] = ltopo[lid];
+  }
+}
+/******************************************************************************/
+void
 ATO::Solver::smoothTopology(Teuchos::RCP<TopologyInfoStruct> topoStruct)
 /******************************************************************************/
 {
@@ -850,6 +902,40 @@ ATO::Solver::smoothTopology(Teuchos::RCP<TopologyInfoStruct> topoStruct)
 
 /******************************************************************************/
 void
+ATO::Solver::smoothTopologyT(Teuchos::RCP<TopologyInfoStructT> topoStructT)
+/******************************************************************************/
+{
+  // apply filter if requested
+  if(topoStructT->filterT != Teuchos::null){
+    Teuchos::RCP<Tpetra_Vector> topoVecT = topoStructT->localVectorT;
+    Teuchos::RCP<Tpetra_Vector> filtered_topoVecT = 
+        Teuchos::rcp(new Tpetra_Vector(localNodeMapT));
+    int num = topoStructT->filterT->getNumIterations();
+    for(int i=0; i<num; i++){
+      //IKT, 1/5/17: the use of copies here is somewhat hacky, to get apply 
+      //to do the right thing and not throw an exception in a debug build. 
+      std::vector<double> vec(topoVecT->getLocalLength()); 
+      Teuchos::ArrayView<double> view = Teuchos::arrayViewFromVector(vec); 
+      if (i == 0) 
+        topoVecT->get1dCopy(view);
+      else 
+        filtered_topoVecT->get1dCopy(view); 
+      Teuchos::RCP<Tpetra_Vector> temp = Teuchos::rcp(new Tpetra_Vector(localNodeMapT, view)); 
+      topoStructT->filterT->FilterOperatorT()->apply(*temp, *filtered_topoVecT, Teuchos::NO_TRANS);
+    }
+    *topoVecT = *filtered_topoVecT; 
+  } else
+  if(topoStructT->postFilterT != Teuchos::null){
+    Teuchos::RCP<Tpetra_Vector> topoVecT = topoStructT->localVectorT;
+    Teuchos::RCP<Tpetra_Vector> filteredTopoVecT = topoStructT->filteredVectorT;
+    Teuchos::RCP<Tpetra_Vector> filteredOTopoVecT = topoStructT->filteredOverlapVectorT;
+    topoStructT->postFilterT->FilterOperatorT()->apply(*topoVecT, *filteredTopoVecT, Teuchos::NO_TRANS);
+    filteredOTopoVecT->doImport(*filteredTopoVecT, *importerT, Tpetra::INSERT);
+  }
+}
+
+/******************************************************************************/
+void
 ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& stateMgr )
 /******************************************************************************/
 {
@@ -864,27 +950,27 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
     wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();
 
-  int ntopos = _topologyInfoStructs.size();
+  int ntopos = _topologyInfoStructsT.size();
   for(int itopo=0; itopo<ntopos; itopo++){
-    Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];
-    Teuchos::RCP<Topology> topology = topoStruct->topology;
+    Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
+    Teuchos::RCP<Topology> topology = topoStructT->topologyT;
     const Teuchos::Array<std::string>& fixedBlocks = topology->getFixedBlocks();
 
     // copy topology into Epetra_Vector to apply the filter and/or communicate boundary data
-    Teuchos::RCP<Epetra_Vector> topoVec = topoStruct->localVector;
-    double* ltopo; topoVec->ExtractView(&ltopo);
-    int numLocalNodes = topoVec->MyLength();
+    Teuchos::RCP<Tpetra_Vector> topoVecT = topoStructT->localVectorT;
+    Teuchos::ArrayRCP<double> ltopo = topoVecT->get1dViewNonConst(); 
+    int numLocalNodes = topoVecT->getLocalLength();
     int offset = itopo*numLocalNodes;
     for(int lid=0; lid<numLocalNodes; lid++)
       ltopo[lid] = p[lid+offset];
 
-    smoothTopology(topoStruct);
+    smoothTopologyT(topoStructT);
 
-    Teuchos::RCP<Epetra_Vector> overlapTopoVec = topoStruct->overlapVector;
-    overlapTopoVec->Import(*topoVec, *importer, Insert);
+    Teuchos::RCP<Tpetra_Vector> overlapTopoVecT = topoStructT->overlapVectorT;
+    overlapTopoVecT->doImport(*topoVecT, *importerT, Tpetra::INSERT);
 
     // copy the topology into the state manager
-    double* otopo; overlapTopoVec->ExtractView(&otopo);
+    Teuchos::ArrayRCP<double> otopo = overlapTopoVecT->get1dViewNonConst(); 
     double matVal = topology->getMaterialValue();
     for(int ws=0; ws<numWorksets; ws++){
       Albany::MDArray& wsTopo = dest[ws][topology->getName()];
@@ -892,14 +978,14 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
       for(int cell=0; cell<numCells; cell++)
         for(int node=0; node<numNodes; node++){
           int gid = wsElNodeID[ws][cell][node];
-          int lid = overlapNodeMap->LID(gid);
+          int lid = overlapNodeMapT->getLocalElement(gid);
           wsTopo(cell,node) = otopo[lid];
         }
     }
 
     // determine fixed/nonfixed status of nodes across processors
-    Epetra_Vector overlapFixedNodeMask(*overlapTopoVec);
-    Epetra_Vector localFixedNodeMask(*topoVec);
+    Epetra_Vector overlapFixedNodeMask(*overlapNodeMap);
+    Epetra_Vector localFixedNodeMask(*localNodeMap);
     overlapFixedNodeMask.PutScalar(1.0);
     double* fMask; overlapFixedNodeMask.ExtractView(&fMask);
     for(int ws=0; ws<numWorksets; ws++){
@@ -909,7 +995,7 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
         for(int cell=0; cell<numCells; cell++)
           for(int node=0; node<numNodes; node++){
             int gid = wsElNodeID[ws][cell][node];
-            int lid = overlapNodeMap->LID(gid);
+            int lid = overlapNodeMapT->getLocalElement(gid);
             fMask[lid] = 0.0;
           }
       } else {
@@ -936,21 +1022,15 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
     }
 
     // save topology to nodal data for output sake
-    const Teuchos::RCP<const Teuchos_Comm>
-      commT = Albany::createTeuchosCommFromEpetraComm(overlapTopoVec->Comm());
     Teuchos::RCP<Albany::NodeFieldContainer> 
       nodeContainer = stateMgr.getNodalDataBase()->getNodeContainer();
 
     std::string nodal_topoName = topology->getName()+"_node";
-    const Teuchos::RCP<const Tpetra_Vector>
-      overlapTopoVecT = Petra::EpetraVector_To_TpetraVectorConst( *overlapTopoVec, commT);
     (*nodeContainer)[nodal_topoName]->saveFieldVector(overlapTopoVecT,/*offset=*/0);
 
-    if(topoStruct->postFilter != Teuchos::null){
+    if(topoStructT->postFilterT != Teuchos::null){
       nodal_topoName = topology->getName()+"_node_filtered";
-      Teuchos::RCP<Epetra_Vector> filteredOTopoVec = topoStruct->filteredOverlapVector;
-      const Teuchos::RCP<const Tpetra_Vector>
-        filteredOTopoVecT = Petra::EpetraVector_To_TpetraVectorConst( *filteredOTopoVec, commT);      
+      Teuchos::RCP<Tpetra_Vector> filteredOTopoVecT = topoStructT->filteredOverlapVectorT;
       (*nodeContainer)[nodal_topoName]->saveFieldVector(filteredOTopoVecT,/*offset=*/0);
     }
   }
@@ -964,18 +1044,18 @@ ATO::Solver::copyConstraintFromStateMgr( double& c, double* dcdp )
 
   c = *constraintValue;
 
-  int nVecs = ConstraintGradientVec.size();
+  auto nVecs = ConstraintGradientVecT.size();
   for(int ivec=0; ivec<nVecs; ivec++){
 
     if( entityType == "State Variable" ) {
-      ConstraintGradientVec[ivec]->PutScalar(0.0);
-      ConstraintGradientVec[ivec]->Export(*overlapConstraintGradientVec[ivec], *exporter, Add);
+      ConstraintGradientVecT[ivec]->putScalar(0.0);
+      ConstraintGradientVecT[ivec]->doExport(*overlapConstraintGradientVecT[ivec], *exporterT, Tpetra::ADD);
     }
 
     if( dcdp != NULL ){
-      int numLocalNodes = ConstraintGradientVec[ivec]->MyLength();
-      double* lvec; ConstraintGradientVec[ivec]->ExtractView(&lvec);
-      std::memcpy((void*)(dcdp+ivec*numLocalNodes), (void*)lvec, numLocalNodes*sizeof(double));
+      auto numLocalNodes = ConstraintGradientVecT[ivec]->getLocalLength();
+      Teuchos::ArrayRCP<const double> lvec = ConstraintGradientVecT[ivec]->get1dView(); 
+      std::memcpy((void*)(dcdp+ivec*numLocalNodes), lvec.getRawPtr(), numLocalNodes*sizeof(double));
     }
   }
 }
@@ -991,45 +1071,69 @@ ATO::Solver::copyObjectiveFromStateMgr( double& g, double* dgdp )
 
   g = *objectiveValue;
 
-  int nVecs = ObjectiveGradientVec.size();
+  auto nVecs = ObjectiveGradientVecT.size();
   for(int ivec=0; ivec<nVecs; ivec++){
 
     if( entityType == "State Variable" ) {
-      ObjectiveGradientVec[ivec]->PutScalar(0.0);
-      ObjectiveGradientVec[ivec]->Export(*overlapObjectiveGradientVec[ivec], *exporter, Add);
+      ObjectiveGradientVecT[ivec]->putScalar(0.0);
+      ObjectiveGradientVecT[ivec]->doExport(*overlapObjectiveGradientVecT[ivec], *exporterT, Tpetra::ADD);
     }
 
-    int numLocalNodes = ObjectiveGradientVec[ivec]->MyLength();
-    double* lvec; ObjectiveGradientVec[ivec]->ExtractView(&lvec);
-
+    auto numLocalNodes = ObjectiveGradientVecT[ivec]->getLocalLength();
+    Teuchos::ArrayRCP<const double> lvec = ObjectiveGradientVecT[ivec]->get1dView(); 
+#ifdef TPETRA_CRS_APPLY  
     // apply filter if requested
-    Epetra_Vector filtered_ObjectiveGradientVec(*ObjectiveGradientVec[ivec]);
+    Teuchos::RCP<Tpetra_Vector> filtered_ObjectiveGradientVecT = 
+        Teuchos::rcp(new Tpetra_Vector(*ObjectiveGradientVecT[ivec]));
     if(_derivativeFilter != Teuchos::null){
-
+      int num = _derivativeFilter->getNumIterations();
+      for(int i=0; i<num; i++){
+        //IKT, FIXME 12/23/16:
+        //Tpetra::CrsMatrix apply method with Teuchos::TRANS mode does not work correctly - 
+        //gives a vector of all 0s here.  Waiting to hear back from Mark Hoemmenn
+        //about this.  
+        _derivativeFilter->FilterOperatorT()->apply(*ObjectiveGradientVecT[ivec],
+                                                    *filtered_ObjectiveGradientVecT,
+                                                    Teuchos::TRANS); 
+        *ObjectiveGradientVecT[ivec] = *filtered_ObjectiveGradientVecT; 
+        //Tpetra_MatrixMarket_Writer::writeDenseFile("filtered_ObjectiveGradientVecT.mm",  
+        //    filtered_ObjectiveGradientVecT); exit(1); 
+      }
+      Teuchos::ArrayRCP<const double> lvec = filtered_ObjectiveGradientVecT->get1dView(); 
+      for (int i=0; i< numLocalNodes; i++) 
+      std::memcpy((void*)(dgdp+ivec*numLocalNodes), lvec.getRawPtr(), numLocalNodes*sizeof(double));
+#else 
+    // apply filter if requested
+    Teuchos::RCP<Epetra_Vector> ObjectiveGradientVecE = Teuchos::rcp(new Epetra_Vector(*localNodeMap)); 
+    Petra::TpetraVector_To_EpetraVector(ObjectiveGradientVecT[ivec],
+                                        *ObjectiveGradientVecE, Teuchos::rcpFromRef(localNodeMap->Comm()));
+    Epetra_Vector filtered_ObjectiveGradientVec(*ObjectiveGradientVecE);
+    if(_derivativeFilter != Teuchos::null){
       int num = _derivativeFilter->getNumIterations();
       for(int i=0; i<num; i++){
         _derivativeFilter->FilterOperator()->Multiply(/*UseTranspose=*/true, 
-                                                      *ObjectiveGradientVec[ivec],
+                                                      *ObjectiveGradientVecE,
                                                        filtered_ObjectiveGradientVec);
-        *ObjectiveGradientVec[ivec] = filtered_ObjectiveGradientVec;
+        *ObjectiveGradientVecE = filtered_ObjectiveGradientVec; 
       }
-      filtered_ObjectiveGradientVec.ExtractView(&lvec);
-      std::memcpy((void*)(dgdp+ivec*numLocalNodes), (void*)lvec, numLocalNodes*sizeof(double));
+      double* lvecE; filtered_ObjectiveGradientVec.ExtractView(&lvecE);
+      for (int i=0; i< numLocalNodes; i++) 
+      std::memcpy((void*)(dgdp+ivec*numLocalNodes), (void*)lvecE, numLocalNodes*sizeof(double));
+#endif
     } else {
-      std::memcpy((void*)(dgdp+ivec*numLocalNodes), (void*)lvec, numLocalNodes*sizeof(double));
+      for (int i=0; i< numLocalNodes; i++) 
+      std::memcpy((void*)(dgdp+ivec*numLocalNodes), lvec.getRawPtr(), numLocalNodes*sizeof(double));
     }
-
+#ifndef TPETRA_CRS_APPLY
+    Teuchos::RCP<const Tpetra_Vector> filtered_ObjectiveGradientVecT =  
+                Petra::EpetraVector_To_TpetraVectorConst(filtered_ObjectiveGradientVec, _solverComm); 
+#endif
     // save dgdp to nodal data for output sake
-    overlapObjectiveGradientVec[ivec]->Import(filtered_ObjectiveGradientVec, *importer, Insert);
-    Teuchos::RCP<Albany::NodeFieldContainer> 
+    overlapObjectiveGradientVecT[ivec]->doImport(*filtered_ObjectiveGradientVecT, *importerT, Tpetra::INSERT);
+    Teuchos::RCP<Albany::NodeFieldContainer>
       nodeContainer = stateMgr.getNodalDataBase()->getNodeContainer();
-    const Teuchos::RCP<const Teuchos_Comm>
-      commT = Albany::createTeuchosCommFromEpetraComm(overlapObjectiveGradientVec[ivec]->Comm());
     std::string nodal_derName = Albany::strint(_objAggregator->getOutputDerivativeName()+"_node", ivec);
-    const Teuchos::RCP<const Tpetra_Vector>
-      overlapObjectiveGradientVecT = Petra::EpetraVector_To_TpetraVectorConst(
-        *overlapObjectiveGradientVec[ivec], commT);
-    (*nodeContainer)[nodal_derName]->saveFieldVector(overlapObjectiveGradientVecT,/*offset=*/0);
+    (*nodeContainer)[nodal_derName]->saveFieldVector(overlapObjectiveGradientVecT[ivec],/*offset=*/0);
   }
 }
 /******************************************************************************/
@@ -1082,40 +1186,53 @@ ATO::Solver::ComputeMeasure(std::string measureType, const double* p,
 
   int numWorksets = wsElNodeID.size();
 
-  int ntopos = _topologyInfoStructs.size();
+  int ntopos = _topologyInfoStructsT.size();
 
-  std::vector<Teuchos::RCP<TopologyStruct> > topologyStructs(ntopos);
+  std::vector<Teuchos::RCP<TopologyStructT> > topologyStructsT(ntopos);
 
   for(int itopo=0; itopo<ntopos; itopo++){
 
-    topologyStructs[itopo] = Teuchos::rcp(new TopologyStruct);
+    topologyStructsT[itopo] = Teuchos::rcp(new TopologyStructT);
   
     Teuchos::RCP<Epetra_Vector> topoVec = _topologyInfoStructs[itopo]->localVector;
-    int numLocalNodes = topoVec->MyLength();
+    Teuchos::RCP<Tpetra_Vector> topoVecT = _topologyInfoStructsT[itopo]->localVectorT;
+    int numLocalNodes = topoVecT->getLocalLength();
     int offset = itopo*numLocalNodes;
-    double* ltopo; topoVec->ExtractView(&ltopo);
+    double* ltopo; 
+    topoVec->ExtractView(&ltopo);
+    Teuchos::ArrayRCP<double> ltopoT = topoVecT->get1dViewNonConst(); 
     for(int ws=0; ws<numWorksets; ws++){
       int numCells = wsElNodeID[ws].size();
       int numNodes = wsElNodeID[ws][0].size();
       for(int cell=0; cell<numCells; cell++)
         for(int node=0; node<numNodes; node++){
           int gid = wsElNodeID[ws][cell][node];
-          int lid = localNodeMap->LID(gid);
+          int lid = localNodeMapT->getLocalElement(gid);
           if(lid != -1) ltopo[lid] = p[lid+offset];
+          if(lid != -1) ltopoT[lid] = p[lid+offset];
         }
     }
 
     Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];
     smoothTopology(topoStruct);
+    Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
+    smoothTopologyT(topoStructT);
 
     Teuchos::RCP<Epetra_Vector> overlapTopoVec = _topologyInfoStructs[itopo]->overlapVector;
     overlapTopoVec->Import(*topoVec, *importer, Insert);
+    Teuchos::RCP<Tpetra_Vector> overlapTopoVecTpetra = _topologyInfoStructsT[itopo]->overlapVectorT;
+    overlapTopoVecTpetra->doImport(*topoVecT, *importerT, Tpetra::INSERT);
 
-    topologyStructs[itopo]->topology = _topologyInfoStructs[itopo]->topology;
-    topologyStructs[itopo]->dataVector = overlapTopoVec;
+    topologyStructsT[itopo]->topologyT = _topologyInfoStructsT[itopo]->topologyT; 
+    Teuchos::RCP<Tpetra_Vector> overlapTopoVecT = 
+        Petra::EpetraVector_To_TpetraVectorNonConst(*overlapTopoVec, _solverComm);  
+    topologyStructsT[itopo]->dataVectorT = overlapTopoVecT;
+    //IKT, the following makes FixedBlocks and 2Matl_Homog tests fail; 
+    //need to figure out why to finalize Tpetra conversion. 
+    //topologyStructsT[itopo]->dataVectorT = overlapTopoVecTpetra;
   }
 
-  return _atoProblem->ComputeMeasure(measureType, topologyStructs, 
+  return _atoProblem->ComputeMeasureT(measureType, topologyStructsT, 
                                      measure, dmdp, integrationMethod);
 }
 
@@ -1164,11 +1281,19 @@ ATO::Solver::Compute(const double* p, double& g, double* dgdp, double& c, double
                                     (*_subProblems[i].responses_out));
   }
 
-  _objAggregator->Evaluate();
+  if ( entityType == "Distributed Parameter" ) {
+    updateTpetraResponseMaps(); 
+    _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
+  }
+  _objAggregator->EvaluateT();
   copyObjectiveFromStateMgr( g, dgdp );
   
   if( !_conAggregator.is_null()){
-    _conAggregator->Evaluate();
+    if ( entityType == "Distributed Parameter" ) {
+      updateTpetraResponseMaps(); 
+      _conAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
+    }
+    _conAggregator->EvaluateT();
     copyConstraintFromStateMgr( c, dcdp );
   } else c = 0.0;
 
@@ -1190,8 +1315,8 @@ ATO::Solver::GetNumOptDofs()
 /******************************************************************************/
 {
 //  return _subProblems[0].app->getDiscretization()->getNodeMap()->NumMyElements();
-  int nVecs = ObjectiveGradientVec.size();
-  return nVecs*ObjectiveGradientVec[0]->MyLength();
+  auto nVecs = ObjectiveGradientVecT.size();
+  return nVecs*ObjectiveGradientVecT[0]->getLocalLength();
 }
 
 /******************************************************************************/
@@ -1203,7 +1328,7 @@ ATO::Solver::GetNumOptDofs()
 ATO::SolverSubSolver
 ATO::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appParams, 
                               const Teuchos::RCP<const Teuchos_Comm>& commT,
-                              const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+                              const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 /******************************************************************************/
 {
   using Teuchos::RCP;
@@ -1221,10 +1346,7 @@ ATO::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPara
     //! Create solver factory, which reads xml input filen
     Albany::SolverFactory slvrfctry(appParams, commT);
 
-    RCP<const Tpetra_Vector> initial_guessT = Teuchos::null;
-    if (!initial_guess.is_null())
-      initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, commT);
-    ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, commT, commT, initial_guessT);
+    ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, commT, commT, initial_guess);
   }
 
 
@@ -1280,7 +1402,11 @@ ATO::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPara
         } else 
           ret.responses_out->set_DgDp(ig,ip,dgdp);
         responseMap.insert(std::pair<std::string,RCP<const Epetra_Vector> >(gName,g));
+        RCP<const Tpetra_Vector> gT = Petra::EpetraVector_To_TpetraVectorConst(*g, _solverComm); 
+        responseMapT.insert(std::pair<std::string,RCP<const Tpetra_Vector> >(gName, gT));
         responseDerivMap.insert(std::pair<std::string,RCP<Epetra_MultiVector> >(dgdpName,dgdp));
+        RCP<Tpetra_MultiVector> dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp, _solverComm); 
+        responseDerivMapT.insert(std::pair<std::string,RCP<Tpetra_MultiVector> >(dgdpName, dgdpT));
       }
     }
   }
@@ -1291,6 +1417,31 @@ ATO::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPara
 
   return ret;
 }
+
+/******************************************************************************/
+void 
+ATO::Solver::updateTpetraResponseMaps()
+/******************************************************************************/
+{
+  std::map<std::string, Teuchos::RCP<const Epetra_Vector> >::const_iterator git;
+  git = responseMap.cbegin();  
+  for (int i = 0; i<responseMap.size(); i++) {
+    std::string gName = git->first;
+    Teuchos::RCP<const Tpetra_Vector> gT = Petra::EpetraVector_To_TpetraVectorConst(*(git->second), _solverComm); 
+    responseMapT[gName] = gT;
+    git++; 
+  }
+  std::map<std::string, Teuchos::RCP<Epetra_MultiVector> >::const_iterator git2;
+  git2 = responseDerivMap.cbegin();  
+  for (int i = 0; i<responseDerivMap.size(); i++) {
+    std::string gName = git2->first; 
+    Teuchos::RCP<Tpetra_MultiVector> dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*(git2->second), _solverComm); 
+    responseDerivMapT[gName] = dgdpT;
+    git2++; 
+  }
+}
+
+
 
 /******************************************************************************/
 Teuchos::RCP<Teuchos::ParameterList> 
@@ -1333,10 +1484,10 @@ ATO::Solver::createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appPar
       Teuchos::Exceptions::InvalidParameter, std::endl 
       << "Error! Cannot have 'Distributed Parameters' in both Topology and subproblems" << std::endl);
     Teuchos::ParameterList distParams;
-    int ntopos = _topologyInfoStructs.size();
+    int ntopos = _topologyInfoStructsT.size();
     distParams.set("Number of Parameter Vectors",ntopos);
     for(int itopo=0; itopo<ntopos; itopo++){
-      distParams.set(Albany::strint("Parameter",itopo), _topologyInfoStructs[itopo]->topology->getName());
+      distParams.set(Albany::strint("Parameter",itopo), _topologyInfoStructsT[itopo]->topologyT->getName());
     }
     physics_probParams.set<Teuchos::ParameterList>("Distributed Parameters", distParams);
   }
@@ -1363,9 +1514,9 @@ ATO::Solver::createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appPar
     physics_discList.set("Exodus Output File Name",newname.str());
   }
 
-  int ntopos = _topologyInfoStructs.size();
+  int ntopos = _topologyInfoStructsT.size();
   for(int itopo=0; itopo<ntopos; itopo++){
-    if( _topologyInfoStructs[itopo]->topology->getFixedBlocks().size() > 0 ){
+    if( _topologyInfoStructsT[itopo]->topologyT->getFixedBlocks().size() > 0 ){
       physics_discList.set("Separate Evaluators by Element Block", true);
       break;
     }
@@ -1718,10 +1869,10 @@ ATO::Solver::CreateSubSolverData(const ATO::SolverSubSolver& sub) const
 void
 ATO::SpatialFilter::buildOperator(
              Teuchos::RCP<Albany::Application> app,
-             Teuchos::RCP<Epetra_Map>          overlapNodeMap,
-             Teuchos::RCP<Epetra_Map>          localNodeMap,
-             Teuchos::RCP<Epetra_Import>       importer,
-             Teuchos::RCP<Epetra_Export>       exporter)
+             Teuchos::RCP<const Tpetra_Map>    overlapNodeMapT,
+             Teuchos::RCP<const Tpetra_Map>    localNodeMapT,
+             Teuchos::RCP<Tpetra_Import>       importerT,
+             Teuchos::RCP<Tpetra_Export>       exporterT)
 /******************************************************************************/
 {
 
@@ -1820,49 +1971,77 @@ ATO::SpatialFilter::buildOperator(
     }
 
     // communicate neighbor data
-    importNeighbors(neighbors,importer,exporter);
-
+    importNeighbors(neighbors,importerT,*localNodeMapT,exporterT,*overlapNodeMapT);
     
     // for each interior node, search boundary nodes for additional interactions off processor.
     
-  
     // now build filter operator
     int numnonzeros = 0;
+    Teuchos::RCP<Epetra_Comm> comm = 
+      Albany::createEpetraCommFromTeuchosComm(localNodeMapT->getComm());
+    Teuchos::RCP<Epetra_Map> localNodeMap = Petra::TpetraMap_To_EpetraMap(localNodeMapT, comm); 
     filterOperator = Teuchos::rcp(new Epetra_CrsMatrix(Copy,*localNodeMap,numnonzeros));
+    filterOperatorT = Teuchos::rcp(new Tpetra_CrsMatrix(localNodeMapT,numnonzeros));
     for (std::map<GlobalPoint,std::set<GlobalPoint> >::iterator 
         it=neighbors.begin(); it!=neighbors.end(); ++it) { 
       GlobalPoint homeNode = it->first;
-      int home_node_gid = homeNode.gid;
+      GO home_node_gid = homeNode.gid;
       std::set<GlobalPoint> connected_nodes = it->second;
+      ST weight; 
+      ST zero = 0.0;  
+      Teuchos::Array<ST> weightT(1);
       if( connected_nodes.size() > 0 ){
         for (std::set<GlobalPoint>::iterator 
              set_it=connected_nodes.begin(); set_it!=connected_nodes.end(); ++set_it) {
-           int neighbor_node_gid = set_it->gid;
+           GO neighbor_node_gid = set_it->gid;
            const double* coords = &(set_it->coords[0]);
            double distance = 0.0;
            for (int dim=0; dim<dimension; dim++) 
              distance += (coords[dim]-homeNode.coords[dim])*(coords[dim]-homeNode.coords[dim]);
            distance = (distance > 0.0) ? sqrt(distance) : 0.0;
-           double weight = filterRadius - distance;
+           weight = filterRadius - distance;
            filterOperator->InsertGlobalValues(home_node_gid,1,&weight,&neighbor_node_gid);
+           filterOperatorT->insertGlobalValues(home_node_gid,1,&zero,&neighbor_node_gid); 
+           filterOperatorT->replaceGlobalValues(home_node_gid,1,&weight,&neighbor_node_gid); 
         }
       } else {
          // if the list of connected nodes is empty, still add a one on the diagonal.
-         double weight = 1.0;
+         weight = 1.0;
          filterOperator->InsertGlobalValues(home_node_gid,1,&weight,&home_node_gid);
+         filterOperatorT->insertGlobalValues(home_node_gid,1,&zero,&home_node_gid); 
+         filterOperatorT->insertGlobalValues(home_node_gid,1,&weight,&home_node_gid); 
       }
     }
   
     filterOperator->FillComplete();
+    filterOperatorT->fillComplete();
 
     // scale filter operator so rows sum to one.
     Epetra_Vector rowSums(*localNodeMap);
     filterOperator->InvRowSums(rowSums);
     filterOperator->LeftScale(rowSums);
 
+    //IKT: this is temporary until InvRowSums 
+    Teuchos::RCP<Tpetra_Vector> rowSumsT = 
+      Petra::EpetraVector_To_TpetraVectorNonConst(rowSums, localNodeMapT->getComm());
+    filterOperatorT->leftScale(*rowSumsT);  
+    
+    /*char name[100];  
+    sprintf(name, "rowSums%i.mm", countFilterOp);
+    EpetraExt::MultiVectorToMatrixMarketFile(name, rowSums);
+    sprintf(name, "rowSumsT%i.mm", countFilterOp);
+    Tpetra_MatrixMarket_Writer::writeDenseFile(name, rowSumsT);
+    countFilterOp++;*/
   return;
 
 }
+
+void 
+ATO::SpatialFilter::createFilterOpTfromFilterOp(Teuchos::RCP<const Teuchos_Comm> commT) 
+{
+  filterOperatorT = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*filterOperator, commT); 
+}
+
 /******************************************************************************/
 ATO::SpatialFilter::SpatialFilter( Teuchos::ParameterList& params )
 /******************************************************************************/
@@ -1882,47 +2061,44 @@ ATO::SpatialFilter::SpatialFilter( Teuchos::ParameterList& params )
 void 
 ATO::SpatialFilter::importNeighbors( 
   std::map< ATO::GlobalPoint, std::set<ATO::GlobalPoint> >& neighbors,
-  Teuchos::RCP<Epetra_Import> importer,
-  Teuchos::RCP<Epetra_Export> exporter)
+  Teuchos::RCP<Tpetra_Import> importerT, 
+  const Tpetra_Map& impNodeMapT,
+  Teuchos::RCP<Tpetra_Export> exporterT, 
+  const Tpetra_Map& expNodeMapT)
 /******************************************************************************/
 {
   // get from the exporter the node global ids and the associated processor ids
   std::map<int, std::set<int> > boundaryNodesByProc;
 
-  const int* exportLIDs = exporter->ExportLIDs();
-  const int* exportPIDs = exporter->ExportPIDs();
-  int numExportIDs = exporter->NumExportIDs();
-
-  const Epetra_BlockMap& expNodeMap = exporter->SourceMap();
-
+  Teuchos::ArrayView<const LO> exportLIDsT = exporterT->getExportLIDs(); 
+  Teuchos::ArrayView<const int> exportPIDsT = exporterT->getExportPIDs(); 
+  int numExportIDsT = exporterT->getNumExportIDs();
   std::map<int, std::set<int> >::iterator procIter;
-  for(int i=0; i<numExportIDs; i++){
-    procIter = boundaryNodesByProc.find(exportPIDs[i]);
-    int exportGID = expNodeMap.GID(exportLIDs[i]);
+  for(int i=0; i<numExportIDsT; i++){
+    procIter = boundaryNodesByProc.find(exportPIDsT[i]);
+    int exportGIDT = expNodeMapT.getGlobalElement(exportLIDsT[i]);
     if( procIter == boundaryNodesByProc.end() ){
       std::set<int> newSet;
-      newSet.insert(exportGID);
-      boundaryNodesByProc.insert( std::pair<int,std::set<int> >(exportPIDs[i],newSet) );
+      newSet.insert(exportGIDT);
+      boundaryNodesByProc.insert( std::pair<int,std::set<int> >(exportPIDsT[i],newSet) );
     } else {
-      procIter->second.insert(exportGID);
+      procIter->second.insert(exportGIDT);
     }
   }
 
-  const Epetra_BlockMap& impNodeMap = importer->SourceMap();
+  exportLIDsT = importerT->getExportLIDs();
+  exportPIDsT = importerT->getExportPIDs();
+  numExportIDsT = importerT->getNumExportIDs();
 
-  exportLIDs = importer->ExportLIDs();
-  exportPIDs = importer->ExportPIDs();
-  numExportIDs = importer->NumExportIDs();
-
-  for(int i=0; i<numExportIDs; i++){
-    procIter = boundaryNodesByProc.find(exportPIDs[i]);
-    int exportGID = impNodeMap.GID(exportLIDs[i]);
+  for(int i=0; i<numExportIDsT; i++){
+    procIter = boundaryNodesByProc.find(exportPIDsT[i]);
+    int exportGIDT = impNodeMapT.getGlobalElement(exportLIDsT[i]);
     if( procIter == boundaryNodesByProc.end() ){
       std::set<int> newSet;
-      newSet.insert(exportGID);
-      boundaryNodesByProc.insert( std::pair<int,std::set<int> >(exportPIDs[i],newSet) );
+      newSet.insert(exportGIDT);
+      boundaryNodesByProc.insert( std::pair<int,std::set<int> >(exportPIDsT[i],newSet) );
     } else {
-      procIter->second.insert(exportGID);
+      procIter->second.insert(exportGIDT);
     }
   }
 
@@ -2096,12 +2272,668 @@ ATO::SpatialFilter::importNeighbors(
       newPoints += (pointSet.size() - pointSetSize);
     }
     int globalNewPoints=0;
-    impNodeMap.Comm().SumAll(&newPoints, &globalNewPoints, 1);
+    Teuchos::reduceAll(*(impNodeMapT.getComm()), Teuchos::REDUCE_SUM, 1, &newPoints, &globalNewPoints); 
     newPoints = globalNewPoints;
   }
 }
   
+/******************************************************************************/
+ATO::SolverT::
+SolverT(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+       const Teuchos::RCP<const Teuchos_Comm>& comm,
+       const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+: _solverComm(comm), _mainAppParams(appParams)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}  
   
+/******************************************************************************/
+void
+ATO::SolverT::zeroSet()
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}  
+
+/******************************************************************************/
+void 
+ATO::SolverT::evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
+                            Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const 
+/******************************************************************************/
+{
+  int numHomogenizationSets = _homogenizationSets.size();
+  for (int iHomog=0; iHomog<numHomogenizationSets; iHomog++){
+    const HomogenizationSet& hs = _homogenizationSets[iHomog];
+    int numColumns = hs.homogenizationProblems.size();
+    for (int i=0; i<numColumns; i++){
+
+      // enforce PDE constraints
+      hs.homogenizationProblems[i].modelT->evalModel((*hs.homogenizationProblems[i].params_inT),
+                                                     (*hs.homogenizationProblems[i].responses_outT));
+    }
+
+    if (numColumns > 0){
+      // collect homogenized values
+      Kokkos::DynRankView<RealType, PHX::Device> Cvals("ZZZ", numColumns,numColumns);
+      for(int i=0; i<numColumns; i++){
+        Teuchos::RCP<Thyra::VectorBase<ST> > g = hs.homogenizationProblems[i].responses_outT->get_g(hs.responseIndex);
+        Teuchos::RCP<const Tpetra_Vector> g_tpetra = ConverterT::getConstTpetraVector(g);
+        Teuchos::ArrayRCP<const double> g_constView = g_tpetra->get1dView(); 
+        for(int j=0; j<numColumns; j++){
+          Cvals(i,j) = g_constView[j];
+        }
+      }
+      if (_solverComm->getRank() == 0){
+        Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+        *out << "*****************************************" << std::endl;
+        *out << " Homogenized parameters (" << hs.name << ") are: " << std::endl; 
+        for(int i=0; i<numColumns; i++){
+          for(int j=0; j<numColumns; j++){
+            *out << std::setprecision(10) << 1.0/2.0*(Cvals(i,j)+Cvals(j,i)) << " ";
+          }
+          *out << std::endl;
+        }
+        *out << "*****************************************" << std::endl;
+      }
+
+      for (int iPhys=0; iPhys<_numPhysics; iPhys++){
+        Albany::StateManager& stateMgr = _subProblems[iPhys].app->getStateMgr();
+        Albany::StateArrays& stateArrays = stateMgr.getStateArrays();
+        Albany::StateArrayVec& src = stateArrays.elemStateArrays;
+        int numWorksets = src.size();
+
+        for(int ws=0; ws<numWorksets; ws++){
+          for(int i=0; i<numColumns; i++){
+            for(int j=i; j<numColumns; j++){
+              std::stringstream valname;
+              valname << hs.name << " " << i+1 << j+1;
+              Albany::MDArray& wsC = src[ws][valname.str()]; 
+              if( wsC.size() != 0 ) wsC(0) = (Cvals(j,i)+Cvals(i,j))/2.0;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  for(int i=0; i<_numPhysics; i++){
+    Albany::StateManager& stateMgr = _subProblems[i].app->getStateMgr();
+    const Albany::WorksetArray<std::string>::type& 
+      wsEBNames = stateMgr.getDiscretization()->getWsEBNames();
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
+    wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();
+    Albany::StateArrays& stateArrays = stateMgr.getStateArrays();
+    Albany::StateArrayVec& dest = stateArrays.elemStateArrays;
+    int numWorksets = dest.size();
   
+    // initialize topology of fixed blocks
+    int ntopos = _topologyInfoStructsT.size();
+
+    for(int ws=0; ws<numWorksets; ws++){
+
+      for(int itopo=0; itopo<ntopos; itopo++){
+        Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
+        Teuchos::RCP<Topology> topology = topoStructT->topologyT;
+        const Teuchos::Array<std::string>& fixedBlocks = topology->getFixedBlocks();
+
+        if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) != fixedBlocks.end() ){
+
+          if( topology->getEntityType() == "State Variable" ){
+            double matVal = topology->getMaterialValue();
+            Albany::MDArray& wsTopo = dest[ws][topology->getName()];
+            int numCells = wsTopo.dimension(0);
+            int numNodes = wsTopo.dimension(1);
+            for(int cell=0; cell<numCells; cell++)
+              for(int node=0; node<numNodes; node++){
+                wsTopo(cell,node) = matVal;
+              }
+          } else if( topology->getEntityType() == "Distributed Parameter" ){
+            Teuchos::ArrayRCP<double> ltopo = topoStructT->localVectorT->get1dViewNonConst(); 
+            double matVal = topology->getMaterialValue();
+            const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& elNodeID = wsElNodeID[ws];
+            int numCells = elNodeID.size();
+            int numNodes = elNodeID[0].size();
+            for(int cell=0; cell<numCells; cell++)
+              for(int node=0; node<numNodes; node++){
+                int gid = wsElNodeID[ws][cell][node];
+                int lid = localNodeMapT->getLocalElement(gid);
+                if(lid != -1) ltopo[lid] = matVal;
+              }
+          }
+        }
+      }
+    }
+  }
+
+  if(_is_verbose){
+    Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+    *out << "*** Performing Topology Optimization Loop ***" << std::endl;
+  }
+
+  _optimizer->Initialize();
+
+  _optimizer->Optimize();
+
+}
+
+/******************************************************************************/
+///*************** SOLVER - OPTIMIZER INTERFACE FUNCTIONS *******************///
+/******************************************************************************/
+
+/******************************************************************************/
+void ATO::SolverT::getOptDofsUpperBound( Teuchos::Array<double>& b )
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}  
+
+/******************************************************************************/
+void ATO::SolverT::getOptDofsLowerBound( Teuchos::Array<double>& b )
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::InitializeOptDofs(double* p)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::ComputeObjective(const double* p, double& g, double* dgdp)
+/******************************************************************************/
+{
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  *out << "IKT, 12/22/16, WARNING: Tpetra-converted ComputeObjective has not been tested " 
+       << "yet and may not work correctly! \n"; 
+  for(int i=0; i<_numPhysics; i++){
+
+    // copy data from p into each stateManager
+    if( entityType == "State Variable" ){
+      Albany::StateManager& stateMgr = _subProblems[i].app->getStateMgr();
+      copyTopologyIntoStateMgr( p, stateMgr );
+    } else 
+    if( entityType == "Distributed Parameter"){
+      copyTopologyIntoParameter( p, _subProblems[i] );
+    }
+
+    // enforce PDE constraints
+    _subProblems[i].modelT->evalModel((*_subProblems[i].params_inT),
+                                      (*_subProblems[i].responses_outT));
+  }
+
+  if ( entityType == "Distributed Parameter" ) {
+    updateTpetraResponseMaps(); 
+    _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
+  }
+  _objAggregator->EvaluateT();
+  copyObjectiveFromStateMgr( g, dgdp );
+
+  _iteration++;
+
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::ComputeObjective(double* p, double& g, double* dgdp)
+/******************************************************************************/
+{
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  *out << "IKT, 12/22/16, WARNING: Tpetra-converted ComputeObjective has not been tested " 
+       << "yet and may not work correctly! \n"; 
+  if(_iteration!=1) smoothTopologyT(p);
+
+  for(int i=0; i<_numPhysics; i++){
+    
+
+    // copy data from p into each stateManager
+    if( entityType == "State Variable" ){
+      Albany::StateManager& stateMgr = _subProblems[i].app->getStateMgr();
+      copyTopologyIntoStateMgr( p, stateMgr );
+    } else 
+    if( entityType == "Distributed Parameter"){
+      copyTopologyIntoParameter( p, _subProblems[i] );
+    }
+
+    // enforce PDE constraints
+    _subProblems[i].modelT->evalModel((*_subProblems[i].params_inT),
+                                      (*_subProblems[i].responses_outT));
+  }
+
+  if ( entityType == "Distributed Parameter" ) {
+    updateTpetraResponseMaps(); 
+    _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
+  }
+  _objAggregator->EvaluateT();
+  copyObjectiveFromStateMgr( g, dgdp );
+
+  // See if the user specified a new design frequency.
+  GO new_frequency = -1;
+  if( _solverComm->getRank() == 0){
+    FILE *fp = fopen("update_frequency.txt", "r");
+    if(fp)
+    {
+      fscanf(fp, "%d", &new_frequency);
+      fclose(fp);
+    }
+  }
+  Teuchos::broadcast(*_solverComm, 0, 1, &new_frequency);
+
+  if(new_frequency != -1)
+  {
+    // the user has specified a new frequency to use
+    _writeDesignFrequency = new_frequency;
+   }
+
+   // Output a new result file if requested
+   if(_writeDesignFrequency && (_iteration % _writeDesignFrequency == 0) )
+     writeCurrentDesign();
+  _iteration++;
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::writeCurrentDesign()
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::copyTopologyIntoParameter( const double* p, SolverSubSolverT& subSolver )
+/******************************************************************************/
+{
+  //IKT, fill in!
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr )
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::smoothTopology(double* p)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::smoothTopologyT(double* p)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::smoothTopology(Teuchos::RCP<TopologyInfoStruct> topoStruct)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::smoothTopologyT(Teuchos::RCP<TopologyInfoStructT> topoStructT)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& stateMgr )
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::copyConstraintFromStateMgr( double& c, double* dcdp )
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::copyObjectiveFromStateMgr( double& g, double* dgdp )
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::ComputeMeasure(std::string measureType, double& measure)
+/******************************************************************************/
+{
+  return _atoProblem->ComputeMeasure(measureType, measure);
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::ComputeMeasure(std::string measureType, const double* p, 
+                            double& measure, double* dmdp, 
+                            std::string integrationMethod)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::ComputeVolume(double* p, const double* dfdp, 
+                           double& v, double threshhold, double minP)
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::Compute(double* p, double& g, double* dgdp, double& c, double* dcdp)
+/******************************************************************************/
+{
+  Compute((const double*)p, g, dgdp, c, dcdp);
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::Compute(const double* p, double& g, double* dgdp, double& c, double* dcdp)
+/******************************************************************************/
+{
+  for(int i=0; i<_numPhysics; i++){
+
+    // copy data from p into each stateManager
+    if( entityType == "State Variable" ){
+      Albany::StateManager& stateMgr = _subProblems[i].app->getStateMgr();
+      copyTopologyIntoStateMgr( p, stateMgr );
+    } else 
+    if( entityType == "Distributed Parameter"){
+      copyTopologyIntoParameter( p, _subProblems[i] );
+    }
+
+    // enforce PDE constraints
+    _subProblems[i].modelT->evalModel((*_subProblems[i].params_inT),
+                                      (*_subProblems[i].responses_outT));
+  }
+
+  if ( entityType == "Distributed Parameter" ) {
+    updateTpetraResponseMaps(); 
+    _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
+  }
+  _objAggregator->EvaluateT();
+  copyObjectiveFromStateMgr( g, dgdp );
   
+  if( !_conAggregator.is_null()){
+    if ( entityType == "Distributed Parameter" ) {
+      updateTpetraResponseMaps(); 
+      _conAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
+    }
+    _conAggregator->EvaluateT();
+    copyConstraintFromStateMgr( c, dcdp );
+  } else c = 0.0;
+
+  _iteration++;
+}
+
+/******************************************************************************/
+void
+ATO::SolverT::ComputeConstraint(double* p, double& c, double* dcdp)
+/******************************************************************************/
+{
+}
+
+/******************************************************************************/
+int
+ATO::SolverT::GetNumOptDofs()
+/******************************************************************************/
+{
+//  return _subProblems[0].app->getDiscretization()->getNodeMap()->NumMyElements();
+  auto nVecs = ObjectiveGradientVecT.size();
+  return nVecs*ObjectiveGradientVecT[0]->getLocalLength();
+}
+
+/******************************************************************************/
+///*********************** SETUP AND UTILITY FUNCTIONS **********************///
+/******************************************************************************/
+
+
+/******************************************************************************/
+ATO::SolverSubSolverT
+ATO::SolverT::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appParams, 
+                              const Teuchos::RCP<const Teuchos_Comm>& commT,
+                              const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+/******************************************************************************/
+{
+  using Teuchos::RCP;
+  using Teuchos::rcp;
+
+  ATO::SolverSubSolverT ret; //value to return
+
+  RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  *out << "ATO Solver creating solver from " << appParams->name()
+       << " parameter list" << std::endl;
+
+  //! Create solver and application objects via solver factory
+  {
+
+    //! Create solver factory, which reads xml input filen
+    Albany::SolverFactory slvrfctry(appParams, commT);
+
+    ret.modelT = slvrfctry.createAndGetAlbanyAppT(ret.app, commT, commT, initial_guess);
+  }
+
+
+  Teuchos::ParameterList& problemParams = appParams->sublist("Problem");
+
+  int numParameters = 0;
+  if( problemParams.isType<Teuchos::ParameterList>("Parameters") )
+    numParameters = problemParams.sublist("Parameters").get<int>("Number of Parameter Vectors");
+
+  int numResponses = 0;
+  if( problemParams.isType<Teuchos::ParameterList>("Response Functions") )
+    numResponses = problemParams.sublist("Response Functions").get<int>("Number of Response Vectors");
+
+  ret.params_inT = rcp(new Thyra::ModelEvaluatorBase::InArgs<ST>);
+  ret.responses_outT = rcp(new Thyra::ModelEvaluatorBase::OutArgs<ST>);
+
+  *(ret.params_inT) = ret.modelT->createInArgs();
+  *(ret.responses_outT) = ret.modelT->createOutArgs();
+
+  // the createOutArgs() function doesn't allocate storage
+  RCP<Thyra::VectorBase<ST>> g1;
+  int ss_num_g = ret.responses_outT->Ng(); // Number of *vectors* of responses
+  for(int ig=0; ig<ss_num_g; ig++){
+    g1 = Thyra::createMember<ST>(ret.modelT->get_g_space(ig));//rcp(new Epetra_Vector(*(ret.model->get_g_map(ig))));
+    ret.responses_outT->set_g(ig,g1);
+  }
+
+  int ss_num_p = ret.params_inT->Np();     // Number of *vectors* of parameters
+  TEUCHOS_TEST_FOR_EXCEPTION (
+    ss_num_p - numParameters > 1,
+    Teuchos::Exceptions::InvalidParameter, std::endl 
+    << "Error! Cannot have more than one distributed Parameter for topology optimization" << std::endl);
+  for (int ip=0; ip<ss_num_p; ip++){
+    RCP<const Thyra::VectorBase<ST>> p1 = ret.modelT->getNominalValues().get_p(ip); 
+    ret.params_inT->set_p(ip,p1);
+  }
   
+  for(int ig=0; ig<numResponses; ig++){
+    if(ss_num_p > numParameters){
+      int ip = ss_num_p-1;
+      Teuchos::ParameterList& resParams = 
+        problemParams.sublist("Response Functions").sublist(Albany::strint("Response Vector",ig));
+      std::string gName = resParams.get<std::string>("Response Name");
+      std::string dgdpName = resParams.get<std::string>("Response Derivative Name");
+      if (!ret.responses_outT->supports(Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, ig, ip).none()){
+        RCP<const Thyra::VectorBase<ST>> p = ret.params_inT->get_p(ip);
+        RCP<const Thyra::VectorBase<ST>> g = ret.responses_outT->get_g(ig);
+        //RCP<Epetra_MultiVector> dgdp = rcp(new Epetra_MultiVector(p->Map(), g->GlobalLength() ));
+        //IKT, 1/6/17: double check that the following is correct 
+        RCP<Thyra::MultiVectorBase<ST>> dgdp = Thyra::createMembers(ret.modelT->get_p_space(ip), ss_num_g); 
+        if(ret.responses_outT->supports(OUT_ARG_DgDp,ig,ip).supports(DERIV_TRANS_MV_BY_ROW)){
+          Derivative<ST> dgdp_out(dgdp, DERIV_TRANS_MV_BY_ROW);
+          ret.responses_outT->set_DgDp(ig,ip,dgdp_out);
+        } 
+        else 
+          ret.responses_outT->set_DgDp(ig,ip,dgdp);
+        //IKT, 1/6/17: note that responseMap and responseDerivMap are not populated here.  Need to make 
+        //sure that the rest of the code does not use this object; otherwise, need to populate it.  
+        RCP<const Tpetra_Vector> gT = ConverterT::getConstTpetraVector(g);
+        responseMapT.insert(std::pair<std::string,RCP<const Tpetra_Vector> >(gName, gT));
+        //responseMap.insert(std::pair<std::string,RCP<const Epetra_Vector> >(gName,g));
+        RCP<Tpetra_MultiVector> dgdpT = ConverterT::getTpetraMultiVector(dgdp);
+        responseDerivMapT.insert(std::pair<std::string,RCP<Tpetra_MultiVector> >(dgdpName, dgdpT)); 
+        //responseDerivMap.insert(std::pair<std::string,RCP<Epetra_MultiVector> >(dgdpName,dgdp));
+      }
+    }
+  }
+
+  RCP<Thyra::VectorBase<ST>> xfinal = Thyra::createMember(ret.modelT->get_g_space(ss_num_g-1)); 
+  ret.responses_outT->set_g(ss_num_g-1,xfinal); 
+
+  return ret;
+}
+
+
+/******************************************************************************/
+void 
+ATO::SolverT::updateTpetraResponseMaps()
+/******************************************************************************/
+{
+  //IKT, FIXME: this functions should not be needed in the Thyra model evaluator version of the code. 
+  std::map<std::string, Teuchos::RCP<const Epetra_Vector> >::const_iterator git;
+  git = responseMap.cbegin();  
+  for (int i = 0; i<responseMap.size(); i++) {
+    std::string gName = git->first;
+    Teuchos::RCP<const Tpetra_Vector> gT = Petra::EpetraVector_To_TpetraVectorConst(*(git->second), _solverComm); 
+    responseMapT[gName] = gT;
+    git++; 
+  }
+  std::map<std::string, Teuchos::RCP<Epetra_MultiVector> >::const_iterator git2;
+  git2 = responseDerivMap.cbegin();  
+  for (int i = 0; i<responseDerivMap.size(); i++) {
+    std::string gName = git2->first; 
+    Teuchos::RCP<Tpetra_MultiVector> dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*(git2->second), _solverComm); 
+    responseDerivMapT[gName] = dgdpT;
+    git2++; 
+  }
+}
+
+/******************************************************************************/
+Teuchos::RCP<Teuchos::ParameterList> 
+ATO::SolverT::createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}   
+
+/******************************************************************************/
+Teuchos::RCP<Teuchos::ParameterList> 
+ATO::SolverT::createHomogenizationInputFile( 
+    const Teuchos::RCP<Teuchos::ParameterList>& appParams, 
+    const Teuchos::ParameterList& homog_subList, 
+    int homogProblemIndex, 
+    int homogSubIndex, 
+    int homogDim) const
+/******************************************************************************/
+{
+  //IKT, fill in!    
+}
+
+/******************************************************************************/
+Teuchos::RCP<const Teuchos::ParameterList>
+ATO::SolverT::getValidProblemParameters() const
+/******************************************************************************/
+{
+  //IKT, fill in!
+}
+
+/******************************************************************************/
+///*************                   BOILERPLATE                  *************///
+/******************************************************************************/
+
+
+
+/******************************************************************************/
+ATO::SolverT::~SolverT() { }
+/******************************************************************************/
+
+
+/******************************************************************************/
+Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> ATO::SolverT::get_x_space() const
+/******************************************************************************/
+{
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > dummy; 
+  return dummy;
+}
+
+/******************************************************************************/
+Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> ATO::SolverT::get_f_space() const
+/******************************************************************************/
+{
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > dummy; 
+  return dummy;
+}
+
+/******************************************************************************/
+Thyra::ModelEvaluatorBase::InArgs<ST> 
+ATO::SolverT::createInArgs() const
+/******************************************************************************/
+{
+  Thyra::ModelEvaluatorBase::InArgsSetup<ST> inArgs; 
+  inArgs.setModelEvalDescription("ATO Solver Model Evaluator Description");
+  inArgs.set_Np(_num_parameters);
+  return inArgs;
+}
+
+/******************************************************************************/
+Thyra::ModelEvaluatorBase::OutArgs<ST> 
+ATO::SolverT::createOutArgsImpl() const
+/******************************************************************************/
+{
+  Thyra::ModelEvaluatorBase::OutArgsSetup<ST> outArgs; 
+  outArgs.setModelEvalDescription("ATO Solver Multipurpose Model Evaluator");
+  outArgs.set_Np_Ng(_num_parameters, _num_responses+1);  //TODO: is the +1 necessary still??
+  return outArgs;
+}
+
+/******************************************************************************/
+Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> 
+ATO::SolverT::get_g_space(int j) const 
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+/******************************************************************************/
+Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> 
+ATO::SolverT::get_p_space(int j) const 
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
+
+
+/******************************************************************************/
+ATO::SolverSubSolverDataT
+ATO::SolverT::CreateSubSolverData(const ATO::SolverSubSolverT& sub) const
+/******************************************************************************/
+{
+  //IKT, fill in! 
+}
