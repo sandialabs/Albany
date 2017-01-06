@@ -41,6 +41,9 @@ class Omega_h_Method : public MeshAdaptMethod {
     double gradation_rate;
     bool should_prevent_overshoot;
     double overshoot_allowance;
+    bool should_use_curvature;
+    double segment_angle;
+    double max_size;
     MeshAdaptMethod* helper;
     ma::Mesh* mesh_apf;
     Omega_h::Library library_osh;

@@ -37,7 +37,7 @@ void Omega_h_Method::setParams(const Teuchos::RCP<Teuchos::ParameterList>& p) {
   else if (size_method == "Hessian") {
     TEUCHOS_TEST_FOR_EXCEPTION(!p->isType<double>("Maximum Size"),
         std::logic_error,
-        "Must specify \"Maximum Size\" for \"Hessian\" size field");
+        "Must specify \"Maximum Size\" for \"Hessian\" size field\n");
     maximum_size = p->get<double>("Maximum Size");
     if (p->isParameter("Error Bound")) {
       should_target_error = true;
@@ -63,6 +63,14 @@ void Omega_h_Method::setParams(const Teuchos::RCP<Teuchos::ParameterList>& p) {
   should_prevent_overshoot = p->isType<double>("Overshoot Allowance");
   if (should_prevent_overshoot) {
     overshoot_allowance = p->get<double>("Overshoot Allowance");
+  }
+  should_use_curvature = p->isType<double>("Max Edge Angle");
+  if (should_use_curvature) {
+    segment_angle = p->get<double>("Max Edge Angle");
+    TEUCHOS_TEST_FOR_EXCEPTION(!p->isType<double>("Maximum Size"),
+        std::logic_error,
+        "Must specify \"Maximum Size\" with \"Max Edge Angle\"\n");
+    maximum_size = p->get<double>("Maximum Size");
   }
   if (helper) helper->setParams(p);
 }
@@ -104,6 +112,13 @@ void Omega_h_Method::adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt
     }
     mesh_osh.add_tag(0, "target_metric", Omega_h::symm_dofs(mesh_osh.dim()),
         OMEGA_H_METRIC, OMEGA_H_DO_OUTPUT, metrics);
+  }
+  if (should_use_curvature) {
+    auto old_isos =  mesh_osh.get_array<double>(0, "target_size");
+    auto curv_isos = Omega_h::get_curvature_isos(&mesh_osh,
+        segment_angle, maximum_size);
+    auto new_isos = Omega_h::min_each(old_isos, curv_isos);
+    mesh_osh.set_tag(0, "target_size", new_isos);
   }
   if (should_smooth_metric) {
     for (int i = 0; i < metric_smooth_steps; ++i) {
