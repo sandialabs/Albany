@@ -856,7 +856,7 @@ void
 ATO::Solver::smoothTopologyT(double* p)
 /******************************************************************************/
 {
-  // copy topology into Epetra_Vectors to apply the filter and/or communicate boundary data
+  // copy topology into Tpetra_Vectors to apply the filter and/or communicate boundary data
   int ntopos = _topologyInfoStructsT.size();
   
   for(int itopo=0; itopo<ntopos; itopo++){
@@ -871,7 +871,7 @@ ATO::Solver::smoothTopologyT(double* p)
 
     smoothTopologyT(topoStructT);
 
-    // copy the topology back from the epetra vectors
+    // copy the topology back from the tpetra vectors
     for(int lid=0; lid<numLocalNodes; lid++)
       p[lid] = ltopo[lid];
   }
@@ -2666,7 +2666,25 @@ void
 ATO::SolverT::smoothTopology(double* p)
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  // copy topology into Epetra_Vectors to apply the filter and/or communicate boundary data
+  int ntopos = _topologyInfoStructs.size();
+  
+  for(int itopo=0; itopo<ntopos; itopo++){
+    Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];
+    Teuchos::RCP<Epetra_Vector> topoVec = topoStruct->localVector;
+    double* ltopo; topoVec->ExtractView(&ltopo);
+    int numLocalNodes = topoVec->MyLength();
+    int offset = itopo*numLocalNodes;
+    p += offset;
+    for(int lid=0; lid<numLocalNodes; lid++)
+      ltopo[lid] = p[lid];
+
+    smoothTopology(topoStruct);
+
+    // copy the topology back from the epetra vectors
+    for(int lid=0; lid<numLocalNodes; lid++)
+      p[lid] = ltopo[lid];
+  }
 }
 
 /******************************************************************************/
@@ -2674,7 +2692,24 @@ void
 ATO::SolverT::smoothTopologyT(double* p)
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  int ntopos = _topologyInfoStructsT.size();
+  
+  for(int itopo=0; itopo<ntopos; itopo++){
+    Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
+    Teuchos::RCP<Tpetra_Vector> topoVecT = topoStructT->localVectorT;
+    Teuchos::ArrayRCP<double> ltopo = topoVecT->get1dViewNonConst(); 
+    int numLocalNodes = topoVecT->getLocalLength();
+    int offset = itopo*numLocalNodes;
+    p += offset;
+    for(int lid=0; lid<numLocalNodes; lid++)
+      ltopo[lid] = p[lid];
+
+    smoothTopologyT(topoStructT);
+
+    // copy the topology back from the tpetra vectors
+    for(int lid=0; lid<numLocalNodes; lid++)
+      p[lid] = ltopo[lid];
+  }
 }
 
 /******************************************************************************/
@@ -2682,7 +2717,23 @@ void
 ATO::SolverT::smoothTopology(Teuchos::RCP<TopologyInfoStruct> topoStruct)
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  // apply filter if requested
+  if(topoStruct->filter != Teuchos::null){
+    Teuchos::RCP<Epetra_Vector> topoVec = topoStruct->localVector;
+    Epetra_Vector filtered_topoVec(*topoVec);
+    int num = topoStruct->filter->getNumIterations();
+    for(int i=0; i<num; i++){
+      topoStruct->filter->FilterOperator()->Multiply(/*UseTranspose=*/false, *topoVec, filtered_topoVec);
+      *topoVec = filtered_topoVec;
+    }
+  } else
+  if(topoStruct->postFilter != Teuchos::null){
+    Teuchos::RCP<Epetra_Vector> topoVec = topoStruct->localVector;
+    Teuchos::RCP<Epetra_Vector> filteredTopoVec = topoStruct->filteredVector;
+    Teuchos::RCP<Epetra_Vector> filteredOTopoVec = topoStruct->filteredOverlapVector;
+    topoStruct->postFilter->FilterOperator()->Multiply(/*UseTranspose=*/false, *topoVec, *filteredTopoVec);
+    filteredOTopoVec->Import(*filteredTopoVec, *importer, Insert);
+  }
 }
 
 /******************************************************************************/
@@ -2690,7 +2741,33 @@ void
 ATO::SolverT::smoothTopologyT(Teuchos::RCP<TopologyInfoStructT> topoStructT)
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  // apply filter if requested
+  if(topoStructT->filterT != Teuchos::null){
+    Teuchos::RCP<Tpetra_Vector> topoVecT = topoStructT->localVectorT;
+    Teuchos::RCP<Tpetra_Vector> filtered_topoVecT = 
+        Teuchos::rcp(new Tpetra_Vector(localNodeMapT));
+    int num = topoStructT->filterT->getNumIterations();
+    for(int i=0; i<num; i++){
+      //IKT, 1/5/17: the use of copies here is somewhat hacky, to get apply 
+      //to do the right thing and not throw an exception in a debug build. 
+      std::vector<double> vec(topoVecT->getLocalLength()); 
+      Teuchos::ArrayView<double> view = Teuchos::arrayViewFromVector(vec); 
+      if (i == 0) 
+        topoVecT->get1dCopy(view);
+      else 
+        filtered_topoVecT->get1dCopy(view); 
+      Teuchos::RCP<Tpetra_Vector> temp = Teuchos::rcp(new Tpetra_Vector(localNodeMapT, view)); 
+      topoStructT->filterT->FilterOperatorT()->apply(*temp, *filtered_topoVecT, Teuchos::NO_TRANS);
+    }
+    *topoVecT = *filtered_topoVecT; 
+  } else
+  if(topoStructT->postFilterT != Teuchos::null){
+    Teuchos::RCP<Tpetra_Vector> topoVecT = topoStructT->localVectorT;
+    Teuchos::RCP<Tpetra_Vector> filteredTopoVecT = topoStructT->filteredVectorT;
+    Teuchos::RCP<Tpetra_Vector> filteredOTopoVecT = topoStructT->filteredOverlapVectorT;
+    topoStructT->postFilterT->FilterOperatorT()->apply(*topoVecT, *filteredTopoVecT, Teuchos::NO_TRANS);
+    filteredOTopoVecT->doImport(*filteredTopoVecT, *importerT, Tpetra::INSERT);
+  }
 }
 
 /******************************************************************************/
