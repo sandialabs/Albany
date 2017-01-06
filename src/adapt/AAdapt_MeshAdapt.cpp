@@ -530,6 +530,7 @@ AAdapt::MeshAdapt::getValidAdapterParameters() const
   validPL->set<double>("Gradation Rate Limit", 1.01, "Max metric gradation rate");
   validPL->set<std::string>("Size Method", "SPR", "Size field for Omega_h adaptation");
   validPL->set<double>("Overshoot Allowance", 3.0, "Max allowed metric edge length");
+  validPL->set<double>("Max Edge Angle", 3.14, "Max arc angle for mesh edge: curvature refinement");
 
   /* RCU options */
   validPL->set<bool>("Reference Configuration: Update", false, "Activate RCU");

@@ -30,6 +30,7 @@ class Omega_h_Method : public MeshAdaptMethod {
 
   private:
     std::string size_method;
+    double target_size;
     double maximum_size;
     bool should_target_count;
     double target_count;
@@ -41,6 +42,9 @@ class Omega_h_Method : public MeshAdaptMethod {
     double gradation_rate;
     bool should_prevent_overshoot;
     double overshoot_allowance;
+    bool should_use_curvature;
+    double segment_angle;
+    double max_size;
     MeshAdaptMethod* helper;
     ma::Mesh* mesh_apf;
     Omega_h::Library library_osh;
