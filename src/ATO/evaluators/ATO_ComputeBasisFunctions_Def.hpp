@@ -68,16 +68,16 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
 
   topoNames = cubature->getFieldNames();
   numTopos = topoNames.size();
-  topoVals.resize(numNodes,numTopos);
-  coordVals.resize(numNodes,numDims);
+  topoVals = Kokkos::DynRankView<RealType, PHX::Device>("XXX",numNodes,numTopos);
+  coordVals = Kokkos::DynRankView<RealType, PHX::Device>("XXX",numNodes,numDims);
 
   // Allocate Temporary FieldContainers
-  val_at_cub_points.resize(numNodes, numQPs);
-  grad_at_cub_points.resize(numNodes, numQPs, numDims);
-  refPoints.resize(numQPs, numDims);
-  weights.resize(numQPs);
-  jacobian.resize(numCells, numQPs, numDims, numDims);
-  jacobian_inv.resize(numCells, numQPs, numDims, numDims);
+  val_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPs);
+  grad_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPs, numDims);
+  refPoints = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs, numDims);
+  weights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
+  jacobian = Kokkos::createDynRankView(jacobian_det.get_view(),"XXX", numCells, numQPs, numDims, numDims);
+  jacobian_inv = Kokkos::createDynRankView(jacobian_det.get_view(),"XXX", numCells, numQPs, numDims, numDims);
 
   cubature->getStandardPoints(refPoints);
 
@@ -118,12 +118,12 @@ evaluateFields(typename Traits::EvalData workset)
   //int numCells = workset.numCells;
     */
 
-  typedef typename Intrepid2::CellTools<MeshScalarT>   ICT;
-  typedef Intrepid2::FunctionSpaceTools                IFST;
+  typedef typename Intrepid2::CellTools<PHX::Device>   ICT;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device>   IFST;
 
-  Intrepid2::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, cubature->getBasis());
+  ICT::setJacobian(jacobian, refPoints, coordVec.get_view(), cubature->getBasis());
   ICT::setJacobianInv (jacobian_inv, jacobian);
-  ICT::setJacobianDet (jacobian_det, jacobian);
+  ICT::setJacobianDet (jacobian_det.get_view(), jacobian);
 
   bool isSet = false;
   Albany::MDArray savedWeights;
@@ -139,20 +139,21 @@ evaluateFields(typename Traits::EvalData workset)
         weighted_measure(cell, qp) = savedWeights(cell,qp);
     }
   } else {
-    Teuchos::Array<Albany::MDArray> topo(numTopos);
-    for(int itopo=0; itopo<numTopos; itopo++){
-      topo[itopo] = (*workset.stateArrayPtr)[topoNames[itopo]];
-    }
 
     for(int cell=0; cell<workset.numCells; cell++){
       for(int node=0; node<numNodes; node++)
         for(int dim=0; dim<numDims; dim++)
           coordVals(node,dim) = coordVec(cell,node,dim);
   
+      Teuchos::Array<Albany::MDArray> topo(numTopos);
+      for(int itopo=0; itopo<numTopos; itopo++){
+        topo[itopo] = (*workset.stateArrayPtr)[topoNames[itopo]];
+      }
+  
       for(int itopo=0; itopo<numTopos; itopo++)
         for(int node=0; node<numNodes; node++)
           topoVals(node,itopo) = topo[itopo](cell,node);
-
+  
       cubature->getCubatureWeights(weights, topoVals, coordVals);
 
       for(int qp=0; qp<numQPs; qp++)
@@ -166,10 +167,10 @@ evaluateFields(typename Traits::EvalData workset)
     (*workset.stateArrayPtr)["isSet"](0,0) = 1;
   }
 
-  IFST::HGRADtransformVALUE<RealType>   (BF, val_at_cub_points);
-  IFST::multiplyMeasure<MeshScalarT>    (wBF, weighted_measure, BF);
-  IFST::HGRADtransformGRAD<MeshScalarT> (GradBF, jacobian_inv, grad_at_cub_points);
-  IFST::multiplyMeasure<MeshScalarT>    (wGradBF, weighted_measure, GradBF);
+  IFST::HGRADtransformVALUE(BF.get_view(), val_at_cub_points);
+  IFST::multiplyMeasure    (wBF.get_view(), weighted_measure.get_view(), BF.get_view());
+  IFST::HGRADtransformGRAD (GradBF.get_view(), jacobian_inv, grad_at_cub_points);
+  IFST::multiplyMeasure    (wGradBF.get_view(), weighted_measure.get_view(), GradBF.get_view());
 }
 
 //**********************************************************************
