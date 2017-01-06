@@ -30,6 +30,7 @@ class Omega_h_Method : public MeshAdaptMethod {
 
   private:
     std::string size_method;
+    double target_size;
     double maximum_size;
     bool should_target_count;
     double target_count;
