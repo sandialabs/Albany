@@ -1818,6 +1818,8 @@ Teuchos::RCP<const Epetra_Map> ATO::Solver::get_g_map(int j) const
                      j << std::endl);
   //TEV: Hardwired for now
   int _num_responses = 0;
+  //IKT, 1/6/17, to ask Josh: _epetra_response_map is not populated anywhere,
+  //so it will be null.  Is that the intention?   
   //no index because num_g == 1 so j must be zero
   if      (j <  _num_responses) return _epetra_response_map; 
   else if (j == _num_responses) return _epetra_x_map;
@@ -2918,7 +2920,23 @@ Teuchos::RCP<const Thyra::VectorSpaceBase<ST>>
 ATO::SolverT::get_g_space(int j) const 
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  TEUCHOS_TEST_FOR_EXCEPTION(j > _num_responses || j < 0, Teuchos::Exceptions::InvalidParameter,
+                     std::endl <<
+                     "Error in ATO::SolverT::get_g_space():  " <<
+                     "Invalid response index j = " <<
+                     j << std::endl);
+  //TEV: Hardwired for now
+  int _num_responses = 0;
+  //IKT, 1/6/17, to ask Josh: _tpetra_response_map is not populated anywhere,
+  //so it will be null.  Is that the intention?   
+  //no index because num_g == 1 so j must be zero
+  //IKT, 1/6/17: does _tpetra_response_map need to be a LocalMap?  It is not 
+  //populated.  LocalMap cannot be cast to Thyra::VectorSpaceBase.  Ask Josh.  
+  //if (j <  _num_responses) 
+  //  return Thyra::createVectorSpace<ST>(_tpetra_response_map);
+  if (j == _num_responses) 
+    return Thyra::createVectorSpace<ST>(_tpetra_x_map); 
+  return Teuchos::null; 
 }
 
 /******************************************************************************/
@@ -2935,5 +2953,45 @@ ATO::SolverSubSolverDataT
 ATO::SolverT::CreateSubSolverData(const ATO::SolverSubSolverT& sub) const
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  ATO::SolverSubSolverDataT ret;
+  if( sub.params_inT->Np() > 0 && sub.responses_outT->Ng() > 0 ) 
+  {
+    ret.deriv_supportT = sub.modelT->createOutArgs().supports(OUT_ARG_DgDp, 0, 0);
+  }
+  else ret.deriv_supportT = Thyra::ModelEvaluatorBase::DerivativeSupport();
+
+  ret.Np = sub.params_inT->Np();
+  ret.pLength = std::vector<int>(ret.Np);
+  for (int i=0; i<ret.Np; i++) {
+    Teuchos::RCP<const Thyra::VectorBase<ST>> solver_p = sub.params_inT->get_p(i);
+    //IKT, 1/6/17: is there really no equivalent of getLocalLength() for Thyra::VectorBase??
+    Teuchos::RCP<const Tpetra_Vector> solver_p_tpetra = ConverterT::getConstTpetraVector(solver_p);
+    //uses local length (need to modify to work with distributed params)
+    if(solver_p != Teuchos::null) ret.pLength[i] = solver_p_tpetra->getLocalLength();
+    else ret.pLength[i] = 0;
+  }
+  
+  ret.Ng = sub.responses_outT->Ng();
+  ret.gLength = std::vector<int>(ret.Ng);
+  for (int i=0; i<ret.Ng; i++) {
+    Teuchos::RCP<const Thyra::VectorBase<ST>> solver_g = sub.responses_outT->get_g(i);
+    //IKT, 1/6/17: is there really no equivalent of getLocalLength() for Thyra::VectorBase??
+    Teuchos::RCP<const Tpetra_Vector> solver_g_tpetra = ConverterT::getConstTpetraVector(solver_g);
+    //uses local length (need to modify to work with distributed responses)
+    if(solver_g != Teuchos::null) ret.gLength[i] = solver_g_tpetra->getLocalLength();
+    else ret.gLength[i] = 0;
+  }
+  
+  if(ret.Np > 0) {
+    Teuchos::RCP<const Thyra::VectorBase<ST>> p_init =
+      //only first p vector used - in the future could make ret.p_init an array of Np vectors
+      sub.modelT->getNominalValues().get_p(0);
+    if(p_init != Teuchos::null) 
+      ret.p_initT = ConverterT::getConstTpetraVector(p_init); 
+    else 
+      ret.p_initT = Teuchos::null;
+  }
+  else ret.p_initT = Teuchos::null;
+
+  return ret;
 }

@@ -151,6 +151,9 @@ namespace ATO {
     int  numDims;
     int _num_parameters; // for sensitiviy analysis(?)
     int _num_responses;  //  ditto
+    //IKT, 1/6/17: are _epetra_param_map and _epetra_response_map needed?  They are not 
+    //set anywhere in the code, so they are null.  Do these maps need to be LocalMaps? 
+    //Need to ask Josh.  
     Teuchos::RCP<Epetra_LocalMap> _epetra_param_map;
     Teuchos::RCP<Epetra_LocalMap> _epetra_response_map;
     Teuchos::RCP<Epetra_Map>      _epetra_x_map;
@@ -348,7 +351,7 @@ namespace ATO {
     int _num_responses;  //  ditto
     Teuchos::RCP<Tpetra_LocalMap> _tpetra_param_map;
     Teuchos::RCP<Tpetra_LocalMap> _tpetra_response_map;
-    Teuchos::RCP<Tpetra_Map>      _tpetra_x_map;
+    Teuchos::RCP<const Tpetra_Map>      _tpetra_x_map;
 
     int _numPhysics; // number of sub problems
 
