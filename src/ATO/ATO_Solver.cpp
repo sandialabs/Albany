@@ -2958,7 +2958,76 @@ void
 ATO::SolverT::copyObjectiveFromStateMgr( double& g, double* dgdp )
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  //IKT, FIXME: this routine still has Epetra, which should ultimately be removed. 
+  // aggregated objective derivative is stored in the first subproblem
+  Albany::StateManager& stateMgr = _subProblems[0].app->getStateMgr();
+
+  g = *objectiveValue;
+
+  auto nVecs = ObjectiveGradientVecT.size();
+  for(int ivec=0; ivec<nVecs; ivec++){
+
+    if( entityType == "State Variable" ) {
+      ObjectiveGradientVecT[ivec]->putScalar(0.0);
+      ObjectiveGradientVecT[ivec]->doExport(*overlapObjectiveGradientVecT[ivec], *exporterT, Tpetra::ADD);
+    }
+
+    auto numLocalNodes = ObjectiveGradientVecT[ivec]->getLocalLength();
+    Teuchos::ArrayRCP<const double> lvec = ObjectiveGradientVecT[ivec]->get1dView(); 
+#ifdef TPETRA_CRS_APPLY  
+    // apply filter if requested
+    Teuchos::RCP<Tpetra_Vector> filtered_ObjectiveGradientVecT = 
+        Teuchos::rcp(new Tpetra_Vector(*ObjectiveGradientVecT[ivec]));
+    if(_derivativeFilter != Teuchos::null){
+      int num = _derivativeFilter->getNumIterations();
+      for(int i=0; i<num; i++){
+        //IKT, FIXME 12/23/16:
+        //Tpetra::CrsMatrix apply method with Teuchos::TRANS mode does not work correctly - 
+        //gives a vector of all 0s here.  Waiting to hear back from Mark Hoemmenn
+        //about this.  
+        _derivativeFilter->FilterOperatorT()->apply(*ObjectiveGradientVecT[ivec],
+                                                    *filtered_ObjectiveGradientVecT,
+                                                    Teuchos::TRANS); 
+        *ObjectiveGradientVecT[ivec] = *filtered_ObjectiveGradientVecT; 
+        //Tpetra_MatrixMarket_Writer::writeDenseFile("filtered_ObjectiveGradientVecT.mm",  
+        //    filtered_ObjectiveGradientVecT); exit(1); 
+      }
+      Teuchos::ArrayRCP<const double> lvec = filtered_ObjectiveGradientVecT->get1dView(); 
+      for (int i=0; i< numLocalNodes; i++) 
+      std::memcpy((void*)(dgdp+ivec*numLocalNodes), lvec.getRawPtr(), numLocalNodes*sizeof(double));
+#else 
+    // apply filter if requested
+    Teuchos::RCP<Epetra_Vector> ObjectiveGradientVecE = Teuchos::rcp(new Epetra_Vector(*localNodeMap)); 
+    Petra::TpetraVector_To_EpetraVector(ObjectiveGradientVecT[ivec],
+                                        *ObjectiveGradientVecE, Teuchos::rcpFromRef(localNodeMap->Comm()));
+    Epetra_Vector filtered_ObjectiveGradientVec(*ObjectiveGradientVecE);
+    if(_derivativeFilter != Teuchos::null){
+      int num = _derivativeFilter->getNumIterations();
+      for(int i=0; i<num; i++){
+        _derivativeFilter->FilterOperator()->Multiply(/*UseTranspose=*/true, 
+                                                      *ObjectiveGradientVecE,
+                                                       filtered_ObjectiveGradientVec);
+        *ObjectiveGradientVecE = filtered_ObjectiveGradientVec; 
+      }
+      double* lvecE; filtered_ObjectiveGradientVec.ExtractView(&lvecE);
+      for (int i=0; i< numLocalNodes; i++) 
+      std::memcpy((void*)(dgdp+ivec*numLocalNodes), (void*)lvecE, numLocalNodes*sizeof(double));
+#endif
+    } else {
+      for (int i=0; i< numLocalNodes; i++) 
+      std::memcpy((void*)(dgdp+ivec*numLocalNodes), lvec.getRawPtr(), numLocalNodes*sizeof(double));
+    }
+#ifndef TPETRA_CRS_APPLY
+    Teuchos::RCP<const Tpetra_Vector> filtered_ObjectiveGradientVecT =  
+                Petra::EpetraVector_To_TpetraVectorConst(filtered_ObjectiveGradientVec, _solverComm); 
+#endif
+    // save dgdp to nodal data for output sake
+    overlapObjectiveGradientVecT[ivec]->doImport(*filtered_ObjectiveGradientVecT, *importerT, Tpetra::INSERT);
+    Teuchos::RCP<Albany::NodeFieldContainer>
+      nodeContainer = stateMgr.getNodalDataBase()->getNodeContainer();
+    std::string nodal_derName = Albany::strint(_objAggregator->getOutputDerivativeName()+"_node", ivec);
+    (*nodeContainer)[nodal_derName]->saveFieldVector(overlapObjectiveGradientVecT[ivec],/*offset=*/0);
+  }
 }
 
 /******************************************************************************/
@@ -2976,7 +3045,63 @@ ATO::SolverT::ComputeMeasure(std::string measureType, const double* p,
                             std::string integrationMethod)
 /******************************************************************************/
 {
-  //IKT, fill in! 
+  //IKT, FIXME: this routine still has Epetra in it, which should ultimately be removed. 
+  // communicate boundary topo data
+  Albany::StateManager& stateMgr = _subProblems[0].app->getStateMgr();
+  
+  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
+    wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();
+
+  int numWorksets = wsElNodeID.size();
+
+  int ntopos = _topologyInfoStructsT.size();
+
+  std::vector<Teuchos::RCP<TopologyStructT> > topologyStructsT(ntopos);
+
+  for(int itopo=0; itopo<ntopos; itopo++){
+
+    topologyStructsT[itopo] = Teuchos::rcp(new TopologyStructT);
+  
+    Teuchos::RCP<Epetra_Vector> topoVec = _topologyInfoStructs[itopo]->localVector;
+    Teuchos::RCP<Tpetra_Vector> topoVecT = _topologyInfoStructsT[itopo]->localVectorT;
+    int numLocalNodes = topoVecT->getLocalLength();
+    int offset = itopo*numLocalNodes;
+    double* ltopo; 
+    topoVec->ExtractView(&ltopo);
+    Teuchos::ArrayRCP<double> ltopoT = topoVecT->get1dViewNonConst(); 
+    for(int ws=0; ws<numWorksets; ws++){
+      int numCells = wsElNodeID[ws].size();
+      int numNodes = wsElNodeID[ws][0].size();
+      for(int cell=0; cell<numCells; cell++)
+        for(int node=0; node<numNodes; node++){
+          int gid = wsElNodeID[ws][cell][node];
+          int lid = localNodeMapT->getLocalElement(gid);
+          if(lid != -1) ltopo[lid] = p[lid+offset];
+          if(lid != -1) ltopoT[lid] = p[lid+offset];
+        }
+    }
+
+    Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];
+    smoothTopology(topoStruct);
+    Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
+    smoothTopologyT(topoStructT);
+
+    Teuchos::RCP<Epetra_Vector> overlapTopoVec = _topologyInfoStructs[itopo]->overlapVector;
+    overlapTopoVec->Import(*topoVec, *importer, Insert);
+    Teuchos::RCP<Tpetra_Vector> overlapTopoVecTpetra = _topologyInfoStructsT[itopo]->overlapVectorT;
+    overlapTopoVecTpetra->doImport(*topoVecT, *importerT, Tpetra::INSERT);
+
+    topologyStructsT[itopo]->topologyT = _topologyInfoStructsT[itopo]->topologyT; 
+    Teuchos::RCP<Tpetra_Vector> overlapTopoVecT = 
+        Petra::EpetraVector_To_TpetraVectorNonConst(*overlapTopoVec, _solverComm);  
+    topologyStructsT[itopo]->dataVectorT = overlapTopoVecT;
+    //IKT, the following makes FixedBlocks and 2Matl_Homog tests fail; 
+    //need to figure out why to finalize Tpetra conversion. 
+    //topologyStructsT[itopo]->dataVectorT = overlapTopoVecTpetra;
+  }
+
+  return _atoProblem->ComputeMeasureT(measureType, topologyStructsT, 
+                                     measure, dmdp, integrationMethod);
 }
 
 /******************************************************************************/
