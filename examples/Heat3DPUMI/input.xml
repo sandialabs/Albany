@@ -106,7 +106,7 @@
 	</ParameterList>
 	<Parameter name="Method" type="string" value="Full Step"/>
       </ParameterList>
-      <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
+      <Parameter name="Nonlinear Solver" type="string" value="Single Step"/>
       <ParameterList name="Printing">
 	<Parameter name="Output Information" type="int" value="103"/>
 	<!--Parameter name="Output Information" type="int" value="127"/-->
