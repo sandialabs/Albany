@@ -2858,7 +2858,8 @@ ATO::SolverT::ComputeObjective(const double* p, double& g, double* dgdp)
   }
 
   if ( entityType == "Distributed Parameter" ) {
-    updateTpetraResponseMaps(); 
+    //IKT, FIXME: delete the following line 
+    //updateTpetraResponseMaps(); 
     _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
   }
   _objAggregator->EvaluateT();
@@ -2896,7 +2897,8 @@ ATO::SolverT::ComputeObjective(double* p, double& g, double* dgdp)
   }
 
   if ( entityType == "Distributed Parameter" ) {
-    updateTpetraResponseMaps(); 
+    //IKT, FIXME: delete the following line 
+    //updateTpetraResponseMaps(); 
     _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
   }
   _objAggregator->EvaluateT();
@@ -3487,7 +3489,8 @@ ATO::SolverT::Compute(const double* p, double& g, double* dgdp, double& c, doubl
   }
 
   if ( entityType == "Distributed Parameter" ) {
-    updateTpetraResponseMaps(); 
+    //IKT, FIXME: delete the following line 
+    //updateTpetraResponseMaps(); 
     _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
   }
   _objAggregator->EvaluateT();
@@ -3495,7 +3498,8 @@ ATO::SolverT::Compute(const double* p, double& g, double* dgdp, double& c, doubl
   
   if( !_conAggregator.is_null()){
     if ( entityType == "Distributed Parameter" ) {
-      updateTpetraResponseMaps(); 
+      //IKT, FIXME: delete the following line 
+      //updateTpetraResponseMaps(); 
       _conAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
     }
     _conAggregator->EvaluateT();

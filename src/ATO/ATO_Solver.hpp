@@ -308,29 +308,30 @@ namespace ATO {
             const Teuchos::RCP<const Teuchos_Comm>& comm,
             const Teuchos::RCP<const Tpetra_Vector>& initial_guess);
 
-    ~SolverT(); //done 
+    ~SolverT();  
 
     //pure virtual from Thyra::ModelEvaluator
-    virtual Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> get_x_space() const; //done
+    virtual Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> get_x_space() const; 
     //pure virtual from Thyra::ModelEvaluator
-    virtual Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> get_f_space() const; //done 
+    virtual Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> get_f_space() const;  
     //pure virtual from Thyra::ModelEvaluator
-    virtual Thyra::ModelEvaluatorBase::InArgs<ST> createInArgs() const; //done  
+    virtual Thyra::ModelEvaluatorBase::InArgs<ST> createInArgs() const;   
     //pure virtual from Thyra::ModelEvaluator
-    virtual Thyra::ModelEvaluatorBase::OutArgs<ST> createOutArgsImpl() const; //done 
+    virtual Thyra::ModelEvaluatorBase::OutArgs<ST> createOutArgsImpl() const;  
     //pure virtual from Thyra::ModelEvaluator
     void evalModelImpl(
       Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
-      Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const; //done 
+      Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;  
 
-    void Compute(double* p, double& f, double* dfdp, double& g, double* dgdp=NULL); //done
-    void Compute(const double* p, double& f, double* dfdp, double& g, double* dgdp=NULL); //done 
+    void Compute(double* p, double& f, double* dfdp, double& g, double* dgdp=NULL); 
+    void Compute(const double* p, double& f, double* dfdp, double& g, double* dgdp=NULL);  
 
     void ComputeConstraint(double* p, double& c, double* dcdp=NULL);
 
-    void ComputeObjective(double* p, double& g, double* dgdp=NULL); //done 
-    void ComputeObjective(const double* p, double& g, double* dgdp=NULL); //done 
-    void updateTpetraResponseMaps(); //done  
+    void ComputeObjective(double* p, double& g, double* dgdp=NULL);  
+    void ComputeObjective(const double* p, double& g, double* dgdp=NULL); 
+    //IKT, FIXME: the following routine should ultimately be removed.  
+    void updateTpetraResponseMaps();   
     void writeCurrentDesign();
     void InitializeOptDofs(double* p);
     void getOptDofsLowerBound( Teuchos::Array<double>& b );
