@@ -330,8 +330,6 @@ namespace ATO {
 
     void ComputeObjective(double* p, double& g, double* dgdp=NULL);  
     void ComputeObjective(const double* p, double& g, double* dgdp=NULL); 
-    //IKT, FIXME: the following routine should ultimately be removed.  
-    void updateTpetraResponseMaps();   
     void writeCurrentDesign();
     void InitializeOptDofs(double* p);
     void getOptDofsLowerBound( Teuchos::Array<double>& b );
@@ -438,8 +436,6 @@ namespace ATO {
     Teuchos::RCP<Epetra_Export> exporter;
     Teuchos::RCP<Tpetra_Export> exporterT;
 
-    std::map<std::string, Teuchos::RCP<const Epetra_Vector> > responseMap;
-    std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > responseDerivMap;
     std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > responseMapT;
     std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > responseDerivMapT;
 
@@ -459,8 +455,6 @@ namespace ATO {
 
     Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> get_g_space(int j) const;
     
-    Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> get_p_space(int j) const;
-
     Teuchos::RCP<Teuchos::ParameterList> 
       createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const;
 

@@ -2858,8 +2858,6 @@ ATO::SolverT::ComputeObjective(const double* p, double& g, double* dgdp)
   }
 
   if ( entityType == "Distributed Parameter" ) {
-    //IKT, FIXME: delete the following line 
-    //updateTpetraResponseMaps(); 
     _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
   }
   _objAggregator->EvaluateT();
@@ -2897,8 +2895,6 @@ ATO::SolverT::ComputeObjective(double* p, double& g, double* dgdp)
   }
 
   if ( entityType == "Distributed Parameter" ) {
-    //IKT, FIXME: delete the following line 
-    //updateTpetraResponseMaps(); 
     _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
   }
   _objAggregator->EvaluateT();
@@ -3489,8 +3485,6 @@ ATO::SolverT::Compute(const double* p, double& g, double* dgdp, double& c, doubl
   }
 
   if ( entityType == "Distributed Parameter" ) {
-    //IKT, FIXME: delete the following line 
-    //updateTpetraResponseMaps(); 
     _objAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
   }
   _objAggregator->EvaluateT();
@@ -3498,8 +3492,6 @@ ATO::SolverT::Compute(const double* p, double& g, double* dgdp, double& c, doubl
   
   if( !_conAggregator.is_null()){
     if ( entityType == "Distributed Parameter" ) {
-      //IKT, FIXME: delete the following line 
-      //updateTpetraResponseMaps(); 
       _conAggregator->SetInputVariablesT(_subProblems, responseMapT, responseDerivMapT);
     }
     _conAggregator->EvaluateT();
@@ -3601,23 +3593,23 @@ ATO::SolverT::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPar
       if (!ret.responses_outT->supports(Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, ig, ip).none()){
         RCP<const Thyra::VectorBase<ST>> p = ret.params_inT->get_p(ip);
         RCP<const Thyra::VectorBase<ST>> g = ret.responses_outT->get_g(ig);
-        //RCP<Epetra_MultiVector> dgdp = rcp(new Epetra_MultiVector(p->Map(), g->GlobalLength() ));
-        //IKT, 1/6/17: double check that the following is correct 
-        RCP<Thyra::MultiVectorBase<ST>> dgdp = Thyra::createMembers(ret.modelT->get_p_space(ip), ss_num_g); 
+        //IKT, FIXME? conversions from Thyra to Tpetra should not be necessary, but there does 
+        //not appear to be a routine in Thyra to get the space of a Thyra vector or the vector's 
+        //global length.  
+        RCP<const Tpetra_Vector> p_tpetra = ConverterT::getConstTpetraVector(p); 
+        RCP<const Tpetra_Vector> g_tpetra = ConverterT::getConstTpetraVector(g); 
+        Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > p_space = Thyra::createVectorSpace<ST>(p_tpetra->getMap());
+        RCP<Thyra::MultiVectorBase<ST>> dgdp = Thyra::createMembers(p_space, g_tpetra->getGlobalLength()); 
         if(ret.responses_outT->supports(OUT_ARG_DgDp,ig,ip).supports(DERIV_TRANS_MV_BY_ROW)){
           Derivative<ST> dgdp_out(dgdp, DERIV_TRANS_MV_BY_ROW);
           ret.responses_outT->set_DgDp(ig,ip,dgdp_out);
         } 
         else 
           ret.responses_outT->set_DgDp(ig,ip,dgdp);
-        //IKT, 1/6/17: note that responseMap and responseDerivMap are not populated here.  Need to make 
-        //sure that the rest of the code does not use this object; otherwise, need to populate it.  
         RCP<const Tpetra_Vector> gT = ConverterT::getConstTpetraVector(g);
         responseMapT.insert(std::pair<std::string,RCP<const Tpetra_Vector> >(gName, gT));
-        //responseMap.insert(std::pair<std::string,RCP<const Epetra_Vector> >(gName,g));
         RCP<Tpetra_MultiVector> dgdpT = ConverterT::getTpetraMultiVector(dgdp);
         responseDerivMapT.insert(std::pair<std::string,RCP<Tpetra_MultiVector> >(dgdpName, dgdpT)); 
-        //responseDerivMap.insert(std::pair<std::string,RCP<Epetra_MultiVector> >(dgdpName,dgdp));
       }
     }
   }
@@ -3626,31 +3618,6 @@ ATO::SolverT::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPar
   ret.responses_outT->set_g(ss_num_g-1,xfinal); 
 
   return ret;
-}
-
-
-/******************************************************************************/
-void 
-ATO::SolverT::updateTpetraResponseMaps()
-/******************************************************************************/
-{
-  //IKT, FIXME: this functions should not be needed in the Thyra model evaluator version of the code. 
-  std::map<std::string, Teuchos::RCP<const Epetra_Vector> >::const_iterator git;
-  git = responseMap.cbegin();  
-  for (int i = 0; i<responseMap.size(); i++) {
-    std::string gName = git->first;
-    Teuchos::RCP<const Tpetra_Vector> gT = Petra::EpetraVector_To_TpetraVectorConst(*(git->second), _solverComm); 
-    responseMapT[gName] = gT;
-    git++; 
-  }
-  std::map<std::string, Teuchos::RCP<Epetra_MultiVector> >::const_iterator git2;
-  git2 = responseDerivMap.cbegin();  
-  for (int i = 0; i<responseDerivMap.size(); i++) {
-    std::string gName = git2->first; 
-    Teuchos::RCP<Tpetra_MultiVector> dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*(git2->second), _solverComm); 
-    responseDerivMapT[gName] = dgdpT;
-    git2++; 
-  }
 }
 
 
@@ -3725,14 +3692,6 @@ ATO::SolverT::get_g_space(int j) const
   if (j == _num_responses) 
     return Thyra::createVectorSpace<ST>(_tpetra_x_map); 
   return Teuchos::null; 
-}
-
-/******************************************************************************/
-Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> 
-ATO::SolverT::get_p_space(int j) const 
-/******************************************************************************/
-{
-  //IKT, fill in! 
 }
 
 
