@@ -51,7 +51,9 @@ SET(SOURCES ${SOURCES}
 IF (ENABLE_DOTK)
   SET(SOURCES ${SOURCES}       
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_Optimizer.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_DOTk_Optimizer.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_ContinuousOperators.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_DOTk_ContinuousOperators.cpp
   )
 ENDIF()
 
@@ -131,7 +133,9 @@ SET(HEADERS
 IF (ENABLE_DOTK)
   SET(HEADERS ${HEADERS}
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_Optimizer.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_DOTk_Optimizer.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_ContinuousOperators.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_DOTk_ContinuousOperators.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_DOTk_vector.hpp
   )
 ENDIF()
