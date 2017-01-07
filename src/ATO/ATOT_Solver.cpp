@@ -1798,7 +1798,9 @@ ATOT::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPar
         RCP<const Thyra::VectorBase<ST>> g = ret.responses_outT->get_g(ig);
         //IKT, FIXME? conversions from Thyra to Tpetra should not be necessary, but there does 
         //not appear to be a routine in Thyra to get the space of a Thyra vector or the vector's 
-        //global length.  
+        //global length. 
+        //IKT, FIXME: the creationg of p_space should be replaced with modelT->get_p_space, once 
+        //this routine is verified.   
         RCP<const Tpetra_Vector> p_tpetra = ConverterT::getConstTpetraVector(p); 
         RCP<const Tpetra_Vector> g_tpetra = ConverterT::getConstTpetraVector(g); 
         Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > p_space = Thyra::createVectorSpace<ST>(p_tpetra->getMap());
@@ -1878,7 +1880,9 @@ Teuchos::RCP<const Thyra::VectorSpaceBase<ST>>
 ATOT::Solver::get_p_space(int j) const 
 /******************************************************************************/
 {
-  //IKT, FIXME: fill in! 
+  //IKT: I believe p's map is localNodeMapT; should double check.
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > p_space = Thyra::createVectorSpace<ST>(localNodeMapT);
+  return p_space; 
 }
 
 /******************************************************************************/
