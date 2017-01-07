@@ -127,7 +127,37 @@ SetInputVariablesT(const std::vector<SolverSubSolverT>& subProblems,
 
 //**********************************************************************
 {
-  //IKT, fill in! 
+  outApp = subProblems[0].app;
+
+  // loop through sub variable names and find the containing state manager
+  int numVars = aggregatedValuesNames.size();
+  valuesT.resize(numVars);
+
+  std::map<std::string, Teuchos::RCP<const Tpetra_Vector> >::const_iterator git;
+  for(int ir=0; ir<numVars; ir++){
+    git = valueMap.find(aggregatedValuesNames[ir]);
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      git == valueMap.end(), Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Aggregator: Requested response (" << aggregatedValuesNames[ir] 
+      << ") not defined." << std::endl);
+    valuesT[ir].name = git->first;
+    valuesT[ir].value = git->second;
+  }
+
+
+  numVars = aggregatedDerivativesNames.size();
+  derivativesT.resize(numVars);
+
+  std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> >::const_iterator gpit;
+  for(int ir=0; ir<numVars; ir++){
+    gpit = derivMap.find(aggregatedDerivativesNames[ir]);
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      gpit == derivMap.end(), Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Aggregator: Requested response derivative (" << aggregatedDerivativesNames[ir] 
+      << ") not defined." << std::endl);
+    derivativesT[ir].name = gpit->first;
+    derivativesT[ir].value = gpit->second;
+  }
 }
 
 void 
@@ -216,7 +246,61 @@ void
 Aggregator_StateVarBased::SetInputVariablesT(const std::vector<SolverSubSolverT>& subProblems)
 //**********************************************************************
 {
-  //IKT, fill in! 
+  outApp = subProblems[0].app;
+
+  // loop through sub variable names and find the containing state manager
+
+  int numVars = aggregatedValuesNames.size();
+  valuesT.resize(numVars);
+    
+  int numSubs = subProblems.size();
+  for(int iv=0; iv<numVars; iv++){
+    bool objFound = false;
+    std::string& objName = aggregatedValuesNames[iv];
+    for(int is=0; is<numSubs; is++){
+      const Teuchos::RCP<Albany::Application>& app = subProblems[is].app;
+      Albany::StateArray& src = app->getStateMgr().getStateArrays().elemStateArrays[0];
+      if(src.count(objName) > 0){
+        TEUCHOS_TEST_FOR_EXCEPTION(
+          objFound, Teuchos::Exceptions::InvalidParameter, std::endl
+          << "Value '" << objName << "' found in two state managers." << std::endl
+          << "Value names must be unique to avoid ambiguity." << std::endl);
+        valuesT[iv].name = objName;
+        valuesT[iv].app = app;
+        objFound = true;
+      }
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      !objFound, Teuchos::Exceptions::InvalidParameter, std::endl
+      << "Value '" << objName << "' not found in any state manager." << std::endl);
+  }
+
+  numVars = aggregatedDerivativesNames.size();
+  derivativesT.resize(numVars);
+  
+  for(int iv=0; iv<numVars; iv++){
+    bool derFound = false;
+    std::string derName = aggregatedDerivativesNames[iv];
+    for(int is=0; is<numSubs; is++){
+      const Teuchos::RCP<Albany::Application>& app = subProblems[is].app;
+      Albany::StateArray& src = app->getStateMgr().getStateArrays().elemStateArrays[0];
+      if(src.count(Albany::strint(derName,0)) > 0){
+        TEUCHOS_TEST_FOR_EXCEPTION(
+          derFound, Teuchos::Exceptions::InvalidParameter, std::endl
+          << "Derivative '" << derName << "' found in two state managers." << std::endl
+          << "Derivative names must be unique to avoid ambiguity." << std::endl);
+        derivativesT[iv].name.resize(numTopologies);
+        for(int itopo=0; itopo<numTopologies; itopo++)
+          derivativesT[iv].name[itopo] = Albany::strint(derName, itopo);
+        derivativesT[iv].app = app;
+        derFound = true;
+      }
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      !derFound, Teuchos::Exceptions::InvalidParameter, std::endl
+      << "Derivative '" << derName << "' not found in any state manager." << std::endl);
+  }
+
 }
 
 //**********************************************************************
