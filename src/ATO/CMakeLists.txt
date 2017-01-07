@@ -5,7 +5,6 @@
 ##*****************************************************************//
 
 SET(SOURCES
-  ${CMAKE_SOURCE_DIR}/src/ATO/ATO_Solver.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_StiffnessObjective.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ModalObjective.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_InternalEnergyResponse.cpp
@@ -29,11 +28,24 @@ SET(SOURCES
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/ATO_OptimizationProblem.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/ATO_Utils.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_TopoTools.cpp
-  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Aggregator.cpp
-  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Optimizer.cpp
-  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Pareto_Optimizer.cpp
+)
+
+IF (ALBANY_EPETRA)
+  SET(SOURCES ${SOURCES}       
+    ${CMAKE_SOURCE_DIR}/src/ATO/ATO_Solver.cpp
+    ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Aggregator.cpp
+    ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Optimizer.cpp
+    ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Pareto_Optimizer.cpp
+    ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_XFEM_Preconditioner.cpp
+  )
+ENDIF()
+
+SET(SOURCES ${SOURCES}       
+  ${CMAKE_SOURCE_DIR}/src/ATO/ATOT_Solver.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_Aggregator.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_Optimizer.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_Pareto_Optimizer.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_XFEM_Preconditioner.cpp
-  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_XFEM_Preconditioner.cpp
 )
 
 IF (ENABLE_DOTK)
@@ -51,7 +63,6 @@ ENDIF()
 
 SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/ATO_Types.hpp
-  ${CMAKE_SOURCE_DIR}/src/ATO/ATO_Solver.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_StiffnessObjective_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_StiffnessObjective.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ModalObjective_Def.hpp
@@ -98,11 +109,23 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Integrator_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_PenaltyModel.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_PenaltyModel_Def.hpp
-  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Aggregator.hpp
-  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Optimizer.hpp
-  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Pareto_Optimizer.hpp
+)
+
+IF (ALBANY_EPETRA)
+  SET(HEADERS
+    ${CMAKE_SOURCE_DIR}/src/ATO/ATO_Solver.hpp
+    ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Aggregator.hpp
+    ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Optimizer.hpp
+    ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Pareto_Optimizer.hpp
+    ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_XFEM_Preconditioner.hpp
+  )
+ENDIF()
+SET(HEADERS
+  ${CMAKE_SOURCE_DIR}/src/ATO/ATOT_Solver.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_Aggregator.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_Optimizer.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_Pareto_Optimizer.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_XFEM_Preconditioner.hpp
-  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_XFEM_Preconditioner.hpp
 )
 
 IF (ENABLE_DOTK)

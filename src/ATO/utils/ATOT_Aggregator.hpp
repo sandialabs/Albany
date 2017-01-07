@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ATO_Aggregator_HPP
-#define ATO_Aggregator_HPP
+#ifndef ATOT_Aggregator_HPP
+#define ATOT_Aggregator_HPP
 
 #include "Albany_Application.hpp"
 
@@ -15,7 +15,7 @@
 #include "Teuchos_ParameterList.hpp"
 
 
-namespace ATO {
+namespace ATOT {
 
 class SolverSubSolver;
 
@@ -40,10 +40,6 @@ public:
   virtual std::string getOutputValueName(){return outputValueName;}
   virtual std::string getOutputDerivativeName(){return outputDerivativeName;}
 
-  virtual void SetInputVariables(const std::vector<SolverSubSolver>& subProblems){};
-  virtual void SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
-                                 const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > valueMap,
-                                 const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > derivMap){};
   virtual void SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems){};
   virtual void SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,
                                  const std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > valueMap,
@@ -82,7 +78,6 @@ protected:
 class Aggregator_StateVarBased : public virtual Aggregator {
  public:
   Aggregator_StateVarBased(){}
-  void SetInputVariables(const std::vector<SolverSubSolver>& subProblems);
   void SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems);
  protected:
   typedef struct { std::string name; Teuchos::RCP<Albany::Application> app; } SubValue;
@@ -102,9 +97,6 @@ class Aggregator_StateVarBased : public virtual Aggregator {
 class Aggregator_DistParamBased : public virtual Aggregator {
  public:
   Aggregator_DistParamBased(){}
-  void SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
-                         const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > valueMap,
-                         const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > derivMap);
   void SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,
                           const std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > valueMap,
                           const std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > derivMap);

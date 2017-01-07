@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ATO_Optimizer_HPP
-#define ATO_Optimizer_HPP
+#ifndef ATOT_Optimizer_HPP
+#define ATOT_Optimizer_HPP
 
 #include "Albany_StateManager.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -20,10 +20,9 @@
 #include "nlopt.h"
 #endif //ATO_USES_NLOPT
 
-namespace ATO {
+namespace ATOT {
 
 class Solver;
-//class SolverT;
 class OptInterface;
 class ConvergenceTest;
 
@@ -41,18 +40,16 @@ class Optimizer
   virtual void Optimize()=0;
   virtual void Initialize()=0;
   virtual void SetInterface(Solver*);
-  //virtual void SetInterface(SolverT*);
   virtual void SetCommunicator(const Teuchos::RCP<const Teuchos_Comm>& _comm) {comm = _comm;}
  protected:
 
   double computeDiffNorm(const double* v1, const double* v2, int n, bool printResult=false);
   double computeNorm(const double* v2, int n);
   OptInterface* solverInterface;
-  OptInterface* solverInterfaceT;
   Teuchos::RCP<const Teuchos_Comm> comm;
 
   Teuchos::RCP<ConvergenceTest> convergenceChecker;
-  Teuchos::RCP<Topology> topology;
+  Teuchos::RCP<ATO::Topology> topology;
 
   int    _nIterations;
 

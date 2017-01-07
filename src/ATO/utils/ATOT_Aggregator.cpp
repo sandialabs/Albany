@@ -4,12 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "ATO_Aggregator.hpp"
-#include "ATO_Solver.hpp"
+#include "ATOT_Aggregator.hpp"
+#include "ATOT_Solver.hpp"
 #include "Teuchos_TestForException.hpp"
 #include <functional>
 
-namespace ATO {
+namespace ATOT {
 
 
 //**********************************************************************
@@ -118,6 +118,7 @@ Aggregator::parse(const Teuchos::ParameterList& aggregatorParams)
   comm = Teuchos::null;
 }
 
+//**********************************************************************
 void 
 Aggregator_DistParamBased::
 SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,
@@ -155,48 +156,6 @@ SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,
       << ") not defined." << std::endl);
     derivativesT[ir].name = gpit->first;
     derivativesT[ir].value = gpit->second;
-  }
-}
-
-//**********************************************************************
-void 
-Aggregator_DistParamBased::
-SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
-                  const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > valueMap,
-                  const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > derivMap)
-//**********************************************************************
-{
-
-  outApp = subProblems[0].app;
-
-  // loop through sub variable names and find the containing state manager
-  int numVars = aggregatedValuesNames.size();
-  values.resize(numVars);
-
-  std::map<std::string, Teuchos::RCP<const Epetra_Vector> >::const_iterator git;
-  for(int ir=0; ir<numVars; ir++){
-    git = valueMap.find(aggregatedValuesNames[ir]);
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      git == valueMap.end(), Teuchos::Exceptions::InvalidParameter, std::endl 
-      << "Aggregator: Requested response (" << aggregatedValuesNames[ir] 
-      << ") not defined." << std::endl);
-    values[ir].name = git->first;
-    values[ir].value = git->second;
-  }
-
-
-  numVars = aggregatedDerivativesNames.size();
-  derivatives.resize(numVars);
-
-  std::map<std::string, Teuchos::RCP<Epetra_MultiVector> >::const_iterator gpit;
-  for(int ir=0; ir<numVars; ir++){
-    gpit = derivMap.find(aggregatedDerivativesNames[ir]);
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      gpit == derivMap.end(), Teuchos::Exceptions::InvalidParameter, std::endl 
-      << "Aggregator: Requested response derivative (" << aggregatedDerivativesNames[ir] 
-      << ") not defined." << std::endl);
-    derivatives[ir].name = gpit->first;
-    derivatives[ir].value = gpit->second;
   }
 }
 
@@ -262,64 +221,6 @@ Aggregator_StateVarBased::SetInputVariablesT(const std::vector<SolverSubSolver>&
 
 }
 
-//**********************************************************************
-void
-Aggregator_StateVarBased::SetInputVariables(const std::vector<SolverSubSolver>& subProblems)
-//**********************************************************************
-{
-  outApp = subProblems[0].app;
-
-  // loop through sub variable names and find the containing state manager
-  int numVars = aggregatedValuesNames.size();
-  values.resize(numVars);
-
-  int numSubs = subProblems.size();
-  for(int iv=0; iv<numVars; iv++){
-    bool objFound = false;
-    std::string& objName = aggregatedValuesNames[iv];
-    for(int is=0; is<numSubs; is++){
-      const Teuchos::RCP<Albany::Application>& app = subProblems[is].app;
-      Albany::StateArray& src = app->getStateMgr().getStateArrays().elemStateArrays[0];
-      if(src.count(objName) > 0){
-        TEUCHOS_TEST_FOR_EXCEPTION(
-          objFound, Teuchos::Exceptions::InvalidParameter, std::endl 
-          << "Value '" << objName << "' found in two state managers." << std::endl
-          << "Value names must be unique to avoid ambiguity." << std::endl);
-        values[iv].name = objName;
-        values[iv].app = app;
-        objFound = true;
-      }
-    }
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      !objFound, Teuchos::Exceptions::InvalidParameter, std::endl 
-      << "Value '" << objName << "' not found in any state manager." << std::endl);
-  }
-
-  numVars = aggregatedDerivativesNames.size();
-  derivatives.resize(numVars);
-  for(int iv=0; iv<numVars; iv++){
-    bool derFound = false;
-    std::string derName = aggregatedDerivativesNames[iv];
-    for(int is=0; is<numSubs; is++){
-      const Teuchos::RCP<Albany::Application>& app = subProblems[is].app;
-      Albany::StateArray& src = app->getStateMgr().getStateArrays().elemStateArrays[0];
-      if(src.count(Albany::strint(derName,0)) > 0){
-        TEUCHOS_TEST_FOR_EXCEPTION(
-          derFound, Teuchos::Exceptions::InvalidParameter, std::endl 
-          << "Derivative '" << derName << "' found in two state managers." << std::endl
-          << "Derivative names must be unique to avoid ambiguity." << std::endl);
-        derivatives[iv].name.resize(numTopologies);
-        for(int itopo=0; itopo<numTopologies; itopo++)
-          derivatives[iv].name[itopo] = Albany::strint(derName, itopo);
-        derivatives[iv].app = app;
-        derFound = true;
-      }
-    }
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      !derFound, Teuchos::Exceptions::InvalidParameter, std::endl 
-      << "Derivative '" << derName << "' not found in any state manager." << std::endl);
-  }
-}
 
 //**********************************************************************
 Aggregator_Uniform::Aggregator_Uniform(const Teuchos::ParameterList& aggregatorParams, int nTopos) :

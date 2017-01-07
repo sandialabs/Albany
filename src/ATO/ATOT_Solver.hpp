@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ATO_SOLVER_H
-#define ATO_SOLVER_H
+#ifndef ATOT_SOLVER_H
+#define ATOT_SOLVER_H
 
 #include <iostream>
 
@@ -22,15 +22,21 @@
 #include "Albany_Utils.hpp"
 #include "Piro_Epetra_StokhosNOXObserver.hpp"
 #include "ATO_Types.hpp"
-#include "ATO_Aggregator.hpp"
-#include "ATO_Optimizer.hpp"
+#include "ATOT_Aggregator.hpp"
+#include "ATOT_Optimizer.hpp"
 
 namespace ATO {
+  
+  class OptimizationProblem; 
+  class Topology;
+
+}
+
+
+namespace ATOT {
 
   class SolverSubSolver;
   class SolverSubSolverData;
-  class OptimizationProblem;
-  class Topology;
 
   typedef struct GlobalPoint{ 
     GlobalPoint();
@@ -96,41 +102,43 @@ namespace ATO {
 
     virtual void ComputeObjective(double* p, double& g, double* dgdp=NULL)=0;
     virtual void ComputeObjective(const double* p, double& g, double* dgdp=NULL)=0;
-    virtual void updateTpetraResponseMaps() = 0; 
     virtual void ComputeVolume(double* p, const double* dfdp, double& v, double threshhold, double minP)=0;
 
    
     /* end legacy */
   };
 
-  class Solver : public EpetraExt::ModelEvaluator , public OptInterface {
+  class Solver : public Thyra::ResponseOnlyModelEvaluatorBase<ST>, public OptInterface {
   public:
 
      Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
             const Teuchos::RCP<const Teuchos_Comm>& comm,
             const Teuchos::RCP<const Tpetra_Vector>& initial_guess);
 
-    ~Solver();
+    ~Solver();  
 
-    //pure virtual from EpetraExt::ModelEvaluator
-    virtual Teuchos::RCP<const Epetra_Map> get_x_map() const;
-    //pure virtual from EpetraExt::ModelEvaluator
-    virtual Teuchos::RCP<const Epetra_Map> get_f_map() const;
-    //pure virtual from EpetraExt::ModelEvaluator
-    virtual EpetraExt::ModelEvaluator::InArgs createInArgs() const;
-    //pure virtual from EpetraExt::ModelEvaluator
-    virtual EpetraExt::ModelEvaluator::OutArgs createOutArgs() const;
-    //pure virtual from EpetraExt::ModelEvaluator
-    void evalModel( const InArgs& inArgs, const OutArgs& outArgs ) const;
+    //pure virtual from Thyra::ModelEvaluator
+    virtual Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> get_x_space() const; 
+    //pure virtual from Thyra::ModelEvaluator
+    virtual Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> get_f_space() const;  
+    //pure virtual from Thyra::ModelEvaluator
+    virtual Thyra::ModelEvaluatorBase::InArgs<ST> createInArgs() const;   
+    //pure virtual from Thyra::ModelEvaluator
+    virtual Thyra::ModelEvaluatorBase::OutArgs<ST> createOutArgsImpl() const;  
+    //pure virtual from Thyra::ModelEvaluator
+    void evalModelImpl(
+      Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
+      Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;  
+    //! Return parameter vector map
+    Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > get_p_space(int l) const;
 
-    void Compute(double* p, double& f, double* dfdp, double& g, double* dgdp=NULL);
-    void Compute(const double* p, double& f, double* dfdp, double& g, double* dgdp=NULL);
+    void Compute(double* p, double& f, double* dfdp, double& g, double* dgdp=NULL); 
+    void Compute(const double* p, double& f, double* dfdp, double& g, double* dgdp=NULL);  
 
     void ComputeConstraint(double* p, double& c, double* dcdp=NULL);
 
-    void ComputeObjective(double* p, double& g, double* dgdp=NULL);
-    void ComputeObjective(const double* p, double& g, double* dgdp=NULL);
-    void updateTpetraResponseMaps(); 
+    void ComputeObjective(double* p, double& g, double* dgdp=NULL);  
+    void ComputeObjective(const double* p, double& g, double* dgdp=NULL); 
     void writeCurrentDesign();
     void InitializeOptDofs(double* p);
     void getOptDofsLowerBound( Teuchos::Array<double>& b );
@@ -149,12 +157,9 @@ namespace ATO {
     int  numDims;
     int _num_parameters; // for sensitiviy analysis(?)
     int _num_responses;  //  ditto
-    //IKT, 1/6/17: are _epetra_param_map and _epetra_response_map needed?  They are not 
-    //set anywhere in the code, so they are null.  Do these maps need to be LocalMaps? 
-    //Need to ask Josh.  
-    Teuchos::RCP<Epetra_LocalMap> _epetra_param_map;
-    Teuchos::RCP<Epetra_LocalMap> _epetra_response_map;
-    Teuchos::RCP<Epetra_Map>      _epetra_x_map;
+    Teuchos::RCP<Tpetra_LocalMap> _tpetra_param_map;
+    Teuchos::RCP<Tpetra_LocalMap> _tpetra_response_map;
+    Teuchos::RCP<const Tpetra_Map>      _tpetra_x_map;
 
     int _numPhysics; // number of sub problems
 
@@ -168,7 +173,7 @@ namespace ATO {
     Teuchos::RCP<Optimizer> _optimizer;
 
     typedef struct TopologyInfoStruct {
-      Teuchos::RCP<Topology>      topology;
+      Teuchos::RCP<ATO::Topology>      topology;
       Teuchos::RCP<SpatialFilter> filter;
       Teuchos::RCP<SpatialFilter> postFilter;
       Teuchos::RCP<Epetra_Vector> filteredOverlapVector;
@@ -179,7 +184,7 @@ namespace ATO {
     } TopologyInfoStruct;
 
     typedef struct TopologyInfoStructT {
-      Teuchos::RCP<Topology>      topologyT;
+      Teuchos::RCP<ATO::Topology>      topologyT;
       Teuchos::RCP<SpatialFilter> filterT;
       Teuchos::RCP<SpatialFilter> postFilterT;
       Teuchos::RCP<Tpetra_Vector> filteredOverlapVectorT;
@@ -191,8 +196,8 @@ namespace ATO {
 
     std::vector<Teuchos::RCP<TopologyInfoStruct> > _topologyInfoStructs;
     std::vector<Teuchos::RCP<TopologyInfoStructT> > _topologyInfoStructsT;
-    Teuchos::RCP<TopologyArray> _topologyArray;
-    Teuchos::RCP<TopologyArray> _topologyArrayT;
+    Teuchos::RCP<ATO::TopologyArray> _topologyArray;
+    Teuchos::RCP<ATO::TopologyArray> _topologyArrayT;
 
     // currently all topologies must have the same entity type
     std::string entityType;
@@ -215,7 +220,7 @@ namespace ATO {
     std::vector<Teuchos::RCP<Teuchos::ParameterList> > _subProblemAppParams;
     std::vector<SolverSubSolver> _subProblems;
 
-    OptimizationProblem* _atoProblem;
+    ATO::OptimizationProblem* _atoProblem;
 
     Teuchos::RCP<const Teuchos_Comm> _solverComm; 
     Teuchos::RCP<Teuchos::ParameterList> _mainAppParams;
@@ -240,8 +245,6 @@ namespace ATO {
     Teuchos::RCP<Epetra_Export> exporter;
     Teuchos::RCP<Tpetra_Export> exporterT;
 
-    std::map<std::string, Teuchos::RCP<const Epetra_Vector> > responseMap;
-    std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > responseDerivMap;
     std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > responseMapT;
     std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > responseDerivMapT;
 
@@ -259,8 +262,8 @@ namespace ATO {
     void zeroSet();
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
-    Teuchos::RCP<const Epetra_Map> get_g_map(int j) const;
-
+    Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> get_g_space(int j) const;
+    
     Teuchos::RCP<Teuchos::ParameterList> 
       createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const;
 
@@ -276,17 +279,17 @@ namespace ATO {
             int homogSubIndex, 
             int homogDim) const;
 
-    SolverSubSolverData CreateSubSolverData(const ATO::SolverSubSolver& sub) const;
+    SolverSubSolverData CreateSubSolverData(const SolverSubSolver& sub) const;
 
   };
 
   class SolverSubSolver {
   public:
     Teuchos::RCP<Albany::Application> app;
-    Teuchos::RCP<EpetraExt::ModelEvaluator> model;
-    Teuchos::RCP<EpetraExt::ModelEvaluator::InArgs> params_in;
-    Teuchos::RCP<EpetraExt::ModelEvaluator::OutArgs> responses_out;
-    void freeUp() { app = Teuchos::null; model = Teuchos::null; }
+    Teuchos::RCP<Thyra::ModelEvaluator<ST>> modelT;
+    Teuchos::RCP<Thyra::ModelEvaluatorBase::InArgs<ST>> params_inT;
+    Teuchos::RCP<Thyra::ModelEvaluatorBase::OutArgs<ST>> responses_outT;
+    void freeUp() {app = Teuchos::null; modelT = Teuchos::null; }
   };
 
   class SolverSubSolverData {
@@ -295,8 +298,8 @@ namespace ATO {
     int Ng;
     std::vector<int> pLength;
     std::vector<int> gLength;
-    Teuchos::RCP<const Epetra_Vector> p_init;
-    EpetraExt::ModelEvaluator::DerivativeSupport deriv_support;
+    Teuchos::RCP<const Tpetra_Vector> p_initT;
+    Thyra::ModelEvaluatorBase::DerivativeSupport deriv_supportT;
   };
 
 }

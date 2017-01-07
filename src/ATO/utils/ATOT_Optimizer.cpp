@@ -4,10 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "ATO_Optimizer.hpp"
-#include "ATO_Pareto_Optimizer.hpp"
+#include "ATOT_Optimizer.hpp"
+#include "ATOT_Pareto_Optimizer.hpp"
 #include "Teuchos_TestForException.hpp"
-#include "ATO_Solver.hpp"
+#include "ATOT_Solver.hpp"
 
 #ifdef ATO_USES_NLOPT
 #include <nlopt.h>
@@ -20,7 +20,7 @@
 #include <algorithm>
 
 
-namespace ATO {
+namespace ATOT {
 
 /**********************************************************************/
 Teuchos::RCP<Optimizer> 
@@ -226,6 +226,7 @@ Optimizer(optimizerParams)
 
 #endif //ATO_USES_NLOPT
 
+
 /**********************************************************************/
 void
 Optimizer::SetInterface(Solver* mySolverInterface)
@@ -236,17 +237,6 @@ Optimizer::SetInterface(Solver* mySolverInterface)
     solverInterface == NULL, Teuchos::Exceptions::InvalidParameter, std::endl 
     << "Error! Dynamic cast of Solver* to OptInterface* failed." << std::endl);
 }
-
-/**********************************************************************/
-/*void
-Optimizer::SetInterface(SolverT* mySolverInterface)*/
-/**********************************************************************/
-/*{
-  solverInterfaceT = dynamic_cast<OptInterface*>(mySolverInterface);
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    solverInterface == NULL, Teuchos::Exceptions::InvalidParameter, std::endl 
-    << "Error! Dynamic cast of Solver* to OptInterface* failed." << std::endl);
-}*/
 
 /******************************************************************************/
 
