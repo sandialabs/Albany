@@ -44,10 +44,6 @@ inline void cudaError(const char *file, int line) {
 
 namespace Albany {
 
-  //Helper function which extracts diagonal of a matrix into a vector 
-  Teuchos::RCP<Tpetra_Vector>  
-  ExtractDiagonalCopy(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix); 
-
   //Helper function which replaces the diagonal of a matrix 
   void
   ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
@@ -70,10 +66,6 @@ namespace Albany {
 
 #endif
   
-  //Helper function which extracts diagonal of a matrix into a vector 
-  Teuchos::RCP<Tpetra_Vector>  
-  ExtractDiagonalCopy(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix); 
-
   //Helper function which replaces the diagonal of a matrix 
   void ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
                               const Teuchos::RCP<Tpetra_Vector>& diag);

@@ -21,28 +21,6 @@
 // Start of Utils to do with Communicators
 #ifdef ALBANY_MPI
 
-  Teuchos::RCP<Tpetra_Vector>  
-  Albany::ExtractDiagonalCopy(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix) {
-    Teuchos::RCP<Tpetra_Vector> diag = Teuchos::rcp(new Tpetra_Vector(matrix->getRowMap()));
-    diag->putScalar(0.0); 
-    Teuchos::ArrayRCP<ST> diag_nonconstView = diag->get1dViewNonConst();
-    for (auto i=0; i<matrix->getNodeNumRows(); i++) {
-      auto NumEntries = matrix->getNumEntriesInLocalRow(i);
-      Teuchos::Array<LO> Indices(NumEntries);
-      Teuchos::Array<ST> Values(NumEntries); 
-      matrix->getLocalRowCopy(i, Indices(), Values(), NumEntries);
-      GO global_row = matrix->getRowMap()->getGlobalElement(i);
-      for (auto j=0; j<NumEntries; j++) {
-        GO global_col = matrix->getColMap()->getGlobalElement(Indices[j]);
-        if (global_row == global_col) {
-          diag_nonconstView[i] = Values[j];
-        }
-      }
-    }
-    //Tpetra_MatrixMarket_Writer::writeSparseFile("matrix.mm", matrix);
-    //Tpetra_MatrixMarket_Writer::writeDenseFile("diag.mm", diag);
-  }
-
   void
   Albany::ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
                                  const Teuchos::RCP<Tpetra_Vector>& diag) {
