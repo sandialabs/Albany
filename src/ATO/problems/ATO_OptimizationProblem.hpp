@@ -27,27 +27,35 @@ public virtual Albany::AbstractProblem {
                         const int _numDim);
    void ComputeVolume(double* p, const double* dfdp,
                       double& v, double threshhold, double minP);
+#if defined(ALBANY_EPETRA)
    void ComputeMeasure(std::string measure, 
                        std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
                        double& v, double* dvdp=NULL, 
                        std::string strIntegrationMethod="Gauss Quadrature");
+#endif
    void ComputeMeasureT(std::string measure, 
                        std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
                        double& v, double* dvdp=NULL, 
                        std::string strIntegrationMethod="Gauss Quadrature");
+#if defined(ALBANY_EPETRA)
    void computeMeasure(std::string measure, 
                        std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
                        double& v, double* dvdp=NULL);
+#endif
    void computeMeasureT(std::string measure, 
                        std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
                        double& v, double* dvdp=NULL);
+#if defined(ALBANY_EPETRA)
    void computeConformalVolume(std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
                       double& m, double* dmdp);
+#endif
    void computeConformalVolumeT(std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
                       double& m, double* dmdp);
+#if defined(ALBANY_EPETRA)
    void computeConformalMeasure(std::string measure, 
                       std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
                       double& m, double* dmdp);
+#endif
    void computeConformalMeasureT(std::string measure, 
                       std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
                       double& m, double* dmdp);

@@ -42,7 +42,9 @@
 
 //#if defined(ATO_USES_COGENT)
 #ifdef ALBANY_ATO
+#if defined(ALBANY_EPETRA)
 #include "ATO_XFEM_Preconditioner.hpp"
+#endif
 #include "ATOT_XFEM_Preconditioner.hpp"
 #endif
 //#endif
@@ -782,11 +784,11 @@ getPreconditionerT()
 {
 //#if defined(ATO_USES_COGENT)
 #ifdef ALBANY_ATO
-  if(precType == "XFEM"){
+/*  if(precType == "XFEM"){
     return rcp(new ATOT::XFEM::Preconditioner(precParams));
-  } else
+  } else*/
 #endif
-//#endif
+//#endif 
    return Teuchos::null;
 }
 
@@ -1793,7 +1795,7 @@ computeGlobalPreconditionerT(const RCP<Tpetra_CrsMatrix>& jac,
 {
 //#if defined(ATO_USES_COGENT)
 #ifdef ALBANY_ATO 
-  if(precType == "XFEM"){
+/*  if(precType == "XFEM"){
     TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
   
     *out << "Computing WPrec by Cogent" << std::endl;
@@ -1802,7 +1804,7 @@ computeGlobalPreconditionerT(const RCP<Tpetra_CrsMatrix>& jac,
       = rcp_dynamic_cast<ATOT::XFEM::Preconditioner>(prec);
   
     cogentPrec->BuildPreconditioner(jac, disc, stateMgr);
-  }
+  } */
 #endif
 //#endif
 }

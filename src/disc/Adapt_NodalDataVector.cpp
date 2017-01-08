@@ -59,6 +59,8 @@ resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs,
   mapsHaveChanged = true;
 
 #ifdef ALBANY_ATO 
+#if defined(ALBANY_EPETRA)
+//IKT, FIXME: check with Josh if this block map stuff is needed. 
   {
     Teuchos::RCP<Epetra_Comm>
       commE = Albany::createEpetraCommFromTeuchosComm(comm_);
@@ -68,7 +70,8 @@ resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs,
       new Epetra_BlockMap(-1, overlap_nodeGIDs.size(), gids, vectorsize, 0,
                           *commE));
   }
-#endif
+#endif 
+#endif 
 }
 
 void
@@ -89,6 +92,8 @@ resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs,
   mapsHaveChanged = true;
 
 #ifdef ALBANY_ATO
+#if defined(ALBANY_EPETRA)
+//IKT, FIXME: check with Josh if this block map stuff is needed. 
   {
     Teuchos::RCP<Epetra_Comm>
       commE = Albany::createEpetraCommFromTeuchosComm(comm_);
@@ -98,6 +103,7 @@ resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs,
       new Epetra_BlockMap(-1, local_nodeGIDs.size(), gids, vectorsize, 0,
                           *commE));
   }
+#endif
 #endif
 }
 

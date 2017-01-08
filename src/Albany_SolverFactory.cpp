@@ -52,7 +52,9 @@
 
 #include "Albany_ModelEvaluatorT.hpp"
 #ifdef ALBANY_ATO
+#if defined(ALBANY_EPETRA)
   #include "ATO_Solver.hpp"
+#endif
   #include "ATOT_Solver.hpp"
 #endif
 
@@ -730,15 +732,6 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     return piroFactory.createSolver<ST, LO, GO, KokkosNode>(piroParams, coupled_model_with_solveT, Teuchos::null, observerT_);
   }
 #endif /* LCM and Schwarz */
-
-//IKT, FIXME 
-//  if (solutionMethod == "ATO Problem") {
-//#ifdef ALBANY_ATO
-//    return rcp(new ATO::SolverT(appParams, appComm, initial_guess));
-//#else /* ALBANY_ATO */
-//    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate ATO (topological optimization)\n");
-//#endif /* ALBANY_ATO */
-//  }
 
   RCP<Albany::Application> app = albanyApp;
   modelT_ = createAlbanyAppAndModelT(app, appComm, initial_guess, createAlbanyApp);

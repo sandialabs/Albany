@@ -68,7 +68,8 @@
   }
 
 
-#if defined(ALBANY_EPETRA)
+//IKT, FIXME: ultimately remove || defined(ALBANY_ATO) from following line 
+#if defined(ALBANY_EPETRA) || defined(ALBANY_ATO) 
   Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) {
     const Epetra_MpiComm& emc = dynamic_cast<const Epetra_MpiComm&>(ec);
     return emc.Comm();
