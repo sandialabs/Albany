@@ -680,6 +680,7 @@ ENDIF()
 # Set optional build of AFRL MultiScale; defaults to ON
 OPTION(ENABLE_AFRL "Flag to turn on AFRL Source code" ON)
 IF (ENABLE_AFRL)
+  SET(ENABLE_LCM ON)
   ADD_DEFINITIONS(-DALBANY_AFRL)
   MESSAGE("-- AFRL      is Enabled, compiling with -DALBANY_AFRL")
   LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
