@@ -25,7 +25,6 @@ Please remove when issue is resolved
 #include "Petra_Converters.hpp"
 #include "EpetraExt_RowMatrixOut.h"
 #include "EpetraExt_MultiVectorOut.h"
-#include "Epetra_LinearProblem.h"
 #include "AztecOO.h"
 
 #ifdef ATO_USES_ISOLIB
@@ -721,10 +720,11 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   Teuchos::RCP<Albany::Application> app = _subProblems[0].app;
   Teuchos::RCP<Albany::AbstractDiscretization> disc = app->getDiscretization();
 
-  localNodeMap   = disc->getNodeMap();
-  overlapNodeMap = disc->getOverlapNodeMap();
   localNodeMapT   = disc->getNodeMapT();
   overlapNodeMapT = disc->getOverlapNodeMapT();
+  Teuchos::RCP<Epetra_Comm> commE = Albany::createEpetraCommFromTeuchosComm(_solverComm);
+  localNodeMap = Petra::TpetraMap_To_EpetraMap(localNodeMapT, commE); 
+  overlapNodeMap = Petra::TpetraMap_To_EpetraMap(overlapNodeMapT, commE); 
 
   for(int itopo=0; itopo<ntopos; itopo++){
     Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];

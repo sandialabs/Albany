@@ -14,7 +14,8 @@
   #define Albany_MPI_Comm MPI_Comm
   #define Albany_MPI_COMM_WORLD MPI_COMM_WORLD
   #define Albany_MPI_COMM_NULL MPI_COMM_NULL
-  #if defined(ALBANY_EPETRA)
+  //IKT, FIXME: remove || defined(ALBANY_ATO) below 
+  #if defined(ALBANY_EPETRA) || defined(ALBANY_ATO) 
     #include "Epetra_MpiComm.h"
   #endif
   #include "Teuchos_DefaultMpiComm.hpp"
@@ -22,7 +23,8 @@
   #define Albany_MPI_Comm int
   #define Albany_MPI_COMM_WORLD 0  // This is compatible with Dakota
   #define Albany_MPI_COMM_NULL 99
-  #if defined(ALBANY_EPETRA)
+  //IKT, FIXME: remove || defined(ALBANY_ATO) below 
+  #if defined(ALBANY_EPETRA) || defined(ALBANY_ATO) 
     #include "Epetra_SerialComm.h"
   #endif
   #include "Teuchos_DefaultSerialComm.hpp"
@@ -54,7 +56,8 @@ namespace Albany {
   Teuchos::RCP<Tpetra_Vector> 
   InvRowSum(const Teuchos::RCP<const Tpetra_CrsMatrix>& matrix); 
 
-#if defined(ALBANY_EPETRA)
+//IKT, FIXME: ultimately get ride of || defined (ALBANY_ATO) below 
+#if defined(ALBANY_EPETRA) || defined (ALBANY_ATO)
 
   Albany_MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec);
 

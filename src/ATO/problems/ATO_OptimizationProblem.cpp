@@ -116,6 +116,7 @@ ComputeMeasure(std::string measureType, double& measure)
   }
 }
 
+#if defined(ALBANY_EPETRA)
 /******************************************************************************/
 void
 ATO::OptimizationProblem::
@@ -492,7 +493,7 @@ TEUCHOS_TEST_FOR_EXCEPTION( isNonconformal, Teuchos::Exceptions::InvalidParamete
   Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, 1, &localv, &v);
 
 }
-
+#endif
 
 /******************************************************************************/
 void

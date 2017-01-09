@@ -25,6 +25,9 @@
 #include "Epetra_Vector.h"
 #include "Epetra_CrsGraph.h"
 #include "Epetra_CrsMatrix.h"
+#include "Epetra_Export.h" 
+#include "Epetra_Import.h" 
+#include "Epetra_LocalMap.h" 
 
 namespace Petra {
 
