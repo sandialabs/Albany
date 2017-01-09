@@ -350,10 +350,6 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
       _subProblems[0].app, 
       overlapNodeMapT, localNodeMapT,
       importerT, exporterT);
-    //IKT, FIXME: the following call is still here b/c filterOperatorT 
-    //is not constructed correctly yet in buildOperator for parallel runs.
-    //Need to debug.  
-    //filters[ifltr]->createFilterOpTfromFilterOp(_solverComm); 
   }
 
 
@@ -983,6 +979,8 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
         }
     }
 
+    //IKT, FIXME: switch this over to Tpetra once export with Epetra_Min 
+    //combine mode is switched to export with a combine mode that exists in Tpetra. 
     // determine fixed/nonfixed status of nodes across processors
     Epetra_Vector overlapFixedNodeMask(*overlapNodeMap);
     Epetra_Vector localFixedNodeMask(*localNodeMap);
@@ -1227,7 +1225,7 @@ ATO::Solver::ComputeMeasure(std::string measureType, const double* p,
     Teuchos::RCP<Tpetra_Vector> overlapTopoVecT = 
         Petra::EpetraVector_To_TpetraVectorNonConst(*overlapTopoVec, _solverComm);  
     topologyStructsT[itopo]->dataVectorT = overlapTopoVecT;
-    //IKT, the following makes FixedBlocks and 2Matl_Homog tests fail; 
+    //IKT, FIXME: the following makes FixedBlocks and 2Matl_Homog tests fail; 
     //need to figure out why to finalize Tpetra conversion. 
     //topologyStructsT[itopo]->dataVectorT = overlapTopoVecTpetra;
   }
