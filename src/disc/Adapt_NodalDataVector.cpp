@@ -8,27 +8,6 @@
 #include "Tpetra_Import.hpp"
 #include "Teuchos_CommHelpers.hpp"
 
-#ifdef ALBANY_ATO
-#include <vector>
-#include "Albany_Utils.hpp"
-namespace {
-template<typename T> const int* convert(
-  const Teuchos::Array<T>& av, std::vector<int>& v);
-template<> const int*
-convert<long long int> (
-  const Teuchos::Array<long long int>& av, std::vector<int>& v)
-{
-  v.resize(av.size());
-  for (std::size_t i = 0; i < av.size(); ++i) v[i] = static_cast<int>(av[i]);
-  return &v[0];
-}
-template<> const int*
-convert<int> (const Teuchos::Array<int>& av, std::vector<int>& v) {
-  return &av[0];
-}
-}
-#endif
-
 Adapt::NodalDataVector::NodalDataVector(
   const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer_,
   NodeFieldSizeVector& nodeVectorLayout_,
@@ -57,21 +36,6 @@ resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs,
   overlap_node_vec = Teuchos::rcp(new Tpetra_MultiVector(overlap_node_map, vectorsize));
 
   mapsHaveChanged = true;
-
-#ifdef ALBANY_ATO 
-#if defined(ALBANY_EPETRA)
-//IKT, FIXME: check with Josh if this block map stuff is needed. 
-  {
-    Teuchos::RCP<Epetra_Comm>
-      commE = Albany::createEpetraCommFromTeuchosComm(comm_);
-    std::vector<int> buf;
-    const int* gids = convert(overlap_nodeGIDs, buf);
-    overlap_node_mapE = Teuchos::rcp(
-      new Epetra_BlockMap(-1, overlap_nodeGIDs.size(), gids, vectorsize, 0,
-                          *commE));
-  }
-#endif 
-#endif 
 }
 
 void
@@ -90,21 +54,6 @@ resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs,
   local_node_vec = Teuchos::rcp(new Tpetra_MultiVector(local_node_map, vectorsize));
 
   mapsHaveChanged = true;
-
-#ifdef ALBANY_ATO
-#if defined(ALBANY_EPETRA)
-//IKT, FIXME: check with Josh if this block map stuff is needed. 
-  {
-    Teuchos::RCP<Epetra_Comm>
-      commE = Albany::createEpetraCommFromTeuchosComm(comm_);
-    std::vector<int> buf;
-    const int* gids = convert(local_nodeGIDs, buf);
-    local_node_mapE = Teuchos::rcp(
-      new Epetra_BlockMap(-1, local_nodeGIDs.size(), gids, vectorsize, 0,
-                          *commE));
-  }
-#endif
-#endif
 }
 
 Teuchos::RCP<const Tpetra_Import> Adapt::NodalDataVector::initializeExport()

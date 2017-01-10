@@ -147,13 +147,8 @@ namespace ATO {
     int _iteration;
     int _writeDesignFrequency;
     int  numDims;
-    int _num_parameters; // for sensitiviy analysis(?)
-    int _num_responses;  //  ditto
-    //IKT, 1/6/17: are _epetra_param_map and _epetra_response_map needed?  They are not 
-    //set anywhere in the code, so they are null.  Do these maps need to be LocalMaps? 
-    //Need to ask Josh.  
-    Teuchos::RCP<Epetra_LocalMap> _epetra_param_map;
-    Teuchos::RCP<Epetra_LocalMap> _epetra_response_map;
+    const int c_num_parameters; // set to zero in initialization list
+    const int c_num_responses; // set to one in initialization list
     Teuchos::RCP<Epetra_Map>      _epetra_x_map;
 
     int _numPhysics; // number of sub problems

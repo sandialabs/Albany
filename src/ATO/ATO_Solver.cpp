@@ -48,7 +48,10 @@ ATO::Solver::
 Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
        const Teuchos::RCP<const Teuchos_Comm>& comm,
        const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
-: _solverComm(comm), _mainAppParams(appParams)
+: c_num_parameters(0), // no parameters
+  c_num_responses(1),  // only response is solution vector
+  _solverComm(comm), 
+  _mainAppParams(appParams)
 /******************************************************************************/
 {
   zeroSet();
@@ -394,8 +397,6 @@ ATO::Solver::zeroSet()
 /******************************************************************************/
 {
   // set parameters and responses
-  _num_parameters = 0; //TEV: assume no parameters or responses for now...
-  _num_responses  = 0; //TEV: assume no parameters or responses for now...
   _iteration      = 1;
 
   _is_verbose = false;
@@ -982,10 +983,11 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
     //IKT, FIXME: switch this over to Tpetra once export with Epetra_Min 
     //combine mode is switched to export with a combine mode that exists in Tpetra. 
     // determine fixed/nonfixed status of nodes across processors
-    Epetra_Vector overlapFixedNodeMask(*overlapNodeMap);
-    Epetra_Vector localFixedNodeMask(*localNodeMap);
-    overlapFixedNodeMask.PutScalar(1.0);
-    double* fMask; overlapFixedNodeMask.ExtractView(&fMask);
+    // JR, switched to Epetra_Max
+    Epetra_Vector overlapFreeNodeMask(*overlapNodeMap);
+    Epetra_Vector localFreeNodeMask(*localNodeMap);
+    overlapFreeNodeMask.PutScalar(0.0);
+    double* fMask; overlapFreeNodeMask.ExtractView(&fMask);
     for(int ws=0; ws<numWorksets; ws++){
       Albany::MDArray& wsTopo = dest[ws][topology->getName()];
       int numCells = wsTopo.dimension(0), numNodes = wsTopo.dimension(1);
@@ -994,7 +996,7 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
           for(int node=0; node<numNodes; node++){
             int gid = wsElNodeID[ws][cell][node];
             int lid = overlapNodeMapT->getLocalElement(gid);
-            fMask[lid] = 0.0;
+            fMask[lid] = 1.0;
           }
       } else {
         for(int cell=0; cell<numCells; cell++)
@@ -1003,9 +1005,9 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
           }
       }
     }
-    localFixedNodeMask.PutScalar(0.0);
-    localFixedNodeMask.Export(overlapFixedNodeMask, *exporter, Epetra_Min);
-    overlapFixedNodeMask.Import(localFixedNodeMask, *importer, Insert);
+    localFreeNodeMask.PutScalar(1.0);
+    localFreeNodeMask.Export(overlapFreeNodeMask, *exporter, Epetra_Max);
+    overlapFreeNodeMask.Import(localFreeNodeMask, *importer, Insert);
   
     // if it is a fixed block, set the topology variable to the material value
     for(int ws=0; ws<numWorksets; ws++){
@@ -1015,7 +1017,7 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
         for(int node=0; node<numNodes; node++){
           int gid = wsElNodeID[ws][cell][node];
           int lid = overlapNodeMap->LID(gid);
-          if(fMask[lid] != 0.0) otopo[lid] = matVal;
+          if(fMask[lid] != 1.0) otopo[lid] = matVal;
         }
     }
 
@@ -1790,7 +1792,7 @@ ATO::Solver::createInArgs() const
 {
   EpetraExt::ModelEvaluator::InArgsSetup inArgs;
   inArgs.setModelEvalDescription("ATO Solver Model Evaluator Description");
-  inArgs.set_Np(_num_parameters);
+  inArgs.set_Np(c_num_parameters);
   return inArgs;
 }
 
@@ -1801,7 +1803,7 @@ ATO::Solver::createOutArgs() const
 {
   EpetraExt::ModelEvaluator::OutArgsSetup outArgs;
   outArgs.setModelEvalDescription("ATO Solver Multipurpose Model Evaluator");
-  outArgs.set_Np_Ng(_num_parameters, _num_responses+1);  //TODO: is the +1 necessary still??
+  outArgs.set_Np_Ng(c_num_parameters, c_num_responses);
   return outArgs;
 }
 
@@ -1809,19 +1811,11 @@ ATO::Solver::createOutArgs() const
 Teuchos::RCP<const Epetra_Map> ATO::Solver::get_g_map(int j) const
 /******************************************************************************/
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(j > _num_responses || j < 0, Teuchos::Exceptions::InvalidParameter,
-                     std::endl <<
-                     "Error in ATO::Solver::get_g_map():  " <<
-                     "Invalid response index j = " <<
-                     j << std::endl);
-  //TEV: Hardwired for now
-  int _num_responses = 0;
-  //IKT, 1/6/17, to ask Josh: _epetra_response_map is not populated anywhere,
-  //so it will be null.  Is that the intention?   
-  //no index because num_g == 1 so j must be zero
-  if      (j <  _num_responses) return _epetra_response_map; 
-  else if (j == _num_responses) return _epetra_x_map;
-  return Teuchos::null;
+  TEUCHOS_TEST_FOR_EXCEPTION(j != 0, Teuchos::Exceptions::InvalidParameter,
+                     std::endl << "Error in ATO::Solver::get_g_map():  " <<
+                     "Invalid response index j = " << j << std::endl);
+
+  return _epetra_x_map;
 }
 
 /******************************************************************************/

@@ -1417,10 +1417,10 @@ ATOT::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& s
     }
 
     // determine fixed/nonfixed status of nodes across processors
-    Epetra_Vector overlapFixedNodeMask(*overlapNodeMap);
-    Epetra_Vector localFixedNodeMask(*localNodeMap);
-    overlapFixedNodeMask.PutScalar(1.0);
-    double* fMask; overlapFixedNodeMask.ExtractView(&fMask);
+    Epetra_Vector overlapFreeNodeMask(*overlapNodeMap);
+    Epetra_Vector localFreeNodeMask(*localNodeMap);
+    overlapFreeNodeMask.PutScalar(0.0);
+    double* fMask; overlapFreeNodeMask.ExtractView(&fMask);
     for(int ws=0; ws<numWorksets; ws++){
       Albany::MDArray& wsTopo = dest[ws][topology->getName()];
       int numCells = wsTopo.dimension(0), numNodes = wsTopo.dimension(1);
@@ -1429,7 +1429,7 @@ ATOT::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& s
           for(int node=0; node<numNodes; node++){
             int gid = wsElNodeID[ws][cell][node];
             int lid = overlapNodeMapT->getLocalElement(gid);
-            fMask[lid] = 0.0;
+            fMask[lid] = 1.0;
           }
       } else {
         for(int cell=0; cell<numCells; cell++)
@@ -1438,9 +1438,9 @@ ATOT::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& s
           }
       }
     }
-    localFixedNodeMask.PutScalar(0.0);
-    localFixedNodeMask.Export(overlapFixedNodeMask, *exporter, Epetra_Min);
-    overlapFixedNodeMask.Import(localFixedNodeMask, *importer, Insert);
+    localFreeNodeMask.PutScalar(1.0);
+    localFreeNodeMask.Export(overlapFreeNodeMask, *exporter, Epetra_Max);
+    overlapFreeNodeMask.Import(localFreeNodeMask, *importer, Insert);
   
     // if it is a fixed block, set the topology variable to the material value
     for(int ws=0; ws<numWorksets; ws++){
@@ -1450,7 +1450,7 @@ ATOT::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& s
         for(int node=0; node<numNodes; node++){
           int gid = wsElNodeID[ws][cell][node];
           int lid = overlapNodeMap->LID(gid);
-          if(fMask[lid] != 0.0) otopo[lid] = matVal;
+          if(fMask[lid] != 1.0) otopo[lid] = matVal;
         }
     }
 
