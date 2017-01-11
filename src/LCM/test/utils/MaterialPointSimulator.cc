@@ -27,7 +27,7 @@
 #include <Albany_STKDiscretization.hpp>
 #include <Albany_Layouts.hpp>
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 #include "FieldNameMap.hpp"
 
@@ -607,8 +607,8 @@ int main(int ac, char* av[])
         "Improper Loading Case in Material Point Simulator block");
   }
 
-  Intrepid2::Tensor<ScalarT> F_tensor(3, &F_vector[0]);
-  Intrepid2::Tensor<ScalarT> log_F_tensor = Intrepid2::log(F_tensor);
+  minitensor::Tensor<ScalarT> F_tensor(3, &F_vector[0]);
+  minitensor::Tensor<ScalarT> log_F_tensor = minitensor::log(F_tensor);
 
   std::cout << "F\n" << F_tensor << std::endl;
   //std::cout << "log F\n" << log_F_tensor << std::endl;
@@ -632,8 +632,8 @@ int main(int ac, char* av[])
     double alpha = double(istep) / number_steps;
 
     //std::cout << "alpha: " << alpha << std::endl;
-    Intrepid2::Tensor<ScalarT> scaled_log_F_tensor = alpha * log_F_tensor;
-    Intrepid2::Tensor<ScalarT> current_F = Intrepid2::exp(scaled_log_F_tensor);
+    minitensor::Tensor<ScalarT> scaled_log_F_tensor = alpha * log_F_tensor;
+    minitensor::Tensor<ScalarT> current_F = minitensor::exp(scaled_log_F_tensor);
 
     //std::cout << "scaled log F\n" << scaled_log_F_tensor << std::endl;
     //std::cout << "current F\n" << current_F << std::endl;
@@ -645,12 +645,12 @@ int main(int ac, char* av[])
     }
 
     // jacobian
-    detdefgrad[0] = Intrepid2::det(current_F);
+    detdefgrad[0] = minitensor::det(current_F);
 
     // small strain tensor
-    Intrepid2::Tensor<ScalarT> current_strain;
-    current_strain = 0.5 * (current_F + Intrepid2::transpose(current_F))
-      - Intrepid2::eye<ScalarT>(3);
+    minitensor::Tensor<ScalarT> current_strain;
+    current_strain = 0.5 * (current_F + minitensor::transpose(current_F))
+      - minitensor::eye<ScalarT>(3);
 
     for (int i = 0; i < 3; ++i) {
       for (int j = 0; j < 3; ++j) {
@@ -737,7 +737,7 @@ int main(int ac, char* av[])
   	    int maxIteration = 50;
 
     	// small strain tensor
-        Intrepid2::Tensor<ScalarT> current_strain;
+        minitensor::Tensor<ScalarT> current_strain;
 
         // iteration begin
         while ( ((mu_k <= 0) || (std::abs(mu_k / mu_0) > tol)) ) {
@@ -745,9 +745,9 @@ int main(int ac, char* av[])
           alpha = double(bifurcationTime_rough - 1 + alpha_local)
             / number_steps;
 
-          Intrepid2::Tensor<ScalarT> scaled_log_F_tensor = alpha * log_F_tensor;
-          Intrepid2::Tensor<ScalarT> current_F
-            = Intrepid2::exp(scaled_log_F_tensor);
+          minitensor::Tensor<ScalarT> scaled_log_F_tensor = alpha * log_F_tensor;
+          minitensor::Tensor<ScalarT> current_F
+            = minitensor::exp(scaled_log_F_tensor);
 
           for (int i = 0; i < 3; ++i) {
       	    for (int j = 0; j < 3; ++j) {
@@ -756,10 +756,10 @@ int main(int ac, char* av[])
           }
 
           // jacobian
-          detdefgrad[0] = Intrepid2::det(current_F);
+          detdefgrad[0] = minitensor::det(current_F);
 
-          current_strain = 0.5 * (current_F + Intrepid2::transpose(current_F))
-      	    - Intrepid2::eye<ScalarT>(3);
+          current_strain = 0.5 * (current_F + minitensor::transpose(current_F))
+      	    - minitensor::eye<ScalarT>(3);
 
           for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 3; ++j) {

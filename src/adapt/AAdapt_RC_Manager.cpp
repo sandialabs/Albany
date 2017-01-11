@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include <Phalanx_FieldManager.hpp>
 #include <Teuchos_CommHelpers.hpp>
 #include "Phalanx_DataLayout_MDALayout.hpp"
@@ -80,9 +80,9 @@ void write (Albany::MDArray& mda, const MDArray& f) {
   }
 }
 
-Intrepid2::Tensor<RealType>&
-symmetrize (Intrepid2::Tensor<RealType>& a) {
-  const Intrepid2::Index dim = a.get_dimension();
+minitensor::Tensor<RealType>&
+symmetrize (minitensor::Tensor<RealType>& a) {
+  const minitensor::Index dim = a.get_dimension();
   if (dim > 1) {
     a(0,1) = a(1,0) = 0.5*(a(0,1) + a(1,0));
     if (dim > 2) {
@@ -96,23 +96,23 @@ symmetrize (Intrepid2::Tensor<RealType>& a) {
 struct Direction { enum Enum { g2G, G2g }; };
 
 void calc_right_polar_LieR_LieS_G2g(
-  const Intrepid2::Tensor<RealType>& F, Intrepid2::Tensor<RealType> RS[2])
+  const minitensor::Tensor<RealType>& F, minitensor::Tensor<RealType> RS[2])
 {
-  { std::pair< Intrepid2::Tensor<RealType>, Intrepid2::Tensor<RealType> >
-      RSpair = Intrepid2::polar_right(F);
+  { std::pair< minitensor::Tensor<RealType>, minitensor::Tensor<RealType> >
+      RSpair = minitensor::polar_right(F);
     RS[0] = RSpair.first; RS[1] = RSpair.second; }
-  RS[0] = Intrepid2::log_rotation(RS[0]);
-  RS[1] = Intrepid2::log_sym(RS[1]);
+  RS[0] = minitensor::log_rotation(RS[0]);
+  RS[1] = minitensor::log_sym(RS[1]);
   symmetrize(RS[1]);
 }
 
 void calc_right_polar_LieR_LieS_g2G (
-  Intrepid2::Tensor<RealType>& R, Intrepid2::Tensor<RealType>& S)
+  minitensor::Tensor<RealType>& R, minitensor::Tensor<RealType>& S)
 {
-  R = Intrepid2::exp_skew_symmetric(R);
-  S = Intrepid2::exp(S);
+  R = minitensor::exp_skew_symmetric(R);
+  S = minitensor::exp(S);
   symmetrize(S);
-  R = Intrepid2::dot(R, S);
+  R = minitensor::dot(R, S);
 }
 
 void transformStateArray (const unsigned int wi, const Direction::Enum dir,
@@ -132,9 +132,9 @@ void transformStateArray (const unsigned int wi, const Direction::Enum dir,
     loop(mda1, cell, 0) loop(mda1, qp, 1) {
       if (dir == Direction::G2g) {
         // Copy mda2 (provisional) -> local.
-        Intrepid2::Tensor<RealType> F(mda1.dimension(2));
+        minitensor::Tensor<RealType> F(mda1.dimension(2));
         loop(mda2, i, 2) loop(mda2, j, 3) F(i, j) = mda2(cell, qp, i, j);
-        Intrepid2::Tensor<RealType> RS[2];
+        minitensor::Tensor<RealType> RS[2];
         calc_right_polar_LieR_LieS_G2g(F, RS);
         // Copy local -> mda1, mda2.
         loop(mda1, i, 2) loop(mda1, j, 3) {
@@ -143,7 +143,7 @@ void transformStateArray (const unsigned int wi, const Direction::Enum dir,
         }
       } else {
         // Copy mda1,2 -> local.
-        Intrepid2::Tensor<RealType> R(mda1.dimension(2)), S(mda2.dimension(2));
+        minitensor::Tensor<RealType> R(mda1.dimension(2)), S(mda2.dimension(2));
         loop(mda1, i, 2) loop(mda1, j, 3) {
           R(i, j) = mda1(cell, qp, i, j);
           S(i, j) = mda2(cell, qp, i, j);
@@ -262,10 +262,10 @@ fillRhs (const PHX::MDField<RealType>& f_G_qp, Manager::Field& f,
                   row, col, f_G_qp(cell, qp, i, j) * wbf(cell, node, qp));
           } break;
           case Transformation::right_polar_LieR_LieS: {
-            Intrepid2::Tensor<RealType> F(ndim);
+            minitensor::Tensor<RealType> F(ndim);
             loop(f_G_qp, i, 2) loop(f_G_qp, j, 3)
               F(i, j) = f_G_qp(cell, qp, i, j);
-            Intrepid2::Tensor<RealType> RS[2];
+            minitensor::Tensor<RealType> RS[2];
             calc_right_polar_LieR_LieS_G2g(F, RS);
             for (int fi = 0; fi < f.num_g_fields; ++fi) {
               for (int i = 0, col = 0; i < ndim; ++i)
@@ -819,7 +819,7 @@ aadapt_rc_apply_to_all_eval_types(eti_fn)
 
 namespace {
 namespace testing {
-typedef Intrepid2::Tensor<RealType> Tensor;
+typedef minitensor::Tensor<RealType> Tensor;
 
 // Some deformation gradient tensors with det(F) > 0 for use in testing.
 static const double Fs[3][3][3] = {
@@ -870,7 +870,7 @@ void getBoundingBox (const PHX::MDField<RealType, Cell, Vertex, Dim>& vs,
 }
 
 // F field.
-Intrepid2::Tensor<RealType> eval_F (const RealType p[3]) {
+minitensor::Tensor<RealType> eval_F (const RealType p[3]) {
 #define in01(u) (0 <= (u) && (u) <= 1)
   TEUCHOS_ASSERT(in01(p[0]) && in01(p[1]) && in01(p[2]));
 #undef in01
@@ -880,9 +880,9 @@ Intrepid2::Tensor<RealType> eval_F (const RealType p[3]) {
   for (int k = 0; k < 3; ++k) {
     Tensor F(3);
     lpij F(i,j) = Fs[k][i][j];
-    std::pair<Tensor, Tensor> RS = Intrepid2::polar_right(F);
-    RS.first = Intrepid2::log_rotation(RS.first);
-    RS.second = Intrepid2::log_sym(RS.second);
+    std::pair<Tensor, Tensor> RS = minitensor::polar_right(F);
+    RS.first = minitensor::log_rotation(RS.first);
+    RS.second = minitensor::log_sym(RS.second);
     symmetrize(RS.second);
     // Right now, we are not doing anything to handle phase wrapping in r =
     // logm(R). That means that projection with Lie transformation does not work
@@ -891,9 +891,9 @@ Intrepid2::Tensor<RealType> eval_F (const RealType p[3]) {
     if (k == 0) r += p[k]*RS.first;
     s += p[k]*RS.second;
   }
-  const Tensor R = Intrepid2::exp_skew_symmetric(r);
-  Tensor S = Intrepid2::exp(s); symmetrize(S);
-  return Intrepid2::dot(R, S);
+  const Tensor R = minitensor::exp_skew_symmetric(r);
+  Tensor S = minitensor::exp(s); symmetrize(S);
+  return minitensor::dot(R, S);
 #undef lpij
 }
 
@@ -968,7 +968,7 @@ void testProjector (
         RealType p[3];
         for (int k = 0; k < 3; ++k)
           p[k] = (coord_qp(cell, qp, k) - lo[k])/(hi[k] - lo[k]);
-        const Intrepid2::Tensor<RealType> F = eval_F(p);
+        const minitensor::Tensor<RealType> F = eval_F(p);
         loop(f_mdf, i, 2) loop(f_mdf, j, 3) f_mdf(cell, qp, i, j) = F(i, j);
       }
     }
@@ -1145,7 +1145,7 @@ fillRhs (const PHAL::Workset& workset, const Manager::BasisField& wbf,
         // I don't have a bounding box, so come up with something reasonable.
         RealType alpha[3] = {0, 0, 0};
         alpha[0] = (100 + p.x[0])/200;
-        const Intrepid2::Tensor<RealType> F = eval_F(alpha);
+        const minitensor::Tensor<RealType> F = eval_F(alpha);
         loop(f_mdf, i, 2) loop(f_mdf, j, 3) fv.f[num_dim*i + j] = F(i,j);
       }
       td.f_true_qp[p] = fv;

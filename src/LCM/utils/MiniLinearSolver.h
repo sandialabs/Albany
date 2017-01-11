@@ -8,7 +8,7 @@
 #define LCM_MiniLinearSolver_h
 
 #include "PHAL_AlbanyTraits.hpp"
-#include "Intrepid2_MiniTensor_Solvers.h"
+#include "MiniTensor_Solvers.h"
 
 namespace LCM
 {
@@ -16,7 +16,7 @@ namespace LCM
 ///
 /// Mini Linear Solver Base class
 ///
-template<typename EvalT, Intrepid2::Index N = Intrepid2::DYNAMIC>
+template<typename EvalT, minitensor::Index N = minitensor::DYNAMIC>
 class MiniLinearSolver_Base
 {
 public:
@@ -29,21 +29,21 @@ public:
   virtual
   void
   solve(
-      Intrepid2::Tensor<ScalarT, N> const & A,
-      Intrepid2::Vector<ScalarT, N> const & b,
-      Intrepid2::Vector<ScalarT, N> & x) {}
+      minitensor::Tensor<ScalarT, N> const & A,
+      minitensor::Vector<ScalarT, N> const & b,
+      minitensor::Vector<ScalarT, N> & x) {}
 };
 
 //
 // Specializations
 //
-template<typename EvalT, Intrepid2::Index N = Intrepid2::DYNAMIC>
+template<typename EvalT, minitensor::Index N = minitensor::DYNAMIC>
 class MiniLinearSolver;
 
 //
 // Residual
 //
-template<Intrepid2::Index N>
+template<minitensor::Index N>
 class MiniLinearSolver<PHAL::AlbanyTraits::Residual, N> :
     public MiniLinearSolver_Base<PHAL::AlbanyTraits::Residual, N>
 {
@@ -53,15 +53,15 @@ public:
 
   void
   solve(
-      Intrepid2::Tensor<ScalarT, N> const & A,
-      Intrepid2::Vector<ScalarT, N> const & b,
-      Intrepid2::Vector<ScalarT, N> & x) override;
+      minitensor::Tensor<ScalarT, N> const & A,
+      minitensor::Vector<ScalarT, N> const & b,
+      minitensor::Vector<ScalarT, N> & x) override;
 };
 
 //
 // Jacobian
 //
-template<Intrepid2::Index N>
+template<minitensor::Index N>
 class MiniLinearSolver<PHAL::AlbanyTraits::Jacobian, N> :
     public MiniLinearSolver_Base<PHAL::AlbanyTraits::Jacobian, N>
 {
@@ -71,15 +71,15 @@ public:
 
   void
   solve(
-      Intrepid2::Tensor<ScalarT, N> const & A,
-      Intrepid2::Vector<ScalarT, N> const & b,
-      Intrepid2::Vector<ScalarT, N> & x)  override;
+      minitensor::Tensor<ScalarT, N> const & A,
+      minitensor::Vector<ScalarT, N> const & b,
+      minitensor::Vector<ScalarT, N> & x)  override;
 };
 
 //
 // Tangent
 //
-template<Intrepid2::Index N>
+template<minitensor::Index N>
 class MiniLinearSolver<PHAL::AlbanyTraits::Tangent, N> :
     public MiniLinearSolver_Base<PHAL::AlbanyTraits::Tangent, N>
 {
@@ -89,15 +89,15 @@ public:
 
   void
   solve(
-      Intrepid2::Tensor<ScalarT, N> const & A,
-      Intrepid2::Vector<ScalarT, N> const & b,
-      Intrepid2::Vector<ScalarT, N> & x) override;
+      minitensor::Tensor<ScalarT, N> const & A,
+      minitensor::Vector<ScalarT, N> const & b,
+      minitensor::Vector<ScalarT, N> & x) override;
 };
 
 //
 // Distributed Parameter Derivative
 //
-template<Intrepid2::Index N>
+template<minitensor::Index N>
 class MiniLinearSolver<PHAL::AlbanyTraits::DistParamDeriv, N> :
     public MiniLinearSolver_Base<PHAL::AlbanyTraits::DistParamDeriv, N>
 {
@@ -107,16 +107,16 @@ public:
 
   void
   solve(
-      Intrepid2::Tensor<ScalarT, N> const & A,
-      Intrepid2::Vector<ScalarT, N> const & b,
-      Intrepid2::Vector<ScalarT, N> & x) override;
+      minitensor::Tensor<ScalarT, N> const & A,
+      minitensor::Vector<ScalarT, N> const & b,
+      minitensor::Vector<ScalarT, N> & x) override;
 };
 
 #ifdef ALBANY_SG
 //
 // SGResidual
 //
-template<Intrepid2::Index N>
+template<minitensor::Index N>
 class MiniLinearSolver<PHAL::AlbanyTraits::SGResidual, N> :
     public MiniLinearSolver_Base<PHAL::AlbanyTraits::SGResidual, N>
 {
@@ -126,15 +126,15 @@ public:
 
   void
   solve(
-      Intrepid2::Tensor<ScalarT, N> const & A,
-      Intrepid2::Vector<ScalarT, N> const & b,
-      Intrepid2::Vector<ScalarT, N> & x) override;
+      minitensor::Tensor<ScalarT, N> const & A,
+      minitensor::Vector<ScalarT, N> const & b,
+      minitensor::Vector<ScalarT, N> & x) override;
 };
 
 //
 // SGJacobian
 //
-template<Intrepid2::Index N>
+template<minitensor::Index N>
 class MiniLinearSolver<PHAL::AlbanyTraits::SGJacobian, N> :
     public MiniLinearSolver_Base<PHAL::AlbanyTraits::SGJacobian, N>
 {
@@ -144,15 +144,15 @@ public:
 
   void
   solve(
-      Intrepid2::Tensor<ScalarT, N> const & A,
-      Intrepid2::Vector<ScalarT, N> const & b,
-      Intrepid2::Vector<ScalarT, N> & x) override;
+      minitensor::Tensor<ScalarT, N> const & A,
+      minitensor::Vector<ScalarT, N> const & b,
+      minitensor::Vector<ScalarT, N> & x) override;
 };
 
 //
 // SGTangent
 //
-template<Intrepid2::Index N>
+template<minitensor::Index N>
 class MiniLinearSolver<PHAL::AlbanyTraits::SGTangent, N> :
     public MiniLinearSolver_Base<PHAL::AlbanyTraits::SGTangent, N>
 {
@@ -162,9 +162,9 @@ public:
 
   void
   solve(
-      Intrepid2::Tensor<ScalarT, N> const & A,
-      Intrepid2::Vector<ScalarT, N> const & b,
-      Intrepid2::Vector<ScalarT, N> & x) override;
+      minitensor::Tensor<ScalarT, N> const & A,
+      minitensor::Vector<ScalarT, N> const & b,
+      minitensor::Vector<ScalarT, N> & x) override;
 };
 #endif
 
@@ -172,7 +172,7 @@ public:
 //
 // MPResidual
 //
-template<Intrepid2::Index N>
+template<minitensor::Index N>
 class MiniLinearSolver<PHAL::AlbanyTraits::MPResidual, N> :
     public MiniLinearSolver_Base<PHAL::AlbanyTraits::MPResidual, N>
 {
@@ -182,15 +182,15 @@ public:
 
   void
   solve(
-      Intrepid2::Tensor<ScalarT, N> const & A,
-      Intrepid2::Vector<ScalarT, N> const & b,
-      Intrepid2::Vector<ScalarT, N> & x) override;
+      minitensor::Tensor<ScalarT, N> const & A,
+      minitensor::Vector<ScalarT, N> const & b,
+      minitensor::Vector<ScalarT, N> & x) override;
 };
 
 //
 // MPJacobian
 //
-template<Intrepid2::Index N>
+template<minitensor::Index N>
 class MiniLinearSolver<PHAL::AlbanyTraits::MPJacobian, N> :
     public MiniLinearSolver_Base<PHAL::AlbanyTraits::MPJacobian, N>
 {
@@ -200,15 +200,15 @@ public:
 
   void
   solve(
-      Intrepid2::Tensor<ScalarT, N> const & A,
-      Intrepid2::Vector<ScalarT, N> const & b,
-      Intrepid2::Vector<ScalarT, N> & x) override;
+      minitensor::Tensor<ScalarT, N> const & A,
+      minitensor::Vector<ScalarT, N> const & b,
+      minitensor::Vector<ScalarT, N> & x) override;
 };
 
 //
 // MPTangent
 //
-template<Intrepid2::Index N>
+template<minitensor::Index N>
 class MiniLinearSolver<PHAL::AlbanyTraits::MPTangent, N> :
     public MiniLinearSolver_Base<PHAL::AlbanyTraits::MPTangent, N>
 {
@@ -218,9 +218,9 @@ public:
 
   void
   solve(
-      Intrepid2::Tensor<ScalarT, N> const & A,
-      Intrepid2::Vector<ScalarT, N> const & b,
-      Intrepid2::Vector<ScalarT, N> & x) override;
+      minitensor::Tensor<ScalarT, N> const & A,
+      minitensor::Vector<ScalarT, N> const & b,
+      minitensor::Vector<ScalarT, N> & x) override;
 };
 #endif
 

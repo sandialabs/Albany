@@ -105,17 +105,17 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
     }
     double temp;
     fseek(meshfile, 0, SEEK_SET);
-    fscanf(meshfile, "%lf", &temp);
+    safe_fscanf(1, meshfile, "%lf", &temp);
     NumNodes = int(temp);
 #ifdef OUTPUT_TO_SCREEN
     *out << "numNodes: " << NumNodes << std::endl;
 #endif
     xyz = new double[NumNodes][3];
     char buffer[100];
-    fgets(buffer, 100, meshfile);
+    safe_fgets(buffer, 100, meshfile);
     for (int i=0; i<NumNodes; i++){
-      fgets(buffer, 100, meshfile);
-      sscanf(buffer, "%lf %lf %lf", &xyz[i][0], &xyz[i][1], &xyz[i][2]);
+      safe_fgets(buffer, 100, meshfile);
+      safe_sscanf(3, buffer, "%lf %lf %lf", &xyz[i][0], &xyz[i][1], &xyz[i][2]);
       //*out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << std::endl;
      }
     //read in surface height data from mesh
@@ -125,7 +125,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
     if (shfile != NULL) have_sh = true;
     if (have_sh) {
       fseek(shfile, 0, SEEK_SET);
-      fscanf(shfile, "%lf", &temp);
+      safe_fscanf(1, shfile, "%lf", &temp);
       int NumNodesSh = int(temp);
 #ifdef OUTPUT_TO_SCREEN
       *out << "NumNodesSh: " << NumNodesSh<< std::endl;
@@ -136,10 +136,10 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
             std::endl << "Error in AsciiSTKMeshStruct: sh file must have same number nodes as xyz file!  numNodes in xyz = " << NumNodes << ", numNodes in sh = "<< NumNodesSh << std::endl);
       }
       sh = new double[NumNodes];
-      fgets(buffer, 100, shfile);
+      safe_fgets(buffer, 100, shfile);
       for (int i=0; i<NumNodes; i++){
-        fgets(buffer, 100, shfile);
-        sscanf(buffer, "%lf", &sh[i]);
+        safe_fgets(buffer, 100, shfile);
+        safe_sscanf(1, buffer, "%lf", &sh[i]);
         //*out << "i: " << i << ", sh: " << sh[i] << std::endl;
        }
      }
@@ -152,16 +152,16 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
           std::endl << "Error in AsciiSTKMeshStruct: element connectivity file " << confilename << " not found!"<< std::endl);
      }
      fseek(confile, 0, SEEK_SET);
-     fscanf(confile, "%lf", &temp);
+     safe_fscanf(1, confile, "%lf", &temp);
      NumEles = int(temp);
 #ifdef OUTPUT_TO_SCREEN
      *out << "numEles: " << NumEles << std::endl;
 #endif
      eles = new int[NumEles][8];
-     fgets(buffer, 100, confile);
+     safe_fgets(buffer, 100, confile);
      for (int i=0; i<NumEles; i++){
-        fgets(buffer, 100, confile);
-        sscanf(buffer, "%i %i %i %i %i %i %i %i", &eles[i][0], &eles[i][1], &eles[i][2], &eles[i][3], &eles[i][4], &eles[i][5], &eles[i][6], &eles[i][7]);
+        safe_fgets(buffer, 100, confile);
+        safe_sscanf(8, buffer, "%i %i %i %i %i %i %i %i", &eles[i][0], &eles[i][1], &eles[i][2], &eles[i][3], &eles[i][4], &eles[i][5], &eles[i][6], &eles[i][7]);
         //*out << "elt # " << i << ": " << eles[i][0] << " " << eles[i][1] << " " << eles[i][2] << " " << eles[i][3] << " " << eles[i][4] << " "
         //                  << eles[i][5] << " " << eles[i][6] << " " << eles[i][7] << std::endl;
      }
@@ -172,16 +172,16 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
     if (bffile != NULL) have_bf = true;
     if (have_bf) {
       fseek(bffile, 0, SEEK_SET);
-      fscanf(bffile, "%lf", &temp);
+      safe_fscanf(1, bffile, "%lf", &temp);
       NumBasalFaces = int(temp);
 #ifdef OUTPUT_TO_SCREEN
       *out << "numBasalFaces: " << NumBasalFaces << std::endl;
 #endif
       bf = new int[NumBasalFaces][5]; //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces)
-      fgets(buffer, 100, bffile);
+      safe_fgets(buffer, 100, bffile);
       for (int i=0; i<NumBasalFaces; i++){
-        fgets(buffer, 100, bffile);
-        sscanf(buffer, "%i %i %i %i %i", &bf[i][0], &bf[i][1], &bf[i][2], &bf[i][3], &bf[i][4]);
+        safe_fgets(buffer, 100, bffile);
+        safe_sscanf(5, buffer, "%i %i %i %i %i", &bf[i][0], &bf[i][1], &bf[i][2], &bf[i][3], &bf[i][4]);
         //*out << "face #:" << bf[i][0] << ", face conn:" << bf[i][1] << " " << bf[i][2] << " " << bf[i][3] << " " << bf[i][4] << std::endl;
        }
      }
@@ -202,10 +202,10 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
             std::endl << "Error in AsciiSTKMeshStruct: global element IDs file " << geIDsfilename << " not found!"<< std::endl);
        }
        fseek(geIDsfile, 0, SEEK_SET);
-       fgets(buffer, 100, geIDsfile);
+       safe_fgets(buffer, 100, geIDsfile);
        for (int i=0; i<NumEles; i++){
-         fgets(buffer, 100, geIDsfile);
-         sscanf(buffer, "" ST_LLI" ", &globalElesID[i]);
+         safe_fgets(buffer, 100, geIDsfile);
+         safe_sscanf(1, buffer, "" ST_LLI" ", &globalElesID[i]);
          globalElesID[i] = globalElesID[i]-1; //subtract 1 b/c global element IDs file assumed to be 1-based not 0-based
          //*out << "local element ID #:" << i << ", global element ID #:" << globalElesID[i] << std::endl;
        }
@@ -227,10 +227,10 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
             std::endl << "Error in AsciiSTKMeshStruct: global node IDs file " << gnIDsfilename << " not found!"<< std::endl);
        }
        fseek(gnIDsfile, 0, SEEK_SET);
-       fgets(buffer, 100, gnIDsfile);
+       safe_fgets(buffer, 100, gnIDsfile);
        for (int i=0; i<NumNodes; i++){
-         fgets(buffer, 100, gnIDsfile);
-         sscanf(buffer, "" ST_LLI" ", &globalNodesID[i]);
+         safe_fgets(buffer, 100, gnIDsfile);
+         safe_sscanf(1, buffer, "" ST_LLI" ", &globalNodesID[i]);
          globalNodesID[i] = globalNodesID[i]-1; //subtract 1 b/c global node IDs file assumed to be 1-based not 0-based
          //*out << "local node ID #:" << i << ", global node ID #:" << globalNodesID[i] << std::endl;
        }
@@ -246,10 +246,10 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
            //This file should have a header like the other files, and length NumBasalFaces
        FILE *bfIDsfile = fopen(bfIDsfilename,"r");
        fseek(bfIDsfile, 0, SEEK_SET);
-       fgets(buffer, 100, bfIDsfile);
+       safe_fgets(buffer, 100, bfIDsfile);
        for (int i=0; i<NumBasalFaces; i++){
-         fgets(buffer, 100, bfIDsfile);
-         sscanf(buffer, "" ST_LLI" ", &basalFacesID[i]);
+         safe_fgets(buffer, 100, bfIDsfile);
+         safe_sscanf(1, buffer, "" ST_LLI" ", &basalFacesID[i]);
          basalFacesID[i] = basalFacesID[i]-1; //subtract 1 b/c basal face IDs file assumed to be 1-based not 0-based
          //*out << "local face ID #:" << i << ", global face ID #:" << basalFacesID[i] << std::endl;
        }
@@ -261,12 +261,12 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
     if (flwafile != NULL) have_flwa = true;
     if (have_flwa) {
       fseek(flwafile, 0, SEEK_SET);
-      fscanf(flwafile, "%lf", &temp);
+      safe_fscanf(1, flwafile, "%lf", &temp);
       flwa = new double[NumEles];
-      fgets(buffer, 100, flwafile);
+      safe_fgets(buffer, 100, flwafile);
       for (int i=0; i<NumEles; i++){
-        fgets(buffer, 100, flwafile);
-        sscanf(buffer, "%lf", &flwa[i]);
+        safe_fgets(buffer, 100, flwafile);
+        safe_sscanf(1, buffer, "%lf", &flwa[i]);
         //*out << "i: " << i << ", flwa: " << flwa[i] << std::endl;
        }
      }
@@ -277,12 +277,12 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
     if (tempfile != NULL) have_temp = true;
     if (have_temp) {
       fseek(tempfile, 0, SEEK_SET);
-      fscanf(tempfile, "%lf", &temp);
+      safe_fscanf(1, tempfile, "%lf", &temp);
       temper = new double[NumEles];
-      fgets(buffer, 100, tempfile);
+      safe_fgets(buffer, 100, tempfile);
       for (int i=0; i<NumEles; i++){
-        fgets(buffer, 100, tempfile);
-        sscanf(buffer, "%lf", &temper[i]);
+        safe_fgets(buffer, 100, tempfile);
+        safe_sscanf(1, buffer, "%lf", &temper[i]);
         //*out << "i: " << i << ", temp: " << temper[i] << std::endl;
        }
      }
@@ -293,12 +293,12 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
     if (betafile != NULL) have_beta = true;
     if (have_beta) {
       fseek(betafile, 0, SEEK_SET);
-      fscanf(betafile, "%lf", &temp);
+      safe_fscanf(1, betafile, "%lf", &temp);
       beta = new double[NumNodes];
-      fgets(buffer, 100, betafile);
+      safe_fgets(buffer, 100, betafile);
       for (int i=0; i<NumNodes; i++){
-        fgets(buffer, 100, betafile);
-        sscanf(buffer, "%lf", &beta[i]);
+        safe_fgets(buffer, 100, betafile);
+        safe_sscanf(1, buffer, "%lf", &beta[i]);
         //*out << "i: " << i << ", beta: " << beta[i] << std::endl;
        }
      }

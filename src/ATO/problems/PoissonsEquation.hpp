@@ -23,6 +23,7 @@
 
 #ifdef ATO_USES_COGENT
 #include <Cogent_Integrator.hpp>
+#include <Cogent_IntegratorFactory.hpp>
 #endif
 
 namespace Albany {
@@ -193,7 +194,7 @@ Albany::PoissonsEquationProblem::constructEvaluators(
      int projectionOrder = geomSpec.get<int>("Projection Order");
      cubatureDegree = 2*projectionOrder;
 
-     blockType = geomSpec.get<std::string>("Type");
+     blockType = geomSpec.get<std::string>("Geometry Type");
 
    }
 #endif

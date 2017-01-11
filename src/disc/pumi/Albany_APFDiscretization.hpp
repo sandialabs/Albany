@@ -9,6 +9,7 @@
 #define ALBANY_APFDISCRETIZATION_HPP
 
 #include <vector>
+#include <functional>
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_VerboseObject.hpp"
@@ -380,6 +381,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void computeWorksetInfo();
     //! Process APF mesh for NodeSets
     void computeNodeSets();
+    void forEachNodeSetNode(std::function<void(size_t, apf::StkModel*)> fn);
     //! Process APF mesh for SideSets
     void computeSideSets();
     //! Re-initialize Time after adaptation

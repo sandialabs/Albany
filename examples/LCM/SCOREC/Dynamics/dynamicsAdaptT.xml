@@ -26,12 +26,10 @@
     </ParameterList>
     <!-- Adapt mesh using meshAdapt -->
     <ParameterList name="Adaptation">
-      <Parameter name="Method" type="string" value="RPI Unif Size"/>
+      <Parameter name="Method" type="string" value="RPI Constant Size"/>
       <Parameter name="Remesh Step Number" type="Array(int)" value="{2, 4, 6, 8}"/>
       <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="1"/>
       <Parameter name="Target Element Size" type="double" value="0.008"/>
-      <!-- Maximum number of nodes on any given rank -->
-      <Parameter name="High Water Mark" type="int" value="10000"/>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">

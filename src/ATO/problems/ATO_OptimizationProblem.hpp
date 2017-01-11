@@ -8,7 +8,6 @@
 #define ATO_OPTIMIZATION_PROBLEM_HPP
 
 #include "Albany_AbstractProblem.hpp"
-#include "Epetra_Vector.h"
 #include "ATO_Types.hpp"
 
 namespace ATO {
@@ -28,22 +27,42 @@ public virtual Albany::AbstractProblem {
                         const int _numDim);
    void ComputeVolume(double* p, const double* dfdp,
                       double& v, double threshhold, double minP);
+#if defined(ALBANY_EPETRA)
    void ComputeMeasure(std::string measure, 
                        std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
                        double& v, double* dvdp=NULL, 
                        std::string strIntegrationMethod="Gauss Quadrature");
+#endif
+   void ComputeMeasureT(std::string measure, 
+                       std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
+                       double& v, double* dvdp=NULL, 
+                       std::string strIntegrationMethod="Gauss Quadrature");
+#if defined(ALBANY_EPETRA)
    void computeMeasure(std::string measure, 
                        std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
                        double& v, double* dvdp=NULL);
+#endif
+   void computeMeasureT(std::string measure, 
+                       std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
+                       double& v, double* dvdp=NULL);
+#if defined(ALBANY_EPETRA)
    void computeConformalVolume(std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
                       double& m, double* dmdp);
+#endif
+   void computeConformalVolumeT(std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
+                      double& m, double* dmdp);
+#if defined(ALBANY_EPETRA)
    void computeConformalMeasure(std::string measure, 
                       std::vector<Teuchos::RCP<TopologyStruct> >& topologyStructs,
+                      double& m, double* dmdp);
+#endif
+   void computeConformalMeasureT(std::string measure, 
+                      std::vector<Teuchos::RCP<TopologyStructT> >& topologyStructsT,
                       double& m, double* dmdp);
    void ComputeMeasure(std::string measure, double& v);
    void setDiscretization(Teuchos::RCP<Albany::AbstractDiscretization> _disc)
           {disc = _disc;}
-   void setCommunicator(const Teuchos::RCP<const Epetra_Comm>& _comm) {comm = _comm;}
+   void setCommunicator(const Teuchos::RCP<const Teuchos_Comm>& _comm) {comm = _comm;}
 
 
    void InitTopOpt();
@@ -53,7 +72,7 @@ public virtual Albany::AbstractProblem {
                      Albany::StateManager& _stateMgr);
 
    Teuchos::RCP<Albany::AbstractDiscretization> disc;
-   Teuchos::RCP<const Epetra_Comm> comm;
+   Teuchos::RCP<const Teuchos_Comm> comm;
 
    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
    Albany::StateManager* stateMgr;
@@ -69,14 +88,14 @@ public virtual Albany::AbstractProblem {
    std::vector<Kokkos::DynRankView<RealType, PHX::Device> > basisAtQPs;
    std::vector<Kokkos::DynRankView<RealType, PHX::Device> > weighted_measure;
 
-   Teuchos::RCP<Epetra_Vector> overlapVec;
-   Teuchos::RCP<Epetra_Vector> localVec;
-   Teuchos::RCP<Epetra_Export> exporter;
+   Teuchos::RCP<Tpetra_Vector> overlapVecT;
+   Teuchos::RCP<Tpetra_Vector> localVecT;
+   Teuchos::RCP<Tpetra_Export> exporterT;
 
-   Teuchos::Array<Teuchos::RCP<Epetra_Vector> > overlapVectors;
+   Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > overlapVectorsT;
 
-   Teuchos::RCP<const Epetra_Map> localNodeMap;
-   Teuchos::RCP<const Epetra_Map> overlapNodeMap;
+   Teuchos::RCP<const Tpetra_Map> localNodeMapT;
+   Teuchos::RCP<const Tpetra_Map> overlapNodeMapT;
 
 
    std::unordered_map<std::string, Teuchos::RCP<BlockMeasureMap> > measureModels;

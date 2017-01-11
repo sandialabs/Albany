@@ -13,7 +13,7 @@
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 #include "LCM/models/ConstitutiveModel.hpp"
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 #include "Sacado.hpp"
 
@@ -100,13 +100,13 @@ private:
 
 
 void parseBasis  (const Teuchos::ParameterList&   pBasis, 
-                        Intrepid2::Tensor <RealType, FM::THREE_D>& R);
+                        minitensor::Tensor <RealType, FM::THREE_D>& R);
 void parseTensor4(const Teuchos::ParameterList&   pConsts,
-                        Intrepid2::Tensor4<RealType, FM::THREE_D>& tensor);
+                        minitensor::Tensor4<RealType, FM::THREE_D>& tensor);
 void parseTensor3(const Teuchos::ParameterList&   pConsts, 
-                        Intrepid2::Tensor3<RealType, FM::THREE_D>& tensor);
+                        minitensor::Tensor3<RealType, FM::THREE_D>& tensor);
 void parseTensor (const Teuchos::ParameterList&   pConsts, 
-                        Intrepid2::Tensor <RealType, FM::THREE_D>& tensor);
+                        minitensor::Tensor <RealType, FM::THREE_D>& tensor);
 
 FM::CrystalVariant
 parseCrystalVariant(const Teuchos::Array<Teuchos::RCP<FM::CrystalPhase>>& phases, 

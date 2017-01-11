@@ -28,7 +28,9 @@ SET(SOURCES
   PHAL_Utilities.cpp
   )
 
-IF (ALBANY_EPETRA)
+#IKT, FIXME: remove OR ALBANY_ATO from following if when 
+#ATO is free of Epetra 
+IF (ALBANY_EPETRA OR ALBANY_ATO)
   SET(SOURCES ${SOURCES} Albany_ObserverFactory.cpp)
   IF(ALBANY_64BIT_INT)
     SET(SOURCES ${SOURCES} Petra_Converters_64.cpp)
@@ -718,6 +720,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./AMP/problems
                      ./AMP/evaluators
                      ./AMP/responses
+                     ./ANISO
                      ./QCAD
                      ./QCAD/problems
                      ./QCAD/evaluators
@@ -967,11 +970,16 @@ IF (ALBANY_AMP)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AMP)
 ENDIF()
 
+IF (ALBANY_ANISO)
+  add_subdirectory(ANISO)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ANISO)
+ENDIF()
+
 IF(ALBANY_CATALYST)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyCatalyst)
 endif()
 
-IF (ALBANY_ATO AND ALBANY_EPETRA)
+IF (ALBANY_ATO)
     SET(ALBANY_LCM ON)
     add_subdirectory(ATO)
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ATO)

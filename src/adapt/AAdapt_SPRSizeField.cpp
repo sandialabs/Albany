@@ -51,7 +51,7 @@ void
 AAdapt::SPRSizeField::setParams(
     const Teuchos::RCP<Teuchos::ParameterList>& p) {
 
-  if (p->isParameter("Target Element Count")) {
+  if (p->isType<long int>("Target Element Count")) {
     using_rel_err = false;
     target_count = p->get<long int>("Target Element Count", 1000);
     TEUCHOS_TEST_FOR_EXCEPTION(target_count <= 0, std::logic_error,

@@ -21,7 +21,7 @@
       <Parameter name="Response 0"  type="string" value="Solution Average"/>
     </ParameterList>
     <ParameterList name="Adaptation">
-      <Parameter name="Method" type="string" value="RPI UnifRef Size"/>
+      <Parameter name="Method" type="string" value="RPI Scaled Size"/>
       <Parameter name="Remesh Strategy" type="string" value="Continuous"/>
       <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="1"/>
       <Parameter name="Equilibrate" type="bool" value="false"/>

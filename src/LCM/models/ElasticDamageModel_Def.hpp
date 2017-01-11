@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
 #include <typeinfo>
@@ -112,15 +112,15 @@ computeState(typename Traits::EvalData workset,
   ScalarT alpha, damage_deriv;
 
   // Define some tensors for use
-  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
-  Intrepid2::Tensor<ScalarT> epsilon(num_dims_), sigma(num_dims_);
+  minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
+  minitensor::Tensor<ScalarT> epsilon(num_dims_), sigma(num_dims_);
 
-  Intrepid2::Tensor4<ScalarT> Ce(num_dims_);
-  Intrepid2::Tensor4<ScalarT> id4(num_dims_);
-  Intrepid2::Tensor4<ScalarT> id3(Intrepid2::identity_3<ScalarT>(num_dims_));
+  minitensor::Tensor4<ScalarT> Ce(num_dims_);
+  minitensor::Tensor4<ScalarT> id4(num_dims_);
+  minitensor::Tensor4<ScalarT> id3(minitensor::identity_3<ScalarT>(num_dims_));
 
-  id4 = 0.5 * (Intrepid2::identity_1<ScalarT>(num_dims_)
-      + Intrepid2::identity_2<ScalarT>(num_dims_));
+  id4 = 0.5 * (minitensor::identity_1<ScalarT>(num_dims_)
+      + minitensor::identity_2<ScalarT>(num_dims_));
 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int pt = 0; pt < num_pts_; ++pt) {
@@ -139,10 +139,10 @@ computeState(typename Traits::EvalData workset,
 
       // undamaged energy
       energy(cell, pt) =
-          0.5 * Intrepid2::dotdot(Intrepid2::dotdot(epsilon, Ce), epsilon);
+          0.5 * minitensor::dotdot(minitensor::dotdot(epsilon, Ce), epsilon);
 
       // undamaged Cauchy stress
-      sigma = Intrepid2::dotdot(Ce, epsilon);
+      sigma = minitensor::dotdot(Ce, epsilon);
 
       // maximum thermodynamic force
       alpha = energy_old(cell, pt);
@@ -159,7 +159,7 @@ computeState(typename Traits::EvalData workset,
       // tangent for matrix considering damage
       if(compute_tangent_) {
         Ce = (1.0 - damage(cell, pt)) * Ce
-          - damage_deriv * Intrepid2::tensor(sigma, sigma);
+          - damage_deriv * minitensor::tensor(sigma, sigma);
       }
 
       // total Cauchy stress

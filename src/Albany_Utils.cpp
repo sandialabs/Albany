@@ -15,13 +15,61 @@
 
 // For stack trace
 #include <execinfo.h>
-#include <stdio.h>
+#include <cstdio>
+#include <cstdarg>
 
-
-  // Start of Utils to do with Communicators
+// Start of Utils to do with Communicators
 #ifdef ALBANY_MPI
 
-#if defined(ALBANY_EPETRA)
+  void
+  Albany::ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
+                                 const Teuchos::RCP<Tpetra_Vector>& diag) {
+    Teuchos::ArrayRCP<const ST> diag_constView = diag->get1dView();
+    for (auto i=0; i<matrix->getNodeNumRows(); i++) {
+      auto NumEntries = matrix->getNumEntriesInLocalRow(i);
+      Teuchos::Array<LO> Indices(NumEntries);
+      Teuchos::Array<ST> Values(NumEntries);
+      matrix->getLocalRowCopy(i, Indices(), Values(), NumEntries);
+      GO global_row = matrix->getRowMap()->getGlobalElement(i);
+      for (auto j=0; j<NumEntries; j++) {
+        GO global_col = matrix->getColMap()->getGlobalElement(Indices[j]);
+        if (global_row == global_col) {
+          Teuchos::Array<ST> matrixEntriesT(1);
+          Teuchos::Array<LO> matrixIndicesT(1);
+          matrixEntriesT[0] = diag_constView[i];
+          matrixIndicesT[0] = Indices[j];
+          matrix->replaceLocalValues(i, matrixIndicesT(), matrixEntriesT());
+        }
+      }
+    }
+    //Tpetra_MatrixMarket_Writer::writeSparseFile("prec.mm", matrix);
+  }
+
+  Teuchos::RCP<Tpetra_Vector> 
+  Albany::InvRowSum(const Teuchos::RCP<const Tpetra_CrsMatrix>& matrix) {
+    //Create vector to store absrowsum 
+    Teuchos::RCP<Tpetra_Vector> absrowsum = Teuchos::rcp(new Tpetra_Vector(matrix->getRowMap())); 
+    absrowsum->putScalar(0.0); 
+    Teuchos::ArrayRCP<ST> absrowsum_nonconstView = absrowsum->get1dViewNonConst(); 
+    //Compute abs sum of each row and store in absrowsum vector 
+    for (auto i=0; i<matrix->getNodeNumRows(); ++i) {
+      std::size_t NumEntries = matrix->getNumEntriesInLocalRow(i);
+      Teuchos::Array<LO> Indices(NumEntries); 
+      Teuchos::Array<ST> Values(NumEntries); 
+      //Get local row
+      matrix->getLocalRowCopy(i, Indices(), Values(), NumEntries);
+      //Compute abs row rum 
+      for (auto j=0; j<NumEntries; j++) 
+        absrowsum_nonconstView[i] += abs(Values[j]);
+    }
+    //Invert absrowsum 
+    Teuchos::RCP<Tpetra_Vector> invabsrowsum = Teuchos::rcp(new Tpetra_Vector(matrix->getRowMap())); 
+    invabsrowsum->reciprocal(*absrowsum); 
+  }
+
+
+//IKT, FIXME: ultimately remove || defined(ALBANY_ATO) from following line 
+#if defined(ALBANY_EPETRA) || defined(ALBANY_ATO) 
   Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) {
     const Epetra_MpiComm& emc = dynamic_cast<const Epetra_MpiComm&>(ec);
     return emc.Comm();
@@ -270,4 +318,35 @@
         }
         free(strs);
   }
-  
+
+void Albany::safe_fscanf(int nitems, FILE* file, const char* format, ...) {
+  va_list ap;
+  va_start(ap, format);
+  int ret = vfscanf(file, format, ap);
+  va_end(ap);
+  TEUCHOS_TEST_FOR_EXCEPTION(ret != nitems, std::runtime_error,
+		  ret << "=safe_fscanf(" << nitems << ", " << file << ", \"" << format << "\")\n");
+}
+
+void Albany::safe_sscanf(int nitems, const char* str, const char* format, ...) {
+  va_list ap;
+  va_start(ap, format);
+  int ret = vsscanf(str, format, ap);
+  va_end(ap);
+  TEUCHOS_TEST_FOR_EXCEPTION(ret != nitems, std::runtime_error,
+		  ret << "=safe_sscanf(" << nitems << ", \"" << str << "\", \"" << format << "\")\n");
+}
+
+void Albany::safe_fgets(char* str, int size, FILE* stream) {
+  char* ret = fgets(str, size, stream);
+  TEUCHOS_TEST_FOR_EXCEPTION(ret != str, std::runtime_error,
+		  ret << "=safe_fgets(" << static_cast<void*>(str) << ", " << size << ", " << stream << ")\n");
+}
+
+void Albany::safe_system(char const* str) {
+  TEUCHOS_TEST_FOR_EXCEPTION(!str, std::runtime_error,
+		  "safe_system called with null command string\n");
+  int ret = system(str);
+  TEUCHOS_TEST_FOR_EXCEPTION(ret != 0, std::runtime_error,
+		  ret << "=safe_system(\"" << str << "\")\n");
+}

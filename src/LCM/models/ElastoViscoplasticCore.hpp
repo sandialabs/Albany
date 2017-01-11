@@ -12,14 +12,14 @@
 namespace EV
 {
 
-static constexpr Intrepid2::Index MAX_DIM = 3;
+static constexpr minitensor::Index MAX_DIM = 3;
 
 //
 //! Nonlinear Solver (NLS) class for the ElastoViscoplastic model
 //
-template<typename EvalT, Intrepid2::Index M = MAX_DIM>
+template<typename EvalT, minitensor::Index M = MAX_DIM>
 class ElastoViscoplasticNLS:
-    public Intrepid2::Function_Base<ElastoViscoplasticNLS<EvalT, M>,
+    public minitensor::Function_Base<ElastoViscoplasticNLS<EvalT, M>,
     typename EvalT::ScalarT, M>
 {
   using S = typename EvalT::ScalarT;
@@ -54,29 +54,29 @@ public:
       S rate_coeff,
       S rate_exp,
       S p,
-      Intrepid2::Tensor<S, MAX_DIM> const & s);
+      minitensor::Tensor<S, MAX_DIM> const & s);
 
   static constexpr char const * const
   NAME{"ElastoViscoplastic Nonlinear System"};
 
-  using Base = Intrepid2::Function_Base<ElastoViscoplasticNLS<EvalT, M>,
+  using Base = minitensor::Function_Base<ElastoViscoplasticNLS<EvalT, M>,
       typename EvalT::ScalarT, M>;
 
   //! Default implementation of value.
-  template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
+  template<typename T, minitensor::Index N = minitensor::DYNAMIC>
   T
-  value(Intrepid2::Vector<T, N> const & x);
+  value(minitensor::Vector<T, N> const & x);
 
   //! Gradient function; returns the residual vector at step N+1.
-  template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
-  Intrepid2::Vector<T, N>
-  gradient(Intrepid2::Vector<T, N> const & x) const;
+  template<typename T, minitensor::Index N = minitensor::DYNAMIC>
+  minitensor::Vector<T, N>
+  gradient(minitensor::Vector<T, N> const & x) const;
 
 
   //! Default implementation of hessian.
-  template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
-  Intrepid2::Tensor<T, N>
-  hessian(Intrepid2::Vector<T, N> const & x);
+  template<typename T, minitensor::Index N = minitensor::DYNAMIC>
+  minitensor::Tensor<T, N>
+  hessian(minitensor::Vector<T, N> const & x);
 
 private:
 
@@ -107,7 +107,7 @@ private:
   S rate_coeff_;
   S rate_exp_;
   S p_;
-  Intrepid2::Tensor<S, MAX_DIM> const & s_;
+  minitensor::Tensor<S, MAX_DIM> const & s_;
 
 };
 

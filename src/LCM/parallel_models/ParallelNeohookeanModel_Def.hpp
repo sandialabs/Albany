@@ -7,7 +7,7 @@
 #if !defined(LCM_ParallelNeohookeanModel_Def_hpp)
 #define LCM_ParallelNeohookeanModel_Def_hpp
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "utility/math/Tensor.hpp"

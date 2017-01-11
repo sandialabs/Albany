@@ -105,7 +105,7 @@ Optimizer_Pareto::Optimize()
       solverInterface->ComputeObjective(p, f, dfdp);
       computeUpdatedTopology(volFrac);
     
-      if(comm->MyPID()==0.0){
+      if(comm->getRank()==0.0){
         std::cout << "************************************************************************" << std::endl;
         std::cout << "** Optimization Status Check *******************************************" << std::endl;
         std::cout << "Status: Objective = " << f << std::endl;
@@ -114,7 +114,7 @@ Optimizer_Pareto::Optimize()
       double delta_f = f-f_last;
       double delta_p = computeDiffNorm(p, p_last, numOptDofs, /*result to cout*/ false);
   
-      optimization_converged = convergenceChecker->isConverged(delta_f, delta_p, iter, comm->MyPID());
+      optimization_converged = convergenceChecker->isConverged(delta_f, delta_p, iter, comm->getRank());
 
       iter++;
     }
@@ -141,8 +141,8 @@ Optimizer_Pareto::computeUpdatedTopology(double volFrac)
   }
 
   double tau_1, tau_2, tauMid;
-  comm->MinAll(&localTauMin, &tau_1, 1);
-  comm->MaxAll(&localTauMax, &tau_2, 1);
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MIN, localTauMin, &tau_1);
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, localTauMax, &tau_2);
 
   const double minDensity = topology->getBounds()[0];
 
@@ -169,7 +169,7 @@ Optimizer_Pareto::computeUpdatedTopology(double volFrac)
     niters++;
 
     if( niters > _volMaxIter ){
-      if(comm->MyPID() == 0 ){
+      if(comm->getRank() == 0 ){
         std::cout << std::endl 
         << "Enforcement of volume constraint failed:  Exceeded max iterations" << std::endl
         << "Actual = " << vol << std::endl

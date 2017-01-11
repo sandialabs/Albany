@@ -239,6 +239,12 @@ IF(ALBANY_AMP)
   add_subdirectory(AMP)
 ENDIF()
 
+# ANISO #################
+
+IF(ALBANY_ANISO)
+  add_subdirectory(ANISO)
+ENDIF(ALBANY_ANISO)
+
 IF(ALBANY_PERFORMANCE_TESTS)
   add_subdirectory(PerformanceTests)
 ENDIF()

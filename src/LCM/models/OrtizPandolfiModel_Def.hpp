@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
 
@@ -142,16 +142,16 @@ computeState(typename Traits::EvalData workset,
     for (int pt(0); pt < num_pts_; ++pt) {
 
       //current basis vector
-      Intrepid2::Vector<ScalarT> g_0(3, mdf_basis, cell, pt, 0, 0);
-      Intrepid2::Vector<ScalarT> g_1(3, mdf_basis, cell, pt, 1, 0);
-      Intrepid2::Vector<ScalarT> n(3, mdf_basis, cell, pt, 2, 0);
+      minitensor::Vector<ScalarT> g_0(3, mdf_basis, cell, pt, 0, 0);
+      minitensor::Vector<ScalarT> g_1(3, mdf_basis, cell, pt, 1, 0);
+      minitensor::Vector<ScalarT> n(3, mdf_basis, cell, pt, 2, 0);
 
-      //current jump vector - move PHX::MDField into Intrepid2::Vector
-      Intrepid2::Vector<ScalarT> jump_pt(3, mdf_jump, cell, pt, 0);
+      //current jump vector - move PHX::MDField into minitensor::Vector
+      minitensor::Vector<ScalarT> jump_pt(3, mdf_jump, cell, pt, 0);
 
       //construct Identity tensor (2nd order) and tensor product of normal
-      Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(3));
-      Intrepid2::Tensor<ScalarT> Fn(Intrepid2::bun(n, n));
+      minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(3));
+      minitensor::Tensor<ScalarT> Fn(minitensor::bun(n, n));
 
       // define components of the jump
       // jump_n is the normal component
@@ -159,11 +159,11 @@ computeState(typename Traits::EvalData workset,
       // jump_m is the maximum effective jump from prior converged iteration
       // vec_jump_s is the shear vector
       ScalarT jump_m = jump_max_old(cell, pt);
-      ScalarT jump_n = Intrepid2::dot(jump_pt, n);
-      Intrepid2::Vector<ScalarT> vec_jump_s = Intrepid2::dot(I - Fn, jump_pt);
+      ScalarT jump_n = minitensor::dot(jump_pt, n);
+      minitensor::Vector<ScalarT> vec_jump_s = minitensor::dot(I - Fn, jump_pt);
       // Be careful regarding Sacado and sqrt()
       ScalarT const
-      jump_s2 = Intrepid2::dot(vec_jump_s, vec_jump_s);
+      jump_s2 = minitensor::dot(vec_jump_s, vec_jump_s);
 
       ScalarT jump_s = 0.0;
       if (jump_s2 > 0.0) {
@@ -222,8 +222,8 @@ computeState(typename Traits::EvalData workset,
       // penalize interpenetration through stiff_c
 
       // Normal traction, default to zero.
-      Intrepid2::Vector<ScalarT>
-      traction_normal(3, Intrepid2::ZEROS);
+      minitensor::Vector<ScalarT>
+      traction_normal(3, minitensor::ZEROS);
 
       if (jump_n >= 0.0) {
 
@@ -248,14 +248,14 @@ computeState(typename Traits::EvalData workset,
       }
 
       // Shear traction, default to zero.
-      Intrepid2::Vector<ScalarT>
-      traction_shear(3, Intrepid2::ZEROS);
+      minitensor::Vector<ScalarT>
+      traction_shear(3, minitensor::ZEROS);
 
       if (jump_eff > 0.0) {
         traction_shear = t_eff / jump_eff * beta * beta * vec_jump_s;
       }
 
-      Intrepid2::Vector<ScalarT>
+      minitensor::Vector<ScalarT>
       traction_vector = traction_normal + traction_shear;
 
       // Debugging - debug_print tractions
@@ -273,10 +273,10 @@ computeState(typename Traits::EvalData workset,
       // update state variables 
 
       // Calculate normal and shear components of global traction
-      ScalarT traction_n = Intrepid2::dot(traction_vector, n);
-      Intrepid2::Vector<ScalarT> vec_traction_s = Intrepid2::dot(I - Fn, jump_pt);
+      ScalarT traction_n = minitensor::dot(traction_vector, n);
+      minitensor::Vector<ScalarT> vec_traction_s = minitensor::dot(I - Fn, jump_pt);
       // Be careful regarding Sacado and sqrt()
-      ScalarT traction_s2 = Intrepid2::dot(vec_traction_s, vec_traction_s);
+      ScalarT traction_s2 = minitensor::dot(vec_traction_s, vec_traction_s);
       ScalarT traction_s = 0.0;
       if (traction_s2 > 0.0) {
         traction_s = std::sqrt(traction_s2);

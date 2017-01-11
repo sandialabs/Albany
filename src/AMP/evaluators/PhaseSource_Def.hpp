@@ -54,6 +54,10 @@ PhaseSource(Teuchos::ParameterList& p,
 
   ScalarT value = cond_list->get("Value", 1.0);
   init_constant(value,p);
+  
+  //cond_list = p.get<Teuchos::ParameterList*>("Laser Source Parameter List");
+  
+  
 
   this->setName("PhaseSource"+PHX::typeAsString<EvalT>());
 
@@ -98,10 +102,10 @@ evaluateFields(typename Traits::EvalData workset)
 
   //source function
   ScalarT laser_beam_radius = 60.0e-6;
-  ScalarT porosity = 0.60;
+  ScalarT porosity = 0.652;
   ScalarT particle_dia = 20.0e-6;
   ScalarT powder_hemispherical_reflectivity = 0.70;
-  ScalarT lambda =2.50;
+  ScalarT lambda =2.0;
   ScalarT pi = 3.1415926535897932;
 
   ScalarT LaserFlux_Max;
@@ -131,14 +135,17 @@ evaluateFields(typename Traits::EvalData workset)
 
   /* The "Thin layer" upto which the volumetric heat in the substrate penetrates is given for optical thickness values for 2.5, 2, and 3. Choose only one at a time based on the porosity
   value defined in the material input file */
+  /*
   //This is for optical thickness = 2.5 (porosity = 0.6, particle dia = 20 microns, powder bed thickness = 50 microns)
   ScalarT Absorptivity_PowderSurface = 0.7728; 
   ScalarT Substrate_Bot = 0.0000575;
-  /*
+  */
+  
   //This is for optical thickness = 2 (porosity = 0.652, particle dia = 20 microns, powder bed thickness = 50 microns)
   ScalarT Absorptivity_PowderSurface = 0.7570; 
   ScalarT Substrate_Bot = 0.000060;
 
+  /*
   //This is for optical thickness = 3 (porosity = 0.556, particle dia = 20 microns, powder bed thickness = 50 microns)
   ScalarT Absorptivity_PowderSurface = 0.7795; 
   ScalarT Substrate_Bot = 0.0000565;
@@ -150,7 +157,10 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT S4 = (A*b1 + B*c2)*(exp(-2.0*a*lambda) - 1.0); 
   ScalarT S5 = 3.0*(1.0 - powder_hemispherical_reflectivity)*(1.0 - exp(-lambda))*(1.0 + powder_hemispherical_reflectivity*exp(-lambda)); 
   ScalarT I_value = S1*(S2*(S3 + S4) + S5);
+  //std::cout<<"Abs at substrate = "<<(Absorptivity_PowderSurface - I_value)<<std::endl;
   
+  //std::cout<<" ebname ="<<workset.EBName<<std::endl; 
+  //std::cout<<"current time ="<<workset.current_time<<std::endl;
   // source function
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t qp = 0; qp < num_qps_; ++qp) {
@@ -159,10 +169,14 @@ evaluateFields(typename Traits::EvalData workset)
         MeshScalarT Z = coord_(cell,qp,2);
                            
         ScalarT radius = sqrt((X - Laser_center_x)*(X - Laser_center_x) + (Y - Laser_center_y)*(Y - Laser_center_y));
-        if (radius < laser_beam_radius && Z >= Substrate_Top && Z <= Substrate_Bot)
+        /*
+		if (radius < laser_beam_radius && Z >= Substrate_Top && Z <= Substrate_Bot)
               source_(cell,qp) = beta*LaserFlux_Max*pow((1.0-(radius*radius)/(laser_beam_radius*laser_beam_radius)),2)*(Absorptivity_PowderSurface - I_value);
         else  source_(cell,qp) =0.0;
-         
+		*/
+		if (radius < laser_beam_radius && Z >= Substrate_Top)
+              source_(cell,qp) = beta*(Absorptivity_PowderSurface - I_value)*LaserFlux_Max*pow((1.0-(radius*radius)/(laser_beam_radius*laser_beam_radius)),2)*exp(-beta*(Z-Substrate_Top));
+		else  source_(cell,qp) =0.0;		        
     }
   }
 }

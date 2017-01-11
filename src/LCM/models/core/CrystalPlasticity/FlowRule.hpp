@@ -67,7 +67,7 @@ struct FlowParameterBase
   param_map_;
 
   // Flow parameters
-  Intrepid2::Vector<RealType>
+  minitensor::Vector<RealType>
   flow_params_;
 };
 
@@ -89,7 +89,7 @@ struct PowerLawFlowParameters final : public FlowParameterBase
     param_map_["Reference Slip Rate"] = RATE_SLIP_REFERENCE;
     param_map_["Rate Exponent"] = EXPONENT_RATE;
     flow_params_.set_dimension(NUM_PARAMS);
-    flow_params_.fill(Intrepid2::ZEROS);
+    flow_params_.fill(minitensor::ZEROS);
   }
 
   virtual
@@ -125,7 +125,7 @@ struct ThermalActivationFlowParameters final : public FlowParameterBase
     param_map_["P Exponent"] = EXPONENT_P;
     param_map_["Q Exponent"] = EXPONENT_Q;
     flow_params_.set_dimension(NUM_PARAMS);
-    flow_params_.fill(Intrepid2::ZEROS);
+    flow_params_.fill(minitensor::ZEROS);
   }
 
   virtual
@@ -156,7 +156,7 @@ struct PowerLawDragFlowParameters final : public FlowParameterBase
     param_map_["Rate Exponent"] = EXPONENT_RATE;
     param_map_["Drag Coefficient"] = COEFFICIENT_DRAG;
     flow_params_.set_dimension(NUM_PARAMS);
-    flow_params_.fill(Intrepid2::ZEROS);
+    flow_params_.fill(minitensor::ZEROS);
   }
 
   virtual

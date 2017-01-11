@@ -9,7 +9,7 @@
 
 #include <iostream>
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -81,101 +81,101 @@ namespace LCM {
     /// Spherical parametrization sweep
     ///
     ScalarT
-    spherical_sweep(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
-      Intrepid2::Vector<ScalarT, 2> & arg_minimum, 
-      Intrepid2::Vector<ScalarT, 3> & direction, double const & interval);
+    spherical_sweep(minitensor::Tensor4<ScalarT, 3> const & tangent,
+      minitensor::Vector<ScalarT, 2> & arg_minimum, 
+      minitensor::Vector<ScalarT, 3> & direction, double const & interval);
 
     ///
     /// Stereographic parametrization sweep
     ///
     ScalarT
-    stereographic_sweep(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
-      Intrepid2::Vector<ScalarT, 2> & arg_minimum,  
-      Intrepid2::Vector<ScalarT, 3> & direction, double const & interval);
+    stereographic_sweep(minitensor::Tensor4<ScalarT, 3> const & tangent,
+      minitensor::Vector<ScalarT, 2> & arg_minimum,  
+      minitensor::Vector<ScalarT, 3> & direction, double const & interval);
     
     ///
     /// Projective parametrization sweep
     ///
     ScalarT
-    projective_sweep(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
-      Intrepid2::Vector<ScalarT, 3> & arg_minimum,  
-      Intrepid2::Vector<ScalarT, 3> & direction, double const & interval);
+    projective_sweep(minitensor::Tensor4<ScalarT, 3> const & tangent,
+      minitensor::Vector<ScalarT, 3> & arg_minimum,  
+      minitensor::Vector<ScalarT, 3> & direction, double const & interval);
     
     ///
     /// Tangent parametrization sweep
     ///
     ScalarT
-    tangent_sweep(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
-      Intrepid2::Vector<ScalarT, 2> & arg_minimum,  
-      Intrepid2::Vector<ScalarT, 3> & direction, double const & interval);     
+    tangent_sweep(minitensor::Tensor4<ScalarT, 3> const & tangent,
+      minitensor::Vector<ScalarT, 2> & arg_minimum,  
+      minitensor::Vector<ScalarT, 3> & direction, double const & interval);     
     
     ///
     /// Cartesian parametrization sweep
     ///
     ScalarT
-    cartesian_sweep(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
-      Intrepid2::Vector<ScalarT, 2> & arg_minimum, int surface_index,   
-      Intrepid2::Vector<ScalarT, 3> & direction, double const & interval);
+    cartesian_sweep(minitensor::Tensor4<ScalarT, 3> const & tangent,
+      minitensor::Vector<ScalarT, 2> & arg_minimum, int surface_index,   
+      minitensor::Vector<ScalarT, 3> & direction, double const & interval);
     
     ///
     /// Newton-Raphson method to find exact min DetA and direction
     ///    
     void
-    spherical_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> const & tangent, 
-      Intrepid2::Vector<ScalarT, 2> & parameters,
-      Intrepid2::Vector<ScalarT, 3> & direction, ScalarT & min_detA); 
+    spherical_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent, 
+      minitensor::Vector<ScalarT, 2> & parameters,
+      minitensor::Vector<ScalarT, 3> & direction, ScalarT & min_detA); 
       
     void
-    stereographic_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> const & tangent, 
-      Intrepid2::Vector<ScalarT, 2> & parameters,
-      Intrepid2::Vector<ScalarT, 3> & direction, ScalarT & min_detA);
+    stereographic_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent, 
+      minitensor::Vector<ScalarT, 2> & parameters,
+      minitensor::Vector<ScalarT, 3> & direction, ScalarT & min_detA);
       
     void
-    projective_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> const & tangent, 
-      Intrepid2::Vector<ScalarT, 3> & parameters,
-      Intrepid2::Vector<ScalarT, 3> & direction, ScalarT & min_detA);
+    projective_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent, 
+      minitensor::Vector<ScalarT, 3> & parameters,
+      minitensor::Vector<ScalarT, 3> & direction, ScalarT & min_detA);
       
     void
-    tangent_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> const & tangent, 
-      Intrepid2::Vector<ScalarT, 2> & parameters,
-      Intrepid2::Vector<ScalarT, 3> & direction, ScalarT & min_detA);
+    tangent_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent, 
+      minitensor::Vector<ScalarT, 2> & parameters,
+      minitensor::Vector<ScalarT, 3> & direction, ScalarT & min_detA);
       
     void
-    cartesian_newton_raphson(Intrepid2::Tensor4<ScalarT, 3> const & tangent, 
-      Intrepid2::Vector<ScalarT, 2> & parameters, int surface_index,
-      Intrepid2::Vector<ScalarT, 3> & direction, ScalarT & min_detA);  
+    cartesian_newton_raphson(minitensor::Tensor4<ScalarT, 3> const & tangent, 
+      minitensor::Vector<ScalarT, 2> & parameters, int surface_index,
+      minitensor::Vector<ScalarT, 3> & direction, ScalarT & min_detA);  
 
     ///
     /// PSO method
     ///
     ScalarT
-    stereographic_pso(Intrepid2::Tensor4<ScalarT, 3> const & tangent,
-      Intrepid2::Vector<ScalarT, 2> & arg_minimum,
-      Intrepid2::Vector<ScalarT, 3> & direction);
+    stereographic_pso(minitensor::Tensor4<ScalarT, 3> const & tangent,
+      minitensor::Vector<ScalarT, 2> & arg_minimum,
+      minitensor::Vector<ScalarT, 3> & direction);
     
     ///
     /// Get normal
     ///  
-    Intrepid2::Vector<D2FadType, 3>
-    spherical_get_normal(Intrepid2::Vector<D2FadType, 2> & parameters);
+    minitensor::Vector<D2FadType, 3>
+    spherical_get_normal(minitensor::Vector<D2FadType, 2> & parameters);
     
-    Intrepid2::Vector<D2FadType, 3>
-    stereographic_get_normal(Intrepid2::Vector<D2FadType, 2> & parameters);
+    minitensor::Vector<D2FadType, 3>
+    stereographic_get_normal(minitensor::Vector<D2FadType, 2> & parameters);
     
-    Intrepid2::Vector<D2FadType, 3>
-    projective_get_normal(Intrepid2::Vector<D2FadType, 3> & parameters);
+    minitensor::Vector<D2FadType, 3>
+    projective_get_normal(minitensor::Vector<D2FadType, 3> & parameters);
     
-    Intrepid2::Vector<D2FadType, 3>
-    tangent_get_normal(Intrepid2::Vector<D2FadType, 2> & parameters);
+    minitensor::Vector<D2FadType, 3>
+    tangent_get_normal(minitensor::Vector<D2FadType, 2> & parameters);
     
-    Intrepid2::Vector<D2FadType, 3>
-    cartesian_get_normal1(Intrepid2::Vector<D2FadType, 2> & parameters);
+    minitensor::Vector<D2FadType, 3>
+    cartesian_get_normal1(minitensor::Vector<D2FadType, 2> & parameters);
     
-    Intrepid2::Vector<D2FadType, 3>
-    cartesian_get_normal2(Intrepid2::Vector<D2FadType, 2> & parameters);
+    minitensor::Vector<D2FadType, 3>
+    cartesian_get_normal2(minitensor::Vector<D2FadType, 2> & parameters);
     
-    Intrepid2::Vector<D2FadType, 3>
-    cartesian_get_normal3(Intrepid2::Vector<D2FadType, 2> & parameters);
+    minitensor::Vector<D2FadType, 3>
+    cartesian_get_normal3(minitensor::Vector<D2FadType, 2> & parameters);
                            
   };
 

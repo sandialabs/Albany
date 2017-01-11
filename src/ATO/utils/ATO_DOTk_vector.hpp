@@ -11,8 +11,6 @@
 #include <vector>
 #include <memory>
 
-#include <Epetra_Comm.h>
-
 #include "Teuchos_RCP.hpp"
 
 #include "DOTk/vector.hpp"
@@ -22,7 +20,7 @@ namespace ATO {
 class vector : public dotk::vector<Real>
 {
 public:
-    vector( int vecLength, Teuchos::RCP<const Epetra_Comm> comm ) :
+    vector( int vecLength, Teuchos::RCP<const Teuchos_Comm> comm ) :
             dotk::vector<Real>::vector(),
             myComm( comm )
     {
@@ -57,7 +55,7 @@ public:
             dot += x_[i] * mStdVector[i];
         }
         Real global_dot=0;
-        myComm->SumAll(&dot, &global_dot, 1);
+        Teuchos::reduceAll(*myComm, Teuchos::REDUCE_SUM, 1, &dot, &global_dot);
 
         return (global_dot);
     }
@@ -97,7 +95,7 @@ public:
 
 private:
     std::vector<Real> mStdVector;
-    Teuchos::RCP<const Epetra_Comm> myComm;
+    Teuchos::RCP<const Teuchos_Comm> myComm;
 
 private:
     vector(const vector &);

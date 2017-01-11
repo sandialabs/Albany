@@ -16,9 +16,9 @@ namespace CP
 	 *	Nonlinear Solver (NLS) class for the CrystalPlasticity model; slip 
 	 *	increments as unknowns.
 	 */
-	template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
+	template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename EvalT>
 	class ResidualSlipNLS:
-			public Intrepid2::Function_Base<
+			public minitensor::Function_Base<
 			ResidualSlipNLS<NumDimT, NumSlipT, EvalT>,
 			typename EvalT::ScalarT, NumSlipT>
 	{
@@ -28,38 +28,38 @@ namespace CP
 
 		//! Constructor.
 		ResidualSlipNLS(
-				Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
+				minitensor::Tensor4<ScalarT, NumDimT> const & C,
 				std::vector<SlipSystem<NumDimT>> const & slip_systems,
 				std::vector<SlipFamily<NumDimT, NumSlipT>> const & slip_families,
-				Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
-				Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
-				Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
-				Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
+				minitensor::Tensor<RealType, NumDimT> const & Fp_n,
+				minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
+				minitensor::Vector<RealType, NumSlipT> const & slip_n,
+				minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
 				RealType dt);
 
 		static constexpr char const * const
 		NAME{"Crystal Plasticity Nonlinear System"};
 
-	  using Base = Intrepid2::Function_Base<
+	  using Base = minitensor::Function_Base<
 	      ResidualSlipNLS<NumDimT, NumSlipT, EvalT>,
 	      typename EvalT::ScalarT, NumSlipT>;
 
 		//! Default implementation of value.
-		template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
+		template<typename T, minitensor::Index N = minitensor::DYNAMIC>
 		T
-		value(Intrepid2::Vector<T, N> const & x);
+		value(minitensor::Vector<T, N> const & x);
 
 		//! Gradient function; returns the residual vector as a function of the slip 
 		// at step N+1.
-		template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
-		Intrepid2::Vector<T, N>
-		gradient(Intrepid2::Vector<T, N> const & x);
+		template<typename T, minitensor::Index N = minitensor::DYNAMIC>
+		minitensor::Vector<T, N>
+		gradient(minitensor::Vector<T, N> const & x);
 
 
 		//! Default implementation of hessian.
-		template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
-		Intrepid2::Tensor<T, N>
-		hessian(Intrepid2::Vector<T, N> const & x);
+		template<typename T, minitensor::Index N = minitensor::DYNAMIC>
+		minitensor::Tensor<T, N>
+		hessian(minitensor::Vector<T, N> const & x);
 
 	private:
 
@@ -69,7 +69,7 @@ namespace CP
 		RealType
 		num_slip_;
 
-		Intrepid2::Tensor4<ScalarT, NumDimT> const &
+		minitensor::Tensor4<ScalarT, NumDimT> const &
 		C_;
 
 		std::vector<SlipSystem<NumDimT>> const &
@@ -78,16 +78,16 @@ namespace CP
 		std::vector<SlipFamily<NumDimT, NumSlipT>> const &
 		slip_families_;
 
-		Intrepid2::Tensor<RealType, NumDimT> const &
+		minitensor::Tensor<RealType, NumDimT> const &
 		Fp_n_;
 
-		Intrepid2::Vector<RealType, NumSlipT> const &
+		minitensor::Vector<RealType, NumSlipT> const &
 		state_hardening_n_;
 
-		Intrepid2::Vector<RealType, NumSlipT> const &
+		minitensor::Vector<RealType, NumSlipT> const &
 		slip_n_;
 
-		Intrepid2::Tensor<ScalarT, NumDimT> const &
+		minitensor::Tensor<ScalarT, NumDimT> const &
 		F_np1_;
 
 		RealType
@@ -99,9 +99,9 @@ namespace CP
 	//! Nonlinear Solver (NLS) class for the CrystalPlasticity model; slip 
 	//  increments and hardnesses as unknowns.
 	//
-	template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename EvalT>
+	template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename EvalT>
 	class ResidualSlipHardnessNLS:
-			public Intrepid2::Function_Base<
+			public minitensor::Function_Base<
 			ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>,
 			typename EvalT::ScalarT, NumSlipT>
 	{
@@ -111,38 +111,38 @@ namespace CP
 
 		//! Constructor.
 		ResidualSlipHardnessNLS(
-				Intrepid2::Tensor4<ScalarT, NumDimT> const & C,
+				minitensor::Tensor4<ScalarT, NumDimT> const & C,
 				std::vector<SlipSystem<NumDimT>> const & slip_systems,
 				std::vector<SlipFamily<NumDimT, NumSlipT>> const & slip_families,
-				Intrepid2::Tensor<RealType, NumDimT> const & Fp_n,
-				Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
-				Intrepid2::Vector<RealType, NumSlipT> const & slip_n,
-				Intrepid2::Tensor<ScalarT, NumDimT> const & F_np1,
+				minitensor::Tensor<RealType, NumDimT> const & Fp_n,
+				minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
+				minitensor::Vector<RealType, NumSlipT> const & slip_n,
+				minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
 				RealType dt);
 
 		static constexpr char const * const
 		NAME{"Slip and Hardness Residual Nonlinear System"};
 
-		using Base = Intrepid2::Function_Base<
+		using Base = minitensor::Function_Base<
 	      ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>,
 	      typename EvalT::ScalarT, NumSlipT>;
 
 		//! Default implementation of value.
-		template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
+		template<typename T, minitensor::Index N = minitensor::DYNAMIC>
 		T
-		value(Intrepid2::Vector<T, N> const & x);
+		value(minitensor::Vector<T, N> const & x);
 
 		//! Gradient function; returns the residual vector as a function of the slip 
 		// and hardness at step N+1.
-		template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
-		Intrepid2::Vector<T, N>
-		gradient(Intrepid2::Vector<T, N> const & x);
+		template<typename T, minitensor::Index N = minitensor::DYNAMIC>
+		minitensor::Vector<T, N>
+		gradient(minitensor::Vector<T, N> const & x);
 
 
 		//! Default implementation of hessian.
-		template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
-		Intrepid2::Tensor<T, N>
-		hessian(Intrepid2::Vector<T, N> const & x);
+		template<typename T, minitensor::Index N = minitensor::DYNAMIC>
+		minitensor::Tensor<T, N>
+		hessian(minitensor::Vector<T, N> const & x);
 
 	private:
 
@@ -152,7 +152,7 @@ namespace CP
 		RealType
 		num_slip_;
 
-		Intrepid2::Tensor4<ScalarT, NumDimT> const &
+		minitensor::Tensor4<ScalarT, NumDimT> const &
 		C_;
 
 		std::vector<SlipSystem<NumDimT>> const &
@@ -161,16 +161,16 @@ namespace CP
 		std::vector<SlipFamily<NumDimT, NumSlipT>> const &
 		slip_families_;
 
-		Intrepid2::Tensor<RealType, NumDimT> const &
+		minitensor::Tensor<RealType, NumDimT> const &
 		Fp_n_;
 
-		Intrepid2::Vector<RealType, NumSlipT> const &
+		minitensor::Vector<RealType, NumSlipT> const &
 		state_hardening_n_;
 
-		Intrepid2::Vector<RealType, NumSlipT> const &
+		minitensor::Vector<RealType, NumSlipT> const &
 		slip_n_;
 
-		Intrepid2::Tensor<ScalarT, NumDimT> const &
+		minitensor::Tensor<ScalarT, NumDimT> const &
 		F_np1_;
 
 		RealType

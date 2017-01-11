@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -88,25 +88,25 @@ namespace LCM {
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int pt=0; pt < numQPs; ++pt) {
 
-        Intrepid2::Vector<MeshScalarT> G_0(3, refDualBasis, cell, pt, 0, 0);
-        Intrepid2::Vector<MeshScalarT> G_1(3, refDualBasis, cell, pt, 1, 0);
-        Intrepid2::Vector<MeshScalarT> G_2(3, refDualBasis, cell, pt, 2, 0);
-        Intrepid2::Vector<MeshScalarT> N(3, refNormal,cell, pt, 0);
+        minitensor::Vector<MeshScalarT> G_0(3, refDualBasis, cell, pt, 0, 0);
+        minitensor::Vector<MeshScalarT> G_1(3, refDualBasis, cell, pt, 1, 0);
+        minitensor::Vector<MeshScalarT> G_2(3, refDualBasis, cell, pt, 2, 0);
+        minitensor::Vector<MeshScalarT> N(3, refNormal,cell, pt, 0);
 
-        Intrepid2::Vector<ScalarT> scalarGradPerpendicular(0, 0, 0);
-        Intrepid2::Vector<ScalarT> scalarGradParallel(0, 0, 0);
+        minitensor::Vector<ScalarT> scalarGradPerpendicular(0, 0, 0);
+        minitensor::Vector<ScalarT> scalarGradParallel(0, 0, 0);
 
        // Need to inverse basis [G_0 ; G_1; G_2] and none of them should be normalized
-        Intrepid2::Tensor<MeshScalarT> gBasis(3, refDualBasis,cell, pt, 0, 0);
-        Intrepid2::Tensor<MeshScalarT> invRefDualBasis(3);
+        minitensor::Tensor<MeshScalarT> gBasis(3, refDualBasis,cell, pt, 0, 0);
+        minitensor::Tensor<MeshScalarT> invRefDualBasis(3);
 
         // This map the position vector from parent to current configuration in R^3
-        gBasis = Intrepid2::transpose(gBasis);
-       invRefDualBasis = Intrepid2::inverse(gBasis);
+        gBasis = minitensor::transpose(gBasis);
+       invRefDualBasis = minitensor::inverse(gBasis);
 
-        Intrepid2::Vector<MeshScalarT> invG_0(3, &invRefDualBasis( 0, 0));
-        Intrepid2::Vector<MeshScalarT> invG_1(3, &invRefDualBasis( 1, 0));
-        Intrepid2::Vector<MeshScalarT> invG_2(3, &invRefDualBasis( 2, 0));
+        minitensor::Vector<MeshScalarT> invG_0(3, &invRefDualBasis( 0, 0));
+        minitensor::Vector<MeshScalarT> invG_1(3, &invRefDualBasis( 1, 0));
+        minitensor::Vector<MeshScalarT> invG_2(3, &invRefDualBasis( 2, 0));
 
         // in-plane (parallel) contribution
         for (int node(0); node < numPlaneNodes; ++node) {

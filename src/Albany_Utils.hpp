@@ -14,7 +14,8 @@
   #define Albany_MPI_Comm MPI_Comm
   #define Albany_MPI_COMM_WORLD MPI_COMM_WORLD
   #define Albany_MPI_COMM_NULL MPI_COMM_NULL
-  #if defined(ALBANY_EPETRA)
+  //IKT, FIXME: remove || defined(ALBANY_ATO) below 
+  #if defined(ALBANY_EPETRA) || defined(ALBANY_ATO) 
     #include "Epetra_MpiComm.h"
   #endif
   #include "Teuchos_DefaultMpiComm.hpp"
@@ -22,7 +23,8 @@
   #define Albany_MPI_Comm int
   #define Albany_MPI_COMM_WORLD 0  // This is compatible with Dakota
   #define Albany_MPI_COMM_NULL 99
-  #if defined(ALBANY_EPETRA)
+  //IKT, FIXME: remove || defined(ALBANY_ATO) below 
+  #if defined(ALBANY_EPETRA) || defined(ALBANY_ATO) 
     #include "Epetra_SerialComm.h"
   #endif
   #include "Teuchos_DefaultSerialComm.hpp"
@@ -44,7 +46,18 @@ inline void cudaError(const char *file, int line) {
 
 namespace Albany {
 
-#if defined(ALBANY_EPETRA)
+  //Helper function which replaces the diagonal of a matrix 
+  void
+  ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
+                         const Teuchos::RCP<Tpetra_Vector>& diag);
+
+  //Helper function which computes absolute values of the rowsum
+  //of a matrix, and puts it in a vector. 
+  Teuchos::RCP<Tpetra_Vector> 
+  InvRowSum(const Teuchos::RCP<const Tpetra_CrsMatrix>& matrix); 
+
+//IKT, FIXME: ultimately get ride of || defined (ALBANY_ATO) below 
+#if defined(ALBANY_EPETRA) || defined (ALBANY_ATO)
 
   Albany_MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec);
 
@@ -55,6 +68,15 @@ namespace Albany {
   Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromEpetraComm(const Epetra_Comm& ec);
 
 #endif
+  
+  //Helper function which replaces the diagonal of a matrix 
+  void ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
+                              const Teuchos::RCP<Tpetra_Vector>& diag);
+
+  //Helper function which creates diagonal vector with entries equal to the 
+  //absolute value of the rowsum of a matrix.
+  Teuchos::RCP<Tpetra_Vector> 
+  InvRowSum(const Teuchos::RCP<const Tpetra_CrsMatrix>& matrix); 
 
   Albany_MPI_Comm getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc);
 
@@ -107,5 +129,12 @@ namespace Albany {
 
   // Do a nice stack trace for debugging
   void do_stack_trace();
+
+  // Check returns codes and throw Teuchos exceptions
+  // Useful for silencing compiler warnings about unused return codes
+  void safe_fscanf(int nitems, FILE* file, const char* format, ...);
+  void safe_sscanf(int nitems, const char* str, const char* format, ...);
+  void safe_fgets(char* str, int size, FILE* stream);
+  void safe_system(char const* str);
 }
 #endif //ALBANY_UTILS

@@ -1,7 +1,0 @@
-#!/bin/bash
-#SBATCH -N 1
-#SBATCH --time=04:00:00
-cd /home/ikalash/nightlyCDash 
-
-cat trilinos ctest_nightly.cmake.frag >& ctest_nightly.cmake  
-bash -c -l "source ride_modules_salloc.sh >& modules_albany.out; bash nightly_cron_script_albany_ride.sh" 

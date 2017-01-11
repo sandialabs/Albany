@@ -35,6 +35,7 @@ public:
   virtual ~Aggregator(){};
 
   virtual void Evaluate()=0;
+  virtual void EvaluateT()=0;
 
   virtual std::string getOutputValueName(){return outputValueName;}
   virtual std::string getOutputDerivativeName(){return outputDerivativeName;}
@@ -43,9 +44,15 @@ public:
   virtual void SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
                                  const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > valueMap,
                                  const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > derivMap){};
-  void SetCommunicator(const Teuchos::RCP<const Epetra_Comm>& _comm){comm = _comm;}
+  virtual void SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems){};
+  virtual void SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,
+                                 const std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > valueMap,
+                                 const std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > derivMap){};
+  void SetCommunicator(const Teuchos::RCP<const Teuchos_Comm>& _comm){comm = _comm;}
   void SetOutputVariables(Teuchos::RCP<double> g, Teuchos::Array<Teuchos::RCP<Epetra_Vector> > deriv)
          {valueAggregated = g; derivAggregated = deriv;}
+  void SetOutputVariablesT(Teuchos::RCP<double> g, Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > derivT)
+         {valueAggregated = g; derivAggregatedT = derivT;}
 
 protected:
 
@@ -58,9 +65,10 @@ protected:
 
   Teuchos::RCP<double> valueAggregated;
   Teuchos::Array<Teuchos::RCP<Epetra_Vector> > derivAggregated;
+  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > derivAggregatedT;
 
   Teuchos::RCP<Albany::Application> outApp;
-  Teuchos::RCP<const Epetra_Comm> comm;
+  Teuchos::RCP<const Teuchos_Comm> comm;
 
   Teuchos::Array<double> normalize;
   double shiftValueAggregated;
@@ -75,12 +83,17 @@ class Aggregator_StateVarBased : public virtual Aggregator {
  public:
   Aggregator_StateVarBased(){}
   void SetInputVariables(const std::vector<SolverSubSolver>& subProblems);
+  void SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems);
  protected:
   typedef struct { std::string name; Teuchos::RCP<Albany::Application> app; } SubValue;
   typedef struct { Teuchos::Array<std::string> name; Teuchos::RCP<Albany::Application> app; } SubDerivative;
+  typedef struct { std::string name; Teuchos::RCP<Albany::Application> app; } SubValueT;
+  typedef struct { Teuchos::Array<std::string> name; Teuchos::RCP<Albany::Application> app; } SubDerivativeT;
 
   std::vector<SubValue> values;
   std::vector<SubDerivative> derivatives;
+  std::vector<SubValueT> valuesT;
+  std::vector<SubDerivativeT> derivativesT;
 };
 /******************************************************************************/
 
@@ -92,12 +105,19 @@ class Aggregator_DistParamBased : public virtual Aggregator {
   void SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
                          const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > valueMap,
                          const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > derivMap);
+  void SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,
+                          const std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > valueMap,
+                          const std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > derivMap);
  protected:
   typedef struct { std::string name; Teuchos::RCP<const Epetra_Vector> value; } SubValue;
+  typedef struct { std::string name; Teuchos::RCP<const Tpetra_Vector> value; } SubValueT;
   typedef struct { std::string name; Teuchos::RCP<Epetra_MultiVector> value; } SubDerivative;
+  typedef struct { std::string name; Teuchos::RCP<Tpetra_MultiVector> value; } SubDerivativeT;
 
   std::vector<SubValue> values;
   std::vector<SubDerivative> derivatives;
+  std::vector<SubValueT> valuesT;
+  std::vector<SubDerivativeT> derivativesT;
 };
 /******************************************************************************/
 
@@ -109,6 +129,7 @@ class Aggregator_Scaled : public virtual Aggregator,
   Aggregator_Scaled(){}
   Aggregator_Scaled(const Teuchos::ParameterList& aggregatorParams, int nTopos);
   virtual void Evaluate();
+  virtual void EvaluateT();
  protected:
   Teuchos::Array<double> weights;
 };
@@ -122,6 +143,7 @@ class Aggregator_Extremum : public virtual Aggregator,
   Aggregator_Extremum(){}
   Aggregator_Extremum(const Teuchos::ParameterList& aggregatorParams, int nTopos);
   virtual void Evaluate();
+  virtual void EvaluateT();
  protected:
   C compare;
 };
@@ -141,6 +163,7 @@ class Aggregator_DistScaled : public virtual Aggregator,
   Aggregator_DistScaled(){}
   Aggregator_DistScaled(const Teuchos::ParameterList& aggregatorParams, int nTopos);
   void Evaluate();
+  void EvaluateT();
  protected:
   Teuchos::Array<double> weights;
 };
@@ -154,6 +177,7 @@ class Aggregator_DistExtremum : public virtual Aggregator,
   Aggregator_DistExtremum(){}
   Aggregator_DistExtremum(const Teuchos::ParameterList& aggregatorParams, int nTopos);
   void Evaluate();
+  void EvaluateT();
  protected:
   C compare;
 };

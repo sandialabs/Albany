@@ -48,17 +48,17 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 
-set (BOOST_DIR "/home/projects/pwr8-rhel72/boost/1.60.0/openmpi/1.10.2/gcc/4.9.2/cuda/7.5.7")
-set (NETCDF_DIR "/home/projects/pwr8-rhel72/netcdf-exo/4.3.3.1/openmpi/1.10.2/gcc/4.9.2/cuda/7.5.7") 
-set (PNETCDF_DIR "/home/projects/pwr8-rhel72/pnetcdf/1.6.1/openmpi/1.10.2/gcc/4.9.2/cuda/7.5.7") 
-set (HDF5_DIR "/home/projects/pwr8-rhel72/hdf5/1.8.16/openmpi/1.10.2/gcc/4.9.2/cuda/7.5.7") 
-set (BLAS_DIR "/home/projects/pwr8-rhel72/openblas/0.2.15/gcc/4.9.2")  
+set (NVCC_WRAPPER "/home/ikalash/nightlyHOMMEXXCDash/repos/Trilinos/packages/kokkos/config/nvcc_wrapper")
+set (CUDA_MANAGED_FORCE_DEVICE_ALLOC 1)
+set( CUDA_LAUNCH_BLOCKING 1)
 
-set (LAPACK_DIR "/home/projects/pwr8-rhel72/openblas/0.2.15/gcc/4.9.2")
-
-set (ZLIB_DIR "/home/projects/pwr8-rhel72/zlib/1.2.8") 
-
-set(MPI_DIR "/home/projects/pwr8-rhel72/openmpi/1.10.2/gcc/4.9.2/cuda/7.5.7") 
+set(BOOST_DIR "/home/projects/pwr8-rhel73-lsf/boost/1.60.0/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44")
+set(NETCDF_DIR "/home/projects/pwr8-rhel73-lsf/netcdf/4.4.1/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
+set(PNETCDF_DIR "/home/projects/pwr8-rhel73-lsf/pnetcdf/1.6.1/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
+set(HDF5_DIR "/home/projects/pwr8-rhel73-lsf/hdf5/1.8.17/openmpi/1.10.4/gcc/5.4.0/cuda/8.0.44") 
+set(BLAS_DIR "/home/projects/pwr8-rhel73-lsf/openblas/0.2.19/gcc/5.3.0")  
+set(LAPACK_DIR "/home/projects/pwr8-rhel73-lsf/openblas/0.2.19/gcc/5.3.0")
+set(ZLIB_DIR "/home/projects/pwr8-rhel73-lsf/zlib/1.2.8") 
 
 if (CLEAN_BUILD)
   # Initial cache info
@@ -84,7 +84,7 @@ if (DOWNLOAD_TRILINOS)
   
   if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Trilinos")
     execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Trilinos_REPOSITORY_LOCATION} -b develop ${CTEST_SOURCE_DIRECTORY}/Trilinos
+      clone ${Trilinos_REPOSITORY_LOCATION} -b master ${CTEST_SOURCE_DIRECTORY}/Trilinos
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -165,9 +165,7 @@ if (BUILD_TRILINOS)
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     #
-    "-DCMAKE_CXX_COMPILER:FILEPATH=mpicxx"
-    "-DCMAKE_C_COMPILER:FILEPATH=mpicc"
-    "-DCMAKE_C_COMPILER:FILEPATH=mpif90"
+    "-DCMAKE_CXX_COMPILER:FILEPATH=${NVCC_WRAPPER}"
     "-DCMAKE_CXX_FLAGS:STRING=-fopenmp -mcpu=power8 -lgfortran" 
     "-DCMAKE_C_FLAGS:STRING=-fopenmp -mcpu=power8 -lgfortran" 
     "-DCMAKE_Fortran_FLAGS:STRING=-lgfortran -fopenmp -mcpu=power8"
@@ -175,19 +173,17 @@ if (BUILD_TRILINOS)
     "-DTrilinos_EXTRA_LINK_FLAGS:STRING=-fopenmp -mcpu=power8 -ldl -lgfortran"
     "-DCMAKE_SKIP_RULE_DEPENDENCY=ON"
     "-DTPL_ENABLE_MPI:BOOL=ON"
-    "-DMPI_BASE_DIR:PATH=$MPI_DIR"
-    "-DMPI_BIN_DIR:FILEPATH=$MPI_DIR/bin"
     #
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_EXEC=mpirun"
     "-DMPI_EXEC_NUMPROCS_FLAG:STRING=-n"
     #
     "-DTPL_ENABLE_BLAS:BOOL=ON"
-    "-DBLAS_LIBRARY_DIRS:PATH=$BLAS_DIR/lib"
+    "-DBLAS_LIBRARY_DIRS:PATH=${BLAS_DIR}/lib"
     "-DBLAS_LIBRARY_NAMES:STRING=blas"
     #
     "-DTPL_ENABLE_LAPACK:BOOL=ON"
-    "-DLAPACK_LIBRARY_DIRS:PATH=$LAPACK_DIR/lib"
+    "-DLAPACK_LIBRARY_DIRS:PATH=${LAPACK_DIR}/lib"
     "-DLAPACK_LIBRARY_NAMES:STRING=lapack"
     #
     "-DTPL_ENABLE_Boost:BOOL=ON"
@@ -262,6 +258,7 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_KokkosExample:BOOL=OFF"
     "-DTrilinos_ENABLE_ML:BOOL=ON"
     "-DTrilinos_ENABLE_OpenMP:BOOL=OFF"
+    "-DTrilinos_ENABLE_MiniTensor:BOOL=ON"
     "-DTrilinos_ENABLE_MueLu:BOOL=ON"
     "-DTrilinos_ENABLE_NOX:BOOL=ON"
     "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
@@ -294,7 +291,7 @@ if (BUILD_TRILINOS)
 
   CTEST_CONFIGURE(
     BUILD "${CTEST_BINARY_DIRECTORY}/TriBuild"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos"
+    SOURCE "/home/ikalash/nightlyHOMMEXXCDash/repos/Trilinos"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     )

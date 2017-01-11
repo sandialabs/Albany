@@ -87,7 +87,8 @@
             <Parameter name="Poissons Ratio" type="double" value="0.33"/>
           </ParameterList>
           <ParameterList name="Geometry Construction">
-            <Parameter name="Type" type="string" value="Body"/>
+            <Parameter name="Geometry Type" type="string" value="Body"/>
+            <Parameter name="Model Type" type="string" value="Non-parameterized"/>
             <Parameter name="Error Checking" type="int" value="0"/>
             <Parameter name="Projection Order" type="int" value="2"/>
             <Parameter name="Uniform Quadrature" type="bool" value="true"/>
@@ -114,7 +115,8 @@
         <ParameterList name="Element Block 1">
           <Parameter name="Name" type="string" value="block_100"/>
           <ParameterList name="Geometry Construction">
-            <Parameter name="Type" type="string" value="Boundary"/>
+            <Parameter name="Geometry Type" type="string" value="Boundary"/>
+            <Parameter name="Model Type" type="string" value="Non-parameterized"/>
             <Parameter name="Error Checking" type="int" value="0"/>
             <Parameter name="Projection Order" type="int" value="2"/>
             <Parameter name="Uniform Quadrature" type="bool" value="true"/>
@@ -130,7 +132,8 @@
         <ParameterList name="Element Block 2">
           <Parameter name="Name" type="string" value="block_200"/>
           <ParameterList name="Geometry Construction">
-            <Parameter name="Type" type="string" value="Boundary"/>
+            <Parameter name="Geometry Type" type="string" value="Boundary"/>
+            <Parameter name="Model Type" type="string" value="Non-parameterized"/>
             <Parameter name="Error Checking" type="int" value="0"/>
             <Parameter name="Projection Order" type="int" value="2"/>
             <Parameter name="Uniform Quadrature" type="bool" value="true"/>
@@ -148,7 +151,8 @@
           <ParameterList name="Geometry Construction">
             <Parameter name="Projection Order" type="int" value="2"/>
             <Parameter name="Uniform Quadrature" type="bool" value="true"/>
-            <Parameter name="Type" type="string" value="Boundary"/>
+            <Parameter name="Geometry Type" type="string" value="Boundary"/>
+            <Parameter name="Model Type" type="string" value="Non-parameterized"/>
             <Parameter name="Error Checking" type="int" value="0"/>
             <Parameter name="Level Set Names" type="Array(string)" value="{LS3_SURF0, LS3_SURF1, LS3_SURF2}"/>
             <Parameter name="Surface Level Set Index" type="int" value="0"/>

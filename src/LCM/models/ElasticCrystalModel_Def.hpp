@@ -7,8 +7,8 @@
 // Author: Mario J. Juha (juham@rpi.edu)
 
 #include <cmath>
-#include "Intrepid2_MiniTensor.h"
-#include "Intrepid2_MiniTensor_Definitions.h"
+#include "MiniTensor.h"
+#include "MiniTensor_Definitions.h"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -57,12 +57,12 @@ namespace LCM
     Phi_ = Phid*degtorad;
     phi2_ = phi2d*degtorad;
 
-    const Intrepid2::Index IndexM = 3;
-    const Intrepid2::Index IndexN = 3;
+    const minitensor::Index IndexM = 3;
+    const minitensor::Index IndexN = 3;
 
     // Initialize rotation matrix
-    Intrepid2::Matrix<double, IndexM, IndexN> rl;
-    rl.fill(Intrepid2::ZEROS);
+    minitensor::Matrix<double, IndexM, IndexN> rl;
+    rl.fill(minitensor::ZEROS);
 
     // Compute rotation matrix
     rl(0,0) = cos(phi1_)*cos(phi2_) - sin(phi1_)*cos(Phi_)*sin(phi2_);
@@ -76,10 +76,10 @@ namespace LCM
     rl(2,2) = cos(Phi_);
 
     // Set elastic tensor in lattice frame
-    Intrepid2::Tensor4<RealType, EC::MAX_DIM> C;
+    minitensor::Tensor4<RealType, EC::MAX_DIM> C;
     C.set_dimension(num_dims_);
     // Initialize with zeros
-    C.fill(Intrepid2::ZEROS);
+    C.fill(minitensor::ZEROS);
     // fill tensor
     C(0,0,0,0) = c11_;
     C(1,1,1,1) = c22_;
@@ -190,36 +190,36 @@ namespace LCM
     PHX::MDField< ScalarT > stress = *eval_fields[cauchy];
 
     // deformation gradient
-    Intrepid2::Tensor<ScalarT> F(num_dims_);
+    minitensor::Tensor<ScalarT> F(num_dims_);
 
     // Inverse deformation gradient
-    Intrepid2::Tensor<ScalarT> Finv(num_dims_);
+    minitensor::Tensor<ScalarT> Finv(num_dims_);
     
     // Right Cauchy-Green deformation tensor (do not confuse with C_). C = F^{T}*F
-    Intrepid2::Tensor<ScalarT> C(num_dims_);
+    minitensor::Tensor<ScalarT> C(num_dims_);
 
     // Inverse of Cauchy-Green deformation tensor.
-    Intrepid2::Tensor<ScalarT> Cinv(num_dims_);
+    minitensor::Tensor<ScalarT> Cinv(num_dims_);
 
     // Right Cauchy-Green deformation tensor times J^{-2/3}. C23 = J^{-2/3}*C
-    Intrepid2::Tensor<ScalarT> C23(num_dims_);
+    minitensor::Tensor<ScalarT> C23(num_dims_);
 
     // Modified Green-Lagrange deformation tensor. E = 1/2*(C23-I)
-    Intrepid2::Tensor<ScalarT> E(num_dims_);
+    minitensor::Tensor<ScalarT> E(num_dims_);
 
     // S = C_:E
-    Intrepid2::Tensor<ScalarT> S(num_dims_);
+    minitensor::Tensor<ScalarT> S(num_dims_);
 
     // First Piola-Kirchhoff stress
-    Intrepid2::Tensor<ScalarT> PK(num_dims_);
+    minitensor::Tensor<ScalarT> PK(num_dims_);
 
     // sigma (Cauchy stress)
-    Intrepid2::Tensor<ScalarT> sigma(num_dims_);
+    minitensor::Tensor<ScalarT> sigma(num_dims_);
 
     // Temporal variables
-    Intrepid2::Tensor<ScalarT> tmp1(num_dims_);
+    minitensor::Tensor<ScalarT> tmp1(num_dims_);
 
-    Intrepid2::Tensor<ScalarT> Dev_Stress(num_dims_);
+    minitensor::Tensor<ScalarT> Dev_Stress(num_dims_);
     
     // Jacobian
     ScalarT Jac;
@@ -240,7 +240,7 @@ namespace LCM
     ScalarT pressure;
 
     // Identity tensor
-    Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
+    minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
 
     for (int cell(0); cell < workset.numCells; ++cell) 
       {
@@ -259,9 +259,9 @@ namespace LCM
 	    // Compute Green-Lagrange deformation tensor. E = 1/2*(C23-I)
 	    E = 0.5*(C23 - I);
 	    // compute inverse of C
-	    Cinv = Intrepid2::inverse(C);
+	    Cinv = minitensor::inverse(C);
 	    // Inverse deformation gradient
-	    Finv = Intrepid2::inverse(F);
+	    Finv = minitensor::inverse(F);
 
 	    // compute S = C_*E
 	    for ( int i = 0; i < num_dims_; ++i )
@@ -281,7 +281,7 @@ namespace LCM
 
 	     // temporal variable
 	    tmp1 = S*C;
-	    ScalarT tmp = (1.0/3.0)*Intrepid2::trace(tmp1);
+	    ScalarT tmp = (1.0/3.0)*minitensor::trace(tmp1);
 
 	    tmp1 = tmp*Cinv;
 	    Dev_Stress = Jac23*(S - tmp1);

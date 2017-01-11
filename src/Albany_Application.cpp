@@ -40,9 +40,14 @@
 #endif
 #endif
 
-#if defined(ATO_USES_COGENT)
+//#if defined(ATO_USES_COGENT)
+#ifdef ALBANY_ATO
+#if defined(ALBANY_EPETRA)
 #include "ATO_XFEM_Preconditioner.hpp"
 #endif
+#include "ATOT_XFEM_Preconditioner.hpp"
+#endif
+//#endif
 
 #include "Albany_ScalarResponseFunction.hpp"
 #include "PHAL_Utilities.hpp"
@@ -221,29 +226,35 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
 
   // Save the solution method to be used
   std::string solutionMethod = problemParams->get("Solution Method", "Steady");
-  if(solutionMethod == "Steady")
+  if(solutionMethod == "Steady") {
     solMethod = Steady;
-  else if(solutionMethod == "Continuation")
+  }
+  else if(solutionMethod == "Continuation") {
     solMethod = Continuation;
-  else if(solutionMethod == "Transient")
+  }
+  else if(solutionMethod == "Transient") {
     solMethod = Transient;
+  }
+  else if(solutionMethod == "Eigensolve") {
+    solMethod = Eigensolve;
+  }
+  else if(solutionMethod == "Aeras Hyperviscosity") {
+    solMethod = Transient;
+  }
   else if(solutionMethod == "Transient Tempus" || "Transient Tempus No Piro") {
 #ifdef ALBANY_TEMPUS
     solMethod = TransientTempus;
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(true,
             std::logic_error, "Solution Method = " << solutionMethod << " is not valid because " 
-            << "Trilinos was not build with Tempus turned ON.\n");
+            << "Trilinos was not built with Tempus turned ON.\n");
 #endif
   }
-  else if(solutionMethod == "Eigensolve")
-    solMethod = Eigensolve;
-  else if(solutionMethod == "Aeras Hyperviscosity")
-    solMethod = Transient;
-  else
+  else {
     TEUCHOS_TEST_FOR_EXCEPTION(true,
             std::logic_error, "Solution Method must be Steady, Transient, Transient Tempus, Transient Tempus No Piro, "
             << "Continuation, Eigensolve, or Aeras Hyperviscosity, not : " << solutionMethod);
+  }
 
   bool expl = false;
   std::string stepperType;
@@ -312,10 +323,12 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     if(precType == "Teko")
       precParams = Teuchos::sublist(problemParams, "Teko", true);
 #endif
-#ifdef ATO_USES_COGENT
+//#ifdef ATO_USES_COGENT
+#ifdef ALBANY_ATO
     if(precType == "XFEM")
       precParams = Teuchos::sublist(problemParams, "XFEM", true);
 #endif
+//#endif
   }
 
   //get info from Scaling parameter list (for scaling Jacobian/residual)
@@ -765,6 +778,20 @@ getJacobianGraphT() const
   return disc->getJacobianGraphT();
 }
 
+RCP<Tpetra_Operator>
+Albany::Application::
+getPreconditionerT()
+{
+//#if defined(ATO_USES_COGENT)
+#ifdef ALBANY_ATO
+  if(precType == "XFEM"){
+    return rcp(new ATOT::XFEM::Preconditioner(precParams));
+  } else
+#endif
+//#endif 
+   return Teuchos::null;
+}
+
 #if defined(ALBANY_EPETRA)
 RCP<Epetra_Operator>
 Albany::Application::
@@ -795,11 +822,13 @@ getPreconditioner()
      return rcp(new Teko::Epetra::InverseFactoryOperator(inverseFac));
   } else
 #endif
-#if defined(ATO_USES_COGENT)
+//#if defined(ATO_USES_COGENT)
+#ifdef ALBANY_ATO
   if(precType == "XFEM"){
     return rcp(new ATO::XFEM::Preconditioner(precParams));
   } else
 #endif
+//#endif
    return Teuchos::null;
 }
 
@@ -1759,6 +1788,27 @@ computeGlobalJacobianT(
   }
 }
 
+void
+Albany::Application::
+computeGlobalPreconditionerT(const RCP<Tpetra_CrsMatrix>& jac,
+                             const RCP<Tpetra_Operator>& prec)
+{
+//#if defined(ATO_USES_COGENT)
+#ifdef ALBANY_ATO 
+  if(precType == "XFEM"){
+    TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
+  
+    *out << "Computing WPrec by Cogent" << std::endl;
+
+    RCP<ATOT::XFEM::Preconditioner> cogentPrec
+      = rcp_dynamic_cast<ATOT::XFEM::Preconditioner>(prec);
+  
+    cogentPrec->BuildPreconditioner(jac, disc, stateMgr);
+  } 
+#endif
+//#endif
+}
+
 #if defined(ALBANY_EPETRA)
 void
 Albany::Application::
@@ -1780,7 +1830,8 @@ computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
     blockPrec->rebuildInverseOperator(wrappedJac);
   } 
 #endif
-#if defined(ATO_USES_COGENT)
+//#if defined(ATO_USES_COGENT)
+#ifdef ALBANY_ATO
   if(precType == "XFEM"){
     TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
   
@@ -1792,6 +1843,7 @@ computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
     cogentPrec->BuildPreconditioner(jac, disc, stateMgr);
   }
 #endif
+//#endif
 }
 #endif
 

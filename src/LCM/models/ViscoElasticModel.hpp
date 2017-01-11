@@ -16,8 +16,8 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Layouts.hpp"
 #include "ConstitutiveModel.hpp"
-#include "Intrepid2_MiniTensor.h"
-#include "Intrepid2_MiniTensor_Definitions.h"
+#include "MiniTensor.h"
+#include "MiniTensor_Definitions.h"
 
 namespace LCM
 {
@@ -25,7 +25,7 @@ namespace LCM
   namespace VE
   {
     // Do not change it!
-    static constexpr Intrepid2::Index MAX_DIM = 3;
+    static constexpr minitensor::Index MAX_DIM = 3;
   }
 
 

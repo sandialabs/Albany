@@ -9,7 +9,7 @@
 #include <Epetra_MpiComm.h>
 #endif
 #include <Phalanx.hpp>
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Utils.hpp"
@@ -39,11 +39,11 @@ typedef shards::CellTopology CT;
 using Teuchos::RCP;
 using Teuchos::rcp;
 using Teuchos::ArrayRCP;
-using Intrepid2::Vector;
-using Intrepid2::Tensor;
-using Intrepid2::bun;
-using Intrepid2::norm;
-using Intrepid2::eye;
+using minitensor::Vector;
+using minitensor::Tensor;
+using minitensor::bun;
+using minitensor::norm;
+using minitensor::eye;
 
 TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
 {

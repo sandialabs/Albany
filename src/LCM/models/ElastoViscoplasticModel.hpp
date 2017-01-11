@@ -89,10 +89,10 @@ private:
   ///
   // template<typename ArgT>
   // void
-  // computeStress(Intrepid2::Tensor<ScalarT> const & F,
-  //     Intrepid2::Tensor<ArgT> const & Fp,
-  //     Intrepid2::Tensor<ArgT> & T,
-  //     Intrepid2::Tensor<ArgT> & S,
+  // computeStress(minitensor::Tensor<ScalarT> const & F,
+  //     minitensor::Tensor<ArgT> const & Fp,
+  //     minitensor::Tensor<ArgT> & T,
+  //     minitensor::Tensor<ArgT> & S,
   //     std::vector<ArgT> & shear) const;
 
   ///
@@ -139,7 +139,7 @@ private:
   /// Solution options
   ///
   bool apply_slip_predictor_;
-  Intrepid2::StepType step_type_;
+  minitensor::StepType step_type_;
 
   RealType implicit_nonlinear_solver_relative_tolerance_;
   RealType implicit_nonlinear_solver_absolute_tolerance_;

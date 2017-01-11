@@ -13,7 +13,7 @@
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 #include "LCM/models/ConstitutiveModel.hpp"
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 #include "Sacado.hpp"
 
@@ -87,10 +87,10 @@ private:
   RealType C11, C33, C12, C23, C44, C66;
   RealType e31, e33, e15, E11, E33;
 
-  Intrepid2::Tensor4<ScalarT> C;
-  Intrepid2::Tensor3<ScalarT> e;
-  Intrepid2::Tensor<ScalarT> eps;
-  Intrepid2::Tensor<ScalarT> R;
+  minitensor::Tensor4<ScalarT> C;
+  minitensor::Tensor3<ScalarT> e;
+  minitensor::Tensor<ScalarT> eps;
+  minitensor::Tensor<ScalarT> R;
 
   bool test;
 

@@ -30,7 +30,7 @@
 #include <Albany_SolverFactory.hpp>
 #include <Albany_Utils.hpp>
 
-#include <Intrepid2_MiniTensor_Geometry.h>
+#include <MiniTensor_Geometry.h>
 
 namespace LCM {
 
@@ -56,7 +56,7 @@ ScalarMap;
 ///
 /// Map for topologcal objects for which it is possible to associate points.
 ///
-typedef std::map<int, Intrepid2::Vector<double>>
+typedef std::map<int, minitensor::Vector<double>>
 PointMap;
 
 ///
@@ -93,13 +93,13 @@ struct KDTreeNode;
 ///
 struct ClusterCenter {
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   position;
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   weighted_centroid;
 
-  Intrepid2::Index
+  minitensor::Index
   count;
 
 };
@@ -126,26 +126,26 @@ struct KDTreeNode {
   right;
 
   // Bounding box of cell
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   lower_corner;
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   upper_corner;
 
   // Weighted centroid and count
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   weighted_centroid;
 
-  Intrepid2::Index
+  minitensor::Index
   count;
 
-  std::set<Intrepid2::Index>
+  std::set<minitensor::Index>
   cell_points;
 
-  std::set<Intrepid2::Index>
+  std::set<minitensor::Index>
   candidate_centers;
 
-  Intrepid2::Index
+  minitensor::Index
   closest_center_to_midcell;
 
 };
@@ -161,8 +161,8 @@ template<typename Node>
 class KDTree {
 public:
 
-  KDTree(std::vector<Intrepid2::Vector<double>> const & points,
-      Intrepid2::Index const number_centers);
+  KDTree(std::vector<minitensor::Vector<double>> const & points,
+      minitensor::Index const number_centers);
 
   boost::shared_ptr<Node> &
   get_root()
@@ -184,7 +184,7 @@ private:
 ///
 template<typename Node>
 boost::shared_ptr<Node>
-BuildKDTree(std::vector<Intrepid2::Vector<double>> const & points);
+BuildKDTree(std::vector<minitensor::Vector<double>> const & points);
 
 ///
 /// Create KD tree node.
@@ -196,8 +196,8 @@ boost::shared_ptr<Node>
 CreateKDTreeNode(
     std::string const & name,
     boost::shared_ptr<Node> parent,
-    std::vector<Intrepid2::Vector<double>> const & points,
-    std::set<Intrepid2::Index> const & points_indices);
+    std::vector<minitensor::Vector<double>> const & points,
+    std::set<minitensor::Index> const & points_indices);
 
 ///
 /// Visit Tree nodes recursively and
@@ -235,12 +235,12 @@ struct OutputVisitor {
 template<typename Node, typename Center>
 struct FilterVisitor {
 
-  std::vector<Intrepid2::Vector<double>> & points;
+  std::vector<minitensor::Vector<double>> & points;
 
   std::vector<Center> & centers;
 
   FilterVisitor(
-      std::vector<Intrepid2::Vector<double>> & p,
+      std::vector<minitensor::Vector<double>> & p,
       std::vector<Center> & c);
 
   void
@@ -277,33 +277,33 @@ public:
   ///
   /// \return Number of nodes on the array
   ///
-  Intrepid2::Index
+  minitensor::Index
   GetNumberNodes() const;
 
   ///
   /// \return Number of elements in the array
   ///
-  Intrepid2::Index
+  minitensor::Index
   GetNumberElements() const;
 
   ///
   /// \return Space dimension
   ///
-  Intrepid2::Index
+  minitensor::Index
   GetDimension() const;
 
   ///
   /// \return Type of finite element in the array
   /// (assume same type for all elements)
   ///
-  Intrepid2::ELEMENT::Type
+  minitensor::ELEMENT::Type
   GetType() const;
 
   ///
   /// \return Number of nodes that define element topology
   /// (assume same type for all elements)
   ///
-  Intrepid2::Index
+  minitensor::Index
   GetNodesPerElement() const;
 
   ///
@@ -345,7 +345,7 @@ public:
   ///
   /// \return Partition centroids
   ///
-  std::vector<Intrepid2::Vector<double>>
+  std::vector<minitensor::Vector<double>>
   GetPartitionCentroids() const;
 
   ///
@@ -357,7 +357,7 @@ public:
   ///
   /// \return Bounding box for all nodes
   ///
-  std::pair<Intrepid2::Vector<double>, Intrepid2::Vector<double>>
+  std::pair<minitensor::Vector<double>, minitensor::Vector<double>>
   BoundingBox() const;
 
   ///
@@ -388,12 +388,12 @@ public:
   /// \param maximum iterations for K-means
   ///
   void
-  SetMaximumIterations(Intrepid2::Index maximum_iterations);
+  SetMaximumIterations(minitensor::Index maximum_iterations);
 
   ///
   /// \return maximum iterarions for K-means
   ///
-  Intrepid2::Index
+  minitensor::Index
   GetMaximumIterations() const;
 
   ///
@@ -419,20 +419,20 @@ public:
   /// of points being inside or outside the domain.
   /// \return points inside the domain.
   ///
-  std::vector<Intrepid2::Vector<double>>
+  std::vector<minitensor::Vector<double>>
   CreateGrid();
 
   ///
   /// Convert point to index into voxel array
   ///
-  Intrepid2::Vector<int>
-  PointToIndex(Intrepid2::Vector<double> const & point) const;
+  minitensor::Vector<int>
+  PointToIndex(minitensor::Vector<double> const & point) const;
 
   ///
   /// Determine is a given point is inside the mesh.
   ///
   bool
-  IsInsideMesh(Intrepid2::Vector<double> const & point) const;
+  IsInsideMesh(minitensor::Vector<double> const & point) const;
 
   ///
   /// Determine is a given point is inside the mesh
@@ -441,7 +441,7 @@ public:
   /// be used on a faster method.
   ///
   bool
-  IsInsideMeshByElement(Intrepid2::Vector<double> const & point) const;
+  IsInsideMeshByElement(minitensor::Vector<double> const & point) const;
 
   ///
   /// \param length_scale Length scale for partitioning for
@@ -449,7 +449,7 @@ public:
   /// \return Number of partitions defined as total volume
   /// of the array divided by the cube of the length scale
   ///
-  Intrepid2::Index
+  minitensor::Index
   GetNumberPartitions(double const length_scale) const;
 
   ///
@@ -464,7 +464,7 @@ public:
   /// closest center to its centroid
   ///
   std::map<int, int>
-  PartitionByCenters(std::vector<Intrepid2::Vector<double>> const & centers);
+  PartitionByCenters(std::vector<minitensor::Vector<double>> const & centers);
 
   ///
   /// Partition mesh with the specified algorithm and length scale
@@ -668,7 +668,7 @@ private:
   //
   // The type of elements in the mesh (assumed that all are of same type)
   //
-  Intrepid2::ELEMENT::Type
+  minitensor::ELEMENT::Type
   type_;
 
   //
@@ -686,7 +686,7 @@ private:
   //
   // Space dimension
   //
-  Intrepid2::Index
+  minitensor::Index
   dimension_;
 
   //
@@ -711,7 +711,7 @@ private:
   //
   // Size of background grid cell
   //
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   cell_size_;
 
   //
@@ -723,16 +723,16 @@ private:
   double
   requested_cell_size_;
 
-  Intrepid2::Index
+  minitensor::Index
   maximum_iterations_;
 
   //
   // Limits of the bounding box for coordinate array
   //
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   lower_corner_;
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   upper_corner_;
 
   //
@@ -823,7 +823,7 @@ private:
   // proper faces
   //
   std::vector<std::vector<int>>
-  GetFaceConnectivity(Intrepid2::ELEMENT::Type const type) const;
+  GetFaceConnectivity(minitensor::ELEMENT::Type const type) const;
 
 private:
 

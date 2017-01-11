@@ -49,7 +49,7 @@ TEST(AlbanyResidualROL, LineSearchRosenbrock)
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   constexpr
-  Intrepid2::Index
+  minitensor::Index
   DIM{2};
 
   using FN = LCM::Banana_Traits<EvalT>;
@@ -82,7 +82,7 @@ TEST(AlbanyResidualROL, LineSearchRosenbrock)
   params.sublist("Status Test").set("Step Tolerance", 1.0e-16);
   params.sublist("Status Test").set("Iteration Limit", 128);
 
-  Intrepid2::Vector<ScalarT, DIM>
+  minitensor::Vector<ScalarT, DIM>
   x;
 
   x(0) = 0.0;
@@ -113,7 +113,7 @@ TEST(AlbanyJacobianROL, LineSearchRosenbrock)
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   constexpr
-  Intrepid2::Index
+  minitensor::Index
   DIM{2};
 
   using FN = LCM::Banana_Traits<EvalT>;
@@ -146,7 +146,7 @@ TEST(AlbanyJacobianROL, LineSearchRosenbrock)
   params.sublist("Status Test").set("Step Tolerance", 1.0e-16);
   params.sublist("Status Test").set("Iteration Limit", 128);
 
-  Intrepid2::Vector<ScalarT, DIM>
+  minitensor::Vector<ScalarT, DIM>
   x;
 
   x(0) = 0.0;

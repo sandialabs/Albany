@@ -11,7 +11,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Shards_CellTopology.hpp"
 //#include "Intrepid2_HGRAD_HEX_Cn_FEM.hpp"
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include <vector>
 #include <functional>
 
@@ -53,9 +53,9 @@ class Integrator
 
  private:
 
-  typedef Intrepid2::Vector<RealType,3> Vector3D;
-  typedef Intrepid2::Vector<int,3> Tri;
-  typedef Intrepid2::Vector<int,4> Tet;
+  typedef minitensor::Vector<RealType,3> Vector3D;
+  typedef minitensor::Vector<int,3> Tri;
+  typedef minitensor::Vector<int,4> Tet;
 
   struct Intersection {
     Intersection(Vector3D p, std::pair<int,int> c):point(p),connect(c){}
@@ -65,7 +65,7 @@ class Integrator
 
   struct MiniPoly {
     MiniPoly(){}
-    MiniPoly(int n){points.resize(n,Vector3D(Intrepid2::ZEROS));mapToBase.resize(n);}
+    MiniPoly(int n){points.resize(n,Vector3D(minitensor::ZEROS));mapToBase.resize(n);}
     std::vector<Vector3D> points;
     std::vector<int> mapToBase;
   };
@@ -140,15 +140,15 @@ class SubIntegrator
   template <typename N> struct Positive { typedef std::greater_equal<N> Type; };
   template <typename N> struct Negative { typedef std::less_equal<N> Type; };
 
-  template <typename N> struct Vector3D { typedef Intrepid2::Vector<N,3> Type; };
-  typedef Intrepid2::Vector<int,3> Tri;
-  typedef Intrepid2::Vector<int,4> Tet;
+  template <typename N> struct Vector3D { typedef minitensor::Vector<N,3> Type; };
+  typedef minitensor::Vector<int,3> Tri;
+  typedef minitensor::Vector<int,4> Tet;
 
   template <typename V, typename P>
   struct Simplex {
     Simplex(){}
-    Simplex(int n){points.resize(n,typename Vector3D<P>::Type(Intrepid2::ZEROS));fieldvals.resize(n);}
-    std::vector<Intrepid2::Vector<P,3> > points;
+    Simplex(int n){points.resize(n,typename Vector3D<P>::Type(minitensor::ZEROS));fieldvals.resize(n);}
+    std::vector<minitensor::Vector<P,3> > points;
     std::vector<V> fieldvals;
   };
 

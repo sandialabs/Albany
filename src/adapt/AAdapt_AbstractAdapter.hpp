@@ -54,7 +54,7 @@ class AbstractAdapter : public NOX::Epetra::AdaptManager {
 
     ///
     /// List of valid problem params common to all adapters, as
-    /// a starting point for the specific  getValidAdaptaterParameters
+    /// a starting point for the specific  getValidAdapterParameters
     ///
     Teuchos::RCP<Teuchos::ParameterList>
     getGenericAdapterParams(std::string listname = "AdapterList") const;

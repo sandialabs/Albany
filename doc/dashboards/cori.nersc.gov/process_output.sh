@@ -24,4 +24,7 @@ rm out5 g
 cat out6 h >& out7 
 rm out6 h 
 cat out7 i >& test_summary.txt
+echo "" >> test_summary.txt
+echo "The Cori CDash site can be accessed here: http://my.cdash.org/index.php?project=Albany" >> test_summary.txt
+echo "" >> test_summary.txt
 rm out7 i 

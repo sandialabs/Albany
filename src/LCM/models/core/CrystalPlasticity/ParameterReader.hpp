@@ -8,7 +8,7 @@
 #define LCM_CrystalPlasticityModel_ParameterReader_hpp
 
 #include <Teuchos_ParameterList.hpp>
-#include <Intrepid2_MiniTensor_Solvers.h>
+#include <MiniTensor_Solvers.h>
 #include "CrystalPlasticityFwd.hpp"
 #include "../../../../utility/ParameterEnum.hpp"
 #include "../../../../utility/StaticAllocator.hpp"
@@ -23,13 +23,13 @@ namespace CP
 		using ScalarT = typename EvalT::ScalarT;
 		using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
-		using Minimizer = Intrepid2::Minimizer<ValueT, CP::NLS_DIM>;
+		using Minimizer = minitensor::Minimizer<ValueT, CP::NLS_DIM>;
 
 		ParameterReader(Teuchos::ParameterList* p);
 		
 		IntegrationScheme	getIntegrationScheme() const;
 		ResidualType getResidualType() const;
-		Intrepid2::StepType getStepType() const;
+		minitensor::StepType getStepType() const;
 		Minimizer getMinimizer() const;
 
 		SlipFamily<CP::MAX_DIM, CP::MAX_SLIP> getSlipFamily(int index);

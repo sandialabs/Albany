@@ -14,7 +14,7 @@ namespace ATO {
 
 ATO_DOTk_ContinuousOperators::ATO_DOTk_ContinuousOperators(
   OptInterface* interface,
-  Teuchos::RCP<const Epetra_Comm> comm) :
+  Teuchos::RCP<const Teuchos_Comm> comm) :
   dotk::DOTk_ContinuousOperators::DOTk_ContinuousOperators(),
   solverInterface( interface ),
   myComm( comm )

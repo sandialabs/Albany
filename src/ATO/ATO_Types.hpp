@@ -6,10 +6,17 @@
 
 namespace ATO {
 
+#if defined(ALBANY_EPETRA)
 typedef struct TopologyStruct {
   Teuchos::RCP<ATO::Topology> topology;
   Teuchos::RCP<Epetra_Vector> dataVector;
 } TopologyStruct;
+#endif 
+
+typedef struct TopologyStructT {
+  Teuchos::RCP<ATO::Topology> topologyT;
+  Teuchos::RCP<Tpetra_Vector> dataVectorT;
+} TopologyStructT;
 
 }
 

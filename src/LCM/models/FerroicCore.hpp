@@ -1,15 +1,15 @@
 #if !defined(FerroicCore_hpp)
 #define FerroicCore_hpp
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include <MiniNonlinearSolver.h>
 
 namespace FM
 {
 
-static constexpr Intrepid2::Index THREE_D = 3;
-static constexpr Intrepid2::Index MAX_VRNT = 27;
-static constexpr Intrepid2::Index MAX_TRNS = MAX_VRNT*MAX_VRNT;
+static constexpr minitensor::Index THREE_D = 3;
+static constexpr minitensor::Index MAX_VRNT = 27;
+static constexpr minitensor::Index MAX_TRNS = MAX_VRNT*MAX_VRNT;
 
 
 enum class IntegrationType
@@ -31,15 +31,15 @@ enum class ExplicitMethod
 struct CrystalPhase
 /******************************************************************************/
 {
-  CrystalPhase(Intrepid2::Tensor <RealType, THREE_D>& R, 
-               Intrepid2::Tensor4<RealType, THREE_D>& C, 
-               Intrepid2::Tensor3<RealType, THREE_D>& h, 
-               Intrepid2::Tensor <RealType, THREE_D>& eps);
+  CrystalPhase(minitensor::Tensor <RealType, THREE_D>& R, 
+               minitensor::Tensor4<RealType, THREE_D>& C, 
+               minitensor::Tensor3<RealType, THREE_D>& h, 
+               minitensor::Tensor <RealType, THREE_D>& eps);
 
-  Intrepid2::Tensor4<RealType, THREE_D> C;
-  Intrepid2::Tensor3<RealType, THREE_D> h;
-  Intrepid2::Tensor <RealType, THREE_D> b;
-  Intrepid2::Tensor <RealType, THREE_D> basis;
+  minitensor::Tensor4<RealType, THREE_D> C;
+  minitensor::Tensor3<RealType, THREE_D> h;
+  minitensor::Tensor <RealType, THREE_D> b;
+  minitensor::Tensor <RealType, THREE_D> basis;
 };
 
 
@@ -47,12 +47,12 @@ struct CrystalPhase
 struct CrystalVariant
 /******************************************************************************/
 {
-  Intrepid2::Tensor4<RealType, THREE_D> C;
-  Intrepid2::Tensor3<RealType, THREE_D> h;
-  Intrepid2::Tensor<RealType, THREE_D> b;
-  Intrepid2::Tensor<RealType, THREE_D> R;
-  Intrepid2::Tensor<RealType, THREE_D> spontStrain;
-  Intrepid2::Vector<RealType, THREE_D> spontEDisp;
+  minitensor::Tensor4<RealType, THREE_D> C;
+  minitensor::Tensor3<RealType, THREE_D> h;
+  minitensor::Tensor<RealType, THREE_D> b;
+  minitensor::Tensor<RealType, THREE_D> R;
+  minitensor::Tensor<RealType, THREE_D> spontStrain;
+  minitensor::Vector<RealType, THREE_D> spontEDisp;
 };
 
 /******************************************************************************/
@@ -64,8 +64,8 @@ struct Transition
 //  Teuchos::RCP<CrystalVariant> fromVariant;
 //  Teuchos::RCP<CrystalVariant> toVariant;
 
-  Intrepid2::Tensor<RealType, THREE_D> transStrain;
-  Intrepid2::Vector<RealType, THREE_D> transEDisp;
+  minitensor::Tensor<RealType, THREE_D> transStrain;
+  minitensor::Vector<RealType, THREE_D> transEDisp;
 };
 
 
@@ -77,41 +77,41 @@ struct Transition
 
 template<typename DataT>
 void 
-changeBasis(      Intrepid2::Tensor4<DataT, THREE_D>& inMatlBasis,
-            const Intrepid2::Tensor4<DataT, THREE_D>& inGlblBasis,
-            const Intrepid2::Tensor <DataT, THREE_D>& Basis);
+changeBasis(      minitensor::Tensor4<DataT, THREE_D>& inMatlBasis,
+            const minitensor::Tensor4<DataT, THREE_D>& inGlblBasis,
+            const minitensor::Tensor <DataT, THREE_D>& Basis);
 
 template<typename DataT>
 void 
-changeBasis(      Intrepid2::Tensor3<DataT, THREE_D>& inMatlBasis,
-            const Intrepid2::Tensor3<DataT, THREE_D>& inGlblBasis,
-            const Intrepid2::Tensor <DataT, THREE_D>& Basis);
+changeBasis(      minitensor::Tensor3<DataT, THREE_D>& inMatlBasis,
+            const minitensor::Tensor3<DataT, THREE_D>& inGlblBasis,
+            const minitensor::Tensor <DataT, THREE_D>& Basis);
 
 template<typename DataT>
 void 
-changeBasis(      Intrepid2::Tensor <DataT, THREE_D>& inMatlBasis,
-            const Intrepid2::Tensor <DataT, THREE_D>& inGlblBasis,
-            const Intrepid2::Tensor <DataT, THREE_D>& Basis);
+changeBasis(      minitensor::Tensor <DataT, THREE_D>& inMatlBasis,
+            const minitensor::Tensor <DataT, THREE_D>& inGlblBasis,
+            const minitensor::Tensor <DataT, THREE_D>& Basis);
 
 template<typename DataT>
 void 
-changeBasis(      Intrepid2::Vector <DataT, THREE_D>& inMatlBasis,
-            const Intrepid2::Vector <DataT, THREE_D>& inGlblBasis,
-            const Intrepid2::Tensor <DataT, THREE_D>& Basis);
+changeBasis(      minitensor::Vector <DataT, THREE_D>& inMatlBasis,
+            const minitensor::Vector <DataT, THREE_D>& inGlblBasis,
+            const minitensor::Tensor <DataT, THREE_D>& Basis);
 
 
 template<typename NLS, typename DataT>
 void 
-DescentNorm(NLS & nls, Intrepid2::Vector<DataT, MAX_TRNS> & xi);
+DescentNorm(NLS & nls, minitensor::Vector<DataT, MAX_TRNS> & xi);
 
 template<typename NLS, typename DataT>
 void 
-ScaledDescent(NLS & nls, Intrepid2::Vector<DataT, MAX_TRNS> & xi);
+ScaledDescent(NLS & nls, minitensor::Vector<DataT, MAX_TRNS> & xi);
 
 template<typename DataT, typename ArgT>
 void
 computeBinFractions(
-    Intrepid2::Vector<ArgT, FM::MAX_TRNS> const & xi,
+    minitensor::Vector<ArgT, FM::MAX_TRNS> const & xi,
     Teuchos::Array<ArgT>                        & newFractions,
     Teuchos::Array<DataT>                 const & oldFractions,
     Teuchos::Array<int>                   const & transitionMap,
@@ -123,12 +123,12 @@ void
 computeInitialState(
     Teuchos::Array<RealType>            const & fractions,
     Teuchos::Array<FM::CrystalVariant>  const & crystalVariants,
-    Intrepid2::Tensor<ArgT,FM::THREE_D> const & x, 
-    Intrepid2::Tensor<ArgT,FM::THREE_D>       & X, 
-    Intrepid2::Tensor<ArgT,FM::THREE_D>       & linear_x,
-    Intrepid2::Vector<ArgT,FM::THREE_D> const & E, 
-    Intrepid2::Vector<ArgT,FM::THREE_D>       & D, 
-    Intrepid2::Vector<ArgT,FM::THREE_D>       & linear_D);
+    minitensor::Tensor<ArgT,FM::THREE_D> const & x, 
+    minitensor::Tensor<ArgT,FM::THREE_D>       & X, 
+    minitensor::Tensor<ArgT,FM::THREE_D>       & linear_x,
+    minitensor::Vector<ArgT,FM::THREE_D> const & E, 
+    minitensor::Vector<ArgT,FM::THREE_D>       & D, 
+    minitensor::Vector<ArgT,FM::THREE_D>       & linear_D);
 
 
 template<typename ArgT>
@@ -136,28 +136,28 @@ void
 computeRelaxedState(
     Teuchos::Array<ArgT>                const & fractions,
     Teuchos::Array<FM::CrystalVariant>  const & crystalVariants,
-    Intrepid2::Tensor<ArgT,FM::THREE_D> const & x, 
-    Intrepid2::Tensor<ArgT,FM::THREE_D>       & X, 
-    Intrepid2::Tensor<ArgT,FM::THREE_D>       & linear_x,
-    Intrepid2::Vector<ArgT,FM::THREE_D>       & E, 
-    Intrepid2::Vector<ArgT,FM::THREE_D> const & D, 
-    Intrepid2::Vector<ArgT,FM::THREE_D>       & linear_D);
+    minitensor::Tensor<ArgT,FM::THREE_D> const & x, 
+    minitensor::Tensor<ArgT,FM::THREE_D>       & X, 
+    minitensor::Tensor<ArgT,FM::THREE_D>       & linear_x,
+    minitensor::Vector<ArgT,FM::THREE_D>       & E, 
+    minitensor::Vector<ArgT,FM::THREE_D> const & D, 
+    minitensor::Vector<ArgT,FM::THREE_D>       & linear_D);
 
 
 template<typename DataT, typename ArgT>
 void
 computeResidual(
-    Intrepid2::Vector<ArgT, FM::MAX_TRNS>       & residual,
+    minitensor::Vector<ArgT, FM::MAX_TRNS>       & residual,
     Teuchos::Array<ArgT>                  const & fractions,
     Teuchos::Array<int>                   const & transitionMap,
     Teuchos::Array<FM::Transition>        const & transitions,
     Teuchos::Array<FM::CrystalVariant>    const & crystalVariants,
     Teuchos::Array<DataT>                 const & tBarrier,
     Kokkos::DynRankView<DataT>            const & aMatrix,
-    Intrepid2::Tensor<ArgT,FM::THREE_D>   const & X, 
-    Intrepid2::Tensor<ArgT,FM::THREE_D>   const & linear_x,
-    Intrepid2::Vector<ArgT,FM::THREE_D>   const & E,
-    Intrepid2::Vector<ArgT,FM::THREE_D>   const & linear_D);
+    minitensor::Tensor<ArgT,FM::THREE_D>   const & X, 
+    minitensor::Tensor<ArgT,FM::THREE_D>   const & linear_x,
+    minitensor::Vector<ArgT,FM::THREE_D>   const & E,
+    minitensor::Vector<ArgT,FM::THREE_D>   const & linear_D);
 
 
 
@@ -171,9 +171,9 @@ computeResidual(
 //! Nonlinear Solver (NLS) class for the domain switching / phase transition model.
 //  Unknowns: transition rates
 //
-template<typename EvalT, Intrepid2::Index M = FM::MAX_TRNS>
+template<typename EvalT, minitensor::Index M = FM::MAX_TRNS>
 class DomainSwitching:
-    public Intrepid2::Function_Base<
+    public minitensor::Function_Base<
     DomainSwitching<EvalT, M>, typename EvalT::ScalarT, M>
 {
   using ArgT = typename EvalT::ScalarT;
@@ -187,32 +187,32 @@ public:
       Teuchos::Array<RealType>           const & transBarriers,
       Teuchos::Array<RealType>           const & binFractions,
       Kokkos::DynRankView<RealType>      const & aMatrix,
-      Intrepid2::Tensor<ArgT,THREE_D>    const & x,
-      Intrepid2::Vector<ArgT,THREE_D>    const & E,
+      minitensor::Tensor<ArgT,THREE_D>    const & x,
+      minitensor::Vector<ArgT,THREE_D>    const & E,
       RealType dt);
 
   static constexpr char const * const
   NAME{"Domain Switching Nonlinear System"};
 
-  using Base = Intrepid2::Function_Base<
+  using Base = minitensor::Function_Base<
       DomainSwitching<EvalT, M>, typename EvalT::ScalarT, M>;
 
   //! Default implementation of value function.
-  template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
+  template<typename T, minitensor::Index N = minitensor::DYNAMIC>
   T
-  value(Intrepid2::Vector<T, N> const & x);
+  value(minitensor::Vector<T, N> const & x);
 
   //! Gradient function; returns the residual vector as a function of the 
   // transition rate at step N+1.
-  template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
-  Intrepid2::Vector<T, N>
-  gradient(Intrepid2::Vector<T, N> const & x) const;
+  template<typename T, minitensor::Index N = minitensor::DYNAMIC>
+  minitensor::Vector<T, N>
+  gradient(minitensor::Vector<T, N> const & x) const;
 
 
   //! Default implementation of hessian function.
-  template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
-  Intrepid2::Tensor<T, N>
-  hessian(Intrepid2::Vector<T, N> const & x);
+  template<typename T, minitensor::Index N = minitensor::DYNAMIC>
+  minitensor::Tensor<T, N>
+  hessian(minitensor::Vector<T, N> const & x);
 
   int getNumStates(){return m_numActiveTransitions;}
 
@@ -223,8 +223,8 @@ private:
   Teuchos::Array<RealType>            const & m_transBarriers;
   Teuchos::Array<RealType>            const & m_binFractions;
   Kokkos::DynRankView<RealType>       const & m_aMatrix;
-  Intrepid2::Tensor<ArgT,THREE_D>     const & m_x;
-  Intrepid2::Vector<ArgT,THREE_D>             m_D;
+  minitensor::Tensor<ArgT,THREE_D>     const & m_x;
+  minitensor::Vector<ArgT,THREE_D>             m_D;
   RealType m_dt;
   int m_numActiveTransitions;
 
