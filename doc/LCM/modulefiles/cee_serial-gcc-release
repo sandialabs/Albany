@@ -4,22 +4,29 @@
 #
 set     arch            serial
 set     tool_chain      gcc
-set     build_type      debug
+set     build_type      release
 set     build           $arch-$tool_chain-$build_type
 set     lcm_dir         $env(LCM_DIR)
 set     module_dir      $env(MODULEPATH)
 set     install_dir     $lcm_dir/trilinos-install-$build
 set     alb_exe_dir     $lcm_dir/albany-build-$build/src
+set     lcm_netcdf_inc  $env(SEMS_NETCDF_ROOT)/include
+set     lcm_netcdf_lib  $env(SEMS_NETCDF_ROOT)/lib
 
 setenv                  ARCH            $arch
 setenv                  TOOL_CHAIN      $tool_chain
 setenv                  BUILD_TYPE      $build_type
 setenv                  BUILD           $build
 setenv                  INSTALL_DIR     $install_dir
-setenv                  BOOST_INC       /usr/include/boost
-setenv                  BOOST_LIB       /usr/lib64
-setenv                  BOOSTLIB_INC    /usr/include/boost
-setenv                  BOOSTLIB_LIB    /usr/lib64
+setenv                  BOOSTDIR        $env(SEMS_BOOST_ROOT)
+setenv                  BOOST_INC       $env(BOOSTDIR)/include
+setenv                  BOOST_LIB       $env(BOOSTDIR)/lib
+setenv                  BOOSTLIB_INC    $env(BOOSTDIR)/include
+setenv                  BOOSTLIB_LIB    $env(BOOSTDIR)/lib
+setenv                  NETCDF          $env(SEMS_NETCDF_ROOT)
+setenv                  NETCDF_INC      $lcm_netcdf_inc
+setenv                  NETCDF_LIB      $lcm_netcdf_lib
+setenv                  HDF5DIR         $env(SEMS_HDF5_ROOT)
 
 prepend-path            LD_LIBRARY_PATH $install_dir/lib
 prepend-path            LD_LIBRARY_PATH /usr/lib64/openmpi/lib

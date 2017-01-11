@@ -16,6 +16,10 @@ set     target          linux86-64
 set     version         16.5
 set     pgidir          $pgihome/$target/$version
 
+setenv                  BOOST_INC       /usr/include/boost
+setenv                  BOOST_LIB       /usr/lib64
+setenv                  BOOSTLIB_INC    /usr/include/boost
+setenv                  BOOSTLIB_LIB    /usr/lib64
 setenv                  ARCH            $arch
 setenv                  TOOL_CHAIN      $tool_chain
 setenv                  BUILD_TYPE      $build_type

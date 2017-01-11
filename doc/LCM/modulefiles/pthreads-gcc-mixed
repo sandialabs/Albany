@@ -16,6 +16,10 @@ setenv                  TOOL_CHAIN      $tool_chain
 setenv                  BUILD_TYPE      $build_type
 setenv                  BUILD           $build
 setenv                  INSTALL_DIR     $install_dir
+setenv                  BOOST_INC       /usr/include/boost
+setenv                  BOOST_LIB       /usr/lib64
+setenv                  BOOSTLIB_INC    /usr/include/boost
+setenv                  BOOSTLIB_LIB    /usr/lib64
 
 prepend-path            LD_LIBRARY_PATH $install_dir/lib
 prepend-path            LD_LIBRARY_PATH /usr/lib64/openmpi/lib
