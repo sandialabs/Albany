@@ -980,14 +980,10 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
         }
     }
 
-    //IKT, FIXME: switch this over to Tpetra once export with Epetra_Min 
-    //combine mode is switched to export with a combine mode that exists in Tpetra. 
-    // determine fixed/nonfixed status of nodes across processors
-    // JR, switched to Epetra_Max
-    Epetra_Vector overlapFreeNodeMask(*overlapNodeMap);
-    Epetra_Vector localFreeNodeMask(*localNodeMap);
-    overlapFreeNodeMask.PutScalar(0.0);
-    double* fMask; overlapFreeNodeMask.ExtractView(&fMask);
+    Tpetra_Vector overlapFreeNodeMaskT(overlapNodeMapT);
+    Tpetra_Vector localFreeNodeMaskT(localNodeMapT);
+    overlapFreeNodeMaskT.putScalar(0.0);
+    Teuchos::ArrayRCP<double> fMask = overlapFreeNodeMaskT.get1dViewNonConst(); 
     for(int ws=0; ws<numWorksets; ws++){
       Albany::MDArray& wsTopo = dest[ws][topology->getName()];
       int numCells = wsTopo.dimension(0), numNodes = wsTopo.dimension(1);
@@ -1005,9 +1001,9 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
           }
       }
     }
-    localFreeNodeMask.PutScalar(1.0);
-    localFreeNodeMask.Export(overlapFreeNodeMask, *exporter, Epetra_Max);
-    overlapFreeNodeMask.Import(localFreeNodeMask, *importer, Insert);
+    localFreeNodeMaskT.putScalar(1.0);
+    localFreeNodeMaskT.doExport(overlapFreeNodeMaskT, *exporterT, Tpetra::ABSMAX);
+    overlapFreeNodeMaskT.doImport(localFreeNodeMaskT, *importerT, Tpetra::INSERT);
   
     // if it is a fixed block, set the topology variable to the material value
     for(int ws=0; ws<numWorksets; ws++){
@@ -1016,7 +1012,7 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
       for(int cell=0; cell<numCells; cell++)
         for(int node=0; node<numNodes; node++){
           int gid = wsElNodeID[ws][cell][node];
-          int lid = overlapNodeMap->LID(gid);
+          int lid = overlapNodeMapT->getLocalElement(gid);
           if(fMask[lid] != 1.0) otopo[lid] = matVal;
         }
     }
