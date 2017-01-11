@@ -36,9 +36,10 @@ cmake \
 \
  -D TPL_ENABLE_Boost:BOOL=ON \
  -D TPL_ENABLE_BoostLib:BOOL=ON \
- -D BoostLib_INCLUDE_DIRS:FILEPATH="/usr/include/boost" \
- -D BoostLib_LIBRARY_DIRS:FILEPATH="/usr/lib64" \
- -D Boost_INCLUDE_DIRS:FILEPATH="/usr/include/boost" \
+ -D Boost_INCLUDE_DIRS:FILEPATH="$BOOST_INC" \
+ -D Boost_LIBRARY_DIRS:FILEPATH="$BOOST_LIB" \
+ -D BoostLib_INCLUDE_DIRS:FILEPATH="$BOOSTLIB_INC" \
+ -D BoostLib_LIBRARY_DIRS:FILEPATH="$BOOSTLIB_LIB" \
 \
  -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
  -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
@@ -75,9 +76,9 @@ cmake \
  -D TPL_ENABLE_Matio:BOOL=OFF \
  -D TPL_ENABLE_Netcdf:BOOL=ON \
  -D TPL_ENABLE_X11:BOOL=OFF \
- -D TPL_Netcdf_INCLUDE_DIRS:PATH=lcm_netcdf_inc \
- -D TPL_Netcdf_LIBRARY_DIRS:PATH=lcm_netcdf_lib \
- -D TPL_Netcdf_LIBRARIES:PATH=lcm_netcdf_lib/libnetcdf.so \
+ -D TPL_Netcdf_INCLUDE_DIRS:PATH="lcm_netcdf_inc" \
+ -D TPL_Netcdf_LIBRARY_DIRS:PATH="lcm_netcdf_lib" \
+ -D TPL_Netcdf_LIBRARIES:PATH="lcm_netcdf_lib/libnetcdf.so" \
  -D TPL_Netcdf_PARALLEL:BOOL=ON \
 \
  -D Trilinos_ENABLE_Amesos2:BOOL=ON \
