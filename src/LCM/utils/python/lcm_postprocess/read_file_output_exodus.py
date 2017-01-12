@@ -3,15 +3,15 @@
 read_file_output_exodus.py
 '''
 
-from _core import stdout_redirected
+# from lcm_postprocess._core import stdout_redirected
 from exodus import exodus
 import lcm_postprocess
 import numpy as np
 import re
 
-from lcm_exodus import get_names_variable
-from lcm_exodus import get_num_elements_block
-from lcm_exodus import get_element_variable_values
+from lcm_postprocess.lcm_exodus import get_names_variable
+from lcm_postprocess.lcm_exodus import get_num_elements_block
+from lcm_postprocess.lcm_exodus import get_element_variable_values
 
 #
 # Read the Exodus output file
@@ -30,7 +30,7 @@ def read_file_output_exodus(
         'block_ids', 
         'num_points']):
 
-    with stdout_redirected():
+    with lcm_postprocess.stdout_redirected():
         file_input = exodus(filename,'r')
 
     dict_variables = {}
@@ -178,7 +178,7 @@ def read_file_output_exodus(
                     node = domain.nodes[key_node]
 
                     try:
-                        node.variables[name_variable_node][time][dim_i] = values[index_node] #FIXME: should be indexed by node id map
+                        node.variables[name_variable_node][time][dim_i] = values[index_node]
                     except:
                         print key_node
 
@@ -292,13 +292,12 @@ def read_file_output_exodus(
                 indices_variable,
                 domain)
 
-    with stdout_redirected():
+    with lcm_postprocess.stdout_redirected():
         file_input.close()
 
     return domain
 
 # end def read_file_output_exodus(file_input, **kwargs):
-
 
 
 
@@ -319,11 +318,11 @@ def _set_values_tensor(file_input, name_variable, indices_variable, domain):
     # Note: exodus function get_element_variable_values returns values by block,    
     # so outer loop over block
 
-    for key_block in domain.blocks:
+    for key_block, block in domain.blocks.items():
 
         num_elements_block = get_num_elements_block(file_input, key_block)
 
-        block = domain.blocks[key_block]
+        # block = domain.blocks[key_block]
 
         map_element_ids = block.map_element_ids
 
@@ -346,16 +345,16 @@ def _set_values_tensor(file_input, name_variable, indices_variable, domain):
         block.variables[name_variable] = \
             dict([(step, np.zeros((num_dims, num_dims))) for step in times])
 
-        for key_element in block.elements:
+        for element in block.elements.values():
 
-            element = block.elements[key_element]
+            # element = block.elements[key_element]
 
             element.variables[name_variable] = \
                 dict([(step, np.zeros((num_dims, num_dims))) for step in times])
 
-            for key_point in element.points:
+            for point in element.points.values():
 
-                point = element.points[key_point]
+                # point = element.points[key_point]
 
                 point.variables[name_variable] = \
                     dict([(step, np.zeros((num_dims, num_dims))) for step in times])
@@ -376,6 +375,11 @@ def _set_values_tensor(file_input, name_variable, indices_variable, domain):
 
                         index_variable = names_variable_exodus.index(name_variable_exodus) + 1
 
+                        # values_block = file_input.get_element_variable_values(
+                        #     key_block,
+                        #     name_variable_exodus,
+                        #     step + 1)
+
                         values_block = get_element_variable_values(
                             file_input,
                             key_block,
@@ -383,22 +387,22 @@ def _set_values_tensor(file_input, name_variable, indices_variable, domain):
                             index_variable,
                             step + 1)
 
-                        for key_element in block.elements:
+                        for key_element, element in block.elements.items():
 
-                            element = block.elements[key_element]
+                            # element = block.elements[key_element]
 
-                            point = element.points[index_point]
+                            # point = element.points[index_point]
 
-                            point.variables[name_variable][time][dim_i, dim_j] = \
+                            element.points[index_point].variables[name_variable][time][dim_i, dim_j] = \
                                 values_block[map_element_ids[key_element]]
 
-                    for key_element in block.elements:
+                    for element in block.elements.values():
 
-                        element = block.elements[key_element]
+                        # element = block.elements[key_element]
 
-                        for key_point in element.points:
+                        for point in element.points.values():
 
-                            point = element.points[key_point]
+                            # point = element.points[key_point]
 
                             element.variables[name_variable][time][dim_i, dim_j] += \
                                 point.variables[name_variable][time][dim_i, dim_j] * \

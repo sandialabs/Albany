@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
 import sys
-from lcm_exodus import open_file_exodus
-from lcm_exodus import close_file_exodus
+import lcm_postprocess
+from .lcm_exodus import open_file_exodus
+from .lcm_exodus import close_file_exodus
 import matplotlib.pyplot as plt
-from _core import stdout_redirected
-from _core import InputError
+# from ._core import stdout_redirected
+# from ._core import InputError
 
 
 def compute_force_displacement(

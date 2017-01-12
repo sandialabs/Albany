@@ -5,6 +5,7 @@ read_file_input_material.py
 
 import xml.etree.ElementTree as et
 from _core import ObjDomain
+# import lcm_postprocess
 import numpy as np
 
 # Read the materials input file

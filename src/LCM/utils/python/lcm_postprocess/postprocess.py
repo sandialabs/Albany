@@ -9,21 +9,22 @@ creates usable output from LCM calculations
 # Imported modules
 #
 import cPickle as pickle
-from _core import Timer
-from read_file_log import read_file_log
-from read_file_output_exodus import read_file_output_exodus
-from read_file_input_material import read_file_input_material
-from derive_value_variable import derive_value_variable
-from write_file_exodus import write_file_exodus
-from plot_data_run import plot_data_run
-from plot_inverse_pole_figure import plot_inverse_pole_figure
-from plot_data_stress import plot_data_stress
-from write_file_data import write_file_data
+from lcm_postprocess._core import Timer
+from lcm_postprocess.read_file_log import read_file_log
+from lcm_postprocess.read_file_output_exodus import read_file_output_exodus
+from lcm_postprocess.read_file_input_material import read_file_input_material
+from lcm_postprocess.derive_value_variable import derive_value_variable
+from lcm_postprocess.write_file_exodus import write_file_exodus
+from lcm_postprocess.plot_data_run import plot_data_run
+from lcm_postprocess.plot_inverse_pole_figure import plot_inverse_pole_figure
+from lcm_postprocess.plot_data_stress import plot_data_stress
+from lcm_postprocess.write_file_data import write_file_data
 
 
 #
 # Main function to postprocess simulation data
 #
+# @profile
 def postprocess(
     name_file_output_exodus,
     plotting = False,
@@ -62,7 +63,7 @@ def postprocess(
             print '    No log file found.'
 
     if verbosity > 0:
-        print '    Elapsed time: ' + str(timer.interval) + 's\n'
+        timer.print_time()
 
 
 
@@ -78,7 +79,7 @@ def postprocess(
         domain = read_file_output_exodus(filename = name_file_output_exodus)
 
     if verbosity > 0:
-        print '    Elapsed time: ' + str(timer.interval) + 's\n'
+        timer.print_time()
 
 
 
@@ -98,7 +99,7 @@ def postprocess(
             names_variable = ['orientations'])
 
     if verbosity > 0:
-        print '    Elapsed time: ' + str(timer.interval) + 's\n'
+        timer.print_time()
 
 
 
@@ -114,7 +115,7 @@ def postprocess(
         derive_value_variable(domain)
 
     if verbosity > 0:
-        print '    Elapsed time: ' + str(timer.interval) + 's\n'
+        timer.print_time()
 
 
 
@@ -134,7 +135,7 @@ def postprocess(
         write_file_exodus(domain, name_file_output_exodus, name_file_postprocess)
 
     if verbosity > 0:
-        print '    Elapsed time: ' + str(timer.interval) + 's\n'
+        timer.print_time()
 
 
 
@@ -155,7 +156,7 @@ def postprocess(
             plot_data_run(run = run)
 
         if verbosity > 0:
-            print '    Elapsed time: ' + str(timer.interval) + 's\n'
+            timer.print_time()
 
         #
         # Plot the inverse pole figures
@@ -170,7 +171,7 @@ def postprocess(
                 plot_inverse_pole_figure(domain = domain, time = step, fmt = fmt)
 
         if verbosity > 0:
-            print '    Elapsed time: ' + str(timer.interval) + 's\n'
+            timer.print_time()
 
         #
         # Plot stress-strain data
@@ -183,7 +184,7 @@ def postprocess(
             plot_data_stress(domain = domain)
 
         if verbosity > 0:
-            print '    Elapsed time: ' + str(timer.interval) + 's\n'
+            timer.print_time()
 
 
 
@@ -206,7 +207,7 @@ def postprocess(
             file_pickling.close()
 
         if verbosity > 0:
-            print '    Elapsed time: ' + str(timer.interval) + 's\n'
+            timer.print_time()
 
 
     #
@@ -222,7 +223,7 @@ def postprocess(
             write_file_data(domain = domain, name_file_output = name_file_base + '_Data.out')
 
         if verbosity > 0:
-            print '    Elapsed time: ' + str(timer.interval) + 's\n'
+            timer.print_time()
 
 
 

@@ -49,103 +49,60 @@ def write_file_exodus(domain = None, name_file_input = None, name_file_output = 
     #
     # create variables in output file
     #
-    file_output.set_element_variable_number(3 * num_dims**2 + 3)
 
-    for dim_i in range(num_dims):
+    names_var_output_tensor = ['Cauchy_Stress', 'F', 'Log_Strain']
+    names_var_output_scalar = ['Mises_Stress', 'eqps', 'Misorientation']
 
-        for dim_j in range(num_dims):
+    names_var_avail_tensor = [name for name in names_var_output_tensor if name in domain.variables]
+    names_var_avail_scalar = [name for name in names_var_output_scalar if name in domain.variables]
 
-            name_stress = 'Cauchy_Stress_' + str(dim_i + 1) + str(dim_j + 1)
+    num_vars_tensor = len(names_var_avail_tensor)
+    num_vars_scalar = len(names_var_avail_scalar)
 
-            file_output.put_element_variable_name(
-                name_stress, 
-                dim_i * num_dims + dim_j + 1)
+    file_output.set_element_variable_number(num_dims**2 * len(names_var_avail_tensor) + len(names_var_avail_scalar))
 
-            name_def_grad = 'F_' + str(dim_i + 1) + str(dim_j + 1)
+    for index, name in enumerate(names_var_avail_tensor):
 
-            file_output.put_element_variable_name(
-                name_def_grad, 
-                num_dims**2 + dim_i * num_dims + dim_j + 1)
+        for dim_i in range(num_dims):
 
-            name_strain = 'Log_Strain_' + str(dim_i + 1) + str(dim_j + 1)
+            for dim_j in range(num_dims):
 
-            file_output.put_element_variable_name(
-                name_strain, 
-                2 * num_dims**2 + dim_i * num_dims + dim_j + 1)
+                name_indexed = name + '_' + str(dim_i + 1) + str(dim_j + 1)
 
-            for key_block in domain.blocks:
+                file_output.put_element_variable_name(
+                    name_indexed, 
+                    index * num_dims**2 + dim_i * num_dims + dim_j + 1)
 
-                block = domain.blocks[key_block]
+                for key_block in domain.blocks:
 
-                for step in range(len(times)):
+                    block = domain.blocks[key_block]
 
-                    file_output.put_element_variable_values(
-                        key_block,
-                        name_stress,
-                        step + 1,
-                        [block.elements[key_element].variables['Cauchy_Stress'][times[step]][dim_i][dim_j] for key_element in block.elements])
+                    for step in range(len(times)):
 
-                    file_output.put_element_variable_values(
-                        key_block,
-                        name_def_grad,
-                        step + 1,
-                        [block.elements[key_element].variables['F'][times[step]][dim_i][dim_j] for key_element in block.elements])
+                        file_output.put_element_variable_values(
+                            key_block,
+                            name_indexed,
+                            step + 1,
+                            [block.elements[key_element].variables[name][times[step]][dim_i][dim_j] for key_element in block.elements])
 
-                    file_output.put_element_variable_values(
-                        key_block,
-                        name_strain,
-                        step + 1,
-                        [block.elements[key_element].variables['Log_Strain'][times[step]][dim_i][dim_j] for key_element in block.elements])
+    for index, name in enumerate(names_var_avail_scalar):
 
-    file_output.put_element_variable_name(
-        'Mises_Stress', 
-        3 * num_dims**2 + 1)
+        file_output.put_element_variable_name(
+            name, 
+            num_vars_tensor + index + 2)
 
-    for key_block in domain.blocks:
+        for key_block in domain.blocks:
 
-        block = domain.blocks[key_block]
+            block = domain.blocks[key_block]
 
-        for step in range(len(times)):
+            for step in range(len(times)):
 
-            file_output.put_element_variable_values(
-                key_block,
-                'Mises_Stress',
-                step + 1,
-                [block.elements[key_element].variables['Mises_Stress'][times[step]] for key_element in block.elements])
+                file_output.put_element_variable_values(
+                    key_block,
+                    name,
+                    step + 1,
+                    [block.elements[key_element].variables[name][times[step]] for key_element in block.elements])
 
-    file_output.put_element_variable_name(
-        'eqps', 
-        3 * num_dims**2 + 2)
-
-    for key_block in domain.blocks:
-
-        block = domain.blocks[key_block]
-
-        for step in range(len(times)):
-
-            file_output.put_element_variable_values(
-                key_block,
-                'eqps',
-                step + 1,
-                [block.elements[key_element].variables['eqps'][times[step]] for key_element in block.elements])
-
-    file_output.put_element_variable_name(
-        'Misorientation', 
-        3 * num_dims**2 + 3)
-
-    for key_block in domain.blocks:
-
-        block = domain.blocks[key_block]
-
-        for step in range(len(times)):
-
-            file_output.put_element_variable_values(
-                key_block,
-                'Misorientation',
-                step + 1,
-                [block.elements[key_element].variables['Misorientation'][times[step]] for key_element in block.elements])
-
-            
     with stdout_redirected():
         file_output.close()
 

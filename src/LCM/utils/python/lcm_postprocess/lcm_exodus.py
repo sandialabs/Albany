@@ -2,7 +2,8 @@ import ctypes
 import exodus
 import numpy as np
 import os
-from _core import stdout_redirected
+# from lcm_postprocess._core import stdout_redirected
+import lcm_postprocess
 
 
 EXODUS_LIB = ctypes.cdll.LoadLibrary('libexodus.so')
