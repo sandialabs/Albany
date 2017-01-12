@@ -60,52 +60,6 @@ if (CLEAN_BUILD)
   file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
 endif ()
 
-if (DOWNLOAD)
-
-  set (CTEST_CHECKOUT_COMMAND)
-  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-  #
-  # Get Albany
-  #
-
-  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
-    execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany
-      OUTPUT_VARIABLE _out
-      ERROR_VARIABLE _err
-      RESULT_VARIABLE HAD_ERROR)
-    
-    message(STATUS "out: ${_out}")
-    message(STATUS "err: ${_err}")
-    message(STATUS "res: ${HAD_ERROR}")
-    if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot clone Albany repository!")
-    endif ()
-  endif ()
-
-  #
-  # Get cism-piscees
-  #
-  #
-  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/cism-piscees")
-    execute_process (COMMAND "${CTEST_GIT_COMMAND}"
-      clone ${cism-piscees_REPOSITORY_LOCATION} -b felix_interface ${CTEST_SOURCE_DIRECTORY}/cism-piscees
-      OUTPUT_VARIABLE _out
-      ERROR_VARIABLE _err
-      RESULT_VARIABLE HAD_ERROR)
-    message(STATUS "out: ${_out}")
-    message(STATUS "err: ${_err}")
-    message(STATUS "res: ${HAD_ERROR}")
-    if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot clone cism-piscees repository!")
-    endif ()
-  endif ()
-
-  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-
-
-endif ()
-
 ctest_start(${CTEST_TEST_TYPE})
 
 #

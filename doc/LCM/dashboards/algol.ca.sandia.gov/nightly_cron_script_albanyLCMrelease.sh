@@ -1,6 +1,6 @@
 #!/bin/sh
 
-TESTDIR=/home/ikalash/LCM/nightlyCDash 
+TESTDIR=/home/lcm/LCM/nightlyCDash 
 
 cd $TESTDIR 
 
