@@ -243,9 +243,7 @@ namespace ATO {
 
     // methods
     void copyTopologyIntoStateMgr(const double* p, Albany::StateManager& stateMgr );
-    void smoothTopology(double* p);
     void smoothTopologyT(double* p);
-    void smoothTopology(Teuchos::RCP<TopologyInfoStruct> topoStruct);
     void smoothTopologyT(Teuchos::RCP<TopologyInfoStructT> topoStructT);
     void copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr );
     void copyTopologyIntoParameter(const double* p, SolverSubSolver& sub);
