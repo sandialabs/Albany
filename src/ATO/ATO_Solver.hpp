@@ -166,10 +166,6 @@ namespace ATO {
       Teuchos::RCP<Topology>      topology;
       Teuchos::RCP<SpatialFilter> filter;
       Teuchos::RCP<SpatialFilter> postFilter;
-      Teuchos::RCP<Epetra_Vector> filteredOverlapVector;
-      Teuchos::RCP<Epetra_Vector> filteredVector;
-      Teuchos::RCP<Epetra_Vector> overlapVector;
-      Teuchos::RCP<Epetra_Vector> localVector;
       bool                        filterIsRecursive;
     } TopologyInfoStruct;
 
@@ -215,11 +211,8 @@ namespace ATO {
     Teuchos::RCP<const Teuchos_Comm> _solverComm; 
     Teuchos::RCP<Teuchos::ParameterList> _mainAppParams;
 
-    Teuchos::RCP<const Epetra_Map> overlapNodeMap;
-    Teuchos::RCP<const Epetra_Map> localNodeMap;
     Teuchos::RCP<const Tpetra_Map> overlapNodeMapT;
     Teuchos::RCP<const Tpetra_Map> localNodeMapT;
-
 
     Teuchos::Array< Teuchos::RCP<Tpetra_Vector> > overlapObjectiveGradientVecT;
     Teuchos::Array< Teuchos::RCP<Tpetra_Vector> > ObjectiveGradientVecT;

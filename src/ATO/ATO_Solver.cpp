@@ -284,21 +284,12 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   Teuchos::RCP<Albany::Application> app = _subProblems[0].app;
   Teuchos::RCP<Albany::AbstractDiscretization> disc = app->getDiscretization();
 
-  localNodeMap   = disc->getNodeMap();
-  overlapNodeMap = disc->getOverlapNodeMap();
   localNodeMapT   = disc->getNodeMapT();
   overlapNodeMapT = disc->getOverlapNodeMapT();
 
   for(int itopo=0; itopo<ntopos; itopo++){
     Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];
     Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
-    if(topoStruct->postFilter != Teuchos::null ){
-      topoStruct->filteredOverlapVector = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
-      topoStruct->filteredVector  = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
-    } else {
-      topoStruct->filteredOverlapVector = Teuchos::null;
-      topoStruct->filteredVector = Teuchos::null;
-    }
     if(topoStructT->postFilterT != Teuchos::null ){
       topoStructT->filteredOverlapVectorT = Teuchos::rcp(new Tpetra_Vector(overlapNodeMapT));
       topoStructT->filteredVectorT  = Teuchos::rcp(new Tpetra_Vector(localNodeMapT));
@@ -308,8 +299,6 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     }
 
     // create overlap topo vector for output purposes
-    topoStruct->overlapVector = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
-    topoStruct->localVector   = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
     topoStructT->overlapVectorT = Teuchos::rcp(new Tpetra_Vector(overlapNodeMapT));
     topoStructT->localVectorT   = Teuchos::rcp(new Tpetra_Vector(localNodeMapT));
 
@@ -775,8 +764,11 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
 
     // JR: fix this.  you don't need to do this every time.  Just once at setup, after topoVec is built
     int distParamIndex = subSolver.params_in->Np()-1;
+    Teuchos::RCP<Epetra_Comm> comm = 
+      Albany::createEpetraCommFromTeuchosComm(localNodeMapT->getComm());
+    Teuchos::RCP<Epetra_Map> localNodeMap = Petra::TpetraMap_To_EpetraMap(localNodeMapT, comm); 
     Teuchos::RCP<Epetra_Vector> topoVec = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
-    Petra::TpetraVector_To_EpetraVector(topoVecT, *topoVec, Teuchos::rcpFromRef(localNodeMap->Comm())); 
+    Petra::TpetraVector_To_EpetraVector(topoVecT, *topoVec, comm); 
     subSolver.params_in->set_p(distParamIndex,topoVec);
   
     overlapTopoVecT->doImport(*topoVecT, *importerT, Tpetra::INSERT);
@@ -1050,6 +1042,9 @@ ATO::Solver::copyObjectiveFromStateMgr( double& g, double* dgdp )
       std::memcpy((void*)(dgdp+ivec*numLocalNodes), lvec.getRawPtr(), numLocalNodes*sizeof(double));
 #else 
     // apply filter if requested
+    Teuchos::RCP<Epetra_Comm> comm = 
+      Albany::createEpetraCommFromTeuchosComm(localNodeMapT->getComm());
+    Teuchos::RCP<Epetra_Map> localNodeMap = Petra::TpetraMap_To_EpetraMap(localNodeMapT, comm); 
     Teuchos::RCP<Epetra_Vector> ObjectiveGradientVecE = Teuchos::rcp(new Epetra_Vector(*localNodeMap)); 
     Petra::TpetraVector_To_EpetraVector(ObjectiveGradientVecT[ivec],
                                         *ObjectiveGradientVecE, Teuchos::rcpFromRef(localNodeMap->Comm()));
