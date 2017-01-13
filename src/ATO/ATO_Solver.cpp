@@ -82,17 +82,12 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   if( topoParams.isType<bool>("Read From Restart") )
      _is_restart = topoParams.get<bool>("Read From Restart");
 
-  _topologyInfoStructs.resize(ntopos);
   _topologyInfoStructsT.resize(ntopos);
-  _topologyArray = Teuchos::rcp( new Teuchos::Array<Teuchos::RCP<ATO::Topology> >(ntopos) );
   _topologyArrayT = Teuchos::rcp( new Teuchos::Array<Teuchos::RCP<ATO::Topology> >(ntopos) );
   for(int itopo=0; itopo<ntopos; itopo++){
-    _topologyInfoStructs[itopo] = Teuchos::rcp(new TopologyInfoStruct);
     _topologyInfoStructsT[itopo] = Teuchos::rcp(new TopologyInfoStructT);
     Teuchos::ParameterList& tParams = topoParams.sublist(Albany::strint("Topology",itopo));
-    _topologyInfoStructs[itopo]->topology = Teuchos::rcp(new Topology(tParams, itopo));
     _topologyInfoStructsT[itopo]->topologyT = Teuchos::rcp(new Topology(tParams, itopo));
-    (*_topologyArray)[itopo] = _topologyInfoStructs[itopo]->topology;
     (*_topologyArrayT)[itopo] = _topologyInfoStructsT[itopo]->topologyT;
   }
 
@@ -146,29 +141,24 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   
   // Assign requested filters to topologies
   for(int itopo=0; itopo<ntopos; itopo++){
-    Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];
     Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
-    Teuchos::RCP<Topology> topo = topoStruct->topology;
     Teuchos::RCP<Topology> topoT = topoStructT->topologyT;
 
-    topoStruct->filterIsRecursive = topoParams.get<bool>("Apply Filter Recursively", true);
     topoStructT->filterIsRecursiveT = topoParams.get<bool>("Apply Filter Recursively", true);
 
-    int topologyFilterIndex = topo->SpatialFilterIndex();
+    int topologyFilterIndex = topoT->SpatialFilterIndex();
     if( topologyFilterIndex >= 0 ){
       TEUCHOS_TEST_FOR_EXCEPTION( topologyFilterIndex >= filters.size(),
         Teuchos::Exceptions::InvalidParameter, std::endl 
         << "Error!  Spatial filter " << topologyFilterIndex << "requested but not defined." << std::endl);
-      topoStruct->filter = filters[topologyFilterIndex];
       topoStructT->filterT = filters[topologyFilterIndex];
     }
 
-    int topologyOutputFilter = topo->TopologyOutputFilter();
+    int topologyOutputFilter = topoT->TopologyOutputFilter();
     if( topologyOutputFilter >= 0 ){
       TEUCHOS_TEST_FOR_EXCEPTION( topologyOutputFilter >= filters.size(),
         Teuchos::Exceptions::InvalidParameter, std::endl 
         << "Error!  Spatial filter " << topologyFilterIndex << "requested but not defined." << std::endl);
-      topoStruct->postFilter = filters[topologyOutputFilter];
       topoStructT->postFilterT = filters[topologyOutputFilter];
     }
   }
@@ -288,7 +278,6 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   overlapNodeMapT = disc->getOverlapNodeMapT();
 
   for(int itopo=0; itopo<ntopos; itopo++){
-    Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];
     Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
     if(topoStructT->postFilterT != Teuchos::null ){
       topoStructT->filteredOverlapVectorT = Teuchos::rcp(new Tpetra_Vector(overlapNodeMapT));
@@ -1397,7 +1386,7 @@ ATO::Solver::createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appPar
   physics_probParams.setParameters(physics_subList);
 
   // Add topology information
-  physics_probParams.set<Teuchos::RCP<TopologyArray> >("Topologies",_topologyArray);
+  physics_probParams.set<Teuchos::RCP<TopologyArray> >("Topologies",_topologyArrayT);
 
   Teuchos::ParameterList& topoParams = 
     appParams->sublist("Problem").get<Teuchos::ParameterList>("Topologies");

@@ -162,13 +162,6 @@ namespace ATO {
     Teuchos::RCP<Aggregator> _conAggregator;
     Teuchos::RCP<Optimizer> _optimizer;
 
-    typedef struct TopologyInfoStruct {
-      Teuchos::RCP<Topology>      topology;
-      Teuchos::RCP<SpatialFilter> filter;
-      Teuchos::RCP<SpatialFilter> postFilter;
-      bool                        filterIsRecursive;
-    } TopologyInfoStruct;
-
     typedef struct TopologyInfoStructT {
       Teuchos::RCP<Topology>      topologyT;
       Teuchos::RCP<SpatialFilter> filterT;
@@ -180,9 +173,7 @@ namespace ATO {
       bool                        filterIsRecursiveT;
     } TopologyInfoStructT;
 
-    std::vector<Teuchos::RCP<TopologyInfoStruct> > _topologyInfoStructs;
     std::vector<Teuchos::RCP<TopologyInfoStructT> > _topologyInfoStructsT;
-    Teuchos::RCP<TopologyArray> _topologyArray;
     Teuchos::RCP<TopologyArray> _topologyArrayT;
 
     // currently all topologies must have the same entity type
