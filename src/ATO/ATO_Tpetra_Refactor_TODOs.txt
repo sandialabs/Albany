@@ -1,0 +1,30 @@
+
+This file lists the work that is still needed to finish 
+refactoring ATO to work with Tpetra/Thyra instead of 
+Epetra/EpetraExt, in no particular order (dependencies 
+b/w action items are noted).  
+
+1. Debug Tpetra functions ReplaceDiagonalValues and InvRowSum,
+currently in Albany::Utils (should ultimately be moved to the 
+Tpetra::CrsMatrix class). Propagate these funcitons into 
+the buildOperator routines in ATO_Solver.cpp and ATOT_Solver.cpp and 
+ATOT_XFEM_Preconditioner.cpp.
+
+2. Have Mark Hoemmen fix Tpetra::CrsMatrix::apply method with a 
+TRANS combine mode.  This is needed for the 
+ATO::Solver::copyObjectiveFromStateMgr and ATOT::Solver::copyObjectiveFromStateMgr 
+routines.  Once this is done, remove Epetra code and ifdefs from these functions.
+
+3. Switch distributed parameters in Albany to use Tpetra instead 
+of Epetra.  This requires replacing workset.overlapped_dgdp and 
+workset.dgdp with Tpetra versions and changing calls in 
+ATO::TensorPNormResponse and ATO::HomogenizedConstantsResponse 
+to use these new objects.
+
+4. Once 2. is done, remove filterOperator from SpatialFilter 
+class in ATO::Solver and ATOT::Solver. 
+
+5. Test/debug new ATOT::Solver by running tests with AlbanyT 
+executable.
+
+6. Once 5. is done, create tests that run with AlbanyT executable.   
