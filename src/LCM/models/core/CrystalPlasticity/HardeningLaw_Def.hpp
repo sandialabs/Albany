@@ -250,7 +250,7 @@ harden(
   }
 
   minitensor::Vector<ArgT, NumSlipT> const 
-  driver_hardening = slip_family.latent_matrix_ * rate_slip_abs;
+  driver_hardening = 2.0 * slip_family.latent_matrix_ * rate_slip_abs;
 
   ArgT
   effective_slip_rate{minitensor::norm_1(rate_slip_abs)};
