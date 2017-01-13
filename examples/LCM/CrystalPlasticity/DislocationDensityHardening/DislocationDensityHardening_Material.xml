@@ -152,12 +152,12 @@
           <Parameter
             name="Initial Hardening State"
             type="double"
-            value="5.0e+12" />
+            value="5.0e+06" />
 
           <Parameter
             name="Generation Factor"
             type="double"
-            value="2.0e+08" />
+            value="2.0e+05" />
 
           <Parameter
             name="Annihilation Factor"
@@ -172,7 +172,7 @@
           <Parameter
             name="Burgers Vector Magnitude"
             type="double"
-            value="2.87e-10" />
+            value="2.87e-07" />
 
         </ParameterList>
 

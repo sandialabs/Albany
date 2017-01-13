@@ -43,13 +43,13 @@ def compute_strain_logarithmic(defgrad):
 # @profile
 def compute_orientations(domain):
 
-    for key_block in domain.blocks:
+    for block in domain.blocks.values():
 
-        block = domain.blocks[key_block]
+        # block = domain.blocks[key_block]
 
-        for key_element in block.elements:
+        for element in block.elements.values():
 
-            element = block.elements[key_element]
+            # element = block.elements[key_element]
 
             element.variables['R'] = dict()
             element.variables['U'] = dict()
@@ -65,9 +65,9 @@ def compute_orientations(domain):
                         element.variables['R'][step],
                         np.dot(block.material.orientation, element.variables['R'][step].T))
 
-            for key_point in element.points:
+            for point in element.points.values():
 
-                point = element.points[key_point]
+                # point = element.points[key_point]
 
                 point.variables['R'] = dict()
                 point.variables['U'] = dict()
@@ -108,9 +108,9 @@ def _derive_values_scalar(name_variable, domain):
             domain.variables[name_variable][key_step] = \
                 compute_stress_mises(domain.variables['Cauchy_Stress'][key_step])
 
-    for key_block in domain.blocks:
+    for block in domain.blocks.values():
 
-        block = domain.blocks[key_block]
+        # block = domain.blocks[key_block]
 
         block.variables[name_variable] = dict([(step, 0.0) for step in times])
 
@@ -124,9 +124,9 @@ def _derive_values_scalar(name_variable, domain):
                 block.variables[name_variable][key_step] = \
                     compute_stress_mises(block.variables['Cauchy_Stress'][key_step])
 
-        for key_element in block.elements:
+        for element in block.elements.values():
 
-            element = block.elements[key_element]
+            # element = block.elements[key_element]
 
             element.variables[name_variable] = dict([(step, 0.0) for step in times])
 
@@ -146,9 +146,9 @@ def _derive_values_scalar(name_variable, domain):
 
                 element.variables[name_variable][key_step] = value_variable                
 
-            for key_point in element.points:
+            for point in element.points.values():
 
-                point = element.points[key_point]
+                # point = element.points[key_point]
 
                 point.variables[name_variable] = dict([(step, 0.0) for step in times])
                 
@@ -191,9 +191,9 @@ def _derive_values_tensor(name_variable, domain):
             domain.variables[name_variable][key_step] = \
                 compute_strain_logarithmic(domain.variables['F'][key_step])
 
-    for key_block in domain.blocks:
+    for block in domain.blocks.values():
 
-        block = domain.blocks[key_block]
+        # block = domain.blocks[key_block]
 
         block.variables[name_variable] = \
             dict([(step, np.zeros((num_dims, num_dims))) for step in times])
@@ -205,9 +205,9 @@ def _derive_values_tensor(name_variable, domain):
                 block.variables[name_variable][key_step] = \
                     compute_strain_logarithmic(block.variables['F'][key_step])
 
-        for key_element in block.elements:
+        for element in block.elements.values():
 
-            element = block.elements[key_element]
+            # element = block.elements[key_element]
 
             element.variables[name_variable] = \
                 dict([(step, np.zeros((num_dims, num_dims))) for step in times])
@@ -219,9 +219,9 @@ def _derive_values_tensor(name_variable, domain):
                     element.variables[name_variable][key_step] = \
                         compute_strain_logarithmic(element.variables['F'][key_step])
 
-            for key_point in element.points:
+            for point in element.points.values():
 
-                point = element.points[key_point]
+                # point = element.points[key_point]
 
                 point.variables[name_variable] = \
                     dict([(step, np.zeros((num_dims, num_dims))) for step in times])

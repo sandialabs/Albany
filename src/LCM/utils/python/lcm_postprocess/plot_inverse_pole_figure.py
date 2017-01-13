@@ -7,6 +7,8 @@ import numpy as np
 # Plot inverse pole figures for simulations with defined local orientations
 def plot_inverse_pole_figure(**kwargs):
 
+    fmt = kwargs.get('fmt', 'pdf')
+
     #
     # Read data 
     #
@@ -134,7 +136,7 @@ def plot_inverse_pole_figure(**kwargs):
     # plt.xlim([-0.01, 0.5])
     # plt.ylim([-0.01, 0.5])
 
-    plt.savefig(name_file_base + '_IPF.pdf')
+    plt.savefig(name_file_base + '_IPF.' + fmt)
     plt.close(fig)
 
 # end plot_inverse_pole_figure(**kwargs):
@@ -150,6 +152,11 @@ if __name__ == '__main__':
     except:
         raise
 
+    if 3 == len(sys.argv):
+        fmt = sys.argv[2]
+    else:
+        fmt = 'pdf'
+
     name_file_base = name_file_input.split('.')[0]
     name_file_extension = name_file_input.split('.')[-1]
 
@@ -158,9 +165,9 @@ if __name__ == '__main__':
         file_pickling = open(name_file_input, 'rb')
         domain = pickle.load(file_pickling)
         file_pickling.close()
-        plot_inverse_pole_figure(domain = domain, time = domain.times[0])
-        plot_inverse_pole_figure(domain = domain, time = domain.times[-1])
+        plot_inverse_pole_figure(domain = domain, time = domain.times[0], fmt = fmt)
+        plot_inverse_pole_figure(domain = domain, time = domain.times[-1], fmt = fmt)
     else:
-    	plot_inverse_pole_figure(name_file_input = name_file_input)
+    	plot_inverse_pole_figure(name_file_input = name_file_input, fmt = fmt)
 
 # end if __name__ == '__main__':
