@@ -1190,12 +1190,9 @@ ATO::Solver::ComputeMeasure(std::string measureType, const double* p,
 
     topologyStructsT[itopo] = Teuchos::rcp(new TopologyStructT);
   
-    Teuchos::RCP<Epetra_Vector> topoVec = _topologyInfoStructs[itopo]->localVector;
     Teuchos::RCP<Tpetra_Vector> topoVecT = _topologyInfoStructsT[itopo]->localVectorT;
     int numLocalNodes = topoVecT->getLocalLength();
     int offset = itopo*numLocalNodes;
-    double* ltopo; 
-    topoVec->ExtractView(&ltopo);
     Teuchos::ArrayRCP<double> ltopoT = topoVecT->get1dViewNonConst(); 
     for(int ws=0; ws<numWorksets; ws++){
       int numCells = wsElNodeID[ws].size();
@@ -1204,28 +1201,18 @@ ATO::Solver::ComputeMeasure(std::string measureType, const double* p,
         for(int node=0; node<numNodes; node++){
           int gid = wsElNodeID[ws][cell][node];
           int lid = localNodeMapT->getLocalElement(gid);
-          if(lid != -1) ltopo[lid] = p[lid+offset];
           if(lid != -1) ltopoT[lid] = p[lid+offset];
         }
     }
 
-    Teuchos::RCP<TopologyInfoStruct> topoStruct = _topologyInfoStructs[itopo];
-    smoothTopology(topoStruct);
     Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
     smoothTopologyT(topoStructT);
 
-    Teuchos::RCP<Epetra_Vector> overlapTopoVec = _topologyInfoStructs[itopo]->overlapVector;
-    overlapTopoVec->Import(*topoVec, *importer, Insert);
-    Teuchos::RCP<Tpetra_Vector> overlapTopoVecTpetra = _topologyInfoStructsT[itopo]->overlapVectorT;
-    overlapTopoVecTpetra->doImport(*topoVecT, *importerT, Tpetra::INSERT);
+    Teuchos::RCP<Tpetra_Vector> overlapTopoVecT = _topologyInfoStructsT[itopo]->overlapVectorT;
+    overlapTopoVecT->doImport(*topoVecT, *importerT, Tpetra::INSERT);
 
     topologyStructsT[itopo]->topologyT = _topologyInfoStructsT[itopo]->topologyT; 
-    Teuchos::RCP<Tpetra_Vector> overlapTopoVecT = 
-        Petra::EpetraVector_To_TpetraVectorNonConst(*overlapTopoVec, _solverComm);  
     topologyStructsT[itopo]->dataVectorT = overlapTopoVecT;
-    //IKT, FIXME: the following makes FixedBlocks and 2Matl_Homog tests fail; 
-    //need to figure out why to finalize Tpetra conversion. 
-    //topologyStructsT[itopo]->dataVectorT = overlapTopoVecTpetra;
   }
 
   return _atoProblem->ComputeMeasureT(measureType, topologyStructsT, 
@@ -1999,7 +1986,7 @@ ATO::SpatialFilter::buildOperator(
          weight = 1.0;
          filterOperator->InsertGlobalValues(home_node_gid,1,&weight,&home_node_gid);
          filterOperatorT->insertGlobalValues(home_node_gid,1,&zero,&home_node_gid); 
-         filterOperatorT->insertGlobalValues(home_node_gid,1,&weight,&home_node_gid); 
+         filterOperatorT->replaceGlobalValues(home_node_gid,1,&weight,&home_node_gid); 
       }
     }
   
