@@ -235,9 +235,7 @@ Teuchos::Array< Teuchos::RCP<Tpetra_Vector> > ConstraintGradientVecT;
 Teuchos::RCP<double> objectiveValue;
 Teuchos::RCP<double> constraintValue;
 
-Teuchos::RCP<Epetra_Import> importer;
 Teuchos::RCP<Tpetra_Import> importerT;
-Teuchos::RCP<Epetra_Export> exporter;
 Teuchos::RCP<Tpetra_Export> exporterT;
 
 std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > responseMapT;
@@ -246,9 +244,7 @@ std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > responseDerivMapT;
 
 // methods
 void copyTopologyIntoStateMgr(const double* p, Albany::StateManager& stateMgr );
-void smoothTopology(double* p);
 void smoothTopologyT(double* p);
-void smoothTopology(Teuchos::RCP<TopologyInfoStruct> topoStruct);
 void smoothTopologyT(Teuchos::RCP<TopologyInfoStructT> topoStructT);
 void copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr );
 void copyTopologyIntoParameter(const double* p, SolverSubSolver& sub);
