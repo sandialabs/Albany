@@ -327,13 +327,11 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   } 
   
                                             //* target *//   //* source *//
-  importer = Teuchos::rcp(new Epetra_Import(*overlapNodeMap, *localNodeMap));
   importerT = Teuchos::rcp(new Tpetra_Import(localNodeMapT, overlapNodeMapT));
 
 
   // create exporter (for integration type operations):
                                             //* source *//   //* target *//
-  exporter = Teuchos::rcp(new Epetra_Export(*overlapNodeMap, *localNodeMap));
   exporterT = Teuchos::rcp(new Tpetra_Export(overlapNodeMapT, localNodeMapT));
 
   // this should go somewhere else.  for now ...

@@ -230,9 +230,7 @@ namespace ATO {
     Teuchos::RCP<double> objectiveValue;
     Teuchos::RCP<double> constraintValue;
 
-    Teuchos::RCP<Epetra_Import> importer;
     Teuchos::RCP<Tpetra_Import> importerT;
-    Teuchos::RCP<Epetra_Export> exporter;
     Teuchos::RCP<Tpetra_Export> exporterT;
 
     std::map<std::string, Teuchos::RCP<const Epetra_Vector> > responseMap;
