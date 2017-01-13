@@ -167,31 +167,19 @@ Teuchos::RCP<Aggregator> _objAggregator;
 Teuchos::RCP<Aggregator> _conAggregator;
 Teuchos::RCP<Optimizer> _optimizer;
 
-typedef struct TopologyInfoStruct {
-Teuchos::RCP<ATO::Topology>      topology;
-Teuchos::RCP<SpatialFilter> filter;
-Teuchos::RCP<SpatialFilter> postFilter;
-Teuchos::RCP<Epetra_Vector> filteredOverlapVector;
-Teuchos::RCP<Epetra_Vector> filteredVector;
-Teuchos::RCP<Epetra_Vector> overlapVector;
-Teuchos::RCP<Epetra_Vector> localVector;
-bool                        filterIsRecursive;
-} TopologyInfoStruct;
 
 typedef struct TopologyInfoStructT {
-Teuchos::RCP<ATO::Topology>      topologyT;
-Teuchos::RCP<SpatialFilter> filterT;
-Teuchos::RCP<SpatialFilter> postFilterT;
-Teuchos::RCP<Tpetra_Vector> filteredOverlapVectorT;
-Teuchos::RCP<Tpetra_Vector> filteredVectorT;
-Teuchos::RCP<Tpetra_Vector> overlapVectorT;
-Teuchos::RCP<Tpetra_Vector> localVectorT;
-bool                        filterIsRecursiveT;
+  Teuchos::RCP<ATO::Topology>      topologyT;
+  Teuchos::RCP<SpatialFilter> filterT;
+  Teuchos::RCP<SpatialFilter> postFilterT;
+  Teuchos::RCP<Tpetra_Vector> filteredOverlapVectorT;
+  Teuchos::RCP<Tpetra_Vector> filteredVectorT;
+  Teuchos::RCP<Tpetra_Vector> overlapVectorT;
+  Teuchos::RCP<Tpetra_Vector> localVectorT;
+  bool                        filterIsRecursiveT;
 } TopologyInfoStructT;
 
-std::vector<Teuchos::RCP<TopologyInfoStruct> > _topologyInfoStructs;
 std::vector<Teuchos::RCP<TopologyInfoStructT> > _topologyInfoStructsT;
-Teuchos::RCP<ATO::TopologyArray> _topologyArray;
 Teuchos::RCP<ATO::TopologyArray> _topologyArrayT;
 
 // currently all topologies must have the same entity type
