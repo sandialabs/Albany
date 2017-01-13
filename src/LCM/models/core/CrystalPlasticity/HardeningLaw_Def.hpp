@@ -289,12 +289,19 @@ harden(
         effective_slip_rate / rate_slip_reference, exponent_saturation);
     }
 
-    state_hardening_np1[ss_index_global] = state_hardening_n[ss_index_global] +
-      dt * rate_hardening * driver_hardening[ss_index] *
-      (stress_saturation - state_hardening_n[ss_index_global]) / 
-      (stress_saturation - resistance_slip_initial);
-
     slip_resistance[ss_index_global] = state_hardening_np1[ss_index_global];
+
+    // if (driver_hardening[ss_index] !=0 )
+    // {
+      state_hardening_np1[ss_index_global] = state_hardening_n[ss_index_global] +
+        dt * rate_hardening * driver_hardening[ss_index] *
+        (stress_saturation - state_hardening_np1[ss_index_global]) / 
+        (stress_saturation - resistance_slip_initial);
+    // }
+    // else
+    // {
+    //   state_hardening_np1[ss_index_global] = state_hardening_n[ss_index_global];
+    // }
   } 
 
   return;
