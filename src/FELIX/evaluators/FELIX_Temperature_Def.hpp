@@ -128,6 +128,7 @@ namespace FELIX
             exit(1);
           }
           dTdz(cell,side, inode) = (temperature(cell, inode1) - temperature(cell, inode0))/(thickness(cell,inode0)*layers_ratio[ilayer]);
+          //dTdz(cell,side, inode) = pow6/(rho_i * c_i)*(enthalpy(cell, inode1) - enthalpy(cell, inode0))/(thickness(cell,inode0)*layers_ratio[ilayer]);
         }
       }
     }

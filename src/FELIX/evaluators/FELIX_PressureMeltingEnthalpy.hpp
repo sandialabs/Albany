@@ -37,11 +37,14 @@ namespace FELIX
     void evaluateFields(typename Traits::EvalData d);
 
   private:
+    typedef typename EvalT::ParamScalarT ParamScalarT;
     // Input:
     PHX::MDField<Type,Cell,Node> meltingTemp; //[K]
+    PHX::MDField<ParamScalarT,Cell,Node> surfaceTemp; //[K]
 
     // Output:
     PHX::MDField<Type,Cell,Node> enthalpyHs;  //[MW s m^{-3}]
+    PHX::MDField<ParamScalarT,Cell,Node> surfaceEnthalpy;  //[MW s m^{-3}]
 
     int numNodes;
 

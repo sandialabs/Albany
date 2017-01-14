@@ -63,6 +63,7 @@ namespace FELIX
     double k_i;   //[W m^{-1} K^{-1}], Conductivity of ice
     double eta_w;   //[Pa s], Viscosity of water
     double alpha_om; //[adim], Omega exponent alpha
+    double beta_p;
 
   };
 

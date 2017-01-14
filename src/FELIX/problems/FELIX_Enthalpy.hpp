@@ -26,6 +26,7 @@
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_SaveCellStateField.hpp"
 #include "PHAL_SaveStateField.hpp"
+#include "PHAL_LoadSideSetStateField.hpp"
 #include "PHAL_ScatterScalarNodalParameter.hpp"
 #include "FELIX_SharedParameter.hpp"
 #include "FELIX_ParamEnum.hpp"
@@ -56,6 +57,7 @@ namespace FELIX
   public:
     //! Default constructor
     Enthalpy(const Teuchos::RCP<Teuchos::ParameterList>& params,
+             const Teuchos::RCP<Teuchos::ParameterList>& discParams,
              const Teuchos::RCP<ParamLib>& paramLib,
              const int numDim_);
 
@@ -104,6 +106,9 @@ namespace FELIX
     Teuchos::RCP<Albany::Layouts> dl, dl_basal;
     std::string elementBlockName;
 
+    //! Discretization parameters
+    Teuchos::RCP<Teuchos::ParameterList> discParams;
+
     bool needsDiss, needsBasFric;
     bool isGeoFluxConst;
 
@@ -148,6 +153,10 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, "");
     ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_basal->node_scalar, basalEBName, false, &entity);
+    ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   // Velocity
@@ -157,6 +166,24 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName, true, &entity, "");
     ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    if (discParams->isSublist("Side Set Discretizations") &&
+        discParams->sublist("Side Set Discretizations").isSublist("basalside") &&
+        discParams->sublist("Side Set Discretizations").sublist("basalside").isSublist("Required Fields Info")){
+      Teuchos::ParameterList& req_fields_info = discParams->sublist("Side Set Discretizations").sublist("basalside").sublist("Required Fields Info");
+      int num_fields = req_fields_info.get<int>("Number Of Fields",0);
+      for (int ifield=0; ifield<num_fields; ++ifield)
+      {
+        const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(Albany::strint("Field", ifield));
+        if(thisFieldList.get<std::string>("Field Name") ==  stateName){
+          int numLayers = thisFieldList.get<int>("Number Of Layers");
+   //       int numLayers = 51;
+          auto sns = dl_basal->node_vector;
+          auto dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,VecDim, LayerDim>(sns->dimension(0),sns->dimension(1),sns->dimension(2),2, numLayers));
+          stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_temp, basalEBName, true, &entity);
+        }
+      }
+    }
   }
 
   // Flow factor - actually, this is not used if viscosity is temperature based
@@ -176,6 +203,10 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
     ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_basal->node_scalar, basalEBName, false, &entity);
+    ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   // Geothermal flux
@@ -186,6 +217,10 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
     ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_basal->node_scalar, basalEBName, false, &entity);
+    ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   // Thickness
@@ -195,6 +230,10 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
     ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_basal->node_scalar, basalEBName, false, &entity);
+    ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   // Surface Height
@@ -203,6 +242,10 @@ FELIX::Enthalpy::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     std::string stateName = "surface_height";
     p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
     ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, stateName, dl_basal->node_scalar, basalEBName, false, &entity);
+    ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
