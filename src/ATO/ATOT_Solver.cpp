@@ -240,11 +240,6 @@ ATOT::SpatialFilter::buildOperator(
 
 }
 
-void 
-ATOT::SpatialFilter::createFilterOpTfromFilterOp(Teuchos::RCP<const Teuchos_Comm> commT) 
-{
-  filterOperatorT = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*filterOperator, commT); 
-}
 
 /******************************************************************************/
 ATOT::SpatialFilter::SpatialFilter( Teuchos::ParameterList& params )

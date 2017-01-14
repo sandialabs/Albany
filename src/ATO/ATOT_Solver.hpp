@@ -51,7 +51,6 @@ namespace ATOT {
              Teuchos::RCP<const Tpetra_Map>    localNodeMapT, 
              Teuchos::RCP<Tpetra_Import>       importerT,
              Teuchos::RCP<Tpetra_Export>       exporterT);  
-      void createFilterOpTfromFilterOp(Teuchos::RCP<const Teuchos_Comm> commT);  
       Teuchos::RCP<Epetra_CrsMatrix> FilterOperator(){return filterOperator;}
       Teuchos::RCP<Tpetra_CrsMatrix> FilterOperatorT(){return filterOperatorT;}
       int getNumIterations(){return iterations;}
