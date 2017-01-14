@@ -708,8 +708,6 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   localNodeMapT   = disc->getNodeMapT();
   overlapNodeMapT = disc->getOverlapNodeMapT();
   Teuchos::RCP<Epetra_Comm> commE = Albany::createEpetraCommFromTeuchosComm(_solverComm);
-  localNodeMap = Petra::TpetraMap_To_EpetraMap(localNodeMapT, commE); 
-  overlapNodeMap = Petra::TpetraMap_To_EpetraMap(overlapNodeMapT, commE); 
 
   for(int itopo=0; itopo<ntopos; itopo++){
     Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
@@ -1454,6 +1452,9 @@ ATOT::Solver::copyObjectiveFromStateMgr( double& g, double* dgdp )
       std::memcpy((void*)(dgdp+ivec*numLocalNodes), lvec.getRawPtr(), numLocalNodes*sizeof(double));
 #else 
     // apply filter if requested
+    Teuchos::RCP<Epetra_Comm> comm = 
+      Albany::createEpetraCommFromTeuchosComm(localNodeMapT->getComm());
+    Teuchos::RCP<Epetra_Map> localNodeMap = Petra::TpetraMap_To_EpetraMap(localNodeMapT, comm); 
     Teuchos::RCP<Epetra_Vector> ObjectiveGradientVecE = Teuchos::rcp(new Epetra_Vector(*localNodeMap)); 
     Petra::TpetraVector_To_EpetraVector(ObjectiveGradientVecT[ivec],
                                         *ObjectiveGradientVecE, Teuchos::rcpFromRef(localNodeMap->Comm()));

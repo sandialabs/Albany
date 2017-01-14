@@ -207,8 +207,6 @@ ATO::OptimizationProblem* _atoProblem;
 Teuchos::RCP<const Teuchos_Comm> _solverComm; 
 Teuchos::RCP<Teuchos::ParameterList> _mainAppParams;
 
-Teuchos::RCP<const Epetra_Map> overlapNodeMap;
-Teuchos::RCP<const Epetra_Map> localNodeMap;
 Teuchos::RCP<const Tpetra_Map> overlapNodeMapT;
 Teuchos::RCP<const Tpetra_Map> localNodeMapT;
 
