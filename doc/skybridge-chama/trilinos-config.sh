@@ -30,7 +30,6 @@ cmake \
  -D BoostLib_LIBRARY_DIRS:FILEPATH=$BOOST_DIR/lib \
  -D Boost_INCLUDE_DIRS:FILEPATH=$BOOST_DIR/include \
 \
- -D Trilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES=ON \
  -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
  -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
  -D Trilinos_ENABLE_CXX11:BOOL=ON \
@@ -52,15 +51,13 @@ cmake \
 \
  -D Amesos2_ENABLE_KLU2:BOOL=ON \
  -D EpetraExt_USING_HDF5:BOOL=OFF \
- -D Intrepid_ENABLE_TESTS:BOOL=OFF \
  -D Intrepid2_ENABLE_TESTS:BOOL=OFF \
  -D Intrepid2_ENABLE_KokkosDynRankView:BOOL=ON \
+ -D MiniTensor_ENABLE_TESTS:BOOL=ON \
  -D ROL_ENABLE_TESTS:BOOL=OFF \
  -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
  -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
  -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
- -D Sacado_ENABLE_COMPLEX:BOOL=ON \
- -D Teuchos_ENABLE_COMPLEX:BOOL=ON \
  -D Tpetra_ENABLE_Kokkos_Refactor:BOOL=ON \
  -D Tpetra_INST_PTHREAD:BOOL=OFF \
 \
@@ -83,13 +80,13 @@ cmake \
  -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
  -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
  -D Trilinos_ENABLE_Ifpack:BOOL=ON \
- -D Trilinos_ENABLE_Intrepid:BOOL=ON \
  -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
  -D Trilinos_ENABLE_Kokkos:BOOL=ON \
  -D Trilinos_ENABLE_KokkosAlgorithms:BOOL=ON \
  -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
  -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
  -D Trilinos_ENABLE_KokkosExample:BOOL=OFF \
+ -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
  -D Trilinos_ENABLE_ML:BOOL=ON \
  -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
  -D Trilinos_ENABLE_MueLu:BOOL=ON \
