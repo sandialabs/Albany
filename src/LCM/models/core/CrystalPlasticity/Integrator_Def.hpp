@@ -138,6 +138,9 @@ bool
 CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
     RealType & residual_norm) const
 {
+  bool
+  failed{false};
+
   minitensor::Vector<ScalarT, NumSlipT>
   residual(this->num_slip_);
 
@@ -176,7 +179,8 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
     state_internal_.resistance_,
     state_internal_.shear_np1_,
     state_internal_.slip_n_,
-    state_internal_.slip_np1_);
+    state_internal_.slip_np1_,
+    failed);
 
   // compute Lp_np1, and Fp_np1
   CP::applySlipIncrement<NumDimT, NumSlipT, ScalarT>(
@@ -209,7 +213,8 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
     state_internal_.resistance_,
     state_internal_.shear_np1_,
     state_internal_.slip_n_,
-    slip_computed);
+    slip_computed,
+    failed);
 
   residual = state_internal_.slip_np1_ - slip_computed;
 
