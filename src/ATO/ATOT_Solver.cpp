@@ -39,7 +39,6 @@ MPI_Datatype MPI_GlobalPointT;
 bool ATOT::operator< (ATOT::GlobalPoint const & a, ATOT::GlobalPoint const & b){return a.gid < b.gid;}
 ATOT::GlobalPoint::GlobalPoint(){coords[0]=0.0; coords[1]=0.0; coords[2]=0.0;}
 
-int countFilterOpT;
 
 
 /******************************************************************************/
@@ -224,18 +223,12 @@ ATOT::SpatialFilter::buildOperator(
     Epetra_Vector rowSums(*localNodeMap);
     filterOperator->InvRowSums(rowSums);
     filterOperator->LeftScale(rowSums);
-
-    //IKT: this is temporary until InvRowSums 
-    Teuchos::RCP<Tpetra_Vector> rowSumsT = 
-      Petra::EpetraVector_To_TpetraVectorNonConst(rowSums, localNodeMapT->getComm());
-    filterOperatorT->leftScale(*rowSumsT);  
     
-    /*char name[100];  
-    sprintf(name, "rowSums%i.mm", countFilterOpT);
-    EpetraExt::MultiVectorToMatrixMarketFile(name, rowSums);
-    sprintf(name, "rowSumsT%i.mm", countFilterOpT);
-    Tpetra_MatrixMarket_Writer::writeDenseFile(name, rowSumsT);
-    countFilterOpT++;*/
+    // scale filter operator so rows sum to one.
+    Teuchos::RCP<Tpetra_Vector> rowSumsT = Teuchos::rcp(new Tpetra_Vector(filterOperatorT->getRowMap()));
+    Albany::InvRowSum(rowSumsT, filterOperatorT); 
+    filterOperatorT->leftScale(*rowSumsT);  
+
   return;
 
 }
@@ -755,7 +748,6 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   // initialize/build the filter operators. these are built once.
   int nFilters = filters.size();
-  countFilterOpT = 0; 
   for(int ifltr=0; ifltr<nFilters; ifltr++){
     filters[ifltr]->buildOperator(
       _subProblems[0].app, 
