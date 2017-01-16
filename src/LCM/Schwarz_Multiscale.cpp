@@ -546,19 +546,19 @@ LCM::SchwarzMultiscale::get_g_space(int l) const
 {
   assert(0 <= l && l < num_responses_total_);
 
-  std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
+  Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
   vs_array;
 
   // create product space for lth response by concatenating lth response
   // from all the models.
   for (auto m = 0; m < num_models_; ++m) {
-    vs_array.push_back(
-          Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(
-              apps_[m]->getResponse(l)->responseMapT()));
+    vs_array.push_back(models_[m]->get_g_space(l));
   }
 
-  return Thyra::productVectorSpace<ST>(vs_array);
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
+  Z = Thyra::productVectorSpace<ST>(vs_array);
 
+  return Z;
 }
 
 Teuchos::RCP<const Teuchos::Array<std::string>>

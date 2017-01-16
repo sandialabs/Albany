@@ -22,7 +22,7 @@ ScatterScalarNodalParameterBase(const Teuchos::ParameterList& p,
   val = PHX::MDField<ParamScalarT,Cell,Node>(field_name,dl->node_scalar);
   numNodes = 0;
 
-  this->addEvaluatedField(val);
+  this->addDependentField(val);
 
   this->setName("Scatter Nodal Parameter" );
 }
@@ -38,23 +38,6 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 // **********************************************************************
-
-template<typename EvalT, typename Traits>
-ScatterScalarNodalParameter<EvalT, Traits>::
-ScatterScalarNodalParameter(const Teuchos::ParameterList& p,
-                           const Teuchos::RCP<Albany::Layouts>& dl) :
-  ScatterScalarNodalParameterBase<EvalT, Traits>(p,dl)
-{
-}
-
-template<typename EvalT, typename Traits>
-ScatterScalarNodalParameter<EvalT, Traits>::
-ScatterScalarNodalParameter(const Teuchos::ParameterList& p) :
-  ScatterScalarNodalParameterBase<EvalT, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct"))
-{
-}
-
-// **********************************************************************
 template<typename EvalT, typename Traits>
 void ScatterScalarNodalParameter<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
@@ -63,13 +46,39 @@ evaluateFields(typename Traits::EvalData workset)
 }
 
 // **********************************************************************
+template<typename EvalT, typename Traits>
+void ScatterScalarExtruded2DNodalParameter<EvalT, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "PHAL::ScatterScalarNodalParameter is supposed to be used only for Residual evaluation Type.");
+}
+
+// **********************************************************************
+// Specialization: Residual
+// **********************************************************************
+
+template<typename Traits>
+ScatterScalarNodalParameter<PHAL::AlbanyTraits::Residual, Traits>::
+ScatterScalarNodalParameter(const Teuchos::ParameterList& p,
+                           const Teuchos::RCP<Albany::Layouts>& dl) :
+  ScatterScalarNodalParameterBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl)
+{
+  // Create field tag
+  nodal_field_tag =
+    Teuchos::rcp(new PHX::Tag<ParamScalarT>(className, dl->dummy));
+
+  this->addEvaluatedField(*nodal_field_tag);
+}
+
+
+// **********************************************************************
 template<typename Traits>
 void ScatterScalarNodalParameter<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP<Tpetra_Vector> pvecT;
   try {
-    pvecT = workset.distParamLib->get(this->param_name)->overlapped_vector();
+    pvecT = workset.distParamLib->get(this->param_name)->vector();
   } catch (const std::logic_error& e) {
     const std::string evalt = PHX::typeAsString<PHAL::AlbanyTraits::Residual>();
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -83,31 +92,40 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::ArrayRCP<ST> pvecT_constView = pvecT->get1dViewNonConst();
 
   const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
+  auto overlap_map = workset.distParamLib->get(this->param_name)->overlap_map();
+  auto map = workset.distParamLib->get(this->param_name)->map();
 
   for (std::size_t cell = 0; cell < workset.numCells; ++cell)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      const LO lid = wsElDofs((int)cell,(int)node,0);
+      const LO lid_overlap = wsElDofs((int)cell,(int)node,0);
+      const LO lid = map->getLocalElement(overlap_map->getGlobalElement(lid_overlap));
       if(lid >= 0)
-        pvecT_constView[lid] = (this->val)(cell,node);
+       pvecT_constView[lid] = (this->val)(cell,node);
     }
 }
 
-// **********************************************************************
-template<typename EvalT, typename Traits>
-void ScatterScalarExtruded2DNodalParameter<EvalT, Traits>::
-evaluateFields(typename Traits::EvalData workset)
+template<typename Traits>
+ScatterScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::Residual, Traits>::
+ScatterScalarExtruded2DNodalParameter(const Teuchos::ParameterList& p,
+                           const Teuchos::RCP<Albany::Layouts>& dl) :
+  ScatterScalarNodalParameterBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "PHAL::ScatterScalarExtruded2DNodalParameter is supposed to be used only for Residual evaluation Type.");
+  fieldLevel = p.get<int>("Field Level");
+
+  // Create field tag
+  nodal_field_tag =
+    Teuchos::rcp(new PHX::Tag<ParamScalarT>(className, dl->dummy));
+
+  this->addEvaluatedField(*nodal_field_tag);
 }
 
-// **********************************************************************
 template<typename Traits>
 void ScatterScalarExtruded2DNodalParameter<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP<Tpetra_Vector> pvecT;
   try {
-    pvecT = workset.distParamLib->get(this->param_name)->overlapped_vector();
+    pvecT = workset.distParamLib->get(this->param_name)->vector();
   } catch (const std::logic_error& e) {
     const std::string evalt = PHX::typeAsString<PHAL::AlbanyTraits::Residual>();
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -126,6 +144,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   int numLayers = layeredMeshNumbering.numLayers;
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+  auto overlap_map = workset.distParamLib->get(this->param_name)->overlap_map();
+  auto map = workset.distParamLib->get(this->param_name)->map();
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
@@ -136,7 +156,9 @@ evaluateFields(typename Traits::EvalData workset)
       layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
       if(ilayer==fieldLevel) {
         GO ginode = workset.disc->getOverlapNodeMapT()->getGlobalElement(lnodeId);
-        pvecT_constView[pvecT->getMap()->getLocalElement(ginode)  ] = (this->val)(cell,node);
+        LO lid = pvecT->getMap()->getLocalElement(ginode);
+        if(lid>=0)
+          pvecT_constView[ lid ] = (this->val)(cell,node);
       }
     }
   }

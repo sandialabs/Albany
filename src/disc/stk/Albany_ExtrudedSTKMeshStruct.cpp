@@ -320,12 +320,14 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   stk::mesh::PartVector nodePartVec;
   stk::mesh::PartVector singlePartVec(1);
   stk::mesh::PartVector singlePartVecBottom(1);
+  stk::mesh::PartVector singlePartVecLateral(1);
   stk::mesh::PartVector singlePartVecTop(1);
   stk::mesh::PartVector emptyPartVec;
   unsigned int ebNo = 0; //element block #???
 
   singlePartVecBottom[0] = nsPartVec["bottom"];
   singlePartVecTop[0] = nsPartVec["top"];
+  singlePartVecLateral[0] = nsPartVec["lateral"];
 
   typedef AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
   typedef AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
@@ -567,8 +569,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
      //   std::cout << j <<", " << sideLID << ", " << minIndex << ", " << tetraFaceIdOnPrismFaceId[minIndex][edgeLID] << ","  << std::endl;
         stk::mesh::Entity node0 = rel_elemNodes0[this->meshSpecs[0]->ctd.side[tetraFaceIdOnPrismFaceId[minIndex][sideLID]].node[j]];
         bulkData->declare_relation(side0, node0, j);
+        bulkData->change_entity_parts(node0, singlePartVecLateral);
         stk::mesh::Entity node1 = rel_elemNodes1[this->meshSpecs[0]->ctd.side[tetraFaceIdOnPrismFaceId[minIndex][sideLID]].node[j]];
         bulkData->declare_relation(side1, node1, j);
+        bulkData->change_entity_parts(node1, singlePartVecLateral);
       }
     }
 
@@ -584,6 +588,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
       for (int j = 0; j < 4; j++) {
         stk::mesh::Entity node = rel_elemNodes[this->meshSpecs[0]->ctd.side[sideLID].node[j]];
         bulkData->declare_relation(side, node, j);
+        bulkData->change_entity_parts(node, singlePartVecLateral);
       }
     }
     break;
@@ -895,7 +900,7 @@ void Albany::ExtrudedSTKMeshStruct::interpolateBasalLayeredFields (const std::ve
           {
             VFT* field3d = metaData->get_field<VFT> (stk::topology::NODE_RANK, node_fields_names[ifield]);
             values3d = stk::mesh::field_data(*field3d,node3d);
-            for (int j=0; j<numScalars; ++j)
+            for (int j=0; j<numScalars/numFieldLayers; ++j)
               values3d[j] = h0*values2d[j*numFieldLayers+il0]+(1-h0)*values2d[j*numFieldLayers+il1];
             break;
           }

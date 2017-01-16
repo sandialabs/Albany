@@ -375,10 +375,10 @@ Albany::ProblemFactory::create()
     strategy = rcp(new FELIX::Elliptic2D(problemParams, paramLib, 1));
   }
   else if (method == "FELIX Enthalpy 3D") {
-    strategy = rcp(new FELIX::Enthalpy(problemParams, paramLib, 3));
+    strategy = rcp(new FELIX::Enthalpy(problemParams, discretizationParams, paramLib, 3));
   }
   else if (method == "FELIX Stokes FO Thermo Coupled 3D") {
-   strategy = rcp(new FELIX::StokesFOThermoCoupled(problemParams, paramLib, 3));
+   strategy = rcp(new FELIX::StokesFOThermoCoupled(problemParams, discretizationParams, paramLib, 3));
   }
   else if (method == "FELIX Laplacian Sampling") {
    strategy = rcp(new FELIX::LaplacianSampling(problemParams, discretizationParams, paramLib, 2));

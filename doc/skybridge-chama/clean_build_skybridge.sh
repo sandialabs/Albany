@@ -41,13 +41,13 @@ make install -j 8
 # Build a fresh flavor of Albany
 cd $REMOTE
 mkdir albany-build-gcc-release
-cp $REMOTE/src/Albany/doc/skybridge-chama/albany-config.sh $REMOTE/src/albany-build-gcc-release
+cp $REMOTE/src/Albany/doc/skybridge-chama/albany-config.sh $REMOTE/albany-build-gcc-release
 cd albany-build-gcc-release
 ./albany-config.sh
 make -j 8
 
 # Make a directory for the build
-export DATE=$(date +%m-%d-%Y")
+export DATE=$(date "+%m-%d-%y")
 mkdir $REMOTE_EXEC/$DATE
 chmod a+rx $REMOTE_EXEC/$DATE 
 
