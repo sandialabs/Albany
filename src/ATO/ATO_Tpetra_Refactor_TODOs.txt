@@ -4,11 +4,10 @@ refactoring ATO to work with Tpetra/Thyra instead of
 Epetra/EpetraExt, in no particular order (dependencies 
 b/w action items are noted).  
 
-1. Debug Tpetra functions ReplaceDiagonalValues and InvRowSum,
+1. Debug Tpetra function ReplaceDiagonalValues,
 currently in Albany::Utils (should ultimately be moved to the 
-Tpetra::CrsMatrix class). Propagate these funcitons into 
-the buildOperator routines in ATO_Solver.cpp and ATOT_Solver.cpp and 
-ATOT_XFEM_Preconditioner.cpp.
+Tpetra::CrsMatrix class). This function is used in the 
+ATOT::XFEM_Preconditioner.cpp class. 
 
 2. Have Mark Hoemmen fix Tpetra::CrsMatrix::apply method with a 
 TRANS combine mode.  This is needed for the 

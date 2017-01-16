@@ -45,26 +45,28 @@
     //Tpetra_MatrixMarket_Writer::writeSparseFile("prec.mm", matrix);
   }
 
-  Teuchos::RCP<Tpetra_Vector> 
-  Albany::InvRowSum(const Teuchos::RCP<const Tpetra_CrsMatrix>& matrix) {
-    //Create vector to store absrowsum 
-    Teuchos::RCP<Tpetra_Vector> absrowsum = Teuchos::rcp(new Tpetra_Vector(matrix->getRowMap())); 
-    absrowsum->putScalar(0.0); 
-    Teuchos::ArrayRCP<ST> absrowsum_nonconstView = absrowsum->get1dViewNonConst(); 
-    //Compute abs sum of each row and store in absrowsum vector 
-    for (auto i=0; i<matrix->getNodeNumRows(); ++i) {
-      std::size_t NumEntries = matrix->getNumEntriesInLocalRow(i);
-      Teuchos::Array<LO> Indices(NumEntries); 
-      Teuchos::Array<ST> Values(NumEntries); 
-      //Get local row
-      matrix->getLocalRowCopy(i, Indices(), Values(), NumEntries);
-      //Compute abs row rum 
-      for (auto j=0; j<NumEntries; j++) 
-        absrowsum_nonconstView[i] += abs(Values[j]);
+  void 
+  Albany::InvRowSum(Teuchos::RCP<Tpetra_Vector>& rowSumsTpetra, const Teuchos::RCP<Tpetra_CrsMatrix> matrix) {
+    //Check that rowSumsTpetra and matrix have same map 
+    if (rowSumsTpetra->getMap()->isSameAs(*(matrix->getRowMap()))) {
+      rowSumsTpetra->putScalar(0.0);
+      Teuchos::ArrayRCP<double> rowSumsTpetra_nonconstView = rowSumsTpetra->get1dViewNonConst(); 
+      for (auto row=0; row<rowSumsTpetra->getLocalLength(); row++) {
+        auto numEntriesRow = matrix->getNumEntriesInLocalRow(row); 
+        Teuchos::Array<LO> indices(numEntriesRow); 
+        Teuchos::Array<ST> values(numEntriesRow); 
+        matrix->getLocalRowCopy(row, indices(), values(), numEntriesRow);
+        ST scale = 0.0; 
+        for (auto j=0; j < numEntriesRow; j++) scale += std::abs(values[j]);
+        if (scale < 1.0e-16) rowSumsTpetra_nonconstView[row] = 0.0; 
+        else rowSumsTpetra_nonconstView[row] = 1.0/scale; 
+      }
     }
-    //Invert absrowsum 
-    Teuchos::RCP<Tpetra_Vector> invabsrowsum = Teuchos::rcp(new Tpetra_Vector(matrix->getRowMap())); 
-    invabsrowsum->reciprocal(*absrowsum); 
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl
+				 << "Error in Albany::InvRowSum!  "
+				 << "Input vector must have same map as row map of input matrix!" << std::endl);
+    }
   }
 
 

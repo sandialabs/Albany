@@ -53,8 +53,7 @@ namespace Albany {
 
   //Helper function which computes absolute values of the rowsum
   //of a matrix, and puts it in a vector. 
-  Teuchos::RCP<Tpetra_Vector> 
-  InvRowSum(const Teuchos::RCP<const Tpetra_CrsMatrix>& matrix); 
+  void InvRowSum(Teuchos::RCP<Tpetra_Vector>& rowSumsTpetra, const Teuchos::RCP<Tpetra_CrsMatrix> matrix); 
 
 //IKT, FIXME: ultimately get ride of || defined (ALBANY_ATO) below 
 #if defined(ALBANY_EPETRA) || defined (ALBANY_ATO)
@@ -75,8 +74,6 @@ namespace Albany {
 
   //Helper function which creates diagonal vector with entries equal to the 
   //absolute value of the rowsum of a matrix.
-  Teuchos::RCP<Tpetra_Vector> 
-  InvRowSum(const Teuchos::RCP<const Tpetra_CrsMatrix>& matrix); 
 
   Albany_MPI_Comm getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc);
 
