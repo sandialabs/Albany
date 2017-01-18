@@ -66,6 +66,27 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
                                std::out_of_range,
                                projectionType + " not in " + allowedProjectionTypes.toString());
 
+    const int num_DBC_modes = romParams->get("Number of DBC Modes", 0);
+    printf("Parameter read: num_DBC_modes = %d.\n", num_DBC_modes);
+    if (projectionType == allowedProjectionTypes[0])
+    {
+      if (num_DBC_modes != 0)
+      {
+        printf("WARNING:  Galerkin Projection selected, specifying Number of DBC Modes will have no effect.\n");
+      }
+    }
+    else if (projectionType == allowedProjectionTypes[1])
+    {
+      printf("Minimum Residual ROM will be run with %d DBC Modes.\n", num_DBC_modes);
+    }
+    else
+    {
+      if (num_DBC_modes != 0)
+      {
+        printf("WARNING:  Unknown projection type, specifying Number of DBC Modes will have no effect.\n");
+      }
+    }
+
     const RCP<const ReducedSpace> reducedSpace = spaceFactory_->create(romParams);
     const RCP<const Epetra_MultiVector> basis = spaceFactory_->getBasis(romParams);
 
@@ -81,7 +102,7 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
       if (nonnull(collocationOperator)) {
         opFactory = rcp(new GaussNewtonMetricOperatorFactory(basis, collocationOperator));
       } else {
-        opFactory = rcp(new GaussNewtonOperatorFactory(basis));
+        opFactory = rcp(new GaussNewtonOperatorFactory(basis, num_DBC_modes));
       }
 
       result = rcp(new ReducedOrderModelEvaluator(child, reducedSpace, opFactory));
