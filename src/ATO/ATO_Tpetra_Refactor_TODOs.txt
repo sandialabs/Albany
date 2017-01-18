@@ -21,10 +21,7 @@ workset.dgdp with Tpetra versions and changing calls in
 ATO::TensorPNormResponse and ATO::HomogenizedConstantsResponse 
 to use these new objects.
 
-4. Remove Epetra_CrsMatrix filterOperator from SpatialFilter 
-class in ATO::Solver and ATOT::Solver. 
-
-5. Test/debug new ATOT::Solver by running tests with AlbanyT 
+4. Test/debug new ATOT::Solver by running tests with AlbanyT 
 executable.
 
-6. Once 5. is done, create tests that run with AlbanyT executable.   
+5. Once 4. is done, create tests that run with AlbanyT executable.   

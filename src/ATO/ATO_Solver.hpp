@@ -50,7 +50,6 @@ namespace ATO {
              Teuchos::RCP<const Tpetra_Map>    localNodeMapT, 
              Teuchos::RCP<Tpetra_Import>       importerT,
              Teuchos::RCP<Tpetra_Export>       exporterT);  
-      Teuchos::RCP<Epetra_CrsMatrix> FilterOperator(){return filterOperator;}
       Teuchos::RCP<Tpetra_CrsMatrix> FilterOperatorT(){return filterOperatorT;}
       //IKT, FIXME: remove the following function once Mark Hoemmen 
       //fixes apply method with TRANS mode in Tpetra::CrsMatrix.
@@ -64,7 +63,6 @@ namespace ATO {
              Teuchos::RCP<Tpetra_Export>       exporterT, 
              const Tpetra_Map& overlapNodeMapT);
 
-      Teuchos::RCP<Epetra_CrsMatrix> filterOperator;
       Teuchos::RCP<Tpetra_CrsMatrix> filterOperatorT;
       //IKT, FIXME: remove the following creation of filterOperatorTransposeT 
       //once Mark Hoemmen fixes apply method with TRANS mode in Tpetra::CrsMatrix.

@@ -23,8 +23,6 @@ Please remove when issue is resolved
 #include "Albany_StateInfoStruct.hpp"
 #include "Adapt_NodalDataVector.hpp"
 #include "Petra_Converters.hpp"
-#include "EpetraExt_RowMatrixOut.h"
-#include "EpetraExt_MultiVectorOut.h"
 #include "Epetra_LinearProblem.h"
 #include "AztecOO.h"
 
@@ -1865,7 +1863,6 @@ ATO::SpatialFilter::buildOperator(
     Teuchos::RCP<Epetra_Comm> comm = 
       Albany::createEpetraCommFromTeuchosComm(localNodeMapT->getComm());
     Teuchos::RCP<Epetra_Map> localNodeMap = Petra::TpetraMap_To_EpetraMap(localNodeMapT, comm); 
-    filterOperator = Teuchos::rcp(new Epetra_CrsMatrix(Copy,*localNodeMap,numnonzeros));
     filterOperatorT = Teuchos::rcp(new Tpetra_CrsMatrix(localNodeMapT,numnonzeros));
     for (std::map<GlobalPoint,std::set<GlobalPoint> >::iterator 
         it=neighbors.begin(); it!=neighbors.end(); ++it) { 
@@ -1885,26 +1882,18 @@ ATO::SpatialFilter::buildOperator(
              distance += (coords[dim]-homeNode.coords[dim])*(coords[dim]-homeNode.coords[dim]);
            distance = (distance > 0.0) ? sqrt(distance) : 0.0;
            weight = filterRadius - distance;
-           filterOperator->InsertGlobalValues(home_node_gid,1,&weight,&neighbor_node_gid);
            filterOperatorT->insertGlobalValues(home_node_gid,1,&zero,&neighbor_node_gid); 
            filterOperatorT->replaceGlobalValues(home_node_gid,1,&weight,&neighbor_node_gid); 
         }
       } else {
          // if the list of connected nodes is empty, still add a one on the diagonal.
          weight = 1.0;
-         filterOperator->InsertGlobalValues(home_node_gid,1,&weight,&home_node_gid);
          filterOperatorT->insertGlobalValues(home_node_gid,1,&zero,&home_node_gid); 
          filterOperatorT->replaceGlobalValues(home_node_gid,1,&weight,&home_node_gid); 
       }
     }
   
-    filterOperator->FillComplete();
     filterOperatorT->fillComplete();
-
-    // scale filter operator so rows sum to one.
-    Epetra_Vector rowSums(*localNodeMap);
-    filterOperator->InvRowSums(rowSums);
-    filterOperator->LeftScale(rowSums);
 
     // scale filter operator so rows sum to one.
     Teuchos::RCP<Tpetra_Vector> rowSumsT = Teuchos::rcp(new Tpetra_Vector(filterOperatorT->getRowMap()));
