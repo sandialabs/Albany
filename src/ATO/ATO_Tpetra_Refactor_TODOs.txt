@@ -10,9 +10,10 @@ Tpetra::CrsMatrix class). This function is used in the
 ATOT::XFEM_Preconditioner.cpp class. 
 
 2. Have Mark Hoemmen fix Tpetra::CrsMatrix::apply method with a 
-TRANS combine mode.  This is needed for the 
-ATO::Solver::copyObjectiveFromStateMgr and ATOT::Solver::copyObjectiveFromStateMgr 
-routines.  Once this is done, remove Epetra code and ifdefs from these functions.
+TRANS combine mode.  Once this is done, remove creation of 
+filterOperatorTpetra in ATO::Solver and ATOT::Solver, and
+uncomment relevant apply code in copyObjectiveFromStateMgr 
+routines.
 
 3. Switch distributed parameters in Albany to use Tpetra instead 
 of Epetra.  This requires replacing workset.overlapped_dgdp and 
@@ -20,7 +21,7 @@ workset.dgdp with Tpetra versions and changing calls in
 ATO::TensorPNormResponse and ATO::HomogenizedConstantsResponse 
 to use these new objects.
 
-4. Once 2. is done, remove filterOperator from SpatialFilter 
+4. Remove Epetra_CrsMatrix filterOperator from SpatialFilter 
 class in ATO::Solver and ATOT::Solver. 
 
 5. Test/debug new ATOT::Solver by running tests with AlbanyT 

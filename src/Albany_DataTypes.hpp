@@ -92,6 +92,7 @@ typedef Sacado::Fad::DFad<RealType> TanFadType;
 #include "MatrixMarket_Tpetra.hpp"
 #include "Thyra_TpetraThyraWrappers.hpp"
 #include "MatrixMarket_Tpetra.hpp"
+#include "Tpetra_RowMatrixTransposer.hpp"
 
 
 //Kokkos includes
@@ -122,7 +123,7 @@ typedef Thyra::TpetraOperatorVectorExtraction<ST, LO, GO, KokkosNode> ConverterT
 typedef Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix>                Tpetra_MatrixMarket_Writer;
 typedef Thyra::TpetraVector<ST,LO,GO,KokkosNode>                      ThyraVector;
 typedef Thyra::TpetraMultiVector<ST,LO,GO,KokkosNode>                 ThyraMultiVector;
-
+typedef Tpetra::RowMatrixTransposer<ST, LO, GO, KokkosNode >          Tpetra_RowMatrixTransposer; 
 
 // Include ScalarParameterLibrary to specialize its traits
 #include "Sacado_ScalarParameterLibrary.hpp"
