@@ -53,6 +53,9 @@ namespace ATOT {
              Teuchos::RCP<Tpetra_Export>       exporterT);  
       Teuchos::RCP<Epetra_CrsMatrix> FilterOperator(){return filterOperator;}
       Teuchos::RCP<Tpetra_CrsMatrix> FilterOperatorT(){return filterOperatorT;}
+      //IKT, FIXME: remove the following function once Mark Hoemmen 
+      //fixes apply method with TRANS mode in Tpetra::CrsMatrix.
+      Teuchos::RCP<Tpetra_CrsMatrix> FilterOperatorTransposeT(){return filterOperatorTransposeT;}
       int getNumIterations(){return iterations;}
     protected:
       void importNeighbors(
@@ -64,6 +67,9 @@ namespace ATOT {
 
       Teuchos::RCP<Epetra_CrsMatrix> filterOperator;
       Teuchos::RCP<Tpetra_CrsMatrix> filterOperatorT;
+      //IKT, FIXME: remove the following creation of filterOperatorTransposeT 
+      //once Mark Hoemmen fixes apply method with TRANS mode in Tpetra::CrsMatrix.
+      Teuchos::RCP<Tpetra_CrsMatrix> filterOperatorTransposeT;
       int iterations;
       double filterRadius;
       Teuchos::Array<std::string> blocks;
