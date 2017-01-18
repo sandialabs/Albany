@@ -21,7 +21,7 @@ namespace MOR {
 template <typename Derived>
 class GaussNewtonOperatorFactoryBase : public ReducedOperatorFactory {
 public:
-  explicit GaussNewtonOperatorFactoryBase(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis);
+  explicit GaussNewtonOperatorFactoryBase(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis, int numDBCModes);
 
   virtual bool fullJacobianRequired(bool residualRequested, bool jacobianRequested) const;
 
@@ -32,6 +32,10 @@ public:
 
   virtual void fullJacobianIs(const Epetra_Operator &op);
 
+  virtual Teuchos::RCP<const Epetra_MultiVector> getLeftBasisCopy() const;
+
+  int num_dbc_modes_;
+
 protected:
   Teuchos::RCP<const Epetra_MultiVector> getPremultipliedReducedBasis() const;
 
@@ -40,12 +44,14 @@ private:
 
   ReducedJacobianFactory jacobianFactory_;
 
+  Teuchos::RCP<Epetra_MultiVector> leftbasis_;
+
   Teuchos::RCP<const Epetra_MultiVector> getLeftBasis() const;
 };
 
 class GaussNewtonOperatorFactory : public GaussNewtonOperatorFactoryBase<GaussNewtonOperatorFactory> {
 public:
-  explicit GaussNewtonOperatorFactory(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis);
+  explicit GaussNewtonOperatorFactory(const Teuchos::RCP<const Epetra_MultiVector> &reducedBasis, int numDBCModes);
 
   Teuchos::RCP<const Epetra_MultiVector> leftProjectorBasis() const;
 };

@@ -15,9 +15,10 @@ namespace MOR {
 using ::Teuchos::RCP;
 
 template <typename Derived>
-GaussNewtonOperatorFactoryBase<Derived>::GaussNewtonOperatorFactoryBase(const RCP<const Epetra_MultiVector> &reducedBasis) :
+GaussNewtonOperatorFactoryBase<Derived>::GaussNewtonOperatorFactoryBase(const RCP<const Epetra_MultiVector> &reducedBasis, int numDBCModes) :
   reducedBasis_(reducedBasis),
   jacobianFactory_(reducedBasis_)
+  ,num_dbc_modes_(numDBCModes)
 {
   // Nothing to do
 }
@@ -30,7 +31,11 @@ bool GaussNewtonOperatorFactoryBase<Derived>::fullJacobianRequired(bool residual
 template <typename Derived>
 const Epetra_MultiVector &GaussNewtonOperatorFactoryBase<Derived>::leftProjection(
     const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const {
-  const int err = reduce(*this->getLeftBasis(), fullVec, result);
+  int err = 0;
+  if (num_dbc_modes_ == 0)
+    err = reduce(*this->getLeftBasis(), fullVec, result);
+  else
+    err = reduce(*this->getLeftBasisCopy(), fullVec, result);
   TEUCHOS_TEST_FOR_EXCEPT(err != 0);
   return result;
 }
@@ -42,12 +47,29 @@ RCP<Epetra_CrsMatrix> GaussNewtonOperatorFactoryBase<Derived>::reducedJacobianNe
 
 template <typename Derived>
 const Epetra_CrsMatrix &GaussNewtonOperatorFactoryBase<Derived>::reducedJacobian(Epetra_CrsMatrix &result) const {
-  return jacobianFactory_.reducedMatrix(*this->getLeftBasis(), result);
+  if (num_dbc_modes_ == 0)
+    return jacobianFactory_.reducedMatrix(*this->getLeftBasis(), result);
+  else
+    return jacobianFactory_.reducedMatrix(*this->getLeftBasisCopy(), result);
 }
 
 template <typename Derived>
 void GaussNewtonOperatorFactoryBase<Derived>::fullJacobianIs(const Epetra_Operator &op) {
   jacobianFactory_.fullJacobianIs(op);
+
+  leftbasis_ = Teuchos::rcp(new Epetra_MultiVector(*jacobianFactory_.premultipliedRightProjector()));
+
+  //printf("using %d DBC modes\n",num_dbc_modes_);
+  if (num_dbc_modes_ > 0)
+  {
+    Epetra_MultiVector* psi_dbc = new Epetra_MultiVector(View,*leftbasis_,0,num_dbc_modes_);
+  //psi_dbc->Print(std::cout);
+    Epetra_MultiVector* phi_dbc = new Epetra_MultiVector(View,*jacobianFactory_.rightProjector(),0,num_dbc_modes_);
+    psi_dbc->Scale(1.0, *phi_dbc);
+  //psi_dbc->Print(std::cout);
+    delete psi_dbc;
+    delete phi_dbc;
+  }
 }
 
 template <typename Derived>
@@ -60,8 +82,13 @@ RCP<const Epetra_MultiVector> GaussNewtonOperatorFactoryBase<Derived>::getLeftBa
   return static_cast<const Derived *>(this)->leftProjectorBasis();
 }
 
-GaussNewtonOperatorFactory::GaussNewtonOperatorFactory(const RCP<const Epetra_MultiVector> &reducedBasis) :
-  GaussNewtonOperatorFactoryBase<GaussNewtonOperatorFactory>(reducedBasis)
+template <typename Derived>
+RCP<const Epetra_MultiVector> GaussNewtonOperatorFactoryBase<Derived>::getLeftBasisCopy() const {
+  return leftbasis_;
+}
+
+GaussNewtonOperatorFactory::GaussNewtonOperatorFactory(const RCP<const Epetra_MultiVector> &reducedBasis, int numDBCModes) :
+  GaussNewtonOperatorFactoryBase<GaussNewtonOperatorFactory>(reducedBasis, numDBCModes)
 {
   // Nothing to do
 }
@@ -73,7 +100,7 @@ RCP<const Epetra_MultiVector> GaussNewtonOperatorFactory::leftProjectorBasis() c
 GaussNewtonMetricOperatorFactory::GaussNewtonMetricOperatorFactory(
     const RCP<const Epetra_MultiVector> &reducedBasis,
     const Teuchos::RCP<const Epetra_Operator> &metric) :
-  GaussNewtonOperatorFactoryBase<GaussNewtonMetricOperatorFactory>(reducedBasis),
+  GaussNewtonOperatorFactoryBase<GaussNewtonMetricOperatorFactory>(reducedBasis, num_dbc_modes_),
   metric_(metric),
   premultipliedLeftProjector_(new Epetra_MultiVector(metric->OperatorDomainMap(), reducedBasis->NumVectors(), false))
 {

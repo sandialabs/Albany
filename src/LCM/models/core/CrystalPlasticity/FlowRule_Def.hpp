@@ -84,7 +84,8 @@ CP::PowerLawFlowRule<ArgT>::
 computeRateSlip(
   std::shared_ptr<CP::FlowParameterBase> const & pflow_parameters,
   ArgT const & shear,
-  ArgT const & slip_resistance)
+  ArgT const & slip_resistance,
+  bool & failed)
 {
   using Params = PowerLawFlowParameters;
 
@@ -98,8 +99,17 @@ computeRateSlip(
   RealType const
   min_tol = pflow_parameters->min_tol_;
 
+  RealType const
+  max_tol = pflow_parameters->max_tol_;
+
   ArgT const
   ratio_stress = shear / slip_resistance;
+
+  if (ratio_stress > max_tol)
+  {
+    failed = true;
+    return max_tol;
+  }
 
   bool const
   finite_rate = std::fabs(ratio_stress) > min_tol;
@@ -125,7 +135,8 @@ CP::ThermalActivationFlowRule<ArgT>::
 computeRateSlip(
   std::shared_ptr<CP::FlowParameterBase> const & pflow_parameters,
   ArgT const & shear,
-  ArgT const & slip_resistance)
+  ArgT const & slip_resistance,
+  bool & failed)
 {
   using Params = ThermalActivationFlowParameters;
 
@@ -178,7 +189,8 @@ CP::PowerLawDragFlowRule<ArgT>::
 computeRateSlip(
   std::shared_ptr<CP::FlowParameterBase> const & pflow_parameters,
   ArgT const & shear,
-  ArgT const & slip_resistance)
+  ArgT const & slip_resistance,
+  bool & failed)
 {     
   using Params = PowerLawDragFlowParameters;
 
@@ -195,8 +207,17 @@ computeRateSlip(
   RealType const
   min_tol = pflow_parameters->min_tol_;
 
+  RealType const
+  max_tol = pflow_parameters->max_tol_;
+
   ArgT const
   ratio_stress = shear / slip_resistance;
+
+  if (ratio_stress > max_tol)
+  {
+    failed = true;
+    return max_tol;
+  }
 
   // Compute drag term
   ArgT const
@@ -253,7 +274,8 @@ CP::NoFlowRule<ArgT>::
 computeRateSlip(
   std::shared_ptr<CP::FlowParameterBase> const & pflow_parameters,
   ArgT const & shear,
-  ArgT const & slip_resistance)
+  ArgT const & slip_resistance,
+  bool & failed)
 {
   return 0.;
 }
