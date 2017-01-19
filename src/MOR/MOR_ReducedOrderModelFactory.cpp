@@ -87,13 +87,59 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
       }
     }
 
+    std::string preconditionerType = romParams->get("Preconditioner Type", "None");
+    printf("Parameter read: preconditionerType = %s.\n", preconditionerType.c_str());
+    if (projectionType == allowedProjectionTypes[0])
+    {
+      if (preconditionerType.compare("None") != 0)
+      {
+        printf("WARNING:  Galerkin Projection selected, preconditioning is not supported, setting preconditionerType to None.\n");
+        preconditionerType = "None";
+      }
+    }
+    else if (projectionType == allowedProjectionTypes[1])
+    {
+      printf("Minimum Residual ROM will be run with preconditioner = %s.\n", preconditionerType.c_str());
+    }
+    else
+    {
+      if (preconditionerType.compare("None") != 0)
+      {
+        printf("WARNING:  Unknown projection type selected, preconditioning is not supported, setting preconditionerType to None.\n");
+        preconditionerType = "None";
+      }
+    }
+
+
+    const bool outputTrace = romParams->get("Output Trace", false);
+    printf("Parameter read: outputTrace = %d.\n", outputTrace);
+
+    const bool writeJacobian = romParams->get("Write Jacobian to File", false);
+    printf("Parameter read: writeJacobian = %d.\n", writeJacobian);
+
+    const bool writeResidual = romParams->get("Write Residual to File", false);
+    printf("Parameter read: writeResidual = %d.\n", writeResidual);
+
+    const bool writeSolution = romParams->get("Write Solution to File", false);
+    printf("Parameter read: writeSolution = %d.\n", writeSolution);
+
+    const bool writePreconditioner = romParams->get("Write Preconditioner to File", false);
+    printf("Parameter read: writePreconditioner = %d.\n", writePreconditioner);
+
+    bool output_flags[8];
+    output_flags[0] = outputTrace;
+    output_flags[1] = writeJacobian;
+    output_flags[2] = writeResidual;
+    output_flags[3] = writeSolution;
+    output_flags[4] = writePreconditioner;
+
     const RCP<const ReducedSpace> reducedSpace = spaceFactory_->create(romParams);
     const RCP<const Epetra_MultiVector> basis = spaceFactory_->getBasis(romParams);
 
     if (projectionType == allowedProjectionTypes[0]) {
       const RCP<const Epetra_MultiVector> projector = spaceFactory_->getProjector(romParams);
       const RCP<ReducedOperatorFactory> opFactory(new PetrovGalerkinOperatorFactory(basis, projector));
-      result = rcp(new ReducedOrderModelEvaluator(child, reducedSpace, opFactory));
+      result = rcp(new ReducedOrderModelEvaluator(child, reducedSpace, opFactory, output_flags, preconditionerType));
     } else if (projectionType == allowedProjectionTypes[1]) {
       RCP<ReducedOperatorFactory> opFactory;
 
@@ -105,7 +151,7 @@ RCP<EpetraExt::ModelEvaluator> ReducedOrderModelFactory::create(const RCP<Epetra
         opFactory = rcp(new GaussNewtonOperatorFactory(basis, num_DBC_modes));
       }
 
-      result = rcp(new ReducedOrderModelEvaluator(child, reducedSpace, opFactory));
+      result = rcp(new ReducedOrderModelEvaluator(child, reducedSpace, opFactory, output_flags, preconditionerType));
     } else {
       TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "Should not happen");
     }

@@ -26,25 +26,48 @@ public:
   virtual bool fullJacobianRequired(bool residualRequested, bool jacobianRequested) const;
 
   virtual const Epetra_MultiVector &leftProjection(const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const;
+  virtual const Epetra_MultiVector &leftProjection_ProjectedSol(const Epetra_MultiVector &fullVec, Epetra_MultiVector &result) const;
 
   virtual Teuchos::RCP<Epetra_CrsMatrix> reducedJacobianNew();
   virtual const Epetra_CrsMatrix &reducedJacobian(Epetra_CrsMatrix &result) const;
+  virtual const Epetra_CrsMatrix &reducedJacobian_ProjectedSol(Epetra_CrsMatrix &result) const;
 
   virtual void fullJacobianIs(const Epetra_Operator &op);
 
+  virtual Teuchos::RCP<const Epetra_MultiVector> getPremultipliedReducedBasis() const;
+  virtual Teuchos::RCP<const Epetra_MultiVector> getReducedBasis() const;
   virtual Teuchos::RCP<const Epetra_MultiVector> getLeftBasisCopy() const;
+
+  virtual Teuchos::RCP<const Epetra_MultiVector> getScaling() const;
+  virtual void setScaling(Epetra_CrsMatrix &jacobian) const;
+  virtual void applyScaling(const Epetra_MultiVector &vector) const;
+
+  virtual Teuchos::RCP<const Epetra_MultiVector> getPreconditioner() const;
+  virtual void setPreconditioner(Epetra_CrsMatrix &jacobian) const;
+  virtual void applyPreconditioner(const Epetra_MultiVector &vector) const;
+
+  virtual Teuchos::RCP<Ifpack_Preconditioner> getPreconditionerIfpack() const;
+  virtual void setPreconditionerIfpack(Epetra_CrsMatrix &jacobian, std::string ifpackType) const;
+  virtual void applyPreconditionerIfpack(const Epetra_MultiVector &vector) const;
+
+  virtual Teuchos::RCP<const Epetra_CrsMatrix> getJacobian() const;
+  virtual void setJacobian(Epetra_CrsMatrix &jacobian) const;
+  virtual void applyJacobian(const Epetra_MultiVector &vector) const;
 
   int num_dbc_modes_;
 
 protected:
-  Teuchos::RCP<const Epetra_MultiVector> getPremultipliedReducedBasis() const;
 
 private:
   Teuchos::RCP<const Epetra_MultiVector> reducedBasis_;
 
   ReducedJacobianFactory jacobianFactory_;
 
+  Teuchos::RCP<Epetra_MultiVector> scaling_;
+  Teuchos::RCP<Epetra_MultiVector> preconditioner_;
   Teuchos::RCP<Epetra_MultiVector> leftbasis_;
+  mutable Teuchos::RCP<Ifpack_Preconditioner> preconditioner_ifpack_;
+  mutable Teuchos::RCP<Epetra_CrsMatrix> jacobian_;
 
   Teuchos::RCP<const Epetra_MultiVector> getLeftBasis() const;
 };
