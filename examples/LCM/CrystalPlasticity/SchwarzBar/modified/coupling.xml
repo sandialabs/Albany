@@ -2,7 +2,7 @@
 
      <ParameterList name="Coupled System">
 
-          <Parameter name="Model XML Files" 
+            <Parameter name="Model XML Files" 
                      type="Array(string)"
 		     value="{../lower_bar.xml, 
 		             ../gauge.xml, 
@@ -101,7 +101,7 @@
 
                     <Parameter name="Max Value" 
                                type="double" 
-                               value="100.0"/>
+                               value="2.0"/>
 
                     <Parameter name="Return Failed on Reaching Max Steps"
                                type="bool" 
@@ -118,11 +118,11 @@
                <ParameterList name="Step Size">
 
                     <Parameter name="Method" type="string" value="Adaptive"/>
-                    <Parameter name="Initial Step Size" type="double" value="5.0"/>
-                    <Parameter name="Max Step Size" type="double" value="10.0"/>
+                    <Parameter name="Initial Step Size" type="double" value="2.0"/>
+                    <Parameter name="Max Step Size" type="double" value="2.0"/>
                     <Parameter name="Min Step Size" type="double" value="0.001"/>
                     <Parameter name="Failed Step Reduction Factor" type="double" value="0.5"/>
-                    <Parameter name="Aggressiveness" type="double" value="0.2"/>
+                    <Parameter name="Aggressiveness" type="double" value="0.0"/>
 
                </ParameterList>
 
@@ -458,7 +458,7 @@
 
                          <Parameter name="Maximum Iterations" 
                                     type="int" 
-                                    value="1000"/>
+                                    value="25"/>
 
                     </ParameterList>
 
@@ -484,7 +484,7 @@
 
                               <Parameter name="Number of Nonlinear Iterations"
                                          type="int" 
-                                         value="200"/>
+                                         value="20"/>
 
                          </ParameterList>
 

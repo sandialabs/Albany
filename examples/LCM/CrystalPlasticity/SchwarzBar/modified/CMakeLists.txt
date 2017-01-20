@@ -15,4 +15,4 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coupling.gold.exo
                ${CMAKE_CURRENT_BINARY_DIR}/coupling.gold.exo COPYONLY)
 
 # Add the tests
-add_test(ScharzBarCPMatrixFree_np1 python ../../run_exodiff_test.py "${SerialAlbanyT.exe}" coupling.xml)
+add_test(ScharzBarCPModified_np1 python ../../run_exodiff_test.py "${SerialAlbanyT.exe}" coupling.xml)

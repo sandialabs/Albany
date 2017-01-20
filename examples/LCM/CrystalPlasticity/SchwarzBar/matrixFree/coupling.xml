@@ -157,7 +157,7 @@
 
                               <Parameter name="Tolerance" 
                                          type="double" 
-                                         value="1.0e-5"/>
+                                         value="1.0e-8"/>
 
                          </ParameterList>
 

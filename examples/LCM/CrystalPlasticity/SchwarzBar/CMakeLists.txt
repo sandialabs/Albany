@@ -18,3 +18,4 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/upper_bar_material.xml
                ${CMAKE_CURRENT_BINARY_DIR}/upper_bar_material.xml COPYONLY)
 
 add_subdirectory(matrixFree)
+add_subdirectory(modified)
