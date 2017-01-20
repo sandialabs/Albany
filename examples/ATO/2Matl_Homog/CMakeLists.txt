@@ -7,6 +7,7 @@ set(testName ${testDirName})
 IF (ALBANY_EPETRA) 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell3D.xml ${CMAKE_CURRENT_BINARY_DIR}/mitchell3D.xml COPYONLY)
 ENDIF() 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell3DT.xml ${CMAKE_CURRENT_BINARY_DIR}/mitchell3DT.xml COPYONLY)
 # 2. Copy mesh files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/padded.gen     ${CMAKE_CURRENT_BINARY_DIR}/padded.gen COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/padded.gen.4.0 ${CMAKE_CURRENT_BINARY_DIR}/padded.gen.4.0 COPYONLY)
