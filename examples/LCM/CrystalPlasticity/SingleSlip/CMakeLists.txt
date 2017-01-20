@@ -1,0 +1,7 @@
+add_subdirectory(SingleSlip)
+add_subdirectory(SingleSlipHard)
+add_subdirectory(SingleSlipHardMinusRecovery)
+add_subdirectory(SingleSlipPowerLawDrag)
+add_subdirectory(SingleSlipSaturation)
+add_subdirectory(SingleSlipOffKilterLoading)
+
