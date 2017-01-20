@@ -3,6 +3,7 @@
 IF (ALBANY_EPETRA) 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nodal.xml ${CMAKE_CURRENT_BINARY_DIR}/nodal.xml COPYONLY)
 ENDIF() 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nodalT.xml ${CMAKE_CURRENT_BINARY_DIR}/nodalT.xml COPYONLY)
 # 2. Copy mesh files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell3D.gen     ${CMAKE_CURRENT_BINARY_DIR}/mitchell3D.gen COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell3D.gen.4.0 ${CMAKE_CURRENT_BINARY_DIR}/mitchell3D.gen.4.0 COPYONLY)

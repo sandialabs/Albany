@@ -4,6 +4,8 @@ IF (ALBANY_EPETRA)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nodal_oc.xml ${CMAKE_CURRENT_BINARY_DIR}/nodal_oc.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nodal_nlopt.xml ${CMAKE_CURRENT_BINARY_DIR}/nodal_nlopt.xml COPYONLY)
 ENDIF() 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nodal_ocT.xml ${CMAKE_CURRENT_BINARY_DIR}/nodal_ocT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nodal_nloptT.xml ${CMAKE_CURRENT_BINARY_DIR}/nodal_nloptT.xml COPYONLY)
 # 2. Copy mesh files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell.gen     ${CMAKE_CURRENT_BINARY_DIR}/mitchell.gen COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell.gen.4.0 ${CMAKE_CURRENT_BINARY_DIR}/mitchell.gen.4.0 COPYONLY)

@@ -3,6 +3,7 @@
 IF (ALBANY_EPETRA) 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2d_ebw.xml ${CMAKE_CURRENT_BINARY_DIR}/2d_ebw.xml COPYONLY)
 ENDIF() 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2d_ebwT.xml ${CMAKE_CURRENT_BINARY_DIR}/2d_ebwT.xml COPYONLY)
 # 2. Copy mesh files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2d_ebw.gen     ${CMAKE_CURRENT_BINARY_DIR}/2d_ebw.gen COPYONLY)
 # 3. Copy runtest.cmake from source to binary dir

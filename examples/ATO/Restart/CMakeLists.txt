@@ -3,6 +3,7 @@
 IF (ALBANY_EPETRA) 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fblock_restart.xml ${CMAKE_CURRENT_BINARY_DIR}/fblock_restart.xml COPYONLY)
 ENDIF() 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fblock_restartT.xml ${CMAKE_CURRENT_BINARY_DIR}/fblock_restartT.xml COPYONLY)
 # 2. Copy mesh files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fblock_restart.exo     ${CMAKE_CURRENT_BINARY_DIR}/fblock_restart.exo COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fblock_restart.exo.4.0 ${CMAKE_CURRENT_BINARY_DIR}/fblock_restart.exo.4.0 COPYONLY)
