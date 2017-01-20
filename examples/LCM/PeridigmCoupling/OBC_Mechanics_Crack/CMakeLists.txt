@@ -24,6 +24,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OBC_Mechanics_Crack_Analysis.final_st
                ${CMAKE_CURRENT_BINARY_DIR}/OBC_Mechanics_Crack_Analysis.final_step.gold.e COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OBC_Mechanics_Crack_Analysis.final_step.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/OBC_Mechanics_Crack_Analysis.final_step.exodiff COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OBC_Mechanics_Crack_PostProcess.py
+               ${CMAKE_CURRENT_BINARY_DIR}/OBC_Mechanics_Crack_PostProcess.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OBC_Mechanics_Crack.gnuplot
+               ${CMAKE_CURRENT_BINARY_DIR}/OBC_Mechanics_Crack.gnuplot COPYONLY)
 
 # Add the tests
 if(ALBANY_IFPACK2)

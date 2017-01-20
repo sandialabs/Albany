@@ -11,6 +11,7 @@
 #include "Schwarz_Multiscale.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
+#include "NOXSolverPrePostOperator.h"
 
 //uncomment the following to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET
@@ -115,6 +116,46 @@ SchwarzMultiscale(
     }
   }
 
+  // Create a NOX status test and associated machinery for cutting the global time step
+  // when the CrystalPlasticity constitutive model's state update routine fails
+  Teuchos::RCP<NOX::StatusTest::Generic> nox_status_test = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag);
+  Teuchos::RCP<NOX::Abstract::PrePostOperator> pre_post_operator = Teuchos::rcp(new NOXSolverPrePostOperator);
+  Teuchos::RCP<NOXSolverPrePostOperator> nox_solver_pre_post_operator =
+    Teuchos::rcp_dynamic_cast<NOXSolverPrePostOperator>(pre_post_operator);
+  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> statusTest =
+    Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(nox_status_test);
+
+  // Acquire the NOX "Solver Options" and "Status Tests" parameter lists
+  Teuchos::RCP<Teuchos::ParameterList> solverOptionsParameterList;
+  Teuchos::RCP<Teuchos::ParameterList> statusTestsParameterList;
+  if(app_params->isSublist("Piro")){
+    if(app_params->sublist("Piro").isSublist("NOX")){
+      if(app_params->sublist("Piro").sublist("NOX").isSublist("Solver Options")){
+	solverOptionsParameterList = Teuchos::rcpFromRef( app_params->sublist("Piro").sublist("NOX").sublist("Solver Options") );
+      }
+      if(app_params->sublist("Piro").sublist("NOX").isSublist("Status Tests")){
+	statusTestsParameterList = Teuchos::rcpFromRef( app_params->sublist("Piro").sublist("NOX").sublist("Status Tests") );
+      }
+    }
+  }
+
+  if(!solverOptionsParameterList.is_null() && !statusTestsParameterList.is_null()){
+
+    // Add the model evaulator flag as a status test.
+    Teuchos::ParameterList originalStatusTestParameterList = *statusTestsParameterList;
+    Teuchos::ParameterList newStatusTestParameterList;
+    newStatusTestParameterList.set<std::string>("Test Type", "Combo");
+    newStatusTestParameterList.set<std::string>("Combo Type", "OR");
+    newStatusTestParameterList.set<int>("Number of Tests", 2);
+    newStatusTestParameterList.sublist("Test 0");
+    newStatusTestParameterList.sublist("Test 0").set("Test Type", "User Defined");
+    newStatusTestParameterList.sublist("Test 0").set("User Status Test", nox_status_test);
+    newStatusTestParameterList.sublist("Test 1") = originalStatusTestParameterList;
+    *statusTestsParameterList = newStatusTestParameterList;
+
+    nox_solver_pre_post_operator->setStatusTest(statusTest);
+    solverOptionsParameterList->set("User Defined Pre/Post Operator", pre_post_operator);
+  }
 
   //------------End getting of Preconditioner type-------------------------------------------------------------
 
@@ -261,9 +302,6 @@ SchwarzMultiscale(
     model_app_params_[m] = Teuchos::rcp(
         new Teuchos::ParameterList(solver_factory.getParameters()));
 
-    Teuchos::ParameterList &
-    app_params_m = *model_app_params_[m];
-
     Teuchos::RCP<Teuchos::ParameterList>
     problem_params_m = Teuchos::sublist(model_app_params_[m], "Problem");
 
@@ -337,13 +375,16 @@ SchwarzMultiscale(
     // BC evaluators are built.
 
     // Add application array for later use in Schwarz BC.
-    app_params_m.set("Application Array", apps_);
+    model_app_params_[m]->set("Application Array", apps_);
 
     // See application index for use with Schwarz BC.
-    app_params_m.set("Application Index", m);
+    model_app_params_[m]->set("Application Index", m);
 
     // App application name-index map for later use in Schwarz BC.
-    app_params_m.set("Application Name Index Map", app_name_index_map);
+    model_app_params_[m]->set("Application Name Index Map", app_name_index_map);
+
+    // Machinery for cutting the global time step from within the CrystalPlasticity constitutive model
+    model_app_params_[m]->sublist("Problem").set("Constitutive Model NOX Status Test", nox_status_test);
 
     //create application for mth model
     apps_[m] = Teuchos::rcp(new Albany::Application(
