@@ -249,8 +249,14 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
     have_topmod_adaptation_ = adaptation_method_name == "Topmod";
   }
 
-  // Create a user-defined NOX status test that can be passed to the ModelEvaluators
-  nox_status_test_ = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag);
+  // User-defined NOX status test that can be passed to the ModelEvaluators
+  // This allows a ModelEvaluator to indicate to NOX that something has failed, which is useful for adaptive step size reduction
+  if (params->isParameter("Constitutive Model NOX Status Test")) {
+    nox_status_test_ = params->get<Teuchos::RCP<NOX::StatusTest::Generic>>("Constitutive Model NOX Status Test");
+  }
+  else {
+    nox_status_test_ = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag);
+  }
 
   bool requireLatticeOrientationOnMesh = false;
   if (Teuchos::nonnull(material_db_)) {
@@ -515,7 +521,6 @@ applyProblemSpecificSolverSettings(
   }
 
   if(!solverOptionsParameterList.is_null() && !statusTestsParameterList.is_null()){
-
     // Add the model evaulator flag as a status test.
     Teuchos::ParameterList originalStatusTestParameterList = *statusTestsParameterList;
     Teuchos::ParameterList newStatusTestParameterList;
