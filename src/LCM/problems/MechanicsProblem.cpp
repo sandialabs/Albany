@@ -463,6 +463,7 @@ getValidProblemParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL =
       this->getGenericProblemParams("ValidMechanicsProblemParams");
 
+  validPL->set<bool>("Register dirichlet_field", true, "Flag to register dirichlet_field"); 
   validPL->set<std::string>("MaterialDB Filename",
       "materials.xml",
       "Filename of material database xml file");
