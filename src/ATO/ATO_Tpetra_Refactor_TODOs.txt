@@ -24,4 +24,8 @@ to use these new objects.
 4. Test/debug new ATOT::Solver by running tests with AlbanyT 
 executable.
 
-5. Once 4. is done, create tests that run with AlbanyT executable.   
+5. Once 4. is done, create tests that run with AlbanyT executable.  
+
+6. For Tpetra input files for 2Matl_Homog, Cogent_Opt and Cogent_ThermoMech
+that use MueLu with same settings as ML.  These test originally had ML, 
+but I have switched them to Ifpack2, due to complexity of MueLu settings. 
