@@ -21,6 +21,6 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 6. Run the "runtest.cmake" file in the CWD
 IF (ALBANY_EPETRA) 
-add_test(NAME ${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
+  add_test(NAME ATO:${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
   -DTEST_NAME=${testName} -P runtest.cmake)
 ENDIF() 
