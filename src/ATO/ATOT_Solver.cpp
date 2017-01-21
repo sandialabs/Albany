@@ -35,6 +35,7 @@ MPI_Datatype MPI_GlobalPointT;
 bool ATOT::operator< (ATOT::GlobalPoint const & a, ATOT::GlobalPoint const & b){return a.gid < b.gid;}
 ATOT::GlobalPoint::GlobalPoint(){coords[0]=0.0; coords[1]=0.0; coords[2]=0.0;}
 
+#define OUTPUT_TO_SCREEN
 
 
 /******************************************************************************/
@@ -43,6 +44,9 @@ ATOT::OptInterface::ComputeMeasure(std::string measureType, const double* p,
                                   double& measure)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   ComputeMeasure(measureType, p, measure, NULL, "Gauss Quadrature");
 }
 
@@ -52,6 +56,9 @@ ATOT::OptInterface::ComputeMeasure(std::string measureType, const double* p,
                                   double& measure, double* dmdp)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   ComputeMeasure(measureType, p, measure, dmdp, "Gauss Quadrature");
 }
 
@@ -61,6 +68,9 @@ ATOT::OptInterface::ComputeMeasure(std::string measureType, const double* p,
                                   double& measure, std::string integrationMethod)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   ComputeMeasure(measureType, p, measure, NULL, integrationMethod);
 }
 
@@ -74,6 +84,9 @@ ATOT::SpatialFilter::buildOperator(
              Teuchos::RCP<Tpetra_Export>       exporterT)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
           wsElNodeID = app->getDiscretization()->getWsElNodeID();
@@ -227,6 +240,9 @@ ATOT::SpatialFilter::buildOperator(
 ATOT::SpatialFilter::SpatialFilter( Teuchos::ParameterList& params )
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   filterRadius = params.get<double>("Filter Radius");
   if( params.isType<Teuchos::Array<std::string> >("Blocks") ){
     blocks = params.get<Teuchos::Array<std::string> >("Blocks");
@@ -248,6 +264,9 @@ ATOT::SpatialFilter::importNeighbors(
   const Tpetra_Map& expNodeMapT)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   // get from the exporter the node global ids and the associated processor ids
   std::map<int, std::set<int> > boundaryNodesByProc;
 
@@ -466,7 +485,9 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 : _solverComm(comm), _mainAppParams(appParams)
 /******************************************************************************/
 {
-  //IKT, FIXME: this routine still has Epetra in it, which should ultimately be removed. 
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 
   zeroSet();
 
@@ -689,7 +710,6 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   localNodeMapT   = disc->getNodeMapT();
   overlapNodeMapT = disc->getOverlapNodeMapT();
-  Teuchos::RCP<Epetra_Comm> commE = Albany::createEpetraCommFromTeuchosComm(_solverComm);
 
   for(int itopo=0; itopo<ntopos; itopo++){
     Teuchos::RCP<TopologyInfoStructT> topoStructT = _topologyInfoStructsT[itopo];
@@ -784,6 +804,9 @@ void
 ATOT::Solver::zeroSet()
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   // set parameters and responses
   _num_parameters = 0; //TEV: assume no parameters or responses for now...
   _num_responses  = 0; //TEV: assume no parameters or responses for now...
@@ -802,6 +825,9 @@ ATOT::Solver::evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_arg
                             Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const 
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   int numHomogenizationSets = _homogenizationSets.size();
   for (int iHomog=0; iHomog<numHomogenizationSets; iHomog++){
     const HomogenizationSet& hs = _homogenizationSets[iHomog];
@@ -925,6 +951,9 @@ ATOT::Solver::evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_arg
 void ATOT::Solver::getOptDofsUpperBound( Teuchos::Array<double>& b )
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   int nLocal = _topologyInfoStructsT[0]->localVectorT->getLocalLength();
   int nTopos = _topologyInfoStructsT.size();
   int nTerms = nTopos*nLocal;
@@ -945,6 +974,9 @@ void ATOT::Solver::getOptDofsUpperBound( Teuchos::Array<double>& b )
 void ATOT::Solver::getOptDofsLowerBound( Teuchos::Array<double>& b )
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   int nLocal = _topologyInfoStructsT[0]->localVectorT->getLocalLength();
   int nTopos = _topologyInfoStructsT.size();
   int nTerms = nTopos*nLocal;
@@ -966,6 +998,9 @@ void
 ATOT::Solver::InitializeOptDofs(double* p)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   if( _is_restart ){
 // JR: this needs to be tested for multimaterial
     Albany::StateManager& stateMgr = _subProblems[0].app->getStateMgr();
@@ -989,6 +1024,9 @@ void
 ATOT::Solver::ComputeObjective(const double* p, double& g, double* dgdp)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   *out << "IKT, 12/22/16, WARNING: Tpetra-converted ComputeObjective has not been tested " 
        << "yet and may not work correctly! \n"; 
@@ -1023,6 +1061,9 @@ void
 ATOT::Solver::ComputeObjective(double* p, double& g, double* dgdp)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   *out << "IKT, 12/22/16, WARNING: Tpetra-converted ComputeObjective has not been tested " 
        << "yet and may not work correctly! \n"; 
@@ -1080,6 +1121,9 @@ void
 ATOT::Solver::writeCurrentDesign()
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 #ifdef ATO_USES_ISOLIB
   Teuchos::RCP<Albany::AbstractDiscretization>
     disc = _subProblems[0].app->getDiscretization();
@@ -1108,6 +1152,9 @@ void
 ATOT::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSolver )
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   Teuchos::RCP<Albany::Application> app = subSolver.app;
   Albany::StateManager& stateMgr = app->getStateMgr();
 
@@ -1174,6 +1221,9 @@ void
 ATOT::Solver::copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr )
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 
   Albany::StateArrays& stateArrays = stateMgr.getStateArrays();
   Albany::StateArrayVec& src = stateArrays.elemStateArrays;
@@ -1211,6 +1261,9 @@ void
 ATOT::Solver::smoothTopologyT(double* p)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   int ntopos = _topologyInfoStructsT.size();
   
   for(int itopo=0; itopo<ntopos; itopo++){
@@ -1236,6 +1289,9 @@ void
 ATOT::Solver::smoothTopologyT(Teuchos::RCP<TopologyInfoStructT> topoStructT)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   // apply filter if requested
   if(topoStructT->filterT != Teuchos::null){
     Teuchos::RCP<Tpetra_Vector> topoVecT = topoStructT->localVectorT;
@@ -1270,6 +1326,9 @@ void
 ATOT::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& stateMgr )
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   Albany::StateArrays& stateArrays = stateMgr.getStateArrays();
   Albany::StateArrayVec& dest = stateArrays.elemStateArrays;
   int numWorksets = dest.size();
@@ -1286,7 +1345,7 @@ ATOT::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& s
     Teuchos::RCP<ATO::Topology> topology = topoStructT->topologyT;
     const Teuchos::Array<std::string>& fixedBlocks = topology->getFixedBlocks();
 
-    // copy topology into Epetra_Vector to apply the filter and/or communicate boundary data
+    // copy topology into Tpetra_Vector to apply the filter and/or communicate boundary data
     Teuchos::RCP<Tpetra_Vector> topoVecT = topoStructT->localVectorT;
     Teuchos::ArrayRCP<double> ltopo = topoVecT->get1dViewNonConst(); 
     int numLocalNodes = topoVecT->getLocalLength();
@@ -1371,6 +1430,9 @@ void
 ATOT::Solver::copyConstraintFromStateMgr( double& c, double* dcdp )
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   c = *constraintValue;
 
   auto nVecs = ConstraintGradientVecT.size();
@@ -1394,7 +1456,9 @@ void
 ATOT::Solver::copyObjectiveFromStateMgr( double& g, double* dgdp )
 /******************************************************************************/
 {
-  //IKT, FIXME: this routine still has Epetra, which should ultimately be removed. 
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   // aggregated objective derivative is stored in the first subproblem
   Albany::StateManager& stateMgr = _subProblems[0].app->getStateMgr();
 
@@ -1452,6 +1516,9 @@ void
 ATOT::Solver::ComputeMeasure(std::string measureType, double& measure)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   return _atoProblem->ComputeMeasure(measureType, measure);
 }
 
@@ -1462,6 +1529,9 @@ ATOT::Solver::ComputeMeasure(std::string measureType, const double* p,
                             std::string integrationMethod)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   // communicate boundary topo data
   Albany::StateManager& stateMgr = _subProblems[0].app->getStateMgr();
   
@@ -1513,6 +1583,9 @@ ATOT::Solver::ComputeVolume(double* p, const double* dfdp,
                            double& v, double threshhold, double minP)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   /*  Assumptions:
       -- dfdp is already consistent across proc boundaries.
       -- the volume computation that's done by the atoProblem updates the topology, p.
@@ -1527,6 +1600,9 @@ void
 ATOT::Solver::Compute(double* p, double& g, double* dgdp, double& c, double* dcdp)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   Compute((const double*)p, g, dgdp, c, dcdp);
 }
 
@@ -1535,6 +1611,9 @@ void
 ATOT::Solver::Compute(const double* p, double& g, double* dgdp, double& c, double* dcdp)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   for(int i=0; i<_numPhysics; i++){
 
     // copy data from p into each stateManager
@@ -1573,6 +1652,9 @@ void
 ATOT::Solver::ComputeConstraint(double* p, double& c, double* dcdp)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 }
 
 /******************************************************************************/
@@ -1580,6 +1662,9 @@ int
 ATOT::Solver::GetNumOptDofs()
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 //  return _subProblems[0].app->getDiscretization()->getNodeMap()->NumMyElements();
   auto nVecs = ObjectiveGradientVecT.size();
   return nVecs*ObjectiveGradientVecT[0]->getLocalLength();
@@ -1597,6 +1682,9 @@ ATOT::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPar
                               const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   using Teuchos::RCP;
   using Teuchos::rcp;
 
@@ -1705,6 +1793,9 @@ ATOT::Solver::~Solver() { }
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> ATOT::Solver::get_x_space() const
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > dummy; 
   return dummy;
 }
@@ -1713,6 +1804,9 @@ Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> ATOT::Solver::get_x_space() const
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> ATOT::Solver::get_f_space() const
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > dummy; 
   return dummy;
 }
@@ -1722,6 +1816,9 @@ Thyra::ModelEvaluatorBase::InArgs<ST>
 ATOT::Solver::createInArgs() const
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   Thyra::ModelEvaluatorBase::InArgsSetup<ST> inArgs; 
   inArgs.setModelEvalDescription("ATO Solver Model Evaluator Description");
   inArgs.set_Np(_num_parameters);
@@ -1733,6 +1830,9 @@ Thyra::ModelEvaluatorBase::OutArgs<ST>
 ATOT::Solver::createOutArgsImpl() const
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   Thyra::ModelEvaluatorBase::OutArgsSetup<ST> outArgs; 
   outArgs.setModelEvalDescription("ATO Solver Multipurpose Model Evaluator");
   outArgs.set_Np_Ng(_num_parameters, _num_responses+1);  //TODO: is the +1 necessary still??
@@ -1744,6 +1844,9 @@ Teuchos::RCP<const Thyra::VectorSpaceBase<ST>>
 ATOT::Solver::get_p_space(int j) const 
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   //IKT: I believe p's map is localNodeMapT; should double check.
   Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > p_space = Thyra::createVectorSpace<ST>(localNodeMapT);
   return p_space; 
@@ -1754,6 +1857,9 @@ Teuchos::RCP<const Thyra::VectorSpaceBase<ST>>
 ATOT::Solver::get_g_space(int j) const 
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   TEUCHOS_TEST_FOR_EXCEPTION(j > _num_responses || j < 0, Teuchos::Exceptions::InvalidParameter,
                      std::endl <<
                      "Error in ATOT::Solver::get_g_space():  " <<
@@ -1779,6 +1885,9 @@ ATOT::SolverSubSolverData
 ATOT::Solver::CreateSubSolverData(const ATOT::SolverSubSolver& sub) const
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   ATOT::SolverSubSolverData ret;
   if( sub.params_inT->Np() > 0 && sub.responses_outT->Ng() > 0 ) 
   {
@@ -1828,6 +1937,9 @@ Teuchos::RCP<Teuchos::ParameterList>
 ATOT::Solver::createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const
 /******************************************************************************/
 {   
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 
 
   ///*** CREATE INPUT FILE FOR SUBPROBLEM: ***///
@@ -1948,6 +2060,9 @@ ATOT::Solver::createHomogenizationInputFile(
     int homogDim) const
 /******************************************************************************/
 {   
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 
   const Teuchos::ParameterList& homog_problem_subList = 
     homog_subList.sublist("Problem");
@@ -2086,6 +2201,9 @@ Teuchos::RCP<const Teuchos::ParameterList>
 ATOT::Solver::getValidProblemParameters() const
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 
   Teuchos::RCP<Teuchos::ParameterList> validPL = 
     Teuchos::createParameterList("ValidTopologicalOptimizationProblemParams");
