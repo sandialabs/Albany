@@ -37,9 +37,29 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
     std::string mtrlDbFilename = params->get<std::string>("MaterialDB Filename");
  // Create Material Database
     materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, commT));
-
   }
 
+  conductivityIsDistParam = false;
+  if(params->isSublist("Distributed Parameters")) {
+    int numDistParams = params->sublist("Distributed Parameters").get<int>("Number of Parameter Vectors",0);
+    for (int i=0; i<numDistParams; ++i) {
+      Teuchos::ParameterList p = params->sublist("Distributed Parameters").sublist(Albany::strint("Distributed Parameter", i));
+      if(p.get<std::string>("Name","")== "thermal_conductivity")
+        conductivityIsDistParam = true;
+        break;
+    } 
+  }
+  dirichletIsDistParam = false;
+  if(params->isSublist("Distributed Parameters")) {
+    int numDistParams = params->sublist("Distributed Parameters").get<int>("Number of Parameter Vectors",0);
+    for (int i=0; i<numDistParams; ++i) {
+      Teuchos::ParameterList p = params->sublist("Distributed Parameters").sublist(Albany::strint("Distributed Parameter", i));
+      if(p.get<std::string>("Name","")== "dirichlet_field")
+        dirichletIsDistParam = true;
+        meshPartDirichlet = p.get<std::string>("Mesh Part", "");
+        break;
+    } 
+  }
 }
 
 Albany::HeatProblem::
