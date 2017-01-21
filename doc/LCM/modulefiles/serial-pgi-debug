@@ -10,6 +10,8 @@ set     lcm_dir         $env(LCM_DIR)
 set     module_dir      $env(MODULEPATH)
 set     install_dir     $lcm_dir/trilinos-install-$build
 set     alb_exe_dir     $lcm_dir/albany-build-$build/src
+set     alb_src_dir     $lcm_dir/Albany/src
+set     py_utils_dir    $alb_src_dir/LCM/utils/python
 
 set     pgihome         /opt/pgi
 set     target          linux86-64
@@ -43,6 +45,6 @@ prepend-path            PATH            $alb_exe_dir/LCM
 prepend-path            PATH            $install_dir/bin
 prepend-path            PATH            /usr/lib64/openmpi/bin
 prepend-path            PATH            $pgidir/bin
-prepend-path            PYTHONPATH      $install_dir/lib
+prepend-path            PYTHONPATH      $install_dir/lib:$py_utils_dir
 conflict                $module_dir
 conflict                pgi
