@@ -501,10 +501,7 @@
                   </ParameterList>
                 </ParameterList>
               </ParameterList>
-              <!--Parameter name="Preconditioner Type" type="string" value="ML"/-->
-              <!--FIXME: Epetra version of test uses ML.  Find analogous MueLu options and switch
-                   preconditioner to MueLu.-->
-              <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
+              <Parameter name="Preconditioner Type" type="string" value="MueLu"/>
               <ParameterList name="Preconditioner Types">
                 <ParameterList name="Ifpack2">
                   <Parameter name="Overlap" type="int" value="2"/>
