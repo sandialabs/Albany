@@ -26,7 +26,8 @@ executable.
 
 Currently, the following tests seg fault when run:
 
-- Constraint_2D: ATOT_Solver.cpp:610,1615 (*) 
+- Constraint_2D_adj: ATOT_Solver.cpp:610,1615 (*) 
+- Constraint_2D_fd: ATOT_Solver.cpp:610,1615 (*) 
 - DistParam_2D: ATOT_Solver.cpp:610,1615 (*) 
 
 (*) error in debug: 
