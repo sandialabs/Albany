@@ -15,6 +15,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell.gen.4.3 ${CMAKE_CURRENT_BINA
 IF (ALBANY_EPETRA) 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake ${CMAKE_CURRENT_BINARY_DIR}/runtest.cmake COPYONLY)
 ENDIF() 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.cmake ${CMAKE_CURRENT_BINARY_DIR}/runtestT.cmake COPYONLY)
 
 # 5. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)

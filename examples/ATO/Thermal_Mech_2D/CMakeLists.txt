@@ -22,3 +22,6 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 add_test(NAME ATO:${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
   -DTEST_NAME=${testName} -P runtest.cmake)
 ENDIF() 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.cmake ${CMAKE_CURRENT_BINARY_DIR}/runtestT.cmake COPYONLY)
+add_test(NAME ATOT:${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
+  -DTEST_NAME=${testName} -P runtestT.cmake)
