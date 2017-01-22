@@ -30,7 +30,8 @@ executable.  Currently, the following tests seg fault when run:
 - Thermal_MultiMech_3D: ATOT_Solver.cpp:610,1615 (**)  
 - Constraint_2D: ATOT_Solver.cpp:610,1615 (*) 
 - FixedBlocks: ATOT_Solver.cpp:610,1615 (**)
-- Restart: ATOT_Solver.cpp:610,1615 (**) 
+- Restart: ATOT_Solver.cpp:610,1615 (**)
+- 2Matl_Homog:  
 
 (*) error in debug: 
 p=0: *** Caught standard std::exception of type 'Teuchos::NullReferenceError' :
