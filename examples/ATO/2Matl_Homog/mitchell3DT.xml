@@ -230,7 +230,7 @@
       <ParameterList name="Discretization">
         <Parameter name="Method" type="string" value="Ioss"/>
         <Parameter name="Exodus Input File Name" type="string" value="cube.gen"/>
-        <Parameter name="Exodus Output File Name" type="string" value="cube.exo"/>
+        <Parameter name="Exodus Output File Name" type="string" value="cubeT.exo"/>
       </ParameterList>
       <ParameterList name="Cell BCs">
         <Parameter name="DOF Names" type="Array(string)" value="{X,Y,Z}"/>
@@ -501,10 +501,7 @@
                   </ParameterList>
                 </ParameterList>
               </ParameterList>
-              <!--Parameter name="Preconditioner Type" type="string" value="ML"/-->
-              <!--FIXME: Epetra version of test uses ML.  Find analogous MueLu options and switch
-                   preconditioner to MueLu.-->
-              <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
+              <Parameter name="Preconditioner Type" type="string" value="MueLu"/>
               <ParameterList name="Preconditioner Types">
                 <ParameterList name="Ifpack2">
                   <Parameter name="Overlap" type="int" value="2"/>

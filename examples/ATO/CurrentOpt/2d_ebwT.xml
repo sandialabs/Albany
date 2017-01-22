@@ -164,7 +164,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name" type="string" value="2d_ebw.gen"/>
-    <Parameter name="Exodus Output File Name" type="string" value="2d_ebw.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="2d_ebwT.exo"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
   </ParameterList>
 

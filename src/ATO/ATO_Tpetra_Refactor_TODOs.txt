@@ -22,7 +22,41 @@ ATO::TensorPNormResponse and ATO::HomogenizedConstantsResponse
 to use these new objects.
 
 4. Test/debug new ATOT::Solver by running tests with AlbanyT 
-executable.
+executable.  Currently, the following tests seg fault when run:
+
+- 2Matl_Homog:  
+- Constraint_2D: ATOT_Solver.cpp:610,1615 (*) 
+- DistParam_2D: ATOT_Solver.cpp:610,1615 (*) 
+- FixedBlocks: ATOT_Solver.cpp:610,1615 (**)
+- Mitchell_3D: ATOT_Solver.cpp:610,1615 (**) 
+- RegHeaviside_3D: ATOT_Solver.cpp:610,1615 (**) 
+- Restart: ATOT_Solver.cpp:610,1615 (**)
+- Thermal_MultiMech_3D: ATOT_Solver.cpp:610,1615 (**)  
+
+(*) error in debug: 
+p=0: *** Caught standard std::exception of type 'Teuchos::NullReferenceError' :
+ /home/ikalash/LCM/Trilinos/packages/teuchos/core/src/Teuchos_RCPNode.cpp:741:
+ Throw number = 1
+ Throw test that evaluated to true: true
+ Teuchos::RCP<Tpetra::Map<int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > const> : You can not call operator->() or operator*() if getRawPtr()==0!
+
+
+(**) error in debug:
+p=0: *** Caught standard std::exception of type 'Teuchos::RangeError' :
+ /home/ikalash/LCM/Trilinos/build-debug-no-dtk-ikt/install/include/Teuchos_Array.hpp:1473:
+ Throw number = 1
+ Throw test that evaluated to true: !( 0 <= i && i < size() )
+ Array<T>::assertIndex(i): i=1 out of range [0, 1)
+
+
+Note that NLOpt was not on in my build; need to build
+with NLOpt and test NLOpt tests as well.  These tests are:
+
+- BodyForce_2D 
+- CurrentOpt 
+- ResidualStrain 
+- VolumeObj_StiffnessCon
+- VolumeObj_StressCon
 
 5. Once 4. is done, create tests that run with AlbanyT executable.  
 

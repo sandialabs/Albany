@@ -134,7 +134,7 @@
       <ParameterList name="Discretization">
         <Parameter name="Method" type="string" value="Ioss"/>
         <Parameter name="Exodus Input File Name" type="string" value="array.gen"/>
-        <Parameter name="Exodus Output File Name" type="string" value="array.exo"/>
+        <Parameter name="Exodus Output File Name" type="string" value="arrayT.exo"/>
       </ParameterList>
       <ParameterList name="Cell BCs">
         <Parameter name="DOF Names" type="Array(string)" value="{X,Y}"/>

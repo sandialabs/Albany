@@ -27,3 +27,9 @@ add_test(NAME ATO:${testName}
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
 set_tests_properties(ATO:${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 ENDIF() 
+add_test(NAME ATOT:${testName} 
+         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
+         -DTEST_NAME=${testName} -DTEST_ARGS=nodalT.xml -DMPIMNP=${MPIMNP} 
+         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
+         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
+set_tests_properties(ATO:${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")

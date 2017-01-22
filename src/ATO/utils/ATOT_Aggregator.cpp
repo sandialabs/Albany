@@ -9,6 +9,8 @@
 #include "Teuchos_TestForException.hpp"
 #include <functional>
 
+#define OUTPUT_TO_SCREEN
+
 namespace ATOT {
 
 
@@ -16,6 +18,9 @@ namespace ATOT {
 Teuchos::RCP<Aggregator> 
 AggregatorFactory::create(const Teuchos::ParameterList& aggregatorParams, std::string entityType, int nTopos)
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   Teuchos::Array<std::string> values = 
     aggregatorParams.get<Teuchos::Array<std::string> >("Values");
 
@@ -55,6 +60,9 @@ AggregatorFactory::create(const Teuchos::ParameterList& aggregatorParams, std::s
 Aggregator::Aggregator(const Teuchos::ParameterList& aggregatorParams, int nTopos) : numTopologies(nTopos)
 //**********************************************************************
 { 
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   parse(aggregatorParams);
 }
 
@@ -63,6 +71,9 @@ void
 Aggregator::parse(const Teuchos::ParameterList& aggregatorParams)
 //**********************************************************************
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   if(aggregatorParams.isType<Teuchos::Array<std::string> >("Values"))
     aggregatedValuesNames = aggregatorParams.get<Teuchos::Array<std::string> >("Values");
 
@@ -126,6 +137,9 @@ SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,
                    const std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > derivMap)
 //**********************************************************************
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   outApp = subProblems[0].app;
 
   // loop through sub variable names and find the containing state manager
@@ -164,6 +178,9 @@ void
 Aggregator_StateVarBased::SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems)
 //**********************************************************************
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   outApp = subProblems[0].app;
 
   // loop through sub variable names and find the containing state manager
@@ -228,6 +245,9 @@ Aggregator(aggregatorParams, nTopos),
 Aggregator_StateVarBased()
 //**********************************************************************
 { 
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   int nAgg = aggregatedValuesNames.size();
   if(nAgg == 0) nAgg = aggregatedDerivativesNames.size();
   double weight = 1.0/nAgg;
@@ -241,6 +261,9 @@ Aggregator_DistUniform::Aggregator_DistUniform(const Teuchos::ParameterList& agg
 Aggregator(aggregatorParams, nTopos)
 //**********************************************************************
 { 
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   int nAgg = aggregatedValuesNames.size();
   if(nAgg == 0) nAgg = aggregatedDerivativesNames.size();
   double weight = 1.0/nAgg;
@@ -253,6 +276,9 @@ Aggregator_Scaled::Aggregator_Scaled(const Teuchos::ParameterList& aggregatorPar
 Aggregator(aggregatorParams, nTopos)
 //**********************************************************************
 { 
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   TEUCHOS_TEST_FOR_EXCEPTION(
     !aggregatorParams.isType<Teuchos::Array<double> >("Weights"),
     Teuchos::Exceptions::InvalidParameter, std::endl 
@@ -273,6 +299,9 @@ Aggregator_Extremum<C>::Aggregator_Extremum(const Teuchos::ParameterList& aggreg
 Aggregator(aggregatorParams, nTopos)
 //**********************************************************************
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   TEUCHOS_TEST_FOR_EXCEPTION(
     aggregatedValuesNames.size() == 0 &&
     aggregatedDerivativesNames.size() > 0,
@@ -285,6 +314,9 @@ Aggregator_DistScaled::Aggregator_DistScaled(const Teuchos::ParameterList& aggre
 Aggregator(aggregatorParams, nTopos)
 //**********************************************************************
 { 
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   TEUCHOS_TEST_FOR_EXCEPTION(
     !aggregatorParams.isType<Teuchos::Array<double> >("Weights"),
     Teuchos::Exceptions::InvalidParameter, std::endl 
@@ -305,6 +337,9 @@ Aggregator_DistExtremum<C>::Aggregator_DistExtremum(const Teuchos::ParameterList
 Aggregator(aggregatorParams, nTopos)
 //**********************************************************************
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   TEUCHOS_TEST_FOR_EXCEPTION(
     aggregatedValuesNames.size() == 0 &&
     aggregatedDerivativesNames.size() > 0,
@@ -318,6 +353,9 @@ void
 Aggregator_Scaled::EvaluateT()
 //**********************************************************************
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
    int numValues = valuesT.size();
 
   *valueAggregated=shiftValueAggregated;
@@ -406,7 +444,10 @@ template <typename C>
 void Aggregator_Extremum<C>::EvaluateT()
 //**********************************************************************
 {
-   *valueAggregated=shiftValueAggregated;
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  *valueAggregated=shiftValueAggregated;
 
   int extremum_index = 0;
   int numValues = valuesT.size();
@@ -476,6 +517,9 @@ template <typename C>
 void Aggregator_DistExtremum<C>::EvaluateT()
 //**********************************************************************
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   *valueAggregated = shiftValueAggregated;
 
   int extremum_index = 0;
@@ -546,6 +590,9 @@ void
 Aggregator_DistScaled::EvaluateT()
 //**********************************************************************
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   *valueAggregated = shiftValueAggregated;
 
   int nValues = valuesT.size();

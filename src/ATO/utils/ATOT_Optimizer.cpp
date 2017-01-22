@@ -19,6 +19,7 @@
 
 #include <algorithm>
 
+#define OUTPUT_TO_SCREEN
 
 namespace ATOT {
 
@@ -27,6 +28,9 @@ Teuchos::RCP<Optimizer>
 OptimizerFactory::create(const Teuchos::ParameterList& optimizerParams)
 /**********************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   std::string optPackage = optimizerParams.get<std::string>("Package");
 
   if( optPackage == "OC"  )  return Teuchos::rcp(new Optimizer_OC(optimizerParams));
@@ -70,6 +74,9 @@ OptimizerFactory::create(const Teuchos::ParameterList& optimizerParams)
 Optimizer::Optimizer(const Teuchos::ParameterList& optimizerParams)
 /**********************************************************************/
 { 
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 
   solverInterface = NULL;
   comm = Teuchos::null;
@@ -107,6 +114,9 @@ Optimizer_OC::Optimizer_OC(const Teuchos::ParameterList& optimizerParams) :
 Optimizer(optimizerParams)
 /**********************************************************************/
 { 
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   p = NULL;
   p_last = NULL;
   f = 0.0;
@@ -162,6 +172,9 @@ Optimizer_NLopt::Optimizer_NLopt(const Teuchos::ParameterList& optimizerParams) 
 Optimizer(optimizerParams)
 /**********************************************************************/
 { 
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   p = NULL;
   p_last = NULL;
   objectiveValue = 0.0;
@@ -232,6 +245,9 @@ void
 Optimizer::SetInterface(Solver* mySolverInterface)
 /**********************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   solverInterface = dynamic_cast<OptInterface*>(mySolverInterface);
   TEUCHOS_TEST_FOR_EXCEPTION(
     solverInterface == NULL, Teuchos::Exceptions::InvalidParameter, std::endl 
@@ -244,6 +260,9 @@ Optimizer::SetInterface(Solver* mySolverInterface)
 Optimizer_OC::~Optimizer_OC()
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   if( p      ) delete [] p;
   if( p_last ) delete [] p_last;
   if( dfdp   ) delete [] dfdp;
@@ -256,6 +275,9 @@ Optimizer_OC::~Optimizer_OC()
 Optimizer_NLopt::~Optimizer_NLopt()
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   if( p      ) delete [] p;
   if( p_last ) delete [] p_last;
 }
@@ -266,6 +288,9 @@ double
 Optimizer::computeNorm(const double* p, int n)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   double norm = 0.0;
   for(int i=0; i<n; i++){
     norm += p[i]*p[i];
@@ -282,6 +307,9 @@ double
 Optimizer::computeDiffNorm(const double* p, const double* p_last, int n, bool printResult)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   double norm = 0.0;
   for(int i=0; i<n; i++){
     norm += pow(p[i]-p_last[i],2);
@@ -302,6 +330,9 @@ void
 Optimizer_OC::Initialize()
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   TEUCHOS_TEST_FOR_EXCEPTION (
     solverInterface == NULL, Teuchos::Exceptions::InvalidParameter, 
     std::endl << "Error! Optimizer requires valid Solver Interface" << std::endl);
@@ -348,6 +379,9 @@ void
 Optimizer_OCG::Optimize()
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   solverInterface->Compute(p, f, dfdp, g, dgdp);
 
   double global_f=0.0, pnorm = computeNorm(p, numOptDofs);
@@ -441,6 +475,9 @@ void
 Optimizer_OC::Optimize()
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 
   double measure=0.0;
 
@@ -535,9 +572,12 @@ void
 ConvergenceTest::initNorm( double f, double pnorm )
 /******************************************************************************/
 {
-    Teuchos::Array<Teuchos::RCP<ConTest> >::iterator it;
-    for(it=conTests.begin(); it!=conTests.end(); it++)
-      (*it)->initNorm(f, pnorm);
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  Teuchos::Array<Teuchos::RCP<ConTest> >::iterator it;
+  for (it=conTests.begin(); it!=conTests.end(); it++)
+    (*it)->initNorm(f, pnorm);
 }
 
 /******************************************************************************/
@@ -545,6 +585,9 @@ bool
 ConvergenceTest::isConverged( double delta_f, double delta_p, int iter, int myPID )
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
     if(iter == 0) return false;
 
     bool writeToCout = false;
@@ -599,6 +642,9 @@ ConvergenceTest::isConverged( double delta_f, double delta_p, int iter, int myPI
 ConvergenceTest::ConvergenceTest(const Teuchos::ParameterList& convParams)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 
   if( convParams.isType<int>("Minimum Iterations") )
     minIterations = convParams.get<int>("Minimum Iterations");
@@ -653,6 +699,9 @@ ConvergenceTest::ConvergenceTest(const Teuchos::ParameterList& convParams)
 /******************************************************************************/
 bool ConvergenceTest::AbsDeltaP::passed(double delta_f, double delta_p, bool write)
 { 
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   bool status = ( fabs(delta_p) < conValue );
   if( write )
     std::cout << "Test: Topology Change (Absolute): " << std::endl 
@@ -662,6 +711,9 @@ bool ConvergenceTest::AbsDeltaP::passed(double delta_f, double delta_p, bool wri
 }
 bool ConvergenceTest::AbsDeltaF::passed(double delta_f, double delta_p, bool write)
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   bool status = ( fabs(delta_f) < conValue );
   if( write )
     std::cout << "Test: Objective Change (Absolute): " << std::endl 
@@ -671,6 +723,9 @@ bool ConvergenceTest::AbsDeltaF::passed(double delta_f, double delta_p, bool wri
 }
 bool ConvergenceTest::AbsRunningDF::passed(double delta_f, double delta_p, bool write)
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   dF.push_back(delta_f);
   runningDF += delta_f;
   if(dF.size()>nave) runningDF -= *(dF.end()-nave);
@@ -682,6 +737,9 @@ bool ConvergenceTest::AbsRunningDF::passed(double delta_f, double delta_p, bool 
   return status;
 }
 bool ConvergenceTest::RelDeltaP::passed(double delta_f, double delta_p, bool write){
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   bool status = (p0 != 0.0) ? ( fabs(delta_p/p0) < conValue ) : false;
   if( write )
     std::cout << "Test: Topology Change (Relative): " << std::endl 
@@ -690,6 +748,9 @@ bool ConvergenceTest::RelDeltaP::passed(double delta_f, double delta_p, bool wri
   return status;
 }
 bool ConvergenceTest::RelDeltaF::passed(double delta_f, double delta_p, bool write){
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   bool status = (f0 != 0.0) ? ( fabs(delta_f/f0) < conValue ) : false;
   if( write )
     std::cout << "Test: Objective Change (Relative): " << std::endl 
@@ -698,6 +759,9 @@ bool ConvergenceTest::RelDeltaF::passed(double delta_f, double delta_p, bool wri
   return status;
 }
 bool ConvergenceTest::RelRunningDF::passed(double delta_f, double delta_p, bool write){
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   dF.push_back(delta_f);
   runningDF += delta_f;
   int nvals = dF.size();
@@ -721,6 +785,9 @@ void
 Optimizer_OC::computeUpdatedTopology()
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 
   // find multiplier that enforces measure constraint
   Teuchos::Array<double> upperBound, lowerBound;
@@ -938,6 +1005,9 @@ void
 Optimizer_NLopt::Initialize()
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   TEUCHOS_TEST_FOR_EXCEPTION (
     solverInterface == NULL, Teuchos::Exceptions::InvalidParameter, std::endl
     << "Error! Optimizer requires valid Solver Interface" << std::endl);
@@ -1016,6 +1086,9 @@ void
 Optimizer_NLopt::Optimize()
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   double* dfdp_init = new double[numOptDofs];
   solverInterface->ComputeObjective(p, f, dfdp_init);
   delete [] dfdp_init;
@@ -1047,6 +1120,9 @@ double
 Optimizer_NLopt::evaluate_backend( unsigned int n, const double* x, double* grad )
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
    
   bool changed = isChanged(x);
 
@@ -1093,6 +1169,9 @@ Optimizer_NLopt::evaluate( unsigned int n, const double* x,
                            double* grad, void* data)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   Optimizer_NLopt* NLopt = reinterpret_cast<Optimizer_NLopt*>(data);
   return NLopt->evaluate_backend(n, x, grad);
 }
@@ -1102,6 +1181,9 @@ double
 Optimizer_NLopt::constraint_backend( unsigned int n, const double* x, double* grad )
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   bool changed = isChanged(x);
 
   if( primaryConstraintType == ResponseType::Measure ){
@@ -1135,6 +1217,9 @@ Optimizer_NLopt::constraint( unsigned int n, const double* x,
                              double* grad, void* data)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   Optimizer_NLopt* NLopt = reinterpret_cast<Optimizer_NLopt*>(data);
   return NLopt->constraint_backend(n, x, grad);
 }
@@ -1144,6 +1229,9 @@ bool
 Optimizer_NLopt::isChanged(const double* x)
 /******************************************************************************/
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   for(int i=0; i<numOptDofs; i++){
     if( x[i] != x_ref[i] ){
       std::memcpy((void*)x_ref, (void*)x, numOptDofs*sizeof(double));

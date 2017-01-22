@@ -263,7 +263,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name" type="string" value="mitchell3D.gen"/>
-    <Parameter name="Exodus Output File Name" type="string" value="mitchell3D.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="mitchell3DT.exo"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
   </ParameterList>
 
