@@ -2437,6 +2437,7 @@ applyGlobalDistParamDerivImplT(const double current_time,
 
     std::stringstream sensitivity_name; sensitivity_name << dist_param_name << "_sensitivity";
     if(distParamLib->has(sensitivity_name.str())) {
+      distParamLib->get(sensitivity_name.str())->vector()->putScalar(0);
       distParamLib->get(sensitivity_name.str())->vector()->update(1.0,*fpVT->getVector(0),1.0);
       distParamLib->get(sensitivity_name.str())->scatter();
     }

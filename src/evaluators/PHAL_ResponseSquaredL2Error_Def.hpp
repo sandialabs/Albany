@@ -18,7 +18,9 @@ ResponseSquaredL2ErrorBase(Teuchos::ParameterList& p, const Teuchos::RCP<Albany:
   Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Parameter List");
 
   // Gathering dimensions
-  numQPs   = dl->qp_scalar->dimension(2);
+  std::vector<std::size_t> dims;
+  dl->qp_scalar->dimensions(dims);
+  numQPs   = dims.back();
 
   Teuchos::RCP<PHX::DataLayout> layout;
   std::string rank,fname,target_fname;

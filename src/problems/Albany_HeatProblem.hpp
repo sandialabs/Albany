@@ -17,6 +17,7 @@
 #include "PHAL_Dimension.hpp"
 #include "Albany_ProblemUtils.hpp"
 
+#include "PHAL_ConvertFieldType.hpp"
 #include "QCAD_MaterialDatabase.hpp"
 
 namespace Albany {
@@ -88,6 +89,9 @@ namespace Albany {
     bool periodic;
     bool haveSource;
     bool haveAbsorption;
+    bool conductivityIsDistParam;
+    bool dirichletIsDistParam;
+    std::string meshPartDirichlet;
     int numDim;
 
    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
@@ -204,6 +208,7 @@ Albany::HeatProblem::constructEvaluators(
       (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
   }
 
+  if(!conductivityIsDistParam)
   { // Thermal conductivity
     RCP<ParameterList> p = rcp(new ParameterList);
 
@@ -241,6 +246,40 @@ Albany::HeatProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = rcp(new PHAL::Absorption<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  if(dirichletIsDistParam)
+  {
+    // Here is how to register the field for dirichlet condition.
+    RCP<ParameterList> p = rcp(new ParameterList);
+    Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
+    std::string stateName = "dirichlet_field";
+    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, meshPartDirichlet);
+  }
+
+  if(conductivityIsDistParam)
+  {
+    RCP<ParameterList> p = rcp(new ParameterList);
+    Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
+    std::string stateName = "thermal_conductivity";
+    std::string fieldName = "Thermal Conductivity";
+    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
+
+    //Gather parameter (similarly to what done with the solution)
+    ev = evalUtils.constructGatherScalarNodalParameter(stateName,fieldName);
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    //Scalar Nodal parameter is stored as a ParamScalarT, while the residual evaluator expect a ScalarT, hence we need to convert the field into a ScalarT 
+    p->set<Teuchos::RCP<PHX::DataLayout> >("Data Layout", dl->node_scalar);
+    p->set<std::string>("Field Name", fieldName);
+    ev = Teuchos::rcp(new PHAL::ConvertFieldTypePSTtoST<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator(fieldName));
+
+    stateName = "thermal_conductivity_sensitivity";
+    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, meshSpecs.ebName, true, &entity, "");
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

@@ -288,6 +288,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_IdentityCoordinateFunctionTraits.cpp
   evaluators/PHAL_LoadSideSetStateField.cpp
   evaluators/PHAL_LoadStateField.cpp
+  evaluators/PHAL_ConvertFieldType.cpp
   evaluators/PHAL_MapToPhysicalFrame.cpp
   evaluators/PHAL_MapToPhysicalFrameSide.cpp
   evaluators/PHAL_Neumann.cpp
@@ -425,6 +426,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_LoadSideSetStateField_Def.hpp
   evaluators/PHAL_LoadStateField.hpp
   evaluators/PHAL_LoadStateField_Def.hpp
+  evaluators/PHAL_ConvertFieldType.hpp
+  evaluators/PHAL_ConvertFieldType_Def.hpp
   evaluators/PHAL_MapToPhysicalFrame.hpp
   evaluators/PHAL_MapToPhysicalFrame_Def.hpp
   evaluators/PHAL_MapToPhysicalFrameSide.hpp
