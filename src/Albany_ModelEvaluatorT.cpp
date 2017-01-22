@@ -51,8 +51,7 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
   Teuchos::ParameterList& responseParams =
     problemParams.sublist("Response Functions");
 
-  int num_response_vecs =
-     responseParams.get("Number of Response Vectors", 0);
+  int num_response_vecs = app->getNumResponses(); 
   bool using_old_response_list = false;
   if (responseParams.isType<int>("Number")) {
     int numParameters = responseParams.get<int>("Number");
