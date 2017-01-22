@@ -265,7 +265,7 @@
       <ParameterList name="Discretization">
         <Parameter name="Method" type="string" value="Ioss"/>
         <Parameter name="Exodus Input File Name" type="string" value="cube.gen"/>
-        <Parameter name="Exodus Output File Name" type="string" value="cube.exo"/>
+        <Parameter name="Exodus Output File Name" type="string" value="cubeT.exo"/>
       </ParameterList>
       <ParameterList name="Cell BCs">
         <Parameter name="DOF Names" type="Array(string)" value="{P}"/>
@@ -423,7 +423,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name" type="string" value="padded.gen"/>
-    <Parameter name="Exodus Output File Name" type="string" value="padded.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="paddedT.exo"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
   </ParameterList>
 
