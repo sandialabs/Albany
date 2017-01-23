@@ -51,11 +51,6 @@ p=0: *** Caught standard std::exception of type 'std::logic_error' :
  The supported types include DerivativeSupport{DERIV_LINEAR_OP}!
 
 
-The following tests fail when run with AlbanyT: 
-
-- 2Matl_Homog 
-- RegHeaviside_3D 
-
 Note that NLOpt was not on in my build; need to build
 with NLOpt and test NLOpt tests as well.  These tests are:
 
