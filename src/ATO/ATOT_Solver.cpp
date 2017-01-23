@@ -1825,7 +1825,7 @@ ATOT::Solver::createInArgs() const
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   Thyra::ModelEvaluatorBase::InArgsSetup<ST> inArgs; 
-  inArgs.setModelEvalDescription("ATO Solver Model Evaluator Description");
+  inArgs.setModelEvalDescription(this->description());
   inArgs.set_Np(_num_parameters);
   return inArgs;
 }
@@ -1839,7 +1839,7 @@ ATOT::Solver::createOutArgsImpl() const
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   Thyra::ModelEvaluatorBase::OutArgsSetup<ST> outArgs; 
-  outArgs.setModelEvalDescription("ATO Solver Multipurpose Model Evaluator");
+  outArgs.setModelEvalDescription(this->description());
   outArgs.set_Np_Ng(_num_parameters, _num_responses+1);  //TODO: is the +1 necessary still??
   return outArgs;
 }
