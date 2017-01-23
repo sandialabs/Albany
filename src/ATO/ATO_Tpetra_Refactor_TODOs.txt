@@ -26,16 +26,29 @@ executable.
 
 Currently, the following tests seg fault when run:
 
-- Constraint_2D_adj: ATOT_Solver.cpp:610,1615 (*) 
-- Constraint_2D_fd: ATOT_Solver.cpp:610,1615 (*) 
-- DistParam_2D: ATOT_Solver.cpp:610,1615 (*) 
+- Constraint_2D_adj 
+- Constraint_2D_fd
+- DistParam_2D
 
-(*) error in debug: 
-p=0: *** Caught standard std::exception of type 'Teuchos::NullReferenceError' :
- /home/ikalash/LCM/Trilinos/packages/teuchos/core/src/Teuchos_RCPNode.cpp:741:
+error in debug: 
+
+
+p=0: *** Caught standard std::exception of type 'std::logic_error' :
+
+ /home/ikalash/LCM/Trilinos/build-debug-no-dtk-ikt/install/include/Thyra_ModelEvaluatorBase_def.hpp:2102:
+ 
  Throw number = 1
- Throw test that evaluated to true: true
- Teuchos::RCP<Tpetra::Map<int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> > const> : You can not call operator->() or operator*() if getRawPtr()==0!
+ 
+ Throw test that evaluated to true: !deriv.isSupportedBy(derivSupport)
+ 
+ Thyra::ModelEvaluatorBase::OutArgs<Scalar>::assert_supports(OUT_ARG_DgDp,j,l):
+ 
+ model = 'Piro::NOXSolver<double>':
+ 
+ Error, The argument DgDp(0,0) = Derivative{derivMultiVec=DerivativeMultiVector{multiVec=Thyra::TpetraMultiVector<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> >{rangeDim=651,domainDim=1},orientation=DERIV_MV_BY_COL}}
+ is not supported!
+ 
+ The supported types include DerivativeSupport{DERIV_LINEAR_OP}!
 
 
 The following tests fail when run with AlbanyT: 
@@ -53,7 +66,8 @@ with NLOpt and test NLOpt tests as well.  These tests are:
 - VolumeObj_StressCon
 
 Note also that Cogent was not on in my build; need to build with Cogent
-and test Cogent tests.  These tests are: 
+and test Cogent tests.  These tests are:
+ 
 - Cogent_Opt
 - Cogent_Tab
 

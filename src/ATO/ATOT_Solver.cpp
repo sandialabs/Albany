@@ -1746,16 +1746,12 @@ ATOT::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPar
       std::string gName = resParams.get<std::string>("Response Name");
       std::string dgdpName = resParams.get<std::string>("Response Derivative Name");
       if (!ret.responses_outT->supports(Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, ig, ip).none()){
-        RCP<const Thyra::VectorBase<ST>> p = ret.params_inT->get_p(ip);
         RCP<const Thyra::VectorBase<ST>> g = ret.responses_outT->get_g(ig);
         //IKT, FIXME? conversions from Thyra to Tpetra should not be necessary, but there does 
         //not appear to be a routine in Thyra to get the space of a Thyra vector or the vector's 
         //global length. 
-        //IKT, FIXME: the creationg of p_space should be replaced with modelT->get_p_space, once 
-        //this routine is verified.   
-        RCP<const Tpetra_Vector> p_tpetra = ConverterT::getConstTpetraVector(p); 
         RCP<const Tpetra_Vector> g_tpetra = ConverterT::getConstTpetraVector(g); 
-        Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > p_space = Thyra::createVectorSpace<ST>(p_tpetra->getMap());
+        Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > p_space = ret.modelT->get_p_space(ip); 
         RCP<Thyra::MultiVectorBase<ST>> dgdp = Thyra::createMembers(p_space, g_tpetra->getGlobalLength()); 
         if(ret.responses_outT->supports(OUT_ARG_DgDp,ig,ip).supports(DERIV_TRANS_MV_BY_ROW)){
           Derivative<ST> dgdp_out(dgdp, DERIV_TRANS_MV_BY_ROW);
