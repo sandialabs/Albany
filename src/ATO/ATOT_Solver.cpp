@@ -1487,7 +1487,16 @@ ATOT::Solver::copyObjectiveFromStateMgr( double& g, double* dgdp )
         //_derivativeFilter->FilterOperatorT()->apply(*ObjectiveGradientVecT[ivec],
         //                                            *filtered_ObjectiveGradientVecT,
         //                                            Teuchos::TRANS); 
-        _derivativeFilter->FilterOperatorTransposeT()->apply(*ObjectiveGradientVecT[ivec],
+	//IKT, 1/23/17: the use of copies here is somewhat hacky, to get apply 
+	//to do the right thing and not throw an exception in a debug build. 
+	std::vector<double> vec(ObjectiveGradientVecT[ivec]->getLocalLength());
+	Teuchos::ArrayView<double> view = Teuchos::arrayViewFromVector(vec);
+	if (i == 0)
+	  ObjectiveGradientVecT[ivec]->get1dCopy(view);
+        else
+	  filtered_ObjectiveGradientVecT->get1dCopy(view);
+        Teuchos::RCP<Tpetra_Vector> temp = Teuchos::rcp(new Tpetra_Vector(localNodeMapT, view));
+        _derivativeFilter->FilterOperatorTransposeT()->apply(*temp,
                                                              *filtered_ObjectiveGradientVecT,
                                                              Teuchos::NO_TRANS); 
         *ObjectiveGradientVecT[ivec] = *filtered_ObjectiveGradientVecT; 
