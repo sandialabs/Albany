@@ -104,7 +104,6 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
 
-#ifdef ALBANY_FELIX
   else if (responseName == "Squared L2 Error Target ST")
   {
     RCP<PHAL::ResponseSquaredL2ErrorTargetST<EvalT,Traits>> res_ev =
@@ -153,6 +152,8 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
+
+#ifdef ALBANY_FELIX
   else if (responseName == "Surface Velocity Mismatch")
   {
     // No side data layouts have been passed to this class
