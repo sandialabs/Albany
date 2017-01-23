@@ -214,7 +214,10 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
 #endif
 #ifdef ALBANY_AMP
   if (method == "Sim") {
-    if (adaptParams_->isType<bool>("Add Layer")) { // add layer
+    bool add_layer = false;
+    if (adaptParams_->isType<bool>("Add Layer"))
+      add_layer = adaptParams_->get<bool>("Add Layer");
+    if (add_layer) { // add layer
       *out << "************************" << std::endl;
       *out << "    ADDING LAYER ON     " << std::endl;
       *out << "************************" << std::endl;
