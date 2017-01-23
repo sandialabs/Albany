@@ -326,14 +326,12 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Modal Objective")
   {
 #ifdef ALBANY_ATO
-#if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::ModalObjective<EvalT,Traits> > res_ev =
       rcp(new ATO::ModalObjective<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-#endif
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter,
@@ -346,14 +344,12 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Stiffness Objective")
   {
 #ifdef ALBANY_ATO
-#if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::StiffnessObjective<EvalT,Traits> > res_ev =
       rcp(new ATO::StiffnessObjective<EvalT,Traits>(*p, dl, meshSpecs));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-#endif
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter,
@@ -366,14 +362,12 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Tensor PNorm Objective")
   {
 #ifdef ALBANY_ATO
-#if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::TensorPNormResponse<EvalT,Traits> > res_ev =
       rcp(new ATO::TensorPNormResponse<EvalT,Traits>(*p, dl, meshSpecs));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-#endif
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter,
@@ -386,14 +380,12 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Homogenized Constants Response")
   {
 #ifdef ALBANY_ATO
-#if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::HomogenizedConstantsResponse<EvalT,Traits> > res_ev =
       rcp(new ATO::HomogenizedConstantsResponse<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-#endif
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter,
@@ -406,14 +398,12 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Internal Energy Objective")
   {
 #ifdef ALBANY_ATO
-#if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::InternalEnergyResponse<EvalT,Traits> > res_ev =
       rcp(new ATO::InternalEnergyResponse<EvalT,Traits>(*p, dl, meshSpecs));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-#endif
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter,

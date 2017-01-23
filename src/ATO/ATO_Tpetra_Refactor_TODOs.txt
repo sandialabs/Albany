@@ -71,7 +71,6 @@ and test Cogent tests.  These tests are:
 - Cogent_Opt
 - Cogent_Tab
 
-Also, all ATO fails when Epetra is turned off (seg faults).  Need to debug. 
 
-5. Once 4. is done, create tests that run with AlbanyT executable.  
+5. Once 4. is done, finish creating tests that run with AlbanyT executable.  
 
