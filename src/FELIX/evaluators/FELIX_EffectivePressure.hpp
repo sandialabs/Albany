@@ -21,7 +21,7 @@ namespace FELIX
     This evaluator evaluates the effective pressure at the basal side
 */
 
-template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes>
+template<typename EvalT, typename Traits, bool OnSide, bool Surrogate>
 class EffectivePressure : public PHX::EvaluatorWithBaseImpl<Traits>,
                           public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -30,7 +30,7 @@ public:
   typedef typename EvalT::ScalarT      ScalarT;
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
-  typedef typename std::conditional<IsHydrology,ScalarT,ParamScalarT>::type  HydroScalarT;
+  typedef typename std::conditional<Surrogate,ParamScalarT,ScalarT>::type  HydroScalarT;
 
   EffectivePressure (const Teuchos::ParameterList& p,
                      const Teuchos::RCP<Albany::Layouts>& dl);
@@ -41,6 +41,8 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
+  void evaluateFieldsSide (typename Traits::EvalData workset);
+  void evaluateFieldsCell (typename Traits::EvalData workset);
 
   // Input:
   PHX::MDField<ParamScalarT>  H;
@@ -51,13 +53,12 @@ private:
   PHX::MDField<HydroScalarT>  N;
 
   int numNodes;
-  int scenario;
 
   double rho_i;
   double rho_w;
   double g;
 
-  std::string basalSideName; // Needed if IsStokes=true
+  std::string basalSideName; // Needed if OnSide=true
 
   // Parameters needed for Stokes alone case
   bool   regularized;
