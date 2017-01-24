@@ -16,7 +16,6 @@
        evaluators/FELIX_Dissipation.cpp
        evaluators/FELIX_DummyResidual.cpp
        evaluators/FELIX_EffectivePressure.cpp
-       evaluators/FELIX_Elliptic2DResidual.cpp
        evaluators/FELIX_EnthalpyResid.cpp
        evaluators/FELIX_EnthalpyBasalResid.cpp
        evaluators/FELIX_EpsilonL1L2.cpp
@@ -41,6 +40,7 @@
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
        evaluators/FELIX_ResponseSMBMismatch.cpp
        evaluators/FELIX_ResponseBoundarySquaredL2Norm.cpp
+       evaluators/FELIX_SimpleOperation.cpp
        evaluators/FELIX_StackFields.cpp
        evaluators/FELIX_StokesMomentumResid.cpp
        evaluators/FELIX_StokesFOBasalResid.cpp
@@ -64,7 +64,6 @@
        evaluators/FELIX_w_Resid.cpp
        evaluators/FELIX_Time.cpp
        problems/FELIX_ProblemFactory.cpp
-       problems/FELIX_Elliptic2D.cpp
        problems/FELIX_Enthalpy.cpp
        problems/FELIX_Hydrology.cpp
        problems/FELIX_PopulateMesh.cpp
@@ -123,8 +122,6 @@ ENDIF()
        evaluators/FELIX_DummyResidual_Def.hpp
        evaluators/FELIX_EffectivePressure.hpp
        evaluators/FELIX_EffectivePressure_Def.hpp
-       evaluators/FELIX_Elliptic2DResidual.hpp
-       evaluators/FELIX_Elliptic2DResidual_Def.hpp
        evaluators/FELIX_EnthalpyResid.hpp
        evaluators/FELIX_EnthalpyResid_Def.hpp
        evaluators/FELIX_EnthalpyBasalResid.hpp
@@ -166,7 +163,7 @@ ENDIF()
        evaluators/FELIX_L2ProjectedBoundaryLaplacianResidual.hpp
        evaluators/FELIX_L2ProjectedBoundaryLaplacianResidual_Def.hpp
        evaluators/FELIX_LaplacianRegularizationResidual.hpp
-       evaluators/FELIX_LaplacianRegularizationResidual_Def.hpp       
+       evaluators/FELIX_LaplacianRegularizationResidual_Def.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
        evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
        evaluators/FELIX_ResponseBoundarySquaredL2Norm.hpp
@@ -174,6 +171,8 @@ ENDIF()
        evaluators/FELIX_ResponseSMBMismatch.hpp
        evaluators/FELIX_ResponseSMBMismatch_Def.hpp
        evaluators/FELIX_SharedParameter.hpp
+       evaluators/FELIX_SimpleOperation.hpp
+       evaluators/FELIX_SimpleOperation_Def.hpp
        evaluators/FELIX_StackFields.hpp
        evaluators/FELIX_StackFields_Def.hpp
        evaluators/FELIX_StokesBodyForce.hpp
@@ -215,7 +214,6 @@ ENDIF()
        evaluators/FELIX_Time.hpp
        evaluators/FELIX_Time_Def.hpp
        problems/FELIX_ProblemFactory.hpp
-       problems/FELIX_Elliptic2D.hpp
        problems/FELIX_Enthalpy.hpp
        problems/FELIX_StokesFOThermoCoupled.hpp
        problems/FELIX_Hydrology.hpp
