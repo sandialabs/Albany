@@ -11,7 +11,6 @@
 #include "FELIX_StokesFO.hpp"
 #include "FELIX_StokesL1L2.hpp"
 #include "FELIX_Hydrology.hpp"
-#include "FELIX_Elliptic2D.hpp"
 #include "FELIX_Enthalpy.hpp"
 #include "FELIX_PopulateMesh.hpp"
 #include "FELIX_StokesFOThermoCoupled.hpp"
@@ -50,7 +49,6 @@ bool ProblemFactory::hasProblem (const std::string& problemName)
       problemName == "FELIX Coupled FO Hydrology 3D" ||
       problemName == "FELIX Stokes L1L2 2D" ||
       problemName == "FELIX Hydrology 2D" ||
-      problemName == "FELIX Elliptic 2D" ||
       problemName == "FELIX Enthalpy 3D" ||
       problemName == "FELIX Populate Mesh" ||
       problemName == "FELIX Stokes FO Thermo Coupled 3D" ||
@@ -104,17 +102,14 @@ ProblemFactory::create() const
   else if (method == "FELIX Hydrology 2D") {
     problem = rcp(new FELIX::Hydrology(problemParams, paramLib, 2));
   }
-  else if (method == "FELIX Elliptic 2D") {
-    problem = rcp(new FELIX::Elliptic2D(problemParams, paramLib, 1));
-  }
   else if (method == "FELIX Enthalpy 3D") {
-    problem = rcp(new FELIX::Enthalpy(problemParams, paramLib, 3));
+    problem = rcp(new FELIX::Enthalpy(problemParams, discretizationParams, paramLib, 3));
   }
   else if (method == "FELIX Populate Mesh") {
     problem = rcp(new FELIX::PopulateMesh(problemParams, discretizationParams, paramLib));
   }
   else if (method == "FELIX Stokes FO Thermo Coupled 3D") {
-    problem = rcp(new FELIX::StokesFOThermoCoupled(problemParams, paramLib, 3));
+    problem = rcp(new FELIX::StokesFOThermoCoupled(problemParams, discretizationParams, paramLib, 3));
   }
   else if (method == "FELIX Schoof Fit") {
     problem = rcp(new FELIX::SchoofFit(problemParams, paramLib, 2));
@@ -122,6 +117,7 @@ ProblemFactory::create() const
   else if (method == "FELIX Laplacian Sampling") {
     problem = rcp(new FELIX::LaplacianSampling(problemParams, discretizationParams, paramLib, 2));
   }
+
   return problem;
 }
 
