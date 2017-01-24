@@ -47,9 +47,9 @@ createResponseFunction(
   using Teuchos::rcp;
   using Teuchos::ParameterList;
   using Teuchos::Array;
-  
+
   RCP<const Teuchos_Comm> comm = app->getComm();
-  
+
   if (name == "Solution Average") {
     responses.push_back(rcp(new Albany::SolutionAverageResponseFunction(comm)));
   }
@@ -125,20 +125,32 @@ createResponseFunction(
   else if (name == "Field Integral" ||
      name == "Field Value" ||
      name == "Field Average" ||
-     name == "Squared L2 Error Target ST" ||
-     name == "Squared L2 Error Target MST" ||
-     name == "Squared L2 Error Target PST" ||
-     name == "Squared L2 Error Side Target ST" ||
-     name == "Squared L2 Error Side Target MST" ||
-     name == "Squared L2 Error Side Target PST" ||
+     name == "Squared L2 Difference Source ST Target ST" ||
+     name == "Squared L2 Difference Source ST Target MST" ||
+     name == "Squared L2 Difference Source ST Target PST" ||
+     name == "Squared L2 Difference Source PST Target ST" ||
+     name == "Squared L2 Difference Source PST Target MST" ||
+     name == "Squared L2 Difference Source PST Target PST" ||
+     name == "Squared L2 Difference Source MST Target ST" ||
+     name == "Squared L2 Difference Source MST Target MST" ||
+     name == "Squared L2 Difference Source MST Target PST" ||
+     name == "Squared L2 Difference Side Source ST Target ST" ||
+     name == "Squared L2 Difference Side Source ST Target MST" ||
+     name == "Squared L2 Difference Side Source ST Target PST" ||
+     name == "Squared L2 Difference Side Source PST Target ST" ||
+     name == "Squared L2 Difference Side Source PST Target MST" ||
+     name == "Squared L2 Difference Side Source PST Target PST" ||
+     name == "Squared L2 Difference Side Source MST Target ST" ||
+     name == "Squared L2 Difference Side Source MST Target MST" ||
+     name == "Squared L2 Difference Side Source MST Target PST" ||
      name == "Surface Velocity Mismatch" ||
      name == "Surface Mass Balance Mismatch" ||
      name == "Boundary Squared L2 Norm" ||
-           name == "Aeras Shallow Water L2 Error" ||
-           name == "Aeras Shallow Water L2 Norm" ||
-           name == "Aeras Hydrostatic L2 Norm" ||
-           name == "Aeras Hydrostatic L2 Error" ||
-           name == "Aeras Total Volume" ||
+     name == "Aeras Shallow Water L2 Error" ||
+     name == "Aeras Shallow Water L2 Norm" ||
+     name == "Aeras Hydrostatic L2 Norm" ||
+     name == "Aeras Hydrostatic L2 Error" ||
+     name == "Aeras Total Volume" ||
      name == "Center Of Mass" ||
      name == "Save Field" ||
      name == "Region Boundary" ||
@@ -149,10 +161,10 @@ createResponseFunction(
      name == "Tensor PNorm Objective" ||
      name == "Homogenized Constants Response" ||
      name == "Modal Objective" ||
-           name == "PHAL Field Integral" ||
-           name == "PHAL Field IntegralT" ||
-           name == "PHAL Thermal EnergyT" ||
-	   name == "AMP Energy") {
+     name == "PHAL Field Integral" ||
+     name == "PHAL Field IntegralT" ||
+     name == "PHAL Thermal EnergyT" ||
+     name == "AMP Energy") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
 #if defined(ALBANY_LCM)

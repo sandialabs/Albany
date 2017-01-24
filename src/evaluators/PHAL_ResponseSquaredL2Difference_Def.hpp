@@ -10,9 +10,9 @@
 
 #include "Albany_Utils.hpp"
 
-template<typename EvalT, typename Traits, typename TargetScalarT>
-PHAL::ResponseSquaredL2ErrorBase<EvalT, Traits, TargetScalarT>::
-ResponseSquaredL2ErrorBase(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
+template<typename EvalT, typename Traits, typename SourceScalarT, typename TargetScalarT>
+PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetScalarT>::
+ResponseSquaredL2DifferenceBase(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
 {
   // get response parameter list
   Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Parameter List");
@@ -24,24 +24,28 @@ ResponseSquaredL2ErrorBase(Teuchos::ParameterList& p, const Teuchos::RCP<Albany:
   std::string rank,fname,target_fname;
 
   rank           = plist->get<std::string>("Field Rank");
-  fname          = plist->get<std::string>("Field Name");
+  fname          = plist->get<std::string>("Source Field Name");
   target_fname   = plist->get<std::string>("Target Field Name");
 
   fieldDim = getLayout(dl,rank,layout);
+  layout->dimensions(dims);
 
-  computedField = PHX::MDField<ScalarT>(fname,layout);
+  sourceField = PHX::MDField<SourceScalarT>(fname,layout);
   targetField   = PHX::MDField<TargetScalarT>(target_fname,layout);
   w_measure     = PHX::MDField<RealType,Cell,QuadPoint>("Weights",dl->qp_scalar);
   scaling       = plist->get("Scaling",1.0);
 
-  this->addDependentField(computedField.fieldTag());
+  this->addDependentField(sourceField.fieldTag());
   if (target_fname=="ZERO")
   {
     target_zero = true;
     this->addEvaluatedField(targetField);
   }
   else
+  {
+    target_zero = false;
     this->addDependentField(targetField.fieldTag());
+  }
   this->addDependentField(w_measure.fieldTag());
 
   this->setName("Response Squared L2 Error " + PHX::typeAsString<EvalT>());
@@ -62,39 +66,42 @@ ResponseSquaredL2ErrorBase(Teuchos::ParameterList& p, const Teuchos::RCP<Albany:
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits, typename TargetScalarT>
-void PHAL::ResponseSquaredL2ErrorBase<EvalT, Traits, TargetScalarT>::
+template<typename EvalT, typename Traits, typename SourceScalarT, typename TargetScalarT>
+void PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetScalarT>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(computedField,fm);
+  this->utils.setFieldData(sourceField,fm);
   this->utils.setFieldData(targetField,fm);
   this->utils.setFieldData(w_measure,fm);
 
   if (target_zero)
   {
-    PHAL::set(targetField, 0.0);
+    targetField.deep_copy(TargetScalarT(0.0));
+    //PHAL::set(targetField, 0.0);
   }
 
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postRegistrationSetup(d, fm);
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits, typename TargetScalarT>
-void PHAL::ResponseSquaredL2ErrorBase<EvalT, Traits, TargetScalarT>::preEvaluate(typename Traits::PreEvalData workset)
+template<typename EvalT, typename Traits, typename SourceScalarT, typename TargetScalarT>
+void PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetScalarT>::preEvaluate(typename Traits::PreEvalData workset)
 {
-  PHAL::set(this->global_response, 0.0);
+  //PHAL::set(this->global_response, 0.0);
+  this->global_response.deep_copy(ScalarT(0.0));
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::preEvaluate(workset);
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits, typename TargetScalarT>
-void PHAL::ResponseSquaredL2ErrorBase<EvalT, Traits, TargetScalarT>::evaluateFields(typename Traits::EvalData workset)
+template<typename EvalT, typename Traits, typename SourceScalarT, typename TargetScalarT>
+void PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetScalarT>::evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
-  PHAL::set(this->local_response, 0.0);
+//  PHAL::set(this->local_response, 0.0);
 
+  this->local_response.deep_copy(ScalarT(0.0));
   for (int cell=0; cell<workset.numCells; ++cell)
   {
     ScalarT sum = 0;
@@ -102,20 +109,24 @@ void PHAL::ResponseSquaredL2ErrorBase<EvalT, Traits, TargetScalarT>::evaluateFie
     {
       ScalarT sq = 0;
       // Computing squared difference at qp
-      if (fieldDim==0)
-        sq += std::pow(computedField(cell,qp)-targetField(cell,qp),2);
-      else if (fieldDim==1)
-        for (int j=0; j<computedField.fieldTag().dataLayout().dimension(3); ++j)
-          sq += std::pow(computedField(cell,qp,j)-targetField(cell,qp,j),2);
-      else
-        for (int j=0; j<computedField.fieldTag().dataLayout().dimension(3); ++j)
-          for (int k=0; k<computedField.fieldTag().dataLayout().dimension(4); ++k)
-            sq += std::pow(computedField(cell,qp,j,k)-targetField(cell,qp,j,k),2);
-
+      switch (fieldDim)
+      {
+        case 0:
+          sq += std::pow(sourceField(cell,qp)-targetField(cell,qp),2);
+          break;
+        case 1:
+          for (int j=0; j<dims[2]; ++j)
+            sq += std::pow(sourceField(cell,qp,j)-targetField(cell,qp,j),2);
+          break;
+        case 2:
+          for (int j=0; j<dims[2]; ++j)
+            for (int k=0; k<dims[3]; ++k)
+              sq += std::pow(sourceField(cell,qp,j,k)-targetField(cell,qp,j,k),2);
+          break;
+      }
       sum += sq * w_measure(cell,qp);
     }
-
-    this->local_response(cell, 0) += sum*scaling;
+    this->local_response(cell, 0) = sum*scaling;
     this->global_response(0) += sum*scaling;
   }
 
@@ -124,21 +135,21 @@ void PHAL::ResponseSquaredL2ErrorBase<EvalT, Traits, TargetScalarT>::evaluateFie
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits, typename TargetScalarT>
-void PHAL::ResponseSquaredL2ErrorBase<EvalT, Traits, TargetScalarT>::postEvaluate(typename Traits::PostEvalData workset)
+template<typename EvalT, typename Traits, typename SourceScalarT, typename TargetScalarT>
+void PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetScalarT>::postEvaluate(typename Traits::PostEvalData workset)
 {
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
 
   if(workset.comm->getRank()==0)
-    std::cout << "resp: " << this->global_response(0) << "\n" << std::flush;
+    std::cout << "resp" << PHX::typeAsString<EvalT>() << ": " << this->global_response(0) << "\n" << std::flush;
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postEvaluate(workset);
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits, typename TargetScalarT>
-int PHAL::ResponseSquaredL2ErrorBase<EvalT,Traits,TargetScalarT>::
+template<typename EvalT, typename Traits, typename SourceScalarT, typename TargetScalarT>
+int PHAL::ResponseSquaredL2DifferenceBase<EvalT,Traits,SourceScalarT,TargetScalarT>::
 getLayout (const Teuchos::RCP<Albany::Layouts>& dl, const std::string& rank, Teuchos::RCP<PHX::DataLayout>& layout)
 {
   int dim = -1;

@@ -28,8 +28,8 @@ SET(SOURCES
   PHAL_Utilities.cpp
   )
 
-#IKT, FIXME: remove OR ALBANY_ATO from following if when 
-#ATO is free of Epetra 
+#IKT, FIXME: remove OR ALBANY_ATO from following if when
+#ATO is free of Epetra
 IF (ALBANY_EPETRA OR ALBANY_ATO)
   SET(SOURCES ${SOURCES} Albany_ObserverFactory.cpp)
   IF(ALBANY_64BIT_INT)
@@ -296,6 +296,8 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_NSMaterialProperty.cpp
   evaluators/PHAL_QuadPointsToCellInterpolation.cpp
   evaluators/PHAL_ResponseFieldIntegralT.cpp
+  evaluators/PHAL_ResponseSquaredL2Difference.cpp
+  evaluators/PHAL_ResponseSquaredL2DifferenceSide.cpp
   evaluators/PHAL_ResponseThermalEnergyT.cpp
   evaluators/PHAL_SaveCellStateField.cpp
   evaluators/PHAL_SaveNodalField.cpp
@@ -307,8 +309,6 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_SharedParameter.cpp
   evaluators/PHAL_SideQuadPointsToSideInterpolation.cpp
   evaluators/PHAL_Source.cpp
-  evaluators/PHAL_ResponseSquaredL2Error.cpp
-  evaluators/PHAL_ResponseSquaredL2ErrorSide.cpp
   evaluators/PHAL_ThermalConductivity.cpp
   evaluators/QCAD_EvaluatorTools.cpp
   evaluators/QCAD_MathVector.cpp
@@ -442,10 +442,10 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_QuadPointsToCellInterpolation_Def.hpp
   evaluators/PHAL_ResponseFieldIntegralT.hpp
   evaluators/PHAL_ResponseFieldIntegralT_Def.hpp
-  evaluators/PHAL_ResponseSquaredL2Error.hpp
-  evaluators/PHAL_ResponseSquaredL2Error_Def.hpp
-  evaluators/PHAL_ResponseSquaredL2ErrorSide.hpp
-  evaluators/PHAL_ResponseSquaredL2ErrorSide_Def.hpp
+  evaluators/PHAL_ResponseSquaredL2Difference.hpp
+  evaluators/PHAL_ResponseSquaredL2Difference_Def.hpp
+  evaluators/PHAL_ResponseSquaredL2DifferenceSide.hpp
+  evaluators/PHAL_ResponseSquaredL2DifferenceSide_Def.hpp
   evaluators/PHAL_ResponseThermalEnergyT.hpp
   evaluators/PHAL_ResponseThermalEnergyT_Def.hpp
   evaluators/PHAL_SaveCellStateField.hpp
@@ -832,15 +832,15 @@ IF (ALBANY_EPETRA)
 ENDIF()
 
 add_executable(AlbanyT Main_SolveT.cpp)
-IF (ALBANY_TEMPUS) 
-  add_executable(AlbanyTempus Main_SolveT_Tempus.cpp) 
-ENDIF() 
+IF (ALBANY_TEMPUS)
+  add_executable(AlbanyTempus Main_SolveT_Tempus.cpp)
+ENDIF()
 
 SET(ALBANY_EXECUTABLES AlbanyT)
 IF (ALBANY_EPETRA)
   SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} Albany )
 ENDIF()
-IF (ALBANY_TEMPUS) 
+IF (ALBANY_TEMPUS)
   SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyTempus )
 ENDIF()
 

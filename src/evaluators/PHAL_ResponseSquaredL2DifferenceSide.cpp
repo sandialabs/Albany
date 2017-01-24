@@ -6,7 +6,7 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "PHAL_ResponseSquaredL2ErrorSide.hpp"
-#include "PHAL_ResponseSquaredL2ErrorSide_Def.hpp"
+#include "PHAL_ResponseSquaredL2DifferenceSide.hpp"
+#include "PHAL_ResponseSquaredL2DifferenceSide_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_ONE_SCALAR_TYPE(PHAL::ResponseSquaredL2ErrorSideBase)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES(PHAL::ResponseSquaredL2DifferenceSideBase)
