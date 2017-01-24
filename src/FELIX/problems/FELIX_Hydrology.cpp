@@ -137,6 +137,13 @@ void FELIX::Hydrology::constructDirichletEvaluators (const Albany::MeshSpecsStru
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
 
+  // Ensure that dfm is initialized
+  Teuchos::ParameterList& hydro = params->sublist("FELIX Hydrology");
+  Teuchos::Array<std::string> ns_names = hydro.get<Teuchos::Array<std::string>>("Zero Porewater Pressure On Node Sets",Teuchos::Array<std::string>());
+  if (ns_names.size()>0 && dfm==Teuchos::null)
+    dfm = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+
+
   // Add the hydrology specific evaluators
   HydrologyDirOp op(*this);
   Sacado::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes> fe(op);

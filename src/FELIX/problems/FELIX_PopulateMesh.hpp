@@ -88,22 +88,29 @@ public:
 
 protected:
 
-  typedef Teuchos::RCP<shards::CellTopology>                                topologyType;
-  typedef Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>   basisType;
-
-  basisType     cellBasis;
-  topologyType  cellTopology;
-
-  std::map<std::string,basisType>     sideBasis;
-  std::map<std::string,topologyType>  sideTopology;
-
   Teuchos::RCP<Albany::Layouts> dl;
 
-  std::string                       cellEBName;
-  std::map<std::string,std::string> sideEBName;
+  //! Dimension of vectors on side sets
+  std::map<std::string,int> ss_vec_dims;
 
   //! Discretization parameters
   Teuchos::RCP<Teuchos::ParameterList> discParams;
+
+  //! Stuff for basis functions (in case we use some response to check data)
+  typedef shards::CellTopology                                topology_type;
+  typedef Intrepid2::Cubature<PHX::Device>                    cubature_type;
+  typedef Intrepid2::Basis<PHX::Device, RealType, RealType>   basis_type;
+
+  Teuchos::RCP<topology_type> cellTopology;
+  Teuchos::RCP<cubature_type> cellCubature;
+  Teuchos::RCP<basis_type>    cellBasis;
+
+  std::map<std::string,Teuchos::RCP<topology_type>> sideTopology;
+  std::map<std::string,Teuchos::RCP<cubature_type>> sideCubature;
+  std::map<std::string,Teuchos::RCP<basis_type>>    sideBasis;
+
+  std::string                       cellEBName;
+  std::map<std::string,std::string> sideEBName;
 };
 
 } // Namespace FELIX

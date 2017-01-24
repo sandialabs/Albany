@@ -6,7 +6,8 @@
 
 #include <string>
 
-#include "Intrepid2_DefaultCubatureFactory.hpp"
+#include "Intrepid_FieldContainer.hpp"
+#include "Intrepid_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_FancyOStream.hpp"
 
@@ -95,7 +96,7 @@ StokesFOHydrology (const Teuchos::RCP<Teuchos::ParameterList>& params_,
     hydro_resid_names[0] = "Residual Hydrology Potential Eqn";
   }
 
-  // Set the number of eq of the problem
+ // Set the number of eq of the problem
   this->neq = stokes_neq + hydro_neq;
   this->setNumEquations(neq);
   this->rigidBodyModes->setNumPDEs(neq);
@@ -121,7 +122,7 @@ void FELIX::StokesFOHydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Alba
   cellBasis = Albany::getIntrepid2Basis(*cell_top);
   cellType = rcp(new shards::CellTopology (cell_top));
 
-  Intrepid2::DefaultCubatureFactory cubFactory;
+  Intrepid2::DefaultCubatureFactory   cubFactory;
   cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs[0]->cubatureDegree);
 
   elementBlockName = meshSpecs[0]->ebName;
@@ -131,13 +132,12 @@ void FELIX::StokesFOHydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Alba
   const Albany::MeshSpecsStruct& basalMeshSpecs = *meshSpecs[0]->sideSetMeshSpecs.at(basalSideName)[0];
 
   const int worksetSize     = meshSpecs[0]->worksetSize;
-  const int vecDim          = stokes_neq;
   const int numCellSides    = cellType->getFaceCount();
   const int numCellVertices = cellType->getNodeCount();
   const int numCellNodes    = cellBasis->getCardinality();
   const int numCellQPs      = cellCubature->getNumPoints();
 
-  dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim,vecDim));
+  dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim,stokes_neq));
 
   // Building also basal side structures
   const CellTopologyData * const basal_side_top = &basalMeshSpecs.ctd;
@@ -152,7 +152,7 @@ void FELIX::StokesFOHydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Alba
   int numBasalSideQPs      = basalCubature->getNumPoints();
 
   dl_basal = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,
-                                     numBasalSideQPs,numDim-1,numDim,numCellSides,vecDim));
+                                     numBasalSideQPs,numDim-1,numDim,numCellSides,stokes_neq));
   dl->side_layouts[basalSideName] = dl_basal;
 
   int numSurfaceSideVertices = -1;
@@ -179,7 +179,7 @@ void FELIX::StokesFOHydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Alba
     numSurfaceSideQPs      = surfaceCubature->getNumPoints();
 
     dl_surface = rcp(new Albany::Layouts(worksetSize,numSurfaceSideVertices,numSurfaceSideNodes,
-                                         numSurfaceSideQPs,numDim-1,numDim,numCellSides,vecDim));
+                                         numSurfaceSideQPs,numDim-1,numDim,numCellSides,stokes_neq));
     dl->side_layouts[surfaceSideName] = dl_surface;
   }
 
@@ -196,7 +196,6 @@ void FELIX::StokesFOHydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Alba
        << "  CellNodes           = " << numCellNodes << "\n"
        << "  CellQuadPts         = " << numCellQPs << "\n"
        << "  Dim                 = " << numDim << "\n"
-       << "  VecDim              = " << vecDim << "\n"
        << "  BasalSideVertices   = " << numBasalSideVertices << "\n"
        << "  BasalSideNodes      = " << numBasalSideNodes << "\n"
        << "  BasalSideQuadPts    = " << numBasalQPs << "\n"

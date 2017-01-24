@@ -878,11 +878,11 @@ if (basalSideName!="INVALID")
     p->set<std::string>("Old Coords Name", "Coord Vec Old");
     p->set<std::string>("New Coords Name", "Coord Vec");
     if(is_dist_param["thickness"])
-      p->set<std::string>("Thickness Name", "Ice Thickness Param");
+      p->set<std::string>("Thickness Name", "ice_thickness Param");
     else
-      p->set<std::string>("Thickness Name", "Ice Thickness");
+      p->set<std::string>("Thickness Name", "ice_thickness");
 
-    p->set<std::string>("Top Surface Name", "Surface Height");
+    p->set<std::string>("Top Surface Name", "surface_height");
 
     ev = Teuchos::rcp(new FELIX::UpdateZCoordinateMovingBed<EvalT,PHAL::AlbanyTraits>(*p, dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -1277,7 +1277,7 @@ if (basalSideName!="INVALID")
     p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("FELIX Physical Parameters"));
     p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
     p->set<std::string>("Bed Topography QP Name", "bed_topography");
-    p->set<std::string>("Thickness QP Name", "Ice Thickness");
+    p->set<std::string>("Thickness QP Name", "ice_thickness");
 
     //Output
     p->set<std::string>("Basal Friction Coefficient Variable Name", "beta");
