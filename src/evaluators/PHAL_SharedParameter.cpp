@@ -10,4 +10,4 @@
 #include "PHAL_SharedParameter_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::SharedParameter)
-
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::SharedParameterVec)

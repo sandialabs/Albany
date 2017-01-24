@@ -15,8 +15,8 @@ namespace PHAL {
 
 template<typename EvalT, typename Traits>
 SharedParameter<EvalT, Traits>::
-SharedParameter(const Teuchos::ParameterList& p) 
-{  
+SharedParameter(const Teuchos::ParameterList& p)
+{
   paramName =  p.get<std::string>("Parameter Name");
   paramValue =  p.get<double>("Parameter Value");
 
@@ -37,7 +37,7 @@ SharedParameter(const Teuchos::ParameterList& p)
 }
 
 // **********************************************************************
-template<typename EvalT, typename Traits> 
+template<typename EvalT, typename Traits>
 void SharedParameter<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -53,7 +53,7 @@ void SharedParameter<EvalT, Traits>::evaluateFields(typename Traits::EvalData wo
 
 // **********************************************************************
 template<typename EvalT,typename Traits>
-typename SharedParameter<EvalT,Traits>::ScalarT& 
+typename SharedParameter<EvalT,Traits>::ScalarT&
 SharedParameter<EvalT,Traits>::getValue(const std::string &n)
 {
   TEUCHOS_TEST_FOR_EXCEPT(n != paramName);
@@ -61,6 +61,67 @@ SharedParameter<EvalT,Traits>::getValue(const std::string &n)
 }
 
 // **********************************************************************
+
+template<typename EvalT, typename Traits>
+SharedParameterVec<EvalT, Traits>::
+SharedParameterVec(const Teuchos::ParameterList& p)
+{
+  Teuchos::RCP<PHX::DataLayout> layout = p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
+  Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >("Parameter Library"); //, Teuchos::null ANDY - why a compiler error with this?
+
+  numParams = layout->dimension(1);
+
+  paramNames.resize(numParams);
+  paramValues.resize(numParams);
+  paramNames = p.get<Teuchos::Array<std::string>>("Parameters Names");
+  paramValues = p.get<Teuchos::Array<ScalarT>>("Parameters Values");
+
+  TEUCHOS_TEST_FOR_EXCEPTION (paramNames.size()==numParams, std::logic_error,
+                              "Error! The array of names' size does not match the layout first dimension.\n");
+  TEUCHOS_TEST_FOR_EXCEPTION (paramValues.size()==numParams, std::logic_error,
+                              "Error! The array of values' size does not match the layout first dimension.\n");
+
+
+  std::string paramVecName = p.get<std::string>("Parameter Vector Name");
+
+  this->registerSacadoParameter(paramVecName, paramLib);
+
+  this->addEvaluatedField(paramAsField);
+
+  this->setName("Shared Parameter Vector" );
 }
 
+// **********************************************************************
+template<typename EvalT, typename Traits>
+void SharedParameterVec<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& fm)
+{
+  this->utils.setFieldData(paramAsField,fm);
+}
 
+// **********************************************************************
+template<typename EvalT, typename Traits>
+void SharedParameterVec<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
+{
+  for (int i=0; i<numParams; ++i)
+    paramAsField(i) = paramValues[i];
+}
+
+// **********************************************************************
+template<typename EvalT,typename Traits>
+typename SharedParameterVec<EvalT,Traits>::ScalarT&
+SharedParameterVec<EvalT,Traits>::getValue(const std::string &n)
+{
+  for (int i=0; i<numParams; ++i)
+    if (n==paramNames[i])
+      return paramValues[i];
+
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "Error! Parameter name not found.\n");
+
+  // To avoid warnings
+  static ScalarT dummy;
+  return dummy;
+}
+
+// **********************************************************************
+} // namespace PHAL

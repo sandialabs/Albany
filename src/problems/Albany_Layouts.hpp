@@ -12,9 +12,7 @@
 
 #include "Teuchos_RCP.hpp"
 
-//#include "Phalanx.hpp"
-#include "Phalanx_DataLayout_MDALayout.hpp"
-#include "Phalanx_DataLayout.hpp"
+#include "Phalanx.hpp"
 #include "Albany_DataTypes.hpp"
 
 namespace Albany {
@@ -125,6 +123,7 @@ namespace Albany {
      * the action is performed.
      */
     Teuchos::RCP<PHX::DataLayout> shared_param;
+    Teuchos::RCP<PHX::DataLayout> shared_param_vec; // same length as other vectors
     Teuchos::RCP<PHX::DataLayout> dummy;
 
     // For backward compatibility, and simplicitiy, we want to check if
@@ -138,6 +137,7 @@ namespace Albany {
 
     std::map<std::string,Teuchos::RCP<Layouts>> side_layouts;
   };
-}
 
-#endif
+} // namespace Albany
+
+#endif // ALBANY_LAYOUTS_HPP
