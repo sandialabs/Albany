@@ -285,13 +285,15 @@ postEvaluate(typename Traits::PostEvalData workset)
 {
 #if defined(ALBANY_EPETRA)
   // Here we scatter the *global* response and its derivatives
-  Teuchos::RCP<Epetra_Vector> g = workset.g;
+  Teuchos::RCP<Tpetra_Vector> gT = workset.gT;
   Teuchos::RCP<Epetra_MultiVector> dgdp = workset.dgdp;
   Teuchos::RCP<Epetra_MultiVector> overlapped_dgdp = workset.overlapped_dgdp;
-  if (g != Teuchos::null)
-     for (std::size_t res = 0; res < this->global_response.size(); res++) {
-       (*g)[res] = this->global_response[res].val();
-   }
+  if (gT != Teuchos::null) {
+    Teuchos::ArrayRCP<double> gT_nonconstView = gT->get1dViewNonConst(); 
+    for (std::size_t res = 0; res < this->global_response.size(); res++) {
+      gT_nonconstView[res] = this->global_response[res].val();
+    }
+  }
   if (dgdp != Teuchos::null) {
     Epetra_Export exporter(overlapped_dgdp->Map(), dgdp->Map());
     dgdp->Export(*overlapped_dgdp, exporter, Add);

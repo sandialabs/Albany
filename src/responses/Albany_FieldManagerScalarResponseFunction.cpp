@@ -330,8 +330,12 @@ evaluateGradient(const double current_time,
     if (dg_dp)
       Petra::TpetraMultiVector_To_EpetraMultiVector(dg_dpT, *dg_dp, comm);
     return; }
-
-  workset.g = Teuchos::rcp(g, false);
+ 
+  Teuchos::RCP<Tpetra_Vector> gT = g ?
+       Petra::EpetraVector_To_TpetraVectorNonConst(*g, commT) : 
+       Teuchos::null; 
+  workset.gT = gT; 
+  
   
   // Perform fill via field manager (dg/dx)
   if (dg_dx != NULL) {

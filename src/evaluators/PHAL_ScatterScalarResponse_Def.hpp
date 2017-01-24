@@ -91,7 +91,6 @@ void ScatterScalarResponse<PHAL::AlbanyTraits::Residual, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response
-  //Teuchos::RCP<Epetra_Vector> g = workset.g;
   Teuchos::RCP<Tpetra_Vector> gT = workset.gT; //Tpetra version
   Teuchos::ArrayRCP<ST> gT_nonconstView;
   if (gT != Teuchos::null) {
@@ -120,7 +119,6 @@ void ScatterScalarResponse<PHAL::AlbanyTraits::Tangent, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response and tangent
-  //Teuchos::RCP<Epetra_Vector> g = workset.g;
   //Teuchos::RCP<Epetra_MultiVector> gx = workset.dgdx;
   //Teuchos::RCP<Epetra_MultiVector> gp = workset.dgdp;
   Teuchos::RCP<Tpetra_Vector> gT = workset.gT;
