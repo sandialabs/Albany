@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -146,15 +146,15 @@ void SurfaceVectorResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // define and initialize tensors/vectors
-  Intrepid2::Vector<ScalarT>
+  minitensor::Vector<ScalarT>
   f_plus(0, 0, 0), f_minus(0, 0, 0);
 
   ScalarT
   dgapdxN, tmp1, tmp2, dndxbar, dFdx_plus, dFdx_minus;
 
   // 2nd-order identity tensor
-  Intrepid2::Tensor<MeshScalarT> const
-  I = Intrepid2::identity<MeshScalarT>(3);
+  minitensor::Tensor<MeshScalarT> const
+  I = minitensor::identity<MeshScalarT>(3);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int bottom_node(0); bottom_node < num_surf_nodes_; ++bottom_node) {
@@ -172,31 +172,31 @@ evaluateFields(typename Traits::EvalData workset)
 
       for (int pt(0); pt < num_qps_; ++pt) {
         // deformed bases
-        Intrepid2::Vector<ScalarT> g_0(3, current_basis_, cell, pt, 0, 0);
-        Intrepid2::Vector<ScalarT> g_1(3, current_basis_, cell, pt, 1, 0);
-        Intrepid2::Vector<ScalarT> n(3, current_basis_, cell, pt, 2, 0);
+        minitensor::Vector<ScalarT> g_0(3, current_basis_, cell, pt, 0, 0);
+        minitensor::Vector<ScalarT> g_1(3, current_basis_, cell, pt, 1, 0);
+        minitensor::Vector<ScalarT> n(3, current_basis_, cell, pt, 2, 0);
         // ref bases
-        Intrepid2::Vector<MeshScalarT> G0(3, ref_dual_basis_, cell, pt, 0, 0);
-        Intrepid2::Vector<MeshScalarT> G1(3, ref_dual_basis_, cell, pt, 1, 0);
-        Intrepid2::Vector<MeshScalarT> G2(3, ref_dual_basis_, cell, pt, 2, 0);
+        minitensor::Vector<MeshScalarT> G0(3, ref_dual_basis_, cell, pt, 0, 0);
+        minitensor::Vector<MeshScalarT> G1(3, ref_dual_basis_, cell, pt, 1, 0);
+        minitensor::Vector<MeshScalarT> G2(3, ref_dual_basis_, cell, pt, 2, 0);
         // ref normal
-        Intrepid2::Vector<MeshScalarT> N(3, ref_normal_, cell, pt, 0);
+        minitensor::Vector<MeshScalarT> N(3, ref_normal_, cell, pt, 0);
 
         // compute dFdx_plus_or_minus
-        f_plus.fill(Intrepid2::ZEROS);
-        f_minus.fill(Intrepid2::ZEROS);
+        f_plus.fill(minitensor::ZEROS);
+        f_minus.fill(minitensor::ZEROS);
 
         // h * P * dFperpdx --> +/- \lambda * P * N
         if (use_cohesive_traction_) {
 
-          Intrepid2::Vector<ScalarT>
+          minitensor::Vector<ScalarT>
           T(3, traction_, cell, pt, 0);
 
           f_plus = ref_values_(bottom_node, pt) * T;
           f_minus = -ref_values_(bottom_node, pt) * T;
         } else {
 
-          Intrepid2::Tensor<ScalarT>
+          minitensor::Tensor<ScalarT>
           P(3, stress_, cell, pt, 0, 0);
 
           f_plus = ref_values_(bottom_node, pt) * P * N;
@@ -217,11 +217,11 @@ evaluateFields(typename Traits::EvalData workset)
                   for (int r(0); r < num_dims_; ++r) {
                     for (int s(0); s < num_dims_; ++s) {
 
-                      dndxbar += Intrepid2::levi_civita<MeshScalarT>(i, r, s)
+                      dndxbar += minitensor::levi_civita<MeshScalarT>(i, r, s)
                           * (g_1(r) * ref_grads_(bottom_node, pt, 0) -
                               g_0(r) * ref_grads_(bottom_node, pt, 1))
                           * (I(m, s) - n(m) * n(s)) /
-                          Intrepid2::norm(Intrepid2::cross(g_0, g_1));
+                          minitensor::norm(minitensor::cross(g_0, g_1));
                     }
                   }
                   tmp2 = 0.5 * dndxbar * G2(L);

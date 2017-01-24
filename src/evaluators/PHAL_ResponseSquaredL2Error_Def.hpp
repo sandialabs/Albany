@@ -114,6 +114,7 @@ void PHAL::ResponseSquaredL2ErrorBase<EvalT, Traits, TargetScalarT>::evaluateFie
 
       sum += sq * w_measure(cell,qp);
     }
+
     this->local_response(cell, 0) += sum*scaling;
     this->global_response(0) += sum*scaling;
   }

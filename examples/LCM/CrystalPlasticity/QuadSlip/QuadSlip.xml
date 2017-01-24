@@ -230,15 +230,35 @@
 
       <ParameterList name="Step Size">
 
-        <Parameter
-          name="Method"
-          type="string"
-          value="Constant" />
+          <Parameter
+              name="Method"
+              type="string"
+              value="Adaptive"/>
 
-        <Parameter
-          name="Initial Step Size"
-          type="double"
-          value="0.01" />
+          <Parameter
+              name="Initial Step Size"
+              type="double"
+              value="0.005"/>
+
+          <Parameter
+              name="Max Step Size"
+              type="double"
+              value="1.0"/>
+
+          <Parameter
+              name="Min Step Size"
+              type="double"
+              value="0.00001"/>
+
+          <Parameter
+              name="Failed Step Reduction Factor"
+              type="double"
+              value="0.9"/>
+
+          <Parameter
+              name="Aggressiveness"
+              type="double"
+              value="0.2"/>
 
       </ParameterList>
 

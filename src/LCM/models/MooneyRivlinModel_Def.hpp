@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -52,9 +52,9 @@ computeState(typename Traits::EvalData workset,
   std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy];
 
-  Intrepid2::Tensor<ScalarT> F(num_dims_), C(num_dims_);
-  Intrepid2::Tensor<ScalarT> S(num_dims_), sigma(num_dims_);
-  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
+  minitensor::Tensor<ScalarT> F(num_dims_), C(num_dims_);
+  minitensor::Tensor<ScalarT> S(num_dims_), sigma(num_dims_);
+  minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
 
   ScalarT d = 2.0 * (c1_ + 2 * c2_);
 
@@ -62,10 +62,10 @@ computeState(typename Traits::EvalData workset,
     for (int pt(0); pt < num_pts_; ++pt) {
       F.fill(defGrad,cell, pt,0,0);
       C = transpose(F) * F;
-      S = 2.0 * (c1_ + c2_ * Intrepid2::I1(C)) * I - 2.0 * c2_ * C
+      S = 2.0 * (c1_ + c2_ * minitensor::I1(C)) * I - 2.0 * c2_ * C
           + (2.0 * c_ * J(cell, pt) * (J(cell, pt) - 1.0) - d)
-              * Intrepid2::inverse(C);
-      sigma = (1. / J(cell, pt)) * F * S * Intrepid2::transpose(F);
+              * minitensor::inverse(C);
+      sigma = (1. / J(cell, pt)) * F * S * minitensor::transpose(F);
 
       for (int i(0); i < num_dims_; ++i)
         for (int j(0); j < num_dims_; ++j)

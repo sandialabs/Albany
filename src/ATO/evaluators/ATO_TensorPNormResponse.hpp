@@ -10,7 +10,7 @@
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 #include "Albany_StateManager.hpp"
 #include "ATO_TopoTools.hpp"
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 
 /** 
@@ -165,8 +165,8 @@ namespace ATO
 
     Teuchos::RCP<Topology> topology;
 
-    Intrepid2::Matrix<double> Cp;
-    Intrepid2::Matrix<double> Cpp;
+    minitensor::Matrix<double> Cp;
+    minitensor::Matrix<double> Cpp;
     int R;
     double yieldStress;
 

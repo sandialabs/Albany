@@ -1,0 +1,8 @@
+
+Material properties:
+
+Young's modulus 192.0e3 MPa
+Poisson's ratio 0.25
+Bar length 2 mm
+
+The material properties are roughly those of a steel, although a more physcially correct value of Poisson's ratio is ~ 0.28.

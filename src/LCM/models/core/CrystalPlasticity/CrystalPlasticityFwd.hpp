@@ -12,22 +12,22 @@ namespace CP
 static constexpr RealType
 MACHINE_EPS = std::numeric_limits<RealType>::epsilon();
 
-static constexpr Intrepid2::Index 
+static constexpr minitensor::Index 
 MAX_DIM = 3;
 
-static constexpr Intrepid2::Index
+static constexpr minitensor::Index
 MAX_SLIP = 48;
 
-static constexpr Intrepid2::Index
+static constexpr minitensor::Index
 MAX_FAMILY = 3;
 
-template<Intrepid2::Index NumSlipT>
+template<minitensor::Index NumSlipT>
 struct NlsDim
 {
-  static constexpr Intrepid2::Index value{NumSlipT * 2};
+  static constexpr minitensor::Index value{NumSlipT * 2};
 };
 
-static constexpr Intrepid2::Index
+static constexpr minitensor::Index
 NLS_DIM = NlsDim<MAX_SLIP>::value;
 
 enum class IntegrationScheme
@@ -46,13 +46,13 @@ enum class ResidualType
 
 struct FlowParameterBase;
 
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 struct HardeningParameterBase;
 
-template<Intrepid2::Index NumDimT>
+template<minitensor::Index NumDimT>
 struct SlipSystem;
 
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 struct SlipFamily;
 }
 

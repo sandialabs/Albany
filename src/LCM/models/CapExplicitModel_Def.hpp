@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include <Intrepid2_FunctionSpaceTools.hpp>
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
 #include <typeinfo>
@@ -117,35 +117,35 @@ CapExplicitModel(Teuchos::ParameterList* p,
 
   // initialize tensor
   //
-  I = Intrepid2::eye<ScalarT>(num_dims_);
-  id1 = Intrepid2::identity_1<ScalarT>(num_dims_);
-  id2 = Intrepid2::identity_2<ScalarT>(num_dims_);
-  id3 = Intrepid2::identity_3<ScalarT>(num_dims_);
-  Celastic = Intrepid2::Tensor4<ScalarT>(num_dims_);
-  compliance = Intrepid2::Tensor4<ScalarT>(num_dims_);
-  depsilon = Intrepid2::Tensor<ScalarT>(num_dims_);
-  sigmaN = Intrepid2::Tensor<ScalarT>(num_dims_);
-  strainN = Intrepid2::Tensor<ScalarT>(num_dims_);
-  sigmaVal = Intrepid2::Tensor<ScalarT>(num_dims_);
-  alphaVal = Intrepid2::Tensor<ScalarT>(num_dims_);
-  deps_plastic = Intrepid2::Tensor<ScalarT>(num_dims_);
-  sigmaTr = Intrepid2::Tensor<ScalarT>(num_dims_);
-  alphaTr = Intrepid2::Tensor<ScalarT>(num_dims_);
-  dfdsigma = Intrepid2::Tensor<ScalarT>(num_dims_);
-  dgdsigma = Intrepid2::Tensor<ScalarT>(num_dims_);
-  dfdalpha = Intrepid2::Tensor<ScalarT>(num_dims_);
-  halpha = Intrepid2::Tensor<ScalarT>(num_dims_);
-  dfdotCe = Intrepid2::Tensor<ScalarT>(num_dims_);
-  sigmaK = Intrepid2::Tensor<ScalarT>(num_dims_);
-  alphaK = Intrepid2::Tensor<ScalarT>(num_dims_);
-  dsigma = Intrepid2::Tensor<ScalarT>(num_dims_);
-  dev_plastic = Intrepid2::Tensor<ScalarT>(num_dims_);
-  xi = Intrepid2::Tensor<ScalarT>(num_dims_);
-  sN = Intrepid2::Tensor<ScalarT>(num_dims_);
-  s = Intrepid2::Tensor<ScalarT>(num_dims_);
-  strainCurrent = Intrepid2::Tensor<ScalarT>(num_dims_);
-  dJ3dsigma = Intrepid2::Tensor<ScalarT>(num_dims_);
-  eps_dev = Intrepid2::Tensor<ScalarT>(num_dims_);
+  I = minitensor::eye<ScalarT>(num_dims_);
+  id1 = minitensor::identity_1<ScalarT>(num_dims_);
+  id2 = minitensor::identity_2<ScalarT>(num_dims_);
+  id3 = minitensor::identity_3<ScalarT>(num_dims_);
+  Celastic = minitensor::Tensor4<ScalarT>(num_dims_);
+  compliance = minitensor::Tensor4<ScalarT>(num_dims_);
+  depsilon = minitensor::Tensor<ScalarT>(num_dims_);
+  sigmaN = minitensor::Tensor<ScalarT>(num_dims_);
+  strainN = minitensor::Tensor<ScalarT>(num_dims_);
+  sigmaVal = minitensor::Tensor<ScalarT>(num_dims_);
+  alphaVal = minitensor::Tensor<ScalarT>(num_dims_);
+  deps_plastic = minitensor::Tensor<ScalarT>(num_dims_);
+  sigmaTr = minitensor::Tensor<ScalarT>(num_dims_);
+  alphaTr = minitensor::Tensor<ScalarT>(num_dims_);
+  dfdsigma = minitensor::Tensor<ScalarT>(num_dims_);
+  dgdsigma = minitensor::Tensor<ScalarT>(num_dims_);
+  dfdalpha = minitensor::Tensor<ScalarT>(num_dims_);
+  halpha = minitensor::Tensor<ScalarT>(num_dims_);
+  dfdotCe = minitensor::Tensor<ScalarT>(num_dims_);
+  sigmaK = minitensor::Tensor<ScalarT>(num_dims_);
+  alphaK = minitensor::Tensor<ScalarT>(num_dims_);
+  dsigma = minitensor::Tensor<ScalarT>(num_dims_);
+  dev_plastic = minitensor::Tensor<ScalarT>(num_dims_);
+  xi = minitensor::Tensor<ScalarT>(num_dims_);
+  sN = minitensor::Tensor<ScalarT>(num_dims_);
+  s = minitensor::Tensor<ScalarT>(num_dims_);
+  strainCurrent = minitensor::Tensor<ScalarT>(num_dims_);
+  dJ3dsigma = minitensor::Tensor<ScalarT>(num_dims_);
+  eps_dev = minitensor::Tensor<ScalarT>(num_dims_);
 
 }
 //------------------------------------------------------------------------------
@@ -207,7 +207,7 @@ computeState(typename Traits::EvalData workset,
           + (1. / mu / 2.) * (0.5 * (id1 + id2) - (1. / 3.) * id3);
 
       // trial state
-      Intrepid2::Tensor<ScalarT> depsilon(3);
+      minitensor::Tensor<ScalarT> depsilon(3);
       for (int i = 0; i < num_dims_; ++i) {
         for (int j = 0; j < num_dims_; ++j) {
           depsilon(i, j) = strain(cell, qp, i, j) - strainold(cell, qp, i, j);
@@ -217,7 +217,7 @@ computeState(typename Traits::EvalData workset,
         }
       }
 
-      sigmaVal = sigmaN + Intrepid2::dotdot(Celastic, depsilon);
+      sigmaVal = sigmaN + minitensor::dotdot(Celastic, depsilon);
       ScalarT kappaVal = capParameterold(cell, qp);
 
       // initialize friction and dilatancy
@@ -251,11 +251,11 @@ computeState(typename Traits::EvalData workset,
 
         ScalarT dfdkappa = compute_dfdkappa(sigmaN, alphaVal, kappaVal);
 
-        ScalarT J2_alpha = 0.5 * Intrepid2::dotdot(alphaVal, alphaVal);
+        ScalarT J2_alpha = 0.5 * minitensor::dotdot(alphaVal, alphaVal);
 
         halpha = compute_halpha(dgdsigma, J2_alpha);
 
-        ScalarT I1_dgdsigma = Intrepid2::trace(dgdsigma);
+        ScalarT I1_dgdsigma = minitensor::trace(dgdsigma);
 
         ScalarT dedkappa = compute_dedkappa(kappaVal);
 
@@ -266,20 +266,20 @@ computeState(typename Traits::EvalData workset,
           hkappa = 0.0;
 
         ScalarT kai(0.0);
-        kai = Intrepid2::dotdot(dfdsigma, Intrepid2::dotdot(Celastic, dgdsigma))
-            - Intrepid2::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
+        kai = minitensor::dotdot(dfdsigma, minitensor::dotdot(Celastic, dgdsigma))
+            - minitensor::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
 
-        //H = -Intrepid2::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
+        //H = -minitensor::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
 
-        dfdotCe = Intrepid2::dotdot(dfdsigma, Celastic);
+        dfdotCe = minitensor::dotdot(dfdsigma, Celastic);
 
         if (kai != 0.0)
-          dgamma = Intrepid2::dotdot(dfdotCe, depsilon) / kai;
+          dgamma = minitensor::dotdot(dfdotCe, depsilon) / kai;
         else
           dgamma = 0.0;
 
         // update
-        sigmaVal -= dgamma * Intrepid2::dotdot(Celastic, dgdsigma);
+        sigmaVal -= dgamma * minitensor::dotdot(Celastic, dgdsigma);
 
         alphaVal += dgamma * halpha;
 
@@ -287,7 +287,7 @@ computeState(typename Traits::EvalData workset,
         ScalarT dkappa = dgamma * hkappa;
         if (dkappa > 0) {
           dkappa = 0;
-          //H = -Intrepid2::dotdot(dfdalpha, halpha);
+          //H = -minitensor::dotdot(dfdalpha, halpha);
         }
 
         kappaVal += dkappa;
@@ -308,11 +308,11 @@ computeState(typename Traits::EvalData workset,
 
           ScalarT dfdkappa = compute_dfdkappa(sigmaVal, alphaVal, kappaVal);
 
-          J2_alpha = 0.5 * Intrepid2::dotdot(alphaVal, alphaVal);
+          J2_alpha = 0.5 * minitensor::dotdot(alphaVal, alphaVal);
 
           halpha = compute_halpha(dgdsigma, J2_alpha);
 
-          I1_dgdsigma = Intrepid2::trace(dgdsigma);
+          I1_dgdsigma = minitensor::trace(dgdsigma);
 
           dedkappa = compute_dedkappa(kappaVal);
 
@@ -322,11 +322,11 @@ computeState(typename Traits::EvalData workset,
             hkappa = 0;
 
           //generalized plastic hardening modulus
-          //H = -Intrepid2::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
+          //H = -minitensor::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
 
-          kai = Intrepid2::dotdot(dfdsigma,
-              Intrepid2::dotdot(Celastic, dgdsigma));
-          kai = kai - Intrepid2::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
+          kai = minitensor::dotdot(dfdsigma,
+              minitensor::dotdot(Celastic, dgdsigma));
+          kai = kai - minitensor::dotdot(dfdalpha, halpha) - dfdkappa * hkappa;
 
           if (std::abs(f) < tolerance)
             break;
@@ -348,12 +348,12 @@ computeState(typename Traits::EvalData workset,
           dkappa = delta_gamma * hkappa;
           if (dkappa > 0.0) {
             dkappa = 0.0;
-            //H = -Intrepid2::dotdot(dfdalpha, halpha);
+            //H = -minitensor::dotdot(dfdalpha, halpha);
           }
 
           // update
           sigmaK = sigmaVal
-              - delta_gamma * Intrepid2::dotdot(Celastic, dgdsigma);
+              - delta_gamma * minitensor::dotdot(Celastic, dgdsigma);
           alphaK = alphaVal + delta_gamma * halpha;
           ScalarT kappaK = kappaVal + dkappa;
 
@@ -362,7 +362,7 @@ computeState(typename Traits::EvalData workset,
           if (std::abs(fK) > std::abs(f)) {
             // if the corrected stress is further away from yield surface,
             // then use normal correction
-            ScalarT dfdotdf = Intrepid2::dotdot(dfdsigma, dfdsigma);
+            ScalarT dfdotdf = minitensor::dotdot(dfdsigma, dfdsigma);
             if (dfdotdf != 0)
               delta_gamma = f / dfdotdf;
             else
@@ -386,14 +386,14 @@ computeState(typename Traits::EvalData workset,
         // compute plastic strain increment
         // deps_plastic = compliance ( sigma_tr - sigma_(n+1));
         dsigma = sigmaTr - sigmaVal;
-        deps_plastic = Intrepid2::dotdot(compliance, dsigma);
+        deps_plastic = minitensor::dotdot(compliance, dsigma);
 
         // compute its two invariants
         // devolps (volumetric) and deqps (deviatoric)
-        devolps = Intrepid2::trace(deps_plastic);
+        devolps = minitensor::trace(deps_plastic);
         dev_plastic = deps_plastic - (1. / 3.) * devolps * I;
         // use altenative definition, differ by constants
-        deqps = std::sqrt(2) * Intrepid2::norm(dev_plastic);
+        deqps = std::sqrt(2) * minitensor::norm(dev_plastic);
 
         // dilatancy
         //if (deqps != 0)
@@ -404,18 +404,18 @@ computeState(typename Traits::EvalData workset,
         // previous p and tau
         //ScalarT pN(0.0), tauN(0.0);
         //xi = sigmaN - alphaTr;
-        //pN = Intrepid2::trace(xi);
+        //pN = minitensor::trace(xi);
         //pN = pN / 3.;
         //sN = xi - pN * I;
-        //tauN = sqrt(1. / 2.) * Intrepid2::norm(sN);
+        //tauN = sqrt(1. / 2.) * minitensor::norm(sN);
 
         // current p, and tau
         //ScalarT p(0.0), tau(0.0);
         //xi = sigmaVal - alphaVal;
-        //p = Intrepid2::trace(xi);
+        //p = minitensor::trace(xi);
         //p = p / 3.;
         //s = xi - p * I;
-        //tau = sqrt(1. / 2.) * Intrepid2::norm(s);
+        //tau = sqrt(1. / 2.) * minitensor::norm(s);
 
         // difference
         //ScalarT dtau = tau - tauN;
@@ -428,17 +428,17 @@ computeState(typename Traits::EvalData workset,
         //  friction(cell, qp) = 0.0;
 
         // previous gamma(gamma)
-        //ScalarT evol3 = Intrepid2::trace(strainN);
+        //ScalarT evol3 = minitensor::trace(strainN);
         //evol3 = evol3 / 3.;
         //eps_dev = strainN - evol3 * I;
-        //ScalarT gammaN = sqrt(2.) * Intrepid2::norm(eps_dev);
+        //ScalarT gammaN = sqrt(2.) * minitensor::norm(eps_dev);
 
         // current gamma(gamma)
         //strainCurrent = strainN + depsilon;
-        //evol3 = Intrepid2::trace(strainCurrent);
+        //evol3 = minitensor::trace(strainCurrent);
         //evol3 = evol3 / 3.;
         //eps_dev = strainCurrent - evol3 * I;
-        //ScalarT gamma = sqrt(2.) * Intrepid2::norm(eps_dev);
+        //ScalarT gamma = sqrt(2.) * minitensor::norm(eps_dev);
 
         // difference
         //ScalarT dGamma = gamma - gammaN;
@@ -476,19 +476,19 @@ template<typename EvalT, typename Traits>
 typename CapExplicitModel<EvalT, Traits>::ScalarT
 //typename EvalT::ScalarT
 CapExplicitModel<EvalT, Traits>::compute_f(
-    Intrepid2::Tensor<ScalarT> & sigma, Intrepid2::Tensor<ScalarT> & alpha,
+    minitensor::Tensor<ScalarT> & sigma, minitensor::Tensor<ScalarT> & alpha,
     ScalarT & kappa)
 {
 
   xi = sigma - alpha;
 
-  ScalarT I1 = Intrepid2::trace(xi), p = I1 / 3;
+  ScalarT I1 = minitensor::trace(xi), p = I1 / 3;
 
-  s = xi - p * Intrepid2::identity<ScalarT>(3);
+  s = xi - p * minitensor::identity<ScalarT>(3);
 
-  ScalarT J2 = 0.5 * Intrepid2::dotdot(s, s);
+  ScalarT J2 = 0.5 * minitensor::dotdot(s, s);
 
-  ScalarT J3 = Intrepid2::det(s);
+  ScalarT J3 = minitensor::det(s);
 
   ScalarT Gamma = 1.0;
   if (psi != 0 && J2 != 0)
@@ -511,21 +511,21 @@ CapExplicitModel<EvalT, Traits>::compute_f(
 }
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
-Intrepid2::Tensor<typename CapExplicitModel<EvalT, Traits>::ScalarT>
+minitensor::Tensor<typename CapExplicitModel<EvalT, Traits>::ScalarT>
 CapExplicitModel<EvalT, Traits>::compute_dfdsigma(
-    Intrepid2::Tensor<ScalarT> & sigma,
-    Intrepid2::Tensor<ScalarT> & alpha, ScalarT & kappa)
+    minitensor::Tensor<ScalarT> & sigma,
+    minitensor::Tensor<ScalarT> & alpha, ScalarT & kappa)
 {
 
   xi = sigma - alpha;
 
-  ScalarT I1 = Intrepid2::trace(xi), p = I1 / 3;
+  ScalarT I1 = minitensor::trace(xi), p = I1 / 3;
 
-  s = xi - p * Intrepid2::identity<ScalarT>(3);
+  s = xi - p * minitensor::identity<ScalarT>(3);
 
-  ScalarT J2 = 0.5 * Intrepid2::dotdot(s, s);
+  ScalarT J2 = 0.5 * minitensor::dotdot(s, s);
 
-  ScalarT J3 = Intrepid2::det(s);
+  ScalarT J3 = minitensor::det(s);
 
   //dI1dsigma = I;
   //dJ2dsigma = s;
@@ -579,21 +579,21 @@ CapExplicitModel<EvalT, Traits>::compute_dfdsigma(
 }
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
-Intrepid2::Tensor<typename CapExplicitModel<EvalT, Traits>::ScalarT>
+minitensor::Tensor<typename CapExplicitModel<EvalT, Traits>::ScalarT>
 CapExplicitModel<EvalT, Traits>::compute_dgdsigma(
-    Intrepid2::Tensor<ScalarT> & sigma,
-    Intrepid2::Tensor<ScalarT> & alpha, ScalarT & kappa)
+    minitensor::Tensor<ScalarT> & sigma,
+    minitensor::Tensor<ScalarT> & alpha, ScalarT & kappa)
 {
 
   xi = sigma - alpha;
 
-  ScalarT I1 = Intrepid2::trace(xi), p = I1 / 3;
+  ScalarT I1 = minitensor::trace(xi), p = I1 / 3;
 
-  s = xi - p * Intrepid2::identity<ScalarT>(3);
+  s = xi - p * minitensor::identity<ScalarT>(3);
 
-  ScalarT J2 = 0.5 * Intrepid2::dotdot(s, s);
+  ScalarT J2 = 0.5 * minitensor::dotdot(s, s);
 
-  ScalarT J3 = Intrepid2::det(s);
+  ScalarT J3 = minitensor::det(s);
 
   //dJ2dsigma = s;
   //dJ3dsigma(3);
@@ -649,20 +649,20 @@ CapExplicitModel<EvalT, Traits>::compute_dgdsigma(
 template<typename EvalT, typename Traits>
 typename CapExplicitModel<EvalT, Traits>::ScalarT
 CapExplicitModel<EvalT, Traits>::compute_dfdkappa(
-    Intrepid2::Tensor<ScalarT> & sigma, Intrepid2::Tensor<ScalarT> & alpha,
+    minitensor::Tensor<ScalarT> & sigma, minitensor::Tensor<ScalarT> & alpha,
     ScalarT & kappa)
 {
   ScalarT dfdkappa;
 
   xi = sigma - alpha;
 
-  ScalarT I1 = Intrepid2::trace(xi), p = I1 / 3.0;
+  ScalarT I1 = minitensor::trace(xi), p = I1 / 3.0;
 
-  s = xi - p * Intrepid2::identity<ScalarT>(3);
+  s = xi - p * minitensor::identity<ScalarT>(3);
 
-  ScalarT J2 = 0.5 * Intrepid2::dotdot(s, s);
+  ScalarT J2 = 0.5 * minitensor::dotdot(s, s);
 
-  ScalarT J3 = Intrepid2::det(s);
+  ScalarT J3 = minitensor::det(s);
 
   ScalarT Ff_I1 = A - C * std::exp(B * I1) - theta * I1;
 
@@ -695,15 +695,15 @@ typename CapExplicitModel<EvalT, Traits>::ScalarT CapExplicitModel<EvalT, Traits
 }
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
-Intrepid2::Tensor<typename CapExplicitModel<EvalT, Traits>::ScalarT>
+minitensor::Tensor<typename CapExplicitModel<EvalT, Traits>::ScalarT>
 CapExplicitModel<EvalT, Traits>::compute_halpha(
-    Intrepid2::Tensor<ScalarT> & dgdsigma,
+    minitensor::Tensor<ScalarT> & dgdsigma,
     ScalarT & J2_alpha)
 {
 
   ScalarT Galpha = compute_Galpha(J2_alpha);
 
-  ScalarT I1 = Intrepid2::trace(dgdsigma), p = I1 / 3;
+  ScalarT I1 = minitensor::trace(dgdsigma), p = I1 / 3;
 
   s = dgdsigma - p * I;
 

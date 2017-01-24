@@ -34,7 +34,7 @@
 #include <Teuchos_CommandLineProcessor.hpp>
 
 //Intrepid2 includes
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 // Albany includes
 #include "Albany_AbstractSTKFieldContainer.hpp"
@@ -48,7 +48,7 @@ namespace LCM {
 typedef stk::mesh::RelationIdentifier EdgeId;
 typedef stk::mesh::EntityVector::size_type EntityVectorIndex;
 typedef stk::mesh::RelationVector::size_type RelationVectorIndex;
-typedef std::vector<Intrepid2::Vector<double>> Coordinates;
+typedef std::vector<minitensor::Vector<double>> Coordinates;
 typedef Coordinates::size_type CoordinatesIndex;
 typedef std::vector<std::vector<stk::mesh::EntityId>> Connectivity;
 typedef Connectivity::size_type ConnectivityIndex;

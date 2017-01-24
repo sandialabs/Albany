@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Intrepid2_FunctionSpaceTools.hpp"
@@ -357,59 +357,59 @@ void LameStressBase<EvalT, Traits>::
       // The incremental deformation gradient is computed as F_new F_old^-1
 
       // JTO:  here is how I think this will go (of course the first two lines won't work as is...)
-      // Intrepid2::Tensor<RealType> F = newDefGrad;
-      // Intrepid2::Tensor<RealType> Fn = oldDefGrad;
-      // Intrepid2::Tensor<RealType> f = F*Intrepid2::inverse(Fn);
-      // Intrepid2::Tensor<RealType> V;
-      // Intrepid2::Tensor<RealType> R;
-      // boost::tie(V,R) = Intrepid2::polar_left(F);
-      // Intrepid2::Tensor<RealType> Vinc;
-      // Intrepid2::Tensor<RealType> Rinc;
-      // Intrepid2::Tensor<RealType> logVinc;
-      // boost::tie(Vinc,Rinc,logVinc) = Intrepid2::polar_left_logV(f)
-      // Intrepid2::Tensor<RealType> logRinc = Intrepid2::log_rotation(Rinc);
-      // Intrepid2::Tensor<RealType> logf = Intrepid2::bch(logVinc,logRinc);
-      // Intrepid2::Tensor<RealType> L = (1.0/deltaT)*logf;
-      // Intrepid2::Tensor<RealType> D = Intrepid2::sym(L);
-      // Intrepid2::Tensor<RealType> W = Intrepid2::skew(L);
+      // minitensor::Tensor<RealType> F = newDefGrad;
+      // minitensor::Tensor<RealType> Fn = oldDefGrad;
+      // minitensor::Tensor<RealType> f = F*minitensor::inverse(Fn);
+      // minitensor::Tensor<RealType> V;
+      // minitensor::Tensor<RealType> R;
+      // boost::tie(V,R) = minitensor::polar_left(F);
+      // minitensor::Tensor<RealType> Vinc;
+      // minitensor::Tensor<RealType> Rinc;
+      // minitensor::Tensor<RealType> logVinc;
+      // boost::tie(Vinc,Rinc,logVinc) = minitensor::polar_left_logV(f)
+      // minitensor::Tensor<RealType> logRinc = minitensor::log_rotation(Rinc);
+      // minitensor::Tensor<RealType> logf = Intrepid2::bch(logVinc,logRinc);
+      // minitensor::Tensor<RealType> L = (1.0/deltaT)*logf;
+      // minitensor::Tensor<RealType> D = minitensor::sym(L);
+      // minitensor::Tensor<RealType> W = minitensor::skew(L);
       // and then fill data into the vectors below
 
       // new deformation gradient (the current deformation gradient as computed in the current configuration)
-      Intrepid2::Tensor<RealType> Fnew(
+      minitensor::Tensor<RealType> Fnew(
        defGradFieldRef(cell,qp,0,0), defGradFieldRef(cell,qp,0,1), defGradFieldRef(cell,qp,0,2),
        defGradFieldRef(cell,qp,1,0), defGradFieldRef(cell,qp,1,1), defGradFieldRef(cell,qp,1,2),
        defGradFieldRef(cell,qp,2,0), defGradFieldRef(cell,qp,2,1), defGradFieldRef(cell,qp,2,2) );
 
       // old deformation gradient (deformation gradient at previous load step)
-      Intrepid2::Tensor<RealType> Fold( oldDefGrad(cell,qp,0,0), oldDefGrad(cell,qp,0,1), oldDefGrad(cell,qp,0,2),
+      minitensor::Tensor<RealType> Fold( oldDefGrad(cell,qp,0,0), oldDefGrad(cell,qp,0,1), oldDefGrad(cell,qp,0,2),
                                  oldDefGrad(cell,qp,1,0), oldDefGrad(cell,qp,1,1), oldDefGrad(cell,qp,1,2),
                                  oldDefGrad(cell,qp,2,0), oldDefGrad(cell,qp,2,1), oldDefGrad(cell,qp,2,2) );
 
       // incremental deformation gradient
-      Intrepid2::Tensor<RealType> Finc = Fnew * Intrepid2::inverse(Fold);
+      minitensor::Tensor<RealType> Finc = Fnew * minitensor::inverse(Fold);
 
       // left stretch V, and rotation R, from left polar decomposition of new deformation gradient
-      Intrepid2::Tensor<RealType> V(3), R(3);
-      boost::tie(V,R) = Intrepid2::polar_left_eig(Fnew);
+      minitensor::Tensor<RealType> V(3), R(3);
+      boost::tie(V,R) = minitensor::polar_left_eig(Fnew);
 
       // incremental left stretch Vinc, incremental rotation Rinc, and log of incremental left stretch, logVinc
-      Intrepid2::Tensor<RealType> Vinc(3), Rinc(3), logVinc(3);
-      boost::tie(Vinc,Rinc,logVinc) = Intrepid2::polar_left_logV_lame(Finc);
+      minitensor::Tensor<RealType> Vinc(3), Rinc(3), logVinc(3);
+      boost::tie(Vinc,Rinc,logVinc) = minitensor::polar_left_logV_lame(Finc);
 
       // log of incremental rotation
-      Intrepid2::Tensor<RealType> logRinc = Intrepid2::log_rotation(Rinc);
+      minitensor::Tensor<RealType> logRinc = minitensor::log_rotation(Rinc);
 
       // log of incremental deformation gradient
-      Intrepid2::Tensor<RealType> logFinc = Intrepid2::bch(logVinc, logRinc);
+      minitensor::Tensor<RealType> logFinc = Intrepid2::bch(logVinc, logRinc);
 
       // velocity gradient
-      Intrepid2::Tensor<RealType> L = RealType(1.0/deltaT)*logFinc;
+      minitensor::Tensor<RealType> L = RealType(1.0/deltaT)*logFinc;
 
       // strain rate (a.k.a rate of deformation)
-      Intrepid2::Tensor<RealType> D = Intrepid2::sym(L);
+      minitensor::Tensor<RealType> D = minitensor::sym(L);
 
       // spin
-      Intrepid2::Tensor<RealType> W = Intrepid2::skew(L);
+      minitensor::Tensor<RealType> W = minitensor::skew(L);
 
       // load everything into the Lame data structure
 

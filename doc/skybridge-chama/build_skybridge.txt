@@ -4,55 +4,12 @@ Preparing to build on skybridge.sandia.gov
 
 Consider a few source files and put them in ~/bin
 
-filename: buildAlbany (file loads modules and modifies paths)
+buildAlbany.sh and runAlbany.sh are located in this source directory
 
----
-#!/bin/bash
+buildAlbany.sh: loads modules and modifies paths needed building
+runAlbany.sh: modules/paths + modifications for python
+postAlbany.sh: file sources runAlbany and swaps python modules for numpy, etc.
 
-module purge
-module load gnu/4.9.2
-module load openmpi-gnu/1.8
-module load python/2.7
-module load git/1.9.4
-
-# Building Trilinos, add environmental variable and path
-export REMOTE=/gscratch/jwfoulk/albany
-export LD_LIBRARY_PATH=/opt/python-2.7/lib:$LD_LIBRARY_PATH
-
-## Using Trilinos
-LD_LIBRARY_PATH=$REMOTE/trilinos-install-gcc-release/lib:$LD_LIBRARY_PATH
-LD_LIBRARY_PATH=$REMOTE/lib:$LD_LIBRARY_PATH
-LD_LIBRARY_PATH=$REMOTE/lib64:$LD_LIBRARY_PATH
-PATH=$REMOTE/trilinos-install-gcc-release/bin:$PATH
-
-## Python paths for exodus.py within Trilinos
-export PYTHONPATH=$REMOTE/trilinos-install-gcc-release/lib:$PYTHONPATH
-
-## Python utils from LCM
-export LCM_DIR=$REMOTE/src
-export PYTHONPATH=$LCM_DIR/Albany/src/LCM/utils/python:$PYTHONPATH
-export PATH=$LCM_DIR/Albany/src/LCM/utils/python:$PATH
-export PYTHONPATH=$LCM_DIR/Albany/src/LCM/utils/python/lcm_postprocess:$PYTHONPATH
-export PATH=$LCM_DIR/Albany/src/LCM/utils/python/lcm_postprocess:$PATH
-
-## Python tools in robustness suite
-export PYTHONPATH=/ascldap/users/jwfoulk/SolidMechanicsExamples/LCM/CrystalPlasticity/robustnessTests/Tools:$PYTHONPATH
-export PATH=/ascldap/users/jwfoulk/SolidMechanicsExamples/LCM/CrystalPlasticity/robustnessTests/Tools:$PATH
-
-## Account information needed for simulations and robustness suite
-export MYWCID=fy150167
----
-
-filename: postAlbany (file sources buildAlbany and swaps python modules for numpy, etc.)
-
----
-#!/bin/bash
-
-source ~/bin/buildAlbany
-
-module unload python/2.7
-module load canopy/1.6.2
----
 
 ****************************************************************************
 Building on skybridge.sandia.gov
@@ -278,3 +235,9 @@ Add the following dependencies to your trilinos configuration script in $REMOTE/
     -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=OFF \
 
 Rebuild albany
+
+7. Copy build into a dated directory and open permissions for others
+
+script: clean_build_skybridge.sh
+
+This script is in progress. More updates soon.

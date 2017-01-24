@@ -165,15 +165,18 @@ bool SimAdapt::adaptMesh()
   return true;
 }
 
-
-Teuchos::RCP<const Teuchos::ParameterList> SimAdapt::getValidAdapterParameters()
+Teuchos::RCP<const Teuchos::ParameterList>
+AAdapt::SimAdapt::getValidAdapterParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericAdapterParams("ValidSimAdaptParams");
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
+  validPL->set<bool>("Equilibrate", false, "Perform an equilibration step after adaptivity");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
   validPL->set<double>("Max Size", 1e10, "Maximum allowed edge length (size field)");
   validPL->set<bool>("Add Layer", false, "Turn on/off adding layer");
+  validPL->set<std::string>("Remesh Strategy", "", "Strategy for when to adapt");
+  validPL->set<int>("Remesh Every N Step Number", 1, "Remesh every Nth load/time step");
   return validPL;
 }
 

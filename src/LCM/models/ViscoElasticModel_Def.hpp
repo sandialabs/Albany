@@ -7,8 +7,8 @@
 // Author: Mario J. Juha (juham@rpi.edu)
 
 #include <cmath>
-#include "Intrepid2_MiniTensor.h"
-#include "Intrepid2_MiniTensor_Definitions.h"
+#include "MiniTensor.h"
+#include "MiniTensor_Definitions.h"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -175,58 +175,58 @@ namespace LCM
 //    std::cout << "tcurrent = " << tcurrent << std::endl;
     
     // deformation gradient
-    Intrepid2::Tensor<ScalarT> F(num_dims_);
+    minitensor::Tensor<ScalarT> F(num_dims_);
     
     // deformation gradient old
-    Intrepid2::Tensor<ScalarT> F_old(num_dims_);
+    minitensor::Tensor<ScalarT> F_old(num_dims_);
 
     // Inverse deformation gradient
-    Intrepid2::Tensor<ScalarT> Finv(num_dims_);
+    minitensor::Tensor<ScalarT> Finv(num_dims_);
     
     // Right Cauchy-Green deformation tensor (do not confuse with C_). C = F^{T}*F
-    Intrepid2::Tensor<ScalarT> C(num_dims_);
+    minitensor::Tensor<ScalarT> C(num_dims_);
     
     // Inverse of Cauchy-Green deformation tensor.
-    Intrepid2::Tensor<ScalarT> Cinv(num_dims_);
+    minitensor::Tensor<ScalarT> Cinv(num_dims_);
 
     // Right Cauchy-Green deformation tensor times J^{-2/3}. C23 = J^{-2/3}*C
-    Intrepid2::Tensor<ScalarT> C23(num_dims_);
+    minitensor::Tensor<ScalarT> C23(num_dims_);
 
     // Inverse of Cauchy-Green deformation tensor.
-    Intrepid2::Tensor<ScalarT> C23inv(num_dims_);
+    minitensor::Tensor<ScalarT> C23inv(num_dims_);
 
     // First Piola-Kirchhoff stress
-    Intrepid2::Tensor<ScalarT> PK(num_dims_);
+    minitensor::Tensor<ScalarT> PK(num_dims_);
 
     // sigma (Cauchy stress)
-    Intrepid2::Tensor<ScalarT> sigma(num_dims_);
+    minitensor::Tensor<ScalarT> sigma(num_dims_);
     
     // S0 (Instantaneous stress)
-    Intrepid2::Tensor<ScalarT> S0(num_dims_);
+    minitensor::Tensor<ScalarT> S0(num_dims_);
     
     // S0_old (Instantaneous stress old)
-    Intrepid2::Tensor<ScalarT> S0_old(num_dims_);
+    minitensor::Tensor<ScalarT> S0_old(num_dims_);
     
     // State variables
-    Intrepid2::Tensor<ScalarT> h1(num_dims_);
-    Intrepid2::Tensor<ScalarT> h2(num_dims_);
-    Intrepid2::Tensor<ScalarT> h3(num_dims_);
+    minitensor::Tensor<ScalarT> h1(num_dims_);
+    minitensor::Tensor<ScalarT> h2(num_dims_);
+    minitensor::Tensor<ScalarT> h3(num_dims_);
     
     // State variables old
-    Intrepid2::Tensor<ScalarT> h1_old(num_dims_);
-    Intrepid2::Tensor<ScalarT> h2_old(num_dims_);
-    Intrepid2::Tensor<ScalarT> h3_old(num_dims_);
+    minitensor::Tensor<ScalarT> h1_old(num_dims_);
+    minitensor::Tensor<ScalarT> h2_old(num_dims_);
+    minitensor::Tensor<ScalarT> h3_old(num_dims_);
     
     // state variable alpha
-    Intrepid2::Tensor<ScalarT> h1_alpha(num_dims_);
-    Intrepid2::Tensor<ScalarT> h2_alpha(num_dims_);
-    Intrepid2::Tensor<ScalarT> h3_alpha(num_dims_);
+    minitensor::Tensor<ScalarT> h1_alpha(num_dims_);
+    minitensor::Tensor<ScalarT> h2_alpha(num_dims_);
+    minitensor::Tensor<ScalarT> h3_alpha(num_dims_);
     
 //
 //    // Temporal variables
-//    Intrepid2::Tensor<ScalarT> tmp1(num_dims_);
+//    minitensor::Tensor<ScalarT> tmp1(num_dims_);
 
-    Intrepid2::Tensor<ScalarT> Dev_Stress(num_dims_);
+    minitensor::Tensor<ScalarT> Dev_Stress(num_dims_);
     
     // Jacobian
     ScalarT Jac;
@@ -256,7 +256,7 @@ namespace LCM
     ScalarT pressure;
 
     // Identity tensor
-    Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
+    minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
     
     for (int cell(0); cell < workset.numCells; ++cell) 
       {
@@ -288,16 +288,16 @@ namespace LCM
 	    // compute right Cauchy-Green deformation tensor ==> C = F^{T}*F
 	    C = transpose(F)*F;
             // compute inverse of C
-            Cinv = Intrepid2::inverse(C);
+            Cinv = minitensor::inverse(C);
 	    // compute modified right Cauchy-Green deformation tensor ==> C = J^{-2/3}*F^{T}*F
     	    C23 = Jac23_inv*C;
 	    // compute inverse of C
-	    C23inv = Intrepid2::inverse(C23);
+	    C23inv = minitensor::inverse(C23);
 	    // Inverse deformation gradient
-	    Finv = Intrepid2::inverse(F);
+	    Finv = minitensor::inverse(F);
 
 	    // compute instantaneous stress
-	    S0 = Jac23_inv * mu_ * (I - (1.0/3.0)*Intrepid2::trace(C23)*C23inv);
+	    S0 = Jac23_inv * mu_ * (I - (1.0/3.0)*minitensor::trace(C23)*C23inv);
 
             // Compute state variables h_alpha
             h1 = exp(-dt/tau1_) * h1_old + exp(-0.5*dt/tau1_) * (Jac23 * S0 - Jac23_old * S0_old);

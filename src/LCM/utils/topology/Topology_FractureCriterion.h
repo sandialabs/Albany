@@ -98,7 +98,7 @@ public:
     return get_topology().get_meta_data();
   }
 
-  Intrepid2::Index
+  minitensor::Index
   get_space_dimension()
   {
     return get_topology().get_space_dimension();
@@ -255,7 +255,7 @@ private:
   FractureCriterionTraction(FractureCriterionTraction const &);
   FractureCriterionTraction & operator=(FractureCriterionTraction const &);
 
-  Intrepid2::Vector<double> const &
+  minitensor::Vector<double> const &
   getNormal(stk::mesh::EntityId const entity_id);
 
   void
@@ -272,7 +272,7 @@ private:
   double
   beta_;
 
-  std::map<stk::mesh::EntityId, Intrepid2::Vector<double>>
+  std::map<stk::mesh::EntityId, minitensor::Vector<double>>
   normals_;
 };
 

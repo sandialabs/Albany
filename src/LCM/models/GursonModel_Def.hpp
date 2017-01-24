@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -126,12 +126,12 @@ computeState(typename Traits::EvalData workset,
   Albany::MDArray void_volume_old =
       (*workset.stateArrayPtr)[void_string + "_old"];
 
-  Intrepid2::Tensor<ScalarT> F(num_dims_), be(num_dims_), logbe(num_dims_);
-  Intrepid2::Tensor<ScalarT> s(num_dims_), sigma(num_dims_), N(num_dims_);
-  Intrepid2::Tensor<ScalarT> A(num_dims_), expA(num_dims_), Fpnew(num_dims_);
-  Intrepid2::Tensor<ScalarT> Fpn(num_dims_), Fpinv(num_dims_), Cpinv(num_dims_);
-  Intrepid2::Tensor<ScalarT> dPhi(num_dims_);
-  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
+  minitensor::Tensor<ScalarT> F(num_dims_), be(num_dims_), logbe(num_dims_);
+  minitensor::Tensor<ScalarT> s(num_dims_), sigma(num_dims_), N(num_dims_);
+  minitensor::Tensor<ScalarT> A(num_dims_), expA(num_dims_), Fpnew(num_dims_);
+  minitensor::Tensor<ScalarT> Fpn(num_dims_), Fpinv(num_dims_), Cpinv(num_dims_);
+  minitensor::Tensor<ScalarT> dPhi(num_dims_);
+  minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
 
   ScalarT kappa, mu, K, Y;
   ScalarT p, trlogbeby3, detbe;
@@ -161,16 +161,16 @@ computeState(typename Traits::EvalData workset,
       }
 
       // compute trial state
-      Fpinv = Intrepid2::inverse(Fpn);
-      Cpinv = Fpinv * Intrepid2::transpose(Fpinv);
-      be = F * Cpinv * Intrepid2::transpose(F);
+      Fpinv = minitensor::inverse(Fpn);
+      Cpinv = Fpinv * minitensor::transpose(Fpinv);
+      be = F * Cpinv * minitensor::transpose(F);
 #if defined(KOKKOS_HAVE_CUDA)
-      logbe = Intrepid2::log<ScalarT>(be);
+      logbe = minitensor::log<ScalarT>(be);
 #else
-      logbe = Intrepid2::log_sym<ScalarT>(be);
+      logbe = minitensor::log_sym<ScalarT>(be);
 #endif
-      trlogbeby3 = Intrepid2::trace(logbe) / 3.0;
-      detbe = Intrepid2::det<ScalarT>(be);
+      trlogbeby3 = minitensor::trace(logbe) / 3.0;
+      detbe = minitensor::det<ScalarT>(be);
       s = mu * (logbe - trlogbeby3 * I);
       p = 0.5 * kappa * std::log(detbe);
       fvoid = void_volume_old(cell, pt);
@@ -266,7 +266,7 @@ computeState(typename Traits::EvalData workset,
         dPhi =
             s + 1.0 / 3.0 * q1_ * q2_ * Ybar * fvoid_star * std::sinh(tmp) * I;
 
-        expA = Intrepid2::exp(dgam * dPhi);
+        expA = minitensor::exp(dgam * dPhi);
 
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
@@ -313,7 +313,7 @@ computeState(typename Traits::EvalData workset,
 // all local functions for compute state
 template<typename EvalT, typename Traits>
 typename EvalT::ScalarT
-GursonModel<EvalT, Traits>::YieldFunction(Intrepid2::Tensor<ScalarT> const & s,
+GursonModel<EvalT, Traits>::YieldFunction(minitensor::Tensor<ScalarT> const & s,
     ScalarT const & p, ScalarT const & fvoid, ScalarT const & eq,
     ScalarT const & K, ScalarT const & Y, ScalarT const & jacobian,
     ScalarT const & E)
@@ -343,10 +343,10 @@ GursonModel<EvalT, Traits>::YieldFunction(Intrepid2::Tensor<ScalarT> const & s,
       - 2.0 * q1_ * fvoid_star * std::cosh(tmp);
 
   // a quadratic representation will look like:
-  ScalarT Phi = 0.5 * Intrepid2::dotdot(s, s) - psi * Ybar * Ybar / 3.0;
+  ScalarT Phi = 0.5 * minitensor::dotdot(s, s) - psi * Ybar * Ybar / 3.0;
 
   // linear form
-  // ScalarT smag = Intrepid2::dotdot(s,s);
+  // ScalarT smag = minitensor::dotdot(s,s);
   // smag = std::sqrt(smag);
   // ScalarT sq23 = std::sqrt(2./3.);
   // ScalarT Phi = smag - sq23 * std::sqrt(psi) * psi_sign * Ybar
@@ -358,7 +358,7 @@ template<typename EvalT, typename Traits>
 void
 GursonModel<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
     std::vector<ScalarT> & R, std::vector<ScalarT> & dRdX, const ScalarT & p,
-    const ScalarT & fvoid, const ScalarT & eq, Intrepid2::Tensor<ScalarT> & s,
+    const ScalarT & fvoid, const ScalarT & eq, minitensor::Tensor<ScalarT> & s,
     const ScalarT & mu, const ScalarT & kappa, const ScalarT & K,
     const ScalarT & Y, const ScalarT & jacobian)
 {
@@ -412,7 +412,7 @@ GursonModel<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
   DFadType factor = 1.0 / (1.0 + (2.0 * (mu * dgam)));
 
   // valid for assumption Ntr = N;
-  Intrepid2::Tensor<DFadType> sfad(num_dims_);
+  minitensor::Tensor<DFadType> sfad(num_dims_);
   for (int i = 0; i < num_dims_; ++i) {
     for (int j = 0; j < num_dims_; ++j) {
       sfad(i, j) = factor * s(i, j);
@@ -424,8 +424,8 @@ GursonModel<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
 
   // shear-dependent term in void growth
   DFadType omega(0.0), J3(0.0), taue(0.0), smag2, smag;
-  J3 = Intrepid2::det(sfad);
-  smag2 = Intrepid2::dotdot(sfad, sfad);
+  J3 = minitensor::det(sfad);
+  smag2 = minitensor::dotdot(sfad, sfad);
   if (smag2 > 0.0) {
     smag = std::sqrt(smag2);
     taue = sq32 * smag;

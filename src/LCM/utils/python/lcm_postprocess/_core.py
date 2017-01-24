@@ -81,14 +81,26 @@ class Timer:
         return self
 
     def __exit__(self, *args):
-        self.end = time.clock()
-        self.interval = self.end - self.start
+        self.check()
+        self.end = self.now
 
     def check(self):
         self.now = time.clock()
         self.step = self.now - self.last
         self.interval = self.now - self.start
         self.last = self.now
+        return self.step
+
+    def print_time(self):
+        hours = int(self.step / 3600.)
+        minutes = int((self.step - 3600. * hours) / 60.)
+        seconds = self.step - 3600. * hours - 60. * minutes
+        time_step = '{:02d}h {:02d}m {:05.2f}s'.format(hours, minutes, seconds)
+        hours = int(self.interval / 3600.)
+        minutes = int((self.interval - 3600. * hours) / 60.)
+        seconds = self.interval - 3600. * hours - 60. * minutes
+        time_run = '{:02d}h {:02d}m {:05.2f}s'.format(hours, minutes, seconds)
+        print '    Elapsed time: ' + time_step, '    Running time: ' + time_run + '\n'
 
 #
 # Class for common properties of local objects
@@ -128,6 +140,7 @@ class ObjLocal(object):
 #
 class ObjDomain(ObjLocal):
 
+    # @profile
     def __init__(self, **kwargs):
 
         self.blocks = dict()
@@ -147,9 +160,10 @@ class ObjDomain(ObjLocal):
     #         self.variables.append(name)
 
 
-# Element block
+# Node
 class ObjNode(ObjLocal):
 
+    # @profile
     def __init__(self, **kwargs):
 
         self.variables = dict()
@@ -161,6 +175,7 @@ class ObjNode(ObjLocal):
 # Element block
 class ObjBlock(ObjLocal):
 
+    # @profile
     def __init__(self, **kwargs):
 
         self.elements = dict()
@@ -174,6 +189,7 @@ class ObjBlock(ObjLocal):
 # Element
 class ObjElement(ObjLocal):
 
+    # @profile
     def __init__(self, **kwargs):
 
         self.points = dict()
@@ -186,7 +202,8 @@ class ObjElement(ObjLocal):
 
 # Integration point
 class ObjPoint(ObjLocal):
-    
+
+    # @profile
     def __init__(self, **kwargs):
 
         self.variables = dict()

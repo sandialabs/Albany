@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 namespace LCM
 {
@@ -57,16 +57,16 @@ evaluateFields(typename Traits::EvalData workset)
   std::cout.precision(15);
 
   std::cout << "ConstitutiveModelDriver<EvalT, Traits>::evaluateFields" << std::endl;
-  Intrepid2::Tensor<ScalarT> F(num_dims_), P(num_dims_), sig(num_dims_);
+  minitensor::Tensor<ScalarT> F(num_dims_), P(num_dims_), sig(num_dims_);
 
-  Intrepid2::Tensor<ScalarT> F0(num_dims_), P0(num_dims_);
+  minitensor::Tensor<ScalarT> F0(num_dims_), P0(num_dims_);
 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int pt = 0; pt < num_pts_; ++pt) {
       F0.fill(prescribed_def_grad_,cell,pt,0,0);
       F.fill(def_grad_,cell,pt,0,0);
       sig.fill(stress_,cell,pt,0,0);
-      P = Intrepid2::piola(F,sig);
+      P = minitensor::piola(F,sig);
       if (print) {
         std::cout << "F: \n" << F << std::endl;
         std::cout << "P: \n" << P << std::endl;

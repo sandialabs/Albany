@@ -16,10 +16,6 @@
 
 #include "Adapt_NodalFieldUtils.hpp"
 
-#ifdef ALBANY_ATO
-#include "Epetra_BlockMap.h"
-#endif
-
 namespace Adapt {
 
 /*!
@@ -65,11 +61,6 @@ class NodalDataVector {
     Teuchos::RCP<const Tpetra_Map> getOverlapMap() const { return overlap_node_map; }
     Teuchos::RCP<const Tpetra_Map> getLocalMap() const { return local_node_map; }
 
-#ifdef ALBANY_ATO
-    Teuchos::RCP<const Epetra_BlockMap> getOverlapBlockMapE() const { return overlap_node_mapE; }
-    Teuchos::RCP<const Epetra_BlockMap> getLocalBlockMapE() const { return local_node_mapE; }
-#endif
-
     void initializeVectors(ST value);
 
     Teuchos::RCP<const Tpetra_Import> initializeExport();
@@ -100,11 +91,6 @@ class NodalDataVector {
 
     Teuchos::RCP<Tpetra_MultiVector> overlap_node_vec;
     Teuchos::RCP<Tpetra_MultiVector> local_node_vec;
-
-#ifdef ALBANY_ATO
-    Teuchos::RCP<const Epetra_BlockMap> overlap_node_mapE;
-    Teuchos::RCP<const Epetra_BlockMap> local_node_mapE;
-#endif
 
     Teuchos::RCP<Tpetra_Import> importer;
 

@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -78,23 +78,23 @@ namespace LCM {
   {
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int pt=0; pt < numQPs; ++pt) {
-        Intrepid2::Vector<ScalarT> g_0(3, currentBasis,cell, pt, 0, 0);
-        Intrepid2::Vector<ScalarT> g_1(3, currentBasis,cell, pt, 1, 0);
-        Intrepid2::Vector<ScalarT> g_2(3, currentBasis,cell, pt, 2, 0);
-        Intrepid2::Vector<MeshScalarT> G_2(3, refNormal,cell, pt, 0);
-        Intrepid2::Vector<ScalarT> d(3, jump,cell, pt, 0);
-        Intrepid2::Vector<MeshScalarT> G0(3, refDualBasis,cell, pt, 0, 0);
-        Intrepid2::Vector<MeshScalarT> G1(3, refDualBasis,cell, pt, 1, 0);
-        Intrepid2::Vector<MeshScalarT> G2(3, refDualBasis,cell, pt, 2, 0);
+        minitensor::Vector<ScalarT> g_0(3, currentBasis,cell, pt, 0, 0);
+        minitensor::Vector<ScalarT> g_1(3, currentBasis,cell, pt, 1, 0);
+        minitensor::Vector<ScalarT> g_2(3, currentBasis,cell, pt, 2, 0);
+        minitensor::Vector<MeshScalarT> G_2(3, refNormal,cell, pt, 0);
+        minitensor::Vector<ScalarT> d(3, jump,cell, pt, 0);
+        minitensor::Vector<MeshScalarT> G0(3, refDualBasis,cell, pt, 0, 0);
+        minitensor::Vector<MeshScalarT> G1(3, refDualBasis,cell, pt, 1, 0);
+        minitensor::Vector<MeshScalarT> G2(3, refDualBasis,cell, pt, 2, 0);
 
-        Intrepid2::Tensor<ScalarT>
-        Fpar(Intrepid2::bun(g_0, G0) +
-            Intrepid2::bun(g_1, G1) +
-            Intrepid2::bun(g_2, G2));
+        minitensor::Tensor<ScalarT>
+        Fpar(minitensor::bun(g_0, G0) +
+            minitensor::bun(g_1, G1) +
+            minitensor::bun(g_2, G2));
         // for Jay: bun()
-        Intrepid2::Tensor<ScalarT> Fper((1 / thickness) * Intrepid2::bun(d, G_2));
+        minitensor::Tensor<ScalarT> Fper((1 / thickness) * minitensor::bun(d, G_2));
 
-        Intrepid2::Tensor<ScalarT> F = Fpar + Fper;
+        minitensor::Tensor<ScalarT> F = Fpar + Fper;
 
         defGrad(cell, pt, 0, 0) = F(0, 0);
         defGrad(cell, pt, 0, 1) = F(0, 1);
@@ -105,7 +105,7 @@ namespace LCM {
         defGrad(cell, pt, 2, 0) = F(2, 0);
         defGrad(cell, pt, 2, 1) = F(2, 1);
         defGrad(cell, pt, 2, 2) = F(2, 2);
-        J(cell,pt) = Intrepid2::det(F);
+        J(cell,pt) = minitensor::det(F);
       }
     }
 

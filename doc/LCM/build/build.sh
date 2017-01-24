@@ -162,13 +162,15 @@ case "$SCRIPT_NAME" in
         # Check if a custom build netcdf with pnetcdf exists and use that
         # instead of the system one to avoid failing horrible tests that
         # need this (yuck!).
-	if [ -e "/usr/local/netcdf/lib/libnetcdf.so" ]; then
-            NETCDF_INC=/usr/local/netcdf/include
-            NETCDF_LIB=/usr/local/netcdf/lib
-        else
-            NETCDF_INC=/usr/include/openmpi-x86_64
-            NETCDF_LIB=/usr/lib64/openmpi/lib
-	fi
+        if [ ! -n "$NETCDF_INC" ]; then
+            if [ -e "/usr/local/netcdf/lib/libnetcdf.so" ]; then
+                NETCDF_INC=/usr/local/netcdf/include
+                NETCDF_LIB=/usr/local/netcdf/lib
+            else
+                NETCDF_INC=/usr/include/openmpi-x86_64
+                NETCDF_LIB=/usr/lib64/openmpi/lib
+            fi
+        fi
         sed -i -e "s|lcm_netcdf_inc|$NETCDF_INC|g;" "$CONFIG_FILE"
         sed -i -e "s|lcm_netcdf_lib|$NETCDF_LIB|g;" "$CONFIG_FILE"
 	case "$BUILD_TYPE" in

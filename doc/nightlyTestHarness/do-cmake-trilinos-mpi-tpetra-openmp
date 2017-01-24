@@ -114,6 +114,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
       -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
       -D Trilinos_ENABLE_KokkosExample:BOOL=OFF \
+      -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
       -D Trilinos_ENABLE_ML:BOOL=ON \
       -D Trilinos_ENABLE_OpenMP:BOOL=ON \
       -D Trilinos_ENABLE_MueLu:BOOL=ON \
@@ -141,6 +142,12 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
       -D Trilinos_ENABLE_Zoltan:BOOL=ON \
       -D Intrepid2_ENABLE_KokkosDynRankView:BOOL=ON \
+\
+      -D Trilinos_ENABLE_Tempus:BOOL=ON \
+      -D Tempus_ENABLE_TESTS:BOOL=OFF \
+      -D Tempus_ENABLE_EXAMPLES:BOOL=ON \
+      -D Tempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
+\
        ..
 
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \

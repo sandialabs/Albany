@@ -113,9 +113,9 @@ init(Workset &workset,
 //
 // J2 nonlinear system
 //
-template<typename EvalT, Intrepid2::Index M = 1>
+template<typename EvalT, minitensor::Index M = 1>
 class J2NLS:
-    public Intrepid2::Function_Base<J2NLS<EvalT, M>, typename EvalT::ScalarT, M>
+    public minitensor::Function_Base<J2NLS<EvalT, M>, typename EvalT::ScalarT, M>
 {
   using S = typename EvalT::ScalarT;
 
@@ -142,23 +142,23 @@ public:
   char const * const
   NAME{"J2 NLS"};
 
-  using Base = Intrepid2::Function_Base<J2NLS<EvalT, M>, typename EvalT::ScalarT, M>;
+  using Base = minitensor::Function_Base<J2NLS<EvalT, M>, typename EvalT::ScalarT, M>;
 
   // Default value.
-  template<typename T, Intrepid2::Index N>
+  template<typename T, minitensor::Index N>
   T
-  value(Intrepid2::Vector<T, N> const & x)
+  value(minitensor::Vector<T, N> const & x)
   {
     return Base::value(*this, x);
   }
 
   // Explicit gradient.
-  template<typename T, Intrepid2::Index N>
-  Intrepid2::Vector<T, N>
-  gradient(Intrepid2::Vector<T, N> const & x)
+  template<typename T, minitensor::Index N>
+  minitensor::Vector<T, N>
+  gradient(minitensor::Vector<T, N> const & x)
   {
     // Firewalls.
-    Intrepid2::Index const
+    minitensor::Index const
     dimension = x.get_dimension();
 
     assert(dimension == Base::DIMENSION);
@@ -179,7 +179,7 @@ public:
     Y = peel<EvalT, T, N>()(Y_);
 
     // This is the actual computation of the gradient.
-    Intrepid2::Vector<T, N>
+    minitensor::Vector<T, N>
     r(dimension);
 
     T const &
@@ -200,9 +200,9 @@ public:
   }
 
   // Default AD hessian.
-  template<typename T, Intrepid2::Index N>
-  Intrepid2::Tensor<T, N>
-  hessian(Intrepid2::Vector<T, N> const & x)
+  template<typename T, minitensor::Index N>
+  minitensor::Tensor<T, N>
+  hessian(minitensor::Vector<T, N> const & x)
   {
     return Base::hessian(*this, x);
   }
@@ -241,16 +241,16 @@ J2MiniKernel<EvalT, Traits>::
 operator()(int cell, int pt) const
 {
   constexpr
-  Intrepid2::Index
+  minitensor::Index
   MAX_DIM{3};
 
-  Intrepid2::Tensor<ScalarT, MAX_DIM>
+  minitensor::Tensor<ScalarT, MAX_DIM>
   F(num_dims_);
 
-  Intrepid2::Tensor<ScalarT, MAX_DIM> const
-  I(Intrepid2::eye<ScalarT, MAX_DIM>(num_dims_));
+  minitensor::Tensor<ScalarT, MAX_DIM> const
+  I(minitensor::eye<ScalarT, MAX_DIM>(num_dims_));
 
-  Intrepid2::Tensor<ScalarT, MAX_DIM>
+  minitensor::Tensor<ScalarT, MAX_DIM>
   sigma(num_dims_);
   
   ScalarT const
@@ -274,7 +274,7 @@ operator()(int cell, int pt) const
 
   //Fpn.fill( &Fpold(cell,pt,int(0),int(0)) );
 
-  Intrepid2::Tensor<ScalarT, MAX_DIM>
+  minitensor::Tensor<ScalarT, MAX_DIM>
   Fpn(num_dims_);
 
   for (int i{0}; i < num_dims_; ++i) {
@@ -284,24 +284,24 @@ operator()(int cell, int pt) const
   }
 
   // compute trial state
-  Intrepid2::Tensor<ScalarT, MAX_DIM> const
-  Fpinv = Intrepid2::inverse(Fpn);
+  minitensor::Tensor<ScalarT, MAX_DIM> const
+  Fpinv = minitensor::inverse(Fpn);
 
-  Intrepid2::Tensor<ScalarT, MAX_DIM> const
-  Cpinv = Fpinv * Intrepid2::transpose(Fpinv);
+  minitensor::Tensor<ScalarT, MAX_DIM> const
+  Cpinv = Fpinv * minitensor::transpose(Fpinv);
 
-  Intrepid2::Tensor<ScalarT, MAX_DIM> const
-  be = Jm23 * F * Cpinv * Intrepid2::transpose(F);
+  minitensor::Tensor<ScalarT, MAX_DIM> const
+  be = Jm23 * F * Cpinv * minitensor::transpose(F);
 
-  Intrepid2::Tensor<ScalarT, MAX_DIM>
-  s = mu * Intrepid2::dev(be);
+  minitensor::Tensor<ScalarT, MAX_DIM>
+  s = mu * minitensor::dev(be);
 
   ScalarT const
-  mubar = Intrepid2::trace(be) * mu / (num_dims_);
+  mubar = minitensor::trace(be) * mu / (num_dims_);
 
   // check yield condition
   ScalarT const
-  smag = Intrepid2::norm(s);
+  smag = minitensor::norm(s);
 
   ScalarT const
   sq23{std::sqrt(2.0 / 3.0)};
@@ -319,11 +319,11 @@ operator()(int cell, int pt) const
     using NLS = J2NLS<EvalT>;
 
     constexpr
-    Intrepid2::Index
+    minitensor::Index
     nls_dim{NLS::DIMENSION};
 
-    using MIN = Intrepid2::Minimizer<ValueT, nls_dim>;
-    using STEP = Intrepid2::NewtonStep<NLS, ValueT, nls_dim>;
+    using MIN = minitensor::Minimizer<ValueT, nls_dim>;
+    using STEP = minitensor::NewtonStep<NLS, ValueT, nls_dim>;
 
     MIN
     minimizer;
@@ -334,7 +334,7 @@ operator()(int cell, int pt) const
     NLS
     j2nls(sat_mod, sat_exp, eqpsold(cell, pt), K, smag, mubar, Y);
 
-    Intrepid2::Vector<ScalarT, nls_dim>
+    minitensor::Vector<ScalarT, nls_dim>
     x;
 
     x(0) = 0.0;
@@ -352,7 +352,7 @@ operator()(int cell, int pt) const
     dgam = x(0);
 
     // plastic direction
-    Intrepid2::Tensor<ScalarT, MAX_DIM> const
+    minitensor::Tensor<ScalarT, MAX_DIM> const
     N = (1 / smag) * s;
 
     // update s
@@ -368,13 +368,13 @@ operator()(int cell, int pt) const
     }
 
     // exponential map to get Fpnew
-    Intrepid2::Tensor<ScalarT, MAX_DIM> const
+    minitensor::Tensor<ScalarT, MAX_DIM> const
     A = dgam * N;
 
-    Intrepid2::Tensor<ScalarT, MAX_DIM> const
-    expA = Intrepid2::exp(A);
+    minitensor::Tensor<ScalarT, MAX_DIM> const
+    expA = minitensor::exp(A);
 
-    Intrepid2::Tensor<ScalarT, MAX_DIM> const
+    minitensor::Tensor<ScalarT, MAX_DIM> const
     Fpnew = expA * Fpn;
 
     for (int i{0}; i < num_dims_; ++i) {
@@ -415,7 +415,7 @@ operator()(int cell, int pt) const
     F.fill(def_grad, cell, pt, 0, 0);
 
     ScalarT const
-    J = Intrepid2::det(F);
+    J = minitensor::det(F);
 
     sigma.fill(stress, cell, pt, 0, 0);
     sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J * J))

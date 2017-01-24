@@ -25,6 +25,9 @@
 #include "Epetra_Vector.h"
 #include "Epetra_CrsGraph.h"
 #include "Epetra_CrsMatrix.h"
+#include "Epetra_Export.h" 
+#include "Epetra_Import.h" 
+#include "Epetra_LocalMap.h" 
 
 namespace Petra {
 
@@ -96,6 +99,7 @@ Teuchos::RCP<Tpetra_MultiVector> EpetraMultiVector_To_TpetraMultiVector(const Ep
 Teuchos::RCP<Tpetra_CrsMatrix> EpetraCrsMatrix_To_TpetraCrsMatrix(Epetra_CrsMatrix& epetraMatrix_,
                                                                const Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
                                                                const Teuchos::RCP< KokkosNode > &node = KokkosClassic::Details::getNode< KokkosNode >());
+  
 
 // Convenience class for conversions. One use case is to inherit from this class
 // and implement situation-specific conversion functionality using concise

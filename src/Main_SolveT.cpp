@@ -267,6 +267,7 @@ int main(int argc, char *argv[]) {
   // Command-line argument for input file
   Albany::CmdLineArgs cmd;
   cmd.parse_cmdline(argc, argv, *out);
+  bool computeSensitivities = true; 
 
   try {
     RCP<Teuchos::Time> totalTime =
@@ -292,10 +293,17 @@ int main(int argc, char *argv[]) {
 
     setupTimer.~TimeMonitor();
 
+    std::string solnMethod = slvrfctry.getParameters().sublist("Problem").get<std::string>("Solution Method"); 
+    if (solnMethod == "Transient Tempus No Piro") {
+        TEUCHOS_TEST_FOR_EXCEPTION(true,
+          Teuchos::Exceptions::InvalidParameter,
+          std::endl << "Error!  Please run AlbanyTempus executable with Solution Method = Transient Tempus No Piro.\n");
+    } 
     Teuchos::ParameterList &solveParams =
       slvrfctry.getAnalysisParameters().sublist("Solve", /*mustAlreadyExist =*/ false);
     // By default, request the sensitivities if not explicitly disabled
-    solveParams.get("Compute Sensitivities", true);
+    if (solveParams.isParameter("Compute Sensitivities")) 
+      computeSensitivities = solveParams.get<bool>("Compute Sensitivities"); 
 
     Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST> > > thyraResponses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<ST> > > > thyraSensitivities;
@@ -455,7 +463,7 @@ int main(int argc, char *argv[]) {
           // Just calculate regression data
           status += slvrfctry.checkSolveTestResultsT(i, 0, g.get(), NULL);
         } 
-        else {
+        else if (computeSensitivities == true) {
           if (sensitivities[0][0] != Teuchos::null) {
             for (int j=0; j<num_p; j++) {
               const RCP<const Tpetra_MultiVector> dgdp = sensitivities[i][j];

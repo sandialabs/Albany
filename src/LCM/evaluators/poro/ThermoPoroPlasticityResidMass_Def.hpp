@@ -8,7 +8,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Intrepid2_RealSpaceTools.hpp"
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 #include <typeinfo>
 

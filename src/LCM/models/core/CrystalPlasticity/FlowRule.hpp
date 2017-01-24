@@ -63,11 +63,14 @@ struct FlowParameterBase
   RealType
   min_tol_{0.0};
 
+  RealType
+  max_tol_{0.0};
+
   std::map<std::string, ParamIndex>
   param_map_;
 
   // Flow parameters
-  Intrepid2::Vector<RealType>
+  minitensor::Vector<RealType>
   flow_params_;
 };
 
@@ -89,7 +92,7 @@ struct PowerLawFlowParameters final : public FlowParameterBase
     param_map_["Reference Slip Rate"] = RATE_SLIP_REFERENCE;
     param_map_["Rate Exponent"] = EXPONENT_RATE;
     flow_params_.set_dimension(NUM_PARAMS);
-    flow_params_.fill(Intrepid2::ZEROS);
+    flow_params_.fill(minitensor::ZEROS);
   }
 
   virtual
@@ -97,7 +100,10 @@ struct PowerLawFlowParameters final : public FlowParameterBase
   setTolerance()
   {
     min_tol_ = 
-      std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / EXPONENT_RATE);
+      std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / flow_params_(EXPONENT_RATE));
+
+    max_tol_ = 
+      std::pow(0.5 * std::numeric_limits<RealType>::max(), 0.5 / flow_params_(EXPONENT_RATE));
   }
 };
 
@@ -125,7 +131,7 @@ struct ThermalActivationFlowParameters final : public FlowParameterBase
     param_map_["P Exponent"] = EXPONENT_P;
     param_map_["Q Exponent"] = EXPONENT_Q;
     flow_params_.set_dimension(NUM_PARAMS);
-    flow_params_.fill(Intrepid2::ZEROS);
+    flow_params_.fill(minitensor::ZEROS);
   }
 
   virtual
@@ -133,6 +139,7 @@ struct ThermalActivationFlowParameters final : public FlowParameterBase
   setTolerance()
   {
     min_tol_ = 2.0 * std::numeric_limits<RealType>::min();
+    max_tol_ = 0.5 * std::numeric_limits<RealType>::max();
   }
 };
 
@@ -156,7 +163,7 @@ struct PowerLawDragFlowParameters final : public FlowParameterBase
     param_map_["Rate Exponent"] = EXPONENT_RATE;
     param_map_["Drag Coefficient"] = COEFFICIENT_DRAG;
     flow_params_.set_dimension(NUM_PARAMS);
-    flow_params_.fill(Intrepid2::ZEROS);
+    flow_params_.fill(minitensor::ZEROS);
   }
 
   virtual
@@ -164,7 +171,10 @@ struct PowerLawDragFlowParameters final : public FlowParameterBase
   setTolerance()
   {
     min_tol_ =
-      std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / EXPONENT_RATE);
+      std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / flow_params_(EXPONENT_RATE));
+
+    max_tol_ = 
+      std::pow(0.5 * std::numeric_limits<RealType>::max(), 0.5 / flow_params_(EXPONENT_RATE));
   }
 };
 
@@ -203,7 +213,8 @@ struct FlowRuleBase
   computeRateSlip(
     std::shared_ptr<FlowParameterBase> const & pflow_parameters,
     ArgT const & shear,
-    ArgT const & slip_resistance) = 0;
+    ArgT const & slip_resistance,
+    bool & failed) = 0;
 
   virtual
   ~FlowRuleBase() {}
@@ -243,7 +254,8 @@ struct PowerLawFlowRule final : public FlowRuleBase<ArgT>
   computeRateSlip(
     std::shared_ptr<FlowParameterBase> const & pflow_parameters,
     ArgT const & shear,
-    ArgT const & slip_resistance);
+    ArgT const & slip_resistance,
+    bool & failed);
 
   virtual
   ~PowerLawFlowRule() {}
@@ -263,7 +275,8 @@ struct ThermalActivationFlowRule final : public FlowRuleBase<ArgT>
   computeRateSlip(
     std::shared_ptr<FlowParameterBase> const & pflow_parameters,
     ArgT const & shear,
-    ArgT const & slip_resistance);
+    ArgT const & slip_resistance,
+    bool & failed);
 
   virtual
   ~ThermalActivationFlowRule() {}
@@ -283,7 +296,8 @@ struct PowerLawDragFlowRule final : public FlowRuleBase<ArgT>
   computeRateSlip(
     std::shared_ptr<FlowParameterBase> const & pflow_parameters,
     ArgT const & shear,
-    ArgT const & slip_resistance);
+    ArgT const & slip_resistance,
+    bool & failed);
 
   virtual
   ~PowerLawDragFlowRule() {}
@@ -303,7 +317,8 @@ struct NoFlowRule final : public FlowRuleBase<ArgT>
   computeRateSlip(
     std::shared_ptr<FlowParameterBase> const & pflow_parameters,
     ArgT const & shear,
-    ArgT const & slip_resistance);
+    ArgT const & slip_resistance,
+    bool & failed);
 
   virtual
   ~NoFlowRule() {}

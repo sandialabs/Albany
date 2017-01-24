@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -55,9 +55,9 @@ computeState(typename Traits::EvalData workset,
   ScalarT lambda;
   ScalarT mu;
 
-  Intrepid2::Tensor<ScalarT> F(num_dims_), C(num_dims_), sigma(num_dims_);
-  Intrepid2::Tensor<ScalarT> I(Intrepid2::eye<ScalarT>(num_dims_));
-  Intrepid2::Tensor<ScalarT> S(num_dims_), E(num_dims_);
+  minitensor::Tensor<ScalarT> F(num_dims_), C(num_dims_), sigma(num_dims_);
+  minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
+  minitensor::Tensor<ScalarT> S(num_dims_), E(num_dims_);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
@@ -68,8 +68,8 @@ computeState(typename Traits::EvalData workset,
       F.fill(def_grad,cell, pt,0,0);
       C = F * transpose(F);
       E = 0.5 * ( C - I );
-      S = lambda * Intrepid2::trace(E) * I + 2.0 * mu * E;
-      sigma = (1.0 / Intrepid2::det(F) ) * F * S * Intrepid2::transpose(F);
+      S = lambda * minitensor::trace(E) * I + 2.0 * mu * E;
+      sigma = (1.0 / minitensor::det(F) ) * F * S * minitensor::transpose(F);
       for (int i = 0; i < num_dims_; ++i) {
         for (int j = 0; j < num_dims_; ++j) {
           stress(cell, pt, i, j) = sigma(i, j);

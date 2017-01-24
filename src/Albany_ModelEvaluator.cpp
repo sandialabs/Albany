@@ -774,24 +774,26 @@ x->Print(std::cout);
     Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
 #endif
     f_already_computed=true;
-if(test_var != 0){
-//std::cout << "The current rhs length is: " << f_out->MyLength() << std::endl;
-//f_out->Print(std::cout);
-std::cout << "The current Jacobian length is: " << W_out_crs->NumGlobalRows() << std::endl;
-W_out_crs->Print(std::cout);
-}
+
+    if(test_var != 0) {
+      //std::cout << "The current rhs length is: " << f_out->MyLength() << std::endl;
+      //f_out->Print(std::cout);
+      std::cout << "The current Jacobian length is: " << W_out_crs->NumGlobalRows() << std::endl;
+      W_out_crs->Print(std::cout);
+    }
   }
 
   if (WPrec_out != Teuchos::null) {
     app->computeGlobalJacobian(alpha, beta, omega, curr_time, x_dot.get(), x_dotdot.get(), *x,
                                sacado_param_vec, f_out.get(), *Extra_W_crs);
     f_already_computed=true;
-if(test_var != 0){
-//std::cout << "The current rhs length is: " << f_out->MyLength() << std::endl;
-//f_out->Print(std::cout);
-std::cout << "The current preconditioner length is: " << Extra_W_crs->NumGlobalRows() << std::endl;
-Extra_W_crs->Print(std::cout);
-}
+
+  if(test_var != 0) {
+    //std::cout << "The current rhs length is: " << f_out->MyLength() << std::endl;
+    //f_out->Print(std::cout);
+    std::cout << "The current preconditioner length is: " << Extra_W_crs->NumGlobalRows() << std::endl;
+    Extra_W_crs->Print(std::cout);
+  }
 
     app->computeGlobalPreconditioner(Extra_W_crs, WPrec_out);
   }

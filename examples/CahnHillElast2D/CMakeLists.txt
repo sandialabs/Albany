@@ -3,8 +3,6 @@
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-
-# 2. Copy mesh files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/domain.exo
                ${CMAKE_CURRENT_BINARY_DIR}/domain.exo COPYONLY)
 
@@ -20,6 +18,12 @@ endif()
 if (ALBANY_IFPACK2)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
-add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+add_test(${testName}_Tpetra_Rythmos ${AlbanyT.exe} inputT.xml)
+if (ALBANY_TEMPUS)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_tempus.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT_tempus.xml COPYONLY)
+add_test(${testName}_Tpetra_Tempus ${AlbanyT.exe} inputT_tempus.xml)
+endif()
+# 2. Copy mesh files from source to binary dir
 endif()
 

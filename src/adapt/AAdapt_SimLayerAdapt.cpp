@@ -538,7 +538,7 @@ bool SimLayerAdapt::adaptMesh()
 }
 
 
-Teuchos::RCP<const Teuchos::ParameterList> SimLayerAdapt::getValidAdapterParameters()
+Teuchos::RCP<const Teuchos::ParameterList> SimLayerAdapt::getValidAdapterParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericAdapterParams("ValidSimLayerAdaptParams");
@@ -552,6 +552,9 @@ Teuchos::RCP<const Teuchos::ParameterList> SimLayerAdapt::getValidAdapterParamet
   validPL->set<bool>("Add Layer", true, "Turn on/off adding layer");
   validPL->set<double>("Uniform Temperature New Layer", 20.0, "Uniform Layer Temperature");
   validPL->set<double>("First Layer Time", 0.0, "Overrides time to place first layer");
+  validPL->set<bool>("Equilibrate", false, "Should equilibration be turned on after adaptation");
+  validPL->set<std::string>("Remesh Strategy", "", "Strategy for when to adapt");
+  validPL->set<int>("Remesh Every N Step Number", 1, "Remesh every Nth load/time step");
   return validPL;
 }
 

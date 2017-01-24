@@ -66,7 +66,14 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
 
   // Want the initial time in the parameter library to be correct
   // if this is a restart solution
-  if (disc_->hasRestartSolution()) {
+  // MJJ (12/06/16) I'll go an remove this conditional "if (disc_->hasRestartSolution())"
+  // Independent of restarting analysis you want to have the capability of specify
+  // an initial time. Not doing so was causing that the initial time was always set to zero
+  // and the latter cause many problem because for time 0, dt is set up as 1.0e-15, creating
+  // serious problem when a body source is specified at time 0. For example, in a heat
+  // transfer problem at time 0 and specifying a heat source the problem may corresponds to
+  // a "thermal shock" problem, causing some instabilities in the time integrator.
+//  if (disc_->hasRestartSolution()) {
     if (paramLib_->isParameter("Time")) {
 
       double initialValue = 0.0;
@@ -87,7 +94,7 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
       }
       paramLib_->setRealValue<PHAL::AlbanyTraits::Residual>("Time", initialValue);
     }
-  }
+//  }
 
   const Teuchos::RCP<const Tpetra_Map> mapT = disc_->getMapT();
   const Teuchos::RCP<const Tpetra_Map> overlapMapT = disc_->getOverlapMapT();
@@ -169,14 +176,6 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
 
   std::string& method = adaptParams_->get("Method", "");
   std::string first_three_chars = method.substr(0, 3);
-  // do I need to add layer?
-  bool hasAddLayer = adaptParams_->isType<bool>("Add Layer");
-  if (hasAddLayer)
-  {
-      *out << "************************" << std::endl;
-      *out << "    ADDING LAYER ON     " << std::endl;
-      *out << "************************" << std::endl;
-  }
 
 #if defined(HAVE_STK)
   if (method == "Copy Remesh") {
@@ -215,14 +214,19 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
 #endif
 #ifdef ALBANY_AMP
   if (method == "Sim") {
-     // do not add layer
-      if (!hasAddLayer){
-    adapter_ = Teuchos::rcp(
-      new AAdapt::SimAdapt(adaptParams_, paramLib_, stateMgr_, commT_));
-      } else { // add layer
-          adapter_ = Teuchos::rcp(
-      new AAdapt::SimLayerAdapt(adaptParams_, paramLib_, stateMgr_, commT_));
-      }
+    bool add_layer = false;
+    if (adaptParams_->isType<bool>("Add Layer"))
+      add_layer = adaptParams_->get<bool>("Add Layer");
+    if (add_layer) { // add layer
+      *out << "************************" << std::endl;
+      *out << "    ADDING LAYER ON     " << std::endl;
+      *out << "************************" << std::endl;
+      adapter_ = Teuchos::rcp(
+          new AAdapt::SimLayerAdapt(adaptParams_, paramLib_, stateMgr_, commT_));
+    } else { // do not add layer
+      adapter_ = Teuchos::rcp(
+          new AAdapt::SimAdapt(adaptParams_, paramLib_, stateMgr_, commT_));
+    }
   } else
 #endif
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)
@@ -245,11 +249,14 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
         std::endl << *adaptParams_);
   }
 
+  Teuchos::RCP<const Teuchos::ParameterList> valid_params =
+    adapter_->getValidAdapterParameters();
+  adaptParams_->validateParameters(*valid_params);
+
   *out << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
       << " Mesh adapter has been initialized:\n"
       << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
       << std::endl;
-
 }
 
 bool

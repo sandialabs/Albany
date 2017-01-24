@@ -44,6 +44,7 @@ ENDIF()
 # Paths to the actual executables
 set(AlbanyPath                         ${Albany_BINARY_DIR}/src/Albany)
 set(AlbanyTPath                        ${Albany_BINARY_DIR}/src/AlbanyT)
+set(AlbanyTempusPath                   ${Albany_BINARY_DIR}/src/AlbanyTempus)
 set(AlbanySGPath                       ${Albany_BINARY_DIR}/src/AlbanySG)
 set(AlbanyDakotaPath                   ${Albany_BINARY_DIR}/src/AlbanyDakota)
 set(AlbanyDakotaTPath                  ${Albany_BINARY_DIR}/src/AlbanyDakotaT)
@@ -66,6 +67,7 @@ IF (ALBANY_MPI)
   set(SerialAlbanyDakota.exe           ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${MPIPOST} ${AlbanyDakotaPath})
   set(Albany.exe                       ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${MPIPOST} ${AlbanyPath})
   set(AlbanyT.exe                      ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${MPIPOST} ${AlbanyTPath})
+  set(AlbanyTempus.exe                 ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${MPIPOST} ${AlbanyTempusPath})
   set(AlbanyDakota.exe                 ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${MPIPOST} ${AlbanyDakotaPath})
   set(AlbanyDakotaT.exe                ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${MPIPOST} ${AlbanyDakotaTPath})
   set(AlbanySG.exe                     ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${MPIPOST} ${AlbanySGPath})
@@ -110,6 +112,7 @@ IF(ALBANY_HAVE_STK) # STK is needed for all these
 # Heat Transfer Problems ###############
   add_subdirectory(SteadyHeat1D)
   add_subdirectory(SteadyHeat2D)
+  add_subdirectory(SteadyHeatConstrainedOpt2D)
   add_subdirectory(SteadyHeat3D)
   add_subdirectory(SteadyHeat1DEB)
   add_subdirectory(SteadyHeat2DEB)
@@ -236,6 +239,12 @@ ENDIF()
 IF(ALBANY_AMP)
   add_subdirectory(AMP)
 ENDIF()
+
+# ANISO #################
+
+IF(ALBANY_ANISO)
+  add_subdirectory(ANISO)
+ENDIF(ALBANY_ANISO)
 
 IF(ALBANY_PERFORMANCE_TESTS)
   add_subdirectory(PerformanceTests)

@@ -1,8 +1,14 @@
  
 
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectralT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_spectralT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectralT_rythmos.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_spectralT_rythmos.xml COPYONLY)
+if (ALBANY_TEMPUS)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectralT_tempus.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_spectralT_tempus.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectralT_tempus_no_piro.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_spectralT_tempus_no_piro.xml COPYONLY)
+endif () 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_with_topography.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_with_topography.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plot_xz_matlab.m
@@ -15,7 +21,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_spectral_ho_BE_T.xml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
-add_test(Aeras_${testName}_Spectral_np2_RungeKutta4 ${AlbanyT.exe} input_spectralT.xml) 
+add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Rythmos ${AlbanyT.exe} input_spectralT_rythmos.xml) 
+if (ALBANY_TEMPUS)
+add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Tempus ${AlbanyT.exe} input_spectralT_tempus.xml) 
+add_test(Aeras_${testName}_Spectral_np2_RungeKutta4_Tempus_No_Piro ${AlbanyTempus.exe} input_spectralT_tempus_no_piro.xml) 
+endif () 
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_STOKHOS)

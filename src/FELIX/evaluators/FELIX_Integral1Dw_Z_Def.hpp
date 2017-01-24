@@ -44,8 +44,8 @@ Integral1Dw_ZBase(const Teuchos::ParameterList& p,
   StokesThermoCoupled = p.get<bool>("Stokes and Thermo coupled");
   if(StokesThermoCoupled)
   {
-  	offset = 3; // it identifies the right variable to consider (in this case w_z)
-  	neq = 4;	// Stokes FO + Enthalpy + w_z
+  	offset = 2; // it identifies the right variable to consider (in this case w_z)
+  	neq = 4;	// Stokes FO + w_z + Enthalpy
   }
   else	//(just Enthalpy + w_z)
   {

@@ -230,6 +230,7 @@ namespace CTM {
     }
 
     void Application::computeGlobalResidualT(const double current_time,
+            const double previous_time,
             const Tpetra_Vector* xdotT,
             const Tpetra_Vector* xdotdotT,
             const Tpetra_Vector& xT,
@@ -238,6 +239,7 @@ namespace CTM {
         // to be passed to the implementation
         this->computeGlobalResidualImplT(
                 current_time,
+                previous_time,
                 Teuchos::rcp(xdotT, false),
                 Teuchos::rcp(xdotdotT, false),
                 Teuchos::rcpFromRef(xT),
@@ -277,6 +279,7 @@ namespace CTM {
     void
     Application::computeGlobalResidualImplT(
             const double current_time,
+            const double previous_time,
             const Teuchos::RCP<const Tpetra_Vector>& xdotT,
             const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
             const Teuchos::RCP<const Tpetra_Vector>& xT,
@@ -310,7 +313,7 @@ namespace CTM {
         {
             PHAL::Workset workset;
 
-            loadBasicWorksetInfoT(workset, current_time);
+            loadBasicWorksetInfoT(workset, current_time, previous_time);
             workset.fT = overlapped_fT;
 
             for (int ws = 0; ws < numWorksets; ws++) {
@@ -346,6 +349,7 @@ namespace CTM {
             loadWorksetNodesetInfo(workset);
             dfm_set(workset, xT, xdotT, xdotdotT);
             workset.current_time = current_time;
+            workset.previous_time = previous_time;
             workset.distParamLib = Teuchos::null;
             workset.disc = disc;
 
@@ -360,6 +364,7 @@ namespace CTM {
             const double beta,
             const double omega,
             const double current_time,
+            const double previous_time,
             const Tpetra_Vector* xdotT,
             const Tpetra_Vector* xdotdotT,
             const Tpetra_Vector& xT,
@@ -372,6 +377,7 @@ namespace CTM {
                 beta,
                 omega,
                 current_time,
+                previous_time,
                 Teuchos::rcp(xdotT, false),
                 Teuchos::rcp(xdotdotT, false),
                 Teuchos::rcpFromRef(xT),
@@ -416,6 +422,7 @@ namespace CTM {
             const double beta,
             const double omega,
             const double current_time,
+            const double previous_time,
             const Teuchos::RCP<const Tpetra_Vector>& xdotT,
             const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
             const Teuchos::RCP<const Tpetra_Vector>& xT,
@@ -476,7 +483,7 @@ namespace CTM {
         // Set data in Workset struct, and perform fill via field manager
         {
             PHAL::Workset workset;
-            loadBasicWorksetInfoT(workset, current_time);
+            loadBasicWorksetInfoT(workset, current_time, previous_time);
 
             workset.fT = overlapped_fT;
             workset.JacT = overlapped_jacT;
@@ -521,6 +528,7 @@ namespace CTM {
             workset.n_coeff = omega;
             workset.j_coeff = beta;
             workset.current_time = current_time;
+            workset.previous_time = previous_time;
 
             dfm_set(workset, xT, xdotT, xdotdotT);
 
@@ -546,23 +554,25 @@ namespace CTM {
     void
     Application::evaluateStateFieldManagerT(
             const double current_time,
+            const double previous_time,
             const Tpetra_MultiVector& xT) {
         int num_vecs = xT.getNumVectors();
 
         if (num_vecs == 1)
-            this->evaluateStateFieldManagerT(current_time, Teuchos::null,
+            this->evaluateStateFieldManagerT(current_time, previous_time, Teuchos::null,
                 Teuchos::null, *xT.getVector(0));
         else if (num_vecs == 2)
-            this->evaluateStateFieldManagerT(current_time, xT.getVector(1).ptr(),
+            this->evaluateStateFieldManagerT(current_time, previous_time, xT.getVector(1).ptr(),
                 Teuchos::null, *xT.getVector(0));
         else
-            this->evaluateStateFieldManagerT(current_time, xT.getVector(1).ptr(),
+            this->evaluateStateFieldManagerT(current_time, previous_time, xT.getVector(1).ptr(),
                 xT.getVector(2).ptr(), *xT.getVector(0));
     }
 
     void
     Application::evaluateStateFieldManagerT(
             const double current_time,
+            const double previous_time,
             Teuchos::Ptr<const Tpetra_Vector> xdotT,
             Teuchos::Ptr<const Tpetra_Vector> xdotdotT,
             const Tpetra_Vector& xT) {
@@ -616,7 +626,7 @@ namespace CTM {
 
         // Set data in Workset struct
         PHAL::Workset workset;
-        loadBasicWorksetInfoT(workset, current_time);
+        loadBasicWorksetInfoT(workset, current_time, previous_time);
         workset.fT = overlapped_fT;
 
         // Perform fill via field manager
@@ -634,7 +644,8 @@ namespace CTM {
 
     void Application::loadBasicWorksetInfoT(
             PHAL::Workset& workset,
-            double current_time) {
+            double current_time,
+            double previous_time) {
 
         workset.numEqs = neq;
 
@@ -645,6 +656,7 @@ namespace CTM {
         workset.xdotdotT =
                 (overlapped_MV->getNumVectors() > 2) ? overlapped_MV->getVectorNonConst(2) : Teuchos::null;
         workset.current_time = current_time;
+        workset.previous_time = previous_time;
         workset.distParamLib = Teuchos::null;
         workset.disc = disc;
         workset.transientTerms = Teuchos::nonnull(workset.xdotT);

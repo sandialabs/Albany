@@ -152,7 +152,9 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT beta = 1.5*(1.0 - porosity)/(porosity*particle_dia);
 
 //  Parameters for the depth profile of the laser heat source:
-  ScalarT lambda = 2.50;
+  //Depth of powder bed (Needs to be changed as per the model)
+  ScalarT PB_depth = 50e-6;
+  ScalarT lambda = PB_depth*beta;
   ScalarT a = sqrt(1.0 - powder_hemispherical_reflectivity);
   ScalarT A = (1.0 - pow(powder_hemispherical_reflectivity,2))*exp(-lambda);
   ScalarT B = 3.0 + powder_hemispherical_reflectivity*exp(-2*lambda);

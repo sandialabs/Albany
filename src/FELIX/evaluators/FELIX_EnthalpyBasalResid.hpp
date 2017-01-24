@@ -67,9 +67,12 @@ namespace FELIX
     int vecDimFO;
 
     double a;
+    double k_i;   //[W m^{-1} K^{-1}], Conductivity of ice
+    double beta_p;
+    double rho_i;
+    double g;
 
     bool haveSUPG;
-    bool isGeoFluxConst;
   };
 
 }	// end namespace FELIX

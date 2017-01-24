@@ -354,6 +354,72 @@ namespace PHX {
 
 
 
+
+
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_RESIDUAL(name) \
+  template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits, RealType, RealType>;
+
+//TODO, add macros for ALBANY_SG case, also these ned to be double checked
+#ifdef ALBANY_ENSEMBLE
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_MPRESIDUAL(name) \
+  template class name<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits,MPType, MPType>; \
+  template class name<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits,RealType, MPType>; \
+  template class name<PHAL::AlbanyTraits::MPResidual, PHAL::AlbanyTraits,RealType, RealType>;
+
+#if defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_MPJACOBIAN(name) \
+  template class name<PHAL::AlbanyTraits::MPJacobian, PHAL::AlbanyTraits, MPFadType, MPFadType>;
+#else
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_MPJACOBIAN(name) \
+    template class name<PHAL::AlbanyTraits::MPJacobian, PHAL::AlbanyTraits, RealType, RealType>; \
+    template class name<PHAL::AlbanyTraits::MPJacobian, PHAL::AlbanyTraits, MPFadType, MPFadType>; \
+    template class name<PHAL::AlbanyTraits::MPJacobian, PHAL::AlbanyTraits, RealType, MPFadType>;
+#endif
+
+#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_MPTANGENT(name) \
+  template class name<PHAL::AlbanyTraits::MPTangent, PHAL::AlbanyTraits, MPFadType, MPFadType>;
+#else
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_MPTANGENT(name) \
+  template class name<PHAL::AlbanyTraits::MPTangent, PHAL::AlbanyTraits, MPFadType, MPFadType>; \
+  template class name<PHAL::AlbanyTraits::MPTangent, PHAL::AlbanyTraits, RealType, MPFadType>; \
+  template class name<PHAL::AlbanyTraits::MPTangent, PHAL::AlbanyTraits, RealType, RealType>;
+#endif
+#endif
+
+#if defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_JACOBIAN(name) \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, FadType>;
+#else
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_JACOBIAN(name) \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, FadType, FadType>; \
+  template class name<PHAL::AlbanyTraits::Jacobian, PHAL::AlbanyTraits, RealType, FadType>;
+#endif
+
+
+#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_TANGENT(name) \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, TanFadType>;
+#else
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_TANGENT(name) \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType, RealType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, TanFadType, TanFadType>; \
+  template class name<PHAL::AlbanyTraits::Tangent, PHAL::AlbanyTraits, RealType, TanFadType>;
+#endif
+
+#if defined(ALBANY_MESH_DEPENDS_ON_PARAMETERS) || defined(ALBANY_MESH_DEPENDS_ON_SOLUTION)
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_DISTPARAMDERIV(name) \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType>;
+#else
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_DISTPARAMDERIV(name)                                                         \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType, RealType>; \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, TanFadType, TanFadType>; \
+  template class name<PHAL::AlbanyTraits::DistParamDeriv, PHAL::AlbanyTraits, RealType, TanFadType>;
+#endif
+
+
+
 #ifdef ALBANY_SG
 
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_SGRESIDUAL(name) \
@@ -451,6 +517,23 @@ namespace PHX {
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_JACOBIAN(name)         \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_TANGENT(name)          \
   PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_TWO_SCALAR_TYPES_DISTPARAMDERIV(name)
+#endif
+
+#ifdef ALBANY_ENSEMBLE
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES(name)            \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_RESIDUAL(name)         \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_JACOBIAN(name)         \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_TANGENT(name)          \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_DISTPARAMDERIV(name)   \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_MPRESIDUAL(name)       \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_MPJACOBIAN(name)       \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_MPTANGENT(name)
+#else
+#define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES(name)            \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_RESIDUAL(name)         \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_JACOBIAN(name)         \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_TANGENT(name)          \
+  PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_INPUT_OUTPUT_TYPES_DISTPARAMDERIV(name)
 #endif
 
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(name,...)                  \

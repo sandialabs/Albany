@@ -8,6 +8,10 @@
 #include "CTM_SolutionInfo.hpp"
 #include "linear_solver.hpp"
 
+#ifdef ALBANY_AMP
+#include "AMP/problems/PhaseProblem.hpp"
+#endif
+
 namespace CTM {
 
     static RCP<ParameterList> get_valid_params() {
@@ -91,8 +95,24 @@ namespace CTM {
 
         // create the problem objects
         auto dim = mesh_specs[0]->numDim;
-        t_problem = rcp(new ThermalProblem(temp_params, param_lib, dim, comm));
 
+        std::string& method = temp_params->get("Name", "Thermal");
+        if (method == "Thermal") {
+            t_problem = rcp(new ThermalProblem(temp_params, param_lib, dim, comm));
+        }
+#ifdef ALBANY_AMP
+        else if (method == "Phase3D") {
+            t_problem = rcp(new Albany::PhaseProblem(temp_params, param_lib, 3, comm));
+        }
+#endif
+        else {
+            TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                    std::endl <<
+                    "Error!  Unknown problem " << method <<
+                    "!" << std::endl << "Supplied parameter list is " <<
+                    std::endl << *temp_params);
+        }
+        
         temp_params->validateParameters(*(t_problem->getValidProblemParameters()), 0);
         t_problem->buildProblem(mesh_specs, t_state_mgr);
 
@@ -235,11 +255,11 @@ namespace CTM {
             while ((iter <= max_iter) && (!converged)) {
                 *out << "  " << iter << " newton iteration" << std::endl;
                 // compute residual
-                t_application->computeGlobalResidualT(t_current, v_t.get(),
+                t_application->computeGlobalResidualT(t_current, t_old, v_t.get(),
                         xdotdot_t.get(), *u_t, *r_t);
                 // compute Jacobian
                 t_application->computeGlobalJacobianT(alpha, beta, omega,
-                        t_current, v_t.get(), xdotdot_t.get(), *u_t, r_t.get(), *J_t);
+                        t_current, t_old, v_t.get(), xdotdot_t.get(), *u_t, r_t.get(), *J_t);
                 // scale residual
                 r_t->scale(-1.0);
                 //
@@ -250,7 +270,7 @@ namespace CTM {
                 u_t->update(1.0, *du_t, 1.0);
                 v_t->update(alpha, *u_t, -alpha, *u_v_t, 0.0);
                 // compute residual
-                t_application->computeGlobalResidualT(t_current, v_t.get(),
+                t_application->computeGlobalResidualT(t_current, t_old, v_t.get(),
                         xdotdot_t.get(), *u_t, *r_t);
                 // compute norm
                 norm = r_t->norm2();
@@ -264,7 +284,7 @@ namespace CTM {
             // predictor
             u_v_m->assign(*u_m);
             // update thermal states
-            t_application->evaluateStateFieldManagerT(t_current, *(t_sol_info->getOwnedMV()));
+            t_application->evaluateStateFieldManagerT(t_current, t_old, *(t_sol_info->getOwnedMV()));
             //
             t_state_mgr.updateStates();
             apf_t_disc->writeSolutionToMeshDatabaseT(*(t_sol_info->getGhostMV()->getVector(0)), t_current, true);
@@ -275,11 +295,11 @@ namespace CTM {
             while ((iter <= max_iter) && (!converged)) {
                 *out << "  " << iter << " newton iteration" << std::endl;
                 // compute residual
-                m_application->computeGlobalResidualT(t_current, v_m.get(),
+                m_application->computeGlobalResidualT(t_current, t_old, v_m.get(),
                         xdotdot_m.get(), *u_m, *r_m);
                 // compute Jacobian
                 m_application->computeGlobalJacobianT(alpha, beta, omega,
-                        t_current, v_m.get(), xdotdot_m.get(), *u_m, r_m.get(), *J_m);
+                        t_current, t_old, v_m.get(), xdotdot_m.get(), *u_m, r_m.get(), *J_m);
                 // scale residual
                 r_m->scale(-1.0);
                 //
@@ -289,7 +309,7 @@ namespace CTM {
                 // update solution
                 u_m->update(1.0, *du_m, 1.0);
                 // compute residual
-                m_application->computeGlobalResidualT(t_current, v_m.get(),
+                m_application->computeGlobalResidualT(t_current, t_old, v_m.get(),
                         xdotdot_m.get(), *u_m, *r_m);
                 // compute norm
                 norm = r_m->norm2();
@@ -298,7 +318,7 @@ namespace CTM {
                 iter++;
                 // 
             } // end newton loop
-            m_application->evaluateStateFieldManagerT(t_current, *(m_sol_info->getOwnedMV()));
+            m_application->evaluateStateFieldManagerT(t_current, t_old, *(m_sol_info->getOwnedMV()));
             //
             m_state_mgr.updateStates();
             apf_m_disc->writeSolutionT(*(m_sol_info->getGhostMV()->getVector(0)), t_current, true);

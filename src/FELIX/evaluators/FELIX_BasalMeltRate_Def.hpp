@@ -59,6 +59,8 @@ namespace FELIX
     g = physics_list->get("Gravity Acceleration", 9.8);
     alpha_om = physics_list->get("Omega exponent alpha", 2.0);
 
+    beta_p = physics_list->get<double>("Clausius-Clapeyron coefficient");
+
     a = physics_list->get("Diffusivity homotopy exponent", -9.0);
   }
 
@@ -116,8 +118,12 @@ namespace FELIX
 
           phiExp = pow(phi(cell,side,node),alpha_om);
 
-          basalMeltRate(cell,side,node) = - scyr*( ((1 - scale)*( basalHeat + geoFluxHeat(cell,side,node) + 1e-3* k_i * basal_dTdz(cell,side,node) ) / ((1 - rho_w/rho_i*phi(cell,side,node))*L*rho_w)) +
-              k_0 * (rho_w - rho_i) * g / eta_w * phiExp );
+          double dTdz_melting = beta_p * rho_i * g;
+
+      //    basalMeltRate(cell,side,node) = - scyr*( (1 - scale)*( basalHeat + geoFluxHeat(cell,side,node) + 1e-3* k_i * dTdz_melting ) / ((1 - rho_w/rho_i*phi(cell,side,node))*L*rho_w) +
+      //        k_0 * (rho_w - rho_i) * g / eta_w * phiExp );
+          basalMeltRate(cell,side,node) = - scyr*( ( basalHeat + geoFluxHeat(cell,side,node) + 1e-3* k_i * basal_dTdz(cell,side,node) ) / ((1 - rho_w/rho_i*phi(cell,side,node))*L*rho_w) +
+             k_0 * (rho_w - rho_i) * g / eta_w * phiExp );
         }
       }
     }

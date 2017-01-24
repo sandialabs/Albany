@@ -3,7 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include <Intrepid2_MiniTensor.h>
+#include <MiniTensor.h>
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -78,20 +78,20 @@ template<typename EvalT, typename Traits>
 void SurfaceVectorJump<EvalT, Traits>::evaluateFields(
     typename Traits::EvalData workset)
 {
-  Intrepid2::Vector<ScalarT>
+  minitensor::Vector<ScalarT>
   vecA(0, 0, 0), vecB(0, 0, 0), vecJump(0, 0, 0);
 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int pt = 0; pt < num_qps_; ++pt) {
-      vecA.fill(Intrepid2::ZEROS);
-      vecB.fill(Intrepid2::ZEROS);
+      vecA.fill(minitensor::ZEROS);
+      vecB.fill(minitensor::ZEROS);
       for (int node = 0; node < num_plane_nodes_; ++node) {
         int topNode = node + num_plane_nodes_;
-        vecA += Intrepid2::Vector<ScalarT>(
+        vecA += minitensor::Vector<ScalarT>(
             ref_values_(node, pt) * vector_(cell, node, 0),
             ref_values_(node, pt) * vector_(cell, node, 1),
             ref_values_(node, pt) * vector_(cell, node, 2));
-        vecB += Intrepid2::Vector<ScalarT>(
+        vecB += minitensor::Vector<ScalarT>(
             ref_values_(node, pt) * vector_(cell, topNode, 0),
             ref_values_(node, pt) * vector_(cell, topNode, 1),
             ref_values_(node, pt) * vector_(cell, topNode, 2));

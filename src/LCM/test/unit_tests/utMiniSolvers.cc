@@ -48,19 +48,19 @@ TEST(AlbanyResidual, NewtonBanana)
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   constexpr
-  Intrepid2::Index
+  minitensor::Index
   DIM{2};
 
-  using MIN = Intrepid2::Minimizer<ValueT, DIM>;
+  using MIN = minitensor::Minimizer<ValueT, DIM>;
   using FN = LCM::Banana<ValueT>;
-  using STEP = Intrepid2::StepBase<FN, ValueT, DIM>;
+  using STEP = minitensor::StepBase<FN, ValueT, DIM>;
 
   MIN
   minimizer;
 
   std::unique_ptr<STEP>
   pstep =
-      Intrepid2::stepFactory<FN, ValueT, DIM>(Intrepid2::StepType::NEWTON);
+      minitensor::stepFactory<FN, ValueT, DIM>(minitensor::StepType::NEWTON);
 
   assert(pstep->name() != nullptr);
 
@@ -70,7 +70,7 @@ TEST(AlbanyResidual, NewtonBanana)
   FN
   banana;
 
-  Intrepid2::Vector<ScalarT, DIM>
+  minitensor::Vector<ScalarT, DIM>
   x;
 
   x(0) = 0.0;
@@ -104,12 +104,12 @@ TEST(AlbanyJacobian, NewtonBanana)
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   constexpr
-  Intrepid2::Index
+  minitensor::Index
   DIM{2};
 
-  using MIN = Intrepid2::Minimizer<ValueT, DIM>;
+  using MIN = minitensor::Minimizer<ValueT, DIM>;
   using FN = LCM::Banana<ValueT>;
-  using STEP = Intrepid2::NewtonStep<FN, ValueT, DIM>;
+  using STEP = minitensor::NewtonStep<FN, ValueT, DIM>;
 
   MIN
   minimizer;
@@ -120,7 +120,7 @@ TEST(AlbanyJacobian, NewtonBanana)
   FN
   banana;
 
-  Intrepid2::Vector<ScalarT, DIM>
+  minitensor::Vector<ScalarT, DIM>
   x;
 
   x(0) = 0.0;

@@ -23,7 +23,8 @@
 Albany::ModelEvaluatorT::ModelEvaluatorT(
     const Teuchos::RCP<Albany::Application>& app_,
     const Teuchos::RCP<Teuchos::ParameterList>& appParams)
-: app(app_), supports_xdot(false), supports_xdotdot(false)
+: app(app_), supports_xdot(false), supports_xdotdot(false),
+  supplies_prec(app_->suppliesPreconditioner())
 {
 
   Teuchos::RCP<Teuchos::FancyOStream> out =
@@ -50,8 +51,7 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
   Teuchos::ParameterList& responseParams =
     problemParams.sublist("Response Functions");
 
-  int num_response_vecs =
-     responseParams.get("Number of Response Vectors", 0);
+  int num_response_vecs = app->getNumResponses(); 
   bool using_old_response_list = false;
   if (responseParams.isType<int>("Number")) {
     int numParameters = responseParams.get<int>("Number");
@@ -282,9 +282,13 @@ Albany::ModelEvaluatorT::get_p_space(int l) const
   Teuchos::RCP<const Tpetra_Map> map;
   if (l < num_param_vecs)
     map = tpetra_param_map[l];
-  //IK, 7/1/14: commenting this out for now
-  //map = distParamLib->get(dist_param_names[l-num_param_vecs])->map();
-  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > tpetra_param_space = Thyra::createVectorSpace<ST>(map);
+  else 
+    map = distParamLib->get(dist_param_names[l-num_param_vecs])->map();
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > tpetra_param_space;
+  if (map != Teuchos::null) 
+    tpetra_param_space = Thyra::createVectorSpace<ST>(map);
+  else
+    tpetra_param_space = Teuchos::null; 
   return tpetra_param_space;
 }
 
@@ -354,10 +358,28 @@ Albany::ModelEvaluatorT::create_W_op() const
 Teuchos::RCP<Thyra::PreconditionerBase<ST> >
 Albany::ModelEvaluatorT::create_W_prec() const
 {
+  Teuchos::RCP<Thyra::DefaultPreconditioner<ST> > W_prec = Teuchos::rcp(new Thyra::DefaultPreconditioner<ST>);
+  Teuchos::RCP<Tpetra_Operator> precOp = app->getPreconditionerT();
+  Teuchos::RCP<Thyra::LinearOpBase<ST>> precOp_thyra = Thyra::createLinearOp(precOp);
+
+  Teuchos::RCP<Tpetra_Operator> Extra_W_crs_op =
+    Teuchos::nonnull(create_W()) ?
+    ConverterT::getTpetraOperator(create_W()) :
+    Teuchos::null;
+
+  Extra_W_crs = Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(Extra_W_crs_op, true);
+
+  W_prec->initializeRight(precOp_thyra); 
+  return W_prec; 
+
+  // Teko prec needs space for Jacobian as well
+  //Extra_W_crs = Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(create_W(), true);
+
+
   // TODO: Analog of EpetraExt::ModelEvaluator::Preconditioner does not exist in Thyra yet!
-  const bool W_prec_not_supported = true;
+  /*const bool W_prec_not_supported = true;
   TEUCHOS_TEST_FOR_EXCEPT(W_prec_not_supported);
-  return Teuchos::null;
+  return Teuchos::null;*/
 }
 
 Teuchos::RCP<Thyra::LinearOpBase<ST> >
@@ -457,6 +479,8 @@ Albany::ModelEvaluatorT::createOutArgsImpl() const
   result.set_Np_Ng(num_param_vecs+num_dist_param_vecs, n_g);
 
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f, true);
+
+  if (supplies_prec) result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_prec, true);
 
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_op, true);
   result.set_W_properties(
@@ -592,6 +616,13 @@ Albany::ModelEvaluatorT::evalModelImpl(
     Teuchos::nonnull(outArgsT.get_W_op()) ?
     ConverterT::getTpetraOperator(outArgsT.get_W_op()) :
     Teuchos::null;
+  
+  // Get preconditioner operator, if requested
+  Teuchos::RCP<Tpetra_Operator> WPrec_out;
+  if (outArgsT.supports(Thyra::ModelEvaluatorBase::OUT_ARG_W_prec)) {
+    //IKT, 12/19/16: need to verify that this is correct  
+    Teuchos::RCP<Tpetra_Operator> WPrec_out = app->getPreconditionerT();
+  }
 
 #ifdef WRITE_MASS_MATRIX_TO_MM_FILE
   //IK, 4/24/15: adding object to hold mass matrix to be written to matrix market file
@@ -643,6 +674,14 @@ Albany::ModelEvaluatorT::evalModelImpl(
     Tpetra_MatrixMarket_Writer::writeMapFile("colmap.mm", *Mass_crs->getColMap());
 #endif
   }
+  if (Teuchos::nonnull(WPrec_out)) {
+    app->computeGlobalJacobianT(alpha, beta, omega, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
+                               sacado_param_vec, fT_out.get(), *Extra_W_crs);
+    f_already_computed=true;
+
+    app->computeGlobalPreconditionerT(Extra_W_crs, WPrec_out);
+  }
+
 
   // df/dp
   for (int l = 0; l < outArgsT.Np(); ++l) {

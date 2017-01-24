@@ -1,8 +1,8 @@
 <ParameterList>
-<ParameterList name="Debug Output">
-         <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
-    <Parameter name="Write Solution to MatrixMarket" type="bool" value="true"/>
-  </ParameterList>
+<!--ParameterList name="Debug Output">
+  <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
+  <Parameter name="Write Solution to MatrixMarket" type="bool" value="true"/>
+</ParameterList-->
 <ParameterList name="Problem">
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
@@ -13,7 +13,7 @@
     <Parameter name="Needs Basal Friction" type="bool" value="true"/>
     <Parameter name="Constant Geothermal Flux" type="bool" value="false"/> 
 <ParameterList name="Dirichlet BCs">
-        <Parameter name="DBC on NS top for DOF Enth prescribe Field" type="string" value="surface_air_enthalpy"/>
+        <Parameter name="DBC on NS top for DOF Enth prescribe Field" type="string" value="surface_enthalpy"/>
 </ParameterList>
     <ParameterList name="FELIX Viscosity">
       <Parameter name="Extract Strain Rate Sq" type="bool" value="true"/>
@@ -91,10 +91,10 @@
 </ParameterList>
 <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="2"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{21.526118855, 7.28622636011}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{20.7934988885, 7.28622636011}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-2"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.208812026834, 0.243439246662, 0.0545756230981}"/>
+    <!--Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.0, 0.0}"/-->
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="LOCA">

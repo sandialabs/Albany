@@ -8,7 +8,7 @@
 //
 // Factory returning a pointer to a hardening paremeter object
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 std::shared_ptr<CP::HardeningParameterBase<NumDimT, NumSlipT>>
 CP::hardeningParameterFactory(CP::HardeningLawType type_hardening_law)
 {
@@ -43,13 +43,13 @@ CP::hardeningParameterFactory(CP::HardeningLawType type_hardening_law)
   return HPUP(nullptr);
 }
 
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 CP::HardeningLawFactory<NumDimT, NumSlipT>::HardeningLawFactory()
 {
 
 }
 
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 template<typename ArgT>
 utility::StaticPointer<CP::HardeningLawBase<NumDimT, NumSlipT, ArgT>>
 CP::HardeningLawFactory<NumDimT, NumSlipT>::createHardeningLaw(HardeningLawType type_hardening_law) const
@@ -85,7 +85,7 @@ CP::HardeningLawFactory<NumDimT, NumSlipT>::createHardeningLaw(HardeningLawType 
 //
 // Linear hardening with recovery
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 void
 CP::LinearMinusRecoveryHardeningParameters<NumDimT, NumSlipT>::
 createLatentMatrix(
@@ -93,7 +93,7 @@ createLatentMatrix(
   std::vector<CP::SlipSystem<NumDimT>> const & slip_systems)
 {
   slip_family.latent_matrix_.set_dimension(slip_family.num_slip_sys_);
-  slip_family.latent_matrix_.fill(Intrepid2::ONES);
+  slip_family.latent_matrix_.fill(minitensor::ONES);
 
   return;
 }
@@ -101,27 +101,27 @@ createLatentMatrix(
 //
 // 
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename ArgT>
 void
 CP::LinearMinusRecoveryHardeningLaw<NumDimT, NumSlipT, ArgT>::
 harden(
   CP::SlipFamily<NumDimT, NumSlipT> const & slip_family, 
   std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
   RealType dt,
-  Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-  Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
-  Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
-  Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance)
+  minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
+  minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
+  minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
+  minitensor::Vector<ArgT, NumSlipT> & slip_resistance)
 {
   using Params = LinearMinusRecoveryHardeningParameters<NumDimT, NumSlipT>;
 
-  Intrepid2::Index const
+  minitensor::Index const
   num_slip_sys = slip_family.num_slip_sys_;
 
-  Intrepid2::Vector<ArgT, NumSlipT>
+  minitensor::Vector<ArgT, NumSlipT>
   rate_slip_abs(num_slip_sys);
 
-  for (Intrepid2::Index ss_index(0); ss_index < num_slip_sys; ++ss_index)
+  for (minitensor::Index ss_index(0); ss_index < num_slip_sys; ++ss_index)
   {
     auto const
     ss_index_global = slip_family.slip_system_indices_[ss_index];
@@ -129,7 +129,7 @@ harden(
     rate_slip_abs[ss_index] = std::fabs(rate_slip[ss_index_global]);
   }
 
-  Intrepid2::Vector<ArgT, NumSlipT> const 
+  minitensor::Vector<ArgT, NumSlipT> const 
   driver_hardening = slip_family.latent_matrix_ * rate_slip_abs;
 
   auto const &
@@ -185,7 +185,7 @@ harden(
 //
 // Saturation hardening
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 void
 CP::SaturationHardeningParameters<NumDimT, NumSlipT>::
 createLatentMatrix(
@@ -193,7 +193,7 @@ createLatentMatrix(
   std::vector<CP::SlipSystem<NumDimT>> const & slip_systems)
 {
   slip_family.latent_matrix_.set_dimension(slip_family.num_slip_sys_);
-  slip_family.latent_matrix_.fill(Intrepid2::ZEROS);
+  slip_family.latent_matrix_.fill(minitensor::ZEROS);
 
   for (int ss_index_i(0); ss_index_i < slip_family.num_slip_sys_; ++ss_index_i) {
 
@@ -206,9 +206,9 @@ createLatentMatrix(
       slip_system_j = slip_systems[slip_family.slip_system_indices_[ss_index_j]];
 
       slip_family.latent_matrix_(ss_index_i, ss_index_j) = 
-        std::fabs(Intrepid2::dotdot(
-          Intrepid2::sym(slip_system_i.projector_),
-          Intrepid2::sym(slip_system_j.projector_)));
+        std::fabs(minitensor::dotdot(
+          minitensor::sym(slip_system_i.projector_),
+          minitensor::sym(slip_system_j.projector_)));
     }
   }
 
@@ -218,24 +218,24 @@ createLatentMatrix(
 //
 // 
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename ArgT>
 void
 CP::SaturationHardeningLaw<NumDimT, NumSlipT, ArgT>::
 harden(
   CP::SlipFamily<NumDimT, NumSlipT> const & slip_family, 
   std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
   RealType dt,
-  Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-  Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
-  Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
-  Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance)
+  minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
+  minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
+  minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
+  minitensor::Vector<ArgT, NumSlipT> & slip_resistance)
 {
   using Params = SaturationHardeningParameters<NumDimT, NumSlipT>;
 
-  Intrepid2::Index const
+  minitensor::Index const
   num_slip_sys = slip_family.num_slip_sys_;
 
-  Intrepid2::Vector<ArgT, NumSlipT>
+  minitensor::Vector<ArgT, NumSlipT>
   rate_slip_abs(num_slip_sys);
 
   for (int ss_index(0); ss_index < num_slip_sys; ++ss_index)
@@ -249,11 +249,11 @@ harden(
     rate_slip_abs(ss_index) = std::fabs(slip_rate);
   }
 
-  Intrepid2::Vector<ArgT, NumSlipT> const 
-  driver_hardening = slip_family.latent_matrix_ * rate_slip_abs;
+  minitensor::Vector<ArgT, NumSlipT> const 
+  driver_hardening = 2.0 * slip_family.latent_matrix_ * rate_slip_abs;
 
   ArgT
-  effective_slip_rate{Intrepid2::norm_1(rate_slip)};
+  effective_slip_rate{minitensor::norm_1(rate_slip_abs)};
 
   auto const
   phardening_params = slip_family.phardening_parameters_;
@@ -289,12 +289,19 @@ harden(
         effective_slip_rate / rate_slip_reference, exponent_saturation);
     }
 
-    state_hardening_np1[ss_index_global] = state_hardening_n[ss_index_global] +
-      dt * rate_hardening * driver_hardening[ss_index] *
-      (stress_saturation - state_hardening_n[ss_index_global]) / 
-      (stress_saturation - resistance_slip_initial);
-
     slip_resistance[ss_index_global] = state_hardening_np1[ss_index_global];
+
+    // if (driver_hardening[ss_index] !=0 )
+    // {
+      state_hardening_np1[ss_index_global] = state_hardening_n[ss_index_global] +
+        dt * rate_hardening * driver_hardening[ss_index] *
+        (stress_saturation - state_hardening_np1[ss_index_global]) / 
+        (stress_saturation - resistance_slip_initial);
+    // }
+    // else
+    // {
+    //   state_hardening_np1[ss_index_global] = state_hardening_n[ss_index_global];
+    // }
   } 
 
   return;
@@ -303,25 +310,25 @@ harden(
 //
 // Dislocation-density based hardening
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 void
 CP::DislocationDensityHardeningParameters<NumDimT, NumSlipT>::
 createLatentMatrix(
   CP::SlipFamily<NumDimT, NumSlipT> & slip_family, 
   std::vector<CP::SlipSystem<NumDimT>> const & slip_systems)
 {
-  Intrepid2::Index const
+  minitensor::Index const
   num_dim = slip_systems[0].s_.get_dimension();
 
   slip_family.latent_matrix_.set_dimension(slip_family.num_slip_sys_);
-  slip_family.latent_matrix_.fill(Intrepid2::ZEROS);
+  slip_family.latent_matrix_.fill(minitensor::ZEROS);
 
   for (int ss_index_i(0); ss_index_i < slip_family.num_slip_sys_; ++ss_index_i)
   {
     auto const &
     slip_system_i = slip_systems[slip_family.slip_system_indices_[ss_index_i]];
 
-    Intrepid2::Vector<RealType, CP::MAX_DIM>
+    minitensor::Vector<RealType, CP::MAX_DIM>
     normal_i(num_dim);
 
     normal_i = slip_system_i.n_;
@@ -331,17 +338,17 @@ createLatentMatrix(
       auto const &
       slip_system_j = slip_systems[slip_family.slip_system_indices_[ss_index_j]];
 
-      Intrepid2::Vector<RealType, CP::MAX_DIM>
+      minitensor::Vector<RealType, CP::MAX_DIM>
       direction_j = slip_system_j.s_;
 
-      Intrepid2::Vector<RealType, CP::MAX_DIM>
+      minitensor::Vector<RealType, CP::MAX_DIM>
       normal_j = slip_system_j.n_;
 
-      Intrepid2::Vector<RealType, CP::MAX_DIM>
-      transverse_j = Intrepid2::unit(Intrepid2::cross(normal_j, direction_j));
+      minitensor::Vector<RealType, CP::MAX_DIM>
+      transverse_j = minitensor::unit(minitensor::cross(normal_j, direction_j));
 
       slip_family.latent_matrix_(ss_index_i, ss_index_j) = 
-          std::abs(Intrepid2::dot(normal_i, transverse_j));
+          std::abs(minitensor::dot(normal_i, transverse_j));
     }
   }
 
@@ -351,30 +358,30 @@ createLatentMatrix(
 //
 // 
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename ArgT>
 void
 CP::DislocationDensityHardeningLaw<NumDimT, NumSlipT, ArgT>::
 harden(
   CP::SlipFamily<NumDimT, NumSlipT> const & slip_family, 
   std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
   RealType dt,
-  Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-  Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
-  Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
-  Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance)
+  minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
+  minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
+  minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
+  minitensor::Vector<ArgT, NumSlipT> & slip_resistance)
 {
   using Params = DislocationDensityHardeningParameters<NumDimT, NumSlipT>;
 
-  Intrepid2::Index const
+  minitensor::Index const
   num_slip_sys = slip_family.num_slip_sys_;
 
   //
   // Compute the effective dislocation density at step n
   //
-  Intrepid2::Vector<RealType, NumSlipT>
-  densities_forest = slip_family.latent_matrix_ * state_hardening_n;
+  minitensor::Vector<ArgT, NumSlipT>
+  densities_forest = slip_family.latent_matrix_ * state_hardening_np1;
 
-  Intrepid2::Tensor<RealType, NumSlipT>
+  minitensor::Tensor<RealType, NumSlipT>
   aux_matrix(num_slip_sys);
 
   for (int ss_index_i(0); ss_index_i < num_slip_sys; ++ss_index_i)
@@ -385,20 +392,6 @@ harden(
           std::sqrt(1.0 - std::pow(slip_family.latent_matrix_(ss_index_i, ss_index_j), 2));
     }
   }
-
-  Intrepid2::Vector<RealType, NumSlipT>
-  state_hardening(num_slip_sys);
-
-  for (int ss_index(0); ss_index < num_slip_sys; ++ss_index)
-  {
-    auto const
-    ss_index_global = slip_family.slip_system_indices_[ss_index];
-  
-    state_hardening[ss_index] = state_hardening_n[ss_index_global];
-  }
-
-  Intrepid2::Vector<RealType, NumSlipT>
-  densities_parallel = aux_matrix * state_hardening;
 
   //
   // Update dislocation densities
@@ -426,34 +419,44 @@ harden(
 
   for (int ss_index(0); ss_index < num_slip_sys; ++ss_index)
   {
-    RealType const
-    generation = factor_generation * std::sqrt(densities_forest[ss_index]);
-
-    RealType const
-    annihilation = factor_annihilation * state_hardening[ss_index];
-
     auto const
     ss_index_global = slip_family.slip_system_indices_[ss_index];
 
-    state_hardening_np1[ss_index_global] = state_hardening[ss_index];
+    ArgT const
+    generation = factor_generation * std::sqrt(densities_forest[ss_index]);
 
-    if (generation > annihilation)
-    {
-    state_hardening_np1[ss_index_global] += 
+    ArgT const
+    annihilation = factor_annihilation * state_hardening_np1[ss_index_global];
+
+    // if (generation > annihilation)
+    // {
+    state_hardening_np1[ss_index_global] = state_hardening_n[ss_index_global] + 
         dt * (generation - annihilation) * std::abs(rate_slip[ss_index_global]);
-    }
+    // }
+    
+  }
+  
+  minitensor::Vector<ArgT, NumSlipT> const
+  densities_parallel = aux_matrix * state_hardening_np1;
+    
+  for (int ss_index(0); ss_index < num_slip_sys; ++ss_index)
+  {
+
+    auto const
+    ss_index_global = slip_family.slip_system_indices_[ss_index];    
 
     // Compute the slip resistance
     slip_resistance[ss_index_global] = 
         factor_geometry_dislocation * modulus_shear * magnitude_burgers *
         std::sqrt(densities_parallel[ss_index]);
   }
+  
 }
 
 //
 // No hardening
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 void
 CP::NoHardeningParameters<NumDimT, NumSlipT>::
 createLatentMatrix(
@@ -461,7 +464,7 @@ createLatentMatrix(
   std::vector<CP::SlipSystem<NumDimT>> const & slip_systems)
 {
   slip_family.latent_matrix_.set_dimension(slip_family.num_slip_sys_);
-  slip_family.latent_matrix_.fill(Intrepid2::ZEROS);
+  slip_family.latent_matrix_.fill(minitensor::ZEROS);
 
   return;
 }
@@ -469,19 +472,19 @@ createLatentMatrix(
 //
 // 
 //
-template<Intrepid2::Index NumDimT, Intrepid2::Index NumSlipT, typename ArgT>
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename ArgT>
 void
 CP::NoHardeningLaw<NumDimT, NumSlipT, ArgT>::
 harden(
   CP::SlipFamily<NumDimT, NumSlipT> const & slip_family, 
   std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
   RealType dt,
-  Intrepid2::Vector<ArgT, NumSlipT> const & rate_slip,
-  Intrepid2::Vector<RealType, NumSlipT> const & state_hardening_n,
-  Intrepid2::Vector<ArgT, NumSlipT> & state_hardening_np1,
-  Intrepid2::Vector<ArgT, NumSlipT> & slip_resistance)
+  minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
+  minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
+  minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
+  minitensor::Vector<ArgT, NumSlipT> & slip_resistance)
 {  
-  Intrepid2::Index const
+  minitensor::Index const
   num_slip_sys = slip_family.num_slip_sys_;
 
   auto const

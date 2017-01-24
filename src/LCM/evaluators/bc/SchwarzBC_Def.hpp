@@ -7,7 +7,7 @@
 #include "Albany_Application.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
 #include "Albany_STKDiscretization.hpp"
-#include "Intrepid2_MiniTensor.h"
+#include "MiniTensor.h"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
@@ -176,7 +176,7 @@ computeBCs(
 
   auto const
   coupled_element_type =
-      Intrepid2::find_type(coupled_dimension, coupled_vertex_count);
+      minitensor::find_type(coupled_dimension, coupled_vertex_count);
 
   std::string const &
   coupled_nodeset_name = this_app.getNodesetName(coupled_app_index);
@@ -188,10 +188,10 @@ computeBCs(
   auto const &
   ws_elem_2_node_id = coupled_stk_disc->getWsElNodeID();
 
-  std::vector<Intrepid2::Vector<double>>
+  std::vector<minitensor::Vector<double>>
   coupled_element_vertices(coupled_vertex_count);
 
-  std::vector<Intrepid2::Vector<double>>
+  std::vector<minitensor::Vector<double>>
   coupled_element_solution(coupled_vertex_count);
 
   for (auto i = 0; i < coupled_vertex_count; ++i) {
@@ -208,7 +208,7 @@ computeBCs(
   double * const
   coord = ns_coord[ns_node];
 
-  Intrepid2::Vector<double>
+  minitensor::Vector<double>
   point;
 
   point.set_dimension(coupled_dimension);
@@ -301,13 +301,13 @@ computeBCs(
         exit(1);
         break;
 
-      case Intrepid2::ELEMENT::TETRAHEDRAL:
+      case minitensor::ELEMENT::TETRAHEDRAL:
         parametric_dimension = 3;
 
         basis = Teuchos::rcp(
             new Intrepid2::Basis_HGRAD_TET_C1_FEM<PHX::Device>());
 
-        in_element = Intrepid2::in_tetrahedron(
+        in_element = minitensor::in_tetrahedron(
             point,
             coupled_element_vertices[0],
             coupled_element_vertices[1],
@@ -316,13 +316,13 @@ computeBCs(
             tolerance);
         break;
 
-      case Intrepid2::ELEMENT::HEXAHEDRAL:
+      case minitensor::ELEMENT::HEXAHEDRAL:
         parametric_dimension = 3;
 
         basis = Teuchos::rcp(
             new Intrepid2::Basis_HGRAD_HEX_C1_FEM<PHX::Device>());
 
-        in_element = Intrepid2::in_hexahedron(
+        in_element = minitensor::in_hexahedron(
             point,
             coupled_element_vertices[0],
             coupled_element_vertices[1],
@@ -424,8 +424,8 @@ computeBCs(
 
   // Evaluate solution at parametric point using values of shape
   // functions just computed.
-  Intrepid2::Vector<double>
-  value(coupled_dimension, Intrepid2::ZEROS);
+  minitensor::Vector<double>
+  value(coupled_dimension, minitensor::ZEROS);
 
 #if defined(DEBUG_LCM_SCHWARZ)
   std::cout << "NODE   BASIS                     VALUE\n";

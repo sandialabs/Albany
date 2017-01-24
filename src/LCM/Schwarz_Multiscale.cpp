@@ -11,6 +11,7 @@
 #include "Schwarz_Multiscale.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
+#include "NOXSolverPrePostOperator.h"
 
 //uncomment the following to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET
@@ -81,18 +82,14 @@ SchwarzMultiscale(
     mf_prec_type_ = NONE; 
   else if (mf_prec == "Jacobi") 
     mf_prec_type_ = JACOBI;  
-  else if (mf_prec == "Jacobi Local") 
-    mf_prec_type_ = JACOBI_LOCAL;  
-  else if (mf_prec == "Abs Row Sum") 
+  else if (mf_prec == "AbsRowSum") 
     mf_prec_type_ = ABS_ROW_SUM;  
-  else if (mf_prec == "Abs Row Sum Local") 
-    mf_prec_type_ = ABS_ROW_SUM_LOCAL;  
   else if (mf_prec == "Identity") 
     mf_prec_type_ = ID;  
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
 		       "Unknown Matrix-Free Preconditioner type " << mf_prec 
-                       << "!  Valid options are None and Jacobi. \n");
+                       << "!  Valid options are None, Identity, AbsRowSum, and Jacobi. \n");
   //If using matrix-free, get NOX sublist and set "Preconditioner Type" to "None" regardless 
   //of what is specified in the input file.  Currently preconditioners for matrix-free 
   //are implemented in this ModelEvaluator, which requires the type to be "None".
@@ -119,6 +116,46 @@ SchwarzMultiscale(
     }
   }
 
+  // Create a NOX status test and associated machinery for cutting the global time step
+  // when the CrystalPlasticity constitutive model's state update routine fails
+  Teuchos::RCP<NOX::StatusTest::Generic> nox_status_test = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag);
+  Teuchos::RCP<NOX::Abstract::PrePostOperator> pre_post_operator = Teuchos::rcp(new NOXSolverPrePostOperator);
+  Teuchos::RCP<NOXSolverPrePostOperator> nox_solver_pre_post_operator =
+    Teuchos::rcp_dynamic_cast<NOXSolverPrePostOperator>(pre_post_operator);
+  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> statusTest =
+    Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(nox_status_test);
+
+  // Acquire the NOX "Solver Options" and "Status Tests" parameter lists
+  Teuchos::RCP<Teuchos::ParameterList> solverOptionsParameterList;
+  Teuchos::RCP<Teuchos::ParameterList> statusTestsParameterList;
+  if(app_params->isSublist("Piro")){
+    if(app_params->sublist("Piro").isSublist("NOX")){
+      if(app_params->sublist("Piro").sublist("NOX").isSublist("Solver Options")){
+	solverOptionsParameterList = Teuchos::rcpFromRef( app_params->sublist("Piro").sublist("NOX").sublist("Solver Options") );
+      }
+      if(app_params->sublist("Piro").sublist("NOX").isSublist("Status Tests")){
+	statusTestsParameterList = Teuchos::rcpFromRef( app_params->sublist("Piro").sublist("NOX").sublist("Status Tests") );
+      }
+    }
+  }
+
+  if(!solverOptionsParameterList.is_null() && !statusTestsParameterList.is_null()){
+
+    // Add the model evaulator flag as a status test.
+    Teuchos::ParameterList originalStatusTestParameterList = *statusTestsParameterList;
+    Teuchos::ParameterList newStatusTestParameterList;
+    newStatusTestParameterList.set<std::string>("Test Type", "Combo");
+    newStatusTestParameterList.set<std::string>("Combo Type", "OR");
+    newStatusTestParameterList.set<int>("Number of Tests", 2);
+    newStatusTestParameterList.sublist("Test 0");
+    newStatusTestParameterList.sublist("Test 0").set("Test Type", "User Defined");
+    newStatusTestParameterList.sublist("Test 0").set("User Status Test", nox_status_test);
+    newStatusTestParameterList.sublist("Test 1") = originalStatusTestParameterList;
+    *statusTestsParameterList = newStatusTestParameterList;
+
+    nox_solver_pre_post_operator->setStatusTest(statusTest);
+    solverOptionsParameterList->set("User Defined Pre/Post Operator", pre_post_operator);
+  }
 
   //------------End getting of Preconditioner type-------------------------------------------------------------
 
@@ -265,9 +302,6 @@ SchwarzMultiscale(
     model_app_params_[m] = Teuchos::rcp(
         new Teuchos::ParameterList(solver_factory.getParameters()));
 
-    Teuchos::ParameterList &
-    app_params_m = *model_app_params_[m];
-
     Teuchos::RCP<Teuchos::ParameterList>
     problem_params_m = Teuchos::sublist(model_app_params_[m], "Problem");
 
@@ -341,13 +375,16 @@ SchwarzMultiscale(
     // BC evaluators are built.
 
     // Add application array for later use in Schwarz BC.
-    app_params_m.set("Application Array", apps_);
+    model_app_params_[m]->set("Application Array", apps_);
 
     // See application index for use with Schwarz BC.
-    app_params_m.set("Application Index", m);
+    model_app_params_[m]->set("Application Index", m);
 
     // App application name-index map for later use in Schwarz BC.
-    app_params_m.set("Application Name Index Map", app_name_index_map);
+    model_app_params_[m]->set("Application Name Index Map", app_name_index_map);
+
+    // Machinery for cutting the global time step from within the CrystalPlasticity constitutive model
+    model_app_params_[m]->sublist("Problem").set("Constitutive Model NOX Status Test", nox_status_test);
 
     //create application for mth model
     apps_[m] = Teuchos::rcp(new Albany::Application(
@@ -375,6 +412,8 @@ SchwarzMultiscale(
         Teuchos::nonnull(jac_temp) ?
             Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(jac_temp, true) :
             Teuchos::null;
+    if (precs_[m]->isFillActive()) 
+      precs_[m]->fillComplete();
   }
 
   //Now get maps, InArgs, OutArgs for each model.
@@ -548,19 +587,19 @@ LCM::SchwarzMultiscale::get_g_space(int l) const
 {
   assert(0 <= l && l < num_responses_total_);
 
-  std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
+  Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
   vs_array;
 
   // create product space for lth response by concatenating lth response
   // from all the models.
   for (auto m = 0; m < num_models_; ++m) {
-    vs_array.push_back(
-          Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(
-              apps_[m]->getResponse(l)->responseMapT()));
+    vs_array.push_back(models_[m]->get_g_space(l));
   }
 
-  return Thyra::productVectorSpace<ST>(vs_array);
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
+  Z = Thyra::productVectorSpace<ST>(vs_array);
 
+  return Z;
 }
 
 Teuchos::RCP<const Teuchos::Array<std::string>>
@@ -602,6 +641,10 @@ LCM::SchwarzMultiscale::create_W_prec() const
   Teuchos::RCP<Thyra::DefaultPreconditioner<ST> > W_prec = Teuchos::rcp(new Thyra::DefaultPreconditioner<ST>);
   if (w_prec_supports_) {
     LCM::Schwarz_CoupledJacobian csJac(commT_);
+    for (auto m = 0; m<num_models_; m++) {
+      if (precs_[m]->isFillActive()) 
+        precs_[m]->fillComplete();
+    }
     Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = csJac.getThyraCoupledJacobian(precs_, apps_);
     W_prec->initializeRight(W_op);
     //IKT, 11/16/16: the following code is for Teko. 
@@ -950,23 +993,22 @@ evalModelImpl(
           apps_[m]->computeGlobalJacobianT(alpha, beta, omega, curr_time,
               x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
               sacado_param_vecs_[m], fTtemp.get(), *jacs_[m]);
-          //Extract diagonal froms jacs_[m] and invert to create precs_[m]  
+          //Get diagonal of jacs_[m]  
+          Teuchos::RCP<Tpetra_Vector> diag = Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap())); 
+          jacs_[m]->getLocalDiagCopy(*diag); 
+          //Take reciprocal of diagonal 
+          Teuchos::RCP<Tpetra_Vector> invdiag = Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap())); 
+          invdiag->reciprocal(*diag);
+          Teuchos::ArrayRCP<const ST> invdiag_constView = invdiag->get1dView(); 
+          //Zero out precs_[m] 
+          precs_[m]->resumeFill();
+          precs_[m]->scale(0.0);
+          //Create Jacobi preconditioner 
           for (auto i=0; i<jacs_[m]->getNodeNumRows(); ++i) {
-            std::size_t NumEntries = jacs_[m]->getNumEntriesInLocalRow(i);
-            Teuchos::Array<LO> Indices(NumEntries); 
-            Teuchos::Array<ST> Values(NumEntries); 
-            jacs_[m]->getLocalRowCopy(i, Indices(), Values(), NumEntries);
             GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
-            //Get diagonal value for row i from jacs_[m] 
-            ST diag = Values[i];
-            //Invert diagonal value if it's non-zero  
-            ST inv_diag = 1.0; 
-            if (diag != 0) 
-              inv_diag /= diag; 
-            //Populate precs_[m] using inverse of diagonal value 
             Teuchos::Array<ST> matrixEntriesT(1);
             Teuchos::Array<GO> matrixIndicesT(1);
-            matrixEntriesT[0] = inv_diag; 
+            matrixEntriesT[0] = invdiag_constView[i]; 
             matrixIndicesT[0] = global_row; 
             precs_[m]->replaceGlobalValues(global_row, matrixIndicesT(), matrixEntriesT());
           }
@@ -983,46 +1025,12 @@ evalModelImpl(
           apps_[m]->computeGlobalJacobianT(alpha, beta, omega, curr_time,
               x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
               sacado_param_vecs_[m], fTtemp.get(), *jacs_[m]);
-          //Extract ros froms jacs_[m], compute abs row sum and invert to create precs_[m]  
+          //Create vector to store absrowsum 
+          Teuchos::RCP<Tpetra_Vector> absrowsum = Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap())); 
+          absrowsum->putScalar(0.0); 
+          Teuchos::ArrayRCP<ST> absrowsum_nonconstView = absrowsum->get1dViewNonConst(); 
+          //Compute abs sum of each row and store in absrowsum vector 
           for (auto i=0; i<jacs_[m]->getNodeNumRows(); ++i) {
-            ST row_sum = 0.0; 
-            std::size_t NumEntries = jacs_[m]->getNumEntriesInLocalRow(i);
-            Teuchos::Array<LO> Indices(NumEntries); 
-            Teuchos::Array<ST> Values(NumEntries); 
-            //Get local row
-            jacs_[m]->getLocalRowCopy(i, Indices(), Values(), NumEntries);
-            GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
-            //Compute abs row rum 
-            for (auto j=0; j<NumEntries; j++) {
-              row_sum += abs(Values[j]); 
-            }
-            //Invert abs row sum 
-            ST inv_row_sum = 1.0; 
-            if (row_sum != 0) 
-              inv_row_sum /= row_sum; 
-            //Populate precs_[m] using inverse of abs row sum 
-            Teuchos::Array<ST> matrixEntriesT(1);
-            Teuchos::Array<GO> matrixIndicesT(1);
-            matrixEntriesT[0] = inv_row_sum; 
-            matrixIndicesT[0] = global_row; 
-            precs_[m]->replaceGlobalValues(global_row, matrixIndicesT(), matrixEntriesT());
-          }
-        } 
-        else if (mf_prec_type_ == ABS_ROW_SUM_LOCAL) {
-          //With matrix-free, W_op_outT is null, so computeJacobianT does not
-          //get called earlier.  We need to call it here to get the Jacobians.
-          //Create fTtemp vector, so that this call to computeGlobalJacobianT 
-          //doesn't overwrite the real residual.
-          Teuchos::RCP<Tpetra_Vector> fTtemp;
-          if (fT_out != Teuchos::null) {
-            fTtemp = Teuchos::rcp_dynamic_cast<ThyraVector>(fT_out->getNonconstVectorBlock(m), true)->getTpetraVector();
-          }
-          apps_[m]->computeGlobalJacobianT(alpha, beta, omega, curr_time,
-              x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
-              sacado_param_vecs_[m], fTtemp.get(), *jacs_[m]);
-          //Extract ros froms jacs_[m], compute abs row sum and invert to create precs_[m]  
-          for (auto i=0; i<jacs_[m]->getNodeNumRows(); ++i) {
-            ST row_sum = 0.0; 
             std::size_t NumEntries = jacs_[m]->getNumEntriesInLocalRow(i);
             Teuchos::Array<LO> Indices(NumEntries); 
             Teuchos::Array<ST> Values(NumEntries); 
@@ -1030,47 +1038,23 @@ evalModelImpl(
             jacs_[m]->getLocalRowCopy(i, Indices(), Values(), NumEntries);
             //Compute abs row rum 
             for (auto j=0; j<NumEntries; j++) 
-              row_sum += abs(Values[j]); 
-            //Invert abs row sum 
-            ST inv_row_sum = 1.0; 
-            if (row_sum != 0) 
-              inv_row_sum /= row_sum; 
-            //Populate precs_[m] using inverse of abs row sum 
-            Teuchos::Array<ST> matrixEntriesT(1);
-            Teuchos::Array<LO> matrixIndicesT(1);
-            matrixEntriesT[0] = inv_row_sum; 
-            matrixIndicesT[0] = i; 
-            precs_[m]->replaceLocalValues(i, matrixIndicesT(), matrixEntriesT());
+              absrowsum_nonconstView[i] += abs(Values[j]);
           }
-        } 
-        else if (mf_prec_type_ == JACOBI_LOCAL) {
-          //With matrix-free, W_op_outT is null, so computeJacobianT does not
-          //get called earlier.  We need to call it here to get the Jacobians.
-          //Create fTtemp vector, so that this call to computeGlobalJacobianT 
-          //doesn't overwrite the real residual.
-          Teuchos::RCP<Tpetra_Vector> fTtemp;
-          if (fT_out != Teuchos::null) {
-            fTtemp = Teuchos::rcp_dynamic_cast<ThyraVector>(fT_out->getNonconstVectorBlock(m), true)->getTpetraVector();
-          }
-          apps_[m]->computeGlobalJacobianT(alpha, beta, omega, curr_time,
-              x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
-              sacado_param_vecs_[m], fTtemp.get(), *jacs_[m]);
-          //Extract diagonal froms jacs_[m] 
-          Teuchos::RCP<Tpetra_Vector> diagVec = Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap()));
-          jacs_[m]->getLocalDiagCopy(*diagVec);
-          //Get view of diagonal 
-          Teuchos::ArrayRCP<const ST> diagVec_constView = diagVec->get1dView();
-          //Create Jacobi preconditioner
-          for (auto row=0; row<jacs_[m]->getNodeNumRows(); ++row) {
+          //Invert absrowsum 
+          Teuchos::RCP<Tpetra_Vector> invabsrowsum = Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap())); 
+          invabsrowsum->reciprocal(*absrowsum); 
+          Teuchos::ArrayRCP<const ST> invabsrowsum_constView = invabsrowsum->get1dView(); 
+          //Zero out precs_[m] 
+          precs_[m]->resumeFill();
+          precs_[m]->scale(0.0);
+          //Create diagonal abs row sum preconditioner 
+          for (auto i=0; i<jacs_[m]->getNodeNumRows(); ++i) {
+            GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
             Teuchos::Array<ST> matrixEntriesT(1);
-            Teuchos::Array<LO> matrixIndicesT(1);
-            ST diag = diagVec_constView[row]; 
-            ST inv_diag = 1.0; 
-            if (diag != 0) 
-              inv_diag /= diag; 
-            matrixEntriesT[0] = inv_diag; 
-            matrixIndicesT[0] = row; 
-            precs_[m]->replaceLocalValues(row, matrixIndicesT(), matrixEntriesT());
+            Teuchos::Array<GO> matrixIndicesT(1);
+            matrixEntriesT[0] = invabsrowsum_constView[i]; 
+            matrixIndicesT[0] = global_row; 
+            precs_[m]->replaceGlobalValues(global_row, matrixIndicesT(), matrixEntriesT());
           }
         } 
         else if (mf_prec_type_ == ID) {
@@ -1079,8 +1063,7 @@ evalModelImpl(
             GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
             Teuchos::Array<ST> matrixEntriesT(1);
             Teuchos::Array<GO> matrixIndicesT(1);
-            ST diag = 1.0;
-            matrixEntriesT[0] = diag; 
+            matrixEntriesT[0] = 1.0; 
             matrixIndicesT[0] = global_row; 
             precs_[m]->replaceGlobalValues(global_row, matrixIndicesT(), matrixEntriesT());
           }
@@ -1238,3 +1221,4 @@ getValidProblemParameters() const
 
   return list;
 }
+

@@ -54,6 +54,9 @@ public:
 
 private:
 
+  void saveElemState (typename Traits::EvalData d);
+  void saveNodeState (typename Traits::EvalData d);
+
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
 
   Teuchos::RCP<PHX::FieldTag> savestate_operation;
@@ -62,6 +65,9 @@ private:
   std::string sideSetName;
   std::string fieldName;
   std::string stateName;
+
+  bool nodalState;
+  std::vector<std::vector<int> >  sideNodes;
 };
 
 } // Namespace PHAL

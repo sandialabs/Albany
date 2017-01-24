@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "Albany_AbstractProblem.hpp"
+#include "NOX_StatusTest_Generic.H"
 
 // Generic implementations that can be used by derived problems
 
@@ -51,7 +52,7 @@ Albany::AbstractProblem::AbstractProblem(
     number_of_time_deriv = 1;
     SolutionMethodName = Transient;
   }
-  else if(solutionMethod == "Transient Tempus")
+  else if(solutionMethod == "Transient Tempus" || solutionMethod == "Transient Tempus No Piro")
   {
     number_of_time_deriv = 1;
     SolutionMethodName = TransientTempus;
@@ -179,7 +180,11 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Schottky Barrier", false, "");
 
   // Add "Interface Traps" for QCAD (Suzey Gao, 12/22/2015)
-  validPL->sublist("Interface Traps", false, ""); 
+  validPL->sublist("Interface Traps", false, "");
+
+  // NOX status test that allows constutive models to cut the global time step
+  // needed at the Problem scope when running Schwarz coupling
+  validPL->set<Teuchos::RCP<NOX::StatusTest::Generic>>("Constitutive Model NOX Status Test", Teuchos::RCP<NOX::StatusTest::Generic>(), "NOX status test that facilitates communication between a ModelEvaluator and a NOX solver");
 
   return validPL;
 }

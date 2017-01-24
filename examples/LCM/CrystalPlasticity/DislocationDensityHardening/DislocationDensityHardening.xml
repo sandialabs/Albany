@@ -212,11 +212,11 @@
 
                     <Parameter name="Min Step Size" 
                                type="double" 
-                               value="0.0005"/>
+                               value="0.000001"/>
 
                     <Parameter name="Failed Step Reduction Factor" 
                                type="double" 
-                               value="0.5"/>
+                               value="0.9"/>
 
                     <Parameter name="Aggressiveness" 
                                type="double" 
@@ -321,7 +321,7 @@
         </ParameterList>
         <ParameterList name="Test 1">
          <Parameter name="Test Type" type="string" value="MaxIters"/>
-         <Parameter name="Maximum Iterations" type="int" value="10"/>
+         <Parameter name="Maximum Iterations" type="int" value="100"/>
         </ParameterList>
         <ParameterList name="Test 2">
           <Parameter name="Test Type" type="string" value="Combo"/>
@@ -333,7 +333,7 @@
           </ParameterList>
           <ParameterList name="Test 1">
             <Parameter name="Test Type" type="string" value="NormF"/>
-            <Parameter name="Tolerance" type="double" value="1.0e-8"/>
+            <Parameter name="Tolerance" type="double" value="1.0e-10"/>
           </ParameterList>
         </ParameterList>
         <ParameterList name="Test 3">
