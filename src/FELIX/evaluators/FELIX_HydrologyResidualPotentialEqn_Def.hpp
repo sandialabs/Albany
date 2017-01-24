@@ -22,7 +22,8 @@ HydrologyResidualPotentialEqn (const Teuchos::ParameterList& p,
   m         (p.get<std::string> ("Melting Rate QP Variable Name"), dl->qp_scalar),
   h         (p.get<std::string> ("Water Thickness QP Variable Name"), dl->qp_scalar),
   omega     (p.get<std::string> ("Surface Water Input QP Variable Name"), dl->qp_scalar),
-  u_b       (p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar)
+  u_b       (p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar),
+  residual  (p.get<std::string> ("Potential Eqn Residual Name"),dl->node_scalar)
 {
   if (IsStokesCoupling)
   {
@@ -34,24 +35,6 @@ HydrologyResidualPotentialEqn (const Teuchos::ParameterList& p,
     numDims  = dl->qp_gradient->dimension(3);
 
     sideSetName = p.get<std::string>("Side Set Name");
-
-    // Index of the nodes on the sides in the numeration of the cell
-    int numSides = dl->node_scalar->dimension(1);
-    int sideDim  = dl->qp_gradient->dimension(3);
-
-    Teuchos::RCP<shards::CellTopology> cellType;
-    cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
-    sideNodes.resize(numSides);
-    for (int side=0; side<numSides; ++side)
-    {
-      // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-      int thisSideNodes = cellType->getNodeCount(sideDim,side);
-      sideNodes[side].resize(thisSideNodes);
-      for (int node=0; node<thisSideNodes; ++node)
-      {
-        sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
-      }
-    }
   }
   else
   {
@@ -72,8 +55,6 @@ HydrologyResidualPotentialEqn (const Teuchos::ParameterList& p,
   this->addDependentField(m.fieldTag());
   this->addDependentField(omega.fieldTag());
   this->addDependentField(u_b.fieldTag());
-
-  residual = PHX::MDField<ScalarT>(p.get<std::string> ("Potential Eqn Residual Name"),dl->node_scalar);
 
   this->addEvaluatedField(residual);
 
@@ -133,10 +114,7 @@ evaluateFields (typename Traits::EvalData workset)
   if (IsStokesCoupling)
   {
     // Zero out, to avoid leaving stuff from previous workset!
-    const int numCellNodes = residual.fieldTag().dataLayout().dimension(1);
-    for (int cell=0; cell<workset.numCells; ++cell)
-      for (int node=0; node<numCellNodes; ++node)
-        residual(cell,node) = 0;
+    residual.deep_copy(ScalarT(0.));
 
     if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
       return;
@@ -167,7 +145,7 @@ evaluateFields (typename Traits::EvalData workset)
 
           res_node += res_qp * w_measure(cell,side,qp);
         }
-        residual (cell,sideNodes[side][node]) += res_node;
+        residual (cell,side,node) += res_node;
       }
     }
   }

@@ -39,7 +39,12 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 void DummyResidual<EvalT, Traits>::evaluateFields (typename Traits::EvalData /*workset*/)
 {
-  residual.deep_copy(solution);
+  // If initial guess is random, we still want to avoid a non-zero residual, which
+  // would force one iteration of non-linear solver.
+  if (std::is_same<EvalT,PHAL::AlbanyTraits::Residual>::value)
+    residual.deep_copy(0.0);
+  else
+    residual.deep_copy(solution);
 }
 
 } // Namespace FELIX

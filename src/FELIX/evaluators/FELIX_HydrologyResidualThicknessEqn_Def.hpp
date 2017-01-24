@@ -9,62 +9,36 @@
 
 namespace FELIX {
 
-//**********************************************************************
-// PARTIAL SPECIALIZATION: Hydrology ***********************************
-//**********************************************************************
 template<typename EvalT, typename Traits, bool IsStokes>
 HydrologyResidualThicknessEqn<EvalT, Traits, IsStokes>::
 HydrologyResidualThicknessEqn (const Teuchos::ParameterList& p,
                                const Teuchos::RCP<Albany::Layouts>& dl) :
+  BF        (p.get<std::string> ("BF Name"), dl->node_qp_scalar),
+  w_measure (p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar),
+  h         (p.get<std::string> ("Water Thickness QP Variable Name"), dl->qp_scalar),
+  h_dot     (p.get<std::string> ("Water Thickness Dot QP Variable Name"), dl->qp_scalar),
+  N         (p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar),
+  m         (p.get<std::string> ("Melting Rate QP Variable Name"), dl->qp_scalar),
+  u_b       (p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar),
   residual  (p.get<std::string> ("Thickness Eqn Residual Name"),dl->node_scalar)
 {
   if (IsStokes)
   {
+    TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+                                "Error! The layout structure does not appear to be that of a side set.\n");
+
+    numNodes = dl->node_scalar->dimension(2);
+    numQPs   = dl->qp_scalar->dimension(2);
+
     sideSetName = p.get<std::string>("Side Set Name");
-
-    Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
-
-    numNodes = dl_side->node_scalar->dimension(2);
-    numQPs   = dl_side->qp_scalar->dimension(2);
-
-    BF        = PHX::MDField<RealType>(p.get<std::string> ("BF Name"), dl_side->node_qp_scalar);
-    w_measure = PHX::MDField<MeshScalarT>(p.get<std::string> ("Weighted Measure Name"), dl_side->qp_scalar);
-    h         = PHX::MDField<ScalarT>(p.get<std::string> ("Water Thickness QP Variable Name"), dl_side->qp_scalar);
-    h_dot     = PHX::MDField<ScalarT>(p.get<std::string> ("Water Thickness Dot QP Variable Name"), dl_side->qp_scalar);
-    N         = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl_side->qp_scalar);
-    m         = PHX::MDField<ScalarT>(p.get<std::string> ("Melting Rate QP Variable Name"), dl_side->qp_scalar);
-    u_b       = PHX::MDField<IceScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl_side->qp_scalar);
-
-    // Index of the nodes on the sides in the numeration of the cell
-    int numSides = dl_side->node_scalar->dimension(1);
-    int sideDim  = dl_side->qp_gradient->dimension(3);
-
-    Teuchos::RCP<shards::CellTopology> cellType;
-    cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
-    sideNodes.resize(numSides);
-    for (int side=0; side<numSides; ++side)
-    {
-      // Need to get the subcell exact count, since different sides may have different number of nodes (e.g., Wedge)
-      int thisSideNodes = cellType->getNodeCount(sideDim,side);
-      sideNodes[side].resize(thisSideNodes);
-      for (int node=0; node<thisSideNodes; ++node)
-      {
-        sideNodes[side][node] = cellType->getNodeMap(sideDim,side,node);
-      }
-    }
   }
   else
   {
+    TEUCHOS_TEST_FOR_EXCEPTION (dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
+                                "Error! The layout structure appears to be that of a side set.\n");
+
     numNodes = dl->node_scalar->dimension(1);
     numQPs   = dl->qp_scalar->dimension(1);
-
-    BF        = PHX::MDField<RealType>(p.get<std::string> ("BF Name"), dl->node_qp_scalar);
-    w_measure = PHX::MDField<MeshScalarT>(p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar);
-    h         = PHX::MDField<ScalarT>(p.get<std::string> ("Water Thickness QP Variable Name"), dl->qp_scalar);
-    h_dot     = PHX::MDField<ScalarT>(p.get<std::string> ("Water Thickness Dot QP Variable Name"), dl->qp_scalar);
-    N         = PHX::MDField<ScalarT>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
-    m         = PHX::MDField<ScalarT>(p.get<std::string> ("Melting Rate QP Variable Name"), dl->qp_scalar);
-    u_b       = PHX::MDField<IceScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
   }
 
   this->addDependentField(BF.fieldTag());
@@ -78,7 +52,7 @@ HydrologyResidualThicknessEqn (const Teuchos::ParameterList& p,
   if (unsteady)
     this->addDependentField(h_dot.fieldTag());
   else
-    this->addEvaluatedField(h_dot);
+    this->addEvaluatedField(h_dot); // Will be set to zero
 
   this->addEvaluatedField(residual);
 
@@ -137,10 +111,7 @@ evaluateFields (typename Traits::EvalData workset)
   if (IsStokes)
   {
     // Zero out, to avoid leaving stuff from previous workset!
-    const int numCellNodes = residual.fieldTag().dataLayout().dimension(1);
-    for (int cell=0; cell<workset.numCells; ++cell)
-      for (int node=0; node<numCellNodes; ++node)
-        residual(cell,node) = 0;
+    residual.deep_copy(ScalarT(0.0));
 
     if (workset.sideSets->find(sideSetName)==workset.sideSets->end())
       return;
@@ -163,7 +134,7 @@ evaluateFields (typename Traits::EvalData workset)
           res_node += res_qp * BF(cell,side,node,qp) * w_measure(cell,side,qp);
         }
 
-        residual (cell,sideNodes[side][node]) = res_node;
+        residual (cell,side,node) += res_node;
       }
     }
   }
@@ -181,7 +152,7 @@ evaluateFields (typename Traits::EvalData workset)
 
           res_node += res_qp * BF(cell,node,qp) * w_measure(cell,qp);
         }
-        residual (cell,node) = res_node;
+        residual (cell,node) += res_node;
       }
     }
   }
