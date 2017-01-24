@@ -20,7 +20,8 @@ namespace FELIX
 
     This evaluator computes the friction coefficient beta for basal natural BC
 */
-template<typename EvalT, typename Traits>
+
+template<typename EvalT, typename Traits, bool IsHydrology, bool IsStokes>
 class BasalFrictionCoefficientNode : public PHX::EvaluatorWithBaseImpl<Traits>,
                                      public PHX::EvaluatorDerived<EvalT, Traits>
 {
@@ -30,8 +31,11 @@ public:
   typedef typename EvalT::MeshScalarT   MeshScalarT;
   typedef typename EvalT::ParamScalarT  ParamScalarT;
 
+  typedef typename std::conditional<IsStokes,ScalarT,ParamScalarT>::type     IceScalarT;
+  typedef typename std::conditional<IsHydrology,ScalarT,ParamScalarT>::type  HydroScalarT;
+
   BasalFrictionCoefficientNode (const Teuchos::ParameterList& p,
-                                const Teuchos::RCP<Albany::Layouts>& dl);
+                            const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& vm);
@@ -39,6 +43,9 @@ public:
   void evaluateFields (typename Traits::EvalData d);
 
 private:
+
+  void evaluateFieldsSide (typename Traits::EvalData d, ScalarT mu, ScalarT lambda, ScalarT power);
+  void evaluateFieldsCell (typename Traits::EvalData d, ScalarT mu, ScalarT lambda, ScalarT power);
 
   // Coefficients for computing beta (if not given)
   PHX::MDField<ScalarT,Dim> muParam;              // Coulomb friction coefficient
@@ -49,19 +56,36 @@ private:
   ScalarT printedLambda;
   ScalarT printedQ;
 
+  double beta_given_val;  // Constant value (for CONSTANT only)
   double A;               // Constant value for the flowFactorA field (for REGULARIZED_COULOMB only)
 
   // Input:
-  PHX::MDField<ParamScalarT>  u_norm;
-  PHX::MDField<ParamScalarT>  N;
+  PHX::MDField<ParamScalarT>  beta_given_field;
+  PHX::MDField<IceScalarT>    u_norm;
+  PHX::MDField<HydroScalarT>  N;
+  PHX::MDField<ParamScalarT>  lambdaField;
+  PHX::MDField<MeshScalarT>   coordVec;
 
   // Output:
   PHX::MDField<ScalarT>       beta;
 
+  std::string                 basalSideName;  // Only if IsStokes=true
+
+  bool use_stereographic_map;
+
+  double x_0;
+  double y_0;
+  double R2;
+
   int numNodes;
+  int numQPs;
 
   bool logParameters;
+  bool distributedLambda;
   bool regularize;
+
+  enum BETA_TYPE {GIVEN_CONSTANT, EXP_GIVEN_FIELD, GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
+  BETA_TYPE beta_type;
 };
 
 } // Namespace FELIX

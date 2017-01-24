@@ -44,6 +44,9 @@ public:
 
 private:
 
+  void evaluateFieldsSide (typename Traits::EvalData d, ScalarT mu, ScalarT lambda, ScalarT power);
+  void evaluateFieldsCell (typename Traits::EvalData d, ScalarT mu, ScalarT lambda, ScalarT power);
+
   // Coefficients for computing beta (if not given)
   PHX::MDField<ScalarT,Dim> muParam;              // Coulomb friction coefficient
   PHX::MDField<ScalarT,Dim> lambdaParam;          // Bed bumps avg length divided by bed bumps avg slope (for REGULARIZED_COULOMB only)
@@ -60,6 +63,7 @@ private:
   PHX::MDField<ParamScalarT>  beta_given_field;
   PHX::MDField<IceScalarT>    u_norm;
   PHX::MDField<HydroScalarT>  N;
+  PHX::MDField<ParamScalarT>  lambdaField;
   PHX::MDField<MeshScalarT>   coordVec;
   PHX::MDField<ParamScalarT>  bed_topo_field;
   PHX::MDField<ParamScalarT>  thickness_field;
@@ -83,6 +87,7 @@ private:
   int numQPs;
 
   bool logParameters;
+  bool distributedLambda;
   bool regularize;
 
   enum BETA_TYPE {GIVEN_CONSTANT, GIVEN_FIELD, EXP_GIVEN_FIELD, GAL_PROJ_EXP_GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};

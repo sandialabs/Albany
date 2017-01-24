@@ -9,4 +9,7 @@
 #include "FELIX_BasalFrictionCoefficientNode.hpp"
 #include "FELIX_BasalFrictionCoefficientNode_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::BasalFrictionCoefficientNode)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(FELIX::BasalFrictionCoefficientNode,true,true)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(FELIX::BasalFrictionCoefficientNode,true,false)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(FELIX::BasalFrictionCoefficientNode,false,true)
+PHAL_INSTANTIATE_TEMPLATE_CLASS_WITH_EXTRA_ARGS(FELIX::BasalFrictionCoefficientNode,false,false)
