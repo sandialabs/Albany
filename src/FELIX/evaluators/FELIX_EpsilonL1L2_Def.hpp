@@ -9,7 +9,6 @@
 #include "Phalanx_TypeStrings.hpp"
 #include "Sacado_ParameterRegistration.hpp" 
 
-#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace FELIX {
 
@@ -27,7 +26,7 @@ EpsilonL1L2(const Teuchos::ParameterList& p,
   Teuchos::ParameterList* visc_list = 
    p.get<Teuchos::ParameterList*>("Parameter List");
   
-  this->addDependentField(Ugrad);
+  this->addDependentField(Ugrad.fieldTag());
   
   this->addEvaluatedField(epsilonXX);
   this->addEvaluatedField(epsilonYY);

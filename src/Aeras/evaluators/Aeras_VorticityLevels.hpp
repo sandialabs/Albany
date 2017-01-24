@@ -55,13 +55,13 @@ private:
   //! Values at quadrature points
   PHX::MDField<ScalarT,Cell,QuadPoint,Level> vort_val_qp;
 
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    refPoints;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    refWeights;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
+  Kokkos::DynRankView<RealType, PHX::Device>    refPoints;
+  Kokkos::DynRankView<RealType, PHX::Device>    refWeights;
 
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    grad_at_cub_points;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>     vco;
+  Kokkos::DynRankView<RealType, PHX::Device>    grad_at_cub_points;
+  Kokkos::DynRankView<ScalarT, PHX::Device>     vco;
 
   const int numNodes;
   const int numDims;

@@ -24,8 +24,8 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   numQPs  = dl->qp_gradient->dimension(1);
   numDim  = dl->qp_gradient->dimension(2);
 
-  this->addDependentField(gradPhi);
-  this->addDependentField(h);
+  this->addDependentField(gradPhi.fieldTag());
+  this->addDependentField(h.fieldTag());
 
   this->addEvaluatedField(q);
 
@@ -48,7 +48,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   {
     needsGradPhiNorm = true;
     gradPhiNorm = PHX::MDField<ScalarT,Cell,QuadPoint>(p.get<std::string>("Hydraulic Potential Gradient Norm QP Variable Name"), dl->qp_scalar);
-    this->addDependentField(gradPhiNorm);
+    this->addDependentField(gradPhiNorm.fieldTag());
   }
 */
   this->setName("HydrologyWaterDischarge"+PHX::typeAsString<EvalT>());
@@ -126,8 +126,8 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   numQPs  = dl->qp_gradient->dimension(2);
   numDim  = dl->qp_gradient->dimension(3);
 
-  this->addDependentField(gradPhi);
-  this->addDependentField(h);
+  this->addDependentField(gradPhi.fieldTag());
+  this->addDependentField(h.fieldTag());
 
   this->addEvaluatedField(q);
 
@@ -145,7 +145,7 @@ HydrologyWaterDischarge (const Teuchos::ParameterList& p,
   {
     needsGradPhiNorm = true;
     gradPhiNorm = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string>("Hydraulic Potential Gradient Norm QP Variable Name"), dl->qp_scalar);
-    this->addDependentField(gradPhiNorm);
+    this->addDependentField(gradPhiNorm.fieldTag());
   }
 */
   this->setName("HydrologyWaterDischarge"+PHX::typeAsString<EvalT>());

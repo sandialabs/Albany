@@ -22,8 +22,8 @@ StokesContinuityResid(const Teuchos::ParameterList& p,
   CResidual (p.get<std::string> ("Residual Name"), dl->node_scalar),
   havePSPG(p.get<bool>("Have PSPG"))
 {
-  this->addDependentField(wBF);  
-  this->addDependentField(VGrad);
+  this->addDependentField(wBF.fieldTag());  
+  this->addDependentField(VGrad.fieldTag());
   if (havePSPG) {
     wGradBF = PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>(
       p.get<std::string>("Weighted Gradient BF Name"), dl->node_qp_vector);
@@ -31,21 +31,19 @@ StokesContinuityResid(const Teuchos::ParameterList& p,
       p.get<std::string>("Tau M Name"), dl->qp_scalar);
     Rm = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
       p.get<std::string>("Rm Name"), dl->qp_vector);
-    this->addDependentField(wGradBF);
-    this->addDependentField(TauM);
-    this->addDependentField(Rm);
+    this->addDependentField(wGradBF.fieldTag());
+    this->addDependentField(TauM.fieldTag());
+    this->addDependentField(Rm.fieldTag());
   }
    
   this->addEvaluatedField(CResidual);
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_qp_vector->dimensions(dims);
+  numCells = dims[0];
   numNodes = dims[1];
   numQPs  = dims[2];
   numDims = dims[3];
-
-  // Allocate workspace
-  divergence.resize(dims[0], numQPs);
 
   this->setName("StokesContinuityResid"+PHX::typeAsString<EvalT>());
 }
@@ -65,6 +63,10 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
 
   this->utils.setFieldData(CResidual,fm);
+
+  // Allocate workspace
+  divergence = Kokkos::createDynRankView(VGrad.get_view(), "XXX", numCells, numQPs);
+
 }
 //*********************************************************************
 template<class Scalar, class ArrayOutFields, class ArrayInData, class ArrayInFields>
@@ -133,7 +135,7 @@ template<typename EvalT, typename Traits>
 void StokesContinuityResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -143,7 +145,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-  FST::integrate<ScalarT>(CResidual, divergence, wBF, Intrepid2::COMP_CPP,  
+  FST::integrate(CResidual.get_view(), divergence, wBF.get_view(),  
                           false); // "false" overwrites
 
   contractDataFieldScalar<ScalarT>(CResidual, divergence, wBF,false); // "false" overwrites

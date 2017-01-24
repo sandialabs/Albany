@@ -50,8 +50,8 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node> CResidual;
 
-  unsigned int numQPs, numDims, numNodes;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> divergence;
+  unsigned int numQPs, numDims, numNodes, numCells;
+  Kokkos::DynRankView<ScalarT, PHX::Device> divergence;
   bool havePSPG;
 };
 }

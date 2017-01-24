@@ -27,8 +27,8 @@ BasalNormalVector(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::La
 	gradSurfHeight    (p.get<std::string> ("Surface Height Gradient Side QP Variable Name"), dl_basal->qp_gradient),
 	gradThickness	  (p.get<std::string> ("Thickness Gradient Side QP Variable Name"), dl_basal->qp_gradient),
 
-	this->addDependentField(gradSurfHeight);
-	this->addDependentField(gradThickness);
+	this->addDependentField(gradSurfHeight.fieldTag());
+	this->addDependentField(gradThickness.fieldTag());
 
 	this->addEvaluatedField(normal);
 	this->setName("Basal Normal");

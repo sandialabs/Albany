@@ -63,15 +63,15 @@ HydrologyResidualPotentialEqn (const Teuchos::ParameterList& p,
     numDims  = dl->qp_gradient->dimension(2);
   }
 
-  this->addDependentField(BF);
-  this->addDependentField(GradBF);
-  this->addDependentField(w_measure);
-  this->addDependentField(q);
-  this->addDependentField(N);
-  this->addDependentField(h);
-  this->addDependentField(m);
-  this->addDependentField(omega);
-  this->addDependentField(u_b);
+  this->addDependentField(BF.fieldTag());
+  this->addDependentField(GradBF.fieldTag());
+  this->addDependentField(w_measure.fieldTag());
+  this->addDependentField(q.fieldTag());
+  this->addDependentField(N.fieldTag());
+  this->addDependentField(h.fieldTag());
+  this->addDependentField(m.fieldTag());
+  this->addDependentField(omega.fieldTag());
+  this->addDependentField(u_b.fieldTag());
 
   residual = PHX::MDField<ScalarT>(p.get<std::string> ("Potential Eqn Residual Name"),dl->node_scalar);
 

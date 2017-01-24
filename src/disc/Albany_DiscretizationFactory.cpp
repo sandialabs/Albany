@@ -52,9 +52,9 @@
 #endif // ALBANY_LCM
 
 Albany::DiscretizationFactory::DiscretizationFactory(
-  const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
-  const Teuchos::RCP<const Teuchos_Comm>& commT_,
-  const bool explicit_scheme_) :
+        const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
+        const Teuchos::RCP<const Teuchos_Comm>& commT_,
+        const bool explicit_scheme_) :
   commT(commT_),
   explicit_scheme(explicit_scheme_) {
 
@@ -212,8 +212,8 @@ void createInterfaceParts(
   bool const
   is_interleaved = last_mesh_specs_struct.interleavedOrdering;
 
-  Intrepid2::EIntrepidPLPoly const
-  cubature_rule = last_mesh_specs_struct.cubatureRule;
+        Intrepid2::EPolyType const
+                cubature_rule = last_mesh_specs_struct.cubatureRule;
 
   mesh_specs_struct.resize(number_blocks + 1);
 
@@ -238,7 +238,6 @@ void createInterfaceParts(
 } // anonymous namespace
 
 #endif //ALBANY_LCM
-
 
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
 Albany::DiscretizationFactory::createMeshSpecs()
@@ -285,40 +284,32 @@ Albany::DiscretizationFactory::createMeshSpecs()
 
 Teuchos::RCP<Albany::AbstractMeshStruct>
 #ifdef ALBANY_CUTR
-Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::ParameterList> disc_params,
-                                                 Teuchos::RCP<Teuchos::ParameterList> adapt_params,
-                                                 Teuchos::RCP<const Teuchos_Comm> comm,
-                                                 Teuchos::RCP<CUTR::CubitMeshMover> mesh_mover,
-                                                 int num_eq)
+Albany::DiscretizationFactory::createMeshStruct(
+        Teuchos::RCP<Teuchos::ParameterList> disc_params,
+        Teuchos::RCP<Teuchos::ParameterList> adapt_params,
+        Teuchos::RCP<const Teuchos_Comm> comm,
+        Teuchos::RCP<CUTR::CubitMeshMover> mesh_mover,
+        int num_eq)
 #else
-Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::ParameterList> disc_params,
-                                                 Teuchos::RCP<Teuchos::ParameterList> adapt_params,
-                                                 Teuchos::RCP<const Teuchos_Comm> comm)
+Albany::DiscretizationFactory::createMeshStruct(
+        Teuchos::RCP<Teuchos::ParameterList> disc_params,
+        Teuchos::RCP<Teuchos::ParameterList> adapt_params,
+        Teuchos::RCP<const Teuchos_Comm> comm)
 #endif
 {
   std::string& method = disc_params->get("Method", "STK1D");
 #if defined(HAVE_STK)
-  if(method == "STK1D" || method == "STK1D Aeras") {
+  if (method == "STK1D" || method == "STK1D Aeras") {
     return Teuchos::rcp(new Albany::TmplSTKMeshStruct<1>(disc_params, adapt_params, comm));
-  }
-
-  else if(method == "STK0D") {
+  } else if (method == "STK0D") {
     return Teuchos::rcp(new Albany::TmplSTKMeshStruct<0>(disc_params, adapt_params, comm));
-  }
-
-  else if(method == "STK2D") {
+  } else if (method == "STK2D") {
     return Teuchos::rcp(new Albany::TmplSTKMeshStruct<2>(disc_params, adapt_params, comm));
-  }
-
-  else if(method == "STK3D") {
+  } else if (method == "STK3D") {
     return Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(disc_params, adapt_params, comm));
-  }
-
-  else if(method == "STK3DPoint") {
+  } else if (method == "STK3DPoint") {
     return Teuchos::rcp(new Albany::STK3DPointStruct(disc_params, comm));
-  }
-
-  else if(method == "Ioss" || method == "Exodus" ||  method == "Pamgen" || method == "Ioss Aeras" || method == "Exodus Aeras") {
+  } else if (method == "Ioss" || method == "Exodus" ||  method == "Pamgen" || method == "Ioss Aeras" || method == "Exodus Aeras") {
 
 #ifdef ALBANY_SEACAS
     return Teuchos::rcp(new Albany::IossSTKMeshStruct(disc_params, adapt_params, comm));
@@ -331,30 +322,27 @@ Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::Parameter
 #endif // ALBANY_SEACAS
   }
 #if defined(ALBANY_EPETRA)
-  else if(method == "Ascii") {
-    return Teuchos::rcp(new Albany::AsciiSTKMeshStruct(disc_params, comm));
-  }
-  else if(method == "Ascii2D") {
+  else if (method == "Ascii") {
+      return Teuchos::rcp(new Albany::AsciiSTKMeshStruct(disc_params, comm));
+  } else if (method == "Ascii2D") {
       return Teuchos::rcp(new Albany::AsciiSTKMesh2D(disc_params, comm));
-  }
-  else if(method == "Hacky Ascii2D") {
+  } else if (method == "Hacky Ascii2D") {
       //FixME very hacky! needed for printing 2d mesh
       Teuchos::RCP<Albany::GenericSTKMeshStruct> meshStruct2D;
       meshStruct2D = Teuchos::rcp(new Albany::AsciiSTKMesh2D(disc_params, comm));
-      Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
-    Albany::AbstractFieldContainer::FieldContainerRequirements req;
-    int neq=2;
+      Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct);
+      Albany::AbstractFieldContainer::FieldContainerRequirements req;
+      int neq = 2;
       meshStruct2D->setFieldAndBulkData(comm, disc_params, neq, req,
-                                        sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
+              sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
       Ioss::Init::Initializer io;
-      Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data =Teuchos::rcp(new stk::io::StkMeshIoBroker(MPI_COMM_WORLD));
+      Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(MPI_COMM_WORLD));
       mesh_data->set_bulk_data(*meshStruct2D->bulkData);
       const std::string& output_filename = disc_params->get("Exodus Output File Name", "ice_mesh.2d.exo");
       size_t idx = mesh_data->create_output_mesh(output_filename, stk::io::WRITE_RESULTS);
       mesh_data->process_output_request(idx, 0.0);
-  }
-  else if(method == "Gmsh") {
-    return Teuchos::rcp(new Albany::GmshSTKMeshStruct(disc_params, comm));
+  } else if (method == "Gmsh") {
+      return Teuchos::rcp(new Albany::GmshSTKMeshStruct(disc_params, comm));
   }
 #ifdef ALBANY_FELIX
   else if(method == "Extruded")
@@ -372,10 +360,6 @@ Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::Parameter
       basal_params->set("Use Serial Mesh", disc_params->get("Use Serial Mesh", false));
       basal_params->set("Exodus Input File Name", disc_params->get("Exodus Input File Name", "basalmesh.exo"));
     }
-
-    // The basal params must have the number of derivatives
-    if (!basal_params->isParameter("Number Of Time Derivatives"))
-      basal_params->set<int>("Number Of Time Derivatives",disc_params->get<int>("Number Of Time Derivatives"));
 
     basalMesh = createMeshStruct(basal_params, Teuchos::null, comm);
     return Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(disc_params, comm, basalMesh));
@@ -425,7 +409,6 @@ Albany::DiscretizationFactory::createMeshStruct (Teuchos::RCP<Teuchos::Parameter
   }
 }
 
-
 Teuchos::RCP<Albany::AbstractDiscretization>
 Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
@@ -473,7 +456,7 @@ void
 Albany::DiscretizationFactory::setupInternalMeshStruct(
   unsigned int neq,
   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-  const AbstractFieldContainer::FieldContainerRequirements& req)
+  const AbstractFieldContainer::FieldContainerRequirements& req) 
 {
   setupInternalMeshStruct(neq, sis, empty_side_set_sis, req, empty_side_set_req);
 }
@@ -491,7 +474,7 @@ Albany::DiscretizationFactory::setupInternalMeshStruct(
 
 Teuchos::RCP<Albany::AbstractDiscretization>
 Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
-  const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes)
+  const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes) 
 {
   return createDiscretizationFromInternalMeshStruct(empty_side_set_equations, rigidBodyModes);
 }
@@ -551,7 +534,6 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
 #endif
     }
   }
-
 #if defined(ALBANY_AERAS) && defined(HAVE_STK)
   else if (method == "Ioss Aeras" || method == "Exodus Aeras" || method == "STK1D Aeras") {
     //IK, 1/8/15: Added construction of Aeras::SpectralDiscretization object.

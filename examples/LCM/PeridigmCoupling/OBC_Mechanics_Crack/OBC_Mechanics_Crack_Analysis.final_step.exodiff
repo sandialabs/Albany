@@ -1,0 +1,56 @@
+
+#  *****************************************************************
+#             EXODIFF	(Version: 2.85) Modified: 2016-08-08
+#             Authors:  Richard Drake, rrdrake@sandia.gov           
+#                       Greg Sjaardema, gdsjaar@sandia.gov          
+#             Run on    2016/10/17   11:08:35 MDT
+#  *****************************************************************
+
+#  FILE 1: /scratch/djlittl/Albany/GCC_4.9.2_OPT/examples/LCM/PeridigmCoupling/OBC_Mechanics_Crack/OBC_Mechanics_Crack_Analysis.final_step.e
+#   Title: Sierra Output Default Title
+#          Dim = 3, Blocks = 2, Nodes = 1110, Elements = 1024, Nodesets = 9, Sidesets = 0
+#          Vars: Global = 0, Nodal = 10, Element = 80, Nodeset = 0, Sideset = 0, Times = 1
+
+
+# ==============================================================
+#  NOTE: All node and element ids are reported as global ids.
+
+# NOTES:  - The min/max values are reporting the min/max in absolute value.
+#         - Time values (t) are 1-offset time step numbers.
+#         - Element block numbers are the block ids.
+#         - Node(n) and element(e) numbers are 1-offset.
+
+COORDINATES absolute 1.e-6    # min separation not calculated
+
+# Effectively do not compare time steps
+TIME STEPS absolute 1.0e10
+
+# No GLOBAL VARIABLES
+
+NODAL VARIABLES relative 1.e-6 floor 0.0
+	DISPLACEMENT_X             absolute 7.0e-5
+	DISPLACEMENT_Y             absolute 5.0e-5
+	DISPLACEMENT_Z             absolute 5.0e-5
+	DIRICHLET_CONTROL_FIELD_X  absolute 5.0e-5
+	DIRICHLET_CONTROL_FIELD_Y  absolute 5.0e-5
+	DIRICHLET_CONTROL_FIELD_Z  absolute 5.0e-5
+	DIRICHLET_FIELD            absolute 1.000000000000e-09    # min:               0 @ t1,n1	max:           0.001 @ t1,n1031
+	FORCE_X                    absolute 5.0e-1
+	FORCE_Y                    absolute 5.0e-1
+	FORCE_Z                    absolute 5.0e-1
+
+ELEMENT VARIABLES relative 1.e-6 floor 0.0
+	PERIDIGM_DISPLACEMENT_1       absolute 5.0e-5
+	PERIDIGM_DISPLACEMENT_2       absolute 5.0e-5
+	PERIDIGM_DISPLACEMENT_3       absolute 5.0e-5
+	PERIDIGM_NUMBER_OF_NEIGHBORS  absolute 3.100000000000e-05    # min:               0 @ t1,b2,e961	max:              31 @ t1,b1,e75
+	PERIDIGM_OBC_FUNCTIONAL_1     absolute 5.0e-5
+	PERIDIGM_OBC_FUNCTIONAL_2     absolute 5.0e-6
+	PERIDIGM_OBC_FUNCTIONAL_3     absolute 5.0e-6
+	PERIDIGM_RADIUS               absolute 3.649120500000e-08    # min:               0 @ t1,b2,e961	max:     0.036491205 @ t1,b1,e70
+
+# No NODESET VARIABLES
+
+# No SIDESET VARIABLES
+
+

@@ -100,19 +100,23 @@ public:
                  const Teuchos::RCP<Aeras::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d); 
 
-  Teuchos::ArrayRCP<const ST> xT_constView;
-  Teuchos::ArrayRCP<const ST> xdotT_constView;
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  typedef typename PHX::Device execution_space;
-  Kokkos::View<int***, PHX::Device> wsID_kokkos;
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct GatherSolution_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, GatherSolution_Tag> GatherSolution_Policy;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const int &cell) const;
+  void operator() (const GatherSolution_Tag& tag, const int &cell) const;
 #endif
 
 private: 
   const int numFields;
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  Kokkos::View<int***, PHX::Device> wsID_kokkos;
+  Kokkos::View<const ST*, PHX::Device> xT_constView, xdotT_constView;
+
   typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
   Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device > val_kokkosvec;  
   Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device > val_dot_kokkosvec;  
@@ -135,21 +139,12 @@ public:
   GatherSolution(const Teuchos::ParameterList& p,
                  const Teuchos::RCP<Aeras::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d); 
-  
-  Teuchos::ArrayRCP<const ST> xT_constView;
-  Teuchos::ArrayRCP<const ST> xdotT_constView;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-
-  bool ignore_residual;
-  double j_coeff, m_coeff;
-
   struct GatherSolution_Tag{};
   struct GatherSolution_transientTerms_Tag{};
   
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-  typedef typename PHX::Device execution_space;
-  Kokkos::View<int***, PHX::Device> wsID_kokkos;
 
   typedef Kokkos::RangePolicy<ExecutionSpace,GatherSolution_Tag> GatherSolution_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace,GatherSolution_transientTerms_Tag> GatherSolution_transientTerms_Policy; 
@@ -168,7 +163,13 @@ public:
 
 private: 
   const int numFields;
+
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  bool ignore_residual;
+  double j_coeff, m_coeff;
+  Kokkos::View<int***, PHX::Device> wsID_kokkos;
+  Kokkos::View<const ST*, PHX::Device> xT_constView, xdotT_constView;
+
   typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
   Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device > val_kokkosjac;  
   Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device > val_dot_kokkosjac;  
@@ -176,7 +177,6 @@ private:
   typename Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device >::t_dev d_val;   
   typename Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device >::t_dev d_val_dot;   
 #endif
-
 };
 
 

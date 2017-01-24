@@ -9,8 +9,6 @@
 
 #include <type_traits>
 
-#include "Intrepid2_FieldContainer.hpp"
-#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Phalanx.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_RCP.hpp"
@@ -103,9 +101,8 @@ protected:
 
   Teuchos::RCP<shards::CellTopology> cellType;
 
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > >  cellCubature;
-
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > cellBasis;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device, RealType, RealType>>  cellCubature;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>     cellBasis;
 
   int numDim;
   Teuchos::RCP<Albany::Layouts> dl;

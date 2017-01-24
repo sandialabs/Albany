@@ -33,12 +33,12 @@ CahnHillWResid(const Teuchos::ParameterList& p) :
 
   lump = p.get<bool>("Lump Mass");
 
-  this->addDependentField(wBF);
-  this->addDependentField(BF);
-  this->addDependentField(rhoDot);
-  this->addDependentField(rhoDotNode);
-  this->addDependentField(wGrad);
-  this->addDependentField(wGradBF);
+  this->addDependentField(wBF.fieldTag());
+  this->addDependentField(BF.fieldTag());
+  this->addDependentField(rhoDot.fieldTag());
+  this->addDependentField(rhoDotNode.fieldTag());
+  this->addDependentField(wGrad.fieldTag());
+  this->addDependentField(wGradBF.fieldTag());
   this->addEvaluatedField(wResidual);
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
@@ -74,13 +74,13 @@ template<typename EvalT, typename Traits>
 void CahnHillWResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
-  FST::integrate<ScalarT>(wResidual, wGrad, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
+  FST::integrate(wResidual.get_view(), wGrad.get_view(), wGradBF.get_view(), false); // "false" overwrites
 
   if(!lump){
     // Consistent mass matrix, the Intrepid2 way
-    FST::integrate<ScalarT>(wResidual, rhoDot, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+    FST::integrate(wResidual.get_view(), rhoDot.get_view(), wBF.get_view(), true); // "true" sums into
 
     // Consistent mass matrix, done manually
 /*

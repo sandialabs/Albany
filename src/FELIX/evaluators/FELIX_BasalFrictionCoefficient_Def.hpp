@@ -8,7 +8,6 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Albany_Layouts.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
@@ -33,6 +32,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 #endif
 
   Teuchos::ParameterList& beta_list = *p.get<Teuchos::ParameterList*>("Parameter List");
+  zero_on_floating = beta_list.get<bool> ("Zero Beta On Floating Ice", false);
+
 
   std::string betaType = (beta_list.isParameter("Type") ? beta_list.get<std::string>("Type") : "Given Field");
 
@@ -64,19 +65,28 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     beta_type = GIVEN_CONSTANT;
     beta_given_val = beta_list.get<double>("Constant Given Beta Value");
   }
-  else if ((betaType == "Given Field")|| (betaType == "Exponent of Given Field"))
+  else if ((betaType == "Given Field")|| (betaType == "Exponent Of Given Field") || (betaType == "Galerkin Projection Of Exponent Of Given Field"))
   {
 #ifdef OUTPUT_TO_SCREEN
     *output << "Given constant beta field, loaded from mesh or file.\n";
 #endif
     if (betaType == "Given Field")
       beta_type = GIVEN_FIELD;
+    else if (betaType == "Galerkin Projection Of Exponent Of Given Field")
+      beta_type = GAL_PROJ_EXP_GIVEN_FIELD;
     else
       beta_type = EXP_GIVEN_FIELD;
 
-    beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->qp_scalar);
-
-    this->addDependentField (beta_given_field);
+    if(beta_type == GAL_PROJ_EXP_GIVEN_FIELD) {
+      beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->node_scalar);
+      this->addDependentField (beta_given_field.fieldTag());
+      BF = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
+      this->addDependentField (BF.fieldTag());
+    }
+    else {
+      beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->qp_scalar);
+      this->addDependentField (beta_given_field.fieldTag());
+    }
   }
   else if (betaType == "Power Law")
   {
@@ -95,11 +105,11 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     lambdaParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
     powerParam     = PHX::MDField<ScalarT,Dim>("Power Exponent", dl->shared_param);
 
-    this->addDependentField (muParam);
-    this->addDependentField (lambdaParam);
-    this->addDependentField (powerParam);
-    this->addDependentField (u_norm);
-    this->addDependentField (N);
+    this->addDependentField (muParam.fieldTag());
+    this->addDependentField (lambdaParam.fieldTag());
+    this->addDependentField (powerParam.fieldTag());
+    this->addDependentField (u_norm.fieldTag());
+    this->addDependentField (N.fieldTag());
   }
   else if (betaType == "Regularized Coulomb")
   {
@@ -132,16 +142,26 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     lambdaParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
     powerParam     = PHX::MDField<ScalarT,Dim>("Power Exponent", dl->shared_param);
 
-    this->addDependentField (muParam);
-    this->addDependentField (lambdaParam);
-    this->addDependentField (powerParam);
-    this->addDependentField (N);
-    this->addDependentField (u_norm);
+    this->addDependentField (muParam.fieldTag());
+    this->addDependentField (lambdaParam.fieldTag());
+    this->addDependentField (powerParam.fieldTag());
+    this->addDependentField (N.fieldTag());
+    this->addDependentField (u_norm.fieldTag());
   }
   else
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
         std::endl << "Error in FELIX::BasalFrictionCoefficient:  \"" << betaType << "\" is not a valid parameter for Beta Type\n");
+  }
+
+  if(zero_on_floating) {
+    bed_topo_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Bed Topography QP Name"), dl->qp_scalar);
+    thickness_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Thickness QP Name"), dl->qp_scalar);
+    Teuchos::ParameterList& phys_param_list = *p.get<Teuchos::ParameterList*>("Physical Parameter List");
+    rho_i = phys_param_list.get<double> ("Ice Density");
+    rho_w = phys_param_list.get<double> ("Water Density");
+    this->addDependentField (bed_topo_field.fieldTag());
+    this->addDependentField (thickness_field.fieldTag());
   }
 
   auto& stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
@@ -155,7 +175,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
     y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
     R2 = std::pow(R,2);
 
-    this->addDependentField(coordVec);
+    this->addDependentField(coordVec.fieldTag());
   }
 
   logParameters = beta_list.get<bool>("Use log scalar parameters",false);
@@ -180,6 +200,10 @@ postRegistrationSetup (typename Traits::SetupData d,
     case EXP_GIVEN_FIELD:
       this->utils.setFieldData(beta_given_field,fm);
       break;
+    case GAL_PROJ_EXP_GIVEN_FIELD:
+      this->utils.setFieldData(BF,fm);
+      this->utils.setFieldData(beta_given_field,fm);
+      break;
     case POWER_LAW:
     case REGULARIZED_COULOMB:
       this->utils.setFieldData(muParam,fm);
@@ -187,6 +211,11 @@ postRegistrationSetup (typename Traits::SetupData d,
       this->utils.setFieldData(powerParam,fm);
       this->utils.setFieldData(N,fm);
       this->utils.setFieldData(u_norm,fm);
+  }
+
+  if(zero_on_floating) {
+    this->utils.setFieldData(bed_topo_field,fm);
+    this->utils.setFieldData(thickness_field,fm);
   }
 
   if (use_stereographic_map)
@@ -292,7 +321,21 @@ evaluateFields (typename Traits::EvalData workset)
             beta(cell,side,qp) = std::exp(beta_given_field(cell,side,qp));
           }
           break;
+        case GAL_PROJ_EXP_GIVEN_FIELD:
+          for (int qp=0; qp<numQPs; ++qp)
+          {
+            beta(cell,side,qp) = 0;
+            for (int node=0; node<numNodes; ++node)
+              beta(cell,side,qp) += std::exp(beta_given_field(cell,side,node))*BF(cell,side,node,qp);
+          }
+        break;
       }
+
+      if(zero_on_floating)
+        for (int qp=0; qp<numQPs; ++qp) {
+          double isGrounded = rho_i*thickness_field(cell,side,qp) > -rho_w*bed_topo_field(cell,side,qp);
+          beta(cell,side,qp) *=  isGrounded;
+        }
 
       // Correct the value if we are using a stereographic map
       if (use_stereographic_map)

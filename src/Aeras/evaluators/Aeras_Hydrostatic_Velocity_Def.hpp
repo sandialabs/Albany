@@ -9,6 +9,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "Albany_Utils.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
@@ -29,6 +30,7 @@ Hydrostatic_Velocity(const Teuchos::ParameterList& p,
   numNodes ( dl->node_scalar             ->dimension(1)),
   numDims  ( dl->node_qp_gradient        ->dimension(3)),
   numLevels( dl->node_scalar_level       ->dimension(2)),
+  E (Eta<EvalT>::self()),
   out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
   Teuchos::ParameterList* hs_list = p.get<Teuchos::ParameterList*>("Hydrostatic Problem");
@@ -38,23 +40,42 @@ Hydrostatic_Velocity(const Teuchos::ParameterList& p,
 
   *out << "Advection Type = " << advType << std::endl; 
   
-  if (advType == "Unknown")
+  if (advType == "Unknown") {
     adv_type = UNKNOWN;
-  else if (advType == "Prescribed 1-1") 
+  }
+
+  else if (advType == "Prescribed 1-1") {
+    //Eqns. 19-23, DCMIP 2012, pp. 16,17 3D Deformational Flow
     adv_type = PRESCRIBED_1_1; 
-  else if (advType == "Prescribed 1-2")
-    adv_type = PRESCRIBED_1_2; 
-  else 
+    PI          = 3.141592653589793;
+    earthRadius = 6.3712e6;
+    ptop        = 25494.4;
+    p0          = 100000.0;
+    tau         = 1036800.0;
+    omega0      = 23000.0*PI/tau; 
+    k           = 10.0*earthRadius/tau;
+  }
+
+  else if (advType == "Prescribed 1-2") {
+    adv_type = PRESCRIBED_1_2;
+  }
+
+  else {
     TEUCHOS_TEST_FOR_EXCEPTION(true,
- 		               Teuchos::Exceptions::InvalidParameter,"Aeras::Hydrostatic_Velocity: " 
+                   Teuchos::Exceptions::InvalidParameter,"Aeras::Hydrostatic_Velocity: " 
                                << "Advection Type = " << advType << " is invalid!"); 
+  }
 
   this->addDependentField(Velx);
   this->addDependentField(sphere_coord);
   this->addDependentField(pressure);
   this->addEvaluatedField(Velocity);
 
-  this->setName("Aeras::Hydrostatic_Velocity" );
+  this->setName("Aeras::Hydrostatic_Velocity" + PHX::typeAsString<EvalT>());
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  B = E.B_kokkos;
+#endif
 }
 
 //**********************************************************************
@@ -70,13 +91,74 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 
 //**********************************************************************
+// Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void Hydrostatic_Velocity<EvalT, Traits>::
+operator() (const Hydrostatic_Velocity_Tag& tag, const int& cell) const{
+  for (int node=0; node < numNodes; ++node) 
+    for (int level=0; level < numLevels; ++level) 
+      for (int dim=0; dim < numDims; ++dim)  
+        Velocity(cell,node,level,dim) = Velx(cell,node,level,dim); 
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void Hydrostatic_Velocity<EvalT, Traits>::
+operator() (const Hydrostatic_Velocity_PRESCRIBED_1_1_Tag& tag, const int& cell) const{
+  for (int node=0; node < numNodes; ++node) {
+    const MeshScalarT lambda = sphere_coord(cell, node, 0);
+    const MeshScalarT theta = sphere_coord(cell, node, 1);
+    ScalarT lambdap = lambda - 2.0*PI*time/tau;
+
+    ScalarT Ua = k*sin(lambdap)*sin(lambdap)*sin(2.0*theta)*cos(PI*time/tau)
+               + (2.0*PI*earthRadius/tau)*cos(theta);
+
+    ScalarT Va = k*sin(2.0*lambdap)*cos(theta)*cos(PI*time/tau);
+
+    for (int level=0; level < numLevels; ++level) {
+      ScalarT B = this->B(level);
+      ScalarT p = pressure(cell,node,level);
+
+      ScalarT taper = - exp( (p    - p0)/(B*ptop) )
+                      + exp( (ptop - p )/(B*ptop) );
+
+      ScalarT Ud = (omega0*earthRadius)/(B*ptop)
+                   *cos(lambdap)*cos(theta)*cos(theta)*cos(2.0*PI*time/tau)*taper;
+
+      Velocity(cell,node,level,0) = Ua + Ud; 
+      Velocity(cell,node,level,1) = Va; 
+    }
+  }
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void Hydrostatic_Velocity<EvalT, Traits>::
+operator() (const Hydrostatic_Velocity_PRESCRIBED_1_2_Tag& tag, const int& cell) const{
+  //FIXME: Pete, Tom - please fill in
+  for (int node=0; node < numNodes; ++node) {
+    const MeshScalarT lambda = sphere_coord(cell, node, 0);
+    const MeshScalarT theta = sphere_coord(cell, node, 1);
+    for (int level=0; level < numLevels; ++level) {
+      for (int dim=0; dim < numDims; ++dim) {
+        Velocity(cell,node,level,dim) = 0.0; //FIXME  
+      }
+    }
+  }
+}
+
+#endif
+
+//**********************************************************************
 template<typename EvalT, typename Traits>
 void Hydrostatic_Velocity<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  const Eta<EvalT> &E = Eta<EvalT>::self();
+  time = workset.current_time; 
 
-  double time = workset.current_time; 
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   //*out << "Aeras::Hydrostatic_Velocity time = " << time << std::endl; 
   switch (adv_type) {
     case UNKNOWN: //velocity is an unknown that we solve for (not prescribed)
@@ -91,16 +173,6 @@ evaluateFields(typename Traits::EvalData workset)
 
     case PRESCRIBED_1_1: //velocity is prescribed to that of 1-1 test
     {
-      //Eqns. 19-23, DCMIP 2012, pp. 16,17 3D Deformational Flow
-      
-      ScalarT PI          = 3.141592653589793;
-      ScalarT earthRadius = 6.3712e6;
-      ScalarT ptop        = 25494.4;
-      ScalarT p0          = 100000.0;
-      ScalarT tau         = 1036800.0;
-      ScalarT omega0      = 23000.0*PI/tau; 
-      ScalarT k           = 10.0*earthRadius/tau;
-      
       for (int cell=0; cell < workset.numCells; ++cell) { 
         for (int node=0; node < numNodes; ++node) {
 
@@ -149,5 +221,31 @@ evaluateFields(typename Traits::EvalData workset)
     }
     break; 
   }
+
+#else
+  switch (adv_type) {
+    case UNKNOWN: //velocity is an unknown that we solve for (not prescribed)
+    {
+      Kokkos::parallel_for(Hydrostatic_Velocity_Policy(0,workset.numCells),*this);
+      cudaCheckError();
+      break; 
+    } 
+
+    case PRESCRIBED_1_1: //velocity is prescribed to that of 1-1 test
+    {
+      Kokkos::parallel_for(Hydrostatic_Velocity_PRESCRIBED_1_1_Policy(0,workset.numCells),*this);
+      cudaCheckError();
+      break; 
+    }
+
+    case PRESCRIBED_1_2: //velocity is prescribed to that of 1-2 test
+    {
+      Kokkos::parallel_for(Hydrostatic_Velocity_PRESCRIBED_1_2_Policy(0,workset.numCells),*this);
+      cudaCheckError();
+      break; 
+    }
+  }
+
+#endif
 }
 }

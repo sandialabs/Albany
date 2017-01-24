@@ -11,7 +11,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#include "Intrepid2_FieldContainer.hpp"
+#include "Kokkos_Vector.hpp"
 
 namespace ATO {
 /** \brief Computes stress
@@ -54,7 +54,7 @@ private:
   std::string homogenizedConstantsName;
   int cellForcingColumn;
 
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> subTensor;
+  Kokkos::DynRankView<RealType, PHX::Device> subTensor;
 };
 }
 

@@ -8,7 +8,6 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
-#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace FELIX {
 
@@ -29,16 +28,16 @@ StokesL1L2Resid(const Teuchos::ParameterList& p,
   epsilonXY  (p.get<std::string> ("FELIX EpsilonXY QP Variable Name"), dl->qp_scalar), 
   Residual   (p.get<std::string> ("Residual Name"), dl->node_vector)
 {
-  this->addDependentField(U);
-  this->addDependentField(Ugrad);
-  this->addDependentField(force);
-  //this->addDependentField(UDot);
-  this->addDependentField(wBF);
-  this->addDependentField(wGradBF);
-  this->addDependentField(muFELIX);
-  this->addDependentField(epsilonXX);
-  this->addDependentField(epsilonYY);
-  this->addDependentField(epsilonXY);
+  this->addDependentField(U.fieldTag());
+  this->addDependentField(Ugrad.fieldTag());
+  this->addDependentField(force.fieldTag());
+  //this->addDependentField(UDot.fieldTag());
+  this->addDependentField(wBF.fieldTag());
+  this->addDependentField(wGradBF.fieldTag());
+  this->addDependentField(muFELIX.fieldTag());
+  this->addDependentField(epsilonXX.fieldTag());
+  this->addDependentField(epsilonYY.fieldTag());
+  this->addDependentField(epsilonXY.fieldTag());
 
   this->addEvaluatedField(Residual);
 
@@ -93,7 +92,6 @@ template<typename EvalT, typename Traits>
 void StokesL1L2Resid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t node=0; node < numNodes; ++node) {
             for (std::size_t i=0; i<vecDim; i++)  Residual(cell,node,i)=0.0;

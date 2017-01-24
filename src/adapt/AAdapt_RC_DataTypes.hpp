@@ -7,6 +7,9 @@
 #define AADAPT_RC_DATATYPES
 
 #include "PHAL_AlbanyTraits.hpp"
+#include "Phalanx_MDField.hpp"
+
+
 
 namespace AAdapt {
 namespace rc {

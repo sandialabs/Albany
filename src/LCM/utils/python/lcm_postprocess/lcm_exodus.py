@@ -48,10 +48,10 @@ def get_names_variable(instance_exodus):
         ctypes.byref(var_char), 
         ctypes.byref(num_vars))
 
-    var_name_ptrs = (ctypes.POINTER(ctypes.c_char * (exodus.MAX_STR_LENGTH + 1)) * num_vars.value)()
+    var_name_ptrs = (ctypes.POINTER(ctypes.c_char * (exodus.MAX_NAME_LENGTH + 1)) * num_vars.value)()
 
     for i in range(num_vars.value):
-      var_name_ptrs[i] = ctypes.pointer(ctypes.create_string_buffer(exodus.MAX_STR_LENGTH + 1))
+      var_name_ptrs[i] = ctypes.pointer(ctypes.create_string_buffer(exodus.MAX_NAME_LENGTH + 1))
 
     EXODUS_LIB.ex_get_var_names(
         instance_exodus.fileId,

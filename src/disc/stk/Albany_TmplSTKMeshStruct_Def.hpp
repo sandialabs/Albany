@@ -286,15 +286,15 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   
   //Get Cubature Rule
   const std::string cub_rule_string = params->get("Cubature Rule", "GAUSS");
-  Intrepid2::EIntrepidPLPoly cub_rule;  
+  Intrepid2::EPolyType cub_rule;  
   if (cub_rule_string == "GAUSS")
-    cub_rule = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS); 
+    cub_rule = static_cast<Intrepid2::EPolyType>(Intrepid2::POLYTYPE_GAUSS); 
   else if (cub_rule_string == "GAUSS_RADAU_LEFT") 
-    cub_rule = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS_RADAU_LEFT); 
+    cub_rule = static_cast<Intrepid2::EPolyType>(Intrepid2::POLYTYPE_GAUSS_RADAU_LEFT); 
   else if (cub_rule_string == "GAUSS_RADAU_RIGHT") 
-    cub_rule = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS_RADAU_RIGHT); 
+    cub_rule = static_cast<Intrepid2::EPolyType>(Intrepid2::POLYTYPE_GAUSS_RADAU_RIGHT); 
   else if (cub_rule_string == "GAUSS_LOBATTO")
-    cub_rule = static_cast<Intrepid2::EIntrepidPLPoly>(Intrepid2::PL_GAUSS_LOBATTO); 
+    cub_rule = static_cast<Intrepid2::EPolyType>(Intrepid2::POLYTYPE_GAUSS_LOBATTO); 
   else
     TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
                                 "Invalid Cubature Rule: " << cub_rule_string << "; valid options are GAUSS, GAUSS_RADAU_LEFT, GAUSS_RADAU_RIGHT, and GAUSS_LOBATTO");

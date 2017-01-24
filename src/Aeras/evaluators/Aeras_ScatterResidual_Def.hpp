@@ -10,6 +10,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Aeras_Layouts.hpp"
+#include "Albany_Utils.hpp"
 
 namespace Aeras {
 
@@ -81,7 +82,12 @@ ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
 ScatterResidual(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Aeras::Layouts>& dl)
   : ScatterResidualBase<PHAL::AlbanyTraits::Residual,Traits>(p,dl)
-{}
+{
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  val_kokkos.resize(this->numFields);
+#endif
+}
+
 // **********************************************************************
 // Kokkos kernel
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -89,39 +95,39 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const ScatterResid_Tag& tag, const int& cell) const{
-    for (int node = 0; node < this->numNodes; ++node) {
-      int n = 0, eq = 0;
-      for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-         Kokkos::atomic_fetch_add(&fT_nonconstView[Index(cell,node,n)], (this->val[j])(cell,node));
-        //fT_nonconstView[Index(cell,node,n)] += (this->val[j])(cell,node);
-      }
-      eq += this->numNodeVar;
-      for (int level = 0; level < this->numLevels; level++) {
-        for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
-          for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-              Kokkos::atomic_fetch_add(&fT_nonconstView[Index(cell,node,n)], (this->val[j])(cell,node,level,dim));
-            //fT_nonconstView[Index(cell,node,n)] += (this->val[j])(cell,node,level,dim);
-          }
-        }
-        for (int j = eq+this->numVectorLevelVar;
-                 j < eq+this->numVectorLevelVar + this->numScalarLevelVar; ++j, ++n) {
-                Kokkos::atomic_fetch_add(&fT_nonconstView[Index(cell,node,n)], (this->val[j])(cell,node,level));
-               //   fT_nonconstView[Index(cell,node,n)] += (this->val[j])(cell,node,level);
-        }
-      }
-      eq += this->numVectorLevelVar + this->numScalarLevelVar;
-      for (int level = 0; level < this->numLevels; ++level) {
-        for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-            Kokkos::atomic_fetch_add(&fT_nonconstView[Index(cell,node,n)], (this->val[j])(cell,node,level));
-             //fT_nonconstView[Index(cell,node,n)] += (this->val[j])(cell,node,level);
-        }
-      }
-      eq += this->numTracerVar;
+  for (int node = 0; node < this->numNodes; ++node) {
+    int n = 0, eq = 0;
+    for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
+       Kokkos::atomic_fetch_add(&fT_nonconstView[Index(cell,node,n)], d_val[j](cell,node));
+      //fT_nonconstView[Index(cell,node,n)] += d_val[j](cell,node);
     }
-
-
+    eq += this->numNodeVar;
+    for (int level = 0; level < this->numLevels; level++) {
+      for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
+        for (int dim = 0; dim < this->numDims; ++dim, ++n) {
+            Kokkos::atomic_fetch_add(&fT_nonconstView[Index(cell,node,n)], d_val[j](cell,node,level,dim));
+          //fT_nonconstView[Index(cell,node,n)] += d_val[j](cell,node,level,dim);
+        }
+      }
+      for (int j = eq+this->numVectorLevelVar;
+               j < eq+this->numVectorLevelVar + this->numScalarLevelVar; ++j, ++n) {
+              Kokkos::atomic_fetch_add(&fT_nonconstView[Index(cell,node,n)], d_val[j](cell,node,level));
+             //   fT_nonconstView[Index(cell,node,n)] += d_val[j](cell,node,level);
+      }
+    }
+    eq += this->numVectorLevelVar + this->numScalarLevelVar;
+    for (int level = 0; level < this->numLevels; ++level) {
+      for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
+          Kokkos::atomic_fetch_add(&fT_nonconstView[Index(cell,node,n)], d_val[j](cell,node,level));
+           //fT_nonconstView[Index(cell,node,n)] += d_val[j](cell,node,level);
+      }
+    }
+    eq += this->numTracerVar;
+  }
 }
+
 #endif
+
 // **********************************************************************
 template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Residual, Traits>::
@@ -129,6 +135,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
+
   //get non-const view of fT 
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
 
@@ -161,178 +168,185 @@ evaluateFields(typename Traits::EvalData workset)
       eq += this->numTracerVar;
     }
   }
+
 #else
- fT = workset.fT;
- fT_nonconstView = fT->get1dViewNonConst();
- Index=workset.wsElNodeEqID_kokkos;
+  Index = workset.wsElNodeEqID_kokkos;
+
+  // Tpetra getLocalView is needed to obtain a Kokkos View from a specific device
+  auto fT_2d = workset.fT->template getLocalView<PHX::Device>();
+  fT_nonconstView = Kokkos::subview(fT_2d, Kokkos::ALL(), 0);
+
+  for (int i = 0; i < this->numFields; i++) {
+    val_kokkos[i] = this->val[i].get_view();
+  }
+  d_val = val_kokkos.template view<executionSpace>();
 
   Kokkos::parallel_for(ScatterResid_Policy(0,workset.numCells),*this);
+  cudaCheckError();
 #endif
 }
 
 // **********************************************************************
 // Specialization: Jacobian
 // **********************************************************************
-
 template<typename Traits>
 ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 ScatterResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Aeras::Layouts>& dl)
   : ScatterResidualBase<PHAL::AlbanyTraits::Jacobian,Traits>(p,dl)
-{ }
+{
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  val_kokkosjac.resize(this->numFields);
+#endif
+}
+
 // *********************************************************************
 // Kokkos kernels
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
-operator() (const ScatterResid_noFastAccess_Tag& tag, const int& i) const{
-
-}
-
-template<typename Traits>
-KOKKOS_INLINE_FUNCTION
-void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
-operator() (const ScatterResid_hasFastAccess_is_adjoint_Tag& tag, const int& cell) const{
-
- LO* colT = new LO[nunk];
- LO rowT;
-
+operator() (const ScatterResid_is_adjoint_Tag& tag, const int& cell) const{
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
-      for (int eq_col=0; eq_col<neq; eq_col++) {
-        colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
+    for (int eq_col=0; eq_col<neq; eq_col++) {
+      colT(cell, neq * node_col + eq_col) =  Index(cell,node_col,eq_col);
+    }
+  }
+
+  LO rowT;
+  for (int node = 0; node < this->numNodes; ++node) {
+    int n = 0, eq = 0;
+    for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
+      const typename PHAL::Ref<ScalarT>::type valptr = d_val[j](cell,node);
+      rowT = Index(cell,node,n);
+      if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
+      for (unsigned int i=0; i<nunk; ++i) {
+        ST val = valptr.fastAccessDx(i);
+        if (val != 0) 
+          jacobian.sumIntoValues(colT(cell,i), &rowT,  1, &val, false, true);
       }
     }
-  for (int node = 0; node < this->numNodes; ++node) {
-      int n = 0, eq = 0;
-      for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-        const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node);
-        rowT = Index(cell,node,n);
-        if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
-        for (unsigned int i=0; i<nunk; ++i) {
-          ST val = valptr.fastAccessDx(i);
-          if (val != 0) 
-            jacobian.sumIntoValues(colT[i], &rowT,  1, &val, false, true);
+
+    eq += this->numNodeVar;
+    for (int level = 0; level < this->numLevels; level++) {
+      for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
+        for (int dim = 0; dim < this->numDims; ++dim, ++n) {
+          const typename PHAL::Ref<ScalarT>::type valptr = d_val[j](cell,node,level,dim);
+          rowT = Index(cell,node,n);
+          if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
+          for (int i=0; i<nunk; ++i){
+            ST val = valptr.fastAccessDx(i);
+            if (val != 0) 
+              jacobian.sumIntoValues(colT(cell,i), &rowT,  1, &val, false, true);
+          }
         }
-      }
-      eq += this->numNodeVar;
-      for (int level = 0; level < this->numLevels; level++) {
-        for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
-          for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-            const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
-            rowT = Index(cell,node,n);
-            if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
-            for (int i=0; i<nunk; ++i){
-              ST val = valptr.fastAccessDx(i);
-              if (val != 0) 
-                jacobian.sumIntoValues(colT[i], &rowT,  1, &val, false, true);
-         }
-        }
-         for (int j = eq+this->numVectorLevelVar;
-                 j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-          const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
+
+        for (int j = eq+this->numVectorLevelVar;
+             j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
+          const typename PHAL::Ref<ScalarT>::type valptr = d_val[j](cell,node,level);
           rowT = Index(cell,node,n);
           if (loadResid) fT->sumIntoLocalValue(Index(cell,node,n), valptr.val());
           for (int i=0; i<nunk; ++i){ 
             ST val = valptr.fastAccessDx(i);
             if (val != 0) 
-              jacobian.sumIntoValues(colT[i], &rowT,  1, &val, false, true);
+              jacobian.sumIntoValues(colT(cell,i), &rowT,  1, &val, false, true);
           }
         }
       }
-     }
-      eq += this->numVectorLevelVar+this->numScalarLevelVar;
-      for (int level = 0; level < this->numLevels; ++level) {
-        for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
-          rowT = Index(cell,node,n);
-          if (loadResid) fT->sumIntoLocalValue(Index(cell,node,n), valptr.val());
-          for (int i=0; i<nunk; ++i) {
-            ST val = valptr.fastAccessDx(i);
-            if (val != 0) 
-              jacobian.sumIntoValues(colT[i], &rowT,  1, &val, false, true);
+    }
+
+    eq += this->numVectorLevelVar+this->numScalarLevelVar;
+    for (int level = 0; level < this->numLevels; ++level) {
+      for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
+        const typename PHAL::Ref<ScalarT>::type valptr = d_val[j](cell,node,level);
+        rowT = Index(cell,node,n);
+        if (loadResid) fT->sumIntoLocalValue(Index(cell,node,n), valptr.val());
+        for (int i=0; i<nunk; ++i) {
+          ST val = valptr.fastAccessDx(i);
+          if (val != 0) 
+            jacobian.sumIntoValues(colT(cell,i), &rowT,  1, &val, false, true);
         }
       }
-     }
-      eq += this->numTracerVar;
-    }    
-    delete colT; 
+    }
+    eq += this->numTracerVar;
+  }
 }
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
-operator() (const ScatterResid_hasFastAccess_no_adjoint_Tag& tag, const int& cell) const{
-
-  LO* colT = new LO[nunk];
-  LO rowT;
- 
+operator() (const ScatterResid_no_adjoint_Tag& tag, const int& cell) const{
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
-      for (int eq_col=0; eq_col<neq; eq_col++) {
-        colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
+    for (int eq_col=0; eq_col<neq; eq_col++) {
+      colT(cell, neq * node_col + eq_col) = Index(cell,node_col,eq_col);
+    }
+  }
+
+  LO rowT;
+  for (int node = 0; node < this->numNodes; ++node) {
+    int n = 0, eq = 0;
+    for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
+      const typename PHAL::Ref<ScalarT>::type valptr = d_val[j](cell,node);
+      rowT = Index(cell,node,n);
+      if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
+      for (unsigned int i=0; i<nunk; ++i) { 
+        ST val = valptr.fastAccessDx(i);
+        if (val != 0) 
+          jacobian.sumIntoValues(rowT, &colT(cell,i),  1, &val, false, true);
+      }
+      //jacobian.sumIntoValues(rowT, colT, nunk,  vals, true); 
+    }
+
+    eq += this->numNodeVar;
+    for (int level = 0; level < this->numLevels; level++) {
+      for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
+        for (int dim = 0; dim < this->numDims; ++dim, ++n) {
+          const typename PHAL::Ref<ScalarT>::type valptr = d_val[j](cell,node,level,dim);
+          rowT = Index(cell,node,n);
+          if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
+          for (int i=0; i<nunk; ++i) { 
+            ST val = valptr.fastAccessDx(i);
+            if (val != 0) 
+              jacobian.sumIntoValues(rowT, &colT(cell,i),  1, &val, false, true);
+          }
+          //jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
+        }
+
+        for (int j = eq+this->numVectorLevelVar;
+             j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
+          const typename PHAL::Ref<ScalarT>::type valptr = d_val[j](cell,node,level);
+          rowT = Index(cell,node,n);
+          if (loadResid) fT->sumIntoLocalValue(Index(cell,node,n), valptr.val());
+          for (int i=0; i<nunk; ++i) {
+            ST val = valptr.fastAccessDx(i);
+            if (val != 0) 
+              jacobian.sumIntoValues(rowT, &colT(cell,i),  1, &val, false, true);
+          }
+          //jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
+        }
       }
     }
-  for (int node = 0; node < this->numNodes; ++node) {
-      int n = 0, eq = 0;
-      for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-        const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node);
+
+    eq += this->numVectorLevelVar+this->numScalarLevelVar;
+    for (int level = 0; level < this->numLevels; ++level) {
+      for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
+        const typename PHAL::Ref<ScalarT>::type valptr = d_val[j](cell,node,level);
         rowT = Index(cell,node,n);
-        if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
-        for (unsigned int i=0; i<nunk; ++i) { 
+        if (loadResid) fT->sumIntoLocalValue(Index(cell,node,n), valptr.val());
+        for (int i=0; i<nunk; ++i) {
           ST val = valptr.fastAccessDx(i);
           if (val != 0) 
-            jacobian.sumIntoValues(rowT, &colT[i],  1, &val, false, true);
+            jacobian.sumIntoValues(rowT, &colT(cell,i),  1, &val, false, true);
         }
-        //jacobian.sumIntoValues(rowT, colT, nunk,  vals, true); 
+        //jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
       }
-      eq += this->numNodeVar;
-      for (int level = 0; level < this->numLevels; level++) {
-        for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
-          for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-            const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
-            rowT = Index(cell,node,n);
-            if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
-            for (int i=0; i<nunk; ++i) { 
-              ST val = valptr.fastAccessDx(i);
-              if (val != 0) 
-                jacobian.sumIntoValues(rowT, &colT[i],  1, &val, false, true);
-            }
-            //jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
-        }
-         for (int j = eq+this->numVectorLevelVar;
-                 j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-          const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
-          rowT = Index(cell,node,n);
-          if (loadResid) fT->sumIntoLocalValue(Index(cell,node,n), valptr.val());
-          for (int i=0; i<nunk; ++i) {
-            ST val = valptr.fastAccessDx(i);
-            if (val != 0) 
-              jacobian.sumIntoValues(rowT, &colT[i],  1, &val, false, true);
-          }
-          //jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
-        }
-      }
-     }
-      eq += this->numVectorLevelVar+this->numScalarLevelVar;
-      for (int level = 0; level < this->numLevels; ++level) {
-        for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
-          rowT = Index(cell,node,n);
-          if (loadResid) fT->sumIntoLocalValue(Index(cell,node,n), valptr.val());
-          for (int i=0; i<nunk; ++i) {
-            ST val = valptr.fastAccessDx(i);
-            if (val != 0) 
-              jacobian.sumIntoValues(rowT, &colT[i],  1, &val, false, true);
-          }
-          //jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
-      }
-     }
-      eq += this->numTracerVar;
     }
-    delete colT;
+    eq += this->numTracerVar;
+  }
 }
 
 #endif
+
 // **********************************************************************
 template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
@@ -480,25 +494,37 @@ evaluateFields(typename Traits::EvalData workset)
       eq += this->numTracerVar;
     }
   }
+
 #else
-   fT = workset.fT;
-   JacT = workset.JacT;
-   Index=workset.wsElNodeEqID_kokkos;
-   neq = workset.wsElNodeEqID[0][0].size();
-   nunk = neq*this->numNodes;
+  fT = workset.fT;
+  JacT = workset.JacT;
+  neq = workset.wsElNodeEqID[0][0].size();
+  nunk = neq*this->numNodes;
+  Index = workset.wsElNodeEqID_kokkos;
 
-   if (!JacT->isFillComplete())
-      JacT->fillComplete();
+  // Temporary data structure
+  colT = Kokkos::DynRankView<LO, PHX::Device>("colT", workset.numCells, nunk);
 
-   jacobian=JacT->getLocalMatrix();
+  if (!JacT->isFillComplete())
+    JacT->fillComplete();
 
-   loadResid = (fT != Teuchos::null);
+  jacobian=JacT->getLocalMatrix();
 
-       if (workset.is_adjoint)
-           Kokkos::parallel_for(ScatterResid_hasFastAccess_is_adjoint_Policy(0,workset.numCells),*this);
-       else
-           Kokkos::parallel_for(ScatterResid_hasFastAccess_no_adjoint_Policy(0,workset.numCells),*this);
+  loadResid = (fT != Teuchos::null);
 
+  for (int i = 0; i < this->numFields; i++) {
+    val_kokkosjac[i] = this->val[i].get_view();
+  }
+  d_val = val_kokkosjac.template view<executionSpace>();
+
+  if (workset.is_adjoint) {
+    Kokkos::parallel_for(ScatterResid_is_adjoint_Policy(0,workset.numCells),*this);
+    cudaCheckError();
+  }
+  else {
+    Kokkos::parallel_for(ScatterResid_no_adjoint_Policy(0,workset.numCells),*this);
+    cudaCheckError();
+  }
 
   if (JacT->isFillComplete())
     JacT->resumeFill();

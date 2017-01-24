@@ -24,7 +24,7 @@ DirichletEnthalpySurface(const Teuchos::ParameterList& p, const Teuchos::RCP<Alb
 
 	numNodes = dims[1];
 
-	this->addDependentField(dirTemp);
+	this->addDependentField(dirTemp.fieldTag());
 
 	this->addEvaluatedField(dirEnth);
 	this->setName("Dirichlet Enthalpy Surface");

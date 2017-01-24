@@ -1144,7 +1144,7 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
   for (auto rname : req)
     missing.insert(rname);
 
-  std::string fname, fscope, ftype;
+  std::string fname, fscope, flayout;
   int num_fields = req_fields_info->get<int>("Number Of Fields",0);
   for (int ifield=0; ifield<num_fields; ++ifield)
   {
@@ -1160,7 +1160,6 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
     {
       *out << "  - Skipping field '" << fname << "' since it's listed as output. Make sure there's an evaluator set to save it!\n";
       continue;
-
     }
     else if (fscope == "Unused")
     {
@@ -1176,38 +1175,38 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
     TEUCHOS_TEST_FOR_EXCEPTION (fscope!="Input From File", Teuchos::Exceptions::InvalidParameter,
                                   "Error! 'Field Scope' for field '" << fname << "' must be one of 'Output', 'Unused', 'Input From File' or 'Input From Mesh'.\n");
 
-    ftype = fparams.get<std::string>("Field Type","INVALID");
+    flayout = fparams.get<std::string>("Field Layout","INVALID");
 
     // Depending on the input field type, we need to use different pointers/importers/vectors
-    if (ftype == "Node Scalar")
+    if (flayout == "Node Scalar")
     {
       loadField (fname, fparams, importOperatorNode, nodes, commT, true, true, false);
     }
-    else if (ftype == "Elem Scalar")
+    else if (flayout == "Elem Scalar")
     {
       loadField (fname, fparams, importOperatorElem, elems, commT, false, true, false);
     }
-    else if (ftype == "Node Vector")
+    else if (flayout == "Node Vector")
     {
       loadField (fname, fparams, importOperatorNode, nodes, commT, true, false, false);
     }
-    else if (ftype == "Elem Vector")
+    else if (flayout == "Elem Vector")
     {
       loadField (fname, fparams, importOperatorElem, elems, commT, false, false, false);
     }
-    else if (ftype == "Node Layered Scalar")
+    else if (flayout == "Node Layered Scalar")
     {
       loadField (fname, fparams, importOperatorNode, nodes, commT, true, true, true);
     }
-    else if (ftype == "Elem Layered Scalar")
+    else if (flayout == "Elem Layered Scalar")
     {
       loadField (fname, fparams, importOperatorElem, elems, commT, false, true, true);
     }
-    else if (ftype == "Node Layered Vector")
+    else if (flayout == "Node Layered Vector")
     {
       loadField (fname, fparams, importOperatorNode, nodes, commT, true, false, true);
     }
-    else if (ftype == "Elem Layered Vector")
+    else if (flayout == "Elem Layered Vector")
     {
       loadField (fname, fparams, importOperatorElem, elems, commT, false, false, true);
     }

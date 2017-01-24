@@ -128,6 +128,13 @@ private:
   p_eb_list_{nullptr};
 };
 
+//
+//
+//
+Teuchos::RCP<MaterialDatabase>
+createMaterialDatabase(
+    Teuchos::RCP<Teuchos::ParameterList> const & params,
+    Teuchos::RCP<Teuchos_Comm const> & commT);
 }
 
 #endif // LCM_MaterialDatabase_h

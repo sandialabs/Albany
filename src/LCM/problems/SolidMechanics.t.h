@@ -18,7 +18,7 @@ constructEvaluators(
     Albany::FieldManagerChoice fm_choice,
     Teuchos::RCP<Teuchos::ParameterList> const & response_list)
 {
-  using Basis = Teuchos::RCP<Intrepid2::Basis<RealType, FieldContainer>>;
+  using Basis = Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>;
 
   // Collect problem-specific response parameters
 
@@ -57,14 +57,11 @@ constructEvaluators(
       Teuchos::rcp(new shards::CellTopology(&mesh_specs.ctd));
 
 
-  Intrepid2::DefaultCubatureFactory<RealType,
-      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+  Intrepid2::DefaultCubatureFactory cubFactory;
 
   Teuchos::RCP<
-      Intrepid2::Cubature<RealType,
-          Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,
-              PHX::Device>> > cubature =
-      cubFactory.create(*cellType, mesh_specs.cubatureDegree);
+      Intrepid2::Cubature<PHX::Device > cubature =
+      cubFactory.create<PHX::Device, RealType, RealType>(*cellType, mesh_specs.cubatureDegree);
 
 
 // Note that these are the volume element quantities
@@ -263,9 +260,7 @@ constructEvaluators(
     p
         ->set<
             Teuchos::RCP<
-                Intrepid2::Cubature<RealType,
-                    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,
-                        PHX::Device>>> >("Cubature", cubature);
+                Intrepid2::Cubature<PHX::Device>>>("Cubature", cubature);
 
     // Get the Adaptation list and send to the evaluator
     Teuchos::ParameterList& paramList = params->sublist("Adaptation");
@@ -274,9 +269,7 @@ constructEvaluators(
     p
         ->set<
             const Teuchos::RCP<
-                Intrepid2::Basis<RealType,
-                    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,
-                        PHX::Device>>> >("Intrepid2 Basis", intrepid_basis);
+                Intrepid2::Basis<PHX::Device, RealType, RealType>>>("Intrepid2 Basis", intrepid_basis);
     ev = Teuchos::rcp(
         new LCM::IsoMeshSizeField<EvalT, PHAL::AlbanyTraits>(*p, dl_));
     field_mgr.template registerEvaluator<EvalT>(ev);

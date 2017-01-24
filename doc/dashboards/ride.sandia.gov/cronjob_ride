@@ -1,0 +1,11 @@
+#This is the cronjob that runs nightly on ride to clone and build, 
+#Trilinos and Albany, and run Albany tests.  Currently I cannot 
+#get the test results to upload from ride to the CDash site.  
+#To get arround this, I copy the results to my workstation,
+#camobap.ca.sandia.gov, and upload the results to CDash from there.
+#See cronjob_camobap for the cronjob on that machine.
+
+01 00 * * 1-5  cd /home/ikalash/nightlyCDash; sbatch trilinos.batch
+30 03 * * 1-5  cd /home/ikalash/nightlyCDash; sbatch albany.batch
+01 06 * * 1-5  cd /home/ikalash/nightlyCDash; bash process_results_ctest.sh 
+02 06 * * 1-5  cd /home/ikalash/nightlyCDash; bash send_email_ctest.sh 

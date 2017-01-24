@@ -52,8 +52,6 @@ HomogenizedConstantsResponse(Teuchos::ParameterList& p,
   int numCells = dims[0];
   int numQPs   = dims[1];
 
-  components.resize(0);
-  
   Teuchos::RCP<PHX::DataLayout> local_response_layout;
   Teuchos::RCP<PHX::DataLayout> global_response_layout;
   if(fieldType == "Scalar"){
@@ -72,18 +70,19 @@ HomogenizedConstantsResponse(Teuchos::ParameterList& p,
     local_response_layout = Teuchos::rcp(new PHX::MDALayout<Cell,Dim>(numCells,nVoigt));
     global_response_layout = Teuchos::rcp(new PHX::MDALayout<Dim>(nVoigt));
 
-    components.resize(nVoigt,tensorRank);
-    components(0,0) = 0; components(0,1) = 0;
+    component0.resize(nVoigt);
+    component1.resize(nVoigt);
+    component0(0) = 0; component1(0) = 0;
     if(numDims==2){
-      components(1,0) = 1; components(1,1) = 1;
-      components(2,0) = 0; components(2,1) = 1;
+      component0(1) = 1; component1(1) = 1;
+      component0(2) = 0; component1(2) = 1;
     } else
     if(numDims==3){
-      components(1,0) = 1; components(1,1) = 1;
-      components(2,0) = 2; components(2,1) = 2;
-      components(3,0) = 1; components(3,1) = 2;
-      components(4,0) = 0; components(4,1) = 2;
-      components(5,0) = 0; components(5,1) = 1;
+      component0(1) = 1; component1(1) = 1;
+      component0(2) = 2; component1(2) = 2;
+      component0(3) = 1; component1(3) = 2;
+      component0(4) = 0; component1(4) = 2;
+      component0(5) = 0; component1(5) = 1;
     }
   }
 
@@ -174,10 +173,9 @@ evaluateFields(typename Traits::EvalData workset)
         }
       } else 
       if( tensorRank == 2 ){
-        int nterms = components.dimension(0);
-   //     Intrepid2::FieldContainer_Kokkos<int, PHX::Layout, PHX::Device>& c = components;
+        int nterms = component0.size();
         for(std::size_t ic=0; ic<nterms; ic++){
-          s = -field(cell,qp,components(ic,0),components(ic,1)) * weights(cell,qp);
+          s = -field(cell,qp,component0(ic),component1(ic)) * weights(cell,qp);
           this->local_response(cell,ic) += s;
           this->global_response(ic) += s;
         }

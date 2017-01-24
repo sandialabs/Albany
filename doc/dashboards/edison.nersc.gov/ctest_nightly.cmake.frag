@@ -31,6 +31,7 @@ set (CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
 set (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 set (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
 set (CTEST_FLAGS "-j16")
+set (CTEST_BUILD_FLAGS "-j16")
 
 set (CTEST_DROP_METHOD "http")
 
@@ -208,8 +209,8 @@ if (BUILD_TRILINOS)
     "-DTrilinos_ENABLE_KokkosCore:BOOL=ON"
     "-DTrilinos_ENABLE_KokkosContainers:BOOL=ON"
     "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
-    "-DTrilinos_ENABLE_Intrepid:BOOL=ON"
     "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
+    "-DIntrepid2_ENABLE_KokkosDynRankView:BOOL=ON"
     "-DTrilinos_ENABLE_ML:BOOL=ON"
     "-DTrilinos_ENABLE_MueLu:BOOL=ON"
     "-DTrilinos_ENABLE_NOX:BOOL=ON"
@@ -310,6 +311,8 @@ if (BUILD_TRILINOS)
     "-DMPI_EXEC_MAX_NUMPROCS:STRING=4"
     "-DMPI_EXEC_NUMPROCS_FLAG:STRING=-n"
     "-DTPL_Netcdf_PARALLEL:BOOL=ON"
+    "-DIntrepid2_ENABLE_KokkosDynRankView:BOOL=ON"
+    "-DCMAKE_SKIP_INSTALL_RPATH=TRUE"
   )
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")

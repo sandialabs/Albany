@@ -59,15 +59,15 @@ public virtual Albany::AbstractProblem {
    Albany::StateManager* stateMgr;
 
    std::vector<Teuchos::RCP<shards::CellTopology> > cellTypes;
-   std::vector<Teuchos::RCP<Intrepid2::Cubature<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout,PHX::Device> > > > cubatures;
-   std::vector<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+   std::vector<Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > > cubatures;
+   std::vector<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
      intrepidBasis;
 
 
-   std::vector<Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > refPoints;
-   std::vector<Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > refWeights;
-   std::vector<Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > basisAtQPs;
-   std::vector<Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > weighted_measure;
+   std::vector<Kokkos::DynRankView<RealType, PHX::Device> > refPoints;
+   std::vector<Kokkos::DynRankView<RealType, PHX::Device> > refWeights;
+   std::vector<Kokkos::DynRankView<RealType, PHX::Device> > basisAtQPs;
+   std::vector<Kokkos::DynRankView<RealType, PHX::Device> > weighted_measure;
 
    Teuchos::RCP<Epetra_Vector> overlapVec;
    Teuchos::RCP<Epetra_Vector> localVec;
@@ -84,6 +84,8 @@ public virtual Albany::AbstractProblem {
 //   std::string strIntegrationMethod;
 
    int nTopologies;
+
+   bool isNonconformal;
 
 };
 

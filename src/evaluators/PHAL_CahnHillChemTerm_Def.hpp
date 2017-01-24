@@ -40,8 +40,8 @@ CahnHillChemTerm(const Teuchos::ParameterList& p) :
   numQPs  = dims[1];
   numDims = dims[2];
 
-  this->addDependentField(rho);
-  this->addDependentField(w);
+  this->addDependentField(rho.fieldTag());
+  this->addDependentField(w.fieldTag());
 
   this->addEvaluatedField(chemTerm);
 

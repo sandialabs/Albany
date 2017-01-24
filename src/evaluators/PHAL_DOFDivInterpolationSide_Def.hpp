@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace PHAL {
 
@@ -21,8 +21,8 @@ DOFDivInterpolationSideBase(const Teuchos::ParameterList& p,
   gradBF      (p.get<std::string> ("Gradient BF Name"), dl_side->node_qp_gradient),
   val_qp      (p.get<std::string> ("Divergence Variable Name"), dl_side->qp_scalar )
 {
-  this->addDependentField(val_node);
-  this->addDependentField(gradBF);
+  this->addDependentField(val_node.fieldTag());
+  this->addDependentField(gradBF.fieldTag());
   this->addEvaluatedField(val_qp);
 
   this->setName("DOFDivInterpolationSideBase" );

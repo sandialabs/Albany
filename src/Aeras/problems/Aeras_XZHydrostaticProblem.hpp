@@ -115,8 +115,7 @@ namespace Aeras {
 
 }
 
-#include "Intrepid2_FieldContainer.hpp"
-#include "Intrepid2_CubaturePolylib.hpp"
+//#include "Intrepid2_CubaturePolylib.hpp"
 #include "Shards_CellTopology.hpp"
 
 #include "Aeras_Eta.hpp"
@@ -153,7 +152,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   }
 
 
-  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+  RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
     intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
   
@@ -170,13 +169,14 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
   
-  RCP <Intrepid2::CubaturePolylib<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > polylib = rcp(new Intrepid2::CubaturePolylib<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
-  std::vector< Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > cubatures(1, polylib); 
-  RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > cubature = rcp( new Intrepid2::CubatureTensor<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >(cubatures));
+//  RCP <Intrepid2::CubaturePolylib<RealType, Kokkos::DynRankView<RealType, PHX::Device> > > polylib = rcp(new Intrepid2::CubaturePolylib<RealType, Kokkos::DynRankView<RealType, PHX::Device> >(meshSpecs.cubatureDegree, meshSpecs.cubatureRule));
+//  std::vector< Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > > cubatures(1, polylib); 
+//  RCP <Intrepid2::Cubature<PHX::Device> > cubature = rcp( new Intrepid2::CubatureTensor<PHX::Device>(cubatures));
 
   //Regular Gauss Quadrature.
-  //Intrepid2::DefaultCubatureFactory<RealType> cubFactory;
-  //RCP <Intrepid2::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  std::cout << "AGS: Switching CubatureFactory -- no Polylib -- may break code??" << std::endl;
+  Intrepid2::DefaultCubatureFactory cubFactory;
+  RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree, meshSpecs.cubatureRule);
   
   const int numQPts = cubature->getNumPoints();
   const int numVertices = meshSpecs.ctd.node_count;
@@ -634,7 +634,7 @@ Aeras::XZHydrostaticProblem::constructEvaluators(
     p->set<Teuchos::ParameterList*>("XZHydrostatic Problem", &paramList);
     
     //Input
-    p->set<std::string>("Coordinate Vector Name", "Coordinate Vector Name");
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     
     //Output
     p->set<std::string>("SurfaceGeopotential", "SurfaceGeopotential");

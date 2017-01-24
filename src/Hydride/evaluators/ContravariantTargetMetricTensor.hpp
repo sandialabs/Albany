@@ -42,19 +42,19 @@ public:
 private:
 
   typedef typename EvalT::ScalarT ScalarT;
-  int  numDims, numQPs;
+  int  numDims, numQPs, containerSize;
 
   // Input:
   //! Coordinate vector at vertices
   PHX::MDField<ScalarT, Cell, Node, Dim> solnVec;
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature;
-  Teuchos::RCP<shards::CellTopology> cellType;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
 
   // Temporary FieldContainers
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> jacobian;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> jacobian_inv;
+  Kokkos::DynRankView<RealType, PHX::Device> refPoints;
+  Kokkos::DynRankView<RealType, PHX::Device> refWeights;
+  Kokkos::DynRankView<ScalarT, PHX::Device> jacobian;
+  Kokkos::DynRankView<ScalarT, PHX::Device> jacobian_inv;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Gc;

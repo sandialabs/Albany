@@ -9,7 +9,6 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_CommHelpers.hpp"
 #include "Phalanx.hpp"
-#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "PHAL_Utilities.hpp"
 
 template<typename EvalT, typename Traits>
@@ -41,10 +40,10 @@ FluxDiv (const Teuchos::ParameterList& p,
   sideSetName = p.get<std::string> ("Side Set Name");
 
   // add dependent fields
-  this->addDependentField(averaged_velocity);
-  this->addDependentField(div_averaged_velocity);
-  this->addDependentField(thickness);
-  this->addDependentField(grad_thickness);
+  this->addDependentField(averaged_velocity.fieldTag());
+  this->addDependentField(div_averaged_velocity.fieldTag());
+  this->addDependentField(thickness.fieldTag());
+  this->addDependentField(grad_thickness.fieldTag());
 
   this->addEvaluatedField(flux_div);
 

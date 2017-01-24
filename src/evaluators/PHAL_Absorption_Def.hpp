@@ -47,7 +47,7 @@ Absorption(Teuchos::ParameterList& p) :
     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
       fx(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
     coordVec = fx;
-    this->addDependentField(coordVec);
+    this->addDependentField(coordVec.fieldTag());
 
     exp_rf_kl = 
       Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(*cond_list));

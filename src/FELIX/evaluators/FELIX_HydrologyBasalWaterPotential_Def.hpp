@@ -33,8 +33,8 @@ BasalGravitationalWaterPotential (const Teuchos::ParameterList& p,
     numNodes = dl->node_scalar->dimension(1);
   }
 
-  this->addDependentField (z_s);
-  this->addDependentField (H);
+  this->addDependentField (z_s.fieldTag());
+  this->addDependentField (H.fieldTag());
 
   this->addEvaluatedField (phi_0);
 

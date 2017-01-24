@@ -63,11 +63,11 @@ ResponseThermalEnergyT(Teuchos::ParameterList& p,
   numDims = coord_dims[2];
 
   // add dependent fields
-  this->addDependentField(field);
-  this->addDependentField(coordVec);
-//  this->addDependentField(time);
-//  this->addDependentField(deltaTime);
-  this->addDependentField(weights);
+  this->addDependentField(field.fieldTag());
+  this->addDependentField(coordVec.fieldTag());
+//  this->addDependentField(time.fieldTag());
+//  this->addDependentField(deltaTime.fieldTag());
+  this->addDependentField(weights.fieldTag());
   this->setName(field_name+" Response Field IntegralT"+PHX::typeAsString<EvalT>());
 
   // Setup scatter evaluator

@@ -8,7 +8,6 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
-#include "Intrepid2_FunctionSpaceTools.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -71,8 +70,8 @@ StackFieldsBase(const Teuchos::ParameterList& p,
   fields_in.push_back(PHX::MDField<ScalarT>(name_1,layout_1));
   fields_in.push_back(PHX::MDField<ScalarT>(name_2,layout_2));
 
-  this->addDependentField(fields_in[0]);
-  this->addDependentField(fields_in[1]);
+  this->addDependentField(fields_in[0].fieldTag());
+  this->addDependentField(fields_in[1].fieldTag());
 
   TEUCHOS_TEST_FOR_EXCEPTION (offsets[2]!=dims_out.back(), std::logic_error,
                               "Error! The sum of input fields dimensions does not match the output field dimension.\n");
@@ -126,7 +125,7 @@ StackFieldsBase(const Teuchos::ParameterList& p,
     offsets[i+1] = offsets[i] + dims_in[i];
 
     fields_in[i] = PHX::MDField<ScalarT>(names[i],layout_i);
-    this->addDependentField(fields_in[i]);
+    this->addDependentField(fields_in[i].fieldTag());
   }
 
   TEUCHOS_TEST_FOR_EXCEPTION (offsets.back()!=dims_out.back(), std::logic_error,

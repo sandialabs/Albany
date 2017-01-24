@@ -1,0 +1,48 @@
+#!/bin/bash
+#-------------------------------------------
+#
+# Platform and User-Specific Paths and environment variables
+#
+# This file must be modified for each user/machine
+#
+# GAH 08/11
+#-------------------------------------------
+
+#source .bash_profile
+# Outside variables for parallel
+# module load openmpi-1.4/gcc-4.1.2
+
+# Set these to whatever you like
+
+
+
+SCRIPTDIR=/home/ikalash/nightlyAlbanyTests/
+NIGHTLYDIR=$SCRIPTDIR/Results
+
+#set this correctly
+#set this correctly, to software.sandia.gov user name
+SSGUSER=ikalash
+
+# Don't change these
+TRILDIR=$NIGHTLYDIR/Trilinos
+TRIBUILDDIR=$NIGHTLYDIR/Trilinos/build-cuda/
+TRILINSTALLDIR=$TRIBUILDDIR/install
+ALBDIR=$NIGHTLYDIR/Albany
+TRIKOTADIR=$TRILDIR/packages/TriKota
+
+# Set these to whatever you like
+TRILOUTDIR=$NIGHTLYDIR/Trilinos_out
+ALBOUTDIR=$NIGHTLYDIR/Albany_out
+DAKOUTDIR=$NIGHTLYDIR/Dakota_out
+
+NETCDF=/home/ikalash/Install/TPLS
+HDF5DIR=/home/ikalash/Install/TPLS
+BOOSTDIR=/home/ikalash/Install/boost_1_53_0-gcc
+INTEL_DIR=/opt/intel/mkl/lib/intel64
+CC_DIR=/home/projects/x86-64-sandybridge-nvidia/openmpi/1.10.1/gnu/4.7.2/cuda/7.5.7/bin
+
+# Must be set
+TRILINOS_BRANCH=develop
+ALBANY_BRANCH=DynRankViewIntrepid2Refactor
+
+

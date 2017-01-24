@@ -49,11 +49,11 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> ForchTerm;
 
-  unsigned int numQPs, numDims, numNodes;
+  unsigned int numQPs, numDims, numNodes, numCells;
   bool enableTransient;
   bool haveHeat;
 
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> normV;
+  Kokkos::DynRankView<ScalarT, PHX::Device> normV;
  
 };
 }

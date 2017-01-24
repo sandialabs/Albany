@@ -30,8 +30,8 @@ JouleHeating(Teuchos::ParameterList& p) :
   numDims = dims[2];
 
   this->addEvaluatedField(jouleHeating);
-  this->addDependentField(potentialGrad);
-  this->addDependentField(potentialFlux);
+  this->addDependentField(potentialGrad.fieldTag());
+  this->addDependentField(potentialFlux.fieldTag());
   this->setName("Joule Heating" );
 }
 
@@ -51,8 +51,8 @@ template<typename EvalT, typename Traits>
 void JouleHeating<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Intrepid2::FunctionSpaceTools::dotMultiplyDataData<ScalarT>
-    (jouleHeating, potentialFlux, potentialGrad);
+  Intrepid2::FunctionSpaceTools<PHX::Device>::dotMultiplyDataData
+    (jouleHeating.get_view(), potentialFlux.get_view(), potentialGrad.get_view());
 }
 // **********************************************************************
 // **********************************************************************

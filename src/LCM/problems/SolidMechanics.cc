@@ -12,7 +12,7 @@
 #include "ConstitutiveModelInterface.hpp"
 #include "ConstitutiveModelParameters.hpp"
 #include "Kinematics.hpp"
-#include "LCM_Utils.h"
+#include "MaterialDatabase.h"
 #include "MechanicsResidual.hpp"
 #include "NOXSolverPrePostOperator.h"
 #include "PHAL_NSMaterialProperty.hpp"
@@ -343,10 +343,10 @@ void
 Albany::SolidMechanics::
 getAllocatedStates(
     Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>
+        Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>>
     old_state,
     Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>
+        Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>>
     new_state
     ) const
     {

@@ -1,0 +1,35 @@
+
+reset
+
+#{SCALE_FACTOR=0.9411764705}
+#{HORIZON=0.125*SCALE_FACTOR}
+#{FEM_ELEM_SIZE=0.125*SCALE_FACTOR}
+#{PD_ELEM_SIZE=HORIZON/2.0}
+#{PD_BAR_LENGTH=15*HORIZON}
+#{FEM_BAR_LENGTH=3*HORIZON+FEM_ELEM_SIZE}
+
+create brick x {PD_BAR_LENGTH} y {0.5*SCALE_FACTOR} z {0.25*SCALE_FACTOR}
+create brick x {FEM_BAR_LENGTH} y {0.5*SCALE_FACTOR} z {0.25*SCALE_FACTOR}
+volume 2 move x {0.5*(PD_BAR_LENGTH - FEM_BAR_LENGTH) + FEM_ELEM_SIZE} y 0.0 z 0.0
+create brick x {FEM_BAR_LENGTH} y {0.5*SCALE_FACTOR} z {0.25*SCALE_FACTOR}
+volume 3 move x {0.5*(-PD_BAR_LENGTH + FEM_BAR_LENGTH) - FEM_ELEM_SIZE} y 0.0 z 0.0
+webcut volume 1 with plane xplane offset {0.5*PD_BAR_LENGTH - HORIZON} imprint merge
+webcut volume 4 with plane xplane offset {-0.5*PD_BAR_LENGTH + HORIZON} imprint merge
+volume 1 4 5 size {PD_ELEM_SIZE}
+volume 2 3 size {FEM_ELEM_SIZE}
+mesh volume all
+block 1 volume 1 4 5
+block 2 volume 2 3
+nodeset 1 surface 16                  # left end fem face
+nodeset 2 surface 12                  # right end fem face
+nodeset 3 volume 1 5                  # pd nodes in control
+nodeset 4 surface 10 18               # fem nodes in control
+nodeset 5 volume 1 5 surface 10 18    # complete set of control nodes
+nodeset 6 curve 33
+nodeset 7 curve 31
+nodeset 8 curve 22
+nodeset 9 curve 17 
+export genesis 'OBC_Mechanics_Crack_AllHex.g' overwrite
+
+# The path to spheregen.py is toolset/contrib/testTools/adagio/spheregen.py
+# spheregen.py --ignore-blocks 2 -o OBC_Mechanics_Crack.g OBC_Mechanics_Crack_AllHex.g

@@ -107,7 +107,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     coordVec = PHX::MDField<MeshScalarT>(
       p.get<std::string>("Coordinate Vector Name"),
       coord_dl);
-    this->addDependentField(coordVec);
+    this->addDependentField(coordVec.fieldTag());
     std::vector<PHX::DataLayout::size_type> coord_dims;
     coord_dl->dimensions(coord_dims);
     point.resize(coord_dims[2]);
@@ -132,7 +132,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     T = PHX::MDField<ScalarT>(
       p.get<std::string>("Temperature Variable Name"),
       layout);
-    this->addDependentField(T);
+    this->addDependentField(T.fieldTag());
 
     // Add property as a Sacado-ized parameter
     this->registerSacadoParameter(name_mp+" Reference Value", paramLib);
@@ -144,7 +144,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     T = PHX::MDField<ScalarT>(
       p.get<std::string>("Temperature Variable Name"),
       layout);
-    this->addDependentField(T);
+    this->addDependentField(T.fieldTag());
 
     // Add property as a Sacado-ized parameter
     this->registerSacadoParameter(name_mp+" Reference Value", paramLib);
@@ -160,9 +160,9 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     mu = PHX::MDField<ScalarT>(
       p.get<std::string>("Average Scattering Angle Name"),
       layout);
-    this->addDependentField(sigma_a);
-    this->addDependentField(sigma_s);
-    this->addDependentField(mu);
+    this->addDependentField(sigma_a.fieldTag());
+    this->addDependentField(sigma_s.fieldTag());
+    this->addDependentField(mu.fieldTag());
   }
   else if (type == "Time Dependent") {
     matPropType = TIME_DEP_SCALAR;

@@ -23,8 +23,8 @@ DOFVecGradInterpolationSideBase(const Teuchos::ParameterList& p,
   TEUCHOS_TEST_FOR_EXCEPTION (!dl_side->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                               "Error! The layouts structure does not appear to be that of a side set.\n");
 
-  this->addDependentField(val_node);
-  this->addDependentField(gradBF);
+  this->addDependentField(val_node.fieldTag());
+  this->addDependentField(gradBF.fieldTag());
   this->addEvaluatedField(grad_qp);
 
   this->setName("DOFVecGradInterpolationSideBase" );

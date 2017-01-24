@@ -8,7 +8,6 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
-#include "Intrepid2_FunctionSpaceTools.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -63,18 +62,18 @@ StokesFOResid(const Teuchos::ParameterList& p,
     eqn_type = POISSON;
   }
 
-  this->addDependentField(U);
-  this->addDependentField(Ugrad);
-  this->addDependentField(force);
-  this->addDependentField(wBF);
-  this->addDependentField(wGradBF);
-  this->addDependentField(muFELIX);
+  this->addDependentField(U.fieldTag());
+  this->addDependentField(Ugrad.fieldTag());
+  this->addDependentField(force.fieldTag());
+  this->addDependentField(wBF.fieldTag());
+  this->addDependentField(wGradBF.fieldTag());
+  this->addDependentField(muFELIX.fieldTag());
 
   needsBasalResidual = p.get<bool>("Needs Basal Residual");
   if (needsBasalResidual)
   {
     basalRes  = PHX::MDField<ScalarT,Cell,Node,VecDim>(p.get<std::string> ("Basal Residual Variable Name"), dl->node_vector);
-    this->addDependentField(basalRes);
+    this->addDependentField(basalRes.fieldTag());
   }
 
   stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
@@ -82,7 +81,7 @@ StokesFOResid(const Teuchos::ParameterList& p,
   if(useStereographicMap)
   {
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
-    this->addDependentField(coordVec);
+    this->addDependentField(coordVec.fieldTag());
   }
 
   this->addEvaluatedField(Residual);

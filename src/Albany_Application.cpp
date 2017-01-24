@@ -40,6 +40,10 @@
 #endif
 #endif
 
+#if defined(ATO_USES_COGENT)
+#include "ATO_XFEM_Preconditioner.hpp"
+#endif
+
 #include "Albany_ScalarResponseFunction.hpp"
 #include "PHAL_Utilities.hpp"
 
@@ -223,13 +227,15 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     solMethod = Continuation;
   else if(solutionMethod == "Transient")
     solMethod = Transient;
+  else if(solutionMethod == "Transient Tempus")
+    solMethod = TransientTempus;
   else if(solutionMethod == "Eigensolve")
     solMethod = Eigensolve;
   else if(solutionMethod == "Aeras Hyperviscosity")
     solMethod = Transient;
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,
-            std::logic_error, "Solution Method must be Steady, Transient, "
+            std::logic_error, "Solution Method must be Steady, Transient, Transient Tempus "
             << "Continuation, Eigensolve, or Aeras Hyperviscosity, not : " << solutionMethod);
 
   bool expl = false;
@@ -260,7 +266,17 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     if (stepperType.find("Explicit") != std::string::npos)
       expl = true;
   }
-  //*out << "stepperType, expl: " <<stepperType << ", " <<  expl << std::endl;
+  else if (solMethod == TransientTempus) {
+    //Get Piro PL
+    Teuchos::RCP<Teuchos::ParameterList> piroParams = Teuchos::sublist(params, "Piro", true);
+    //Check if there is Rythmos Solver sublist, and get the stepper type
+    if (piroParams->isSublist("Tempus")) {
+      Teuchos::RCP<Teuchos::ParameterList> rythmosSolverParams = Teuchos::sublist(piroParams, "Tempus", true);
+    }
+    //IKT, 10/26/16, FIXME: get whether method is explicit from Tempus parameter list 
+    //expl = true; 
+  }
+   //*out << "stepperType, expl: " <<stepperType << ", " <<  expl << std::endl;
 
   // Register shape parameters for manipulation by continuation/optimization
   if (problemParams->get("Enable Cubit Shape Parameters",false)) {
@@ -283,10 +299,17 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   determinePiroSolver(params);
 
   physicsBasedPreconditioner = problemParams->get("Use Physics-Based Preconditioner",false);
+  if (physicsBasedPreconditioner){
+    precType = problemParams->get("Physics-Based Preconditioner","Teko");
 #ifdef ALBANY_TEKO
-  if (physicsBasedPreconditioner)
-    tekoParams = Teuchos::sublist(problemParams, "Teko", true);
+    if(precType == "Teko")
+      precParams = Teuchos::sublist(problemParams, "Teko", true);
 #endif
+#ifdef ATO_USES_COGENT
+    if(precType == "XFEM")
+      precParams = Teuchos::sublist(problemParams, "XFEM", true);
+#endif
+  }
 
   //get info from Scaling parameter list (for scaling Jacobian/residual)
   RCP<Teuchos::ParameterList> scalingParams = Teuchos::sublist(params, "Scaling", true);
@@ -741,30 +764,36 @@ Albany::Application::
 getPreconditioner()
 {
 #if defined(ALBANY_TEKO)
-   //inverseLib = Teko::InverseLibrary::buildFromStratimikos();
-   inverseLib = Teko::InverseLibrary::buildFromParameterList(tekoParams->sublist("Inverse Factory Library"));
-   inverseLib->PrintAvailableInverses(*out);
-
-   inverseFac = inverseLib->getInverseFactory(tekoParams->get("Preconditioner Name","Amesos"));
-
-   // get desired blocking of unknowns
-   std::stringstream ss;
-   ss << tekoParams->get<std::string>("Unknown Blocking");
-
-   // figure out the decomposition requested by the string
-   unsigned int num=0,sum=0;
-   while(not ss.eof()) {
-      ss >> num;
-      TEUCHOS_ASSERT(num>0);
-      sum += num;
-      blockDecomp.push_back(num);
-   }
-   TEUCHOS_ASSERT(neq==sum);
-
-   return rcp(new Teko::Epetra::InverseFactoryOperator(inverseFac));
-#else
-   return Teuchos::null;
+  if(precType == "Teko"){
+     //inverseLib = Teko::InverseLibrary::buildFromStratimikos();
+     inverseLib = Teko::InverseLibrary::buildFromParameterList(precParams->sublist("Inverse Factory Library"));
+     inverseLib->PrintAvailableInverses(*out);
+  
+     inverseFac = inverseLib->getInverseFactory(precParams->get("Preconditioner Name","Amesos"));
+  
+     // get desired blocking of unknowns
+     std::stringstream ss;
+     ss << precParams->get<std::string>("Unknown Blocking");
+  
+     // figure out the decomposition requested by the string
+     unsigned int num=0,sum=0;
+     while(not ss.eof()) {
+        ss >> num;
+        TEUCHOS_ASSERT(num>0);
+        sum += num;
+        blockDecomp.push_back(num);
+     }
+     TEUCHOS_ASSERT(neq==sum);
+  
+     return rcp(new Teko::Epetra::InverseFactoryOperator(inverseFac));
+  } else
 #endif
+#if defined(ATO_USES_COGENT)
+  if(precType == "XFEM"){
+    return rcp(new ATO::XFEM::Preconditioner(precParams));
+  } else
+#endif
+   return Teuchos::null;
 }
 
 RCP<const Epetra_Vector>
@@ -1730,17 +1759,31 @@ computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
                             const RCP<Epetra_Operator>& prec)
 {
 #if defined(ALBANY_TEKO)
-  TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
+  if(precType == "Teko"){
+    TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
+  
+    *out << "Computing WPrec by Teko" << std::endl;
 
-  *out << "Computing WPrec by Teko" << std::endl;
+    RCP<Teko::Epetra::InverseFactoryOperator> blockPrec
+      = rcp_dynamic_cast<Teko::Epetra::InverseFactoryOperator>(prec);
+  
+    blockPrec->initInverse();
+  
+    wrappedJac = buildWrappedOperator(jac, wrappedJac);
+    blockPrec->rebuildInverseOperator(wrappedJac);
+  } 
+#endif
+#if defined(ATO_USES_COGENT)
+  if(precType == "XFEM"){
+    TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
+  
+    *out << "Computing WPrec by Cogent" << std::endl;
 
-  RCP<Teko::Epetra::InverseFactoryOperator> blockPrec
-    = rcp_dynamic_cast<Teko::Epetra::InverseFactoryOperator>(prec);
-
-  blockPrec->initInverse();
-
-  wrappedJac = buildWrappedOperator(jac, wrappedJac);
-  blockPrec->rebuildInverseOperator(wrappedJac);
+    RCP<ATO::XFEM::Preconditioner> cogentPrec
+      = rcp_dynamic_cast<ATO::XFEM::Preconditioner>(prec);
+  
+    cogentPrec->BuildPreconditioner(jac, disc, stateMgr);
+  }
 #endif
 }
 #endif
@@ -4311,7 +4354,7 @@ Albany::Application::buildWrappedOperator(const RCP<Epetra_Operator>& Jac,
      rcp_dynamic_cast<Teko::Epetra::StridedEpetraOperator>(wrappedOp)->RebuildOps();
 
   // test blocked operator for correctness
-  if(tekoParams->get("Test Blocked Operator",false)) {
+  if(precParams->get("Test Blocked Operator",false)) {
      bool result
         = rcp_dynamic_cast<Teko::Epetra::StridedEpetraOperator>(wrappedOp)->testAgainstFullOperator(6,1e-14);
 
@@ -4352,6 +4395,8 @@ Albany::Application::determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterLi
       piroSolverToken = "LOCA";
     } else if (solMethod == Transient) {
       piroSolverToken = (secondOrder == "No") ? "Rythmos" : secondOrder;
+    } else if (solMethod == TransientTempus) {
+      piroSolverToken = (secondOrder == "No") ? "Tempus" : secondOrder;
     } else {
       // Piro cannot handle the corresponding problem
       piroSolverToken = "Unsupported";
@@ -4635,20 +4680,27 @@ void Albany::Application::setupBasicWorksetInfoT(
   workset.distParamLib = distParamLib;
   workset.disc = disc;
   
-  // MJJ (3/30/2016)
-  #if !defined ALBANY_AMP_ADD_LAYER
-// original version
+  //  original version
   if (!paramLib->isParameter("Time"))
     workset.current_time = current_time;
   else
     workset.current_time =
       paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
-#else
-  // version needed when computing responses when we add a new mesh layer to a
-  // previous mesh model.
-  workset.current_time = current_time;
-  paramLib->setRealValue<PHAL::AlbanyTraits::Residual>("Time",current_time);
-#endif
+  
+//  // MJJ (3/30/2016)
+//  #if !defined ALBANY_AMP_ADD_LAYER
+//// original version
+//  if (!paramLib->isParameter("Time"))
+//    workset.current_time = current_time;
+//  else
+//    workset.current_time =
+//      paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+//#else
+//  // version needed when computing responses when we add a new mesh layer to a
+//  // previous mesh model.
+//  workset.current_time = current_time;
+//  paramLib->setRealValue<PHAL::AlbanyTraits::Residual>("Time",current_time);
+//#endif
   
   workset.transientTerms = Teuchos::nonnull(workset.xdotT);
   workset.accelerationTerms = Teuchos::nonnull(workset.xdotdotT);

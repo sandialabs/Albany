@@ -9,7 +9,6 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_CommHelpers.hpp"
 #include "Phalanx.hpp"
-#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "PHAL_Utilities.hpp"
 
 template<typename EvalT, typename Traits>
@@ -60,14 +59,14 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   numBasalQPs  = dl_basal->qp_scalar->dimension(2);
 
   // add dependent fields
-  this->addDependentField(flux_div);
-  this->addDependentField(SMB);
-  this->addDependentField(SMBRMS);
-  this->addDependentField(thickness);
-  this->addDependentField(grad_thickness);
-  this->addDependentField(obs_thickness);
-  this->addDependentField(thicknessRMS);
-  this->addDependentField(w_measure_2d);
+  this->addDependentField(flux_div.fieldTag());
+  this->addDependentField(SMB.fieldTag());
+  this->addDependentField(SMBRMS.fieldTag());
+  this->addDependentField(thickness.fieldTag());
+  this->addDependentField(grad_thickness.fieldTag());
+  this->addDependentField(obs_thickness.fieldTag());
+  this->addDependentField(thicknessRMS.fieldTag());
+  this->addDependentField(w_measure_2d.fieldTag());
 
   this->setName("Response Surface Mass Balance Mismatch" + PHX::typeAsString<EvalT>());
 

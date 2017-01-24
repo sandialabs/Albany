@@ -1,0 +1,5 @@
+#42 16 * * 1-7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyAlbanyTests; bash -l -c "rm modules.out; rm tests.out; source shannon_cuda_modules.sh >& modules.out; ./run_kdv.sh set_shannon_env.in MPI >& tests.out"
+#06 19 * * 1-7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyAlbanyTests; bash -l -c "./send_email.sh set_shannon_env.in MPI"
+00 02 * * 1-5 cd /home/ikalash/nightlyCDash; bash -l -c "source /home/ikalash/.bashrc; rm -rf repos; rm -rf build; rm ctest_nightly.cmake; rm nightly_log*; rm test_summary.txt; rm modules.out; source shannon_cuda_modules.sh >& modules.out; bash nightly_cron_script_trilinos_shannon.sh"
+30 04 * * 1-5 cd /home/ikalash/nightlyCDash; bash -l -c "source /home/ikalash/.bashrc; rm modules.out; source shannon_cuda_modules.sh >& modules.out; bash nightly_cron_script_albany_shannon.sh"
+#

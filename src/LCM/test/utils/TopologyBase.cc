@@ -179,8 +179,6 @@ int main(int ac, char* av[])
   stk_discretization =
       static_cast<Albany::STKDiscretization &>(*discretization_ptr);
 
-  stk_discretization.updateMesh();
-
   // Need solution for output call
   Teuchos::RCP<Tpetra_Vector>
   solution_fieldT = stk_discretization.getSolutionFieldT();

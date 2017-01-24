@@ -17,52 +17,56 @@
 namespace FELIX
 {
 
-template<typename EvalT, typename Traits, typename VelocityType>
-class BasalMeltRate : public PHX::EvaluatorWithBaseImpl<Traits>,
-					  public PHX::EvaluatorDerived<EvalT, Traits>
-{
-	public:
+  template<typename EvalT, typename Traits, typename VelocityType>
+  class BasalMeltRate : public PHX::EvaluatorWithBaseImpl<Traits>,
+  public PHX::EvaluatorDerived<EvalT, Traits>
+  {
+  public:
 
-		BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl_basal);
+    BasalMeltRate(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl_basal);
 
-		void postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& vm);
+    void postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& vm);
 
-		void evaluateFields(typename Traits::EvalData d);
+    void evaluateFields(typename Traits::EvalData d);
 
-	private:
-		typedef typename EvalT::ScalarT ScalarT;
-		typedef typename EvalT::MeshScalarT MeshScalarT;
-		typedef typename EvalT::ParamScalarT ParamScalarT;
-		//typedef VelocityType ParamScalarT;
+  private:
+    typedef typename EvalT::ScalarT ScalarT;
+    typedef typename EvalT::MeshScalarT MeshScalarT;
+    typedef typename EvalT::ParamScalarT ParamScalarT;
 
-		// Input:
-		PHX::MDField<ParamScalarT,Cell,Side,Node> basalNormalHeatCold;
-		PHX::MDField<ParamScalarT,Cell,Side,Node> basalNormalHeatTemperate;
-		PHX::MDField<ParamScalarT,Cell,Side,Node> omega;
-		PHX::MDField<ParamScalarT,Cell,Side,Node> basal_heat_flux;
+    // Input:
+    PHX::MDField<ScalarT,Cell,Side,Node> 				phi;  // []
+    PHX::MDField<ParamScalarT,Cell,Side,Node>    		beta;  // [kPa yr/m]
+    PHX::MDField<VelocityType,Cell,Side,Node,VecDim>	velocity; // [m/yr]
+    PHX::MDField<ParamScalarT,Cell,Side,Node> 			geoFluxHeat; // [W m^{-2}] = [Pa m s^{-1}]
+    PHX::MDField<ScalarT,Cell,Side,Node> 				Enthalpy; //[MW s m^{-3}]
+    PHX::MDField<ScalarT,Cell,Side,Node>                basal_dTdz; // [K km^{-1}]
+    PHX::MDField<ParamScalarT,Cell,Side,Node> 			EnthalpyHs; ////[MW s m^{-3}]
 
-		PHX::MDField<VelocityType,Cell,Side,Node,Dim> velocity;
-		PHX::MDField<ParamScalarT,Cell,Side,Node> basal_friction;
+    // Output:
+    PHX::MDField<ScalarT,Cell,Side,Node> basalMeltRate; // [m/yr]
 
-		PHX::MDField<ParamScalarT,Cell,Side,Node> meltEnthalpy;
-		PHX::MDField<ParamScalarT,Cell,Side,Node> Enthalpy;
+    PHX::MDField<ScalarT,Dim> homotopy;
 
-		// Output:
-		PHX::MDField<ScalarT,Cell,Side,Node> basalMeltRate;
+    std::vector<std::vector<int> >  sideNodes;
+    std::string                     basalSideName;
 
-		//unsigned int numQPs, numNodes;
+    int numCellNodes, numSideNodes, sideDim;
 
-		std::vector<std::vector<int> >  sideNodes;
-		std::string                     basalSideName;
+    double rho_w; 	// [kg m^{-3}] density of water
+    double rho_i; 	// [kg m^{-3}] density of ice
+    double L;       //[J kg^{-1} ] Latent heat of fusion", 3e5);
+    double g;       //[m s^{-2}], Gravity Acceleration
+    double a;       // [adim], Diffusivity homotopy exponent
 
-		int numCellNodes, numSideNodes, numSideQPs, sideDim;
+    double k_0;     //[m^2], Permeability factor
+    double k_i;   //[W m^{-1} K^{-1}], Conductivity of ice
+    double eta_w;   //[Pa s], Viscosity of water
+    double alpha_om; //[adim], Omega exponent alpha
 
-		double L;
-};
+  };
 
 }
-
-
 
 
 #endif /* FELIX_BASALMELTRATE_HPP_ */

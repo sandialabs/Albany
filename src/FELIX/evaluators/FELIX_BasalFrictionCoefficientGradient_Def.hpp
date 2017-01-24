@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Albany_Layouts.hpp"
 #include "FELIX_SharedParameter.hpp"
 #include "FELIX_ParamEnum.hpp"
@@ -43,7 +43,7 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
 #endif
     beta_type = GIVEN_CONSTANT;
   }
-  else if ((betaType == "Given Field") || (betaType == "Exponent of Given Field"))
+  else if ((betaType == "Given Field") || (betaType == "Exponent Of Given Field") || (betaType == "Galerkin Projection Of Exponent Of Given Field"))
   {
 #ifdef OUTPUT_TO_SCREEN
     *output << "Constant beta, loaded from file.\n";
@@ -53,8 +53,8 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
     beta_given = PHX::MDField<ParamScalarT,Cell,Side,Node>(p.get<std::string> ("Beta Given Variable Name"), dl->node_scalar);
     GradBF     = PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Variable Name"), dl->node_qp_gradient);
 
-    this->addDependentField (beta_given);
-    this->addDependentField (GradBF);
+    this->addDependentField (beta_given.fieldTag());
+    this->addDependentField (GradBF.fieldTag());
 
     numSideNodes = dl->node_qp_gradient->dimension(2);
   }
@@ -75,15 +75,15 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
     lambdaParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
     powerParam     = PHX::MDField<ScalarT,Dim>("Power Exponent", dl->shared_param);
 
-    this->addDependentField (N);
-    this->addDependentField (U);
-    this->addDependentField (gradN);
-    this->addDependentField (gradU);
-    this->addDependentField (u_norm);
+    this->addDependentField (N.fieldTag());
+    this->addDependentField (U.fieldTag());
+    this->addDependentField (gradN.fieldTag());
+    this->addDependentField (gradU.fieldTag());
+    this->addDependentField (u_norm.fieldTag());
 
-    this->addDependentField (muParam);
-    this->addDependentField (lambdaParam);
-    this->addDependentField (powerParam);
+    this->addDependentField (muParam.fieldTag());
+    this->addDependentField (lambdaParam.fieldTag());
+    this->addDependentField (powerParam.fieldTag());
 
     vecDim = dl->qp_vecgradient->dimension(3);
 
@@ -111,7 +111,7 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
     y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
     R2 = std::pow(R,2);
 
-    this->addDependentField(coordVec);
+    this->addDependentField(coordVec.fieldTag());
   }
 
   this->setName("BasalFrictionCoefficientGradient"+PHX::typeAsString<EvalT>());

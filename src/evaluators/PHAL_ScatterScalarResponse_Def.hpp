@@ -43,7 +43,7 @@ setup(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
     p.get<PHX::Tag<ScalarT> >("Global Response Field Tag");
   global_response = PHX::MDField<ScalarT>(global_response_tag);
   if (stand_alone)
-    this->addDependentField(global_response);
+    this->addDependentField(global_response.fieldTag());
   else
     this->addEvaluatedField(global_response);
 

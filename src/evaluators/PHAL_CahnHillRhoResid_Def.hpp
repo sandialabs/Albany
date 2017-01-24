@@ -29,16 +29,16 @@ CahnHillRhoResid(const Teuchos::ParameterList& p) :
 
   haveNoise = p.get<bool>("Have Noise");
 
-  this->addDependentField(wBF);
-  this->addDependentField(rhoGrad);
-  this->addDependentField(wGradBF);
-  this->addDependentField(chemTerm);
+  this->addDependentField(wBF.fieldTag());
+  this->addDependentField(rhoGrad.fieldTag());
+  this->addDependentField(wGradBF.fieldTag());
+  this->addDependentField(chemTerm.fieldTag());
   this->addEvaluatedField(rhoResidual);
 
   if(haveNoise){
     noiseTerm = PHX::MDField<ScalarT, Cell, QuadPoint> (p.get<std::string>("Langevin Noise Term"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-    this->addDependentField(noiseTerm);
+    this->addDependentField(noiseTerm.fieldTag());
   }
 
   gamma = p.get<double>("gamma Value");
@@ -51,8 +51,6 @@ CahnHillRhoResid(const Teuchos::ParameterList& p) :
   numNodes = dims[1];
   numQPs  = dims[2];
   numDims = dims[3];
-
-  gamma_term.resize(worksetSize, numQPs, numDims);
 
   this->setName("CahnHillRhoResid" );
 
@@ -72,6 +70,9 @@ postRegistrationSetup(typename Traits::SetupData d,
     this->utils.setFieldData(noiseTerm,fm);
 
   this->utils.setFieldData(rhoResidual,fm);
+
+  gamma_term = Kokkos::createDynRankView(rhoGrad.get_view(), "XXX", worksetSize, numQPs, numDims);
+
 }
 
 //**********************************************************************
@@ -82,7 +83,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 // Form Equation 2.2
 
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
     for (std::size_t qp=0; qp < numQPs; ++qp) 
@@ -90,13 +91,13 @@ evaluateFields(typename Traits::EvalData workset)
 
         gamma_term(cell, qp, i) = rhoGrad(cell,qp,i) * gamma; 
 
-  FST::integrate<ScalarT>(rhoResidual, gamma_term, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
+  FST::integrate(rhoResidual.get_view(), gamma_term, wGradBF.get_view(), false); // "false" overwrites
 
-  FST::integrate<ScalarT>(rhoResidual, chemTerm, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+  FST::integrate(rhoResidual.get_view(), chemTerm.get_view(), wBF.get_view(), true); // "true" sums into
 
   if(haveNoise)
 
-    FST::integrate<ScalarT>(rhoResidual, noiseTerm, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+    FST::integrate(rhoResidual.get_view(), noiseTerm.get_view(), wBF.get_view(), true); // "true" sums into
 
 
 }

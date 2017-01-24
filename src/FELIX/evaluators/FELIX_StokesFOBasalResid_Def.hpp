@@ -30,10 +30,10 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
   BF        = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
   w_measure = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint> (p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
 
-  this->addDependentField(u);
-  this->addDependentField(beta);
-  this->addDependentField(BF);
-  this->addDependentField(w_measure);
+  this->addDependentField(u.fieldTag());
+  this->addDependentField(beta.fieldTag());
+  this->addDependentField(BF.fieldTag());
+  this->addDependentField(w_measure.fieldTag());
 
   this->addEvaluatedField(basalResid);
 
@@ -42,7 +42,7 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
   int numSides = dims[1];
   numSideNodes = dims[2];
   numSideQPs   = dims[3];
-  sideDim      = dims[4];
+  sideDim      = dims[4]-1; //gradient is in physical space
   numCellNodes = basalResid.fieldTag().dataLayout().dimension(1);
 
   dl->node_vector->dimensions(dims);
@@ -53,7 +53,7 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
   if (regularized)
   {
     homotopyParam = PHX::MDField<ScalarT,Dim>("Glen's Law Homotopy Parameter", dl->shared_param);
-    this->addDependentField(homotopyParam);
+    this->addDependentField(homotopyParam.fieldTag());
   }
 
   // Index of the nodes on the sides in the numeration of the cell

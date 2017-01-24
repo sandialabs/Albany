@@ -46,7 +46,7 @@ FerroicModel<EvalT>::PostParseInitialize()
   // create/initialize transition matrix
   //
   int nTransitions = transitions.size();
-  aMatrix.resize(nVariants, nTransitions);
+  aMatrix = Kokkos::DynRankView<RealType>("aMatrix", nVariants, nTransitions);
   for(int I=0; I<nVariants; I++){
     for(int J=0; J<nVariants; J++){
       aMatrix(I,nVariants*I+J) = -1.0;

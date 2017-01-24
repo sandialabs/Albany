@@ -9,6 +9,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "Albany_Utils.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
@@ -45,7 +46,11 @@ XZHydrostatic_Omega(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(omega);
 
-  this->setName("Aeras::XZHydrostatic_Omega" );
+  this->setName("Aeras::XZHydrostatic_Omega" + PHX::typeAsString<EvalT>());
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  delta = E.delta_kokkos;
+#endif
 }
 
 //**********************************************************************
@@ -71,8 +76,8 @@ void XZHydrostatic_Omega<EvalT, Traits>::
 operator() (const XZHydrostatic_Omega_Tag& tag, const int& cell) const{
   for (int qp=0; qp < numQPs; ++qp) {
     for (int level=0; level < numLevels; ++level) {
-      ScalarT                               sum  = -0.5*divpivelx(cell,qp,level) * E.delta(level);
-      for (int j=0; j<level; ++j)           sum -=     divpivelx(cell,qp,j)     * E.delta(j);
+      ScalarT                               sum  = -0.5*divpivelx(cell,qp,level) * delta(level);
+      for (int j=0; j<level; ++j)           sum -=     divpivelx(cell,qp,j)     * delta(j);
       for (int dim=0; dim < numDims; ++dim) sum += Velocity(cell,qp,level,dim)*gradp(cell,qp,level,dim);
       omega(cell,qp,level) = sum/(Cpstar(cell,qp,level)*density(cell,qp,level));
     }
@@ -100,6 +105,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 #else
   Kokkos::parallel_for(XZHydrostatic_Omega_Policy(0,workset.numCells),*this);
+  cudaCheckError();
 
 #endif
 }

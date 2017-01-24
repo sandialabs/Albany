@@ -10,7 +10,6 @@
 #include "Phalanx_TypeStrings.hpp"
 #include "Sacado.hpp"
 
-#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace FELIX {
 const double pi = 3.1415926535897932385;
@@ -44,8 +43,8 @@ StokesL1L2BodyForce(const Teuchos::ParameterList& p,
             p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar); 
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
-    this->addDependentField(muFELIX); 
-    this->addDependentField(coordVec);
+    this->addDependentField(muFELIX.fieldTag()); 
+    this->addDependentField(coordVec.fieldTag());
   }
 
   this->addEvaluatedField(force);

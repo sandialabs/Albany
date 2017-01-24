@@ -19,6 +19,7 @@
 #include <stk_mesh/base/GetEntities.hpp>
 #include "Piro_PerformSolve.hpp"
 #include "Albany_OrdinarySTKFieldContainer.hpp"
+#include "Albany_STKDiscretization.hpp"
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
@@ -67,6 +68,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     const std::vector<double>& bedTopographyData,
     const std::vector<double>& smbData,
     const std::vector<double>& temperatureOnTetra,
+    std::vector<double>& dissipationHeatOnTetra,
     std::vector<double>& velocityOnVertices,
     const double& deltat) {
 
@@ -182,9 +184,11 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
   if(!keptMesh) {
     albanyApp->createDiscretization();
     albanyApp->finalSetUp(paramList); //, albanyApp->getDiscretization()->getSolutionFieldT());
+  } else {
+    auto abs_disc = albanyApp->getDiscretization();
+    auto stk_disc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(abs_disc);
+    stk_disc->updateMesh();
   }
-  else
-    albanyApp->getDiscretization()->updateMesh();
 
 #ifdef MPAS_USE_EPETRA
   solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiCommT, mpiCommT, Teuchos::null, false);
@@ -226,6 +230,22 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     }
     velocityOnVertices[j] = solution_constView[lId0];
     velocityOnVertices[j + numVertices3D] = solution_constView[lId1];
+  }
+
+
+  ScalarFieldType* dissipationHeatField = meshStruct->metaData->get_field <ScalarFieldType> (stk::topology::ELEMENT_RANK, "dissipation_heat");
+  for (UInt j = 0; j < numPrisms; ++j) {
+    int ib = (ordering == 0) * (j % (lElemColumnShift / 3))
+        + (ordering == 1) * (j / (elemLayerShift / 3));
+    int il = (ordering == 0) * (j / (lElemColumnShift / 3))
+        + (ordering == 1) * (j % (elemLayerShift / 3));
+    int gId = il * elemColumnShift + elemLayerShift * indexToTriangleID[ib];
+    int lId = il * lElemColumnShift + elemLayerShift * ib;
+    for (int iTetra = 0; iTetra < 3; iTetra++) {
+      stk::mesh::Entity elem = meshStruct->bulkData->get_entity(stk::topology::ELEMENT_RANK, ++gId);
+      double* dissipationHeat = stk::mesh::field_data(*dissipationHeatField, elem);
+      dissipationHeatOnTetra[lId++] = dissipationHeat[0];
+    }
   }
 
   keptMesh = true;
@@ -296,14 +316,14 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   paramList->sublist("Problem").set("Required Fields", arrayRequiredFields);
 
   //Physical Parameters
-  if(!paramList->sublist("Problem").isSublist("FELIX Physical Parameters")) {
+  if(paramList->sublist("Problem").isSublist("FELIX Physical Parameters")) {
     std::cout<<"\nWARNING: Using Physical Parameters (gravity, ice/ocean densities) provided in Albany input file. In order to use those provided by MPAS, remove \"FELIX Physical Parameters\" sublist from Albany input file.\n"<<std::endl;
   }
  
   Teuchos::ParameterList& physParamList = paramList->sublist("Problem").sublist("FELIX Physical Parameters");
  
   double rho_ice, rho_seawater; 
-  physParamList.set("Gravity", physParamList.get("Gravity", MPAS_gravity));
+  physParamList.set("Gravity Acceleration", physParamList.get("Gravity Acceleration", MPAS_gravity));
   physParamList.set("Ice Density", rho_ice = physParamList.get("Ice Density", MPAS_rho_ice));
   physParamList.set("Water Density", rho_seawater = physParamList.get("Water Density", MPAS_rho_seawater));
   
@@ -348,6 +368,8 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   viscosityList.set("Glen's Law A", viscosityList.get("Glen's Law A", MPAS_flowParamA));
   viscosityList.set("Glen's Law n", viscosityList.get("Glen's Law n",  MPAS_flowLawExponent));
   viscosityList.set("Flow Rate Type", viscosityList.get("Flow Rate Type", "Temperature Based"));
+  viscosityList.set("Extract Strain Rate Sq", viscosityList.get("Extract Strain Rate Sq", true)); //set true if not defined
+
 
   paramList->sublist("Problem").sublist("Body Force").set("Type", "FO INTERP SURF GRAD");
   

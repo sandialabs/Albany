@@ -77,8 +77,8 @@ DOFSideToCellBase(const Teuchos::ParameterList& p,
   }
 
   val_side.dimensions(dims);
-  this->addDependentField(val_cell);
-  this->addEvaluatedField(val_side);
+  this->addDependentField(val_side.fieldTag());
+  this->addEvaluatedField(val_cell);
 
   this->setName("DOFSideToCell");
 
@@ -87,7 +87,7 @@ DOFSideToCellBase(const Teuchos::ParameterList& p,
     Teuchos::RCP<shards::CellTopology> cellType;
     cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
-    int sideDim = dl_side->cell_gradient->dimension(2);
+    int sideDim = cellType->getDimension()-1;
     sideNodes.resize(dims[1]);
     for (int side=0; side<dims[1]; ++side)
     {

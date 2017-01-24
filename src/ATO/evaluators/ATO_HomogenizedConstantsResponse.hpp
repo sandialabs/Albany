@@ -9,6 +9,7 @@
 
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 #include "ATO_TopoTools.hpp"
+#include "Kokkos_Vector.hpp"
 
 
 /** 
@@ -126,7 +127,7 @@ namespace ATO
     PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     Teuchos::RCP< PHX::Tag<ScalarT> > objective_tag;
 
-    Intrepid2::FieldContainer_Kokkos<int, PHX::Layout, PHX::Device> components;
+    Kokkos::vector<int> component0, component1;
     int tensorRank;
 
     RealType local_measure;

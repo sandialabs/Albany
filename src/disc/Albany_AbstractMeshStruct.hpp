@@ -75,7 +75,7 @@ class CellSpecs {
         cellTopologyData(ctd),
         cellType(shards::CellTopology (&ctd)),
         intrepidBasis(Albany::getIntrepid2Basis(ctd, compositeTet)),
-        cellCubature(cubFactory.create(cellType, cubdegree)),
+        cellCubature(cubFactory.create<PHX::Device, RealType, RealType>(cellType, cubdegree)),
         dl(worksetSize, cellType.getNodeCount(), intrepidBasis->getCardinality(), cellCubature->getNumPoints(), numdim, vecdim)
      { }
 
@@ -85,12 +85,12 @@ class CellSpecs {
 
    private:
 
-     static Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
+     static Intrepid2::DefaultCubatureFactory  cubFactory;
 
      const CellTopologyData &cellTopologyData; // Information about the topology of the elements contained in the workset
      const shards::CellTopology cellType; // the topology of the elements contained in the workset
-     const Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis; // The basis
-     const Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cellCubature; // The cubature of the cells in the workset
+     const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis; // The basis
+     const Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cellCubature; // The cubature of the cells in the workset
      // Make sure this appears after the above, as it depends on the above being initialized prior to
      // dl being initialized
      const Albany::Layouts dl; // the data layout for the elements in the workset

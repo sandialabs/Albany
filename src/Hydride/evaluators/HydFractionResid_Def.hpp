@@ -184,14 +184,6 @@ HydFractionResid(Teuchos::ParameterList& p,
   numQPs  = dims[2];
   numDims = dims[3];
 
-
-  // Allocate workspace
-  JGrad.resize(dims[0], numQPs, numDims);
-  fh_coef.resize(dims[0], numQPs, numDims);
-  fh_time_term.resize(dims[0], numQPs, numDims);
-  CHZr_coef.resize(dims[0], numQPs, numDims);
-  CH_time_term.resize(dims[0], numQPs, numDims);
-
   this->setName("HydFractionResid"+PHX::typeAsString<EvalT>());
 }
 
@@ -210,6 +202,13 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(JThermCond,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(TGrad,fm);
+  
+  // Allocate workspace
+  JGrad = Kokkos::createDynRankView(TGrad.get_view(), "JGrad", worksetSize, numQPs, numDims);
+  fh_coef = Kokkos::createDynRankView(Temperature.get_view(), "fh_coef", worksetSize, numQPs, numDims);
+  fh_time_term = Kokkos::createDynRankView(Fhdot.get_view(), "fh_time_term", worksetSize, numQPs, numDims);
+  CHZr_coef = Kokkos::createDynRankView(Temperature.get_view(), "CHZr_coef", worksetSize, numQPs, numDims);
+  CH_time_term = Kokkos::createDynRankView(Temperature.get_view(), "CH_time_term", worksetSize, numQPs, numDims);
 
   this->utils.setFieldData(FhResidual,fm);
 }
@@ -220,11 +219,11 @@ void HydFractionResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
   // First, multiply the coefficient (JThermConductivity) by the temperature gradient to get the JGrad field
 
-  FST::scalarMultiplyDataData<ScalarT> (JGrad, JThermCond, TGrad);
+  FST::scalarMultiplyDataData<ScalarT> (JGrad, JThermCond.get_view(), TGrad.get_view());
 
   /* Now, integrate this JGrad term into the residual statement, which gives us the RHS term:
 
@@ -232,7 +231,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   */
 
-  FST::integrate<ScalarT>(FhResidual, JGrad, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
+  FST::integrate(FhResidual.get_view(), JGrad, wGradBF.get_view(), false); // "false" overwrites
 
   /*
      Now, build the coefficient for \partial f_H / \partial t
@@ -248,11 +247,11 @@ evaluateFields(typename Traits::EvalData workset)
 
     // multiply by Fhdot
 
-    FST::scalarMultiplyDataData<ScalarT> (fh_time_term, fh_coef, Fhdot);
+    FST::scalarMultiplyDataData<ScalarT> (fh_time_term, fh_coef, Fhdot.get_view());
 
     // integrate and sum into residual
 
-    FST::integrate<ScalarT>(FhResidual, fh_time_term, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+    FST::integrate(FhResidual.get_view(), fh_time_term, wBF.get_view(), true); // "true" sums into
 
   /*
      Finally, build the coefficient for \partial C_H,Zr / \partial t
@@ -270,11 +269,11 @@ evaluateFields(typename Traits::EvalData workset)
 
     // multiply by Tdot
 
-    FST::scalarMultiplyDataData<ScalarT> (CH_time_term, CHZr_coef, Tdot);
+    FST::scalarMultiplyDataData<ScalarT> (CH_time_term, CHZr_coef, Tdot.get_view());
 
     // integrate and sum into residual
 
-    FST::integrate<ScalarT>(FhResidual, CH_time_term, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+    FST::integrate(FhResidual.get_view(), CH_time_term, wBF.get_view(), true); // "true" sums into
 
 }
 

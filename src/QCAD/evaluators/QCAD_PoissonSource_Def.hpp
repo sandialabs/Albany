@@ -10,8 +10,8 @@
 #include "Sacado_ParameterRegistration.hpp"
 
 const int MAX_MESH_REGIONS = 30;
-const int MAX_POINT_CHARGES = 10;
-const int MAX_CLOUD_CHARGES = 10;
+const int MAX_POINT_CHARGES = 500;
+const int MAX_CLOUD_CHARGES = 500;
 
 template<typename EvalT, typename Traits>
 QCAD::PoissonSource<EvalT, Traits>::
@@ -2144,16 +2144,23 @@ bool QCAD::PoissonSource<EvalT,Traits>::
   return true;
 }
 
-//! ----------------- Point charge functions ---------------------
-
+//! ----------------- Cloud charge functions ---------------------
 template<typename EvalT, typename Traits>
 void QCAD::PoissonSource<EvalT,Traits>::source_cloudcharges(typename Traits::EvalData workset)
 {
+  // Length scaling special sauce copied from source_pointcharges
+  double X0 = length_unit_in_m/1e-2; // length scaling to get to [cm] (structure dimension in [um] usually)
+  ScalarT Lambda2 = eps0/(eleQ*X0*X0);  
+
   //! add point charge contributions
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for( std::size_t i=0; i < cloudCharges.size(); ++i) {
       ScalarT cutoff2 = cloudCharges[i].cutoff * cloudCharges[i].cutoff;
       ScalarT width2  = cloudCharges[i].width  * cloudCharges[i].width;
+      MeshScalarT  scaledCellVol=0.0; 
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+       	scaledCellVol += weights(cell,qp);
+      scaledCellVol *= pow(X0,3);
 
       for (std::size_t qp=0; qp < numQPs; ++qp) {
 	ScalarT distance2 =        (cloudCharges[i].position[0] - coordVec(cell,qp,0)) * (cloudCharges[i].position[0] - coordVec(cell,qp,0));
@@ -2161,8 +2168,16 @@ void QCAD::PoissonSource<EvalT,Traits>::source_cloudcharges(typename Traits::Eva
 	if(numDims>2) distance2 += (cloudCharges[i].position[2] - coordVec(cell,qp,2)) * (cloudCharges[i].position[2] - coordVec(cell,qp,2));
 
         if (distance2 <= cutoff2) {
-	  poissonSource(cell, qp) += cloudCharges[i].amplitude * exp(-distance2/(2.0*width2));
-        }
+	  ScalarT qpChargeDen = cloudCharges[i].amplitude * exp(-distance2/(2.0*width2)) / scaledCellVol;
+	  std::cout << "DEBUG: ADDING POINT CHARGE (den=" << qpChargeDen << ", was " << chargeDensity(cell,0) << ") to ws "
+		    << workset.wsIndex << ", cell " << cell << std::endl;
+
+	  for (std::size_t qp=0; qp < numQPs; ++qp) {
+	    ScalarT scaleFactor = 1.0; //TODO: get appropriate scale factor from meshRegions (later?)
+	    poissonSource(cell, qp) += 1.0/Lambda2 * qpChargeDen;
+	    chargeDensity(cell, qp) += qpChargeDen;    
+	  }
+	}
       }
     }
   }

@@ -79,7 +79,6 @@ SET(HEADERS
 
 IF(ALBANY_EPETRA)
   SET(HEADERS ${HEADERS}
-    Albany_DistributedParameterDerivativeOp.hpp
     Albany_EigendataInfoStruct.hpp
     Albany_SaveEigenData.hpp
     Albany_ModelEvaluator.hpp
@@ -281,6 +280,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherAuxData.cpp
   evaluators/PHAL_GatherCoordinateVector.cpp
   evaluators/PHAL_GatherScalarNodalParameter.cpp
+  evaluators/PHAL_ScatterScalarNodalParameter.cpp
   evaluators/PHAL_GatherSolution.cpp
   evaluators/PHAL_HeatEqResid.cpp
   evaluators/PHAL_IdentityCoordinateFunctionTraits.cpp
@@ -411,6 +411,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherCoordinateVector_Def.hpp
   evaluators/PHAL_GatherScalarNodalParameter.hpp
   evaluators/PHAL_GatherScalarNodalParameter_Def.hpp
+  evaluators/PHAL_ScatterScalarNodalParameter.hpp
+  evaluators/PHAL_ScatterScalarNodalParameter_Def.hpp
   evaluators/PHAL_GatherSolution.hpp
   evaluators/PHAL_GatherSolution_Def.hpp
   evaluators/PHAL_HeatEqResid.hpp
@@ -562,6 +564,17 @@ IF(ALBANY_ASCR AND ALBANY_EPETRA)
     )
 ENDIF()
 
+IF(ALBANY_HYDRIDE AND (NOT ALBANY_DEMO_PDES))
+  SET(SOURCES ${SOURCES}
+    evaluators/PHAL_LangevinNoiseTerm.cpp
+    )
+  SET(HEADERS ${HEADERS}
+    evaluators/PHAL_LangevinNoiseTerm.hpp
+    evaluators/PHAL_LangevinNoiseTerm_Def.hpp
+    )
+ENDIF()
+
+
 SET(MESHMOVER_DIR ${Albany_SOURCE_DIR}/src/MeshMover/src)
 SET(CUTR_SRCS
   ${MESHMOVER_DIR}/CUTR_CubitMeshMover.cpp
@@ -654,10 +667,12 @@ if (ALBANY_MOR AND ALBANY_EPETRA)
   set(HEADERS ${HEADERS} ${MOR_ALBANY_HEADERS})
 endif ()
 
+IF (ALBANY_SCOREC_STANDALONE)
+  SET(SCOREC_LIB SCOREC::core)
+ENDIF()
 
 add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
-target_link_libraries(albanyLib ${Trilinos_LIBRARIES})
-
+target_link_libraries(albanyLib ${SCOREC_LIB} ${Trilinos_LIBRARIES})
 
 # Add Albany external libraries
 
@@ -676,7 +691,20 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./LCM/
                      ./LCM/evaluators
                      ./LCM/evaluators/bc
+                     ./LCM/evaluators/contact
+                     ./LCM/evaluators/HMC
+                     ./LCM/evaluators/kinematics
+                     ./LCM/evaluators/lame
+                     ./LCM/evaluators/linear-elasticity
+                     ./LCM/evaluators/peridigm
+                     ./LCM/evaluators/poro
+                     ./LCM/evaluators/projection
+                     ./LCM/evaluators/responses
+                     ./LCM/evaluators/residuals
                      ./LCM/evaluators/surface-element
+                     ./LCM/evaluators/size-field
+                     ./LCM/evaluators/transport
+                     ./LCM/evaluators/HMC
                      ./LCM/models
                      ./LCM/utils
                      ./LCM/utils/topology
@@ -689,7 +717,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./AMP/
                      ./AMP/problems
                      ./AMP/evaluators
-         ./AMP/responses
+                     ./AMP/responses
                      ./QCAD
                      ./QCAD/problems
                      ./QCAD/evaluators
@@ -698,10 +726,6 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./ATO/problems
                      ./ATO/evaluators
                      ./ATO/utils
-                     ./GOAL
-                     ./GOAL/utils
-                     ./GOAL/responses
-                     ./GOAL/evaluators
                     )
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
@@ -721,6 +745,14 @@ IF ( ENABLE_NLopt )
   set(NLOPT_LIB nlopt)
 ELSE()
   set(NLOPT_LIB )
+ENDIF()
+
+IF ( ENABLE_Cogent )
+  include_directories (${Cogent_INCLUDE_DIR})
+  link_directories (${Cogent_LIBRARY_DIR})
+  set(Cogent_LIB Cogent)
+ELSE()
+  set(Cogent_LIB )
 ENDIF()
 
 IF ( ENABLE_DOTK )
@@ -848,12 +880,6 @@ IF (ALBANY_MESHDB_TOOLS)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} exopumiconvert)
 ENDIF()
 
-IF (ALBANY_GOAL)
-  add_executable(AlbanyGOAL GOAL/GOAL_Main.cpp)
-  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyGOAL)
-ENDIF()
-
-
 ENDIF (NOT ALBANY_LIBRARIES_ONLY)
 # End declaration of executables
 
@@ -867,6 +893,7 @@ set(ALL_LIBRARIES
   ${LAME_LIB}
   ${MATH_TOOLKIT_LIB}
   ${NLOPT_LIB}
+  ${Cogent_LIB}
   ${DOTK_LIB}
   ${LAMENT_LIB}
   ${Trilinos_EXTRA_LD_FLAGS}
@@ -924,17 +951,12 @@ ENDIF()
 
 # RPI APF mesh interface
 IF(ALBANY_APF)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} pumi)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyPUMI)
 ENDIF()
 
 IF (ALBANY_AMP)
   add_subdirectory(AMP)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AMP)
-ENDIF()
-
-IF (ALBANY_GOAL)
-  add_subdirectory(GOAL)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} GOAL)
 ENDIF()
 
 IF(ALBANY_CATALYST)
@@ -971,6 +993,14 @@ endif()
 
 # Repeat libraries twice to catch circular dependencies
 SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
+
+# this needs to come after the definition of ALBANY_LIBRARIES
+IF (ALBANY_CTM)
+  # CTM is inteded to be a demonstration of using Albany as a library, not
+  # adding a library to Albany. Thus, we do not set an additional library in
+  # the ALBANY_LIBRARIES list here.
+  add_subdirectory(CTM)
+ENDIF()
 
 MESSAGE("-- Albany Executables to link: ${ALBANY_EXECUTABLES}")
 

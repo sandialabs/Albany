@@ -24,9 +24,14 @@ template<typename EvalT, typename Traits>
 Integral1Dw_ZBase<EvalT, Traits>::
 Integral1Dw_ZBase(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl) :
-				  int1Dw_z(p.get<std::string>("Integral1D w_z Variable Name"), dl->node_scalar)
+			basal_melt_rate		(p.get<std::string>("Basal Melt Rate Variable Name"), dl->node_scalar),
+			thickness			(p.get<std::string>("Thickness Variable Name"), dl->node_scalar),
+			int1Dw_z			(p.get<std::string>("Integral1D w_z Variable Name"), dl->node_scalar)
 {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+
+  this->addDependentField(basal_melt_rate.fieldTag());
+  this->addDependentField(thickness.fieldTag());
 
   this->addEvaluatedField(int1Dw_z);
   cell_topo = p.get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
@@ -56,6 +61,8 @@ void Integral1Dw_ZBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
+    this->utils.setFieldData(basal_melt_rate,fm);
+    this->utils.setFieldData(thickness,fm);
     this->utils.setFieldData(int1Dw_z,fm);
 }
 
@@ -83,6 +90,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
     int numLayers = layeredMeshNumbering.numLayers;
     LO baseId, ilayer;
+    std::map<LO,std::pair<std::size_t,std::size_t> > basalCellsMap;
 
     for ( std::size_t cell = 0; cell < workset.numCells; ++cell )
     {
@@ -92,6 +100,10 @@ evaluateFields(typename Traits::EvalData workset)
     	{
     		LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[node]);
     		layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
+
+    		if(ilayer==0)
+    			basalCellsMap[baseId]= std::make_pair(cell,node);
+
     		double int1D = 0;
 
     		for (int il = 0; il < ilayer; ++il)
@@ -101,7 +113,19 @@ evaluateFields(typename Traits::EvalData workset)
     			int1D += 0.5 * ( xT_constView[solDOFManager.getLocalDOF(inode0, this->offset)] + xT_constView[solDOFManager.getLocalDOF(inode1, this->offset)] ) * layers_ratio[il];
     		}
 
-    		this->int1Dw_z(cell,node) = int1D;
+    		this->int1Dw_z(cell,node) = int1D * this->thickness(cell,node);
+    	}
+    }
+
+    for ( std::size_t cell = 0; cell < workset.numCells; ++cell )
+    {
+    	const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
+
+    	for (std::size_t node = 0; node < this->numNodes; ++node)
+    	{
+    		LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[node]);
+    		layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
+        this->int1Dw_z(cell,node) += this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second);
     	}
     }
 }
@@ -118,7 +142,6 @@ template<typename Traits>
 void Integral1Dw_Z<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
     Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
     Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
@@ -133,6 +156,7 @@ evaluateFields(typename Traits::EvalData workset)
     int numLayers = layeredMeshNumbering.numLayers;
 
     LO baseId, ilevel, baseId_curr, ilevel_curr;
+    std::map<LO,std::pair<std::size_t,std::size_t> > basalCellsMap;
 
     for ( std::size_t cell = 0; cell < workset.numCells; ++cell )
     {
@@ -142,6 +166,9 @@ evaluateFields(typename Traits::EvalData workset)
     	{
     		LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[node]);
     		layeredMeshNumbering.getIndices(lnodeId, baseId, ilevel);
+
+    		if(ilevel==0)
+    			basalCellsMap[baseId]= std::make_pair(cell,node);
 
     		double int1D = 0;
 
@@ -153,8 +180,20 @@ evaluateFields(typename Traits::EvalData workset)
     		}
 
     		this->int1Dw_z(cell,node) = FadType(this->int1Dw_z(cell,node).size(), int1D);
-            //std::cout << "this->int1Dw_z(cell,node).size() = " << this->int1Dw_z(cell,node).size() << std::endl;
+    	}
+    }
 
+    for ( std::size_t cell = 0; cell < workset.numCells; ++cell )
+    {
+    	const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
+
+    	for (std::size_t node = 0; node < this->numNodes; ++node)
+    	{
+    		LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(nodeID[node]);
+    		layeredMeshNumbering.getIndices(lnodeId, baseId, ilevel);
+
+
+    		// TODO implement the derivative for the extra term mb
     		for (std::size_t node_curr = 0; node_curr < this->numNodes; ++node_curr)
         	{
         		LO lnodeId_curr = nodeID[node_curr];
@@ -165,19 +204,24 @@ evaluateFields(typename Traits::EvalData workset)
         	    	//int idx = this->offset * this->numNodes + node_curr;
 
         	    	if(ilevel_curr == ilevel - 1)
-					{
-						this->int1Dw_z(cell,node).fastAccessDx(idx) = 0.5 * layers_ratio[ilevel_curr] * workset.j_coeff;
-					}
+        	    		this->int1Dw_z(cell,node).fastAccessDx(idx) = 0.5 * layers_ratio[ilevel_curr] * workset.j_coeff;
+
         	    	if( ((ilevel_curr == ilevel)||(ilevel_curr == ilevel - 1))&&(ilevel_curr > 0) )
-        	    	{
-        	            this->int1Dw_z(cell,node).fastAccessDx(idx) += 0.5 * layers_ratio[ilevel_curr - 1] * workset.j_coeff;
-        	    	}
+        	    		this->int1Dw_z(cell,node).fastAccessDx(idx) += 0.5 * layers_ratio[ilevel_curr - 1] * workset.j_coeff;
         	    }
         	}
 
+    		this->int1Dw_z(cell,node) *= this->thickness(cell,node);
+        //FadType mb = (lnodeId == baseId) ? this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second)  :
+            //                 Albany::ADValue(this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second)) ;
+
+          if (0)//lnodeId == baseId)
+            this->int1Dw_z(cell,node) += this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second);
+          else
+            this->int1Dw_z(cell,node) += Albany::ADValue(this->basal_melt_rate(basalCellsMap[baseId].first, basalCellsMap[baseId].second));
+
     	}
     }
-
 }
 
 // Specialization for AlbanyTraits::Tangent

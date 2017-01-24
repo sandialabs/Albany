@@ -22,6 +22,7 @@
 
     <ParameterList name="Peridigm Parameters">
       <ParameterList name="Optimization Based Coupling">
+	<Parameter name="Functional Scale Factor" type="double" value="1.0e9" />
       </ParameterList>
       <ParameterList name="Discretization">
 	<Parameter name="Type" type="string" value="Albany" />
@@ -100,7 +101,7 @@
       <Parameter name="Analysis Package" type="string" value="ROL"/>
       <ParameterList name="ROL">
         <Parameter name="Check Gradient" type="bool" value="false"/>
-        <Parameter name="Gradient Tolerance" type="double" value="1e-12"/> <!-- This is the main ROL convergence tolerance, it is an absolute tolerance -->
+        <Parameter name="Gradient Tolerance" type="double" value="1e-3"/> <!-- This is the main ROL convergence tolerance, it is an absolute tolerance -->
         <Parameter name="Step Tolerance" type="double" value="1e-20"/>
         <Parameter name="Max Iterations" type="int" value="500"/>
         <Parameter name="Print Output" type="bool" value="true"/>
@@ -117,7 +118,7 @@
               <Parameter name="Type"                   type="string" value="Limited-Memory BFGS" />
               <Parameter name="Maximum Storage"        type="int"    value="1000"                  />
             </ParameterList>
-          </ParameterList>        
+          </ParameterList>
     	    <!-- ===========  STEP SUBLIST  =========== -->
     	    <ParameterList name="Step">
     	      <!-- ===========  LINE SEARCH  =========== -->
@@ -229,7 +230,7 @@
 	      <Parameter name="Test Type" type="string" value="NormF"/>
 	      <Parameter name="Norm Type" type="string" value="Two Norm"/>
 	      <Parameter name="Scale Type" type="string" value="Scaled"/>
-	      <Parameter name="Tolerance" type="double" value="1.0e-14"/>
+	      <Parameter name="Tolerance" type="double" value="5.0e-14"/>
 	    </ParameterList>
 	    <ParameterList name="Test 1">
 	      <Parameter name="Test Type" type="string" value="MaxIters"/>

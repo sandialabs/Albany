@@ -60,7 +60,7 @@ protected:
   const Teuchos::RCP<Albany::Layouts>& dl;
   const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs;
 
-  int  cellDims,  numQPs, numNodes;
+  int  cellDims,  numQPs, numNodes, numCells, maxSideDim, maxNumQpSide;
   Teuchos::Array<int> offset;
   int numDOFsSet;
 
@@ -81,19 +81,19 @@ protected:
  // Should only specify flux vector components (dudx, dudy, dudz), dudn, or pressure P
 
    // dudn scaled
-  void calc_dudn_const(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& phys_side_cub_points,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
+  void calc_dudn_const(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id,
                           ScalarT scale = 1.0);
 
   // robin (also uses flux scaling)
-  void calc_dudn_robin (Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
-                        const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& phys_side_cub_points,
-                        const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& dof_side,
-                        const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
+  void calc_dudn_robin (Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
+                        const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
+                        const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side,
+                        const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                         const shards::CellTopology & celltopo,
                         const int cellDims,
                         int local_side_id,
@@ -101,54 +101,57 @@ protected:
                         const ScalarT* robin_param_values);
 
    // (dudx, dudy, dudz)
-  void calc_gradu_dotn_const(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& phys_side_cub_points,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
+  void calc_gradu_dotn_const(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id);
 
    // (t_x, t_y, t_z)
-  void calc_traction_components(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& phys_side_cub_points,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
+  void calc_traction_components(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id);
 
    // Pressure P
-  void calc_press(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& phys_side_cub_points,
-                          const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
+  void calc_press(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& phys_side_cub_points,
+                          const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id);
 
   //Basal bc
-  void calc_dudn_basal(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
-   		       const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& basalFriction_side,
-   		       const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& thickness_side,
-   		      const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& bedTopo_side,
-   		       const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& dof_side,
-                       const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
+  void calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
+                       const Kokkos::DynRankView<MeshScalarT, PHX::Device>& physPointsSide,
+   		       const Kokkos::DynRankView<ScalarT, PHX::Device>& basalFriction_side,
+   		       const Kokkos::DynRankView<ScalarT, PHX::Device>& thickness_side,
+   		      const Kokkos::DynRankView<ScalarT, PHX::Device>& bedTopo_side,
+   		       const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side,
+                       const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                        const shards::CellTopology & celltopo,
                        const int cellDims,
                        int local_side_id);
 
-  void calc_dudn_basal_scalar_field(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
-                            const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& basalFriction_side,
-                            const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& dof_side,
-                                const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
+  void calc_dudn_basal_scalar_field(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
+                       const Kokkos::DynRankView<MeshScalarT, PHX::Device>& physPointsSide,
+                            const Kokkos::DynRankView<ScalarT, PHX::Device>& basalFriction_side,
+                            const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side,
+                                const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                                 const shards::CellTopology & celltopo,
                                 const int cellDims,
                                 int local_side_id);
 
   //Lateral bc
-  void calc_dudn_lateral(Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> & qp_data_returned,
-                     const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& thickness_side,
-                     const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& elevation_side,
-                     const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& dof_side,
-                         const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>& jacobian_side_refcell,
+  void calc_dudn_lateral(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
+                       const Kokkos::DynRankView<MeshScalarT, PHX::Device>& physPointsSide,
+                     const Kokkos::DynRankView<ScalarT, PHX::Device>& thickness_side,
+                     const Kokkos::DynRankView<ScalarT, PHX::Device>& elevation_side,
+                     const Kokkos::DynRankView<ScalarT, PHX::Device>& dof_side,
+                         const Kokkos::DynRankView<MeshScalarT, PHX::Device>& jacobian_side_refcell,
                          const shards::CellTopology & celltopo,
                          const int cellDims,
                          int local_side_id);
@@ -168,37 +171,53 @@ protected:
   PHX::MDField<ParamScalarT,Cell,Node> bedTopo_field;
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::ArrayRCP<Teuchos::RCP<shards::CellTopology> > sideType;
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubatureCell;
-  Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > > cubatureSide;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureCell;
+  Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > > cubatureSide;
 
   // The basis
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
 
-  // Temporary FieldContainers
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> cubPointsSide;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPointsSide;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> cubWeightsSide;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> physPointsSide;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobianSide;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobianSide_det;
+  // Temporary Views
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsCell_buffer;
 
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> physPointsCell;
-
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> weighted_measure;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> basis_refPointsSide;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> trans_basis_refPointsSide;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> weighted_trans_basis_refPointsSide;
-
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dofCell;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dofSide;
-
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dofCellVec;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> dofSideVec;
+  Kokkos::DynRankView<ScalarT, PHX::Device> dofCell_buffer;
+  Kokkos::DynRankView<ScalarT, PHX::Device> dofCellVec_buffer;
   
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> data;
+  
+  Kokkos::DynRankView<RealType, PHX::Device> cubPointsSide_buffer;
+  Kokkos::DynRankView<RealType, PHX::Device> refPointsSide_buffer;
+  Kokkos::DynRankView<RealType, PHX::Device> cubWeightsSide_buffer;
+  Kokkos::DynRankView<RealType, PHX::Device> basis_refPointsSide_buffer;
+
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsSide_buffer;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobianSide_buffer;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobianSide_det_buffer;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> weighted_measure_buffer;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> trans_basis_refPointsSide_buffer;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> weighted_trans_basis_refPointsSide_buffer;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> side_normals_buffer;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> normal_lengths_buffer;
+  
+  Kokkos::DynRankView<ScalarT, PHX::Device> betaOnSide_buffer;
+  Kokkos::DynRankView<ScalarT, PHX::Device> thicknessOnSide_buffer;
+  Kokkos::DynRankView<ScalarT, PHX::Device> bedTopoOnSide_buffer;
+  Kokkos::DynRankView<ScalarT, PHX::Device> elevationOnSide_buffer;
+  Kokkos::DynRankView<ScalarT, PHX::Device> dofSide_buffer;
+  Kokkos::DynRankView<ScalarT, PHX::Device> dofSideVec_buffer;
+  Kokkos::DynRankView<ScalarT, PHX::Device> betaOnCell;
+  Kokkos::DynRankView<ScalarT, PHX::Device> thicknessOnCell;
+  Kokkos::DynRankView<ScalarT, PHX::Device> elevationOnCell;
+  Kokkos::DynRankView<ScalarT, PHX::Device> bedTopoOnCell;
+  
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> temporary_buffer;
+  Kokkos::DynRankView<ScalarT, PHX::Device> data_buffer;  
+
+  Kokkos::DynRankView<ScalarT, PHX::Device> data;
 
   // Output:
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>   neumann;
+  Kokkos::DynRankView<ScalarT, PHX::Device> neumann;
+
+  int numSidesOnElem;
 
   std::string sideSetID;
   Teuchos::Array<RealType> inputValues;

@@ -48,7 +48,6 @@ protected:
   //OG not used anymore
   Teuchos::RCP<PHX::FieldTag> scatter_operation;
   //OG not used anymore
-  std::vector< PHX::MDField<ScalarT> > val;
   const int numNodes;
   const int numDims;
   const int numLevels;
@@ -81,7 +80,6 @@ template<typename EvalT, typename Traits> class ComputeAndScatterJac;
 // **************************************************************
 // **************************************************************
 
-
 // **************************************************************
 // Jacobian
 // **************************************************************
@@ -95,22 +93,39 @@ public:
   void evaluateFields(typename Traits::EvalData d); 
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-public:
+  Teuchos::RCP<Tpetra_Vector> fT;
+  Teuchos::RCP<Tpetra_CrsMatrix> JacT;
+  typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
+  LocalMatrixType jacobian;
+  RealType mc;
+  int neq;
 
-Teuchos::RCP<Tpetra_Vector> fT;
-Teuchos::RCP<Tpetra_CrsMatrix> JacT;
-typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
-LocalMatrixType jacobian;
-bool loadResid;
-int neq, nunk;
+  Kokkos::View<int***, PHX::Device> Index;
 
-//FIXME, IKT, 5/9/16: add Kokkos functor implementations here. 
+  struct ComputeAndScatterJac_buildMass_Tag{};
+
+  template<int numn>
+  struct ComputeAndScatterJac_buildLaplace_Tag{};
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, ComputeAndScatterJac_buildMass_Tag> ComputeAndScatterJac_buildMass_Policy;
+
+  template<int numn>
+  using ComputeAndScatterJac_buildLaplace_Policy = Kokkos::RangePolicy<ExecutionSpace, ComputeAndScatterJac_buildLaplace_Tag<numn>>;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ComputeAndScatterJac_buildMass_Tag& tag, const int& i) const;
+
+  template<int numn>
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ComputeAndScatterJac_buildLaplace_Tag<numn>& tag, const int& i) const;
+
+private:
+  Kokkos::DynRankView<LO, PHX::Device> colT;
 
 #endif
-
-
 };
-
 
 // **************************************************************
 // GENERIC: Specializations for SG and MP not yet implemented

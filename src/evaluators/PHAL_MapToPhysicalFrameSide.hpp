@@ -44,7 +44,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Accessory variables
-  std::vector<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >     phi_at_cub_points;
+  std::vector<Kokkos::DynRankView<RealType, PHX::Device> >     phi_at_cub_points;
   std::vector<std::vector<int>>                       sideVertices;
   std::vector<int>                                    numSideVertices;
 

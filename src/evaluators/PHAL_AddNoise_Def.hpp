@@ -31,7 +31,7 @@ AddNoiseBase<EvalT, Traits, ScalarT>::AddNoiseBase (const Teuchos::ParameterList
   if (fieldName=="ZERO")
     this->addEvaluatedField(field);
   else
-    this->addDependentField(field);
+    this->addDependentField(field.fieldTag());
 
   this->addEvaluatedField(noisy_field);
 

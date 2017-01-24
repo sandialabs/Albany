@@ -9,7 +9,6 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_CommHelpers.hpp"
 #include "Phalanx.hpp"
-#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "PHAL_Utilities.hpp"
 
 template<typename EvalT, typename Traits>
@@ -26,6 +25,7 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   scaling = plist->get<double>("Scaling Coefficient", 1.0);
   alpha = plist->get<double>("Regularization Coefficient", 0.0);
   asinh_scaling = plist->get<double>("Asinh Scaling", 10.0);
+  alpha_stiffening = plist->get<double>("Regularization Coefficient Stiffening", 0.0);
 
   const std::string& velocity_name           = paramList->get<std::string>("Surface Velocity Side QP Variable Name");
   const std::string& obs_velocity_name       = paramList->get<std::string>("Observed Surface Velocity Side QP Variable Name");
@@ -49,10 +49,10 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   numSurfaceQPs = dl_surface->qp_scalar->dimension(2);
 
   // add dependent fields
-  this->addDependentField(velocity);
-  this->addDependentField(observedVelocity);
-  this->addDependentField(observedVelocityRMS);
-  this->addDependentField(w_measure_surface);
+  this->addDependentField(velocity.fieldTag());
+  this->addDependentField(observedVelocity.fieldTag());
+  this->addDependentField(observedVelocityRMS.fieldTag());
+  this->addDependentField(w_measure_surface.fieldTag());
 
   if (alpha!=0)
   {
@@ -71,8 +71,32 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
 
     numBasalQPs = dl_basal->qp_scalar->dimension(2);
 
-    this->addDependentField(w_measure_basal);
-    this->addDependentField(grad_beta);
+    this->addDependentField(w_measure_basal.fieldTag());
+    this->addDependentField(grad_beta.fieldTag());
+  }
+
+  if (alpha_stiffening!=0)
+  {
+    // Setting up the fields required by the regularizations
+    basalSideName = paramList->get<std::string> ("Basal Side Name");
+
+    TEUCHOS_TEST_FOR_EXCEPTION (dl->side_layouts.find(basalSideName)==dl->side_layouts.end(), std::runtime_error,
+                                "Error! Basal side data layout not found.\n");
+    Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
+
+    const std::string& stiffening_name         = paramList->get<std::string>("Stiffening Factor Name");
+    const std::string& grad_stiffening_name    = paramList->get<std::string>("Stiffening Factor Gradient Name");
+    const std::string& w_measure_basal_name    = paramList->get<std::string>("Weighted Measure Basal Name");
+
+    stiffening       = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(stiffening_name, dl_basal->qp_scalar);
+    grad_stiffening  = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(grad_stiffening_name, dl_basal->qp_gradient);
+    w_measure_basal  = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_basal_name, dl_basal->qp_scalar);
+
+    numBasalQPs = dl_basal->qp_scalar->dimension(2);
+
+    this->addDependentField(w_measure_basal.fieldTag());
+    this->addDependentField(grad_stiffening.fieldTag());
+    this->addDependentField(stiffening.fieldTag());
   }
 
   this->setName("Response surface_velocity Mismatch" + PHX::typeAsString<EvalT>());
@@ -111,6 +135,14 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
     this->utils.setFieldData(grad_beta, fm);
   }
 
+  if (alpha_stiffening!=0)
+  {
+    // Regularization-related fields
+    this->utils.setFieldData(w_measure_basal, fm);
+    this->utils.setFieldData(grad_stiffening, fm);
+    this->utils.setFieldData(stiffening, fm);
+  }
+
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postRegistrationSetup(d, fm);
 }
 
@@ -120,7 +152,7 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::preEvaluate(typename
 {
   PHAL::set(this->global_response, 0.0);
 
-  p_resp = p_reg = 0;
+  p_resp = p_reg = p_reg_stiffening =0;
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::preEvaluate(workset);
@@ -191,6 +223,30 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
     }
   }
 
+
+  if (workset.sideSets->find(basalSideName) != workset.sideSets->end() && alpha_stiffening!=0)
+  {
+    const std::vector<Albany::SideStruct>& sideSet = workset.sideSets->at(basalSideName);
+    for (auto const& it_side : sideSet)
+    {
+      // Get the local data of side and cell
+      const int cell = it_side.elem_LID;
+      const int side = it_side.side_local_id;
+      ScalarT t = 0;
+      for (int qp=0; qp<numBasalQPs; ++qp)
+      {
+        ScalarT sum = stiffening(cell,side,qp)*stiffening(cell,side,qp);
+        for (int idim=0; idim<numSideDims; ++idim)
+          sum += grad_stiffening(cell,side,qp,idim)*grad_stiffening(cell,side,qp,idim);
+
+        t += sum * w_measure_basal(cell,side,qp);
+      }
+      this->local_response(cell, 0) += t*scaling*alpha_stiffening;//*50.0;
+      this->global_response(0) += t*scaling*alpha_stiffening;//*50.0;
+      p_reg_stiffening += t*scaling*alpha_stiffening;
+    }
+  }
+
   // Do any local-scattering necessary
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::evaluateFields(workset);
 }
@@ -198,20 +254,7 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typename Traits::PostEvalData workset) {
-#if 0
-  // Add contributions across processors
-  Teuchos::RCP<Teuchos::ValueTypeSerializer<int, ScalarT> > serializer = workset.serializerManager.template getValue<EvalT>();
 
-  // we cannot pass the same object for both the send and receive buffers in reduceAll call
-  // creating a copy of the global_response, not a view
-  std::vector<ScalarT> partial_vector(&this->global_response[0],&this->global_response[0]+this->global_response.size()); //needed for allocating new storage
-  PHX::MDField<ScalarT> partial_response(this->global_response);
-  partial_response.setFieldData(Teuchos::ArrayRCP<ScalarT>(partial_vector.data(),0,partial_vector.size(),false));
-
-  Teuchos::reduceAll(*workset.comm, *serializer, Teuchos::REDUCE_SUM, partial_response.size(), &partial_response[0], &this->global_response[0]);
-  Teuchos::reduceAll(*workset.comm, *serializer, Teuchos::REDUCE_SUM,1, &p_resp, &resp);
-  Teuchos::reduceAll(*workset.comm, *serializer, Teuchos::REDUCE_SUM, 1, &p_reg, &reg);
-#else
   //amb Deal with op[], pointers, and reduceAll.
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
                            this->global_response);
@@ -219,10 +262,11 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typenam
   resp = p_resp;
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_reg);
   reg = p_reg;
-#endif
+  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_reg_stiffening);
+  reg_stiffening = p_reg_stiffening;
 
   if(workset.comm->getRank()   ==0)
-    std::cout << "SV, resp: " << Sacado::ScalarValue<ScalarT>::eval(resp) << ", reg: " << Sacado::ScalarValue<ScalarT>::eval(reg) <<std::endl;
+    std::cout << "SV, resp: " << Sacado::ScalarValue<ScalarT>::eval(resp) << ", reg: " << Sacado::ScalarValue<ScalarT>::eval(reg) <<  ", reg_stiffening: " << Sacado::ScalarValue<ScalarT>::eval(reg_stiffening) <<std::endl;
 
   if (rank(*workset.comm) == 0) {
     std::ofstream ofile;
@@ -257,6 +301,7 @@ Teuchos::RCP<const Teuchos::ParameterList> FELIX::ResponseSurfaceVelocityMismatc
   validPL->set<std::string>("Name", "", "Name of response function");
   validPL->set<std::string>("Field Name", "Solution", "Not used");
   validPL->set<double>("Regularization Coefficient", 1.0, "Regularization Coefficient");
+  validPL->set<double>("Regularization Coefficient Stiffening", 1.0, "Regularization Coefficient Stiffening");
   validPL->set<double>("Scaling Coefficient", 1.0, "Coefficient that scales the response");
   validPL->set<double>("Asinh Scaling", 1.0, "Scaling s in asinh(s*x)/s. Used to penalize high values of velocity");
   validPL->set<int>("Cubature Degree", 3, "degree of cubature used to compute the velocity mismatch");

@@ -34,8 +34,8 @@ QuadPointsToCellInterpolationBase (const Teuchos::ParameterList& p,
     numQPs = dl->qp_scalar->dimension(1);
   }
 
-  this->addDependentField (field_qp);
-  this->addDependentField (w_measure);
+  this->addDependentField (field_qp.fieldTag());
+  this->addDependentField (w_measure.fieldTag());
   this->addEvaluatedField (field_cell);
 
   this->setName("QuadPointsToCellInterpolation"+PHX::typeAsString<EvalT>());

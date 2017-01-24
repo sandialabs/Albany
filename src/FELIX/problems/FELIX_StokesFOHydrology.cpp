@@ -6,8 +6,7 @@
 
 #include <string>
 
-#include "Intrepid_FieldContainer.hpp"
-#include "Intrepid_DefaultCubatureFactory.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_FancyOStream.hpp"
 
@@ -122,8 +121,8 @@ void FELIX::StokesFOHydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Alba
   cellBasis = Albany::getIntrepid2Basis(*cell_top);
   cellType = rcp(new shards::CellTopology (cell_top));
 
-  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
-  cellCubature = cubFactory.create(*cellType, meshSpecs[0]->cubatureDegree);
+  Intrepid2::DefaultCubatureFactory cubFactory;
+  cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs[0]->cubatureDegree);
 
   elementBlockName = meshSpecs[0]->ebName;
 
@@ -146,7 +145,7 @@ void FELIX::StokesFOHydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Alba
   basalSideType = rcp(new shards::CellTopology (basal_side_top));
 
   basalEBName   = basalMeshSpecs.ebName;
-  basalCubature = cubFactory.create(*basalSideType, basalMeshSpecs.cubatureDegree);
+  basalCubature = cubFactory.create<PHX::Device, RealType, RealType>(*basalSideType, basalMeshSpecs.cubatureDegree);
 
   int numBasalSideVertices = basalSideType->getNodeCount();
   int numBasalSideNodes    = basalSideBasis->getCardinality();
@@ -173,7 +172,7 @@ void FELIX::StokesFOHydrology::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Alba
     surfaceSideType = rcp(new shards::CellTopology (surface_side_top));
 
     surfaceEBName   = surfaceMeshSpecs.ebName;
-    surfaceCubature = cubFactory.create(*surfaceSideType, surfaceMeshSpecs.cubatureDegree);
+    surfaceCubature = cubFactory.create<PHX::Device, RealType, RealType>(*surfaceSideType, surfaceMeshSpecs.cubatureDegree);
 
     numSurfaceSideVertices = surfaceSideType->getNodeCount();
     numSurfaceSideNodes    = surfaceSideBasis->getCardinality();

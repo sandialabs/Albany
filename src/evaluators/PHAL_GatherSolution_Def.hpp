@@ -209,84 +209,72 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const tensorRank_1Tag& tag, const int& i) const{
-  
   for (int node = 0; node < this->numNodes; ++node) 
     for (int eq = 0; eq < numFields; eq++) 
-     (this->valVec)(i,node,eq)= xT_constView[wsID_kokkos(i, node,this->offset+eq)];
+      (this->valVec)(i,node,eq)= xT_constView(wsID_kokkos(i, node,this->offset+eq));
 }
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const tensorRank_1_enableTransientTag& tag, const int& i) const{
-
   for (int node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
-     (this->valVec_dot)(i,node,eq)= xdotT_constView[wsID_kokkos(i, node, this->offset+eq)];
+      (this->valVec_dot)(i,node,eq)= xdotT_constView(wsID_kokkos(i, node, this->offset+eq));
 }
-
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const tensorRank_1_enableAccelerationTag& tag, const int& i) const{
-
   for (int node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
-     (this->valVec_dotdot)(i,node,eq)= xdotdotT_constView[wsID_kokkos(i, node, this->offset+eq)];
+      (this->valVec_dotdot)(i,node,eq)= xdotdotT_constView(wsID_kokkos(i, node, this->offset+eq));
 }
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const tensorRank_2Tag& tag, const int& i) const{
-
   for (int node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
-        (this->valTensor)(i,node,eq/numDim,eq%numDim)= xT_constView[wsID_kokkos(i, node, this->offset+eq)];
+      (this->valTensor)(i,node,eq/numDim,eq%numDim)= xT_constView(wsID_kokkos(i, node, this->offset+eq));
 }
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const tensorRank_2_enableTransientTag& tag, const int& i) const{
-
   for (int node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
-       (this->valTensor_dot)(i,node,eq/numDim,eq%numDim)= xdotT_constView[wsID_kokkos (i, node, this->offset+eq)];
+      (this->valTensor_dot)(i,node,eq/numDim,eq%numDim)= xdotT_constView(wsID_kokkos (i, node, this->offset+eq));
 }
-
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const tensorRank_2_enableAccelerationTag& tag, const int& i) const{
-
-
   for (int node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
-       (this->valTensor_dotdot)(i,node,eq/numDim,eq%numDim)= xdotdotT_constView[wsID_kokkos(i, node, this->offset+eq)];
+      (this->valTensor_dotdot)(i,node,eq/numDim,eq%numDim)= xdotdotT_constView(wsID_kokkos(i, node, this->offset+eq));
 }
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const tensorRank_0Tag& tag, const int& i) const{
-
   for (int node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
-        (d_val[eq](i,node))= xT_constView[wsID_kokkos(i, node, this->offset+eq)];
-  
+      (d_val[eq](i,node))= xT_constView(wsID_kokkos(i, node, this->offset+eq));
 }
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const tensorRank_0_enableTransientTag& tag, const int& i) const{
-
   for (int node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
-       (d_val_dot[eq](i,node))= xdotT_constView[wsID_kokkos (i, node, this->offset+eq)];
+      (d_val_dot[eq](i,node))= xdotT_constView(wsID_kokkos (i, node, this->offset+eq));
 }
 
 
@@ -294,10 +282,9 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const tensorRank_0_enableAccelerationTag& tag, const int& i) const{
-
   for (int node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
-       (d_val_dotdot[eq](i,node))= xdotdotT_constView[wsID_kokkos(i, node, this->offset+eq)];
+      (d_val_dotdot[eq](i,node))= xdotdotT_constView(wsID_kokkos(i, node, this->offset+eq));
 }
 
 
@@ -310,19 +297,14 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
   Teuchos::RCP<const Tpetra_Vector> xdotdotT = workset.xdotdotT;
 
- //In purpose to use Kokkos functores declaration of the temporary data has been mooved to the class
-  //get const (read-only) view of xT and xdotT
-//  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
-//  Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
-//  Teuchos::ArrayRCP<const ST> xdotdotT_constView = xdotdotT->get1dView();
-  
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  Teuchos::ArrayRCP<const ST> xT_constView, xdotT_constView, xdotdotT_constView;
   xT_constView = xT->get1dView();
-  if(Teuchos::nonnull(xdotT))
+  if(!xdotT.is_null())
     xdotT_constView = xdotT->get1dView();
-  if(Teuchos::nonnull(xdotdotT))
+  if(!xdotdotT.is_null())
     xdotdotT_constView = xdotdotT->get1dView();
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -379,54 +361,73 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+
 #else
 #ifdef ALBANY_TIMER
   auto start = std::chrono::high_resolution_clock::now();
 #endif
 
- wsID_kokkos=workset.wsElNodeEqID_kokkos;
+  wsID_kokkos = workset.wsElNodeEqID_kokkos;
 
-   if (this->tensorRank == 2){
+  // Tpetra getLocalView is needed to obtain a Kokkos View from a specific device
+  auto xT_2d = xT->template getLocalView<PHX::Device>();
+  xT_constView = Kokkos::subview(xT_2d, Kokkos::ALL(), 0);
+  if(!xdotT.is_null()) {
+    auto xdotT_2d = xdotT->template getLocalView<PHX::Device>();
+    xdotT_constView = Kokkos::subview(xdotT_2d, Kokkos::ALL(), 0);
+  }
+  if(!xdotdotT.is_null()) {
+    auto xdotdotT_2d = xdotdotT->template getLocalView<PHX::Device>();
+    xdotdotT_constView = Kokkos::subview(xdotdotT_2d, Kokkos::ALL(), 0);
+  }
 
-     numDim = this->valTensor.dimension(2);
+  if (this->tensorRank == 2){
+    numDim = this->valTensor.dimension(2);
+    Kokkos::parallel_for(tensorRank_2Policy(0,workset.numCells),*this);
 
-     Kokkos::parallel_for(tensorRank_2Policy(0,workset.numCells),*this);
+    if (workset.transientTerms && this->enableTransient) 
+      Kokkos::parallel_for(tensorRank_2_enableTransientPolicy(0,workset.numCells),*this);
 
-     if (workset.transientTerms && this->enableTransient) 
-        Kokkos::parallel_for(tensorRank_2_enableTransientPolicy(0,workset.numCells),*this);    
-     if (workset.accelerationTerms && this->enableAcceleration) 
-        Kokkos::parallel_for(tensorRank_2_enableAccelerationPolicy(0,workset.numCells),*this);
-
-   } else if (this->tensorRank == 1){
- 
-     Kokkos::parallel_for(tensorRank_1Policy(0,workset.numCells),*this);
+    if (workset.accelerationTerms && this->enableAcceleration) 
+      Kokkos::parallel_for(tensorRank_2_enableAccelerationPolicy(0,workset.numCells),*this);
+  }
   
-     if (workset.transientTerms && this->enableTransient) 
-       Kokkos::parallel_for(tensorRank_1_enableTransientPolicy(0,workset.numCells),*this);
-     if (workset.accelerationTerms && this->enableAcceleration) 
-        Kokkos::parallel_for(tensorRank_1_enableAccelerationPolicy(0,workset.numCells),*this);
- 
-   } else  {
+  else if (this->tensorRank == 1){
+    Kokkos::parallel_for(tensorRank_1Policy(0,workset.numCells),*this);
 
-     for (int i =0; i<numFields;i++){
-       val_kokkos[i]=this->val[i].get_static_view();
-     }
-     d_val=val_kokkos.template view<executionSpace>();
-     Kokkos::parallel_for(tensorRank_0Policy(0,workset.numCells),*this);
+    if (workset.transientTerms && this->enableTransient)
+      Kokkos::parallel_for(tensorRank_1_enableTransientPolicy(0,workset.numCells),*this);
 
-     if (workset.transientTerms && this->enableTransient){ 
-        for (int i =0; i<numFields;i++) 
-           val_dot_kokkos[i]=this->val_dot[i].get_static_view();
-        d_val_dot=val_dot_kokkos.template view<executionSpace>();
-        Kokkos::parallel_for(tensorRank_0_enableTransientPolicy(0,workset.numCells),*this);  
-     }
-     if (workset.accelerationTerms && this->enableAcceleration){
-        for (int i =0; i<numFields;i++)
-           val_dotdot_kokkos[i]=this->val_dotdot[i].get_static_view();
-        d_val_dotdot=val_dotdot_kokkos.template view<executionSpace>();
-        Kokkos::parallel_for(tensorRank_0_enableAccelerationPolicy(0,workset.numCells),*this);
-     }
-   }
+    if (workset.accelerationTerms && this->enableAcceleration)
+      Kokkos::parallel_for(tensorRank_1_enableAccelerationPolicy(0,workset.numCells),*this);
+  }
+
+  else {
+    for (int i =0; i<numFields;i++){
+      //val_kokkos[i]=this->val[i].get_view();
+      val_kokkos[i]=this->val[i].get_static_view();
+    }
+    d_val=val_kokkos.template view<executionSpace>();
+    Kokkos::parallel_for(tensorRank_0Policy(0,workset.numCells),*this);
+
+    if (workset.transientTerms && this->enableTransient){ 
+      for (int i =0; i<numFields;i++){
+        //val_dot_kokkos[i]=this->val_dot[i].get_view();
+        val_dot_kokkos[i]=this->val_dot[i].get_static_view();
+      }
+      d_val_dot=val_dot_kokkos.template view<executionSpace>();
+      Kokkos::parallel_for(tensorRank_0_enableTransientPolicy(0,workset.numCells),*this);  
+    }
+    if (workset.accelerationTerms && this->enableAcceleration){
+      for (int i =0; i<numFields;i++){
+        //val_dotdot_kokkos[i]=this->val_dotdot[i].get_view();
+        val_dotdot_kokkos[i]=this->val_dotdot[i].get_static_view();
+      }
+      d_val_dotdot=val_dotdot_kokkos.template view<executionSpace>();
+      Kokkos::parallel_for(tensorRank_0_enableAccelerationPolicy(0,workset.numCells),*this);
+    }
+  }
+
 #ifdef ALBANY_TIMER
   PHX::Device::fence();
   auto elapsed = std::chrono::high_resolution_clock::now() - start;
@@ -434,9 +435,7 @@ evaluateFields(typename Traits::EvalData workset)
   long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
   std::cout<< "GaTher Solution Residual time = "  << millisec << "  "  << microseconds << std::endl;
 #endif
-
 #endif
-
 }
 
 // **********************************************************************
@@ -467,20 +466,18 @@ numFields(GatherSolutionBase<PHAL::AlbanyTraits::Jacobian,Traits>::numFieldsBase
 }
 //********************************************************************
 ////Kokkos functors for Jacobian
-
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const tensorRank_2Tag& tag, const int& i) const{
+  const int neq=wsID_kokkos.dimension(2);
+  //const int num_dof = neq * this->numNodes;
 
-const int neq=wsID_kokkos.dimension(2);
-//const int num_dof = neq * this->numNodes;
-
-for (int node = 0; node < this->numNodes; ++node){
-  int firstunk = neq * node + this->offset;
+  for (int node = 0; node < this->numNodes; ++node){
+    int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = (this->valTensor)(i,node,eq/numDim,eq%numDim);
-      valref=FadType(valref.size(), xT_constView[wsID_kokkos(i,node,this->offset+eq)]);
+      valref=FadType(valref.size(), xT_constView(wsID_kokkos(i,node,this->offset+eq)));
       //((this->valTensor)(i,node,eq/numDim,eq%numDim)).setUpdateValue(!ignore_residual);
       valref.fastAccessDx(firstunk + eq) =j_coeff;
     }
@@ -491,55 +488,48 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const tensorRank_2_enableTransientTag& tag, const int& i) const{
-
   const int neq=wsID_kokkos.dimension(2);
-  const int num_dof = neq * this->numNodes;
+  //const int num_dof = neq * this->numNodes;
   
   for (int node = 0; node < this->numNodes; ++node){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = (this->valTensor_dot)(i,node,eq/numDim,eq%numDim);
-      valref =FadType(valref.size(), xdotT_constView[wsID_kokkos(i,node,this->offset+eq)]);
+      valref =FadType(valref.size(), xdotT_constView(wsID_kokkos(i,node,this->offset+eq)));
       valref.fastAccessDx(firstunk + eq) =m_coeff;
     }
   }
-
 }
-
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const tensorRank_2_enableAccelerationTag& tag, const int& i) const{
-
   const int neq=wsID_kokkos.dimension(2);
-  const int num_dof = neq * this->numNodes;
+  //const int num_dof = neq * this->numNodes;
 
   for (int node = 0; node < this->numNodes; ++node){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = (this->valTensor_dotdot)(i,node,eq/numDim,eq%numDim);
-      valref=FadType(valref.size(), xdotdotT_constView[wsID_kokkos(i,node,this->offset+eq)]);
+      valref=FadType(valref.size(), xdotdotT_constView(wsID_kokkos(i,node,this->offset+eq)));
       valref.fastAccessDx(firstunk + eq) =n_coeff;
     }
   }
-
 }
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const tensorRank_1Tag& tag, const int& i) const{
-
   const int neq=wsID_kokkos.dimension(2);
-  const int num_dof = neq * this->numNodes;
-
+  //const int num_dof = neq * this->numNodes;
 
   for (int node = 0; node < this->numNodes; node++){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
-      typename PHAL::Ref<ScalarT>::type valref = this->valVec(i,node,eq);
-      valref =FadType(valref.size(), xT_constView[wsID_kokkos(i,node,this->offset+eq)]);
+      typename PHAL::Ref<ScalarT>::type valref = (this->valVec)(i,node,eq);
+      valref =FadType(valref.size(), xT_constView(wsID_kokkos(i,node,this->offset+eq)));
       //((this->valVec)(i,node,eq)).setUpdateValue(!ignore_residual);
       valref.fastAccessDx(firstunk + eq) =j_coeff;
     }
@@ -550,55 +540,48 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const tensorRank_1_enableTransientTag& tag, const int& i) const{
-
   const int neq=wsID_kokkos.dimension(2);
-  const int num_dof = neq * this->numNodes;
+  //const int num_dof = neq * this->numNodes;
 
   for (int node = 0; node < this->numNodes; ++node){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = (this->valVec_dot)(i,node,eq);
-      valref =FadType(valref.size(), xdotT_constView[wsID_kokkos(i,node,this->offset+eq)]);
+      valref =FadType(valref.size(), xdotT_constView(wsID_kokkos(i,node,this->offset+eq)));
       valref.fastAccessDx(firstunk + eq) =m_coeff;
     }
   }  
-
 }
-
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const tensorRank_1_enableAccelerationTag& tag, const int& i) const{
- 
   const int neq=wsID_kokkos.dimension(2);
-  const int num_dof = neq * this->numNodes;
+  //const int num_dof = neq * this->numNodes;
 
   for (int node = 0; node < this->numNodes; ++node){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
-      typename PHAL::Ref<ScalarT>::type valref = (this->valVec_dotdot(i,node,eq));
-      valref =FadType(valref.size(), xdotdotT_constView[wsID_kokkos(i,node,this->offset+eq)]);
+      typename PHAL::Ref<ScalarT>::type valref = (this->valVec_dotdot)(i,node,eq);
+      valref =FadType(valref.size(), xdotdotT_constView(wsID_kokkos(i,node,this->offset+eq)));
       valref.fastAccessDx(firstunk + eq) =n_coeff;
     }
   }
-
 }
-
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const tensorRank_0Tag& tag, const int& i) const{
-
   const int neq=wsID_kokkos.dimension(2);
-  const int num_dof = neq * this->numNodes;
+  //const int num_dof = neq * this->numNodes;
 
   for (int node = 0; node < this->numNodes; ++node){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = d_val[eq](i,node);
-      valref =FadType(valref.size(), xT_constView[wsID_kokkos(i,node,this->offset+eq)]);
+      valref =FadType(valref.size(), xT_constView(wsID_kokkos(i,node,this->offset+eq)));
        //(d_val[eq](i,node)).setUpdateValue(!ignore_residual);
       valref.fastAccessDx(firstunk + eq) =j_coeff;
     }
@@ -609,42 +592,35 @@ template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const tensorRank_0_enableTransientTag& tag, const int& i) const{
-
   const int neq=wsID_kokkos.dimension(2);
-  const int num_dof = neq * this->numNodes;
+  //const int num_dof = neq * this->numNodes;
 
   for (int node = 0; node < this->numNodes; ++node){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = (d_val_dot[eq](i,node));
-      valref =FadType(valref.size(), xdotT_constView[wsID_kokkos(i,node,this->offset+eq)]);
+      valref =FadType(valref.size(), xdotT_constView(wsID_kokkos(i,node,this->offset+eq)));
       valref.fastAccessDx(firstunk + eq) =m_coeff;
     }
   }
-
 }
-
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 operator() (const tensorRank_0_enableAccelerationTag& tag, const int& i) const{
-
   const int neq=wsID_kokkos.dimension(2);
-  const int num_dof = neq * this->numNodes;
+  //const int num_dof = neq * this->numNodes;
 
   for (int node = 0; node < this->numNodes; ++node){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
       typename PHAL::Ref<ScalarT>::type valref = (d_val_dotdot[eq](i,node));
-      valref = FadType(valref.size(), xdotdotT_constView[wsID_kokkos(i,node,this->offset+eq)]);
+      valref = FadType(valref.size(), xdotdotT_constView(wsID_kokkos(i,node,this->offset+eq)));
       valref.fastAccessDx(firstunk + eq) = n_coeff;
     }
   }
-
 }
-
-
 
 // **********************************************************************
 template<typename Traits>
@@ -655,13 +631,14 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
   Teuchos::RCP<const Tpetra_Vector> xdotdotT = workset.xdotdotT;
 
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  Teuchos::ArrayRCP<const ST> xT_constView, xdotT_constView, xdotdotT_constView;
   xT_constView = xT->get1dView();
-  if(Teuchos::nonnull(xdotT))
+  if(!xdotT.is_null())
     xdotT_constView = xdotT->get1dView();
-  if(Teuchos::nonnull(xdotdotT))
+  if(!xdotdotT.is_null())
     xdotdotT_constView = xdotdotT->get1dView();
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   int numDim = 0;
   if (this->tensorRank==2) numDim = this->valTensor.dimension(2); // only needed for tensor fields
 
@@ -706,63 +683,83 @@ evaluateFields(typename Traits::EvalData workset)
   }
 #else
 #ifdef ALBANY_TIMER
- auto start = std::chrono::high_resolution_clock::now();
+  auto start = std::chrono::high_resolution_clock::now();
 #endif
-    wsID_kokkos=workset.wsElNodeEqID_kokkos;
 
-    ignore_residual=workset.ignore_residual;
-    j_coeff=workset.j_coeff;
-    m_coeff=workset.m_coeff;
-    n_coeff=workset.n_coeff;
+  ignore_residual=workset.ignore_residual;
+  j_coeff=workset.j_coeff;
+  m_coeff=workset.m_coeff;
+  n_coeff=workset.n_coeff;
+  wsID_kokkos=workset.wsElNodeEqID_kokkos;
 
+  // Tpetra getLocalView is needed to obtain a Kokkos View from a specific device
+  auto xT_2d = xT->template getLocalView<PHX::Device>();
+  xT_constView = Kokkos::subview(xT_2d, Kokkos::ALL(), 0);
+  if(!xdotT.is_null()) {
+    auto xdotT_2d = xdotT->template getLocalView<PHX::Device>();
+    xdotT_constView = Kokkos::subview(xdotT_2d, Kokkos::ALL(), 0);
+  }
+  if(!xdotdotT.is_null()) {
+    auto xdotdotT_2d = xdotdotT->template getLocalView<PHX::Device>();
+    xdotdotT_constView = Kokkos::subview(xdotdotT_2d, Kokkos::ALL(), 0);
+  }
 
-   if(this->tensorRank==2) numDim = this->valTensor.dimension(2);
-  
-   if (this->tensorRank == 2){
- 
-     Kokkos::parallel_for(tensorRank_2Policy(0,workset.numCells),*this);
+  if(this->tensorRank==2) numDim = this->valTensor.dimension(2);
 
-     if (workset.transientTerms && this->enableTransient)
-        Kokkos::parallel_for(tensorRank_2_enableTransientPolicy(0,workset.numCells),*this);
-     if (workset.accelerationTerms && this->enableAcceleration)
-        Kokkos::parallel_for(tensorRank_2_enableAccelerationPolicy(0,workset.numCells),*this);
+  if (this->tensorRank == 2) {
+    Kokkos::parallel_for(tensorRank_2Policy(0,workset.numCells),*this);
 
-   } else if (this->tensorRank == 1){
-     Kokkos::parallel_for(tensorRank_1Policy(0,workset.numCells),*this);
+    if (workset.transientTerms && this->enableTransient)
+      Kokkos::parallel_for(tensorRank_2_enableTransientPolicy(0,workset.numCells),*this);
 
-     if (workset.transientTerms && this->enableTransient){
-       Kokkos::parallel_for(tensorRank_1_enableTransientPolicy(0,workset.numCells),*this);}
-     if (workset.accelerationTerms && this->enableAcceleration){
-        Kokkos::parallel_for(tensorRank_1_enableAccelerationPolicy(0,workset.numCells),*this);}
-   } else  {
-     
-     for (int i =0; i<numFields;i++)
-        val_kokkosjac[i]=this->val[i].get_static_view();
-     d_val=val_kokkosjac.template view<executionSpace>();
-     Kokkos::parallel_for(tensorRank_0Policy(0,workset.numCells),*this);
+    if (workset.accelerationTerms && this->enableAcceleration)
+      Kokkos::parallel_for(tensorRank_2_enableAccelerationPolicy(0,workset.numCells),*this);
+  } 
 
-     if (workset.transientTerms && this->enableTransient){
-        for (int i =0; i<numFields;i++)
-           val_dot_kokkosjac[i]=this->val_dot[i].get_static_view();
-        d_val_dot=val_dot_kokkosjac.template view<executionSpace>();
-        Kokkos::parallel_for(tensorRank_0_enableTransientPolicy(0,workset.numCells),*this);
-     }
+  else if (this->tensorRank == 1) {
+    Kokkos::parallel_for(tensorRank_1Policy(0,workset.numCells),*this);
 
-     if (workset.accelerationTerms && this->enableAcceleration){
-        for (int i =0; i<numFields;i++)
-           val_dotdot_kokkosjac[i]=this->val_dotdot[i].get_static_view();
-        d_val_dot=val_dotdot_kokkosjac.template view<executionSpace>();
-        Kokkos::parallel_for(tensorRank_0_enableAccelerationPolicy(0,workset.numCells),*this);
-     }
-   }
+    if (workset.transientTerms && this->enableTransient)
+      Kokkos::parallel_for(tensorRank_1_enableTransientPolicy(0,workset.numCells),*this);
+
+    if (workset.accelerationTerms && this->enableAcceleration)
+      Kokkos::parallel_for(tensorRank_1_enableAccelerationPolicy(0,workset.numCells),*this);
+  }
+
+  else {
+    for (int i =0; i<numFields;i++) {
+      //val_kokkosjac[i]=this->val[i].get_view();
+      val_kokkosjac[i]=this->val[i].get_static_view();
+    }
+    d_val=val_kokkosjac.template view<executionSpace>();
+    Kokkos::parallel_for(tensorRank_0Policy(0,workset.numCells),*this);
+
+    if (workset.transientTerms && this->enableTransient) {
+      for (int i =0; i<numFields;i++) {
+        //val_dot_kokkosjac[i]=this->val_dot[i].get_view();
+        val_dot_kokkosjac[i]=this->val_dot[i].get_static_view();
+      }
+      d_val_dot=val_dot_kokkosjac.template view<executionSpace>();
+      Kokkos::parallel_for(tensorRank_0_enableTransientPolicy(0,workset.numCells),*this);
+    }
+
+    if (workset.accelerationTerms && this->enableAcceleration) {
+      for (int i =0; i<numFields;i++) {
+        //val_dotdot_kokkosjac[i]=this->val_dotdot[i].get_view();
+        val_dotdot_kokkosjac[i]=this->val_dotdot[i].get_static_view();
+      }
+      d_val_dot=val_dotdot_kokkosjac.template view<executionSpace>();
+      Kokkos::parallel_for(tensorRank_0_enableAccelerationPolicy(0,workset.numCells),*this);
+    }
+  }
+
 #ifdef ALBANY_TIMER
-PHX::Device::fence();
-auto elapsed = std::chrono::high_resolution_clock::now() - start;
-long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-std::cout<< "GaTher Solution Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
+  PHX::Device::fence();
+  auto elapsed = std::chrono::high_resolution_clock::now() - start;
+  long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+  long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+  std::cout<< "GaTher Solution Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
 #endif
-
 #endif
 }
 

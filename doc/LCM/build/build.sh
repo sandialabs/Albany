@@ -7,7 +7,7 @@ cd "$LCM_DIR"
 if [ -f "$STATUS_LOG" ]; then
     rm "$STATUS_LOG" -f
 fi
-		
+
 case "$SCRIPT_NAME" in
     build.sh)
 	;;
@@ -40,7 +40,7 @@ case "$SCRIPT_NAME" in
     test-mail.sh)
 	;;
     *)
-	echo "Unrecognized script name"
+	echo "Unrecognized script name: $SCRIPT_NAME"
 	exit 1
 	;;
 esac
@@ -67,7 +67,7 @@ case "$SCRIPT_NAME" in
 	    albany)
 		;;
 	    *)
-		echo "Unrecognized package option"
+		echo "Unrecognized package option in config: $PACKAGE"
 		exit 1
 		;;
 	esac
@@ -90,6 +90,9 @@ case "$SCRIPT_NAME" in
 	        if [ -e "$PACKAGE_DIR/DataTransferKit" ]; then
                     cp -p "$DTK_FRAG" "$BUILD_DIR"
 	        fi
+	        if [ -e "$PACKAGE_DIR/tempus" ]; then
+                    cp -p "$TEMPUS_FRAG" "$BUILD_DIR"
+	        fi
 		;;
 	    *)
 		;;
@@ -97,18 +100,55 @@ case "$SCRIPT_NAME" in
 	cd "$BUILD_DIR"
         # Add DTK fragment to Trilinos config script and disable ETI as
         # it is not supported for DTK due to incompatible Global Index types.
+        # Also add tempus fragment if needed.
 	case "$PACKAGE" in
 	    trilinos)
+                # First build extra repos string
+                ER=""
+	        if [ -e "$PACKAGE_DIR/DataTransferKit" ]; then
+                    if [ -z $ER ]; then
+                        ER="DataTransferKit"
+                    else
+                        ER="$ER,DataTransferKit"
+                    fi
+                fi
+                #
+                # Disable this temporarily because for now Tempus
+                # is considered part of Trilinos as a hack while it
+                # gets copyright.
+                #
+	        #if [ -e "$PACKAGE_DIR/tempus" ]; then
+                #    if [ -z $ER ]; then
+                #        ER="tempus"
+                #    else
+                #        ER="$ER,tempus"
+                #    fi
+                #fi
+                if [ ! -z $ER ]; then
+                    TER=" -D Trilinos_EXTRA_REPOSITORIES:STRING=\"$ER\" \\"
+                    sed -i -e "/lcm_package_dir/d" "$CONFIG_FILE"
+                    echo "\\" >> "$CONFIG_FILE"
+                    echo "$TER" >> "$CONFIG_FILE"
+                fi
+
 	        if [ -e "$PACKAGE_DIR/DataTransferKit" ]; then
                     TMP_FILE="/tmp/_TMP_FILE_"
                     ETION="Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
                     ETIOFF="Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=OFF"
-                    sed -i -e "/lcm_package_dir/d" "$CONFIG_FILE"
                     cat "$CONFIG_FILE" "$DTK_FRAG" > "$TMP_FILE"
                     mv "$TMP_FILE" "$CONFIG_FILE"
                     chmod 0755 "$CONFIG_FILE"
                     sed -i -e "s|$ETION|$ETIOFF|g;" "$CONFIG_FILE"
 	        fi
+	        if [ -e "$PACKAGE_DIR/tempus" ]; then
+                    TMP_FILE="/tmp/_TMP_FILE_"
+                    cat "$CONFIG_FILE" "$TEMPUS_FRAG" > "$TMP_FILE"
+                    mv "$TMP_FILE" "$CONFIG_FILE"
+                    chmod 0755 "$CONFIG_FILE"
+	        fi
+                if [ ! -z $ER ]; then
+                    echo "lcm_package_dir" >> "$CONFIG_FILE"
+                fi
 		;;
 	    *)
 		;;
@@ -119,34 +159,46 @@ case "$SCRIPT_NAME" in
 	sed -i -e "s|lcm_install_dir|$INSTALL_DIR|g;" "$CONFIG_FILE"
 	sed -i -e "s|lcm_build_type|$BUILD_STRING|g;" "$CONFIG_FILE"
 	sed -i -e "s|lcm_package_dir|$PACKAGE_DIR|g;" "$CONFIG_FILE"
+        # Check if a custom build netcdf with pnetcdf exists and use that
+        # instead of the system one to avoid failing horrible tests that
+        # need this (yuck!).
+	if [ -e "/usr/local/netcdf/lib/libnetcdf.so" ]; then
+            NETCDF_INC=/usr/local/netcdf/include
+            NETCDF_LIB=/usr/local/netcdf/lib
+        else
+            NETCDF_INC=/usr/include/openmpi-x86_64
+            NETCDF_LIB=/usr/lib64/openmpi/lib
+	fi
+        sed -i -e "s|lcm_netcdf_inc|$NETCDF_INC|g;" "$CONFIG_FILE"
+        sed -i -e "s|lcm_netcdf_lib|$NETCDF_LIB|g;" "$CONFIG_FILE"
 	case "$BUILD_TYPE" in
 	    debug)
 		sed -i -e "s|lcm_fpe_switch|ON|g;" "$CONFIG_FILE"
 		sed -i -e "s|lcm_denormal_switch|ON|g;" "$CONFIG_FILE"
-		sed -i -e "s|lcm_cxx_flags||g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_cxx_flags|-msse3|g;" "$CONFIG_FILE"
 		;;
 	    release)
 		sed -i -e "s|lcm_fpe_switch|OFF|g;" "$CONFIG_FILE"
 		sed -i -e "s|lcm_denormal_switch|ON|g;" "$CONFIG_FILE"
-		sed -i -e "s|lcm_cxx_flags|-DNDEBUG|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_cxx_flags|-msse3 -DNDEBUG|g;" "$CONFIG_FILE"
 		;;
 	    profile)
 		sed -i -e "s|lcm_fpe_switch|OFF|g;" "$CONFIG_FILE"
 		sed -i -e "s|lcm_denormal_switch|ON|g;" "$CONFIG_FILE"
-		sed -i -e "s|lcm_cxx_flags|-DNDEBUG|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_cxx_flags|-msse3 -DNDEBUG|g;" "$CONFIG_FILE"
 		;;
 	    small)
 		sed -i -e "s|lcm_fpe_switch|OFF|g;" "$CONFIG_FILE"
 		sed -i -e "s|lcm_denormal_switch|ON|g;" "$CONFIG_FILE"
-		sed -i -e "s|lcm_cxx_flags|-DNDEBUG|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_cxx_flags|-msse3 -DNDEBUG|g;" "$CONFIG_FILE"
 		;;
             mixed)
 		sed -i -e "s|lcm_fpe_switch|ON|g;" "$CONFIG_FILE"
 		sed -i -e "s|lcm_denormal_switch|ON|g;" "$CONFIG_FILE"
-		sed -i -e "s|lcm_cxx_flags|-std=c++11 -g -O0|g;" "$CONFIG_FILE"
+		sed -i -e "s|lcm_cxx_flags|-msse3 -std=c++11 -g -O0|g;" "$CONFIG_FILE"
 		;;
 	    *)
-		echo "Unrecognized build type option"
+		echo "Unrecognized build type option in config: $BUILD_TYPE"
 		exit 1
 		;;
 	esac
@@ -212,7 +264,7 @@ case "$SCRIPT_NAME" in
 		sed -i -e "s|lcm_slfad_size|-D SLFAD_SIZE=48|g;" "$CONFIG_FILE"
 		;;
 	    *)
-		echo "Unrecognized architecture option"
+		echo "Unrecognized architecture option in config: $ARCH"
 		exit 1
 		;;
 	esac
@@ -250,11 +302,11 @@ case "$SCRIPT_NAME" in
 			echo "*** MAKE INSTALL COMMAND FAILED ***"
 			exit 1
 		    fi
-                    NETCDF_SYSLIB=/usr/lib64/libnetcdf.so
+                    NETCDF_SYSLIB=/usr/lib64/openmpi/lib/libnetcdf.so
                     NETCDF_LCMLIB="$INSTALL_DIR/lib/libnetcdf.so"
                     ln -sf "$INSTALL_DIR/include" "$INSTALL_DIR/inc"
                     ln -sf "$NETCDF_SYSLIB" "$NETCDF_LCMLIB"
-		    echo SUCCESS > "$STATUS_LOG" 
+		    echo SUCCESS > "$STATUS_LOG"
 		fi
 		;;
 	    albany)
@@ -264,10 +316,10 @@ case "$SCRIPT_NAME" in
 		    echo "*** MAKE COMMAND FAILED ***"
 		    exit 1
 		fi
-		echo SUCCESS > "$STATUS_LOG" 
+		echo SUCCESS > "$STATUS_LOG"
 		;;
 	    *)
-		echo "Unrecognized package option"
+		echo "Unrecognized package option in build: $PACKAGE"
 		exit 1
 		;;
 	esac
@@ -290,7 +342,7 @@ case "$SCRIPT_NAME" in
 		ctest --timeout 600 . | tee "$TEST_LOG"
 		;;
 	    *)
-		echo "Unrecognized package option"
+		echo "Unrecognized package option in test: $PACKAGE"
 		exit 1
 		;;
 	esac

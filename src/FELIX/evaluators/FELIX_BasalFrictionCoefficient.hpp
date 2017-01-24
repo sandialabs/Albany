@@ -61,17 +61,23 @@ private:
   PHX::MDField<IceScalarT>    u_norm;
   PHX::MDField<HydroScalarT>  N;
   PHX::MDField<MeshScalarT>   coordVec;
+  PHX::MDField<ParamScalarT>  bed_topo_field;
+  PHX::MDField<ParamScalarT>  thickness_field;
+
+  PHX::MDField<RealType,Cell,Side,Node,QuadPoint>   BF;
 
   // Output:
   PHX::MDField<ScalarT>       beta;
 
   std::string                 basalSideName;  // Only if IsStokes=true
 
-  bool use_stereographic_map;
+  bool use_stereographic_map, zero_on_floating;
 
   double x_0;
   double y_0;
   double R2;
+
+  double rho_i, rho_w;
 
   int numNodes;
   int numQPs;
@@ -79,7 +85,7 @@ private:
   bool logParameters;
   bool regularize;
 
-  enum BETA_TYPE {GIVEN_CONSTANT, EXP_GIVEN_FIELD, GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
+  enum BETA_TYPE {GIVEN_CONSTANT, GIVEN_FIELD, EXP_GIVEN_FIELD, GAL_PROJ_EXP_GIVEN_FIELD, POWER_LAW, REGULARIZED_COULOMB};
   BETA_TYPE beta_type;
 };
 

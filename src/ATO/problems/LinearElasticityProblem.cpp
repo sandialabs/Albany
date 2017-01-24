@@ -193,14 +193,17 @@ Albany::LinearElasticityProblem::getValidProblemParameters() const
   validPL->sublist("Configuration", false, "");
   validPL->sublist("Objective Aggregator", false, "");
   validPL->sublist("Apply Topology Weight Functions", false, "");
+  validPL->sublist("Body Force", false, "");
+  validPL->sublist("Residual Strain", false, "");
+  validPL->sublist("Implicit Boundary Conditions", false, "");
 
   return validPL;
 }
 
 void
 Albany::LinearElasticityProblem::getAllocatedStates(
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > oldState_,
-   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > newState_
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device> > > > oldState_,
+   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device> > > > newState_
    ) const
 {
   oldState_ = oldState;

@@ -7,7 +7,6 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
-#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace FELIX {
 
@@ -25,12 +24,12 @@ StokesMomentumResid(const Teuchos::ParameterList& p,
   MResidual (p.get<std::string> ("Residual Name"),dl->node_vector)
 {
 
-  this->addDependentField(wBF);  
-  this->addDependentField(VGrad);
-  this->addDependentField(wGradBF);
-  this->addDependentField(P);
-  this->addDependentField(force);
-  this->addDependentField(muFELIX);
+  this->addDependentField(wBF.fieldTag());  
+  this->addDependentField(VGrad.fieldTag());
+  this->addDependentField(wGradBF.fieldTag());
+  this->addDependentField(P.fieldTag());
+  this->addDependentField(force.fieldTag());
+  this->addDependentField(muFELIX.fieldTag());
   
   this->addEvaluatedField(MResidual);
 

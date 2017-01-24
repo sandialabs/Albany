@@ -94,7 +94,6 @@ class LaplaceBeltramiProblem : public AbstractProblem {
 
 }
 
-#include "Intrepid2_FieldContainer.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Albany_Utils.hpp"
@@ -132,7 +131,7 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
 
   const CellTopologyData* const elem_top = &meshSpecs.ctd;
 
-  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+  RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
   intrepidBasis = Albany::getIntrepid2Basis(*elem_top);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology(elem_top));
 
@@ -140,8 +139,8 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
 
-  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
-  RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+  Intrepid2::DefaultCubatureFactory cubFactory;
+  RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
 
   const int numQPtsCell = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
@@ -227,9 +226,9 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set< std::string >("Solution Vector Name", soln_name[0]);
 
-    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+    p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+    p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
          ("Intrepid2 Basis", intrepidBasis);
 
     //Output
@@ -247,9 +246,9 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
     //Input
     p->set< std::string >("Solution Vector Name", soln_name[0]);
 
-    p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+    p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-    p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+    p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
          ("Intrepid2 Basis", intrepidBasis);
 
     //Output
@@ -283,9 +282,9 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
       //Input
       p->set< std::string >("Solution Vector Name", "Current Coords");
 
-      p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+      p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
       p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-      p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+      p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
          ("Intrepid2 Basis", intrepidBasis);
 
       //Output
@@ -354,9 +353,9 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
       // Target is calculated from the actual solution
       p->set< std::string >("Solution Vector Name", soln_name[0]);
 
-      p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+      p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
       p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-      p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+      p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
          ("Intrepid2 Basis", intrepidBasis);
 
       //Output
@@ -375,9 +374,10 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
       // Inputs: 
       // Note that the target solution is used to build Gc
       p->set< std::string >("Solution Vector Name", tgt_name[0]);
-      p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+      p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
 
-      p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
+      p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
+         ("Intrepid2 Basis", intrepidBasis);
 
       // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
       p->set<std::string>("Contravariant Metric Tensor Name", "Gc");
@@ -396,9 +396,9 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
       p->set< std::string >("Solution Vector Name", soln_name[0]);
       p->set<std::string>("Contravariant Metric Tensor Name", "Gc");
 
-      p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+      p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
       p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-      p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+      p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
         ("Intrepid2 Basis", intrepidBasis);
 
       //Output
@@ -458,9 +458,9 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
       // Target is calculated from the actual solution
       p->set< std::string >("Solution Vector Name", "Current Coords");
 
-      p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+      p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
       p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-      p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+      p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
          ("Intrepid2 Basis", intrepidBasis);
 
       //Output
@@ -479,7 +479,7 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
       // Inputs: 
       // Note that the target solution is used to build Gc
       p->set< std::string >("Solution Vector Name", "Current Tgt Coords");
-      p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+      p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
 
       p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
 
@@ -500,9 +500,9 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
       p->set< std::string >("Solution Vector Name", "Current Coords");
       p->set<std::string>("Contravariant Metric Tensor Name", "Gc");
 
-      p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+      p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
       p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-      p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+      p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
         ("Intrepid2 Basis", intrepidBasis);
 
       //Output
@@ -583,7 +583,7 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
       // Inputs: 
       // Note that the target solution is used to build Gc
       p->set< std::string >("Solution Vector Name", "Current Tgt Coords");
-      p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+      p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
 
       p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
 
@@ -604,9 +604,9 @@ Albany::LaplaceBeltramiProblem::constructEvaluators(
       p->set< std::string >("Solution Vector Name", "Current Coords");
       p->set<std::string>("Contravariant Metric Tensor Name", "Gc");
 
-      p->set< RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature", cubature);
+      p->set< RCP<Intrepid2::Cubature<PHX::Device> > >("Cubature", cubature);
       p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
-      p->set< RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >
+      p->set< RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >
         ("Intrepid2 Basis", intrepidBasis);
 
       //Output

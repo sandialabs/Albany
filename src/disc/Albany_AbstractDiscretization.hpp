@@ -79,8 +79,6 @@ class AbstractDiscretization {
 #if defined(ALBANY_EPETRA)
     //! Get Epetra DOF map
     virtual Teuchos::RCP<const Epetra_Map> getMap() const = 0;
-    //! Get field DOF map
-    virtual Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const = 0;
 #endif
     //! Get Tpetra DOF map
     virtual Teuchos::RCP<const Tpetra_Map> getMapT() const = 0;
@@ -90,9 +88,8 @@ class AbstractDiscretization {
 #if defined(ALBANY_EPETRA)
     //! Get Epetra overlapped DOF map
     virtual Teuchos::RCP<const Epetra_Map> getOverlapMap() const = 0;
-    //! Get field overlapped DOF map
-    virtual Teuchos::RCP<const Epetra_Map> getOverlapMap(const std::string& field_name) const = 0;
 #endif
+
     //! Get Tpetra overlapped DOF map
     virtual Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const = 0;
     //! Get field overlapped DOF map
@@ -124,10 +121,8 @@ class AbstractDiscretization {
 #if defined(ALBANY_EPETRA)
     //! Get Epetra Node map
     virtual Teuchos::RCP<const Epetra_Map> getNodeMap() const = 0;
-
-    //! Get Field Node map
-    virtual Teuchos::RCP<const Epetra_Map> getNodeMap(const std::string& field_name) const = 0;
 #endif
+
     //! Get Tpetra Node map
     virtual Teuchos::RCP<const Tpetra_Map> getNodeMapT() const = 0;
 
@@ -137,10 +132,8 @@ class AbstractDiscretization {
 #if defined(ALBANY_EPETRA)
     //! Get overlapped Node map
     virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const = 0;
-
-    //! Get Field overlapped Node map
-    virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap(const std::string& field_name) const = 0;
 #endif
+
     //! Get overlapped Node map
     virtual Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const = 0;
     
@@ -229,12 +222,8 @@ class AbstractDiscretization {
 #endif
     virtual Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(bool overlapped=false) const = 0;
 
-    virtual Teuchos::RCP<Tpetra_MultiVector> getSolutionMV(bool overlapped=false) const = 0;
+    virtual Teuchos::RCP<Tpetra_MultiVector> getSolutionMV(bool overlapped=false) const = 0;\
 
-#if defined(ALBANY_EPETRA)
-    //! Get field vector from mesh database
-    virtual void getField(Epetra_Vector &field_vector, const std::string& field_name) const = 0;
-#endif
     virtual void getFieldT(Tpetra_Vector &field_vector, const std::string& field_name) const = 0;
 
     //! Flag if solution has a restart values -- used in Init Cond
@@ -252,16 +241,6 @@ class AbstractDiscretization {
     //! Get number of total DOFs per node
     virtual int getNumEq() const = 0;
 
-#if defined(ALBANY_EPETRA)
-    //! Set the solution field into mesh database
-    virtual void setSolutionField(const Epetra_Vector& soln) = 0;
-
-    //! Set the field vector into mesh database
-    virtual void setField(const Epetra_Vector &field_vector, const std::string& field_name, bool overlapped) = 0;
-
-    //! Set the residual field for output
-    virtual void setResidualField(const Epetra_Vector& residual) = 0;
-#endif
     //! Set the field vector into mesh database
     virtual void setFieldT(const Tpetra_Vector &field_vector, const std::string& field_name, bool overlapped) = 0;
 
@@ -283,12 +262,8 @@ class AbstractDiscretization {
     virtual void writeSolutionToFileT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
     virtual void writeSolutionMVToFile(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false) = 0;
 
-    //! update the mesh
-    virtual void updateMesh(bool shouldTransferIPData = false) = 0;
-
     //! Get Numbering for layered mesh (mesh structred in one direction)
     virtual Teuchos::RCP<LayeredMeshNumbering<LO> > getLayeredMeshNumbering() = 0;
-
 
   private:
 

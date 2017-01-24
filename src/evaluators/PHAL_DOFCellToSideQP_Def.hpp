@@ -72,7 +72,7 @@ DOFCellToSideQPBase(const Teuchos::ParameterList& p,
   val_cell.dimensions(dims_cell);
   val_side_qp.dimensions(dims_side);
 
-  this->addDependentField(val_cell);
+  this->addDependentField(val_cell.fieldTag());
   this->addEvaluatedField(val_side_qp);
 
   this->setName("DOFCellToSideQP");
@@ -96,7 +96,7 @@ DOFCellToSideQPBase(const Teuchos::ParameterList& p,
     }
 
     BF = PHX::MDField<ScalarT,Cell,Side,Node,QuadPoint>(p.get<std::string> ("BF Name"), dl_side->node_qp_scalar);
-    this->addDependentField(BF);
+    this->addDependentField(BF.fieldTag());
   }
 }
 

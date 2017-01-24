@@ -17,10 +17,9 @@ SurfaceCohesiveResidual<EvalT, Traits>::
 SurfaceCohesiveResidual(const Teuchos::ParameterList& p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
     cubature_(
-        p.get<Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>>("Cubature")),
+        p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")),
     intrepid_basis_(
-        p.get<Teuchos::RCP<Intrepid2::Basis<RealType,
-            Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>("Intrepid2 Basis")),
+        p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>("Intrepid2 Basis")),
     ref_area_(
         p.get<std::string>("Reference Area Name"), dl->qp_scalar),
     cohesive_traction_(
@@ -49,20 +48,6 @@ SurfaceCohesiveResidual(const Teuchos::ParameterList& p,
 
   num_surf_nodes_ = num_nodes_ / 2;
   num_surf_dims_ = num_dims_ - 1;
-
-  // Allocate Temporary FieldContainers
-  ref_values_.resize(num_surf_nodes_, num_qps_);
-  ref_grads_.resize(num_surf_nodes_, num_qps_, num_surf_dims_);
-  ref_points_.resize(num_qps_, num_surf_dims_);
-  ref_weights_.resize(num_qps_);
-
-  // Pre-Calculate reference element quantitites
-  cubature_->getCubature(ref_points_, ref_weights_);
-  intrepid_basis_->getValues(
-      ref_values_, ref_points_, Intrepid2::OPERATOR_VALUE);
-
-  intrepid_basis_->getValues(
-      ref_grads_, ref_points_, Intrepid2::OPERATOR_GRAD);
 }
 
 //**********************************************************************
@@ -74,6 +59,20 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(cohesive_traction_, fm);
   this->utils.setFieldData(ref_area_, fm);
   this->utils.setFieldData(force_, fm);
+
+  // Allocate Temporary Views
+  ref_values_ = Kokkos::DynRankView<RealType, PHX::Device>("XXX", num_surf_nodes_, num_qps_);
+  ref_grads_ = Kokkos::DynRankView<RealType, PHX::Device>("XXX", num_surf_nodes_, num_qps_, num_surf_dims_);
+  ref_points_ = Kokkos::DynRankView<RealType, PHX::Device>("XXX", num_qps_, num_surf_dims_);
+  ref_weights_ = Kokkos::DynRankView<RealType, PHX::Device>("XXX", num_qps_);
+
+  // Pre-Calculate reference element quantitites
+  cubature_->getCubature(ref_points_, ref_weights_);
+  intrepid_basis_->getValues(
+      ref_values_, ref_points_, Intrepid2::OPERATOR_VALUE);
+
+  intrepid_basis_->getValues(
+      ref_grads_, ref_points_, Intrepid2::OPERATOR_GRAD);
 }
 
 //**********************************************************************

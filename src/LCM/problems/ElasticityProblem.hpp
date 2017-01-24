@@ -58,8 +58,8 @@ namespace Albany {
     //! Each problem must generate it's list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
-    void getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> oldState_,
-			    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> newState_
+    void getAllocatedStates(Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>> oldState_,
+			    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>> newState_
 			    ) const;
 
   private:
@@ -98,8 +98,8 @@ namespace Albany {
     std::string matModel; 
     Teuchos::RCP<Albany::Layouts> dl;
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> oldState;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> newState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>> oldState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>> newState;
 
     Teuchos::RCP<AAdapt::rc::Manager> rc_mgr;
   };
@@ -123,11 +123,11 @@ namespace Albany {
 #include "Stress.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "ElasticityResid.hpp"
-#include "ElasticityDispErrResid.hpp"
+//#include "ElasticityDispErrResid.hpp"
 
 #include "Time.hpp"
-#include "CapExplicit.hpp"
-#include "CapImplicit.hpp"
+//#include "CapExplicit.hpp"
+//#include "CapImplicit.hpp"
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -150,14 +150,14 @@ Albany::ElasticityProblem::constructEvaluators(
    std::string elementBlockName = meshSpecs.ebName;
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-   RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>
+   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
      intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
 
    const int numNodes = intrepidBasis->getCardinality();
    const int worksetSize = meshSpecs.worksetSize;
 
-   Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
-   RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >> cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+   Intrepid2::DefaultCubatureFactory cubFactory;
+   RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
 
    const int numDim = cubature->getDimension();
    const int numQPts = cubature->getNumPoints();
@@ -385,111 +385,8 @@ Albany::ElasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (matModel == "CapExplicit" || matModel == "CapImplicit")
-  {
-	{ // Cap model stress
-	  RCP<ParameterList> p = rcp(new ParameterList("Stress"));
-
-      //Input
-      p->set<std::string>("Strain Name", "Strain");
-      p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
-
-      p->set<std::string>("Elastic Modulus Name", "Elastic Modulus");
-      p->set< RCP<DataLayout>>("QP Scalar Data Layout", dl->qp_scalar);
-
-      p->set<std::string>("Poissons Ratio Name", "Poissons Ratio");  // dl->qp_scalar also
-
-      RealType A = params->get("A", 1.0);
-      RealType B = params->get("B", 1.0);
-      RealType C = params->get("C", 1.0);
-      RealType theta = params->get("theta", 1.0);
-      RealType R = params->get("R", 1.0);
-      RealType kappa0 = params->get("kappa0", 1.0);
-      RealType W = params->get("W", 1.0);
-      RealType D1 = params->get("D1", 1.0);
-      RealType D2 = params->get("D2", 1.0);
-      RealType calpha = params->get("calpha", 1.0);
-      RealType psi = params->get("psi", 1.0);
-      RealType N = params->get("N", 1.0);
-      RealType L = params->get("L", 1.0);
-      RealType phi = params->get("phi", 1.0);
-      RealType Q = params->get("Q", 1.0);
-
-      p->set<RealType>("A Name", A);
-      p->set<RealType>("B Name", B);
-      p->set<RealType>("C Name", C);
-      p->set<RealType>("Theta Name", theta);
-      p->set<RealType>("R Name", R);
-      p->set<RealType>("Kappa0 Name", kappa0);
-      p->set<RealType>("W Name", W);
-      p->set<RealType>("D1 Name", D1);
-      p->set<RealType>("D2 Name", D2);
-      p->set<RealType>("Calpha Name", calpha);
-      p->set<RealType>("Psi Name", psi);
-      p->set<RealType>("N Name", N);
-      p->set<RealType>("L Name", L);
-      p->set<RealType>("Phi Name", phi);
-      p->set<RealType>("Q Name", Q);
-
-      //Output
-      p->set<std::string>("Stress Name", "Stress"); //dl->qp_tensor also
-      p->set<std::string>("Back Stress Name", "backStress"); //dl->qp_tensor also
-      p->set<std::string>("Cap Parameter Name", "capParameter"); //dl->qp_tensor also
-
-      //if(matModel == "CapImplicit"){
-      //p->set<std::string>("Friction Name", "friction"); //dl->qp_scalar also
-      //p->set<std::string>("Dilatancy Name", "dilatancy"); //dl->qp_scalar also
-      //p->set<std::string>("Hardening Modulus Name", "hardeningModulus"); //dl->qp_scalar also
-      //}
-
-      p->set<std::string>("Eqps Name", "eqps"); //dl->qp_scalar also
-      p->set<std::string>("Vol Plastic Strain Name", "volPlasticStrain"); //dl->qp_scalar also
-
-      //Declare what state data will need to be saved (name, layout, init_type)
-      if(matModel == "CapExplicit"){
-    	  ev = rcp(new LCM::CapExplicit<EvalT,AlbanyTraits>(*p,dl));
-      }
-
-      if(matModel == "CapImplicit"){
-    	  ev = rcp(new LCM::CapImplicit<EvalT,AlbanyTraits>(*p,dl));
-      }
-
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0, true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("backStress",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0, true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("capParameter",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", kappa0, true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-
-      //if(matModel == "CapImplicit"){
-      //p = stateMgr.registerStateVariable("friction",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0);
-      //ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      //fm0.template registerEvaluator<EvalT>(ev);
-      //p = stateMgr.registerStateVariable("dilatancy",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0);
-      //ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      //fm0.template registerEvaluator<EvalT>(ev);
-      //p = stateMgr.registerStateVariable("hardeningModulus",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0);
-      //ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      //fm0.template registerEvaluator<EvalT>(ev);
-      //}
-      p = stateMgr.registerStateVariable("eqps",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0, true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-      p = stateMgr.registerStateVariable("volPlasticStrain",dl->qp_scalar, dl->dummy, elementBlockName, "scalar", 0.0,true);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-
-	}
-  }
-
-  else
-  {
-	{ // Linear elasticity stress
-      RCP<ParameterList> p = rcp(new ParameterList("Stress"));
+  { // Linear elasticity stress
+    RCP<ParameterList> p = rcp(new ParameterList("Stress"));
 
       //Input
       p->set<std::string>("Strain Name", "Strain");
@@ -508,7 +405,6 @@ Albany::ElasticityProblem::constructEvaluators(
       p = stateMgr.registerStateVariable("Stress",dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
       ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-	}
   }
 
   { // Displacement Resid
@@ -582,27 +478,6 @@ Albany::ElasticityProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     }
     
-    { // Displacement Error Resid
-      RCP<ParameterList> p = rcp(new ParameterList("Displacement Error Resid"));
-
-      //Input
-      p->set<std::string>("Error Stress Name", "Error Stress");
-      p->set< RCP<DataLayout>>("QP Tensor Data Layout", dl->qp_tensor);
-
-      p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-      p->set< RCP<DataLayout>>("Node QP Vector Data Layout", dl->node_qp_vector);
-
-      p->set<std::string>("Displacement Residual Name", "Displacement Residual");
-      p->set< RCP<DataLayout>>("Node Vector Data Layout", dl->node_vector);
-
-      //Output
-      p->set<std::string>("Residual Name", "Displacement Error Residual");
-      p->set< RCP<DataLayout>>("Node Vector Data Layout", dl->node_vector);
-
-      ev = rcp(new LCM::ElasticityDispErrResid<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    }
-
   }
 
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->createEvaluators<EvalT>(fm0, dl);

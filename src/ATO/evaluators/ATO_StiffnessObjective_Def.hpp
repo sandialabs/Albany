@@ -19,8 +19,22 @@ StiffnessObjectiveBase(Teuchos::ParameterList& p,
   BF         ("BF",      dl->node_qp_scalar)
 
 {
-
+  Teuchos::ParameterList* responseParams = p.get<Teuchos::ParameterList*>("Parameter List");
   elementBlockName = meshSpecs->ebName;
+
+  m_excludeBlock = false;
+  if(responseParams->isType<Teuchos::Array<std::string>>("Blocks")){
+    Teuchos::Array<std::string> 
+      blocks = responseParams->get<Teuchos::Array<std::string>>("Blocks");
+    if(find(blocks.begin(),blocks.end(),elementBlockName) == blocks.end()){
+      m_excludeBlock = true;
+
+      stiffness_objective_tag =
+        Teuchos::rcp(new PHX::Tag<ScalarT>(className, dl->dummy));
+      this->addEvaluatedField(*stiffness_objective_tag);
+      return;
+    }
+  }
 
   ATO::PenaltyModelFactory<ScalarT> penaltyFactory;
   penaltyModel = penaltyFactory.create(p, dl, elementBlockName);
@@ -30,7 +44,6 @@ StiffnessObjectiveBase(Teuchos::ParameterList& p,
 
   topologies = paramsFromProblem->get<Teuchos::RCP<TopologyArray> >("Topologies");
 
-  Teuchos::ParameterList* responseParams = p.get<Teuchos::ParameterList*>("Parameter List");
   int nTopos = topologies->size();
   FName = responseParams->get<std::string>("Response Name");
   std::string dFdpBaseName = responseParams->get<std::string>("Response Derivative Name");
@@ -56,7 +69,7 @@ StiffnessObjectiveBase(Teuchos::ParameterList& p,
 
   int nFields = depFields.size();
   for(int ifield=0; ifield<nFields; ifield++)
-    this->addDependentField(depFields[ifield]);
+    this->addDependentField(depFields[ifield].fieldTag());
 
   stiffness_objective_tag =
     Teuchos::rcp(new PHX::Tag<ScalarT>(className, dl->dummy));
@@ -70,6 +83,8 @@ void ATO::StiffnessObjectiveBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
+  if(m_excludeBlock) return;
+
   this->utils.setFieldData(qp_weights,fm);
   this->utils.setFieldData(BF,fm);
 
@@ -107,6 +122,8 @@ template<typename Traits>
 void ATO::StiffnessObjective<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+
+  if(m_excludeBlock) return;
 
   if( elementBlockName != workset.EBName ) return;
 

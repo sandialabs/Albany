@@ -48,7 +48,7 @@ setup(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
     p.get<PHX::Tag<ScalarT> >("Local Response Field Tag");
   local_response = PHX::MDField<ScalarT>(local_response_tag);
   if (stand_alone)
-    this->addDependentField(local_response);
+    this->addDependentField(local_response.fieldTag());
   else
     this->addEvaluatedField(local_response);
 }

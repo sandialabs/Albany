@@ -41,18 +41,18 @@ HeatEqResid(const Teuchos::ParameterList& p) :
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
-  this->addDependentField(wBF);
-  this->addDependentField(Temperature);
-  this->addDependentField(ThermalCond);
-  if (enableTransient) this->addDependentField(Tdot);
-  this->addDependentField(TGrad);
-  this->addDependentField(wGradBF);
-  if (haveSource) this->addDependentField(Source);
+  this->addDependentField(wBF.fieldTag());
+  this->addDependentField(Temperature.fieldTag());
+  this->addDependentField(ThermalCond.fieldTag());
+  if (enableTransient) this->addDependentField(Tdot.fieldTag());
+  this->addDependentField(TGrad.fieldTag());
+  this->addDependentField(wGradBF.fieldTag());
+  if (haveSource) this->addDependentField(Source.fieldTag());
   if (haveAbsorption) {
     Absorption = PHX::MDField<ScalarT,Cell,QuadPoint>(
 	p.get<std::string>("Absorption Name"),
 	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
-    this->addDependentField(Absorption);
+    this->addDependentField(Absorption.fieldTag());
   }
   this->addEvaluatedField(TResidual);
 
@@ -64,12 +64,6 @@ HeatEqResid(const Teuchos::ParameterList& p) :
   numNodes = dims[1];
   numQPs  = dims[2];
   numDims = dims[3];
-
-
-  // Allocate workspace
-  flux.resize(worksetSize, numQPs, numDims);
-
-  if (haveAbsorption)  aterm.resize(worksetSize, numQPs);
 
   convectionVels = Teuchos::getArrayFromStringParameter<double> (p,
                            "Convection Velocity", numDims, false);
@@ -85,7 +79,7 @@ HeatEqResid(const Teuchos::ParameterList& p) :
       PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<std::string>("Rho Cp Name"),
             p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
       rhoCp = tmp;
-      this->addDependentField(rhoCp);
+      this->addDependentField(rhoCp.fieldTag());
     }
   }
 
@@ -111,6 +105,11 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (haveConvection && haverhoCp)  this->utils.setFieldData(rhoCp,fm);
 
   this->utils.setFieldData(TResidual,fm);
+
+  // Allocate workspace
+  flux = Kokkos::createDynRankView(Temperature.get_view(), "XXX", worksetSize, numQPs, numDims);
+  if (haveAbsorption) aterm = Kokkos::createDynRankView(Temperature.get_view(), "XXX", worksetSize, numQPs);
+  if (haveConvection) convection = Kokkos::createDynRankView(Temperature.get_view(), "XXX", worksetSize, numQPs);
 }
 
 //**********************************************************************
@@ -122,7 +121,7 @@ evaluateFields(typename Traits::EvalData workset)
 //// workset.print(std::cout);
 
 
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
   // Since Intrepid2 will later perform calculations on the entire workset size
   // and not just the used portion, we must fill the excess with reasonable
@@ -136,9 +135,9 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
 
-  FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, TGrad);
+  FST::scalarMultiplyDataData (flux, ThermalCond.get_view(), TGrad.get_view());
 
-  FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
+  FST::integrate(TResidual.get_view(), flux, wGradBF.get_view(), false); // "false" overwrites
 
   if (haveSource) {
 
@@ -149,7 +148,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (int i =0; i< Source.dimension(0); i++)
      for (int j =0; j< Source.dimension(1); j++)
         Source(i,j) *= -1.0;
-    FST::integrate<ScalarT>(TResidual, Source, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+    FST::integrate(TResidual.get_view(), Source.get_view(), wBF.get_view(), true); // "true" sums into
   }
 
   if (workset.transientTerms && enableTransient){
@@ -158,12 +157,11 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp)
         Tdot(cell,qp) = 0.0;
 
-    FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+    FST::integrate(TResidual.get_view(), Tdot.get_view(), wBF.get_view(), true); // "true" sums into
 
   }
 
   if (haveConvection)  {
-    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> convection(worksetSize, numQPs);
 
     for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
       for (std::size_t qp=0; qp < numQPs; ++qp)
@@ -181,7 +179,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
 
-    FST::integrate<ScalarT>(TResidual, convection, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+    FST::integrate(TResidual.get_view(), convection, wBF.get_view(), true); // "true" sums into
   }
 
 
@@ -197,8 +195,8 @@ evaluateFields(typename Traits::EvalData workset)
         Temperature(cell,qp) = 0.0;
       }
 
-    FST::scalarMultiplyDataData<ScalarT> (aterm, Absorption, Temperature);
-    FST::integrate<ScalarT>(TResidual, aterm, wBF, Intrepid2::COMP_CPP, true); 
+    FST::scalarMultiplyDataData (aterm, Absorption.get_view(), Temperature.get_view());
+    FST::integrate(TResidual.get_view(), aterm, wBF.get_view(), true); 
   }
 
 //TResidual.print(std::cout, true);

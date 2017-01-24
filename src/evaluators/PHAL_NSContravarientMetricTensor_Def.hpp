@@ -17,30 +17,21 @@ NSContravarientMetricTensor<EvalT, Traits>::
 NSContravarientMetricTensor(const Teuchos::ParameterList& p) :
   coordVec      (p.get<std::string>                   ("Coordinate Vector Name"),
                  p.get<Teuchos::RCP<PHX::DataLayout> >("Coordinate Data Layout") ),
-  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature")),
+  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   Gc            (p.get<std::string>                   ("Contravarient Metric Tensor Name"),
                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") )
 {
-  this->addDependentField(coordVec);
+  this->addDependentField(coordVec.fieldTag());
   this->addEvaluatedField(Gc);
 
   // Get Dimensions
   Teuchos::RCP<PHX::DataLayout> vector_dl = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
   std::vector<PHX::DataLayout::size_type> dim;
   vector_dl->dimensions(dim);
-  int containerSize = dim[0];
+  numCells = dim[0];
   numQPs = dim[1];
   numDims = dim[2];
-
-  // Allocate Temporary FieldContainers
-  refPoints.resize(numQPs, numDims);
-  refWeights.resize(numQPs);
-  jacobian.resize(containerSize, numQPs, numDims, numDims);
-  jacobian_inv.resize(containerSize, numQPs, numDims, numDims);
-
-  // Pre-Calculate reference element quantitites
-  cubature->getCubature(refPoints, refWeights);
 
   this->setName("NSContravarientMetricTensor" );
 }
@@ -53,6 +44,14 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(Gc,fm);
+
+  // Pre-Calculate reference element quantitites
+  refPoints = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs, numDims);
+  refWeights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
+  cubature->getCubature(refPoints, refWeights);
+
+  jacobian = Kokkos::createDynRankView(Gc.get_view(), "XXX", numCells, numQPs, numDims, numDims);
+  jacobian_inv = Kokkos::createDynRankView(Gc.get_view(), "XXX", numCells, numQPs, numDims, numDims);
 }
 
 //**********************************************************************
@@ -69,8 +68,8 @@ evaluateFields(typename Traits::EvalData workset)
   //int containerSize = workset.numCells;
     */
   
-  Intrepid2::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, *cellType);
-  Intrepid2::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
+  Intrepid2::CellTools<PHX::Device>::setJacobian(jacobian, refPoints, coordVec.get_view(), *cellType);
+  Intrepid2::CellTools<PHX::Device>::setJacobianInv(jacobian_inv, jacobian);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {      

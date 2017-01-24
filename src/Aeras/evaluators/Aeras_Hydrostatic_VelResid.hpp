@@ -40,17 +40,17 @@ public:
 
 private:
 
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    refPoints;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    refWeights;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    grad_at_cub_points;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
+  Kokkos::DynRankView<RealType, PHX::Device>    refPoints;
+  Kokkos::DynRankView<RealType, PHX::Device>    refWeights;
+  Kokkos::DynRankView<RealType, PHX::Device>    grad_at_cub_points;
 
   // vorticity only returns the component in the radial direction
-  //void get_vorticity(const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & fieldAtNodes,
-  //    std::size_t cell, std::size_t level, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & curl);
+  //void get_vorticity(const Kokkos::DynRankView<ScalarT, PHX::Device>  & fieldAtNodes,
+  //    std::size_t cell, std::size_t level, Kokkos::DynRankView<ScalarT, PHX::Device>  & curl);
 
-  void get_coriolis(std::size_t cell, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & coriolis);
+  void get_coriolis(std::size_t cell, Kokkos::DynRankView<ScalarT, PHX::Device>  & coriolis);
 
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>         wBF;
@@ -88,6 +88,23 @@ private:
   bool obtainLaplaceOp;
   bool pureAdvection;
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct Hydrostatic_VelResid_Tag{};
+  struct Hydrostatic_VelResid_pureAdvection_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, Hydrostatic_VelResid_Tag> Hydrostatic_VelResid_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, Hydrostatic_VelResid_pureAdvection_Tag> Hydrostatic_VelResid_pureAdvection_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Hydrostatic_VelResid_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const Hydrostatic_VelResid_pureAdvection_Tag& tag, const int& i) const;
+
+#endif
 };
 }
 

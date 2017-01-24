@@ -1,0 +1,3 @@
+MAILTO=""
+00 00 * * * /users/mperego/nightly-tests-scripts/nightly_cron_script.sh
+

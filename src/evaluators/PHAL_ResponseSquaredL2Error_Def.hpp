@@ -34,15 +34,15 @@ ResponseSquaredL2ErrorBase(Teuchos::ParameterList& p, const Teuchos::RCP<Albany:
   w_measure     = PHX::MDField<RealType,Cell,QuadPoint>("Weights",dl->qp_scalar);
   scaling       = plist->get("Scaling",1.0);
 
-  this->addDependentField(computedField);
+  this->addDependentField(computedField.fieldTag());
   if (target_fname=="ZERO")
   {
     target_zero = true;
     this->addEvaluatedField(targetField);
   }
   else
-    this->addDependentField(targetField);
-  this->addDependentField(w_measure);
+    this->addDependentField(targetField.fieldTag());
+  this->addDependentField(w_measure.fieldTag());
 
   this->setName("Response Squared L2 Error " + PHX::typeAsString<EvalT>());
 

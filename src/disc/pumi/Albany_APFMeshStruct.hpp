@@ -117,6 +117,7 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
     int restartWriteStep;
 
     bool shouldLoadFELIXData;
+    bool shouldWriteAsciiVtk;
 
     int neq; //! number of equations (components) per node in the solution and residual
     int numDim; //! mesh element dimensionality
@@ -149,6 +150,9 @@ class APFMeshStruct : public Albany::AbstractMeshStruct {
 
     static const char* solution_name[3];
     static const char* residual_name;
+
+    static void initialize_libraries(int* pargc, char*** pargv);
+    static void finalize_libraries();
 
 protected:
 

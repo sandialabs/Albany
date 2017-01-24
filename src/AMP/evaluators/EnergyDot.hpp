@@ -47,6 +47,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> phi_;
   PHX::MDField<ScalarT,Cell,QuadPoint> phi_dot_;
   PHX::MDField<ScalarT,Cell,QuadPoint> psi_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> psi_dot_;
   PHX::MDField<ScalarT,Cell,QuadPoint> rho_Cp_;
   PHX::MDField<ScalarT,Dummy> time_;
   PHX::MDField<ScalarT,Dummy> deltaTime_;
@@ -66,12 +67,22 @@ private:
   ScalarT Tm_;
   // Delta temperature to compute phi
   ScalarT Tc_;
-  
+  // Dense state volumetric heat capacity
+  ScalarT Cd;
+  //Initial Porosity
+  ScalarT Initial_porosity;
+
   // old temperature name
   std::string Temperature_Name_;
 
   // old phi name
   std::string Phi_old_name_;
+
+    //old psi name
+  std::string Psi_old_name_;
+
+  // variable use to decide if consolidation must be computed
+  bool hasConsolidation_;
 
   Teuchos::RCP<const Teuchos::ParameterList>
     getValidEnergyDotParameters() const;

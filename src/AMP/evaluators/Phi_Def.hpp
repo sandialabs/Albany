@@ -85,8 +85,33 @@ evaluateFields(typename Traits::EvalData workset)
         {
             for (std::size_t qp = 0; qp < num_qps_; ++qp)
             {
-                // Compute phi
+                // Compute phi - hyperbolic function of temperature
                 phi_(cell, qp) = 0.5 * (std::tanh((T_(cell, qp) - MeltingTemperature_) / deltaTemperature_) + 1.0);
+				
+				//Compute Phi - linear function of temperature
+				/*
+				if (T_(cell, qp) <= MeltingTemperature_ - deltaTemperature_)
+				phi_(cell, qp) = 0.0; 
+				else if (T_(cell, qp) >= MeltingTemperature_ + deltaTemperature_)
+				phi_(cell, qp) = 1.0; 
+				else phi_(cell, qp) = (T_(cell, qp) - MeltingTemperature_ + deltaTemperature_)/(2*deltaTemperature_);
+				*/
+				
+				//Compute Phi - cubic function of temperature
+				//define some variables:
+				/*
+				ScalarT detA = 8.0*pow(deltaTemperature_,5.0);
+				ScalarT a = -2.0*pow(deltaTemperature_,2.0)/detA;
+				ScalarT b = 6.0*pow(deltaTemperature_,2.0)*MeltingTemperature_/detA;
+				ScalarT c = -3.0*a*pow((MeltingTemperature_ + deltaTemperature_),2) - 2*b*(MeltingTemperature_ + deltaTemperature_);
+				ScalarT d = -a*pow((MeltingTemperature_ - deltaTemperature_),3) - b*pow((MeltingTemperature_ - deltaTemperature_),2) - c*(MeltingTemperature_ - deltaTemperature_);
+				
+				if (T_(cell, qp) <= MeltingTemperature_ - deltaTemperature_)
+				phi_(cell, qp) = 0.0; 
+				else if (T_(cell, qp) >= MeltingTemperature_ + deltaTemperature_)
+				phi_(cell, qp) = 1.0; 
+				else phi_(cell, qp) = a*pow(T_(cell, qp),3) + b*pow(T_(cell, qp),2) + c*T_(cell, qp) + d;
+				*/
             }
         }
     }

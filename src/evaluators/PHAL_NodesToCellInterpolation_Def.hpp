@@ -35,9 +35,9 @@ NodesToCellInterpolationBase (const Teuchos::ParameterList& p,
   numQPs   = dl->qp_scalar->dimension(1);
   numNodes = dl->node_scalar->dimension(1);
 
-  this->addDependentField (BF);
-  this->addDependentField (field_node);
-  this->addDependentField (w_measure);
+  this->addDependentField (BF.fieldTag());
+  this->addDependentField (field_node.fieldTag());
+  this->addDependentField (w_measure.fieldTag());
 
   this->addEvaluatedField (field_cell);
 

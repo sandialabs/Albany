@@ -49,16 +49,15 @@ class TPSLaplaceResid : public PHX::EvaluatorWithBaseImpl<Traits>,
     //! Coordinate vector at vertices being solved for
     PHX::MDField<ScalarT, Cell, Node, Dim> solnVec;
 
-    Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature;
-    Teuchos::RCP<shards::CellTopology> cellType;
-    Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
+    Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
+    Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
 
     // Temporary FieldContainers
-    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> grad_at_cub_points;
-    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
-    Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
-    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> jacobian;
-    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> jacobian_det;
+    Kokkos::DynRankView<RealType, PHX::Device> grad_at_cub_points;
+    Kokkos::DynRankView<RealType, PHX::Device> refPoints;
+    Kokkos::DynRankView<RealType, PHX::Device> refWeights;
+    Kokkos::DynRankView<ScalarT, PHX::Device> jacobian;
+    Kokkos::DynRankView<ScalarT, PHX::Device> jacobian_det;
 
     // Output:
     PHX::MDField<ScalarT, Cell, Node, Dim> solnResidual;

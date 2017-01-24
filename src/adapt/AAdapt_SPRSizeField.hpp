@@ -44,23 +44,22 @@ class SPRSizeField : public MeshAdaptMethod {
 
   private:
 
-    Albany::StateArrayVec& esa;
     Albany::WsLIDList& elemGIDws;
     Teuchos::RCP<Albany::APFDiscretization> pumi_disc;
 
     std::string state_name;
     std::string sol_name;
     bool using_state;
+    bool using_rel_err;
     double rel_err;
+    size_t target_count;
 
-    apf::GlobalNumbering* global_numbering;
-
-    int num_qp;
     int cub_degree;
 
     void getFieldFromStateVariable(apf::Field* eps);
     void computeErrorFromRecoveredGradients();
     void computeErrorFromStateVariable();
+    apf::Field* runSPR(apf::Field* elem_fld);
 
 };
 

@@ -6,7 +6,6 @@
 
 #include "Aeras_ShallowWaterProblem.hpp"
 
-#include "Intrepid2_FieldContainer.hpp"
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Albany_Utils.hpp"

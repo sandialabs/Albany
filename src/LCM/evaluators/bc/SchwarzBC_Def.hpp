@@ -87,7 +87,7 @@ computeBCs(
     ScalarT & y_val,
     ScalarT & z_val)
 {
-  Teuchos::RCP<Teuchos::FancyOStream> 
+  Teuchos::RCP<Teuchos::FancyOStream>
   out = Teuchos::fancyOStream(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   auto const
@@ -232,7 +232,7 @@ computeBCs(
   auto
   parametric_dimension = 0;
 
-  Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>>>
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
   basis;
 
   Teuchos::ArrayRCP<double> const &
@@ -242,12 +242,12 @@ computeBCs(
   coupled_solution = coupled_stk_disc->getSolutionFieldT();
 
 #if defined(DEBUG_LCM_SCHWARZ)
-  if (ns_node == 0) { 
-    *out << "coupled_solution: \n"; 
-    coupled_solution->describe(*out, Teuchos::VERB_EXTREME);  
+  if (ns_node == 0) {
+    *out << "coupled_solution: \n";
+    coupled_solution->describe(*out, Teuchos::VERB_EXTREME);
   }
 #endif //DEBUG_LCM_SCHWARZ  
- 
+
   Teuchos::ArrayRCP<ST const>
   coupled_solution_view = coupled_solution->get1dView();
 
@@ -304,8 +304,8 @@ computeBCs(
       case Intrepid2::ELEMENT::TETRAHEDRAL:
         parametric_dimension = 3;
 
-        basis = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TET_C1_FEM<
-            double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>>());
+        basis = Teuchos::rcp(
+            new Intrepid2::Basis_HGRAD_TET_C1_FEM<PHX::Device>());
 
         in_element = Intrepid2::in_tetrahedron(
             point,
@@ -319,8 +319,8 @@ computeBCs(
       case Intrepid2::ELEMENT::HEXAHEDRAL:
         parametric_dimension = 3;
 
-        basis = Teuchos::rcp(new Intrepid2::Basis_HGRAD_HEX_C1_FEM<
-            double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>>());
+        basis = Teuchos::rcp(
+            new Intrepid2::Basis_HGRAD_HEX_C1_FEM<PHX::Device>());
 
         in_element = Intrepid2::in_hexahedron(
             point,
@@ -356,27 +356,43 @@ computeBCs(
   auto const
   number_cells = 1;
 
+  // We do this point by point
+  auto const
+  number_points = 1;
+
   // Container for the parametric coordinates
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>
-  parametric_point(number_cells, parametric_dimension);
+  Kokkos::DynRankView<RealType, PHX::Device>
+  parametric_point(
+      "par_point",
+      number_cells,
+      number_points,
+      parametric_dimension);
 
   for (auto j = 0; j < parametric_dimension; ++j) {
-    parametric_point(0, j) = 0.0;
+    parametric_point(0, 0, j) = 0.0;
   }
 
   // Container for the physical point
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>
-  physical_coordinates(number_cells, coupled_dimension);
+  Kokkos::DynRankView<RealType, PHX::Device>
+  physical_coordinates(
+      "phys_point",
+      number_cells,
+      number_points,
+      coupled_dimension);
 
   for (auto i = 0; i < coupled_dimension; ++i) {
-    physical_coordinates(0, i) = point(i);
+    physical_coordinates(0, 0, i) = point(i);
   }
 
   // Container for the physical nodal coordinates
   // TODO: matToReference more general, accepts more topologies.
   // Use it to find if point is contained in element as well.
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>
-  nodal_coordinates(number_cells, coupled_vertex_count, coupled_dimension);
+  Kokkos::DynRankView<RealType, PHX::Device>
+  nodal_coordinates(
+      "coords",
+      number_cells,
+      coupled_vertex_count,
+      coupled_dimension);
 
   for (auto i = 0; i < coupled_vertex_count; ++i) {
     for (auto j = 0; j < coupled_dimension; ++j) {
@@ -385,22 +401,26 @@ computeBCs(
   }
 
   // Get parametric coordinates
-  Intrepid2::CellTools<double>::mapToReferenceFrame(
+  Intrepid2::CellTools<PHX::Device>::mapToReferenceFrame(
       parametric_point,
       physical_coordinates,
       nodal_coordinates,
-      coupled_cell_topology,
-      0
-      );
+      coupled_cell_topology);
 
   // Evaluate shape functions at parametric point.
-  auto const
-  number_points = 1;
+  Kokkos::DynRankView<RealType, PHX::Device>
+  basis_values("basis", coupled_vertex_count, number_points);
 
-  Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device>
-  basis_values(coupled_vertex_count, number_points);
+  // Another container for the parametric coordinates. Needed because above
+  // it is required that parametric_points has rank 3 for mapToReferenceFrame
+  // but here basis->getValues requires a rank 2 view :(
+  Kokkos::DynRankView<RealType, PHX::Device>
+  pp_reduced("par_point", number_points, parametric_dimension);
 
-  basis->getValues(basis_values, parametric_point, Intrepid2::OPERATOR_VALUE);
+  for (auto j = 0; j < parametric_dimension; ++j) {
+    pp_reduced(0, j) = parametric_point(0, 0, j);
+  }
+  basis->getValues(basis_values, pp_reduced, Intrepid2::OPERATOR_VALUE);
 
   // Evaluate solution at parametric point using values of shape
   // functions just computed.
@@ -446,10 +466,10 @@ Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
 SchwarzBC_Base<EvalT, Traits>::
 computeBCsDTK()
 {
-  Teuchos::RCP<Teuchos::FancyOStream> 
+  Teuchos::RCP<Teuchos::FancyOStream>
   out = Teuchos::fancyOStream(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-  Teuchos::RCP<Teuchos::FancyOStream> 
+  Teuchos::RCP<Teuchos::FancyOStream>
   outc = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
 
 #if defined(DEBUG_LCM_SCHWARZ)
@@ -471,7 +491,7 @@ computeBCsDTK()
   assert(this_app.getNumEquations() == coupled_app.getNumEquations());
 
   //Get number of equations from this_app 
-  int neq = this_app.getNumEquations(); 
+  int neq = this_app.getNumEquations();
 
   //this_disc = target mesh
   Teuchos::RCP<Albany::AbstractDiscretization>
@@ -503,10 +523,10 @@ computeBCsDTK()
   //Get discretization sublist from coupled_app parameter list
   Teuchos::ParameterList
   dtk_params = coupled_app_params->sublist("DataTransferKit");
-   
+
   //Get solution name from Discretization sublist
   std::string map_name =
-  dtk_params.get("Map Type", "Consistent Interpolation");
+      dtk_params.get("Map Type", "Consistent Interpolation");
 
 #if defined(DEBUG_LCM_SCHWARZ)
   *out << "DEBUG: map_name: " << map_name << "\n";
@@ -516,7 +536,7 @@ computeBCsDTK()
   coupled_field =
       Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
           coupled_stk_disc->getSTKMeshStruct()->getFieldContainer()
-      )->getSolutionField();
+          )->getSolutionField();
 
   stk::mesh::Selector
   coupled_stk_selector =
@@ -535,7 +555,7 @@ computeBCsDTK()
   this_field =
       Teuchos::rcp_dynamic_cast<Albany::OrdinarySTKFieldContainer<true>>(
           this_stk_disc->getSTKMeshStruct()->getFieldContainer()
-      )->getSolutionFieldDTK();
+          )->getSolutionFieldDTK();
 
   // Get the part corresponding to this nodeset.
   std::string const &
@@ -563,16 +583,16 @@ computeBCsDTK()
   // Create a solution vector for the source.
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
   coupled_vector =
-      coupled_manager.createFieldMultiVector<
-        Albany::AbstractSTKFieldContainer::VectorFieldType
-      >(Teuchos::ptr(coupled_field), neq);
+      coupled_manager.createFieldMultiVector <
+          Albany::AbstractSTKFieldContainer::VectorFieldType
+          > (Teuchos::ptr(coupled_field), neq);
 
   // Create a solution vector for the target.
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
   this_vector =
-      this_manager.createFieldMultiVector<
-        Albany::AbstractSTKFieldContainer::VectorFieldType
-      >(Teuchos::ptr(this_field), neq);
+      this_manager.createFieldMultiVector <
+          Albany::AbstractSTKFieldContainer::VectorFieldType
+          > (Teuchos::ptr(this_field), neq);
 
 #if defined(DEBUG_LCM_SCHWARZ)
   // Print out source mesh info.
@@ -595,8 +615,8 @@ computeBCsDTK()
   DataTransferKit::MapOperatorFactory
   op_factory;
 
-  Teuchos::RCP<DataTransferKit::MapOperator>
-  map_op =
+  Teuchos::RCP < DataTransferKit::MapOperator >
+      map_op =
       op_factory.create(coupled_vector->getMap(),
           this_vector->getMap(),
           dtk_params);
@@ -637,10 +657,10 @@ void
 SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
-  Teuchos::RCP<Teuchos::FancyOStream> 
+  Teuchos::RCP<Teuchos::FancyOStream>
   out = Teuchos::fancyOStream(Teuchos::VerboseObjectBase::getDefaultOStream());
-  
-  Teuchos::RCP<Teuchos::FancyOStream> 
+
+  Teuchos::RCP<Teuchos::FancyOStream>
   outc = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
 
   // Solution
@@ -669,21 +689,21 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 #endif //DEBUG_LCM_SCHWARZ  
 
   Teuchos::RCP<
-    Tpetra::MultiVector<double, int, DataTransferKit::SupportId>
+      Tpetra::MultiVector<double, int, DataTransferKit::SupportId>
   > const
   schwarz_bcs = this->computeBCsDTK();
-  
-  Teuchos::RCP<const Teuchos::Comm<int> > 
-  commT = schwarz_bcs->getMap()->getComm(); 
-  
-  Teuchos::ArrayRCP<const ST> 
-  schwarz_bcs_const_view_x = schwarz_bcs->getData(0); 
 
-  Teuchos::ArrayRCP<const ST> 
-  schwarz_bcs_const_view_y = schwarz_bcs->getData(1); 
+  Teuchos::RCP<const Teuchos::Comm<int> >
+  commT = schwarz_bcs->getMap()->getComm();
 
-  Teuchos::ArrayRCP<const ST> 
-  schwarz_bcs_const_view_z = schwarz_bcs->getData(2); 
+  Teuchos::ArrayRCP<const ST>
+  schwarz_bcs_const_view_x = schwarz_bcs->getData(0);
+
+  Teuchos::ArrayRCP<const ST>
+  schwarz_bcs_const_view_y = schwarz_bcs->getData(1);
+
+  Teuchos::ArrayRCP<const ST>
+  schwarz_bcs_const_view_z = schwarz_bcs->getData(2);
 
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
@@ -696,23 +716,23 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     auto const
     z_dof = ns_dof[ns_node][2];
 
-    int dof = x_dof/3; 
-    
+    int dof = x_dof / 3;
+
 #if defined(DEBUG_LCM_SCHWARZ)
     std::cout
     << "proc#, ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: "
-    << commT->getRank() << ", " << ns_node <<  ", "
-    << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", "
-    << schwarz_bcs_const_view_x[dof] << ", "
-    << schwarz_bcs_const_view_y[dof] << ", "
-    << schwarz_bcs_const_view_z[dof] << "\n";
+        << commT->getRank() << ", " << ns_node << ", "
+        << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", "
+        << schwarz_bcs_const_view_x[dof] << ", "
+        << schwarz_bcs_const_view_y[dof] << ", "
+        << schwarz_bcs_const_view_z[dof] << "\n";
 #endif //DEBUG_LCM_SCHWARZ  
 
     fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
     fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
     fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
 
-  } 
+  }
 #else // ALBANY_DTK
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
@@ -733,8 +753,8 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 #if defined(DEBUG_LCM_SCHWARZ)
     std::cout
     << "ns_node, x_dof, y_dof, z_dof, x_val, y_val, z_val: "
-    << ns_node <<  ", "
-    << x_dof << ", " << y_dof << ", " << z_dof <<  ", "
+    << ns_node << ", "
+    << x_dof << ", " << y_dof << ", " << z_dof << ", "
     << x_val << ", " << y_val << ", " << z_val << "\n";
 #endif //DEBUG_LCM_SCHWARZ  
 
@@ -768,10 +788,10 @@ template<typename Traits>
 void SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
-  Teuchos::RCP<Teuchos::FancyOStream> 
+  Teuchos::RCP<Teuchos::FancyOStream>
   out = Teuchos::fancyOStream(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-  Teuchos::RCP<Teuchos::FancyOStream> 
+  Teuchos::RCP<Teuchos::FancyOStream>
   outc = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
 
   Teuchos::RCP<Tpetra_Vector>
@@ -896,21 +916,21 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif //DEBUG_LCM_SCHWARZ  
     Teuchos::RCP<
-      Tpetra::MultiVector<double, int, DataTransferKit::SupportId>
+        Tpetra::MultiVector<double, int, DataTransferKit::SupportId>
     > const
     schwarz_bcs = this->computeBCsDTK();
-     
-    Teuchos::RCP<const Teuchos::Comm<int> > 
-    commT = schwarz_bcs->getMap()->getComm(); 
-  
-    Teuchos::ArrayRCP<const ST> 
-    schwarz_bcs_const_view_x = schwarz_bcs->getData(0); 
 
-    Teuchos::ArrayRCP<const ST> 
-    schwarz_bcs_const_view_y = schwarz_bcs->getData(1); 
+    Teuchos::RCP<const Teuchos::Comm<int> >
+    commT = schwarz_bcs->getMap()->getComm();
 
-    Teuchos::ArrayRCP<const ST> 
-    schwarz_bcs_const_view_z = schwarz_bcs->getData(2); 
+    Teuchos::ArrayRCP<const ST>
+    schwarz_bcs_const_view_x = schwarz_bcs->getData(0);
+
+    Teuchos::ArrayRCP<const ST>
+    schwarz_bcs_const_view_y = schwarz_bcs->getData(1);
+
+    Teuchos::ArrayRCP<const ST>
+    schwarz_bcs_const_view_z = schwarz_bcs->getData(2);
 
     for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
 
@@ -923,24 +943,24 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       auto const
       z_dof = ns_nodes[ns_node][2];
 
-      int dof = x_dof/3; 
-    
+      int dof = x_dof / 3;
+
 #if defined(DEBUG_LCM_SCHWARZ)
       std::cout
       << "proc#, ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: "
-      << commT->getRank() << ", " << ns_node <<  ", "
-      << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", "
-      << schwarz_bcs_const_view_x[dof] << ", "
-      << schwarz_bcs_const_view_y[dof] << ", "
-      << schwarz_bcs_const_view_z[dof] << "\n";
+          << commT->getRank() << ", " << ns_node << ", "
+          << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", "
+          << schwarz_bcs_const_view_x[dof] << ", "
+          << schwarz_bcs_const_view_y[dof] << ", "
+          << schwarz_bcs_const_view_z[dof] << "\n";
 #endif //DEBUG_LCM_SCHWARZ  
       fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
       fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
       fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
-    } 
+    }
 #else // ALBANY_DTK
     for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
-    
+
       auto const
       x_dof = ns_nodes[ns_node][0];
 
@@ -986,10 +1006,10 @@ template<typename Traits>
 void SchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
-  Teuchos::RCP<Teuchos::FancyOStream> 
+  Teuchos::RCP<Teuchos::FancyOStream>
   out = Teuchos::fancyOStream(Teuchos::VerboseObjectBase::getDefaultOStream());
-  
-  Teuchos::RCP<Teuchos::FancyOStream> 
+
+  Teuchos::RCP<Teuchos::FancyOStream>
   outc = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
 
   Teuchos::RCP<Tpetra_Vector>
@@ -1027,7 +1047,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   }
 
   for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
-   
+
     auto const
     x_dof = ns_nodes[ns_node][0];
 
@@ -1055,26 +1075,26 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
 #if defined(ALBANY_DTK)
 #if defined(DEBUG_LCM_SCHWARZ)
-  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+    *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif //DEBUG_LCM_SCHWARZ  
     if (fT != Teuchos::null) {
 
       Teuchos::RCP<
-        Tpetra::MultiVector<double, int, DataTransferKit::SupportId>
+          Tpetra::MultiVector<double, int, DataTransferKit::SupportId>
       > const
       schwarz_bcs = this->computeBCsDTK();
-    
-      Teuchos::RCP<const Teuchos::Comm<int> > 
-      commT = schwarz_bcs->getMap()->getComm(); 
 
-      Teuchos::ArrayRCP<const ST> 
-      schwarz_bcs_const_view_x = schwarz_bcs->getData(0); 
+      Teuchos::RCP<const Teuchos::Comm<int> >
+      commT = schwarz_bcs->getMap()->getComm();
 
-      Teuchos::ArrayRCP<const ST> 
-      schwarz_bcs_const_view_y = schwarz_bcs->getData(1); 
+      Teuchos::ArrayRCP<const ST>
+      schwarz_bcs_const_view_x = schwarz_bcs->getData(0);
 
-      Teuchos::ArrayRCP<const ST> 
-      schwarz_bcs_const_view_z = schwarz_bcs->getData(2); 
+      Teuchos::ArrayRCP<const ST>
+      schwarz_bcs_const_view_y = schwarz_bcs->getData(1);
+
+      Teuchos::ArrayRCP<const ST>
+      schwarz_bcs_const_view_z = schwarz_bcs->getData(2);
 
       for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
 
@@ -1087,22 +1107,22 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         auto const
         z_dof = ns_nodes[ns_node][2];
 
-        int dof = x_dof/3; 
-    
+        int dof = x_dof / 3;
+
 #if defined(DEBUG_LCM_SCHWARZ)
         std::cout
         << "proc#, ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: "
-        << commT->getRank() << ", " << ns_node <<  ", "
-        << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", "
-        << schwarz_bcs_const_view_x[dof] << ", "
-        << schwarz_bcs_const_view_y[dof] << ", "
-        << schwarz_bcs_const_view_z[dof] << "\n";
+            << commT->getRank() << ", " << ns_node << ", "
+            << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", "
+            << schwarz_bcs_const_view_x[dof] << ", "
+            << schwarz_bcs_const_view_y[dof] << ", "
+            << schwarz_bcs_const_view_z[dof] << "\n";
 #endif //DEBUG_LCM_SCHWARZ  
         fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
         fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
         fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
       }
-    } 
+    }
 
     if (fpT != Teuchos::null) {
       std::cout << "WARNING: fpT requested but unset when ALBANY_DTK is ON!\n";
@@ -1123,7 +1143,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       x_val, y_val, z_val;
 
       this->computeBCs(ns_node, x_val, y_val, z_val);
-      
+
       if (fT != Teuchos::null) {
         fT_view[x_dof] = xT_const_view[x_dof] - x_val.val();
         fT_view[y_dof] = xT_const_view[y_dof] - y_val.val();
@@ -1778,4 +1798,5 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 }
 #endif // ALBANY_ENSEMBLE
 
-} // namespace LCM
+}
+  // namespace LCM

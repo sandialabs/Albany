@@ -23,6 +23,7 @@
 #ifdef ALBANY_FELIX
   #include "FELIX_ResponseSurfaceVelocityMismatch.hpp"
   #include "FELIX_ResponseSMBMismatch.hpp"
+  #include "FELIX_ResponseBoundarySquaredL2Norm.hpp"
 #endif
 #ifdef ALBANY_QCAD
 #if defined(ALBANY_EPETRA)
@@ -167,6 +168,15 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     // No side data layouts have been passed to this class
     RCP<FELIX::ResponseSMBMismatch<EvalT,Traits> > res_ev =
       rcp(new FELIX::ResponseSMBMismatch<EvalT,Traits>(*p,dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+  else if (responseName == "Boundary Squared L2 Norm")
+  {
+    // No side data layouts have been passed to this class
+    RCP<FELIX::ResponseBoundarySquaredL2Norm<EvalT,Traits> > res_ev =
+      rcp(new FELIX::ResponseBoundarySquaredL2Norm<EvalT,Traits>(*p,dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

@@ -39,18 +39,18 @@ private:
 
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> TauM;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> Rm;
   PHX::MDField<ScalarT,Cell,QuadPoint> rho;
   
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint> TauM;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> Rm;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> CResidual;
 
-  unsigned int numQPs, numDims, numNodes;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> divergence;
+  unsigned int numCells, numQPs, numDims, numNodes;
+  Kokkos::DynRankView<ScalarT, PHX::Device> divergence;
   bool havePSPG;
 };
 }

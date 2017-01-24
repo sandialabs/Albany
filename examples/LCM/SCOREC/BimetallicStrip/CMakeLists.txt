@@ -15,8 +15,6 @@ get_filename_component(testRoot ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 set(testName "SCOREC_${testRoot}")
 
 # 3. Create the test with this name and standard executable
-IF(ENABLE_MESHMODEL)
-  IF(ALBANY_IFPACK2)
-    add_test(NAME ${testName}_Traction_Tpetra COMMAND ${AlbanyT.exe} inputT.xml)
-  ENDIF()
+IF(ALBANY_IFPACK2)
+  add_test(NAME ${testName}_Traction_Tpetra COMMAND ${AlbanyT.exe} inputT.xml)
 ENDIF()

@@ -1,0 +1,169 @@
+#/********************************************************************\
+#*            Albany, Copyright (2010) Sandia Corporation             *
+#*                                                                    *
+#* Notice: This computer software was prepared by Sandia Corporation, *
+#* hereinafter the Contractor, under Contract DE-AC04-94AL85000 with  *
+#* the Department of Energy (DOE). All rights in the computer software*
+#* are reserved by DOE on behalf of the United States Government and  *
+#* the Contractor as provided in the Contract. You are authorized to  *
+#* use this computer software for Governmental purposes but it is not *
+#* to be released or distributed to the public. NEITHER THE GOVERNMENT*
+#* NOR THE CONTRACTOR MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR      *
+#* ASSUMES ANY LIABILITY FOR THE USE OF THIS SOFTWARE. This notice    *
+#* including this sentence must appear on any copies of this software.*
+#*    Questions to Andy Salinger, agsalin@sandia.gov                  *
+#\********************************************************************/
+
+# This is a sample Trilinos configuration script for Albany.
+#
+# Boost is required, but just needs to be unpacked,
+# not compiled. Version _1_40 or newer.
+#
+# There are two optional build choices, commented below
+#   these are for Dakota and Exodus I/O capabilites.
+#
+# Albany automatically queries the Trilinos build to 
+# know if these capabilities are enabled or disabled.
+#
+# It is important you edit your ~/.bashrc to be as follows: 
+# LD_LIBRARY_PATH=/ha_cluster/global/opt/gcc/4.8.1/snos/lib:$LD_LIBRARY_PATH:/ha_cluster/home/projects/mpc/1.0.1/lib
+# export LD_LIBRARY_PATH
+#
+# To run: 
+# First need to allocate a job:
+# salloc -n 4 -N 4 -p stella
+# Then just do ctest and Albany tests should run (make sure cmake module is loaded first).
+
+rm -rf CMake*
+
+NETCDF=/home/ikalash/Install/netcdf-4.2-hack
+HDF5DIR=/home/ikalash/Install/hdf5-1.8.6
+BOOSTDIR=/home/ikalash/Install/boost_1_55_0
+BUILD_DIR=`pwd`
+HWLOC_PATH=/home/ikalash/Install/hwloc-1.10.1
+
+cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
+      -D CMAKE_BUILD_TYPE:STRING=RELEASE \
+      -D TPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so.3 \
+      -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/atlas/liblapack.so.3 \
+\
+      -D TPL_ENABLE_MPI:BOOL=ON \
+\
+      -D TPL_ENABLE_Boost:BOOL=ON \
+      -D TPL_ENABLE_BoostLib:BOOL=ON \
+      -D Boost_INCLUDE_DIRS:FILEPATH=$BOOSTDIR/include \
+      -D Boost_LIBRARY_DIRS:FILEPATH=$BOOSTDIR/lib \
+      -D BoostLib_INCLUDE_DIRS:FILEPATH=$BOOSTDIR/include \
+      -D BoostLib_LIBRARY_DIRS:FILEPATH=$BOOSTDIR/lib \
+\
+      -D Trilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF \
+      -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
+      -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+      -D Trilinos_ENABLE_CXX11:BOOL=ON \
+      -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
+      -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
+      -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
+      -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
+\
+      -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
+      -D Kokkos_ENABLE_CXX11:BOOL=ON \
+      -D Kokkos_ENABLE_Cuda_UVM:BOOL=OFF \
+      -D Kokkos_ENABLE_EXAMPLES:BOOL=OFF \
+      -D Kokkos_ENABLE_OpenMP:BOOL=ON \
+      -D Kokkos_ENABLE_Pthread:BOOL=OFF \
+      -D Kokkos_ENABLE_Serial:BOOL=ON \
+      -D Kokkos_ENABLE_TESTS:BOOL=ON \
+      -D TPL_ENABLE_Thrust:BOOL=OFF \
+      -D TPL_ENABLE_CUDA:BOOL=OFF \
+      -D TPL_ENABLE_CUSPARSE:BOOL=OFF \
+\
+      -D Amesos2_ENABLE_KLU2:BOOL=ON \
+      -D EpetraExt_USING_HDF5:BOOL=OFF \
+      -D Intrepid_ENABLE_TESTS:BOOL=OFF \
+      -D Intrepid2_ENABLE_TESTS:BOOL=OFF \
+      -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
+      -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="OPENMP" \
+      -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
+      -D Sacado_ENABLE_COMPLEX:BOOL=ON \
+      -D Teuchos_ENABLE_COMPLEX:BOOL=ON \
+      -D Tpetra_ENABLE_Kokkos_Refactor:BOOL=ON \
+      -D TPL_ENABLE_HWLOC:STRING=ON \
+      -D TPL_HWLOC_LIBRARIES:PATHNAME=${HWLOC_PATH}/lib/libhwloc.so \
+      -D TPL_HWLOC_INCLUDE_DIRS:PATHNAME=${HWLOC_PATH}/include \
+\
+      -D TPL_ENABLE_HDF5:BOOL=ON \
+      -D TPL_ENABLE_Matio:BOOL=OFF \
+      -D TPL_ENABLE_Netcdf:BOOL=ON \
+      -D TPL_Netcdf_PARALLEL:BOOL=ON \
+      -D TPL_ENABLE_X11:BOOL=OFF \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=$NETCDF/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=$NETCDF/lib \
+      -D HDF5_INCLUDE_DIRS:PATH=$HDF5DIR/include \
+      -D HDF5_LIBRARY_DIRS:PATH=$HDF5DIR/lib \
+\
+      -D Trilinos_ENABLE_Amesos2:BOOL=ON \
+      -D Trilinos_ENABLE_Amesos:BOOL=ON \
+      -D Trilinos_ENABLE_Anasazi:BOOL=ON \
+      -D Trilinos_ENABLE_AztecOO:BOOL=ON \
+      -D Trilinos_ENABLE_Belos:BOOL=ON \
+      -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
+      -D Trilinos_ENABLE_Epetra:BOOL=ON \
+      -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
+      -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
+      -D Trilinos_ENABLE_Ifpack:BOOL=ON \
+      -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+      -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
+      -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosAlgorithms:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosExample:BOOL=OFF \
+      -D Trilinos_ENABLE_ML:BOOL=ON \
+      -D Trilinos_ENABLE_OpenMP:BOOL=ON \
+      -D Trilinos_ENABLE_MueLu:BOOL=ON \
+      -D Trilinos_ENABLE_NOX:BOOL=ON \
+      -D Trilinos_ENABLE_Pamgen:BOOL=ON \
+      -D Trilinos_ENABLE_Phalanx:BOOL=ON \
+      -D Trilinos_ENABLE_Piro:BOOL=ON \
+      -D Trilinos_ENABLE_Rythmos:BOOL=ON \
+      -D Trilinos_ENABLE_SEACAS:BOOL=ON \
+      -D Trilinos_ENABLE_STKClassic:BOOL=OFF \
+      -D Trilinos_ENABLE_STKDoc_tests:BOOL=OFF \
+      -D Trilinos_ENABLE_STKIO:BOOL=ON \
+      -D Trilinos_ENABLE_STKMesh:BOOL=ON \
+      -D Trilinos_ENABLE_Sacado:BOOL=ON \
+      -D Trilinos_ENABLE_Shards:BOOL=ON \
+      -D Trilinos_ENABLE_Stokhos:BOOL=ON \
+      -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
+      -D Trilinos_ENABLE_TriKota:BOOL=ON \
+      -D Trilinos_ENABLE_TESTS:BOOL=OFF \
+      -D Trilinos_ENABLE_Teko:BOOL=ON \
+      -D Trilinos_ENABLE_Teuchos:BOOL=ON \
+      -D Trilinos_ENABLE_ThreadPool:BOOL=ON \
+      -D Trilinos_ENABLE_Thyra:BOOL=ON \
+      -D Trilinos_ENABLE_Tpetra:BOOL=ON \
+      -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
+      -D Trilinos_ENABLE_Zoltan:BOOL=ON \
+      -D Intrepid2_ENABLE_KokkosDynRankView:BOOL=ON \
+       ..
+
+#      -D Trios_ENABLE_XDMF:BOOL=OFF \
+#
+# Optional build capabilities:
+# (1) TriKota is a Trilinos package that builds the
+#     Dakota libraries, for optimization and UQ. See
+#     TriKota web page for how to unpack Dakota.
+#
+#        -D Trilinos_ENABLE_TriKota:BOOL=ON \
+#
+# (2) These 6 lines regarding  SEACAS/netcdf  are needed
+#     for reading exodus meshes, but require an
+#     installed netcdf. Also used for Pamgen meshes.
+#        -D Trilinos_ENABLE_SEACAS:BOOL=ON \
+#        -D Trilinos_ENABLE_Pamgen:BOOL=ON \
+#        -D TPL_ENABLE_Netcdf:BOOL=ON \
+#        -D TPL_Netcdf_INCLUDE_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/include \
+#        -D Netcdf_LIBRARY_DIRS:PATH=/home/agsalin/install/netcdf-4.0.1/lib \
+
+#      -D Trilinos_EXTRA_REPOSITORIES="preCopyrightTrilinos" \
+#      -D Trilinos_ENABLE_MueLu:BOOL=ON \

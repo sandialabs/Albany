@@ -17,43 +17,40 @@
 namespace FELIX
 {
 
-/** \brief Pressure-melting enthalpy
+  /** \brief Pressure-melting enthalpy
 
-    This evaluator computes the enthalpy of the ice at the pressure-melting temperature Tm(p).
-*/
+    This evaluator computes enthalpy of the ice at pressure-melting temperature Tm(p).
+   */
 
-template<typename EvalT, typename Traits, typename Type>
-class PressureMeltingEnthalpy: public PHX::EvaluatorWithBaseImpl<Traits>,
-                               public PHX::EvaluatorDerived<EvalT, Traits>
-{
-public:
+  template<typename EvalT, typename Traits, typename Type>
+  class PressureMeltingEnthalpy: public PHX::EvaluatorWithBaseImpl<Traits>,
+  public PHX::EvaluatorDerived<EvalT, Traits>
+  {
+  public:
 
-  //typedef typename EvalT::ParamScalarT ParamScalarT;
-  //typedef typename EvalT::MeshScalarT MeshScalarT;
+    PressureMeltingEnthalpy (const Teuchos::ParameterList& p,
+                             const Teuchos::RCP<Albany::Layouts>& dl);
 
-  PressureMeltingEnthalpy (const Teuchos::ParameterList& p,
-                       	   const Teuchos::RCP<Albany::Layouts>& dl);
+    void postRegistrationSetup (typename Traits::SetupData d,
+                                PHX::FieldManager<Traits>& fm);
 
-  void postRegistrationSetup (typename Traits::SetupData d,
-                              PHX::FieldManager<Traits>& fm);
+    void evaluateFields(typename Traits::EvalData d);
 
-  void evaluateFields(typename Traits::EvalData d);
+  private:
+    // Input:
+    PHX::MDField<Type,Cell,Node> meltingTemp; //[K]
 
-private:
-  // Input:
-  PHX::MDField<Type,Cell,Node> meltingTemp;
+    // Output:
+    PHX::MDField<Type,Cell,Node> enthalpyHs;  //[MW s m^{-3}]
 
-  // Output:
-  PHX::MDField<Type,Cell,Node> enthalpyHs;
+    int numNodes;
 
-  int numNodes;
-
-  double c_i;
-  double T0;
-};
+    double c_i;   //[J Kg^{-1} K^{-1}], Heat capacity of ice
+    double rho_i; //[kg m^{-3}]
+    double T0;    //[K]
+  };
 
 } // Namespace FELIX
-
 
 
 #endif /* FELIX_PRESSUREMELTINGENTHALPY_HPP_ */

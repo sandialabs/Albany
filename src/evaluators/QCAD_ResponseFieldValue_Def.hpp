@@ -372,11 +372,11 @@ ResponseFieldValue(Teuchos::ParameterList& p,
   }
 
   // add dependent fields
-  this->addDependentField(opField);
-  this->addDependentField(coordVec);
-  this->addDependentField(weights);
+  this->addDependentField(opField.fieldTag());
+  this->addDependentField(coordVec.fieldTag());
+  this->addDependentField(weights.fieldTag());
   opRegion->addDependentFields(this);
-  if(!bReturnOpField) this->addDependentField(retField); //when return field is *different* from op field
+  if(!bReturnOpField) this->addDependentField(retField.fieldTag()); //when return field is *different* from op field
 
   // Set sentinal values for max/min problems
   initVals = Teuchos::Array<double>(5, 0.0);

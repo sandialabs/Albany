@@ -85,16 +85,16 @@ addDependentFields(PHX::EvaluatorWithBaseImpl<Traits>* evaluator)
 {
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> f(coordVecFieldname, dl->qp_vector); 
   coordVec = f;
-  evaluator->addDependentField(coordVec);
+  evaluator->addDependentField(coordVec.fieldTag());
 
   if(bRestrictToLevelSet) {
     PHX::MDField<MeshScalarT,Cell,QuadPoint> g(weightsFieldname, dl->qp_scalar); 
     weights = g;
-    evaluator->addDependentField(weights);
+    evaluator->addDependentField(weights.fieldTag());
 
     PHX::MDField<ScalarT> h(levelSetFieldname, dl->qp_scalar); 
     levelSetField = h;
-    evaluator->addDependentField(levelSetField);
+    evaluator->addDependentField(levelSetField.fieldTag());
   }
 }
 

@@ -79,7 +79,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell = 0; cell < workset.numCells; ++cell)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       const LO lid = wsElDofs((int)cell,(int)node,0);
-      (this->val)(cell,node) = (lid >= 0 ) ? pvecT_constView[wsElDofs((int)cell,(int)node,0)] : 0;
+      (this->val)(cell,node) = (lid >= 0 ) ? pvecT_constView[lid] : 0;
     }
 }
 
@@ -198,7 +198,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
   Teuchos::ArrayRCP<const ST> pvecT_constView = pvecT->get1dView();
 
-  const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
+  //const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
 
   const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
@@ -214,7 +214,8 @@ evaluateFields(typename Traits::EvalData workset)
       layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
       LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
       GO ginode = workset.disc->getOverlapNodeMapT()->getGlobalElement(inode);
-      (this->val)(cell,node) = pvecT_constView[pvecT->getMap()->getLocalElement(ginode)  ];
+      LO p_lid= pvecT->getMap()->getLocalElement(ginode);
+      (this->val)(cell,node) = ( p_lid >= 0) ? pvecT_constView[p_lid] : 0;
     }
   }
 }
@@ -261,10 +262,13 @@ evaluateFields(typename Traits::EvalData workset)
         layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
         LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
         GO ginode = workset.disc->getOverlapNodeMapT()->getGlobalElement(inode);
-        double pvec_id = pvecT_constView[pvecT->getMap()->getLocalElement(ginode)];
+        LO p_lid= pvecT->getMap()->getLocalElement(ginode);
+        double pvec_id = ( p_lid >= 0) ? pvecT_constView[p_lid] : 0;
 
         ParamScalarT v(num_deriv, node, pvec_id);
         v.setUpdateValue(!workset.ignore_residual);
+        if(p_lid < 0)
+          v.fastAccessDx(node) = 0;
         (this->val)(cell,node) = v;
       }
 
@@ -303,9 +307,16 @@ evaluateFields(typename Traits::EvalData workset)
   // If not active, just set the parameter value in the phalanx field
   else {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+      const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node) {
-        const LO lid = wsElDofs((int)cell,(int)node,0);
-        (this->val)(cell,node) = (lid >= 0) ? pvecT_constView[lid] : 0;
+      //  LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(wsElDofs((int)cell,(int)node,0));
+        LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
+        LO base_id, ilayer;
+        layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
+        LO inode = layeredMeshNumbering.getId(base_id, fieldLevel);
+        GO ginode = workset.disc->getOverlapNodeMapT()->getGlobalElement(inode);
+        LO p_lid= pvecT->getMap()->getLocalElement(ginode);
+        (this->val)(cell,node) = ( p_lid >= 0) ? pvecT_constView[p_lid] : 0;
       }
     }
   }

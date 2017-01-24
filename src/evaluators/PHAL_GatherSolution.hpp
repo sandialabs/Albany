@@ -105,30 +105,30 @@ public:
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 
- //Kokkos:
- struct tensorRank_2Tag{};
- struct tensorRank_2_enableTransientTag{};
- struct tensorRank_2_enableAccelerationTag{};
+  //Kokkos:
+  struct tensorRank_2Tag{};
+  struct tensorRank_2_enableTransientTag{};
+  struct tensorRank_2_enableAccelerationTag{};
 
- struct tensorRank_1Tag{};
- struct tensorRank_1_enableTransientTag{};
- struct tensorRank_1_enableAccelerationTag{};
+  struct tensorRank_1Tag{};
+  struct tensorRank_1_enableTransientTag{};
+  struct tensorRank_1_enableAccelerationTag{};
 
- struct tensorRank_0Tag{};
- struct tensorRank_0_enableTransientTag{};
- struct tensorRank_0_enableAccelerationTag{};
+  struct tensorRank_0Tag{};
+  struct tensorRank_0_enableTransientTag{};
+  struct tensorRank_0_enableAccelerationTag{};
 
- typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
- typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2Tag> tensorRank_2Policy;
- typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2_enableTransientTag> tensorRank_2_enableTransientPolicy;
- typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2_enableAccelerationTag> tensorRank_2_enableAccelerationPolicy;
- typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1Tag> tensorRank_1Policy;
- typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1_enableTransientTag> tensorRank_1_enableTransientPolicy;
- typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1_enableAccelerationTag> tensorRank_1_enableAccelerationPolicy;
- typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0Tag> tensorRank_0Policy;
- typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0_enableTransientTag> tensorRank_0_enableTransientPolicy;
- typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0_enableAccelerationTag> tensorRank_0_enableAccelerationPolicy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2Tag> tensorRank_2Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2_enableTransientTag> tensorRank_2_enableTransientPolicy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2_enableAccelerationTag> tensorRank_2_enableAccelerationPolicy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1Tag> tensorRank_1Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1_enableTransientTag> tensorRank_1_enableTransientPolicy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1_enableAccelerationTag> tensorRank_1_enableAccelerationPolicy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0Tag> tensorRank_0Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0_enableTransientTag> tensorRank_0_enableTransientPolicy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0_enableAccelerationTag> tensorRank_0_enableAccelerationPolicy;
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_2Tag& tag, const int& i) const;
@@ -151,26 +151,19 @@ public:
   KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_0_enableAccelerationTag& tag, const int& i) const;
 
-
-
-
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
   const int numFields;
   int numDim; 
 
-  Teuchos::ArrayRCP<const ST> xT_constView;
-  Teuchos::ArrayRCP<const ST> xdotT_constView;
-  Teuchos::ArrayRCP<const ST> xdotdotT_constView;
   Kokkos::View<int***, PHX::Device> wsID_kokkos;
+  Kokkos::View<const ST*, PHX::Device> xT_constView, xdotT_constView, xdotdotT_constView;
 
   typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
   Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device > val_kokkos;
-//  Kokkos::vector< PHX::MDField<ScalarT,Cell,Node> , PHX::Device > val_kokkos;
   Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device > val_dot_kokkos; 
   Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device > val_dotdot_kokkos;
 
-//  typename Kokkos::vector< PHX::MDField<ScalarT,Cell,Node> , PHX::Device >::t_dev d_val;
   typename Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device >::t_dev d_val;
   typename Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device >::t_dev d_val_dot;
   typename Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device >::t_dev d_val_dotdot;
@@ -189,56 +182,64 @@ public:
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
  
- //Kokkos
- struct tensorRank_2Tag{};
- struct tensorRank_2_enableTransientTag{};
- struct tensorRank_2_enableAccelerationTag{};
+  //Kokkos
+  struct tensorRank_2Tag{};
+  struct tensorRank_2_enableTransientTag{};
+  struct tensorRank_2_enableAccelerationTag{};
 
- struct tensorRank_1Tag{};
- struct tensorRank_1_enableTransientTag{};
- struct tensorRank_1_enableAccelerationTag{};
+  struct tensorRank_1Tag{};
+  struct tensorRank_1_enableTransientTag{};
+  struct tensorRank_1_enableAccelerationTag{};
 
- struct tensorRank_0Tag{};
- struct tensorRank_0_enableTransientTag{};
- struct tensorRank_0_enableAccelerationTag{};
+  struct tensorRank_0Tag{};
+  struct tensorRank_0_enableTransientTag{};
+  struct tensorRank_0_enableAccelerationTag{};
 
- typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
- typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2Tag> tensorRank_2Policy;
- typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2_enableTransientTag> tensorRank_2_enableTransientPolicy;
- typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2_enableAccelerationTag> tensorRank_2_enableAccelerationPolicy;
- typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1Tag> tensorRank_1Policy;
- typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1_enableTransientTag> tensorRank_1_enableTransientPolicy;
- typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1_enableAccelerationTag> tensorRank_1_enableAccelerationPolicy;
- typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0Tag> tensorRank_0Policy;
- typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0_enableTransientTag> tensorRank_0_enableTransientPolicy;
- typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0_enableAccelerationTag> tensorRank_0_enableAccelerationPolicy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2Tag> tensorRank_2Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2_enableTransientTag> tensorRank_2_enableTransientPolicy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2_enableAccelerationTag> tensorRank_2_enableAccelerationPolicy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1Tag> tensorRank_1Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1_enableTransientTag> tensorRank_1_enableTransientPolicy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1_enableAccelerationTag> tensorRank_1_enableAccelerationPolicy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0Tag> tensorRank_0Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0_enableTransientTag> tensorRank_0_enableTransientPolicy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0_enableAccelerationTag> tensorRank_0_enableAccelerationPolicy;
 
+  KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_2Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_2_enableTransientTag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_2_enableAccelerationTag& tag, const int& i) const;
 
+  KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_1Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_1_enableTransientTag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_1_enableAccelerationTag& tag, const int& i) const;
 
+  KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_0Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_0_enableTransientTag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_0_enableAccelerationTag& tag, const int& i) const;
  
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
   const int numFields;
 
-  Teuchos::ArrayRCP<const ST> xT_constView;
-  Teuchos::ArrayRCP<const ST> xdotT_constView;
-  Teuchos::ArrayRCP<const ST> xdotdotT_constView;
   int numDim;
-  Kokkos::View<int***, PHX::Device> wsID_kokkos;
   double j_coeff;
   double n_coeff;
   double m_coeff;
   bool ignore_residual;
+
+  Kokkos::View<int***, PHX::Device> wsID_kokkos;
+  Kokkos::View<const ST*, PHX::Device> xT_constView, xdotT_constView, xdotdotT_constView;
 
   typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
   Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device > val_kokkosjac;
@@ -248,7 +249,6 @@ private:
   typename Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device >::t_dev d_val;
   typename Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device >::t_dev d_val_dot;
   typename Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device >::t_dev d_val_dotdot;
- 
 };
 
 

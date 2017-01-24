@@ -51,6 +51,11 @@ Albany::AbstractProblem::AbstractProblem(
     number_of_time_deriv = 1;
     SolutionMethodName = Transient;
   }
+  else if(solutionMethod == "Transient Tempus")
+  {
+    number_of_time_deriv = 1;
+    SolutionMethodName = TransientTempus;
+  }
   else if(solutionMethod == "Eigensolve")
   {
     number_of_time_deriv = 0;
@@ -63,7 +68,7 @@ Albany::AbstractProblem::AbstractProblem(
   }
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true,
-            std::logic_error, "Solution Method must be Steady, Transient, "
+            std::logic_error, "Solution Method must be Steady, Transient, Transient Tempus, "
             << "Continuation, Eigensolve, or Aeras Hyperviscosity, not : " << solutionMethod);
 
    // Set the number in the Problem PL
@@ -127,7 +132,9 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->set<int>("Phalanx Graph Visualization Detail", 0,
                     "Flag to select outpuy of Phalanx Graph and level of detail");
   validPL->set<bool>("Use Physics-Based Preconditioner", false,
-      "Flag to create signal that this problem will creat its own preconditioner");
+                     "Flag to create signal that this problem will creat its own preconditioner");
+  validPL->set<std::string>("Physics-Based Preconditioner", "None",
+                            "Type of preconditioner that problem will create");
 
   validPL->set<Teuchos::Array<std::string> >("Required Fields",Teuchos::Array<std::string>(),"List of field requirements");
   validPL->sublist("Initial Condition", false, "");
@@ -139,6 +146,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Parameters", false, "");
   validPL->sublist("Distributed Parameters", false, "");
   validPL->sublist("Teko", false, "");
+  validPL->sublist("XFEM", false, "");
   validPL->sublist("Dirichlet BCs", false, "");
   validPL->sublist("Neumann BCs", false, "");
   validPL->sublist("Adaptation", false, "");

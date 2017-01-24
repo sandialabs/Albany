@@ -1,4 +1,4 @@
-////*****************************************************************//
+//*****************************************************************//
 //    Albany 3.0:  Copyright 2016 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
@@ -56,6 +56,8 @@ PhaseResidual(const Teuchos::ParameterList& p,
   
   Initial_porosity = cond_list->get("Value", 0.0);
   
+  hasConsolidation_  = p.get<bool>("Compute Consolidation");
+  
   std::vector<PHX::Device::size_type> dims;
   w_grad_bf_.fieldTag().dataLayout().dimensions(dims);
   workset_size_ = dims[0];
@@ -65,7 +67,6 @@ PhaseResidual(const Teuchos::ParameterList& p,
 
   Temperature_Name_ = p.get<std::string>("Temperature Name")+"_old";
 
-  term1_.resize(dims[0],num_qps_,num_dims_);
 
   this->setName("PhaseResidual"+PHX::typeAsString<EvalT>());
 }
@@ -92,6 +93,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(porosity_,fm);
   this->utils.setFieldData(energyDot_,fm);
   this->utils.setFieldData(residual_,fm);
+
+
+  term1_ = Kokkos::createDynRankView(k_.get_view(), "term1_", workset_size_,num_qps_,num_dims_);
 }
 
 //**********************************************************************
@@ -101,7 +105,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
     // time step
     ScalarT dt = deltaTime(0);
-    typedef Intrepid2::FunctionSpaceTools FST;
+    typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
     if (dt == 0.0) dt = 1.0e-15;
     //grab old temperature
@@ -117,8 +121,8 @@ evaluateFields(typename Traits::EvalData workset)
     }
 
     // diffusive term
-    FST::scalarMultiplyDataData<ScalarT> (term1_, k_, T_grad_);
-    // FST::integrate<ScalarT>(residual_, term1_, w_grad_bf_, Intrepid2::COMP_CPP, false);
+    FST::scalarMultiplyDataData<ScalarT> (term1_, k_.get_view(), T_grad_.get_view());
+    // FST::integrate(residual_, term1_, w_grad_bf_, false);
     //Using for loop to calculate the residual 
 
     
@@ -139,68 +143,114 @@ evaluateFields(typename Traits::EvalData workset)
 //      }
 //    }
    
-    
-    
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      for (int qp = 0; qp < num_qps_; ++qp) {
-        for (int node = 0; node < num_nodes_; ++node) {
-            porosity_function1 = pow(((1.0 - porosity_(cell,qp))/(1.0 - Initial_porosity)),2);
-            porosity_function2 = (1.0 - Initial_porosity)/(1.0 - porosity_(cell,qp));
-            //In the model that is currently used, the Y-axis corresponds to the depth direction. Hence the term porosity
-            //function1 is multiplied with the second term. 
-            residual_(cell,node) += porosity_function2*(
-                       w_grad_bf_(cell,node,qp,0) * term1_(cell,qp,0)
-                     + w_grad_bf_(cell,node,qp,1) * term1_(cell,qp,1)
-                     + porosity_function1* w_grad_bf_(cell,node,qp,2) * term1_(cell,qp,2));
+    if (hasConsolidation_) {
+            for (int cell = 0; cell < workset.numCells; ++cell) {
+                for (int qp = 0; qp < num_qps_; ++qp) {
+                    for (int node = 0; node < num_nodes_; ++node) {
+                        //Use if consolidation is considered
+                        porosity_function1 = pow(((1.0 - porosity_(cell, qp)) / (1.0 - Initial_porosity)), 2);
+                                porosity_function2 = (1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
+                                //Use if No consolidation is considered
+                                //porosity_function1 = 1.0;
+                                //porosity_function2 = 1.0;
+                                //In the model that is currently used, the Z-axis corresponds to the depth direction. Hence the term porosity
+                                //function1 is multiplied with the second term. 
+                                residual_(cell, node) += porosity_function2 * (
+                                w_grad_bf_(cell, node, qp, 0) * term1_(cell, qp, 0)
+                                + w_grad_bf_(cell, node, qp, 1) * term1_(cell, qp, 1)
+                                + porosity_function1 * w_grad_bf_(cell, node, qp, 2) * term1_(cell, qp, 2));
+                    }
+                }
+            }
+
+            // heat source from laser 
+            for (int cell = 0; cell < workset.numCells; ++cell) {
+                for (int qp = 0; qp < num_qps_; ++qp) {
+                    for (int node = 0; node < num_nodes_; ++node) {
+                        //Use if consolidation is considered
+                        porosity_function2 = (1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
+                                //Use if No consolidation is considered
+                                //porosity_function2 = 1.0;
+                                residual_(cell, node) -= porosity_function2 * (w_bf_(cell, node, qp) * laser_source_(cell, qp));
+                    }
+                }
+            }
+
+            // all other problem sources
+            for (int cell = 0; cell < workset.numCells; ++cell) {
+                for (int qp = 0; qp < num_qps_; ++qp) {
+                    for (int node = 0; node < num_nodes_; ++node) {
+                        //Use if consolidation is considered
+                        porosity_function2 = (1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
+                                //Use if No consolidation is considered
+                                //porosity_function2 = 1.0;
+                                residual_(cell, node) -= porosity_function2 * (w_bf_(cell, node, qp) * source_(cell, qp));
+                    }
+                }
+            }
+
+            // transient term
+            for (int cell = 0; cell < workset.numCells; ++cell) {
+                for (int qp = 0; qp < num_qps_; ++qp) {
+                    for (int node = 0; node < num_nodes_; ++node) {
+                        //Use if consolidation is considered
+                        porosity_function2 = (1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
+                                //Use if No consolidation is considered
+                                //porosity_function2 = 1.0;
+                                residual_(cell, node) += porosity_function2 * (w_bf_(cell, node, qp) * energyDot_(cell, qp));
+                    }
+                }
+            }
+        } else { // does not have consolidation
+            for (int cell = 0; cell < workset.numCells; ++cell) {
+                for (int qp = 0; qp < num_qps_; ++qp) {
+                    for (int node = 0; node < num_nodes_; ++node) {
+                        //In the model that is currently used, the Z-axis corresponds to the depth direction. Hence the term porosity
+                        //function1 is multiplied with the second term. 
+                        residual_(cell, node) += (
+                                w_grad_bf_(cell, node, qp, 0) * term1_(cell, qp, 0)
+                                + w_grad_bf_(cell, node, qp, 1) * term1_(cell, qp, 1)
+                                + w_grad_bf_(cell, node, qp, 2) * term1_(cell, qp, 2));
+                    }
+                }
+            }
+            // heat source from laser 
+            for (int cell = 0; cell < workset.numCells; ++cell) {
+                for (int qp = 0; qp < num_qps_; ++qp) {
+                    for (int node = 0; node < num_nodes_; ++node) {
+                        residual_(cell, node) -= (w_bf_(cell, node, qp) * laser_source_(cell, qp));
+                    }
+                }
+            }
+            // all other problem sources
+            for (int cell = 0; cell < workset.numCells; ++cell) {
+                for (int qp = 0; qp < num_qps_; ++qp) {
+                    for (int node = 0; node < num_nodes_; ++node) {
+                        residual_(cell, node) -= (w_bf_(cell, node, qp) * source_(cell, qp));
+                    }
+                }
+            }
+            // transient term
+            for (int cell = 0; cell < workset.numCells; ++cell) {
+                for (int qp = 0; qp < num_qps_; ++qp) {
+                    for (int node = 0; node < num_nodes_; ++node) {
+                        residual_(cell, node) += (w_bf_(cell, node, qp) * energyDot_(cell, qp));
+                    }
+                }
+            }
         }
-      }
-    }
-
-    // heat source from laser 
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      for (int qp = 0; qp < num_qps_; ++qp) {
-        for (int node = 0; node < num_nodes_; ++node) {
-            porosity_function2 = (1.0 - Initial_porosity)/(1.0 - porosity_(cell,qp));
-
-            residual_(cell,node) -= porosity_function2*(w_bf_(cell,node,qp) * laser_source_(cell,qp));
-        }
-      }
-    }
-
-    // all other problem sources
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      for (int qp = 0; qp < num_qps_; ++qp) {
-        for (int node = 0; node < num_nodes_; ++node) {
-            porosity_function2 = (1.0 - Initial_porosity)/(1.0 - porosity_(cell,qp));
-
-            residual_(cell,node) -= porosity_function2*(w_bf_(cell,node,qp) * source_(cell,qp));
-        }
-      }
-    }
-
-    // transient term
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      for (int qp = 0; qp < num_qps_; ++qp) {
-        for (int node = 0; node < num_nodes_; ++node) {
-            porosity_function2 = (1.0 - Initial_porosity)/(1.0 - porosity_(cell,qp));
-
-            residual_(cell,node) += porosity_function2*(w_bf_(cell,node,qp) * energyDot_(cell,qp));
-        }
-      }
-    }
-
+         
     // heat source from laser 
     //PHAL::scale(laser_source_, -1.0);
-    //FST::integrate<ScalarT>(residual_, laser_source_, w_bf_, Intrepid2::COMP_CPP, true);
+    //FST::integrate(residual_, laser_source_, w_bf_, true);
 
     // all other problem sources
     //PHAL::scale(source_, -1.0);
-    //FST::integrate<ScalarT>(residual_, source_, w_bf_, Intrepid2::COMP_CPP, true);
+    //FST::integrate(residual_, source_, w_bf_, true);
 
     // transient term
-    //FST::integrate<ScalarT>(residual_, energyDot_, w_bf_, Intrepid2::COMP_CPP, true);
-
+    //FST::integrate(residual_, energyDot_, w_bf_, true);
 }
 
-//**********************************************************************
+//*********************************************************************
 }

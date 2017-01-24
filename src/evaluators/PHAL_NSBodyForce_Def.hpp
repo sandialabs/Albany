@@ -32,7 +32,7 @@ NSBodyForce(const Teuchos::ParameterList& p) :
     rho = PHX::MDField<ScalarT,Cell,QuadPoint>(
             p.get<std::string>("Density QP Variable Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    this->addDependentField(rho);
+    this->addDependentField(rho.fieldTag());
   }
   else if (type == "Boussinesq") {
     TEUCHOS_TEST_FOR_EXCEPTION(haveHeat == false, std::logic_error,
@@ -50,9 +50,9 @@ NSBodyForce(const Teuchos::ParameterList& p) :
             p.get<std::string>(
               "Volumetric Expansion Coefficient QP Variable Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    this->addDependentField(rho);
-    this->addDependentField(beta);
-    this->addDependentField(T);
+    this->addDependentField(rho.fieldTag());
+    this->addDependentField(beta.fieldTag());
+    this->addDependentField(T.fieldTag());
   }
 
   this->addEvaluatedField(force);

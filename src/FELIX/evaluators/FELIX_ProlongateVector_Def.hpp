@@ -44,7 +44,7 @@ ProlongateVectorBase(const Teuchos::ParameterList& p,
                                 "Error! Field layout not supported.\n");
   }
 
-  this->addDependentField(v_in);
+  this->addDependentField(v_in.fieldTag());
   this->addEvaluatedField(v_out);
 
   dims_in.resize(v_in.fieldTag().dataLayout().rank());

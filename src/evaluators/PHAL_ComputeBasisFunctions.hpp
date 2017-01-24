@@ -41,21 +41,21 @@ public:
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  int  numVertices, numDims, numNodes, numQPs;
+  int  numVertices, numDims, numNodes, numQPs, numCells;
 
   // Input:
   //! Coordinate vector at vertices
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
   Teuchos::RCP<shards::CellTopology> cellType;
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature;
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
 
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> val_at_cub_points;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> grad_at_cub_points;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobian;
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> jacobian_inv;
+  Kokkos::DynRankView<RealType, PHX::Device> val_at_cub_points;
+  Kokkos::DynRankView<RealType, PHX::Device> grad_at_cub_points;
+  Kokkos::DynRankView<RealType, PHX::Device> refPoints;
+  Kokkos::DynRankView<RealType, PHX::Device> refWeights;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobian;
+  Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobian_inv;
 
   // Output:
   //! Basis Functions at quadrature points

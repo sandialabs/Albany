@@ -9,7 +9,6 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 
-#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Albany_Layouts.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
@@ -32,9 +31,9 @@ CismSurfaceGradFO(const Teuchos::ParameterList& p,
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-  this->addDependentField(dsdx_node);
-  this->addDependentField(dsdy_node);
-  this->addDependentField(BF);
+  this->addDependentField(dsdx_node.fieldTag());
+  this->addDependentField(dsdy_node.fieldTag());
+  this->addDependentField(BF.fieldTag());
   this->addEvaluatedField(gradS_qp);
 
   this->setName("CismSurfaceGradFO"+PHX::typeAsString<EvalT>());

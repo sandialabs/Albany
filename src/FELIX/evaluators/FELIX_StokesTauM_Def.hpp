@@ -7,7 +7,6 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
-#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace FELIX {
 
@@ -28,20 +27,18 @@ StokesTauM(const Teuchos::ParameterList& p,
 
   delta = tauM_list->get("Delta", 1.0);
 
-  this->addDependentField(V);
-  this->addDependentField(Gc);
-  this->addDependentField(muFELIX);
-  this->addDependentField(jacobian_det);
+  this->addDependentField(V.fieldTag());
+  this->addDependentField(Gc.fieldTag());
+  this->addDependentField(muFELIX.fieldTag());
+  this->addDependentField(jacobian_det.fieldTag());
  
   this->addEvaluatedField(TauM);
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_gradient->dimensions(dims);
+  numCells= dims[0];
   numQPs  = dims[1];
   numDims = dims[2];
-
-  // Allocate workspace
-  normGc.resize(dims[0], numQPs);
 
   this->setName("StokesTauM"+PHX::typeAsString<EvalT>());
 }
@@ -58,6 +55,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(jacobian_det,fm);
   
   this->utils.setFieldData(TauM,fm);
+
+  // Allocate workspace
+  normGc = Kokkos::createDynRankView(Gc.get_view(), "XXX", numCells, numQPs);
 }
 
 //**********************************************************************

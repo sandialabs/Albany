@@ -80,7 +80,7 @@ namespace Albany {
      public Sacado::ParameterAccessor<PHAL::AlbanyTraits::Residual, SPL_Traits> {
   public:
 
-    enum SolutionMethod {Steady, Transient, Continuation, Eigensolve};
+    enum SolutionMethod {Steady, Transient, TransientTempus, Continuation, Eigensolve};
 
     //! Constructor
     Application(const Teuchos::RCP<const Teuchos_Comm>& comm,
@@ -1132,7 +1132,8 @@ namespace Albany {
 
     //! Data for Physics-Based Preconditioners
     bool physicsBasedPreconditioner;
-    Teuchos::RCP<Teuchos::ParameterList> tekoParams;
+    Teuchos::RCP<Teuchos::ParameterList> precParams;
+    std::string precType;
 
     //! Type of solution method
     SolutionMethod solMethod;

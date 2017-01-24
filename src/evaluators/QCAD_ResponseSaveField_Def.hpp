@@ -94,8 +94,8 @@ ResponseSaveField(Teuchos::ParameterList& p,
   //! add dependent fields
   Teuchos::RCP<PHX::DataLayout>& field_dl = isVectorField ? vector_dl : scalar_dl;
   PHX::MDField<ScalarT> f(fieldName, field_dl);  field = f;
-  this->addDependentField(field);
-  this->addDependentField(weights);
+  this->addDependentField(field.fieldTag());
+  this->addDependentField(weights.fieldTag());
 
   if(fieldIndices == "Cell,QuadPt") { //register a cell,qp state => cell-valued quantity
     if( outputCellAverage ) {

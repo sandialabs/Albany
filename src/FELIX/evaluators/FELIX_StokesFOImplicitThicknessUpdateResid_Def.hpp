@@ -8,7 +8,6 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
-#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "PHAL_Utilities.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
@@ -34,15 +33,15 @@ StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
   Teuchos::ParameterList* p_list =
       p.get<Teuchos::ParameterList*>("Physical Parameter List");
 
-  g = p_list->get("Gravity Acceleration", 9.8);
-  rho = p_list->get("Ice Density", 910.0);
+  g = p_list->get<double>("Gravity Acceleration");
+  rho = p_list->get<double>("Ice Density");
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-  this->addDependentField(dH);
-  this->addDependentField(wBF);
-  this->addDependentField(gradBF);
-  this->addDependentField(InputResidual);
+  this->addDependentField(dH.fieldTag());
+  this->addDependentField(wBF.fieldTag());
+  this->addDependentField(gradBF.fieldTag());
+  this->addDependentField(InputResidual.fieldTag());
   this->addEvaluatedField(Residual);
 
 
@@ -134,15 +133,13 @@ void StokesFOImplicitThicknessUpdateResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  typedef Intrepid2::FunctionSpaceTools FST; 
-
   // Initialize residual to 0.0
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> res(numNodes,2);
+  Kokkos::DynRankView<ScalarT, PHX::Device> res= createDynRankView(Residual.get_view(), "XXX", numNodes,2);
 
   double rho_g=rho*g;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    res.initialize();
+    for (std::size_t node=0; node < numNodes; ++node) {res(node,0)=0.0; res(node,1)=0.0;}
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       ScalarT dHdiffdx = 0;//Ugrad(cell,qp,2,0);
       ScalarT dHdiffdy = 0;//Ugrad(cell,qp,2,1);

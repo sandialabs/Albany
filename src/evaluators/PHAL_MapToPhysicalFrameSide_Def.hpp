@@ -25,20 +25,20 @@ MapToPhysicalFrameSide(const Teuchos::ParameterList& p,
   coords_side_vertices = PHX::MDField<MeshScalarT,Cell,Side,Vertex,Dim>(p.get<std::string>("Coordinate Vector Vertex Name"), dl_side->vertices_vector);
   coords_side_qp       = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string>("Coordinate Vector QP Name"), dl_side->qp_coords);
 
-  this->addDependentField(coords_side_vertices);
+  this->addDependentField(coords_side_vertices.fieldTag());
   this->addEvaluatedField(coords_side_qp);
 
   // Get Dimensions
   int numSides = dl_side->qp_coords->dimension(1);
   numSideQPs   = dl_side->qp_coords->dimension(2);
   numDim       = dl_side->qp_coords->dimension(3);
-  int sideDim  = dl_side->qp_gradient->dimension(3);
+  int sideDim  = numDim-1;
 
   // Compute cubature points in reference elements
-  auto cubature = p.get<Teuchos::RCP<Intrepid2::Cubature<RealType,Intrepid2::FieldContainer_Kokkos<RealType,PHX::Layout,PHX::Device>>>>("Cubature");
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> ref_cub_points, ref_weights;
-  ref_cub_points.resize(numSideQPs,sideDim);
-  ref_weights.resize(numSideQPs); // Not needed per se, but need to be passed to the following function call
+  auto cubature = p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature");
+  Kokkos::DynRankView<RealType, PHX::Device> ref_cub_points, ref_weights;
+  ref_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numSideQPs,sideDim);
+  ref_weights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numSideQPs); // Not needed per se, but need to be passed to the following function call
   cubature->getCubature(ref_cub_points, ref_weights);
 
   // Index of the vertices on the sides in the numeration of the cell
@@ -50,7 +50,7 @@ MapToPhysicalFrameSide(const Teuchos::ParameterList& p,
     // Since sides may be different (and we don't know on which local side this side set is), we build one basis per side.
     auto sideBasis = Albany::getIntrepid2Basis (*cellType->getCellTopologyData(sideDim,side));
     numSideVertices[side] = cellType->getVertexCount(sideDim,side);
-    phi_at_cub_points[side].resize(numSideVertices[side],numSideQPs);
+    phi_at_cub_points[side] = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numSideVertices[side],numSideQPs);
     sideBasis->getValues(phi_at_cub_points[side], ref_cub_points, Intrepid2::OPERATOR_VALUE);
   }
 

@@ -27,7 +27,7 @@ class SolidMechanics: public Albany::AbstractProblem
 public:
 
   using FieldContainer =
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>;
+  Kokkos::DynRankView<RealType, PHX::Device>;
 
   using StateArray =
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FieldContainer>>>;

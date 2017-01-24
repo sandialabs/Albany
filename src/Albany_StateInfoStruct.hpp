@@ -49,7 +49,7 @@ typedef std::vector<StateArray> StateArrayVec;
                     int worksetSize_, const std::string ebName_,
                     std::map<std::string, int>& ebNameToIndex_, bool interleavedOrdering_,
                     const bool sepEvalsByEB_ = false,
-                    const Intrepid2::EIntrepidPLPoly cubatureRule_ = Intrepid2::PL_GAUSS)
+                    const Intrepid2::EPolyType cubatureRule_ = Intrepid2::POLYTYPE_GAUSS)
        :  ctd(ctd_), numDim(numDim_), cubatureDegree(cubatureDegree_),
           nsNames(nsNames_), ssNames(ssNames_), worksetSize(worksetSize_),
           ebName(ebName_), ebNameToIndex(ebNameToIndex_),
@@ -70,7 +70,7 @@ typedef std::vector<StateArray> StateArrayVec;
     // doesn't matter. It is intended that interface blocks (LCM) don't count,
     // but the user must enforce this intention.
     bool sepEvalsByEB;
-    const Intrepid2::EIntrepidPLPoly cubatureRule;
+    const Intrepid2::EPolyType cubatureRule;
     std::map<std::string,Teuchos::ArrayRCP<Teuchos::RCP<MeshSpecsStruct> > > sideSetMeshSpecs;
 
     // We store the side meshes names so we have a way to index them with a number
@@ -93,16 +93,19 @@ struct StateStruct {
 
   StateStruct (const std::string& name_, MeshFieldEntity ent,
                const FieldDims& dims, const std::string& type,
-               const std::string& meshPart_=""):
+               const std::string& meshPart_="",
+               const std::string& ebName_=""):
         name(name_), responseIDtoRequire(""), output(true), dim(dims),
         initType(type), restartDataAvailable(false), saveOldState(false),
-        meshPart(meshPart_), pParentStateStruct(NULL), entity(ent), layered(false)
+        meshPart(meshPart_), ebName(ebName_),
+        pParentStateStruct(NULL), entity(ent), layered(false)
   {}
 
   void setInitType(const std::string& type) { initType = type; }
   void setInitValue(const double val) { initValue = val; }
   void setFieldDims(const FieldDims& dims) { dim = dims; }
   void setMeshPart(const std::string& meshPart_) {meshPart = meshPart_;}
+  void setEBName(const std::string& ebName_) {ebName = ebName_;}
 
   void print() {
     std::cout << "StateInfoStruct diagnostics for : " << name << std::endl;
@@ -127,6 +130,7 @@ struct StateStruct {
   bool saveOldState; // Bool that this state is to be copied into name+"_old"
   bool layered;
   std::string meshPart;
+  std::string ebName;
   StateStruct *pParentStateStruct; // If this is a copy (name = parentName+"_old"), ptr to parent struct
 
   StateStruct ();

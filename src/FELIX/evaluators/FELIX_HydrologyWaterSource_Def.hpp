@@ -16,7 +16,7 @@ HydrologyWaterSource (const Teuchos::ParameterList& p,
   // Get Dimensions
   numNodes = dl->node_qp_vector->dimension(1);
 
-  this->addDependentField(smb);
+  this->addDependentField(smb.fieldTag());
   this->addEvaluatedField(omega);
 
   this->setName("Surface Water Input From SMB " + PHX::typeAsString<EvalT>());

@@ -391,8 +391,8 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
             -this->value.dx(dirichletWorkset.param_offset+i).coeff(block);
   }
 }
-#endif 
-#ifdef ALBANY_ENSEMBLE 
+#endif
+#ifdef ALBANY_ENSEMBLE
 
 // **********************************************************************
 // Specialization: Multi-point Residual

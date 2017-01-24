@@ -5,7 +5,7 @@
 //*****************************************************************//
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_Utils.hpp"
-#include "LCM_Utils.h"
+#include "MaterialDatabase.h"
 #include "ConstitutiveDriverProblem.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
@@ -108,8 +108,8 @@ getValidProblemParameters() const
 void
 Albany::ConstitutiveDriverProblem::
 getAllocatedStates(
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> old_state,
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>> new_state) const
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>> old_state,
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>> new_state) const
 {
   old_state = old_state_;
   new_state = new_state_;

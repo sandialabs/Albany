@@ -27,11 +27,9 @@ int getDerivativeDimensions (const Albany::Application* app,
                              const int element_block_idx, const bool explicit_scheme = false);
 
 template<class ViewType>
-int getDerivativeDimensionsFromView (const ViewType &a) { return 0; }
-
-template< class D, class E, class M, class L>
-int getDerivativeDimensionsFromView(const Kokkos::View<D,E,M,L, Kokkos::Impl::ViewSpecializeSacadoFad> &a){
-  return a.storage_size() - 1;
+int getDerivativeDimensionsFromView (const ViewType &a) {
+  int ds = Kokkos::dimension_scalar(a);
+  return ds == 0 ? ds : ds-1;
 }
 
 

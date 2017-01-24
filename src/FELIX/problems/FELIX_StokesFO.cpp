@@ -6,7 +6,6 @@
 
 #include <string>
 
-#include "Intrepid2_FieldContainer.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_FancyOStream.hpp"
@@ -34,6 +33,7 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   else if (eqnSet == "Poisson" || eqnSet == "FELIX X-Z")
     neq = 1; //1 PDE/node for Poisson or FELIX X-Z physics
 
+  neq =  params_->sublist("Equation Set").get<int>("Num Equations", neq);
 
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);
@@ -107,19 +107,20 @@ void FELIX::StokesFO::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshS
   cellBasis = Albany::getIntrepid2Basis(*cell_top);
   cellType = rcp(new shards::CellTopology (cell_top));
 
-  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
-  cellCubature = cubFactory.create(*cellType, meshSpecs[0]->cubatureDegree);
+  Intrepid2::DefaultCubatureFactory cubFactory;
+  cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs[0]->cubatureDegree);
 
   elementBlockName = meshSpecs[0]->ebName;
 
   const int worksetSize     = meshSpecs[0]->worksetSize;
-  const int vecDim          = 2;
+  vecDimFO                  = std::min((int)neq,(int)2);
   const int numCellSides    = cellType->getFaceCount();
   const int numCellVertices = cellType->getNodeCount();
   const int numCellNodes    = cellBasis->getCardinality();
   const int numCellQPs      = cellCubature->getNumPoints();
 
-  dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim,vecDim));
+  dl = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim,vecDimFO));
+  dl_scalar = rcp(new Albany::Layouts(worksetSize,numCellVertices,numCellNodes,numCellQPs,numDim, 1));
 
   int numSurfaceSideVertices = -1;
   int numSurfaceSideNodes    = -1;
@@ -140,15 +141,19 @@ void FELIX::StokesFO::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshS
     basalSideType = rcp(new shards::CellTopology (side_top));
 
     basalEBName   = basalMeshSpecs.ebName;
-    basalCubature = cubFactory.create(*basalSideType, basalMeshSpecs.cubatureDegree);
+    basalCubature = cubFactory.create<PHX::Device, RealType, RealType>(*basalSideType, basalMeshSpecs.cubatureDegree);
 
     numBasalSideVertices = basalSideType->getNodeCount();
     numBasalSideNodes    = basalSideBasis->getCardinality();
     numBasalSideQPs      = basalCubature->getNumPoints();
 
     dl_basal = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,
-                                       numBasalSideQPs,numDim-1,numDim,numCellSides,vecDim));
+                                       numBasalSideQPs,numDim-1,numDim,numCellSides,neq));
+    dl_side_scalar = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,
+                                              numBasalSideQPs,numDim-1,numDim,numCellSides,1));
     dl->side_layouts[basalSideName] = dl_basal;
+
+    dl_scalar->side_layouts[basalSideName] = dl_side_scalar;
   }
 
   if (surfaceSideName!="INVALID")
@@ -164,14 +169,14 @@ void FELIX::StokesFO::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshS
     surfaceSideType = rcp(new shards::CellTopology (side_top));
 
     surfaceEBName   = surfaceMeshSpecs.ebName;
-    surfaceCubature = cubFactory.create(*surfaceSideType, surfaceMeshSpecs.cubatureDegree);
+    surfaceCubature = cubFactory.create<PHX::Device, RealType, RealType>(*surfaceSideType, surfaceMeshSpecs.cubatureDegree);
 
     numSurfaceSideVertices = surfaceSideType->getNodeCount();
     numSurfaceSideNodes    = surfaceSideBasis->getCardinality();
     numSurfaceSideQPs      = surfaceCubature->getNumPoints();
 
     dl_surface = rcp(new Albany::Layouts(worksetSize,numSurfaceSideVertices,numSurfaceSideNodes,
-                                         numSurfaceSideQPs,numDim-1,numDim,numCellSides,vecDim));
+                                         numSurfaceSideQPs,numDim-1,numDim,numCellSides,vecDimFO));
     dl->side_layouts[surfaceSideName] = dl_surface;
   }
 
@@ -188,7 +193,8 @@ void FELIX::StokesFO::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshS
        << "  CellNodes           = " << numCellNodes << "\n"
        << "  CellQuadPts         = " << numCellQPs << "\n"
        << "  Dim                 = " << numDim << "\n"
-       << "  VecDim              = " << vecDim << "\n"
+       << "  VecDim              = " << neq << "\n"
+       << "  VecDimFO            = " << vecDimFO << "\n"
        << "  BasalSideVertices   = " << numBasalSideVertices << "\n"
        << "  BasalSideNodes      = " << numBasalSideNodes << "\n"
        << "  BasalSideQuadPts    = " << numBasalQPs << "\n"
@@ -231,10 +237,12 @@ FELIX::StokesFO::constructDirichletEvaluators(
 {
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(neq);
-   for (int i=0; i<neq; i++) {
+   for (int i=0; i<vecDimFO; i++) {
      std::stringstream s; s << "U" << i;
      dirichletNames[i] = s.str();
    }
+   if(vecDimFO < neq)
+     dirichletNames[vecDimFO] = "Lapl_L2Proj";
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
@@ -270,14 +278,14 @@ void FELIX::StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::Mes
    offsets[neq].resize(neq);
    offsets[neq][0] = 0;
 
-   if (neq>1){
+   if (vecDimFO>1){
      neumannNames[1] = "U1";
      offsets[1].resize(1);
      offsets[1][0] = 1;
      offsets[neq][1] = 1;
    }
 
-   if (neq>2){
+   if (vecDimFO>2){
      neumannNames[2] = "U2";
      offsets[2].resize(1);
      offsets[2][0] = 2;
@@ -332,6 +340,7 @@ FELIX::StokesFO::getValidProblemParameters () const
   validPL->sublist("FELIX Viscosity", false, "");
   validPL->sublist("FELIX Effective Pressure Surrogate", false, "Parameters needed to compute the effective pressure surrogate");
   validPL->sublist("FELIX Basal Friction Coefficient", false, "Parameters needed to compute the basal friction coefficient");
+  validPL->sublist("FELIX L2 Projected Boundary Laplacian", false, "Parameters needed to compute the L2 Projected Boundary Laplacian");
   validPL->sublist("FELIX Surface Gradient", false, "");
   validPL->sublist("Equation Set", false, "");
   validPL->sublist("Body Force", false, "");
@@ -340,6 +349,7 @@ FELIX::StokesFO::getValidProblemParameters () const
   validPL->sublist("FELIX Noise", false, "");
   validPL->sublist("Parameter Fields", false, "Parameter Fields to be registered");
   validPL->set<bool>("Use Time Parameter", false, "Solely to use Solver Method = Continuation");
+  validPL->set<bool>("Print Stress Tensor", false, "Whether to save stress tensor in the mesh");
 
   return validPL;
 }

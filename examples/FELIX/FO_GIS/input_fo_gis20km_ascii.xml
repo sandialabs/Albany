@@ -24,6 +24,11 @@
     <ParameterList name="Body Force">
       <Parameter name="Type" type="string" value="FO INTERP SURF GRAD"/>
     </ParameterList>
+    <ParameterList name="FELIX Physical Parameters">
+      <Parameter name="Water Density" type="double" value="1028"/>
+      <Parameter name="Ice Density" type="double" value="910"/>
+      <Parameter name="Gravity Acceleration" type="double" value="9.8"/>
+    </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="3"/>
       <Parameter name="Response 0" type="string" value="Solution Max Value"/>

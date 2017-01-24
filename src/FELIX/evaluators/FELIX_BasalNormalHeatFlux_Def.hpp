@@ -29,9 +29,9 @@ BasalNormalHeatFlux(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::
 	numQPs   = dims[2];
 	numDims  = dims[3];
 
-	this->addDependentField(gradMeltTemp);
-	this->addDependentField(gradEnthalpy);
-	this->addDependentField(normal);
+	this->addDependentField(gradMeltTemp.fieldTag());
+	this->addDependentField(gradEnthalpy.fieldTag());
+	this->addDependentField(normal.fieldTag());
 
 	this->addEvaluatedField(basalNormalHeatCold);
 	this->addEvaluatedField(basalNormalHeatTemperate);

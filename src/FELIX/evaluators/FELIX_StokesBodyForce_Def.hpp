@@ -9,7 +9,6 @@
 #include "Phalanx_TypeStrings.hpp"
 #include "Sacado.hpp"
 
-#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace FELIX {
 const double pi = 3.1415926535897932385;
@@ -310,8 +309,8 @@ StokesBodyForce(const Teuchos::ParameterList& p,
             p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar);
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
-    this->addDependentField(muFELIX); 
-    this->addDependentField(coordVec);
+    this->addDependentField(muFELIX.fieldTag()); 
+    this->addDependentField(coordVec.fieldTag());
   }
   else if (type == "PolySacado") {
     bf_type = POLYSACADO;  
@@ -319,8 +318,8 @@ StokesBodyForce(const Teuchos::ParameterList& p,
             p.get<std::string>("FELIX Viscosity QP Variable Name"), dl->qp_scalar);
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
-    this->addDependentField(muFELIX); 
-    this->addDependentField(coordVec);
+    this->addDependentField(muFELIX.fieldTag()); 
+    this->addDependentField(coordVec.fieldTag());
   }
   else if (type == "SinSin") {
     bf_type = SINSIN;  
@@ -328,8 +327,8 @@ StokesBodyForce(const Teuchos::ParameterList& p,
             p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar);
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
-    this->addDependentField(muFELIX); 
-    this->addDependentField(coordVec);
+    this->addDependentField(muFELIX.fieldTag()); 
+    this->addDependentField(coordVec.fieldTag());
   }
   else if (type == "FullStokesBasal") {
     bf_type = FULLSTOKESBASAL;  
@@ -337,8 +336,8 @@ StokesBodyForce(const Teuchos::ParameterList& p,
             p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar);
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
-    this->addDependentField(muFELIX); 
-    this->addDependentField(coordVec);
+    this->addDependentField(muFELIX.fieldTag()); 
+    this->addDependentField(coordVec.fieldTag());
   }
   else if (type == "SinSinGlen") {
     bf_type = SINSINGLEN;  
@@ -346,8 +345,8 @@ StokesBodyForce(const Teuchos::ParameterList& p,
             p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar);
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
-    this->addDependentField(muFELIX); 
-    this->addDependentField(coordVec);
+    this->addDependentField(muFELIX.fieldTag()); 
+    this->addDependentField(coordVec.fieldTag());
   }
   else if (type == "SinCosZ") {
     bf_type = SINCOSZ;  
@@ -355,8 +354,8 @@ StokesBodyForce(const Teuchos::ParameterList& p,
             p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar);
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
-    this->addDependentField(muFELIX); 
-    this->addDependentField(coordVec);
+    this->addDependentField(muFELIX.fieldTag()); 
+    this->addDependentField(coordVec.fieldTag());
   }
   else if (type == "TestAMMF") {
     bf_type = TESTAMMF;  
@@ -364,8 +363,8 @@ StokesBodyForce(const Teuchos::ParameterList& p,
             p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar);
     coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
-    this->addDependentField(muFELIX); 
-    this->addDependentField(coordVec);
+    this->addDependentField(muFELIX.fieldTag()); 
+    this->addDependentField(coordVec.fieldTag());
   }
 
   this->addEvaluatedField(force);

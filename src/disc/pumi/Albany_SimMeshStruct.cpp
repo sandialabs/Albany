@@ -20,16 +20,6 @@ Albany::SimMeshStruct::SimMeshStruct(
     const Teuchos::RCP<Teuchos::ParameterList>& params,
 		const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
-  SimPartitionedMesh_start(NULL, NULL);
-  MS_init();
-  SimDiscrete_start(0);
-  SimField_start();
-  gmi_sim_start();
-  Sim_readLicenseFile(0);
-
-  gmi_register_sim();
-  PCU_Comm_Init();
-
   params->validateParameters(
       *(SimMeshStruct::getValidDiscretizationParameters()), 0);
 
@@ -81,14 +71,6 @@ Albany::SimMeshStruct::~SimMeshStruct()
   mesh->destroyNative();
   apf::destroyMesh(mesh);
   gmi_destroy(model);
-  PCU_Comm_Free();
-
-  Sim_unregisterAllKeys();
-  gmi_sim_stop();
-  SimField_stop();
-  SimDiscrete_stop(0);
-  MS_exit();
-  SimPartitionedMesh_stop();
 }
 
 Albany::AbstractMeshStruct::msType

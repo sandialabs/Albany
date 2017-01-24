@@ -7,6 +7,8 @@
 #if !defined(LCM_ConstitutiveModel_hpp)
 #define LCM_ConstitutiveModel_hpp
 
+#include "Phalanx_MDField.hpp"
+
 namespace LCM
 {
 

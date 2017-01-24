@@ -24,7 +24,7 @@ PressureMeltingTemperature(const Teuchos::ParameterList& p, const Teuchos::RCP<A
 
 	numNodes   = dims[1];
 
-	this->addDependentField(pressure);
+	this->addDependentField(pressure.fieldTag());
 
 	this->addEvaluatedField(meltingTemp);
 	this->setName("Pressure-melting Temperature");

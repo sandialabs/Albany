@@ -6,5 +6,5 @@
 
 #include "Albany_AbstractMeshStruct.hpp"
 
-Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> >
+Intrepid2::DefaultCubatureFactory
   Albany::CellSpecs::cubFactory;

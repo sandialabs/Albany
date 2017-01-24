@@ -56,6 +56,10 @@ public:
   Teuchos::RCP<const Teuchos::ParameterList> 
   getValidProblemParameters() const;
   
+  // This function return true if compute consolidation was specified in the
+  // input deck. By default consolidation is on.
+  bool hasConsolidation() const;
+  
 
 private:
 
@@ -85,6 +89,10 @@ protected:
   int num_dims_;
 
   Teuchos::RCP<QCAD::MaterialDatabase> material_db_;
+  
+  // this variable is used to specify if we want to include consolidation
+  // or not in the model. It may be removed in the future.
+  bool hasConsolidation_;
 
   Teuchos::RCP<Albany::Layouts> dl_;
 
@@ -94,7 +102,6 @@ protected:
 
 //******************************************************************************
 
-#include "Intrepid2_FieldContainer.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Albany_Utils.hpp"
@@ -164,16 +171,16 @@ Albany::PhaseProblem::constructEvaluators(
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"*** Material name must be Powder or Solid ***\n")
   }
  
-  RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+  RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
     intrepid_basis = Albany::getIntrepid2Basis(*elem_top);
 
   RCP<shards::CellTopology> elem_type = 
     rcp(new shards::CellTopology (elem_top));
 
-  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cub_factory;
+  Intrepid2::DefaultCubatureFactory cubFactory;
 
-  RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > elem_cubature = 
-    cub_factory.create(*elem_type, meshSpecs.cubatureDegree);
+  RCP <Intrepid2::Cubature<PHX::Device> > elem_cubature = 
+    cubFactory.create<PHX::Device, RealType, RealType>(*elem_type, meshSpecs.cubatureDegree);
 
   const int workset_size = meshSpecs.worksetSize;
   const int num_vertices = elem_type->getNodeCount();
@@ -316,7 +323,7 @@ Albany::PhaseProblem::constructEvaluators(
 	  material_db_->getElementBlockSublist(eb_name, "Initial Psi"); 
         psi_initial = param.get<double>("Psi");
       }
-
+    
     Teuchos::ParameterList& param_list = 
       material_db_->getElementBlockSublist(eb_name, "Initial Psi"); 
 
@@ -330,11 +337,11 @@ Albany::PhaseProblem::constructEvaluators(
 
     ev = rcp(new AMP::Psi<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
-    
 
     p = stateMgr.registerStateVariable("Psi", dl_->qp_scalar,
 				       dl_->dummy, eb_name, "scalar", psi_initial, true);
-    
+   
+
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev); 
   }
@@ -375,6 +382,14 @@ Albany::PhaseProblem::constructEvaluators(
     p->set<string>("Coordinate Name","Coord Vec");
     p->set<string>("Porosity Name", "Porosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &param_list);
+    
+    // has consolidation?
+    p->set<bool>("Compute Consolidation",hasConsolidation());
+
+    // take porosity parameter list
+    Teuchos::ParameterList& param_list_porosity =
+    material_db_->getElementBlockSublist(eb_name, "Porosity");
+    p->set<Teuchos::ParameterList*>("Porosity Parameter List", &param_list_porosity);
 
     //Output
     p->set<string>("Rho Cp Name", "Rho Cp");
@@ -441,40 +456,59 @@ Albany::PhaseProblem::constructEvaluators(
   }  
   
   
-  { // Energy dot
+   { // Energy dot
     RCP<ParameterList> p = rcp(new ParameterList("Energy Rate Params"));
 
     // take phase change parameter list
     Teuchos::ParameterList& param_list_phase =
-      material_db_->getElementBlockSublist(eb_name, "Phase Change Properties"); 
-    
+      material_db_->getElementBlockSublist(eb_name, "Phase Change Properties");
+	
     //Input
     p->set<string>("Temperature Name","Temperature");
     p->set<string>("Temperature Time Derivative Name","Temperature_dot");
     p->set<string>("Phi Name","Phi");
     p->set<string>("Phi Dot Name","Phi_dot");
     p->set<string>("Psi Name","Psi");
+    p->set<string>("Psi Dot Name","Psi_dot");
     p->set<string>("Time Name","Time");
     p->set<string>("Delta Time Name","Delta Time");
     p->set<string>("Rho Cp Name", "Rho Cp");
     p->set<Teuchos::ParameterList*>("Phase Change Parameter List", &param_list_phase);
-    
+
+    // has consolidation?
+    p->set<bool>("Compute Consolidation",hasConsolidation());
+
+    // take initial Phi parameter list
+    Teuchos::ParameterList& param_list_phi =
+      material_db_->getElementBlockSublist(eb_name, "Initial Phi");
+    p->set<Teuchos::ParameterList*>("Initial Phi Parameter List", &param_list_phi);
+
     // take initial Psi parameter list
     Teuchos::ParameterList& param_list_psi =
-      material_db_->getElementBlockSublist(eb_name, "Initial Phi");
-    p->set<Teuchos::ParameterList*>("Initial Phi Parameter List", &param_list_psi);
-    
+      material_db_->getElementBlockSublist(eb_name, "Initial Psi");
+    p->set<Teuchos::ParameterList*>("Initial Psi Parameter List", &param_list_psi);
+
+    // take porosity parameter list
+         Teuchos::ParameterList& param_list_porosity =
+           material_db_->getElementBlockSublist(eb_name, "Porosity");
+         p->set<Teuchos::ParameterList*>("Porosity Parameter List", &param_list_porosity);
+
+    // take RhoCp parameter list
+         Teuchos::ParameterList& param_list_rhocp =
+           material_db_->getElementBlockSublist(eb_name, "Rho Cp");
+         p->set<Teuchos::ParameterList*>("Volumetric Heat Capacity Dense Parameter List", &param_list_rhocp);
+
     //Output
     p->set<string>("Energy Rate Name", "Energy Rate");
 
     //  //Need these to compute responses later:
-    RealType Cl = param_list_phase.get<RealType>("Volumetric Heat Capacity Liquid Value");	  // Volumetric heat capacity in liquid
+    RealType Cl = param_list_phase.get<RealType>("Volumetric Heat Capacity Liquid Value");        // Volumetric heat capacity in liquid
     RealType L  = param_list_phase.get<RealType>("Latent Heat Value");    // Latent heat of fusion/melting
-  
-   
+
+
     pFromProb->set<RealType>("Volumetric Heat Capacity Liquid Value",Cl);
     pFromProb->set<RealType>("Latent Heat Value",L);
-    
+
     ev = rcp(new AMP::EnergyDot<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }
@@ -500,6 +534,8 @@ Albany::PhaseProblem::constructEvaluators(
     p->set<string>("Time Name","Time");
     p->set<string>("Delta Time Name","Delta Time");
     
+    // has consolidation?
+    p->set<bool>("Compute Consolidation",hasConsolidation());
     
     // take porosity parameter list
     Teuchos::ParameterList& param_list_porosity =

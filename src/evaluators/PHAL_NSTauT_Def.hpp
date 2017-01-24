@@ -29,11 +29,11 @@ NSTauT(const Teuchos::ParameterList& p) :
                  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") )
   
 {
-  this->addDependentField(V);
-  this->addDependentField(ThermalCond);
-  this->addDependentField(Gc);
-  this->addDependentField(rho);
-  this->addDependentField(Cp);
+  this->addDependentField(V.fieldTag());
+  this->addDependentField(ThermalCond.fieldTag());
+  this->addDependentField(Gc.fieldTag());
+  this->addDependentField(rho.fieldTag());
+  this->addDependentField(Cp.fieldTag());
  
   this->addEvaluatedField(TauT);
 
@@ -41,11 +41,9 @@ NSTauT(const Teuchos::ParameterList& p) :
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
+  numCells = dims[0];
   numQPs  = dims[1];
   numDims = dims[2];
-
-  // Allocate workspace
-  normGc.resize(dims[0], numQPs);
 
   this->setName("NSTauT" );
 }
@@ -63,6 +61,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(Cp,fm);
   
   this->utils.setFieldData(TauT,fm);
+
+  // Allocate workspace
+  normGc = Kokkos::createDynRankView(Gc.get_view(), "YYY", numCells, numQPs);
 }
 
 //**********************************************************************

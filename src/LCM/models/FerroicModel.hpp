@@ -83,7 +83,7 @@ private:
   Teuchos::Array<FM::Transition>                  transitions;
   Teuchos::Array<RealType>                        tBarriers;
   Teuchos::Array<RealType>                        initialBinFractions;
-  Intrepid::FieldContainer<RealType>              aMatrix;
+  Kokkos::DynRankView<RealType>                   aMatrix;
 
   // Solution options
   //

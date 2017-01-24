@@ -49,6 +49,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   ScalarT constant_value_;
+  ScalarT Initial_porosity;
   void init_constant(ScalarT value, Teuchos::ParameterList& p);
 
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_;
@@ -59,6 +60,9 @@ private:
   unsigned int num_dims_;
   unsigned int num_nodes_;
   unsigned int workset_size_;
+  
+  // variable use to decide if consolidation must be computed
+  bool hasConsolidation_;
 
   Teuchos::RCP<const Teuchos::ParameterList>
     getValidRhoCpParameters() const;

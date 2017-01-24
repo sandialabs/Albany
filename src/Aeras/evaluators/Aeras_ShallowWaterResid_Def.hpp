@@ -45,8 +45,8 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   jacobian  (p.get<std::string>  ("Jacobian Name"), dl->qp_tensor ),
   source    (p.get<std::string> ("Shallow Water Source QP Variable Name"), dl->qp_vector),
   Residual (p.get<std::string> ("Residual Name"), dl->node_vector),
-  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > ("Intrepid2 Basis") ),
-  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > >("Cubature")),
+  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis") ),
+  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
   spatialDim(p.get<std::size_t>("spatialDim")),
   sphere_coord  (p.get<std::string>  ("Spherical Coord Name"), dl->qp_gradient ),
   lambda_nodal  (p.get<std::string>  ("Lambda Coord Nodal Name"), dl->node_scalar),
@@ -183,19 +183,6 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
  			       Teuchos::Exceptions::InvalidParameter, "Aeras::ShallowWaterResid must be run such that nNodes == numQPs!  "
 			       <<  "This does not hold: numNodes = " <<  nNodes << ", numQPs = " << numQPs << ".");
   }
-  refWeights        .resize               (numQPs);
-  grad_at_cub_points.resize     (numNodes, numQPs, 2);
-  refPoints         .resize               (numQPs, 2);
-
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  nodal_jacobian.resize(numNodes, 2, 2);
-  nodal_inv_jacobian.resize(numNodes, 2, 2);
-  nodal_det_j.resize(numNodes);
-  wrk_.resize(numNodes, 2);
-#endif
-
-  cubature->getCubature(refPoints, refWeights);
-  intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
 
   this->setName("Aeras::ShallowWaterResid"+PHX::typeAsString<EvalT>());
 
@@ -217,84 +204,6 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   this->registerSacadoParameter("Omega", paramLib);
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  //Allocationg additional data for Kokkos functors
-  refWeights_Kokkos=Kokkos::View<MeshScalarT*, PHX::Device>("refWeights_Kokkos",numQPs);
-  grad_at_cub_points_Kokkos=Kokkos::View<MeshScalarT***, PHX::Device>("grad_at_cub_points_Kokkos",numNodes,numQPs,2);
-  refPoints_kokkos=Kokkos::View<MeshScalarT**, PHX::Device>("refPoints_Kokkos",numQPs,2);
-
-  for (int i=0; i<numQPs; i++) {
-    refWeights_Kokkos(i)=refWeights(i);
-    for (int j=0; j<2; j++) {
-      refPoints_kokkos(i,j)=refPoints(i,j);
-      for (int k=0; k<numNodes; k++)
-        grad_at_cub_points_Kokkos(k,i,j)=grad_at_cub_points(k,i,j);
-    }
-  }
-
-  std::vector<PHX::index_size_type> ddims_;
-#ifdef  ALBANY_FAST_FELIX
-  ddims_.push_back(ALBANY_SLFAD_SIZE);
-#else
-  ddims_.push_back(95);
-#endif
-
-  //OG Later I will insert if-statements because some of these temporary fields do not need to be constructed
-  //if HV is off.
-  csurf=PHX::MDField<ScalarT,Cell,Node>("csurf",Teuchos::rcp(new PHX::MDALayout<Cell,Node>(numCells,numNodes)));
-  csurf.setFieldData(ViewFactory::buildView(csurf.fieldTag(),ddims_));
-  csurftilde=PHX::MDField<ScalarT,Cell,Node>("csurftilde",Teuchos::rcp(new PHX::MDALayout<Cell,Node>(numCells,numNodes)));
-  csurftilde.setFieldData(ViewFactory::buildView(csurftilde.fieldTag(),ddims_));
-  cgradsurf=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradsurf",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
-  cgradsurf.setFieldData(ViewFactory::buildView(cgradsurf.fieldTag(),ddims_));
-  cgradsurftilde=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradsurftilde",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
-  cgradsurftilde.setFieldData(ViewFactory::buildView(cgradsurftilde.fieldTag(),ddims_));
-  tempnodalvec1=PHX::MDField<ScalarT,Cell,Node,Dim>("tempnodalvec1",Teuchos::rcp(new PHX::MDALayout<Cell,Node,Dim>(numCells,numNodes,2)));
-  tempnodalvec1.setFieldData(ViewFactory::buildView(tempnodalvec1.fieldTag(),ddims_));
-  tempnodalvec2=PHX::MDField<ScalarT,Cell,Node,Dim>("tempnodalvec2",Teuchos::rcp(new PHX::MDALayout<Cell,Node,Dim>(numCells,numNodes,2)));
-  tempnodalvec2.setFieldData(ViewFactory::buildView(tempnodalvec2.fieldTag(),ddims_));
-  chuv=PHX::MDField<ScalarT,Cell,Node,Dim>("chuv",Teuchos::rcp(new PHX::MDALayout<Cell,Node,Dim>(numCells,numNodes,2)));
-  chuv.setFieldData(ViewFactory::buildView(chuv.fieldTag(),ddims_));
-  cdiv=PHX::MDField<ScalarT,Cell,QuadPoint>("cdiv",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(numCells,numQPs)));
-  cdiv.setFieldData(ViewFactory::buildView(cdiv.fieldTag(),ddims_));
-  ccor=PHX::MDField<ScalarT,Cell,QuadPoint>("ccor",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(numCells,numQPs)));
-  ccor.setFieldData(ViewFactory::buildView(ccor.fieldTag(),ddims_));
-  ckineticEnergy=PHX::MDField<ScalarT,Cell,Node>("ckineticEnergy",Teuchos::rcp(new PHX::MDALayout<Cell,Node>(numCells,numNodes)));
-  ckineticEnergy.setFieldData(ViewFactory::buildView(ckineticEnergy.fieldTag(),ddims_));
-  cpotentialEnergy=PHX::MDField<ScalarT,Cell,Node>("cpotentialEnergy",Teuchos::rcp(new PHX::MDALayout<Cell,Node>(numCells,numNodes)));
-  cpotentialEnergy.setFieldData(ViewFactory::buildView(cpotentialEnergy.fieldTag(),ddims_));
-  cvelocityVec=PHX::MDField<ScalarT,Cell,Node,Dim>("cvelocityVec",Teuchos::rcp(new PHX::MDALayout<Cell,Node,Dim>(numCells,numNodes,2)));
-  cvelocityVec.setFieldData(ViewFactory::buildView(cvelocityVec.fieldTag(),ddims_));
-  cvort=PHX::MDField<ScalarT,Cell,QuadPoint>("cvort",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint>(numCells,numQPs)));
-  cvort.setFieldData(ViewFactory::buildView(cvort.fieldTag(),ddims_));
-  cgradKineticEnergy=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradKineticEnergy",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
-  cgradKineticEnergy.setFieldData(ViewFactory::buildView(cgradKineticEnergy.fieldTag(),ddims_));
-  cgradPotentialEnergy=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradPotentialEnergy",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
-  cgradPotentialEnergy.setFieldData(ViewFactory::buildView(cgradPotentialEnergy.fieldTag(),ddims_));
-  cUX=PHX::MDField<ScalarT,Cell,Node>("cUX",Teuchos::rcp(new PHX::MDALayout<Cell,Node>(numCells,numNodes)));
-  cUX.setFieldData(ViewFactory::buildView(cUX.fieldTag(),ddims_));
-  cUY=PHX::MDField<ScalarT,Cell,Node>("cUY",Teuchos::rcp(new PHX::MDALayout<Cell,Node>(numCells,numNodes)));
-  cUY.setFieldData(ViewFactory::buildView(cUY.fieldTag(),ddims_));
-  cUZ=PHX::MDField<ScalarT,Cell,Node>("cUZ",Teuchos::rcp(new PHX::MDALayout<Cell,Node>(numCells,numNodes)));
-  cUZ.setFieldData(ViewFactory::buildView(cUZ.fieldTag(),ddims_));
-  cUTX=PHX::MDField<ScalarT,Cell,Node>("cUTX",Teuchos::rcp(new PHX::MDALayout<Cell,Node>(numCells,numNodes)));
-  cUTX.setFieldData(ViewFactory::buildView(cUTX.fieldTag(),ddims_));
-  cUTY=PHX::MDField<ScalarT,Cell,Node>("cUTY",Teuchos::rcp(new PHX::MDALayout<Cell,Node>(numCells,numNodes)));
-  cUTY.setFieldData(ViewFactory::buildView(cUTY.fieldTag(),ddims_));
-  cUTZ=PHX::MDField<ScalarT,Cell,Node>("cUTZ",Teuchos::rcp(new PHX::MDALayout<Cell,Node>(numCells,numNodes)));
-  cUTZ.setFieldData(ViewFactory::buildView(cUTZ.fieldTag(),ddims_));
-  cgradUX=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradUX",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
-  cgradUX.setFieldData(ViewFactory::buildView(cgradUX.fieldTag(),ddims_));
-  cgradUY=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradUY",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
-  cgradUY.setFieldData(ViewFactory::buildView(cgradUY.fieldTag(),ddims_));
-  cgradUZ=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradUZ",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
-  cgradUZ.setFieldData(ViewFactory::buildView(cgradUZ.fieldTag(),ddims_));
-  cgradUTX=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradUTX",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
-  cgradUTX.setFieldData(ViewFactory::buildView(cgradUTX.fieldTag(),ddims_));
-  cgradUTY=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradUTY",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
-  cgradUTY.setFieldData(ViewFactory::buildView(cgradUTY.fieldTag(),ddims_));
-  cgradUTZ=PHX::MDField<ScalarT,Cell,QuadPoint,Dim>("cgradUTZ",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numCells,numQPs,2)));
-  cgradUTZ.setFieldData(ViewFactory::buildView(cgradUTZ.fieldTag(),ddims_));
-
   nodeToQPMap_Kokkos=Kokkos::View<int*, PHX::Device> ("nodeToQPMap_Kokkos",nNodes);
   for (int i=0; i<nNodes; i++)
     nodeToQPMap_Kokkos(i)=nodeToQPMap[i];
@@ -335,6 +244,64 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   this->utils.setFieldData(Residual,fm);
 
+  refWeights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
+  grad_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPs, 2);
+  refPoints = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs, 2);
+
+  cubature->getCubature(refPoints, refWeights);
+  intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
+
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  nodal_jacobian = Kokkos::createDynRankView(wBF.get_view(), "XXX", numNodes, 2, 2);
+  nodal_inv_jacobian = Kokkos::createDynRankView(wBF.get_view(), "XXX", numNodes, 2, 2);
+  nodal_det_j = Kokkos::createDynRankView(wBF.get_view(), "XXX", numNodes);
+  wrk_ = Kokkos::createDynRankView(U.get_view(), "XXX", numNodes, 2);
+
+#else
+  //Allocationg additional data for Kokkos functors
+  refWeights_Kokkos=Kokkos::createDynRankView(wBF.get_view(),"refWeights_Kokkos",numQPs);
+  grad_at_cub_points_Kokkos=Kokkos::createDynRankView(wBF.get_view(),"grad_at_cub_points_Kokkos",numNodes,numQPs,2);
+  refPoints_kokkos=Kokkos::createDynRankView(wBF.get_view(),"refPoints_Kokkos",numQPs,2);
+
+  for (int i=0; i<numQPs; i++) {
+    refWeights_Kokkos(i)=refWeights(i);
+    for (int j=0; j<2; j++) {
+      refPoints_kokkos(i,j)=refPoints(i,j);
+      for (int k=0; k<numNodes; k++)
+        grad_at_cub_points_Kokkos(k,i,j)=grad_at_cub_points(k,i,j);
+    }
+  }
+
+  //OG Later I will insert if-statements because some of these temporary fields do not need to be constructed
+  //if HV is off.
+  csurf = Kokkos::createDynRankView(Residual.get_view(), "csurf", numCells, numNodes);
+  csurftilde = Kokkos::createDynRankView(Residual.get_view(), "csurftilde", numCells, numNodes);
+  cgradsurf = Kokkos::createDynRankView(Residual.get_view(), "cgradsurf", numCells, numQPs, 2);
+  cgradsurftilde = Kokkos::createDynRankView(Residual.get_view(), "cgradsurftilde", numCells, numQPs, 2);
+  tempnodalvec1 = Kokkos::createDynRankView(Residual.get_view(), "tempnodalvec1", numCells, numNodes, 2);
+  tempnodalvec2 = Kokkos::createDynRankView(Residual.get_view(), "tempnodalvec2", numCells, numNodes, 2);
+  chuv = Kokkos::createDynRankView(Residual.get_view(), "chuv", numCells, numNodes, 2);
+  cdiv = Kokkos::createDynRankView(Residual.get_view(), "cdiv", numCells, numQPs);
+  ccor = Kokkos::createDynRankView(Residual.get_view(), "ccor", numCells, numQPs);
+  ckineticEnergy = Kokkos::createDynRankView(Residual.get_view(), "ckineticEnergy", numCells, numNodes);
+  cpotentialEnergy = Kokkos::createDynRankView(Residual.get_view(), "cpotentialEnergy", numCells, numNodes);
+  cvelocityVec = Kokkos::createDynRankView(Residual.get_view(), "cvelocityVec", numCells, numNodes, 2);
+  cvort = Kokkos::createDynRankView(Residual.get_view(), "cvort", numCells, numQPs);
+  cgradKineticEnergy = Kokkos::createDynRankView(Residual.get_view(), "cgradKineticEnergy", numCells, numQPs, 2);
+  cgradPotentialEnergy = Kokkos::createDynRankView(Residual.get_view(), "cgradPotentialEnergy", numCells, numQPs, 2);
+  cUX = Kokkos::createDynRankView(Residual.get_view(), "cUX", numCells, numNodes);
+  cUY = Kokkos::createDynRankView(Residual.get_view(), "cUY", numCells, numNodes);
+  cUZ = Kokkos::createDynRankView(Residual.get_view(), "cUZ", numCells, numNodes);
+  cUTX = Kokkos::createDynRankView(Residual.get_view(), "cUTX", numCells, numNodes);
+  cUTY = Kokkos::createDynRankView(Residual.get_view(), "cUTY", numCells, numNodes);
+  cUTZ = Kokkos::createDynRankView(Residual.get_view(), "cUTZ", numCells, numNodes);
+  cgradUX = Kokkos::createDynRankView(Residual.get_view(), "cgradUX", numCells, numQPs, 2);
+  cgradUY = Kokkos::createDynRankView(Residual.get_view(), "cgradUY", numCells, numQPs, 2);
+  cgradUZ = Kokkos::createDynRankView(Residual.get_view(), "cgradUZ", numCells, numQPs, 2);
+  cgradUTX = Kokkos::createDynRankView(Residual.get_view(), "cgradUTX", numCells, numQPs, 2);
+  cgradUTY = Kokkos::createDynRankView(Residual.get_view(), "cgradUTY", numCells, numQPs, 2);
+  cgradUTZ = Kokkos::createDynRankView(Residual.get_view(), "cgradUTZ", numCells, numQPs, 2);
+#endif
 }
 
 // *********************************************************************
@@ -364,8 +331,8 @@ void gradient(const ArrayT1  & fieldAtNodes, const int &cell, ArrayT2  & gradFie
 ///////////////////////////////////////////////////////////////////////////////////////////////
 template<typename EvalT,typename Traits>
 KOKKOS_INLINE_FUNCTION
-void ShallowWaterResid<EvalT,Traits>::divergence4(const PHX::MDField<ScalarT, Cell, Node, Dim>  & fieldAtNodes,
-  const PHX::MDField<ScalarT,Cell,QuadPoint>  & div_,
+void ShallowWaterResid<EvalT,Traits>::divergence4(const Kokkos::DynRankView<ScalarT, PHX::Device>  & fieldAtNodes,
+  const Kokkos::DynRankView<ScalarT, PHX::Device>  & div_,
   const int & cell) const  
 {
 #ifdef AERAS_OUTPUT
@@ -406,8 +373,8 @@ void ShallowWaterResid<EvalT,Traits>::divergence4(const PHX::MDField<ScalarT, Ce
 template<typename EvalT,typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT,Traits>::
-gradient4(const PHX::MDField<ScalarT, Cell, Node>  & field,
-  const PHX::MDField<ScalarT, Cell, QuadPoint, Dim>  & gradient_,
+gradient4(const Kokkos::DynRankView<ScalarT, PHX::Device>  & field,
+  const Kokkos::DynRankView<ScalarT, PHX::Device>  & gradient_,
   const int & cell) const 
 {
 #ifdef AERAS_OUTPUT
@@ -435,8 +402,8 @@ gradient4(const PHX::MDField<ScalarT, Cell, Node>  & field,
 template<typename EvalT,typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT,Traits>::curl4(
-  const PHX::MDField<ScalarT, Cell, Node, Dim>  & field,
-  const PHX::MDField<ScalarT, Cell, QuadPoint>  & curl_,
+  const Kokkos::DynRankView<ScalarT, PHX::Device>  & field,
+  const Kokkos::DynRankView<ScalarT, PHX::Device>  & curl_,
   const int &cell) const 
 {
 #ifdef AERAS_OUTPUT
@@ -466,7 +433,7 @@ void ShallowWaterResid<EvalT,Traits>::curl4(
 template<typename EvalT,typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT,Traits>::
-get_coriolis4(const PHX::MDField<ScalarT,Cell,QuadPoint>  & cor_,
+get_coriolis4(const Kokkos::DynRankView<ScalarT, PHX::Device>  & cor_,
   const int &cell) const 
 {
 #ifdef AERAS_OUTPUT
@@ -822,8 +789,8 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 compute_3Dvelocity4(std::size_t node, const ScalarT lam, const ScalarT th, const ScalarT ulambda, const ScalarT utheta,
-  const PHX::MDField<ScalarT, Cell, Node>  & ux, const PHX::MDField<ScalarT, Cell, Node>  & uy,
-  const PHX::MDField<ScalarT, Cell, Node>  & uz, const int& cell) const
+  const Kokkos::DynRankView<ScalarT, PHX::Device>  & ux, const Kokkos::DynRankView<ScalarT, PHX::Device>  & uy,
+  const Kokkos::DynRankView<ScalarT, PHX::Device>  & uz, const int& cell) const
 {
 #ifdef AERAS_OUTPUT
   std::cout << "ShallowWaterResid::compute_3Dvelocity4 (kokkos)" << std::endl;
@@ -1108,7 +1075,6 @@ template<typename EvalT, typename Traits>
 void ShallowWaterResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
   double j_coeff = workset.j_coeff;
   double m_coeff = workset.m_coeff;
   double n_coeff = workset.n_coeff;
@@ -1124,49 +1090,49 @@ evaluateFields(typename Traits::EvalData workset)
 #endif 
   //Note that vars huAtNodes, div_hU, ... below are redefined locally here.
   //Global vars with such names exist too (see constructor).
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  huAtNodes(numNodes,2);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  div_hU(numQPs);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  div_weak_hU(numQPs);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  kineticEnergyAtNodes(numNodes);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  gradKineticEnergy(numQPs,2);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  potentialEnergyAtNodes(numNodes);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  gradPotentialEnergy(numQPs,2);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  uAtNodes(numNodes, 2);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  curlU(numQPs);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  coriolis(numQPs);
+  Kokkos::DynRankView<ScalarT, PHX::Device>  huAtNodes = Kokkos::createDynRankView(U.get_view(),"ASW",numNodes,2);
+  Kokkos::DynRankView<ScalarT, PHX::Device>  div_hU = Kokkos::createDynRankView(U.get_view(),"ASW",numQPs);
+  Kokkos::DynRankView<ScalarT, PHX::Device>  div_weak_hU = Kokkos::createDynRankView(U.get_view(),"ASW",numQPs);
+  Kokkos::DynRankView<ScalarT, PHX::Device>  kineticEnergyAtNodes = Kokkos::createDynRankView(U.get_view(),"ASW",numNodes);
+  Kokkos::DynRankView<ScalarT, PHX::Device>  gradKineticEnergy = Kokkos::createDynRankView(U.get_view(),"ASW",numQPs,2);
+  Kokkos::DynRankView<ScalarT, PHX::Device>  potentialEnergyAtNodes = Kokkos::createDynRankView(U.get_view(),"ASW",numNodes);
+  Kokkos::DynRankView<ScalarT, PHX::Device>  gradPotentialEnergy = Kokkos::createDynRankView(U.get_view(),"ASW",numQPs,2);
+  Kokkos::DynRankView<ScalarT, PHX::Device>  uAtNodes = Kokkos::createDynRankView(U.get_view(),"ASW",numNodes, 2);
+  Kokkos::DynRankView<ScalarT, PHX::Device>  curlU = Kokkos::createDynRankView(U.get_view(),"ASW",numQPs);
+  Kokkos::DynRankView<ScalarT, PHX::Device>  coriolis = Kokkos::createDynRankView(U.get_view(),"ASW",numQPs);
 
   //container for surface height for viscosty
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> surf(numNodes);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> surftilde(numNodes);
+  Kokkos::DynRankView<ScalarT, PHX::Device> surf = Kokkos::createDynRankView(U.get_view(),"ASW",numNodes);
+  Kokkos::DynRankView<ScalarT, PHX::Device> surftilde = Kokkos::createDynRankView(U.get_view(),"ASW",numNodes);
   //conteiner for surface height gradient for viscosity
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> hgradNodes(numQPs,2);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> htildegradNodes(numQPs,2);
+  Kokkos::DynRankView<ScalarT, PHX::Device> hgradNodes = Kokkos::createDynRankView(U.get_view(),"ASW",numQPs,2);
+  Kokkos::DynRankView<ScalarT, PHX::Device> htildegradNodes = Kokkos::createDynRankView(U.get_view(),"ASW",numQPs,2);
 
   //auxiliary vars, (u,v) in lon-lat is transformed to (ux,uy,uz) in XYZ
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> uX(numNodes);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> uY(numNodes);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> uZ(numNodes);
+  Kokkos::DynRankView<ScalarT, PHX::Device> uX = Kokkos::createDynRankView(U.get_view(),"ASW",numNodes);
+  Kokkos::DynRankView<ScalarT, PHX::Device> uY = Kokkos::createDynRankView(U.get_view(),"ASW",numNodes);
+  Kokkos::DynRankView<ScalarT, PHX::Device> uZ = Kokkos::createDynRankView(U.get_view(),"ASW",numNodes);
 
   //auxiliary vars, (utilde,vtilde) in lon-lat is transformed to (utx,uty,utz) in XYZ
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> utX(numNodes);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> utY(numNodes);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> utZ(numNodes);
+  Kokkos::DynRankView<ScalarT, PHX::Device> utX = Kokkos::createDynRankView(U.get_view(),"ASW",numNodes);
+  Kokkos::DynRankView<ScalarT, PHX::Device> utY = Kokkos::createDynRankView(U.get_view(),"ASW",numNodes);
+  Kokkos::DynRankView<ScalarT, PHX::Device> utZ = Kokkos::createDynRankView(U.get_view(),"ASW",numNodes);
 
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> uXgradNodes(numQPs,2);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> uYgradNodes(numQPs,2);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> uZgradNodes(numQPs,2);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> utXgradNodes(numQPs,2);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> utYgradNodes(numQPs,2);
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> utZgradNodes(numQPs,2);
+  Kokkos::DynRankView<ScalarT, PHX::Device> uXgradNodes = Kokkos::createDynRankView(U.get_view(),"ASW",numQPs,2);
+  Kokkos::DynRankView<ScalarT, PHX::Device> uYgradNodes = Kokkos::createDynRankView(U.get_view(),"ASW",numQPs,2);
+  Kokkos::DynRankView<ScalarT, PHX::Device> uZgradNodes = Kokkos::createDynRankView(U.get_view(),"ASW",numQPs,2);
+  Kokkos::DynRankView<ScalarT, PHX::Device> utXgradNodes = Kokkos::createDynRankView(U.get_view(),"ASW",numQPs,2);
+  Kokkos::DynRankView<ScalarT, PHX::Device> utYgradNodes = Kokkos::createDynRankView(U.get_view(),"ASW",numQPs,2);
+  Kokkos::DynRankView<ScalarT, PHX::Device> utZgradNodes = Kokkos::createDynRankView(U.get_view(),"ASW",numQPs,2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     // Depth Equation (Eq# 0)
-    huAtNodes.initialize();
-    div_hU.initialize();
-    surf.initialize();
-    surftilde.initialize();
-    hgradNodes.initialize();
-    htildegradNodes.initialize();
+    Kokkos::deep_copy(huAtNodes,0.0);
+    Kokkos::deep_copy(div_hU,0.0);
+    Kokkos::deep_copy(surf,0.0);
+    Kokkos::deep_copy(surftilde,0.0);
+    Kokkos::deep_copy(hgradNodes,0.0);
+    Kokkos::deep_copy(htildegradNodes,0.0);
 
     for (std::size_t node=0; node < numNodes; ++node) {
       ScalarT surfaceHeight = UNodal(cell,node,0);
@@ -1227,7 +1193,7 @@ evaluateFields(typename Traits::EvalData workset)
 #if WEAK_DIV
     std::cout << "Weak divergence is on\n";
     fill_nodal_metrics(cell);
-    div_weak_hU.initialize();
+    Kokkos::deep_copy(div_weak_hU,0.0);
 
     // \int w_i * div(v) = - \sum_j \int grad(w_i)\cdot v_j w_j
     for (int i=0; i < numNodes; ++i)
@@ -1277,8 +1243,8 @@ evaluateFields(typename Traits::EvalData workset)
   if (useImplHyperviscosity) { //hyperviscosity residual(3) = htilde*phi + grad(h)*grad(phi)
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      surf.initialize();
-      hgradNodes.initialize();
+      Kokkos::deep_copy(surf,0.0);
+      Kokkos::deep_copy(hgradNodes,0.0);
       for (std::size_t node=0; node < numNodes; ++node)
         surf(node) = UNodal(cell,node,0);
       gradient(surf, cell, hgradNodes);
@@ -1309,12 +1275,12 @@ evaluateFields(typename Traits::EvalData workset)
   else { // Solve for velocity
     // Velocity Equations (Eq# 1,2)
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      potentialEnergyAtNodes.initialize();
-      gradPotentialEnergy.initialize();
+      Kokkos::deep_copy(potentialEnergyAtNodes,0.0);
+      Kokkos::deep_copy(gradPotentialEnergy,0.0);
 
-      kineticEnergyAtNodes.initialize();
-      gradKineticEnergy.initialize();
-      uAtNodes.initialize();
+      Kokkos::deep_copy(kineticEnergyAtNodes,0.0);
+      Kokkos::deep_copy(gradKineticEnergy,0.0);
+      Kokkos::deep_copy(uAtNodes,0.0);
 
       get_coriolis(cell, coriolis);
 
@@ -1322,29 +1288,29 @@ evaluateFields(typename Traits::EvalData workset)
         //uX.initialize();
 	//uY.initialize();
 	//uZ.initialize();
-	utX.initialize();
-	utY.initialize();
-	utZ.initialize();
+	Kokkos::deep_copy(utX,0.0);
+	Kokkos::deep_copy(utY,0.0);
+	Kokkos::deep_copy(utZ,0.0);
 	//uXgradNodes.initialize();
 	//uYgradNodes.initialize();
 	//uZgradNodes.initialize();
-	utXgradNodes.initialize();
-	utYgradNodes.initialize();
-	utZgradNodes.initialize(); 
+	Kokkos::deep_copy(utXgradNodes,0.0);
+	Kokkos::deep_copy(utYgradNodes,0.0);
+	Kokkos::deep_copy(utZgradNodes,0.0); 
       }
       if (useImplHyperviscosity) {
-	uX.initialize();
-	uY.initialize();
-	uZ.initialize();
-	utX.initialize();
-	utY.initialize();
-	utZ.initialize();
-	uXgradNodes.initialize();
-	uYgradNodes.initialize();
-	uZgradNodes.initialize();
-	utXgradNodes.initialize();
-	utYgradNodes.initialize();
-	utZgradNodes.initialize();
+	Kokkos::deep_copy(uX,0.0);
+	Kokkos::deep_copy(uY,0.0);
+	Kokkos::deep_copy(uZ,0.0);
+	Kokkos::deep_copy(utX,0.0);
+	Kokkos::deep_copy(utY,0.0);
+	Kokkos::deep_copy(utZ,0.0);
+	Kokkos::deep_copy(uXgradNodes,0.0);
+	Kokkos::deep_copy(uYgradNodes,0.0);
+	Kokkos::deep_copy(uZgradNodes,0.0);
+	Kokkos::deep_copy(utXgradNodes,0.0);
+	Kokkos::deep_copy(utYgradNodes,0.0);
+	Kokkos::deep_copy(utZgradNodes,0.0);
       }
 
       for (std::size_t node=0; node < numNodes; ++node) {
@@ -1560,6 +1526,7 @@ evaluateFields(typename Traits::EvalData workset)
       }//end if ExplHV
     } // end workset cell loop
   } //end if !prescribedVelocities
+
 #else
   a = Aeras::ShallowWaterConstants::self().earthRadius;
   myPi = Aeras::ShallowWaterConstants::self().pi;
@@ -1609,7 +1576,6 @@ evaluateFields(typename Traits::EvalData workset)
 #ifdef AERAS_OUTPUT
   std::cout << "ShallowWaterResid::end of evaluateFields (kokkos)" << std::endl;
 #endif
-
 #endif
 }
 
@@ -1627,16 +1593,16 @@ ShallowWaterResid<EvalT,Traits>::getValue(const std::string &n)
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT,typename Traits>
 void
-ShallowWaterResid<EvalT,Traits>::divergence(const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & fieldAtNodes,
-		std::size_t cell, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & div) {
+ShallowWaterResid<EvalT,Traits>::divergence(const Kokkos::DynRankView<ScalarT, PHX::Device>  & fieldAtNodes,
+		std::size_t cell, Kokkos::DynRankView<ScalarT, PHX::Device>  & div) {
 
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& vcontra = wrk_;
-  vcontra.initialize();
+  Kokkos::DynRankView<ScalarT, PHX::Device>& vcontra = wrk_;
+  Kokkos::deep_copy(vcontra,0.0);
 
   fill_nodal_metrics(cell);
 
-  vcontra.initialize();
-  div.initialize();
+  Kokkos::deep_copy(vcontra,0.0);
+  Kokkos::deep_copy(div,0.0);
 
   for (std::size_t node=0; node < numNodes; ++node) {
     const MeshScalarT jinv00 = nodal_inv_jacobian(node, 0, 0);
@@ -1677,10 +1643,10 @@ ShallowWaterResid<EvalT,Traits>::divergence(const Intrepid2::FieldContainer_Kokk
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT,typename Traits>
 void
-ShallowWaterResid<EvalT,Traits>::gradient(const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & fieldAtNodes,
-  std::size_t cell, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & gradField) 
+ShallowWaterResid<EvalT,Traits>::gradient(const Kokkos::DynRankView<ScalarT, PHX::Device>  & fieldAtNodes,
+  std::size_t cell, Kokkos::DynRankView<ScalarT, PHX::Device>  & gradField) 
 {
-  gradField.initialize();
+  Kokkos::deep_copy(gradField,0.0);
 
   for (std::size_t qp=0; qp < numQPs; ++qp) {
     ScalarT gx = 0;
@@ -1701,9 +1667,9 @@ template<typename EvalT,typename Traits>
 void
 ShallowWaterResid<EvalT,Traits>::fill_nodal_metrics(std::size_t cell) 
 {
-  nodal_jacobian.initialize();
-  nodal_det_j.initialize();
-  nodal_inv_jacobian.initialize();
+  Kokkos::deep_copy(nodal_jacobian,0.0);
+  Kokkos::deep_copy(nodal_det_j,0.0);
+  Kokkos::deep_copy(nodal_inv_jacobian,0.0);
 
   for (size_t v = 0; v < numNodes; ++v) {
     int qp = nodeToQPMap[v];
@@ -1720,21 +1686,20 @@ ShallowWaterResid<EvalT,Traits>::fill_nodal_metrics(std::size_t cell)
 #endif
 
 // *********************************************************************
-
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 //og: rename this to vorticity
 template<typename EvalT,typename Traits>
 void
-ShallowWaterResid<EvalT,Traits>::curl(const Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & nodalVector,
-  std::size_t cell, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & curl) 
+ShallowWaterResid<EvalT,Traits>::curl(const Kokkos::DynRankView<ScalarT, PHX::Device>  & nodalVector,
+  std::size_t cell, Kokkos::DynRankView<ScalarT, PHX::Device>  & curl) 
 {
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>& covariantVector = wrk_;
-  covariantVector.initialize();
+  Kokkos::DynRankView<ScalarT, PHX::Device>& covariantVector = wrk_;
+  Kokkos::deep_copy(covariantVector,0.0);
 
   fill_nodal_metrics(cell);
 
-  covariantVector.initialize();
-  curl.initialize();
+  Kokkos::deep_copy(covariantVector,0.0);
+  Kokkos::deep_copy(curl,0.0);
 
   for (std::size_t node=0; node < numNodes; ++node) {
     const MeshScalarT j00 = nodal_jacobian(node, 0, 0);
@@ -1756,7 +1721,7 @@ ShallowWaterResid<EvalT,Traits>::curl(const Intrepid2::FieldContainer_Kokkos<Sca
 
   /////////// Debugging option, to verufy 3d code
   /*if(cell == 0){
-    Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  dummy(numNodes,2);
+    Kokkos::DynRankView<ScalarT, PHX::Device>  dummy(numNodes,2);
     dummy.initialize();
     covariantVector.initialize();
     curl.initialize();
@@ -1794,9 +1759,9 @@ ShallowWaterResid<EvalT,Traits>::curl(const Intrepid2::FieldContainer_Kokkos<Sca
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT,typename Traits>
 void
-ShallowWaterResid<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>  & coriolis) 
+ShallowWaterResid<EvalT,Traits>::get_coriolis(std::size_t cell, Kokkos::DynRankView<ScalarT, PHX::Device>  & coriolis) 
 {
-  coriolis.initialize();
+  Kokkos::deep_copy(coriolis,0.0);
   double alpha = AlphaAngle; /*must match what is in initial condition for TC2 and TC5.
   //see AAdatpt::AerasZonal analytic function. */
   for (std::size_t qp=0; qp < numQPs; ++qp) {

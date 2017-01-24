@@ -871,9 +871,11 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     }
     if (debug_output_verbosity != 0 && cur_time_yr == final_time) //only print regression test result if you're in the final time step 
       *out << "\nNumber of Failed Comparisons: " << status << std::endl;
+#ifdef CISM_CHECK_COMPARISONS
     //IK, 10/30/14: added the following line so that when you run ctest from CISM the test fails if there are some failed comparisons.
-    //if (status > 0)     
-    //  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "All regression comparisons did not pass!" << std::endl);
+    if (status > 0)     
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "All regression comparisons did not pass!" << std::endl);
+#endif
 
 #endif
     // ---------------------------------------------------------------------------------------------------

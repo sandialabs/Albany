@@ -55,8 +55,8 @@ SaveCellStateField(const Teuchos::ParameterList& p) :
   savestate_operation = Teuchos::rcp(new PHX::Tag<ScalarT>
     (stateName, p.get< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout")));
 
-  this->addDependentField(weights);
-  this->addDependentField(field);
+  this->addDependentField(weights.fieldTag());
+  this->addDependentField(field.fieldTag());
   this->addEvaluatedField(*savestate_operation);
 
   this->setName("Save Field " + fieldName +" to Cell State " + stateName + "Residual");
@@ -89,56 +89,71 @@ evaluateFields(typename Traits::EvalData workset)
     std::vector<int> dims;
     field.dimensions(dims);
     int size = dims.size();
+    int numCells = workset.numCells;
+    int numQPs = dims[1];
+    
    
     double el_weight;
 
     switch (size) {
     case 1:
-      for (int cell = 0; cell < dims[0]; ++cell)
+      for (int cell = 0; cell < numCells; ++cell)
         sta(cell) = field(cell);
       break;
     case 2:
-      for (int cell = 0; cell < dims[0]; ++cell){
+      for (int cell = 0; cell < numCells; ++cell){
         sta(cell, 0) = 0.0;
         el_weight = 0.0;
-	for (int qp = 0; qp < dims[1]; ++qp){
+	for (int qp = 0; qp < numQPs; ++qp){
 	  sta(cell, 0) += weights(cell,qp)*field(cell,qp);
           el_weight += weights(cell,qp);
         }
-        sta(cell, 0) /= el_weight;
+        if( el_weight == 0.0 )
+          sta(cell, 0) = 0.0;
+        else
+          sta(cell, 0) /= el_weight;
       }
       break;
     case 3:
-      for (int cell = 0; cell < dims[0]; ++cell){
+      for (int cell = 0; cell < numCells; ++cell){
         sta(cell, 0) = 0.0;
         el_weight = 0.0;
-	for (int qp = 0; qp < dims[1]; ++qp){
+	for (int qp = 0; qp < numQPs; ++qp){
 	  sta(cell, 0) += weights(cell,qp)*field(cell,qp,i_index);
           el_weight += weights(cell,qp);
         }
-        sta(cell, 0) /= el_weight;
+        if( el_weight == 0.0 )
+          sta(cell, 0) = 0.0;
+        else 
+          sta(cell, 0) /= el_weight;
       }
       break;
     case 4:
-      for (int cell = 0; cell < dims[0]; ++cell){
+      for (int cell = 0; cell < numCells; ++cell){
         sta(cell, 0) = 0.0;
         el_weight = 0.0;
-	for (int qp = 0; qp < dims[1]; ++qp){
+	for (int qp = 0; qp < numQPs; ++qp){
           sta(cell, 0) += weights(cell,qp)*field(cell,qp,i_index,j_index);
           el_weight += weights(cell,qp);
         }
-        sta(cell, 0) /= el_weight;
+        if( el_weight == 0.0 )
+          sta(cell, 0) = 0.0;
+        else
+          sta(cell, 0) /= el_weight;
       }
       break;
     case 5:
-      for (int cell = 0; cell < dims[0]; ++cell){
+      for (int cell = 0; cell < numCells; ++cell){
         sta(cell, 0) = 0.0;
         el_weight = 0.0;
-	for (int qp = 0; qp < dims[1]; ++qp){
+	for (int qp = 0; qp < numQPs; ++qp){
           sta(cell, 0) += weights(cell,qp)*field(cell,qp,i_index,j_index,k_index);
           el_weight += weights(cell,qp);
         }
-        sta(cell, 0) /= el_weight;
+        if( el_weight == 0.0 )
+          sta(cell, 0) = 0.0;
+        else
+          sta(cell, 0) /= el_weight;
       }
       break;
     default:

@@ -40,9 +40,21 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
+  template<typename TemperatureT>
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  KOKKOS_INLINE_FUNCTION
+#endif
+  TemperatureT flowRate(const TemperatureT& T) const;
+
+  const double pi, actenh, actenl, gascon, switchingT;
+#ifdef USE_CISM_FLOW_PARAMETERS
+  const double arrmlh, arrmll, k4scyr;
+#endif
+  const double arrmh, arrml;
 
   bool extractStrainRateSq;
   bool useStereographicMap;
+  bool useStiffeningFactor;
   Teuchos::ParameterList* stereographicMapList;
 
   //coefficients for Glen's law
@@ -50,17 +62,20 @@ private:
   double n;
 
   // Input:
-  PHX::MDField<VelT,Cell,QuadPoint,VecDim,Dim> Ugrad;
-  PHX::MDField<VelT,Cell,QuadPoint,VecDim> U;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
-  PHX::MDField<TemprT,Cell> temperature;
-  PHX::MDField<TemprT,Cell> flowFactorA;  //this is the coefficient A.  To distinguish it from the scalar flowFactor defined in the body of the function, it is called flowFactorA.  Probably this should be changed at some point...
-  PHX::MDField<ScalarT> homotopyParam;
+  PHX::MDField<VelT,Cell,QuadPoint,VecDim,Dim> Ugrad; //[(k yr)^{-1}], k=1000
+  PHX::MDField<VelT,Cell,QuadPoint,VecDim> U; //[m/yr]
+  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec; // [Km]
+  PHX::MDField<TemprT,Cell> temperature; // [K]
+  PHX::MDField<TemprT,Cell> flowFactorA;  // [k^{-(n+1)} Pa^{-n} yr^{-1} ], k=1000.  This is the coefficient A.
+                                          //To distinguish it from the scalar flowFactor defined in the body of the function, it is called flowFactorA.
+                                          //Probably this should be changed at some point...
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint> mu;
-  PHX::MDField<ScalarT,Cell,QuadPoint> epsilonSq;
+  PHX::MDField<ScalarT,Cell,QuadPoint> mu;  // [k^2 Pa yr], k=1000
+  PHX::MDField<ScalarT,Cell,QuadPoint> epsilonSq; // [(k yr)^{-2}], k=1000
+  PHX::MDField<ParamScalarT,Cell,QuadPoint> stiffeningFactor;
 
+  PHX::MDField<ScalarT> homotopyParam;
   ScalarT printedFF;
 
   unsigned int numQPs, numDims, numNodes, numCells;

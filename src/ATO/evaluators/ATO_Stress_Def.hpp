@@ -70,7 +70,7 @@ Stress(const Teuchos::ParameterList& p) :
     RealType lambda = ( elasticModulus * poissonsRatio ) / ( ( 1 + poissonsRatio ) * ( 1 - 2 * poissonsRatio ) );
     RealType mu = elasticModulus / ( 2 * ( 1 + poissonsRatio ) );
 
-    subTensor.resize(numDims,numDims);
+    subTensor = Kokkos::DynRankView<RealType, PHX::Device>("SUB", numDims,numDims);
 
     switch (numDims) {
     case 1:

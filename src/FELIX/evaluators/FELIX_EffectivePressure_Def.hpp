@@ -35,7 +35,7 @@ EffectivePressure (const Teuchos::ParameterList& p,
     if (!IsHydrology)
     {
       alphaParam = PHX::MDField<ScalarT,Dim> ("Hydraulic-Over-Hydrostatic Potential Ratio",dl->shared_param);
-      this->addDependentField (alphaParam);
+      this->addDependentField (alphaParam.fieldTag());
 
       Teuchos::ParameterList& plist = *p.get<Teuchos::ParameterList*>("Parameter List");
 
@@ -55,11 +55,11 @@ EffectivePressure (const Teuchos::ParameterList& p,
     z_s  = PHX::MDField<ParamScalarT>(p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar);
     phi  = PHX::MDField<HydroScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), dl->node_scalar);
 
-    this->addDependentField (phi);
-    this->addDependentField (z_s);
+    this->addDependentField (phi.fieldTag());
+    this->addDependentField (z_s.fieldTag());
   }
 
-  this->addDependentField (H);
+  this->addDependentField (H.fieldTag());
   this->addEvaluatedField (N);
 
   // Setting parameters
@@ -126,10 +126,10 @@ evaluateFields (typename Traits::EvalData workset)
     }
     else
     {
-      ParamScalarT alpha = Albany::ScalarConverter<ParamScalarT>::apply(alphaParam(0));
+      ParamScalarT alpha = Albany::convertScalar<ScalarT,ParamScalarT>(alphaParam(0));
       if (regularized)
       {
-        alpha = alpha*std::sqrt(Albany::ScalarConverter<ParamScalarT>::apply(regularizationParam(0)));
+        alpha = alpha*std::sqrt(Albany::convertScalar<ScalarT,ParamScalarT>(regularizationParam(0)));
       }
 
 #ifdef OUTPUT_TO_SCREEN

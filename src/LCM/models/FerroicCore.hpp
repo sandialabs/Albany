@@ -1,7 +1,6 @@
 #if !defined(FerroicCore_hpp)
 #define FerroicCore_hpp
 
-#include <Intrepid_FieldContainer.hpp>
 #include <Intrepid2_MiniTensor.h>
 #include <MiniNonlinearSolver.h>
 
@@ -116,7 +115,7 @@ computeBinFractions(
     Teuchos::Array<ArgT>                        & newFractions,
     Teuchos::Array<DataT>                 const & oldFractions,
     Teuchos::Array<int>                   const & transitionMap,
-    Intrepid::FieldContainer<DataT>       const & aMatrix);
+    Kokkos::DynRankView<DataT>            const & aMatrix);
 
 
 template<typename ArgT>
@@ -154,7 +153,7 @@ computeResidual(
     Teuchos::Array<FM::Transition>        const & transitions,
     Teuchos::Array<FM::CrystalVariant>    const & crystalVariants,
     Teuchos::Array<DataT>                 const & tBarrier,
-    Intrepid::FieldContainer<DataT>       const & aMatrix,
+    Kokkos::DynRankView<DataT>            const & aMatrix,
     Intrepid2::Tensor<ArgT,FM::THREE_D>   const & X, 
     Intrepid2::Tensor<ArgT,FM::THREE_D>   const & linear_x,
     Intrepid2::Vector<ArgT,FM::THREE_D>   const & E,
@@ -172,10 +171,10 @@ computeResidual(
 //! Nonlinear Solver (NLS) class for the domain switching / phase transition model.
 //  Unknowns: transition rates
 //
-template<typename EvalT>
+template<typename EvalT, Intrepid2::Index M = FM::MAX_TRNS>
 class DomainSwitching:
     public Intrepid2::Function_Base<
-    DomainSwitching<EvalT>, typename EvalT::ScalarT>
+    DomainSwitching<EvalT, M>, typename EvalT::ScalarT, M>
 {
   using ArgT = typename EvalT::ScalarT;
 
@@ -187,13 +186,16 @@ public:
       Teuchos::Array<FM::Transition>     const & transitions,
       Teuchos::Array<RealType>           const & transBarriers,
       Teuchos::Array<RealType>           const & binFractions,
-      Intrepid::FieldContainer<RealType> const & aMatrix,
+      Kokkos::DynRankView<RealType>      const & aMatrix,
       Intrepid2::Tensor<ArgT,THREE_D>    const & x,
       Intrepid2::Vector<ArgT,THREE_D>    const & E,
       RealType dt);
 
-  static constexpr char const * const NAME =
-      "Domain Switching Nonlinear System";
+  static constexpr char const * const
+  NAME{"Domain Switching Nonlinear System"};
+
+  using Base = Intrepid2::Function_Base<
+      DomainSwitching<EvalT, M>, typename EvalT::ScalarT, M>;
 
   //! Default implementation of value function.
   template<typename T, Intrepid2::Index N = Intrepid2::DYNAMIC>
@@ -220,7 +222,7 @@ private:
   Teuchos::Array<FM::Transition>      const & m_transitions;
   Teuchos::Array<RealType>            const & m_transBarriers;
   Teuchos::Array<RealType>            const & m_binFractions;
-  Intrepid::FieldContainer<RealType>  const & m_aMatrix;
+  Kokkos::DynRankView<RealType>       const & m_aMatrix;
   Intrepid2::Tensor<ArgT,THREE_D>     const & m_x;
   Intrepid2::Vector<ArgT,THREE_D>             m_D;
   RealType m_dt;

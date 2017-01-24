@@ -104,9 +104,18 @@ class DiscretizationFactory {
     Teuchos::RCP<Albany::AbstractDiscretization> createDiscretizationFromInternalMeshStruct(
       const std::map<int,std::vector<std::string> >& sideSetEquations,
       const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes);
+    
+    /* This function overwrite previous discretization parameter list */
+    void
+    setDiscretizationParameters(Teuchos::RCP<Teuchos::ParameterList> disc_params);
+    
+#ifdef ALBANY_AMP
+        /* This function overwrite previous number of equations in mesh structure */
+        void
+        setNumberOfEquations(int neq);
+#endif
 
-
-  private:
+    private:
 
     //! Private to prohibit copying
     DiscretizationFactory(const DiscretizationFactory&);

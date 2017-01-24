@@ -23,8 +23,6 @@ namespace Albany {
     //! Retrieve mesh struct
     virtual Teuchos::RCP<Albany::PUMIMeshStruct> getPUMIMeshStruct() = 0;
 
-    virtual apf::GlobalNumbering* getAPFGlobalNumbering() = 0;
-
     virtual void attachQPData() = 0;
     virtual void detachQPData() = 0;
 

@@ -21,6 +21,9 @@
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
+#ifdef ATO_USES_COGENT
+#include <Cogent_Integrator.hpp>
+#endif
 
 namespace Albany {
 
@@ -63,8 +66,8 @@ namespace Albany {
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
     void getAllocatedStates(
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > oldState_,
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > newState_) const;
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device> > > > oldState_,
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device> > > > newState_) const;
 
   private:
 
@@ -96,8 +99,8 @@ namespace Albany {
 
     Teuchos::RCP<Albany::Layouts> dl;
 
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > oldState;
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > newState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device> > > > oldState;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device> > > > newState;
 
   };
 
@@ -117,6 +120,10 @@ namespace Albany {
 #include "ATO_TopologyFieldWeighting.hpp"
 #include "ATO_TopologyWeighting.hpp"
 #include "ATO_VectorResidual.hpp"
+#include "ATO_AddForce.hpp"
+#ifdef ATO_USES_COGENT
+#include "ATO_ComputeBasisFunctions.hpp"
+#endif
 #include "PHAL_SaveStateField.hpp"
 
 #include "Time.hpp"
@@ -142,14 +149,57 @@ Albany::PoissonsEquationProblem::constructEvaluators(
    std::string elementBlockName = meshSpecs.ebName;
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-   RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
      intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
 
    const int numNodes = intrepidBasis->getCardinality();
    const int worksetSize = meshSpecs.worksetSize;
 
-   Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
-   RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+
+   int cubatureDegree = meshSpecs.cubatureDegree;
+
+   std::string blockType = "Body";
+
+#ifdef ATO_USES_COGENT
+   bool isNonconformal = false;
+   Teuchos::ParameterList geomSpec, blockSpec;
+   if(params->isSublist("Configuration")){
+     if(params->sublist("Configuration").isType<bool>("Nonconformal"))
+       isNonconformal = params->sublist("Configuration").get<bool>("Nonconformal");
+   }
+   RCP<Cogent::Integrator> projector;
+   if(isNonconformal){
+     // find geom spec
+     Teuchos::ParameterList& blocksParams = params->sublist("Configuration").sublist("Element Blocks");
+     int nBlocks = blocksParams.get<int>("Number of Element Blocks");
+     std::string specName;
+     for(int i=0; i<nBlocks; i++){
+       std::string specName_i = Albany::strint("Element Block", i);
+       blockSpec = blocksParams.sublist(specName_i);
+       if( blockSpec.get<std::string>("Name") == elementBlockName ){
+         geomSpec = blockSpec.sublist("Geometry Construction");
+         if( geomSpec.get<bool>("Uniform Quadrature") ){
+           specName = specName_i;
+           break;
+         } else {
+           TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                                    "Nonconformal method requires 'Uniform Quadrature'");
+         }
+       }
+     }
+     Cogent::IntegratorFactory integratorFactory;
+     projector = integratorFactory.create(cellType, intrepidBasis, geomSpec);
+
+     int projectionOrder = geomSpec.get<int>("Projection Order");
+     cubatureDegree = 2*projectionOrder;
+
+     blockType = geomSpec.get<std::string>("Type");
+
+   }
+#endif
+
+   Intrepid2::DefaultCubatureFactory cubFactory;
+   RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, cubatureDegree);
 
    const int numDim = cubature->getDimension();
    const int numQPts = cubature->getNumPoints();
@@ -164,13 +214,26 @@ Albany::PoissonsEquationProblem::constructEvaluators(
 
    // Construct standard FEM evaluators with standard field names                              
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
-//   TEUCHOS_TEST_FOR_EXCEPTION(dl->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
-//                              "Data Layout Usage in Mechanics problems assume vecDim = numDim");
 
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   ATO::Utils<EvalT, PHAL::AlbanyTraits> atoUtils(dl);
+   ATO::Utils<EvalT, PHAL::AlbanyTraits> atoUtils(dl,numDim);
 
+   // Temporary variable used numerous times below
+   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
+#ifdef ATO_USES_COGENT
+   if( isNonconformal ){
+     Teuchos::Array<std::string> topoNames = geomSpec.get<Teuchos::Array<std::string> >("Level Set Names");
+     int numNames = topoNames.size();
+     for(int i=0; i<numNames; i++){
+       RCP<ParameterList> p = rcp(new ParameterList);
+       Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDataToElemNode;
+       p = stateMgr.registerStateVariable(topoNames[i], dl->node_scalar, "all", true, &entity);
+     }
+   }
+#endif
+
+   std::string boundaryTermName("Boundary Value");
 
    Teuchos::ArrayRCP<std::string> dof_names(1);
    dof_names[0] = "Phi";
@@ -184,6 +247,7 @@ Albany::PoissonsEquationProblem::constructEvaluators(
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
 
+   // computes gradPhi
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[0]));
 
@@ -191,19 +255,43 @@ Albany::PoissonsEquationProblem::constructEvaluators(
        (evalUtils.constructGatherSolutionEvaluator_noTransient(/*is_vector_dof=*/ false, dof_names));
 
    fm0.template registerEvaluator<EvalT>
-     (evalUtils.constructScatterResidualEvaluator(/*is_vector_dof=*/ false, resid_names));
-
-   fm0.template registerEvaluator<EvalT>
      (evalUtils.constructGatherCoordinateVectorEvaluator());
 
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
 
+#ifdef ATO_USES_COGENT
+   if( isNonconformal ){
+     RCP<ParameterList> p = rcp(new ParameterList("Compute Basis Functions"));
+
+     //Input
+     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
+     p->set<bool>("Static Topology", true);
+
+     p->set< RCP<Cogent::Integrator> >("Cubature",     projector);
+     p->set<std::string>("Coordinate Vector Name",   "Coord Vec");
+     p->set<std::string>("Weights Name",               "Weights");
+     p->set<std::string>("Jacobian Det Name",     "Jacobian Det");
+     p->set<std::string>("Jacobian Name",             "Jacobian");
+     p->set<std::string>("Jacobian Inv Name",     "Jacobian Inv");
+     p->set<std::string>("BF Name",                         "BF");
+     p->set<std::string>("Weighted BF Name",               "wBF");
+     p->set<std::string>("Gradient BF Name",           "Grad BF");
+     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+ 
+     ev = rcp(new ATO::ComputeBasisFunctions<EvalT,AlbanyTraits>(*p,dl,&meshSpecs));
+     fm0.template registerEvaluator<EvalT>(ev);
+
+     atoUtils.SaveCellStateField(fm0, stateMgr, "Weights", elementBlockName, dl->qp_scalar);
+ 
+   } else
+#endif
+
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
-   // Temporary variable used numerous times below
-   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+
+
 
 
   { // Time
@@ -223,16 +311,13 @@ Albany::PoissonsEquationProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  if( blockType == "Body" )
   { // Linear isotropic material response
     RCP<ParameterList> p = rcp(new ParameterList(kinVarName));
 
     //Input
     p->set<std::string>("Input Vector Name", gradPhiName);
     p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-
-
-
 
 
     // check for multiple element block specs
@@ -273,7 +358,7 @@ Albany::PoissonsEquationProblem::constructEvaluators(
           fm0.template registerEvaluator<EvalT>(ev);
       
           //if(some input stuff)
-          atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName, elementBlockName, dl->qp_vector, numDim);
+          atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName, elementBlockName, dl->qp_vector);
 
         } else
         if( blockParams.isSublist("Mixture") ){
@@ -307,7 +392,7 @@ Albany::PoissonsEquationProblem::constructEvaluators(
             fm0.template registerEvaluator<EvalT>(ev);
         
             //if(some input stuff)
-            atoUtils.SaveCellStateField(fm0, stateMgr, outName, elementBlockName, dl->qp_vector, numDim);
+            atoUtils.SaveCellStateField(fm0, stateMgr, outName, elementBlockName, dl->qp_vector);
           }
 
           //-- create mixture --//
@@ -408,9 +493,25 @@ Albany::PoissonsEquationProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     
       //if(some input stuff)
-      atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName, elementBlockName, dl->qp_vector, numDim);
+      atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName, elementBlockName, dl->qp_vector);
+    }
+  } else
+  if( blockType == "Boundary" )
+#ifdef ATO_USES_COGENT
+  {
+    // Boundary forces
+    //
+    if(params->isSublist("Implicit Boundary Conditions")){
+      Teuchos::ParameterList& bcSpec = params->sublist("Implicit Boundary Conditions");
+      atoUtils.constructBoundaryConditionEvaluators( bcSpec, fm0, stateMgr, elementBlockName, boundaryTermName );
     }
   }
+#else
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                               "Cogent not enabled. 'Boundary' block type not available.");
+  }
+#endif
 
   /*******************************************************************************/
   /** Begin topology weighting ***************************************************/
@@ -429,6 +530,14 @@ Albany::PoissonsEquationProblem::constructEvaluators(
       std::string fieldName  = fieldParams.get<std::string>("Name");
       std::string layoutName = fieldParams.get<std::string>("Layout");
       int functionIndex      = fieldParams.get<int>("Function Index");
+
+      std::string reqBlockType;
+      if( fieldParams.isType<std::string>("Type") )
+        reqBlockType = fieldParams.get<std::string>("Type");
+      else
+        reqBlockType = "Body";
+
+      if( reqBlockType != blockType ) continue;
 
       Teuchos::RCP<PHX::DataLayout> layout;
       if( layoutName == "QP Scalar" ) layout = dl->qp_scalar;
@@ -452,8 +561,8 @@ Albany::PoissonsEquationProblem::constructEvaluators(
       p->set<Teuchos::RCP<ATO::Topology> >("Topology",topology);
 
       p->set<std::string>("BF Name", "BF");
-      p->set<std::string>("Unweighted Variable Name", kinVarName);
-      p->set<std::string>("Weighted Variable Name", kinVarName+"_Weighted");
+      p->set<std::string>("Unweighted Variable Name", fieldName);
+      p->set<std::string>("Weighted Variable Name", fieldName+"_Weighted");
       p->set<std::string>("Variable Layout", layoutName);
       p->set<int>("Function Index", functionIndex);
 
@@ -465,14 +574,15 @@ Albany::PoissonsEquationProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
 
       //if(some input stuff)
-      atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName+"_Weighted", 
-                                  elementBlockName, layout, numDim);
+      atoUtils.SaveCellStateField(fm0, stateMgr, fieldName+"_Weighted", 
+                                  elementBlockName, layout);
     }
   }
   /*******************************************************************************/
   /** End topology weighting *****************************************************/
   /*******************************************************************************/
 
+  if( blockType == "Body" )
   { // Residual
     RCP<ParameterList> p = rcp(new ParameterList("Residual"));
 
@@ -494,7 +604,35 @@ Albany::PoissonsEquationProblem::constructEvaluators(
 
     ev = rcp(new ATO::VectorResidual<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+  } else
+  if( blockType == "Boundary" )
+#ifdef ATO_USES_COGENT
+  {
+    RCP<ParameterList> p = rcp(new ParameterList("Boundary Values"));
+    if( params->isType<Teuchos::RCP<ATO::TopologyArray> > ("Topologies") )
+      p->set<std::string>("Scalar Name", boundaryTermName+"_Weighted");
+    else 
+    p->set<std::string>("Scalar Name", boundaryTermName);
+    p->set<std::string>("Weighted BF Name", "wBF");
+    resid_names[0] = boundaryTermName;
+    p->set<std::string>("Out Residual Name", resid_names[0]);
+    p->set< RCP<DataLayout> >("Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("Weighted BF Data Layout", dl->node_qp_scalar);
+    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+    p->set<bool>("Negative",true);
+    ev = rcp(new ATO::AddScalar<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  
   }
+#else
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                               "Cogent not enabled. 'Boundary' block type not available.");
+  }
+#endif
+
+   fm0.template registerEvaluator<EvalT>
+     (evalUtils.constructScatterResidualEvaluator(/*is_vector_dof=*/ false, resid_names));
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);

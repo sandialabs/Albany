@@ -67,11 +67,11 @@ BasalFrictionCoefficientNode (const Teuchos::ParameterList& p,
   lambdaParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
   powerParam     = PHX::MDField<ScalarT,Dim>("Power Exponent", dl->shared_param);
 
-  this->addDependentField (muParam);
-  this->addDependentField (lambdaParam);
-  this->addDependentField (powerParam);
-  this->addDependentField (N);
-  this->addDependentField (u_norm);
+  this->addDependentField (muParam.fieldTag());
+  this->addDependentField (lambdaParam.fieldTag());
+  this->addDependentField (powerParam.fieldTag());
+  this->addDependentField (N.fieldTag());
+  this->addDependentField (u_norm.fieldTag());
 
   logParameters = beta_list.get<bool>("Use log scalar parameters",false);
 

@@ -84,8 +84,7 @@ STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
 #endif
-//  Albany::STKDiscretization::updateMesh();  //Mauro: cannot call virtual function in constructor
-
+  Albany::STKDiscretization::updateMesh();
 }
 
 Albany::STKDiscretization::~STKDiscretization()
@@ -160,29 +159,6 @@ Albany::STKDiscretization::getOverlapMapT() const
 }
 
 #if defined(ALBANY_EPETRA)
-Teuchos::RCP<const Epetra_Map>
-Albany::STKDiscretization::getMap(const std::string& field_name) const {
-  Teuchos::RCP<const Epetra_Map> map = Petra::TpetraMap_To_EpetraMap(getMapT(field_name), comm);
-  return map;
-}
-
-Teuchos::RCP<const Epetra_Map>
-Albany::STKDiscretization::getNodeMap(const std::string& field_name) const {
-  Teuchos::RCP<const Epetra_Map> nodeMap = Petra::TpetraMap_To_EpetraMap(getNodeMapT(field_name), comm);
-  return nodeMap;
-}
-
-Teuchos::RCP<const Epetra_Map>
-Albany::STKDiscretization::getOverlapMap(const std::string& field_name) const {
-  Teuchos::RCP<const Epetra_Map> overlapMap = Petra::TpetraMap_To_EpetraMap(getOverlapMapT(field_name), comm);
-  return overlapMap;
-}
-
-Teuchos::RCP<const Epetra_Map>
-Albany::STKDiscretization::getOverlapNodeMap(const std::string& field_name) const {
-  Teuchos::RCP<const Epetra_Map> overlapNodeMap = Petra::TpetraMap_To_EpetraMap(getOverlapNodeMapT(field_name), comm);
-  return overlapNodeMap;
-}
 
 Teuchos::RCP<const Epetra_CrsGraph>
 Albany::STKDiscretization::getJacobianGraph() const
@@ -667,76 +643,9 @@ Albany::STKDiscretization::getWsPhysIndex() const
 #if defined(ALBANY_EPETRA)
 void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped){
 
-  // Put solution as Epetra_Vector into STK Mesh
-  if(!overlapped)
-
-    setSolutionField(soln);
-
-  // soln coming in is overlapped
-  else
-
-    setOvlpSolutionField(soln);
-
-
-#ifdef ALBANY_SEACAS
-
-  if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
-
-   Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
-
-   container->transferSolutionToCoords();
-
-   if (!mesh_data.is_null()) {
-     // Mesh coordinates have changed. Rewrite output file by deleting the mesh data object and recreate it
-     setupExodusOutput();
-   }
-  }
-
-
-   // Skip this write unless the proper interval has been reached
-  if (stkMeshStruct->exoOutput && !(outputInterval % stkMeshStruct->exoOutputInterval)) {
-
-     double time_label = monotonicTimeLabel(time);
-
-     mesh_data->begin_output_step(outputFileIdx, time_label);
-     int out_step = mesh_data->write_defined_output_fields(outputFileIdx);
-     // Writing mesh global variables
-     for (auto& it : stkMeshStruct->getFieldContainer()->getMeshVectorStates())
-     {
-       mesh_data->write_global (outputFileIdx, it.first, it.second);
-     }
-     for (auto& it : stkMeshStruct->getFieldContainer()->getMeshScalarIntegerStates())
-     {
-       mesh_data->write_global (outputFileIdx, it.first, it.second);
-     }
-     mesh_data->end_output_step(outputFileIdx);
-
-     if (mapT->getComm()->getRank()==0) {
-       *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
-       if (time_label != time) *out << " with label " << time_label;
-       *out << " to index " <<out_step<<" in file "<<stkMeshStruct->exoOutFile<< std::endl;
-     }
-  }
-  outputInterval++;
-
-  for (auto it : sideSetDiscretizations)
-  {
-    if (overlapped)
-    {
-      Epetra_Vector ss_soln (*it.second->getOverlapMap());
-      const Epetra_CrsMatrix& P = *ov_projectors.at(it.first);
-      P.Apply(soln, ss_soln);
-      it.second->writeSolution (ss_soln, time, overlapped);
-    }
-    else
-    {
-      Epetra_Vector ss_soln (*it.second->getMap());
-      const Epetra_CrsMatrix& P = *projectors.at(it.first);
-      P.Apply(soln, ss_soln);
-      it.second->writeSolution (ss_soln, time, overlapped);
-    }
-  }
-#endif
+  Teuchos::RCP<const Tpetra_Vector> solnT =
+     Petra::EpetraVector_To_TpetraVectorConst(soln, commT);
+  writeSolutionT(*solnT, time, overlapped);
 }
 #endif
 
@@ -957,38 +866,6 @@ Albany::STKDiscretization::monotonicTimeLabel(const double time)
   return previous_time_label;
 }
 
-#if defined(ALBANY_EPETRA)
-void
-Albany::STKDiscretization::setResidualField(const Epetra_Vector& residual)
-{
-#if defined(ALBANY_LCM)
-  Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
-
-  if(container->hasResidualField()){
-
-    // Iterate over the on-processor nodes
-    stk::mesh::Selector locally_owned = metaData.locally_owned_part();
-
-    container->saveResVector(residual, locally_owned, node_map);
-
-    // Write the overlapped data
-//    stk::mesh::Selector select_owned_or_shared = metaData.locally_owned_part() | metaData.globally_shared_part();
-
-//    container->saveResVector(residual, select_owned_or_shared, overlap_node_map);
-  }
-
-  // Setting the residual on the side set meshes
-  for (auto it : sideSetDiscretizations)
-  {
-    const Epetra_CrsMatrix& P = *ov_projectors.at(it.first);
-    Epetra_Vector ss_residual (*it.second->getOverlapMap());
-    P.Apply(residual,ss_residual);
-    it.second->setResidualField(ss_residual);
-  }
-#endif
-}
-#endif
-
 void
 Albany::STKDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 {
@@ -1018,6 +895,7 @@ Albany::STKDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 Teuchos::RCP<Epetra_Vector>
 Albany::STKDiscretization::getSolutionField(bool overlapped) const
 {
+  /*
   // Copy soln vector into solution field, one node at a time
   Teuchos::ArrayView<const GO> indicesAV = mapT->getNodeElementList();
   int numElements = mapT->getNodeNumElements();
@@ -1028,7 +906,7 @@ Albany::STKDiscretization::getSolutionField(bool overlapped) const
   Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(-1, numElements, i_indices.getRawPtr(), 0, *comm));
 #else
   Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(-1, numElements, indicesAV.getRawPtr(), 0, *comm));
-#endif
+#endif */
   Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
   this->getSolutionField(*soln, overlapped);
   return soln;
@@ -1089,16 +967,6 @@ Teuchos::RCP<Epetra_MultiVector>
 Albany::STKDiscretization::getSolutionFieldHistoryImpl(int stepCount) const
 {
   const int vectorCount = stepCount > 0 ? stepCount : 1; // A valid MultiVector has at least one vector
-  Teuchos::ArrayView<const GO> indicesAV = mapT->getNodeElementList();
-  LO numElements = mapT->getNodeNumElements();
-#ifdef ALBANY_64BIT_INT
-  Teuchos::Array<int> i_indices(numElements);
-  for(std::size_t k = 0; k < numElements; k++)
-  i_indices[k] = Teuchos::as<int>(indicesAV[k]);
-  Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(-1, numElements, i_indices.getRawPtr(), 0, *comm));
-#else
-  Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(-1, numElements, indicesAV.getRawPtr(), 0, *comm));
-#endif
   const Teuchos::RCP<Epetra_MultiVector> result = Teuchos::rcp(new Epetra_MultiVector(*map, vectorCount));
   if (stepCount > 0) {
     this->getSolutionFieldHistoryImpl(*result);
@@ -1117,6 +985,9 @@ Albany::STKDiscretization::getSolutionFieldHistoryImpl(Epetra_MultiVector &resul
   }
 }
 
+#endif
+
+#if defined(ALBANY_EPETRA)
 void
 Albany::STKDiscretization::getSolutionField(Epetra_Vector &result, const bool overlapped) const
 {
@@ -1129,28 +1000,7 @@ Albany::STKDiscretization::getSolutionField(Epetra_Vector &result, const bool ov
 
   container->fillSolnVector(result, locally_owned, node_map);
 }
-
-void
-Albany::STKDiscretization::getField(Epetra_Vector &result, const std::string& name) const
-{
-  Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
-
-  // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
-  const std::string& part = nodalDOFsStructContainer.fieldToMap.find(name)->second->first.first;
-  stk::mesh::Selector selector = metaData.locally_owned_part();
-  if(part.size()) {
-    std::map<std::string, stk::mesh::Part*>::const_iterator it = stkMeshStruct->nsPartVec.find(part);
-    if(it != stkMeshStruct->nsPartVec.end())
-      selector &= stk::mesh::Selector( *(it->second) );
-  }
-
-  const DOFsStruct& dofsStruct = nodalDOFsStructContainer.getDOFsStruct(name);
-  Teuchos::RCP<Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(dofsStruct.node_map, comm);
-
-  container->fillVector(result, name, selector, node_map,dofsStruct.dofManager);
-}
-#endif // ALBANY_EPETRA
-
+#endif
 
 void
 Albany::STKDiscretization::getFieldT(Tpetra_Vector &result, const std::string& name) const
@@ -1200,51 +1050,6 @@ Albany::STKDiscretization::getSolutionMV(Tpetra_MultiVector &resultT, const bool
 /*****************************************************************/
 /*** Private functions follow. These are just used in above code */
 /*****************************************************************/
-
-#if defined(ALBANY_EPETRA)
-void
-Albany::STKDiscretization::setField(const Epetra_Vector &result, const std::string& name, bool overlapped)
-{
-  Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
-
-  const std::string& part = nodalDOFsStructContainer.fieldToMap.find(name)->second->first.first;
-
-  stk::mesh::Selector selector = overlapped ?
-      metaData.locally_owned_part() | metaData.globally_shared_part() :
-      metaData.locally_owned_part();
-
-  // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
-  if(part.size()) {
-    std::map<std::string, stk::mesh::Part*>::const_iterator it = stkMeshStruct->nsPartVec.find(part);
-    if(it != stkMeshStruct->nsPartVec.end())
-      selector &= stk::mesh::Selector( *(it->second) );
-  }
-
-  const DOFsStruct& dofsStruct = nodalDOFsStructContainer.getDOFsStruct(name);
-
-  if(overlapped) {
-    Teuchos::RCP<Epetra_Map> overlap_node_map = Petra::TpetraMap_To_EpetraMap(dofsStruct.overlap_node_map, comm);
-    container->saveVector(result, name, selector, overlap_node_map, dofsStruct.overlap_dofManager);
-  } else {
-    Teuchos::RCP<Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(dofsStruct.node_map, comm);
-    container->saveVector(result, name, selector, node_map, dofsStruct.dofManager);
-  }
-}
-
-void
-Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln)
-{
-  // Copy soln vector into solution field, one node at a time
-  // Note that soln coming in is the local (non overlapped) soln
-
-  Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
-
-  // Iterate over the on-processor nodes
-  stk::mesh::Selector locally_owned = metaData.locally_owned_part();
-
-  container->saveSolnVector(soln, locally_owned, node_map);
-}
-#endif // ALBANY_EPETRA
 
 //Tpetra version of above
 void
@@ -1302,22 +1107,6 @@ Albany::STKDiscretization::setSolutionFieldMV(const Tpetra_MultiVector& solnT)
 
   container->saveSolnMultiVector(solnT, locally_owned, node_mapT);
 }
-
-#if defined(ALBANY_EPETRA)
-void
-Albany::STKDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
-{
-  // Copy soln vector into solution field, one node at a time
-  // Note that soln coming in is the local+ghost (overlapped) soln
-
-  Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
-
-  // Iterate over the processor-visible nodes
-  stk::mesh::Selector select_owned_or_shared = metaData.locally_owned_part() | metaData.globally_shared_part();
-
-  container->saveSolnVector(soln, select_owned_or_shared, overlap_node_map);
-}
-#endif // ALBANY_EPETRA
 
 void
 Albany::STKDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT)
@@ -2490,16 +2279,16 @@ namespace {
   }
 
 
-  const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > >
+  const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
   Basis(const int C)
   {
     // Static types
-    typedef Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> Field_t;
-    typedef Intrepid2::Basis< double, Field_t > Basis_t;
+    typedef Kokkos::DynRankView<RealType, PHX::Device> Field_t;
+    typedef Intrepid2::Basis<PHX::Device, RealType, RealType> Basis_t;
     static const Teuchos::RCP< Basis_t > HGRAD_Basis_4 =
-      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C1_FEM< double, Field_t >() );
+      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C1_FEM<PHX::Device>() );
     static const Teuchos::RCP< Basis_t > HGRAD_Basis_9 =
-      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C2_FEM< double, Field_t >() );
+      Teuchos::rcp( new Intrepid2::Basis_HGRAD_QUAD_C2_FEM<PHX::Device>() );
 
     // Check for valid value of C
     int deg = (int) std::sqrt((double)C);
@@ -2515,19 +2304,19 @@ namespace {
 
     // Spectral bases
     return Teuchos::rcp(
-      new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM< double, Field_t >(
-        deg, Intrepid2::POINTTYPE_SPECTRAL) );
+      new Intrepid2::Basis_HGRAD_QUAD_Cn_FEM<PHX::Device>(
+        deg, Intrepid2::POINTTYPE_WARPBLEND) );
   }
 
   double value(const std::vector<double> &soln,
                const std::pair<double, double> &ref) {
 
     const int C = soln.size();
-    const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > > HGRAD_Basis = Basis(C);
+    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > HGRAD_Basis = Basis(C);
 
     const int numPoints        = 1;
-    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> basisVals (C, numPoints);
-    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> tempPoints(numPoints, 2);
+    Kokkos::DynRankView<RealType, PHX::Device> basisVals ("SSS", C, numPoints);
+    Kokkos::DynRankView<RealType, PHX::Device> tempPoints("SSS", numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
@@ -2543,11 +2332,11 @@ namespace {
              const std::pair<double, double> &ref){
 
     const int C = coords.size();
-    const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > > HGRAD_Basis = Basis(C);
+    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > HGRAD_Basis = Basis(C);
 
     const int numPoints        = 1;
-    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> basisVals (C, numPoints);
-    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> tempPoints(numPoints, 2);
+    Kokkos::DynRankView<RealType, PHX::Device> basisVals ("SSS", C, numPoints);
+    Kokkos::DynRankView<RealType, PHX::Device> tempPoints("SSS", numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
@@ -2564,11 +2353,11 @@ namespace {
              const std::pair<double, double> &ref){
 
     const int C = coords.size();
-    const Teuchos::RCP<Intrepid2::Basis<double, Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> > > HGRAD_Basis = Basis(C);
+    const Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > HGRAD_Basis = Basis(C);
 
     const int numPoints        = 1;
-    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> basisGrad (C, numPoints, 2);
-    Intrepid2::FieldContainer_Kokkos<double, PHX::Layout, PHX::Device> tempPoints(numPoints, 2);
+    Kokkos::DynRankView<RealType, PHX::Device> basisGrad ("SSS", C, numPoints, 2);
+    Kokkos::DynRankView<RealType, PHX::Device> tempPoints("SSS", numPoints, 2);
     tempPoints(0,0) = ref.first;
     tempPoints(0,1) = ref.second;
 
@@ -2762,75 +2551,6 @@ int Albany::STKDiscretization::processNetCDFOutputRequestMV(const Tpetra_MultiVe
 #endif
   return 0;
 }
-
-#if defined(ALBANY_EPETRA)
-int Albany::STKDiscretization::processNetCDFOutputRequest(const Epetra_Vector& solution_field) {
-#ifdef ALBANY_SEACAS
-  const long long unsigned rank = commT->getRank();
-  const unsigned nlat = stkMeshStruct->nLat;
-  const unsigned nlon = stkMeshStruct->nLon;
-
-  std::vector<double> local(nlat*nlon*neq, -std::numeric_limits<double>::max());
-
-
-  for (unsigned n=0; n<neq; ++n) {
-    for (unsigned b=0; b<interpolateData.size(); ++b) {
-      Teuchos::ArrayRCP<std::vector<interp> >        Interpb = interpolateData[b];
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > Coordsb = coords[b];
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > ElNodeEqID = wsElNodeEqID[b];
-
-      for (unsigned e=0; e<Interpb.size(); ++e) {
-        const std::vector<interp>                    &interp = Interpb[e];
-        Teuchos::ArrayRCP<double*>                    coordp = Coordsb[e];
-        Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >    elnode = ElNodeEqID[e];
-
-        const int C = coordp.size();
-        std::vector<double> soln(C);
-        for (unsigned i=0; i<C; ++i) {
-          const int overlap_dof = elnode[i][n];
-          soln[i] = solution_field[overlap_dof];
-        }
-        for (unsigned p=0; p<interp.size(); ++p) {
-          Albany::STKDiscretization::interp par    = interp[p];
-          const double y = value(soln, par.parametric_coords);
-          std::pair<unsigned,unsigned> latlon =   par.latitude_longitude;
-          local[nlon*latlon.first + latlon.second + n*nlat*nlon] = y;
-        }
-      }
-    }
-  }
-
-  std::vector<double> global(neq*nlat*nlon);
-  comm->MaxAll(&local[0], &global[0], neq*nlat*nlon);
-
-#ifdef ALBANY_PAR_NETCDF
-  const long long unsigned np   = commT->getSize();
-  const size_t start            = static_cast<size_t>((rank*nlat)/np);
-  const size_t end              = static_cast<size_t>(((rank+1)*nlat)/np);
-  const size_t len              = end-start;
-
-  for (unsigned n=0; n<neq; ++n) {
-    const size_t  startp[] = {netCDFOutputRequest,    0, start, 0};
-    const size_t  countp[] = {1, 1, len, nlon};
-    if (const int ierr = nc_put_vara_double (netCDFp, varSolns[n], startp, countp, &global[n*nlat*nlon]))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "nc_put_vara_double returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-  }
-#else
-  if (netCDFp) {
-    for (unsigned n=0; n<neq; ++n)  {
-      const size_t  startp[] = {netCDFOutputRequest,    0, 0, 0};
-      const size_t  countp[] = {1, 1, nlat, nlon};
-      if (const int ierr = nc_put_vara_double (netCDFp, varSolns[n], startp, countp, &global[n*nlat*nlon]))
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "nc_put_vara returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-    }
-  }
-#endif
-#endif
-  return netCDFOutputRequest++;
-}
-#endif
 
 void Albany::STKDiscretization::setupNetCDFOutput()
 {
@@ -3237,7 +2957,7 @@ void Albany::STKDiscretization::buildSideSetProjectors()
 }
 
 void
-Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
+Albany::STKDiscretization::updateMesh()
 {
   const Albany::StateInfoStruct& nodal_param_states = stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
   nodalDOFsStructContainer.addEmptyDOFsStruct("ordinary_solution", "", neq);

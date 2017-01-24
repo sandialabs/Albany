@@ -48,9 +48,9 @@ private:
   //! Length scale parameter for localization zone
   ScalarT thickness;
   //! Numerical integration rule
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >> cubature;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature;
   //! Finite element basis for the midplane
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>> intrepidBasis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
   //! Scalar Gradient
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
  //! Scalar Gradient Operator
@@ -87,23 +87,23 @@ private:
    // Time
    PHX::MDField<ScalarT,Dummy> deltaTime;
 
-  //! Reference Cell FieldContainers
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refValues;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refGrads;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refPoints;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> refWeights;
+  //! Reference Cell Views
+  Kokkos::DynRankView<RealType, PHX::Device> refValues;
+  Kokkos::DynRankView<RealType, PHX::Device> refGrads;
+  Kokkos::DynRankView<RealType, PHX::Device> refPoints;
+  Kokkos::DynRankView<RealType, PHX::Device> refWeights;
 
   // Work space FCs
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> F_inv;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> F_invT;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> C;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Cinv;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> JF_invT;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> KJF_invT;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> Kref;
+  Kokkos::DynRankView<ScalarT, PHX::Device> F_inv;
+  Kokkos::DynRankView<ScalarT, PHX::Device> F_invT;
+  Kokkos::DynRankView<ScalarT, PHX::Device> C;
+  Kokkos::DynRankView<ScalarT, PHX::Device> Cinv;
+  Kokkos::DynRankView<ScalarT, PHX::Device> JF_invT;
+  Kokkos::DynRankView<ScalarT, PHX::Device> KJF_invT;
+  Kokkos::DynRankView<ScalarT, PHX::Device> Kref;
 
-  // Temporary FieldContainers
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> flux;
+  // Temporary Views
+  Kokkos::DynRankView<ScalarT, PHX::Device> flux;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> poroMassResidual;

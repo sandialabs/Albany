@@ -179,6 +179,7 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
   stateRef.setInitType(init_type);
   stateRef.setInitValue(init_val);
   stateRef.setMeshPart(meshPartName);
+  stateRef.setEBName(ebName);
 
   dl->dimensions(stateRef.dim);
 
@@ -222,6 +223,7 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
     pstateRef.initType  = init_type;
     pstateRef.initValue = init_val;
     pstateRef.pParentStateStruct = &stateRef;
+    pstateRef.ebName = ebName;
 
     pstateRef.output = false;
     dl->dimensions(pstateRef.dim);
@@ -868,6 +870,7 @@ Albany::StateManager::doSetStateArrays(const Teuchos::RCP<Albany::AbstractDiscre
   for (unsigned int i=0; i<stateInfoPtr->size(); i++) {
     const std::string& stateName = (*stateInfoPtr)[i]->name;
     const std::string& init_type = (*stateInfoPtr)[i]->initType;
+    const std::string& ebName    = (*stateInfoPtr)[i]->ebName;
     const double init_val        = (*stateInfoPtr)[i]->initValue;
     bool have_restart            = (*stateInfoPtr)[i]->restartDataAvailable;
     Albany::StateStruct *pParentStruct = (*stateInfoPtr)[i]->pParentStateStruct;
@@ -909,6 +912,14 @@ Albany::StateManager::doSetStateArrays(const Teuchos::RCP<Albany::AbstractDiscre
         *out << " with initialization type 'identity'" << std::endl;
 
       for (int ws = 0; ws < numElemWorksets; ws++){
+
+        /* because we loop over all worksets above, we need to check
+           that the wsEBName is the same as the state variable ebName,
+           and if it is not, we continue, otherwise we overwrite previously
+           initialized data */
+        std::string wsEBName = (disc->getWsEBNames())[ws];
+        if (wsEBName != ebName)
+          continue;
 
         Albany::StateStruct::FieldDims dims;
         esa[ws][stateName].dimensions(dims);

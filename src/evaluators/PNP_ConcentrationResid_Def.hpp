@@ -27,12 +27,12 @@ ConcentrationResid(const Teuchos::ParameterList& p,
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
-  this->addDependentField(wBF);
-  this->addDependentField(wGradBF);
-  this->addDependentField(Concentration);
-  if (enableTransient)  this->addDependentField(Concentration_dot);
-  this->addDependentField(ConcentrationGrad);
-  this->addDependentField(PotentialGrad);
+  this->addDependentField(wBF.fieldTag());
+  this->addDependentField(wGradBF.fieldTag());
+  this->addDependentField(Concentration.fieldTag());
+  if (enableTransient)  this->addDependentField(Concentration_dot.fieldTag());
+  this->addDependentField(ConcentrationGrad.fieldTag());
+  this->addDependentField(PotentialGrad.fieldTag());
 
   this->addEvaluatedField(ConcentrationResidual);
 
@@ -76,10 +76,7 @@ template<typename EvalT, typename Traits>
 void PNP::ConcentrationResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
-
-  // Scale gradient into a flux, reusing same memory
-//  FST::scalarMultiplyDataData<ScalarT> (PhiFlux, Permittivity, PhiGrad);
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {          

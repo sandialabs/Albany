@@ -3,39 +3,64 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include <gtest/gtest.h>
-#include <MiniLinearSolver.h>
-#include <MiniNonlinearSolver.h>
-#include <MiniSolvers.h>
+#include "gtest/gtest.h"
+#include "MiniLinearSolver.h"
+#include "MiniNonlinearSolver.h"
+#include "MiniSolvers.h"
 
 // Why is this needed?
 bool TpetraBuild = false;
 
-namespace
+int
+main(int ac, char * av[])
 {
+  Kokkos::initialize();
+
+  ::testing::GTEST_FLAG(print_time) = (ac > 1) ? true : false;
+
+  ::testing::InitGoogleTest(&ac, av);
+
+  auto const
+  retval = RUN_ALL_TESTS();
+
+  Kokkos::finalize();
+
+  return retval;
+}
+
 //
 // Test the LCM mini minimizer.
 //
 TEST(AlbanyResidual, NewtonBanana)
 {
+  bool const
+  print_output = ::testing::GTEST_FLAG(print_time);
+
+  // outputs nothing
+  Teuchos::oblackholestream
+  bhs;
+
+  std::ostream &
+  os = (print_output == true) ? std::cout : bhs;
+
   using EvalT = PHAL::AlbanyTraits::Residual;
   using ScalarT = typename EvalT::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   constexpr
   Intrepid2::Index
-  dim{2};
+  DIM{2};
 
-  using MIN = Intrepid2::Minimizer<ValueT, dim>;
-  using FN = LCM::BananaNLS<ValueT>;
-  using STEP = Intrepid2::StepBase<FN, ValueT, dim>;
+  using MIN = Intrepid2::Minimizer<ValueT, DIM>;
+  using FN = LCM::Banana<ValueT>;
+  using STEP = Intrepid2::StepBase<FN, ValueT, DIM>;
 
   MIN
   minimizer;
 
   std::unique_ptr<STEP>
   pstep =
-      Intrepid2::stepFactory<FN, ValueT, dim>(Intrepid2::StepType::NEWTON);
+      Intrepid2::stepFactory<FN, ValueT, DIM>(Intrepid2::StepType::NEWTON);
 
   assert(pstep->name() != nullptr);
 
@@ -45,16 +70,16 @@ TEST(AlbanyResidual, NewtonBanana)
   FN
   banana;
 
-  Intrepid2::Vector<ScalarT, dim>
+  Intrepid2::Vector<ScalarT, DIM>
   x;
 
   x(0) = 0.0;
   x(1) = 3.0;
 
-  LCM::MiniSolver<MIN, STEP, FN, EvalT, dim>
+  LCM::MiniSolver<MIN, STEP, FN, EvalT, DIM>
   mini_solver(minimizer, step, banana, x);
 
-  minimizer.printReport(std::cout);
+  minimizer.printReport(os);
 
   ASSERT_EQ(minimizer.converged, true);
 }
@@ -64,17 +89,27 @@ TEST(AlbanyResidual, NewtonBanana)
 //
 TEST(AlbanyJacobian, NewtonBanana)
 {
+  bool const
+  print_output = ::testing::GTEST_FLAG(print_time);
+
+  // outputs nothing
+  Teuchos::oblackholestream
+  bhs;
+
+  std::ostream &
+  os = (print_output == true) ? std::cout : bhs;
+
   using EvalT = PHAL::AlbanyTraits::Jacobian;
   using ScalarT = typename EvalT::ScalarT;
   using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   constexpr
   Intrepid2::Index
-  dim{2};
+  DIM{2};
 
-  using MIN = Intrepid2::Minimizer<ValueT, dim>;
-  using FN = LCM::BananaNLS<ValueT>;
-  using STEP = Intrepid2::NewtonStep<FN, ValueT, dim>;
+  using MIN = Intrepid2::Minimizer<ValueT, DIM>;
+  using FN = LCM::Banana<ValueT>;
+  using STEP = Intrepid2::NewtonStep<FN, ValueT, DIM>;
 
   MIN
   minimizer;
@@ -85,30 +120,16 @@ TEST(AlbanyJacobian, NewtonBanana)
   FN
   banana;
 
-  Intrepid2::Vector<ScalarT, dim>
+  Intrepid2::Vector<ScalarT, DIM>
   x;
 
   x(0) = 0.0;
   x(1) = 3.0;
 
-  LCM::MiniSolver<MIN, STEP, FN, EvalT, dim>
+  LCM::MiniSolver<MIN, STEP, FN, EvalT, DIM>
   mini_solver(minimizer, step, banana, x);
 
-  minimizer.printReport(std::cout);
+  minimizer.printReport(os);
 
   ASSERT_EQ(minimizer.converged, true);
-}
-
-} // anonymous namespace
-
-int
-main(int ac, char * av[])
-{
-  Kokkos::initialize();
-
-  ::testing::InitGoogleTest(&ac, av);
-
-  return RUN_ALL_TESTS();
-
-  Kokkos::finalize();
 }

@@ -122,7 +122,7 @@ FieldNormBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Invalid field layout.\n");
   }
 
-  this->addDependentField(field);
+  this->addDependentField(field.fieldTag());
   this->addEvaluatedField(field_norm);
 
   Teuchos::ParameterList& options = p.get<Teuchos::ParameterList*>("Parameter List")->sublist(fieldNormName);
@@ -141,13 +141,13 @@ FieldNormBase (const Teuchos::ParameterList& p,
   {
     regularization_type = GIVEN_PARAMETER;
     regularizationParam = PHX::MDField<EScalarT,Dim>(options.get<std::string>("Regularization Parameter Name"),dl->shared_param);
-    this->addDependentField(regularizationParam);
+    this->addDependentField(regularizationParam.fieldTag());
   }
   else if (type=="Parameter Exponential")
   {
     regularization_type = PARAMETER_EXPONENTIAL;
     regularizationParam = PHX::MDField<EScalarT,Dim>(options.get<std::string>("Regularization Parameter Name"),dl->shared_param);
-    this->addDependentField(regularizationParam);
+    this->addDependentField(regularizationParam.fieldTag());
   }
   else
   {

@@ -10,7 +10,6 @@
 #include <type_traits>
 
 #include "Phalanx.hpp"
-#include "Intrepid2_FieldContainer.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -33,7 +32,7 @@ namespace FELIX
  *  from file and stuffed and saved in the mesh for future use.
  *  Note: the mesh is populated while Albany::Application is created, so the
  *        execution that follows could be anything (Solve, Analysis,...).
- *        In any case, the 'residual' of the problem is DummyResidual, whic
+ *        In any case, the 'residual' of the problem is DummyResidual, which
  *        sets the residual equal to the solution.
  */
 class PopulateMesh : public Albany::AbstractProblem
@@ -89,8 +88,8 @@ public:
 
 protected:
 
-  typedef Teuchos::RCP<shards::CellTopology>                                                                                  topologyType;
-  typedef Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >    basisType;
+  typedef Teuchos::RCP<shards::CellTopology>                                topologyType;
+  typedef Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>   basisType;
 
   basisType     cellBasis;
   topologyType  cellTopology;
@@ -121,120 +120,8 @@ FELIX::PopulateMesh::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>&
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
 
-  Albany::StateStruct::MeshFieldEntity entity;
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
-
-  // ---------------------------- Registering state variables ------------------------- //
-
-  // Map string to StateStruct::MeshFieldEntity
-  std::map<std::string,Albany::StateStruct::MeshFieldEntity> str2mfe;
-  str2mfe["Node Scalar"] = Albany::StateStruct::NodalDataToElemNode;
-  str2mfe["Node Vector"] = Albany::StateStruct::NodalDataToElemNode;
-  str2mfe["Elem Scalar"] = Albany::StateStruct::ElemData;
-  str2mfe["Elem Vector"] = Albany::StateStruct::ElemData;
-  str2mfe["Node Layered Scalar"] = Albany::StateStruct::NodalDataToElemNode;
-  str2mfe["Node Layered Vector"] = Albany::StateStruct::NodalDataToElemNode;
-  str2mfe["Elem Layered Scalar"] = Albany::StateStruct::ElemData;
-  str2mfe["Elem Layered Vector"] = Albany::StateStruct::ElemData;
-
-  std::string fname, flayout;
-  if (discParams->isSublist("Required Fields Info"))
-  {
-    // Map string to PHX layout
-    std::map<std::string,Teuchos::RCP<PHX::DataLayout>> str2dl;
-    str2dl["Node Scalar"] = dl->node_scalar;
-    str2dl["Node Vector"] = dl->node_vector;
-    str2dl["Elem Scalar"] = dl->cell_scalar2;
-    str2dl["Elem Vector"] = dl->cell_vector;
-
-
-    Teuchos::ParameterList& req_fields_info = discParams->sublist("Required Fields Info");
-    int num_fields = req_fields_info.get<int>("Number Of Fields",0);
-    for (int ifield=0; ifield<num_fields; ++ifield)
-    {
-      const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(Albany::strint("Field", ifield));
-
-      fname   = thisFieldList.get<std::string>("Field Name");
-      flayout = thisFieldList.get<std::string>("Field Layout");
-
-      if (flayout.find("Layered")!=std::string::npos)
-      {
-        Teuchos::RCP<PHX::DataLayout> ldl;
-        int numLayers = thisFieldList.get<int>("Number Of Layers");
-        if (flayout=="Node Layered Scalar")
-          ldl = PHAL::ExtendLayout<LayerDim,Cell,Node>::apply(dl->node_scalar,numLayers);
-        else if (flayout=="Node Layered Vector")
-          ldl = PHAL::ExtendLayout<LayerDim,Cell,Node,Dim>::apply(dl->node_vector,numLayers);
-        else if (flayout=="Elem Layered Scalar")
-          ldl = PHAL::ExtendLayout<LayerDim,Cell>::apply(dl->cell_scalar2,numLayers);
-        else if (flayout=="Elem Layered Vector")
-          ldl = PHAL::ExtendLayout<LayerDim,Cell,Dim>::apply(dl->cell_vector,numLayers);
-        else
-          TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Invalid layout for field '" << fname << "'.\n");
-
-        p = stateMgr.registerStateVariable(fname, ldl, cellEBName, true, &str2mfe[flayout]);
-      }
-      else
-        p = stateMgr.registerStateVariable(fname, str2dl[flayout], cellEBName, true, &str2mfe[flayout]);
-    }
-  }
-
-  if (discParams->isSublist("Side Set Discretizations"))
-  {
-    Teuchos::ParameterList& ss_disc_pl = discParams->sublist("Side Set Discretizations");
-    const Teuchos::Array<std::string>& ss_names = ss_disc_pl.get<Teuchos::Array<std::string>>("Side Sets");
-
-    for (int is=0; is<ss_names.size(); ++is)
-    {
-      const std::string& ss_name = ss_names[is];
-      Teuchos::ParameterList& this_ss_pl = ss_disc_pl.sublist(ss_name);
-
-      if (this_ss_pl.isSublist("Required Fields Info"))
-      {
-        Teuchos::RCP<Albany::Layouts> sdl = dl->side_layouts[ss_name];
-
-        // Map string to PHX layout
-        std::map<std::string,Teuchos::RCP<PHX::DataLayout>> str2dl;
-        str2dl["Node Scalar"] = sdl->node_scalar;
-        str2dl["Node Vector"] = sdl->node_vector;
-        str2dl["Elem Scalar"] = sdl->cell_scalar2;
-        str2dl["Elem Vector"] = sdl->cell_vector;
-
-        Teuchos::ParameterList& req_fields_info = this_ss_pl.sublist("Required Fields Info");
-        int num_fields = req_fields_info.get<int>("Number Of Fields",0);
-        for (int ifield=0; ifield<num_fields; ++ifield)
-        {
-          const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(Albany::strint("Field", ifield));
-
-          fname   = thisFieldList.get<std::string>("Field Name");
-          flayout = thisFieldList.get<std::string>("Field Layout");
-
-          if (flayout.find("Layered")!=std::string::npos)
-          {
-            Teuchos::RCP<PHX::DataLayout> ldl;
-            int numLayers = thisFieldList.get<int>("Number Of Layers");
-            if (flayout=="Node Layered Scalar")
-              ldl = PHAL::ExtendLayout<LayerDim,Cell,Side,Node>::apply(sdl->node_scalar,numLayers);
-            else if (flayout=="Node Layered Vector")
-              ldl = PHAL::ExtendLayout<LayerDim,Cell,Side,Node,Dim>::apply(sdl->node_vector,numLayers);
-            else if (flayout=="Elem Layered Scalar")
-              ldl = PHAL::ExtendLayout<LayerDim,Cell,Side>::apply(sdl->cell_scalar2,numLayers);
-            else if (flayout=="Elem Layered Vector")
-              ldl = PHAL::ExtendLayout<LayerDim,Cell,Side,Dim>::apply(sdl->cell_vector,numLayers);
-            else
-              TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Invalid layout for field '" << fname << "'.\n");
-
-            p = stateMgr.registerSideSetStateVariable(ss_name, fname, fname, ldl, sideEBName[ss_name], true, &str2mfe[flayout]);
-          }
-          else
-          {
-            p = stateMgr.registerSideSetStateVariable(ss_name, fname, fname, str2dl[flayout], sideEBName[ss_name], true, &str2mfe[flayout]);
-          }
-        }
-      }
-    }
-  }
 
   // ------------------- Computing and Scattering a Dummy Residual ------------------ //
 

@@ -38,13 +38,13 @@ LinComprNSResid(const Teuchos::ParameterList& p) :
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
-  this->addDependentField(qFluct);
-  this->addDependentField(qFluctGrad);
+  this->addDependentField(qFluct.fieldTag());
+  this->addDependentField(qFluctGrad.fieldTag());
   if(enableTransient)
-    this->addDependentField(qFluctDot);
-  this->addDependentField(force);
-  this->addDependentField(wBF);
-  this->addDependentField(wGradBF);
+    this->addDependentField(qFluctDot.fieldTag());
+  this->addDependentField(force.fieldTag());
+  this->addDependentField(wBF.fieldTag());
+  this->addDependentField(wGradBF.fieldTag());
 
   this->addEvaluatedField(Residual);
 
@@ -133,8 +133,6 @@ template<typename EvalT, typename Traits>
 void LinComprNSResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
-
   if (eqn_type == EULER) { //Euler equations
    if (numDims == 1) { //1D case
     double ubar = baseFlowData[0];

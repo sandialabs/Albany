@@ -16,6 +16,8 @@
 
 #include "Teuchos_ParameterList.hpp"
 
+#include "Kokkos_Vector.hpp"
+
 namespace Aeras {
 /** \brief Gathers Coordinates values from the Newton coordinates vector into 
     the nodal fields of the field manager
@@ -80,24 +82,27 @@ public:
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
+  Kokkos::View<int***, PHX::Device> Index;
+  Kokkos::View<ST*, PHX::Device> fT_nonconstView;
 
-Teuchos::RCP<Tpetra_Vector> fT;
-Teuchos::ArrayRCP<ST> fT_nonconstView;
+  struct ScatterResid_Tag{};
 
-Kokkos::View<int***, PHX::Device> Index;
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
-struct ScatterResid_Tag{};
+  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterResid_Tag> ScatterResid_Policy;
 
-typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-
-typedef Kokkos::RangePolicy<ExecutionSpace, ScatterResid_Tag> ScatterResid_Policy;
-
-KOKKOS_INLINE_FUNCTION
+  KOKKOS_INLINE_FUNCTION
   void operator() (const ScatterResid_Tag& tag, const int& i) const;
 
-#endif
+private:
+  typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
+  Kokkos::vector< Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device > val_kokkos;
 
+  typename Kokkos::vector< Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device >::t_dev d_val;
+
+#endif
 };
+
 // **************************************************************
 // Jacobian
 // **************************************************************
@@ -112,36 +117,38 @@ public:
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
+  Teuchos::RCP<Tpetra_Vector> fT;
+  Teuchos::RCP<Tpetra_CrsMatrix> JacT;
+  typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
+  LocalMatrixType jacobian;
+  bool loadResid;
+  int neq, nunk;
 
-Teuchos::RCP<Tpetra_Vector> fT;
-Teuchos::RCP<Tpetra_CrsMatrix> JacT;
-typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
-LocalMatrixType jacobian;
-bool loadResid;
-int neq, nunk;
+  Kokkos::View<int***, PHX::Device> Index;
 
-Kokkos::View<int***, PHX::Device> Index;
+  struct ScatterResid_is_adjoint_Tag{};
+  struct ScatterResid_no_adjoint_Tag{};
 
-struct ScatterResid_noFastAccess_Tag{};
-struct ScatterResid_hasFastAccess_is_adjoint_Tag{};
-struct ScatterResid_hasFastAccess_no_adjoint_Tag{};
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
-typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterResid_is_adjoint_Tag> ScatterResid_is_adjoint_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterResid_no_adjoint_Tag> ScatterResid_no_adjoint_Policy;
 
-typedef Kokkos::RangePolicy<ExecutionSpace, ScatterResid_noFastAccess_Tag> ScatterResid_noFastAccess_Policy;
-typedef Kokkos::RangePolicy<ExecutionSpace, ScatterResid_hasFastAccess_is_adjoint_Tag> ScatterResid_hasFastAccess_is_adjoint_Policy;
-typedef Kokkos::RangePolicy<ExecutionSpace, ScatterResid_hasFastAccess_no_adjoint_Tag> ScatterResid_hasFastAccess_no_adjoint_Policy;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ScatterResid_is_adjoint_Tag& tag, const int& i) const;
 
-KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterResid_noFastAccess_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ScatterResid_no_adjoint_Tag& tag, const int& i) const;
 
-KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterResid_hasFastAccess_is_adjoint_Tag& tag, const int& i) const;
+private:
+  Kokkos::DynRankView<LO, PHX::Device> colT;
 
-KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterResid_hasFastAccess_no_adjoint_Tag& tag, const int& i) const;
+  typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
+  Kokkos::vector< Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device > val_kokkosjac;
+
+  typename Kokkos::vector< Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device >::t_dev d_val;
+
 #endif
-
 };
 
 // **************************************************************

@@ -42,34 +42,34 @@ NSThermalEqResid(const Teuchos::ParameterList& p) :
     enableTransient = !p.get<bool>("Disable Transient");
   else enableTransient = true;
 
-  this->addDependentField(wBF);
-  this->addDependentField(wGradBF);
-  this->addDependentField(Temperature);
-  this->addDependentField(TGrad);
-  if (enableTransient) this->addDependentField(Tdot);
-  this->addDependentField(ThermalCond);
-  this->addDependentField(rho);
-  this->addDependentField(Cp);
+  this->addDependentField(wBF.fieldTag());
+  this->addDependentField(wGradBF.fieldTag());
+  this->addDependentField(Temperature.fieldTag());
+  this->addDependentField(TGrad.fieldTag());
+  if (enableTransient) this->addDependentField(Tdot.fieldTag());
+  this->addDependentField(ThermalCond.fieldTag());
+  this->addDependentField(rho.fieldTag());
+  this->addDependentField(Cp.fieldTag());
   
   if (haveSource) {
     Source = PHX::MDField<ScalarT,Cell,QuadPoint>(
       p.get<std::string>("Source Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    this->addDependentField(Source);
+    this->addDependentField(Source.fieldTag());
   }
 
   if (haveFlow) {
     V = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
       p.get<std::string>("Velocity QP Variable Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
-    this->addDependentField(V);
+    this->addDependentField(V.fieldTag());
   }
 
   if (haveSUPG) {
     TauT = PHX::MDField<ScalarT,Cell,QuadPoint>(
       p.get<std::string>("Tau T Name"),  
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    this->addDependentField(TauT);
+    this->addDependentField(TauT.fieldTag());
   }
 
   this->addEvaluatedField(TResidual);
@@ -85,11 +85,8 @@ NSThermalEqResid(const Teuchos::ParameterList& p) :
     p.get< Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout");
   std::vector<PHX::DataLayout::size_type> ndims;
   node_dl->dimensions(ndims);
+  numCells = ndims[0];
   numNodes = ndims[1];
-
-  // Allocate workspace
-  flux.resize(dims[0], numQPs, numDims);
-  convection.resize(dims[0], numQPs);
  
   this->setName("NSThermalEqResid" );
 }
@@ -113,6 +110,10 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (haveSUPG) this->utils.setFieldData(TauT,fm);
 
   this->utils.setFieldData(TResidual,fm);
+
+  // Allocate workspace
+  flux = Kokkos::createDynRankView(Temperature.get_view(), "XXX", numCells, numQPs, numDims);
+  convection = Kokkos::createDynRankView(Temperature.get_view(), "XXX", numCells, numQPs);
 }
 
 //**********************************************************************
@@ -120,11 +121,11 @@ template<typename EvalT, typename Traits>
 void NSThermalEqResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
-  FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, TGrad);
+  FST::scalarMultiplyDataData (flux, ThermalCond.get_view(), TGrad.get_view());
 
-  FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
+  FST::integrate(TResidual.get_view(), flux, wGradBF.get_view(), false); // "false" overwrites
   
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -141,7 +142,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-  FST::integrate<ScalarT>(TResidual, convection, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+  FST::integrate(TResidual.get_view(), convection, wBF.get_view(), true); // "true" sums into
 
   if (haveSUPG) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {

@@ -8,7 +8,6 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Albany_Layouts.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
@@ -31,11 +30,11 @@ UpdateZCoordinateMovingTop(const Teuchos::ParameterList& p,
 {
   this->addEvaluatedField(coordVecOut);
 
-  this->addDependentField(coordVecIn);
-  this->addDependentField(H0);
-  this->addDependentField(dH);
+  this->addDependentField(coordVecIn.fieldTag());
+  this->addDependentField(H0.fieldTag());
+  this->addDependentField(dH.fieldTag());
 
-  this->addDependentField(topSurface);
+  this->addDependentField(topSurface.fieldTag());
 
   minH = p.isParameter("Minimum Thickness") ? p.get<double>("Minimum Thickness") : 1e-4;
   std::vector<PHX::DataLayout::size_type> dims;
@@ -115,11 +114,11 @@ UpdateZCoordinateMovingBed(const Teuchos::ParameterList& p,
 {
   this->addEvaluatedField(coordVecOut);
 
-  this->addDependentField(coordVecIn);
+  this->addDependentField(coordVecIn.fieldTag());
 
-  this->addDependentField(H);
+  this->addDependentField(H.fieldTag());
 
-  this->addDependentField(topSurface);
+  this->addDependentField(topSurface.fieldTag());
 
   minH = p.isParameter("Minimum Thickness") ? p.get<double>("Minimum Thickness") : 1e-4;
   std::vector<PHX::DataLayout::size_type> dims;

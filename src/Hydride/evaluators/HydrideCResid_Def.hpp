@@ -55,8 +55,6 @@ HydrideCResid(const Teuchos::ParameterList& p) :
   numQPs  = dims[2];
   numDims = dims[3];
 
-  gamma_term.resize(worksetSize, numQPs, numDims);
-
   this->setName("HydrideCResid"+PHX::typeAsString<EvalT>());
 
 }
@@ -74,6 +72,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(stressTerm,fm);
   if(haveNoise)
     this->utils.setFieldData(noiseTerm,fm);
+    
+  gamma_term  = Kokkos::createDynRankView(cGrad.get_view(), "gamma_term", worksetSize, numQPs, numDims);   
 
   this->utils.setFieldData(cResidual,fm);
 }
@@ -86,7 +86,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 // Form Equation 2.2
 
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
     for (std::size_t qp=0; qp < numQPs; ++qp) 
@@ -94,15 +94,15 @@ evaluateFields(typename Traits::EvalData workset)
 
         gamma_term(cell, qp, i) = cGrad(cell,qp,i) * gamma; 
 
-  FST::integrate<ScalarT>(cResidual, gamma_term, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
+  FST::integrate(cResidual.get_view(), gamma_term, wGradBF.get_view(), false); // "false" overwrites
 
-  FST::integrate<ScalarT>(cResidual, chemTerm, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+  FST::integrate(cResidual.get_view(), chemTerm.get_view(), wBF.get_view(), true); // "true" sums into
 
-  FST::integrate<ScalarT>(cResidual, stressTerm, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+  FST::integrate(cResidual.get_view(), stressTerm.get_view(), wBF.get_view(), true); // "true" sums into
 
   if(haveNoise)
 
-    FST::integrate<ScalarT>(cResidual, noiseTerm, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+    FST::integrate(cResidual.get_view(), noiseTerm.get_view(), wBF.get_view(), true); // "true" sums into
 
 
 }

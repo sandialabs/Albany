@@ -28,7 +28,6 @@
 #include "PHAL_Dimension.hpp"
 
 #include "Teuchos_VerboseObject.hpp"
-#include <Intrepid2_FieldContainer.hpp>
 
 #include "Intrepid2_HGRAD_LINE_C1_FEM.hpp"
 #include "Intrepid2_HGRAD_LINE_Cn_FEM.hpp"
@@ -41,7 +40,6 @@
 #include "Intrepid2_HGRAD_TET_C1_FEM.hpp"
 #include "Intrepid2_HGRAD_TET_C2_FEM.hpp"
 #include "Intrepid2_HGRAD_TET_COMP12_FEM.hpp"
-#include "Intrepid2_FieldContainer.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "PHAL_FactoryTraits.hpp"
@@ -50,7 +48,7 @@
 namespace Albany {
 
 // Define enumerator to store solution method name
-enum SolutionMethodType {Steady, Continuation, Transient, Eigensolve, AerasHyperviscosity, Unknown};
+enum SolutionMethodType {Steady, Continuation, Transient, TransientTempus, Eigensolve, AerasHyperviscosity, Unknown};
 
 #if defined(ALBANY_LCM)
   class Application;
@@ -116,8 +114,8 @@ enum SolutionMethodType {Steady, Continuation, Transient, Eigensolve, AerasHyper
 
     virtual void
       getAllocatedStates(
-         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > oldState_,
-         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > newState_
+         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device> > > > oldState_,
+         Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device> > > > newState_
          ) const  {};
 
     //! Get a list of the Special fields needed to implement the problem

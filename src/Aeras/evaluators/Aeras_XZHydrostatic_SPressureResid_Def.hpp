@@ -9,6 +9,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "PHAL_Utilities.hpp"
+#include "Albany_Utils.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
@@ -47,6 +48,10 @@ XZHydrostatic_SPressureResid(const Teuchos::ParameterList& p,
   sp0 = 0.0;
 
   pureAdvection = xsa_params->get<bool>("Pure Advection", false);
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  delta = E.delta_kokkos;
+#endif
 }
 
 //**********************************************************************
@@ -71,7 +76,7 @@ void XZHydrostatic_SPressureResid<EvalT, Traits>::
 operator() (const XZHydrostatic_SPressureResid_Tag& tag, const int& cell) const{
   for (int qp=0; qp < numQPs; ++qp) {
     ScalarT sum = 0;
-	  for (int level=0; level<numLevels; ++level)  sum += divpivelx(cell,qp,level) * E.delta(level);
+	  for (int level=0; level<numLevels; ++level)  sum += divpivelx(cell,qp,level) * delta(level);
 
 	  int node = qp;
 	  Residual(cell,node) += (spDot(cell,qp) + sum)*wBF(cell,node,qp);
@@ -141,10 +146,12 @@ evaluateFields(typename Traits::EvalData workset)
   if( !obtainLaplaceOp ) {
     if( !pureAdvection ) {
       Kokkos::parallel_for(XZHydrostatic_SPressureResid_Policy(0,workset.numCells),*this);
+      cudaCheckError();
     }
 
     else {
       Kokkos::parallel_for(XZHydrostatic_SPressureResid_pureAdvection_Policy(0,workset.numCells),*this);
+      cudaCheckError();
     }
   }
 

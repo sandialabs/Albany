@@ -92,7 +92,6 @@ namespace Albany {
 
 }
 
-#include "Intrepid2_FieldContainer.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Albany_Utils.hpp"
@@ -139,7 +138,7 @@ Albany::HydrideProblem::constructEvaluators(
 
    const CellTopologyData * const elem_top = &meshSpecs.ctd;
 
-   RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > >
+   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
      intrepidBasis = Albany::getIntrepid2Basis(*elem_top);
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (elem_top));
 
@@ -147,8 +146,8 @@ Albany::HydrideProblem::constructEvaluators(
    const int numNodes = intrepidBasis->getCardinality();
    const int worksetSize = meshSpecs.worksetSize;
 
-   Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
-   RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cellCubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
+   Intrepid2::DefaultCubatureFactory cubFactory;
+   RCP <Intrepid2::Cubature<PHX::Device> > cellCubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
 
    const int numQPtsCell = cellCubature->getNumPoints();
    const int numVertices = cellType->getNodeCount();

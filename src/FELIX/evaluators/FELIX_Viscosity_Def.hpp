@@ -9,7 +9,6 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
 
-#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace FELIX {
 
@@ -49,9 +48,9 @@ Viscosity(const Teuchos::ParameterList& p,
 
   coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
            p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
-  this->addDependentField(coordVec);
-  this->addDependentField(VGrad);
-  this->addDependentField(homotopyParam);
+  this->addDependentField(coordVec.fieldTag());
+  this->addDependentField(VGrad.fieldTag());
+  this->addDependentField(homotopyParam.fieldTag());
 
   this->addEvaluatedField(mu);
 

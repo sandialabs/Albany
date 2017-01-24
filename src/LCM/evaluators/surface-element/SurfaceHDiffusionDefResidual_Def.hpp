@@ -23,8 +23,8 @@ namespace LCM {
   SurfaceHDiffusionDefResidual(const Teuchos::ParameterList& p,
                             const Teuchos::RCP<Albany::Layouts>& dl) :
     thickness                          (p.get<double>("thickness")),
-    cubature                           (p.get<Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> >>>("Cubature")),
-    intrepidBasis                    (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>>>>("Intrepid2 Basis")),
+    cubature                           (p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")),
+    intrepidBasis                    (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >>("Intrepid2 Basis")),
     scalarGrad                       (p.get<std::string>("Surface Transport Gradient Name"),dl->qp_vector),
     surface_Grad_BF           (p.get<std::string>("Surface Scalar Gradient Operator Name"),dl->node_qp_gradient),
     refDualBasis                    (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
@@ -99,24 +99,6 @@ namespace LCM {
     std::cout << " cubature->getDimension(): " << cubature->getDimension() << std::endl;
 #endif
 
-    // Allocate Temporary FieldContainers
-    refValues.resize(numPlaneNodes, numQPs);
-    refGrads.resize(numPlaneNodes, numQPs, numPlaneDims);
-    refPoints.resize(numQPs, numPlaneDims);
-    refWeights.resize(numQPs);
-
-    // Allocate workspace
-    artificalDL.resize(worksetSize, numQPs);
-    stabilizedDL.resize(worksetSize, numQPs);
-    flux.resize(worksetSize, numQPs, numDims);
-
-    pterm.resize(worksetSize, numQPs);
-
-    // Pre-Calculate reference element quantitites
-    cubature->getCubature(refPoints, refWeights);
-    intrepidBasis->getValues(refValues, refPoints, Intrepid2::OPERATOR_VALUE);
-    intrepidBasis->getValues(refGrads, refPoints, Intrepid2::OPERATOR_GRAD);
-
     transportName = p.get<std::string>("Transport Name")+"_old";
     if (haveMech) eqpsName =p.get<std::string>("eqps Name")+"_old";
   }
@@ -149,6 +131,24 @@ namespace LCM {
       this->utils.setFieldData(eqps_, fm);
       this->utils.setFieldData(hydro_stress_gradient_, fm);
     }
+
+    // Allocate Temporary Views
+    refValues = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numPlaneNodes, numQPs);
+    refGrads = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numPlaneNodes, numQPs, numPlaneDims);
+    refPoints = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs, numPlaneDims);
+    refWeights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
+
+    // Allocate workspace
+    artificalDL = Kokkos::createDynRankView(scalarGrad.get_view(), "XXX", worksetSize, numQPs);
+    stabilizedDL = Kokkos::createDynRankView(scalarGrad.get_view(), "XXX", worksetSize, numQPs);
+    flux = Kokkos::createDynRankView(scalarGrad.get_view(), "XXX", worksetSize, numQPs, numDims);
+
+    pterm = Kokkos::createDynRankView(scalarGrad.get_view(), "XXX", worksetSize, numQPs);
+
+    // Pre-Calculate reference element quantitites
+    cubature->getCubature(refPoints, refWeights);
+    intrepidBasis->getValues(refValues, refPoints, Intrepid2::OPERATOR_VALUE);
+    intrepidBasis->getValues(refGrads, refPoints, Intrepid2::OPERATOR_GRAD);
   }
 
   //**********************************************************************
@@ -156,7 +156,7 @@ namespace LCM {
   void SurfaceHDiffusionDefResidual<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
- //   typedef Intrepid2::FunctionSpaceTools FST;
+ //   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 //    typedef Intrepid2::RealSpaceTools<ScalarT> RST;
 
     Albany::MDArray transportold = (*workset.stateArrayPtr)[transportName];

@@ -173,8 +173,8 @@ include_directories(${ALBANY_PUMI_INCLUDE_DIRS} ${PUMI_INCLUDE_DIR})
 ENDIF()
 
 IF(ALBANY_AMP)
-SET(SOURCES ${SOURCES} AAdapt_SimAdapt.cpp)
-SET(HEADERS ${HEADERS} AAdapt_SimAdapt.hpp)
+SET(SOURCES ${SOURCES} AAdapt_SimAdapt.cpp AAdapt_SimLayerAdapt.cpp)
+SET(HEADERS ${HEADERS} AAdapt_SimAdapt.hpp AAdapt_SimLayerAdapt.hpp)
 include_directories(${ALBANY_PUMI_INCLUDE_DIRS})
 ENDIF()
 
@@ -190,6 +190,8 @@ include_directories(${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
 add_library(albanyAdapt ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 
 set_target_properties(albanyAdapt PROPERTIES PUBLIC_HEADER "${HEADERS}")
+
+target_link_libraries(albanyAdapt ${SCOREC_LIB})
 
 IF(INSTALL_ALBANY)
 install(TARGETS albanyAdapt EXPORT albany-export

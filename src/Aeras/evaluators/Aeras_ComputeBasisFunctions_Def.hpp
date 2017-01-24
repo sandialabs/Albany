@@ -19,10 +19,9 @@ ComputeBasisFunctions<EvalT, Traits>::
 ComputeBasisFunctions(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Aeras::Layouts>& dl) :
                               spatialDim( p.get<std::size_t>("spatialDim") ),
-  coordVec      (p.get<std::string>  ("Coordinate Vector Name"),
-      spatialDim == 3 ? dl->node_3vector : dl->node_vector ),
-  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > >("Cubature")),
-  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > > ("Intrepid2 Basis") ),
+  coordVec      (p.get<std::string>  ("Coordinate Vector Name"), dl->node_3vector),
+  cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
+  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis") ),
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   weighted_measure (p.get<std::string>  ("Weights Name"),   dl->qp_scalar ),
   sphere_coord  (p.get<std::string>  ("Spherical Coord Name"), dl->qp_gradient ),
@@ -60,13 +59,38 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   numQPs                    = dim[2];
   basisDim    =                    2;
 
+  //OG make grad_at_cub_points an output value
 
-  // Allocate Temporary FieldContainers
-  val_at_cub_points .resize     (numNodes, numQPs);
-  grad_at_cub_points.resize     (numNodes, numQPs, basisDim);
-  D2_at_cub_points  .resize     (numNodes, numQPs, Intrepid2::getDkCardinality(Intrepid2::OPERATOR_D2, basisDim));
-  refPoints         .resize               (numQPs, basisDim);
-  refWeights        .resize               (numQPs);
+
+  this->setName("Aeras::ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
+
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+void ComputeBasisFunctions<EvalT, Traits>::
+postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& fm)
+{
+  this->utils.setFieldData(coordVec,fm);
+  this->utils.setFieldData(weighted_measure,fm);
+  this->utils.setFieldData(sphere_coord,fm);
+  this->utils.setFieldData(lambda_nodal,fm);
+  this->utils.setFieldData(theta_nodal,fm);
+  this->utils.setFieldData(jacobian_det,fm);
+  this->utils.setFieldData(jacobian_inv,fm);
+  this->utils.setFieldData(jacobian,fm);
+  this->utils.setFieldData(BF,fm);
+  this->utils.setFieldData(wBF,fm);
+  this->utils.setFieldData(GradBF,fm);
+  this->utils.setFieldData(wGradBF,fm);
+
+  // Allocate Temporary Views
+  val_at_cub_points  = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPs);
+  grad_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPs, basisDim);
+  D2_at_cub_points   = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPs, Intrepid2::getDkCardinality(Intrepid2::OPERATOR_D2, basisDim));
+  refPoints          = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs, basisDim);
+  refWeights         = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
 
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
@@ -74,11 +98,6 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   intrepidBasis->getValues(val_at_cub_points,  refPoints, Intrepid2::OPERATOR_VALUE);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
   intrepidBasis->getValues(D2_at_cub_points,   refPoints, Intrepid2::OPERATOR_D2);
-
-  //OG make grad_at_cub_points an output value
-
-
-  this->setName("Aeras::ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   val_at_cub_points_CUDA=Kokkos::View<RealType**, PHX::Device>("val_at_cub_points_CUDA", numNodes, numQPs);
@@ -98,6 +117,8 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
 #else
   ddims_.push_back(95);
 #endif
+
+//AGS  TODO CONVERT TO DynRankView for all temporaries
 
   Phi=PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>("Phi",Teuchos::rcp(new PHX::MDALayout<Cell,QuadPoint,Dim>(numelements,numQPs,spatialDim)));
   Phi.setFieldData(ViewFactory::buildView(Phi.fieldTag(),ddims_));
@@ -121,27 +142,6 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   DD3.setFieldData(ViewFactory::buildView(DD3.fieldTag(),ddims_));
 #endif
 
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits>
-void ComputeBasisFunctions<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
-{
-  this->utils.setFieldData(coordVec,fm);
-  this->utils.setFieldData(weighted_measure,fm);
-  this->utils.setFieldData(sphere_coord,fm);
-  this->utils.setFieldData(lambda_nodal,fm);
-  this->utils.setFieldData(theta_nodal,fm);
-  this->utils.setFieldData(jacobian_det,fm);
-  this->utils.setFieldData(jacobian_inv,fm);
-  this->utils.setFieldData(jacobian,fm);
-  this->utils.setFieldData(BF,fm);
-  this->utils.setFieldData(wBF,fm);
-  this->utils.setFieldData(GradBF,fm);
-  this->utils.setFieldData(wGradBF,fm);
-  
 }
 
 //**********************************************************************
@@ -379,22 +379,22 @@ evaluateFields(typename Traits::EvalData workset)
                                std::endl << "Error!  Intrepid2::CellTools<RealType>::setJacobian " <<
                                "is only implemented for bilinear and biquadratic elements!  Attempting " <<
                                "to call this function for a higher order element. \n"); 
-    Intrepid2::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+    Intrepid2::CellTools<PHX::Device>::setJacobian(jacobian.get_view(), refPoints, coordVec.get_view(), *cellType);
   } 
   else {
 
 #define HOMMEMAP 0
 #if !(HOMMEMAP)
-    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>  phi(numQPs,spatialDim);
-    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> dphi(numQPs,spatialDim,basisDim);
-    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> norm(numQPs);
-    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> sinL(numQPs);
-    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> cosL(numQPs);
-    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> sinT(numQPs);
-    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> cosT(numQPs);
-    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D1(numQPs,basisDim,spatialDim);
-    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D2(numQPs,spatialDim,spatialDim);
-    Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D3(numQPs,basisDim,spatialDim);
+    Kokkos::DynRankView<MeshScalarT, PHX::Device>  phi("TTT",numQPs,spatialDim);
+    Kokkos::DynRankView<MeshScalarT, PHX::Device> dphi("TTT",numQPs,spatialDim,basisDim);
+    Kokkos::DynRankView<MeshScalarT, PHX::Device> norm("TTT",numQPs);
+    Kokkos::DynRankView<MeshScalarT, PHX::Device> sinL("TTT",numQPs);
+    Kokkos::DynRankView<MeshScalarT, PHX::Device> cosL("TTT",numQPs);
+    Kokkos::DynRankView<MeshScalarT, PHX::Device> sinT("TTT",numQPs);
+    Kokkos::DynRankView<MeshScalarT, PHX::Device> cosT("TTT",numQPs);
+    Kokkos::DynRankView<MeshScalarT, PHX::Device>   D1("TTT",numQPs,basisDim,spatialDim);
+    Kokkos::DynRankView<MeshScalarT, PHX::Device>   D2("TTT",numQPs,spatialDim,spatialDim);
+    Kokkos::DynRankView<MeshScalarT, PHX::Device>   D3("TTT",numQPs,basisDim,spatialDim);
     
     for (int e = 0; e<numelements;      ++e) {
       for (int v = 0; v<numNodes;      ++v) {
@@ -424,16 +424,16 @@ evaluateFields(typename Traits::EvalData workset)
     }
     
     for (int e = 0; e<numelements;      ++e) {
-      phi.initialize(); 
-      dphi.initialize(); 
-      norm.initialize(); 
-      sinL.initialize(); 
-      cosL.initialize(); 
-      sinT.initialize(); 
-      cosT.initialize(); 
-      D1.initialize(); 
-      D2.initialize(); 
-      D3.initialize();
+      Kokkos::deep_copy(phi, 0.0); 
+      Kokkos::deep_copy(dphi, 0.0); 
+      Kokkos::deep_copy(norm, 0.0); 
+      Kokkos::deep_copy(sinL, 0.0); 
+      Kokkos::deep_copy(cosL, 0.0); 
+      Kokkos::deep_copy(sinT, 0.0); 
+      Kokkos::deep_copy(cosT, 0.0); 
+      Kokkos::deep_copy(D1, 0.0); 
+      Kokkos::deep_copy(D2, 0.0); 
+      Kokkos::deep_copy(D3, 0.0);
 
       for (int q = 0; q<numQPs;          ++q)
         for (int b1= 0; b1<basisDim;     ++b1)
@@ -559,16 +559,16 @@ evaluateFields(typename Traits::EvalData workset)
 
 #if HOMMEMAP
   
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   Q(4);
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   C(3,4);
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   xx(3);
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   CartC(3);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device>   Q("TTT",4);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device>   C("TTT",3,4);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device>   xx("TTT",3);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device>   CartC("TTT",3);
   
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   dd(4,2);
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D1(2,3);
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D2(3,3);
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D3(3,2);
-  Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>   D4(3,2);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device>   dd("TTT",4,2);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device>   D1("TTT",2,3);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device>   D2("TTT",3,3);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device>   D3("TTT",3,2);
+  Kokkos::DynRankView<MeshScalarT, PHX::Device>   D4("TTT",3,2);
   
   for (int e = 0; e<numelements; ++e) {
     
@@ -586,10 +586,10 @@ evaluateFields(typename Traits::EvalData workset)
       MeshScalarT a = refPoints(q,0);
       MeshScalarT b = refPoints(q,1);
       
-      Q.initialize();
-      C.initialize();
-      xx.initialize();
-      CartC.initialize();
+      Kokkos::deep_copy(Q, 0.0);
+      Kokkos::deep_copy(C, 0.0);
+      Kokkos::deep_copy(xx, 0.0);
+      Kokkos::deep_copy(CartC, 0.0);
       
       Q(0) = (1-a)*(1-b)/4.; Q(1) = (1+a)*(1-b)/4.;
       Q(2) = (1+a)*(1+b)/4.; Q(3) = (1-a)*(1+b)/4.;
@@ -650,11 +650,11 @@ evaluateFields(typename Traits::EvalData workset)
       sinL = std::sin(longitude);
       cosL = std::cos(longitude);
       
-      dd.initialize();
-      D1.initialize();
-      D2.initialize();
-      D3.initialize();
-      D4.initialize();
+      Kokkos::deep_copy(dd, 0.0);
+      Kokkos::deep_copy(D1, 0.0);
+      Kokkos::deep_copy(D2, 0.0);
+      Kokkos::deep_copy(D3, 0.0);
+      Kokkos::deep_copy(D4, 0.0);
       
       D1(0,0) = -sinL;
       D1(0,1) =  cosL;
@@ -704,8 +704,8 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 
-  Intrepid2::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
-  Intrepid2::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
+  Intrepid2::CellTools<PHX::Device>::setJacobianInv(jacobian_inv.get_view(), jacobian.get_view());
+  Intrepid2::CellTools<PHX::Device>::setJacobianDet(jacobian_det.get_view(), jacobian.get_view());
 
   for (int e = 0; e<numelements;      ++e) {
     for (int q = 0; q<numQPs;          ++q) {
@@ -715,17 +715,15 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-  Intrepid2::FunctionSpaceTools::computeCellMeasure<MeshScalarT>
-    (weighted_measure, jacobian_det, refWeights);
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
-  Intrepid2::FunctionSpaceTools::HGRADtransformVALUE<RealType>
-    (BF, val_at_cub_points);
-  Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
-    (wBF, weighted_measure, BF);
-  Intrepid2::FunctionSpaceTools::HGRADtransformGRAD<MeshScalarT>
-    (GradBF, jacobian_inv, grad_at_cub_points);
-  Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
-    (wGradBF, weighted_measure, GradBF);
+  FST::computeCellMeasure<MeshScalarT>
+    (weighted_measure.get_view(), jacobian_det.get_view(), refWeights);
+
+  FST::HGRADtransformVALUE(BF.get_view(), val_at_cub_points);
+  FST::multiplyMeasure(wBF.get_view(), weighted_measure.get_view(), BF.get_view());
+  FST::HGRADtransformGRAD(GradBF.get_view(), jacobian_inv.get_view(), grad_at_cub_points);
+  FST::multiplyMeasure(wGradBF.get_view(), weighted_measure.get_view(), GradBF.get_view());
 
 
 #else // ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -742,7 +740,7 @@ evaluateFields(typename Traits::EvalData workset)
                        std::endl << "Error!  Intrepid2::CellTools<RealType>::setJacobian " <<
                        "is only implemented for bilinear and biquadratic elements!  Attempting " <<
                   "to call this function for a higher order element. \n");
-     Intrepid2::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+     Intrepid2::CellTools<PHX::Device>::setJacobian(jacobian.get_view(), refPoints, coordVec.get_view(), *cellType);
   }
   else {
 #if !(HOMMEMAP)
@@ -757,8 +755,8 @@ evaluateFields(typename Traits::EvalData workset)
   }
   
 
-  Intrepid2::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
-  Intrepid2::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
+  Intrepid2::CellTools<PHX::Device>::setJacobianInv(jacobian_inv.get_view(), jacobian.get_view());
+  Intrepid2::CellTools<PHX::Device>::setJacobianDet(jacobian_det.get_view(), jacobian.get_view());
 
   for (int e = 0; e<numelements;      ++e) {
     for (int q = 0; q<numQPs;          ++q) {
@@ -768,12 +766,14 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-  Intrepid2::FunctionSpaceTools::computeCellMeasure<MeshScalarT> (weighted_measure, jacobian_det, refWeights);
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
+  FST::computeCellMeasure<MeshScalarT>
+    (weighted_measure.get_view(), jacobian_det.get_view(), refWeights);
 
-  Intrepid2::FunctionSpaceTools::HGRADtransformVALUE<RealType> (BF, val_at_cub_points);
-  Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT>  (wBF, weighted_measure, BF);
-  Intrepid2::FunctionSpaceTools::HGRADtransformGRAD<MeshScalarT> (GradBF, jacobian_inv, grad_at_cub_points);
-  Intrepid2::FunctionSpaceTools::multiplyMeasure<MeshScalarT> (wGradBF, weighted_measure, GradBF);
+  FST::HGRADtransformVALUE(BF.get_view(), val_at_cub_points);
+  FST::multiplyMeasure(wBF.get_view(), weighted_measure.get_view(), BF.get_view());
+  FST::HGRADtransformGRAD(GradBF.get_view(), jacobian_inv.get_view(), grad_at_cub_points);
+  FST::multiplyMeasure(wGradBF.get_view(), weighted_measure.get_view(), GradBF.get_view());
 
 #endif // ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
@@ -785,10 +785,11 @@ evaluateFields(typename Traits::EvalData workset)
 
 template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
-initialize_grad(Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device > &grad_at_quadrature_points) const
+initialize_grad(Kokkos::DynRankView<RealType, PHX::Device> &grad_at_quadrature_points) const
 {
   const unsigned N = static_cast<unsigned>(std::floor(std::sqrt(numQPs)+.1));
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> dLdx(N,N); dLdx.initialize(); 
+  Kokkos::DynRankView<RealType, PHX::Device> dLdx("TTT",N,N);
+  Kokkos::deep_copy(dLdx, 0.0); 
 
   for (unsigned m=0; m<N; ++m) {
     for (unsigned n=0; n<N; ++n) {
@@ -814,12 +815,12 @@ initialize_grad(Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Dev
 
 template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
-spherical_divergence (Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> &div_v,
-                      const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> &v_lambda_theta,
+spherical_divergence (Kokkos::DynRankView<MeshScalarT, PHX::Device> &div_v,
+                      const Kokkos::DynRankView<MeshScalarT, PHX::Device> &v_lambda_theta,
                       const int e,
                       const double rrearth) const
 {
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> grad_at_quadrature_points(numQPs,numQPs,2);
+  Kokkos::DynRankView<RealType, PHX::Device> grad_at_quadrature_points("TTT",numQPs,numQPs,2);
   static bool init_grad = true;
   if (init_grad) initialize_grad(grad_at_quadrature_points);
   init_grad = false;
@@ -863,15 +864,15 @@ div_check(const int spatialDim, const int numelements) const
     for (int e = 0; e<numelements;      ++e) {
       static const MeshScalarT DIST_THRESHOLD = 1.0e-6;
 
-      Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device>  phi(numQPs,spatialDim);
-      phi.initialize(); 
+      Kokkos::DynRankView<MeshScalarT, PHX::Device>  phi("TTT",numQPs,spatialDim);
+      Kokkos::deep_copy(phi, 0.0); 
       for (int q = 0; q<numQPs;         ++q) 
         for (int d = 0; d<spatialDim;   ++d) 
           for (int v = 0; v<numNodes;  ++v)
             phi(q,d) += earthRadius*coordVec(e,v,d) * val_at_cub_points(v,q);
 
       std::vector<MeshScalarT> divergence_v(numQPs);
-      Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> v_lambda_theta(numQPs,2);
+      Kokkos::DynRankView<MeshScalarT, PHX::Device> v_lambda_theta("TTT",numQPs,2);
       switch (c) {
         case 0: {
           //  Example copied from homme, the climate code, from function divergence_sphere()
@@ -972,7 +973,7 @@ div_check(const int spatialDim, const int numelements) const
       }
       
 
-      Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> div_v(numQPs);
+      Kokkos::DynRankView<MeshScalarT, PHX::Device> div_v("TTT",numQPs);
       spherical_divergence(div_v, v_lambda_theta, e, rrearth);
       for (int q = 0; q<numQPs;          ++q) {
         if (DIST_THRESHOLD<std::abs(div_v(q)/rrearth - divergence_v[q])) 

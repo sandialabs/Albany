@@ -66,6 +66,8 @@ namespace ATO {
 
     Teuchos::RCP< PenaltyModel<ScalarT> > penaltyModel;
 
+    bool m_excludeBlock;
+
   };
 
 template<typename EvalT, typename Traits>
@@ -73,6 +75,7 @@ class StiffnessObjective
    : public StiffnessObjectiveBase<EvalT, Traits> {
 
    using StiffnessObjectiveBase<EvalT,Traits>::penaltyModel;
+   using StiffnessObjectiveBase<EvalT,Traits>::m_excludeBlock;
    using StiffnessObjectiveBase<EvalT,Traits>::topologies;
    using StiffnessObjectiveBase<EvalT,Traits>::dFdpNames;
    using StiffnessObjectiveBase<EvalT,Traits>::FName;
@@ -107,6 +110,7 @@ class StiffnessObjective<PHAL::AlbanyTraits::Residual,Traits>
    : public StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits> {
 
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::penaltyModel;
+   using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::m_excludeBlock;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::topologies;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::dFdpNames;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::FName;

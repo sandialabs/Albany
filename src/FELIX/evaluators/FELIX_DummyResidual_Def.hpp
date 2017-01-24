@@ -19,7 +19,7 @@ DummyResidual<EvalT, Traits>::DummyResidual (const Teuchos::ParameterList& p,
   solution (p.get<std::string> ("Solution Variable Name"), dl->node_scalar),
   residual (p.get<std::string> ("Residual Variable Name"),dl->node_scalar)
 {
-  this->addDependentField(solution);
+  this->addDependentField(solution.fieldTag());
   this->addEvaluatedField(residual);
 
   this->setName("DummyResidual"+PHX::typeAsString<EvalT>());

@@ -41,7 +41,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
     for (std::size_t eq = 0; eq < numFieldsBase; ++eq) {
       PHX::MDField<ScalarT,Cell,Node> mdf(names[eq],dl->node_scalar);
       val[eq] = mdf;
-      this->addDependentField(val[eq]);
+      this->addDependentField(val[eq].fieldTag());
     }
   }
   // vector
@@ -50,7 +50,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
 //    valVec.resize(1);
     PHX::MDField<ScalarT,Cell,Node,Dim> mdf(names[0],dl->node_vector);
     valVec= mdf;
-    this->addDependentField(valVec);
+    this->addDependentField(valVec.fieldTag());
     numFieldsBase = dl->node_vector->dimension(2);
   }
   // tensor
@@ -59,7 +59,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
     valTensor.resize(1);
     PHX::MDField<ScalarT,Cell,Node,Dim,Dim> mdf(names[0],dl->node_tensor);
     valTensor[0] = mdf;
-    this->addDependentField(valTensor[0]);
+    this->addDependentField(valTensor[0].fieldTag());
     numFieldsBase = (dl->node_tensor->dimension(2))*(dl->node_tensor->dimension(3));
   }
 
@@ -83,12 +83,12 @@ postRegistrationSetup(typename Traits::SetupData d,
       this->utils.setFieldData(val[eq],fm);
     numNodes = val[0].dimension(1);
   }
-  else 
+  else
   if (tensorRank == 1) {
     this->utils.setFieldData(valVec,fm);
     numNodes = valVec.dimension(1);
   }
-  else 
+  else
   if (tensorRank == 2) {
     this->utils.setFieldData(valTensor[0],fm);
     numNodes = valTensor[0].dimension(1);
@@ -115,36 +115,39 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
 operator()(const ScatterRank0_Tag& tag, const int& cell) const
 {
-      for (std::size_t node = 0; node < this->numNodes; ++node){
-        for (std::size_t eq = 0; eq < numFields; eq++){
-          Kokkos::atomic_fetch_add(&f_nonconstView[Index(cell,node,this->offset + eq)], (this->val[eq])(cell,node));
-        }
-      }    
+  for (std::size_t node = 0; node < this->numNodes; ++node){
+    for (std::size_t eq = 0; eq < numFields; eq++){
+      Kokkos::atomic_fetch_add(&f_nonconstView(Index(cell,node,this->offset + eq)), (this->val[eq])(cell,node));
+    }
+  }
 }
+
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
 operator()(const ScatterRank1_Tag& tag, const int& cell) const
 {
-   for (std::size_t node = 0; node < this->numNodes; ++node){
-        for (std::size_t eq = 0; eq < numFields; eq++){
-             Kokkos::atomic_fetch_add(&f_nonconstView[Index(cell,node,this->offset + eq)], (this->valVec)(cell,node,eq));
-        }
+  for (std::size_t node = 0; node < this->numNodes; ++node){
+    for (std::size_t eq = 0; eq < numFields; eq++){
+      Kokkos::atomic_fetch_add(&f_nonconstView(Index(cell,node,this->offset + eq)), (this->valVec)(cell,node,eq));
     }
+  }
 }
+
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
 operator()(const ScatterRank2_Tag& tag, const int& cell) const
 {
   const int numDims = this->valTensor[0].dimension(2);
-
   for (std::size_t node = 0; node < this->numNodes; ++node)
-      for (std::size_t i = 0; i < numDims; i++)
-          for (std::size_t j = 0; j < numDims; j++)
-              Kokkos::atomic_fetch_add( &f_nonconstView[Index(cell,node,this->offset + i*numDims + j)], (this->valTensor[0])(cell,node,i,j)); 
+    for (std::size_t i = 0; i < numDims; i++)
+      for (std::size_t j = 0; j < numDims; j++)
+        Kokkos::atomic_fetch_add(&f_nonconstView(Index(cell,node,this->offset + i*numDims + j)), (this->valTensor[0])(cell,node,i,j));
 }
+
 #endif
+
 // **********************************************************************
 template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Residual, Traits>::
@@ -163,7 +166,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t eq = 0; eq < numFields; eq++)
           f_nonconstView[nodeID[node][this->offset + eq]] += (this->val[eq])(cell,node);
     }
-  } else 
+  } else
   if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -180,32 +183,37 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t i = 0; i < numDims; i++)
           for (std::size_t j = 0; j < numDims; j++)
             f_nonconstView[nodeID[node][this->offset + i*numDims + j]] += (this->valTensor[0])(cell,node,i,j);
-  
+
     }
   }
+
 #else
+#ifdef ALBANY_TIMER
+  auto start = std::chrono::high_resolution_clock::now();
+#endif
+
+  Index = workset.wsElNodeEqID_kokkos;
+
+  // Tpetra getLocalView is needed to obtain a Kokkos View from a specific device
+  auto fT_2d = workset.fT->template getLocalView<PHX::Device>();
+  f_nonconstView = Kokkos::subview(fT_2d, Kokkos::ALL(), 0);
+
+  if (this->tensorRank == 0) {
+    Kokkos::parallel_for(ScatterRank0_Policy(0,workset.numCells),*this);
+  }
+  else if (this->tensorRank == 1) {
+    Kokkos::parallel_for(ScatterRank1_Policy(0,workset.numCells),*this);
+  }
+  else if (this->tensorRank == 2) {
+    Kokkos::parallel_for(ScatterRank2_Policy(0,workset.numCells),*this);
+  }
 
 #ifdef ALBANY_TIMER
- auto start = std::chrono::high_resolution_clock::now();
-#endif
- fT = workset.fT;
- f_nonconstView = fT->get1dViewNonConst();
- Index=workset.wsElNodeEqID_kokkos;
-  if (this->tensorRank == 0) {
-   Kokkos::parallel_for(ScatterRank0_Policy(0,workset.numCells),*this);
- }
- else  if (this->tensorRank == 1) {
-  Kokkos::parallel_for(ScatterRank1_Policy(0,workset.numCells),*this);
- }
- else if (this->tensorRank == 2) {
-  Kokkos::parallel_for(ScatterRank2_Policy(0,workset.numCells),*this);
- }
-#ifdef ALBANY_TIMER
- PHX::Device::fence();
- auto elapsed = std::chrono::high_resolution_clock::now() - start;
- long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
- long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
- std::cout<< "Scatter Residual time = "  << millisec << "  "  << microseconds << std::endl;
+  PHX::Device::fence();
+  auto elapsed = std::chrono::high_resolution_clock::now() - start;
+  long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+  long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+  std::cout<< "Scatter Residual time = "  << millisec << "  "  << microseconds << std::endl;
 #endif
 #endif
 }
@@ -238,7 +246,7 @@ operator()(const ScatterRank0_is_adjoint_Tag& tag, const int& cell) const
   //std::vector<LO> colT(nunk);
  // colT=(LO*) Kokkos::cuda_malloc<PHX::Device>(nunk*sizeof(LO));
 
-  if (nunk>500) 
+  if (nunk>500)
        Kokkos::abort ("ERROR (ScatterResidual): nunk >500");
 
   for (int node_col=0; node_col<this->numNodes; node_col++){
@@ -250,12 +258,12 @@ operator()(const ScatterRank0_is_adjoint_Tag& tag, const int& cell) const
    for (int node = 0; node < this->numNodes; ++node) {
       for (int eq = 0; eq < numFields; eq++) {
           rowT= Index(cell,node,this->offset + eq);
-           if (loadResid) 
+           if (loadResid)
               fT->sumIntoLocalValue(rowT, ((this->val[eq])(cell,node)).val());
-           if (((this->val[eq])(cell,node)).hasFastAccess()) {  
+           if (((this->val[eq])(cell,node)).hasFastAccess()) {
                for (int lunk=0; lunk<nunk; lunk++){
                    ST val = ((this->val[eq])(cell,node)).fastAccessDx(lunk);
-                    jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val, false, true); 
+                    jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val, false, true);
                }
             }//has fast access
       }
@@ -295,7 +303,7 @@ operator()(const ScatterRank0_no_adjoint_Tag& tag, const int& cell) const
            if (((this->val[eq])(cell,node)).hasFastAccess()) {
              for (int i = 0; i < nunk; ++i) vals[i] = this->val[eq](cell,node).fastAccessDx(i);
                 jacobian.sumIntoValues(rowT, colT, nunk,  vals, false, true);
-//              jacobian.sumIntoValues(rowT, &colT[0], nunk,  &vals[0], true);  
+//              jacobian.sumIntoValues(rowT, &colT[0], nunk,  &vals[0], true);
         }
       }
    }
@@ -531,20 +539,20 @@ evaluateFields(typename Traits::EvalData workset)
      numDim = this->valTensor[0].dimension(2);
 
    if (this->tensorRank == 0) {
-      if (workset.is_adjoint) 
-         Kokkos::parallel_for(ScatterRank0_is_adjoint_Policy(0,workset.numCells),*this);  
+      if (workset.is_adjoint)
+         Kokkos::parallel_for(ScatterRank0_is_adjoint_Policy(0,workset.numCells),*this);
       else
          Kokkos::parallel_for(ScatterRank0_no_adjoint_Policy(0,workset.numCells),*this);
    }
    else  if (this->tensorRank == 1) {
-       if (workset.is_adjoint) 
+       if (workset.is_adjoint)
           Kokkos::parallel_for(ScatterRank1_is_adjoint_Policy(0,workset.numCells),*this);
        else
           Kokkos::parallel_for(ScatterRank1_no_adjoint_Policy(0,workset.numCells),*this);
 
    }
    else if (this->tensorRank == 2) {
-        if (workset.is_adjoint) 
+        if (workset.is_adjoint)
             Kokkos::parallel_for(ScatterRank2_is_adjoint_Policy(0,workset.numCells),*this);
         else
             Kokkos::parallel_for(ScatterRank2_no_adjoint_Policy(0,workset.numCells),*this);
@@ -555,9 +563,8 @@ evaluateFields(typename Traits::EvalData workset)
  long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
  long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
  std::cout<< "Scatter Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
-#endif 
 #endif
-
+#endif
 }
 
 // **********************************************************************
@@ -635,14 +642,17 @@ evaluateFields(typename Traits::EvalData workset)
   bool trans = workset.transpose_dist_param_deriv;
   int num_cols = workset.VpT->getNumVectors();
 
+  if(workset.local_Vp[0].size() == 0) return; //In case the parameter has not been gathered, e.g. parameter is used only in Dirichlet conditions.
+
   int numDim= (this->tensorRank==2) ? this->valTensor[0].dimension(2) : 0;
 
   if (trans) {
+    const int neq = workset.wsElNodeEqID[0][0].size();
     const Albany::IDArray&  wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
         workset.local_Vp[cell];
-      const int num_deriv = local_Vp.size()/numFields;
+      const int num_deriv = this->numNodes;//local_Vp.size()/numFields;
       for (int i=0; i<num_deriv; i++) {
         for (int col=0; col<num_cols; col++) {
           double val = 0.0;
@@ -652,7 +662,7 @@ evaluateFields(typename Traits::EvalData workset)
                         valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                                   this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                                   this->valTensor[0](cell,node, eq/numDim, eq%numDim));
-              val += valref.dx(i)*local_Vp[node*numFields+eq][col];
+              val += valref.dx(i)*local_Vp[node*neq+eq+this->offset][col];  //numField can be less then neq
             }
           }
           const LO row = wsElDofs((int)cell,i,0);
@@ -694,6 +704,9 @@ template<typename Traits>
 void ScatterResidualWithExtrudedParams<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+
+  if(workset.local_Vp[0].size() == 0) return; //In case the parameter has not been gathered, e.g. parameter is used only in Dirichlet conditions.
+
   auto level_it = extruded_params_levels->find(workset.dist_param_deriv_name);
   if(level_it == extruded_params_levels->end()) //if parameter is not extruded use usual scatter.
     return ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::evaluateFields(workset);
@@ -708,6 +721,7 @@ evaluateFields(typename Traits::EvalData workset)
   int numDim= (this->tensorRank==2) ? this->valTensor[0].dimension(2) : 0;
 
   if (trans) {
+    const int neq = workset.wsElNodeEqID[0][0].size();
     const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
 
     int numLayers = layeredMeshNumbering.numLayers;
@@ -718,7 +732,7 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
         workset.local_Vp[cell];
-      const int num_deriv = local_Vp.size()/this->numFields;
+      const int num_deriv = this->numNodes;//local_Vp.size()/this->numFields;
       for (int i=0; i<num_deriv; i++) {
         LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[i]);
         LO base_id, ilayer;
@@ -734,7 +748,7 @@ evaluateFields(typename Traits::EvalData workset)
                         valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                                   this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                                   this->valTensor[0](cell,node, eq/numDim, eq%numDim));
-              val += valref.dx(i)*local_Vp[node*this->numFields+eq][col];
+              val += valref.dx(i)*local_Vp[node*neq+eq+this->offset][col];  //numField can be less then neq
             }
           }
           const LO row = workset.distParamLib->get(workset.dist_param_deriv_name)->overlap_map()->getLocalElement(ginode);
@@ -965,8 +979,8 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
-#endif 
-#ifdef ALBANY_ENSEMBLE 
+#endif
+#ifdef ALBANY_ENSEMBLE
 
 // **********************************************************************
 // Specialization: Multi-point Residual

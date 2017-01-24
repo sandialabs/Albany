@@ -35,9 +35,9 @@ HydrologyMeltingRate (const Teuchos::ParameterList& p,
     numQPs = dl->qp_scalar->dimension(1);
   }
 
-  this->addDependentField(beta);
-  this->addDependentField(u_b);
-  this->addDependentField(G);
+  this->addDependentField(beta.fieldTag());
+  this->addDependentField(u_b.fieldTag());
+  this->addDependentField(G.fieldTag());
 
   this->addEvaluatedField(m);
 

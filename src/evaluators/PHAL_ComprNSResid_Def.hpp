@@ -54,21 +54,21 @@ ComprNSResid(const Teuchos::ParameterList& p) :
   //TO DOs: 
   //3D 
 
-  this->addDependentField(qFluct);
-  this->addDependentField(qFluctGrad);
-  this->addDependentField(qFluctDot);
-  this->addDependentField(force);
-  this->addDependentField(mu);
-  this->addDependentField(kappa);
-  this->addDependentField(lambda);
-  this->addDependentField(wBF);
-  this->addDependentField(wGradBF);
-  this->addDependentField(tau11);
-  this->addDependentField(tau12);
-  this->addDependentField(tau13);
-  this->addDependentField(tau22);
-  this->addDependentField(tau23);
-  this->addDependentField(tau33);
+  this->addDependentField(qFluct.fieldTag());
+  this->addDependentField(qFluctGrad.fieldTag());
+  this->addDependentField(qFluctDot.fieldTag());
+  this->addDependentField(force.fieldTag());
+  this->addDependentField(mu.fieldTag());
+  this->addDependentField(kappa.fieldTag());
+  this->addDependentField(lambda.fieldTag());
+  this->addDependentField(wBF.fieldTag());
+  this->addDependentField(wGradBF.fieldTag());
+  this->addDependentField(tau11.fieldTag());
+  this->addDependentField(tau12.fieldTag());
+  this->addDependentField(tau13.fieldTag());
+  this->addDependentField(tau22.fieldTag());
+  this->addDependentField(tau23.fieldTag());
+  this->addDependentField(tau33.fieldTag());
 
   this->addEvaluatedField(Residual);
 
@@ -136,7 +136,7 @@ template<typename EvalT, typename Traits>
 void ComprNSResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
   if (numDims == 2) { //2D case; order of variables is rho, u, v, T
       for (std::size_t cell=0; cell < workset.numCells; ++cell) {

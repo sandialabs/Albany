@@ -1,0 +1,677 @@
+<ParameterList>
+  <ParameterList name="Problem">
+    <Parameter name="Solution Method" type="string" value="ATO Problem" />
+    <Parameter name="Number of Subproblems" type="int" value="6" />
+    <Parameter name="Verbose Output" type="bool" value="1" />
+
+
+    <!--
+    Define objective in terms of the responses defined below. The ATO solver defines 
+    and owns the derivative of the objective wrt the topology.  
+    -->
+    <ParameterList name="Objective Aggregator">
+      <Parameter name="Output Value Name" type="string" value="F" />
+      <Parameter name="Output Derivative Name" type="string" value="dFdRho" />
+      <Parameter name="Values" type="Array(string)" value="{R0,R1,R2,R3,R4,R5}"/>
+      <Parameter name="Derivatives" type="Array(string)" value="{dR0dRho,dR1dRho,dR2dRho,dR3dRho,dR4dRho,dR5dRho}"/>
+      <Parameter name="Weighting" type="string" value="Scaled"/>
+      <Parameter name="Weights" type="Array(double)" value="{0.975,0.005,0.005,0.005,0.005,0.005}"/>
+      <!--Parameter name="Spatial Filter" type="int" value="0" /-->
+    </ParameterList>
+
+    <ParameterList name="Spatial Filters">
+      <Parameter name="Number of Filters" type="int" value="1" />
+      <ParameterList name="Filter 0">
+        <Parameter name="Filter Radius" type="double" value="0.075" />
+        <Parameter name="Iterations" type="int" value="1" />
+      </ParameterList>
+    </ParameterList>
+
+    <ParameterList name="Topological Optimization">
+      <Parameter name="Package" type="string" value="NLopt" />
+      <Parameter name="Method" type="string" value="MMA" />
+      <ParameterList name="Convergence Tests">
+        <Parameter name="Maximum Iterations" type="int" value="10" />
+        <Parameter name="Combo Type" type="string" value="OR"/>
+        <!--Parameter name="Relative Topology Change" type="double" value="5e-3" /-->
+        <!--Parameter name="Relative Objective Change" type="double" value="1e-5" /-->
+      </ParameterList>
+      <ParameterList name="Measure Enforcement">
+        <Parameter name="Measure" type="string" value="Volume" />
+        <Parameter name="Maximum Iterations" type="int" value="120" />
+        <Parameter name="Convergence Tolerance" type="double" value="1e-6" />
+        <Parameter name="Target" type="double" value="0.5" />
+      </ParameterList>
+      <Parameter name="Objective" type="string" value="Aggregator" />
+      <Parameter name="Constraint" type="string" value="Measure" />
+    </ParameterList>
+    
+    <ParameterList name="Topologies">
+      <!-- 
+          This block defines the topologies that all physics problems and responses 
+          are computed from.  This block is available to the responses and is added 
+          to each physics parameter list by the ATO_Solver.
+      -->
+      <Parameter name="Number of Topologies" type="int" value="1" />
+      <ParameterList name="Topology 0">
+        <Parameter name="Topology Name" type="string" value="Rho" />
+        <Parameter name="Entity Type" type="string" value="Distributed Parameter" />
+        <Parameter name="Bounds" type="Array(double)" value="{1e-24,1.0}" />
+        <Parameter name="Initial Value" type="double" value="0.5" />
+        <ParameterList name="Functions">
+          <Parameter name="Number of Functions" type="int" value="2" />
+          <ParameterList name="Function 0">
+            <Parameter name="Function Type" type="string" value="SIMP" />
+            <Parameter name="Minimum" type="double" value="0.001" />
+            <Parameter name="Penalization Parameter" type="double" value="3.0" />
+          </ParameterList>
+          <ParameterList name="Function 1">
+            <Parameter name="Function Type" type="string" value="SIMP" />
+            <Parameter name="Minimum" type="double" value="0.0" />
+            <Parameter name="Penalization Parameter" type="double" value="1.0" />
+          </ParameterList>
+        </ParameterList>
+        <Parameter name="Spatial Filter" type="int" value="0" />
+      </ParameterList>
+    </ParameterList>
+
+    <ParameterList name="Configuration">
+      <ParameterList name="Element Blocks">
+        <Parameter name="Number of Element Blocks" type="int" value="1"/>
+        <ParameterList name="Element Block 0">
+          <Parameter name="Name" type="string" value="block_1"/>
+          <ParameterList name="Material">
+            <Parameter name="Elastic Modulus" type="double" value="1e9"/>
+            <Parameter name="Poissons Ratio" type="double" value="0.33"/>
+            <Parameter name="Density" type="double" value="2700.0"/>
+          </ParameterList>
+        </ParameterList>
+      </ParameterList>
+
+      <ParameterList name="Linear Measures">
+        <Parameter name="Number of Linear Measures" type="int" value="1"/>
+        <ParameterList name="Linear Measure 0">
+          <Parameter name="Linear Measure Name" type="string" value="Volume"/>
+          <Parameter name="Linear Measure Type" type="string" value="Volume"/>
+          <ParameterList name="Volume">
+            <Parameter name="Topology Index" type="int" value="0"/>
+            <Parameter name="Function Index" type="int" value="1"/>
+          </ParameterList>
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
+
+    <ParameterList name="Physics Problem 0">    
+      <Parameter name="Name" type="string" value="LinearElasticity 2D" />
+  
+      <ParameterList name="Dirichlet BCs">
+        <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
+        <Parameter name="DBC on NS nodelist_1 for DOF Y" type="double" value="0.0"/>
+      </ParameterList> <!-- end Dirichlet BCs -->
+      <ParameterList name="Neumann BCs">
+        <Parameter name="NBC on SS surface_1 for DOF all set (t_x, t_y)" type="Array(double)" value="{0., -4.5e2}"/>
+      </ParameterList>
+
+      <ParameterList name="Apply Topology Weight Functions">
+        <Parameter name="Number of Fields" type="int" value="1"/>
+        <ParameterList name="Field 0">
+          <Parameter name="Name" type="string" value="Stress"/>
+          <Parameter name="Layout" type="string" value="QP Tensor"/>
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+        </ParameterList>
+      </ParameterList>
+
+      <!--
+          This response provides an objective function and the derivative of the 
+          objective function wrt the topology defined above.  The variable is added
+          to the state manager, and can be accessed by the objective aggregator above.
+          You can define as many of these as you like.
+      -->
+      <ParameterList name="Response Functions">
+        <Parameter name="Number of Response Vectors" type="int" value="1"/>
+        <ParameterList name="Response Vector 0">
+          <Parameter name="Name" type="string" value="Internal Energy Objective" />
+          <Parameter name="Gradient Field Name" type="string" value="Strain" />
+          <Parameter name="Gradient Field Layout" type="string" value="QP Tensor" />
+          <Parameter name="Work Conjugate Name" type="string" value="Stress" />
+          <Parameter name="Work Conjugate Layout" type="string" value="QP Tensor" />
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+          <Parameter name="Response Name" type="string" value="R0" />
+          <Parameter name="Response Derivative Name" type="string" value="dR0dRho" />
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
+
+    <ParameterList name="Physics Problem 1">    
+      <Parameter name="Name" type="string" value="LinearElasticity 2D" />
+
+      <ParameterList name="Residual Strain">
+        <!--Parameter name="Field Name" type="string" value="Residual Force"/-->
+        <ParameterList name="Shear XY">
+          <Parameter name="Number of KL Terms" type="int" value="8"/>
+          <Parameter name="Mean" type="double" value="0.000"/>
+          <Parameter name="KL Random Variable 0" type="double" value="9.88847696148e-05"/>
+          <Parameter name="KL Random Variable 1" type="double" value="5.48993963436e-05"/>
+          <Parameter name="KL Random Variable 2" type="double" value="-7.42253656464e-06"/>
+          <Parameter name="KL Random Variable 3" type="double" value="-8.04399801366e-06"/>
+          <Parameter name="KL Random Variable 4" type="double" value="0.000105301352227"/>
+          <Parameter name="KL Random Variable 5" type="double" value="2.51476343902e-05"/>
+          <Parameter name="KL Random Variable 6" type="double" value="-6.90858220214e-05"/>
+          <Parameter name="KL Random Variable 7" type="double" value="-0.000104979743244"/>
+          <Parameter name="Standard Deviation" type="double" value="0.0001"/>
+          <Parameter name="Domain Lower Bounds" type="string" value="{0.0, 0.0}"/>
+          <Parameter name="Domain Upper Bounds" type="string" value="{1.5, 1.0}"/>
+          <Parameter name="Correlation Lengths" type="string" value="{0.05, 0.05, 0.05}"/>
+        </ParameterList>
+        <ParameterList name="Volumetric">
+          <Parameter name="Number of KL Terms" type="int" value="8"/>
+          <Parameter name="Mean" type="double" value="0.0"/>
+          <Parameter name="KL Random Variable 0" type="double" value="-3.02127248953e-06"/>
+          <Parameter name="KL Random Variable 1" type="double" value="3.97955671927e-05"/>
+          <Parameter name="KL Random Variable 2" type="double" value="5.38075130165e-05"/>
+          <Parameter name="KL Random Variable 3" type="double" value="4.79556485028e-05"/>
+          <Parameter name="KL Random Variable 4" type="double" value="3.40597009207e-05"/>
+          <Parameter name="KL Random Variable 5" type="double" value="0.000154428110598"/>
+          <Parameter name="KL Random Variable 6" type="double" value="5.03384451597e-05"/>
+          <Parameter name="KL Random Variable 7" type="double" value="-0.000119385967704"/>
+          <Parameter name="Standard Deviation" type="double" value="0.0001"/>
+          <Parameter name="Domain Lower Bounds" type="string" value="{0.0, 0.0}"/>
+          <Parameter name="Domain Upper Bounds" type="string" value="{1.5, 1.0}"/>
+          <Parameter name="Correlation Lengths" type="string" value="{0.05, 0.05, 0.05}"/>
+        </ParameterList>
+      </ParameterList>
+  
+      <ParameterList name="Dirichlet BCs">
+        <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
+        <Parameter name="DBC on NS nodelist_1 for DOF Y" type="double" value="0.0"/>
+      </ParameterList> <!-- end Dirichlet BCs -->
+
+      <ParameterList name="Apply Topology Weight Functions">
+        <Parameter name="Number of Fields" type="int" value="2"/>
+        <ParameterList name="Field 0">
+          <Parameter name="Name" type="string" value="Stress"/>
+          <Parameter name="Layout" type="string" value="QP Tensor"/>
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+        </ParameterList>
+        <ParameterList name="Field 1">
+          <Parameter name="Name" type="string" value="Residual Stress"/>
+          <Parameter name="Layout" type="string" value="QP Tensor"/>
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+        </ParameterList>
+      </ParameterList>
+
+      <!--
+          This response provides an objective function and the derivative of the 
+          objective function wrt the topology defined above.  The variable is added
+          to the state manager, and can be accessed by the objective aggregator above.
+          You can define as many of these as you like.
+      -->
+      <ParameterList name="Response Functions">
+        <Parameter name="Number of Response Vectors" type="int" value="1"/>
+        <ParameterList name="Response Vector 0">
+          <Parameter name="Name" type="string" value="Internal Energy Objective" />
+          <Parameter name="Gradient Field Name" type="string" value="Strain" />
+          <Parameter name="Gradient Field Layout" type="string" value="QP Tensor" />
+          <Parameter name="Work Conjugate Name" type="string" value="Stress" />
+          <Parameter name="Work Conjugate Layout" type="string" value="QP Tensor" />
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+          <Parameter name="Response Name" type="string" value="R1" />
+          <Parameter name="Response Derivative Name" type="string" value="dR1dRho" />
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
+
+    <ParameterList name="Physics Problem 2">    
+      <Parameter name="Name" type="string" value="LinearElasticity 2D" />
+
+      <ParameterList name="Residual Strain">
+        <!--Parameter name="Field Name" type="string" value="Residual Force"/-->
+        <ParameterList name="Shear XY">
+          <Parameter name="Number of KL Terms" type="int" value="8"/>
+          <Parameter name="Mean" type="double" value="0.000"/>
+          <Parameter name="KL Random Variable 0" type="double" value="-9.76738581647e-05"/>
+          <Parameter name="KL Random Variable 1" type="double" value="8.38420930939e-05"/>
+          <Parameter name="KL Random Variable 2" type="double" value="-0.000165578847517"/>
+          <Parameter name="KL Random Variable 3" type="double" value="-7.40166981691e-05"/>
+          <Parameter name="KL Random Variable 4" type="double" value="-0.000108160853165"/>
+          <Parameter name="KL Random Variable 5" type="double" value="2.37153966423e-05"/>
+          <Parameter name="KL Random Variable 6" type="double" value="0.000101885755908"/>
+          <Parameter name="KL Random Variable 7" type="double" value="7.33655555789e-05"/>
+          <Parameter name="Standard Deviation" type="double" value="0.0001"/>
+          <Parameter name="Domain Lower Bounds" type="string" value="{0.0, 0.0}"/>
+          <Parameter name="Domain Upper Bounds" type="string" value="{1.5, 1.0}"/>
+          <Parameter name="Correlation Lengths" type="string" value="{0.05, 0.05, 0.05}"/>
+        </ParameterList>
+        <ParameterList name="Volumetric">
+          <Parameter name="Number of KL Terms" type="int" value="8"/>
+          <Parameter name="Mean" type="double" value="0.0"/>
+          <Parameter name="KL Random Variable 0" type="double" value="-8.31636019827e-05"/>
+          <Parameter name="KL Random Variable 1" type="double" value="-9.05341347476e-05"/>
+          <Parameter name="KL Random Variable 2" type="double" value="8.22910967282e-05"/>
+          <Parameter name="KL Random Variable 3" type="double" value="-5.79526285646e-05"/>
+          <Parameter name="KL Random Variable 4" type="double" value="-5.54979093251e-05"/>
+          <Parameter name="KL Random Variable 5" type="double" value="-2.50502315999e-05"/>
+          <Parameter name="KL Random Variable 6" type="double" value="-5.28917994462e-05"/>
+          <Parameter name="KL Random Variable 7" type="double" value="-1.03407731451e-06"/>
+          <Parameter name="Standard Deviation" type="double" value="0.0001"/>
+          <Parameter name="Domain Lower Bounds" type="string" value="{0.0, 0.0}"/>
+          <Parameter name="Domain Upper Bounds" type="string" value="{1.5, 1.0}"/>
+          <Parameter name="Correlation Lengths" type="string" value="{0.05, 0.05, 0.05}"/>
+        </ParameterList>
+      </ParameterList>
+  
+      <ParameterList name="Dirichlet BCs">
+        <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
+        <Parameter name="DBC on NS nodelist_1 for DOF Y" type="double" value="0.0"/>
+      </ParameterList> <!-- end Dirichlet BCs -->
+
+      <ParameterList name="Apply Topology Weight Functions">
+        <Parameter name="Number of Fields" type="int" value="2"/>
+        <ParameterList name="Field 0">
+          <Parameter name="Name" type="string" value="Stress"/>
+          <Parameter name="Layout" type="string" value="QP Tensor"/>
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+        </ParameterList>
+        <ParameterList name="Field 1">
+          <Parameter name="Name" type="string" value="Residual Stress"/>
+          <Parameter name="Layout" type="string" value="QP Tensor"/>
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+        </ParameterList>
+      </ParameterList>
+
+      <!--
+          This response provides an objective function and the derivative of the 
+          objective function wrt the topology defined above.  The variable is added
+          to the state manager, and can be accessed by the objective aggregator above.
+          You can define as many of these as you like.
+      -->
+      <ParameterList name="Response Functions">
+        <Parameter name="Number of Response Vectors" type="int" value="1"/>
+        <ParameterList name="Response Vector 0">
+          <Parameter name="Name" type="string" value="Internal Energy Objective" />
+          <Parameter name="Gradient Field Name" type="string" value="Strain" />
+          <Parameter name="Gradient Field Layout" type="string" value="QP Tensor" />
+          <Parameter name="Work Conjugate Name" type="string" value="Stress" />
+          <Parameter name="Work Conjugate Layout" type="string" value="QP Tensor" />
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+          <Parameter name="Response Name" type="string" value="R2" />
+          <Parameter name="Response Derivative Name" type="string" value="dR2dRho" />
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
+
+    <ParameterList name="Physics Problem 3">    
+      <Parameter name="Name" type="string" value="LinearElasticity 2D" />
+
+      <ParameterList name="Residual Strain">
+        <!--Parameter name="Field Name" type="string" value="Residual Force"/-->
+        <ParameterList name="Shear XY">
+          <Parameter name="Number of KL Terms" type="int" value="8"/>
+          <Parameter name="Mean" type="double" value="0.000"/>
+          <Parameter name="KL Random Variable 0" type="double" value="-7.45793804109e-05"/>
+          <Parameter name="KL Random Variable 1" type="double" value="-9.2594145511e-05"/>
+          <Parameter name="KL Random Variable 2" type="double" value="-7.87069218074e-05"/>
+          <Parameter name="KL Random Variable 3" type="double" value="1.81678430932e-06"/>
+          <Parameter name="KL Random Variable 4" type="double" value="0.000188516526786"/>
+          <Parameter name="KL Random Variable 5" type="double" value="-8.38154636519e-05"/>
+          <Parameter name="KL Random Variable 6" type="double" value="-6.25912477873e-05"/>
+          <Parameter name="KL Random Variable 7" type="double" value="7.79030042612e-05"/>
+          <Parameter name="Standard Deviation" type="double" value="0.0001"/>
+          <Parameter name="Domain Lower Bounds" type="string" value="{0.0, 0.0}"/>
+          <Parameter name="Domain Upper Bounds" type="string" value="{1.5, 1.0}"/>
+          <Parameter name="Correlation Lengths" type="string" value="{0.05, 0.05, 0.05}"/>
+        </ParameterList>
+        <ParameterList name="Volumetric">
+          <Parameter name="Number of KL Terms" type="int" value="8"/>
+          <Parameter name="Mean" type="double" value="0.0"/>
+          <Parameter name="KL Random Variable 0" type="double" value="4.16205433569e-05"/>
+          <Parameter name="KL Random Variable 1" type="double" value="4.67925057082e-05"/>
+          <Parameter name="KL Random Variable 2" type="double" value="-9.59485760443e-06"/>
+          <Parameter name="KL Random Variable 3" type="double" value="9.94709623595e-05"/>
+          <Parameter name="KL Random Variable 4" type="double" value="3.65278374175e-05"/>
+          <Parameter name="KL Random Variable 5" type="double" value="-1.44252551974e-05"/>
+          <Parameter name="KL Random Variable 6" type="double" value="9.74250090137e-05"/>
+          <Parameter name="KL Random Variable 7" type="double" value="9.67313914908e-05"/>
+          <Parameter name="Standard Deviation" type="double" value="0.0001"/>
+          <Parameter name="Domain Lower Bounds" type="string" value="{0.0, 0.0}"/>
+          <Parameter name="Domain Upper Bounds" type="string" value="{1.5, 1.0}"/>
+          <Parameter name="Correlation Lengths" type="string" value="{0.05, 0.05, 0.05}"/>
+        </ParameterList>
+      </ParameterList>
+  
+      <ParameterList name="Dirichlet BCs">
+        <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
+        <Parameter name="DBC on NS nodelist_1 for DOF Y" type="double" value="0.0"/>
+      </ParameterList> <!-- end Dirichlet BCs -->
+
+      <ParameterList name="Apply Topology Weight Functions">
+        <Parameter name="Number of Fields" type="int" value="2"/>
+        <ParameterList name="Field 0">
+          <Parameter name="Name" type="string" value="Stress"/>
+          <Parameter name="Layout" type="string" value="QP Tensor"/>
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+        </ParameterList>
+        <ParameterList name="Field 1">
+          <Parameter name="Name" type="string" value="Residual Stress"/>
+          <Parameter name="Layout" type="string" value="QP Tensor"/>
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+        </ParameterList>
+      </ParameterList>
+
+      <!--
+          This response provides an objective function and the derivative of the 
+          objective function wrt the topology defined above.  The variable is added
+          to the state manager, and can be accessed by the objective aggregator above.
+          You can define as many of these as you like.
+      -->
+      <ParameterList name="Response Functions">
+        <Parameter name="Number of Response Vectors" type="int" value="1"/>
+        <ParameterList name="Response Vector 0">
+          <Parameter name="Name" type="string" value="Internal Energy Objective" />
+          <Parameter name="Gradient Field Name" type="string" value="Strain" />
+          <Parameter name="Gradient Field Layout" type="string" value="QP Tensor" />
+          <Parameter name="Work Conjugate Name" type="string" value="Stress" />
+          <Parameter name="Work Conjugate Layout" type="string" value="QP Tensor" />
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+          <Parameter name="Response Name" type="string" value="R3" />
+          <Parameter name="Response Derivative Name" type="string" value="dR3dRho" />
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
+
+    <ParameterList name="Physics Problem 4">    
+      <Parameter name="Name" type="string" value="LinearElasticity 2D" />
+
+      <ParameterList name="Residual Strain">
+        <!--Parameter name="Field Name" type="string" value="Residual Force"/-->
+        <ParameterList name="Shear XY">
+          <Parameter name="Number of KL Terms" type="int" value="8"/>
+          <Parameter name="Mean" type="double" value="0.000"/>
+          <Parameter name="KL Random Variable 0" type="double" value="-8.76719735096e-06"/>
+          <Parameter name="KL Random Variable 1" type="double" value="-4.87182031999e-06"/>
+          <Parameter name="KL Random Variable 2" type="double" value="3.04409519277e-05"/>
+          <Parameter name="KL Random Variable 3" type="double" value="-8.59988341215e-05"/>
+          <Parameter name="KL Random Variable 4" type="double" value="3.52923640499e-05"/>
+          <Parameter name="KL Random Variable 5" type="double" value="-8.45570385348e-05"/>
+          <Parameter name="KL Random Variable 6" type="double" value="-0.00014833235991"/>
+          <Parameter name="KL Random Variable 7" type="double" value="-0.000144289456898"/>
+          <Parameter name="Standard Deviation" type="double" value="0.0001"/>
+          <Parameter name="Domain Lower Bounds" type="string" value="{0.0, 0.0}"/>
+          <Parameter name="Domain Upper Bounds" type="string" value="{1.5, 1.0}"/>
+          <Parameter name="Correlation Lengths" type="string" value="{0.05, 0.05, 0.05}"/>
+        </ParameterList>
+        <ParameterList name="Volumetric">
+          <Parameter name="Number of KL Terms" type="int" value="8"/>
+          <Parameter name="Mean" type="double" value="0.0"/>
+          <Parameter name="KL Random Variable 0" type="double" value="0.000108989806326"/>
+          <Parameter name="KL Random Variable 1" type="double" value="-3.31578565625e-05"/>
+          <Parameter name="KL Random Variable 2" type="double" value="-0.00022370286443"/>
+          <Parameter name="KL Random Variable 3" type="double" value="9.16890451472e-05"/>
+          <Parameter name="KL Random Variable 4" type="double" value="8.89583286317e-05"/>
+          <Parameter name="KL Random Variable 5" type="double" value="5.15130362707e-06"/>
+          <Parameter name="KL Random Variable 6" type="double" value="4.92892723611e-05"/>
+          <Parameter name="KL Random Variable 7" type="double" value="0.000207506343199"/>
+          <Parameter name="Standard Deviation" type="double" value="0.0001"/>
+          <Parameter name="Domain Lower Bounds" type="string" value="{0.0, 0.0}"/>
+          <Parameter name="Domain Upper Bounds" type="string" value="{1.5, 1.0}"/>
+          <Parameter name="Correlation Lengths" type="string" value="{0.05, 0.05, 0.05}"/>
+        </ParameterList>
+      </ParameterList>
+  
+      <ParameterList name="Dirichlet BCs">
+        <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
+        <Parameter name="DBC on NS nodelist_1 for DOF Y" type="double" value="0.0"/>
+      </ParameterList> <!-- end Dirichlet BCs -->
+
+      <ParameterList name="Apply Topology Weight Functions">
+        <Parameter name="Number of Fields" type="int" value="2"/>
+        <ParameterList name="Field 0">
+          <Parameter name="Name" type="string" value="Stress"/>
+          <Parameter name="Layout" type="string" value="QP Tensor"/>
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+        </ParameterList>
+        <ParameterList name="Field 1">
+          <Parameter name="Name" type="string" value="Residual Stress"/>
+          <Parameter name="Layout" type="string" value="QP Tensor"/>
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+        </ParameterList>
+      </ParameterList>
+
+      <!--
+          This response provides an objective function and the derivative of the 
+          objective function wrt the topology defined above.  The variable is added
+          to the state manager, and can be accessed by the objective aggregator above.
+          You can define as many of these as you like.
+      -->
+      <ParameterList name="Response Functions">
+        <Parameter name="Number of Response Vectors" type="int" value="1"/>
+        <ParameterList name="Response Vector 0">
+          <Parameter name="Name" type="string" value="Internal Energy Objective" />
+          <Parameter name="Gradient Field Name" type="string" value="Strain" />
+          <Parameter name="Gradient Field Layout" type="string" value="QP Tensor" />
+          <Parameter name="Work Conjugate Name" type="string" value="Stress" />
+          <Parameter name="Work Conjugate Layout" type="string" value="QP Tensor" />
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+          <Parameter name="Response Name" type="string" value="R4" />
+          <Parameter name="Response Derivative Name" type="string" value="dR4dRho" />
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
+
+    <ParameterList name="Physics Problem 5">    
+      <Parameter name="Name" type="string" value="LinearElasticity 2D" />
+
+      <ParameterList name="Residual Strain">
+        <!--Parameter name="Field Name" type="string" value="Residual Force"/-->
+        <ParameterList name="Shear XY">
+          <Parameter name="Number of KL Terms" type="int" value="8"/>
+          <Parameter name="Mean" type="double" value="0.000"/>
+          <Parameter name="KL Random Variable 0" type="double" value="3.36259731317e-05"/>
+          <Parameter name="KL Random Variable 1" type="double" value="0.000124299815641"/>
+          <Parameter name="KL Random Variable 2" type="double" value="2.79795060697e-05"/>
+          <Parameter name="KL Random Variable 3" type="double" value="1.02094400634e-05"/>
+          <Parameter name="KL Random Variable 4" type="double" value="-2.49434727996e-05"/>
+          <Parameter name="KL Random Variable 5" type="double" value="-1.60389775361e-05"/>
+          <Parameter name="KL Random Variable 6" type="double" value="1.93562087945e-05"/>
+          <Parameter name="KL Random Variable 7" type="double" value="-9.24082350882e-05"/>
+          <Parameter name="Standard Deviation" type="double" value="0.0001"/>
+          <Parameter name="Domain Lower Bounds" type="string" value="{0.0, 0.0}"/>
+          <Parameter name="Domain Upper Bounds" type="string" value="{1.5, 1.0}"/>
+          <Parameter name="Correlation Lengths" type="string" value="{0.05, 0.05, 0.05}"/>
+        </ParameterList>
+        <ParameterList name="Volumetric">
+          <Parameter name="Number of KL Terms" type="int" value="8"/>
+          <Parameter name="Mean" type="double" value="0.0"/>
+          <Parameter name="KL Random Variable 0" type="double" value="-2.19789756876e-05"/>
+          <Parameter name="KL Random Variable 1" type="double" value="-6.94726602015e-05"/>
+          <Parameter name="KL Random Variable 2" type="double" value="1.0598052555e-05"/>
+          <Parameter name="KL Random Variable 3" type="double" value="8.44400538441e-05"/>
+          <Parameter name="KL Random Variable 4" type="double" value="0.000131109101914"/>
+          <Parameter name="KL Random Variable 5" type="double" value="5.94732512891e-05"/>
+          <Parameter name="KL Random Variable 6" type="double" value="0.00012608627888"/>
+          <Parameter name="KL Random Variable 7" type="double" value="9.65850258442e-05"/>
+          <Parameter name="Standard Deviation" type="double" value="0.0001"/>
+          <Parameter name="Domain Lower Bounds" type="string" value="{0.0, 0.0}"/>
+          <Parameter name="Domain Upper Bounds" type="string" value="{1.5, 1.0}"/>
+          <Parameter name="Correlation Lengths" type="string" value="{0.05, 0.05, 0.05}"/>
+        </ParameterList>
+      </ParameterList>
+  
+      <ParameterList name="Dirichlet BCs">
+        <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
+        <Parameter name="DBC on NS nodelist_1 for DOF Y" type="double" value="0.0"/>
+      </ParameterList> <!-- end Dirichlet BCs -->
+
+      <ParameterList name="Apply Topology Weight Functions">
+        <Parameter name="Number of Fields" type="int" value="2"/>
+        <ParameterList name="Field 0">
+          <Parameter name="Name" type="string" value="Stress"/>
+          <Parameter name="Layout" type="string" value="QP Tensor"/>
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+        </ParameterList>
+        <ParameterList name="Field 1">
+          <Parameter name="Name" type="string" value="Residual Stress"/>
+          <Parameter name="Layout" type="string" value="QP Tensor"/>
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+        </ParameterList>
+      </ParameterList>
+
+      <!--
+          This response provides an objective function and the derivative of the 
+          objective function wrt the topology defined above.  The variable is added
+          to the state manager, and can be accessed by the objective aggregator above.
+          You can define as many of these as you like.
+      -->
+      <ParameterList name="Response Functions">
+        <Parameter name="Number of Response Vectors" type="int" value="1"/>
+        <ParameterList name="Response Vector 0">
+          <Parameter name="Name" type="string" value="Internal Energy Objective" />
+          <Parameter name="Gradient Field Name" type="string" value="Strain" />
+          <Parameter name="Gradient Field Layout" type="string" value="QP Tensor" />
+          <Parameter name="Work Conjugate Name" type="string" value="Stress" />
+          <Parameter name="Work Conjugate Layout" type="string" value="QP Tensor" />
+          <Parameter name="Topology Index" type="int" value="0"/>
+          <Parameter name="Function Index" type="int" value="0"/>
+          <Parameter name="Response Name" type="string" value="R5" />
+          <Parameter name="Response Derivative Name" type="string" value="dR5dRho" />
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
+
+  </ParameterList> <!-- end of Problem -->
+
+  <ParameterList name="Discretization">
+    <Parameter name="Method" type="string" value="Ioss"/>
+    <Parameter name="Exodus Input File Name" type="string" value="mitchell.gen"/>
+    <Parameter name="Exodus Output File Name" type="string" value="mitchell.exo"/>
+  </ParameterList>
+
+  <ParameterList name="Piro">
+    <Parameter name="Sensitivity Method" type="string" value="Adjoint" />
+    <ParameterList name="LOCA">
+      <ParameterList name="Bifurcation"/>
+      <ParameterList name="Constraints"/>
+      <ParameterList name="Predictor">
+        <ParameterList name="First Step Predictor"/>
+        <ParameterList name="Last Step Predictor"/>
+      </ParameterList>
+      <ParameterList name="Step Size"/>
+      <ParameterList name="Stepper">
+        <ParameterList name="Eigensolver"/>
+      </ParameterList>
+    </ParameterList>
+    <ParameterList name="NOX">
+      <ParameterList name="Status Tests">
+        <Parameter name="Test Type" type="string" value="Combo"/>
+        <Parameter name="Combo Type" type="string" value="OR"/>
+        <Parameter name="Number of Tests" type="int" value="3"/>
+        <ParameterList name="Test 0">
+          <Parameter name="Test Type" type="string" value="NormF"/>
+          <Parameter name="Norm Type" type="string" value="Two Norm"/>
+          <Parameter name="Scale Type" type="string" value="Scaled"/>
+          <Parameter name="Tolerance" type="double" value="1e-10"/>
+        </ParameterList>
+        <ParameterList name="Test 1">
+          <Parameter name="Test Type" type="string" value="MaxIters"/>
+          <Parameter name="Maximum Iterations" type="int" value="10"/>
+        </ParameterList>
+        <ParameterList name="Test 2">
+          <Parameter name="Test Type" type="string" value="NormUpdate"/>
+          <Parameter name="Norm Type" type="string" value="Two Norm"/>
+          <Parameter name="Scale Type" type="string" value="Scaled"/>
+          <Parameter name="Tolerance" type="double" value="1e-10"/>
+        </ParameterList>
+      </ParameterList>
+      <ParameterList name="Direction">
+        <Parameter name="Method" type="string" value="Newton"/>
+        <ParameterList name="Newton">
+          <Parameter name="Forcing Term Method" type="string" value="Constant"/>
+          <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
+          <ParameterList name="Stratimikos Linear Solver">
+            <ParameterList name="NOX Stratimikos Options">
+            </ParameterList>
+            <ParameterList name="Stratimikos">
+              <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
+              <ParameterList name="Linear Solver Types">
+                <ParameterList name="AztecOO">
+                  <ParameterList name="Forward Solve">
+                    <ParameterList name="AztecOO Settings">
+                      <Parameter name="Aztec Solver" type="string" value="GMRES"/>
+                      <Parameter name="Convergence Test" type="string" value="r0"/>
+                      <Parameter name="Size of Krylov Subspace" type="int" value="200"/>
+                      <Parameter name="Output Frequency" type="int" value="10"/>
+                    </ParameterList>
+                    <Parameter name="Max Iterations" type="int" value="200"/>
+                    <Parameter name="Tolerance" type="double" value="1e-5"/>
+                  </ParameterList>
+                </ParameterList>
+                <ParameterList name="Belos">
+                  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
+                  <ParameterList name="Solver Types">
+                    <ParameterList name="Block GMRES">
+                      <Parameter name="Convergence Tolerance" type="double" value="1e-12"/>
+                      <Parameter name="Output Frequency" type="int" value="2"/>
+                      <Parameter name="Output Style" type="int" value="1"/>
+                      <Parameter name="Verbosity" type="int" value="0"/>
+                      <Parameter name="Maximum Iterations" type="int" value="200"/>
+                      <Parameter name="Block Size" type="int" value="1"/>
+                      <Parameter name="Num Blocks" type="int" value="200"/>
+                      <Parameter name="Flexible Gmres" type="bool" value="0"/>
+                    </ParameterList>
+                  </ParameterList>
+                </ParameterList>
+              </ParameterList>
+              <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+              <ParameterList name="Preconditioner Types">
+                <ParameterList name="Ifpack">
+                  <Parameter name="Overlap" type="int" value="2"/>
+                  <Parameter name="Prec Type" type="string" value="ILU"/>
+                  <ParameterList name="Ifpack Settings">
+                    <Parameter name="fact: drop tolerance" type="double" value="0"/>
+                    <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
+                    <Parameter name="fact: level-of-fill" type="int" value="0"/>
+                  </ParameterList>
+                  <ParameterList name="VerboseObject">
+                    <Parameter name="Verbosity Level" type="string" value="medium"/>
+                  </ParameterList>
+                </ParameterList>
+              </ParameterList>
+            </ParameterList>
+          </ParameterList>
+        </ParameterList>
+      </ParameterList>
+      <ParameterList name="Line Search">
+        <ParameterList name="Full Step">
+          <Parameter name="Full Step" type="double" value="1"/>
+        </ParameterList>
+        <Parameter name="Method" type="string" value="Full Step"/>
+      </ParameterList>
+      <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
+      <ParameterList name="Printing">
+        <Parameter name="Output Information" type="int" value="103"/>
+        <Parameter name="Output Precision" type="int" value="3"/>
+        <Parameter name="Output Processor" type="int" value="0"/>
+      </ParameterList>
+      <ParameterList name="Solver Options">
+        <Parameter name="Status Test Check Type" type="string" value="Minimal"/>
+      </ParameterList>
+    </ParameterList>
+  </ParameterList>
+
+</ParameterList>

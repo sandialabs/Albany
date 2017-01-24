@@ -54,8 +54,8 @@ Reader(const Teuchos::RCP<Manager>& rc_mgr,
       "BF", dl->node_qp_scalar);
     wbf_ = PHX::MDField<RealType,Cell,Node,QuadPoint>(
       "wBF", dl->node_qp_scalar);
-    this->addDependentField(bf_);
-    this->addDependentField(wbf_);
+    this->addDependentField(bf_.fieldTag());
+    this->addDependentField(wbf_.fieldTag());
   }
 }
 

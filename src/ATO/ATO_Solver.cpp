@@ -55,8 +55,6 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   *constraintValue = 0.0;
 
   ///*** PROCESS TOP LEVEL PROBLEM ***///
-  Teuchos::ParameterList& discList = appParams->sublist("Discretization");
-  if( discList.isType<int>("Restart Index") ) _is_restart = true;
  
 
   // Validate Problem parameters
@@ -72,6 +70,9 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   // Parse topologies
   Teuchos::ParameterList& topoParams = problemParams.get<Teuchos::ParameterList>("Topologies");
   int ntopos = topoParams.get<int>("Number of Topologies");
+
+  if( topoParams.isType<bool>("Read From Restart") )
+     _is_restart = topoParams.get<bool>("Read From Restart");
 
   _topologyInfoStructs.resize(ntopos);
   _topologyArray = Teuchos::rcp( new Teuchos::Array<Teuchos::RCP<ATO::Topology> >(ntopos) );
@@ -413,7 +414,7 @@ ATO::Solver::evalModel(const InArgs& inArgs,
 
     if(numColumns > 0){
       // collect homogenized values
-      Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> Cvals(numColumns,numColumns);
+      Kokkos::DynRankView<RealType, PHX::Device> Cvals("ZZZ", numColumns,numColumns);
       for(int i=0; i<numColumns; i++){
         Teuchos::RCP<const Epetra_Vector> g = hs.homogenizationProblems[i].responses_out->get_g(hs.responseIndex);
         for(int j=0; j<numColumns; j++){
@@ -566,7 +567,7 @@ ATO::Solver::InitializeOptDofs(double* p)
 /******************************************************************************/
 {
   if( _is_restart ){
-    // copy data from stateManager into p
+// JR: this needs to be tested for multimaterial
     Albany::StateManager& stateMgr = _subProblems[0].app->getStateMgr();
     copyTopologyFromStateMgr( p, stateMgr );
   } else {

@@ -27,9 +27,9 @@ w_ZResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& d
 	numNodes = dims[1];
 	numQPs   = dims[2];
 
-	this->addDependentField(GradVelocity);
-	this->addDependentField(wBF);
-	this->addDependentField(w_z);
+	this->addDependentField(GradVelocity.fieldTag());
+	this->addDependentField(wBF.fieldTag());
+	this->addDependentField(w_z.fieldTag());
 
 	this->addEvaluatedField(Residual);
 	this->setName("w_z Residual");

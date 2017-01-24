@@ -20,8 +20,8 @@ namespace PHAL {
     GradBF      (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient ),
     grad_val_qp (p.get<std::string>  ("Gradient Variable Name"), dl->qp_tensorgradient )
   {
-    this->addDependentField(val_node);
-    this->addDependentField(GradBF);
+    this->addDependentField(val_node.fieldTag());
+    this->addDependentField(GradBF.fieldTag());
     this->addEvaluatedField(grad_val_qp);
 
     this->setName("DOFTensorGradInterpolationBase"+PHX::typeAsString<EvalT>());
@@ -79,8 +79,8 @@ namespace PHAL {
     GradBF      (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient ),
     grad_val_qp (p.get<std::string>  ("Gradient Variable Name"), dl->qp_tensorgradient )
   {
-    this->addDependentField(val_node);
-    this->addDependentField(GradBF);
+    this->addDependentField(val_node.fieldTag());
+    this->addDependentField(GradBF.fieldTag());
     this->addEvaluatedField(grad_val_qp);
 
     this->setName("DOFTensorGradInterpolationBase"+PHX::typeAsString<PHAL::AlbanyTraits::Jacobian>());
@@ -154,8 +154,8 @@ namespace PHAL {
     GradBF      (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient ),
     grad_val_qp (p.get<std::string>  ("Gradient Variable Name"), dl->qp_tensorgradient )
   {
-    this->addDependentField(val_node);
-    this->addDependentField(GradBF);
+    this->addDependentField(val_node.fieldTag());
+    this->addDependentField(GradBF.fieldTag());
     this->addEvaluatedField(grad_val_qp);
 
     this->setName("DOFTensorGradInterpolationBase"+PHX::typeAsString<PHAL::AlbanyTraits::SGJacobian>());
@@ -223,8 +223,8 @@ namespace PHAL {
     GradBF      (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient ),
     grad_val_qp (p.get<std::string>  ("Gradient Variable Name"), dl->qp_tensorgradient )
   {
-    this->addDependentField(val_node);
-    this->addDependentField(GradBF);
+    this->addDependentField(val_node.fieldTag());
+    this->addDependentField(GradBF.fieldTag());
     this->addEvaluatedField(grad_val_qp);
 
     this->setName("DOFTensorGradInterpolationBase"+PHX::typeAsString<PHAL::AlbanyTraits::MPJacobian>());

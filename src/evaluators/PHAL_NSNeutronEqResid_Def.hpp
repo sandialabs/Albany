@@ -36,20 +36,20 @@ NSNeutronEqResid(const Teuchos::ParameterList& p) :
   haveNeutSource  (p.get<bool>("Have Neutron Source"))
 {
 
-  this->addDependentField(wBF);
-  this->addDependentField(wGradBF);
-  this->addDependentField(Neutron);
-  this->addDependentField(NGrad);
-  this->addDependentField(NeutronDiff);
-  this->addDependentField(Absorp);
-  this->addDependentField(Fission);
-  this->addDependentField(nu);
+  this->addDependentField(wBF.fieldTag());
+  this->addDependentField(wGradBF.fieldTag());
+  this->addDependentField(Neutron.fieldTag());
+  this->addDependentField(NGrad.fieldTag());
+  this->addDependentField(NeutronDiff.fieldTag());
+  this->addDependentField(Absorp.fieldTag());
+  this->addDependentField(Fission.fieldTag());
+  this->addDependentField(nu.fieldTag());
   
   if (haveNeutSource) {
     Source = PHX::MDField<ScalarT,Cell,QuadPoint>(
       p.get<std::string>("Source Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    this->addDependentField(Source);
+    this->addDependentField(Source.fieldTag());
   }
 
   this->addEvaluatedField(NResidual);
@@ -58,12 +58,9 @@ NSNeutronEqResid(const Teuchos::ParameterList& p) :
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
   std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
+  numCells  = dims[0];
   numQPs  = dims[1];
   numDims = dims[2];
-
-  // Allocate workspace
-  flux.resize(dims[0], numQPs, numDims);
-  abscoeff.resize(dims[0], numQPs);
  
   this->setName("NSNeutronEqResid" );
 }
@@ -85,6 +82,10 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (haveNeutSource)  this->utils.setFieldData(Source,fm);
 
   this->utils.setFieldData(NResidual,fm);
+
+  // Allocate workspace
+  flux = Kokkos::createDynRankView(Neutron.get_view(), "XXX", numCells, numQPs, numDims);
+  abscoeff = Kokkos::createDynRankView(Neutron.get_view(), "XXX", numCells, numQPs);
 }
 
 //**********************************************************************
@@ -92,11 +93,11 @@ template<typename EvalT, typename Traits>
 void NSNeutronEqResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid2::FunctionSpaceTools FST;
+  typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
-  FST::scalarMultiplyDataData<ScalarT> (flux, NeutronDiff, NGrad);
+  FST::scalarMultiplyDataData (flux, NeutronDiff.get_view(), NGrad.get_view());
 
-  FST::integrate<ScalarT>(NResidual, flux, wGradBF, Intrepid2::COMP_CPP, false); // "false" overwrites
+  FST::integrate(NResidual.get_view(), flux, wGradBF.get_view(), false); // "false" overwrites
   
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -106,7 +107,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-  FST::integrate<ScalarT>(NResidual, abscoeff, wBF, Intrepid2::COMP_CPP, true); // "true" sums into
+  FST::integrate(NResidual.get_view(), abscoeff, wBF.get_view(), true); // "true" sums into
 
 }
 

@@ -42,7 +42,7 @@ case "$PACKAGE" in
 	PACKAGE_NAME="Albany"
 	;;
     *)
-	echo "Unrecognized package option"
+	echo "Unrecognized package option in env-single: $PACKAGE"
 	exit 1
 	;;
 esac
@@ -65,7 +65,7 @@ case "$ARCH" in
 	ARCH_NAME="Cuda"
 	;;
     *)
-	echo "Unrecognized architecture option"
+	echo "Unrecognized architecture option in env-single: $ARCH"
 	exit 1
 	;;
 esac
@@ -94,7 +94,7 @@ case "$TOOL_CHAIN" in
 		fi
 		;;
 	    *)
-		echo "Unrecognized architecture option"
+		echo "Unrecognized architecture option in env-single: $ARCH"
 		exit 1
 		;;
 	esac
@@ -117,7 +117,7 @@ case "$TOOL_CHAIN" in
 	if [ -z ${FC+x} ]; then FC=`which pgfortran`; fi
 	;;
     *)
-	echo "Unrecognized tool chain option"
+	echo "Unrecognized tool chain option in env-single: $TOOL_CHAIN"
 	exit 1
 	;;
 esac
@@ -206,7 +206,7 @@ case "$BUILD_TYPE" in
 	esac
 	;;
     *)
-	echo "Unrecognized build type option"
+	echo "Unrecognized build type option in env-single: $BUILD_TYPE"
 	exit 1
 	;;
 esac
@@ -214,6 +214,7 @@ esac
 # Setup flags with the info gathered above.
 CONFIG_FILE="$PACKAGE-config.sh"
 DTK_FRAG="dtk-frag.sh"
+TEMPUS_FRAG="tempus-frag.sh"
 BUILD=$ARCH-$TOOL_CHAIN-$BUILD_TYPE
 PACKAGE_DIR="$LCM_DIR/$PACKAGE_NAME"
 # Install directory for trilinos only

@@ -15,6 +15,7 @@
 #include "FELIX_Enthalpy.hpp"
 #include "FELIX_PopulateMesh.hpp"
 #include "FELIX_StokesFOThermoCoupled.hpp"
+#include "FELIX_LaplacianSampling.hpp"
 
 #ifdef ALBANY_EPETRA
 #include "FELIX_StokesFOHydrology.hpp"
@@ -53,7 +54,8 @@ bool ProblemFactory::hasProblem (const std::string& problemName)
       problemName == "FELIX Enthalpy 3D" ||
       problemName == "FELIX Populate Mesh" ||
       problemName == "FELIX Stokes FO Thermo Coupled 3D" ||
-      problemName == "FELIX Schoof Fit")
+      problemName == "FELIX Schoof Fit" ||
+      problemName == "FELIX Laplacian Sampling")
   {
     return true;
   }
@@ -117,7 +119,9 @@ ProblemFactory::create() const
   else if (method == "FELIX Schoof Fit") {
     problem = rcp(new FELIX::SchoofFit(problemParams, paramLib, 2));
   }
-
+  else if (method == "FELIX Laplacian Sampling") {
+    problem = rcp(new FELIX::LaplacianSampling(problemParams, discretizationParams, paramLib, 2));
+  }
   return problem;
 }
 

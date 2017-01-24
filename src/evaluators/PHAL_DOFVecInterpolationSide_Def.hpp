@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Intrepid_FunctionSpaceTools.hpp"
+#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace PHAL {
 
@@ -24,8 +24,8 @@ DOFVecInterpolationSideBase(const Teuchos::ParameterList& p,
   TEUCHOS_TEST_FOR_EXCEPTION (!dl_side->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                               "Error! The layouts structure does not appear to be that of a side set.\n");
 
-  this->addDependentField(val_node);
-  this->addDependentField(BF);
+  this->addDependentField(val_node.fieldTag());
+  this->addDependentField(BF.fieldTag());
   this->addEvaluatedField(val_qp);
 
   this->setName("DOFVecInterpolationSide" );

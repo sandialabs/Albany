@@ -54,17 +54,17 @@ private:
   // Input:
   //! Coordinate vector at vertices
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > cubature;
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
   Teuchos::RCP<shards::CellTopology> cellType;
 
-  // Temporary FieldContainers
+  // Temporary Views
   //PHX::MDField<RealType,Node,QuadPoint>    val_at_cub_points;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    val_at_cub_points;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    grad_at_cub_points;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    D2_at_cub_points;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    refPoints;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    refWeights;
+  Kokkos::DynRankView<RealType, PHX::Device>    val_at_cub_points;
+  Kokkos::DynRankView<RealType, PHX::Device>    grad_at_cub_points;
+  Kokkos::DynRankView<RealType, PHX::Device>    D2_at_cub_points;
+  Kokkos::DynRankView<RealType, PHX::Device>    refPoints;
+  Kokkos::DynRankView<RealType, PHX::Device>    refWeights;
 
   // Output:
   //! Basis Functions at quadrature points
@@ -83,11 +83,11 @@ private:
          
   const double earthRadius;
   void div_check(const int spatialDim, const int numelements) const;
-  void spherical_divergence(Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> &,
-                            const Intrepid2::FieldContainer_Kokkos<MeshScalarT, PHX::Layout, PHX::Device> &,
+  void spherical_divergence(Kokkos::DynRankView<MeshScalarT, PHX::Device> &,
+                            const Kokkos::DynRankView<MeshScalarT, PHX::Device> &,
                             const int e,
                             const double rrearth=1) const;
-  void initialize_grad(Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> &) const;
+  void initialize_grad(Kokkos::DynRankView<RealType, PHX::Device> &) const;
 
   MDFieldMemoizer<Traits> memoizer_;
 

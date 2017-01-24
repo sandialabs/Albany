@@ -7,7 +7,6 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
-#include "Intrepid2_FunctionSpaceTools.hpp"
 
 namespace FELIX {
 
@@ -25,12 +24,12 @@ StokesRm(const Teuchos::ParameterList& p,
 {
   coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
-  this->addDependentField(coordVec);
+  this->addDependentField(coordVec.fieldTag());
 
-  this->addDependentField(pGrad);
-  this->addDependentField(VGrad);
-  this->addDependentField(V);
-  this->addDependentField(force); 
+  this->addDependentField(pGrad.fieldTag());
+  this->addDependentField(VGrad.fieldTag());
+  this->addDependentField(V.fieldTag());
+  this->addDependentField(force.fieldTag()); 
   this->addEvaluatedField(Rm);
 
   std::vector<PHX::DataLayout::size_type> dims;

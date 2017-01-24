@@ -144,12 +144,18 @@ evaluateFields(typename Traits::EvalData workset)
   //Zero out local response 
   PHAL::set(this->local_response, 0.0);
 
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> spressure_ref(workset.numCells, numQPs); //spressure_ref (exact solution) at quad points
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> spressure_err(workset.numCells, numQPs); //spressure error at quad points
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> velocity_ref(workset.numCells, numQPs, numLevels, 2); //velocity_ref (exact solution) at quad points
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> velocity_err(workset.numCells, numQPs, numLevels, 2); //velocity error at quad points
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> temperature_ref(workset.numCells, numQPs, numLevels); //temperature_ref (exact solution) at quad points
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device> temperature_err(workset.numCells, numQPs, numLevels); //temperature error at quad points
+  Kokkos::DynRankView<ScalarT, PHX::Device> spressure_ref 
+    = Kokkos::createDynRankView(spressure.get_view(), "HRE", workset.numCells, numQPs); //spressure_ref (exact solution) at quad points
+  Kokkos::DynRankView<ScalarT, PHX::Device> spressure_err 
+    = Kokkos::createDynRankView(spressure.get_view(), "HRE", workset.numCells, numQPs); //spressure error at quad points
+  Kokkos::DynRankView<ScalarT, PHX::Device> velocity_ref 
+    = Kokkos::createDynRankView(spressure.get_view(), "HRE", workset.numCells, numQPs, numLevels, 2); //velocity_ref (exact solution) at quad points
+  Kokkos::DynRankView<ScalarT, PHX::Device> velocity_err 
+    = Kokkos::createDynRankView(spressure.get_view(), "HRE", workset.numCells, numQPs, numLevels, 2); //velocity error at quad points
+  Kokkos::DynRankView<ScalarT, PHX::Device> temperature_ref 
+    = Kokkos::createDynRankView(spressure.get_view(), "HRE", workset.numCells, numQPs, numLevels); //temperature_ref (exact solution) at quad points
+  Kokkos::DynRankView<ScalarT, PHX::Device> temperature_err 
+    = Kokkos::createDynRankView(spressure.get_view(), "HRE", workset.numCells, numQPs, numLevels); //temperature error at quad points
 
   //Get time from workset.  This is for setting time-dependent exact solution.
   const RealType time  = workset.current_time;

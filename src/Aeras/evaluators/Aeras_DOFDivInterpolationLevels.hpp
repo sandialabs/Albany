@@ -57,13 +57,13 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Level> div_val_qp;
 
 
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > intrepidBasis;
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > > cubature;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    refPoints;
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    refWeights;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
+  Kokkos::DynRankView<RealType, PHX::Device>    refPoints;
+  Kokkos::DynRankView<RealType, PHX::Device>    refWeights;
 
-  Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device>    grad_at_cub_points;
-  Intrepid2::FieldContainer_Kokkos<ScalarT, PHX::Layout, PHX::Device>     vcontra;
+  Kokkos::DynRankView<RealType, PHX::Device>    grad_at_cub_points;
+  Kokkos::DynRankView<ScalarT, PHX::Device>     vcontra;
 
   const int numNodes;
   const int numDims;
@@ -73,7 +73,24 @@ private:
   std::string myName;
 
   bool originalDiv;
-};
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct DOFDivInterpolationLevels_originalDiv_Tag{};
+  struct DOFDivInterpolationLevels_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFDivInterpolationLevels_originalDiv_Tag> DOFDivInterpolationLevels_originalDiv_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, DOFDivInterpolationLevels_Tag> DOFDivInterpolationLevels_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFDivInterpolationLevels_originalDiv_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFDivInterpolationLevels_Tag& tag, const int& i) const;
+
+#endif
+};
 }
 #endif

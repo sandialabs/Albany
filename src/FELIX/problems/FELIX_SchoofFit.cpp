@@ -6,7 +6,6 @@
 
 #include <string>
 
-#include "Intrepid2_FieldContainer.hpp"
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_FancyOStream.hpp"
@@ -55,8 +54,8 @@ void FELIX::SchoofFit::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::Mesh
   cellBasis = Albany::getIntrepid2Basis(*cell_top);
   cellType = rcp(new shards::CellTopology (cell_top));
 
-  Intrepid2::DefaultCubatureFactory<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > cubFactory;
-  cellCubature = cubFactory.create(*cellType, meshSpecs[0]->cubatureDegree);
+  Intrepid2::DefaultCubatureFactory   cubFactory;
+  cellCubature = cubFactory.create<PHX::Device,RealType,RealType>(*cellType, meshSpecs[0]->cubatureDegree);
 
   elementBlockName = meshSpecs[0]->ebName;
 

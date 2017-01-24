@@ -63,9 +63,9 @@ ComprNSViscosity(const Teuchos::ParameterList& p) :
             p.get<std::string>("Coordinate Vector Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
 
-  this->addDependentField(qFluct);
-  this->addDependentField(qFluctGrad);
-  this->addDependentField(coordVec);
+  this->addDependentField(qFluct.fieldTag());
+  this->addDependentField(qFluctGrad.fieldTag());
+  this->addDependentField(coordVec.fieldTag());
   this->addEvaluatedField(mu);
   this->addEvaluatedField(kappa);
   this->addEvaluatedField(lambda);

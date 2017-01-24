@@ -348,7 +348,7 @@ DependentFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p)
   PHX::MDField<MeshScalarT,Cell,Point,Dim> f0
     (p.get<std::string>("QP Coordinate Vector Name"),  vector_qp);
   coordVec = f0;
-  source.addDependentField(coordVec);
+  source.addDependentField(coordVec.fieldTag());
 }
 
 template<typename EvalT,typename Traits>
@@ -459,7 +459,7 @@ DependentFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
   PHX::MDField<ScalarT,Cell,Point> f(p.get<std::string>("Variable Name"), dl);
   m_baseField = f;
-  source.addDependentField(m_baseField);
+  source.addDependentField(m_baseField.fieldTag());
 }
 template<typename EvalT,typename Traits>
 void 
@@ -580,7 +580,7 @@ DependentFields(Source<EvalT,Traits> &source, Teuchos::ParameterList& p) {
   PHX::MDField<MeshScalarT,Cell,Point,Dim>
     fx(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
   m_coordVec = fx;
-  source.addDependentField(m_coordVec);
+  source.addDependentField(m_coordVec.fieldTag());
 }
 
 template<typename EvalT,typename Traits>
@@ -666,9 +666,9 @@ public :
       p.get<std::string>("Fission Cross Section Name"), dl);
     m_E_f = PHX::MDField<ScalarT,Cell,Point>(
       p.get<std::string>("Energy Released per Fission Name"), dl);
-    source.addDependentField(m_phi);
-    source.addDependentField(m_sigma_f);
-    source.addDependentField(m_E_f);
+    source.addDependentField(m_phi.fieldTag());
+    source.addDependentField(m_sigma_f.fieldTag());
+    source.addDependentField(m_E_f.fieldTag());
   }
 
   virtual void FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, 
@@ -757,7 +757,7 @@ void MVQuadratic<EvalT,Traits>::DependentFields(Source<EvalT,Traits> &source, Te
   Teuchos::RCP<PHX::DataLayout> dl = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
   PHX::MDField<ScalarT,Cell,Point> f(p.get<std::string>("Variable Name"), dl);
   m_baseField = f;
-  source.addDependentField(m_baseField);
+  source.addDependentField(m_baseField.fieldTag());
 }
 template<typename EvalT,typename Traits>
 void MVQuadratic<EvalT,Traits>::FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, PHX::FieldManager<Traits>& fm){
@@ -852,7 +852,7 @@ void MVExponential<EvalT,Traits>::DependentFields(Source<EvalT,Traits> &source, 
   Teuchos::RCP<PHX::DataLayout> dl = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
   PHX::MDField<ScalarT,Cell,Point> f(p.get<std::string>("Variable Name"), dl);
   m_baseField = f;
-  source.addDependentField(m_baseField);
+  source.addDependentField(m_baseField.fieldTag());
 }
 template<typename EvalT,typename Traits>
 void MVExponential<EvalT,Traits>::FieldData(PHX::EvaluatorUtilities<EvalT,Traits> &utils, PHX::FieldManager<Traits>& fm){
@@ -1072,7 +1072,7 @@ void PointSource<EvalT,Traits>::DependentFields(Source<EvalT,Traits> &source, Te
   PHX::MDField<MeshScalarT,Cell,Point,Dim> f0
     (p.get<std::string>("QP Coordinate Vector Name"),  vector_qp);
   coordVec = f0;
-  source.addDependentField(coordVec);
+  source.addDependentField(coordVec.fieldTag());
 }
 
 template<typename EvalT, typename Traits>

@@ -67,16 +67,16 @@ HydrologyResidualThicknessEqn (const Teuchos::ParameterList& p,
     u_b       = PHX::MDField<IceScalarT>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
   }
 
-  this->addDependentField(BF);
-  this->addDependentField(w_measure);
-  this->addDependentField(h);
-  this->addDependentField(N);
-  this->addDependentField(m);
-  this->addDependentField(u_b);
+  this->addDependentField(BF.fieldTag());
+  this->addDependentField(w_measure.fieldTag());
+  this->addDependentField(h.fieldTag());
+  this->addDependentField(N.fieldTag());
+  this->addDependentField(m.fieldTag());
+  this->addDependentField(u_b.fieldTag());
 
   unsteady = p.get<bool>("Unsteady");
   if (unsteady)
-    this->addDependentField(h_dot);
+    this->addDependentField(h_dot.fieldTag());
   else
     this->addEvaluatedField(h_dot);
 

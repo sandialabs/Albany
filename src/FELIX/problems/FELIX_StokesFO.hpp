@@ -9,8 +9,6 @@
 
 #include <type_traits>
 
-#include "Intrepid2_FieldContainer.hpp"
-#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Phalanx.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_RCP.hpp"
@@ -40,15 +38,19 @@
 #include "FELIX_EffectivePressure.hpp"
 #include "FELIX_StokesFOResid.hpp"
 #include "FELIX_StokesFOBasalResid.hpp"
+#include "FELIX_L2ProjectedBoundaryLaplacianResidual.hpp"
 #ifdef CISM_HAS_FELIX
 #include "FELIX_CismSurfaceGradFO.hpp"
 #endif
 #include "FELIX_StokesFOBodyForce.hpp"
+#include "FELIX_StokesFOStress.hpp"
 #include "FELIX_ViscosityFO.hpp"
 #include "FELIX_FieldNorm.hpp"
 #include "FELIX_FluxDiv.hpp"
 #include "FELIX_BasalFrictionCoefficient.hpp"
 #include "FELIX_BasalFrictionCoefficientGradient.hpp"
+#include "FELIX_BasalFrictionHeat.hpp"
+#include "FELIX_Dissipation.hpp"
 #include "FELIX_UpdateZCoordinate.hpp"
 #include "FELIX_GatherVerticallyAveragedVelocity.hpp"
 #include "FELIX_Time.hpp"
@@ -121,16 +123,17 @@ protected:
   Teuchos::RCP<shards::CellTopology> basalSideType;
   Teuchos::RCP<shards::CellTopology> surfaceSideType;
 
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > >  cellCubature;
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > >  basalCubature;
-  Teuchos::RCP<Intrepid2::Cubature<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout,PHX::Device> > >  surfaceCubature;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >  cellCubature;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >  basalCubature;
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> >  surfaceCubature;
 
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > cellBasis;
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > basalSideBasis;
-  Teuchos::RCP<Intrepid2::Basis<RealType, Intrepid2::FieldContainer_Kokkos<RealType, PHX::Layout, PHX::Device> > > surfaceSideBasis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > cellBasis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > basalSideBasis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > surfaceSideBasis;
 
   int numDim;
-  Teuchos::RCP<Albany::Layouts> dl,dl_basal,dl_surface;
+  int vecDimFO;
+  Teuchos::RCP<Albany::Layouts> dl, dl_scalar, dl_side_scalar,dl_basal,dl_surface;
 
   //! Discretization parameters
   Teuchos::RCP<Teuchos::ParameterList> discParams;
@@ -158,12 +161,14 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
                                       const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+  Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils_scalar(dl_scalar);
 
   int offset=0;
 
   Albany::StateStruct::MeshFieldEntity entity;
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
   Teuchos::RCP<Teuchos::ParameterList> p;
+  Teuchos::RCP<std::map<std::string, int> > extruded_params_levels = Teuchos::rcp(new std::map<std::string, int> ());
 
   // ---------------------------- Registering state variables ------------------------- //
 
@@ -260,13 +265,70 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
           entity = Albany::StateStruct::ElemData;
           sns = dl_basal->cell_scalar2;
           dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,LayerDim>(sns->dimension(0),sns->dimension(1),numLayers));
-          stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_temp, basalEBName, true, &entity);
+          stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_temp, basalEBName, false, &entity);
         }
         else {//if(fieldType ==  "Node Layered  Scalar") {
           entity = Albany::StateStruct::NodalDataToElemNode;
           sns = dl_basal->node_scalar;
           dl_temp = Teuchos::rcp(new PHX::MDALayout<Cell,Side,Node,LayerDim>(sns->dimension(0),sns->dimension(1),sns->dimension(2),numLayers));
           stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_temp, basalEBName, true, &entity);
+        }
+      }
+
+      //stiffening_factor
+      const std::string* meshPart;
+      const std::string emptyString("");
+      stateName = fieldName = "stiffening_factor";
+      //fieldName = "Stiffening Factor";
+      if (this->params->isSublist("Distributed Parameters"))
+      {
+        Teuchos::ParameterList& dist_params_list =  this->params->sublist("Distributed Parameters");
+        Teuchos::ParameterList* param_list;
+        int numParams = dist_params_list.get<int>("Number of Parameter Vectors",0);
+        for (int p_index=0; p_index< numParams; ++p_index)
+        {
+          std::string parameter_sublist_name = Albany::strint("Distributed Parameter", p_index);
+          int extruded_param_level = 0;
+          extruded_params_levels->insert(std::make_pair(stateName, extruded_param_level));
+          if (dist_params_list.isSublist(parameter_sublist_name))
+          {
+            param_list = &dist_params_list.sublist(parameter_sublist_name);
+            if (param_list->get<std::string>("Name", emptyString) == stateName)
+            {
+              meshPart = &param_list->get<std::string>("Mesh Part",emptyString);
+              break;
+            }
+          }
+          else
+          {
+            if (stateName == dist_params_list.get(Albany::strint("Parameter", p_index), emptyString))
+            {
+              meshPart = &emptyString;
+              break;
+            }
+          }
+        }
+      }
+      if(thisFieldList.get<std::string>("Field Name") ==  fieldName){
+        entity = Albany::StateStruct::NodalDistParameter;
+        p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity, *meshPart);
+        ev = evalUtils.constructGatherScalarExtruded2DNodalParameter(stateName,fieldName);
+        fm0.template registerEvaluator<EvalT>(ev);
+
+        if (basalSideName!="INVALID")
+        {
+          // Interpolate the 3D state on the side (the BasalFrictionCoefficient evaluator needs a side field)
+          ev = evalUtils.getPSTUtils().constructDOFCellToSideEvaluator(fieldName,basalSideName,"Node Scalar",cellType);
+          fm0.template registerEvaluator<EvalT> (ev);
+        }
+      }
+      if (ss_requirements.find(basalSideName)!=ss_requirements.end())
+      {
+        const Albany::AbstractFieldContainer::FieldContainerRequirements& req = ss_requirements.at(basalSideName);
+        if (std::find(req.begin(), req.end(), stateName)!=req.end())
+        {
+          entity = Albany::StateStruct::NodalDataToElemNode;
+          p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
         }
       }
 
@@ -516,10 +578,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
         //---- Load the side state
         ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
-
-        //---- Interpolate Beta Given on QP on side (may be used by a response)
-        ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator(fieldName, basalSideName);
-        fm0.template registerEvaluator<EvalT>(ev);
       }
     }
 
@@ -662,11 +720,17 @@ if (basalSideName!="INVALID")
   }
 
   // Bed topography
-  stateName = "bed_topography";
-  entity= Albany::StateStruct::NodalDataToElemNode;
-  p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
-  ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
-  fm0.template registerEvaluator<EvalT>(ev);
+  if (basalSideName!="INVALID")
+  {
+    entity = Albany::StateStruct::NodalDataToElemNode;
+    stateName = fieldName = "bed_topography";
+    p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
+    ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
+    ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   stateName = "basal_friction";
   entity= Albany::StateStruct::NodalDataToElemNode;
@@ -697,10 +761,10 @@ if (basalSideName!="INVALID")
 */
 
   // ----------  Define Field Names ----------- //
-  Teuchos::ArrayRCP<std::string> dof_names(1);
+  Teuchos::ArrayRCP<std::string> dof_names(1),dof_name_auxiliary(1);
   Teuchos::ArrayRCP<std::string> resid_names(1);
-  Teuchos::RCP<std::map<std::string, int> > extruded_params_levels = Teuchos::rcp(new std::map<std::string, int> ());
   dof_names[0] = "Velocity";
+  dof_name_auxiliary[0] = "L2 Projected Boundary Laplacian";
   resid_names[0] = "Stokes Residual";
   if(isThicknessAParameter)
   {
@@ -732,6 +796,15 @@ if (basalSideName!="INVALID")
   ev = evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names, offset);
   fm0.template registerEvaluator<EvalT> (ev);
 
+  // Gather solution field
+  if(neq > vecDimFO) {
+    ev = evalUtils_scalar.constructGatherSolutionEvaluator_noTransient(false, dof_name_auxiliary, 2);
+    fm0.template registerEvaluator<EvalT> (ev);
+
+    ev = evalUtils.constructDOFCellToSideEvaluator(dof_name_auxiliary[0],basalSideName,"Node Scalar",cellType, dof_name_auxiliary[0]);
+    fm0.template registerEvaluator<EvalT> (ev);
+  }
+
   // Interpolate solution field
   ev = evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]);
   fm0.template registerEvaluator<EvalT> (ev);
@@ -742,6 +815,13 @@ if (basalSideName!="INVALID")
 
   // Scatter residual
   ev = evalUtils.constructScatterResidualEvaluatorWithExtrudedParams(true, resid_names, extruded_params_levels, offset, "Scatter Stokes");
+  fm0.template registerEvaluator<EvalT> (ev);
+
+
+  // Scatter residual
+  Teuchos::ArrayRCP<std::string> resid2_name(1);
+  resid2_name[0] = "L2 Projected Boundary Laplacian Residual";
+  ev = evalUtils_scalar.constructScatterResidualEvaluatorWithExtrudedParams(false, resid2_name, extruded_params_levels, vecDimFO, "Auxiliary Residual");
   fm0.template registerEvaluator<EvalT> (ev);
 
   // Interpolate temperature from nodes to cell
@@ -807,6 +887,10 @@ if (basalSideName!="INVALID")
   ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("Surface Height");
   fm0.template registerEvaluator<EvalT> (ev);
 
+  // Intepolate stiffening_factor
+  ev = evalUtils.getPSTUtils().constructDOFInterpolationEvaluator("stiffening_factor");
+  fm0.template registerEvaluator<EvalT> (ev);
+
   // Intepolate surface height gradient
   ev = evalUtils.getPSTUtils().constructDOFGradInterpolationEvaluator("Surface Height");
   fm0.template registerEvaluator<EvalT> (ev);
@@ -835,6 +919,18 @@ if (basalSideName!="INVALID")
     ev = evalUtils.constructMapToPhysicalFrameSideEvaluator(cellType,basalCubature,basalSideName);
     fm0.template registerEvaluator<EvalT> (ev);
 
+    //---- Interpolate stiffening gradient on QP on side
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("stiffening_factor", basalSideName);
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    //---- Interpolate stiffening gradient on QP on side
+    ev = evalUtils.getPSTUtils().constructDOFGradInterpolationSideEvaluator("stiffening_factor", basalSideName);
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    // Intepolate surface height
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("bed_topography", basalSideName);
+    fm0.template registerEvaluator<EvalT> (ev);
+
     //---- Interpolate velocity gradient on QP on side
     ev = evalUtils.constructDOFVecGradInterpolationSideEvaluator("Basal Velocity", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
@@ -849,6 +945,10 @@ if (basalSideName!="INVALID")
 
     //---- Interpolate thickness on QP on side
     ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Ice Thickness Param", basalSideName);
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    //---- Interpolate beta on QP on side
+    ev = evalUtils.getPSTUtils().constructDOFInterpolationSideEvaluator("Beta Given", basalSideName);
     fm0.template registerEvaluator<EvalT>(ev);
 
     //---- Restrict ice thickness (param) from cell-based to cell-side-based
@@ -937,6 +1037,28 @@ if (basalSideName!="INVALID")
 
   // -------------------------------- FELIX evaluators ------------------------- //
 
+
+  // --- FO Stokes Stress --- //
+  p = Teuchos::rcp(new Teuchos::ParameterList("Stokes Stress"));
+
+  //Input
+  p->set<std::string>("Velocity QP Variable Name", "Velocity");
+  p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
+  p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
+  p->set<std::string>("Surface Height QP Name", "Surface Height");
+  p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+  p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
+  p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("FELIX Physical Parameters"));
+
+  //Output
+  p->set<std::string>("Stress Variable Name", "Stress Tensor");
+
+  ev = Teuchos::rcp(new FELIX::StokesFOStress<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  fm0.template registerEvaluator<EvalT>(ev);
+
+
+
+
   // --- FO Stokes Resid --- //
   p = Teuchos::rcp(new Teuchos::ParameterList("Stokes Resid"));
 
@@ -958,6 +1080,31 @@ if (basalSideName!="INVALID")
 
   ev = Teuchos::rcp(new FELIX::StokesFOResid<EvalT,PHAL::AlbanyTraits>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
+
+  if(neq > vecDimFO) {
+
+    p = Teuchos::rcp(new Teuchos::ParameterList("L2 Projected Boundary Laplacian Residual"));
+
+   // const std::string& residual_name = params->get<std::string>("L2 Projected Boundary Laplacian Residual Name");
+
+    //Input
+    p->set<std::string>("Solution Variable Name", "L2 Projected Boundary Laplacian");
+    p->set<std::string>("Field Name", "Beta Given");
+    p->set<std::string>("Field Gradient Name", "Beta Gradient");
+    p->set<std::string>("Gradient BF Side Name", "Grad BF "+basalSideName);
+    p->set<std::string>("Weighted Measure Side Name", "Weighted Measure "+basalSideName);
+    p->set<std::string>("Side Set Name", basalSideName);
+    p->set<double>("Mass Coefficient", params->sublist("FELIX L2 Projected Boundary Laplacian").get<double>("Mass Coefficient",1.0));
+    p->set<double>("Laplacian Coefficient", params->sublist("FELIX L2 Projected Boundary Laplacian").get<double>("Laplacian Coefficient",1.0));
+    p->set<Teuchos::RCP<shards::CellTopology> >("Cell Type", cellType);
+    p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
+
+    //Output
+    p->set<std::string>("L2 Projected Boundary Laplacian Residual Name", "L2 Projected Boundary Laplacian Residual");
+
+    ev = Teuchos::rcp(new FELIX::L2ProjectedBoundaryLaplacianResidual<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
 
   if (sliding)
   {
@@ -1068,7 +1215,10 @@ if (basalSideName!="INVALID")
     p->set<std::string>("Side Set Name", basalSideName);
     p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec " + basalSideName);
     p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Basal Friction Coefficient"));
+    p->set<Teuchos::ParameterList*>("Physical Parameter List", &params->sublist("FELIX Physical Parameters"));
     p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
+    p->set<std::string>("Bed Topography QP Name", "bed_topography");
+    p->set<std::string>("Thickness QP Name", "Ice Thickness");
 
     //Output
     p->set<std::string>("Basal Friction Coefficient Variable Name", "Beta");
@@ -1131,6 +1281,7 @@ if (basalSideName!="INVALID")
   p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
   p->set<std::string>("Temperature Variable Name", "temperature");
   p->set<std::string>("Flow Factor Variable Name", "flow_factor");
+  p->set<std::string>("Stiffening Factor QP Name", "stiffening_factor");
   p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
   p->set<Teuchos::ParameterList*>("Stereographic Map", &params->sublist("Stereographic Map"));
   p->set<Teuchos::ParameterList*>("Parameter List", &params->sublist("FELIX Viscosity"));
@@ -1142,6 +1293,73 @@ if (basalSideName!="INVALID")
 
   ev = Teuchos::rcp(new FELIX::ViscosityFO<EvalT,PHAL::AlbanyTraits,typename EvalT::ScalarT,typename EvalT::ParamScalarT>(*p,dl));
   fm0.template registerEvaluator<EvalT>(ev);
+
+  // --- Print FELIX Dissipation ---
+  if(params->sublist("FELIX Viscosity").get("Extract Strain Rate Sq", false))
+  {
+    {
+    p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Dissipation"));
+
+    //Input
+    p->set<std::string>("Viscosity QP Variable Name", "FELIX Viscosity");
+    p->set<std::string>("EpsilonSq QP Variable Name", "FELIX EpsilonSq");
+
+    //Output
+    p->set<std::string>("Dissipation QP Variable Name", "FELIX Dissipation");
+
+    ev = Teuchos::rcp(new FELIX::Dissipation<EvalT,PHAL::AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructQuadPointsToCellInterpolationEvaluator("FELIX Dissipation",false));
+
+    // Saving the dissipation heat in the output mesh
+    {
+//         fm0.template registerEvaluator<EvalT> (evalUtils.constructNodesToCellInterpolationEvaluator("melting temp",false));
+
+      std::string stateName = "dissipation_heat";
+      p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, dl->dummy, elementBlockName, "scalar", 0.0, /* save state = */ false, /* write output = */ true);
+      p->set<std::string>("Field Name", "FELIX Dissipation");
+      p->set<std::string>("Weights Name","Weights");
+      p->set("Weights Layout", dl->qp_scalar);
+      p->set("Field Layout", dl->cell_scalar2);
+      p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
+      ev = Teuchos::rcp(new PHAL::SaveCellStateField<EvalT,PHAL::AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+    if (fieldManagerChoice == Albany::BUILD_RESID_FM)
+    {
+      // Only PHAL::AlbanyTraits::Residual evaluates something
+      if (ev->evaluatedFields().size()>0)
+      {
+        // Require save friction heat
+        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+      }
+    }
+  }
+
+
+  // Saving the stress tensor in the output mesh
+  if(params->get<bool>("Print Stress Tensor", false))
+  {
+    {
+      std::string stateName = "Stress Tensor";
+      p = stateMgr.registerStateVariable(stateName, dl->qp_tensor, dl->dummy, elementBlockName, "tensor", 0.0, /* save state = */ false, /* write output = */ true);
+      p->set<std::string>("Field Name", "Stress Tensor");
+      p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
+      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+    if (fieldManagerChoice == Albany::BUILD_RESID_FM)
+    {
+      // Only PHAL::AlbanyTraits::Residual evaluates something
+      if (ev->evaluatedFields().size()>0)
+      {
+        // Require save friction heat
+        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+      }
+    }
+  }
 
 #ifdef CISM_HAS_FELIX
   //--- FELIX surface gradient from CISM ---//
@@ -1281,6 +1499,11 @@ if (basalSideName!="INVALID")
     // Require scattering of residual
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter Stokes", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
+
+    if(neq > vecDimFO) {
+      PHX::Tag<typename EvalT::ScalarT> res_tag2("Auxiliary Residual", dl_scalar->dummy);
+      fm0.requireField<EvalT>(res_tag2);
+    }
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM)
   {
@@ -1288,6 +1511,8 @@ if (basalSideName!="INVALID")
     Teuchos::RCP<Teuchos::ParameterList> paramList = Teuchos::rcp(new Teuchos::ParameterList("Param List"));
     paramList->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
     paramList->set<std::string>("Basal Friction Coefficient Gradient Name","Beta Gradient");
+    paramList->set<std::string>("Stiffening Factor Gradient Name","stiffening_factor Gradient");
+    paramList->set<std::string>("Stiffening Factor Name","stiffening_factor");
     if(isThicknessAParameter) {
       paramList->set<std::string>("Thickness Gradient Name","Ice Thickness Param Gradient");
       paramList->set<std::string>("Thickness Side QP Variable Name","Ice Thickness Param");
