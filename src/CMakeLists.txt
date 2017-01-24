@@ -130,6 +130,7 @@ SET(SOURCES ${SOURCES}
   problems/Albany_ProblemFactory.cpp
   problems/Albany_ProblemUtils.cpp
   problems/Albany_ResponseUtilities.cpp
+  problems/Albany_SideLaplacianProblem.cpp
   problems/QCAD_MaterialDatabase.cpp
   )
 SET(PDE_SRCS
@@ -155,6 +156,7 @@ SET(HEADERS ${HEADERS}
   problems/Albany_ProblemUtils.hpp
   problems/Albany_ResponseUtilities.hpp
   problems/Albany_ResponseUtilities_Def.hpp
+  problems/Albany_SideLaplacianProblem.hpp
   problems/QCAD_MaterialDatabase.hpp
   )
 SET(PDE_HDRS
@@ -308,6 +310,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_ScatterScalarResponse.cpp
   evaluators/PHAL_SeparableScatterScalarResponseT.cpp
   evaluators/PHAL_SharedParameter.cpp
+  evaluators/PHAL_SideLaplacianResidual.cpp
   evaluators/PHAL_SideQuadPointsToSideInterpolation.cpp
   evaluators/PHAL_Source.cpp
   evaluators/PHAL_ThermalConductivity.cpp
@@ -467,6 +470,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_SeparableScatterScalarResponseT_Def.hpp
   evaluators/PHAL_SharedParameter.hpp
   evaluators/PHAL_SharedParameter_Def.hpp
+  evaluators/PHAL_SideLaplacianResidual.hpp
+  evaluators/PHAL_SideLaplacianResidual_Def.hpp
   evaluators/PHAL_SideQuadPointsToSideInterpolation.hpp
   evaluators/PHAL_SideQuadPointsToSideInterpolation_Def.hpp
   evaluators/PHAL_Source.hpp

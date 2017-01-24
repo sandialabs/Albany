@@ -120,6 +120,7 @@ IF(ALBANY_HAVE_STK) # STK is needed for all these
   add_subdirectory(Heat1DPeriodic)
   add_subdirectory(Heat2DTriangles)
   add_subdirectory(Heat1DWithSource)
+  add_subdirectory(SideSetLaplacian)
   add_subdirectory(SGBratu1D)
   add_subdirectory(SGQuad2D)
   add_subdirectory(MPNIQuad2D)
