@@ -4,10 +4,11 @@ refactoring ATO to work with Tpetra/Thyra instead of
 Epetra/EpetraExt, in no particular order (dependencies 
 b/w action items are noted).  
 
-1. Debug Tpetra function ReplaceDiagonalValues,
+1. Test / debug (if necessary) Tpetra function ReplaceDiagonalValues,
 currently in Albany::Utils (should ultimately be moved to the 
 Tpetra::CrsMatrix class). This function is used in the 
-ATOT::XFEM_Preconditioner.cpp class. 
+ATOT::XFEM_Preconditioner.cpp class. Currently there is no example
+for this preconditioner. 
 
 2. Have Mark Hoemmen fix Tpetra::CrsMatrix::apply method with a 
 TRANS combine mode.  Once this is done, remove creation of 
@@ -15,10 +16,13 @@ filterOperatorTpetra in ATO::Solver and ATOT::Solver, and
 uncomment relevant apply code in copyObjectiveFromStateMgr 
 routines.
 
-3. Switch distributed parameters in Albany to use Tpetra instead 
-of Epetra.  This requires replacing workset.overlapped_dgdp and 
-workset.dgdp with Tpetra versions and changing calls in 
+3. Switch Albany to use workset.dgdpT (Tpetra version) instead 
+of workset.dgdp (Epetra version) -- need debug help from Mauro.
+The switch should be straight forward but when I try it, ATO::Constrained_2D_adj
+test fails.  Once this is done, remove ALBANY_EPETRA_EXE ifdefs in 
 ATO::TensorPNormResponse and ATO::HomogenizedConstantsResponse 
+around workset.overlapped_dgdpT, as well as other relevant 
+routines throughout Albany.  
 to use these new objects.
 
 4. Test/debug new ATOT::Solver by running tests with AlbanyT 
@@ -29,6 +33,11 @@ Currently, the following tests seg fault when run:
 - Constraint_2D_adj 
 - Constraint_2D_fd
 - DistParam_2D
+- BodyForce_2D (uses NLopt) 
+- CurrentOpt (uses NLopt)
+- ResidualStrain (uses NLopt)
+- VolumeObj_StiffnessCon (uses NLopt)
+- VolumeObj_StressCon (uses NLopt) 
 
 error in debug: 
 
@@ -51,21 +60,5 @@ p=0: *** Caught standard std::exception of type 'std::logic_error' :
  The supported types include DerivativeSupport{DERIV_LINEAR_OP}!
 
 
-Note that NLOpt was not on in my build; need to build
-with NLOpt and test NLOpt tests as well.  These tests are:
-
-- BodyForce_2D 
-- CurrentOpt 
-- ResidualStrain 
-- VolumeObj_StiffnessCon
-- VolumeObj_StressCon
-
-Note also that Cogent was not on in my build; need to build with Cogent
-and test Cogent tests.  These tests are:
- 
-- Cogent_Opt
-- Cogent_Tab
-
-
-5. Once 4. is done, finish creating tests that run with AlbanyT executable.  
+5. Once 4. is done, activate tests that run with AlbanyT executable.  
 

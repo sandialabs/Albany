@@ -481,18 +481,12 @@ evaluateDistParamDeriv(
   if(dg_dp != NULL) {
     workset.dist_param_deriv_name = dist_param_name;
     workset.dgdp = Teuchos::rcp(dg_dp, false);
-    { // workset.overlapped_dgdp = Teuchos::rcp(new Epetra_MultiVector(*workset.distParamLib->get(dist_param_name)->overlap_map(), dg_dp->NumVectors()));
+    { 
       Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT = Teuchos::rcp(
         new Tpetra_MultiVector(
           workset.distParamLib->get(dist_param_name)->overlap_map(),
           dg_dp->NumVectors()));
-      const Teuchos::RCP<const Epetra_Comm>
-        comm = createEpetraCommFromTeuchosComm(application->getComm());   
-
-      Teuchos::RCP<const Epetra_Map> emap = Petra::TpetraMap_To_EpetraMap(overlapped_dgdpT->getMap(), comm);
-      workset.overlapped_dgdp = Teuchos::rcp(new Epetra_MultiVector(*emap, overlapped_dgdpT->getNumVectors()));
-      Petra::TpetraMultiVector_To_EpetraMultiVector(
-        overlapped_dgdpT, *workset.overlapped_dgdp, comm);
+      workset.overlapped_dgdpT = overlapped_dgdpT; 
     }
     evaluate<PHAL::AlbanyTraits::DistParamDeriv>(workset);
   }

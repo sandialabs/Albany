@@ -120,7 +120,6 @@ postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response and tangent
   //Teuchos::RCP<Epetra_MultiVector> gx = workset.dgdx;
-  //Teuchos::RCP<Epetra_MultiVector> gp = workset.dgdp;
   Teuchos::RCP<Tpetra_Vector> gT = workset.gT;
   Teuchos::RCP<Tpetra_MultiVector> gxT = workset.dgdxT;
   Teuchos::RCP<Tpetra_MultiVector> gpT = workset.dgdpT;

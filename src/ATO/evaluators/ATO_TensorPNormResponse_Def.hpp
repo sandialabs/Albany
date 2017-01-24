@@ -521,8 +521,8 @@ postEvaluate(typename Traits::PostEvalData workset)
   this->global_response[0] = pow(this->global_response[0],1.0/pVal);
 
 #if defined(ALBANY_EPETRA)
-  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdp = workset.overlapped_dgdp;
-  if(overlapped_dgdp != Teuchos::null) overlapped_dgdp->Scale(scale);
+  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT = workset.overlapped_dgdpT;
+  if(overlapped_dgdpT != Teuchos::null) overlapped_dgdpT->scale(scale);
 #endif
 }
 
