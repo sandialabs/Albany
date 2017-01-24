@@ -353,7 +353,7 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
         }
         if (disc_params->isSublist("Side Set Discretizations") && disc_params->sublist("Side Set Discretizations").isSublist("basalside")) {
             basal_params = Teuchos::rcp(new Teuchos::ParameterList(disc_params->sublist("Side Set Discretizations").sublist("basalside")));
-            if(!disc_params->isSublist("Side Set Discretizations").isParameter("Workset Size"))
+            if(!disc_params->sublist("Side Set Discretizations").isParameter("Workset Size"))
               basal_params->set("Workset Size", basal_ws_size);
         } else {
             // Backward compatibility: Ioss, with parameters mixed with the extruded mesh ones
