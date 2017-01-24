@@ -279,6 +279,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_DOFTensorInterpolation.cpp
   evaluators/PHAL_DOFVecInterpolation.cpp
   evaluators/PHAL_DOFVecInterpolationSide.cpp
+  evaluators/PHAL_Field2Norm.cpp
   evaluators/PHAL_GatherAuxData.cpp
   evaluators/PHAL_GatherCoordinateVector.cpp
   evaluators/PHAL_GatherScalarNodalParameter.cpp
@@ -408,6 +409,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_DOFVecInterpolation_Def.hpp
   evaluators/PHAL_DOFVecInterpolationSide.hpp
   evaluators/PHAL_DOFVecInterpolationSide_Def.hpp
+  evaluators/PHAL_Field2Norm.hpp
+  evaluators/PHAL_Field2Norm_Def.hpp
   evaluators/PHAL_GatherAuxData.hpp
   evaluators/PHAL_GatherAuxData_Def.hpp
   evaluators/PHAL_GatherCoordinateVector.hpp
