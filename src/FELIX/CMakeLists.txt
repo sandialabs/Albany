@@ -19,7 +19,6 @@
        evaluators/FELIX_EnthalpyResid.cpp
        evaluators/FELIX_EnthalpyBasalResid.cpp
        evaluators/FELIX_EpsilonL1L2.cpp
-       evaluators/FELIX_FieldNorm.cpp
        evaluators/FELIX_FlowRate.cpp
        evaluators/FELIX_FluxDiv.cpp
        evaluators/FELIX_GeoFluxHeat.cpp
@@ -128,8 +127,6 @@ ENDIF()
        evaluators/FELIX_EnthalpyBasalResid_Def.hpp
        evaluators/FELIX_EpsilonL1L2.hpp
        evaluators/FELIX_EpsilonL1L2_Def.hpp
-       evaluators/FELIX_FieldNorm.hpp
-       evaluators/FELIX_FieldNorm_Def.hpp
        evaluators/FELIX_FlowRate.hpp
        evaluators/FELIX_FlowRate_Def.hpp
        evaluators/FELIX_FluxDiv.hpp
