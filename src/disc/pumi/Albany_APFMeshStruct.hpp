@@ -48,6 +48,8 @@ class SolutionLayout {
 
  void resize(size_t size){ solNames.resize(size); solSizes.resize(size); }
 
+ int getNumSolFields() { return solNames[0].size(); }
+
  Teuchos::Array<Teuchos::Array<std::string> > solNames;
  Teuchos::Array<Teuchos::Array<int> > solSizes; // solSizes[time_deriv_vector][DOF_component]
 
