@@ -41,7 +41,7 @@ public:
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  int numSides, numSideNodes, numSideQPs, cellDims, sideDims, numNodes;
+  int numSides, numSideNodes, numSideQPs, numCellDims, numSideDims, numNodes;
 
   //! The side set where to compute the Basis Functions
   std::string sideSetName;
@@ -57,7 +57,6 @@ private:
   Kokkos::DynRankView<RealType, PHX::Device> cub_weights;
   Kokkos::DynRankView<RealType, PHX::Device> cub_points;
   Kokkos::DynRankView<MeshScalarT, PHX::Device> tangents;
-  Kokkos::DynRankView<MeshScalarT, PHX::Device>  metric;
 
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
@@ -66,6 +65,7 @@ private:
   //! Basis Functions and other quantities at quadrature points
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>           metric_det;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>           w_measure;
+  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>   metric;
   PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim,Dim>   inv_metric;
   PHX::MDField<RealType,Cell,Side,Node,QuadPoint>         BF;
   PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>  GradBF;
