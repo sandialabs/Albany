@@ -17,8 +17,8 @@
 #include "PHAL_ResponseFieldIntegralT.hpp"
 #include "PHAL_ResponseThermalEnergyT.hpp"
 #include "Adapt_ElementSizeField.hpp"
-#include "PHAL_ResponseSquaredL2Error.hpp"
-#include "PHAL_ResponseSquaredL2ErrorSide.hpp"
+#include "PHAL_ResponseSquaredL2Difference.hpp"
+#include "PHAL_ResponseSquaredL2DifferenceSide.hpp"
 #include "PHAL_SaveNodalField.hpp"
 #ifdef ALBANY_FELIX
   #include "FELIX_ResponseSurfaceVelocityMismatch.hpp"
@@ -75,133 +75,115 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   RCP<ParameterList> p = rcp(new ParameterList);
   p->set<ParameterList*>("Parameter List", &responseParams);
   p->set<RCP<ParameterList> >("Parameters From Problem", paramsFromProblem);
-  Teuchos::RCP<const PHX::FieldTag> response_tag;
+  RCP<PHX::Evaluator<Traits>> res_ev;
 
   if (responseName == "Field Integral")
   {
-    RCP<QCAD::ResponseFieldIntegral<EvalT,Traits> > res_ev =
-      rcp(new QCAD::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new QCAD::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
   }
-
   else if (responseName == "Field Value")
   {
-    RCP<QCAD::ResponseFieldValue<EvalT,Traits> > res_ev =
-      rcp(new QCAD::ResponseFieldValue<EvalT,Traits>(*p,dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new QCAD::ResponseFieldValue<EvalT,Traits>(*p,dl));
   }
-
   else if (responseName == "Field Average")
   {
-    RCP<QCAD::ResponseFieldAverage<EvalT,Traits> > res_ev =
-      rcp(new QCAD::ResponseFieldAverage<EvalT,Traits>(*p,dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new QCAD::ResponseFieldAverage<EvalT,Traits>(*p,dl));
   }
-
-  else if (responseName == "Squared L2 Error Target ST")
+  else if (responseName == "Squared L2 Difference Source ST Target ST")
   {
-    RCP<PHAL::ResponseSquaredL2ErrorTargetST<EvalT,Traits>> res_ev =
-      rcp(new PHAL::ResponseSquaredL2ErrorTargetST<EvalT,Traits>(*p,dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSST_TST<EvalT,Traits>(*p,dl));
   }
-  else if (responseName == "Squared L2 Error Target MST")
+  else if (responseName == "Squared L2 Difference Source ST Target MST")
   {
-    RCP<PHAL::ResponseSquaredL2ErrorTargetMST<EvalT,Traits>> res_ev =
-      rcp(new PHAL::ResponseSquaredL2ErrorTargetMST<EvalT,Traits>(*p,dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev =rcp(new PHAL::ResponseSquaredL2DifferenceSST_TMST<EvalT,Traits>(*p,dl));
   }
-  else if (responseName == "Squared L2 Error Target PST")
+  else if (responseName == "Squared L2 Difference Source ST Target PST")
   {
-    RCP<PHAL::ResponseSquaredL2ErrorTargetPST<EvalT,Traits>> res_ev =
-      rcp(new PHAL::ResponseSquaredL2ErrorTargetPST<EvalT,Traits>(*p,dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSST_TPST<EvalT,Traits>(*p,dl));
   }
-  else if (responseName == "Squared L2 Error Side Target ST")
+  else if (responseName == "Squared L2 Difference Source PST Target ST")
   {
-    RCP<PHAL::ResponseSquaredL2ErrorSideTargetST<EvalT,Traits>> res_ev =
-      rcp(new PHAL::ResponseSquaredL2ErrorSideTargetST<EvalT,Traits>(*p,dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSPST_TST<EvalT,Traits>(*p,dl));
   }
-  else if (responseName == "Squared L2 Error Side Target MST")
+  else if (responseName == "Squared L2 Difference Source PST Target MST")
   {
-    RCP<PHAL::ResponseSquaredL2ErrorSideTargetMST<EvalT,Traits>> res_ev =
-      rcp(new PHAL::ResponseSquaredL2ErrorSideTargetMST<EvalT,Traits>(*p,dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSPST_TMST<EvalT,Traits>(*p,dl));
   }
-  else if (responseName == "Squared L2 Error Side Target PST")
+  else if (responseName == "Squared L2 Difference Source PST Target PST")
   {
-    RCP<PHAL::ResponseSquaredL2ErrorSideTargetPST<EvalT,Traits>> res_ev =
-      rcp(new PHAL::ResponseSquaredL2ErrorSideTargetPST<EvalT,Traits>(*p,dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSPST_TPST<EvalT,Traits>(*p,dl));
   }
-
+  else if (responseName == "Squared L2 Difference Source MST Target ST")
+  {
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSMST_TST<EvalT,Traits>(*p,dl));
+  }
+  else if (responseName == "Squared L2 Difference Source MST Target MST")
+  {
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSMST_TMST<EvalT,Traits>(*p,dl));
+  }
+  else if (responseName == "Squared L2 Difference Source MST Target PST")
+  {
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSideSMST_TPST<EvalT,Traits>(*p,dl));
+  }
+  else if (responseName == "Squared L2 Difference Side Source ST Target ST")
+  {
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSideSST_TST<EvalT,Traits>(*p,dl));
+  }
+  else if (responseName == "Squared L2 Difference Side Source ST Target MST")
+  {
+    res_ev =rcp(new PHAL::ResponseSquaredL2DifferenceSideSST_TMST<EvalT,Traits>(*p,dl));
+  }
+  else if (responseName == "Squared L2 Difference Side Source ST Target PST")
+  {
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSideSST_TPST<EvalT,Traits>(*p,dl));
+  }
+  else if (responseName == "Squared L2 Difference Side Source PST Target ST")
+  {
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSideSPST_TST<EvalT,Traits>(*p,dl));
+  }
+  else if (responseName == "Squared L2 Difference Side Source PST Target MST")
+  {
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSideSPST_TMST<EvalT,Traits>(*p,dl));
+  }
+  else if (responseName == "Squared L2 Difference Side Source PST Target PST")
+  {
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSideSPST_TPST<EvalT,Traits>(*p,dl));
+  }
+  else if (responseName == "Squared L2 Difference Side Source MST Target ST")
+  {
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSideSMST_TST<EvalT,Traits>(*p,dl));
+  }
+  else if (responseName == "Squared L2 Difference Side Source MST Target MST")
+  {
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSideSMST_TMST<EvalT,Traits>(*p,dl));
+  }
+  else if (responseName == "Squared L2 Difference Side Source MST Target PST")
+  {
+    res_ev = rcp(new PHAL::ResponseSquaredL2DifferenceSMST_TPST<EvalT,Traits>(*p,dl));
+  }
 #ifdef ALBANY_FELIX
   else if (responseName == "Surface Velocity Mismatch")
   {
-    // No side data layouts have been passed to this class
-    RCP<FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits> > res_ev =
-      rcp(new FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits>(*p,dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits>(*p,dl));
   }
-
   else if (responseName == "Surface Mass Balance Mismatch")
   {
-    // No side data layouts have been passed to this class
-    RCP<FELIX::ResponseSMBMismatch<EvalT,Traits> > res_ev =
-      rcp(new FELIX::ResponseSMBMismatch<EvalT,Traits>(*p,dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new FELIX::ResponseSMBMismatch<EvalT,Traits>(*p,dl));
   }
   else if (responseName == "Boundary Squared L2 Norm")
   {
-    // No side data layouts have been passed to this class
-    RCP<FELIX::ResponseBoundarySquaredL2Norm<EvalT,Traits> > res_ev =
-      rcp(new FELIX::ResponseBoundarySquaredL2Norm<EvalT,Traits>(*p,dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new FELIX::ResponseBoundarySquaredL2Norm<EvalT,Traits>(*p,dl));
   }
-
 #endif
-
   else if (responseName == "Center Of Mass")
   {
-    RCP<QCAD::ResponseCenterOfMass<EvalT,Traits> > res_ev =
-      rcp(new QCAD::ResponseCenterOfMass<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new QCAD::ResponseCenterOfMass<EvalT,Traits>(*p, dl));
   }
-
   else if (responseName == "Save Field")
   {
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
-    RCP<QCAD::ResponseSaveField<EvalT,Traits> > res_ev =
-      rcp(new QCAD::ResponseSaveField<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+
+    res_ev = rcp(new QCAD::ResponseSaveField<EvalT,Traits>(*p, dl));
   }
 #ifdef ALBANY_QCAD
   else if (responseName == "Saddle Value")
@@ -210,11 +192,8 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set<std::string>("Weights Name",   "Weights");
-    RCP<QCAD::ResponseSaddleValue<EvalT,Traits> > res_ev =
-      rcp(new QCAD::ResponseSaddleValue<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+
+    res_ev = rcp(new QCAD::ResponseSaddleValue<EvalT,Traits>(*p, dl));
 #else
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                   std::endl << "Error in Albany::ResponseUtilities:  " <<
@@ -225,11 +204,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Region Boundary")
   {
 #if defined(ALBANY_EPETRA)
-    RCP<QCAD::ResponseRegionBoundary<EvalT,Traits> > res_ev =
-      rcp(new QCAD::ResponseRegionBoundary<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new QCAD::ResponseRegionBoundary<EvalT,Traits>(*p, dl));
 #else
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                   std::endl << "Error in Albany::ResponseUtilities:  " <<
@@ -241,63 +216,36 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "PHAL Field Integral")
   {
 #if defined(ALBANY_EPETRA)
-    RCP<PHAL::ResponseFieldIntegral<EvalT,Traits> > res_ev =
-      rcp(new PHAL::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new PHAL::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
 #else
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                   std::endl << "Error in Albany::ResponseUtilities:  " <<
                                   "PHAL Field Integral is not available if ALBANY_EPETRA_EXE is OFF; Try PHAL Field IntegralT Instead " << std::endl);
 #endif
   }
-
   else if (responseName == "PHAL Field IntegralT")
   {
-    RCP<PHAL::ResponseFieldIntegralT<EvalT,Traits> > res_ev =
-      rcp(new PHAL::ResponseFieldIntegralT<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new PHAL::ResponseFieldIntegralT<EvalT,Traits>(*p, dl));
   }
-  
   else if (responseName == "PHAL Thermal EnergyT")
   {
-    RCP<PHAL::ResponseThermalEnergyT<EvalT,Traits> > res_ev =
-      rcp(new PHAL::ResponseThermalEnergyT<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new PHAL::ResponseThermalEnergyT<EvalT,Traits>(*p, dl));
   }
-  
 #ifdef ALBANY_AMP
   else if (responseName == "AMP Energy")
   {
-    RCP<AMP::Energy<EvalT,Traits> > res_ev =
-      rcp(new AMP::Energy<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new AMP::Energy<EvalT,Traits>(*p, dl));
   }
 #endif
-  
+
 #ifdef ALBANY_AERAS
   else if (responseName == "Aeras Shallow Water L2 Error")
   {
-    RCP<Aeras::ShallowWaterResponseL2Error<EvalT,Traits> > res_ev =
-      rcp(new Aeras::ShallowWaterResponseL2Error<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new Aeras::ShallowWaterResponseL2Error<EvalT,Traits>(*p, dl));
   }
   else if (responseName == "Aeras Shallow Water L2 Norm")
   {
-    RCP<Aeras::ShallowWaterResponseL2Norm<EvalT,Traits> > res_ev =
-      rcp(new Aeras::ShallowWaterResponseL2Norm<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+    res_ev = rcp(new Aeras::ShallowWaterResponseL2Norm<EvalT,Traits>(*p, dl));
   }
 #endif
 
@@ -307,32 +255,21 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set<std::string>("Weights Name",  "Weights");
-    RCP<Adapt::ElementSizeField<EvalT,Traits> > res_ev =
-      rcp(new Adapt::ElementSizeField<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-  }
 
-   else if (responseName == "Save Nodal Fields")
+    res_ev = rcp(new Adapt::ElementSizeField<EvalT,Traits>(*p, dl));
+  }
+  else if (responseName == "Save Nodal Fields")
   {
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
-    RCP<PHAL::SaveNodalField<EvalT,Traits> > res_ev =
-      rcp(new PHAL::SaveNodalField<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-  }
 
+    res_ev = rcp(new PHAL::SaveNodalField<EvalT,Traits>(*p, dl));
+  }
   else if (responseName == "Modal Objective")
   {
 #ifdef ALBANY_ATO
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
-    RCP<ATO::ModalObjective<EvalT,Traits> > res_ev =
-      rcp(new ATO::ModalObjective<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+
+    res_ev = rcp(new ATO::ModalObjective<EvalT,Traits>(*p, dl));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter,
@@ -346,11 +283,8 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   {
 #ifdef ALBANY_ATO
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
-    RCP<ATO::StiffnessObjective<EvalT,Traits> > res_ev =
-      rcp(new ATO::StiffnessObjective<EvalT,Traits>(*p, dl, meshSpecs));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+
+    res_ev = rcp(new ATO::StiffnessObjective<EvalT,Traits>(*p, dl, meshSpecs));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter,
@@ -359,16 +293,12 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
       std::endl);
 #endif
   }
-
   else if (responseName == "Tensor PNorm Objective")
   {
 #ifdef ALBANY_ATO
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
-    RCP<ATO::TensorPNormResponse<EvalT,Traits> > res_ev =
-      rcp(new ATO::TensorPNormResponse<EvalT,Traits>(*p, dl, meshSpecs));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+
+    res_ev = rcp(new ATO::TensorPNormResponse<EvalT,Traits>(*p, dl, meshSpecs));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter,
@@ -382,11 +312,8 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   {
 #ifdef ALBANY_ATO
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
-    RCP<ATO::HomogenizedConstantsResponse<EvalT,Traits> > res_ev =
-      rcp(new ATO::HomogenizedConstantsResponse<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+
+    res_ev = rcp(new ATO::HomogenizedConstantsResponse<EvalT,Traits>(*p, dl));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter,
@@ -400,11 +327,8 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   {
 #ifdef ALBANY_ATO
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
-    RCP<ATO::InternalEnergyResponse<EvalT,Traits> > res_ev =
-      rcp(new ATO::InternalEnergyResponse<EvalT,Traits>(*p, dl, meshSpecs));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+
+    res_ev = rcp(new ATO::InternalEnergyResponse<EvalT,Traits>(*p, dl, meshSpecs));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter,
@@ -421,11 +345,8 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
     //p->set<std::string>("Stress Name", "Cauchy_Stress");
     //p->set<std::string>("Weights Name",  "Weights");
-    RCP<LCM::IPtoNodalField<EvalT,Traits> > res_ev =
-      rcp(new LCM::IPtoNodalField<EvalT,Traits>(*p, dl, meshSpecs));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+
+    res_ev = rcp(new LCM::IPtoNodalField<EvalT,Traits>(*p, dl, meshSpecs));
   }
   else if (responseName == "Project IP to Nodal Field")
   {
@@ -434,11 +355,8 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     p->set<std::string>("BF Name", "BF");
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-    RCP<LCM::ProjectIPtoNodalField<EvalT,Traits> > res_ev = rcp(
-      new LCM::ProjectIPtoNodalField<EvalT,Traits>(*p, dl, meshSpecs));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+
+    res_ev = rcp(new LCM::ProjectIPtoNodalField<EvalT,Traits>(*p, dl, meshSpecs));
   }
 #endif
 
@@ -449,6 +367,22 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
       "!" << std::endl << "Supplied parameter list is " <<
       std::endl << responseParams);
 
-  return response_tag;
+  // Register the evaluator
+  fm.template registerEvaluator<EvalT>(res_ev);
 
+  // Fetch the response tag. Usually it is the tag of the first evaluated field
+  Teuchos::RCP<const PHX::FieldTag> ev_tag = res_ev->evaluatedFields()[0];
+
+  // The response tag is not the same of the evaluated field tag for PHAL::ScatterScalarResponse
+  Teuchos::RCP<PHAL::ScatterScalarResponseBase<EvalT,Traits>> sc_resp;
+  sc_resp = Teuchos::rcp_dynamic_cast<PHAL::ScatterScalarResponseBase<EvalT,Traits>>(res_ev);
+  if (sc_resp!=Teuchos::null)
+  {
+    ev_tag = sc_resp->getResponseFieldTag();
+  }
+
+  // Require the response tag;
+  fm.requireField<EvalT>(*ev_tag);
+
+  return ev_tag;
 }
