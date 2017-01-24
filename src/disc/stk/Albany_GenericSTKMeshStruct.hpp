@@ -87,6 +87,9 @@ namespace Albany {
     //! Re-load balance mesh
     void rebalanceInitialMeshT(const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
 
+    //! Sets all mesh parts as IO parts (will be written to file)
+    void setAllPartsIO();
+
     //! Determine if a percept mesh object is needed
     bool buildEMesh;
     bool buildPerceptEMesh();

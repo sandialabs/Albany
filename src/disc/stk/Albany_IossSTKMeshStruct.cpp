@@ -77,7 +77,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   //    Several partitioning choices: rcb, rib, hsfc, kway, kway-gemo, linear, random
   //          linear does not require Zoltan or metis
   if (params->get<bool>("Use Serial Mesh", false) && commT->getSize() > 1){
-  //    Option  external  reads the nemesis files, and must be the default 
+  //    Option  external  reads the nemesis files, and must be the default
 #ifdef ALBANY_ZOLTAN
     mesh_data->property_add(Ioss::Property("DECOMPOSITION_METHOD", "rib"));
 #else
@@ -243,6 +243,11 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     this->addNodeSetsFromSideSets ();
   }
 
+  // If requested, mark all parts as io parts
+  if (params->get<bool>("Set All Parts IO", false))
+    this->setAllPartsIO();
+
+  // Initialize the (possible) other side set meshes
   this->initializeSideSetMeshStructs(commT);
 }
 
@@ -413,21 +418,25 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
           }
     }
 
-    // Read global mesh variables
+    // Read global mesh variables. Should we emit warnings at all?
     for (auto& it : fieldContainer->getMeshVectorStates())
     {
-      mesh_data->get_global (it.first, it.second, true); // Last variable is abort_if_not_found. Should it be false?
+      bool found = mesh_data->get_global (it.first, it.second, false); // Last variable is abort_if_not_found. We don't want that.
+      if (!found)
+        *out << "  *** WARNING *** Mesh vector state '" << it.first << "' was not found in the mesh database.\n";
     }
     for (auto& it : fieldContainer->getMeshScalarIntegerStates())
     {
-      mesh_data->get_global (it.first, it.second, true); // Last variable is abort_if_not_found. Should it be false?
+      bool found = mesh_data->get_global (it.first, it.second, false); // Last variable is abort_if_not_found. We don't want that.
+      if (!found)
+        *out << "  *** WARNING *** Mesh scalar integer state '" << it.first << "' was not found in the mesh database.\n";
     }
 
     //Read info for layered mehes.
     bool hasLayeredStructure=true;
     std::vector<double> ltr;
     int ordering, stride;
-  
+
     std::string state_name = "layer_thickness_ratio";
     hasLayeredStructure = hasLayeredStructure && mesh_data->get_global (state_name, ltr, false);
     if(hasLayeredStructure) fieldContainer->getMeshVectorStates()[state_name] = ltr;

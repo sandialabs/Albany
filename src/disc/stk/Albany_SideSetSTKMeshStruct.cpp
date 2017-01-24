@@ -175,11 +175,11 @@ void SideSetSTKMeshStruct::setFieldAndBulkData (
     }
   }
 
-  // Insertion of entities end
-  bulkData->modification_end();
-
   // Loading the fields from file
   this->loadRequiredInputFields (req,commT);
+
+  // Insertion of entities end
+  bulkData->modification_end();
 }
 
 Teuchos::RCP<const Teuchos::ParameterList> SideSetSTKMeshStruct::getValidDiscretizationParameters() const

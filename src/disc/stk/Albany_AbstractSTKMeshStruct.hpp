@@ -111,7 +111,9 @@ namespace Albany {
                                                  std::map<GO,GO>& sideMap,
                                                  std::map<GO,std::vector<int>>& sideNodeMap) = 0;
 
+    // Useful for loading side meshes from file
     bool side_maps_present;
+    bool ignore_side_maps;
   protected:
 
     Teuchos::RCP<Albany::AbstractSTKFieldContainer> fieldContainer;
