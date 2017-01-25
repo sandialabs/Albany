@@ -34,36 +34,28 @@ template<typename Traits>
 void DirichletOffNodeSet<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
-  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
-  Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
-
-  // Grab the vector off node GIDs for this Node Set ID from the std::map
-  std::set<int> nodeSetRows;
+  // Gather all node IDs from all the stored nodesets
+  std::set<int> nodeSetsRows;
   for (int ins(0); ins<nodeSets.size(); ++ins)
   {
     const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(nodeSets[ins])->second;
     for (int inode=0; inode<nsNodes.size(); ++inode)
     {
-      nodeSetRows.insert(nsNodes[inode][this->offset]);
+      nodeSetsRows.insert(nsNodes[inode][this->offset]);
     }
   }
 
-  const auto& wsElNodeEqID = dirichletWorkset.disc->getWsElNodeEqID();
-  for (int ws=0; ws<wsElNodeEqID.size(); ++ws)
+  Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
+  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
+
+  // Loop on all local dofs and set the BC on those not in nodeSetsRows
+  LO num_local_dofs = fT->getMap()->getNodeNumElements();
+  for (LO row=0; row<num_local_dofs; ++row)
   {
-    for (int cell=0; cell<wsElNodeEqID[ws].size(); ++cell)
-    {
-      for (int node=0; node<wsElNodeEqID[ws][cell].size(); ++node)
-      {
-        LO row = wsElNodeEqID[ws][cell][node][this->offset];
-        if (nodeSetRows.find(row)==nodeSetRows.end())
-        {
-          fT_nonconstView[row] = xT_constView[row] - this->value;
-        }
-      }
-    }
+    if (nodeSetsRows.find(row)==nodeSetsRows.end())
+      fT_nonconstView[row] = xT_constView[row] - this->value;
   }
 }
 
@@ -83,14 +75,14 @@ template<typename Traits>
 void DirichletOffNodeSet<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  // Grab the vector off node GIDs for this Node Set ID from the std::map
-  std::set<int> nodeSetRows;
+  // Gather all node IDs from all the stored nodesets
+  std::set<int> nodeSetsRows;
   for (int ins(0); ins<nodeSets.size(); ++ins)
   {
     const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(nodeSets[ins])->second;
     for (int inode=0; inode<nsNodes.size(); ++inode)
     {
-      nodeSetRows.insert(nsNodes[inode][this->offset]);
+      nodeSetsRows.insert(nsNodes[inode][this->offset]);
     }
   }
 
@@ -113,37 +105,29 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::Array<ST> matrixEntriesT;
   Teuchos::Array<LO> matrixIndicesT;
 
-  const auto& wsElNodeEqID = dirichletWorkset.disc->getWsElNodeEqID();
-  for (int ws=0; ws<wsElNodeEqID.size(); ++ws)
+  // Loop on all local dofs and set the BC on those not in nodeSetsRows
+  LO num_local_dofs = jacT->getRangeMap()->getNodeNumElements();
+  for (LO row=0; row<num_local_dofs; ++row)
   {
-    for (int cell=0; cell<wsElNodeEqID[ws].size(); ++cell)
+    if (nodeSetsRows.find(row)==nodeSetsRows.end())
     {
-      for (int node=0; node<wsElNodeEqID[ws][cell].size(); ++node)
-      {
-        LO row = wsElNodeEqID[ws][cell][node][this->offset];
-        if (nodeSetRows.find(row)==nodeSetRows.end())
-        {
-          // It's a row not on the given node sets
+      // It's a row not on the given node sets
+      index[0] = row;
 
-          LO row = wsElNodeEqID[ws][cell][node][this->offset];
-          index[0] = row;
+      numEntriesT = jacT->getNumEntriesInLocalRow(row);
+      matrixEntriesT.resize(numEntriesT);
+      matrixIndicesT.resize(numEntriesT);
 
-          numEntriesT = jacT->getNumEntriesInLocalRow(row);
-          matrixEntriesT.resize(numEntriesT);
-          matrixIndicesT.resize(numEntriesT);
+      jacT->getLocalRowCopy(row, matrixIndicesT(), matrixEntriesT(), numEntriesT);
 
-          jacT->getLocalRowCopy(row, matrixIndicesT(), matrixEntriesT(), numEntriesT);
+      for (int i=0; i<numEntriesT; i++)
+        matrixEntriesT[i]=0;
 
-          for (int i=0; i<numEntriesT; i++)
-            matrixEntriesT[i]=0;
+      jacT->replaceLocalValues(row, matrixIndicesT(), matrixEntriesT());
+      jacT->replaceLocalValues(row, index(), value());
 
-          jacT->replaceLocalValues(row, matrixIndicesT(), matrixEntriesT());
-          jacT->replaceLocalValues(row, index(), value());
-
-          if (fillResid)
-            fT_nonconstView[row] = xT_constView[row] - this->value.val();
-        }
-      }
+      if (fillResid)
+        fT_nonconstView[row] = xT_constView[row] - this->value.val();
     }
   }
 }
@@ -164,14 +148,14 @@ template<typename Traits>
 void DirichletOffNodeSet<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  // Grab the vector off node GIDs for this Node Set ID from the std::map
-  std::set<int> nodeSetRows;
+  // Gather all node IDs from all the stored nodesets
+  std::set<int> nodeSetsRows;
   for (int ins(0); ins<nodeSets.size(); ++ins)
   {
     const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(nodeSets[ins])->second;
     for (int inode=0; inode<nsNodes.size(); ++inode)
     {
-      nodeSetRows.insert(nsNodes[inode][this->offset]);
+      nodeSetsRows.insert(nsNodes[inode][this->offset]);
     }
   }
 
@@ -183,49 +167,41 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
   Teuchos::ArrayRCP<const ST> VxT_constView;
   Teuchos::ArrayRCP<ST> fT_nonconstView;
-  if (fT != Teuchos::null) fT_nonconstView = fT->get1dViewNonConst();
+  if (fT != Teuchos::null)
+    fT_nonconstView = fT->get1dViewNonConst();
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
 
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const auto& wsElNodeEqID = dirichletWorkset.disc->getWsElNodeEqID();
-  for (int ws=0; ws<wsElNodeEqID.size(); ++ws)
+  // Loop on all local dofs and set the BC on those not in nodeSetsRows
+  LO num_local_dofs = fpT!=Teuchos::null ? fpT->getMap()->getNodeNumElements() :
+                     (JVT!=Teuchos::null ? JVT->getMap()->getNodeNumElements() :
+                     (fT!=Teuchos::null ? fT->getMap()->getNodeNumElements() : 0));
+  for (LO row=0; row<num_local_dofs; ++row)
   {
-    for (int cell=0; cell<wsElNodeEqID[ws].size(); ++cell)
+    if (nodeSetsRows.find(row)==nodeSetsRows.end())
     {
-      for (int node=0; node<wsElNodeEqID[ws][cell].size(); ++node)
+      // It's a row not on the given node sets
+      if (fT != Teuchos::null)
+        fT_nonconstView[row] = xT_constView[row] - this->value.val();
+
+      if (JVT != Teuchos::null)
       {
-        LO row = wsElNodeEqID[ws][cell][node][this->offset];
-        if (nodeSetRows.find(row)==nodeSetRows.end())
+        Teuchos::ArrayRCP<ST> JVT_nonconstView;
+        for (int i=0; i<dirichletWorkset.num_cols_x; i++)
         {
-          // It's a row not on the given node sets
+          JVT_nonconstView = JVT->getDataNonConst(i);
+          VxT_constView = VxT->getData(i);
+          JVT_nonconstView[row] = j_coeff*VxT_constView[row];
+        }
+      }
 
-          LO row = wsElNodeEqID[ws][cell][node][this->offset];
-
-          if (fT != Teuchos::null)
-          {
-            fT_nonconstView[row] = xT_constView[row] - this->value.val();
-          }
-
-          if (JVT != Teuchos::null)
-          {
-            Teuchos::ArrayRCP<ST> JVT_nonconstView;
-            for (int i=0; i<dirichletWorkset.num_cols_x; i++)
-            {
-              JVT_nonconstView = JVT->getDataNonConst(i);
-              VxT_constView = VxT->getData(i);
-              JVT_nonconstView[row] = j_coeff*VxT_constView[row];
-            }
-          }
-
-          if (fpT != Teuchos::null)
-          {
-            Teuchos::ArrayRCP<ST> fpT_nonconstView;
-            for (int i=0; i<dirichletWorkset.num_cols_p; i++)
-            {
-              fpT_nonconstView = fpT->getDataNonConst(i);
-              fpT_nonconstView[row] = -this->value.dx(dirichletWorkset.param_offset+i);
-            }
-          }
+      if (fpT != Teuchos::null)
+      {
+        Teuchos::ArrayRCP<ST> fpT_nonconstView;
+        for (int i=0; i<dirichletWorkset.num_cols_p; i++)
+        {
+          fpT_nonconstView = fpT->getDataNonConst(i);
+          fpT_nonconstView[row] = -this->value.dx(dirichletWorkset.param_offset+i);
         }
       }
     }
@@ -247,14 +223,14 @@ template<typename Traits>
 void DirichletOffNodeSet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  // Grab the vector off node GIDs for this Node Set ID from the std::map
-  std::set<int> nodeSetRows;
+  // Gather all node IDs from all the stored nodesets
+  std::set<int> nodeSetsRows;
   for (int ins(0); ins<nodeSets.size(); ++ins)
   {
     const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(nodeSets[ins])->second;
     for (int inode=0; inode<nsNodes.size(); ++inode)
     {
-      nodeSetRows.insert(nsNodes[inode][this->offset]);
+      nodeSetsRows.insert(nsNodes[inode][this->offset]);
     }
   }
 
@@ -263,6 +239,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   Teuchos::ArrayRCP<ST> fpVT_nonconstView;
   bool trans = dirichletWorkset.transpose_dist_param_deriv;
   int num_cols = fpVT->getNumVectors();
+  LO num_local_dofs = fpVT->getMap()->getNodeNumElements();
 
   // For (df/dp)^T*V we zero out corresponding entries in V
   if (trans)
@@ -270,54 +247,38 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     Teuchos::RCP<Tpetra_MultiVector> VpT = dirichletWorkset.Vp_bcT;
     //non-const view of VpT
     Teuchos::ArrayRCP<ST> VpT_nonconstView;
-    const auto& wsElNodeEqID = dirichletWorkset.disc->getWsElNodeEqID();
-    for (int ws=0; ws<wsElNodeEqID.size(); ++ws)
-    {
-      for (int cell=0; cell<wsElNodeEqID[ws].size(); ++cell)
-      {
-        for (int node=0; node<wsElNodeEqID[ws][cell].size(); ++node)
-        {
-          LO row = wsElNodeEqID[ws][cell][node][this->offset];
-          if (nodeSetRows.find(row)==nodeSetRows.end())
-          {
-            // It's a row not on the given node sets
-            LO row = wsElNodeEqID[ws][cell][node][this->offset];
 
-            for (int col=0; col<num_cols; ++col)
-            {
-              //(*Vp)[col][row] = 0.0;
-              VpT_nonconstView = VpT->getDataNonConst(col);
-              VpT_nonconstView[row] = 0.0;
-            }
-          }
+    // Loop on all local dofs and set the BC on those not in nodeSetsRows
+    for (LO row=0; row<num_local_dofs; ++row)
+    {
+      if (nodeSetsRows.find(row)==nodeSetsRows.end())
+      {
+        // It's a row not on the given node sets
+
+        for (int col=0; col<num_cols; ++col)
+        {
+          //(*Vp)[col][row] = 0.0;
+          VpT_nonconstView = VpT->getDataNonConst(col);
+          VpT_nonconstView[row] = 0.0;
         }
       }
     }
   }
-
   // for (df/dp)*V we zero out corresponding entries in df/dp
   else
   {
-    const auto& wsElNodeEqID = dirichletWorkset.disc->getWsElNodeEqID();
-    for (int ws=0; ws<wsElNodeEqID.size(); ++ws)
+    // Loop on all local dofs and set the BC on those not in nodeSetsRows
+    for (LO row=0; row<num_local_dofs; ++row)
     {
-      for (int cell=0; cell<wsElNodeEqID[ws].size(); ++cell)
+      if (nodeSetsRows.find(row)==nodeSetsRows.end())
       {
-        for (int node=0; node<wsElNodeEqID[ws][cell].size(); ++node)
-        {
-          LO row = wsElNodeEqID[ws][cell][node][this->offset];
-          if (nodeSetRows.find(row)==nodeSetRows.end())
-          {
-            // It's a row not on the given node sets
-            LO row = wsElNodeEqID[ws][cell][node][this->offset];
+        // It's a row not on the given node sets
 
-            for (int col=0; col<num_cols; ++col)
-            {
-              //(*fpV)[col][row] = 0.0;
-              fpVT_nonconstView = fpVT->getDataNonConst(col);
-              fpVT_nonconstView[row] = 0.0;
-            }
-          }
+        for (int col=0; col<num_cols; ++col)
+        {
+          //(*fpV)[col][row] = 0.0;
+          fpVT_nonconstView = fpVT->getDataNonConst(col);
+          fpVT_nonconstView[row] = 0.0;
         }
       }
     }

@@ -122,7 +122,7 @@ class BCUtils {
     }
 
     Teuchos::Array<Teuchos::Array<int>> getOffsets() const {
-      return offsets_; 
+      return offsets_;
     }
 
     //! Specific implementation for Dirichlet BC Evaluator below
@@ -198,9 +198,9 @@ class BCUtils {
         const Teuchos::RCP< std::vector< Teuchos::RCP<PHX::Evaluator_TemplateManager<PHAL::AlbanyTraits> > > > evaluators,
         std::string& allBC, Teuchos::RCP<PHX::DataLayout>& dummy);
 
-    protected: 
-  
-    Teuchos::Array<Teuchos::Array<int> > offsets_; 
+    protected:
+
+    Teuchos::Array<Teuchos::Array<int> > offsets_;
 };
 
 //! Specific implementation for Dirichlet BC Evaluator
@@ -271,7 +271,7 @@ void  BCUtils<NeumannTraits>::buildEvaluatorsList (
   Teuchos::RCP<ParamLib> paramLib,
   const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB);
 
-}
+} // namespace Albany
 
 // Define macro for explicit template instantiation
 #define BCUTILS_INSTANTIATE_TEMPLATE_CLASS_DIRICHLET(name) \
@@ -283,4 +283,4 @@ void  BCUtils<NeumannTraits>::buildEvaluatorsList (
   BCUTILS_INSTANTIATE_TEMPLATE_CLASS_DIRICHLET(name)   \
   BCUTILS_INSTANTIATE_TEMPLATE_CLASS_NEUMANN(name)
 
-#endif
+#endif // ALBANY_BCUTILS_HPP

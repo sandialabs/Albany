@@ -50,11 +50,56 @@ void imposeOrder (const Teuchos::ParameterList& bc_pl,
   std::vector<bool> found(ne, false);
   for (S2PL::const_iterator it = evname2pl.begin(); it != evname2pl.end(); ++it) {
     const std::string name = plName(it->first);
-    const S2int::const_iterator order_it = order.find(name);
+    S2int::const_iterator order_it = order.find(name);
     if (order_it == order.end()) {
       // It is not an error to add an evaluator not directly mapped to an XML
       // entry.
-      continue;
+
+      // LB: if the bc is of the form 'DBC off NS...', we ignore the miss,
+      //     since only one evaluator will be build for all the 'DBC off NS...'
+      //     bc specified (and therefore, no match can be found here).
+
+      if (name.find("DBC off NS")!=std::string::npos)
+      {
+        bool found_off_ns = false;
+        // We actually have an evaluator for this 'DBC off NS...', but it
+        // probably have more than one NS in its name
+        for (order_it=order.begin(); order_it!=order.end(); ++order_it)
+        {
+          if (order_it->first.find("DBC off NS")!=std::string::npos)
+          {
+            // We found a 'DBC off NS...' bc. Let's check the NS and DOF inside name
+            // are inside this evaluator name
+
+            // Get NS name
+            size_t ns_pos  = name.find("NS ");
+            size_t ns_size = name.find(" ",ns_pos+3);
+            std::string ns_name = name.substr(ns_pos+3,ns_size);
+
+            // Get DOF name
+            size_t dof_pos  = name.find("DOF ");
+            size_t dof_size = name.find(" ",dof_pos+4);
+            std::string dof_name = name.substr(dof_pos+4,dof_size);
+
+            // Check that NS and DOF name are inside this evaluator name
+            if (order_it->first.find(ns_name)!=std::string::npos &&
+                order_it->first.find(dof_name)!=std::string::npos)
+            {
+              found_off_ns = true;
+              break;
+            }
+          }
+        }
+
+        // If we did not find the right DirichletOffNodeSet evaluator, it's really a miss
+        if (!found_off_ns)
+          continue;
+      }
+      else
+      {
+        // It really is a miss
+        continue;
+      }
     }
     const int index = order_it->second;
     found[index] = true;
@@ -87,10 +132,12 @@ void imposeOrder (const Teuchos::ParameterList& bc_pl,
     msg << "But BCUtils provided:\n";
     for (S2PL::const_iterator it = evname2pl.begin(); it != evname2pl.end(); ++it)
       msg << "  " << plName(it->first) << "\n";
+
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, msg.str());
-  }    
+  }
 }
-} // namespace
+
+} // anonymous namespace
 
 // Dirichlet specialization
 
@@ -242,7 +289,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
   Teuchos::RCP<Teuchos::ParameterList> params,
   Teuchos::RCP<ParamLib> paramLib,
   int numEqn)  {
-  
+
 
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -276,7 +323,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         p->set< string > ("Node Set ID", nodeSetIDs[i]);
         // p->set< int >     ("Number of Equations", dirichletNames.size());
         p->set< int > ("Equation Offset", j);
-        offsets_[i].push_back(j); 
+        offsets_[i].push_back(j);
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
 
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
@@ -311,7 +358,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         p->set< string > ("Node Set ID", nodeSetIDs[i]);
         p->set< int > ("Number of Equations", numEqn);
         p->set< int > ("Equation Offset", 0);
-        for(std::size_t j = 0; j < bcNames.size(); j++) { 
+        for(std::size_t j = 0; j < bcNames.size(); j++) {
           offsets_[i].push_back(j);
         }
         p->set<RCP<ParamLib> > ("Parameter Library", paramLib);
@@ -337,7 +384,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         p->set< string >("Field Name", BCparams.get<string>(ss));
         p->set< string > ("Node Set ID", nodeSetIDs[i]);
         p->set< int > ("Equation Offset", j);
-        offsets_[i].push_back(j); 
+        offsets_[i].push_back(j);
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
         bcs->push_back(ss);
@@ -380,7 +427,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         p->set< string > ("Dirichlet Name", ss);
         p->set< RealType >("Dirichlet Value", 0.0);
         p->set< int > ("Equation Offset", j);
-        offsets_[i].push_back(j); 
+        offsets_[i].push_back(j);
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
         p->set< string > ("Node Set ID", nodeSetIDs[i]);
         p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
@@ -417,7 +464,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         p->set< string > ("Node Set ID", nodeSetIDs[i]);
         //p->set< int >     ("Number of Equations", dirichletNames.size());
         p->set< int > ("Equation Offset", 0);
-        for(std::size_t j = 0; j < bcNames.size(); j++) { 
+        for(std::size_t j = 0; j < bcNames.size(); j++) {
           offsets_[i].push_back(j);
         }
         p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
@@ -447,7 +494,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
             continue;
           }
         }
-        
+
         if(sub_list.get<string>("BC Function") == "Equilibrium Concentration") {
           RCP<ParameterList> p = rcp(new ParameterList);
           p->set<int>("Type", traits_type::typeEq);
@@ -461,7 +508,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
           p->set< RealType >("Dirichlet Value", 0.0);
           p->set< string > ("Node Set ID", nodeSetIDs[i]);
           p->set< int > ("Equation Offset", j);
-          offsets_[i].push_back(j); 
+          offsets_[i].push_back(j);
           p->set< int > ("Pressure Offset", pressure_offset);
 
           evaluators_to_build[evaluatorsToBuildName(ss)] = p;
@@ -471,7 +518,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
       }
     }
   }
-  
+
   ///
   /// Least squares fit of peridynamics neighbors BC
   ////
@@ -492,7 +539,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
       p->set< string > ("Node Set ID", nodeSetIDs[i]);
       //p->set< int >     ("Number of Equations", dirichletNames.size());
       p->set< int > ("Equation Offset", 0);
-      for(std::size_t j = 0; j < bcNames.size(); j++) { 
+      for(std::size_t j = 0; j < bcNames.size(); j++) {
         offsets_[i].push_back(j);
       }
       p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
@@ -551,7 +598,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         p->set<RealType>("Dirichlet Value", 0.0);
         p->set<string> ("Node Set ID", nodeSetIDs[i]);
         p->set<int> ("Equation Offset", 0);
-        for(std::size_t j = 0; j < bcNames.size(); j++) { 
+        for(std::size_t j = 0; j < bcNames.size(); j++) {
           offsets_[i].push_back(j);
         }
         // if set to zero, the cubature degree of the side
@@ -601,7 +648,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         p->set< string > ("Node Set ID", nodeSetIDs[i]);
         //p->set< int >     ("Number of Equations", dirichletNames.size());
         p->set< int > ("Equation Offset", 0);
-        for(std::size_t j = 0; j < bcNames.size(); j++) { 
+        for(std::size_t j = 0; j < bcNames.size(); j++) {
           offsets_[i].push_back(j);
         }
         p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -620,7 +667,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
   for (std::size_t j = 0; j < bcNames.size(); ++j)
   {
     RCP<std::vector<string> > nodeSets(new std::vector<string>(0));
-    string dir_name = "Off-Side-Set";
+    string dir_name = "DBC off NS";
     double* value = NULL;
     for (auto i = 0; i < nodeSetIDs.size(); ++i)
     {
@@ -629,7 +676,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
       if (BCparams.isParameter(ss))
       {
         nodeSets->push_back(nodeSetIDs[i]);
-        dir_name += "_" + nodeSetIDs[i];
+        dir_name += " " + nodeSetIDs[i];
         if (value==NULL)
         {
           value = new double();
@@ -643,6 +690,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
         }
       }
     }
+    dir_name += " for DOF " + bcNames[j];
 
     if (nodeSets->size()>0)
     {
@@ -696,7 +744,7 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (
   Teuchos::RCP<Teuchos::ParameterList> params,
   Teuchos::RCP<ParamLib> paramLib,
   const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB) {
-  
+
   using Teuchos::RCP;
   using Teuchos::rcp;
   using Teuchos::ParameterList;
@@ -749,7 +797,7 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (
 
           p->set<string> ("Coordinate Vector Name", "Coord Vec");
           p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
- 
+
           if(conditions[k] == "robin") {
             p->set<string> ("DOF Name", dof_names[j]);
 
@@ -1022,8 +1070,8 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (
   string NeuGT = "Evaluator for Gather thickness";
   {
     const string paramName = "thickness";
-	  RCP<ParameterList> p = rcp(new ParameterList());
-	  p->set<int>("Type", traits_type::typeSF);
+    RCP<ParameterList> p = rcp(new ParameterList());
+    p->set<int>("Type", traits_type::typeSF);
 
     // for new way
     p->set< RCP<DataLayout> >  ("State Field Layout",  dl->node_scalar);
