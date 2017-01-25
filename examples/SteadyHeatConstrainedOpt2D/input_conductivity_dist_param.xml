@@ -26,11 +26,11 @@
         <Parameter name="Field Name" type="string" value="Temperature"/>
         <Parameter name="Target Field Name" type="string" value="ZERO"/>
       </ParameterList>
-      <Parameter name="Response 1" type="string" value="Squared L2 Error Target PST"/>
+      <Parameter name="Response 1" type="string" value="Squared L2 Difference Source ST Target PST"/>
       <ParameterList name="ResponseParams 1">
         <Parameter name="Field Rank" type="string" value="Scalar"/>
         <Parameter name="Scaling" type="double" value="0.15"/>
-        <Parameter name="Field Name" type="string" value="Thermal Conductivity"/>
+        <Parameter name="Source Field Name" type="string" value="Thermal Conductivity"/>
         <Parameter name="Target Field Name" type="string" value="ZERO"/>
       </ParameterList>
     </ParameterList>
@@ -64,7 +64,7 @@
         <Parameter name="Print Output" type="bool" value="true"/>
         <Parameter name="Parameter Initial Guess Type" type="string" value="Uniform Vector"/> <!-- other choices are "Uniform Vector" or "Random Vector", default is "From Model Evaluator"/-->
         <Parameter name="Uniform Parameter Guess" type="double" value="1.0"/>
-        <Parameter name="Min And Max Of Random Parameter Guess" type="Array(double)" value="{-1.0, 2.0}"/>     
+        <Parameter name="Min And Max Of Random Parameter Guess" type="Array(double)" value="{-1.0, 2.0}"/>
         <Parameter name="Bound Constrained" type="bool" value="true"/>
         <Parameter name="bound_eps" type="double" value="0.1"/>
         <!-- ===========  BEGIN ROL INPUT PARAMETER SUBLIST  =========== -->
@@ -79,7 +79,7 @@
             <Parameter name="Inexact Hessian-Times-A-Vector"         type="bool" value="false" />
             <!-- ===========  BOUND CONSTRAINED CRITICALITY MEASURE  =========== -->
             <Parameter name="Projected Gradient Criticality Measure" type="bool" value="false" />
-  
+
             <!-- ===========  SECANT INPUTS  =========== -->
             <ParameterList name="Secant">
               <Parameter name="Type"                   type="string" value="Limited-Memory BFGS" />
@@ -89,7 +89,7 @@
               <Parameter name="Maximum Storage"        type="int"    value="50"                  />
               <Parameter name="Barzilai-Borwein Type"  type="int"    value="1"                   />
             </ParameterList>
-  
+
             <!-- ===========  KRYLOV INPUTS  =========== -->
             <ParameterList name="Krylov">
               <Parameter name="Type"               type="string" value="Conjugate Gradients" />
@@ -98,7 +98,7 @@
               <Parameter name="Iteration Limit"    type="int"    value="100"                 />
             </ParameterList>
           </ParameterList>
-        
+
           <!-- ===========  STEP SUBLIST  =========== -->
           <ParameterList name="Step">
             <!-- ===========  LINE SEARCH  =========== -->
@@ -112,10 +112,10 @@
               <!-- ===========  DESCENT ALGORITHM SPECIFICATION  =========== -->
               <ParameterList name="Descent Method">
                 <!--Parameter name="Type"              type="string" value="Newton-Krylov"    /-->
-                <Parameter name="Type"              type="string" value="Quasi-Newton"    /> 
+                <Parameter name="Type"              type="string" value="Quasi-Newton"    />
                 <Parameter name="Nonlinear CG Type" type="string" value="Hestenes-Stiefel" />
               </ParameterList>
-      
+
               <!-- ===========  CURVATURE CONDITION SPECIFICATION  =========== -->
               <ParameterList name="Curvature Condition">
                 <!--Parameter name="Type"                        type="string" value="Generalized Wolfe Conditions" /-->
@@ -123,7 +123,7 @@
                 <Parameter name="General Parameter"           type="double" value="0.9"                     />
                 <Parameter name="Generalized Wolfe Parameter" type="double" value="0.6"                     />
               </ParameterList>
-      
+
               <!-- ===========  LINE-SEARCH ALGORITHM SPECIFICATION  =========== -->
               <ParameterList name="Line-Search Method">
                 <!--Parameter name="Type"                         type="string" value="Backtracking" /-->
@@ -137,7 +137,7 @@
                 </ParameterList>
               </ParameterList>
             </ParameterList>
-              
+
             <!-- ===========  TRUST REGION  =========== -->
             <ParameterList name="Trust Region">
               <Parameter name="Subproblem Solver"                    type="string" value="Truncated CG" />
@@ -150,10 +150,10 @@
               <Parameter name="Radius Shrinking Rate (Positive rho)" type="double" value="0.25"         />
               <Parameter name="Radius Growing Rate"                  type="double" value="2.5"          />
               <Parameter name="Safeguard Size"                       type="double" value="1.e8"         />
-      
+
               <!-- ===========  CONTROLS FOR INEXACTNESS  =========== -->
               <ParameterList name="Inexact">
-      
+
                 <!-- ===========  INEXACT OBJECTIVE VALUE UPDATE  =========== -->
                 <ParameterList name="Value">
                   <Parameter name="Tolerance Scaling"                 type="double" value="1.e-1" />
@@ -162,17 +162,17 @@
                   <Parameter name="Forcing Sequence Update Frequency" type="int"    value="10"    />
                   <Parameter name="Forcing Sequence Reduction Factor" type="double" value="0.1"   />
                 </ParameterList>
-      
+
                 <!-- ===========  INEXACT GRADIENT UPDATE  =========== -->
                 <ParameterList name="Gradient">
                   <Parameter name="Tolerance Scaling"  type="double" value="1.e-1" />
                   <Parameter name="Relative Tolerance" type="double" value="2.0"   />
                 </ParameterList>
               </ParameterList>
-            </ParameterList>   
-              
+            </ParameterList>
+
           </ParameterList>
-            
+
           <!-- ===========  STATUS TEST SUBLIST  =========== -->
           <ParameterList name="Status Test">
             <Parameter name="Gradient Tolerance"   type="double" value="1.e-10" />
@@ -180,7 +180,7 @@
             <Parameter name="Step Tolerance"       type="double" value="1.e-14" />
             <Parameter name="Iteration Limit"      type="int"    value="1000"   />
           </ParameterList>
-          
+
         </ParameterList>
       </ParameterList>
     </ParameterList>
@@ -188,84 +188,84 @@
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>
       <ParameterList name="Predictor">
-	<ParameterList name="First Step Predictor"/>
-	<ParameterList name="Last Step Predictor"/>
+  <ParameterList name="First Step Predictor"/>
+  <ParameterList name="Last Step Predictor"/>
       </ParameterList>
       <ParameterList name="Step Size"/>
       <ParameterList name="Stepper">
-	<ParameterList name="Eigensolver"/>
+  <ParameterList name="Eigensolver"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="NOX">
       <ParameterList name="Direction">
-	<Parameter name="Method" type="string" value="Newton"/>
-	<ParameterList name="Newton">
-	  <Parameter name="Forcing Term Method" type="string" value="Constant"/>
-	  <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
-	  <ParameterList name="Stratimikos Linear Solver">
-	    <ParameterList name="NOX Stratimikos Options">
-	    </ParameterList>
-	    <ParameterList name="Stratimikos">
-	      <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
-	      <ParameterList name="Linear Solver Types">
-		<ParameterList name="AztecOO">
-		  <ParameterList name="Forward Solve"> 
-		    <ParameterList name="AztecOO Settings">
-		      <Parameter name="Aztec Solver" type="string" value="GMRES"/>
-		      <Parameter name="Convergence Test" type="string" value="r0"/>
-		      <Parameter name="Size of Krylov Subspace" type="int" value="200"/>
-		      <Parameter name="Output Frequency" type="int" value="10"/>
-		    </ParameterList>
-		    <Parameter name="Max Iterations" type="int" value="200"/>
-		    <Parameter name="Tolerance" type="double" value="1e-7"/>
-		  </ParameterList>
-		</ParameterList>
-		<ParameterList name="Belos">
-		  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
-		  <ParameterList name="Solver Types">
-		    <ParameterList name="Block GMRES">
-		      <Parameter name="Convergence Tolerance" type="double" value="1e-7"/>
-		      <Parameter name="Output Frequency" type="int" value="10"/>
-		      <Parameter name="Output Style" type="int" value="1"/>
-		      <Parameter name="Verbosity" type="int" value="33"/>
-		      <Parameter name="Maximum Iterations" type="int" value="100"/>
-		      <Parameter name="Block Size" type="int" value="1"/>
-		      <Parameter name="Num Blocks" type="int" value="50"/>
-		      <Parameter name="Flexible Gmres" type="bool" value="0"/>
-		    </ParameterList>
-		  </ParameterList>
-		</ParameterList>
-	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
-	      <ParameterList name="Preconditioner Types">
-		<ParameterList name="Ifpack">
-		  <Parameter name="Overlap" type="int" value="1"/>
-		  <Parameter name="Prec Type" type="string" value="ILU"/>
-		  <ParameterList name="Ifpack Settings">
-		    <Parameter name="fact: drop tolerance" type="double" value="0"/>
-		    <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
-		    <Parameter name="fact: level-of-fill" type="int" value="1"/>
-		  </ParameterList>
-		</ParameterList>
-	      </ParameterList>
-	    </ParameterList>
-	  </ParameterList>
-	</ParameterList>
+  <Parameter name="Method" type="string" value="Newton"/>
+  <ParameterList name="Newton">
+    <Parameter name="Forcing Term Method" type="string" value="Constant"/>
+    <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
+    <ParameterList name="Stratimikos Linear Solver">
+      <ParameterList name="NOX Stratimikos Options">
+      </ParameterList>
+      <ParameterList name="Stratimikos">
+        <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
+        <ParameterList name="Linear Solver Types">
+    <ParameterList name="AztecOO">
+      <ParameterList name="Forward Solve">
+        <ParameterList name="AztecOO Settings">
+          <Parameter name="Aztec Solver" type="string" value="GMRES"/>
+          <Parameter name="Convergence Test" type="string" value="r0"/>
+          <Parameter name="Size of Krylov Subspace" type="int" value="200"/>
+          <Parameter name="Output Frequency" type="int" value="10"/>
+        </ParameterList>
+        <Parameter name="Max Iterations" type="int" value="200"/>
+        <Parameter name="Tolerance" type="double" value="1e-7"/>
+      </ParameterList>
+    </ParameterList>
+    <ParameterList name="Belos">
+      <Parameter name="Solver Type" type="string" value="Block GMRES"/>
+      <ParameterList name="Solver Types">
+        <ParameterList name="Block GMRES">
+          <Parameter name="Convergence Tolerance" type="double" value="1e-7"/>
+          <Parameter name="Output Frequency" type="int" value="10"/>
+          <Parameter name="Output Style" type="int" value="1"/>
+          <Parameter name="Verbosity" type="int" value="33"/>
+          <Parameter name="Maximum Iterations" type="int" value="100"/>
+          <Parameter name="Block Size" type="int" value="1"/>
+          <Parameter name="Num Blocks" type="int" value="50"/>
+          <Parameter name="Flexible Gmres" type="bool" value="0"/>
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
+        </ParameterList>
+        <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+        <ParameterList name="Preconditioner Types">
+    <ParameterList name="Ifpack">
+      <Parameter name="Overlap" type="int" value="1"/>
+      <Parameter name="Prec Type" type="string" value="ILU"/>
+      <ParameterList name="Ifpack Settings">
+        <Parameter name="fact: drop tolerance" type="double" value="0"/>
+        <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
+        <Parameter name="fact: level-of-fill" type="int" value="1"/>
+      </ParameterList>
+    </ParameterList>
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
+  </ParameterList>
       </ParameterList>
       <ParameterList name="Line Search">
-	<ParameterList name="Full Step">
-	  <Parameter name="Full Step" type="double" value="1"/>
-	</ParameterList>
-	<Parameter name="Method" type="string" value="Full Step"/>
+  <ParameterList name="Full Step">
+    <Parameter name="Full Step" type="double" value="1"/>
+  </ParameterList>
+  <Parameter name="Method" type="string" value="Full Step"/>
       </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
-	<Parameter name="Output Information" type="int" value="103"/>
-	<!--Parameter name="Output Information" type="int" value="127"/-->
-	<Parameter name="Output Precision" type="int" value="3"/>
+  <Parameter name="Output Information" type="int" value="103"/>
+  <!--Parameter name="Output Information" type="int" value="127"/-->
+  <Parameter name="Output Precision" type="int" value="3"/>
       </ParameterList>
       <ParameterList name="Solver Options">
-	<Parameter name="Status Test Check Type" type="string" value="Minimal"/>
+  <Parameter name="Status Test Check Type" type="string" value="Minimal"/>
       </ParameterList>
     </ParameterList>
   </ParameterList>
