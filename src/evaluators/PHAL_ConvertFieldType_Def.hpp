@@ -18,19 +18,19 @@ template<typename EvalT, typename Traits, typename InputType, typename OutputTyp
 ConvertFieldType<EvalT, Traits, InputType, OutputType>::ConvertFieldType(const Teuchos::ParameterList& p) {
   std::string input_field_name, output_field_name;
   if(p.isParameter("Input Field Name") && p.isParameter("Output Field Name")) {
-    input_field_name = p.get<std::string>("Input Field Name"); 
-    output_field_name = p.get<std::string>("Output Field Name"); 
+    input_field_name = p.get<std::string>("Input Field Name");
+    output_field_name = p.get<std::string>("Output Field Name");
   } else if (p.isParameter("Field Name")) {
     input_field_name = output_field_name = p.get<std::string>("Field Name");
   } else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Field Name not set.\n");
   in_field = PHX::MDField<InputType>(input_field_name, p.get<Teuchos::RCP<PHX::DataLayout> >("Data Layout"));
   out_field = PHX::MDField<OutputType>(output_field_name, p.get<Teuchos::RCP<PHX::DataLayout> >("Data Layout"));
-    
-  this->addDependentField(in_field);
+
+  this->addDependentField(in_field.fieldTag());
   this->addEvaluatedField(out_field);
 
   this->setName("ConvertFieldType");
-  
+
   PHX::MDField<InputType> in_field;
 }
 
