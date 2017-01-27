@@ -232,43 +232,41 @@ ScatterResidual(const Teuchos::ParameterList& p,
 }
 // **********************************************************************
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-//Kokkos kernels:
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank0_is_adjoint_Tag& tag, const int& cell) const
 {
-// const int neq = workset.wsElNodeEqID[0][0].size();
-//  const int nunk = neq*this->numNodes;
-  //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
+  //const int neq = workset.wsElNodeEqID[0][0].size();
+  //const int nunk = neq*this->numNodes;
+  // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO colT[500];
   LO rowT;
   //std::vector<LO> colT(nunk);
- // colT=(LO*) Kokkos::cuda_malloc<PHX::Device>(nunk*sizeof(LO));
+  //colT=(LO*) Kokkos::cuda_malloc<PHX::Device>(nunk*sizeof(LO));
 
-  if (nunk>500) 
-       Kokkos::abort ("ERROR (ScatterResidual): nunk >500");
+  if (nunk>500) Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
 
-  for (int node_col=0; node_col<this->numNodes; node_col++){
-      for (int eq_col=0; eq_col<neq; eq_col++) {
-        colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
-      }
+  for (int node_col=0; node_col<this->numNodes; node_col++) {
+    for (int eq_col=0; eq_col<neq; eq_col++) {
+      colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
     }
+  }
 
-   for (int node = 0; node < this->numNodes; ++node) {
-      for (int eq = 0; eq < numFields; eq++) {
-          rowT= Index(cell,node,this->offset + eq);
-           if (loadResid) 
-              fT->sumIntoLocalValue(rowT, ((this->val[eq])(cell,node)).val());
-           if (((this->val[eq])(cell,node)).hasFastAccess()) {  
-               for (int lunk=0; lunk<nunk; lunk++){
-                   ST val = ((this->val[eq])(cell,node)).fastAccessDx(lunk);
-                    jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val, false, true); 
-               }
-            }//has fast access
-      }
-   }
+  for (int node = 0; node < this->numNodes; ++node) {
+    for (int eq = 0; eq < numFields; eq++) {
+      rowT = Index(cell,node,this->offset + eq);
+      if (loadResid) 
+        Kokkos::atomic_fetch_add(&f_nonconstView(rowT), ((this->val[eq])(cell,node)).val());
 
+      if (((this->val[eq])(cell,node)).hasFastAccess()) {  
+        for (int lunk=0; lunk<nunk; lunk++){
+          ST val = ((this->val[eq])(cell,node)).fastAccessDx(lunk);
+          jacobian.sumIntoValues(colT[lunk], &rowT, 1, &val, false, true); 
+        }
+      }//has fast access
+    }
+  }
 }
 
 template<typename Traits>
@@ -276,49 +274,46 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank0_no_adjoint_Tag& tag, const int& cell) const
 {
-//  const int neq = workset.wsElNodeEqID[0][0].size();
-//  const int nunk = neq*this->numNodes;
-  //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
+  //const int neq = workset.wsElNodeEqID[0][0].size();
+  //const int nunk = neq*this->numNodes;
+  // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   //colT=(LO*) Kokkos::cuda_malloc<PHX::Device>(nunk*sizeof(LO));
   LO rowT;
   LO colT[500];
   ST vals[500];
- // std::vector<LO> colT(nunk);
+  //std::vector<LO> colT(nunk);
   //std::vector<ST> vals(nunk);
 
-  if (nunk>500)
-       Kokkos::abort ("ERROR (ScatterResidual): nunk >500");
+  if (nunk>500) Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
 
-  for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
-      for (int eq_col=0; eq_col<neq; eq_col++) {
-        colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
+  for (int node_col=0, i=0; node_col<this->numNodes; node_col++) {
+    for (int eq_col=0; eq_col<neq; eq_col++) {
+      colT[neq * node_col + eq_col] = Index(cell,node_col,eq_col);
+    }
+  }
+
+  for (int node = 0; node < this->numNodes; ++node) {
+    for (int eq = 0; eq < numFields; eq++) {
+      rowT = Index(cell,node,this->offset + eq);
+      if (loadResid)
+        Kokkos::atomic_fetch_add(&f_nonconstView(rowT), ((this->val[eq])(cell,node)).val());
+
+      if (((this->val[eq])(cell,node)).hasFastAccess()) {
+        for (int i = 0; i < nunk; ++i) vals[i] = this->val[eq](cell,node).fastAccessDx(i);
+        jacobian.sumIntoValues(rowT, colT, nunk, vals, false, true);
       }
     }
-
-   for (int node = 0; node < this->numNodes; ++node) {
-      for (int eq = 0; eq < numFields; eq++) {
-          rowT = Index(cell,node,this->offset + eq);
-           if (loadResid)
-              fT->sumIntoLocalValue(rowT, ((this->val[eq])(cell,node)).val());
-           if (((this->val[eq])(cell,node)).hasFastAccess()) {
-             for (int i = 0; i < nunk; ++i) vals[i] = this->val[eq](cell,node).fastAccessDx(i);
-                jacobian.sumIntoValues(rowT, colT, nunk,  vals, false, true);
-//              jacobian.sumIntoValues(rowT, &colT[0], nunk,  &vals[0], true);  
-        }
-      }
-   }
-
+  }
 }
-
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank1_is_adjoint_Tag& tag, const int& cell) const
 {
-//  const int neq = workset.wsElNodeEqID[0][0].size();
-//  const int nunk = neq*this->numNodes;
-  //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
+  //const int neq = workset.wsElNodeEqID[0][0].size();
+  //const int nunk = neq*this->numNodes;
+  // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO colT[500];
   LO rowT;
   ST vals[500];
@@ -326,29 +321,28 @@ operator()(const ScatterRank1_is_adjoint_Tag& tag, const int& cell) const
   //std::vector<LO> colT(nunk);
   //colT=(LO*) Kokkos::malloc<PHX::Device>(nunk*sizeof(LO));
 
-  if (nunk>500)
-       Kokkos::abort ("ERROR (ScatterResidual): nunk >500");
+  if (nunk>500) Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
 
-  for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
-      for (int eq_col=0; eq_col<neq; eq_col++) {
-        colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
-      }
+  for (int node_col=0, i=0; node_col<this->numNodes; node_col++) {
+    for (int eq_col=0; eq_col<neq; eq_col++) {
+      colT[neq * node_col + eq_col] = Index(cell,node_col,eq_col);
     }
+  }
 
-   for (int node = 0; node < this->numNodes; ++node) {
-      for (int eq = 0; eq < numFields; eq++) {
-          rowT= Index(cell,node,this->offset + eq);
-           if (loadResid)
-              fT->sumIntoLocalValue(rowT, ((this->valVec)(cell,node,eq)).val());
-           if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
-               for (int lunk=0; lunk<nunk; lunk++){
-                   ST val = ((this->valVec)(cell,node,eq)).fastAccessDx(lunk);
-                    jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val, false, true);
-               }
-            }//has fast access
-      }
-   }
+  for (int node = 0; node < this->numNodes; ++node) {
+    for (int eq = 0; eq < numFields; eq++) {
+      rowT = Index(cell,node,this->offset + eq);
+      if (loadResid)
+        Kokkos::atomic_fetch_add(&f_nonconstView(rowT), ((this->valVec)(cell,node,eq)).val());
 
+      if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
+        for (int lunk=0; lunk<nunk; lunk++){
+          ST val = ((this->valVec)(cell,node,eq)).fastAccessDx(lunk);
+          jacobian.sumIntoValues(colT[lunk], &rowT, 1, &val, false, true);
+        }
+      }//has fast access
+    }
+  }
 }
 
 template<typename Traits>
@@ -356,9 +350,9 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank1_no_adjoint_Tag& tag, const int& cell) const
 {
- // const int neq = workset.wsElNodeEqID[0][0].size();
-//  const int nunk = neq*this->numNodes;
-//  //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
+  //const int neq = workset.wsElNodeEqID[0][0].size();
+  //const int nunk = neq*this->numNodes;
+  // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO colT[500];
   LO rowT;
   ST vals[500];
@@ -366,28 +360,26 @@ operator()(const ScatterRank1_no_adjoint_Tag& tag, const int& cell) const
   //colT=(LO*) Kokkos::malloc<PHX::Device>(nunk*sizeof(LO));
   //std::vector<ST> vals(nunk);
 
-  if (nunk>500)
-       Kokkos::abort ("ERROR (ScatterResidual): nunk >500");
+  if (nunk>500) Kokkos::abort ("ERROR (ScatterResidual): nunk > 500");
 
-  for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
-      for (int eq_col=0; eq_col<neq; eq_col++) {
-        colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
+  for (int node_col=0, i=0; node_col<this->numNodes; node_col++) {
+    for (int eq_col=0; eq_col<neq; eq_col++) {
+      colT[neq * node_col + eq_col] = Index(cell,node_col,eq_col);
+    }
+  }
+
+  for (int node = 0; node < this->numNodes; ++node) {
+    for (int eq = 0; eq < numFields; eq++) {
+      rowT = Index(cell,node,this->offset + eq);
+      if (loadResid)
+        Kokkos::atomic_fetch_add(&f_nonconstView(rowT), ((this->valVec)(cell,node,eq)).val());
+
+      if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
+        for (int i = 0; i < nunk; ++i) vals[i] = (this->valVec)(cell,node,eq).fastAccessDx(i);
+        jacobian.sumIntoValues(rowT, colT, nunk, vals, false, true);
       }
     }
-
-   for (int node = 0; node < this->numNodes; ++node) {
-      for (int eq = 0; eq < numFields; eq++) {
-          rowT = Index(cell,node,this->offset + eq);
-           if (loadResid)
-              fT->sumIntoLocalValue(rowT, ((this->valVec)(cell,node,eq)).val());
-           if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
-             for (int i = 0; i < nunk; ++i) vals[i] = (this->valVec)(cell,node,eq).fastAccessDx(i);
-              jacobian.sumIntoValues(rowT, colT, nunk,  vals, false, true);
-//              jacobian.sumIntoValues(rowT, &colT[0], nunk, &vals[0], true);
-        }
-      }
-   }
-
+  }
 }
 
 template<typename Traits>
@@ -396,36 +388,35 @@ void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank2_is_adjoint_Tag& tag, const int& cell) const
 {
   //const int neq = workset.wsElNodeEqID[0][0].size();
-//  const int nunk = neq*this->numNodes;
-  //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
+  //const int nunk = neq*this->numNodes;
+  // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
   LO colT[500];
   LO rowT;
-//  std::vector<LO> colT(nunk);
-//  colT=(LO*) Kokkos::malloc<PHX::Device>(nunk*sizeof(LO));
+  //std::vector<LO> colT(nunk);
+  //colT=(LO*) Kokkos::malloc<PHX::Device>(nunk*sizeof(LO));
 
-  if (nunk>500)
-       Kokkos::abort ("ERROR (ScatterResidual): nunk >500");
+  if (nunk>500) Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
 
-  for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
-      for (int eq_col=0; eq_col<neq; eq_col++) {
-        colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
-      }
+  for (int node_col=0, i=0; node_col<this->numNodes; node_col++) {
+    for (int eq_col=0; eq_col<neq; eq_col++) {
+      colT[neq * node_col + eq_col] = Index(cell,node_col,eq_col);
     }
+  }
 
-   for (int node = 0; node < this->numNodes; ++node) {
-      for (int eq = 0; eq < numFields; eq++) {
-          rowT= Index(cell,node,this->offset + eq);
-           if (loadResid)
-              fT->sumIntoLocalValue(rowT, ((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).val());
-           if (((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).hasFastAccess()) {
-               for (int lunk=0; lunk<nunk; lunk++){
-                    ST val = ((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).fastAccessDx(lunk);
-                    jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val, false, true);
-               }
-            }//has fast access
-      }
-   }
+  for (int node = 0; node < this->numNodes; ++node) {
+    for (int eq = 0; eq < numFields; eq++) {
+      rowT = Index(cell,node,this->offset + eq);
+      if (loadResid)
+        Kokkos::atomic_fetch_add(&f_nonconstView(rowT), ((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).val());
 
+      if (((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).hasFastAccess()) {
+        for (int lunk=0; lunk<nunk; lunk++) {
+          ST val = ((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).fastAccessDx(lunk);
+          jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val, false, true);
+        }
+      }//has fast access
+    }
+  }
 }
 
 template<typename Traits>
@@ -434,37 +425,35 @@ void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank2_no_adjoint_Tag& tag, const int& cell) const
 {
   //const int neq = workset.wsElNodeEqID[0][0].size();
-//  const int nunk = neq*this->numNodes;
-   //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
-   LO colT[500];
-   LO rowT;
-   ST vals[500];
-   //std::vector<LO> colT(nunk);
-   //colT=(LO*) Kokkos::malloc<PHX::Device>(nunk*sizeof(LO));
-   //std::vector<ST> vals(nunk);
+  //const int nunk = neq*this->numNodes;
+  // Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
+  LO colT[500];
+  LO rowT;
+  ST vals[500];
+  //std::vector<LO> colT(nunk);
+  //colT=(LO*) Kokkos::malloc<PHX::Device>(nunk*sizeof(LO));
+  //std::vector<ST> vals(nunk);
 
-   if (nunk>500)
-       Kokkos::abort ("ERROR (ScatterResidual): nunk >500");
+  if (nunk>500) Kokkos::abort("ERROR (ScatterResidual): nunk > 500");
 
-  for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
-      for (int eq_col=0; eq_col<neq; eq_col++) {
-        colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
+  for (int node_col=0, i=0; node_col<this->numNodes; node_col++) {
+    for (int eq_col=0; eq_col<neq; eq_col++) {
+      colT[neq * node_col + eq_col] = Index(cell,node_col,eq_col);
+    }
+  }
+
+  for (int node = 0; node < this->numNodes; ++node) {
+    for (int eq = 0; eq < numFields; eq++) {
+      rowT = Index(cell,node,this->offset + eq);
+      if (loadResid)
+        Kokkos::atomic_fetch_add(&f_nonconstView(rowT), ((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).val());
+
+      if (((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).hasFastAccess()) {
+        for (int i = 0; i < nunk; ++i) vals[i] = (this->valTensor[0])(cell,node, eq/numDim, eq%numDim).fastAccessDx(i);
+        jacobian.sumIntoValues(rowT, colT, nunk,  vals, false, true);
       }
     }
-
-   for (int node = 0; node < this->numNodes; ++node) {
-      for (int eq = 0; eq < numFields; eq++) {
-          rowT = Index(cell,node,this->offset + eq);
-           if (loadResid)
-              fT->sumIntoLocalValue(rowT, ((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).val());
-           if (((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).hasFastAccess()) {
-             for (int i = 0; i < nunk; ++i) vals[i] = (this->valTensor[0])(cell,node, eq/numDim, eq%numDim).fastAccessDx(i);
-              jacobian.sumIntoValues(rowT, colT, nunk,  vals, false, true);
-           //   jacobian.sumIntoValues(rowT, &colT[0], nunk, &vals[0], true);
-        }
-      }
-   }
-
+  }
 }
 #endif
 // **********************************************************************
@@ -519,50 +508,49 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 #else
-   //Kokkos parallel execution
 #ifdef ALBANY_TIMER
   auto start = std::chrono::high_resolution_clock::now();
 #endif
-   fT = workset.fT;
-   JacT = workset.JacT;
-   Index=workset.wsElNodeEqID_kokkos;
 
-   jacobian=JacT->getLocalMatrix();
+  // Tpetra getLocalView is needed to obtain a Kokkos View from a specific device
+  loadResid = Teuchos::nonnull(workset.fT);
+  if (loadResid) {
+    auto fT_2d = workset.fT->template getLocalView<PHX::Device>();
+    f_nonconstView = Kokkos::subview(fT_2d, Kokkos::ALL(), 0);
+  }
+  jacobian = workset.JacT->getLocalMatrix();
 
-   loadResid = Teuchos::nonnull(fT);
+  Index = workset.wsElNodeEqID_kokkos;
+  neq = workset.wsElNodeEqID[0][0].size();
+  nunk = neq*this->numNodes;
+  numDim = 0;
+  if (this->tensorRank==2) numDim = this->valTensor[0].dimension(2);
 
-   neq = workset.wsElNodeEqID[0][0].size();
-   nunk = neq*this->numNodes;
+  if (this->tensorRank == 0) {
+    if (workset.is_adjoint) 
+      Kokkos::parallel_for(ScatterRank0_is_adjoint_Policy(0,workset.numCells),*this);  
+    else
+      Kokkos::parallel_for(ScatterRank0_no_adjoint_Policy(0,workset.numCells),*this);
+  }
+  else  if (this->tensorRank == 1) {
+    if (workset.is_adjoint) 
+      Kokkos::parallel_for(ScatterRank1_is_adjoint_Policy(0,workset.numCells),*this);
+    else
+      Kokkos::parallel_for(ScatterRank1_no_adjoint_Policy(0,workset.numCells),*this);
+  }
+  else if (this->tensorRank == 2) {
+    if (workset.is_adjoint) 
+      Kokkos::parallel_for(ScatterRank2_is_adjoint_Policy(0,workset.numCells),*this);
+    else
+      Kokkos::parallel_for(ScatterRank2_no_adjoint_Policy(0,workset.numCells),*this);
+  }
 
-   numDim=0;
-   if(this->tensorRank==2)
-     numDim = this->valTensor[0].dimension(2);
-
-   if (this->tensorRank == 0) {
-      if (workset.is_adjoint) 
-         Kokkos::parallel_for(ScatterRank0_is_adjoint_Policy(0,workset.numCells),*this);  
-      else
-         Kokkos::parallel_for(ScatterRank0_no_adjoint_Policy(0,workset.numCells),*this);
-   }
-   else  if (this->tensorRank == 1) {
-       if (workset.is_adjoint) 
-          Kokkos::parallel_for(ScatterRank1_is_adjoint_Policy(0,workset.numCells),*this);
-       else
-          Kokkos::parallel_for(ScatterRank1_no_adjoint_Policy(0,workset.numCells),*this);
-
-   }
-   else if (this->tensorRank == 2) {
-        if (workset.is_adjoint) 
-            Kokkos::parallel_for(ScatterRank2_is_adjoint_Policy(0,workset.numCells),*this);
-        else
-            Kokkos::parallel_for(ScatterRank2_no_adjoint_Policy(0,workset.numCells),*this);
-   }
 #ifdef ALBANY_TIMER
   PHX::Device::fence();
- auto elapsed = std::chrono::high_resolution_clock::now() - start;
- long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
- long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
- std::cout<< "Scatter Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
+  auto elapsed = std::chrono::high_resolution_clock::now() - start;
+  long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+  long long millisec= std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+  std::cout<< "Scatter Jacobian time = "  << millisec << "  "  << microseconds << std::endl;
 #endif 
 #endif
 }
