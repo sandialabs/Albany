@@ -145,7 +145,8 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   int cub = params->get("Cubature Degree", 3);
   int basalWorksetSize = basalMeshStruct->getMeshSpecs()[0]->worksetSize;
   int worksetSizeMax = params->get("Workset Size", 50);
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, basalWorksetSize);
+  int numElemsInColumn = params->get<int>("NumLayers")*((ElemShape==Tetrahedron) ? 3 : 1);
+  int worksetSize = this->computeWorksetSize(worksetSizeMax, basalWorksetSize*numElemsInColumn);
 
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 

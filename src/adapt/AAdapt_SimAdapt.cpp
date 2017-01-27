@@ -21,7 +21,6 @@ SimAdapt::SimAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                    const Teuchos::RCP<const Teuchos_Comm>& commT_):
   AbstractAdapterT(params_, paramLib_, StateMgr_, commT_)
 {
-  errorBound = params_->get<double>("Error Bound", 0.1);
 }
 
 bool SimAdapt::queryAdaptationCriteria(int iteration)
@@ -78,15 +77,48 @@ bool SimAdapt::adaptMesh()
   bool should_transfer_ip_data = adapt_params_->get<bool>("Transfer IP Data", false);
   /* remove this assert when Simmetrix support IP transfer */
   assert(!should_transfer_ip_data);
-  /* compute the size field via SPR error estimation
-     on the solution gradient */
-  apf::Field* sol_flds[3];
-  for (int i = 0; i <= apf_ms->num_time_deriv; ++i)
-    sol_flds[i] = apf_m->findField(Albany::APFMeshStruct::solution_name[i]);
-  apf::Field* grad_ip_fld = spr::getGradIPField(sol_flds[0], "grad_sol",
-      apf_ms->cubatureDegree);
-  apf::Field* size_fld = spr::getSPRSizeField(grad_ip_fld, errorBound);
+
+  /* grab the solution fields from the discretization.
+     here we assume that the apf_ms->num_time_deriv = 0
+     I think this is currently valid for all Sim* problems. */
+  Albany::SolutionLayout soln_layout = sim_disc->getSolutionLayout();
+  std::vector<apf::Field*> soln_fields;
+  Teuchos::Array<std::string> soln_field_names = soln_layout.getDerivNames(0);
+  int num_soln_fields = soln_layout.getNumSolFields();
+  assert( soln_field_names.size() == num_soln_fields );
+  for (int i=0; i < num_soln_fields; ++i) {
+    soln_fields.push_back(apf_m->findField(soln_field_names[i].c_str()));
+    assert( soln_fields[i] );
+  }
+
+  /* grab the residual fields from the discretization */
+  std::vector<apf::Field*> res_fields;
+  Teuchos::Array<std::string> res_names = sim_disc->getResNames();
+  assert( res_names.size() == num_soln_fields );
+  for (int i=0; i < num_soln_fields; ++i) {
+    res_fields.push_back(apf_m->findField(res_names[i].c_str()));
+    assert( res_fields[i] );
+  }
+
+  /* compute the size field via SPR error estimation on the gradient
+     of the chosen solution field. */
+  int spr_idx = adapt_params_->get<int>("SPR Solution Index", 0);
+  apf::Field* grad_ip_fld = spr::getGradIPField(
+      soln_fields[spr_idx], "grad_sol", apf_ms->cubatureDegree);
+  apf::Field* size_fld;
+  if (adapt_params_->isType<long int>("Target Element Count")) {
+    long N = adapt_params_->get<long int>("Target Element Count");
+    size_fld = spr::getTargetSPRSizeField(grad_ip_fld, N);
+  }
+  else if (adapt_params_->isType<double>("Error Bound")) {
+    double error_bound = adapt_params_->get<double>("Error Bound", 0.1);
+    size_fld = spr::getSPRSizeField(grad_ip_fld, error_bound);
+  }
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "invalid SimAdapt SPR inputs\n");
   apf::destroyField(grad_ip_fld);
+
 #ifdef SIMDEBUG
   /* write the mesh with size field to file */
   std::stringstream ss;
@@ -94,8 +126,10 @@ bool SimAdapt::adaptMesh()
   std::string s = ss.str();
   apf::writeVtkFiles(s.c_str(), apf_m);
 #endif
+
   /* create the Simmetrix adapter */
   pMSAdapt adapter = MSA_new(sim_pm, 1);
+
   /* copy the size field from APF to the Simmetrix adapter */
   apf::MeshEntity* v;
   apf::MeshIterator* it = apf_m->begin(0);
@@ -107,42 +141,49 @@ bool SimAdapt::adaptMesh()
   }
   apf_m->end(it);
   apf::destroyField(size_fld);
-  /* tell the adapter to transfer the solution and residual fields */
-  apf::Field* res_fld = apf_m->findField(Albany::APFMeshStruct::residual_name);
-  pField sim_sol_flds[3];
-  for (int i = 0; i <= apf_ms->num_time_deriv; ++i)
-    sim_sol_flds[i] = apf::getSIMField(sol_flds[i]);
-  pField sim_res_fld = apf::getSIMField(res_fld);
+
+  /* tell the Simmetrix adapter to transfer the soln/residual fields */
+  std::vector<pField> sim_soln_fields;
+  std::vector<pField> sim_res_fields;
   pPList sim_fld_lst = PList_new();
-  for (int i = 0; i <= apf_ms->num_time_deriv; ++i)
-    PList_append(sim_fld_lst, sim_sol_flds[i]);
-  PList_append(sim_fld_lst, sim_res_fld);
+  for (int i=0; i < num_soln_fields; ++i) {
+    sim_soln_fields.push_back(apf::getSIMField(soln_fields[i]));
+    sim_res_fields.push_back(apf::getSIMField(res_fields[i]));
+    PList_append(sim_fld_lst, sim_soln_fields[i]);
+    PList_append(sim_fld_lst, sim_res_fields[i]);
+  }
+
+  /* Append the old temperature state if specified to transfer
+     temperature at the nodes. */
   if (apf_ms->useTemperatureHack) {
-    /* transfer Temperature_old at the nodes */
     apf::Field* told_fld = apf_m->findField("temp_old");
+    assert(told_fld);
     pField sim_told_fld = apf::getSIMField(told_fld);
     PList_append(sim_fld_lst, sim_told_fld);
   }
+
   MSA_setMapFields(adapter, sim_fld_lst);
   PList_delete(sim_fld_lst);
 
 #ifdef SIMDEBUG
+  apf::writeVtkFiles("before", apf_m);
   char simname[80];
   sprintf(simname, "preadapt_%d.sms", callcount);
   PM_write(sim_pm, simname, sthreadDefault, 0);
-  for (int i = 0; i <= apf_ms->num_time_deriv; ++i) {
-    sprintf(simname, "preadapt_sol%d_%d.fld", i, callcount);
-    Field_write(sim_sol_flds[i], simname, 0, 0, 0);
+  for (int i = 0; i <= num_soln_fields; ++i) {
+    sprintf(simname, "preadapt_sol_%d_%d.fld", i, callcount);
+    Field_write(sim_soln_fields[i], simname, 0, 0, 0);
+    sprintf(simname, "preadpt_res_%d_%d.fld", i, callcount);
+    Field_write(sim_res_fields[i], simname, 0, 0, 0);
   }
-  sprintf(simname, "preadapt_res_%d.fld", callcount);
-  Field_write(sim_res_fld, simname, 0, 0, 0);
-  Albany::debugAMPMesh(apf_m, "before");
 #endif
+
   /* run the adapter */
   pProgress progress = Progress_new();
   MSA_adapt(adapter, progress);
   Progress_delete(progress);
   MSA_delete(adapter);
+
 #ifdef SIMDEBUG
   sprintf(simname, "adapted_%d.sms", callcount);
   PM_write(sim_pm, simname, sthreadDefault, 0);
@@ -157,10 +198,13 @@ bool SimAdapt::adaptMesh()
   
   /* run APF verification on the resulting mesh */
   apf_m->verify();
+
   /* update Albany structures to reflect the adapted mesh */
   sim_disc->updateMesh(should_transfer_ip_data, param_lib_);
+
   /* see the comment in Albany_APFDiscretization.cpp */
   sim_disc->initTemperatureHack();
+
   ++callcount;
   return true;
 }
@@ -177,6 +221,8 @@ AAdapt::SimAdapt::getValidAdapterParameters() const
   validPL->set<bool>("Add Layer", false, "Turn on/off adding layer");
   validPL->set<std::string>("Remesh Strategy", "", "Strategy for when to adapt");
   validPL->set<int>("Remesh Every N Step Number", 1, "Remesh every Nth load/time step");
+  validPL->set<int>("SPR Solution Index", 0, "Solution field index for SPR to operate on");
+  validPL->set<long int>("Target Element Count", 1000, "Desired number of elements for error-based adaptivity");
   return validPL;
 }
 

@@ -319,6 +319,12 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     //! Some evaluators may want access to the underlying apf mesh elements.
     std::vector<std::vector<apf::MeshEntity*> >& getBuckets() {return buckets;}
 
+    //! Get the solution vector layouts
+    SolutionLayout const& getSolutionLayout() { return solLayout; }
+
+    //! Get the residual field names
+    Teuchos::Array<std::string> const& getResNames() { return resNames; }
+
   private:
 
     //! Private to prohibit copying
