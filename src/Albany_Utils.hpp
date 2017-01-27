@@ -133,5 +133,28 @@ namespace Albany {
   void safe_sscanf(int nitems, const char* str, const char* format, ...);
   void safe_fgets(char* str, int size, FILE* stream);
   void safe_system(char const* str);
-}
+
+[[noreturn]] void assert_fail(char const* cond, char const* file, int line);
+[[noreturn]] void assert_fail(char const* cond, char const* file, int line,
+      char const* msg, ...);
+
+} // end namespace Albany
+
+#ifdef __CUDA_ARCH__
+// CUDA does support assert() in kernels
+#define ALBANY_ASSERT(cond, ...) assert(cond)
+#define ALBANY_ASSERT_STREAM(cond, stream) assert(cond)
+#else
+// we implicitly assume the "msg" is part of __VA_ARGS__,
+// due to the trailing comma problem (make sure __VA_ARGS__ is never empty)
+#define ALBANY_ASSERT(cond, ...)                                          \
+  ((cond) ? ((void)0) : \
+             Albany::assert_fail(#cond, __FILE__, __LINE__, __VA_ARGS__))
+#define ALBANY_ASSERT_STREAM(cond, stream)                                \
+  do { if (cond) { \
+    std::cerr stream; \
+    Albany::assert_fail(#cond, __FILE__, __LINE__); \
+  } } while (0)
+#endif
+
 #endif //ALBANY_UTILS

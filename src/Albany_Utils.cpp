@@ -48,24 +48,20 @@
   void 
   Albany::InvRowSum(Teuchos::RCP<Tpetra_Vector>& rowSumsTpetra, const Teuchos::RCP<Tpetra_CrsMatrix> matrix) {
     //Check that rowSumsTpetra and matrix have same map 
-    if (rowSumsTpetra->getMap()->isSameAs(*(matrix->getRowMap()))) {
-      rowSumsTpetra->putScalar(0.0);
-      Teuchos::ArrayRCP<double> rowSumsTpetra_nonconstView = rowSumsTpetra->get1dViewNonConst(); 
-      for (auto row=0; row<rowSumsTpetra->getLocalLength(); row++) {
-        auto numEntriesRow = matrix->getNumEntriesInLocalRow(row); 
-        Teuchos::Array<LO> indices(numEntriesRow); 
-        Teuchos::Array<ST> values(numEntriesRow); 
-        matrix->getLocalRowCopy(row, indices(), values(), numEntriesRow);
-        ST scale = 0.0; 
-        for (auto j=0; j < numEntriesRow; j++) scale += std::abs(values[j]);
-        if (scale < 1.0e-16) rowSumsTpetra_nonconstView[row] = 0.0; 
-        else rowSumsTpetra_nonconstView[row] = 1.0/scale; 
-      }
-    }
-    else {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl
-				 << "Error in Albany::InvRowSum!  "
-				 << "Input vector must have same map as row map of input matrix!" << std::endl);
+    ALBANY_ASSERT(rowSumsTpetra->getMap()->isSameAs(*(matrix->getRowMap())), 
+			 "\nError in Albany::InvRowSum!  "
+			 "Input vector must have same map as row map of input matrix!\n");
+    rowSumsTpetra->putScalar(0.0);
+    Teuchos::ArrayRCP<double> rowSumsTpetra_nonconstView = rowSumsTpetra->get1dViewNonConst(); 
+    for (auto row=0; row<rowSumsTpetra->getLocalLength(); row++) {
+      auto numEntriesRow = matrix->getNumEntriesInLocalRow(row); 
+      Teuchos::Array<LO> indices(numEntriesRow); 
+      Teuchos::Array<ST> values(numEntriesRow); 
+      matrix->getLocalRowCopy(row, indices(), values(), numEntriesRow);
+      ST scale = 0.0; 
+      for (auto j=0; j < numEntriesRow; j++) scale += std::abs(values[j]);
+      if (scale < 1.0e-16) rowSumsTpetra_nonconstView[row] = 0.0; 
+      else rowSumsTpetra_nonconstView[row] = 1.0/scale; 
     }
   }
 
@@ -181,8 +177,8 @@
   }
 
   double Albany::initStringToDouble(const std::string& initString) {
-    TEUCHOS_TEST_FOR_EXCEPTION(!Albany::isValidInitString(initString), std::range_error,
-			       " initStringToDouble() called with invalid initialization string: " + initString + "\n");
+    ALBANY_ASSERT(isValidInitString(initString),
+			       " initStringToDouble() called with invalid initialization string: %s\n", initString.c_str());
     std::string verbiage("initial value ");
     std::string valueString = initString.substr(verbiage.size(), initString.size() - verbiage.size());
     return std::atof(valueString.c_str());
@@ -326,8 +322,7 @@ void Albany::safe_fscanf(int nitems, FILE* file, const char* format, ...) {
   va_start(ap, format);
   int ret = vfscanf(file, format, ap);
   va_end(ap);
-  TEUCHOS_TEST_FOR_EXCEPTION(ret != nitems, std::runtime_error,
-		  ret << "=safe_fscanf(" << nitems << ", " << file << ", \"" << format << "\")\n");
+  ALBANY_ASSERT(ret == nitems, "%d=safe_fscanf(%d, %p, \"%s\")\n", ret, nitems, file, format);
 }
 
 void Albany::safe_sscanf(int nitems, const char* str, const char* format, ...) {
@@ -335,20 +330,33 @@ void Albany::safe_sscanf(int nitems, const char* str, const char* format, ...) {
   va_start(ap, format);
   int ret = vsscanf(str, format, ap);
   va_end(ap);
-  TEUCHOS_TEST_FOR_EXCEPTION(ret != nitems, std::runtime_error,
-		  ret << "=safe_sscanf(" << nitems << ", \"" << str << "\", \"" << format << "\")\n");
+  ALBANY_ASSERT(ret == nitems, "%d=safe_sscanf(%d, \"%s\", \"%s\")\n", ret, nitems, str, format);
 }
 
 void Albany::safe_fgets(char* str, int size, FILE* stream) {
   char* ret = fgets(str, size, stream);
-  TEUCHOS_TEST_FOR_EXCEPTION(ret != str, std::runtime_error,
-		  ret << "=safe_fgets(" << static_cast<void*>(str) << ", " << size << ", " << stream << ")\n");
+  ALBANY_ASSERT(ret == str, "%d=safe_fgets(%p, %d, %p)\n", ret, str, size, stream);
 }
 
 void Albany::safe_system(char const* str) {
-  TEUCHOS_TEST_FOR_EXCEPTION(!str, std::runtime_error,
-		  "safe_system called with null command string\n");
+  ALBANY_ASSERT(str, "safe_system called with null command string\n");
   int ret = system(str);
-  TEUCHOS_TEST_FOR_EXCEPTION(ret != 0, std::runtime_error,
-		  ret << "=safe_system(\"" << str << "\")\n");
+  ALBANY_ASSERT(str, "%d=safe_system(\"%s\")\n", ret, str);
+}
+
+void Albany::assert_fail(char const* cond, char const* file, int line) {
+  fprintf(stderr, "Albany assert %s failed at %s +%d\n",
+      cond, file, line);
+  abort();
+}
+
+void Albany::assert_fail(char const* cond, char const* file, int line,
+      char const* msg, ...) {
+  fprintf(stderr, "Albany assert %s failed at %s +%d\n",
+      cond, file, line);
+  va_list ap;
+  va_start(ap, msg);
+  vfprintf(stderr, msg, ap);
+  va_end(ap);
+  abort();
 }
