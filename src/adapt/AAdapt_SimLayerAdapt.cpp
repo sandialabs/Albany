@@ -9,18 +9,16 @@
 #include <MeshSimAdapt.h>
 #include <SimPartitionedMesh.h>
 #include <SimField.h>
-/* BRD */
 #include <SimModel.h>
-/* BRD */
 #include <apfSIM.h>
 #include <spr.h>
 #include <EnergyIntegral.hpp>
+#include <set>
 
 /* BRD */
 #include "PHAL_AlbanyTraits.hpp"
+extern VIter M_classificationVertexIter(pMesh, int);
 extern void DM_undoSlicing(pPList regions,int layerNum, pUnstructuredMesh mesh);
-extern void PM_localizePartiallyConnected(pParMesh);
-extern void MSA_setPrebalance(pMSAdapt,int);
 /* BRD */
 
 namespace AAdapt {
@@ -147,11 +145,8 @@ void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double la
   GRIter_delete(regions);
   
   pSurfaceMesher sm = SurfaceMesher_new(mcase,mesh);
-  // SurfaceMesher_setParamForDiscrete(sm, 1);
   SurfaceMesher_execute(sm,0);
   SurfaceMesher_delete(sm);
-  if (currentLayer==1)
-    PM_setTotalNumParts(mesh,PMU_size());
   pVolumeMesher vm  = VolumeMesher_new(mcase,mesh);
   VolumeMesher_setEnforceSize(vm, 1);
   VolumeMesher_execute(vm,0);
@@ -171,6 +166,7 @@ void addNextLayer(pParMesh sim_pm,double layerSize,int nextLayer, double initTem
   pGRegion gr1;
   int layer, maxLayer = -1;
   pPList combinedRegions = PList_new();
+  std::set<pGRegion> layGrs;
   while (gr1=GRIter_next(regions)) {
     if (GEN_numNativeIntAttribute(gr1,"SimLayer")==1) {
       GEN_nativeIntAttribute(gr1,"SimLayer",&layer);
@@ -178,13 +174,46 @@ void addNextLayer(pParMesh sim_pm,double layerSize,int nextLayer, double initTem
         PList_appUnique(combinedRegions,gr1);
       if (layer > maxLayer)
         maxLayer = layer;
+      if (layer == nextLayer)
+        layGrs.insert(gr1);
     }
   }
   GRIter_delete(regions);
   if ( nextLayer > maxLayer )
     return;
 
-  PM_localizePartiallyConnected(sim_pm);
+  pMesh mesh = PM_mesh(sim_pm, 0);
+  pMigrator mig = Migrator_new(sim_pm, 0);
+  Migrator_reset(mig, 3);
+  std::set<pRegion> doneRs;
+  int rank = PMU_rank();
+  if (rank != 0) {
+    VIter vi = M_classificationVertexIter(mesh, 3);
+    while (pVertex v = VIter_next(vi)) {
+      pGEntity gent = EN_whatIn(v);
+      for (std::set<pGRegion>::const_iterator layGrIt = layGrs.begin();
+           layGrIt != layGrs.end(); ++layGrIt) {
+        pGRegion layGr = *layGrIt;
+        if (GEN_inClosure(layGr, gent)) {
+          pPList vrs = V_regions(v);
+          int i, nvrs = PList_size(vrs);
+          for (i=0; i < nvrs; i++) {
+            pRegion r = static_cast<pRegion>(PList_item(vrs, i));
+            if (doneRs.find(r) == doneRs.end()) {
+              Migrator_add(mig, r, 0, rank);
+              doneRs.insert(r);
+            }
+          }
+          PList_delete(vrs);
+          break;
+        }
+      }
+    }
+    VIter_delete(vi);
+  }
+  Migrator_run(mig, 0);
+  Migrator_delete(mig);
+
   if (nextLayer>1) {
     *out << "Combine layer " << nextLayer-1 << "\n";
     DM_undoSlicing(combinedRegions,nextLayer-1,sim_pm);
@@ -373,11 +402,6 @@ bool SimLayerAdapt::adaptMesh()
   apf::Field* size_fld = spr::getSPRSizeField(grad_ip_fld, errorBound);
   apf::destroyField(grad_ip_fld);
 
-  pPartitionOpts popts = PartitionOpts_new();
-  PartitionOpts_setAdaptive(popts, 1);
-  PM_partition(sim_pm, popts, 0);
-  PartitionOpts_delete(popts);
-
   double sliceThickness;
   GIP_nativeDoubleAttribute(GM_part(Simmetrix_model),"SimLayerThickness",&sliceThickness);
 
@@ -486,9 +510,6 @@ bool SimLayerAdapt::adaptMesh()
 
   /* run the adapter */
   pProgress progress = Progress_new();
-  /* BRD */ 
-  MSA_setPrebalance(adapter, 0);
-  /* BRD */
   MSA_adapt(adapter, progress);
   Progress_delete(progress);
   MSA_delete(adapter);
