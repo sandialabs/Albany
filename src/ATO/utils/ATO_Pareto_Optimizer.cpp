@@ -141,8 +141,8 @@ Optimizer_Pareto::computeUpdatedTopology(double volFrac)
   }
 
   double tau_1, tau_2, tauMid;
-  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MIN, localTauMin, &tau_1);
-  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, localTauMax, &tau_2);
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MIN, localTauMin, Teuchos::ptr(&tau_1));
+  Teuchos::reduceAll(*comm, Teuchos::REDUCE_MAX, localTauMax, Teuchos::ptr(&tau_2));
 
   const double minDensity = topology->getBounds()[0];
 
