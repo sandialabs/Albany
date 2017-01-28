@@ -93,8 +93,6 @@ public:
   void evaluateFields(typename Traits::EvalData d); 
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Teuchos::RCP<Tpetra_Vector> fT;
-  Teuchos::RCP<Tpetra_CrsMatrix> JacT;
   typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
   LocalMatrixType jacobian;
   RealType mc;
