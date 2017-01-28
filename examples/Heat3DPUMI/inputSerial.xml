@@ -46,12 +46,12 @@
       </ParameterList>
     </ParameterList>
     <ParameterList name="NOX">
+      <ParameterList name="Linear Solver">
+        <Parameter name="Tolerance" type="double" value="1e-8"/>
+      </ParameterList>
       <ParameterList name="Direction">
         <Parameter name="Method" type="string" value="Newton"/>
         <ParameterList name="Newton">
-          <ParameterList name="Linear Solver">
-            <Parameter name="Tolerance" type="double" value="1e-8"/>
-          </ParameterList>
           <ParameterList name="Stratimikos Linear Solver">
             <ParameterList name="NOX Stratimikos Options">
             </ParameterList>
@@ -98,7 +98,7 @@
         </ParameterList>
         <Parameter name="Method" type="string" value="Full Step"/>
       </ParameterList>
-      <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
+      <Parameter name="Nonlinear Solver" type="string" value="Single Step"/>
       <ParameterList name="Printing">
         <!--Parameter name="Output Information" type="int" value="103"/-->
         <Parameter name="Output Information" type="int" value="127"/>

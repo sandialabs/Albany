@@ -52,7 +52,10 @@
 
 #include "Albany_ModelEvaluatorT.hpp"
 #ifdef ALBANY_ATO
+#if defined(ALBANY_EPETRA)
   #include "ATO_Solver.hpp"
+#endif
+  #include "ATOT_Solver.hpp"
 #endif
 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
@@ -609,14 +612,13 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif /* ALBANY_QCAD */
     }
 
-//IK, 10/16/14: ATO::Solver needs to be converted to Tpetra?
-// if (solutionMethod == "ATO Problem") {
-//#ifdef ALBANY_ATO
-//      return rcp(new ATO::Solver(appParams, solverComm, initial_guess));
-//#else /* ALBANY_ATO */
-//      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate ATO (topological optimization)\n");
-//#endif /* ALBANY_ATO */
-//    }
+  if (solutionMethod == "ATO Problem") {
+#ifdef ALBANY_ATO
+    return rcp(new ATOT::Solver(appParams, solverComm, initial_guess));
+#else /* ALBANY_ATO */
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate ATO (topological optimization)\n");
+#endif /* ALBANY_ATO */
+  }
 
 #ifdef ALBANY_AERAS
   if (solutionMethod == "Aeras Hyperviscosity") {
@@ -691,8 +693,6 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
   if (solutionMethod == "Coupled Schwarz") {
-
-    std::cout <<"In Albany_SolverFactory: solutionMethod = Coupled Schwarz!" << std::endl;
 
 #ifndef ALBANY_DTK
     if (appComm->getSize() > 1)

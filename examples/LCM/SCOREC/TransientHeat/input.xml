@@ -129,14 +129,14 @@
 		</ParameterList>
 	      </ParameterList>
 
-	      <Parameter name="Preconditioner Type" type="string" value="MueLu-Tpetra"/>
+	      <Parameter name="Preconditioner Type" type="string" value="MueLu"/>
 
 	      <ParameterList name="Preconditioner Types">
 	        <ParameterList name="MueLu">
 		    <Parameter name="multigrid algorithm" type="string" value="sa"/>
 	            <Parameter name="aggregation: type" type="string" value="uncoupled"/>
 	            <Parameter name="coarse: max size" type="int" value="20"/>
-	            <Parameter name="coarse: type" type="string" value="Superlu"/>
+	            <Parameter name="coarse: type" type="string" value="Klu"/>
 	            <Parameter name="cycle type" type="string" value="V"/>
 	            <Parameter name="smoother: type" type="string" value="RELAXATION"/>
 	            <ParameterList name="smoother: params">

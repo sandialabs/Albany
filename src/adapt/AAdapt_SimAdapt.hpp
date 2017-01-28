@@ -20,9 +20,7 @@ public:
   // virtual bool adaptMesh(const Teuchos::RCP<const Tpetra_Vector>& solution,
   //                        const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution);
   virtual bool adaptMesh();
-  virtual Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters();
-private:
-  double errorBound;
+  virtual Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const;
 };
 
 }

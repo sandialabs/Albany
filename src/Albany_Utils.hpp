@@ -14,7 +14,8 @@
   #define Albany_MPI_Comm MPI_Comm
   #define Albany_MPI_COMM_WORLD MPI_COMM_WORLD
   #define Albany_MPI_COMM_NULL MPI_COMM_NULL
-  #if defined(ALBANY_EPETRA)
+  //IKT, FIXME: remove || defined(ALBANY_ATO) below 
+  #if defined(ALBANY_EPETRA) || defined(ALBANY_ATO) 
     #include "Epetra_MpiComm.h"
   #endif
   #include "Teuchos_DefaultMpiComm.hpp"
@@ -22,7 +23,8 @@
   #define Albany_MPI_Comm int
   #define Albany_MPI_COMM_WORLD 0  // This is compatible with Dakota
   #define Albany_MPI_COMM_NULL 99
-  #if defined(ALBANY_EPETRA)
+  //IKT, FIXME: remove || defined(ALBANY_ATO) below 
+  #if defined(ALBANY_EPETRA) || defined(ALBANY_ATO) 
     #include "Epetra_SerialComm.h"
   #endif
   #include "Teuchos_DefaultSerialComm.hpp"
@@ -44,10 +46,6 @@ inline void cudaError(const char *file, int line) {
 
 namespace Albany {
 
-  //Helper function which extracts diagonal of a matrix into a vector 
-  Teuchos::RCP<Tpetra_Vector>  
-  ExtractDiagonalCopy(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix); 
-
   //Helper function which replaces the diagonal of a matrix 
   void
   ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
@@ -55,10 +53,10 @@ namespace Albany {
 
   //Helper function which computes absolute values of the rowsum
   //of a matrix, and puts it in a vector. 
-  Teuchos::RCP<Tpetra_Vector> 
-  InvRowSum(const Teuchos::RCP<const Tpetra_CrsMatrix>& matrix); 
+  void InvRowSum(Teuchos::RCP<Tpetra_Vector>& rowSumsTpetra, const Teuchos::RCP<Tpetra_CrsMatrix> matrix); 
 
-#if defined(ALBANY_EPETRA)
+//IKT, FIXME: ultimately get ride of || defined (ALBANY_ATO) below 
+#if defined(ALBANY_EPETRA) || defined (ALBANY_ATO)
 
   Albany_MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec);
 
@@ -70,18 +68,12 @@ namespace Albany {
 
 #endif
   
-  //Helper function which extracts diagonal of a matrix into a vector 
-  Teuchos::RCP<Tpetra_Vector>  
-  ExtractDiagonalCopy(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix); 
-
   //Helper function which replaces the diagonal of a matrix 
   void ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
                               const Teuchos::RCP<Tpetra_Vector>& diag);
 
   //Helper function which creates diagonal vector with entries equal to the 
   //absolute value of the rowsum of a matrix.
-  Teuchos::RCP<Tpetra_Vector> 
-  InvRowSum(const Teuchos::RCP<const Tpetra_CrsMatrix>& matrix); 
 
   Albany_MPI_Comm getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc);
 

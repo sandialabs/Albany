@@ -5,28 +5,16 @@
 ##*****************************************************************//
 
 # Create a symlink to exodiff
-execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${SEACAS_EXODIFF} ${CMAKE_CURRENT_BINARY_DIR}/exodiff)
-execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${SEACAS_ALGEBRA} ${CMAKE_CURRENT_BINARY_DIR}/algebra)
-execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${SEACAS_EPU} ${CMAKE_CURRENT_BINARY_DIR}/epu)
-execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
-if (ALBANY_IFPACK2)
-execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+
+if (NOT ALBANY_IFPACK2)
+  return()
 endif()
 
 # input files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/galerkin.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/galerkin.xml COPYONLY)
-if (ALBANY_IFPACK2)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/galerkinT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/galerkinT.xml COPYONLY)
-endif()
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/stabilized.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/stabilized.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/stabilizedT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/stabilizedT.xml COPYONLY)
 
 # material files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
@@ -50,24 +38,22 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/galerkin.gold.e
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/stabilized.gold.e
                ${CMAKE_CURRENT_BINARY_DIR}/stabilized.gold.e COPYONLY)
 
-# python runtest file
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
-               ${CMAKE_CURRENT_BINARY_DIR}/runtest.py COPYONLY)
-if (ALBANY_IFPACK2)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
-               ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
-endif()
+# 2. Copy runtest.cmake from source to binary dir
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/runtest.cmake COPYONLY)
 
-# 2. Name the test with the directory name
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+# 3. Name the test with the directory name
+get_filename_component(dirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
-# 3. Create the test with this name and standard executable
-IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_EPETRA)
-# FIXME Test broken with new STK
-#  add_test(NAME ${testName} COMMAND "python" "runtest.py")
-#  set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
+# 4. Create the test with this name and standard executable
+IF(NOT ALBANY_PARALLEL_ONLY)
+  add_test(NAME ${dirName}_galerkin COMMAND
+      ${CMAKE_COMMAND} "-DALBANY=${SerialAlbanyT.exe}" -DTESTNAME=galerkin
+      -DEXODIFF=${SEACAS_EXODIFF} -P runtest.cmake)
+  set_tests_properties(${dirName}_galerkin PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
+# currently exodiff fails; look into it
+# add_test(NAME ${dirName}_stabilized COMMAND
+#     ${CMAKE_COMMAND} "-DALBANY=${SerialAlbanyT.exe}" -DTESTNAME=stabilized
+#     -DEXODIFF=${SEACAS_EXODIFF} -P runtest.cmake)
+# set_tests_properties(${dirName}_stabilized PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
 ENDIF()
-
-
-
-

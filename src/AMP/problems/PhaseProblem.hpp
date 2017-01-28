@@ -433,6 +433,14 @@ Albany::PhaseProblem::constructEvaluators(
     
     ev = rcp(new AMP::PhaseSource<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
+	
+	p = stateMgr.registerStateVariable("Source", dl_->qp_scalar,
+				       dl_->dummy, eb_name, "scalar", 0.0, true);
+   
+
+    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev); 
+
   }
   
   { // Laser Source Function
@@ -452,6 +460,13 @@ Albany::PhaseProblem::constructEvaluators(
     p->set<string>("Laser Source Name", "Laser Source");
     
     ev = rcp(new AMP::LaserSource<EvalT,AlbanyTraits>(*p,dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+	
+	p = stateMgr.registerStateVariable("Laser Source", dl_->qp_scalar,
+				       dl_->dummy, eb_name, "scalar", 0.0, true);
+   
+
+    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }  
   

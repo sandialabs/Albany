@@ -344,15 +344,24 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
     else if (method == "Extruded") {
         Teuchos::RCP<Albany::AbstractMeshStruct> basalMesh;
         Teuchos::RCP<Teuchos::ParameterList> basal_params;
+        //compute basal Workset size starting from Discretization
+        int extruded_ws_size = disc_params->get("Workset Size", 50);
+        int basal_ws_size = -1;
+        if(extruded_ws_size != -1) {
+          basal_ws_size =  extruded_ws_size/ (disc_params->get<int>("NumLayers") * ((disc_params->get<std::string>("Element Shape") == "Tetrahedron") ? 3 : 1));
+          basal_ws_size = std::max(basal_ws_size,1); //makes sure is at least 1.
+        }
         if (disc_params->isSublist("Side Set Discretizations") && disc_params->sublist("Side Set Discretizations").isSublist("basalside")) {
             basal_params = Teuchos::rcp(new Teuchos::ParameterList(disc_params->sublist("Side Set Discretizations").sublist("basalside")));
+            if(!disc_params->sublist("Side Set Discretizations").isParameter("Workset Size"))
+              basal_params->set("Workset Size", basal_ws_size);
         } else {
             // Backward compatibility: Ioss, with parameters mixed with the extruded mesh ones
             basal_params->set("Method", "Ioss");
             basal_params->set("Use Serial Mesh", disc_params->get("Use Serial Mesh", false));
             basal_params->set("Exodus Input File Name", disc_params->get("Exodus Input File Name", "basalmesh.exo"));
+            basal_params->set("Workset Size", basal_ws_size);
         }
-
         basalMesh = createMeshStruct(basal_params, Teuchos::null, comm);
         return Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(disc_params, comm, basalMesh));
     }

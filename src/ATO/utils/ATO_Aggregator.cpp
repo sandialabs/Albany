@@ -118,7 +118,6 @@ Aggregator::parse(const Teuchos::ParameterList& aggregatorParams)
   comm = Teuchos::null;
 }
 
-//**********************************************************************
 void 
 Aggregator_DistParamBased::
 SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,

@@ -50,9 +50,10 @@ namespace ATO {
              Teuchos::RCP<const Tpetra_Map>    localNodeMapT, 
              Teuchos::RCP<Tpetra_Import>       importerT,
              Teuchos::RCP<Tpetra_Export>       exporterT);  
-      void createFilterOpTfromFilterOp(Teuchos::RCP<const Teuchos_Comm> commT);  
-      Teuchos::RCP<Epetra_CrsMatrix> FilterOperator(){return filterOperator;}
       Teuchos::RCP<Tpetra_CrsMatrix> FilterOperatorT(){return filterOperatorT;}
+      //IKT, FIXME: remove the following function once Mark Hoemmen 
+      //fixes apply method with TRANS mode in Tpetra::CrsMatrix.
+      Teuchos::RCP<Tpetra_CrsMatrix> FilterOperatorTransposeT(){return filterOperatorTransposeT;}
       int getNumIterations(){return iterations;}
     protected:
       void importNeighbors(
@@ -62,8 +63,10 @@ namespace ATO {
              Teuchos::RCP<Tpetra_Export>       exporterT, 
              const Tpetra_Map& overlapNodeMapT);
 
-      Teuchos::RCP<Epetra_CrsMatrix> filterOperator;
       Teuchos::RCP<Tpetra_CrsMatrix> filterOperatorT;
+      //IKT, FIXME: remove the following creation of filterOperatorTransposeT 
+      //once Mark Hoemmen fixes apply method with TRANS mode in Tpetra::CrsMatrix.
+      Teuchos::RCP<Tpetra_CrsMatrix> filterOperatorTransposeT;
       int iterations;
       double filterRadius;
       Teuchos::Array<std::string> blocks;
@@ -147,10 +150,8 @@ namespace ATO {
     int _iteration;
     int _writeDesignFrequency;
     int  numDims;
-    int _num_parameters; // for sensitiviy analysis(?)
-    int _num_responses;  //  ditto
-    Teuchos::RCP<Epetra_LocalMap> _epetra_param_map;
-    Teuchos::RCP<Epetra_LocalMap> _epetra_response_map;
+    const int c_num_parameters; // set to zero in initialization list
+    const int c_num_responses; // set to one in initialization list
     Teuchos::RCP<Epetra_Map>      _epetra_x_map;
 
     int _numPhysics; // number of sub problems
@@ -164,17 +165,6 @@ namespace ATO {
     Teuchos::RCP<Aggregator> _conAggregator;
     Teuchos::RCP<Optimizer> _optimizer;
 
-    typedef struct TopologyInfoStruct {
-      Teuchos::RCP<Topology>      topology;
-      Teuchos::RCP<SpatialFilter> filter;
-      Teuchos::RCP<SpatialFilter> postFilter;
-      Teuchos::RCP<Epetra_Vector> filteredOverlapVector;
-      Teuchos::RCP<Epetra_Vector> filteredVector;
-      Teuchos::RCP<Epetra_Vector> overlapVector;
-      Teuchos::RCP<Epetra_Vector> localVector;
-      bool                        filterIsRecursive;
-    } TopologyInfoStruct;
-
     typedef struct TopologyInfoStructT {
       Teuchos::RCP<Topology>      topologyT;
       Teuchos::RCP<SpatialFilter> filterT;
@@ -186,9 +176,7 @@ namespace ATO {
       bool                        filterIsRecursiveT;
     } TopologyInfoStructT;
 
-    std::vector<Teuchos::RCP<TopologyInfoStruct> > _topologyInfoStructs;
     std::vector<Teuchos::RCP<TopologyInfoStructT> > _topologyInfoStructsT;
-    Teuchos::RCP<TopologyArray> _topologyArray;
     Teuchos::RCP<TopologyArray> _topologyArrayT;
 
     // currently all topologies must have the same entity type
@@ -217,11 +205,8 @@ namespace ATO {
     Teuchos::RCP<const Teuchos_Comm> _solverComm; 
     Teuchos::RCP<Teuchos::ParameterList> _mainAppParams;
 
-    Teuchos::RCP<const Epetra_Map> overlapNodeMap;
-    Teuchos::RCP<const Epetra_Map> localNodeMap;
     Teuchos::RCP<const Tpetra_Map> overlapNodeMapT;
     Teuchos::RCP<const Tpetra_Map> localNodeMapT;
-
 
     Teuchos::Array< Teuchos::RCP<Tpetra_Vector> > overlapObjectiveGradientVecT;
     Teuchos::Array< Teuchos::RCP<Tpetra_Vector> > ObjectiveGradientVecT;
@@ -232,9 +217,7 @@ namespace ATO {
     Teuchos::RCP<double> objectiveValue;
     Teuchos::RCP<double> constraintValue;
 
-    Teuchos::RCP<Epetra_Import> importer;
     Teuchos::RCP<Tpetra_Import> importerT;
-    Teuchos::RCP<Epetra_Export> exporter;
     Teuchos::RCP<Tpetra_Export> exporterT;
 
     std::map<std::string, Teuchos::RCP<const Epetra_Vector> > responseMap;
@@ -245,9 +228,7 @@ namespace ATO {
 
     // methods
     void copyTopologyIntoStateMgr(const double* p, Albany::StateManager& stateMgr );
-    void smoothTopology(double* p);
     void smoothTopologyT(double* p);
-    void smoothTopology(Teuchos::RCP<TopologyInfoStruct> topoStruct);
     void smoothTopologyT(Teuchos::RCP<TopologyInfoStructT> topoStructT);
     void copyTopologyFromStateMgr(double* p, Albany::StateManager& stateMgr );
     void copyTopologyIntoParameter(const double* p, SolverSubSolver& sub);

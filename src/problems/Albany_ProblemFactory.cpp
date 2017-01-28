@@ -62,6 +62,10 @@
 #include "AMP/problems/PhaseProblem.hpp"
 #endif
 
+#ifdef ALBANY_ANISO
+#include "ANISO/AdvectionProblem.hpp"
+#endif
+
 #ifdef ALBANY_FELIX
 #include "FELIX/problems/FELIX_Stokes.hpp"
 #include "FELIX/problems/FELIX_StokesFO.hpp"
@@ -302,6 +306,14 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Albany::PhaseProblem(problemParams, paramLib, 3, commT));
   }
 #endif
+#ifdef ALBANY_ANISO
+  else if (method == "ANISO Advection 2D") {
+    strategy = rcp(new Albany::AdvectionProblem(problemParams, paramLib, 2, commT));
+  }
+  else if (method == "ANISO Advection 3D") {
+    strategy = rcp(new Albany::AdvectionProblem(problemParams, paramLib, 3, commT));
+  }
+#endif
 #ifdef ALBANY_HYDRIDE
   else if (method == "Hydride 2D") {
     strategy = rcp(new Albany::HydrideProblem(problemParams, paramLib, 2, commT));
@@ -363,10 +375,10 @@ Albany::ProblemFactory::create()
     strategy = rcp(new FELIX::Elliptic2D(problemParams, paramLib, 1));
   }
   else if (method == "FELIX Enthalpy 3D") {
-    strategy = rcp(new FELIX::Enthalpy(problemParams, paramLib, 3));
+    strategy = rcp(new FELIX::Enthalpy(problemParams, discretizationParams, paramLib, 3));
   }
   else if (method == "FELIX Stokes FO Thermo Coupled 3D") {
-   strategy = rcp(new FELIX::StokesFOThermoCoupled(problemParams, paramLib, 3));
+   strategy = rcp(new FELIX::StokesFOThermoCoupled(problemParams, discretizationParams, paramLib, 3));
   }
   else if (method == "FELIX Laplacian Sampling") {
    strategy = rcp(new FELIX::LaplacianSampling(problemParams, discretizationParams, paramLib, 2));

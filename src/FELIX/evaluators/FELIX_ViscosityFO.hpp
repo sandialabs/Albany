@@ -138,7 +138,7 @@ public:
   void operator() (const ViscosityFO_GLENSLAW_XZ_FROMCISM_Tag& tag, const int& i) const;
 
   KOKKOS_INLINE_FUNCTION
-  void glenslaw (const TemprT &flowFactorVec, const int& cell) const;
+  void glenslaw (const ScalarT &flowFactorVec, const int& cell) const;
 
   KOKKOS_INLINE_FUNCTION
   void glenslaw_xz (const TemprT &flowFactorVec, const int& cell) const;

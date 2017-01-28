@@ -216,7 +216,8 @@ updateSlip(
     minitensor::Vector<ArgT, NumSlipT> const & slip_resistance,
     minitensor::Vector<ArgT, NumSlipT> const & shear,
     minitensor::Vector<RealType, NumSlipT> const & slip_n,
-    minitensor::Vector<ArgT, NumSlipT> & slip_np1);
+    minitensor::Vector<ArgT, NumSlipT> & slip_np1,
+    bool & failed);
 
 
 

@@ -1,0 +1,64 @@
+
+This file lists the work that is still needed to finish 
+refactoring ATO to work with Tpetra/Thyra instead of 
+Epetra/EpetraExt, in no particular order (dependencies 
+b/w action items are noted).  
+
+1. Test / debug (if necessary) Tpetra function ReplaceDiagonalValues,
+currently in Albany::Utils (should ultimately be moved to the 
+Tpetra::CrsMatrix class). This function is used in the 
+ATOT::XFEM_Preconditioner.cpp class. Currently there is no example
+for this preconditioner. 
+
+2. Have Mark Hoemmen fix Tpetra::CrsMatrix::apply method with a 
+TRANS combine mode.  Once this is done, remove creation of 
+filterOperatorTpetra in ATO::Solver and ATOT::Solver, and
+uncomment relevant apply code in copyObjectiveFromStateMgr 
+routines.
+
+3. Switch Albany to use workset.dgdpT (Tpetra version) instead 
+of workset.dgdp (Epetra version) -- need debug help from Mauro.
+The switch should be straight forward but when I try it, ATO::Constrained_2D_adj
+test fails.  Once this is done, remove ALBANY_EPETRA_EXE ifdefs in 
+ATO::TensorPNormResponse and ATO::HomogenizedConstantsResponse 
+around workset.overlapped_dgdpT, as well as other relevant 
+routines throughout Albany.  
+to use these new objects.
+
+4. Test/debug new ATOT::Solver by running tests with AlbanyT 
+executable.  
+
+Currently, the following tests seg fault when run:
+
+- Constraint_2D_adj 
+- Constraint_2D_fd
+- DistParam_2D
+- BodyForce_2D (uses NLopt) 
+- CurrentOpt (uses NLopt)
+- ResidualStrain (uses NLopt)
+- VolumeObj_StiffnessCon (uses NLopt)
+- VolumeObj_StressCon (uses NLopt) 
+
+error in debug: 
+
+
+p=0: *** Caught standard std::exception of type 'std::logic_error' :
+
+ /home/ikalash/LCM/Trilinos/build-debug-no-dtk-ikt/install/include/Thyra_ModelEvaluatorBase_def.hpp:2102:
+ 
+ Throw number = 1
+ 
+ Throw test that evaluated to true: !deriv.isSupportedBy(derivSupport)
+ 
+ Thyra::ModelEvaluatorBase::OutArgs<Scalar>::assert_supports(OUT_ARG_DgDp,j,l):
+ 
+ model = 'Piro::NOXSolver<double>':
+ 
+ Error, The argument DgDp(0,0) = Derivative{derivMultiVec=DerivativeMultiVector{multiVec=Thyra::TpetraMultiVector<double, int, int, Kokkos::Compat::KokkosDeviceWrapperNode<Kokkos::Serial, Kokkos::HostSpace> >{rangeDim=651,domainDim=1},orientation=DERIV_MV_BY_COL}}
+ is not supported!
+ 
+ The supported types include DerivativeSupport{DERIV_LINEAR_OP}!
+
+
+5. Once 4. is done, activate tests that run with AlbanyT executable.  
+

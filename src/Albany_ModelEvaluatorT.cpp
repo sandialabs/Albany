@@ -51,8 +51,7 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
   Teuchos::ParameterList& responseParams =
     problemParams.sublist("Response Functions");
 
-  int num_response_vecs =
-     responseParams.get("Number of Response Vectors", 0);
+  int num_response_vecs = app->getNumResponses(); 
   bool using_old_response_list = false;
   if (responseParams.isType<int>("Number")) {
     int numParameters = responseParams.get<int>("Number");
@@ -283,9 +282,13 @@ Albany::ModelEvaluatorT::get_p_space(int l) const
   Teuchos::RCP<const Tpetra_Map> map;
   if (l < num_param_vecs)
     map = tpetra_param_map[l];
-  //IK, 7/1/14: commenting this out for now
-  //map = distParamLib->get(dist_param_names[l-num_param_vecs])->map();
-  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > tpetra_param_space = Thyra::createVectorSpace<ST>(map);
+  else 
+    map = distParamLib->get(dist_param_names[l-num_param_vecs])->map();
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > tpetra_param_space;
+  if (map != Teuchos::null) 
+    tpetra_param_space = Thyra::createVectorSpace<ST>(map);
+  else
+    tpetra_param_space = Teuchos::null; 
   return tpetra_param_space;
 }
 

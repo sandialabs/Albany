@@ -19,7 +19,9 @@ class ReducedOrderModelEvaluator : public EpetraExt::ModelEvaluator {
 public:
   ReducedOrderModelEvaluator(const Teuchos::RCP<EpetraExt::ModelEvaluator> &fullOrderModel,
                              const Teuchos::RCP<const ReducedSpace> &solutionSpace,
-                             const Teuchos::RCP<ReducedOperatorFactory> &reducedOpFactory);
+                             const Teuchos::RCP<ReducedOperatorFactory> &reducedOpFactory,
+                             const bool* outputFlags,
+                             const std::string preconditionerType);
 
   // Overridden functions
   virtual Teuchos::RCP<const Epetra_Map> get_x_map() const;
@@ -66,6 +68,18 @@ private:
 
   Teuchos::RCP<Epetra_Vector> x_init_;
   Teuchos::RCP<Epetra_Vector> x_dot_init_;
+
+  bool outputTrace_;
+  bool writeJacobian_reduced_;
+  bool writeResidual_reduced_;
+  bool writeSolution_reduced_;
+  bool writePreconditioner_;
+
+  bool useScaling_;
+  bool useInvJac_;
+  bool useProjectedSol_;
+  bool usePreconditionerIfpack_;
+  std::string ifpackType_;
 
   // Disallow copy and assignment
   ReducedOrderModelEvaluator(const ReducedOrderModelEvaluator &);

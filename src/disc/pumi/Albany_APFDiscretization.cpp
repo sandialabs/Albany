@@ -71,8 +71,6 @@ continuationStep(0)
 
 Albany::APFDiscretization::~APFDiscretization() {
   delete meshOutput;
-  assert(!globalNumbering);
-  assert(!elementNumbering);
 }
 
 void Albany::APFDiscretization::init()
@@ -1097,45 +1095,70 @@ void Albany::APFDiscretization::computeWorksetInfo()
   }
 }
 
-void Albany::APFDiscretization::computeNodeSets()
+void Albany::APFDiscretization::forEachNodeSetNode(
+    std::function<void(size_t, apf::StkModel*)> fn)
 {
-  // Make sure all the maps are allocated
-  for (int i = 0; i < meshStruct->nsNames.size(); i++)
-  { // Iterate over Node Sets
-    std::string name = meshStruct->nsNames[i];
-    nodeSets[name].resize(0);
-    nodeSetCoords[name].resize(0);
-    nodeset_node_coords[name].resize(0);
-  }
   //grab the analysis model and mesh
   apf::StkModels& sets = meshStruct->getSets();
   apf::Mesh* m = meshStruct->getMesh();
-  int mesh_dim = m->getDimension();
   //loop over owned mesh nodes
   for (size_t i = 0; i < ownedNodes.getSize(); ++i) {
     apf::Node node = ownedNodes[i];
     apf::MeshEntity* e = node.entity;
     std::set<apf::StkModel*> mset;
     apf::collectEntityModels(m, sets.invMaps[0], m->toModel(e), mset);
-    if (mset.empty())
-      continue;
     APF_ITERATE(std::set<apf::StkModel*>, mset, mit) {
-      apf::StkModel* ns = *mit;
-      std::string const& NS_name = ns->stkName;
-      nodeSets[NS_name].push_back(std::vector<int>());
-      std::vector<int>& dofLids = nodeSets[NS_name].back();
-      std::vector<double>& ns_coords = nodeset_node_coords[NS_name];
-      ns_coords.resize(ns_coords.size() + mesh_dim);
-      double* node_coords = &ns_coords[ns_coords.size() - mesh_dim];
-      nodeSetCoords[NS_name].push_back(node_coords);
-      dofLids.resize(neq);
-      for (std::size_t eq=0; eq < neq; eq++)
-        dofLids[eq] = getDOF(i, eq);
-      double buf[3];
-      apf::getComponents(m->getCoordinateField(), e, node.node, buf);
-      for (int j = 0; j < mesh_dim; ++j) node_coords[j] = buf[j];
+      apf::StkModel* node_set = *mit;
+      fn(i, node_set);
     }
   }
+}
+
+void Albany::APFDiscretization::computeNodeSets()
+{
+  // Make sure all the maps are allocated
+  for (int i = 0; i < meshStruct->nsNames.size(); i++)
+  { // Iterate over Node Sets
+    std::string const& name = meshStruct->nsNames[i];
+    nodeSets[name].resize(0);
+    nodeSetCoords[name].resize(0);
+    nodeset_node_coords[name].resize(0);
+  }
+  std::map<std::string, int> nodeSetSizes;
+  auto count_fn = [&](size_t, apf::StkModel* node_set)
+  {
+    std::string const& NS_name = node_set->stkName;
+    ++(nodeSetSizes[NS_name]);
+  };
+  forEachNodeSetNode(count_fn);
+  apf::Mesh* m = meshStruct->getMesh();
+  int mesh_dim = m->getDimension();
+  for (int i = 0; i < meshStruct->nsNames.size(); i++)
+  {
+    std::string const& name = meshStruct->nsNames[i];
+    nodeset_node_coords[name].resize(nodeSetSizes[name] * mesh_dim);
+    nodeSetSizes[name] = 0;
+  }
+  auto fill_fn = [&](size_t owned_i, apf::StkModel* node_set)
+  {
+    auto node = ownedNodes[owned_i];
+    apf::MeshEntity* e = node.entity;
+    std::string const& NS_name = node_set->stkName;
+    std::vector<double>& ns_coords = nodeset_node_coords[NS_name];
+    assert(ns_coords.size() >= (nodeSetSizes[NS_name] + 1) * mesh_dim);
+    double* node_coords = &(ns_coords.at(nodeSetSizes[NS_name] * mesh_dim));
+    nodeSetCoords[NS_name].push_back(node_coords);
+    double buf[3];
+    apf::getComponents(m->getCoordinateField(), e, node.node, buf);
+    for (int j = 0; j < mesh_dim; ++j) node_coords[j] = buf[j];
+    nodeSets[NS_name].push_back(std::vector<int>());
+    std::vector<int>& dofLids = nodeSets[NS_name].back();
+    dofLids.resize(neq);
+    for (std::size_t eq=0; eq < neq; eq++)
+      dofLids[eq] = getDOF(owned_i, eq);
+    ++(nodeSetSizes[NS_name]);
+  };
+  forEachNodeSetNode(fill_fn);
 }
 
 void Albany::APFDiscretization::computeSideSets()

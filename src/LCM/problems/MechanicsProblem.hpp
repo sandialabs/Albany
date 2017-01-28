@@ -1175,9 +1175,15 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
     }
+    
+  bool reg_dir_field = true; 
+  if (params->isParameter("Register dirichlet_field")){
+    reg_dir_field = params->get<bool>("Register dirichlet_field");
+  }
   // IKT, 3/27/16: register dirichlet_field for specifying Dirichlet data from a field 
-  // in the input exodus mesh.
-  if (dir_count == 0){ //constructEvaluators gets called multiple times for different specializations.  
+  // in the input exodus mesh, if this is requested in the input file .
+  if ((dir_count == 0) && (reg_dir_field == true )) { 
+                       //constructEvaluators gets called multiple times for different specializations.  
                        //Make sure dirichlet_field gets registered only once via counter.
                        //I don't quite understand why this is needed for LCM but not for FELIX... 
     //dirichlet_field

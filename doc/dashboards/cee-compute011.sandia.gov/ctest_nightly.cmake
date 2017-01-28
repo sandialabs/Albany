@@ -566,8 +566,7 @@ if (BUILD_ALB32)
     "-DENABLE_CHECK_FPE:BOOL=ON")
   if (BUILD_SCOREC)
     set (CONF_OPTIONS ${CONF_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON"
-      "-DENABLE_GOAL:BOOL=ON")
+      "-DENABLE_SCOREC:BOOL=ON")
   endif (BUILD_SCOREC)
   if (BUILD_PERIDIGM)
     set (CONF_OPTIONS ${CONF_OPTIONS}
@@ -600,8 +599,7 @@ if (BUILD_ALB64)
     "-DENABLE_CHECK_FPE:BOOL=ON")
   if (BUILD_SCOREC)
     set (CONF_OPTIONS ${CONF_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON"
-      "-DENABLE_GOAL:BOOL=ON")
+      "-DENABLE_SCOREC:BOOL=ON")
   endif (BUILD_SCOREC)
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
@@ -692,8 +690,7 @@ if (BUILD_ALB64CLANG)
     )
   if (BUILD_SCOREC)
     set (CONF_OPTIONS ${CONF_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON"
-      "-DENABLE_GOAL:BOOL=ON")
+      "-DENABLE_SCOREC:BOOL=ON")
   endif (BUILD_SCOREC)
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
@@ -722,8 +719,7 @@ if (BUILD_ALBFUNCTOR)
     "-DENABLE_CHECK_FPE:BOOL=ON")
   if (BUILD_SCOREC)
     set (CONF_OPTIONS ${CONF_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON"
-      "-DENABLE_GOAL:BOOL=ON")
+      "-DENABLE_SCOREC:BOOL=ON")
   endif (BUILD_SCOREC)
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)

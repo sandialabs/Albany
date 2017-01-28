@@ -49,7 +49,7 @@ void Albany::STKDiscretizationStokesH::computeGraphs()
 
   // Loads member data:  overlap_graph, numOverlapodes, overlap_node_map, coordinates, graphs
 
-  const unsigned int n3dEq = 2;
+  const unsigned int n3dEq = (neq == 4) ? 4 : 2;  //super bad hack based on current FELIX probelms.. make this general!!
 
   overlap_graphT = Teuchos::null; // delete existing graph happens here on remesh
 

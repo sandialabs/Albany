@@ -63,7 +63,11 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     typedef stk::mesh::Field<double, QPTag>                      QPScalarFieldType ;
     typedef stk::mesh::Field<double, stk::mesh::Cartesian3d>     SphereVolumeFieldType ;
 
+#ifdef ALBANY_MOR
+    typedef std::vector<std::string> ScalarValueState;  //required to avoid segfault in Albany_RBGen executable
+#else
     typedef std::vector<const std::string*> ScalarValueState;
+#endif
     typedef std::vector<QPScalarFieldType*> QPScalarState;
     typedef std::vector<QPVectorFieldType*> QPVectorState;
     typedef std::vector<QPTensorFieldType*> QPTensorState;

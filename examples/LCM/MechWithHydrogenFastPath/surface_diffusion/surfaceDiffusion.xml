@@ -3,6 +3,8 @@
   <!-- MODEL DECLARATION, Look in the "Problem" directory -->
   <ParameterList name="Problem">
 
+    <!--Tell code whether to use/write out to exo dirichlet_field-->
+    <Parameter name="Register dirichlet_field" type="bool" value="false" />
     <!-- Declare your Physics (What you intend to model)! -->
     <Parameter
       name="Name"

@@ -16,12 +16,15 @@
 #include <apfZoltan.h>
 #include <apfMDS.h> // for reorderMdsMesh
 
-#include "AAdapt_UnifSizeField.hpp"
-#include "AAdapt_UnifRefSizeField.hpp"
-#include "AAdapt_NonUnifRefSizeField.hpp"
+#include "AAdapt_ConstantSizeField.hpp"
+#include "AAdapt_ScaledSizeField.hpp"
+#include "AAdapt_UniformRefine.hpp"
 #include "AAdapt_AlbanySizeField.hpp"
 #include "AAdapt_SPRSizeField.hpp"
 #include "AAdapt_ExtrudedAdapt.hpp"
+#ifdef ALBANY_OMEGA_H
+#include "AAdapt_Omega_h_Method.hpp"
+#endif
 
 #include "AAdapt_RC_Manager.hpp"
 
@@ -46,12 +49,12 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   mesh = pumiMeshStruct->getMesh();
 
   const std::string& method = params_->get("Method", "");
-  if (method == "RPI Unif Size")
-    szField = Teuchos::rcp(new AAdapt::UnifSizeField(pumi_discretization));
-  else if (method == "RPI UnifRef Size")
-    szField = Teuchos::rcp(new AAdapt::UnifRefSizeField(pumi_discretization));
-  else if (method == "RPI NonUnifRef Size")
-    szField = Teuchos::rcp(new AAdapt::NonUnifRefSizeField(pumi_discretization));
+  if (method == "RPI Constant Size")
+    szField = Teuchos::rcp(new AAdapt::ConstantSizeField(pumi_discretization));
+  else if (method == "RPI Scaled Size")
+    szField = Teuchos::rcp(new AAdapt::ScaledSizeField(pumi_discretization));
+  else if (method == "RPI Uniform Refine")
+    szField = Teuchos::rcp(new AAdapt::UniformRefine(pumi_discretization));
   else if (method == "RPI Albany Size")
     szField = Teuchos::rcp(new AAdapt::AlbanySizeField(pumi_discretization));
   else if (method == "RPI SPR Size") {
@@ -59,8 +62,13 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     szField = Teuchos::rcp(new AAdapt::SPRSizeField(pumi_discretization));
   } else if (method == "RPI Extruded")
     szField = Teuchos::rcp(new AAdapt::ExtrudedAdapt(pumi_discretization));
+#ifdef ALBANY_OMEGA_H
+  else if (method == "RPI Omega_h")
+    szField = Teuchos::rcp(new AAdapt::Omega_h_Method(pumi_discretization));
+#endif
   else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "unknown RPI adapt method" << method);
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "unknown RPI adapt method \"" << method << "\"\n");
 
   // Save the initial output file name
   base_exo_filename = pumiMeshStruct->outputFileName;
@@ -262,6 +270,8 @@ void AAdapt::MeshAdapt::afterAdapt()
   // Throw away some Albany data structures and re-build them from the mesh
   // Note that the solution transfer for the QP fields happens in this call
   pumi_discretization->updateMesh(should_transfer_ip_data, param_lib_);
+  /* see the comment in Albany_APFDiscretization.cpp */
+  pumi_discretization->initTemperatureHack();
 
   // detach QP fields from the apf mesh
   if (should_transfer_ip_data)
@@ -501,7 +511,8 @@ AAdapt::MeshAdapt::getValidAdapterParameters() const
   validPL->set<bool>("AdaptNow", false, "Used to force an adaptation step");
   validPL->set<bool>("Should Coarsen", true, "Set to false to disable mesh coarsening operations.");
   validPL->set<int>("Max Number of Mesh Adapt Iterations", 1, "Number of iterations to limit meshadapt to");
-  validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
+  validPL->set<double>("Target Element Size", 0.1, "Value of the constant size field");
+  validPL->set<double>("Mesh Size Scaling", 0.7, "Scales the current average size to make the new size field");
   validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
   validPL->set<long int>("Target Element Count", 1000, "Desired number of elements for error-based adaptivity");
   validPL->set<std::string>("State Variable", "", "SPR operates on this variable");
@@ -512,6 +523,23 @@ AAdapt::MeshAdapt::getValidAdapterParameters() const
   validPL->set<double>("Minimum Part Density", 1000, "Minimum elements per part: triggers partition shrinking");
   validPL->set<bool>("Write Adapted SMB Files", false, "Write .smb mesh files after adaptation");
   validPL->set<std::string>("Extruded Size Method", "SPR", "Error estimator for extruded meshes");
+
+  /* Omega_h_Method options */
+  validPL->set<double>("Maximum Size", 1.0, "Max element size, prevents infinity when error is zero");
+  validPL->set<int>("Metric Smooth Steps", 0, "Metric smoothing, number of iterations");
+  validPL->set<double>("Gradation Rate Limit", 1.01, "Max metric gradation rate");
+  validPL->set<std::string>("Size Method", "SPR", "Size field for Omega_h adaptation");
+  validPL->set<double>("Overshoot Allowance", 3.0, "Max allowed metric edge length");
+  validPL->set<double>("Max Edge Angle", 3.14, "Max arc angle for mesh edge: curvature refinement");
+
+  /* RCU options */
+  validPL->set<bool>("Reference Configuration: Update", false, "Activate RCU");
+  validPL->set<bool>("Reference Configuration: Project", false, "???");
+  validPL->set<bool>("Reference Configuration: Transform", false, "???");
+
+  /* LOCA options */
+  validPL->set<bool>("Equilibrate", true);
+
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->getValidParameters(validPL);
 
   return validPL;
@@ -612,14 +640,8 @@ void anlzCoords (
 }
 
 void writeMesh (
-  const Teuchos::RCP<Albany::PUMIDiscretization>& pumi_disc)
+  const Teuchos::RCP<Albany::PUMIDiscretization>&)
 {
-  return;
-  static int ncalls = 0;
-  std::stringstream ss;
-  ss << "mesh_" << ncalls << ".vtk";
-  ++ncalls;
-  pumi_disc->writeMeshDebug(ss.str());
 }
 
 // Helper struct for updateCoordinates. Keep track of data relevant to update

@@ -9,6 +9,7 @@
 #define ALBANY_APFDISCRETIZATION_HPP
 
 #include <vector>
+#include <functional>
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_VerboseObject.hpp"
@@ -318,6 +319,12 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     //! Some evaluators may want access to the underlying apf mesh elements.
     std::vector<std::vector<apf::MeshEntity*> >& getBuckets() {return buckets;}
 
+    //! Get the solution vector layouts
+    SolutionLayout const& getSolutionLayout() { return solLayout; }
+
+    //! Get the residual field names
+    Teuchos::Array<std::string> const& getResNames() { return resNames; }
+
   private:
 
     //! Private to prohibit copying
@@ -380,6 +387,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void computeWorksetInfo();
     //! Process APF mesh for NodeSets
     void computeNodeSets();
+    void forEachNodeSetNode(std::function<void(size_t, apf::StkModel*)> fn);
     //! Process APF mesh for SideSets
     void computeSideSets();
     //! Re-initialize Time after adaptation

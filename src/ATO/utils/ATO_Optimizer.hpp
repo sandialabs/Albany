@@ -23,6 +23,7 @@
 namespace ATO {
 
 class Solver;
+//class SolverT;
 class OptInterface;
 class ConvergenceTest;
 
@@ -40,12 +41,14 @@ class Optimizer
   virtual void Optimize()=0;
   virtual void Initialize()=0;
   virtual void SetInterface(Solver*);
+  //virtual void SetInterface(SolverT*);
   virtual void SetCommunicator(const Teuchos::RCP<const Teuchos_Comm>& _comm) {comm = _comm;}
  protected:
 
   double computeDiffNorm(const double* v1, const double* v2, int n, bool printResult=false);
   double computeNorm(const double* v2, int n);
   OptInterface* solverInterface;
+  OptInterface* solverInterfaceT;
   Teuchos::RCP<const Teuchos_Comm> comm;
 
   Teuchos::RCP<ConvergenceTest> convergenceChecker;

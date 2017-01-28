@@ -1,0 +1,830 @@
+
+<ParameterList>
+
+     <ParameterList name="Scaling">
+
+          <Parameter name="Scale"
+                     type="double" 
+                     value="1.0e3"/>
+
+          <Parameter name="Scale BC Dofs"
+                     type="bool"
+                     value="true"/>
+
+     </ParameterList>
+
+<!-- =========================================================================================== -->
+<!-- Specify problem parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- =========================================================================================== -->
+
+     <ParameterList name="Problem">
+
+<!-- ~~~~ Declare your Physics (What you intend to model)! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+          <Parameter name="Name" 
+                     type="string" 
+                     value="Mechanics 3D"/>
+  
+<!-- ~~~~ Transient or Steady (Quasi-Static) or Continuation (load steps) ~~~~~~~~~~~~~~~~~~~~~~ -->
+
+          <Parameter name="Solution Method" 
+                     type="string" 
+                     value="Continuation"/>
+
+<!-- ~~~~ Have Phalanx output a graph of the used evaluators ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+          <Parameter name="Phalanx Graph Visualization Detail" 
+                     type="int" 
+                     value="0"/>
+
+<!-- ~~~~ XML filename with material definitions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+          <Parameter name="MaterialDB Filename" 
+                     type="string" 
+                     value="RigidRotation_Material.xml"/>    
+
+          <ParameterList name="Response Functions">
+
+               <Parameter name="Number" type="int" value="1"/>
+
+               <Parameter name="Response 0" 
+                          type="string" 
+                          value="Project IP to Nodal Field"/>
+
+               <ParameterList name="ResponseParams 0">
+
+                    <Parameter name="Number of Fields" 
+                               type="int"
+                               value="1"/>
+
+                    <Parameter name="IP Field Name 0"
+                               type="string"
+                               value="eqps"/>
+
+                    <Parameter name="IP Field Layout 0"
+                               type="string"
+                               value="Scalar"/>
+
+                    <Parameter name="Output to File"
+                               type="bool"
+                               value="true"/>
+
+               </ParameterList>
+
+          </ParameterList>
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- ~~~~ Set boundary conditions on node sets from the discretization which follows -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+          <ParameterList name="Dirichlet BCs">
+
+<!-- ~~~~~~~~~ Rotate x-, y- edge -->
+
+               <ParameterList name="Time Dependent DBC on NS xmym for DOF X">
+
+                    <Parameter name="Number of points" 
+                               type="int" 
+                               value="13"/>
+
+                    <Parameter name="Time Values" 
+                               type="Array(double)" 
+                               value="{ 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0}"/>
+
+                    <Parameter name="BC Values"   
+                               type="Array(double)" 
+                              value="{ 0.0,
+                                       0.069540665423120596,
+                                       0.14644660940672621,
+                                       0.22940194992690152,
+                                       0.31698729810778059,
+                                       0.40770404435874275,
+                                       0.5,
+                                       0.59229595564125725,
+                                       0.68301270189221919,
+                                       0.77059805007309845,
+                                       0.85355339059327373,
+                                       0.93045933457687935,
+                                       1.0}"/>
+
+               </ParameterList>
+
+               <ParameterList name="Time Dependent DBC on NS xmym for DOF Y">
+
+                    <Parameter name="Number of points" 
+                               type="int" 
+                               value="13"/>
+
+                    <Parameter name="Time Values" 
+                               type="Array(double)" 
+                               value="{ 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0}"/>
+
+                    <Parameter name="BC Values"   
+                               type="Array(double)" 
+                              value="{ 0.0,
+                                      -0.060985526796931033,
+                                      -0.11237243569579447,
+                                      -0.15328148243818829,
+                                      -0.1830127018922193,
+                                      -0.20105738464997791,
+                                      -0.20710678118654746,
+                                      -0.20105738464997791,
+                                      -0.1830127018922193,
+                                      -0.15328148243818829,
+                                      -0.11237243569579447,
+                                      -0.060985526796931033,
+                                       0.0}"/>
+
+               </ParameterList>
+
+
+               <Parameter name="DBC on NS xmym for DOF Z" 
+                          type="double" 
+                          value="0.0"/>
+
+<!-- ~~~~~~~~~ Rotate x+, y- edge -->
+
+               <ParameterList name="Time Dependent DBC on NS xpym for DOF X">
+
+                    <Parameter name="Number of points" 
+                               type="int" 
+                               value="13"/>
+
+                    <Parameter name="Time Values" 
+                               type="Array(double)" 
+                               value="{ 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0}"/>
+
+                    <Parameter name="BC Values"   
+                               type="Array(double)" 
+                               value="{ 0.0,
+                                        0.060985526796931033,
+                                        0.11237243569579447,
+                                        0.15328148243818829,
+                                        0.1830127018922193,
+                                        0.20105738464997791,
+                                        0.20710678118654746,
+                                        0.20105738464997791,
+                                        0.1830127018922193,
+                                        0.15328148243818829,
+                                        0.11237243569579447,
+                                        0.060985526796931033,
+                                        0.0}"/>
+
+               </ParameterList>
+
+               <ParameterList name="Time Dependent DBC on NS xpym for DOF Y">
+
+                    <Parameter name="Number of points" 
+                               type="int" 
+                               value="13"/>
+
+                    <Parameter name="Time Values" 
+                               type="Array(double)" 
+                               value="{ 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0}"/>
+
+                    <Parameter name="BC Values"   
+                               type="Array(double)" 
+                               value="{ 0.0,
+                                        0.069540665423120596,
+                                        0.14644660940672621,
+                                        0.22940194992690152,
+                                        0.31698729810778059,
+                                        0.40770404435874275,
+                                        0.5,
+                                        0.59229595564125725,
+                                        0.68301270189221919,
+                                        0.77059805007309845,
+                                        0.85355339059327373,
+                                        0.93045933457687935,
+                                        1.0}"/>
+
+               </ParameterList>
+
+               <Parameter name="DBC on NS xpym for DOF Z" 
+                          type="double" 
+                          value="0.0"/>
+
+<!-- ~~~~~~~~~ Rotate x+, y+ edge -->
+
+               <ParameterList name="Time Dependent DBC on NS xpyp for DOF X">
+
+                    <Parameter name="Number of points" 
+                               type="int" 
+                               value="13"/>
+
+                    <Parameter name="Time Values" 
+                               type="Array(double)" 
+                               value="{ 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0}"/>
+
+                    <Parameter name="BC Values"   
+                               type="Array(double)" 
+                               value="{ 0.0,
+                                       -0.069540665423120596,
+                                       -0.14644660940672621,
+                                       -0.22940194992690152,
+                                       -0.31698729810778059,
+                                       -0.40770404435874275,
+                                       -0.5,
+                                       -0.59229595564125725,
+                                       -0.68301270189221919,
+                                       -0.77059805007309845,
+                                       -0.85355339059327373,
+                                       -0.93045933457687935,
+                                       -1.0}"/>
+
+               </ParameterList>
+
+               <ParameterList name="Time Dependent DBC on NS xpyp for DOF Y">
+
+                    <Parameter name="Number of points" 
+                               type="int" 
+                               value="13"/>
+
+                    <Parameter name="Time Values" 
+                               type="Array(double)" 
+                               value="{ 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0}"/>
+
+                    <Parameter name="BC Values"   
+                               type="Array(double)" 
+                               value="{ 0.0,
+                                        0.060985526796931033,
+                                        0.11237243569579447,
+                                        0.15328148243818829,
+                                        0.1830127018922193,
+                                        0.20105738464997791,
+                                        0.20710678118654746,
+                                        0.20105738464997791,
+                                        0.1830127018922193,
+                                        0.15328148243818829,
+                                        0.11237243569579447,
+                                        0.060985526796931033,
+                                        0.0}"/>
+
+               </ParameterList>
+
+               <Parameter name="DBC on NS xpyp for DOF Z" 
+                          type="double" 
+                          value="0.0"/>
+
+<!-- ~~~~~~~~~ Rotate x-, y+ edge -->
+
+               <ParameterList name="Time Dependent DBC on NS xmyp for DOF X">
+
+                    <Parameter name="Number of points" 
+                               type="int" 
+                               value="13"/>
+
+                    <Parameter name="Time Values" 
+                               type="Array(double)" 
+                               value="{ 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0}"/>
+
+                    <Parameter name="BC Values"   
+                               type="Array(double)" 
+                               value="{ 0.0,
+                                       -0.060985526796931033,
+                                       -0.11237243569579447,
+                                       -0.15328148243818829,
+                                       -0.1830127018922193,
+                                       -0.20105738464997791,
+                                       -0.20710678118654746,
+                                       -0.20105738464997791,
+                                       -0.1830127018922193,
+                                       -0.15328148243818829,
+                                       -0.11237243569579447,
+                                       -0.060985526796931033,
+                                        0.0}"/>
+
+               </ParameterList>
+
+               <ParameterList name="Time Dependent DBC on NS xmyp for DOF Y">
+
+                    <Parameter name="Number of points" 
+                               type="int" 
+                               value="13"/>
+
+                    <Parameter name="Time Values" 
+                               type="Array(double)" 
+                               value="{ 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0}"/>
+
+                    <Parameter name="BC Values"   
+                               type="Array(double)" 
+                               value="{ 0.0,
+                                       -0.069540665423120596,
+                                       -0.14644660940672621,
+                                       -0.22940194992690152,
+                                       -0.31698729810778059,
+                                       -0.40770404435874275,
+                                       -0.5,
+                                       -0.59229595564125725,
+                                       -0.68301270189221919,
+                                       -0.77059805007309845,
+                                       -0.85355339059327373,
+                                       -0.93045933457687935,
+                                       -1.0}"/>
+
+               </ParameterList>
+
+               <Parameter name="DBC on NS xmyp for DOF Z" 
+                          type="double" 
+                          value="0.0"/>
+
+          </ParameterList>
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- ~~~~ Continuation parameters ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+          <ParameterList name="Parameters">
+
+               <Parameter name="Number" 
+                          type="int" 
+                          value="1"/>
+
+               <Parameter name="Parameter 0" 
+                          type="string" 
+                          value="Time"/>
+
+          </ParameterList>
+
+     </ParameterList>
+
+
+
+<!-- =========================================================================================== -->
+<!-- Discretization and i/o information ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- =========================================================================================== -->
+
+     <ParameterList name="Discretization">
+
+          <Parameter name="Method" 
+                     type="string" 
+                     value="Exodus"/>
+
+          <Parameter name="Exodus Input File Name" 
+                     type="string" 
+                     value="RigidRotation.g"/>
+
+          <Parameter name="Exodus Output File Name" 
+                     type="string" 
+                     value="RigidRotation.exo"/>
+
+          <Parameter name="Solution Vector Components"
+                     type="Array(string)" 
+                     value="{displacement, V}"/>
+
+          <Parameter name="Residual Vector Components"
+                     type="Array(string)"
+                     value="{force, V}"/>
+
+          <Parameter name="Cubature Degree" 
+                     type="int" 
+                     value="3"/>
+
+          <Parameter name="Separate Evaluators by Element Block" 
+                     type="bool" 
+                     value="true"/>
+
+     </ParameterList>
+  
+
+
+<!-- =========================================================================================== -->
+<!-- Solver options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- =========================================================================================== -->
+
+     <ParameterList name="Piro">
+
+          <Parameter name="Solver Type" 
+                     type="string" 
+                     value="LOCA"/>
+
+          <ParameterList name="LOCA">
+
+               <ParameterList name="Bifurcation"/>
+
+                    <ParameterList name="Constraints"/>
+
+                         <ParameterList name="Predictor">
+
+                              <Parameter  name="Method" 
+                                          type="string" 
+                                          value="Constant"/>
+
+                         </ParameterList>
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- ~~~~~~~~~~~~~~~~~~~ PARAMETER STEPPING ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+                         <ParameterList name="Stepper">
+
+                              <Parameter name="Continuation Method" 
+                                         type="string" 
+                                         value="Natural"/>
+
+                              <Parameter name="Initial Value" 
+                                         type="double" 
+                                         value="0.0"/>
+
+                              <Parameter name="Continuation Parameter" 
+                                         type="string" 
+                                         value="Time"/>
+
+                              <Parameter name="Max Steps" 
+                                         type="int" 
+                                         value="12"/>
+
+                              <Parameter name="Min Value" 
+                                         type="double" 
+                                         value="0.0"/>
+
+                              <Parameter name="Max Value" 
+                                         type="double" 
+                                         value="12.0"/>
+
+                              <Parameter name="Return Failed on Reaching Max Steps"
+                                         type="bool" 
+                                         value="0"/>
+
+                              <Parameter name="Hit Continuation Bound" 
+                                         type="bool" 
+                                         value="0"/>
+
+                         </ParameterList>
+
+                          <ParameterList name="Step Size">
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~ Control the parameter incrementation,
+                              here it is the displacement increment on the BC ~~~~~~~~~~~~~~~~~~ -->
+
+                              <Parameter name="Initial Step Size" 
+                                         type="double" 
+                                         value="1.0"/>
+
+                              <Parameter name="Method" 
+                                         type="string" 
+                                         value="Constant"/>
+
+                          </ParameterList>
+
+          </ParameterList>
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- ~~~~ Set solver controls. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+          <ParameterList name="NOX">
+
+               <ParameterList name="Direction">
+
+                    <Parameter name="Method" 
+                               type="string" 
+                               value="Newton"/>
+
+                    <ParameterList name="Newton">
+
+                         <Parameter name="Forcing Term Method" 
+                                    type="string" 
+                                    value="Constant"/>
+
+                         <Parameter name="Rescue Bad Newton Solve" 
+                                    type="bool" 
+                                    value="1"/>
+
+                         <ParameterList name="Linear Solver">
+
+                              <Parameter name="Tolerance" 
+                                         type="double" 
+                                         value="1.0e-12"/>
+
+                         </ParameterList>
+
+                         <ParameterList name="Stratimikos Linear Solver">
+
+                              <ParameterList name="NOX Stratimikos Options">
+
+                              </ParameterList>
+
+                              <ParameterList name="Stratimikos">
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Belos for iterative solvers, Amesos for direct ~~~~~~~~~~~~~~ -->
+
+                                   <Parameter name="Linear Solver Type"
+                                              type="string" 
+                                              value="Belos"/>
+
+                                   <ParameterList name="Linear Solver Types">
+
+                                        <ParameterList name="Belos">
+
+                                             <ParameterList name="VerboseObject">
+
+                                                  <Parameter name="Verbosity Level"
+                                                             type="string" 
+                                                             value="low"/>
+
+                                             </ParameterList>
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Set linear solver type ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->                                            
+
+                                             <Parameter name="Solver Type"
+                                                        type="string" 
+                                                        value="Block GMRES"/>
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define linear solver types ~~~~~~~~~~~~~~~~~~~~~~~~ -->                                                       
+
+                                             <ParameterList name="Solver Types">
+
+                                                  <ParameterList name="Block GMRES">
+
+                                                       <Parameter name="Convergence Tolerance"
+                                                                  type="double" 
+                                                                  value="1e-8"/>
+
+                                                       <Parameter name="Output Frequency" 
+                                                                  type="int" 
+                                                                  value="10"/>
+
+                                                       <Parameter name="Output Style" 
+                                                                  type="int" 
+                                                                  value="1"/>
+
+                                                       <Parameter name="Verbosity" 
+                                                                  type="int" 
+                                                                  value="33"/>
+
+                                                       <Parameter name="Maximum Iterations"
+                                                                  type="int" 
+                                                                  value="1000"/>
+
+                                                       <Parameter name="Block Size" 
+                                                                  type="int" 
+                                                                  value="1"/>
+
+                                                       <Parameter name="Num Blocks" 
+                                                                  type="int" 
+                                                                  value="200"/>
+
+                                                       <Parameter name="Flexible Gmres" 
+                                                                  type="bool" 
+                                                                  value="0"/>
+
+                                                  </ParameterList>
+
+                                             </ParameterList>
+
+                                        </ParameterList>
+
+                                   </ParameterList>
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Set preconditioner type ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->                                   
+
+                                   <Parameter name="Preconditioner Type"
+                                              type="string" 
+                                              value="Ifpack2"/>
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Define preconditioner types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+                                   <ParameterList name="Preconditioner Types">
+
+                                        <ParameterList name="Ifpack2">
+
+                                             <Parameter name="Overlap" 
+                                                        type="int" 
+                                                        value="2"/>
+
+                                             <Parameter name="Prec Type" 
+                                                        type="string" 
+                                                        value="ILUT"/>
+
+                                             <ParameterList name="Ifpack2 Settings">
+
+                                                  <Parameter name="fact: drop tolerance" 
+                                                             type="double" 
+                                                             value="0"/>
+
+                                                  <Parameter name="fact: ilut level-of-fill" 
+                                                             type="double" 
+                                                             value="1"/>
+
+                                                  <Parameter name="fact: level-of-fill" 
+                                                             type="int" 
+                                                             value="1"/>
+
+                                             </ParameterList>
+
+                                        </ParameterList>
+
+                                   </ParameterList>
+
+                              </ParameterList>
+
+                         </ParameterList>
+
+                    </ParameterList>
+
+               </ParameterList>
+
+               <ParameterList name="Line Search">
+
+                    <ParameterList name="Full Step">
+
+                         <Parameter name="Full Step" 
+                                    type="double" 
+                                    value="1"/>
+
+                    </ParameterList>
+
+                    <Parameter name="Method" 
+                               type="string" 
+                               value="Full Step"/>
+
+               </ParameterList>
+
+               <Parameter name="Nonlinear Solver"
+                          type="string" 
+                          value="Line Search Based"/>
+
+               <ParameterList name="Printing">
+
+                    <Parameter name="Output Precision" 
+                               type="int" 
+                               value="3"/>
+
+                    <Parameter name="Output Processor" 
+                               type="int" 
+                               value="0"/>
+
+<!-- ~~~~~~~~~~~~~~ set the output information ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+                    <ParameterList name="Output Information">
+
+                         <Parameter name="Error" 
+                                    type="bool" 
+                                    value="1"/>
+
+                         <Parameter name="Warning" 
+                                    type="bool" 
+                                    value="1"/>
+
+                         <Parameter name="Outer Iteration" 
+                                    type="bool" 
+                                    value="1"/>
+
+                         <Parameter name="Parameters" 
+                                    type="bool" 
+                                    value="0"/>
+
+                         <Parameter name="Details" 
+                                    type="bool" 
+                                    value="0"/>
+
+                         <Parameter name="Linear Solver Details" 
+                                    type="bool" 
+                                    value="0"/>
+
+                         <Parameter name="Stepper Iteration" 
+                                    type="bool" 
+                                    value="1"/>
+
+                         <Parameter name="Stepper Details" 
+                                    type="bool" 
+                                    value="1"/>
+
+                         <Parameter name="Stepper Parameters" 
+                                    type="bool" 
+                                    value="1"/>
+
+                    </ParameterList>
+
+               </ParameterList>
+
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- ~~~~~~~~~ Checking for residual convergence (rel, abs, inc) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+               <ParameterList name="Solver Options">
+
+                    <Parameter name="Status Test Check Type" 
+                               type="string" 
+                               value="Complete"/>
+
+               </ParameterList>
+
+               <ParameterList name="Status Tests">
+
+                    <Parameter name="Test Type" 
+                               type="string" 
+                               value="Combo"/>
+
+                    <Parameter name="Combo Type" 
+                               type="string" 
+                               value="OR"/>
+
+                    <Parameter name="Number of Tests" 
+                               type="int" 
+                               value="5"/>
+
+                    <ParameterList name="Test 0">
+
+                         <Parameter name="Test Type" 
+                                    type="string" 
+                                    value="RelativeNormF"/>
+
+                         <Parameter name="Tolerance" 
+                                    type="double" 
+                                    value="1.0e-20"/>
+
+                    </ParameterList>
+
+                    <ParameterList name="Test 1">
+
+                         <Parameter name="Test Type" 
+                                    type="string" 
+                                    value="MaxIters"/>
+
+                         <Parameter name="Maximum Iterations" 
+                                    type="int" 
+                                    value="2000"/>
+
+                    </ParameterList>
+
+                    <ParameterList name="Test 2">
+
+                         <Parameter name="Test Type" 
+                                    type="string" 
+                                    value="Combo"/>
+
+                         <Parameter name="Combo Type" 
+                                    type="string" 
+                                    value="AND"/>
+
+                         <Parameter name="Number of Tests" 
+                                    type="int" 
+                                    value="2"/>
+
+                         <ParameterList name="Test 0">
+
+                              <Parameter name="Test Type" 
+                                         type="string" 
+                                         value="NStep"/>
+
+                              <Parameter name="Number of Nonlinear Iterations"
+                                         type="int" 
+                                         value="1"/>
+
+                         </ParameterList>
+
+                         <ParameterList name="Test 1">
+
+                              <Parameter name="Test Type" 
+                                         type="string" 
+                                         value="NormF"/>
+
+                              <Parameter name="Tolerance" 
+                                         type="double" 
+                                         value="1.0e-12"/>
+
+                         </ParameterList>
+
+                    </ParameterList>
+
+                    <ParameterList name="Test 3">
+
+                         <Parameter name="Test Type" 
+                                    type="string" 
+                                    value="FiniteValue"/>
+
+                    </ParameterList>
+
+                    <ParameterList name="Test 4">
+
+                         <Parameter name="Test Type" 
+                                    type="string" 
+                                    value="NormF"/>
+
+                         <Parameter name="Tolerance" 
+                                    type="double" 
+                                    value="1.0e-35"/>
+
+                    </ParameterList>
+
+               </ParameterList>
+
+          </ParameterList>
+
+     </ParameterList>  
+
+</ParameterList>

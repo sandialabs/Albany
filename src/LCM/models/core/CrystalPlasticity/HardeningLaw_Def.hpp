@@ -250,10 +250,10 @@ harden(
   }
 
   minitensor::Vector<ArgT, NumSlipT> const 
-  driver_hardening = slip_family.latent_matrix_ * rate_slip_abs;
+  driver_hardening = 2.0 * slip_family.latent_matrix_ * rate_slip_abs;
 
   ArgT
-  effective_slip_rate{minitensor::norm_1(rate_slip)};
+  effective_slip_rate{minitensor::norm_1(rate_slip_abs)};
 
   auto const
   phardening_params = slip_family.phardening_parameters_;
@@ -289,12 +289,19 @@ harden(
         effective_slip_rate / rate_slip_reference, exponent_saturation);
     }
 
-    state_hardening_np1[ss_index_global] = state_hardening_n[ss_index_global] +
-      dt * rate_hardening * driver_hardening[ss_index] *
-      (stress_saturation - state_hardening_n[ss_index_global]) / 
-      (stress_saturation - resistance_slip_initial);
-
     slip_resistance[ss_index_global] = state_hardening_np1[ss_index_global];
+
+    // if (driver_hardening[ss_index] !=0 )
+    // {
+      state_hardening_np1[ss_index_global] = state_hardening_n[ss_index_global] +
+        dt * rate_hardening * driver_hardening[ss_index] *
+        (stress_saturation - state_hardening_np1[ss_index_global]) / 
+        (stress_saturation - resistance_slip_initial);
+    // }
+    // else
+    // {
+    //   state_hardening_np1[ss_index_global] = state_hardening_n[ss_index_global];
+    // }
   } 
 
   return;
@@ -371,8 +378,8 @@ harden(
   //
   // Compute the effective dislocation density at step n
   //
-  minitensor::Vector<RealType, NumSlipT>
-  densities_forest = slip_family.latent_matrix_ * state_hardening_n;
+  minitensor::Vector<ArgT, NumSlipT>
+  densities_forest = slip_family.latent_matrix_ * state_hardening_np1;
 
   minitensor::Tensor<RealType, NumSlipT>
   aux_matrix(num_slip_sys);
@@ -385,20 +392,6 @@ harden(
           std::sqrt(1.0 - std::pow(slip_family.latent_matrix_(ss_index_i, ss_index_j), 2));
     }
   }
-
-  minitensor::Vector<RealType, NumSlipT>
-  state_hardening(num_slip_sys);
-
-  for (int ss_index(0); ss_index < num_slip_sys; ++ss_index)
-  {
-    auto const
-    ss_index_global = slip_family.slip_system_indices_[ss_index];
-  
-    state_hardening[ss_index] = state_hardening_n[ss_index_global];
-  }
-
-  minitensor::Vector<RealType, NumSlipT>
-  densities_parallel = aux_matrix * state_hardening;
 
   //
   // Update dislocation densities
@@ -426,28 +419,38 @@ harden(
 
   for (int ss_index(0); ss_index < num_slip_sys; ++ss_index)
   {
-    RealType const
-    generation = factor_generation * std::sqrt(densities_forest[ss_index]);
-
-    RealType const
-    annihilation = factor_annihilation * state_hardening[ss_index];
-
     auto const
     ss_index_global = slip_family.slip_system_indices_[ss_index];
 
-    state_hardening_np1[ss_index_global] = state_hardening[ss_index];
+    ArgT const
+    generation = factor_generation * std::sqrt(densities_forest[ss_index]);
 
-    if (generation > annihilation)
-    {
-    state_hardening_np1[ss_index_global] += 
+    ArgT const
+    annihilation = factor_annihilation * state_hardening_np1[ss_index_global];
+
+    // if (generation > annihilation)
+    // {
+    state_hardening_np1[ss_index_global] = state_hardening_n[ss_index_global] + 
         dt * (generation - annihilation) * std::abs(rate_slip[ss_index_global]);
-    }
+    // }
+    
+  }
+  
+  minitensor::Vector<ArgT, NumSlipT> const
+  densities_parallel = aux_matrix * state_hardening_np1;
+    
+  for (int ss_index(0); ss_index < num_slip_sys; ++ss_index)
+  {
+
+    auto const
+    ss_index_global = slip_family.slip_system_indices_[ss_index];    
 
     // Compute the slip resistance
     slip_resistance[ss_index_global] = 
         factor_geometry_dislocation * modulus_shear * magnitude_burgers *
         std::sqrt(densities_parallel[ss_index]);
   }
+  
 }
 
 //

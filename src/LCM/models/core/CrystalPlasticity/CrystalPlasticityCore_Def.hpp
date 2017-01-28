@@ -162,7 +162,8 @@ CP::updateSlip(
     minitensor::Vector<ArgT, NumSlipT> const & slip_resistance,
     minitensor::Vector<ArgT, NumSlipT> const & shear,
     minitensor::Vector<RealType, NumSlipT> const & slip_n,
-    minitensor::Vector<ArgT, NumSlipT> & slip_np1)
+    minitensor::Vector<ArgT, NumSlipT> & slip_np1,
+    bool & failed)
 {
   for (int ss_index(0); ss_index < slip_systems.size(); ++ ss_index)
   {
@@ -182,7 +183,8 @@ CP::updateSlip(
     rate_slip = pflow->computeRateSlip(
         slip_family.pflow_parameters_,
         shear[ss_index],
-        slip_resistance[ss_index]);
+        slip_resistance[ss_index],
+        failed);
 
     slip_np1[ss_index] = slip_n[ss_index] + dt * rate_slip;
   }

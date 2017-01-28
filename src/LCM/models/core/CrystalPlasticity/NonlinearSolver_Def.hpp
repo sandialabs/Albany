@@ -160,7 +160,8 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
       slip_resistance,
       shear_np1,
       slip_n_,
-      slip_computed);
+      slip_computed,
+      failed);
 
   for (int i = 0; i< num_slip_; ++i){
     residual[i] = slip_np1[i] - slip_computed[i];
@@ -341,6 +342,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
       shear_np1);
 
   // Compute state_hardening_np1
+  state_hardening_computed = state_hardening_np1;
   CP::updateHardness<NumDimT, NumSlipT, T>(
       slip_systems_,
       slip_families_,
@@ -358,7 +360,8 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
       slip_resistance,
       shear_np1,
       slip_n_,
-      slip_computed);
+      slip_computed,
+      failed);
 
   for (int i = 0; i< num_slip_; ++i){
     residual[i] = slip_np1[i] - slip_computed[i];

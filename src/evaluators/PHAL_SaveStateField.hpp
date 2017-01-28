@@ -19,19 +19,19 @@ namespace PHAL {
 
 */
 
-template<typename EvalT, typename Traits> 
+template<typename EvalT, typename Traits>
 class SaveStateField : public PHX::EvaluatorWithBaseImpl<Traits>,
                        public PHX::EvaluatorDerived<EvalT, Traits>  {
-  
+
 public:
-  
+
   SaveStateField(const Teuchos::ParameterList& p);
-  
+
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
-  
+
   void evaluateFields(typename Traits::EvalData d);
-  
+
 private:
 
   typedef typename EvalT::ScalarT ScalarT;
@@ -39,30 +39,35 @@ private:
 };
 
 
-template<typename Traits> 
-class SaveStateField<PHAL::AlbanyTraits::Residual, Traits> 
+template<typename Traits>
+class SaveStateField<PHAL::AlbanyTraits::Residual, Traits>
                     : public PHX::EvaluatorWithBaseImpl<Traits>,
                       public PHX::EvaluatorDerived<PHAL::AlbanyTraits::Residual, Traits>  {
-  
+
 public:
-  
+
   SaveStateField(const Teuchos::ParameterList& p);
-  
+
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
-  
+
   void evaluateFields(typename Traits::EvalData d);
-  
+
 private:
 
+  void saveElemState (typename Traits::EvalData d);
+  void saveNodeState (typename Traits::EvalData d);
+
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
-  typedef typename PHAL::AlbanyTraits::Residual::MeshScalarT MeshScalarT;
 
   Teuchos::RCP<PHX::FieldTag> savestate_operation;
   PHX::MDField<ScalarT> field;
   std::string fieldName;
   std::string stateName;
-};
-}
 
-#endif
+  bool nodalState;
+};
+
+} // Namespace PHAL
+
+#endif // PHAL_SAVESTATEFIELD_HPP
