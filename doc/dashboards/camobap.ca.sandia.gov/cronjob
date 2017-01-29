@@ -1,5 +1,5 @@
-00 20 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyAlbanyTests; ./run_tpetra.sh set_irinas_env.in  MPI >& out
-45 20 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyAlbanyTests; ./run_tpetra_openmp.sh set_irinas_env.in  MPI
+00 20 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyAlbanyTests; rm -rf out; ./run_tpetra.sh set_irinas_env.in MPI >& out
+45 20 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyAlbanyTests; rm -rf out_openmp; ./run_tpetra_openmp.sh set_irinas_env.in MPI >& out_openMP
 00 22 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albany32bitT.sh
 45 22 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_cismAlbany.sh
 15 23 * * 1-4,7  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albany32bit.sh
