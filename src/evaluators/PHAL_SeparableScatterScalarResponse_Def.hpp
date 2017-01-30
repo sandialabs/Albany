@@ -234,15 +234,12 @@ preEvaluate(typename Traits::PreEvalData workset)
   //IKT, FIXME, 1/24/17: replace workset.dgdp below with workset.dgdpT 
   //once ATO:Constraint_2D_adj test passes with this change.  Remove ifdef guards 
   //when this is done. 
+  Teuchos::RCP<Tpetra_MultiVector> dgdpT = workset.dgdpT;
   Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT = workset.overlapped_dgdpT;
-#if defined(ALBANY_EPETRA)
-  // Initialize derivatives
-  Teuchos::RCP<Epetra_MultiVector> dgdp = workset.dgdp;
-  if (dgdp != Teuchos::null) {
-    dgdp->PutScalar(0.0);
+  if (dgdpT != Teuchos::null)
+    dgdpT->putScalar(0.0);
+  if (overlapped_dgdpT != Teuchos::null)
     overlapped_dgdpT->putScalar(0.0);
-  }
-#endif
 }
 
 template<typename Traits>
@@ -291,23 +288,13 @@ postEvaluate(typename Traits::PostEvalData workset)
       gT_nonconstView[res] = this->global_response[res].val();
     }
   }
-  //IKT, FIXME, 1/24/17: replace workset.dgdp below with workset.dgdpT 
-  //once ATO:Constraint_2D_adj test passes with this change.  Remove ifdef guards 
-  //when this is done. 
-#if defined(ALBANY_EPETRA)
-  // Here we scatter the *global* response and its derivatives
-  Teuchos::RCP<Epetra_MultiVector> dgdp = workset.dgdp;
+
+  Teuchos::RCP<Tpetra_MultiVector> dgdpT = workset.dgdpT;
   Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT = workset.overlapped_dgdpT;
-  if (dgdp != Teuchos::null) {
-    Teuchos::RCP<const Teuchos::Comm<int> > commT = workset.comm;
-    Teuchos::RCP<Tpetra_MultiVector> dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*(workset.dgdp), 
-                                                    commT);
+  if ((dgdpT != Teuchos::null)&&(overlapped_dgdpT != Teuchos::null)) {
     Tpetra_Export exporterT(overlapped_dgdpT->getMap(), dgdpT->getMap());
     dgdpT->doExport(*overlapped_dgdpT, exporterT, Tpetra::ADD);
-    Teuchos::RCP<const Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
-    Petra::TpetraMultiVector_To_EpetraMultiVector(dgdpT, *(workset.dgdp), comm);
   }
-#endif
 }
 
 // **********************************************************************

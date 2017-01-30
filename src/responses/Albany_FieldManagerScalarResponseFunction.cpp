@@ -444,54 +444,41 @@ evaluateGradientT(const double current_time,
   }  
 }
 
-#if defined(ALBANY_EPETRA)
 void
 Albany::FieldManagerScalarResponseFunction::
-evaluateDistParamDeriv(
+evaluateDistParamDerivT(
       const double current_time,
-      const Epetra_Vector* xdot,
-      const Epetra_Vector* xdotdot,
-      const Epetra_Vector& x,
+      const Tpetra_Vector* xdotT,
+      const Tpetra_Vector* xdotdotT,
+      const Tpetra_Vector& xT,
       const Teuchos::Array<ParamVec>& param_array,
       const std::string& dist_param_name,
-      Epetra_MultiVector* dg_dp)
+      Tpetra_MultiVector* dg_dpT)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       !performedPostRegSetup, Teuchos::Exceptions::InvalidParameter,
       std::endl << "Post registration setup not performed in field manager " <<
       std::endl << "Forgot to call \"postRegSetup\"? ");
-  
+
   // Set data in Workset struct
   PHAL::Workset workset;
-  Teuchos::RCP<const Tpetra_Vector> xdotT;
-   if (xdot != NULL) {
-      xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, application->getComm());
-   }
 
-   Teuchos::RCP<const Tpetra_Vector> xdotdotT;
-   if (xdotdot != NULL) {
-      xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, application->getComm());
-   }
-
-  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x,application->getComm());
-
-  application->setupBasicWorksetInfoT(workset, current_time, xdotT, xdotdotT, xT, param_array);
+  application->setupBasicWorksetInfoT(workset, current_time, rcp(xdotT, false), rcp(xdotdotT, false), rcpFromRef(xT), param_array);
 
   // Perform fill via field manager (dg/dx)
-  if(dg_dp != NULL) {
+  if(dg_dpT != NULL) {
     workset.dist_param_deriv_name = dist_param_name;
-    workset.dgdp = Teuchos::rcp(dg_dp, false);
-    { 
+    workset.dgdpT = Teuchos::rcp(dg_dpT, false);
+    {
       Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT = Teuchos::rcp(
         new Tpetra_MultiVector(
           workset.distParamLib->get(dist_param_name)->overlap_map(),
-          dg_dp->NumVectors()));
-      workset.overlapped_dgdpT = overlapped_dgdpT; 
+          dg_dpT->getNumVectors()));
+      workset.overlapped_dgdpT = overlapped_dgdpT;
     }
     evaluate<PHAL::AlbanyTraits::DistParamDeriv>(workset);
   }
 }
-#endif
 
 #ifdef ALBANY_SG
 void

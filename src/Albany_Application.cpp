@@ -2568,34 +2568,31 @@ evaluateResponseDerivativeT(
     t, xdotT, xdotdotT, xT, p, deriv_p, gT, dg_dxT, dg_dxdotT, dg_dxdotdotT, dg_dpT);
 }
 
-#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
-evaluateResponseDistParamDeriv(
+evaluateResponseDistParamDerivT(
     int response_index,
     const double current_time,
-    const Epetra_Vector* xdot,
-    const Epetra_Vector* xdotdot,
-    const Epetra_Vector& x,
+    const Tpetra_Vector* xdot,
+    const Tpetra_Vector* xdotdot,
+    const Tpetra_Vector& x,
     const Teuchos::Array<ParamVec>& param_array,
     const std::string& dist_param_name,
-    Epetra_MultiVector* dg_dp) {
+    Tpetra_MultiVector* dg_dp) {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Response Distributed Parameter Derivative");
   double t = current_time;
   if ( paramLib->isParameter("Time") )
     t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
 
-  responses[response_index]->evaluateDistParamDeriv(t, xdot, xdotdot, x, param_array, dist_param_name, dg_dp);
+  responses[response_index]->evaluateDistParamDerivT(t, xdot, xdotdot, x, param_array, dist_param_name, dg_dp);
   if (dg_dp != NULL){
     std::stringstream sensitivity_name; sensitivity_name << dist_param_name << "_sensitivity";
     if(distParamLib->has(sensitivity_name.str())) {
-      distParamLib->get(sensitivity_name.str())->vector()->update(1.0, *Petra::EpetraVector_To_TpetraVectorNonConst(*(*dg_dp)(0), commT),1.0);
+      distParamLib->get(sensitivity_name.str())->vector()->update(1.0, *dg_dp,1.0);
       distParamLib->get(sensitivity_name.str())->scatter();
     }
   }
-
 }
-#endif
 
 #ifdef ALBANY_SG
 void

@@ -121,18 +121,16 @@ namespace Albany {
       Tpetra_Operator* dg_dxdotdotT,
       Tpetra_MultiVector* dg_dpT);
 
-#if defined(ALBANY_EPETRA)
     //! Evaluate distributed parameter derivative = dg/dp
     virtual void
-    evaluateDistParamDeriv(
+    evaluateDistParamDerivT(
           const double current_time,
-          const Epetra_Vector* xdot,
-          const Epetra_Vector* xdotdot,
-          const Epetra_Vector& x,
+          const Tpetra_Vector* xdotT,
+          const Tpetra_Vector* xdotdotT,
+          const Tpetra_Vector& xT,
           const Teuchos::Array<ParamVec>& param_array,
           const std::string& dist_param_name,
-          Epetra_MultiVector* dg_dp);
-#endif
+          Tpetra_MultiVector* dg_dpT);
     //@}
 
     //! \name Stochastic Galerkin evaluation functions

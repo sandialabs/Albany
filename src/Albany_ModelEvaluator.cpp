@@ -924,10 +924,13 @@ f_out->Print(std::cout);
 
     // Need to handle dg/dp for distributed p
     for(int j=0; j<num_dist_param_vecs; j++) {
-      Derivative dgdp_out = outArgs.get_DgDp(i,j+num_param_vecs);
-      if (!dgdp_out.isEmpty()) {
-        dgdp_out.getMultiVector()->PutScalar(0.);
-        app->evaluateResponseDistParamDeriv(i, curr_time, x_dot.get(), x_dotdot.get(), *x, sacado_param_vec, dist_param_names[j], dgdp_out.getMultiVector().get());
+      Teuchos::RCP<Epetra_MultiVector> dgdp_out = outArgs.get_DgDp(i,j+num_param_vecs).getMultiVector();
+      Teuchos::RCP<Tpetra_MultiVector> dgdp_outT;
+      if (dgdp_out != Teuchos::null) {
+        dgdp_outT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp_out, commT);
+        dgdp_outT->putScalar(0.);
+        app->evaluateResponseDistParamDerivT(i, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, sacado_param_vec, dist_param_names[j], dgdp_outT.get());
+        Petra::TpetraMultiVector_To_EpetraMultiVector(dgdp_outT, *dgdp_out, comm);
       }
     }
 

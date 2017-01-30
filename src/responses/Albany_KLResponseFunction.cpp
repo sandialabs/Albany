@@ -109,21 +109,19 @@ evaluateTangentT(const double alpha,
           gT, gxT, gpT);
 }
 
-#if defined(ALBANY_EPETRA)
 //! Evaluate distributed parameter derivative dg/dp
 void
 Albany::KLResponseFunction::
-evaluateDistParamDeriv(
+evaluateDistParamDerivT(
   const double current_time,
-  const Epetra_Vector* xdot,
-  const Epetra_Vector* xdotdot,
-  const Epetra_Vector& x,
+  const Tpetra_Vector* xdotT,
+  const Tpetra_Vector* xdotdotT,
+  const Tpetra_Vector& xT,
   const Teuchos::Array<ParamVec>& param_array,
   const std::string& dist_param_name,
-  Epetra_MultiVector*  dg_dp){
-  response->evaluateDistParamDeriv(current_time, xdot, xdotdot, x, param_array, dist_param_name, dg_dp);
+  Tpetra_MultiVector*  dg_dpT){
+  response->evaluateDistParamDerivT(current_time, xdotT, xdotdotT, xT, param_array, dist_param_name, dg_dpT);
 }
-#endif
 
 #if defined(ALBANY_EPETRA)
 void
