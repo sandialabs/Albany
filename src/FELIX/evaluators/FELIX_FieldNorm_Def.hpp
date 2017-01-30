@@ -139,13 +139,13 @@ FieldNormBase (const Teuchos::ParameterList& p,
   else if (type=="Given Parameter")
   {
     regularization_type = GIVEN_PARAMETER;
-    regularizationParam = PHX::MDField<EScalarT,Dim>(options.get<std::string>("Regularization Parameter Name"),dl->shared_param);
+    regularizationParam = decltype(regularizationParam)(options.get<std::string>("Regularization Parameter Name"),dl->shared_param);
     this->addDependentField(regularizationParam);
   }
   else if (type=="Parameter Exponential")
   {
     regularization_type = PARAMETER_EXPONENTIAL;
-    regularizationParam = PHX::MDField<EScalarT,Dim>(options.get<std::string>("Regularization Parameter Name"),dl->shared_param);
+    regularizationParam = decltype(regularizationParam)(options.get<std::string>("Regularization Parameter Name"),dl->shared_param);
     this->addDependentField(regularizationParam);
   }
   else

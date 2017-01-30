@@ -36,7 +36,7 @@ CahnHillRhoResid(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(rhoResidual);
 
   if(haveNoise){
-    noiseTerm = PHX::MDField<ScalarT, Cell, QuadPoint> (p.get<std::string>("Langevin Noise Term"),
+    noiseTerm = decltype(noiseTerm)(p.get<std::string>("Langevin Noise Term"),
 	       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
     this->addDependentField(noiseTerm);
   }

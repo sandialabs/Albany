@@ -90,11 +90,11 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT, Cell, Node, VecDim>
+  PHX::MDField<const ScalarT, Cell, Node, VecDim>
   nodal_value_;
 
   //! Basis Functions
-  PHX::MDField<RealType, Cell, Node>
+  PHX::MDField<const RealType, Cell, Node>
   basis_fn_;
 
   // Output:

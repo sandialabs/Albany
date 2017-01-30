@@ -78,9 +78,9 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>       u_b;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>       beta;
-  PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>  G;
+  PHX::MDField<const ScalarT,Cell,Side,QuadPoint>       u_b;
+  PHX::MDField<const ScalarT,Cell,Side,QuadPoint>       beta;
+  PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>  G;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Side,QuadPoint>       m;

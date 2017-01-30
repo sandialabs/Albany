@@ -49,15 +49,15 @@ public:
 private:
 
   // Input:
-  PHX::MDField<RealType,Cell,Node,QuadPoint>      BF;
-  PHX::MDField<RealType,Cell,Node,QuadPoint,Dim>  GradBF;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint>        w_measure;
-  PHX::MDField<ScalarT,Cell,QuadPoint>            N;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>        q;
-  PHX::MDField<hScalarT,Cell,QuadPoint>           h;
-  PHX::MDField<ParamScalarT,Cell,QuadPoint>       m;
-  PHX::MDField<ParamScalarT,Cell,QuadPoint>       omega;
-  PHX::MDField<ParamScalarT,Cell,QuadPoint>       u_b;
+  PHX::MDField<const RealType,Cell,Node,QuadPoint>      BF;
+  PHX::MDField<const RealType,Cell,Node,QuadPoint,Dim>  GradBF;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint>        w_measure;
+  PHX::MDField<const ScalarT,Cell,QuadPoint>            N;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim>        q;
+  PHX::MDField<const hScalarT,Cell,QuadPoint>           h;
+  PHX::MDField<const ParamScalarT,Cell,QuadPoint>       m;
+  PHX::MDField<const ParamScalarT,Cell,QuadPoint>       omega;
+  PHX::MDField<const ParamScalarT,Cell,QuadPoint>       u_b;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> residual;

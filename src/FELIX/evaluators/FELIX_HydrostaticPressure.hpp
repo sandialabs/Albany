@@ -41,8 +41,8 @@ public:
 
 private:
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,Dim> z;
-  PHX::MDField<Type,Cell,Node> s; //surface height
+  PHX::MDField<const MeshScalarT,Cell,Node,Dim> z;
+  PHX::MDField<const Type,Cell,Node> s; //surface height
 
   // Output:
   PHX::MDField<Type,Cell,Node> pressure;
