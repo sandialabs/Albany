@@ -38,7 +38,7 @@ Writer (const Teuchos::RCP<Manager>& rc_mgr,
   }
   for (Manager::Field::iterator it = rc_mgr_->fieldsBegin(),
        end = rc_mgr_->fieldsEnd(); it != end; ++it) {
-    fields_.push_back(PHX::MDField<RealType>((*it)->name, (*it)->layout));
+    fields_.push_back(PHX::MDField<const RealType>((*it)->name, (*it)->layout));
     this->addDependentField(fields_.back());
   }
 }

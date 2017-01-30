@@ -132,7 +132,7 @@ public:
   //! Writer<Residual> uses these methods to record the data.
   void beginQpWrite(const PHAL::Workset& workset,
                     const BasisField& bf, const BasisField& wbf);
-  void writeQpField(const PHX::MDField<RealType>& f,
+  void writeQpField(const PHX::MDField<const RealType>& f,
                     const PHAL::Workset& workset, const BasisField& wbf);
   void endQpWrite();
   void testProjector(

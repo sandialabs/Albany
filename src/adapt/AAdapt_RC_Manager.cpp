@@ -176,7 +176,7 @@ public:
             const Teuchos::RCP<const Tpetra_Map>& ol_node_map);
   void fillMassMatrix(const PHAL::Workset& workset, const BasisField& bf,
                       const BasisField& wbf);
-  void fillRhs(const PHX::MDField<RealType>& f_G_qp, Manager::Field& f,
+  void fillRhs(const PHX::MDField<const RealType>& f_G_qp, Manager::Field& f,
                const PHAL::Workset& workset, const BasisField& wbf);
   void project(Manager::Field& f);
   void interp(const Manager::Field& f, const PHAL::Workset& workset,
@@ -229,7 +229,7 @@ fillMassMatrix (const PHAL::Workset& workset, const BasisField& bf,
 }
 
 void Projector::
-fillRhs (const PHX::MDField<RealType>& f_G_qp, Manager::Field& f,
+fillRhs (const PHX::MDField<const RealType>& f_G_qp, Manager::Field& f,
          const PHAL::Workset& workset, const BasisField& wbf) {
   const int
     rank = f.layout->rank() - 2,
@@ -556,7 +556,7 @@ public:
     read(getMDArray(f.fieldTag().name(), workset.wsIndex), f);
   }
 
-  void writeQpField (const PHX::MDField<RealType>& f,
+  void writeQpField (const PHX::MDField<const RealType>& f,
                      const PHAL::Workset& workset, const BasisField& wbf) {
     const std::string name_rc = decorate(f.fieldTag().name());
     if (proj_.is_null()) {
@@ -761,7 +761,7 @@ beginQpWrite (const PHAL::Workset& workset, const BasisField& bf,
   impl_->proj_->fillMassMatrix(workset, bf, wbf);
 }
 void Manager::
-writeQpField (const PHX::MDField<RealType>& f, const PHAL::Workset& workset,
+writeQpField (const PHX::MDField<const RealType>& f, const PHAL::Workset& workset,
               const BasisField& wbf) {
   impl_->writeQpField(f, workset, wbf);
 }
@@ -974,7 +974,8 @@ void testProjector (
         loop(f_mdf, i, 2) loop(f_mdf, j, 3) f_mdf(cell, qp, i, j) = F(i, j);
       }
     }
-    p.fillRhs(f_mdf, f, workset, wbf);
+    PHX::MDField<const RealType> f_mdf_const = f_mdf;
+    p.fillRhs(f_mdf_const, f, workset, wbf);
 
     // Solve M x = b.
     p.project(f);

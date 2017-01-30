@@ -101,13 +101,16 @@ evaluateFields(typename Traits::EvalData workset)
     FST::integrate(VResidual.get_view(), VSource.get_view(), wBF.get_view(), true);
   }
 
+  PHX::MDField<ScalarT,Cell,QuadPoint> U_ksqr; U_ksqr.deep_copy(U);
+  PHX::MDField<ScalarT,Cell,QuadPoint> V_ksqr; V_ksqr.deep_copy(V);
+
   if (ksqr != 1.0) {
-    PHAL::scale(U, ksqr);
-    PHAL::scale(V, ksqr);
+    PHAL::scale(U_ksqr, ksqr);
+    PHAL::scale(V_ksqr, ksqr);
   }
 
-  FST::integrate(UResidual.get_view(), U.get_view(), wBF.get_view(), true); // "true" sums into
-  FST::integrate(VResidual.get_view(), V.get_view(), wBF.get_view(), true);
+  FST::integrate(UResidual.get_view(), U_ksqr.get_view(), wBF.get_view(), true); // "true" sums into
+  FST::integrate(VResidual.get_view(), V_ksqr.get_view(), wBF.get_view(), true);
 
  // Potential code for "attenuation"  (1 - 0.05i)k^2 \phi
  /*

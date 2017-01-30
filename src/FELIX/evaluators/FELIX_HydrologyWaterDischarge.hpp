@@ -89,9 +89,9 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>   gradPhi;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>       gradPhiNorm;
-  PHX::MDField<hScalarT,Cell,Side,QuadPoint>      h;
+  PHX::MDField<const ScalarT,Cell,Side,QuadPoint,Dim>   gradPhi;
+  PHX::MDField<const ScalarT,Cell,Side,QuadPoint>       gradPhiNorm;
+  PHX::MDField<const hScalarT,Cell,Side,QuadPoint>      h;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>   q;
