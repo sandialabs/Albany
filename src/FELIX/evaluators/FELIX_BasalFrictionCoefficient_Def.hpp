@@ -70,13 +70,13 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       beta_type = EXP_GIVEN_FIELD;
 
     if(beta_type == GAL_PROJ_EXP_GIVEN_FIELD) {
-      beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->node_scalar);
+      beta_given_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->node_scalar);
       this->addDependentField (beta_given_field);
-      bF = PHX::MDField<RealType,Cell,Node,Side,QuadPoint>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
+      bF = PHX::MDField<const RealType,Cell,Node,Side,QuadPoint>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
       this->addDependentField (bF);
     }
     else {
-      beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->qp_scalar);
+      beta_given_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->qp_scalar);
       this->addDependentField (beta_given_field);
     }
   }
@@ -91,11 +91,11 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
             << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
 
-    N              = PHX::MDField<HydroScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
-    u_norm         = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
-    muParam        = PHX::MDField<ScalarT,Dim>("Coulomb Friction Coefficient", dl->shared_param);
-    lambdaParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
-    powerParam     = PHX::MDField<ScalarT,Dim>("Power Exponent", dl->shared_param);
+    N              = PHX::MDField<const HydroScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
+    u_norm         = PHX::MDField<const ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
+    muParam        = PHX::MDField<const ScalarT,Dim>("Coulomb Friction Coefficient", dl->shared_param);
+    lambdaParam    = PHX::MDField<const ScalarT,Dim>("Bed Roughness", dl->shared_param);
+    powerParam     = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
 
     this->addDependentField (muParam);
     this->addDependentField (lambdaParam);
@@ -128,11 +128,11 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
             << "  with N being the effective pressure, |u| the sliding velocity\n";
 #endif
 
-    N              = PHX::MDField<HydroScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
-    u_norm         = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
-    muParam        = PHX::MDField<ScalarT,Dim>("Coulomb Friction Coefficient", dl->shared_param);
-    lambdaParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
-    powerParam     = PHX::MDField<ScalarT,Dim>("Power Exponent", dl->shared_param);
+    N              = PHX::MDField<const HydroScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar);
+    u_norm         = PHX::MDField<const ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar);
+    muParam        = PHX::MDField<const ScalarT,Dim>("Coulomb Friction Coefficient", dl->shared_param);
+    lambdaParam    = PHX::MDField<const ScalarT,Dim>("Bed Roughness", dl->shared_param);
+    powerParam     = PHX::MDField<const ScalarT,Dim>("Power Exponent", dl->shared_param);
 
     this->addDependentField (muParam);
     this->addDependentField (lambdaParam);
@@ -147,8 +147,8 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   }
 
   if(zero_on_floating) {
-    bed_topo_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Bed Topography QP Name"), dl->qp_scalar);
-    thickness_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Thickness QP Name"), dl->qp_scalar);
+    bed_topo_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Bed Topography QP Name"), dl->qp_scalar);
+    thickness_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Thickness QP Name"), dl->qp_scalar);
     Teuchos::ParameterList& phys_param_list = *p.get<Teuchos::ParameterList*>("Physical Parameter List");
     rho_i = phys_param_list.get<double> ("Ice Density");
     rho_w = phys_param_list.get<double> ("Water Density");
@@ -160,7 +160,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   use_stereographic_map = stereographicMapList->get("Use Stereographic Map", false);
   if(use_stereographic_map)
   {
-    coordVec = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_coords);
+    coordVec = PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_coords);
 
     double R = stereographicMapList->get<double>("Earth Radius", 6371);
     x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
@@ -369,13 +369,13 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
       beta_type = GAL_PROJ_EXP_GIVEN_FIELD;
 
     if(beta_type == GAL_PROJ_EXP_GIVEN_FIELD) {
-      beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->node_scalar);
+      beta_given_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->node_scalar);
       this->addDependentField (beta_given_field);
-      bF = PHX::MDField<RealType,Cell,Node,QuadPoint>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
+      bF = PHX::MDField<const RealType,Cell,Node,QuadPoint>(p.get<std::string> ("BF Variable Name"), dl->node_qp_scalar);
       this->addDependentField (bF);
     }
     else {
-      beta_given_field = PHX::MDField<ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->qp_scalar);
+      beta_given_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Basal Friction Coefficient Variable Name") + " Given", dl->qp_scalar);
       this->addDependentField (beta_given_field);
     }
 
@@ -392,7 +392,7 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
   use_stereographic_map = stereographicMapList->get("Use Stereographic Map", false);
   if(use_stereographic_map)
   {
-    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_coords);
+    coordVec = PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim>(p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_coords);
 
     double R = stereographicMapList->get<double>("Earth Radius", 6371);
     x_0 = stereographicMapList->get<double>("X_0", 0);//-136);

@@ -45,10 +45,10 @@ class AdvectionTau :
 
     Teuchos::Array<double> alpha;
 
-    PHX::MDField<MeshScalarT, Cell, Vertex, Dim> coord;
-    PHX::MDField<MeshScalarT, Cell, Node, QuadPoint, Dim> grad_bf;
-    PHX::MDField<ScalarT, Cell, QuadPoint> kappa;
-    PHX::MDField<ScalarT, Cell, QuadPoint> alpha_mag;
+    PHX::MDField<const MeshScalarT, Cell, Vertex, Dim> coord;
+    PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> grad_bf;
+    PHX::MDField<const ScalarT, Cell, QuadPoint> kappa;
+    PHX::MDField<const ScalarT, Cell, QuadPoint> alpha_mag;
     PHX::MDField<ScalarT, Cell, QuadPoint> tau;
 
 };
