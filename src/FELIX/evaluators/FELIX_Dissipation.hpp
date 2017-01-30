@@ -37,8 +37,8 @@ class Dissipation : public PHX::EvaluatorWithBaseImpl<Traits>,
 		typedef typename EvalT::ParamScalarT ParamScalarT;
 
 		// Input:
-		PHX::MDField<ScalarT,Cell,QuadPoint> mu; // [k^2 Pa yr], k=1000
-		PHX::MDField<ScalarT,Cell,QuadPoint> epsilonSq; // [(k yr)^{-2}],  k=1000
+		PHX::MDField<const ScalarT,Cell,QuadPoint> mu; // [k^2 Pa yr], k=1000
+		PHX::MDField<const ScalarT,Cell,QuadPoint> epsilonSq; // [(k yr)^{-2}],  k=1000
 
 		// Output:
 		PHX::MDField<ScalarT,Cell,QuadPoint> diss; // [W m^{-3}] = [Pa s^{-1}]

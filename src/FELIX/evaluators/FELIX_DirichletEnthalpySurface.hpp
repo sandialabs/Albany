@@ -41,7 +41,7 @@ public:
 
 private:
   // Input:
-  PHX::MDField<ParamScalarT,Cell,Node> dirTemp;
+  PHX::MDField<const ParamScalarT,Cell,Node> dirTemp;
 
   // Output:
   PHX::MDField<ParamScalarT,Cell,Node> dirEnth;

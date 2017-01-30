@@ -40,18 +40,18 @@ namespace FELIX
     typedef typename EvalT::ParamScalarT ParamScalarT;
 
     // Input:
-    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>    	 geoFlux;     // [W m^{-2}] = [Pa m s^{-1}]
-    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>       beta; // [kPa m / yr]
-    PHX::MDField<ScalarT,Cell,Side,QuadPoint>            basal_dTdz; // [K  km^{-1}]
-    PHX::MDField<ScalarT,Cell,Side, QuadPoint>           enthalpy;  //[MW s m^{-3}]
-    PHX::MDField<ParamScalarT,Cell, Side, QuadPoint>     enthalpyHs;  //[MW s m^{-3}]
-    PHX::MDField<Type,Cell,Side,QuadPoint,VecDim>        velocity; // [m yr^{-1}
-    PHX::MDField<ScalarT,Cell,Side,QuadPoint>            verticalVel; // [m y^{-1}]
-    PHX::MDField<RealType,Cell,Side,Node,QuadPoint>   	 BF;          // []
-    PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim>  GradBF;      // [km^{-1}
-    PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>     	 w_measure;   // [km^2]
-    PHX::MDField<ScalarT,Cell,Node>                      diffEnth;  //[MW s m^{-3}]
-    PHX::MDField<ScalarT,Dim>                            homotopy;
+    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>    	 geoFlux;     // [W m^{-2}] = [Pa m s^{-1}]
+    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>       beta; // [kPa m / yr]
+    PHX::MDField<const ScalarT,Cell,Side,QuadPoint>            basal_dTdz; // [K  km^{-1}]
+    PHX::MDField<const ScalarT,Cell,Side, QuadPoint>           enthalpy;  //[MW s m^{-3}]
+    PHX::MDField<const ParamScalarT,Cell, Side, QuadPoint>     enthalpyHs;  //[MW s m^{-3}]
+    PHX::MDField<const Type,Cell,Side,QuadPoint,VecDim>        velocity; // [m yr^{-1}
+    PHX::MDField<const ScalarT,Cell,Side,QuadPoint>            verticalVel; // [m y^{-1}]
+    PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>   	 BF;          // []
+    PHX::MDField<const RealType,Cell,Side,Node,QuadPoint,Dim>  GradBF;      // [km^{-1}
+    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>     	 w_measure;   // [km^2]
+    PHX::MDField<const ScalarT,Cell,Node>                      diffEnth;  //[MW s m^{-3}]
+    PHX::MDField<const ScalarT,Dim>                            homotopy;
 
     // Output:
     PHX::MDField<ScalarT,Cell,Node> enthalpyBasalResid;      // [MW] = [k^{-2} kPa s^{-1} km^3]

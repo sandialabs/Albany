@@ -24,16 +24,16 @@ namespace FELIX
 
     Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
-    BF         = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
-    w_measure  = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint> (p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
-    velocity   = PHX::MDField<Type,Cell,Side,QuadPoint,VecDim>(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
-    beta       = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl_basal->qp_scalar);
-    basal_dTdz = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Basal dTdz Side QP Variable Name"), dl_basal->qp_scalar);
-    enthalpy   = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Enthalpy Side QP Variable Name"), dl_basal->qp_scalar);
-    enthalpyHs = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Enthalpy Hs QP Variable Name"), dl_basal->qp_scalar);
-    diffEnth   = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar);
+    BF         = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
+    w_measure  = decltype(w_measure)(p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
+    velocity   = decltype(velocity)(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
+    beta       = decltype(beta)(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl_basal->qp_scalar);
+    basal_dTdz = decltype(basal_dTdz)(p.get<std::string> ("Basal dTdz Side QP Variable Name"), dl_basal->qp_scalar);
+    enthalpy   = decltype(enthalpy)(p.get<std::string> ("Enthalpy Side QP Variable Name"), dl_basal->qp_scalar);
+    enthalpyHs = decltype(enthalpyHs)(p.get<std::string> ("Enthalpy Hs QP Variable Name"), dl_basal->qp_scalar);
+    diffEnth   = decltype(diffEnth)(p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar);
 
-    geoFlux   = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Geothermal Flux Side QP Variable Name"), dl_basal->qp_scalar);
+    geoFlux   = decltype(geoFlux)(p.get<std::string> ("Geothermal Flux Side QP Variable Name"), dl_basal->qp_scalar);
 
     haveSUPG = p.isParameter("FELIX Enthalpy Stabilization") ? (p.get<Teuchos::ParameterList*>("FELIX Enthalpy Stabilization")->get<std::string>("Type") == "SUPG") : false;
 
@@ -53,9 +53,9 @@ namespace FELIX
 
     if (haveSUPG)
     {
-      enthalpyBasalResidSUPG  = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Enthalpy Basal Residual SUPG Variable Name"), dl->node_scalar);
-      GradBF    		 = PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Name"), dl_basal->node_qp_gradient);
-      verticalVel		 = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string>("Vertical Velocity Side QP Variable Name"), dl_basal->qp_scalar);
+      enthalpyBasalResidSUPG  = decltype(enthalpyBasalResidSUPG)(p.get<std::string> ("Enthalpy Basal Residual SUPG Variable Name"), dl->node_scalar);
+      GradBF    		 = decltype(GradBF)(p.get<std::string> ("Gradient BF Side Name"), dl_basal->node_qp_gradient);
+      verticalVel		 = decltype(verticalVel)(p.get<std::string>("Vertical Velocity Side QP Variable Name"), dl_basal->qp_scalar);
 
       this->addDependentField(velocity);
       this->addDependentField(verticalVel);

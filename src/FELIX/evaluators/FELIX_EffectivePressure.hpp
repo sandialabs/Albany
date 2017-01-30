@@ -45,9 +45,11 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ParamScalarT>  H;
-  PHX::MDField<ParamScalarT>  z_s;
-  PHX::MDField<ParamScalarT>  phi;
+  PHX::MDField<const ParamScalarT>  H;
+  PHX::MDField<const ParamScalarT>  z_s;
+  PHX::MDField<const ParamScalarT>  phi;
+  PHX::MDField<const ScalarT,Dim> alphaParam;
+  PHX::MDField<const ScalarT,Dim> regularizationParam;
 
   // Output:
   PHX::MDField<ParamScalarT>  N;
@@ -61,8 +63,6 @@ private:
   double rho_w;
   double g;
 
-  PHX::MDField<ScalarT,Dim> alphaParam;
-  PHX::MDField<ScalarT,Dim> regularizationParam;
   ScalarT printedAlpha;
 };
 
@@ -87,9 +87,9 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ParamScalarT>  H;
-  PHX::MDField<ParamScalarT>  z_s;
-  PHX::MDField<ScalarT>       phi;
+  PHX::MDField<const ParamScalarT>  H;
+  PHX::MDField<const ParamScalarT>  z_s;
+  PHX::MDField<const ScalarT>       phi;
 
   // Output:
   PHX::MDField<ScalarT>       N;
@@ -124,9 +124,9 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ParamScalarT>  H;
-  PHX::MDField<ParamScalarT>  z_s;
-  PHX::MDField<ScalarT>       phi;
+  PHX::MDField<const ParamScalarT>  H;
+  PHX::MDField<const ParamScalarT>  z_s;
+  PHX::MDField<const ScalarT>       phi;
 
   // Output:
   PHX::MDField<ScalarT>       N;

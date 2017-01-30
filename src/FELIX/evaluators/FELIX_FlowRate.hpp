@@ -42,8 +42,8 @@ private:
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input:
-  PHX::MDField<ParamScalarT,Cell> given_flow_rate;
-  PHX::MDField<ParamScalarT,Cell> temperature;
+  PHX::MDField<const ParamScalarT,Cell> given_flow_rate;
+  PHX::MDField<const ParamScalarT,Cell> temperature;
 
   // Output:
   PHX::MDField<ParamScalarT,Cell> flowRate;

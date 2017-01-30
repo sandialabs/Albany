@@ -86,29 +86,29 @@ namespace FELIX
 
     if (needsDiss)
     {
-      diss = PHX::MDField<ScalarT,Cell,QuadPoint>(p.get<std::string> ("Dissipation QP Variable Name"),dl->qp_scalar);
+      diss = decltype(diss)(p.get<std::string> ("Dissipation QP Variable Name"),dl->qp_scalar);
       this->addDependentField(diss);
     }
 
     if (needsBasFric)
     {
-      basalFricHeat = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Basal Friction Heat QP Variable Name"),dl->node_scalar);
+      basalFricHeat = decltype(basalFricHeat)(p.get<std::string> ("Basal Friction Heat QP Variable Name"),dl->node_scalar);
       //this->addDependentField(basalFricHeat);
 
       if(haveSUPG)
       {
-        basalFricHeatSUPG = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Basal Friction Heat QP SUPG Variable Name"),dl->node_scalar);
+        basalFricHeatSUPG = decltype(basalFricHeatSUPG)(p.get<std::string> ("Basal Friction Heat QP SUPG Variable Name"),dl->node_scalar);
         //this->addDependentField(basalFricHeatSUPG);
       }
     }
 
-    geoFluxHeat = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Geothermal Flux Heat QP Variable Name"),dl->node_scalar);
+    geoFluxHeat = decltype(geoFluxHeat)(p.get<std::string> ("Geothermal Flux Heat QP Variable Name"),dl->node_scalar);
     //this->addDependentField(geoFluxHeat);
 
     if(haveSUPG)
     {
-      geoFluxHeatSUPG = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Geothermal Flux Heat QP SUPG Variable Name"),dl->node_scalar);
-      basalResidSUPG = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Enthalpy Basal Residual SUPG Variable Name"),dl->node_scalar);
+      geoFluxHeatSUPG = decltype(geoFluxHeatSUPG)(p.get<std::string> ("Geothermal Flux Heat QP SUPG Variable Name"),dl->node_scalar);
+      basalResidSUPG = decltype(basalResidSUPG)(p.get<std::string> ("Enthalpy Basal Residual SUPG Variable Name"),dl->node_scalar);
       //this->addDependentField(geoFluxHeatSUPG);
       this->addDependentField(basalFricHeatSUPG);
     }

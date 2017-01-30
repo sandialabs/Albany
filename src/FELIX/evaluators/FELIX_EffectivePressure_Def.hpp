@@ -25,16 +25,16 @@ EffectivePressure (const Teuchos::ParameterList& p,
   basalSideName = p.get<std::string>("Side Set Name");
   numNodes = dl->node_scalar->dimension(2);
 
-  alphaParam = PHX::MDField<ScalarT,Dim> ("Hydraulic-Over-Hydrostatic Potential Ratio",dl->shared_param);
+  alphaParam = PHX::MDField<const ScalarT,Dim> ("Hydraulic-Over-Hydrostatic Potential Ratio",dl->shared_param);
   this->addDependentField (alphaParam);
 
   regularized = p.get<Teuchos::ParameterList*>("Parameter List")->get("Regularize With Continuation",false);
   printedAlpha = -1.0;
 
   if (regularized)
-    regularizationParam = PHX::MDField<ScalarT,Dim>(p.get<std::string>("Regularization Parameter Name"),dl->shared_param);
+    regularizationParam = PHX::MDField<const ScalarT,Dim>(p.get<std::string>("Regularization Parameter Name"),dl->shared_param);
 
-  H   = PHX::MDField<ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), dl->node_scalar);
+  H   = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), dl->node_scalar);
   this->addDependentField (H);
 
   this->addEvaluatedField (N);
@@ -119,9 +119,9 @@ EffectivePressure (const Teuchos::ParameterList& p,
   basalSideName = p.get<std::string>("Side Set Name");
   numNodes = dl->node_scalar->dimension(2);
 
-  z_s  = PHX::MDField<ParamScalarT>(p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar);
-  phi  = PHX::MDField<ScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), dl->node_scalar);
-  H    = PHX::MDField<ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), dl->node_scalar);
+  z_s  = decltype(z_s)(p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar);
+  phi  = decltype(phi)(p.get<std::string> ("Hydraulic Potential Variable Name"), dl->node_scalar);
+  H    = decltype(H)(p.get<std::string> ("Ice Thickness Variable Name"), dl->node_scalar);
 
   this->addDependentField (phi);
   this->addDependentField (z_s);
@@ -191,9 +191,9 @@ EffectivePressure (const Teuchos::ParameterList& p,
 {
   numNodes = dl->node_scalar->dimension(1);
 
-  z_s  = PHX::MDField<ParamScalarT>(p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar);
-  phi  = PHX::MDField<ScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), dl->node_scalar);
-  H   = PHX::MDField<ParamScalarT>(p.get<std::string> ("Ice Thickness Variable Name"), dl->node_scalar);
+  z_s  = decltype(z_s)(p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar);
+  phi  = decltype(phi)(p.get<std::string> ("Hydraulic Potential Variable Name"), dl->node_scalar);
+  H   = decltype(H)(p.get<std::string> ("Ice Thickness Variable Name"), dl->node_scalar);
 
   this->addDependentField (phi);
   this->addDependentField (z_s);
