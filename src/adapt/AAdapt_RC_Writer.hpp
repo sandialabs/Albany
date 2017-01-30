@@ -59,7 +59,7 @@ private:
   typedef typename FieldsVector::iterator FieldsIterator;
   Teuchos::RCP<Manager> rc_mgr_;
   FieldsVector fields_;
-  PHX::MDField<RealType,Cell,Node,QuadPoint> bf_, wbf_;
+  PHX::MDField<const RealType,Cell,Node,QuadPoint> bf_, wbf_;
 };
 
 } // namespace rc

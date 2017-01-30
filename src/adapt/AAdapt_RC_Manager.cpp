@@ -158,7 +158,7 @@ void transformStateArray (const unsigned int wi, const Direction::Enum dir,
 }
 
 class Projector {
-  typedef PHX::MDField<RealType,Cell,Node,QuadPoint> BasisField;
+  typedef PHX::MDField<const RealType,Cell,Node,QuadPoint> BasisField;
   typedef BasisField::size_type size_type;
 
   Teuchos::RCP<const Tpetra_Map> node_map_, ol_node_map_;

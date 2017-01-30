@@ -121,7 +121,7 @@ public:
   Field::iterator fieldsBegin();
   Field::iterator fieldsEnd();
 
-  typedef PHX::MDField<RealType,Cell,Node,QuadPoint> BasisField;
+  typedef PHX::MDField<const RealType,Cell,Node,QuadPoint> BasisField;
   //! Reader<EvalT> uses these methods to load the data.
   void beginQpInterp();
   void interpQpField(PHX::MDField<RealType>& f, const PHAL::Workset& workset,
