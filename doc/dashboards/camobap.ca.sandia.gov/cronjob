@@ -7,7 +7,7 @@
 45 00 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albany64bitT.sh; bash process_results_64bitT.sh; bash send_email_64bitT.sh
 30 01 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albanyFunctor.sh; bash process_results_functor.sh; bash send_email_functor.sh
 15 02 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_cismAlbanyEpetra.sh; bash process_results_cismAlbanyEpetra.sh; bash send_email_cismAlbanyEpetra.sh
-00 03 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albanyFunctorOpenMP.sh; bash process_results_functor_openMP; bash send_email_functor_openMP.sh
+00 03 * * 1-5  source /home/ikalash/.bashrc; cd /home/ikalash/nightlyCDash; bash nightly_cron_script_albanyFunctorOpenMP.sh; bash process_results_functor_openMP.sh; bash send_email_functor_openMP.sh
 12 00 * * 6    source /home/ikalash/.bashrc; scp -r /home/ikalash/Desktop ikalash@mockba:/media/a078b7aa-fb53-4281-8356-a5e964c1549f/camobap
 12 00 * * 7    source /home/ikalash/.bashrc; scp -r /extradrive ikalash@mockba:/media/a078b7aa-fb53-4281-8356-a5e964c1549f/camobap
 ~                                                                                                                                      
