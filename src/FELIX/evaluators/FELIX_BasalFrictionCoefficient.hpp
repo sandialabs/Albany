@@ -48,9 +48,9 @@ public:
 private:
 
   // Coefficients for computing beta (if not given)
-  PHX::MDField<ScalarT,Dim> muParam;              // Coulomb friction coefficient
-  PHX::MDField<ScalarT,Dim> lambdaParam;          // Bed bumps avg length divided by bed bumps avg slope (for REGULARIZED_COULOMB only)
-  PHX::MDField<ScalarT,Dim> powerParam;           // Exponent (for POWER_LAW and REGULARIZED COULOMB only)
+  PHX::MDField<const ScalarT,Dim> muParam;              // Coulomb friction coefficient
+  PHX::MDField<const ScalarT,Dim> lambdaParam;          // Bed bumps avg length divided by bed bumps avg slope (for REGULARIZED_COULOMB only)
+  PHX::MDField<const ScalarT,Dim> powerParam;           // Exponent (for POWER_LAW and REGULARIZED COULOMB only)
 
   ScalarT printedMu;
   ScalarT printedLambda;
@@ -60,15 +60,15 @@ private:
   double A;               // Constant value for the flowFactorA field (for REGULARIZED_COULOMB only)
 
   // Input:
-  PHX::MDField<ParamScalarT>      beta_given_field;
+  PHX::MDField<const ParamScalarT>      beta_given_field;
   PHX::MDField<ParamScalarT,Cell,Node>  beta_given_node_field;
-  PHX::MDField<RealType,Cell,Node,Side,QuadPoint> bF;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>           u_norm;
-  PHX::MDField<HydroScalarT,Cell,Side,QuadPoint>      N;
-  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>   coordVec;
+  PHX::MDField<const RealType,Cell,Node,Side,QuadPoint> bF;
+  PHX::MDField<const ScalarT,Cell,Side,QuadPoint>           u_norm;
+  PHX::MDField<const HydroScalarT,Cell,Side,QuadPoint>      N;
+  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim>   coordVec;
 
-  PHX::MDField<ParamScalarT> bed_topo_field;
-  PHX::MDField<ParamScalarT> thickness_field;
+  PHX::MDField<const ParamScalarT> bed_topo_field;
+  PHX::MDField<const ParamScalarT> thickness_field;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Side,QuadPoint>           beta;
@@ -116,9 +116,9 @@ private:
   double beta_given_val;  // Constant value (for CONSTANT only)
 
   // Input:
-  PHX::MDField<ParamScalarT> beta_given_field;
-  PHX::MDField<RealType,Cell,Node, QuadPoint> bF;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>  coordVec;
+  PHX::MDField<const ParamScalarT> beta_given_field;
+  PHX::MDField<const RealType,Cell,Node, QuadPoint> bF;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim>  coordVec;
 
   // Output:
   PHX::MDField<ParamScalarT,Cell,QuadPoint>     beta;

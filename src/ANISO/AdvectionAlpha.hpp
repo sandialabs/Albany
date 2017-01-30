@@ -42,7 +42,7 @@ class AdvectionAlpha :
     int num_dims;
     Teuchos::Array<std::string> alpha_val;
 
-    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> coord;
+    PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim> coord;
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim> alpha;
     PHX::MDField<ScalarT, Cell, QuadPoint> alpha_mag;
 
