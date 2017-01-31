@@ -923,8 +923,8 @@ void testProjector (
     new Layout(workset.numCells, coord_qp.dimension(1),
                coord_qp.dimension(2), coord_qp.dimension(2)));
   PHX::MDField<RealType> f_mdf = PHX::MDField<RealType>("f_mdf", layout);
-  f_mdf.setFieldData(
-    PHX::KokkosViewFactory<RealType, PHX::Device>::buildView(f_mdf.fieldTag()));
+  auto f_mdf_data = PHX::KokkosViewFactory<RealType, PHX::Device>::buildView(f_mdf.fieldTag());
+  f_mdf.setFieldData(f_mdf_data);
     
   std::vector<Albany::MDArray> mda;
   std::vector<double> mda_data[2];
@@ -974,7 +974,11 @@ void testProjector (
         loop(f_mdf, i, 2) loop(f_mdf, j, 3) f_mdf(cell, qp, i, j) = F(i, j);
       }
     }
-    PHX::MDField<const RealType> f_mdf_const = f_mdf;
+
+    // @ibaned: really not sure of the best way to do this:
+    PHX::MDField<const RealType> f_mdf_const("f_mdf_const", layout);
+    f_mdf_const.setFieldData(f_mdf_data);
+
     p.fillRhs(f_mdf_const, f, workset, wbf);
 
     // Solve M x = b.
@@ -1129,8 +1133,8 @@ fillRhs (const PHAL::Workset& workset, const Manager::BasisField& wbf,
   Teuchos::RCP<Layout> layout = Teuchos::rcp(
     new Layout(workset.numCells, num_qp, num_dim, num_dim));
   PHX::MDField<RealType> f_mdf = PHX::MDField<RealType>("f_mdf", layout);
-  f_mdf.setFieldData(
-    PHX::KokkosViewFactory<RealType, PHX::Device>::buildView(f_mdf.fieldTag()));
+  auto f_mdf_data = PHX::KokkosViewFactory<RealType, PHX::Device>::buildView(f_mdf.fieldTag());
+  f_mdf.setFieldData(f_mdf_data);
 
   for (int test = 0; test < Impl::ntests; ++test) {
     Impl::TestData& td = d->td[test];
@@ -1156,7 +1160,10 @@ fillRhs (const PHAL::Workset& workset, const Manager::BasisField& wbf,
         f_mdf(cell, qp, i, j) = fv.f[num_dim*i + j];
     }
 
-    d->p.fillRhs(f_mdf, f, workset, wbf);
+    PHX::MDField<const RealType> f_mdf_const("f_mdf_const", layout);
+    f_mdf_const.setFieldData(f_mdf_data);
+
+    d->p.fillRhs(f_mdf_const, f, workset, wbf);
   }
 }
 
