@@ -403,7 +403,7 @@ void SimLayerAdapt::computeLayerTimes() {
 bool SimLayerAdapt::adaptMesh()
 {
   if (PMU_rank() == 0)
-    fprintf(stderr,"adaptMesh(): coming in %f , cpu = %d\n", PCU_Time(),PMU_rank());
+    fprintf(stderr,"adaptMesh(): coming in %f, cpu = %d\n", PCU_Time(),PMU_rank());
 
 
   /* dig through all the abstrations to obtain pointers
@@ -610,7 +610,7 @@ bool SimLayerAdapt::adaptMesh()
   if (PMU_rank() == 0)
     fprintf(stderr,"adaptMesh(): going out in %f on cpu: %d\n", PCU_Time(),PMU_rank());
 
-  printf("leaving: %d tets on cpu %d",M_numRegions(PM_mesh(sim_pm,0)),PMU_rank());
+  printf("leaving: %d tets on cpu %d\n",M_numRegions(PM_mesh(sim_pm,0)),PMU_rank());
   return true;
 }
 
