@@ -975,7 +975,8 @@ void testProjector (
       }
     }
 
-    // @ibaned: really not sure of the best way to do this:
+    // @ibaned: the following is a workaround, @rppawlo will get
+    // `f_mdf_const = f_mdf` to work soon.
     PHX::MDField<const RealType> f_mdf_const("f_mdf_const", layout);
     f_mdf_const.setFieldData(f_mdf_data);
 
