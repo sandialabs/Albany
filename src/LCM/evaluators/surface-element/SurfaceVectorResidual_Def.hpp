@@ -66,26 +66,21 @@ SurfaceVectorResidual(Teuchos::ParameterList & p,
   // if enabled grab the cohesive tractions
   if (use_cohesive_traction_) {
 
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim>
-    ct(p.get<std::string>("Cohesive Traction Name"), dl->qp_vector);
+    traction_ = decltype(traction_)(
+        p.get<std::string>("Cohesive Traction Name"), dl->qp_vector);
 
-    traction_ = ct;
     this->addDependentField(traction_);
   } else {
     this->addDependentField(stress_);
   }
 
   if (have_topmod_adaptation_ == true) {
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim>
-    J(p.get<std::string>("Jacobian Name"), dl->qp_scalar);
+    detF_ = decltype(detF_)(p.get<std::string>("Jacobian Name"), dl->qp_scalar);
 
-    detF_ = J;
     this->addDependentField(detF_);
 
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
-    sigma(p.get<std::string>("Cauchy Stress Name"), dl->qp_tensor);
-
-    cauchy_stress_ = sigma;
+    cauchy_stress_ = decltype(cauchy_stress_)(
+        p.get<std::string>("Cauchy Stress Name"), dl->qp_tensor);
 
     this->addEvaluatedField(cauchy_stress_);
   }

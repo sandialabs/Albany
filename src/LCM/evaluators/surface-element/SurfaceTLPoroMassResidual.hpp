@@ -77,12 +77,11 @@ private:
   PHX::MDField<const ScalarT,Cell,QuadPoint> kcPermeability;
   //! Deformation Gradient
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim, Dim> defGrad;
+  //! Time
+  PHX::MDField<const ScalarT,Dummy> deltaTime;
 
-  //Data from previous time step
-   std::string porePressureName, JName;
-
-   // Time
-   PHX::MDField<ScalarT,Dummy> deltaTime;
+  //! Data from previous time step
+  std::string porePressureName, JName;
 
   //! Reference Cell Views
   Kokkos::DynRankView<RealType, PHX::Device> refValues;

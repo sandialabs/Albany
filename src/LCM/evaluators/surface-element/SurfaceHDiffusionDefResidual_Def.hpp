@@ -68,14 +68,10 @@ namespace LCM {
     if (p.isType<std::string>("DefGrad Name")) {
       haveMech = true;
 
-      PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim>
-        tf(p.get<std::string>("DefGrad Name"), dl->qp_tensor);
-      defGrad = tf;
+      defGrad = decltype(defGrad)(p.get<std::string>("DefGrad Name"), dl->qp_tensor);
       this->addDependentField(defGrad);
 
-      PHX::MDField<ScalarT,Cell,QuadPoint>
-        tj(p.get<std::string>("DetDefGrad Name"), dl->qp_scalar);
-      J = tj;
+      J = decltype(J)(p.get<std::string>("DetDefGrad Name"), dl->qp_scalar);
       this->addDependentField(J);
     }
 
