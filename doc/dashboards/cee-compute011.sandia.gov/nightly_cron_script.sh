@@ -1,10 +1,23 @@
-#!/bin/sh
+#!/bin/bash
 
 SUBMIT_RESULTS=ON
 #SUBMIT_RESULTS=OFF
 THE_TEST_TYPE=Nightly
 #THE_TEST_TYPE=Experimental
 
+if [ "${MODULESHOME:-}" = "" ]; then
+  # Modules have not been set
+  . /usr/share/Modules/init/bash
+  module purge
+  module load sierra-git/2.6.1
+  module load sierra-compiler/gcc/5.2.0
+  module load sierra-mkl/17.0-2017.1.132
+else
+  module purge
+  module load sierra-git/2.6.1
+  module load sierra-compiler/gcc/5.2.0
+  module load sierra-mkl/17.0-2017.1.132
+fi
 
 BUILD_OPT="$1"
 

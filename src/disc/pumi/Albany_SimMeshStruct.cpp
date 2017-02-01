@@ -42,7 +42,7 @@ Albany::SimMeshStruct::SimMeshStruct(
   pGModel sim_model = gmi_export_sim(model);
 
   std::string mesh_file = params->get<std::string>("Sim Input File Name");
-  pParMesh sim_mesh = PM_load(mesh_file.c_str(), sthreadNone, sim_model, NULL);
+  pParMesh sim_mesh = PM_load(mesh_file.c_str(), sim_model, NULL);
   mesh = apf::createMesh(sim_mesh);
 
   APFMeshStruct::init(params, commT);

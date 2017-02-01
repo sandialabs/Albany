@@ -53,5 +53,8 @@ p=0: *** Caught standard std::exception of type 'std::logic_error' :
 Fixing this requires rewriting ATOT::Solver to call createOutArgs in evalModelImpl instead of in CreateSubSolver.
 
 
-4. Once 3. is done, activate tests that run with AlbanyT executable.  
+4. Once 3. is done, activate tests that run with AlbanyT executable. \
+
+5. Check why some ATO test results (2Matl, RegHeaviside3D) seem to be workset-size dependent.  
+This does not seem to have to do with the Tpetra/Thyra conversion but is noted in this file nonetheless. 
 
