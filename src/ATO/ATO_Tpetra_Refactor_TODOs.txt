@@ -16,16 +16,7 @@ filterOperatorTpetra in ATO::Solver and ATOT::Solver, and
 uncomment relevant apply code in copyObjectiveFromStateMgr 
 routines.
 
-3. Switch Albany to use workset.dgdpT (Tpetra version) instead 
-of workset.dgdp (Epetra version) -- need debug help from Mauro.
-The switch should be straight forward but when I try it, ATO::Constrained_2D_adj
-test fails.  Once this is done, remove ALBANY_EPETRA_EXE ifdefs in 
-ATO::TensorPNormResponse and ATO::HomogenizedConstantsResponse 
-around workset.overlapped_dgdpT, as well as other relevant 
-routines throughout Albany.  
-to use these new objects.
-
-4. Test/debug new ATOT::Solver by running tests with AlbanyT 
+3. Test/debug new ATOT::Solver by running tests with AlbanyT 
 executable.  
 
 Currently, the following tests seg fault when run:
@@ -59,6 +50,8 @@ p=0: *** Caught standard std::exception of type 'std::logic_error' :
  
  The supported types include DerivativeSupport{DERIV_LINEAR_OP}!
 
+Fixing this requires rewriting ATOT::Solver to call createOutArgs in evalModelImpl instead of in CreateSubSolver.
 
-5. Once 4. is done, activate tests that run with AlbanyT executable.  
+
+4. Once 3. is done, activate tests that run with AlbanyT executable.  
 
