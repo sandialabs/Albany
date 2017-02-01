@@ -90,11 +90,13 @@ STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
 Albany::STKDiscretization::~STKDiscretization()
 {
 #ifdef ALBANY_SEACAS
-  if (stkMeshStruct->cdfOutput)
-      if (netCDFp)
-    if (const int ierr = nc_close (netCDFp))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "close returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
+  if (stkMeshStruct->cdfOutput) {
+    if (netCDFp) {
+      const int ierr = nc_close (netCDFp);
+      ALBANY_ASSERT(ierr == 0,
+            "nc_close returned error code "<<ierr<<" - "<<nc_strerror(ierr));
+    }
+  }
 #endif
 
   for (int i=0; i< toDelete.size(); i++) delete [] toDelete[i];

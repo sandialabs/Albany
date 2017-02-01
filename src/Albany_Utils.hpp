@@ -10,6 +10,8 @@
 // For cudaCheckError
 #include <stdexcept>
 
+#include <sstream>
+
 #ifdef ALBANY_MPI
   #define Albany_MPI_Comm MPI_Comm
   #define Albany_MPI_COMM_WORLD MPI_COMM_WORLD
@@ -134,27 +136,36 @@ namespace Albany {
   void safe_fgets(char* str, int size, FILE* stream);
   void safe_system(char const* str);
 
-[[noreturn]] void assert_fail(char const* cond, char const* file, int line);
-[[noreturn]] void assert_fail(char const* cond, char const* file, int line,
-      char const* msg, ...);
+[[noreturn]] void assert_fail(std::string const& msg);
 
 } // end namespace Albany
 
 #ifdef __CUDA_ARCH__
-// CUDA does support assert() in kernels
-#define ALBANY_ASSERT(cond, ...) assert(cond)
-#define ALBANY_ASSERT_STREAM(cond, stream) assert(cond)
+#define ALBANY_ASSERT_IMPL(cond, ...) assert(cond)
 #else
-// we implicitly assume the "msg" is part of __VA_ARGS__,
-// due to the trailing comma problem (make sure __VA_ARGS__ is never empty)
-#define ALBANY_ASSERT(cond, ...)                                          \
-  ((cond) ? ((void)0) : \
-             Albany::assert_fail(#cond, __FILE__, __LINE__, __VA_ARGS__))
-#define ALBANY_ASSERT_STREAM(cond, stream)                                \
-  do { if (cond) { \
-    std::cerr stream; \
-    Albany::assert_fail(#cond, __FILE__, __LINE__); \
-  } } while (0)
+#define ALBANY_ASSERT_IMPL(cond, msg, ...) \
+  do { \
+    if (!(cond)) { \
+      std::ostringstream omsg; \
+      omsg << #cond " failed at "; \
+      omsg << __FILE__ << " +" << __LINE__ << '\n'; \
+      omsg << msg << '\n'; \
+      Albany::assert_fail(omsg.str()); \
+    } \
+  } while (0)
 #endif
+
+#define ALBANY_ASSERT(...) ALBANY_ASSERT_IMPL(__VA_ARGS__, "")
+
+#ifdef NDEBUG
+#define ALBANY_EXPECT(...)
+#else
+#define ALBANY_EXPECT(...) ALBANY_ASSERT(__VA_ARGS__)
+#endif
+
+#define ALBANY_ALWAYS_ASSERT(cond) ALBANY_ASSERT(cond)
+#define ALBANY_ALWAYS_ASSERT_VERBOSE(cond, msg) ALBANY_ASSERT(cond, msg)
+#define ALBANY_DEBUG_ASSERT(cond) ALBANY_EXPECT(cond)
+#define ALBANY_DEBUG_ASSERT_VERBOSE(cond, msg) ALBANY_EXPECT(cond, msg)
 
 #endif //ALBANY_UTILS
