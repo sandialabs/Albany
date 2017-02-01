@@ -4,7 +4,6 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
-IF(NOT ALBANY_64BIT_INT)
 add_subdirectory(DistParam_2D)
 add_subdirectory(RegHeaviside_2D)
 add_subdirectory(RegHeaviside_3D)
@@ -29,5 +28,4 @@ IF(ENABLE_Cogent)
 add_subdirectory(Cogent_Tab)
 add_subdirectory(Cogent_Opt)
 add_subdirectory(Cogent_ThermoMech)
-ENDIF()
 ENDIF()

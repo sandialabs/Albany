@@ -54,11 +54,11 @@ else ()
   # around with the settings in this block.
 
   # What to build and test
-  set (DOWNLOAD TRUE)
+  set (DOWNLOAD FALSE)
   # See if we can get away with this for speed, at least until we get onto a
   # machine that can support a lengthy nightly.
-  set (CLEAN_BUILD TRUE)
-  set (BUILD_SCOREC TRUE)
+  set (CLEAN_BUILD FALSE)
+  set (BUILD_SCOREC FALSE)
   set (BUILD_TRILINOS FALSE)
   set (BUILD_PERIDIGM FALSE)
   set (BUILD_ALB32 FALSE)
@@ -374,6 +374,9 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
   "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
   "-DTrilinos_ENABLE_MueLu:BOOL=ON"
+#
+  "-DTrilinos_ENABLE_STRONG_C_COMPILE_WARNINGS:BOOL=OFF"
+  "-DTrilinos_ENABLE_STRONG_CXX_COMPILE_WARNINGS:BOOL=OFF"
   #
   "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
   "-DMDS_ID_TYPE:STRING='long int'"
