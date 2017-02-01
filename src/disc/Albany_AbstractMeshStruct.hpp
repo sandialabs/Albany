@@ -104,6 +104,8 @@ struct AbstractMeshStruct {
 
   public:
 
+    enum { DEFAULT_WORKSET_SIZE = 1000 };
+
     //! Internal mesh specs type needed
     enum msType {
       STK_MS,

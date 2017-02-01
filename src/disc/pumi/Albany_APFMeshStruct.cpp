@@ -184,7 +184,7 @@ void Albany::APFMeshStruct::init(
   // Set defaults for cubature and workset size, overridden in input file
 
   cubatureDegree = params->get("Cubature Degree", 3);
-  int worksetSizeMax = params->get("Workset Size", 10000);
+  int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
   interleavedOrdering = params->get("Interleaved Ordering",true);
   num_time_deriv = params->get<int>("Number Of Time Derivatives", 0);
   allElementBlocksHaveSamePhysics = true;
@@ -504,7 +504,7 @@ Albany::APFMeshStruct::getValidDiscretizationParameters() const
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid2");
-  validPL->set<int>("Workset Size", 10000, "Upper bound on workset (bucket) size");
+  validPL->set<int>("Workset Size", DEFAULT_WORKSET_SIZE, "Upper bound on workset (bucket) size");
   validPL->set<bool>("Interleaved Ordering", true, "Flag for interleaved or blocked unknown ordering");
   validPL->set<bool>("Separate Evaluators by Element Block", false,
                      "Flag for different evaluation trees for each Element Block");

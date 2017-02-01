@@ -282,7 +282,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
     stk::mesh::set_cell_topology<default_element_side_type>(*it->second);
 
   int cub = params->get("Cubature Degree",3);
-  int worksetSizeMax = params->get("Workset Size",50);
+  int worksetSizeMax = params->get<int>("Workset Size",DEFAULT_WORKSET_SIZE);
   
   //Get Cubature Rule
   const std::string cub_rule_string = params->get("Cubature Rule", "GAUSS");

@@ -94,6 +94,7 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
        bool isOriginal = ((PCU_Comm_Self() % commT->getSize()) == 0);
        switchToOriginals(commT->getSize());
        if (isOriginal) {
+         std::cerr << "original loading " << mesh_file << '\n';
          mesh = apf::loadMdsMesh(g, mesh_file.c_str());
          plan = getPlan(mesh, commT->getSize());
        }
@@ -101,6 +102,7 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
        mesh = repeatMdsMesh(mesh, g, plan, commT->getSize());
     }
     else {
+      std::cerr << "all loading " << mesh_file << '\n';
       mesh = apf::loadMdsMesh(model_file.c_str(), mesh_file.c_str());
     }
 
@@ -112,8 +114,10 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
     double wy = params->get<double>("2D Scale", 1);
     double wz = params->get<double>("3D Scale", 1);
     bool is = ! params->get<bool>("Hexahedral", true);
+    std::cerr << "building box\n";
     buildBoxMesh(nex, ney, nez, wx, wy, wz, is);
   }
+  mesh->verify(); // REMOVE THIS NOW !!
 
   model = mesh->getModel();
 
