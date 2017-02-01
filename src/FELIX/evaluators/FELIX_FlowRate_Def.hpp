@@ -34,7 +34,7 @@ FlowRate<EvalT, Traits>::FlowRate (const Teuchos::ParameterList& p,
   else if (flowRateType == "Given Field")
   {
     flowRate_type = GIVEN_FIELD;
-    given_flow_rate = PHX::MDField<ParamScalarT,Cell>(p.get<std::string> ("Given Flow Rate Field Name"), dl->cell_scalar2);
+    given_flow_rate = decltype(given_flow_rate)(p.get<std::string> ("Given Flow Rate Field Name"), dl->cell_scalar2);
     this->addDependentField(given_flow_rate);
 #ifdef OUTPUT_TO_SCREEN
     *out << "Flow Rate read in from file (exodus or ascii) or passed in from CISM." << std::endl;
@@ -43,7 +43,7 @@ FlowRate<EvalT, Traits>::FlowRate (const Teuchos::ParameterList& p,
   else if (flowRateType == "Temperature Based")
   {
     flowRate_type = TEMPERATURE_BASED;
-    temperature = PHX::MDField<ParamScalarT,Cell>(p.get<std::string> ("Temperature Variable Name"), dl->cell_scalar2);
+    temperature = decltype(temperature)(p.get<std::string> ("Temperature Variable Name"), dl->cell_scalar2);
     this->addDependentField(temperature);
 #ifdef OUTPUT_TO_SCREEN
     *out << "Flow Rate computed using temperature field." << std::endl;

@@ -40,30 +40,30 @@ namespace FELIX
     double delta;
 
     // Input:
-    PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF; // [km^3]
-    PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF; // [km^2]
+    PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF; // [km^3]
+    PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF; // [km^2]
 
-    PHX::MDField<ScalarT,Cell,QuadPoint> Enthalpy;  //[MW s m^{-3}]
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> EnthalpyGrad; //[kW s m^{-4}]
-    PHX::MDField<ParamScalarT,Cell,QuadPoint> EnthalpyHs;  //[MW s m^{-3}]
-    PHX::MDField<ScalarT,Cell,Node> diffEnth;  //[MW s m^{-3}]
+    PHX::MDField<const ScalarT,Cell,QuadPoint> Enthalpy;  //[MW s m^{-3}]
+    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> EnthalpyGrad; //[kW s m^{-4}]
+    PHX::MDField<const ParamScalarT,Cell,QuadPoint> EnthalpyHs;  //[MW s m^{-3}]
+    PHX::MDField<const ScalarT,Cell,Node> diffEnth;  //[MW s m^{-3}]
 
-    PHX::MDField<VelocityType,Cell,QuadPoint,VecDim> Velocity; //[m yr^{-1}]
-    PHX::MDField<VelocityType,Cell,QuadPoint,VecDim, Dim> velGrad; //[m yr^{-1}]
-    PHX::MDField<ScalarT,Cell,QuadPoint> verticalVel; //[m yr^{-1}]
-    PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec; // [km]
-    PHX::MDField<ScalarT,Cell,QuadPoint> diss;  //[W m^{-3}] = [Pa s^{-1}]
-    PHX::MDField<ScalarT,Cell,Node> basalFricHeat;  // [MW] = [k^{-1} Pa s^{-1} km^3], k=1000
-    PHX::MDField<ScalarT,Cell,Node> basalFricHeatSUPG; // [MW s^{-1}] = [k^{-1} Pa s^{-2} km^3], k=1000
-    PHX::MDField<ScalarT,Cell,Node> geoFluxHeat;     // [MW]
-    PHX::MDField<ScalarT,Cell,Node> geoFluxHeatSUPG; // [MW s^{-1}]
-    PHX::MDField<ScalarT,Cell,QuadPoint> phi;                //[]
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> phiGrad;        //[km^{-1}
-    PHX::MDField<ParamScalarT,Cell,QuadPoint,Dim> meltTempGrad; // [K km^{-1}]
-    PHX::MDField<ScalarT,Cell,Node> basalResid; // [k^{2} W], k =1000
-    PHX::MDField<ScalarT,Cell,Node> basalResidSUPG; // [k^{2} W], k =1000
+    PHX::MDField<const VelocityType,Cell,QuadPoint,VecDim> Velocity; //[m yr^{-1}]
+    PHX::MDField<const VelocityType,Cell,QuadPoint,VecDim, Dim> velGrad; //[m yr^{-1}]
+    PHX::MDField<const ScalarT,Cell,QuadPoint> verticalVel; //[m yr^{-1}]
+    PHX::MDField<const MeshScalarT,Cell,Node,Dim> coordVec; // [km]
+    PHX::MDField<const ScalarT,Cell,QuadPoint> diss;  //[W m^{-3}] = [Pa s^{-1}]
+    PHX::MDField<const ScalarT,Cell,Node> basalFricHeat;  // [MW] = [k^{-1} Pa s^{-1} km^3], k=1000
+    PHX::MDField<const ScalarT,Cell,Node> basalFricHeatSUPG; // [MW s^{-1}] = [k^{-1} Pa s^{-2} km^3], k=1000
+    PHX::MDField<const ScalarT,Cell,Node> geoFluxHeat;     // [MW]
+    PHX::MDField<const ScalarT,Cell,Node> geoFluxHeatSUPG; // [MW s^{-1}]
+    PHX::MDField<const ScalarT,Cell,QuadPoint> phi;                //[]
+    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> phiGrad;        //[km^{-1}
+    PHX::MDField<const ParamScalarT,Cell,QuadPoint,Dim> meltTempGrad; // [K km^{-1}]
+    PHX::MDField<const ScalarT,Cell,Node> basalResid; // [k^{2} W], k =1000
+    PHX::MDField<const ScalarT,Cell,Node> basalResidSUPG; // [k^{2} W], k =1000
 
-    PHX::MDField<ScalarT,Dim> homotopy;
+    PHX::MDField<const ScalarT,Dim> homotopy;
 
     // Output:
     PHX::MDField<ScalarT,Cell,Node> Residual; // [k^{4} W]  = [km^3 kPa s^{-1} ], k =1000

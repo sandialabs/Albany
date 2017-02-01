@@ -24,12 +24,12 @@ FluxDiv (const Teuchos::ParameterList& p,
   const std::string& thickness_name             = p.get<std::string>("Thickness Side QP Variable Name");
   const std::string& grad_thickness_name        = p.get<std::string>("Thickness Gradient Name");
 
-  averaged_velocity     = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(averaged_velocity_name, dl_basal->qp_vector);
-  div_averaged_velocity = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(div_averaged_velocity_name, dl_basal->qp_scalar);
-  thickness             = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(thickness_name, dl_basal->qp_scalar);
-  grad_thickness        = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(grad_thickness_name, dl_basal->qp_gradient);
+  averaged_velocity     = decltype(averaged_velocity)(averaged_velocity_name, dl_basal->qp_vector);
+  div_averaged_velocity = decltype(div_averaged_velocity)(div_averaged_velocity_name, dl_basal->qp_scalar);
+  thickness             = decltype(thickness)(thickness_name, dl_basal->qp_scalar);
+  grad_thickness        = decltype(grad_thickness)(grad_thickness_name, dl_basal->qp_gradient);
 
-  flux_div              = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(fieldName, dl_basal->qp_scalar);
+  flux_div              = decltype(flux_div)(fieldName, dl_basal->qp_scalar);
 
   // Get Dimensions
   std::vector<PHX::DataLayout::size_type> dims;

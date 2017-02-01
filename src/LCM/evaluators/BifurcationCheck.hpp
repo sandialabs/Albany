@@ -60,7 +60,7 @@ namespace LCM {
     double parametrization_interval_;
 
     //! Input: material tangent
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim,Dim,Dim> tangent_;
+    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim,Dim,Dim> tangent_;
 
     //! Output: ellipticity indicator
     PHX::MDField<ScalarT,Cell,QuadPoint> ellipticity_flag_;

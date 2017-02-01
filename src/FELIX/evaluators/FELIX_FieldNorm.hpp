@@ -54,7 +54,7 @@ private:
   ScalarT                       printedReg;
 
   // Input:
-  PHX::MDField<ScalarT> field;
+  PHX::MDField<const ScalarT> field;
 
   // Output:
   PHX::MDField<ScalarT> field_norm;

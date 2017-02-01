@@ -30,7 +30,7 @@ Elliptic2DResidual<EvalT, Traits>::Elliptic2DResidual (const Teuchos::ParameterL
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layout structure does not appear to be that of a side set.\n");
 
-    inv_metric   = PHX::MDField<RealType,Cell,Side,QuadPoint,Dim,Dim>(p.get<std::string> ("Inverse Metric Name"), dl->qp_tensor);
+    inv_metric   = PHX::MDField<const RealType,Cell,Side,QuadPoint,Dim,Dim>(p.get<std::string> ("Inverse Metric Name"), dl->qp_tensor);
     this->addDependentField(inv_metric);
 
     sideSetName = p.get<std::string>("Side Set Name");

@@ -24,36 +24,36 @@ FieldNormBase (const Teuchos::ParameterList& p,
   std::string layout = p.get<std::string>("Field Layout");
   if (layout=="Cell Vector")
   {
-    field      = PHX::MDField<ScalarT> (fieldName, dl->cell_vector);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->cell_scalar2);
+    field      = decltype(field)(fieldName, dl->cell_vector);
+    field_norm = decltype(field_norm)(fieldNormName, dl->cell_scalar2);
 
     dl->cell_vector->dimensions(dims);
   }
   else if (layout=="Cell Gradient")
   {
-    field      = PHX::MDField<ScalarT> (fieldName, dl->cell_gradient);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->cell_scalar2);
+    field      = decltype(field)(fieldName, dl->cell_gradient);
+    field_norm = decltype(field_norm)(fieldNormName, dl->cell_scalar2);
 
     dl->cell_gradient->dimensions(dims);
   }
   else if (layout=="Cell Node Vector")
   {
-    field      = PHX::MDField<ScalarT> (fieldName, dl->node_vector);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->node_scalar);
+    field      = decltype(field)(fieldName, dl->node_vector);
+    field_norm = decltype(field_norm)(fieldNormName, dl->node_scalar);
 
     dl->node_vector->dimensions(dims);
   }
   else if (layout=="Cell QuadPoint Vector")
   {
-    field      = PHX::MDField<ScalarT> (fieldName, dl->qp_vector);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->qp_scalar);
+    field      = decltype(field)(fieldName, dl->qp_vector);
+    field_norm = decltype(field_norm)(fieldNormName, dl->qp_scalar);
 
     dl->qp_vector->dimensions(dims);
   }
   else if (layout=="Cell QuadPoint Gradient")
   {
-    field      = PHX::MDField<ScalarT> (fieldName, dl->qp_gradient);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->qp_scalar);
+    field      = decltype(field)(fieldName, dl->qp_gradient);
+    field_norm = decltype(field_norm)(fieldNormName, dl->qp_scalar);
 
     dl->qp_gradient->dimensions(dims);
   }
@@ -64,8 +64,8 @@ FieldNormBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = PHX::MDField<ScalarT> (fieldName, dl->cell_vector);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->cell_scalar2);
+    field      = decltype(field)(fieldName, dl->cell_vector);
+    field_norm = decltype(field_norm)(fieldNormName, dl->cell_scalar2);
 
     dl->cell_vector->dimensions(dims);
   }
@@ -76,8 +76,8 @@ FieldNormBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = PHX::MDField<ScalarT> (fieldName, dl->cell_gradient);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->cell_scalar2);
+    field      = decltype(field)(fieldName, dl->cell_gradient);
+    field_norm = decltype(field_norm)(fieldNormName, dl->cell_scalar2);
 
     dl->cell_gradient->dimensions(dims);
   }
@@ -88,8 +88,8 @@ FieldNormBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = PHX::MDField<ScalarT> (fieldName, dl->node_vector);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->node_scalar);
+    field      = decltype(field)(fieldName, dl->node_vector);
+    field_norm = decltype(field_norm)(fieldNormName, dl->node_scalar);
 
     dl->node_vector->dimensions(dims);
   }
@@ -100,8 +100,8 @@ FieldNormBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = PHX::MDField<ScalarT> (fieldName, dl->qp_vector);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->qp_scalar);
+    field      = decltype(field)(fieldName, dl->qp_vector);
+    field_norm = decltype(field_norm)(fieldNormName, dl->qp_scalar);
 
     dl->qp_vector->dimensions(dims);
   }
@@ -112,8 +112,8 @@ FieldNormBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = PHX::MDField<ScalarT> (fieldName, dl->qp_gradient);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->qp_scalar);
+    field      = decltype(field)(fieldName, dl->qp_gradient);
+    field_norm = decltype(field_norm)(fieldNormName, dl->qp_scalar);
 
     dl->qp_gradient->dimensions(dims);
   }
