@@ -231,7 +231,6 @@
         <Parameter name="Method" type="string" value="Ioss"/>
         <Parameter name="Exodus Input File Name" type="string" value="cube.gen"/>
         <Parameter name="Exodus Output File Name" type="string" value="cubeT.exo"/>
-        <Parameter name="Workset Size" type="int" value="50"/>
       </ParameterList>
       <ParameterList name="Cell BCs">
         <Parameter name="DOF Names" type="Array(string)" value="{X,Y,Z}"/>
@@ -426,6 +425,7 @@
     <Parameter name="Exodus Input File Name" type="string" value="padded.gen"/>
     <Parameter name="Exodus Output File Name" type="string" value="paddedT.exo"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
+    <Parameter name="Workset Size" type="int" value="50"/>
   </ParameterList>
 
   <ParameterList name="Piro">
