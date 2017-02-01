@@ -58,7 +58,7 @@ SchwarzBC_Base(Teuchos::ParameterList & p) :
   auto
   it = app_name_index_map.find(this_app_name);
 
-  assert(it != app_name_index_map.end());
+  ALBANY_EXPECT(it != app_name_index_map.end());
 
   auto const
   this_app_index = it->second;
@@ -67,7 +67,7 @@ SchwarzBC_Base(Teuchos::ParameterList & p) :
 
   it = app_name_index_map.find(coupled_app_name_);
 
-  assert(it != app_name_index_map.end());
+  ALBANY_EXPECT(it != app_name_index_map.end());
 
   auto const
   coupled_app_index = it->second;
@@ -350,7 +350,7 @@ computeBCs(
 
   } // workset loop
 
-  assert(found == true);
+  ALBANY_EXPECT(found == true);
 
   // We do this element by element
   auto const
@@ -488,7 +488,7 @@ computeBCsDTK()
   coupled_app = getApplication(coupled_app_index);
 
   // neq should be the same for this_app and coupled_app.
-  assert(this_app.getNumEquations() == coupled_app.getNumEquations());
+  ALBANY_EXPECT(this_app.getNumEquations() == coupled_app.getNumEquations());
 
   //Get number of equations from this_app 
   int neq = this_app.getNumEquations();
