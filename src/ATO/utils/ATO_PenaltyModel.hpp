@@ -15,12 +15,12 @@ class PenaltyModel {
     PenaltyModel( Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl );
     virtual void Evaluate(Teuchos::Array<N>& topoVals, Teuchos::RCP<TopologyArray>& topologies,
                           int cell, int qp, N& response, Teuchos::Array<N>& dResponse)=0;
-    virtual void getDependentFields(Teuchos::Array<PHX::MDField<N> >& depFields)=0;
-    virtual void getDependentFields(Teuchos::Array< PHX::MDField<N>* >& depFields)=0;
+    virtual void getDependentFields(Teuchos::Array<PHX::MDField<const N> >& depFields)=0;
+    virtual void getDependentFields(Teuchos::Array< PHX::MDField<const N>* >& depFields)=0;
     void getFieldDimensions(std::vector<int>& dims);
   protected:
     int numDims, rank;
-    PHX::MDField<N> gradX;
+    PHX::MDField<const N> gradX;
 };
 /******************************************************************************/
 
@@ -37,15 +37,15 @@ class PenaltyMixture : public PenaltyModel<N> {
                     const Teuchos::RCP<Albany::Layouts>& dl);
     void Evaluate(Teuchos::Array<N>& topoVals, Teuchos::RCP<TopologyArray>& topologies,
                   int cell, int qp, N& response, Teuchos::Array<N>& dResponse);
-    void getDependentFields(Teuchos::Array<PHX::MDField<N> >& depFields);
-    void getDependentFields(Teuchos::Array< PHX::MDField<N>* >& depFields);
+    void getDependentFields(Teuchos::Array<PHX::MDField<const N> >& depFields);
+    void getDependentFields(Teuchos::Array< PHX::MDField<const N>* >& depFields);
   private:
     int topologyIndex;
     int functionIndex;
     Teuchos::Array<int> materialIndices;
     Teuchos::Array<int> mixtureTopologyIndices;
     Teuchos::Array<int> mixtureFunctionIndices;
-    Teuchos::Array<PHX::MDField<N> > workConj;
+    Teuchos::Array<PHX::MDField<const N> > workConj;
 };
 /******************************************************************************/
 
@@ -63,12 +63,12 @@ class PenaltyMaterial : public PenaltyModel<N> {
                      const Teuchos::RCP<Albany::Layouts>& dl);
     void Evaluate(Teuchos::Array<N>& topoVals, Teuchos::RCP<TopologyArray>& topologies,
                   int cell, int qp, N& response, Teuchos::Array<N>& dResponse);
-    void getDependentFields(Teuchos::Array<PHX::MDField<N> >& depFields);
-    void getDependentFields(Teuchos::Array< PHX::MDField<N>* >& depFields);
+    void getDependentFields(Teuchos::Array<PHX::MDField<const N> >& depFields);
+    void getDependentFields(Teuchos::Array< PHX::MDField<const N>* >& depFields);
   private:
     int topologyIndex;
     int functionIndex;
-    PHX::MDField<N> workConj;
+    PHX::MDField<const N> workConj;
 };
 /******************************************************************************/
 
