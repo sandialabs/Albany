@@ -9,7 +9,6 @@
 #if defined (ALBANY_LCM) && defined(ALBANY_ZOLTAN) && defined(ALBANY_BGL)
 
 #include <algorithm>
-#include <cassert>
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
@@ -20,6 +19,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/connected_components.hpp>
 
+#include "Albany_Utils.hpp"
 #include "LCMPartition.h"
 
 namespace LCM {
@@ -109,8 +109,8 @@ bounds_and_sum_subset(
     std::vector<minitensor::Vector<double>> const & points,
     std::set<minitensor::Index> const & indices)
 {
-  assert(points.size() > 0);
-  assert(indices.size() > 0);
+  ALBANY_EXPECT(points.size() > 0);
+  ALBANY_EXPECT(indices.size() > 0);
 
   minitensor::Index const
   first = *indices.begin();
@@ -160,8 +160,8 @@ closest_subset(
     std::vector<ClusterCenter> const & centers,
     std::set<minitensor::Index> const & indices)
 {
-  assert(centers.size() > 0);
-  assert(indices.size() > 0);
+  ALBANY_EXPECT(centers.size() > 0);
+  ALBANY_EXPECT(indices.size() > 0);
 
   minitensor::Index const
   first = *indices.begin();
@@ -206,8 +206,8 @@ split_box(
     std::vector<minitensor::Vector<double>> const & points,
     std::set<minitensor::Index> const & indices)
 {
-  assert(points.size() > 0);
-  assert(indices.size() > 0);
+  ALBANY_EXPECT(points.size() > 0);
+  ALBANY_EXPECT(indices.size() > 0);
 
   //
   // Compute bounding box
@@ -247,7 +247,7 @@ split_box(
   minitensor::Vector<double> const
   span = upper_corner - lower_corner;
 
-  assert(norm_square(span) > 0.0);
+  ALBANY_EXPECT(norm_square(span) > 0.0);
 
   double
   maximum_span = span(0);
@@ -586,7 +586,7 @@ closest_center_from_subset(
     Iterator begin,
     Iterator end)
 {
-  assert(std::distance(begin, end) > 0);
+  ALBANY_EXPECT(std::distance(begin, end) > 0);
 
   minitensor::Index
   closest_index = *begin;
@@ -630,8 +630,8 @@ box_proximity_to_centers(
     std::vector<Center> const & centers,
     std::set<minitensor::Index> const & index_subset)
 {
-  assert(centers.size() > 0);
-  assert(index_subset.size() > 0);
+  ALBANY_EXPECT(centers.size() > 0);
+  ALBANY_EXPECT(index_subset.size() > 0);
 
   minitensor::Vector<double> const
   midcell = 0.5 * (lower_corner + upper_corner);
@@ -931,7 +931,7 @@ ConnectivityArray::ConnectivityArray(
   minitensor::Index const
   dimension = cell_topology.dimension;
 
-  assert(dimension == dimension_);
+  ALBANY_EXPECT(dimension == dimension_);
 
   int const
   vertices_per_element = cell_topology.vertex_count;
@@ -1219,7 +1219,7 @@ ConnectivityArray::GetVolumes() const
       PointMap::const_iterator
       nodes_iter = nodes_.find(node_list[i]);
 
-      assert(nodes_iter != nodes_.end());
+      ALBANY_EXPECT(nodes_iter != nodes_.end());
       points.push_back((*nodes_iter).second);
 
     }
@@ -1402,7 +1402,7 @@ ConnectivityArray::GetPartitionCentroids() const
       PointMap::const_iterator
       nodes_iterator = nodes_.find(node_list[i]);
 
-      assert(nodes_iterator != nodes_.end());
+      ALBANY_EXPECT(nodes_iterator != nodes_.end());
 
       element_nodes.push_back((*nodes_iterator).second);
 
@@ -1470,7 +1470,7 @@ ConnectivityArray::GetCentroids() const
       PointMap::const_iterator
       nodes_iter = nodes_.find(node);
 
-      assert(nodes_iter != nodes_.end());
+      ALBANY_EXPECT(nodes_iter != nodes_.end());
 
       minitensor::Vector<double> const
       point = (*nodes_iter).second;
@@ -1686,7 +1686,7 @@ ConnectivityArray::CreateGrid()
       PointMap::const_iterator
       nodes_iter = nodes_.find(node_list[i]);
 
-      assert(nodes_iter != nodes_.end());
+      ALBANY_EXPECT(nodes_iter != nodes_.end());
 
       element_nodes.push_back((*nodes_iter).second);
 
@@ -1762,8 +1762,8 @@ ConnectivityArray::CreateGrid()
           index = PointToIndex(p);
 
           for (minitensor::Index l = 0; l < dimension; ++l) {
-            assert(index(l) >= 0);
-            assert(index(l) <= int(cells_per_dimension(l)));
+            ALBANY_EXPECT(index(l) >= 0);
+            ALBANY_EXPECT(index(l) <= int(cells_per_dimension(l)));
 
             if (index(l) == int(cells_per_dimension(l))) {
               --index(l);
@@ -1928,7 +1928,7 @@ ConnectivityArray::IsInsideMeshByElement(
       PointMap::const_iterator
       nodes_iter = nodes_.find(node_list[i]);
 
-      assert(nodes_iter != nodes_.end());
+      ALBANY_EXPECT(nodes_iter != nodes_.end());
       node.push_back((*nodes_iter).second);
 
     }
@@ -2260,7 +2260,7 @@ ConnectivityArray::PartitionByCenters(
       PointMap::const_iterator
       nodes_iter = nodes_.find(node_list[i]);
 
-      assert(nodes_iter != nodes_.end());
+      ALBANY_EXPECT(nodes_iter != nodes_.end());
 
       element_nodes.push_back((*nodes_iter).second);
 
@@ -3274,7 +3274,7 @@ operator<<(
     ScalarMap::const_iterator
     volumes_iter = volumes.find(element);
 
-    assert(volumes_iter != volumes.end());
+    ALBANY_EXPECT(volumes_iter != volumes.end());
 
     double const
     volume = (*volumes_iter).second;
@@ -3425,7 +3425,7 @@ DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
     const IDList
     elements_face = faceID_element_map[faceID];
 
-    assert(elements_face.size() == 2);
+    ALBANY_EXPECT(elements_face.size() == 2);
 
     for (IDList::size_type
     j = 0;
@@ -4101,13 +4101,13 @@ ZoltanHyperGraph::GetHyperGraph(
   *ierr = ZOLTAN_OK;
 
   // Validate
-  assert(num_vtx_edge ==
+  ALBANY_EXPECT(num_vtx_edge ==
       static_cast<int>(zoltan_hypergraph.GetVertexIDs().size()));
 
-  assert(num_pins ==
+  ALBANY_EXPECT(num_pins ==
       static_cast<int>(zoltan_hypergraph.GetEdgeIDs().size()));
 
-  assert(format == ZOLTAN_COMPRESSED_VERTEX);
+  ALBANY_EXPECT(format == ZOLTAN_COMPRESSED_VERTEX);
 
   // Copy hypergraph data
   std::vector<ZOLTAN_ID_TYPE>
