@@ -61,6 +61,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
+    <Parameter name="Workset Size" type="int" value="50"/>
     <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Exodus Output File Name" type="string" value="gis_enthalpy.exo"/>
