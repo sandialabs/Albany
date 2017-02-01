@@ -345,17 +345,16 @@ evaluateGradientT(const double current_time,
   }
 }
 
-#if defined(ALBANY_EPETRA)
 void
 Albany::AggregateScalarResponseFunction::
-evaluateDistParamDeriv(
+evaluateDistParamDerivT(
       const double current_time,
-      const Epetra_Vector* xdot,
-      const Epetra_Vector* xdotdot,
-      const Epetra_Vector& x,
+      const Tpetra_Vector* xdotT,
+      const Tpetra_Vector* xdotdotT,
+      const Tpetra_Vector& xT,
       const Teuchos::Array<ParamVec>& param_array,
       const std::string& dist_param_name,
-      Epetra_MultiVector* dg_dp) {
+      Tpetra_MultiVector* dg_dpT) {
   unsigned int offset = 0;
   for (unsigned int i=0; i<responses.size(); i++) {
 
@@ -363,21 +362,27 @@ evaluateDistParamDeriv(
     int num_responses = responses[i]->numResponses();
 
     // Create Epetra_MultiVectors for response derivative function
-    RCP<Epetra_MultiVector> aggregated_dgdp;
-    if (dg_dp != NULL)
-      aggregated_dgdp = rcp(new Epetra_MultiVector(dg_dp->Map(),num_responses));
+    RCP<Tpetra_MultiVector> aggregated_dgdpT;
+    if (dg_dpT != NULL)
+      aggregated_dgdpT = rcp(new Tpetra_MultiVector(dg_dpT->getMap(),num_responses));
+
+
 
     // Evaluate response function
-    responses[i]->evaluateDistParamDeriv(current_time, xdot, xdotdot, x, param_array, dist_param_name,
-           aggregated_dgdp.get());
+    responses[i]->evaluateDistParamDerivT(current_time, xdotT, xdotdotT, xT, param_array, dist_param_name,
+           aggregated_dgdpT.get());
 
     // Copy results into combined result
-    if (dg_dp != NULL)
-      for (unsigned int j=0; j<num_responses; j++)
-        *(*dg_dp)(offset+j) = *(*aggregated_dgdp)(j);
-
+    if (dg_dpT != NULL) {
+      Teuchos::ArrayRCP<ST> dg_dpT_nonconstView;
+      Teuchos::ArrayRCP<const ST> local_aggregated_dgdpT_constView;
+      for (int k=0; k<num_responses; k++) {
+        local_aggregated_dgdpT_constView = aggregated_dgdpT->getData(k);
+        dg_dpT_nonconstView = dg_dpT->getDataNonConst(k);
+        dg_dpT_nonconstView[offset+k] = local_aggregated_dgdpT_constView[k];
+      }
+    }
     // Increment offset in combined result
     offset += num_responses;
   }
 }
-#endif

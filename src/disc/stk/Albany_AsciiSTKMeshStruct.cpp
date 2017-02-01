@@ -377,7 +377,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
 
   numDim = 3;
   int cub = params->get("Cubature Degree",3);
-  int worksetSizeMax = params->get("Workset Size",50);
+  int worksetSizeMax = params->get<int>("Workset Size",DEFAULT_WORKSET_SIZE);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_mapT->getNodeNumElements());
 
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
