@@ -18,7 +18,7 @@
 
 /* BRD */
 #include "PHAL_AlbanyTraits.hpp"
-extern void DM_undoSlicing(pPList regions,int layerNum, pMesh mesh);
+extern void DM_undoSlicing(pPList regions,int layerNum, pUnstructuredMesh mesh);
 extern void PM_localizePartiallyConnected(pParMesh);
 extern void MSA_setPrebalance(pMSAdapt,int);
 /* BRD */
@@ -185,11 +185,9 @@ void addNextLayer(pParMesh sim_pm,double layerSize,int nextLayer, double initTem
     return;
 
   PM_localizePartiallyConnected(sim_pm);
-  //PM_merge(sim_pm);
   if (nextLayer>1) {
     *out << "Combine layer " << nextLayer-1 << "\n";
-    pMesh oneMesh = PM_numParts(sim_pm) == 1 ? PM_mesh(sim_pm, 0) : 0;
-    DM_undoSlicing(combinedRegions,nextLayer-1,oneMesh);
+    DM_undoSlicing(combinedRegions,nextLayer-1,sim_pm);
   }
   PList_clear(combinedRegions);
   *out << "Mesh top layer\n";
@@ -375,9 +373,9 @@ bool SimLayerAdapt::adaptMesh()
   apf::Field* size_fld = spr::getSPRSizeField(grad_ip_fld, errorBound);
   apf::destroyField(grad_ip_fld);
 
-  pPartitionOpts popts = PM_newPartitionOpts();
+  pPartitionOpts popts = PartitionOpts_new();
   PartitionOpts_setAdaptive(popts, 1);
-  PM_partition(sim_pm, popts, sthreadDefault, 0);
+  PM_partition(sim_pm, popts, 0);
   PartitionOpts_delete(popts);
 
   double sliceThickness;
@@ -513,7 +511,7 @@ bool SimLayerAdapt::adaptMesh()
     if (should_debug) {
       char meshFile[80];
       sprintf(meshFile, "layerMesh%d.sms", Simmetrix_currentLayer + 1);
-      PM_write(sim_pm, meshFile, sthreadDefault, 0);
+      PM_write(sim_pm, meshFile, 0);
     }
     Simmetrix_currentLayer++;
   }
