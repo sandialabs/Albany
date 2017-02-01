@@ -201,7 +201,7 @@ SchwarzMultiscale(
       auto const
       num_parameters = p_list->get<int>("Number");
 
-      assert(num_parameters > 0);
+      ALBANY_EXPECT(num_parameters > 0);
 
       param_names_[l] =
           Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
@@ -568,7 +568,7 @@ LCM::SchwarzMultiscale::getThyraDomainSpace() const
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 LCM::SchwarzMultiscale::get_p_space(int l) const
 {
-  assert(0 <= l && l < num_params_total_);
+  ALBANY_EXPECT(0 <= l && l < num_params_total_);
 
   std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
   vs_array;
@@ -585,7 +585,7 @@ LCM::SchwarzMultiscale::get_p_space(int l) const
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 LCM::SchwarzMultiscale::get_g_space(int l) const
 {
-  assert(0 <= l && l < num_responses_total_);
+  ALBANY_EXPECT(0 <= l && l < num_responses_total_);
 
   Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
   vs_array;
@@ -605,7 +605,7 @@ LCM::SchwarzMultiscale::get_g_space(int l) const
 Teuchos::RCP<const Teuchos::Array<std::string>>
 LCM::SchwarzMultiscale::get_p_names(int l) const
 {
-  assert(0 <= l && l < num_params_total_);
+  ALBANY_EXPECT(0 <= l && l < num_params_total_);
   return param_names_[l]; 
 }
 
@@ -747,7 +747,7 @@ Teuchos::RCP<Thyra::LinearOpBase<ST>>
 LCM::SchwarzMultiscale::
 create_DgDx_op_impl(int j) const
 {
-  assert(0 <= j && j < num_responses_total_);
+  ALBANY_EXPECT(0 <= j && j < num_responses_total_);
 
   //FIX ME: re-implement using product vectors! 
   return Teuchos::null;
@@ -758,7 +758,7 @@ Teuchos::RCP<Thyra::LinearOpBase<ST>>
 LCM::SchwarzMultiscale::
 create_DgDx_dot_op_impl(int j) const
 {
-  assert(0 <= j && j < num_responses_total_);
+  ALBANY_EXPECT(0 <= j && j < num_responses_total_);
   //FIXME: re-implement using product vectors!
   return Teuchos::null;
 }
