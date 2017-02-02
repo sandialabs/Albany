@@ -119,7 +119,7 @@ public:
 public:
   Teuchos::RCP<Tpetra_Vector> fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT;
-  typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
+  typedef typename Tpetra_CrsMatrix::local_matrix_type  LocalMatrixType;
   LocalMatrixType jacobian;
   bool loadResid;
   int neq, nunk;
