@@ -31,8 +31,16 @@ SET(SOURCES
 )
 
 IF (ALBANY_EPETRA)
-  SET(SOURCES ${SOURCES}       
-    ${CMAKE_SOURCE_DIR}/src/ATO/ATO_Solver.cpp
+  IF (ALBANY_ATO_SOLVER_EPETRA)  
+    SET(SOURCES ${SOURCES}      
+      ${CMAKE_SOURCE_DIR}/src/ATO/ATO_SolverEpetra.cpp
+    )
+  ELSE() 
+    SET(SOURCES ${SOURCES}      
+      ${CMAKE_SOURCE_DIR}/src/ATO/ATO_Solver.cpp 
+    )
+  ENDIF()
+  SET(SOURCES ${SOURCES} 
     ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Aggregator.cpp
     ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Optimizer.cpp
     ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Pareto_Optimizer.cpp
@@ -116,14 +124,23 @@ SET(HEADERS
 )
 
 IF (ALBANY_EPETRA)
-  SET(HEADERS
-    ${CMAKE_SOURCE_DIR}/src/ATO/ATO_Solver.hpp
+  IF (ALBANY_ATO_SOLVER_EPETRA)  
+    SET (HEADERS
+      ${CMAKE_SOURCE_DIR}/src/ATO/ATO_SolverEpetra.hpp
+    )
+  ELSE() 
+    SET (HEADERS 
+      ${CMAKE_SOURCE_DIR}/src/ATO/ATO_Solver.hpp
+    )
+  ENDIF()
+  SET (HEADERS 
     ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Aggregator.hpp
     ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Optimizer.hpp
     ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Pareto_Optimizer.hpp
     ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_XFEM_Preconditioner.hpp
   )
 ENDIF()
+
 SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/ATOT_Solver.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATOT_Aggregator.hpp
