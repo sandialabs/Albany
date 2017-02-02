@@ -1,10 +1,4 @@
 #!/bin/bash                                           
-#BSUB -a "openmpi"                                    
-#BSUB -n 8
-#BSUB -W 08:00                                                           
-#BSUB -R "span[ptile=16]"                             
-#BSUB -o albanyCDash.out                                 
-#BSUB -e albanyCDash.err                                 
 
 #rm -rf repos
 rm -rf build
