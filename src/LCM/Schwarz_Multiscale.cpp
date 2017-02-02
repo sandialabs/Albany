@@ -17,8 +17,10 @@
 //#define WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
-static int mm_counter = 0;
-static int prec_mm_counter = 0;
+static int mm_counter_sol = 0;
+static int mm_counter_res = 0;
+static int mm_counter_pre = 0;
+static int mm_counter_jac = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
 LCM::
@@ -64,39 +66,40 @@ SchwarzMultiscale(
 
     app_name_index_map->insert(app_name_index);
   }
- 
+
   //------------Determine whether to set OUT_ARG_W_prec supports or not-------------
   //------------This is only relevant for matrix-free GMRES-------------------------
   // Get "Piro" parameter sublist
   Teuchos::ParameterList &piroPL = app_params->sublist("Piro");
   w_prec_supports_ = false;
   //Check if problem is matrix-free  
-  std::string jacob_op = ""; 
-  if (piroPL.isParameter("Jacobian Operator")) 
+  std::string jacob_op = "";
+  if (piroPL.isParameter("Jacobian Operator"))
     jacob_op = piroPL.get<std::string>("Jacobian Operator");
   //Get matrix-free preconditioner from input file
-  std::string mf_prec = "None"; 
-  if (coupled_system_params.isParameter("Matrix-Free Preconditioner")) 
-    mf_prec = coupled_system_params.get<std::string>("Matrix-Free Preconditioner");
-  if (mf_prec == "None") 
-    mf_prec_type_ = NONE; 
-  else if (mf_prec == "Jacobi") 
-    mf_prec_type_ = JACOBI;  
-  else if (mf_prec == "AbsRowSum") 
-    mf_prec_type_ = ABS_ROW_SUM;  
-  else if (mf_prec == "Identity") 
-    mf_prec_type_ = ID;  
+  std::string mf_prec = "None";
+  if (coupled_system_params.isParameter("Matrix-Free Preconditioner"))
+    mf_prec = coupled_system_params.get<std::string>(
+        "Matrix-Free Preconditioner");
+  if (mf_prec == "None")
+    mf_prec_type_ = NONE;
+  else if (mf_prec == "Jacobi")
+    mf_prec_type_ = JACOBI;
+  else if (mf_prec == "AbsRowSum")
+    mf_prec_type_ = ABS_ROW_SUM;
+  else if (mf_prec == "Identity")
+    mf_prec_type_ = ID;
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-		       "Unknown Matrix-Free Preconditioner type " << mf_prec 
-                       << "!  Valid options are None, Identity, AbsRowSum, and Jacobi. \n");
+        "Unknown Matrix-Free Preconditioner type " << mf_prec
+        << "!  Valid options are None, Identity, AbsRowSum, and Jacobi. \n");
   //If using matrix-free, get NOX sublist and set "Preconditioner Type" to "None" regardless 
   //of what is specified in the input file.  Currently preconditioners for matrix-free 
   //are implemented in this ModelEvaluator, which requires the type to be "None".
   //Also set w_prec_supoprts_ to true if using matrix-free with a preconditioner. 
   if ((mf_prec != "None") && (jacob_op != "")) {
     //Set w_prec_supports_ to true
-    w_prec_supports_ = true; 
+    w_prec_supports_ = true;
     //IKT, 11/14/16, FIXME: may want to add more cases, e.g., for Tempus
     if (piroPL.isSublist("NOX")) {
       Teuchos::ParameterList &noxPL = piroPL.sublist("NOX", true);
@@ -105,56 +108,77 @@ SchwarzMultiscale(
         if (dirPL.isSublist("Newton")) {
           Teuchos::ParameterList &newPL = dirPL.sublist("Newton", true);
           if (newPL.isSublist("Stratimikos Linear Solver")) {
-            Teuchos::ParameterList &stratLSPL = newPL.sublist("Stratimikos Linear Solver", true);
+            Teuchos::ParameterList &stratLSPL = newPL.sublist(
+                "Stratimikos Linear Solver",
+                true);
             if (stratLSPL.isSublist("Stratimikos")) {
-              Teuchos::ParameterList &stratPL = stratLSPL.sublist("Stratimikos", true);
-              stratPL.set<std::string>("Preconditioner Type", "None"); 
+              Teuchos::ParameterList &stratPL = stratLSPL.sublist(
+                  "Stratimikos",
+                  true);
+              stratPL.set<std::string>("Preconditioner Type", "None");
             }
           }
-        } 
+        }
       }
     }
   }
 
   // Create a NOX status test and associated machinery for cutting the global time step
   // when the CrystalPlasticity constitutive model's state update routine fails
-  Teuchos::RCP<NOX::StatusTest::Generic> nox_status_test = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag);
-  Teuchos::RCP<NOX::Abstract::PrePostOperator> pre_post_operator = Teuchos::rcp(new NOXSolverPrePostOperator);
+  Teuchos::RCP<NOX::StatusTest::Generic> nox_status_test = Teuchos::rcp(
+      new NOX::StatusTest::ModelEvaluatorFlag);
+  Teuchos::RCP<NOX::Abstract::PrePostOperator> pre_post_operator = Teuchos::rcp(
+      new NOXSolverPrePostOperator);
   Teuchos::RCP<NOXSolverPrePostOperator> nox_solver_pre_post_operator =
-    Teuchos::rcp_dynamic_cast<NOXSolverPrePostOperator>(pre_post_operator);
+      Teuchos::rcp_dynamic_cast<NOXSolverPrePostOperator>(pre_post_operator);
   Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> statusTest =
-    Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(nox_status_test);
+      Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(
+          nox_status_test);
 
   // Acquire the NOX "Solver Options" and "Status Tests" parameter lists
   Teuchos::RCP<Teuchos::ParameterList> solverOptionsParameterList;
   Teuchos::RCP<Teuchos::ParameterList> statusTestsParameterList;
-  if(app_params->isSublist("Piro")){
-    if(app_params->sublist("Piro").isSublist("NOX")){
-      if(app_params->sublist("Piro").sublist("NOX").isSublist("Solver Options")){
-	solverOptionsParameterList = Teuchos::rcpFromRef( app_params->sublist("Piro").sublist("NOX").sublist("Solver Options") );
+  if (app_params->isSublist("Piro")) {
+    if (app_params->sublist("Piro").isSublist("NOX")) {
+      if (app_params->sublist("Piro").sublist("NOX").isSublist(
+          "Solver Options")) {
+        solverOptionsParameterList = Teuchos::rcpFromRef(
+            app_params->sublist("Piro").sublist("NOX").sublist(
+                "Solver Options"));
       }
-      if(app_params->sublist("Piro").sublist("NOX").isSublist("Status Tests")){
-	statusTestsParameterList = Teuchos::rcpFromRef( app_params->sublist("Piro").sublist("NOX").sublist("Status Tests") );
+      if (app_params->sublist("Piro").sublist("NOX").isSublist(
+          "Status Tests")) {
+        statusTestsParameterList = Teuchos::rcpFromRef(
+            app_params->sublist("Piro").sublist("NOX").sublist("Status Tests"));
       }
     }
   }
 
-  if(!solverOptionsParameterList.is_null() && !statusTestsParameterList.is_null()){
+  if (!solverOptionsParameterList.is_null()
+      && !statusTestsParameterList.is_null()) {
 
     // Add the model evaulator flag as a status test.
-    Teuchos::ParameterList originalStatusTestParameterList = *statusTestsParameterList;
+    Teuchos::ParameterList originalStatusTestParameterList =
+        *statusTestsParameterList;
     Teuchos::ParameterList newStatusTestParameterList;
     newStatusTestParameterList.set<std::string>("Test Type", "Combo");
     newStatusTestParameterList.set<std::string>("Combo Type", "OR");
     newStatusTestParameterList.set<int>("Number of Tests", 2);
     newStatusTestParameterList.sublist("Test 0");
-    newStatusTestParameterList.sublist("Test 0").set("Test Type", "User Defined");
-    newStatusTestParameterList.sublist("Test 0").set("User Status Test", nox_status_test);
-    newStatusTestParameterList.sublist("Test 1") = originalStatusTestParameterList;
+    newStatusTestParameterList.sublist("Test 0").set(
+        "Test Type",
+        "User Defined");
+    newStatusTestParameterList.sublist("Test 0").set(
+        "User Status Test",
+        nox_status_test);
+    newStatusTestParameterList.sublist("Test 1") =
+        originalStatusTestParameterList;
     *statusTestsParameterList = newStatusTestParameterList;
 
     nox_solver_pre_post_operator->setStatusTest(statusTest);
-    solverOptionsParameterList->set("User Defined Pre/Post Operator", pre_post_operator);
+    solverOptionsParameterList->set(
+        "User Defined Pre/Post Operator",
+        pre_post_operator);
   }
 
   //------------End getting of Preconditioner type-------------------------------------------------------------
@@ -178,25 +202,27 @@ SchwarzMultiscale(
         &(problem_params.sublist("Parameters")), false);
 
     auto const
-    num_parameters = parameter_params->isType<int>("Number") == true ?
-        parameter_params->get<int>("Number") : 0;
-
+    num_parameters =
+        parameter_params->isType<int>("Number") == true ?
+            parameter_params->get<int>("Number") : 0;
 
     bool const
     using_old_parameter_list = num_parameters > 0 ? true : false;
 
-    num_params_total_ = num_parameters > 0  ?
-        1 : parameter_params->get("Number of Parameter Vectors", 0);
+    num_params_total_ =
+        num_parameters > 0 ?
+            1 : parameter_params->get("Number of Parameter Vectors", 0);
 
     //Get parameter names
     param_names_.resize(num_params_total_);
     for (auto l = 0; l < num_params_total_; ++l) {
 
       Teuchos::RCP<Teuchos::ParameterList const>
-      p_list = using_old_parameter_list == true ?
-          Teuchos::rcp(new Teuchos::ParameterList(*parameter_params)) :
-          Teuchos::rcp(&(parameter_params->sublist(
-              Albany::strint("Parameter Vector", l))), false);
+      p_list =
+          using_old_parameter_list == true ?
+              Teuchos::rcp(new Teuchos::ParameterList(*parameter_params)) :
+              Teuchos::rcp(&(parameter_params->sublist(
+                  Albany::strint("Parameter Vector", l))), false);
 
       auto const
       num_parameters = p_list->get<int>("Number");
@@ -208,7 +234,7 @@ SchwarzMultiscale(
 
       for (auto k = 0; k < num_parameters; ++k) {
         (*param_names_[l])[k] =
-          p_list->get<std::string>(Albany::strint("Parameter", k));
+            p_list->get<std::string>(Albany::strint("Parameter", k));
       }
       std::cout << "Number of parameters in parameter vector ";
       std::cout << l << " = " << num_parameters << '\n';
@@ -218,7 +244,7 @@ SchwarzMultiscale(
   std::cout << "Number of parameter vectors = " << num_params_total_ << '\n';
 
   //---------------End Parameters---------------------
-  
+
   //----------------Responses------------------------
   //Get "Response functions" parameter sublist
   num_responses_total_ = 0;
@@ -228,14 +254,16 @@ SchwarzMultiscale(
         Teuchos::rcp(&(problem_params.sublist("Response Functions")), false);
 
     auto const
-    num_parameters = response_params->isType<int>("Number") == true ?
-        response_params->get<int>("Number") : 0;
+    num_parameters =
+        response_params->isType<int>("Number") == true ?
+            response_params->get<int>("Number") : 0;
 
     bool const
     using_old_response_list = num_parameters > 0 ? true : false;
 
-    num_responses_total_ = num_parameters > 0 ?
-        1 : response_params->get("Number of Response Vectors", 0);
+    num_responses_total_ =
+        num_parameters > 0 ?
+            1 : response_params->get("Number of Response Vectors", 0);
 
     Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>
     response_names;
@@ -245,14 +273,17 @@ SchwarzMultiscale(
     for (auto l = 0; l < num_responses_total_; ++l) {
 
       Teuchos::RCP<Teuchos::ParameterList const>
-      p_list = using_old_response_list == true ?
-          Teuchos::rcp(new Teuchos::ParameterList(*response_params)) :
-          Teuchos::rcp(&(response_params->sublist(
-              Albany::strint("Response Vector", l))), false);
+      p_list =
+          using_old_response_list == true ?
+              Teuchos::rcp(new Teuchos::ParameterList(*response_params)) :
+              Teuchos::rcp(&(response_params->sublist(
+                  Albany::strint("Response Vector", l))), false);
 
       auto const
-      num_parameters = p_list->get<int>("Number") == true ?
-          p_list->get<int>("Number") : 0;
+      num_parameters =
+          p_list->get<int>("Number") == true ?
+                                               p_list->get<int>("Number") :
+                                               0;
 
       if (num_parameters > 0) {
         response_names[l] =
@@ -260,7 +291,7 @@ SchwarzMultiscale(
 
         for (auto k = 0; k < num_parameters; ++k) {
           (*response_names[l])[k] =
-            p_list->get<std::string>(Albany::strint("Response", k));
+              p_list->get<std::string>(Albany::strint("Response", k));
         }
 
       }
@@ -268,7 +299,7 @@ SchwarzMultiscale(
   }
 
   std::cout << "Number of response vectors = " << num_responses_total_ << '\n';
-   
+
   //----------- end Responses-----------------------
 
   apps_.resize(num_models_);
@@ -281,7 +312,7 @@ SchwarzMultiscale(
   disc_maps_.resize(num_models_);
 
   jacs_.resize(num_models_);
-  
+
   precs_.resize(num_models_);
 
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const>>
@@ -296,7 +327,7 @@ SchwarzMultiscale(
     //get parameterlist from mth model *.xml file
     Albany::SolverFactory
     solver_factory(model_filenames[m], commT_);
-    
+
     // solver_factory will go out of scope, so get a copy of the PL. We take
     // ownership and give weak pointers to everyone else.
     model_app_params_[m] = Teuchos::rcp(
@@ -317,14 +348,14 @@ SchwarzMultiscale(
             model_filenames[m] <<
             " cannot have a 'Parameters' section!  " <<
             "Parameters must be specified in the 'master' input file " <<
-            "driving the coupled problem.\n") ;
+            "driving the coupled problem.\n");
       }
       Teuchos::ParameterList &
       param_params_m = problem_params_m->sublist("Parameters", false);
 
-      param_params_m.setParametersNotAlreadySet(*parameter_params); 
+      param_params_m.setParametersNotAlreadySet(*parameter_params);
     }
-    
+
     // Overwrite Responses sublists for individual models,
     // if they are provided, to set them
     // to the parameters specified in the "master" coupled input file.
@@ -337,12 +368,12 @@ SchwarzMultiscale(
             model_filenames[m] <<
             " cannot have a 'Response Functions' section!  " <<
             "Responses must be specified in the 'master' input file " <<
-            "driving the coupled problem.\n") ;
+            "driving the coupled problem.\n");
       }
       Teuchos::ParameterList &
       response_params_m =
           problem_params_m->sublist("Response Functions", false);
-      response_params_m.setParametersNotAlreadySet(*response_params); 
+      response_params_m.setParametersNotAlreadySet(*response_params);
     }
 
     model_problem_params[m] = problem_params_m;
@@ -367,7 +398,7 @@ SchwarzMultiscale(
     matdb_filename = problem_params_m->get<std::string>("MaterialDB Filename");
 
     material_dbs_[m] =
-      Teuchos::rcp(new LCM::MaterialDatabase(matdb_filename, commT_));
+        Teuchos::rcp(new LCM::MaterialDatabase(matdb_filename, commT_));
 
     std::cout << "Materials #" << m << ": " << matdb_filename << '\n';
 
@@ -384,7 +415,9 @@ SchwarzMultiscale(
     model_app_params_[m]->set("Application Name Index Map", app_name_index_map);
 
     // Machinery for cutting the global time step from within the CrystalPlasticity constitutive model
-    model_app_params_[m]->sublist("Problem").set("Constitutive Model NOX Status Test", nox_status_test);
+    model_app_params_[m]->sublist("Problem").set(
+        "Constitutive Model NOX Status Test",
+        nox_status_test);
 
     //create application for mth model
     apps_[m] = Teuchos::rcp(new Albany::Application(
@@ -406,13 +439,13 @@ SchwarzMultiscale(
         Teuchos::nonnull(jac_temp) ?
             Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(jac_temp, true) :
             Teuchos::null;
-    
+
     //create array of individual model preconditioners - these will have same graph as Jacobians for now
     precs_[m] =
         Teuchos::nonnull(jac_temp) ?
             Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(jac_temp, true) :
             Teuchos::null;
-    if (precs_[m]->isFillActive()) 
+    if (precs_[m]->isFillActive())
       precs_[m]->fillComplete();
   }
 
@@ -431,7 +464,6 @@ SchwarzMultiscale(
     solver_outargs_[m] = models_[m]->createOutArgs();
   }
 
-  
   //----------------Parameters------------------------
   // Create sacado parameter vectors of appropriate size
   // for use in evalModelImpl
@@ -443,32 +475,31 @@ SchwarzMultiscale(
 
   for (auto m = 0; m < num_models_; ++m) {
     for (auto l = 0; l < num_params_total_; ++l) {
-       try {
-         // Initialize Sacado parameter vector
-         // The following call will throw,
-         // and it is often due to an incorrect input line in the
-         // "Parameters" PL
-         // in the input file.
-         // Give the user a hint about what might be happening
-         apps_[m]->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
-         *(param_names_[l]), sacado_param_vecs_[m][l]);
-       }
-       catch (const std::logic_error & le) {
-         std::cout << "Error: exception thrown from ParamLib fillVector in ";
-         std::cout << __FILE__ << " line " << __LINE__ << '\n';
-         std::cout << "This is probably due to something incorrect in the";
-         std::cout << " \"Parameters\" list in the input file, ";
-         std::cout << "one of the lines:" << '\n';
-         for (auto k = 0; k < param_names_[l]->size(); ++k) {
-           std::cout << "      " << (*param_names_[l])[k] << '\n';
-         }
-         throw le; // rethrow to shut things down
-       }
-     }
-   }
+      try {
+        // Initialize Sacado parameter vector
+        // The following call will throw,
+        // and it is often due to an incorrect input line in the
+        // "Parameters" PL
+        // in the input file.
+        // Give the user a hint about what might be happening
+        apps_[m]->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
+            *(param_names_[l]), sacado_param_vecs_[m][l]);
+      }
+      catch (const std::logic_error & le) {
+        std::cout << "Error: exception thrown from ParamLib fillVector in ";
+        std::cout << __FILE__ << " line " << __LINE__ << '\n';
+        std::cout << "This is probably due to something incorrect in the";
+        std::cout << " \"Parameters\" list in the input file, ";
+        std::cout << "one of the lines:" << '\n';
+        for (auto k = 0; k < param_names_[l]->size(); ++k) {
+          std::cout << "      " << (*param_names_[l])[k] << '\n';
+        }
+        throw le; // rethrow to shut things down
+      }
+    }
+  }
 
   //----------- end Parameters-----------------------
-
 
   //------------------Setup nominal values----------------
   nominal_values_ = this->createInArgsImpl();
@@ -495,7 +526,7 @@ SchwarzMultiscale(
 
     Teuchos::ArrayRCP<Teuchos::RCP<Thyra::VectorBase<ST> const>>
     p_vecs(num_models_);
-    
+
     for (auto m = 0; m < num_models_; ++m) {
       p_vecs[m] = models_[m]->getNominalValues().get_p(l);
     }
@@ -579,7 +610,7 @@ LCM::SchwarzMultiscale::get_p_space(int l) const
     vs_array.push_back(models_[m]->get_p_space(l));
   }
 
-  return Thyra::productVectorSpace<ST>(vs_array); 
+  return Thyra::productVectorSpace<ST>(vs_array);
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
@@ -606,7 +637,7 @@ Teuchos::RCP<const Teuchos::Array<std::string>>
 LCM::SchwarzMultiscale::get_p_names(int l) const
 {
   ALBANY_EXPECT(0 <= l && l < num_params_total_);
-  return param_names_[l]; 
+  return param_names_[l];
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
@@ -638,29 +669,32 @@ Teuchos::RCP<Thyra::PreconditionerBase<ST>>
 LCM::SchwarzMultiscale::create_W_prec() const
 {
   //Teuchos::RCP< Thyra::PreconditionerBase<ST> > W_prec;
-  Teuchos::RCP<Thyra::DefaultPreconditioner<ST> > W_prec = Teuchos::rcp(new Thyra::DefaultPreconditioner<ST>);
+  Teuchos::RCP<Thyra::DefaultPreconditioner<ST> > W_prec = Teuchos::rcp(
+      new Thyra::DefaultPreconditioner<ST>);
   if (w_prec_supports_) {
     LCM::Schwarz_CoupledJacobian csJac(commT_);
-    for (auto m = 0; m<num_models_; m++) {
-      if (precs_[m]->isFillActive()) 
+    for (auto m = 0; m < num_models_; m++) {
+      if (precs_[m]->isFillActive())
         precs_[m]->fillComplete();
     }
-    Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = csJac.getThyraCoupledJacobian(precs_, apps_);
+    Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = csJac.getThyraCoupledJacobian(
+        precs_,
+        apps_);
     W_prec->initializeRight(W_op);
     //IKT, 11/16/16: the following code is for Teko. 
     //We may want to switch to this once I figure out how to hook up Teko with natrix-free.  
     /*
-    //Get preconditioner factory from solver_factory_.  For Teko, this will get the TekoFactory.
-    Teuchos::RCP<Thyra::PreconditionerFactoryBase<ST> > prec_factory = solver_factory_->getPreconditionerFactory(); 
-    //Get the preconditioner operator from the prec_factory 
-    W_prec = prec_factory->createPrec(); 
-    */
+     //Get preconditioner factory from solver_factory_.  For Teko, this will get the TekoFactory.
+     Teuchos::RCP<Thyra::PreconditionerFactoryBase<ST> > prec_factory = solver_factory_->getPreconditionerFactory();
+     //Get the preconditioner operator from the prec_factory
+     W_prec = prec_factory->createPrec();
+     */
   }
   else {
     TEUCHOS_TEST_FOR_EXCEPT(w_prec_supports_);
     //W_prec = Teuchos::null; 
   }
-  return W_prec; 
+  return W_prec;
 }
 
 Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST>>
@@ -778,7 +812,9 @@ createOutArgsImpl() const
 
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f, true);
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_op, true);
-  result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_prec, w_prec_supports_);
+  result.setSupports(
+      Thyra::ModelEvaluatorBase::OUT_ARG_W_prec,
+      w_prec_supports_);
 
   result.set_W_properties(
       Thyra::ModelEvaluatorBase::DerivativeProperties(
@@ -799,10 +835,11 @@ evalModelImpl(
   //Get xT and x_dotT from in_args
   Teuchos::RCP<const Thyra::ProductVectorBase<ST>>
   xT = Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST>>(
-          in_args.get_x(), true);
+      in_args.get_x(), true);
 
   Teuchos::RCP<const Thyra::ProductVectorBase<ST>>
-  x_dotT = Teuchos::nonnull(in_args.get_x_dot()) ?
+  x_dotT =
+      Teuchos::nonnull(in_args.get_x_dot()) ?
           Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST>>(
               in_args.get_x_dot(), true) :
           Teuchos::null;
@@ -835,7 +872,8 @@ evalModelImpl(
   x_dotdotT = Teuchos::null;
 
   double const
-  alpha = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
+  alpha =
+      (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
           in_args.get_alpha() : 0.0;
 
   // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
@@ -857,28 +895,28 @@ evalModelImpl(
   for (auto l = 0; l < num_params_total_; ++l) {
     //get p from in_args for each parameter
     Teuchos::RCP<Thyra::ProductVectorBase<ST> const> pT =
-      Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST>>(
-         in_args.get_p(l), true);
-      // Don't set it if there is nothing. Avoid null pointer.
-      if (Teuchos::is_null(pT) == true) continue;
+        Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST>>(
+            in_args.get_p(l), true);
+    // Don't set it if there is nothing. Avoid null pointer.
+    if (Teuchos::is_null(pT) == true) continue;
 
-      for (auto m = 0; m < num_models_; ++m) {
-        ParamVec &
-        sacado_param_vector = sacado_param_vecs_[m][l];
+    for (auto m = 0; m < num_models_; ++m) {
+      ParamVec &
+      sacado_param_vector = sacado_param_vecs_[m][l];
 
-        // IKT FIXME: the following is somewhat of a hack:
-        // we get the 0th block of p b/c with all the parameters
-        // read from the master file, all the blocks are the same.
-        // The code does not work if 0 is replaced by m:
-        // only the first vector in the Thyra Product MultiVec is correct.
-        // Why...?
-        Teuchos::RCP<Tpetra_Vector const>
-        pTm = Teuchos::rcp_dynamic_cast<const ThyraVector>(
-            pT->getVectorBlock(0), true)->getConstTpetraVector();
+      // IKT FIXME: the following is somewhat of a hack:
+      // we get the 0th block of p b/c with all the parameters
+      // read from the master file, all the blocks are the same.
+      // The code does not work if 0 is replaced by m:
+      // only the first vector in the Thyra Product MultiVec is correct.
+      // Why...?
+      Teuchos::RCP<Tpetra_Vector const>
+      pTm = Teuchos::rcp_dynamic_cast<const ThyraVector>(
+          pT->getVectorBlock(0), true)->getConstTpetraVector();
 
-        Teuchos::ArrayRCP<ST const> pTm_constView = pTm->get1dView();
-        for (auto k = 0; k < sacado_param_vector.size(); ++k) {
-          sacado_param_vector[k].baseValue = pTm_constView[k];
+      Teuchos::ArrayRCP<ST const> pTm_constView = pTm->get1dView();
+      for (auto k = 0; k < sacado_param_vector.size(); ++k) {
+        sacado_param_vector[k].baseValue = pTm_constView[k];
       }
     }
   }
@@ -904,8 +942,8 @@ evalModelImpl(
 
   Teuchos::RCP<Thyra::LinearOpBase<ST>>
   W_op_outT = Teuchos::nonnull(out_args.get_W_op()) ?
-      out_args.get_W_op() :
-      Teuchos::null;
+                                                      out_args.get_W_op() :
+                                                      Teuchos::null;
 
   // Compute the functions
 
@@ -967,19 +1005,20 @@ evalModelImpl(
       }
     }
   }
-  
+
   //Create preconditioner if w_prec_supports_ are on
-  if (w_prec_supports_ == true) { 
+  if (w_prec_supports_ == true) {
     Teuchos::RCP<Thyra::PreconditionerBase<ST>>
-    W_prec_outT = Teuchos::nonnull(out_args.get_W_prec()) ?
-        out_args.get_W_prec() :
-        Teuchos::null;
- 
+    W_prec_outT =
+        Teuchos::nonnull(out_args.get_W_prec()) ?
+                                                  out_args.get_W_prec() :
+                                                  Teuchos::null;
+
     //IKT, 11/16/16: it may be desirable to move the following code into a separate 
     //function, especially as we implement more preconditioners. 
     if (Teuchos::nonnull(W_prec_outT) == true) {
       for (auto m = 0; m < num_models_; ++m) {
-        if (!precs_[m]->isFillActive()) 
+        if (!precs_[m]->isFillActive())
           precs_[m]->resumeFill();
         if (mf_prec_type_ == JACOBI) {
           //With matrix-free, W_op_outT is null, so computeJacobianT does not
@@ -988,31 +1027,38 @@ evalModelImpl(
           //doesn't overwrite the real residual.
           Teuchos::RCP<Tpetra_Vector> fTtemp;
           if (fT_out != Teuchos::null) {
-            fTtemp = Teuchos::rcp_dynamic_cast<ThyraVector>(fT_out->getNonconstVectorBlock(m), true)->getTpetraVector();
+            fTtemp = Teuchos::rcp_dynamic_cast<ThyraVector>(
+                fT_out->getNonconstVectorBlock(m),
+                true)->getTpetraVector();
           }
           apps_[m]->computeGlobalJacobianT(alpha, beta, omega, curr_time,
               x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
               sacado_param_vecs_[m], fTtemp.get(), *jacs_[m]);
           //Get diagonal of jacs_[m]  
-          Teuchos::RCP<Tpetra_Vector> diag = Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap())); 
-          jacs_[m]->getLocalDiagCopy(*diag); 
+          Teuchos::RCP<Tpetra_Vector> diag = Teuchos::rcp(
+              new Tpetra_Vector(jacs_[m]->getRowMap()));
+          jacs_[m]->getLocalDiagCopy(*diag);
           //Take reciprocal of diagonal 
-          Teuchos::RCP<Tpetra_Vector> invdiag = Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap())); 
+          Teuchos::RCP<Tpetra_Vector> invdiag = Teuchos::rcp(
+              new Tpetra_Vector(jacs_[m]->getRowMap()));
           invdiag->reciprocal(*diag);
-          Teuchos::ArrayRCP<const ST> invdiag_constView = invdiag->get1dView(); 
+          Teuchos::ArrayRCP<const ST> invdiag_constView = invdiag->get1dView();
           //Zero out precs_[m] 
           precs_[m]->resumeFill();
           precs_[m]->scale(0.0);
           //Create Jacobi preconditioner 
-          for (auto i=0; i<jacs_[m]->getNodeNumRows(); ++i) {
+          for (auto i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
             GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
             Teuchos::Array<ST> matrixEntriesT(1);
             Teuchos::Array<GO> matrixIndicesT(1);
-            matrixEntriesT[0] = invdiag_constView[i]; 
-            matrixIndicesT[0] = global_row; 
-            precs_[m]->replaceGlobalValues(global_row, matrixIndicesT(), matrixEntriesT());
+            matrixEntriesT[0] = invdiag_constView[i];
+            matrixIndicesT[0] = global_row;
+            precs_[m]->replaceGlobalValues(
+                global_row,
+                matrixIndicesT(),
+                matrixEntriesT());
           }
-        } 
+        }
         else if (mf_prec_type_ == ABS_ROW_SUM) {
           //With matrix-free, W_op_outT is null, so computeJacobianT does not
           //get called earlier.  We need to call it here to get the Jacobians.
@@ -1020,103 +1066,124 @@ evalModelImpl(
           //doesn't overwrite the real residual.
           Teuchos::RCP<Tpetra_Vector> fTtemp;
           if (fT_out != Teuchos::null) {
-            fTtemp = Teuchos::rcp_dynamic_cast<ThyraVector>(fT_out->getNonconstVectorBlock(m), true)->getTpetraVector();
+            fTtemp = Teuchos::rcp_dynamic_cast<ThyraVector>(
+                fT_out->getNonconstVectorBlock(m),
+                true)->getTpetraVector();
           }
           apps_[m]->computeGlobalJacobianT(alpha, beta, omega, curr_time,
               x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
               sacado_param_vecs_[m], fTtemp.get(), *jacs_[m]);
           //Create vector to store absrowsum 
-          Teuchos::RCP<Tpetra_Vector> absrowsum = Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap())); 
-          absrowsum->putScalar(0.0); 
-          Teuchos::ArrayRCP<ST> absrowsum_nonconstView = absrowsum->get1dViewNonConst(); 
+          Teuchos::RCP<Tpetra_Vector> absrowsum = Teuchos::rcp(
+              new Tpetra_Vector(jacs_[m]->getRowMap()));
+          absrowsum->putScalar(0.0);
+          Teuchos::ArrayRCP<ST> absrowsum_nonconstView = absrowsum
+              ->get1dViewNonConst();
           //Compute abs sum of each row and store in absrowsum vector 
-          for (auto i=0; i<jacs_[m]->getNodeNumRows(); ++i) {
+          for (auto i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
             std::size_t NumEntries = jacs_[m]->getNumEntriesInLocalRow(i);
-            Teuchos::Array<LO> Indices(NumEntries); 
-            Teuchos::Array<ST> Values(NumEntries); 
+            Teuchos::Array<LO> Indices(NumEntries);
+            Teuchos::Array<ST> Values(NumEntries);
             //Get local row
             jacs_[m]->getLocalRowCopy(i, Indices(), Values(), NumEntries);
             //Compute abs row rum 
-            for (auto j=0; j<NumEntries; j++) 
+            for (auto j = 0; j < NumEntries; j++)
               absrowsum_nonconstView[i] += abs(Values[j]);
           }
           //Invert absrowsum 
-          Teuchos::RCP<Tpetra_Vector> invabsrowsum = Teuchos::rcp(new Tpetra_Vector(jacs_[m]->getRowMap())); 
-          invabsrowsum->reciprocal(*absrowsum); 
-          Teuchos::ArrayRCP<const ST> invabsrowsum_constView = invabsrowsum->get1dView(); 
+          Teuchos::RCP<Tpetra_Vector> invabsrowsum = Teuchos::rcp(
+              new Tpetra_Vector(jacs_[m]->getRowMap()));
+          invabsrowsum->reciprocal(*absrowsum);
+          Teuchos::ArrayRCP<const ST> invabsrowsum_constView = invabsrowsum
+              ->get1dView();
           //Zero out precs_[m] 
           precs_[m]->resumeFill();
           precs_[m]->scale(0.0);
           //Create diagonal abs row sum preconditioner 
-          for (auto i=0; i<jacs_[m]->getNodeNumRows(); ++i) {
+          for (auto i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
             GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
             Teuchos::Array<ST> matrixEntriesT(1);
             Teuchos::Array<GO> matrixIndicesT(1);
-            matrixEntriesT[0] = invabsrowsum_constView[i]; 
-            matrixIndicesT[0] = global_row; 
-            precs_[m]->replaceGlobalValues(global_row, matrixIndicesT(), matrixEntriesT());
-          }
-        } 
-        else if (mf_prec_type_ == ID) {
-          //Create Identity
-          for (auto i=0; i<jacs_[m]->getNodeNumRows(); ++i) {
-            GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
-            Teuchos::Array<ST> matrixEntriesT(1);
-            Teuchos::Array<GO> matrixIndicesT(1);
-            matrixEntriesT[0] = 1.0; 
-            matrixIndicesT[0] = global_row; 
-            precs_[m]->replaceGlobalValues(global_row, matrixIndicesT(), matrixEntriesT());
+            matrixEntriesT[0] = invabsrowsum_constView[i];
+            matrixIndicesT[0] = global_row;
+            precs_[m]->replaceGlobalValues(
+                global_row,
+                matrixIndicesT(),
+                matrixEntriesT());
           }
         }
-        if (precs_[m]->isFillActive()) 
+        else if (mf_prec_type_ == ID) {
+          //Create Identity
+          for (auto i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
+            GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
+            Teuchos::Array<ST> matrixEntriesT(1);
+            Teuchos::Array<GO> matrixIndicesT(1);
+            matrixEntriesT[0] = 1.0;
+            matrixIndicesT[0] = global_row;
+            precs_[m]->replaceGlobalValues(
+                global_row,
+                matrixIndicesT(),
+                matrixEntriesT());
+          }
+        }
+        if (precs_[m]->isFillActive())
           precs_[m]->fillComplete();
       }
       LCM::Schwarz_CoupledJacobian csJac(commT_);
-      Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = csJac.getThyraCoupledJacobian(precs_, apps_);
-      Teuchos::RCP<Thyra::DefaultPreconditioner<ST> > W_prec = Teuchos::rcp(new Thyra::DefaultPreconditioner<ST>);
-      W_prec->initializeRight(W_op); 
-      W_prec_outT = Teuchos::rcp_dynamic_cast<Thyra::PreconditionerBase<ST>>(W_prec, true); 
+      Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op =
+          csJac.getThyraCoupledJacobian(precs_, apps_);
+      Teuchos::RCP<Thyra::DefaultPreconditioner<ST> > W_prec = Teuchos::rcp(
+          new Thyra::DefaultPreconditioner<ST>);
+      W_prec->initializeRight(W_op);
+      W_prec_outT = Teuchos::rcp_dynamic_cast<Thyra::PreconditionerBase<ST>>(
+          W_prec,
+          true);
 #ifdef WRITE_TO_MATRIX_MARKET
-      char prec_name[100];  //create string for file name
-      char jac_name[100];  //create string for file name
-      sprintf(prec_name, "prec0_%i.mm", prec_mm_counter);
+      char prec_name[100];
+      sprintf(prec_name, "pre0_%i.mm", mm_counter_pre);
       Tpetra_MatrixMarket_Writer::writeSparseFile(prec_name, precs_[0]);
-      sprintf(jac_name, "jac0_%i.mm", prec_mm_counter);
-      Tpetra_MatrixMarket_Writer::writeSparseFile(jac_name, jacs_[0]);
       if (num_models_ > 1) {
-        sprintf(prec_name, "prec1_%i.mm", prec_mm_counter);
+        sprintf(prec_name, "pre1_%i.mm", mm_counter_pre);
         Tpetra_MatrixMarket_Writer::writeSparseFile(prec_name, precs_[1]);
-        sprintf(jac_name, "jac1_%i.mm", prec_mm_counter);
-        Tpetra_MatrixMarket_Writer::writeSparseFile(jac_name, jacs_[1]);
       }
-      prec_mm_counter++;
-#endif 
+      ++mm_counter_pre;
+#endif
     }
   }
 
+#ifdef WRITE_TO_MATRIX_MARKET
+  char sol_name[100];
+  sprintf(sol_name, "sol0_%i.mm", mm_counter_sol);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(sol_name, *(xTs[0]));
+  if (num_models_ > 1) {
+    sprintf(sol_name, "sol1_%i.mm", mm_counter_sol);
+    Tpetra_MatrixMarket_Writer::writeDenseFile(sol_name, *(xTs[1]));
+  }
+  ++mm_counter_sol;
+#endif
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  //writing to MatrixMarket file for debug
-  char name[100];  //create string for file name
-  sprintf(name, "f0_%i.mm", mm_counter);
+  char res_name[100];
+  sprintf(res_name, "res0_%i.mm", mm_counter_res);
   if (fTs_out[0] != Teuchos::null) {
-    Tpetra_MatrixMarket_Writer::writeDenseFile(
-        name,
-        *(fTs_out[0]));
+    Tpetra_MatrixMarket_Writer::writeDenseFile(res_name, *(fTs_out[0]));
   }
   if (num_models_ > 1 && fTs_out[1] != Teuchos::null) {
-    sprintf(name, "f1_%i.mm", mm_counter);
-    Tpetra_MatrixMarket_Writer::writeDenseFile(
-        name,
-        *(fTs_out[1]));
+    sprintf(res_name, "res1_%i.mm", mm_counter_res);
+    Tpetra_MatrixMarket_Writer::writeDenseFile(res_name, *(fTs_out[1]));
   }
-  sprintf(name, "x0_%i.mm", mm_counter);
-  Tpetra_MatrixMarket_Writer::writeDenseFile(name, *(xTs[0]));
+  ++mm_counter_res;
+#endif
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  char jac_name[100];
+  sprintf(jac_name, "jac0_%i.mm", mm_counter_jac);
+  Tpetra_MatrixMarket_Writer::writeSparseFile(jac_name, jacs_[0]);
   if (num_models_ > 1) {
-    sprintf(name, "x1_%i.mm", mm_counter);
-    Tpetra_MatrixMarket_Writer::writeDenseFile(name, *(xTs[1]));
+    sprintf(jac_name, "jac1_%i.mm", mm_counter_jac);
+    Tpetra_MatrixMarket_Writer::writeSparseFile(jac_name, jacs_[1]);
   }
-  mm_counter++;
+  ++mm_counter_jac;
 #endif
 
 //Responses / sensitivities
@@ -1125,18 +1192,19 @@ evalModelImpl(
   for (auto j = 0; j < out_args.Ng(); ++j) {
 
     Teuchos::RCP<Thyra::ProductVectorBase<ST>>
-    gT_out = Teuchos::nonnull(out_args.get_g(j)) ?
-          Teuchos::rcp_dynamic_cast<Thyra::ProductVectorBase<ST>>(
-              out_args.get_g(j), true) :
-          Teuchos::null;
-    
+    gT_out =
+        Teuchos::nonnull(out_args.get_g(j)) ?
+            Teuchos::rcp_dynamic_cast<Thyra::ProductVectorBase<ST>>(
+                out_args.get_g(j), true) :
+            Teuchos::null;
+
     if (Teuchos::is_null(gT_out) == false) {
       for (auto m = 0; m < num_models_; ++m) {
         //Get each Tpetra vector
         Teuchos::RCP<Tpetra_Vector>
         gT_out_m = Teuchos::rcp_dynamic_cast<ThyraVector>(
-                  gT_out->getNonconstVectorBlock(m),
-                  true)->getTpetraVector();
+            gT_out->getNonconstVectorBlock(m),
+            true)->getTpetraVector();
 
         for (auto l = 0; l < out_args.Np(); ++l) {
           //sets gT_out
@@ -1192,7 +1260,10 @@ getValidAppParameters() const
   list->sublist("VTK", false, "DEPRECATED  VTK sublist");
   list->sublist("Piro", false, "Piro sublist");
   list->sublist("Coupled System", false, "Coupled system sublist");
-  list->set<std::string>("Matrix-Free Preconditioner", "", "Matrix-Free Preconditioner Type");
+  list->set<std::string>(
+      "Matrix-Free Preconditioner",
+      "",
+      "Matrix-Free Preconditioner Type");
 
   return list;
 }
