@@ -9,18 +9,17 @@
 #include <MeshSimAdapt.h>
 #include <SimPartitionedMesh.h>
 #include <SimField.h>
-/* BRD */
 #include <SimModel.h>
-/* BRD */
 #include <apfSIM.h>
 #include <spr.h>
 #include <EnergyIntegral.hpp>
+#include <set>
+#include <PCU.h>
 
 /* BRD */
 #include "PHAL_AlbanyTraits.hpp"
+extern VIter M_classificationVertexIter(pMesh, int);
 extern void DM_undoSlicing(pPList regions,int layerNum, pUnstructuredMesh mesh);
-extern void PM_localizePartiallyConnected(pParMesh);
-extern void MSA_setPrebalance(pMSAdapt,int);
 /* BRD */
 
 namespace AAdapt {
@@ -146,18 +145,24 @@ void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double la
   }
   GRIter_delete(regions);
   
+  double t1 = PCU_Time();
   pSurfaceMesher sm = SurfaceMesher_new(mcase,mesh);
-  // SurfaceMesher_setParamForDiscrete(sm, 1);
   SurfaceMesher_execute(sm,0);
   SurfaceMesher_delete(sm);
-  if (currentLayer==1)
-    PM_setTotalNumParts(mesh,PMU_size());
+  double t2 = PCU_Time();
+  if (!PCU_Comm_Self())
+    fprintf(stderr,"meshCurrentLayerOnly surface mesh %f seconds\n",t2-t1);
+  double t3 = PCU_Time();
   pVolumeMesher vm  = VolumeMesher_new(mcase,mesh);
   VolumeMesher_setEnforceSize(vm, 1);
   VolumeMesher_execute(vm,0);
   VolumeMesher_delete(vm);
+  double t4 = PCU_Time();
+  if (!PCU_Comm_Self())
+    fprintf(stderr,"meshCurrentLayerOnly volume mesh %f seconds\n",t4-t3);
 
   MS_deleteMeshCase(mcase);
+  printf("after mesh CurrentLayerOnly: %d tets on cpu %d\n",M_numRegions(PM_mesh(mesh,0)),PMU_rank());
 }
 
 void addNextLayer(pParMesh sim_pm,double layerSize,int nextLayer, double initTempNewLayer,int nSolFlds,pPList flds) {
@@ -171,6 +176,7 @@ void addNextLayer(pParMesh sim_pm,double layerSize,int nextLayer, double initTem
   pGRegion gr1;
   int layer, maxLayer = -1;
   pPList combinedRegions = PList_new();
+  std::set<pGRegion> layGrs;
   while (gr1=GRIter_next(regions)) {
     if (GEN_numNativeIntAttribute(gr1,"SimLayer")==1) {
       GEN_nativeIntAttribute(gr1,"SimLayer",&layer);
@@ -178,21 +184,67 @@ void addNextLayer(pParMesh sim_pm,double layerSize,int nextLayer, double initTem
         PList_appUnique(combinedRegions,gr1);
       if (layer > maxLayer)
         maxLayer = layer;
+      if (layer == nextLayer)
+        layGrs.insert(gr1);
     }
   }
   GRIter_delete(regions);
   if ( nextLayer > maxLayer )
     return;
 
-  PM_localizePartiallyConnected(sim_pm);
+  pMesh mesh = PM_mesh(sim_pm, 0);
+  double t1 = PCU_Time();
+  pMigrator mig = Migrator_new(sim_pm, 0);
+  Migrator_reset(mig, 3);
+  std::set<pRegion> doneRs;
+  int rank = PMU_rank();
+  if (rank != 0) {
+    VIter vi = M_classificationVertexIter(mesh, 3);
+    while (pVertex v = VIter_next(vi)) {
+      pGEntity gent = EN_whatIn(v);
+      for (std::set<pGRegion>::const_iterator layGrIt = layGrs.begin();
+           layGrIt != layGrs.end(); ++layGrIt) {
+        pGRegion layGr = *layGrIt;
+        if (GEN_inClosure(layGr, gent)) {
+          pPList vrs = V_regions(v);
+          int i, nvrs = PList_size(vrs);
+          for (i=0; i < nvrs; i++) {
+            pRegion r = static_cast<pRegion>(PList_item(vrs, i));
+            if (doneRs.find(r) == doneRs.end()) {
+              Migrator_add(mig, r, 0, rank);
+              doneRs.insert(r);
+            }
+          }
+          PList_delete(vrs);
+          break;
+        }
+      }
+    }
+    VIter_delete(vi);
+  }
+  Migrator_run(mig, 0);
+  Migrator_delete(mig);
+  double t2 = PCU_Time();
+  if (!PCU_Comm_Self())
+    fprintf(stderr, "addNextLayer(): migration %f seconds\n", t2 - t1);
+
   if (nextLayer>1) {
     *out << "Combine layer " << nextLayer-1 << "\n";
+    double t3 = PCU_Time();
     DM_undoSlicing(combinedRegions,nextLayer-1,sim_pm);
+    double t4 = PCU_Time();
+    if (!PCU_Comm_Self())
+      fprintf(stderr, "addNextLayer(): DM_undoSlicing %f seconds\n", t4 - t3);
   }
   PList_clear(combinedRegions);
   *out << "Mesh top layer\n";
+  double t5 = PCU_Time();
   meshCurrentLayerOnly(model,sim_pm,nextLayer,layerSize);
+  double t6 = PCU_Time();
+  if (!PCU_Comm_Self())
+    fprintf(stderr,"addNextLayer(): meshCurrentLayerOnly %f seconds\n",t6-t5);
 
+  double t7 = PCU_Time();
   if (flds) {
     // Add temperature and residual fields to top layer
     // Add temperature HACK fields to top layer
@@ -269,6 +321,9 @@ void addNextLayer(pParMesh sim_pm,double layerSize,int nextLayer, double initTem
     MEntitySet_delete(PM_mesh(sim_pm,0),topLayerVerts);
     GRIter_delete(regions);
   }
+  double t8 = PCU_Time();
+  if (!PCU_Comm_Self())
+    fprintf(stderr,"addNextLayer(): dealing with field for new layer %f seconds\n",t8-t7);
   return;
 }
 
@@ -347,6 +402,10 @@ void SimLayerAdapt::computeLayerTimes() {
 
 bool SimLayerAdapt::adaptMesh()
 {
+  if (PMU_rank() == 0)
+    fprintf(stderr,"adaptMesh(): coming in %f, cpu = %d\n", PCU_Time(),PMU_rank());
+
+
   /* dig through all the abstrations to obtain pointers
      to the various structures needed */
   static int callcount = 0;
@@ -359,25 +418,31 @@ bool SimLayerAdapt::adaptMesh()
   apf::Mesh* apf_m = apf_ms->getMesh();
   apf::MeshSIM* apf_msim = dynamic_cast<apf::MeshSIM*>(apf_m);
   pParMesh sim_pm = apf_msim->getMesh();
+  printf("coming in: %d tets on cpu %d\n",M_numRegions(PM_mesh(sim_pm,0)),PMU_rank());
   /* ensure that users don't expect Simmetrix to transfer IP state */
   bool should_transfer_ip_data = adapt_params_->get<bool>("Transfer IP Data", false);
   /* remove this assert when Simmetrix support IP transfer */
   assert(!should_transfer_ip_data);
   /* compute the size field via SPR error estimation
      on the solution gradient */
+  double t0 = PCU_Time();
   apf::Field* sol_flds[3];
   for (int i = 0; i <= apf_ms->num_time_deriv; ++i)
     sol_flds[i] = apf_m->findField(Albany::APFMeshStruct::solution_name[i]);
   apf::Field* grad_ip_fld = spr::getGradIPField(sol_flds[0], "grad_sol",
       apf_ms->cubatureDegree);
+  double t1 = PCU_Time();
+  if (!PCU_Comm_Self())
+    fprintf(stderr,"adaptMesh(): getGradIPField in %f seconds\n",t1-t0);
+    
+  double t0b = PCU_Time();  
   apf::Field* size_fld = spr::getSPRSizeField(grad_ip_fld, errorBound);
   apf::destroyField(grad_ip_fld);
+  double t1b = PCU_Time();
+  if (!PCU_Comm_Self())
+    fprintf(stderr,"adaptMesh(): getSPRSizeField in %f seconds\n",t1b-t0b);
 
-  pPartitionOpts popts = PartitionOpts_new();
-  PartitionOpts_setAdaptive(popts, 1);
-  PM_partition(sim_pm, popts, 0);
-  PartitionOpts_delete(popts);
-
+  double t4 = PCU_Time();
   double sliceThickness;
   GIP_nativeDoubleAttribute(GM_part(Simmetrix_model),"SimLayerThickness",&sliceThickness);
 
@@ -483,17 +548,23 @@ bool SimLayerAdapt::adaptMesh()
   }
 
   apf::destroyField(size_fld);
+  double t5 = PCU_Time();
+  if (!PCU_Comm_Self())
+    fprintf(stderr,"adaptMesh(): preparing mesh adapt in %f seconds\n",t5-t4);
+
+  double t5b = PCU_Time();
 
   /* run the adapter */
   pProgress progress = Progress_new();
-  /* BRD */ 
-  MSA_setPrebalance(adapter, 0);
-  /* BRD */
   MSA_adapt(adapter, progress);
   Progress_delete(progress);
   MSA_delete(adapter);
   MS_deleteMeshCase(mcase);
 
+  double t5bb = PCU_Time();
+  if (!PCU_Comm_Self())
+    fprintf(stderr,"adaptMesh(): mesh adapt in %f seconds\n",t5bb-t5b);
+    
   if (should_debug) {
     std::stringstream ss;
     ss << "postadapt_" << callcount;
@@ -525,13 +596,21 @@ bool SimLayerAdapt::adaptMesh()
     apf::writeVtkFiles(s.c_str(), apf_m);
   }
 
+  double t8 = PCU_Time();
   /* run APF verification on the resulting mesh */
   apf_m->verify();
   /* update Albany structures to reflect the adapted mesh */
   sim_disc->updateMesh(should_transfer_ip_data, param_lib_);
   /* see the comment in Albany_APFDiscretization.cpp */
   sim_disc->initTemperatureHack();
+  double t9 = PCU_Time();
+  if (!PCU_Comm_Self())
+    fprintf(stderr,"adaptMesh(): finalize %f seconds\n",t9-t8);
   ++callcount;
+  if (PMU_rank() == 0)
+    fprintf(stderr,"adaptMesh(): going out in %f on cpu: %d\n", PCU_Time(),PMU_rank());
+
+  printf("leaving: %d tets on cpu %d\n",M_numRegions(PM_mesh(sim_pm,0)),PMU_rank());
   return true;
 }
 
