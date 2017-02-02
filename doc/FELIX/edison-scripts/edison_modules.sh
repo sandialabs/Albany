@@ -1,11 +1,9 @@
 
-# gcc module needed for C++11 constructs. Intel is still
-# the compiler, but gcc headers are needed. Got this from
-# Edison help page.
 
-# cray-hdf5-parallel defaults to 1.8.13 which is incompatible with netcdf 
-# -- need to revert to 1.8.12 -- found this by googling unreolved linking errors
+#!/bin/bash
 
-module load boost cmake netcdf-hdf5parallel cray-hdf5-parallel/1.8.12 gcc
-
+module unload cmake netcdf-hdf5parallel/4.2.0 python
+module swap PrgEnv-intel PrgEnv-gnu; 
+module load cmake/2.8.11.2 python cray-netcdf-hdf5parallel usg-default-modules/1.1
+module load boost/1.58.0
 module list
