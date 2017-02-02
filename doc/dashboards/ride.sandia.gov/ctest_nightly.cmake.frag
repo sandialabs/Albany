@@ -48,7 +48,7 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 
-set (NVCC_WRAPPER "${jenkins_trilinos_dir}/packages/kokkos/config/nvcc_wrapper")
+set (NVCC_WRAPPER "$ENV{jenkins_trilinos_dir}/packages/kokkos/config/nvcc_wrapper")
 set (CUDA_MANAGED_FORCE_DEVICE_ALLOC 1)
 set( CUDA_LAUNCH_BLOCKING 1)
 
@@ -291,7 +291,7 @@ if (BUILD_TRILINOS)
 
   CTEST_CONFIGURE(
     BUILD "${CTEST_BINARY_DIRECTORY}/TriBuild"
-    SOURCE "${jenkins_trilinos_dir}"
+    SOURCE "$ENV{jenkins_trilinos_dir}"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     )
@@ -381,7 +381,7 @@ if (BUILD_ALBANY)
 
   CTEST_CONFIGURE(
     BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuild"
-    SOURCE "${jenkins_albany_dir}"
+    SOURCE "$ENV{jenkins_albany_dir}"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     )
