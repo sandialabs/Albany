@@ -45,14 +45,14 @@ namespace FELIX {
     int numSurfaceQPs;
     int numSideDims;
 
-    PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>       velocity;
-    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>  observedVelocity;
-    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>  observedVelocityRMS;
-    PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>          grad_beta;
-    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>     grad_stiffening;
-    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>         stiffening;
-    PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>          w_measure_basal;
-    PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>          w_measure_surface;
+    PHX::MDField<const ScalarT,Cell,Side,QuadPoint,VecDim>       velocity;
+    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint,VecDim>  observedVelocity;
+    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint,VecDim>  observedVelocityRMS;
+    PHX::MDField<const ScalarT,Cell,Side,QuadPoint,Dim>          grad_beta;
+    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint,Dim>     grad_stiffening;
+    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         stiffening;
+    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>          w_measure_basal;
+    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>          w_measure_surface;
 
     ScalarT p_resp, p_reg, resp, reg, p_reg_stiffening,reg_stiffening;
     double scaling, alpha, asinh_scaling, alpha_stiffening;

@@ -34,8 +34,8 @@ ResponseBoundarySquaredL2Norm(Teuchos::ParameterList& p, const Teuchos::RCP<Alba
   const std::string& w_side_measure_name = paramList->get<std::string>("Weighted Measure 2D Name");
   const std::string& solution_name       = plist->get<std::string>("Field Name");
 
-  solution        = PHX::MDField<ScalarT,Cell,Side,Node>(solution_name, dl_side->node_scalar);
-  w_side_measure  = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_side_measure_name, dl_side->qp_scalar);
+  solution        = decltype(solution)(solution_name, dl_side->node_scalar);
+  w_side_measure  = decltype(w_side_measure)(w_side_measure_name, dl_side->qp_scalar);
 
   scaling = plist->get<double>("Scaling Coefficient", 1.0);
 

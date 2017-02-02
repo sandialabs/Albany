@@ -40,14 +40,14 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 
   Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
-  flux_div              = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(flux_div_name, dl_basal->qp_scalar);
-  SMB                   = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(smb_name, dl_basal->qp_scalar);
-  SMBRMS                = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(smbRMS_name, dl_basal->qp_scalar);
-  thickness             = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(thickness_name, dl_basal->qp_scalar);
-  grad_thickness        = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(grad_thickness_name, dl_basal->qp_gradient);
-  obs_thickness         = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(obs_thickness_name, dl_basal->qp_scalar);
-  thicknessRMS          = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(thicknessRMS_name, dl_basal->qp_scalar);
-  w_measure_2d          = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_2d_name, dl_basal->qp_scalar);
+  flux_div        = decltype(flux_div)(flux_div_name, dl_basal->qp_scalar);
+  SMB             = decltype(SMB)(smb_name, dl_basal->qp_scalar);
+  SMBRMS          = decltype(SMBRMS)(smbRMS_name, dl_basal->qp_scalar);
+  thickness       = decltype(thickness)(thickness_name, dl_basal->qp_scalar);
+  grad_thickness  = decltype(grad_thickness)(grad_thickness_name, dl_basal->qp_gradient);
+  obs_thickness   = decltype(obs_thickness)(obs_thickness_name, dl_basal->qp_scalar);
+  thicknessRMS    = decltype(thicknessRMS)(thicknessRMS_name, dl_basal->qp_scalar);
+  w_measure_2d    = decltype(w_measure_2d)(w_measure_2d_name, dl_basal->qp_scalar);
 
   cell_topo = paramList->get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
   Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();

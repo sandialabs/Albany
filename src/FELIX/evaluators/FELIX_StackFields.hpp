@@ -54,7 +54,7 @@ private:
 
 
   // Input:
-  std::vector<PHX::MDField<ScalarT>> fields_in;
+  std::vector<PHX::MDField<const ScalarT>> fields_in;
 
   // Output:
   PHX::MDField<ScalarT> field_out;

@@ -38,10 +38,10 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
 
   Teuchos::RCP<Albany::Layouts> dl_surface = dl->side_layouts.at(surfaceSideName);
 
-  velocity            = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(velocity_name, dl_surface->qp_vector);
-  observedVelocity    = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocity_name, dl_surface->qp_vector);
-  observedVelocityRMS = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,VecDim>(obs_velocityRMS_name, dl_surface->qp_vector);
-  w_measure_surface   = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_surface_name, dl_surface->qp_scalar);
+  velocity            = decltype(velocity)(velocity_name, dl_surface->qp_vector);
+  observedVelocity    = decltype(observedVelocity)(obs_velocity_name, dl_surface->qp_vector);
+  observedVelocityRMS = decltype(observedVelocityRMS)(obs_velocityRMS_name, dl_surface->qp_vector);
+  w_measure_surface   = decltype(w_measure_surface)(w_measure_surface_name, dl_surface->qp_scalar);
 
   // Get Dimensions
   numSideNodes  = dl_surface->node_scalar->dimension(2);
@@ -66,8 +66,8 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
     const std::string& grad_beta_name          = paramList->get<std::string>("Basal Friction Coefficient Gradient Name");
     const std::string& w_measure_basal_name    = paramList->get<std::string>("Weighted Measure Basal Name");
 
-    grad_beta           = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(grad_beta_name, dl_basal->qp_gradient);
-    w_measure_basal     = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_basal_name, dl_basal->qp_scalar);
+    grad_beta           = decltype(grad_beta)(grad_beta_name, dl_basal->qp_gradient);
+    w_measure_basal     = decltype(w_measure_basal)(w_measure_basal_name, dl_basal->qp_scalar);
 
     numBasalQPs = dl_basal->qp_scalar->dimension(2);
 
@@ -88,9 +88,9 @@ ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Al
     const std::string& grad_stiffening_name    = paramList->get<std::string>("Stiffening Factor Gradient Name");
     const std::string& w_measure_basal_name    = paramList->get<std::string>("Weighted Measure Basal Name");
 
-    stiffening       = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(stiffening_name, dl_basal->qp_scalar);
-    grad_stiffening  = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(grad_stiffening_name, dl_basal->qp_gradient);
-    w_measure_basal  = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_basal_name, dl_basal->qp_scalar);
+    stiffening       = decltype(stiffening)(stiffening_name, dl_basal->qp_scalar);
+    grad_stiffening  = decltype(grad_stiffening)(grad_stiffening_name, dl_basal->qp_gradient);
+    w_measure_basal  = decltype(w_measure_basal)(w_measure_basal_name, dl_basal->qp_scalar);
 
     numBasalQPs = dl_basal->qp_scalar->dimension(2);
 
@@ -272,15 +272,11 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typenam
     std::ofstream ofile;
     ofile.open("velocity_mismatch");
     if (ofile.is_open(), std::ofstream::out | std::ofstream::trunc) {
-      //ofile << sqrt(this->global_response[0]);
-      //PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
       ofile <<  std::scientific << std::setprecision(15) << Sacado::ScalarValue<ScalarT>::eval(resp);
       ofile.close();
     }
     ofile.open("beta_regularization");
     if (ofile.is_open(), std::ofstream::out | std::ofstream::trunc) {
-      //ofile << sqrt(this->global_response[0]);
-      //PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
       ofile <<  std::scientific << std::setprecision(15) << Sacado::ScalarValue<ScalarT>::eval(reg);
       ofile.close();
     }
