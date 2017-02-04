@@ -62,11 +62,11 @@ private:
   double n;
 
   // Input:
-  PHX::MDField<VelT,Cell,QuadPoint,VecDim,Dim> Ugrad; //[(k yr)^{-1}], k=1000
-  PHX::MDField<VelT,Cell,QuadPoint,VecDim> U; //[m/yr]
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec; // [Km]
-  PHX::MDField<TemprT,Cell> temperature; // [K]
-  PHX::MDField<TemprT,Cell> flowFactorA;  // [k^{-(n+1)} Pa^{-n} yr^{-1} ], k=1000.  This is the coefficient A.
+  PHX::MDField<const VelT,Cell,QuadPoint,VecDim,Dim> Ugrad; //[(k yr)^{-1}], k=1000
+  PHX::MDField<const VelT,Cell,QuadPoint,VecDim> U; //[m/yr]
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> coordVec; // [Km]
+  PHX::MDField<const TemprT,Cell> temperature; // [K]
+  PHX::MDField<const TemprT,Cell> flowFactorA;  // [k^{-(n+1)} Pa^{-n} yr^{-1} ], k=1000.  This is the coefficient A.
                                           //To distinguish it from the scalar flowFactor defined in the body of the function, it is called flowFactorA.
                                           //Probably this should be changed at some point...
 

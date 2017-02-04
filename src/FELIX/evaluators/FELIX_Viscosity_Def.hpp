@@ -46,7 +46,7 @@ Viscosity(const Teuchos::ParameterList& p,
     *out << "n: " << n << std::endl;
   }
 
-  coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+  coordVec = decltype(coordVec)(
            p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
   this->addDependentField(coordVec);
   this->addDependentField(VGrad);

@@ -40,17 +40,17 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> force;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> U;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
-  PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
-  PHX::MDField<ScalarT,Cell,QuadPoint> epsilonXX;
-  PHX::MDField<ScalarT,Cell,QuadPoint> epsilonYY;
-  PHX::MDField<ScalarT,Cell,QuadPoint> epsilonXY;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> U;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> UDot;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> muFELIX;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> epsilonXX;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> epsilonYY;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> epsilonXY;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;

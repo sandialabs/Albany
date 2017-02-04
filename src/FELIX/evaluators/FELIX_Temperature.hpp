@@ -41,10 +41,10 @@ namespace FELIX
 
   private:
     // Input:
-    PHX::MDField<Type,Cell,Node> 		meltingTemp; //[K]
-    PHX::MDField<Type,Cell,Node> 		enthalpyHs;  //[MW s m^{-3}]
-    PHX::MDField<ScalarT,Cell,Node> 	enthalpy;  //[MW s m^{-3}]
-    PHX::MDField<ParamScalarT,Cell,Node>   thickness;  //[km]
+    PHX::MDField<const Type,Cell,Node> 		meltingTemp; //[K]
+    PHX::MDField<const Type,Cell,Node> 		enthalpyHs;  //[MW s m^{-3}]
+    PHX::MDField<const ScalarT,Cell,Node> 	enthalpy;  //[MW s m^{-3}]
+    PHX::MDField<const ParamScalarT,Cell,Node>   thickness;  //[km]
 
     // Output:
     PHX::MDField<ScalarT,Cell,Node> 	temperature; //[K]
