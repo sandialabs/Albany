@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include <Kokkos_DynRankView.hpp>
+
 namespace PHAL {
 
 template<typename T>
@@ -208,6 +210,18 @@ template<typename ArrayT, typename T>
 void scale (ArrayT& a, const T& val) {
   impl::ScaleLooper<typename ArrayT::value_type, T> sl(val);
   loop(sl, a);
+}
+
+
+template< class T , class ... P >
+inline
+typename Kokkos::DynRankView<T,P...>::non_const_type
+create_copy( const std::string& name,
+    const Kokkos::DynRankView<T,P...> & src )
+{
+  using dst_type = typename Kokkos::DynRankView<T,P...>::non_const_type;
+  auto layout = Kokkos::Experimental::Impl::reconstructLayout(src.layout(), src.rank());
+  return dst_type( name , layout );
 }
 
 } // namespace PHAL
