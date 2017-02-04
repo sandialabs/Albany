@@ -50,17 +50,17 @@ namespace LCM {
     ///
     /// Input: temperature
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> temperature_;
+    PHX::MDField<const ScalarT,Cell,QuadPoint> temperature_;
 
     ///
     /// Input: thermal conductivity
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> thermal_cond_;
+    PHX::MDField<const ScalarT,Cell,QuadPoint> thermal_cond_;
 
     ///
     /// Input: time step
     ///
-    PHX::MDField<ScalarT,Dummy> delta_time_;
+    PHX::MDField<const ScalarT,Dummy> delta_time_;
 
     ///
     /// Optional deformation gradient
