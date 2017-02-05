@@ -51,7 +51,7 @@ namespace LCM {
     ///
     /// Input: unit scalar gradient
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> unit_grad_;
+    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> unit_grad_;
 
     ///
     /// Input: basis function gradients

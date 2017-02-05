@@ -65,7 +65,7 @@ namespace LCM {
     ///
     /// Optional deformation gradient
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> def_grad_;
+    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> def_grad_;
 
     ///
     /// Output: thermal transient coefficient

@@ -48,7 +48,7 @@ private:
 
   int numQPs;
   int numDims;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
 
   //! Is Biot Coefficient constant, or random field
@@ -61,7 +61,6 @@ private:
   //! Notice that K can be dependent of temperature;
   // PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
   bool isPoroElastic;
   ScalarT Kskeleton_value;
   ScalarT Kgrain_value;
