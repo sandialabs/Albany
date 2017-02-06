@@ -53,7 +53,7 @@ private:
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature;
 
   /// for the parallel gradient term
-  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>> intrepidBasis;
   // nodal value used to construct in-plan gradient
   PHX::MDField<const ScalarT,Cell,Node> nodalScalar;
 

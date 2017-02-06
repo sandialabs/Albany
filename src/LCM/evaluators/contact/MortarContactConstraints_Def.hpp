@@ -109,8 +109,8 @@ evaluateFields(typename Traits::EvalData workset)
     return;
 
   // currently only one pair of contact surfaces allowed.
-  assert(masterSideNames.size()==1);
-  assert(slaveSideNames.size()==1);
+  ALBANY_EXPECT(masterSideNames.size()==1);
+  ALBANY_EXPECT(slaveSideNames.size()==1);
 
   const Albany::SideSetList& ssList = *(workset.sideSets);
 

@@ -93,7 +93,7 @@ public:
   void evaluateFields(typename Traits::EvalData d); 
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
+  typedef typename Tpetra_CrsMatrix::local_matrix_type  LocalMatrixType;
   LocalMatrixType jacobian;
   RealType mc;
   int neq;

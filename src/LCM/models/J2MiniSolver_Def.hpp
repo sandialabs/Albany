@@ -3,6 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#include "Albany_Utils.hpp"
 #include "MiniNonlinearSolver.h"
 #include "J2MiniSolver.hpp"
 
@@ -161,7 +162,7 @@ public:
     minitensor::Index const
     dimension = x.get_dimension();
 
-    assert(dimension == Base::DIMENSION);
+    ALBANY_EXPECT(dimension == Base::DIMENSION);
 
     // Variables that potentially have Albany::Traits sensitivity
     // information need to be handled by the peel functor so that

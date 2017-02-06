@@ -162,16 +162,15 @@ struct StateInternal
   resistance_;
 };
 
-//
-//! Check tensor for NaN and inf values.
-//
-template<minitensor::Index NumDimT, typename ArgT>
+///
+/// Verify that constitutive update has preserved finite values
+///
+template<typename T, minitensor::Index N>
 void
-confirmTensorSanity(
-    minitensor::Tensor<ArgT, NumDimT> const & input,
-    std::string const & message);
-
-
+expectFiniteTensor(
+                   minitensor::Tensor<T, N> const & A,
+                   std::string const & msg);
+  
 //
 //! Compute Lp_np1 and Fp_np1 based on computed slip increment.
 //

@@ -355,6 +355,11 @@ evaluateDistParamDerivT(
       const Teuchos::Array<ParamVec>& param_array,
       const std::string& dist_param_name,
       Tpetra_MultiVector* dg_dpT) {
+
+
+  if (dg_dpT != NULL)
+    dg_dpT->putScalar(0);
+
   unsigned int offset = 0;
   for (unsigned int i=0; i<responses.size(); i++) {
 
@@ -376,11 +381,9 @@ evaluateDistParamDerivT(
     if (dg_dpT != NULL) {
       Teuchos::ArrayRCP<ST> dg_dpT_nonconstView;
       Teuchos::ArrayRCP<const ST> local_aggregated_dgdpT_constView;
-      for (int k=0; k<num_responses; k++) {
-        local_aggregated_dgdpT_constView = aggregated_dgdpT->getData(k);
-        dg_dpT_nonconstView = dg_dpT->getDataNonConst(k);
-        dg_dpT_nonconstView[offset+k] = local_aggregated_dgdpT_constView[k];
-      }
+      for (int k=0; k<num_responses; k++)
+        dg_dpT->getVectorNonConst(offset+k)->assign(*aggregated_dgdpT->getVector(k));
+
     }
     // Increment offset in combined result
     offset += num_responses;

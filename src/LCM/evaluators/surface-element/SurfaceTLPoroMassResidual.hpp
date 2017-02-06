@@ -50,7 +50,7 @@ private:
   //! Numerical integration rule
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature;
   //! Finite element basis for the midplane
-  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>> intrepidBasis;
   //! Scalar Gradient
   PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> scalarGrad;
  //! Scalar Gradient Operator

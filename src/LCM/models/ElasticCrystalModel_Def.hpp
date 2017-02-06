@@ -176,8 +176,8 @@ namespace LCM
   template<typename EvalT, typename Traits>
   void ElasticCrystalModel< EvalT, Traits > ::
   computeState( typename Traits::EvalData workset,
-		std::map< std::string, Teuchos::RCP< PHX::MDField< ScalarT > > > dep_fields,
-		std::map< std::string, Teuchos::RCP< PHX::MDField< ScalarT > > > eval_fields )
+		std::map< std::string, Teuchos::RCP< PHX::MDField< ScalarT >>> dep_fields,
+		std::map< std::string, Teuchos::RCP< PHX::MDField< ScalarT >>> eval_fields )
   {
     std::string F_string = (*field_name_map_)["F"];
     std::string J_string = (*field_name_map_)["J"];

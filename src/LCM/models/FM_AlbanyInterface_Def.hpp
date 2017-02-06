@@ -52,7 +52,7 @@ FerroicDriver(Teuchos::ParameterList* p,
 
   // PARSE PHASES
   //
-  Teuchos::Array<Teuchos::RCP<FM::CrystalPhase> >& crystalPhases = ferroicModel->getCrystalPhases();
+  Teuchos::Array<Teuchos::RCP<FM::CrystalPhase>>& crystalPhases = ferroicModel->getCrystalPhases();
   int nphases = p->get<int>("Number of Phases");
   for(int i=0; i<nphases; i++){
     Teuchos::ParameterList& pParam = p->get<Teuchos::ParameterList>(Albany::strint("Phase",i+1));

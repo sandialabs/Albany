@@ -3,10 +3,10 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-
-#include <MiniTensor.h>
-#include <Teuchos_TestForException.hpp>
-#include <Phalanx_DataLayout.hpp>
+#include "Albany_Utils.hpp"
+#include "MiniTensor.h"
+#include "Phalanx_DataLayout.hpp"
+#include "Teuchos_TestForException.hpp"
 
 //#define PRINT_DEBUG
 
@@ -227,10 +227,10 @@ computeState(typename Traits::EvalData workset,
 
       if (jump_n >= 0.0) {
 
-        assert(jump_eff >= 0.0);
+        ALBANY_EXPECT(jump_eff >= 0.0);
 
         if (jump_n > 0.0) {
-          assert(jump_eff > 0.0);
+          ALBANY_EXPECT(jump_eff > 0.0);
           traction_normal = t_eff / jump_eff * jump_n * n;
         } else {
           // FIXME: Assume that if there is no jump whatever (initial state)

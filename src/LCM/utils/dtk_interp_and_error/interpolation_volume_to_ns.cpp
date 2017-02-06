@@ -98,9 +98,9 @@ void interpolate(Teuchos::RCP<const Teuchos::Comm<int>> comm, Teuchos::RCP<Teuch
   std::string tgt_interp_field_name = source_field_name+"Ref";
     
   // Get the raw mpi communicator (basic typedef in STK).
-  Teuchos::RCP<const Teuchos::MpiComm<int> > mpi_comm = 
-	Teuchos::rcp_dynamic_cast<const Teuchos::MpiComm<int> >( comm );
-  Teuchos::RCP<const Teuchos::OpaqueWrapper<MPI_Comm> > opaque_comm = 
+  Teuchos::RCP<const Teuchos::MpiComm<int>> mpi_comm = 
+	Teuchos::rcp_dynamic_cast<const Teuchos::MpiComm<int>>( comm );
+  Teuchos::RCP<const Teuchos::OpaqueWrapper<MPI_Comm>> opaque_comm = 
 	mpi_comm->getRawMpiComm();
   stk::ParallelMachine parallel_machine = (*opaque_comm)();
       
@@ -275,7 +275,7 @@ void interpolate(Teuchos::RCP<const Teuchos::Comm<int>> comm, Teuchos::RCP<Teuch
   src_manager.createFieldMultiVector<FieldType>(Teuchos::ptr(source_field), neq);
 
   // Create a solution vector for the target.
-  Teuchos::RCP<Tpetra::MultiVector<double,int,DataTransferKit::SupportId> > tgt_vector =
+  Teuchos::RCP<Tpetra::MultiVector<double,int,DataTransferKit::SupportId>> tgt_vector =
 	  tgt_manager.createFieldMultiVector<FieldType>(
 	  Teuchos::ptr(&target_interp_field), neq);
 
@@ -387,7 +387,7 @@ int main(int argc, char* argv[])
     // Setup communication.
     Teuchos::GlobalMPISession mpiSession(&argc,&argv);
 
-    Teuchos::RCP<const Teuchos::Comm<int> > comm = 
+    Teuchos::RCP<const Teuchos::Comm<int>> comm = 
 	Teuchos::DefaultComm<int>::getComm();
 
     // Read in command line options.
