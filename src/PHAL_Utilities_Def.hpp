@@ -51,7 +51,7 @@ MDFieldIterator<T>::operator++ (int) {
   return *this;
 }
 
-template<typename T> inline typename Ref<T>::type
+template<typename T> inline typename MDFieldIterator<T>::return_type
 MDFieldIterator<T>::ref () {
   switch (rank_) {
   case 1: return a_(idxs_[0]);
