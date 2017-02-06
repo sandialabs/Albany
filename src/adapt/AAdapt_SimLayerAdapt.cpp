@@ -35,7 +35,6 @@ SimLayerAdapt::SimLayerAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_
   AbstractAdapterT(params_, paramLib_, StateMgr_, commT_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
-  errorBound = params_->get<double>("Error Bound", 0.1);
   // get inititial temperature for new added layer
   initTempNewLayer = params_->get<double>("Uniform Temperature New Layer", 20.0);
 
@@ -165,13 +164,49 @@ void meshCurrentLayerOnly(pGModel model,pParMesh mesh,int currentLayer,double la
   printf("after mesh CurrentLayerOnly: %d tets on cpu %d\n",M_numRegions(PM_mesh(mesh,0)),PMU_rank());
 }
 
-void addNextLayer(pParMesh sim_pm,double layerSize,int nextLayer, double initTempNewLayer,int nSolFlds,pPList flds) {
-  //! Output stream, defaults to printing just Proc 0
+void addNextLayer2(
+    pParMesh sim_pm,
+    double layerSize,
+    int nextLayer,
+    double initTemp,
+    double initDisp,
+    std::vector<pField> const& soln_flds,
+    std::vector<pField> const& res_flds,
+    pField old_temp_fld) {
+
+  /* ostream only on proc 0 */
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
-  
+
+  /* split up the solution / residual fields so that we know exactly what
+     fields we are working with */
+  pField temp_fld = 0;
+  pField disp_fld = 0;
+  pField temp_res_fld = 0;
+  pField disp_res_fld = 0;
+
+  int num_soln_flds = soln_flds.size();
+  assert((num_soln_flds == 1) || (num_soln_flds == 2));
+
+  if (soln_flds.size() == 1) {
+    temp_fld = soln_flds[0];
+    temp_res_fld = soln_flds[0];
+    assert(Field_numComp(temp_fld) == 1);
+    assert(Field_numComp(temp_res_fld) == 1);
+  }
+
+  else if (soln_flds.size() == 2) {
+    disp_fld = soln_flds[0];
+    disp_res_fld = res_flds[0];
+    temp_fld = soln_flds[1];
+    temp_res_fld = res_flds[1];
+    assert(Field_numComp(disp_fld) == 3);
+    assert(Field_numComp(disp_res_fld) == 3);
+    assert(Field_numComp(temp_fld) == 1);
+    assert(Field_numComp(temp_res_fld) == 1);
+  }
+
+  /* Collect the layer 0 regions */
   pGModel model = M_model(sim_pm);
-  
-  // Collect the layer 0 regions
   GRIter regions = GM_regionIter(model);
   pGRegion gr1;
   int layer, maxLayer = -1;
@@ -192,8 +227,9 @@ void addNextLayer(pParMesh sim_pm,double layerSize,int nextLayer, double initTem
   if ( nextLayer > maxLayer )
     return;
 
-  pMesh mesh = PM_mesh(sim_pm, 0);
+  /* perform migration */
   double t1 = PCU_Time();
+  pMesh mesh = PM_mesh(sim_pm, 0);
   pMigrator mig = Migrator_new(sim_pm, 0);
   Migrator_reset(mig, 3);
   std::set<pRegion> doneRs;
@@ -228,6 +264,7 @@ void addNextLayer(pParMesh sim_pm,double layerSize,int nextLayer, double initTem
   if (!PCU_Comm_Self())
     fprintf(stderr, "addNextLayer(): migration %f seconds\n", t2 - t1);
 
+  /* undo slicing if needed */
   if (nextLayer>1) {
     *out << "Combine layer " << nextLayer-1 << "\n";
     double t3 = PCU_Time();
@@ -237,6 +274,8 @@ void addNextLayer(pParMesh sim_pm,double layerSize,int nextLayer, double initTem
       fprintf(stderr, "addNextLayer(): DM_undoSlicing %f seconds\n", t4 - t3);
   }
   PList_clear(combinedRegions);
+
+  /* mesh the top layer only */
   *out << "Mesh top layer\n";
   double t5 = PCU_Time();
   meshCurrentLayerOnly(model,sim_pm,nextLayer,layerSize);
@@ -244,20 +283,12 @@ void addNextLayer(pParMesh sim_pm,double layerSize,int nextLayer, double initTem
   if (!PCU_Comm_Self())
     fprintf(stderr,"addNextLayer(): meshCurrentLayerOnly %f seconds\n",t6-t5);
 
+  /* initialize field values on the top layer */
   double t7 = PCU_Time();
-  if (flds) {
-    // Add temperature and residual fields to top layer
-    // Add temperature HACK fields to top layer
+  {
     *out << "Add field to top layer\n";
-    pField sim_sol_flds[3] = {0,0,0};  // at most 3 - see calling routine
-    int i;
-    for (i=0;i<nSolFlds;i++) {
-      sim_sol_flds[i] = static_cast<pField>(PList_item(flds,i));
-    }
-    pField sim_res_fld  = static_cast<pField>(PList_item(flds,i++));
-    pField sim_hak_fld = 0;
-    if (PList_size(flds)==i+1)
-      sim_hak_fld = static_cast<pField>(PList_item(flds,i));
+
+    /* collect the top layer vertices */
     pMEntitySet topLayerVerts = MEntitySet_new(PM_mesh(sim_pm,0));
     regions = GM_regionIter(model);
     pVertex mv;
@@ -275,46 +306,51 @@ void addNextLayer(pParMesh sim_pm,double layerSize,int nextLayer, double initTem
         }
       }
     }
+
+    /* make sure mesh entities know about the fields ? */
     pPList unmapped = PList_new();
     pDofGroup dg;
     MESIter viter = MESIter_iter(topLayerVerts);
-    //*out << "Create fields\n";
     while ( mv = reinterpret_cast<pVertex>(MESIter_next(viter)) ) {
-      dg = Field_entDof(sim_sol_flds[0],mv,0);
+      dg = Field_entDof(temp_fld, mv, 0);
       if (!dg) {
-        PList_append(unmapped,mv);
-        for(i=0;i<nSolFlds;i++)
-          Field_applyEnt(sim_sol_flds[i],mv);
-        Field_applyEnt(sim_res_fld,mv);
-        if (sim_hak_fld)
-          Field_applyEnt(sim_hak_fld,mv);
-      } 
+        PList_append(unmapped, mv);
+        if (temp_fld) Field_applyEnt(temp_fld, mv);
+        if (disp_fld) Field_applyEnt(disp_fld, mv);
+        if (temp_res_fld) Field_applyEnt(temp_res_fld, mv);
+        if (disp_res_fld) Field_applyEnt(disp_res_fld, mv);
+        if (old_temp_fld) Field_applyEnt(old_temp_fld, mv);
+      }
     }
     MESIter_delete(viter);
+
+    /* set the field values to the user-specified initial value */
     pEntity ent;
     void *vptr;
-    int c, ncs;
-    int nc2 = (sim_res_fld ? Field_numComp(sim_res_fld) : 0);
-    int nc3 = (sim_hak_fld ? Field_numComp(sim_hak_fld) : 0);
     void *iter = 0;
-    //*out << "Set field values\n";
     while (vptr = PList_next(unmapped,&iter)) {
       ent = reinterpret_cast<pEntity>(vptr);
-      for(i=0;i<nSolFlds;i++) {
-        dg = Field_entDof(sim_sol_flds[i],ent,0);
-        ncs = Field_numComp(sim_sol_flds[i]);
-        for (c=0; c < ncs; c++)
-          DofGroup_setValue(dg,c,0,initTempNewLayer);
+      if (temp_fld) {
+        dg = Field_entDof(temp_fld, ent, 0);
+        DofGroup_setValue(dg, 0, 0, initTemp);
       }
-      if (sim_res_fld) {
-        dg = Field_entDof(sim_res_fld,ent,0);
-        for (c=0; c < nc2; c++)
-          DofGroup_setValue(dg,c,0,0.0);
+      if (old_temp_fld) {
+        dg = Field_entDof(old_temp_fld, ent, 0);
+        DofGroup_setValue(dg, 0, 0, initTemp);
       }
-      if (sim_hak_fld) {
-        dg = Field_entDof(sim_hak_fld,ent,0);
-        for (c=0; c < nc3; c++)
-          DofGroup_setValue(dg,c,0,initTempNewLayer);
+      if (temp_res_fld) {
+        dg = Field_entDof(temp_res_fld, ent, 0);
+        DofGroup_setValue(dg, 0, 0, 0.0);
+      }
+      if (disp_fld) {
+        dg = Field_entDof(disp_fld, ent, 0);
+        for (int c=0; c < 3; ++c)
+          DofGroup_setValue(dg, c, 0, initDisp);
+      }
+      if (disp_res_fld) {
+        dg = Field_entDof(disp_res_fld, ent, 0);
+        for (int c=0; c < 3; ++c)
+          DofGroup_setValue(dg, c, 0, 0.0);
       }
     }
     PList_delete(unmapped);
@@ -324,6 +360,7 @@ void addNextLayer(pParMesh sim_pm,double layerSize,int nextLayer, double initTem
   double t8 = PCU_Time();
   if (!PCU_Comm_Self())
     fprintf(stderr,"addNextLayer(): dealing with field for new layer %f seconds\n",t8-t7);
+
   return;
 }
 
@@ -405,7 +442,6 @@ bool SimLayerAdapt::adaptMesh()
   if (PMU_rank() == 0)
     fprintf(stderr,"adaptMesh(): coming in %f, cpu = %d\n", PCU_Time(),PMU_rank());
 
-
   /* dig through all the abstrations to obtain pointers
      to the various structures needed */
   static int callcount = 0;
@@ -419,29 +455,49 @@ bool SimLayerAdapt::adaptMesh()
   apf::MeshSIM* apf_msim = dynamic_cast<apf::MeshSIM*>(apf_m);
   pParMesh sim_pm = apf_msim->getMesh();
   printf("coming in: %d tets on cpu %d\n",M_numRegions(PM_mesh(sim_pm,0)),PMU_rank());
+
   /* ensure that users don't expect Simmetrix to transfer IP state */
   bool should_transfer_ip_data = adapt_params_->get<bool>("Transfer IP Data", false);
-  /* remove this assert when Simmetrix support IP transfer */
   assert(!should_transfer_ip_data);
-  /* compute the size field via SPR error estimation
-     on the solution gradient */
-  double t0 = PCU_Time();
-  apf::Field* sol_flds[3];
-  for (int i = 0; i <= apf_ms->num_time_deriv; ++i)
-    sol_flds[i] = apf_m->findField(Albany::APFMeshStruct::solution_name[i]);
-  apf::Field* grad_ip_fld = spr::getGradIPField(sol_flds[0], "grad_sol",
-      apf_ms->cubatureDegree);
-  double t1 = PCU_Time();
-  if (!PCU_Comm_Self())
-    fprintf(stderr,"adaptMesh(): getGradIPField in %f seconds\n",t1-t0);
-    
-  double t0b = PCU_Time();  
-  apf::Field* size_fld = spr::getSPRSizeField(grad_ip_fld, errorBound);
-  apf::destroyField(grad_ip_fld);
-  double t1b = PCU_Time();
-  if (!PCU_Comm_Self())
-    fprintf(stderr,"adaptMesh(): getSPRSizeField in %f seconds\n",t1b-t0b);
 
+  /* grab the solution / residual fields from the discretization.
+     here we assume that the apf_ms->num_time_deriv = 0. */
+  Albany::SolutionLayout soln_layout = sim_disc->getSolutionLayout();
+  std::vector<apf::Field*> soln_fields;
+  std::vector<apf::Field*> res_fields;
+  Teuchos::Array<std::string> soln_field_names = soln_layout.getDerivNames(0);
+  Teuchos::Array<std::string> res_names = sim_disc->getResNames();
+  int num_soln_fields = soln_layout.getNumSolFields();
+  assert( soln_field_names.size() == num_soln_fields );
+  assert( res_names.size() == num_soln_fields );
+  assert( num_soln_fields > 0 );
+  for (int i=0; i < num_soln_fields; ++i) {
+    soln_fields.push_back(apf_m->findField(soln_field_names[i].c_str()));
+    res_fields.push_back(apf_m->findField(res_names[i].c_str()));
+    assert( soln_fields[i] );
+    assert( res_fields[i] );
+  }
+
+  /* compute the size field via SPR error estimation on the gradient
+     of the chosen solution field */
+  int spr_idx = adapt_params_->get<int>("SPR Solution Index", 0);
+  apf::Field* grad_ip_fld = spr::getGradIPField(
+      soln_fields[spr_idx], "grad_sol", apf_ms->cubatureDegree);
+  apf::Field* size_fld;
+  if (adapt_params_->isType<long int>("Target Element Count")) {
+    long N = adapt_params_->get<long int>("Target Element Count");
+    size_fld = spr::getTargetSPRSizeField(grad_ip_fld, N);
+  }
+  else if (adapt_params_->isType<double>("Error Bound")) {
+    double error_bound = adapt_params_->get<double>("Error Bound", 0.1);
+    size_fld = spr::getSPRSizeField(grad_ip_fld, error_bound);
+  }
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "invalid SimAdapt SPR inputs\n");
+  apf::destroyField(grad_ip_fld);
+
+  /* get some layer addition information */
   double t4 = PCU_Time();
   double sliceThickness;
   GIP_nativeDoubleAttribute(GM_part(Simmetrix_model),"SimLayerThickness",&sliceThickness);
@@ -482,26 +538,25 @@ bool SimLayerAdapt::adaptMesh()
     apf::setScalar(size_fld, v, 0, size);
   }
   apf_m->end(it);
-  /* tell the adapter to transfer the solution and residual fields */
-  apf::Field* res_fld = apf_m->findField(Albany::APFMeshStruct::residual_name);
-  pField sim_sol_flds[3];
-  for (int i = 0; i <= apf_ms->num_time_deriv; ++i)
-    sim_sol_flds[i] = apf::getSIMField(sol_flds[i]);
-  pField sim_res_fld = apf::getSIMField(res_fld);
+
+  /* tell the Simmetrix adapter to transfer the soln/residual fields &
+     old temperature field (if specified) */
+  std::vector<pField> sim_soln_fields;
+  std::vector<pField> sim_res_fields;
+  pField sim_told_field = 0;
   pPList sim_fld_lst = PList_new();
-  for (int i = 0; i <= apf_ms->num_time_deriv; ++i)
-    PList_append(sim_fld_lst, sim_sol_flds[i]);
-  PList_append(sim_fld_lst, sim_res_fld);
+  for (int i=0; i < num_soln_fields; ++i) {
+    sim_soln_fields.push_back(apf::getSIMField(soln_fields[i]));
+    sim_res_fields.push_back(apf::getSIMField(res_fields[i]));
+    PList_append(sim_fld_lst, sim_soln_fields[i]);
+    PList_append(sim_fld_lst, sim_res_fields[i]);
+  }
   if (apf_ms->useTemperatureHack) {
-    /* transfer Temperature_old at the nodes */
-    apf::Field* told_fld = apf_m->findField("temp_old");
-    pField sim_told_fld = apf::getSIMField(told_fld);
-    PList_append(sim_fld_lst, sim_told_fld);
+    apf::Field* told_field = apf_m->findField("temp_old");
+    sim_told_field = apf::getSIMField(told_field);
+    PList_append(sim_fld_lst, sim_told_field);
   }
   MSA_setMapFields(adapter, sim_fld_lst);
-  /* BRD */
-  //PList_delete(sim_fld_lst);
-  /* BRD */
 
   /* BRD */
   GRIter regions = GM_regionIter(Simmetrix_model);
@@ -573,12 +628,11 @@ bool SimLayerAdapt::adaptMesh()
   }
 
   /* BRD */
-  /*IMPORTANT: next line will not work with current implementation of CTM, because
-   CTM does not use param_lib*/
   double currentTime = param_lib_->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
   if (currentTime >= Simmetrix_layerTimes[Simmetrix_currentLayer]) {
     *out << "Adding layer " << Simmetrix_currentLayer+1 << "\n";
-    addNextLayer(sim_pm,layerSize,Simmetrix_currentLayer+1,initTempNewLayer,apf_ms->num_time_deriv+1,sim_fld_lst);
+    addNextLayer2(sim_pm, layerSize, Simmetrix_currentLayer+1,  initTempNewLayer, 0,
+        sim_soln_fields, sim_res_fields, sim_told_field);
     if (should_debug) {
       char meshFile[80];
       sprintf(meshFile, "layerMesh%d.sms", Simmetrix_currentLayer + 1);
@@ -596,21 +650,21 @@ bool SimLayerAdapt::adaptMesh()
     apf::writeVtkFiles(s.c_str(), apf_m);
   }
 
+  /* rebuild the ALbany data structures needed for the analysis */
   double t8 = PCU_Time();
-  /* run APF verification on the resulting mesh */
   apf_m->verify();
-  /* update Albany structures to reflect the adapted mesh */
   sim_disc->updateMesh(should_transfer_ip_data, param_lib_);
-  /* see the comment in Albany_APFDiscretization.cpp */
   sim_disc->initTemperatureHack();
   double t9 = PCU_Time();
   if (!PCU_Comm_Self())
     fprintf(stderr,"adaptMesh(): finalize %f seconds\n",t9-t8);
-  ++callcount;
+
+  /* print out some finalization details */
   if (PMU_rank() == 0)
     fprintf(stderr,"adaptMesh(): going out in %f on cpu: %d\n", PCU_Time(),PMU_rank());
-
   printf("leaving: %d tets on cpu %d\n",M_numRegions(PM_mesh(sim_pm,0)),PMU_rank());
+
+  ++callcount;
   return true;
 }
 
@@ -632,6 +686,8 @@ Teuchos::RCP<const Teuchos::ParameterList> SimLayerAdapt::getValidAdapterParamet
   validPL->set<bool>("Equilibrate", false, "Should equilibration be turned on after adaptation");
   validPL->set<std::string>("Remesh Strategy", "", "Strategy for when to adapt");
   validPL->set<int>("Remesh Every N Step Number", 1, "Remesh every Nth load/time step");
+  validPL->set<int>("SPR Solution Index", 0, "Solution field index for SPR to operate on");
+  validPL->set<long int>("Target Element Count", 1000, "Desired number of elements for error-based adaptivity");
   return validPL;
 }
 
