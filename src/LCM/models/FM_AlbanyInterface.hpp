@@ -67,7 +67,7 @@ public:
 
 private:
 
-  Teuchos::RCP<FM::FerroicModel<EvalT> > ferroicModel;
+  Teuchos::RCP<FM::FerroicModel<EvalT>> ferroicModel;
   
 
   ///

@@ -160,7 +160,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
   RCP<CT> cellType =
       rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4>>()));
   Intrepid2::DefaultCubatureFactory cubFactory;
-  RCP<Intrepid2::Cubature<PHX::Device> > cubature =
+  RCP<Intrepid2::Cubature<PHX::Device>> cubature =
       cubFactory.create<PHX::Device, RealType, RealType>(*cellType, 3);
 
   //--------------------------------------------------------------------------
@@ -173,7 +173,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Basis )
   sbPL.set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
   sbPL.set<std::string>("Reference Normal Name", "Reference Normal");
   sbPL.set<std::string>("Reference Area Name", "Reference Area");
-  sbPL.set<RCP<Intrepid2::Cubature<PHX::Device> > >
+  sbPL.set<RCP<Intrepid2::Cubature<PHX::Device>>>
   ("Cubature", cubature);
   sbPL.set<RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>
   ("Intrepid2 Basis", intrepidBasis);
@@ -425,7 +425,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarJump )
   RCP<CT> cellType =
       rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4>>()));
   Intrepid2::DefaultCubatureFactory cubFactory;
-  RCP<Intrepid2::Cubature<PHX::Device> > cubature =
+  RCP<Intrepid2::Cubature<PHX::Device>> cubature =
       cubFactory.create<PHX::Device, RealType, RealType>(*cellType, 3);
 
   //--------------------------------------------------------------------------
@@ -434,7 +434,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarJump )
   sjPL.set<std::string>("Nodal Temperature Name", "Temperature");
   sjPL.set<std::string>("Jump of Temperature Name", "Scalar Jump");
   sjPL.set<std::string>("MidPlane Temperature Name", "Scalar Avg");
-  sjPL.set<RCP<Intrepid2::Cubature<PHX::Device> >>("Cubature", cubature);
+  sjPL.set<RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature", cubature);
   sjPL.set<RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>
   ("Intrepid2 Basis", intrepidBasis);
   RCP<LCM::SurfaceScalarJump<Residual, Traits>> sj =
@@ -647,7 +647,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorJump )
   RCP<CT> cellType =
       rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4>>()));
   Intrepid2::DefaultCubatureFactory cubFactory;
-  RCP<Intrepid2::Cubature<PHX::Device> > cubature =
+  RCP<Intrepid2::Cubature<PHX::Device>> cubature =
       cubFactory.create<PHX::Device, RealType, RealType>(*cellType, 3);
 
   //--------------------------------------------------------------------------
@@ -655,7 +655,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorJump )
   Teuchos::ParameterList svjPL;
   svjPL.set<std::string>("Vector Name", "Current Coordinates");
   svjPL.set<std::string>("Vector Jump Name", "Vector Jump");
-  svjPL.set<RCP<Intrepid2::Cubature<PHX::Device> >>("Cubature", cubature);
+  svjPL.set<RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature", cubature);
   svjPL.set<RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>("Intrepid2 Basis",
       intrepidBasis);
   RCP<LCM::SurfaceVectorJump<Residual, Traits>> svj =
@@ -822,7 +822,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarGradient )
   RCP<CT> cellType =
       rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4>>()));
   Intrepid2::DefaultCubatureFactory cubFactory;
-  RCP<Intrepid2::Cubature<PHX::Device> > cubature =
+  RCP<Intrepid2::Cubature<PHX::Device>> cubature =
       cubFactory.create<PHX::Device, RealType, RealType>(*cellType, 3);
 
   //--------------------------------------------------------------------------
@@ -833,7 +833,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarGradient )
   ssgPL.set<std::string>("Scalar Jump Name", "Jump");
   ssgPL.set<std::string>("Nodal Scalar Name", "Nodal Scalar");
   ssgPL.set<std::string>("Surface Scalar Gradient Name", "Surface Scalar Gradient");
-  ssgPL.set<RCP<Intrepid2::Cubature<PHX::Device> >>("Cubature", cubature);
+  ssgPL.set<RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature", cubature);
   ssgPL.set<RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>
   ("Intrepid2 Basis", intrepidBasis);
   ssgPL.set<double>("thickness", 0.1);
@@ -1064,7 +1064,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorGradient )
   RCP<CT> cellType =
       rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4>>()));
   Intrepid2::DefaultCubatureFactory cubFactory;
-  RCP<Intrepid2::Cubature<PHX::Device> > cubature =
+  RCP<Intrepid2::Cubature<PHX::Device>> cubature =
       cubFactory.create<PHX::Device, RealType, RealType>(*cellType, 3);
 
   //--------------------------------------------------------------------------
@@ -1077,7 +1077,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, VectorGradient )
   svgPL.set<std::string>("Weights Name", "Weights");
   svgPL.set<std::string>("Surface Vector Gradient Name", "F");
   svgPL.set<std::string>("Surface Vector Gradient Determinant Name", "J");
-  svgPL.set<RCP<Intrepid2::Cubature<PHX::Device> >>("Cubature", cubature);
+  svgPL.set<RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature", cubature);
   svgPL.set<double>("thickness", 0.1);
   RCP<LCM::SurfaceVectorGradient<Residual, Traits>> svg =
       rcp(new LCM::SurfaceVectorGradient<Residual, Traits>(svgPL, dl));
@@ -1198,7 +1198,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, CohesiveForce )
   RCP<CT> cellType =
       rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4>>()));
   Intrepid2::DefaultCubatureFactory cubFactory;
-  RCP<Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, 3);
+  RCP<Intrepid2::Cubature<PHX::Device>> cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, 3);
 
   //----------------------------------------------------------------------------
   // SurfaceCohesiveResidual evaluator
@@ -1206,7 +1206,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, CohesiveForce )
   scrPL.set<std::string>("Reference Area Name", "Reference Area");
   scrPL.set<std::string>("Cohesive Traction Name", "Cohesive Traction");
   scrPL.set<std::string>("Surface Cohesive Residual Name", "Force");
-  scrPL.set<RCP<Intrepid2::Cubature<PHX::Device> >>("Cubature", cubature);
+  scrPL.set<RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature", cubature);
   scrPL.set<RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>("Intrepid2 Basis",
       intrepidBasis);
   RCP<LCM::SurfaceCohesiveResidual<Residual, Traits>> scr =
@@ -1388,7 +1388,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   RCP<CT> cellType =
       rcp(new CT(shards::getCellTopologyData<shards::Quadrilateral<4>>()));
   Intrepid2::DefaultCubatureFactory cubFactory;
-  RCP<Intrepid2::Cubature<PHX::Device> > cubature =
+  RCP<Intrepid2::Cubature<PHX::Device>> cubature =
       cubFactory.create<PHX::Device, RealType, RealType>(*cellType, 3);
 
   Kokkos::DynRankView<RealType, PHX::Device> refPoints("RRR", numQPts, 2);
@@ -1405,7 +1405,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   sbPL.set<std::string>("Reference Dual Basis Name", "Reference Dual Basis");
   sbPL.set<std::string>("Reference Normal Name", "Reference Normal");
   sbPL.set<std::string>("Reference Area Name", "Reference Area");
-  sbPL.set<RCP<Intrepid2::Cubature<PHX::Device>> >("Cubature", cubature);
+  sbPL.set<RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature", cubature);
   sbPL.set<RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>
   ("Intrepid2 Basis", intrepidBasis);
   RCP<LCM::SurfaceBasis<Residual, Traits>> sb =
@@ -1416,7 +1416,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   Teuchos::ParameterList svjP;
   svjP.set<std::string>("Vector Name", "Current Coordinates");
   svjP.set<std::string>("Vector Jump Name", "Vector Jump");
-  svjP.set<RCP<Intrepid2::Cubature<PHX::Device> >>("Cubature", cubature);
+  svjP.set<RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature", cubature);
   svjP.set<RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>
   ("Intrepid2 Basis", intrepidBasis);
   RCP<LCM::SurfaceVectorJump<Residual, Traits>> svj =
@@ -1432,7 +1432,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   svgPL.set<std::string>("Weights Name", "Reference Area");
   svgPL.set<std::string>("Surface Vector Gradient Name", "F");
   svgPL.set<std::string>("Surface Vector Gradient Determinant Name", "J");
-  svgPL.set<RCP<Intrepid2::Cubature<PHX::Device> >>("Cubature", cubature);
+  svgPL.set<RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature", cubature);
   svgPL.set<double>("thickness", thickness);
   RCP<LCM::SurfaceVectorGradient<Residual, Traits>> svg =
       rcp(new LCM::SurfaceVectorGradient<Residual, Traits>(svgPL, dl));
@@ -1481,7 +1481,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, Complete )
   svrPL.set<std::string>("Reference Normal Name", "Reference Normal");
   svrPL.set<std::string>("Reference Area Name", "Reference Area");
   svrPL.set<std::string>("Surface Vector Residual Name", "Force");
-  svrPL.set<RCP<Intrepid2::Cubature<PHX::Device> >>("Cubature", cubature);
+  svrPL.set<RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature", cubature);
   svrPL.set<RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>
   ("Intrepid2 Basis", intrepidBasis);
   RCP<LCM::SurfaceVectorResidual<Residual, Traits>> svr =

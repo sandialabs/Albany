@@ -693,7 +693,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   > const
   schwarz_bcs = this->computeBCsDTK();
 
-  Teuchos::RCP<const Teuchos::Comm<int> >
+  Teuchos::RCP<const Teuchos::Comm<int>>
   commT = schwarz_bcs->getMap()->getComm();
 
   Teuchos::ArrayRCP<const ST>
@@ -920,7 +920,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     > const
     schwarz_bcs = this->computeBCsDTK();
 
-    Teuchos::RCP<const Teuchos::Comm<int> >
+    Teuchos::RCP<const Teuchos::Comm<int>>
     commT = schwarz_bcs->getMap()->getComm();
 
     Teuchos::ArrayRCP<const ST>
@@ -1084,7 +1084,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       > const
       schwarz_bcs = this->computeBCsDTK();
 
-      Teuchos::RCP<const Teuchos::Comm<int> >
+      Teuchos::RCP<const Teuchos::Comm<int>>
       commT = schwarz_bcs->getMap()->getComm();
 
       Teuchos::ArrayRCP<const ST>

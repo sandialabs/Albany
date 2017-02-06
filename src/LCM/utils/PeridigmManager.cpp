@@ -174,7 +174,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       CellTopologyData& cellTopologyData = partCellTopologyData[blockName];
       shards::CellTopology cellTopology(&cellTopologyData);
       Intrepid2::DefaultCubatureFactory cubFactory;
-      Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopology, cubatureDegree);
+      Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopology, cubatureDegree);
       const int numQPts = cubature->getNumPoints();
       numPartialStressIds += numQPts * elementsInElementBlock.size();
     }
@@ -332,7 +332,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       CellTopologyData& cellTopologyData = partCellTopologyData[blockName];
       shards::CellTopology cellTopology(&cellTopologyData);
       Intrepid2::DefaultCubatureFactory cubFactory;
-      Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopology, cubatureDegree);
+      Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopology, cubatureDegree);
       const int numDim = cubature->getDimension();
       const int numQuadPoints = cubature->getNumPoints();
       const int numNodes = cellTopology.getNodeCount();
@@ -895,7 +895,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
       for(int dof=0 ; dof<3 ; dof++)
         refPoint(0, dof) = refPoints(0, 0, dof);
 
-      Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > refBasis = Albany::getIntrepid2Basis((*obcDataPoints)[iEvalPt].cellTopologyData);
+      Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>> refBasis = Albany::getIntrepid2Basis((*obcDataPoints)[iEvalPt].cellTopologyData);
       Kokkos::DynRankView<RealType, PHX::Device> basisOnRefPoint("PPP", numNodes, 1);
       refBasis->getValues(basisOnRefPoint, refPoint, Intrepid2::OPERATOR_VALUE);
 
@@ -1011,7 +1011,7 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
 
       shards::CellTopology cellTopology(&it->cellTopologyData);
       Intrepid2::DefaultCubatureFactory cubFactory;
-      Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopology, cubatureDegree);
+      Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopology, cubatureDegree);
       const int numDim = cubature->getDimension();
       const int numQuadPoints = cubature->getNumPoints();
       const int numNodes = cellTopology.getNodeCount();

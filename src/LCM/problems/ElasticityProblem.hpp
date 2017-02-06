@@ -150,14 +150,14 @@ Albany::ElasticityProblem::constructEvaluators(
    std::string elementBlockName = meshSpecs.ebName;
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
+   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
      intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
 
    const int numNodes = intrepidBasis->getCardinality();
    const int worksetSize = meshSpecs.worksetSize;
 
    Intrepid2::DefaultCubatureFactory cubFactory;
-   RCP <Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
+   RCP <Intrepid2::Cubature<PHX::Device>> cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
 
    const int numDim = cubature->getDimension();
    const int numQPts = cubature->getNumPoints();

@@ -668,8 +668,8 @@ LCM::SchwarzMultiscale::create_W_op() const
 Teuchos::RCP<Thyra::PreconditionerBase<ST>>
 LCM::SchwarzMultiscale::create_W_prec() const
 {
-  //Teuchos::RCP< Thyra::PreconditionerBase<ST> > W_prec;
-  Teuchos::RCP<Thyra::DefaultPreconditioner<ST> > W_prec = Teuchos::rcp(
+  //Teuchos::RCP< Thyra::PreconditionerBase<ST>> W_prec;
+  Teuchos::RCP<Thyra::DefaultPreconditioner<ST>> W_prec = Teuchos::rcp(
       new Thyra::DefaultPreconditioner<ST>);
   if (w_prec_supports_) {
     LCM::Schwarz_CoupledJacobian csJac(commT_);
@@ -685,7 +685,7 @@ LCM::SchwarzMultiscale::create_W_prec() const
     //We may want to switch to this once I figure out how to hook up Teko with natrix-free.  
     /*
      //Get preconditioner factory from solver_factory_.  For Teko, this will get the TekoFactory.
-     Teuchos::RCP<Thyra::PreconditionerFactoryBase<ST> > prec_factory = solver_factory_->getPreconditionerFactory();
+     Teuchos::RCP<Thyra::PreconditionerFactoryBase<ST>> prec_factory = solver_factory_->getPreconditionerFactory();
      //Get the preconditioner operator from the prec_factory
      W_prec = prec_factory->createPrec();
      */
@@ -1132,7 +1132,7 @@ evalModelImpl(
       LCM::Schwarz_CoupledJacobian csJac(commT_);
       Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op =
           csJac.getThyraCoupledJacobian(precs_, apps_);
-      Teuchos::RCP<Thyra::DefaultPreconditioner<ST> > W_prec = Teuchos::rcp(
+      Teuchos::RCP<Thyra::DefaultPreconditioner<ST>> W_prec = Teuchos::rcp(
           new Thyra::DefaultPreconditioner<ST>);
       W_prec->initializeRight(W_op);
       W_prec_outT = Teuchos::rcp_dynamic_cast<Thyra::PreconditionerBase<ST>>(

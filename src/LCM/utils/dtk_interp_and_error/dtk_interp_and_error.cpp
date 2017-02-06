@@ -115,7 +115,7 @@ void interp_and_calc_error(
     
   // Get the raw mpi communicator (basic typedef in STK).
   Teuchos::RCP<const Teuchos::MpiComm<int>>
-  mpi_comm = Teuchos::rcp_dynamic_cast<const Teuchos::MpiComm<int> >( comm );
+  mpi_comm = Teuchos::rcp_dynamic_cast<const Teuchos::MpiComm<int>>( comm );
 
   Teuchos::RCP<const Teuchos::OpaqueWrapper<MPI_Comm>>
   opaque_comm = mpi_comm->getRawMpiComm();
@@ -584,7 +584,7 @@ int main(int argc, char* argv[])
   // Setup communication.
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
 
-  Teuchos::RCP<const Teuchos::Comm<int> > comm = 
+  Teuchos::RCP<const Teuchos::Comm<int>> comm = 
   Teuchos::DefaultComm<int>::getComm();
 
   // Read in command line options.
