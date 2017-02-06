@@ -1138,16 +1138,6 @@ evalModelImpl(
       W_prec_outT = Teuchos::rcp_dynamic_cast<Thyra::PreconditionerBase<ST>>(
           W_prec,
           true);
-#ifdef WRITE_TO_MATRIX_MARKET
-      char prec_name[100];
-      sprintf(prec_name, "pre0_%i.mm", mm_counter_pre);
-      Tpetra_MatrixMarket_Writer::writeSparseFile(prec_name, precs_[0]);
-      if (num_models_ > 1) {
-        sprintf(prec_name, "pre1_%i.mm", mm_counter_pre);
-        Tpetra_MatrixMarket_Writer::writeSparseFile(prec_name, precs_[1]);
-      }
-      ++mm_counter_pre;
-#endif
     }
   }
 
@@ -1186,6 +1176,16 @@ evalModelImpl(
   ++mm_counter_jac;
 #endif
 
+#ifdef WRITE_TO_MATRIX_MARKET
+      char prec_name[100];
+      sprintf(prec_name, "pre0_%i.mm", mm_counter_pre);
+      Tpetra_MatrixMarket_Writer::writeSparseFile(prec_name, precs_[0]);
+      if (num_models_ > 1) {
+        sprintf(prec_name, "pre1_%i.mm", mm_counter_pre);
+        Tpetra_MatrixMarket_Writer::writeSparseFile(prec_name, precs_[1]);
+      }
+      ++mm_counter_pre;
+#endif
 //Responses / sensitivities
 //FIXME: need to implement DgDx, DgDp, etc for sensitivity analysis! 
 // Response functions
