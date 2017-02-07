@@ -1423,7 +1423,8 @@ computeConditionNumber(Epetra_CrsMatrix& matrix)
   double tol = 1e-10;
   int status = conditionEstimator.computeConditionNumber(maxIters, tol);
   if (status!=0)
-    *out << "status result from computeConditionNumber(): " << status << "\n";
+    *out << "WARNING: AztecOO::ConditionNumber::computeConditionNumber returned "
+         << "non-zero status = " << status << ".  Condition number estimate may be wrong!\n";
   double condest = conditionEstimator.getConditionNumber();
   return condest; 
 }
