@@ -15,7 +15,7 @@ SurfaceScalarJump<EvalT, Traits>::
 SurfaceScalarJump(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl) :
   cubature      (p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")), 
-  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >>("Intrepid2 Basis"))
+  intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>("Intrepid2 Basis"))
 //  scalar        (p.get<std::string>("Nodal Scalar Name"),dl->node_scalar),
 //  scalarJump    (p.get<std::string>("Scalar Jump Name"),dl->qp_scalar),
  // scalarAverage (p.get<std::string>("Scalar Average Name"),dl->qp_scalar)

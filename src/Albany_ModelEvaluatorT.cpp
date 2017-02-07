@@ -12,6 +12,15 @@
 #include "Teuchos_TestForException.hpp"
 #include "Tpetra_ConfigDefs.hpp"
 
+//uncomment the following to write stuff out to matrix market to debug
+//#define WRITE_TO_MATRIX_MARKET
+
+#ifdef WRITE_TO_MATRIX_MARKET
+static int mm_counter_sol = 0;
+static int mm_counter_res = 0;
+static int mm_counter_pre = 0;
+static int mm_counter_jac = 0;
+#endif // WRITE_TO_MATRIX_MARKET
 
 //IK, 4/24/15: adding option to write the mass matrix to matrix market file, which is needed
 //for some applications.  Uncomment the following line to turn on.
@@ -831,6 +840,32 @@ Albany::ModelEvaluatorT::evalModelImpl(
     }
   }
 
+#ifdef WRITE_TO_MATRIX_MARKET
+  char sol_name[100];
+  sprintf(sol_name, "sol_%i.mm", mm_counter_sol);
+  if (xT != Teuchos::null) {
+    Tpetra_MatrixMarket_Writer::writeDenseFile(sol_name, *(xT));
+  }
+  ++mm_counter_sol;
+#endif
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  char res_name[100];
+  sprintf(res_name, "res_%i.mm", mm_counter_res);
+  if (fT_out != Teuchos::null) {
+    Tpetra_MatrixMarket_Writer::writeDenseFile(res_name, *(fT_out));
+  }
+  ++mm_counter_res;
+#endif
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  char jac_name[100];
+  sprintf(jac_name, "jac_%i.mm", mm_counter_jac);
+  if (W_op_out_crsT != Teuchos::null) {
+    Tpetra_MatrixMarket_Writer::writeSparseFile(jac_name, W_op_out_crsT);
+  }
+  ++mm_counter_jac;
+#endif
 }
 
 

@@ -141,7 +141,7 @@ namespace LCM {
     Kokkos::DynRankView<ScalarT, PHX::Device> dEDdxi;
 
     Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature;
-    Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
+    Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>> intrepidBasis;
 
     ///
     /// Number of integration points
@@ -253,7 +253,7 @@ namespace LCM {
     Kokkos::DynRankView<ScalarT, PHX::Device> dxdxi;
 
     Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature;
-    Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
+    Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>> intrepidBasis;
 
     ///
     /// Number of integration points

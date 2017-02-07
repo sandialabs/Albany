@@ -74,11 +74,11 @@ public:
 #if 0
 //! \brief Parallel Neohookean Model
 template<typename EvalT, typename Traits>
-class ParallelNeohookeanModel: public LCM::ParallelConstitutiveModel<EvalT, Traits, detail::NeohookeanKernel<EvalT, Traits> >
+class ParallelNeohookeanModel: public LCM::ParallelConstitutiveModel<EvalT, Traits, detail::NeohookeanKernel<EvalT, Traits>>
 {
 public:
 
-  using Parent = ParallelConstitutiveModel<EvalT, Traits, detail::NeohookeanKernel<EvalT, Traits> >;
+  using Parent = ParallelConstitutiveModel<EvalT, Traits, detail::NeohookeanKernel<EvalT, Traits>>;
   using ScalarT = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
 

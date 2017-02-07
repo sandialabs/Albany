@@ -183,14 +183,14 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{358.687389208}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{358.22432464}"/>
     <ParameterList name="Sensitivity Comparisons 0">
       <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{94.2764124001}"/>
+      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{94.0117639046}"/>
     </ParameterList>
     <ParameterList name="Sensitivity Comparisons 1">
       <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{317.658964514}"/>
+      <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{316.614718429}"/>
     </ParameterList>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>

@@ -33,7 +33,7 @@ ResponseSquaredL2ErrorBase(Teuchos::ParameterList& p, const Teuchos::RCP<Albany:
 
   computedField = PHX::MDField<ScalarT>(fname,layout);
   targetField   = PHX::MDField<TargetScalarT>(target_fname,layout);
-  w_measure     = PHX::MDField<RealType,Cell,QuadPoint>("Weights",dl->qp_scalar);
+  w_measure     = PHX::MDField<MeshScalarT,Cell,QuadPoint>("Weights",dl->qp_scalar);
   scaling       = plist->get("Scaling",1.0);
 
   this->addDependentField(computedField);

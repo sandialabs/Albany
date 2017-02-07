@@ -20,8 +20,6 @@
 //SG and MP specializations are not implemented when ALBANY_DTK is ON. 
 //This may never be needed... 
 
-//#define DEBUG_LCM_SCHWARZ
-
 //
 // Generic Template Code for Constructor and PostRegistrationSetup
 //
@@ -58,7 +56,7 @@ SchwarzBC_Base(Teuchos::ParameterList & p) :
   auto
   it = app_name_index_map.find(this_app_name);
 
-  assert(it != app_name_index_map.end());
+  ALBANY_EXPECT(it != app_name_index_map.end());
 
   auto const
   this_app_index = it->second;
@@ -67,7 +65,7 @@ SchwarzBC_Base(Teuchos::ParameterList & p) :
 
   it = app_name_index_map.find(coupled_app_name_);
 
-  assert(it != app_name_index_map.end());
+  ALBANY_EXPECT(it != app_name_index_map.end());
 
   auto const
   coupled_app_index = it->second;
@@ -87,9 +85,6 @@ computeBCs(
     ScalarT & y_val,
     ScalarT & z_val)
 {
-  Teuchos::RCP<Teuchos::FancyOStream>
-  out = Teuchos::fancyOStream(Teuchos::VerboseObjectBase::getDefaultOStream());
-
   auto const
   this_app_index = getThisAppIndex();
 
@@ -215,16 +210,6 @@ computeBCs(
 
   point.fill(coord);
 
-#if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "--------------------------------------------------------\n";
-  std::cout << "Current app      : " << this_app_name << '\n';
-  std::cout << "Coupling to app  : " << coupled_app_name << '\n';
-  std::cout << "Coupling to block: " << coupled_block_name << '\n';
-  std::cout << "Node set node    : " << ns_node << '\n';
-  std::cout << "Point            : " << point << '\n';
-  std::cout << "--------------------------------------------------------\n";
-#endif // DEBUG_LCM_SCHWARZ
-
   // Determine the element that contains this point.
   bool
   found = false;
@@ -240,13 +225,6 @@ computeBCs(
 
   Teuchos::RCP<Tpetra_Vector const>
   coupled_solution = coupled_stk_disc->getSolutionFieldT();
-
-#if defined(DEBUG_LCM_SCHWARZ)
-  if (ns_node == 0) {
-    *out << "coupled_solution: \n";
-    coupled_solution->describe(*out, Teuchos::VERB_EXTREME);
-  }
-#endif //DEBUG_LCM_SCHWARZ  
 
   Teuchos::ArrayRCP<ST const>
   coupled_solution_view = coupled_solution->get1dView();
@@ -350,7 +328,7 @@ computeBCs(
 
   } // workset loop
 
-  assert(found == true);
+  ALBANY_EXPECT(found == true);
 
   // We do this element by element
   auto const
@@ -427,28 +405,10 @@ computeBCs(
   minitensor::Vector<double>
   value(coupled_dimension, minitensor::ZEROS);
 
-#if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "NODE   BASIS                     VALUE\n";
-  std::cout << "---------------------------------------------------------\n";
-#endif // DEBUG_LCM_SCHWARZ
-
   for (auto i = 0; i < coupled_vertex_count; ++i) {
     value += basis_values(i, 0) * coupled_element_solution[i];
 
-#if defined(DEBUG_LCM_SCHWARZ)
-    std::cout << std::setw(4) << i << ' ';
-    std::cout << std::scientific << std::setw(24) << std::setprecision(16);
-    std::cout << basis_values(i, 0) << "    ";
-    std::cout << coupled_element_solution[i] << '\n';
-#endif // DEBUG_LCM_SCHWARZ
-
   }
-
-#if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "--------------------------------------------------------\n";
-  std::cout << "RESULT : " << value << '\n';
-  std::cout << "--------------------------------------------------------\n";
-#endif // DEBUG_LCM_SCHWARZ
 
   x_val = value(0);
   y_val = value(1);
@@ -466,15 +426,6 @@ Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>>
 SchwarzBC_Base<EvalT, Traits>::
 computeBCsDTK()
 {
-  Teuchos::RCP<Teuchos::FancyOStream>
-  out = Teuchos::fancyOStream(Teuchos::VerboseObjectBase::getDefaultOStream());
-
-  Teuchos::RCP<Teuchos::FancyOStream>
-  outc = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
-
-#if defined(DEBUG_LCM_SCHWARZ)
-  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-#endif //DEBUG_LCM_SCHWARZ
   auto const
   this_app_index = getThisAppIndex();
 
@@ -488,7 +439,7 @@ computeBCsDTK()
   coupled_app = getApplication(coupled_app_index);
 
   // neq should be the same for this_app and coupled_app.
-  assert(this_app.getNumEquations() == coupled_app.getNumEquations());
+  ALBANY_EXPECT(this_app.getNumEquations() == coupled_app.getNumEquations());
 
   //Get number of equations from this_app 
   int neq = this_app.getNumEquations();
@@ -527,10 +478,6 @@ computeBCsDTK()
   //Get solution name from Discretization sublist
   std::string map_name =
       dtk_params.get("Map Type", "Consistent Interpolation");
-
-#if defined(DEBUG_LCM_SCHWARZ)
-  *out << "DEBUG: map_name: " << map_name << "\n";
-#endif //DEBUG_LCM_SCHWARZ  
 
   Albany::AbstractSTKFieldContainer::VectorFieldType*
   coupled_field =
@@ -594,22 +541,6 @@ computeBCsDTK()
           Albany::AbstractSTKFieldContainer::VectorFieldType
           > (Teuchos::ptr(this_field), neq);
 
-#if defined(DEBUG_LCM_SCHWARZ)
-  // Print out source mesh info.
-  Teuchos::RCP<Teuchos::Describable>
-  coupled_describe = coupled_manager.functionSpace()->entitySet();
-  std::cout << "Source Mesh \n";
-  coupled_describe->describe(std::cout);
-  std::cout << "\n";
-
-  // Print out target mesh info.
-  Teuchos::RCP<Teuchos::Describable>
-  this_describe = this_manager.functionSpace()->entitySet();
-  std::cout << "Target Mesh \n";
-  this_describe->describe(std::cout);
-  std::cout << "\n";
-#endif //DEBUG_LCM_SCHWARZ  
-
   //Solution transfer
 
   DataTransferKit::MapOperatorFactory
@@ -627,13 +558,6 @@ computeBCsDTK()
   // Apply the map operator. This interpolates the data from one STK field
   // to the other.
   map_op->apply(*coupled_vector, *this_vector);
-
-#if defined(DEBUG_LCM_SCHWARZ)
-  *out << "coupled_vector: \n ";
-  coupled_vector->describe(*outc, Teuchos::VERB_EXTREME);
-  *out << "this_vector: \n ";
-  this_vector->describe(*outc, Teuchos::VERB_EXTREME);
-#endif //DEBUG_LCM_SCHWARZ  
 
   return this_vector;
 }
@@ -657,12 +581,6 @@ void
 SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
-  Teuchos::RCP<Teuchos::FancyOStream>
-  out = Teuchos::fancyOStream(Teuchos::VerboseObjectBase::getDefaultOStream());
-
-  Teuchos::RCP<Teuchos::FancyOStream>
-  outc = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
-
   // Solution
   Teuchos::RCP<const Tpetra_Vector>
   xT = dirichlet_workset.xT;
@@ -684,16 +602,13 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   ns_number_nodes = ns_dof.size();
 
 #if defined(ALBANY_DTK)
-#if defined(DEBUG_LCM_SCHWARZ)
-  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-#endif //DEBUG_LCM_SCHWARZ  
 
   Teuchos::RCP<
       Tpetra::MultiVector<double, int, DataTransferKit::SupportId>
   > const
   schwarz_bcs = this->computeBCsDTK();
 
-  Teuchos::RCP<const Teuchos::Comm<int> >
+  Teuchos::RCP<const Teuchos::Comm<int>>
   commT = schwarz_bcs->getMap()->getComm();
 
   Teuchos::ArrayRCP<const ST>
@@ -716,17 +631,8 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     auto const
     z_dof = ns_dof[ns_node][2];
 
-    int dof = x_dof / 3;
-
-#if defined(DEBUG_LCM_SCHWARZ)
-    std::cout
-    << "proc#, ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: "
-        << commT->getRank() << ", " << ns_node << ", "
-        << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", "
-        << schwarz_bcs_const_view_x[dof] << ", "
-        << schwarz_bcs_const_view_y[dof] << ", "
-        << schwarz_bcs_const_view_z[dof] << "\n";
-#endif //DEBUG_LCM_SCHWARZ  
+    auto const
+    dof = x_dof / 3;
 
     fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
     fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
@@ -750,24 +656,12 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     auto const
     z_dof = ns_dof[ns_node][2];
 
-#if defined(DEBUG_LCM_SCHWARZ)
-    std::cout
-    << "ns_node, x_dof, y_dof, z_dof, x_val, y_val, z_val: "
-    << ns_node << ", "
-    << x_dof << ", " << y_dof << ", " << z_dof << ", "
-    << x_val << ", " << y_val << ", " << z_val << "\n";
-#endif //DEBUG_LCM_SCHWARZ  
-
     fT_view[x_dof] = xT_const_view[x_dof] - x_val;
     fT_view[y_dof] = xT_const_view[y_dof] - y_val;
     fT_view[z_dof] = xT_const_view[z_dof] - z_val;
 
   } // node in node set loop
 #endif //ALBANY_DTK
-#if defined(DEBUG_LCM_SCHWARZ)
-  *out << "fT: \n ";
-  fT->describe(*outc, Teuchos::VERB_EXTREME);
-#endif //DEBUG_LCM_SCHWARZ  
   return;
 }
 
@@ -788,12 +682,6 @@ template<typename Traits>
 void SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
-  Teuchos::RCP<Teuchos::FancyOStream>
-  out = Teuchos::fancyOStream(Teuchos::VerboseObjectBase::getDefaultOStream());
-
-  Teuchos::RCP<Teuchos::FancyOStream>
-  outc = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
-
   Teuchos::RCP<Tpetra_Vector>
   fT = dirichlet_workset.fT;
 
@@ -912,15 +800,13 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   if (fill_residual == true) {
 
 #if defined(ALBANY_DTK)
-#if defined(DEBUG_LCM_SCHWARZ)
-    *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-#endif //DEBUG_LCM_SCHWARZ  
+
     Teuchos::RCP<
         Tpetra::MultiVector<double, int, DataTransferKit::SupportId>
     > const
     schwarz_bcs = this->computeBCsDTK();
 
-    Teuchos::RCP<const Teuchos::Comm<int> >
+    Teuchos::RCP<const Teuchos::Comm<int>>
     commT = schwarz_bcs->getMap()->getComm();
 
     Teuchos::ArrayRCP<const ST>
@@ -943,17 +829,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       auto const
       z_dof = ns_nodes[ns_node][2];
 
-      int dof = x_dof / 3;
+      auto const
+      dof = x_dof / 3;
 
-#if defined(DEBUG_LCM_SCHWARZ)
-      std::cout
-      << "proc#, ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: "
-          << commT->getRank() << ", " << ns_node << ", "
-          << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", "
-          << schwarz_bcs_const_view_x[dof] << ", "
-          << schwarz_bcs_const_view_y[dof] << ", "
-          << schwarz_bcs_const_view_z[dof] << "\n";
-#endif //DEBUG_LCM_SCHWARZ  
       fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
       fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
       fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
@@ -981,12 +859,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     }
 #endif //ALBANY_DTK
   }
-#if defined(DEBUG_LCM_SCHWARZ)
-  if (fill_residual == true) {
-    *out << "fT: \n ";
-    fT->describe(*outc, Teuchos::VERB_EXTREME);
-  }
-#endif //DEBUG_LCM_SCHWARZ  
 }
 
 //
@@ -1006,12 +878,6 @@ template<typename Traits>
 void SchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
-  Teuchos::RCP<Teuchos::FancyOStream>
-  out = Teuchos::fancyOStream(Teuchos::VerboseObjectBase::getDefaultOStream());
-
-  Teuchos::RCP<Teuchos::FancyOStream>
-  outc = Teuchos::fancyOStream(Teuchos::rcpFromRef(std::cout));
-
   Teuchos::RCP<Tpetra_Vector>
   fT = dirichlet_workset.fT;
 
@@ -1074,9 +940,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   if (fT != Teuchos::null || fpT != Teuchos::null) {
 
 #if defined(ALBANY_DTK)
-#if defined(DEBUG_LCM_SCHWARZ)
-    *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-#endif //DEBUG_LCM_SCHWARZ  
     if (fT != Teuchos::null) {
 
       Teuchos::RCP<
@@ -1084,7 +947,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       > const
       schwarz_bcs = this->computeBCsDTK();
 
-      Teuchos::RCP<const Teuchos::Comm<int> >
+      Teuchos::RCP<const Teuchos::Comm<int>>
       commT = schwarz_bcs->getMap()->getComm();
 
       Teuchos::ArrayRCP<const ST>
@@ -1107,17 +970,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         auto const
         z_dof = ns_nodes[ns_node][2];
 
-        int dof = x_dof / 3;
+        auto const
+        dof = x_dof / 3;
 
-#if defined(DEBUG_LCM_SCHWARZ)
-        std::cout
-        << "proc#, ns_node, x_dof, y_dof, z_dof, dof, x_val, y_val, z_val: "
-            << commT->getRank() << ", " << ns_node << ", "
-            << x_dof << ", " << y_dof << ", " << z_dof << ", " << dof << ", "
-            << schwarz_bcs_const_view_x[dof] << ", "
-            << schwarz_bcs_const_view_y[dof] << ", "
-            << schwarz_bcs_const_view_z[dof] << "\n";
-#endif //DEBUG_LCM_SCHWARZ  
         fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
         fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
         fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
@@ -1163,12 +1018,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     }
 #endif //ALBANY_DTK
   }
-#if defined(DEBUG_LCM_SCHWARZ)
-  if (fT != Teuchos::null) {
-    *out << "fT: \n ";
-    fT->describe(*outc, Teuchos::VERB_EXTREME);
-  }
-#endif //DEBUG_LCM_SCHWARZ  
   return;
 }
 
@@ -1798,5 +1647,4 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 }
 #endif // ALBANY_ENSEMBLE
 
-}
-  // namespace LCM
+} // namespace LCM

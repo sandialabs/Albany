@@ -48,7 +48,7 @@ private:
   cubature_;
 
   //! Finite element basis for the midplane
-  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
   intrepid_basis_;
 
   //! Vector to take the jump of

@@ -18,6 +18,7 @@ class ResponseSquaredL2ErrorBase : public PHAL::SeparableScatterScalarResponse<E
 {
 public:
   typedef typename EvalT::ScalarT     ScalarT;
+  typedef typename EvalT::MeshScalarT     MeshScalarT;
 
   ResponseSquaredL2ErrorBase (Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
@@ -44,7 +45,7 @@ private:
   PHX::MDField<ScalarT>                      computedField;
   PHX::MDField<TargetScalarT>                targetField;
 
-  PHX::MDField<RealType,Cell,QuadPoint>      w_measure;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint>      w_measure;
 };
 
 // Some shortcut names

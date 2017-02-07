@@ -211,7 +211,7 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
 //     minitensor::Index const
 //     dimension = x.get_dimension();
 
-//     assert(dimension == DIMENSION);
+//     ALBANY_EXPECT(dimension == DIMENSION);
 
 //     // Variables that potentially have Albany::Traits sensitivity
 //     // information need to be handled by the peel functor so that

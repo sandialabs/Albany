@@ -25,7 +25,7 @@ SurfaceBasis(
         dl->vertices_vector),
     cubature_(p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")),
     intrepid_basis_(
-        p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > >("Intrepid2 Basis")),
+        p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>("Intrepid2 Basis")),
     ref_basis_(p.get<std::string>("Reference Basis Name"), dl->qp_tensor),
     ref_area_(p.get<std::string>("Reference Area Name"), dl->qp_scalar),
     ref_dual_basis_(

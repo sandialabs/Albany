@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "gtest/gtest.h"
+#include "Albany_Utils.cpp"
 #include "MiniLinearSolver.h"
 #include "MiniNonlinearSolver.h"
 #include "MiniSolvers.h"
@@ -62,7 +63,7 @@ TEST(AlbanyResidual, NewtonBanana)
   pstep =
       minitensor::stepFactory<FN, ValueT, DIM>(minitensor::StepType::NEWTON);
 
-  assert(pstep->name() != nullptr);
+  ALBANY_EXPECT(pstep->name() != nullptr);
 
   STEP &
   step = *pstep;

@@ -204,7 +204,7 @@ Albany::HMCProblem::constructEvaluators(
 #endif
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
+   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
      intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
 
    const int numNodes = intrepidBasis->getCardinality();

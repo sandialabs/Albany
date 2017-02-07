@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include <boost/math/special_functions/fpclassify.hpp>
+#include "Albany_Utils.hpp"
 
 template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 CP::SlipFamily<NumDimT, NumSlipT>::SlipFamily()
@@ -32,36 +33,25 @@ CP::SlipFamily<NumDimT, NumSlipT>::setFlowRuleType(CP::FlowRuleType rule)
 }
 
 
-///
-/// Verify that constitutive update has preserved finite values
-///
-template<minitensor::Index NumDimT, typename ArgT>
+//
+// Verify that constitutive update has preserved finite values
+//
+template<typename T, minitensor::Index N>
 void
-CP::confirmTensorSanity(
-    minitensor::Tensor<ArgT, NumDimT> const & input,
-    std::string const & message)
+CP::expectFiniteTensor(
+                   minitensor::Tensor<T, N> const & A,
+                   std::string const & msg)
 {
-  int dim = input.get_dimension();
-  for (int i = 0; i < dim; i++) {
-    for (int j = 0; j < dim; j++) {
-      assert(boost::math::isfinite(Sacado::ScalarValue<ArgT>::eval(input(i, j)))==true);
-      // Disabling this capability for release.
-      // We will revisit this option when we can cut the time step from the constitutive model.
-      /* if (!boost::math::isfinite(
-          Sacado::ScalarValue<ArgT>::eval(input(i, j)))) {
-        std::string msg =
-            "**** Invalid data detected in CP::confirmTensorSanity(): "
-                + message;
-        TEUCHOS_TEST_FOR_EXCEPTION(
-            !boost::math::isfinite(
-                Sacado::ScalarValue<ArgT>::eval(input(i, j))),
-            std::logic_error,
-            msg);
-      } */
-    }
+  auto const
+  dim = A.get_dimension();
+
+  auto const
+  num_components = dim * dim;
+
+  for (auto i = 0; i < num_components; ++i) {
+    ALBANY_EXPECT(boost::math::isfinite(Sacado::ScalarValue<T>::eval(A[i])) == true);
   }
 }
-
 
 ///
 /// Update the plastic quantities
@@ -98,14 +88,14 @@ CP::applySlipIncrement(
     }
   }
 
-  CP::confirmTensorSanity<NumDimT>(Lp_np1, "Lp_np1 in applySlipIncrement().");
+  CP::expectFiniteTensor(Lp_np1, "Lp_np1 in applySlipIncrement().");
 
   // update plastic deformation gradient
   // F^{p}_{n+1} = exp(L_{n+1} * delta t) F^{p}_{n}
   exp_L_dt = minitensor::exp(Lp_np1 * dt);
   Fp_np1 = exp_L_dt * Fp_n;
 
-  CP::confirmTensorSanity<NumDimT>(Fp_np1, "Fp_np1 in applySlipIncrement()");
+  CP::expectFiniteTensor(Fp_np1, "Fp_np1 in applySlipIncrement()");
 }
 
 
@@ -241,7 +231,7 @@ CP::computeStress(
   sigma = 1.0 / minitensor::det(defgrad_elastic) * 
     defgrad_elastic * S * minitensor::transpose(defgrad_elastic);
 
-  CP::confirmTensorSanity<NumDimT>(
+  CP::expectFiniteTensor(
       sigma,
       "Cauchy stress in ResidualSlipNLS::computeStress()");
 
