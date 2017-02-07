@@ -1810,17 +1810,38 @@ computeGlobalJacobianT(
   }
   if (writeToCoutJac != 0) { //If requesting writing Jacobian to standard output (cout)...
     if (writeToCoutJac == -1) { //cout jacobian every time it arises
-      std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
+      *out << "Global Jacobian #" << countJac << ":\n";
       jacT.describe(*out, Teuchos::VERB_EXTREME);
     }
     else {
       if (countJac == writeToCoutJac) { //cout jacobian only at requested count#
-        std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
+        *out << "Global Jacobian #" << countJac << ":\n";
         jacT.describe(*out, Teuchos::VERB_EXTREME);
       }
     }
   }
-  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0) {
+  if (computeJacCondNum != 0) { //If requesting computation of condition number
+#if defined(ALBANY_EPETRA)
+    Teuchos::RCP<Epetra_CrsMatrix> jac = Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(Teuchos::rcpFromRef(jacT), comm); 
+    if (computeJacCondNum == -1) { //cout jacobian condition # every time it arises
+       double condNum = computeConditionNumber(*jac);  
+       *out << "Jacobian #" << countJac << " condition number = " << condNum << "\n";
+    }
+    else {
+      if (countJac == computeJacCondNum) { //cout jacobian condition # only at requested count#
+       double condNum = computeConditionNumber(*jac);  
+       *out << "Jacobian #" << countJac << " condition number = " << condNum << "\n"; 
+      }
+    }
+#else
+  TEUCHOS_TEST_FOR_EXCEPTION(true,
+            std::logic_error, "Error in Albany::Application: Compute Jacobian Condition Number debug option "
+            << " currently relies on an Epetra-based routine in AztecOO.  To use this option, please "
+            << " rebuild Albany with ENABLE_ALBANY_EPETRA_EXE=ON.  You will then be able to have Albany "  
+            << " output the Jacobian condition number when running either the Albany or AlbanyT executable.\n"); 
+#endif
+  }
+  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0 || computeJacCondNum != 0) {
     countJac++; //increment Jacobian counter
   }
 }

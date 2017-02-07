@@ -1,4 +1,8 @@
 <ParameterList>
+  <ParameterList name="Debug Output">
+     <Parameter name="Compute Jacobian Condition Number" type="int" value="-1"/>
+     <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
+  </ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Heat 2D"/>
     <ParameterList name="Dirichlet BCs">
