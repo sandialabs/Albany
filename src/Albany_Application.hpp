@@ -197,6 +197,11 @@ namespace Albany {
      * Set xdot to NULL for steady-state problems
      */
 #if defined(ALBANY_EPETRA)
+    double 
+    computeConditionNumber(Epetra_CrsMatrix& matrix); 
+#endif 
+
+#if defined(ALBANY_EPETRA)
     void computeGlobalResidual(const double current_time,
                                const Epetra_Vector* xdot,
                                const Epetra_Vector* xdotdot,
@@ -1149,6 +1154,7 @@ namespace Albany {
     // residual to MatrixMarket file)
     int writeToMatrixMarketJac;
     int writeToMatrixMarketRes;
+    int computeJacCondNum; 
     //! Integer specifying whether user wants to write Jacobian and residual to Standard output (cout)
     int writeToCoutJac;
     int writeToCoutRes;
