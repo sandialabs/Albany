@@ -177,16 +177,15 @@ FerroicDriver(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void FerroicDriver<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
+    DepFieldMap dep_fields,
+    FieldMap eval_fields)
 /******************************************************************************/
 {
-  PHX::MDField<ScalarT> strain = *dep_fields[strainName];
-  PHX::MDField<ScalarT> Gradp = *dep_fields[efieldName];
+  auto strain = *dep_fields[strainName];
+  auto Gradp = *dep_fields[efieldName];
 
-  PHX::MDField<ScalarT> stress = *eval_fields[stressName];
-  PHX::MDField<ScalarT> edisp  = *eval_fields[edispName];
-
+  auto stress = *eval_fields[stressName];
+  auto edisp  = *eval_fields[edispName];
 
   int nVariants = binNames.size();
   Teuchos::Array<PHX::MDField<ScalarT>> newBinFractions(nVariants);
@@ -236,8 +235,8 @@ computeState(typename Traits::EvalData workset,
 template<typename EvalT, typename Traits>
 void FerroicDriver<EvalT, Traits>::
 computeStateParallel(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
+    DepFieldMap dep_fields,
+    FieldMap eval_fields)
 /******************************************************************************/
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument,
