@@ -121,8 +121,8 @@ namespace LCM
   template<typename EvalT, typename Traits>
   void ViscoElasticModel< EvalT, Traits > ::
   computeState( typename Traits::EvalData workset,
-		std::map< std::string, Teuchos::RCP< PHX::MDField< ScalarT >>> dep_fields,
-		std::map< std::string, Teuchos::RCP< PHX::MDField< ScalarT >>> eval_fields )
+		DepFieldMap dep_fields,
+		FieldMap eval_fields )
   {
     // Get names
     std::string F_string = (*field_name_map_)["F"];
@@ -140,22 +140,22 @@ namespace LCM
     //
     // extract dependent MDFields
     //
-    PHX::MDField< ScalarT > def_grad = *dep_fields[F_string];
-    PHX::MDField< ScalarT > J = *dep_fields[J_string];
-    PHX::MDField<ScalarT> delta_time = *dep_fields["Delta Time"];
+    auto def_grad = *dep_fields[F_string];
+    auto J = *dep_fields[J_string];
+    auto delta_time = *dep_fields["Delta Time"];
     
     //
     // extract evaluated MDFields
     //
-    PHX::MDField< ScalarT > stress = *eval_fields[cauchy];
+    auto stress = *eval_fields[cauchy];
     // S_0
-    PHX::MDField< ScalarT > stress_0 = *eval_fields[S0_string];
+    auto stress_0 = *eval_fields[S0_string];
     // H_alpha
-    PHX::MDField< ScalarT > H1 = *eval_fields[H1_string];
-    PHX::MDField< ScalarT > H2 = *eval_fields[H2_string];
-    PHX::MDField< ScalarT > H3 = *eval_fields[H3_string];
+    auto H1 = *eval_fields[H1_string];
+    auto H2 = *eval_fields[H2_string];
+    auto H3 = *eval_fields[H3_string];
     // time
-    PHX::MDField<ScalarT> time = *eval_fields["Time"];
+    auto time = *eval_fields["Time"];
     
     //
     // Extract previous values (state variables)

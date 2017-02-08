@@ -27,6 +27,7 @@ struct ParallelKernel
   using MeshScalarT = typename EvalT::MeshScalarT;
   using Workset = typename Traits::EvalData;
   using ScalarField = PHX::MDField<ScalarT>;
+  using ConstScalarField = PHX::MDField<const ScalarT>;
   
 protected:
   
