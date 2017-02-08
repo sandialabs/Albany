@@ -62,34 +62,30 @@ def postprocess(
 
             print '    No log file found.'
 
-    if verbosity > 0:
-        timer.print_time()
+        if verbosity > 0:
+            timer.print_time()
 
 
 
 
-    #
-    # Get values of whole domain variables
-    #
-    with Timer() as timer:
-
+        #
+        # Get values of whole domain variables
+        #
         if verbosity > 0:
             print 'Reading exodus output file...'
 
         domain = read_file_output_exodus(filename = name_file_output_exodus)
 
-    if verbosity > 0:
-        timer.print_time()
+        if verbosity > 0:
+            timer.print_time()
 
 
 
 
 
-    #
-    # Get material data
-    #
-    with Timer() as timer:
-
+        #
+        # Get material data
+        #
         if verbosity > 0:
             print 'Retrieving material data...'
 
@@ -98,32 +94,28 @@ def postprocess(
             domain = domain,
             names_variable = ['orientations'])
 
-    if verbosity > 0:
-        timer.print_time()
+        if verbosity > 0:
+            timer.print_time()
 
 
 
     
-    #
-    # Compute derived variable values
-    #
-    with Timer() as timer:
-
+        #
+        # Compute derived variable values
+        #
         if verbosity > 0:
             print 'Deriving output data...'
     
         derive_value_variable(domain)
 
-    if verbosity > 0:
-        timer.print_time()
+        if verbosity > 0:
+            timer.print_time()
 
 
 
-    #
-    # Write data to exodus output file
-    #
-    with Timer() as timer:
-
+        #
+        # Write data to exodus output file
+        #
         if verbosity > 0:
             print 'Writing data to exodus file...'
 
@@ -134,35 +126,31 @@ def postprocess(
         
         write_file_exodus(domain, name_file_output_exodus, name_file_postprocess)
 
-    if verbosity > 0:
-        timer.print_time()
+        if verbosity > 0:
+            timer.print_time()
 
 
 
 
-    #
-    # Plot the simulation results
-    #
-    if plotting == True:
-    
         #
-        # Plot the convergence data
+        # Plot the simulation results
         #
-        with Timer() as timer:
-
+        if plotting == True:
+        
+            #
+            # Plot the convergence data
+            #
             if verbosity > 0:
                 print 'Plotting convergence data...'
 
             plot_data_run(run = run)
 
-        if verbosity > 0:
-            timer.print_time()
+            if verbosity > 0:
+                timer.print_time()
 
-        #
-        # Plot the inverse pole figures
-        #
-        with Timer() as timer:
-
+            #
+            # Plot the inverse pole figures
+            #
             if verbosity > 0:
                 print 'Plotting inverse pole figures...'
             
@@ -170,30 +158,26 @@ def postprocess(
 
                 plot_inverse_pole_figure(domain = domain, time = step, fmt = fmt)
 
-        if verbosity > 0:
-            timer.print_time()
+            if verbosity > 0:
+                timer.print_time()
 
-        #
-        # Plot stress-strain data
-        #
-        with Timer() as timer:
-
+            #
+            # Plot stress-strain data
+            #
             if verbosity > 0:
                 print 'Plotting stress-strain data...'
 
             plot_data_stress(domain = domain)
 
-        if verbosity > 0:
-            timer.print_time()
+            if verbosity > 0:
+                timer.print_time()
 
 
 
-    #
-    # Serialize data objects
-    #
-    if pickling == True:
-
-        with Timer() as timer:
+        #
+        # Serialize data objects
+        #
+        if pickling == True:
 
             if verbosity > 0:
                 print 'Writing serialized object files...'
@@ -206,24 +190,22 @@ def postprocess(
             pickle.dump(run, file_pickling, pickle.HIGHEST_PROTOCOL)
             file_pickling.close()
 
-        if verbosity > 0:
-            timer.print_time()
+            if verbosity > 0:
+                timer.print_time()
 
 
-    #
-    # Write data to text file
-    #
-    if write_data == True:
-
-        with Timer() as timer:
+        #
+        # Write data to text file
+        #
+        if write_data == True:
 
             if verbosity > 0:
                 print 'Writing data to text file...'
 
             write_file_data(domain = domain, name_file_output = name_file_base + '_Data.out')
 
-        if verbosity > 0:
-            timer.print_time()
+            if verbosity > 0:
+                timer.print_time()
 
 
 

@@ -92,6 +92,7 @@ class Timer:
         return self.step
 
     def print_time(self):
+        self.check()
         hours = int(self.step / 3600.)
         minutes = int((self.step - 3600. * hours) / 60.)
         seconds = self.step - 3600. * hours - 60. * minutes
