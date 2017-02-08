@@ -67,36 +67,48 @@ SchwarzMultiscale(
     app_name_index_map->insert(app_name_index);
   }
 
-  //------------Determine whether to set OUT_ARG_W_prec supports or not-------------
-  //------------This is only relevant for matrix-free GMRES-------------------------
+  //------------Determine whether to set OUT_ARG_W_prec supports or not--------
+  //------------This is only relevant for matrix-free GMRES--------------------
   // Get "Piro" parameter sublist
-  Teuchos::ParameterList &piroPL = app_params->sublist("Piro");
+  Teuchos::ParameterList &
+  piroPL = app_params->sublist("Piro");
+
   w_prec_supports_ = false;
+
   //Check if problem is matrix-free  
-  std::string jacob_op = "";
-  if (piroPL.isParameter("Jacobian Operator"))
-    jacob_op = piroPL.get<std::string>("Jacobian Operator");
+  std::string const
+  jacob_op = piroPL.isParameter("Jacobian Operator") == true ?
+      piroPL.get<std::string>("Jacobian Operator") : "";
+
   //Get matrix-free preconditioner from input file
-  std::string mf_prec = "None";
-  if (coupled_system_params.isParameter("Matrix-Free Preconditioner"))
-    mf_prec = coupled_system_params.get<std::string>(
-        "Matrix-Free Preconditioner");
-  if (mf_prec == "None")
+  std::string const
+  mf_prec =
+      coupled_system_params.isParameter("Matrix-Free Preconditioner") == true ?
+      coupled_system_params.get<std::string>("Matrix-Free Preconditioner") :
+      "None";
+
+  if (mf_prec == "None") {
     mf_prec_type_ = NONE;
-  else if (mf_prec == "Jacobi")
+  }
+  else if (mf_prec == "Jacobi") {
     mf_prec_type_ = JACOBI;
-  else if (mf_prec == "AbsRowSum")
+  }
+  else if (mf_prec == "AbsRowSum") {
     mf_prec_type_ = ABS_ROW_SUM;
-  else if (mf_prec == "Identity")
+  }
+  else if (mf_prec == "Identity") {
     mf_prec_type_ = ID;
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "Unknown Matrix-Free Preconditioner type " << mf_prec
-        << "!  Valid options are None, Identity, AbsRowSum, and Jacobi. \n");
-  //If using matrix-free, get NOX sublist and set "Preconditioner Type" to "None" regardless 
-  //of what is specified in the input file.  Currently preconditioners for matrix-free 
-  //are implemented in this ModelEvaluator, which requires the type to be "None".
-  //Also set w_prec_supoprts_ to true if using matrix-free with a preconditioner. 
+  }
+  else {
+    ALBANY_ASSERT(true, "Unknown Matrix-Free Preconditioner type.");
+  }
+
+  // If using matrix-free, get NOX sublist and set "Preconditioner Type" to
+  // "None" regardless  of what is specified in the input file.
+  // Currently preconditioners for matrix-free  are implemented in this
+  // ModelEvaluator, which requires the type to be "None".
+  // Also set w_prec_supoprts_ to true if using matrix-free with a
+  // preconditioner.
   if ((mf_prec != "None") && (jacob_op != "")) {
     //Set w_prec_supports_ to true
     w_prec_supports_ = true;
@@ -123,8 +135,9 @@ SchwarzMultiscale(
     }
   }
 
-  // Create a NOX status test and associated machinery for cutting the global time step
-  // when the CrystalPlasticity constitutive model's state update routine fails
+  // Create a NOX status test and associated machinery for cutting the
+  // global time step when the CrystalPlasticity constitutive model's state
+  // update routine fails
   Teuchos::RCP<NOX::StatusTest::Generic> nox_status_test = Teuchos::rcp(
       new NOX::StatusTest::ModelEvaluatorFlag);
   Teuchos::RCP<NOX::Abstract::PrePostOperator> pre_post_operator = Teuchos::rcp(
@@ -414,7 +427,8 @@ SchwarzMultiscale(
     // App application name-index map for later use in Schwarz BC.
     model_app_params_[m]->set("Application Name Index Map", app_name_index_map);
 
-    // Machinery for cutting the global time step from within the CrystalPlasticity constitutive model
+    // Machinery for cutting the global time step from within the
+    // CrystalPlasticity constitutive model
     model_app_params_[m]->sublist("Problem").set(
         "Constitutive Model NOX Status Test",
         nox_status_test);
@@ -440,7 +454,8 @@ SchwarzMultiscale(
             Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(jac_temp, true) :
             Teuchos::null;
 
-    //create array of individual model preconditioners - these will have same graph as Jacobians for now
+    // create array of individual model preconditioners
+    // these will have same graph as Jacobians for now
     precs_[m] =
         Teuchos::nonnull(jac_temp) ?
             Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(jac_temp, true) :
@@ -681,11 +696,14 @@ LCM::SchwarzMultiscale::create_W_prec() const
         precs_,
         apps_);
     W_prec->initializeRight(W_op);
-    //IKT, 11/16/16: the following code is for Teko. 
-    //We may want to switch to this once I figure out how to hook up Teko with natrix-free.  
+    // IKT, 11/16/16: the following code is for Teko.
+    // We may want to switch to this once I figure out how to hook up Teko
+    // with natrix-free.
     /*
-     //Get preconditioner factory from solver_factory_.  For Teko, this will get the TekoFactory.
-     Teuchos::RCP<Thyra::PreconditionerFactoryBase<ST>> prec_factory = solver_factory_->getPreconditionerFactory();
+     // Get preconditioner factory from solver_factory_.
+     // For Teko, this will get the TekoFactory.
+     Teuchos::RCP<Thyra::PreconditionerFactoryBase<ST>>
+     prec_factory = solver_factory_->getPreconditionerFactory();
      //Get the preconditioner operator from the prec_factory
      W_prec = prec_factory->createPrec();
      */
@@ -714,9 +732,7 @@ LCM::SchwarzMultiscale::reportFinalPoint(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & final_point,
     bool const was_solved)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true,
-      Teuchos::Exceptions::InvalidParameter,
-      "Calling reportFinalPoint in CoupledSchwarz.cpp" << '\n');
+  ALBANY_ASSERT(true, "Calling reportFinalPoint");
 }
 
 void
@@ -753,10 +769,7 @@ allocateVectors()
     xT_vec = Teuchos::rcp(new Tpetra_Vector(*xMV->getVector(0)));
 
     // Error if xdot isn't around
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        xMV->getNumVectors() < 2,
-        std::logic_error,
-        "SchwarzMultiscale Error! Time derivative data is not present!");
+    ALBANY_ASSERT(xMV->getNumVectors() < 2, "Time derivative is not present.");
 
     Teuchos::RCP<Tpetra_Vector>
     x_dotT_vec = Teuchos::rcp(new Tpetra_Vector(*xMV->getVector(1)));
