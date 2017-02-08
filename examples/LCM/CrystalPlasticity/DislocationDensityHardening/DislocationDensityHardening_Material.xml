@@ -149,30 +149,39 @@
             type="double"
             value="4.0e-01" />
 
+          <!-- Units must be consistent with Burgers Vector Magnitude
+             1/m^2: 1e14, 1/mm^2: 1e8, 1/um^2: 1e2 -->
+
           <Parameter
             name="Initial Hardening State"
             type="double"
-            value="5.0e+06" />
+            value="8.0e+01" />
 
           <Parameter
             name="Generation Factor"
             type="double"
-            value="2.0e+05" />
+            value="5.0e+03" />
 
           <Parameter
             name="Annihilation Factor"
             type="double"
-            value="5.0e+01" />
+            value="5.0e+02" />
+
+          <!-- Units must be consistent with elastic constants
+            N/mm^2 (MPa): 7.07e+04 -->
 
           <Parameter
             name="Shear Modulus"
             type="double"
             value="7.07e+04" />
 
+          <!-- Units must be consistent with Initial Hardening State
+            m:  2.87e-10, mm: 2.87e-7, um: 2.87e-4 -->
+
           <Parameter
             name="Burgers Vector Magnitude"
             type="double"
-            value="2.87e-07" />
+            value="2.87e-04" />
 
         </ParameterList>
 

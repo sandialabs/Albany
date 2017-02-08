@@ -378,6 +378,15 @@ harden(
   //
   // Compute the effective dislocation density at step n
   //
+
+  for (int ss_index_i(0); ss_index_i < num_slip_sys; ++ss_index_i)
+  {
+    if (state_hardening_np1[ss_index_i] < 0.0)
+    {
+      std::cout << state_hardening_np1;
+    }
+  }
+
   minitensor::Vector<ArgT, NumSlipT>
   densities_forest = slip_family.latent_matrix_ * state_hardening_np1;
 
@@ -428,12 +437,20 @@ harden(
     ArgT const
     annihilation = factor_annihilation * state_hardening_np1[ss_index_global];
 
-    // if (generation > annihilation)
-    // {
+    ArgT
+    driver_hardening;
+
+    if (generation > annihilation)
+    {
+      driver_hardening = generation - annihilation;
+    }
+    else
+    {
+      driver_hardening = 0.0;
+    }
+
     state_hardening_np1[ss_index_global] = state_hardening_n[ss_index_global] + 
-        dt * (generation - annihilation) * std::abs(rate_slip[ss_index_global]);
-    // }
-    
+      dt * driver_hardening * std::abs(rate_slip[ss_index_global]);
   }
   
   minitensor::Vector<ArgT, NumSlipT> const
