@@ -4604,37 +4604,8 @@ void Albany::Application::setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT)
   else if (scale_type == ABSROWSUM) {//absolute value of row sum scaling
     if (jacT == Teuchos::null) { scaleVec_->putScalar(1.0); }
     else {
-      //FIXME: create a tpetra implementation .
-#ifdef ALBANY_EPETRA
       scaleVec_->putScalar(0.0);
-      Teuchos::RCP<Epetra_Map> rowMap = Petra::TpetraMap_To_EpetraMap(jacT->getRowMap(), comm);
-      Teuchos::RCP<const Epetra_CrsGraph> graph = disc->getJacobianGraph();
-      Teuchos::RCP<Epetra_CrsMatrix> jacE = Teuchos::rcp(new Epetra_CrsMatrix(Copy, *graph));
-      jacE->FillComplete();
-      Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(jacT, *jacE, comm);
-      Teuchos::RCP<Epetra_Vector> scaleVecE = Teuchos::rcp(new Epetra_Vector(*rowMap));
-      scaleVecE->PutScalar(0.0);
-      //TODO: ask Mark Hoemenn re: adding InvRowSums to Tpetra
-      jacE->InvRowSums(*scaleVecE);
-      scaleVec_ = Petra::EpetraVector_To_TpetraVectorNonConst(*scaleVecE, commT);
-#endif
-      /*
-      for (std::size_t i = 0; i < jacT->getNodeNumRows(); i++) {
-         Teuchos::ArrayView<const GO> indices;
-         Teuchos::ArrayView<const ST> values;
-         //get ith row of jacT
-         jacT->getLocalRowView(i, indices, values);
-         //calculate absolute value of row sum for ith row
-         ST rowsum = 0.0;
-         for (int j=0; j<indices.size(); j++) {
-           rowsum += abs(values[j]);
-         }
-         //take reciprocal of rowsum
-         ST rowsuminv = 1.0/rowsum;
-         GO globalRow = jacT->getRowMap()->getGlobalElement(i);
-         //put 1/rowsum into globalRow entry of scaleVec_
-         scaleVec_->replaceGlobalValue(globalRow, rowsuminv);
-      }*/
+      Albany::InvRowSum(scaleVec_, jacT);
     }
   }
 }
