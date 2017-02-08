@@ -95,16 +95,16 @@ GursonModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void GursonModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
+    DepFieldMap dep_fields,
+    FieldMap eval_fields)
 {
   // extract dependent MDFields
-  PHX::MDField<ScalarT> def_grad = *dep_fields["F"];
-  PHX::MDField<ScalarT> J = *dep_fields["J"];
-  PHX::MDField<ScalarT> poissons_ratio = *dep_fields["Poissons Ratio"];
-  PHX::MDField<ScalarT> elastic_modulus = *dep_fields["Elastic Modulus"];
-  PHX::MDField<ScalarT> yield_strength = *dep_fields["Yield Strength"];
-  PHX::MDField<ScalarT> hardening_modulus = *dep_fields["Hardening Modulus"];
+  auto def_grad = *dep_fields["F"];
+  auto J = *dep_fields["J"];
+  auto poissons_ratio = *dep_fields["Poissons Ratio"];
+  auto elastic_modulus = *dep_fields["Elastic Modulus"];
+  auto yield_strength = *dep_fields["Yield Strength"];
+  auto hardening_modulus = *dep_fields["Hardening Modulus"];
 
   // retrieve appropriate field name strings
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
@@ -113,10 +113,10 @@ computeState(typename Traits::EvalData workset,
   std::string void_string = (*field_name_map_)["void_volume_fraction"];
 
   // extract evaluated MDFields
-  PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
-  PHX::MDField<ScalarT> Fp = *eval_fields[Fp_string];
-  PHX::MDField<ScalarT> eqps = *eval_fields[eqps_string];
-  PHX::MDField<ScalarT> void_volume = *eval_fields[void_string];
+  auto stress = *eval_fields[cauchy_string];
+  auto Fp = *eval_fields[Fp_string];
+  auto eqps = *eval_fields[eqps_string];
+  auto void_volume = *eval_fields[void_string];
 
   // get State Variables
   Albany::MDArray Fp_old =
