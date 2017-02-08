@@ -722,16 +722,17 @@ if (basalSideName!="INVALID")
   }
 
   // Bed topography
-  if (basalSideName!="INVALID")
   {
     entity = Albany::StateStruct::NodalDataToElemNode;
     stateName = fieldName = "bed_topography";
     p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName, true, &entity);
     ev = Teuchos::rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
-    ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
+    if (basalSideName!="INVALID") {
+      p = stateMgr.registerSideSetStateVariable(basalSideName, stateName, fieldName, dl_basal->node_scalar, basalEBName, true, &entity);
+      ev = Teuchos::rcp(new PHAL::LoadSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
 
   stateName = "basal_friction";
