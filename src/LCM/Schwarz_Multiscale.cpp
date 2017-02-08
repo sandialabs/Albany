@@ -100,7 +100,7 @@ SchwarzMultiscale(
     mf_prec_type_ = ID;
   }
   else {
-    ALBANY_ASSERT(true, "Unknown Matrix-Free Preconditioner type.");
+    ALBANY_ASSERT(false, "Unknown Matrix-Free Preconditioner type.");
   }
 
   // If using matrix-free, get NOX sublist and set "Preconditioner Type" to
@@ -732,7 +732,7 @@ LCM::SchwarzMultiscale::reportFinalPoint(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & final_point,
     bool const was_solved)
 {
-  ALBANY_ASSERT(true, "Calling reportFinalPoint");
+  ALBANY_ASSERT(false, "Calling reportFinalPoint");
 }
 
 void
@@ -769,7 +769,7 @@ allocateVectors()
     xT_vec = Teuchos::rcp(new Tpetra_Vector(*xMV->getVector(0)));
 
     // Error if xdot isn't around
-    ALBANY_ASSERT(xMV->getNumVectors() < 2, "Time derivative is not present.");
+    ALBANY_ASSERT(xMV->getNumVectors() >= 2, "Time derivative is not present.");
 
     Teuchos::RCP<Tpetra_Vector>
     x_dotT_vec = Teuchos::rcp(new Tpetra_Vector(*xMV->getVector(1)));
