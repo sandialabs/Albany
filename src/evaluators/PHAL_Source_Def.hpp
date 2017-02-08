@@ -521,7 +521,7 @@ private :
   Teuchos::ParameterList* m_source_list;
   PHX::MDField<ScalarT,Cell,Point>   m_source;
   PHX::MDField<MeshScalarT,Cell,Point,Dim> m_coordVec;
-  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > m_exp_rf_kl;
+  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType> > m_exp_rf_kl;
   Teuchos::Array<ScalarT> m_rv;
   Teuchos::Array<MeshScalarT> m_point;
   std::string param_name_base;
@@ -544,7 +544,7 @@ TruncatedKL(Teuchos::ParameterList& p) {
     m_source_list->sublist("Truncated KL Expansion");
   
   m_exp_rf_kl = 
-      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>(paramList));
+      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(paramList));
   int num_KL = m_exp_rf_kl->stochasticDimension();
 
   param_name_base = p.get<std::string>("Source Name") + " KL Random Variable";
