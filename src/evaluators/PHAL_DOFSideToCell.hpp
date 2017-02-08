@@ -42,12 +42,12 @@ private:
   std::vector<int>                dims;
 
   // Input:
-  //! Values at nodes
-  PHX::MDField<ScalarT> val_cell;
+  //! Values on side
+  PHX::MDField<const ScalarT> val_side;
 
   // Output:
-  //! Values on side
-  PHX::MDField<ScalarT> val_side;
+  //! Values at nodes
+  PHX::MDField<ScalarT> val_cell;
 
   enum LayoutType
   {

@@ -177,7 +177,7 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> elastic_modulus = *dep_fields["Elastic Modulus"];
   PHX::MDField<ScalarT> yield_strength = *dep_fields["Yield Strength"];
   PHX::MDField<ScalarT> hardening_modulus = *dep_fields["Hardening Modulus"];
-  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> gpt_location;
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim> gpt_location;
 
   // for now, force using global fiber direction
   if (local_coord_flag_) {

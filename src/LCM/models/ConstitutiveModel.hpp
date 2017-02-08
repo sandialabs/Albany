@@ -28,6 +28,7 @@ public:
   using Workset = typename Traits::EvalData;
 
   using FieldMap = std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>;
+  using DepFieldMap = std::map<std::string, Teuchos::RCP<PHX::MDField<const ScalarT>>>;
   using DataLayoutMap = std::map<std::string, Teuchos::RCP<PHX::DataLayout>>;
 
   ///
@@ -64,14 +65,14 @@ public:
   void
   computeState(
       Workset workset,
-      FieldMap dep_fields,
+      DepFieldMap dep_fields,
       FieldMap eval_fields) = 0;
 
   virtual
   void
   computeStateParallel(
       Workset workset,
-      FieldMap dep_fields,
+      DepFieldMap dep_fields,
       FieldMap eval_fields) = 0;
 
   ///
@@ -80,7 +81,7 @@ public:
   void
   computeVolumeAverage(
       Workset workset,
-      FieldMap dep_fields,
+      DepFieldMap dep_fields,
       FieldMap eval_fields);
 
   ///
@@ -228,7 +229,7 @@ public:
   /// Integration point location set method
   ///
   void
-  setCoordVecField(PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> coord_vec)
+  setCoordVecField(PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim> coord_vec)
   {
     coord_vec_ = coord_vec;
   }
@@ -237,7 +238,7 @@ public:
   /// set the Temperature field
   ///
   void
-  setTemperatureField(PHX::MDField<ScalarT, Cell, QuadPoint> temperature)
+  setTemperatureField(PHX::MDField<const ScalarT, Cell, QuadPoint> temperature)
   {
     temperature_ = temperature;
   }
@@ -246,7 +247,7 @@ public:
   /// set the damage field
   ///
   void
-  setDamageField(PHX::MDField<ScalarT, Cell, QuadPoint> damage)
+  setDamageField(PHX::MDField<const ScalarT, Cell, QuadPoint> damage)
   {
     damage_ = damage;
   }
@@ -255,7 +256,7 @@ public:
   /// set the total concentration
   ///
   void
-  setTotalConcentrationField(PHX::MDField<ScalarT, Cell, QuadPoint> total_concentration)
+  setTotalConcentrationField(PHX::MDField<const ScalarT, Cell, QuadPoint> total_concentration)
   {
     total_concentration_ = total_concentration;
   }
@@ -264,7 +265,7 @@ public:
   /// set the total bubble density
   ///
   void
-  setTotalBubbleDensityField(PHX::MDField<ScalarT, Cell, QuadPoint> total_bubble_density)
+  setTotalBubbleDensityField(PHX::MDField<const ScalarT, Cell, QuadPoint> total_bubble_density)
   {
     total_bubble_density_ = total_bubble_density;
   }
@@ -273,7 +274,7 @@ public:
   /// set the bubble volume fraction
   ///
   void
-  setBubbleVolumeFractionField(PHX::MDField<ScalarT, Cell, QuadPoint> bubble_volume_fraction)
+  setBubbleVolumeFractionField(PHX::MDField<const ScalarT, Cell, QuadPoint> bubble_volume_fraction)
   {
     bubble_volume_fraction_ = bubble_volume_fraction;
   }
@@ -282,7 +283,7 @@ public:
   /// set the Weights field
   ///
   void
-  setWeightsField(PHX::MDField<MeshScalarT, Cell, QuadPoint> weights)
+  setWeightsField(PHX::MDField<const MeshScalarT, Cell, QuadPoint> weights)
   {
     weights_ = weights;
   }
@@ -291,7 +292,7 @@ public:
   /// set the J field
   ///
   void
-  setJField(PHX::MDField<ScalarT, Cell, QuadPoint> j)
+  setJField(PHX::MDField<const ScalarT, Cell, QuadPoint> j)
   {
     j_ = j;
   }
@@ -399,49 +400,49 @@ protected:
   ///
   /// optional integration point locations field
   ///
-  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim>
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim>
   coord_vec_;
 
   ///
   /// optional temperature field
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint>
+  PHX::MDField<const ScalarT, Cell, QuadPoint>
   temperature_;
 
   ///
   /// Optional total concentration field
   ///
-  PHX::MDField<ScalarT,Cell,QuadPoint>
+  PHX::MDField<const ScalarT,Cell,QuadPoint>
   total_concentration_;
 
   ///
   /// Optional total (He) bubble density field
   ///
-  PHX::MDField<ScalarT,Cell,QuadPoint>
+  PHX::MDField<const ScalarT,Cell,QuadPoint>
   total_bubble_density_;
 
   ///
   /// Optional bubble volume fraction field
   ///
-  PHX::MDField<ScalarT,Cell,QuadPoint>
+  PHX::MDField<const ScalarT,Cell,QuadPoint>
   bubble_volume_fraction_;
 
   ///
   /// optional damage field
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint>
+  PHX::MDField<const ScalarT, Cell, QuadPoint>
   damage_;
 
   ///
   /// optional weights field
   ///
-  PHX::MDField<MeshScalarT, Cell, QuadPoint>
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint>
   weights_;
 
   ///
   /// optional J field
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint>
+  PHX::MDField<const ScalarT, Cell, QuadPoint>
   j_;
 
   ///

@@ -68,19 +68,15 @@ ConstitutiveModelInterface(Teuchos::ParameterList& p,
   this->initializeModel(plist,dl);
 
   // construct the dependent fields
-  std::map<std::string, Teuchos::RCP<PHX::DataLayout>>
-  dependent_map = model_->getDependentFieldMap();
-  typename std::map<std::string, Teuchos::RCP<PHX::DataLayout>>::iterator miter;
-  for (miter = dependent_map.begin();
-      miter != dependent_map.end();
-      ++miter) {
-    Teuchos::RCP<PHX::MDField<ScalarT>> temp_field =
-        Teuchos::rcp(new PHX::MDField<ScalarT>(miter->first, miter->second));
-    dep_fields_map_.insert(std::make_pair(miter->first, temp_field));
+  auto dependent_map = model_->getDependentFieldMap();
+  for (auto pair : dependent_map) {
+    auto temp_field = Teuchos::rcp(
+        new PHX::MDField<const ScalarT>(pair.first, pair.second));
+    dep_fields_map_.insert(std::make_pair(pair.first, temp_field));
   }
 
   // register dependent fields
-  typename std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>::iterator it;
+  typename decltype(dep_fields_map_)::iterator it;
   for (it = dep_fields_map_.begin();
       it != dep_fields_map_.end();
       ++it) {
@@ -89,86 +85,71 @@ ConstitutiveModelInterface(Teuchos::ParameterList& p,
 
   // optionally deal with integration point locations
   if (model_->getIntegrationPointLocationFlag()) {
-    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> cv("Coord Vec",
-        dl->qp_vector);
-    coord_vec_ = cv;
+    coord_vec_ = decltype(coord_vec_)("Coord Vec", dl->qp_vector);
     this->addDependentField(coord_vec_);
   }
 
   // optionally deal with temperature
   if (p.isType<std::string>("Temperature Name")) {
     have_temperature_ = true;
-    PHX::MDField<ScalarT, Cell, QuadPoint> t(p.get<std::string>("Temperature Name"),
+    temperature_ = decltype(temperature_)(p.get<std::string>("Temperature Name"),
         dl->qp_scalar);
-    temperature_ = t;
     this->addDependentField(temperature_);
   }
 
   // optionally deal with damage
   if (p.isType<std::string>("Damage Name")) {
     have_damage_ = true;
-    PHX::MDField<ScalarT, Cell, QuadPoint> d(p.get<std::string>("Damage Name"),
+    damage_ = decltype(damage_)(p.get<std::string>("Damage Name"),
         dl->qp_scalar);
-    damage_ = d;
     this->addDependentField(damage_);
   }
 
   // optionally deal with total concentration
   if (p.isType<std::string>("Total Concentration Name")) {
     have_total_concentration_ = true;
-    PHX::MDField<ScalarT, Cell, QuadPoint> tc(p.get<std::string>("Total Concentration Name"),
-        dl->qp_scalar);
-    total_concentration_ = tc;
+    total_concentration_ = decltype(total_concentration_)(
+        p.get<std::string>("Total Concentration Name"), dl->qp_scalar);
     this->addDependentField(total_concentration_);
   }
 
   // optionally deal with total bubble density
   if (p.isType<std::string>("Total Bubble Density Name")) {
     have_total_bubble_density_ = true;
-    PHX::MDField<ScalarT, Cell, QuadPoint> tbd(p.get<std::string>("Total Bubble Density Name"),
-        dl->qp_scalar);
-    total_bubble_density_ = tbd;
+    total_bubble_density_ = decltype(total_bubble_density_)(
+        p.get<std::string>("Total Bubble Density Name"), dl->qp_scalar);
     this->addDependentField(total_bubble_density_);
   }
 
   // optionally deal with bubble volume fraction
   if (p.isType<std::string>("Bubble Volume Fraction Name")) {
     have_bubble_volume_fraction_ = true;
-    PHX::MDField<ScalarT, Cell, QuadPoint> bvf(p.get<std::string>("Bubble Volume Fraction Name"),
-        dl->qp_scalar);
-    bubble_volume_fraction_ = bvf;
+    bubble_volume_fraction_ = decltype(bubble_volume_fraction_)(
+        p.get<std::string>("Bubble Volume Fraction Name"), dl->qp_scalar);
     this->addDependentField(bubble_volume_fraction_);
   }
 
   // optional volume averaging needs integration weights and J
   if (volume_average_pressure_) {
-    PHX::MDField<MeshScalarT, Cell, QuadPoint> w(p.get<std::string>("Weights Name"),
+    weights_ = decltype(weights_)(p.get<std::string>("Weights Name"),
         dl->qp_scalar);
-    weights_ = w;
     this->addDependentField(weights_);
 
-    PHX::MDField<ScalarT, Cell, QuadPoint> j(p.get<std::string>("J Name"),
-        dl->qp_scalar);
-    j_ = j;
+    j_ = decltype(j_)(p.get<std::string>("J Name"), dl->qp_scalar);
     this->addDependentField(j_);
   }
 
   // construct the evaluated fields
-  std::map<std::string, Teuchos::RCP<PHX::DataLayout>>
-  eval_map = model_->getEvaluatedFieldMap();
-  for (miter = eval_map.begin();
-      miter != eval_map.end();
-      ++miter) {
-    Teuchos::RCP<PHX::MDField<ScalarT>> temp_field =
-        Teuchos::rcp(new PHX::MDField<ScalarT>(miter->first, miter->second));
-    eval_fields_map_.insert(std::make_pair(miter->first, temp_field));
+  auto eval_map = model_->getEvaluatedFieldMap();
+  for (auto pair : eval_map) {
+    auto temp_field =
+        Teuchos::rcp(new PHX::MDField<ScalarT>(pair.first, pair.second));
+    eval_fields_map_.insert(std::make_pair(pair.first, temp_field));
   }
 
   // register evaluated fields
-  for (it = eval_fields_map_.begin();
-      it != eval_fields_map_.end();
-      ++it) {
-    this->addEvaluatedField(*(it->second));
+  for (auto pair : eval_fields_map_) {
+    this->addEvaluatedField(*(pair.second));
   }
 
   this->setName("ConstitutiveModelInterface" + PHX::typeAsString<EvalT>());
@@ -185,7 +166,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   TEUCHOS_TEST_FOR_EXCEPTION(eval_fields_map_.size() == 0, std::logic_error,
       "something is wrong in the LCM::CMI");
   // dependent fields
-  typename std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>>::iterator it;
+  typename decltype(dep_fields_map_)::iterator it;
   for (it = dep_fields_map_.begin();
       it != dep_fields_map_.end();
       ++it) {
@@ -249,10 +230,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
 
   // evaluated fields
-  for (it = eval_fields_map_.begin();
-      it != eval_fields_map_.end();
-      ++it) {
-    this->utils.setFieldData(*(it->second), fm);
+  for (auto pair : eval_fields_map_) {
+    this->utils.setFieldData(*(pair.second), fm);
   }
 }
 

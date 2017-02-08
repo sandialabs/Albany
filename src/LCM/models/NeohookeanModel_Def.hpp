@@ -47,22 +47,22 @@ NeohookeanModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void NeohookeanModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
+    DepFieldMap dep_fields,
+    FieldMap eval_fields)
 {
   std::string F_string = (*field_name_map_)["F"];
   std::string J_string = (*field_name_map_)["J"];
   std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
 
   // extract dependent MDFields
-  PHX::MDField<ScalarT> def_grad = *dep_fields[F_string];
-  PHX::MDField<ScalarT> J = *dep_fields[J_string];
-  PHX::MDField<ScalarT> poissons_ratio = *dep_fields["Poissons Ratio"];
-  PHX::MDField<ScalarT> elastic_modulus = *dep_fields["Elastic Modulus"];
+  auto def_grad = *dep_fields[F_string];
+  auto J = *dep_fields[J_string];
+  auto poissons_ratio = *dep_fields["Poissons Ratio"];
+  auto elastic_modulus = *dep_fields["Elastic Modulus"];
   // extract evaluated MDFields
-  PHX::MDField<ScalarT> stress = *eval_fields[cauchy];
-  PHX::MDField<ScalarT> energy = *eval_fields["Energy"];
-  PHX::MDField<ScalarT> tangent = *eval_fields["Material Tangent"];
+  auto stress = *eval_fields[cauchy];
+  auto energy = *eval_fields["Energy"];
+  auto tangent = *eval_fields["Material Tangent"];
   ScalarT kappa;
   ScalarT mu, mubar;
   ScalarT Jm53, Jm23;

@@ -111,7 +111,12 @@ evaluateFields(typename Traits::EvalData workset)
 auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-   Kokkos::parallel_for ( workset.numCells,  VecInterpolation <  PHX::Device,  PHX::MDField<RealType,Cell,Node,QuadPoint>, PHX::MDField<ScalarT,Cell,Node,VecDim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> >(BF, val_node, val_qp, numQPs, numNodes, vecDim));
+   Kokkos::parallel_for ( workset.numCells,
+       VecInterpolation<PHX::Device,
+                        decltype(BF),
+                        decltype(val_node),
+                        decltype(val_qp) >(
+                          BF, val_node, val_qp, numQPs, numNodes, vecDim));
 
 #ifdef ALBANY_TIMER
 PHX::Device::fence();
@@ -235,7 +240,14 @@ evaluateFields(typename Traits::EvalData workset)
   }
 //Intrepid2::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
 #else
-  Kokkos::parallel_for ( workset.numCells,  VecInterpolationJacob <ScalarT,  PHX::Device,  PHX::MDField<RealType,Cell,Node,QuadPoint>, PHX::MDField<ScalarT,Cell,Node,VecDim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> >(BF, val_node, val_qp, numNodes, numQPs, vecDim, num_dof, offset));
+  Kokkos::parallel_for(workset.numCells,
+      VecInterpolationJacob<
+        ScalarT,
+        PHX::Device,
+        decltype(BF),
+        decltype(val_node),
+        decltype(val_qp)>(
+          BF, val_node, val_qp, numNodes, numQPs, vecDim, num_dof, offset));
 #endif
 
 }
@@ -300,7 +312,15 @@ evaluateFields(typename Traits::EvalData workset)
   }
 //Intrepid2::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
 #else
-  Kokkos::parallel_for ( workset.numCells,  VecInterpolationJacob <ScalarT,  PHX::Device,  PHX::MDField<RealType,Cell,Node,QuadPoint>, PHX::MDField<ScalarT,Cell,Node,VecDim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> >(BF, val_node, val_qp, numNodes, numQPs, vecDim, num_dof, offset));
+  Kokkos::parallel_for(
+      workset.numCells,
+      VecInterpolationJacob<
+        ScalarT,
+        PHX::Device,
+        decltype(BF),
+        decltype(val_node),
+        decltype(val_qp)>(
+          BF, val_node, val_qp, numNodes, numQPs, vecDim, num_dof, offset));
 #endif
 
 }
@@ -371,7 +391,14 @@ evaluateFields(typename Traits::EvalData workset)
  auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-  Kokkos::parallel_for ( workset.numCells,  VecInterpolationJacob <ScalarT,  PHX::Device,  PHX::MDField<RealType,Cell,Node,QuadPoint>, PHX::MDField<ScalarT,Cell,Node,VecDim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> >(BF, val_node, val_qp, numNodes, numQPs, vecDim, num_dof, offset));
+  Kokkos::parallel_for(workset.numCells,
+      VecInterpolationJacob<
+        ScalarT,
+        PHX::Device,
+        decltype(BF),
+        decltype(val_node),
+        decltype(val_qp) >(
+          BF, val_node, val_qp, numNodes, numQPs, vecDim, num_dof, offset));
 
 #ifdef ALBANY_TIMER
  PHX::Device::fence();
