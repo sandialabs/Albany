@@ -1155,49 +1155,23 @@ evalModelImpl(
   }
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  char sol_name[100];
-  sprintf(sol_name, "sol0_%i.mm", mm_counter_sol);
-  Tpetra_MatrixMarket_Writer::writeDenseFile(sol_name, *(xTs[0]));
-  if (num_models_ > 1) {
-    sprintf(sol_name, "sol1_%i.mm", mm_counter_sol);
-    Tpetra_MatrixMarket_Writer::writeDenseFile(sol_name, *(xTs[1]));
-  }
+  Albany::writeMatrixMarket(xTs, "sol", mm_counter_sol);
   ++mm_counter_sol;
 #endif
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  char res_name[100];
-  sprintf(res_name, "res0_%i.mm", mm_counter_res);
-  if (fTs_out[0] != Teuchos::null) {
-    Tpetra_MatrixMarket_Writer::writeDenseFile(res_name, *(fTs_out[0]));
-  }
-  if (num_models_ > 1 && fTs_out[1] != Teuchos::null) {
-    sprintf(res_name, "res1_%i.mm", mm_counter_res);
-    Tpetra_MatrixMarket_Writer::writeDenseFile(res_name, *(fTs_out[1]));
-  }
+  Albany::writeMatrixMarket(fTs_out, "res", mm_counter_res);
   ++mm_counter_res;
 #endif
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  char jac_name[100];
-  sprintf(jac_name, "jac0_%i.mm", mm_counter_jac);
-  Tpetra_MatrixMarket_Writer::writeSparseFile(jac_name, jacs_[0]);
-  if (num_models_ > 1) {
-    sprintf(jac_name, "jac1_%i.mm", mm_counter_jac);
-    Tpetra_MatrixMarket_Writer::writeSparseFile(jac_name, jacs_[1]);
-  }
+  Albany::writeMatrixMarket(jacs_, "jac", mm_counter_jac);
   ++mm_counter_jac;
 #endif
 
 #ifdef WRITE_TO_MATRIX_MARKET
-      char prec_name[100];
-      sprintf(prec_name, "pre0_%i.mm", mm_counter_pre);
-      Tpetra_MatrixMarket_Writer::writeSparseFile(prec_name, precs_[0]);
-      if (num_models_ > 1) {
-        sprintf(prec_name, "pre1_%i.mm", mm_counter_pre);
-        Tpetra_MatrixMarket_Writer::writeSparseFile(prec_name, precs_[1]);
-      }
-      ++mm_counter_pre;
+  Albany::writeMatrixMarket(precs_, "pre", mm_counter_pre);
+  ++mm_counter_pre;
 #endif
 //Responses / sensitivities
 //FIXME: need to implement DgDx, DgDp, etc for sensitivity analysis! 
