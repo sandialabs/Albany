@@ -107,6 +107,47 @@ namespace Albany {
   void printTpetraVector(std::ostream &os, const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > >& names,
          const Teuchos::RCP<const Tpetra_MultiVector>& vec);
 
+  /// Write to matrix market format
+  void writeMatrixMarket(
+      Teuchos::RCP<Tpetra_Vector const> const & x,
+      std::string const & prefix,
+      int const counter = -1);
+
+  void writeMatrixMarket(
+      Teuchos::RCP<Tpetra_CrsMatrix const> const & A,
+      std::string const & prefix,
+      int const counter = -1);
+
+  void writeMatrixMarket(
+      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> const & x,
+      std::string const & prefix,
+      int const counter = -1);
+
+  void writeMatrixMarket(
+      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix const>> const & A,
+      std::string const & prefix,
+      int const counter = -1);
+
+  void writeMatrixMarket(
+      Teuchos::RCP<Tpetra_Vector> const & x,
+      std::string const & prefix,
+      int const counter = -1);
+
+  void writeMatrixMarket(
+      Teuchos::RCP<Tpetra_CrsMatrix> const & A,
+      std::string const & prefix,
+      int const counter = -1);
+
+  void writeMatrixMarket(
+      Teuchos::Array<Teuchos::RCP<Tpetra_Vector>> const & x,
+      std::string const & prefix,
+      int const counter = -1);
+
+  void writeMatrixMarket(
+      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> const & A,
+      std::string const & prefix,
+      int const counter = -1);
+
   // Parses and stores command-line arguments
   struct CmdLineArgs {
     std::string xml_filename;
