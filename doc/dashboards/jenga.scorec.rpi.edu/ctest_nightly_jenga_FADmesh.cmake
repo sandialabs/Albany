@@ -9,11 +9,7 @@ SET(CTEST_TEST_TYPE Nightly)
 # What to build and test
 SET(BUILD_TRILINOS TRUE)
 SET(BUILD_ALB32 TRUE)
-SET(BUILD_ALB64 FALSE)
 
-SET(BUILD_TRILINOSCLANG FALSE)
-SET(BUILD_ALB64CLANG FALSE)
-SET(BUILD_ALBFUNCTOR FALSE)
 
 SET(DOWNLOAD TRUE)
 SET(CLEAN_BUILD TRUE)
@@ -145,8 +141,8 @@ ENDIF()
 IF(DOWNLOAD)
 
   # Update Trilinos
-  SET_PROPERTY (GLOBAL PROPERTY SubProject Trilinos)
-  SET_PROPERTY (GLOBAL PROPERTY Label Trilinos)
+  SET_PROPERTY (GLOBAL PROPERTY SubProject JengaTrilinos)
+  SET_PROPERTY (GLOBAL PROPERTY Label JengaTrilinos)
 
   ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos" RETURN_VALUE count)
   message("Found ${count} changed files")
@@ -162,8 +158,8 @@ IF(DOWNLOAD)
   ENDIF()
 
   # Update Albany branch
-  SET_PROPERTY (GLOBAL PROPERTY SubProject Albany-meshDependsOnParameters)
-  SET_PROPERTY (GLOBAL PROPERTY Label Albany-meshDependsOnParameters)
+  SET_PROPERTY (GLOBAL PROPERTY SubProject JengaAlbanyFADMesh)
+  SET_PROPERTY (GLOBAL PROPERTY Label JengaAlbanyFADMesh)
 
   set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
   CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE count)
@@ -321,8 +317,8 @@ SET(COMMON_CONFIGURE_OPTIONS
 IF(BUILD_TRILINOS)
 
   # Configure the Trilinos build
-  SET_PROPERTY (GLOBAL PROPERTY SubProject Trilinos)
-  SET_PROPERTY (GLOBAL PROPERTY Label Trilinos)
+  SET_PROPERTY (GLOBAL PROPERTY SubProject JengaTrilinos)
+  SET_PROPERTY (GLOBAL PROPERTY Label JengaTrilinos)
 
   SET(CONFIGURE_OPTIONS
     "-DTPL_ENABLE_MPI:BOOL=ON"
@@ -395,117 +391,26 @@ IF(BUILD_TRILINOS)
 
 ENDIF(BUILD_TRILINOS)
 
-IF(BUILD_TRILINOSCLANG)
-
-  # Configure the Trilinos build
-  SET_PROPERTY (GLOBAL PROPERTY SubProject TrilinosClang)
-  SET_PROPERTY (GLOBAL PROPERTY Label TrilinosClang)
-
-  SET(CONFIGURE_OPTIONS
-    "-DTPL_ENABLE_MPI:BOOL=ON"
-    "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/ompi-clang"
-    #
-    "-DTrilinos_ENABLE_CXX11:BOOL=ON"
-    "-DCMAKE_CXX_COMPILER:PATH=/users/ghansen/ompi-clang/bin/mpicxx"
-    "-DCMAKE_CXX_FLAGS:STRING='-O3 -w -DNDEBUG  ${extra_cxx_flags}'"
-    "-DCMAKE_C_COMPILER:PATH=/users/ghansen/ompi-clang/bin/mpicc"
-    "-DCMAKE_C_FLAGS:STRING='-O3 -w -DNDEBUG'"
-    "-DCMAKE_Fortran_COMPILER:PATH=/users/ghansen/ompi-clang/bin/mpifort"
-    "-DCMAKE_Fortran_FLAGS:STRING='-Os -w -DNDEBUG'"
-    "-DMDS_ID_TYPE:STRING='long long int'"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallClang"
-    "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
-    "-DTpetra_INST_FLOAT=OFF"
-    "-DTpetra_INST_INT_INT=ON"
-    "-DTpetra_INST_DOUBLE=ON"
-    "-DTpetra_INST_COMPLEX_FLOAT=OFF"
-    "-DTpetra_INST_COMPLEX_DOUBLE=OFF"
-    "-DTpetra_INST_INT_LONG=OFF"
-    "-DTpetra_INST_INT_UNSIGNED=OFF"
-    "-DTpetra_INST_INT_LONG_LONG=ON"
-    ${COMMON_CONFIGURE_OPTIONS}
-    )
-
-  if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuildClang")
-    FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TriBuildClang)
-  endif()
-
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildClang"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    )
-
-  if(HAD_ERROR)
-    message(FATAL_ERROR "Cannot configure TrilinosClang build!")
-  endif()
-
-  IF(CTEST_DO_SUBMIT)
-    CTEST_SUBMIT(PARTS Configure
-      RETURN_VALUE  HAD_ERROR
-      )
-
-    if(HAD_ERROR)
-      message( "Cannot submit TrilinosClang configure results!")
-    endif()
-  ENDIF()
-
-  #SET(CTEST_BUILD_TARGET all)
-  SET(CTEST_BUILD_TARGET install)
-
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-  set(ENV{LD_LIBRARY_PATH} "/users/ghansen/ompi-clang/lib:${INITIAL_LD_LIBRARY_PATH}")
-
-  CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildClang"
-    RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-    APPEND
-    )
-
-  if(HAD_ERROR)
-    message(FATAL_ERROR "Cannot build Trilinos with Clang!")
-  endif()
-
-  set(ENV{LD_LIBRARY_PATH} ${INITIAL_LD_LIBRARY_PATH})
-
-  IF(CTEST_DO_SUBMIT)
-    CTEST_SUBMIT(PARTS Build
-      RETURN_VALUE  HAD_ERROR
-      )
-
-    if(HAD_ERROR)
-      message( "Cannot submit TrilinoClang build results!")
-    endif()
-
-  ENDIF()
-
-ENDIF(BUILD_TRILINOSCLANG)
-
 IF (BUILD_ALB32)
   # Configure the Albany 32 Bit build 
   # Builds everything!
-  SET_PROPERTY (GLOBAL PROPERTY SubProject Albany32Bit-DynRankViewRefactor)
-  SET_PROPERTY (GLOBAL PROPERTY Label Albany32Bit-DynRankViewRefactor)
+  SET_PROPERTY (GLOBAL PROPERTY SubProject JengaAlbanyFADMesh)
+  SET_PROPERTY (GLOBAL PROPERTY Label JengaAlbanyFADMesh)
 
   SET(CONFIGURE_OPTIONS
     "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     "-DENABLE_FELIX:BOOL=ON"
-    "-D ENABLE_MESH_DEPENDS_ON_PARAMETERS:BOOL=ON"
-    "-D ENABLE_DEMO_PDES:BOOL=ON"
+    "-DENABLE_MESH_DEPENDS_ON_PARAMETERS:BOOL=ON"
+    "-DENABLE_DEMO_PDES:BOOL=ON"
     "-DENABLE_ALBANY_EPETRA_EXE:BOOL=ON"
-
-    #  "-DENABLE_CHECK_FPE:BOOL=ON"
     )
 
-  if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany-meshDependsOnParameters")
-    FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany-meshDependsOnParameters)
+  if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany32Bit")
+    FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany32Bit)
   endif()
 
   CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany-meshDependsOnParameters"
+    BUILD "${CTEST_BINARY_DIRECTORY}/Albany32Bit"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
@@ -533,7 +438,7 @@ IF (BUILD_ALB32)
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
   CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany-meshDependsOnParameters"
+    BUILD "${CTEST_BINARY_DIRECTORY}/Albany32Bit"
     RETURN_VALUE  HAD_ERROR
     NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
     APPEND
@@ -573,276 +478,3 @@ IF (BUILD_ALB32)
   ENDIF()
 
 ENDIF(BUILD_ALB32)
-
-# Configure the Albany build using GO = long
-IF (BUILD_ALB64)
-  SET_PROPERTY (GLOBAL PROPERTY SubProject Albany64Bit)
-  SET_PROPERTY (GLOBAL PROPERTY Label Albany64Bit)
-
-  SET(CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-    "-DENABLE_FELIX:BOOL=ON"
-    "-D ENABLE_MESH_DEPENDS_ON_PARAMETERS:BOOL=ON"
-    "-D ENABLE_DEMO_PDES:BOOL=ON"
-    "-DENABLE_64BIT_INT:BOOL=ON"
-    "-DENABLE_ALBANY_EPETRA_EXE:BOOL=ON"
-    )
-
-  if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany64Bit")
-    FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany64Bit)
-  endif()
-
-  # The 64 bit build 
-
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany64Bit"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    APPEND
-    )
-
-  # Read the CTestCustom.cmake file to turn off ignored tests
-
-  #CTEST_READ_CUSTOM_FILES("${CTEST_BINARY_DIRECTORY}/AlbanyT64")
-
-  if(HAD_ERROR)
-    message("Cannot configure Albany 64 bit build!")
-  endif()
-
-  IF(CTEST_DO_SUBMIT)
-    CTEST_SUBMIT(PARTS Configure
-      RETURN_VALUE  HAD_ERROR
-      )
-
-    if(HAD_ERROR)
-      message("Cannot submit Albany 64 bit configure results!")
-    endif()
-  ENDIF()
-
-  # Build Albany 64 bit
-
-  SET(CTEST_BUILD_TARGET all)
-
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-  CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany64Bit"
-    RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-    APPEND
-    )
-
-  if(HAD_ERROR)
-    message("Cannot build Albany 64 bit!")
-  endif()
-
-  IF(CTEST_DO_SUBMIT)
-    CTEST_SUBMIT(PARTS Build
-      RETURN_VALUE  HAD_ERROR
-      )
-
-    if(HAD_ERROR)
-      message("Cannot submit Albany 64 bit build results!")
-    endif()
-  ENDIF()
-
-  # Run Albany 64 bit tests
-
-  CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany64Bit"
-    #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-    #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-    #NUMBER_FAILED  TEST_NUM_FAILED
-    )
-
-  IF(CTEST_DO_SUBMIT)
-    CTEST_SUBMIT(PARTS Test
-      RETURN_VALUE  HAD_ERROR
-      )
-
-    if(HAD_ERROR)
-      message("Cannot submit Albany 64 bit test results!")
-    endif()
-  ENDIF()
-ENDIF(BUILD_ALB64)
-
-# Configure the Albany Clang build using GO = long
-IF (BUILD_ALB64CLANG)
-  SET_PROPERTY (GLOBAL PROPERTY SubProject Albany64BitClang)
-  SET_PROPERTY (GLOBAL PROPERTY Label Albany64BitClang)
-
-  SET(CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallClang"
-    "-DENABLE_64BIT_INT:BOOL=ON"
-    "-DENABLE_ALBANY_EPETRA_EXE:BOOL=ON"
-    "-DENABLE_FELIX:BOOL=ON"
-    "-D ENABLE_MESH_DEPENDS_ON_PARAMETERS:BOOL=ON"
-    "-D ENABLE_DEMO_PDES:BOOL=ON"
-    #  "-DENABLE_CHECK_FPE:BOOL=ON"
-    )
-
-  if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany64BitClang")
-    FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany64BitClang)
-  endif()
-
-  # The 64 bit build 
-
-  CTEST_CONFIGURE(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany64BitClang"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    APPEND
-    )
-
-  # Read the CTestCustom.cmake file to turn off ignored tests
-
-  #CTEST_READ_CUSTOM_FILES("${CTEST_BINARY_DIRECTORY}/AlbanyT64")
-
-  if(HAD_ERROR)
-    message(FATAL_ERROR "Cannot configure Albany 64 bit Clang build!")
-  endif()
-
-  IF(CTEST_DO_SUBMIT)
-    CTEST_SUBMIT(PARTS Configure
-      RETURN_VALUE  HAD_ERROR
-      )
-
-    if(HAD_ERROR)
-      message( "Cannot submit Albany 64 bit Clang configure results!")
-    endif()
-  ENDIF()
-
-  # Build Albany 64 bit
-
-  SET(CTEST_BUILD_TARGET all)
-
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-  CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany64BitClang"
-    RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-    APPEND
-    )
-
-  if(HAD_ERROR)
-    message(FATAL_ERROR "Cannot build Albany 64 bit with Clang!")
-  endif()
-
-  IF(CTEST_DO_SUBMIT)
-    CTEST_SUBMIT(PARTS Build
-      RETURN_VALUE  HAD_ERROR
-      )
-
-    if(HAD_ERROR)
-      message( "Cannot submit Albany 64 bit Clang build results!")
-    endif()
-  ENDIF()
-
-  # Run Albany 64 bit tests
-
-  CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany64BitClang"
-    #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-    #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-    #NUMBER_FAILED  TEST_NUM_FAILED
-    )
-
-  IF(CTEST_DO_SUBMIT)
-    CTEST_SUBMIT(PARTS Test
-      RETURN_VALUE  HAD_ERROR
-      )
-
-    if(HAD_ERROR)
-      message( "Cannot submit Albany 64 bit Clang test results!")
-    endif()
-  ENDIF()
-ENDIF()
-
-if (BUILD_ALBFUNCTOR)
-  # ALBANY_KOKKOS_UNDER_DEVELOPMENT build
-
-  set_property (GLOBAL PROPERTY SubProject AlbanyFunctorDev)
-  set_property (GLOBAL PROPERTY Label AlbanyFunctorDev)
-
-  set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-    "-DENABLE_FELIX:BOOL=ON"
-    "-D ENABLE_MESH_DEPENDS_ON_PARAMETERS:BOOL=ON"
-    "-D ENABLE_DEMO_PDES:BOOL=ON")
-  
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev)
-  endif ()
-
-  CTEST_CONFIGURE (
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
-    OPTIONS "${CONFIGURE_OPTIONS}"
-    RETURN_VALUE HAD_ERROR
-    APPEND)
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Configure RETURN_VALUE S_HAD_ERROR)
-    
-    if (S_HAD_ERROR)
-      message ("Cannot submit Albany configure results!")
-      set (BUILD_ALBFUNCTOR FALSE)
-    endif ()
-  endif ()
-
-  if (HAD_ERROR)
-    message ("Cannot configure Albany build!")
-    set (BUILD_ALBFUNCTOR FALSE)
-  endif ()
-
-  if (BUILD_ALBFUNCTOR)
-    set (CTEST_BUILD_TARGET all)
-
-    message ("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
-
-    CTEST_BUILD (
-      BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev"
-      RETURN_VALUE  HAD_ERROR
-      NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-      APPEND)
-
-    if (CTEST_DO_SUBMIT)
-      ctest_submit (PARTS Build
-        RETURN_VALUE  S_HAD_ERROR)
-
-      if (S_HAD_ERROR)
-        message ("Cannot submit Albany build results!")
-        set (BUILD_ALBFUNCTOR FALSE)
-      endif ()
-    endif ()
-
-    if (HAD_ERROR)
-      message ("Cannot build Albany!")
-      set (BUILD_ALBFUNCTOR FALSE)
-    endif ()
-
-    if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-      message ("Encountered build errors in Albany build.")
-      set (BUILD_ALBFUNCTOR FALSE)
-    endif ()
-  endif ()
-
-  if (BUILD_ALBFUNCTOR)
-    set (CTEST_TEST_TIMEOUT 400)
-    CTEST_TEST (
-      BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev"
-      RETURN_VALUE HAD_ERROR)
-
-    if (CTEST_DO_SUBMIT)
-      ctest_submit (PARTS Test
-        RETURN_VALUE S_HAD_ERROR)
-
-      if (S_HAD_ERROR)
-        message ("Cannot submit Albany test results!")
-      endif ()
-    endif ()
-  endif ()
-endif ()
