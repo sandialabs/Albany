@@ -200,11 +200,11 @@
 
                     <Parameter name="Method" 
                                type="string" 
-                               value="Adaptive"/>
+                               value="Constant"/>
 
                     <Parameter name="Initial Step Size" 
                                type="double" 
-                               value="0.001"/>
+                               value="0.005"/>
 
                     <Parameter name="Max Step Size" 
                                type="double" 

@@ -5,8 +5,7 @@ import lcm_postprocess
 from .lcm_exodus import open_file_exodus
 from .lcm_exodus import close_file_exodus
 import matplotlib.pyplot as plt
-# from ._core import stdout_redirected
-# from ._core import InputError
+from ._core import InputError
 
 
 def compute_force_displacement(
@@ -31,15 +30,22 @@ def compute_force_displacement(
     numNodes = file_input.num_nodes()
     numTimeSteps = file_input.num_times()
     nodeVariableNames = file_input.get_node_variable_names()
+
     displacement_label = 'displacement_' + direction
     if displacement_label not in nodeVariableNames:
+        displacement_label = 'disp_' + direction
+    if displacement_label not in nodeVariableNames:
         print "\nERROR:  Failed to extract " + displacement_label + " data\n"
+        print "Nodal variable names are:"
+        print "  " + "\n  ".join(nodeVariableNames)
         sys.exit(1)
     force_label = 'force_' + direction
     if force_label not in nodeVariableNames:
         force_label = 'resid_' + direction
         if force_label not in nodeVariableNames:
             print "\nERROR:  Failed to extract " + force_label + " data\n"
+            print "Nodal variable names are:"
+            print "  " + "\n  ".join(nodeVariableNames)
             sys.exit(1)
 
     # Read node sets
@@ -100,7 +106,7 @@ def compute_force_displacement(
         lg = plt.legend(loc = 4)
         lg.draw_frame(False)
         plt.tight_layout()
-        fig.savefig(outFileLabel + 'Force_Displacment' + '_' + str(reaction_node_set) + '_' + direction + '.pdf')
+        fig.savefig(outFileLabel + 'Force_Displacement' + '_' + str(reaction_node_set) + '_' + direction + '.pdf')
     
 
 

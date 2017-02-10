@@ -2,7 +2,7 @@ import ctypes
 import exodus
 import numpy as np
 import os
-# from lcm_postprocess._core import stdout_redirected
+from ._core import stdout_redirected
 import lcm_postprocess
 
 

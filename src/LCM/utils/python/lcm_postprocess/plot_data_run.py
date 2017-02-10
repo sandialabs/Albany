@@ -129,14 +129,16 @@ def plot_data_run(run = None, filename = None):
     ax.set_xlabel('Iteration')
     ax.set_ylabel(r'Increment Norm $\left\| \Delta u^{(n)} \right\|$')
 
-    string_legend = ['Step '+str(i+1) for i in range(run.num_steps)]
+    string_legend = [str(i + 1) for i in range(run.num_steps)]
 
     legend = ax.legend(
         string_legend,
         bbox_to_anchor = (1.05, 1), 
         loc = 2, 
         borderaxespad = 0.,
-        fontsize = 15)
+        fontsize = 15,
+        ncol = np.max(1, int(len(string_legend) / 15.)),
+        title = 'Step')
 
     canvas.print_figure(
         'norm_increment.pdf',
@@ -174,7 +176,9 @@ def plot_data_run(run = None, filename = None):
         bbox_to_anchor = (1.05, 1), 
         loc = 2, 
         borderaxespad = 0.,
-        fontsize = 15)
+        fontsize = 15,
+        ncol = np.max(1, int(len(string_legend) / 15.)),
+        title = 'Step')
 
     canvas.print_figure(
         'norm_residual.pdf',
@@ -212,7 +216,9 @@ def plot_data_run(run = None, filename = None):
         bbox_to_anchor = (1.05, 1), 
         loc = 2, 
         borderaxespad = 0.,
-        fontsize = 15)
+        fontsize = 15,
+        ncol = np.max(1, int(len(string_legend) / 15.)),
+        title = 'Step')
 
     canvas.print_figure(
         'norm_increment_convergence.pdf',
@@ -250,7 +256,9 @@ def plot_data_run(run = None, filename = None):
         bbox_to_anchor = (1.05, 1), 
         loc = 2, 
         borderaxespad = 0.,
-        fontsize = 15)
+        fontsize = 15,
+        ncol = np.max(1, int(len(string_legend) / 15.)),
+        title = 'Step')
 
     canvas.print_figure(
         'norm_residual_convergence.pdf',

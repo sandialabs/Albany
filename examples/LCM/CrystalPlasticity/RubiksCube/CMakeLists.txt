@@ -7,6 +7,14 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${SEACAS_EPU} ${CMAKE
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Implicit.xml
                ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Implicit.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Implicit_noScale.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Implicit_noScale.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Implicit_constScale.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Implicit_constScale.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Implicit_diagScale.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Implicit_diagScale.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Implicit_absRowSumScale.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Implicit_absRowSumScale.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Implicit_Materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Implicit_Materials.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Explicit.xml

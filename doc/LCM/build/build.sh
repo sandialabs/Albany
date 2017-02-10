@@ -281,7 +281,7 @@ case "$SCRIPT_NAME" in
 	    exit 1
 	fi
 	cd "$BUILD_DIR"
-	echo "REBUILDING $PACKAGE_STRING ..."
+	echo "BUILDING $PACKAGE_STRING ..."
 	echo "$LINE"
 	cd "$BUILD_DIR"
 	echo "WARNINGS AND ERRORS REDIRECTED TO $ERROR_LOG"

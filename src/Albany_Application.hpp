@@ -197,6 +197,11 @@ namespace Albany {
      * Set xdot to NULL for steady-state problems
      */
 #if defined(ALBANY_EPETRA)
+    double 
+    computeConditionNumber(Epetra_CrsMatrix& matrix); 
+#endif 
+
+#if defined(ALBANY_EPETRA)
     void computeGlobalResidual(const double current_time,
                                const Epetra_Vector* xdot,
                                const Epetra_Vector* xdotdot,
@@ -1007,6 +1012,24 @@ namespace Albany {
       return name;
     }
 
+    Teuchos::RCP<Tpetra_Vector const> const &
+    getX()
+    {
+      return x_;
+    }
+
+    Teuchos::RCP<Tpetra_Vector const> const &
+    getXdot()
+    {
+      return xdot_;
+    }
+
+    Teuchos::RCP<Tpetra_Vector const> const &
+    getXdotdot()
+    {
+      return xdotdot_;
+    }
+
   private:
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
     apps_;
@@ -1019,6 +1042,15 @@ namespace Albany {
 
     std::map<int, std::pair<std::string, std::string>>
     coupled_app_index_block_nodeset_names_map_;
+
+    Teuchos::RCP<Tpetra_Vector const>
+    x_{Teuchos::null};
+
+    Teuchos::RCP<Tpetra_Vector const>
+    xdot_{Teuchos::null};
+
+    Teuchos::RCP<Tpetra_Vector const>
+    xdotdot_{Teuchos::null};
 #endif //ALBANY_LCM
 
   protected:
@@ -1149,6 +1181,7 @@ namespace Albany {
     // residual to MatrixMarket file)
     int writeToMatrixMarketJac;
     int writeToMatrixMarketRes;
+    int computeJacCondNum; 
     //! Integer specifying whether user wants to write Jacobian and residual to Standard output (cout)
     int writeToCoutJac;
     int writeToCoutRes;

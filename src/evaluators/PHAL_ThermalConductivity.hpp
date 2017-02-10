@@ -90,7 +90,7 @@ private:
 
 #ifdef ALBANY_STOKHOS
   //! Exponential random field
-  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
+  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType> > exp_rf_kl;
 #endif
 
   //! Values of the random variables

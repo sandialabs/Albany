@@ -18,7 +18,6 @@
 #ifdef WRITE_TO_MATRIX_MARKET
 static int mm_counter_sol = 0;
 static int mm_counter_res = 0;
-static int mm_counter_pre = 0;
 static int mm_counter_jac = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
@@ -841,29 +840,17 @@ Albany::ModelEvaluatorT::evalModelImpl(
   }
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  char sol_name[100];
-  sprintf(sol_name, "sol_%i.mm", mm_counter_sol);
-  if (xT != Teuchos::null) {
-    Tpetra_MatrixMarket_Writer::writeDenseFile(sol_name, *(xT));
-  }
+  Albany::writeMatrixMarket(xT, "sol", mm_counter_sol);
   ++mm_counter_sol;
 #endif
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  char res_name[100];
-  sprintf(res_name, "res_%i.mm", mm_counter_res);
-  if (fT_out != Teuchos::null) {
-    Tpetra_MatrixMarket_Writer::writeDenseFile(res_name, *(fT_out));
-  }
+  Albany::writeMatrixMarket(fT_out, "res", mm_counter_res);
   ++mm_counter_res;
 #endif
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  char jac_name[100];
-  sprintf(jac_name, "jac_%i.mm", mm_counter_jac);
-  if (W_op_out_crsT != Teuchos::null) {
-    Tpetra_MatrixMarket_Writer::writeSparseFile(jac_name, W_op_out_crsT);
-  }
+  Albany::writeMatrixMarket(W_op_out_crsT, "jac", mm_counter_jac);
   ++mm_counter_jac;
 #endif
 }

@@ -57,6 +57,9 @@
 #include "PeridigmManager.hpp"
 #endif
 #endif
+#if defined(ALBANY_EPETRA)
+#include "AztecOO_ConditionNumber.h"
+#endif
 
 //#define WRITE_TO_MATRIX_MARKET
 
@@ -383,6 +386,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   RCP<Teuchos::ParameterList> debugParams =
     Teuchos::sublist(params, "Debug Output", true);
   writeToMatrixMarketJac = debugParams->get("Write Jacobian to MatrixMarket", 0);
+  computeJacCondNum = debugParams->get("Compute Jacobian Condition Number", 0);
   writeToMatrixMarketRes = debugParams->get("Write Residual to MatrixMarket", 0);
   writeToCoutJac = debugParams->get("Write Jacobian to Standard Output", 0);
   writeToCoutRes = debugParams->get("Write Residual to Standard Output", 0);
@@ -400,7 +404,10 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   if (writeToCoutRes < -1)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                   std::endl << "Error in Albany::Application constructor:  " <<
                                   "Invalid Parameter Write Residual to Standard Output.  Acceptable values are -1, 0, 1, 2, ... " << std::endl);}
-  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0 )
+  if (computeJacCondNum < -1)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                                  std::endl << "Error in Albany::Application constructor:  " <<
+                                  "Invalid Parameter Compute Jacobian Condition Number.  Acceptable values are -1, 0, 1, 2, ... " << std::endl);}
+  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0 || computeJacCondNum != 0)
      countJac = 0; //initiate counter that counts instances of Jacobian matrix to 0
   if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
      countRes = 0; //initiate counter that counts instances of Jacobian matrix to 0
@@ -1280,7 +1287,15 @@ computeGlobalResidualImplT(
 
   //scale residual by scaleVec_ if scaleBCdofs is on 
   if (scaleBCdofs == true) 
-    fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0); 
+    fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
+
+#if defined(ALBANY_LCM)
+  // Store pointers to solution and time derivatives.
+  // Needed for Schwarz coupling.
+  x_ = xT;
+  xdot_ = xdotT;
+  xdotdot_ = xdotdotT;
+#endif
 }
 
 #if defined(ALBANY_EPETRA)
@@ -1293,6 +1308,12 @@ computeGlobalResidual(const double current_time,
           const Teuchos::Array<ParamVec>& p,
           Epetra_Vector& f)
 {
+  if (scale != 1.0) {
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+                               Teuchos::Exceptions::InvalidParameter,
+                               "Error: Jacobian/Residual Scaling does not work with Albany executable! "
+                               << "To use scaling, please re-run with AlbanyT executable. \n");
+  }
   // Scatter x and xdot to the overlapped distribution
   solMgr->scatterX(x, xdot, xdotdot);
 
@@ -1404,6 +1425,25 @@ computeGlobalResidualT(
     countRes++;  //increment residual counter
   }
 }
+
+#if defined(ALBANY_EPETRA)
+double 
+Albany::Application::
+computeConditionNumber(Epetra_CrsMatrix& matrix)
+{
+  AztecOOConditionNumber conditionEstimator;
+  conditionEstimator.initialize(matrix);
+  int maxIters = 40000;
+  double tol = 1e-10;
+  int status = conditionEstimator.computeConditionNumber(maxIters, tol);
+  if (status!=0)
+    *out << "WARNING: AztecOO::ConditionNumber::computeConditionNumber returned "
+         << "non-zero status = " << status << ".  Condition number estimate may be wrong!\n";
+  double condest = conditionEstimator.getConditionNumber();
+  return condest; 
+}
+#endif
+
 
 void
 Albany::Application::
@@ -1656,6 +1696,12 @@ computeGlobalJacobian(const double alpha,
           Epetra_Vector* f,
           Epetra_CrsMatrix& jac)
 {
+  if (scale != 1.0) {
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+                               Teuchos::Exceptions::InvalidParameter,
+                               "Error: Jacobian/Residual Scaling does not work with Albany executable! "
+                               << "To use scaling, please re-run with AlbanyT executable. \n");
+  }
   // Scatter x and xdot to the overlapped distribution
   solMgr->scatterX(x, xdot, xdotdot);
 
@@ -1710,20 +1756,33 @@ computeGlobalJacobian(const double alpha,
   }
   if (writeToCoutJac != 0) { //If requesting writing Jacobian to standard output (cout)...
     if (writeToCoutJac == -1) { //cout jacobian every time it arises
-       std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
-       std::cout << jac << std::endl;
+       *out << "Global Jacobian #" << countJac << ":\n";
+       *out << jac << "\n";
     }
     else {
       if (countJac == writeToCoutJac) { //cout jacobian only at requested count#
-       std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
-       std::cout << jac << std::endl;
+       *out << "Global Jacobian #" << countJac << ":\n";
+       *out << jac << "\n";
       }
     }
   }
-  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0)
+  if (computeJacCondNum != 0) { //If requesting computation of condition number
+    if (computeJacCondNum == -1) { //cout jacobian condition # every time it arises
+       double condNum = computeConditionNumber(jac);  
+       *out << "Jacobian #" << countJac << " condition number = " << condNum << "\n";
+    }
+    else {
+      if (countJac == computeJacCondNum) { //cout jacobian condition # only at requested count#
+       double condNum = computeConditionNumber(jac);  
+       *out << "Jacobian #" << countJac << " condition number = " << condNum << "\n"; 
+      }
+    }
+  }
+  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0 || computeJacCondNum != 0 )
     countJac++; //increment Jacobian counter
 }
 #endif
+
 
 void
 Albany::Application::
@@ -1770,20 +1829,40 @@ computeGlobalJacobianT(
       }
     }
   }
-  Teuchos::RCP<Teuchos::FancyOStream> out = fancyOStream(rcpFromRef(std::cout));
   if (writeToCoutJac != 0) { //If requesting writing Jacobian to standard output (cout)...
     if (writeToCoutJac == -1) { //cout jacobian every time it arises
-      std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
+      *out << "Global Jacobian #" << countJac << ":\n";
       jacT.describe(*out, Teuchos::VERB_EXTREME);
     }
     else {
       if (countJac == writeToCoutJac) { //cout jacobian only at requested count#
-        std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
+        *out << "Global Jacobian #" << countJac << ":\n";
         jacT.describe(*out, Teuchos::VERB_EXTREME);
       }
     }
   }
-  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0) {
+  if (computeJacCondNum != 0) { //If requesting computation of condition number
+#if defined(ALBANY_EPETRA)
+    Teuchos::RCP<Epetra_CrsMatrix> jac = Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(Teuchos::rcpFromRef(jacT), comm); 
+    if (computeJacCondNum == -1) { //cout jacobian condition # every time it arises
+       double condNum = computeConditionNumber(*jac);  
+       *out << "Jacobian #" << countJac << " condition number = " << condNum << "\n";
+    }
+    else {
+      if (countJac == computeJacCondNum) { //cout jacobian condition # only at requested count#
+       double condNum = computeConditionNumber(*jac);  
+       *out << "Jacobian #" << countJac << " condition number = " << condNum << "\n"; 
+      }
+    }
+#else
+  TEUCHOS_TEST_FOR_EXCEPTION(true,
+            std::logic_error, "Error in Albany::Application: Compute Jacobian Condition Number debug option "
+            << " currently relies on an Epetra-based routine in AztecOO.  To use this option, please "
+            << " rebuild Albany with ENABLE_ALBANY_EPETRA_EXE=ON.  You will then be able to have Albany "  
+            << " output the Jacobian condition number when running either the Albany or AlbanyT executable.\n"); 
+#endif
+  }
+  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0 || computeJacCondNum != 0) {
     countJac++; //increment Jacobian counter
   }
 }
@@ -4545,37 +4624,8 @@ void Albany::Application::setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT)
   else if (scale_type == ABSROWSUM) {//absolute value of row sum scaling
     if (jacT == Teuchos::null) { scaleVec_->putScalar(1.0); }
     else {
-      //FIXME: create a tpetra implementation .
-#ifdef ALBANY_EPETRA
       scaleVec_->putScalar(0.0);
-      Teuchos::RCP<Epetra_Map> rowMap = Petra::TpetraMap_To_EpetraMap(jacT->getRowMap(), comm);
-      Teuchos::RCP<const Epetra_CrsGraph> graph = disc->getJacobianGraph();
-      Teuchos::RCP<Epetra_CrsMatrix> jacE = Teuchos::rcp(new Epetra_CrsMatrix(Copy, *graph));
-      jacE->FillComplete();
-      Petra::TpetraCrsMatrix_To_EpetraCrsMatrix(jacT, *jacE, comm);
-      Teuchos::RCP<Epetra_Vector> scaleVecE = Teuchos::rcp(new Epetra_Vector(*rowMap));
-      scaleVecE->PutScalar(0.0);
-      //TODO: ask Mark Hoemenn re: adding InvRowSums to Tpetra
-      jacE->InvRowSums(*scaleVecE);
-      scaleVec_ = Petra::EpetraVector_To_TpetraVectorNonConst(*scaleVecE, commT);
-#endif
-      /*
-      for (std::size_t i = 0; i < jacT->getNodeNumRows(); i++) {
-         Teuchos::ArrayView<const GO> indices;
-         Teuchos::ArrayView<const ST> values;
-         //get ith row of jacT
-         jacT->getLocalRowView(i, indices, values);
-         //calculate absolute value of row sum for ith row
-         ST rowsum = 0.0;
-         for (int j=0; j<indices.size(); j++) {
-           rowsum += abs(values[j]);
-         }
-         //take reciprocal of rowsum
-         ST rowsuminv = 1.0/rowsum;
-         GO globalRow = jacT->getRowMap()->getGlobalElement(i);
-         //put 1/rowsum into globalRow entry of scaleVec_
-         scaleVec_->replaceGlobalValue(globalRow, rowsuminv);
-      }*/
+      Albany::InvRowSum(scaleVec_, jacT);
     }
   }
 }

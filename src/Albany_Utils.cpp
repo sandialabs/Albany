@@ -250,6 +250,212 @@
 
   }
 
+  //
+  //
+  //
+  void
+  Albany::writeMatrixMarket(
+      Teuchos::RCP<Tpetra_Vector const> const & x,
+      std::string const & prefix,
+      int const counter)
+  {
+    if (x == Teuchos::null) return;
+
+    std::ostringstream
+    oss;
+
+    oss << prefix;
+
+    if (counter >= 0) {
+      oss << '-' << std::setfill('0') << std::setw(3) << counter;
+    }
+
+    oss << ".mm";
+
+    std::string const &
+    filename = oss.str();
+
+    Tpetra_MatrixMarket_Writer::writeDenseFile(filename, x);
+
+    return;
+  }
+
+  //
+  //
+  //
+  void
+  Albany::writeMatrixMarket(
+      Teuchos::RCP<Tpetra_CrsMatrix const> const & A,
+      std::string const & prefix,
+      int const counter)
+  {
+    if (A == Teuchos::null) return;
+
+    std::ostringstream
+    oss;
+
+    oss << prefix;
+
+    if (counter >= 0) {
+      oss << '-' << std::setfill('0') << std::setw(3) << counter;
+    }
+
+    oss << ".mm";
+
+    std::string const &
+    filename = oss.str();
+
+    Tpetra_MatrixMarket_Writer::writeSparseFile(filename, A);
+
+    return;
+  }
+
+  //
+  //
+  //
+  void
+  Albany::writeMatrixMarket(
+      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> const & x,
+      std::string const & prefix,
+      int const counter)
+  {
+    for (auto i = 0; i < x.size(); ++i) {
+      std::ostringstream
+      oss;
+
+      oss << prefix;
+
+      oss << '-' << std::setfill('0') << std::setw(2) << i;
+
+      std::string const &
+      new_prefix = oss.str();
+
+      writeMatrixMarket(x[i], new_prefix, counter);
+    }
+
+    return;
+  }
+
+  //
+  //
+  //
+  void
+  Albany::writeMatrixMarket(
+      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix const>> const & A,
+      std::string const & prefix,
+      int counter)
+  {
+    for (auto i = 0; i < A.size(); ++i) {
+      std::ostringstream
+      oss;
+
+      oss << prefix;
+
+      oss << '-' << std::setfill('0') << std::setw(2) << i;
+
+      std::string const &
+      new_prefix = oss.str();
+
+      writeMatrixMarket(A[i], new_prefix, counter);
+    }
+
+    return;
+  }
+
+  //
+  //
+  //
+  void
+  Albany::writeMatrixMarket(
+      Teuchos::RCP<Tpetra_Vector> const & x,
+      std::string const & prefix,
+      int const counter)
+  {
+    Teuchos::RCP<Tpetra_Vector const> const &
+    y = static_cast<Teuchos::RCP<Tpetra_Vector const> const &>(x);
+
+    writeMatrixMarket(y, prefix, counter);
+
+    return;
+  }
+
+  //
+  //
+  //
+  void
+  Albany::writeMatrixMarket(
+      Teuchos::RCP<Tpetra_CrsMatrix> const & A,
+      std::string const & prefix,
+      int const counter)
+  {
+    Teuchos::RCP<Tpetra_CrsMatrix const> const &
+    B = static_cast<Teuchos::RCP<Tpetra_CrsMatrix const> const &>(A);
+
+    writeMatrixMarket(B, prefix, counter);
+
+    return;
+  }
+
+  //
+  //
+  //
+  void
+  Albany::writeMatrixMarket(
+      Teuchos::Array<Teuchos::RCP<Tpetra_Vector>> const & x,
+      std::string const & prefix,
+      int const counter)
+  {
+    for (auto i = 0; i < x.size(); ++i) {
+
+      Teuchos::RCP<Tpetra_Vector const> const &
+      y = static_cast<Teuchos::RCP<Tpetra_Vector const> const &>(x[i]);
+
+      std::ostringstream
+      oss;
+
+      oss << prefix;
+
+      oss << '-' << std::setfill('0') << std::setw(2) << i;
+
+      std::string const &
+      new_prefix = oss.str();
+
+      writeMatrixMarket(y, new_prefix, counter);
+    }
+
+    return;
+  }
+
+  //
+  //
+  //
+  void
+  Albany::writeMatrixMarket(
+      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> const & A,
+      std::string const & prefix,
+      int counter)
+  {
+    for (auto i = 0; i < A.size(); ++i) {
+
+      Teuchos::RCP<Tpetra_CrsMatrix const> const &
+      B = static_cast<Teuchos::RCP<Tpetra_CrsMatrix const> const &>(A[i]);
+
+      std::ostringstream
+      oss;
+
+      oss << prefix;
+
+      oss << '-' << std::setfill('0') << std::setw(2) << i;
+
+      std::string const &
+      new_prefix = oss.str();
+
+      writeMatrixMarket(B, new_prefix, counter);
+    }
+
+    return;
+  }
+
   Albany::CmdLineArgs::CmdLineArgs(const std::string& default_xml_filename,
                                    const std::string& default_xml_filename2,
                                    const std::string& default_xml_filename3) :
