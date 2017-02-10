@@ -42,10 +42,11 @@ private:
   bool target_zero;
   RealType scaling;
 
-  PHX::MDField<ScalarT>                      computedField;
-  PHX::MDField<TargetScalarT>                targetField;
+  PHX::MDField<const ScalarT>                computedField;
+  PHX::MDField<const TargetScalarT>          targetField;
+  PHX::MDField<TargetScalarT>                targetFieldEval;
 
-  PHX::MDField<MeshScalarT,Cell,QuadPoint>      w_measure;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint>   w_measure;
 };
 
 // Some shortcut names

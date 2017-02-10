@@ -359,16 +359,16 @@ ResponseFieldValue(Teuchos::ParameterList& p,
   opZ = plist->get<bool>("Operate on z-component", true) && (numDims > 2);
 
   // setup operation field and return field (if it's a different field)
-  if(bOpFieldIsVector) {
-    PHX::MDField<ScalarT> f(opFieldName, vector_dl); opField = f; }
-  else {
-    PHX::MDField<ScalarT> f(opFieldName, scalar_dl); opField = f; }
+  if(bOpFieldIsVector)
+    opField = decltype(opField)(opFieldName, vector_dl);
+  else
+    opField = decltype(opField)(opFieldName, scalar_dl);
 
   if(!bReturnOpField) {
-    if(bRetFieldIsVector) {
-      PHX::MDField<ScalarT> f(retFieldName, vector_dl); retField = f; }
-    else {
-      PHX::MDField<ScalarT> f(retFieldName, scalar_dl); retField = f; }
+    if(bRetFieldIsVector)
+      retField = decltype(retField)(retFieldName, vector_dl);
+    else
+      retField = decltype(retField)(retFieldName, scalar_dl);
   }
 
   // add dependent fields

@@ -36,19 +36,19 @@ ResponseSquaredL2ErrorSideBase(Teuchos::ParameterList& p, const Teuchos::RCP<Alb
 
   fieldDim = getLayout(dl_side,rank,layout);
 
-  computedField = PHX::MDField<ScalarT>(fname,layout);
-  targetField   = PHX::MDField<TargetScalarT>(target_fname,layout);
-  w_measure     = PHX::MDField<RealType,Cell,Side,QuadPoint>("Weighted Measure " + sideSetName, dl_side->qp_scalar);
+  computedField = decltype(computedField)(fname,layout);
+  w_measure     = decltype(w_measure)("Weighted Measure " + sideSetName, dl_side->qp_scalar);
   scaling       = plist->get("Scaling",1.0);
 
   this->addDependentField(computedField);
-  if (target_fname=="ZERO")
-  {
+  if (target_fname=="ZERO") {
     target_zero = true;
-    this->addEvaluatedField(targetField);
-  }
-  else
+    targetFieldEval = decltype(targetFieldEval)(target_fname,layout);
+    this->addEvaluatedField(targetFieldEval);
+  } else {
+    targetField = decltype(targetField)(target_fname,layout);
     this->addDependentField(targetField);
+  }
   this->addDependentField(w_measure);
 
   this->setName("Response Squared L2 Error Side" + PHX::typeAsString<EvalT>());
@@ -74,12 +74,13 @@ void PHAL::ResponseSquaredL2ErrorSideBase<EvalT, Traits, TargetScalarT>::
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(computedField,fm);
-  this->utils.setFieldData(targetField,fm);
   this->utils.setFieldData(w_measure,fm);
 
-  if (target_zero)
-  {
-    PHAL::set(targetField, 0.0);
+  if (target_zero) {
+    this->utils.setFieldData(targetFieldEval,fm);
+    PHAL::set(targetFieldEval, 0.0);
+  } else {
+    this->utils.setFieldData(targetField,fm);
   }
 
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postRegistrationSetup(d, fm);

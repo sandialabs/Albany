@@ -47,7 +47,7 @@ ResponseCenterOfMass(Teuchos::ParameterList& p,
   opRegion  = Teuchos::rcp( new QCAD::MeshRegion<EvalT, Traits>("Coord Vec","Weights",*plist,materialDB,dl) );
   
   // setup field
-  PHX::MDField<ScalarT> f(fieldName, scalar_dl); field = f;
+  field = decltype(field)(fieldName, scalar_dl);
 
   // add dependent fields
   this->addDependentField(field);

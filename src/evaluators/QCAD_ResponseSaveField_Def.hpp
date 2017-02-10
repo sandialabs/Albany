@@ -92,8 +92,8 @@ ResponseSaveField(Teuchos::ParameterList& p,
   }
  
   //! add dependent fields
-  Teuchos::RCP<PHX::DataLayout>& field_dl = isVectorField ? vector_dl : scalar_dl;
-  PHX::MDField<ScalarT> f(fieldName, field_dl);  field = f;
+  auto& field_dl = isVectorField ? vector_dl : scalar_dl;
+  field = decltype(field)(fieldName, field_dl);
   this->addDependentField(field);
   this->addDependentField(weights);
 
