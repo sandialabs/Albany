@@ -1287,7 +1287,15 @@ computeGlobalResidualImplT(
 
   //scale residual by scaleVec_ if scaleBCdofs is on 
   if (scaleBCdofs == true) 
-    fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0); 
+    fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
+
+#if defined(ALBANY_LCM)
+  // Store pointers to solution and time derivatives.
+  // Needed for Schwarz coupling.
+  x_ = xT;
+  xdot_ = xdotT;
+  xdotdot_ = xdotdotT;
+#endif
 }
 
 #if defined(ALBANY_EPETRA)

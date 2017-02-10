@@ -16,10 +16,6 @@
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #endif
 
-//IKT, FIXME, 12/10/15: 
-//SG and MP specializations are not implemented when ALBANY_DTK is ON. 
-//This may never be needed... 
-
 //
 // Generic Template Code for Constructor and PostRegistrationSetup
 //

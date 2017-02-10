@@ -14,7 +14,7 @@
 #include "NOXSolverPrePostOperator.h"
 
 //uncomment the following to write stuff out to matrix market to debug
-//#define WRITE_TO_MATRIX_MARKET
+#define WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
 static int mm_counter_sol = 0;
