@@ -79,7 +79,7 @@ ResponseFieldIntegralT(Teuchos::ParameterList& p,
       "Invalid field type " << fieldType << ".  Support values are " << 
       "Scalar, Vector, and Tensor." << std::endl);
   }
-  field = PHX::MDField<ScalarT>(field_name, field_layout);
+  field = decltype(field)(field_name, field_layout);
   field_layout->dimensions(field_dims);
   field_rank = field_layout->rank();
   if (field_components.size() == 0) {

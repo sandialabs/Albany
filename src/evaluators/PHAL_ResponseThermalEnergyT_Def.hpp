@@ -53,7 +53,7 @@ ResponseThermalEnergyT(Teuchos::ParameterList& p,
       "Invalid field type " << fieldType << ".  Support value is " << 
       "Scalar." << std::endl);
   }
-  field = PHX::MDField<ScalarT>(field_name, field_layout);
+  field = decltype(field)(field_name, field_layout);
   field_layout->dimensions(field_dims);
 
   // coordinate dimensions
