@@ -232,7 +232,7 @@ evaluateFields(typename Traits::EvalData workset)
 #else
 #if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
   DOFGradInterpolationLevels_noDeriv_Policy range(
-                {0,0,0}, {(int)workset.numCells,(int)numQPs,(int)numLevels}, {256,1,1} );
+                {0,0,0}, {(int)workset.numCells,(int)numQPs,(int)numLevels}, {128,1,1} );
 #else 
   DOFGradInterpolationLevels_noDeriv_Policy range ({(int)workset.numCells,
                 (int)numQPs,(int)numLevels});

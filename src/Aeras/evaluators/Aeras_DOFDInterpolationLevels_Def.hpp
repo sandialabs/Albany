@@ -95,7 +95,7 @@ evaluateFields(typename Traits::EvalData workset)
 #else
 #if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
   DOFDInterpolationLevels_Policy range(
-                {0,0,0}, {(int)workset.numCells,(int)numNodes,(int)numLevels}, {256,1,1} );
+                {0,0,0}, {(int)workset.numCells,(int)numNodes,(int)numLevels}, {128,1,1} );
 #else
   DOFDInterpolationLevels_Policy  range ({(int)workset.numCells,(int)numQPs,(int)numLevels});
 #endif

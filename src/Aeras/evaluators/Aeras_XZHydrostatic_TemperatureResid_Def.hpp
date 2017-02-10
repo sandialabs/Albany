@@ -222,7 +222,7 @@ evaluateFields(typename Traits::EvalData workset)
     if( !pureAdvection ) {
 #if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
        XZHydrostatic_TemperatureResid_Policy range(
-                {0,0,0}, {(int)workset.numCells,(int)numNodes,(int)numLevels}, {256,1,1} );
+                {0,0,0}, {(int)workset.numCells,(int)numNodes,(int)numLevels}, {128,1,1} );
 #else
        XZHydrostatic_TemperatureResid_Policy  range(
 		{(int)workset.numCells,(int)numNodes,(int)numLevels});
