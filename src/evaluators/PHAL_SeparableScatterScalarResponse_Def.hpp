@@ -34,6 +34,8 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(local_response,fm);
+  if (!this->stand_alone)
+    this->utils.setFieldData(local_response_eval,fm);
 }
 
 template<typename EvalT, typename Traits>
@@ -41,16 +43,18 @@ void
 SeparableScatterScalarResponseBase<EvalT, Traits>::
 setup(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
 {
-  bool stand_alone = p.get<bool>("Stand-alone Evaluator");
+  stand_alone = p.get<bool>("Stand-alone Evaluator");
 
   // Setup fields we require
-  PHX::Tag<ScalarT> local_response_tag =
+  auto local_response_tag =
     p.get<PHX::Tag<ScalarT> >("Local Response Field Tag");
-  local_response = PHX::MDField<ScalarT>(local_response_tag);
-  if (stand_alone)
+  local_response = decltype(local_response)(local_response_tag);
+  if (stand_alone) {
     this->addDependentField(local_response);
-  else
-    this->addEvaluatedField(local_response);
+  } else {
+    local_response_eval = decltype(local_response_eval)(local_response_tag);
+    this->addEvaluatedField(local_response_eval);
+  }
 }
 
 // **********************************************************************

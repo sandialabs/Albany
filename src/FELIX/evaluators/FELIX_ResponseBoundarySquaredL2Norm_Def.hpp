@@ -126,8 +126,8 @@ void FELIX::ResponseBoundarySquaredL2Norm<EvalT, Traits>::evaluateFields(typenam
         //using trapezoidal rule to get diagonal mass matrix
         t += std::pow(solution(cell,side,inode),2)* trapezoid_weight;
       }
-      this->local_response(cell, 0) += t*scaling;
-      this->global_response(0) += t*scaling;
+      this->local_response_eval(cell, 0) += t*scaling;
+      this->global_response_eval(0) += t*scaling;
       p_reg += t*scaling;
     }
   }
@@ -142,7 +142,7 @@ void FELIX::ResponseBoundarySquaredL2Norm<EvalT, Traits>::postEvaluate(typename 
 
   //amb Deal with op[], pointers, and reduceAll.
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
-                           this->global_response);
+                           this->global_response_eval);
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_reg);
   reg = p_reg;
 

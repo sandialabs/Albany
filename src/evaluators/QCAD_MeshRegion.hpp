@@ -69,7 +69,7 @@ namespace QCAD {
     bool bRestrictToLevelSet;
     std::string levelSetFieldname;              
     double levelSetFieldMin, levelSetFieldMax;
-    PHX::MDField<ScalarT> levelSetField;    
+    PHX::MDField<const ScalarT> levelSetField;    
 
     //! Material database
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;

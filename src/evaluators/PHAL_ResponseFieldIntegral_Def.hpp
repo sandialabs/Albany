@@ -78,7 +78,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
       "Invalid field type " << fieldType << ".  Support values are " << 
       "Scalar, Vector, and Tensor." << std::endl);
   }
-  field = PHX::MDField<ScalarT>(field_name, field_layout);
+  field = decltype(field)(field_name, field_layout);
   field_layout->dimensions(field_dims);
   field_rank = field_layout->rank();
   if (field_components.size() == 0) {
@@ -198,22 +198,22 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp) {
 	if (field_rank == 2) {
 	  s = field(cell,qp) * weights(cell,qp) * scaling;
-	  this->local_response(cell,0) += s;
-	  this->global_response(0) += s;
+	  this->local_response_eval(cell,0) += s;
+	  this->global_response_eval(0) += s;
 	}
 	else if (field_rank == 3) {
 	  for (std::size_t dim=0; dim < field_components.size(); ++dim) {
 	    s = field(cell,qp,field_components[dim]) * weights(cell,qp) * scaling;
-	    this->local_response(cell,dim) += s;
-	    this->global_response(dim) += s;
+	    this->local_response_eval(cell,dim) += s;
+	    this->global_response_eval(dim) += s;
 	  }
 	}
 	else if (field_rank == 4) {
 	  for (std::size_t dim1=0; dim1 < field_dims[2]; ++dim1) {
 	    for (std::size_t dim2=0; dim2 < field_dims[3]; ++dim2) {
 	      s = field(cell,qp,dim1,dim2) * weights(cell,qp) * scaling;
-	      this->local_response(cell,dim1,dim2) += s;
-	      this->global_response(dim1,dim2) += s;
+	      this->local_response_eval(cell,dim1,dim2) += s;
+	      this->global_response_eval(dim1,dim2) += s;
 	    }
 	  }
 	}

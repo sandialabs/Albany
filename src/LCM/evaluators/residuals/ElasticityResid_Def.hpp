@@ -40,24 +40,21 @@ ElasticityResid(Teuchos::ParameterList& p) :
       hasDensity = true;
       Teuchos::RCP<PHX::DataLayout> cell_scalar_dl =
 	p.get< Teuchos::RCP<PHX::DataLayout>>("Cell Scalar Data Layout");
-      PHX::MDField<ScalarT,Cell> density_tmp
+      density = decltype(density)
 	(p.get<std::string>("Density Name"), cell_scalar_dl);
-      density = density_tmp;
       this->addDependentField(density);
     }
 
     Teuchos::RCP<PHX::DataLayout> node_qp_scalar_dl =
       p.get< Teuchos::RCP<PHX::DataLayout>>("Node QP Scalar Data Layout");
-    PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF_tmp
+    wBF = decltype(wBF)
       (p.get<std::string>("Weighted BF Name"), node_qp_scalar_dl);
-    wBF = wBF_tmp;
     this->addDependentField(wBF);
 
     Teuchos::RCP<PHX::DataLayout> vector_dl =
       p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> uDotDot_tmp
+    uDotDot = decltype(uDotDot)
       (p.get<std::string>("Time Dependent Variable Name"), vector_dl);
-    uDotDot = uDotDot_tmp;
     this->addDependentField(uDotDot);
   }
 

@@ -150,7 +150,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
 template<typename EvalT, typename Traits>
 void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::preEvaluate(typename Traits::PreEvalData workset)
 {
-  PHAL::set(this->global_response, 0.0);
+  PHAL::set(this->global_response_eval, 0.0);
 
   p_resp = p_reg = p_reg_stiffening =0;
 
@@ -166,7 +166,7 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
                               "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
   // Zero out local response
-  PHAL::set(this->local_response, 0.0);
+  PHAL::set(this->local_response_eval, 0.0);
 
   // ----------------- Surface side ---------------- //
 
@@ -192,8 +192,8 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
         t += data * w_measure_surface(cell,side,qp);
       }
 
-      this->local_response(cell, 0) += t*scaling;
-      this->global_response(0) += t*scaling;
+      this->local_response_eval(cell, 0) += t*scaling;
+      this->global_response_eval(0) += t*scaling;
       p_resp += t*scaling;
     }
   }
@@ -217,8 +217,8 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
 
         t += sum * w_measure_basal(cell,side,qp);
       }
-      this->local_response(cell, 0) += t*scaling*alpha;//*50.0;
-      this->global_response(0) += t*scaling*alpha;//*50.0;
+      this->local_response_eval(cell, 0) += t*scaling*alpha;//*50.0;
+      this->global_response_eval(0) += t*scaling*alpha;//*50.0;
       p_reg += t*scaling*alpha;
     }
   }
@@ -241,8 +241,8 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
 
         t += sum * w_measure_basal(cell,side,qp);
       }
-      this->local_response(cell, 0) += t*scaling*alpha_stiffening;//*50.0;
-      this->global_response(0) += t*scaling*alpha_stiffening;//*50.0;
+      this->local_response_eval(cell, 0) += t*scaling*alpha_stiffening;//*50.0;
+      this->global_response_eval(0) += t*scaling*alpha_stiffening;//*50.0;
       p_reg_stiffening += t*scaling*alpha_stiffening;
     }
   }
@@ -257,7 +257,7 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typenam
 
   //amb Deal with op[], pointers, and reduceAll.
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
-                           this->global_response);
+                           this->global_response_eval);
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_resp);
   resp = p_resp;
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_reg);
