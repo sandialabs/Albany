@@ -461,7 +461,7 @@ IF (BUILD_ALB32)
   # Run Albany tests
 
   CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany-meshDependsOnParameters"
+    BUILD "${CTEST_BINARY_DIRECTORY}/Albany32Bit"
     #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
     #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
     #NUMBER_FAILED  TEST_NUM_FAILED
