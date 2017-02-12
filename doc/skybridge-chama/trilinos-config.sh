@@ -14,12 +14,9 @@ cmake \
  -D BUILD_SHARED_LIBS:BOOL=ON \
  -D CMAKE_BUILD_TYPE:STRING="RELEASE" \
 \
- -D TPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so.3 \
- -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so.3 \
+ -D TPL_BLAS_LIBRARIES:FILEPATH=/usr/lib64/libblas.so \
+ -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/liblapack.so \
 \
- -D CMAKE_CXX_COMPILER:FILEPATH=$MPI_BASE_DIR/bin/mpicxx \
- -D CMAKE_C_COMPILER:FILEPATH=$MPI_BASE_DIR/bin/mpicc \
- -D CMAKE_Fortran_COMPILER:FILEPATH=$MPI_BASE_DIR/bin/mpif90 \
  -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR \
  -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 \
@@ -31,13 +28,14 @@ cmake \
  -D TPL_ENABLE_Boost:BOOL=ON \
  -D TPL_ENABLE_BoostLib:BOOL=ON \
  -D BoostLib_INCLUDE_DIRS:FILEPATH=$BOOST_DIR/include \
+ -D BoostLib_LIBRARY_DIRS:FILEPATH=$BOOST_DIR/lib \
  -D Boost_INCLUDE_DIRS:FILEPATH=$BOOST_DIR/include \
  -D Boost_LIBRARY_DIRS:PATH=$BOOST_DIR/lib \
- -D BoostLib_LIBRARY_DIRS:FILEPATH=$BOOST_DIR/lib \
 \
  -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
  -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
  -D Trilinos_ENABLE_CXX11:BOOL=ON \
+ -D MPI_EXEC=mpiexec \
  -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
  -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=OFF \
  -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
@@ -83,17 +81,22 @@ cmake \
  -D Trilinos_ENABLE_Anasazi:BOOL=ON \
  -D Trilinos_ENABLE_AztecOO:BOOL=ON \
  -D Trilinos_ENABLE_Belos:BOOL=ON \
+ -D Teuchos_ENABLE_COMPLEX:BOOL=OFF \
+ -D Teuchos_ENABLE_LONG_LONG_INT:BOOL=ON \
  -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
  -D Trilinos_ENABLE_Epetra:BOOL=ON \
  -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
  -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
  -D Trilinos_ENABLE_Ifpack:BOOL=ON \
+ -D Trilinos_ENABLE_Intrepid:BOOL=ON \
  -D Trilinos_ENABLE_Intrepid2:BOOL=ON \
+ -D Trilinos_ENABLE_Isorropia:BOOL=ON\
  -D Trilinos_ENABLE_Kokkos:BOOL=ON \
  -D Trilinos_ENABLE_KokkosAlgorithms:BOOL=ON \
  -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
  -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
  -D Trilinos_ENABLE_KokkosExample:BOOL=OFF \
+ -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
  -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
  -D Trilinos_ENABLE_ML:BOOL=ON \
  -D Trilinos_ENABLE_OpenMP:BOOL=OFF \
@@ -109,6 +112,8 @@ cmake \
  -D Trilinos_ENABLE_STKIO:BOOL=ON \
  -D Trilinos_ENABLE_STKMesh:BOOL=ON \
  -D Trilinos_ENABLE_Sacado:BOOL=ON \
+ -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
+ -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
  -D Trilinos_ENABLE_Shards:BOOL=ON \
  -D Trilinos_ENABLE_Stokhos:BOOL=ON \
  -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
@@ -118,8 +123,14 @@ cmake \
  -D Trilinos_ENABLE_ThreadPool:BOOL=ON \
  -D Trilinos_ENABLE_Thyra:BOOL=ON \
  -D Trilinos_ENABLE_Tpetra:BOOL=ON \
+ -D Trilinos_ENABLE_TrilinosCouplings:BOOL=ON \
+ -D Trilinos_ENABLE_TriKota:BOOL=ON \
  -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
  -D Trilinos_ENABLE_Zoltan:BOOL=ON \
+ -D ZOLTAN_BUILD_ZFDRIVE:BOOL=OFF \
+ -D Zoltan2_ENABLE_Experimental:BOOL=ON\
+ -D Trilinos_ENABLE_DEBUG:BOOL=OFF \
+ -D Trilinos_ENABLE_SECONDARY_STABLE_CODE:BOOL=ON \
 \
  -D Trilinos_EXTRA_REPOSITORIES:STRING="DataTransferKit" \
 \
@@ -129,10 +140,6 @@ cmake \
  -D DataTransferKit_ENABLE_EXAMPLES:BOOL=OFF \
  -D TPL_ENABLE_MOAB:BOOL=OFF \
  -D TPL_ENABLE_Libmesh:BOOL=OFF \
-\
- -D TPL_ENABLE_BoostAlbLib:BOOL=ON \
- -D BoostAlbLib_INCLUDE_DIRS:PATH=$BOOST_DIR/include \
- -D BoostAlbLib_LIBRARY_DIRS:PATH=$BOOST_DIR/lib \
 \
  -D HDF5_INCLUDE_DIRS:PATH="${HDFDIR}/include" \
  -D TPL_HDF5_LIBRARIES:PATH="${HDFDIR}/lib/libhdf5_hl.so;${HDFDIR}/lib/libhdf5.so;${HDFDIR}/lib/libz.so" \
