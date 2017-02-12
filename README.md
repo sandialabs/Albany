@@ -1,4 +1,4 @@
-<img src="https://github.com/gahansen/Albany/wiki/images/albany5.png" width="100">
+<img src="https://github.com/gahansen/Albany/wiki/images/albany5.png" width="300">
 
 # Albany
 
