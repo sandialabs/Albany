@@ -325,11 +325,11 @@ IF(BUILD_TRILINOS)
     "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/ompi-gcc"
     #
     "-DCMAKE_CXX_COMPILER:PATH=/users/ghansen/ompi-gcc/bin/mpicxx"
-    "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -w -DNDEBUG ${extra_cxx_flags}'"
+    "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -DNDEBUG ${extra_cxx_flags}'"
     "-DCMAKE_C_COMPILER:PATH=/users/ghansen/ompi-gcc/bin/mpicc"
-    "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
+    "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
     "-DCMAKE_Fortran_COMPILER:PATH=/users/ghansen/ompi-gcc/bin/mpifort"
-    "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
+    "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     ${COMMON_CONFIGURE_OPTIONS}
     )
