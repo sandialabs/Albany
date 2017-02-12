@@ -508,8 +508,8 @@
         << " -target-pid " << my_os_pid << " &";
     if (p_rank == 0)
       std::cout << cmd.str() << std::endl;
-    system(cmd.str().c_str());
-    system("sleep 10");
+    safe_system(cmd.str().c_str());
+    safe_system("sleep 10");
   }
 
   void Albany::do_stack_trace() {
