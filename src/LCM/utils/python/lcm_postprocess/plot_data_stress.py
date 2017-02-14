@@ -61,7 +61,8 @@ def plot_data_stress(domain = None, filename = None):
                 bbox_to_anchor = (1.05, 1), 
                 loc = 2, 
                 borderaxespad = 0.,
-                fontsize = 15)
+                fontsize = 15,
+                ncol = np.max([1, int(len(string_legend) / 15.)]))
 
             plt.savefig(
                 'stress_strain_'+ str(dim_i + 1) + str(dim_j + 1) +'.pdf',

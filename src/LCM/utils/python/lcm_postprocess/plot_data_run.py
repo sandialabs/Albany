@@ -137,7 +137,7 @@ def plot_data_run(run = None, filename = None):
         loc = 2, 
         borderaxespad = 0.,
         fontsize = 15,
-        ncol = np.max(1, int(len(string_legend) / 15.)),
+        ncol = np.max([1, int(len(string_legend) / 15.)]),
         title = 'Step')
 
     canvas.print_figure(
@@ -177,7 +177,7 @@ def plot_data_run(run = None, filename = None):
         loc = 2, 
         borderaxespad = 0.,
         fontsize = 15,
-        ncol = np.max(1, int(len(string_legend) / 15.)),
+        ncol = np.max([1, int(len(string_legend) / 15.)]),
         title = 'Step')
 
     canvas.print_figure(
@@ -217,7 +217,7 @@ def plot_data_run(run = None, filename = None):
         loc = 2, 
         borderaxespad = 0.,
         fontsize = 15,
-        ncol = np.max(1, int(len(string_legend) / 15.)),
+        ncol = np.max([1, int(len(string_legend) / 15.)]),
         title = 'Step')
 
     canvas.print_figure(
@@ -257,7 +257,7 @@ def plot_data_run(run = None, filename = None):
         loc = 2, 
         borderaxespad = 0.,
         fontsize = 15,
-        ncol = np.max(1, int(len(string_legend) / 15.)),
+        ncol = np.max([1, int(len(string_legend) / 15.)]),
         title = 'Step')
 
     canvas.print_figure(
