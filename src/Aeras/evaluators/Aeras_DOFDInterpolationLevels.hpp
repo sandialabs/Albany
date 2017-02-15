@@ -71,8 +71,8 @@ public:
 #else
   using DOFDInterpolationLevels_Policy =
         Kokkos::Experimental::MDRangePolicy<
-        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Left,
-        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int> >;
+        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Right,
+        Kokkos::Experimental::Iterate::Right >, Kokkos::IndexType<int> >;
 #endif
 
   KOKKOS_INLINE_FUNCTION
