@@ -60,10 +60,6 @@ cp -r /home/ikalash/nightlyAlbanyTests/DataTransferKit-2.0.0 DataTransferKit
 #cd DataTransferKit
 #git clone git@github.com:ORNL-CEES/DTKData.git
 echo; echo "   ...finished DTK copy into Trilinos."
-echo; echo "   Starting tempus checkout..." 
-cd $TRILDIR 
-git clone software.sandia.gov:/git/tempus
-echo; echo "   ...finished tempus checkout."
 
 
 
