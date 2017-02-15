@@ -2,11 +2,11 @@
 
 module purge
 module load gnu/4.9.2
-module load openmpi-gnu/1.8
+module load openmpi-gnu/1.10
 module load python/2.7
 
 # Building Trilinos, add environmental variable and path
-export REMOTE=/gscratch/jwfoulk/albany
+export REMOTE=/ascldap/users/jwfoulk/albany
 export LD_LIBRARY_PATH=/opt/python-2.7/lib:$LD_LIBRARY_PATH
 
 ## Using Trilinos

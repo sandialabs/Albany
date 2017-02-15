@@ -155,6 +155,7 @@ echo "using mpi : /opt/openmpi-1.8-gnu/bin/mpicxx ;" >> ./tools/build/user-confi
 ---
 cd $REMOTE/src
 git clone git@github.com:trilinos/Trilinos.git
+git checkout master
 ---
 
 ---
@@ -178,9 +179,8 @@ make install
 6. Albany
 
 ---
-cd /ascldap/users/$USER/src
+cd $REMOTE/src
 git clone git@github.com:gahansen/Albany.git
-cd Albany
 ---
 
 Configure the Albany build
@@ -202,10 +202,13 @@ make -j 8
 
 7. DTK
 
-Pull DTK from repository
+Download DTK from website
 
-cd $REMOTE/src/Trilinos
-git clone git@github.com:ORNL-CEES/DataTransferKit.git
+http://ornl-cees.github.io/DataTransferKit/download/
+
+put in $REMOTE/src/Trilinos
+
+under the directory DataTransferKit
 
 Configure DTK
 

@@ -1,3 +1,5 @@
+<img src="https://github.com/gahansen/Albany/wiki/images/albany5.png" width="300">
+
 # Albany
 
 Albany is an implicit, unstructured grid, finite element code for the solution and analysis of multiphysics

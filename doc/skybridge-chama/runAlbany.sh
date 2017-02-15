@@ -7,8 +7,8 @@ module load python/2.7
 
 # Declare path to repository (REMOTE), dated build (REMOTE_EXEC), 
 # and robustness suite (in SolidMechanicsExamples)
-export REMOTE=/gscratch/jwfoulk/albany
-export REMOTE_EXEC=/gscratch/jwfoulk/albany
+export REMOTE=/ascldap/users/jwfoulk/albany
+export REMOTE_EXEC=/ascldap/users/jwfoulk/albany
 export ROBUSTNESS_SUITE=/ascldap/users/jwfoulk/SolidMechanicsExamples/LCM/CrystalPlasticity/robustnessTests
 
 # needed path for python
