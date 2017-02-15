@@ -43,8 +43,7 @@ setup(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
   // Setup fields we require
   auto local_response_tag =
     p.get<PHX::Tag<ScalarT> >("Local Response Field Tag");
-  local_response = decltype(local_response)(
-      local_response_tag.name(), local_response_tag.dataLayout());
+  local_response = decltype(local_response)(local_response_tag);
   if (stand_alone) {
     this->addDependentField(local_response);
   } else {

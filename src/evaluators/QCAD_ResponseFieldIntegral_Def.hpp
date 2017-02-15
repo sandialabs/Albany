@@ -171,7 +171,7 @@ void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
   // Zero out global response
-  PHAL::set(this->global_response, 0.0);  
+  PHAL::set(this->global_response_eval, 0.0);  
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -183,7 +183,7 @@ void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
-  PHAL::set(this->local_response, 0.0);
+  PHAL::set(this->local_response_eval, 0.0);
 
   if(opRegion->elementBlockIsInRegion(workset.EBName)) {
 
@@ -252,8 +252,8 @@ evaluateFields(typename Traits::EvalData workset)
 	//std::cout << "local response size = " << this->local_response.size() << std::endl;
 	//std::cout << "cell = " << cell << std::endl;
 	//std::cout << "workset size = " << workset.numCells << std::endl;
-        this->local_response(cell,0) += val;
-	this->global_response(0) += val;
+        this->local_response_eval(cell,0) += val;
+	this->global_response_eval(0) += val;
       }
     }
 
@@ -278,10 +278,10 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
+  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response_eval);
 
-  if (bPositiveOnly && this->global_response(0) < 1e-6) {
-    this->global_response(0) = 1e+100;
+  if (bPositiveOnly && this->global_response_eval(0) < 1e-6) {
+    this->global_response_eval(0) = 1e+100;
   }
   
   // Do global scattering

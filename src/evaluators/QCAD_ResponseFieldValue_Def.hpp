@@ -159,7 +159,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > g_sg = workset.sg_g;
   if (g_sg != Teuchos::null) {
     for (int res = 0; res < this->field_components.size(); res++) {
-      typename PHAL::Ref<ScalarT>::type val = this->global_response(this->field_components[res]);
+      auto val = this->global_response(this->field_components[res]);
       for (int block=0; block<g_sg->size(); block++)
         (*g_sg)[block][res] = val.val().coeff(block);
     }
@@ -193,7 +193,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
     // Loop over responses
     for (int res = 0; res < this->field_components.size(); res++) {
-      ScalarT& val = this->global_response(this->field_components[res]);
+      auto val = this->global_response(this->field_components[res]);
 
       // Loop over nodes in cell
       for (int node_dof=0; node_dof<numNodes; node_dof++) {
@@ -238,7 +238,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Stokhos::ProductEpetraVector> g_mp = workset.mp_g;
   if (g_mp != Teuchos::null) {
     for (int res = 0; res < this->field_components.size(); res++) {
-      typename PHAL::Ref<ScalarT>::type val = this->global_response(this->field_components[res]);
+      auto val = this->global_response(this->field_components[res]);
       for (int block=0; block<g_mp->size(); block++)
         (*g_mp)[block][res] = val.val().coeff(block);
     }
@@ -271,7 +271,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
     // Loop over responses
     for (int res = 0; res < this->field_components.size(); res++) {
-      typename PHAL::Ref<ScalarT>::type val = this->global_response(this->field_components[res]);
+      auto val = this->global_response(this->field_components[res]);
 
       // Loop over nodes in cell
       for (int node_dof=0; node_dof<numNodes; node_dof++) {
@@ -429,7 +429,7 @@ preEvaluate(typename Traits::PreEvalData workset)
 {
   for (typename PHX::MDField<ScalarT>::size_type i=0;
        i<this->global_response.size(); i++)
-    this->global_response(i) = initVals[i];
+    this->global_response_eval(i) = initVals[i];
 
   // Do global initialization
   QCAD::FieldValueScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -477,7 +477,7 @@ evaluateFields(typename Traits::EvalData workset)
       max_nodeID = workset.wsElNodeEqID[cell];
 
       // set g[0] = value of return field at the current cell (avg)
-      this->global_response(0)=0.0;
+      this->global_response_eval(0)=0.0;
       if(bReturnOpField) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           qpVal = 0.0;
@@ -487,7 +487,7 @@ evaluateFields(typename Traits::EvalData workset)
             }
           }
           else qpVal = opField(cell,qp);
-          this->global_response(0) += qpVal * weights(cell,qp);
+          this->global_response_eval(0) += qpVal * weights(cell,qp);
         }
       }
       else {
@@ -499,20 +499,20 @@ evaluateFields(typename Traits::EvalData workset)
             }
           }
           else qpVal = retField(cell,qp);
-          this->global_response(0) += qpVal * weights(cell,qp);
+          this->global_response_eval(0) += qpVal * weights(cell,qp);
         }
       }
-      this->global_response(0) /= cellVol;
+      this->global_response_eval(0) /= cellVol;
 
       // set g[1] = value of the field operated on at the current cell (avg)
-      this->global_response(1) = opVal;
+      this->global_response_eval(1) = opVal;
 
       // set g[2+] = average qp coordinate values of the current cell
       for(std::size_t i=0; i<numDims; i++) {
-        this->global_response(i+2) = 0.0;
+        this->global_response_eval(i+2) = 0.0;
         for (std::size_t qp=0; qp < numQPs; ++qp)
-          this->global_response(i+2) += coordVec(cell,qp,i);
-        this->global_response(i+2) /= numQPs;
+          this->global_response_eval(i+2) += coordVec(cell,qp,i);
+        this->global_response_eval(i+2) /= numQPs;
       }
     }
 
@@ -547,7 +547,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::reduceAll(
     *workset.comm, Teuchos::REDUCE_MAX, 1, &procToBcast, &winner);
 
-  PHAL::broadcast(*workset.comm, winner, this->global_response);
+  PHAL::broadcast(*workset.comm, winner, this->global_response_eval);
 
   // Do global scattering
   if (workset.comm->getRank() == winner)

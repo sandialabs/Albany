@@ -82,7 +82,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
 template<typename EvalT, typename Traits>
 void FELIX::ResponseBoundarySquaredL2Norm<EvalT, Traits>::preEvaluate(typename Traits::PreEvalData workset)
 {
-  PHAL::set(this->global_response, 0.0);
+  PHAL::set(this->global_response_eval, 0.0);
 
   p_reg = 0;
 
@@ -98,7 +98,7 @@ void FELIX::ResponseBoundarySquaredL2Norm<EvalT, Traits>::evaluateFields(typenam
                               "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
   // Zero out local response
-  PHAL::set(this->local_response, 0.0);
+  PHAL::set(this->local_response_eval, 0.0);
 
   // ----------------- Surface side ---------------- //
 

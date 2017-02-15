@@ -43,13 +43,13 @@ void
 SeparableScatterScalarResponseBase<EvalT, Traits>::
 setup(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
 {
-  stand_alone = p.get<bool>("Stand-alone Evaluator");
+  this->stand_alone = p.get<bool>("Stand-alone Evaluator");
 
   // Setup fields we require
   auto local_response_tag =
     p.get<PHX::Tag<ScalarT> >("Local Response Field Tag");
   local_response = decltype(local_response)(local_response_tag);
-  if (stand_alone) {
+  if (this->stand_alone) {
     this->addDependentField(local_response);
   } else {
     local_response_eval = decltype(local_response_eval)(local_response_tag);
@@ -111,7 +111,7 @@ evaluateFields(typename Traits::EvalData workset)
     // Loop over responses
 
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
-      typename PHAL::Ref<ScalarT>::type val = this->local_response(cell, res);
+      auto val = this->local_response(cell, res);
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
@@ -174,7 +174,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
 
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
       for (std::size_t res = 0; res < this->global_response.size(); res++) {
-        typename PHAL::Ref<ScalarT>::type val = this->local_response(elem_LID, res);
+        auto val = this->local_response(elem_LID, res);
         LO base_id, ilayer;
         for (int i = 0; i < numSideNodes; ++i) {
           std::size_t node = side.node[i];
@@ -202,7 +202,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Tpetra_Vector> gT = workset.gT;
   if (gT != Teuchos::null) {
     Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
-    for (PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+    for (PHAL::MDFieldIterator<const ScalarT> gr(this->global_response);
          ! gr.done(); ++gr)
       gT_nonconstView[gr.idx()] = gr.ref().val();
   }

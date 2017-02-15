@@ -168,7 +168,7 @@ template<typename EvalT, typename Traits>
 void PHAL::ResponseFieldIntegralT<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  PHAL::set(this->global_response, 0.0);
+  PHAL::set(this->global_response_eval, 0.0);
   // Do global initialization
   PHAL::SeparableScatterScalarResponseT<EvalT,Traits>::preEvaluate(workset);
 }
@@ -179,7 +179,7 @@ void PHAL::ResponseFieldIntegralT<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
-  PHAL::set(this->local_response, 0.0);
+  PHAL::set(this->local_response_eval, 0.0);
 
   if( ebNames.size() == 0 || 
       std::find(ebNames.begin(), ebNames.end(), workset.EBName) != ebNames.end() ) {
@@ -232,7 +232,7 @@ void PHAL::ResponseFieldIntegralT<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
-                           this->global_response);
+                           this->global_response_eval);
   PHAL::SeparableScatterScalarResponseT<EvalT,Traits>::postEvaluate(workset);
 }
 

@@ -85,7 +85,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
 template<typename EvalT, typename Traits, typename TargetScalarT>
 void PHAL::ResponseSquaredL2ErrorBase<EvalT, Traits, TargetScalarT>::preEvaluate(typename Traits::PreEvalData workset)
 {
-  PHAL::set(this->global_response, 0.0);
+  PHAL::set(this->global_response_eval, 0.0);
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::preEvaluate(workset);
@@ -96,7 +96,7 @@ template<typename EvalT, typename Traits, typename TargetScalarT>
 void PHAL::ResponseSquaredL2ErrorBase<EvalT, Traits, TargetScalarT>::evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
-  PHAL::set(this->local_response, 0.0);
+  PHAL::set(this->local_response_eval, 0.0);
 
   for (int cell=0; cell<workset.numCells; ++cell)
   {
@@ -118,8 +118,8 @@ void PHAL::ResponseSquaredL2ErrorBase<EvalT, Traits, TargetScalarT>::evaluateFie
       sum += sq * w_measure(cell,qp);
     }
 
-    this->local_response(cell, 0) += sum*scaling;
-    this->global_response(0) += sum*scaling;
+    this->local_response_eval(cell, 0) += sum*scaling;
+    this->global_response_eval(0) += sum*scaling;
   }
 
   // Do any local-scattering necessary
@@ -130,7 +130,7 @@ void PHAL::ResponseSquaredL2ErrorBase<EvalT, Traits, TargetScalarT>::evaluateFie
 template<typename EvalT, typename Traits, typename TargetScalarT>
 void PHAL::ResponseSquaredL2ErrorBase<EvalT, Traits, TargetScalarT>::postEvaluate(typename Traits::PostEvalData workset)
 {
-  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
+  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->global_response_eval);
 
   if(workset.comm->getRank()==0)
     std::cout << "resp: " << Sacado::ScalarValue<ScalarT>::eval(this->global_response(0)) << "\n" << std::flush;

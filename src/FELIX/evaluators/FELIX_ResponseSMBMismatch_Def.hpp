@@ -106,7 +106,7 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::postRegistrationSetup(typename T
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void FELIX::ResponseSMBMismatch<EvalT, Traits>::preEvaluate(typename Traits::PreEvalData workset) {
-  PHAL::set(this->global_response, 0.0);
+  PHAL::set(this->global_response_eval, 0.0);
 
   p_resp = p_reg = p_misH =0;
 

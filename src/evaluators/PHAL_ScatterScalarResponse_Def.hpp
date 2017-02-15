@@ -43,7 +43,6 @@ setup(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
   // Setup fields we require
   auto global_response_tag =
     p.get<PHX::Tag<ScalarT> >("Global Response Field Tag");
-  global_response = PHX::MDField<ScalarT>(global_response_tag);
   global_response = decltype(global_response)(global_response_tag);
   if (stand_alone) {
     this->addDependentField(global_response);
@@ -130,7 +129,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Tpetra_MultiVector> gpT = workset.dgdpT;
   for (PHAL::MDFieldIterator<const ScalarT> gr(this->global_response);
        ! gr.done(); ++gr) {
-    typename PHAL::Ref<ScalarT>::type val = *gr;
+    auto val = *gr;
     const int res = gr.idx();
     if (gT != Teuchos::null){
       Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
