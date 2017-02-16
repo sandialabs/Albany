@@ -59,14 +59,35 @@ public:
   struct DOFInterpolation_numRank2_Tag{};
   struct DOFInterpolation_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFInterpolation_numRank2_Tag> DOFInterpolation_numRank2_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFInterpolation_Tag> DOFInterpolation_Policy;
+
+  #if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA) 
+  using DOFInterpolation_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Left,
+        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int> >;
+  using DOFInterpolation_rank2_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, Kokkos::Experimental::Iterate::Left,
+        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int> >;
+
+#else
+  using DOFInterpolation_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Right,
+        Kokkos::Experimental::Iterate::Right >, Kokkos::IndexType<int> >;
+  using DOFInterpolation_rank2_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, Kokkos::Experimental::Iterate::Right,
+        Kokkos::Experimental::Iterate::Right >, Kokkos::IndexType<int> >;
+#endif
+
+
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFInterpolation_numRank2_Tag& tag, const int& i) const;
+  void operator() (const int cell, const int qp, const int level) const;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFInterpolation_Tag& tag, const int& i) const;
+  void operator() (const int cell, const int level) const;
 
 #endif
 };
