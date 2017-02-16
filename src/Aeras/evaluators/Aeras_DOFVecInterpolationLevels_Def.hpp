@@ -49,17 +49,26 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void DOFVecInterpolationLevels<EvalT, Traits>::
-operator() (const DOFVecInterpolationLevels_Tag& tag, const int& cell) const{
-  for (int qp=0; qp < numQPs; ++qp) {
-    for (int level=0; level < numLevels; ++level) {
-      for (int dim=0; dim < numDims; ++dim) {
-        val_qp(cell,qp,level,dim) = 0;
-        for (int node=0; node < numNodes; ++node) {
-          val_qp(cell,qp,level,dim) += val_node(cell,node,level,dim) * BF(cell,node,qp);
-        }
-      }
+operator() (const int cell, const int qp, const int level) const{
+  if (numDims==2){
+    ScalarT val_qp_0 =0;
+    ScalarT val_qp_1=0;
+    for (int node=0; node < numNodes; ++node) {
+          val_qp_0 += val_node(cell,node,level,0) * BF(cell,node,qp);
+          val_qp_1 += val_node(cell,node,level,1) * BF(cell,node,qp);
     }
-  }
+    val_qp(cell,qp,level,0)=val_qp_0; 
+    val_qp(cell,qp,level,1)=val_qp_1;
+
+  }else{
+      for (int dim=0; dim < numDims; ++dim) {
+        ScalarT temp=0;
+        for (int node=0; node < numNodes; ++node) {
+          temp += val_node(cell,node,level,dim) * BF(cell,node,qp);
+        }
+        val_qp(cell,qp,level,dim)=temp;
+      }
+  }//endif
 }
 
 #endif
@@ -84,7 +93,9 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 #else
-  Kokkos::parallel_for(DOFVecInterpolationLevels_Policy(0,workset.numCells),*this);
+  DOFVecInterpolationLevels_Policy range(
+                {0,0,0}, {(int)workset.numCells,(int)numQPs,(int)numLevels} );
+  Kokkos::Experimental::md_parallel_for(range,*this);
 
 #endif
 }

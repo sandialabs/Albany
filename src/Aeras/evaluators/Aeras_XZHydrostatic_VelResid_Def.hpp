@@ -81,22 +81,19 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_VelResid<EvalT, Traits>::
-operator() (const XZHydrostatic_VelResid_Tag& tag, const int& cell) const{
-  for (int node=0; node < numNodes; ++node) {
-    for (int level=0; level < numLevels; ++level) {
-      for (int dim=0; dim < numDims; ++dim) {
-        int qp = node; 
-        Residual(cell,node,level,dim) = ( keGrad(cell,qp,level,dim) + PhiGrad(cell,qp,level,dim) )*wBF(cell,node,qp)
-                                      + ( pGrad (cell,qp,level,dim)/density(cell,qp,level) )      *wBF(cell,node,qp)
-                                      + etadotdVelx(cell,qp,level,dim)                            *wBF(cell,node,qp)
-                                      + uDot(cell,qp,level,dim)                                   *wBF(cell,node,qp);
-
-        for (int qp=0; qp < numQPs; ++qp) {
+operator() (const int cell, const int node, const int level) const{
+  for (int dim=0; dim < numDims; ++dim) {
+    int qp = node;
+    ScalarT wbf=wBF(cell,node,qp); 
+    Residual(cell,node,level,dim) = 
+	( keGrad(cell,qp,level,dim) + PhiGrad(cell,qp,level,dim) )*wbf
+        + ( pGrad (cell,qp,level,dim)/density(cell,qp,level) )*wbf
+        + etadotdVelx(cell,qp,level,dim)*wbf
+        + uDot(cell,qp,level,dim)*wbf;
+     for (int qp=0; qp < numQPs; ++qp) {
           Residual(cell,node,level,dim) += viscosity * DVelx(cell,qp,level,dim) * wGradBF(cell,node,qp,dim);
-        }
-      }
-    }
-  }
+     }
+   }
 }
 
 #endif
@@ -126,7 +123,9 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 #else
-  Kokkos::parallel_for(XZHydrostatic_VelResid_Policy(0,workset.numCells),*this);
+  XZHydrostatic_VelResid_Policy range(
+             {0,0,0}, {(int)workset.numCells,(int)numNodes,(int)numLevels} );
+  Kokkos::Experimental::md_parallel_for(range,*this);
 
 #endif
 }

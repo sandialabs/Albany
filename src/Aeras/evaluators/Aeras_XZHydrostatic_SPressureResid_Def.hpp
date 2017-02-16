@@ -73,14 +73,12 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_SPressureResid<EvalT, Traits>::
-operator() (const XZHydrostatic_SPressureResid_Tag& tag, const int& cell) const{
-  for (int qp=0; qp < numQPs; ++qp) {
+operator() (const int cell, const int qp) const{
     ScalarT sum = 0;
-	  for (int level=0; level<numLevels; ++level)  sum += divpivelx(cell,qp,level) * delta(level);
-
-	  int node = qp;
-	  Residual(cell,node) += (spDot(cell,qp) + sum)*wBF(cell,node,qp);
-	}
+    for (int level=0; level<numLevels; ++level)
+	sum += divpivelx(cell,qp,level) * delta(level);
+   int node = qp;
+   Residual(cell,node) += (spDot(cell,qp) + sum)*wBF(cell,node,qp);
 }
 
 template<typename EvalT, typename Traits>
@@ -145,7 +143,9 @@ evaluateFields(typename Traits::EvalData workset)
 #else
   if( !obtainLaplaceOp ) {
     if( !pureAdvection ) {
-      Kokkos::parallel_for(XZHydrostatic_SPressureResid_Policy(0,workset.numCells),*this);
+      XZHydrostatic_SPressureResid_Policy range(          
+	{0,0}, {(int)workset.numCells,(int)numQPs} );
+      Kokkos::Experimental::md_parallel_for(range,*this);
       cudaCheckError();
     }
 

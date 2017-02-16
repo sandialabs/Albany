@@ -59,10 +59,20 @@ public:
 
   struct DOFVecInterpolationLevels_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFVecInterpolationLevels_Tag> DOFVecInterpolationLevels_Policy;
+  #if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA) 
+  using DOFVecInterpolationLevels_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Left,
+        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int> >;
+#else
+  using DOFVecInterpolationLevels_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Right,
+        Kokkos::Experimental::Iterate::Right >, Kokkos::IndexType<int> >;
+#endif
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFVecInterpolationLevels_Tag& tag, const int& i) const;
+  void operator() (const int cell, const int qp, const int level) const;
 
 #endif
 };
