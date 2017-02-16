@@ -1227,9 +1227,17 @@ computeGlobalResidualImplT(
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
 
   //Allocate scaleVec_
-  if (scaleVec_ == Teuchos::null && scale != 1.0) {
-    scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap()));
-    setScale();
+  if (scale != 1.0) {
+    if (scaleVec_ == Teuchos::null) {
+      scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap()));
+      setScale();
+    }
+    else if (Teuchos::nonnull(fT)) {
+      if (scaleVec_->getGlobalLength() != fT->getGlobalLength()) {
+        scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap()));
+        setScale();
+      }
+    }
   }
 
 #ifdef WRITE_TO_MATRIX_MARKET
@@ -1564,10 +1572,19 @@ computeGlobalJacobianImplT(const double alpha,
 
   { TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian Export");
   //Allocate and populate scaleVec_
-  if (scaleVec_ == Teuchos::null && scale != 1.0) {
-    scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap()));
-    setScale();
+  if (scale != 1.0) {
+    if (scaleVec_ == Teuchos::null) {
+      scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap()));
+      setScale();
+    }
+    else if (Teuchos::nonnull(fT)) {
+      if (scaleVec_->getGlobalLength() != fT->getGlobalLength()) {
+        scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap()));
+        setScale();
+      }
+    }
   }
+
   // Assemble global residual
   if (Teuchos::nonnull(fT))
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
