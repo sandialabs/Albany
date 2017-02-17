@@ -161,13 +161,8 @@ computeBCs(
   auto const
   coupled_dimension = coupled_cell_topology_data.dimension;
 
-  // FIXME: Generalize element topology.
   auto const
-  coupled_vertex_count = coupled_cell_topology_data.vertex_count;
-
-  auto const
-  coupled_element_type =
-      minitensor::find_type(coupled_dimension, coupled_vertex_count);
+  coupled_node_count = coupled_cell_topology_data.node_count;
 
   std::string const &
   coupled_nodeset_name = this_app.getNodesetName(coupled_app_index);
@@ -180,13 +175,13 @@ computeBCs(
   ws_elem_2_node_id = coupled_stk_disc->getWsElNodeID();
 
   std::vector<minitensor::Vector<double>>
-  coupled_element_vertices(coupled_vertex_count);
+  coupled_element_nodes(coupled_node_count);
 
   std::vector<minitensor::Vector<double>>
-  coupled_element_solution(coupled_vertex_count);
+  coupled_element_solution(coupled_node_count);
 
-  for (auto i = 0; i < coupled_vertex_count; ++i) {
-    coupled_element_vertices[i].set_dimension(coupled_dimension);
+  for (auto i = 0; i < coupled_node_count; ++i) {
+    coupled_element_nodes[i].set_dimension(coupled_dimension);
     coupled_element_solution[i].set_dimension(coupled_dimension);
   }
 
@@ -195,6 +190,44 @@ computeBCs(
   // coupled_app within that tolerance.
   double const
   tolerance = 5.0e-2;
+
+  auto const
+  parametric_dimension = coupled_dimension;
+
+  auto const
+  coupled_vertex_count = coupled_cell_topology_data.vertex_count;
+
+  auto const
+  coupled_element_type =
+        minitensor::find_type(coupled_dimension, coupled_vertex_count);
+
+  minitensor::Vector<double>
+  lo(parametric_dimension, minitensor::ONES);
+
+  minitensor::Vector<double>
+  hi(parametric_dimension, minitensor::ONES);
+
+  hi = hi * (1.0 + tolerance);
+
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
+  basis;
+
+  switch (coupled_element_type) {
+
+  default:
+    MT_ERROR_EXIT("Unknown element type");
+    break;
+
+  case minitensor::ELEMENT::TETRAHEDRAL:
+    basis = Teuchos::rcp(new Intrepid2::Basis_HGRAD_TET_C1_FEM<PHX::Device>());
+    lo = - tolerance * lo;
+    break;
+
+  case minitensor::ELEMENT::HEXAHEDRAL:
+    basis = Teuchos::rcp(new Intrepid2::Basis_HGRAD_HEX_C1_FEM<PHX::Device>());
+    lo = - lo * (1.0 + tolerance);
+    break;
+  }
 
   double * const
   coord = ns_coord[ns_node];
@@ -207,15 +240,6 @@ computeBCs(
   point.fill(coord);
 
   // Determine the element that contains this point.
-  bool
-  found = false;
-
-  auto
-  parametric_dimension = 0;
-
-  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
-  basis;
-
   Teuchos::ArrayRCP<double> const &
   coupled_coordinates = coupled_stk_disc->getCoordinates();
 
@@ -227,104 +251,6 @@ computeBCs(
 
   Teuchos::RCP<Tpetra_Map const>
   coupled_overlap_node_map = coupled_stk_disc->getOverlapNodeMapT();
-
-  for (auto workset = 0; workset < ws_elem_2_node_id.size(); ++workset) {
-
-    std::string const &
-    coupled_element_block = coupled_ws_eb_names[workset];
-
-    bool const
-    block_names_differ = coupled_element_block != coupled_block_name;
-
-    if (use_block == true && block_names_differ == true) continue;
-
-    auto const
-    elements_per_workset = ws_elem_2_node_id[workset].size();
-
-    for (auto element = 0; element < elements_per_workset; ++element) {
-
-      for (auto node = 0; node < coupled_vertex_count; ++node) {
-
-        auto const
-        global_node_id = ws_elem_2_node_id[workset][element][node];
-
-        auto const
-        local_node_id =
-            coupled_overlap_node_map->getLocalElement(global_node_id);
-
-        double * const
-        pcoord = &(coupled_coordinates[coupled_dimension * local_node_id]);
-
-        coupled_element_vertices[node].fill(pcoord);
-
-        for (auto i = 0; i < coupled_dimension; ++i) {
-          coupled_element_solution[node](i) =
-              coupled_solution_view[coupled_dimension * local_node_id + i];
-        } // dimension loop
-
-      } // node loop
-
-      bool
-      in_element = false;
-
-      switch (coupled_element_type) {
-
-      default:
-        std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
-        std::cerr << "Unknown element type: " << coupled_element_type << '\n';
-        exit(1);
-        break;
-
-      case minitensor::ELEMENT::TETRAHEDRAL:
-        parametric_dimension = 3;
-
-        basis = Teuchos::rcp(
-            new Intrepid2::Basis_HGRAD_TET_C1_FEM<PHX::Device>());
-
-        in_element = minitensor::in_tetrahedron(
-            point,
-            coupled_element_vertices[0],
-            coupled_element_vertices[1],
-            coupled_element_vertices[2],
-            coupled_element_vertices[3],
-            tolerance);
-        break;
-
-      case minitensor::ELEMENT::HEXAHEDRAL:
-        parametric_dimension = 3;
-
-        basis = Teuchos::rcp(
-            new Intrepid2::Basis_HGRAD_HEX_C1_FEM<PHX::Device>());
-
-        in_element = minitensor::in_hexahedron(
-            point,
-            coupled_element_vertices[0],
-            coupled_element_vertices[1],
-            coupled_element_vertices[2],
-            coupled_element_vertices[3],
-            coupled_element_vertices[4],
-            coupled_element_vertices[5],
-            coupled_element_vertices[6],
-            coupled_element_vertices[7],
-            tolerance);
-        break;
-
-      } // switch
-
-      if (in_element == true) {
-        found = true;
-        break;
-      }
-
-    } // element loop
-
-    if (found == true) {
-      break;
-    }
-
-  } // workset loop
-
-  ALBANY_EXPECT(found == true);
 
   // We do this element by element
   auto const
@@ -359,31 +285,92 @@ computeBCs(
   }
 
   // Container for the physical nodal coordinates
-  // TODO: matToReference more general, accepts more topologies.
-  // Use it to find if point is contained in element as well.
   Kokkos::DynRankView<RealType, PHX::Device>
   nodal_coordinates(
       "coords",
       number_cells,
-      coupled_vertex_count,
+      coupled_node_count,
       coupled_dimension);
 
-  for (auto i = 0; i < coupled_vertex_count; ++i) {
-    for (auto j = 0; j < coupled_dimension; ++j) {
-      nodal_coordinates(0, i, j) = coupled_element_vertices[i](j);
-    }
-  }
+  bool
+  found = false;
 
-  // Get parametric coordinates
-  Intrepid2::CellTools<PHX::Device>::mapToReferenceFrame(
-      parametric_point,
-      physical_coordinates,
-      nodal_coordinates,
-      coupled_cell_topology);
+  for (auto workset = 0; workset < ws_elem_2_node_id.size(); ++workset) {
+
+    std::string const &
+    coupled_element_block = coupled_ws_eb_names[workset];
+
+    bool const
+    block_names_differ = coupled_element_block != coupled_block_name;
+
+    if (use_block == true && block_names_differ == true) continue;
+
+    auto const
+    elements_per_workset = ws_elem_2_node_id[workset].size();
+
+    for (auto element = 0; element < elements_per_workset; ++element) {
+
+      for (auto node = 0; node < coupled_node_count; ++node) {
+
+        auto const
+        global_node_id = ws_elem_2_node_id[workset][element][node];
+
+        auto const
+        local_node_id =
+            coupled_overlap_node_map->getLocalElement(global_node_id);
+
+        double * const
+        pcoord = &(coupled_coordinates[coupled_dimension * local_node_id]);
+
+        coupled_element_nodes[node].fill(pcoord);
+
+        for (auto i = 0; i < coupled_dimension; ++i) {
+          coupled_element_solution[node](i) =
+              coupled_solution_view[coupled_dimension * local_node_id + i];
+        } // dimension loop
+
+      } // node loop
+
+      for (auto i = 0; i < coupled_node_count; ++i) {
+        for (auto j = 0; j < coupled_dimension; ++j) {
+          nodal_coordinates(0, i, j) = coupled_element_nodes[i](j);
+        }
+      }
+
+      // Get parametric coordinates
+      Intrepid2::CellTools<PHX::Device>::mapToReferenceFrame(
+          parametric_point,
+          physical_coordinates,
+          nodal_coordinates,
+          coupled_cell_topology);
+
+      bool
+      in_element = true;
+
+      for (auto i = 0; i < parametric_dimension; ++i) {
+        auto const
+        xi = parametric_point(0, 0, i);
+        in_element = in_element && lo(i) <= xi && xi <= hi(i);
+      }
+
+      if (in_element == true) {
+        found = true;
+        break;
+      }
+
+    } // element loop
+
+    if (found == true) {
+      break;
+    }
+
+  } // workset loop
+
+  ALBANY_EXPECT(found == true);
 
   // Evaluate shape functions at parametric point.
   Kokkos::DynRankView<RealType, PHX::Device>
-  basis_values("basis", coupled_vertex_count, number_points);
+  basis_values("basis", coupled_node_count, number_points);
 
   // Another container for the parametric coordinates. Needed because above
   // it is required that parametric_points has rank 3 for mapToReferenceFrame
@@ -401,7 +388,7 @@ computeBCs(
   minitensor::Vector<double>
   value(coupled_dimension, minitensor::ZEROS);
 
-  for (auto i = 0; i < coupled_vertex_count; ++i) {
+  for (auto i = 0; i < coupled_node_count; ++i) {
     value += basis_values(i, 0) * coupled_element_solution[i];
 
   }
