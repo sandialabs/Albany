@@ -156,7 +156,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
   }
 
   // register evaluated fields
-  for (auto pair : field_map_) {
+  for (auto& pair : field_map_) {
     this->addEvaluatedField(pair.second);
   }
   this->setName(
@@ -170,7 +170,7 @@ void ConstitutiveModelParameters<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
-  for (auto pair : field_map_) {
+  for (auto& pair : field_map_) {
     this->utils.setFieldData(pair.second, fm);
     if (!is_constant_map_[pair.first]) {
       this->utils.setFieldData(coord_vec_, fm);
@@ -293,7 +293,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT  
-  for (auto pair : field_map_) {
+  for (auto& pair : field_map_) {
 #ifdef ALBANY_STOKHOS
     Stokhos::KL::ExponentialRandomField<RealType>*  exp_rf_kl =  exp_rf_kl_map_[pair.first].get();
 #endif
@@ -344,7 +344,7 @@ evaluateFields(typename Traits::EvalData workset)
 #ifdef ALBANY_TIMER
   auto start = std::chrono::high_resolution_clock::now();
 #endif
-  for (auto pair : field_map_) {
+  for (auto& pair : field_map_) {
 
     constant_value = constant_value_map_[pair.first];
     second=pair.second;
@@ -395,7 +395,7 @@ template<typename EvalT, typename Traits>
 typename ConstitutiveModelParameters<EvalT, Traits>::ScalarT&
 ConstitutiveModelParameters<EvalT, Traits>::getValue(const std::string &n)
 {
-  for (auto pair : constant_value_map_) {
+  for (auto& pair : constant_value_map_) {
     if (n == pair.first) {
       return constant_value_map_[pair.first];
     }
