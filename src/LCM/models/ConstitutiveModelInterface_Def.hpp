@@ -69,7 +69,7 @@ ConstitutiveModelInterface(Teuchos::ParameterList& p,
 
   // construct the dependent fields
   auto dependent_map = model_->getDependentFieldMap();
-  for (auto pair : dependent_map) {
+  for (auto& pair : dependent_map) {
     auto temp_field = Teuchos::rcp(
         new PHX::MDField<const ScalarT>(pair.first, pair.second));
     dep_fields_map_.insert(std::make_pair(pair.first, temp_field));
@@ -141,14 +141,14 @@ ConstitutiveModelInterface(Teuchos::ParameterList& p,
 
   // construct the evaluated fields
   auto eval_map = model_->getEvaluatedFieldMap();
-  for (auto pair : eval_map) {
+  for (auto& pair : eval_map) {
     auto temp_field =
         Teuchos::rcp(new PHX::MDField<ScalarT>(pair.first, pair.second));
     eval_fields_map_.insert(std::make_pair(pair.first, temp_field));
   }
 
   // register evaluated fields
-  for (auto pair : eval_fields_map_) {
+  for (auto& pair : eval_fields_map_) {
     this->addEvaluatedField(*(pair.second));
   }
 
@@ -230,7 +230,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
 
   // evaluated fields
-  for (auto pair : eval_fields_map_) {
+  for (auto& pair : eval_fields_map_) {
     this->utils.setFieldData(*(pair.second), fm);
   }
 }
