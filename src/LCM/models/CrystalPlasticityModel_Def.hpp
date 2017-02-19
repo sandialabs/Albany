@@ -262,11 +262,11 @@ CrystalPlasticityKernel(
   setDependentField(F_string_, dl->qp_tensor);
   setDependentField(J_string_, dl->qp_scalar);
   setDependentField(dt_string_, dl->workset_scalar);
+  setDependentField(time_string_, dl->workset_scalar);
 
   //
   // Define the evaluated fields
   //
-  setEvaluatedField(time_string_, dl->workset_scalar);
   setEvaluatedField(eqps_string_, dl->qp_scalar);
   setEvaluatedField(Re_string_, dl->qp_tensor);
   setEvaluatedField(cauchy_string_, dl->qp_tensor);
