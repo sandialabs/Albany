@@ -262,7 +262,9 @@ CrystalPlasticityKernel(
   setDependentField(F_string_, dl->qp_tensor);
   setDependentField(J_string_, dl->qp_scalar);
   setDependentField(dt_string_, dl->workset_scalar);
-  setDependentField(time_string_, dl->workset_scalar);
+  if (write_data_file_) {
+    setDependentField(time_string_, dl->workset_scalar);
+  }
 
   //
   // Define the evaluated fields
@@ -420,7 +422,9 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(Workset & workset,
   // extract dependent MDFields
   //
   def_grad_ = *dep_fields[F_string_];
-  time_ = *dep_fields[time_string_];
+  if (write_data_file_) {
+    time_ = *dep_fields[time_string_];
+  }
   delta_time_ = *dep_fields[dt_string_];
 
   //
