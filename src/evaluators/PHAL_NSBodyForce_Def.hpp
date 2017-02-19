@@ -29,7 +29,7 @@ NSBodyForce(const Teuchos::ParameterList& p) :
   }
   else if (type == "Constant") {
     bf_type = CONSTANT;
-    rho = PHX::MDField<ScalarT,Cell,QuadPoint>(
+    rho = decltype(rho)(
             p.get<std::string>("Density QP Variable Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
     this->addDependentField(rho);
@@ -40,13 +40,13 @@ NSBodyForce(const Teuchos::ParameterList& p) :
 		       "Error!  Must enable heat equation for Boussinesq " <<
 		       "body force term!");
     bf_type = BOUSSINESQ;
-    T = PHX::MDField<ScalarT,Cell,QuadPoint>(
+    T = decltype(T)(
           p.get<std::string>("Temperature QP Variable Name"),
 	  p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    rho = PHX::MDField<ScalarT,Cell,QuadPoint>(
+    rho = decltype(rho)(
             p.get<std::string>("Density QP Variable Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    beta = PHX::MDField<ScalarT,Cell,QuadPoint>(
+    beta = decltype(beta)(
             p.get<std::string>(
               "Volumetric Expansion Coefficient QP Variable Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );

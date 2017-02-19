@@ -42,9 +42,8 @@ BiotModulus(Teuchos::ParameterList& p) :
 #ifdef ALBANY_STOKHOS
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
-      fx(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
-    coordVec = fx;
+    coordVec = decltype(coordVec)(
+        p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
     this->addDependentField(coordVec);
 
     exp_rf_kl = 
@@ -68,9 +67,8 @@ BiotModulus(Teuchos::ParameterList& p) :
   if ( p.isType<std::string>("Porosity Name") ) {
      Teuchos::RCP<PHX::DataLayout> scalar_dl =
        p.get< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
-     PHX::MDField<ScalarT,Cell,QuadPoint>
-       tp(p.get<std::string>("Porosity Name"), scalar_dl);
-     porosity = tp;
+     porosity = decltype(porosity)(
+         p.get<std::string>("Porosity Name"), scalar_dl);
      this->addDependentField(porosity);
      isPoroElastic = true;
      FluidBulkModulus = elmd_list->get("Fluid Bulk Modulus Value", 10.0e9);
@@ -87,9 +85,8 @@ BiotModulus(Teuchos::ParameterList& p) :
   if ( p.isType<std::string>("Biot Coefficient Name") ) {
      Teuchos::RCP<PHX::DataLayout> scalar_dl =
        p.get< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
-     PHX::MDField<ScalarT,Cell,QuadPoint>
-       btp(p.get<std::string>("Biot Coefficient Name"), scalar_dl);
-     biotCoefficient = btp;
+     biotCoefficient = decltype(biotCoefficient)(
+         p.get<std::string>("Biot Coefficient Name"), scalar_dl);
      this->addDependentField(biotCoefficient);
   }
 

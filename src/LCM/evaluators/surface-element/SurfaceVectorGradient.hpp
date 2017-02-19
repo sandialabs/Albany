@@ -48,13 +48,13 @@ private:
   //! Numerical integration rule
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature;
   //! Vector to take the jump of
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> vector;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> jump;
+  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> vector;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> jump;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> currentBasis;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> refNormal;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim, Dim> currentBasis;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> refNormal;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> defGrad;

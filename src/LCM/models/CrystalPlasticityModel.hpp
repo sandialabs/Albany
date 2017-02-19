@@ -28,6 +28,7 @@ public:
 	
   using BaseKernel = ParallelKernel<EvalT, Traits>;
   using ScalarField = typename BaseKernel::ScalarField;
+  using ConstScalarField = typename BaseKernel::ConstScalarField;
   using Workset = typename BaseKernel::Workset;
 	
   // Dimension of problem, e.g., 2 -> 2D, 3 -> 3D
@@ -70,7 +71,7 @@ public:
 
   void
   init(Workset & workset,
-       FieldMap<ScalarT> & dep_fields,
+       FieldMap<const ScalarT> & dep_fields,
        FieldMap<ScalarT> & eval_fields);
 
   ///
@@ -203,13 +204,13 @@ private:
   ///
   /// Dependent MDFields
   ///
-  ScalarField
+  ConstScalarField
   def_grad_;
 
-  ScalarField
+  ConstScalarField
   time_;
 
-  ScalarField
+  ConstScalarField
   delta_time_;
 
   ///

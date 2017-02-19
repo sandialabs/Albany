@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include <Kokkos_DynRankView.hpp>
+
 namespace PHAL {
 
 template<typename T>
@@ -49,7 +51,7 @@ MDFieldIterator<T>::operator++ (int) {
   return *this;
 }
 
-template<typename T> inline typename Ref<T>::type
+template<typename T> inline typename MDFieldIterator<T>::return_type
 MDFieldIterator<T>::ref () {
   switch (rank_) {
   case 1: return a_(idxs_[0]);
@@ -208,6 +210,39 @@ template<typename ArrayT, typename T>
 void scale (ArrayT& a, const T& val) {
   impl::ScaleLooper<typename ArrayT::value_type, T> sl(val);
   loop(sl, a);
+}
+
+template< class T , class ... P >
+inline
+typename std::enable_if<
+  !Kokkos::is_dynrankview_fad<Kokkos::DynRankView<T,P...>>::value,
+  typename Kokkos::DynRankView<T,P...>::non_const_type >::type
+create_copy( const std::string& name,
+    const Kokkos::DynRankView<T,P...> & src )
+{
+  using dst_type = typename Kokkos::DynRankView<T,P...>::non_const_type;
+  auto layout = Kokkos::Experimental::Impl::reconstructLayout(src.layout(), src.rank());
+  return dst_type( name , layout );
+}
+
+template< class T , class ... P >
+inline
+typename std::enable_if<
+  Kokkos::is_dynrankview_fad<Kokkos::DynRankView<T,P...>>::value,
+  typename Kokkos::DynRankView<T,P...>::non_const_type >::type
+create_copy( const std::string& name,
+    const Kokkos::DynRankView<T,P...> & src )
+{
+  using Src = Kokkos::DynRankView<T,P...>;
+  using Dst = typename Kokkos::DynRankView<T,P...>::non_const_type;
+  auto sl = src.layout();
+  auto sm = src.implementation_map();
+  auto fad_rank = src.rank();
+  sl.dimension[fad_rank] = sm.dimension_scalar();
+  auto real_rank = fad_rank + 1;
+  auto ml = Kokkos::Experimental::Impl::reconstructLayout(sl, real_rank);
+  auto dst = Dst( src.label(), ml );
+  return dst;
 }
 
 } // namespace PHAL

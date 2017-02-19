@@ -32,7 +32,7 @@ AddVector(const Teuchos::ParameterList& p) :
   numDims  = dims[2];
 
   if(p.isType<std::string>("In Residual Name")){
-    inResidual = PHX::MDField<ScalarT,Cell,Node,Dim>(p.get<std::string>("In Residual Name"),
+    inResidual = decltype(inResidual)(p.get<std::string>("In Residual Name"),
                                     p.get<Teuchos::RCP<PHX::DataLayout> >("Node Vector Data Layout") );
     this->addDependentField(inResidual);
     plusEquals = true;
@@ -40,7 +40,7 @@ AddVector(const Teuchos::ParameterList& p) :
     plusEquals = false;
   
   if(p.isType<std::string>("Weighted BF Name")){
-    w_bf = PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>(p.get<std::string>("Weighted BF Name"),
+    w_bf = decltype(w_bf)(p.get<std::string>("Weighted BF Name"),
                                     p.get<Teuchos::RCP<PHX::DataLayout> >("Weighted BF Data Layout") );
     this->addDependentField(w_bf);
     projectFromQPs = true;
@@ -159,7 +159,7 @@ AddScalar(const Teuchos::ParameterList& p) :
   numNodes = dims[1];
 
   if(p.isType<std::string>("In Residual Name")){
-    inResidual = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string>("In Residual Name"),
+    inResidual = decltype(inResidual)(p.get<std::string>("In Residual Name"),
                                     p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") );
     this->addDependentField(inResidual);
     plusEquals = true;
@@ -167,7 +167,7 @@ AddScalar(const Teuchos::ParameterList& p) :
     plusEquals = false;
   
   if(p.isType<std::string>("Weighted BF Name")){
-    w_bf = PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>(p.get<std::string>("Weighted BF Name"),
+    w_bf = decltype(w_bf)(p.get<std::string>("Weighted BF Name"),
                                     p.get<Teuchos::RCP<PHX::DataLayout> >("Weighted BF Data Layout") );
     this->addDependentField(w_bf);
     projectFromQPs = true;

@@ -127,13 +127,13 @@ namespace LCM
   template<typename EvalT, typename Traits>
   void CapImplicitModel<EvalT, Traits>::
   computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
+    DepFieldMap dep_fields,
+    FieldMap eval_fields)
   {    
     // extract dependent MDFields
-    PHX::MDField<ScalarT> strain = *dep_fields["Strain"];
-    PHX::MDField<ScalarT> poissons_ratio = *dep_fields["Poissons Ratio"];
-    PHX::MDField<ScalarT> elastic_modulus = *dep_fields["Elastic Modulus"];
+    auto strain = *dep_fields["Strain"];
+    auto poissons_ratio = *dep_fields["Poissons Ratio"];
+    auto elastic_modulus = *dep_fields["Elastic Modulus"];
       
     // retrieve appropriate field name strings
     std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
@@ -145,11 +145,11 @@ namespace LCM
     std::string tangent_string = (*field_name_map_)["Material Tangent"];
       
     // extract evaluated MDFields
-    PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
-    PHX::MDField<ScalarT> backStress = *eval_fields[backStress_string];
-    PHX::MDField<ScalarT> capParameter = *eval_fields[capParameter_string];
-    PHX::MDField<ScalarT> eqps = *eval_fields[eqps_string];
-    PHX::MDField<ScalarT> volPlasticStrain = *eval_fields[volPlasticStrain_string];
+    auto stress = *eval_fields[cauchy_string];
+    auto backStress = *eval_fields[backStress_string];
+    auto capParameter = *eval_fields[capParameter_string];
+    auto eqps = *eval_fields[eqps_string];
+    auto volPlasticStrain = *eval_fields[volPlasticStrain_string];
     PHX::MDField<ScalarT> tangent;
     if(compute_tangent_) tangent = *eval_fields[tangent_string];
       

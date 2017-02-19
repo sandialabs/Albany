@@ -34,12 +34,12 @@ L2ProjectedBoundaryLaplacianResidual(Teuchos::ParameterList& p, const Teuchos::R
   const std::string& w_side_measure_name = p.get<std::string>("Weighted Measure Side Name");
   const std::string& residual_name = p.get<std::string>("L2 Projected Boundary Laplacian Residual Name");
 
-  solution           = PHX::MDField<ScalarT,Cell,Node>(solution_name, dl->node_scalar);
-  field              = PHX::MDField<ParamScalarT,Cell,Side,Node>(field_name, dl_side->node_scalar);
-  gradField          = PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>(gradField_name, dl_side->qp_gradient);
-  gradBF             = PHX::MDField<MeshScalarT,Cell,Side,Node, QuadPoint,Dim>(gradBFname,dl_side->node_qp_gradient),
-  w_side_measure     = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_side_measure_name, dl_side->qp_scalar);
-  bdLaplacian_L2Projection_res = PHX::MDField<ScalarT,Cell,Node>(residual_name, dl->node_scalar);
+  solution           = decltype(solution)(solution_name, dl->node_scalar);
+  field              = decltype(field)(field_name, dl_side->node_scalar);
+  gradField          = decltype(gradField)(gradField_name, dl_side->qp_gradient);
+  gradBF             = decltype(gradBF)(gradBFname,dl_side->node_qp_gradient),
+  w_side_measure     = decltype(w_side_measure)(w_side_measure_name, dl_side->qp_scalar);
+  bdLaplacian_L2Projection_res = decltype(bdLaplacian_L2Projection_res)(residual_name, dl->node_scalar);
 
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");

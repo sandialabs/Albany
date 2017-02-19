@@ -46,16 +46,17 @@ private:
   typedef typename EvalT::ParamScalarT    ParamScalarT;
 
   // Input:
-  PHX::MDField<RealType,Cell,Node,QuadPoint>  BF;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint>    w_measure;
-  PHX::MDField<ScalarT,Cell,QuadPoint>        h;
-  PHX::MDField<ScalarT,Cell,QuadPoint>        h_dot;
-  PHX::MDField<ScalarT,Cell,QuadPoint>        N;
-  PHX::MDField<ParamScalarT,Cell,QuadPoint>   m;
-  PHX::MDField<ParamScalarT,Cell,QuadPoint>   u_b;
+  PHX::MDField<const RealType,Cell,Node,QuadPoint>  BF;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint>    w_measure;
+  PHX::MDField<const ScalarT,Cell,QuadPoint>        h;
+  PHX::MDField<const ScalarT,Cell,QuadPoint>        h_dot;
+  PHX::MDField<const ScalarT,Cell,QuadPoint>        N;
+  PHX::MDField<const ParamScalarT,Cell,QuadPoint>   m;
+  PHX::MDField<const ParamScalarT,Cell,QuadPoint>   u_b;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> residual;
+  PHX::MDField<ScalarT,Cell,QuadPoint>        h_dot_eval;
 
   int numNodes;
   int numQPs;
@@ -91,16 +92,17 @@ private:
   typedef typename EvalT::ScalarT     ScalarT;
 
   // Input:
-  PHX::MDField<RealType,Cell,Side,Node,QuadPoint>  BF;
-  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>    w_measure;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>        h;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>        h_dot;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>        N;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>        m;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>        u_b;
+  PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>  BF;
+  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>    w_measure;
+  PHX::MDField<const ScalarT,Cell,Side,QuadPoint>        h;
+  PHX::MDField<const ScalarT,Cell,Side,QuadPoint>        h_dot;
+  PHX::MDField<const ScalarT,Cell,Side,QuadPoint>        N;
+  PHX::MDField<const ScalarT,Cell,Side,QuadPoint>        m;
+  PHX::MDField<const ScalarT,Cell,Side,QuadPoint>        u_b;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> residual;
+  PHX::MDField<ScalarT,Cell,Side,QuadPoint>        h_dot_eval;
 
   int numNodes;
   int numQPs;

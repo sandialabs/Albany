@@ -49,8 +49,8 @@ namespace QCAD {
     std::size_t numQPs;
     std::size_t numDims;
     std::string coordVecFieldname, weightsFieldname;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
     Teuchos::RCP<Albany::Layouts> dl;
 
     //! Restricting to element blocks
@@ -69,7 +69,7 @@ namespace QCAD {
     bool bRestrictToLevelSet;
     std::string levelSetFieldname;              
     double levelSetFieldMin, levelSetFieldMax;
-    PHX::MDField<ScalarT> levelSetField;    
+    PHX::MDField<const ScalarT> levelSetField;    
 
     //! Material database
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;

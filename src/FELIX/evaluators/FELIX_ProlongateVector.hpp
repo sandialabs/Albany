@@ -45,7 +45,7 @@ private:
               const Teuchos::RCP<Albany::Layouts>& dl_out);
 
   // Input:
-  PHX::MDField<ScalarT> v_in;
+  PHX::MDField<const ScalarT> v_in;
 
   // Output:
   PHX::MDField<ScalarT> v_out;

@@ -37,7 +37,7 @@ public:
 private:
 
   // Input:
-  PHX::MDField<InputType> in_field;
+  PHX::MDField<const InputType> in_field;
   // Output:
   PHX::MDField<OutputType> out_field;
 };

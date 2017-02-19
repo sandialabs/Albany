@@ -16,15 +16,7 @@ SurfaceScalarJump(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl) :
   cubature      (p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")), 
   intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>("Intrepid2 Basis"))
-//  scalar        (p.get<std::string>("Nodal Scalar Name"),dl->node_scalar),
-//  scalarJump    (p.get<std::string>("Scalar Jump Name"),dl->qp_scalar),
- // scalarAverage (p.get<std::string>("Scalar Average Name"),dl->qp_scalar)
 {
- // this->addDependentField(scalar);
-
-//  this->addEvaluatedField(scalarJump);
-//  this->addEvaluatedField(scalarAverage);
-
   this->setName("Surface Scalar Jump"+PHX::typeAsString<EvalT>());
 
   haveTemperature = false;
@@ -34,74 +26,62 @@ SurfaceScalarJump(const Teuchos::ParameterList& p,
 
   if (p.isType<std::string>("Nodal Pore Pressure Name")) {
 	havePorePressure = true;
-    PHX::MDField<ScalarT,Cell,Vertex>
-      tp(p.get<std::string>("Nodal Pore Pressure Name"), dl->node_scalar);
-    nodalPorePressure = tp;
+    nodalPorePressure = decltype(nodalPorePressure)(
+        p.get<std::string>("Nodal Pore Pressure Name"), dl->node_scalar);
     this->addDependentField(nodalPorePressure);
 
-    PHX::MDField<ScalarT,Cell,QuadPoint>
-      tjp(p.get<std::string>("Jump of Pore Pressure Name"), dl->qp_scalar);
-    jumpPorePressure = tjp;
+    jumpPorePressure = decltype(jumpPorePressure)(
+        p.get<std::string>("Jump of Pore Pressure Name"), dl->qp_scalar);
     this->addEvaluatedField(jumpPorePressure);
 
-    PHX::MDField<ScalarT,Cell,QuadPoint>
-      tmpp(p.get<std::string>("MidPlane Pore Pressure Name"), dl->qp_scalar);
-    midPlanePorePressure = tmpp;
+    midPlanePorePressure = decltype(midPlanePorePressure)(
+        p.get<std::string>("MidPlane Pore Pressure Name"), dl->qp_scalar);
     this->addEvaluatedField(midPlanePorePressure);
   }
 
   if (p.isType<std::string>("Nodal Temperature Name")) {
 	haveTemperature = true;
-    PHX::MDField<ScalarT,Cell,Vertex>
-      tf(p.get<std::string>("Nodal Temperature Name"), dl->node_scalar);
-    nodalTemperature = tf;
+    nodalTemperature = decltype(nodalTemperature)(
+        p.get<std::string>("Nodal Temperature Name"), dl->node_scalar);
     this->addDependentField(nodalTemperature);
 
-    PHX::MDField<ScalarT,Cell,QuadPoint>
-      tt(p.get<std::string>("Jump of Temperature Name"), dl->qp_scalar);
-    jumpTemperature = tt;
+    jumpTemperature = decltype(jumpTemperature)(
+        p.get<std::string>("Jump of Temperature Name"), dl->qp_scalar);
     this->addEvaluatedField(jumpTemperature);
 
-    PHX::MDField<ScalarT,Cell,QuadPoint>
-      tmt(p.get<std::string>("MidPlane Temperature Name"), dl->qp_scalar);
-    midPlaneTemperature = tmt;
+    midPlaneTemperature = decltype(midPlaneTemperature)(
+        p.get<std::string>("MidPlane Temperature Name"), dl->qp_scalar);
     this->addEvaluatedField(midPlaneTemperature);
   }
 
   if (p.isType<std::string>("Nodal Transport Name")) {
 	haveTransport = true;
-    PHX::MDField<ScalarT,Cell,Vertex>
-      ttp(p.get<std::string>("Nodal Transport Name"), dl->node_scalar);
-    nodalTransport = ttp;
+    nodalTransport = decltype(nodalTransport)(
+        p.get<std::string>("Nodal Transport Name"), dl->node_scalar);
     this->addDependentField(nodalTransport);
 
-    PHX::MDField<ScalarT,Cell,QuadPoint>
-    tjtp(p.get<std::string>("Jump of Transport Name"), dl->qp_scalar);
-    jumpTransport= tjtp;
+    jumpTransport = decltype(jumpTransport)(
+        p.get<std::string>("Jump of Transport Name"), dl->qp_scalar);
     this->addEvaluatedField(jumpTransport);
 
-    PHX::MDField<ScalarT,Cell,QuadPoint>
-    tjtm(p.get<std::string>("MidPlane Transport Name"), dl->qp_scalar);
-    midPlaneTransport = tjtm;
+    midPlaneTransport = decltype(midPlaneTransport)(
+        p.get<std::string>("MidPlane Transport Name"), dl->qp_scalar);
     this->addEvaluatedField(midPlaneTransport);
   }
 
   if (p.isType<std::string>("Nodal HydroStress Name")) {
 
     haveHydroStress = true;
-    PHX::MDField<ScalarT,Cell,Vertex>
-      ths(p.get<std::string>("Nodal HydroStress Name"), dl->node_scalar);
-    nodalHydroStress = ths;
+    nodalHydroStress = decltype(nodalHydroStress)(
+        p.get<std::string>("Nodal HydroStress Name"), dl->node_scalar);
     this->addDependentField(nodalHydroStress);
 
-    PHX::MDField<ScalarT,Cell,QuadPoint>
-    tjths(p.get<std::string>("Jump of HydroStress Name"), dl->qp_scalar);
-    jumpHydroStress= tjths;
+    jumpHydroStress = decltype(jumpHydroStress)(
+        p.get<std::string>("Jump of HydroStress Name"), dl->qp_scalar);
     this->addEvaluatedField(jumpHydroStress);
 
-    PHX::MDField<ScalarT,Cell,QuadPoint>
-    tmpths(p.get<std::string>("MidPlane HydroStress Name"), dl->qp_scalar);
-    midPlaneHydroStress= tmpths;
+    midPlaneHydroStress = decltype(midPlaneHydroStress)(
+        p.get<std::string>("MidPlane HydroStress Name"), dl->qp_scalar);
     this->addEvaluatedField(midPlaneHydroStress);
   }
 

@@ -39,9 +39,9 @@ StokesL1L2BodyForce(const Teuchos::ParameterList& p,
   }
   else if (type == "L1L2SinCos") {
     bf_type = L1L2_SINCOS;  
-    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
+    muFELIX = decltype(muFELIX)(
             p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar); 
-    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+    coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);

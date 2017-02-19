@@ -150,9 +150,8 @@ init_KL_RF(std::string &type, Teuchos::ParameterList& sublist, Teuchos::Paramete
       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
     Teuchos::RCP<PHX::DataLayout> vector_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
-      fx(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
-    coordVec = fx;
+    coordVec = decltype(coordVec)(
+        p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
     this->addDependentField(coordVec);
 
     exp_rf_kl =

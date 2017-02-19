@@ -25,13 +25,16 @@ AddNoiseBase<EvalT, Traits, ScalarT>::AddNoiseBase (const Teuchos::ParameterList
   std::string noisyFieldName = p.get<std::string> ("Noisy Field Name");
 
   Teuchos::RCP<PHX::DataLayout> layout = p.get<Teuchos::RCP<PHX::DataLayout>>("Field Layout");
-  field       = PHX::MDField<ScalarT> (fieldName, layout);
-  noisy_field = PHX::MDField<ScalarT> (noisyFieldName, layout);
+  noisy_field = decltype(noisy_field)(noisyFieldName, layout);
 
-  if (fieldName=="ZERO")
-    this->addEvaluatedField(field);
-  else
+  is_zero = (fieldName == "ZERO");
+  field = decltype(field)(fieldName, layout);
+  if (is_zero) {
+    field_eval = decltype(field_eval)(fieldName, layout);
+    this->addEvaluatedField(field_eval);
+  } else {
     this->addDependentField(field);
+  }
 
   this->addEvaluatedField(noisy_field);
 
@@ -80,6 +83,7 @@ void AddNoiseBase<EvalT, Traits, ScalarT>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
+  if (is_zero) this->utils.setFieldData(field_eval,fm);
   this->utils.setFieldData(field,fm);
   this->utils.setFieldData(noisy_field,fm);
 }
@@ -109,7 +113,7 @@ void AddNoiseBase<EvalT, Traits, ScalarT>::evaluateFields (typename Traits::Eval
   }
 */
 
-  PHAL::MDFieldIterator<ScalarT> in(field);
+  PHAL::MDFieldIterator<const ScalarT> in(field);
   PHAL::MDFieldIterator<ScalarT> out(noisy_field);
 
   if (noise_free) {

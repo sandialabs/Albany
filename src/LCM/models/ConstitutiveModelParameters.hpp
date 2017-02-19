@@ -79,7 +79,7 @@ namespace LCM {
     ///
     /// spatial locations of integration points
     ///
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_vec_;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coord_vec_;
 
     ///
     /// Constitutive Model Parameters
@@ -123,7 +123,7 @@ namespace LCM {
     /// Optional dependence on Temperature
     ///
     bool have_temperature_;
-    PHX::MDField<ScalarT,Cell,QuadPoint> temperature_;
+    PHX::MDField<const ScalarT,Cell,QuadPoint> temperature_;
     std::map<std::string, std::string> temp_type_map_;
     std::map<std::string, RealType> dparam_dtemp_map_;
     std::map<std::string, RealType> ref_temp_map_;

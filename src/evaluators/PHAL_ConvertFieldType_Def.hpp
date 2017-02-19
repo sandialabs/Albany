@@ -23,15 +23,13 @@ ConvertFieldType<EvalT, Traits, InputType, OutputType>::ConvertFieldType(const T
   } else if (p.isParameter("Field Name")) {
     input_field_name = output_field_name = p.get<std::string>("Field Name");
   } else TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Field Name not set.\n");
-  in_field = PHX::MDField<InputType>(input_field_name, p.get<Teuchos::RCP<PHX::DataLayout> >("Data Layout"));
-  out_field = PHX::MDField<OutputType>(output_field_name, p.get<Teuchos::RCP<PHX::DataLayout> >("Data Layout"));
+  in_field = decltype(in_field)(input_field_name, p.get<Teuchos::RCP<PHX::DataLayout> >("Data Layout"));
+  out_field = decltype(out_field)(output_field_name, p.get<Teuchos::RCP<PHX::DataLayout> >("Data Layout"));
     
   this->addDependentField(in_field);
   this->addEvaluatedField(out_field);
 
   this->setName("ConvertFieldType");
-  
-  PHX::MDField<InputType> in_field;
 }
 
 //**********************************************************************

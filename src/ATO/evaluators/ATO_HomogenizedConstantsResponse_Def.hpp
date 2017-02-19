@@ -42,7 +42,7 @@ HomogenizedConstantsResponse(Teuchos::ParameterList& p,
       "Invalid field type " << fieldType << ".  Support values are " << 
       "Scalar, Vector, and Tensor." << std::endl);
   }
-  field = PHX::MDField<ScalarT>(field_name, field_layout);
+  field = decltype(field)(field_name, field_layout);
 
   int field_rank = field_layout->rank();
   tensorRank = field_rank - 2; //first 2 dimensions are cell and qp.

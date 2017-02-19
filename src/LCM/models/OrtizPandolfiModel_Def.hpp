@@ -111,21 +111,21 @@ OrtizPandolfiModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void OrtizPandolfiModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
+    DepFieldMap dep_fields,
+    FieldMap eval_fields)
 {
 
   // extract dependent MDFields
-  PHX::MDField<ScalarT> mdf_jump = *dep_fields["Vector Jump"];
-  PHX::MDField<ScalarT> mdf_basis = *dep_fields["Current Basis"];
+  auto mdf_jump = *dep_fields["Vector Jump"];
+  auto mdf_basis = *dep_fields["Current Basis"];
 
   // extract evaluated MDFields
-  PHX::MDField<ScalarT> mdf_traction = *eval_fields["Cohesive_Traction"];
-  PHX::MDField<ScalarT> mdf_traction_normal = *eval_fields["Normal_Traction"];
-  PHX::MDField<ScalarT> mdf_traction_shear = *eval_fields["Shear_Traction"];
-  PHX::MDField<ScalarT> mdf_jump_normal = *eval_fields["Normal_Jump"];
-  PHX::MDField<ScalarT> mdf_jump_shear = *eval_fields["Shear_Jump"];
-  PHX::MDField<ScalarT> mdf_jump_max = *eval_fields["Max_Jump"];
+  auto mdf_traction = *eval_fields["Cohesive_Traction"];
+  auto mdf_traction_normal = *eval_fields["Normal_Traction"];
+  auto mdf_traction_shear = *eval_fields["Shear_Traction"];
+  auto mdf_jump_normal = *eval_fields["Normal_Jump"];
+  auto mdf_jump_shear = *eval_fields["Shear_Jump"];
+  auto mdf_jump_max = *eval_fields["Max_Jump"];
 
   // get state variable
   Albany::MDArray jump_max_old = (*workset.stateArrayPtr)["Max_Jump_old"];

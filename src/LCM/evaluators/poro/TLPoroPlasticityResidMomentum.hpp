@@ -39,13 +39,13 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> TotalStress;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> J;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> TotalStress;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> uDotDot;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> uDotDot;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Dim> ExResidual;

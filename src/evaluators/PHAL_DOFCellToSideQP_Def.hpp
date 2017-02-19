@@ -24,43 +24,55 @@ DOFCellToSideQPBase(const Teuchos::ParameterList& p,
 
   if (layout_str=="Cell Scalar")
   {
-    val_cell    = PHX::MDField<ScalarT>(p.get<std::string> ("Cell Variable Name"), dl->cell_scalar2);
-    val_side_qp = PHX::MDField<ScalarT>(p.get<std::string> ("Side Variable Name"), dl_side->qp_scalar);
+    val_cell = decltype(val_cell)(p.get<std::string> ("Cell Variable Name"),
+        dl->cell_scalar2);
+    val_side_qp = decltype(val_side_qp)(p.get<std::string> ("Side Variable Name"),
+        dl_side->qp_scalar);
 
     layout = CELL_SCALAR;
   }
   else if (layout_str=="Cell Vector")
   {
-    val_cell    = PHX::MDField<ScalarT>(p.get<std::string> ("Cell Variable Name"), dl->cell_vector);
-    val_side_qp = PHX::MDField<ScalarT>(p.get<std::string> ("Side Variable Name"), dl_side->qp_vector);
+    val_cell = decltype(val_cell)(p.get<std::string> ("Cell Variable Name"),
+        dl->cell_vector);
+    val_side_qp = decltype(val_side_qp)(p.get<std::string> ("Side Variable Name"),
+        dl_side->qp_vector);
 
     layout = CELL_VECTOR;
   }
   else if (layout_str=="Cell Tensor")
   {
-    val_cell    = PHX::MDField<ScalarT>(p.get<std::string> ("Cell Variable Name"), dl->cell_tensor);
-    val_side_qp = PHX::MDField<ScalarT>(p.get<std::string> ("Side Variable Name"), dl_side->qp_tensor);
+    val_cell = decltype(val_cell)(p.get<std::string> ("Cell Variable Name"),
+        dl->cell_tensor);
+    val_side_qp = decltype(val_side_qp)(p.get<std::string> ("Side Variable Name"),
+        dl_side->qp_tensor);
 
     layout = CELL_TENSOR;
   }
   else if (layout_str=="Node Scalar")
   {
-    val_cell    = PHX::MDField<ScalarT>(p.get<std::string> ("Cell Variable Name"), dl->node_scalar);
-    val_side_qp = PHX::MDField<ScalarT>(p.get<std::string> ("Side Variable Name"), dl_side->qp_scalar);
+    val_cell = decltype(val_cell)(p.get<std::string> ("Cell Variable Name"),
+        dl->node_scalar);
+    val_side_qp = decltype(val_side_qp)(p.get<std::string> ("Side Variable Name"),
+        dl_side->qp_scalar);
 
     layout = NODE_SCALAR;
   }
   else if (layout_str=="Node Vector")
   {
-    val_cell    = PHX::MDField<ScalarT>(p.get<std::string> ("Cell Variable Name"), dl->node_vector);
-    val_side_qp = PHX::MDField<ScalarT>(p.get<std::string> ("Side Variable Name"), dl_side->qp_vector);
+    val_cell = decltype(val_cell)(p.get<std::string> ("Cell Variable Name"),
+        dl->node_vector);
+    val_side_qp = decltype(val_side_qp)(p.get<std::string> ("Side Variable Name"),
+        dl_side->qp_vector);
 
     layout = NODE_VECTOR;
   }
   else if (layout_str=="Node Tensor")
   {
-    val_cell    = PHX::MDField<ScalarT>(p.get<std::string> ("Cell Variable Name"), dl->node_tensor);
-    val_side_qp = PHX::MDField<ScalarT>(p.get<std::string> ("Side Variable Name"), dl_side->qp_tensor);
+    val_cell = decltype(val_cell)(p.get<std::string> ("Cell Variable Name"),
+        dl->node_tensor);
+    val_side_qp = decltype(val_side_qp)(p.get<std::string> ("Side Variable Name"),
+        dl_side->qp_tensor);
 
     layout = NODE_TENSOR;
   }
@@ -95,7 +107,7 @@ DOFCellToSideQPBase(const Teuchos::ParameterList& p,
       }
     }
 
-    BF = PHX::MDField<ScalarT,Cell,Side,Node,QuadPoint>(p.get<std::string> ("BF Name"), dl_side->node_qp_scalar);
+    BF = decltype(BF)(p.get<std::string> ("BF Name"), dl_side->node_qp_scalar);
     this->addDependentField(BF);
   }
 }

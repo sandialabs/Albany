@@ -43,8 +43,8 @@ private:
   std::vector<int>                dims_side;
 
   // Input:
-  PHX::MDField<ScalarT>                           val_cell;
-  PHX::MDField<ScalarT,Cell,Side,Node,QuadPoint>  BF;
+  PHX::MDField<const ScalarT>                           val_cell;
+  PHX::MDField<const ScalarT,Cell,Side,Node,QuadPoint>  BF;
 
   // Output:
   PHX::MDField<ScalarT>                           val_side_qp;
