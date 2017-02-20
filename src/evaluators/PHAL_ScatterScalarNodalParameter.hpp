@@ -50,7 +50,7 @@ namespace PHAL {
         protected:
 
     typedef typename EvalT::ParamScalarT ParamScalarT;
-    PHX::MDField<const ParamScalarT,Cell,Node> val;
+    PHX::MDField<ParamScalarT,Cell,Node> val;
     std::string param_name;
     std::size_t numNodes;
   };

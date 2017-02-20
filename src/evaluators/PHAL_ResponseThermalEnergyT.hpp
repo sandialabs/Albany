@@ -40,14 +40,14 @@ namespace PHAL {
     Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
     // temperature
-    PHX::MDField<const ScalarT> field;
+    PHX::MDField<ScalarT> field;
     // time
 //    PHX::MDField<ScalarT,Dummy> time;
 //    PHX::MDField<ScalarT,Dummy> deltaTime;
     // coordinates
-    PHX::MDField<const MeshScalarT> coordVec;
+    PHX::MDField<MeshScalarT> coordVec;
     // Quadrature points
-    PHX::MDField<const MeshScalarT> weights;
+    PHX::MDField<MeshScalarT> weights;
     std::vector<PHX::DataLayout::size_type> field_dims;
     std::size_t numQPs;
     std::size_t numDims;

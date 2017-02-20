@@ -62,7 +62,7 @@ public:
   template<typename ST>
   void
   computeMidplaneCoords(
-      PHX::MDField<const ST, Cell, Vertex, Dim> const coords,
+      PHX::MDField<ST, Cell, Vertex, Dim> const coords,
       Kokkos::DynRankView<ST, PHX::Device> & midplane_coords);
 
   ///
@@ -111,7 +111,7 @@ private:
   ///
   /// Input: Cordinates in the reference configuration
   ///
-  PHX::MDField<const MeshScalarT, Cell, Vertex, Dim>
+  PHX::MDField<MeshScalarT, Cell, Vertex, Dim>
   reference_coords_;
 
   ///
@@ -166,7 +166,7 @@ private:
   ///
   /// Optional Input: Coordinates in the current configuration
   ///
-  PHX::MDField<const ScalarT, Cell, Vertex, Dim>
+  PHX::MDField<ScalarT, Cell, Vertex, Dim>
   current_coords_;
 
   ///

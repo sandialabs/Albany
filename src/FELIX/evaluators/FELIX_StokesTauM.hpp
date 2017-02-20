@@ -40,12 +40,12 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input: 
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> V;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> VGrad; //IK - added 7/19/2012
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim,Dim> Gc;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> mu;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> muFELIX;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint> jacobian_det; //jacobian determinant - for getting mesh size h 
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad; //IK - added 7/19/2012
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> Gc;
+  PHX::MDField<ScalarT,Cell,QuadPoint> mu;
+  PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det; //jacobian determinant - for getting mesh size h 
   double delta; 
   ScalarT meshSize; //mesh size h 
 

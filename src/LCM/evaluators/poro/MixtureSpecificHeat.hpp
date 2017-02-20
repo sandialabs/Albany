@@ -40,12 +40,12 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const ScalarT,Cell,QuadPoint> porosity;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> gammaSkeleton;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> gammaPoreFluid;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> densitySkeleton;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> densityPoreFluid;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
+  PHX::MDField<ScalarT,Cell,QuadPoint> gammaSkeleton;
+  PHX::MDField<ScalarT,Cell,QuadPoint> gammaPoreFluid;
+  PHX::MDField<ScalarT,Cell,QuadPoint> densitySkeleton;
+  PHX::MDField<ScalarT,Cell,QuadPoint> densityPoreFluid;
+  PHX::MDField<ScalarT,Cell,QuadPoint> J;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mixtureSpecificHeat;

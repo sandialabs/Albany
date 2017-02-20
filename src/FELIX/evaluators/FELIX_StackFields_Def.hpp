@@ -67,8 +67,8 @@ StackFieldsBase(const Teuchos::ParameterList& p,
   offsets[1] = dims_in[0];
   offsets[2] = dims_in[0]+dims_in[1];
 
-  fields_in.push_back(PHX::MDField<const ScalarT>(name_1,layout_1));
-  fields_in.push_back(PHX::MDField<const ScalarT>(name_2,layout_2));
+  fields_in.push_back(PHX::MDField<ScalarT>(name_1,layout_1));
+  fields_in.push_back(PHX::MDField<ScalarT>(name_2,layout_2));
 
   this->addDependentField(fields_in[0]);
   this->addDependentField(fields_in[1]);
@@ -124,7 +124,7 @@ StackFieldsBase(const Teuchos::ParameterList& p,
     dims_in[i] = ranks_in[i]==rank_out ? layout_i->dimension(ranks_in[i]-1) : 1;
     offsets[i+1] = offsets[i] + dims_in[i];
 
-    fields_in[i] = PHX::MDField<const ScalarT>(names[i],layout_i);
+    fields_in[i] = PHX::MDField<ScalarT>(names[i],layout_i);
     this->addDependentField(fields_in[i]);
   }
 

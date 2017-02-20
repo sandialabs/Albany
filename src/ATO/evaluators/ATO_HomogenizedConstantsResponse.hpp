@@ -123,8 +123,8 @@ namespace ATO
 
     std::string FName;
     static const std::string className;
-    PHX::MDField<const ScalarT> field;
-    PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
+    PHX::MDField<ScalarT> field;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
     Teuchos::RCP< PHX::Tag<ScalarT> > objective_tag;
 
     Kokkos::vector<int> component0, component1;

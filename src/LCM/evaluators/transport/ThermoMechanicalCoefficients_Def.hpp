@@ -36,17 +36,21 @@ ThermoMechanicalCoefficients(Teuchos::ParameterList& p,
 
    if (SolutionType_ == "Continuation")
     {
-       temperature_ = decltype(temperature_)(
-           p.get < std::string > ("Temperature Name"), dl->qp_scalar);
+       PHX::MDField<ScalarT,Cell,QuadPoint> 
+       temp(p.get < std::string > ("Temperature Name"), dl->qp_scalar);
+       temperature_ = temp;
        //
-       temperature_dot_ = decltype(temperature_dot_)(
-           p.get < std::string > ("Temperature Dot Name"),
+       PHX::MDField<ScalarT,Cell,QuadPoint> 
+       tmpDot(p.get < std::string > ("Temperature Dot Name"),
                          dl->qp_scalar);
-       delta_time_ = decltype(delta_time_)(p.get < std::string > ("Delta Time Name"),
+       temperature_dot_ = tmpDot;
+       PHX::MDField<ScalarT,Dummy>
+       tmp(p.get < std::string > ("Delta Time Name"),
                     dl->workset_scalar);
-       this->addDependentField(temperature_);
-       this->addDependentField(delta_time_);
-       this->addEvaluatedField(temperature_dot_);
+       delta_time_ = tmp;
+        this->addDependentField(temperature_);
+        this->addDependentField(delta_time_);
+        this->addEvaluatedField(temperature_dot_);
     }
     this->addDependentField(thermal_cond_);
 
@@ -62,9 +66,10 @@ ThermoMechanicalCoefficients(Teuchos::ParameterList& p,
   num_dims_ = dims[2];
 
   if (have_mech_) {
-    def_grad_ = decltype(def_grad_)(
-        p.get < std::string > ("Deformation Gradient Name"),
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>
+        temp_def_grad(p.get < std::string > ("Deformation Gradient Name"),
             dl->qp_tensor);
+    def_grad_ = temp_def_grad;
     this->addDependentField(def_grad_);
   }
 

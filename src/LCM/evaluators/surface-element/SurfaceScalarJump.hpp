@@ -51,12 +51,12 @@ private:
 
 
   //! Nodal value of scalar
-  PHX::MDField<const ScalarT,Cell,Vertex> scalar;
+  PHX::MDField<ScalarT,Cell,Vertex> scalar;
 
-  PHX::MDField<const ScalarT,Cell,Vertex> nodalTemperature;
-  PHX::MDField<const ScalarT,Cell,Vertex> nodalTransport;
-  PHX::MDField<const ScalarT,Cell,Vertex> nodalHydroStress;
-  PHX::MDField<const ScalarT,Cell,Vertex> nodalPorePressure;
+  PHX::MDField<ScalarT,Cell,Vertex> nodalTemperature;
+  PHX::MDField<ScalarT,Cell,Vertex> nodalTransport;
+  PHX::MDField<ScalarT,Cell,Vertex> nodalHydroStress;
+  PHX::MDField<ScalarT,Cell,Vertex> nodalPorePressure;
 
   // Reference Cell Views
   Kokkos::DynRankView<RealType, PHX::Device> refValues;

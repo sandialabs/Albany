@@ -77,7 +77,7 @@ namespace LCM {
     ///
     /// Container for coordinates
     ///
-    PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
 
     ///
     /// Container for porosity
@@ -98,12 +98,12 @@ namespace LCM {
     /// Optional dependence on strain and porePressure
     ///
     /// porosity holds linear relation to volumetric strain
-    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> strain;
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
 
     ///
     /// Optional dependence on det(F)
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> J;
+    PHX::MDField<ScalarT,Cell,QuadPoint> J;
     
     ///
     /// flag to indicated usage in poroelastic context
@@ -128,12 +128,12 @@ namespace LCM {
     ///
     /// For compressible grain
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> biotCoefficient;
+    PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
 
     ///
     /// For compressible grain
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> porePressure;
+    PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
 
     ///
     /// For compressible grain
@@ -143,17 +143,17 @@ namespace LCM {
     ///
     /// For THM porous media
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> Temperature;
+    PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
 
     ///
    /// For THM porous media
    ///
-   PHX::MDField<const ScalarT,Cell,QuadPoint> skeletonThermalExpansion;
+   PHX::MDField<ScalarT,Cell,QuadPoint> skeletonThermalExpansion;
 
    ///
   /// For THM porous media
   ///
-  PHX::MDField<const ScalarT,Cell,QuadPoint> refTemperature;
+  PHX::MDField<ScalarT,Cell,QuadPoint> refTemperature;
 
 #ifdef ALBANY_STOKHOS
     ///

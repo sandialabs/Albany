@@ -149,8 +149,8 @@ CreepModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void CreepModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    DepFieldMap dep_fields,
-    FieldMap eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 {
   static int times_called = 0;
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
@@ -161,18 +161,18 @@ computeState(typename Traits::EvalData workset,
   std::string J_string      = (*field_name_map_)["J"];
 
   // extract dependent MDFields
-  auto def_grad         = *dep_fields[F_string];
-  auto J                = *dep_fields[J_string];
-  auto poissons_ratio   = *dep_fields["Poissons Ratio"];
-  auto elastic_modulus  = *dep_fields["Elastic Modulus"];
-  auto yieldStrength    = *dep_fields["Yield Strength"];
-  auto hardeningModulus = *dep_fields["Hardening Modulus"];
-  auto delta_time       = *dep_fields["Delta Time"];
+  PHX::MDField<ScalarT> def_grad         = *dep_fields[F_string];
+  PHX::MDField<ScalarT> J                = *dep_fields[J_string];
+  PHX::MDField<ScalarT> poissons_ratio   = *dep_fields["Poissons Ratio"];
+  PHX::MDField<ScalarT> elastic_modulus  = *dep_fields["Elastic Modulus"];
+  PHX::MDField<ScalarT> yieldStrength    = *dep_fields["Yield Strength"];
+  PHX::MDField<ScalarT> hardeningModulus = *dep_fields["Hardening Modulus"];
+  PHX::MDField<ScalarT> delta_time       = *dep_fields["Delta Time"];
 
   // extract evaluated MDFields
-  auto stress = *eval_fields[cauchy_string];
-  auto Fp     = *eval_fields[Fp_string];
-  auto eqps   = *eval_fields[eqps_string];
+  PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
+  PHX::MDField<ScalarT> Fp     = *eval_fields[Fp_string];
+  PHX::MDField<ScalarT> eqps   = *eval_fields[eqps_string];
   PHX::MDField<ScalarT> source;
   if (have_temperature_) {
     source = *eval_fields[source_string];

@@ -40,11 +40,10 @@ public:
 private:
 
   // Input:
-  PHX::MDField<const ScalarT> field;
+  PHX::MDField<ScalarT> field;
 
   // Output:
   PHX::MDField<ScalarT> noisy_field;
-  PHX::MDField<ScalarT> field_eval;
 
   enum PDFType {UNIFORM, NORMAL};
   PDFType pdf_type;
@@ -59,8 +58,6 @@ private:
   int seed;
   bool reset_seed_pre_eval;
   bool noise_free;
-
-  bool is_zero;
 };
 
 // Some shortcut names

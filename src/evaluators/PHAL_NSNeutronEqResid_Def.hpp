@@ -46,7 +46,7 @@ NSNeutronEqResid(const Teuchos::ParameterList& p) :
   this->addDependentField(nu);
   
   if (haveNeutSource) {
-    Source = decltype(Source)(
+    Source = PHX::MDField<ScalarT,Cell,QuadPoint>(
       p.get<std::string>("Source Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
     this->addDependentField(Source);

@@ -44,8 +44,8 @@ namespace FELIX {
     int numSideDims;
 
 
-    PHX::MDField<const ScalarT,Cell,Side,Node>          solution;
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>     w_side_measure;
+    PHX::MDField<ScalarT,Cell,Side,Node>          solution;
+    PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>     w_side_measure;
 
     ScalarT p_reg, reg;
     double scaling;

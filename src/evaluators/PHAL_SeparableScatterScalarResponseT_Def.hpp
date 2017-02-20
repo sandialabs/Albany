@@ -29,8 +29,6 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(local_response,fm);
-  if (!stand_alone)
-    this->utils.setFieldData(local_response_eval,fm);
 }
 
 template<typename EvalT, typename Traits>
@@ -38,18 +36,16 @@ void
 SeparableScatterScalarResponseBaseT<EvalT, Traits>::
 setup(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
 {
-  stand_alone = p.get<bool>("Stand-alone Evaluator");
+  bool stand_alone = p.get<bool>("Stand-alone Evaluator");
 
   // Setup fields we require
-  auto local_response_tag =
+  PHX::Tag<ScalarT> local_response_tag =
     p.get<PHX::Tag<ScalarT> >("Local Response Field Tag");
-  local_response = decltype(local_response)(local_response_tag);
-  if (stand_alone) {
+  local_response = PHX::MDField<ScalarT>(local_response_tag);
+  if (stand_alone)
     this->addDependentField(local_response);
-  } else {
-    local_response_eval = decltype(local_response_eval)(local_response_tag);
-    this->addEvaluatedField(local_response_eval);
-  }
+  else
+    this->addEvaluatedField(local_response);
 }
 
 // **********************************************************************
@@ -105,7 +101,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Loop over responses
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
-      auto val = this->local_response(cell, res);
+      typename PHAL::Ref<ScalarT>::type val = this->local_response(cell, res);
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
@@ -137,7 +133,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Tpetra_Vector> g = workset.gT;
   if (g != Teuchos::null){
     const Teuchos::ArrayRCP<ST> g_nonConstView = g->get1dViewNonConst();
-    for (PHAL::MDFieldIterator<const ScalarT> gr(this->global_response);
+    for (PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
          ! gr.done(); ++gr)
       g_nonConstView[gr.idx()] = gr.ref().val();
   }
@@ -317,7 +313,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Loop over responses
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
-      auto val = this->local_response(cell, res);
+      typename PHAL::Ref<ScalarT>::type val = this->local_response(cell, res);
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
@@ -437,7 +433,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Loop over responses
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
-      auto val = this->local_response(cell, res);
+      typename PHAL::Ref<ScalarT>::type val = this->local_response(cell, res);
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {

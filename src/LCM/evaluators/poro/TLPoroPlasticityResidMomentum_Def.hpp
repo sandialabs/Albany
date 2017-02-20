@@ -44,9 +44,12 @@ TLPoroPlasticityResidMomentum(const Teuchos::ParameterList& p) :
     Teuchos::RCP<PHX::DataLayout> vector_dl =
        p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
 
-    wBF = decltype(wBF)(p.get<std::string>("Weighted BF Name"), node_qp_scalar_dl);
-    uDotDot = decltype(uDotDot)(p.get<std::string>("Time Dependent Variable Name"),
-        vector_dl);
+    PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF_tmp
+        (p.get<std::string>("Weighted BF Name"), node_qp_scalar_dl);
+    wBF = wBF_tmp;
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> uDotDot_tmp
+        (p.get<std::string>("Time Dependent Variable Name"), vector_dl);
+    uDotDot = uDotDot_tmp;
 
    this->addDependentField(wBF);
    this->addDependentField(uDotDot);

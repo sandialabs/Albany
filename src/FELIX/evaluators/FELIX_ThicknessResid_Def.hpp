@@ -37,7 +37,7 @@ ThicknessResid(const Teuchos::ParameterList& p,
     meshPart = "upperside";
 
   if(p.isParameter("SMB Name")) {
-   SMB = decltype(SMB)(p.get<std::string> ("SMB Name"), dl->node_scalar);
+   SMB = PHX::MDField<ParamScalarT,Cell,Node>(p.get<std::string> ("SMB Name"), dl->node_scalar);
    have_SMB = true;
   } else
     have_SMB = false;

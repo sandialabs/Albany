@@ -45,11 +45,10 @@ private:
 
   // Input:
 
-  PHX::MDField<const ScalarT,Cell,Node> dH;
-  PHX::MDField<const ParamScalarT,Cell,Node> H0;
-  PHX::MDField<const ScalarT,Cell,Node,Dim> V;
-  PHX::MDField<const ParamScalarT,Cell,Node> SMB;
-  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,Node> dH;
+  PHX::MDField<ParamScalarT,Cell,Node> H0;
+  PHX::MDField<ScalarT,Cell,Node,Dim> V;
+  PHX::MDField<ParamScalarT,Cell,Node> SMB;
   
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual;
@@ -62,6 +61,8 @@ private:
 
   std::size_t numQPs;
   std::size_t numVecFODims;
+
+  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
 
 
   Teuchos::RCP<shards::CellTopology> cellType;

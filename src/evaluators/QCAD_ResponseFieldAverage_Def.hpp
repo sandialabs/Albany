@@ -47,7 +47,7 @@ ResponseFieldAverage(Teuchos::ParameterList& p,
   opRegion  = Teuchos::rcp( new QCAD::MeshRegion<EvalT, Traits>("Coord Vec","Weights",*plist,materialDB,dl) );
   
   // setup field
-  field = decltype(field)(fieldName, scalar_dl);
+  PHX::MDField<ScalarT> f(fieldName, scalar_dl); field = f;
 
   // add dependent fields
   this->addDependentField(field);
@@ -99,7 +99,7 @@ void QCAD::ResponseFieldAverage<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
   // Zero out global response
-  PHAL::set(this->global_response_eval, 0.0);  
+  PHAL::set(this->global_response, 0.0);  
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -111,7 +111,7 @@ void QCAD::ResponseFieldAverage<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
-  PHAL::set(this->local_response_eval, 0.0);
+  PHAL::set(this->local_response, 0.0);
 
   ScalarT t;
 
@@ -125,12 +125,12 @@ evaluateFields(typename Traits::EvalData workset)
     // Add to running total volume and field integral
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       t = field(cell,qp) * weights(cell,qp); //component of integrated field
-      this->local_response_eval(cell,0) += t;
-      this->global_response_eval(0) += t;
+      this->local_response(cell,0) += t;
+      this->global_response(0) += t;
 
       t = weights(cell,qp); //component of integrated volume
-      this->local_response_eval(cell,1) += t;
-      this->global_response_eval(1) += t;
+      this->local_response(cell,1) += t;
+      this->global_response(1) += t;
     }
 
   }
@@ -144,13 +144,13 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseFieldAverage<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response_eval);
+  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
 
   int iNormalizer = 1;
-  if( fabs(this->global_response_eval(iNormalizer)) > 1e-9 ) {
+  if( fabs(this->global_response(iNormalizer)) > 1e-9 ) {
     for( int i=0; i < this->global_response.size(); i++) {
       if( i == iNormalizer ) continue;
-      this->global_response_eval(i) /= this->global_response_eval(iNormalizer);
+      this->global_response(i) /= this->global_response(iNormalizer);
     }
   }
     

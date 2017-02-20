@@ -79,7 +79,7 @@ private:
 
   std::size_t numQPs;
   std::size_t numDims;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint> thermalCond;
 
   //! Conductivity type

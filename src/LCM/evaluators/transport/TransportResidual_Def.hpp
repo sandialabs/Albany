@@ -43,64 +43,75 @@ namespace LCM {
     this->addDependentField(w_grad_bf_);
 
     if (have_source_) {
-      source_ = decltype(source_)(
-          p.get<std::string>("Source Name"), dl->qp_scalar);
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tmp(p.get<std::string>("Source Name"), dl->qp_scalar);
+      source_ = tmp;
       this->addDependentField(source_);
     }
 
     if (have_second_source_) {
-      second_source_ = decltype(second_source_)(
-          p.get<std::string>("Second Source Name"), dl->qp_scalar);
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tmp(p.get<std::string>("Second Source Name"), dl->qp_scalar);
+      second_source_ = tmp;
       this->addDependentField(second_source_);
     }
 
     if (have_transient_) {
-      scalar_dot_ = decltype(scalar_dot_)(
-          p.get<std::string>("Scalar Dot Name"), dl->qp_scalar);
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tmp_dot(p.get<std::string>("Scalar Dot Name"), dl->qp_scalar);
+      scalar_dot_ = tmp_dot;
       this->addDependentField(scalar_dot_);
 
-      transient_coeff_ = decltype(transient_coeff_)(
-          p.get<std::string>("Transient Coefficient Name"), dl->qp_scalar);
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tmp(p.get<std::string>("Transient Coefficient Name"), dl->qp_scalar);
+      transient_coeff_ = tmp;
       this->addDependentField(transient_coeff_);
     }
 
     if (have_diffusion_) {
-      diffusivity_ = decltype(diffusivity_)(
-          p.get<std::string>("Diffusivity Name"), dl->qp_tensor);
+      PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>
+        tmp(p.get<std::string>("Diffusivity Name"), dl->qp_tensor);
+      diffusivity_ = tmp;
       this->addDependentField(diffusivity_);
     }
 
     if (have_convection_) {
-      convection_vector_ = decltype(convection_vector_)(
-          p.get<std::string>("Convection Vector Name"), dl->qp_vector);
+      PHX::MDField<ScalarT,Cell,QuadPoint,Dim>
+        tmp(p.get<std::string>("Convection Vector Name"), dl->qp_vector);
+      convection_vector_ = tmp;
       this->addDependentField(convection_vector_);
     }
 
     if (have_species_coupling_) {
-      species_coupling_ = decltype(species_coupling_)(
-          p.get<std::string>("Species Coupling Name"), dl->qp_scalar);
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tmp(p.get<std::string>("Species Coupling Name"), dl->qp_scalar);
+      species_coupling_ = tmp;
       this->addDependentField(species_coupling_);
     }
 
     if (have_stabilization_) {
-      stabilization_ = decltype(stabilization_)(
-          p.get<std::string>("Stabilization Name"), dl->qp_scalar);
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tmp(p.get<std::string>("Stabilization Name"), dl->qp_scalar);
+      stabilization_ = tmp;
       this->addDependentField(stabilization_);
     }
 
     if (have_contact_) {
-      M_operator_ = decltype(M_operator_)(
-          p.get<std::string>("M Name"), dl->qp_scalar);
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tmp(p.get<std::string>("M Name"), dl->qp_scalar);
+      M_operator_ = tmp;
       this->addDependentField(M_operator_);
     }
     
     if ( have_transient_ && have_mechanics_ && (SolutionType_ != "Continuation") )
     {
-       stress_ = decltype(stress_)(
-           p.get<std::string>("Stress Name"), dl->qp_tensor);
+       PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
+       tmp(p.get<std::string>("Stress Name"), dl->qp_tensor);
+       stress_ = tmp;
        
-       vel_grad_ = decltype(vel_grad_)(
-           p.get<std::string>("Velocity Gradient Variable Name"),dl->qp_tensor);
+       PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>
+       tmpVel(p.get<std::string>("Velocity Gradient Variable Name"),dl->qp_tensor);
+       vel_grad_ = tmpVel;
        
        this->addDependentField(stress_);
        this->addDependentField(vel_grad_);

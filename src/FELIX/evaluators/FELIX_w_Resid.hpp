@@ -34,11 +34,11 @@ namespace FELIX
     typedef typename EvalT::ParamScalarT ParamScalarT;
 
     // Input:
-    PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;  // [km^3]
-    PHX::MDField<const ScalarT,Cell,Node> basalMeltRate; // [m yr^{-1}]
-    PHX::MDField<const VelocityType,Cell,QuadPoint,VecDim,Dim>  GradVelocity; // [k^{-1} yr^{-1}]
-    PHX::MDField<const ScalarT,Cell,QuadPoint, Dim> w_z;  // [k^{-1} yr^{-1}]
-    PHX::MDField<const ScalarT,Cell,Node> w; // [m yr^{-1}]
+    PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;  // [km^3]
+    PHX::MDField<ScalarT,Cell,Node> basalMeltRate; // [m yr^{-1}]
+    PHX::MDField<VelocityType,Cell,QuadPoint,VecDim,Dim>  GradVelocity; // [k^{-1} yr^{-1}]
+    PHX::MDField<ScalarT,Cell,QuadPoint, Dim> w_z;  // [k^{-1} yr^{-1}]
+    PHX::MDField<ScalarT,Cell,Node> w; // [m yr^{-1}]
 
     // Output
     PHX::MDField<ScalarT,Cell,Node> Residual;

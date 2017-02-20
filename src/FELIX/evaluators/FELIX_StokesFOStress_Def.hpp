@@ -44,7 +44,7 @@ StokesFOStress(const Teuchos::ParameterList& p,
 
   if(useStereographicMap)
   {
-    U = decltype(U)(p.get<std::string>("Velocity QP Variable Name"), dl->qp_vector);
+    U = PHX::MDField<ScalarT,Cell,QuadPoint,VecDim>(p.get<std::string>("Velocity QP Variable Name"), dl->qp_vector);
     this->addDependentField(U);
   }
 
@@ -52,7 +52,7 @@ StokesFOStress(const Teuchos::ParameterList& p,
   useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
   if(useStereographicMap)
   {
-    coordVec = decltype(coordVec)(p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
     this->addDependentField(coordVec);
   }
 

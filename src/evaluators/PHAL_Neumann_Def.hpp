@@ -107,8 +107,9 @@ NeumannBase(const Teuchos::ParameterList& p) :
                              std::endl << "Error: \"Robin\" Neumann boundary conditions "
                              << "only supported when the DOF is not a vector" << std::endl);
 
-       dof = decltype(dof)(p.get<std::string>("DOF Name"),
+       PHX::MDField<ScalarT,Cell,Node> tmp(p.get<std::string>("DOF Name"),
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
+       dof = tmp;
        this->addDependentField(dof);
      }
   }
@@ -170,14 +171,15 @@ NeumannBase(const Teuchos::ParameterList& p) :
         std::stringstream ss; ss << name << "[" << i << "]";
         this->registerSacadoParameter(ss.str(), paramLib);
       }
-       dofVec = decltype(dofVec)(p.get<std::string>("DOF Name"),
+       PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
+       dofVec = tmp;
 #ifdef ALBANY_FELIX
-      beta_field = decltype(beta_field)(
+      beta_field = PHX::MDField<ParamScalarT,Cell,Node>(
         p.get<std::string>("Beta Field Name"), dl->node_scalar);
-      thickness_field = decltype(thickness_field)(
+      thickness_field = PHX::MDField<ParamScalarT,Cell,Node>(
         p.get<std::string>("thickness Field Name"), dl->node_scalar);
-      bedTopo_field = decltype(bedTopo_field)(
+      bedTopo_field = PHX::MDField<ParamScalarT,Cell,Node>(
         p.get<std::string>("BedTopo Field Name"), dl->node_scalar);
 #endif
 
@@ -238,11 +240,12 @@ NeumannBase(const Teuchos::ParameterList& p) :
         std::stringstream ss; ss << name << "[" << i << "]";
         this->registerSacadoParameter(ss.str(), paramLib);
       }
-      dofVec = decltype(dofVec)(p.get<std::string>("DOF Name"),
+      PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
           p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
+      dofVec = tmp;
       this->addDependentField(dofVec);
 #ifdef ALBANY_FELIX
-      beta_field = decltype(beta_field)(
+      beta_field = PHX::MDField<ParamScalarT,Cell,Node>(
                     p.get<std::string>("Beta Field Name"), dl->node_scalar);
       this->addDependentField(beta_field);
 #endif
@@ -276,14 +279,15 @@ NeumannBase(const Teuchos::ParameterList& p) :
         std::stringstream ss; ss << name << "[" << i << "]";
         this->registerSacadoParameter(ss.str(), paramLib);
       }
-        dofVec = decltype(dofVec)(p.get<std::string>("DOF Name"),
+        PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
              p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
+        dofVec = tmp;
         this->addDependentField(dofVec);
 #ifdef ALBANY_FELIX
-        thickness_field = decltype(thickness_field)(
-          p.get<std::string>("thickness Field Name"), dl->node_scalar);
-        elevation_field = decltype(elevation_field)(
-          p.get<std::string>("Elevation Field Name"), dl->node_scalar);
+        thickness_field = PHX::MDField<ParamScalarT,Cell,Node>(
+                           p.get<std::string>("thickness Field Name"), dl->node_scalar);
+        elevation_field = PHX::MDField<ParamScalarT,Cell,Node>(
+                           p.get<std::string>("Elevation Field Name"), dl->node_scalar);
 
         this->addDependentField(thickness_field);
         this->addDependentField(elevation_field);

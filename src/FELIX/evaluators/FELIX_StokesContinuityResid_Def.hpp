@@ -25,11 +25,11 @@ StokesContinuityResid(const Teuchos::ParameterList& p,
   this->addDependentField(wBF);  
   this->addDependentField(VGrad);
   if (havePSPG) {
-    wGradBF = decltype(wGradBF)(
+    wGradBF = PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>(
       p.get<std::string>("Weighted Gradient BF Name"), dl->node_qp_vector);
-    TauM = decltype(TauM)(
+    TauM = PHX::MDField<ScalarT,Cell,QuadPoint>(
       p.get<std::string>("Tau M Name"), dl->qp_scalar);
-    Rm = decltype(Rm)(
+    Rm = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
       p.get<std::string>("Rm Name"), dl->qp_vector);
     this->addDependentField(wGradBF);
     this->addDependentField(TauM);

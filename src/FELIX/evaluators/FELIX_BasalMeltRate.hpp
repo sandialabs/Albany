@@ -42,10 +42,11 @@ namespace FELIX
     PHX::MDField<const ScalarT,Cell,Side,Node> 				Enthalpy; //[MW s m^{-3}]
     PHX::MDField<const ScalarT,Cell,Side,Node>                basal_dTdz; // [K km^{-1}]
     PHX::MDField<const ParamScalarT,Cell,Side,Node> 			EnthalpyHs; ////[MW s m^{-3}]
-    PHX::MDField<const ScalarT,Dim> homotopy;
 
     // Output:
     PHX::MDField<ScalarT,Cell,Side,Node> basalMeltRate; // [m/yr]
+
+    PHX::MDField<ScalarT,Dim> homotopy;
 
     std::vector<std::vector<int> >  sideNodes;
     std::string                     basalSideName;

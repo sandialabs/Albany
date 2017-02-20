@@ -262,13 +262,11 @@ CrystalPlasticityKernel(
   setDependentField(F_string_, dl->qp_tensor);
   setDependentField(J_string_, dl->qp_scalar);
   setDependentField(dt_string_, dl->workset_scalar);
-  if (write_data_file_) {
-    setDependentField(time_string_, dl->workset_scalar);
-  }
 
   //
   // Define the evaluated fields
   //
+  setEvaluatedField(time_string_, dl->workset_scalar);
   setEvaluatedField(eqps_string_, dl->qp_scalar);
   setEvaluatedField(Re_string_, dl->qp_tensor);
   setEvaluatedField(cauchy_string_, dl->qp_tensor);
@@ -401,7 +399,7 @@ CrystalPlasticityKernel(
 //
 template<typename EvalT, typename Traits>
 void CrystalPlasticityKernel<EvalT, Traits>::init(Workset & workset,
-                                                  FieldMap<const ScalarT> & dep_fields,
+                                                  FieldMap<ScalarT> & dep_fields,
                                                   FieldMap<ScalarT> & eval_fields)
 {
   if(verbosity_ > 2) {
@@ -422,14 +420,12 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(Workset & workset,
   // extract dependent MDFields
   //
   def_grad_ = *dep_fields[F_string_];
-  if (write_data_file_) {
-    time_ = *dep_fields[time_string_];
-  }
   delta_time_ = *dep_fields[dt_string_];
 
   //
   // extract evaluated MDFields
   //
+  time_ = *eval_fields[time_string_];
   eqps_ = *eval_fields[eqps_string_];
   xtal_rotation_ = *eval_fields[Re_string_];
   stress_ = *eval_fields[cauchy_string_];

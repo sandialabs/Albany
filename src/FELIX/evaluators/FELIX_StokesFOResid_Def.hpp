@@ -72,7 +72,7 @@ StokesFOResid(const Teuchos::ParameterList& p,
   needsBasalResidual = p.get<bool>("Needs Basal Residual");
   if (needsBasalResidual)
   {
-    basalRes  = decltype(basalRes)(p.get<std::string> ("Basal Residual Variable Name"), dl->node_vector);
+    basalRes  = PHX::MDField<ScalarT,Cell,Node,VecDim>(p.get<std::string> ("Basal Residual Variable Name"), dl->node_vector);
     this->addDependentField(basalRes);
   }
 
@@ -80,7 +80,7 @@ StokesFOResid(const Teuchos::ParameterList& p,
   useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
   if(useStereographicMap)
   {
-    coordVec = decltype(coordVec)(p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
     this->addDependentField(coordVec);
   }
 
@@ -629,6 +629,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (numDims == 3) { //3D case
     if (eqn_type == FELIX) {
      Kokkos::parallel_for(FELIX_3D_Policy(0,workset.numCells), *this);
+   //  Kokkos::parallel_for ( workset.numCells, StokesFOResid_3D_FELIX < ScalarT, PHX::Device, PHX::MDField<ScalarT,Cell,Node,VecDim>, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim>, PHX::MDField<ScalarT,Cell,QuadPoint>, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> > (Residual, wGradBF, force, Ugrad, muFELIX, wBF, numNodes, numQPs));
     }
     else if (eqn_type == POISSON) {
       Kokkos::parallel_for(POISSON_3D_Policy(0,workset.numCells), *this);

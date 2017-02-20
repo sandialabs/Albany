@@ -41,11 +41,11 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> PotentialGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> Concentration;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Permittivity;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PotentialGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Concentration;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Permittivity;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> PotentialResidual;

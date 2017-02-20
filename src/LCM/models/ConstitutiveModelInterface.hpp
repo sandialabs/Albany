@@ -106,7 +106,7 @@ namespace LCM {
     ///
     /// Dependent MDFields
     ///
-    std::map<std::string, Teuchos::RCP<PHX::MDField<const ScalarT>>> dep_fields_map_;
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields_map_;
 
     ///
     /// Evaluated MDFields
@@ -126,42 +126,42 @@ namespace LCM {
     ///
     /// Optional field for integration point locations
     ///
-    PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coord_vec_;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_vec_;
 
     ///
     /// Optional temperature field
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> temperature_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> temperature_;
 
     ///
     /// Optional total concentration field
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> total_concentration_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> total_concentration_;
 
     ///
     /// Optional total (He) bubble density field
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> total_bubble_density_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> total_bubble_density_;
 
     ///
     /// Optional bubble volume fraction field
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> bubble_volume_fraction_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> bubble_volume_fraction_;
 
     ///
     /// Optional damage field
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> damage_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> damage_;
 
     ///
     /// Optional Integration Weights
     ///
-    PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights_;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights_;
 
     ///
     /// Optional J
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> j_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> j_;
 
     ///
     /// flag to indicate we have temperature

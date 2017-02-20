@@ -46,13 +46,13 @@ NSMomentumResid(const Teuchos::ParameterList& p) :
   this->addDependentField(Rm);
   this->addDependentField(mu);
   if (haveSUPG) {
-    V = decltype(V)(
+    V = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
       p.get<std::string>("Velocity QP Variable Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
-    rho = decltype(rho)(
+    rho = PHX::MDField<ScalarT,Cell,QuadPoint>(
       p.get<std::string>("Density QP Variable Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    TauM = decltype(TauM)(
+    TauM = PHX::MDField<ScalarT,Cell,QuadPoint>(
 	p.get<std::string>("Tau M Name"),
 	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
     this->addDependentField(V);

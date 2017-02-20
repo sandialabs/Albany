@@ -54,7 +54,7 @@ private:
 
   // Input:
   //! Values at vertices
-  PHX::MDField<const MeshScalarT,Cell,Side,Vertex,Dim>      coords_side_vertices;
+  PHX::MDField<MeshScalarT,Cell,Side,Vertex,Dim>      coords_side_vertices;
 
   // Output:
   //! Values at quadrature points

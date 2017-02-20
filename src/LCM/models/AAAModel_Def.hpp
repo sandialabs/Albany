@@ -42,15 +42,15 @@ AAAModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void AAAModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    DepFieldMap dep_fields,
-    FieldMap eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 {
   // extract dependent MDFields
-  auto defGrad = *dep_fields["F"];
-  auto J = *dep_fields["J"];
+  PHX::MDField<ScalarT> defGrad = *dep_fields["F"];
+  PHX::MDField<ScalarT> J = *dep_fields["J"];
   // extract evaluated MDFields
   std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
-  auto stress = *eval_fields[cauchy];
+  PHX::MDField<ScalarT> stress = *eval_fields[cauchy];
 
   minitensor::Tensor<ScalarT> F(num_dims_);
   minitensor::Tensor<ScalarT> S(num_dims_);

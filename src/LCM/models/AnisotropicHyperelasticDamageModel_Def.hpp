@@ -135,8 +135,8 @@ AnisotropicHyperelasticDamageModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void AnisotropicHyperelasticDamageModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    DepFieldMap dep_fields,
-    FieldMap eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 {
   bool print = false;
   //if (typeid(ScalarT) == typeid(RealType)) print = true;
@@ -154,19 +154,19 @@ computeState(typename Traits::EvalData workset,
   std::string f2_damage_string = (*field_name_map_)["F2_Damage"];
 
   // extract dependent MDFields
-  auto def_grad = *dep_fields[F_string];
-  auto J = *dep_fields[J_string];
-  auto poissons_ratio = *dep_fields["Poissons Ratio"];
-  auto elastic_modulus = *dep_fields["Elastic Modulus"];
+  PHX::MDField<ScalarT> def_grad = *dep_fields[F_string];
+  PHX::MDField<ScalarT> J = *dep_fields[J_string];
+  PHX::MDField<ScalarT> poissons_ratio = *dep_fields["Poissons Ratio"];
+  PHX::MDField<ScalarT> elastic_modulus = *dep_fields["Elastic Modulus"];
 
   // extract evaluated MDFields
-  auto stress = *eval_fields[cauchy_string];
-  auto energy_m = *eval_fields[matrix_energy_string];
-  auto energy_f1 = *eval_fields[f1_energy_string];
-  auto energy_f2 = *eval_fields[f2_energy_string];
-  auto damage_m = *eval_fields[matrix_damage_string];
-  auto damage_f1 = *eval_fields[f1_damage_string];
-  auto damage_f2 = *eval_fields[f2_damage_string];
+  PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
+  PHX::MDField<ScalarT> energy_m = *eval_fields[matrix_energy_string];
+  PHX::MDField<ScalarT> energy_f1 = *eval_fields[f1_energy_string];
+  PHX::MDField<ScalarT> energy_f2 = *eval_fields[f2_energy_string];
+  PHX::MDField<ScalarT> damage_m = *eval_fields[matrix_damage_string];
+  PHX::MDField<ScalarT> damage_f1 = *eval_fields[f1_damage_string];
+  PHX::MDField<ScalarT> damage_f2 = *eval_fields[f2_damage_string];
 
   // previous state
   Albany::MDArray energy_m_old =

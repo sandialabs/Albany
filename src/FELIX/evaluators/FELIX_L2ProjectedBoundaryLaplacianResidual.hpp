@@ -45,11 +45,11 @@ namespace FELIX {
     int numSideDims;
     int sideDim;
 
-    PHX::MDField<const ScalarT,Cell,Node>             solution;
-    PHX::MDField<const ParamScalarT,Cell,Side,Node>                 field;
-    PHX::MDField<const ScalarT,Cell,Side,QuadPoint,Dim>        gradField;
-    PHX::MDField<const MeshScalarT,Cell,Side,Node,QuadPoint,Dim>   gradBF;
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>        w_side_measure;
+    PHX::MDField<ScalarT,Cell,Node>             solution;
+    PHX::MDField<ParamScalarT,Cell,Side,Node>                 field;
+    PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>        gradField;
+    PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>   gradBF;
+    PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>        w_side_measure;
 
     PHX::MDField<ScalarT,Cell,Node> bdLaplacian_L2Projection_res;
 

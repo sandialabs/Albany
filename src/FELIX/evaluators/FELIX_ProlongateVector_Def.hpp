@@ -25,18 +25,18 @@ ProlongateVectorBase(const Teuchos::ParameterList& p,
   std::string layout = p.get<std::string>("Field Layout");
   if (layout=="Cell Vector")
   {
-    v_in  = decltype(v_in)(name,dl_in->cell_vector);
-    v_out = decltype(v_out)(name,dl_out->cell_vector);
+    v_in  = PHX::MDField<ScalarT>(name,dl_in->cell_vector);
+    v_out = PHX::MDField<ScalarT>(name,dl_out->cell_vector);
   }
   else if (layout=="Cell Node Vector")
   {
-    v_in  = decltype(v_in)(name,dl_in->node_vector);
-    v_out = decltype(v_out)(name,dl_out->node_vector);
+    v_in  = PHX::MDField<ScalarT>(name,dl_in->node_vector);
+    v_out = PHX::MDField<ScalarT>(name,dl_out->node_vector);
   }
   else if (layout=="Cell QuadPoint Vector")
   {
-    v_in  = decltype(v_in)(name,dl_in->qp_vector);
-    v_out = decltype(v_out)(name,dl_out->qp_vector);
+    v_in  = PHX::MDField<ScalarT>(name,dl_in->qp_vector);
+    v_out = PHX::MDField<ScalarT>(name,dl_out->qp_vector);
   }
   else
   {

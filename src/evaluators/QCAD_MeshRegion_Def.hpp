@@ -83,14 +83,17 @@ template<typename EvalT, typename Traits>
 void QCAD::MeshRegion<EvalT, Traits>::
 addDependentFields(PHX::EvaluatorWithBaseImpl<Traits>* evaluator)
 {
-  coordVec = decltype(coordVec)(coordVecFieldname, dl->qp_vector); 
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> f(coordVecFieldname, dl->qp_vector); 
+  coordVec = f;
   evaluator->addDependentField(coordVec);
 
   if(bRestrictToLevelSet) {
-    weights = decltype(weights)(weightsFieldname, dl->qp_scalar); 
+    PHX::MDField<MeshScalarT,Cell,QuadPoint> g(weightsFieldname, dl->qp_scalar); 
+    weights = g;
     evaluator->addDependentField(weights);
 
-    levelSetField = decltype(levelSetField)(levelSetFieldname, dl->qp_scalar); 
+    PHX::MDField<ScalarT> h(levelSetFieldname, dl->qp_scalar); 
+    levelSetField = h;
     evaluator->addDependentField(levelSetField);
   }
 }

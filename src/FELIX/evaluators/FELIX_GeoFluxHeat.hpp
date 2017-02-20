@@ -40,12 +40,12 @@ namespace FELIX
     typedef typename EvalT::ParamScalarT ParamScalarT;
 
     // Input:
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>    	 geoFlux;     // [W m^{-2}] = [Pa m s^{-1}]
-    PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>   	 BF;          // []
-    PHX::MDField<const RealType,Cell,Side,Node,QuadPoint,Dim>  GradBF;      // [km^{-1}
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>     	 w_measure;   // [km^2]
-    PHX::MDField<const Type,Cell,Side,QuadPoint,VecDim>        velocity;    // [m y^{-1}]
-    PHX::MDField<const ScalarT,Cell,Side,QuadPoint>        	   verticalVel; // [m y^{-1}]
+    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>    	 geoFlux;     // [W m^{-2}] = [Pa m s^{-1}]
+    PHX::MDField<RealType,Cell,Side,Node,QuadPoint>   	 BF;          // []
+    PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim>  GradBF;      // [km^{-1}
+    PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>     	 w_measure;   // [km^2]
+    PHX::MDField<Type,Cell,Side,QuadPoint,VecDim>        velocity;    // [m y^{-1}]
+    PHX::MDField<ScalarT,Cell,Side,QuadPoint>        	   verticalVel; // [m y^{-1}]
 
     // Output:
     PHX::MDField<ScalarT,Cell,Node> geoFluxHeat;      // [MW] = [k^{-2} kPa s^{-1} km^3]

@@ -34,8 +34,8 @@ namespace FELIX
     typedef typename EvalT::ParamScalarT ParamScalarT;
 
     // Input:
-    PHX::MDField<const ParamScalarT,Cell,Node> thickness;
-    PHX::MDField<const ScalarT,Cell,Node> int1Dw_z;
+    PHX::MDField<ParamScalarT,Cell,Node> thickness;
+    PHX::MDField<ScalarT,Cell,Node> int1Dw_z;
 
     // Output:
     PHX::MDField<ScalarT,Cell,Node> w;

@@ -26,10 +26,6 @@ class J2HMCModel: public LCM::ConstitutiveModel<EvalT, Traits>
 {
 public:
 
-  using Base = LCM::ConstitutiveModel<EvalT, Traits>;
-  using DepFieldMap = typename Base::DepFieldMap;
-  using FieldMap = typename Base::FieldMap;
-
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
   typedef typename Sacado::mpl::apply<FadType,ScalarT>::type DFadType;
@@ -58,21 +54,21 @@ public:
   virtual
   void
   computeState(typename Traits::EvalData workset,
-      DepFieldMap dep_fields,
-      FieldMap eval_fields);
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
 
   //Kokkos
   virtual
   void
   computeStateParallel(typename Traits::EvalData workset,
-      DepFieldMap dep_fields,
-      FieldMap eval_fields);
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
 
   void
   computeVolumeAverage(
       typename Traits::EvalData workset,
-      DepFieldMap dep_fields,
-      FieldMap eval_fields);
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
 
 private:
   
@@ -82,9 +78,9 @@ private:
   void 
   computeTrialState( typename Traits::EvalData workset,
                    /* increments */
-                   PHX::MDField<const ScalarT> &                delta_macroStrain,
-                   std::vector< PHX::MDField<const ScalarT>> & delta_strainDifference,
-                   std::vector< PHX::MDField<const ScalarT>> & delta_microStrainGradient,
+                   PHX::MDField<ScalarT> &                delta_macroStrain,
+                   std::vector< PHX::MDField<ScalarT>> & delta_strainDifference,
+                   std::vector< PHX::MDField<ScalarT>> & delta_microStrainGradient,
                    /* updated state */
                    PHX::MDField<ScalarT> &                updated_macroStress,
                    std::vector< PHX::MDField<ScalarT>> & updated_microStress,

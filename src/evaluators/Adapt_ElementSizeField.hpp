@@ -65,9 +65,9 @@ namespace Adapt {
     std::size_t numDims;
     std::size_t numVertices;
 
-    PHX::MDField<const MeshScalarT,Cell,QuadPoint> qp_weights;
-    PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-    PHX::MDField<const MeshScalarT,Cell,Node,Dim> coordVec_vertices;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint> qp_weights;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+    PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec_vertices;
 
     bool outputToExodus;
     bool outputCellAverage;

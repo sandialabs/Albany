@@ -40,9 +40,9 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:  
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> coordVec;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> qFluct; //vector q' containing fluid fluctuations in primitive variables
-  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim> qFluctGrad;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> qFluct; //vector q' containing fluid fluctuations in primitive variables
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> qFluctGrad;
   //reference values for viscosities
   double muref; 
   double kapparef; 

@@ -47,8 +47,10 @@ DamageCoefficients(Teuchos::ParameterList& p,
   num_dims_ = dims[2];
 
   if (have_mech_) {
-    def_grad_ = decltype(def_grad_)(
-        p.get<std::string>("Deformation Gradient Name"), dl->qp_tensor);
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
+    temp_def_grad(p.get<std::string>("Deformation Gradient Name"),
+        dl->qp_tensor);
+    def_grad_ = temp_def_grad;
     this->addDependentField(def_grad_);
   }
   damage_name_ = p.get<std::string>("Damage Name")+"_old";

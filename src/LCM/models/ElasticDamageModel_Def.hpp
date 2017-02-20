@@ -76,17 +76,17 @@ ElasticDamageModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void ElasticDamageModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    DepFieldMap dep_fields,
-    FieldMap eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 {
   //bool print = false;
   //if (typeid(ScalarT) == typeid(RealType)) print = true;
   //cout.precision(15);
 
   // extract dependent MDFields
-  auto strain = *dep_fields["Strain"];
-  auto poissons_ratio = *dep_fields["Poissons Ratio"];
-  auto elastic_modulus = *dep_fields["Elastic Modulus"];
+  PHX::MDField<ScalarT> strain = *dep_fields["Strain"];
+  PHX::MDField<ScalarT> poissons_ratio = *dep_fields["Poissons Ratio"];
+  PHX::MDField<ScalarT> elastic_modulus = *dep_fields["Elastic Modulus"];
 
   // retrieve appropriate field name strings
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
@@ -95,9 +95,9 @@ computeState(typename Traits::EvalData workset,
   std::string tangent_string = (*field_name_map_)["Material Tangent"];
 
   // extract evaluated MDFields
-  auto stress = *eval_fields[cauchy_string];
-  auto energy = *eval_fields[energy_string];
-  auto damage = *eval_fields[damage_string];
+  PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
+  PHX::MDField<ScalarT> energy = *eval_fields[energy_string];
+  PHX::MDField<ScalarT> damage = *eval_fields[damage_string];
   PHX::MDField<ScalarT> tangent;
     
   if(compute_tangent_) {

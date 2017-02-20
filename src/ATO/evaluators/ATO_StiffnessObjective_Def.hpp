@@ -64,7 +64,7 @@ StiffnessObjectiveBase(Teuchos::ParameterList& p,
   this->addDependentField(qp_weights);
   this->addDependentField(BF);
 
-  Teuchos::Array< PHX::MDField<const ScalarT> > depFields;
+  Teuchos::Array< PHX::MDField<ScalarT> > depFields;
   penaltyModel->getDependentFields(depFields);
 
   int nFields = depFields.size();
@@ -88,7 +88,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(qp_weights,fm);
   this->utils.setFieldData(BF,fm);
 
-  Teuchos::Array<PHX::MDField<const ScalarT>* > depFields;
+  Teuchos::Array<PHX::MDField<ScalarT>* > depFields;
   penaltyModel->getDependentFields(depFields);
 
   int nFields = depFields.size();

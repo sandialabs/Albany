@@ -53,7 +53,7 @@ namespace LCM {
     ///
     /// solution field
     ///
-    PHX::MDField<const ScalarT, Cell, Node, Dim, Dim> solution_;
+    PHX::MDField<ScalarT, Cell, Node, Dim, Dim> solution_;
 
     ///
     /// def grad field
@@ -73,7 +73,7 @@ namespace LCM {
     ///
     /// time field
     ///
-    PHX::MDField<const ScalarT, Dummy> time_;
+    PHX::MDField<ScalarT, Dummy> time_;
 
     ///
     /// problem final time

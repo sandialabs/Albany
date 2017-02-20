@@ -122,15 +122,15 @@ LinearPiezoModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void LinearPiezoModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    DepFieldMap dep_fields,
-    FieldMap eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 /******************************************************************************/
 {
-  auto strain = *dep_fields[strainName];
-  auto Gradp = *dep_fields[efieldName];
+  PHX::MDField<ScalarT> strain = *dep_fields[strainName];
+  PHX::MDField<ScalarT> Gradp = *dep_fields[efieldName];
 
-  auto stress = *eval_fields[stressName];
-  auto edisp  = *eval_fields[edispName];
+  PHX::MDField<ScalarT> stress = *eval_fields[stressName];
+  PHX::MDField<ScalarT> edisp  = *eval_fields[edispName];
 
   int numCells = workset.numCells;
 
@@ -191,8 +191,8 @@ computeState(typename Traits::EvalData workset,
 template<typename EvalT, typename Traits>
 void LinearPiezoModel<EvalT, Traits>::
 computeStateParallel(typename Traits::EvalData workset,
-    DepFieldMap dep_fields,
-    FieldMap eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 /******************************************************************************/
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument,

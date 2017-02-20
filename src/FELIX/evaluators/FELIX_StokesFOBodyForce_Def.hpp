@@ -61,15 +61,14 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
 #ifdef OUTPUT_TO_SCREEN
     *out << "INTERP SURFACE GRAD Source!" << std::endl;
 #endif
-    surfaceGrad = decltype(surfaceGrad)(
+    surfaceGrad = PHX::MDField<ParamScalarT,Cell,QuadPoint,Dim>(
              p.get<std::string>("Surface Height Gradient Name"), dl->qp_gradient);
     this->addDependentField(surfaceGrad);
 
     if(useStereographicMap) {
-      surface = decltype(surface)(
-          p.get<std::string>("Surface Height Name"), dl->qp_scalar);
+      surface = PHX::MDField<ParamScalarT,Cell,QuadPoint>(p.get<std::string>("Surface Height Name"), dl->qp_scalar);
       this->addDependentField(surface);
-      coordVec = decltype(coordVec)(
+      coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
                   p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
       this->addDependentField(coordVec);
     }
@@ -80,7 +79,7 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
 #ifdef OUTPUT_TO_SCREEN
     *out << "Surface Grad Provided Source!" << std::endl;
 #endif
-    surfaceGrad = decltype(surfaceGrad)(
+    surfaceGrad = PHX::MDField<ParamScalarT,Cell,QuadPoint,Dim>(
              p.get<std::string>("Surface Height Gradient QP Variable Name"), dl->qp_gradient);
     this->addDependentField(surfaceGrad);
     bf_type = FO_SURF_GRAD_PROVIDED;
@@ -88,63 +87,63 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
 #endif
   else if (type == "FOSinCos2D") {
     bf_type = FO_SINCOS2D;
-    muFELIX = decltype(muFELIX)(
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
             p.get<std::string>("FELIX Viscosity QP Variable Name"), dl->qp_scalar);
-    coordVec = decltype(coordVec)(
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
     this->addDependentField(muFELIX);
     this->addDependentField(coordVec);
   }
   else if (type == "FOSinExp2D") {
     bf_type = FO_SINEXP2D;
-    muFELIX = decltype(muFELIX)(
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
             p.get<std::string>("FELIX Viscosity QP Variable Name"), dl->qp_scalar);
-    coordVec = decltype(coordVec)(
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
     this->addDependentField(muFELIX);
     this->addDependentField(coordVec);
   }
   else if (type == "FOCosExp2D") {
     bf_type = FO_COSEXP2D;
-    muFELIX = decltype(muFELIX)(
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
             p.get<std::string>("FELIX Viscosity QP Variable Name"), dl->qp_scalar);
-    coordVec = decltype(coordVec)(
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
     this->addDependentField(muFELIX);
     this->addDependentField(coordVec);
   }
   else if (type == "FOCosExp2DFlip") {
     bf_type = FO_COSEXP2DFLIP;
-    muFELIX = decltype(muFELIX)(
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
             p.get<std::string>("FELIX Viscosity QP Variable Name"), dl->qp_scalar);
-    coordVec = decltype(coordVec)(
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
     this->addDependentField(muFELIX);
     this->addDependentField(coordVec);
   }
   else if (type == "FOCosExp2DAll") {
     bf_type = FO_COSEXP2DALL;
-    muFELIX = decltype(muFELIX)(
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
             p.get<std::string>("FELIX Viscosity QP Variable Name"), dl->qp_scalar);
-    coordVec = decltype(coordVec)(
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
     this->addDependentField(muFELIX);
     this->addDependentField(coordVec);
   }
   else if (type == "FOSinCosZ") {
     bf_type = FO_SINCOSZ;
-    muFELIX = decltype(muFELIX)(
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
             p.get<std::string>("FELIX Viscosity QP Variable Name"), dl->qp_scalar);
-    coordVec = decltype(coordVec)(
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
     this->addDependentField(muFELIX);
     this->addDependentField(coordVec);
   }
   else if (type == "Poisson") {
     bf_type = POISSON;
-    muFELIX = decltype(muFELIX)(
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
             p.get<std::string>("FELIX Viscosity QP Variable Name"), dl->qp_scalar);
-    coordVec = decltype(coordVec)(
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
     this->addDependentField(muFELIX);
     this->addDependentField(coordVec);
@@ -152,9 +151,9 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   //Source for xz MMS problem derived by Mauro.
   else if (type == "FO_XZ_MMS") {
     bf_type = FO_XZMMS;
-    muFELIX = decltype(muFELIX)(
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
             p.get<std::string>("FELIX Viscosity QP Variable Name"), dl->qp_scalar);
-    coordVec = decltype(coordVec)(
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
     this->addDependentField(muFELIX);
     this->addDependentField(coordVec);
@@ -162,7 +161,7 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   //kept for backward compatibility. Use type = "FO INTERP GRAD SURF" instead.
   else if ((type == "FO ISMIP-HOM Test A") || (type == "FO ISMIP-HOM Test B") || (type == "FO ISMIP-HOM Test C") || (type == "FO ISMIP-HOM Test D")) {
   *out << "ISMIP-HOM Tests A/B/C/D \n WARNING: computing INTERP SURFACE GRAD Source! \nPlease set  Force Type = FO INTERP GRAD SURF." << std::endl;
-    surfaceGrad = decltype(surfaceGrad)(
+    surfaceGrad = PHX::MDField<ParamScalarT,Cell,QuadPoint,Dim>(
         p.get<std::string>("Surface Height Gradient Name"), dl->qp_gradient);
     this->addDependentField(surfaceGrad);
     bf_type = FO_INTERP_SURF_GRAD;
@@ -171,7 +170,7 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
 #ifdef OUTPUT_TO_SCREEN
     *out << "Dome Source!" << std::endl;
 #endif
-    coordVec = decltype(coordVec)(
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_gradient);
     bf_type = FO_DOME;
     this->addDependentField(coordVec);

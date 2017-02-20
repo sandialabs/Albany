@@ -40,20 +40,20 @@ LinearElasticModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void LinearElasticModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    DepFieldMap dep_fields,
-    FieldMap eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 {
   bool print = false;
   //if (typeid(ScalarT) == typeid(RealType)) print = true;
   //std::cout.precision(15);
 
   // extract dependent MDFields
-  auto strain = *dep_fields["Strain"];
-  auto poissons_ratio = *dep_fields["Poissons Ratio"];
-  auto elastic_modulus = *dep_fields["Elastic Modulus"];
+  PHX::MDField<ScalarT> strain = *dep_fields["Strain"];
+  PHX::MDField<ScalarT> poissons_ratio = *dep_fields["Poissons Ratio"];
+  PHX::MDField<ScalarT> elastic_modulus = *dep_fields["Elastic Modulus"];
   // extract evaluated MDFields
   std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
-  auto stress = *eval_fields[cauchy];
+  PHX::MDField<ScalarT> stress = *eval_fields[cauchy];
   ScalarT lambda;
   ScalarT mu;
 

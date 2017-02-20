@@ -40,11 +40,11 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> defGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> J;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> stress;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> biotCoefficient;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> porePressure;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
+  PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
 
   unsigned int numQPs;
   unsigned int numDims;

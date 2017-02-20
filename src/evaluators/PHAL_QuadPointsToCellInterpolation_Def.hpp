@@ -20,16 +20,16 @@ QuadPointsToCellInterpolationBase (const Teuchos::ParameterList& p,
 
   if (isVectorField)
   {
-    field_qp   = decltype(field_qp)(p.get<std::string> ("Field QP Name"), dl->qp_vector);
-    field_cell = decltype(field_cell)(p.get<std::string> ("Field Cell Name"), dl->cell_vector);
+    field_qp   = PHX::MDField<ScalarT> (p.get<std::string> ("Field QP Name"), dl->qp_vector);
+    field_cell = PHX::MDField<ScalarT> (p.get<std::string> ("Field Cell Name"), dl->cell_vector);
 
     numQPs = dl->qp_vector->dimension(1);
     vecDim = dl->qp_vector->dimension(2);
   }
   else
   {
-    field_qp   = decltype(field_qp)(p.get<std::string> ("Field QP Name"), dl->qp_scalar);
-    field_cell = decltype(field_cell)(p.get<std::string> ("Field Cell Name"), dl->cell_scalar2);
+    field_qp   = PHX::MDField<ScalarT> (p.get<std::string> ("Field QP Name"), dl->qp_scalar);
+    field_cell = PHX::MDField<ScalarT> (p.get<std::string> ("Field Cell Name"), dl->cell_scalar2);
 
     numQPs = dl->qp_scalar->dimension(1);
   }

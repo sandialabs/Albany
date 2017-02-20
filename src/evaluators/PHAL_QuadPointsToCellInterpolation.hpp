@@ -46,8 +46,8 @@ private:
   bool isVectorField;
 
   // Input:
-  PHX::MDField<const ScalarT>                    field_qp;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint> w_measure;
+  PHX::MDField<ScalarT>                    field_qp;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> w_measure;
 
   // Output:
   PHX::MDField<ScalarT>     field_cell;

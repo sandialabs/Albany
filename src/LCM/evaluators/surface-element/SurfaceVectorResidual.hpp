@@ -56,27 +56,27 @@ private:
   intrepid_basis_;
 
   /// First PK Stress
-  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim>
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
   stress_;
 
   /// Current configuration basis
-  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim>
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
   current_basis_;
 
   /// Reference configuration dual basis
-  PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim, Dim>
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim>
   ref_dual_basis_;
 
   /// Reference configuration normal
-  PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim>
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim>
   ref_normal_;
 
   /// Reference configuration area
-  PHX::MDField<const MeshScalarT, Cell, QuadPoint>
+  PHX::MDField<MeshScalarT, Cell, QuadPoint>
   ref_area_;
 
   /// Determinant of deformation gradient
-  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim>
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim>
   detF_;
 
   /// Reference Cell Views
@@ -93,17 +93,16 @@ private:
   ref_weights_;
 
   /// Optional Cohesive Traction
-  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim>
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim>
   traction_;
-
-  // Output:
-  /// Force
-  PHX::MDField<ScalarT, Cell, Node, Dim>
-  force_;
 
   /// Cauchy Stress
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
   cauchy_stress_;
+
+  // Output:
+  PHX::MDField<ScalarT, Cell, Node, Dim>
+  force_;
 
   unsigned int
   workset_size_;

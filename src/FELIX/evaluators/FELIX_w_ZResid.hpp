@@ -34,9 +34,9 @@ class w_ZResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		typedef typename EvalT::ParamScalarT ParamScalarT;
 
 		// Input:
-		PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
-		PHX::MDField<const VelocityType,Cell,QuadPoint,VecDim,Dim>  GradVelocity;
-		PHX::MDField<const ScalarT,Cell,QuadPoint> w_z;
+		PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+		PHX::MDField<VelocityType,Cell,QuadPoint,VecDim,Dim>  GradVelocity;
+		PHX::MDField<ScalarT,Cell,QuadPoint> w_z;
 
 		// Output
 		PHX::MDField<ScalarT,Cell,Node> Residual;

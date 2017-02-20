@@ -39,11 +39,11 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const ScalarT,Cell,QuadPoint> biotCoefficient;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> porosity;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> J;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> alphaSkeleton;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> alphaPoreFluid;
+  PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
+  PHX::MDField<ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<ScalarT,Cell,QuadPoint> alphaSkeleton;
+  PHX::MDField<ScalarT,Cell,QuadPoint> alphaPoreFluid;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mixtureThermalExpansion;

@@ -34,8 +34,8 @@ ResponseBoundarySquaredL2Norm(Teuchos::ParameterList& p, const Teuchos::RCP<Alba
   const std::string& w_side_measure_name = paramList->get<std::string>("Weighted Measure 2D Name");
   const std::string& solution_name       = plist->get<std::string>("Field Name");
 
-  solution        = decltype(solution)(solution_name, dl_side->node_scalar);
-  w_side_measure  = decltype(w_side_measure)(w_side_measure_name, dl_side->qp_scalar);
+  solution        = PHX::MDField<ScalarT,Cell,Side,Node>(solution_name, dl_side->node_scalar);
+  w_side_measure  = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_side_measure_name, dl_side->qp_scalar);
 
   scaling = plist->get<double>("Scaling Coefficient", 1.0);
 
@@ -82,7 +82,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
 template<typename EvalT, typename Traits>
 void FELIX::ResponseBoundarySquaredL2Norm<EvalT, Traits>::preEvaluate(typename Traits::PreEvalData workset)
 {
-  PHAL::set(this->global_response_eval, 0.0);
+  PHAL::set(this->global_response, 0.0);
 
   p_reg = 0;
 
@@ -98,7 +98,7 @@ void FELIX::ResponseBoundarySquaredL2Norm<EvalT, Traits>::evaluateFields(typenam
                               "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
   // Zero out local response
-  PHAL::set(this->local_response_eval, 0.0);
+  PHAL::set(this->local_response, 0.0);
 
   // ----------------- Surface side ---------------- //
 
@@ -126,8 +126,8 @@ void FELIX::ResponseBoundarySquaredL2Norm<EvalT, Traits>::evaluateFields(typenam
         //using trapezoidal rule to get diagonal mass matrix
         t += std::pow(solution(cell,side,inode),2)* trapezoid_weight;
       }
-      this->local_response_eval(cell, 0) += t*scaling;
-      this->global_response_eval(0) += t*scaling;
+      this->local_response(cell, 0) += t*scaling;
+      this->global_response(0) += t*scaling;
       p_reg += t*scaling;
     }
   }
@@ -142,7 +142,7 @@ void FELIX::ResponseBoundarySquaredL2Norm<EvalT, Traits>::postEvaluate(typename 
 
   //amb Deal with op[], pointers, and reduceAll.
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
-                           this->global_response_eval);
+                           this->global_response);
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_reg);
   reg = p_reg;
 

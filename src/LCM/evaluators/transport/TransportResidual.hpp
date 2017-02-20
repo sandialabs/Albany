@@ -51,10 +51,10 @@ namespace LCM {
     ///
     /// Stress field
     ///
-    PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> stress_;
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress_;
     
     // velocity gradient (Lagrangian)
-    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> vel_grad_;
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> vel_grad_;
     
     // Temporal container used to store P : F_dot
     Kokkos::DynRankView<ScalarT, PHX::Device> term1_;
@@ -62,68 +62,68 @@ namespace LCM {
     ///
     /// Scalar field for transport variable
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> scalar_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> scalar_;
 
     ///
     /// Scalar dot field for transport variable
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> scalar_dot_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> scalar_dot_;
 
     ///
     /// Scalar field for transport variable
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint, Dim> scalar_grad_;
+    PHX::MDField<ScalarT,Cell,QuadPoint, Dim> scalar_grad_;
 
     ///
     /// Integrations weights
     ///
-    PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights_;
+    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights_;
 
     ///
     /// Weighted basis functions
     ///
-    PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> w_bf_;
+    PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> w_bf_;
 
     ///
     /// Weighted gradients of basis functions
     ///
-    PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> w_grad_bf_;
+    PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> w_grad_bf_;
 
     ///
     /// Source term(s)
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> source_;
-    PHX::MDField<const ScalarT,Cell,QuadPoint> second_source_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> source_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> second_source_;
 
     ///
     /// M operator for contact
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> M_operator_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> M_operator_;
 
     ///
     /// Scalar coefficient on the transient transport term
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> transient_coeff_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> transient_coeff_;
 
     ///
     /// Tensor diffusivity
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> diffusivity_;
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> diffusivity_;
 
     ///
     /// Vector convection term
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> convection_vector_;
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> convection_vector_;
 
     ///
     /// Species coupling term
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> species_coupling_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> species_coupling_;
 
     ///
     /// Stabilization term
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> stabilization_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> stabilization_;
 
     ///
     /// Output residual

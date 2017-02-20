@@ -48,12 +48,12 @@ public:
 private:
   std::string name_mp;
   Teuchos::RCP<PHX::DataLayout> layout;
-  PHX::MDField<const MeshScalarT> coordVec;
-  PHX::MDField<const ScalarT> T;
-  PHX::MDField<const ScalarT> sigma_a;
-  PHX::MDField<const ScalarT> sigma_s;
-  PHX::MDField<const ScalarT> mu;
+  PHX::MDField<MeshScalarT> coordVec;
   PHX::MDField<ScalarT> matprop;
+  PHX::MDField<ScalarT> T;
+  PHX::MDField<ScalarT> sigma_a;
+  PHX::MDField<ScalarT> sigma_s;
+  PHX::MDField<ScalarT> mu;
   PHX::index_size_type rank;
   std::vector<PHX::DataLayout::size_type> dims;
 

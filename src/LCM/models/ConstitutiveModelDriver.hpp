@@ -52,17 +52,17 @@ namespace LCM {
     ///
     /// def grad field
     ///
-    PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> def_grad_;
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> def_grad_;
 
     ///
     /// Cauchy stress field
     ///
-    PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> stress_;
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress_;
 
     ///
     /// prescribed deformation gradient field
     ///
-    PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> prescribed_def_grad_;
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> prescribed_def_grad_;
 
     ///
     /// Time field

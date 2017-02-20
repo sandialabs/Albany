@@ -48,8 +48,9 @@ namespace LCM {
 #ifdef ALBANY_STOKHOS
     else if (type == "Truncated KL Expansion") {
       is_constant = false;
-      coordVec = decltype(coordVec)(
-          p.get<std::string>("QP Coordinate Vector Name"), dl->qp_vector);
+      PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
+        fx(p.get<std::string>("QP Coordinate Vector Name"), dl->qp_vector);
+      coordVec = fx;
       this->addDependentField(coordVec);
 
       exp_rf_kl = 
@@ -76,10 +77,18 @@ namespace LCM {
     // Switched ON by sending porePressure field in p
     if ( p.isType<std::string>("Strain Name") ) {
 
+      //   Teuchos::RCP<PHX::DataLayout> scalar_dl =
+      //     p.get< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
+      //   PHX::MDField<ScalarT,Cell,QuadPoint>
+      //     tmp(p.get<std::string>("QP Pore Pressure Name"), scalar_dl);
+      //   porePressure = tmp;
+      //  this->addDependentField(porePressure);
+
       hasStrain = true;
 
-      strain = decltype(strain)(
-          p.get<std::string>("Strain Name"), dl->qp_tensor);
+      PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim>
+        ts(p.get<std::string>("Strain Name"), dl->qp_tensor);
+      strain = ts;
       this->addDependentField(strain);
 
       isCompressibleSolidPhase = true;
@@ -91,7 +100,9 @@ namespace LCM {
     }
     else if ( p.isType<std::string>("DetDefGrad Name") ) {
       hasJ = true;
-      J = decltype(J)(p.get<std::string>("DetDefGrad Name"), dl->qp_scalar);
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tj(p.get<std::string>("DetDefGrad Name"), dl->qp_scalar);
+      J = tj;
       this->addDependentField(J);
       isPoroElastic = true;
       initialPorosityValue = 
@@ -105,8 +116,9 @@ namespace LCM {
     }
 
     if ( p.isType<std::string>("Biot Coefficient Name") ) {
-      biotCoefficient = decltype(biotCoefficient)(
-          p.get<std::string>("Biot Coefficient Name"), dl->qp_scalar);
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        btp(p.get<std::string>("Biot Coefficient Name"), dl->qp_scalar);
+      biotCoefficient = btp;
       isCompressibleSolidPhase = true;
       isCompressibleFluidPhase = true;
       isPoroElastic = true;
@@ -114,8 +126,9 @@ namespace LCM {
     }
 
     if ( p.isType<std::string>("QP Pore Pressure Name") ) {
-      porePressure = decltype(porePressure)(
-          p.get<std::string>("QP Pore Pressure Name"), dl->qp_scalar);
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        ppn(p.get<std::string>("QP Pore Pressure Name"), dl->qp_scalar);
+      porePressure = ppn;
       isCompressibleSolidPhase = true;
       isCompressibleFluidPhase = true;
       isPoroElastic = true;
@@ -128,21 +141,26 @@ namespace LCM {
     }
 
     if ( p.isType<std::string>("QP Temperature Name") ) {
-      Temperature = decltype(Temperature)(
-          p.get<std::string>("QP Temperature Name"), dl->qp_scalar);
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        ppn(p.get<std::string>("QP Temperature Name"), dl->qp_scalar);
+      Temperature = ppn;
       this->addDependentField(Temperature);
 
-      if ( p.isType<std::string>("Skeleton Thermal Expansion Name") ) {
-        skeletonThermalExpansion = decltype(skeletonThermalExpansion)(
-            p.get<std::string>("Skeleton Thermal Expansion Name"), dl->qp_scalar);
-        this->addDependentField(skeletonThermalExpansion);
 
 
-        if ( p.isType<std::string>("Reference Temperature Name") ) {
-          refTemperature = decltype(refTemperature)(
-              p.get<std::string>("Reference Temperature Name"), dl->qp_scalar);
-          hasTemp = true;
-          this->addDependentField(refTemperature);
+         if ( p.isType<std::string>("Skeleton Thermal Expansion Name") ) {
+              PHX::MDField<ScalarT,Cell,QuadPoint>
+              skte(p.get<std::string>("Skeleton Thermal Expansion Name"), dl->qp_scalar);
+              skeletonThermalExpansion = skte;
+              this->addDependentField(skeletonThermalExpansion);
+
+
+            if ( p.isType<std::string>("Reference Temperature Name") ) {
+              PHX::MDField<ScalarT,Cell,QuadPoint>
+              reftemp(p.get<std::string>("Reference Temperature Name"), dl->qp_scalar);
+              refTemperature = reftemp;
+              hasTemp = true;
+              this->addDependentField(refTemperature);
 
         }
       }

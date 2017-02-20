@@ -53,7 +53,7 @@ ResponseThermalEnergyT(Teuchos::ParameterList& p,
       "Invalid field type " << fieldType << ".  Support value is " << 
       "Scalar." << std::endl);
   }
-  field = decltype(field)(field_name, field_layout);
+  field = PHX::MDField<ScalarT>(field_name, field_layout);
   field_layout->dimensions(field_dims);
 
   // coordinate dimensions
@@ -104,7 +104,7 @@ template<typename EvalT, typename Traits>
 void PHAL::ResponseThermalEnergyT<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  PHAL::set(this->global_response_eval, 0.0);
+  PHAL::set(this->global_response, 0.0);
   // Do global initialization
   PHAL::SeparableScatterScalarResponseT<EvalT,Traits>::preEvaluate(workset);
 }
@@ -115,7 +115,7 @@ void PHAL::ResponseThermalEnergyT<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
     // Zero out local response
-    PHAL::set(this->local_response_eval, 0.0);
+    PHAL::set(this->local_response, 0.0);
     
     ScalarT s;
     for (std::size_t cell = 0; cell < workset.numCells; ++cell)
@@ -123,8 +123,8 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t qp = 0; qp < numQPs; ++qp)
         {
             s = density * heat_capacity * field(cell, qp) * weights(cell, qp);
-            this->local_response_eval(cell, 0) += s;
-            this->global_response_eval(0) += s;
+            this->local_response(cell, 0) += s;
+            this->global_response(0) += s;
         }
     }
 
@@ -138,7 +138,7 @@ void PHAL::ResponseThermalEnergyT<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
-                           this->global_response_eval);
+                           this->global_response);
   PHAL::SeparableScatterScalarResponseT<EvalT,Traits>::postEvaluate(workset);
 }
 

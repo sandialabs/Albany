@@ -63,16 +63,16 @@ ViscosityFO(const Teuchos::ParameterList& p,
   useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
 
   if(useStereographicMap)
-    U = decltype(U)(p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector);
+    U = PHX::MDField<VelT,Cell,QuadPoint,VecDim>(p.get<std::string> ("Velocity QP Variable Name"), dl->qp_vector);
 
   if(useStiffeningFactor)
-    stiffeningFactor = decltype(stiffeningFactor)(p.get<std::string> ("Stiffening Factor QP Name"), dl->qp_scalar);
+    stiffeningFactor = PHX::MDField<ParamScalarT,Cell,QuadPoint>(p.get<std::string> ("Stiffening Factor QP Name"), dl->qp_scalar);
 
 
   A = visc_list->get("Glen's Law A", 1.0);
   n = visc_list->get("Glen's Law n", 3.0);
 
-  coordVec = decltype(coordVec)(
+  coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Variable Name"),dl->qp_gradient);
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -300,8 +300,8 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
         for (int qp=0; qp < numQPs; ++qp)
         {
         //evaluate non-linear viscosity, given by Glen's law, at quadrature points
-        typename PHAL::Ref<const VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
-        typename PHAL::Ref<const VelT>::type u11 = Ugrad(cell,qp,1,1); //epsilon_yy
+        typename PHAL::Ref<VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
+        typename PHAL::Ref<VelT>::type u11 = Ugrad(cell,qp,1,1); //epsilon_yy
         epsilonEqpSq = u00*u00 + u11*u11 + u00*u11; //epsilon_xx^2 + epsilon_yy^2 + epsilon_xx*epsilon_yy
         epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); //+0.25*epsilon_xy^2
 
@@ -318,8 +318,8 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw (const ScalarT &flowFact
         for (int qp=0; qp < numQPs; ++qp)
         {
         //evaluate non-linear viscosity, given by Glen's law, at quadrature points
-        typename PHAL::Ref<const VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
-        typename PHAL::Ref<const VelT>::type u11 = Ugrad(cell,qp,1,1); //epsilon_yy
+        typename PHAL::Ref<VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
+        typename PHAL::Ref<VelT>::type u11 = Ugrad(cell,qp,1,1); //epsilon_yy
         epsilonEqpSq = u00*u00 + u11*u11 + u00*u11; //epsilon_xx^2 + epsilon_yy^2 + epsilon_xx*epsilon_yy
         epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); //+0.25*epsilon_xy^2
 
@@ -387,7 +387,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw_xz (const TemprT &flowFa
     {
       for (int qp=0; qp < numQPs; ++qp)
       {
-        typename PHAL::Ref<const VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
+        typename PHAL::Ref<VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
         epsilonEqpSq = u00*u00; //epsilon_xx^2
         epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,0) + Ugrad(cell,qp,0,1))*(Ugrad(cell,qp,0,0) + Ugrad(cell,qp,0,1)); //+0.25*epsilon_xz^2
         epsilonSq(cell,qp) = epsilonEqpSq;
@@ -399,7 +399,7 @@ void ViscosityFO<EvalT, Traits, VelT, TemprT>::glenslaw_xz (const TemprT &flowFa
     {
       for (int qp=0; qp < numQPs; ++qp)
       {
-        typename PHAL::Ref<const VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
+        typename PHAL::Ref<VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
         epsilonEqpSq = u00*u00; //epsilon_xx^2
         epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,0) + Ugrad(cell,qp,0,1))*(Ugrad(cell,qp,0,0) + Ugrad(cell,qp,0,1)); //+0.25*epsilon_xz^2
         epsilonEqpSq += ff; //add regularization "fudge factor"
@@ -587,8 +587,8 @@ evaluateFields(typename Traits::EvalData workset)
                   for (std::size_t qp=0; qp < numQPs; ++qp)
                   {
                           //evaluate non-linear viscosity, given by Glen's law, at quadrature points
-                    typename PHAL::Ref<const VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
-                    typename PHAL::Ref<const VelT>::type u11 = Ugrad(cell,qp,1,1); //epsilon_yy
+                    typename PHAL::Ref<VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
+                    typename PHAL::Ref<VelT>::type u11 = Ugrad(cell,qp,1,1); //epsilon_yy
                     epsilonEqpSq = u00*u00 + u11*u11 + u00*u11; //epsilon_xx^2 + epsilon_yy^2 + epsilon_xx*epsilon_yy
                     epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); //+0.25*epsilon_xy^2
 
@@ -608,8 +608,8 @@ evaluateFields(typename Traits::EvalData workset)
                   for (std::size_t qp=0; qp < numQPs; ++qp)
                   {
                           //evaluate non-linear viscosity, given by Glen's law, at quadrature points
-                    typename PHAL::Ref<const VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
-                    typename PHAL::Ref<const VelT>::type u11 = Ugrad(cell,qp,1,1); //epsilon_yy
+                    typename PHAL::Ref<VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
+                    typename PHAL::Ref<VelT>::type u11 = Ugrad(cell,qp,1,1); //epsilon_yy
                     epsilonEqpSq = u00*u00 + u11*u11 + u00*u11; //epsilon_xx^2 + epsilon_yy^2 + epsilon_xx*epsilon_yy
                     epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); //+0.25*epsilon_xy^2
 
@@ -635,7 +635,7 @@ evaluateFields(typename Traits::EvalData workset)
             {
                   for (std::size_t qp=0; qp < numQPs; ++qp)
               {
-                typename PHAL::Ref<const VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
+                typename PHAL::Ref<VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
                 epsilonEqpSq = u00*u00; //epsilon_xx^2
                 epsilonEqpSq += 0.25*Ugrad(cell,qp,0,1)*Ugrad(cell,qp,0,1); //+0.25*epsilon_xz^2
                 epsilonSq(cell,qp) = epsilonEqpSq;
@@ -650,7 +650,7 @@ evaluateFields(typename Traits::EvalData workset)
             {
                   for (std::size_t qp=0; qp < numQPs; ++qp)
               {
-                typename PHAL::Ref<const VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
+                typename PHAL::Ref<VelT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
                 epsilonEqpSq = u00*u00; //epsilon_xx^2
                 epsilonEqpSq += 0.25*Ugrad(cell,qp,0,1)*Ugrad(cell,qp,0,1); //+0.25*epsilon_xz^2
                 epsilonEqpSq += ff; //add regularization "fudge factor"

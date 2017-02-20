@@ -31,8 +31,8 @@ inline void
 ParallelConstitutiveModel<EvalT, Traits, Kernel>::
 computeState(
     typename Traits::EvalData workset,
-    FieldMap<const ScalarT> dep_fields,
-    FieldMap<ScalarT> eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 {
   util::TimeMonitor &tmonitor = util::PerformanceContext::instance().timeMonitor();
   Teuchos::RCP<Teuchos::Time> kernel_time = tmonitor["Constitutive Model: Kernel Time"];

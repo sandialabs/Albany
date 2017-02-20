@@ -8,7 +8,6 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
-#include "PHAL_Utilities.hpp"
 
 namespace PHAL {
 
@@ -50,7 +49,7 @@ HeatEqResid(const Teuchos::ParameterList& p) :
   this->addDependentField(wGradBF);
   if (haveSource) this->addDependentField(Source);
   if (haveAbsorption) {
-    Absorption = decltype(Absorption)(
+    Absorption = PHX::MDField<ScalarT,Cell,QuadPoint>(
 	p.get<std::string>("Absorption Name"),
 	p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
     this->addDependentField(Absorption);
@@ -77,8 +76,9 @@ HeatEqResid(const Teuchos::ParameterList& p) :
     if (p.isType<bool>("Have Rho Cp"))
       haverhoCp = p.get<bool>("Have Rho Cp");
     if (haverhoCp) {
-      rhoCp = decltype(rhoCp)(p.get<std::string>("Rho Cp Name"),
+      PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<std::string>("Rho Cp Name"),
             p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"));
+      rhoCp = tmp;
       this->addDependentField(rhoCp);
     }
   }
@@ -123,26 +123,49 @@ evaluateFields(typename Traits::EvalData workset)
 
   typedef Intrepid2::FunctionSpaceTools<PHX::Device> FST;
 
+  // Since Intrepid2 will later perform calculations on the entire workset size
+  // and not just the used portion, we must fill the excess with reasonable
+  // values. Leaving this out leads to floating point exceptions !!!
+  for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
+    for (std::size_t qp=0; qp < numQPs; ++qp){
+      ThermalCond(cell,qp) = 0.0;
+      for (std::size_t i=0; i < numDims; ++i){
+        flux(cell,qp,i) = 0.0;
+        TGrad(cell,qp,i) = 0.0;
+      }
+    }
+
   FST::scalarMultiplyDataData (flux, ThermalCond.get_view(), TGrad.get_view());
 
   FST::integrate(TResidual.get_view(), flux, wGradBF.get_view(), false); // "false" overwrites
 
   if (haveSource) {
-    auto neg_source = PHAL::create_copy("neg_source", Source.get_view());
+
+    for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+        Source(cell,qp) = 0.0;
 
     for (int i =0; i< Source.dimension(0); i++)
      for (int j =0; j< Source.dimension(1); j++)
-       neg_source(i,j) = Source(i,j) * -1.0;
-    FST::integrate(TResidual.get_view(), neg_source, wBF.get_view(), true); // "true" sums into
+        Source(i,j) *= -1.0;
+    FST::integrate(TResidual.get_view(), Source.get_view(), wBF.get_view(), true); // "true" sums into
   }
 
   if (workset.transientTerms && enableTransient){
+
+    for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+        Tdot(cell,qp) = 0.0;
 
     FST::integrate(TResidual.get_view(), Tdot.get_view(), wBF.get_view(), true); // "true" sums into
 
   }
 
   if (haveConvection)  {
+
+    for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+        convection(cell,qp) = 0.0;
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -161,6 +184,16 @@ evaluateFields(typename Traits::EvalData workset)
 
 
   if (haveAbsorption) {
+
+    // Since Intrepid2 will later perform calculations on the entire workset size
+    // and not just the used portion, we must fill the excess with reasonable
+    // values. Leaving this out leads to floating point exceptions !!!
+    for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
+      for (std::size_t qp=0; qp < numQPs; ++qp){
+        aterm(cell,qp) = 0.0;
+        Absorption(cell,qp) = 0.0;
+        Temperature(cell,qp) = 0.0;
+      }
 
     FST::scalarMultiplyDataData (aterm, Absorption.get_view(), Temperature.get_view());
     FST::integrate(TResidual.get_view(), aterm, wBF.get_view(), true); 

@@ -39,15 +39,15 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Temperature;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Tdot;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> ThermalCond;
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> TGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Source;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> rhoCp;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Absorption;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Tdot;
+  PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Source;
+  PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Absorption;
   Teuchos::Array<double> convectionVels;
 
   // Output:

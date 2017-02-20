@@ -47,14 +47,14 @@ namespace FELIX {
     int numSurfaceQPs;
     int numSideDims;
 
-    PHX::MDField<const ScalarT,Cell,Side,QuadPoint>              flux_div;
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         SMB;
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         SMBRMS;
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         obs_thickness;
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         thickness;
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         thicknessRMS;
-    PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint,Dim>     grad_thickness;
-    PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>          w_measure_2d;
+    PHX::MDField<ScalarT,Cell,Side,QuadPoint>              flux_div;
+    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>         SMB;
+    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>         SMBRMS;
+    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>         obs_thickness;
+    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>         thickness;
+    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>         thicknessRMS;
+    PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>     grad_thickness;
+    PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>          w_measure_2d;
 
     ScalarT p_resp, p_reg, resp, reg, p_misH, misH;
     double scaling, alpha, alphaH, alphaSMB, asinh_scaling;

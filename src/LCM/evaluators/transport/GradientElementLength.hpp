@@ -51,12 +51,12 @@ namespace LCM {
     ///
     /// Input: unit scalar gradient
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> unit_grad_;
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> unit_grad_;
 
     ///
     /// Input: basis function gradients
     ///
-    PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> grad_bf_;
+    PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> grad_bf_;
 
     ///
     /// Output: element length

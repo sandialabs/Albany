@@ -22,9 +22,6 @@ template<typename EvalT, typename Traits>
 class J2Model: public LCM::ConstitutiveModel<EvalT, Traits>
 {
 public:
-  using Base = LCM::ConstitutiveModel<EvalT, Traits>;
-  using DepFieldMap = typename Base::DepFieldMap;
-  using FieldMap = typename Base::FieldMap;
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
@@ -60,8 +57,8 @@ public:
   virtual
   void
   computeState(typename Traits::EvalData workset,
-      DepFieldMap dep_fields,
-      FieldMap eval_fields);
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
 
 private:
 
@@ -84,8 +81,8 @@ private:
   virtual
   void
   computeStateParallel(typename Traits::EvalData workset,
-      DepFieldMap dep_fields,
-      FieldMap eval_fields);
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
 
@@ -104,15 +101,14 @@ public:
 
    
     typedef typename PHX::MDField<ScalarT> ArrayT;
-    typedef typename PHX::MDField<const ScalarT> ConstArrayT;
     
-    ConstArrayT def_grad;
-    ConstArrayT J;
-    ConstArrayT poissons_ratio;
-    ConstArrayT elastic_modulus;
-    ConstArrayT yieldStrength;
-    ConstArrayT hardeningModulus;
-    ConstArrayT delta_time;
+    PHX::MDField<ScalarT> def_grad;
+    PHX::MDField<ScalarT> J;
+    PHX::MDField<ScalarT> poissons_ratio;
+    PHX::MDField<ScalarT> elastic_modulus;
+    PHX::MDField<ScalarT> yieldStrength;
+    PHX::MDField<ScalarT> hardeningModulus;
+    PHX::MDField<ScalarT> delta_time;
 
     ArrayT stress, Fp, eqps, yieldSurf, source;
     Albany::MDArray Fpold;
@@ -138,7 +134,7 @@ public:
 
     RealType sat_mod_, sat_exp_;
     RealType heat_capacity_, density_;
-    PHX::MDField<const ScalarT, Cell, QuadPoint> temperature_;
+    PHX::MDField<ScalarT, Cell, QuadPoint> temperature_;
     RealType ref_temperature_;
     RealType expansion_coeff_;
 
@@ -147,13 +143,13 @@ public:
 
     computeStateKernel (const int dims, 
                         const int num_pts_,
-                        ConstArrayT &def_grad_,
-                        ConstArrayT &J_,
-                        ConstArrayT &poissons_ratio_,
-                        ConstArrayT &elastic_modulus_, 
-                        ConstArrayT &yieldStrength_,
-                        ConstArrayT &hardeningModulus_,
-                        ConstArrayT &delta_time_,
+                        const ArrayT &def_grad_,
+                        const ArrayT &J_,
+                        const ArrayT &poissons_ratio_,
+                        const ArrayT &elastic_modulus_, 
+                        const ArrayT &yieldStrength_,
+                        const ArrayT &hardeningModulus_,
+                        const ArrayT &delta_time_,
                         ArrayT &stress_,
                         ArrayT &Fp_,
                         ArrayT &eqps_,
@@ -178,7 +174,7 @@ public:
                         const RealType sat_exp,
                         const RealType heat_capacity,
                         const RealType density,
-                        const PHX::MDField<const ScalarT, Cell, QuadPoint> temperature,
+                        const PHX::MDField<ScalarT, Cell, QuadPoint> temperature,
                         const RealType ref_temperature,
                         const RealType expansion_coeff)
        : dims_(dims) 

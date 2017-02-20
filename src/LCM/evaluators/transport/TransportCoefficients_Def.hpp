@@ -57,8 +57,9 @@ namespace LCM {
     have_eqps_ = false;
     if ( p.isType<std::string>("Equivalent Plastic Strain Name") ) {
       have_eqps_ = true;
-      strain_rate_fac_ = decltype(strain_rate_fac_)(
-          p.get<std::string>("Strain Rate Factor Name"), dl->qp_scalar);
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tmp(p.get<std::string>("Strain Rate Factor Name"), dl->qp_scalar);
+      strain_rate_fac_ = tmp;
       this->addEvaluatedField(strain_rate_fac_);
     }
 

@@ -41,41 +41,41 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> porePressure;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> densityPoreFluid;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Temp;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> RefTemp;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> stabParameter;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> ThermalCond;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> kcPermeability;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> porosity;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> biotCoefficient;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> biotModulus;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> young_modulus_;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> poissons_ratio_;
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> TGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> TempGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> alphaMixture;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> alphaPoreFluid;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> alphaSkeleton;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Source;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
+  PHX::MDField<ScalarT,Cell,QuadPoint> densityPoreFluid;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Temp;
+  PHX::MDField<ScalarT,Cell,QuadPoint> RefTemp;
+  PHX::MDField<ScalarT,Cell,QuadPoint> stabParameter;
+  PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
+  PHX::MDField<ScalarT,Cell,QuadPoint> kcPermeability;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
+  PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
+  PHX::MDField<ScalarT,Cell,QuadPoint> biotModulus;
+  PHX::MDField<ScalarT,Cell,QuadPoint> young_modulus_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> poissons_ratio_;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TempGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint> alphaMixture;
+  PHX::MDField<ScalarT,Cell,QuadPoint> alphaPoreFluid;
+  PHX::MDField<ScalarT,Cell,QuadPoint> alphaSkeleton;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Source;
   Teuchos::Array<double> convectionVels;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> rhoCp;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Absorption;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> strain;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Absorption;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint> J;
 
   // stabilization term
-  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
+  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature;
   Teuchos::RCP<shards::CellTopology> cellType;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
 
   // Time
-  PHX::MDField<const ScalarT,Dummy> deltaTime;
+  PHX::MDField<ScalarT,Dummy> deltaTime;
 
   //Data from previous time step
   std::string strainName, porePressureName, porosityName,

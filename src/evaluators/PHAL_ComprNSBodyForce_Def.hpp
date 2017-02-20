@@ -31,7 +31,7 @@ ComprNSBodyForce(const Teuchos::ParameterList& p) :
   else if (type == "Taylor-Green Vortex") {
     std::cout << "Taylor-Green Vortex source" << std::endl; 
     bf_type = TAYLOR_GREEN_VORTEX;  
-    coordVec = decltype(coordVec)(
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
     this->addDependentField(coordVec);

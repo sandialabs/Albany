@@ -51,11 +51,11 @@ private:
   intrepid_basis_;
 
   // Reference area
-  PHX::MDField<const ScalarT, Cell, QuadPoint>
+  PHX::MDField<ScalarT, Cell, QuadPoint>
   ref_area_;
 
   // Traction vector based on cohesive-separation law
-  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim>
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim>
   cohesive_traction_;
 
   // Reference Cell Views

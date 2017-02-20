@@ -50,32 +50,37 @@ namespace LCM {
     ///
     /// Input: lattice concentration
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> c_lattice_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> c_lattice_;
+
+    ///
+    /// Input: number of trap sites
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> n_trap_;
+
+    ///
+    /// Input: Equvalent plastic strain
+    ///
+    //PHX::MDField<ScalarT,Cell,QuadPoint> eqps_;
 
     ///
     /// Input: Temperature
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> temperature_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> temperature_;
 
     ///
     /// Input: deformation gradient
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> F_;
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F_;
 
     ///
     /// Input: determinant of deformation gradient
     ///
-    PHX::MDField<const ScalarT,Cell,QuadPoint> J_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> J_;
 
     ///
     /// Output: concentration equilibrium parameter
     ///
     PHX::MDField<ScalarT,Cell,QuadPoint> k_eq_;
-
-    ///
-    /// Output: number of trap sites
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> n_trap_;
 
     ///
     /// Output: diffusion coefficient

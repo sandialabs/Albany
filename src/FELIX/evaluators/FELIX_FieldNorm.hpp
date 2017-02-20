@@ -48,12 +48,12 @@ private:
 
   enum RegularizationType { NONE=1, GIVEN_VALUE, GIVEN_PARAMETER, PARAMETER_EXPONENTIAL};
 
+  PHX::MDField<EScalarT,Dim>    regularizationParam;
   RegularizationType            regularization_type;
   ScalarT                       regularization;
   ScalarT                       printedReg;
 
   // Input:
-  PHX::MDField<const EScalarT,Dim>    regularizationParam;
   PHX::MDField<const ScalarT> field;
 
   // Output:

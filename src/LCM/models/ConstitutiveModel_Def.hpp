@@ -213,7 +213,7 @@ template<typename EvalT, typename Traits>
 void ConstitutiveModel<EvalT, Traits>::
 computeVolumeAverage(
     Workset workset,
-    DepFieldMap dep_fields,
+    FieldMap dep_fields,
     FieldMap eval_fields)
 {
   int const &
@@ -251,12 +251,7 @@ computeVolumeAverage(
     }
   }
 #else
-  Kokkos::parallel_for(workset.numCells,
-      computeVolumeAverageKernel<ScalarT,
-        decltype(stress),
-        decltype(weights_),
-        decltype(j_)>(
-          stress, weights_, j_, num_pts_, num_dims_));
+  Kokkos::parallel_for(workset.numCells, computeVolumeAverageKernel<ScalarT, PHX::MDField<ScalarT>, PHX::MDField<MeshScalarT, Cell, QuadPoint>, PHX::MDField<ScalarT, Cell, QuadPoint>>(stress, weights_, j_, num_pts_, num_dims_));
 #endif
 }
 

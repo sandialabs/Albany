@@ -50,7 +50,7 @@ private:
 
   int numQPs;
   int numDims;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint> kcPermeability;
 
   //! Is Kozeny-Carman Permeability constant, or random field
@@ -61,7 +61,7 @@ private:
 
   //! Optional dependence on porosity
 
-  PHX::MDField<const ScalarT,Cell,QuadPoint> porosity;
+  PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
   bool isPoroElastic;
 
 #ifdef ALBANY_STOKHOS

@@ -55,19 +55,19 @@ NewtonianFluidModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void NewtonianFluidModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    DepFieldMap dep_fields,
-    FieldMap eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 {
 
   std::string F_string      = (*field_name_map_)["F"];
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
 
   // extract dependent MDFields
-  auto def_grad         = *dep_fields[F_string];
-  auto delta_time       = *dep_fields["Delta Time"];
+  PHX::MDField<ScalarT> def_grad         = *dep_fields[F_string];
+  PHX::MDField<ScalarT> delta_time       = *dep_fields["Delta Time"];
 
   // extract evaluated MDFields
-  auto stress = *eval_fields[cauchy_string];
+  PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
 
   // get State Variables
   Albany::MDArray def_grad_old = (*workset.stateArrayPtr)[F_string + "_old"];

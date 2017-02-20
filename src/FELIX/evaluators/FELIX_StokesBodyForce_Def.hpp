@@ -305,63 +305,63 @@ StokesBodyForce(const Teuchos::ParameterList& p,
   }
   else if (type == "Poly") {
     bf_type = POLY;  
-    muFELIX = decltype(muFELIX)(
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
             p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar);
-    coordVec = decltype(coordVec)(
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
   else if (type == "PolySacado") {
     bf_type = POLYSACADO;  
-    muFELIX = decltype(muFELIX)(
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
             p.get<std::string>("FELIX Viscosity QP Variable Name"), dl->qp_scalar);
-    coordVec = decltype(coordVec)(
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
   else if (type == "SinSin") {
     bf_type = SINSIN;  
-    muFELIX = decltype(muFELIX)(
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
             p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar);
-    coordVec = decltype(coordVec)(
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
   else if (type == "FullStokesBasal") {
     bf_type = FULLSTOKESBASAL;  
-    muFELIX = decltype(muFELIX)(
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
             p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar);
-    coordVec = decltype(coordVec)(
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
   else if (type == "SinSinGlen") {
     bf_type = SINSINGLEN;  
-    muFELIX = decltype(muFELIX)(
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
             p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar);
-    coordVec = decltype(coordVec)(
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
   else if (type == "SinCosZ") {
     bf_type = SINCOSZ;  
-    muFELIX = decltype(muFELIX)(
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
             p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar);
-    coordVec = decltype(coordVec)(
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
   else if (type == "TestAMMF") {
     bf_type = TESTAMMF;  
-    muFELIX = decltype(muFELIX)(
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
             p.get<std::string>("FELIX Viscosity QP Variable Name"),dl->qp_scalar);
-    coordVec = decltype(coordVec)(
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
             p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);

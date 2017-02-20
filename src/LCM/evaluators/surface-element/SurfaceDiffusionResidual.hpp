@@ -51,17 +51,20 @@ private:
   //! Finite element basis for the midplane
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>> intrepidBasis;
   //! Scalar Gradient
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> scalarGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
   //! Scalar Jump
-  PHX::MDField<const ScalarT,Cell,QuadPoint> scalarJump;
+    PHX::MDField<ScalarT,Cell,QuadPoint> scalarJump;
   //! Current configuration basis
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim, Dim> currentBasis;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> currentBasis;
   //! Reference configuration dual basis
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
   //! Reference configuration normal
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> refNormal;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> refNormal;
   //! Reference configuration area
-  PHX::MDField<const ScalarT,Cell,QuadPoint> refArea;
+  PHX::MDField<ScalarT,Cell,QuadPoint> refArea;
+
+//  // weight times basis function value at integration point
+//  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
 
   //! Reference Cell Views
   Kokkos::DynRankView<RealType, PHX::Device> refValues;

@@ -59,8 +59,8 @@ private:
   typedef typename PHAL::AlbanyTraits::Residual::MeshScalarT MeshScalarT;
 
   Teuchos::RCP<PHX::FieldTag> savestate_operation;
-  PHX::MDField<const ScalarT> field;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
+  PHX::MDField<ScalarT> field;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
   std::string fieldName;
   std::string stateName;
   int i_index;

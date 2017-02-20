@@ -20,7 +20,6 @@ HydrologyResidualThicknessEqn (const Teuchos::ParameterList& p,
   w_measure (p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar),
   h         (p.get<std::string> ("Water Thickness QP Variable Name"), dl->qp_scalar),
   h_dot     (p.get<std::string> ("Water Thickness Dot QP Variable Name"), dl->qp_scalar),
-  h_dot_eval(p.get<std::string> ("Water Thickness Dot QP Variable Name"), dl->qp_scalar),
   N         (p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar),
   m         (p.get<std::string> ("Melting Rate QP Variable Name"), dl->qp_scalar),
   u_b       (p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar)
@@ -40,7 +39,7 @@ HydrologyResidualThicknessEqn (const Teuchos::ParameterList& p,
   if (unsteady)
     this->addDependentField(h_dot);
   else
-    this->addEvaluatedField(h_dot_eval);
+    this->addEvaluatedField(h_dot);
 
   residual = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Thickness Eqn Residual Name"),dl->node_scalar);
 
@@ -83,7 +82,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(residual,fm);
 
   if (!unsteady)
-    h_dot_eval.deep_copy(ScalarT(0.0));
+    h_dot.deep_copy(ScalarT(0.0));
 }
 
 template<typename EvalT, typename Traits>
@@ -143,7 +142,6 @@ HydrologyResidualThicknessEqn (const Teuchos::ParameterList& p,
   w_measure (p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar),
   h         (p.get<std::string> ("Water Thickness QP Variable Name"), dl->qp_scalar),
   h_dot     (p.get<std::string> ("Water Thickness Dot QP Variable Name"), dl->qp_scalar),
-  h_dot_eval(p.get<std::string> ("Water Thickness Dot QP Variable Name"), dl->qp_scalar),
   N         (p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar),
   m         (p.get<std::string> ("Melting Rate QP Variable Name"), dl->qp_scalar),
   u_b       (p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar)
@@ -186,7 +184,7 @@ HydrologyResidualThicknessEqn (const Teuchos::ParameterList& p,
   if (unsteady)
     this->addDependentField(h_dot);
   else
-    this->addEvaluatedField(h_dot_eval);
+    this->addEvaluatedField(h_dot);
 
   residual = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Thickness Eqn Residual Name"),dl->node_scalar);
 
@@ -229,7 +227,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(residual,fm);
 
   if (!unsteady)
-    h_dot_eval.deep_copy(ScalarT(0.0));
+    h_dot.deep_copy(ScalarT(0.0));
 }
 
 template<typename EvalT, typename Traits>

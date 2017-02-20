@@ -38,8 +38,8 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> vector;
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> vector;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> ExResidual;

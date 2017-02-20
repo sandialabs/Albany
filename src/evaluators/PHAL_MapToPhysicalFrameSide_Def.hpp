@@ -22,10 +22,8 @@ MapToPhysicalFrameSide(const Teuchos::ParameterList& p,
   TEUCHOS_TEST_FOR_EXCEPTION (!dl_side->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                               "Error! The layouts structure does not appear to be that of a side set.\n");
 
-  coords_side_vertices = decltype(coords_side_vertices)(
-      p.get<std::string>("Coordinate Vector Vertex Name"), dl_side->vertices_vector);
-  coords_side_qp = decltype(coords_side_qp)(
-      p.get<std::string>("Coordinate Vector QP Name"), dl_side->qp_coords);
+  coords_side_vertices = PHX::MDField<MeshScalarT,Cell,Side,Vertex,Dim>(p.get<std::string>("Coordinate Vector Vertex Name"), dl_side->vertices_vector);
+  coords_side_qp       = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string>("Coordinate Vector QP Name"), dl_side->qp_coords);
 
   this->addDependentField(coords_side_vertices);
   this->addEvaluatedField(coords_side_qp);

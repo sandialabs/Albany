@@ -50,7 +50,7 @@ BF(p.get<std::string> ("BF Name"), dl->node_qp_scalar)
   int nMats = inVarNames.size();
   constituentVar.resize(nMats);
   for(int i=0; i<nMats; i++){
-    PHX::MDField<const ScalarT> _constituentVar(inVarNames[i], layout);
+    PHX::MDField<ScalarT> _constituentVar(inVarNames[i], layout);
     constituentVar[i] = _constituentVar;
     this->addDependentField(constituentVar[i]);
   }

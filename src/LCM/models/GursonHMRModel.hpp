@@ -24,10 +24,6 @@ class GursonHMRModel: public LCM::ConstitutiveModel<EvalT, Traits>
 {
 public:
 
-  using Base = LCM::ConstitutiveModel<EvalT, Traits>;
-  using DepFieldMap = typename Base::DepFieldMap;
-  using FieldMap = typename Base::FieldMap;
-
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
   typedef typename Sacado::mpl::apply<FadType, ScalarT>::type DFadType;
@@ -55,14 +51,14 @@ public:
   virtual
   void
   computeState(typename Traits::EvalData workset,
-      DepFieldMap dep_fields,
-      FieldMap eval_fields);
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
 
   virtual
   void
   computeStateParallel(typename Traits::EvalData workset,
-      DepFieldMap dep_fields,
-      FieldMap eval_fields){
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields){
          TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
  }
 

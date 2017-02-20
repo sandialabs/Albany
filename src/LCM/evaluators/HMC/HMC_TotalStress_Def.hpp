@@ -30,7 +30,7 @@ namespace HMC {
     for(int i=0; i<numMicroScales; i++){
       std::string ms = Albany::strint("Micro Stress",i);
       std::string msname(ms); msname += " Name";
-      microStress[i] = Teuchos::rcp(new cHMC2Tensor(p.get<std::string>(msname),
+      microStress[i] = Teuchos::rcp(new HMC2Tensor(p.get<std::string>(msname),
                                     p.get<Teuchos::RCP<PHX::DataLayout>>("QP 2Tensor Data Layout") ) );
       this->addDependentField(*(microStress[i]));
     }

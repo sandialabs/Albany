@@ -30,7 +30,9 @@ ResidualStrain(Teuchos::ParameterList& p) :
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
     p.get< Teuchos::RCP<PHX::DataLayout>>("QP Vector Data Layout");
-  coordVec = decltype(coordVec)(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
+    fx(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
+  coordVec = fx;
   this->addDependentField(coordVec);
 
   if(residStrainParams->isSublist("Shear XY")){

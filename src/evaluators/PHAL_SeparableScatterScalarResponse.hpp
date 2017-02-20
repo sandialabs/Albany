@@ -45,9 +45,7 @@ protected:
 protected:
 
   typedef typename EvalT::ScalarT ScalarT;
-  bool stand_alone;
-  PHX::MDField<const ScalarT> local_response;
-  PHX::MDField<ScalarT> local_response_eval;
+  PHX::MDField<ScalarT> local_response;
 };
 
 /** \brief Handles scattering of separable scalar response functions into epetra

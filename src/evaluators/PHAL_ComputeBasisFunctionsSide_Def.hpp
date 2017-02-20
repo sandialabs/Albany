@@ -35,9 +35,9 @@ ComputeBasisFunctionsSide (const Teuchos::ParameterList& p,
 
   compute_side_normals = p.isParameter("Side Normals Name");
   if(compute_side_normals) {
-    side_normals = decltype(side_normals)(p.get<std::string> ("Side Normals Name"), dl_side->qp_gradient);
+    side_normals = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string> ("Side Normals Name"), dl_side->qp_gradient);
     Teuchos::RCP<Albany::Layouts> dl = p.get<Teuchos::RCP<Albany::Layouts>>("Layout Name");
-    coordVec = decltype(coordVec)(p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector );
+    coordVec =  PHX::MDField<MeshScalarT,Cell,Vertex,Dim>    (p.get<std::string> ("Coordinate Vector Name"), dl->vertices_vector );
     numNodes = dl->node_gradient->dimension(1);
     this->addEvaluatedField(side_normals);
     this->addEvaluatedField(coordVec);

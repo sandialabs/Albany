@@ -46,8 +46,6 @@ int getDerivativeDimensionsFromView (const ViewType &a) {
 template<typename T>
 class MDFieldIterator {
 public:
-  using array_type = typename PHX::MDField<T>::array_type;
-  using return_type = typename PHX::MDFieldTypeTraits<array_type>::return_type;
   //! User ctor.
   explicit MDFieldIterator(PHX::MDField<T>& a);
   //! Increment efficiently.
@@ -57,9 +55,9 @@ public:
   //! Returns whether the iterator has reached the end.
   bool done () const { return done_; }
   //! Get a reference type to the current value.
-  return_type ref();
+  typename Ref<T>::type ref();
   //! Syntactic wrapper to \c ref().
-  return_type operator* () { return ref(); }
+  typename Ref<T>::type operator* () { return ref(); }
   //! Pointer type for \c operator->.
   class PtrT;
   //! Syntactic wrapper to \c (*it). .

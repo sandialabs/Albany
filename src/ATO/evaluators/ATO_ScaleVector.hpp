@@ -39,7 +39,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> inVector;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> inVector;
   double coefficient;
 
   unsigned int numQPs;

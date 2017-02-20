@@ -26,12 +26,12 @@ LaplacianRegularizationResidual(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   const std::string& w_measure_name = p.get<std::string>("Weighted Measure Name");
   const std::string& residual_name = p.get<std::string>("Laplacian Residual Name");
 
-  forcing    = decltype(forcing)(forcing_name, dl->node_scalar);
-  field      = decltype(field)(field_name, dl->node_scalar);
-  gradField  = decltype(gradField)(gradField_name, dl->qp_gradient);
-  gradBF     = decltype(gradBF)(gradBFname,dl->node_qp_gradient),
-  w_measure  = decltype(w_measure)(w_measure_name, dl->qp_scalar);
-  residual   = decltype(residual)(residual_name, dl->node_scalar);
+  forcing            = PHX::MDField<ParamScalarT>(forcing_name, dl->node_scalar);
+  field              = PHX::MDField<ScalarT>(field_name, dl->node_scalar);
+  gradField          = PHX::MDField<ScalarT>(gradField_name, dl->qp_gradient);
+  gradBF             = PHX::MDField<MeshScalarT>(gradBFname,dl->node_qp_gradient),
+  w_measure          = PHX::MDField<MeshScalarT>(w_measure_name, dl->qp_scalar);
+  residual = PHX::MDField<ScalarT>(residual_name, dl->node_scalar);
 
   Teuchos::RCP<shards::CellTopology> cellType;
   cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");

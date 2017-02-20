@@ -46,8 +46,8 @@ private:
   std::string sideSetName;
 
   // Input:
-  PHX::MDField<const ScalarT>                         field_qp;
-  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint> w_measure;
+  PHX::MDField<ScalarT>                         field_qp;
+  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint> w_measure;
 
   // Output:
   PHX::MDField<ScalarT>                         field_side;

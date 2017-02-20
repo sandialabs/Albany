@@ -38,20 +38,20 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Temperature;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Tdot;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> ThermalCond;
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> TGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> V;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Source;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> TauT;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> rho;  
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Cp;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> phi;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> Fission;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> PropConst;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Tdot;
+  PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> TGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Source;
+  PHX::MDField<ScalarT,Cell,QuadPoint> TauT;
+  PHX::MDField<ScalarT,Cell,QuadPoint> rho;  
+  PHX::MDField<ScalarT,Cell,QuadPoint> Cp;
+  PHX::MDField<ScalarT,Cell,QuadPoint> phi;
+  PHX::MDField<ScalarT,Cell,QuadPoint> Fission;
+  PHX::MDField<ScalarT,Cell,QuadPoint> PropConst;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;

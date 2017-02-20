@@ -176,18 +176,18 @@ namespace LCM
   template<typename EvalT, typename Traits>
   void ElasticCrystalModel< EvalT, Traits > ::
   computeState( typename Traits::EvalData workset,
-		DepFieldMap dep_fields,
-		FieldMap eval_fields )
+		std::map< std::string, Teuchos::RCP< PHX::MDField< ScalarT >>> dep_fields,
+		std::map< std::string, Teuchos::RCP< PHX::MDField< ScalarT >>> eval_fields )
   {
     std::string F_string = (*field_name_map_)["F"];
     std::string J_string = (*field_name_map_)["J"];
     std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
 
     // extract dependent MDFields
-    auto def_grad = *dep_fields[F_string];
-    auto J = *dep_fields[J_string];
+    PHX::MDField< ScalarT > def_grad = *dep_fields[F_string];
+    PHX::MDField< ScalarT > J = *dep_fields[J_string];
     // extract evaluated MDFields
-    auto stress = *eval_fields[cauchy];
+    PHX::MDField< ScalarT > stress = *eval_fields[cauchy];
 
     // deformation gradient
     minitensor::Tensor<ScalarT> F(num_dims_);

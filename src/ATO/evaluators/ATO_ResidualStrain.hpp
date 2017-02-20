@@ -41,7 +41,7 @@ private:
 
   int numQPs;
   int numDims;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
 
   //! Exponential random field

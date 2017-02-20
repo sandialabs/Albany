@@ -208,21 +208,21 @@ J2HMCModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void J2HMCModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    DepFieldMap dep_fields,
-    FieldMap eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 /******************************************************************************/
 {
   // extract increments
-  std::vector< PHX::MDField<const ScalarT>> delta_strainDifference(numMicroScales);
-  std::vector< PHX::MDField<const ScalarT>> delta_microStrainGradient(numMicroScales);
-  auto delta_macroStrain = *dep_fields[delta_macroStrainName];
+  std::vector< PHX::MDField<ScalarT>> delta_strainDifference(numMicroScales);
+  std::vector< PHX::MDField<ScalarT>> delta_microStrainGradient(numMicroScales);
+  PHX::MDField<ScalarT> delta_macroStrain = *dep_fields[delta_macroStrainName];
   for(int i=0; i<numMicroScales; i++){
     delta_strainDifference[i]    = *dep_fields[delta_strainDifferenceName[i]];
     delta_microStrainGradient[i] = *dep_fields[delta_microStrainGradientName[i]];
   }
 
   // extract states to be updated (i.e., state at N+1):
-  auto updated_macroStress = *eval_fields[updated_macroStressName];
+  PHX::MDField<ScalarT> updated_macroStress = *eval_fields[updated_macroStressName];
   std::vector< PHX::MDField<ScalarT>> updated_microStress(numMicroScales);
   std::vector< PHX::MDField<ScalarT>> updated_doubleStress(numMicroScales);
   for(int i=0; i<numMicroScales; i++){
@@ -263,8 +263,8 @@ computeState(typename Traits::EvalData workset,
 template<typename EvalT, typename Traits>
 void J2HMCModel<EvalT, Traits>::
 computeStateParallel(typename Traits::EvalData workset,
-    DepFieldMap dep_fields,
-    FieldMap eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 /******************************************************************************/
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument,
@@ -831,9 +831,9 @@ template<typename EvalT, typename Traits>
 void J2HMCModel<EvalT, Traits>::
 computeTrialState( typename Traits::EvalData workset,
                    /* increments */
-                   PHX::MDField<const ScalarT> &                delta_macroStrain,
-                   std::vector< PHX::MDField<const ScalarT>> & delta_strainDifference,
-                   std::vector< PHX::MDField<const ScalarT>> & delta_microStrainGradient,
+                   PHX::MDField<ScalarT> &                delta_macroStrain,
+                   std::vector< PHX::MDField<ScalarT>> & delta_strainDifference,
+                   std::vector< PHX::MDField<ScalarT>> & delta_microStrainGradient,
                    /* updated state */
                    PHX::MDField<ScalarT> &                updated_macroStress,
                    std::vector< PHX::MDField<ScalarT>> & updated_microStress,
@@ -881,8 +881,8 @@ computeTrialState( typename Traits::EvalData workset,
     }
     // Compute Micro Stress
     for(int i=0; i<numMicroScales; i++){
-      auto &dsd = delta_strainDifference[i];
-      auto &ms  = updated_microStress[i];
+      PHX::MDField<ScalarT> &dsd = delta_strainDifference[i];
+      PHX::MDField<ScalarT> &ms  = updated_microStress[i];
       ScalarT beta = betaParameter[i];
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < num_pts_; ++qp) {
@@ -903,8 +903,8 @@ computeTrialState( typename Traits::EvalData workset,
     }
     // Compute Double Stress
     for(int i=0; i<numMicroScales; i++){
-      auto &dmsg = delta_microStrainGradient[i];
-      auto &ds   = updated_doubleStress[i];
+      PHX::MDField<ScalarT> &dmsg = delta_microStrainGradient[i];
+      PHX::MDField<ScalarT> &ds   = updated_doubleStress[i];
       ScalarT beta = lengthScale[i]*lengthScale[i]*betaParameter[i];
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < num_pts_; ++qp) {
@@ -955,8 +955,8 @@ computeTrialState( typename Traits::EvalData workset,
     }
     // Compute Micro Stress
     for(int i=0; i<numMicroScales; i++){
-      auto &dsd = delta_strainDifference[i];
-      auto &ms  = updated_microStress[i];
+      PHX::MDField<ScalarT> &dsd = delta_strainDifference[i];
+      PHX::MDField<ScalarT> &ms  = updated_microStress[i];
       ScalarT beta = betaParameter[i];
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < num_pts_; ++qp) {
@@ -986,8 +986,8 @@ computeTrialState( typename Traits::EvalData workset,
     }
     // Compute Double Stress
     for(int i=0; i<numMicroScales; i++){
-      auto &dmsg = delta_microStrainGradient[i];
-      auto &ds   = updated_doubleStress[i];
+      PHX::MDField<ScalarT> &dmsg = delta_microStrainGradient[i];
+      PHX::MDField<ScalarT> &ds   = updated_doubleStress[i];
       ScalarT beta = lengthScale[i]*lengthScale[i]*betaParameter[i];
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < num_pts_; ++qp) {
@@ -1071,8 +1071,8 @@ initializeElasticConstants()
 template<typename EvalT, typename Traits>
 void J2HMCModel<EvalT, Traits>::
 computeVolumeAverage(typename Traits::EvalData workset,
-    DepFieldMap dep_fields,
-    FieldMap eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 /******************************************************************************/
 {
 
@@ -1080,7 +1080,7 @@ computeVolumeAverage(typename Traits::EvalData workset,
   minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(num_dims_));
 
   std::string cauchy("Stress");
-  auto stress = *eval_fields[cauchy];
+  PHX::MDField<ScalarT> stress = *eval_fields[cauchy];
 
   ScalarT volume, pbar, p;
 

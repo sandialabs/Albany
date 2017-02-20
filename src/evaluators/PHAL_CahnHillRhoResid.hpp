@@ -42,11 +42,11 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> rhoGrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> chemTerm;
-  PHX::MDField<const ScalarT,Cell,QuadPoint> noiseTerm;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> rhoGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint> chemTerm;
+  PHX::MDField<ScalarT,Cell,QuadPoint> noiseTerm;
 
 
   // Output:

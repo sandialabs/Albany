@@ -52,7 +52,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const ScalarT,Cell,QuadPoint> rho;
+  PHX::MDField<ScalarT,Cell,QuadPoint> rho;
   
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> noiseTerm;

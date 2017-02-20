@@ -41,8 +41,9 @@ MicroResidual(const Teuchos::ParameterList& p) :
     // One more field is required for transient capability
     Teuchos::RCP<PHX::DataLayout> tensor_dl =
        p.get< Teuchos::RCP<PHX::DataLayout>>("QP Tensor Data Layout");
-    epsDotDot = decltype(epsDotDot)(
-        p.get<std::string>("Time Dependent Variable Name"), tensor_dl);
+    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> epsDotDot_tmp
+      (p.get<std::string>("Time Dependent Variable Name"), tensor_dl);
+    epsDotDot = epsDotDot_tmp;
    this->addDependentField(epsDotDot);
   }
 

@@ -43,7 +43,7 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<const ScalarT> val_cell;
+  PHX::MDField<ScalarT> val_cell;
 
   // Output:
   //! Values on side

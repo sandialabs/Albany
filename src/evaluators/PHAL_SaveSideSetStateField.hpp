@@ -60,7 +60,7 @@ private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
 
   Teuchos::RCP<PHX::FieldTag> savestate_operation;
-  PHX::MDField<const ScalarT>       field;
+  PHX::MDField<ScalarT>       field;
 
   std::string sideSetName;
   std::string fieldName;

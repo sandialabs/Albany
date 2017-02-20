@@ -55,19 +55,22 @@ private:
   //! Scalar Gradient for H1 projection (not yet implemented)
   //PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
  //! Scalar Gradient Operator for H1 projection (not yet implemented)
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> surface_Grad_BF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> surface_Grad_BF;
   //! Reference configuration dual basis
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
   //! Reference configuration normal
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> refNormal;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> refNormal;
   //! Reference configuration area
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint> refArea;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> refArea;
   //! Cauchy Stress
-  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim, Dim> Cauchy_stress_;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> Cauchy_stress_;
   //! Determinant of deformation gradient
-  PHX::MDField<const ScalarT,Cell,QuadPoint> detF_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> detF_;
   //! Porjected hydrostatic Kirchhoff stress
-  PHX::MDField<const ScalarT,Cell,QuadPoint> projected_tau_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> projected_tau_;
+
+//  // weight times basis function value at integration point
+//  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
 
   //! Reference Cell Views
   Kokkos::DynRankView<RealType, PHX::Device> refValues;

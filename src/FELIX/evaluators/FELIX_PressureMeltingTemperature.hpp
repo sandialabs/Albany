@@ -41,7 +41,7 @@ public:
 
 private:
   // Input:
-  PHX::MDField<const Type,Cell,Node> pressure;
+  PHX::MDField<Type,Cell,Node> pressure;
 
   // Output:
   PHX::MDField<Type,Cell,Node> meltingTemp;

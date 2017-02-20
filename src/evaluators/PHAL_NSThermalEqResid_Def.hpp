@@ -52,21 +52,21 @@ NSThermalEqResid(const Teuchos::ParameterList& p) :
   this->addDependentField(Cp);
   
   if (haveSource) {
-    Source = decltype(Source)(
+    Source = PHX::MDField<ScalarT,Cell,QuadPoint>(
       p.get<std::string>("Source Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
     this->addDependentField(Source);
   }
 
   if (haveFlow) {
-    V = decltype(V)(
+    V = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
       p.get<std::string>("Velocity QP Variable Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
     this->addDependentField(V);
   }
 
   if (haveSUPG) {
-    TauT = decltype(TauT)(
+    TauT = PHX::MDField<ScalarT,Cell,QuadPoint>(
       p.get<std::string>("Tau T Name"),  
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
     this->addDependentField(TauT);

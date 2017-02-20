@@ -94,20 +94,20 @@ TvergaardHutchinsonModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void TvergaardHutchinsonModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    DepFieldMap dep_fields,
-    FieldMap eval_fields)
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
 {
 
   // extract dependent MDFields
-  auto jump = *dep_fields["Vector Jump"];
-  auto basis = *dep_fields["Current Basis"];
+  PHX::MDField<ScalarT> jump = *dep_fields["Vector Jump"];
+  PHX::MDField<ScalarT> basis = *dep_fields["Current Basis"];
 
   // extract evaluated MDFields
-  auto traction = *eval_fields["Cohesive_Traction"];
-  auto traction_normal = *eval_fields["Normal_Traction"];
-  auto traction_shear = *eval_fields["Shear_Traction"];
-  auto jump_normal = *eval_fields["Normal_Jump"];
-  auto jump_shear = *eval_fields["Shear_Jump"];
+  PHX::MDField<ScalarT> traction = *eval_fields["Cohesive_Traction"];
+  PHX::MDField<ScalarT> traction_normal = *eval_fields["Normal_Traction"];
+  PHX::MDField<ScalarT> traction_shear = *eval_fields["Shear_Traction"];
+  PHX::MDField<ScalarT> jump_normal = *eval_fields["Normal_Jump"];
+  PHX::MDField<ScalarT> jump_shear = *eval_fields["Shear_Jump"];
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {

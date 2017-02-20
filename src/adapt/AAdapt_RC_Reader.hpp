@@ -56,7 +56,7 @@ public:
                              PHX::FieldManager<Traits>& fm);
   void evaluateFields(typename Traits::EvalData d);
 private:
-  PHX::MDField<const RealType,Cell,Node,QuadPoint> bf_, wbf_;
+  PHX::MDField<RealType,Cell,Node,QuadPoint> bf_, wbf_;
   // For correctness testing the projector.
   struct InterpTestData;
   Teuchos::RCP<InterpTestData> itd_;

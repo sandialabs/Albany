@@ -41,8 +41,8 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  std::vector<PHX::MDField<const ScalarT> > constituentVar;
-  PHX::MDField<const RealType,Cell,Node,QuadPoint> BF;
+  std::vector<PHX::MDField<ScalarT> > constituentVar;
+  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
 
 
   unsigned int numQPs;

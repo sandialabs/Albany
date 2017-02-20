@@ -40,16 +40,16 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint>     wBF;
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim>       force;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>     wBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim>       force;
 
-  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim>       U;
-  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim>   Ugrad;
-  PHX::MDField<const ScalarT,Cell,QuadPoint>              muFELIX;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim>       U;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim>   Ugrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint>              muFELIX;
 
-  PHX::MDField<const ScalarT,Cell,Node,VecDim>            basalRes;
-  PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim>     coordVec;
+  PHX::MDField<ScalarT,Cell,Node,VecDim>            basalRes;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim>     coordVec;
 
   enum EQNTYPE {FELIX, POISSON, FELIX_XZ};
   EQNTYPE eqn_type;

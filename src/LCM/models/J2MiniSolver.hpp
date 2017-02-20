@@ -34,7 +34,6 @@ struct J2MiniKernel : public ParallelKernel<EvalT, Traits>
 
   using ScalarT = typename EvalT::ScalarT;
   using ScalarField = PHX::MDField<ScalarT>;
-  using ConstScalarField = PHX::MDField<const ScalarT>;
   using BaseKernel = ParallelKernel<EvalT, Traits>;
   using Workset = typename BaseKernel::Workset;
 
@@ -55,13 +54,13 @@ struct J2MiniKernel : public ParallelKernel<EvalT, Traits>
   using BaseKernel::addStateVariable;
   
   // Dependent MDFields
-  ConstScalarField def_grad;
-  ConstScalarField J;
-  ConstScalarField poissons_ratio;
-  ConstScalarField elastic_modulus;
-  ConstScalarField yieldStrength;
-  ConstScalarField hardeningModulus;
-  ConstScalarField delta_time;
+  ScalarField def_grad;
+  ScalarField J;
+  ScalarField poissons_ratio;
+  ScalarField elastic_modulus;
+  ScalarField yieldStrength;
+  ScalarField hardeningModulus;
+  ScalarField delta_time;
 
   // extract evaluated MDFields
   ScalarField stress;
@@ -79,7 +78,7 @@ struct J2MiniKernel : public ParallelKernel<EvalT, Traits>
   
   void
   init(Workset &workset,
-       FieldMap<const ScalarT> &dep_fields,
+       FieldMap<ScalarT> &dep_fields,
        FieldMap<ScalarT> &eval_fields);
 
   KOKKOS_INLINE_FUNCTION

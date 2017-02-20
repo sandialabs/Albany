@@ -42,9 +42,9 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<const ScalarT,Cell,Node> val_node;
+  PHX::MDField<ScalarT,Cell,Node> val_node;
   //! Basis Functions
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
 
   // Output:
   //! Values at quadrature points
@@ -102,9 +102,9 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<const ScalarT,Cell,Node> val_node;
+  PHX::MDField<ScalarT,Cell,Node> val_node;
   //! Basis Functions
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
 
   // Output:
   //! Values at quadrature points
@@ -155,9 +155,9 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<const ScalarT,Cell,Node> val_node;
+  PHX::MDField<ScalarT,Cell,Node> val_node;
   //! Basis Functions
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
 
   // Output:
   //! Values at quadrature points
@@ -193,9 +193,9 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<const ScalarT,Cell,Node> val_node;
+  PHX::MDField<ScalarT,Cell,Node> val_node;
   //! Basis Functions
-  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
 
   // Output:
   //! Values at quadrature points
