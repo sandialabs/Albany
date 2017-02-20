@@ -1012,20 +1012,20 @@ namespace Albany {
       return name;
     }
 
-    Teuchos::RCP<Tpetra_Vector const> &
-    getX()
+    Teuchos::RCP<Tpetra_Vector const> const &
+    getX() const
     {
       return x_;
     }
 
-    Teuchos::RCP<Tpetra_Vector const> &
-    getXdot()
+    Teuchos::RCP<Tpetra_Vector const> const &
+    getXdot() const
     {
       return xdot_;
     }
 
-    Teuchos::RCP<Tpetra_Vector const> &
-    getXdotdot()
+    Teuchos::RCP<Tpetra_Vector const> const &
+    getXdotdot() const
     {
       return xdotdot_;
     }

@@ -82,16 +82,26 @@ computeBCs(
     ScalarT & z_val)
 {
   auto const
-  this_app_index = getThisAppIndex();
-
-  auto const
   coupled_app_index = getCoupledAppIndex();
 
   Albany::Application const &
-  this_app = getApplication(this_app_index);
+  coupled_app = getApplication(coupled_app_index);
+
+  Teuchos::RCP<Tpetra_Vector const>
+  coupled_solution = coupled_app.getX();
+
+  if (coupled_solution == Teuchos::null) {
+    x_val = 0.0;
+    y_val = 0.0;
+    z_val = 0.0;
+    return;
+  }
+
+  auto const
+  this_app_index = getThisAppIndex();
 
   Albany::Application const &
-  coupled_app = getApplication(coupled_app_index);
+  this_app = getApplication(this_app_index);
 
   Teuchos::RCP<Albany::AbstractDiscretization>
   this_disc = this_app.getDiscretization();
@@ -242,9 +252,6 @@ computeBCs(
   // Determine the element that contains this point.
   Teuchos::ArrayRCP<double> const &
   coupled_coordinates = coupled_stk_disc->getCoordinates();
-
-  Teuchos::RCP<Tpetra_Vector const>
-  coupled_solution = coupled_stk_disc->getSolutionFieldT();
 
   Teuchos::ArrayRCP<ST const>
   coupled_solution_view = coupled_solution->get1dView();
