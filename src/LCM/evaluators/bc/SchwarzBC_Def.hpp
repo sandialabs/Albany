@@ -390,7 +390,6 @@ computeBCs(
 
   for (auto i = 0; i < coupled_node_count; ++i) {
     value += basis_values(i, 0) * coupled_element_solution[i];
-
   }
 
   x_val = value(0);

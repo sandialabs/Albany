@@ -179,16 +179,16 @@ namespace Albany {
 
 #ifdef ALBANY_STOKHOS
     //! Get stochastic expansion
-    Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >
+    Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double>>
     getStochasticExpansion();
 #endif
 
     //! Intialize stochastic Galerkin method
 #ifdef ALBANY_SG
     void init_sg(
-      const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
-      const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& quad,
-      const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& expansion,
+      const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double>>& basis,
+      const Teuchos::RCP<const Stokhos::Quadrature<int,double>>& quad,
+      const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double>>& expansion,
       const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm);
 #endif
 
@@ -454,7 +454,7 @@ namespace Albany {
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
       Stokhos::EpetraVectorOrthogPoly& sg_f);
 
     //! Compute global Jacobian for stochastic Galerkin problem
@@ -471,7 +471,7 @@ namespace Albany {
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
       Stokhos::EpetraVectorOrthogPoly* sg_f,
       Stokhos::VectorOrthogPoly<Epetra_CrsMatrix>& sg_jac);
 
@@ -490,7 +490,7 @@ namespace Albany {
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
       ParamVec* deriv_p,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vxdot,
@@ -512,7 +512,7 @@ namespace Albany {
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
       Stokhos::EpetraVectorOrthogPoly& sg_g);
 
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
@@ -532,7 +532,7 @@ namespace Albany {
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
       ParamVec* deriv_p,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vxdot,
@@ -555,7 +555,7 @@ namespace Albany {
       const Stokhos::EpetraVectorOrthogPoly& sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
       ParamVec* deriv_p,
       Stokhos::EpetraVectorOrthogPoly* sg_g,
       const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
@@ -576,7 +576,7 @@ namespace Albany {
       const Stokhos::ProductEpetraVector& mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
       Stokhos::ProductEpetraVector& mp_f);
 
     //! Compute global Jacobian for stochastic Galerkin problem
@@ -593,7 +593,7 @@ namespace Albany {
       const Stokhos::ProductEpetraVector& mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
       Stokhos::ProductEpetraVector* mp_f,
       Stokhos::ProductContainer<Epetra_CrsMatrix>& mp_jac);
 
@@ -612,7 +612,7 @@ namespace Albany {
       const Stokhos::ProductEpetraVector& mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
       ParamVec* deriv_p,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vxdot,
@@ -634,7 +634,7 @@ namespace Albany {
       const Stokhos::ProductEpetraVector& mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
       Stokhos::ProductEpetraVector& mp_g);
 
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
@@ -654,7 +654,7 @@ namespace Albany {
       const Stokhos::ProductEpetraVector& mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
       ParamVec* deriv_p,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vxdot,
@@ -677,7 +677,7 @@ namespace Albany {
       const Stokhos::ProductEpetraVector& mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
       ParamVec* deriv_p,
       Stokhos::ProductEpetraVector* mp_g,
       const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
@@ -789,7 +789,7 @@ namespace Albany {
     void loadWorksetJacobianInfo(PHAL::Workset& workset,
                 const double& alpha, const double& beta, const double& omega);
 
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > 
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>>
     getEnrichedMeshSpecs() const {return meshSpecs; } 
  
     //! Routine to load common nodeset info into workset
@@ -829,7 +829,7 @@ namespace Albany {
       const Stokhos::EpetraVectorOrthogPoly* sg_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals);
+      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals);
 #endif 
 #ifdef ALBANY_ENSEMBLE 
 
@@ -841,7 +841,7 @@ namespace Albany {
       const Stokhos::ProductEpetraVector* mp_x,
       const Teuchos::Array<ParamVec>& p,
       const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals);
+      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals);
 #endif
 
 #if defined(ALBANY_EPETRA)
@@ -885,7 +885,7 @@ namespace Albany {
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       const Teuchos::Array<int>& sg_p_index,
-      const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
+      const Teuchos::Array< Teuchos::Array<SGType>>& sg_p_vals,
       const Epetra_MultiVector* Vxdot,
       const Epetra_MultiVector* Vxdotdot,
       const Epetra_MultiVector* Vx,
@@ -903,7 +903,7 @@ namespace Albany {
       const Teuchos::Array<ParamVec>& p,
       ParamVec* deriv_p,
       const Teuchos::Array<int>& mp_p_index,
-      const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
+      const Teuchos::Array< Teuchos::Array<MPType>>& mp_p_vals,
       const Epetra_MultiVector* Vxdot,
       const Epetra_MultiVector* Vxdotdot,
       const Epetra_MultiVector* Vx,
@@ -1012,19 +1012,19 @@ namespace Albany {
       return name;
     }
 
-    Teuchos::RCP<Tpetra_Vector const> const &
+    Teuchos::RCP<Tpetra_Vector const> &
     getX()
     {
       return x_;
     }
 
-    Teuchos::RCP<Tpetra_Vector const> const &
+    Teuchos::RCP<Tpetra_Vector const> &
     getXdot()
     {
       return xdot_;
     }
 
-    Teuchos::RCP<Tpetra_Vector const> const &
+    Teuchos::RCP<Tpetra_Vector const> &
     getXdotdot()
     {
       return xdotdot_;
@@ -1073,7 +1073,7 @@ namespace Albany {
     Teuchos::RCP<Albany::DiscretizationFactory> discFactory;
 
     //! mesh specs
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct>> meshSpecs;
 
     //! Problem class
     Teuchos::RCP<Albany::AbstractProblem> problem;
@@ -1102,29 +1102,29 @@ namespace Albany {
     Teuchos::RCP<AAdapt::rc::Manager> rc_mgr;
 
     //! Response functions
-    Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> > responses;
+    Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction>> responses;
 
     //! Phalanx Field Manager for volumetric fills
-    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > fm;
+    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> fm;
 
     //! Phalanx Field Manager for Dirichlet Conditions
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > dfm;
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>> dfm;
 
     //! Phalanx Field Manager for Neumann Conditions
-    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > nfm;
+    Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> nfm;
 
     //! Phalanx Field Manager for states
-    Teuchos::Array< Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > sfm;
+    Teuchos::Array< Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits>>> sfm;
 
 #ifdef ALBANY_STOKHOS
     //! Stochastic Galerkin basis
-    Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> > sg_basis;
+    Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double>> sg_basis;
 
     //! Stochastic Galerkin quadrature
-    Teuchos::RCP<const Stokhos::Quadrature<int,double> > sg_quad;
+    Teuchos::RCP<const Stokhos::Quadrature<int,double>> sg_quad;
 
     //! Stochastic Galerkin expansion
-    Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
+    Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double>> sg_expansion;
 #endif
 
 #if defined(ALBANY_EPETRA)
@@ -1146,7 +1146,7 @@ namespace Albany {
     Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_overlapped_f;
 
     //! Overlapped Jacobian matrixs
-    Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > sg_overlapped_jac;
+    Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix>> sg_overlapped_jac;
 
     //! MP overlapped solution vectors
     Teuchos::RCP< Stokhos::ProductEpetraVector >  mp_overlapped_x;
@@ -1159,7 +1159,7 @@ namespace Albany {
     Teuchos::RCP< Stokhos::ProductEpetraVector > mp_overlapped_f;
 
     //! Overlapped Jacobian matrixs
-    Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > mp_overlapped_jac;
+    Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix>> mp_overlapped_jac;
 #endif
 #endif
 
@@ -1237,7 +1237,7 @@ namespace Albany {
     int num_time_deriv;
     
     //The following are for Jacobian/residual scaling 
-    Teuchos::Array<Teuchos::Array<int> > offsets_;
+    Teuchos::Array<Teuchos::Array<int>> offsets_;
     Teuchos::RCP<Tpetra_Vector> scaleVec_;  
 
     //boolean read from input file telling code whether to compute/print responses every step 
@@ -1257,16 +1257,16 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
                                                 const int& ws)
 {
 
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO>>>>::type&
         wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO>>>::type&
         wsElNodeID = disc->getWsElNodeID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
         coords = disc->getCoords();
   const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
-  const WorksetArray<Teuchos::ArrayRCP<double> >::type&
+  const WorksetArray<Teuchos::ArrayRCP<double>>::type&
         sphereVolume = disc->getSphereVolume();
-  const WorksetArray<Teuchos::ArrayRCP<double*> >::type&
+  const WorksetArray<Teuchos::ArrayRCP<double*>>::type&
         latticeOrientation = disc->getLatticeOrientation();
 
   workset.numCells = wsElNodeEqID[ws].size();
