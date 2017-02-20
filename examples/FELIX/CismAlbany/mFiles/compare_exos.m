@@ -7,9 +7,11 @@ nLevels=11;  %careful! this needs to be compatible with the grids
 
 isAlbanyMeshOrderColumnWise = true;
 
+disregard_coord_shifts = true;
+
 %% import fields of exo mesh
 
-s_exo_names = struct('x', 'coordx','y', 'coordy', 'z', 'coordz', 'basal_friction','basal_friction', 'flow_factor' ,'flow_factor',  'Velx', 'solution_x', 'Vely', 'solution_y', 'sh', 'surface_height', 'thk', 'thickness', 'temperature', 'temperature');
+s_exo_names = struct('x', 'coordx','y', 'coordy', 'z', 'coordz', 'basal_friction','basal_friction', 'flow_factor' ,'flow_factor',  'Velx', 'solution_x', 'Vely', 'solution_y', 'sh', 'surface_height', 'thk', 'thickness', 'temperature', 'temperature', 'cell2node_map', 'connect1');
 
 s_geo = exo_read( [fdir_in, exo_fname_in], s_exo_names);
 s_geo2 = exo_read( [fdir_in, exo_fname2_in], s_exo_names);
@@ -26,14 +28,29 @@ exo_sh = s_geo.sh(:,end);
 exo2_sh = s_geo2.sh(:,end);
 exo_thk = s_geo.thk(:,end);
 exo2_thk = s_geo2.thk(:,end);
-if(~isempty(s_geo.flow_factor))
+exo_c2n = s_geo.cell2node_map';
+exo2_c2n = s_geo2.cell2node_map';
+
+if(~isempty(s_geo.flow_factor) && ~isempty(s_geo2.flow_factor))
   exo_flowfactor = s_geo.flow_factor(:,end);
+  exo2_flowfactor = s_geo2.flow_factor(:,end);
 end
-exo2_flowfactor = s_geo2.flow_factor(:,end);
+
 exo_temperature= s_geo.temperature(:,end);
 exo2_temperature = s_geo2.temperature(:,end);
+
+% create coordinate vector accounting for possible shifts in the coordinates.
+shift_dx =0; shift_dy=0; shift_dz=0;
+
+if(disregard_coord_shifts)
+    shift_dx = min(s_geo2.x) - min(s_geo.x);
+    shift_dy = min(s_geo2.y) - min(s_geo.y);
+    shift_dz = min(s_geo2.z) - min(s_geo.z);
+end
+
 coords1 = [s_geo.x,s_geo.y, s_geo.z];
-coords2 = [s_geo2.x,s_geo2.y, s_geo2.z];
+coords2 = [(s_geo2.x -shift_dx), (s_geo2.y -shift_dy), (s_geo2.z-shift_dz)];
+
 
 size3d = length(exo_beta);
 size2d = size3d/nLevels;
@@ -44,30 +61,34 @@ albany2cism_node_map = ones(nLevels,1)*(1:size2d) + size2d*(nLevels-1:-1:0)' *on
 albany2cism_elem_map = ones(nLevels-1,1)*(1:size2d_cell) + size2d_cell*(nLevels-2:-1:0)' *ones(1,size2d_cell);
 
 if(~isAlbanyMeshOrderColumnWise)
-  I2 = reshape(albany2cism_node_map',size3d,1);
-  I2_cell = reshape(albany2cism_elem_map',size3d_cell,1);
+  I12 = reshape(albany2cism_node_map',size3d,1);
+  %I12_cell = reshape(albany2cism_elem_map',size3d_cell,1);
 else
-  I2 = reshape(albany2cism_node_map,size3d,1);
-  I2_cell = reshape(albany2cism_elem_map,size3d_cell,1);
+  I12 = reshape(albany2cism_node_map,size3d,1);
+  %I12_cell = reshape(albany2cism_elem_map,size3d_cell,1);
 end
 
-disp(['coordinates mismatch [km]: ',  num2str(norm(coords1(:,:) - coords2(I2,:), inf))]);
+% find cell map looking at cell to nodes maps
+I21=I12; I21(I12)=1:length(I12);
+[~,~,I12_cell] = intersect(sort(exo_c2n,2),sort(I21(exo2_c2n),2),'rows','stable');
 
-disp(['thickness mismatch [km]: ',  num2str(norm(exo_thk(:,1) - exo2_thk(I2,1), inf))]);
+disp(['coordinates mismatch [km]: ',  num2str(norm(coords1(:,:) - coords2(I12,:), inf))]);
 
-disp(['surface heigth mismatch [km]: ',  num2str(norm(exo_sh(:,1) - exo2_sh(I2,1), inf))]);
+disp(['thickness mismatch [km]: ',  num2str(norm(exo_thk(:,1) - exo2_thk(I12,1), inf))]);
 
-disp(['basal_friction mismatch [kPa m/yr]: ',  num2str(norm(exo_beta(:,1) - exo2_beta(I2,1), inf))]);
+disp(['surface heigth mismatch [km]: ',  num2str(norm(exo_sh(:,1) - exo2_sh(I12,1)+2, inf))]);
 
-disp(['x comp of velocity mismatch [m/yr]: ',  num2str(norm(exo_Velx(:,1) - exo2_Velx(I2,1), inf))]);
+disp(['basal_friction mismatch [kPa m/yr]: ',  num2str(norm(exo_beta(:,1) - exo2_beta(I12,1), inf))]);
 
-disp(['y comp of velocity mismatch [m/yr]: ',  num2str(norm(exo_Vely(:,1) - exo2_Vely(I2,1), inf))]);
+disp(['x comp of velocity mismatch [m/yr]: ',  num2str(norm(exo_Velx(:,1) - exo2_Velx(I12,1), inf))]);
 
-if(~isempty(s_geo.flow_factor))
-  disp(['flow factor mismatch: ',  num2str(norm((exo_flowfactor(:,1) - exo2_flowfactor(I2_cell,1)), inf))]);
+disp(['y comp of velocity mismatch [m/yr]: ',  num2str(norm(exo_Vely(:,1) - exo2_Vely(I12,1), inf))]);
+
+if(~isempty(s_geo.flow_factor) && ~isempty(s_geo2.flow_factor))
+  disp(['flow factor mismatch: ',  num2str(norm((exo_flowfactor(:,1) - exo2_flowfactor(I12_cell,1)), inf))]);
 end
 
-disp(['temperature mismatch [K]: ',  num2str(norm((exo_temperature(:,1) - exo2_temperature(I2_cell,1)),inf))]);
+disp(['temperature mismatch [K]: ',  num2str(norm((exo_temperature(:,1) - exo2_temperature(I12_cell,1)),inf))]);
 
 %% print variables
 % coords2d = coords1(1:size2d,1:2);
