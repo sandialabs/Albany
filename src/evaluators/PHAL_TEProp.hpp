@@ -52,8 +52,8 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> rhoCp;
   PHX::MDField<ScalarT,Cell,QuadPoint> permittivity;
   PHX::MDField<ScalarT,Cell,QuadPoint> thermalCond;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Temp;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> Temp;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
 
   int mats;
   Teuchos::Array<ScalarT> elecCs;
