@@ -1212,32 +1212,40 @@ void checkDerivatives(Albany::Application& app, const double time,
 void
 Albany::Application::
 computeGlobalResidualImplT(
-    const double current_time,
-    const Teuchos::RCP<const Tpetra_Vector>& xdotT,
-    const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
-    const Teuchos::RCP<const Tpetra_Vector>& xT,
-    const Teuchos::Array<ParamVec>& p,
-    const Teuchos::RCP<Tpetra_Vector>& fT)
+    double const current_time,
+    Teuchos::RCP<Tpetra_Vector const> const & xdotT,
+    Teuchos::RCP<Tpetra_Vector const> const & xdotdotT,
+    Teuchos::RCP<Tpetra_Vector const> const & xT,
+    Teuchos::Array<ParamVec> const & p,
+    Teuchos::RCP<Tpetra_Vector> const & fT)
 {
-
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
   postRegSetup("Residual");
 
   // Load connectivity map and coordinates
-  const WorksetArray<
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>> >::type&
+  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type const &
   wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
+
+  WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type const &
   coords = disc->getCoords();
-  const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
-  const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
-  int numWorksets = wsElNodeEqID.size();
+  WorksetArray<std::string>::type const &
+  wsEBNames = disc->getWsEBNames();
 
-  const Teuchos::RCP<Tpetra_Vector> overlapped_fT =
-      solMgrT->get_overlapped_fT();
-  const Teuchos::RCP<Tpetra_Export> exporterT = solMgrT->get_exporterT();
-  const Teuchos::RCP<Tpetra_Import> importerT = solMgrT->get_importerT();
+  WorksetArray<int>::type const &
+  wsPhysIndex = disc->getWsPhysIndex();
+
+  int const
+  numWorksets = wsElNodeEqID.size();
+
+  Teuchos::RCP<Tpetra_Vector> const
+  overlapped_fT = solMgrT->get_overlapped_fT();
+
+  Teuchos::RCP<Tpetra_Export>
+  const exporterT = solMgrT->get_exporterT();
+
+  Teuchos::RCP<Tpetra_Import> const
+  importerT = solMgrT->get_importerT();
 
   // Scatter x and xdot to the overlapped distrbution
   solMgrT->scatterXT(*xT, xdotT.get(), xdotdotT.get());
@@ -1268,7 +1276,9 @@ computeGlobalResidualImplT(
     TEUCHOS_FUNC_TIME_MONITOR("Albany-Cubit MeshMover");
 
     *out << " Calling moveMesh with params: " << std::setprecision(8);
-    for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  ";
+    for (unsigned int i=0; i<shapeParams.size(); i++) {
+      *out << shapeParams[i] << "  ";
+    }
     *out << std::endl;
     meshMover->moveMesh(shapeParams, morphFromInit);
     coords = disc->getCoords();
@@ -1295,7 +1305,8 @@ computeGlobalResidualImplT(
   {
     if (Teuchos::nonnull(rc_mgr)) rc_mgr->init_x_if_not(xT->getMap());
 
-    PHAL::Workset workset;
+    PHAL::Workset
+    workset;
 
     if (!paramLib->isParameter("Time")) {
       loadBasicWorksetInfoT(workset, current_time);
@@ -1318,7 +1329,9 @@ computeGlobalResidualImplT(
             ->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
       }
     }
-    // workset.wsElNodeEqID_kokkos =Kokkos:: View<int****, PHX::Device ("wsElNodeEqID_kokkos",workset. wsElNodeEqID.size(), workset. wsElNodeEqID[0].size(), workset. wsElNodeEqID[0][0].size());
+    // workset.wsElNodeEqID_kokkos =Kokkos:: View<int****,
+    // PHX::Device ("wsElNodeEqID_kokkos",workset. wsElNodeEqID.size(),
+    // workset. wsElNodeEqID[0].size(), workset. wsElNodeEqID[0][0].size());
   }
 
   // Assemble the residual into a non-overlapping vector
@@ -1343,8 +1356,11 @@ computeGlobalResidualImplT(
   sprintf(nameResUnscaled, "resUnscaled%i_residual.mm", countScale);
   Tpetra_MatrixMarket_Writer::writeDenseFile(nameResUnscaled, fT);
 #endif
-  if (scaleBCdofs == false && scale != 1.0)
+
+  if (scaleBCdofs == false && scale != 1.0) {
     fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
+  }
+
 #ifdef WRITE_TO_MATRIX_MARKET
   char nameResScaled[100];  //create string for file name
   sprintf(nameResScaled, "resScaled%i_residual.mm", countScale);
@@ -1354,33 +1370,41 @@ computeGlobalResidualImplT(
 #ifdef ALBANY_LCM
   // Push the assembled residual values back into the overlap vector
   overlapped_fT->doImport(*fT, *importerT, Tpetra::INSERT);
-  // Write the residual to the discretization, which will later (optionally) be written to the output file
+  // Write the residual to the discretization, which will later (optionally)
+  // be written to the output file
   disc->setResidualFieldT(*overlapped_fT);
 #endif
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
 
   if (dfm != Teuchos::null) {
-    PHAL::Workset workset;
+    PHAL::Workset
+    workset;
 
     workset.fT = fT;
+
     loadWorksetNodesetInfo(workset);
+
     if (scaleBCdofs == true) {
       setScaleBCDofs(workset);
 #ifdef WRITE_TO_MATRIX_MARKET
-      if (countScale == 0)
-      Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
+      if (countScale == 0) {
+        Tpetra_MatrixMarket_Writer::writeDenseFile("scale.mm", scaleVec_);
+      }
 #endif
       countScale++;
     }
+
     dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
+
     if (paramLib->isParameter("Time")) {
-      workset.current_time = paramLib
-          ->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
+      workset.current_time =
+        paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
     }
     else {
       workset.current_time = current_time;
     }
+
     workset.distParamLib = distParamLib;
     workset.disc = disc;
 
@@ -1566,7 +1590,7 @@ computeGlobalJacobianImplT(const double alpha,
 
   // Load connectivity map and coordinates
   const WorksetArray<
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>> >::type&
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type&
   wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   coords = disc->getCoords();
@@ -2075,7 +2099,7 @@ computeGlobalTangentImplT(
 
   // Load connectivity map and coordinates
   const WorksetArray<
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>> >::type&
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type&
   wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   coords = disc->getCoords();
@@ -2215,7 +2239,7 @@ computeGlobalTangentImplT(
   // Begin shape optimization logic
   ArrayRCP<ArrayRCP<double>> coord_derivs;
   // ws, sp, cell, node, dim
-  ArrayRCP<ArrayRCP<ArrayRCP<ArrayRCP<ArrayRCP<double>>> >> ws_coord_derivs;
+  ArrayRCP<ArrayRCP<ArrayRCP<ArrayRCP<ArrayRCP<double>>>>> ws_coord_derivs;
   ws_coord_derivs.resize(coords.size());
   std::vector<int> coord_deriv_indices;
 #ifdef ALBANY_CUTR
@@ -2542,7 +2566,7 @@ applyGlobalDistParamDerivImplT(const double current_time,
 
   // Load connectivity map and coordinates
   const WorksetArray<
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>> >::type&
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type&
   wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   coords = disc->getCoords();
@@ -4346,7 +4370,7 @@ evaluateStateFieldManagerT(
 
   // Load connectivity map and coordinates
   const WorksetArray<
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>> >::type&
+      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type&
   wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*>>>::type&
   coords = disc->getCoords();
