@@ -59,27 +59,27 @@ private:
   ///
   /// Input: Cauchy Stress
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> stress_;
 
   ///
   /// Input: Weighted Basis Function Gradients
   ///
-  PHX::MDField<MeshScalarT, Cell, Node, QuadPoint, Dim> w_grad_bf_;
+  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> w_grad_bf_;
 
   ///
   /// Input: Weighted Basis Functions
   ///
-  PHX::MDField<MeshScalarT, Cell, Node, QuadPoint> w_bf_;
+  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint> w_bf_;
 
   ///
   /// Input: body force vector
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim> body_force_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim> body_force_;
 
   ///
   /// Input: acceleration
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim> acceleration_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim> acceleration_;
 
   ///
   /// Output: Residual Forces

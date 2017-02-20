@@ -72,13 +72,10 @@ namespace LCM {
     have_eqps_ = false;
     if ( p.isType<std::string>("Equivalent Plastic Strain Name") ) {
       have_eqps_ = true;
-      PHX::MDField<ScalarT,Cell,QuadPoint>
-        tmp(p.get<std::string>("Equivalent Plastic Strain Name"), dl->qp_scalar);
-      eqps = tmp;
+      eqps = decltype(eqps)(p.get<std::string>("Equivalent Plastic Strain Name"), dl->qp_scalar);
       this->addDependentField(eqps);
-      PHX::MDField<ScalarT,Cell,QuadPoint>
-        tmp2(p.get<std::string>("Strain Rate Factor Name"), dl->qp_scalar);
-      eqpsFactor = tmp2;
+      eqpsFactor = decltype(eqpsFactor)(
+          p.get<std::string>("Strain Rate Factor Name"), dl->qp_scalar);
       this->addDependentField(eqpsFactor);
     }
     
