@@ -65,30 +65,27 @@ postRegistrationSetup(typename Traits::SetupData d,
 //**********************************************************************
 //Kokkos kernals
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+
+#if ORIGINALVORT
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void VorticityLevels<EvalT, Traits>::
-operator() (const Vorticity_Orig_Tag& tag, const int & cell) const 
+operator() (const int cell, const int qp, const int level) const
 {
-  for (int qp=0; qp < numQPs; ++qp) {
-    for (int level=0; level < numLevels; ++level) {
       ScalarT tmp = 0.0; 
       for (int node= 0 ; node < numNodes; ++node) { 
          tmp += (val_node(cell,node,level,1) * GradBF(cell,node,qp,0) 
              -  val_node(cell,node,level,0) * GradBF(cell,node,qp,1));
       }
       vort_val_qp(cell,qp,level) = tmp;
-    }
-  }
 }
 
+#else
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void VorticityLevels<EvalT, Traits>::
-operator() (const Vorticity_Tag& tag, const int & cell) const 
+operator() (const int cell, const int level, const int qp) const
 {
-  for (int level=0; level < numLevels; ++level) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
       ScalarT tmp = 0.0; 
       for (std::size_t node=0; node < numNodes; ++node) {
         const MeshScalarT j00 = jacobian(cell, node, 0, 0);
@@ -101,9 +98,8 @@ operator() (const Vorticity_Tag& tag, const int & cell) const
              - vco0*grad_at_cub_points(node, qp,1);
       }
       vort_val_qp(cell,qp,level) = tmp/jacobian_det(cell,qp);
-    }
-  }
 }
+#endif
 
 #endif
 
@@ -199,9 +195,14 @@ evaluateFields(typename Traits::EvalData workset)
 #else
 
 #if ORIGINALVORT
-  Kokkos::parallel_for(Vorticity_Orig_Policy(0,workset.numCells),*this);
+  VorticityLevels_Policy range(
+      {0,0,0}, {(int)workset.numCells,(int)numQPs,(int)numLevels}, {256,0,0} );
+  Kokkos::Experimental::md_parallel_for(range,*this);
 #else
-  Kokkos::parallel_for(Vorticity_Policy(0,workset.numCells),*this);
+  VorticityLevels_Policy range(
+      {0,0,0}, {(int)workset.numCells,(int)numLevels,(int)numQPs},{256,0,0});
+  Kokkos::Experimental::md_parallel_for(range,*this);
+
 #endif
 
 #endif

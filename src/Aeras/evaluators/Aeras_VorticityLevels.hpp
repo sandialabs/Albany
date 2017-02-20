@@ -75,13 +75,19 @@ typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 struct Vorticity_Orig_Tag{};
 struct Vorticity_Tag{};
 
-typedef Kokkos::RangePolicy<ExecutionSpace, Vorticity_Orig_Tag> Vorticity_Orig_Policy;
-KOKKOS_INLINE_FUNCTION
-void operator() (const Vorticity_Orig_Tag& tag, const int& i) const;
+using VorticityLevels_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Left,
+        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int> >;
 
-typedef Kokkos::RangePolicy<ExecutionSpace, Vorticity_Tag> Vorticity_Policy;
+#if ORIGINALVORT
 KOKKOS_INLINE_FUNCTION
-void operator() (const Vorticity_Tag& tag, const int& i) const;
+void operator() (const int cell, const int qp, const int level) const;
+#else
+KOKKOS_INLINE_FUNCTION
+void operator() (const int cell, const int level, const int qp) const;
+#endif
+
 #endif
 
 };
