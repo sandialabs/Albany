@@ -150,12 +150,20 @@
             value="4.0e-01" />
 
           <!-- Units must be consistent with Burgers Vector Magnitude
-             1/m^2: 1e14, 1/mm^2: 1e8, 1/um^2: 1e2 -->
+                 1/m^2: 8e13, 1/mm^2: 8e7, 1/um^2: 8e1 -->
 
           <Parameter
             name="Initial Hardening State"
             type="double"
             value="8.0e+01" />
+
+          <!-- Units must be consistent with Initial Hardening State
+                 1/m^2: 5e15, 1/mm^2: 5e9, 1/um^2: 5e3 
+               The saturated hardening state is given by the ratio
+                 (Generation Factor / Annihilation Factor)^2
+               The rate of saturation is governed by the magnitude a
+                 Generation Factor = a * (Generation Factor)_0
+                 Annihilation Factor = a * (Annihilation Factor)_0 -->
 
           <Parameter
             name="Generation Factor"
@@ -168,7 +176,7 @@
             value="5.0e+02" />
 
           <!-- Units must be consistent with elastic constants
-            N/mm^2 (MPa): 7.07e+04 -->
+                 N/mm^2 (MPa): 7.07e+04 -->
 
           <Parameter
             name="Shear Modulus"
@@ -176,7 +184,7 @@
             value="7.07e+04" />
 
           <!-- Units must be consistent with Initial Hardening State
-            m:  2.87e-10, mm: 2.87e-7, um: 2.87e-4 -->
+                 m:  2.87e-10, mm: 2.87e-7, um: 2.87e-4 -->
 
           <Parameter
             name="Burgers Vector Magnitude"
