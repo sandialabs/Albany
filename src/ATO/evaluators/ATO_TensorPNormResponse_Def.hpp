@@ -263,8 +263,8 @@ void ATO::TensorPNormResponse<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
   for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->global_response.size(); i++)
-    this->global_response[i] = 0.0;
+       i<this->global_response_eval.size(); i++)
+    this->global_response_eval[i] = 0.0;
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -278,8 +278,8 @@ evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
   for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->local_response.size(); i++)
-    this->local_response[i] = 0.0;
+       i<this->local_response_eval.size(); i++)
+    this->local_response_eval[i] = 0.0;
 
   std::vector<int> dims;
   tensor.dimensions(dims);
@@ -307,7 +307,7 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT P = topology->Penalize(functionIndex, topoVal);
         devNorm = P*sqrt(devNorm);
         ScalarT dS = pow(devNorm,pVal) * qp_weights(cell,qp);
-        this->local_response(cell,0) += dS;
+        this->local_response_eval(cell,0) += dS;
         pNorm += dS;
       }
     }
@@ -327,7 +327,7 @@ evaluateFields(typename Traits::EvalData workset)
         el_weight += qp_weights(cell,qp);
         ScalarT devNorm = P*response_eff/yieldStress;
         ScalarT dS = pow(devNorm,pVal) * qp_weights(cell,qp);
-        this->local_response(cell,0) += dS;
+        this->local_response_eval(cell,0) += dS;
         pNorm += dS;
       }
       saveState(effStress(cell,0), responseAve/el_weight);
@@ -348,7 +348,7 @@ evaluateFields(typename Traits::EvalData workset)
         el_weight += qp_weights(cell,qp);
         ScalarT devMag = P*response_eff/yieldStress;
         ScalarT dS = pow(devMag,pVal) * qp_weights(cell,qp);
-        this->local_response(cell,0) += dS;
+        this->local_response_eval(cell,0) += dS;
         pNorm += dS;
       }
       saveState(effStress(cell,0), responseAve/el_weight);
@@ -358,7 +358,7 @@ evaluateFields(typename Traits::EvalData workset)
       "Unexpected array dimensions in Tensor PNorm Objective:" << size << std::endl);
   }
 
-  this->global_response[0] += pNorm;
+  this->global_response_eval[0] += pNorm;
 
   // Do any local-scattering necessary
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::evaluateFields(workset);
@@ -467,7 +467,7 @@ void ATO::TensorPNormResponse<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
     // Add contributions across processors
-    PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
+    PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->global_response_eval);
 
     TensorPNormResponseSpec<EvalT,Traits>::postEvaluate(workset);
 
@@ -480,7 +480,7 @@ template<typename EvalT, typename Traits>
 void ATO::TensorPNormResponseSpec<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-  this->global_response[0] = pow(this->global_response[0],1.0/pVal);
+  this->global_response_eval[0] = pow(this->global_response_eval[0],1.0/pVal);
 }
 
 // **********************************************************************
@@ -488,7 +488,7 @@ template<typename Traits>
 void ATO::TensorPNormResponseSpec<PHAL::AlbanyTraits::Residual, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-  this->global_response[0] = pow(this->global_response[0],1.0/pVal);
+  this->global_response_eval[0] = pow(this->global_response_eval[0],1.0/pVal);
 }
 
 
@@ -500,7 +500,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   double gVal = this->global_response[0].val();
   double scale = pow(gVal,1.0/pVal-1.0)/pVal;
 
-  this->global_response[0] = pow(this->global_response[0],1.0/pVal);
+  this->global_response_eval[0] = pow(this->global_response_eval[0],1.0/pVal);
 
   Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxT = workset.overlapped_dgdxT;
   if (overlapped_dgdxT != Teuchos::null) overlapped_dgdxT->scale(scale);
@@ -517,7 +517,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   double gVal = this->global_response[0].val();
   double scale = pow(gVal,1.0/pVal-1.0)/pVal;
 
-  this->global_response[0] = pow(this->global_response[0],1.0/pVal);
+  this->global_response_eval[0] = pow(this->global_response_eval[0],1.0/pVal);
 
   Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT = workset.overlapped_dgdpT;
   if(overlapped_dgdpT != Teuchos::null) overlapped_dgdpT->scale(scale);
@@ -534,12 +534,12 @@ template<typename Traits>
 void ATO::TensorPNormResponseSpec<PHAL::AlbanyTraits::SGJacobian, Traits>::l
 postEvaluate(typename Traits::PostEvalData workset)
 {
-  this->global_response[0] = pow(this->global_response[0],1.0/pVal);
+  this->global_response_eval[0] = pow(this->global_response_eval[0],1.0/pVal);
 
   Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> overlapped_dgdx_sg = workset.overlapped_sg_dgdx;
   if(overlapped_dgdx_sg != Teuchos::null){
     for(int block=0; block<overlapped_dgdx_sg->size(); block++){
-      typename PHAL::Ref<ScalarT>::type gVal = this->global_response[0];
+      auto gVal = this->global_response[0];
       double scale = pow(gVal.val().coeff(block),1.0/pVal-1.0)/pVal;
       (*overlapped_dgdx_sg)[block].Scale(scale);
     }
@@ -548,7 +548,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> overlapped_dgdxdot_sg = workset.overlapped_sg_dgdxdot;
   if(overlapped_dgdxdot_sg != Teuchos::null){
     for(int block=0; block<overlapped_dgdxdot_sg->size(); block++){
-      typename PHAL::Ref<ScalarT>::type gVal = this->global_response[0];
+      auto gVal = this->global_response[0];
       double scale = pow(gVal.val().coeff(block),1.0/pVal-1.0)/pVal;
       (*overlapped_dgdxdot_sg)[block].Scale(scale);
     }
@@ -562,12 +562,12 @@ template<typename Traits>
 void ATO::TensorPNormResponseSpec<PHAL::AlbanyTraits::MPJacobian, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-  this->global_response[0] = pow(this->global_response[0],1.0/pVal);
+  this->global_response_eval[0] = pow(this->global_response_eval[0],1.0/pVal);
 
   Teuchos::RCP<Stokhos::ProductEpetraMultiVector> overlapped_dgdx_mp = workset.overlapped_mp_dgdx;
   if(overlapped_dgdx_mp != Teuchos::null){
     for(int block=0; block<overlapped_dgdx_mp->size(); block++){
-      typename PHAL::Ref<ScalarT>::type gVal = this->global_response[0];
+      auto gVal = this->global_response[0];
       double scale = pow(gVal.val().coeff(block),1.0/pVal-1.0)/pVal;
       (*overlapped_dgdx_mp)[block].Scale(scale);
     }
@@ -576,7 +576,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Stokhos::ProductEpetraMultiVector> overlapped_dgdxdot_mp = workset.overlapped_mp_dgdxdot;
   if(overlapped_dgdxdot_mp != Teuchos::null){
     for(int block=0; block<overlapped_dgdxdot_mp->size(); block++){
-      typename PHAL::Ref<ScalarT>::type gVal = this->global_response[0];
+      auto gVal = this->global_response[0];
       double scale = pow(gVal.val().coeff(block),1.0/pVal-1.0)/pVal;
       (*overlapped_dgdxdot_mp)[block].Scale(scale);
     }

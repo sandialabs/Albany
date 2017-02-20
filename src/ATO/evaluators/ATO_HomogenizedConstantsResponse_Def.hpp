@@ -129,8 +129,8 @@ void ATO::HomogenizedConstantsResponse<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
   for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->global_response.size(); i++)
-    this->global_response[i] = 0.0;
+       i<this->global_response_eval.size(); i++)
+    this->global_response_eval[i] = 0.0;
 
   local_measure = 0.0;
 
@@ -146,8 +146,8 @@ evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
   for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->local_response.size(); i++)
-    this->local_response[i] = 0.0;
+       i<this->local_response_eval.size(); i++)
+    this->local_response_eval[i] = 0.0;
 
   ScalarT s;
 
@@ -162,22 +162,22 @@ evaluateFields(typename Traits::EvalData workset)
     for(int qp=0; qp<numQPs; qp++){
       if( tensorRank == 0 ){
         s = -field(cell,qp) * weights(cell,qp);
-        this->local_response(cell,0) += s;
-        this->global_response(0) += s;
+        this->local_response_eval(cell,0) += s;
+        this->global_response_eval(0) += s;
       } else
       if( tensorRank == 1 ){
         for(std::size_t idim=0; idim<numDims; idim++){
           s = -field(cell,qp,idim) * weights(cell,qp);
-          this->local_response(cell,idim) += s;
-          this->global_response(idim) += s;
+          this->local_response_eval(cell,idim) += s;
+          this->global_response_eval(idim) += s;
         }
       } else 
       if( tensorRank == 2 ){
         int nterms = component0.size();
         for(std::size_t ic=0; ic<nterms; ic++){
           s = -field(cell,qp,component0(ic),component1(ic)) * weights(cell,qp);
-          this->local_response(cell,ic) += s;
-          this->global_response(ic) += s;
+          this->local_response_eval(cell,ic) += s;
+          this->global_response_eval(ic) += s;
         }
       }
       local_measure += weights(cell,qp);
@@ -193,7 +193,7 @@ template<typename EvalT, typename Traits>
 void ATO::HomogenizedConstantsResponse<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-    PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
+    PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->global_response_eval);
     Teuchos::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, 1, &local_measure, &global_measure);
 
     HomogenizedConstantsResponseSpec<EvalT,Traits>::postEvaluate(workset);
@@ -207,9 +207,9 @@ template<typename EvalT, typename Traits>
 void ATO::HomogenizedConstantsResponseSpec<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-  int nterms = this->global_response.size();
+  int nterms = this->global_response_eval.size();
   for(int i=0; i<nterms; i++)
-    this->global_response[i] /= global_measure;
+    this->global_response_eval[i] /= global_measure;
 }
 
 
@@ -220,9 +220,9 @@ postEvaluate(typename Traits::PostEvalData workset)
 {
   RealType scale = 1.0/global_measure;
 
-  int nterms = this->global_response.size();
+  int nterms = this->global_response_eval.size();
   for(int i=0; i<nterms; i++)
-    this->global_response[i] *= scale;
+    this->global_response_eval[i] *= scale;
 
   Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxT = workset.overlapped_dgdxT;
   if (overlapped_dgdxT != Teuchos::null) overlapped_dgdxT->scale(scale);
@@ -238,9 +238,9 @@ postEvaluate(typename Traits::PostEvalData workset)
 {
   RealType scale = 1.0/global_measure;
 
-  int nterms = this->global_response.size();
+  int nterms = this->global_response_eval.size();
   for(int i=0; i<nterms; i++)
-    this->global_response[i] *= scale;
+    this->global_response_eval[i] *= scale;
 
   Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT = workset.overlapped_dgdpT;
   if(overlapped_dgdpT != Teuchos::null) overlapped_dgdpT->scale(scale);
@@ -258,9 +258,9 @@ void ATO::HomogenizedConstantsResponseSpec<PHAL::AlbanyTraits::SGJacobian, Trait
 postEvaluate(typename Traits::PostEvalData workset)
 {
   RealType scale = 1.0/global_measure;
-  int nterms = this->global_response.size();
+  int nterms = this->global_response_eval.size();
   for(int i=0; i<nterms; i++)
-    this->global_response[i] *= scale;
+    this->global_response_eval[i] *= scale;
 
   Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> overlapped_dgdx_sg = workset.overlapped_sg_dgdx;
   if(overlapped_dgdx_sg != Teuchos::null){
@@ -285,9 +285,9 @@ void ATO::HomogenizedConstantsResponseSpec<PHAL::AlbanyTraits::MPJacobian, Trait
 postEvaluate(typename Traits::PostEvalData workset)
 {
   RealType scale = 1.0/global_measure;
-  int nterms = this->global_response.size();
+  int nterms = this->global_response_eval.size();
   for(int i=0; i<nterms; i++)
-    this->global_response[i] *= scale;
+    this->global_response_eval[i] *= scale;
 
   Teuchos::RCP<Stokhos::ProductEpetraMultiVector> overlapped_dgdx_mp = workset.overlapped_mp_dgdx;
   if(overlapped_dgdx_mp != Teuchos::null){
