@@ -49,7 +49,7 @@ namespace QCAD
 			   typename EvalT::ScalarT& fieldVal, typename EvalT::ScalarT& retFieldVal, 
 			   std::vector<typename EvalT::ScalarT>& fieldGrad) const;
     void getCellArea(const std::size_t cell, typename EvalT::ScalarT& cellArea) const;
-    void getAvgCellCoordinates(PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec,
+    void getAvgCellCoordinates(PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec,
 			       const std::size_t cell, double* dblAvgCoords, double& dblMaxZ) const;
 
     std::size_t numQPs;
@@ -58,12 +58,12 @@ namespace QCAD
   
     Teuchos::RCP<QCAD::SaddleValueResponseFunction> svResponseFn;
   
-    PHX::MDField<ScalarT> field;
-    PHX::MDField<ScalarT> fieldGradient;
-    PHX::MDField<ScalarT> retField;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-    PHX::MDField<MeshScalarT,Cell,Node,Dim> coordVec_vertices; //not currently needed
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
+    PHX::MDField<const ScalarT> field;
+    PHX::MDField<const ScalarT> fieldGradient;
+    PHX::MDField<const ScalarT> retField;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+    PHX::MDField<const MeshScalarT,Cell,Node,Dim> coordVec_vertices; //not currently needed
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
     
     std::string fieldName;
     std::string fieldGradientName;

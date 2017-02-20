@@ -57,8 +57,8 @@ namespace QCAD {
   	std::size_t numQPs;
   	std::size_t numDims;
   	PHX::MDField<ScalarT,Cell,QuadPoint> permittivity;
-  	PHX::MDField<ScalarT,Cell,QuadPoint> Temp;
-  	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  	PHX::MDField<const ScalarT,Cell,QuadPoint> Temp;
+  	PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
 
   	//! Define boolean variables to categorize 
 	  std::string typ;		// permittivity type

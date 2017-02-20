@@ -284,7 +284,7 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 template<typename EvalT, typename Traits> double
 QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMassFiniteWall(
-  const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> & coord,
+  const PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> & coord,
   const int cell, const int qp )
 {
   double effMass; 

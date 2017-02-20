@@ -170,11 +170,11 @@ namespace QCAD {
     std::size_t numQPs;
     std::size_t numDims;
     std::size_t numNodes;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-    PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVecAtVertices;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
-    PHX::MDField<ScalarT,Cell,QuadPoint> potential;	// scaled potential (no unit)
-    PHX::MDField<ScalarT,Dim> temperatureField; // lattice temperature [K]
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+    PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVecAtVertices;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
+    PHX::MDField<const ScalarT,Cell,QuadPoint> potential;	// scaled potential (no unit)
+    PHX::MDField<const ScalarT,Dim> temperatureField; // lattice temperature [K]
     
     //! output
     PHX::MDField<ScalarT,Cell,QuadPoint> poissonSource; // scaled RHS (unitless)
@@ -240,8 +240,8 @@ namespace QCAD {
     bool bRealEigenvectors;
     int  nEigenvectors;
     double fixedQuantumOcc;
-    std::vector< PHX::MDField<ScalarT,Cell,QuadPoint> > eigenvector_Re;
-    std::vector< PHX::MDField<ScalarT,Cell,QuadPoint> > eigenvector_Im;
+    std::vector< PHX::MDField<const ScalarT,Cell,QuadPoint> > eigenvector_Re;
+    std::vector< PHX::MDField<const ScalarT,Cell,QuadPoint> > eigenvector_Im;
     
     //! Material database
     Teuchos::RCP<QCAD::MaterialDatabase> materialDB;

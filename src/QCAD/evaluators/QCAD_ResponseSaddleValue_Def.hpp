@@ -74,12 +74,11 @@ ResponseSaddleValue(Teuchos::ParameterList& p,
     bReturnSameField = true;    
 
   //! setup operation field and its gradient, and the return field (if it's different)
-  PHX::MDField<ScalarT> f(fieldName, dl->qp_scalar); field = f;
-  PHX::MDField<ScalarT> fg(fieldGradientName, dl->qp_vector); fieldGradient = fg;
+  field = decltype(field)(fieldName, dl->qp_scalar);
+  fieldGradient = decltype(fieldGradient)(fieldGradientName, dl->qp_vector);
 
-  if(!bReturnSameField) {
-    PHX::MDField<ScalarT> fr(retFieldName, dl->qp_scalar); retField = fr; }
-
+  if(!bReturnSameField)
+    retField = decltype(retField)(retFieldName, dl->qp_scalar);
 
   //! add dependent fields
   this->addDependentField(field);
@@ -467,7 +466,7 @@ getCellArea(const std::size_t cell, typename EvalT::ScalarT& cellArea) const
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void QCAD::ResponseSaddleValue<EvalT, Traits>::
-  getAvgCellCoordinates(PHX::MDField<typename EvalT::MeshScalarT,Cell,QuadPoint,Dim> coordVec,
+  getAvgCellCoordinates(PHX::MDField<const typename EvalT::MeshScalarT,Cell,QuadPoint,Dim> coordVec,
 			const std::size_t cell, double* dblAvgCoords, double& dblMaxZ) const
 {
   std::vector<MeshScalarT> avgCoord(numDims, 0.0); //just a double?

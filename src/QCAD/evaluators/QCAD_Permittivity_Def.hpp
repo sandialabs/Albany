@@ -94,17 +94,13 @@ Permittivity(Teuchos::ParameterList& p,
 
   // Add coordinate dependence to permittivity evaluator
   if(position_dependent) {
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
-      	tmp(p.get<std::string>("Coordinate Vector Name"), dl->qp_vector);
-    coordVec = tmp;
+    coordVec = decltype(coordVec)(p.get<std::string>("Coordinate Vector Name"), dl->qp_vector);
     this->addDependentField(coordVec);
   }
 
   // Add temperature dependence to permittivity evaluator
   if(temp_dependent) {
-    PHX::MDField<ScalarT,Cell,QuadPoint>
-      	tmp(p.get<std::string>("Temperature Variable Name"), dl->qp_scalar);
-    Temp = tmp;
+    Temp = decltype(Temp)(p.get<std::string>("Temperature Variable Name"), dl->qp_scalar);
     this->addDependentField(Temp);
   }
 
