@@ -141,13 +141,13 @@ computeBCs(
   use_block = coupled_block_name != "NONE";
 
   std::map<std::string, int> const &
-  coupled_block_name_2_index = coupled_gms.ebNameToIndex;
+  coupled_block_name_to_index = coupled_gms.ebNameToIndex;
 
   auto
-  it = coupled_block_name_2_index.find(coupled_block_name);
+  it = coupled_block_name_to_index.find(coupled_block_name);
 
   bool const
-  missing_block = it == coupled_block_name_2_index.end();
+  missing_block = it == coupled_block_name_to_index.end();
 
   if (use_block == true && missing_block == true) {
     std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
@@ -182,7 +182,7 @@ computeBCs(
       this_stk_disc->getNodeSetCoords().find(coupled_nodeset_name)->second;
 
   auto const &
-  ws_elem_2_node_id = coupled_stk_disc->getWsElNodeID();
+  ws_elem_to_node_id = coupled_stk_disc->getWsElNodeID();
 
   std::vector<minitensor::Vector<double>>
   coupled_element_nodes(coupled_node_count);
@@ -302,7 +302,7 @@ computeBCs(
   bool
   found = false;
 
-  for (auto workset = 0; workset < ws_elem_2_node_id.size(); ++workset) {
+  for (auto workset = 0; workset < ws_elem_to_node_id.size(); ++workset) {
 
     std::string const &
     coupled_element_block = coupled_ws_eb_names[workset];
@@ -313,14 +313,14 @@ computeBCs(
     if (use_block == true && block_names_differ == true) continue;
 
     auto const
-    elements_per_workset = ws_elem_2_node_id[workset].size();
+    elements_per_workset = ws_elem_to_node_id[workset].size();
 
     for (auto element = 0; element < elements_per_workset; ++element) {
 
       for (auto node = 0; node < coupled_node_count; ++node) {
 
         auto const
-        global_node_id = ws_elem_2_node_id[workset][element][node];
+        global_node_id = ws_elem_to_node_id[workset][element][node];
 
         auto const
         local_node_id =

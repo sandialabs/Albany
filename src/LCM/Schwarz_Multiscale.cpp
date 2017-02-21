@@ -295,8 +295,8 @@ SchwarzMultiscale(
       auto const
       num_parameters =
           p_list->get<int>("Number") == true ?
-                                               p_list->get<int>("Number") :
-                                               0;
+              p_list->get<int>("Number") :
+              0;
 
       if (num_parameters > 0) {
         response_names[l] =
