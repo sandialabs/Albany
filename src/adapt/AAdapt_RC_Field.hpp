@@ -57,8 +57,8 @@ public:
   //! \c init has been called.
   operator bool() const;
 
-  typename RTensor<rank>::type& operator() () { return f_; }
-  const typename RTensor<rank>::type& operator() () const { return f_; }
+  typename Tensor<const RealType, rank>::type& operator() () { return f_; }
+  const typename Tensor<const RealType, rank>::type& operator() () const { return f_; }
 
   //! f_incr = f_incr * f_accum. Call as \code f_rc.multiplyInto<typename
   //  EvalT::ScalarT>(f, cell, qp); \endcode inside loops over workset.numCells
@@ -79,7 +79,7 @@ public:
              const std::size_t cell, const std::size_t qp) const;
 
 private:
-  typename RTensor<rank>::type f_;
+  typename Tensor<const RealType, rank>::type f_;
   bool valid_;
 };
 

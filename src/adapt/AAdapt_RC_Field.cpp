@@ -24,7 +24,7 @@ init (const Teuchos::ParameterList& p, const std::string& name) {
     name_rc_name = name_rc + " Name";
   valid_ = p.isType<std::string>(name_rc_name);
   if ( ! valid_) return false;
-  f_ = typename RTensor<rank>::type(
+  f_ = decltype(f_)(
     p.get<std::string>(name_rc_name),
     p.get< Teuchos::RCP<PHX::DataLayout> >(name_rc + " Data Layout"));
   return true;
@@ -33,8 +33,15 @@ init (const Teuchos::ParameterList& p, const std::string& name) {
 template<int rank>
 Field<rank>::operator bool () const { return valid_; }
 
+template <typename T>
+struct SizeType {
+  using T_noref = typename std::remove_reference<T>::type;
+  using T_noref_nocv = typename std::remove_cv<T_noref>::type;
+  using type = typename T_noref_nocv::size_type;
+};
+
 #define loop(f, i, dim)                                                 \
-  for (typename RTensor<2>::type::size_type i = 0; i < f.dimension(dim); ++i)
+  for (typename SizeType<decltype(f)>::type i = 0; i < f.dimension(dim); ++i)
 #define loopf(i, dim) loop(f_, i, dim)
 
 template<> template<typename ad_type>
@@ -80,7 +87,7 @@ template<typename ad_type> struct MultiplyWork {
 template<typename ad_type>
 inline void
 multiplyIntoImpl (
-  const RTensor<2>::type& f_, typename Tensor<ad_type, 2>::type& f_incr,
+  const Tensor<const RealType, 2>::type& f_, typename Tensor<ad_type, 2>::type& f_incr,
   const std::size_t cell, const std::size_t qp, MultiplyWork<ad_type>& w)
 {
   loopf(i0, 2) loopf(i1, 3) w.f_incr_mt(i0, i1) = f_incr(cell, qp, i0, i1);
