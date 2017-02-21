@@ -14,7 +14,7 @@
 #include "NOXSolverPrePostOperator.h"
 
 //uncomment the following to write stuff out to matrix market to debug
-//#define WRITE_TO_MATRIX_MARKET
+//define WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
 static int mm_counter_sol = 0;
@@ -194,7 +194,7 @@ SchwarzMultiscale(
         pre_post_operator);
   }
 
-  //------------End getting of Preconditioner type-------------------------------------------------------------
+  //------------End getting of Preconditioner type----
 
   //----------------Parameters------------------------
   //Get "Problem" parameter list
@@ -653,6 +653,13 @@ LCM::SchwarzMultiscale::get_p_names(int l) const
 {
   ALBANY_EXPECT(0 <= l && l < num_params_total_);
   return param_names_[l];
+}
+
+Teuchos::ArrayView<const std::string>
+LCM::SchwarzMultiscale::get_g_names(int l) const
+{
+  ALBANY_ASSERT(false, "not implemented");
+  return Teuchos::ArrayView<const std::string>();
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>

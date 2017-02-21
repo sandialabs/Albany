@@ -26,8 +26,8 @@ public:
   /// Constructor
   SchwarzMultiscale(
       Teuchos::RCP<Teuchos::ParameterList> const & app_params,
-      Teuchos::RCP<Teuchos::Comm<int> const > const & commT,
-      Teuchos::RCP<Tpetra_Vector const > const & initial_guessT, 
+      Teuchos::RCP<Teuchos::Comm<int> const> const & commT,
+      Teuchos::RCP<Tpetra_Vector const> const & initial_guessT,
       Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const &
       solver_factory);
 
@@ -55,10 +55,7 @@ public:
   get_p_names(int l) const;
 
   Teuchos::ArrayView<const std::string>
-  get_g_names(int j) const
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not implemented");
-  }
+  get_g_names(int j) const;
 
   Thyra::ModelEvaluatorBase::InArgs<ST>
   getNominalValues() const;
