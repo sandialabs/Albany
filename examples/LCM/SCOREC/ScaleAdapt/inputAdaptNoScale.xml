@@ -24,7 +24,7 @@
       <Parameter name="Parameter 0" type="string" value="Time"/>
     </ParameterList>
     <ParameterList name="Response Functions">
-      <Parameter name="Number"      type="int"    value="1"/>
+      <Parameter name="Number"      type="int"    value="0"/>
       <Parameter name="Response 0"  type="string" value="Solution Average"/>
     </ParameterList>
     <ParameterList name="Adaptation">
@@ -35,6 +35,7 @@
       <Parameter name="Target Element Count" type="long int" value="8000"/>
       <Parameter name="State Variable" type="string" value="Cauchy_Stress"/>
       <Parameter name="Minimum Part Density" type="double" value="2500"/>
+      <Parameter name="Equilibrate" type="bool" value="false"/>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
@@ -89,7 +90,7 @@
               <ParameterList name="Linear Solver Types">
                 <ParameterList name="Belos">
                   <ParameterList name="VerboseObject">
-                    <Parameter name="Verbosity Level" type="string" value="low"/>
+                    <Parameter name="Verbosity Level" type="string" value="none"/>
                   </ParameterList>
                   <Parameter name="Solver Type" type="string" value="Block GMRES"/>
                   <ParameterList name="Solver Types">
