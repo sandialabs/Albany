@@ -378,13 +378,18 @@ harden(
   //
   // Compute the effective dislocation density at step n
   //
-
+  bool dd_negative = false;
   for (int ss_index_i(0); ss_index_i < num_slip_sys; ++ss_index_i)
   {
     if (state_hardening_np1[ss_index_i] < 0.0)
     {
-      std::cout << state_hardening_np1;
+      dd_negative = true;
+      // std::cout << state_hardening_np1;
     }
+  }
+  if (dd_negative)
+  {
+      std::cout << "Warning: Dislocation density at np1 is negative" << std::endl;
   }
 
   minitensor::Vector<ArgT, NumSlipT>
