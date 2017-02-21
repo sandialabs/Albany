@@ -284,8 +284,16 @@ setCoordinates(const Teuchos::RCP<Tpetra_MultiVector> &coordMV_)
     plist->set("PDE equations", numPDEs);
 
   } else {  // MueLu here
-    plist->set("Coordinates", coordMV);
-    plist->set("number of equations", numPDEs);
+    if (plist->isSublist("Factories") == true) {
+      // use verbose input deck
+      Teuchos::ParameterList& matrixList = plist->sublist("Matrix");
+      matrixList.set("PDE equations", numPDEs);
+      plist->set("Coordinates", coordMV);
+    } else {
+      // use simplified input deck
+      plist->set("Coordinates", coordMV);
+      plist->set("number of equations", numPDEs);
+    }
   }
 }
 
