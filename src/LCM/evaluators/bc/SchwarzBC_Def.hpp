@@ -571,10 +571,10 @@ SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
   // Solution
-  Teuchos::RCP<const Tpetra_Vector>
+  Teuchos::RCP<Tpetra_Vector const>
   xT = dirichlet_workset.xT;
 
-  Teuchos::ArrayRCP<const ST>
+  Teuchos::ArrayRCP<ST const>
   xT_const_view = xT->get1dView();
 
   // Residual
@@ -600,13 +600,13 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Teuchos::RCP<const Teuchos::Comm<int>>
   commT = schwarz_bcs->getMap()->getComm();
 
-  Teuchos::ArrayRCP<const ST>
+  Teuchos::ArrayRCP<ST const>
   schwarz_bcs_const_view_x = schwarz_bcs->getData(0);
 
-  Teuchos::ArrayRCP<const ST>
+  Teuchos::ArrayRCP<ST const>
   schwarz_bcs_const_view_y = schwarz_bcs->getData(1);
 
-  Teuchos::ArrayRCP<const ST>
+  Teuchos::ArrayRCP<ST const>
   schwarz_bcs_const_view_z = schwarz_bcs->getData(2);
 
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
@@ -680,10 +680,10 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Teuchos::RCP<Tpetra_CrsMatrix>
   jacT = dirichlet_workset.JacT;
 
-  Teuchos::RCP<const Tpetra_Vector>
+  Teuchos::RCP<Tpetra_Vector const>
   xT = dirichlet_workset.xT;
 
-  Teuchos::ArrayRCP<const ST>
+  Teuchos::ArrayRCP<ST const>
   xT_const_view = xT->get1dView();
 
   RealType const
@@ -798,13 +798,13 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     Teuchos::RCP<const Teuchos::Comm<int>>
     commT = schwarz_bcs->getMap()->getComm();
 
-    Teuchos::ArrayRCP<const ST>
+    Teuchos::ArrayRCP<ST const>
     schwarz_bcs_const_view_x = schwarz_bcs->getData(0);
 
-    Teuchos::ArrayRCP<const ST>
+    Teuchos::ArrayRCP<ST const>
     schwarz_bcs_const_view_y = schwarz_bcs->getData(1);
 
-    Teuchos::ArrayRCP<const ST>
+    Teuchos::ArrayRCP<ST const>
     schwarz_bcs_const_view_z = schwarz_bcs->getData(2);
 
     for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
@@ -876,10 +876,10 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Teuchos::RCP<Tpetra_MultiVector>
   JVT = dirichlet_workset.JVT;
 
-  Teuchos::RCP<const Tpetra_Vector>
+  Teuchos::RCP<Tpetra_Vector const>
   xT = dirichlet_workset.xT;
 
-  Teuchos::RCP<const Tpetra_MultiVector>
+  Teuchos::RCP<Tpetra_MultiVector const>
   VxT = dirichlet_workset.VxT;
 
   RealType const
@@ -888,13 +888,13 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   std::vector<std::vector<int>> const &
   ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
-  Teuchos::ArrayRCP<const ST>
+  Teuchos::ArrayRCP<ST const>
   VxT_const_view;
 
   Teuchos::ArrayRCP<ST>
   fT_view;
 
-  Teuchos::ArrayRCP<const ST>
+  Teuchos::ArrayRCP<ST const>
   xT_const_view = xT->get1dView();
 
   if (fT != Teuchos::null) {
@@ -939,13 +939,13 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       Teuchos::RCP<const Teuchos::Comm<int>>
       commT = schwarz_bcs->getMap()->getComm();
 
-      Teuchos::ArrayRCP<const ST>
+      Teuchos::ArrayRCP<ST const>
       schwarz_bcs_const_view_x = schwarz_bcs->getData(0);
 
-      Teuchos::ArrayRCP<const ST>
+      Teuchos::ArrayRCP<ST const>
       schwarz_bcs_const_view_y = schwarz_bcs->getData(1);
 
-      Teuchos::ArrayRCP<const ST>
+      Teuchos::ArrayRCP<ST const>
       schwarz_bcs_const_view_z = schwarz_bcs->getData(2);
 
       for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
