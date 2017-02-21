@@ -962,8 +962,8 @@ evalModelImpl(
 
   Teuchos::RCP<Thyra::LinearOpBase<ST>>
   W_op_outT = Teuchos::nonnull(out_args.get_W_op()) ?
-                                                      out_args.get_W_op() :
-                                                      Teuchos::null;
+      out_args.get_W_op() :
+      Teuchos::null;
 
   // Compute the functions
 
@@ -1031,8 +1031,8 @@ evalModelImpl(
     Teuchos::RCP<Thyra::PreconditionerBase<ST>>
     W_prec_outT =
         Teuchos::nonnull(out_args.get_W_prec()) ?
-                                                  out_args.get_W_prec() :
-                                                  Teuchos::null;
+            out_args.get_W_prec() :
+            Teuchos::null;
 
     //IKT, 11/16/16: it may be desirable to move the following code into a separate 
     //function, especially as we implement more preconditioners. 
