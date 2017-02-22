@@ -93,10 +93,7 @@ def read_file_output_exodus(
     num_blocks = file_input.num_blks()
 
     # Calculate number of integration points
-    num_points = 0
-    for name_element_variable in names_variable_element:
-      if (name_element_variable.startswith("Weights_")):
-          num_points += 1
+    num_points = len(names_variable_element['Weights'])
 
     # Check that "Weights" exist as an element variable
     if (num_points == 0):
