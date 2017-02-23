@@ -87,10 +87,12 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
     this->computeBCs(coord, Xval, Yval, time);
 
-    //(*f)[xlunk] = ((*x)[xlunk] - Xval);
-    //(*f)[ylunk] = ((*x)[ylunk] - Yval);
     fT_nonconstView[xlunk] = xT_constView[xlunk] - Xval;
     fT_nonconstView[ylunk] = xT_constView[ylunk] - Yval;
+
+    // Record DOFs to avoid setting Schwarz BCs on them.
+    dirichletWorkset.fixed_dofs_.insert(xlunk);
+    dirichletWorkset.fixed_dofs_.insert(ylunk);
   }
 }
 
