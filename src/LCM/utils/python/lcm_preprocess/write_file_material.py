@@ -7,6 +7,83 @@ from exodus import exodus
 
 INDENTATION = 2
 
+def create_mat_params_default():
+
+    mat_params = {}
+
+    mat_params["crystal_structure"] = "fcc"
+    mat_params["slip_families"] = "unspecified"
+    mat_params["ratio_c_a"] = "unspecified"
+
+    mat_params["C11"] = "unspecified"
+    mat_params["C12"] = "unspecified"
+    mat_params["C13"] = "unspecified"
+    mat_params["C33"] = "unspecified"
+    mat_params["C44"] = "unspecified"
+
+    # Flow rule parameters
+    mat_params["flow_rule"] = "unspecified"                    # "Flow Rule" POWER_LAW, THERMAL_ACTIVATION, or POWER_LAW_DRAG
+    mat_params["rate_slip_reference"] = "unspecified"          # "Reference Slip Rate" power_law  power_law_drag  thermal_activation  and saturation hardening law
+    mat_params["exponent_rate"] = "unspecified"                # "Rate Exponent"       power_law  power_law_drag
+    mat_params["drag_coeff"] = "unspecified"                   # "Drag Coefficient"               power_law_drag
+    mat_params["energy_activation"] = "unspecified"            # "Activation Energy"                              thermal_activation
+    mat_params["resistance_thermal"] = "unspecified"           # "Thermal Resistance"                             thermal_activation
+    mat_params["exponent_p"] = "unspecified"                   # "P Exponent"                                     thermal_activation
+    mat_params["exponent_q"] = "unspecified"                   # "Q Exponent"                                     thermal_activation
+
+    # Hardening law parameters
+    mat_params["hardening_law"] = "unspecified"                # "Hardening Rule" LINEAR_MINUS_RECOVERY, SATURATION, or DISLOCATION_DENSITY
+    mat_params["modulus_hardening"] = "unspecified"            # "Hardening Modulus"       linear_minus_recovery
+    mat_params["modulus_recovery"] = "unspecified"             # "Recovery Modulus"        linear_minus_recovery
+    mat_params["state_hardening_initial"] = "unspecified"      # "Initial Hardening State" linear_minus_recovery  saturation  dislocation_density
+    mat_params["rate_hardening"] = "unspecified"               # "Hardening Rate"                                 saturation
+    mat_params["stress_saturation_initial"] = "unspecified"    # "Initial Saturation Stress"                      saturation
+    mat_params["exponent_saturation"] = "unspecified"          # "Saturation Exponent"                            saturation
+    mat_params["factor_geometric"] = "unspecified"             # "Geometric Factor"                                           dislocation_density
+    mat_params["factor_generation"] = "unspecified"            # "Generation Factor"                                          dislocation_density
+    mat_params["factor_annihilation"] = "unspecified"          # "Annihilation Factor"                                        dislocation_density
+    mat_params["magnitude_burgers"] = "unspecified"            # "Burgers Vector Magnitute"                                   dislocation_density
+    mat_params["modulus_shear"] = "unspecified"                # "Shear Modulus"                                              dislocation_density
+
+    mat_params["integration_scheme"] = "unspecified"
+    mat_params["type_residual"] = "unspecified"
+    mat_params["nonlinear_solver_step_type"] = "unspecified"
+    mat_params["implicit_integration_relative_tolerance"] = "unspecified"
+    mat_params["implicit_integration_absolute_tolerance"] = "unspecified"
+    mat_params["implicit_integration_max_iterations"] = "unspecified"
+
+    return mat_params
+
+def create_vars_output_default():
+
+    vars_output = {}
+    vars_output["cauchy_stress"] = "true"
+    vars_output["F"] = "true"
+    vars_output["integration_weights"] = "true"
+    vars_output["Fp"] = "false"
+    vars_output["L"] = "false"
+    vars_output["eqps"] = "false"
+    vars_output["gamma"] = "false"
+    vars_output["gamma_dot"] = "false"
+    vars_output["tau"] = "false"
+    vars_output["tau_hard"] = "false"
+    vars_output["cp_residual"] = "false"
+    vars_output["cp_residual_iter"] = "false"
+
+    return vars_output
+
+def read_names_block(name_file_exodus):
+
+    file_exodus = exodus(name_file_exodus)
+    ids_block = file_exodus.get_elem_blk_ids()
+    names_block = file_exodus.get_elem_blk_names()
+
+    for idx in range(len(ids_block)):
+        if (names_block[idx] == ""):
+            names_block[idx] = "block_" + str(ids_block[idx])
+
+    return names_block
+
 def ParseMaterialParametersFile(file_name, mat_params, vars_output):
 
     print "\nReading material parameters from", file_name
@@ -47,11 +124,12 @@ def ParseMaterialParametersFile(file_name, mat_params, vars_output):
 
     return
 
-def ParseRotationMatricesFile(file_name, rotations):
+def ParseRotationMatricesFile(file_name):
 
     print "\nReading rotation matrices from", file_name
 
-    rotations_file = open(file_name, mode='r')
+    rotations = []
+    rotations_file = open(file_name, mode = 'r')
     raw_data = rotations_file.readlines()
     rotations_file.close()
     for matrix in raw_data:
@@ -64,7 +142,7 @@ def ParseRotationMatricesFile(file_name, rotations):
 
     print "  read", len(rotations), "rotation matrices"
 
-    return
+    return rotations
 
 def ConstructBasisVectors(R):
 
@@ -294,77 +372,17 @@ if __name__ == "__main__":
     mat_params_file_name = sys.argv[1]
     rotations_file_name = sys.argv[2]
     name_file_exodus = sys.argv[3]
-    file_exodus = exodus(name_file_exodus)
-    ids_block = file_exodus.get_elem_blk_ids()
-    names_block = file_exodus.get_elem_blk_names()
-
-    for idx in range(len(ids_block)):
-        if (names_block[idx] == ""):
-            names_block[idx] = "block_" + str(ids_block[idx])
+    names_block = read_names_block(name_file_exodus)
 
     # List of material parameters that are expected to be in the input file
     # If it's set to None, then it is a required parameter
-    mat_params = {}
+    mat_params = create_mat_params_default()
 
-    mat_params["crystal_structure"] = "fcc"
-    mat_params["slip_families"] = "unspecified"
-    mat_params["ratio_c_a"] = "unspecified"
-
-    mat_params["C11"] = "unspecified"
-    mat_params["C12"] = "unspecified"
-    mat_params["C13"] = "unspecified"
-    mat_params["C33"] = "unspecified"
-    mat_params["C44"] = "unspecified"
-
-    # Flow rule parameters
-    mat_params["flow_rule"] = "unspecified"                    # "Flow Rule" POWER_LAW, THERMAL_ACTIVATION, or POWER_LAW_DRAG
-    mat_params["rate_slip_reference"] = "unspecified"          # "Reference Slip Rate" power_law  power_law_drag  thermal_activation  and saturation hardening law
-    mat_params["exponent_rate"] = "unspecified"                # "Rate Exponent"       power_law  power_law_drag
-    mat_params["drag_coeff"] = "unspecified"                   # "Drag Coefficient"               power_law_drag
-    mat_params["energy_activation"] = "unspecified"            # "Activation Energy"                              thermal_activation
-    mat_params["resistance_thermal"] = "unspecified"           # "Thermal Resistance"                             thermal_activation
-    mat_params["exponent_p"] = "unspecified"                   # "P Exponent"                                     thermal_activation
-    mat_params["exponent_q"] = "unspecified"                   # "Q Exponent"                                     thermal_activation
-
-    # Hardening law parameters
-    mat_params["hardening_law"] = "unspecified"                # "Hardening Rule" LINEAR_MINUS_RECOVERY, SATURATION, or DISLOCATION_DENSITY
-    mat_params["modulus_hardening"] = "unspecified"            # "Hardening Modulus"       linear_minus_recovery
-    mat_params["modulus_recovery"] = "unspecified"             # "Recovery Modulus"        linear_minus_recovery
-    mat_params["state_hardening_initial"] = "unspecified"      # "Initial Hardening State" linear_minus_recovery  saturation  dislocation_density
-    mat_params["rate_hardening"] = "unspecified"               # "Hardening Rate"                                 saturation
-    mat_params["stress_saturation_initial"] = "unspecified"    # "Initial Saturation Stress"                      saturation
-    mat_params["exponent_saturation"] = "unspecified"          # "Saturation Exponent"                            saturation
-    mat_params["factor_geometric"] = "unspecified"             # "Geometric Factor"                                           dislocation_density
-    mat_params["factor_generation"] = "unspecified"            # "Generation Factor"                                          dislocation_density
-    mat_params["factor_annihilation"] = "unspecified"          # "Annihilation Factor"                                        dislocation_density
-    mat_params["magnitude_burgers"] = "unspecified"            # "Burgers Vector Magnitute"                                   dislocation_density
-    mat_params["modulus_shear"] = "unspecified"                # "Shear Modulus"                                              dislocation_density
-
-    mat_params["integration_scheme"] = "unspecified"
-    mat_params["type_residual"] = "unspecified"
-    mat_params["nonlinear_solver_step_type"] = "unspecified"
-    mat_params["implicit_integration_relative_tolerance"] = "unspecified"
-    mat_params["implicit_integration_absolute_tolerance"] = "unspecified"
-    mat_params["implicit_integration_max_iterations"] = "unspecified"
-
-    vars_output = {}
-    vars_output["cauchy_stress"] = "true"
-    vars_output["F"] = "true"
-    vars_output["integration_weights"] = "true"
-    vars_output["Fp"] = "false"
-    vars_output["L"] = "false"
-    vars_output["eqps"] = "false"
-    vars_output["gamma"] = "false"
-    vars_output["gamma_dot"] = "false"
-    vars_output["tau"] = "false"
-    vars_output["tau_hard"] = "false"
-    vars_output["cp_residual"] = "false"
-    vars_output["cp_residual_iter"] = "false"
+    vars_output = create_vars_output_default()
 
     ParseMaterialParametersFile(mat_params_file_name, mat_params, vars_output)
 
-    rotations = []
-    ParseRotationMatricesFile(rotations_file_name, rotations)
+    rotations = ParseRotationMatricesFile(rotations_file_name)
 
     materials_file_name = name_file_exodus.split('.')[0] + '_Material.xml'
     WriteMaterialsFile(materials_file_name, mat_params, vars_output, rotations, names_block)
