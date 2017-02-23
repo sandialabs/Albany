@@ -20,13 +20,11 @@
 #ifdef ALBANY_SEACAS
 #include "Albany_IossSTKMeshStruct.hpp"
 #endif
-#if defined(ALBANY_EPETRA)
 #include "Albany_AsciiSTKMeshStruct.hpp"
 #include "Albany_AsciiSTKMesh2D.hpp"
 #include "Albany_GmshSTKMeshStruct.hpp"
 #ifdef ALBANY_FELIX
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
-#endif
 #endif
 #ifdef ALBANY_FELIX
 #include "Albany_STKDiscretizationStokesH.hpp"
@@ -317,7 +315,6 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
                 << " requested, but not compiled in" << std::endl);
 #endif // ALBANY_SEACAS
     }
-#if defined(ALBANY_EPETRA)
     else if (method == "Ascii") {
         return Teuchos::rcp(new Albany::AsciiSTKMeshStruct(disc_params, comm));
     } else if (method == "Ascii2D") {
@@ -366,7 +363,6 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
         return Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(disc_params, comm, basalMesh));
     }
 #endif // ALBANY_FELIX
-#endif // ALBANY_EPETRA
     else if (method == "Cubit") {
 #ifdef ALBANY_CUTR
         // AGS"need to inherit from Generic"
