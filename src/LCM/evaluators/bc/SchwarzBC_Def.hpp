@@ -623,9 +623,18 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     auto const
     dof = x_dof / 3;
 
-    fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
-    fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
-    fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
+    std::set<int> const &
+    fixed_dofs = dirichlet_workset.fixed_dofs_;
+
+    if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
+      fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
+    }
+    if (fixed_dofs.find(y_dof) == fixed_dofs.end()) {
+      fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
+    }
+    if (fixed_dofs.find(z_dof) == fixed_dofs.end()) {
+      fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
+    }
 
   }
 #else // ALBANY_DTK
@@ -645,9 +654,18 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     auto const
     z_dof = ns_dof[ns_node][2];
 
-    fT_view[x_dof] = xT_const_view[x_dof] - x_val;
-    fT_view[y_dof] = xT_const_view[y_dof] - y_val;
-    fT_view[z_dof] = xT_const_view[z_dof] - z_val;
+    std::set<int> const &
+    fixed_dofs = dirichlet_workset.fixed_dofs_;
+
+    if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
+      fT_view[x_dof] = xT_const_view[x_dof] - x_val;
+    }
+    if (fixed_dofs.find(y_dof) == fixed_dofs.end()) {
+      fT_view[y_dof] = xT_const_view[y_dof] - y_val;
+    }
+    if (fixed_dofs.find(z_dof) == fixed_dofs.end()) {
+      fT_view[z_dof] = xT_const_view[z_dof] - z_val;
+    }
 
   } // node in node set loop
 #endif //ALBANY_DTK

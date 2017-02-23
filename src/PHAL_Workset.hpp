@@ -190,6 +190,9 @@ struct Workset {
 
   Teuchos::RCP<Albany::Application>
   current_app_;
+
+  std::set<int>
+  fixed_dofs_;
 #endif
 
   Albany::StateArray* stateArrayPtr;

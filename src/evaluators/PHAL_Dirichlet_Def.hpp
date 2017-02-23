@@ -89,6 +89,9 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
       int lunk = nsNodes[inode][this->offset];
       // (*f)[lunk] = ((*x)[lunk] - this->value);
       fT_nonconstView[lunk] = xT_constView[lunk] - this->value;
+#if defined(ALBANY_LCM)
+      dirichletWorkset.fixed_dofs_.insert(lunk);
+#endif
   }
 }
 
