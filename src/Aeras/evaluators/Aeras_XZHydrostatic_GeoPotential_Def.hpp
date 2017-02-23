@@ -73,17 +73,13 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_GeoPotential<EvalT, Traits>::
-operator() (const XZHydrostatic_GeoPotential_Tag& tag, const int& cell) const{
-  for (int node=0; node < numNodes; ++node) {
-    for (int level=0; level < numLevels; ++level) {
+operator() (const int cell, const int node, const int level) const{
       ScalarT sum =
       PhiSurf(cell,node) +
       0.5 * Pi(cell,node,level) * delta(level) / density(cell,node,level);
       for (int j=level+1; j < numLevels; ++j) sum += Pi(cell,node,j)     * delta(j)     / density(cell,node,j);
 
       Phi(cell,node,level) = sum;
-    }
-  }
 }
 
 #endif
@@ -120,7 +116,10 @@ evaluateFields(typename Traits::EvalData workset)
   //}*/
 
 #else
-  Kokkos::parallel_for(XZHydrostatic_GeoPotential_Policy(0,workset.numCells),*this);
+  XZHydrostatic_GeoPotential_Policy range(
+      {0,0,0}, {(int)workset.numCells,(int)numNodes,(int)numLevels}, {256,0,0} );
+  Kokkos::Experimental::md_parallel_for(range,*this);
+
   cudaCheckError();
 
 #endif

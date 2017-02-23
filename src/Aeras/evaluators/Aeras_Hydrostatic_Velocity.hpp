@@ -65,18 +65,53 @@ public:
   struct Hydrostatic_Velocity_PRESCRIBED_1_1_Tag{};
   struct Hydrostatic_Velocity_PRESCRIBED_1_2_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, Hydrostatic_Velocity_Tag> Hydrostatic_Velocity_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, Hydrostatic_Velocity_PRESCRIBED_1_1_Tag> Hydrostatic_Velocity_PRESCRIBED_1_1_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, Hydrostatic_Velocity_PRESCRIBED_1_2_Tag> Hydrostatic_Velocity_PRESCRIBED_1_2_Policy;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  using Hydrostatic_Velocity_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Left,
+        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int> ,
+        Hydrostatic_Velocity_Tag >;
+
+ using Hydrostatic_Velocity_PRESCRIBED_1_1_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, Kokkos::Experimental::Iterate::Left,
+        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int>,
+        Hydrostatic_Velocity_PRESCRIBED_1_1_Tag >;
+
+  using Hydrostatic_Velocity_PRESCRIBED_1_2_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, Kokkos::Experimental::Iterate::Left,
+        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int>, 
+        Hydrostatic_Velocity_PRESCRIBED_1_2_Tag >;
+#else
+  using Hydrostatic_Velocity_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Right,
+        Kokkos::Experimental::Iterate::Right >, Kokkos::IndexType<int> ,
+        Hydrostatic_Velocity_Tag >;
+
+ using Hydrostatic_Velocity_PRESCRIBED_1_1_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, Kokkos::Experimental::Iterate::Right,
+        Kokkos::Experimental::Iterate::Right>, Kokkos::IndexType<int>,
+        Hydrostatic_Velocity_PRESCRIBED_1_1_Tag >;
+
+  using Hydrostatic_Velocity_PRESCRIBED_1_2_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, Kokkos::Experimental::Iterate::Right,
+        Kokkos::Experimental::Iterate::Right >, Kokkos::IndexType<int>,
+        Hydrostatic_Velocity_PRESCRIBED_1_2_Tag >;
+
+#endif 
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const Hydrostatic_Velocity_Tag& tag, const int& i) const;
+  void operator() (const Hydrostatic_Velocity_Tag& tag, const int cell, const int node, const int level) const;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const Hydrostatic_Velocity_PRESCRIBED_1_1_Tag& tag, const int& i) const;
-
+  void operator() (const Hydrostatic_Velocity_PRESCRIBED_1_1_Tag& tag, const int cell, const int node) const;
+  
   KOKKOS_INLINE_FUNCTION
-  void operator() (const Hydrostatic_Velocity_PRESCRIBED_1_2_Tag& tag, const int& i) const;
+  void operator() (const Hydrostatic_Velocity_PRESCRIBED_1_2_Tag& tag, const int cell, const int node) const;
 
 #endif
 };

@@ -64,12 +64,20 @@ public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
   struct XZHydrostatic_GeoPotential_Tag{};
-
-  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_GeoPotential_Tag> XZHydrostatic_GeoPotential_Policy;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA) 
+  using XZHydrostatic_GeoPotential_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Left,
+        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int> >;
+#else
+  using XZHydrostatic_GeoPotential_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Right,
+        Kokkos::Experimental::Iterate::Right >, Kokkos::IndexType<int> >;
+#endif
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const XZHydrostatic_GeoPotential_Tag& tag, const int& i) const;
-
+  void operator() (const int cell, const int node, const int level) const;
 #endif
 };
 }

@@ -52,9 +52,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_PiVel<EvalT, Traits>::
-operator() (const XZHydrostatic_PiVel_Tag& tag, const int& cell) const{
-  for (int node=0; node < numNodes; ++node) 
-    for (int level=0; level < numLevels; ++level) 
+operator() (const XZHydrostatic_PiVel_Tag &tag, const int cell, const int node, const int level) const{
       for (int dim=0; dim < numDims; ++dim)  
         pivelx(cell,node,level,dim) = pi(cell,node,level)*velocity(cell,node,level,dim);
 }
@@ -76,7 +74,9 @@ evaluateFields(typename Traits::EvalData workset)
             //std::cout << "Tracer " << Tracer(cell,node,level) << std::endl;
           }
 #else
-  Kokkos::parallel_for(XZHydrostatic_PiVel_Policy(0,workset.numCells),*this);
+  XZHydrostatic_PiVel_Policy range(
+      {0,0,0}, {(int)workset.numCells,(int)numNodes,(int)numLevels}, {256,0,0} );
+  Kokkos::Experimental::md_parallel_for(range,*this);
 
 #endif
 }

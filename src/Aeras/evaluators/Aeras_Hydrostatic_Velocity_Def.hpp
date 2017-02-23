@@ -96,9 +96,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void Hydrostatic_Velocity<EvalT, Traits>::
-operator() (const Hydrostatic_Velocity_Tag& tag, const int& cell) const{
-  for (int node=0; node < numNodes; ++node) 
-    for (int level=0; level < numLevels; ++level) 
+operator() (const Hydrostatic_Velocity_Tag& tag, const int cell, const int node, const int level) const{
       for (int dim=0; dim < numDims; ++dim)  
         Velocity(cell,node,level,dim) = Velx(cell,node,level,dim); 
 }
@@ -106,8 +104,7 @@ operator() (const Hydrostatic_Velocity_Tag& tag, const int& cell) const{
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void Hydrostatic_Velocity<EvalT, Traits>::
-operator() (const Hydrostatic_Velocity_PRESCRIBED_1_1_Tag& tag, const int& cell) const{
-  for (int node=0; node < numNodes; ++node) {
+operator() (const Hydrostatic_Velocity_PRESCRIBED_1_1_Tag& tag, const int cell, const int node) const{
     const MeshScalarT lambda = sphere_coord(cell, node, 0);
     const MeshScalarT theta = sphere_coord(cell, node, 1);
     ScalarT lambdap = lambda - 2.0*PI*time/tau;
@@ -130,15 +127,14 @@ operator() (const Hydrostatic_Velocity_PRESCRIBED_1_1_Tag& tag, const int& cell)
       Velocity(cell,node,level,0) = Ua + Ud; 
       Velocity(cell,node,level,1) = Va; 
     }
-  }
 }
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void Hydrostatic_Velocity<EvalT, Traits>::
-operator() (const Hydrostatic_Velocity_PRESCRIBED_1_2_Tag& tag, const int& cell) const{
+operator() (const Hydrostatic_Velocity_PRESCRIBED_1_2_Tag& tag, const int cell, 
+const int node) const{
   //FIXME: Pete, Tom - please fill in
-  for (int node=0; node < numNodes; ++node) {
     const MeshScalarT lambda = sphere_coord(cell, node, 0);
     const MeshScalarT theta = sphere_coord(cell, node, 1);
     for (int level=0; level < numLevels; ++level) {
@@ -146,7 +142,6 @@ operator() (const Hydrostatic_Velocity_PRESCRIBED_1_2_Tag& tag, const int& cell)
         Velocity(cell,node,level,dim) = 0.0; //FIXME  
       }
     }
-  }
 }
 
 #endif
@@ -226,24 +221,31 @@ evaluateFields(typename Traits::EvalData workset)
   switch (adv_type) {
     case UNKNOWN: //velocity is an unknown that we solve for (not prescribed)
     {
-      Kokkos::parallel_for(Hydrostatic_Velocity_Policy(0,workset.numCells),*this);
-      cudaCheckError();
+        Hydrostatic_Velocity_Policy range({0,0,0}, {(int)workset.numCells,
+            (int)numNodes,(int)numLevels}, {256,0,0} );
+        Kokkos::Experimental::md_parallel_for(range,*this);
+        cudaCheckError();
       break; 
     } 
 
     case PRESCRIBED_1_1: //velocity is prescribed to that of 1-1 test
     {
-      Kokkos::parallel_for(Hydrostatic_Velocity_PRESCRIBED_1_1_Policy(0,workset.numCells),*this);
-      cudaCheckError();
+       Hydrostatic_Velocity_PRESCRIBED_1_1_Policy range({0,0},
+         {(int)workset.numCells, (int)numNodes}, {256,0} );
+       Kokkos::Experimental::md_parallel_for(range,*this);
+       cudaCheckError();
       break; 
     }
 
     case PRESCRIBED_1_2: //velocity is prescribed to that of 1-2 test
     {
-      Kokkos::parallel_for(Hydrostatic_Velocity_PRESCRIBED_1_2_Policy(0,workset.numCells),*this);
-      cudaCheckError();
+       Hydrostatic_Velocity_PRESCRIBED_1_2_Policy range({0,0},
+         {(int)workset.numCells, (int)numNodes}, {256,0} );
+       Kokkos::Experimental::md_parallel_for(range,*this);
+       cudaCheckError();
       break; 
     }
+
   }
 
 #endif

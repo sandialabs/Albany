@@ -54,10 +54,24 @@ public:
 
   struct XZHydrostatic_PiVel_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_PiVel_Tag> XZHydrostatic_PiVel_Policy;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA) 
+ using XZHydrostatic_PiVel_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Left,
+        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int>,
+        XZHydrostatic_PiVel_Tag >;
+#else
+  using XZHydrostatic_PiVel_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Right,
+        Kokkos::Experimental::Iterate::Right >, Kokkos::IndexType<int>,
+        XZHydrostatic_PiVel_Tag >;
+
+#endif
+
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const XZHydrostatic_PiVel_Tag& tag, const int& i) const;
+  void operator() (const XZHydrostatic_PiVel_Tag &tag, const int cell, const int node, const int level) const;
 
 #endif
 };
