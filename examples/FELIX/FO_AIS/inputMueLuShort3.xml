@@ -5,7 +5,7 @@
   </ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
-    <Parameter name="Solution Method" type="string" value="Continuation"/>
+    <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>
     <Parameter name="Required Fields"         type="Array(string)" value="{temperature}"/>
     <Parameter name="Required Basal Fields"   type="Array(string)" value="{basal_friction,thickness,temperature,surface_height}"/>
@@ -14,8 +14,8 @@
     <Parameter name="Surface Side Name"       type="string" value="upperside"/>
 
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="0"/>
-      <Parameter name="Response 0" type="string" value="Surface Velocity Mismatch"/>
+      <Parameter name="Number" type="int" value="1"/>
+      <Parameter name="Response 0" type="string" value="Solution Average"/>
     </ParameterList>
 
     <ParameterList name="Dirichlet BCs">
@@ -41,7 +41,7 @@
 
     <ParameterList name="FELIX Viscosity">
       <Parameter name="Type" type="string" value="Glen's Law"/>
-      <Parameter name="Glen's Law Homotopy Parameter" type="double" value="0"/>
+      <Parameter name="Glen's Law Homotopy Parameter" type="double" value="0.3"/>
       <Parameter name="Glen's Law A" type="double" value="0.00005"/>
       <Parameter name="Glen's Law n" type="double" value="3"/>
       <Parameter name="Flow Rate Type" type="string" value="Temperature Based"/>
@@ -128,7 +128,7 @@
 
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{109129452.686}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{-2.2537151}"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{20780201.6563}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>

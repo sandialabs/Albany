@@ -42,11 +42,10 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 #3. Tests 
 #  First Test
-#if (ALBANY_EPETRA) 
-#add_test(${testName}_Gis20km ${Albany.exe} input_fo_gis20km_test.xml)
-#add_test(${testName}_GisUnstructured ${Albany.exe} input_fo_gis_unstruct.xml)
-#endif(ALBANY_EPETRA)
-#if(ALBANY_IFPACK2)
-#add_test(${testName}_Gis20km_Tpetra ${AlbanyT.exe} input_fo_gis20km_testT.xml)
-#endif(ALBANY_IFPACK2)
+if (ALBANY_EPETRA) 
+add_test(${testName}_Ais16km_ML ${Albany8.exe} inputML3.xml)
+endif(ALBANY_EPETRA)
+if(ALBANY_IFPACK2)
+add_test(${testName}_Ais16km_MueLu ${AlbanyT8.exe} inputMueLuShort3.xml)
+endif(ALBANY_IFPACK2)
 
