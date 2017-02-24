@@ -1,0 +1,327 @@
+<ParameterList>
+  <Parameter name="Reference Material" type="string" value="Silicon"/>
+
+  <ParameterList name="NodeSets">
+
+    <ParameterList name="nodesetedge">
+      <Parameter name="elementBlock" type="string" value="vacuum.quantum" />
+    </ParameterList>
+
+  </ParameterList>
+
+
+  <ParameterList name="ElementBlocks">
+
+    <ParameterList name="vacuum">
+      <Parameter name="material" type="string" value="Vacuum" />
+      <Parameter name="Dopant Type" type="string" value="None" />
+      <Parameter name="quantum" type="bool" value="true" />
+    </ParameterList>
+
+    <ParameterList name="vacuum.quantum">
+      <Parameter name="material" type="string" value="Vacuum" />
+      <Parameter name="Dopant Type" type="string" value="None" />
+      <Parameter name="quantum" type="bool" value="true" />
+    </ParameterList>
+
+    <ParameterList name="silicon">
+      <Parameter name="material" type="string" value="Silicon" />
+      <Parameter name="Dopant Type" type="string" value="None" />
+    </ParameterList>
+
+    <ParameterList name="silicon.quantum">
+      <Parameter name="material" type="string" value="Silicon" />
+      <Parameter name="quantum" type="bool" value="true" />
+    </ParameterList>
+    
+  </ParameterList>
+
+
+  <ParameterList name="Materials">
+
+    <ParameterList name="Vacuum">
+      <Parameter name="Category" type="string" value="Insulator" />
+      <Parameter name="Permittivity" type="double" value="1.0" />
+      <Parameter name="Work Function" type="double" value="0.0" />
+
+      <!-- Valley information -->
+      <Parameter name="Number of conduction band min" type="int" value="1" />
+
+      <!-- For Insulators, electron effective mass is often assumed 0.5m0 -->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="1.0" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="1.0" />
+
+      <Parameter name="Electron Affinity" type="double" value="0.0" />
+
+      <!-- Band Gap in [eV] -->
+      <!-- <Parameter name="Band Gap" type="double" value="1.0" /> -->
+
+      <!-- Electron affinity in [eV] -->
+      <!-- <Parameter name="Electron Affinity" type="double" value="1.0" /> -->
+
+    </ParameterList>
+
+
+    <ParameterList name="SiliconAsInsulator">
+      <Parameter name="Category" type="string" value="Insulator" />
+      <Parameter name="Permittivity" type="double" value="11.9" />
+
+      <!-- Valley information -->
+      <Parameter name="Number of conduction band min" type="int" value="1" />
+
+      <!-- For Insulators, electron effective mass is often assumed 0.5m0 -->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.328" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.328" />
+
+      <!-- Band Gap in [eV] -->
+      <!-- <Parameter name="Band Gap" type="double" value="1.0" /> -->
+
+      <!-- Electron affinity in [eV] -->
+      <!-- <Parameter name="Electron Affinity" type="double" value="1.0" /> -->
+
+    </ParameterList>
+
+
+    <!-- Unstrained Silicon: Schrodinger equation is solved only for the Delta2-valleys
+    whose longitudinal axis is perpendicular to the Si/SiO2 interface which is 
+    parallel to the (100) crystal plane. In the simulation coordinate system, 
+    a structure should be created such that the Si/SiO2 interface is perpendicular 
+    to x axis in 1D, to y axis in 2D, and to z axis in 3D. -->
+    
+    <ParameterList name="Silicon">
+      <Parameter name="Category" type="string" value="Semiconductor" />
+      <Parameter name="Permittivity" type="double" value="11.9" />
+
+      <!-- Valley information -->
+      <Parameter name="Conduction Band Minimum" type="string" value="Delta2 Valley" />
+      <Parameter name="Number of conduction band min" type="int" value="2" />
+      <Parameter name="Number of valence band max" type="int" value="1" />
+
+      <!-- Electron effective mass in [m0] -->
+      <!-- <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.98" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.19" /> -->
+      <!-- NOTE: 0.328 = geo-mean (0.98*0.19*0.19)^(1/3) -->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.328" /> 
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.328" />
+
+      <!-- Heavy/Light Hole effective mass in [m0] -->
+      <Parameter name="Light Hole Effective Mass" type="double" value="0.16" />
+      <Parameter name="Heavy Hole Effective Mass" type="double" value="0.56" />
+
+      <!-- Electron/Hole DOS effective mass (valley deg. included) [m0] -->
+      <!-- Electron = pow(6,2./3.)*pow(pow(mt,2)*ml,1./3.) b/c of 6 valleys -->
+      <!-- Hole = pow(pow(mhh,1.5)+pow(mlh,1.5),2./3.) -->
+      <Parameter name="Electron DOS Effective Mass" type="double" value="1.08396" />
+      <Parameter name="Hole DOS Effective Mass" type="double" value="0.61566" />
+      
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="4.05" />
+
+      <!-- Band gap at 0 K in [eV] -->
+      <Parameter name="Zero Temperature Band Gap" type="double" value="1.1455" />
+
+      <!-- Temperature coefficient for band gap in [eV/K] -->
+      <Parameter name="Band Gap Alpha Coefficient" type="double" value="4.73e-4" />
+
+      <!-- Temperature coefficient for band gap in [K] -->
+      <Parameter name="Band Gap Beta Coefficient" type="double" value="636.0" />
+
+      <!-- Reference temperature [K] for computing Nc and Nv -->
+      <Parameter name="Reference Temperature" type="double" value="300.0" />
+
+    </ParameterList>
+
+
+    <!-- Use Silicon parameters for PolySilicon as assumed standardly, since the latter 
+    has complicated structure (polycrystalline or amorphous) and no data is available -->
+    
+    <ParameterList name="PolySilicon">
+      <Parameter name="Category" type="string" value="Semiconductor" />
+      <Parameter name="Permittivity" type="double" value="11.9" />
+
+      <!-- Valley information -->
+      <Parameter name="Conduction Band Minimum" type="string" value="Delta2 Valley" />
+      <Parameter name="Number of conduction band min" type="int" value="2" />
+      <Parameter name="Number of valence band max" type="int" value="1" />
+
+      <!-- Electron effective mass along coordinate directions in [m0] -->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.98" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.19" />
+
+      <!-- Heavy/Light Hole effective mass in [m0] -->
+      <Parameter name="Light Hole Effective Mass" type="double" value="0.16" />
+      <Parameter name="Heavy Hole Effective Mass" type="double" value="0.56" />
+
+      <!-- Electron/Hole DOS effective mass (valley deg. included) [m0] -->
+      <!-- Electron = pow(6,2./3.)*pow(pow(mt,2)*ml,1./3.) b/c of 6 valleys -->
+      <!-- Hole = pow(pow(mhh,1.5)+pow(mlh,1.5),2./3.) -->
+      <Parameter name="Electron DOS Effective Mass" type="double" value="1.08396" />
+      <Parameter name="Hole DOS Effective Mass" type="double" value="0.61566" />
+      
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="4.05" />
+
+      <!-- Band gap at 0 K in [eV] -->
+      <Parameter name="Zero Temperature Band Gap" type="double" value="1.1455" />
+
+      <!-- Temperature coefficient for band gap in [eV/K] -->
+      <Parameter name="Band Gap Alpha Coefficient" type="double" value="4.73e-4" />
+
+      <!-- Temperature coefficient for band gap in [K] -->
+      <Parameter name="Band Gap Beta Coefficient" type="double" value="636.0" />
+
+      <!-- Reference temperature [K] for computing Nc and Nv -->
+      <Parameter name="Reference Temperature" type="double" value="300.0" />
+
+    </ParameterList>
+    
+
+    <!-- Relaxed Si(0.7)Ge(0.3): conduction band minima (CBM) are six-fold deg 
+    Delta valleys, and VBM is the deg LH-HH Gamma-valley.  -->
+    
+    <ParameterList name="Si0.7Ge0.3">
+      <Parameter name="Category" type="string" value="Semiconductor" />
+      <Parameter name="Permittivity" type="double" value="13.13" />
+
+      <!-- Valley information (temporary) -->
+      <Parameter name="Conduction Band Minimum" type="string" value="Delta2 Valley" />
+      <Parameter name="Number of conduction band min" type="int" value="2" />
+      <Parameter name="Number of valence band max" type="int" value="1" />
+
+      <!-- Electron effective mass in [m0] -->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.98" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.19" />
+
+      <!-- Heavy/Light Hole effective mass in [m0] -->
+      <Parameter name="Light Hole Effective Mass" type="double" value="0.1252" />
+      <Parameter name="Heavy Hole Effective Mass" type="double" value="0.45" />
+
+      <!-- Electron/Hole DOS effective mass (valley deg. included) [m0] -->
+      <!-- Electron = pow(6,2./3.)*pow(pow(mt,2)*ml,1./3.) b/c of 6 valleys -->
+      <!-- Hole = pow(pow(mhh,1.5)+pow(mlh,1.5),2./3.) -->
+      <Parameter name="Electron DOS Effective Mass" type="double" value="1.08396" />
+      <Parameter name="Hole DOS Effective Mass" type="double" value="0.4930" />
+      
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="4.035" />
+
+      <!-- Band gap at 0 K in [eV] -->
+      <Parameter name="Zero Temperature Band Gap" type="double" value="1.03" />
+
+      <!-- Temperature coefficient for band gap in [eV/K] -->
+      <Parameter name="Band Gap Alpha Coefficient" type="double" value="4.751e-4" />
+
+      <!-- Temperature coefficient for band gap in [K] -->
+      <Parameter name="Band Gap Beta Coefficient" type="double" value="515.7" />
+
+      <!-- Reference temperature [K] for computing Nc and Nv -->
+      <Parameter name="Reference Temperature" type="double" value="300.0" />
+
+    </ParameterList>
+    
+
+    <!-- Strained Si on Si(0.7)Ge(0.3) substrate: CBM are two-fold deg Delta2 valleys,
+    four-fold deg Delta4 valleys are about 190 meV above Delta2, so not occupied.
+    Gamma-valley LH and HH bands are split due to strain and VBM is the LH band. -->
+    
+    <ParameterList name="Strained Silicon">
+      <Parameter name="Category" type="string" value="Semiconductor" />
+      <Parameter name="Permittivity" type="double" value="11.9" />
+
+      <!-- Valley information (temporary) -->
+      <Parameter name="Conduction Band Minimum" type="string" value="Delta2 Valley" />
+      <Parameter name="Number of conduction band min" type="int" value="2" />
+      <Parameter name="Number of valence band max" type="int" value="1" />
+
+      <!-- Electron effective mass in [m0] -->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.94" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.19" />
+
+      <!-- Heavy/Light Hole effective mass in [m0]: actually mlh_t=0.18, mlh_l=0.29 -->
+      <Parameter name="Light Hole Effective Mass" type="double" value="0.18" />
+      <Parameter name="Heavy Hole Effective Mass" type="double" value="0.29" />
+
+      <!-- Electron/Hole DOS effective mass (valley deg. included) [m0] -->
+      <!-- Electron = pow(2,2./3.)*pow(pow(mt,2)*ml,1./3.) b/c of two Delta2 valleys -->
+      <!-- Hole = pow(mlh_l*pow(mlh_t,2),1./3.), only LH band is occupied. -->
+      <Parameter name="Electron DOS Effective Mass" type="double" value="0.5139" />
+      <Parameter name="Hole DOS Effective Mass" type="double" value="0.2110" />
+      
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="4.185" />
+
+      <!-- Band gap at 0 K in [eV] -->
+      <Parameter name="Zero Temperature Band Gap" type="double" value="0.93" />
+
+      <!-- Temperature coefficient for band gap in [eV/K] -->
+      <Parameter name="Band Gap Alpha Coefficient" type="double" value="4.73e-4" />
+
+      <!-- Temperature coefficient for band gap in [K] -->
+      <Parameter name="Band Gap Beta Coefficient" type="double" value="636" />
+
+      <!-- Reference temperature [K] for computing Nc and Nv -->
+      <Parameter name="Reference Temperature" type="double" value="300.0" />
+
+    </ParameterList>
+
+
+    <ParameterList name="SiliconDioxide">
+      <Parameter name="Category" type="string" value="Insulator" />
+      <Parameter name="Permittivity" type="double" value="3.9" />
+
+      <!-- Valley information -->
+      <Parameter name="Number of conduction band min" type="int" value="1" />
+
+      <!-- For Insulators, electron effective mass is often assumed 0.5m0 -->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.5" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.5" />
+
+      <!-- Band Gap in [eV] -->
+      <Parameter name="Band Gap" type="double" value="9.0" />
+
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="1.0" />
+    </ParameterList>
+
+
+    <ParameterList name="SiliconNitride">
+      <Parameter name="Category" type="string" value="Insulator" />
+      <Parameter name="Permittivity" type="double" value="7.5" />
+
+      <!-- Valley information -->
+      <Parameter name="Number of conduction band min" type="int" value="1" />
+
+      <!-- For Insulators, electron effective mass is often assumed 0.5m0 -->
+      <Parameter name="Longitudinal Electron Effective Mass" type="double" value="0.5" />
+      <Parameter name="Transverse Electron Effective Mass" type="double" value="0.5" />
+
+      <!-- Band Gap in [eV] -->
+      <Parameter name="Band Gap" type="double" value="5.1" />
+
+      <!-- Electron affinity in [eV] -->
+      <Parameter name="Electron Affinity" type="double" value="1.85" />
+    </ParameterList>
+
+
+    <ParameterList name="MetalPolySilicon">
+      <Parameter name="Category" type="string" value="Metal" />  
+      <Parameter name="Permittivity" type="double" value="11.9" />
+
+      <!-- Assume n+ PolySilicon which is true in devices that QCAD team is interested in !-->
+      <Parameter name="Work Function" type="double" value="4.05" /> 
+    </ParameterList>
+
+
+    <ParameterList name="Aluminum">
+      <Parameter name="Category" type="string" value="Metal" />
+      <Parameter name="Permittivity" type="double" value="1.0" />
+
+      <!-- Work Function in [eV] -->
+      <Parameter name="Work Function" type="double" value="4.186" /> -->
+
+    </ParameterList>
+
+
+  </ParameterList>
+
+</ParameterList>
