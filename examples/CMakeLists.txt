@@ -269,6 +269,6 @@ ENDIF(ALBANY_HAVE_STK)
 
 ###################
 
-IF (ALBANY_LARGE_CASES)
+IF (ALBANY_LARGE_TESTS)
   add_subdirectory(large)
 ENDIF()
