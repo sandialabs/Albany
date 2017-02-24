@@ -1,9 +1,0 @@
-<ParameterList>
-  <ParameterList name="Discretization">
-    <Parameter name="Method" type="string" value="PUMI"/>
-    <Parameter name="PUMI Input File Name" type="string" value="../LCM/SCOREC/meshes/cube/cube.smb"/>
-    <Parameter name="Mesh Model Input File Name" type="string" value="../LCM/SCOREC/meshes/cube/cube.dmg"/>
-    <Parameter name="PUMI Output File Name" type="string" value="ctm.vtk"/>
-    <Parameter name="Model Associations File Name" type="string" value="assoc.txt"/>
-  </ParameterList>
-</ParameterList>

@@ -1192,23 +1192,6 @@ IF (ALBANY_LIBRARIES_ONLY)
   ENDIF()
 ENDIF()
 
-# set optional dependency on CTM, defaults to Disabled
-OPTION(ENABLE_CTM "Flag to turn on CTM, coupled thermomechanics source code" OFF)
-IF(ENABLE_CTM)
-  IF(NOT ENABLE_LCM)
-    MESSAGE(FATAL_ERROR "CTM requires -DALBANY_LCM to be turned ON")
-  ENDIF()
-  IF(NOT ALBANY_APF)
-    MESSAGE(FATAL_ERROR "CTM requires -DALBANY_APF to be turned ON")
-  ENDIF()
-  MESSAGE("-- CTM       is Enabled, compiling with -DALBANY_CTM")
-  ADD_DEFINITIONS(-DALBANY_CTM)
-  SET(ALBANY_CTM TRUE)
-ELSE()
-  MESSAGE("-- CTM       is NOT Enabled.")
-  SET(ALBANY_CTM FALSE)
-ENDIF()
-
 # Add option to include Dakota restart examples in the test suite
 IF (NOT APPLE)
 CMAKE_DEPENDENT_OPTION(ENABLE_DAKOTA_RESTART_EXAMPLES "Flag to include Dakota restart examples" ON
