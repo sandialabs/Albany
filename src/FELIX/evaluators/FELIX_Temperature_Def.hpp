@@ -105,6 +105,7 @@ namespace FELIX
     }
 
 
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = d.disc->getWsElNodeID()[d.wsIndex];
     const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *d.disc->getLayeredMeshNumbering();
     const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
     int numLayers = layeredMeshNumbering.numLayers;
@@ -118,16 +119,27 @@ namespace FELIX
         // Get the local data of side and cell
         const int cell = it_side.elem_LID;
         const int side = it_side.side_local_id;
+        const Teuchos::ArrayRCP<GO>& nodeID = wsElNodeID[cell];
         for (int inode=0; inode<numSideNodes; ++inode) {
-          int lnodeId=sideNodes[side][inode];
+          int cnode0=sideNodes[side][inode];
+          int lnodeId = d.disc->getOverlapNodeMapT()->getLocalElement(nodeID[cnode0]);
           layeredMeshNumbering.getIndices(lnodeId, baseId, ilayer);
-          LO inode0 = layeredMeshNumbering.getId(baseId,  ilayer);
-          LO inode1 = layeredMeshNumbering.getId(baseId,  ilayer+1);
-          if(inode0 != lnodeId) {
+          LO lnodeId0 = layeredMeshNumbering.getId(baseId,  ilayer);
+          LO lnodeId1 = layeredMeshNumbering.getId(baseId,  ilayer+1);
+          if(lnodeId0 != lnodeId) {
             std::cout<< "Something Wrong in " << __FILE__ << " at line " << __LINE__<< std::endl;
             exit(1);
           }
-          dTdz(cell,side, inode) = (temperature(cell, inode1) - temperature(cell, inode0))/(thickness(cell,inode0)*layers_ratio[ilayer]);
+          for (std::size_t cnode1 = 0; cnode1 < numNodes; ++cnode1) {
+            if(lnodeId1 == d.disc->getOverlapNodeMapT()->getLocalElement(nodeID[cnode1])) {
+              dTdz(cell,side, inode) = (temperature(cell, cnode1) - temperature(cell, cnode0))/(thickness(cell,cnode0)*layers_ratio[ilayer]);
+              break;
+            }
+            if(cnode1 == numNodes-1) {
+              std::cout<< "Error in " << __FILE__ << " at line " << __LINE__<< "! At the moment this is working only for hexa. Fix this by accessing directly the enthalpy solution tpetra vector." << std::endl;
+              exit(1);
+            }
+          }
           //dTdz(cell,side, inode) = pow6/(rho_i * c_i)*(enthalpy(cell, inode1) - enthalpy(cell, inode0))/(thickness(cell,inode0)*layers_ratio[ilayer]);
         }
       }

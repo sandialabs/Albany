@@ -61,7 +61,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Workset Size" type="int" value="50"/>
+    <!--Parameter name="Workset Size" type="int" value="50"/-->
     <Parameter name="Number Of Time Derivatives" type="int" value="0"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Exodus Output File Name" type="string" value="gis_enthalpy.exo"/>
@@ -92,7 +92,7 @@
 </ParameterList>
 <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="2"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{20.7934988885, 7.28622636011}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{20.1347389929, 7.28622636011}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-2"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <!--Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.0, 0.0}"/-->

@@ -250,7 +250,7 @@ namespace FELIX
     {
       ScalarT vmax =  1e-3; //min velocity to avoid divide by zero.
       ScalarT vmax_z =  1e-5; //min velocity to avoid divide by zero.
-      ParamScalarT diam = 0.0, diam_z;
+      ParamScalarT diam = 0.0, diam_z = 0.0;
       for (std::size_t qp = 0; qp < numQPs; ++qp)
       {
         ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;
