@@ -51,13 +51,21 @@ private:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
 
   struct XZHydrostatic_Density_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_Density_Tag> XZHydrostatic_Density_Policy;
+  using XZHydrostatic_Density_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, XZHydrostatic_Density_Tag>;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const XZHydrostatic_Density_Tag& tag, const int& i) const;
+  void operator() (const XZHydrostatic_Density_Tag& tag, const int cell, const int node, const int level) const;
 
 #endif
 

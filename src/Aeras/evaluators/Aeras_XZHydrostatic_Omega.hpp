@@ -61,13 +61,21 @@ private:
 
 public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
 
   struct XZHydrostatic_Omega_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_Omega_Tag> XZHydrostatic_Omega_Policy;
+  using XZHydrostatic_Omega_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, XZHydrostatic_Omega_Tag>;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const XZHydrostatic_Omega_Tag& tag, const int& i) const;
+  void operator() (const XZHydrostatic_Omega_Tag& tag, const int cell, const int qp, const int level) const;
 
 #endif
 };

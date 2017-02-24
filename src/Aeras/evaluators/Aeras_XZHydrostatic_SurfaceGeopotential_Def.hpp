@@ -112,17 +112,15 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_SurfaceGeopotential<EvalT, Traits>::
-operator() (const XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag& tag, const int& cell) const{
-  for (int node=0; node < numNodes; ++node) {
-    double xcoord = coordVec(cell,node,0);
-    if (std::abs(xcoord - center) <= (width/2.)) {
-      PhiSurf(cell,node) =
-             (std::cos( (xcoord - center)*local_pi*2./width ) + 1.)
-             *height/2. ;//*local_gravity;
-    }
-    else
-      PhiSurf(cell,node) = 0.0;
+operator() (const XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag& tag, const int cell, const int node) const{
+  double xcoord = coordVec(cell,node,0);
+  if (std::abs(xcoord - center) <= (width/2.)) {
+    PhiSurf(cell,node) =
+           (std::cos( (xcoord - center)*local_pi*2./width ) + 1.)
+           *height/2. ;//*local_gravity;
   }
+  else
+    PhiSurf(cell,node) = 0.0;
 }
 
 #endif
@@ -184,7 +182,8 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   else if (topoType == MOUNTAIN1) {
-    Kokkos::parallel_for(XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Policy(0,workset.numCells),*this);
+    Kokkos::Experimental::md_parallel_for(XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Policy(
+      {0,0},{(int)workset.numCells,(int)numNodes}),*this);
     cudaCheckError();
   }
 

@@ -73,15 +73,11 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_Omega<EvalT, Traits>::
-operator() (const XZHydrostatic_Omega_Tag& tag, const int& cell) const{
-  for (int qp=0; qp < numQPs; ++qp) {
-    for (int level=0; level < numLevels; ++level) {
-      ScalarT                               sum  = -0.5*divpivelx(cell,qp,level) * delta(level);
-      for (int j=0; j<level; ++j)           sum -=     divpivelx(cell,qp,j)     * delta(j);
-      for (int dim=0; dim < numDims; ++dim) sum += Velocity(cell,qp,level,dim)*gradp(cell,qp,level,dim);
-      omega(cell,qp,level) = sum/(Cpstar(cell,qp,level)*density(cell,qp,level));
-    }
-  }
+operator() (const XZHydrostatic_Omega_Tag& tag, const int cell, const int qp, const int level) const{
+  ScalarT                               sum  = -0.5*divpivelx(cell,qp,level) * delta(level);
+  for (int j=0; j<level; ++j)           sum -=     divpivelx(cell,qp,j)     * delta(j);
+  for (int dim=0; dim < numDims; ++dim) sum += Velocity(cell,qp,level,dim)*gradp(cell,qp,level,dim);
+  omega(cell,qp,level) = sum/(Cpstar(cell,qp,level)*density(cell,qp,level));
 }
 
 #endif
@@ -104,7 +100,8 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 #else
-  Kokkos::parallel_for(XZHydrostatic_Omega_Policy(0,workset.numCells),*this);
+  Kokkos::Experimental::md_parallel_for(XZHydrostatic_Omega_Policy(
+    {0,0,0},{(int)workset.numCells,(int)numQPs,(int)numLevels}),*this);
   cudaCheckError();
 
 #endif
