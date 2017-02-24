@@ -30,7 +30,7 @@ cmake \
  -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 \
  -D TPL_ENABLE_MPI:BOOL=ON \
- -D TPL_ENABLE_BinUtils:BOOL=ON \
+ -D TPL_ENABLE_BinUtils:BOOL=OFF \
  -D TPL_MPI_INCLUDE_DIRS:FILEPATH="/usr/include/openmpi-x86_64" \
  -D TPL_MPI_LIBRARY_DIRS:FILEPATH="/usr/lib64/openmpi/lib" \
  -D MPI_BIN_DIR:FILEPATH="/usr/lib64/openmpi/bin" \
@@ -50,8 +50,8 @@ cmake \
  -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
  -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
  \
- -D Teuchos_ENABLE_STACKTRACE:BOOL=ON \
- -D Teuchos_ENABLE_DEFAULT_STACKTRACE:BOOL=ON \
+ -D Teuchos_ENABLE_STACKTRACE:BOOL=OFF \
+ -D Teuchos_ENABLE_DEFAULT_STACKTRACE:BOOL=OFF \
  -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
  -D Kokkos_ENABLE_CXX11:BOOL=ON \
  -D Kokkos_ENABLE_Cuda_UVM:BOOL=lcm_enable_uvm \
@@ -59,7 +59,7 @@ cmake \
  -D Kokkos_ENABLE_OpenMP:BOOL=lcm_enable_openmp \
  -D Kokkos_ENABLE_Pthread:BOOL=lcm_enable_pthreads \
  -D Kokkos_ENABLE_Serial:BOOL=ON \
- -D Kokkos_ENABLE_TESTS:BOOL=ON \
+ -D Kokkos_ENABLE_TESTS:BOOL=OFF \
  -D TPL_ENABLE_CUDA:STRING=lcm_enable_cuda \
  -D TPL_ENABLE_CUSPARSE:BOOL=lcm_enable_cusparse \
 \
