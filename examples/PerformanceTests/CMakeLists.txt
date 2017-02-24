@@ -20,25 +20,10 @@ set(performanceTestScript_2
      -executable "${Albany_BINARY_DIR}/src")
 
 # Heat Transfer Problems ###############
-  add_subdirectory(SteadyHeat2D)
-  IF(ALBANY_SEACAS)
-    #add_subdirectory(SteadyHeat2DSS)
-  ENDIF()
-
-# DEMO PDES ###############
-IF(ALBANY_DEMO_PDES)
-  #add_subdirectory(LinComprNS)
-
-  # These require exodus, Ioss, stk_io, to read meshes
-  IF(ALBANY_SEACAS)
-    add_subdirectory(NSVortexShedding)
-  ENDIF()
-
-  if (ALBANY_ASCR)
-    #add_subdirectory(CoupledReactor)
-  endif()
-
-ENDIF(ALBANY_DEMO_PDES)
+add_subdirectory(SteadyHeat2D)
+IF(ALBANY_SEACAS)
+  #add_subdirectory(SteadyHeat2DSS)
+ENDIF()
 
 # LCM ###############
 IF(ALBANY_LCM)
