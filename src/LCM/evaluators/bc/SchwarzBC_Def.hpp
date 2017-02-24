@@ -73,13 +73,10 @@ SchwarzBC_Base(Teuchos::ParameterList & p) :
 //
 //
 template<typename EvalT, typename Traits>
+template<typename T>
 void
 SchwarzBC_Base<EvalT, Traits>::
-computeBCs(
-    size_t const ns_node,
-    ScalarT & x_val,
-    ScalarT & y_val,
-    ScalarT & z_val)
+computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
 {
   auto const
   coupled_app_index = getCoupledAppIndex();
@@ -553,22 +550,11 @@ computeBCsDTK()
 #endif //ALBANY_DTK
 
 //
-// Specialization: Residual
+// Fill residual, used in both residual and Jacobian
 //
-template<typename Traits>
-SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::
-SchwarzBC(Teuchos::ParameterList & p) :
-    SchwarzBC_Base<PHAL::AlbanyTraits::Residual, Traits>(p)
-{
-}
-
-//
-//
-//
-template<typename Traits>
+template<typename SchwarzBC, typename Traits>
 void
-SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::
-evaluateFields(typename Traits::EvalData dirichlet_workset)
+fillResidual(SchwarzBC & sbc, typename Traits::EvalData dirichlet_workset)
 {
   // Solution
   Teuchos::RCP<Tpetra_Vector const>
@@ -585,7 +571,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   fT_view = fT->get1dViewNonConst();
 
   std::vector<std::vector<int>> const &
-  ns_dof = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+  ns_dof = dirichlet_workset.nodeSets->find(sbc.nodeSetID)->second;
 
   auto const
   ns_number_nodes = ns_dof.size();
@@ -595,7 +581,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Teuchos::RCP<
       Tpetra::MultiVector<double, int, DataTransferKit::SupportId>
   > const
-  schwarz_bcs = this->computeBCsDTK();
+  schwarz_bcs = sbc.computeBCsDTK();
 
   Teuchos::RCP<const Teuchos::Comm<int>>
   commT = schwarz_bcs->getMap()->getComm();
@@ -640,10 +626,10 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 #else // ALBANY_DTK
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
-    ScalarT
+    ST
     x_val, y_val, z_val;
 
-    this->computeBCs(ns_node, x_val, y_val, z_val);
+    sbc.computeBCs(ns_node, x_val, y_val, z_val);
 
     auto const
     x_dof = ns_dof[ns_node][0];
@@ -669,6 +655,29 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   } // node in node set loop
 #endif //ALBANY_DTK
+  return;
+}
+
+//
+// Specialization: Residual
+//
+template<typename Traits>
+SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::
+SchwarzBC(Teuchos::ParameterList & p) :
+    SchwarzBC_Base<PHAL::AlbanyTraits::Residual, Traits>(p)
+{
+}
+
+//
+//
+//
+template<typename Traits>
+void
+SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::
+evaluateFields(typename Traits::EvalData dirichlet_workset)
+{
+  fillResidual<SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>, Traits>
+  (*this, dirichlet_workset);
   return;
 }
 
@@ -742,130 +751,85 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     auto const
     z_dof = ns_nodes[ns_node][2];
 
-    // replace jac values for the X dof
-    auto
-    num_entries = jacT->getNumEntriesInLocalRow(x_dof);
+    std::set<int> const &
+    fixed_dofs = dirichlet_workset.fixed_dofs_;
 
-    matrix_entries.resize(num_entries);
-    matrix_indices.resize(num_entries);
+    if (fixed_dofs.find(x_dof) == fixed_dofs.end()) {
+      // replace jac values for the X dof
+      auto
+      num_entries = jacT->getNumEntriesInLocalRow(x_dof);
 
-    jacT->getLocalRowCopy(
-        x_dof,
-        matrix_indices(),
-        matrix_entries(),
-        num_entries);
+      matrix_entries.resize(num_entries);
+      matrix_indices.resize(num_entries);
 
-    for (auto i = 0; i < num_entries; ++i) {
-      matrix_entries[i] = 0;
+      jacT->getLocalRowCopy(
+          x_dof,
+          matrix_indices(),
+          matrix_entries(),
+          num_entries);
+
+      for (auto i = 0; i < num_entries; ++i) {
+        matrix_entries[i] = 0;
+      }
+
+      jacT->replaceLocalValues(x_dof, matrix_indices(), matrix_entries());
+      index[0] = x_dof;
+      jacT->replaceLocalValues(x_dof, index(), value());
     }
 
-    jacT->replaceLocalValues(x_dof, matrix_indices(), matrix_entries());
-    index[0] = x_dof;
-    jacT->replaceLocalValues(x_dof, index(), value());
+    if (fixed_dofs.find(y_dof) == fixed_dofs.end()) {
+      // replace jac values for the y dof
+      auto
+      num_entries = jacT->getNumEntriesInLocalRow(y_dof);
 
-    // replace jac values for the y dof
-    num_entries = jacT->getNumEntriesInLocalRow(y_dof);
+      matrix_entries.resize(num_entries);
+      matrix_indices.resize(num_entries);
 
-    matrix_entries.resize(num_entries);
-    matrix_indices.resize(num_entries);
+      jacT->getLocalRowCopy(
+          y_dof,
+          matrix_indices(),
+          matrix_entries(),
+          num_entries);
 
-    jacT->getLocalRowCopy(
-        y_dof,
-        matrix_indices(),
-        matrix_entries(),
-        num_entries);
+      for (auto i = 0; i < num_entries; ++i) {
+        matrix_entries[i] = 0;
+      }
 
-    for (auto i = 0; i < num_entries; ++i) {
-      matrix_entries[i] = 0;
+      jacT->replaceLocalValues(y_dof, matrix_indices(), matrix_entries());
+      index[0] = y_dof;
+      jacT->replaceLocalValues(y_dof, index(), value());
     }
 
-    jacT->replaceLocalValues(y_dof, matrix_indices(), matrix_entries());
-    index[0] = y_dof;
-    jacT->replaceLocalValues(y_dof, index(), value());
+    if (fixed_dofs.find(z_dof) == fixed_dofs.end()) {
+      // replace jac values for the z dof
+      auto
+      num_entries = jacT->getNumEntriesInLocalRow(z_dof);
 
-    // replace jac values for the z dof
-    num_entries = jacT->getNumEntriesInLocalRow(z_dof);
+      matrix_entries.resize(num_entries);
+      matrix_indices.resize(num_entries);
 
-    matrix_entries.resize(num_entries);
-    matrix_indices.resize(num_entries);
+      jacT->getLocalRowCopy(
+          z_dof,
+          matrix_indices(),
+          matrix_entries(),
+          num_entries);
 
-    jacT->getLocalRowCopy(
-        z_dof,
-        matrix_indices(),
-        matrix_entries(),
-        num_entries);
+      for (auto i = 0; i < num_entries; ++i) {
+        matrix_entries[i] = 0;
+      }
 
-    for (auto i = 0; i < num_entries; ++i) {
-      matrix_entries[i] = 0;
+      jacT->replaceLocalValues(z_dof, matrix_indices(), matrix_entries());
+      index[0] = z_dof;
+      jacT->replaceLocalValues(z_dof, index(), value());
     }
-
-    jacT->replaceLocalValues(z_dof, matrix_indices(), matrix_entries());
-    index[0] = z_dof;
-    jacT->replaceLocalValues(z_dof, index(), value());
   }
 
   if (fill_residual == true) {
-
-#if defined(ALBANY_DTK)
-
-    Teuchos::RCP<
-        Tpetra::MultiVector<double, int, DataTransferKit::SupportId>
-    > const
-    schwarz_bcs = this->computeBCsDTK();
-
-    Teuchos::RCP<const Teuchos::Comm<int>>
-    commT = schwarz_bcs->getMap()->getComm();
-
-    Teuchos::ArrayRCP<ST const>
-    schwarz_bcs_const_view_x = schwarz_bcs->getData(0);
-
-    Teuchos::ArrayRCP<ST const>
-    schwarz_bcs_const_view_y = schwarz_bcs->getData(1);
-
-    Teuchos::ArrayRCP<ST const>
-    schwarz_bcs_const_view_z = schwarz_bcs->getData(2);
-
-    for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
-
-      auto const
-      x_dof = ns_nodes[ns_node][0];
-
-      auto const
-      y_dof = ns_nodes[ns_node][1];
-
-      auto const
-      z_dof = ns_nodes[ns_node][2];
-
-      auto const
-      dof = x_dof / 3;
-
-      fT_view[x_dof] = xT_const_view[x_dof] - schwarz_bcs_const_view_x[dof];
-      fT_view[y_dof] = xT_const_view[y_dof] - schwarz_bcs_const_view_y[dof];
-      fT_view[z_dof] = xT_const_view[z_dof] - schwarz_bcs_const_view_z[dof];
-    }
-#else // ALBANY_DTK
-    for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
-
-      auto const
-      x_dof = ns_nodes[ns_node][0];
-
-      auto const
-      y_dof = ns_nodes[ns_node][1];
-
-      auto const
-      z_dof = ns_nodes[ns_node][2];
-
-      ScalarT
-      x_val, y_val, z_val;
-
-      this->computeBCs(ns_node, x_val, y_val, z_val);
-
-      fT_view[x_dof] = xT_const_view[x_dof] - x_val.val();
-      fT_view[y_dof] = xT_const_view[y_dof] - y_val.val();
-      fT_view[z_dof] = xT_const_view[z_dof] - z_val.val();
-    }
-#endif //ALBANY_DTK
+    fillResidual<
+    SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>, Traits>
+    (*this, dirichlet_workset);
   }
+  return;
 }
 
 //

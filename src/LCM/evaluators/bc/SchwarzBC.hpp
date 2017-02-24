@@ -45,12 +45,9 @@ public:
 
   SchwarzBC_Base(Teuchos::ParameterList & p);
 
+  template<typename T>
   void
-  computeBCs(
-      size_t const ns_node,
-      ScalarT & x_val,
-      ScalarT & y_val,
-      ScalarT & z_val);
+  computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val);
 
 #if defined(ALBANY_DTK)
   Teuchos::RCP<Tpetra::MultiVector<double, int, DataTransferKit::SupportId>> 
@@ -117,6 +114,11 @@ public:
     return *(coupled_apps_[app_index]);
   }
 
+  template<typename SBC, typename T>
+  friend
+  void
+  fillResidual(SBC & sbc, typename T::EvalData d);
+
 protected:
 
   Teuchos::RCP<Albany::Application>
@@ -137,6 +139,13 @@ protected:
   int
   coupled_app_index_;
 };
+
+//
+// Fill residual, used in both residual and Jacobian
+//
+template<typename SchwarzBC, typename Traits>
+void
+fillResidual(SchwarzBC & sbc, typename Traits::EvalData d);
 
 //
 // Residual
