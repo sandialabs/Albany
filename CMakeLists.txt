@@ -363,10 +363,10 @@ IF (MueLu_List_ID GREATER -1)
   LIST(FIND MueLu_PACKAGE_LIST Ifpack2 MueLu_Ifpack2_List_ID)
   LIST(FIND MueLu_PACKAGE_LIST Amesos2 MueLu_Amesos2_List_ID)
   IF ((MueLu_Ifpack2_List_ID GREATER -1) AND (MueLu_Amesos2_List_ID GREATER -1) AND ALBANY_AMESOS2_OPERATIONAL_SOLVER)
-    MESSAGE("---- MueLu examples enabled")
+    MESSAGE("---- MueLu tests enabled")
     SET(ALBANY_MUELU_EXAMPLES TRUE)
   ELSE()
-    MESSAGE("---- MueLu examples NOT enabled. Ifpack2 and Amesos2 compiled with an operational solver are required.")
+    MESSAGE("---- MueLu tests NOT enabled. Ifpack2 and Amesos2 compiled with an operational solver are required.")
     SET(ALBANY_MUELU_EXAMPLES FALSE)
 ENDIF()
 ELSE()
@@ -1173,7 +1173,7 @@ ENDIF()
 OPTION(ENABLE_PERFORMANCE_TESTS "Flag to turn on Performance Tests" OFF)
 IF (ENABLE_PERFORMANCE_TESTS)
   ADD_DEFINITIONS(-DALBANY_PERFORMANCE_TESTS)
-  MESSAGE("-- Performance Tests         are Enabled, adding examples/PerformanceTests")
+  MESSAGE("-- Performance Tests         are Enabled, adding tests/*/PerformanceTests")
   SET(ALBANY_PERFORMANCE_TESTS TRUE)
 ELSE()
   MESSAGE("-- Performance Tests         are NOT Enabled.")
@@ -1183,7 +1183,7 @@ ENDIF()
 # Add option to enable performance tests. Results are machine-specific
 OPTION(ENABLE_LARGE_TESTS "Run tests from the Albany-large-tests repository" ON)
 IF (ENABLE_LARGE_TESTS)
-  MESSAGE("-- Large Tests         are Enabled, adding examples/large/")
+  MESSAGE("-- Large Tests         are Enabled, adding tests/large/")
   SET(ALBANY_LARGE_TESTS TRUE)
 ELSE()
   MESSAGE("-- Large Tests         are NOT Enabled.")
@@ -1200,13 +1200,13 @@ IF (ALBANY_LIBRARIES_ONLY)
   ENDIF()
 ENDIF()
 
-# Add option to include Dakota restart examples in the test suite
+# Add option to include Dakota restart tests in the test suite
 IF (NOT APPLE)
-CMAKE_DEPENDENT_OPTION(ENABLE_DAKOTA_RESTART_EXAMPLES "Flag to include Dakota restart examples" ON
+CMAKE_DEPENDENT_OPTION(ENABLE_DAKOTA_RESTART_EXAMPLES "Flag to include Dakota restart tests" ON
                        "ALBANY_DAKOTA" OFF)
 ELSE (NOT APPLE)
 # Portable Dakota restart files is broken on MacOS, deactivate test by default
-CMAKE_DEPENDENT_OPTION(ENABLE_DAKOTA_RESTART_EXAMPLES "Flag to include Dakota restart examples" OFF
+CMAKE_DEPENDENT_OPTION(ENABLE_DAKOTA_RESTART_EXAMPLES "Flag to include Dakota restart tests" OFF
                        "ALBANY_DAKOTA" OFF)
 ENDIF (NOT APPLE)
 IF (ENABLE_DAKOTA_RESTART_EXAMPLES)
@@ -1349,11 +1349,11 @@ IF (DEFINED ALBANY_SEACAS_PATH)
   MESSAGE("-- ALBANY_SEACAS_PATH is ${ALBANY_SEACAS_PATH}")
 ENDIF()
 
-# Add Albany test -- in the "examples" directory
+# Add Albany test -- in the "tests" directory
 IF (ALBANY_LIBRARIES_ONLY)
   MESSAGE("\nALBANY_LIBRARIES_ONLY has been set: turning off all tests.")
 ELSE()
-  add_subdirectory(examples)
+  add_subdirectory(tests)
 ENDIF()
 
 MESSAGE("\nAnd CMake says...:")
