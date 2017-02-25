@@ -112,99 +112,88 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_EtaDotPi<EvalT, Traits>::
-operator() (const XZHydrostatic_EtaDotPi_Tag& tag, const int& cell) const{
-  for (int qp=0; qp < numQPs; ++qp) {
-    ScalarT pdotp0 = 0;
-    for (int level=0; level < numLevels; ++level) pdotp0 -= divpivelx(cell,qp,level) * delta(level);
+operator() (const XZHydrostatic_EtaDotPi_Tag& tag, const int cell, const int qp, const int level) const{
+  ScalarT pdotp0 = 0;
+  for (int level=0; level < numLevels; ++level) pdotp0 -= divpivelx(cell,qp,level) * delta(level);
 
-    //etadotpi(level) shifted by 1/2
-    for (int level=0; level < numLevels; ++level) {
-      //define etadotpi on interfaces
-      ScalarT integral = 0;
-      for (int j=0; j<=level; ++j) integral += divpivelx(cell,qp,j) * delta(j);
+  //define etadotpi on interfaces
+  const int level_m = level             ? level-1 : 0;
+  ScalarT integral = 0;
+  for (int j=0; j<=level; ++j) integral += divpivelx(cell,qp,j) * delta(j);
+  ScalarT etadotpi_m = -b(level+1)*pdotp0 - integral;
+  etadotpi_m = level ? etadotpi_m : 0;
 
-      etadotpi(cell,level) = -b(level+1)*pdotp0 - integral;
-    }
-    etadotpi(cell,0) = etadotpi(cell,numLevels) = 0;
+  const int level_p = level+1<numLevels ? level+1 : level;
+  integral = 0;
+  for (int j=0; j<=level_p; ++j) integral += divpivelx(cell,qp,j) * delta(j);
+  ScalarT etadotpi_p = -b(level_p+1)*pdotp0 - integral;
+  etadotpi_p = level+1<numLevels ? etadotpi_p : 0;
 
-    //Vertical Finite Differencing
-    for (int level=0; level < numLevels; ++level) {
-      const ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*delta(level));
-      const int level_m = level             ? level-1 : 0;
-      const int level_p = level+1<numLevels ? level+1 : level;
-      const ScalarT etadotpi_m = etadotpi(cell,level  );
-      const ScalarT etadotpi_p = etadotpi(cell,level+1);
+	//Vertical Finite Differencing
+  const ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*delta(level));
+  const ScalarT dT_m       = Temperature(cell,qp,level)   - Temperature(cell,qp,level_m);
+  const ScalarT dT_p       = Temperature(cell,qp,level_p) - Temperature(cell,qp,level);
+  etadotdT(cell,qp,level) = factor * ( etadotpi_p*dT_p + etadotpi_m*dT_m );
 
-      const ScalarT dT_m       = Temperature(cell,qp,level)   - Temperature(cell,qp,level_m);
-      const ScalarT dT_p       = Temperature(cell,qp,level_p) - Temperature(cell,qp,level);
-      etadotdT(cell,qp,level) = factor * ( etadotpi_p*dT_p + etadotpi_m*dT_m );
-
-      for (int dim=0; dim<numDims; ++dim) {
-        const ScalarT dVx_m      = Velocity(cell,qp,level,dim)   - Velocity(cell,qp,level_m,dim);
-        const ScalarT dVx_p      = Velocity(cell,qp,level_p,dim) - Velocity(cell,qp,level,dim);
-        etadotdVelx(cell,qp,level,dim) = factor * ( etadotpi_p*dVx_p + etadotpi_m*dVx_m );
-      }
-
-      //OG: Why for tracers (etaDot delta_eta) operator is different than for velocity, T, etc.?
-      for (int i = 0; i < numTracers; ++i) {
-        const ScalarT q_m = 0.5*( d_Tracer[i](cell,qp,level)   / Pi(cell,qp,level)
-                          + d_Tracer[i](cell,qp,level_m) / Pi(cell,qp,level_m) );
-        const ScalarT q_p = 0.5*( d_Tracer[i](cell,qp,level_p) / Pi(cell,qp,level_p)
-                          + d_Tracer[i](cell,qp,level)   / Pi(cell,qp,level)   );
-        //d_etadotdTracer[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / delta(level);
-        d_dedotpiTracerde[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / delta(level);
-      }
-
-      //OG: A tracer eqn for pi, or for q=1. Not relevant for basic hydrostatic version.
-      Pidot(cell,qp,level) = - divpivelx(cell,qp,level) - (etadotpi_p - etadotpi_m)/delta(level);
-    }
+  for (int dim=0; dim<numDims; ++dim) {
+    const ScalarT dVx_m      = Velocity(cell,qp,level,dim)   - Velocity(cell,qp,level_m,dim);
+    const ScalarT dVx_p      = Velocity(cell,qp,level_p,dim) - Velocity(cell,qp,level,dim);
+    etadotdVelx(cell,qp,level,dim) = factor * ( etadotpi_p*dVx_p + etadotpi_m*dVx_m );
   }
+
+  //OG: Why for tracers (etaDot delta_eta) operator is different than for velocity, T, etc.?
+  for (int i = 0; i < numTracers; ++i) {
+    const ScalarT q_m = 0.5*( d_Tracer[i](cell,qp,level)   / Pi(cell,qp,level)
+                      + d_Tracer[i](cell,qp,level_m) / Pi(cell,qp,level_m) );
+    const ScalarT q_p = 0.5*( d_Tracer[i](cell,qp,level_p) / Pi(cell,qp,level_p)
+                      + d_Tracer[i](cell,qp,level)   / Pi(cell,qp,level)   );
+    //d_etadotdTracer[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / delta(level);
+    d_dedotpiTracerde[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / delta(level);
+  }
+
+  //OG: A tracer eqn for pi, or for q=1. Not relevant for basic hydrostatic version.
+  Pidot(cell,qp,level) = - divpivelx(cell,qp,level) - (etadotpi_p - etadotpi_m)/delta(level);
 }
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_EtaDotPi<EvalT, Traits>::
-operator() (const XZHydrostatic_EtaDotPi_pureAdvection_Tag& tag, const int& cell) const{
-  for (int qp=0; qp < numQPs; ++qp) {
-    //etadotpi(level) shifted by 1/2
-    for (int level=0; level < numLevels-1; ++level) {
-      const ScalarT etadotpi_m = etadot(cell,qp,level  )*Pi(cell,qp,level  );
-      const ScalarT etadotpi_p = etadot(cell,qp,level+1)*Pi(cell,qp,level+1);
+operator() (const XZHydrostatic_EtaDotPi_pureAdvection_Tag& tag, const int cell, const int qp, const int level) const{
+  //Simple average in vertical direction for etadotpi at interfaces
+  const int level_m = level             ? level-1 : 0;
+  ScalarT etadotpi_m = 0.5*(etadot(cell,qp,level_m)*Pi(cell,qp,level_m) +
+                            etadot(cell,qp,level  )*Pi(cell,qp,level  ));
+  etadotpi_m = level ? etadotpi_m : 0;
 
-      //Simple average in vertical direction for etadotpi(level+1/2) at interfaces
-      etadotpi(cell,level) = 0.5*(etadotpi_m + etadotpi_p);  
-    }
-    etadotpi(cell,0) = etadotpi(cell,numLevels) = 0;
-        
-    //Vertical Finite Differencing
-    for (int level=0; level < numLevels; ++level) {
-      const ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*delta(level));
-      const int level_m = level             ? level-1 : 0;
-      const int level_p = level+1<numLevels ? level+1 : level;
-      const ScalarT etadotpi_m = etadotpi(cell,level  );
-      const ScalarT etadotpi_p = etadotpi(cell,level+1);
+  const int level_p = level+1<numLevels ? level+1 : level;
+  ScalarT etadotpi_p = 0.5*(etadot(cell,qp,level  )*Pi(cell,qp,level  ) +
+                            etadot(cell,qp,level_p)*Pi(cell,qp,level_p));
+  etadotpi_p = level+1<numLevels ? etadotpi_p : 0;
 
-      const ScalarT dT_m       = Temperature(cell,qp,level)   - Temperature(cell,qp,level_m);
-      const ScalarT dT_p       = Temperature(cell,qp,level_p) - Temperature(cell,qp,level);
-      etadotdT(cell,qp,level) = factor * ( etadotpi_p*dT_p + etadotpi_m*dT_m );
+	//Vertical Finite Differencing
+  const ScalarT factor     = 1.0/(2.0*Pi(cell,qp,level)*delta(level));
+  const ScalarT dT_m       = Temperature(cell,qp,level)   - Temperature(cell,qp,level_m);
+  const ScalarT dT_p       = Temperature(cell,qp,level_p) - Temperature(cell,qp,level);
+  etadotdT(cell,qp,level) = factor * ( etadotpi_p*dT_p + etadotpi_m*dT_m );
 
-      for (int dim=0; dim<numDims; ++dim) {
-        const ScalarT dVx_m      = Velocity(cell,qp,level,dim)   - Velocity(cell,qp,level_m,dim);
-        const ScalarT dVx_p      = Velocity(cell,qp,level_p,dim) - Velocity(cell,qp,level,dim);
-        etadotdVelx(cell,qp,level,dim) = factor * ( etadotpi_p*dVx_p + etadotpi_m*dVx_m );
-      }
-
-      for (int i = 0; i < numTracers; ++i) {
-        const ScalarT q_m = 0.5*( d_Tracer[i](cell,qp,level)   / Pi(cell,qp,level)
-                          + d_Tracer[i](cell,qp,level_m) / Pi(cell,qp,level_m) );
-        const ScalarT q_p = 0.5*( d_Tracer[i](cell,qp,level_p) / Pi(cell,qp,level_p)
-                          + d_Tracer[i](cell,qp,level)   / Pi(cell,qp,level)   );
-        d_dedotpiTracerde[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / delta(level);
-      }
-
-      Pidot(cell,qp,level) = - divpivelx(cell,qp,level) - (etadotpi_p - etadotpi_m)/delta(level);
-    }
+  for (int dim=0; dim<numDims; ++dim) {
+    const ScalarT dVx_m      = Velocity(cell,qp,level,dim)   - Velocity(cell,qp,level_m,dim);
+    const ScalarT dVx_p      = Velocity(cell,qp,level_p,dim) - Velocity(cell,qp,level,dim);
+    etadotdVelx(cell,qp,level,dim) = factor * ( etadotpi_p*dVx_p + etadotpi_m*dVx_m );
   }
+
+  //OG: Why for tracers (etaDot delta_eta) operator is different than for velocity, T, etc.?
+  for (int i = 0; i < numTracers; ++i) {
+    const ScalarT q_m = 0.5*( d_Tracer[i](cell,qp,level)   / Pi(cell,qp,level)
+                      + d_Tracer[i](cell,qp,level_m) / Pi(cell,qp,level_m) );
+    const ScalarT q_p = 0.5*( d_Tracer[i](cell,qp,level_p) / Pi(cell,qp,level_p)
+                      + d_Tracer[i](cell,qp,level)   / Pi(cell,qp,level)   );
+    //d_etadotdTracer[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / delta(level);
+    d_dedotpiTracerde[i](cell,qp,level) = ( etadotpi_p*q_p - etadotpi_m*q_m ) / delta(level);
+  }
+
+  //OG: A tracer eqn for pi, or for q=1. Not relevant for basic hydrostatic version.
+  Pidot(cell,qp,level) = - divpivelx(cell,qp,level) - (etadotpi_p - etadotpi_m)/delta(level);
 }
 
 #endif
@@ -336,9 +325,6 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 #else
-  // etadotpi(level) shifted by 1/2
-  etadotpi = Kokkos::createDynRankView(Pidot.get_view(), "etadotpi", workset.numCells, numLevels+1);
-
   // Obtain vector of device views from map of MDFields
   for (int i = 0; i < tracerNames.size(); ++i) {
     Tracer_kokkos[i] = Tracer[tracerNames[i]].get_view();
@@ -350,12 +336,13 @@ evaluateFields(typename Traits::EvalData workset)
   d_dedotpiTracerde = dedotpiTracerde_kokkos.template view<executionSpace>();
 
   if (!pureAdvection) {
-    Kokkos::parallel_for(XZHydrostatic_EtaDotPi_Policy(0,workset.numCells),*this);
+    Kokkos::Experimental::md_parallel_for(XZHydrostatic_EtaDotPi_Policy(
+      {0,0,0},{(int)workset.numCells,(int)numQPs,(int)numLevels}),*this);
     cudaCheckError();
   }
-
   else {
-    Kokkos::parallel_for(XZHydrostatic_EtaDotPi_pureAdvection_Policy(0,workset.numCells),*this);
+    Kokkos::Experimental::md_parallel_for(XZHydrostatic_EtaDotPi_pureAdvection_Policy(
+      {0,0,0},{(int)workset.numCells,(int)numQPs,(int)numLevels}),*this);
     cudaCheckError();
   }
 

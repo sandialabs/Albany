@@ -222,7 +222,7 @@ evaluateFields(typename Traits::EvalData workset)
     case UNKNOWN: //velocity is an unknown that we solve for (not prescribed)
     {
         Hydrostatic_Velocity_Policy range({0,0,0}, {(int)workset.numCells,
-            (int)numNodes,(int)numLevels}, {256,0,0} );
+            (int)numNodes,(int)numLevels});
         Kokkos::Experimental::md_parallel_for(range,*this);
         cudaCheckError();
       break; 
@@ -231,7 +231,7 @@ evaluateFields(typename Traits::EvalData workset)
     case PRESCRIBED_1_1: //velocity is prescribed to that of 1-1 test
     {
        Hydrostatic_Velocity_PRESCRIBED_1_1_Policy range({0,0},
-         {(int)workset.numCells, (int)numNodes}, {256,0} );
+         {(int)workset.numCells, (int)numNodes});
        Kokkos::Experimental::md_parallel_for(range,*this);
        cudaCheckError();
       break; 
@@ -240,7 +240,7 @@ evaluateFields(typename Traits::EvalData workset)
     case PRESCRIBED_1_2: //velocity is prescribed to that of 1-2 test
     {
        Hydrostatic_Velocity_PRESCRIBED_1_2_Policy range({0,0},
-         {(int)workset.numCells, (int)numNodes}, {256,0} );
+         {(int)workset.numCells, (int)numNodes});
        Kokkos::Experimental::md_parallel_for(range,*this);
        cudaCheckError();
       break; 

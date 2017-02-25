@@ -62,18 +62,28 @@ private:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
 
   struct Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Tag{};
   struct Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Tag> Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Tag> Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Policy;
+  using Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Tag>;
+  using Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Tag>;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Tag& tag, const int& i) const;
+  void operator() (const Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Tag& tag, const int cell, const int node) const;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Tag& tag, const int& i) const;
+  void operator() (const Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Tag& tag, const int cell, const int node) const;
 
 #endif
 };

@@ -118,45 +118,37 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void Hydrostatic_VelResid<EvalT, Traits>::
-operator() (const Hydrostatic_VelResid_Tag& tag, const int& cell) const{
-  for (int node=0; node < numNodes; ++node) {
-    // Compute Coriolis
-    const double alpha = AlphaAngle;
-    const MeshScalarT lambda = sphere_coord(cell, node, 0);
-    const MeshScalarT theta = sphere_coord(cell, node, 1);
-    const ScalarT coriolis = 2*Omega*( -cos(lambda)*cos(theta)*sin(alpha) + sin(theta)*cos(alpha));
+operator() (const Hydrostatic_VelResid_Tag& tag, const int cell, const int node, const int level) const{
+  // Compute Coriolis
+  const double alpha = AlphaAngle;
+  const MeshScalarT lambda = sphere_coord(cell, node, 0);
+  const MeshScalarT theta = sphere_coord(cell, node, 1);
+  const ScalarT coriolis = 2*Omega*( -cos(lambda)*cos(theta)*sin(alpha) + sin(theta)*cos(alpha));
 
-    // Compute Residual
-    for (int level=0; level < numLevels; ++level) {
-      for (int dim=0; dim < numDims; ++dim) {
-        Residual(cell,node,level,dim) =  ( keGrad(cell,node,level,dim) + PhiGrad(cell,node,level,dim) )
-                                      +  ( pGrad (cell,node,level,dim)/density(cell,node,level) )
-                                      +   etadotdVelx(cell,node,level,dim)
-                                      +   VelxDot(cell,node,level,dim);
-      }
-      Residual(cell,node,level,0) -= (vorticity(cell,node,level) + coriolis)*Velx(cell,node,level,1);
-      Residual(cell,node,level,1) += (vorticity(cell,node,level) + coriolis)*Velx(cell,node,level,0);
-      Residual(cell,node,level,0) *= wBF(cell,node,node);
-      Residual(cell,node,level,1) *= wBF(cell,node,node);
-    }
-    for (int qp=0; qp < numQPs; ++qp) {
-      for (int level = 0; level < 2; ++level ) {
-        for (int dim = 0; dim < numDims; ++dim) {
-          Residual(cell, node, level, dim) += viscosity * DVelx(cell, qp, level, dim) * wGradBF(cell, node, qp, dim);  
-    	}
-      }
-    }
+  // Compute Residual
+  for (int dim=0; dim < numDims; ++dim) {
+    Residual(cell,node,level,dim) =  ( keGrad(cell,node,level,dim) + PhiGrad(cell,node,level,dim) )
+                                  +  ( pGrad (cell,node,level,dim)/density(cell,node,level) )
+                                  +   etadotdVelx(cell,node,level,dim)
+                                  +   VelxDot(cell,node,level,dim);
+  }
+  Residual(cell,node,level,0) -= (vorticity(cell,node,level) + coriolis)*Velx(cell,node,level,1);
+  Residual(cell,node,level,1) += (vorticity(cell,node,level) + coriolis)*Velx(cell,node,level,0);
+  Residual(cell,node,level,0) *= wBF(cell,node,node);
+  Residual(cell,node,level,1) *= wBF(cell,node,node);
+
+  // Add Viscosity
+  for (int dim = 0; dim < numDims; ++dim) {
+    Residual(cell, node, level, dim) += (level < 2 ? 1 : 0) * viscosity * DVelx(cell, node, level, dim) * wGradBF(cell, node, node, dim);  
   }
 }
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void Hydrostatic_VelResid<EvalT, Traits>::
-operator() (const Hydrostatic_VelResid_pureAdvection_Tag& tag, const int& cell) const{
-  for (int node=0; node < numNodes; ++node)
-    for (int level=0; level < numLevels; ++level)
-      for (int dim=0; dim < numDims; ++dim)
-        Residual(cell,node,level,dim) =   VelxDot(cell,node,level,dim) *wBF(cell,node,node); 
+operator() (const Hydrostatic_VelResid_pureAdvection_Tag& tag, const int cell, const int node, const int level) const{
+  for (int dim=0; dim < numDims; ++dim)
+    Residual(cell,node,level,dim) =   VelxDot(cell,node,level,dim) *wBF(cell,node,node); 
 }
 
 #endif
@@ -226,12 +218,14 @@ evaluateFields(typename Traits::EvalData workset)
 #else
   if ( !obtainLaplaceOp ) {
     if (!pureAdvection ) {
-      Kokkos::parallel_for(Hydrostatic_VelResid_Policy(0,workset.numCells),*this);
+      Kokkos::Experimental::md_parallel_for(Hydrostatic_VelResid_Policy(
+        {0,0,0},{(int)workset.numCells,(int)numNodes,(int)numLevels}),*this);
       cudaCheckError();
     }
 
     else {
-      Kokkos::parallel_for(Hydrostatic_VelResid_pureAdvection_Policy(0,workset.numCells),*this);
+      Kokkos::Experimental::md_parallel_for(Hydrostatic_VelResid_pureAdvection_Policy(
+        {0,0,0},{(int)workset.numCells,(int)numNodes,(int)numLevels}),*this);
       cudaCheckError();
     }
   }

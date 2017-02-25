@@ -91,7 +91,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 #else
   XZHydrostatic_KineticEnergy_Policy range(
-      {0,0,0}, {(int)workset.numCells,(int)numNodes,(int)numLevels}, {256,0,0} );
+      {0,0,0}, {(int)workset.numCells,(int)numNodes,(int)numLevels});
   Kokkos::Experimental::md_parallel_for(range,*this);
 #endif
 }

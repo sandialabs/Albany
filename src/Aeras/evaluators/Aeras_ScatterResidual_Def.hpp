@@ -62,7 +62,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(*scatter_operation);
 
-  this->setName(fieldName);
+  this->setName("Aeras::ScatterResidual" +PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************
@@ -181,7 +181,7 @@ evaluateFields(typename Traits::EvalData workset)
   d_val = val_kokkos.template view<executionSpace>();
 
   ScatterResid_Policy range(
-      {0,0}, {(int)workset.numCells,(int)this->numNodes}, {256,0} );
+      {0,0}, {(int)workset.numCells,(int)this->numNodes});
   Kokkos::Experimental::md_parallel_for(range,*this);
 
   cudaCheckError();

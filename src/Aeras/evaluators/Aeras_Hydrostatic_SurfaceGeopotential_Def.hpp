@@ -121,41 +121,37 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void Hydrostatic_SurfaceGeopotential<EvalT, Traits>::
-operator() (const Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Tag& tag, const int& cell) const{
-  for ( int node = 0; node < numNodes; ++node ) {
-    const double x = coordVec(cell,node,0);
-    const double y = coordVec(cell,node,1);
-    const double z = coordVec(cell,node,2);
-        
-    const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
-    const double lambda = std::atan2( y, x );
-
-    const double radialDist = std::acos( std::sin( cntrLat ) * std::sin( theta ) + 
-                              std::cos( cntrLat ) * std::cos( theta ) * std::cos( cntrLon - lambda ) );
-            
-    const double zsurf = radialDist < mtnWidth ? 0.5 * mtnHeight * ( 1.0 + std::cos ( PI * radialDist / mtnWidth ) ) *
-                         std::cos( PI * radialDist / mtnHalfWidth ) * std::cos( PI * radialDist / mtnHalfWidth ) : 0.0;
+operator() (const Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Tag& tag, const int cell, const int node) const{
+  const double x = coordVec(cell,node,0);
+  const double y = coordVec(cell,node,1);
+  const double z = coordVec(cell,node,2);
       
-    PhiSurf(cell, node) = G * zsurf;
-  }
+  const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
+  const double lambda = std::atan2( y, x );
+
+  const double radialDist = std::acos( std::sin( cntrLat ) * std::sin( theta ) + 
+                            std::cos( cntrLat ) * std::cos( theta ) * std::cos( cntrLon - lambda ) );
+          
+  const double zsurf = radialDist < mtnWidth ? 0.5 * mtnHeight * ( 1.0 + std::cos ( PI * radialDist / mtnWidth ) ) *
+                       std::cos( PI * radialDist / mtnHalfWidth ) * std::cos( PI * radialDist / mtnHalfWidth ) : 0.0;
+    
+  PhiSurf(cell, node) = G * zsurf;
 }
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void Hydrostatic_SurfaceGeopotential<EvalT, Traits>::
-operator() (const Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Tag& tag, const int& cell) const{
-  for ( int node = 0; node < numNodes; ++node ) {
-    const double x = coordVec(cell,node,0);
-    const double y = coordVec(cell,node,1);
-    const double z = coordVec(cell,node,2);
+operator() (const Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Tag& tag, const int cell, const int node) const{
+  const double x = coordVec(cell,node,0);
+  const double y = coordVec(cell,node,1);
+  const double z = coordVec(cell,node,2);
 
-    const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
+  const double theta = std::atan2( z, std::sqrt( x*x + y*y ) );
 
-    const double costmp = u0*std::pow( std::cos( (etas-eta0)*pi*0.5), 1.5);
+  const double costmp = u0*std::pow( std::cos( (etas-eta0)*pi*0.5), 1.5);
 
-    PhiSurf(cell, node) = ((  -2.*std::pow(std::sin(theta),6.0)*( std::pow(std::cos(theta),2.0) + 1./3.) + 10./63. )*costmp
-                        + ( 8./5.*std::pow( std::cos(theta), 3. ) * ( std::pow(std::sin(theta),2.0) + 2./3. ) - pi/4.)*a*omega)*costmp; 
-  }
+  PhiSurf(cell, node) = ((  -2.*std::pow(std::sin(theta),6.0)*( std::pow(std::cos(theta),2.0) + 1./3.) + 10./63. )*costmp
+                      + ( 8./5.*std::pow( std::cos(theta), 3. ) * ( std::pow(std::sin(theta),2.0) + 2./3. ) - pi/4.)*a*omega)*costmp; 
 }
 #endif
 
@@ -239,12 +235,14 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   else if ( topoType == SPHERE_MOUNTAIN1 ){
-    Kokkos::parallel_for(Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Policy(0,workset.numCells),*this);
+    Kokkos::Experimental::md_parallel_for(Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Policy(
+      {0,0},{(int)workset.numCells,(int)numNodes}),*this);
     cudaCheckError();
   }
 
   else if (topoType == ASP_BAROCLINIC){
-    Kokkos::parallel_for(Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Policy(0,workset.numCells),*this);
+    Kokkos::Experimental::md_parallel_for(Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Policy(
+      {0,0},{(int)workset.numCells,(int)numNodes}),*this);
     cudaCheckError();
   }
 

@@ -85,7 +85,7 @@ numFields  (0), numNodeVar(0), numVectorLevelVar(0), numScalarLevelVar(0), numTr
     this->addEvaluatedField(val_dot[eq]);
   }
 
-  this->setName("Aeras_GatherSolution" +PHX::typeAsString<EvalT>());
+  this->setName("Aeras::GatherSolution" +PHX::typeAsString<EvalT>());
 }
 
 

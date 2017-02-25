@@ -77,18 +77,35 @@ private:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
 
   struct DOFDivInterpolationLevels_originalDiv_Tag{};
+  struct DOFDivInterpolationLevels_vcontra_Tag{};
   struct DOFDivInterpolationLevels_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFDivInterpolationLevels_originalDiv_Tag> DOFDivInterpolationLevels_originalDiv_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, DOFDivInterpolationLevels_Tag> DOFDivInterpolationLevels_Policy;
+  using DOFDivInterpolationLevels_originalDiv_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, DOFDivInterpolationLevels_originalDiv_Tag>;
+  using DOFDivInterpolationLevels_vcontra_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, DOFDivInterpolationLevels_vcontra_Tag>;
+  using DOFDivInterpolationLevels_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, DOFDivInterpolationLevels_Tag>;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFDivInterpolationLevels_originalDiv_Tag& tag, const int& i) const;
+  void operator() (const DOFDivInterpolationLevels_originalDiv_Tag& tag, const int cell, const int qp, const int level) const;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const DOFDivInterpolationLevels_Tag& tag, const int& i) const;
+  void operator() (const DOFDivInterpolationLevels_vcontra_Tag& tag, const int cell, const int node, const int level) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const DOFDivInterpolationLevels_Tag& tag, const int cell, const int qp, const int level) const;
 
 #endif
 };

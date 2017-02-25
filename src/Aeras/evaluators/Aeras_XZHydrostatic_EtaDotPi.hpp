@@ -83,23 +83,31 @@ private:
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Kokkos::DynRankView<ScalarT, PHX::Device> b, delta;
-  Kokkos::DynRankView<ScalarT, PHX::Device> etadotpi;
 
 public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
 
   struct XZHydrostatic_EtaDotPi_Tag{};
   struct XZHydrostatic_EtaDotPi_pureAdvection_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_EtaDotPi_Tag> XZHydrostatic_EtaDotPi_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_EtaDotPi_pureAdvection_Tag> XZHydrostatic_EtaDotPi_pureAdvection_Policy;
+  using XZHydrostatic_EtaDotPi_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, XZHydrostatic_EtaDotPi_Tag>;
+  using XZHydrostatic_EtaDotPi_pureAdvection_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, XZHydrostatic_EtaDotPi_pureAdvection_Tag>;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const XZHydrostatic_EtaDotPi_Tag& tag, const int& i) const;
+  void operator() (const XZHydrostatic_EtaDotPi_Tag& tag, const int cell, const int qp, const int level) const;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const XZHydrostatic_EtaDotPi_pureAdvection_Tag& tag, const int& i) const;
-
+  void operator() (const XZHydrostatic_EtaDotPi_pureAdvection_Tag& tag, const int cell, const int qp, const int level) const;
 #endif
 };
 }

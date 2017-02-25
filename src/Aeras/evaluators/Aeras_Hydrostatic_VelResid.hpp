@@ -91,18 +91,28 @@ private:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
 
   struct Hydrostatic_VelResid_Tag{};
   struct Hydrostatic_VelResid_pureAdvection_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, Hydrostatic_VelResid_Tag> Hydrostatic_VelResid_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, Hydrostatic_VelResid_pureAdvection_Tag> Hydrostatic_VelResid_pureAdvection_Policy;
+  using Hydrostatic_VelResid_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, Hydrostatic_VelResid_Tag>;
+  using Hydrostatic_VelResid_pureAdvection_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, Hydrostatic_VelResid_pureAdvection_Tag>;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const Hydrostatic_VelResid_Tag& tag, const int& i) const;
+  void operator() (const Hydrostatic_VelResid_Tag& tag, const int cell, const int node, const int level) const;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const Hydrostatic_VelResid_pureAdvection_Tag& tag, const int& i) const;
+  void operator() (const Hydrostatic_VelResid_pureAdvection_Tag& tag, const int cell, const int node, const int level) const;
 
 #endif
 };
