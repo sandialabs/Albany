@@ -117,7 +117,7 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
     std::cerr << "building box\n";
     buildBoxMesh(nex, ney, nez, wx, wy, wz, is);
   }
-  mesh->verify(); // REMOVE THIS NOW !!
+  mesh->verify();
 
   model = mesh->getModel();
 
