@@ -340,7 +340,10 @@ void Albany::APFDiscretization::setField(
   // the simple front-packing of components below would not
   // be sufficient to deal with incoming 2x2 tensors, so assert
   // that we are passing data straight through if dealing with a tensor
-  if (pumi_value_type == apf::MATRIX) assert(albany_nc == 9);
+  if (pumi_value_type == apf::MATRIX) {
+    ALBANY_ASSERT(albany_nc == 9, "APFDiscretization::setField: "
+       "field " << name << " is apf::MATRIX, but albany_nc = " << albany_nc);
+  }
 
   apf::DynamicArray<apf::Node> const& nodes = overlapped ? overlapNodes : ownedNodes;
   for (size_t i = 0; i < nodes.getSize(); ++i) {
