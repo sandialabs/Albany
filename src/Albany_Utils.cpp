@@ -192,6 +192,13 @@
     }
   }
 
+  std::string
+  Albany::getFileExtension(std::string const & filename)
+  {
+    auto const pos = filename.find_last_of(".");
+    return filename.substr(pos + 1);
+  }
+
   void Albany::printTpetraVector(std::ostream &os, const Teuchos::RCP<const Tpetra_Vector>& vec){
 
     Teuchos::ArrayRCP<const double> vv = vec->get1dView();

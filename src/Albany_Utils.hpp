@@ -97,6 +97,9 @@ namespace Albany {
   //! Splits a std::string on a delimiter
   void splitStringOnDelim(const std::string &s, char delim, std::vector<std::string> &elems);
 
+  /// Get file name extension
+  std::string getFileExtension(std::string const & filename);
+
   //! Nicely prints out a Tpetra Vector
   void printTpetraVector(std::ostream &os, const Teuchos::RCP<const Tpetra_Vector>& vec);
   void printTpetraVector(std::ostream &os, const Teuchos::Array<std::string>& names,
