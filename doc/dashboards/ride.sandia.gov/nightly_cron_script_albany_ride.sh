@@ -1,6 +1,6 @@
 #!/bin/csh
 
-BASE_DIR=${WORKSPACE}
+BASE_DIR=./
 cd $BASE_DIR
 
 unset http_proxy
