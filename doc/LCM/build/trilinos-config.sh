@@ -52,7 +52,7 @@ cmake \
  \
  -D Teuchos_ENABLE_STACKTRACE:BOOL=OFF \
  -D Teuchos_ENABLE_DEFAULT_STACKTRACE:BOOL=OFF \
- -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
+ -D TeuchosCore_ENABLE_yaml-cpp:BOOL=ON \
  -D Kokkos_ENABLE_CXX11:BOOL=ON \
  -D Kokkos_ENABLE_Cuda_UVM:BOOL=lcm_enable_uvm \
  -D Kokkos_ENABLE_EXAMPLES:BOOL=lcm_enable_kokkos_examples \
