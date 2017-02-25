@@ -17,3 +17,9 @@ ENDIF(ALBANY_LCM)
 IF(ALBANY_AERAS)
   add_subdirectory(Aeras)
 ENDIF()
+
+# FELIX ##################
+
+IF(ALBANY_FELIX AND ALBANY_SEACAS)
+  add_subdirectory(FELIX)
+ENDIF()
