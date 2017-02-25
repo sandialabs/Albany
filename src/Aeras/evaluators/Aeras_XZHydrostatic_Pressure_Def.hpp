@@ -67,25 +67,17 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_Pressure<EvalT, Traits>::
-operator() (const XZHydrostatic_Pressure_Tag& tag, const int& cell) const{
-  for (int node=0; node < numNodes; ++node) {
-    for (int level=0; level < numLevels; ++level) {
-      Pressure(cell,node,level) = A(level)*P0 + B(level)*Ps(cell,node);
-    }
-  }
+operator() (const XZHydrostatic_Pressure_Tag& tag, const int cell, const int node, const int level) const{
+  Pressure(cell,node,level) = A(level)*P0 + B(level)*Ps(cell,node);
 }
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_Pressure<EvalT, Traits>::
-operator() (const XZHydrostatic_Pressure_Pi_Tag& tag, const int& cell) const{
-  for (int node=0; node < numNodes; ++node) {
-    for (int level=0; level < numLevels; ++level) {
-      const ScalarT pm   = level             ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level-1) ) : Ptop;
-      const ScalarT pp   = level<numLevels-1 ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level+1) ) : ScalarT(Ps(cell,node));
-      Pi(cell,node,level) = (pp - pm) /delta(level);
-    }
-  }
+operator() (const XZHydrostatic_Pressure_Pi_Tag& tag, const int cell, const int node, const int level) const{
+  const ScalarT pm   = level             ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level-1) ) : Ptop;
+  const ScalarT pp   = level<numLevels-1 ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level+1) ) : ScalarT(Ps(cell,node));
+  Pi(cell,node,level) = (pp - pm) /delta(level);
 }
 #endif
 
@@ -133,10 +125,12 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 #else
-  Kokkos::parallel_for(XZHydrostatic_Pressure_Policy(0,workset.numCells),*this);
+  Kokkos::Experimental::md_parallel_for(XZHydrostatic_Pressure_Policy(
+    {0,0,0},{(int)workset.numCells,(int)numNodes,(int)numLevels}),*this);
   cudaCheckError();
 
-  Kokkos::parallel_for(XZHydrostatic_Pressure_Pi_Policy(0,workset.numCells),*this);
+  Kokkos::Experimental::md_parallel_for(XZHydrostatic_Pressure_Pi_Policy(
+    {0,0,0},{(int)workset.numCells,(int)numNodes,(int)numLevels}),*this);
   cudaCheckError();
 #endif
 }

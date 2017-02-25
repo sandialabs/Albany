@@ -59,13 +59,21 @@ private:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
 
   struct XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag> XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Policy;
+  using XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag>;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag& tag, const int& i) const;
+  void operator() (const XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Tag& tag, const int cell, const int node) const;
 
 #endif
 };

@@ -9,6 +9,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "Albany_Utils.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
@@ -78,26 +79,18 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_VirtualT<EvalT, Traits>::
-operator() (const XZHydrostatic_VirtualT_Tag& tag, const int& cell) const{
-  for (int node=0; node < numNodes; ++node) {
-    for (int level=0; level < numLevels; ++level) {
-      virt_t(cell,node,level) = temperature(cell,node,level);
-      Cpstar(cell,node,level) = Cp;
-    }
-  }
+operator() (const XZHydrostatic_VirtualT_Tag& tag, const int cell, const int node, const int level) const{
+  virt_t(cell,node,level) = temperature(cell,node,level);
+  Cpstar(cell,node,level) = Cp;
 }
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_VirtualT<EvalT, Traits>::
-operator() (const XZHydrostatic_VirtualT_vapor_Tag& tag, const int& cell) const{
-  for (int node=0; node < numNodes; ++node) {
-    for (int level=0; level < numLevels; ++level) {
-      virt_t(cell,node,level) = temperature(cell,node,level) 
-                              + factor * temperature(cell,node,level)*qv(cell,node,level)/Pi(cell,node,level);
-      Cpstar(cell,node,level) = Cp + (Cpv - Cp)*qv(cell,node,level)/Pi(cell,node,level);
-    }
-  }
+operator() (const XZHydrostatic_VirtualT_vapor_Tag& tag, const int cell, const int node, const int level) const{
+  virt_t(cell,node,level) = temperature(cell,node,level) 
+                          + factor * temperature(cell,node,level)*qv(cell,node,level)/Pi(cell,node,level);
+  Cpstar(cell,node,level) = Cp + (Cpv - Cp)*qv(cell,node,level)/Pi(cell,node,level);
 }
 
 #endif
@@ -131,9 +124,13 @@ evaluateFields(typename Traits::EvalData workset)
 
 #else
   if (!vapor) {
-    Kokkos::parallel_for(XZHydrostatic_VirtualT_Policy(0,workset.numCells),*this);
+    Kokkos::Experimental::md_parallel_for(XZHydrostatic_VirtualT_Policy(
+      {0,0,0},{(int)workset.numCells,(int)numNodes,(int)numLevels}),*this);
+    cudaCheckError();
   } else { 
-    Kokkos::parallel_for(XZHydrostatic_VirtualT_vapor_Policy(0,workset.numCells),*this);
+    Kokkos::Experimental::md_parallel_for(XZHydrostatic_VirtualT_vapor_Policy(
+      {0,0,0},{(int)workset.numCells,(int)numNodes,(int)numLevels}),*this);
+    cudaCheckError();
   }
 
 #endif
