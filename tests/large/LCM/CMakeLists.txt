@@ -7,3 +7,11 @@
 IF(ALBANY_DTK)
   add_subdirectory(DTKInterp)
 ENDIF()
+
+IF(ALBANY_HAVE_STK)
+IF(ALBANY_SEACAS)
+  IF(ALBANY_EPETRA)
+    add_subdirectory(HMC)
+  ENDIF()
+ENDIF()
+ENDIF()
