@@ -105,10 +105,21 @@ public:
 
   struct GatherSolution_Tag{};
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, GatherSolution_Tag> GatherSolution_Policy;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA) 
+  using GatherSolution_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, Kokkos::Experimental::Iterate::Left,
+        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int> >;
+#else
+  using GatherSolution_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, Kokkos::Experimental::Iterate::Right,
+        Kokkos::Experimental::Iterate::Right >, Kokkos::IndexType<int> >;
+#endif
+
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const GatherSolution_Tag& tag, const int &cell) const;
+  void operator() (const int cell, const int node) const;
 #endif
 
 private: 

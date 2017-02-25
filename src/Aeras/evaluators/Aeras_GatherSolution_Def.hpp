@@ -157,9 +157,8 @@ GatherSolution(const Teuchos::ParameterList& p,
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
-operator() (const GatherSolution_Tag& tag, const int &cell) const
+operator() (const int cell, const int node) const
 {
- for (int node = 0; node < this->numNodes; ++node) {
    int n = 0, eq = 0;
    for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
      (this->d_val    [j])(cell,node) = xT_constView(wsID_kokkos(cell, node,n));
@@ -187,7 +186,6 @@ operator() (const GatherSolution_Tag& tag, const int &cell) const
       }
     }
     eq += this->numTracerVar;
-  }
 }
 #endif
 
@@ -255,7 +253,10 @@ evaluateFields(typename Traits::EvalData workset)
   d_val = val_kokkosvec.template view<executionSpace>(); 
   d_val_dot = val_dot_kokkosvec.template view<executionSpace>(); 
 
-  Kokkos::parallel_for(GatherSolution_Policy(0,workset.numCells),*this);
+
+  GatherSolution_Policy range(
+      {0,0}, {(int)workset.numCells,(int)this->numNodes}, {256,0} );
+  Kokkos::Experimental::md_parallel_for(range,*this);
   cudaCheckError();
 
 #endif

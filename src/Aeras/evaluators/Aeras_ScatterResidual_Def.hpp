@@ -94,8 +94,8 @@ ScatterResidual(const Teuchos::ParameterList& p,
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Residual, Traits>::
-operator() (const ScatterResid_Tag& tag, const int& cell) const{
-  for (int node = 0; node < this->numNodes; ++node) {
+operator() (const int cell, const int node) const
+{
     int n = 0, eq = 0;
     for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
        Kokkos::atomic_fetch_add(&fT_nonconstView[Index(cell,node,n)], d_val[j](cell,node));
@@ -123,7 +123,6 @@ operator() (const ScatterResid_Tag& tag, const int& cell) const{
       }
     }
     eq += this->numTracerVar;
-  }
 }
 
 #endif
@@ -181,7 +180,10 @@ evaluateFields(typename Traits::EvalData workset)
   }
   d_val = val_kokkos.template view<executionSpace>();
 
-  Kokkos::parallel_for(ScatterResid_Policy(0,workset.numCells),*this);
+  ScatterResid_Policy range(
+      {0,0}, {(int)workset.numCells,(int)this->numNodes}, {256,0} );
+  Kokkos::Experimental::md_parallel_for(range,*this);
+
   cudaCheckError();
 #endif
 }

@@ -89,10 +89,20 @@ public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
-  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterResid_Tag> ScatterResid_Policy;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA) 
+  using ScatterResid_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, Kokkos::Experimental::Iterate::Left,
+        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int> >;
+#else
+  using ScatterResid_Policy =
+        Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, Kokkos::Experimental::Iterate::Right,
+        Kokkos::Experimental::Iterate::Right >, Kokkos::IndexType<int> >;
+#endif
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterResid_Tag& tag, const int& i) const;
+  void operator() (const int cell, const int node) const;
 
 private:
   typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
