@@ -5,3 +5,7 @@ IF(ALBANY_DEMO_PDES)
     add_subdirectory(NSVortexShedding)
   ENDIF()
 ENDIF(ALBANY_DEMO_PDES)
+
+IF(ALBANY_LCM)
+  add_subdirectory(LCM)
+ENDIF(ALBANY_LCM)
