@@ -1275,21 +1275,20 @@ COMMENT "Generating API documentation with Doxygen" VERBATIM
 endif(DOXYGEN_FOUND)
 
 # Enable yaml parsing for reading parameters lists
-IF (EXISTS "${Trilinos_INCLUDE_DIRS}/TeuchosCore_config.h")
-  FILE(READ ${Trilinos_INCLUDE_DIRS}/TeuchosCore_config.h CURRENT_CONFIG)
-  STRING(REGEX MATCH "\#define HAVE_TEUCHOSCORE_YAML_CPP" TEUCHOS_YAML_IS_SET ${CURRENT_CONFIG})
-  IF ("#define HAVE_TEUCHOSCORE_YAML_CPP" STREQUAL "${TEUCHOS_YAML_IS_SET}")
+SET(ALBANY_YAML FALSE)
+IF ((EXISTS "${Trilinos_INCLUDE_DIRS}/Teuchos_YamlParameterListHelpers.hpp")
+     AND (EXISTS "${Trilinos_INCLUDE_DIRS}/TeuchosCore_config.h"))
+  FILE(READ ${Trilinos_INCLUDE_DIRS}/TeuchosCore_config.h TEUCHOS_CONFIG)
+  STRING(REGEX MATCH "\#define HAVE_TEUCHOSCORE_YAML_CPP" TEUCHOS_YAML_IS_SET ${TEUCHOS_CONFIG})
+  IF ("#define HAVE_TEUCHOSCORE_YAML_CPP 1" STREQUAL "${TEUCHOS_YAML_IS_SET}")
     MESSAGE("-- Looking for YAML in Teuchos: Found, compiling with -DALBANY_YAML")
     SET(ALBANY_YAML TRUE)
     ADD_DEFINITIONS(-DALBANY_YAML)
-  ELSE ("#define HAVE_TEUCHOSCORE_YAML_CPP" STREQUAL "${TEUCHOS_YAML_IS_SET}")
-    MESSAGE("-- Looking for YAML in Teuchos: NOT found.")
-    SET(ALBANY_YAML FALSE)
-  ENDIF ("#define HAVE_TEUCHOSCORE_YAML_CPP" STREQUAL "${TEUCHOS_YAML_IS_SET}")
-ELSE (EXISTS "${Trilinos_INCLUDE_DIRS}/TeuchosCore_config.h")
-    MESSAGE("-- Looking for YAML in Teuchos: NOT found.")
-    SET(ALBANY_YAML FALSE)
-ENDIF (EXISTS "${Trilinos_INCLUDE_DIRS}/TeuchosCore_config.h")
+  ENDIF()
+ENDIF()
+IF (NOT ALBANY_YAML)
+  MESSAGE("-- Looking for YAML in Teuchos: NOT found.")
+ENDIF()
 
 ## End of CMake options to Albany
 
