@@ -53,10 +53,10 @@ namespace LCM {
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
     //! Input: displacement gradient
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> grad_u_;
+    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> grad_u_;
 
     //! Input: integration weights
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights_;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights_;
   
     //! Output: deformation gradient
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> def_grad_;

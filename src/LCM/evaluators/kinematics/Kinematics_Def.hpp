@@ -33,9 +33,8 @@ namespace LCM {
       needs_vel_grad_ = p.get<bool>("Velocity Gradient Flag");
     if ( p.isType<std::string>("Strain Name") ) {
       needs_strain_ = true;
-      PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>
-        tmp(p.get<std::string>("Strain Name"),dl->qp_tensor);
-      strain_ = tmp;
+      strain_ = decltype(strain_)(
+          p.get<std::string>("Strain Name"),dl->qp_tensor);
       this->addEvaluatedField(strain_);
     }
 
@@ -51,9 +50,8 @@ namespace LCM {
     this->addEvaluatedField(j_);
 
     if (needs_vel_grad_) {
-      PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>
-        tmp(p.get<std::string>("Velocity Gradient Name"),dl->qp_tensor);
-      vel_grad_ = tmp;
+      vel_grad_ = decltype(vel_grad_)(
+          p.get<std::string>("Velocity Gradient Name"),dl->qp_tensor);
       this->addEvaluatedField(vel_grad_);
     }
 
@@ -62,7 +60,7 @@ namespace LCM {
     if (def_grad_rc_.init(p, p.get<std::string>("DefGrad Name")))
       this->addDependentField(def_grad_rc_());
     if (def_grad_rc_) {
-      u_ = PHX::MDField<ScalarT,Cell,Vertex,Dim>(
+      u_ = decltype(u_)(
         p.get<std::string>("Displacement Name"), dl->node_vector);
       this->addDependentField(u_);
     }
@@ -91,10 +89,10 @@ namespace LCM {
     ddims_.push_back(deriv_dims);
     const int num_cells=strain_.dimension(0);
 
-    F=PHX::MDField<ScalarT,Cell,Dim,Dim>("F",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
-    strain=PHX::MDField<ScalarT,Cell,Dim,Dim>("strain",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
-    gradu=PHX::MDField<ScalarT,Cell,Dim,Dim>("gradu",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
-    Itensor=PHX::MDField<ScalarT,Dim,Dim>("Itensor",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
+    F=decltype(F)("F",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
+    strain=decltype(strain)("strain",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
+    gradu=decltype(gradu)("gradu",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
+    Itensor=decltype(Itensor)("Itensor",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
 
     F.setFieldData(ViewFactory::buildView(F.fieldTag(),ddims_));
     strain.setFieldData(ViewFactory::buildView(strain.fieldTag(),ddims_));

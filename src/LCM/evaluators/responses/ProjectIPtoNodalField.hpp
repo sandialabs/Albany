@@ -116,15 +116,16 @@ private:
 
   int ndb_start_, num_fields_, num_pts_, num_dims_, num_nodes_;
     
-  std::vector<PHX::MDField<ScalarT>> ip_fields_;
-  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  std::vector<PHX::MDField<const ScalarT>> ip_fields_;
+  PHX::MDField<const RealType,Cell,Node,QuadPoint> BF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
 
 #ifdef PROJ_INTERP_TEST
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coords_qp_;
+  PHX::MDField<ScalarT> test_ip_field_;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coords_qp_;
 #endif
   typedef Intrepid2::Basis<PHX::Device, RealType, RealType> Intrepid2Basis;
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coords_verts_;
+  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coords_verts_;
   Teuchos::RCP<ProjectIPtoNodalFieldQuadrature> quad_mgr_;
 
   Albany::StateManager* p_state_mgr_;

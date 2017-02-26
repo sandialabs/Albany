@@ -35,22 +35,19 @@ FirstPK (Teuchos::ParameterList& p,
   // logic to modify stress in the presence of a pore pressure
   if (have_pore_pressure_) {
     // grab the pore pressure
-    { PHX::MDField<ScalarT, Cell, QuadPoint>
-        tmp(p.get<std::string>("Pore Pressure Name"), dl->qp_scalar);
-      pore_pressure_ = tmp; }
+    pore_pressure_ = decltype(pore_pressure_)(
+      p.get<std::string>("Pore Pressure Name"), dl->qp_scalar);
     // grab Biot's coefficient
-    { PHX::MDField<ScalarT, Cell, QuadPoint>
-        tmp(p.get<std::string>("Biot Coefficient Name"), dl->qp_scalar);
-      biot_coeff_ = tmp; }
+    biot_coeff_ = decltype(biot_coeff_)(
+        p.get<std::string>("Biot Coefficient Name"), dl->qp_scalar);
     this->addDependentField(pore_pressure_);
     this->addDependentField(biot_coeff_);
   }
 
   // deal with stabilized pressure
   if (have_stab_pressure_) {
-    PHX::MDField<ScalarT, Cell, QuadPoint>
-      tmp(p.get<std::string>("Pressure Name"), dl->qp_scalar);
-    stab_pressure_ = tmp;
+    stab_pressure_ = decltype(stab_pressure_)(
+        p.get<std::string>("Pressure Name"), dl->qp_scalar);
     this->addDependentField(stab_pressure_);
   }
 

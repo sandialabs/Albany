@@ -61,7 +61,9 @@ typedef Intrepid2::Basis<PHX::Device, RealType, RealType>
 class ProjectIPtoNodalFieldQuadrature {
   typedef PHAL::AlbanyTraits::Residual::MeshScalarT MeshScalarT;
   PHX::MDField<RealType,Cell,Node,QuadPoint> bf_;
+  PHX::MDField<const RealType,Cell,Node,QuadPoint> bf_const_;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wbf_;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wbf_const_;
 
   Teuchos::RCP<Intrepid2Basis> intrepid_basis_;
   CellTopologyData ctd_;
@@ -72,12 +74,16 @@ public:
   ProjectIPtoNodalFieldQuadrature(
     Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl,
     const CellTopologyData& ctd, const int degree);
-  void evaluateBasis(const PHX::MDField<MeshScalarT,Cell,Vertex,Dim>&
+  void evaluateBasis(const PHX::MDField<const MeshScalarT,Cell,Vertex,Dim>&
                      coords_verts);
   const PHX::MDField<RealType,Cell,Node,QuadPoint>& bf () const
   { return bf_; }
+  const PHX::MDField<const RealType,Cell,Node,QuadPoint>& bf_const () const
+  { return bf_const_; }
   const PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>& wbf () const
   { return wbf_; }
+  const PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint>& wbf_const () const
+  { return wbf_const_; }
 };
 
 ProjectIPtoNodalFieldQuadrature::
@@ -110,19 +116,24 @@ ProjectIPtoNodalFieldQuadrature (
   Teuchos::RCP<Layout> node_qp_scalar = Teuchos::rcp(
     new Layout(dl->node_qp_scalar->dimension(0),
                dl->node_qp_scalar->dimension(1), nqp));
-  bf_ = PHX::MDField<RealType,Cell,Node,QuadPoint>("my BF", node_qp_scalar);
-  wbf_ = PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>("my wBF",
-                                                       node_qp_scalar);
-  bf_.setFieldData(
+  bf_ = decltype(bf_)("my BF", node_qp_scalar);
+  bf_const_ = decltype(bf_const_)("my BF", node_qp_scalar);
+  wbf_ = decltype(wbf_)("my wBF", node_qp_scalar);
+  wbf_const_ = decltype(wbf_const_)("my wBF", node_qp_scalar);
+  auto bf_data = 
     PHX::KokkosViewFactory<RealType,PHX::Device>::buildView(
-      bf_.fieldTag()));
-  wbf_.setFieldData(
+      bf_.fieldTag());
+  bf_.setFieldData(bf_data);
+  bf_const_.setFieldData(bf_data);
+  auto wbf_data = 
     PHX::KokkosViewFactory<MeshScalarT,PHX::Device>::buildView(
-      wbf_.fieldTag()));
+      wbf_.fieldTag());
+  wbf_.setFieldData(wbf_data);
+  wbf_const_.setFieldData(wbf_data);
 }
 
 void ProjectIPtoNodalFieldQuadrature::
-evaluateBasis (const PHX::MDField<MeshScalarT,Cell,Vertex,Dim>& coord_vert) {
+evaluateBasis (const PHX::MDField<const MeshScalarT,Cell,Vertex,Dim>& coord_vert) {
   using namespace Intrepid2;
   typedef CellTools<PHX::Device> CellTools;
   const int nqp = ref_points_.dimension(0), nd = ref_points_.dimension(1),
@@ -136,7 +147,7 @@ evaluateBasis (const PHX::MDField<MeshScalarT,Cell,Vertex,Dim>& coord_vert) {
   FunctionSpaceTools<PHX::Device>::computeCellMeasure(weighted_measure,
                                                    jacobian_det, ref_weights_);
   FunctionSpaceTools<PHX::Device>::HGRADtransformVALUE(bf_.get_view(), val_ref_points);
-  FunctionSpaceTools<PHX::Device>::multiplyMeasure(wbf_.get_view(), weighted_measure, bf_.get_view());
+  FunctionSpaceTools<PHX::Device>::multiplyMeasure(wbf_.get_view(), weighted_measure, bf_const_.get_view());
 }
 
 static Teuchos::RCP<ProjectIPtoNodalFieldQuadrature>
@@ -249,8 +260,8 @@ public:
   virtual ~MassMatrix() {}
 
   virtual void fill(const PHAL::Workset& workset,
-                    const PHX::MDField<RealType,Cell,Node,QuadPoint>& bf,
-                    const PHX::MDField<RealType,Cell,Node,QuadPoint>& wbf) = 0;
+                    const PHX::MDField<const RealType,Cell,Node,QuadPoint>& bf,
+                    const PHX::MDField<const RealType,Cell,Node,QuadPoint>& wbf) = 0;
 
   Teuchos::RCP<Tpetra_CrsMatrix>& matrix () { return matrix_; }
 
@@ -265,8 +276,8 @@ class ProjectIPtoNodalFieldManager::FullMassMatrix
   : public ProjectIPtoNodalFieldManager::MassMatrix {
 public:
   virtual void fill (const PHAL::Workset& workset,
-                     const PHX::MDField<RealType,Cell,Node,QuadPoint>& bf,
-                     const PHX::MDField<RealType,Cell,Node,QuadPoint>& wbf) {
+                     const PHX::MDField<const RealType,Cell,Node,QuadPoint>& bf,
+                     const PHX::MDField<const RealType,Cell,Node,QuadPoint>& wbf) {
     const int
       num_nodes = bf.dimension(1),
       num_pts   = bf.dimension(2);
@@ -307,8 +318,8 @@ class ProjectIPtoNodalFieldManager::LumpedMassMatrix
   : public ProjectIPtoNodalFieldManager::MassMatrix {
 public:
   virtual void fill (const PHAL::Workset& workset,
-                     const PHX::MDField<RealType,Cell,Node,QuadPoint>& bf,
-                     const PHX::MDField<RealType,Cell,Node,QuadPoint>& wbf) {
+                     const PHX::MDField<const RealType,Cell,Node,QuadPoint>& bf,
+                     const PHX::MDField<const RealType,Cell,Node,QuadPoint>& wbf) {
     const int
       num_nodes = bf.dimension(1),
       num_pts   = bf.dimension(2);
@@ -464,7 +475,7 @@ ProjectIPtoNodalField (Teuchos::ParameterList& p,
       node_node_layout = dl->node_node_tensor;
       break;
     }
-    ip_fields_[field] = PHX::MDField<ScalarT>(
+    ip_fields_[field] = PHX::MDField<const ScalarT>(
       ip_field_names_[field], qp_layout);
     // Incoming integration point field to transfer.
     this->addDependentField(ip_fields_[field].fieldTag());
@@ -477,13 +488,17 @@ ProjectIPtoNodalField (Teuchos::ParameterList& p,
   ip_field_names_.push_back("linear");
   nodal_field_names_.push_back("proj_nodal_linear");
   ip_field_layouts_.push_back(EFieldLayout::scalar);
-  ip_fields_.push_back(PHX::MDField<ScalarT>(ip_field_names_.back(),
-                                             dl->qp_scalar));
-  PHX::MDField<ScalarT>& f = ip_fields_.back();
+  test_ip_field_ = decltype(test_ip_field_)(
+      ip_field_names_.back(), dl->qp_scalar);
+  ip_fields_.push_back(PHX::MDField<const ScalarT>(
+        ip_field_names_.back(), dl->qp_scalar));
+  auto& f = ip_fields_.back();
   typedef PHX::KokkosViewFactory<ScalarT, PHX::Device> ViewFactory;
   std::vector<PHX::index_size_type> dims;
   dims.push_back(100);
-  f.setFieldData(ViewFactory::buildView(f.fieldTag(), dims));
+  auto test_data = ViewFactory::buildView(f.fieldTag(), dims);
+  f.setFieldData(test_data);
+  test_ip_field_.setFieldData(test_data);
   p_state_mgr_->registerNodalVectorStateVariable(
     nodal_field_names_.back(), dl->node_node_scalar, dl->dummy, "all", "scalar",
     0.0, false, output_to_exodus_);
@@ -638,14 +653,13 @@ void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields (typename Traits::EvalData workset) {
   if (Teuchos::nonnull(quad_mgr_)) {
     quad_mgr_->evaluateBasis(coords_verts_);
-    mgr_->mass_matrix->fill(workset, quad_mgr_->bf(), quad_mgr_->wbf());
+    mgr_->mass_matrix->fill(workset, quad_mgr_->bf_const(), quad_mgr_->wbf_const());
   } else
     mgr_->mass_matrix->fill(workset, BF, wBF);
 #ifdef PROJ_INTERP_TEST
-  PHX::MDField<RealType>& f = ip_fields_.back();
   for (unsigned int cell = 0; cell < workset.numCells; ++cell)
     for (std::size_t qp = 0; qp < num_pts_; ++qp)
-      f(cell, qp) = test_fn(
+      test_ip_field_(cell, qp) = test_fn(
         coords_qp_(cell, qp, 0), coords_qp_(cell, qp, 1),
         coords_qp_(cell, qp, 2));
 #endif

@@ -41,14 +41,14 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> DefGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> projectedStress;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim, Dim> DefGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> projectedStress;
 
 
   // Input for hydro-static stress effect
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Pstress;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> Pstress;
 
   bool enableTransient;
 
