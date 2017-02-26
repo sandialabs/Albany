@@ -59,7 +59,7 @@ ComprNSViscosity(const Teuchos::ParameterList& p) :
   Pr = visc_list->get("Prandtl number Pr", 0.72); 
   Cp = visc_list->get("Specific heat Cp", 1.0); 
   
-  coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+  coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Name"),
 	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
 

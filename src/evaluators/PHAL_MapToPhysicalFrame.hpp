@@ -49,7 +49,7 @@ private:
   // Input:
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
   //! Values at vertices
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coords_vertices;
+  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coords_vertices;
   Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > cubature;
   Teuchos::RCP <shards::CellTopology> cellType;
 

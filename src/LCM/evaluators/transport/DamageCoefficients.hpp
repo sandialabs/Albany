@@ -49,19 +49,19 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   ///
-  /// Input: temperature
+  /// Input: damage
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint> damage_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint> damage_;
 
   ///
-  /// Input: tiem step
+  /// Input: time step
   ///
-  PHX::MDField<ScalarT, Dummy> delta_time_;
+  PHX::MDField<const ScalarT, Dummy> delta_time_;
 
   ///
-  /// Optional: deformation gradient
+  /// Optional Input: deformation gradient
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> def_grad_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> def_grad_;
 
   ///
   /// Output: damage transient coefficient

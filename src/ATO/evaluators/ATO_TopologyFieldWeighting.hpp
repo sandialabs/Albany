@@ -42,9 +42,9 @@ private:
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input:
-  PHX::MDField<ParamScalarT,Cell,Node> topo;
-  PHX::MDField<ScalarT> unWeightedVar;
-  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
+  PHX::MDField<const ParamScalarT,Cell,Node> topo;
+  PHX::MDField<const ScalarT> unWeightedVar;
+  PHX::MDField<const RealType,Cell,Node,QuadPoint> BF;
 
   // Output:
   PHX::MDField<ScalarT> weightedVar;

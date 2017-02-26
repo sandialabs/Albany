@@ -108,13 +108,11 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
 
 
   //! add dependent fields (all fields assumed scalar qp)
-  std::vector<std::string>::const_iterator it;
-  //for(it = fieldNames.begin(); it != fieldNames.end(); ++it) {
   for(std::size_t i=0; i<fieldNames.size(); i++) {
-    PHX::MDField<ScalarT,Cell,QuadPoint> f(fieldNames[i], scalar_dl);
+    PHX::MDField<const ScalarT,Cell,QuadPoint> f(fieldNames[i], scalar_dl);
     fields.push_back(f); this->addDependentField(f.fieldTag());
 
-    PHX::MDField<ScalarT,Cell,QuadPoint> fi(fieldNames_Imag[i], scalar_dl);
+    PHX::MDField<const ScalarT,Cell,QuadPoint> fi(fieldNames_Imag[i], scalar_dl);
     fields_Imag.push_back(fi);
 
     if(fieldIsComplex[i]) this->addDependentField(fi.fieldTag());
@@ -156,8 +154,6 @@ void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  typename std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> >::iterator it;
-  //for(it = fields.begin(); it != fields.end(); ++it)
   for(std::size_t i=0; i<fields.size(); i++) {
     this->utils.setFieldData(fields[i],fm);
     if(fieldIsComplex[i]) this->utils.setFieldData(fields_Imag[i],fm);
@@ -175,7 +171,7 @@ void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
   // Zero out global response
-  PHAL::set(this->global_response, 0.0);  
+  PHAL::set(this->global_response_eval, 0.0);  
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -187,9 +183,7 @@ void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
-  PHAL::set(this->local_response, 0.0);
-
-  typename std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> >::const_iterator it;
+  PHAL::set(this->local_response_eval, 0.0);
 
   if(opRegion->elementBlockIsInRegion(workset.EBName)) {
 
@@ -215,7 +209,6 @@ evaluateFields(typename Traits::EvalData workset)
 
 	//nContrib1++; //DEBUG
 
-	//for(it = fields.begin(); it != fields.end(); ++it)
 	max = (std::size_t)std::pow(2.,(int)nBits);
 //	max = pow(2.0,static_cast<int>(nBits));
 	for(std::size_t i=0; i<max; i++) {
@@ -259,8 +252,8 @@ evaluateFields(typename Traits::EvalData workset)
 	//std::cout << "local response size = " << this->local_response.size() << std::endl;
 	//std::cout << "cell = " << cell << std::endl;
 	//std::cout << "workset size = " << workset.numCells << std::endl;
-        this->local_response(cell,0) += val;
-	this->global_response(0) += val;
+        this->local_response_eval(cell,0) += val;
+	this->global_response_eval(0) += val;
       }
     }
 
@@ -285,10 +278,10 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
+  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response_eval);
 
-  if (bPositiveOnly && this->global_response(0) < 1e-6) {
-    this->global_response(0) = 1e+100;
+  if (bPositiveOnly && this->global_response_eval(0) < 1e-6) {
+    this->global_response_eval(0) = 1e+100;
   }
   
   // Do global scattering

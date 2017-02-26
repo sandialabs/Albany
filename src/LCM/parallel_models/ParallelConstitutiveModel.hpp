@@ -27,6 +27,7 @@ struct ParallelKernel
   using MeshScalarT = typename EvalT::MeshScalarT;
   using Workset = typename Traits::EvalData;
   using ScalarField = PHX::MDField<ScalarT>;
+  using ConstScalarField = PHX::MDField<const ScalarT>;
   
 protected:
   
@@ -126,14 +127,14 @@ protected:
   bool have_total_bubble_density_;  ///< Bool for total bubble density
   bool have_bubble_volume_fraction_; ///< Bool for bubble_volume_fraction
 
-  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> coord_vec_; ///< optional integration point locations field
-  PHX::MDField<ScalarT, Cell, QuadPoint> temperature_; ///< optional temperature field
-  PHX::MDField<ScalarT,Cell,QuadPoint> total_concentration_; ///< Optional total concentration field
-  PHX::MDField<ScalarT,Cell,QuadPoint> total_bubble_density_;  ///< Optional total (He) bubble density field
-  PHX::MDField<ScalarT,Cell,QuadPoint> bubble_volume_fraction_;  ///< Optional bubble volume fraction field
-  PHX::MDField<ScalarT, Cell, QuadPoint> damage_;  ///< optional damage field
-  PHX::MDField<MeshScalarT, Cell, QuadPoint> weights_; ///< optional weights field
-  PHX::MDField<ScalarT, Cell, QuadPoint> j_; ///< optional J field
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim> coord_vec_; ///< optional integration point locations field
+  PHX::MDField<const ScalarT, Cell, QuadPoint> temperature_; ///< optional temperature field
+  PHX::MDField<const ScalarT,Cell,QuadPoint> total_concentration_; ///< Optional total concentration field
+  PHX::MDField<const ScalarT,Cell,QuadPoint> total_bubble_density_;  ///< Optional total (He) bubble density field
+  PHX::MDField<const ScalarT,Cell,QuadPoint> bubble_volume_fraction_;  ///< Optional bubble volume fraction field
+  PHX::MDField<const ScalarT, Cell, QuadPoint> damage_;  ///< optional damage field
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint> weights_; ///< optional weights field
+  PHX::MDField<const ScalarT, Cell, QuadPoint> j_; ///< optional J field
   
   RealType expansion_coeff_; ///< Thermal Expansion Coefficient
   RealType ref_temperature_; ///< Reference Temperature
@@ -161,13 +162,13 @@ public:
   void
   computeState(
       typename Traits::EvalData workset,
-      FieldMap<ScalarT> dep_fields,
+      FieldMap<const ScalarT> dep_fields,
       FieldMap<ScalarT> eval_fields) final;
   
   virtual
   void
   computeStateParallel(typename Traits::EvalData workset,
-      FieldMap<ScalarT> dep_fields,
+      FieldMap<const ScalarT> dep_fields,
       FieldMap<ScalarT> eval_fields) override {
          TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
   }

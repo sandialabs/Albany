@@ -40,9 +40,9 @@ namespace QCAD {
     std::size_t numQPs;
     std::size_t numDims;
     
-    PHX::MDField<ScalarT> field;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
+    PHX::MDField<const ScalarT> field;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
     
     std::string fieldName;
     Teuchos::RCP< MeshRegion<EvalT, Traits> > opRegion;

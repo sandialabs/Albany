@@ -52,40 +52,36 @@ private:
   //! Finite element basis for the midplane
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>> intrepidBasis;
   //! Scalar Gradient
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> scalarGrad;
  //! Scalar Gradient Operator
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> surface_Grad_BF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> surface_Grad_BF;
   //! Scalar Jump
-   PHX::MDField<ScalarT,Cell,QuadPoint> scalarJump;
+   PHX::MDField<const ScalarT,Cell,QuadPoint> scalarJump;
   //! Reference configuration dual basis
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
   //! Reference configuration normal
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> refNormal;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> refNormal;
   //! Reference configuration area
-  PHX::MDField<MeshScalarT,Cell,QuadPoint> refArea;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint> refArea;
   //! Determinant of the surface deformation gradient
-  PHX::MDField<ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> J;
   //! Pore Pressure at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> porePressure;
   //! Nodal Pore Pressure at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,Node> nodalPorePressure;
+  PHX::MDField<const ScalarT,Cell,Node> nodalPorePressure;
   //! Biot Coefficient at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> biotCoefficient;
   //! Biot Modulus at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,QuadPoint> biotModulus;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> biotModulus;
   //! Permeability at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,QuadPoint> kcPermeability;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> kcPermeability;
   //! Deformation Gradient
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> defGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim, Dim> defGrad;
+  //! Time
+  PHX::MDField<const ScalarT,Dummy> deltaTime;
 
-//  // weight times basis function value at integration point
-//  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-
-  //Data from previous time step
-   std::string porePressureName, JName;
-
-   // Time
-   PHX::MDField<ScalarT,Dummy> deltaTime;
+  //! Data from previous time step
+  std::string porePressureName, JName;
 
   //! Reference Cell Views
   Kokkos::DynRankView<RealType, PHX::Device> refValues;

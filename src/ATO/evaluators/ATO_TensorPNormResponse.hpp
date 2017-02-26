@@ -157,10 +157,10 @@ namespace ATO
     void TransformResponse (int Cell, int QP, ScalarT& response_eff);
     std::string FName;
     static const std::string className;
-    PHX::MDField<ScalarT> tensor;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> qp_weights;
-    PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
-    PHX::MDField<ParamScalarT,Cell,Node> topo;
+    PHX::MDField<const ScalarT> tensor;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint> qp_weights;
+    PHX::MDField<const RealType,Cell,Node,QuadPoint> BF;
+    PHX::MDField<const ParamScalarT,Cell,Node> topo;
     Teuchos::RCP< PHX::Tag<ScalarT> > objective_tag;
 
     Teuchos::RCP<Topology> topology;

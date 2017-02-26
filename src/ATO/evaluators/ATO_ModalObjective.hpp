@@ -53,12 +53,12 @@ namespace ATO {
     std::string FName;
     static const std::string className;
 
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> qp_weights;
-    PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> val_qp;
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> gradX;
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> workConj;
-    PHX::MDField<ScalarT> eigval;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint> qp_weights;
+    PHX::MDField<const RealType,Cell,Node,QuadPoint> BF;
+    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> val_qp;
+    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> gradX;
+    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> workConj;
+    PHX::MDField<const ScalarT> eigval;
 
     Teuchos::RCP< PHX::Tag<ScalarT> > modal_objective_tag;
     Albany::StateManager* pStateMgr;

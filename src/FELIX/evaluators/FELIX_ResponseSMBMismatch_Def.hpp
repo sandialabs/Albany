@@ -40,14 +40,14 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
 
   Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
-  flux_div              = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(flux_div_name, dl_basal->qp_scalar);
-  SMB                   = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(smb_name, dl_basal->qp_scalar);
-  SMBRMS                = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(smbRMS_name, dl_basal->qp_scalar);
-  thickness             = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(thickness_name, dl_basal->qp_scalar);
-  grad_thickness        = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>(grad_thickness_name, dl_basal->qp_gradient);
-  obs_thickness         = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(obs_thickness_name, dl_basal->qp_scalar);
-  thicknessRMS          = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(thicknessRMS_name, dl_basal->qp_scalar);
-  w_measure_2d          = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>(w_measure_2d_name, dl_basal->qp_scalar);
+  flux_div        = decltype(flux_div)(flux_div_name, dl_basal->qp_scalar);
+  SMB             = decltype(SMB)(smb_name, dl_basal->qp_scalar);
+  SMBRMS          = decltype(SMBRMS)(smbRMS_name, dl_basal->qp_scalar);
+  thickness       = decltype(thickness)(thickness_name, dl_basal->qp_scalar);
+  grad_thickness  = decltype(grad_thickness)(grad_thickness_name, dl_basal->qp_gradient);
+  obs_thickness   = decltype(obs_thickness)(obs_thickness_name, dl_basal->qp_scalar);
+  thicknessRMS    = decltype(thicknessRMS)(thicknessRMS_name, dl_basal->qp_scalar);
+  w_measure_2d    = decltype(w_measure_2d)(w_measure_2d_name, dl_basal->qp_scalar);
 
   cell_topo = paramList->get<Teuchos::RCP<const CellTopologyData> >("Cell Topology");
   Teuchos::RCP<const Teuchos::ParameterList> reflist = this->getValidResponseParameters();
@@ -78,8 +78,8 @@ ResponseSMBMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layout
   std::string global_response_name = "Global SMB Mismatch";
   int worksetSize = dl_basal->qp_scalar->dimension(0);
   int responseSize = 1;
-  Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(new MDALayout<Cell, Dim>(worksetSize, responseSize));
-  Teuchos::RCP<PHX::DataLayout> global_response_layout = Teuchos::rcp(new MDALayout<Dim>(responseSize));
+  auto local_response_layout = Teuchos::rcp(new MDALayout<Cell, Dim>(worksetSize, responseSize));
+  auto global_response_layout = Teuchos::rcp(new MDALayout<Dim>(responseSize));
   PHX::Tag<ScalarT> local_response_tag(local_response_name, local_response_layout);
   PHX::Tag<ScalarT> global_response_tag(global_response_name, global_response_layout);
   p.set("Local Response Field Tag", local_response_tag);
@@ -106,7 +106,7 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::postRegistrationSetup(typename T
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void FELIX::ResponseSMBMismatch<EvalT, Traits>::preEvaluate(typename Traits::PreEvalData workset) {
-  PHAL::set(this->global_response, 0.0);
+  PHAL::set(this->global_response_eval, 0.0);
 
   p_resp = p_reg = p_misH =0;
 
@@ -122,7 +122,7 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits::
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
   // Zero out local response
-  PHAL::set(this->local_response, 0.0);
+  PHAL::set(this->local_response_eval, 0.0);
 
   if (workset.sideSets->find(basalSideName) != workset.sideSets->end())
   {
@@ -138,9 +138,9 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits::
       for (int qp=0; qp<numBasalQPs; ++qp)
         t += pow((flux_div(cell,side,qp)-SMB(cell,side,qp))/SMBRMS(cell,side,qp),2) * w_measure_2d(cell,side,qp);
 
-      this->local_response(cell, 0) += t*scaling*alphaSMB;
+      this->local_response_eval(cell, 0) += t*scaling*alphaSMB;
       //std::cout << this->local_response(cell, 0) << std::endl;
-      this->global_response(0) += t*scaling*alphaSMB;
+      this->global_response_eval(0) += t*scaling*alphaSMB;
       p_resp += t*scaling*alphaSMB;
     }
 
@@ -163,8 +163,8 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::evaluateFields(typename Traits::
           tH += (pow((obs_thickness(cell,side,qp)-thickness(cell,side,qp))/thicknessRMS(cell,side,qp),2)) * w_measure_2d(cell,side,qp);
         }
 
-        this->local_response(cell, 0) += (tr*alpha + tH*alphaH)*scaling;//*50.0;
-        this->global_response(0) += (tr*alpha + tH*alphaH)*scaling;//*50.0;
+        this->local_response_eval(cell, 0) += (tr*alpha + tH*alphaH)*scaling;//*50.0;
+        this->global_response_eval(0) += (tr*alpha + tH*alphaH)*scaling;//*50.0;
         p_reg += tr*scaling*alpha;
         p_misH += tH*scaling*alphaH;
       }
@@ -195,7 +195,7 @@ void FELIX::ResponseSMBMismatch<EvalT, Traits>::postEvaluate(typename Traits::Po
 #else
   //amb Deal with op[], pointers, and reduceAll.
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
-                           this->global_response);
+                           this->global_response_eval);
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_resp);
   resp = p_resp;
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_reg);

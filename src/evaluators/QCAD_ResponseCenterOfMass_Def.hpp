@@ -47,7 +47,7 @@ ResponseCenterOfMass(Teuchos::ParameterList& p,
   opRegion  = Teuchos::rcp( new QCAD::MeshRegion<EvalT, Traits>("Coord Vec","Weights",*plist,materialDB,dl) );
   
   // setup field
-  PHX::MDField<ScalarT> f(fieldName, scalar_dl); field = f;
+  field = decltype(field)(fieldName, scalar_dl);
 
   // add dependent fields
   this->addDependentField(field);
@@ -99,7 +99,7 @@ void QCAD::ResponseCenterOfMass<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
   // Zero out global response
-  PHAL::set(this->global_response, 0.0);  
+  PHAL::set(this->global_response_eval, 0.0);  
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -111,7 +111,7 @@ void QCAD::ResponseCenterOfMass<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
-  PHAL::set(this->local_response, 0.0);
+  PHAL::set(this->local_response_eval, 0.0);
 
   ScalarT integral, moment;
 
@@ -125,13 +125,13 @@ evaluateFields(typename Traits::EvalData workset)
     // Add to running total volume and mass moment
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       integral = field(cell,qp) * weights(cell,qp);
-      this->local_response(cell,3) += integral;
-      this->global_response(3) += integral;
+      this->local_response_eval(cell,3) += integral;
+      this->global_response_eval(3) += integral;
 
       for(std::size_t i=0; i<numDims && i<3; i++) {
 	moment = field(cell,qp) * weights(cell,qp) * coordVec(cell,qp,i);
-	this->local_response(cell,i) += moment;
-	this->global_response(i) += moment;
+	this->local_response_eval(cell,i) += moment;
+	this->global_response_eval(i) += moment;
       }
     }
 
@@ -146,15 +146,15 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseCenterOfMass<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
+  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response_eval);
 
   int iNormalizer = 3;
   if( fabs(this->global_response(iNormalizer)) > 1e-9 ) {
     for( int i=0; i < this->global_response.size(); i++) {
       if( i == iNormalizer ) continue;
-      this->global_response(i) /= this->global_response(iNormalizer);
+      this->global_response_eval(i) /= this->global_response_eval(iNormalizer);
     }
-    this->global_response(iNormalizer) = 1.0;
+    this->global_response_eval(iNormalizer) = 1.0;
   }
 
   // Do global scattering

@@ -23,7 +23,7 @@ PenaltyModel(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
                                "!" << std::endl << "Options are (QP Tensor3, QP Tensor, QP Vector)" <<
                                std::endl);
 
-  PHX::MDField<N> _gradX(responseParams->get<std::string>("Gradient Field Name"), layout);
+  PHX::MDField<const N> _gradX(responseParams->get<std::string>("Gradient Field Name"), layout);
   gradX = _gradX;
 
   std::vector<int> dims;
@@ -63,7 +63,7 @@ PenaltyMixture(Teuchos::ParameterList& blockParams,
 
   workConj.resize(nMats);
   for(int imat=0; imat<nMats; imat++){
-    PHX::MDField<N> _workConj(Albany::strint(workConjBaseName,imat), layout);
+    PHX::MDField<const N> _workConj(Albany::strint(workConjBaseName,imat), layout);
     workConj[imat] = _workConj;
   }
 
@@ -108,7 +108,7 @@ getFieldDimensions(std::vector<int>& dims)
 /******************************************************************************/
 template<typename N>
 void ATO::PenaltyMixture<N>::
-getDependentFields(Teuchos::Array<PHX::MDField<N> >& depFields)
+getDependentFields(Teuchos::Array<PHX::MDField<const N> >& depFields)
 /******************************************************************************/
 {
   int nWCs = workConj.size();
@@ -122,7 +122,7 @@ getDependentFields(Teuchos::Array<PHX::MDField<N> >& depFields)
 /******************************************************************************/
 template<typename N>
 void ATO::PenaltyMixture<N>::
-getDependentFields(Teuchos::Array<PHX::MDField<N>* >& depFields)
+getDependentFields(Teuchos::Array<PHX::MDField<const N>* >& depFields)
 /******************************************************************************/
 {
   int nWCs = workConj.size();
@@ -137,7 +137,7 @@ getDependentFields(Teuchos::Array<PHX::MDField<N>* >& depFields)
 /******************************************************************************/
 template<typename N>
 void ATO::PenaltyMaterial<N>::
-getDependentFields(Teuchos::Array<PHX::MDField<N> >& depFields)
+getDependentFields(Teuchos::Array<PHX::MDField<const N> >& depFields)
 /******************************************************************************/
 {
   depFields.resize(2);
@@ -148,7 +148,7 @@ getDependentFields(Teuchos::Array<PHX::MDField<N> >& depFields)
 /******************************************************************************/
 template<typename N>
 void ATO::PenaltyMaterial<N>::
-getDependentFields(Teuchos::Array<PHX::MDField<N>* >& depFields)
+getDependentFields(Teuchos::Array<PHX::MDField<const N>* >& depFields)
 /******************************************************************************/
 {
   depFields.resize(2);
@@ -181,7 +181,7 @@ PenaltyMaterial(Teuchos::ParameterList& blockParams,
                                "!" << std::endl << "Options are (QP Tensor3, QP Tensor, QP Vector)" <<
                                std::endl);
 
-  PHX::MDField<N> _workConj(responseParams->get<std::string>("Work Conjugate Name"), layout);
+  PHX::MDField<const N> _workConj(responseParams->get<std::string>("Work Conjugate Name"), layout);
   workConj = _workConj;
 
   topologyIndex = responseParams->get<int>("Topology Index");

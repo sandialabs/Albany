@@ -39,8 +39,7 @@ TensorPNormResponse(Teuchos::ParameterList& p,
                                "!" << std::endl << "Options are (QP Tensor, QP Vector)" <<
                                std::endl);
 
-  PHX::MDField<ScalarT> _tensor(responseParams->get<std::string>("Tensor Field Name"), layout);
-  tensor = _tensor;
+  tensor = decltype(tensor)(responseParams->get<std::string>("Tensor Field Name"), layout);
 
   Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem =
     p.get< Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
@@ -203,7 +202,7 @@ TensorPNormResponse(Teuchos::ParameterList& p,
     Teuchos::Exceptions::InvalidParameter, std::endl
     << "Error!  TensorPNormResponse requires 'Distributed Parameter' based topology" << std::endl);
 
-  topo = PHX::MDField<ParamScalarT,Cell,Node>(topology->getName(),dl->node_scalar);
+  topo = decltype(topo)(topology->getName(),dl->node_scalar);
 
   this->pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");
   this->pStateMgr->registerStateVariable("Effective Stress",

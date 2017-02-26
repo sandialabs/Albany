@@ -78,7 +78,7 @@ InternalEnergyResponse(Teuchos::ParameterList& p,
       (*topologies)[itopo]->getEntityType() != "Distributed Parameter", 
       Teuchos::Exceptions::InvalidParameter, std::endl
       << "Error!  InternalEnergyResponse requires 'Distributed Parameter' based topology" << std::endl);
-    topos[itopo] = PHX::MDField<ParamScalarT,Cell,Node>((*topologies)[itopo]->getName(),dl->node_scalar);
+    topos[itopo] = PHX::MDField<const ParamScalarT,Cell,Node>((*topologies)[itopo]->getName(),dl->node_scalar);
     this->addDependentField(topos[itopo]);
   }
 
@@ -89,7 +89,7 @@ InternalEnergyResponse(Teuchos::ParameterList& p,
   this->addDependentField(qp_weights);
   this->addDependentField(BF);
 
-  Teuchos::Array< PHX::MDField<ScalarT> > depFields;
+  Teuchos::Array< PHX::MDField<const ScalarT> > depFields;
   penaltyModel->getDependentFields(depFields);
 
   int nFields = depFields.size();
@@ -135,7 +135,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(qp_weights,fm);
   this->utils.setFieldData(BF,fm);
 
-  Teuchos::Array<PHX::MDField<ScalarT>* > depFields;
+  Teuchos::Array<PHX::MDField<const ScalarT>* > depFields;
   penaltyModel->getDependentFields(depFields);
 
   int nFields = depFields.size();

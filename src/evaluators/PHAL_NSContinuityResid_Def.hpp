@@ -30,13 +30,13 @@ NSContinuityResid(const Teuchos::ParameterList& p) :
   this->addDependentField(VGrad);
   this->addDependentField(rho);
   if (havePSPG) {
-    wGradBF = PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>(
+    wGradBF = decltype(wGradBF)(
       p.get<std::string>("Weighted Gradient BF Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout") );
-    TauM = PHX::MDField<ScalarT,Cell,QuadPoint>(
+    TauM = decltype(TauM)(
       p.get<std::string>("Tau M Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") );
-    Rm = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
+    Rm = decltype(Rm)(
       p.get<std::string>("Rm Name"),
       p.get<Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout") );
     this->addDependentField(wGradBF);

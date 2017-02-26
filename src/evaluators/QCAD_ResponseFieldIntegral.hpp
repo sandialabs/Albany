@@ -52,10 +52,10 @@ namespace QCAD {
     
     std::vector<bool> fieldIsComplex;
     std::vector<bool> conjugateFieldFlag;
-    std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> > fields;
-    std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> > fields_Imag;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
+    std::vector<PHX::MDField<const ScalarT,Cell,QuadPoint> > fields;
+    std::vector<PHX::MDField<const ScalarT,Cell,QuadPoint> > fields_Imag;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
     Teuchos::Array<int> field_components;
     
     double length_unit_in_m; // length unit for input and output mesh

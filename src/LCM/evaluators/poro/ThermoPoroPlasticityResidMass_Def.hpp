@@ -104,7 +104,7 @@ namespace LCM {
 
     if (haveSource) this->addDependentField(Source);
       if (haveAbsorption) {
-        Absorption = PHX::MDField<ScalarT,Cell,QuadPoint>(
+        Absorption = decltype(Absorption)(
   							p.get<std::string>("Absorption Name"),
   							p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"));
         this->addDependentField(Absorption);
@@ -143,12 +143,11 @@ namespace LCM {
     if (convectionVels.size()>0) {
       haveConvection = true;
       if (p.isType<bool>("Have Rho Cp"))
-	haverhoCp = p.get<bool>("Have Rho Cp");
+        haverhoCp = p.get<bool>("Have Rho Cp");
       if (haverhoCp) {
-	PHX::MDField<ScalarT,Cell,QuadPoint> tmp(p.get<std::string>("Rho Cp Name"),
-						 p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"));
-	rhoCp = tmp;
-	this->addDependentField(rhoCp);
+        rhoCp = decltype(rhoCp)(p.get<std::string>("Rho Cp Name"),
+            p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"));
+        this->addDependentField(rhoCp);
       }
     }
     this->setName("ThermoPoroPlasticityResidMass"+PHX::typeAsString<EvalT>());

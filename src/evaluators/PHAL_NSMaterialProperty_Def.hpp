@@ -104,7 +104,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
 
     Teuchos::RCP<PHX::DataLayout> coord_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("Coordinate Vector Data Layout");
-    coordVec = PHX::MDField<MeshScalarT>(
+    coordVec = decltype(coordVec)(
       p.get<std::string>("Coordinate Vector Name"),
       coord_dl);
     this->addDependentField(coordVec);
@@ -129,7 +129,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     matPropType = SQRT_TEMP;
     scalar_constant_value = mp_list->get("Reference Value", default_value);
     ref_temp = mp_list->get("Reference Temperature", default_value);
-    T = PHX::MDField<ScalarT>(
+    T = decltype(T)(
       p.get<std::string>("Temperature Variable Name"),
       layout);
     this->addDependentField(T);
@@ -141,7 +141,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     matPropType = INV_SQRT_TEMP;
     scalar_constant_value = mp_list->get("Reference Value", default_value);
     ref_temp = mp_list->get("Reference Temperature", default_value);
-    T = PHX::MDField<ScalarT>(
+    T = decltype(T)(
       p.get<std::string>("Temperature Variable Name"),
       layout);
     this->addDependentField(T);
@@ -151,13 +151,13 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
   }
   else if (type == "Transport Mean Free Path") {
     matPropType = NEUTRON_DIFFUSION;
-    sigma_a = PHX::MDField<ScalarT>(
+    sigma_a = decltype(sigma_a)(
       p.get<std::string>("Absorption Cross Section Name"),
       layout);
-    sigma_s = PHX::MDField<ScalarT>(
+    sigma_s = decltype(sigma_s)(
       p.get<std::string>("Scattering Cross Section Name"),
       layout);
-    mu = PHX::MDField<ScalarT>(
+    mu = decltype(mu)(
       p.get<std::string>("Average Scattering Angle Name"),
       layout);
     this->addDependentField(sigma_a);

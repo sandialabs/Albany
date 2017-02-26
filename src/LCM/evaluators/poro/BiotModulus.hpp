@@ -48,7 +48,7 @@ private:
 
   int numQPs;
   int numDims;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint> biotModulus;
 
   //! Is conductivity constant, or random field
@@ -59,8 +59,8 @@ private:
 
   //! Optional dependence on Temperature (E = E_const + dEdT * T)
   //PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
-  PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
-  PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> porosity;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> biotCoefficient;
   //bool isThermoElastic;
   bool isPoroElastic;
   //ScalarT dEdT_value;

@@ -43,11 +43,11 @@ namespace FELIX {
     int cellDim;
  //   int sideDim;
 
-    PHX::MDField<ScalarT>  field;
-    PHX::MDField<ScalarT>       gradField;
-    PHX::MDField<ParamScalarT>  forcing;
-    PHX::MDField<MeshScalarT>   gradBF;
-    PHX::MDField<MeshScalarT>   w_measure;
+    PHX::MDField<const ScalarT>  field;
+    PHX::MDField<const ScalarT>       gradField;
+    PHX::MDField<const ParamScalarT>  forcing;
+    PHX::MDField<const MeshScalarT>   gradBF;
+    PHX::MDField<const MeshScalarT>   w_measure;
 
     PHX::MDField<ScalarT> residual;
 

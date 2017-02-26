@@ -121,7 +121,7 @@ public:
   Field::iterator fieldsBegin();
   Field::iterator fieldsEnd();
 
-  typedef PHX::MDField<RealType,Cell,Node,QuadPoint> BasisField;
+  typedef PHX::MDField<const RealType,Cell,Node,QuadPoint> BasisField;
   //! Reader<EvalT> uses these methods to load the data.
   void beginQpInterp();
   void interpQpField(PHX::MDField<RealType>& f, const PHAL::Workset& workset,
@@ -132,7 +132,7 @@ public:
   //! Writer<Residual> uses these methods to record the data.
   void beginQpWrite(const PHAL::Workset& workset,
                     const BasisField& bf, const BasisField& wbf);
-  void writeQpField(const PHX::MDField<RealType>& f,
+  void writeQpField(const PHX::MDField<const RealType>& f,
                     const PHAL::Workset& workset, const BasisField& wbf);
   void endQpWrite();
   void testProjector(

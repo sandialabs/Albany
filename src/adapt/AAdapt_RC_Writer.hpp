@@ -55,11 +55,11 @@ public:
                              PHX::FieldManager<Traits>& fm);
   void evaluateFields(typename Traits::EvalData d);
 private:
-  typedef typename std::vector< PHX::MDField<RealType> > FieldsVector;
+  typedef typename std::vector< PHX::MDField<const RealType> > FieldsVector;
   typedef typename FieldsVector::iterator FieldsIterator;
   Teuchos::RCP<Manager> rc_mgr_;
   FieldsVector fields_;
-  PHX::MDField<RealType,Cell,Node,QuadPoint> bf_, wbf_;
+  PHX::MDField<const RealType,Cell,Node,QuadPoint> bf_, wbf_;
 };
 
 } // namespace rc

@@ -50,9 +50,9 @@ Reader(const Teuchos::RCP<Manager>& rc_mgr,
   : ReaderBase<PHAL::AlbanyTraits::Residual, Traits>(rc_mgr)
 {
   if (this->rc_mgr_->usingProjection()) {
-    bf_  = PHX::MDField<RealType,Cell,Node,QuadPoint>(
+    bf_  = PHX::MDField<const RealType,Cell,Node,QuadPoint>(
       "BF", dl->node_qp_scalar);
-    wbf_ = PHX::MDField<RealType,Cell,Node,QuadPoint>(
+    wbf_ = PHX::MDField<const RealType,Cell,Node,QuadPoint>(
       "wBF", dl->node_qp_scalar);
     this->addDependentField(bf_);
     this->addDependentField(wbf_);

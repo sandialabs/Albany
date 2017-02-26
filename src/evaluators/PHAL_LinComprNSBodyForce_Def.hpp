@@ -25,28 +25,15 @@ LinComprNSBodyForce(const Teuchos::ParameterList& p) :
     p.get<Teuchos::ParameterList*>("Parameter List");
 
   std::string type = bf_list->get("Type", "None");
-  if (type == "None") {
-    bf_type = NONE;
-  }
-  else if (type == "Steady Euler") {
-    bf_type = STEADYEUL;  
-    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+  if (type == "None") bf_type = NONE;
+  else if (type == "Steady Euler") bf_type = STEADYEUL;  
+  else if (type == "Unsteady Euler MMS") bf_type = UNSTEADYEULMMS;  
+  else if (type == "Driven Pulse") bf_type = DRIVENPULSE;  
+
+  if (bf_type != NONE) {
+    coordVec = decltype(coordVec)(
             p.get<std::string>("Coordinate Vector Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
-    this->addDependentField(coordVec);
-  }
-  else if (type == "Unsteady Euler MMS") {
-    bf_type = UNSTEADYEULMMS;  
-    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-            p.get<std::string>("Coordinate Vector Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
-    this->addDependentField(coordVec);
-  }
-  else if (type == "Driven Pulse") {
-    bf_type = DRIVENPULSE;  
-    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-            p.get<std::string>("Coordinate Vector Name"),
-	    p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
+            p.get<Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout") );
     this->addDependentField(coordVec);
   }
 

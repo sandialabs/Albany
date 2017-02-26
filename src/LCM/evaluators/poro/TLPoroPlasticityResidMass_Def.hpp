@@ -81,7 +81,7 @@ namespace LCM {
     this->addDependentField(wGradBF);
     if (haveSource) this->addDependentField(Source);
     if (haveAbsorption) {
-      Absorption = PHX::MDField<ScalarT,Cell,QuadPoint>
+      Absorption = decltype(Absorption)
         (p.get<std::string>("Absorption Name"),
          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"));
       this->addDependentField(Absorption);
@@ -95,14 +95,10 @@ namespace LCM {
 
       haveMechanics = true;
 
-      PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim>
-        tf(p.get<std::string>("DefGrad Name"), tensor_dl);
-      defgrad = tf;
+      defgrad = decltype(defgrad)(p.get<std::string>("DefGrad Name"), tensor_dl);
       this->addDependentField(defgrad);
 
-      PHX::MDField<ScalarT,Cell,QuadPoint>
-        tj(p.get<std::string>("DetDefGrad Name"), scalar_dl);
-      J = tj;
+      J = decltype(J)(p.get<std::string>("DetDefGrad Name"), scalar_dl);
       this->addDependentField(J);
     }
 
@@ -134,10 +130,8 @@ namespace LCM {
       if (p.isType<bool>("Have Rho Cp"))
         haverhoCp = p.get<bool>("Have Rho Cp");
       if (haverhoCp) {
-        PHX::MDField<ScalarT,Cell,QuadPoint>
-          tmp(p.get<std::string>("Rho Cp Name"),
+        rhoCp = decltype(rhoCp)(p.get<std::string>("Rho Cp Name"),
               p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"));
-        rhoCp = tmp;
         this->addDependentField(rhoCp);
       }
     }

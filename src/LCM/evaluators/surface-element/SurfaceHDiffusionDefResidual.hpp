@@ -52,51 +52,48 @@ private:
   //! Finite element basis for the midplane
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>> intrepidBasis;
   //! Scalar Gradient
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> scalarGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> scalarGrad;
  //! Scalar Gradient Operator
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> surface_Grad_BF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> surface_Grad_BF;
   //! Scalar Jump
-   PHX::MDField<ScalarT,Cell,QuadPoint> scalarJump;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> scalarJump;
   //! Reference configuration dual basis
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim, Dim> refDualBasis;
   //! Reference configuration normal
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> refNormal;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> refNormal;
   //! Reference configuration area
-  PHX::MDField<MeshScalarT,Cell,QuadPoint> refArea;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint> refArea;
   //! Determinant of the surface deformation gradient
-  PHX::MDField<ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> J;
   //! Pore Pressure at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,QuadPoint> transport_;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> transport_;
   //! Nodal Pore Pressure at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,Node> nodal_transport_;
+  PHX::MDField<const ScalarT,Cell,Node> nodal_transport_;
 
   //! diffusion coefficient at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,QuadPoint> dL_;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> dL_;
   //! effective diffusion constant at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,QuadPoint> eff_diff_;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> eff_diff_;
   //! strain rate factor at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,QuadPoint> strain_rate_factor_;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> strain_rate_factor_;
   //! Convection-like term with hydrostatic stress at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,QuadPoint> convection_coefficient_;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> convection_coefficient_;
   //! Hydrostatic stress gradient at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,QuadPoint, Dim> hydro_stress_gradient_;
+  PHX::MDField<const ScalarT,Cell,QuadPoint, Dim> hydro_stress_gradient_;
   //! Equvialent plastic strain at the 2D integration point location
-  PHX::MDField<ScalarT,Cell,QuadPoint> eqps_;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> eqps_;
   //! Elelement length parameter for stabilization procedure
-  PHX::MDField<ScalarT,Cell,QuadPoint> element_length_;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> element_length_;
 
 
   //! Deformation Gradient
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> defGrad;
-
-//  // weight times basis function value at integration point
-//  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim, Dim> defGrad;
 
   //Data from previous time step
-   std::string transportName, JName, CLGradName, eqpsName;
+  std::string transportName, JName, CLGradName, eqpsName;
 
-   // Time
-   PHX::MDField<ScalarT,Dummy> deltaTime;
+  // Time
+  PHX::MDField<const ScalarT,Dummy> deltaTime;
 
   //! Reference Cell Views
   Kokkos::DynRankView<RealType, PHX::Device> refValues;

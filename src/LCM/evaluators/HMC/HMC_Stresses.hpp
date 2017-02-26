@@ -37,15 +37,17 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
+  typedef PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> cHMC2Tensor;
   typedef PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> HMC2Tensor;
+  typedef PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim,Dim> cHMC3Tensor;
   typedef PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim,Dim> HMC3Tensor;
   typedef PHX::MDField<ScalarT,Cell,QuadPoint> HMCScalar;
 
   // Input:
-  HMC2Tensor strain;
+  cHMC2Tensor strain;
 
-  Teuchos::ArrayRCP< Teuchos::RCP<HMC2Tensor>> strainDifference;
-  Teuchos::ArrayRCP< Teuchos::RCP<HMC3Tensor>> microStrainGradient;
+  Teuchos::ArrayRCP< Teuchos::RCP<cHMC2Tensor>> strainDifference;
+  Teuchos::ArrayRCP< Teuchos::RCP<cHMC3Tensor>> microStrainGradient;
   std::vector<RealType> lengthScale;
   std::vector<RealType> betaParameter;
 

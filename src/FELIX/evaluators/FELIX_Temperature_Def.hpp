@@ -32,7 +32,7 @@ namespace FELIX
                                 "Error! Basal side data layout not found.\n");
     Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideName);
 
-    dTdz = PHX::MDField<ScalarT,Cell, Side, Node>(p.get<std::string> ("Basal dTdz Variable Name"), dl_side->node_scalar);
+    dTdz = decltype(dTdz)(p.get<std::string> ("Basal dTdz Variable Name"), dl_side->node_scalar);
 
     std::vector<PHX::Device::size_type> dims;
     dl->node_qp_vector->dimensions(dims);

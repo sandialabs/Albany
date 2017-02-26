@@ -39,8 +39,8 @@ namespace FELIX
   private:
     typedef typename EvalT::ParamScalarT ParamScalarT;
     // Input:
-    PHX::MDField<Type,Cell,Node> meltingTemp; //[K]
-    PHX::MDField<ParamScalarT,Cell,Node> surfaceTemp; //[K]
+    PHX::MDField<const Type,Cell,Node> meltingTemp; //[K]
+    PHX::MDField<const ParamScalarT,Cell,Node> surfaceTemp; //[K]
 
     // Output:
     PHX::MDField<Type,Cell,Node> enthalpyHs;  //[MW s m^{-3}]

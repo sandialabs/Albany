@@ -42,8 +42,8 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint> rho;
-  PHX::MDField<ScalarT,Cell,QuadPoint> w;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> rho;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> w;
   
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> chemTerm;

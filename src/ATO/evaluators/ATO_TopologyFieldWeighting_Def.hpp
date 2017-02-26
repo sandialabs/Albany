@@ -28,7 +28,7 @@ BF(p.get<std::string> ("BF Name"), dl->node_qp_scalar)
     Teuchos::Exceptions::InvalidParameter, std::endl
     << "Error!  TopologyFieldWeighting requires 'Distributed Parameter' based topology" << std::endl);
 
-  topo = PHX::MDField<ParamScalarT,Cell,Node>(topology->getName(),dl->node_scalar);
+  topo = decltype(topo)(topology->getName(),dl->node_scalar);
 
 
   std::string strLayout = p.get<std::string>("Variable Layout");
@@ -46,10 +46,8 @@ BF(p.get<std::string> ("BF Name"), dl->node_qp_scalar)
                                "!" << std::endl << "Options are (QP Tensor3, QP Tensor, QP Vector)" <<
                                std::endl);
 
-  PHX::MDField<ScalarT> _unWeightedVar(p.get<std::string>("Unweighted Variable Name"), layout);
-  unWeightedVar = _unWeightedVar;
-  PHX::MDField<ScalarT> _weightedVar(p.get<std::string>("Weighted Variable Name"), layout);
-  weightedVar = _weightedVar;
+  unWeightedVar = decltype(unWeightedVar)(p.get<std::string>("Unweighted Variable Name"), layout);
+  weightedVar = decltype(weightedVar)(p.get<std::string>("Weighted Variable Name"), layout);
 
 
   // Pull out numQPs and numDims from a Layout

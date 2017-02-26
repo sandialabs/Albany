@@ -49,7 +49,7 @@ template<typename EvalT, typename Traits>
 void
 NeohookeanKernel<EvalT, Traits>::
 init(Workset &workset,
-     FieldMap<ScalarT> &dep_fields,
+     FieldMap<const ScalarT> &dep_fields,
      FieldMap<ScalarT> &eval_fields)
 {
   std::string F_string = field_name_map_["F"];

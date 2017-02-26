@@ -37,8 +37,10 @@ private:
 
   Teuchos::Array<RealType> bodyForceVector;
 
+  // Input:
+  PHX::MDField<const ScalarT,Cell,QuadPoint> density;
+
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint> density;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> outVector;
 
 };
