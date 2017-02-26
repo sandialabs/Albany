@@ -391,16 +391,25 @@ IF (LCM_TEST_EXES AND ALBANY_DTK)
   add_executable(DTK_Interp_Volume_to_NS utils/dtk_interp_and_error/interpolation_volume_to_ns.cpp)
 ENDIF()
 
-IF (LCM_TEST_EXES AND ALBANY_BGL) 
-  add_executable(MaterialPointSimulator test/utils/MaterialPointSimulator.cc)
-  add_executable(MeshComponents test/utils/MeshComponents.cc)
-  add_executable(NodeUpdate test/utils/NodeUpdate.cc)
-  add_executable(PartitionTest test/utils/PartitionTest.cc)
+IF (LCM_TEST_EXES)
+  add_executable(utMiniSolvers test/unit_tests/utMiniSolvers.cc)
+
+  IF (ALBANY_ROL)
+    add_executable(utMiniSolversROL test/unit_tests/utMiniSolversROL.cc)
+  ENDIF()
+  
   add_executable(BifurcationTest test/utils/BifurcationTest.cc)
-  add_executable(Subdivision test/utils/Subdivision.cc)
+  add_executable(MaterialPointSimulator test/utils/MaterialPointSimulator.cc)
+ENDIF()
+ 
+IF (LCM_TEST_EXES AND ALBANY_BGL) 
+  add_executable(BoundarySurfaceOutput test/utils/BoundarySurfaceOutput.cc)
+  add_executable(MeshComponents test/utils/MeshComponents.cc)
   add_executable(MinSurfaceMPS test/utils/MinSurfaceMPS.cc)
   add_executable(MinSurfaceOutput test/utils/MinSurfaceOutput.cc)
-  add_executable(BoundarySurfaceOutput test/utils/BoundarySurfaceOutput.cc)
+  add_executable(NodeUpdate test/utils/NodeUpdate.cc)
+  add_executable(PartitionTest test/utils/PartitionTest.cc)
+  add_executable(Subdivision test/utils/Subdivision.cc)
   add_executable(Test1_Subdivision test/utils/Test1_Subdivision.cc)
   add_executable(Test2_Subdivision test/utils/Test2_Subdivision.cc)
   add_executable(TopologyBase test/utils/TopologyBase.cc)
@@ -410,18 +419,6 @@ IF (LCM_TEST_EXES AND ALBANY_BGL)
     test/unit_tests/StandardUnitTestMain.cpp
     test/unit_tests/utLocalNonlinearSolver.cpp
     )
-
-  add_executable(
-    utMiniSolvers
-    test/unit_tests/utMiniSolvers.cc
-    )
-
-  IF (ALBANY_ROL)
-    add_executable(
-      utMiniSolversROL
-      test/unit_tests/utMiniSolversROL.cc
-      )
-  ENDIF()
 
   add_executable(
     utSurfaceElement
@@ -436,10 +433,7 @@ IF (LCM_TEST_EXES AND ALBANY_BGL)
     )
 
   IF(NOT BUILD_SHARED_LIBS)
-    add_executable(
-      utStaticAllocator
-      test/unit_tests/utStaticAllocator.cpp
-      )
+    add_executable(utStaticAllocator test/unit_tests/utStaticAllocator.cpp)
   ENDIF()
 ENDIF()
 
@@ -570,15 +564,15 @@ IF (LCM_TEST_EXES AND ALBANY_DTK)
 ENDIF()
 IF (LCM_TEST_EXES AND ALBANY_BGL)
   set (repeat_libs ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${LCM_UT_LIBS} ${ALBANY_LIBRARIES})
+  target_link_libraries(BifurcationTest ${repeat_libs} ${ALL_LIBRARIES})
+  target_link_libraries(BoundarySurfaceOutput ${repeat_libs} ${ALL_LIBRARIES})
   target_link_libraries(MaterialPointSimulator ${repeat_libs} ${ALL_LIBRARIES})
   target_link_libraries(MeshComponents ${repeat_libs} ${ALL_LIBRARIES})
-  target_link_libraries(NodeUpdate ${repeat_libs} ${ALL_LIBRARIES})
-  target_link_libraries(PartitionTest ${repeat_libs} ${ALL_LIBRARIES})
-  target_link_libraries(BifurcationTest ${repeat_libs} ${ALL_LIBRARIES})
-  target_link_libraries(Subdivision ${repeat_libs} ${ALL_LIBRARIES})
   target_link_libraries(MinSurfaceMPS ${repeat_libs} ${ALL_LIBRARIES})
   target_link_libraries(MinSurfaceOutput ${repeat_libs} ${ALL_LIBRARIES})
-  target_link_libraries(BoundarySurfaceOutput ${repeat_libs} ${ALL_LIBRARIES})
+  target_link_libraries(NodeUpdate ${repeat_libs} ${ALL_LIBRARIES})
+  target_link_libraries(PartitionTest ${repeat_libs} ${ALL_LIBRARIES})
+  target_link_libraries(Subdivision ${repeat_libs} ${ALL_LIBRARIES})
   target_link_libraries(Test1_Subdivision ${repeat_libs} ${ALL_LIBRARIES})
   target_link_libraries(Test2_Subdivision ${repeat_libs} ${ALL_LIBRARIES})
   target_link_libraries(TopologyBase ${repeat_libs} ${ALL_LIBRARIES})
