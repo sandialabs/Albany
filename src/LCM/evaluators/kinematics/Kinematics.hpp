@@ -91,7 +91,7 @@ namespace LCM {
     ///! Input, if RCU.
     AAdapt::rc::Field<2> def_grad_rc_;
     // For debugging.
-    PHX::MDField<ScalarT,Cell,Vertex,Dim> u_;
+    PHX::MDField<const ScalarT,Cell,Vertex,Dim> u_;
     bool check_det(typename Traits::EvalData d, int cell, int pt);
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
