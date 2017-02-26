@@ -105,9 +105,8 @@ PoissonSourceNeumannBase(const Teuchos::ParameterList& p) :
                              std::endl << "Error: PoissonSource Neumann boundary conditions "
                              << "only supported when the DOF is not a vector" << std::endl);
 
-  PHX::MDField<ScalarT,Cell,Node> tmp(p.get<std::string>("DOF Name"),
+  dof = decltype(dof)(p.get<std::string>("DOF Name"),
 				      p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
-  dof = tmp;
   this->addDependentField(dof);
   this->addDependentField(coordVec);
 

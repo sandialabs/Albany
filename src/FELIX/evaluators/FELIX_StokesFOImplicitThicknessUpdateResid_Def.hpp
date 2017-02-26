@@ -68,7 +68,7 @@ StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
 #else
   ddims_.push_back(95);
 #endif
-  Res=PHX::MDField<ScalarT,Cell,Node,Dim>("Res",Teuchos::rcp(new PHX::MDALayout<Cell,Node,Dim>(numCells,numNodes,2)));
+  Res=decltype(Res)("Res",Teuchos::rcp(new PHX::MDALayout<Cell,Node,Dim>(numCells,numNodes,2)));
   Res.setFieldData(ViewFactory::buildView(Res.fieldTag(),ddims_));
 #endif
 #ifdef OUTPUT_TO_SCREEN

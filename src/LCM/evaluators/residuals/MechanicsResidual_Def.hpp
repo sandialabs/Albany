@@ -41,9 +41,8 @@ MechanicsResidual(Teuchos::ParameterList& p,
   else enable_dynamics_ = true;
 
   if (enable_dynamics_) {
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim> tmp
+    acceleration_ = decltype(acceleration_)
       (p.get<std::string>("Acceleration Name"), dl->qp_vector);
-    acceleration_ = tmp;
     this->addDependentField(acceleration_);
   }
 
@@ -51,9 +50,8 @@ MechanicsResidual(Teuchos::ParameterList& p,
 
   if (have_body_force_) {
     // grab the pore pressure
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim>
-    tmp(p.get<std::string>("Body Force Name"), dl->qp_vector);
-    body_force_ = tmp;
+    body_force_ = decltype(body_force_)
+       (p.get<std::string>("Body Force Name"), dl->qp_vector);
     this->addDependentField(body_force_);
   }
 

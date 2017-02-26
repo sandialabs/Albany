@@ -42,9 +42,8 @@ PoissonsRatio(Teuchos::ParameterList& p) :
 #ifdef ALBANY_STOKHOS
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
-      fx(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
-    coordVec = fx;
+    coordVec = decltype(coordVec)(
+        p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
     this->addDependentField(coordVec);
 
     exp_rf_kl = 
@@ -71,9 +70,8 @@ PoissonsRatio(Teuchos::ParameterList& p) :
   if ( p.isType<std::string>("QP Temperature Name") ) {
     Teuchos::RCP<PHX::DataLayout> scalar_dl =
       p.get< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
-    PHX::MDField<ScalarT,Cell,QuadPoint>
-      tmp(p.get<std::string>("QP Temperature Name"), scalar_dl);
-    Temperature = tmp;
+    Temperature = decltype(Temperature)(
+        p.get<std::string>("QP Temperature Name"), scalar_dl);
     this->addDependentField(Temperature);
     isThermoElastic = true;
     dnudT_value = pr_list->get("dnudT Value", 0.0);

@@ -50,7 +50,7 @@ namespace LCM {
     ///
     /// Input: displacement gradient
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> GradU;
+    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> GradU;
 
     ///
     /// Output: Strain

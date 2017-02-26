@@ -115,16 +115,16 @@ PoissonSource(Teuchos::ParameterList& p,
     eigenvector_Re.resize(nEigenvectors);
     for (int k = 0; k < nEigenvectors; ++k) {
       sprintf(buf, "%s_Re%d", evecFieldRoot.c_str(), k);
-      PHX::MDField<ScalarT,Cell,QuadPoint> fr(buf,dl->qp_scalar);
+      PHX::MDField<const ScalarT,Cell,QuadPoint> fr(buf,dl->qp_scalar);
       eigenvector_Re[k] = fr; this->addDependentField(eigenvector_Re[k]);
     }
 
     if(!bRealEigenvectors) {
       eigenvector_Im.resize(nEigenvectors);
       for (int k = 0; k < nEigenvectors; ++k) {
-	sprintf(buf, "%s_Im%d", evecFieldRoot.c_str(), k);
-	PHX::MDField<ScalarT,Cell,QuadPoint> fi(buf,dl->qp_scalar);
-	eigenvector_Im[k] = fi; this->addDependentField(eigenvector_Im[k]);
+        sprintf(buf, "%s_Im%d", evecFieldRoot.c_str(), k);
+        PHX::MDField<const ScalarT,Cell,QuadPoint> fi(buf,dl->qp_scalar);
+        eigenvector_Im[k] = fi; this->addDependentField(eigenvector_Im[k]);
       }
     }
   }

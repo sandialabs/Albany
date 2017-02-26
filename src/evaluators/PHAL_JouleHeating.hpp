@@ -46,8 +46,8 @@ private:
   std::size_t numDims;
 
   // Inputs
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> potentialGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> potentialFlux;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> potentialGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> potentialFlux;
 
   // Outputs
   PHX::MDField<ScalarT,Cell,QuadPoint> jouleHeating;

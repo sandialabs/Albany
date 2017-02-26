@@ -105,8 +105,8 @@ protected:
 
   // Input:
   //! Coordinate vector at vertices
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
-  PHX::MDField<ScalarT,Cell,Node> dof;
+  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
+  PHX::MDField<const ScalarT,Cell,Node> dof;
 
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::ArrayRCP<Teuchos::RCP<shards::CellTopology> > sideType;

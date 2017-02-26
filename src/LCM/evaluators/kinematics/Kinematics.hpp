@@ -53,10 +53,10 @@ namespace LCM {
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
     //! Input: displacement gradient
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> grad_u_;
+    PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> grad_u_;
 
     //! Input: integration weights
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights_;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights_;
   
     //! Output: deformation gradient
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> def_grad_;
@@ -91,7 +91,7 @@ namespace LCM {
     ///! Input, if RCU.
     AAdapt::rc::Field<2> def_grad_rc_;
     // For debugging.
-    PHX::MDField<ScalarT,Cell,Vertex,Dim> u_;
+    PHX::MDField<const ScalarT,Cell,Vertex,Dim> u_;
     bool check_det(typename Traits::EvalData d, int cell, int pt);
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT

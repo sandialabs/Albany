@@ -41,8 +41,8 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> GradU;
-  PHX::MDField<MeshScalarT, Cell, QuadPoint> weights;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> GradU;
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint> weights;
 
   // Output:
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> defgrad;

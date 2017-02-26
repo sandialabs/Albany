@@ -52,9 +52,8 @@ ElasticModulus(Teuchos::ParameterList& p) :
 #ifdef ALBANY_STOKHOS
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
-      fx(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
-    coordVec = fx;
+    coordVec = decltype(coordVec)
+      (p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
     this->addDependentField(coordVec);
 
     exp_rf_kl = 
@@ -81,9 +80,8 @@ ElasticModulus(Teuchos::ParameterList& p) :
   if ( p.isType<std::string>("QP Temperature Name") ) {
     Teuchos::RCP<PHX::DataLayout> scalar_dl =
       p.get< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
-    PHX::MDField<ScalarT,Cell,QuadPoint>
-      tmp(p.get<std::string>("QP Temperature Name"), scalar_dl);
-    Temperature = tmp;
+    Temperature = decltype(Temperature)
+      (p.get<std::string>("QP Temperature Name"), scalar_dl);
     this->addDependentField(Temperature);
     isThermoElastic = true;
     dEdT_value = elmd_list->get("dEdT Value", 0.0);
@@ -101,9 +99,7 @@ ElasticModulus(Teuchos::ParameterList& p) :
   if ( p.isType<std::string>("Porosity Name") ) {
       Teuchos::RCP<PHX::DataLayout> scalar_dl =
         p.get< Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout");
-      PHX::MDField<ScalarT,Cell,QuadPoint>
-        tporo(p.get<std::string>("Porosity Name"), scalar_dl);
-      porosity = tporo;
+      porosity = decltype(porosity)(p.get<std::string>("Porosity Name"), scalar_dl);
       this->addDependentField(porosity);
       isPoroElastic = true;
 

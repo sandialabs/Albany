@@ -126,7 +126,7 @@ namespace LCM {
     ///
     /// Input: current coordinates of the nodes
     ///
-    PHX::MDField<ScalarT,Cell,Vertex,Dim> currentCoords;
+    PHX::MDField<const ScalarT,Cell,Vertex,Dim> currentCoords;
 
     ///
     /// Output: MeshSizeField (isotropic scalar)
@@ -239,7 +239,7 @@ namespace LCM {
     ///
     /// Input: current coordinates of the nodes
     ///
-    PHX::MDField<ScalarT,Cell,Vertex,Dim> currentCoords;
+    PHX::MDField<const ScalarT,Cell,Vertex,Dim> currentCoords;
 
     ///
     /// Output: MeshSizeField (anisotropic scalar)

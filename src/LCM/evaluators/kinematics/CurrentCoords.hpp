@@ -41,8 +41,8 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> refCoords;
-  PHX::MDField<ScalarT,Cell,Vertex,Dim> displacement;
+  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> refCoords;
+  PHX::MDField<const ScalarT,Cell,Vertex,Dim> displacement;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Vertex,Dim> currentCoords;

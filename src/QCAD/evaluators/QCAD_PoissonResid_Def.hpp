@@ -8,6 +8,7 @@
 #include "Phalanx_DataLayout.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
+#include "PHAL_Utilities.hpp"
 
 
 //**********************************************************************
@@ -67,11 +68,12 @@ evaluateFields(typename Traits::EvalData workset)
 
   FST::integrate(PhiResidual.get_view(), PhiFlux.get_view(), wGradBF.get_view(), false); // "false" overwrites
 
+  auto neg_source = PHAL::create_copy("neg_Source", Source.get_view());
   if (haveSource) {
     for (int i=0; i<Source.dimension(0); i++)
       for (int j=0; j<Source.dimension(1); j++)
-        Source(i,j) *= -1.0;
-    FST::integrate(PhiResidual.get_view(), Source.get_view(), wBF.get_view(), true); // "true" sums into
+        neg_source(i,j) = -1.0 * Source(i,j);
+    FST::integrate(PhiResidual.get_view(), neg_source, wBF.get_view(), true); // "true" sums into
   }
 }
 //**********************************************************************

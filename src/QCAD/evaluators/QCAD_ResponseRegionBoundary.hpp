@@ -60,8 +60,8 @@ namespace QCAD {
     std::size_t numQPs;
     std::size_t numDims;
 
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
     
     //Region boundary: for now just min/max along each coordinate direction
     //  * just MeshScalarTs - no derivative information for region boundaries yet, as
