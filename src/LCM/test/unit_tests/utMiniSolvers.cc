@@ -4,13 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "gtest/gtest.h"
-#include "Albany_Utils.cpp"
 #include "MiniLinearSolver.h"
 #include "MiniNonlinearSolver.h"
 #include "MiniSolvers.h"
-
-// Why is this needed?
-bool TpetraBuild = false;
 
 int
 main(int ac, char * av[])
@@ -63,7 +59,7 @@ TEST(AlbanyResidual, NewtonBanana)
   pstep =
       minitensor::stepFactory<FN, ValueT, DIM>(minitensor::StepType::NEWTON);
 
-  ALBANY_EXPECT(pstep->name() != nullptr);
+  assert(pstep->name() != nullptr);
 
   STEP &
   step = *pstep;

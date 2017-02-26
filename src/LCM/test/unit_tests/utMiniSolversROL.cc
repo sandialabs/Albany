@@ -6,11 +6,7 @@
 #include "gtest/gtest.h"
 #include "MiniSolvers.h"
 #include "MiniNonlinearSolver.h"
-#include "PHAL_AlbanyTraits.hpp"
 #include "ROL_MiniTensor_MiniSolver.hpp"
-
-// Why is this needed?
-bool TpetraBuild = false;
 
 int
 main(int ac, char * av[])

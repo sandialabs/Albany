@@ -8,7 +8,6 @@
 
 #include "MiniTensor_Solvers.h"
 #include "MiniNonlinearSolver.h"
-#include "PHAL_AlbanyTraits.hpp"
 
 //
 // Define some nonlinear systems (NLS) to test nonlinear solution methods.
