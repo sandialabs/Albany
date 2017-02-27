@@ -112,9 +112,7 @@ template<typename EvalT, typename Traits>
 void TotalVolume<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  const int imax = this->global_response.size();
-
-  PHAL::set(this->global_response, 0.0);
+  PHAL::set(this->global_response_eval, 0.0);
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -127,7 +125,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   std::cout << "TotalVolume evaluateFields()" << std::endl;
 
-  PHAL::set(this->local_response, 0.0);
+  PHAL::set(this->local_response_eval, 0.0);
 
   ScalarT volume;
   ScalarT mass;
@@ -138,12 +136,12 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         volume = weighted_measure(cell,qp);
         for(std::size_t ell = 0; ell < numLevels; ++ell) {
-          this->local_response(cell, 0) += volume;
-          this->global_response(0) += volume;
+          this->local_response_eval(cell, 0) += volume;
+          this->global_response_eval(0) += volume;
 
           mass = volume*density(cell, qp, ell);
-          this->local_response(cell, 1) += mass;
-          this->global_response(1) += mass;
+          this->local_response_eval(cell, 1) += mass;
+          this->global_response_eval(1) += mass;
 
           //amb velocity (Velx) has rank 4, not 3. It appears to have dimension
           // 1 in the fourth index. An Aeras person needs to check this.
@@ -151,8 +149,8 @@ evaluateFields(typename Traits::EvalData workset)
           energy = pie(cell, qp, ell)*(0.5*velocity(cell, qp, ell, level)*velocity(cell,qp,ell, level) +
               Cpstar(cell,qp,ell)*temperature(cell,qp,ell) + Phi0 )*volume;
 
-          this->local_response(cell, 2) += energy;
-          this->global_response(2) += energy;
+          this->local_response_eval(cell, 2) += energy;
+          this->global_response_eval(2) += energy;
  }
 
     }
@@ -186,7 +184,7 @@ postEvaluate(typename Traits::PostEvalData workset)
     &this->global_response[0]);
 #else
   //amb reduceAll workaround.
-  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
+  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response_eval);
 #endif
 
   // Do global scattering
@@ -198,7 +196,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   std::cout << "Total Mass is " << this->global_response(1) << std::endl;
   std::cout << "Total Energy is " << this->global_response(2) << std::endl;
 #else
-  PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+  PHAL::MDFieldIterator<ScalarT> gr(this->global_response_eval);
   std::cout << "Total Volume is " << *gr << std::endl;
   ++gr;
   std::cout << "Total Mass is " << *gr << std::endl;

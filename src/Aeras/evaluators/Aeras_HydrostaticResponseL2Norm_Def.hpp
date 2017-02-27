@@ -99,9 +99,9 @@ template<typename EvalT, typename Traits>
 void HydrostaticResponseL2Norm<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  const int imax = this->global_response.size();
+  const int imax = this->global_response_eval.size();
 
-  PHAL::set(this->global_response, 0.0);
+  PHAL::set(this->global_response_eval, 0.0);
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -115,7 +115,7 @@ evaluateFields(typename Traits::EvalData workset)
   *out << "HydrostaticResponseL2Norm evaluateFields() \n" << std::endl;
 
   //Zero out local response 
-  PHAL::set(this->local_response, 0.0);
+  PHAL::set(this->local_response_eval, 0.0);
 
   //Print out time, for reference 
   *out << "time = " << workset.current_time << std::endl;
@@ -130,20 +130,20 @@ evaluateFields(typename Traits::EvalData workset)
       wm = weighted_measure(cell,qp);
       //surface pressure field: dof 0
       dim = 0;
-      this->local_response(cell,dim) += wm*spressure(cell,qp)*spressure(cell,qp); 
-      this->global_response(dim) += wm*spressure(cell,qp)*spressure(cell,qp);
+      this->local_response_eval(cell,dim) += wm*spressure(cell,qp)*spressure(cell,qp); 
+      this->global_response_eval(dim) += wm*spressure(cell,qp)*spressure(cell,qp);
       for (std::size_t level=0; level < numLevels; ++level) {
         //u-velocity field: dof 1, 4, 7, ...
         //v-velocity field: dof 2, 5, 8, ...
         for (std::size_t i=0; i < 2; ++i) {
           dim = 1 + i + level*3; 
-          this->local_response(cell,dim) += wm*velocity(cell,qp,level,i)*velocity(cell,qp,level,i); 
-          this->global_response(dim) += wm*velocity(cell,qp,level,i)*velocity(cell,qp,level,i);
+          this->local_response_eval(cell,dim) += wm*velocity(cell,qp,level,i)*velocity(cell,qp,level,i); 
+          this->global_response_eval(dim) += wm*velocity(cell,qp,level,i)*velocity(cell,qp,level,i);
         }
         //temperature field: dof 3, 6, 9, .... 
         dim = 3 + level*3; 
-        this->local_response(cell,dim) += wm*temperature(cell,qp,level)*temperature(cell,qp,level); 
-        this->global_response(dim) += wm*temperature(cell,qp,level)*temperature(cell,qp,level);
+        this->local_response_eval(cell,dim) += wm*temperature(cell,qp,level)*temperature(cell,qp,level); 
+        this->global_response_eval(dim) += wm*temperature(cell,qp,level)*temperature(cell,qp,level);
         //FIXME: ultimately, will want to add tracers. 
       } 
     }
@@ -177,7 +177,7 @@ postEvaluate(typename Traits::PostEvalData workset)
     &this->global_response[0]);
 #else
   //amb reduceAll workaround.
-  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
+  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response_eval);
 #endif
 
   // Do global scattering
@@ -185,7 +185,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
 #if 0
 #else
-  PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+  PHAL::MDFieldIterator<ScalarT> gr(this->global_response_eval);
   for (int i=0; i < responseSize; ++i) {
     ScalarT norm_sq = *gr; 
     *gr = sqrt(norm_sq);  

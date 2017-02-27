@@ -126,9 +126,9 @@ template<typename EvalT, typename Traits>
 void HydrostaticResponseL2Error<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  const int imax = this->global_response.size();
+  const int imax = this->global_response_eval.size();
 
-  PHAL::set(this->global_response, 0.0);
+  PHAL::set(this->global_response_eval, 0.0);
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -142,7 +142,7 @@ evaluateFields(typename Traits::EvalData workset)
   *out << "HydrostaticResponseL2Error evaluateFields() \n" << std::endl;
 
   //Zero out local response 
-  PHAL::set(this->local_response, 0.0);
+  PHAL::set(this->local_response_eval, 0.0);
 
   Kokkos::DynRankView<ScalarT, PHX::Device> spressure_ref 
     = Kokkos::createDynRankView(spressure.get_view(), "HRE", workset.numCells, numQPs); //spressure_ref (exact solution) at quad points
@@ -258,63 +258,63 @@ evaluateFields(typename Traits::EvalData workset)
       //L2 absolute error squared
       dim = 0;
       spressure_err_sq = spressure_err(cell,qp)*spressure_err(cell,qp); 
-      this->local_response(cell,dim) += wm*spressure_err_sq;
-      this->global_response(dim) += wm*spressure_err_sq;
+      this->local_response_eval(cell,dim) += wm*spressure_err_sq;
+      this->global_response_eval(dim) += wm*spressure_err_sq;
       //norm ref solution squared
       dim++;  
       spressure_ref_norm_sq = spressure_ref(cell,qp)*spressure_ref(cell,qp); 
-      this->local_response(cell,dim) += wm*spressure_ref_norm_sq;
-      this->global_response(dim) += wm*spressure_ref_norm_sq;
+      this->local_response_eval(cell,dim) += wm*spressure_ref_norm_sq;
+      this->global_response_eval(dim) += wm*spressure_ref_norm_sq;
       //L2 relative error
       dim++; 
-      this->local_response(cell,dim) = 0.0;
-      this->global_response(dim) = 0.0;
+      this->local_response_eval(cell,dim) = 0.0;
+      this->global_response_eval(dim) = 0.0;
       for (std::size_t level=0; level < numLevels; ++level) {
         //u-velocity field: dof 1, 4, 7, ...
         //L2 absolute error squared
         dim = 3 + level*9; 
         uvelocity_err_sq = velocity_err(cell,qp,level,0)*velocity_err(cell,qp,level,0); 
-        this->local_response(cell,dim) += wm*uvelocity_err_sq; 
-        this->global_response(dim) += wm*uvelocity_err_sq; 
+        this->local_response_eval(cell,dim) += wm*uvelocity_err_sq; 
+        this->global_response_eval(dim) += wm*uvelocity_err_sq; 
         //norm ref solution squared
         dim++;  
         uvelocity_ref_norm_sq = velocity_ref(cell,qp,level,0)*velocity_ref(cell,qp,level,0); 
-        this->local_response(cell,dim) += wm*uvelocity_ref_norm_sq; 
-        this->global_response(dim) += wm*uvelocity_ref_norm_sq; 
+        this->local_response_eval(cell,dim) += wm*uvelocity_ref_norm_sq; 
+        this->global_response_eval(dim) += wm*uvelocity_ref_norm_sq; 
         //L2 relative error
         dim++; 
-        this->local_response(cell,dim) = 0.0;
-        this->global_response(dim) = 0.0;
+        this->local_response_eval(cell,dim) = 0.0;
+        this->global_response_eval(dim) = 0.0;
         //v-velocity field: dof 2, 5, 8, ...
         //L2 absolute error squared
         dim = 6 + level*9; 
         vvelocity_err_sq = velocity_err(cell,qp,level,1)*velocity_err(cell,qp,level,1); 
-        this->local_response(cell,dim) += wm*vvelocity_err_sq;  
-        this->global_response(dim) += wm*vvelocity_err_sq;  
+        this->local_response_eval(cell,dim) += wm*vvelocity_err_sq;  
+        this->global_response_eval(dim) += wm*vvelocity_err_sq;  
         //norm ref solution squared
         dim++;  
         vvelocity_ref_norm_sq = velocity_ref(cell,qp,level,1)*velocity_ref(cell,qp,level,1); 
-        this->local_response(cell,dim) += wm*vvelocity_ref_norm_sq;  
-        this->global_response(dim) += wm*vvelocity_ref_norm_sq;  
+        this->local_response_eval(cell,dim) += wm*vvelocity_ref_norm_sq;  
+        this->global_response_eval(dim) += wm*vvelocity_ref_norm_sq;  
         //L2 relative error
         dim++; 
-        this->local_response(cell,dim) = 0.0;
-        this->global_response(dim) = 0.0;
+        this->local_response_eval(cell,dim) = 0.0;
+        this->global_response_eval(dim) = 0.0;
         //temperature field: dof 3, 6, 9, .... 
         //L2 absolute error squared
         dim = 9 + level*9; 
         temperature_err_sq = temperature_err(cell,qp,level)*temperature_err(cell,qp,level); 
-        this->local_response(cell,dim) += wm*temperature_err_sq; 
-        this->global_response(dim) += wm*temperature_err_sq;
+        this->local_response_eval(cell,dim) += wm*temperature_err_sq; 
+        this->global_response_eval(dim) += wm*temperature_err_sq;
         //norm ref solution squared
         dim++;  
         temperature_ref_norm_sq = temperature_ref(cell,qp,level)*temperature_ref(cell,qp,level); 
-        this->local_response(cell,dim) += wm*temperature_ref_norm_sq; 
-        this->global_response(dim) += wm*temperature_ref_norm_sq;
+        this->local_response_eval(cell,dim) += wm*temperature_ref_norm_sq; 
+        this->global_response_eval(dim) += wm*temperature_ref_norm_sq;
         //L2 relative error
         dim++; 
-        this->local_response(cell,dim) = 0.0;
-        this->global_response(dim) = 0.0;
+        this->local_response_eval(cell,dim) = 0.0;
+        this->global_response_eval(dim) = 0.0;
         //FIXME: ultimately, will want to add tracers. 
       }
     }
@@ -348,7 +348,7 @@ postEvaluate(typename Traits::PostEvalData workset)
     &this->global_response[0]);
 #else
   //amb reduceAll workaround.
-  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
+  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response_eval);
 #endif
 
   // Do global scattering
@@ -356,7 +356,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
 #if 0
 #else
-  PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+  PHAL::MDFieldIterator<ScalarT> gr(this->global_response_eval);
   int nEqnsError = responseSize/3;  
   for (int i=0; i < nEqnsError; ++i) {
     ScalarT abs_err_sq = *gr; 
