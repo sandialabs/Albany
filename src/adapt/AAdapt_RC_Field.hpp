@@ -86,7 +86,7 @@ private:
 //! Transform \c w_grad_bf using F[n-1,0].
 void transformWeightedGradientBF(
   const Field<2>& F, const RealType& det_F,
-  const PHX::MDField<RealType, Cell, Node, QuadPoint, Dim>& w_grad_bf,
+  const PHX::MDField<RealType const, Cell, Node, QuadPoint, Dim>& w_grad_bf,
   const int cell, const int pt, const int node, RealType w[3]);
 
 } // namespace rc
