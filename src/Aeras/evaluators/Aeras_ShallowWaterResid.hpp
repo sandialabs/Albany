@@ -52,26 +52,31 @@ public:
 private:
 
 	// Input:
-	PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-	PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-	PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
-	PHX::MDField<ScalarT,Cell,Node,VecDim> U;  //vecDim works but its really Dim+1?
-	PHX::MDField<ScalarT,Cell,Node,VecDim> UNodal;
-	PHX::MDField<ScalarT,Cell,Node,VecDim> UDotDotNodal;
-	PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
-	PHX::MDField<ScalarT,Cell,Node,VecDim> UDot;
-	PHX::MDField<ScalarT,Cell,Node,VecDim> UDotDot;
+	PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
+	PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+	PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+	PHX::MDField<const ScalarT,Cell,Node,VecDim> U;  //vecDim works but its really Dim+1?
+	PHX::MDField<const ScalarT,Cell,Node,VecDim> UNodal;
+	PHX::MDField<const ScalarT,Cell,Node,VecDim> UDotDotNodal;
+	PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
+	PHX::MDField<const ScalarT,Cell,Node,VecDim> UDot;
+	PHX::MDField<const ScalarT,Cell,Node,VecDim> UDotDot;
 	Teuchos::RCP<shards::CellTopology> cellType;
 
-	PHX::MDField<ScalarT,Cell,QuadPoint> mountainHeight;
+	PHX::MDField<const ScalarT,Cell,QuadPoint> mountainHeight;
 
-	PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
+	PHX::MDField<const MeshScalarT,Cell,QuadPoint> weighted_measure;
 
-	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian;
-	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
-	PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det;
+	PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian;
+	PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
+	PHX::MDField<const MeshScalarT,Cell,QuadPoint> jacobian_det;
 	Kokkos::DynRankView<RealType, PHX::Device>    grad_at_cub_points;
-	PHX::MDField<ScalarT,Cell,Node,VecDim> hyperviscosity;
+	PHX::MDField<const ScalarT,Cell,Node,VecDim> hyperviscosity;
+
+	PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
+	PHX::MDField<const MeshScalarT,Cell,Node> lambda_nodal;
+	PHX::MDField<const MeshScalarT,Cell,Node> theta_nodal;
+	PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> source;
 
 	// Output:
 	PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
@@ -92,11 +97,6 @@ private:
 	Kokkos::DynRankView<MeshScalarT, PHX::Device>  nodal_det_j;
 	Kokkos::DynRankView<ScalarT, PHX::Device> wrk_;
 #endif
-
-	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
-	PHX::MDField<MeshScalarT,Cell,Node> lambda_nodal;
-	PHX::MDField<MeshScalarT,Cell,Node> theta_nodal;
-	PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> source;
 
 	ScalarT gravity; // gravity parameter -- Sacado-ized for sensitivities
 	ScalarT Omega;   //rotation of earth  -- Sacado-ized for sensitivities

@@ -49,7 +49,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> sphere_coord;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> sphere_coord;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> hs;

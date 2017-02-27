@@ -46,10 +46,10 @@ public:
 private:
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>         wBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint>         wBF;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint>       spDot;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level> divpivelx;
+  PHX::MDField<const ScalarT,Cell,QuadPoint>       spDot;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level> divpivelx;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual;

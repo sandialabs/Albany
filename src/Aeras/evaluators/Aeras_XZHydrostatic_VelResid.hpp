@@ -41,16 +41,16 @@ public:
 private:
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>         wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint>         wBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  keGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  PhiGrad;
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim>  etadotdVelx;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  pGrad;
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim>  uDot;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  DVelx;
-  PHX::MDField<ScalarT,Cell,Node,Level>      density;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level,Dim>  keGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level,Dim>  PhiGrad;
+  PHX::MDField<const ScalarT,Cell,Node,Level,Dim>  etadotdVelx;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level,Dim>  pGrad;
+  PHX::MDField<const ScalarT,Cell,Node,Level,Dim>  uDot;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level,Dim>  DVelx;
+  PHX::MDField<const ScalarT,Cell,Node,Level>      density;
 
 
   // Output:

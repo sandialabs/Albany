@@ -34,7 +34,7 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   // Input:
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim> Velx;
+  PHX::MDField<const ScalarT,Cell,Node,Level,Dim> Velx;
   
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Level,Dim> Velocity;

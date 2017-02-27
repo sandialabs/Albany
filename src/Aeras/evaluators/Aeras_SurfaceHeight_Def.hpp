@@ -38,7 +38,7 @@ SurfaceHeight(const Teuchos::ParameterList& p,
   else if (hsType == "Mountain") {
  //  *out << "Mountain surface height!" << std::endl;
    hs_type = MOUNTAIN;
-   sphere_coord = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+   sphere_coord = decltype(sphere_coord)(
             p.get<std::string>("Spherical Coord Name"),dl->qp_gradient);
    this->addDependentField(sphere_coord);
 

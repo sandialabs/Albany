@@ -41,29 +41,30 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-  // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      divpivelx;
-  PHX::MDField<ScalarT,Cell,Node>            pdotP0;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Pi;
-  PHX::MDField<ScalarT,Cell,Node,Level>      Temperature;
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim>  Velocity;
+  // Input:
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level>      divpivelx;
+  PHX::MDField<const ScalarT,Cell,Node>            pdotP0;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level>      Pi;
+  PHX::MDField<const ScalarT,Cell,Node,Level>      Temperature;
+  PHX::MDField<const ScalarT,Cell,Node,Level,Dim>  Velocity;
 
+  // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      etadotdT;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      etadot;
   PHX::MDField<ScalarT,Cell,Node,Level,Dim>  etadotdVelx;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Pidot;
 
-  std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > Tracer;
+  std::map<std::string, PHX::MDField<const ScalarT,Cell,QuadPoint,Level> > Tracer;
   //std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > etadotdTracer;
   std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > dedotpiTracerde;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
-  Kokkos::vector< Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device> Tracer_kokkos;
+  Kokkos::vector< Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device> Tracer_kokkos;
   //Kokkos::vector< Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device> etadotdTracer_kokkos; 
   Kokkos::vector< Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device> dedotpiTracerde_kokkos;
 
-  typename Kokkos::vector< Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device>::t_dev d_Tracer;
+  typename Kokkos::vector< Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device>::t_dev d_Tracer;
   //typename Kokkos::vector< Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device>::t_dev d_etadotdTracer;
   typename Kokkos::vector< Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device>::t_dev d_dedotpiTracerde;
 
