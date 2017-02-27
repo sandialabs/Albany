@@ -1,7 +1,7 @@
 <ParameterList>
   <ParameterList name="Coupled System">
     <Parameter
-      name="Model XML Files"
+      name="Model Input Files"
       type="Array(string)"
       value="{cube0.xml, cube1.xml}" />
   </ParameterList>

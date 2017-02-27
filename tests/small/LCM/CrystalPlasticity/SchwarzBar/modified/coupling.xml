@@ -2,7 +2,7 @@
 
      <ParameterList name="Coupled System">
 
-            <Parameter name="Model XML Files" 
+            <Parameter name="Model Input Files" 
                      type="Array(string)"
 		     value="{../lower_bar.xml, 
 		             ../gauge.xml, 

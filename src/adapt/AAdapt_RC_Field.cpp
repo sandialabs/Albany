@@ -112,7 +112,7 @@ void Field<2>::multiplyInto (typename Tensor<ad_type, 2>::type& f_incr) const {
 
 void transformWeightedGradientBF (
   const Field<2>& F, const RealType& F_det,
-  const PHX::MDField<RealType, Cell, Node, QuadPoint, Dim>& w_grad_bf,
+  const PHX::MDField<RealType const, Cell, Node, QuadPoint, Dim>& w_grad_bf,
   const int cell, const int pt, const int node, RealType w[3])
 {
   const int nd = w_grad_bf.dimension(3);

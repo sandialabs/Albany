@@ -43,11 +43,11 @@ SchwarzMultiscale(
   Teuchos::ParameterList &
   coupled_system_params = app_params->sublist("Coupled System");
 
-  // Get names of individual model xml input files from problem parameterlist
+  // Get names of individual model input files from problem parameterlist
   Teuchos::Array<std::string>
   model_filenames =
       coupled_system_params.get<Teuchos::Array<std::string>>(
-          "Model XML Files");
+          "Model Input Files");
 
   //number of models
   num_models_ = model_filenames.size();

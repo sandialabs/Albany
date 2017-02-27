@@ -1,7 +1,7 @@
 <ParameterList>
   <ParameterList name="Coupled System">
     <Parameter
-      name="Model XML Files"
+      name="Model Input Files"
       type="Array(string)"
       value="{coarse0.xml, coarse1.xml}" />
   </ParameterList>

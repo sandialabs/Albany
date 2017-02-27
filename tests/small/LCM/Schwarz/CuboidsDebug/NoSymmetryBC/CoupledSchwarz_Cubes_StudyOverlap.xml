@@ -10,7 +10,7 @@
 
 <!-- ~~~~ List xml files with discretization information ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-          <Parameter name="Model XML Files" 
+          <Parameter name="Model Input Files" 
                      type="Array(string)"
                      value="{CoupledSchwarz_Cubes_StudyOverlap_Cube0_Model.xml,
                              CoupledSchwarz_Cubes_StudyOverlap_Cube1_Model.xml}"/>
