@@ -44,7 +44,7 @@ public:
 
 private:
   // Input:
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim> u;
+  PHX::MDField<const ScalarT,Cell,Node,Level,Dim> u;
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Level>    ke;
 

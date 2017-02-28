@@ -40,7 +40,7 @@ public:
 
 private:
   // Input
-  PHX::MDField<ScalarT,Cell,Node>       Ps;
+  PHX::MDField<const ScalarT,Cell,Node>       Ps;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Level> Pressure;

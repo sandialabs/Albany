@@ -41,9 +41,9 @@ public:
 
 private:
   // Input:
-  PHX::MDField<ScalarT,Cell,Node,Level> temperature;
-  PHX::MDField<ScalarT,Cell,Node,Level> Pi;
-  PHX::MDField<ScalarT,Cell,Node,Level> qv;
+  PHX::MDField<const ScalarT,Cell,Node,Level> temperature;
+  PHX::MDField<const ScalarT,Cell,Node,Level> Pi;
+  PHX::MDField<const ScalarT,Cell,Node,Level> qv;
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Level> virt_t;
   PHX::MDField<ScalarT,Cell,Node,Level> Cpstar;

@@ -43,10 +43,10 @@ private:
                      
   //why not Eta??? it is in XZHydrostaticProblem
                      
-  PHX::MDField<ScalarT,Cell,Node,Level> density;
-  PHX::MDField<ScalarT,Cell,Node,Level> Pi;
+  PHX::MDField<const ScalarT,Cell,Node,Level> density;
+  PHX::MDField<const ScalarT,Cell,Node,Level> Pi;
                      
-  PHX::MDField<ScalarT,Cell,Node> PhiSurf;
+  PHX::MDField<const ScalarT,Cell,Node> PhiSurf;
                      
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Level> Phi;

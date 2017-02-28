@@ -39,9 +39,9 @@ public:
 private:
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT> val_node;
+  PHX::MDField<const ScalarT> val_node;
   //! Basis Functions
-  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
+  PHX::MDField<const RealType,Cell,Node,QuadPoint> BF;
 
   // Output:
   //! Values at quadrature points

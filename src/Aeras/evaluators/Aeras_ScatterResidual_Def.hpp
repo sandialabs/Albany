@@ -39,20 +39,20 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
 
   int eq = 0;
   for (int i = 0; i < numNodeVar; ++i, ++eq) {
-    PHX::MDField<ScalarT> mdf(node_names[i],dl->node_scalar);
+    PHX::MDField<const ScalarT> mdf(node_names[i],dl->node_scalar);
     val[eq] = mdf;
     this->addDependentField(val[eq]);
   }   
   for (int i = 0; i < numVectorLevelVar; ++i, ++eq) {
-    PHX::MDField<ScalarT> mdf(vector_level_names[i],dl->node_vector_level); val[eq] = mdf;
+    PHX::MDField<const ScalarT> mdf(vector_level_names[i],dl->node_vector_level); val[eq] = mdf;
     this->addDependentField(val[eq]);
   }
   for (int i = 0; i < numScalarLevelVar; ++i, ++eq) {
-    PHX::MDField<ScalarT> mdf(scalar_level_names[i],dl->node_scalar_level); val[eq] = mdf;
+    PHX::MDField<const ScalarT> mdf(scalar_level_names[i],dl->node_scalar_level); val[eq] = mdf;
     this->addDependentField(val[eq]);
   }
   for (int i = 0; i < numTracerVar; ++i, ++eq) {
-    PHX::MDField<ScalarT> mdf(tracer_names[i],dl->node_scalar_level);
+    PHX::MDField<const ScalarT> mdf(tracer_names[i],dl->node_scalar_level);
     val[eq] = mdf;
     this->addDependentField(val[eq]);
   }
@@ -217,7 +217,7 @@ operator() (const ScatterResid_is_adjoint_Tag& tag, const int& cell) const{
   for (int node = 0; node < this->numNodes; ++node) {
     int n = 0, eq = 0;
     for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-      const typename PHAL::Ref<ScalarT>::type valptr = d_val[j](cell,node);
+      auto valptr = d_val[j](cell,node);
       rowT = Index(cell,node,n);
       if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
       for (unsigned int i=0; i<nunk; ++i) {
@@ -231,7 +231,7 @@ operator() (const ScatterResid_is_adjoint_Tag& tag, const int& cell) const{
     for (int level = 0; level < this->numLevels; level++) {
       for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
         for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-          const typename PHAL::Ref<ScalarT>::type valptr = d_val[j](cell,node,level,dim);
+          auto valptr = d_val[j](cell,node,level,dim);
           rowT = Index(cell,node,n);
           if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
           for (int i=0; i<nunk; ++i){
@@ -243,7 +243,7 @@ operator() (const ScatterResid_is_adjoint_Tag& tag, const int& cell) const{
 
         for (int j = eq+this->numVectorLevelVar;
              j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-          const typename PHAL::Ref<ScalarT>::type valptr = d_val[j](cell,node,level);
+          auto valptr = d_val[j](cell,node,level);
           rowT = Index(cell,node,n);
           if (loadResid) fT->sumIntoLocalValue(Index(cell,node,n), valptr.val());
           for (int i=0; i<nunk; ++i){ 
@@ -258,7 +258,7 @@ operator() (const ScatterResid_is_adjoint_Tag& tag, const int& cell) const{
     eq += this->numVectorLevelVar+this->numScalarLevelVar;
     for (int level = 0; level < this->numLevels; ++level) {
       for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-        const typename PHAL::Ref<ScalarT>::type valptr = d_val[j](cell,node,level);
+        auto valptr = d_val[j](cell,node,level);
         rowT = Index(cell,node,n);
         if (loadResid) fT->sumIntoLocalValue(Index(cell,node,n), valptr.val());
         for (int i=0; i<nunk; ++i) {
@@ -286,7 +286,7 @@ operator() (const ScatterResid_no_adjoint_Tag& tag, const int& cell) const{
   for (int node = 0; node < this->numNodes; ++node) {
     int n = 0, eq = 0;
     for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-      const typename PHAL::Ref<ScalarT>::type valptr = d_val[j](cell,node);
+      auto valptr = d_val[j](cell,node);
       rowT = Index(cell,node,n);
       if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
       for (unsigned int i=0; i<nunk; ++i) { 
@@ -301,7 +301,7 @@ operator() (const ScatterResid_no_adjoint_Tag& tag, const int& cell) const{
     for (int level = 0; level < this->numLevels; level++) {
       for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
         for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-          const typename PHAL::Ref<ScalarT>::type valptr = d_val[j](cell,node,level,dim);
+          auto valptr = d_val[j](cell,node,level,dim);
           rowT = Index(cell,node,n);
           if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
           for (int i=0; i<nunk; ++i) { 
@@ -314,7 +314,7 @@ operator() (const ScatterResid_no_adjoint_Tag& tag, const int& cell) const{
 
         for (int j = eq+this->numVectorLevelVar;
              j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-          const typename PHAL::Ref<ScalarT>::type valptr = d_val[j](cell,node,level);
+          auto valptr = d_val[j](cell,node,level);
           rowT = Index(cell,node,n);
           if (loadResid) fT->sumIntoLocalValue(Index(cell,node,n), valptr.val());
           for (int i=0; i<nunk; ++i) {
@@ -330,7 +330,7 @@ operator() (const ScatterResid_no_adjoint_Tag& tag, const int& cell) const{
     eq += this->numVectorLevelVar+this->numScalarLevelVar;
     for (int level = 0; level < this->numLevels; ++level) {
       for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-        const typename PHAL::Ref<ScalarT>::type valptr = d_val[j](cell,node,level);
+        auto valptr = d_val[j](cell,node,level);
         rowT = Index(cell,node,n);
         if (loadResid) fT->sumIntoLocalValue(Index(cell,node,n), valptr.val());
         for (int i=0; i<nunk; ++i) {
@@ -375,7 +375,7 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-        const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node);
+        auto valptr = (this->val[j])(cell,node);
         rowT = eqID[n];
         if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
         if (valptr.hasFastAccess()) {
@@ -405,7 +405,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int level = 0; level < this->numLevels; level++) {
         for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-            const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
+            auto valptr = (this->val[j])(cell,node,level,dim);
             rowT = eqID[n];
             if (loadResid) fT->sumIntoLocalValue(rowT, valptr.val());
             if (valptr.hasFastAccess()) {
@@ -434,7 +434,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
         for (int j = eq+this->numVectorLevelVar;
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-          const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
+          auto valptr = (this->val[j])(cell,node,level);
           rowT = eqID[n];
           if (loadResid) fT->sumIntoLocalValue(eqID[n], valptr.val());
           if (valptr.hasFastAccess()) {
@@ -464,7 +464,7 @@ evaluateFields(typename Traits::EvalData workset)
       eq += this->numVectorLevelVar+this->numScalarLevelVar;
       for (int level = 0; level < this->numLevels; ++level) {
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
+          auto valptr = (this->val[j])(cell,node,level);
           rowT = eqID[n];
           if (loadResid) fT->sumIntoLocalValue(eqID[n], valptr.val());
           if (valptr.hasFastAccess()) {
@@ -571,7 +571,7 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-        typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node);
+        auto valptr = (this->val[j])(cell,node);
         rowT = eqID[n];
         if (fT != Teuchos::null) fT->sumIntoLocalValue(rowT, valptr.val());
         if (JVT != Teuchos::null)
@@ -585,7 +585,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int level = 0; level < this->numLevels; level++) {
         for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-            typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
+            auto valptr = (this->val[j])(cell,node,level,dim);
             rowT = eqID[n];
             if (fT != Teuchos::null) fT->sumIntoLocalValue(rowT, valptr.val());
             if (JVT != Teuchos::null)
@@ -598,7 +598,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
         for (int j = eq+this->numVectorLevelVar;
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j,++n) {
-          typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
+          auto valptr = (this->val[j])(cell,node,level);
           rowT = eqID[n];
           if (fT != Teuchos::null) fT->sumIntoLocalValue(rowT, valptr.val());
           if (JVT != Teuchos::null)
@@ -612,7 +612,7 @@ evaluateFields(typename Traits::EvalData workset)
      eq += this->numVectorLevelVar+this->numScalarLevelVar;
       for (int level = 0; level < this->numLevels; ++level) {
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
+          auto valptr = (this->val[j])(cell,node,level);
           rowT = eqID[n];
           if (fT != Teuchos::null) fT->sumIntoLocalValue(rowT, valptr.val());
           if (JVT != Teuchos::null)
@@ -655,7 +655,7 @@ evaluateFields(typename Traits::EvalData workset)
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
 //        fT_nonconstView[eqID[n]] += (this->val[j])(cell,node);
-        typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node);
+        auto valptr = (this->val[j])(cell,node);
         for (int block=0; block<nblock; block++)
           (*f)[block][nodeID[node][n]] += valptr.coeff(block);
       }
@@ -664,7 +664,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
 //            fT_nonconstView[eqID[n]] += (this->val[j])(cell,node,level,dim);
-            typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
+            auto valptr = (this->val[j])(cell,node,level,dim);
             for (int block=0; block<nblock; block++)
               (*f)[block][nodeID[node][n]] += valptr.coeff(block);
           }
@@ -672,7 +672,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int j = eq+this->numVectorLevelVar; 
                  j < eq+this->numVectorLevelVar + this->numScalarLevelVar; ++j, ++n) {
 //          fT_nonconstView[eqID[n]] += (this->val[j])(cell,node,level);
-          typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
+          auto valptr = (this->val[j])(cell,node,level);
           for (int block=0; block<nblock; block++)
             (*f)[block][nodeID[node][n]] += valptr.coeff(block);
         }
@@ -681,7 +681,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int level = 0; level < this->numLevels; ++level) { 
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
 //          fT_nonconstView[eqID[n]] += (this->val[j])(cell,node,level);
-          typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
+          auto valptr = (this->val[j])(cell,node,level);
           for (int block=0; block<nblock; block++)
             (*f)[block][nodeID[node][n]] += valptr.coeff(block);
         }
@@ -738,7 +738,7 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-        const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node);
+        auto valptr = (this->val[j])(cell,node);
         row = eqID[n]; 
         if (loadResid) {
 //          fT->sumIntoLocalValue(rowT, valptr.val());
@@ -777,7 +777,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int level = 0; level < this->numLevels; level++) { 
         for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-            const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
+            auto valptr = (this->val[j])(cell,node,level,dim);
             row = eqID[n]; 
             if (loadResid) {
               for (int block=0; block<nblock; block++)
@@ -799,7 +799,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
         for (int j = eq+this->numVectorLevelVar; 
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
-          const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
+          auto valptr = (this->val[j])(cell,node,level);
           row = eqID[n]; 
           if (loadResid) {
             for (int block=0; block<nblock; block++)
@@ -822,7 +822,7 @@ evaluateFields(typename Traits::EvalData workset)
       eq += this->numVectorLevelVar+this->numScalarLevelVar;
       for (int level = 0; level < this->numLevels; ++level) { 
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          const typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
+          auto valptr = (this->val[j])(cell,node,level);
           row = eqID[n]; 
           if (loadResid) {
             for (int block=0; block<nblock; block++)
