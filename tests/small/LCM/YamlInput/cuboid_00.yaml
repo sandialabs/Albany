@@ -1,0 +1,47 @@
+ANONYMOUS:
+  Scaling:
+    Scale: 1.0
+  DataTransferKit:
+    Map Type: Consistent Interpolation
+    L2 Projection:      
+      Integration Order: 2
+    Consistent Interpolation:
+    Point Cloud:
+      Map Type: Moving Least Square Reconstruction
+      Basis Type: Wu
+      Basis Order: 4
+      Spatial Dimension: 3
+      RBF Radius: 1.0
+    Search:
+      Track Missed Range Entities: true
+  Debug Output:
+    Write Solution to MatrixMarket: true
+    Write Solution to Standard Output: true  
+  # MODEL DECLARATION, Look in the Problem directory
+  Problem:
+    # Declare your Physics (What you intend to model)
+    Name: Mechanics 3D
+    # Have Phalanx output a graph of the used evaluators
+    Phalanx Graph Visualization Detail: 0
+    # YAML filename with material definitions
+    MaterialDB Filename: materials_00.yaml
+    # BOUNDARY CONDITIONS on node sets
+    Dirichlet BCs:
+      DBC on NS nodelist_1 for DOF X: 0.0
+      DBC on NS nodelist_3 for DOF Y: 0.0
+      DBC on NS nodelist_5 for DOF Z: 0.0
+      DBC on NS nodelist_6 for DOF Schwarz:
+        BC Function: Schwarz
+        Coupled Application: cuboid_01.yaml
+        Coupled Block: coarse
+  # MESH, done here, or input from file.
+  # If the latter, the domain decomposition 
+  # must already be performed for parallel jobs.
+  Discretization:
+    Method: Ioss
+    Exodus Input File Name: cuboid_00.g
+    Exodus Output File Name: cuboid_00.e
+    Exodus Solution Name: disp
+    Exodus Residual Name: resid
+    Separate Evaluators by Element Block: true
+    Number Of Time Derivatives: 1
