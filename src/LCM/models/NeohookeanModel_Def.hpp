@@ -8,15 +8,17 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-namespace LCM
-{
+namespace LCM {
 
-//----------------------------------------------------------------------------
+//
+//
+//
 template<typename EvalT, typename Traits>
 NeohookeanModel<EvalT, Traits>::
-NeohookeanModel(Teuchos::ParameterList* p,
-                const Teuchos::RCP<Albany::Layouts>& dl) :
-  LCM::ConstitutiveModel<EvalT, Traits>(p, dl)
+NeohookeanModel(
+    Teuchos::ParameterList* p,
+    const Teuchos::RCP<Albany::Layouts>& dl) :
+    LCM::ConstitutiveModel<EvalT, Traits>(p, dl)
 {
   std::string F_string = (*field_name_map_)["F"];
   std::string J_string = (*field_name_map_)["J"];
@@ -31,8 +33,7 @@ NeohookeanModel(Teuchos::ParameterList* p,
   // define the evaluated fields
   this->eval_field_map_.insert(std::make_pair(cauchy, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair("Energy", dl->qp_scalar));
-  this->eval_field_map_.insert(
-      std::make_pair("Material Tangent", dl->qp_tensor4));
+  this->eval_field_map_.insert(std::make_pair("Material Tangent", dl->qp_tensor4));
 
   // define the state variables
   this->num_state_variables_++;
@@ -43,10 +44,14 @@ NeohookeanModel(Teuchos::ParameterList* p,
   this->state_var_old_state_flags_.push_back(false);
   this->state_var_output_flags_.push_back(p->get<bool>("Output Cauchy Stress", false));
 }
-//----------------------------------------------------------------------------
+
+//
+//
+//
 template<typename EvalT, typename Traits>
 void NeohookeanModel<EvalT, Traits>::
-computeState(typename Traits::EvalData workset,
+computeState(
+    typename Traits::EvalData workset,
     DepFieldMap dep_fields,
     FieldMap eval_fields)
 {
@@ -56,16 +61,18 @@ computeState(typename Traits::EvalData workset,
 
   // extract dependent MDFields
   auto def_grad = *dep_fields[F_string];
-  auto J = *dep_fields[J_string];
+  auto jac_det = *dep_fields[J_string];
   auto poissons_ratio = *dep_fields["Poissons Ratio"];
   auto elastic_modulus = *dep_fields["Elastic Modulus"];
+
   // extract evaluated MDFields
   auto stress = *eval_fields[cauchy];
   auto energy = *eval_fields["Energy"];
   auto tangent = *eval_fields["Material Tangent"];
+
   ScalarT kappa;
   ScalarT mu, mubar;
-  ScalarT Jm53, Jm23;
+  ScalarT Jm13, Jm53, Jm23;
   ScalarT smag;
 
   minitensor::Tensor<ScalarT> F(num_dims_), b(num_dims_), sigma(num_dims_);
@@ -78,20 +85,29 @@ computeState(typename Traits::EvalData workset,
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
-      kappa =
-          elastic_modulus(cell, pt)
-              / (3. * (1. - 2. * poissons_ratio(cell, pt)));
-      mu =
-          elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
-      Jm53 = std::pow(J(cell, pt), -5. / 3.);
-      Jm23 = Jm53 * J(cell, pt);
+      auto const &
+      E = elastic_modulus(cell, pt);
 
-      F.fill(def_grad,cell, pt,0,0);
-      b = F * transpose(F);
+      auto const &
+      nu = poissons_ratio(cell, pt);
+
+      auto const &
+      J = jac_det(cell, pt);
+
+      kappa = E / (3.0 * (1.0 - 2.0 * nu));
+
+      mu = E / (2.0 * (1.0 + nu));
+
+      Jm13 = 1.0 / std::cbrt(J);
+
+      Jm23 = Jm13 * Jm13;
+
+      Jm53 = Jm23 * Jm23 * Jm13;
+
+      F.fill(def_grad, cell, pt, 0, 0);
+      b = F * minitensor::transpose(F);
       mubar = (1.0 / 3.0) * mu * Jm23 * minitensor::trace(b);
-
-      sigma = 0.5 * kappa * (J(cell, pt) - 1. / J(cell, pt)) * I
-          + mu * Jm53 * minitensor::dev(b);
+      sigma = 0.5 * kappa * (J - 1.0 / J) * I + mu * Jm53 * minitensor::dev(b);
 
       for (int i = 0; i < num_dims_; ++i) {
         for (int j = 0; j < num_dims_; ++j) {
@@ -99,26 +115,21 @@ computeState(typename Traits::EvalData workset,
         }
       }
 
-      if (compute_energy_) { // compute energy
-        energy(cell, pt) =
-            0.5 * kappa
-                * (0.5 * (J(cell, pt) * J(cell, pt) - 1.0)
-                    - std::log(J(cell, pt)))
-                + 0.5 * mu * (Jm23 * minitensor::trace(b) - 3.0);
+      if (compute_energy_ == true) {
+        energy(cell, pt) = 0.5 * kappa * (0.5 * (J * J - 1.0)
+            - std::log(J)) + 0.5 * mu * (Jm23 * minitensor::trace(b) - 3.0);
       }
 
-      if (compute_tangent_) { // compute tangent
+      if (compute_tangent_ == true) {
 
         s = minitensor::dev(sigma);
         smag = minitensor::norm(s);
         n = s / smag;
 
         dsigmadb =
-            kappa * J(cell, pt) * J(cell, pt) * I3
-                - kappa * (J(cell, pt) * J(cell, pt) - 1.0) * I1
-                + 2.0 * mubar * (I1 - (1.0 / 3.0) * I3)
-                - 2.0 / 3.0 * smag
-                    * (minitensor::tensor(n, I) + minitensor::tensor(I, n));
+            kappa * J * J * I3 - kappa * (J * J - 1.0) * I1 +
+            2.0 * mubar * (I1 - (1.0 / 3.0) * I3) - 2.0 / 3.0 * smag *
+              (minitensor::tensor(n, I) + minitensor::tensor(I, n));
 
         for (int i = 0; i < num_dims_; ++i) {
           for (int j = 0; j < num_dims_; ++j) {
@@ -133,14 +144,14 @@ computeState(typename Traits::EvalData workset,
     }
   }
 
-  if (have_temperature_) {
+  if (have_temperature_ == true) {
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
-        F.fill(def_grad,cell,pt,0,0);
+        F.fill(def_grad, cell, pt, 0, 0);
         ScalarT J = minitensor::det(F);
-        sigma.fill(stress,cell,pt,0,0);
-        sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
-          * (temperature_(cell,pt) - ref_temperature_) * I;
+        sigma.fill(stress, cell, pt, 0, 0);
+        sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J * J))
+            * (temperature_(cell, pt) - ref_temperature_) * I;
 
         for (int i = 0; i < num_dims_; ++i) {
           for (int j = 0; j < num_dims_; ++j) {
@@ -151,6 +162,5 @@ computeState(typename Traits::EvalData workset,
     }
   }
 }
-//----------------------------------------------------------------------------
-}
 
+} // namespace LCM
