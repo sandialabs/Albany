@@ -4,6 +4,7 @@
     <!--Parameter name="Write Solution to MatrixMarket" type="bool" value="true"/-->
   </ParameterList>
   <ParameterList name="Problem">
+    <Parameter name="Number RBMs for ML" type="int" value="3"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 3D"/>

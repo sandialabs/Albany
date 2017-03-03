@@ -4,11 +4,15 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputML1.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputML1.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputML3.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputML3.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMLRay.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputMLRay.xml COPYONLY)
 endif() 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMueLuShort1.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputMueLuShort1.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMueLuShort3.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputMueLuShort3.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMueLuShortRay.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputMueLuShortRay.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/thickness.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/thickness.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/temperature.ascii
