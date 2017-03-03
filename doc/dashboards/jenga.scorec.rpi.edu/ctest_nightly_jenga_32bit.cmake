@@ -410,11 +410,11 @@ IF(BUILD_TRILINOS)
     "-DTrilinos_ENABLE_ROL:BOOL=ON"
     #
     "-DCMAKE_CXX_COMPILER:PATH=/users/ghansen/ompi-gcc/bin/mpicxx"
-    "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -DNDEBUG ${extra_cxx_flags}'"
+    "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native ${extra_cxx_flags}'"
     "-DCMAKE_C_COMPILER:PATH=/users/ghansen/ompi-gcc/bin/mpicc"
-    "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
+    "-DCMAKE_C_FLAGS:STRING='-O3 -march=native'"
     "-DCMAKE_Fortran_COMPILER:PATH=/users/ghansen/ompi-gcc/bin/mpifort"
-    "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
+    "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native'"
     "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
     "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
@@ -521,10 +521,10 @@ IF(BUILD_PERIDIGM)
     "-DUSE_PV:BOOL=OFF"
     "-DBOOST_ROOT=${BOOST_DIR}"
     "-DCMAKE_CXX_COMPILER:PATH=/users/ghansen/ompi-gcc/bin/mpicxx"
-    "-DCMAKE_CXX_FLAGS:STRING='-O3 -std=c++11 -march=native -DNDEBUG ${extra_cxx_flags}'"
+    "-DCMAKE_CXX_FLAGS:STRING='-O3 -std=c++11 -march=native ${extra_cxx_flags}'"
     "-DCMAKE_CXX_LINK_FLAGS:STRING='-lhdf5_hl -lnetcdf -L${PREFIX_DIR}/lib'"
     "-DCMAKE_C_COMPILER:PATH=/users/ghansen/ompi-gcc/bin/mpicc"
-    "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
+    "-DCMAKE_C_FLAGS:STRING='-O3 -march=native'"
     )
 
   if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/PeridigmBuild")
