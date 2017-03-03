@@ -46,17 +46,18 @@ Ths nightly build results for the Trilinos and SCOREC libraries along with
 Albany and the status of the Albany regression tests are posted on the Albany CDash site at
 [http://my.cdash.org/index.php?project=Albany](http://my.cdash.org/index.php?project=Albany)
 
-The regression test suite is contained within the Albany repository in the directory:
+The regression test suite is contained within the Albany repository in the directories:
 
-	/examples
+	/tests/small
+	/tests/large
 
 These tests are stand-alone and also serve as nice examples about how to describe various multiphysics problems.
 They also serve as a template for developing new simulations.
 
-Once Albany is built, the default test suite is executed by typing *ctest*
-within the build directory. Any individual test/example can be executed by
-changing directories to the desired example, and executing *ctest* in the
-example directory. The vast majority of Albany tests run in parallel using MPI.
+Once Albany is built, the default test suite is executed by typing `ctest`
+within the build directory. Any individual test can be executed by
+moving into its sub-directory, and executing `ctest` in that
+sub-directory. Many Albany tests run in parallel using up to 4 MPI ranks.
 
 ## Documentation
 
