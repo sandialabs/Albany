@@ -74,6 +74,14 @@ int countJac; //counter which counts instances of Jacobian (for debug output)
 int countRes; //counter which counts instances of residual (for debug output)
 int countScale;
 
+namespace Albany {
+  int scaled_nonlinear_solver_step = -1;
+}
+
+namespace NOX {
+  extern int nonlinear_solver_step;
+}
+
 extern bool TpetraBuild;
 
 Albany::Application::
@@ -1358,6 +1366,8 @@ computeGlobalResidualImplT(
 #endif
 
   if (scaleBCdofs == false && scale != 1.0) {
+    std::cout << "DEBUG: computing residual in step " << ::NOX::nonlinear_solver_step
+      << ", scaling it by scaleVec from step " << ::Albany::scaled_nonlinear_solver_step << '\n';
     fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
   }
 
@@ -1698,15 +1708,10 @@ computeGlobalJacobianImplT(const double alpha,
     TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian Export");
     //Allocate and populate scaleVec_
     if (scale != 1.0) {
-      if (scaleVec_ == Teuchos::null) {
-        scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap()));
+      if (scaleVec_ == Teuchos::null ||
+          scaleVec_->getGlobalLength() != jacT->getGlobalNumCols()) {
+        scaleVec_ = Teuchos::rcp(new Tpetra_Vector(jacT->getColMap()));
         setScale();
-      }
-      else if (Teuchos::nonnull(fT)) {
-        if (scaleVec_->getGlobalLength() != fT->getGlobalLength()) {
-          scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap()));
-          setScale();
-        }
       }
     }
 
@@ -1741,11 +1746,16 @@ computeGlobalJacobianImplT(const double alpha,
       //set the scaling
       setScale(jacT);
       //scale Jacobian
+      std::cout << "DEBUG: computing jacobian in step " << ::NOX::nonlinear_solver_step
+        << ", scaling it by scaleVec from step " << ::Albany::scaled_nonlinear_solver_step << '\n';
       jacT->leftScale(*scaleVec_);
       jacT->resumeFill();
       //scale residual
-      if (Teuchos::nonnull(fT))
+      if (Teuchos::nonnull(fT)) {
+        std::cout << "DEBUG: computing jacobian in step " << ::NOX::nonlinear_solver_step
+          << ", scaling residual by scaleVec from step " << ::Albany::scaled_nonlinear_solver_step << '\n';
         fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
+      }
 #ifdef WRITE_TO_MATRIX_MARKET
       char nameJacScaled[100];  //create string for file name
       sprintf(nameJacScaled, "jacScaled%i.mm", countScale);
@@ -4883,6 +4893,10 @@ void Albany::Application::loadWorksetNodesetInfo(PHAL::Workset& workset)
   workset.nodeSetCoords = Teuchos::rcpFromRef(disc->getNodeSetCoords());
 }
 
+namespace NOX {
+  extern int nonlinear_solver_step;
+}
+
 void Albany::Application::setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT)
 {
   if (scale_type == CONSTANT) { //constant scaling
@@ -4890,9 +4904,11 @@ void Albany::Application::setScale(Teuchos::RCP<Tpetra_CrsMatrix> jacT)
   }
   else if (scale_type == DIAG) { //diagonal scaling
     if (jacT == Teuchos::null) {
+      ::Albany::scaled_nonlinear_solver_step = -2;
       scaleVec_->putScalar(1.0);
     }
     else {
+      ::Albany::scaled_nonlinear_solver_step = ::NOX::nonlinear_solver_step;
       jacT->getLocalDiagCopy(*scaleVec_);
       //std::cout << "scaleVec_ noninv: " <<std::endl;
       //scaleVec_->describe(*out, Teuchos::VERB_EXTREME);
