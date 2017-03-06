@@ -1,4 +1,7 @@
 <ParameterList>
+  <ParameterList name="Scaling">
+    <Parameter name="Type" type="string" value="Diagonal"/>
+  </ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
@@ -24,7 +27,7 @@
       <Parameter name="Parameter 0" type="string" value="Time"/>
     </ParameterList>
     <ParameterList name="Response Functions">
-      <Parameter name="Number"      type="int"    value="0"/>
+      <Parameter name="Number"      type="int"    value="1"/>
       <Parameter name="Response 0"  type="string" value="Solution Average"/>
     </ParameterList>
     <ParameterList name="Adaptation">
@@ -43,7 +46,7 @@
     <Parameter name="Workset Size" type="int" value="10000"/>
     <Parameter name="Mesh Model Input File Name" type="string" value="annular.dmg"/>
     <Parameter name="PUMI Input File Name" type="string" value="annular.smb"/>
-    <Parameter name="PUMI Output File Name" type="string" value="out_adapt_no_scale.vtk"/>
+    <Parameter name="PUMI Output File Name" type="string" value="out_single_step_scale_adapt.vtk"/>
     <Parameter name="Cubature Degree" type="int" value="1"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{ 5, Region_5}"/>
@@ -76,12 +79,12 @@
       </ParameterList>
     </ParameterList>
     <ParameterList name="NOX">
+      <ParameterList name="Linear Solver">
+        <Parameter name="Tolerance" type="double" value="1.0e-6"/>
+      </ParameterList>
       <ParameterList name="Direction">
         <Parameter name="Method" type="string" value="Newton"/>
         <ParameterList name="Newton">
-          <ParameterList name="Linear Solver">
-            <Parameter name="Tolerance" type="double" value="1.0e-12"/>
-          </ParameterList>
           <Parameter name="Forcing Term Method" type="string" value="Constant"/>
           <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
           <ParameterList name="Stratimikos Linear Solver">
@@ -90,7 +93,7 @@
               <ParameterList name="Linear Solver Types">
                 <ParameterList name="Belos">
                   <ParameterList name="VerboseObject">
-                    <Parameter name="Verbosity Level" type="string" value="none"/>
+                    <Parameter name="Verbosity Level" type="string" value="low"/>
                   </ParameterList>
                   <Parameter name="Solver Type" type="string" value="Block GMRES"/>
                   <ParameterList name="Solver Types">
@@ -149,29 +152,6 @@
       </ParameterList>
       <ParameterList name="Solver Options">
         <Parameter name="Status Test Check Type" type="string" value="Complete"/>
-      </ParameterList>
-      <ParameterList name="Status Tests">
-        <Parameter name="Test Type" type="string" value="Combo"/>
-        <Parameter name="Combo Type" type="string" value="OR"/>
-        <Parameter name="Number of Tests" type="int" value="4"/>
-        <ParameterList name="Test 0">
-          <Parameter name="Test Type" type="string" value="NormF"/>
-          <Parameter name="Norm Type" type="string" value="Two Norm"/>
-          <Parameter name="Scale Type" type="string" value="Unscaled"/>
-          <Parameter name="Tolerance" type="double" value="1.0e-6"/>
-        </ParameterList>
-        <ParameterList name="Test 1">
-          <Parameter name="Test Type" type="string" value="MaxIters"/>
-          <Parameter name="Maximum Iterations" type="int" value="100"/>
-        </ParameterList>
-        <ParameterList name="Test 2">
-          <Parameter name="Test Type" type="string" value="FiniteValue"/>
-        </ParameterList>
-        <ParameterList name="Test 3">
-          <Parameter name="Test Type" type="string" value="NormUpdate"/>
-          <Parameter name="Scale Type" type="string" value="Unscaled"/>
-          <Parameter name="Tolerance" type="double" value="1e-11"/>
-        </ParameterList>
       </ParameterList>
     </ParameterList>
   </ParameterList>
