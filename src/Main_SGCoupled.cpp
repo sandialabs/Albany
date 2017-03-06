@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
     int idx = outArgs.Ng()-1;
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg = 
       outArgs.get_g_sg(idx);
-    Teuchos::RCP<Stokhos::SGModelEvaluator> sg_model =
+    Teuchos::RCP<Stokhos::SGModelEvaluatorBase> sg_model =
       coupledSolver->get_sg_model();
     Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> g_sg_local = 
       //sg_model->import_solution_poly(*(g_sg->getBlockVector()));

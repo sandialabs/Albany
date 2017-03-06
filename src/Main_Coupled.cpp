@@ -16,7 +16,7 @@
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Epetra_Map.h"  //Needed for serial, somehow
 #include "Piro_Epetra_NECoupledModelEvaluator.hpp"
-#include "Piro_Epetra_Factory.hpp"
+#include "Piro_Epetra_SolverFactory.hpp"
 #include "Epetra_LocalMap.h"
 #include "Epetra_Import.h"
 
@@ -103,8 +103,9 @@ int main(int argc, char *argv[]) {
 						    network_model,
 						    coupledPiroParams, 
 						    coupledComm));
+    Piro::Epetra::SolverFactory piroEpetraFactory;
     RCP<EpetraExt::ModelEvaluator> coupledSolver =
-      Piro::Epetra::Factory::createSolver(coupledPiroParams, coupledModel);
+      piroEpetraFactory.createSolver(coupledPiroParams, coupledModel);
     
     // Solve coupled system
     EpetraExt::ModelEvaluator::InArgs inArgs = coupledSolver->createInArgs();
