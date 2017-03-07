@@ -13,6 +13,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMueLuShort3.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputMueLuShort3.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMueLuShortRay.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputMueLuShortRay.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMueLuLongRay.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputMueLuLongRay.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/thickness.ascii
                ${CMAKE_CURRENT_BINARY_DIR}/thickness.ascii COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/temperature.ascii
