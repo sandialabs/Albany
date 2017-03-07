@@ -22,19 +22,20 @@
       </ParameterList>
       <ParameterList name="Poissons Ratio">
         <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="0"/>
+        <Parameter name="Value" type="double" value="0.29"/>
       </ParameterList>
       <ParameterList name="Thermal Conductivity">
 	       <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="0.169"/>
+        <Parameter name="Value" type="double" value="46.6"/>
       </ParameterList>
-      <Parameter name="Thermal Expansion Coefficient" type="double" value="1.0e-6"/>
+      <Parameter name="Thermal Expansion Coefficient" type="double" value="0.0000115002"/>
       <Parameter name="Thermal Transient Coefficient" type="double" value="1"/>
-      <Parameter name="Reference Temperature" type="double" value="200"/>
-      <Parameter name="Density" type="double" value="0.0079"/>
-      <Parameter name="Heat Capacity" type="double" value="4800000"/>
-      <Parameter name="Initial Temperature" type="double" value="19"/>
+      <Parameter name="Reference Temperature" type="double" value="19.0"/>
+      <Parameter name="Density" type="double" value="7900"/>
+      <Parameter name="Heat Capacity" type="double" value="480"/>
+      <Parameter name="Initial Temperature" type="double" value="19.0"/>
     </ParameterList>
+
     <ParameterList name="Mat_first-layer">
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="Linear Elastic"/>
@@ -45,17 +46,17 @@
       </ParameterList>
       <ParameterList name="Poissons Ratio">
         <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="0"/>
+        <Parameter name="Value" type="double" value="0.29"/>
       </ParameterList>
       <ParameterList name="Thermal Conductivity">
 	       <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="0.163"/>
+        <Parameter name="Value" type="double" value="46.6"/>
       </ParameterList>
-      <Parameter name="Thermal Expansion Coefficient" type="double" value="1.0e-6"/>
+      <Parameter name="Thermal Expansion Coefficient" type="double" value="0.0000115002"/>
       <Parameter name="Thermal Transient Coefficient" type="double" value="1"/>
-      <Parameter name="Reference Temperature" type="double" value="200"/>
-      <Parameter name="Density" type="double" value="0.0079"/>
-      <Parameter name="Heat Capacity" type="double" value="4800000"/>
+      <Parameter name="Reference Temperature" type="double" value="19.0"/>
+      <Parameter name="Density" type="double" value="7900"/>
+      <Parameter name="Heat Capacity" type="double" value="480"/>
       <ParameterList name="Source Functions">
         <ParameterList name="Thermal Source">
          <ParameterList name="Table">
@@ -63,8 +64,9 @@
          </ParameterList>
         </ParameterList>
       </ParameterList>
-      <Parameter name="Initial Temperature" type="double" value="19"/>
+      <Parameter name="Initial Temperature" type="double" value="19.0"/>
     </ParameterList>
+
     <ParameterList name="Mat_additional-layers">
       <ParameterList name="Material Model">
         <Parameter name="Model Name" type="string" value="Linear Elastic"/>
@@ -75,17 +77,17 @@
       </ParameterList>
       <ParameterList name="Poissons Ratio">
         <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="0"/>
+        <Parameter name="Value" type="double" value="0.29"/>
       </ParameterList>
       <ParameterList name="Thermal Conductivity">
 	       <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
-        <Parameter name="Value" type="double" value="0.169"/>
+        <Parameter name="Value" type="double" value="46.6"/>
       </ParameterList>
-      <Parameter name="Thermal Expansion Coefficient" type="double" value="1.0e-6"/>
+      <Parameter name="Thermal Expansion Coefficient" type="double" value="0.0000115002"/>
       <Parameter name="Thermal Transient Coefficient" type="double" value="1"/>
-      <Parameter name="Reference Temperature" type="double" value="200"/>
-      <Parameter name="Density" type="double" value="0.0079"/>
-      <Parameter name="Heat Capacity" type="double" value="4800000"/>
+      <Parameter name="Reference Temperature" type="double" value="19.0"/>
+      <Parameter name="Density" type="double" value="7900"/>
+      <Parameter name="Heat Capacity" type="double" value="480"/>
       <ParameterList name="Source Functions">
         <ParameterList name="Thermal Source">
          <ParameterList name="Table">
@@ -93,6 +95,7 @@
          </ParameterList>
         </ParameterList>
       </ParameterList>
+      <Parameter name="Initial Temperature" type="double" value="19.0"/>
     </ParameterList>
   </ParameterList>
 </ParameterList>
