@@ -1698,15 +1698,10 @@ computeGlobalJacobianImplT(const double alpha,
     TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Jacobian Export");
     //Allocate and populate scaleVec_
     if (scale != 1.0) {
-      if (scaleVec_ == Teuchos::null) {
-        scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap()));
+      if (scaleVec_ == Teuchos::null ||
+          scaleVec_->getGlobalLength() != jacT->getGlobalNumCols()) {
+        scaleVec_ = Teuchos::rcp(new Tpetra_Vector(jacT->getColMap()));
         setScale();
-      }
-      else if (Teuchos::nonnull(fT)) {
-        if (scaleVec_->getGlobalLength() != fT->getGlobalLength()) {
-          scaleVec_ = Teuchos::rcp(new Tpetra_Vector(fT->getMap()));
-          setScale();
-        }
       }
     }
 
@@ -1744,8 +1739,9 @@ computeGlobalJacobianImplT(const double alpha,
       jacT->leftScale(*scaleVec_);
       jacT->resumeFill();
       //scale residual
-      if (Teuchos::nonnull(fT))
+      if (Teuchos::nonnull(fT)) {
         fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
+      }
 #ifdef WRITE_TO_MATRIX_MARKET
       char nameJacScaled[100];  //create string for file name
       sprintf(nameJacScaled, "jacScaled%i.mm", countScale);
