@@ -30,20 +30,18 @@ SchwarzSequential(
     Teuchos::RCP<Teuchos::Comm<int> const> const & commT,
     Teuchos::RCP<Tpetra_Vector const> const & initial_guessT,
     Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const &
-    solver_factory)
+    lowsfb)
 {
   commT_ = commT;
 
-  solver_factory_ = solver_factory;
+  lowsfb_ = lowsfb;
 
-  //IK, 2/11/15: I am assuming for now we don't have any distributed parameters.
   num_dist_params_total_ = 0;
 
-  // Get "Coupled Schwarz" parameter sublist
   Teuchos::ParameterList &
   coupled_system_params = app_params->sublist("Coupled System");
 
-  // Get names of individual model input files from problem parameterlist
+  // Get names of individual model input files
   Teuchos::Array<std::string>
   model_filenames =
       coupled_system_params.get<Teuchos::Array<std::string>>(
@@ -67,131 +65,90 @@ SchwarzSequential(
     app_name_index_map->insert(app_name_index);
   }
 
-  //------------Determine whether to set OUT_ARG_W_prec supports or not--------
-  //------------This is only relevant for matrix-free GMRES--------------------
-  // Get "Piro" parameter sublist
-  Teuchos::ParameterList &
-  piroPL = app_params->sublist("Piro");
-
-  w_prec_supports_ = false;
-
-  //Check if problem is matrix-free  
-  std::string const
-  jacob_op = piroPL.isParameter("Jacobian Operator") == true ?
-      piroPL.get<std::string>("Jacobian Operator") : "";
-
-  //Get matrix-free preconditioner from input file
-  std::string const
-  mf_prec =
-      coupled_system_params.isParameter("Matrix-Free Preconditioner") == true ?
-      coupled_system_params.get<std::string>("Matrix-Free Preconditioner") :
-      "None";
-
-  if (mf_prec == "None") {
-    mf_prec_type_ = NONE;
-  }
-  else if (mf_prec == "Jacobi") {
-    mf_prec_type_ = JACOBI;
-  }
-  else if (mf_prec == "AbsRowSum") {
-    mf_prec_type_ = ABS_ROW_SUM;
-  }
-  else if (mf_prec == "Identity") {
-    mf_prec_type_ = ID;
-  }
-  else {
-    ALBANY_ASSERT(false, "Unknown Matrix-Free Preconditioner type.");
-  }
-
-  // If using matrix-free, get NOX sublist and set "Preconditioner Type" to
-  // "None" regardless  of what is specified in the input file.
-  // Currently preconditioners for matrix-free  are implemented in this
-  // ModelEvaluator, which requires the type to be "None".
-  // Also set w_prec_supoprts_ to true if using matrix-free with a
-  // preconditioner.
-  if ((mf_prec != "None") && (jacob_op != "")) {
-    //Set w_prec_supports_ to true
-    w_prec_supports_ = true;
-    //IKT, 11/14/16, FIXME: may want to add more cases, e.g., for Tempus
-    if (piroPL.isSublist("NOX")) {
-      Teuchos::ParameterList &noxPL = piroPL.sublist("NOX", true);
-      if (noxPL.isSublist("Direction")) {
-        Teuchos::ParameterList &dirPL = noxPL.sublist("Direction", true);
-        if (dirPL.isSublist("Newton")) {
-          Teuchos::ParameterList &newPL = dirPL.sublist("Newton", true);
-          if (newPL.isSublist("Stratimikos Linear Solver")) {
-            Teuchos::ParameterList &stratLSPL = newPL.sublist(
-                "Stratimikos Linear Solver",
-                true);
-            if (stratLSPL.isSublist("Stratimikos")) {
-              Teuchos::ParameterList &stratPL = stratLSPL.sublist(
-                  "Stratimikos",
-                  true);
-              stratPL.set<std::string>("Preconditioner Type", "None");
-            }
-          }
-        }
-      }
-    }
-  }
-
   // Create a NOX status test and associated machinery for cutting the
   // global time step when the CrystalPlasticity constitutive model's state
   // update routine fails
-  Teuchos::RCP<NOX::StatusTest::Generic> nox_status_test = Teuchos::rcp(
-      new NOX::StatusTest::ModelEvaluatorFlag);
-  Teuchos::RCP<NOX::Abstract::PrePostOperator> pre_post_operator = Teuchos::rcp(
-      new NOXSolverPrePostOperator);
-  Teuchos::RCP<NOXSolverPrePostOperator> nox_solver_pre_post_operator =
+  Teuchos::RCP<NOX::StatusTest::Generic>
+  nox_status_test = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag);
+
+  Teuchos::RCP<NOX::Abstract::PrePostOperator>
+  pre_post_operator = Teuchos::rcp(new NOXSolverPrePostOperator);
+
+  Teuchos::RCP<NOXSolverPrePostOperator>
+  nox_solver_pre_post_operator =
       Teuchos::rcp_dynamic_cast<NOXSolverPrePostOperator>(pre_post_operator);
-  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> statusTest =
+
+  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
+  status_test =
       Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(
           nox_status_test);
 
   // Acquire the NOX "Solver Options" and "Status Tests" parameter lists
-  Teuchos::RCP<Teuchos::ParameterList> solverOptionsParameterList;
-  Teuchos::RCP<Teuchos::ParameterList> statusTestsParameterList;
-  if (app_params->isSublist("Piro")) {
-    if (app_params->sublist("Piro").isSublist("NOX")) {
-      if (app_params->sublist("Piro").sublist("NOX").isSublist(
-          "Solver Options")) {
-        solverOptionsParameterList = Teuchos::rcpFromRef(
-            app_params->sublist("Piro").sublist("NOX").sublist(
-                "Solver Options"));
+  Teuchos::RCP<Teuchos::ParameterList>
+  solver_options_pl;
+
+  Teuchos::RCP<Teuchos::ParameterList>
+  status_tests_pl;
+
+  auto const
+  have_piro = app_params->isSublist("Piro");
+
+  if (have_piro == true) {
+
+    auto
+    piro_list = app_params->sublist("Piro");
+
+    auto const
+    have_nox = piro_list.isSublist("NOX");
+
+    if (have_nox == true) {
+
+      auto
+      nox_list = piro_list.sublist("NOX");
+
+      auto const
+      have_opts = nox_list.isSublist("Solver Options");
+
+      if (have_opts == true) {
+        solver_options_pl =
+            Teuchos::rcpFromRef(nox_list.sublist("Solver Options"));
       }
-      if (app_params->sublist("Piro").sublist("NOX").isSublist(
-          "Status Tests")) {
-        statusTestsParameterList = Teuchos::rcpFromRef(
-            app_params->sublist("Piro").sublist("NOX").sublist("Status Tests"));
+
+      auto const
+      have_tests = nox_list.isSublist("Status Tests");
+
+      if (have_tests == true) {
+        status_tests_pl =
+            Teuchos::rcpFromRef(nox_list.sublist("Status Tests"));
       }
     }
   }
 
-  if (!solverOptionsParameterList.is_null()
-      && !statusTestsParameterList.is_null()) {
+  bool const
+  have_opts_or_tests = solver_options_pl.is_null() == false &&
+    status_tests_pl.is_null() == false;
+
+  if (have_opts_or_tests == true) {
 
     // Add the model evaulator flag as a status test.
-    Teuchos::ParameterList originalStatusTestParameterList =
-        *statusTestsParameterList;
-    Teuchos::ParameterList newStatusTestParameterList;
-    newStatusTestParameterList.set<std::string>("Test Type", "Combo");
-    newStatusTestParameterList.set<std::string>("Combo Type", "OR");
-    newStatusTestParameterList.set<int>("Number of Tests", 2);
-    newStatusTestParameterList.sublist("Test 0");
-    newStatusTestParameterList.sublist("Test 0").set(
-        "Test Type",
-        "User Defined");
-    newStatusTestParameterList.sublist("Test 0").set(
-        "User Status Test",
-        nox_status_test);
-    newStatusTestParameterList.sublist("Test 1") =
-        originalStatusTestParameterList;
-    *statusTestsParameterList = newStatusTestParameterList;
+    Teuchos::ParameterList &
+    old_test_pl = *status_tests_pl;
 
-    nox_solver_pre_post_operator->setStatusTest(statusTest);
-    solverOptionsParameterList->set(
-        "User Defined Pre/Post Operator",
-        pre_post_operator);
+    Teuchos::ParameterList
+    new_test_pl;
+
+    new_test_pl.set<std::string>("Test Type", "Combo");
+    new_test_pl.set<std::string>("Combo Type", "OR");
+    new_test_pl.set<int>("Number of Tests", 2);
+    new_test_pl.sublist("Test 0");
+    new_test_pl.sublist("Test 0").set("Test Type","User Defined");
+    new_test_pl.sublist("Test 0").set("User Status Test", nox_status_test);
+    new_test_pl.sublist("Test 1") = old_test_pl;
+
+    *status_tests_pl = new_test_pl;
+
+    nox_solver_pre_post_operator->setStatusTest(status_test);
+    solver_options_pl->set("User Defined Pre/Post Operator", pre_post_operator);
   }
 
   //------------End getting of Preconditioner type----
@@ -690,7 +647,6 @@ LCM::SchwarzSequential::create_W_op() const
 Teuchos::RCP<Thyra::PreconditionerBase<ST>>
 LCM::SchwarzSequential::create_W_prec() const
 {
-  //Teuchos::RCP< Thyra::PreconditionerBase<ST>> W_prec;
   Teuchos::RCP<Thyra::DefaultPreconditioner<ST>> W_prec = Teuchos::rcp(
       new Thyra::DefaultPreconditioner<ST>);
   if (w_prec_supports_) {
@@ -703,17 +659,6 @@ LCM::SchwarzSequential::create_W_prec() const
         precs_,
         apps_);
     W_prec->initializeRight(W_op);
-    // IKT, 11/16/16: the following code is for Teko.
-    // We may want to switch to this once I figure out how to hook up Teko
-    // with natrix-free.
-    /*
-     // Get preconditioner factory from solver_factory_.
-     // For Teko, this will get the TekoFactory.
-     Teuchos::RCP<Thyra::PreconditionerFactoryBase<ST>>
-     prec_factory = solver_factory_->getPreconditionerFactory();
-     //Get the preconditioner operator from the prec_factory
-     W_prec = prec_factory->createPrec();
-     */
   }
   else {
     TEUCHOS_TEST_FOR_EXCEPT(w_prec_supports_);
@@ -725,7 +670,7 @@ LCM::SchwarzSequential::create_W_prec() const
 Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST>>
 LCM::SchwarzSequential::get_W_factory() const
 {
-  return solver_factory_;
+  return lowsfb_;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>

@@ -29,7 +29,7 @@ public:
       Teuchos::RCP<Teuchos::Comm<int> const> const & commT,
       Teuchos::RCP<Tpetra_Vector const> const & initial_guessT,
       Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const &
-      solver_factory);
+      lowsfb);
 
   /// Destructor
   ~SchwarzSequential();
@@ -188,7 +188,7 @@ private:
 
   /// For setting get_W_factory()
   Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>
-  solver_factory_;
+  lowsfb_;
     
   /// Array of Sacado parameter vectors
   mutable Teuchos::Array<Teuchos::Array<ParamVec>>
@@ -200,15 +200,13 @@ private:
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST>>
   solver_outargs_;
 
-  bool w_prec_supports_; 
-    
-  enum MF_PREC_TYPE {NONE, JACOBI, ABS_ROW_SUM, ID}; 
-    
+  bool w_prec_supports_;
+
+  enum MF_PREC_TYPE {NONE, JACOBI, ABS_ROW_SUM, ID};
+
   MF_PREC_TYPE mf_prec_type_;
 
   //void evalSchwarzSequentialLoop(const InArgs& inArgs, const OutArgs& outArgs) const;
- 
-
 };
 
 } // namespace LCM
