@@ -23,7 +23,8 @@ static int mm_counter_pre = 0;
 static int mm_counter_jac = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
-LCM::
+namespace LCM {
+
 SchwarzAlternating::
 SchwarzAlternating(
     Teuchos::RCP<Teuchos::ParameterList> const & app_params,
@@ -347,7 +348,7 @@ SchwarzAlternating(
     matdb_filename = problem_params_m->get<std::string>("MaterialDB Filename");
 
     material_dbs_[m] =
-        Teuchos::rcp(new LCM::MaterialDatabase(matdb_filename, commT_));
+        Teuchos::rcp(new MaterialDatabase(matdb_filename, commT_));
 
     std::cout << "Materials #" << m << ": " << matdb_filename << '\n';
 
@@ -364,7 +365,7 @@ SchwarzAlternating(
     model_app_params_[m]->set("Application Name Index Map", app_name_index_map);
 
     // Machinery for cutting the global time step from within the
-    // CrystalPlasticity constitutive model
+    // constitutive model
     model_app_params_[m]->sublist("Problem").set(
         "Constitutive Model NOX Status Test",
         nox_status_test);
@@ -380,24 +381,24 @@ SchwarzAlternating(
     models_[m] = model_factory.createT();
 
     //create array of individual model jacobians
-    Teuchos::RCP<Tpetra_Operator> const jac_temp =
-        Teuchos::nonnull(models_[m]->create_W_op()) ?
+    Teuchos::RCP<Tpetra_Operator> const
+    jac_temp = Teuchos::nonnull(models_[m]->create_W_op()) ?
             ConverterT::getTpetraOperator(models_[m]->create_W_op()) :
             Teuchos::null;
 
-    jacs_[m] =
-        Teuchos::nonnull(jac_temp) ?
+    jacs_[m] = Teuchos::nonnull(jac_temp) ?
             Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(jac_temp, true) :
             Teuchos::null;
 
     // create array of individual model preconditioners
     // these will have same graph as Jacobians for now
-    precs_[m] =
-        Teuchos::nonnull(jac_temp) ?
+    precs_[m] = Teuchos::nonnull(jac_temp) ?
             Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(jac_temp, true) :
             Teuchos::null;
-    if (precs_[m]->isFillActive())
+
+    if (precs_[m]->isFillActive()) {
       precs_[m]->fillComplete();
+    }
   }
 
   //Now get maps, InArgs, OutArgs for each model.
@@ -426,27 +427,8 @@ SchwarzAlternating(
 
   for (auto m = 0; m < num_models_; ++m) {
     for (auto l = 0; l < num_params_total_; ++l) {
-      try {
-        // Initialize Sacado parameter vector
-        // The following call will throw,
-        // and it is often due to an incorrect input line in the
-        // "Parameters" PL
-        // in the input file.
-        // Give the user a hint about what might be happening
-        apps_[m]->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
-            *(param_names_[l]), sacado_param_vecs_[m][l]);
-      }
-      catch (const std::logic_error & le) {
-        std::cout << "Error: exception thrown from ParamLib fillVector in ";
-        std::cout << __FILE__ << " line " << __LINE__ << '\n';
-        std::cout << "This is probably due to something incorrect in the";
-        std::cout << " \"Parameters\" list in the input file, ";
-        std::cout << "one of the lines:" << '\n';
-        for (auto k = 0; k < param_names_[l]->size(); ++k) {
-          std::cout << "      " << (*param_names_[l])[k] << '\n';
-        }
-        throw le; // rethrow to shut things down
-      }
+      apps_[m]->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
+          *(param_names_[l]), sacado_param_vecs_[m][l]);
     }
   }
 
@@ -494,25 +476,25 @@ SchwarzAlternating(
 
 }
 
-LCM::SchwarzAlternating::~SchwarzAlternating()
+SchwarzAlternating::~SchwarzAlternating()
 {
 }
 
 // Overridden from Thyra::ModelEvaluator<ST>
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-LCM::SchwarzAlternating::get_x_space() const
+SchwarzAlternating::get_x_space() const
 {
   return getThyraDomainSpace();
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-LCM::SchwarzAlternating::get_f_space() const
+SchwarzAlternating::get_f_space() const
 {
   return getThyraRangeSpace();
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-LCM::SchwarzAlternating::getThyraRangeSpace() const
+SchwarzAlternating::getThyraRangeSpace() const
 {
   if (range_space_ == Teuchos::null) {
     // loop over all vectors and build the vector space
@@ -530,7 +512,7 @@ LCM::SchwarzAlternating::getThyraRangeSpace() const
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-LCM::SchwarzAlternating::getThyraDomainSpace() const
+SchwarzAlternating::getThyraDomainSpace() const
 {
   if (domain_space_ == Teuchos::null) {
     // loop over all vectors and build the vector space
@@ -548,7 +530,7 @@ LCM::SchwarzAlternating::getThyraDomainSpace() const
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-LCM::SchwarzAlternating::get_p_space(int l) const
+SchwarzAlternating::get_p_space(int l) const
 {
   ALBANY_EXPECT(0 <= l && l < num_params_total_);
 
@@ -565,7 +547,7 @@ LCM::SchwarzAlternating::get_p_space(int l) const
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-LCM::SchwarzAlternating::get_g_space(int l) const
+SchwarzAlternating::get_g_space(int l) const
 {
   ALBANY_EXPECT(0 <= l && l < num_responses_total_);
 
@@ -578,88 +560,84 @@ LCM::SchwarzAlternating::get_g_space(int l) const
     vs_array.push_back(models_[m]->get_g_space(l));
   }
 
-  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-  Z = Thyra::productVectorSpace<ST>(vs_array);
-
-  return Z;
+  return Thyra::productVectorSpace<ST>(vs_array);
 }
 
 Teuchos::RCP<const Teuchos::Array<std::string>>
-LCM::SchwarzAlternating::get_p_names(int l) const
+SchwarzAlternating::get_p_names(int l) const
 {
   ALBANY_EXPECT(0 <= l && l < num_params_total_);
   return param_names_[l];
 }
 
 Teuchos::ArrayView<const std::string>
-LCM::SchwarzAlternating::get_g_names(int l) const
+SchwarzAlternating::get_g_names(int l) const
 {
   ALBANY_ASSERT(false, "not implemented");
   return Teuchos::ArrayView<const std::string>();
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-LCM::SchwarzAlternating::getNominalValues() const
+SchwarzAlternating::getNominalValues() const
 {
   return nominal_values_;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-LCM::SchwarzAlternating::getLowerBounds() const
+SchwarzAlternating::getLowerBounds() const
 {
   return Thyra::ModelEvaluatorBase::InArgs<ST>(); // Default value
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-LCM::SchwarzAlternating::getUpperBounds() const
+SchwarzAlternating::getUpperBounds() const
 {
   return Thyra::ModelEvaluatorBase::InArgs<ST>(); // Default value
 }
 
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
-LCM::SchwarzAlternating::create_W_op() const
+SchwarzAlternating::create_W_op() const
 {
-  LCM::Schwarz_CoupledJacobian csJac(commT_);
-  return csJac.getThyraCoupledJacobian(jacs_, apps_);
+  Schwarz_CoupledJacobian
+  jac(commT_);
+
+  return jac.getThyraCoupledJacobian(jacs_, apps_);
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST>>
-LCM::SchwarzAlternating::create_W_prec() const
+SchwarzAlternating::create_W_prec() const
 {
-  Teuchos::RCP<Thyra::DefaultPreconditioner<ST>> W_prec = Teuchos::rcp(
-      new Thyra::DefaultPreconditioner<ST>);
-  if (w_prec_supports_) {
-    LCM::Schwarz_CoupledJacobian csJac(commT_);
-    for (auto m = 0; m < num_models_; m++) {
-      if (precs_[m]->isFillActive())
-        precs_[m]->fillComplete();
-    }
-    Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = csJac.getThyraCoupledJacobian(
-        precs_,
-        apps_);
-    W_prec->initializeRight(W_op);
+  Teuchos::RCP<Thyra::DefaultPreconditioner<ST>>
+  W_prec = Teuchos::rcp(new Thyra::DefaultPreconditioner<ST>);
+
+  ALBANY_ASSERT(w_prec_supports_ == true);
+
+  Schwarz_CoupledJacobian jac(commT_);
+  for (auto m = 0; m < num_models_; m++) {
+    if (precs_[m]->isFillActive()) precs_[m]->fillComplete();
   }
-  else {
-    TEUCHOS_TEST_FOR_EXCEPT(w_prec_supports_);
-    //W_prec = Teuchos::null; 
-  }
+  Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = jac.getThyraCoupledJacobian(
+      precs_,
+      apps_);
+  W_prec->initializeRight(W_op);
+
   return W_prec;
 }
 
 Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST>>
-LCM::SchwarzAlternating::get_W_factory() const
+SchwarzAlternating::get_W_factory() const
 {
   return lowsfb_;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-LCM::SchwarzAlternating::createInArgs() const
+SchwarzAlternating::createInArgs() const
 {
   return this->createInArgsImpl();
 }
 
 void
-LCM::SchwarzAlternating::reportFinalPoint(
+SchwarzAlternating::reportFinalPoint(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & final_point,
     bool const was_solved)
 {
@@ -667,7 +645,7 @@ LCM::SchwarzAlternating::reportFinalPoint(
 }
 
 void
-LCM::SchwarzAlternating::
+SchwarzAlternating::
 allocateVectors()
 {
   //In this function, we create and set x_init and x_dot_init in
@@ -722,18 +700,17 @@ allocateVectors()
 
 /// Create operator form of dg/dx for distributed responses
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
-LCM::SchwarzAlternating::
+SchwarzAlternating::
 create_DgDx_op_impl(int j) const
 {
   ALBANY_EXPECT(0 <= j && j < num_responses_total_);
-
   //FIX ME: re-implement using product vectors! 
   return Teuchos::null;
 }
 
 /// Create operator form of dg/dx_dot for distributed responses
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
-LCM::SchwarzAlternating::
+SchwarzAlternating::
 create_DgDx_dot_op_impl(int j) const
 {
   ALBANY_EXPECT(0 <= j && j < num_responses_total_);
@@ -743,7 +720,7 @@ create_DgDx_dot_op_impl(int j) const
 
 /// Create OutArgs
 Thyra::ModelEvaluatorBase::OutArgs<ST>
-LCM::SchwarzAlternating::
+SchwarzAlternating::
 createOutArgsImpl() const
 {
   Thyra::ModelEvaluatorBase::OutArgsSetup<ST>
@@ -771,7 +748,7 @@ createOutArgsImpl() const
 
 /// Evaluate model on InArgs
 void
-LCM::SchwarzAlternating::
+SchwarzAlternating::
 evalModelImpl(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
@@ -918,8 +895,8 @@ evalModelImpl(
       fs_already_computed[m] = true;
     }
     // FIXME: create coupled W matrix from array of model W matrices
-    LCM::Schwarz_CoupledJacobian csJac(commT_);
-    W_op_outT = csJac.getThyraCoupledJacobian(jacs_, apps_);
+    Schwarz_CoupledJacobian jac(commT_);
+    W_op_outT = jac.getThyraCoupledJacobian(jacs_, apps_);
   }
 
   for (auto m = 0; m < num_models_; ++m) {
@@ -1073,9 +1050,9 @@ evalModelImpl(
         if (precs_[m]->isFillActive())
           precs_[m]->fillComplete();
       }
-      LCM::Schwarz_CoupledJacobian csJac(commT_);
+      Schwarz_CoupledJacobian jac(commT_);
       Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op =
-          csJac.getThyraCoupledJacobian(precs_, apps_);
+          jac.getThyraCoupledJacobian(precs_, apps_);
       Teuchos::RCP<Thyra::DefaultPreconditioner<ST>> W_prec = Teuchos::rcp(
           new Thyra::DefaultPreconditioner<ST>);
       W_prec->initializeRight(W_op);
@@ -1136,7 +1113,7 @@ evalModelImpl(
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-LCM::SchwarzAlternating::
+SchwarzAlternating::
 createInArgsImpl() const
 {
   Thyra::ModelEvaluatorBase::InArgsSetup<ST>
@@ -1164,7 +1141,7 @@ createInArgsImpl() const
 //applicaton parameters of applications not created via a
 //SolverFactory Check usage and whether necessary...
 Teuchos::RCP<Teuchos::ParameterList const>
-LCM::SchwarzAlternating::
+SchwarzAlternating::
 getValidAppParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList>
@@ -1189,7 +1166,7 @@ getValidAppParameters() const
 //Copied from QCAD::CoupledPoissonSchrodinger
 //Check usage and whether neessary...
 Teuchos::RCP<Teuchos::ParameterList const>
-LCM::SchwarzAlternating::
+SchwarzAlternating::
 getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList>
@@ -1211,3 +1188,4 @@ getValidProblemParameters() const
   return list;
 }
 
+} // namespace LCM

@@ -123,7 +123,6 @@ protected:
       Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
       Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
   
-
 private:
 
   Teuchos::RCP<Teuchos::ParameterList const>
@@ -134,6 +133,12 @@ private:
 
   Thyra::ModelEvaluatorBase::InArgs<ST>
   createInArgsImpl() const;
+
+  /// Schwarz Alternating loop
+  void
+  SchwarzLoop(
+      Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
+      Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
 
   /// List of free parameter names
   Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>
@@ -206,7 +211,6 @@ private:
 
   MF_PREC_TYPE mf_prec_type_;
 
-  //void evalSchwarzAlternatingLoop(const InArgs& inArgs, const OutArgs& outArgs) const;
 };
 
 } // namespace LCM

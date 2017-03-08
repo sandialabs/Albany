@@ -29,7 +29,7 @@ public:
       Teuchos::RCP<Teuchos::Comm<int> const> const & commT,
       Teuchos::RCP<Tpetra_Vector const> const & initial_guessT,
       Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const &
-      solver_factory);
+      lowsfb);
 
   /// Destructor
   ~SchwarzCoupled();
@@ -188,7 +188,7 @@ private:
 
   /// For setting get_W_factory()
   Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>
-  solver_factory_;
+  lowsfb_;
     
   /// Array of Sacado parameter vectors
   mutable Teuchos::Array<Teuchos::Array<ParamVec>>

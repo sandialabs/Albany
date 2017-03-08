@@ -24,18 +24,19 @@ static int mm_counter_pre = 0;
 static int mm_counter_jac = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
-LCM::
+namespace LCM {
+
 SchwarzCoupled::
 SchwarzCoupled(
     Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     Teuchos::RCP<Teuchos::Comm<int> const> const & commT,
     Teuchos::RCP<Tpetra_Vector const> const & initial_guessT,
     Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const &
-    solver_factory)
+    lowsfb)
 {
   commT_ = commT;
 
-  solver_factory_ = solver_factory;
+  lowsfb_ = lowsfb;
 
   //IK, 2/11/15: I am assuming for now we don't have any distributed parameters.
   num_dist_params_total_ = 0;
@@ -385,7 +386,7 @@ SchwarzCoupled(
         TEUCHOS_TEST_FOR_EXCEPTION(
             true,
             std::logic_error,
-            "Error in LCM::CoupledSchwarz! Model input file " <<
+            "Error in CoupledSchwarz! Model input file " <<
             model_filenames[m] <<
             " cannot have a 'Parameters' section!  " <<
             "Parameters must be specified in the 'master' input file " <<
@@ -405,7 +406,7 @@ SchwarzCoupled(
         TEUCHOS_TEST_FOR_EXCEPTION(
             true,
             std::logic_error,
-            "Error in LCM::CoupledSchwarz! Model input file " <<
+            "Error in CoupledSchwarz! Model input file " <<
             model_filenames[m] <<
             " cannot have a 'Response Functions' section!  " <<
             "Responses must be specified in the 'master' input file " <<
@@ -431,7 +432,7 @@ SchwarzCoupled(
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
           std::logic_error,
-          "Error in LCM::CoupledSchwarz! " <<
+          "Error in CoupledSchwarz! " <<
           "Input file needs to have 'MaterialDB Filename' specified.\n");
     }
 
@@ -439,7 +440,7 @@ SchwarzCoupled(
     matdb_filename = problem_params_m->get<std::string>("MaterialDB Filename");
 
     material_dbs_[m] =
-        Teuchos::rcp(new LCM::MaterialDatabase(matdb_filename, commT_));
+        Teuchos::rcp(new MaterialDatabase(matdb_filename, commT_));
 
     std::cout << "Materials #" << m << ": " << matdb_filename << '\n';
 
@@ -456,7 +457,7 @@ SchwarzCoupled(
     model_app_params_[m]->set("Application Name Index Map", app_name_index_map);
 
     // Machinery for cutting the global time step from within the
-    // CrystalPlasticity constitutive model
+    // constitutive model
     model_app_params_[m]->sublist("Problem").set(
         "Constitutive Model NOX Status Test",
         nox_status_test);
@@ -472,8 +473,8 @@ SchwarzCoupled(
     models_[m] = model_factory.createT();
 
     //create array of individual model jacobians
-    Teuchos::RCP<Tpetra_Operator> const jac_temp =
-        Teuchos::nonnull(models_[m]->create_W_op()) ?
+    Teuchos::RCP<Tpetra_Operator> const
+    jac_temp = Teuchos::nonnull(models_[m]->create_W_op()) ?
             ConverterT::getTpetraOperator(models_[m]->create_W_op()) :
             Teuchos::null;
 
@@ -488,8 +489,10 @@ SchwarzCoupled(
         Teuchos::nonnull(jac_temp) ?
             Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(jac_temp, true) :
             Teuchos::null;
-    if (precs_[m]->isFillActive())
+
+    if (precs_[m]->isFillActive()) {
       precs_[m]->fillComplete();
+    }
   }
 
   //Now get maps, InArgs, OutArgs for each model.
@@ -586,25 +589,25 @@ SchwarzCoupled(
 
 }
 
-LCM::SchwarzCoupled::~SchwarzCoupled()
+SchwarzCoupled::~SchwarzCoupled()
 {
 }
 
 // Overridden from Thyra::ModelEvaluator<ST>
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-LCM::SchwarzCoupled::get_x_space() const
+SchwarzCoupled::get_x_space() const
 {
   return getThyraDomainSpace();
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-LCM::SchwarzCoupled::get_f_space() const
+SchwarzCoupled::get_f_space() const
 {
   return getThyraRangeSpace();
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-LCM::SchwarzCoupled::getThyraRangeSpace() const
+SchwarzCoupled::getThyraRangeSpace() const
 {
   if (range_space_ == Teuchos::null) {
     // loop over all vectors and build the vector space
@@ -622,7 +625,7 @@ LCM::SchwarzCoupled::getThyraRangeSpace() const
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-LCM::SchwarzCoupled::getThyraDomainSpace() const
+SchwarzCoupled::getThyraDomainSpace() const
 {
   if (domain_space_ == Teuchos::null) {
     // loop over all vectors and build the vector space
@@ -640,7 +643,7 @@ LCM::SchwarzCoupled::getThyraDomainSpace() const
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-LCM::SchwarzCoupled::get_p_space(int l) const
+SchwarzCoupled::get_p_space(int l) const
 {
   ALBANY_EXPECT(0 <= l && l < num_params_total_);
 
@@ -657,7 +660,7 @@ LCM::SchwarzCoupled::get_p_space(int l) const
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-LCM::SchwarzCoupled::get_g_space(int l) const
+SchwarzCoupled::get_g_space(int l) const
 {
   ALBANY_EXPECT(0 <= l && l < num_responses_total_);
 
@@ -670,100 +673,84 @@ LCM::SchwarzCoupled::get_g_space(int l) const
     vs_array.push_back(models_[m]->get_g_space(l));
   }
 
-  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-  Z = Thyra::productVectorSpace<ST>(vs_array);
-
-  return Z;
+  return Thyra::productVectorSpace<ST>(vs_array);
 }
 
 Teuchos::RCP<const Teuchos::Array<std::string>>
-LCM::SchwarzCoupled::get_p_names(int l) const
+SchwarzCoupled::get_p_names(int l) const
 {
   ALBANY_EXPECT(0 <= l && l < num_params_total_);
   return param_names_[l];
 }
 
 Teuchos::ArrayView<const std::string>
-LCM::SchwarzCoupled::get_g_names(int l) const
+SchwarzCoupled::get_g_names(int l) const
 {
   ALBANY_ASSERT(false, "not implemented");
   return Teuchos::ArrayView<const std::string>();
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-LCM::SchwarzCoupled::getNominalValues() const
+SchwarzCoupled::getNominalValues() const
 {
   return nominal_values_;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-LCM::SchwarzCoupled::getLowerBounds() const
+SchwarzCoupled::getLowerBounds() const
 {
   return Thyra::ModelEvaluatorBase::InArgs<ST>(); // Default value
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-LCM::SchwarzCoupled::getUpperBounds() const
+SchwarzCoupled::getUpperBounds() const
 {
   return Thyra::ModelEvaluatorBase::InArgs<ST>(); // Default value
 }
 
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
-LCM::SchwarzCoupled::create_W_op() const
+SchwarzCoupled::create_W_op() const
 {
-  LCM::Schwarz_CoupledJacobian csJac(commT_);
-  return csJac.getThyraCoupledJacobian(jacs_, apps_);
+  Schwarz_CoupledJacobian
+  jac(commT_);
+
+  return jac.getThyraCoupledJacobian(jacs_, apps_);
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST>>
-LCM::SchwarzCoupled::create_W_prec() const
+SchwarzCoupled::create_W_prec() const
 {
-  //Teuchos::RCP< Thyra::PreconditionerBase<ST>> W_prec;
-  Teuchos::RCP<Thyra::DefaultPreconditioner<ST>> W_prec = Teuchos::rcp(
-      new Thyra::DefaultPreconditioner<ST>);
-  if (w_prec_supports_) {
-    LCM::Schwarz_CoupledJacobian csJac(commT_);
-    for (auto m = 0; m < num_models_; m++) {
-      if (precs_[m]->isFillActive())
-        precs_[m]->fillComplete();
-    }
-    Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = csJac.getThyraCoupledJacobian(
-        precs_,
-        apps_);
-    W_prec->initializeRight(W_op);
-    // IKT, 11/16/16: the following code is for Teko.
-    // We may want to switch to this once I figure out how to hook up Teko
-    // with natrix-free.
-    /*
-     // Get preconditioner factory from solver_factory_.
-     // For Teko, this will get the TekoFactory.
-     Teuchos::RCP<Thyra::PreconditionerFactoryBase<ST>>
-     prec_factory = solver_factory_->getPreconditionerFactory();
-     //Get the preconditioner operator from the prec_factory
-     W_prec = prec_factory->createPrec();
-     */
+  Teuchos::RCP<Thyra::DefaultPreconditioner<ST>>
+  W_prec = Teuchos::rcp(new Thyra::DefaultPreconditioner<ST>);
+
+  ALBANY_ASSERT(w_prec_supports_ == true);
+
+  Schwarz_CoupledJacobian jac(commT_);
+  for (auto m = 0; m < num_models_; m++) {
+    if (precs_[m]->isFillActive()) precs_[m]->fillComplete();
   }
-  else {
-    TEUCHOS_TEST_FOR_EXCEPT(w_prec_supports_);
-    //W_prec = Teuchos::null; 
-  }
+  Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = jac.getThyraCoupledJacobian(
+      precs_,
+      apps_);
+  W_prec->initializeRight(W_op);
+
   return W_prec;
 }
 
 Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST>>
-LCM::SchwarzCoupled::get_W_factory() const
+SchwarzCoupled::get_W_factory() const
 {
-  return solver_factory_;
+  return lowsfb_;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-LCM::SchwarzCoupled::createInArgs() const
+SchwarzCoupled::createInArgs() const
 {
   return this->createInArgsImpl();
 }
 
 void
-LCM::SchwarzCoupled::reportFinalPoint(
+SchwarzCoupled::reportFinalPoint(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & final_point,
     bool const was_solved)
 {
@@ -771,7 +758,7 @@ LCM::SchwarzCoupled::reportFinalPoint(
 }
 
 void
-LCM::SchwarzCoupled::
+SchwarzCoupled::
 allocateVectors()
 {
   //In this function, we create and set x_init and x_dot_init in
@@ -826,18 +813,17 @@ allocateVectors()
 
 /// Create operator form of dg/dx for distributed responses
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
-LCM::SchwarzCoupled::
+SchwarzCoupled::
 create_DgDx_op_impl(int j) const
 {
   ALBANY_EXPECT(0 <= j && j < num_responses_total_);
-
   //FIX ME: re-implement using product vectors! 
   return Teuchos::null;
 }
 
 /// Create operator form of dg/dx_dot for distributed responses
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
-LCM::SchwarzCoupled::
+SchwarzCoupled::
 create_DgDx_dot_op_impl(int j) const
 {
   ALBANY_EXPECT(0 <= j && j < num_responses_total_);
@@ -847,7 +833,7 @@ create_DgDx_dot_op_impl(int j) const
 
 /// Create OutArgs
 Thyra::ModelEvaluatorBase::OutArgs<ST>
-LCM::SchwarzCoupled::
+SchwarzCoupled::
 createOutArgsImpl() const
 {
   Thyra::ModelEvaluatorBase::OutArgsSetup<ST>
@@ -875,7 +861,7 @@ createOutArgsImpl() const
 
 /// Evaluate model on InArgs
 void
-LCM::SchwarzCoupled::
+SchwarzCoupled::
 evalModelImpl(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
@@ -1022,8 +1008,8 @@ evalModelImpl(
       fs_already_computed[m] = true;
     }
     // FIXME: create coupled W matrix from array of model W matrices
-    LCM::Schwarz_CoupledJacobian csJac(commT_);
-    W_op_outT = csJac.getThyraCoupledJacobian(jacs_, apps_);
+    Schwarz_CoupledJacobian jac(commT_);
+    W_op_outT = jac.getThyraCoupledJacobian(jacs_, apps_);
   }
 
   for (auto m = 0; m < num_models_; ++m) {
@@ -1177,9 +1163,9 @@ evalModelImpl(
         if (precs_[m]->isFillActive())
           precs_[m]->fillComplete();
       }
-      LCM::Schwarz_CoupledJacobian csJac(commT_);
+      Schwarz_CoupledJacobian jac(commT_);
       Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op =
-          csJac.getThyraCoupledJacobian(precs_, apps_);
+          jac.getThyraCoupledJacobian(precs_, apps_);
       Teuchos::RCP<Thyra::DefaultPreconditioner<ST>> W_prec = Teuchos::rcp(
           new Thyra::DefaultPreconditioner<ST>);
       W_prec->initializeRight(W_op);
@@ -1240,7 +1226,7 @@ evalModelImpl(
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-LCM::SchwarzCoupled::
+SchwarzCoupled::
 createInArgsImpl() const
 {
   Thyra::ModelEvaluatorBase::InArgsSetup<ST>
@@ -1268,7 +1254,7 @@ createInArgsImpl() const
 //applicaton parameters of applications not created via a
 //SolverFactory Check usage and whether necessary...
 Teuchos::RCP<Teuchos::ParameterList const>
-LCM::SchwarzCoupled::
+SchwarzCoupled::
 getValidAppParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList>
@@ -1293,7 +1279,7 @@ getValidAppParameters() const
 //Copied from QCAD::CoupledPoissonSchrodinger
 //Check usage and whether neessary...
 Teuchos::RCP<Teuchos::ParameterList const>
-LCM::SchwarzCoupled::
+SchwarzCoupled::
 getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList>
@@ -1315,3 +1301,4 @@ getValidProblemParameters() const
   return list;
 }
 
+} // namespace LCM
