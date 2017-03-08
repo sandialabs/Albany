@@ -166,7 +166,7 @@ SchwarzCoupled(
 
   if (have_piro == true) {
 
-    auto
+    auto &
     piro_list = app_params->sublist("Piro");
 
     auto const
@@ -174,7 +174,7 @@ SchwarzCoupled(
 
     if (have_nox == true) {
 
-      auto
+      auto &
       nox_list = piro_list.sublist("NOX");
 
       auto const
@@ -202,7 +202,7 @@ SchwarzCoupled(
   if (have_opts_or_tests == true) {
 
     // Add the model evaulator flag as a status test.
-    Teuchos::ParameterList &
+    Teuchos::ParameterList
     old_test_pl = *status_tests_pl;
 
     Teuchos::ParameterList
