@@ -29,7 +29,7 @@ SchwarzAlternating::
 SchwarzAlternating(
     Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     Teuchos::RCP<Teuchos::Comm<int> const> const & comm,
-    Teuchos::RCP<Tpetra_Vector const> const & initial_guessT,
+    Teuchos::RCP<Tpetra_Vector const> const & initial_guess,
     Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const &
     lowsfb)
 {
@@ -372,7 +372,7 @@ SchwarzAlternating(
 
     //create application for mth model
     apps_[m] = Teuchos::rcp(new Albany::Application(
-        comm, model_app_params_[m].create_weak(), initial_guessT));
+        comm, model_app_params_[m].create_weak(), initial_guess));
 
     //Create model evaluator
     Albany::ModelFactory
