@@ -26,7 +26,7 @@ public:
   /// Constructor
   SchwarzAlternating(
       Teuchos::RCP<Teuchos::ParameterList> const & app_params,
-      Teuchos::RCP<Teuchos::Comm<int> const> const & commT,
+      Teuchos::RCP<Teuchos::Comm<int> const> const & comm,
       Teuchos::RCP<Tpetra_Vector const> const & initial_guessT,
       Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const &
       lowsfb);
@@ -159,7 +159,7 @@ private:
   apps_;
 
   Teuchos::RCP<Teuchos::Comm<int> const>
-  commT_;
+  comm_;
 
   /// Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
   Thyra::ModelEvaluatorBase::InArgs<ST>

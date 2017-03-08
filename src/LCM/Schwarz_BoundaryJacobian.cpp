@@ -19,7 +19,7 @@ Schwarz_BoundaryJacobian(
     Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> jacs,
     int const this_app_index,
     int const coupled_app_index) :
-        commT_(comm),
+        comm_(comm),
         coupled_apps_(ca),
         jacs_(jacs),
         this_app_index_(this_app_index),

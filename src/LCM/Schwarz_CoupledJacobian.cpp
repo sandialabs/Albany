@@ -26,12 +26,12 @@ mm_counter = 0;
 using Thyra::PhysicallyBlockedLinearOpBase;
 
 LCM::Schwarz_CoupledJacobian::Schwarz_CoupledJacobian(
-    Teuchos::RCP<Teuchos_Comm const> const & commT)
+    Teuchos::RCP<Teuchos_Comm const> const & comm)
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << __PRETTY_FUNCTION__ << "\n";
 #endif
-  commT_ = commT;
+  comm_ = comm;
 }
 
 LCM::Schwarz_CoupledJacobian::~Schwarz_CoupledJacobian()
@@ -89,7 +89,7 @@ const
         Teuchos::RCP<Schwarz_BoundaryJacobian>
         jac_boundary =
             Teuchos::rcp(
-                new LCM::Schwarz_BoundaryJacobian(commT_, ca, jacs, i, j));
+                new LCM::Schwarz_BoundaryJacobian(comm_, ca, jacs, i, j));
 
         Teuchos::RCP<Tpetra_CrsMatrix>
         exp_jac = jac_boundary->getExplicitOperator();
@@ -102,7 +102,7 @@ const
         Teuchos::RCP<Tpetra_Operator>
         jac_boundary =
             Teuchos::rcp(
-                new LCM::Schwarz_BoundaryJacobian(commT_, ca, jacs, i, j));
+                new LCM::Schwarz_BoundaryJacobian(comm_, ca, jacs, i, j));
 
         Teuchos::RCP<Thyra::LinearOpBase<ST>>
         block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(jac_boundary);

@@ -144,7 +144,7 @@ private:
   range_map_;
 
   Teuchos::RCP<Teuchos_Comm const>
-  commT_;
+  comm_;
 
   bool
   b_use_transpose_;

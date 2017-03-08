@@ -29,12 +29,12 @@ namespace LCM {
 SchwarzCoupled::
 SchwarzCoupled(
     Teuchos::RCP<Teuchos::ParameterList> const & app_params,
-    Teuchos::RCP<Teuchos::Comm<int> const> const & commT,
+    Teuchos::RCP<Teuchos::Comm<int> const> const & comm,
     Teuchos::RCP<Tpetra_Vector const> const & initial_guessT,
     Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const &
     lowsfb)
 {
-  commT_ = commT;
+  comm_ = comm;
 
   lowsfb_ = lowsfb;
 
@@ -368,7 +368,7 @@ SchwarzCoupled(
 
     //get parameterlist from mth model *.xml file
     Albany::SolverFactory
-    solver_factory(model_filenames[m], commT_);
+    solver_factory(model_filenames[m], comm_);
 
     // solver_factory will go out of scope, so get a copy of the PL. We take
     // ownership and give weak pointers to everyone else.
@@ -440,7 +440,7 @@ SchwarzCoupled(
     matdb_filename = problem_params_m->get<std::string>("MaterialDB Filename");
 
     material_dbs_[m] =
-        Teuchos::rcp(new MaterialDatabase(matdb_filename, commT_));
+        Teuchos::rcp(new MaterialDatabase(matdb_filename, comm_));
 
     std::cout << "Materials #" << m << ": " << matdb_filename << '\n';
 
@@ -464,7 +464,7 @@ SchwarzCoupled(
 
     //create application for mth model
     apps_[m] = Teuchos::rcp(new Albany::Application(
-        commT, model_app_params_[m].create_weak(), initial_guessT));
+        comm, model_app_params_[m].create_weak(), initial_guessT));
 
     //Create model evaluator
     Albany::ModelFactory
@@ -712,7 +712,7 @@ Teuchos::RCP<Thyra::LinearOpBase<ST>>
 SchwarzCoupled::create_W_op() const
 {
   Schwarz_CoupledJacobian
-  jac(commT_);
+  jac(comm_);
 
   return jac.getThyraCoupledJacobian(jacs_, apps_);
 }
@@ -725,7 +725,7 @@ SchwarzCoupled::create_W_prec() const
 
   ALBANY_ASSERT(w_prec_supports_ == true);
 
-  Schwarz_CoupledJacobian jac(commT_);
+  Schwarz_CoupledJacobian jac(comm_);
   for (auto m = 0; m < num_models_; m++) {
     if (precs_[m]->isFillActive()) precs_[m]->fillComplete();
   }
@@ -1008,7 +1008,7 @@ evalModelImpl(
       fs_already_computed[m] = true;
     }
     // FIXME: create coupled W matrix from array of model W matrices
-    Schwarz_CoupledJacobian jac(commT_);
+    Schwarz_CoupledJacobian jac(comm_);
     W_op_outT = jac.getThyraCoupledJacobian(jacs_, apps_);
   }
 
@@ -1163,7 +1163,7 @@ evalModelImpl(
         if (precs_[m]->isFillActive())
           precs_[m]->fillComplete();
       }
-      Schwarz_CoupledJacobian jac(commT_);
+      Schwarz_CoupledJacobian jac(comm_);
       Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op =
           jac.getThyraCoupledJacobian(precs_, apps_);
       Teuchos::RCP<Thyra::DefaultPreconditioner<ST>> W_prec = Teuchos::rcp(
