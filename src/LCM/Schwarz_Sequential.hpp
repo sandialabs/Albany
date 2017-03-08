@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(LCM_SchwarzMultiscale_hpp)
-#define LCM_SchwarzMultiscale_hpp
+#if !defined(LCM_SchwarzSequential_hpp)
+#define LCM_SchwarzSequential_hpp
 
 #include "Albany_ModelEvaluatorT.hpp"
 #include "Albany_DataTypes.hpp"
@@ -17,14 +17,14 @@
 namespace LCM {
 
 ///
-/// SchwarzMultiscale coupling class
+/// SchwarzSequential coupling class
 ///
-class SchwarzMultiscale: public Thyra::ModelEvaluatorDefaultBase<ST> {
+class SchwarzSequential: public Thyra::ModelEvaluatorDefaultBase<ST> {
 
 public:
 
   /// Constructor
-  SchwarzMultiscale(
+  SchwarzSequential(
       Teuchos::RCP<Teuchos::ParameterList> const & app_params,
       Teuchos::RCP<Teuchos::Comm<int> const> const & commT,
       Teuchos::RCP<Tpetra_Vector const> const & initial_guessT,
@@ -32,7 +32,7 @@ public:
       solver_factory);
 
   /// Destructor
-  ~SchwarzMultiscale();
+  ~SchwarzSequential();
 
   /// Return solution vector map
   Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
@@ -204,10 +204,13 @@ private:
     
   enum MF_PREC_TYPE {NONE, JACOBI, ABS_ROW_SUM, ID}; 
     
-  MF_PREC_TYPE mf_prec_type_; 
+  MF_PREC_TYPE mf_prec_type_;
+
+  //void evalSchwarzSequentialLoop(const InArgs& inArgs, const OutArgs& outArgs) const;
+ 
 
 };
 
 } // namespace LCM
 
-#endif // LCM_SchwarzMultiscale_hpp
+#endif // LCM_SchwarzSequential_hpp

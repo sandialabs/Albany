@@ -59,7 +59,7 @@
 #endif
 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
-  #include "Schwarz_Multiscale.hpp"
+  #include "Schwarz_Coupled.hpp"
   #include "Schwarz_PiroObserverT.hpp"
 #endif
 
@@ -734,7 +734,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
         createLinearSolveStrategy(linearSolverBuilder);
 
-    const RCP<LCM::SchwarzMultiscale> coupled_model_with_solveT = rcp(new LCM::SchwarzMultiscale(appParams, solverComm,
+    const RCP<LCM::SchwarzCoupled> coupled_model_with_solveT = rcp(new LCM::SchwarzCoupled(appParams, solverComm,
                                                                          initial_guess, lowsFactory));
 
     observerT_ = rcp(new LCM::Schwarz_PiroObserverT(coupled_model_with_solveT));

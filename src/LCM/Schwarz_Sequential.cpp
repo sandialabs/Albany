@@ -8,7 +8,7 @@
 #include "Albany_ModelFactory.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Schwarz_CoupledJacobian.hpp"
-#include "Schwarz_Multiscale.hpp"
+#include "Schwarz_Sequential.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "NOXSolverPrePostOperator.h"
@@ -24,8 +24,8 @@ static int mm_counter_jac = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
 LCM::
-SchwarzMultiscale::
-SchwarzMultiscale(
+SchwarzSequential::
+SchwarzSequential(
     Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     Teuchos::RCP<Teuchos::Comm<int> const> const & commT,
     Teuchos::RCP<Tpetra_Vector const> const & initial_guessT,
@@ -558,25 +558,25 @@ SchwarzMultiscale(
 
 }
 
-LCM::SchwarzMultiscale::~SchwarzMultiscale()
+LCM::SchwarzSequential::~SchwarzSequential()
 {
 }
 
 // Overridden from Thyra::ModelEvaluator<ST>
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-LCM::SchwarzMultiscale::get_x_space() const
+LCM::SchwarzSequential::get_x_space() const
 {
   return getThyraDomainSpace();
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-LCM::SchwarzMultiscale::get_f_space() const
+LCM::SchwarzSequential::get_f_space() const
 {
   return getThyraRangeSpace();
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-LCM::SchwarzMultiscale::getThyraRangeSpace() const
+LCM::SchwarzSequential::getThyraRangeSpace() const
 {
   if (range_space_ == Teuchos::null) {
     // loop over all vectors and build the vector space
@@ -594,7 +594,7 @@ LCM::SchwarzMultiscale::getThyraRangeSpace() const
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-LCM::SchwarzMultiscale::getThyraDomainSpace() const
+LCM::SchwarzSequential::getThyraDomainSpace() const
 {
   if (domain_space_ == Teuchos::null) {
     // loop over all vectors and build the vector space
@@ -612,7 +612,7 @@ LCM::SchwarzMultiscale::getThyraDomainSpace() const
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-LCM::SchwarzMultiscale::get_p_space(int l) const
+LCM::SchwarzSequential::get_p_space(int l) const
 {
   ALBANY_EXPECT(0 <= l && l < num_params_total_);
 
@@ -629,7 +629,7 @@ LCM::SchwarzMultiscale::get_p_space(int l) const
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-LCM::SchwarzMultiscale::get_g_space(int l) const
+LCM::SchwarzSequential::get_g_space(int l) const
 {
   ALBANY_EXPECT(0 <= l && l < num_responses_total_);
 
@@ -649,46 +649,46 @@ LCM::SchwarzMultiscale::get_g_space(int l) const
 }
 
 Teuchos::RCP<const Teuchos::Array<std::string>>
-LCM::SchwarzMultiscale::get_p_names(int l) const
+LCM::SchwarzSequential::get_p_names(int l) const
 {
   ALBANY_EXPECT(0 <= l && l < num_params_total_);
   return param_names_[l];
 }
 
 Teuchos::ArrayView<const std::string>
-LCM::SchwarzMultiscale::get_g_names(int l) const
+LCM::SchwarzSequential::get_g_names(int l) const
 {
   ALBANY_ASSERT(false, "not implemented");
   return Teuchos::ArrayView<const std::string>();
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-LCM::SchwarzMultiscale::getNominalValues() const
+LCM::SchwarzSequential::getNominalValues() const
 {
   return nominal_values_;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-LCM::SchwarzMultiscale::getLowerBounds() const
+LCM::SchwarzSequential::getLowerBounds() const
 {
   return Thyra::ModelEvaluatorBase::InArgs<ST>(); // Default value
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-LCM::SchwarzMultiscale::getUpperBounds() const
+LCM::SchwarzSequential::getUpperBounds() const
 {
   return Thyra::ModelEvaluatorBase::InArgs<ST>(); // Default value
 }
 
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
-LCM::SchwarzMultiscale::create_W_op() const
+LCM::SchwarzSequential::create_W_op() const
 {
   LCM::Schwarz_CoupledJacobian csJac(commT_);
   return csJac.getThyraCoupledJacobian(jacs_, apps_);
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST>>
-LCM::SchwarzMultiscale::create_W_prec() const
+LCM::SchwarzSequential::create_W_prec() const
 {
   //Teuchos::RCP< Thyra::PreconditionerBase<ST>> W_prec;
   Teuchos::RCP<Thyra::DefaultPreconditioner<ST>> W_prec = Teuchos::rcp(
@@ -723,19 +723,19 @@ LCM::SchwarzMultiscale::create_W_prec() const
 }
 
 Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST>>
-LCM::SchwarzMultiscale::get_W_factory() const
+LCM::SchwarzSequential::get_W_factory() const
 {
   return solver_factory_;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-LCM::SchwarzMultiscale::createInArgs() const
+LCM::SchwarzSequential::createInArgs() const
 {
   return this->createInArgsImpl();
 }
 
 void
-LCM::SchwarzMultiscale::reportFinalPoint(
+LCM::SchwarzSequential::reportFinalPoint(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & final_point,
     bool const was_solved)
 {
@@ -743,7 +743,7 @@ LCM::SchwarzMultiscale::reportFinalPoint(
 }
 
 void
-LCM::SchwarzMultiscale::
+LCM::SchwarzSequential::
 allocateVectors()
 {
   //In this function, we create and set x_init and x_dot_init in
@@ -798,7 +798,7 @@ allocateVectors()
 
 /// Create operator form of dg/dx for distributed responses
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
-LCM::SchwarzMultiscale::
+LCM::SchwarzSequential::
 create_DgDx_op_impl(int j) const
 {
   ALBANY_EXPECT(0 <= j && j < num_responses_total_);
@@ -809,7 +809,7 @@ create_DgDx_op_impl(int j) const
 
 /// Create operator form of dg/dx_dot for distributed responses
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
-LCM::SchwarzMultiscale::
+LCM::SchwarzSequential::
 create_DgDx_dot_op_impl(int j) const
 {
   ALBANY_EXPECT(0 <= j && j < num_responses_total_);
@@ -819,7 +819,7 @@ create_DgDx_dot_op_impl(int j) const
 
 /// Create OutArgs
 Thyra::ModelEvaluatorBase::OutArgs<ST>
-LCM::SchwarzMultiscale::
+LCM::SchwarzSequential::
 createOutArgsImpl() const
 {
   Thyra::ModelEvaluatorBase::OutArgsSetup<ST>
@@ -847,7 +847,7 @@ createOutArgsImpl() const
 
 /// Evaluate model on InArgs
 void
-LCM::SchwarzMultiscale::
+LCM::SchwarzSequential::
 evalModelImpl(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
@@ -1212,7 +1212,7 @@ evalModelImpl(
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-LCM::SchwarzMultiscale::
+LCM::SchwarzSequential::
 createInArgsImpl() const
 {
   Thyra::ModelEvaluatorBase::InArgsSetup<ST>
@@ -1240,7 +1240,7 @@ createInArgsImpl() const
 //applicaton parameters of applications not created via a
 //SolverFactory Check usage and whether necessary...
 Teuchos::RCP<Teuchos::ParameterList const>
-LCM::SchwarzMultiscale::
+LCM::SchwarzSequential::
 getValidAppParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList>
@@ -1265,7 +1265,7 @@ getValidAppParameters() const
 //Copied from QCAD::CoupledPoissonSchrodinger
 //Check usage and whether neessary...
 Teuchos::RCP<Teuchos::ParameterList const>
-LCM::SchwarzMultiscale::
+LCM::SchwarzSequential::
 getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList>

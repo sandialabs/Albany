@@ -13,7 +13,7 @@
 //#define OUTPUT_TO_SCREEN 
 
 LCM::Schwarz_PiroObserverT::Schwarz_PiroObserverT(
-    const Teuchos::RCP<SchwarzMultiscale>& cs_model)
+    const Teuchos::RCP<SchwarzCoupled>& cs_model)
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";

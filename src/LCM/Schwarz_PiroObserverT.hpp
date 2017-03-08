@@ -13,7 +13,7 @@
 
 #include "Albany_DataTypes.hpp"
 #include "Albany_Application.hpp"
-#include "Schwarz_Multiscale.hpp"
+#include "Schwarz_Coupled.hpp"
 #include "Schwarz_ObserverImpl.hpp"
 #include "Teuchos_RCP.hpp"
 
@@ -22,7 +22,7 @@ namespace LCM {
 class Schwarz_PiroObserverT: public Piro::ObserverBase<ST> {
 public:
   explicit Schwarz_PiroObserverT(
-      Teuchos::RCP<SchwarzMultiscale> const & cs_model);
+      Teuchos::RCP<SchwarzCoupled> const & cs_model);
 
   virtual void observeSolution(
       Thyra::VectorBase<ST> const & solution);
