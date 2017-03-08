@@ -138,7 +138,7 @@ SchwarzCoupled(
   }
 
   // Create a NOX status test and associated machinery for cutting the
-  // global time step when the CrystalPlasticity constitutive model's state
+  // global time step when the constitutive model's state
   // update routine fails
   Teuchos::RCP<NOX::StatusTest::Generic>
   nox_status_test = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag);

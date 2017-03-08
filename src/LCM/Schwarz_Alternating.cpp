@@ -66,92 +66,6 @@ SchwarzAlternating(
     app_name_index_map->insert(app_name_index);
   }
 
-  // Create a NOX status test and associated machinery for cutting the
-  // global time step when the CrystalPlasticity constitutive model's state
-  // update routine fails
-  Teuchos::RCP<NOX::StatusTest::Generic>
-  nox_status_test = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag);
-
-  Teuchos::RCP<NOX::Abstract::PrePostOperator>
-  pre_post_operator = Teuchos::rcp(new NOXSolverPrePostOperator);
-
-  Teuchos::RCP<NOXSolverPrePostOperator>
-  nox_solver_pre_post_operator =
-      Teuchos::rcp_dynamic_cast<NOXSolverPrePostOperator>(pre_post_operator);
-
-  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
-  status_test =
-      Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(
-          nox_status_test);
-
-  // Acquire the NOX "Solver Options" and "Status Tests" parameter lists
-  Teuchos::RCP<Teuchos::ParameterList>
-  solver_options_pl;
-
-  Teuchos::RCP<Teuchos::ParameterList>
-  status_tests_pl;
-
-  auto const
-  have_piro = app_params->isSublist("Piro");
-
-  if (have_piro == true) {
-
-    auto &
-    piro_list = app_params->sublist("Piro");
-
-    auto const
-    have_nox = piro_list.isSublist("NOX");
-
-    if (have_nox == true) {
-
-      auto &
-      nox_list = piro_list.sublist("NOX");
-
-      auto const
-      have_opts = nox_list.isSublist("Solver Options");
-
-      if (have_opts == true) {
-        solver_options_pl =
-            Teuchos::rcpFromRef(nox_list.sublist("Solver Options"));
-      }
-
-      auto const
-      have_tests = nox_list.isSublist("Status Tests");
-
-      if (have_tests == true) {
-        status_tests_pl =
-            Teuchos::rcpFromRef(nox_list.sublist("Status Tests"));
-      }
-    }
-  }
-
-  bool const
-  have_opts_or_tests = solver_options_pl.is_null() == false &&
-    status_tests_pl.is_null() == false;
-
-  if (have_opts_or_tests == true) {
-
-    // Add the model evaulator flag as a status test.
-    Teuchos::ParameterList
-    old_test_pl = *status_tests_pl;
-
-    Teuchos::ParameterList
-    new_test_pl;
-
-    new_test_pl.set<std::string>("Test Type", "Combo");
-    new_test_pl.set<std::string>("Combo Type", "OR");
-    new_test_pl.set<int>("Number of Tests", 2);
-    new_test_pl.sublist("Test 0");
-    new_test_pl.sublist("Test 0").set("Test Type","User Defined");
-    new_test_pl.sublist("Test 0").set("User Status Test", nox_status_test);
-    new_test_pl.sublist("Test 1") = old_test_pl;
-
-    *status_tests_pl = new_test_pl;
-
-    nox_solver_pre_post_operator->setStatusTest(status_test);
-    solver_options_pl->set("User Defined Pre/Post Operator", pre_post_operator);
-  }
-
   //----------------Parameters------------------------
   //Get "Problem" parameter list
   Teuchos::ParameterList &
@@ -363,12 +277,6 @@ SchwarzAlternating(
 
     // App application name-index map for later use in Schwarz BC.
     model_app_params_[m]->set("Application Name Index Map", app_name_index_map);
-
-    // Machinery for cutting the global time step from within the
-    // constitutive model
-    model_app_params_[m]->sublist("Problem").set(
-        "Constitutive Model NOX Status Test",
-        nox_status_test);
 
     //create application for mth model
     apps_[m] = Teuchos::rcp(new Albany::Application(
