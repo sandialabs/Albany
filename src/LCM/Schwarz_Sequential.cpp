@@ -151,8 +151,6 @@ SchwarzSequential(
     solver_options_pl->set("User Defined Pre/Post Operator", pre_post_operator);
   }
 
-  //------------End getting of Preconditioner type----
-
   //----------------Parameters------------------------
   //Get "Problem" parameter list
   Teuchos::ParameterList &
@@ -263,7 +261,6 @@ SchwarzSequential(
           (*response_names[l])[k] =
               p_list->get<std::string>(Albany::strint("Response", k));
         }
-
       }
     }
   }
@@ -290,11 +287,10 @@ SchwarzSequential(
 
   material_dbs_.resize(num_models_);
 
-  //Set up each application and model object in Teuchos::Array
-  //(similar logic to that in Albany::SolverFactory::createAlbanyAppAndModelT)
+  //Set up each application and model object
   for (auto m = 0; m < num_models_; ++m) {
 
-    //get parameterlist from mth model *.xml file
+    //get parameterlist from mth model
     Albany::SolverFactory
     solver_factory(model_filenames[m], commT_);
 
@@ -309,17 +305,11 @@ SchwarzSequential(
     // Set Parameter sublists for individual models 
     // to the parameters specified in the "master" coupled input file.
     if (parameter_params != Teuchos::null) {
-      if (problem_params_m->isSublist("Parameters")) {
-        std::cout << "parameters!" << '\n';
-        TEUCHOS_TEST_FOR_EXCEPTION(
-            true,
-            std::logic_error,
-            "Error in LCM::CoupledSchwarz! Model input file " <<
-            model_filenames[m] <<
-            " cannot have a 'Parameters' section!  " <<
-            "Parameters must be specified in the 'master' input file " <<
-            "driving the coupled problem.\n");
-      }
+      bool const
+      have_params_m = problem_params_m->isSublist("Parameters");
+
+      ALBANY_ASSERT(have_params_m == false, "Subdomain parameters not allowed");
+
       Teuchos::ParameterList &
       param_params_m = problem_params_m->sublist("Parameters", false);
 
@@ -330,16 +320,11 @@ SchwarzSequential(
     // if they are provided, to set them
     // to the parameters specified in the "master" coupled input file.
     if (response_params != Teuchos::null) {
-      if (problem_params_m->isSublist("Response Functions")) {
-        TEUCHOS_TEST_FOR_EXCEPTION(
-            true,
-            std::logic_error,
-            "Error in LCM::CoupledSchwarz! Model input file " <<
-            model_filenames[m] <<
-            " cannot have a 'Response Functions' section!  " <<
-            "Responses must be specified in the 'master' input file " <<
-            "driving the coupled problem.\n");
-      }
+      bool const
+      have_resp_m = problem_params_m->isSublist("Response Functions");
+
+      ALBANY_ASSERT(have_resp_m == false, "Subdomain responses not allowed");
+
       Teuchos::ParameterList &
       response_params_m =
           problem_params_m->sublist("Response Functions", false);
@@ -354,15 +339,9 @@ SchwarzSequential(
     std::cout << "Name of problem #" << m << ": " << problem_name << '\n';
 
     bool const
-    matdb_exists = problem_params_m->isType<std::string>("MaterialDB Filename");
+    have_matdb = problem_params_m->isType<std::string>("MaterialDB Filename");
 
-    if (matdb_exists == false) {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          true,
-          std::logic_error,
-          "Error in LCM::CoupledSchwarz! " <<
-          "Input file needs to have 'MaterialDB Filename' specified.\n");
-    }
+    ALBANY_ASSERT(have_matdb == true, "Material database required.");
 
     std::string const &
     matdb_filename = problem_params_m->get<std::string>("MaterialDB Filename");
