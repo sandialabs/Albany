@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(LCM_SchwarzSequential_hpp)
-#define LCM_SchwarzSequential_hpp
+#if !defined(LCM_SchwarzAlternating_hpp)
+#define LCM_SchwarzAlternating_hpp
 
 #include "Albany_ModelEvaluatorT.hpp"
 #include "Albany_DataTypes.hpp"
@@ -17,14 +17,14 @@
 namespace LCM {
 
 ///
-/// SchwarzSequential coupling class
+/// SchwarzAlternating coupling class
 ///
-class SchwarzSequential: public Thyra::ModelEvaluatorDefaultBase<ST> {
+class SchwarzAlternating: public Thyra::ModelEvaluatorDefaultBase<ST> {
 
 public:
 
   /// Constructor
-  SchwarzSequential(
+  SchwarzAlternating(
       Teuchos::RCP<Teuchos::ParameterList> const & app_params,
       Teuchos::RCP<Teuchos::Comm<int> const> const & commT,
       Teuchos::RCP<Tpetra_Vector const> const & initial_guessT,
@@ -32,7 +32,7 @@ public:
       lowsfb);
 
   /// Destructor
-  ~SchwarzSequential();
+  ~SchwarzAlternating();
 
   /// Return solution vector map
   Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
@@ -206,9 +206,9 @@ private:
 
   MF_PREC_TYPE mf_prec_type_;
 
-  //void evalSchwarzSequentialLoop(const InArgs& inArgs, const OutArgs& outArgs) const;
+  //void evalSchwarzAlternatingLoop(const InArgs& inArgs, const OutArgs& outArgs) const;
 };
 
 } // namespace LCM
 
-#endif // LCM_SchwarzSequential_hpp
+#endif // LCM_SchwarzAlternating_hpp
