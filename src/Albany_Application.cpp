@@ -1700,7 +1700,7 @@ computeGlobalJacobianImplT(const double alpha,
     if (scale != 1.0) {
       if (scaleVec_ == Teuchos::null ||
           scaleVec_->getGlobalLength() != jacT->getGlobalNumCols()) {
-        scaleVec_ = Teuchos::rcp(new Tpetra_Vector(jacT->getColMap()));
+        scaleVec_ = Teuchos::rcp(new Tpetra_Vector(jacT->getRowMap()));
         setScale();
       }
     }
