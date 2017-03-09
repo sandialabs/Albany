@@ -174,14 +174,6 @@ private:
   int
   num_params_total_;
 
-  /// Like dist_param_vecs
-  int
-  num_dist_params_total_;
-
-  /// Like num_response_vecs
-  int
-  num_responses_total_;
-
   /// For setting get_W_factory()
   Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>
   lowsfb_;

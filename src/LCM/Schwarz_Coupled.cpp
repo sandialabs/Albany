@@ -437,12 +437,11 @@ SchwarzCoupled(
     }
 
     std::string const &
-    matdb_filename = problem_params_m->get<std::string>("MaterialDB Filename");
+    matdb_file = problem_params_m->get<std::string>("MaterialDB Filename");
 
-    material_dbs_[m] =
-        Teuchos::rcp(new MaterialDatabase(matdb_filename, comm_));
+    material_dbs_[m] = Teuchos::rcp(new MaterialDatabase(matdb_file, comm_));
 
-    std::cout << "Materials #" << m << ": " << matdb_filename << '\n';
+    std::cout << "Materials #" << m << ": " << matdb_file << '\n';
 
     // Pass these on the parameter list because the are needed before
     // BC evaluators are built.

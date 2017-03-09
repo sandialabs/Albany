@@ -37,16 +37,13 @@ SchwarzAlternating(
 
   lowsfb_ = lowsfb;
 
-  num_dist_params_total_ = 0;
-
   Teuchos::ParameterList &
-  coupled_system_params = app_params->sublist("Coupled System");
+  alt_system_params = app_params->sublist("Alternating System");
 
   // Get names of individual model input files
   Teuchos::Array<std::string>
   model_filenames =
-      coupled_system_params.get<Teuchos::Array<std::string>>(
-          "Model Input Files");
+      alt_system_params.get<Teuchos::Array<std::string>>("Model Input Files");
 
   //number of models
   num_models_ = model_filenames.size();
@@ -132,57 +129,16 @@ SchwarzAlternating(
 
   //----------------Responses------------------------
   //Get "Response functions" parameter sublist
-  num_responses_total_ = 0;
-
   if (problem_params.isSublist("Response Functions")) {
     response_params =
         Teuchos::rcp(&(problem_params.sublist("Response Functions")), false);
 
     auto const
-    num_parameters =
-        response_params->isType<int>("Number") == true ?
-            response_params->get<int>("Number") : 0;
+    num_parameters = response_params->isType<int>("Number") == true ?
+        response_params->get<int>("Number") : 0;
 
-    bool const
-    using_old_response_list = num_parameters > 0 ? true : false;
-
-    num_responses_total_ =
-        num_parameters > 0 ?
-            1 : response_params->get("Number of Response Vectors", 0);
-
-    Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>
-    response_names;
-
-    response_names.resize(num_responses_total_);
-
-    for (auto l = 0; l < num_responses_total_; ++l) {
-
-      Teuchos::RCP<Teuchos::ParameterList const>
-      p_list =
-          using_old_response_list == true ?
-              Teuchos::rcp(new Teuchos::ParameterList(*response_params)) :
-              Teuchos::rcp(&(response_params->sublist(
-                  Albany::strint("Response Vector", l))), false);
-
-      auto const
-      num_parameters =
-          p_list->get<int>("Number") == true ?
-              p_list->get<int>("Number") :
-              0;
-
-      if (num_parameters > 0) {
-        response_names[l] =
-            Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
-
-        for (auto k = 0; k < num_parameters; ++k) {
-          (*response_names[l])[k] =
-              p_list->get<std::string>(Albany::strint("Response", k));
-        }
-      }
-    }
+    ALBANY_ASSERT(num_parameters == 0, "No responses allowed.");
   }
-
-  std::cout << "Number of response vectors = " << num_responses_total_ << '\n';
 
   //----------- end Responses-----------------------
 
@@ -219,35 +175,6 @@ SchwarzAlternating(
     Teuchos::RCP<Teuchos::ParameterList>
     problem_params_m = Teuchos::sublist(model_app_params_[m], "Problem");
 
-    // Set Parameter sublists for individual models 
-    // to the parameters specified in the "master" coupled input file.
-    if (parameter_params != Teuchos::null) {
-      bool const
-      have_params_m = problem_params_m->isSublist("Parameters");
-
-      ALBANY_ASSERT(have_params_m == false, "Subdomain parameters not allowed");
-
-      Teuchos::ParameterList &
-      param_params_m = problem_params_m->sublist("Parameters", false);
-
-      param_params_m.setParametersNotAlreadySet(*parameter_params);
-    }
-
-    // Overwrite Responses sublists for individual models,
-    // if they are provided, to set them
-    // to the parameters specified in the "master" coupled input file.
-    if (response_params != Teuchos::null) {
-      bool const
-      have_resp_m = problem_params_m->isSublist("Response Functions");
-
-      ALBANY_ASSERT(have_resp_m == false, "Subdomain responses not allowed");
-
-      Teuchos::ParameterList &
-      response_params_m =
-          problem_params_m->sublist("Response Functions", false);
-      response_params_m.setParametersNotAlreadySet(*response_params);
-    }
-
     model_problem_params[m] = problem_params_m;
 
     std::string const &
@@ -261,12 +188,11 @@ SchwarzAlternating(
     ALBANY_ASSERT(have_matdb == true, "Material database required.");
 
     std::string const &
-    matdb_filename = problem_params_m->get<std::string>("MaterialDB Filename");
+    matdb_file = problem_params_m->get<std::string>("MaterialDB Filename");
 
-    material_dbs_[m] =
-        Teuchos::rcp(new MaterialDatabase(matdb_filename, comm_));
+    material_dbs_[m] = Teuchos::rcp(new MaterialDatabase(matdb_file, comm_));
 
-    std::cout << "Materials #" << m << ": " << matdb_filename << '\n';
+    std::cout << "Materials #" << m << ": " << matdb_file << '\n';
 
     // Pass these on the parameter list because the are needed before
     // BC evaluators are built.
@@ -404,10 +330,14 @@ Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 SchwarzAlternating::get_p_space(int l) const
 {
   ALBANY_EXPECT(0 <= l && l < num_params_total_);
+
   std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
   p_space_array;
-  p_space_array.push_back(
-    Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(tpetra_param_map_[l]));
+
+  auto
+  vs = Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(tpetra_param_map_[l]);
+
+  p_space_array.push_back(vs);
 
   return Thyra::productVectorSpace<ST>(p_space_array);
 }
@@ -415,7 +345,7 @@ SchwarzAlternating::get_p_space(int l) const
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 SchwarzAlternating::get_g_space(int l) const
 {
-  ALBANY_EXPECT(0 <= l && l < num_responses_total_);
+  ALBANY_EXPECT(0 <= l);
 
   Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
   vs_array;
