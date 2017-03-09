@@ -27,13 +27,13 @@
 // This is set in the toplevel CMakeLists.txt file
 //#define ALBANY_CHECK_FPE
 
-#ifdef ALBANY_CHECK_FPE
+#if defined(ALBANY_CHECK_FPE)
 #include <math.h>
 //#include <Accelerate/Accelerate.h>
 #include <xmmintrin.h>
 #endif
 //#define ALBANY_FLUSH_DENORMALS
-#ifdef ALBANY_FLUSH_DENORMALS
+#if defined(ALBANY_FLUSH_DENORMALS)
 #include <xmmintrin.h>
 #include <pmmintrin.h>
 #endif
@@ -45,7 +45,7 @@
 
 #include "Kokkos_Core.hpp"
 
-#ifdef ALBANY_APF
+#if defined(ALBANY_APF)
 #include "Albany_APFMeshStruct.hpp"
 #endif
 

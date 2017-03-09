@@ -1003,6 +1003,8 @@ ENDIF()
 IF (ALBANY_LCM)
   add_subdirectory(LCM)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} LCM)
+  add_executable(SchwarzAlternating Main_Alternating.cpp)
+  SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} SchwarzAlternating)
 ENDIF()
 
 # Can remove this once rebalance is in Trilnos again
