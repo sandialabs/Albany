@@ -85,15 +85,6 @@ public:
       Thyra::ModelEvaluatorBase::InArgs<ST> const & final_point,
       bool const was_solved);
 
-  void
-  allocateVectors();
-
-  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-  getThyraRangeSpace() const;
-  
-  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-  getThyraDomainSpace() const;
-  
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   getApps() const {return apps_;}  
 
@@ -195,6 +186,9 @@ private:
   Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>
   lowsfb_;
     
+  Teuchos::Array<Teuchos::RCP<Tpetra_Map>>
+  tpetra_param_map_;
+
   /// Array of Sacado parameter vectors
   mutable Teuchos::Array<Teuchos::Array<ParamVec>>
   sacado_param_vecs_;
@@ -204,13 +198,6 @@ private:
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST>>
   solver_outargs_;
-
-  bool w_prec_supports_;
-
-  enum MF_PREC_TYPE {NONE, JACOBI, ABS_ROW_SUM, ID};
-
-  MF_PREC_TYPE mf_prec_type_;
-
 };
 
 } // namespace LCM

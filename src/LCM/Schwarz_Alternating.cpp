@@ -96,6 +96,8 @@ SchwarzAlternating(
         num_parameters > 0 ?
             1 : parameter_params->get("Number of Parameter Vectors", 0);
 
+    ALBANY_ASSERT(num_params_total_, "Parameters not supported.");
+
     //Get parameter names
     param_names_.resize(num_params_total_);
     for (auto l = 0; l < num_params_total_; ++l) {
@@ -327,6 +329,9 @@ SchwarzAlternating(
   //----------------Parameters------------------------
   // Create sacado parameter vectors of appropriate size
   // for use in evalModelImpl
+  tpetra_param_map_.resize(num_params_total_);
+
+  // FIXME: Copied from Schwarz Coupled. Need to revisit.
   sacado_param_vecs_.resize(num_models_);
 
   for (auto m = 0; m < num_models_; ++m) {
@@ -345,9 +350,14 @@ SchwarzAlternating(
   //------------------Setup nominal values----------------
   nominal_values_ = this->createInArgsImpl();
 
-  // All the ME vectors are allocated/unallocated here
-  // Calling allocateVectors() will set x and x_dot in nominal_values_
-  allocateVectors();
+  Teuchos::RCP<Thyra::DefaultProductVector<ST>>
+  x = Teuchos::null;
+
+  Teuchos::RCP<Thyra::DefaultProductVector<ST>>
+  x_dot = Teuchos::null;
+
+  nominal_values_.set_x(x);
+  nominal_values_.set_x_dot(x_dot);
 
   // set p_init in nominal_values_ --
   // create product vector that concatenates parameters from each model.
@@ -355,25 +365,8 @@ SchwarzAlternating(
 
   for (auto l = 0; l < num_params_total_; ++l) {
 
-    Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
-    p_spaces(num_models_);
-
-    for (auto m = 0; m < num_models_; ++m) {
-      p_spaces[m] = models_[m]->get_p_space(l);
-    }
-
-    Teuchos::RCP<Thyra::DefaultProductVectorSpace<ST> const>
-    p_space = Thyra::productVectorSpace<ST>(p_spaces);
-
-    Teuchos::ArrayRCP<Teuchos::RCP<Thyra::VectorBase<ST> const>>
-    p_vecs(num_models_);
-
-    for (auto m = 0; m < num_models_; ++m) {
-      p_vecs[m] = models_[m]->getNominalValues().get_p(l);
-    }
-
     Teuchos::RCP<Thyra::DefaultProductVector<ST>>
-    p_prod_vec = Thyra::defaultProductVector<ST>(p_space, p_vecs());
+    p_prod_vec = Teuchos::null;
 
     if (Teuchos::is_null(p_prod_vec) == true) continue;
 
@@ -392,66 +385,31 @@ SchwarzAlternating::~SchwarzAlternating()
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 SchwarzAlternating::get_x_space() const
 {
-  return getThyraDomainSpace();
+  Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
+  unused = Teuchos::null;
+
+  return unused;
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 SchwarzAlternating::get_f_space() const
 {
-  return getThyraRangeSpace();
-}
+  Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
+  unused = Teuchos::null;
 
-Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-SchwarzAlternating::getThyraRangeSpace() const
-{
-  if (range_space_ == Teuchos::null) {
-    // loop over all vectors and build the vector space
-    std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
-    vs_array;
-
-    for (auto m = 0; m < num_models_; ++m) {
-      vs_array.push_back(
-          Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(disc_maps_[m]));
-    }
-
-    range_space_ = Thyra::productVectorSpace<ST>(vs_array);
-  }
-  return range_space_;
-}
-
-Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-SchwarzAlternating::getThyraDomainSpace() const
-{
-  if (domain_space_ == Teuchos::null) {
-    // loop over all vectors and build the vector space
-    std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
-    vs_array;
-
-    for (auto m = 0; m < num_models_; ++m) {
-      vs_array.push_back(
-          Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(disc_maps_[m]));
-    }
-
-    domain_space_ = Thyra::productVectorSpace<ST>(vs_array);
-  }
-  return domain_space_;
+  return unused;
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 SchwarzAlternating::get_p_space(int l) const
 {
   ALBANY_EXPECT(0 <= l && l < num_params_total_);
-
   std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
-  vs_array;
+  p_space_array;
+  p_space_array.push_back(
+    Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(tpetra_param_map_[l]));
 
-  // create product space for lth parameter by concatenating lth parameter
-  // from all the models.
-  for (auto m = 0; m < num_models_; ++m) {
-    vs_array.push_back(models_[m]->get_p_space(l));
-  }
-
-  return Thyra::productVectorSpace<ST>(vs_array);
+  return Thyra::productVectorSpace<ST>(p_space_array);
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
@@ -516,18 +474,7 @@ Teuchos::RCP<Thyra::PreconditionerBase<ST>>
 SchwarzAlternating::create_W_prec() const
 {
   Teuchos::RCP<Thyra::DefaultPreconditioner<ST>>
-  W_prec = Teuchos::rcp(new Thyra::DefaultPreconditioner<ST>);
-
-  ALBANY_ASSERT(w_prec_supports_ == true);
-
-  Schwarz_CoupledJacobian jac(comm_);
-  for (auto m = 0; m < num_models_; m++) {
-    if (precs_[m]->isFillActive()) precs_[m]->fillComplete();
-  }
-  Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op = jac.getThyraCoupledJacobian(
-      precs_,
-      apps_);
-  W_prec->initializeRight(W_op);
+  W_prec = Teuchos::null;
 
   return W_prec;
 }
@@ -552,67 +499,12 @@ SchwarzAlternating::reportFinalPoint(
   ALBANY_ASSERT(false, "Calling reportFinalPoint");
 }
 
-void
-SchwarzAlternating::
-allocateVectors()
-{
-  //In this function, we create and set x_init and x_dot_init in
-  //nominal_values_ for the coupled model.
-  Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
-  spaces(num_models_);
-
-  for (auto m = 0; m < num_models_; ++m) {
-    spaces[m] = Thyra::createVectorSpace<ST>(disc_maps_[m]);
-  }
-
-  Teuchos::RCP<Thyra::DefaultProductVectorSpace<ST> const>
-  space = Thyra::productVectorSpace<ST>(spaces);
-
-  Teuchos::ArrayRCP<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  xT_vecs;
-
-  Teuchos::ArrayRCP<Teuchos::RCP<Thyra::VectorBase<ST>>>
-  x_dotT_vecs;
-
-  xT_vecs.resize(num_models_);
-  x_dotT_vecs.resize(num_models_);
-
-  for (auto m = 0; m < num_models_; ++m) {
-
-    Teuchos::RCP<Tpetra_MultiVector const> const
-    xMV = apps_[m]->getAdaptSolMgrT()->getInitialSolution();
-
-    Teuchos::RCP<Tpetra_Vector>
-    xT_vec = Teuchos::rcp(new Tpetra_Vector(*xMV->getVector(0)));
-
-    // Error if xdot isn't around
-    ALBANY_ASSERT(xMV->getNumVectors() >= 2, "Time derivative is not present.");
-
-    Teuchos::RCP<Tpetra_Vector>
-    x_dotT_vec = Teuchos::rcp(new Tpetra_Vector(*xMV->getVector(1)));
-
-    xT_vecs[m] = Thyra::createVector(xT_vec, spaces[m]);
-    x_dotT_vecs[m] = Thyra::createVector(x_dotT_vec, spaces[m]);
-  }
-
-  Teuchos::RCP<Thyra::DefaultProductVector<ST>>
-  xT_prod_vec = Thyra::defaultProductVector<ST>(space, xT_vecs());
-
-  Teuchos::RCP<Thyra::DefaultProductVector<ST>>
-  x_dotT_prod_vec = Thyra::defaultProductVector<ST>(space, x_dotT_vecs());
-
-  nominal_values_.set_x(xT_prod_vec);
-  nominal_values_.set_x_dot(x_dotT_prod_vec);
-
-}
-
 /// Create operator form of dg/dx for distributed responses
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
 SchwarzAlternating::
 create_DgDx_op_impl(int j) const
 {
-  ALBANY_EXPECT(0 <= j && j < num_responses_total_);
-  //FIX ME: re-implement using product vectors! 
+  ALBANY_ASSERT(0 <= j);
   return Teuchos::null;
 }
 
@@ -621,8 +513,7 @@ Teuchos::RCP<Thyra::LinearOpBase<ST>>
 SchwarzAlternating::
 create_DgDx_dot_op_impl(int j) const
 {
-  ALBANY_EXPECT(0 <= j && j < num_responses_total_);
-  //FIXME: re-implement using product vectors!
+  ALBANY_ASSERT(0 <= j);
   return Teuchos::null;
 }
 
@@ -637,13 +528,11 @@ createOutArgsImpl() const
   result.setModelEvalDescription(this->description());
 
   //Note: it is assumed her there are no distributed parameters.
-  result.set_Np_Ng(num_params_total_, num_responses_total_);
+  result.set_Np_Ng(num_params_total_, 0);
 
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f, true);
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_op, true);
-  result.setSupports(
-      Thyra::ModelEvaluatorBase::OUT_ARG_W_prec,
-      w_prec_supports_);
+  result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_prec, false);
 
   result.set_W_properties(
       Thyra::ModelEvaluatorBase::DerivativeProperties(
@@ -712,12 +601,12 @@ evalModelImpl(
   double const
   omega = 0.0;
 
-  double const beta =
-      (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
+  double const
+  beta = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
           in_args.get_beta() : 1.0;
 
-  double const curr_time =
-      (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
+  double const
+  curr_time = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
           in_args.get_t() : 0.0;
 
   //Get parameters
@@ -832,141 +721,6 @@ evalModelImpl(
             sacado_param_vecs_[m], *fTs_out[m]);
 
       }
-    }
-  }
-
-  //Create preconditioner if w_prec_supports_ are on
-  if (w_prec_supports_ == true) {
-    Teuchos::RCP<Thyra::PreconditionerBase<ST>>
-    W_prec_outT =
-        Teuchos::nonnull(out_args.get_W_prec()) ?
-            out_args.get_W_prec() :
-            Teuchos::null;
-
-    //IKT, 11/16/16: it may be desirable to move the following code into a separate 
-    //function, especially as we implement more preconditioners. 
-    if (Teuchos::nonnull(W_prec_outT) == true) {
-      for (auto m = 0; m < num_models_; ++m) {
-        if (!precs_[m]->isFillActive())
-          precs_[m]->resumeFill();
-        if (mf_prec_type_ == JACOBI) {
-          //With matrix-free, W_op_outT is null, so computeJacobianT does not
-          //get called earlier.  We need to call it here to get the Jacobians.
-          //Create fTtemp vector, so that this call to computeGlobalJacobianT 
-          //doesn't overwrite the real residual.
-          Teuchos::RCP<Tpetra_Vector> fTtemp;
-          if (fT_out != Teuchos::null) {
-            fTtemp = Teuchos::rcp_dynamic_cast<ThyraVector>(
-                fT_out->getNonconstVectorBlock(m),
-                true)->getTpetraVector();
-          }
-          apps_[m]->computeGlobalJacobianT(alpha, beta, omega, curr_time,
-              x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
-              sacado_param_vecs_[m], fTtemp.get(), *jacs_[m]);
-          //Get diagonal of jacs_[m]  
-          Teuchos::RCP<Tpetra_Vector> diag = Teuchos::rcp(
-              new Tpetra_Vector(jacs_[m]->getRowMap()));
-          jacs_[m]->getLocalDiagCopy(*diag);
-          //Take reciprocal of diagonal 
-          Teuchos::RCP<Tpetra_Vector> invdiag = Teuchos::rcp(
-              new Tpetra_Vector(jacs_[m]->getRowMap()));
-          invdiag->reciprocal(*diag);
-          Teuchos::ArrayRCP<const ST> invdiag_constView = invdiag->get1dView();
-          //Zero out precs_[m] 
-          precs_[m]->resumeFill();
-          precs_[m]->scale(0.0);
-          //Create Jacobi preconditioner 
-          for (auto i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
-            GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
-            Teuchos::Array<ST> matrixEntriesT(1);
-            Teuchos::Array<GO> matrixIndicesT(1);
-            matrixEntriesT[0] = invdiag_constView[i];
-            matrixIndicesT[0] = global_row;
-            precs_[m]->replaceGlobalValues(
-                global_row,
-                matrixIndicesT(),
-                matrixEntriesT());
-          }
-        }
-        else if (mf_prec_type_ == ABS_ROW_SUM) {
-          //With matrix-free, W_op_outT is null, so computeJacobianT does not
-          //get called earlier.  We need to call it here to get the Jacobians.
-          //Create fTtemp vector, so that this call to computeGlobalJacobianT 
-          //doesn't overwrite the real residual.
-          Teuchos::RCP<Tpetra_Vector> fTtemp;
-          if (fT_out != Teuchos::null) {
-            fTtemp = Teuchos::rcp_dynamic_cast<ThyraVector>(
-                fT_out->getNonconstVectorBlock(m),
-                true)->getTpetraVector();
-          }
-          apps_[m]->computeGlobalJacobianT(alpha, beta, omega, curr_time,
-              x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
-              sacado_param_vecs_[m], fTtemp.get(), *jacs_[m]);
-          //Create vector to store absrowsum 
-          Teuchos::RCP<Tpetra_Vector> absrowsum = Teuchos::rcp(
-              new Tpetra_Vector(jacs_[m]->getRowMap()));
-          absrowsum->putScalar(0.0);
-          Teuchos::ArrayRCP<ST> absrowsum_nonconstView = absrowsum
-              ->get1dViewNonConst();
-          //Compute abs sum of each row and store in absrowsum vector 
-          for (auto i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
-            std::size_t NumEntries = jacs_[m]->getNumEntriesInLocalRow(i);
-            Teuchos::Array<LO> Indices(NumEntries);
-            Teuchos::Array<ST> Values(NumEntries);
-            //Get local row
-            jacs_[m]->getLocalRowCopy(i, Indices(), Values(), NumEntries);
-            //Compute abs row rum 
-            for (auto j = 0; j < NumEntries; j++)
-              absrowsum_nonconstView[i] += abs(Values[j]);
-          }
-          //Invert absrowsum 
-          Teuchos::RCP<Tpetra_Vector> invabsrowsum = Teuchos::rcp(
-              new Tpetra_Vector(jacs_[m]->getRowMap()));
-          invabsrowsum->reciprocal(*absrowsum);
-          Teuchos::ArrayRCP<const ST> invabsrowsum_constView = invabsrowsum
-              ->get1dView();
-          //Zero out precs_[m] 
-          precs_[m]->resumeFill();
-          precs_[m]->scale(0.0);
-          //Create diagonal abs row sum preconditioner 
-          for (auto i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
-            GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
-            Teuchos::Array<ST> matrixEntriesT(1);
-            Teuchos::Array<GO> matrixIndicesT(1);
-            matrixEntriesT[0] = invabsrowsum_constView[i];
-            matrixIndicesT[0] = global_row;
-            precs_[m]->replaceGlobalValues(
-                global_row,
-                matrixIndicesT(),
-                matrixEntriesT());
-          }
-        }
-        else if (mf_prec_type_ == ID) {
-          //Create Identity
-          for (auto i = 0; i < jacs_[m]->getNodeNumRows(); ++i) {
-            GO global_row = jacs_[m]->getRowMap()->getGlobalElement(i);
-            Teuchos::Array<ST> matrixEntriesT(1);
-            Teuchos::Array<GO> matrixIndicesT(1);
-            matrixEntriesT[0] = 1.0;
-            matrixIndicesT[0] = global_row;
-            precs_[m]->replaceGlobalValues(
-                global_row,
-                matrixIndicesT(),
-                matrixEntriesT());
-          }
-        }
-        if (precs_[m]->isFillActive())
-          precs_[m]->fillComplete();
-      }
-      Schwarz_CoupledJacobian jac(comm_);
-      Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op =
-          jac.getThyraCoupledJacobian(precs_, apps_);
-      Teuchos::RCP<Thyra::DefaultPreconditioner<ST>> W_prec = Teuchos::rcp(
-          new Thyra::DefaultPreconditioner<ST>);
-      W_prec->initializeRight(W_op);
-      W_prec_outT = Teuchos::rcp_dynamic_cast<Thyra::PreconditionerBase<ST>>(
-          W_prec,
-          true);
     }
   }
 
