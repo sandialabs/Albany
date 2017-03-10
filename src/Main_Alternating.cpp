@@ -122,7 +122,7 @@ int main(int ac, char *av[])
   bool
   success{true};
 
-  auto &&
+  auto &
   fos{*Teuchos::VerboseObjectBase::getDefaultOStream()};
 
   // Command-line argument for input file
