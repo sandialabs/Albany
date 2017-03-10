@@ -27,30 +27,14 @@ class SolutionInfo {
     SolutionInfo(const SolutionInfo&) = delete;
     SolutionInfo& operator=(const SolutionInfo&) = delete;
 
-    Teuchos::RCP<Tpetra_MultiVector> getOwnedMV();
-    Teuchos::RCP<Tpetra_MultiVector> getGhostMV();
-
-    Teuchos::RCP<Tpetra_Export> getExporter();
-    Teuchos::RCP<Tpetra_Import> getImporter();
-
-    void scatter_x(
-        const Tpetra_Vector& xT,
-        const Tpetra_Vector* x_dotT,
-        const Tpetra_Vector* x_dotdotT);
-
-    Teuchos::RCP<Tpetra_CrsMatrix> getOwnedJacobian();
-    Teuchos::RCP<Tpetra_CrsMatrix> getGhostJacobian();
-
     void gather_x();
-    void scatter_x();
-
     void gather_x_dot();
-    void scatter_x_dot();
-
     void gather_f();
-    void scatter_f();
-
     void gather_J();
+
+    void scatter_x();
+    void scatter_x_dot();
+    void scatter_f();
     void scatter_J();
 
     void resize(RCP<Albany::AbstractDiscretization> disc, bool have_x_dot);
@@ -60,8 +44,6 @@ class SolutionInfo {
 
   private:
     
-    RCP<Tpetra_MultiVector> owned_x;
-    RCP<Tpetra_MultiVector> ghost_x;
     RCP<Tpetra_Export> exporter;
     RCP<Tpetra_Import> importer;
 
