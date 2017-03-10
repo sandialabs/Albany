@@ -1,5 +1,5 @@
-#ifndef CTM_linear_solver_hpp
-#define CTM_linear_solver_hpp
+#ifndef CTM_LINEAR_SOLVER_HPP
+#define CTM_LINEAR_SOLVER_HPP
 
 #include "Albany_DataTypes.hpp"
 
@@ -14,6 +14,6 @@ void solve_linear_system(
     RCP<Tpetra_Vector> x,
     RCP<Tpetra_Vector> b);
 
-}
+} // namespace CTM
 
 #endif

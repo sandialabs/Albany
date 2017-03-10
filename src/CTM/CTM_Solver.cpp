@@ -6,7 +6,7 @@
 #include "Albany_APFDiscretization.hpp"
 #include <Albany_AbstractDiscretization.hpp>
 #include "CTM_SolutionInfo.hpp"
-#include "linear_solver.hpp"
+#include "CTM_LinearSolver.hpp"
 
 #ifdef ALBANY_AMP
 #include "AMP/problems/PhaseProblem.hpp"
@@ -31,25 +31,17 @@ namespace CTM {
         assert(p->isSublist("Mechanics Discretization"));
         assert(p->isSublist("Linear Algebra"));
         assert(p->isSublist("Time"));
-        //
+
         const Teuchos::ParameterList &time_list = p->sublist("Time");
         assert(time_list.isType<double>("Initial Time"));
         assert(time_list.isType<double>("Step Size"));
         assert(time_list.isType<int>("Number of Steps"));
-        //
+
         const Teuchos::ParameterList &la_list = p->sublist("Linear Algebra");
-        // check if solver was specified
-        assert((la_list.isSublist("GMRES Solver")) ||
-                (la_list.isType<std::string>("Solver")));
-        // Get GMRES solver
-        if (la_list.isSublist("GMRES Solver")) {
-            const Teuchos::ParameterList &params = la_list.sublist("GMRES Solver");
-            assert(params.isType<double>("Linear Tolerance"));
-            assert(params.isType<int>("Linear Max. Iterations"));
-            assert(params.isType<int>("Linear Krylov Size"));
-        } else {
-            assert(la_list.get<std::string>("Solver") == "SuperLU_DIST");
-        }
+        assert(la_list.isType<double>("Linear Tolerance"));
+        assert(la_list.isType<int>("Linear Max. Iterations"));
+        assert(la_list.isType<int>("Linear Krylov Size"));
+
         assert(la_list.isType<double>("Nonlinear Tolerance"));
         assert(la_list.isType<int>("Nonlinear Max. Iterations"));
     }

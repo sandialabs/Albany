@@ -1,9 +1,10 @@
 <ParameterList>
-  <!--
-  <ParameterList name="Debug Output">
-    <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
+
+   <ParameterList name="Time">
+     <Parameter name="Initial Time" type="double" value="0.0"/>
+     <Parameter name="Step Size" type="double" value="1.0"/>
+     <Parameter name="Number of Steps" type="int" value="2"/>
   </ParameterList>
-  -->
 
   <ParameterList name="Temperature Problem">
      <Parameter name="Transient" type="bool" value="true"/>
@@ -16,14 +17,11 @@
     </ParameterList>
     <ParameterList name="Neumann BCs">
     </ParameterList>
-    
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
       <Parameter name="Function Data" type="Array(double)" value="{70.0}"/>
     </ParameterList>
-
-  </ParameterList> <!-- End Temperature Problem -->
-
+  </ParameterList>
 
   <ParameterList name="Thermal Discretization">
     <ParameterList name="Discretization">
@@ -38,8 +36,7 @@
       <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x5:{424, 243, 2, 15, 9, face_424, face_243, face_2, face_15, face_9}"/>
       <Parameter name="QP Temperature from Nodes" type="bool" value="true"/>
     </ParameterList>
-  </ParameterList> <!-- End Thermal Discretization -->
-  
+  </ParameterList>
 
   <ParameterList name="Mechanics Problem">
     <Parameter name="Transient" type="bool" value="false"/>
@@ -52,37 +49,24 @@
     </ParameterList>
     <ParameterList name="Neumann BCs">
     </ParameterList>
-
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
       <Parameter name="Function Data" type="Array(double)" value="{0.0,0.0,0.0}"/>
     </ParameterList>
-    
-  </ParameterList> <!-- End Mechanics Problem -->
+  </ParameterList>
 
-<ParameterList name="Mechanics Discretization">
+  <ParameterList name="Mechanics Discretization">
     <ParameterList name="Discretization">
       <Parameter name="Solution Vector Components" type="Array(string)" value="{Displacement,V}"/>
     </ParameterList>
-  </ParameterList> <!-- End Mechanical Discretization -->
-
-
+  </ParameterList>
 
   <ParameterList name="Linear Algebra">
-    <ParameterList name="GMRES Solver">
-      <Parameter name="Linear Tolerance" type="double" value="1.0e-8"/>
-      <Parameter name="Linear Max. Iterations" type="int" value="800"/>
-      <Parameter name="Linear Krylov Size" type="int" value="400"/>
-    </ParameterList>
+    <Parameter name="Linear Tolerance" type="double" value="1.0e-8"/>
+    <Parameter name="Linear Max. Iterations" type="int" value="800"/>
+    <Parameter name="Linear Krylov Size" type="int" value="400"/>
     <Parameter name="Nonlinear Tolerance" type="double" value="1.0e-4"/>
     <Parameter name="Nonlinear Max. Iterations" type="int" value="10"/>
   </ParameterList>
 
-   <ParameterList name="Time">
-     <Parameter name="Initial Time" type="double" value="0.0"/>
-     <Parameter name="Step Size" type="double" value="1.0"/>
-     <Parameter name="Number of Steps" type="int" value="2"/>
-  </ParameterList>
-
 </ParameterList>
-    
