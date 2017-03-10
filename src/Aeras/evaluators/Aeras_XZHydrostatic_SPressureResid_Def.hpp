@@ -144,7 +144,7 @@ evaluateFields(typename Traits::EvalData workset)
   if( !obtainLaplaceOp ) {
     if( !pureAdvection ) {
       XZHydrostatic_SPressureResid_Policy range(          
-	{0,0}, {(int)workset.numCells,(int)numQPs} );
+	{0,0}, {(int)workset.numCells,(int)numQPs}, XZHydrostatic_SPressureResid_TileSize);
       Kokkos::Experimental::md_parallel_for(range,*this);
       cudaCheckError();
     }
