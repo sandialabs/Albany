@@ -37,7 +37,6 @@
   </ParameterList>
 
   <ParameterList name="Mechanics Problem">
-    <Parameter name="Transient" type="bool" value="false"/>
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS face_424 for DOF Y" type="double" value=" 0.0"/>
