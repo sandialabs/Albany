@@ -257,7 +257,6 @@ int main(int argc, char *argv[]) {
   // Command-line argument for input file
   Albany::CmdLineArgs cmd;
   cmd.parse_cmdline(argc, argv, *out);
-  bool computeSensitivities = true; 
 
   try {
     RCP<Teuchos::Time> totalTime =
@@ -291,9 +290,6 @@ int main(int argc, char *argv[]) {
     } 
     Teuchos::ParameterList &solveParams =
       slvrfctry.getAnalysisParameters().sublist("Solve", /*mustAlreadyExist =*/ false);
-    // By default, request the sensitivities if not explicitly disabled
-    if (solveParams.isParameter("Compute Sensitivities")) 
-      computeSensitivities = solveParams.get<bool>("Compute Sensitivities"); 
 
     Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST> > > thyraResponses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<ST> > > > thyraSensitivities;
@@ -433,36 +429,23 @@ int main(int argc, char *argv[]) {
 
     for (int i=0; i<num_g-1; i++) {
       const RCP<const Tpetra_Vector> g = responses[i];
-      bool is_scalar = true;
+      if (!app->getResponse(i)->isScalarResponse()) continue;
 
-      if (app != Teuchos::null)
-        is_scalar = app->getResponse(i)->isScalarResponse();
+      if(response_names[i] != Teuchos::null) {
+        *out << "\n Response vector " << i << ": " << *response_names[i] << "\n";
+      }
+      else {
+        *out << "\n Response vector " << i << ":\n";
+      }
+      Albany::printTpetraVector(*out, g);
 
-      if (is_scalar) {
+      status += slvrfctry.checkSolveTestResultsT(i, 0, g.get(), NULL);
 
-        if(response_names[i] != Teuchos::null) {
-          *out << "\n Response vector " << i << ": " << *response_names[i] << "\n"; 
-          Albany::printTpetraVector(*out, g);
-        }
-        else {
-          *out << "\n Response vector " << i << ":\n"; 
-          Albany::printTpetraVector(*out, g);
-        }
-
-        if (num_p == 0) {
-          // Just calculate regression data
-          status += slvrfctry.checkSolveTestResultsT(i, 0, g.get(), NULL);
-        } 
-        else if (computeSensitivities == true) {
-          if (sensitivities[0][0] != Teuchos::null) {
-            for (int j=0; j<num_p; j++) {
-              const RCP<const Tpetra_MultiVector> dgdp = sensitivities[i][j];
-              if (Teuchos::nonnull(dgdp)) {
-                Albany::printTpetraVector(*out << "\nSensitivities (" << i << "," << j << "):!\n", dgdp);
-              }
-              status += slvrfctry.checkSolveTestResultsT(i, j, g.get(), dgdp.get());
-            }
-          }
+      for (int j=0; j<num_p; j++) {
+        const RCP<const Tpetra_MultiVector> dgdp = sensitivities[i][j];
+        if (Teuchos::nonnull(dgdp)) {
+          Albany::printTpetraVector(*out << "\nSensitivities (" << i << "," << j << "):!\n", dgdp);
+          status += slvrfctry.checkSolveTestResultsT(i, j, g.get(), dgdp.get());
         }
       }
     }
