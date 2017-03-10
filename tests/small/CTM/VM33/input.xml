@@ -34,7 +34,6 @@
       <Parameter name="Separate Evaluators by Element Block" type="bool" value="false"/>
       <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{ 5, Region_5}"/>
       <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x5:{424, 243, 2, 15, 9, face_424, face_243, face_2, face_15, face_9}"/>
-      <Parameter name="QP Temperature from Nodes" type="bool" value="true"/>
     </ParameterList>
   </ParameterList>
 

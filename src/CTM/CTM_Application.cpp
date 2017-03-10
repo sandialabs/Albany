@@ -136,7 +136,6 @@ namespace CTM {
             if (!apf_disc.is_null()) {
                 apf_disc->writeSolutionMVToMeshDatabase(*ghost_soln, 0, true);
             }
-            //            apf_disc->initTemperatureHack();
         }
 #endif
 

@@ -221,7 +221,6 @@ namespace CTM {
 
         m_state_mgr.setStateArrays(m_disc);
 
-        apf_t_disc->initTemperatureHack();
 
         // time loop
         double norm;
@@ -283,7 +282,6 @@ namespace CTM {
             iter = 1;
             converged = false;
             *out << "Solving mechanics problem" << std::endl;
-            //            apf_t_disc->initTemperatureHack();
             while ((iter <= max_iter) && (!converged)) {
                 *out << "  " << iter << " newton iteration" << std::endl;
                 // compute residual
