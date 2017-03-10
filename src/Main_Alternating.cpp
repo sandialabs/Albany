@@ -110,6 +110,11 @@ int main(int ac, char *av[])
   ALBANY_ASSERT(sizeof(long) == 8, "64-bit Albany requires sizeof(long) == 8");
 #endif
 
+  Teuchos::GlobalMPISession
+  mpi_session(&ac,&av);
+
+  Kokkos::initialize(ac, av);
+
   // 0 = pass, failures are incremented
   int
   status{0};
@@ -120,7 +125,70 @@ int main(int ac, char *av[])
   auto &&
   fos{*Teuchos::VerboseObjectBase::getDefaultOStream()};
 
+  // Command-line argument for input file
+  Albany::CmdLineArgs
+  cmd;
+
+  cmd.parse_cmdline(ac, av, fos);
+
+  auto &&
+  total_time{*Teuchos::TimeMonitor::getNewTimer("Albany: Total Time")};
+
+  auto &&
+  setup_time{*Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time")};
+
+  Teuchos::TimeMonitor
+  total_timer(total_time);
+
+  Teuchos::TimeMonitor
+  setup_timer(setup_time);
+
+  auto &&
+  comm{*Tpetra::DefaultPlatform::getDefaultPlatform().getComm()};
+
+  // Connect vtune for performance profiling
+  if (cmd.vtune == true) {
+    Albany::connect_vtune(comm.getRank());
+  }
+
+  std::string const &
+  alt_filename = cmd.xml_filename;
+
+  auto &&
+  pcomm = Teuchos::rcp(&comm, false);
+
+  Albany::SolverFactory
+  alt_slvrfctry(alt_filename, pcomm);
+
+  Teuchos::ParameterList &
+  alt_params = alt_slvrfctry.getParameters();
+
+  Teuchos::ParameterList &
+  alt_system_params = alt_params.sublist("Alternating System");
+
+  Teuchos::RCP<Teuchos::ParameterList>
+  alt_piro_params = Teuchos::rcp(&(alt_params.sublist("Piro")), false);
+
+  Teuchos::Array<std::string>
+  model_filenames = alt_system_params.get<Teuchos::Array<std::string>>("Model Input Files");
+
+  int
+  num_models = model_filenames.size();
+
+  Teuchos::Array<Teuchos::RCP<Albany::Application>>
+  apps(num_models);
+
+  Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
+  models(num_models);
+
+  Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>>
+  piro_params(num_models);
+
   fos << "Schwarz alternating method" << std::endl;
+
+  Teuchos::TimeMonitor::summarize(fos, false, true, false);
+
+  Kokkos::finalize_all();
 
   return status;
 }
