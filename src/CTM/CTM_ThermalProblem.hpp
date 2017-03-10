@@ -1,8 +1,6 @@
 #ifndef CTM_THERMAL_PROBLEM_HPP
 #define CTM_THERMAL_PROBLEM_HPP
 
-#include "CTM_Teuchos.hpp"
-
 #include <Albany_ProblemUtils.hpp>
 #include <Albany_AbstractProblem.hpp>
 #include <PHAL_AlbanyTraits.hpp>
@@ -10,6 +8,11 @@
 #include <Phalanx.hpp>
 
 namespace CTM {
+
+using Teuchos::rcp;
+using Teuchos::RCP;
+using Teuchos::ArrayRCP;
+using Teuchos::ParameterList;
 
 class ThermalProblem : public Albany::AbstractProblem {
 

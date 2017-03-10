@@ -1,14 +1,15 @@
 #ifndef CTM_SOLUTION_INFO_HPP
 #define CTM_SOLUTION_INFO_HPP
 
-#include "CTM_Teuchos.hpp"
 #include <Albany_DataTypes.hpp>
 
 namespace Albany {
-    class AbstractDiscretization;
+class AbstractDiscretization;
 }
 
 namespace CTM {
+
+using Teuchos::RCP;
 
     class SolutionInfo {
     public:

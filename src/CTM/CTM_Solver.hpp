@@ -3,8 +3,6 @@
 
 /// \file CTM_Solver.hpp
 
-#include "CTM_Teuchos.hpp"
-
 #include <Albany_DataTypes.hpp>
 #include "Albany_StateManager.hpp"
 #include <PHAL_Workset.hpp>
@@ -23,6 +21,11 @@ namespace CTM {
 
 /// \brief All CTM symbols are contained in this namespace.
 namespace CTM {
+
+using Teuchos::rcp;
+using Teuchos::RCP;
+using Teuchos::ArrayRCP;
+using Teuchos::ParameterList;
 
     /// \brief The coupled thermomechanics solver.
     /// \details The intent of this solver is to provide an interface to solve
