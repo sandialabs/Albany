@@ -7,7 +7,6 @@
   </ParameterList>
 
   <ParameterList name="Temperature Problem">
-     <Parameter name="Transient" type="bool" value="true"/>
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
     <ParameterList name="Dirichlet BCs">
       <ParameterList name="Time Dependent DBC on NS face_2 for DOF T">
