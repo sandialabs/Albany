@@ -108,6 +108,18 @@ public:
         Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
         Kokkos::IndexType<int>, Hydrostatic_VelResid_pureAdvection_Tag>;
 
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename Hydrostatic_VelResid_Policy::tile_type 
+    Hydrostatic_VelResid_TileSize{};
+  typename Hydrostatic_VelResid_pureAdvection_Policy::tile_type 
+    Hydrostatic_VelResid_pureAdvection_TileSize{};
+#else
+  typename Hydrostatic_VelResid_Policy::tile_type 
+    Hydrostatic_VelResid_TileSize{};
+  typename Hydrostatic_VelResid_pureAdvection_Policy::tile_type 
+    Hydrostatic_VelResid_pureAdvection_TileSize{};
+#endif
+
   KOKKOS_INLINE_FUNCTION
   void operator() (const Hydrostatic_VelResid_Tag& tag, const int cell, const int node, const int level) const;
 

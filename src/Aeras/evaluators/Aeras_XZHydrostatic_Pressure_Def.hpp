@@ -126,11 +126,13 @@ evaluateFields(typename Traits::EvalData workset)
 
 #else
   Kokkos::Experimental::md_parallel_for(XZHydrostatic_Pressure_Policy(
-    {0,0,0},{(int)workset.numCells,(int)numNodes,(int)numLevels}),*this);
+    {0,0,0},{(int)workset.numCells,(int)numNodes,(int)numLevels},
+    XZHydrostatic_Pressure_TileSize),*this);
   cudaCheckError();
 
   Kokkos::Experimental::md_parallel_for(XZHydrostatic_Pressure_Pi_Policy(
-    {0,0,0},{(int)workset.numCells,(int)numNodes,(int)numLevels}),*this);
+    {0,0,0},{(int)workset.numCells,(int)numNodes,(int)numLevels},
+    XZHydrostatic_Pressure_Pi_TileSize),*this);
   cudaCheckError();
 #endif
 }

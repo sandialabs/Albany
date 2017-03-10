@@ -79,7 +79,8 @@ evaluateFields(typename Traits::EvalData workset)
 
 #else
   DOFInterpolationLevels_Policy range(
-                {0,0,0}, {(int)workset.numCells,(int)numNodes,(int)numLevels} );
+                {0,0,0}, {(int)workset.numCells,(int)numNodes,(int)numLevels},
+                DOFInterpolationLevels_TileSize);
   Kokkos::Experimental::md_parallel_for(range,*this);
 #endif
 }

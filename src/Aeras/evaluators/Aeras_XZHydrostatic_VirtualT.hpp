@@ -80,6 +80,18 @@ public:
         Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
         Kokkos::IndexType<int>, XZHydrostatic_VirtualT_vapor_Tag>;
 
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename XZHydrostatic_VirtualT_Policy::tile_type 
+    XZHydrostatic_VirtualT_TileSize{{256,1,1}};
+  typename XZHydrostatic_VirtualT_vapor_Policy::tile_type 
+    XZHydrostatic_VirtualT_vapor_TileSize{{256,1,1}};
+#else
+  typename XZHydrostatic_VirtualT_Policy::tile_type 
+    XZHydrostatic_VirtualT_TileSize{};
+  typename XZHydrostatic_VirtualT_vapor_Policy::tile_type 
+    XZHydrostatic_VirtualT_vapor_TileSize{};
+#endif
+
   KOKKOS_INLINE_FUNCTION
   void operator() (const XZHydrostatic_VirtualT_Tag& tag, const int cell, const int node, const int level) const;
 

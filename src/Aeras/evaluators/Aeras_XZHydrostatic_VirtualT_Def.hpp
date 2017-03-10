@@ -125,11 +125,13 @@ evaluateFields(typename Traits::EvalData workset)
 #else
   if (!vapor) {
     Kokkos::Experimental::md_parallel_for(XZHydrostatic_VirtualT_Policy(
-      {0,0,0},{(int)workset.numCells,(int)numNodes,(int)numLevels}),*this);
+      {0,0,0},{(int)workset.numCells,(int)numNodes,(int)numLevels},
+      XZHydrostatic_VirtualT_TileSize),*this);
     cudaCheckError();
   } else { 
     Kokkos::Experimental::md_parallel_for(XZHydrostatic_VirtualT_vapor_Policy(
-      {0,0,0},{(int)workset.numCells,(int)numNodes,(int)numLevels}),*this);
+      {0,0,0},{(int)workset.numCells,(int)numNodes,(int)numLevels},
+      XZHydrostatic_VirtualT_vapor_TileSize),*this);
     cudaCheckError();
   }
 

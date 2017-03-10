@@ -74,6 +74,14 @@ public:
         Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
         Kokkos::IndexType<int>, XZHydrostatic_Omega_Tag>;
 
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename XZHydrostatic_Omega_Policy::tile_type 
+    XZHydrostatic_Omega_TileSize{{256,1,1}};
+#else
+  typename XZHydrostatic_Omega_Policy::tile_type 
+    XZHydrostatic_Omega_TileSize{};
+#endif
+
   KOKKOS_INLINE_FUNCTION
   void operator() (const XZHydrostatic_Omega_Tag& tag, const int cell, const int qp, const int level) const;
 

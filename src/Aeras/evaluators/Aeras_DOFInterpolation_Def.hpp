@@ -109,11 +109,11 @@ evaluateFields(typename Traits::EvalData workset)
 #else
   if (numRank == 2) {
     DOFInterpolation_rank2_Policy range(
-                {0,0}, {(int)workset.numCells,(int)numQPs} );
+                {0,0}, {(int)workset.numCells,(int)numQPs}, DOFInterpolation_rank2_TileSize);
     Kokkos::Experimental::md_parallel_for(range,*this);
   } else {
     DOFInterpolation_Policy range(
-                {0,0,0}, {(int)workset.numCells,(int)numQPs, (int)numLevels} );
+                {0,0,0}, {(int)workset.numCells,(int)numQPs, (int)numLevels}, DOFInterpolation_TileSize);
     Kokkos::Experimental::md_parallel_for(range,*this);
   }
 

@@ -7,6 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "PHAL_Utilities.hpp"
+#include "Albany_Utils.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 
@@ -51,7 +52,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void DOFGradInterpolationLevels<EvalT, Traits>::
-operator() (const int cell, const int qp, const int level) const{
+operator() (const DOFGradInterpolationLevels_Tag& tag, const int cell, const int qp, const int level) const{
   if (numDims==2){
     ScalarT grad_val0=0;
     ScalarT grad_val1=0;
@@ -132,9 +133,10 @@ evaluateFields(typename Traits::EvalData workset)
 */
 
 #else
-  DOFGradInterpolationLevels_Policy range(
-                {0,0,0}, {(int)workset.numCells,(int)numQPs,(int)numLevels} );
-  Kokkos::Experimental::md_parallel_for(range,*this);
+  Kokkos::Experimental::md_parallel_for(DOFGradInterpolationLevels_Policy(
+    {0,0,0},{(int)workset.numCells,(int)numQPs,(int)numLevels}, 
+    DOFGradInterpolationLevels_TileSize),*this);
+  cudaCheckError();
 #endif
 }
 
@@ -177,7 +179,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void DOFGradInterpolationLevels_noDeriv<EvalT, Traits>::
-operator() (const int cell, const int qp, const int level) const{
+operator() (const DOFGradInterpolationLevels_noDeriv_Tag& tag, const int cell, const int qp, const int level) const{
   if(numDims==2){
     MeshScalarT gvqp0 = 0;
     MeshScalarT gvqp1 = 0;
@@ -225,9 +227,10 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 #else
-  DOFGradInterpolationLevels_noDeriv_Policy range(
-                {0,0,0}, {(int)workset.numCells,(int)numQPs,(int)numLevels} );
-  Kokkos::Experimental::md_parallel_for(range,*this);
+  Kokkos::Experimental::md_parallel_for(DOFGradInterpolationLevels_noDeriv_Policy(
+    {0,0,0},{(int)workset.numCells,(int)numQPs,(int)numLevels}, 
+    DOFGradInterpolationLevels_noDeriv_TileSize),*this);
+  cudaCheckError();
 #endif
 }
 

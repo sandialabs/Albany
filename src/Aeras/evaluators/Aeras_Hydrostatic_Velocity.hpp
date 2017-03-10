@@ -71,36 +71,48 @@ public:
         Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Left,
         Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int> ,
         Hydrostatic_Velocity_Tag >;
+  typename Hydrostatic_Velocity_Policy::tile_type 
+    Hydrostatic_Velocity_TileSize{{256,1,1}};
 
  using Hydrostatic_Velocity_PRESCRIBED_1_1_Policy =
         Kokkos::Experimental::MDRangePolicy<
         Kokkos::Experimental::Rank<2, Kokkos::Experimental::Iterate::Left,
         Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int>,
         Hydrostatic_Velocity_PRESCRIBED_1_1_Tag >;
+  typename Hydrostatic_Velocity_PRESCRIBED_1_1_Policy::tile_type 
+    Hydrostatic_Velocity_PRESCRIBED_1_1_TileSize{{256,1}};
 
   using Hydrostatic_Velocity_PRESCRIBED_1_2_Policy =
         Kokkos::Experimental::MDRangePolicy<
         Kokkos::Experimental::Rank<2, Kokkos::Experimental::Iterate::Left,
         Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int>, 
         Hydrostatic_Velocity_PRESCRIBED_1_2_Tag >;
+  typename Hydrostatic_Velocity_PRESCRIBED_1_2_Policy::tile_type 
+    Hydrostatic_Velocity_PRESCRIBED_1_2_TileSize{{256,1}};
 #else
   using Hydrostatic_Velocity_Policy =
         Kokkos::Experimental::MDRangePolicy<
         Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Right,
         Kokkos::Experimental::Iterate::Right >, Kokkos::IndexType<int> ,
         Hydrostatic_Velocity_Tag >;
+  typename Hydrostatic_Velocity_Policy::tile_type 
+    Hydrostatic_Velocity_TileSize{};
 
  using Hydrostatic_Velocity_PRESCRIBED_1_1_Policy =
         Kokkos::Experimental::MDRangePolicy<
         Kokkos::Experimental::Rank<2, Kokkos::Experimental::Iterate::Right,
         Kokkos::Experimental::Iterate::Right>, Kokkos::IndexType<int>,
         Hydrostatic_Velocity_PRESCRIBED_1_1_Tag >;
+  typename Hydrostatic_Velocity_PRESCRIBED_1_1_Policy::tile_type 
+    Hydrostatic_Velocity_PRESCRIBED_1_1_TileSize{};
 
   using Hydrostatic_Velocity_PRESCRIBED_1_2_Policy =
         Kokkos::Experimental::MDRangePolicy<
         Kokkos::Experimental::Rank<2, Kokkos::Experimental::Iterate::Right,
         Kokkos::Experimental::Iterate::Right >, Kokkos::IndexType<int>,
         Hydrostatic_Velocity_PRESCRIBED_1_2_Tag >;
+  typename Hydrostatic_Velocity_PRESCRIBED_1_2_Policy::tile_type 
+    Hydrostatic_Velocity_PRESCRIBED_1_2_TileSize{};
 
 #endif 
 

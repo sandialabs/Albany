@@ -102,21 +102,26 @@ public:
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
 
   struct GatherSolution_Tag{};
 
-#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA) 
-  using GatherSolution_Policy =
-        Kokkos::Experimental::MDRangePolicy<
-        Kokkos::Experimental::Rank<2, Kokkos::Experimental::Iterate::Left,
-        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int> >;
-#else
-  using GatherSolution_Policy =
-        Kokkos::Experimental::MDRangePolicy<
-        Kokkos::Experimental::Rank<2, Kokkos::Experimental::Iterate::Right,
-        Kokkos::Experimental::Iterate::Right >, Kokkos::IndexType<int> >;
-#endif
+  using GatherSolution_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>>;
 
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename GatherSolution_Policy::tile_type 
+    GatherSolution_TileSize{{256,1}};
+#else
+  typename GatherSolution_Policy::tile_type 
+    GatherSolution_TileSize{};
+#endif
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const int cell, const int node) const;

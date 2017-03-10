@@ -101,7 +101,8 @@ evaluateFields(typename Traits::EvalData workset)
 
 #else
   Kokkos::Experimental::md_parallel_for(XZHydrostatic_Omega_Policy(
-    {0,0,0},{(int)workset.numCells,(int)numQPs,(int)numLevels}),*this);
+    {0,0,0},{(int)workset.numCells,(int)numQPs,(int)numLevels},
+    XZHydrostatic_Omega_TileSize),*this);
   cudaCheckError();
 
 #endif

@@ -236,13 +236,13 @@ evaluateFields(typename Traits::EvalData workset)
 
   else if ( topoType == SPHERE_MOUNTAIN1 ){
     Kokkos::Experimental::md_parallel_for(Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Policy(
-      {0,0},{(int)workset.numCells,(int)numNodes}),*this);
+      {0,0},{(int)workset.numCells,(int)numNodes},Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_TileSize),*this);
     cudaCheckError();
   }
 
   else if (topoType == ASP_BAROCLINIC){
     Kokkos::Experimental::md_parallel_for(Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Policy(
-      {0,0},{(int)workset.numCells,(int)numNodes}),*this);
+      {0,0},{(int)workset.numCells,(int)numNodes},Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_TileSize),*this);
     cudaCheckError();
   }
 

@@ -98,6 +98,22 @@ public:
         Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
         Kokkos::IndexType<int>, DOFDivInterpolationLevels_Tag>;
 
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename DOFDivInterpolationLevels_originalDiv_Policy::tile_type 
+    DOFDivInterpolationLevels_originalDiv_TileSize{};
+  typename DOFDivInterpolationLevels_vcontra_Policy::tile_type 
+    DOFDivInterpolationLevels_vcontra_TileSize{};
+  typename DOFDivInterpolationLevels_Policy::tile_type 
+    DOFDivInterpolationLevels_TileSize{};
+#else
+  typename DOFDivInterpolationLevels_originalDiv_Policy::tile_type 
+    DOFDivInterpolationLevels_originalDiv_TileSize{};
+  typename DOFDivInterpolationLevels_vcontra_Policy::tile_type 
+    DOFDivInterpolationLevels_vcontra_TileSize{};
+  typename DOFDivInterpolationLevels_Policy::tile_type 
+    DOFDivInterpolationLevels_TileSize{};
+#endif
+
   KOKKOS_INLINE_FUNCTION
   void operator() (const DOFDivInterpolationLevels_originalDiv_Tag& tag, const int cell, const int qp, const int level) const;
 

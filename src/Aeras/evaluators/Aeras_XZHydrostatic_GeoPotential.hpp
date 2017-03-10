@@ -62,18 +62,25 @@ private:
 
 public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
 
   struct XZHydrostatic_GeoPotential_Tag{};
-#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA) 
-  using XZHydrostatic_GeoPotential_Policy =
-        Kokkos::Experimental::MDRangePolicy<
-        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Left,
-        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int> >;
+
+  using XZHydrostatic_GeoPotential_Policy = Kokkos::Experimental::MDRangePolicy<
+    Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>, 
+    Kokkos::IndexType<int>>;
+
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename XZHydrostatic_GeoPotential_Policy::tile_type 
+    XZHydrostatic_GeoPotential_TileSize{{256,1,1}};
 #else
-  using XZHydrostatic_GeoPotential_Policy =
-        Kokkos::Experimental::MDRangePolicy<
-        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Right,
-        Kokkos::Experimental::Iterate::Right >, Kokkos::IndexType<int> >;
+  typename XZHydrostatic_GeoPotential_Policy::tile_type 
+    XZHydrostatic_GeoPotential_TileSize{};
 #endif
 
   KOKKOS_INLINE_FUNCTION

@@ -64,6 +64,14 @@ public:
         Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
         Kokkos::IndexType<int>, XZHydrostatic_Density_Tag>;
 
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename XZHydrostatic_Density_Policy::tile_type 
+    XZHydrostatic_Density_TileSize{{256,1,1}};
+#else
+  typename XZHydrostatic_Density_Policy::tile_type 
+    XZHydrostatic_Density_TileSize{};
+#endif
+
   KOKKOS_INLINE_FUNCTION
   void operator() (const XZHydrostatic_Density_Tag& tag, const int cell, const int node, const int level) const;
 

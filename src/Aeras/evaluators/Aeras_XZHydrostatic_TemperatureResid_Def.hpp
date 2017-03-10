@@ -221,7 +221,8 @@ evaluateFields(typename Traits::EvalData workset)
   if ( !obtainLaplaceOp ) {
     if( !pureAdvection ) {
        XZHydrostatic_TemperatureResid_Policy range(
-                {0,0,0}, {(int)workset.numCells,(int)numNodes,(int)numLevels} );
+                {0,0,0}, {(int)workset.numCells,(int)numNodes,(int)numLevels}, 
+                XZHydrostatic_TemperatureResid_TileSize);
         Kokkos::Experimental::md_parallel_for(range,*this);
     }
  }

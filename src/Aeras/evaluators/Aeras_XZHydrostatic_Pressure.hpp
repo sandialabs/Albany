@@ -74,6 +74,18 @@ public:
         Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
         Kokkos::IndexType<int>, XZHydrostatic_Pressure_Pi_Tag>;
 
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename XZHydrostatic_Pressure_Policy::tile_type 
+    XZHydrostatic_Pressure_TileSize{{256,1,1}};
+  typename XZHydrostatic_Pressure_Pi_Policy::tile_type 
+    XZHydrostatic_Pressure_Pi_TileSize{{256,1,1}};
+#else
+  typename XZHydrostatic_Pressure_Policy::tile_type 
+    XZHydrostatic_Pressure_TileSize{};
+  typename XZHydrostatic_Pressure_Pi_Policy::tile_type 
+    XZHydrostatic_Pressure_Pi_TileSize{};
+#endif
+
   KOKKOS_INLINE_FUNCTION
   void operator() (const XZHydrostatic_Pressure_Tag& tag, const int cell, const int node, const int level) const;
 

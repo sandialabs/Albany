@@ -196,11 +196,11 @@ evaluateFields(typename Traits::EvalData workset)
 
 #if ORIGINALVORT
   VorticityLevels_Policy range(
-      {0,0,0}, {(int)workset.numCells,(int)numQPs,(int)numLevels});
+      {0,0,0}, {(int)workset.numCells,(int)numQPs,(int)numLevels}, VorticityLevels_TileSize);
   Kokkos::Experimental::md_parallel_for(range,*this);
 #else
   VorticityLevels_Policy range(
-      {0,0,0}, {(int)workset.numCells,(int)numLevels,(int)numQPs});
+      {0,0,0}, {(int)workset.numCells,(int)numLevels,(int)numQPs}, VorticityLevels_TileSize);
   Kokkos::Experimental::md_parallel_for(range,*this);
 
 #endif

@@ -103,6 +103,18 @@ public:
         Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
         Kokkos::IndexType<int>, XZHydrostatic_EtaDotPi_pureAdvection_Tag>;
 
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename XZHydrostatic_EtaDotPi_Policy::tile_type 
+    XZHydrostatic_EtaDotPi_TileSize{{256,1,1}};
+  typename XZHydrostatic_EtaDotPi_pureAdvection_Policy::tile_type 
+    XZHydrostatic_EtaDotPi_pureAdvection_TileSize{{256,1,1}};
+#else
+  typename XZHydrostatic_EtaDotPi_Policy::tile_type 
+    XZHydrostatic_EtaDotPi_TileSize{};
+  typename XZHydrostatic_EtaDotPi_pureAdvection_Policy::tile_type 
+    XZHydrostatic_EtaDotPi_pureAdvection_TileSize{};
+#endif
+
   KOKKOS_INLINE_FUNCTION
   void operator() (const XZHydrostatic_EtaDotPi_Tag& tag, const int cell, const int qp, const int level) const;
 

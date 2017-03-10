@@ -124,7 +124,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 #else
   XZHydrostatic_VelResid_Policy range(
-             {0,0,0}, {(int)workset.numCells,(int)numNodes,(int)numLevels} );
+             {0,0,0}, {(int)workset.numCells,(int)numNodes,(int)numLevels}, XZHydrostatic_VelResid_TileSize);
   Kokkos::Experimental::md_parallel_for(range,*this);
 
 #endif

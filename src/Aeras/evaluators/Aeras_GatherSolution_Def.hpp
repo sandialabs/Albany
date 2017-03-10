@@ -255,7 +255,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 
   GatherSolution_Policy range(
-      {0,0}, {(int)workset.numCells,(int)this->numNodes}, {256,0} );
+      {0,0}, {(int)workset.numCells,(int)this->numNodes}, GatherSolution_TileSize);
   Kokkos::Experimental::md_parallel_for(range,*this);
   cudaCheckError();
 

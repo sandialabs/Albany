@@ -181,7 +181,7 @@ evaluateFields(typename Traits::EvalData workset)
   d_val = val_kokkos.template view<executionSpace>();
 
   ScatterResid_Policy range(
-      {0,0}, {(int)workset.numCells,(int)this->numNodes});
+      {0,0}, {(int)workset.numCells,(int)this->numNodes}, ScatterResid_TileSize);
   Kokkos::Experimental::md_parallel_for(range,*this);
 
   cudaCheckError();

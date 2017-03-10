@@ -60,23 +60,29 @@ private:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
 
   struct DOFGradInterpolationLevels_Tag{};
 
-#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA) 
-  using DOFGradInterpolationLevels_Policy =
-        Kokkos::Experimental::MDRangePolicy<
-        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Left,
-        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int> >;
+  using DOFGradInterpolationLevels_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, DOFGradInterpolationLevels_Tag>;
+
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename DOFGradInterpolationLevels_Policy::tile_type 
+    DOFGradInterpolationLevels_TileSize{};
 #else
-  using DOFGradInterpolationLevels_Policy =
-        Kokkos::Experimental::MDRangePolicy<
-        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Right,
-        Kokkos::Experimental::Iterate::Right >, Kokkos::IndexType<int> >;
+  typename DOFGradInterpolationLevels_Policy::tile_type 
+    DOFGradInterpolationLevels_TileSize{};
 #endif
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const int cell, const int qp, const int level) const;
+  void operator() (const DOFGradInterpolationLevels_Tag& tag, const int cell, const int qp, const int level) const;
 
 #endif
 };
@@ -119,23 +125,29 @@ private:
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
 
   struct DOFGradInterpolationLevels_noDeriv_Tag{};
 
-#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA) 
-  using DOFGradInterpolationLevels_noDeriv_Policy =
-        Kokkos::Experimental::MDRangePolicy<
-        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Left,
-        Kokkos::Experimental::Iterate::Left >, Kokkos::IndexType<int> >;
+  using DOFGradInterpolationLevels_noDeriv_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, DOFGradInterpolationLevels_noDeriv_Tag>;
+
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename DOFGradInterpolationLevels_noDeriv_Policy::tile_type 
+    DOFGradInterpolationLevels_noDeriv_TileSize{};
 #else
-  using DOFGradInterpolationLevels_noDeriv_Policy =
-        Kokkos::Experimental::MDRangePolicy<
-        Kokkos::Experimental::Rank<3, Kokkos::Experimental::Iterate::Right,
-        Kokkos::Experimental::Iterate::Right >, Kokkos::IndexType<int> >;
+  typename DOFGradInterpolationLevels_noDeriv_Policy::tile_type 
+    DOFGradInterpolationLevels_noDeriv_TileSize{};
 #endif
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const int cell, const int qp, const int level) const;
+  void operator() (const DOFGradInterpolationLevels_noDeriv_Tag& tag, const int cell, const int qp, const int level) const;
 #endif
 };
 }

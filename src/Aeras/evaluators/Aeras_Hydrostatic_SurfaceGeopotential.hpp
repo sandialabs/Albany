@@ -79,6 +79,18 @@ public:
         Kokkos::Experimental::Rank<2, IterateDirection, IterateDirection>,
         Kokkos::IndexType<int>, Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Tag>;
 
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Policy::tile_type 
+    Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_TileSize{{256,1}};
+  typename Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Policy::tile_type 
+    Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_TileSize{{256,1}};
+#else
+  typename Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Policy::tile_type 
+    Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_TileSize{};
+  typename Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_Policy::tile_type 
+    Hydrostatic_SurfaceGeopotential_ASP_BAROCLINIC_TileSize{};
+#endif
+
   KOKKOS_INLINE_FUNCTION
   void operator() (const Hydrostatic_SurfaceGeopotential_SPHERE_MOUNTAIN1_Tag& tag, const int cell, const int node) const;
 
