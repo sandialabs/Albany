@@ -297,7 +297,7 @@ namespace CTM {
 
         int numWorksets = wsElNodeEqID.size();
 
-        const Teuchos::RCP<Tpetra_Vector> overlapped_fT = solution_info->getGhostResidual();
+        const Teuchos::RCP<Tpetra_Vector> overlapped_fT = solution_info->ghost->f;
         const Teuchos::RCP<Tpetra_Export> exporterT = solution_info->getExporter();
         const Teuchos::RCP<Tpetra_Import> importerT = solution_info->getImporter();
 
@@ -444,11 +444,11 @@ namespace CTM {
         //Teuchos::RCP<Tpetra_Vector> overlapped_fT = solMgrT->get_overlapped_fT();
         Teuchos::RCP<Tpetra_Vector> overlapped_fT;
         if (Teuchos::nonnull(fT)) {
-            overlapped_fT = solution_info->getGhostResidual();
+            overlapped_fT = solution_info->ghost->f;
         } else {
             overlapped_fT = Teuchos::null;
         }
-        Teuchos::RCP<Tpetra_CrsMatrix> overlapped_jacT = solution_info->getGhostJacobian();
+        Teuchos::RCP<Tpetra_CrsMatrix> overlapped_jacT = solution_info->ghost->J;
         Teuchos::RCP<Tpetra_Export> exporterT = solution_info->getExporter();
 
         // Scatter x and xdot to the overlapped distribution
@@ -608,7 +608,7 @@ namespace CTM {
             }
         }
 
-        Teuchos::RCP<Tpetra_Vector> overlapped_fT = solution_info->getGhostResidual();
+        Teuchos::RCP<Tpetra_Vector> overlapped_fT = solution_info->ghost->f;
 
         // Load connectivity map and coordinates
         const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&

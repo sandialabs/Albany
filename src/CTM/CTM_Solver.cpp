@@ -168,9 +168,9 @@ namespace CTM {
         //
         Teuchos::RCP<Tpetra_Vector> xdotdot_t = (t_sol_info->getOwnedMV()->getNumVectors() > 2) ? t_sol_info->getOwnedMV()->getVectorNonConst(2) : Teuchos::null;
         // get residual
-        Teuchos::RCP<Tpetra_Vector> r_t = t_sol_info->getOwnedResidual();
+        Teuchos::RCP<Tpetra_Vector> r_t = t_sol_info->owned->f;
         // get Jacobian
-        Teuchos::RCP<Tpetra_CrsMatrix> J_t = t_sol_info->getOwnedJacobian();
+        Teuchos::RCP<Tpetra_CrsMatrix> J_t = t_sol_info->owned->J;
 
         // create new vectors
         Teuchos::RCP<const Tpetra_Map> t_map_owned = t_disc->getMapT();
@@ -189,9 +189,9 @@ namespace CTM {
         //
         Teuchos::RCP<Tpetra_Vector> xdotdot_m = (m_sol_info->getOwnedMV()->getNumVectors() > 2) ? m_sol_info->getOwnedMV()->getVectorNonConst(2) : Teuchos::null;
         // get residual
-        Teuchos::RCP<Tpetra_Vector> r_m = m_sol_info->getOwnedResidual();
+        Teuchos::RCP<Tpetra_Vector> r_m = m_sol_info->owned->f;
         // get Jacobian
-        Teuchos::RCP<Tpetra_CrsMatrix> J_m = m_sol_info->getOwnedJacobian();
+        Teuchos::RCP<Tpetra_CrsMatrix> J_m = m_sol_info->owned->J;
 
         // create new vectors
         Teuchos::RCP<const Tpetra_Map> m_map_owned = m_disc->getMapT();

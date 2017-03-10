@@ -11,6 +11,13 @@ namespace CTM {
 
 using Teuchos::RCP;
 
+struct LinearObj {
+  RCP<Tpetra_Vector> x;
+  RCP<Tpetra_Vector> x_dot;
+  RCP<Tpetra_Vector> f;
+  RCP<Tpetra_CrsMatrix> J;
+};
+
 class SolutionInfo {
 
   public:
@@ -31,14 +38,14 @@ class SolutionInfo {
         const Tpetra_Vector* x_dotT,
         const Tpetra_Vector* x_dotdotT);
 
-    Teuchos::RCP<Tpetra_Vector> getOwnedResidual();
-    Teuchos::RCP<Tpetra_Vector> getGhostResidual();
-
     Teuchos::RCP<Tpetra_CrsMatrix> getOwnedJacobian();
     Teuchos::RCP<Tpetra_CrsMatrix> getGhostJacobian();
 
     void gather_x();
     void scatter_x();
+
+    void gather_x_dot();
+    void scatter_x_dot();
 
     void gather_f();
     void scatter_f();
@@ -48,14 +55,13 @@ class SolutionInfo {
 
     void resize(RCP<Albany::AbstractDiscretization> disc, bool have_x_dot);
 
+    RCP<LinearObj> owned;
+    RCP<LinearObj> ghost;
+
   private:
     
     RCP<Tpetra_MultiVector> owned_x;
     RCP<Tpetra_MultiVector> ghost_x;
-    RCP<Tpetra_Vector> owned_f;
-    RCP<Tpetra_Vector> ghost_f;
-    RCP<Tpetra_CrsMatrix> owned_J;
-    RCP<Tpetra_CrsMatrix> ghost_J;
     RCP<Tpetra_Export> exporter;
     RCP<Tpetra_Import> importer;
 

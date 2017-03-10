@@ -5,8 +5,12 @@
 
 namespace CTM {
 
-SolutionInfo::SolutionInfo() {}
+using Teuchos::rcp;
 
+SolutionInfo::SolutionInfo() {
+  owned = rcp(new LinearObj);
+  ghost = rcp(new LinearObj);
+}
 
 Teuchos::RCP<Tpetra_MultiVector> SolutionInfo::getOwnedMV() {
   return owned_x;
@@ -24,22 +28,6 @@ Teuchos::RCP<Tpetra_Import> SolutionInfo::getImporter() {
   return importer;
 }
 
-Teuchos::RCP<Tpetra_Vector> SolutionInfo::getOwnedResidual() {
-  return owned_f;
-}
-
-Teuchos::RCP<Tpetra_Vector> SolutionInfo::getGhostResidual() {
-  return ghost_f;
-}
-
-Teuchos::RCP<Tpetra_CrsMatrix> SolutionInfo::getOwnedJacobian() {
-  return owned_J;
-}
-
-Teuchos::RCP<Tpetra_CrsMatrix> SolutionInfo::getGhostJacobian() {
-  return ghost_J;
-}
-
 void SolutionInfo::gather_x() {
   owned_x->doExport(*ghost_x, *exporter, Tpetra::INSERT);
 }
@@ -49,19 +37,19 @@ void SolutionInfo::scatter_x() {
 }
 
 void SolutionInfo::gather_f() {
-  owned_f->doExport(*ghost_f, *exporter, Tpetra::ADD);
+  owned->f->doExport(*(ghost->f), *exporter, Tpetra::ADD);
 }
 
 void SolutionInfo::scatter_f() {
-  ghost_f->doImport(*owned_f, *importer, Tpetra::INSERT);
+  ghost->f->doExport(*(owned->f), *importer, Tpetra::INSERT);
 }
 
 void SolutionInfo::gather_J() {
-  owned_J->doExport(*ghost_J, *exporter, Tpetra::ADD);
+  owned->J->doExport(*(ghost->J), *exporter, Tpetra::ADD);
 }
 
 void SolutionInfo::scatter_J() {
-  ghost_J->doImport(*owned_J, *importer, Tpetra::INSERT);
+  ghost->J->doImport(*(owned->J), *importer, Tpetra::INSERT);
 }
 
 void SolutionInfo::scatter_x(
@@ -89,18 +77,25 @@ void SolutionInfo::resize(RCP<Albany::AbstractDiscretization> d, bool have_x_dot
   auto t0 = PCU_Time();
   int number_vectors = 1;
   if (have_x_dot) number_vectors = 2;
-  auto map = d->getMapT();
+  auto owned_map = d->getMapT();
   auto ghost_map = d->getOverlapMapT();
-  auto graph = d->getJacobianGraphT();
+  auto owned_graph = d->getJacobianGraphT();
   auto ghost_graph = d->getOverlapJacobianGraphT();
-  exporter = rcp(new Tpetra_Export(ghost_map, map));
-  importer = rcp(new Tpetra_Import(map, ghost_map));
-  owned_x = rcp(new Tpetra_MultiVector(map, number_vectors));
+  exporter = rcp(new Tpetra_Export(ghost_map, owned_map));
+  importer = rcp(new Tpetra_Import(owned_map, ghost_map));
+  owned_x = rcp(new Tpetra_MultiVector(owned_map, number_vectors));
   ghost_x = rcp(new Tpetra_MultiVector(ghost_map, number_vectors));
-  owned_f = rcp(new Tpetra_Vector(map));
-  ghost_f = rcp(new Tpetra_Vector(ghost_map));
-  owned_J = rcp(new Tpetra_CrsMatrix(graph));
-  ghost_J = rcp(new Tpetra_CrsMatrix(ghost_graph));
+
+  owned->x = rcp(new Tpetra_Vector(owned_map));
+  owned->x_dot = rcp(new Tpetra_Vector(owned_map));
+  owned->f = rcp(new Tpetra_Vector(owned_map));
+  owned->J = rcp(new Tpetra_CrsMatrix(owned_graph));
+
+  ghost->x = rcp(new Tpetra_Vector(ghost_map));
+  ghost->x_dot = rcp(new Tpetra_Vector(ghost_map));
+  ghost->f = rcp(new Tpetra_Vector(ghost_map));
+  ghost->J = rcp(new Tpetra_CrsMatrix(ghost_graph));
+
   auto t1 = PCU_Time();
   if (!PCU_Comm_Self())
     printf("Solution containers resized in %f seconds\n", t1 - t0);
