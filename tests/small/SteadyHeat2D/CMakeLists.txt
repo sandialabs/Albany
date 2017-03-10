@@ -14,10 +14,14 @@ if (ALBANY_IFPACK2)
 # 1'. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_RegressFail.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT_RegressFail.xml COPYONLY)
 # 2'. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3'. Create the test with this name and standard executable
 add_test(${testName}_SERIAL_Tpetra ${SerialAlbanyT.exe} inputT.xml)
+add_test(${testName}_Tpetra_RegressFail ${SerialAlbanyT.exe} inputT_RegressFail.xml)
+set_tests_properties(${testName}_Tpetra_RegressFail PROPERTIES WILL_FAIL TRUE)
 add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
 endif ()
 
@@ -26,8 +30,12 @@ if (ALBANY_MUELU_EXAMPLES)
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Tpetra_MueLu NAME)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_MueLu.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputT_MueLu.xml COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_MueLu_RegressFail.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT_MueLu_RegressFail.xml COPYONLY)
     # 3'. Create the test with this name and standard executable
     add_test(${testName}_SERIAL ${SerialAlbanyT.exe} inputT_MueLu.xml)
+    add_test(${testName}_RegressFail ${SerialAlbanyT.exe} inputT_MueLu_RegressFail.xml)
+    set_tests_properties(${testName}_RegressFail PROPERTIES WILL_FAIL TRUE)
     add_test(${testName} ${AlbanyT.exe} inputT_MueLu.xml)
 endif ()
 

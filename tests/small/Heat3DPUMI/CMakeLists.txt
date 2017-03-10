@@ -10,6 +10,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSerial.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputSerial.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputRegressFail.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputRegressFail.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/test_non_man.xmt_txt
                ${CMAKE_CURRENT_BINARY_DIR}/test_non_man.xmt_txt COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/coarse_cube_model.dmg
@@ -39,4 +41,7 @@ IF(NOT ALBANY_PARALLEL_ONLY)
      COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${SerialAlbanyT.exe}" -DTEST_ARGS=inputSerial.xml
      "-DFILENAME=serial_coarse_cube_out.pvd" -P
      ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+  add_test(NAME ${testName}_Tpetra_RegressFail
+     COMMAND ${SerialAlbanyT.exe} inputRegressFail.xml)
+  set_tests_properties(${testName}_Tpetra_RegressFail PROPERTIES WILL_FAIL TRUE)
 ENDIF()
