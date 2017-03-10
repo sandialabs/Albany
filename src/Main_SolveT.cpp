@@ -215,7 +215,7 @@ void tpetraFromThyra(
         jt_end = sens_thyra.end();
         jt != jt_end;
         ++jt) {
-        sens.push_back(Teuchos::nonnull(*jt) ? ConverterT::getConstTpetraMultiVector(*jt) : Teuchos::null);
+      sens.push_back(Teuchos::nonnull(*jt) ? ConverterT::getConstTpetraMultiVector(*jt) : Teuchos::null);
     }
     sensitivities.push_back(sens);
   }
