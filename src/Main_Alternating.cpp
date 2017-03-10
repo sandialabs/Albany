@@ -107,7 +107,7 @@ int main(int ac, char *av[])
 #endif
 
 #if defined(ALBANY_64BIT_INT)
-  ALBANY_ASSERT(sizeof(long) == 8, "64-bit Albany requires sizeof(long) == 8");
+  static_assert(sizeof(long) == 8, "64-bit Albany requires sizeof(long) == 8");
 #endif
 
   Teuchos::GlobalMPISession

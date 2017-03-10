@@ -241,18 +241,8 @@ int main(int argc, char *argv[]) {
 #endif
 
 #ifdef ALBANY_64BIT_INT
-// Albany assumes sizeof(long) is 64 bit ints
-
-//	if(sizeof(long) != sizeof(long long)){
-	if(sizeof(long) != 8){ // 8 bytes
-
-		std::cerr << "Error: The 64 bit build of Albany assumes that sizeof(long) == 64 bits."
-			<< " sizeof(long) = " << sizeof(long) << "; sizeof(long long) = " << sizeof(long long) << std::endl;
-
-        exit(1);
-
-    }
-
+  static_assert(sizeof(long) == 8,
+      "Error: The 64 bit build of Albany assumes that sizeof(long) == 64 bits.");
 #endif
 
 #ifdef ALBANY_APF
