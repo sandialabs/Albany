@@ -3,7 +3,6 @@ CTM_SolutionInfo.cpp
 CTM_TemperatureEvaluator.cpp
 CTM_ThermalProblem.cpp
 CTM_MechanicsProblem.cpp
-CTM_Application.cpp
 CTM_LinearSolver.cpp
 CTM_Solver.cpp)
 
