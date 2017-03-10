@@ -13,7 +13,12 @@ SolutionInfo::SolutionInfo() {
 }
 
 void SolutionInfo::gather_x() {
-  owned_x->doExport(*ghost_x, *exporter, Tpetra::INSERT);
+  owned->x->doExport(*(ghost->x), *exporter, Tpetra::INSERT);
+}
+
+void SolutionInfo::gather_x_dot() {
+  if (owned->x_dot != Teuchos::null)
+    owned->x_dot->doExport(*(ghost->x_dot), *exporter, Tpetra::INSERT);
 }
 
 void SolutionInfo::gather_f() {
@@ -25,7 +30,12 @@ void SolutionInfo::gather_J() {
 }
 
 void SolutionInfo::scatter_x() {
-  ghost_x->doImport(*owned_x, *importer, Tpetra::INSERT);
+  ghost->x->doImport(*(owned->x), *importer, Tpetra::INSERT);
+}
+
+void SolutionInfo::scatter_x_dot() {
+  if (ghost->x_dot != Teuchos::null)
+    ghost->x_dot->doImport(*(owned->x_dot), *importer, Tpetra::INSERT);
 }
 
 void SolutionInfo::scatter_f() {
@@ -50,13 +60,13 @@ void SolutionInfo::resize(RCP<Albany::AbstractDiscretization> d, bool have_x_dot
   owned->x = rcp(new Tpetra_Vector(owned_map));
   owned->f = rcp(new Tpetra_Vector(owned_map));
   owned->J = rcp(new Tpetra_CrsMatrix(owned_graph));
-  (if have_x_dot)
+  if (have_x_dot)
     owned->x_dot = rcp(new Tpetra_Vector(owned_map));
 
   ghost->x = rcp(new Tpetra_Vector(ghost_map));
   ghost->f = rcp(new Tpetra_Vector(ghost_map));
   ghost->J = rcp(new Tpetra_CrsMatrix(ghost_graph));
-  (if have_x_dot)
+  if (have_x_dot)
     ghost->x_dot = rcp(new Tpetra_Vector(ghost_map));
 
   auto t1 = PCU_Time();
