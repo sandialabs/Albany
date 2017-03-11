@@ -23,22 +23,16 @@ class Assembler {
         RCP<Albany::AbstractDiscretization> d,
         RCP<Albany::StateManager> sm);
 
-    void assmeble_system(
+    void assemble_system(
         const double alpha,
         const double beta,
         const double omega,
         const double t_new,
-        const double t_old,
-        RCP<Tpetra_Vector> x,
-        RCP<Tpetra_Vector> x_dot,
-        RCP<Tpetra_Vector> f,
-        RCP<Tpetra_CrsMatrix> J);
+        const double t_old);
 
     void assemble_state(
         const double t_new,
-        const double t_old,
-        RCP<Tpetra_Vector> x,
-        RCP<Tpetra_Vector> x_dot);
+        const double t_old);
 
   private:
 
@@ -72,6 +66,8 @@ class Assembler {
     void load_ws_nodeset(PHAL::Workset& workset);
 
     void post_reg_setup();
+
+    void state_post_reg_setup();
 
 };
 
