@@ -78,11 +78,13 @@ void Solver::initial_setup() {
   t_problem = rcp(new ThermalProblem(t_params, param_lib, num_dims, comm));
   t_params->validateParameters(*(t_problem->getValidProblemParameters()), 0);
   t_problem->buildProblem(mesh_specs, *t_state_mgr);
+  *out << std::endl;
 
   // build the mechanics problem
   m_problem = rcp(new CTM::MechanicsProblem(m_params, param_lib, num_dims, comm));
   m_params->validateParameters(*(m_problem->getValidProblemParameters()), 0);
   m_problem->buildProblem(mesh_specs, *m_state_mgr);
+  *out << std::endl;
 
   // create the temperature discretization
   int neq = t_problem->numEquations();
@@ -111,6 +113,15 @@ void Solver::initial_setup() {
   // create the solution information
   t_sol_info->resize(t_disc, true);
   m_sol_info->resize(m_disc, false);
+
+  // build the assembler
+  t_assembler = rcp(new Assembler(t_sol_info, t_problem, t_disc, t_state_mgr));
+  m_assembler = rcp(new Assembler(m_sol_info, m_problem, m_disc, m_state_mgr));
+
+  // set the state arrays
+  *out << std::endl;
+  t_state_mgr->setStateArrays(t_disc);
+  m_state_mgr->setStateArrays(m_disc);
 }
 
 void Solver::solve() {
