@@ -34,22 +34,24 @@ class Solver {
     RCP<const Teuchos_Comm> comm;
 
     RCP<ParameterList> params;
-    RCP<ParameterList> temp_params;
-    RCP<ParameterList> mech_params;
+    RCP<ParameterList> t_params;
+    RCP<ParameterList> m_params;
 
     RCP<ParamLib> param_lib;
     RCP<DistParamLib> dist_param_lib;
 
-    RCP<Albany::DiscretizationFactory> disc_factory;
-    RCP<Albany::AbstractDiscretization> temp_disc;
-    RCP<Albany::AbstractDiscretization> mech_disc;
+    RCP<Albany::AbstractDiscretization> t_disc;
+    RCP<Albany::AbstractDiscretization> m_disc;
 
     ArrayRCP<RCP<Albany::MeshSpecsStruct> > mesh_specs;
-    RCP<Albany::StateManager> temp_state_mgr;
-    RCP<Albany::StateManager> mech_state_mgr;
+    RCP<Albany::StateManager> t_state_mgr;
+    RCP<Albany::StateManager> m_state_mgr;
 
-    RCP<Albany::AbstractProblem> temp_problem;
-    RCP<Albany::AbstractProblem> mech_problem;
+    RCP<Albany::AbstractProblem> t_problem;
+    RCP<Albany::AbstractProblem> m_problem;
+
+    RCP<SolutionInfo> t_sol_info;
+    RCP<SolutionInfo> m_sol_info;
 
     int num_steps;
     double dt;
