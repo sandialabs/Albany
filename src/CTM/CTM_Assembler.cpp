@@ -3,6 +3,7 @@
 
 namespace CTM {
 
+using Teuchos::rcp;
 using Teuchos::rcpFromRef;
 
 Assembler::Assembler(
@@ -10,10 +11,42 @@ Assembler::Assembler(
     RCP<Albany::AbstractProblem> prob,
     RCP<Albany::AbstractDiscretization> d,
     RCP<Albany::StateManager> sm) {
+  sol_info = s_info;
+  problem = prob;
+  disc = d;
+  state_mgr = sm;
   neq = disc->getNumEq();
+  initial_setup();
+  set_initial_conditions();
 }
 
-void Assembler::loadWorksetBucketInfo(PHAL::Workset& workset, const int ws) {
+void Assembler::initial_setup() {
+  using RSD = PHAL::AlbanyTraits::Residual;
+  fm = problem->getFieldManager();
+  dfm = problem->getDirichletFieldManager();
+  nfm = problem->getNeumannFieldManager();
+  mesh_specs = disc->getMeshStruct()->getMeshSpecs();
+  sfm.resize(mesh_specs.size());
+  auto dummy = rcp(new PHX::MDALayout<Dummy>(0));
+  for (int ps = 0; ps < mesh_specs.size(); ++ps) {
+    auto eb_name = mesh_specs[ps]->ebName;
+    auto response_ids = state_mgr->getResidResponseIDsToRequire(eb_name);
+    sfm[ps] = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+    auto tags = problem->buildEvaluators(
+        *sfm[ps], *mesh_specs[ps], *state_mgr,
+        Albany::BUILD_STATE_FM, Teuchos::null);
+    for (auto it = response_ids.begin(); it != response_ids.end(); ++it) {
+      auto id = *it;
+      PHX::Tag<RSD::ScalarT> res_response_tag(id, dummy);
+      sfm[ps]->requireField<RSD>(res_response_tag);
+    }
+  }
+}
+
+void Assembler::set_initial_conditions() {
+}
+
+void Assembler::load_ws_bucket(PHAL::Workset& workset, const int ws) {
 
   // get discretization data
   auto wsElNodeEqID = disc->getWsElNodeEqID();
@@ -28,8 +61,9 @@ void Assembler::loadWorksetBucketInfo(PHAL::Workset& workset, const int ws) {
   workset.wsCoords = coords[ws];
   workset.EBName = wsEBNames[ws];
   workset.wsIndex = ws;
+
   workset.local_Vp.resize(workset.numCells);
-  loadWorksetSidesetInfo(workset, ws);
+  workset.sideSets = rcpFromRef(disc->getSideSets(ws));
   workset.stateArrayPtr =
     &(state_mgr->getStateArray(Albany::StateManager::ELEM, ws));
 
@@ -45,11 +79,7 @@ void Assembler::loadWorksetBucketInfo(PHAL::Workset& workset, const int ws) {
     workset.wsElNodeEqID_kokkos(i, j, k) = workset.wsElNodeEqID[i][j][k];
 }
 
-void Assembler::loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws) {
-  workset.sideSets = rcpFromRef(disc->getSideSets(ws));
-}
-
-void Assembler::loadBasicWorksetInfo(
+void Assembler::load_ws_basic(
     PHAL::Workset& workset, const double t_new, const double t_old) {
   workset.numEqs = neq;
   workset.xT = sol_info->ghost->x;
@@ -63,7 +93,7 @@ void Assembler::loadBasicWorksetInfo(
   workset.accelerationTerms = false;
 }
 
-void Assembler::loadWorksetJacobianInfo(
+void Assembler::load_ws_jacobian(
     PHAL::Workset& workset, const double alpha, const double beta,
     const double omega) {
   workset.m_coeff = alpha;
@@ -73,12 +103,12 @@ void Assembler::loadWorksetJacobianInfo(
   workset.is_adjoint = false;
 }
 
-void Assembler::loadWorksetNodesetInfo(PHAL::Workset& workset) {
+void Assembler::load_ws_nodeset(PHAL::Workset& workset) {
   workset.nodeSets = rcpFromRef(disc->getNodeSets());
   workset.nodeSetCoords = rcpFromRef(disc->getNodeSetCoords());
 }
 
-void Assembler::postRegSetup() {
+void Assembler::post_reg_setup() {
   using JAC = PHAL::AlbanyTraits::Jacobian;
   for (int ps = 0; ps < fm.size(); ++ps) {
     std::vector<PHX::index_size_type> dd;

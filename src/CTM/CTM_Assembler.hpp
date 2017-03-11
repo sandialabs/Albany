@@ -47,25 +47,28 @@ class Assembler {
     RCP<Albany::AbstractDiscretization> disc;
     RCP<Albany::StateManager> state_mgr;
 
+    ArrayRCP<RCP<Albany::MeshSpecsStruct> > mesh_specs;
     ArrayRCP<RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > fm;
     ArrayRCP<RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > nfm;
     RCP<PHX::FieldManager<PHAL::AlbanyTraits> > dfm;
     Teuchos::Array<RCP<PHX::FieldManager<PHAL::AlbanyTraits> > > sfm;
 
-    void loadWorksetBucketInfo(PHAL::Workset& workset, const int ws);
+    void initial_setup();
 
-    void loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws);
+    void set_initial_conditions();
 
-    void loadBasicWorksetInfo(
+    void load_ws_basic(
         PHAL::Workset& workset, const double t_new, const double t_old);
 
-    void loadWorksetJacobianInfo(
+    void load_ws_bucket(PHAL::Workset& workset, const int ws);
+
+    void load_ws_jacobian(
         PHAL::Workset& workset, const double alpha, const double beta,
         const double omega);
 
-    void loadWorksetNodesetInfo(PHAL::Workset& workset);
+    void load_ws_nodeset(PHAL::Workset& workset);
 
-    void postRegSetup();
+    void post_reg_setup();
 
 };
 
