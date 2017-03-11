@@ -122,14 +122,14 @@ int main(int ac, char *av[])
   bool
   success{true};
 
-  auto &
-  fos{*Teuchos::VerboseObjectBase::getDefaultOStream()};
+  auto
+  fos = Teuchos::VerboseObjectBase::getDefaultOStream();
 
   // Command-line argument for input file
   Albany::CmdLineArgs
   cmd;
 
-  cmd.parse_cmdline(ac, av, fos);
+  cmd.parse_cmdline(ac, av, *fos);
 
   auto &&
   total_time{*Teuchos::TimeMonitor::getNewTimer("Albany: Total Time")};
@@ -184,9 +184,9 @@ int main(int ac, char *av[])
   Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>>
   piro_params(num_models);
 
-  fos << "Schwarz alternating method" << std::endl;
+  *fos << "Schwarz alternating method" << std::endl;
 
-  Teuchos::TimeMonitor::summarize(fos, false, true, false);
+  Teuchos::TimeMonitor::summarize(*fos, false, true, false);
 
   Kokkos::finalize_all();
 
