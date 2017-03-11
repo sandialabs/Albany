@@ -1,16 +1,22 @@
 #include "CTM_Assembler.hpp"
 #include "CTM_SolutionInfo.hpp"
 
+#include <AAdapt_InitialCondition.hpp>
+#include <Albany_APFDiscretization.hpp>
+
 namespace CTM {
 
 using Teuchos::rcp;
 using Teuchos::rcpFromRef;
+using Teuchos::rcp_dynamic_cast;
 
 Assembler::Assembler(
+    RCP<ParameterList> p,
     RCP<SolutionInfo> s_info,
     RCP<Albany::AbstractProblem> prob,
     RCP<Albany::AbstractDiscretization> d,
     RCP<Albany::StateManager> sm) {
+  params = p;
   sol_info = s_info;
   problem = prob;
   disc = d;
@@ -44,6 +50,18 @@ void Assembler::initial_setup() {
 }
 
 void Assembler::set_initial_conditions() {
+  auto wsElNodeEqID = disc->getWsElNodeEqID();
+  auto coords = disc->getCoords();
+  auto wsEBNames = disc->getWsEBNames();
+  int num_dims = disc->getNumDim();
+  auto x = sol_info->ghost->x;
+  auto icp = params->sublist("Initial Condition");
+  auto restart = disc->hasRestartSolution();
+  AAdapt::InitialConditionsT(
+      x, wsElNodeEqID, wsEBNames, coords, neq, num_dims, icp, restart);
+  sol_info->gather_x();
+  auto apf_disc = rcp_dynamic_cast<Albany::APFDiscretization>(disc);
+  apf_disc->writeSolutionToMeshDatabaseT(*x, 0, true);
 }
 
 void Assembler::load_ws_bucket(PHAL::Workset& workset, const int ws) {

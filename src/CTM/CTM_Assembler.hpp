@@ -10,12 +10,14 @@ class SolutionInfo;
 
 using Teuchos::RCP;
 using Teuchos::ArrayRCP;
+using Teuchos::ParameterList;
 
 class Assembler {
 
   public:
 
     Assembler(
+        RCP<ParameterList> params,
         RCP<SolutionInfo> s_info,
         RCP<Albany::AbstractProblem> prob,
         RCP<Albany::AbstractDiscretization> d,
@@ -42,6 +44,7 @@ class Assembler {
 
     int neq;
 
+    RCP<ParameterList> params;
     RCP<SolutionInfo> sol_info;
     RCP<Albany::AbstractProblem> problem;
     RCP<Albany::AbstractDiscretization> disc;
