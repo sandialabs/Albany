@@ -3,6 +3,7 @@
 #include "CTM_MechanicsProblem.hpp"
 #include "CTM_SolutionInfo.hpp"
 #include "CTM_LinearSolver.hpp"
+#include "CTM_Assembler.hpp"
 
 #include <Albany_DiscretizationFactory.hpp>
 #include <Albany_AbstractDiscretization.hpp>

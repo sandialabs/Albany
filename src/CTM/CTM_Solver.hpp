@@ -20,6 +20,7 @@ using Teuchos::ArrayRCP;
 using Teuchos::ParameterList;
 
 class SolutionInfo;
+class Assembler;
 
 class Solver {
 
@@ -52,6 +53,9 @@ class Solver {
 
     RCP<SolutionInfo> t_sol_info;
     RCP<SolutionInfo> m_sol_info;
+
+    RCP<Assembler> t_assembler;
+    RCP<Assembler> m_assembler;
 
     int num_steps;
     double dt;
