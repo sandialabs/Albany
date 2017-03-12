@@ -32,7 +32,7 @@ static RCP<ParameterList> get_ifpack2_params() {
 
 static RCP<ParameterList> get_belos_params(RCP<const ParameterList> in) {
   RCP<ParameterList> p = rcp(new ParameterList);
-  int max_iters = in->get<int>("Linear Max. Iterations");
+  int max_iters = in->get<int>("Linear Max Iterations");
   int krylov = in->get<int>("Linear Krylov Size");
   double tol = in->get<double>("Linear Tolerance");
   p->set("Block Size", 1);
@@ -85,7 +85,7 @@ void solve_linear_system(
   solver->solve();
   int iters = solver->getNumIters();
   t1 = PCU_Time();
-  if (iters >= in->get<int>("Linear Max. Iterations")) {
+  if (iters >= in->get<int>("Linear Max Iterations")) {
     *out << "  linear solve failed to converge in " << iters << " iterations" << std::endl;
     *out << "  continuing using the incomplete solve..." << std::endl;
   } else {
