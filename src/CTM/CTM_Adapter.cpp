@@ -6,6 +6,7 @@
 #include <SimField.h>
 #include <SimPartitionedMesh.h>
 #include <MeshSimAdapt.h>
+#include <Albany_Utils.hpp>
 #include <Albany_StateManager.hpp>
 #include <Albany_SimDiscretization.hpp>
 #include <Teuchos_ParameterList.hpp>
@@ -27,12 +28,16 @@ static RCP<ParameterList> get_valid_params() {
   return p;
 }
 
+static void validate_params(RCP<const ParameterList> p) {
+  ALBANY_ALWAYS_ASSERT(p->isType<double>("Uniform Temperature New Layer"));
+  p->validateParameters(*get_valid_params(), 0);
+}
+
 Adapter::Adapter(
     RCP<ParameterList> p,
     RCP<Albany::StateManager> tsm,
     RCP<Albany::StateManager> msm) {
   params = p;
-  params->validateParameters(*get_valid_params(), 0);
   t_state_mgr = tsm;
   m_state_mgr = msm;
   t_disc = t_state_mgr->getDiscretization();
@@ -45,15 +50,101 @@ Adapter::Adapter(
   auto apf_sim_mesh = dynamic_cast<apf::MeshSIM*>(apf_mesh);
   auto sim_mesh = apf_sim_mesh->getMesh();
   sim_model = M_model(sim_mesh);
-  compute_layer_times();
 
   *out << std::endl;
   *out << "*********************" << std::endl;
   *out << "LAYER ADDING ENABLED " << std::endl;
   *out << "*********************" << std::endl;
+  compute_layer_info();
 }
 
-void Adapter::compute_layer_times() {
+static int compute_num_layers(SGModel* model) {
+  GRIter regions = GM_regionIter(model);
+  pGRegion gr;
+  int layer;
+  int max_layer = -1;
+  while (gr = GRIter_next(regions)) {
+    if (GEN_numNativeIntAttribute(gr, "SimLayer") == 1) {
+      GEN_nativeIntAttribute(gr, "SimLayer", &layer);
+      if (layer > max_layer)
+        max_layer = layer;
+    }
+  }
+  return max_layer + 1;
+}
+
+static void compute_laser_info(SGModel* model, double& ls, double& tw) {
+  auto part = GM_part(model);
+  if (GIP_numNativeDoubleAttribute(part, "speed") == 1)
+    GIP_nativeDoubleAttribute(part, "speed", &ls);
+  if (GIP_numNativeDoubleAttribute(part, "width") == 1)
+    GIP_nativeDoubleAttribute(part, "width", &tw);
+}
+
+static void compute_layer_times(
+    SGModel* model, std::vector<double>& times, double ls, double tw) {
+
+  int max_layer = times.size() - 1;
+  int layer;
+  pGRegion gr;
+  GRIter regions = GM_regionIter(model);
+  while (gr = GRIter_next(regions)) {
+    if (GEN_numNativeIntAttribute(gr, "SimLayer") == 1) {
+      GEN_nativeIntAttribute(gr, "SimLayer", &layer);
+      double area = 0.0;
+      pPList faces = GR_faces(gr);
+      pGFace gf;
+      for (int i = 0; i < PList_size(faces); ++i) {
+        gf = static_cast<pGFace>(PList_item(faces, i));
+        if (layer == max_layer) {
+          // top face of last layer is not tagged so
+          // count faces that aren't on the boundary of the
+          // previous layer.  Good enough for RoyalMess.
+          pPList fregs = GF_regions(gf);
+          if (PList_size(fregs)==1) {
+            area += GF_area(gf,0);
+          }
+          PList_delete(fregs);
+        }
+        else {
+          if (GEN_numNativeIntAttribute(gf, "SimLayer")==1) {
+            int faceLayer;
+            GEN_nativeIntAttribute(gf, "SimLayer", &faceLayer);
+            if (faceLayer == layer+1) {
+              area += GF_area(gf, 0);
+            }
+          }
+        }
+      }
+      PList_delete(faces);
+      times[layer] += area / (ls * tw);
+    }
+  }
+  GRIter_delete(regions);
+
+  double total_time = times[0];
+  for (int i = 1; i < times.size(); ++i) {
+    total_time += times[i];
+    times[i] = total_time;
+  }
+}
+
+void Adapter::compute_layer_info() {
+
+  // compute some basic laser + layer info
+  new_layer_temp = params->get<double>("Uniform Temperature New Layer", 20.0);
+  double laser_speed = 85.0;
+  double track_width = 0.013;
+  compute_laser_info(sim_model, laser_speed, track_width);
+  num_layers = compute_num_layers(sim_model);
+  layer_times.resize(num_layers);
+  compute_layer_times(sim_model, layer_times, laser_speed, track_width);
+
+  // print out some useful information for users
+  *out << " > new layer uniform temperature: " << new_layer_temp << std::endl;
+  *out << " > number of layers: " << num_layers << std::endl;
+  *out << " > laser speed: " << laser_speed << std::endl;
+  *out << " > track width: " << track_width << std::endl;
 }
 
 bool Adapter::should_adapt(const int step) {

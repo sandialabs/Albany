@@ -17,7 +17,6 @@ namespace CTM {
 
 using Teuchos::RCP;
 using Teuchos::ParameterList;
-using Teuchos::rcp_dynamic_cast;
 
 class Adapter {
 
@@ -43,12 +42,12 @@ class Adapter {
 
     SGModel* sim_model;
 
-    double new_layer_temp;
-    double* layer_times;
     int num_layers;
     int current_layer;
+    std::vector<double> layer_times;
+    double new_layer_temp;
 
-    void compute_layer_times();
+    void compute_layer_info();
 
 };
 
