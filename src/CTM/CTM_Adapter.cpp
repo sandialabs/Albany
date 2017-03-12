@@ -139,6 +139,7 @@ void Adapter::compute_layer_info() {
   num_layers = compute_num_layers(sim_model);
   layer_times.resize(num_layers);
   compute_layer_times(sim_model, layer_times, laser_speed, track_width);
+  current_layer = 0;
 
   // print out some useful information for users
   *out << " > new layer uniform temperature: " << new_layer_temp << std::endl;
@@ -147,8 +148,9 @@ void Adapter::compute_layer_info() {
   *out << " > track width: " << track_width << std::endl;
 }
 
-bool Adapter::should_adapt(const int step) {
-  return true;
+bool Adapter::should_adapt(const double t_current) {
+  if (t_current >= layer_times[current_layer])
+    return true;
 }
 
 void Adapter::adapt() {

@@ -27,7 +27,7 @@ class Adapter {
         RCP<Albany::StateManager> t_state_mgr,
         RCP<Albany::StateManager> m_state_mgr);
 
-    bool should_adapt(const int step);
+    bool should_adapt(const double t_current);
 
     void adapt();
 
@@ -52,6 +52,5 @@ class Adapter {
 };
 
 } // namespace CTM
-
 
 #endif
