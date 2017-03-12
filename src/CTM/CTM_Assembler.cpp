@@ -141,7 +141,6 @@ void Assembler::post_reg_setup() {
     fm[ps]->postRegistrationSetupForType<JAC>("Jacobian");
     fm[ps]->postRegistrationSetupForType<RSD>("Residual");
     if (nfm != Teuchos::null && ps < nfm.size()) {
-      // too much work to support this for now
       // nfm[ps]->setKokkosExtendedDataTypeDimensions<JAC>(dd);
       // nfm[ps]->postRegistrationSetupForType<JAC>("Jacobian");
       ALBANY_ALWAYS_ASSERT_VERBOSE(false,
