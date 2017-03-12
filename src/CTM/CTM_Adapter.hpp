@@ -47,6 +47,19 @@ class Adapter {
     std::vector<double> layer_times;
     double new_layer_temp;
 
+    bool use_error;
+    bool use_target_elems;
+    double error_bound;
+    long target_elems;
+
+    double layer_size;
+    double min_size;
+    double max_size;
+    double gradation;
+
+    bool debug;
+
+    void setup_params();
     void compute_layer_info();
 
 };

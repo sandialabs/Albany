@@ -18,6 +18,7 @@ using Teuchos::rcp_dynamic_cast;
 static RCP<ParameterList> get_valid_params() {
   auto p = rcp(new ParameterList);
   p->set<double>("Error Bound", 0.1, "Max relative error for adaptivity");
+  p->set<double>("Layer Mesh Size", 1e-2, "Mesh size to use for top layer");
   p->set<double>("Max Size", 1e10, "Maximum allowed edge length (size field)");
   p->set<double>("Min Size", 1e-2, "Mininum allowed edge length (size field)");
   p->set<double>("Gradation", 0.3, "Mesh size gradation parameter");
@@ -37,13 +38,17 @@ Adapter::Adapter(
     RCP<ParameterList> p,
     RCP<Albany::StateManager> tsm,
     RCP<Albany::StateManager> msm) {
+
+  // initializations
   params = p;
+  validate_params(params);
   t_state_mgr = tsm;
   m_state_mgr = msm;
   t_disc = t_state_mgr->getDiscretization();
   m_disc = m_state_mgr->getDiscretization();
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
+  // model initialization
   auto sim_disc = rcp_dynamic_cast<Albany::SimDiscretization>(m_disc);
   auto apf_ms = sim_disc->getAPFMeshStruct();
   auto apf_mesh = apf_ms->getMesh();
@@ -51,11 +56,45 @@ Adapter::Adapter(
   auto sim_mesh = apf_sim_mesh->getMesh();
   sim_model = M_model(sim_mesh);
 
+  // setup input parameter info
+  setup_params();
+
+  // compute layer information + print it
   *out << std::endl;
   *out << "*********************" << std::endl;
   *out << "LAYER ADDING ENABLED " << std::endl;
   *out << "*********************" << std::endl;
   compute_layer_info();
+}
+
+void Adapter::setup_params() {
+
+  // initialize spr size field params
+  use_error = false;
+  use_target_elems = false;
+  error_bound = 0.0;
+  target_elems = 0;
+
+  // grab params from parameter list as needed
+  double slice_thickness;
+  GIP_nativeDoubleAttribute(
+      GM_part(sim_model), "SimLayerThickness", &slice_thickness);
+  layer_size = params->get<double>("Layer Mesh Size", (slice_thickness/3.0));
+  min_size = params->get<double>("Min Size", 1e-2);
+  max_size = params->get<double>("Max Size", 1e10);
+  gradation = params->get<double>("Gradation", 0.3);
+  debug = params->get<bool>("Debug", false);
+  if (params->isType<long int>("Target Element Count")) {
+    use_target_elems = true;
+    target_elems = params->get<long int>("Target Element Count", 1000);
+  }
+  else if (params->isType<double>("Error Bound")) {
+    use_error = true;
+    error_bound = params->get<double>("Error Bound", 0.1);
+  }
+  else
+    ALBANY_ALWAYS_ASSERT_VERBOSE(false, "invalid spr logic\n");
+
 }
 
 static int compute_num_layers(SGModel* model) {
@@ -151,6 +190,10 @@ void Adapter::compute_layer_info() {
 bool Adapter::should_adapt(const double t_current) {
   if (t_current >= layer_times[current_layer])
     return true;
+}
+
+static void mesh_current_layer_only(
+    pGModel model, pParMesh mesh, int current_layer, int layer_size) {
 }
 
 void Adapter::adapt() {
