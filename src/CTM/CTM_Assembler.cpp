@@ -1,6 +1,7 @@
 #include "CTM_Assembler.hpp"
 #include "CTM_SolutionInfo.hpp"
 
+#include <PCU.h>
 #include <AAdapt_InitialCondition.hpp>
 #include <Albany_APFDiscretization.hpp>
 #include <Albany_Utils.hpp>
@@ -180,6 +181,8 @@ void Assembler::assemble_system(
 
   using JAC = PHAL::AlbanyTraits::Jacobian;
 
+  double t0 = PCU_Time();
+
   // get owned algebra containers
   auto owned_x = sol_info->owned->x;
   auto owned_x_dot = sol_info->owned->x_dot;
@@ -259,6 +262,10 @@ void Assembler::assemble_system(
 
   owned_J->fillComplete();
   ghost_J->fillComplete();
+
+  double t1 = PCU_Time();
+  if (! PCU_Comm_Self())
+    printf("  linear system assembled in %f seconds\n", t1-t0);
 
 }
 
