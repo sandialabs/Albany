@@ -11,6 +11,8 @@
 
 namespace CTM {
 
+using Teuchos::rcp_dynamic_cast;
+
 static RCP<ParameterList> get_valid_params() {
   auto p = rcp(new ParameterList);
   p->sublist("Time");
@@ -115,16 +117,110 @@ void Solver::initial_setup() {
   m_sol_info->resize(m_disc, false);
 
   // build the assembler
-  t_assembler = rcp(new Assembler(t_sol_info, t_problem, t_disc, t_state_mgr));
-  m_assembler = rcp(new Assembler(m_sol_info, m_problem, m_disc, m_state_mgr));
+  t_assembler = rcp(new Assembler(
+        t_params, t_sol_info, t_problem, t_disc, t_state_mgr));
+  m_assembler = rcp(new Assembler(
+        m_params, m_sol_info, m_problem, m_disc, m_state_mgr));
 
   // set the state arrays
   *out << std::endl;
   t_state_mgr->setStateArrays(t_disc);
   m_state_mgr->setStateArrays(m_disc);
+
+  // write the initial conditions for visualization
+  auto apf_disc = rcp_dynamic_cast<Albany::APFDiscretization>(m_disc);
+  apf_disc->writeAnySolutionToFile(0);
+}
+
+void Solver::solve_temp() {
+
+  // get linear solve parameters
+  auto la_params = rcpFromRef(params->sublist("Linear Algebra"));
+
+  // get the thermal solution info
+  auto T = t_sol_info->owned->x;
+  auto dTdt = t_sol_info->owned->x_dot;
+  auto f = t_sol_info->owned->f;
+  auto J = t_sol_info->owned->J;
+
+  // create old vector + incremetal solution vector
+  auto owned_map = t_disc->getMapT();
+  auto T_old = rcp(new Tpetra_Vector(owned_map));
+  auto delta_T = rcp(new Tpetra_Vector(owned_map));
+
+  // compute fad coefficients
+  double alpha = 1.0 / dt;
+  double beta = 1.0;
+  double omega = 0.0;
+
+  // solve the linear system
+  T_old->assign(*T);
+  dTdt->update(alpha, *T, -alpha, *T_old, 0.0);
+  t_assembler->assemble_system(alpha, beta, omega, t_current, t_old);
+  f->scale(-1.0);
+  delta_T->putScalar(0.0);
+  solve_linear_system(la_params, J, delta_T, f);
+
+  // perform updates
+  T->update(1.0, *delta_T, 1.0);
+  dTdt->update(alpha, *T, -alpha, *T_old, 0.0);
+  t_assembler->assemble_state(t_current, t_old);
+  t_state_mgr->updateStates();
+
+  // save the solution to the mesh databse
+  auto apf_disc = rcp_dynamic_cast<Albany::APFDiscretization>(t_disc);
+  apf_disc->writeSolutionToMeshDatabaseT(*T, t_current, false);
+
+}
+
+void Solver::solve_mech() {
+
+  // get linear solve parameters
+  auto la_params = rcpFromRef(params->sublist("Linear Algebra"));
+
+  // get the mechanics solution
+  auto u = m_sol_info->owned->x;
+  auto f = m_sol_info->owned->f;
+  auto J = m_sol_info->owned->J;
+
+  // compute the fad coefficients
+  double alpha = 0.0;
+  double beta = 1.0;
+  double omega = 0.0;
+
+  // solve the linear system
+  u->putScalar(0.0);
+  m_assembler->assemble_system(alpha, beta, omega, t_current, t_old);
+  f->scale(-1.0);
+  solve_linear_system(la_params, J, u, f);
+
+  // perform updates
+  m_assembler->assemble_state(t_current, t_old);
+  m_state_mgr->updateStates();
+
+  // save the solution to the mesh database
+  auto apf_disc = rcp_dynamic_cast<Albany::APFDiscretization>(m_disc);
+  apf_disc->writeSolutionToMeshDatabaseT(*u, t_current, false);
+
 }
 
 void Solver::solve() {
+  *out << std::endl;
+  for (int step = 1; step <= num_steps; ++step) {
+
+    *out << "*** Time Step: " << step << std::endl;
+    *out << "*** from time: " << t_old << std::endl;
+    *out << "*** to time: " << t_current << std::endl;
+
+    solve_temp();
+    solve_mech();
+    auto apf_disc = rcp_dynamic_cast<Albany::APFDiscretization>(m_disc);
+    apf_disc->writeAnySolutionToFile(t_current);
+
+    // update the time information
+    t_old = t_current;
+    t_current += dt;
+  }
 }
 
 } // namespace CTM
