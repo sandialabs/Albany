@@ -143,6 +143,8 @@ void Solver::initial_setup() {
 
 void Solver::solve_temp() {
 
+  *out << "Solving thermal physics" << std::endl;
+
   // get linear solve parameters
   auto la_params = rcpFromRef(params->sublist("Linear Algebra"));
 
@@ -184,6 +186,8 @@ void Solver::solve_temp() {
 
 void Solver::solve_mech() {
 
+  *out << "Solving mechanics physics" << std::endl;
+
   // get linear solve parameters
   auto la_params = rcpFromRef(params->sublist("Linear Algebra"));
 
@@ -215,8 +219,9 @@ void Solver::solve_mech() {
 
 void Solver::adapt_mesh() {
   if (adapt_params == Teuchos::null) return;
+  if (! adapter->should_adapt(t_current)) return;
 
-  std::cout << "I'M ADAPTING!!!!!!" << std::endl;
+  *out << "beginning mesh adaptation: " << std::endl;
 }
 
 void Solver::solve() {
