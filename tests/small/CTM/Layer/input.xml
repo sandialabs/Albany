@@ -1,0 +1,54 @@
+<ParameterList>
+  <ParameterList name="Time">
+    <Parameter name="Initial Time" type="double" value="0.0"/>
+    <Parameter name="Step Size" type="double" value="1.0"/>
+    <Parameter name="Number of Steps" type="int" value="2"/>
+  </ParameterList>
+  <ParameterList name="Temperature Problem">
+    <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
+    <ParameterList name="Initial Condition">
+      <Parameter name="Function" type="string" value="Constant"/>
+      <Parameter name="Function Data" type="Array(double)" value="{19.0}"/>
+    </ParameterList>
+  </ParameterList>
+  <ParameterList name="Mechanics Problem">
+    <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
+    <ParameterList name="Dirichlet BCs">
+      <Parameter name="DBC on NS face_197 for DOF Y" type="double" value=" 0.0"/>
+      <Parameter name="DBC on NS face_197 for DOF X" type="double" value=" 0.0"/>
+      <Parameter name="DBC on NS face_197 for DOF Z" type="double" value=" 0.0"/>
+    </ParameterList>
+    <ParameterList name="Initial Condition">
+      <Parameter name="Function" type="string" value="Constant"/>
+      <Parameter name="Function Data" type="Array(double)" value="{0.0, 0.0, 0.0}"/>
+    </ParameterList>
+  </ParameterList>
+  <ParameterList name="Discretization">
+    <Parameter name="Solution Vector Components" type="Array(string)" value="{Temp,S}"/>
+    <Parameter name="Cubature Degree" type="int" value="1"/>
+    <Parameter name="Workset Size" type="int" value="300"/>
+    <Parameter name="Method" type="string" value="Sim"/>
+    <Parameter name="Sim Input File Name" type="string" value="layerMesh0.sms"/>
+    <Parameter name="Sim Model Input File Name" type="string" value="sliced_cube.smd"/>
+    <Parameter name="Sim Output File Name" type="string" value="out_layer.vtk"/>
+    <Parameter name="Model Associations File Name" type="string" value="assoc.txt"/>
+    <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
+  </ParameterList>
+  <ParameterList name="Extra Discretization">
+    <Parameter name="Solution Vector Components" type="Array(string)" value="{Disp,V}"/>
+  </ParameterList>
+  <ParameterList name="Adaptation">
+    <Parameter name="Error Bound" type="double" value="0.05"/>
+    <Parameter name="Uniform Temperature New Layer" type="double" value="200.0"/>
+    <Parameter name="Max Size" type="double" value="1e10"/>
+    <Parameter name="Min Size" type="double" value="5e-3"/>
+    <Parameter name="Layer Mesh Size" type="double" value="5.0e-3"/>
+    <Parameter name="Gradation" type="double" value="0.9"/>
+    <Parameter name="SPR Solution Field" type="string" value="Disp"/>
+  </ParameterList>
+  <ParameterList name="Linear Algebra">
+    <Parameter name="Linear Tolerance" type="double" value="1.0e-10"/>
+    <Parameter name="Linear Max Iterations" type="int" value="200"/>
+    <Parameter name="Linear Krylov Size" type="int" value="200"/>
+  </ParameterList>
+</ParameterList>
