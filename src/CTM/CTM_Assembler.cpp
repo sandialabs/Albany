@@ -48,6 +48,8 @@ void Assembler::initial_setup() {
       sfm[ps]->requireField<RSD>(res_response_tag);
     }
   }
+  post_reg_setup();
+  state_post_reg_setup();
 }
 
 void Assembler::set_initial_conditions() {
@@ -128,6 +130,7 @@ void Assembler::load_ws_nodeset(PHAL::Workset& workset) {
 }
 
 void Assembler::post_reg_setup() {
+  using RSD = PHAL::AlbanyTraits::Residual;
   using JAC = PHAL::AlbanyTraits::Jacobian;
   for (int ps = 0; ps < fm.size(); ++ps) {
     std::vector<PHX::index_size_type> dd;
@@ -136,6 +139,7 @@ void Assembler::post_reg_setup() {
     dd.push_back(deriv_dims);
     fm[ps]->setKokkosExtendedDataTypeDimensions<JAC>(dd);
     fm[ps]->postRegistrationSetupForType<JAC>("Jacobian");
+    fm[ps]->postRegistrationSetupForType<RSD>("Residual");
     if (nfm != Teuchos::null && ps < nfm.size()) {
       // too much work to support this for now
       // nfm[ps]->setKokkosExtendedDataTypeDimensions<JAC>(dd);
@@ -151,6 +155,7 @@ void Assembler::post_reg_setup() {
     dd.push_back(deriv_dims);
     dfm->setKokkosExtendedDataTypeDimensions<JAC>(dd);
     dfm->postRegistrationSetupForType<JAC>("Jacobian");
+    dfm->postRegistrationSetupForType<RSD>("Residual");
   }
 }
 
@@ -175,7 +180,6 @@ void Assembler::assemble_system(
     const double t_old) {
 
   using JAC = PHAL::AlbanyTraits::Jacobian;
-  post_reg_setup();
 
   // get owned algebra containers
   auto owned_x = sol_info->owned->x;
@@ -219,7 +223,7 @@ void Assembler::assemble_system(
     workset.fT = ghost_f;
     workset.JacT = ghost_J;
     load_ws_jacobian(workset, alpha, beta, omega);
-    for (int ps = 0; ps < fm.size(); +ps) {
+    for (int ps = 0; ps < fm.size(); ++ps) {
       int nnodes = mesh_specs[ps].get()->ctd.node_count;
       int deriv_dims = neq * nnodes;
       (workset.Jacobian_deriv_dims).push_back(deriv_dims);
@@ -250,11 +254,13 @@ void Assembler::assemble_system(
     workset.distParamLib = Teuchos::null;
     workset.disc = disc;
     workset.distParamLib = Teuchos::null;
+    load_ws_nodeset(workset);
     dfm->evaluateFields<JAC>(workset);
   }
 
   owned_J->fillComplete();
   ghost_J->fillComplete();
+
 }
 
 void Assembler::assemble_state(
@@ -262,7 +268,6 @@ void Assembler::assemble_state(
     const double t_old) {
 
   using RSD = PHAL::AlbanyTraits::Residual;
-  state_post_reg_setup();
 
   // index information
   int num_worksets = disc->getWsElNodeEqID().size();
