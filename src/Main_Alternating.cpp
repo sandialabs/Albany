@@ -131,34 +131,31 @@ int main(int ac, char *av[])
 
   cmd.parse_cmdline(ac, av, *fos);
 
-  auto &&
-  total_time{*Teuchos::TimeMonitor::getNewTimer("Albany: Total Time")};
+  auto
+  total_time = Teuchos::TimeMonitor::getNewTimer("Albany: Total Time");
 
-  auto &&
-  setup_time{*Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time")};
-
-  Teuchos::TimeMonitor
-  total_timer(total_time);
+  auto
+  setup_time = Teuchos::TimeMonitor::getNewTimer("Albany: Setup Time");
 
   Teuchos::TimeMonitor
-  setup_timer(setup_time);
+  total_timer(*total_time);
 
-  auto &&
-  comm{*Tpetra::DefaultPlatform::getDefaultPlatform().getComm()};
+  Teuchos::TimeMonitor
+  setup_timer(*setup_time);
+
+  auto
+  comm = Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
 
   // Connect vtune for performance profiling
   if (cmd.vtune == true) {
-    Albany::connect_vtune(comm.getRank());
+    Albany::connect_vtune(comm->getRank());
   }
 
   std::string const &
   alt_filename = cmd.xml_filename;
 
-  auto &&
-  pcomm = Teuchos::rcp(&comm, false);
-
   Albany::SolverFactory
-  alt_slvrfctry(alt_filename, pcomm);
+  alt_slvrfctry(alt_filename, comm);
 
   Teuchos::ParameterList &
   alt_params = alt_slvrfctry.getParameters();
