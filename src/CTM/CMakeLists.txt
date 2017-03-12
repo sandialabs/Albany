@@ -5,6 +5,7 @@ CTM_ThermalProblem.cpp
 CTM_MechanicsProblem.cpp
 CTM_LinearSolver.cpp
 CTM_Assembler.cpp
+CTM_Adapter.cpp
 CTM_Solver.cpp)
 
 include_directories(../LCM/problems)
