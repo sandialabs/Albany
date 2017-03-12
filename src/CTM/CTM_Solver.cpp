@@ -4,6 +4,7 @@
 #include "CTM_SolutionInfo.hpp"
 #include "CTM_LinearSolver.hpp"
 #include "CTM_Assembler.hpp"
+#include "CTM_Adapter.hpp"
 
 #include <Albany_DiscretizationFactory.hpp>
 #include <Albany_AbstractDiscretization.hpp>
@@ -20,6 +21,7 @@ static RCP<ParameterList> get_valid_params() {
   p->sublist("Mechanics Problem");
   p->sublist("Discretization");
   p->sublist("Extra Discretization");
+  p->sublist("Adaptation");
   p->sublist("Linear Algebra");
 }
 
@@ -58,6 +60,8 @@ void Solver::set_params(RCP<ParameterList> p) {
   dt = tp.get<double>("Step Size");
   t_old = tp.get<double>("Initial Time");
   t_current = t_old + dt;
+  if (params->isSublist("Adaptation"))
+    adapt_params = rcpFromRef(params->sublist("Adaptation", true));
 }
 
 void Solver::initial_setup() {
@@ -130,6 +134,11 @@ void Solver::initial_setup() {
   // write the initial conditions for visualization
   auto apf_disc = rcp_dynamic_cast<Albany::APFDiscretization>(m_disc);
   apf_disc->writeAnySolutionToFile(0);
+
+  // create the adapter if it is needed
+  if (adapt_params != Teuchos::null)
+    adapter = rcp(new Adapter(adapt_params, t_state_mgr, m_state_mgr));
+
 }
 
 void Solver::solve_temp() {
@@ -204,6 +213,12 @@ void Solver::solve_mech() {
 
 }
 
+void Solver::adapt_mesh() {
+  if (adapt_params == Teuchos::null) return;
+
+  std::cout << "I'M ADAPTING!!!!!!" << std::endl;
+}
+
 void Solver::solve() {
   *out << std::endl;
   for (int step = 1; step <= num_steps; ++step) {
@@ -212,10 +227,16 @@ void Solver::solve() {
     *out << "*** from time: " << t_old << std::endl;
     *out << "*** to time: " << t_current << std::endl;
 
+    // perform the analysis
     solve_temp();
     solve_mech();
+
+    // save the solution to file after analysis
     auto apf_disc = rcp_dynamic_cast<Albany::APFDiscretization>(m_disc);
     apf_disc->writeAnySolutionToFile(t_current);
+
+    // adapt the mesh if needed
+    adapt_mesh();
 
     // update the time information
     t_old = t_current;

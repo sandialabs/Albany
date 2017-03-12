@@ -21,6 +21,7 @@ using Teuchos::ParameterList;
 
 class SolutionInfo;
 class Assembler;
+class Adapter;
 
 class Solver {
 
@@ -33,10 +34,12 @@ class Solver {
   private:
 
     RCP<const Teuchos_Comm> comm;
+    RCP<Teuchos::FancyOStream> out;
 
     RCP<ParameterList> params;
     RCP<ParameterList> t_params;
     RCP<ParameterList> m_params;
+    RCP<ParameterList> adapt_params;
 
     RCP<ParamLib> param_lib;
     RCP<DistParamLib> dist_param_lib;
@@ -57,12 +60,12 @@ class Solver {
     RCP<Assembler> t_assembler;
     RCP<Assembler> m_assembler;
 
+    RCP<Adapter> adapter;
+
     int num_steps;
     double dt;
     double t_old;
     double t_current;
-
-    RCP<Teuchos::FancyOStream> out;
 
     void set_params(RCP<ParameterList> p);
     void initial_setup();
