@@ -2,7 +2,7 @@
   <ParameterList name="Time">
     <Parameter name="Initial Time" type="double" value="0.0"/>
     <Parameter name="Step Size" type="double" value="1.0"/>
-    <Parameter name="Number of Steps" type="int" value="10"/>
+    <Parameter name="Number of Steps" type="int" value="5"/>
   </ParameterList>
   <ParameterList name="Temperature Problem">
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
@@ -31,7 +31,7 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="Solution Vector Components" type="Array(string)" value="{temp,S}"/>
+    <Parameter name="Solution Vector Components" type="Array(string)" value="{Temp,S}"/>
     <Parameter name="Cubature Degree" type="int" value="1"/>
     <Parameter name="Method" type="string" value="Sim"/>
     <Parameter name="Sim Input File Name" type="string" value="wedge_4parts.sms"/>
@@ -41,7 +41,7 @@
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
   </ParameterList>
   <ParameterList name="Extra Discretization">
-    <Parameter name="Solution Vector Components" type="Array(string)" value="{Displacement,V}"/>
+    <Parameter name="Solution Vector Components" type="Array(string)" value="{Disp,V}"/>
   </ParameterList>
   <ParameterList name="Linear Algebra">
     <Parameter name="Linear Tolerance" type="double" value="1.0e-10"/>
