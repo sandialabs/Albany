@@ -381,8 +381,17 @@ void Adapter::adapt() {
   // clean up
   PList_delete(sim_field_list);
 
+  double t4 = PCU_Time();
+
   // rebuild the data structures needed for analysis
   apf_mesh->verify();
+  auto t_sim_disc = rcp_dynamic_cast<Albany::SimDiscretization>(t_disc);
+  auto m_sim_disc = rcp_dynamic_cast<Albany::SimDiscretization>(m_disc);
+  t_sim_disc->updateMesh(/* transfer ip = */ false, param_lib);
+  m_sim_disc->updateMesh(/* transfer ip = */ false, param_lib);
+
+  double t5 = PCU_Time();
+  *out << "adaptMesh(): update albany structures in " << t5-t4 << " seconds\n";
 
   call_count++;
 
