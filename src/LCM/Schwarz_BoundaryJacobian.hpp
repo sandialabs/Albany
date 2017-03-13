@@ -156,5 +156,5 @@ private:
   n_models_;
 };
 
-}
+} //namespace LCM
 #endif // LCM_SchwarzBoundaryJacobian_hpp
