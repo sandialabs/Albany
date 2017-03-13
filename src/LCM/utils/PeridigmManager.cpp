@@ -1436,6 +1436,21 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
         }
       }
     }
+    {
+      const std::string& meshPart = "nodelist_10"; //TODO: make this general
+      Albany::NodeSetGIDsList::const_iterator it= disc->getNodeSetGIDs().find(meshPart);
+      if(it != disc->getNodeSetGIDs().end()) {
+        const std::vector<GO>& nsNodesGIDs = it->second;
+        for(int i=0; i<nsNodesGIDs.size(); ++i) {
+          GO gId = nsNodesGIDs[i];
+          stk::mesh::Entity node = stkDisc->getSTKBulkData().get_entity(stk::topology::NODE_RANK, gId + 1);
+          double* coord = stk::mesh::field_data(*stkDisc->getSTKMeshStruct()->getCoordinatesField(), node);
+          double* dirichletData = stk::mesh::field_data(*dirichletField, node);
+          //set dirichletData as any function of the coordinates;
+          dirichletData[0]= 0.000005*coord[0]*coord[0];
+        }
+      }
+    }
   }
 
   if (dirichletControlField != NULL) {
