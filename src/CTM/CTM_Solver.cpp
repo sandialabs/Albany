@@ -137,7 +137,7 @@ void Solver::initial_setup() {
 
   // create the adapter if it is needed
   if (adapt_params != Teuchos::null)
-    adapter = rcp(new Adapter(adapt_params, t_state_mgr, m_state_mgr));
+    adapter = rcp(new Adapter(adapt_params, param_lib, t_state_mgr, m_state_mgr));
 
 }
 
