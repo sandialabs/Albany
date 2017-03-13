@@ -3,6 +3,11 @@
 
 #include <Teuchos_FancyOStream.hpp>
 #include <SimModel.h>
+#include <SimPartitionedMesh.h>
+
+namespace apf {
+class Mesh;
+} // namespace apf
 
 namespace Teuchos {
 class ParameterList;
@@ -41,6 +46,8 @@ class Adapter {
     RCP<Teuchos::FancyOStream> out;
 
     SGModel* sim_model;
+    pParMesh sim_mesh;
+    apf::Mesh* apf_mesh;
 
     int num_layers;
     int current_layer;
@@ -61,6 +68,7 @@ class Adapter {
 
     void setup_params();
     void compute_layer_info();
+    void compute_spr_size();
 
 };
 

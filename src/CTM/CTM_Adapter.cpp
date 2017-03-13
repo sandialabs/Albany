@@ -4,12 +4,14 @@
 #include <spr.h>
 #include <apfSIM.h>
 #include <SimField.h>
-#include <SimPartitionedMesh.h>
 #include <MeshSimAdapt.h>
 #include <Albany_Utils.hpp>
 #include <Albany_StateManager.hpp>
 #include <Albany_SimDiscretization.hpp>
 #include <Teuchos_ParameterList.hpp>
+
+extern VIter M_classificationVertexIter(pMesh, int);
+extern void DM_undoSlicing(pPList regions,int layerNum, pUnstructuredMesh mesh);
 
 namespace CTM {
 
@@ -51,9 +53,9 @@ Adapter::Adapter(
   // model initialization
   auto sim_disc = rcp_dynamic_cast<Albany::SimDiscretization>(m_disc);
   auto apf_ms = sim_disc->getAPFMeshStruct();
-  auto apf_mesh = apf_ms->getMesh();
+  apf_mesh = apf_ms->getMesh();
   auto apf_sim_mesh = dynamic_cast<apf::MeshSIM*>(apf_mesh);
-  auto sim_mesh = apf_sim_mesh->getMesh();
+  sim_mesh = apf_sim_mesh->getMesh();
   sim_model = M_model(sim_mesh);
 
   // setup input parameter info
@@ -196,8 +198,120 @@ static void mesh_current_layer_only(
     pGModel model, pParMesh mesh, int current_layer, int layer_size) {
 }
 
+void Adapter::compute_spr_size() {
+}
+
+static apf::Field* get_temp_field(
+    RCP<Albany::AbstractDiscretization> disc, apf::Mesh* mesh) {
+  auto sim_disc = rcp_dynamic_cast<Albany::SimDiscretization>(disc);
+  auto t_names = sim_disc->getSolutionLayout().getDerivNames(0);
+  ALBANY_ALWAYS_ASSERT(t_names.size() == 1);
+  auto t_name = t_names[0];
+  apf::Field* f = mesh->findField(t_name.c_str());
+  ALBANY_ALWAYS_ASSERT(f);
+  return f;
+}
+
+static apf::Field* get_mech_field(
+    RCP<Albany::AbstractDiscretization> disc, apf::Mesh* mesh) {
+  auto sim_disc = rcp_dynamic_cast<Albany::SimDiscretization>(disc);
+  auto m_names = sim_disc->getSolutionLayout().getDerivNames(0);
+  ALBANY_ALWAYS_ASSERT(m_names.size() == 1);
+  auto m_name = m_names[0];
+  apf::Field* f = mesh->findField(m_name.c_str());
+  ALBANY_ALWAYS_ASSERT(f);
+  return f;
+}
+
+static apf::Field* compute_error_size(
+    std::string const& fname, apf::Field* tf, apf::Field* mf,
+    bool use_error, bool use_target, double eb, long te) {
+
+  // get the field to operate on
+  apf::Field* f;
+  if (fname == apf::getName(tf)) f = tf;
+  else if (fname == apf::getName(mf)) f = mf;
+  else ALBANY_ALWAYS_ASSERT_VERBOSE(false, "unknown 'SPR Solution Field'");
+
+  // get the gradient of the field
+  // note we assume q_degree == 1, might want to check that somewhere
+  auto gf = spr::getGradIPField(f, "grad_sol", 1);
+
+  // get the requested spr size field
+  apf::Field* sz;
+  if (use_target)
+    sz = spr::getTargetSPRSizeField(gf, te);
+  else if (use_error)
+    sz = spr::getSPRSizeField(gf, eb);
+
+  // clean up
+  apf::destroyField(gf);
+
+  return sz;
+}
+
+static void copy_size_field(
+    apf::Mesh* m, pMSAdapt adapter, apf::Field* szf,
+    double min_size, double max_size) {
+  apf::MeshEntity* v;
+  auto vertices = m->begin(0);
+  while ((v = m->iterate(vertices))) {
+    double size = apf::getScalar(szf, v, 0);
+    size = std::min(max_size, size);
+    size = std::max(min_size, size);
+    MSA_setVertexSize(adapter, (pVertex) v, size);
+    apf::setScalar(szf, v, 0, size);
+  }
+  m->end(vertices);
+}
+
+static pPList set_transfer_fields(
+    pMSAdapt adapter, apf::Field* tf, apf::Field* mf) {
+  pPList sim_list = PList_new();
+  auto sim_tf = apf::getSIMField(tf);
+  auto sim_mf = apf::getSIMField(mf);
+  PList_append(sim_list, sim_tf);
+  PList_append(sim_list, sim_mf);
+  MSA_setMapFields(adapter, sim_list);
+  return sim_list;
+}
+
+enum { ABSOLUTE = 1, RELATIVE = 2 };
+enum { DONT_GRADE = 0, DO_GRADE = 1 };
+enum { ONLY_CURV_TYPE = 2 };
+
 void Adapter::adapt() {
-  *out << "I'M ADAPTING!!!" << std::endl;
+
+  // get the solution fields
+  auto t_apf_field = get_temp_field(t_disc, apf_mesh);
+  auto m_apf_field = get_mech_field(m_disc, apf_mesh);
+
+  // compute chosen spr error estimate on the chosen field
+  auto spr_field_name = params->get<std::string>("SPR Solution Field", "");
+  auto spr_size_field = compute_error_size(
+      spr_field_name, t_apf_field, m_apf_field,
+      use_error, use_target_elems, error_bound, target_elems);
+
+  // create the simmetrix adapter
+  pACase mcase = MS_newMeshCase(sim_model);
+  pModelItem domain = GM_domain(sim_model);
+  MS_setMeshCurv(mcase, domain, ONLY_CURV_TYPE, 0.025);
+  MS_setMinCurvSize(mcase, domain, ONLY_CURV_TYPE, 0.0025);
+  MS_setMeshSize(mcase, domain, RELATIVE, 1.0, NULL);
+  pMSAdapt adapter = MSA_createFromCase(mcase, sim_mesh);
+  MSA_setSizeGradation(adapter, DO_GRADE, gradation);
+
+  // copy the size field from APF to Simmetrix
+  copy_size_field(apf_mesh, adapter, spr_size_field, min_size, max_size);
+
+  // tell the simmetrix adapter which fields to transfer
+  auto sim_field_list = set_transfer_fields(adapter, t_apf_field, m_apf_field);
+
+  // clean up
+  apf::destroyField(spr_size_field);
+  MSA_delete(adapter);
+  MS_deleteMeshCase(mcase);
+
 }
 
 } // namespace CTM
