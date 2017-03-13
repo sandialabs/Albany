@@ -480,6 +480,7 @@ evalModelImpl(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
 {
+  SchwarzLoop(in_args, out_args);
   return;
 }
 
@@ -505,9 +506,8 @@ createInArgsImpl() const
   return result;
 }
 
-//Copied from QCAD::CoupledPoissonSchrodinger -- used to validate
-//applicaton parameters of applications not created via a
-//SolverFactory Check usage and whether necessary...
+// Validate applicaton parameters of applications not created via a
+// SolverFactory Check usage and whether necessary.
 Teuchos::RCP<Teuchos::ParameterList const>
 SchwarzAlternating::
 getValidAppParameters() const
@@ -531,8 +531,7 @@ getValidAppParameters() const
   return list;
 }
 
-//Copied from QCAD::CoupledPoissonSchrodinger
-//Check usage and whether neessary...
+// Check usage and whether neessary.
 Teuchos::RCP<Teuchos::ParameterList const>
 SchwarzAlternating::
 getValidProblemParameters() const
@@ -565,6 +564,13 @@ SchwarzLoop(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
 {
+  bool
+  converged{false};
+
+  while (converged == false) {
+
+  }
+
   return;
 }
 

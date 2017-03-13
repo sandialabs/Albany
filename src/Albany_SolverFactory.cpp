@@ -60,7 +60,7 @@
 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
   #include "Schwarz_Coupled.hpp"
-  #include "Schwarz_PiroObserverT.hpp"
+  #include "Schwarz_PiroObserver.hpp"
 #endif
 
 #ifdef ALBANY_AERAS
@@ -737,7 +737,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     const RCP<LCM::SchwarzCoupled> coupled_model_with_solveT = rcp(new LCM::SchwarzCoupled(appParams, solverComm,
                                                                          initial_guess, lowsFactory));
 
-    observerT_ = rcp(new LCM::Schwarz_PiroObserverT(coupled_model_with_solveT));
+    observerT_ = rcp(new LCM::Schwarz_PiroObserver(coupled_model_with_solveT));
 
     // WARNING: Coupled Schwarz does not contain a primary Albany::Application instance and so albanyApp is null.
     // Piro::SolverFactory
