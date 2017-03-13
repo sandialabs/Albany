@@ -222,6 +222,7 @@ void Solver::adapt_mesh() {
   if (! adapter->should_adapt(t_current)) return;
 
   *out << "beginning mesh adaptation: " << std::endl;
+  adapter->adapt();
 }
 
 void Solver::solve() {
