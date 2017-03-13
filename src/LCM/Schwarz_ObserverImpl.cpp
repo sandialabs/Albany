@@ -5,47 +5,50 @@
 //*****************************************************************//
 #include "Schwarz_ObserverImpl.hpp"
 
-#include "Albany_AbstractDiscretization.hpp"
-
-#include "Teuchos_TimeMonitor.hpp"
-#include "Teuchos_Ptr.hpp"
-
-#include <string>
-
-//#define OUTPUT_TO_SCREEN 
-
 namespace LCM {
 
+//
+//
+//
 ObserverImpl::
-ObserverImpl(Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> &apps) :
-    StatelessObserverImpl(apps)
+ObserverImpl(Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> & apps) :
+    StatelessObserverImpl(apps), n_models_(apps.size()), apps_(apps)
+
 {
-#ifdef OUTPUT_TO_SCREEN
-  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-#endif
-  n_models_ = apps.size();
-  apps_ = apps;
+  return;
 }
 
-void ObserverImpl::observeSolutionT(
-    double stamp,
-    Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> non_overlapped_solutionT,
-    Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> non_overlapped_solution_dotT)
+//
+//
+//
+ObserverImpl::
+~ObserverImpl()
 {
-#ifdef OUTPUT_TO_SCREEN
-  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-#endif
+  return;
+}
+
+//
+//
+//
+void
+ObserverImpl::
+observeSolutionT(
+    double stamp,
+    Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> non_overlapped_solution,
+    Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> non_overlapped_solution_dot)
+{
   for (int m = 0; m < n_models_; m++) {
+
     apps_[m]->evaluateStateFieldManagerT(
         stamp,
-        non_overlapped_solution_dotT[m].ptr(),
+        non_overlapped_solution_dot[m].ptr(),
         Teuchos::null,
-        *non_overlapped_solutionT[m]);
+        *non_overlapped_solution[m]);
+
     apps_[m]->getStateMgr().updateStates();
   }
-  StatelessObserverImpl::observeSolutionT(stamp, non_overlapped_solutionT,
-      non_overlapped_solution_dotT);
-
+  StatelessObserverImpl::
+  observeSolutionT(stamp, non_overlapped_solution, non_overlapped_solution_dot);
 }
 
 } // namespace LCM

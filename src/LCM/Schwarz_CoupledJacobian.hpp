@@ -42,5 +42,5 @@ private:
   comm_;
 };
 
-}
+} //namespace LCM
 #endif // LCM_SchwarzCoupledJacobian_hpp
