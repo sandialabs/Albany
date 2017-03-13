@@ -1,6 +1,7 @@
 #include "CTM_Adapter.hpp"
 
 #include <set>
+#include <PCU.h>
 #include <spr.h>
 #include <apfSIM.h>
 #include <SimField.h>
@@ -38,12 +39,14 @@ static void validate_params(RCP<const ParameterList> p) {
 
 Adapter::Adapter(
     RCP<ParameterList> p,
+    RCP<ParamLib> lib,
     RCP<Albany::StateManager> tsm,
     RCP<Albany::StateManager> msm) {
 
   // initializations
   params = p;
   validate_params(params);
+  param_lib = lib;
   t_state_mgr = tsm;
   m_state_mgr = msm;
   t_disc = t_state_mgr->getDiscretization();
@@ -194,13 +197,6 @@ bool Adapter::should_adapt(const double t_current) {
     return true;
 }
 
-static void mesh_current_layer_only(
-    pGModel model, pParMesh mesh, int current_layer, int layer_size) {
-}
-
-void Adapter::compute_spr_size() {
-}
-
 static apf::Field* get_temp_field(
     RCP<Albany::AbstractDiscretization> disc, apf::Mesh* mesh) {
   auto sim_disc = rcp_dynamic_cast<Albany::SimDiscretization>(disc);
@@ -276,11 +272,59 @@ static pPList set_transfer_fields(
   return sim_list;
 }
 
+static void constrain_top(
+    pMSAdapt adapter, SGModel* model, pParMesh mesh,
+    apf::Field* szf, int current_layer, double layer_sz) {
+  int layer;
+  pGRegion gr1;
+  GRIter regions = GM_regionIter(model);
+  while (gr1 = GRIter_next(regions)) {
+    if (GEN_numNativeIntAttribute(gr1, "SimLayer") == 1) {
+      GEN_nativeIntAttribute(gr1, "SimLayer", &layer);
+      if (layer == current_layer) {
+        pPList face_list = GR_faces(gr1);
+        void* ent;
+        void* iter = 0;
+        while (ent = PList_next(face_list, &iter)) {
+          pGFace gf = static_cast<pGFace>(ent);
+          if (GEN_numNativeIntAttribute(gf, "SimLayer") == 1) {
+            GEN_nativeIntAttribute(gf, "SimLayer", &layer);
+            if (layer == current_layer + 1) {
+              MSA_setNoModification(adapter, gf);
+              for (int np = 0; np < PM_numParts(mesh); ++np) {
+                pVertex mv;
+                VIter all_verts = M_classifiedVertexIter(PM_mesh(mesh, np), gf, 1);
+                while (mv = VIter_next(all_verts) ) {
+                  MSA_setVertexSize(adapter, mv, layer_sz);
+                  apf::setScalar(szf, reinterpret_cast<apf::MeshEntity*>(mv), 0, layer_sz);
+                }
+                VIter_delete(all_verts);
+              }
+            }
+          }
+        }
+        PList_delete(face_list);
+      }
+    }
+  }
+  GRIter_delete(regions);
+}
+
+static void write_debug(bool debug, apf::Mesh* m, const char* n, int c) {
+  if (! debug) return;
+  std::stringstream ss;
+  ss << n << c;
+  std::string s = ss.str();
+  apf::writeVtkFiles(s.c_str(), m);
+}
+
 enum { ABSOLUTE = 1, RELATIVE = 2 };
 enum { DONT_GRADE = 0, DO_GRADE = 1 };
 enum { ONLY_CURV_TYPE = 2 };
 
 void Adapter::adapt() {
+
+  static int call_count = 0;
 
   // get the solution fields
   auto t_apf_field = get_temp_field(t_disc, apf_mesh);
@@ -291,6 +335,8 @@ void Adapter::adapt() {
   auto spr_size_field = compute_error_size(
       spr_field_name, t_apf_field, m_apf_field,
       use_error, use_target_elems, error_bound, target_elems);
+
+  double t0 = PCU_Time();
 
   // create the simmetrix adapter
   pACase mcase = MS_newMeshCase(sim_model);
@@ -307,10 +353,38 @@ void Adapter::adapt() {
   // tell the simmetrix adapter which fields to transfer
   auto sim_field_list = set_transfer_fields(adapter, t_apf_field, m_apf_field);
 
-  // clean up
+  // constrain the top face
+  constrain_top(adapter, sim_model, sim_mesh, spr_size_field,
+      current_layer, layer_size);
+
+  // write debug info + clean up
+  write_debug(debug, apf_mesh, "preadapt_", call_count);
   apf::destroyField(spr_size_field);
+
+  double t1 = PCU_Time();
+  *out << "adaptMesh(): preparing mesh adapt in " << t1-t0 << " seconds\n";
+  double t2 = PCU_Time();
+
+  // run the adapter
+  pProgress progress = Progress_new();
+  MSA_adapt(adapter, progress);
+  Progress_delete(progress);
   MSA_delete(adapter);
   MS_deleteMeshCase(mcase);
+
+  // write debug info
+  write_debug(debug, apf_mesh, "postadapt_", call_count);
+
+  double t3 = PCU_Time();
+  *out << "adaptMesh(); mesh adapt in " << t3-t2 << " seconds\n";
+
+  // clean up
+  PList_delete(sim_field_list);
+
+  // rebuild the data structures needed for analysis
+  apf_mesh->verify();
+
+  call_count++;
 
 }
 

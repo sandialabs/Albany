@@ -2,6 +2,7 @@
 #define CTM_ADAPTER_HPP
 
 #include <Teuchos_FancyOStream.hpp>
+#include <Albany_DataTypes.hpp>
 #include <SimModel.h>
 #include <SimPartitionedMesh.h>
 
@@ -29,6 +30,7 @@ class Adapter {
 
     Adapter(
         RCP<ParameterList> params,
+        RCP<ParamLib> param_lib,
         RCP<Albany::StateManager> t_state_mgr,
         RCP<Albany::StateManager> m_state_mgr);
 
@@ -39,6 +41,7 @@ class Adapter {
   private:
 
     RCP<ParameterList> params;
+    RCP<ParamLib> param_lib;
     RCP<Albany::StateManager> t_state_mgr;
     RCP<Albany::StateManager> m_state_mgr;
     RCP<Albany::AbstractDiscretization> t_disc;
