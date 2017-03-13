@@ -4,15 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "Albany_Utils.hpp"
 #include "Schwarz_CoupledJacobian.hpp"
 #include "Teuchos_ParameterListExceptions.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
-#include "Albany_Utils.hpp"
 #include "Thyra_DefaultBlockedLinearOp.hpp"
-
-using Teuchos::getFancyOStream;
-using Teuchos::rcpFromRef;
 
 //#define WRITE_TO_MATRIX_MARKET
 
@@ -21,21 +18,21 @@ static int
 mm_counter = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
-//#define OUTPUT_TO_SCREEN
-
 using Thyra::PhysicallyBlockedLinearOpBase;
 
-LCM::Schwarz_CoupledJacobian::Schwarz_CoupledJacobian(
+namespace LCM {
+
+Schwarz_CoupledJacobian::
+Schwarz_CoupledJacobian(
     Teuchos::RCP<Teuchos_Comm const> const & comm)
 {
-#ifdef OUTPUT_TO_SCREEN
-  std::cout << __PRETTY_FUNCTION__ << "\n";
-#endif
   comm_ = comm;
 }
 
-LCM::Schwarz_CoupledJacobian::~Schwarz_CoupledJacobian()
+Schwarz_CoupledJacobian::
+~Schwarz_CoupledJacobian()
 {
+  return;
 }
 
 //#define USE_OFF_DIAGONAL
@@ -44,16 +41,12 @@ LCM::Schwarz_CoupledJacobian::~Schwarz_CoupledJacobian()
 // getThyraCoupledJacobian method is similar to getThyraMatrix in panzer
 //(Panzer_BlockedTpetraLinearObjFactory_impl.hpp).
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
-LCM::Schwarz_CoupledJacobian::
+Schwarz_CoupledJacobian::
 getThyraCoupledJacobian(
     Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> jacs,
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> const & ca)
 const
 {
-#ifdef OUTPUT_TO_SCREEN
-  std::cout << __PRETTY_FUNCTION__ << "\n";
-#endif
-
   auto const
   block_dim = jacs.size();
 
@@ -89,7 +82,7 @@ const
         Teuchos::RCP<Schwarz_BoundaryJacobian>
         jac_boundary =
             Teuchos::rcp(
-                new LCM::Schwarz_BoundaryJacobian(comm_, ca, jacs, i, j));
+                new Schwarz_BoundaryJacobian(comm_, ca, jacs, i, j));
 
         Teuchos::RCP<Tpetra_CrsMatrix>
         exp_jac = jac_boundary->getExplicitOperator();
@@ -102,7 +95,7 @@ const
         Teuchos::RCP<Tpetra_Operator>
         jac_boundary =
             Teuchos::rcp(
-                new LCM::Schwarz_BoundaryJacobian(comm_, ca, jacs, i, j));
+                new Schwarz_BoundaryJacobian(comm_, ca, jacs, i, j));
 
         Teuchos::RCP<Thyra::LinearOpBase<ST>>
         block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(jac_boundary);
@@ -117,11 +110,7 @@ const
 
   // all done
   blocked_op->endBlockFill();
-#ifdef OUTPUT_TO_SCREEN
-  Teuchos::RCP<Teuchos::FancyOStream> out = fancyOStream(rcpFromRef(std::cout));
-  std::cout << "blocked_op: " << std::endl;
-  blocked_op->describe(*out, Teuchos::VERB_HIGH);
-#endif
   return blocked_op;
 }
 
+} // namespace LCM
