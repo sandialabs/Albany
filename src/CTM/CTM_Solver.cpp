@@ -221,7 +221,7 @@ void Solver::adapt_mesh() {
   if (adapt_params == Teuchos::null) return;
   if (! adapter->should_adapt(t_current)) return;
   *out << "beginning mesh adaptation: " << std::endl;
-  adapter->adapt();
+  adapter->adapt(t_current);
   t_sol_info->resize(t_disc, true);
   m_sol_info->resize(m_disc, false);
   t_sol_info->owned->x = t_disc->getSolutionFieldT();

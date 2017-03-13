@@ -36,7 +36,7 @@ class Adapter {
 
     bool should_adapt(const double t_current);
 
-    void adapt();
+    void adapt(const double t_current);
 
   private:
 

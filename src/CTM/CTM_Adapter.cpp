@@ -322,7 +322,7 @@ enum { ABSOLUTE = 1, RELATIVE = 2 };
 enum { DONT_GRADE = 0, DO_GRADE = 1 };
 enum { ONLY_CURV_TYPE = 2 };
 
-void Adapter::adapt() {
+void Adapter::adapt(const double t_current) {
 
   static int call_count = 0;
 
@@ -376,7 +376,14 @@ void Adapter::adapt() {
   write_debug(debug, apf_mesh, "postadapt_", call_count);
 
   double t3 = PCU_Time();
-  *out << "adaptMesh(); mesh adapt in " << t3-t2 << " seconds\n";
+  *out << "adaptMesh(): mesh adapt in " << t3-t2 << " seconds\n";
+
+  // add the layer if needed
+  if (t_current >= layer_times[current_layer]) {
+    *out << "adaptMesh(): adding layer: " << current_layer+1 << std::endl;
+    write_debug(debug, apf_mesh, "postlayer_", call_count);
+    current_layer++;
+  }
 
   // clean up
   PList_delete(sim_field_list);
