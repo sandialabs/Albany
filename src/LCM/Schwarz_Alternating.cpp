@@ -3,8 +3,6 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include <sstream>
-
 #include "Albany_ModelFactory.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Schwarz_Alternating.hpp"
@@ -586,6 +584,12 @@ SchwarzLoop(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
 {
+  constexpr ST
+  tol = 1.0e-12;
+
+  minitensor::Vector<ST>
+  norms_diff(num_models_);
+
   bool
   converged{false};
 
@@ -596,6 +600,15 @@ SchwarzLoop(
       auto &
       model = *(models_[m]);
 
+      auto &
+      app = *(apps_[m]);
+
+      auto const &
+      prev_soln = *(app.getX());
+
+      auto
+      diff = Teuchos::rcp(new Tpetra_Vector(prev_soln, Teuchos::Copy));
+
       auto
       in_args_m = model.createInArgs();
 
@@ -603,8 +616,16 @@ SchwarzLoop(
       out_args_m = model.createOutArgs();
 
       model.evalModel(in_args_m, out_args_m);
+
+      auto const &
+      next_soln = *(app.getX());
+
+      diff->update(1.0, next_soln, -1.0);
+
+      norms_diff(m) = diff->norm2();
     }
 
+    converged = minitensor::norm(norms_diff) <= tol;
   }
 
   return;
