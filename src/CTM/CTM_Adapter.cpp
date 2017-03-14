@@ -520,6 +520,9 @@ void Adapter::adapt(const double t_current) {
 
   static int call_count = 0;
 
+  // print mesh stats before adaptation
+  apf::printStats(apf_mesh);
+
   // get the solution fields
   auto t_apf_field = get_temp_field(t_disc, apf_mesh);
   auto m_apf_field = get_mech_field(m_disc, apf_mesh);
@@ -590,6 +593,9 @@ void Adapter::adapt(const double t_current) {
   m_sim_disc->updateMesh(/* transfer ip = */ false, param_lib);
   double t5 = PCU_Time();
   *out << "adapt(): update albany structures in " << t5-t4 << " seconds\n";
+
+  // print stats after adaptation
+  apf::printStats(apf_mesh);
 
   call_count++;
 }

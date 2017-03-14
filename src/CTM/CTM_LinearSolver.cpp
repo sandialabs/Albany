@@ -36,6 +36,8 @@ static RCP<ParameterList> get_ifpack2_params() {
 
 static RCP<ParameterList> get_muelu_params() {
   RCP<ParameterList> p = rcp(new ParameterList);
+  p->set<std::string>("verbosity", "none");
+  p->set<int>("coarse: max size", 750);
   return p;
 }
 
