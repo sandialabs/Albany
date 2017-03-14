@@ -35,10 +35,6 @@ public:
       Thyra::VectorBase<ST> const & solution_dot,
       ST const stamp);
 
-protected:
-  int
-  n_models_;
-
 private:
   void
   observeSolutionImpl(
@@ -56,6 +52,9 @@ private:
       Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> solutions,
       Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> solutions_dot,
       ST const default_stamp);
+
+  int
+  n_models_;
 
   Teuchos::RCP<ObserverImpl>
   impl_;
