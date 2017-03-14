@@ -7,8 +7,6 @@
 #ifndef ALBANY_APPLICATION_HPP
 #define ALBANY_APPLICATION_HPP
 
-#include <vector>
-
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ArrayRCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -28,15 +26,17 @@
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_AbstractResponseFunction.hpp"
 #include "Albany_StateManager.hpp"
+
 #if defined(ALBANY_EPETRA)
 #include "AAdapt_AdaptiveSolutionManager.hpp"
 #endif
+
 #include "AAdapt_AdaptiveSolutionManagerT.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 
-#ifdef ALBANY_CUTR
-  #include "CUTR_CubitMeshMover.hpp"
-  #include "STKMeshData.hpp"
+#if defined(ALBANY_CUTR)
+#include "CUTR_CubitMeshMover.hpp"
+#include "STKMeshData.hpp"
 #endif
 
 #include "Sacado_ScalarParameterLibrary.hpp"
@@ -48,26 +48,30 @@
 #include "PHAL_Workset.hpp"
 #include "Phalanx.hpp"
 
-#ifdef ALBANY_STOKHOS
+#if defined(ALBANY_STOKHOS)
 #include "Stokhos_OrthogPolyExpansion.hpp"
 #include "Stokhos_Quadrature.hpp"
 #endif
+
 #if defined(ALBANY_EPETRA)
-#ifdef ALBANY_STOKHOS
+
+#if defined(ALBANY_STOKHOS)
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
 #endif
-#include "EpetraExt_MultiComm.h"
 
+#include "EpetraExt_MultiComm.h"
 #include "LOCA_Epetra_Group.H"
-#ifdef ALBANY_TEKO
+
+#if defined(ALBANY_TEKO)
 #include "Teko_InverseLibrary.hpp"
 #endif
+
 #endif
 
-#ifdef ALBANY_MOR
+#if defined(ALBANY_MOR)
 #if defined(ALBANY_EPETRA)
-  #include "MOR/Albany_MORFacade.hpp"
+#include "MOR/Albany_MORFacade.hpp"
 #endif
 #endif
 

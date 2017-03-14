@@ -7,7 +7,6 @@
 
 #include "Albany_ModelFactory.hpp"
 #include "Albany_SolverFactory.hpp"
-#include "Schwarz_CoupledJacobian.hpp"
 #include "Schwarz_Alternating.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
@@ -406,10 +405,10 @@ Teuchos::RCP<Thyra::LinearOpBase<ST>>
 SchwarzAlternating::
 create_W_op() const
 {
-  Schwarz_CoupledJacobian
-  jac(comm_);
+  Teuchos::RCP<Thyra::LinearOpBase<ST>>
+  jac = Teuchos::null;
 
-  return jac.getThyraCoupledJacobian(jacs_, apps_);
+  return jac;
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST>>
