@@ -195,6 +195,8 @@ void Adapter::compute_layer_info() {
 bool Adapter::should_adapt(const double t_current) {
   if (t_current >= layer_times[current_layer])
     return true;
+  else
+    return false;
 }
 
 static apf::Field* get_temp_field(
