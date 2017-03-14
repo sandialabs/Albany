@@ -2,7 +2,7 @@
   <ParameterList name="Time">
     <Parameter name="Initial Time" type="double" value="0.0"/>
     <Parameter name="Step Size" type="double" value="1.0"/>
-    <Parameter name="Number of Steps" type="int" value="2"/>
+    <Parameter name="Number of Steps" type="int" value="10"/>
   </ParameterList>
   <ParameterList name="Temperature Problem">
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
