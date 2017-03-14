@@ -89,6 +89,41 @@ static RCP<Solver> build_muelu_solver(
   return solver;
 }
 
+static void get_inv_row_sum(RCP<Tpetra_CrsMatrix> A, RCP<Tpetra_Vector> s) {
+  s->putScalar(0.0);
+  auto view = s->get1dViewNonConst();
+  for (size_t row = 0; row < s->getLocalLength(); ++row) {
+    auto num_entries = A->getNumEntriesInLocalRow(row);
+    Teuchos::Array<LO> indices(num_entries);
+    Teuchos::Array<ST> values(num_entries);
+    A->getLocalRowCopy(row, indices(), values(), num_entries);
+    ST sum = 0.0;
+    for (size_t j = 0; j < num_entries; ++j)
+      sum += std::abs(values[j]);
+    if (sum < 1.0e-14)
+      view[row] = 0.0;
+    else
+      view[row] = 1.0/sum;
+  }
+}
+
+static void scale_system(
+    RCP<const ParameterList> in,
+    RCP<Tpetra_CrsMatrix> A,
+    RCP<Tpetra_Vector> b,
+    RCP<Teuchos::FancyOStream> out) {
+  bool should_scale = false;
+  if (in->isType<bool>("Linear Row Sum Scaling"))
+    should_scale = in->get<bool>("Linear Row Sum Scaling");
+  if (! should_scale) return;
+  *out << "  scaling linear system\n";
+  auto map = b->getMap();
+  auto scale = rcp(new Tpetra_Vector(map));
+  get_inv_row_sum(A, scale);
+  b->elementWiseMultiply(1.0, *scale, *b, 0.0);
+  A->leftScale(*scale);
+}
+
 static RCP<Solver> build_solver(
     RCP<const ParameterList> in,
     RCP<Tpetra_CrsMatrix> A,
@@ -111,9 +146,10 @@ void solve_linear_system(
     RCP<Tpetra_CrsMatrix> A,
     RCP<Tpetra_Vector> x,
     RCP<Tpetra_Vector> b) {
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   double t0 = PCU_Time();
   double t1;
+  scale_system(in, A, b, out);
   RCP<Solver> solver = build_solver(in, A, x, b);
   solver->solve();
   int iters = solver->getNumIters();
