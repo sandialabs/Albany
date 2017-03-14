@@ -12,11 +12,11 @@ namespace LCM {
 //
 StatelessObserverImpl::
 StatelessObserverImpl(
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> &apps)
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> & apps) :
+    n_models_(apps.size()), apps_(apps)
 {
-  apps_ = apps;
-  n_models_ = apps.size();
   sol_out_time_ = Teuchos::TimeMonitor::getNewTimer("Albany: Output to File");
+  return;
 }
 
 //

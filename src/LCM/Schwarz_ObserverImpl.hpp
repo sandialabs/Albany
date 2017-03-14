@@ -27,13 +27,6 @@ public:
 
   ObserverImpl(ObserverImpl const &) = delete;
   ObserverImpl & operator=(ObserverImpl const &) = delete;
-
-private:
-  int
-  n_models_;
-
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
-  apps_;
 };
 
 } // namespace LCM

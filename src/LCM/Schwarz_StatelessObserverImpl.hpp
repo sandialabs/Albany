@@ -33,15 +33,16 @@ public:
   StatelessObserverImpl(StatelessObserverImpl const &) = delete;
   StatelessObserverImpl& operator=(StatelessObserverImpl const &) = delete;
 
-private:
-  Teuchos::RCP<Teuchos::Time>
-  sol_out_time_;
-
+protected:
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   apps_;
 
   int
   n_models_;
+
+private:
+  Teuchos::RCP<Teuchos::Time>
+  sol_out_time_;
 };
 
 } // namespace LCM
