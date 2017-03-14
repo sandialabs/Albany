@@ -10,6 +10,11 @@
       <Parameter name="Function" type="string" value="Constant"/>
       <Parameter name="Function Data" type="Array(double)" value="{19.0}"/>
     </ParameterList>
+    <ParameterList name="Source Functions">
+      <ParameterList name="Thermal Source">
+        <Parameter name="Thermal Source Type" type="string" value="Block Dependent"/>
+      </ParameterList>
+    </ParameterList>
   </ParameterList>
   <ParameterList name="Mechanics Problem">
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
@@ -39,7 +44,7 @@
   </ParameterList>
   <ParameterList name="Adaptation">
     <Parameter name="Error Bound" type="double" value="0.05"/>
-    <Parameter name="Uniform Temperature New Layer" type="double" value="200.0"/>
+    <Parameter name="Uniform Temperature New Layer" type="double" value="19.0"/>
     <Parameter name="Max Size" type="double" value="1e10"/>
     <Parameter name="Min Size" type="double" value="5e-3"/>
     <Parameter name="Layer Mesh Size" type="double" value="5.0e-3"/>
@@ -50,5 +55,6 @@
     <Parameter name="Linear Tolerance" type="double" value="1.0e-10"/>
     <Parameter name="Linear Max Iterations" type="int" value="200"/>
     <Parameter name="Linear Krylov Size" type="int" value="200"/>
+    <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
   </ParameterList>
 </ParameterList>

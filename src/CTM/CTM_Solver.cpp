@@ -42,6 +42,7 @@ static void validate_params(RCP<const ParameterList> p) {
   assert(la_params.isType<double>("Linear Tolerance"));
   assert(la_params.isType<int>("Linear Max Iterations"));
   assert(la_params.isType<int>("Linear Krylov Size"));
+  assert(la_params.isType<std::string>("Preconditioner Type"));
 }
 
 Solver::Solver(RCP<const Teuchos_Comm> c, RCP<ParameterList> p) {
