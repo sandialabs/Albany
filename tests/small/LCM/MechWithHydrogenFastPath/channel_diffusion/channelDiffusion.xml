@@ -234,7 +234,7 @@
         <Parameter
           name="Max Value"
           type="double"
-          value="3.0" />
+          value="1.0" />
         <!-- Initial value of the parameter, here it is a Dirichlet BC on displacement -->
         <Parameter
           name="Min Value"
