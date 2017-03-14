@@ -262,10 +262,8 @@ static void copy_size_field(
 }
 
 static pPList set_transfer_fields(
-    pMSAdapt adapter, apf::Field* tf, apf::Field* mf) {
+    pMSAdapt adapter,  pField sim_tf, pField sim_mf) {
   pPList sim_list = PList_new();
-  auto sim_tf = apf::getSIMField(tf);
-  auto sim_mf = apf::getSIMField(mf);
   PList_append(sim_list, sim_tf);
   PList_append(sim_list, sim_mf);
   MSA_setMapFields(adapter, sim_list);
@@ -310,6 +308,204 @@ static void constrain_top(
   GRIter_delete(regions);
 }
 
+enum { ABSOLUTE = 1, RELATIVE = 2 };
+enum { DONT_GRADE = 0, DO_GRADE = 1 };
+enum { ONLY_CURV_TYPE = 2 };
+
+static void mesh_current_layer(
+    pGModel model, pParMesh mesh, int current_layer, double size,
+    RCP<Teuchos::FancyOStream> out) {
+
+  // setup the mesher
+  pACase mcase = MS_newMeshCase(model);
+  MS_setMeshSize(mcase,GM_domain(model), RELATIVE, 1.0, NULL);
+  MS_setMeshCurv(mcase,GM_domain(model), ONLY_CURV_TYPE, 0.025);
+  MS_setMinCurvSize(mcase,GM_domain(model), ONLY_CURV_TYPE, 0.0025);
+  MS_setSurfaceShapeMetric(mcase, GM_domain(model),ShapeMetricType_AspectRatio, 25);
+  MS_setVolumeShapeMetric(mcase, GM_domain(model), ShapeMetricType_AspectRatio, 25);
+
+  // set region to be meshed based on attributes
+  GRIter regions = GM_regionIter(model);
+  pGRegion gr;
+  int layer;
+  while (gr=GRIter_next(regions)) {
+    if (GEN_numNativeIntAttribute(gr, "SimLayer") == 1) {
+      GEN_nativeIntAttribute(gr, "SimLayer", &layer);
+      if (layer == current_layer) {
+        MS_setMeshSize(mcase, gr, ABSOLUTE, size, NULL);
+        pPList regFaces = GR_faces(gr);
+        void *fiter = 0;
+        pGFace gf;
+        while (gf = static_cast<pGFace>(PList_next(regFaces, &fiter))) {
+          if (GEN_numNativeIntAttribute(gf,"SimLayer") == 1)
+            GEN_nativeIntAttribute(gf,"SimLayer", &layer);
+        }
+        PList_delete(regFaces);
+      }
+      else if (layer > current_layer)
+        MS_setNoMesh(mcase,gr,1);
+    }
+  }
+  GRIter_delete(regions);
+
+  // mesh the surface
+  double t0 = PCU_Time();
+  pSurfaceMesher sm = SurfaceMesher_new(mcase,mesh);
+  SurfaceMesher_execute(sm,0);
+  SurfaceMesher_delete(sm);
+  double t1 = PCU_Time();
+  *out << "adapt(): current layer surface meshed in " << t1-t0 << " seconds\n";
+
+  // mesh the volume
+  double t2 = PCU_Time();
+  pVolumeMesher vm  = VolumeMesher_new(mcase,mesh);
+  VolumeMesher_setEnforceSize(vm, 1);
+  VolumeMesher_execute(vm,0);
+  VolumeMesher_delete(vm);
+  MS_deleteMeshCase(mcase);
+  double t3 = PCU_Time();
+  *out << "adapt(): current layer volume meshed in " << t2-t1 << " seconds\n";
+}
+
+static void add_next_layer(
+    pParMesh sim_pm, double size, int next_layer,
+    double init_temp, double init_disp,
+    pField temp, pField disp, RCP<Teuchos::FancyOStream> out) {
+
+ // collect the layer 0 regions
+  auto model = M_model(sim_pm);
+  auto regions = GM_regionIter(model);
+  pGRegion gr1;
+  int layer;
+  int max_layer = -1;
+  auto combined_regions = PList_new();
+  std::set<pGRegion> lay_grs;
+  while (gr1 = GRIter_next(regions)) {
+    if (GEN_numNativeIntAttribute(gr1, "SimLayer") == 1) {
+      GEN_nativeIntAttribute(gr1, "SimLayer", &layer);
+      if (layer == 0)
+        PList_appUnique(combined_regions, gr1);
+      if (layer > max_layer)
+        max_layer = layer;
+      if (layer == next_layer)
+        lay_grs.insert(gr1);
+    }
+  }
+  GRIter_delete(regions);
+
+  // bail out if no more layers to add
+  if (next_layer > max_layer)
+    return;
+
+  // perform migration
+  double t0 = PCU_Time();
+  pMesh mesh = PM_mesh(sim_pm, 0);
+  pMigrator mig = Migrator_new(sim_pm, 0);
+  Migrator_reset(mig, 3);
+  std::set<pRegion> doneRs;
+  int rank = PMU_rank();
+  if (rank != 0) {
+    VIter vi = M_classificationVertexIter(mesh, 3);
+    while (pVertex v = VIter_next(vi)) {
+      pGEntity gent = EN_whatIn(v);
+      for (std::set<pGRegion>::const_iterator layGrIt = lay_grs.begin();
+           layGrIt != lay_grs.end(); ++layGrIt) {
+        pGRegion layGr = *layGrIt;
+        if (GEN_inClosure(layGr, gent)) {
+          pPList vrs = V_regions(v);
+          int nvrs = PList_size(vrs);
+          for (int i=0; i < nvrs; i++) {
+            pRegion r = static_cast<pRegion>(PList_item(vrs, i));
+            if (doneRs.find(r) == doneRs.end()) {
+              Migrator_add(mig, r, 0, rank);
+              doneRs.insert(r);
+            }
+          }
+          PList_delete(vrs);
+          break;
+        }
+      }
+    }
+    VIter_delete(vi);
+  }
+  Migrator_run(mig, 0);
+  Migrator_delete(mig);
+  double t1 = PCU_Time();
+  *out << "adapt(): next layer migrated in " << t1-t0 << " seconds\n";
+
+  // undo slicing if needed
+  if (next_layer > 1) {
+    *out << "adapt(): undoing slicing\n";
+    double t2 = PCU_Time();
+    DM_undoSlicing(combined_regions, next_layer-1, sim_pm);
+    double t3 = PCU_Time();
+    * out << "adapt(): undo slicing in " << t3-t2 << " seconds\n";
+  }
+
+  // mesh the top layer only
+  *out << "adapt(): mesh top layer\n";
+  mesh_current_layer(model, sim_pm, next_layer, size, out);
+
+  // initialize field values on the top layer
+  *out << "adapt(): add fields to top layer\n";
+  {
+    double t2 = PCU_Time();
+
+    // collect the top layer vertices
+    *out << "adapt(): collect top layer vertices\n";
+    pMEntitySet topLayerVerts = MEntitySet_new(PM_mesh(sim_pm,0));
+    regions = GM_regionIter(model);
+    pVertex mv;
+    while (gr1=GRIter_next(regions)) {
+      if (GEN_numNativeIntAttribute(gr1, "SimLayer")==1) {
+        GEN_nativeIntAttribute(gr1, "SimLayer", &layer);
+        if (layer == next_layer) {
+          for(int np=0;np<PM_numParts(sim_pm);np++) {
+            VIter allVerts = M_classifiedVertexIter(PM_mesh(sim_pm, np), gr1, 1);
+            while ( mv = VIter_next(allVerts) )
+              MEntitySet_add(topLayerVerts,mv);
+            VIter_delete(allVerts);
+          }
+        }
+      }
+    }
+
+    // make sure mesh entities know about the fields
+    pPList unmapped = PList_new();
+    pDofGroup dg;
+    MESIter viter = MESIter_iter(topLayerVerts);
+    while ( mv = reinterpret_cast<pVertex>(MESIter_next(viter)) ) {
+      dg = Field_entDof(temp, mv, 0);
+      if (!dg) {
+        PList_append(unmapped, mv);
+        Field_applyEnt(temp, mv);
+        Field_applyEnt(disp, mv);
+      }
+    }
+    MESIter_delete(viter);
+
+    // set the field values to the user-specified initial value
+    pEntity ent;
+    void *vptr;
+    void *iter = 0;
+    while (vptr = PList_next(unmapped,&iter)) {
+      ent = reinterpret_cast<pEntity>(vptr);
+      dg = Field_entDof(temp, ent, 0);
+      DofGroup_setValue(dg, 0, 0, init_temp);
+      dg = Field_entDof(disp, ent, 0);
+      for (int c=0; c < 3; ++c)
+        DofGroup_setValue(dg, c, 0, init_disp);
+    }
+    PList_delete(unmapped);
+    MEntitySet_delete(PM_mesh(sim_pm,0),topLayerVerts);
+    GRIter_delete(regions);
+
+    double t3 = PCU_Time();
+    *out << "adapt(): new layer fields set in " << t3-t2 << " seconds\n";
+  }
+
+}
+
 static void write_debug(bool debug, apf::Mesh* m, const char* n, int c) {
   if (! debug) return;
   std::stringstream ss;
@@ -318,10 +514,6 @@ static void write_debug(bool debug, apf::Mesh* m, const char* n, int c) {
   apf::writeVtkFiles(s.c_str(), m);
 }
 
-enum { ABSOLUTE = 1, RELATIVE = 2 };
-enum { DONT_GRADE = 0, DO_GRADE = 1 };
-enum { ONLY_CURV_TYPE = 2 };
-
 void Adapter::adapt(const double t_current) {
 
   static int call_count = 0;
@@ -329,6 +521,8 @@ void Adapter::adapt(const double t_current) {
   // get the solution fields
   auto t_apf_field = get_temp_field(t_disc, apf_mesh);
   auto m_apf_field = get_mech_field(m_disc, apf_mesh);
+  auto t_sim_field = apf::getSIMField(t_apf_field);
+  auto m_sim_field = apf::getSIMField(m_apf_field);
 
   // compute chosen spr error estimate on the chosen field
   auto spr_field_name = params->get<std::string>("SPR Solution Field", "");
@@ -351,7 +545,7 @@ void Adapter::adapt(const double t_current) {
   copy_size_field(apf_mesh, adapter, spr_size_field, min_size, max_size);
 
   // tell the simmetrix adapter which fields to transfer
-  auto sim_field_list = set_transfer_fields(adapter, t_apf_field, m_apf_field);
+  auto sim_field_list = set_transfer_fields(adapter, t_sim_field, m_sim_field);
 
   // constrain the top face
   constrain_top(adapter, sim_model, sim_mesh, spr_size_field,
@@ -362,46 +556,40 @@ void Adapter::adapt(const double t_current) {
   apf::destroyField(spr_size_field);
 
   double t1 = PCU_Time();
-  *out << "adaptMesh(): preparing mesh adapt in " << t1-t0 << " seconds\n";
-  double t2 = PCU_Time();
+  *out << "adapt(): preparing mesh adapt in " << t1-t0 << " seconds\n";
 
   // run the adapter
+  double t2 = PCU_Time();
   pProgress progress = Progress_new();
   MSA_adapt(adapter, progress);
   Progress_delete(progress);
   MSA_delete(adapter);
   MS_deleteMeshCase(mcase);
-
-  // write debug info
   write_debug(debug, apf_mesh, "postadapt_", call_count);
-
   double t3 = PCU_Time();
-  *out << "adaptMesh(): mesh adapt in " << t3-t2 << " seconds\n";
+  *out << "adapt(): mesh adapt in " << t3-t2 << " seconds\n";
 
-  // add the layer if needed
-  if (t_current >= layer_times[current_layer]) {
-    *out << "adaptMesh(): adding layer: " << current_layer+1 << std::endl;
-    write_debug(debug, apf_mesh, "postlayer_", call_count);
-    current_layer++;
-  }
+  // add the layer
+  *out << "adapt(): adding layer: " << current_layer+1 << std::endl;
+  add_next_layer(sim_mesh, layer_size, current_layer+1, new_layer_temp, 0.0,
+      t_sim_field, m_sim_field, out);
+  write_debug(debug, apf_mesh, "postlayer_", call_count);
+  current_layer++;
 
   // clean up
   PList_delete(sim_field_list);
 
-  double t4 = PCU_Time();
-
   // rebuild the data structures needed for analysis
+  double t4 = PCU_Time();
   apf_mesh->verify();
   auto t_sim_disc = rcp_dynamic_cast<Albany::SimDiscretization>(t_disc);
   auto m_sim_disc = rcp_dynamic_cast<Albany::SimDiscretization>(m_disc);
   t_sim_disc->updateMesh(/* transfer ip = */ false, param_lib);
   m_sim_disc->updateMesh(/* transfer ip = */ false, param_lib);
-
   double t5 = PCU_Time();
-  *out << "adaptMesh(): update albany structures in " << t5-t4 << " seconds\n";
+  *out << "adapt(): update albany structures in " << t5-t4 << " seconds\n";
 
   call_count++;
-
 }
 
 } // namespace CTM
