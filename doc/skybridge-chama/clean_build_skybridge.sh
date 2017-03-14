@@ -6,7 +6,7 @@ module load openmpi-gnu/1.8
 module load python/2.7
 
 # Building Trilinos, add environmental variable and path
-export REMOTE=/gscratch/jwfoulk/albany
+export REMOTE=/ascldap/users/jwfoulk/albany
 export REMOTE_EXEC=/gscratch/jwfoulk/albany_builds
 export LD_LIBRARY_PATH=/opt/python-2.7/lib:$LD_LIBRARY_PATH
 

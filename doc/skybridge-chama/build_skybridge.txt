@@ -38,6 +38,10 @@ make -j 8
 make install
 ---
 
+to compile with a static hdf5, use
+
+./configure CC=mpicc FC=mpif90 CXX=mpicxx CXXFLAGS="-fPIC -O3" CFLAGS="-fPIC -O3" FCFLAGS="-fPIC -O3" --enable-parallel --enable-shared=no --with-zlib=$REMOTE --prefix=$REMOTE
+
 Prior to moving on to netcdf, we need to modify both the path and LD_LIBRARY_PATH so that we grab both zlib and hdf5 from our local build and not the system build.
 
 ---
@@ -117,6 +121,24 @@ cmake \
 -DENABLE_TESTS=OFF -DCMAKE_SKIP_INSTALL_RPATH=ON \
 -DZLIB_INCLUDE_DIRS=$REMOTE/include \
 -DZLIB_LIBRARY=$REMOTE/lib/libz.so \
+-DBUILD_UTILITIES=OFF \
+..
+---
+
+In some cases, you might want to build without shared libraries
+
+----
+cmake \
+-DCMAKE_C_COMPILER=mpicc \
+-DCMAKE_C_FLAGS="-I$REMOTE/include -O3" \
+-DCMAKE_PREFIX_PATH="$REMOTE/lib" \
+-DCMAKE_EXE_LINKER_FLAGS="-L$REMOTE/lib -O3" \
+-DCMAKE_INSTALL_PREFIX=$REMOTE \
+-DENABLE_DAP=OFF -DBUILD_SHARED_LIBS=OFF -DENABLE_FSYNC=OFF -DENABLE_CDMREMOTE=OFF \
+-DENABLE_DOXYGEN=OFF -DENABLE_NETCDF_4=ON -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_EXAMPLES=OFF \
+-DENABLE_TESTS=OFF -DCMAKE_SKIP_INSTALL_RPATH=ON \
+-DZLIB_INCLUDE_DIRS=$REMOTE/include \
+-DZLIB_LIBRARY=$REMOTE/lib/libz.a \
 -DBUILD_UTILITIES=OFF \
 ..
 ---
