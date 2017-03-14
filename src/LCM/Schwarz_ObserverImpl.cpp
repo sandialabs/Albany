@@ -13,7 +13,6 @@ namespace LCM {
 ObserverImpl::
 ObserverImpl(Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> & apps) :
     StatelessObserverImpl(apps)
-
 {
   return;
 }
@@ -47,6 +46,7 @@ observeSolutionT(
 
     this->apps_[m]->getStateMgr().updateStates();
   }
+
   StatelessObserverImpl::
   observeSolutionT(stamp, non_overlapped_solution, non_overlapped_solution_dot);
 }

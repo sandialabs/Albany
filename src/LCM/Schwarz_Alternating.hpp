@@ -86,7 +86,7 @@ public:
       bool const was_solved);
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
-  getApps() const {return apps_;}  
+  getApps() const;
 
 protected:
 

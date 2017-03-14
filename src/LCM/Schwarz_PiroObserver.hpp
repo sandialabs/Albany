@@ -3,9 +3,6 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-
-//IK, 9/12/14: no Epetra!
-
 #if !defined(Schwarz_PiroObserver_hpp)
 #define Schwarz_PiroObserver_hpp
 

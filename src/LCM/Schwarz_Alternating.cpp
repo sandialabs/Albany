@@ -303,13 +303,16 @@ SchwarzAlternating(
 
 }
 
-SchwarzAlternating::~SchwarzAlternating()
+SchwarzAlternating::
+~SchwarzAlternating()
 {
+  return;
 }
 
 // Overridden from Thyra::ModelEvaluator<ST>
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-SchwarzAlternating::get_x_space() const
+SchwarzAlternating::
+get_x_space() const
 {
   Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
   unused = Teuchos::null;
@@ -318,7 +321,8 @@ SchwarzAlternating::get_x_space() const
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-SchwarzAlternating::get_f_space() const
+SchwarzAlternating::
+get_f_space() const
 {
   Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
   unused = Teuchos::null;
@@ -327,7 +331,8 @@ SchwarzAlternating::get_f_space() const
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-SchwarzAlternating::get_p_space(int l) const
+SchwarzAlternating::
+get_p_space(int l) const
 {
   ALBANY_EXPECT(0 <= l && l < num_params_total_);
 
@@ -343,7 +348,8 @@ SchwarzAlternating::get_p_space(int l) const
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-SchwarzAlternating::get_g_space(int l) const
+SchwarzAlternating::
+get_g_space(int l) const
 {
   ALBANY_EXPECT(0 <= l);
 
@@ -360,39 +366,45 @@ SchwarzAlternating::get_g_space(int l) const
 }
 
 Teuchos::RCP<const Teuchos::Array<std::string>>
-SchwarzAlternating::get_p_names(int l) const
+SchwarzAlternating::
+get_p_names(int l) const
 {
   ALBANY_EXPECT(0 <= l && l < num_params_total_);
   return param_names_[l];
 }
 
 Teuchos::ArrayView<const std::string>
-SchwarzAlternating::get_g_names(int l) const
+SchwarzAlternating::
+get_g_names(int l) const
 {
   ALBANY_ASSERT(false, "not implemented");
   return Teuchos::ArrayView<const std::string>();
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-SchwarzAlternating::getNominalValues() const
+SchwarzAlternating::
+getNominalValues() const
 {
   return nominal_values_;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-SchwarzAlternating::getLowerBounds() const
+SchwarzAlternating::
+getLowerBounds() const
 {
   return Thyra::ModelEvaluatorBase::InArgs<ST>(); // Default value
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-SchwarzAlternating::getUpperBounds() const
+SchwarzAlternating::
+getUpperBounds() const
 {
   return Thyra::ModelEvaluatorBase::InArgs<ST>(); // Default value
 }
 
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
-SchwarzAlternating::create_W_op() const
+SchwarzAlternating::
+create_W_op() const
 {
   Schwarz_CoupledJacobian
   jac(comm_);
@@ -401,7 +413,8 @@ SchwarzAlternating::create_W_op() const
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST>>
-SchwarzAlternating::create_W_prec() const
+SchwarzAlternating::
+create_W_prec() const
 {
   Teuchos::RCP<Thyra::DefaultPreconditioner<ST>>
   W_prec = Teuchos::null;
@@ -410,23 +423,33 @@ SchwarzAlternating::create_W_prec() const
 }
 
 Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST>>
-SchwarzAlternating::get_W_factory() const
+SchwarzAlternating::
+get_W_factory() const
 {
   return lowsfb_;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-SchwarzAlternating::createInArgs() const
+SchwarzAlternating::
+createInArgs() const
 {
   return this->createInArgsImpl();
 }
 
 void
-SchwarzAlternating::reportFinalPoint(
+SchwarzAlternating::
+reportFinalPoint(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & final_point,
     bool const was_solved)
 {
-  ALBANY_ASSERT(false, "Calling reportFinalPoint");
+  ALBANY_ASSERT(false, "reportFinalPoint not allowed");
+}
+
+Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
+SchwarzAlternating::
+getApps() const
+{
+  return apps_;
 }
 
 /// Create operator form of dg/dx for distributed responses
@@ -568,6 +591,20 @@ SchwarzLoop(
   converged{false};
 
   while (converged == false) {
+
+    for (auto m = 0; m < num_models_; ++m) {
+
+      auto &
+      model = *(models_[m]);
+
+      auto
+      in_args_m = model.createInArgs();
+
+      auto
+      out_args_m = model.createOutArgs();
+
+      model.evalModel(in_args_m, out_args_m);
+    }
 
   }
 
