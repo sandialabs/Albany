@@ -219,8 +219,6 @@ void Solver::solve_mech() {
 }
 
 void Solver::adapt_mesh() {
-  if (adapt_params == Teuchos::null) return;
-  if (! adapter->should_adapt(t_current)) return;
   *out << "beginning mesh adaptation: " << std::endl;
   adapter->adapt(t_current);
   t_sol_info->resize(t_disc, true);
@@ -239,16 +237,25 @@ void Solver::solve() {
     *out << "*** from time: " << t_old << std::endl;
     *out << "*** to time: " << t_current << std::endl;
 
-    // perform the analysis
+    // perform the heat analysis analysis
     solve_temp();
-    solve_mech();
 
-    // save the solution to file after analysis
-    auto apf_disc = rcp_dynamic_cast<Albany::APFDiscretization>(m_disc);
-    apf_disc->writeAnySolutionToFile(t_current);
+    // if we should adapt
+    if (adapter != Teuchos::null) {
+      if (adapter->should_adapt(t_current)) {
 
-    // adapt the mesh if needed
-    adapt_mesh();
+        // first solve the mechanical analysis
+        solve_mech();
+
+        // save the solution to file
+        auto apf_disc = rcp_dynamic_cast<Albany::APFDiscretization>(m_disc);
+        apf_disc->writeAnySolutionToFile(t_current);
+
+        // then adapt
+        adapt_mesh();
+
+      }
+    }
 
     // update the time information
     t_old = t_current;
