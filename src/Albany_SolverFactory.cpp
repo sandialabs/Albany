@@ -822,6 +822,13 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     return piroFactory.createSolver<ST, LO, GO, KokkosNode>(
         piroParams, coupled_model_with_solve, Teuchos::null, observerT_);
   }
+
+  if (solutionMethod == "Schwarz Alternating") {
+
+    RCP<LCM::SchwarzAlternating> const
+    schwarz_alt_model =
+        rcp(new LCM::SchwarzAlternating(appParams, solverComm, initial_guess));
+  }
 #endif /* LCM and Schwarz */
 
   RCP<Albany::Application> app = albanyApp;
