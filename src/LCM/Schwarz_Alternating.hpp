@@ -27,9 +27,7 @@ public:
   SchwarzAlternating(
       Teuchos::RCP<Teuchos::ParameterList> const & app_params,
       Teuchos::RCP<Teuchos::Comm<int> const> const & comm,
-      Teuchos::RCP<Tpetra_Vector const> const & initial_guessT,
-      Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const &
-      lowsfb);
+      Teuchos::RCP<Tpetra_Vector const> const & initial_guess);
 
   /// Destructor
   ~SchwarzAlternating();
@@ -174,10 +172,6 @@ private:
   int
   num_params_total_;
 
-  /// For setting get_W_factory()
-  Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>
-  lowsfb_;
-    
   Teuchos::Array<Teuchos::RCP<Tpetra_Map>>
   tpetra_param_map_;
 

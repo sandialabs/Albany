@@ -26,13 +26,9 @@ SchwarzAlternating::
 SchwarzAlternating(
     Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     Teuchos::RCP<Teuchos::Comm<int> const> const & comm,
-    Teuchos::RCP<Tpetra_Vector const> const & initial_guess,
-    Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const &
-    lowsfb)
+    Teuchos::RCP<Tpetra_Vector const> const & initial_guess)
 {
   comm_ = comm;
-
-  lowsfb_ = lowsfb;
 
   Teuchos::ParameterList &
   alt_system_params = app_params->sublist("Alternating System");
@@ -403,27 +399,21 @@ Teuchos::RCP<Thyra::LinearOpBase<ST>>
 SchwarzAlternating::
 create_W_op() const
 {
-  Teuchos::RCP<Thyra::LinearOpBase<ST>>
-  jac = Teuchos::null;
-
-  return jac;
+  return Teuchos::null;
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST>>
 SchwarzAlternating::
 create_W_prec() const
 {
-  Teuchos::RCP<Thyra::DefaultPreconditioner<ST>>
-  W_prec = Teuchos::null;
-
-  return W_prec;
+  return Teuchos::null;
 }
 
 Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST>>
 SchwarzAlternating::
 get_W_factory() const
 {
-  return lowsfb_;
+  return Teuchos::null;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
@@ -454,7 +444,6 @@ Teuchos::RCP<Thyra::LinearOpBase<ST>>
 SchwarzAlternating::
 create_DgDx_op_impl(int j) const
 {
-  ALBANY_ASSERT(0 <= j);
   return Teuchos::null;
 }
 
@@ -463,7 +452,6 @@ Teuchos::RCP<Thyra::LinearOpBase<ST>>
 SchwarzAlternating::
 create_DgDx_dot_op_impl(int j) const
 {
-  ALBANY_ASSERT(0 <= j);
   return Teuchos::null;
 }
 

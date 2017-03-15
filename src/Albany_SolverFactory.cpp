@@ -59,6 +59,7 @@
 #endif
 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
+#include "Schwarz_Alternating.hpp"
 #include "Schwarz_Coupled.hpp"
 #include "Schwarz_PiroObserver.hpp"
 #endif
@@ -362,12 +363,11 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 #endif /* ALBANY_QCAD */
   }
 #if defined(ALBANY_LCM)
-  if (solutionMethod == "Coupled Schwarz") {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::logic_error,
-        "Coupled Schwarz Solution Method does not work with Albany executable! "
-        " Please re-run with AlbanyT Executable. \n");
-  }
+  bool const
+  is_schwarz =
+      solutionMethod == "Coupled Schwarz" ||
+      solutionMethod == "Alternating Schwarz";
+  ALBANY_ASSERT(is_schwarz == false, "Schwarz methods require AlbanyT");
 #endif
   if (solutionMethod == "ATO Problem") {
 #ifdef ALBANY_ATO
@@ -777,21 +777,21 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif
 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
-  if (solutionMethod == "Coupled Schwarz") {
-#ifndef ALBANY_DTK
-    if (appComm->getSize() > 1)
-      TEUCHOS_TEST_FOR_EXCEPTION(
-          true, std::logic_error,
-          "Error: cannot run Coupled Schwarz problem on > 1 procs when DTK is "
-          "disabled.  "
-              << "Rebuild Trilinos and Albany with DTK to run Coupled Schwarz "
-                 "in parallel."
-              << "\n");
-#endif  // ALBANY_DTK
+  bool const
+  is_schwarz =
+      solutionMethod == "Coupled Schwarz" ||
+      solutionMethod == "Alternating Schwarz";
 
+  if (is_schwarz == true) {
+#if !defined(ALBANY_DTK)
+    ALBANY_ASSERT(appComm->getSize() == 1, "Parallel Schwarz requires DTK");
+#endif  // ALBANY_DTK
+  }
+
+  if (solutionMethod == "Coupled Schwarz") {
     // IKT: We are assuming the "Piro" list will come from the main coupled
     // Schwarz input file (not the sub-input
-    // files for each model).  This makes sense I think.
+    // files for each model).
     const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
 
     const Teuchos::RCP<Teuchos::ParameterList> stratList =
@@ -803,7 +803,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     enableIfpack2(linearSolverBuilder);
     enableMueLu(albanyApp, stratList, linearSolverBuilder);
 
-#ifdef ALBANY_TEKO
+#if defined(ALBANY_TEKO)
     Teko::addTekoToStratimikosBuilder(linearSolverBuilder, "Teko");
 #endif
     linearSolverBuilder.setParameterList(stratList);
@@ -811,19 +811,16 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     const RCP<Thyra::LinearOpWithSolveFactoryBase<ST>> lowsFactory =
         createLinearSolveStrategy(linearSolverBuilder);
 
-    const RCP<LCM::SchwarzCoupled> coupled_model_with_solveT =
+    const RCP<LCM::SchwarzCoupled> coupled_model_with_solve =
         rcp(new LCM::SchwarzCoupled(
             appParams, solverComm, initial_guess, lowsFactory));
 
-    observerT_ = rcp(new LCM::Schwarz_PiroObserver(coupled_model_with_solveT));
+    observerT_ = rcp(new LCM::Schwarz_PiroObserver(coupled_model_with_solve));
 
     // WARNING: Coupled Schwarz does not contain a primary Albany::Application
     // instance and so albanyApp is null.
-    // Piro::SolverFactory
-    //    return piroFactory.createSolver<ST>(piroParams,
-    //    coupled_model_with_solveT, observer);
     return piroFactory.createSolver<ST, LO, GO, KokkosNode>(
-        piroParams, coupled_model_with_solveT, Teuchos::null, observerT_);
+        piroParams, coupled_model_with_solve, Teuchos::null, observerT_);
   }
 #endif /* LCM and Schwarz */
 
