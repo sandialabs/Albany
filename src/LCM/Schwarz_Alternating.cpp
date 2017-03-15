@@ -543,10 +543,6 @@ getValidAppParameters() const
   list->sublist("VTK", false, "DEPRECATED  VTK sublist");
   list->sublist("Piro", false, "Piro sublist");
   list->sublist("Coupled System", false, "Coupled system sublist");
-  list->set<std::string>(
-      "Matrix-Free Preconditioner",
-      "",
-      "Matrix-Free Preconditioner Type");
 
   return list;
 }
@@ -557,7 +553,7 @@ SchwarzAlternating::
 getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList>
-  list = Teuchos::createParameterList("ValidCoupledSchwarzProblemParams");
+  list = Teuchos::createParameterList("ValidSchwarzAlternatingProblemParams");
 
   list->set<std::string>("Name", "", "String to designate Problem Class");
 
@@ -607,7 +603,10 @@ SchwarzLoop(
       prev_soln = *(app.getX());
 
       auto
-      diff = Teuchos::rcp(new Tpetra_Vector(prev_soln, Teuchos::Copy));
+      rcp_diff = Teuchos::rcp(new Tpetra_Vector(prev_soln, Teuchos::Copy));
+
+      auto
+      diff = *rcp_diff;
 
       auto
       in_args_m = model.createInArgs();
@@ -620,9 +619,9 @@ SchwarzLoop(
       auto const &
       next_soln = *(app.getX());
 
-      diff->update(1.0, next_soln, -1.0);
+      diff.update(1.0, next_soln, -1.0);
 
-      norms_diff(m) = diff->norm2();
+      norms_diff(m) = diff.norm2();
     }
 
     converged = minitensor::norm(norms_diff) <= tol;
