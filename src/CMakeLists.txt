@@ -1024,6 +1024,10 @@ endif()
 # Repeat libraries twice to catch circular dependencies
 SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
 
+IF (ALBANY_CTM)
+  add_subdirectory(CTM)
+ENDIF()
+
 MESSAGE("-- Albany Executables to link: ${ALBANY_EXECUTABLES}")
 
 IF (Albany_BUILD_STATIC_EXE)
