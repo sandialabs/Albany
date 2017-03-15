@@ -366,7 +366,11 @@ static void mesh_current_layer(
   VolumeMesher_delete(vm);
   MS_deleteMeshCase(mcase);
   double t3 = PCU_Time();
-  *out << "adapt(): current layer volume meshed in " << t2-t1 << " seconds\n";
+  *out << "adapt(): current layer volume meshed in " << t3-t2 << " seconds\n";
+
+  // print a final statement
+  printf("adapt(): after meshing current layer only: %d tets on cpu %d\n",
+      M_numRegions(PM_mesh(mesh,0)),PMU_rank());
 }
 
 static void add_next_layer(
@@ -520,6 +524,10 @@ void Adapter::adapt(const double t_current) {
 
   static int call_count = 0;
 
+  // print an initial statement
+  *out << "adapt(): coming in " << PCU_Time()
+       << ", cpu = " << PMU_rank() << std::endl;
+
   // print mesh stats before adaptation
   apf::printStats(apf_mesh);
 
@@ -534,6 +542,10 @@ void Adapter::adapt(const double t_current) {
   auto spr_size_field = compute_error_size(
       spr_field_name, t_apf_field, m_apf_field,
       use_error, use_target_elems, error_bound, target_elems);
+
+  // print before adapt results
+  printf("adapt(): before adapt - coming in: %d tets on cpu %d\n",
+      M_numRegions(PM_mesh(sim_mesh, 0)), PMU_rank());
 
   double t0 = PCU_Time();
 
@@ -596,6 +608,12 @@ void Adapter::adapt(const double t_current) {
 
   // print stats after adaptation
   apf::printStats(apf_mesh);
+
+  // print a final statement
+  *out << "adapt(): going out in " << PCU_Time()
+       << ", cpu = " << PMU_rank() << std::endl;
+  printf("adapt(): leaving %d tets on cpu %d\n",
+      M_numRegions(PM_mesh(sim_mesh,0)), PMU_rank());
 
   call_count++;
 }

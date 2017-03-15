@@ -148,12 +148,12 @@ void solve_linear_system(
     RCP<Tpetra_Vector> b) {
   RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   double t0 = PCU_Time();
-  double t1;
+  *out << "  linear system # equations: " <<  x->getGlobalLength() << std::endl;
   scale_system(in, A, b, out);
   RCP<Solver> solver = build_solver(in, A, x, b);
   solver->solve();
   int iters = solver->getNumIters();
-  t1 = PCU_Time();
+  double t1 = PCU_Time();
   if (iters >= in->get<int>("Linear Max Iterations")) {
     *out << "  linear solve failed to converge in " << iters << " iterations" << std::endl;
     *out << "  continuing using the incomplete solve..." << std::endl;
