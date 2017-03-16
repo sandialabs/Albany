@@ -144,10 +144,6 @@ SchwarzAlternating(
 
   disc_maps_.resize(num_models_);
 
-  jacs_.resize(num_models_);
-
-  precs_.resize(num_models_);
-
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const>>
   disc_overlap_maps(num_models_);
 
@@ -208,26 +204,6 @@ SchwarzAlternating(
     model_factory(model_app_params_[m].create_weak(), apps_[m]);
 
     models_[m] = model_factory.createT();
-
-    //create array of individual model jacobians
-    Teuchos::RCP<Tpetra_Operator> const
-    jac_temp = Teuchos::nonnull(models_[m]->create_W_op()) ?
-            ConverterT::getTpetraOperator(models_[m]->create_W_op()) :
-            Teuchos::null;
-
-    jacs_[m] = Teuchos::nonnull(jac_temp) ?
-            Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(jac_temp, true) :
-            Teuchos::null;
-
-    // create array of individual model preconditioners
-    // these will have same graph as Jacobians for now
-    precs_[m] = Teuchos::nonnull(jac_temp) ?
-            Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(jac_temp, true) :
-            Teuchos::null;
-
-    if (precs_[m]->isFillActive()) {
-      precs_[m]->fillComplete();
-    }
   }
 
   //Now get maps, InArgs, OutArgs for each model.
@@ -561,10 +537,10 @@ SchwarzLoop(
   rel_tol = 1.0e-12;
 
   minitensor::Vector<ST>
-  norms_diff(num_models_);
+  norms_diff(num_models_, minitensor::ZEROS);
 
   minitensor::Vector<ST>
-  norms_soln(num_models_);
+  norms_soln(num_models_, minitensor::ZEROS);
 
   bool
   converged{false};
@@ -579,30 +555,46 @@ SchwarzLoop(
       auto &
       app = *(apps_[m]);
 
-      auto const &
-      prev_soln = *(app.getX());
-
-      auto
-      rcp_diff = Teuchos::rcp(new Tpetra_Vector(prev_soln, Teuchos::Copy));
-
-      auto &
-      diff = *rcp_diff;
-
       auto &
       in_args_m = solver_inargs_[m];
 
       auto &
       out_args_m = solver_outargs_[m];
 
-      model.evalModel(in_args_m, out_args_m);
+      auto &&
+      rcp_prev = app.getX();
 
-      auto const &
-      next_soln = *(app.getX());
+      bool const
+      prev_exists = rcp_prev != Teuchos::null;
 
-      diff.update(1.0, next_soln, -1.0);
+      if (prev_exists == true) {
+        auto const &
+        prev = *rcp_prev;
 
-      norms_soln(m) = next_soln.norm2();
-      norms_diff(m) = diff.norm2();
+        auto &&
+        rcp_diff = Teuchos::rcp(new Tpetra_Vector(prev, Teuchos::Copy));
+
+        auto &
+        diff = *rcp_diff;
+
+        model.evalModel(in_args_m, out_args_m);
+
+        auto &&
+        next = *(app.getX());
+
+        diff.update(1.0, next, -1.0);
+
+        norms_soln(m) = next.norm2();
+        norms_diff(m) = diff.norm2();
+      } else {
+        model.evalModel(in_args_m, out_args_m);
+
+        auto &&
+        next = *(app.getX());
+
+        norms_soln(m) = next.norm2();
+        norms_diff(m) = norms_soln(m);
+      }
     }
 
     ST const

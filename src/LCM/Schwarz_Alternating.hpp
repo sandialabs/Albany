@@ -152,14 +152,6 @@ private:
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const>>
   disc_maps_;
 
-  /// Teuchos array holding main diagonal jacobians (non-coupled models)
-  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
-  jacs_;
-  
-  /// Teuchos array holding main diagonal preconditioners (non-coupled models)
-  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
-  precs_;
-
   int
   num_models_;
 
