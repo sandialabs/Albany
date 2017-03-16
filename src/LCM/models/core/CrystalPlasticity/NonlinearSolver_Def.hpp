@@ -50,11 +50,6 @@ minitensor::Vector<T, N>
 CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
     minitensor::Vector<T, N> const & x)
 {
-  // Get a convenience reference to the failed flag in case it is used more
-  // than once.
-  bool &
-  failed = Base::failed;
-
   // Tensor mechanical state variables
   minitensor::Tensor<T, NumDimT>
   Fp_np1(num_dim_);
@@ -94,7 +89,7 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
   residual(num_unknowns);
 
   // Return immediately if something failed catastrophically.
-  if (failed == true) {
+  if (this->get_failed() == true) {
     residual.fill(minitensor::ZEROS);
     return residual;
   }
@@ -118,9 +113,12 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
 
   // Ensure that the slip increment is bounded
    if (minitensor::norm(rate_slip * dt_) > 1.0) {
-       failed =  true;
-       return residual;
+     this->set_failed("Slip increment growing unbounded");
+     return residual;
    }
+
+   bool
+   failed{false};
 
   // Compute Lp_np1, and Fp_np1
   CP::applySlipIncrement<NumDimT, NumSlipT, T>(
@@ -162,6 +160,10 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
       slip_n_,
       slip_computed,
       failed);
+
+  if (failed == true) {
+    this->set_failed("Failure message here");
+  }
 
   for (int i = 0; i< num_slip_; ++i){
     residual[i] = slip_np1[i] - slip_computed[i];
