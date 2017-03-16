@@ -826,8 +826,10 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   if (solutionMethod == "Schwarz Alternating") {
 
     RCP<LCM::SchwarzAlternating> const
-    schwarz_alt_model =
+    schwarz_alt_model_and_solver =
         rcp(new LCM::SchwarzAlternating(appParams, solverComm, initial_guess));
+
+    return schwarz_alt_model_and_solver;
   }
 #endif /* LCM and Schwarz */
 
@@ -1428,7 +1430,7 @@ Albany::SolverFactory::setSolverParamDefaults(
 RCP<const ParameterList>
 Albany::SolverFactory::getValidAppParameters() const {
   RCP<ParameterList> validPL = rcp(new ParameterList("ValidAppParams"));
-  ;
+
   validPL->sublist("Problem", false, "Problem sublist");
   validPL->sublist("Debug Output", false, "Debug Output sublist");
   validPL->sublist("Scaling", false, "Jacobian/Residual Scaling sublist");
@@ -1449,6 +1451,7 @@ Albany::SolverFactory::getValidAppParameters() const {
   validPL->sublist("VTK", false, "DEPRECATED  VTK sublist");
   validPL->sublist("Piro", false, "Piro sublist");
   validPL->sublist("Coupled System", false, "Coupled system sublist");
+  validPL->sublist("Alternating System", false, "Alternating system sublist");
 
   // validPL->set<std::string>("Jacobian Operator", "Have Jacobian", "Flag to
   // allow Matrix-Free specification in Piro");

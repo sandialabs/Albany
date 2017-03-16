@@ -86,7 +86,7 @@ SchwarzAlternating(
         num_parameters > 0 ?
             1 : parameter_params->get("Number of Parameter Vectors", 0);
 
-    ALBANY_ASSERT(num_params_total_, "Parameters not supported.");
+    ALBANY_ASSERT(num_params_total_ == 0, "Parameters not supported.");
 
     //Get parameter names
     param_names_.resize(num_params_total_);
@@ -127,10 +127,10 @@ SchwarzAlternating(
         Teuchos::rcp(&(problem_params.sublist("Response Functions")), false);
 
     auto const
-    num_parameters = response_params->isType<int>("Number") == true ?
+    num_responses = response_params->isType<int>("Number") == true ?
         response_params->get<int>("Number") : 0;
 
-    ALBANY_ASSERT(num_parameters == 0, "No responses allowed.");
+    ALBANY_ASSERT(num_responses == 0, "No responses allowed.");
   }
 
   //----------- end Responses-----------------------
@@ -423,15 +423,6 @@ createInArgs() const
   return this->createInArgsImpl();
 }
 
-void
-SchwarzAlternating::
-reportFinalPoint(
-    Thyra::ModelEvaluatorBase::InArgs<ST> const & final_point,
-    bool const was_solved)
-{
-  ALBANY_ASSERT(false, "reportFinalPoint not allowed");
-}
-
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
 SchwarzAlternating::
 getApps() const
@@ -525,12 +516,7 @@ getValidAppParameters() const
 
   list->sublist("Problem", false, "Problem sublist");
   list->sublist("Debug Output", false, "Debug Output sublist");
-  list->sublist("Discretization", false, "Discretization sublist");
-  list->sublist("Quadrature", false, "Quadrature sublist");
-  list->sublist("Regression Results", false, "Regression Results sublist");
-  list->sublist("VTK", false, "DEPRECATED  VTK sublist");
-  list->sublist("Piro", false, "Piro sublist");
-  list->sublist("Coupled System", false, "Coupled system sublist");
+  list->sublist("Alternating System", false, "Alternating system sublist");
 
   return list;
 }
@@ -548,13 +534,13 @@ getValidProblemParameters() const
   list->set<int>(
       "Phalanx Graph Visualization Detail",
       0,
-      "Flag to select output of Phalanx Graph and level of detail");
+      "Phalanx Graph and level of detail");
 
   //FIXME: anything else to validate?
   list->set<std::string>(
       "Solution Method",
       "Steady",
-      "Flag for Steady, Transient, or Continuation");
+      "Steady, Transient, or Continuation");
 
   return list;
 }

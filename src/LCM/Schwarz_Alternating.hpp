@@ -19,7 +19,7 @@ namespace LCM {
 ///
 /// SchwarzAlternating coupling class
 ///
-class SchwarzAlternating: public Thyra::ModelEvaluatorDefaultBase<ST> {
+class SchwarzAlternating: public Thyra::ResponseOnlyModelEvaluatorBase<ST> {
 
 public:
 
@@ -77,11 +77,6 @@ public:
   /// Create InArgs
   Thyra::ModelEvaluatorBase::InArgs<ST>
   createInArgs() const;
-
-  void
-  reportFinalPoint(
-      Thyra::ModelEvaluatorBase::InArgs<ST> const & final_point,
-      bool const was_solved);
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   getApps() const;
