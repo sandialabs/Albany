@@ -209,8 +209,9 @@ class SolverFactory {
 
  private:
   /** \brief Testing utility that compares two numbers using two tolerances */
-  int
-  scaledCompare(double x1, double x2, double relTol, double absTol) const;
+  bool
+  scaledCompare(double x1, double x2, double relTol, double absTol,
+      std::string const& name) const;
 
   Teuchos::ParameterList*
   getTestParameters(int response_index) const;
