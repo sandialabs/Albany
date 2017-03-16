@@ -780,7 +780,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   bool const
   is_schwarz =
       solutionMethod == "Coupled Schwarz" ||
-      solutionMethod == "Alternating Schwarz";
+      solutionMethod == "Schwarz Alternating";
 
   if (is_schwarz == true) {
 #if !defined(ALBANY_DTK)

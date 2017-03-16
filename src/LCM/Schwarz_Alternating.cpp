@@ -569,10 +569,16 @@ SchwarzLoop(
     Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
 {
   constexpr ST
-  tol = 1.0e-12;
+  abs_tol = 1.0e-12;
+
+  constexpr ST
+  rel_tol = 1.0e-12;
 
   minitensor::Vector<ST>
   norms_diff(num_models_);
+
+  minitensor::Vector<ST>
+  norms_soln(num_models_);
 
   bool
   converged{false};
@@ -593,14 +599,14 @@ SchwarzLoop(
       auto
       rcp_diff = Teuchos::rcp(new Tpetra_Vector(prev_soln, Teuchos::Copy));
 
-      auto
+      auto &
       diff = *rcp_diff;
 
-      auto
-      in_args_m = model.createInArgs();
+      auto &
+      in_args_m = solver_inargs_[m];
 
-      auto
-      out_args_m = model.createOutArgs();
+      auto &
+      out_args_m = solver_outargs_[m];
 
       model.evalModel(in_args_m, out_args_m);
 
@@ -609,10 +615,23 @@ SchwarzLoop(
 
       diff.update(1.0, next_soln, -1.0);
 
+      norms_soln(m) = next_soln.norm2();
       norms_diff(m) = diff.norm2();
     }
 
-    converged = minitensor::norm(norms_diff) <= tol;
+    ST const
+    norm_soln = minitensor::norm(norms_soln);
+
+    ST const
+    norm_diff = minitensor::norm(norms_diff);
+
+    ST const
+    abs_error = norm_diff;
+
+    ST const
+    rel_error = norm_soln > 0.0 ? norm_diff / norm_soln : norm_diff;
+
+    converged = abs_error <= abs_tol || rel_error <= rel_tol;
   }
 
   return;
