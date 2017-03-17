@@ -3,8 +3,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis20km_ascii.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis20km_ascii.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis20km.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis20km.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis20km_refine.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis20km_refine.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis10km_ascii.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis10km_ascii.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis10km.xml
@@ -85,11 +83,3 @@ endif()
 if(ALBANY_IFPACK2)
 add_test(${testName}_Gis20km_Tpetra ${AlbanyT.exe} input_fo_gis20km_testT.xml)
 endif(ALBANY_IFPACK2)
-
-#IK, 10/29/13: Convert to tpetra!
-IF(ALBANY_STK_PERCEPT AND ALBANY_EPETRA)
-add_test(${testName}_Gis20km_refine ${Albany8.exe} input_fo_gis20km_refine.xml)
-ENDIF()
-
-#salloc -n 4 -n 4 -p pbatch
-#mpirun -np 4 ../../../build/src/Albany input_fo_gis20km.xml

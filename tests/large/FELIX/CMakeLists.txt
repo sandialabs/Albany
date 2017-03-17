@@ -1,3 +1,5 @@
 IF(ENABLE_CISM_INTERFACE)
 add_subdirectory(CismAlbany)
 ENDIF() 
+add_subdirectory(ExoMeshes)
+add_subdirectory(FO_GIS)
