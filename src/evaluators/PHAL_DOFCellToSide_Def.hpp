@@ -21,6 +21,8 @@ DOFCellToSideBase(const Teuchos::ParameterList& p,
 
   Teuchos::RCP<Albany::Layouts> dl_side = dl->side_layouts.at(sideSetName);
   std::string layout_str = p.get<std::string>("Data Layout");
+  cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
+
 
   if (layout_str=="Cell Scalar")
   {
@@ -90,17 +92,25 @@ DOFCellToSideBase(const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Invalid field layout.\n");
   }
 
-  val_side.dimensions(dims);
-
   this->addDependentField(val_cell);
   this->addEvaluatedField(val_side);
 
   this->setName("DOFCellToSide");
 
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits, typename ScalarT>
+void DOFCellToSideBase<EvalT, Traits, ScalarT>::
+postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& fm)
+{
+  this->utils.setFieldData(val_cell,fm);
+  this->utils.setFieldData(val_side,fm);
+  val_side.dimensions(dims);
+  
   if (layout==NODE_SCALAR || layout==NODE_VECTOR || layout==NODE_TENSOR || layout==VERTEX_VECTOR)
   {
-    Teuchos::RCP<shards::CellTopology> cellType;
-    cellType = p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type");
 
     int sideDim = cellType->getDimension()-1;
     sideNodes.resize(dims[1]);
@@ -115,16 +125,6 @@ DOFCellToSideBase(const Teuchos::ParameterList& p,
       }
     }
   }
-}
-
-//**********************************************************************
-template<typename EvalT, typename Traits, typename ScalarT>
-void DOFCellToSideBase<EvalT, Traits, ScalarT>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
-{
-  this->utils.setFieldData(val_cell,fm);
-  this->utils.setFieldData(val_side,fm);
 }
 
 //**********************************************************************
