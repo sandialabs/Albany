@@ -151,11 +151,12 @@ Aeras::SpectralDiscretization::~SpectralDiscretization()
 {
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->cdfOutput)
-      if (netCDFp)
-    if (const int ierr = nc_close (netCDFp))
-      TEUCHOS_TEST_FOR_EXCEPTION(
-        true, std::logic_error, "close returned error code " << ierr << " - "
-        << nc_strerror(ierr) << std::endl);
+    if (netCDFp) {
+      const int ierr = nc_close (netCDFp);
+      ALBANY_ASSERT(!ierr,
+            "close returned error code " << ierr << " - "
+            << nc_strerror(ierr) << std::endl);
+    }
 #endif
 
   for (int i=0; i< toDelete.size(); i++) delete [] toDelete[i];
