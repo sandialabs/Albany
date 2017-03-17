@@ -44,13 +44,13 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim> val_node;
+  PHX::MDField<const ScalarT,Cell,Node,Level,Dim> val_node;
   //! Basis Functions
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
   //
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
   //
-  PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint> jacobian_det;
 
   // Output:
   //! Values at quadrature points

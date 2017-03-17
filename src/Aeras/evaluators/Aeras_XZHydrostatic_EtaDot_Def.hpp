@@ -29,7 +29,7 @@ XZHydrostatic_EtaDot(const Teuchos::ParameterList& p,
   numLevels  (dl->node_scalar_level       ->dimension(2))
 {
 
-  this->addDependentField(etadot);
+  this->addEvaluatedField(etadot);
   this->setName("Aeras::XZHydrostatic_EtaDot"+PHX::typeAsString<EvalT>());
 
 }

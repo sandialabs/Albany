@@ -49,7 +49,7 @@ private:
   void get_coriolis(std::size_t cell, Kokkos::DynRankView<ScalarT, PHX::Device>  & coriolis);
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> sphere_coord;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> sphere_coord;
 
   enum SOURCETYPE {NONE, TC4};
   SOURCETYPE sourceType;

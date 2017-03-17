@@ -37,8 +37,8 @@ namespace Aeras {
   private:
     Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
-    PHX::MDField<ScalarT,Cell,Node,VecDim> flow_state_field; //flow state field at nodes
-    PHX::MDField<MeshScalarT> weighted_measure;
+    PHX::MDField<const ScalarT,Cell,Node,VecDim> flow_state_field; //flow state field at nodes
+    PHX::MDField<const MeshScalarT> weighted_measure;
     std::size_t numQPs, numDims, numNodes, nPrimaryDOFs;
     int responseSize; //length of response vector; 4 for this response
 
