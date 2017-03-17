@@ -50,12 +50,12 @@ private:
   std::size_t numQPs;
   std::size_t numDims;
 
-  PHX::MDField<ScalarT> field;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
-  PHX::MDField<MeshScalarT> sphere_coord;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> velocity;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level> temperature;
-  PHX::MDField<ScalarT,Cell,QuadPoint> spressure;
+  PHX::MDField<const ScalarT> field;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint> weighted_measure;
+  PHX::MDField<const MeshScalarT> sphere_coord;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level,Dim> velocity;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level> temperature;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> spressure;
   const int numLevels;
   int responseSize; 
 };
