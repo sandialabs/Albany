@@ -94,7 +94,6 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
        bool isOriginal = ((PCU_Comm_Self() % commT->getSize()) == 0);
        switchToOriginals(commT->getSize());
        if (isOriginal) {
-         std::cerr << "original loading " << mesh_file << '\n';
          mesh = apf::loadMdsMesh(g, mesh_file.c_str());
          plan = getPlan(mesh, commT->getSize());
        }
@@ -102,7 +101,6 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
        mesh = repeatMdsMesh(mesh, g, plan, commT->getSize());
     }
     else {
-      std::cerr << "all loading " << mesh_file << '\n';
       mesh = apf::loadMdsMesh(model_file.c_str(), mesh_file.c_str());
     }
 
@@ -117,7 +115,6 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
     std::cerr << "building box\n";
     buildBoxMesh(nex, ney, nez, wx, wy, wz, is);
   }
-  mesh->verify();
 
   model = mesh->getModel();
 
