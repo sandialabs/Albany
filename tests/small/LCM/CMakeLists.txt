@@ -6,7 +6,6 @@
 
 IF(ALBANY_HAVE_STK)
 IF(ALBANY_SEACAS)
-  add_subdirectory(CrystalPlasticity)
   add_subdirectory(CohesiveElement)
   add_subdirectory(SurfaceElement)
   add_subdirectory(SurfaceElementLocking)
