@@ -1225,7 +1225,7 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
     //Write geometry parameters to a (HARDCODED) text file and do re-meshing on root processor
     if( solverComm->MyPID() == 0 ) {
       writeSingleSubSolverParamsToFile(inArgs, "Geometry", "QCAD_geometry_params.txt");
-      std::system(discretizationCreateCmd.c_str()); 
+      Albany::safe_system(discretizationCreateCmd.c_str()); 
       //std::system("echo \"QCAD REMESHING PLACEHOLDER\""); //TEST
     }
     solverComm->Barrier(); //make sure processors wait until root is done working
