@@ -125,12 +125,6 @@ IF(ALBANY_MOR AND ALBANY_EPETRA)
   add_subdirectory(MOR)
 ENDIF()
 
-# AMP   ##################
-
-IF(ALBANY_AMP)
-  add_subdirectory(AMP)
-ENDIF()
-
 # ANISO #################
 
 IF(ALBANY_ANISO)

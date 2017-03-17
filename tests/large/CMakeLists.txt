@@ -24,8 +24,12 @@ IF(ALBANY_FELIX AND ALBANY_SEACAS)
   add_subdirectory(FELIX)
 ENDIF()
 
-IF(ALBANY_HAVE_STK)
-  IF(ALBANY_PERFORMANCE_TESTS)
-    add_subdirectory(PerformanceTests)
-  ENDIF()
-ENDIF(ALBANY_HAVE_STK)
+# AMP   ##################
+
+IF(ALBANY_AMP)
+  add_subdirectory(AMP)
+ENDIF()
+
+IF(ALBANY_PERFORMANCE_TESTS)
+  add_subdirectory(PerformanceTests)
+ENDIF()
