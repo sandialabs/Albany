@@ -137,10 +137,6 @@ IF(ALBANY_ANISO)
   add_subdirectory(ANISO)
 ENDIF(ALBANY_ANISO)
 
-IF(ALBANY_PERFORMANCE_TESTS)
-  add_subdirectory(PerformanceTests)
-ENDIF()
-
 ENDIF(ALBANY_HAVE_STK)
 
 ###################
