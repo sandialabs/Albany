@@ -549,52 +549,51 @@ SchwarzLoop(
 
     for (auto m = 0; m < num_models_; ++m) {
 
-      auto &
+      Thyra::ModelEvaluator<ST> &
       model = *(models_[m]);
 
-      auto &
-      app = *(apps_[m]);
-
-      auto &
+      Thyra::ModelEvaluatorBase::InArgs<ST> &
       in_args_m = solver_inargs_[m];
 
-      auto &
+      Thyra::ModelEvaluatorBase::OutArgs<ST> &
       out_args_m = solver_outargs_[m];
 
-      auto &&
-      rcp_prev = app.getX();
+      Teuchos::RCP<Thyra::ProductVectorBase<ST> const>
+      rcp_pvb_prev =
+        Teuchos::rcp_dynamic_cast<Thyra::ProductVectorBase<ST> const>(
+            in_args_m.get_x(), true);
 
-      bool const
-      prev_exists = rcp_prev != Teuchos::null;
+      Teuchos::RCP<Tpetra_Vector const>
+      rcp_prev = Teuchos::rcp_dynamic_cast<ThyraVector const>(
+          rcp_pvb_prev->getVectorBlock(0), true)->getConstTpetraVector();
 
-      if (prev_exists == true) {
-        auto const &
-        prev = *rcp_prev;
+      Tpetra_Vector const &
+      prev = *rcp_prev;
 
-        auto &&
-        rcp_diff = Teuchos::rcp(new Tpetra_Vector(prev, Teuchos::Copy));
+      Teuchos::RCP<Tpetra_Vector>
+      rcp_diff = Teuchos::rcp(new Tpetra_Vector(prev, Teuchos::Copy));
 
-        auto &
-        diff = *rcp_diff;
+      Tpetra_Vector &
+      diff = *rcp_diff;
 
-        model.evalModel(in_args_m, out_args_m);
+      model.evalModel(in_args_m, out_args_m);
 
-        auto &&
-        next = *(app.getX());
+      Teuchos::RCP<Thyra::ProductVectorBase<ST> const>
+      rcp_pvb_next =
+        Teuchos::rcp_dynamic_cast<Thyra::ProductVectorBase<ST> const>(
+            in_args_m.get_x(), true);
 
-        diff.update(1.0, next, -1.0);
+      Teuchos::RCP<Tpetra_Vector const>
+      rcp_next = Teuchos::rcp_dynamic_cast<ThyraVector const>(
+          rcp_pvb_next->getVectorBlock(0), true)->getConstTpetraVector();
 
-        norms_soln(m) = next.norm2();
-        norms_diff(m) = diff.norm2();
-      } else {
-        model.evalModel(in_args_m, out_args_m);
+      Tpetra_Vector const &
+      next = *rcp_next;
 
-        auto &&
-        next = *(app.getX());
+      diff.update(1.0, next, -1.0);
 
-        norms_soln(m) = next.norm2();
-        norms_diff(m) = norms_soln(m);
-      }
+      norms_soln(m) = next.norm2();
+      norms_diff(m) = diff.norm2();
     }
 
     ST const
