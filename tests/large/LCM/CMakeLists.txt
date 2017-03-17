@@ -10,6 +10,7 @@ ENDIF()
 
 IF(ALBANY_HAVE_STK)
   IF(ALBANY_SEACAS)
+    add_subdirectory(MechanicsWithHydrogenBar)
     add_subdirectory(CrystalPlasticity)
     IF(ALBANY_EPETRA)
       add_subdirectory(HMC)
