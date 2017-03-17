@@ -108,6 +108,7 @@ computeRateSlip(
   if (ratio_stress > max_tol)
   {
     failed = true;
+    std::cout << "Failed on flow: " << ratio_stress << std::endl;
     return max_tol;
   }
 
@@ -213,51 +214,61 @@ computeRateSlip(
   ArgT const
   ratio_stress = shear / slip_resistance;
 
-  if (ratio_stress > max_tol)
+  // carry derivative info from ratio_stress
+  ArgT
+  power_law{0.0 * ratio_stress};
+
+  // Ultra-low stress regime:
+  //
+  // if ratio_stress < min_tol, computation of pow_ratio_stress will introduce
+  // denormalized numbers into subsequent computations, so retun power_law = 0.0
+  if (std::fabs(ratio_stress) < min_tol)
   {
-    failed = true;
-    return max_tol;
+    return power_law;
   }
+
+  ArgT
+  pl_vd_ratio{ratio_stress};
 
   // Compute drag term
   ArgT const
   viscous_drag = ratio_stress / coefficient_drag;
 
-  bool const
-  finite_power_law = std::fabs(ratio_stress) > min_tol;
-
-  // carry derivative info from ratio_stress
-  ArgT
-  power_law{0.0 * ratio_stress};
+  // High stress regime:
+  //
+  // if ratio_stress > max_tol, computation of pow_ratio_stress will introduce
+  // denormalized numbers into subsequent computations. Additionally, such a
+  // large stress value indicates that we are in the viscous drag-dominated 
+  // regime, so return the slip rate computed by the drag constitutive relation
+  if (ratio_stress > max_tol)
+  {
+    return g0 * viscous_drag;
+  }
 
   ArgT
   pow_ratio_stress = std::pow(std::fabs(ratio_stress), m - 1);
 
-  if (finite_power_law == true) {
-    power_law = pow_ratio_stress * ratio_stress;
-  }
+  power_law = pow_ratio_stress * ratio_stress;
 
-  ArgT
   pl_vd_ratio = coefficient_drag * pow_ratio_stress;
 
   bool const
-  pl_active = pl_vd_ratio < CP::MACHINE_EPS;
-
-  bool const
-  vd_active = pl_vd_ratio > 1.0 / CP::MACHINE_EPS;
+  vd_active = pl_vd_ratio > CP::MACHINE_EPS;
       
-  bool const
-  eff_active = !pl_active && !vd_active;
-      
-  // prevent flow rule singularities if stress is zero
+  // Low stress regime:
+  //
+  // Initialize effective to power_law, because in the low stress regime, the 
+  // constitutive calculation depends only on the power law value
   ArgT
   effective{power_law};
 
-  if (eff_active == true) {
+  // Intermediate stress regime:
+  //
+  // The power law and viscous drag terms are both significant in the
+  // intermediate stress regime, so the full consitutive calculation is performed
+  if (vd_active == true)
+  {
     effective = 1.0/((1.0 / power_law) + (1.0 / viscous_drag));
-  }
-  else if (vd_active == true) {
-    effective = viscous_drag;
   }
 
   // compute slip increment

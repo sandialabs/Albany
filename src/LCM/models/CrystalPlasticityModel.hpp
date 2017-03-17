@@ -169,6 +169,10 @@ private:
   bool
   read_orientations_from_mesh_;
 
+  /// Flag indicating failure in model calculation
+  bool
+  failed_;
+
   ///
   /// Solution options
   ///
@@ -232,6 +236,9 @@ private:
   velocity_gradient_;
   
   ScalarField
+  velocity_gradient_plastic_;
+  
+  ScalarField
   source_;
   
   ScalarField
@@ -280,6 +287,9 @@ private:
   L_string_ = field_name_map_["Velocity_Gradient"];
 
   std::string const
+  Lp_string_ = field_name_map_["Velocity_Gradient_Plastic"];
+
+  std::string const
   residual_string_ = field_name_map_["CP_Residual"];
 
   std::string const
@@ -306,6 +316,9 @@ private:
   Albany::MDArray
   previous_plastic_deformation_;
 
+  Albany::MDArray
+  previous_defgrad_;
+
   RealType
   dt_;
 
@@ -321,6 +334,6 @@ public:
       const Teuchos::RCP<Albany::Layouts>& dl);
 };
 
-}
+} // namespace LCM
 
 #endif

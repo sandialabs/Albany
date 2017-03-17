@@ -97,7 +97,8 @@ std::ostream& NOX::StatusTest::ModelEvaluatorFlag::print(std::ostream& stream, i
     stream << ' ';
   }
   stream << status_;
-  stream << "Model Evaluator Flag";
+  stream << "Model Evaluator Flag: ";
+  stream << status_message_;
   stream << std::endl;
 
   return stream;

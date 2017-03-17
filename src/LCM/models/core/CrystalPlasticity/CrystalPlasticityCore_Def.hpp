@@ -39,8 +39,8 @@ CP::SlipFamily<NumDimT, NumSlipT>::setFlowRuleType(CP::FlowRuleType rule)
 template<typename T, minitensor::Index N>
 void
 CP::expectFiniteTensor(
-                   minitensor::Tensor<T, N> const & A,
-                   std::string const & msg)
+    minitensor::Tensor<T, N> const & A,
+    std::string const & msg)
 {
   auto const
   dim = A.get_dimension();
@@ -169,7 +169,7 @@ CP::updateSlip(
     auto
     pflow = flow_rule_factory.template createFlowRule<ArgT>(type_flow_rule);
 
-    ArgT const
+    ArgT //const
     rate_slip = pflow->computeRateSlip(
         slip_family.pflow_parameters_,
         shear[ss_index],
@@ -195,7 +195,8 @@ CP::computeStress(
     minitensor::Tensor<ArgT, NumDimT> const & Fp,
     minitensor::Tensor<ArgT, NumDimT> & sigma,
     minitensor::Tensor<ArgT, NumDimT> & S,
-    minitensor::Vector<ArgT, NumSlipT> & shear)
+    minitensor::Vector<ArgT, NumSlipT> & shear,
+    bool & failed)
 {
   minitensor::Index const
   num_dim = F.get_dimension();
@@ -217,9 +218,21 @@ CP::computeStress(
   {
     std::cout << "Singular plastic deformation gradient" << std::endl;
     std::cout << std::setprecision(4) << Fp << std::endl;
+    failed = true;
+    return;
   }
 
   defgrad_elastic = F * minitensor::inverse(Fp);
+
+  ArgT
+  det_fe = minitensor::det(defgrad_elastic);
+
+  if (0.0 == det_fe) {
+    std::cout << "Singular elastic deformation gradient" << std::endl;
+    std::cout << std::setprecision(4) << defgrad_elastic << std::endl;
+    failed = true;
+    return;
+  }
 
   deformation_elastic = minitensor::transpose(defgrad_elastic) * defgrad_elastic;
 
@@ -228,7 +241,7 @@ CP::computeStress(
 
   S = minitensor::dotdot(C, strain_elastic);
 
-  sigma = 1.0 / minitensor::det(defgrad_elastic) * 
+  sigma = 1.0 / det_fe * 
     defgrad_elastic * S * minitensor::transpose(defgrad_elastic);
 
   CP::expectFiniteTensor(

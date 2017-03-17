@@ -274,6 +274,7 @@ CrystalPlasticityKernel(
   setEvaluatedField(cauchy_string_, dl->qp_tensor);
   setEvaluatedField(Fp_string_, dl->qp_tensor);
   setEvaluatedField(L_string_, dl->qp_tensor);
+  setEvaluatedField(Lp_string_, dl->qp_tensor);
   setEvaluatedField(source_string_, dl->qp_scalar);
   setEvaluatedField(residual_string_, dl->qp_scalar);
   setEvaluatedField(residual_iter_string_, dl->qp_scalar);
@@ -303,8 +304,12 @@ CrystalPlasticityKernel(
       p->get<bool>("Output Fp", false));
 
   // L
-  addStateVariable(L_string_, dl->qp_tensor, "identity", 0.0, true,
+  addStateVariable(L_string_, dl->qp_tensor, "scalar", 0.0, false,
       p->get<bool>("Output L", false));
+
+  // Lp
+  addStateVariable(Lp_string_, dl->qp_tensor, "scalar", 0.0, false,
+      p->get<bool>("Output Lp", false));
 
   // mechanical source
   if (have_temperature_) {
@@ -400,9 +405,10 @@ CrystalPlasticityKernel(
 // Initialize state for computing the constitutive response of the material
 //
 template<typename EvalT, typename Traits>
-void CrystalPlasticityKernel<EvalT, Traits>::init(Workset & workset,
-                                                  FieldMap<const ScalarT> & dep_fields,
-                                                  FieldMap<ScalarT> & eval_fields)
+void CrystalPlasticityKernel<EvalT, Traits>::init(
+    Workset & workset,
+    FieldMap<const ScalarT> & dep_fields,
+    FieldMap<ScalarT> & eval_fields)
 {
   if(verbosity_ > 2) {
     std::cout << ">>> in cp initialize compute state\n";
@@ -435,6 +441,7 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(Workset & workset,
   stress_ = *eval_fields[cauchy_string_];
   plastic_deformation_ = *eval_fields[Fp_string_];
   velocity_gradient_ = *eval_fields[L_string_];
+  velocity_gradient_plastic_ = *eval_fields[Lp_string_];
   cp_residual_ = *eval_fields[residual_string_];
   cp_residual_iter_ = *eval_fields[residual_iter_string_];
   
@@ -460,6 +467,7 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(Workset & workset,
   // get state variables
 
   previous_plastic_deformation_ = (*workset.stateArrayPtr)[Fp_string_ + "_old"];
+  previous_defgrad_ = (*workset.stateArrayPtr)[F_string_ + "_old"];
   
   dt_ = Sacado::ScalarValue<ScalarT>::eval(delta_time_(0));
 }
@@ -472,7 +480,8 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   // TODO: In the future for CUDA this should be moved out of the kernel because
   // it uses dynamic allocation for the buffer. It should also be modified to use 
   // cudaMalloc.
-  utility::StaticAllocator allocator(1024 * 1024);
+  utility::StaticAllocator 
+  allocator(1024 * 1024);
 
   //
   // Known quantities
@@ -491,6 +500,9 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   minitensor::Tensor<ScalarT, CP::MAX_DIM>
   F_np1(num_dims_);
+
+  minitensor::Tensor<RealType, CP::MAX_DIM>
+  F_n(num_dims_);
 
   //
   // Unknown quantities
@@ -614,6 +626,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
     for (int j(0); j < num_dims_; ++j) {
       F_np1(i, j) = def_grad_(cell, pt, i, j);
       Fp_n(i, j) = previous_plastic_deformation_(cell, pt, i, j);
+      F_n(i, j) = previous_defgrad_(cell, pt, i, j);
     }
   }
 
@@ -661,6 +674,8 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   state_internal.slip_np1_ = slip_np1;
 
+  bool
+  failed{false};
 
   auto
   integratorFactory = CP::IntegratorFactory<EvalT, CP::MAX_DIM, CP::MAX_SLIP>(
@@ -673,8 +688,10 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
     state_mechanical,
     state_internal,
     C,
+    F_n,
     F_np1,
-    dt_);
+    dt_,
+    failed);
 
   auto
   integrator = integratorFactory(integration_scheme_, residual_type_);
@@ -698,7 +715,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
     return;
   }
 
-  // Compute the equivalent plastic strain from the velocity gradient:
+  // Compute the equivalent plastic strain from the plastic velocity gradient:
   //  eqps_dot = sqrt[2/3* sym(Lp) : sym(Lp)]
   minitensor::Tensor<ScalarT, CP::MAX_DIM> const
   Dp = minitensor::sym(Lp_np1);
@@ -748,13 +765,28 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   cp_residual_(cell, pt) = norm_slip_residual;
   cp_residual_iter_(cell,pt) = residual_iter;
 
+  minitensor::Tensor<RealType, CP::MAX_DIM> const
+  inv_F = minitensor::inverse(F_n);
+
+  minitensor::Tensor<RealType, CP::MAX_DIM> const
+  eye = minitensor::identity<RealType, CP::MAX_DIM>(num_dims_);
+
+
+  minitensor::Tensor<ScalarT, CP::MAX_DIM>
+  L(num_dims_);
+
+  if (dt_ > 0.0) {
+    L = 1.0 / dt_ * (F_np1 * inv_F - eye);
+  }
+
   // num_dims_ x num_dims_ dimensional array variables
   for (int i(0); i < num_dims_; ++i) {
     for (int j(0); j < num_dims_; ++j) {
       xtal_rotation_(cell, pt, i, j) = Re_np1(i, j);
       plastic_deformation_(cell, pt, i, j) = Fp_np1(i, j);
       stress_(cell, pt, i, j) = sigma_np1(i, j);
-      velocity_gradient_(cell, pt, i, j) = Lp_np1(i, j);
+      velocity_gradient_(cell, pt, i, j) = L(i, j);
+      velocity_gradient_plastic_(cell, pt, i, j) = Lp_np1(i, j);
     }
   }
 

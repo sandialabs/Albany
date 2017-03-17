@@ -52,7 +52,8 @@ CP::HardeningLawFactory<NumDimT, NumSlipT>::HardeningLawFactory()
 template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 template<typename ArgT>
 utility::StaticPointer<CP::HardeningLawBase<NumDimT, NumSlipT, ArgT>>
-CP::HardeningLawFactory<NumDimT, NumSlipT>::createHardeningLaw(HardeningLawType type_hardening_law) const
+CP::HardeningLawFactory<NumDimT, NumSlipT>::createHardeningLaw(
+    HardeningLawType type_hardening_law) const
 {
   switch (type_hardening_law) {
 
@@ -145,7 +146,8 @@ harden(
   modulus_hardening = phardening_params->getParameter(Params::MODULUS_HARDENING);
 
   auto const
-  hardness_initial = phardening_params->getParameter(Params::STATE_HARDENING_INITIAL);
+  hardness_initial = phardening_params->getParameter(
+      Params::STATE_HARDENING_INITIAL);
 
   if (modulus_recovery > 0.0)
   {
@@ -172,8 +174,8 @@ harden(
       auto const
       ss_index_global = slip_family.slip_system_indices_(ss_index);
 
-      state_hardening_np1[ss_index_global] = 
-        state_hardening_n[ss_index_global] + modulus_hardening * dt * driver_hardening[ss_index];
+      state_hardening_np1[ss_index_global] = state_hardening_n[ss_index_global] + 
+          modulus_hardening * dt * driver_hardening[ss_index];
 
       slip_resistance[ss_index_global] = state_hardening_np1[ss_index_global];
     }
@@ -262,19 +264,23 @@ harden(
   param_map = phardening_params->param_map_;
 
   auto const
-  stress_saturation_initial = phardening_params->getParameter(Params::STRESS_SATURATION_INITIAL);
+  stress_saturation_initial = phardening_params->getParameter(
+      Params::STRESS_SATURATION_INITIAL);
 
   auto const
-  rate_slip_reference = phardening_params->getParameter(Params::RATE_SLIP_REFERENCE);
+  rate_slip_reference = phardening_params->getParameter(
+      Params::RATE_SLIP_REFERENCE);
 
   auto const
-  exponent_saturation = phardening_params->getParameter(Params::EXPONENT_SATURATION);
+  exponent_saturation = phardening_params->getParameter(
+      Params::EXPONENT_SATURATION);
 
   auto const
   rate_hardening = phardening_params->getParameter(Params::RATE_HARDENING);
 
   auto const
-  resistance_slip_initial = phardening_params->getParameter(Params::STATE_HARDENING_INITIAL);
+  resistance_slip_initial = phardening_params->getParameter(
+      Params::STATE_HARDENING_INITIAL);
 
   for (int ss_index(0); ss_index < num_slip_sys; ++ss_index)
   {
@@ -289,14 +295,25 @@ harden(
         effective_slip_rate / rate_slip_reference, exponent_saturation);
     }
 
-    slip_resistance[ss_index_global] = state_hardening_np1[ss_index_global];
+    ArgT &
+    state_hard = state_hardening_np1[ss_index_global];
 
+    slip_resistance[ss_index_global] = state_hard;
+
+    ArgT
+    ratio_hardening{0.0};
+
+    // if (state_hardening_np1[ss_index_global] < stress_saturation)
+    // {
+      ratio_hardening = (stress_saturation - state_hard) / 
+        (stress_saturation - resistance_slip_initial);
+    // }
+        
     // if (driver_hardening[ss_index] !=0 )
     // {
-      state_hardening_np1[ss_index_global] = state_hardening_n[ss_index_global] +
-        dt * rate_hardening * driver_hardening[ss_index] *
-        (stress_saturation - state_hardening_np1[ss_index_global]) / 
-        (stress_saturation - resistance_slip_initial);
+    state_hard = state_hardening_n[ss_index_global] +
+      dt * rate_hardening * driver_hardening[ss_index] * ratio_hardening;
+        
     // }
     // else
     // {
@@ -423,7 +440,8 @@ harden(
   factor_annihilation = phardening_params->getParameter(Params::FACTOR_ANNIHILATION);
 
   RealType const
-  factor_geometry_dislocation = phardening_params->getParameter(Params::FACTOR_GEOMETRY_DISLOCATION);
+  factor_geometry_dislocation = phardening_params->getParameter(
+      Params::FACTOR_GEOMETRY_DISLOCATION);
 
   RealType const
   modulus_shear = phardening_params->getParameter(Params::MODULUS_SHEAR);

@@ -26,8 +26,10 @@ class Integrator
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor<RealType, NumDimT> const & F_n,
       minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-      RealType dt)
+      RealType dt,
+      bool & failed)
       : nox_status_test_(nox_status_test),
         num_slip_(state_internal.slip_n_.get_dimension()),
         num_dims_(state_mechanical.Fp_n_.get_dimension()),
@@ -37,13 +39,17 @@ class Integrator
         state_mechanical_(state_mechanical),
         state_internal_(state_internal),
         C_(C),
+        F_n_(F_n),
         F_np1_(F_np1),
-        dt_(dt)
+        dt_(dt),
+        failed_(failed)
     {}
 
     virtual bool update(RealType & residual_norm) const = 0;
 
-    void forceGlobalLoadStepReduction() const;
+    void forceGlobalLoadStepReduction(
+      std::string const & message) const;
+    
     int getNumIters() const { return num_iters_; }
 
   protected:
@@ -59,8 +65,10 @@ class Integrator
     StateMechanical<ScalarT, NumDimT> & state_mechanical_;
     StateInternal<ScalarT, NumSlipT> & state_internal_;
     minitensor::Tensor4<ScalarT, NumDimT> const & C_;
+    minitensor::Tensor<RealType, NumDimT> const & F_n_;
     minitensor::Tensor<ScalarT, NumDimT> const & F_np1_;
     RealType dt_;
+    bool & failed_;
 };
 
 
@@ -83,8 +91,10 @@ class IntegratorFactory
       CP::StateMechanical<ScalarT, NumDimT> & state_mechanical,
       CP::StateInternal<ScalarT, NumSlipT> & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor<RealType, NumDimT> const & F_n,
       minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-      RealType dt);
+      RealType dt,
+      bool & failed);
 
     utility::StaticPointer<IntegratorBase>
     operator()(CP::IntegrationScheme integration_scheme,
@@ -105,8 +115,10 @@ class IntegratorFactory
     CP::StateInternal<ScalarT, NumSlipT> & state_internal_;
     
     minitensor::Tensor4<ScalarT, NumDimT> const & C_;
+    minitensor::Tensor<RealType, NumDimT> const & F_n_;
     minitensor::Tensor<ScalarT, NumDimT> const & F_np1_;
     RealType dt_;
+    bool & failed_;
 };
 
 template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
@@ -124,8 +136,10 @@ class ExplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor<RealType, NumDimT> const & F_n,
       minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-      RealType dt);
+      RealType dt,
+      bool & failed);
 
     virtual bool update(RealType & residual_norm) const override;
 
@@ -136,8 +150,10 @@ class ExplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
     using Base::state_mechanical_;
     using Base::state_internal_;
     using Base::C_;
+    using Base::F_n_;
     using Base::F_np1_;
     using Base::dt_;
+    using Base::failed_;
 };
 
 template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
@@ -159,8 +175,10 @@ class ImplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor<RealType, NumDimT> const & F_n,
       minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-      RealType dt);
+      RealType dt,
+      bool & failed);
     
     bool reevaluateState(RealType & residual_norm) const;
 
@@ -171,8 +189,10 @@ class ImplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
     using Base::state_mechanical_;
     using Base::state_internal_;
     using Base::C_;
+    using Base::F_n_;
     using Base::F_np1_;
     using Base::dt_;
+    using Base::failed_;
 
     mutable Minimizer minimizer_;
     minitensor::StepType step_type_;
@@ -198,8 +218,10 @@ class ImplicitSlipIntegrator : public ImplicitIntegrator<EvalT, NumDimT, NumSlip
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor<RealType, NumDimT> const & F_n,
       minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-      RealType dt);
+      RealType dt,
+      bool & failed);
 
     virtual bool update(RealType & residual_norm) const override;
 
@@ -210,10 +232,12 @@ class ImplicitSlipIntegrator : public ImplicitIntegrator<EvalT, NumDimT, NumSlip
     using Base::state_mechanical_;
     using Base::state_internal_;
     using Base::C_;
+    using Base::F_n_;
     using Base::F_np1_;
     using Base::dt_;
     using Base::minimizer_;
     using Base::step_type_;
+    using Base::failed_;
 };
 
 
@@ -236,8 +260,10 @@ class ImplicitSlipHardnessIntegrator : public ImplicitIntegrator<EvalT, NumDimT,
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor<RealType, NumDimT> const & F_n,
       minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-      RealType dt);
+      RealType dt,
+      bool & failed);
 
     virtual bool update(RealType & residual_norm) const override;
 
@@ -248,10 +274,12 @@ class ImplicitSlipHardnessIntegrator : public ImplicitIntegrator<EvalT, NumDimT,
     using Base::state_mechanical_;
     using Base::state_internal_;
     using Base::C_;
+    using Base::F_n_;
     using Base::F_np1_;
     using Base::dt_;
     using Base::minimizer_;
     using Base::step_type_;
+    using Base::failed_;
 };
 }
 

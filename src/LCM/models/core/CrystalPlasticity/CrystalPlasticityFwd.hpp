@@ -12,6 +12,15 @@ namespace CP
 static constexpr RealType
 MACHINE_EPS = std::numeric_limits<RealType>::epsilon();
 
+static constexpr RealType
+TINY = std::numeric_limits<RealType>::min();
+
+static constexpr RealType
+HUGE_ = std::numeric_limits<RealType>::max();
+
+static constexpr RealType
+LOG_HUGE = std::log(HUGE_);
+
 static constexpr minitensor::Index 
 MAX_DIM = 3;
 

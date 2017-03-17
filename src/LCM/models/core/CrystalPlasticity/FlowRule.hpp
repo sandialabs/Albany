@@ -61,10 +61,10 @@ struct FlowParameterBase
   setTolerance() = 0;
 
   RealType
-  min_tol_{0.0};
+  min_tol_{TINY};
 
   RealType
-  max_tol_{0.0};
+  max_tol_{HUGE_};
 
   std::map<std::string, ParamIndex>
   param_map_;
@@ -100,10 +100,10 @@ struct PowerLawFlowParameters final : public FlowParameterBase
   setTolerance()
   {
     min_tol_ = 
-      std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / flow_params_(EXPONENT_RATE));
+      std::pow(2.0 * TINY, 0.5 / flow_params_(EXPONENT_RATE));
 
     max_tol_ = 
-      std::pow(0.5 * std::numeric_limits<RealType>::max(), 0.5 / flow_params_(EXPONENT_RATE));
+      std::pow(0.5 * HUGE_, 0.5 / flow_params_(EXPONENT_RATE));
   }
 };
 
@@ -138,8 +138,8 @@ struct ThermalActivationFlowParameters final : public FlowParameterBase
   void
   setTolerance()
   {
-    min_tol_ = 2.0 * std::numeric_limits<RealType>::min();
-    max_tol_ = 0.5 * std::numeric_limits<RealType>::max();
+    min_tol_ = 2.0 * TINY;
+    max_tol_ = 0.5 * HUGE_;
   }
 };
 
@@ -171,10 +171,10 @@ struct PowerLawDragFlowParameters final : public FlowParameterBase
   setTolerance()
   {
     min_tol_ =
-      std::pow(2.0 * std::numeric_limits<RealType>::min(), 0.5 / flow_params_(EXPONENT_RATE));
+      std::pow(2.0 * TINY, 0.5 / flow_params_(EXPONENT_RATE));
 
     max_tol_ = 
-      std::pow(0.5 * std::numeric_limits<RealType>::max(), 0.5 / flow_params_(EXPONENT_RATE));
+      std::pow(0.5 * HUGE_, 0.5 / flow_params_(EXPONENT_RATE));
   }
 };
 

@@ -232,7 +232,8 @@ computeStress(
     minitensor::Tensor<ArgT, NumDimT> const & Fp,
     minitensor::Tensor<ArgT, NumDimT> & sigma,
     minitensor::Tensor<ArgT, NumDimT> & S,
-    minitensor::Vector<ArgT, NumSlipT> & shear);
+    minitensor::Vector<ArgT, NumSlipT> & shear,
+    bool & failed);
 
 
 

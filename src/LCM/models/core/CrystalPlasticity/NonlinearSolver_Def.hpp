@@ -111,14 +111,12 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
     rate_slip.fill(minitensor::ZEROS);
   }
 
-  // Ensure that the slip increment is bounded
-   if (minitensor::norm(rate_slip * dt_) > 1.0) {
-     this->set_failed("Slip increment growing unbounded");
-     return residual;
+   // Ensure that the slip increment will not cause overflow
+   if (minitensor::norm(rate_slip * dt_) > LOG_HUGE) {
+       this->set_failed("Failed on slip");
+       // std::cout << "Failed on slip: " << rate_slip << std::endl;
+       return residual;
    }
-
-   bool
-   failed{false};
 
   // Compute Lp_np1, and Fp_np1
   CP::applySlipIncrement<NumDimT, NumSlipT, T>(
@@ -130,6 +128,9 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
       Lp_np1,
       Fp_np1);
 
+  bool
+  failed{false};
+
   // Compute sigma_np1, S_np1, and shear_np1
   CP::computeStress<NumDimT, NumSlipT, T>(
       slip_systems_,
@@ -138,7 +139,14 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
       Fp_np1,
       sigma_np1,
       S_np1,
-      shear_np1);
+      shear_np1,
+      failed);
+
+  // Ensure that the stress was calculated properly
+  if (failed == true) {
+    this->set_failed("Failed on stress");
+    return residual;
+  }
 
   // Compute state_hardening_np1
   CP::updateHardness<NumDimT, NumSlipT, T>(
@@ -161,8 +169,10 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
       slip_computed,
       failed);
 
+  // Ensure that the flow rule was calculated properly
   if (failed == true) {
-    this->set_failed("Failure message here");
+    this->set_failed("Failed on flow");
+    return residual;
   }
 
   for (int i = 0; i< num_slip_; ++i){
@@ -170,13 +180,14 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
   }
 
 
-  // ***** Residual scaling done below is commented out for now since it is in a preliminary stage.  
+  // ***** Residual scaling done below is commented out for now since it is in a 
+  // preliminary stage.  
 
   // RealType
   // norm_resid = Sacado::ScalarValue<T>::eval(minitensor::norm(residual));
 
   // RealType
-  // max_tol = std::numeric_limits<RealType>::max();
+  // max_tol = HUGE;
   
   // if (norm_resid > 0.5 * std::pow(max_tol, 1.0 / 10.0)) {
     
@@ -197,6 +208,119 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::hessian(
   return Base::hessian(*this, x);
 }
 
+//
+// Define nonlinear system for plastic power for slip update
+//
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename EvalT>
+CP::Dissipation<NumDimT, NumSlipT, EvalT>::Dissipation(
+      std::vector<CP::SlipSystem<NumDimT>> const & slip_systems,
+      std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families,
+      minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
+      minitensor::Vector<RealType, NumSlipT> const & slip_n,
+      minitensor::Tensor<RealType, NumDimT> const & F_n,
+      minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
+      RealType dt)
+  :
+      slip_systems_(slip_systems),
+      slip_families_(slip_families),
+      state_hardening_n_(state_hardening_n),
+      slip_n_(slip_n),
+      F_n_(F_n),
+      F_np1_(F_np1),
+      dt_(dt)
+{
+  num_dim_ = F_n_.get_dimension();
+  num_slip_ = state_hardening_n_.get_dimension();
+}
+
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename EvalT>
+template<typename T, minitensor::Index N>
+T
+CP::Dissipation<NumDimT, NumSlipT, EvalT>::value(
+    minitensor::Vector<T, N> const & x)
+{
+  minitensor::Vector<T, NumSlipT> const
+  rate_slip_in{minitensor::ZEROS};
+
+  minitensor::Vector<T, NumSlipT>
+  state_hardening_np1{minitensor::ZEROS};
+
+  minitensor::Vector<T, NumSlipT>
+  slip_resistance{minitensor::ZEROS};
+
+  for (int sf_index(0); sf_index < slip_families_.size(); ++sf_index)
+  {
+    auto const &
+    slip_family = slip_families_[sf_index];
+
+    auto
+    type_hardening_law = slip_family.getHardeningLawType();
+
+    HardeningLawFactory<NumDimT, NumSlipT> hardening_law_factory;
+
+    auto
+    phardening = hardening_law_factory.template createHardeningLaw<T>(type_hardening_law); 
+
+    phardening->harden(
+      slip_family,
+      slip_systems_,
+      dt_, 
+      rate_slip_in, 
+      state_hardening_n_, 
+      state_hardening_np1, 
+      slip_resistance);
+  }
+
+  RealType
+  dissipation{0.0};
+
+  for (int ss_index(0); ss_index < num_slip_; ++ ss_index)
+  {
+    auto const &
+    slip_family = slip_families_[slip_systems_.at(ss_index).slip_family_index_];
+
+    auto
+    type_flow_rule = slip_family.getFlowRuleType();
+
+    FlowRuleFactory
+    flow_rule_factory;
+
+    auto
+    pflow = flow_rule_factory.template createFlowRule<T>(type_flow_rule);
+
+    bool
+    failed;
+
+    T const
+    rate_slip = pflow->computeRateSlip(
+        slip_family.pflow_parameters_,
+        x[ss_index],
+        slip_resistance,
+        failed);
+
+    dissipation -= x[ss_index] * rate_slip;
+  }
+
+  return dissipation;
+}
+
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename EvalT>
+template<typename T, minitensor::Index N>
+minitensor::Vector<T, N>
+CP::Dissipation<NumDimT, NumSlipT, EvalT>::gradient(
+    minitensor::Vector<T, N> const & x)
+{
+  return Base::gradient(*this, x);
+}
+
+template<minitensor::Index NumDimT, minitensor::Index NumSlipT, typename EvalT>
+template<typename T, minitensor::Index N>
+minitensor::Tensor<T, N>
+CP::Dissipation<NumDimT, NumSlipT, EvalT>::hessian(
+    minitensor::Vector<T, N> const & x)
+{
+  return Base::hessian(*this, x);
+}
 
 //
 // ResidualSlipHardnessNLS
@@ -244,11 +368,6 @@ minitensor::Vector<T, N>
 CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
     minitensor::Vector<T, N> const & x)
 {
-  // Get a convenience reference to the failed flag in case it is used more
-  // than once.
-  bool &
-  failed = Base::failed;
-
   // Tensor mechanical state variables
   minitensor::Tensor<T, NumDimT>
   Fp_np1(num_dim_);
@@ -294,7 +413,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   residual(num_unknowns);
 
   // Return immediately if something failed catastrophically.
-  if (failed == true) {
+  if (this->get_failed() == true) {
     residual.fill(minitensor::ZEROS);
     return residual;
   }
@@ -318,8 +437,9 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
   }
 
   // Ensure that the slip increment is bounded
-  if (minitensor::norm(rate_slip * dt_) > 1.0) {
-    failed =  true;
+  if (minitensor::norm(rate_slip * dt_) > LOG_HUGE) {
+    this->set_failed("Failed on slip");
+    // std::cout << "Failed on slip: " << rate_slip << std::endl;
     return residual;
   }
 
@@ -332,7 +452,10 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
       Fp_n_,
       Lp_np1,
       Fp_np1);
-  
+ 
+  bool
+  failed{false};
+ 
   // Compute sigma_np1, S_np1, and shear_np1
   CP::computeStress<NumDimT, NumSlipT, T>(
       slip_systems_,
@@ -341,7 +464,14 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
       Fp_np1,
       sigma_np1,
       S_np1,
-      shear_np1);
+      shear_np1,
+      failed);
+
+  // Ensure that the stress was calculated properly
+  if (failed == true) {
+    this->set_failed("Failed on stress");
+    return residual;
+  }
 
   // Compute state_hardening_np1
   state_hardening_computed = state_hardening_np1;
@@ -365,20 +495,26 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
       slip_computed,
       failed);
 
+  // Ensure that the flow rule was calculated properly
+  if (failed == true) {
+    this->set_failed("Failed on flow");
+    return residual;
+  }
+
   for (int i = 0; i< num_slip_; ++i){
     residual[i] = slip_np1[i] - slip_computed[i];
     residual[i + num_slip_] = 
         state_hardening_np1[i] - state_hardening_computed[i];
   }
 
-
-  // ***** Residual scaling done below is commented out for now since it is in a preliminary stage.
+  // ***** Residual scaling done below is commented out for now since it is in a 
+  // preliminary stage.
   
   // RealType
   // norm_resid = Sacado::ScalarValue<T>::eval(minitensor::norm(residual));
 
   // RealType
-  // max_tol = std::numeric_limits<RealType>::max();
+  // max_tol = HUGE;
   
   // if (norm_resid > 0.5 * std::pow(max_tol, 1.0 / 10.0)) {
     

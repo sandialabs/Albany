@@ -72,11 +72,18 @@ struct HardeningParameterBase
   virtual
   ~HardeningParameterBase() {}
 
+  virtual
+  void
+  setAsymptoticValue() = 0;
+
   std::map<std::string, ParamIndex>
   param_map_;
 
   minitensor::Vector<RealType>
   hardening_params_;
+
+  RealType
+  asymptotic_value_{HUGE_};
 };
 
 
@@ -114,6 +121,13 @@ struct LinearMinusRecoveryHardeningParameters final :
   createLatentMatrix(
     SlipFamily<NumDimT, NumSlipT> & slip_family, 
     std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
+
+  virtual
+  void
+  setAsymptoticValue()
+  {
+    this->asymptotic_value_ = this->hardening_params_(MODULUS_HARDENING) / this->hardening_params_(MODULUS_RECOVERY);
+  }
 
   virtual
   ~LinearMinusRecoveryHardeningParameters() {}
@@ -158,6 +172,14 @@ struct SaturationHardeningParameters final :
   createLatentMatrix(
     SlipFamily<NumDimT, NumSlipT> & slip_family, 
     std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
+
+  virtual
+  void
+  setAsymptoticValue()
+  {
+    // For this model, the asymptotic value depends on the slip rate
+    return;
+  }
 
   virtual
   ~SaturationHardeningParameters() {}
@@ -206,6 +228,14 @@ struct DislocationDensityHardeningParameters final :
     std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
 
   virtual
+  void
+  setAsymptoticValue()
+  {
+    // Need to get transformation of state variable \rho -> \rho_F
+    return;
+  }
+
+  virtual
   ~DislocationDensityHardeningParameters() {}
 };
 
@@ -230,6 +260,13 @@ struct NoHardeningParameters final :
   createLatentMatrix(
     SlipFamily<NumDimT, NumSlipT> & slip_family, 
     std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
+
+  virtual
+  void
+  setAsymptoticValue()
+  {
+    return;
+  }
 
   virtual
   ~NoHardeningParameters() {}

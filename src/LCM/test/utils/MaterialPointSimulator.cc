@@ -468,7 +468,7 @@ int main(int ac, char* av[])
       element_block_name,
       "identity",
       1.0,
-      false,
+      true,
       true);
   ev = Teuchos::rcp(new PHAL::SaveStateField<Residual, Traits>(*p));
   fieldManager.registerEvaluator<Residual>(ev);

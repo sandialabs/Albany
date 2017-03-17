@@ -6,7 +6,8 @@
 
 template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 void
-CP::Integrator<EvalT, NumDimT, NumSlipT>::forceGlobalLoadStepReduction() const
+CP::Integrator<EvalT, NumDimT, NumSlipT>::forceGlobalLoadStepReduction(
+  std::string const & message) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
       nox_status_test_.is_null(),
@@ -15,6 +16,7 @@ CP::Integrator<EvalT, NumDimT, NumSlipT>::forceGlobalLoadStepReduction() const
           error accessing NOX status test.");
 
   nox_status_test_->status_ = NOX::StatusTest::Failed;
+  nox_status_test_->status_message_ = message;
 }
 
 template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
@@ -28,8 +30,10 @@ CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::IntegratorFactory(
       CP::StateMechanical<ScalarT, NumDimT> & state_mechanical,
       CP::StateInternal<ScalarT, NumSlipT> & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor<RealType, NumDimT> const & F_n,
       minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-      RealType dt)
+      RealType dt,
+      bool & failed)
   : allocator_(allocator),
     minimizer_(minimizer),
     step_type_(step_type),
@@ -39,8 +43,10 @@ CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::IntegratorFactory(
     state_mechanical_(state_mechanical),
     state_internal_(state_internal),
     C_(C),
+    F_n_(F_n),
     F_np1_(F_np1),
-    dt_(dt)
+    dt_(dt),
+    failed_(failed)
 {}
 
 template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
@@ -54,14 +60,17 @@ CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::operator()(
     case CP::IntegrationScheme::EXPLICIT:
     {
       using IntegratorType = CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>;
-      return allocator_.create<IntegratorType>(nox_status_test_,
+      return allocator_.create<IntegratorType>(
+          nox_status_test_,
           slip_systems_,
           slip_families_,
           state_mechanical_,
           state_internal_,
           C_,
+          F_n_,
           F_np1_,
-          dt_);
+          dt_,
+          failed_);
 
     } break;
 
@@ -73,7 +82,8 @@ CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::operator()(
         {
           using IntegratorType
             = CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>;
-          return allocator_.create<IntegratorType>(minimizer_,
+          return allocator_.create<IntegratorType>(
+              minimizer_,
               step_type_,
               nox_status_test_,
               slip_systems_,
@@ -81,15 +91,18 @@ CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::operator()(
               state_mechanical_,
               state_internal_,
               C_,
+              F_n_,
               F_np1_,
-              dt_);
+              dt_,
+              failed_);
         } break;
 
         case CP::ResidualType::SLIP_HARDNESS:
         {
           using IntegratorType
             = CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>;
-          return allocator_.create<IntegratorType>(minimizer_,
+          return allocator_.create<IntegratorType>(
+              minimizer_,
               step_type_,
               nox_status_test_,
               slip_systems_,
@@ -97,8 +110,10 @@ CP::IntegratorFactory<EvalT, NumDimT, NumSlipT>::operator()(
               state_mechanical_,
               state_internal_,
               C_,
+              F_n_,
               F_np1_,
-              dt_);
+              dt_,
+              failed_);
         } break;
 
         default:
@@ -126,9 +141,21 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::ExplicitIntegrator(
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor<RealType, NumDimT> const & F_n,
       minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-      RealType dt)
-  : Base(nox_status_test, slip_systems, slip_families, state_mechanical, state_internal, C, F_np1, dt)
+      RealType dt,
+      bool & failed)
+  : Base(
+      nox_status_test,
+      slip_systems,
+      slip_families,
+      state_mechanical,
+      state_internal,
+      C,
+      F_n,
+      F_np1,
+      dt,
+      failed)
 {
 
 }
@@ -138,9 +165,6 @@ bool
 CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
     RealType & residual_norm) const
 {
-  bool
-  failed{false};
-
   minitensor::Vector<ScalarT, NumSlipT>
   residual(this->num_slip_);
 
@@ -159,7 +183,8 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
     Fp_n_FAD, 
     state_mechanical_.sigma_np1_, 
     state_mechanical_.S_np1_, 
-    state_internal_.shear_np1_);
+    state_internal_.shear_np1_,
+    failed_);
 
   // compute state_hardening_np1 using slip_n
   CP::updateHardness<NumDimT, NumSlipT, ScalarT>(
@@ -180,7 +205,7 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
     state_internal_.shear_np1_,
     state_internal_.slip_n_,
     state_internal_.slip_np1_,
-    failed);
+    failed_);
 
   // compute Lp_np1, and Fp_np1
   CP::applySlipIncrement<NumDimT, NumSlipT, ScalarT>(
@@ -200,7 +225,8 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
     state_mechanical_.Fp_np1_, 
     state_mechanical_.sigma_np1_, 
     state_mechanical_.S_np1_, 
-    state_internal_.shear_np1_);
+    state_internal_.shear_np1_,
+    failed_);
 
   minitensor::Vector<ScalarT, NumSlipT>
   slip_computed(state_internal_.slip_np1_.get_dimension());
@@ -214,7 +240,7 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
     state_internal_.shear_np1_,
     state_internal_.slip_n_,
     slip_computed,
-    failed);
+    failed_);
 
   residual = state_internal_.slip_np1_ - slip_computed;
 
@@ -239,9 +265,21 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::ImplicitIntegrator(
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor<RealType, NumDimT> const & F_n,
       minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-      RealType dt)
-  : Base(nox_status_test, slip_systems, slip_families, state_mechanical, state_internal, C, F_np1, dt),
+      RealType dt,
+      bool & failed)
+  : Base(
+      nox_status_test,
+      slip_systems,
+      slip_families,
+      state_mechanical,
+      state_internal,
+      C,
+      F_n,
+      F_np1,
+      dt,
+      failed),
   minimizer_(minimizer), step_type_(step_type)
 {
 
@@ -251,17 +289,6 @@ template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 bool
 CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState(RealType & residual_norm) const
 {
-  if(!minimizer_.converged){
-    // TODO: renable printout
-    /*if(verbosity_ > 2){
-      std::cout << "\n**** CrystalPlasticityModel computeState()";
-      std::cout << " failed to converge.\n" << std::endl;
-      minimizer_.printReport(std::cout);
-    }*/
-    this->forceGlobalLoadStepReduction();
-    return false;
-  }
-
   // cases in which the model is subject to divergence
   // more work to do in the nonlinear systems
   if(minimizer_.failed){
@@ -270,7 +297,18 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState(RealType & res
       std::cout << "\n**** CrystalPlasticityModel computeState() ";
       std::cout << "exited due to failure criteria.\n" << std::endl;
     }*/
-    this->forceGlobalLoadStepReduction();
+    this->forceGlobalLoadStepReduction(minimizer_.failure_message);
+    return false;
+  }
+
+  if(!minimizer_.converged){
+    // TODO: renable printout
+    /*if(verbosity_ > 2){
+      std::cout << "\n**** CrystalPlasticityModel computeState()";
+      std::cout << " failed to converge.\n" << std::endl;
+      minimizer_.printReport(std::cout);
+    }*/
+    this->forceGlobalLoadStepReduction("Minisolver not converged");
     return false;
   }
 
@@ -294,7 +332,13 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState(RealType & res
     state_mechanical_.Fp_np1_, 
     state_mechanical_.sigma_np1_, 
     state_mechanical_.S_np1_, 
-    state_internal_.shear_np1_);
+    state_internal_.shear_np1_,
+    failed_);
+
+  if(true == failed_){
+    this->forceGlobalLoadStepReduction("ComputeStress failed.");
+    return false;
+  }
 
   if (dt_ > 0.0) {
     state_internal_.rate_slip_ = 
@@ -319,10 +363,23 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::ImplicitSlipIntegrator(
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor<RealType, NumDimT> const & F_n,
       minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-      RealType dt)
-  : Base(minimizer, step_type, nox_status_test, slip_systems,
-         slip_families, state_mechanical, state_internal, C, F_np1, dt)
+      RealType dt,
+      bool & failed)
+  : Base(
+      minimizer,
+      step_type,
+      nox_status_test,
+      slip_systems,
+      slip_families,
+      state_mechanical,
+      state_internal,
+      C,
+      F_n,
+      F_np1,
+      dt,
+      failed)
 {
 }
 
@@ -338,9 +395,26 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::update(
 
   using NonlinearSolver = CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>; 
 
-  NonlinearSolver nls(C_, slip_systems_, slip_families_, state_mechanical_.Fp_n_,
-                      state_internal_.hardening_n_, state_internal_.slip_n_,
-                      F_np1_, dt_);
+  NonlinearSolver
+  nls(
+      C_,
+      slip_systems_,
+      slip_families_,
+      state_mechanical_.Fp_n_,
+      state_internal_.hardening_n_,
+      state_internal_.slip_n_,
+      F_np1_,
+      dt_);
+
+  CP::Dissipation<NumDimT, NumSlipT, EvalT>
+  initial_guess_nls(
+      slip_systems_,
+      slip_families_,
+      state_internal_.hardening_n_,
+      state_internal_.slip_n_,
+      F_n_,
+      F_np1_,
+      dt_);
 
   using StepType = minitensor::StepBase<NonlinearSolver, ValueT, CP::NlsDim<NumSlipT>::value>;
 
@@ -392,10 +466,23 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::ImplicitSlipHardne
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
+      minitensor::Tensor<RealType, NumDimT> const & F_n,
       minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-      RealType dt)
-  : Base(minimizer, step_type, nox_status_test, slip_systems,
-         slip_families, state_mechanical, state_internal, C, F_np1, dt)
+      RealType dt,
+      bool & failed)
+  : Base(
+      minimizer,
+      step_type,
+      nox_status_test,
+      slip_systems,
+      slip_families,
+      state_mechanical,
+      state_internal,
+      C,
+      F_n,
+      F_np1,
+      dt,
+      failed)
 {
 }
 

@@ -27,12 +27,20 @@ namespace CP
 
 		ParameterReader(Teuchos::ParameterList* p);
 		
-		IntegrationScheme	getIntegrationScheme() const;
-		ResidualType getResidualType() const;
-		minitensor::StepType getStepType() const;
-		Minimizer getMinimizer() const;
+		IntegrationScheme
+		getIntegrationScheme() const;
 
-		SlipFamily<CP::MAX_DIM, CP::MAX_SLIP> getSlipFamily(int index);
+		ResidualType
+		getResidualType() const;
+
+		minitensor::StepType
+		getStepType() const;
+
+		Minimizer
+		getMinimizer() const;
+
+		SlipFamily<CP::MAX_DIM, CP::MAX_SLIP>
+		getSlipFamily(int index);
 
 	private:
 
