@@ -874,11 +874,6 @@ Albany::ModelEvaluatorT::createInArgsImpl() const {
     result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_t, true);
     result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_alpha, true);
     result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_beta, true);
-  } else {
-    result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_x_dot, true);
-    result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_t, true);
-    result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_alpha, true);
-    result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_beta, true);
   }
 
   if (supports_xdotdot) {
