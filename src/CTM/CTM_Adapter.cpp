@@ -4,6 +4,7 @@
 #include <PCU.h>
 #include <spr.h>
 #include <apfSIM.h>
+#include <parma.h>
 #include <SimField.h>
 #include <MeshSimAdapt.h>
 #include <Albany_Utils.hpp>
@@ -596,15 +597,23 @@ void Adapter::adapt(const double t_current) {
   // clean up
   PList_delete(sim_field_list);
 
-  // rebuild the data structures needed for analysis
+  // partition the mesh
   double t4 = PCU_Time();
+  Parma_PrintPtnStats(apf_mesh, "pre load balance:");
+  PM_partition(sim_mesh, 0, 0);
+  Parma_PrintPtnStats(apf_mesh, "post load balance:");
+  double t5 = PCU_Time();
+  *out << "adapt(): load balancing in " << t5-t4 << " seconds\n";
+
+  // rebuild the data structures needed for analysis
+  double t6 = PCU_Time();
   apf_mesh->verify();
   auto t_sim_disc = rcp_dynamic_cast<Albany::SimDiscretization>(t_disc);
   auto m_sim_disc = rcp_dynamic_cast<Albany::SimDiscretization>(m_disc);
   t_sim_disc->updateMesh(/* transfer ip = */ false, param_lib);
   m_sim_disc->updateMesh(/* transfer ip = */ false, param_lib);
-  double t5 = PCU_Time();
-  *out << "adapt(): update albany structures in " << t5-t4 << " seconds\n";
+  double t7 = PCU_Time();
+  *out << "adapt(): update albany structures in " << t7-t6 << " seconds\n";
 
   // print stats after adaptation
   apf::printStats(apf_mesh);
