@@ -51,10 +51,20 @@
     <Parameter name="Gradation" type="double" value="0.9"/>
     <Parameter name="SPR Solution Field" type="string" value="Disp"/>
   </ParameterList>
-  <ParameterList name="Linear Algebra">
+  <ParameterList name="Temp Linear Algebra">
     <Parameter name="Linear Tolerance" type="double" value="1.0e-10"/>
     <Parameter name="Linear Max Iterations" type="int" value="200"/>
     <Parameter name="Linear Krylov Size" type="int" value="200"/>
-    <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
+    <ParameterList name="Preconditioner">
+      <Parameter name="verbosity" type="string" value="none"/>
+    </ParameterList>
+  </ParameterList>
+  <ParameterList name="Mech Linear Algebra">
+    <Parameter name="Linear Tolerance" type="double" value="1.0e-10"/>
+    <Parameter name="Linear Max Iterations" type="int" value="200"/>
+    <Parameter name="Linear Krylov Size" type="int" value="200"/>
+    <ParameterList name="Preconditioner">
+      <Parameter name="verbosity" type="string" value="none"/>
+    </ParameterList>
   </ParameterList>
 </ParameterList>

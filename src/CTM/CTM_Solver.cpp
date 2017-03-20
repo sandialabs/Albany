@@ -30,7 +30,8 @@ static void validate_params(RCP<const ParameterList> p) {
   assert(p->isSublist("Mechanics Problem"));
   assert(p->isSublist("Discretization"));
   assert(p->isSublist("Extra Discretization"));
-  assert(p->isSublist("Linear Algebra"));
+  assert(p->isSublist("Temp Linear Algebra"));
+  assert(p->isSublist("Mech Linear Algebra"));
   assert(p->isSublist("Time"));
 
   auto time_params = p->sublist("Time");
@@ -38,11 +39,17 @@ static void validate_params(RCP<const ParameterList> p) {
   assert(time_params.isType<double>("Step Size"));
   assert(time_params.isType<int>("Number of Steps"));
 
-  auto la_params = p->sublist("Linear Algebra");
-  assert(la_params.isType<double>("Linear Tolerance"));
-  assert(la_params.isType<int>("Linear Max Iterations"));
-  assert(la_params.isType<int>("Linear Krylov Size"));
-  assert(la_params.isType<std::string>("Preconditioner Type"));
+  auto tla_params = p->sublist("Temp Linear Algebra");
+  assert(tla_params.isType<double>("Linear Tolerance"));
+  assert(tla_params.isType<int>("Linear Max Iterations"));
+  assert(tla_params.isType<int>("Linear Krylov Size"));
+  assert(tla_params.isSublist("Preconditioner"));
+
+  auto mla_params = p->sublist("Mech Linear Algebra");
+  assert(mla_params.isType<double>("Linear Tolerance"));
+  assert(mla_params.isType<int>("Linear Max Iterations"));
+  assert(mla_params.isType<int>("Linear Krylov Size"));
+  assert(mla_params.isSublist("Preconditioner"));
 }
 
 Solver::Solver(RCP<const Teuchos_Comm> c, RCP<ParameterList> p) {
@@ -147,7 +154,7 @@ void Solver::solve_temp() {
   *out << "Solving thermal physics" << std::endl;
 
   // get linear solve parameters
-  auto la_params = rcpFromRef(params->sublist("Linear Algebra"));
+  auto la_params = rcpFromRef(params->sublist("Temp Linear Algebra"));
 
   // get the thermal solution info
   auto T = t_sol_info->owned->x;
@@ -190,7 +197,7 @@ void Solver::solve_mech() {
   *out << "Solving mechanics physics" << std::endl;
 
   // get linear solve parameters
-  auto la_params = rcpFromRef(params->sublist("Linear Algebra"));
+  auto la_params = rcpFromRef(params->sublist("Mech Linear Algebra"));
 
   // get the mechanics solution
   auto u = m_sol_info->owned->x;

@@ -27,20 +27,6 @@ typedef Belos::BlockGmresSolMgr<ST, MV, OP> GmresSolver;
 typedef Tpetra_Operator Prec;
 typedef Ifpack2::Preconditioner<ST, LO, GO, KokkosNode> IfpackPrec;
 
-static RCP<ParameterList> get_ifpack2_params() {
-  RCP<ParameterList> p = rcp(new ParameterList);
-  p->set("fact: drop tolerance", 0.0);
-  p->set("fact: ilut level-of-fill", 1.0);
-  return p;
-}
-
-static RCP<ParameterList> get_muelu_params() {
-  RCP<ParameterList> p = rcp(new ParameterList);
-  p->set<std::string>("verbosity", "none");
-  p->set<int>("coarse: max size", 750);
-  return p;
-}
-
 static RCP<ParameterList> get_belos_params(RCP<const ParameterList> in) {
   RCP<ParameterList> p = rcp(new ParameterList);
   int max_iters = in->get<int>("Linear Max Iterations");
@@ -57,31 +43,13 @@ static RCP<ParameterList> get_belos_params(RCP<const ParameterList> in) {
   return p;
 }
 
-static RCP<Solver> build_ifpack2_solver(
-    RCP<const ParameterList> in, RCP<Tpetra_CrsMatrix> A,
-    RCP<Tpetra_Vector> x, RCP<Tpetra_Vector> b) {
-
-  auto ifpack2_params = get_ifpack2_params();
-  auto belos_params = get_belos_params(in);
-  Ifpack2::Factory factory;
-  auto P = factory.create<RM>("ILUT", A);
-  P->setParameters(*ifpack2_params);
-  P->initialize();
-  P->compute();
-  auto problem = rcp(new LinearProblem(A, x, b));
-  problem->setLeftPrec(P);
-  problem->setProblem();
-  auto solver = rcp(new GmresSolver(problem, belos_params));
-  return solver;
-}
-
 static RCP<Solver> build_muelu_solver(
     RCP<const ParameterList> in, RCP<Tpetra_CrsMatrix> A,
     RCP<Tpetra_Vector> x, RCP<Tpetra_Vector> b) {
-  auto muelu_params = get_muelu_params();
+  auto muelu_params = in->sublist("Preconditioner");
   auto belos_params = get_belos_params(in);
   auto AA = (RCP<OP>)A;
-  auto M = MueLu::CreateTpetraPreconditioner(AA, *muelu_params);
+  auto M = MueLu::CreateTpetraPreconditioner(AA, muelu_params);
   auto problem = rcp(new LinearProblem(A, x, b));
   problem->setLeftPrec(M);
   problem->setProblem();
@@ -129,15 +97,8 @@ static RCP<Solver> build_solver(
     RCP<Tpetra_CrsMatrix> A,
     RCP<Tpetra_Vector> x,
     RCP<Tpetra_Vector> b) {
-  auto prec = in->get<std::string>("Preconditioner Type");
   RCP<Solver> solver;
-  if (prec == "Ifpack2")
-    solver = build_ifpack2_solver(in, A, x, b);
-  else if (prec == "MueLu")
-    solver = build_muelu_solver(in, A, x, b);
-  else
-    ALBANY_ALWAYS_ASSERT_VERBOSE(false,
-        "unknown `Preconditioner Type`");
+  solver = build_muelu_solver(in, A, x, b);
   return solver;
 }
 
