@@ -59,12 +59,6 @@ ElasticityResid(Teuchos::ParameterList& p) :
   }
 
   this->setName("ElasticityResid"+PHX::typeAsString<EvalT>());
-
-  std::vector<PHX::DataLayout::size_type> dims;
-  wGradBF.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
-  numQPs   = dims[2];
-  numDims  = dims[3];
 }
 
 //**********************************************************************
@@ -82,6 +76,12 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (enableTransient) this->utils.setFieldData(wBF,fm);
 
   if (hasDensity) this->utils.setFieldData(density,fm);
+
+  std::vector<PHX::DataLayout::size_type> dims;
+  wGradBF.fieldTag().dataLayout().dimensions(dims);
+  numNodes = dims[1];
+  numQPs   = dims[2];
+  numDims  = dims[3];
 }
 
 //**********************************************************************

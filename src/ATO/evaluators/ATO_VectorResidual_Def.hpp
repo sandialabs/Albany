@@ -28,12 +28,6 @@ VectorResidual(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(ExResidual);
 
   this->setName("VectorResidual"+PHX::typeAsString<EvalT>());
-
-  std::vector<PHX::Device::size_type> dims;
-  wGradBF.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
-  numQPs   = dims[2];
-  numDims  = dims[3];
 }
 
 //**********************************************************************
@@ -45,6 +39,12 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(vector,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(ExResidual,fm);
+
+  std::vector<PHX::Device::size_type> dims;
+  wGradBF.fieldTag().dataLayout().dimensions(dims);
+  numNodes = dims[1];
+  numQPs   = dims[2];
+  numDims  = dims[3];
 }
 
 //**********************************************************************

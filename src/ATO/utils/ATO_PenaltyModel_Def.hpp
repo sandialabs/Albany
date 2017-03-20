@@ -26,8 +26,8 @@ PenaltyModel(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
   PHX::MDField<const N> _gradX(responseParams->get<std::string>("Gradient Field Name"), layout);
   gradX = _gradX;
 
-  std::vector<int> dims;
-  gradX.dimensions(dims);
+  std::vector<PHX::Device::size_type> dims;
+  layout->dimensions(dims);
   numDims = dims[2];
 }
 
