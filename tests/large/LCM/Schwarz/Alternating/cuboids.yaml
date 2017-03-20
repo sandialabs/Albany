@@ -1,0 +1,12 @@
+ANONYMOUS:
+  Alternating System:
+    Model Input Files: [cuboid_00.yaml, cuboid_01.yaml]
+  # MODEL DECLARATION, Look in the Problem directory
+  Problem:
+    # Transient or Steady (Quasi-Static) or Continuation (load steps)
+    Solution Method: Schwarz Alternating
+    # Have Phalanx output a graph of the used evaluators
+    Phalanx Graph Visualization Detail: 0
+    # PARAMETER
+    Parameters:
+      Number: 0
