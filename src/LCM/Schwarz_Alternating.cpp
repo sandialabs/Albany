@@ -71,12 +71,6 @@ SchwarzAlternating(
   //
   apps_.resize(num_models_);
   models_.resize(num_models_);
-  model_app_params_.resize(num_models_);
-
-  Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>>
-  model_problem_params(num_models_);
-
-  material_dbs_.resize(num_models_);
 
   //Set up each application and model object
   for (auto m = 0; m < num_models_; ++m) {
@@ -87,50 +81,29 @@ SchwarzAlternating(
 
     // solver_factory will go out of scope, so get a copy of the PL. We take
     // ownership and give weak pointers to everyone else.
-    model_app_params_[m] = Teuchos::rcp(
-        new Teuchos::ParameterList(solver_factory.getParameters()));
-
     Teuchos::RCP<Teuchos::ParameterList>
-    problem_params_m = Teuchos::sublist(model_app_params_[m], "Problem");
-
-    model_problem_params[m] = problem_params_m;
-
-    std::string const &
-    problem_name = problem_params_m->get("Name", "");
-
-    std::cout << "Name of problem #" << m << ": " << problem_name << '\n';
-
-    bool const
-    have_matdb = problem_params_m->isType<std::string>("MaterialDB Filename");
-
-    ALBANY_ASSERT(have_matdb == true, "Material database required.");
-
-    std::string const &
-    matdb_file = problem_params_m->get<std::string>("MaterialDB Filename");
-
-    material_dbs_[m] = Teuchos::rcp(new MaterialDatabase(matdb_file, comm_));
-
-    std::cout << "Materials #" << m << ": " << matdb_file << '\n';
+    model_app_params_m = Teuchos::rcp(
+        new Teuchos::ParameterList(solver_factory.getParameters()));
 
     // Pass these on the parameter list because the are needed before
     // BC evaluators are built.
 
     // Add application array for later use in Schwarz BC.
-    model_app_params_[m]->set("Application Array", apps_);
+    model_app_params_m->set("Application Array", apps_);
 
     // See application index for use with Schwarz BC.
-    model_app_params_[m]->set("Application Index", m);
+    model_app_params_m->set("Application Index", m);
 
     // App application name-index map for later use in Schwarz BC.
-    model_app_params_[m]->set("Application Name Index Map", app_name_index_map);
+    model_app_params_m->set("Application Name Index Map", app_name_index_map);
 
     //create application for mth model
-    apps_[m] = Teuchos::rcp(new Albany::Application(
-        comm, model_app_params_[m].create_weak(), initial_guess));
+    apps_[m] = Teuchos::rcp(
+        new Albany::Application(comm, model_app_params_m, initial_guess));
 
     //Create model evaluator
     Albany::ModelFactory
-    model_factory(model_app_params_[m].create_weak(), apps_[m]);
+    model_factory(model_app_params_m, apps_[m]);
 
     models_[m] = model_factory.createT();
   }
@@ -465,42 +438,10 @@ SchwarzLoop(
       Thyra::ModelEvaluatorBase::OutArgs<ST> &
       out_args_m = sub_outargs_[m];
 
-      Teuchos::RCP<Thyra::ProductVectorBase<ST> const>
-      rcp_pvb_prev =
-        Teuchos::rcp_dynamic_cast<Thyra::ProductVectorBase<ST> const>(
-            in_args_m.get_x(), true);
-
-      Teuchos::RCP<Tpetra_Vector const>
-      rcp_prev = Teuchos::rcp_dynamic_cast<ThyraVector const>(
-          rcp_pvb_prev->getVectorBlock(0), true)->getConstTpetraVector();
-
-      Tpetra_Vector const &
-      prev = *rcp_prev;
-
-      Teuchos::RCP<Tpetra_Vector>
-      rcp_diff = Teuchos::rcp(new Tpetra_Vector(prev, Teuchos::Copy));
-
-      Tpetra_Vector &
-      diff = *rcp_diff;
-
       model.evalModel(in_args_m, out_args_m);
 
-      Teuchos::RCP<Thyra::ProductVectorBase<ST> const>
-      rcp_pvb_next =
-        Teuchos::rcp_dynamic_cast<Thyra::ProductVectorBase<ST> const>(
-            in_args_m.get_x(), true);
-
-      Teuchos::RCP<Tpetra_Vector const>
-      rcp_next = Teuchos::rcp_dynamic_cast<ThyraVector const>(
-          rcp_pvb_next->getVectorBlock(0), true)->getConstTpetraVector();
-
-      Tpetra_Vector const &
-      next = *rcp_next;
-
-      diff.update(1.0, next, -1.0);
-
-      norms_soln(m) = next.norm2();
-      norms_diff(m) = diff.norm2();
+      norms_soln(m) = 0.0;
+      norms_diff(m) = 0.0;
     }
 
     ST const

@@ -127,16 +127,8 @@ private:
   Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>
   param_names_;
   
-  /// RCP to matDB object
-  Teuchos::Array<Teuchos::RCP<LCM::MaterialDatabase>>
-  material_dbs_;
-
   Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
   models_;
-
-  /// Own the application parameters.
-  Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>>
-  model_app_params_;
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   apps_;
