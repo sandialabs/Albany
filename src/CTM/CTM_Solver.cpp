@@ -213,7 +213,7 @@ void Solver::solve_mech() {
   u->putScalar(0.0);
   m_assembler->assemble_system(alpha, beta, omega, t_current, t_old);
   f->scale(-1.0);
-  solve_linear_system(la_params, J, u, f);
+  solve_linear_system(la_params, J, u, f, m_disc);
 
   // perform updates
   m_assembler->assemble_state(t_current, t_old);

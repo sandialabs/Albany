@@ -64,7 +64,8 @@
     <Parameter name="Linear Max Iterations" type="int" value="200"/>
     <Parameter name="Linear Krylov Size" type="int" value="200"/>
     <ParameterList name="Preconditioner">
-      <Parameter name="verbosity" type="string" value="none"/>
+      <Parameter name="verbosity" type="string" value="low"/>
+      <Parameter name="number of equations" type="int" value="3"/>
     </ParameterList>
   </ParameterList>
 </ParameterList>
