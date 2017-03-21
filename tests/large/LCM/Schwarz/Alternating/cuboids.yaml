@@ -7,6 +7,3 @@ ANONYMOUS:
     Solution Method: Schwarz Alternating
     # Have Phalanx output a graph of the used evaluators
     Phalanx Graph Visualization Detail: 0
-    # PARAMETER
-    Parameters:
-      Number: 0

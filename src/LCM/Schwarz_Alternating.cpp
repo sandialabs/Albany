@@ -5,23 +5,14 @@
 //*****************************************************************//
 #include "Albany_ModelFactory.hpp"
 #include "Albany_SolverFactory.hpp"
+#include "MiniTensor.h"
 #include "Schwarz_Alternating.hpp"
-#include "Teuchos_TestForException.hpp"
-#include "Teuchos_VerboseObject.hpp"
-#include "NOXSolverPrePostOperator.h"
-
-//uncomment the following to write stuff out to matrix market to debug
-//define WRITE_TO_MATRIX_MARKET
-
-#ifdef WRITE_TO_MATRIX_MARKET
-static int mm_counter_sol = 0;
-static int mm_counter_res = 0;
-static int mm_counter_pre = 0;
-static int mm_counter_jac = 0;
-#endif // WRITE_TO_MATRIX_MARKET
 
 namespace LCM {
 
+//
+//
+//
 SchwarzAlternating::
 SchwarzAlternating(
     Teuchos::RCP<Teuchos::ParameterList> const & app_params,
@@ -56,96 +47,34 @@ SchwarzAlternating(
     app_name_index_map->insert(app_name_index);
   }
 
-  //----------------Parameters------------------------
-  //Get "Problem" parameter list
+  //
+  // Parameters
+  //
   Teuchos::ParameterList &
   problem_params = app_params->sublist("Problem");
 
-  Teuchos::RCP<Teuchos::ParameterList>
-  parameter_params;
+  bool const
+  have_parameters = problem_params.isSublist("Parameters");
 
-  Teuchos::RCP<Teuchos::ParameterList>
-  response_params;
+  ALBANY_ASSERT(have_parameters == false, "Parameters not supported.");
 
-  num_params_total_ = 0;
+  //
+  // Responses
+  //
+  bool const
+  have_responses = problem_params.isSublist("Response Functions");
 
-  //Get "Parameters" parameter sublist, if it exists
-  if (problem_params.isSublist("Parameters")) {
-    parameter_params = Teuchos::rcp(
-        &(problem_params.sublist("Parameters")), false);
+  ALBANY_ASSERT(have_responses == false, "No responses allowed.");
 
-    auto const
-    num_parameters =
-        parameter_params->isType<int>("Number") == true ?
-            parameter_params->get<int>("Number") : 0;
-
-    bool const
-    using_old_parameter_list = num_parameters > 0 ? true : false;
-
-    num_params_total_ =
-        num_parameters > 0 ?
-            1 : parameter_params->get("Number of Parameter Vectors", 0);
-
-    ALBANY_ASSERT(num_params_total_ == 0, "Parameters not supported.");
-
-    //Get parameter names
-    param_names_.resize(num_params_total_);
-    for (auto l = 0; l < num_params_total_; ++l) {
-
-      Teuchos::RCP<Teuchos::ParameterList const>
-      p_list =
-          using_old_parameter_list == true ?
-              Teuchos::rcp(new Teuchos::ParameterList(*parameter_params)) :
-              Teuchos::rcp(&(parameter_params->sublist(
-                  Albany::strint("Parameter Vector", l))), false);
-
-      auto const
-      num_parameters = p_list->get<int>("Number");
-
-      ALBANY_EXPECT(num_parameters > 0);
-
-      param_names_[l] =
-          Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
-
-      for (auto k = 0; k < num_parameters; ++k) {
-        (*param_names_[l])[k] =
-            p_list->get<std::string>(Albany::strint("Parameter", k));
-      }
-      std::cout << "Number of parameters in parameter vector ";
-      std::cout << l << " = " << num_parameters << '\n';
-    }
-  }
-
-  std::cout << "Number of parameter vectors = " << num_params_total_ << '\n';
-
-  //---------------End Parameters---------------------
-
-  //----------------Responses------------------------
-  //Get "Response functions" parameter sublist
-  if (problem_params.isSublist("Response Functions")) {
-    response_params =
-        Teuchos::rcp(&(problem_params.sublist("Response Functions")), false);
-
-    auto const
-    num_responses = response_params->isType<int>("Number") == true ?
-        response_params->get<int>("Number") : 0;
-
-    ALBANY_ASSERT(num_responses == 0, "No responses allowed.");
-  }
-
-  //----------- end Responses-----------------------
-
+  //
+  //
+  //
   apps_.resize(num_models_);
   models_.resize(num_models_);
   model_app_params_.resize(num_models_);
 
   Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>>
   model_problem_params(num_models_);
-
-  disc_maps_.resize(num_models_);
-
-  Teuchos::Array<Teuchos::RCP<Tpetra_Map const>>
-  disc_overlap_maps(num_models_);
 
   material_dbs_.resize(num_models_);
 
@@ -206,142 +135,76 @@ SchwarzAlternating(
     models_[m] = model_factory.createT();
   }
 
-  //Now get maps, InArgs, OutArgs for each model.
-  //Calculate how many parameters, responses there are in total.
-  solver_inargs_.resize(num_models_);
-  solver_outargs_.resize(num_models_);
-
-  for (auto m = 0; m < num_models_; ++m) {
-    disc_maps_[m] = apps_[m]->getMapT();
-
-    disc_overlap_maps[m] =
-        apps_[m]->getStateMgr().getDiscretization()->getOverlapMapT();
-
-    solver_inargs_[m] = models_[m]->createInArgs();
-    solver_outargs_[m] = models_[m]->createOutArgs();
-  }
-
-  //----------------Parameters------------------------
-  // Create sacado parameter vectors of appropriate size
-  // for use in evalModelImpl
-  tpetra_param_map_.resize(num_params_total_);
-
-  // FIXME: Copied from Schwarz Coupled. Need to revisit.
-  sacado_param_vecs_.resize(num_models_);
-
-  for (auto m = 0; m < num_models_; ++m) {
-    sacado_param_vecs_[m].resize(num_params_total_);
-  }
-
-  for (auto m = 0; m < num_models_; ++m) {
-    for (auto l = 0; l < num_params_total_; ++l) {
-      apps_[m]->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
-          *(param_names_[l]), sacado_param_vecs_[m][l]);
-    }
-  }
-
-  //----------- end Parameters-----------------------
-
-  //------------------Setup nominal values----------------
+  //
+  // Setup nominal values
+  //
   nominal_values_ = this->createInArgsImpl();
-
-  Teuchos::RCP<Thyra::DefaultProductVector<ST>>
-  x = Teuchos::null;
-
-  Teuchos::RCP<Thyra::DefaultProductVector<ST>>
-  x_dot = Teuchos::null;
-
-  nominal_values_.set_x(x);
-  nominal_values_.set_x_dot(x_dot);
-
-  // set p_init in nominal_values_ --
-  // create product vector that concatenates parameters from each model.
-  // TODO: Check if these are correct nominal values for parameters
-
-  for (auto l = 0; l < num_params_total_; ++l) {
-
-    Teuchos::RCP<Thyra::DefaultProductVector<ST>>
-    p_prod_vec = Teuchos::null;
-
-    if (Teuchos::is_null(p_prod_vec) == true) continue;
-
-    nominal_values_.set_p(l, p_prod_vec);
-  }
-
-  //--------------End setting of nominal values------------------
-
+  nominal_values_.set_x(Teuchos::null);
+  nominal_values_.set_x_dot(Teuchos::null);
 }
 
+//
+//
+//
 SchwarzAlternating::
 ~SchwarzAlternating()
 {
   return;
 }
 
-// Overridden from Thyra::ModelEvaluator<ST>
+//
+//
+//
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 SchwarzAlternating::
 get_x_space() const
 {
-  Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
-  unused = Teuchos::null;
-
-  return unused;
+  return Teuchos::null;
 }
 
+//
+//
+//
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 SchwarzAlternating::
 get_f_space() const
 {
-  Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
-  unused = Teuchos::null;
-
-  return unused;
+  return Teuchos::null;
 }
 
+//
+//
+//
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 SchwarzAlternating::
-get_p_space(int l) const
+get_p_space(int) const
 {
-  ALBANY_EXPECT(0 <= l && l < num_params_total_);
-
-  std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
-  p_space_array;
-
-  auto
-  vs = Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(tpetra_param_map_[l]);
-
-  p_space_array.push_back(vs);
-
-  return Thyra::productVectorSpace<ST>(p_space_array);
+  return Teuchos::null;
 }
 
+//
+//
+//
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 SchwarzAlternating::
-get_g_space(int l) const
+get_g_space(int) const
 {
-  ALBANY_EXPECT(0 <= l);
-
-  Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>>
-  vs_array;
-
-  // create product space for lth response by concatenating lth response
-  // from all the models.
-  for (auto m = 0; m < num_models_; ++m) {
-    vs_array.push_back(models_[m]->get_g_space(l));
-  }
-
-  return Thyra::productVectorSpace<ST>(vs_array);
+  return Teuchos::null;
 }
 
+//
+//
+//
 Teuchos::RCP<const Teuchos::Array<std::string>>
 SchwarzAlternating::
-get_p_names(int l) const
+get_p_names(int) const
 {
-  ALBANY_EXPECT(0 <= l && l < num_params_total_);
-  return param_names_[l];
+  return Teuchos::null;
 }
 
+//
+//
+//
 Teuchos::ArrayView<const std::string>
 SchwarzAlternating::
 get_g_names(int l) const
@@ -350,6 +213,9 @@ get_g_names(int l) const
   return Teuchos::ArrayView<const std::string>();
 }
 
+//
+//
+//
 Thyra::ModelEvaluatorBase::InArgs<ST>
 SchwarzAlternating::
 getNominalValues() const
@@ -357,6 +223,9 @@ getNominalValues() const
   return nominal_values_;
 }
 
+//
+//
+//
 Thyra::ModelEvaluatorBase::InArgs<ST>
 SchwarzAlternating::
 getLowerBounds() const
@@ -364,6 +233,9 @@ getLowerBounds() const
   return Thyra::ModelEvaluatorBase::InArgs<ST>(); // Default value
 }
 
+//
+//
+//
 Thyra::ModelEvaluatorBase::InArgs<ST>
 SchwarzAlternating::
 getUpperBounds() const
@@ -371,6 +243,9 @@ getUpperBounds() const
   return Thyra::ModelEvaluatorBase::InArgs<ST>(); // Default value
 }
 
+//
+//
+//
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
 SchwarzAlternating::
 create_W_op() const
@@ -378,6 +253,9 @@ create_W_op() const
   return Teuchos::null;
 }
 
+//
+//
+//
 Teuchos::RCP<Thyra::PreconditionerBase<ST>>
 SchwarzAlternating::
 create_W_prec() const
@@ -385,6 +263,9 @@ create_W_prec() const
   return Teuchos::null;
 }
 
+//
+//
+//
 Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST>>
 SchwarzAlternating::
 get_W_factory() const
@@ -392,6 +273,9 @@ get_W_factory() const
   return Teuchos::null;
 }
 
+//
+//
+//
 Thyra::ModelEvaluatorBase::InArgs<ST>
 SchwarzAlternating::
 createInArgs() const
@@ -399,6 +283,9 @@ createInArgs() const
   return this->createInArgsImpl();
 }
 
+//
+//
+//
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
 SchwarzAlternating::
 getApps() const
@@ -406,7 +293,9 @@ getApps() const
   return apps_;
 }
 
-/// Create operator form of dg/dx for distributed responses
+//
+// Create operator form of dg/dx for distributed responses
+//
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
 SchwarzAlternating::
 create_DgDx_op_impl(int j) const
@@ -414,7 +303,9 @@ create_DgDx_op_impl(int j) const
   return Teuchos::null;
 }
 
-/// Create operator form of dg/dx_dot for distributed responses
+//
+// Create operator form of dg/dx_dot for distributed responses
+//
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
 SchwarzAlternating::
 create_DgDx_dot_op_impl(int j) const
@@ -422,43 +313,9 @@ create_DgDx_dot_op_impl(int j) const
   return Teuchos::null;
 }
 
-/// Create OutArgs
-Thyra::ModelEvaluatorBase::OutArgs<ST>
-SchwarzAlternating::
-createOutArgsImpl() const
-{
-  Thyra::ModelEvaluatorBase::OutArgsSetup<ST>
-  result;
-
-  result.setModelEvalDescription(this->description());
-
-  //Note: it is assumed her there are no distributed parameters.
-  result.set_Np_Ng(num_params_total_, 0);
-
-  result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f, true);
-  result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_op, true);
-  result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_prec, false);
-
-  result.set_W_properties(
-      Thyra::ModelEvaluatorBase::DerivativeProperties(
-          Thyra::ModelEvaluatorBase::DERIV_LINEARITY_UNKNOWN,
-          Thyra::ModelEvaluatorBase::DERIV_RANK_FULL,
-          true));
-
-  return result;
-}
-
-/// Evaluate model on InArgs
-void
-SchwarzAlternating::
-evalModelImpl(
-    Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
-    Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
-{
-  SchwarzLoop(in_args, out_args);
-  return;
-}
-
+//
+// Create InArgs
+//
 Thyra::ModelEvaluatorBase::InArgs<ST>
 SchwarzAlternating::
 createInArgsImpl() const
@@ -476,13 +333,61 @@ createInArgsImpl() const
   result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_beta, true);
   result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_W_x_dot_dot_coeff, true);
 
-  result.set_Np(num_params_total_);
+  sub_inargs_.resize(num_models_);
+  for (auto m = 0; m < num_models_; ++m) {
+    sub_inargs_[m] = models_[m]->createInArgs();
+  }
 
   return result;
 }
 
+//
+// Create OutArgs
+//
+Thyra::ModelEvaluatorBase::OutArgs<ST>
+SchwarzAlternating::
+createOutArgsImpl() const
+{
+  Thyra::ModelEvaluatorBase::OutArgsSetup<ST>
+  result;
+
+  result.setModelEvalDescription(this->description());
+
+  result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f, true);
+  result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_op, true);
+  result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_prec, false);
+
+  result.set_W_properties(
+      Thyra::ModelEvaluatorBase::DerivativeProperties(
+          Thyra::ModelEvaluatorBase::DERIV_LINEARITY_UNKNOWN,
+          Thyra::ModelEvaluatorBase::DERIV_RANK_FULL,
+          true));
+
+  sub_outargs_.resize(num_models_);
+  for (auto m = 0; m < num_models_; ++m) {
+    sub_outargs_[m] = models_[m]->createOutArgs();
+  }
+
+  return result;
+}
+
+//
+// Evaluate model on InArgs
+//
+void
+SchwarzAlternating::
+evalModelImpl(
+    Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
+    Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
+{
+  SchwarzLoop(in_args, out_args);
+  return;
+}
+
+//
 // Validate applicaton parameters of applications not created via a
 // SolverFactory Check usage and whether necessary.
+//
 Teuchos::RCP<Teuchos::ParameterList const>
 SchwarzAlternating::
 getValidAppParameters() const
@@ -497,7 +402,9 @@ getValidAppParameters() const
   return list;
 }
 
-// Check usage and whether neessary.
+//
+// Check usage and whether necessary.
+//
 Teuchos::RCP<Teuchos::ParameterList const>
 SchwarzAlternating::
 getValidProblemParameters() const
@@ -553,10 +460,10 @@ SchwarzLoop(
       model = *(models_[m]);
 
       Thyra::ModelEvaluatorBase::InArgs<ST> &
-      in_args_m = solver_inargs_[m];
+      in_args_m = sub_inargs_[m];
 
       Thyra::ModelEvaluatorBase::OutArgs<ST> &
-      out_args_m = solver_outargs_[m];
+      out_args_m = sub_outargs_[m];
 
       Teuchos::RCP<Thyra::ProductVectorBase<ST> const>
       rcp_pvb_prev =
