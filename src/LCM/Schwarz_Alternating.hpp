@@ -9,7 +9,6 @@
 
 #include "Albany_ModelEvaluatorT.hpp"
 #include "Albany_DataTypes.hpp"
-#include "Schwarz_BoundaryJacobian.hpp" 
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
 #include "MaterialDatabase.h"
@@ -149,28 +148,14 @@ private:
   Thyra::ModelEvaluatorBase::InArgs<ST>
   nominal_values_;
   
-  Teuchos::Array<Teuchos::RCP<Tpetra_Map const>>
-  disc_maps_;
-
   int
   num_models_;
 
-  /// Like num_param_vecs
-  int
-  num_params_total_;
-
-  Teuchos::Array<Teuchos::RCP<Tpetra_Map>>
-  tpetra_param_map_;
-
-  /// Array of Sacado parameter vectors
-  mutable Teuchos::Array<Teuchos::Array<ParamVec>>
-  sacado_param_vecs_;
-
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST>>
-  solver_inargs_;
+  sub_inargs_;
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST>>
-  solver_outargs_;
+  sub_outargs_;
 };
 
 } // namespace LCM

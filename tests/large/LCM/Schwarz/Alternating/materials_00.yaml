@@ -1,0 +1,16 @@
+ANONYMOUS:
+  ElementBlocks:
+    fine:
+      material: Fine
+  Materials:
+    Fine:
+      Material Model:
+        Model Name: Neohookean
+      Elastic Modulus:
+        Elastic Modulus Type: Constant
+        Value: 1440.0
+      Poissons Ratio:
+        Poissons Ratio Type: Constant
+        Value: 0.25
+      Output Cauchy Stress: true
+      

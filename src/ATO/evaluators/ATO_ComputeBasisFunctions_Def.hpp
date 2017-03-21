@@ -76,8 +76,6 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   grad_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPs, numDims);
   refPoints = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs, numDims);
   weights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
-  jacobian = Kokkos::createDynRankView(jacobian_det.get_view(),"XXX", numCells, numQPs, numDims, numDims);
-  jacobian_inv = Kokkos::createDynRankView(jacobian_det.get_view(),"XXX", numCells, numQPs, numDims, numDims);
 
   cubature->getStandardPoints(refPoints);
 
@@ -100,6 +98,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(GradBF,fm);
   this->utils.setFieldData(wGradBF,fm);
+
+  jacobian = Kokkos::createDynRankView(jacobian_det.get_view(),"XXX", numCells, numQPs, numDims, numDims);
+  jacobian_inv = Kokkos::createDynRankView(jacobian_det.get_view(),"XXX", numCells, numQPs, numDims, numDims);
 }
 
 //**********************************************************************

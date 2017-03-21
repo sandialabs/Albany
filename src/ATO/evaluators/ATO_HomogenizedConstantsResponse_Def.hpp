@@ -17,7 +17,8 @@ template<typename EvalT, typename Traits>
 ATO::HomogenizedConstantsResponse<EvalT, Traits>::
 HomogenizedConstantsResponse(Teuchos::ParameterList& p,
 		    const Teuchos::RCP<Albany::Layouts>& dl) :
-  weights ("Weights", dl->qp_scalar)
+  weights ("Weights", dl->qp_scalar),
+  local_measure(0)
 {
   using Teuchos::RCP;
 
@@ -47,8 +48,8 @@ HomogenizedConstantsResponse(Teuchos::ParameterList& p,
   int field_rank = field_layout->rank();
   tensorRank = field_rank - 2; //first 2 dimensions are cell and qp.
 
-  std::vector<int> dims;
-  field.dimensions(dims);
+  std::vector<PHX::Device::size_type> dims;
+  field_layout->dimensions(dims);
   int numCells = dims[0];
   int numQPs   = dims[1];
 

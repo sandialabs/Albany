@@ -5,7 +5,7 @@ ANONYMOUS:
     Map Type: Consistent Interpolation
     L2 Projection:
       Integration Order: 2
-    Consistent Interpolation:
+    Consistent Interpolation: { }
     Point Cloud:
       Map Type: Moving Least Square Reconstruction
       Basis Type: Wu

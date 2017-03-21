@@ -26,10 +26,6 @@ AddVector(const Teuchos::ParameterList& p) :
 
   this->setName("AddVector"+PHX::typeAsString<EvalT>());
 
-  std::vector<PHX::Device::size_type> dims;
-  outResidual.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
-  numDims  = dims[2];
 
   if(p.isType<std::string>("In Residual Name")){
     inResidual = decltype(inResidual)(p.get<std::string>("In Residual Name"),
@@ -44,8 +40,6 @@ AddVector(const Teuchos::ParameterList& p) :
                                     p.get<Teuchos::RCP<PHX::DataLayout> >("Weighted BF Data Layout") );
     this->addDependentField(w_bf);
     projectFromQPs = true;
-    w_bf.fieldTag().dataLayout().dimensions(dims);
-    numQPs   = dims[2];
   } else 
     projectFromQPs = false;
 
@@ -63,10 +57,17 @@ void AddVector<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
+  std::vector<PHX::Device::size_type> dims;
   this->utils.setFieldData(add_vector,fm);
   this->utils.setFieldData(outResidual,fm);
-  if( projectFromQPs )
+  outResidual.fieldTag().dataLayout().dimensions(dims);
+  numNodes = dims[1];
+  numDims  = dims[2];
+  if( projectFromQPs ) {
     this->utils.setFieldData(w_bf,fm);
+    w_bf.fieldTag().dataLayout().dimensions(dims);
+    numQPs = dims[2];
+  }
   if( plusEquals )
     this->utils.setFieldData(inResidual,fm);
 }
@@ -154,10 +155,6 @@ AddScalar(const Teuchos::ParameterList& p) :
 
   this->setName("AddScalar"+PHX::typeAsString<EvalT>());
 
-  std::vector<PHX::Device::size_type> dims;
-  outResidual.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
-
   if(p.isType<std::string>("In Residual Name")){
     inResidual = decltype(inResidual)(p.get<std::string>("In Residual Name"),
                                     p.get<Teuchos::RCP<PHX::DataLayout> >("Node Scalar Data Layout") );
@@ -171,8 +168,6 @@ AddScalar(const Teuchos::ParameterList& p) :
                                     p.get<Teuchos::RCP<PHX::DataLayout> >("Weighted BF Data Layout") );
     this->addDependentField(w_bf);
     projectFromQPs = true;
-    w_bf.fieldTag().dataLayout().dimensions(dims);
-    numQPs   = dims[2];
   } else 
     projectFromQPs = false;
 
@@ -192,8 +187,14 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(add_scalar,fm);
   this->utils.setFieldData(outResidual,fm);
-  if( projectFromQPs )
+  std::vector<PHX::Device::size_type> dims;
+  outResidual.fieldTag().dataLayout().dimensions(dims);
+  numNodes = dims[1];
+  if( projectFromQPs ) {
     this->utils.setFieldData(w_bf,fm);
+    w_bf.fieldTag().dataLayout().dimensions(dims);
+    numQPs = dims[2];
+  }
   if( plusEquals )
     this->utils.setFieldData(inResidual,fm);
 }

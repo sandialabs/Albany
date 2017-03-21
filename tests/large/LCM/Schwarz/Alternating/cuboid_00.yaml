@@ -1,0 +1,110 @@
+ANONYMOUS:
+  Scaling:
+    Scale: 1.0
+  DataTransferKit:
+    Map Type: Consistent Interpolation
+    L2 Projection:      
+      Integration Order: 2
+    Consistent Interpolation: { }
+    Point Cloud:
+      Map Type: Moving Least Square Reconstruction
+      Basis Type: Wu
+      Basis Order: 4
+      Spatial Dimension: 3
+      RBF Radius: 1.0
+    Search:
+      Track Missed Range Entities: true
+  Debug Output:
+    Write Solution to MatrixMarket: true
+    Write Solution to Standard Output: true  
+  # MODEL DECLARATION, Look in the Problem directory
+  Problem:
+    # Declare your Physics (What you intend to model)
+    Name: Mechanics 3D
+    # Have Phalanx output a graph of the used evaluators
+    Phalanx Graph Visualization Detail: 0
+    # YAML filename with material definitions
+    MaterialDB Filename: materials_00.yaml
+    # BOUNDARY CONDITIONS on node sets
+    Dirichlet BCs:
+      DBC on NS nodelist_1 for DOF X: 0.0
+      DBC on NS nodelist_3 for DOF Y: 0.0
+      DBC on NS nodelist_5 for DOF Z: 0.0
+      DBC on NS nodelist_6 for DOF Schwarz:
+        BC Function: Schwarz
+        Coupled Application: cuboid_01.yaml
+        Coupled Block: coarse
+  # MESH, done here, or input from file.
+  # If the latter, the domain decomposition 
+  # must already be performed for parallel jobs.
+  Discretization:
+    Method: Ioss
+    Exodus Input File Name: cuboid_00.g
+    Exodus Output File Name: cuboid_00.e
+    Exodus Solution Name: disp
+    Exodus Residual Name: resid
+    Separate Evaluators by Element Block: true
+    Number Of Time Derivatives: 0
+  Piro:
+    Solver Type: NOX
+    # BEGIN SOLVER CONTROLS. IN GENERAL, The defaults need not be changed.
+    NOX:
+      Direction:
+        Method: Newton
+        Newton:
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver:
+            Stratimikos:
+              # Belos for iterative solvers, Amesos for direct
+              Linear Solver Type: Belos
+              Linear Solver Types:
+                Belos:
+                  VerboseObject:
+                    Verbosity Level: low
+                  Solver Type: Block GMRES
+                  Solver Types:
+                    Block GMRES:
+                      Convergence Tolerance: 1.0e-14
+                      Output Frequency: 1
+                      Output Style: 1
+                      Verbosity: 0
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: None
+      Line Search:
+        Method: Full Step
+        Full Step:
+          Full Step: 1.0
+      Nonlinear Solver: Line Search Based
+      Printing:
+        Output Precision: 3
+        Output Processor: 0
+        # set the output information
+        Output Information:
+          Error: true
+          Warning: false
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: false
+          Stepper Parameters: false
+      # Checking for residual convergence (rel, abs, inc)
+      Solver Options:
+        Status Test Check Type: Complete
+      Status Tests:
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 3
+        Test 0:
+          Test Type: NormUpdate
+          Tolerance: 1.0e-13
+        Test 1:
+          Test Type: MaxIters
+          Maximum Iterations: 256
+        Test 2:
+          Test Type: FiniteValue
