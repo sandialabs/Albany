@@ -404,24 +404,24 @@ evaluateFields(typename Traits::EvalData workset)
 
   else {
     for (int i =0; i<numFields;i++){
-      //val_kokkos[i]=this->val[i].get_view();
-      val_kokkos[i]=this->val[i].get_static_view();
+      val_kokkos[i]=this->val[i].get_view();
+      //val_kokkos[i]=this->val[i].get_static_view();
     }
     d_val=val_kokkos.template view<executionSpace>();
     Kokkos::parallel_for(tensorRank_0Policy(0,workset.numCells),*this);
 
     if (workset.transientTerms && this->enableTransient){ 
       for (int i =0; i<numFields;i++){
-        //val_dot_kokkos[i]=this->val_dot[i].get_view();
-        val_dot_kokkos[i]=this->val_dot[i].get_static_view();
+        val_dot_kokkos[i]=this->val_dot[i].get_view();
+        //val_dot_kokkos[i]=this->val_dot[i].get_static_view();
       }
       d_val_dot=val_dot_kokkos.template view<executionSpace>();
       Kokkos::parallel_for(tensorRank_0_enableTransientPolicy(0,workset.numCells),*this);  
     }
     if (workset.accelerationTerms && this->enableAcceleration){
       for (int i =0; i<numFields;i++){
-        //val_dotdot_kokkos[i]=this->val_dotdot[i].get_view();
-        val_dotdot_kokkos[i]=this->val_dotdot[i].get_static_view();
+        val_dotdot_kokkos[i]=this->val_dotdot[i].get_view();
+        //val_dotdot_kokkos[i]=this->val_dotdot[i].get_static_view();
       }
       d_val_dotdot=val_dotdot_kokkos.template view<executionSpace>();
       Kokkos::parallel_for(tensorRank_0_enableAccelerationPolicy(0,workset.numCells),*this);

@@ -33,17 +33,21 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   GradBF  (p.get<std::string> ("Gradient BF Name"),dl->node_qp_gradient),
   U        (p.get<std::string> ("QP Variable Name"), dl->node_vector),
   UNodal   (p.get<std::string> ("Nodal Variable Name"), dl->node_vector),
-  UDotDotNodal   (p.get<std::string> ("Time Dependent Nodal Variable Name"), dl->node_vector),
   UDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->node_vector),
   //OG UDotDot is not in use?
+  /*
   UDotDot     (p.get<std::string> ("Time Dependent Variable Name"), dl->node_vector),
+  UDotDotNodal   (p.get<std::string> ("Time Dependent Nodal Variable Name"), dl->node_vector),
+  */
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   mountainHeight  (p.get<std::string> ("Aeras Surface Height QP Variable Name"), dl->qp_scalar),
   jacobian_inv  (p.get<std::string>  ("Jacobian Inv Name"), dl->qp_tensor ),
   jacobian_det  (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
   weighted_measure (p.get<std::string>  ("Weights Name"),   dl->qp_scalar ),
   jacobian  (p.get<std::string>  ("Jacobian Name"), dl->qp_tensor ),
+  /*
   source    (p.get<std::string> ("Shallow Water Source QP Variable Name"), dl->qp_vector),
+  */
   Residual (p.get<std::string> ("Residual Name"), dl->node_vector),
   intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis") ),
   cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
@@ -52,7 +56,9 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   lambda_nodal  (p.get<std::string>  ("Lambda Coord Nodal Name"), dl->node_scalar),
   theta_nodal   (p.get<std::string>  ("Theta Coord Nodal Name"), dl->node_scalar),
   gravity (Aeras::ShallowWaterConstants::self().gravity),
+  /*
   hyperviscosity (p.get<std::string> ("Hyperviscosity Name"), dl->qp_vector),
+  */
   Omega(2.0*(Aeras::ShallowWaterConstants::self().pi)/(24.*3600.)),
   RRadius(1.0/Aeras::ShallowWaterConstants::self().earthRadius),
   doNotDampRotation(true)
@@ -154,17 +160,23 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   this->addDependentField(UNodal);
   this->addDependentField(UDot);
   //OG UDotDot is not in use?
+  /*
   this->addDependentField(UDotDot);
   this->addDependentField(UDotDotNodal);
+  */
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
   this->addDependentField(GradBF);
   this->addDependentField(mountainHeight);
   this->addDependentField(sphere_coord);
+  /*
   this->addDependentField(hyperviscosity);
+  */
   this->addDependentField(lambda_nodal);
   this->addDependentField(theta_nodal);
+  /*
   this->addDependentField(source);
+  */
   this->addDependentField(weighted_measure);
   this->addDependentField(jacobian);
   this->addDependentField(jacobian_inv);
@@ -225,18 +237,24 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(UNodal,fm);
   this->utils.setFieldData(UDot,fm);
   //OG UDotDot is not in use?
+  /*
   this->utils.setFieldData(UDotDot,fm);
   this->utils.setFieldData(UDotDotNodal,fm);
+  */
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
   this->utils.setFieldData(GradBF,fm);
   this->utils.setFieldData(mountainHeight,fm);
 
   this->utils.setFieldData(sphere_coord,fm);
+  /*
   this->utils.setFieldData(hyperviscosity,fm);
+  */
   this->utils.setFieldData(lambda_nodal,fm);
   this->utils.setFieldData(theta_nodal,fm);
+  /*
   this->utils.setFieldData(source,fm);
+  */
   this->utils.setFieldData(weighted_measure, fm);
   this->utils.setFieldData(jacobian, fm);
   this->utils.setFieldData(jacobian_inv, fm);
@@ -274,17 +292,22 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   //OG Later I will insert if-statements because some of these temporary fields do not need to be constructed
   //if HV is off.
+  /*
   csurf = Kokkos::createDynRankView(Residual.get_view(), "csurf", numCells, numNodes);
   csurftilde = Kokkos::createDynRankView(Residual.get_view(), "csurftilde", numCells, numNodes);
   cgradsurf = Kokkos::createDynRankView(Residual.get_view(), "cgradsurf", numCells, numQPs, 2);
   cgradsurftilde = Kokkos::createDynRankView(Residual.get_view(), "cgradsurftilde", numCells, numQPs, 2);
+  */
   tempnodalvec1 = Kokkos::createDynRankView(Residual.get_view(), "tempnodalvec1", numCells, numNodes, 2);
   tempnodalvec2 = Kokkos::createDynRankView(Residual.get_view(), "tempnodalvec2", numCells, numNodes, 2);
+  /*
   chuv = Kokkos::createDynRankView(Residual.get_view(), "chuv", numCells, numNodes, 2);
   cdiv = Kokkos::createDynRankView(Residual.get_view(), "cdiv", numCells, numQPs);
   ccor = Kokkos::createDynRankView(Residual.get_view(), "ccor", numCells, numQPs);
+  */
   ckineticEnergy = Kokkos::createDynRankView(Residual.get_view(), "ckineticEnergy", numCells, numNodes);
   cpotentialEnergy = Kokkos::createDynRankView(Residual.get_view(), "cpotentialEnergy", numCells, numNodes);
+  /*
   cvelocityVec = Kokkos::createDynRankView(Residual.get_view(), "cvelocityVec", numCells, numNodes, 2);
   cvort = Kokkos::createDynRankView(Residual.get_view(), "cvort", numCells, numQPs);
   cgradKineticEnergy = Kokkos::createDynRankView(Residual.get_view(), "cgradKineticEnergy", numCells, numQPs, 2);
@@ -301,12 +324,14 @@ postRegistrationSetup(typename Traits::SetupData d,
   cgradUTX = Kokkos::createDynRankView(Residual.get_view(), "cgradUTX", numCells, numQPs, 2);
   cgradUTY = Kokkos::createDynRankView(Residual.get_view(), "cgradUTY", numCells, numQPs, 2);
   cgradUTZ = Kokkos::createDynRankView(Residual.get_view(), "cgradUTZ", numCells, numQPs, 2);
+  */
 #endif
 }
 
 // *********************************************************************
 //Kokkos functors
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+/*
 template< typename ScalarT, typename ArrayT1,typename ArrayT2, typename ArrayJac, typename ArrayGrad>
 KOKKOS_INLINE_FUNCTION
 void gradient(const ArrayT1  & fieldAtNodes, const int &cell, ArrayT2  & gradField, 
@@ -469,6 +494,7 @@ compute_Residual0(const int& cell) const
     //unodal0 = UNodal(cell,node,0);
     const typename PHAL::Ref<const ScalarT>::type
     unodal0 = UNodal(cell,node,0);
+*/
 /*   std::cout << "ShallowWaterResid::compute_Residual0  inside loop 2 after assign unodal0"  << std::endl;
     std::cout << "address chuv(cell,node,0)"  << chuv(cell,node,0) << std::endl;
     std::cout << "address UNodal(cell,node,1)"  << UNodal(cell,node,1) << std::endl;
@@ -476,6 +502,7 @@ compute_Residual0(const int& cell) const
     std::cout << "address UNodal(cell,node,2)"  << UNodal(cell,node,2) << std::endl;
     std::cout << "address chuv(cell,node,1)"  << chuv(cell,node,1) << std::endl; 
 */
+/*
     chuv(cell,node,0) = unodal0*UNodal(cell,node,1);
     chuv(cell,node,1) = unodal0*UNodal(cell,node,2);
 //    std::cout << "ShallowWaterResid::compute_Residual0  inside loop 3 after assign chuv"  << std::endl;
@@ -624,6 +651,7 @@ compute_Residuals12_notprescribed (const int& cell) const
 
   for (int node=0; node < numNodes; ++node) {
     //const typename PHAL::Ref<const ScalarT>::type
+*/
     /*const ScalarT
     depth = UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap_Kokkos[node]),
     ulambda = UNodal(cell, node,1),
@@ -635,6 +663,7 @@ compute_Residuals12_notprescribed (const int& cell) const
     cvelocityVec(cell, node, 0) = ulambda;
     cvelocityVec(cell, node, 1) = utheta;
     */
+/*
 
     ckineticEnergy(cell, node) = 0.5*(UNodal(cell, node,1)*UNodal(cell, node,1) + UNodal(cell, node,2)*UNodal(cell, node,2));
     cpotentialEnergy(cell, node) = gravity*(UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap_Kokkos[node]));
@@ -677,6 +706,7 @@ compute_Residuals12_Vorticity_notprescribed (const int& cell, const int& index) 
 
   for (int node=0; node < numNodes; ++node) {
     //const typename PHAL::Ref<const ScalarT>::type
+*/
     /*const ScalarT
     depth = UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap_Kokkos[node]),
     ulambda = UNodal(cell, node,1),
@@ -688,6 +718,7 @@ compute_Residuals12_Vorticity_notprescribed (const int& cell, const int& index) 
     cvelocityVec(cell, node, 0) = ulambda;
     cvelocityVec(cell, node, 1) = utheta;
     */
+/*
 
     ckineticEnergy(cell, node) = 0.5*(UNodal(cell, node,1)*UNodal(cell, node,1) + UNodal(cell, node,2)*UNodal(cell, node,2));
     cpotentialEnergy(cell, node) = gravity*(UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap_Kokkos[node]));
@@ -870,7 +901,7 @@ BuildLaplace_for_uv (const int& cell) const
       Residual(cell,node,2) += sHvTau*(k12*( cgradUX(cell, qp, 0)*wgradbf0_ + cgradUX(cell, qp, 1)*wgradbf1_)
 			    + k22*( cgradUY(cell, qp, 0)*wgradbf0_ + cgradUY(cell, qp, 1)*wgradbf1_)
 			    + k32*( cgradUZ(cell, qp, 0)*wgradbf0_ + cgradUZ(cell, qp, 1)*wgradbf1_));
-
+*/
       /*
       if (doNotDampRotation) {
         //adding back the first mode (in sph. harmonic basis) which corresponds to -2/R/R eigenvalue of laplace
@@ -883,6 +914,7 @@ BuildLaplace_for_uv (const int& cell) const
 
         Residual(cell,node,5) += -2.0*U(cell,qp,2)*wBF(cell,node,qp)*RRadius*RRadius;
       } */
+/*
     }
   }
 }
@@ -1067,7 +1099,95 @@ compute_uv_ImplHV (const int& cell) const
     }
   }
 }
+*/
 
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT, Traits>::
+operator() (const ShallowWaterResid_TempNodalVec_Tag& tag, const int& cell, const int& node) const{
+  // constructing contravariant velocity
+  const MeshScalarT jinv00 = jacobian_inv(cell, node, 0, 0);
+  const MeshScalarT jinv01 = jacobian_inv(cell, node, 0, 1);
+  const MeshScalarT jinv10 = jacobian_inv(cell, node, 1, 0);
+  const MeshScalarT jinv11 = jacobian_inv(cell, node, 1, 1);
+  const MeshScalarT det_j  = jacobian_det(cell, node);
+
+  const ScalarT unodal0 = UNodal(cell, node, 0);
+  const ScalarT chuv0 = unodal0*UNodal(cell, node, 1);
+  const ScalarT chuv1 = unodal0*UNodal(cell, node, 2);
+
+  tempnodalvec1(cell, node, 0 ) = det_j*(jinv00*chuv0 + jinv01*chuv1 );
+  tempnodalvec1(cell, node, 1 ) = det_j*(jinv10*chuv0 + jinv11*chuv1 );
+
+  // forming covariant vector
+  const MeshScalarT j00 = jacobian(cell, node, 0, 0);
+  const MeshScalarT j01 = jacobian(cell, node, 0, 1);
+  const MeshScalarT j10 = jacobian(cell, node, 1, 0);
+  const MeshScalarT j11 = jacobian(cell, node, 1, 1);
+
+  const ScalarT cvelocityVec0 = UNodal(cell, node, 1);
+  const ScalarT cvelocityVec1 = UNodal(cell, node, 2);
+
+  tempnodalvec2(cell, node, 0 ) = j00*cvelocityVec0 + j10*cvelocityVec1;
+  tempnodalvec2(cell, node, 1 ) = j01*cvelocityVec0 + j11*cvelocityVec1;
+
+  // compute energy
+  ckineticEnergy(cell, node) = 0.5*(UNodal(cell, node,1)*UNodal(cell, node,1) + UNodal(cell, node,2)*UNodal(cell, node,2));
+  cpotentialEnergy(cell, node) = gravity*(UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap_Kokkos[node]));
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT, Traits>::
+operator() (const ShallowWaterResid_Residual_Tag& tag, const int& cell, const int& qp) const{
+  // Compute Coriolis
+  const MeshScalarT lambda = sphere_coord(cell, qp, 0);
+  const MeshScalarT theta = sphere_coord(cell, qp, 1);
+  ScalarT cor = 2*Omega*( -cos(lambda)*cos(theta)*sin(AlphaAngle) + sin(theta)*cos(AlphaAngle));
+
+  // Compute divergence of contravariant velocity
+  ScalarT div = 0;
+  for (int node=0; node < numNodes; ++node) {
+    div += tempnodalvec1(cell, node, 0)*grad_at_cub_points_Kokkos(node, qp, 0)
+        +  tempnodalvec1(cell, node, 1)*grad_at_cub_points_Kokkos(node, qp, 1);
+  }
+  div /= jacobian_det(cell, qp);
+
+  // Compute curl of covariant vector
+  ScalarT curl = 0;
+  for (int node=0; node < numNodes; ++node) {
+    curl += tempnodalvec2(cell, node, 1)*grad_at_cub_points_Kokkos(node, qp, 0)
+         -  tempnodalvec2(cell, node, 0)*grad_at_cub_points_Kokkos(node, qp, 1);
+  }
+  curl /= jacobian_det(cell, qp);
+
+  // Compute gradient of kinetic energy
+  ScalarT gradKE[2] = {0};
+  for (int node=0; node < numNodes; ++node) {
+    gradKE[0] += ckineticEnergy(cell, node)*grad_at_cub_points_Kokkos(node, qp, 0);
+    gradKE[1] += ckineticEnergy(cell, node)*grad_at_cub_points_Kokkos(node, qp, 1);
+  }
+  ScalarT gradKEtemp = gradKE[0];
+  gradKE[0] = jacobian_inv(cell, qp, 0, 0)*gradKE[0]  + jacobian_inv(cell, qp, 1, 0)*gradKE[1];
+  gradKE[1] = jacobian_inv(cell, qp, 0, 1)*gradKEtemp + jacobian_inv(cell, qp, 1, 1)*gradKE[1];
+
+  // Compute gradient of potential energy
+  ScalarT gradPE[2] = {0};
+  for (int node=0; node < numNodes; ++node) {
+    gradPE[0] += cpotentialEnergy(cell, node)*grad_at_cub_points_Kokkos(node, qp, 0);
+    gradPE[1] += cpotentialEnergy(cell, node)*grad_at_cub_points_Kokkos(node, qp, 1);
+  }
+  ScalarT gradPEtemp = gradPE[0];
+  gradPE[0] = jacobian_inv(cell, qp, 0, 0)*gradPE[0]  + jacobian_inv(cell, qp, 1, 0)*gradPE[1];
+  gradPE[1] = jacobian_inv(cell, qp, 0, 1)*gradPEtemp + jacobian_inv(cell, qp, 1, 1)*gradPE[1];
+
+  // Compute Residual
+  Residual(cell, qp, 0) = (UDot(cell, qp, 0) + div)*wBF(cell, qp, qp);
+  Residual(cell, qp, 1) = (UDot(cell, qp, 1) + gradKE[0] + gradPE[0] 
+                        - (cor + curl) * U(cell, qp, 2)) * wBF(cell, qp, qp);
+  Residual(cell, qp, 2) = (UDot(cell, qp, 2) + gradKE[1] + gradPE[1]
+                        + (cor + curl) * U(cell, qp, 1)) * wBF(cell, qp, qp);
+}
 
 #endif
 //**********************************************************************
@@ -1155,8 +1275,10 @@ evaluateFields(typename Traits::EvalData workset)
     if (useExplHyperviscosity) {
       //OG: maybe, int(n_coeff) == 1 ?
       if (n_coeff == 1) {  
+        /*
 	for (std::size_t node=0; node < numNodes; ++node)
   	  surftilde(node) = UDotDotNodal(cell,node,0);
+      */
 	gradient(surftilde, cell, htildegradNodes);
 
 	for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -1233,8 +1355,10 @@ evaluateFields(typename Traits::EvalData workset)
       //so the code below is temporary
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         for (std::size_t node=0; node < numNodes; ++node) {
+          /*
 	  Residual(cell,node,0) -= hyperviscosity(cell,qp,0)*htildegradNodes(qp,0)*wGradBF(cell,node,qp,0)
                       		+  hyperviscosity(cell,qp,0)*htildegradNodes(qp,1)*wGradBF(cell,node,qp,1);
+                          */
 	}
       }
     }
@@ -1267,8 +1391,10 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         std::size_t node = qp;
+        /*
 	Residual(cell,node,1) += UDot(cell,qp,1)*wBF(cell,node,qp) + source(cell,qp,1)*wBF(cell, node, qp);
 	Residual(cell,node,2) += UDot(cell,qp,2)*wBF(cell,node,qp) + source(cell,qp,2)*wBF(cell, node, qp);
+  */
       }
     }
   }
@@ -1324,8 +1450,10 @@ evaluateFields(typename Traits::EvalData workset)
 	ScalarT utlambda;
 	ScalarT uttheta;
 	if ((useExplHyperviscosity)&&(n_coeff == 1)) {
+    /*
 	  utlambda = UDotDotNodal(cell, node,1);
 	  uttheta  = UDotDotNodal(cell, node,2);
+    */
 	}
 
 	if (useImplHyperviscosity) {
@@ -1441,6 +1569,7 @@ evaluateFields(typename Traits::EvalData workset)
             (v21*utYgradNodes(qp,0) + v22*utYgradNodes(qp,1))*wGradBF(cell,node,qp,1)
             )
 	    */
+      /*
 	    Residual(cell,node,1) -= hyperviscosity(cell,qp,0)*(
                                      k11*( utXgradNodes(qp,0)*wGradBF(cell,node,qp,0) + utXgradNodes(qp,1)*wGradBF(cell,node,qp,1))
 				   + k21*( utYgradNodes(qp,0)*wGradBF(cell,node,qp,0) + utYgradNodes(qp,1)*wGradBF(cell,node,qp,1))
@@ -1457,14 +1586,17 @@ evaluateFields(typename Traits::EvalData workset)
 	    Residual(cell,node,5) += k12*( uXgradNodes(qp,0)*wGradBF(cell,node,qp,0) + uXgradNodes(qp,1)*wGradBF(cell,node,qp,1))
 				  + k22*( uYgradNodes(qp,0)*wGradBF(cell,node,qp,0) + uYgradNodes(qp,1)*wGradBF(cell,node,qp,1))
 				  + k32*( uZgradNodes(qp,0)*wGradBF(cell,node,qp,0) + uZgradNodes(qp,1)*wGradBF(cell,node,qp,1));
+          */
 
           }
 	  if (doNotDampRotation) {
 	    //adding back the first mode (in sph. harmonic basis) which corresponds to -2/R/R eigenvalue of laplace
+      /*
 	    Residual(cell,qp,1) += -hyperviscosity(cell,qp,0)*2.0*U(cell,qp,4)*RRadius*RRadius*wBF(cell,qp,qp);
 	    Residual(cell,qp,2) += -hyperviscosity(cell,qp,0)*2.0*U(cell,qp,5)*RRadius*RRadius*wBF(cell,qp,qp);
 	    Residual(cell,qp,4) += (U(cell,qp,4) - 2.0*U(cell,qp,1)*RRadius*RRadius)*wBF(cell,qp,qp);
 	    Residual(cell,qp,5) += (U(cell,qp,5) - 2.0*U(cell,qp,2)*RRadius*RRadius)*wBF(cell,qp,qp);
+      */
    	  }
 	}
       }//end if ImplHV
@@ -1533,17 +1665,19 @@ evaluateFields(typename Traits::EvalData workset)
 
   //Kokkos::deep_copy(Residual.get_view(), ScalarT(0.0));
 
+/*
   if (usePrescribedVelocity) {
     if (useImplHyperviscosity)
       Kokkos::parallel_for(ShallowWaterResid_VecDim4_Policy(0,workset.numCells),*this);
-    else if (useExplHyperviscosity)
+    else if (useExplHyperviscosity) {
       if ( obtainLaplaceOp ) {
-	Kokkos::parallel_for(ShallowWaterResid_BuildLaplace_for_h_Policy(0,workset.numCells),*this);
+        Kokkos::parallel_for(ShallowWaterResid_BuildLaplace_for_h_Policy(0,workset.numCells),*this);
       }
       else
-	Kokkos::parallel_for(ShallowWaterResid_VecDim3_usePrescribedVelocity_Policy(0,workset.numCells),*this);
-   else
-	Kokkos::parallel_for(ShallowWaterResid_VecDim3_usePrescribedVelocity_Policy(0,workset.numCells),*this);
+        Kokkos::parallel_for(ShallowWaterResid_VecDim3_usePrescribedVelocity_Policy(0,workset.numCells),*this);
+    }
+    else
+      Kokkos::parallel_for(ShallowWaterResid_VecDim3_usePrescribedVelocity_Policy(0,workset.numCells),*this);
   }
   else {
     if (useImplHyperviscosity) {
@@ -1552,26 +1686,34 @@ evaluateFields(typename Traits::EvalData workset)
       else
         Kokkos::parallel_for(ShallowWaterResid_VecDim6_Policy(0,workset.numCells),*this);
     }
-    else if (useExplHyperviscosity)
+    else if (useExplHyperviscosity) {
       if ( obtainLaplaceOp ) {
-	Kokkos::parallel_for(ShallowWaterResid_BuildLaplace_for_huv_Policy(0,workset.numCells),*this);
+        Kokkos::parallel_for(ShallowWaterResid_BuildLaplace_for_huv_Policy(0,workset.numCells),*this);
         if ((j_coeff == 0) && (m_coeff == 1) && (workset.current_time == 0) && (plotVorticity))
-	  Kokkos::parallel_for(ShallowWaterResid_BuildLaplace_for_huv_Vorticity_Policy(0,workset.numCells),*this);
-         
+          Kokkos::parallel_for(ShallowWaterResid_BuildLaplace_for_huv_Vorticity_Policy(0,workset.numCells),*this);
       }
       else {
         if (plotVorticity)
-	  Kokkos::parallel_for(ShallowWaterResid_VecDim3_Vorticity_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
-        else
-	  Kokkos::parallel_for(ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
+          Kokkos::parallel_for(ShallowWaterResid_VecDim3_Vorticity_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
+        else {
+*/
+          Kokkos::Experimental::md_parallel_for(ShallowWaterResid_TempNodalVec_Policy(
+            {0,0},{(int)workset.numCells,(int)numNodes},ShallowWaterResid_TempNodalVec_TileSize),*this);
+          Kokkos::Experimental::md_parallel_for(ShallowWaterResid_Residual_Policy(
+            {0,0},{(int)workset.numCells,(int)numQPs},ShallowWaterResid_Residual_TileSize),*this);
+          //Kokkos::parallel_for(ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
+/*
+        }
       }
+    }
     else {
-       if (plotVorticity)
-         Kokkos::parallel_for(ShallowWaterResid_VecDim3_Vorticity_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
-       else
-         Kokkos::parallel_for(ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
+      if (plotVorticity)
+        Kokkos::parallel_for(ShallowWaterResid_VecDim3_Vorticity_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
+      else
+        Kokkos::parallel_for(ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
     }
   }
+*/
 
 #ifdef AERAS_OUTPUT
   std::cout << "ShallowWaterResid::end of evaluateFields (kokkos)" << std::endl;

@@ -8,6 +8,7 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp" 
+#include "Albany_Utils.hpp"
 
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Albany_Layouts.hpp"
@@ -88,28 +89,25 @@ SurfaceHeight<EvalT,Traits>::getValue(const std::string &n)
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void SurfaceHeight<EvalT, Traits>::
-operator() (const SurfaceHeight_Tag& tag, const int& cell) const{
-  for (int qp=0; qp < numQPs; ++qp)
-          hs(cell,qp) = 0.0;
+operator() (const SurfaceHeight_Tag& tag, const int cell, const int qp) const{
+  hs(cell,qp) = 0.0;
 }
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void SurfaceHeight<EvalT, Traits>::
-operator() (const SurfaceHeight_MOUNTAIN_Tag& tag, const int& cell) const{
-   const double R = pi/9.0;
-      const double lambdac = 1.5*pi;
-      const double thetac = pi/6.0;
-        for (int qp = 0; qp < numQPs; ++qp) {
-          MeshScalarT lambda = sphere_coord(cell,qp,0);
-          MeshScalarT theta = sphere_coord(cell,qp,1);
-          MeshScalarT radius2 = (lambda-lambdac)*(lambda-lambdac) + (theta-thetac)*(theta-thetac);
-          //r^2 = min(R^2, (lambda-lambdac)^2 + (theta-thetac)^2); 
-          MeshScalarT r;
-          if (radius2 > R*R) r = R;
-          else r = sqrt(radius2);
-          hs(cell,qp) = hs0*(1.0-r/R);
-        }
+operator() (const SurfaceHeight_MOUNTAIN_Tag& tag, const int cell, const int qp) const{
+  const double R = pi/9.0;
+  const double lambdac = 1.5*pi;
+  const double thetac = pi/6.0;
+  MeshScalarT lambda = sphere_coord(cell,qp,0);
+  MeshScalarT theta = sphere_coord(cell,qp,1);
+  MeshScalarT radius2 = (lambda-lambdac)*(lambda-lambdac) + (theta-thetac)*(theta-thetac);
+  //r^2 = min(R^2, (lambda-lambdac)^2 + (theta-thetac)^2); 
+  MeshScalarT r;
+  if (radius2 > R*R) r = R;
+  else r = sqrt(radius2);
+  hs(cell,qp) = hs0*(1.0-r/R);
 }
 
 #endif
@@ -152,10 +150,16 @@ evaluateFields(typename Traits::EvalData workset)
 
    switch (hs_type) {
     case NONE:
-      Kokkos::parallel_for(SurfaceHeight_Policy(0,workset.numCells),*this);
+      Kokkos::Experimental::md_parallel_for(SurfaceHeight_Policy(
+        {0,0},{(int)workset.numCells,(int)numQPs},
+        SurfaceHeight_TileSize),*this);
+      cudaCheckError();
     break;
     case  MOUNTAIN:
-      Kokkos::parallel_for(SurfaceHeight_MOUNTAIN_Policy(0,workset.numCells),*this);
+      Kokkos::Experimental::md_parallel_for(SurfaceHeight_MOUNTAIN_Policy(
+        {0,0},{(int)workset.numCells,(int)numQPs},
+        SurfaceHeight_MOUNTAIN_TileSize),*this);
+      cudaCheckError();
     break;
    }
 

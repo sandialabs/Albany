@@ -160,13 +160,13 @@ private:
   Kokkos::View<const ST*, PHX::Device> xT_constView, xdotT_constView, xdotdotT_constView;
 
   typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
-  Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device > val_kokkos;
-  Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device > val_dot_kokkos; 
-  Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device > val_dotdot_kokkos;
+  Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device > val_kokkos;
+  Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device > val_dot_kokkos; 
+  Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device > val_dotdot_kokkos;
 
-  typename Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device >::t_dev d_val;
-  typename Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device >::t_dev d_val_dot;
-  typename Kokkos::vector< Kokkos::View< ScalarT**, PHX::Device> , PHX::Device >::t_dev d_val_dotdot;
+  typename Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device >::t_dev d_val;
+  typename Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device >::t_dev d_val_dot;
+  typename Kokkos::vector< Kokkos::DynRankView< ScalarT, PHX::Device> , PHX::Device >::t_dev d_val_dotdot;
 };
 
 // **************************************************************

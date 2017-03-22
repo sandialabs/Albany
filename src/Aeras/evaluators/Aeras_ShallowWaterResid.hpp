@@ -57,10 +57,12 @@ private:
 	PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
 	PHX::MDField<ScalarT,Cell,Node,VecDim> U;  //vecDim works but its really Dim+1?
 	PHX::MDField<ScalarT,Cell,Node,VecDim> UNodal;
+  /*
+	PHX::MDField<ScalarT,Cell,Node,VecDim> UDotDot;
 	PHX::MDField<ScalarT,Cell,Node,VecDim> UDotDotNodal;
+  */
 	PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
 	PHX::MDField<ScalarT,Cell,Node,VecDim> UDot;
-	PHX::MDField<ScalarT,Cell,Node,VecDim> UDotDot;
 	Teuchos::RCP<shards::CellTopology> cellType;
 
 	PHX::MDField<ScalarT,Cell,QuadPoint> mountainHeight;
@@ -71,7 +73,9 @@ private:
 	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
 	PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det;
 	Kokkos::DynRankView<RealType, PHX::Device>    grad_at_cub_points;
+  /*
 	PHX::MDField<ScalarT,Cell,Node,VecDim> hyperviscosity;
+  */
 
 	// Output:
 	PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
@@ -96,7 +100,9 @@ private:
 	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
 	PHX::MDField<MeshScalarT,Cell,Node> lambda_nodal;
 	PHX::MDField<MeshScalarT,Cell,Node> theta_nodal;
+  /*
 	PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> source;
+  */
 
 	ScalarT gravity; // gravity parameter -- Sacado-ized for sensitivities
 	ScalarT Omega;   //rotation of earth  -- Sacado-ized for sensitivities
@@ -146,7 +152,7 @@ public:
 	Kokkos::DynRankView<MeshScalarT, PHX::Device> refPoints_kokkos;
 
 	typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
-
+  /*
   Kokkos::DynRankView<ScalarT, PHX::Device> csurf;
   Kokkos::DynRankView<ScalarT, PHX::Device> csurftilde;
   Kokkos::DynRankView<ScalarT, PHX::Device> cgradsurf;
@@ -154,15 +160,20 @@ public:
   Kokkos::DynRankView<ScalarT, PHX::Device> cUX, cUY, cUZ, cUTX, cUTY, cUTZ;
   Kokkos::DynRankView<ScalarT, PHX::Device> cgradUX, cgradUY, cgradUZ;
   Kokkos::DynRankView<ScalarT, PHX::Device> cgradUTX, cgradUTY, cgradUTZ;
+  */
   Kokkos::DynRankView<ScalarT, PHX::Device> tempnodalvec1, tempnodalvec2;
+  /*
   Kokkos::DynRankView<ScalarT, PHX::Device> chuv;
   Kokkos::DynRankView<ScalarT, PHX::Device> cdiv;
   Kokkos::DynRankView<ScalarT, PHX::Device> ccor;
   Kokkos::DynRankView<ScalarT, PHX::Device> cvort;
+  */
   Kokkos::DynRankView<ScalarT, PHX::Device> ckineticEnergy, cpotentialEnergy;
+  /*
   Kokkos::DynRankView<ScalarT, PHX::Device> cvelocityVec;
   Kokkos::DynRankView<ScalarT, PHX::Device> cgradKineticEnergy;
   Kokkos::DynRankView<ScalarT, PHX::Device> cgradPotentialEnergy;
+  */
 
 	std::vector<LO> qpToNodeMap;
 	std::vector<LO> nodeToQPMap;
@@ -172,7 +183,7 @@ public:
 
 
 //	ScalarT k11, k12, k21, k22, k32;
-
+  /*
 	KOKKOS_INLINE_FUNCTION
 	void divergence4(const Kokkos::DynRankView<ScalarT, PHX::Device>  & field,
 			const Kokkos::DynRankView<ScalarT, PHX::Device>  & div_,
@@ -191,9 +202,47 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	void get_coriolis4(const Kokkos::DynRankView<ScalarT, PHX::Device>  & cor_,
 			const int &cell) const;
+  */
 
+  // MDRange Policy Kernels
 	typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
 
+  struct ShallowWaterResid_TempNodalVec_Tag{};
+  struct ShallowWaterResid_Residual_Tag{};
+
+  using ShallowWaterResid_TempNodalVec_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, ShallowWaterResid_TempNodalVec_Tag>;
+
+  using ShallowWaterResid_Residual_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<2, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, ShallowWaterResid_Residual_Tag>;
+
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename ShallowWaterResid_TempNodalVec_Policy::tile_type 
+    ShallowWaterResid_TempNodalVec_TileSize{{256,1}};
+  typename ShallowWaterResid_Residual_Policy::tile_type 
+    ShallowWaterResid_Residual_TileSize{{256,1}};
+#else
+  typename ShallowWaterResid_TempNodalVec_Policy::tile_type 
+    ShallowWaterResid_TempNodalVec_TileSize{};
+  typename ShallowWaterResid_Residual_Policy::tile_type 
+    ShallowWaterResid_Residual_TileSize{};
+#endif
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ShallowWaterResid_TempNodalVec_Tag& tag, const int& cell, const int& node) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ShallowWaterResid_Residual_Tag& tag, const int& cell, const int& qp) const;
+
+/*
 	struct ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag{};
 	struct ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag{};
 	//The following are for hyperviscosity
@@ -278,6 +327,7 @@ public:
 	void compute_3Dvelocity4(std::size_t node, const ScalarT lam, const ScalarT th, const ScalarT ulambda, const ScalarT utheta,
 			const Kokkos::DynRankView<ScalarT, PHX::Device>  & ux, const Kokkos::DynRankView<ScalarT, PHX::Device>  & uy,
 			const Kokkos::DynRankView<ScalarT, PHX::Device>  & uz, const int& cell) const;
+  */
 
 #endif
 };
