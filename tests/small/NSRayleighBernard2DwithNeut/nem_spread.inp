@@ -1,9 +1,0 @@
-
-Input FEM file		= ns.exo
-LB file			= ns-m4-bKL.nemI 
-Debug			= 1
-Restart Time list	= off
-Reserve space		= nodal=1, elemental=0, global=0
-Parallel Disk Info = number=1
-Parallel file location = root=tmp,subdir=..
-

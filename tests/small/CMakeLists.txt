@@ -65,8 +65,6 @@ IF(ALBANY_DEMO_PDES)
     add_subdirectory(CahnHillElast2D)
     add_subdirectory(NSPoiseuille2D)
     add_subdirectory(NSRayleighBernard2D)
-# Test appears to be unstable FIXME
-#    add_subdirectory(NSRayleighBernard2DwithNeut)
     add_subdirectory(NSVortexShedding2D)
     add_subdirectory(PNP)
   ENDIF(ALBANY_SEACAS)
