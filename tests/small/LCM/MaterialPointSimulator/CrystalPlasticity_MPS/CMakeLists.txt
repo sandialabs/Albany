@@ -25,35 +25,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CP.py
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CP-uniaxial.xml
                ${CMAKE_CURRENT_BINARY_DIR}/CP-uniaxial.xml COPYONLY)
 
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CP-shear.xml
-#               ${CMAKE_CURRENT_BINARY_DIR}/CP-shear.xml COPYONLY)
-
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CP-hydrostatic.xml
-#               ${CMAKE_CURRENT_BINARY_DIR}/CP-hydrostatic.xml COPYONLY)
-
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CP-general.xml
-#               ${CMAKE_CURRENT_BINARY_DIR}/CP-general.xml COPYONLY)
-
 # Copy the reference solution and exodiff files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CP-uniaxial.gold.exo
                ${CMAKE_CURRENT_BINARY_DIR}/CP-uniaxial.gold.exo COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CP-uniaxial.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/CP-uniaxial.exodiff COPYONLY)
-
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CP-shear.gold.exo
-#               ${CMAKE_CURRENT_BINARY_DIR}/CP-shear.gold.exo COPYONLY)
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CP-shear.exodiff
-#               ${CMAKE_CURRENT_BINARY_DIR}/CP-shear.exodiff COPYONLY)
-
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CP-hydrostatic.gold.exo
-#               ${CMAKE_CURRENT_BINARY_DIR}/CP-hydrostatic.gold.exo COPYONLY)
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CP-hydrostatic.exodiff
-#               ${CMAKE_CURRENT_BINARY_DIR}/CP-hydrostatic.exodiff COPYONLY)
-
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CP-general.gold.exo
-#               ${CMAKE_CURRENT_BINARY_DIR}/CP-general.gold.exo COPYONLY)
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CP-general.exodiff
-#               ${CMAKE_CURRENT_BINARY_DIR}/CP-general.exodiff COPYONLY)
 
 # Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
