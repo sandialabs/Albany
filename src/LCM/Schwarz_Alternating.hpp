@@ -113,9 +113,7 @@ private:
 
   /// Schwarz Alternating loop
   void
-  SchwarzLoop(
-      Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
-      Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
+  SchwarzLoop() const;
 
   Teuchos::Array<Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>>
   solvers_;

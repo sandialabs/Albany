@@ -344,10 +344,10 @@ createOutArgsImpl() const
 void
 SchwarzAlternating::
 evalModelImpl(
-    Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
-    Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
+    Thyra::ModelEvaluatorBase::InArgs<ST> const &,
+    Thyra::ModelEvaluatorBase::OutArgs<ST> const &) const
 {
-  SchwarzLoop(in_args, out_args);
+  SchwarzLoop();
   return;
 }
 
@@ -400,9 +400,7 @@ getValidProblemParameters() const
 //
 void
 SchwarzAlternating::
-SchwarzLoop(
-    Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
-    Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
+SchwarzLoop() const
 {
   constexpr ST
   abs_tol = 1.0e-12;
@@ -420,7 +418,7 @@ SchwarzLoop(
   converged{false};
 
   int const
-  max_iter = 64;
+  max_iter = 2;
 
   int
   num_iter = 0;
