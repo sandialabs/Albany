@@ -8,8 +8,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputLB.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputLB.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2d_chev_quad4.e
                ${CMAKE_CURRENT_BINARY_DIR}/2d_chev_quad4.e COPYONLY)
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2d_chev_quad4_fine.e
-#               ${CMAKE_CURRENT_BINARY_DIR}/2d_chev_quad4_fine.e COPYONLY)
 
 # 4. Name the test with the directory name
 get_filename_component(testDirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
