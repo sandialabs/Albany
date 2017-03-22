@@ -4,6 +4,7 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
+if(SEACAS_EXODIFF)
 # Create a symlink to the runtest.py script
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${runtest.py} ${CMAKE_CURRENT_BINARY_DIR}/runtest.py)
@@ -41,8 +42,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AnisotropicDamage-Bifurcation-shear.e
 # Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
-#MESSAGE(SEACAS_EXODIFF "${SEACAS_EXODIFF}")
-
 # Run the "runtest.py" file in the CWD
 add_test(NAME ${testName} COMMAND "python" "AnisotropicDamage-Bifurcation.py")
-set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
+endif(SEACAS_EXODIFF)

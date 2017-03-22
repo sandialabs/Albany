@@ -5,7 +5,7 @@
 ##*****************************************************************//
 
 # This test is not currently set up to run on the BGQ...
-IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_LCM AND LCM_TEST_EXES AND ALBANY_BGL)
+IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_LCM AND LCM_TEST_EXES AND ALBANY_BGL AND SEACAS_EXODIFF)
 
 # Create a symlink to the Partition executable
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
@@ -34,6 +34,5 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 add_test(NAME ${testName} COMMAND "python" "run_partition.py")
-set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
 
 ENDIF()

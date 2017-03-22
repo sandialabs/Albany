@@ -19,7 +19,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/smooth_tension_coarse_tet4.exo
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
-if (ALBANY_IFPACK2)
+if (ALBANY_IFPACK2 AND SEACAS_EPU AND SEACAS_EXODIFF)
 add_test(${testName}_ElasticML_Tpetra ${AlbanyT.exe} inputElastAdaptT.xml)
 add_test(${testName}_Tpetra ${AlbanyT.exe} mechanicsT.xml)
 
@@ -28,7 +28,6 @@ add_test(NAME ${testName}_NodeSizeField_Tpetra
          -DFILE_NAME=tet4_node_size_field_test_output_1 -DTEST_ARGS=mechNodeSizeFieldT.xml -DMPIMNP=${MPIMNP}
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-set_tests_properties(${testName}_NodeSizeField_Tpetra  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 
 endif()
 

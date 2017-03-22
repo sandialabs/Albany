@@ -1,6 +1,6 @@
 
 # This test is not setup to run on the BGQ as it sits...
-IF(NOT ALBANY_PARALLEL_ONLY)
+IF((NOT ALBANY_PARALLEL_ONLY) AND SEACAS_EPU AND SEACAS_EXODIFF)
 
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
@@ -53,7 +53,6 @@ else()
 add_test(NAME ${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
   -DTEST_NAME=${testName} -DMPIMNP=${MPIMNP} -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} -P runtest.cmake)
 endif()
-set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 endif()
 
 # 6i'. Run the "runtest.cmake" file in the CWD
@@ -68,7 +67,6 @@ add_test(NAME ${testName}_Tpetra COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT
   -DTEST_NAME=${testName}_Tpetra -DMPIMNP=${MPIMNP} -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} -DOUTFILE_SUFFIX=_tpetra
   -P runtest.cmake)
 endif()
-set_tests_properties(${testName}_Tpetra PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 endif()
 
 ENDIF()

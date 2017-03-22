@@ -4,9 +4,7 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
-# Create a symlink to exodiff
-
-if (NOT ALBANY_IFPACK2)
+if (NOT (ALBANY_IFPACK2 AND SEACAS_EXODIFF))
   return()
 endif()
 
@@ -50,10 +48,8 @@ IF(NOT ALBANY_PARALLEL_ONLY)
   add_test(NAME ${dirName}_galerkin COMMAND
       ${CMAKE_COMMAND} "-DALBANY=${SerialAlbanyT.exe}" -DTESTNAME=galerkin
       -DEXODIFF=${SEACAS_EXODIFF} -P runtest.cmake)
-  set_tests_properties(${dirName}_galerkin PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
 # currently exodiff fails; look into it
 # add_test(NAME ${dirName}_stabilized COMMAND
 #     ${CMAKE_COMMAND} "-DALBANY=${SerialAlbanyT.exe}" -DTESTNAME=stabilized
 #     -DEXODIFF=${SEACAS_EXODIFF} -P runtest.cmake)
-# set_tests_properties(${dirName}_stabilized PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
 ENDIF()

@@ -15,14 +15,13 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell.gen.4.2 ${CMAKE_CURRENT_BINA
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell.gen.4.3 ${CMAKE_CURRENT_BINARY_DIR}/mitchell.gen.4.3 COPYONLY)
 
 # Create the test with this name and standard executable
-IF (ALBANY_EPETRA) 
+IF (ALBANY_EPETRA AND SEACAS_EPU AND SEACAS_EXODIFF) 
 set(testName ${testDirName}_adj)
 add_test(NAME ATO:${testName} 
          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
          -DTEST_NAME=${testName} -DTEST_ARGS=nodal_adj.xml -DMPIMNP=${MPIMNP} 
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-set_tests_properties(ATO:${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 
 set(testName ${testDirName}_fd)
 add_test(NAME ATO:${testName} 
@@ -30,5 +29,4 @@ add_test(NAME ATO:${testName}
          -DTEST_NAME=${testName} -DTEST_ARGS=nodal_fd.xml -DMPIMNP=${MPIMNP} 
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-set_tests_properties(ATO:${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 ENDIF() 

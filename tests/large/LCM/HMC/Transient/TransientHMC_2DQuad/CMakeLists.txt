@@ -1,3 +1,4 @@
+if(SEACAS_EPU AND SEACAS_EXODIFF)
 # Name the test with the directory name
 get_filename_component(testDirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 set(testName ${testDirName})
@@ -17,4 +18,4 @@ add_test(NAME HMC:${testName}
          -DTEST_NAME=${testName} -DTEST_ARGS= -DMPIMNP=${MPIMNP} 
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-set_tests_properties(HMC:${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
+endif(SEACAS_EPU AND SEACAS_EXODIFF)

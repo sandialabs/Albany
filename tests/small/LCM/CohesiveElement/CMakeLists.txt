@@ -5,12 +5,15 @@
 ##*****************************************************************//
 
 # Create a symlink to exodiff
+if (SEACAS_EXODIFF AND SEACAS_ALGEBRA)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${SEACAS_EXODIFF} ${CMAKE_CURRENT_BINARY_DIR}/exodiff)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${SEACAS_ALGEBRA} ${CMAKE_CURRENT_BINARY_DIR}/algebra)
+if (ALBANY_EPETRA)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
+endif()
 if (ALBANY_IFPACK2)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
@@ -59,14 +62,9 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 IF(NOT ALBANY_PARALLEL_ONLY)
   if (ALBANY_EPETRA) 
     add_test(NAME ${testName} COMMAND "python" "runtest.py")
-    set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF};${SEACAS_ALGEBRA}")
   endif()
   if (ALBANY_IFPACK2)
     add_test(NAME ${testName}_Tpetra COMMAND "python" "runtestT.py")
-    set_tests_properties(${testName}_Tpetra  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF};${SEACAS_ALGEBRA}")
   endif()
 ENDIF()
-
-
-
-
+endif(SEACAS_EXODIFF AND SEACAS_ALGEBRA)

@@ -1,4 +1,4 @@
-
+if (SEACAS_EPU AND SEACAS_EXODIFF)
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
@@ -21,7 +21,6 @@ if (ALBANY_IFPACK2)
          -DTEST_NAME=${testName} -DTEST_ARGS= -DMPIMNP=${MPIMNP} 
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-  set_tests_properties(LaplaceBeltrami:${testName}_Tpetra  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 
   set(testName ${testDirName}_TPS)
   add_test(NAME LaplaceBeltrami:${testName}_Tpetra 
@@ -29,7 +28,6 @@ if (ALBANY_IFPACK2)
          -DTEST_NAME=${testName} -DTEST_ARGS=inputTPS.xml -DMPIMNP=${MPIMNP} 
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-  set_tests_properties(LaplaceBeltrami:${testName}_Tpetra  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 
   set(testName ${testDirName}_LB)
   add_test(NAME LaplaceBeltrami:${testName}_Tpetra 
@@ -37,7 +35,6 @@ if (ALBANY_IFPACK2)
          -DTEST_NAME=${testName} -DTEST_ARGS=inputLB.xml -DMPIMNP=${MPIMNP} 
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-  set_tests_properties(LaplaceBeltrami:${testName}_Tpetra  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 endif()
 #if (ALBANY_MUELU_EXAMPLES) 
 #    set(testName ${testDirName})
@@ -46,7 +43,6 @@ endif()
 #         -DTEST_NAME=${testName} -DTEST_ARGS=input_MueLu_64.xml -DMPIMNP=${MPIMNP} 
 #         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
 #         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-#    set_tests_properties(LaplaceBeltrami:${testName}_Tpetra_MueLu_64  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 #
 #    set(testName ${testDirName}_TPS)
 #    add_test(NAME LaplaceBeltrami:${testName}_Tpetra_MueLu_64 
@@ -54,7 +50,6 @@ endif()
 #         -DTEST_NAME=${testName} -DTEST_ARGS=inputTPS_MueLu_64.xml -DMPIMNP=${MPIMNP} 
 #         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
 #         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-#    set_tests_properties(LaplaceBeltrami:${testName}_Tpetra_MueLu_64  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 #
 #    set(testName ${testDirName}_LB)
 #    add_test(NAME LaplaceBeltrami:${testName}_Tpetra_MueLu_64 
@@ -62,7 +57,6 @@ endif()
 #         -DTEST_NAME=${testName} -DTEST_ARGS=inputLB_MueLu_64.xml -DMPIMNP=${MPIMNP} 
 #         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
 #         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-#    set_tests_properties(LaplaceBeltrami:${testName}_Tpetra_MueLu_64  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 #  else()
 #    set(testName ${testDirName})
 #    add_test(NAME LaplaceBeltrami:${testName}_Tpetra_MueLu 
@@ -70,7 +64,6 @@ endif()
 #         -DTEST_NAME=${testName} -DTEST_ARGS=input_MueLu.xml -DMPIMNP=${MPIMNP} 
 #         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
 #         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-#    set_tests_properties(LaplaceBeltrami:${testName}_Tpetra_MueLu  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 #
 #    set(testName ${testDirName}_TPS)
 #    add_test(NAME LaplaceBeltrami:${testName}_Tpetra_MueLu 
@@ -78,7 +71,6 @@ endif()
 #         -DTEST_NAME=${testName} -DTEST_ARGS=inputTPS_MueLu.xml -DMPIMNP=${MPIMNP} 
 #         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
 #         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-#    set_tests_properties(LaplaceBeltrami:${testName}_Tpetra_MueLu  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 #
 #    set(testName ${testDirName}_LB)
 #    add_test(NAME LaplaceBeltrami:${testName}_Tpetra_MueLu 
@@ -86,5 +78,5 @@ endif()
 #         -DTEST_NAME=${testName} -DTEST_ARGS=inputLB_MueLu.xml -DMPIMNP=${MPIMNP} 
 #         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
 #         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-#    set_tests_properties(LaplaceBeltrami:${testName}_Tpetra_MueLu  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 ##endif()
+endif(SEACAS_EPU AND SEACAS_EXODIFF)
