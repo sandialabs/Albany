@@ -325,6 +325,10 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     //! Get the residual field names
     Teuchos::Array<std::string> const& getResNames() { return resNames; }
 
+    //! Get the APF owned nodes
+    apf::DynamicArray<apf::Node> const& getOwnedNodes() { return ownedNodes; }
+
+
   private:
 
     //! Private to prohibit copying

@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
 #include "Albany_SimMeshStruct.hpp"
 
 #include <MeshSim.h>
@@ -44,6 +43,7 @@ Albany::SimMeshStruct::SimMeshStruct(
   std::string mesh_file = params->get<std::string>("Sim Input File Name");
   pParMesh sim_mesh = PM_load(mesh_file.c_str(), sim_model, NULL);
   mesh = apf::createMesh(sim_mesh);
+  PM_partition(sim_mesh, 0, 0);
 
   APFMeshStruct::init(params, commT);
 
