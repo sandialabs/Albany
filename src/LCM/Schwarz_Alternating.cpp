@@ -70,42 +70,36 @@ SchwarzAlternating(
   //
   //
   apps_.resize(num_models_);
-  models_.resize(num_models_);
+  solvers_.resize(num_models_);
 
   //Set up each application and model object
   for (auto m = 0; m < num_models_; ++m) {
 
     //get parameterlist from mth model
     Albany::SolverFactory
-    solver_factory(model_filenames[m], comm_);
+    solver_factory(model_filenames[m], comm);
 
-    // solver_factory will go out of scope, so get a copy of the PL. We take
-    // ownership and give weak pointers to everyone else.
-    Teuchos::RCP<Teuchos::ParameterList>
-    model_app_params_m = Teuchos::rcp(
-        new Teuchos::ParameterList(solver_factory.getParameters()));
-
-    // Pass these on the parameter list because the are needed before
-    // BC evaluators are built.
+    Teuchos::ParameterList &
+    solver_factory_params = solver_factory.getParameters();
 
     // Add application array for later use in Schwarz BC.
-    model_app_params_m->set("Application Array", apps_);
+    solver_factory_params.set("Application Array", apps_);
 
     // See application index for use with Schwarz BC.
-    model_app_params_m->set("Application Index", m);
+    solver_factory_params.set("Application Index", m);
 
     // App application name-index map for later use in Schwarz BC.
-    model_app_params_m->set("Application Name Index Map", app_name_index_map);
+    solver_factory_params.set("Application Name Index Map", app_name_index_map);
 
-    //create application for mth model
-    apps_[m] = Teuchos::rcp(
-        new Albany::Application(comm, model_app_params_m, initial_guess));
+    Teuchos::RCP<Albany::Application>
+    app;
 
-    //Create model evaluator
-    Albany::ModelFactory
-    model_factory(model_app_params_m, apps_[m]);
+    Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
+    solver = solver_factory.createAndGetAlbanyAppT(app, comm, comm);
 
-    models_[m] = model_factory.createT();
+    solvers_[m] = solver;
+
+    apps_[m] = app;
   }
 
   //
@@ -308,7 +302,7 @@ createInArgsImpl() const
 
   sub_inargs_.resize(num_models_);
   for (auto m = 0; m < num_models_; ++m) {
-    sub_inargs_[m] = models_[m]->createInArgs();
+    sub_inargs_[m] = solvers_[m]->createInArgs();
   }
 
   return result;
@@ -338,7 +332,7 @@ createOutArgsImpl() const
 
   sub_outargs_.resize(num_models_);
   for (auto m = 0; m < num_models_; ++m) {
-    sub_outargs_[m] = models_[m]->createOutArgs();
+    sub_outargs_[m] = solvers_[m]->createOutArgs();
   }
 
   return result;
@@ -425,20 +419,26 @@ SchwarzLoop(
   bool
   converged{false};
 
+  int const
+  max_iter = 64;
+
+  int
+  num_iter = 0;
+
   while (converged == false) {
 
     for (auto m = 0; m < num_models_; ++m) {
 
-      Thyra::ModelEvaluator<ST> &
-      model = *(models_[m]);
+      Thyra::ResponseOnlyModelEvaluatorBase<ST> &
+      solver = *(solvers_[m]);
 
       Thyra::ModelEvaluatorBase::InArgs<ST> &
-      in_args_m = sub_inargs_[m];
+      in_args = sub_inargs_[m];
 
       Thyra::ModelEvaluatorBase::OutArgs<ST> &
-      out_args_m = sub_outargs_[m];
+      out_args = sub_outargs_[m];
 
-      model.evalModel(in_args_m, out_args_m);
+      solver.evalModel(in_args, out_args);
 
       norms_soln(m) = 0.0;
       norms_diff(m) = 0.0;
@@ -456,7 +456,9 @@ SchwarzLoop(
     ST const
     rel_error = norm_soln > 0.0 ? norm_diff / norm_soln : norm_diff;
 
-    converged = abs_error <= abs_tol || rel_error <= rel_tol;
+    ++num_iter;
+
+    converged = num_iter >= max_iter;
   }
 
   return;

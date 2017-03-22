@@ -506,52 +506,57 @@ main(int argc, char *argv[]) {
     }
 
     // Create debug output object
-    Teuchos::ParameterList &debugParams =
-        slvrfctry.getParameters().sublist("Debug Output", true);
-    bool writeToMatrixMarketSoln =
-        debugParams.get("Write Solution to MatrixMarket", false);
-    bool writeToMatrixMarketDistrSolnMap = debugParams.get(
-        "Write Distributed Solution and Map to MatrixMarket", false);
-    bool writeToCoutSoln =
-        debugParams.get("Write Solution to Standard Output", false);
+    bool const
+    has_responses = responses.size() > 0;
 
-    const RCP<const Tpetra_Vector> xfinal = responses.back();
-    double mnv = xfinal->meanValue();
-    *out << "\nMain_Solve: MeanValue of final solution " << mnv << std::endl;
-    *out << "\nNumber of Failed Comparisons: " << status << std::endl;
-    if (writeToCoutSoln == true) {
-      Albany::printTpetraVector(*out << "\nxfinal:\n", xfinal);
-    }
+    if (has_responses == true) {
+      Teuchos::ParameterList &debugParams =
+          slvrfctry.getParameters().sublist("Debug Output", true);
+      bool writeToMatrixMarketSoln =
+          debugParams.get("Write Solution to MatrixMarket", false);
+      bool writeToMatrixMarketDistrSolnMap = debugParams.get(
+          "Write Distributed Solution and Map to MatrixMarket", false);
+      bool writeToCoutSoln =
+          debugParams.get("Write Solution to Standard Output", false);
 
-    if (debugParams.get<bool>("Analyze Memory", false))
-      Albany::printMemoryAnalysis(std::cout, comm);
+      const RCP<const Tpetra_Vector> xfinal = responses.back();
+      double mnv = xfinal->meanValue();
+      *out << "\nMain_Solve: MeanValue of final solution " << mnv << std::endl;
+      *out << "\nNumber of Failed Comparisons: " << status << std::endl;
+      if (writeToCoutSoln == true) {
+        Albany::printTpetraVector(*out << "\nxfinal:\n", xfinal);
+      }
 
-    if (writeToMatrixMarketSoln == true) {
-      // create serial map that puts the whole solution on processor 0
-      int numMyElements = (xfinal->getMap()->getComm()->getRank() == 0)
-                              ? xfinal->getMap()->getGlobalNumElements()
-                              : 0;
+      if (debugParams.get<bool>("Analyze Memory", false))
+        Albany::printMemoryAnalysis(std::cout, comm);
 
-      Teuchos::RCP<const Tpetra_Map> serial_map =
-          Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm));
+      if (writeToMatrixMarketSoln == true) {
+        // create serial map that puts the whole solution on processor 0
+        int numMyElements = (xfinal->getMap()->getComm()->getRank() == 0)
+                                ? xfinal->getMap()->getGlobalNumElements()
+                                : 0;
 
-      // create importer from parallel map to serial map and populate serial
-      // solution xfinal_serial
-      Teuchos::RCP<Tpetra_Import> importOperator =
-          Teuchos::rcp(new Tpetra_Import(xfinal->getMap(), serial_map));
-      Teuchos::RCP<Tpetra_Vector> xfinal_serial =
-          Teuchos::rcp(new Tpetra_Vector(serial_map));
-      xfinal_serial->doImport(*xfinal, *importOperator, Tpetra::INSERT);
+        Teuchos::RCP<const Tpetra_Map> serial_map =
+            Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm));
 
-      // writing to MatrixMarket file
-      Tpetra_MatrixMarket_Writer::writeDenseFile("xfinal.mm", xfinal_serial);
-    }
-    if (writeToMatrixMarketDistrSolnMap == true) {
-      // writing to MatrixMarket file
-      Tpetra_MatrixMarket_Writer::writeDenseFile(
-          "xfinal_distributed.mm", *xfinal);
-      Tpetra_MatrixMarket_Writer::writeMapFile(
-          "xfinal_distributed_map.mm", *xfinal->getMap());
+        // create importer from parallel map to serial map and populate serial
+        // solution xfinal_serial
+        Teuchos::RCP<Tpetra_Import> importOperator =
+            Teuchos::rcp(new Tpetra_Import(xfinal->getMap(), serial_map));
+        Teuchos::RCP<Tpetra_Vector> xfinal_serial =
+            Teuchos::rcp(new Tpetra_Vector(serial_map));
+        xfinal_serial->doImport(*xfinal, *importOperator, Tpetra::INSERT);
+
+        // writing to MatrixMarket file
+        Tpetra_MatrixMarket_Writer::writeDenseFile("xfinal.mm", xfinal_serial);
+      }
+      if (writeToMatrixMarketDistrSolnMap == true) {
+        // writing to MatrixMarket file
+        Tpetra_MatrixMarket_Writer::writeDenseFile(
+            "xfinal_distributed.mm", *xfinal);
+        Tpetra_MatrixMarket_Writer::writeMapFile(
+            "xfinal_distributed_map.mm", *xfinal->getMap());
+      }
     }
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);

@@ -82,12 +82,6 @@ public:
 
 protected:
 
-  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
-  range_space_;
-  
-  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
-  domain_space_;
-
   /// Create operator form of dg/dx for distributed responses
   Teuchos::RCP<Thyra::LinearOpBase<ST>>
   create_DgDx_op_impl(int j) const;
@@ -123,12 +117,8 @@ private:
       Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
       Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
 
-  /// List of free parameter names
-  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>
-  param_names_;
-  
-  Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
-  models_;
+  Teuchos::Array<Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>>
+  solvers_;
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   apps_;
