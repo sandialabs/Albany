@@ -121,9 +121,6 @@ private:
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   apps_;
 
-  Teuchos::RCP<Teuchos::Comm<int> const>
-  comm_{Teuchos::null};
-
   /// Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
   Thyra::ModelEvaluatorBase::InArgs<ST>
   nominal_values_;

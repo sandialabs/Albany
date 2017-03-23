@@ -19,8 +19,6 @@ SchwarzAlternating(
     Teuchos::RCP<Teuchos::Comm<int> const> const & comm,
     Teuchos::RCP<Tpetra_Vector const> const & initial_guess)
 {
-  comm_ = comm;
-
   Teuchos::ParameterList &
   alt_system_params = app_params->sublist("Alternating System");
 
@@ -69,7 +67,7 @@ SchwarzAlternating(
   bool const
   have_responses = problem_params.isSublist("Response Functions");
 
-  ALBANY_ASSERT(have_responses == false, "No responses allowed.");
+  ALBANY_ASSERT(have_responses == false, "Responses not supported.");
 
   //
   //
@@ -113,6 +111,7 @@ SchwarzAlternating(
   nominal_values_ = this->createInArgsImpl();
   nominal_values_.set_x(Teuchos::null);
   nominal_values_.set_x_dot(Teuchos::null);
+  nominal_values_.set_x_dot_dot(Teuchos::null);
 }
 
 //
@@ -357,8 +356,8 @@ evalModelImpl(
 }
 
 //
-// Validate applicaton parameters of applications not created via a
-// SolverFactory Check usage and whether necessary.
+// Validate application parameters not created via a SolverFactory
+// Check usage and whether necessary.
 //
 Teuchos::RCP<Teuchos::ParameterList const>
 SchwarzAlternating::
@@ -366,10 +365,6 @@ getValidAppParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList>
   list = Teuchos::rcp(new Teuchos::ParameterList("ValidAppParams"));
-
-  list->sublist("Problem", false, "Problem sublist");
-  list->sublist("Debug Output", false, "Debug Output sublist");
-  list->sublist("Alternating System", false, "Alternating system sublist");
 
   return list;
 }
@@ -382,20 +377,7 @@ SchwarzAlternating::
 getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList>
-  list = Teuchos::createParameterList("ValidSchwarzAlternatingProblemParams");
-
-  list->set<std::string>("Name", "", "String to designate Problem Class");
-
-  list->set<int>(
-      "Phalanx Graph Visualization Detail",
-      0,
-      "Phalanx Graph and level of detail");
-
-  //FIXME: anything else to validate?
-  list->set<std::string>(
-      "Solution Method",
-      "Steady",
-      "Steady, Transient, or Continuation");
+  list = Teuchos::createParameterList("ValidProblemParams");
 
   return list;
 }
