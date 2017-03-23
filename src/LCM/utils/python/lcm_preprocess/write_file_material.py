@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
+import os
 import sys
 import string
 from create_slip_systems import create_slip_systems
 from exodus import exodus
+from lcm_postprocess._core import InputError
 
 INDENTATION = 2
 
@@ -62,6 +64,7 @@ def create_vars_output_default():
     vars_output["integration_weights"] = "true"
     vars_output["Fp"] = "false"
     vars_output["L"] = "false"
+    vars_output["Lp"] = "false"
     vars_output["eqps"] = "false"
     vars_output["gamma"] = "false"
     vars_output["gamma_dot"] = "false"
@@ -260,6 +263,7 @@ def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, names_bloc
         WriteParameter("Output Fp", "bool", vars_output["Fp"], mat_file, indent)
         WriteParameter("Output Deformation Gradient", "bool", vars_output["F"], mat_file, indent)
         WriteParameter("Output L", "bool", vars_output["L"], mat_file, indent)
+        WriteParameter("Output Lp", "bool", vars_output["Lp"], mat_file, indent)
         WriteParameter("Output CP_Residual", "bool", vars_output["cp_residual"], mat_file, indent)
         WriteParameter("Output CP_Residual_Iter", "bool", vars_output["cp_residual_iter"], mat_file, indent)
         WriteParameter("Output eqps", "bool", vars_output["eqps"], mat_file, indent)
@@ -365,13 +369,42 @@ def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, names_bloc
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 4:
+    if len(sys.argv) is 1:
+
+        names_file = os.walk('.').next()[2]
+
+        names_potential = [name for name in names_file if name.lower().endswith('_matprops.txt')]
+        if len(names_potential) is 1:
+            name_base = '_'.join(names_potential[0].split('_')[:-1])
+            mat_params_file_name = names_potential[0]
+        else:
+            raise InputError('Non-unique or missing assumed base file name')
+
+        names_potential = [name for name in names_file if name.lower().endswith('_rotations.txt')]
+        if len(names_potential) is 1:
+            if name_base != '_'.join(names_potential[0].split('_')[:-1]):
+                raise InputError('Inconsistently named rotations file. ' + name_base + '_Rotations.txt must exist to use assumed names.')
+            name_base = '_'.join(names_potential[0].split('_')[:-1])
+            rotations_file_name = names_potential[0]
+        else:
+            raise InputError('Non-unique or missing rotations file. ' + name_base + '_Rotations.txt must exist to use assumed names.')
+
+        names_potential = [name for name in names_file if name.lower().endswith('_rotations.txt')]
+        if names_file.__contains__(name_base + '.g'):
+            name_file_exodus = name_base + '.g'
+        else:
+            raise InputError('Inconsistently named or missing mesh file. ' + name_base + '.g must exist to use assumed names.')
+
+    elif len(sys.argv) != 4:
         print "\nUsage: python -m lcm_preprocess.write_file_material <mat_props.txt> <rotation_matrices.txt> <mesh_filename>\n"
         sys.exit(1)
 
-    mat_params_file_name = sys.argv[1]
-    rotations_file_name = sys.argv[2]
-    name_file_exodus = sys.argv[3]
+    else:
+
+        mat_params_file_name = sys.argv[1]
+        rotations_file_name = sys.argv[2]
+        name_file_exodus = sys.argv[3]
+
     names_block = read_names_block(name_file_exodus)
 
     # List of material parameters that are expected to be in the input file

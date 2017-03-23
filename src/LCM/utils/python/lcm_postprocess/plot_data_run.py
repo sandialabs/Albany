@@ -1,12 +1,16 @@
 #!/usr/bin/python
 
+from ._core import InputError
 import cPickle as pickle
 import matplotlib.pyplot as plt
-# from matplotlib import rcParams
+from matplotlib import rcParams
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.ticker import MaxNLocator
 import numpy as np
 from operator import itemgetter
+
+
 
 def set_num_ticks(axis, num_xticks = 5, num_yticks = 5, integer = (False, False)):
     xticks = [x for x in np.linspace(axis.get_xlim()[0], axis.get_xlim()[1], num_xticks)]
@@ -18,28 +22,70 @@ def set_num_ticks(axis, num_xticks = 5, num_yticks = 5, integer = (False, False)
     axis.set_xticks(xticks)
     axis.set_yticks(yticks)
 
-# Plot the time stepping and convergence data
-# @profile
-def plot_data_run(run = None, filename = None):
+
+
+def extract_steps(**kwargs):
+
+    filename = kwargs.get('filename')
+    run = kwargs.get('run')
+    steps = kwargs.get('steps')
+
+    if steps is None and run is None and filename is None:
+        raise InputError('filename or run or steps must be specified')
 
     if filename != None:
         run = pickle.load(open(filename, 'rb'))
 
-    steps = sorted(run.steps.values(), key = lambda step: step.step_number)
+    if run != None:
+        steps = sorted(run.steps.values(), key = lambda step: step.step_number)
 
-    # plt.rc('text', usetex=True)
-    plt.rc('font', family='serif', size=22)
+    return steps
+
+
+
+def setup_plot(**kwargs):
+
+    plt.rc('font', family = 'serif', size = 22)
+    # rcParams['axes.titlesize'] = 18
     # rcParams['text.latex.preamble'] = [r'\usepackage{boldtensors}']
 
-    fig = Figure()
-    canvas = FigureCanvas(fig)
-    ax = fig.add_subplot(111)
 
-    #
-    # Plot the number of nonlinear iterations vs step #
-    #
-    step_numbers = [step.step_number for step in steps if step.status_convergence == 1]
-    num_iters_nonlinear = [step.num_iters_nonlinear for step in steps if step.status_convergence == 1]
+
+# Plot the time stepping and convergence data
+# @profile
+def plot_data_run(steps = None, title = None, **kwargs):
+
+    steps = extract_steps(**kwargs)
+    setup_plot(**kwargs)
+
+    plot_nonlinear_iterations(steps = steps, title = title)
+    plot_step_size(steps = steps, title = title)
+    plot_norm_increment(steps = steps, title = title)
+    plot_norm_residual(steps = steps, title = title)
+    plot_convergence_increment(steps = steps, title = title)
+    plot_convergence_residual(steps = steps, title = title)
+
+# end def plot_data_run(run = None, filename = None):
+
+
+
+#
+# Plot the number of nonlinear iterations vs step #
+#
+def plot_nonlinear_iterations(**kwargs):
+
+    steps = extract_steps(**kwargs)
+    
+    fig = Figure()
+    ax = fig.add_subplot(111)
+    title = fig.suptitle(kwargs.get('title'), fontsize = 14, fontweight = 'bold')
+    canvas = FigureCanvas(fig)
+
+    step_numbers = [
+        step.step_number for step in steps if step.status_convergence == 1]
+
+    num_iters_nonlinear = [
+        step.num_iters_nonlinear for step in steps if step.status_convergence == 1]
 
     ax.bar(
         step_numbers,
@@ -50,15 +96,37 @@ def plot_data_run(run = None, filename = None):
 
     set_num_ticks(ax, integer = (True, True))
 
-    canvas.print_figure('nonlinear_iterations.pdf', bbox_inches = 'tight')
+    canvas.print_figure(
+        'nonlinear_iterations.pdf',
+        bbox_extra_artists = [title],
+        bbox_inches = 'tight')
 
 
-    #
-    # Plot the step size vs iteration #
-    #
-    ax.clear()
 
-    sizes_step = [step.size_step for step in steps if step.status_convergence == 1]
+#
+# Plot the step size vs iteration #
+#
+def plot_step_size(**kwargs):
+
+    steps = extract_steps(**kwargs)
+    
+    fig = Figure()
+    ax = fig.add_subplot(111)
+    title = fig.suptitle(kwargs.get('title'), fontsize = 14, fontweight = 'bold')
+    canvas = FigureCanvas(fig)
+
+    step_numbers = [
+        step.step_number for step in steps if step.status_convergence == 1]
+
+    if steps is None:
+        if run is None:
+            raise InputError('run or steps must be specified')
+        steps = extract_steps(run = run)
+
+    ax.hold(False)
+
+    sizes_step = [
+        step.size_step for step in steps if step.status_convergence == 1]
 
     p1 = ax.plot(
         step_numbers[1:],
@@ -68,8 +136,13 @@ def plot_data_run(run = None, filename = None):
 
     ax.hold(True)
 
-    step_numbers = [step.step_number for step in steps if step.status_convergence == -1]
-    sizes_step = [step.size_step for step in steps if step.status_convergence == -1]
+    step_numbers = [
+        step.step_number for step in steps if step.status_convergence == -1]
+
+    sizes_step = [
+        step.size_step for step in steps if step.status_convergence == -1]
+
+    extra_artists = [title]
 
     if len(step_numbers) > 0:
 
@@ -87,11 +160,9 @@ def plot_data_run(run = None, filename = None):
             borderaxespad = 0.,
             fontsize = 15)
 
-        extra_artists = [legend]
+        extra_artists.append(legend)
 
-    else:
-
-        extra_artists = []
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
     ax.set_yscale('log')
     ax.set_xlabel('Simulation step')
@@ -103,10 +174,21 @@ def plot_data_run(run = None, filename = None):
         bbox_inches = 'tight')
 
 
-    #
-    # Plot the increment norm vs iteration #
-    #
+
+#
+# Plot the increment norm vs iteration #
+#
+def plot_norm_increment(**kwargs):
+
+    steps = extract_steps(**kwargs)
+    
+    fig = Figure()
+    ax = fig.add_subplot(111)
+    title = fig.suptitle(kwargs.get('title'), fontsize = 14, fontweight = 'bold')
+    canvas = FigureCanvas(fig)
+
     ax.clear()
+    fig.suptitle(title, fontsize=14, fontweight='bold')
     ax.hold(True)
     
     for step in steps:
@@ -129,7 +211,7 @@ def plot_data_run(run = None, filename = None):
     ax.set_xlabel('Iteration')
     ax.set_ylabel(r'Increment Norm $\left\| \Delta u^{(n)} \right\|$')
 
-    string_legend = [str(i + 1) for i in range(run.num_steps)]
+    string_legend = [str(i + 1) for i in range(len(steps))]
 
     legend = ax.legend(
         string_legend,
@@ -142,14 +224,25 @@ def plot_data_run(run = None, filename = None):
 
     canvas.print_figure(
         'norm_increment.pdf',
-        bbox_extra_artists = [legend],
+        bbox_extra_artists = [title, legend],
         bbox_inches = 'tight')
 
 
-    #
-    # Plot the residual norm vs iteration #
-    #
+
+#
+# Plot the residual norm vs iteration #
+#
+def plot_norm_residual(**kwargs):
+
+    steps = extract_steps(**kwargs)
+    
+    fig = Figure()
+    ax = fig.add_subplot(111)
+    title = fig.suptitle(kwargs.get('title'), fontsize = 14, fontweight = 'bold')
+    canvas = FigureCanvas(fig)
+
     ax.clear()
+    fig.suptitle(title, fontsize=14, fontweight='bold')
     ax.hold(True)
 
     for step in steps:
@@ -171,6 +264,8 @@ def plot_data_run(run = None, filename = None):
     ax.set_xlabel('Iteration')
     ax.set_ylabel(r'Residual Norm $\left\| F^{(n)} \right\|$')
 
+    string_legend = [str(i + 1) for i in range(len(steps))]
+
     legend = ax.legend(
         string_legend,
         bbox_to_anchor = (1.05, 1), 
@@ -182,21 +277,33 @@ def plot_data_run(run = None, filename = None):
 
     canvas.print_figure(
         'norm_residual.pdf',
-        bbox_extra_artists = [legend],
+        bbox_extra_artists = [title, legend],
         bbox_inches = 'tight')
 
 
-    #
-    # Plot the increment norm convergence
-    #
+
+#
+# Plot the increment norm convergence
+#
+def plot_convergence_increment(**kwargs):
+
+    steps = extract_steps(**kwargs)
+    
+    fig = Figure()
+    ax = fig.add_subplot(111)
+    title = fig.suptitle(kwargs.get('title'), fontsize = 14, fontweight = 'bold')
+    canvas = FigureCanvas(fig)
+
     ax.clear()
+    fig.suptitle(title, fontsize=14, fontweight='bold')
     ax.hold(True)
     
     for step in steps:
 
         if step.status_convergence == 1:
 
-            values_plot = [step.iters_nonlinear[x].norm_increment for x in step.iters_nonlinear]
+            values_plot = [
+                step.iters_nonlinear[x].norm_increment for x in step.iters_nonlinear]
 
             ax.plot(
                 values_plot[1:-1],
@@ -211,6 +318,8 @@ def plot_data_run(run = None, filename = None):
     ax.set_xlabel(r'Increment Norm $\left\| \Delta u^{(n)} \right\|$')
     ax.set_ylabel(r'Increment Norm $\left\| \Delta u^{(n+1)} \right\|$')
 
+    string_legend = [str(i + 1) for i in range(len(steps))]
+
     legend = ax.legend(
         string_legend,
         bbox_to_anchor = (1.05, 1), 
@@ -222,14 +331,25 @@ def plot_data_run(run = None, filename = None):
 
     canvas.print_figure(
         'norm_increment_convergence.pdf',
-        bbox_extra_artists = [legend],
+        bbox_extra_artists = [title, legend],
         bbox_inches = 'tight')
 
 
-    #
-    # Plot the residual norm convergence
-    #
+
+#
+# Plot the residual norm convergence
+#
+def plot_convergence_residual(**kwargs):
+
+    steps = extract_steps(**kwargs)
+    
+    fig = Figure()
+    ax = fig.add_subplot(111)
+    title = fig.suptitle(kwargs.get('title'), fontsize = 14, fontweight = 'bold')
+    canvas = FigureCanvas(fig)
+
     ax.clear()
+    fig.suptitle(title, fontsize=14, fontweight='bold')
     ax.hold(True)
     
     for step in steps:
@@ -251,6 +371,8 @@ def plot_data_run(run = None, filename = None):
     ax.set_ylabel(r'Residual Norm $\left\| F^{(n)} \right\|$')
     ax.set_ylabel(r'Residual Norm $\left\| F^{(n+1)} \right\|$')
 
+    string_legend = [str(i + 1) for i in range(len(steps))]
+
     legend = ax.legend(
         string_legend,
         bbox_to_anchor = (1.05, 1), 
@@ -262,10 +384,8 @@ def plot_data_run(run = None, filename = None):
 
     canvas.print_figure(
         'norm_residual_convergence.pdf',
-        bbox_extra_artists = [legend],
+        bbox_extra_artists = [title, legend],
         bbox_inches = 'tight')
-
-# end def plot_data_run(run = None, filename = None):
 
 
 
@@ -278,6 +398,18 @@ if __name__ == '__main__':
     except:
         raise
 
-    plot_data_run(filename = name_file_input)
+    try:
+        title = sys.argv[2]
+    except:
+        title = ''.join(name_file_input.split('/')[-1].split('.')[:-1])
+        pass
+
+    try:
+        function = locals()[sys.argv[3]]
+    except:
+        function = plot_data_run
+        pass
+
+    function(filename = name_file_input, title = title)
 
 # end if __name__ == '__main__':

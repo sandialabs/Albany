@@ -69,6 +69,20 @@ class InputError(Exception):
     def __str__(self):
         return repr(self.message)
 
+
+
+def read_input(arglist, delimiter = '='):
+
+    argdict = {}
+
+    for arg in arglist:
+
+        key, value = arg.split(delimiter)
+
+        argdict[key] = value
+
+    return argdict
+
 #
 # Class for timing
 #
