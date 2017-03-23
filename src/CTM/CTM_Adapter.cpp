@@ -548,6 +548,7 @@ void Adapter::adapt(const double t_current) {
   printf("adapt(): before adapt - coming in: %d tets on cpu %d\n",
       M_numRegions(PM_mesh(sim_mesh, 0)), PMU_rank());
 
+  PCU_Barrier();
   double t0 = PCU_Time();
 
   // create the simmetrix adapter
@@ -573,19 +574,20 @@ void Adapter::adapt(const double t_current) {
   write_debug(debug, apf_mesh, "preadapt_", call_count);
   apf::destroyField(spr_size_field);
 
+  PCU_Barrier();
   double t1 = PCU_Time();
-  *out << "adapt(): preparing mesh adapt in " << t1-t0 << " seconds\n";
+  *out << "adapt(): prepared for adapt in " << t1-t0 << " seconds\n";
 
   // run the adapter
-  double t2 = PCU_Time();
   pProgress progress = Progress_new();
   MSA_adapt(adapter, progress);
   Progress_delete(progress);
   MSA_delete(adapter);
   MS_deleteMeshCase(mcase);
   write_debug(debug, apf_mesh, "postadapt_", call_count);
+  PCU_Barrier();
   double t3 = PCU_Time();
-  *out << "adapt(): mesh adapt in " << t3-t2 << " seconds\n";
+  *out << "adapt(): mesh adapted in " << t3-t1 << " seconds\n";
 
   // add the layer
   *out << "adapt(): adding layer: " << current_layer+1 << std::endl;
@@ -597,29 +599,38 @@ void Adapter::adapt(const double t_current) {
   // clean up
   PList_delete(sim_field_list);
 
-  // partition the mesh
+  PCU_Barrier();
   double t4 = PCU_Time();
+  *out << "adapt(): layer added in " << t4-t3 << " seconds\n";
+  // partition the mesh
   Parma_PrintPtnStats(apf_mesh, "pre load balance:");
   PM_partition(sim_mesh, 0, 0);
   Parma_PrintPtnStats(apf_mesh, "post load balance:");
+  PCU_Barrier();
   double t5 = PCU_Time();
-  *out << "adapt(): load balancing in " << t5-t4 << " seconds\n";
+  *out << "adapt(): load balanced in " << t5-t4 << " seconds\n";
 
   // rebuild the data structures needed for analysis
-  double t6 = PCU_Time();
   apf_mesh->verify();
-  auto t_sim_disc = rcp_dynamic_cast<Albany::SimDiscretization>(t_disc);
-  auto m_sim_disc = rcp_dynamic_cast<Albany::SimDiscretization>(m_disc);
-  t_sim_disc->updateMesh(/* transfer ip = */ false, param_lib);
-  m_sim_disc->updateMesh(/* transfer ip = */ false, param_lib);
+  PCU_Barrier();
   double t7 = PCU_Time();
-  *out << "adapt(): update albany structures in " << t7-t6 << " seconds\n";
+  *out << "adapt(): mesh verified in " << t7-t5 << " seconds\n";
+  auto t_sim_disc = rcp_dynamic_cast<Albany::SimDiscretization>(t_disc);
+  t_sim_disc->updateMesh(/* transfer ip = */ false, param_lib);
+  PCU_Barrier();
+  double t8 = PCU_Time();
+  *out << "adapt(): updated temperature discretization in " << t8-t7 << " seconds\n";
+  auto m_sim_disc = rcp_dynamic_cast<Albany::SimDiscretization>(m_disc);
+  m_sim_disc->updateMesh(/* transfer ip = */ false, param_lib);
+  PCU_Barrier();
+  double t9 = PCU_Time();
+  *out << "adapt(): updated mechanics discretization in " << t9-t8 << " seconds\n";
 
   // print stats after adaptation
   apf::printStats(apf_mesh);
 
   // print a final statement
-  *out << "adapt(): going out in " << PCU_Time()
+  *out << "adapt(): exiting at " << PCU_Time()
        << ", cpu = " << PMU_rank() << std::endl;
   printf("adapt(): leaving %d tets on cpu %d\n",
       M_numRegions(PM_mesh(sim_mesh,0)), PMU_rank());
