@@ -20,7 +20,7 @@ WindowFrame->Normal*)
 Notebook[{
 
 Cell[CellGroupData[{
-Cell["Testing singleSlipSolution.xml", "Title",
+Cell["Testing singleSlipSolution.yaml", "Title",
  CellChangeTimes->{{3.6361189492461967`*^9, 3.636118963678875*^9}, {
   3.656258822816071*^9, 3.6562588245525217`*^9}}],
 
@@ -1738,7 +1738,7 @@ qMlb6q6PKegbnOATlf1hIaN+wt3EyLKDfBeQFnPFVt5eFhT29VwTcITku7Sg
 MEm4A2q2+MsXyYSESDTNqu27IJLPrXVWCElRt0vgZJcP5Hm7/nqiFJLjhTqR
 +kggaPzsOSYZQnJp4UizSzoPhrk7O03R68JTwlO6DsB6367HfzAvzWqYyF3J
 B7XqgWQa/WYPa7ckUgBE97F/HN3jVbHTpj4cZqJL/YfR6oS6D7q0CHg+9qWp
-F+1s7TahZB0BJmfxmlfoMnmedoVGBF4nLM7M9ZEeapNdjD0KQx5mI+1oDd0w
+F+1s7TahZB0BJm.yamlfoMnmedoVGBF4nLM7M9ZEeapNdjD0KQx5mI+1oDd0w
 PmslhqUxU7xbaLMojrNfazRkJ+jbmtAdyx7zMsJOwGhRHasG3T7bApW0WDB0
 yHMr0Kv4myh1lQRiDDu+FqNz0i7779soheKWj/wCNOesEXVnRgq+vXkPstBj
 k3rmBm08iBW2dgr0vdDqOllZAgSxGguS0OYGWtX9uJPQn+84E4uuTJSZUx6J
@@ -2480,7 +2480,7 @@ qMlb6q6PKegbnOATlf1hIaN+wt3EyLKDfBeQFnPFVt5eFhT29VwTcITku7Sg
 MEm4A2q2+MsXyYSESDTNqu27IJLPrXVWCElRt0vgZJcP5Hm7/nqiFJLjhTqR
 +kggaPzsOSYZQnJp4UizSzoPhrk7O03R68JTwlO6DsB6367HfzAvzWqYyF3J
 B7XqgWQa/WYPa7ckUgBE97F/HN3jVbHTpj4cZqJL/YfR6oS6D7q0CHg+9qWp
-F+1s7TahZB0BJmfxmlfoMnmedoVGBF4nLM7M9ZEeapNdjD0KQx5mI+1oDd0w
+F+1s7TahZB0BJm.yamlfoMnmedoVGBF4nLM7M9ZEeapNdjD0KQx5mI+1oDd0w
 PmslhqUxU7xbaLMojrNfazRkJ+jbmtAdyx7zMsJOwGhRHasG3T7bApW0WDB0
 yHMr0Kv4myh1lQRiDDu+FqNz0i7779soheKWj/wCNOesEXVnRgq+vXkPstBj
 k3rmBm08iBW2dgr0vdDqOllZAgSxGguS0OYGWtX9uJPQn+84E4uuTJSZUx6J

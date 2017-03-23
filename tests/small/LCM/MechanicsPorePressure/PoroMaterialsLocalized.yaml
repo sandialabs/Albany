@@ -1,0 +1,92 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: Soil
+    block_2: 
+      material: Soil
+    block_3: 
+      material: Weak Soil
+      Surface Element: true
+      Localization thickness parameter: 0.00010000000
+  Materials: 
+    Soil: 
+      Material Model: 
+        Model Name: J2
+      Stabilization Parameter: 0.00000000e+00
+      Porosity: 
+        Porosity Type: Constant
+        Value: 0.50000000
+        Initial Porosity Value: 0.50000000
+        Grain Bulk Modulus Value: 5.00000000e+09
+      Biot Coefficient: 
+        Biot Coefficient Type: Constant
+        Value: 0.99990000
+        Skeleton Bulk Modulus Parameter Value: 5.55555556e+07
+        Grain Bulk Modulus Value: 5.00000000e+09
+      Biot Modulus: 
+        Biot Modulus Type: Constant
+        Value: 1.00000000e+16
+        Fluid Bulk Modulus Value: 2.00000000e+09
+        Grain Bulk Modulus Value: 5.00000000e+09
+      Thermal Conductivity: 
+        Thermal Conductivity Type: Constant
+        Value: 0.00000000e+00
+      'Kozeny-Carman Permeability': 
+        KC Permeability Type: Constant
+        Value: 1.00000000
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1.00000000e+08
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.20000000
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 5.00000000e+06
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 100.00000000
+      Saturation Modulus: 0.00000000e+00
+      Saturation Exponent: 0.00000000e+00
+    Weak Soil: 
+      Material Model: 
+        Model Name: J2
+      Stabilization Parameter: 0.00000000e+00
+      Porosity: 
+        Porosity Type: Constant
+        Value: 0.50000000
+        Initial Porosity Value: 0.50000000
+        Grain Bulk Modulus Value: 5.00000000e+09
+      Biot Coefficient: 
+        Biot Coefficient Type: Constant
+        Value: 0.99990000
+        Skeleton Bulk Modulus Parameter Value: 5.55555556e+07
+        Grain Bulk Modulus Value: 5.00000000e+09
+      Biot Modulus: 
+        Biot Modulus Type: Constant
+        Value: 1.00000000e+16
+        Fluid Bulk Modulus Value: 2.00000000e+09
+        Grain Bulk Modulus Value: 5.00000000e+09
+      Thermal Conductivity: 
+        Thermal Conductivity Type: Constant
+        Value: 0.00000000e+00
+      'Kozeny-Carman Permeability': 
+        KC Permeability Type: Constant
+        Value: 1.00000000
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 5.00000000e+07
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.20000000
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 1.00000000e+06
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 10.00000000
+      Saturation Modulus: 0.00000000e+00
+      Saturation Exponent: 0.00000000e+00
+...

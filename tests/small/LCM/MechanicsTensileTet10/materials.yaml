@@ -1,0 +1,36 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: TestMat2
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000e+00
+      Volume Average Pressure: true
+      Use Composite Tet 10: true
+  Materials: 
+    TestMat: 
+      Material Model: 
+        Model Name: Neohookean
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1000.00000000
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.25000000
+    TestMat2: 
+      Material Model: 
+        Model Name: J2
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1000.00000000
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.25000000
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 100.00000000
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 10.00000000
+...

@@ -1,0 +1,39 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Scaling: 
+    Scale: 1.00000000e+09
+  DataTransferKit: 
+    Map Type: Consistent Interpolation
+    L2 Projection: 
+      Integration Order: 2
+    Consistent Interpolation: { }
+    Point Cloud: 
+      Map Type: Moving Least Square Reconstruction
+      Basis Type: Wu
+      Basis Order: 4
+      Spatial Dimension: 3
+      RBF Radius: 1.00000000
+    Search: 
+      Track Missed Range Entities: true
+  Problem: 
+    Name: Mechanics 3D
+    Phalanx Graph Visualization Detail: 0
+    MaterialDB Filename: materials0.yaml
+    Dirichlet BCs: 
+      DBC on NS nodelist_1 for DOF X: 0.00000000e+00
+      DBC on NS nodelist_3 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_5 for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_6 for DOF Schwarz: 
+        BC Function: Schwarz
+        Coupled Application: cube1.yaml
+        Coupled Block: coarse
+  Discretization: 
+    Method: Ioss
+    Exodus Input File Name: cube0.e
+    Exodus Output File Name: cube0_out.exo
+    Exodus Solution Name: disp
+    Exodus Residual Name: resid
+    Separate Evaluators by Element Block: true
+    Number Of Time Derivatives: 1
+...

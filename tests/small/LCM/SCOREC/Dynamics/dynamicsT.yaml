@@ -1,0 +1,194 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Mechanics 2D
+    Solution Method: Transient
+    MaterialDB Filename: elastic.yaml
+    Second Order: Trapezoid Rule
+    Dirichlet BCs: 
+      DBC on NS ns_1 for DOF X: 0.00000000e+00
+      DBC on NS ns_1 for DOF Y: 0.00000000e+00
+    Parameters: 
+      Number: 1
+      Parameter 0: DBC on NS ns_1 for DOF X
+    Initial Condition: 
+      Function: Constant
+      Function Data: [0.00000000e+00, 0.00000000e+00]
+    Initial Condition Dot: 
+      Function: Linear Y
+      Function Data: [0.02000000]
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    Method: PUMI
+    Mesh Model Input File Name: plane.dmg
+    PUMI Input File Name: tri_plane.smb
+    Element Block Associations: [[1], [eb_1]]
+    Node Set Associations: [[2, 4], [ns_1, ns_2]]
+    PUMI Output File Name: albout.vtk
+    PUMI Write Interval: 1
+    2nd Order Mesh: false
+    Cubature Degree: 2
+    Number Of Time Derivatives: 2
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [0.00215650]
+    Relative Tolerance: 1.00000000e-06
+    Number of Sensitivity Comparisons: 0
+    Sensitivity Test Values 0: [0.16666666, 0.16666666, 0.33333333, 0.33333333]
+    Number of Dakota Comparisons: 0
+    Dakota Test Values: [1.00000000, 1.00000000]
+  Piro: 
+    Trapezoid Rule: 
+      Num Time Steps: 100
+      Final Time: 60.00000000
+      Initial Time: 0.00000000e+00
+      NOX: 
+        Direction: 
+          Method: Newton
+          Newton: 
+            Forcing Term Method: Constant
+            Rescue Bad Newton Solve: true
+            Stratimikos Linear Solver: 
+              NOX Stratimikos Options: { }
+              Stratimikos: 
+                Linear Solver Type: Belos
+                Linear Solver Types: 
+                  Belos: 
+                    Solver Type: Block GMRES
+                    Solver Types: 
+                      Block GMRES: 
+                        Convergence Tolerance: 1.00000000e-05
+                        Output Frequency: 10
+                        Output Style: 1
+                        Verbosity: 33
+                        Maximum Iterations: 100
+                        Num Blocks: 100
+                Preconditioner Type: None
+                Preconditioner Types: 
+                  Ifpack2: 
+                    Overlap: 1
+                    Prec Type: ILUT
+                    Ifpack2 Settings: 
+                      'fact: ilut level-of-fill': 1.00000000
+                      'fact: drop tolerance': 0.00000000e+00
+        Line Search: 
+          Method: Full Step
+        Nonlinear Solver: Line Search Based
+        Printing: 
+          Output Information: 103
+          Output Precision: 3
+          Output Processor: 0
+        Status Tests: 
+          Test Type: Combo
+          Combo Type: OR
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.00000000e-10
+          Test 1: 
+            Test Type: MaxIters
+            Maximum Iterations: 10
+    Velocity Verlet: 
+      Num Time Steps: 40
+      Final Time: 0.40000000
+      Initial Time: 0.00000000e+00
+      Invert Mass Matrix: true
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Linear Solver Types: 
+          Belos: 
+            Solver Type: Block GMRES
+            Solver Types: 
+              Block GMRES: 
+                Convergence Tolerance: 1.00000000e-05
+                Output Frequency: 10
+                Output Style: 1
+                Verbosity: 33
+                Maximum Iterations: 100
+                Block Size: 1
+                Num Blocks: 100
+                Flexible Gmres: false
+        Preconditioner Type: Ifpack2
+        Preconditioner Types: 
+          Ifpack2: 
+            Overlap: 1
+            Prec Type: ILUT
+            Ifpack2 Settings: 
+              'fact: ilut level-of-fill': 1.00000000
+              'fact: drop tolerance': 0.00000000e+00
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Tangent
+      Stepper: 
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: DBC on NS NodeSet1 for DOF X
+        Max Steps: 10
+        Max Value: 0.10000000
+        Min Value: 0.00000000e+00
+        Compute Eigenvalues: false
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Jacobian Inverse
+          Num Eigenvalues: 0
+      Step Size: 
+        Initial Step Size: 0.01000000
+        Method: Constant
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000e-05
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-10
+                      Output Frequency: 0
+                      Output Style: 0
+                      Verbosity: 0
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 1
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: drop tolerance': 0.00000000e+00
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

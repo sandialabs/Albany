@@ -5,21 +5,21 @@
 ##*****************************************************************//
 
 # Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dynamics.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/dynamics.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dynamicsT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/dynamicsT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/elastic.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/elastic.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dynamics.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/dynamics.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dynamicsT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/dynamicsT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/elastic.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/elastic.yaml COPYONLY)
 
 # Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 if (ALBANY_EPETRA) 
-  add_test(${testName} ${Albany.exe} dynamics.xml)
+  add_test(${testName} ${Albany.exe} dynamics.yaml)
 endif()
 
 if (ALBANY_IFPACK2) 
-  add_test(${testName}_Tpetra ${AlbanyT.exe} dynamicsT.xml)
+  add_test(${testName}_Tpetra ${AlbanyT.exe} dynamicsT.yaml)
 endif()

@@ -12,7 +12,7 @@ Mechanics problem:
 	HydroStress variables         : DOF
 	Damage variables              : None
 	Stabilized Pressure variables : None
-Initializing material database from materialsScaledLocalHarderTera.xml
+Initializing material database from materialsScaledLocalHarderTera.yaml
 Albany_IOSS: Loading STKMesh from Exodus file  BluntCrackRatio2d_in_m_rev5_reflect_microns_3d_cse.exo
 MULTIPLE Elem Block in Ioss: DO worksetSize[eb] max?? 
 Num MeshSpecs: 2

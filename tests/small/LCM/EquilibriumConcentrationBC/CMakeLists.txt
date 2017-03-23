@@ -13,12 +13,12 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
 
 # input files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/EqConcentrationBC.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/EqConcentrationBC.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/EqConcentrationBC.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/EqConcentrationBC.yaml COPYONLY)
 
 # material files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SimpleMaterials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/SimpleMaterials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SimpleMaterials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/SimpleMaterials.yaml COPYONLY)
 
 # exodiff files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/EqConcentrationBC.exodiff

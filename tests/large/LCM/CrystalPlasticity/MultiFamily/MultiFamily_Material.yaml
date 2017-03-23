@@ -1,0 +1,165 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    element: 
+      material: FCC
+      Weighted Volume Average J: true
+      Volume Average Pressure: true
+      Output Integration Weights: true
+  Materials: 
+    FCC: 
+      Material Model: 
+        Model Name: CrystalPlasticity
+      Crystal Elasticity: 
+        C11: 204600.00
+        C12: 137700.00000000
+        C44: 126200.00000000
+        Basis Vector 1: [1.00000000, 1.00000000, 0.00000000e+00]
+        Basis Vector 2: [-1.00000000e+00, 1.00000000, 0.00000000e+00]
+        Basis Vector 3: [0.00000000e+00, 0.00000000e+00, 1.00000000]
+      Integration Scheme: Implicit
+      Residual Type: Slip Hardness
+      Implicit Integration Relative Tolerance: 1.00000000e-35
+      Implicit Integration Absolute Tolerance: 1.00000000e-12
+      Implicit Integration Max Iterations: 100
+      Output CP_Residual: true
+      Verbosity: 0
+      Number of Slip Families: 3
+      Slip System Family 0: 
+        Flow Rule: 
+          Type: Power Law
+          Reference Slip Rate: 0.00100000
+          Rate Exponent: 50.00000000
+        Hardening Law: 
+          Type: Linear Minus Recovery
+          Hardening Modulus: 10.00000000
+          Recovery Modulus: 0.00000000e+00
+          Initial Hardening State: 1.00000000
+      Slip System Family 1: 
+        Flow Rule: 
+          Type: Power Law
+          Reference Slip Rate: 0.00100000
+          Rate Exponent: 50.00000000
+        Hardening Law: 
+          Type: Saturation
+          Reference Slip Rate: 1.00000000
+          Hardening Rate: 7500.00000000
+          Initial Saturation Stress: 202.00000000
+          Saturation Exponent: 0.00000000e+00
+          Initial Hardening State: 20.00000000
+      Slip System Family 2: 
+        Flow Rule: 
+          Type: Power Law
+          Reference Slip Rate: 0.00100000
+          Rate Exponent: 50.00000000
+        Hardening Law: 
+          Type: Saturation
+          Reference Slip Rate: 1.00000000
+          Hardening Rate: 7500.00000000
+          Initial Saturation Stress: 260.00000000
+          Saturation Exponent: 0.00000000e+00
+          Initial Hardening State: 40.00000000
+      Number of Slip Systems: 12
+      Slip System 1: 
+        Slip Direction: [0.50000000, -8.66025404e-01, 0.00000000e+00]
+        Slip Normal: [0.00000000e+00, 0.00000000e+00, 1.00000000]
+        Slip Family: 0
+      Slip System 2: 
+        Slip Direction: [0.50000000, 0.86602540, 0.00000000e+00]
+        Slip Normal: [0.00000000e+00, 0.00000000e+00, 1.00000000]
+        Slip Family: 0
+      Slip System 3: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, 0.00000000e+00]
+        Slip Normal: [0.00000000e+00, 0.00000000e+00, 1.00000000]
+        Slip Family: 0
+      Slip System 4: 
+        Slip Direction: [1.00000000, 0.00000000e+00, 0.00000000e+00]
+        Slip Normal: [0.00000000e+00, 1.00000000, 0.00000000e+00]
+        Slip Family: 1
+      Slip System 5: 
+        Slip Direction: [0.50000000, 0.86602540, 0.00000000e+00]
+        Slip Normal: [-8.66025404e-01, 0.50000000, 0.00000000e+00]
+        Slip Family: 1
+      Slip System 6: 
+        Slip Direction: [-5.00000000e-01, 0.86602540, 0.00000000e+00]
+        Slip Normal: [-8.66025404e-01, -5.00000000e-01, 0.00000000e+00]
+        Slip Family: 1
+      Slip System 7: 
+        Slip Direction: [1.00000000, 0.00000000e+00, 0.00000000e+00]
+        Slip Normal: [0.00000000e+00, -8.82377290e-01, 0.47054258]
+        Slip Family: 2
+      Slip System 8: 
+        Slip Direction: [0.50000000, 0.86602540, 0.00000000e+00]
+        Slip Normal: [0.76416115, -4.41188645e-01, 0.47054258]
+        Slip Family: 2
+      Slip System 9: 
+        Slip Direction: [-5.00000000e-01, 0.86602540, 0.00000000e+00]
+        Slip Normal: [0.76416115, 0.44118864, 0.47054258]
+        Slip Family: 2
+      Slip System 10: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, 0.00000000e+00]
+        Slip Normal: [0.00000000e+00, 0.88237729, 0.47054258]
+        Slip Family: 2
+      Slip System 11: 
+        Slip Direction: [-5.00000000e-01, -8.66025404e-01, 0.00000000e+00]
+        Slip Normal: [-7.64161149e-01, 0.44118864, 0.47054258]
+        Slip Family: 2
+      Slip System 12: 
+        Slip Direction: [0.50000000, -8.66025404e-01, 0.00000000e+00]
+        Slip Normal: [-7.64161149e-01, -4.41188645e-01, 0.47054258]
+        Slip Family: 2
+      Output Cauchy Stress: true
+      Output Deformation Gradient: true
+      Output Fp: true
+      Output L: true
+      Output eqps: true
+      Output gamma_1: true
+      Output gamma_2: true
+      Output gamma_3: true
+      Output gamma_4: true
+      Output gamma_5: true
+      Output gamma_6: true
+      Output gamma_7: true
+      Output gamma_8: true
+      Output gamma_9: true
+      Output gamma_10: true
+      Output gamma_11: true
+      Output gamma_12: true
+      Output gamma_dot_1: true
+      Output gamma_dot_2: true
+      Output gamma_dot_3: true
+      Output gamma_dot_4: true
+      Output gamma_dot_5: true
+      Output gamma_dot_6: true
+      Output gamma_dot_7: true
+      Output gamma_dot_8: true
+      Output gamma_dot_9: true
+      Output gamma_dot_10: true
+      Output gamma_dot_11: true
+      Output gamma_dot_12: true
+      Output tau_hard_1: true
+      Output tau_hard_2: true
+      Output tau_hard_3: true
+      Output tau_hard_4: true
+      Output tau_hard_5: true
+      Output tau_hard_6: true
+      Output tau_hard_7: true
+      Output tau_hard_8: true
+      Output tau_hard_9: true
+      Output tau_hard_10: true
+      Output tau_hard_11: true
+      Output tau_hard_12: true
+      Output tau_1: true
+      Output tau_2: true
+      Output tau_3: true
+      Output tau_4: true
+      Output tau_5: true
+      Output tau_6: true
+      Output tau_7: true
+      Output tau_8: true
+      Output tau_9: true
+      Output tau_10: true
+      Output tau_11: true
+      Output tau_12: true
+...

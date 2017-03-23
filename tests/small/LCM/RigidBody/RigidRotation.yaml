@@ -1,0 +1,168 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Scaling: 
+    Scale: 1000.0000
+    Scale BC Dofs: true
+  Problem: 
+    Name: Mechanics 3D
+    Solution Method: Continuation
+    Phalanx Graph Visualization Detail: 0
+    MaterialDB Filename: RigidRotation_Material.yaml
+    Response Functions: 
+      Number: 1
+      Response 0: Project IP to Nodal Field
+      ResponseParams 0: 
+        Number of Fields: 1
+        IP Field Name 0: eqps
+        IP Field Layout 0: Scalar
+        Output to File: true
+    Dirichlet BCs: 
+      Time Dependent DBC on NS xmym for DOF X: 
+        Number of points: 13
+        Time Values: [0.00000000e+00, 1.00000000, 2.00000000, 3.00000000, 4.00000000, 5.00000000, 6.00000000, 7.00000000, 8.00000000, 9.00000000, 10.00000000, 11.00000000, 12.00000000]
+        BC Values: [0.00000000e+00, 0.06954067, 0.14644661, 0.22940195, 0.31698730, 0.40770404, 0.50000000, 0.59229596, 0.68301270, 0.77059805, 0.85355339, 0.93045933, 1.00000000]
+      Time Dependent DBC on NS xmym for DOF Y: 
+        Number of points: 13
+        Time Values: [0.00000000e+00, 1.00000000, 2.00000000, 3.00000000, 4.00000000, 5.00000000, 6.00000000, 7.00000000, 8.00000000, 9.00000000, 10.00000000, 11.00000000, 12.00000000]
+        BC Values: [0.00000000e+00, -6.09855268e-02, -1.12372436e-01, -1.53281482e-01, -1.83012702e-01, -2.01057385e-01, -2.07106781e-01, -2.01057385e-01, -1.83012702e-01, -1.53281482e-01, -1.12372436e-01, -6.09855268e-02, 0.00000000e+00]
+      DBC on NS xmym for DOF Z: 0.00000000e+00
+      Time Dependent DBC on NS xpym for DOF X: 
+        Number of points: 13
+        Time Values: [0.00000000e+00, 1.00000000, 2.00000000, 3.00000000, 4.00000000, 5.00000000, 6.00000000, 7.00000000, 8.00000000, 9.00000000, 10.00000000, 11.00000000, 12.00000000]
+        BC Values: [0.00000000e+00, 0.06098553, 0.11237244, 0.15328148, 0.18301270, 0.20105738, 0.20710678, 0.20105738, 0.18301270, 0.15328148, 0.11237244, 0.06098553, 0.00000000e+00]
+      Time Dependent DBC on NS xpym for DOF Y: 
+        Number of points: 13
+        Time Values: [0.00000000e+00, 1.00000000, 2.00000000, 3.00000000, 4.00000000, 5.00000000, 6.00000000, 7.00000000, 8.00000000, 9.00000000, 10.00000000, 11.00000000, 12.00000000]
+        BC Values: [0.00000000e+00, 0.06954067, 0.14644661, 0.22940195, 0.31698730, 0.40770404, 0.50000000, 0.59229596, 0.68301270, 0.77059805, 0.85355339, 0.93045933, 1.00000000]
+      DBC on NS xpym for DOF Z: 0.00000000e+00
+      Time Dependent DBC on NS xpyp for DOF X: 
+        Number of points: 13
+        Time Values: [0.00000000e+00, 1.00000000, 2.00000000, 3.00000000, 4.00000000, 5.00000000, 6.00000000, 7.00000000, 8.00000000, 9.00000000, 10.00000000, 11.00000000, 12.00000000]
+        BC Values: [0.00000000e+00, -6.95406654e-02, -1.46446609e-01, -2.29401950e-01, -3.16987298e-01, -4.07704044e-01, -5.00000000e-01, -5.92295956e-01, -6.83012702e-01, -7.70598050e-01, -8.53553391e-01, -9.30459335e-01, -1.00000000e+00]
+      Time Dependent DBC on NS xpyp for DOF Y: 
+        Number of points: 13
+        Time Values: [0.00000000e+00, 1.00000000, 2.00000000, 3.00000000, 4.00000000, 5.00000000, 6.00000000, 7.00000000, 8.00000000, 9.00000000, 10.00000000, 11.00000000, 12.00000000]
+        BC Values: [0.00000000e+00, 0.06098553, 0.11237244, 0.15328148, 0.18301270, 0.20105738, 0.20710678, 0.20105738, 0.18301270, 0.15328148, 0.11237244, 0.06098553, 0.00000000e+00]
+      DBC on NS xpyp for DOF Z: 0.00000000e+00
+      Time Dependent DBC on NS xmyp for DOF X: 
+        Number of points: 13
+        Time Values: [0.00000000e+00, 1.00000000, 2.00000000, 3.00000000, 4.00000000, 5.00000000, 6.00000000, 7.00000000, 8.00000000, 9.00000000, 10.00000000, 11.00000000, 12.00000000]
+        BC Values: [0.00000000e+00, -6.09855268e-02, -1.12372436e-01, -1.53281482e-01, -1.83012702e-01, -2.01057385e-01, -2.07106781e-01, -2.01057385e-01, -1.83012702e-01, -1.53281482e-01, -1.12372436e-01, -6.09855268e-02, 0.00000000e+00]
+      Time Dependent DBC on NS xmyp for DOF Y: 
+        Number of points: 13
+        Time Values: [0.00000000e+00, 1.00000000, 2.00000000, 3.00000000, 4.00000000, 5.00000000, 6.00000000, 7.00000000, 8.00000000, 9.00000000, 10.00000000, 11.00000000, 12.00000000]
+        BC Values: [0.00000000e+00, -6.95406654e-02, -1.46446609e-01, -2.29401950e-01, -3.16987298e-01, -4.07704044e-01, -5.00000000e-01, -5.92295956e-01, -6.83012702e-01, -7.70598050e-01, -8.53553391e-01, -9.30459335e-01, -1.00000000e+00]
+      DBC on NS xmyp for DOF Z: 0.00000000e+00
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+  Discretization: 
+    Method: Exodus
+    Exodus Input File Name: RigidRotation.g
+    Exodus Output File Name: RigidRotation.exo
+    Solution Vector Components: [displacement, V]
+    Residual Vector Components: [force, V]
+    Cubature Degree: 3
+    Separate Evaluators by Element Block: true
+  Piro: 
+    Solver Type: LOCA
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Continuation Method: Natural
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: Time
+        Max Steps: 12
+        Min Value: 0.00000000e+00
+        Max Value: 12.00000000
+        Return Failed on Reaching Max Steps: false
+        Hit Continuation Bound: false
+      Step Size: 
+        Initial Step Size: 1.00000000
+        Method: Constant
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Linear Solver: 
+            Tolerance: 1.00000000e-12
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: low
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-08
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 1000
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 2
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options: 
+        Status Test Check Type: Complete
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 5
+        Test 0: 
+          Test Type: RelativeNormF
+          Tolerance: 1.00000000e-20
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 2000
+        Test 2: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NStep
+            Number of Nonlinear Iterations: 1
+          Test 1: 
+            Test Type: NormF
+            Tolerance: 1.00000000e-12
+        Test 3: 
+          Test Type: FiniteValue
+        Test 4: 
+          Test Type: NormF
+          Tolerance: 1.00000000e-35
+...

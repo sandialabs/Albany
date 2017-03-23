@@ -11,8 +11,8 @@
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${DTK_Interp_Volume_to_NS.exe} ${CMAKE_CURRENT_BINARY_DIR}/DTK_Interp_Volume_to_NS)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_schwarz.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_schwarz.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_schwarz.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_schwarz.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtest.py COPYONLY)
 

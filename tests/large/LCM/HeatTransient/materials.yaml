@@ -1,0 +1,26 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    cube: 
+      material: Iron
+  Materials: 
+    Iron: 
+      Material Model: 
+        Model Name: Elastic
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1.0000000
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.00000000e+00
+      Thermal Conductivity: 
+        Thermal Conductivity Type: Constant
+        Value: 1.00000000
+      Reference Temperature: 0.00000000e+00
+      Initial Temperature: 1.00000000
+      Thermal Transient Coefficient: 1.00000000
+      Thermal Expansion Coefficient: 0.00000000e+00
+      Density: 1.00000000
+      Heat Capacity: 1.00000000
+...

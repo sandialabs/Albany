@@ -1,0 +1,117 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Mechanics 3D
+    Solution Method: Continuation
+    Phalanx Graph Visualization Detail: 1
+    MaterialDB Filename: materials.yaml
+    Dirichlet BCs: 
+      DBC on NS nodelist_3 for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_4 for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_1 for DOF K: 
+        BC Function: Kfield
+        Kfield KI: 1.00000000
+        Kfield KII: 0.00000000e+00
+        Number of points: 3
+        Time Values: [0.00000000e+00, 0.00100000, 500.00000000]
+        KI Values: [0.00000000e+00, 0.00100000, 500.00000000]
+        KII Values: [0.00000000e+00, 0.00100000, 500.00000000]
+        Shear Modulus: 400.00000000
+        Poissons Ratio: 0.25000000
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+    Response Functions: 
+      Number: 3
+      Response 0: Solution Average
+      Response 1: Solution Max Value
+      Response 2: IP to Nodal Field
+      ResponseParams 2: 
+        Number of Fields: 1
+        IP Field Name 0: Cauchy_Stress
+        IP Field Layout 0: Tensor
+        Output to File: true
+  Discretization: 
+    Method: Exodus
+    Exodus Input File Name: K_field.g
+    Exodus Output File Name: K_field.e
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [0.00001990]
+    Relative Tolerance: 1.00000000e-05
+    Number of Sensitivity Comparisons: 0
+    Sensitivity Test Values 0: [0.00000000e+00]
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Tangent
+      Stepper: 
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: Time
+        Max Steps: 4
+        Max Value: 1.00000000
+        Min Value: 0.00000000e+00
+        Compute Eigenvalues: false
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Jacobian Inverse
+          Num Eigenvalues: 0
+      Step Size: 
+        Initial Step Size: 0.50000000
+        Method: Constant
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000e-05
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-06
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 2
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

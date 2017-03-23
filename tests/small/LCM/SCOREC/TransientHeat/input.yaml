@@ -1,0 +1,146 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Mechanics 3D
+    Solution Method: Continuation
+    MaterialDB Filename: materials.yaml
+    Dirichlet BCs: 
+      DBC on NS xmin for DOF T: 0.00000000e+00
+      DBC on NS xmax for DOF T: 0.00000000e+00
+    Displacement: 
+      Variable Type: None
+    Temperature: 
+      Variable Type: DOF
+    Initial Condition: 
+      Function: Constant
+      Function Data: [1.00000000]
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+  Discretization: 
+    Method: PUMI
+    Workset Size: 50
+    Mesh Model Input File Name: ../meshes/cube/cube.dmg
+    PUMI Input File Name: '../meshes/cube/cube-serial.smb'
+    PUMI Output File Name: out.vtk
+    Element Block Associations: [[95], [cube]]
+    Node Set Associations: [[85, 81], [xmin, xmax]]
+    Cubature Degree: 1
+    Separate Evaluators by Element Block: false
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [0.27840000]
+    Relative Tolerance: 0.00100000
+    Absolute Tolerance: 1.00000000e-05
+    Number of Sensitivity Comparisons: 0
+    Sensitivity Test Values 0: [0.03053790, 0.33026211]
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Continuation Parameter: Time
+        Max Steps: 20
+        Max Value: 0.10000000
+        Return Failed on Reaching Max Steps: false
+        Min Value: 0.00000000e+00
+        Initial Value: 0.00000000e+00
+      Step Size: 
+        Initial Step Size: 0.00500000
+        Method: Constant
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 500
+                      Output Frequency: 10
+                    Max Iterations: 500
+                    Tolerance: 1.00000000e-09
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-11
+                      Output Frequency: 0
+                      Output Style: 0
+                      Verbosity: 1
+                      Maximum Iterations: 500
+                      Block Size: 1
+                      Num Blocks: 1000
+                      Flexible Gmres: false
+              Preconditioner Type: MueLu
+              Preconditioner Types: 
+                MueLu: 
+                  multigrid algorithm: sa
+                  'aggregation: type': uncoupled
+                  'coarse: max size': 20
+                  'coarse: type': Klu
+                  cycle type: V
+                  'smoother: type': RELAXATION
+                  'smoother: params': 
+                    'relaxation: type': 'Gauss-Seidel'
+                    'relaxation: damping factor': 0.66000000
+                    'relaxation: sweeps': 1
+                  'smoother: pre or post': both
+                  verbosity: low
+                Ifpack: 
+                  Overlap: 2
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+        Output Precision: 3
+        Output Processor: 0
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 3
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000e-12
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 15
+        Test 2: 
+          Test Type: NormUpdate
+          Tolerance: 1.00000000e-13
+      Solver Options: 
+        Status Test Check Type: Complete
+...

@@ -5,10 +5,10 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${SEACAS_EPU} ${CMAKE
 
 # Copy Input files from source to binary dir
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/VectorPoisson.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/VectorPoisson.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/VectorPoissonMaterials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/VectorPoissonMaterials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/VectorPoisson.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/VectorPoisson.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/VectorPoissonMaterials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/VectorPoissonMaterials.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/VectorPoisson.g
                ${CMAKE_CURRENT_BINARY_DIR}/VectorPoisson.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/VectorPoisson.g.4.0
@@ -27,6 +27,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/VectorPoisson.exodiff
 
 # Add the tests
 if(ALBANY_IFPACK2)
-add_test(PeridigmCoupling_VectorPoisson_np1_Epetra python ../run_exodiff_test.py "${SerialAlbany.exe}" VectorPoisson.xml)
-add_test(PeridigmCoupling_VectorPoisson_np4_Epetra python ../run_exodiff_test.py "${Albany.exe}" VectorPoisson.xml)
+add_test(PeridigmCoupling_VectorPoisson_np1_Epetra python ../run_exodiff_test.py "${SerialAlbany.exe}" VectorPoisson.yaml)
+add_test(PeridigmCoupling_VectorPoisson_np4_Epetra python ../run_exodiff_test.py "${Albany.exe}" VectorPoisson.yaml)
 endif()

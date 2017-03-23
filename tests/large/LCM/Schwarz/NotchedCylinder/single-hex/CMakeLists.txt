@@ -7,8 +7,8 @@
 # Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder.g
                ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder.g COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched-cylinder.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/notched-cylinder.yaml COPYONLY)
 

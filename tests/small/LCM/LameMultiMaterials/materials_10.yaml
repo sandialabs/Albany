@@ -1,0 +1,37 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Reference Material: Metal
+  ElementBlocks: 
+    block_1: 
+      material: Metal
+    block_2: 
+      material: Metal
+    block_3: 
+      material: Metal
+    block_4: 
+      material: Metal
+    block_5: 
+      material: Metal
+    block_6: 
+      material: Metal
+    block_7: 
+      material: Metal
+    block_8: 
+      material: Plastic
+    block_9: 
+      material: Metal
+    block_10: 
+      material: Plastic
+  Materials: 
+    Plastic: 
+      Lame Material Model: Elastic
+      Lame Material Parameters: 
+        Youngs Modulus: 1.0000000
+        Poissons Ratio: 0.25000000
+    Metal: 
+      Lame Material Model: Elastic
+      Lame Material Parameters: 
+        Youngs Modulus: 2.00000000
+        Poissons Ratio: 0.25000000
+...

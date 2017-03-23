@@ -5,28 +5,28 @@
 ##*****************************************************************//
 
 # Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputCoupledSchwarzT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputCoupledSchwarzT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputCoupledSchwarz_Teko_BGS_T.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputCoupledSchwarz_Teko_BGS_T.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputLOCAT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputLOCAT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputLOCAT0.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputLOCAT0.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputLOCAT1.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputLOCAT1.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputCoupledSchwarzLOCAT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputCoupledSchwarzLOCAT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT0.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT0.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT1.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT1.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials0.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materials0.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials1.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materials1.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputCoupledSchwarzT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputCoupledSchwarzT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputCoupledSchwarz_Teko_BGS_T.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputCoupledSchwarz_Teko_BGS_T.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputLOCAT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputLOCAT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputLOCAT0.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputLOCAT0.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputLOCAT1.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputLOCAT1.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputCoupledSchwarzLOCAT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputCoupledSchwarzLOCAT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT0.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT0.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT1.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT1.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials0.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials0.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials1.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials1.yaml COPYONLY)
 
 add_subdirectory(Cubes)
 add_subdirectory(CuboidsDebug)

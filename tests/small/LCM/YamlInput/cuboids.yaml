@@ -1,59 +1,49 @@
+%YAML 1.1
+---
 ANONYMOUS:
-  Coupled System:
+  Coupled System: 
     Model Input Files: [cuboid_00.yaml, cuboid_01.yaml]
-  # MODEL DECLARATION, Look in the Problem directory
-  Problem:
-    # Transient or Steady (Quasi-Static) or Continuation (load steps)
+  Problem: 
     Solution Method: Coupled Schwarz
-    # Have Phalanx output a graph of the used evaluators
     Phalanx Graph Visualization Detail: 0
-
-    # PARAMETER
-    Parameters:
+    Parameters: 
       Number: 1
       Parameter 0: Time
-  # Solver options
-  Piro:
+  Piro: 
     Solver Type: LOCA
-    LOCA:
-      Predictor:
+    LOCA: 
+      Predictor: 
         Method: Constant
-
-      # PARAMETER STEPPING
-      Stepper:
+      Stepper: 
         Continuation Method: Natural
-        Initial Value: 0.0
+        Initial Value: 0.00000000e+00
         Continuation Parameter: Time
         Max Steps: 1000
-        Min Value: 0.0
-        Max Value: 1.0
+        Min Value: 0.00000000e+00
+        Max Value: 1.00000000
         Return Failed on Reaching Max Steps: false
         Hit Continuation Bound: false
-      Step Size:
-        # Control the parameter incrementation
-        # here it is the displacement increment on the BC
-        Initial Step Size: 1.0
+      Step Size: 
+        Initial Step Size: 1.00000000
         Method: Constant
-        Failed Step Reduction Factor: 1.0
-    # BEGIN SOLVER CONTROLS. IN GENERAL, The defaults need not be changed.
-    NOX:
-      Direction:
+        Failed Step Reduction Factor: 1.00000000
+    NOX: 
+      Direction: 
         Method: Newton
-        Newton:
+        Newton: 
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver:
-            Stratimikos:
-              # Belos for iterative solvers, Amesos for direct
+          Stratimikos Linear Solver: 
+            Stratimikos: 
               Linear Solver Type: Belos
-              Linear Solver Types:
-                Belos:
-                  VerboseObject:
+              Linear Solver Types: 
+                Belos: 
+                  VerboseObject: 
                     Verbosity Level: low
                   Solver Type: Block GMRES
-                  Solver Types:
-                    Block GMRES:
-                      Convergence Tolerance: 1.0e-14
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-14
                       Output Frequency: 1
                       Output Style: 1
                       Verbosity: 0
@@ -62,16 +52,15 @@ ANONYMOUS:
                       Num Blocks: 200
                       Flexible Gmres: false
               Preconditioner Type: None
-      Line Search:
+      Line Search: 
         Method: Full Step
-        Full Step:
-          Full Step: 1.0
+        Full Step: 
+          Full Step: 1.00000000
       Nonlinear Solver: Line Search Based
-      Printing:
+      Printing: 
         Output Precision: 3
         Output Processor: 0
-        # set the output information
-        Output Information:
+        Output Information: 
           Error: true
           Warning: false
           Outer Iteration: true
@@ -81,18 +70,18 @@ ANONYMOUS:
           Stepper Iteration: true
           Stepper Details: false
           Stepper Parameters: false
-      # Checking for residual convergence (rel, abs, inc)
-      Solver Options:
+      Solver Options: 
         Status Test Check Type: Complete
-      Status Tests:
+      Status Tests: 
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 3
-        Test 0:
+        Test 0: 
           Test Type: NormUpdate
-          Tolerance: 1.0e-13
-        Test 1:
+          Tolerance: 1.00000000e-13
+        Test 1: 
           Test Type: MaxIters
           Maximum Iterations: 256
-        Test 2:
+        Test 2: 
           Test Type: FiniteValue
+...

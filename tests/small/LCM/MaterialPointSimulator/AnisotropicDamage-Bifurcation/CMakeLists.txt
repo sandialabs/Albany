@@ -23,10 +23,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AnisotropicDamage-Bifurcation.py
                ${CMAKE_CURRENT_BINARY_DIR}/AnisotropicDamage-Bifurcation.py COPYONLY)
 
 # Copy Input files from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AnisotropicDamage-Bifurcation-uniaxial.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/AnisotropicDamage-Bifurcation-uniaxial.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AnisotropicDamage-Bifurcation-shear.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/AnisotropicDamage-Bifurcation-shear.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AnisotropicDamage-Bifurcation-uniaxial.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/AnisotropicDamage-Bifurcation-uniaxial.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AnisotropicDamage-Bifurcation-shear.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/AnisotropicDamage-Bifurcation-shear.yaml COPYONLY)
 
 # Copy the reference solution and exodiff files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AnisotropicDamage-Bifurcation-uniaxial.gold.exo

@@ -8,19 +8,19 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip.g
                ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip.g COPYONLY)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip_Implicit.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip_Implicit.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip_Implicit_Material.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip_Implicit_Material.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip_Implicit.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip_Implicit.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip_Implicit_Material.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip_Implicit_Material.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip_Implicit.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip_Implicit.exodiff COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip_Implicit.gold.exo
                ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip_Implicit.gold.exo COPYONLY)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip_Explicit.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip_Explicit.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip_Explicit_Material.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip_Explicit_Material.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip_Explicit.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip_Explicit.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip_Explicit_Material.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip_Explicit_Material.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip_Explicit.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip_Explicit.exodiff COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip_Explicit.gold.exo
@@ -33,6 +33,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip.gnuplot
 
 # Add the tests
 if(ALBANY_IFPACK2)
-add_test(CrystalPlasticity_SingleSlip_Explicit_Tpetra python ../../run_exodiff_test.py "${SerialAlbanyT.exe}" SingleSlip_Explicit.xml)
-add_test(CrystalPlasticity_SingleSlip_Implicit_Tpetra python ../../run_exodiff_test.py "${SerialAlbanyT.exe}" SingleSlip_Implicit.xml)
+add_test(CrystalPlasticity_SingleSlip_Explicit_Tpetra python ../../run_exodiff_test.py "${SerialAlbanyT.exe}" SingleSlip_Explicit.yaml)
+add_test(CrystalPlasticity_SingleSlip_Implicit_Tpetra python ../../run_exodiff_test.py "${SerialAlbanyT.exe}" SingleSlip_Implicit.yaml)
 endif()

@@ -1,0 +1,24 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    eb_1: 
+      material: Elast_Mat
+  Materials: 
+    Elast_Mat: 
+      Material Model: 
+        Model Name: Linear Elastic
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1.0000000
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.49990000
+      Shear Modulus: 
+        Shear Modulus Type: Constant
+        Value: 0.33335600
+      Bulk Modulus: 
+        Bulk Modulus Type: Constant
+        Value: 1666.67000000
+      Stabilization Parameter: 1.00000000
+...

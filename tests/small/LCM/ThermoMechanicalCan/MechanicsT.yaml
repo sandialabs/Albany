@@ -1,0 +1,180 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Mechanics 3D
+    Solution Method: Continuation
+    Phalanx Graph Visualization Detail: 0
+    MaterialDB Filename: MechanicsMaterials.yaml
+    Dirichlet BCs: 
+      DBC on NS nodelist_1 for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_2 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_3 for DOF X: 0.00000000e+00
+    Neumann BCs: 
+      Time Dependent NBC on SS surface_1 for DOF all set P: 
+        Time Values: [0.00000000e+00, 985.20000000, 3600.00000000]
+        BC Values: [[0.00000000e+00], [7.15248332e+06], [2.61357490e+07]]
+    Initial Condition: 
+      Function: Constant
+      Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00]
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+    Response Functions: 
+      Number: 3
+      Response 0: Solution Average
+      Response 1: IP to Nodal Field
+      Response 2: Project IP to Nodal Field
+      ResponseParams 1: 
+        Number of Fields: 1
+        IP Field Name 0: Cauchy_Stress
+        IP Field Layout 0: Tensor
+        Output to File: true
+      ResponseParams 2: 
+        Number of Fields: 1
+        IP Field Name 0: Cauchy_Stress
+        IP Field Layout 0: Tensor
+        Output to File: true
+        Mass Matrix Type: Full
+  Discretization: 
+    Method: Exodus
+    Exodus Input File Name: brick_model_2.g
+    Exodus Output File Name: tm.exo
+    Solution Vector Components: [disp, V]
+    Residual Vector Components: [force, V]
+    Separate Evaluators by Element Block: true
+    Exodus Write Interval: 5
+    Use Serial Mesh: true
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [4.29348493e-06]
+    Relative Tolerance: 0.00010000
+    Absolute Tolerance: 0.00010000
+  Piro: 
+    Rythmos: 
+      Num Time Steps: 360
+      Final Time: 3600.00000000
+      Max State Error: 0.00010000
+      Alpha: 0.00000000e+00
+      Rythmos Stepper: 
+        VerboseObject: 
+          Verbosity Level: low
+      Rythmos Integration Control: { }
+      Rythmos Integrator: 
+        VerboseObject: 
+          Verbosity Level: none
+      Stratimikos: { }
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Secant
+      Stepper: 
+        Continuation Method: Natural
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: Time
+        Max Steps: 6
+        Max Value: 3600.00000000
+        Min Value: 0.00000000e+00
+        Compute Eigenvalues: false
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Jacobian Inverse
+          Num Eigenvalues: 1
+      Step Size: 
+        Initial Step Size: 10.00000000
+        Method: Constant
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Linear Solver: 
+            Tolerance: 1.00000000e-08
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 360
+                    Tolerance: 1.00000000e-05
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: low
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-08
+                      Maximum Iterations: 200
+                      Output Frequency: 20
+                      Output Style: 1
+                      Verbosity: 33
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: MueLu
+              Preconditioner Types: 
+                MueLu: 
+                  verbosity: none
+                  max levels: 10
+                  'repartition: enable': true
+                  'repartition: min rows per proc': 1000
+                  'sa: damping factor': 0.50000000
+                  'smoother: pre or post': both
+                  'coarse: max size': 500
+                  'coarse: type': KLU
+                  'aggregation: type': uncoupled
+                  'smoother: type': RELAXATION
+                  'smoother: params': 
+                    'relaxation: type': 'Symmetric Gauss-Seidel'
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: false
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Complete
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 5
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000e-10
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 100
+        Test 2: 
+          Test Type: NormF
+          Scale Type: Unscaled
+          Tolerance: 1.00000000e-07
+        Test 3: 
+          Test Type: NormUpdate
+          Scale Type: Unscaled
+          Tolerance: 1.00000000e-07
+        Test 4: 
+          Test Type: FiniteValue
+...

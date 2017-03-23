@@ -22,17 +22,17 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean.py
                ${CMAKE_CURRENT_BINARY_DIR}/Neohookean.py COPYONLY)
 
 # Copy Input files from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-uniaxial.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/Neohookean-uniaxial.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-uniaxial.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/Neohookean-uniaxial.yaml COPYONLY)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-shear.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/Neohookean-shear.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-shear.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/Neohookean-shear.yaml COPYONLY)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-hydrostatic.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/Neohookean-hydrostatic.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-hydrostatic.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/Neohookean-hydrostatic.yaml COPYONLY)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-general.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/Neohookean-general.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-general.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/Neohookean-general.yaml COPYONLY)
 
 # Copy the reference solution and exodiff files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-uniaxial.gold.exo

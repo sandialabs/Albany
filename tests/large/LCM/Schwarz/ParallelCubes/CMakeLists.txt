@@ -41,16 +41,16 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.e.8.6
                ${CMAKE_CURRENT_BINARY_DIR}/cube1.e.8.6 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.e.8.7
                ${CMAKE_CURRENT_BINARY_DIR}/cube1.e.8.7 COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials0.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materials0.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials1.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materials1.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/cube0.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/cube1.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cubes.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/cubes.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials0.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials0.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials1.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials1.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube0.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/cube0.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube1.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/cube1.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cubes.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/cubes.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT_dtk_8proc.py

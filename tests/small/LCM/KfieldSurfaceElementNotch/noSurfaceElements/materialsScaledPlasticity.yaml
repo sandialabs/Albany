@@ -1,0 +1,35 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: TestMat
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000e+00
+      Volume Average Pressure: true
+  Materials: 
+    TestMat: 
+      Material Model: 
+        Model Name: J2
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 196.00000000
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.30000000
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 0.71400000
+        dYdT Value: 0.00000000e+00
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 0.00000000e+00
+        dHdT Value: 0.00000000e+00
+      Saturation Modulus: 2.07000000
+      Saturation Exponent: 1.00000000
+      Output Cauchy Stress: true
+      Output eqps: true
+      Output Yield Surface: true
+      Output Fp: true
+      Output J: true
+...

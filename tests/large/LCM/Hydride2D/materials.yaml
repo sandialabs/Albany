@@ -1,0 +1,73 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Reference Material: INERT
+  ElementBlocks: 
+    fuel: 
+      material: UO2
+    clad: 
+      material: ZR4
+    environ: 
+      material: INERT
+  Materials: 
+    UO2: 
+      Category: UraniumDioxide
+      Thermal Conductivity: 
+        Name: Constant
+        Value: 4.9844000
+      Hydrogen Conductivity: 
+        Name: Constant
+        Value: 4.98440000
+      Source Functions: 
+        Constant: 
+          Value: 20095.00000000
+    ZR4: 
+      Category: Zircalloy
+      Thermal Conductivity: 
+        Name: Constant
+        Value: 17.03300000
+      Hydrogen Conductivity: 
+        Name: Constant
+        Value: 17.03300000
+      Q_h: 
+        Q_h Type: Constant
+        Value: 17.03300000
+      R: 
+        R Type: Constant
+        Value: 17.03300000
+      'C_{H,Tot}': 
+        'C_{H,Tot} Type': Constant
+        Value: 17.03300000
+      Vbar: 
+        Vbar Type: Constant
+        Value: 17.03300000
+      C_HHyd: 
+        C_HHyd Type: Constant
+        Value: 17.03300000
+      CTSo: 
+        CTSo Type: Constant
+        Value: 17.03300000
+      delQ: 
+        delQ Type: Constant
+        Value: 17.03300000
+      delWm: 
+        delWm Type: Constant
+        Value: 17.03300000
+      stoi: 
+        stoi Type: Constant
+        Value: 17.03300000
+      Vh: 
+        Vh Type: Constant
+        Value: 17.03300000
+      delG: 
+        delG Type: Constant
+        Value: 17.03300000
+    INERT: 
+      Category: Cask plus He
+      Thermal Conductivity: 
+        Name: Constant
+        Value: 0.00040000
+      Hydrogen Conductivity: 
+        Name: Constant
+        Value: 0.00040000
+...

@@ -19,7 +19,7 @@ def runtest( base_name ):
     logfile = open(log_file_name, 'w')
 
     # run the point simulator
-    command = ["./MPS", "--input=\""+base_name+".xml\""]
+    command = ["./MPS", "--input=\""+base_name+".yaml\""]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:

@@ -1,0 +1,26 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: My Classic Elastic Material
+    block_2: 
+      material: My Peridynamic Partial Stress Material
+  Materials: 
+    My Peridynamic Partial Stress Material: 
+      Material Model: 
+        Model Name: Peridynamic Partial Stress
+      Density: 
+        Value: 2200.0000
+    My Classic Elastic Material: 
+      Material Model: 
+        Model Name: Elastic
+      Density: 
+        Value: 2200.00000000
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 2.23500000e+10
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.25000000
+...

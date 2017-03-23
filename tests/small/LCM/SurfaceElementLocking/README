@@ -4,8 +4,8 @@ The boundary conditions are specified in the Mathematica notebook, PrescribedF.n
 
 J varies throughout a single localization element
 
-1. Test without volume averaging: inputNoVolJ.xml
-2. Test with volume averaging: inputVolJ.xml
+1. Test without volume averaging: inputNoVolJ.yaml
+2. Test with volume averaging: inputVolJ.yaml
 
 Gold copies for each case are given in outNoVolJGold.e and outVolJGold.e, respectively.
 

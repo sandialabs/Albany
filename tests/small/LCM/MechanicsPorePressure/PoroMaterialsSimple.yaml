@@ -1,0 +1,41 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    Block0: 
+      material: Soil
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.050000000
+  Materials: 
+    Soil: 
+      Material Model: 
+        Model Name: Neohookean
+      Stabilization Parameter: 2.00000000
+      Porosity: 
+        Porosity Type: Constant
+        Value: 0.40000000
+        Initial Porosity Value: 0.40000000
+        Grain Bulk Modulus Value: 1.00000000e+10
+      Biot Coefficient: 
+        Biot Coefficient Type: Constant
+        Value: 0.99990000
+        Skeleton Bulk Modulus Parameter Value: 1.00000000e+08
+        Grain Bulk Modulus Value: 1.00000000e+10
+      Biot Modulus: 
+        Biot Modulus Type: Constant
+        Value: 1.00000000e+16
+        Fluid Bulk Modulus Value: 1.00000000e+08
+        Grain Bulk Modulus Value: 1.00000000e+10
+      Thermal Conductivity: 
+        Thermal Conductivity Type: Constant
+        Value: 1.00000000e-05
+      'Kozeny-Carman Permeability': 
+        'Kozeny-Carman Permeability Type': Constant
+        Value: 1.00000000e-06
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1.00000000e+07
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.20000000
+...

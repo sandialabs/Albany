@@ -1,0 +1,47 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: Hyper
+    block_2: 
+      material: Hyper
+    block_3: 
+      material: AnisoHyperDamage
+      Surface Element: true
+  Materials: 
+    Hyper: 
+      Material Model: 
+        Model Name: Neohookean
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 100000.00
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.45000000
+    AnisoHyperDamage: 
+      Material Model: 
+        Model Name: AHD
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 100000.00000000
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.45000000
+      Fiber 1 k: 10000.00000000
+      Fiber 1 q: 100.00000000
+      Fiber 1 volume fraction: 0.30000000
+      Fiber 1 maximum damage: 1.00000000
+      Fiber 1 damage saturation: 10000.00000000
+      Fiber 2 k: 10000.00000000
+      Fiber 2 q: 100.00000000
+      Fiber 2 volume fraction: 0.30000000
+      Fiber 2 maximum damage: 1.00000000
+      Fiber 2 damage saturation: 10000.00000000
+      Matrix volume fraction: 0.40000000
+      Matrix maximum damage: 0.10000000
+      Matrix damage saturation: 10000.00000000
+      Fiber 1 Orientation Vector: [0.00000000e+00, 1.00000000, 0.00000000e+00]
+      Fiber 2 Orientation Vector: [0.00000000e+00, 1.00000000, 0.00000000e+00]
+      Use Local Coordinate System: false
+...

@@ -22,8 +22,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CP.py
                ${CMAKE_CURRENT_BINARY_DIR}/CP.py COPYONLY)
 
 # Copy Input files from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CP-uniaxial.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/CP-uniaxial.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CP-uniaxial.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/CP-uniaxial.yaml COPYONLY)
 
 # Copy the reference solution and exodiff files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CP-uniaxial.gold.exo

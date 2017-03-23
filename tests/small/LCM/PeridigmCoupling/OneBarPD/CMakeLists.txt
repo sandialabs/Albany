@@ -5,10 +5,10 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 
 # Copy Input files from source to binary dir
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OneBarPDMatrixFree.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/OneBarPDMatrixFree.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OneBarPDMaterials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/OneBarPDMaterials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OneBarPDMatrixFree.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/OneBarPDMatrixFree.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OneBarPDMaterials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/OneBarPDMaterials.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OneBarPD.sphere.g
                ${CMAKE_CURRENT_BINARY_DIR}/OneBarPD.sphere.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OneBarPDMatrixFree.gold.e
@@ -18,5 +18,5 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OneBarPDMatrixFree.exodiff
 
 # Add the tests
 if(ALBANY_IFPACK2)
-add_test(PeridigmCoupling_OneBarPD_Epetra python ../run_exodiff_test.py "${SerialAlbany.exe}" OneBarPDMatrixFree.xml)
+add_test(PeridigmCoupling_OneBarPD_Epetra python ../run_exodiff_test.py "${SerialAlbany.exe}" OneBarPDMatrixFree.yaml)
 endif()

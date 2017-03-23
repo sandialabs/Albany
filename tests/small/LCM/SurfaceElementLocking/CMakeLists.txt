@@ -20,28 +20,28 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 endif()
 
 # input files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNoVolJ.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputNoVolJ.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputVolJ.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputVolJ.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAveragePressure.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputAveragePressure.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNoVolJ.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputNoVolJ.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputVolJ.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputVolJ.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAveragePressure.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputAveragePressure.yaml COPYONLY)
 if (ALBANY_IFPACK2)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNoVolJT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputNoVolJT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputVolJT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputVolJT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAveragePressureT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputAveragePressureT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNoVolJT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputNoVolJT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputVolJT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputVolJT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAveragePressureT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputAveragePressureT.yaml COPYONLY)
 endif()
 
 # material files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/1materialNoVolJ.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/1materialNoVolJ.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/1materialVolJ.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/1materialVolJ.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/1materialAveragePressure.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/1materialAveragePressure.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/1materialNoVolJ.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/1materialNoVolJ.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/1materialVolJ.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/1materialVolJ.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/1materialAveragePressure.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/1materialAveragePressure.yaml COPYONLY)
 
 # mesh file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface1ElemMeshRev.g

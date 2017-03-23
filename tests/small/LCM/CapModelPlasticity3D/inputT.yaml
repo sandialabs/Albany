@@ -1,0 +1,138 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Elasticity 3D
+    Solution Method: Continuation
+    Phalanx Graph Visualization Detail: 1
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF X: 0.00000000e+00
+      DBC on NS NodeSet1 for DOF X: -4.00000000e-02
+      DBC on NS NodeSet2 for DOF Y: 0.00000000e+00
+      DBC on NS NodeSet3 for DOF Y: 0.00000000e+00
+      DBC on NS NodeSet4 for DOF Z: 0.00000000e+00
+      DBC on NS NodeSet5 for DOF Z: 0.00000000e+00
+    Material Model: 
+      Model Name: CapExplicit
+    Elastic Modulus: 
+      Elastic Modulus Type: Constant
+      Value: 22547.00000000
+    Poissons Ratio: 
+      Poissons Ratio Type: Constant
+      Value: 0.25240000
+    A: 689.20000000
+    B: 0.00039400
+    C: 675.20000000
+    theta: 0.00000000e+00
+    R: 28.00000000
+    kappa0: -8.05000000e+00
+    W: 0.08000000
+    D1: 0.00147000
+    D2: 0.00000000e+00
+    calpha: 100000.00000000
+    psi: 1.00000000
+    N: 6.00000000
+    L: 0.00039400
+    phi: 0.00000000e+00
+    Q: 28.00000000
+    Parameters: 
+      Number: 6
+      Parameter 0: DBC on NS NodeSet0 for DOF X
+      Parameter 1: DBC on NS NodeSet1 for DOF X
+      Parameter 2: DBC on NS NodeSet2 for DOF Y
+      Parameter 3: DBC on NS NodeSet3 for DOF Y
+      Parameter 4: DBC on NS NodeSet4 for DOF Z
+      Parameter 5: DBC on NS NodeSet5 for DOF Z
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    1D Elements: 2
+    2D Elements: 2
+    3D Elements: 2
+    Method: STK3D
+    Interleaved Ordering: true
+    Exodus Output File Name: stel3d_tpetra.exo
+  Regression Results: 
+    Number of Comparisons: 0
+    Test Values: [0.16666667]
+    Relative Tolerance: 1.00000000e-07
+    Number of Sensitivity Comparisons: 0
+    Sensitivity Test Values 0: [0.16666666, 0.16666666, 0.33333333, 0.33333333]
+    Number of Dakota Comparisons: 0
+    Dakota Test Values: [1.00000000, 1.00000000]
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: 
+        Initial Step Size: -1.00000000e-04
+        Method: Constant
+      Stepper: 
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: DBC on NS NodeSet1 for DOF X
+        Max Steps: 80
+        Max Value: 0.00000000e+00
+        Return Failed on Reaching Max Steps: false
+        Min Value: -4.00000000e-02
+        Compute Eigenvalues: false
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Jacobian Inverse
+          Num Eigenvalues: 0
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000e-05
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-10
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 2
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

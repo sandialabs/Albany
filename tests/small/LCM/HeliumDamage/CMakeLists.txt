@@ -14,12 +14,12 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
 
 # input files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/helium-damage.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/helium-damage.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/helium-damage.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/helium-damage.yaml COPYONLY)
 
 # material files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/helium-damage-materials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/helium-damage-materials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/helium-damage-materials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/helium-damage-materials.yaml COPYONLY)
 
 # exodiff files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/helium-damage.exodiff

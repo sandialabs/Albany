@@ -1,0 +1,49 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output: 
+    Compute Jacobian Condition Number: -1
+    Write Resdiual to MatrixMarket: 0
+    Write Jacobian to MatrixMarket: 0
+    Write Residual to Standard Output: 0
+    Write Jacobian to Standard Output: 0
+  Scaling: 
+    Scale: 1000.0000
+  DataTransferKit: 
+    Map Type: Consistent Interpolation
+    L2 Projection: 
+      Integration Order: 2
+    Consistent Interpolation: { }
+    Point Cloud: 
+      Map Type: Moving Least Square Reconstruction
+      Basis Type: Wu
+      Basis Order: 4
+      Spatial Dimension: 3
+      RBF Radius: 1.00000000
+    Search: 
+      Track Missed Range Entities: false
+      Point Inclusion Tolerance: 1.00000000e-12
+  Problem: 
+    Name: Mechanics 3D
+    Phalanx Graph Visualization Detail: 0
+    MaterialDB Filename: ../CoupledSchwarz_Cubes_StudyOverlap_Cube1_Material.yaml
+    Dirichlet BCs: 
+      DBC on NS nodelist_6 for DOF X: 0.00000000e+00
+      DBC on NS nodelist_6 for DOF Y: 0.00000000e+00
+      Time Dependent DBC on NS nodelist_6 for DOF Z: 
+        Number of points: 2
+        Time Values: [0.00000000e+00, 1.00000000]
+        BC Values: [0.00000000e+00, 0.01000000]
+      DBC on NS nodelist_5 for DOF Schwarz: 
+        BC Function: Schwarz
+        Coupled Application: CoupledSchwarz_Cubes_StudyOverlap_Cube0_Model.yaml
+        Coupled Block: fine
+  Discretization: 
+    Number Of Time Derivatives: 1
+    Method: Ioss
+    Exodus Input File Name: ../CoupledSchwarz_Cubes_StudyOverlap_Cube1.g
+    Exodus Output File Name: CoupledSchwarz_Cubes_StudyOverlap_Cube1.e
+    Exodus Solution Name: disp
+    Exodus Residual Name: resid
+    Separate Evaluators by Element Block: true
+...

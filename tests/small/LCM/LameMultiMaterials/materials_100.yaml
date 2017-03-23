@@ -1,0 +1,217 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Reference Material: Metal
+  ElementBlocks: 
+    block_1: 
+      material: Metal
+    block_2: 
+      material: Metal
+    block_3: 
+      material: Metal
+    block_4: 
+      material: Metal
+    block_5: 
+      material: Metal
+    block_6: 
+      material: Metal
+    block_7: 
+      material: Metal
+    block_8: 
+      material: Plastic
+    block_9: 
+      material: Metal
+    block_10: 
+      material: Plastic
+    block_11: 
+      material: Metal
+    block_12: 
+      material: Metal
+    block_13: 
+      material: Metal
+    block_14: 
+      material: Metal
+    block_15: 
+      material: Metal
+    block_16: 
+      material: Metal
+    block_17: 
+      material: Metal
+    block_18: 
+      material: Plastic
+    block_19: 
+      material: Metal
+    block_20: 
+      material: Plastic
+    block_21: 
+      material: Metal
+    block_22: 
+      material: Metal
+    block_23: 
+      material: Metal
+    block_24: 
+      material: Metal
+    block_25: 
+      material: Metal
+    block_26: 
+      material: Metal
+    block_27: 
+      material: Metal
+    block_28: 
+      material: Plastic
+    block_29: 
+      material: Metal
+    block_30: 
+      material: Plastic
+    block_31: 
+      material: Metal
+    block_32: 
+      material: Metal
+    block_33: 
+      material: Metal
+    block_34: 
+      material: Metal
+    block_35: 
+      material: Metal
+    block_36: 
+      material: Metal
+    block_37: 
+      material: Metal
+    block_38: 
+      material: Plastic
+    block_39: 
+      material: Metal
+    block_40: 
+      material: Plastic
+    block_41: 
+      material: Metal
+    block_42: 
+      material: Metal
+    block_43: 
+      material: Metal
+    block_44: 
+      material: Metal
+    block_45: 
+      material: Metal
+    block_46: 
+      material: Metal
+    block_47: 
+      material: Metal
+    block_48: 
+      material: Plastic
+    block_49: 
+      material: Metal
+    block_50: 
+      material: Plastic
+    block_51: 
+      material: Metal
+    block_52: 
+      material: Metal
+    block_53: 
+      material: Metal
+    block_54: 
+      material: Metal
+    block_55: 
+      material: Metal
+    block_56: 
+      material: Metal
+    block_57: 
+      material: Metal
+    block_58: 
+      material: Plastic
+    block_59: 
+      material: Metal
+    block_60: 
+      material: Plastic
+    block_61: 
+      material: Metal
+    block_62: 
+      material: Metal
+    block_63: 
+      material: Metal
+    block_64: 
+      material: Metal
+    block_65: 
+      material: Metal
+    block_66: 
+      material: Metal
+    block_67: 
+      material: Metal
+    block_68: 
+      material: Plastic
+    block_69: 
+      material: Metal
+    block_70: 
+      material: Plastic
+    block_71: 
+      material: Metal
+    block_72: 
+      material: Metal
+    block_73: 
+      material: Metal
+    block_74: 
+      material: Metal
+    block_75: 
+      material: Metal
+    block_76: 
+      material: Metal
+    block_77: 
+      material: Metal
+    block_78: 
+      material: Plastic
+    block_79: 
+      material: Metal
+    block_80: 
+      material: Plastic
+    block_81: 
+      material: Metal
+    block_82: 
+      material: Metal
+    block_83: 
+      material: Metal
+    block_84: 
+      material: Metal
+    block_85: 
+      material: Metal
+    block_86: 
+      material: Metal
+    block_87: 
+      material: Metal
+    block_88: 
+      material: Plastic
+    block_89: 
+      material: Metal
+    block_90: 
+      material: Plastic
+    block_91: 
+      material: Metal
+    block_92: 
+      material: Metal
+    block_93: 
+      material: Metal
+    block_94: 
+      material: Metal
+    block_95: 
+      material: Metal
+    block_96: 
+      material: Metal
+    block_97: 
+      material: Metal
+    block_98: 
+      material: Plastic
+    block_99: 
+      material: Metal
+    block_100: 
+      material: Plastic
+  Materials: 
+    Plastic: 
+      Lame Material Model: Elastic
+      Lame Material Parameters: 
+        Youngs Modulus: 1.0000000
+        Poissons Ratio: 0.25000000
+    Metal: 
+      Lame Material Model: Elastic
+      Lame Material Parameters: 
+        Youngs Modulus: 2.00000000
+        Poissons Ratio: 0.25000000
+...

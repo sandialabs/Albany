@@ -1,0 +1,176 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Mechanics 3D
+    Solution Method: Continuation
+    MaterialDB Filename: materials.yaml
+    Dirichlet BCs: 
+      DBC on NS vtx1 for DOF X: 0.00000000e+00
+      DBC on NS vtx1 for DOF Y: 0.00000000e+00
+      DBC on NS vtx1 for DOF Z: 0.00000000e+00
+      DBC on NS vtx2 for DOF Y: 0.00000000e+00
+      DBC on NS vtx3 for DOF Z: 0.00000000e+00
+      DBC on NS vtx4 for DOF X: 0.00000000e+00
+    Temperature: 
+      Variable Type: Time Dependent
+      Time Values: [0.00000000e+00, 10.00000000]
+      Dependent Values: [400.00000000, 200.00000000]
+    Initial Condition: 
+      Function: Constant
+      Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00]
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+    Response Functions: 
+      Number: 0
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [0.03333793]
+    Relative Tolerance: 1.00000000e-10
+  Discretization: 
+    Method: PUMI
+    Workset Size: 50
+    Mesh Model Input File Name: two_bars.dmg
+    PUMI Input File Name: two_bars.smb
+    PUMI Output File Name: out_no_restart.vtk
+    Element Block Associations: [[92, 216], [eb_1, eb_2]]
+    Vertex Node Set Associations: [[54, 56, 60, 248], [vtx1, vtx2, vtx3, vtx4]]
+    Cubature Degree: 1
+    Separate Evaluators by Element Block: true
+  Piro: 
+    Rythmos: 
+      Num Time Steps: 100
+      Final Time: 1.00000000
+      Max State Error: 0.00010000
+      Alpha: 0.00000000e+00
+      Rythmos Stepper: 
+        VerboseObject: 
+          Verbosity Level: low
+      Rythmos Integration Control: { }
+      Rythmos Integrator: 
+        VerboseObject: 
+          Verbosity Level: none
+      Stratimikos: { }
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Continuation Method: Natural
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: Time
+        Max Steps: 10
+        Max Value: 10.00000000
+        Min Value: 0.00000000e+00
+        Compute Eigenvalues: false
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Jacobian Inverse
+          Num Eigenvalues: 1
+      Step Size: 
+        Initial Step Size: 1.00000000
+        Method: Constant
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Linear Solver: 
+            Tolerance: 1.00000000e-08
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 400
+                      Output Frequency: 10
+                    Max Iterations: 400
+                    Tolerance: 1.00000000e-09
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: none
+                  Left Preconditioner If Unspecified: true
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 0.01000000
+                      Implicit Residual Scaling: Norm of Preconditioned Initial Residual
+                      Explicit Residual Scaling: Norm of RHS
+                      Output Frequency: 1
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 100
+                      Block Size: 1
+                      Num Blocks: 200
+                      Orthogonalization: DGKS
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Prec Type: RILUK
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: iluk level-of-fill': 0
+                    'fact: ilut level-of-fill': 0.00000000e+00
+                    'schwarz: filter singletons': true
+                    'schwarz: use reordering': true
+                    'schwarz: overlap level': 0
+                MueLu: 
+                  verbosity: high
+                  max levels: 10
+                  'repartition: enable': true
+                  'repartition: min rows per proc': 1000
+                  'sa: damping factor': 0.50000000
+                  'smoother: pre or post': both
+                  'coarse: max size': 500
+                  'coarse: type': KLU
+                  'aggregation: type': uncoupled
+                  'smoother: type': RELAXATION
+                  'smoother: params': 
+                    'relaxation: type': 'Symmetric Gauss-Seidel'
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: false
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Complete
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 4
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Unscaled
+          Tolerance: 1.00000000e-06
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 10
+        Test 2: 
+          Test Type: FiniteValue
+        Test 3: 
+          Test Type: NormUpdate
+          Scale Type: Unscaled
+          Tolerance: 1.00000000e-11
+...

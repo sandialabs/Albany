@@ -1,0 +1,126 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Total Lagrangian PoroPlasticity 2D
+    Solution Method: Continuation
+    Phalanx Graph Visualization Detail: 1
+    weighted_Volume_Averaged_J: true
+    Dirichlet BCs: 
+      DBC on NS NodeSet3 for DOF X: 0.00000000e+00
+      DBC on NS NodeSet1 for DOF Y: 0.00000000e+00
+      Time Dependent DBC on NS NodeSet1 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 10000.00000000, 3.15360000e+15]
+        BC Values: [0.00000000e+00, 0.10000000, 0.20000000]
+      DBC on NS NodeSet2 for DOF T: 1.00000000
+      Time Dependent DBC on NS NodeSet2 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 10000.00000000, 3.15360000e+15]
+        BC Values: [0.00000000e+00, 0.10000000, 0.20000000]
+    Stabilization Parameter: 5.00000000
+    Porosity: 
+      Porosity Type: Constant
+      Value: 0.40000000
+      Initial Porosity Value: 0.40000000
+    Biot Coefficient: 
+      Biot Coefficient Type: Constant
+      Value: 0.60000000
+      Skeleton Bulk Modulus Parameter Value: 1.46500000e+07
+      Grain Bulk Modulus Value: 6.32500000e+07
+    Biot Modulus: 
+      Biot Modulus Type: Constant
+      Value: 1.00000000e+16
+      Fluid Bulk Modulus Value: 2.20000000e+06
+      Grain Bulk Modulus Value: 6.32500000e+07
+    Thermal Conductivity: 
+      Thermal Conductivity Type: Constant
+      Value: 1.00000000e-05
+    'Kozeny-Carman Permeability': 
+      'Kozeny-Carman Permeability Type': Constant
+      Value: 0.00050000
+    Elastic Modulus: 
+      Elastic Modulus Type: Constant
+      Value: 2.19750000e+06
+    Poissons Ratio: 
+      Poissons Ratio Type: Constant
+      Value: 0.25000000
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    1D Elements: 11
+    2D Elements: 4
+    2D Scale: 0.25000000
+    Method: STK2D
+    Exodus Output File Name: thel2d.exo
+    Cubature Degree: 3
+  Regression Results: { }
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Tangent
+      Stepper: 
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: Time
+        Max Steps: 5
+        Max Value: 315.00000000
+        Min Value: 0.00000000e+00
+        Compute Eigenvalues: false
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Jacobian Inverse
+          Num Eigenvalues: 0
+      Step Size: 
+        Initial Step Size: 100.00000000
+        Method: Adaptive
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Amesos
+              Linear Solver Types: 
+                Amesos: 
+                  Solver Type: Lapack
+                  Amesos Settings: 
+                    Lapack: 
+                      AddToDiag: 1.00000000e-12
+              Preconditioner Type: Ifpack
+            LinearOpTester: { }
+            LinearOpWithSolveTester: { }
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 3
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 5.00000000e-07
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 15
+        Test 2: 
+          Test Type: FiniteValue
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

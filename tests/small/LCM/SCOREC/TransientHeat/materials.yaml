@@ -1,0 +1,26 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    cube: 
+      material: Plastic
+  Materials: 
+    Plastic: 
+      Material Model: 
+        Model Name: Neohookean
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1.0000000
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.25000000
+      Thermal Conductivity: 
+        Thermal Conductivity Type: Constant
+        Value: 1.00000000
+      Reference Temperature: 1.00000000
+      Initial Temperature: 1.00000000
+      Thermal Transient Coefficient: 1.00000000
+      Thermal Expansion Coefficient: 1.00000000e-07
+      Density: 1.00000000
+      Heat Capacity: 1.00000000
+...

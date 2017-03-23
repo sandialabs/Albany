@@ -1,0 +1,33 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    plate: 
+      material: SS304L
+  Materials: 
+    SS304L: 
+      Material Model: 
+        Model Name: J2
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 2.80000000e+07
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.27000000
+      Shear Modulus: 
+        Shear Modulus Type: Constant
+        Value: 1.10236220e+07
+      Bulk Modulus: 
+        Bulk Modulus Type: Constant
+        Value: 2.02898551e+07
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 286614.00000000
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 50000.00000000
+      Stabilization Parameter: 1.00000000
+      Output Cauchy Stress: true
+      Output Fp: true
+      Output eqps: true
+...

@@ -1,11 +1,11 @@
 
 
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
 # 2. Copy materials file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials.yaml COPYONLY)
 
 # 3. Copy mesh files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fuel_volume.exo

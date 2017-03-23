@@ -5,16 +5,16 @@
 ##*****************************************************************//
 
 # Mechanics
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Mechanics.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/Mechanics.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperatureT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsWithTemperatureT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsMaterials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsMaterials.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperatureMaterials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsWithTemperatureMaterials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Mechanics.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/Mechanics.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperatureT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsWithTemperatureT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsMaterials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsMaterials.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperatureMaterials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsWithTemperatureMaterials.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/brick_model_2.g
                ${CMAKE_CURRENT_BINARY_DIR}/brick_model_2.g COPYONLY)
 
@@ -23,11 +23,11 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 if (ALBANY_EPETRA)
-  add_test(${testName}_mech_epetra ${Albany.exe} Mechanics.xml)
+  add_test(${testName}_mech_epetra ${Albany.exe} Mechanics.yaml)
 endif ()
 if (ALBANY_MUELU_EXAMPLES)
-  add_test (${testName}_mech_tpetra ${AlbanyT.exe} MechanicsT.xml)
+  add_test (${testName}_mech_tpetra ${AlbanyT.exe} MechanicsT.yaml)
   set_tests_properties(${testName}_mech_tpetra PROPERTIES LABELS CUDA_TEST)
-  add_test (${testName}_thermomech_tpetra ${AlbanyT.exe} MechanicsWithTemperatureT.xml)
+  add_test (${testName}_thermomech_tpetra ${AlbanyT.exe} MechanicsWithTemperatureT.yaml)
   set_tests_properties(${testName}_thermomech_tpetra PROPERTIES LABELS CUDA_TEST)
 endif ()

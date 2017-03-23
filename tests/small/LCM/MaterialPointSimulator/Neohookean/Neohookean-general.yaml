@@ -1,0 +1,26 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    Block0: 
+      material: Composite
+  Materials: 
+    Composite: 
+      Material Model: 
+        Model Name: Neohookean
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 200000.00
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.30000000
+      Material Point Simulator: 
+        Check Stability: false
+        Loading Case Name: general
+        Deformation Gradient Components: [1.00000000, 1.10000000, 0.00000000e+00, 0.00000000e+00, 2.00000000, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 1.00000000]
+        Number of Steps: 10
+        Step Size: 0.01000000
+        Output File Name: 'Neohookean-general.exo'
+        Use Temperature: false
+      Output Cauchy Stress: true
+...

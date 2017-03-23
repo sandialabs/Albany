@@ -1,0 +1,76 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: base
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000e+00
+      Volume Average Pressure: true
+    block_2: 
+      material: weld
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000e+00
+      Volume Average Pressure: true
+  Materials: 
+    base: 
+      Material Model: 
+        Model Name: J2
+      Shear Modulus: 
+        Shear Modulus Type: Constant
+        Value: 8.00000000e+10
+        dmudT Value: 0.00000000e+00
+      Bulk Modulus: 
+        Bulk Modulus Type: Constant
+        Value: 1.33333333e+11
+        dKdT Value: 0.00000000e+00
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 3.03690000e+08
+        dYdT Value: 0.00000000e+00
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 1.77980000e+09
+        dHdT Value: 0.00000000e+00
+      Reference Temperature: 300.00000000
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 2.00000000e+11
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.25000000
+      Saturation Modulus: 0.00000000e+00
+      Saturation Exponent: 0.00000000e+00
+      Output Cauchy Stress: true
+      Output eqps: true
+    weld: 
+      Material Model: 
+        Model Name: J2
+      Shear Modulus: 
+        Shear Modulus Type: Constant
+        Value: 8.00000000e+10
+        dmudT Value: 0.00000000e+00
+      Bulk Modulus: 
+        Bulk Modulus Type: Constant
+        Value: 1.33333333e+11
+        dKdT Value: 0.00000000e+00
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 4.55500000e+08
+        dYdT Value: 0.00000000e+00
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 1.77980000e+09
+        dHdT Value: 0.00000000e+00
+      Reference Temperature: 300.00000000
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 2.00000000e+11
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.25000000
+      Saturation Modulus: 0.00000000e+00
+      Saturation Exponent: 0.00000000e+00
+      Output Cauchy Stress: true
+      Output eqps: true
+...

@@ -7,10 +7,10 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 
 # Copy Input files from source to binary dir
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OrientationOnMesh.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/OrientationOnMesh.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OrientationOnMesh_Material.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/OrientationOnMesh_Material.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OrientationOnMesh.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/OrientationOnMesh.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OrientationOnMesh_Material.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/OrientationOnMesh_Material.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OrientationOnMesh.g
                ${CMAKE_CURRENT_BINARY_DIR}/OrientationOnMesh.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OrientationOnMesh.g.4.0
@@ -26,10 +26,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OrientationOnMesh.exodiff
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OrientationOnMesh.gold.exo
                ${CMAKE_CURRENT_BINARY_DIR}/OrientationOnMesh.gold.exo COPYONLY)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OrientationNotOnMesh.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/OrientationNotOnMesh.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OrientationNotOnMesh_Material.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/OrientationNotOnMesh_Material.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OrientationNotOnMesh.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/OrientationNotOnMesh.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OrientationNotOnMesh_Material.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/OrientationNotOnMesh_Material.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OrientationNotOnMesh.g
                ${CMAKE_CURRENT_BINARY_DIR}/OrientationNotOnMesh.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OrientationNotOnMesh.g.4.0
@@ -47,8 +47,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OrientationNotOnMesh.gold.exo
 
 # Add the tests
 if(ALBANY_IFPACK2)
-add_test(CrystalPlasticity_OrientationOnMesh_Tpetra python ../run_exodiff_test.py "${SerialAlbanyT.exe}" OrientationOnMesh.xml)
-add_test(CrystalPlasticity_OrientationOnMesh_np4_Tpetra python ../run_exodiff_test.py "${AlbanyT.exe}" OrientationOnMesh.xml)
-add_test(CrystalPlasticity_OrientationNotOnMesh_Tpetra python ../run_exodiff_test.py "${SerialAlbanyT.exe}" OrientationNotOnMesh.xml)
-add_test(CrystalPlasticity_OrientationNotOnMesh_np4_Tpetra python ../run_exodiff_test.py "${AlbanyT.exe}" OrientationNotOnMesh.xml)
+add_test(CrystalPlasticity_OrientationOnMesh_Tpetra python ../run_exodiff_test.py "${SerialAlbanyT.exe}" OrientationOnMesh.yaml)
+add_test(CrystalPlasticity_OrientationOnMesh_np4_Tpetra python ../run_exodiff_test.py "${AlbanyT.exe}" OrientationOnMesh.yaml)
+add_test(CrystalPlasticity_OrientationNotOnMesh_Tpetra python ../run_exodiff_test.py "${SerialAlbanyT.exe}" OrientationNotOnMesh.yaml)
+add_test(CrystalPlasticity_OrientationNotOnMesh_np4_Tpetra python ../run_exodiff_test.py "${AlbanyT.exe}" OrientationNotOnMesh.yaml)
 endif()

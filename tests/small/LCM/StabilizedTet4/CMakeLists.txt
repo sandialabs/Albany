@@ -9,16 +9,16 @@ if (NOT (ALBANY_IFPACK2 AND SEACAS_EXODIFF))
 endif()
 
 # input files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/galerkinT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/galerkinT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/stabilizedT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/stabilizedT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/galerkinT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/galerkinT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/stabilizedT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/stabilizedT.yaml COPYONLY)
 
 # material files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/stabilized-materials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/stabilized-materials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/stabilized-materials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/stabilized-materials.yaml COPYONLY)
 
 # mesh file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bar.g

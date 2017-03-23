@@ -1,0 +1,70 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: Rotated Lattice
+    block_2: 
+      material: Axes Aligned Lattice
+  Materials: 
+    Rotated Lattice: 
+      Material Model: 
+        Model Name: CrystalPlasticity
+      Crystal Elasticity: 
+        C11: 269.23077
+        C12: 115.38461539
+        C44: 76.92307692
+        Basis Vector 1: [0.99600530, 0.08929413, 0.00000000e+00]
+        Basis Vector 2: [-8.92941262e-02, 0.99600530, 0.00000000e+00]
+        Basis Vector 3: [0.00000000e+00, 0.00000000e+00, 1.00000000]
+      Slip System Family 0: 
+        Flow Rule: 
+          Type: Power Law
+          Reference Slip Rate: 1.00000000
+          Rate Exponent: 1.00000000
+        Hardening Law: 
+          Type: Linear Minus Recovery
+          Hardening Modulus: 0.00000000e+00
+          Recovery Modulus: 0.00000000e+00
+          Initial Hardening State: 1.00000000e+10
+      Number of Slip Systems: 1
+      Slip System 1: 
+        Slip Direction: [1.00000000, 0.00000000e+00, 0.00000000e+00]
+        Slip Normal: [0.00000000e+00, 1.00000000, 0.00000000e+00]
+      Output Cauchy Stress: true
+      Output Fp: true
+      Output L: true
+      Output Mechanical Source: true
+      Output gamma_1: true
+      Output tau_1: true
+    Axes Aligned Lattice: 
+      Material Model: 
+        Model Name: CrystalPlasticity
+      Crystal Elasticity: 
+        C11: 269.23076923
+        C12: 115.38461539
+        C44: 76.92307692
+        Basis Vector 1: [1.00000000, 0.00000000e+00, 0.00000000e+00]
+        Basis Vector 2: [0.00000000e+00, 1.00000000, 0.00000000e+00]
+        Basis Vector 3: [0.00000000e+00, 0.00000000e+00, 1.00000000]
+      Slip System Family 0: 
+        Flow Rule: 
+          Type: Power Law
+          Reference Slip Rate: 1.00000000
+          Rate Exponent: 1.00000000
+        Hardening Law: 
+          Type: Linear Minus Recovery
+          Hardening Modulus: 0.00000000e+00
+          Recovery Modulus: 0.00000000e+00
+          Initial Hardening State: 1.00000000e+10
+      Number of Slip Systems: 1
+      Slip System 1: 
+        Slip Direction: [1.00000000, 0.00000000e+00, 0.00000000e+00]
+        Slip Normal: [0.00000000e+00, 1.00000000, 0.00000000e+00]
+      Output Cauchy Stress: true
+      Output Fp: true
+      Output L: true
+      Output Mechanical Source: true
+      Output gamma_1: true
+      Output tau_1: true
+...

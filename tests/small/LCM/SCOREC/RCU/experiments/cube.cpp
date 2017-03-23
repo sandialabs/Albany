@@ -1,11 +1,11 @@
-/* This program generates an xml file based on a number of optional inputs.
+/* This program generates an.yaml file based on a number of optional inputs.
 
    Build with the command
        g++ cube.cpp
 
    The simplest command is this:
        ./a.out input
-   It produces input.xml, which is the input to AlbanyT.
+   It produces input.yaml, which is the input to AlbanyT.
      Appending options produces various inputs. For example, to create the input
    for the stretched cube with RCU on, run
        ./a.out input elastic bctensile adapt uniform notransform rcu
@@ -32,12 +32,12 @@
 #include <iostream>
 #include <iomanip>
 
-#include "me2xml.hpp"
+#include "me.yaml.hpp"
 
 #define prp(a) std::cout << std::setw(20) << #a << " " << a << std::endl;
 #define check(a) else if (v == #a) a = true
 
-void xml () {
+void.yaml () {
   bool
     adapt = 0,
     refine0 = 0,
@@ -55,8 +55,8 @@ void xml () {
     parallel = 0;
   double step_factor = 1;
   int bc_type;
-  for (int i = 0; i < me2xml::argc; ++i) {
-    const std::string v = me2xml::argv[i];
+  for (int i = 0; i < me.yaml::argc; ++i) {
+    const std::string v = me.yaml::argv[i];
     if (false) ;
     check(adapt);
     check(refine0);
@@ -75,7 +75,7 @@ void xml () {
     check(test);
     check(parallel);
     else if (v == "stepfactor") {
-      step_factor = atof(me2xml::argv[i+1]);
+      step_factor = atof(me.yaml::argv[i+1]);
       ++i;
     }
   }
@@ -129,7 +129,7 @@ void xml () {
       if (mechanic) {
         p("Name", "Mechanics 3D");
         p("MaterialDB Filename",
-          elastic ? "materials_elastic.xml" : "materials_mechanical.xml");
+          elastic ? "materials_elastic.yaml" : "materials_mechanical.yaml");
       } else if (elastic) {
         p("Name", "Elasticity 3D");
         { pl a("Elastic Modulus");

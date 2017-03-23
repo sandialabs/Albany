@@ -1,0 +1,36 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    'bulk-block': 
+      material: Ceramic
+    Surface Element: 
+      material: Cohesive
+      Surface Element: true
+      Cohesive Element: true
+  Materials: 
+    Ceramic: 
+      Material Model: 
+        Model Name: Saint Venant Kirchhoff
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 7.00000000e+10
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.30000000
+      Output Cauchy Stress: true
+      Output FirstPK: true
+    Cohesive: 
+      Material Model: 
+        Model Name: Ortiz Pandolfi
+      delta_c: 0.01000000
+      sigma_c: 1.00000000e+08
+      beta: 1.00000000
+      stiff_c: 1.00000000e+10
+      Output Cohesive Traction: true
+      Output Normal Traction: true
+      Output Shear Traction: true
+      Output Normal Jump: true
+      Output Shear Jump: true
+      Output Max Jump: true
+...

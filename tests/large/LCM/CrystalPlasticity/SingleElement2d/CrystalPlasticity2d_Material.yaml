@@ -1,0 +1,43 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    Block0: 
+      material: Metal
+  Materials: 
+    Metal: 
+      Material Model: 
+        Model Name: CrystalPlasticity
+      Crystal Elasticity: 
+        C11: 168.40000
+        C12: 121.40000000
+        C44: 75.40000000
+        Basis Vector 1: [1.00000000, 0.00000000e+00, 0.00000000e+00]
+        Basis Vector 2: [0.00000000e+00, 1.00000000, 0.00000000e+00]
+        Basis Vector 3: [0.00000000e+00, 0.00000000e+00, 1.00000000]
+      Slip System Family 0: 
+        Flow Rule: 
+          Type: Power Law
+          Reference Slip Rate: 1.00000000
+          Rate Exponent: 1.00000000
+        Hardening Law: 
+          Type: Linear Minus Recovery
+          Hardening Modulus: 0.00000000e+00
+          Recovery Modulus: 0.00000000e+00
+          Initial Hardening State: 1.00000000
+      Number of Slip Systems: 2
+      Slip System 1: 
+        Slip Direction: [1.00000000, 0.00000000e+00, 0.00000000e+00]
+        Slip Normal: [0.00000000e+00, 1.00000000, 0.00000000e+00]
+        Slip Family: 0
+      Slip System 2: 
+        Slip Direction: [0.00000000e+00, 1.00000000, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 0.00000000e+00, 0.00000000e+00]
+        Slip Family: 0
+      Output Cauchy Stress: true
+      Output Fp: true
+      Output L: true
+      Output Mechanical Source: true
+      Output Deformation Gradient: true
+      Output Integration Weights: true
+...

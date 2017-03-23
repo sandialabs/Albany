@@ -6,10 +6,10 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${SEACAS_ALGEBRA} ${C
 
 # Copy Input files from source to binary dir
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OBC_PatchTest_Analysis.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/OBC_PatchTest_Analysis.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OBC_PatchTest_PoissonMaterials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/OBC_PatchTest_PoissonMaterials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OBC_PatchTest_Analysis.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/OBC_PatchTest_Analysis.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OBC_PatchTest_PoissonMaterials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/OBC_PatchTest_PoissonMaterials.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OBC_PatchTest.g
                ${CMAKE_CURRENT_BINARY_DIR}/OBC_PatchTest.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OBC_PatchTest.g.4.0
@@ -31,6 +31,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OBC_PatchTest_Analysis.final_step.exo
 
 # Add the tests
 if(ALBANY_IFPACK2)
-add_test(PeridigmCoupling_OBC_PatchTest_np1_Epetra python ../run_exodiff_test.py "${SerialAlbanyAnalysis.exe}" OBC_PatchTest_Analysis.xml --final_step_only)
-add_test(PeridigmCoupling_OBC_PatchTest_np4_Epetra python ../run_exodiff_test.py "${AlbanyAnalysis.exe}" OBC_PatchTest_Analysis.xml --final_step_only)
+add_test(PeridigmCoupling_OBC_PatchTest_np1_Epetra python ../run_exodiff_test.py "${SerialAlbanyAnalysis.exe}" OBC_PatchTest_Analysis.yaml --final_step_only)
+add_test(PeridigmCoupling_OBC_PatchTest_np4_Epetra python ../run_exodiff_test.py "${AlbanyAnalysis.exe}" OBC_PatchTest_Analysis.yaml --final_step_only)
 endif()

@@ -18,7 +18,7 @@ if os.path.exists(log_file_name):
 logfile = open(log_file_name, 'w')
 
 # run Albany 
-command = ["./Albany", name + ".xml"]
+command = ["./Albany", name + ".yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:
@@ -50,7 +50,7 @@ if os.path.exists(log_file_name):
 logfile = open(log_file_name, 'w')
 
 # run Albany 
-command = ["./Albany", name + ".xml"]
+command = ["./Albany", name + ".yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:

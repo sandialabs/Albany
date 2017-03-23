@@ -1,5 +1,5 @@
 Count = 0.0
-outFileName = 'inputNonLinBC.xml'
+outFileName = 'inputNonLinBC.yaml'
 dataFile = open(outFileName, 'w')
 
 C0 = 0.0

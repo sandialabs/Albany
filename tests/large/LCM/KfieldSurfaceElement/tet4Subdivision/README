@@ -4,7 +4,7 @@ This test seeks to accomplish a few things
 
 Subdivision --input="../meshes/KfieldTetForBarySymm.g" --output="KfieldTetBarySymm.g"
 
-2) Run Albany with inputTet.xml to examine the stress field around the crack tip
+2) Run Albany with inputTet.yaml to examine the stress field around the crack tip
 
 You will notice that the fields don't look so great. 
 

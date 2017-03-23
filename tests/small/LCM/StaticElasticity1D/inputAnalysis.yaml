@@ -1,0 +1,112 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Elasticity 1D
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF X: 0.00000000e+00
+      DBC on NS NodeSet1 for DOF X: 0.10000000
+    Parameters: 
+      Number: 2
+      Parameter 0: DBC on NS NodeSet0 for DOF X
+      Parameter 1: DBC on NS NodeSet1 for DOF X
+    Response Functions: 
+      Number: 3
+      Response 0: Solution Average
+      Response 1: Solution Two Norm
+      Response 2: Solution Max Value
+    Elastic Modulus: 
+      Elastic Modulus Type: Constant
+      Value: 1.00000000
+    Poissons Ratio: 
+      Poissons Ratio Type: Constant
+      Value: 1.00000000
+  Discretization: 
+    1D Elements: 100
+    Method: STK1D
+  Regression Results: 
+    Number of Comparisons: 0
+    Relative Tolerance: 0.00010000
+    Number of Sensitivity Comparisons: 0
+    Number of Piro Analysis Comparisons: 2
+    Piro Analysis Test Values: [1.50000000, 2.50000000]
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000e-05
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-05
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 100
+                      Block Size: 1
+                      Num Blocks: 50
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 1
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+    Analysis: 
+      Analysis Package: Dakota
+      Dakota: 
+        Input File: dakota.in
+        Output File: dak.out
+      MOOCHO: 
+        Parameter Guess: 
+          Explicit Array: '{1.1, 1.1}'
+        Parameter Lower Bounds: 
+          Explicit Array: '{0.0, 0.0}'
+      OptiPack: 
+        Max Num Iterations: 20
+        Objective Gradient Tol: 1.00000000e-06
+        Solver Type: FR
+      GlobiPack: 
+        Minimize: 
+          Max Iterations: 8
+...

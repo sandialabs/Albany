@@ -23,7 +23,7 @@ tolerance = 1.0e-8;
 meanvalue = 0.000594484007237;
 
 # run AlbanyT 
-command = ["./AlbanyT", "cubes.xml"]
+command = ["./AlbanyT", "cubes.yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:

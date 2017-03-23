@@ -1,0 +1,44 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    Block0: 
+      material: 6061Aluminum
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.050000000
+  Materials: 
+    6061Aluminum: 
+      Material Model: 
+        Model Name: GursonFD
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 67559.00000000
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.32990000
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 30.40000000
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 303.30000000
+      Saturation Exponent: 
+        Saturation Exponent Type: Constant
+        Value: 12.40000000
+      Saturation Modulus: 
+        Saturation Modulus Type: Constant
+        Value: 73.60000000
+      N: 0.00000000e+00
+      eq0: 0.00000000e+00
+      f0: 0.00000000e+00
+      kw: 0.00000000e+00
+      fN: 0.00000000e+00
+      fc: 1.00000000
+      ff: 1.00000000
+      sN: 0.10000000
+      eN: 0.30000000
+      q1: 1.50000000
+      q2: 1.00000000
+      q3: 2.25000000
+      isSaturationH: true
+...

@@ -1,0 +1,126 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Elasticity 3D
+    Solution Method: Steady
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF X: 0.00000000e+00
+      DBC on NS NodeSet2 for DOF Y: 0.00000000e+00
+      DBC on NS NodeSet5 for DOF Z: 0.00000000e+00
+    Neumann BCs: 
+      'NBC on SS SideSet1 for DOF all set (t_x, t_y, t_z)': [1.00000000, 0.00000000e+00, 0.00000000e+00]
+    Elastic Modulus: 
+      Elastic Modulus Type: Constant
+      Value: 1.00000000
+    Poissons Ratio: 
+      Poissons Ratio Type: Constant
+      Value: 0.25000000
+    Parameters: 
+      Number: 4
+      Parameter 0: DBC on NS NodeSet0 for DOF X
+      Parameter 1: DBC on NS NodeSet2 for DOF Y
+      Parameter 2: DBC on NS NodeSet5 for DOF Z
+      Parameter 3: 'NBC on SS SideSet1 for DOF all set (t_x, t_y, t_z)[0]'
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    1D Elements: 16
+    2D Elements: 16
+    3D Elements: 16
+    Method: STK3D
+    Exodus Output File Name: stel3d.exo
+  Regression Results: 
+    Number of Comparisons: 0
+    Test Values: [0.16666667]
+    Relative Tolerance: 1.00000000e-07
+    Number of Sensitivity Comparisons: 1
+    Sensitivity Test Values 0: [0.33333333, 0.33333333, 0.33333333, 0.16666667]
+    Number of Dakota Comparisons: 0
+    Dakota Test Values: [1.00000000, 1.00000000]
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000e-05
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-10
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: ML
+              Preconditioner Types: 
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    'smoother: type': Chebyshev
+                    'smoother: pre or post': both
+                    'coarse: type': 'Amesos-KLU'
+                    'coarse: max size': 1000
+                    'repartition: enable': 1
+                    'repartition: partitioner': Zoltan
+                    'repartition: Zoltan dimensions': 3
+                    'repartition: max min ratio': 1.30000000
+                    'repartition: min per proc': 500
+                Ifpack: 
+                  Overlap: 2
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: true
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

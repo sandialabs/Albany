@@ -1,0 +1,38 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    bottom: 
+      material: SiO2
+    top: 
+      material: Si
+  Materials: 
+    Si: 
+      Material Model: 
+        Model Name: Linear Elastic
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1.50000000e+11
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.24000000
+      Reference Temperature: 443.00000000
+      Initial Temperature: 443.00000000
+      Thermal Expansion Coefficient: 2.00000000e-06
+      Output Cauchy Stress: true
+      Output eqps: true
+    SiO2: 
+      Material Model: 
+        Model Name: Linear Elastic
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 7.00000000e+10
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.17000000
+      Reference Temperature: 443.00000000
+      Initial Temperature: 443.00000000
+      Thermal Expansion Coefficient: 0.00002000
+      Output Cauchy Stress: true
+      Output eqps: true
+...

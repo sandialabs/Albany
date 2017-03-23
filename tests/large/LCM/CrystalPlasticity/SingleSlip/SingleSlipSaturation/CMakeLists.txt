@@ -8,10 +8,10 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip.g
                ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip.g COPYONLY)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipSaturation.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipSaturation.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipSaturation_Material.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipSaturation_Material.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipSaturation.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipSaturation.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipSaturation_Material.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipSaturation_Material.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipSaturation.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipSaturation.exodiff COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipSaturation.gold.exo
@@ -19,5 +19,5 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipSaturation.gold.exo
 
 # Add the tests
 if(ALBANY_IFPACK2)
-add_test(CrystalPlasticity_SingleSlipSaturation python ../../run_exodiff_test.py "${SerialAlbanyT.exe}" SingleSlipSaturation.xml)
+add_test(CrystalPlasticity_SingleSlipSaturation python ../../run_exodiff_test.py "${SerialAlbanyT.exe}" SingleSlipSaturation.yaml)
 endif()

@@ -5,10 +5,10 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 if (ALBANY_64BIT_INT)
   if (ALBANY_IFPACK2)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials.yaml COPYONLY)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/turbine.e
                ${CMAKE_CURRENT_BINARY_DIR}/turbine.e COPYONLY)
     add_test(${testName}_Tpetra_64 ${AlbanyT.exe})

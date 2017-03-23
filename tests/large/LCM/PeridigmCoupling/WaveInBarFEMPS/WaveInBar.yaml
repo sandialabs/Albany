@@ -1,0 +1,74 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Peridigm Code Coupling
+    Solution Method: Transient
+    Second Order: Velocity Verlet
+    Perturb Dirichlet: 1.00000000e-06
+    MaterialDB Filename: WaveInBarMaterials.yaml
+    Peridigm Parameters: 
+      Discretization: 
+        Type: Albany
+      Materials: 
+        My Elastic Material: 
+          Material Model: Elastic Correspondence
+          Density: 2200.00000000
+          Bulk Modulus: 1.49000000e+10
+          Shear Modulus: 8.94000000e+09
+          Hourglass Coefficient: 0.05000000
+      Blocks: 
+        My Group of Blocks: 
+          Block Names: block_2
+          Material: My Elastic Material
+          Horizon: 0.00151000
+      Output: 
+        Output Variables: 
+          Displacement: true
+          Force: true
+          Velocity: true
+          Partial_Stress: true
+          Radius: true
+          Number_Of_Neighbors: true
+    Initial Condition Dot: 
+      Function: Expression Parser
+      Function Expression for DOF X: 'if( !(x > -0.01501) ){ value = -100.0; }else{ value = 0.0; }'
+  Discretization: 
+    Method: Exodus
+    Exodus Input File Name: WaveInBar.g
+    Exodus Output File Name: WaveInBar.e
+    Exodus Write Interval: 10
+    Cubature Degree: 2
+    Separate Evaluators by Element Block: true
+    Solution Vector Components: [displacement, V]
+    Residual Vector Components: [force, V]
+  Piro: 
+    Velocity Verlet: 
+      Num Time Steps: 220
+      Final Time: 0.00002000
+      Initial Time: 0.00000000e+00
+      Invert Mass Matrix: true
+      Lump Mass Matrix: true
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Linear Solver Types: 
+          Belos: 
+            Solver Type: Block GMRES
+            Solver Types: 
+              Block GMRES: 
+                Convergence Tolerance: 1.00000000e-05
+                Output Frequency: 10
+                Output Style: 1
+                Verbosity: 33
+                Maximum Iterations: 100
+                Block Size: 1
+                Num Blocks: 100
+                Flexible Gmres: false
+        Preconditioner Type: Ifpack
+        Preconditioner Types: 
+          Ifpack: 
+            Prec Type: ILU
+            Overlap: 1
+            Ifpack Settings: 
+              'fact: level-of-fill': 1
+...

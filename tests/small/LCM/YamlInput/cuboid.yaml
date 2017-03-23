@@ -1,33 +1,28 @@
+%YAML 1.1
+---
 ANONYMOUS:
-  Scaling:
-    Scale: 1.0
-  # Model declaration, look in the "problems" directory
-  Debug Output:
+  Scaling: 
+    Scale: 1.0000000
+  Debug Output: 
     Write Solution to MatrixMarket: false
     Write Solution to Standard Output: false
-  Problem:
+  Problem: 
     Name: Mechanics 3D
-    # Have Phalanx output a graph of the used evaluators 
     Phalanx Graph Visualization Detail: 0
-    # Yaml filename with material definitions
     MaterialDB Filename: materials.yaml
-    # Transient or Steady (Quasi-Static) or Continuation (load steps)
     Solution Method: Continuation
-    # BOUNDARY CONDITIONS on node sets
-    Dirichlet BCs:
-      DBC on NS nodelist_1 for DOF X: 0.0
-      DBC on NS nodelist_3 for DOF Y: 0.0
-      DBC on NS nodelist_5 for DOF Z: 0.0
-      Time Dependent DBC on NS nodelist_6 for DOF Z:
+    Dirichlet BCs: 
+      DBC on NS nodelist_1 for DOF X: 0.00000000e+00
+      DBC on NS nodelist_3 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_5 for DOF Z: 0.00000000e+00
+      Time Dependent DBC on NS nodelist_6 for DOF Z: 
         Number of points: 2
-        Time Values: [0.0, 2.0]
-        BC Values: [0.0, 4.0]
-    Parameters:
+        Time Values: [0.00000000e+00, 2.00000000]
+        BC Values: [0.00000000e+00, 4.00000000]
+    Parameters: 
       Number: 1
       Parameter 0: Time
-  # MESH, done here, or input from file. If the latter, the domain
-  # decomposition must already be performed for parallel jobs.
-  Discretization:
+  Discretization: 
     Method: Ioss
     Exodus Input File Name: cuboid.g
     Exodus Output File Name: cuboid.e
@@ -35,48 +30,42 @@ ANONYMOUS:
     Exodus Residual Name: resid
     Separate Evaluators by Element Block: true
     Number Of Time Derivatives: 1
-  # Solver options
-  Piro:
+  Piro: 
     Solver Type: LOCA
-    LOCA:
-      Predictor:
+    LOCA: 
+      Predictor: 
         Method: Constant
-      #  PARAMETER STEPPING
-      Stepper:
+      Stepper: 
         Continuation Method: Natural
-        Initial Value: 0.0
+        Initial Value: 0.00000000e+00
         Continuation Parameter: Time
         Max Steps: 1000
-        Min Value: 0.0
-        Max Value: 1.0
+        Min Value: 0.00000000e+00
+        Max Value: 1.00000000
         Return Failed on Reaching Max Steps: false
         Hit Continuation Bound: false
-      Step Size:
-        # Control the parameter incrementation, here it is the displacement
-        # increment on the BC
-        Initial Step Size: 1.0
+      Step Size: 
+        Initial Step Size: 1.00000000
         Method: Constant
-        Failed Step Reduction Factor: 1.0
-    # BEGIN SOLVER CONTROLS. IN GENERAL, The defaults need not be changed.
-    NOX:
-      Direction:
+        Failed Step Reduction Factor: 1.00000000
+    NOX: 
+      Direction: 
         Method: Newton
-        Newton:
+        Newton: 
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
-          Stratimikos Linear Solver:
-            NOX Stratimikos Options:
-            Stratimikos:
-              # Belos for iterative solvers, Amesos for direct
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
               Linear Solver Type: Belos
-              Linear Solver Types:
-                Belos:
-                  VerboseObject:
+              Linear Solver Types: 
+                Belos: 
+                  VerboseObject: 
                     Verbosity Level: low
                   Solver Type: Block GMRES
-                  Solver Types:
-                    Block GMRES:
-                      Convergence Tolerance: 1.0e-14
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-14
                       Output Frequency: 1
                       Output Style: 1
                       Verbosity: 0
@@ -85,16 +74,15 @@ ANONYMOUS:
                       Num Blocks: 200
                       Flexible Gmres: false
               Preconditioner Type: None
-      Line Search:
-        Full Step:
-          Full Step: 1.0
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
         Method: Full Step
       Nonlinear Solver: Line Search Based
-      Printing:
+      Printing: 
         Output Precision: 3
         Output Processor: 0
-        # set the output information
-        Output Information:
+        Output Information: 
           Error: true
           Warning: false
           Outer Iteration: true
@@ -104,19 +92,18 @@ ANONYMOUS:
           Stepper Iteration: true
           Stepper Details: false
           Stepper Parameters: false
-      # Checking for residual convergence (rel, abs, inc)
-      Solver Options:
+      Solver Options: 
         Status Test Check Type: Complete
-      Status Tests:
+      Status Tests: 
         Test Type: Combo
         Combo Type: OR
         Number of Tests: 3
-        Test 0:
+        Test 0: 
           Test Type: NormUpdate
-          Tolerance: 1.0e-13
-        Test 1:
+          Tolerance: 1.00000000e-13
+        Test 1: 
           Test Type: MaxIters
           Maximum Iterations: 64
-        Test 2:
+        Test 2: 
           Test Type: FiniteValue
-        
+...

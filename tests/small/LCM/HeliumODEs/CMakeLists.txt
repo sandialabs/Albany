@@ -12,16 +12,16 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
 
 # input files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/HeBubbles.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/HeBubbles.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/HeBubblesDecay.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/HeBubblesDecay.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/HeBubbles.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/HeBubbles.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/HeBubblesDecay.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/HeBubblesDecay.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/hexOneElement.g
                ${CMAKE_CURRENT_BINARY_DIR}/hexOneElement.g COPYONLY)
 
 # material files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialsScaledPlasticity.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materialsScaledPlasticity.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialsScaledPlasticity.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materialsScaledPlasticity.yaml COPYONLY)
 
 # exodiff files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/HeBubbles.exodiff

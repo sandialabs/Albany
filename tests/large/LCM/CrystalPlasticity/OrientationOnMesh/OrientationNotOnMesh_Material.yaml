@@ -1,0 +1,982 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: block_1 Material
+      Weighted Volume Average J: true
+      Volume Average Pressure: true
+    block_2: 
+      material: block_2 Material
+      Weighted Volume Average J: true
+      Volume Average Pressure: true
+    block_3: 
+      material: block_3 Material
+      Weighted Volume Average J: true
+      Volume Average Pressure: true
+    block_4: 
+      material: block_4 Material
+      Weighted Volume Average J: true
+      Volume Average Pressure: true
+    block_5: 
+      material: block_5 Material
+      Weighted Volume Average J: true
+      Volume Average Pressure: true
+    block_6: 
+      material: block_6 Material
+      Weighted Volume Average J: true
+      Volume Average Pressure: true
+    block_7: 
+      material: block_7 Material
+      Weighted Volume Average J: true
+      Volume Average Pressure: true
+    block_8: 
+      material: block_8 Material
+      Weighted Volume Average J: true
+      Volume Average Pressure: true
+  Materials: 
+    block_1 Material: 
+      Material Model: 
+        Model Name: CrystalPlasticity
+      Number of Slip Systems: 12
+      Integration Scheme: Implicit
+      Nonlinear Solver Step Type: Newton
+      Implicit Integration Relative Tolerance: 1.00000000e-35
+      Implicit Integration Absolute Tolerance: 1.00000000e-12
+      Implicit Integration Max Iterations: 100
+      Output Cauchy Stress: true
+      Output Fp: true
+      Output Deformation Gradient: true
+      Output L: true
+      Output CP_Residual: true
+      Output CP_Residual_Iter: true
+      Output eqps: true
+      Output Integration Weights: true
+      Output tau_1: true
+      Output tau_2: true
+      Output tau_3: true
+      Output tau_4: true
+      Output tau_5: true
+      Output tau_6: true
+      Output tau_7: true
+      Output tau_8: true
+      Output tau_9: true
+      Output tau_10: true
+      Output tau_11: true
+      Output tau_12: true
+      Output tau_hard_1: true
+      Output tau_hard_2: true
+      Output tau_hard_3: true
+      Output tau_hard_4: true
+      Output tau_hard_5: true
+      Output tau_hard_6: true
+      Output tau_hard_7: true
+      Output tau_hard_8: true
+      Output tau_hard_9: true
+      Output tau_hard_10: true
+      Output tau_hard_11: true
+      Output tau_hard_12: true
+      Output gamma_1: true
+      Output gamma_2: true
+      Output gamma_3: true
+      Output gamma_4: true
+      Output gamma_5: true
+      Output gamma_6: true
+      Output gamma_7: true
+      Output gamma_8: true
+      Output gamma_9: true
+      Output gamma_10: true
+      Output gamma_11: true
+      Output gamma_12: true
+      Output gamma_dot_1: true
+      Output gamma_dot_2: true
+      Output gamma_dot_3: true
+      Output gamma_dot_4: true
+      Output gamma_dot_5: true
+      Output gamma_dot_6: true
+      Output gamma_dot_7: true
+      Output gamma_dot_8: true
+      Output gamma_dot_9: true
+      Output gamma_dot_10: true
+      Output gamma_dot_11: true
+      Output gamma_dot_12: true
+      Crystal Elasticity: 
+        C11: 204600.00000000
+        C12: 137700.00000000
+        C44: 126200.00000000
+        Basis Vector 1: [-8.81800374e-01, -4.71568188e-01, -7.17952407e-03]
+        Basis Vector 2: [-1.95591104e-01, 0.37950946, -9.04276889e-01]
+        Basis Vector 3: [0.42915291, -7.95987448e-01, -4.26886123e-01]
+      Slip System Family 0: 
+        Flow Rule: 
+          Type: Power Law
+          Reference Slip Rate: 1.00000000
+          Rate Exponent: 20.00000000
+        Hardening Law: 
+          Type: Linear Minus Recovery
+          Hardening Modulus: 355.00000000
+          Recovery Modulus: 2.90000000
+          Initial Hardening State: 122.00000000
+      Slip System 1: 
+        Slip Direction: [-1.00000000e+00, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 2: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 3: 
+        Slip Direction: [1.00000000, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 4: 
+        Slip Direction: [-1.00000000e+00, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 5: 
+        Slip Direction: [1.00000000, 0.00000000e+00, 1.00000000]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 6: 
+        Slip Direction: [0.00000000e+00, 1.00000000, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 7: 
+        Slip Direction: [1.00000000, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 8: 
+        Slip Direction: [0.00000000e+00, 1.00000000, 1.00000000]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 9: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 10: 
+        Slip Direction: [1.00000000, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Slip System 11: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Slip System 12: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+    block_2 Material: 
+      Material Model: 
+        Model Name: CrystalPlasticity
+      Number of Slip Systems: 12
+      Integration Scheme: Implicit
+      Nonlinear Solver Step Type: Newton
+      Implicit Integration Relative Tolerance: 1.00000000e-35
+      Implicit Integration Absolute Tolerance: 1.00000000e-12
+      Implicit Integration Max Iterations: 100
+      Output Cauchy Stress: true
+      Output Fp: true
+      Output Deformation Gradient: true
+      Output L: true
+      Output CP_Residual: true
+      Output CP_Residual_Iter: true
+      Output eqps: true
+      Output Integration Weights: true
+      Output tau_1: true
+      Output tau_2: true
+      Output tau_3: true
+      Output tau_4: true
+      Output tau_5: true
+      Output tau_6: true
+      Output tau_7: true
+      Output tau_8: true
+      Output tau_9: true
+      Output tau_10: true
+      Output tau_11: true
+      Output tau_12: true
+      Output tau_hard_1: true
+      Output tau_hard_2: true
+      Output tau_hard_3: true
+      Output tau_hard_4: true
+      Output tau_hard_5: true
+      Output tau_hard_6: true
+      Output tau_hard_7: true
+      Output tau_hard_8: true
+      Output tau_hard_9: true
+      Output tau_hard_10: true
+      Output tau_hard_11: true
+      Output tau_hard_12: true
+      Output gamma_1: true
+      Output gamma_2: true
+      Output gamma_3: true
+      Output gamma_4: true
+      Output gamma_5: true
+      Output gamma_6: true
+      Output gamma_7: true
+      Output gamma_8: true
+      Output gamma_9: true
+      Output gamma_10: true
+      Output gamma_11: true
+      Output gamma_12: true
+      Output gamma_dot_1: true
+      Output gamma_dot_2: true
+      Output gamma_dot_3: true
+      Output gamma_dot_4: true
+      Output gamma_dot_5: true
+      Output gamma_dot_6: true
+      Output gamma_dot_7: true
+      Output gamma_dot_8: true
+      Output gamma_dot_9: true
+      Output gamma_dot_10: true
+      Output gamma_dot_11: true
+      Output gamma_dot_12: true
+      Crystal Elasticity: 
+        C11: 204600.00000000
+        C12: 137700.00000000
+        C44: 126200.00000000
+        Basis Vector 1: [-6.54144716e-01, -7.16904597e-01, 0.24112754]
+        Basis Vector 2: [-6.61288082e-01, 0.38732984, -6.42396815e-01]
+        Basis Vector 3: [0.36714134, -5.79675248e-01, -7.27450234e-01]
+      Slip System Family 0: 
+        Flow Rule: 
+          Type: Power Law
+          Reference Slip Rate: 1.00000000
+          Rate Exponent: 20.00000000
+        Hardening Law: 
+          Type: Linear Minus Recovery
+          Hardening Modulus: 355.00000000
+          Recovery Modulus: 2.90000000
+          Initial Hardening State: 122.00000000
+      Slip System 1: 
+        Slip Direction: [-1.00000000e+00, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 2: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 3: 
+        Slip Direction: [1.00000000, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 4: 
+        Slip Direction: [-1.00000000e+00, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 5: 
+        Slip Direction: [1.00000000, 0.00000000e+00, 1.00000000]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 6: 
+        Slip Direction: [0.00000000e+00, 1.00000000, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 7: 
+        Slip Direction: [1.00000000, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 8: 
+        Slip Direction: [0.00000000e+00, 1.00000000, 1.00000000]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 9: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 10: 
+        Slip Direction: [1.00000000, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Slip System 11: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Slip System 12: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+    block_3 Material: 
+      Material Model: 
+        Model Name: CrystalPlasticity
+      Number of Slip Systems: 12
+      Integration Scheme: Implicit
+      Nonlinear Solver Step Type: Newton
+      Implicit Integration Relative Tolerance: 1.00000000e-35
+      Implicit Integration Absolute Tolerance: 1.00000000e-12
+      Implicit Integration Max Iterations: 100
+      Output Cauchy Stress: true
+      Output Fp: true
+      Output Deformation Gradient: true
+      Output L: true
+      Output CP_Residual: true
+      Output CP_Residual_Iter: true
+      Output eqps: true
+      Output Integration Weights: true
+      Output tau_1: true
+      Output tau_2: true
+      Output tau_3: true
+      Output tau_4: true
+      Output tau_5: true
+      Output tau_6: true
+      Output tau_7: true
+      Output tau_8: true
+      Output tau_9: true
+      Output tau_10: true
+      Output tau_11: true
+      Output tau_12: true
+      Output tau_hard_1: true
+      Output tau_hard_2: true
+      Output tau_hard_3: true
+      Output tau_hard_4: true
+      Output tau_hard_5: true
+      Output tau_hard_6: true
+      Output tau_hard_7: true
+      Output tau_hard_8: true
+      Output tau_hard_9: true
+      Output tau_hard_10: true
+      Output tau_hard_11: true
+      Output tau_hard_12: true
+      Output gamma_1: true
+      Output gamma_2: true
+      Output gamma_3: true
+      Output gamma_4: true
+      Output gamma_5: true
+      Output gamma_6: true
+      Output gamma_7: true
+      Output gamma_8: true
+      Output gamma_9: true
+      Output gamma_10: true
+      Output gamma_11: true
+      Output gamma_12: true
+      Output gamma_dot_1: true
+      Output gamma_dot_2: true
+      Output gamma_dot_3: true
+      Output gamma_dot_4: true
+      Output gamma_dot_5: true
+      Output gamma_dot_6: true
+      Output gamma_dot_7: true
+      Output gamma_dot_8: true
+      Output gamma_dot_9: true
+      Output gamma_dot_10: true
+      Output gamma_dot_11: true
+      Output gamma_dot_12: true
+      Crystal Elasticity: 
+        C11: 204600.00000000
+        C12: 137700.00000000
+        C44: 126200.00000000
+        Basis Vector 1: [0.44871271, 0.63865153, 0.62512489]
+        Basis Vector 2: [0.26347378, 0.57386885, -7.75407060e-01]
+        Basis Vector 3: [-8.53954607e-01, 0.51263902, 0.08923431]
+      Slip System Family 0: 
+        Flow Rule: 
+          Type: Power Law
+          Reference Slip Rate: 1.00000000
+          Rate Exponent: 20.00000000
+        Hardening Law: 
+          Type: Linear Minus Recovery
+          Hardening Modulus: 355.00000000
+          Recovery Modulus: 2.90000000
+          Initial Hardening State: 122.00000000
+      Slip System 1: 
+        Slip Direction: [-1.00000000e+00, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 2: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 3: 
+        Slip Direction: [1.00000000, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 4: 
+        Slip Direction: [-1.00000000e+00, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 5: 
+        Slip Direction: [1.00000000, 0.00000000e+00, 1.00000000]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 6: 
+        Slip Direction: [0.00000000e+00, 1.00000000, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 7: 
+        Slip Direction: [1.00000000, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 8: 
+        Slip Direction: [0.00000000e+00, 1.00000000, 1.00000000]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 9: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 10: 
+        Slip Direction: [1.00000000, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Slip System 11: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Slip System 12: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+    block_4 Material: 
+      Material Model: 
+        Model Name: CrystalPlasticity
+      Number of Slip Systems: 12
+      Integration Scheme: Implicit
+      Nonlinear Solver Step Type: Newton
+      Implicit Integration Relative Tolerance: 1.00000000e-35
+      Implicit Integration Absolute Tolerance: 1.00000000e-12
+      Implicit Integration Max Iterations: 100
+      Output Cauchy Stress: true
+      Output Fp: true
+      Output Deformation Gradient: true
+      Output L: true
+      Output CP_Residual: true
+      Output CP_Residual_Iter: true
+      Output eqps: true
+      Output Integration Weights: true
+      Output tau_1: true
+      Output tau_2: true
+      Output tau_3: true
+      Output tau_4: true
+      Output tau_5: true
+      Output tau_6: true
+      Output tau_7: true
+      Output tau_8: true
+      Output tau_9: true
+      Output tau_10: true
+      Output tau_11: true
+      Output tau_12: true
+      Output tau_hard_1: true
+      Output tau_hard_2: true
+      Output tau_hard_3: true
+      Output tau_hard_4: true
+      Output tau_hard_5: true
+      Output tau_hard_6: true
+      Output tau_hard_7: true
+      Output tau_hard_8: true
+      Output tau_hard_9: true
+      Output tau_hard_10: true
+      Output tau_hard_11: true
+      Output tau_hard_12: true
+      Output gamma_1: true
+      Output gamma_2: true
+      Output gamma_3: true
+      Output gamma_4: true
+      Output gamma_5: true
+      Output gamma_6: true
+      Output gamma_7: true
+      Output gamma_8: true
+      Output gamma_9: true
+      Output gamma_10: true
+      Output gamma_11: true
+      Output gamma_12: true
+      Output gamma_dot_1: true
+      Output gamma_dot_2: true
+      Output gamma_dot_3: true
+      Output gamma_dot_4: true
+      Output gamma_dot_5: true
+      Output gamma_dot_6: true
+      Output gamma_dot_7: true
+      Output gamma_dot_8: true
+      Output gamma_dot_9: true
+      Output gamma_dot_10: true
+      Output gamma_dot_11: true
+      Output gamma_dot_12: true
+      Crystal Elasticity: 
+        C11: 204600.00000000
+        C12: 137700.00000000
+        C44: 126200.00000000
+        Basis Vector 1: [0.43002611, -7.03876136e-01, -5.65363535e-01]
+        Basis Vector 2: [0.21483551, -5.28452767e-01, 0.82133025]
+        Basis Vector 3: [-8.76882686e-01, -4.74653619e-01, -7.60308996e-02]
+      Slip System Family 0: 
+        Flow Rule: 
+          Type: Power Law
+          Reference Slip Rate: 1.00000000
+          Rate Exponent: 20.00000000
+        Hardening Law: 
+          Type: Linear Minus Recovery
+          Hardening Modulus: 355.00000000
+          Recovery Modulus: 2.90000000
+          Initial Hardening State: 122.00000000
+      Slip System 1: 
+        Slip Direction: [-1.00000000e+00, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 2: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 3: 
+        Slip Direction: [1.00000000, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 4: 
+        Slip Direction: [-1.00000000e+00, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 5: 
+        Slip Direction: [1.00000000, 0.00000000e+00, 1.00000000]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 6: 
+        Slip Direction: [0.00000000e+00, 1.00000000, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 7: 
+        Slip Direction: [1.00000000, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 8: 
+        Slip Direction: [0.00000000e+00, 1.00000000, 1.00000000]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 9: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 10: 
+        Slip Direction: [1.00000000, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Slip System 11: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Slip System 12: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+    block_5 Material: 
+      Material Model: 
+        Model Name: CrystalPlasticity
+      Number of Slip Systems: 12
+      Integration Scheme: Implicit
+      Nonlinear Solver Step Type: Newton
+      Implicit Integration Relative Tolerance: 1.00000000e-35
+      Implicit Integration Absolute Tolerance: 1.00000000e-12
+      Implicit Integration Max Iterations: 100
+      Output Cauchy Stress: true
+      Output Fp: true
+      Output Deformation Gradient: true
+      Output L: true
+      Output CP_Residual: true
+      Output CP_Residual_Iter: true
+      Output eqps: true
+      Output Integration Weights: true
+      Output tau_1: true
+      Output tau_2: true
+      Output tau_3: true
+      Output tau_4: true
+      Output tau_5: true
+      Output tau_6: true
+      Output tau_7: true
+      Output tau_8: true
+      Output tau_9: true
+      Output tau_10: true
+      Output tau_11: true
+      Output tau_12: true
+      Output tau_hard_1: true
+      Output tau_hard_2: true
+      Output tau_hard_3: true
+      Output tau_hard_4: true
+      Output tau_hard_5: true
+      Output tau_hard_6: true
+      Output tau_hard_7: true
+      Output tau_hard_8: true
+      Output tau_hard_9: true
+      Output tau_hard_10: true
+      Output tau_hard_11: true
+      Output tau_hard_12: true
+      Output gamma_1: true
+      Output gamma_2: true
+      Output gamma_3: true
+      Output gamma_4: true
+      Output gamma_5: true
+      Output gamma_6: true
+      Output gamma_7: true
+      Output gamma_8: true
+      Output gamma_9: true
+      Output gamma_10: true
+      Output gamma_11: true
+      Output gamma_12: true
+      Output gamma_dot_1: true
+      Output gamma_dot_2: true
+      Output gamma_dot_3: true
+      Output gamma_dot_4: true
+      Output gamma_dot_5: true
+      Output gamma_dot_6: true
+      Output gamma_dot_7: true
+      Output gamma_dot_8: true
+      Output gamma_dot_9: true
+      Output gamma_dot_10: true
+      Output gamma_dot_11: true
+      Output gamma_dot_12: true
+      Crystal Elasticity: 
+        C11: 204600.00000000
+        C12: 137700.00000000
+        C44: 126200.00000000
+        Basis Vector 1: [-5.70718758e-02, 0.99797574, 0.02805742]
+        Basis Vector 2: [0.05044069, 0.03094964, -9.98247392e-01]
+        Basis Vector 3: [-9.97095049e-01, -5.55566155e-02, -5.21049420e-02]
+      Slip System Family 0: 
+        Flow Rule: 
+          Type: Power Law
+          Reference Slip Rate: 1.00000000
+          Rate Exponent: 20.00000000
+        Hardening Law: 
+          Type: Linear Minus Recovery
+          Hardening Modulus: 355.00000000
+          Recovery Modulus: 2.90000000
+          Initial Hardening State: 122.00000000
+      Slip System 1: 
+        Slip Direction: [-1.00000000e+00, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 2: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 3: 
+        Slip Direction: [1.00000000, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 4: 
+        Slip Direction: [-1.00000000e+00, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 5: 
+        Slip Direction: [1.00000000, 0.00000000e+00, 1.00000000]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 6: 
+        Slip Direction: [0.00000000e+00, 1.00000000, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 7: 
+        Slip Direction: [1.00000000, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 8: 
+        Slip Direction: [0.00000000e+00, 1.00000000, 1.00000000]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 9: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 10: 
+        Slip Direction: [1.00000000, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Slip System 11: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Slip System 12: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+    block_6 Material: 
+      Material Model: 
+        Model Name: CrystalPlasticity
+      Number of Slip Systems: 12
+      Integration Scheme: Implicit
+      Nonlinear Solver Step Type: Newton
+      Implicit Integration Relative Tolerance: 1.00000000e-35
+      Implicit Integration Absolute Tolerance: 1.00000000e-12
+      Implicit Integration Max Iterations: 100
+      Output Cauchy Stress: true
+      Output Fp: true
+      Output Deformation Gradient: true
+      Output L: true
+      Output CP_Residual: true
+      Output CP_Residual_Iter: true
+      Output eqps: true
+      Output Integration Weights: true
+      Output tau_1: true
+      Output tau_2: true
+      Output tau_3: true
+      Output tau_4: true
+      Output tau_5: true
+      Output tau_6: true
+      Output tau_7: true
+      Output tau_8: true
+      Output tau_9: true
+      Output tau_10: true
+      Output tau_11: true
+      Output tau_12: true
+      Output tau_hard_1: true
+      Output tau_hard_2: true
+      Output tau_hard_3: true
+      Output tau_hard_4: true
+      Output tau_hard_5: true
+      Output tau_hard_6: true
+      Output tau_hard_7: true
+      Output tau_hard_8: true
+      Output tau_hard_9: true
+      Output tau_hard_10: true
+      Output tau_hard_11: true
+      Output tau_hard_12: true
+      Output gamma_1: true
+      Output gamma_2: true
+      Output gamma_3: true
+      Output gamma_4: true
+      Output gamma_5: true
+      Output gamma_6: true
+      Output gamma_7: true
+      Output gamma_8: true
+      Output gamma_9: true
+      Output gamma_10: true
+      Output gamma_11: true
+      Output gamma_12: true
+      Output gamma_dot_1: true
+      Output gamma_dot_2: true
+      Output gamma_dot_3: true
+      Output gamma_dot_4: true
+      Output gamma_dot_5: true
+      Output gamma_dot_6: true
+      Output gamma_dot_7: true
+      Output gamma_dot_8: true
+      Output gamma_dot_9: true
+      Output gamma_dot_10: true
+      Output gamma_dot_11: true
+      Output gamma_dot_12: true
+      Crystal Elasticity: 
+        C11: 204600.00000000
+        C12: 137700.00000000
+        C44: 126200.00000000
+        Basis Vector 1: [0.94692627, 0.06598350, 0.31460581]
+        Basis Vector 2: [-4.47869284e-03, 0.98131901, -1.92335499e-01]
+        Basis Vector 3: [-3.21419634e-01, 0.18071851, 0.92953227]
+      Slip System Family 0: 
+        Flow Rule: 
+          Type: Power Law
+          Reference Slip Rate: 1.00000000
+          Rate Exponent: 20.00000000
+        Hardening Law: 
+          Type: Linear Minus Recovery
+          Hardening Modulus: 355.00000000
+          Recovery Modulus: 2.90000000
+          Initial Hardening State: 122.00000000
+      Slip System 1: 
+        Slip Direction: [-1.00000000e+00, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 2: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 3: 
+        Slip Direction: [1.00000000, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 4: 
+        Slip Direction: [-1.00000000e+00, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 5: 
+        Slip Direction: [1.00000000, 0.00000000e+00, 1.00000000]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 6: 
+        Slip Direction: [0.00000000e+00, 1.00000000, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 7: 
+        Slip Direction: [1.00000000, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 8: 
+        Slip Direction: [0.00000000e+00, 1.00000000, 1.00000000]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 9: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 10: 
+        Slip Direction: [1.00000000, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Slip System 11: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Slip System 12: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+    block_7 Material: 
+      Material Model: 
+        Model Name: CrystalPlasticity
+      Number of Slip Systems: 12
+      Integration Scheme: Implicit
+      Nonlinear Solver Step Type: Newton
+      Implicit Integration Relative Tolerance: 1.00000000e-35
+      Implicit Integration Absolute Tolerance: 1.00000000e-12
+      Implicit Integration Max Iterations: 100
+      Output Cauchy Stress: true
+      Output Fp: true
+      Output Deformation Gradient: true
+      Output L: true
+      Output CP_Residual: true
+      Output CP_Residual_Iter: true
+      Output eqps: true
+      Output Integration Weights: true
+      Output tau_1: true
+      Output tau_2: true
+      Output tau_3: true
+      Output tau_4: true
+      Output tau_5: true
+      Output tau_6: true
+      Output tau_7: true
+      Output tau_8: true
+      Output tau_9: true
+      Output tau_10: true
+      Output tau_11: true
+      Output tau_12: true
+      Output tau_hard_1: true
+      Output tau_hard_2: true
+      Output tau_hard_3: true
+      Output tau_hard_4: true
+      Output tau_hard_5: true
+      Output tau_hard_6: true
+      Output tau_hard_7: true
+      Output tau_hard_8: true
+      Output tau_hard_9: true
+      Output tau_hard_10: true
+      Output tau_hard_11: true
+      Output tau_hard_12: true
+      Output gamma_1: true
+      Output gamma_2: true
+      Output gamma_3: true
+      Output gamma_4: true
+      Output gamma_5: true
+      Output gamma_6: true
+      Output gamma_7: true
+      Output gamma_8: true
+      Output gamma_9: true
+      Output gamma_10: true
+      Output gamma_11: true
+      Output gamma_12: true
+      Output gamma_dot_1: true
+      Output gamma_dot_2: true
+      Output gamma_dot_3: true
+      Output gamma_dot_4: true
+      Output gamma_dot_5: true
+      Output gamma_dot_6: true
+      Output gamma_dot_7: true
+      Output gamma_dot_8: true
+      Output gamma_dot_9: true
+      Output gamma_dot_10: true
+      Output gamma_dot_11: true
+      Output gamma_dot_12: true
+      Crystal Elasticity: 
+        C11: 204600.00000000
+        C12: 137700.00000000
+        C44: 126200.00000000
+        Basis Vector 1: [-8.80728370e-01, 0.44940889, -1.49496455e-01]
+        Basis Vector 2: [-4.16671163e-01, -5.85147866e-01, 0.69569183]
+        Basis Vector 3: [0.22517256, 0.67500639, 0.70261205]
+      Slip System Family 0: 
+        Flow Rule: 
+          Type: Power Law
+          Reference Slip Rate: 1.00000000
+          Rate Exponent: 20.00000000
+        Hardening Law: 
+          Type: Linear Minus Recovery
+          Hardening Modulus: 355.00000000
+          Recovery Modulus: 2.90000000
+          Initial Hardening State: 122.00000000
+      Slip System 1: 
+        Slip Direction: [-1.00000000e+00, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 2: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 3: 
+        Slip Direction: [1.00000000, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 4: 
+        Slip Direction: [-1.00000000e+00, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 5: 
+        Slip Direction: [1.00000000, 0.00000000e+00, 1.00000000]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 6: 
+        Slip Direction: [0.00000000e+00, 1.00000000, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 7: 
+        Slip Direction: [1.00000000, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 8: 
+        Slip Direction: [0.00000000e+00, 1.00000000, 1.00000000]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 9: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 10: 
+        Slip Direction: [1.00000000, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Slip System 11: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Slip System 12: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+    block_8 Material: 
+      Material Model: 
+        Model Name: CrystalPlasticity
+      Number of Slip Systems: 12
+      Integration Scheme: Implicit
+      Nonlinear Solver Step Type: Newton
+      Implicit Integration Relative Tolerance: 1.00000000e-35
+      Implicit Integration Absolute Tolerance: 1.00000000e-12
+      Implicit Integration Max Iterations: 100
+      Output Cauchy Stress: true
+      Output Fp: true
+      Output Deformation Gradient: true
+      Output L: true
+      Output CP_Residual: true
+      Output CP_Residual_Iter: true
+      Output eqps: true
+      Output Integration Weights: true
+      Output tau_1: true
+      Output tau_2: true
+      Output tau_3: true
+      Output tau_4: true
+      Output tau_5: true
+      Output tau_6: true
+      Output tau_7: true
+      Output tau_8: true
+      Output tau_9: true
+      Output tau_10: true
+      Output tau_11: true
+      Output tau_12: true
+      Output tau_hard_1: true
+      Output tau_hard_2: true
+      Output tau_hard_3: true
+      Output tau_hard_4: true
+      Output tau_hard_5: true
+      Output tau_hard_6: true
+      Output tau_hard_7: true
+      Output tau_hard_8: true
+      Output tau_hard_9: true
+      Output tau_hard_10: true
+      Output tau_hard_11: true
+      Output tau_hard_12: true
+      Output gamma_1: true
+      Output gamma_2: true
+      Output gamma_3: true
+      Output gamma_4: true
+      Output gamma_5: true
+      Output gamma_6: true
+      Output gamma_7: true
+      Output gamma_8: true
+      Output gamma_9: true
+      Output gamma_10: true
+      Output gamma_11: true
+      Output gamma_12: true
+      Output gamma_dot_1: true
+      Output gamma_dot_2: true
+      Output gamma_dot_3: true
+      Output gamma_dot_4: true
+      Output gamma_dot_5: true
+      Output gamma_dot_6: true
+      Output gamma_dot_7: true
+      Output gamma_dot_8: true
+      Output gamma_dot_9: true
+      Output gamma_dot_10: true
+      Output gamma_dot_11: true
+      Output gamma_dot_12: true
+      Crystal Elasticity: 
+        C11: 204600.00000000
+        C12: 137700.00000000
+        C44: 126200.00000000
+        Basis Vector 1: [0.97983868, -1.49903087e-01, -1.32080356e-01]
+        Basis Vector 2: [0.16693769, 0.97748675, 0.12904054]
+        Basis Vector 3: [0.10976322, -1.48488102e-01, 0.98280380]
+      Slip System Family 0: 
+        Flow Rule: 
+          Type: Power Law
+          Reference Slip Rate: 1.00000000
+          Rate Exponent: 20.00000000
+        Hardening Law: 
+          Type: Linear Minus Recovery
+          Hardening Modulus: 355.00000000
+          Recovery Modulus: 2.90000000
+          Initial Hardening State: 122.00000000
+      Slip System 1: 
+        Slip Direction: [-1.00000000e+00, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 2: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 3: 
+        Slip Direction: [1.00000000, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 4: 
+        Slip Direction: [-1.00000000e+00, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 5: 
+        Slip Direction: [1.00000000, 0.00000000e+00, 1.00000000]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 6: 
+        Slip Direction: [0.00000000e+00, 1.00000000, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 7: 
+        Slip Direction: [1.00000000, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 8: 
+        Slip Direction: [0.00000000e+00, 1.00000000, 1.00000000]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 9: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 10: 
+        Slip Direction: [1.00000000, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Slip System 11: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Slip System 12: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+...

@@ -1,0 +1,23 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: Cohesive
+      Surface Element: true
+      Cohesive Element: true
+  Materials: 
+    Cohesive: 
+      Material Model: 
+        Model Name: Ortiz Pandolfi
+      delta_c: 0.10000000
+      sigma_c: 500.00000000
+      beta: 1.00000000
+      stiff_c: 100000.00000000
+      Output Cohesive Traction: true
+      Output Normal Traction: true
+      Output Shear Traction: true
+      Output Normal Jump: true
+      Output Shear Jump: true
+      Output Max Jump: true
+...

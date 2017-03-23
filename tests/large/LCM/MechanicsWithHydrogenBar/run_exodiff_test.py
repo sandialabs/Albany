@@ -11,7 +11,7 @@ import string
 import glob
 from subprocess import Popen
 
-def runtest(albany_command, xml_file_name):
+def runtest(albany_command,.yaml_file_name):
 
     # When run as part of ctest, the albany_command string is a set of commands
     # separated by semicolons.  This will not be the case if this script
@@ -19,14 +19,14 @@ def runtest(albany_command, xml_file_name):
 
     # To mimic the ctest behavior, tests may be run from inside the test
     # directory like so:
-    # python ../run_exodiff_test.py "mpirun;-np;4;/scratch/djlittl/Albany/GCC_4.7.2_OPT/src/AlbanyT" RubiksCube.xml
+    # python ../run_exodiff_test.py "mpirun;-np;4;/scratch/djlittl/Albany/GCC_4.7.2_OPT/src/AlbanyT" RubiksCube.yaml
 
     result = 0
-    base_name = xml_file_name[:-4]
+    base_name =.yaml_file_name[:-4]
 
-    # parse the Albany command and append the xml file name
+    # parse the Albany command and append the.yaml file name
     command = string.splitfields(albany_command, ";")
-    command.append(xml_file_name)
+    command.append.yaml_file_name)
 
     # determine the number of processors
     num_processors = 1
@@ -97,8 +97,8 @@ if __name__ == "__main__":
         sys.exit(1)
 
     executable = sys.argv[1]
-    xml_file_name = sys.argv[2]
+   .yaml_file_name = sys.argv[2]
 
-    result = runtest(executable, xml_file_name)
+    result = runtest(executable,.yaml_file_name)
 
     sys.exit(result)

@@ -1,0 +1,24 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: elastic
+  Materials: 
+    elastic: 
+      Material Model: 
+        Model Name: Neohookean
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 2.80000000e+07
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.27000000
+      Shear Modulus: 
+        Shear Modulus Type: Constant
+        Value: 1.10200000e+07
+      Bulk Modulus: 
+        Bulk Modulus Type: Constant
+        Value: 2.02900000e+07
+      Stabilization Parameter: 100.00000000
+...

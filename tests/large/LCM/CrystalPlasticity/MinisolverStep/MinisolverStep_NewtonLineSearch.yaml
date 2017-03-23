@@ -1,0 +1,122 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Mechanics 3D
+    Solution Method: Continuation
+    Phalanx Graph Visualization Detail: 0
+    MaterialDB Filename: MinisolverStep_NewtonLineSearch_Material.yaml
+    Dirichlet BCs: 
+      Time Dependent DBC on NS nodelist_12 for DOF X: 
+        Number of points: 2
+        Time Values: [0.00000000e+00, 0.03000000]
+        BC Values: [0.00000000e+00, 0.01500000]
+      DBC on NS nodelist_11 for DOF X: 0.00000000e+00
+      DBC on NS nodelist_13 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_14 for DOF Z: 0.00000000e+00
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+  Discretization: 
+    Method: Exodus
+    Exodus Input File Name: MinisolverStep_Specimen.g
+    Exodus Output File Name: MinisolverStep_NewtonLineSearch.exo
+    Cubature Degree: 2
+    Separate Evaluators by Element Block: true
+    Solution Vector Components: [displacement, V]
+    Residual Vector Components: [force, V]
+  Piro: 
+    LOCA: 
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Continuation Method: Natural
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: Time
+        Max Steps: 5000
+        Max Value: 0.03000000
+        Min Value: 0.00000000e+00
+        Compute Eigenvalues: false
+      Step Size: 
+        Method: Adaptive
+        Initial Step Size: 0.00050000
+        Max Step Size: 0.02000000
+        Min Step Size: 1.00000000e-05
+        Failed Step Reduction Factor: 0.50000000
+        Aggressiveness: 0.10000000
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Linear Solver: 
+            Tolerance: 1.00000000e-12
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: high
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Output Frequency: 1
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 500
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 2
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: { }
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 16
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: true
+          Details: true
+          Linear Solver Details: true
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options: 
+        Status Test Check Type: Complete
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 4
+        Test 0: 
+          Test Type: RelativeNormF
+          Tolerance: 1.00000000e-10
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 10
+        Test 2: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NStep
+            Number of Nonlinear Iterations: 1
+          Test 1: 
+            Test Type: NormF
+            Tolerance: 1.00000000e-10
+        Test 3: 
+          Test Type: FiniteValue
+...

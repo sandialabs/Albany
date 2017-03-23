@@ -5,22 +5,22 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${SEACAS_EPU} ${CMAKE
 
 # Copy Input files from source to binary dir
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Implicit.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Implicit.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Implicit_noScale.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Implicit_noScale.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Implicit_constScale.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Implicit_constScale.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Implicit_diagScale.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Implicit_diagScale.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Implicit_absRowSumScale.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Implicit_absRowSumScale.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Implicit_Materials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Implicit_Materials.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Explicit.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Explicit.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Explicit_Materials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Explicit_Materials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Implicit.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Implicit.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Implicit_noScale.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Implicit_noScale.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Implicit_constScale.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Implicit_constScale.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Implicit_diagScale.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Implicit_diagScale.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Implicit_absRowSumScale.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Implicit_absRowSumScale.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Implicit_Materials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Implicit_Materials.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Explicit.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Explicit.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube_Explicit_Materials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube_Explicit_Materials.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube.g
                ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube.g.4.0
@@ -44,6 +44,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CreateMaterialsFile.py
 
 # Add the tests
 if(ALBANY_IFPACK2)
-#add_test(CrystalPlasticity_RubiksCube_np1_Tpetra python ../run_exodiff_test.py "${SerialAlbanyT.exe}" RubiksCube.xml)
-#add_test(CrystalPlasticity_RubiksCube_np4_Tpetra python ../run_exodiff_test.py "${AlbanyT.exe}" RubiksCube.xml)
+#add_test(CrystalPlasticity_RubiksCube_np1_Tpetra python ../run_exodiff_test.py "${SerialAlbanyT.exe}" RubiksCube.yaml)
+#add_test(CrystalPlasticity_RubiksCube_np4_Tpetra python ../run_exodiff_test.py "${AlbanyT.exe}" RubiksCube.yaml)
 endif()

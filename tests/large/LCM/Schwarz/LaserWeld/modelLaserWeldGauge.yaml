@@ -1,0 +1,51 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output: 
+    Write Solution to Standard Output: 0
+    Write Residual to Standard Output: 0
+  DataTransferKit: 
+    Map Type: Consistent Interpolation
+    L2 Projection: 
+      Integration Order: 2
+    Consistent Interpolation: { }
+    Point Cloud: 
+      Map Type: Moving Least Square Reconstruction
+      Basis Type: Wu
+      Basis Order: 4
+      Spatial Dimension: 3
+      RBF Radius: 1.0000000
+    Search: 
+      Track Missed Range Entities: false
+      Point Inclusion Tolerance: 1.00000000e-12
+  Problem: 
+    Name: Mechanics 3D
+    Phalanx Graph Visualization Detail: 0
+    MaterialDB Filename: materialLaserWeldGauge.yaml
+    Dirichlet BCs: 
+      DBC on NS surface_symmetry for DOF X: 0.00000000e+00
+      DBC on NS surface_negative_y for DOF Schwarz: 
+        BC Function: Schwarz
+        Coupled Application: modelLaserWeldHolder0.yaml
+        Coupled Block: holder_0
+      DBC on NS surface_positive_y for DOF Schwarz: 
+        BC Function: Schwarz
+        Coupled Application: modelLaserWeldHolder1.yaml
+        Coupled Block: holder_1
+    Response Functions: 
+      Number: 1
+      Response 0: Project IP to Nodal Field
+      ResponseParams 0: 
+        Number of Fields: 1
+        IP Field Name 0: Cauchy_Stress
+        IP Field Layout 0: Tensor
+        Output to File: true
+  Discretization: 
+    Number Of Time Derivatives: 1
+    Method: Ioss
+    Exodus Input File Name: specimenLaserWeldGauge.g
+    Exodus Output File Name: outputLaserWeldGauge.e
+    Exodus Solution Name: disp
+    Exodus Residual Name: resid
+    Separate Evaluators by Element Block: true
+...

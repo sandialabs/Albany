@@ -1,0 +1,128 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Mechanics 3D
+    Solution Method: Continuation
+    Phalanx Graph Visualization Detail: 1
+    MaterialDB Filename: 1material.yaml
+    Dirichlet BCs: 
+      Time Dependent DBC on NS nodelist_6 for DOF Y: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 0.20000000, 0.40000000, 0.60000000, 1.00000000]
+        BC Values: [0.00000000e+00, 0.01000000, -1.00000000e-02, 0.01000000, 0.10100000]
+      DBC on NS nodelist_5 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_1 for DOF X: 0.00000000e+00
+      DBC on NS nodelist_2 for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_3 for DOF X: 0.00000000e+00
+      DBC on NS nodelist_4 for DOF Z: 0.00000000e+00
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    Method: Exodus
+    Exodus Input File Name: surface1ElemMesh.g
+    Exodus Output File Name: out.e
+    Cubature Degree: 3
+    Solution Vector Components: [disp, V]
+    Residual Vector Components: [force, V]
+    Separate Evaluators by Element Block: true
+    Use Serial Mesh: true
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Tangent
+      Stepper: 
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: Time
+        Max Steps: 100
+        Max Value: 1.00000000
+        Min Value: 0.00000000e+00
+        Compute Eigenvalues: false
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Jacobian Inverse
+          Num Eigenvalues: 0
+      Step Size: 
+        Initial Step Size: 0.01000000
+        Method: Constant
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000e-05
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-10
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 2
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Complete
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 4
+        Test 0: 
+          Test Type: RelativeNormF
+          Tolerance: 1.00000000e-10
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 6
+        Test 2: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NStep
+            Number of Nonlinear Iterations: 4
+          Test 1: 
+            Test Type: NormF
+            Tolerance: 1.00000000e-05
+        Test 3: 
+          Test Type: FiniteValue
+...

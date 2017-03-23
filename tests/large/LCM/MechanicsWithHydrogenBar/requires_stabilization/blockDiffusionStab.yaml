@@ -1,0 +1,148 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Mechanics 3D
+    Solution Method: Continuation
+    Phalanx Graph Visualization Detail: 1
+    MaterialDB Filename: materialsScaledPlasticity.yaml
+    Transport: 
+      Variable Type: DOF
+    HydroStress: 
+      Variable Type: DOF
+    Temperature: 
+      Variable Type: Constant
+      Value: 300.00000
+    Initial Condition: 
+      Function: Constant
+      Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00003870, 0.00000000e+00]
+    Dirichlet BCs: 
+      Time Dependent DBC on NS nodelist_2 for DOF X: 
+        Number of points: 18
+        Time Values: [0.00000000e+00, 100.00000000, 200000.00000000]
+        BC Values: [0.00000000e+00, 5.00000000, 5.00000000]
+      Time Dependent DBC on NS nodelist_1 for DOF C: 
+        Number of points: 18
+        Time Values: [0.00000000e+00, 100.00000000, 200000.00000000]
+        BC Values: [0.00003870, 0.00056000, 0.00056000]
+      DBC on NS nodelist_1 for DOF X: 0.00000000e+00
+      DBC on NS nodelist_3 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_2 for DOF C: 0.00003870
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    Method: Exodus
+    Exodus Input File Name: blockDiffusion.exo
+    Exodus Output File Name: blockDiffusionStab.e
+    Solution Vector Components: [disp, V, CL, S, tauH, S]
+    Residual Vector Components: [force, V, CLresid, S, tauHresid, S]
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: Time
+        Max Steps: 15
+        Max Value: 100.00000000
+        Min Value: 0.00000000e+00
+        Compute Eigenvalues: false
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Jacobian Inverse
+          Num Eigenvalues: 0
+      Step Size: 
+        Method: Constant
+        Initial Step Size: 0.10000000
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 1000
+                      Output Frequency: 10
+                    Max Iterations: 500
+                    Tolerance: 1.00000000e-06
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: medium
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-06
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 500
+                      Block Size: 1
+                      Num Blocks: 1000
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 2
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: level-of-fill': 1
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    'aggregation: damping factor': 0.00000000e+00
+                    'coarse: type': 'Amesos-KLU'
+                    PDE equations: 3
+                    'smoother: type': ILU
+                    'coarse: max size': 1000
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Complete
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 4
+        Test 0: 
+          Test Type: RelativeNormF
+          Tolerance: 1.00000000e-12
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 15
+        Test 2: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NStep
+            Number of Nonlinear Iterations: 5
+          Test 1: 
+            Test Type: NormF
+            Tolerance: 1.00000000e-12
+        Test 3: 
+          Test Type: FiniteValue
+...

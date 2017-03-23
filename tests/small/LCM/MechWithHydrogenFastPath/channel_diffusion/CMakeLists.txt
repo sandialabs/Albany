@@ -8,10 +8,10 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/channelDiffusion.g
                ${CMAKE_CURRENT_BINARY_DIR}/channelDiffusion.g COPYONLY)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/channelDiffusion.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/channelDiffusion.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/channelDiffusionMaterials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/channelDiffusionMaterials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/channelDiffusion.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/channelDiffusion.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/channelDiffusionMaterials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/channelDiffusionMaterials.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/channelDiffusion.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/channelDiffusion.exodiff COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/channelDiffusion.gold.e
@@ -19,5 +19,5 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/channelDiffusion.gold.e
 
 # Add the tests
 if(ALBANY_IFPACK2)
-add_test(MechWithHydrogenFastPath_channelDiffusion python ../run_exodiff_test.py "${SerialAlbanyT.exe}" channelDiffusion.xml)
+add_test(MechWithHydrogenFastPath_channelDiffusion python ../run_exodiff_test.py "${SerialAlbanyT.exe}" channelDiffusion.yaml)
 endif()

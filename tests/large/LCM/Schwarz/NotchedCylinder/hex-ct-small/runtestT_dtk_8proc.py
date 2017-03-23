@@ -24,7 +24,7 @@ tolerance = 1.0e-6;
 meanvalue = 8.76804336543e-05;
 
 # run AlbanyT 
-command = ["mpirun", "-np", "8", "./AlbanyT", "notched-cylinder-S-ctest.xml"]
+command = ["mpirun", "-np", "8", "./AlbanyT", "notched-cylinder-S-ctest.yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:

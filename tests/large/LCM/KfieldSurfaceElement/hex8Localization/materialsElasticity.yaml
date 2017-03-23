@@ -1,0 +1,21 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: TestMat
+    block_3: 
+      material: TestMat
+      Surface Element: true
+      Localization thickness parameter: 1.00000000e-07
+  Materials: 
+    TestMat: 
+      Material Model: 
+        Model Name: Neohookean
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1.96000000e+11
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.30000000
+...

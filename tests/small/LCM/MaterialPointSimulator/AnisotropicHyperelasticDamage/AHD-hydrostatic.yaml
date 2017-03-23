@@ -1,0 +1,44 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    Block0: 
+      material: Composite
+  Materials: 
+    Composite: 
+      Material Model: 
+        Model Name: AHD
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 200000.00
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.30000000
+      Fiber 1 k: 10000.00000000
+      Fiber 1 q: 100.00000000
+      Fiber 1 volume fraction: 0.50000000
+      Fiber 1 maximum damage: 1.00000000
+      Fiber 1 damage saturation: 10000.00000000
+      Fiber 2 k: 10000.00000000
+      Fiber 2 q: 100.00000000
+      Fiber 2 volume fraction: 0.00000000e+00
+      Fiber 2 maximum damage: 1.00000000
+      Fiber 2 damage saturation: 10000.00000000
+      Matrix volume fraction: 0.50000000
+      Matrix maximum damage: 0.10000000
+      Matrix damage saturation: 10000.00000000
+      Fiber 1 Orientation Vector: [1.00000000, 0.00000000e+00, 0.00000000e+00]
+      Fiber 2 Orientation Vector: [1.00000000, 0.00000000e+00, 0.00000000e+00]
+      Output Cauchy Stress: true
+      Output Matrix Energy: true
+      Output Matrix Damage: true
+      Output Fiber 1 Energy: true
+      Output Fiber 1 Damage: true
+      Output Fiber 2 Energy: true
+      Output Fiber 2 Damage: true
+      Material Point Simulator: 
+        Loading Case Name: hydrostatic
+        Number of Steps: 10
+        Step Size: 0.01000000
+        Output File Name: 'AHD-hydrostatic.exo'
+...

@@ -18,7 +18,7 @@ if os.path.exists(log_file_name):
 logfile = open(log_file_name, 'w')
 
 # run AlbanyT 
-command = ["./AlbanyT", "input" + name + "T.xml"]
+command = ["./AlbanyT", "input" + name + "T.yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:

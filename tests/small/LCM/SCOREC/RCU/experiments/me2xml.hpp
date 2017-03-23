@@ -6,7 +6,7 @@
 #include <vector>
 #include <stdio.h>
 
-namespace me2xml {
+namespace me.yaml {
 FILE* fid;
 int indent_cnt;
 int argc;
@@ -14,7 +14,7 @@ char** argv;
 }
 
 void indent () {
-  for (int i = 0; i < me2xml::indent_cnt; ++i) fputc(' ', me2xml::fid);
+  for (int i = 0; i < me.yaml::indent_cnt; ++i) fputc(' ', me.yaml::fid);
 }
 
 std::string strint (const std::string& s, const int n) {
@@ -28,21 +28,21 @@ class pl {
 public:
   pl (const std::string& name="") : name_(name) {
     indent();
-    fprintf(me2xml::fid, "<ParameterList");
-    if (!name_.empty()) fprintf(me2xml::fid, " name=\"%s\"", name_.c_str());
-    fprintf(me2xml::fid, ">\n");
-    me2xml::indent_cnt += 2;
+    fprintf(me.yaml::fid, "<ParameterList");
+    if (!name_.empty()) fprintf(me.yaml::fid, " name=\"%s\"", name_.c_str());
+    fprintf(me.yaml::fid, ">\n");
+    me.yaml::indent_cnt += 2;
   }
   ~pl () {
-    me2xml::indent_cnt -= 2;
+    me.yaml::indent_cnt -= 2;
     indent();
-    fprintf(me2xml::fid, "</ParameterList>\n");
+    fprintf(me.yaml::fid, "</ParameterList>\n");
   }
 };
 
 void p (const char* name, const char* type, const char* value) {
   indent();
-  fprintf(me2xml::fid, "<Parameter name=\"%s\" type=\"%s\" value=\"%s\"/>\n",
+  fprintf(me.yaml::fid, "<Parameter name=\"%s\" type=\"%s\" value=\"%s\"/>\n",
           name, type, value);
 }
 
@@ -70,31 +70,31 @@ void p (const char* name, const bool value) {
 
 int init (int argc, char** argv) {
   if (argc < 2) {
-    fprintf(stderr, "%s xml-file-basename\n", __FILE__);
+    fprintf(stderr, "%s.yaml-file-basename\n", __FILE__);
     return -1;
   }
-  me2xml::fid = fopen((std::string(argv[1]) + ".xml").c_str(), "w");
-  me2xml::indent_cnt = 0;
+  me.yaml::fid = fopen((std::string(argv[1]) + ".yaml").c_str(), "w");
+  me.yaml::indent_cnt = 0;
   return 0;
 }
 
 void fin () {
-  if (me2xml::fid) fclose(me2xml::fid);
+  if (me.yaml::fid) fclose(me.yaml::fid);
 }
 
 // Implement one of the following.
-void xml();
+void.yaml();
 
 int main (int argc, char** argv) {
   if (init(argc, argv)) return -1;
-  me2xml::argc = argc - 2;
-  me2xml::argv = argv + 2;
-  xml();
+  me.yaml::argc = argc - 2;
+  me.yaml::argv = argv + 2;
+ .yaml();
   fin();
 }
 
 #ifdef DEBUG
-void xml () {
+void.yaml () {
   { pl a;
     p("test", "hello world!");
     p("boolean", true);

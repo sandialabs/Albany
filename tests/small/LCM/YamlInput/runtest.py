@@ -19,8 +19,8 @@ tolerance = 1.0e-9;
 meanvalue = 0.281586446117;
 
 # single domain run using XML
-command = ["./AlbanyT", "cuboid.xml"]
-log_file_name = name + ".xml.log"
+command = ["./AlbanyT", "cuboid.yaml"]
+log_file_name = name + ".yaml.log"
 if os.path.exists(log_file_name):
     os.remove(log_file_name)
 logfile = open(log_file_name, 'w')
@@ -71,8 +71,8 @@ if result != 0:
 name = "cuboids"
 
 # two domain run using XML
-command = ["./AlbanyT", "cuboids.xml"]
-log_file_name = name + ".xml.log"
+command = ["./AlbanyT", "cuboids.yaml"]
+log_file_name = name + ".yaml.log"
 if os.path.exists(log_file_name):
     os.remove(log_file_name)
 logfile = open(log_file_name, 'w')

@@ -1,0 +1,46 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Scaling: 
+    Scale: 1000.0000
+  DataTransferKit: 
+    Map Type: Consistent Interpolation
+    L2 Projection: 
+      Integration Order: 2
+    Consistent Interpolation: { }
+    Point Cloud: 
+      Map Type: Moving Least Square Reconstruction
+      Basis Type: Wu
+      Basis Order: 4
+      Spatial Dimension: 3
+      RBF Radius: 1.00000000
+    Search: 
+      Track Missed Range Entities: true
+      Point Inclusion Tolerance: 0.01000000
+  Debug Output: 
+    Write Solution to Standard Output: 0
+    Write Residual to Standard Output: 0
+  Problem: 
+    Name: Mechanics 3D
+    Phalanx Graph Visualization Detail: 0
+    MaterialDB Filename: ../upper_bar_material.yaml
+    Dirichlet BCs: 
+      Time Dependent DBC on NS nodelist_6 for DOF Y: 
+        Number of points: 2
+        Time Values: [0.00000000e+00, 1000.00000000]
+        BC Values: [0.00000000e+00, 2.50000000]
+      DBC on NS nodelist_6 for DOF X: 0.00000000e+00
+      DBC on NS nodelist_6 for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_5 for DOF Schwarz: 
+        BC Function: Schwarz
+        Coupled Application: ../gauge.yaml
+        Coupled Block: block_1
+  Discretization: 
+    Method: Exodus
+    Exodus Input File Name: ../upper_bar.g
+    Exodus Output File Name: upper_bar.exo
+    Exodus Solution Name: displacement
+    Exodus Residual Name: resid
+    Separate Evaluators by Element Block: true
+    Number Of Time Derivatives: 1
+...

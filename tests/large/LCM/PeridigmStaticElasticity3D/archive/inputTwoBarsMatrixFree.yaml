@@ -1,0 +1,134 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Peridigm Code Coupling
+    MaterialDB Filename: MaterialsTwoBars.yaml
+    Peridigm Parameters: 
+      Discretization: 
+        Type: Albany
+      Materials: 
+        My Elastic Material: 
+          Material Model: Elastic
+          Apply Shear Correction Factor: false
+          Density: 7800.0000
+          Bulk Modulus: 1.30000000e+11
+          Shear Modulus: 7.80000000e+10
+      Blocks: 
+        My Group of Blocks: 
+          Block Names: block_1
+          Material: My Elastic Material
+          Horizon: 0.50250000
+      Output: 
+        Output Variables: 
+          Dilatation: true
+          Weighted_Volume: true
+          Radius: true
+    Solution Method: Steady
+    Phalanx Graph Visualization Detail: 1
+    Dirichlet BCs: 
+      DBC on NS nodelist_1 for DOF X: 0.00000000e+00
+      DBC on NS nodelist_2 for DOF X: 0.04000000
+      DBC on NS nodelist_3 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_4 for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_5 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_6 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_7 for DOF X: 0.00000000e+00
+      DBC on NS nodelist_8 for DOF X: 0.04000000
+      DBC on NS nodelist_9 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_10 for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_11 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_12 for DOF Y: 0.00000000e+00
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    Method: Exodus
+    Exodus Input File Name: PeridigmStaticElasticityTwoBars3D.sphere.g
+    Separate Evaluators by Element Block: true
+    Exodus Output File Name: PeridigmStaticElasticityTwoBars3D.e
+    Solution Vector Components: [displacement, V]
+    Residual Vector Components: [force, V]
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [0.16666667]
+    Relative Tolerance: 1.00000000e-07
+    Number of Sensitivity Comparisons: 0
+    Sensitivity Test Values 0: [0.16666666, 0.16666666, 0.33333333, 0.33333333]
+    Number of Dakota Comparisons: 0
+    Dakota Test Values: [1.00000000, 1.00000000]
+  Piro: 
+    Jacobian Operator: 'Matrix-Free'
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000e-05
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-06
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 1000
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: None
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 1
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 3
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000e-06
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 15
+        Test 2: 
+          Test Type: FiniteValue
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

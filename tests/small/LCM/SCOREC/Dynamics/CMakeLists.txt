@@ -5,14 +5,14 @@
 ##*****************************************************************//
 
 # Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dynamicsT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/dynamicsT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dynamicsAdaptT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/dynamicsAdaptT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/serialDynamicsAdaptT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/serialDynamicsAdaptT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/elastic.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/elastic.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dynamicsT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/dynamicsT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dynamicsAdaptT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/dynamicsAdaptT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/serialDynamicsAdaptT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/serialDynamicsAdaptT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/elastic.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/elastic.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plane.dmg
                ${CMAKE_CURRENT_BINARY_DIR}/plane.dmg COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plane0.smb
@@ -31,6 +31,6 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 if (ALBANY_IFPACK2)
-  add_test(${testName}_SCOREC_Tpetra ${AlbanyT.exe} dynamicsT.xml)
-  add_test(${testName}_SCOREC_Adapt_Tpetra ${AlbanyT.exe} dynamicsAdaptT.xml)
+  add_test(${testName}_SCOREC_Tpetra ${AlbanyT.exe} dynamicsT.yaml)
+  add_test(${testName}_SCOREC_Adapt_Tpetra ${AlbanyT.exe} dynamicsAdaptT.yaml)
 endif()

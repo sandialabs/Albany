@@ -1,0 +1,91 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    Block0: 
+      material: Metal
+  Materials: 
+    Metal: 
+      Material Model: 
+        Model Name: CrystalPlasticity
+      Crystal Elasticity: 
+        C11: 168.40000
+        C12: 121.40000000
+        C44: 75.40000000
+        Basis Vector 1: [1.00000000, 0.00000000e+00, 0.00000000e+00]
+        Basis Vector 2: [0.00000000e+00, 1.00000000, 0.00000000e+00]
+        Basis Vector 3: [0.00000000e+00, 0.00000000e+00, 1.00000000]
+      Number of Slip Systems: 12
+      Slip System 1: 
+        Slip Direction: [-1.00000000e+00, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+        Tau Critical: 1.00000000
+        Gamma Dot: 1.00000000
+        Gamma Exponent: 1.00000000
+      Slip System 2: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+        Tau Critical: 1.00000000
+        Gamma Dot: 1.00000000
+        Gamma Exponent: 1.00000000
+      Slip System 3: 
+        Slip Direction: [1.00000000, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+        Tau Critical: 1.00000000
+        Gamma Dot: 1.00000000
+        Gamma Exponent: 1.00000000
+      Slip System 4: 
+        Slip Direction: [-1.00000000e+00, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+        Tau Critical: 1.00000000
+        Gamma Dot: 1.00000000
+        Gamma Exponent: 1.00000000
+      Slip System 5: 
+        Slip Direction: [1.00000000, 0.00000000e+00, 1.00000000]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+        Tau Critical: 1.00000000
+        Gamma Dot: 1.00000000
+        Gamma Exponent: 1.00000000
+      Slip System 6: 
+        Slip Direction: [0.00000000e+00, 1.00000000, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+        Tau Critical: 1.00000000
+        Gamma Dot: 1.00000000
+        Gamma Exponent: 1.00000000
+      Slip System 7: 
+        Slip Direction: [1.00000000, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+        Tau Critical: 1.00000000
+        Gamma Dot: 1.00000000
+        Gamma Exponent: 1.00000000
+      Slip System 8: 
+        Slip Direction: [0.00000000e+00, 1.00000000, 1.00000000]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+        Tau Critical: 1.00000000
+        Gamma Dot: 1.00000000
+        Gamma Exponent: 1.00000000
+      Slip System 9: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+        Tau Critical: 1.00000000
+        Gamma Dot: 1.00000000
+        Gamma Exponent: 1.00000000
+      Slip System 10: 
+        Slip Direction: [1.00000000, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+        Tau Critical: 1.00000000
+        Gamma Dot: 1.00000000
+        Gamma Exponent: 1.00000000
+      Slip System 11: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+        Tau Critical: 1.00000000
+        Gamma Dot: 1.00000000
+        Gamma Exponent: 1.00000000
+      Slip System 12: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+        Tau Critical: 1.00000000
+        Gamma Dot: 1.00000000
+        Gamma Exponent: 1.00000000
+...

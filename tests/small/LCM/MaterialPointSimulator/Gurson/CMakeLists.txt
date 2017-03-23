@@ -22,14 +22,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Gurson.py
                ${CMAKE_CURRENT_BINARY_DIR}/Gurson.py COPYONLY)
 
 # Copy Input files from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Gurson-uniaxial.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/Gurson-uniaxial.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Gurson-uniaxial.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/Gurson-uniaxial.yaml COPYONLY)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Gurson-shear.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/Gurson-shear.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Gurson-shear.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/Gurson-shear.yaml COPYONLY)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Gurson-hydrostatic.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/Gurson-hydrostatic.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Gurson-hydrostatic.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/Gurson-hydrostatic.yaml COPYONLY)
 
 # Copy the reference solution and exodiff files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Gurson-uniaxial.gold.exo

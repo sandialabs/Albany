@@ -2,11 +2,11 @@ Comparing two cases with the same flavor of the preconditioner
 
 The defaut is to use the most recent flavor of reducing the condition number through a change of units.
 
-Common material file:  materialsScaledLocalHarderTera.xml
+Common material file:  materialsScaledLocalHarderTera.yaml
 
-1. Albany -  inputAllLocalHarderTera.xml
+1. Albany -  inputAllLocalHarderTera.yaml
 
-2. AlbanyT - inputAllLocalHarderTeraT.xml
+2. AlbanyT - inputAllLocalHarderTeraT.yaml
 
 With Albany, the convergence is quite good. I am able to obtain an inverse to 1e-10 quickly. With AlbanyT, I can only get to 1e-5 in 500 iterations. 
 

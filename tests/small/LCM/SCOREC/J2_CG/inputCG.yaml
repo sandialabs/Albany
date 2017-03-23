@@ -1,0 +1,127 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Mechanics 2D
+    MaterialDB Filename: materials.yaml
+    Solution Method: Continuation
+    Dirichlet BCs: 
+      Time Dependent DBC on NS ns_1 for DOF Y: 
+        Time Values: [0.00000000e+00, 1.00000000]
+        BC Values: [0.00000000e+00, 0.10000000]
+      DBC on NS ns_3 for DOF Y: 0.00000000e+00
+      DBC on NS ns_2 for DOF X: 0.00000000e+00
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    Method: PUMI
+    Workset Size: 500000
+    Mesh Model Input File Name: ../meshes/notch/notch.dmg
+    PUMI Input File Name: '../meshes/notch/notch-serial.smb'
+    Node Set Associations: [[5, 3, 4], [ns_1, ns_3, ns_2]]
+    Element Block Associations: [[1], [eb_1]]
+    PUMI Output File Name: out_cg.vtk
+    PUMI Write Interval: 1
+    2nd Order Mesh: false
+    Cubature Degree: 1
+  Regression Results: 
+    Number of Comparisons: 0
+    Test Values: [0.00004352]
+    Relative Tolerance: 0.01000000
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Continuation Method: Natural
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: Time
+        Max Steps: 5
+        Max Value: 1.00000000
+        Min Value: 0.00000000e+00
+        Compute Eigenvalues: false
+        Skip Parameter Derivative: true
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Jacobian Inverse
+          Num Eigenvalues: 0
+      Step Size: 
+        Method: Constant
+        Initial Step Size: 0.05000000
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Linear Solver: 
+            Tolerance: 1.00000000e-06
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: low
+                  Solver Type: Block CG
+                  Solver Types: 
+                    Block CG: 
+                      Convergence Tolerance: 1.00000000e-10
+                      Output Frequency: 1
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 2
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 6.00000000
+                    'fact: level-of-fill': 3
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: false
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: false
+      Solver Options: 
+        Status Test Check Type: Complete
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Test 0: 
+          Test Type: NormUpdate
+          Tolerance: 1.00000000e-08
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 45
+        Test 2: 
+          Test Type: NormF
+          Scale Type: Unscaled
+          Tolerance: 1.00000000e-10
+        Test 3: 
+          Test Type: FiniteValue
+        Number of Tests: 4
+...

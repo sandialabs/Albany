@@ -1,0 +1,8017 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Reference Material: Metal
+  ElementBlocks: 
+    block_1: 
+      material: Metal
+    block_2: 
+      material: Metal
+    block_3: 
+      material: Metal
+    block_4: 
+      material: Metal
+    block_5: 
+      material: Metal
+    block_6: 
+      material: Metal
+    block_7: 
+      material: Metal
+    block_8: 
+      material: Plastic
+    block_9: 
+      material: Metal
+    block_10: 
+      material: Plastic
+    block_11: 
+      material: Metal
+    block_12: 
+      material: Metal
+    block_13: 
+      material: Metal
+    block_14: 
+      material: Metal
+    block_15: 
+      material: Metal
+    block_16: 
+      material: Metal
+    block_17: 
+      material: Metal
+    block_18: 
+      material: Plastic
+    block_19: 
+      material: Metal
+    block_20: 
+      material: Plastic
+    block_21: 
+      material: Metal
+    block_22: 
+      material: Metal
+    block_23: 
+      material: Metal
+    block_24: 
+      material: Metal
+    block_25: 
+      material: Metal
+    block_26: 
+      material: Metal
+    block_27: 
+      material: Metal
+    block_28: 
+      material: Plastic
+    block_29: 
+      material: Metal
+    block_30: 
+      material: Plastic
+    block_31: 
+      material: Metal
+    block_32: 
+      material: Metal
+    block_33: 
+      material: Metal
+    block_34: 
+      material: Metal
+    block_35: 
+      material: Metal
+    block_36: 
+      material: Metal
+    block_37: 
+      material: Metal
+    block_38: 
+      material: Plastic
+    block_39: 
+      material: Metal
+    block_40: 
+      material: Plastic
+    block_41: 
+      material: Metal
+    block_42: 
+      material: Metal
+    block_43: 
+      material: Metal
+    block_44: 
+      material: Metal
+    block_45: 
+      material: Metal
+    block_46: 
+      material: Metal
+    block_47: 
+      material: Metal
+    block_48: 
+      material: Plastic
+    block_49: 
+      material: Metal
+    block_50: 
+      material: Plastic
+    block_51: 
+      material: Metal
+    block_52: 
+      material: Metal
+    block_53: 
+      material: Metal
+    block_54: 
+      material: Metal
+    block_55: 
+      material: Metal
+    block_56: 
+      material: Metal
+    block_57: 
+      material: Metal
+    block_58: 
+      material: Plastic
+    block_59: 
+      material: Metal
+    block_60: 
+      material: Plastic
+    block_61: 
+      material: Metal
+    block_62: 
+      material: Metal
+    block_63: 
+      material: Metal
+    block_64: 
+      material: Metal
+    block_65: 
+      material: Metal
+    block_66: 
+      material: Metal
+    block_67: 
+      material: Metal
+    block_68: 
+      material: Plastic
+    block_69: 
+      material: Metal
+    block_70: 
+      material: Plastic
+    block_71: 
+      material: Metal
+    block_72: 
+      material: Metal
+    block_73: 
+      material: Metal
+    block_74: 
+      material: Metal
+    block_75: 
+      material: Metal
+    block_76: 
+      material: Metal
+    block_77: 
+      material: Metal
+    block_78: 
+      material: Plastic
+    block_79: 
+      material: Metal
+    block_80: 
+      material: Plastic
+    block_81: 
+      material: Metal
+    block_82: 
+      material: Metal
+    block_83: 
+      material: Metal
+    block_84: 
+      material: Metal
+    block_85: 
+      material: Metal
+    block_86: 
+      material: Metal
+    block_87: 
+      material: Metal
+    block_88: 
+      material: Plastic
+    block_89: 
+      material: Metal
+    block_90: 
+      material: Plastic
+    block_91: 
+      material: Metal
+    block_92: 
+      material: Metal
+    block_93: 
+      material: Metal
+    block_94: 
+      material: Metal
+    block_95: 
+      material: Metal
+    block_96: 
+      material: Metal
+    block_97: 
+      material: Metal
+    block_98: 
+      material: Plastic
+    block_99: 
+      material: Metal
+    block_100: 
+      material: Plastic
+    block_101: 
+      material: Metal
+    block_102: 
+      material: Metal
+    block_103: 
+      material: Metal
+    block_104: 
+      material: Metal
+    block_105: 
+      material: Metal
+    block_106: 
+      material: Metal
+    block_107: 
+      material: Metal
+    block_108: 
+      material: Plastic
+    block_109: 
+      material: Metal
+    block_110: 
+      material: Plastic
+    block_111: 
+      material: Metal
+    block_112: 
+      material: Metal
+    block_113: 
+      material: Metal
+    block_114: 
+      material: Metal
+    block_115: 
+      material: Metal
+    block_116: 
+      material: Metal
+    block_117: 
+      material: Metal
+    block_118: 
+      material: Plastic
+    block_119: 
+      material: Metal
+    block_120: 
+      material: Plastic
+    block_121: 
+      material: Metal
+    block_122: 
+      material: Metal
+    block_123: 
+      material: Metal
+    block_124: 
+      material: Metal
+    block_125: 
+      material: Metal
+    block_126: 
+      material: Metal
+    block_127: 
+      material: Metal
+    block_128: 
+      material: Plastic
+    block_129: 
+      material: Metal
+    block_130: 
+      material: Plastic
+    block_131: 
+      material: Metal
+    block_132: 
+      material: Metal
+    block_133: 
+      material: Metal
+    block_134: 
+      material: Metal
+    block_135: 
+      material: Metal
+    block_136: 
+      material: Metal
+    block_137: 
+      material: Metal
+    block_138: 
+      material: Plastic
+    block_139: 
+      material: Metal
+    block_140: 
+      material: Plastic
+    block_141: 
+      material: Metal
+    block_142: 
+      material: Metal
+    block_143: 
+      material: Metal
+    block_144: 
+      material: Metal
+    block_145: 
+      material: Metal
+    block_146: 
+      material: Metal
+    block_147: 
+      material: Metal
+    block_148: 
+      material: Plastic
+    block_149: 
+      material: Metal
+    block_150: 
+      material: Plastic
+    block_151: 
+      material: Metal
+    block_152: 
+      material: Metal
+    block_153: 
+      material: Metal
+    block_154: 
+      material: Metal
+    block_155: 
+      material: Metal
+    block_156: 
+      material: Metal
+    block_157: 
+      material: Metal
+    block_158: 
+      material: Plastic
+    block_159: 
+      material: Metal
+    block_160: 
+      material: Plastic
+    block_161: 
+      material: Metal
+    block_162: 
+      material: Metal
+    block_163: 
+      material: Metal
+    block_164: 
+      material: Metal
+    block_165: 
+      material: Metal
+    block_166: 
+      material: Metal
+    block_167: 
+      material: Metal
+    block_168: 
+      material: Plastic
+    block_169: 
+      material: Metal
+    block_170: 
+      material: Plastic
+    block_171: 
+      material: Metal
+    block_172: 
+      material: Metal
+    block_173: 
+      material: Metal
+    block_174: 
+      material: Metal
+    block_175: 
+      material: Metal
+    block_176: 
+      material: Metal
+    block_177: 
+      material: Metal
+    block_178: 
+      material: Plastic
+    block_179: 
+      material: Metal
+    block_180: 
+      material: Plastic
+    block_181: 
+      material: Metal
+    block_182: 
+      material: Metal
+    block_183: 
+      material: Metal
+    block_184: 
+      material: Metal
+    block_185: 
+      material: Metal
+    block_186: 
+      material: Metal
+    block_187: 
+      material: Metal
+    block_188: 
+      material: Plastic
+    block_189: 
+      material: Metal
+    block_190: 
+      material: Plastic
+    block_191: 
+      material: Metal
+    block_192: 
+      material: Metal
+    block_193: 
+      material: Metal
+    block_194: 
+      material: Metal
+    block_195: 
+      material: Metal
+    block_196: 
+      material: Metal
+    block_197: 
+      material: Metal
+    block_198: 
+      material: Plastic
+    block_199: 
+      material: Metal
+    block_200: 
+      material: Plastic
+    block_201: 
+      material: Metal
+    block_202: 
+      material: Metal
+    block_203: 
+      material: Metal
+    block_204: 
+      material: Metal
+    block_205: 
+      material: Metal
+    block_206: 
+      material: Metal
+    block_207: 
+      material: Metal
+    block_208: 
+      material: Plastic
+    block_209: 
+      material: Metal
+    block_210: 
+      material: Plastic
+    block_211: 
+      material: Metal
+    block_212: 
+      material: Metal
+    block_213: 
+      material: Metal
+    block_214: 
+      material: Metal
+    block_215: 
+      material: Metal
+    block_216: 
+      material: Metal
+    block_217: 
+      material: Metal
+    block_218: 
+      material: Plastic
+    block_219: 
+      material: Metal
+    block_220: 
+      material: Plastic
+    block_221: 
+      material: Metal
+    block_222: 
+      material: Metal
+    block_223: 
+      material: Metal
+    block_224: 
+      material: Metal
+    block_225: 
+      material: Metal
+    block_226: 
+      material: Metal
+    block_227: 
+      material: Metal
+    block_228: 
+      material: Plastic
+    block_229: 
+      material: Metal
+    block_230: 
+      material: Plastic
+    block_231: 
+      material: Metal
+    block_232: 
+      material: Metal
+    block_233: 
+      material: Metal
+    block_234: 
+      material: Metal
+    block_235: 
+      material: Metal
+    block_236: 
+      material: Metal
+    block_237: 
+      material: Metal
+    block_238: 
+      material: Plastic
+    block_239: 
+      material: Metal
+    block_240: 
+      material: Plastic
+    block_241: 
+      material: Metal
+    block_242: 
+      material: Metal
+    block_243: 
+      material: Metal
+    block_244: 
+      material: Metal
+    block_245: 
+      material: Metal
+    block_246: 
+      material: Metal
+    block_247: 
+      material: Metal
+    block_248: 
+      material: Plastic
+    block_249: 
+      material: Metal
+    block_250: 
+      material: Plastic
+    block_251: 
+      material: Metal
+    block_252: 
+      material: Metal
+    block_253: 
+      material: Metal
+    block_254: 
+      material: Metal
+    block_255: 
+      material: Metal
+    block_256: 
+      material: Metal
+    block_257: 
+      material: Metal
+    block_258: 
+      material: Plastic
+    block_259: 
+      material: Metal
+    block_260: 
+      material: Plastic
+    block_261: 
+      material: Metal
+    block_262: 
+      material: Metal
+    block_263: 
+      material: Metal
+    block_264: 
+      material: Metal
+    block_265: 
+      material: Metal
+    block_266: 
+      material: Metal
+    block_267: 
+      material: Metal
+    block_268: 
+      material: Plastic
+    block_269: 
+      material: Metal
+    block_270: 
+      material: Plastic
+    block_271: 
+      material: Metal
+    block_272: 
+      material: Metal
+    block_273: 
+      material: Metal
+    block_274: 
+      material: Metal
+    block_275: 
+      material: Metal
+    block_276: 
+      material: Metal
+    block_277: 
+      material: Metal
+    block_278: 
+      material: Plastic
+    block_279: 
+      material: Metal
+    block_280: 
+      material: Plastic
+    block_281: 
+      material: Metal
+    block_282: 
+      material: Metal
+    block_283: 
+      material: Metal
+    block_284: 
+      material: Metal
+    block_285: 
+      material: Metal
+    block_286: 
+      material: Metal
+    block_287: 
+      material: Metal
+    block_288: 
+      material: Plastic
+    block_289: 
+      material: Metal
+    block_290: 
+      material: Plastic
+    block_291: 
+      material: Metal
+    block_292: 
+      material: Metal
+    block_293: 
+      material: Metal
+    block_294: 
+      material: Metal
+    block_295: 
+      material: Metal
+    block_296: 
+      material: Metal
+    block_297: 
+      material: Metal
+    block_298: 
+      material: Plastic
+    block_299: 
+      material: Metal
+    block_300: 
+      material: Plastic
+    block_301: 
+      material: Metal
+    block_302: 
+      material: Metal
+    block_303: 
+      material: Metal
+    block_304: 
+      material: Metal
+    block_305: 
+      material: Metal
+    block_306: 
+      material: Metal
+    block_307: 
+      material: Metal
+    block_308: 
+      material: Plastic
+    block_309: 
+      material: Metal
+    block_310: 
+      material: Plastic
+    block_311: 
+      material: Metal
+    block_312: 
+      material: Metal
+    block_313: 
+      material: Metal
+    block_314: 
+      material: Metal
+    block_315: 
+      material: Metal
+    block_316: 
+      material: Metal
+    block_317: 
+      material: Metal
+    block_318: 
+      material: Plastic
+    block_319: 
+      material: Metal
+    block_320: 
+      material: Plastic
+    block_321: 
+      material: Metal
+    block_322: 
+      material: Metal
+    block_323: 
+      material: Metal
+    block_324: 
+      material: Metal
+    block_325: 
+      material: Metal
+    block_326: 
+      material: Metal
+    block_327: 
+      material: Metal
+    block_328: 
+      material: Plastic
+    block_329: 
+      material: Metal
+    block_330: 
+      material: Plastic
+    block_331: 
+      material: Metal
+    block_332: 
+      material: Metal
+    block_333: 
+      material: Metal
+    block_334: 
+      material: Metal
+    block_335: 
+      material: Metal
+    block_336: 
+      material: Metal
+    block_337: 
+      material: Metal
+    block_338: 
+      material: Plastic
+    block_339: 
+      material: Metal
+    block_340: 
+      material: Plastic
+    block_341: 
+      material: Metal
+    block_342: 
+      material: Metal
+    block_343: 
+      material: Metal
+    block_344: 
+      material: Metal
+    block_345: 
+      material: Metal
+    block_346: 
+      material: Metal
+    block_347: 
+      material: Metal
+    block_348: 
+      material: Plastic
+    block_349: 
+      material: Metal
+    block_350: 
+      material: Plastic
+    block_351: 
+      material: Metal
+    block_352: 
+      material: Metal
+    block_353: 
+      material: Metal
+    block_354: 
+      material: Metal
+    block_355: 
+      material: Metal
+    block_356: 
+      material: Metal
+    block_357: 
+      material: Metal
+    block_358: 
+      material: Plastic
+    block_359: 
+      material: Metal
+    block_360: 
+      material: Plastic
+    block_361: 
+      material: Metal
+    block_362: 
+      material: Metal
+    block_363: 
+      material: Metal
+    block_364: 
+      material: Metal
+    block_365: 
+      material: Metal
+    block_366: 
+      material: Metal
+    block_367: 
+      material: Metal
+    block_368: 
+      material: Plastic
+    block_369: 
+      material: Metal
+    block_370: 
+      material: Plastic
+    block_371: 
+      material: Metal
+    block_372: 
+      material: Metal
+    block_373: 
+      material: Metal
+    block_374: 
+      material: Metal
+    block_375: 
+      material: Metal
+    block_376: 
+      material: Metal
+    block_377: 
+      material: Metal
+    block_378: 
+      material: Plastic
+    block_379: 
+      material: Metal
+    block_380: 
+      material: Plastic
+    block_381: 
+      material: Metal
+    block_382: 
+      material: Metal
+    block_383: 
+      material: Metal
+    block_384: 
+      material: Metal
+    block_385: 
+      material: Metal
+    block_386: 
+      material: Metal
+    block_387: 
+      material: Metal
+    block_388: 
+      material: Plastic
+    block_389: 
+      material: Metal
+    block_390: 
+      material: Plastic
+    block_391: 
+      material: Metal
+    block_392: 
+      material: Metal
+    block_393: 
+      material: Metal
+    block_394: 
+      material: Metal
+    block_395: 
+      material: Metal
+    block_396: 
+      material: Metal
+    block_397: 
+      material: Metal
+    block_398: 
+      material: Plastic
+    block_399: 
+      material: Metal
+    block_400: 
+      material: Plastic
+    block_401: 
+      material: Metal
+    block_402: 
+      material: Metal
+    block_403: 
+      material: Metal
+    block_404: 
+      material: Metal
+    block_405: 
+      material: Metal
+    block_406: 
+      material: Metal
+    block_407: 
+      material: Metal
+    block_408: 
+      material: Plastic
+    block_409: 
+      material: Metal
+    block_410: 
+      material: Plastic
+    block_411: 
+      material: Metal
+    block_412: 
+      material: Metal
+    block_413: 
+      material: Metal
+    block_414: 
+      material: Metal
+    block_415: 
+      material: Metal
+    block_416: 
+      material: Metal
+    block_417: 
+      material: Metal
+    block_418: 
+      material: Plastic
+    block_419: 
+      material: Metal
+    block_420: 
+      material: Plastic
+    block_421: 
+      material: Metal
+    block_422: 
+      material: Metal
+    block_423: 
+      material: Metal
+    block_424: 
+      material: Metal
+    block_425: 
+      material: Metal
+    block_426: 
+      material: Metal
+    block_427: 
+      material: Metal
+    block_428: 
+      material: Plastic
+    block_429: 
+      material: Metal
+    block_430: 
+      material: Plastic
+    block_431: 
+      material: Metal
+    block_432: 
+      material: Metal
+    block_433: 
+      material: Metal
+    block_434: 
+      material: Metal
+    block_435: 
+      material: Metal
+    block_436: 
+      material: Metal
+    block_437: 
+      material: Metal
+    block_438: 
+      material: Plastic
+    block_439: 
+      material: Metal
+    block_440: 
+      material: Plastic
+    block_441: 
+      material: Metal
+    block_442: 
+      material: Metal
+    block_443: 
+      material: Metal
+    block_444: 
+      material: Metal
+    block_445: 
+      material: Metal
+    block_446: 
+      material: Metal
+    block_447: 
+      material: Metal
+    block_448: 
+      material: Plastic
+    block_449: 
+      material: Metal
+    block_450: 
+      material: Plastic
+    block_451: 
+      material: Metal
+    block_452: 
+      material: Metal
+    block_453: 
+      material: Metal
+    block_454: 
+      material: Metal
+    block_455: 
+      material: Metal
+    block_456: 
+      material: Metal
+    block_457: 
+      material: Metal
+    block_458: 
+      material: Plastic
+    block_459: 
+      material: Metal
+    block_460: 
+      material: Plastic
+    block_461: 
+      material: Metal
+    block_462: 
+      material: Metal
+    block_463: 
+      material: Metal
+    block_464: 
+      material: Metal
+    block_465: 
+      material: Metal
+    block_466: 
+      material: Metal
+    block_467: 
+      material: Metal
+    block_468: 
+      material: Plastic
+    block_469: 
+      material: Metal
+    block_470: 
+      material: Plastic
+    block_471: 
+      material: Metal
+    block_472: 
+      material: Metal
+    block_473: 
+      material: Metal
+    block_474: 
+      material: Metal
+    block_475: 
+      material: Metal
+    block_476: 
+      material: Metal
+    block_477: 
+      material: Metal
+    block_478: 
+      material: Plastic
+    block_479: 
+      material: Metal
+    block_480: 
+      material: Plastic
+    block_481: 
+      material: Metal
+    block_482: 
+      material: Metal
+    block_483: 
+      material: Metal
+    block_484: 
+      material: Metal
+    block_485: 
+      material: Metal
+    block_486: 
+      material: Metal
+    block_487: 
+      material: Metal
+    block_488: 
+      material: Plastic
+    block_489: 
+      material: Metal
+    block_490: 
+      material: Plastic
+    block_491: 
+      material: Metal
+    block_492: 
+      material: Metal
+    block_493: 
+      material: Metal
+    block_494: 
+      material: Metal
+    block_495: 
+      material: Metal
+    block_496: 
+      material: Metal
+    block_497: 
+      material: Metal
+    block_498: 
+      material: Plastic
+    block_499: 
+      material: Metal
+    block_500: 
+      material: Plastic
+    block_501: 
+      material: Metal
+    block_502: 
+      material: Metal
+    block_503: 
+      material: Metal
+    block_504: 
+      material: Metal
+    block_505: 
+      material: Metal
+    block_506: 
+      material: Metal
+    block_507: 
+      material: Metal
+    block_508: 
+      material: Plastic
+    block_509: 
+      material: Metal
+    block_510: 
+      material: Plastic
+    block_511: 
+      material: Metal
+    block_512: 
+      material: Metal
+    block_513: 
+      material: Metal
+    block_514: 
+      material: Metal
+    block_515: 
+      material: Metal
+    block_516: 
+      material: Metal
+    block_517: 
+      material: Metal
+    block_518: 
+      material: Plastic
+    block_519: 
+      material: Metal
+    block_520: 
+      material: Plastic
+    block_521: 
+      material: Metal
+    block_522: 
+      material: Metal
+    block_523: 
+      material: Metal
+    block_524: 
+      material: Metal
+    block_525: 
+      material: Metal
+    block_526: 
+      material: Metal
+    block_527: 
+      material: Metal
+    block_528: 
+      material: Plastic
+    block_529: 
+      material: Metal
+    block_530: 
+      material: Plastic
+    block_531: 
+      material: Metal
+    block_532: 
+      material: Metal
+    block_533: 
+      material: Metal
+    block_534: 
+      material: Metal
+    block_535: 
+      material: Metal
+    block_536: 
+      material: Metal
+    block_537: 
+      material: Metal
+    block_538: 
+      material: Plastic
+    block_539: 
+      material: Metal
+    block_540: 
+      material: Plastic
+    block_541: 
+      material: Metal
+    block_542: 
+      material: Metal
+    block_543: 
+      material: Metal
+    block_544: 
+      material: Metal
+    block_545: 
+      material: Metal
+    block_546: 
+      material: Metal
+    block_547: 
+      material: Metal
+    block_548: 
+      material: Plastic
+    block_549: 
+      material: Metal
+    block_550: 
+      material: Plastic
+    block_551: 
+      material: Metal
+    block_552: 
+      material: Metal
+    block_553: 
+      material: Metal
+    block_554: 
+      material: Metal
+    block_555: 
+      material: Metal
+    block_556: 
+      material: Metal
+    block_557: 
+      material: Metal
+    block_558: 
+      material: Plastic
+    block_559: 
+      material: Metal
+    block_560: 
+      material: Plastic
+    block_561: 
+      material: Metal
+    block_562: 
+      material: Metal
+    block_563: 
+      material: Metal
+    block_564: 
+      material: Metal
+    block_565: 
+      material: Metal
+    block_566: 
+      material: Metal
+    block_567: 
+      material: Metal
+    block_568: 
+      material: Plastic
+    block_569: 
+      material: Metal
+    block_570: 
+      material: Plastic
+    block_571: 
+      material: Metal
+    block_572: 
+      material: Metal
+    block_573: 
+      material: Metal
+    block_574: 
+      material: Metal
+    block_575: 
+      material: Metal
+    block_576: 
+      material: Metal
+    block_577: 
+      material: Metal
+    block_578: 
+      material: Plastic
+    block_579: 
+      material: Metal
+    block_580: 
+      material: Plastic
+    block_581: 
+      material: Metal
+    block_582: 
+      material: Metal
+    block_583: 
+      material: Metal
+    block_584: 
+      material: Metal
+    block_585: 
+      material: Metal
+    block_586: 
+      material: Metal
+    block_587: 
+      material: Metal
+    block_588: 
+      material: Plastic
+    block_589: 
+      material: Metal
+    block_590: 
+      material: Plastic
+    block_591: 
+      material: Metal
+    block_592: 
+      material: Metal
+    block_593: 
+      material: Metal
+    block_594: 
+      material: Metal
+    block_595: 
+      material: Metal
+    block_596: 
+      material: Metal
+    block_597: 
+      material: Metal
+    block_598: 
+      material: Plastic
+    block_599: 
+      material: Metal
+    block_600: 
+      material: Plastic
+    block_601: 
+      material: Metal
+    block_602: 
+      material: Metal
+    block_603: 
+      material: Metal
+    block_604: 
+      material: Metal
+    block_605: 
+      material: Metal
+    block_606: 
+      material: Metal
+    block_607: 
+      material: Metal
+    block_608: 
+      material: Plastic
+    block_609: 
+      material: Metal
+    block_610: 
+      material: Plastic
+    block_611: 
+      material: Metal
+    block_612: 
+      material: Metal
+    block_613: 
+      material: Metal
+    block_614: 
+      material: Metal
+    block_615: 
+      material: Metal
+    block_616: 
+      material: Metal
+    block_617: 
+      material: Metal
+    block_618: 
+      material: Plastic
+    block_619: 
+      material: Metal
+    block_620: 
+      material: Plastic
+    block_621: 
+      material: Metal
+    block_622: 
+      material: Metal
+    block_623: 
+      material: Metal
+    block_624: 
+      material: Metal
+    block_625: 
+      material: Metal
+    block_626: 
+      material: Metal
+    block_627: 
+      material: Metal
+    block_628: 
+      material: Plastic
+    block_629: 
+      material: Metal
+    block_630: 
+      material: Plastic
+    block_631: 
+      material: Metal
+    block_632: 
+      material: Metal
+    block_633: 
+      material: Metal
+    block_634: 
+      material: Metal
+    block_635: 
+      material: Metal
+    block_636: 
+      material: Metal
+    block_637: 
+      material: Metal
+    block_638: 
+      material: Plastic
+    block_639: 
+      material: Metal
+    block_640: 
+      material: Plastic
+    block_641: 
+      material: Metal
+    block_642: 
+      material: Metal
+    block_643: 
+      material: Metal
+    block_644: 
+      material: Metal
+    block_645: 
+      material: Metal
+    block_646: 
+      material: Metal
+    block_647: 
+      material: Metal
+    block_648: 
+      material: Plastic
+    block_649: 
+      material: Metal
+    block_650: 
+      material: Plastic
+    block_651: 
+      material: Metal
+    block_652: 
+      material: Metal
+    block_653: 
+      material: Metal
+    block_654: 
+      material: Metal
+    block_655: 
+      material: Metal
+    block_656: 
+      material: Metal
+    block_657: 
+      material: Metal
+    block_658: 
+      material: Plastic
+    block_659: 
+      material: Metal
+    block_660: 
+      material: Plastic
+    block_661: 
+      material: Metal
+    block_662: 
+      material: Metal
+    block_663: 
+      material: Metal
+    block_664: 
+      material: Metal
+    block_665: 
+      material: Metal
+    block_666: 
+      material: Metal
+    block_667: 
+      material: Metal
+    block_668: 
+      material: Plastic
+    block_669: 
+      material: Metal
+    block_670: 
+      material: Plastic
+    block_671: 
+      material: Metal
+    block_672: 
+      material: Metal
+    block_673: 
+      material: Metal
+    block_674: 
+      material: Metal
+    block_675: 
+      material: Metal
+    block_676: 
+      material: Metal
+    block_677: 
+      material: Metal
+    block_678: 
+      material: Plastic
+    block_679: 
+      material: Metal
+    block_680: 
+      material: Plastic
+    block_681: 
+      material: Metal
+    block_682: 
+      material: Metal
+    block_683: 
+      material: Metal
+    block_684: 
+      material: Metal
+    block_685: 
+      material: Metal
+    block_686: 
+      material: Metal
+    block_687: 
+      material: Metal
+    block_688: 
+      material: Plastic
+    block_689: 
+      material: Metal
+    block_690: 
+      material: Plastic
+    block_691: 
+      material: Metal
+    block_692: 
+      material: Metal
+    block_693: 
+      material: Metal
+    block_694: 
+      material: Metal
+    block_695: 
+      material: Metal
+    block_696: 
+      material: Metal
+    block_697: 
+      material: Metal
+    block_698: 
+      material: Plastic
+    block_699: 
+      material: Metal
+    block_700: 
+      material: Plastic
+    block_701: 
+      material: Metal
+    block_702: 
+      material: Metal
+    block_703: 
+      material: Metal
+    block_704: 
+      material: Metal
+    block_705: 
+      material: Metal
+    block_706: 
+      material: Metal
+    block_707: 
+      material: Metal
+    block_708: 
+      material: Plastic
+    block_709: 
+      material: Metal
+    block_710: 
+      material: Plastic
+    block_711: 
+      material: Metal
+    block_712: 
+      material: Metal
+    block_713: 
+      material: Metal
+    block_714: 
+      material: Metal
+    block_715: 
+      material: Metal
+    block_716: 
+      material: Metal
+    block_717: 
+      material: Metal
+    block_718: 
+      material: Plastic
+    block_719: 
+      material: Metal
+    block_720: 
+      material: Plastic
+    block_721: 
+      material: Metal
+    block_722: 
+      material: Metal
+    block_723: 
+      material: Metal
+    block_724: 
+      material: Metal
+    block_725: 
+      material: Metal
+    block_726: 
+      material: Metal
+    block_727: 
+      material: Metal
+    block_728: 
+      material: Plastic
+    block_729: 
+      material: Metal
+    block_730: 
+      material: Plastic
+    block_731: 
+      material: Metal
+    block_732: 
+      material: Metal
+    block_733: 
+      material: Metal
+    block_734: 
+      material: Metal
+    block_735: 
+      material: Metal
+    block_736: 
+      material: Metal
+    block_737: 
+      material: Metal
+    block_738: 
+      material: Plastic
+    block_739: 
+      material: Metal
+    block_740: 
+      material: Plastic
+    block_741: 
+      material: Metal
+    block_742: 
+      material: Metal
+    block_743: 
+      material: Metal
+    block_744: 
+      material: Metal
+    block_745: 
+      material: Metal
+    block_746: 
+      material: Metal
+    block_747: 
+      material: Metal
+    block_748: 
+      material: Plastic
+    block_749: 
+      material: Metal
+    block_750: 
+      material: Plastic
+    block_751: 
+      material: Metal
+    block_752: 
+      material: Metal
+    block_753: 
+      material: Metal
+    block_754: 
+      material: Metal
+    block_755: 
+      material: Metal
+    block_756: 
+      material: Metal
+    block_757: 
+      material: Metal
+    block_758: 
+      material: Plastic
+    block_759: 
+      material: Metal
+    block_760: 
+      material: Plastic
+    block_761: 
+      material: Metal
+    block_762: 
+      material: Metal
+    block_763: 
+      material: Metal
+    block_764: 
+      material: Metal
+    block_765: 
+      material: Metal
+    block_766: 
+      material: Metal
+    block_767: 
+      material: Metal
+    block_768: 
+      material: Plastic
+    block_769: 
+      material: Metal
+    block_770: 
+      material: Plastic
+    block_771: 
+      material: Metal
+    block_772: 
+      material: Metal
+    block_773: 
+      material: Metal
+    block_774: 
+      material: Metal
+    block_775: 
+      material: Metal
+    block_776: 
+      material: Metal
+    block_777: 
+      material: Metal
+    block_778: 
+      material: Plastic
+    block_779: 
+      material: Metal
+    block_780: 
+      material: Plastic
+    block_781: 
+      material: Metal
+    block_782: 
+      material: Metal
+    block_783: 
+      material: Metal
+    block_784: 
+      material: Metal
+    block_785: 
+      material: Metal
+    block_786: 
+      material: Metal
+    block_787: 
+      material: Metal
+    block_788: 
+      material: Plastic
+    block_789: 
+      material: Metal
+    block_790: 
+      material: Plastic
+    block_791: 
+      material: Metal
+    block_792: 
+      material: Metal
+    block_793: 
+      material: Metal
+    block_794: 
+      material: Metal
+    block_795: 
+      material: Metal
+    block_796: 
+      material: Metal
+    block_797: 
+      material: Metal
+    block_798: 
+      material: Plastic
+    block_799: 
+      material: Metal
+    block_800: 
+      material: Plastic
+    block_801: 
+      material: Metal
+    block_802: 
+      material: Metal
+    block_803: 
+      material: Metal
+    block_804: 
+      material: Metal
+    block_805: 
+      material: Metal
+    block_806: 
+      material: Metal
+    block_807: 
+      material: Metal
+    block_808: 
+      material: Plastic
+    block_809: 
+      material: Metal
+    block_810: 
+      material: Plastic
+    block_811: 
+      material: Metal
+    block_812: 
+      material: Metal
+    block_813: 
+      material: Metal
+    block_814: 
+      material: Metal
+    block_815: 
+      material: Metal
+    block_816: 
+      material: Metal
+    block_817: 
+      material: Metal
+    block_818: 
+      material: Plastic
+    block_819: 
+      material: Metal
+    block_820: 
+      material: Plastic
+    block_821: 
+      material: Metal
+    block_822: 
+      material: Metal
+    block_823: 
+      material: Metal
+    block_824: 
+      material: Metal
+    block_825: 
+      material: Metal
+    block_826: 
+      material: Metal
+    block_827: 
+      material: Metal
+    block_828: 
+      material: Plastic
+    block_829: 
+      material: Metal
+    block_830: 
+      material: Plastic
+    block_831: 
+      material: Metal
+    block_832: 
+      material: Metal
+    block_833: 
+      material: Metal
+    block_834: 
+      material: Metal
+    block_835: 
+      material: Metal
+    block_836: 
+      material: Metal
+    block_837: 
+      material: Metal
+    block_838: 
+      material: Plastic
+    block_839: 
+      material: Metal
+    block_840: 
+      material: Plastic
+    block_841: 
+      material: Metal
+    block_842: 
+      material: Metal
+    block_843: 
+      material: Metal
+    block_844: 
+      material: Metal
+    block_845: 
+      material: Metal
+    block_846: 
+      material: Metal
+    block_847: 
+      material: Metal
+    block_848: 
+      material: Plastic
+    block_849: 
+      material: Metal
+    block_850: 
+      material: Plastic
+    block_851: 
+      material: Metal
+    block_852: 
+      material: Metal
+    block_853: 
+      material: Metal
+    block_854: 
+      material: Metal
+    block_855: 
+      material: Metal
+    block_856: 
+      material: Metal
+    block_857: 
+      material: Metal
+    block_858: 
+      material: Plastic
+    block_859: 
+      material: Metal
+    block_860: 
+      material: Plastic
+    block_861: 
+      material: Metal
+    block_862: 
+      material: Metal
+    block_863: 
+      material: Metal
+    block_864: 
+      material: Metal
+    block_865: 
+      material: Metal
+    block_866: 
+      material: Metal
+    block_867: 
+      material: Metal
+    block_868: 
+      material: Plastic
+    block_869: 
+      material: Metal
+    block_870: 
+      material: Plastic
+    block_871: 
+      material: Metal
+    block_872: 
+      material: Metal
+    block_873: 
+      material: Metal
+    block_874: 
+      material: Metal
+    block_875: 
+      material: Metal
+    block_876: 
+      material: Metal
+    block_877: 
+      material: Metal
+    block_878: 
+      material: Plastic
+    block_879: 
+      material: Metal
+    block_880: 
+      material: Plastic
+    block_881: 
+      material: Metal
+    block_882: 
+      material: Metal
+    block_883: 
+      material: Metal
+    block_884: 
+      material: Metal
+    block_885: 
+      material: Metal
+    block_886: 
+      material: Metal
+    block_887: 
+      material: Metal
+    block_888: 
+      material: Plastic
+    block_889: 
+      material: Metal
+    block_890: 
+      material: Plastic
+    block_891: 
+      material: Metal
+    block_892: 
+      material: Metal
+    block_893: 
+      material: Metal
+    block_894: 
+      material: Metal
+    block_895: 
+      material: Metal
+    block_896: 
+      material: Metal
+    block_897: 
+      material: Metal
+    block_898: 
+      material: Plastic
+    block_899: 
+      material: Metal
+    block_900: 
+      material: Plastic
+    block_901: 
+      material: Metal
+    block_902: 
+      material: Metal
+    block_903: 
+      material: Metal
+    block_904: 
+      material: Metal
+    block_905: 
+      material: Metal
+    block_906: 
+      material: Metal
+    block_907: 
+      material: Metal
+    block_908: 
+      material: Plastic
+    block_909: 
+      material: Metal
+    block_910: 
+      material: Plastic
+    block_911: 
+      material: Metal
+    block_912: 
+      material: Metal
+    block_913: 
+      material: Metal
+    block_914: 
+      material: Metal
+    block_915: 
+      material: Metal
+    block_916: 
+      material: Metal
+    block_917: 
+      material: Metal
+    block_918: 
+      material: Plastic
+    block_919: 
+      material: Metal
+    block_920: 
+      material: Plastic
+    block_921: 
+      material: Metal
+    block_922: 
+      material: Metal
+    block_923: 
+      material: Metal
+    block_924: 
+      material: Metal
+    block_925: 
+      material: Metal
+    block_926: 
+      material: Metal
+    block_927: 
+      material: Metal
+    block_928: 
+      material: Plastic
+    block_929: 
+      material: Metal
+    block_930: 
+      material: Plastic
+    block_931: 
+      material: Metal
+    block_932: 
+      material: Metal
+    block_933: 
+      material: Metal
+    block_934: 
+      material: Metal
+    block_935: 
+      material: Metal
+    block_936: 
+      material: Metal
+    block_937: 
+      material: Metal
+    block_938: 
+      material: Plastic
+    block_939: 
+      material: Metal
+    block_940: 
+      material: Plastic
+    block_941: 
+      material: Metal
+    block_942: 
+      material: Metal
+    block_943: 
+      material: Metal
+    block_944: 
+      material: Metal
+    block_945: 
+      material: Metal
+    block_946: 
+      material: Metal
+    block_947: 
+      material: Metal
+    block_948: 
+      material: Plastic
+    block_949: 
+      material: Metal
+    block_950: 
+      material: Plastic
+    block_951: 
+      material: Metal
+    block_952: 
+      material: Metal
+    block_953: 
+      material: Metal
+    block_954: 
+      material: Metal
+    block_955: 
+      material: Metal
+    block_956: 
+      material: Metal
+    block_957: 
+      material: Metal
+    block_958: 
+      material: Plastic
+    block_959: 
+      material: Metal
+    block_960: 
+      material: Plastic
+    block_961: 
+      material: Metal
+    block_962: 
+      material: Metal
+    block_963: 
+      material: Metal
+    block_964: 
+      material: Metal
+    block_965: 
+      material: Metal
+    block_966: 
+      material: Metal
+    block_967: 
+      material: Metal
+    block_968: 
+      material: Plastic
+    block_969: 
+      material: Metal
+    block_970: 
+      material: Plastic
+    block_971: 
+      material: Metal
+    block_972: 
+      material: Metal
+    block_973: 
+      material: Metal
+    block_974: 
+      material: Metal
+    block_975: 
+      material: Metal
+    block_976: 
+      material: Metal
+    block_977: 
+      material: Metal
+    block_978: 
+      material: Plastic
+    block_979: 
+      material: Metal
+    block_980: 
+      material: Plastic
+    block_981: 
+      material: Metal
+    block_982: 
+      material: Metal
+    block_983: 
+      material: Metal
+    block_984: 
+      material: Metal
+    block_985: 
+      material: Metal
+    block_986: 
+      material: Metal
+    block_987: 
+      material: Metal
+    block_988: 
+      material: Plastic
+    block_989: 
+      material: Metal
+    block_990: 
+      material: Plastic
+    block_991: 
+      material: Metal
+    block_992: 
+      material: Metal
+    block_993: 
+      material: Metal
+    block_994: 
+      material: Metal
+    block_995: 
+      material: Metal
+    block_996: 
+      material: Metal
+    block_997: 
+      material: Metal
+    block_998: 
+      material: Plastic
+    block_999: 
+      material: Metal
+    block_1000: 
+      material: Plastic
+    block_1001: 
+      material: Metal
+    block_1002: 
+      material: Metal
+    block_1003: 
+      material: Metal
+    block_1004: 
+      material: Metal
+    block_1005: 
+      material: Metal
+    block_1006: 
+      material: Metal
+    block_1007: 
+      material: Metal
+    block_1008: 
+      material: Plastic
+    block_1009: 
+      material: Metal
+    block_1010: 
+      material: Plastic
+    block_1011: 
+      material: Metal
+    block_1012: 
+      material: Metal
+    block_1013: 
+      material: Metal
+    block_1014: 
+      material: Metal
+    block_1015: 
+      material: Metal
+    block_1016: 
+      material: Metal
+    block_1017: 
+      material: Metal
+    block_1018: 
+      material: Plastic
+    block_1019: 
+      material: Metal
+    block_1020: 
+      material: Plastic
+    block_1021: 
+      material: Metal
+    block_1022: 
+      material: Metal
+    block_1023: 
+      material: Metal
+    block_1024: 
+      material: Metal
+    block_1025: 
+      material: Metal
+    block_1026: 
+      material: Metal
+    block_1027: 
+      material: Metal
+    block_1028: 
+      material: Plastic
+    block_1029: 
+      material: Metal
+    block_1030: 
+      material: Plastic
+    block_1031: 
+      material: Metal
+    block_1032: 
+      material: Metal
+    block_1033: 
+      material: Metal
+    block_1034: 
+      material: Metal
+    block_1035: 
+      material: Metal
+    block_1036: 
+      material: Metal
+    block_1037: 
+      material: Metal
+    block_1038: 
+      material: Plastic
+    block_1039: 
+      material: Metal
+    block_1040: 
+      material: Plastic
+    block_1041: 
+      material: Metal
+    block_1042: 
+      material: Metal
+    block_1043: 
+      material: Metal
+    block_1044: 
+      material: Metal
+    block_1045: 
+      material: Metal
+    block_1046: 
+      material: Metal
+    block_1047: 
+      material: Metal
+    block_1048: 
+      material: Plastic
+    block_1049: 
+      material: Metal
+    block_1050: 
+      material: Plastic
+    block_1051: 
+      material: Metal
+    block_1052: 
+      material: Metal
+    block_1053: 
+      material: Metal
+    block_1054: 
+      material: Metal
+    block_1055: 
+      material: Metal
+    block_1056: 
+      material: Metal
+    block_1057: 
+      material: Metal
+    block_1058: 
+      material: Plastic
+    block_1059: 
+      material: Metal
+    block_1060: 
+      material: Plastic
+    block_1061: 
+      material: Metal
+    block_1062: 
+      material: Metal
+    block_1063: 
+      material: Metal
+    block_1064: 
+      material: Metal
+    block_1065: 
+      material: Metal
+    block_1066: 
+      material: Metal
+    block_1067: 
+      material: Metal
+    block_1068: 
+      material: Plastic
+    block_1069: 
+      material: Metal
+    block_1070: 
+      material: Plastic
+    block_1071: 
+      material: Metal
+    block_1072: 
+      material: Metal
+    block_1073: 
+      material: Metal
+    block_1074: 
+      material: Metal
+    block_1075: 
+      material: Metal
+    block_1076: 
+      material: Metal
+    block_1077: 
+      material: Metal
+    block_1078: 
+      material: Plastic
+    block_1079: 
+      material: Metal
+    block_1080: 
+      material: Plastic
+    block_1081: 
+      material: Metal
+    block_1082: 
+      material: Metal
+    block_1083: 
+      material: Metal
+    block_1084: 
+      material: Metal
+    block_1085: 
+      material: Metal
+    block_1086: 
+      material: Metal
+    block_1087: 
+      material: Metal
+    block_1088: 
+      material: Plastic
+    block_1089: 
+      material: Metal
+    block_1090: 
+      material: Plastic
+    block_1091: 
+      material: Metal
+    block_1092: 
+      material: Metal
+    block_1093: 
+      material: Metal
+    block_1094: 
+      material: Metal
+    block_1095: 
+      material: Metal
+    block_1096: 
+      material: Metal
+    block_1097: 
+      material: Metal
+    block_1098: 
+      material: Plastic
+    block_1099: 
+      material: Metal
+    block_1100: 
+      material: Plastic
+    block_1101: 
+      material: Metal
+    block_1102: 
+      material: Metal
+    block_1103: 
+      material: Metal
+    block_1104: 
+      material: Metal
+    block_1105: 
+      material: Metal
+    block_1106: 
+      material: Metal
+    block_1107: 
+      material: Metal
+    block_1108: 
+      material: Plastic
+    block_1109: 
+      material: Metal
+    block_1110: 
+      material: Plastic
+    block_1111: 
+      material: Metal
+    block_1112: 
+      material: Metal
+    block_1113: 
+      material: Metal
+    block_1114: 
+      material: Metal
+    block_1115: 
+      material: Metal
+    block_1116: 
+      material: Metal
+    block_1117: 
+      material: Metal
+    block_1118: 
+      material: Plastic
+    block_1119: 
+      material: Metal
+    block_1120: 
+      material: Plastic
+    block_1121: 
+      material: Metal
+    block_1122: 
+      material: Metal
+    block_1123: 
+      material: Metal
+    block_1124: 
+      material: Metal
+    block_1125: 
+      material: Metal
+    block_1126: 
+      material: Metal
+    block_1127: 
+      material: Metal
+    block_1128: 
+      material: Plastic
+    block_1129: 
+      material: Metal
+    block_1130: 
+      material: Plastic
+    block_1131: 
+      material: Metal
+    block_1132: 
+      material: Metal
+    block_1133: 
+      material: Metal
+    block_1134: 
+      material: Metal
+    block_1135: 
+      material: Metal
+    block_1136: 
+      material: Metal
+    block_1137: 
+      material: Metal
+    block_1138: 
+      material: Plastic
+    block_1139: 
+      material: Metal
+    block_1140: 
+      material: Plastic
+    block_1141: 
+      material: Metal
+    block_1142: 
+      material: Metal
+    block_1143: 
+      material: Metal
+    block_1144: 
+      material: Metal
+    block_1145: 
+      material: Metal
+    block_1146: 
+      material: Metal
+    block_1147: 
+      material: Metal
+    block_1148: 
+      material: Plastic
+    block_1149: 
+      material: Metal
+    block_1150: 
+      material: Plastic
+    block_1151: 
+      material: Metal
+    block_1152: 
+      material: Metal
+    block_1153: 
+      material: Metal
+    block_1154: 
+      material: Metal
+    block_1155: 
+      material: Metal
+    block_1156: 
+      material: Metal
+    block_1157: 
+      material: Metal
+    block_1158: 
+      material: Plastic
+    block_1159: 
+      material: Metal
+    block_1160: 
+      material: Plastic
+    block_1161: 
+      material: Metal
+    block_1162: 
+      material: Metal
+    block_1163: 
+      material: Metal
+    block_1164: 
+      material: Metal
+    block_1165: 
+      material: Metal
+    block_1166: 
+      material: Metal
+    block_1167: 
+      material: Metal
+    block_1168: 
+      material: Plastic
+    block_1169: 
+      material: Metal
+    block_1170: 
+      material: Plastic
+    block_1171: 
+      material: Metal
+    block_1172: 
+      material: Metal
+    block_1173: 
+      material: Metal
+    block_1174: 
+      material: Metal
+    block_1175: 
+      material: Metal
+    block_1176: 
+      material: Metal
+    block_1177: 
+      material: Metal
+    block_1178: 
+      material: Plastic
+    block_1179: 
+      material: Metal
+    block_1180: 
+      material: Plastic
+    block_1181: 
+      material: Metal
+    block_1182: 
+      material: Metal
+    block_1183: 
+      material: Metal
+    block_1184: 
+      material: Metal
+    block_1185: 
+      material: Metal
+    block_1186: 
+      material: Metal
+    block_1187: 
+      material: Metal
+    block_1188: 
+      material: Plastic
+    block_1189: 
+      material: Metal
+    block_1190: 
+      material: Plastic
+    block_1191: 
+      material: Metal
+    block_1192: 
+      material: Metal
+    block_1193: 
+      material: Metal
+    block_1194: 
+      material: Metal
+    block_1195: 
+      material: Metal
+    block_1196: 
+      material: Metal
+    block_1197: 
+      material: Metal
+    block_1198: 
+      material: Plastic
+    block_1199: 
+      material: Metal
+    block_1200: 
+      material: Plastic
+    block_1201: 
+      material: Metal
+    block_1202: 
+      material: Metal
+    block_1203: 
+      material: Metal
+    block_1204: 
+      material: Metal
+    block_1205: 
+      material: Metal
+    block_1206: 
+      material: Metal
+    block_1207: 
+      material: Metal
+    block_1208: 
+      material: Plastic
+    block_1209: 
+      material: Metal
+    block_1210: 
+      material: Plastic
+    block_1211: 
+      material: Metal
+    block_1212: 
+      material: Metal
+    block_1213: 
+      material: Metal
+    block_1214: 
+      material: Metal
+    block_1215: 
+      material: Metal
+    block_1216: 
+      material: Metal
+    block_1217: 
+      material: Metal
+    block_1218: 
+      material: Plastic
+    block_1219: 
+      material: Metal
+    block_1220: 
+      material: Plastic
+    block_1221: 
+      material: Metal
+    block_1222: 
+      material: Metal
+    block_1223: 
+      material: Metal
+    block_1224: 
+      material: Metal
+    block_1225: 
+      material: Metal
+    block_1226: 
+      material: Metal
+    block_1227: 
+      material: Metal
+    block_1228: 
+      material: Plastic
+    block_1229: 
+      material: Metal
+    block_1230: 
+      material: Plastic
+    block_1231: 
+      material: Metal
+    block_1232: 
+      material: Metal
+    block_1233: 
+      material: Metal
+    block_1234: 
+      material: Metal
+    block_1235: 
+      material: Metal
+    block_1236: 
+      material: Metal
+    block_1237: 
+      material: Metal
+    block_1238: 
+      material: Plastic
+    block_1239: 
+      material: Metal
+    block_1240: 
+      material: Plastic
+    block_1241: 
+      material: Metal
+    block_1242: 
+      material: Metal
+    block_1243: 
+      material: Metal
+    block_1244: 
+      material: Metal
+    block_1245: 
+      material: Metal
+    block_1246: 
+      material: Metal
+    block_1247: 
+      material: Metal
+    block_1248: 
+      material: Plastic
+    block_1249: 
+      material: Metal
+    block_1250: 
+      material: Plastic
+    block_1251: 
+      material: Metal
+    block_1252: 
+      material: Metal
+    block_1253: 
+      material: Metal
+    block_1254: 
+      material: Metal
+    block_1255: 
+      material: Metal
+    block_1256: 
+      material: Metal
+    block_1257: 
+      material: Metal
+    block_1258: 
+      material: Plastic
+    block_1259: 
+      material: Metal
+    block_1260: 
+      material: Plastic
+    block_1261: 
+      material: Metal
+    block_1262: 
+      material: Metal
+    block_1263: 
+      material: Metal
+    block_1264: 
+      material: Metal
+    block_1265: 
+      material: Metal
+    block_1266: 
+      material: Metal
+    block_1267: 
+      material: Metal
+    block_1268: 
+      material: Plastic
+    block_1269: 
+      material: Metal
+    block_1270: 
+      material: Plastic
+    block_1271: 
+      material: Metal
+    block_1272: 
+      material: Metal
+    block_1273: 
+      material: Metal
+    block_1274: 
+      material: Metal
+    block_1275: 
+      material: Metal
+    block_1276: 
+      material: Metal
+    block_1277: 
+      material: Metal
+    block_1278: 
+      material: Plastic
+    block_1279: 
+      material: Metal
+    block_1280: 
+      material: Plastic
+    block_1281: 
+      material: Metal
+    block_1282: 
+      material: Metal
+    block_1283: 
+      material: Metal
+    block_1284: 
+      material: Metal
+    block_1285: 
+      material: Metal
+    block_1286: 
+      material: Metal
+    block_1287: 
+      material: Metal
+    block_1288: 
+      material: Plastic
+    block_1289: 
+      material: Metal
+    block_1290: 
+      material: Plastic
+    block_1291: 
+      material: Metal
+    block_1292: 
+      material: Metal
+    block_1293: 
+      material: Metal
+    block_1294: 
+      material: Metal
+    block_1295: 
+      material: Metal
+    block_1296: 
+      material: Metal
+    block_1297: 
+      material: Metal
+    block_1298: 
+      material: Plastic
+    block_1299: 
+      material: Metal
+    block_1300: 
+      material: Plastic
+    block_1301: 
+      material: Metal
+    block_1302: 
+      material: Metal
+    block_1303: 
+      material: Metal
+    block_1304: 
+      material: Metal
+    block_1305: 
+      material: Metal
+    block_1306: 
+      material: Metal
+    block_1307: 
+      material: Metal
+    block_1308: 
+      material: Plastic
+    block_1309: 
+      material: Metal
+    block_1310: 
+      material: Plastic
+    block_1311: 
+      material: Metal
+    block_1312: 
+      material: Metal
+    block_1313: 
+      material: Metal
+    block_1314: 
+      material: Metal
+    block_1315: 
+      material: Metal
+    block_1316: 
+      material: Metal
+    block_1317: 
+      material: Metal
+    block_1318: 
+      material: Plastic
+    block_1319: 
+      material: Metal
+    block_1320: 
+      material: Plastic
+    block_1321: 
+      material: Metal
+    block_1322: 
+      material: Metal
+    block_1323: 
+      material: Metal
+    block_1324: 
+      material: Metal
+    block_1325: 
+      material: Metal
+    block_1326: 
+      material: Metal
+    block_1327: 
+      material: Metal
+    block_1328: 
+      material: Plastic
+    block_1329: 
+      material: Metal
+    block_1330: 
+      material: Plastic
+    block_1331: 
+      material: Metal
+    block_1332: 
+      material: Metal
+    block_1333: 
+      material: Metal
+    block_1334: 
+      material: Metal
+    block_1335: 
+      material: Metal
+    block_1336: 
+      material: Metal
+    block_1337: 
+      material: Metal
+    block_1338: 
+      material: Plastic
+    block_1339: 
+      material: Metal
+    block_1340: 
+      material: Plastic
+    block_1341: 
+      material: Metal
+    block_1342: 
+      material: Metal
+    block_1343: 
+      material: Metal
+    block_1344: 
+      material: Metal
+    block_1345: 
+      material: Metal
+    block_1346: 
+      material: Metal
+    block_1347: 
+      material: Metal
+    block_1348: 
+      material: Plastic
+    block_1349: 
+      material: Metal
+    block_1350: 
+      material: Plastic
+    block_1351: 
+      material: Metal
+    block_1352: 
+      material: Metal
+    block_1353: 
+      material: Metal
+    block_1354: 
+      material: Metal
+    block_1355: 
+      material: Metal
+    block_1356: 
+      material: Metal
+    block_1357: 
+      material: Metal
+    block_1358: 
+      material: Plastic
+    block_1359: 
+      material: Metal
+    block_1360: 
+      material: Plastic
+    block_1361: 
+      material: Metal
+    block_1362: 
+      material: Metal
+    block_1363: 
+      material: Metal
+    block_1364: 
+      material: Metal
+    block_1365: 
+      material: Metal
+    block_1366: 
+      material: Metal
+    block_1367: 
+      material: Metal
+    block_1368: 
+      material: Plastic
+    block_1369: 
+      material: Metal
+    block_1370: 
+      material: Plastic
+    block_1371: 
+      material: Metal
+    block_1372: 
+      material: Metal
+    block_1373: 
+      material: Metal
+    block_1374: 
+      material: Metal
+    block_1375: 
+      material: Metal
+    block_1376: 
+      material: Metal
+    block_1377: 
+      material: Metal
+    block_1378: 
+      material: Plastic
+    block_1379: 
+      material: Metal
+    block_1380: 
+      material: Plastic
+    block_1381: 
+      material: Metal
+    block_1382: 
+      material: Metal
+    block_1383: 
+      material: Metal
+    block_1384: 
+      material: Metal
+    block_1385: 
+      material: Metal
+    block_1386: 
+      material: Metal
+    block_1387: 
+      material: Metal
+    block_1388: 
+      material: Plastic
+    block_1389: 
+      material: Metal
+    block_1390: 
+      material: Plastic
+    block_1391: 
+      material: Metal
+    block_1392: 
+      material: Metal
+    block_1393: 
+      material: Metal
+    block_1394: 
+      material: Metal
+    block_1395: 
+      material: Metal
+    block_1396: 
+      material: Metal
+    block_1397: 
+      material: Metal
+    block_1398: 
+      material: Plastic
+    block_1399: 
+      material: Metal
+    block_1400: 
+      material: Plastic
+    block_1401: 
+      material: Metal
+    block_1402: 
+      material: Metal
+    block_1403: 
+      material: Metal
+    block_1404: 
+      material: Metal
+    block_1405: 
+      material: Metal
+    block_1406: 
+      material: Metal
+    block_1407: 
+      material: Metal
+    block_1408: 
+      material: Plastic
+    block_1409: 
+      material: Metal
+    block_1410: 
+      material: Plastic
+    block_1411: 
+      material: Metal
+    block_1412: 
+      material: Metal
+    block_1413: 
+      material: Metal
+    block_1414: 
+      material: Metal
+    block_1415: 
+      material: Metal
+    block_1416: 
+      material: Metal
+    block_1417: 
+      material: Metal
+    block_1418: 
+      material: Plastic
+    block_1419: 
+      material: Metal
+    block_1420: 
+      material: Plastic
+    block_1421: 
+      material: Metal
+    block_1422: 
+      material: Metal
+    block_1423: 
+      material: Metal
+    block_1424: 
+      material: Metal
+    block_1425: 
+      material: Metal
+    block_1426: 
+      material: Metal
+    block_1427: 
+      material: Metal
+    block_1428: 
+      material: Plastic
+    block_1429: 
+      material: Metal
+    block_1430: 
+      material: Plastic
+    block_1431: 
+      material: Metal
+    block_1432: 
+      material: Metal
+    block_1433: 
+      material: Metal
+    block_1434: 
+      material: Metal
+    block_1435: 
+      material: Metal
+    block_1436: 
+      material: Metal
+    block_1437: 
+      material: Metal
+    block_1438: 
+      material: Plastic
+    block_1439: 
+      material: Metal
+    block_1440: 
+      material: Plastic
+    block_1441: 
+      material: Metal
+    block_1442: 
+      material: Metal
+    block_1443: 
+      material: Metal
+    block_1444: 
+      material: Metal
+    block_1445: 
+      material: Metal
+    block_1446: 
+      material: Metal
+    block_1447: 
+      material: Metal
+    block_1448: 
+      material: Plastic
+    block_1449: 
+      material: Metal
+    block_1450: 
+      material: Plastic
+    block_1451: 
+      material: Metal
+    block_1452: 
+      material: Metal
+    block_1453: 
+      material: Metal
+    block_1454: 
+      material: Metal
+    block_1455: 
+      material: Metal
+    block_1456: 
+      material: Metal
+    block_1457: 
+      material: Metal
+    block_1458: 
+      material: Plastic
+    block_1459: 
+      material: Metal
+    block_1460: 
+      material: Plastic
+    block_1461: 
+      material: Metal
+    block_1462: 
+      material: Metal
+    block_1463: 
+      material: Metal
+    block_1464: 
+      material: Metal
+    block_1465: 
+      material: Metal
+    block_1466: 
+      material: Metal
+    block_1467: 
+      material: Metal
+    block_1468: 
+      material: Plastic
+    block_1469: 
+      material: Metal
+    block_1470: 
+      material: Plastic
+    block_1471: 
+      material: Metal
+    block_1472: 
+      material: Metal
+    block_1473: 
+      material: Metal
+    block_1474: 
+      material: Metal
+    block_1475: 
+      material: Metal
+    block_1476: 
+      material: Metal
+    block_1477: 
+      material: Metal
+    block_1478: 
+      material: Plastic
+    block_1479: 
+      material: Metal
+    block_1480: 
+      material: Plastic
+    block_1481: 
+      material: Metal
+    block_1482: 
+      material: Metal
+    block_1483: 
+      material: Metal
+    block_1484: 
+      material: Metal
+    block_1485: 
+      material: Metal
+    block_1486: 
+      material: Metal
+    block_1487: 
+      material: Metal
+    block_1488: 
+      material: Plastic
+    block_1489: 
+      material: Metal
+    block_1490: 
+      material: Plastic
+    block_1491: 
+      material: Metal
+    block_1492: 
+      material: Metal
+    block_1493: 
+      material: Metal
+    block_1494: 
+      material: Metal
+    block_1495: 
+      material: Metal
+    block_1496: 
+      material: Metal
+    block_1497: 
+      material: Metal
+    block_1498: 
+      material: Plastic
+    block_1499: 
+      material: Metal
+    block_1500: 
+      material: Plastic
+    block_1501: 
+      material: Metal
+    block_1502: 
+      material: Metal
+    block_1503: 
+      material: Metal
+    block_1504: 
+      material: Metal
+    block_1505: 
+      material: Metal
+    block_1506: 
+      material: Metal
+    block_1507: 
+      material: Metal
+    block_1508: 
+      material: Plastic
+    block_1509: 
+      material: Metal
+    block_1510: 
+      material: Plastic
+    block_1511: 
+      material: Metal
+    block_1512: 
+      material: Metal
+    block_1513: 
+      material: Metal
+    block_1514: 
+      material: Metal
+    block_1515: 
+      material: Metal
+    block_1516: 
+      material: Metal
+    block_1517: 
+      material: Metal
+    block_1518: 
+      material: Plastic
+    block_1519: 
+      material: Metal
+    block_1520: 
+      material: Plastic
+    block_1521: 
+      material: Metal
+    block_1522: 
+      material: Metal
+    block_1523: 
+      material: Metal
+    block_1524: 
+      material: Metal
+    block_1525: 
+      material: Metal
+    block_1526: 
+      material: Metal
+    block_1527: 
+      material: Metal
+    block_1528: 
+      material: Plastic
+    block_1529: 
+      material: Metal
+    block_1530: 
+      material: Plastic
+    block_1531: 
+      material: Metal
+    block_1532: 
+      material: Metal
+    block_1533: 
+      material: Metal
+    block_1534: 
+      material: Metal
+    block_1535: 
+      material: Metal
+    block_1536: 
+      material: Metal
+    block_1537: 
+      material: Metal
+    block_1538: 
+      material: Plastic
+    block_1539: 
+      material: Metal
+    block_1540: 
+      material: Plastic
+    block_1541: 
+      material: Metal
+    block_1542: 
+      material: Metal
+    block_1543: 
+      material: Metal
+    block_1544: 
+      material: Metal
+    block_1545: 
+      material: Metal
+    block_1546: 
+      material: Metal
+    block_1547: 
+      material: Metal
+    block_1548: 
+      material: Plastic
+    block_1549: 
+      material: Metal
+    block_1550: 
+      material: Plastic
+    block_1551: 
+      material: Metal
+    block_1552: 
+      material: Metal
+    block_1553: 
+      material: Metal
+    block_1554: 
+      material: Metal
+    block_1555: 
+      material: Metal
+    block_1556: 
+      material: Metal
+    block_1557: 
+      material: Metal
+    block_1558: 
+      material: Plastic
+    block_1559: 
+      material: Metal
+    block_1560: 
+      material: Plastic
+    block_1561: 
+      material: Metal
+    block_1562: 
+      material: Metal
+    block_1563: 
+      material: Metal
+    block_1564: 
+      material: Metal
+    block_1565: 
+      material: Metal
+    block_1566: 
+      material: Metal
+    block_1567: 
+      material: Metal
+    block_1568: 
+      material: Plastic
+    block_1569: 
+      material: Metal
+    block_1570: 
+      material: Plastic
+    block_1571: 
+      material: Metal
+    block_1572: 
+      material: Metal
+    block_1573: 
+      material: Metal
+    block_1574: 
+      material: Metal
+    block_1575: 
+      material: Metal
+    block_1576: 
+      material: Metal
+    block_1577: 
+      material: Metal
+    block_1578: 
+      material: Plastic
+    block_1579: 
+      material: Metal
+    block_1580: 
+      material: Plastic
+    block_1581: 
+      material: Metal
+    block_1582: 
+      material: Metal
+    block_1583: 
+      material: Metal
+    block_1584: 
+      material: Metal
+    block_1585: 
+      material: Metal
+    block_1586: 
+      material: Metal
+    block_1587: 
+      material: Metal
+    block_1588: 
+      material: Plastic
+    block_1589: 
+      material: Metal
+    block_1590: 
+      material: Plastic
+    block_1591: 
+      material: Metal
+    block_1592: 
+      material: Metal
+    block_1593: 
+      material: Metal
+    block_1594: 
+      material: Metal
+    block_1595: 
+      material: Metal
+    block_1596: 
+      material: Metal
+    block_1597: 
+      material: Metal
+    block_1598: 
+      material: Plastic
+    block_1599: 
+      material: Metal
+    block_1600: 
+      material: Plastic
+    block_1601: 
+      material: Metal
+    block_1602: 
+      material: Metal
+    block_1603: 
+      material: Metal
+    block_1604: 
+      material: Metal
+    block_1605: 
+      material: Metal
+    block_1606: 
+      material: Metal
+    block_1607: 
+      material: Metal
+    block_1608: 
+      material: Plastic
+    block_1609: 
+      material: Metal
+    block_1610: 
+      material: Plastic
+    block_1611: 
+      material: Metal
+    block_1612: 
+      material: Metal
+    block_1613: 
+      material: Metal
+    block_1614: 
+      material: Metal
+    block_1615: 
+      material: Metal
+    block_1616: 
+      material: Metal
+    block_1617: 
+      material: Metal
+    block_1618: 
+      material: Plastic
+    block_1619: 
+      material: Metal
+    block_1620: 
+      material: Plastic
+    block_1621: 
+      material: Metal
+    block_1622: 
+      material: Metal
+    block_1623: 
+      material: Metal
+    block_1624: 
+      material: Metal
+    block_1625: 
+      material: Metal
+    block_1626: 
+      material: Metal
+    block_1627: 
+      material: Metal
+    block_1628: 
+      material: Plastic
+    block_1629: 
+      material: Metal
+    block_1630: 
+      material: Plastic
+    block_1631: 
+      material: Metal
+    block_1632: 
+      material: Metal
+    block_1633: 
+      material: Metal
+    block_1634: 
+      material: Metal
+    block_1635: 
+      material: Metal
+    block_1636: 
+      material: Metal
+    block_1637: 
+      material: Metal
+    block_1638: 
+      material: Plastic
+    block_1639: 
+      material: Metal
+    block_1640: 
+      material: Plastic
+    block_1641: 
+      material: Metal
+    block_1642: 
+      material: Metal
+    block_1643: 
+      material: Metal
+    block_1644: 
+      material: Metal
+    block_1645: 
+      material: Metal
+    block_1646: 
+      material: Metal
+    block_1647: 
+      material: Metal
+    block_1648: 
+      material: Plastic
+    block_1649: 
+      material: Metal
+    block_1650: 
+      material: Plastic
+    block_1651: 
+      material: Metal
+    block_1652: 
+      material: Metal
+    block_1653: 
+      material: Metal
+    block_1654: 
+      material: Metal
+    block_1655: 
+      material: Metal
+    block_1656: 
+      material: Metal
+    block_1657: 
+      material: Metal
+    block_1658: 
+      material: Plastic
+    block_1659: 
+      material: Metal
+    block_1660: 
+      material: Plastic
+    block_1661: 
+      material: Metal
+    block_1662: 
+      material: Metal
+    block_1663: 
+      material: Metal
+    block_1664: 
+      material: Metal
+    block_1665: 
+      material: Metal
+    block_1666: 
+      material: Metal
+    block_1667: 
+      material: Metal
+    block_1668: 
+      material: Plastic
+    block_1669: 
+      material: Metal
+    block_1670: 
+      material: Plastic
+    block_1671: 
+      material: Metal
+    block_1672: 
+      material: Metal
+    block_1673: 
+      material: Metal
+    block_1674: 
+      material: Metal
+    block_1675: 
+      material: Metal
+    block_1676: 
+      material: Metal
+    block_1677: 
+      material: Metal
+    block_1678: 
+      material: Plastic
+    block_1679: 
+      material: Metal
+    block_1680: 
+      material: Plastic
+    block_1681: 
+      material: Metal
+    block_1682: 
+      material: Metal
+    block_1683: 
+      material: Metal
+    block_1684: 
+      material: Metal
+    block_1685: 
+      material: Metal
+    block_1686: 
+      material: Metal
+    block_1687: 
+      material: Metal
+    block_1688: 
+      material: Plastic
+    block_1689: 
+      material: Metal
+    block_1690: 
+      material: Plastic
+    block_1691: 
+      material: Metal
+    block_1692: 
+      material: Metal
+    block_1693: 
+      material: Metal
+    block_1694: 
+      material: Metal
+    block_1695: 
+      material: Metal
+    block_1696: 
+      material: Metal
+    block_1697: 
+      material: Metal
+    block_1698: 
+      material: Plastic
+    block_1699: 
+      material: Metal
+    block_1700: 
+      material: Plastic
+    block_1701: 
+      material: Metal
+    block_1702: 
+      material: Metal
+    block_1703: 
+      material: Metal
+    block_1704: 
+      material: Metal
+    block_1705: 
+      material: Metal
+    block_1706: 
+      material: Metal
+    block_1707: 
+      material: Metal
+    block_1708: 
+      material: Plastic
+    block_1709: 
+      material: Metal
+    block_1710: 
+      material: Plastic
+    block_1711: 
+      material: Metal
+    block_1712: 
+      material: Metal
+    block_1713: 
+      material: Metal
+    block_1714: 
+      material: Metal
+    block_1715: 
+      material: Metal
+    block_1716: 
+      material: Metal
+    block_1717: 
+      material: Metal
+    block_1718: 
+      material: Plastic
+    block_1719: 
+      material: Metal
+    block_1720: 
+      material: Plastic
+    block_1721: 
+      material: Metal
+    block_1722: 
+      material: Metal
+    block_1723: 
+      material: Metal
+    block_1724: 
+      material: Metal
+    block_1725: 
+      material: Metal
+    block_1726: 
+      material: Metal
+    block_1727: 
+      material: Metal
+    block_1728: 
+      material: Plastic
+    block_1729: 
+      material: Metal
+    block_1730: 
+      material: Plastic
+    block_1731: 
+      material: Metal
+    block_1732: 
+      material: Metal
+    block_1733: 
+      material: Metal
+    block_1734: 
+      material: Metal
+    block_1735: 
+      material: Metal
+    block_1736: 
+      material: Metal
+    block_1737: 
+      material: Metal
+    block_1738: 
+      material: Plastic
+    block_1739: 
+      material: Metal
+    block_1740: 
+      material: Plastic
+    block_1741: 
+      material: Metal
+    block_1742: 
+      material: Metal
+    block_1743: 
+      material: Metal
+    block_1744: 
+      material: Metal
+    block_1745: 
+      material: Metal
+    block_1746: 
+      material: Metal
+    block_1747: 
+      material: Metal
+    block_1748: 
+      material: Plastic
+    block_1749: 
+      material: Metal
+    block_1750: 
+      material: Plastic
+    block_1751: 
+      material: Metal
+    block_1752: 
+      material: Metal
+    block_1753: 
+      material: Metal
+    block_1754: 
+      material: Metal
+    block_1755: 
+      material: Metal
+    block_1756: 
+      material: Metal
+    block_1757: 
+      material: Metal
+    block_1758: 
+      material: Plastic
+    block_1759: 
+      material: Metal
+    block_1760: 
+      material: Plastic
+    block_1761: 
+      material: Metal
+    block_1762: 
+      material: Metal
+    block_1763: 
+      material: Metal
+    block_1764: 
+      material: Metal
+    block_1765: 
+      material: Metal
+    block_1766: 
+      material: Metal
+    block_1767: 
+      material: Metal
+    block_1768: 
+      material: Plastic
+    block_1769: 
+      material: Metal
+    block_1770: 
+      material: Plastic
+    block_1771: 
+      material: Metal
+    block_1772: 
+      material: Metal
+    block_1773: 
+      material: Metal
+    block_1774: 
+      material: Metal
+    block_1775: 
+      material: Metal
+    block_1776: 
+      material: Metal
+    block_1777: 
+      material: Metal
+    block_1778: 
+      material: Plastic
+    block_1779: 
+      material: Metal
+    block_1780: 
+      material: Plastic
+    block_1781: 
+      material: Metal
+    block_1782: 
+      material: Metal
+    block_1783: 
+      material: Metal
+    block_1784: 
+      material: Metal
+    block_1785: 
+      material: Metal
+    block_1786: 
+      material: Metal
+    block_1787: 
+      material: Metal
+    block_1788: 
+      material: Plastic
+    block_1789: 
+      material: Metal
+    block_1790: 
+      material: Plastic
+    block_1791: 
+      material: Metal
+    block_1792: 
+      material: Metal
+    block_1793: 
+      material: Metal
+    block_1794: 
+      material: Metal
+    block_1795: 
+      material: Metal
+    block_1796: 
+      material: Metal
+    block_1797: 
+      material: Metal
+    block_1798: 
+      material: Plastic
+    block_1799: 
+      material: Metal
+    block_1800: 
+      material: Plastic
+    block_1801: 
+      material: Metal
+    block_1802: 
+      material: Metal
+    block_1803: 
+      material: Metal
+    block_1804: 
+      material: Metal
+    block_1805: 
+      material: Metal
+    block_1806: 
+      material: Metal
+    block_1807: 
+      material: Metal
+    block_1808: 
+      material: Plastic
+    block_1809: 
+      material: Metal
+    block_1810: 
+      material: Plastic
+    block_1811: 
+      material: Metal
+    block_1812: 
+      material: Metal
+    block_1813: 
+      material: Metal
+    block_1814: 
+      material: Metal
+    block_1815: 
+      material: Metal
+    block_1816: 
+      material: Metal
+    block_1817: 
+      material: Metal
+    block_1818: 
+      material: Plastic
+    block_1819: 
+      material: Metal
+    block_1820: 
+      material: Plastic
+    block_1821: 
+      material: Metal
+    block_1822: 
+      material: Metal
+    block_1823: 
+      material: Metal
+    block_1824: 
+      material: Metal
+    block_1825: 
+      material: Metal
+    block_1826: 
+      material: Metal
+    block_1827: 
+      material: Metal
+    block_1828: 
+      material: Plastic
+    block_1829: 
+      material: Metal
+    block_1830: 
+      material: Plastic
+    block_1831: 
+      material: Metal
+    block_1832: 
+      material: Metal
+    block_1833: 
+      material: Metal
+    block_1834: 
+      material: Metal
+    block_1835: 
+      material: Metal
+    block_1836: 
+      material: Metal
+    block_1837: 
+      material: Metal
+    block_1838: 
+      material: Plastic
+    block_1839: 
+      material: Metal
+    block_1840: 
+      material: Plastic
+    block_1841: 
+      material: Metal
+    block_1842: 
+      material: Metal
+    block_1843: 
+      material: Metal
+    block_1844: 
+      material: Metal
+    block_1845: 
+      material: Metal
+    block_1846: 
+      material: Metal
+    block_1847: 
+      material: Metal
+    block_1848: 
+      material: Plastic
+    block_1849: 
+      material: Metal
+    block_1850: 
+      material: Plastic
+    block_1851: 
+      material: Metal
+    block_1852: 
+      material: Metal
+    block_1853: 
+      material: Metal
+    block_1854: 
+      material: Metal
+    block_1855: 
+      material: Metal
+    block_1856: 
+      material: Metal
+    block_1857: 
+      material: Metal
+    block_1858: 
+      material: Plastic
+    block_1859: 
+      material: Metal
+    block_1860: 
+      material: Plastic
+    block_1861: 
+      material: Metal
+    block_1862: 
+      material: Metal
+    block_1863: 
+      material: Metal
+    block_1864: 
+      material: Metal
+    block_1865: 
+      material: Metal
+    block_1866: 
+      material: Metal
+    block_1867: 
+      material: Metal
+    block_1868: 
+      material: Plastic
+    block_1869: 
+      material: Metal
+    block_1870: 
+      material: Plastic
+    block_1871: 
+      material: Metal
+    block_1872: 
+      material: Metal
+    block_1873: 
+      material: Metal
+    block_1874: 
+      material: Metal
+    block_1875: 
+      material: Metal
+    block_1876: 
+      material: Metal
+    block_1877: 
+      material: Metal
+    block_1878: 
+      material: Plastic
+    block_1879: 
+      material: Metal
+    block_1880: 
+      material: Plastic
+    block_1881: 
+      material: Metal
+    block_1882: 
+      material: Metal
+    block_1883: 
+      material: Metal
+    block_1884: 
+      material: Metal
+    block_1885: 
+      material: Metal
+    block_1886: 
+      material: Metal
+    block_1887: 
+      material: Metal
+    block_1888: 
+      material: Plastic
+    block_1889: 
+      material: Metal
+    block_1890: 
+      material: Plastic
+    block_1891: 
+      material: Metal
+    block_1892: 
+      material: Metal
+    block_1893: 
+      material: Metal
+    block_1894: 
+      material: Metal
+    block_1895: 
+      material: Metal
+    block_1896: 
+      material: Metal
+    block_1897: 
+      material: Metal
+    block_1898: 
+      material: Plastic
+    block_1899: 
+      material: Metal
+    block_1900: 
+      material: Plastic
+    block_1901: 
+      material: Metal
+    block_1902: 
+      material: Metal
+    block_1903: 
+      material: Metal
+    block_1904: 
+      material: Metal
+    block_1905: 
+      material: Metal
+    block_1906: 
+      material: Metal
+    block_1907: 
+      material: Metal
+    block_1908: 
+      material: Plastic
+    block_1909: 
+      material: Metal
+    block_1910: 
+      material: Plastic
+    block_1911: 
+      material: Metal
+    block_1912: 
+      material: Metal
+    block_1913: 
+      material: Metal
+    block_1914: 
+      material: Metal
+    block_1915: 
+      material: Metal
+    block_1916: 
+      material: Metal
+    block_1917: 
+      material: Metal
+    block_1918: 
+      material: Plastic
+    block_1919: 
+      material: Metal
+    block_1920: 
+      material: Plastic
+    block_1921: 
+      material: Metal
+    block_1922: 
+      material: Metal
+    block_1923: 
+      material: Metal
+    block_1924: 
+      material: Metal
+    block_1925: 
+      material: Metal
+    block_1926: 
+      material: Metal
+    block_1927: 
+      material: Metal
+    block_1928: 
+      material: Plastic
+    block_1929: 
+      material: Metal
+    block_1930: 
+      material: Plastic
+    block_1931: 
+      material: Metal
+    block_1932: 
+      material: Metal
+    block_1933: 
+      material: Metal
+    block_1934: 
+      material: Metal
+    block_1935: 
+      material: Metal
+    block_1936: 
+      material: Metal
+    block_1937: 
+      material: Metal
+    block_1938: 
+      material: Plastic
+    block_1939: 
+      material: Metal
+    block_1940: 
+      material: Plastic
+    block_1941: 
+      material: Metal
+    block_1942: 
+      material: Metal
+    block_1943: 
+      material: Metal
+    block_1944: 
+      material: Metal
+    block_1945: 
+      material: Metal
+    block_1946: 
+      material: Metal
+    block_1947: 
+      material: Metal
+    block_1948: 
+      material: Plastic
+    block_1949: 
+      material: Metal
+    block_1950: 
+      material: Plastic
+    block_1951: 
+      material: Metal
+    block_1952: 
+      material: Metal
+    block_1953: 
+      material: Metal
+    block_1954: 
+      material: Metal
+    block_1955: 
+      material: Metal
+    block_1956: 
+      material: Metal
+    block_1957: 
+      material: Metal
+    block_1958: 
+      material: Plastic
+    block_1959: 
+      material: Metal
+    block_1960: 
+      material: Plastic
+    block_1961: 
+      material: Metal
+    block_1962: 
+      material: Metal
+    block_1963: 
+      material: Metal
+    block_1964: 
+      material: Metal
+    block_1965: 
+      material: Metal
+    block_1966: 
+      material: Metal
+    block_1967: 
+      material: Metal
+    block_1968: 
+      material: Plastic
+    block_1969: 
+      material: Metal
+    block_1970: 
+      material: Plastic
+    block_1971: 
+      material: Metal
+    block_1972: 
+      material: Metal
+    block_1973: 
+      material: Metal
+    block_1974: 
+      material: Metal
+    block_1975: 
+      material: Metal
+    block_1976: 
+      material: Metal
+    block_1977: 
+      material: Metal
+    block_1978: 
+      material: Plastic
+    block_1979: 
+      material: Metal
+    block_1980: 
+      material: Plastic
+    block_1981: 
+      material: Metal
+    block_1982: 
+      material: Metal
+    block_1983: 
+      material: Metal
+    block_1984: 
+      material: Metal
+    block_1985: 
+      material: Metal
+    block_1986: 
+      material: Metal
+    block_1987: 
+      material: Metal
+    block_1988: 
+      material: Plastic
+    block_1989: 
+      material: Metal
+    block_1990: 
+      material: Plastic
+    block_1991: 
+      material: Metal
+    block_1992: 
+      material: Metal
+    block_1993: 
+      material: Metal
+    block_1994: 
+      material: Metal
+    block_1995: 
+      material: Metal
+    block_1996: 
+      material: Metal
+    block_1997: 
+      material: Metal
+    block_1998: 
+      material: Plastic
+    block_1999: 
+      material: Metal
+    block_2000: 
+      material: Plastic
+    block_2001: 
+      material: Metal
+    block_2002: 
+      material: Metal
+    block_2003: 
+      material: Metal
+    block_2004: 
+      material: Metal
+    block_2005: 
+      material: Metal
+    block_2006: 
+      material: Metal
+    block_2007: 
+      material: Metal
+    block_2008: 
+      material: Plastic
+    block_2009: 
+      material: Metal
+    block_2010: 
+      material: Plastic
+    block_2011: 
+      material: Metal
+    block_2012: 
+      material: Metal
+    block_2013: 
+      material: Metal
+    block_2014: 
+      material: Metal
+    block_2015: 
+      material: Metal
+    block_2016: 
+      material: Metal
+    block_2017: 
+      material: Metal
+    block_2018: 
+      material: Plastic
+    block_2019: 
+      material: Metal
+    block_2020: 
+      material: Plastic
+    block_2021: 
+      material: Metal
+    block_2022: 
+      material: Metal
+    block_2023: 
+      material: Metal
+    block_2024: 
+      material: Metal
+    block_2025: 
+      material: Metal
+    block_2026: 
+      material: Metal
+    block_2027: 
+      material: Metal
+    block_2028: 
+      material: Plastic
+    block_2029: 
+      material: Metal
+    block_2030: 
+      material: Plastic
+    block_2031: 
+      material: Metal
+    block_2032: 
+      material: Metal
+    block_2033: 
+      material: Metal
+    block_2034: 
+      material: Metal
+    block_2035: 
+      material: Metal
+    block_2036: 
+      material: Metal
+    block_2037: 
+      material: Metal
+    block_2038: 
+      material: Plastic
+    block_2039: 
+      material: Metal
+    block_2040: 
+      material: Plastic
+    block_2041: 
+      material: Metal
+    block_2042: 
+      material: Metal
+    block_2043: 
+      material: Metal
+    block_2044: 
+      material: Metal
+    block_2045: 
+      material: Metal
+    block_2046: 
+      material: Metal
+    block_2047: 
+      material: Metal
+    block_2048: 
+      material: Plastic
+    block_2049: 
+      material: Metal
+    block_2050: 
+      material: Plastic
+    block_2051: 
+      material: Metal
+    block_2052: 
+      material: Metal
+    block_2053: 
+      material: Metal
+    block_2054: 
+      material: Metal
+    block_2055: 
+      material: Metal
+    block_2056: 
+      material: Metal
+    block_2057: 
+      material: Metal
+    block_2058: 
+      material: Plastic
+    block_2059: 
+      material: Metal
+    block_2060: 
+      material: Plastic
+    block_2061: 
+      material: Metal
+    block_2062: 
+      material: Metal
+    block_2063: 
+      material: Metal
+    block_2064: 
+      material: Metal
+    block_2065: 
+      material: Metal
+    block_2066: 
+      material: Metal
+    block_2067: 
+      material: Metal
+    block_2068: 
+      material: Plastic
+    block_2069: 
+      material: Metal
+    block_2070: 
+      material: Plastic
+    block_2071: 
+      material: Metal
+    block_2072: 
+      material: Metal
+    block_2073: 
+      material: Metal
+    block_2074: 
+      material: Metal
+    block_2075: 
+      material: Metal
+    block_2076: 
+      material: Metal
+    block_2077: 
+      material: Metal
+    block_2078: 
+      material: Plastic
+    block_2079: 
+      material: Metal
+    block_2080: 
+      material: Plastic
+    block_2081: 
+      material: Metal
+    block_2082: 
+      material: Metal
+    block_2083: 
+      material: Metal
+    block_2084: 
+      material: Metal
+    block_2085: 
+      material: Metal
+    block_2086: 
+      material: Metal
+    block_2087: 
+      material: Metal
+    block_2088: 
+      material: Plastic
+    block_2089: 
+      material: Metal
+    block_2090: 
+      material: Plastic
+    block_2091: 
+      material: Metal
+    block_2092: 
+      material: Metal
+    block_2093: 
+      material: Metal
+    block_2094: 
+      material: Metal
+    block_2095: 
+      material: Metal
+    block_2096: 
+      material: Metal
+    block_2097: 
+      material: Metal
+    block_2098: 
+      material: Plastic
+    block_2099: 
+      material: Metal
+    block_2100: 
+      material: Plastic
+    block_2101: 
+      material: Metal
+    block_2102: 
+      material: Metal
+    block_2103: 
+      material: Metal
+    block_2104: 
+      material: Metal
+    block_2105: 
+      material: Metal
+    block_2106: 
+      material: Metal
+    block_2107: 
+      material: Metal
+    block_2108: 
+      material: Plastic
+    block_2109: 
+      material: Metal
+    block_2110: 
+      material: Plastic
+    block_2111: 
+      material: Metal
+    block_2112: 
+      material: Metal
+    block_2113: 
+      material: Metal
+    block_2114: 
+      material: Metal
+    block_2115: 
+      material: Metal
+    block_2116: 
+      material: Metal
+    block_2117: 
+      material: Metal
+    block_2118: 
+      material: Plastic
+    block_2119: 
+      material: Metal
+    block_2120: 
+      material: Plastic
+    block_2121: 
+      material: Metal
+    block_2122: 
+      material: Metal
+    block_2123: 
+      material: Metal
+    block_2124: 
+      material: Metal
+    block_2125: 
+      material: Metal
+    block_2126: 
+      material: Metal
+    block_2127: 
+      material: Metal
+    block_2128: 
+      material: Plastic
+    block_2129: 
+      material: Metal
+    block_2130: 
+      material: Plastic
+    block_2131: 
+      material: Metal
+    block_2132: 
+      material: Metal
+    block_2133: 
+      material: Metal
+    block_2134: 
+      material: Metal
+    block_2135: 
+      material: Metal
+    block_2136: 
+      material: Metal
+    block_2137: 
+      material: Metal
+    block_2138: 
+      material: Plastic
+    block_2139: 
+      material: Metal
+    block_2140: 
+      material: Plastic
+    block_2141: 
+      material: Metal
+    block_2142: 
+      material: Metal
+    block_2143: 
+      material: Metal
+    block_2144: 
+      material: Metal
+    block_2145: 
+      material: Metal
+    block_2146: 
+      material: Metal
+    block_2147: 
+      material: Metal
+    block_2148: 
+      material: Plastic
+    block_2149: 
+      material: Metal
+    block_2150: 
+      material: Plastic
+    block_2151: 
+      material: Metal
+    block_2152: 
+      material: Metal
+    block_2153: 
+      material: Metal
+    block_2154: 
+      material: Metal
+    block_2155: 
+      material: Metal
+    block_2156: 
+      material: Metal
+    block_2157: 
+      material: Metal
+    block_2158: 
+      material: Plastic
+    block_2159: 
+      material: Metal
+    block_2160: 
+      material: Plastic
+    block_2161: 
+      material: Metal
+    block_2162: 
+      material: Metal
+    block_2163: 
+      material: Metal
+    block_2164: 
+      material: Metal
+    block_2165: 
+      material: Metal
+    block_2166: 
+      material: Metal
+    block_2167: 
+      material: Metal
+    block_2168: 
+      material: Plastic
+    block_2169: 
+      material: Metal
+    block_2170: 
+      material: Plastic
+    block_2171: 
+      material: Metal
+    block_2172: 
+      material: Metal
+    block_2173: 
+      material: Metal
+    block_2174: 
+      material: Metal
+    block_2175: 
+      material: Metal
+    block_2176: 
+      material: Metal
+    block_2177: 
+      material: Metal
+    block_2178: 
+      material: Plastic
+    block_2179: 
+      material: Metal
+    block_2180: 
+      material: Plastic
+    block_2181: 
+      material: Metal
+    block_2182: 
+      material: Metal
+    block_2183: 
+      material: Metal
+    block_2184: 
+      material: Metal
+    block_2185: 
+      material: Metal
+    block_2186: 
+      material: Metal
+    block_2187: 
+      material: Metal
+    block_2188: 
+      material: Plastic
+    block_2189: 
+      material: Metal
+    block_2190: 
+      material: Plastic
+    block_2191: 
+      material: Metal
+    block_2192: 
+      material: Metal
+    block_2193: 
+      material: Metal
+    block_2194: 
+      material: Metal
+    block_2195: 
+      material: Metal
+    block_2196: 
+      material: Metal
+    block_2197: 
+      material: Metal
+    block_2198: 
+      material: Plastic
+    block_2199: 
+      material: Metal
+    block_2200: 
+      material: Plastic
+    block_2201: 
+      material: Metal
+    block_2202: 
+      material: Metal
+    block_2203: 
+      material: Metal
+    block_2204: 
+      material: Metal
+    block_2205: 
+      material: Metal
+    block_2206: 
+      material: Metal
+    block_2207: 
+      material: Metal
+    block_2208: 
+      material: Plastic
+    block_2209: 
+      material: Metal
+    block_2210: 
+      material: Plastic
+    block_2211: 
+      material: Metal
+    block_2212: 
+      material: Metal
+    block_2213: 
+      material: Metal
+    block_2214: 
+      material: Metal
+    block_2215: 
+      material: Metal
+    block_2216: 
+      material: Metal
+    block_2217: 
+      material: Metal
+    block_2218: 
+      material: Plastic
+    block_2219: 
+      material: Metal
+    block_2220: 
+      material: Plastic
+    block_2221: 
+      material: Metal
+    block_2222: 
+      material: Metal
+    block_2223: 
+      material: Metal
+    block_2224: 
+      material: Metal
+    block_2225: 
+      material: Metal
+    block_2226: 
+      material: Metal
+    block_2227: 
+      material: Metal
+    block_2228: 
+      material: Plastic
+    block_2229: 
+      material: Metal
+    block_2230: 
+      material: Plastic
+    block_2231: 
+      material: Metal
+    block_2232: 
+      material: Metal
+    block_2233: 
+      material: Metal
+    block_2234: 
+      material: Metal
+    block_2235: 
+      material: Metal
+    block_2236: 
+      material: Metal
+    block_2237: 
+      material: Metal
+    block_2238: 
+      material: Plastic
+    block_2239: 
+      material: Metal
+    block_2240: 
+      material: Plastic
+    block_2241: 
+      material: Metal
+    block_2242: 
+      material: Metal
+    block_2243: 
+      material: Metal
+    block_2244: 
+      material: Metal
+    block_2245: 
+      material: Metal
+    block_2246: 
+      material: Metal
+    block_2247: 
+      material: Metal
+    block_2248: 
+      material: Plastic
+    block_2249: 
+      material: Metal
+    block_2250: 
+      material: Plastic
+    block_2251: 
+      material: Metal
+    block_2252: 
+      material: Metal
+    block_2253: 
+      material: Metal
+    block_2254: 
+      material: Metal
+    block_2255: 
+      material: Metal
+    block_2256: 
+      material: Metal
+    block_2257: 
+      material: Metal
+    block_2258: 
+      material: Plastic
+    block_2259: 
+      material: Metal
+    block_2260: 
+      material: Plastic
+    block_2261: 
+      material: Metal
+    block_2262: 
+      material: Metal
+    block_2263: 
+      material: Metal
+    block_2264: 
+      material: Metal
+    block_2265: 
+      material: Metal
+    block_2266: 
+      material: Metal
+    block_2267: 
+      material: Metal
+    block_2268: 
+      material: Plastic
+    block_2269: 
+      material: Metal
+    block_2270: 
+      material: Plastic
+    block_2271: 
+      material: Metal
+    block_2272: 
+      material: Metal
+    block_2273: 
+      material: Metal
+    block_2274: 
+      material: Metal
+    block_2275: 
+      material: Metal
+    block_2276: 
+      material: Metal
+    block_2277: 
+      material: Metal
+    block_2278: 
+      material: Plastic
+    block_2279: 
+      material: Metal
+    block_2280: 
+      material: Plastic
+    block_2281: 
+      material: Metal
+    block_2282: 
+      material: Metal
+    block_2283: 
+      material: Metal
+    block_2284: 
+      material: Metal
+    block_2285: 
+      material: Metal
+    block_2286: 
+      material: Metal
+    block_2287: 
+      material: Metal
+    block_2288: 
+      material: Plastic
+    block_2289: 
+      material: Metal
+    block_2290: 
+      material: Plastic
+    block_2291: 
+      material: Metal
+    block_2292: 
+      material: Metal
+    block_2293: 
+      material: Metal
+    block_2294: 
+      material: Metal
+    block_2295: 
+      material: Metal
+    block_2296: 
+      material: Metal
+    block_2297: 
+      material: Metal
+    block_2298: 
+      material: Plastic
+    block_2299: 
+      material: Metal
+    block_2300: 
+      material: Plastic
+    block_2301: 
+      material: Metal
+    block_2302: 
+      material: Metal
+    block_2303: 
+      material: Metal
+    block_2304: 
+      material: Metal
+    block_2305: 
+      material: Metal
+    block_2306: 
+      material: Metal
+    block_2307: 
+      material: Metal
+    block_2308: 
+      material: Plastic
+    block_2309: 
+      material: Metal
+    block_2310: 
+      material: Plastic
+    block_2311: 
+      material: Metal
+    block_2312: 
+      material: Metal
+    block_2313: 
+      material: Metal
+    block_2314: 
+      material: Metal
+    block_2315: 
+      material: Metal
+    block_2316: 
+      material: Metal
+    block_2317: 
+      material: Metal
+    block_2318: 
+      material: Plastic
+    block_2319: 
+      material: Metal
+    block_2320: 
+      material: Plastic
+    block_2321: 
+      material: Metal
+    block_2322: 
+      material: Metal
+    block_2323: 
+      material: Metal
+    block_2324: 
+      material: Metal
+    block_2325: 
+      material: Metal
+    block_2326: 
+      material: Metal
+    block_2327: 
+      material: Metal
+    block_2328: 
+      material: Plastic
+    block_2329: 
+      material: Metal
+    block_2330: 
+      material: Plastic
+    block_2331: 
+      material: Metal
+    block_2332: 
+      material: Metal
+    block_2333: 
+      material: Metal
+    block_2334: 
+      material: Metal
+    block_2335: 
+      material: Metal
+    block_2336: 
+      material: Metal
+    block_2337: 
+      material: Metal
+    block_2338: 
+      material: Plastic
+    block_2339: 
+      material: Metal
+    block_2340: 
+      material: Plastic
+    block_2341: 
+      material: Metal
+    block_2342: 
+      material: Metal
+    block_2343: 
+      material: Metal
+    block_2344: 
+      material: Metal
+    block_2345: 
+      material: Metal
+    block_2346: 
+      material: Metal
+    block_2347: 
+      material: Metal
+    block_2348: 
+      material: Plastic
+    block_2349: 
+      material: Metal
+    block_2350: 
+      material: Plastic
+    block_2351: 
+      material: Metal
+    block_2352: 
+      material: Metal
+    block_2353: 
+      material: Metal
+    block_2354: 
+      material: Metal
+    block_2355: 
+      material: Metal
+    block_2356: 
+      material: Metal
+    block_2357: 
+      material: Metal
+    block_2358: 
+      material: Plastic
+    block_2359: 
+      material: Metal
+    block_2360: 
+      material: Plastic
+    block_2361: 
+      material: Metal
+    block_2362: 
+      material: Metal
+    block_2363: 
+      material: Metal
+    block_2364: 
+      material: Metal
+    block_2365: 
+      material: Metal
+    block_2366: 
+      material: Metal
+    block_2367: 
+      material: Metal
+    block_2368: 
+      material: Plastic
+    block_2369: 
+      material: Metal
+    block_2370: 
+      material: Plastic
+    block_2371: 
+      material: Metal
+    block_2372: 
+      material: Metal
+    block_2373: 
+      material: Metal
+    block_2374: 
+      material: Metal
+    block_2375: 
+      material: Metal
+    block_2376: 
+      material: Metal
+    block_2377: 
+      material: Metal
+    block_2378: 
+      material: Plastic
+    block_2379: 
+      material: Metal
+    block_2380: 
+      material: Plastic
+    block_2381: 
+      material: Metal
+    block_2382: 
+      material: Metal
+    block_2383: 
+      material: Metal
+    block_2384: 
+      material: Metal
+    block_2385: 
+      material: Metal
+    block_2386: 
+      material: Metal
+    block_2387: 
+      material: Metal
+    block_2388: 
+      material: Plastic
+    block_2389: 
+      material: Metal
+    block_2390: 
+      material: Plastic
+    block_2391: 
+      material: Metal
+    block_2392: 
+      material: Metal
+    block_2393: 
+      material: Metal
+    block_2394: 
+      material: Metal
+    block_2395: 
+      material: Metal
+    block_2396: 
+      material: Metal
+    block_2397: 
+      material: Metal
+    block_2398: 
+      material: Plastic
+    block_2399: 
+      material: Metal
+    block_2400: 
+      material: Plastic
+    block_2401: 
+      material: Metal
+    block_2402: 
+      material: Metal
+    block_2403: 
+      material: Metal
+    block_2404: 
+      material: Metal
+    block_2405: 
+      material: Metal
+    block_2406: 
+      material: Metal
+    block_2407: 
+      material: Metal
+    block_2408: 
+      material: Plastic
+    block_2409: 
+      material: Metal
+    block_2410: 
+      material: Plastic
+    block_2411: 
+      material: Metal
+    block_2412: 
+      material: Metal
+    block_2413: 
+      material: Metal
+    block_2414: 
+      material: Metal
+    block_2415: 
+      material: Metal
+    block_2416: 
+      material: Metal
+    block_2417: 
+      material: Metal
+    block_2418: 
+      material: Plastic
+    block_2419: 
+      material: Metal
+    block_2420: 
+      material: Plastic
+    block_2421: 
+      material: Metal
+    block_2422: 
+      material: Metal
+    block_2423: 
+      material: Metal
+    block_2424: 
+      material: Metal
+    block_2425: 
+      material: Metal
+    block_2426: 
+      material: Metal
+    block_2427: 
+      material: Metal
+    block_2428: 
+      material: Plastic
+    block_2429: 
+      material: Metal
+    block_2430: 
+      material: Plastic
+    block_2431: 
+      material: Metal
+    block_2432: 
+      material: Metal
+    block_2433: 
+      material: Metal
+    block_2434: 
+      material: Metal
+    block_2435: 
+      material: Metal
+    block_2436: 
+      material: Metal
+    block_2437: 
+      material: Metal
+    block_2438: 
+      material: Plastic
+    block_2439: 
+      material: Metal
+    block_2440: 
+      material: Plastic
+    block_2441: 
+      material: Metal
+    block_2442: 
+      material: Metal
+    block_2443: 
+      material: Metal
+    block_2444: 
+      material: Metal
+    block_2445: 
+      material: Metal
+    block_2446: 
+      material: Metal
+    block_2447: 
+      material: Metal
+    block_2448: 
+      material: Plastic
+    block_2449: 
+      material: Metal
+    block_2450: 
+      material: Plastic
+    block_2451: 
+      material: Metal
+    block_2452: 
+      material: Metal
+    block_2453: 
+      material: Metal
+    block_2454: 
+      material: Metal
+    block_2455: 
+      material: Metal
+    block_2456: 
+      material: Metal
+    block_2457: 
+      material: Metal
+    block_2458: 
+      material: Plastic
+    block_2459: 
+      material: Metal
+    block_2460: 
+      material: Plastic
+    block_2461: 
+      material: Metal
+    block_2462: 
+      material: Metal
+    block_2463: 
+      material: Metal
+    block_2464: 
+      material: Metal
+    block_2465: 
+      material: Metal
+    block_2466: 
+      material: Metal
+    block_2467: 
+      material: Metal
+    block_2468: 
+      material: Plastic
+    block_2469: 
+      material: Metal
+    block_2470: 
+      material: Plastic
+    block_2471: 
+      material: Metal
+    block_2472: 
+      material: Metal
+    block_2473: 
+      material: Metal
+    block_2474: 
+      material: Metal
+    block_2475: 
+      material: Metal
+    block_2476: 
+      material: Metal
+    block_2477: 
+      material: Metal
+    block_2478: 
+      material: Plastic
+    block_2479: 
+      material: Metal
+    block_2480: 
+      material: Plastic
+    block_2481: 
+      material: Metal
+    block_2482: 
+      material: Metal
+    block_2483: 
+      material: Metal
+    block_2484: 
+      material: Metal
+    block_2485: 
+      material: Metal
+    block_2486: 
+      material: Metal
+    block_2487: 
+      material: Metal
+    block_2488: 
+      material: Plastic
+    block_2489: 
+      material: Metal
+    block_2490: 
+      material: Plastic
+    block_2491: 
+      material: Metal
+    block_2492: 
+      material: Metal
+    block_2493: 
+      material: Metal
+    block_2494: 
+      material: Metal
+    block_2495: 
+      material: Metal
+    block_2496: 
+      material: Metal
+    block_2497: 
+      material: Metal
+    block_2498: 
+      material: Plastic
+    block_2499: 
+      material: Metal
+    block_2500: 
+      material: Plastic
+    block_2501: 
+      material: Metal
+    block_2502: 
+      material: Metal
+    block_2503: 
+      material: Metal
+    block_2504: 
+      material: Metal
+    block_2505: 
+      material: Metal
+    block_2506: 
+      material: Metal
+    block_2507: 
+      material: Metal
+    block_2508: 
+      material: Plastic
+    block_2509: 
+      material: Metal
+    block_2510: 
+      material: Plastic
+    block_2511: 
+      material: Metal
+    block_2512: 
+      material: Metal
+    block_2513: 
+      material: Metal
+    block_2514: 
+      material: Metal
+    block_2515: 
+      material: Metal
+    block_2516: 
+      material: Metal
+    block_2517: 
+      material: Metal
+    block_2518: 
+      material: Plastic
+    block_2519: 
+      material: Metal
+    block_2520: 
+      material: Plastic
+    block_2521: 
+      material: Metal
+    block_2522: 
+      material: Metal
+    block_2523: 
+      material: Metal
+    block_2524: 
+      material: Metal
+    block_2525: 
+      material: Metal
+    block_2526: 
+      material: Metal
+    block_2527: 
+      material: Metal
+    block_2528: 
+      material: Plastic
+    block_2529: 
+      material: Metal
+    block_2530: 
+      material: Plastic
+    block_2531: 
+      material: Metal
+    block_2532: 
+      material: Metal
+    block_2533: 
+      material: Metal
+    block_2534: 
+      material: Metal
+    block_2535: 
+      material: Metal
+    block_2536: 
+      material: Metal
+    block_2537: 
+      material: Metal
+    block_2538: 
+      material: Plastic
+    block_2539: 
+      material: Metal
+    block_2540: 
+      material: Plastic
+    block_2541: 
+      material: Metal
+    block_2542: 
+      material: Metal
+    block_2543: 
+      material: Metal
+    block_2544: 
+      material: Metal
+    block_2545: 
+      material: Metal
+    block_2546: 
+      material: Metal
+    block_2547: 
+      material: Metal
+    block_2548: 
+      material: Plastic
+    block_2549: 
+      material: Metal
+    block_2550: 
+      material: Plastic
+    block_2551: 
+      material: Metal
+    block_2552: 
+      material: Metal
+    block_2553: 
+      material: Metal
+    block_2554: 
+      material: Metal
+    block_2555: 
+      material: Metal
+    block_2556: 
+      material: Metal
+    block_2557: 
+      material: Metal
+    block_2558: 
+      material: Plastic
+    block_2559: 
+      material: Metal
+    block_2560: 
+      material: Plastic
+    block_2561: 
+      material: Metal
+    block_2562: 
+      material: Metal
+    block_2563: 
+      material: Metal
+    block_2564: 
+      material: Metal
+    block_2565: 
+      material: Metal
+    block_2566: 
+      material: Metal
+    block_2567: 
+      material: Metal
+    block_2568: 
+      material: Plastic
+    block_2569: 
+      material: Metal
+    block_2570: 
+      material: Plastic
+    block_2571: 
+      material: Metal
+    block_2572: 
+      material: Metal
+    block_2573: 
+      material: Metal
+    block_2574: 
+      material: Metal
+    block_2575: 
+      material: Metal
+    block_2576: 
+      material: Metal
+    block_2577: 
+      material: Metal
+    block_2578: 
+      material: Plastic
+    block_2579: 
+      material: Metal
+    block_2580: 
+      material: Plastic
+    block_2581: 
+      material: Metal
+    block_2582: 
+      material: Metal
+    block_2583: 
+      material: Metal
+    block_2584: 
+      material: Metal
+    block_2585: 
+      material: Metal
+    block_2586: 
+      material: Metal
+    block_2587: 
+      material: Metal
+    block_2588: 
+      material: Plastic
+    block_2589: 
+      material: Metal
+    block_2590: 
+      material: Plastic
+    block_2591: 
+      material: Metal
+    block_2592: 
+      material: Metal
+    block_2593: 
+      material: Metal
+    block_2594: 
+      material: Metal
+    block_2595: 
+      material: Metal
+    block_2596: 
+      material: Metal
+    block_2597: 
+      material: Metal
+    block_2598: 
+      material: Plastic
+    block_2599: 
+      material: Metal
+    block_2600: 
+      material: Plastic
+    block_2601: 
+      material: Metal
+    block_2602: 
+      material: Metal
+    block_2603: 
+      material: Metal
+    block_2604: 
+      material: Metal
+    block_2605: 
+      material: Metal
+    block_2606: 
+      material: Metal
+    block_2607: 
+      material: Metal
+    block_2608: 
+      material: Plastic
+    block_2609: 
+      material: Metal
+    block_2610: 
+      material: Plastic
+    block_2611: 
+      material: Metal
+    block_2612: 
+      material: Metal
+    block_2613: 
+      material: Metal
+    block_2614: 
+      material: Metal
+    block_2615: 
+      material: Metal
+    block_2616: 
+      material: Metal
+    block_2617: 
+      material: Metal
+    block_2618: 
+      material: Plastic
+    block_2619: 
+      material: Metal
+    block_2620: 
+      material: Plastic
+    block_2621: 
+      material: Metal
+    block_2622: 
+      material: Metal
+    block_2623: 
+      material: Metal
+    block_2624: 
+      material: Metal
+    block_2625: 
+      material: Metal
+    block_2626: 
+      material: Metal
+    block_2627: 
+      material: Metal
+    block_2628: 
+      material: Plastic
+    block_2629: 
+      material: Metal
+    block_2630: 
+      material: Plastic
+    block_2631: 
+      material: Metal
+    block_2632: 
+      material: Metal
+    block_2633: 
+      material: Metal
+    block_2634: 
+      material: Metal
+    block_2635: 
+      material: Metal
+    block_2636: 
+      material: Metal
+    block_2637: 
+      material: Metal
+    block_2638: 
+      material: Plastic
+    block_2639: 
+      material: Metal
+    block_2640: 
+      material: Plastic
+    block_2641: 
+      material: Metal
+    block_2642: 
+      material: Metal
+    block_2643: 
+      material: Metal
+    block_2644: 
+      material: Metal
+    block_2645: 
+      material: Metal
+    block_2646: 
+      material: Metal
+    block_2647: 
+      material: Metal
+    block_2648: 
+      material: Plastic
+    block_2649: 
+      material: Metal
+    block_2650: 
+      material: Plastic
+    block_2651: 
+      material: Metal
+    block_2652: 
+      material: Metal
+    block_2653: 
+      material: Metal
+    block_2654: 
+      material: Metal
+    block_2655: 
+      material: Metal
+    block_2656: 
+      material: Metal
+    block_2657: 
+      material: Metal
+    block_2658: 
+      material: Plastic
+    block_2659: 
+      material: Metal
+    block_2660: 
+      material: Plastic
+    block_2661: 
+      material: Metal
+    block_2662: 
+      material: Metal
+    block_2663: 
+      material: Metal
+    block_2664: 
+      material: Metal
+    block_2665: 
+      material: Metal
+    block_2666: 
+      material: Metal
+    block_2667: 
+      material: Metal
+    block_2668: 
+      material: Plastic
+    block_2669: 
+      material: Metal
+    block_2670: 
+      material: Plastic
+    block_2671: 
+      material: Metal
+    block_2672: 
+      material: Metal
+    block_2673: 
+      material: Metal
+    block_2674: 
+      material: Metal
+    block_2675: 
+      material: Metal
+    block_2676: 
+      material: Metal
+    block_2677: 
+      material: Metal
+    block_2678: 
+      material: Plastic
+    block_2679: 
+      material: Metal
+    block_2680: 
+      material: Plastic
+    block_2681: 
+      material: Metal
+    block_2682: 
+      material: Metal
+    block_2683: 
+      material: Metal
+    block_2684: 
+      material: Metal
+    block_2685: 
+      material: Metal
+    block_2686: 
+      material: Metal
+    block_2687: 
+      material: Metal
+    block_2688: 
+      material: Plastic
+    block_2689: 
+      material: Metal
+    block_2690: 
+      material: Plastic
+    block_2691: 
+      material: Metal
+    block_2692: 
+      material: Metal
+    block_2693: 
+      material: Metal
+    block_2694: 
+      material: Metal
+    block_2695: 
+      material: Metal
+    block_2696: 
+      material: Metal
+    block_2697: 
+      material: Metal
+    block_2698: 
+      material: Plastic
+    block_2699: 
+      material: Metal
+    block_2700: 
+      material: Plastic
+    block_2701: 
+      material: Metal
+    block_2702: 
+      material: Metal
+    block_2703: 
+      material: Metal
+    block_2704: 
+      material: Metal
+    block_2705: 
+      material: Metal
+    block_2706: 
+      material: Metal
+    block_2707: 
+      material: Metal
+    block_2708: 
+      material: Plastic
+    block_2709: 
+      material: Metal
+    block_2710: 
+      material: Plastic
+    block_2711: 
+      material: Metal
+    block_2712: 
+      material: Metal
+    block_2713: 
+      material: Metal
+    block_2714: 
+      material: Metal
+    block_2715: 
+      material: Metal
+    block_2716: 
+      material: Metal
+    block_2717: 
+      material: Metal
+    block_2718: 
+      material: Plastic
+    block_2719: 
+      material: Metal
+    block_2720: 
+      material: Plastic
+    block_2721: 
+      material: Metal
+    block_2722: 
+      material: Metal
+    block_2723: 
+      material: Metal
+    block_2724: 
+      material: Metal
+    block_2725: 
+      material: Metal
+    block_2726: 
+      material: Metal
+    block_2727: 
+      material: Metal
+    block_2728: 
+      material: Plastic
+    block_2729: 
+      material: Metal
+    block_2730: 
+      material: Plastic
+    block_2731: 
+      material: Metal
+    block_2732: 
+      material: Metal
+    block_2733: 
+      material: Metal
+    block_2734: 
+      material: Metal
+    block_2735: 
+      material: Metal
+    block_2736: 
+      material: Metal
+    block_2737: 
+      material: Metal
+    block_2738: 
+      material: Plastic
+    block_2739: 
+      material: Metal
+    block_2740: 
+      material: Plastic
+    block_2741: 
+      material: Metal
+    block_2742: 
+      material: Metal
+    block_2743: 
+      material: Metal
+    block_2744: 
+      material: Metal
+    block_2745: 
+      material: Metal
+    block_2746: 
+      material: Metal
+    block_2747: 
+      material: Metal
+    block_2748: 
+      material: Plastic
+    block_2749: 
+      material: Metal
+    block_2750: 
+      material: Plastic
+    block_2751: 
+      material: Metal
+    block_2752: 
+      material: Metal
+    block_2753: 
+      material: Metal
+    block_2754: 
+      material: Metal
+    block_2755: 
+      material: Metal
+    block_2756: 
+      material: Metal
+    block_2757: 
+      material: Metal
+    block_2758: 
+      material: Plastic
+    block_2759: 
+      material: Metal
+    block_2760: 
+      material: Plastic
+    block_2761: 
+      material: Metal
+    block_2762: 
+      material: Metal
+    block_2763: 
+      material: Metal
+    block_2764: 
+      material: Metal
+    block_2765: 
+      material: Metal
+    block_2766: 
+      material: Metal
+    block_2767: 
+      material: Metal
+    block_2768: 
+      material: Plastic
+    block_2769: 
+      material: Metal
+    block_2770: 
+      material: Plastic
+    block_2771: 
+      material: Metal
+    block_2772: 
+      material: Metal
+    block_2773: 
+      material: Metal
+    block_2774: 
+      material: Metal
+    block_2775: 
+      material: Metal
+    block_2776: 
+      material: Metal
+    block_2777: 
+      material: Metal
+    block_2778: 
+      material: Plastic
+    block_2779: 
+      material: Metal
+    block_2780: 
+      material: Plastic
+    block_2781: 
+      material: Metal
+    block_2782: 
+      material: Metal
+    block_2783: 
+      material: Metal
+    block_2784: 
+      material: Metal
+    block_2785: 
+      material: Metal
+    block_2786: 
+      material: Metal
+    block_2787: 
+      material: Metal
+    block_2788: 
+      material: Plastic
+    block_2789: 
+      material: Metal
+    block_2790: 
+      material: Plastic
+    block_2791: 
+      material: Metal
+    block_2792: 
+      material: Metal
+    block_2793: 
+      material: Metal
+    block_2794: 
+      material: Metal
+    block_2795: 
+      material: Metal
+    block_2796: 
+      material: Metal
+    block_2797: 
+      material: Metal
+    block_2798: 
+      material: Plastic
+    block_2799: 
+      material: Metal
+    block_2800: 
+      material: Plastic
+    block_2801: 
+      material: Metal
+    block_2802: 
+      material: Metal
+    block_2803: 
+      material: Metal
+    block_2804: 
+      material: Metal
+    block_2805: 
+      material: Metal
+    block_2806: 
+      material: Metal
+    block_2807: 
+      material: Metal
+    block_2808: 
+      material: Plastic
+    block_2809: 
+      material: Metal
+    block_2810: 
+      material: Plastic
+    block_2811: 
+      material: Metal
+    block_2812: 
+      material: Metal
+    block_2813: 
+      material: Metal
+    block_2814: 
+      material: Metal
+    block_2815: 
+      material: Metal
+    block_2816: 
+      material: Metal
+    block_2817: 
+      material: Metal
+    block_2818: 
+      material: Plastic
+    block_2819: 
+      material: Metal
+    block_2820: 
+      material: Plastic
+    block_2821: 
+      material: Metal
+    block_2822: 
+      material: Metal
+    block_2823: 
+      material: Metal
+    block_2824: 
+      material: Metal
+    block_2825: 
+      material: Metal
+    block_2826: 
+      material: Metal
+    block_2827: 
+      material: Metal
+    block_2828: 
+      material: Plastic
+    block_2829: 
+      material: Metal
+    block_2830: 
+      material: Plastic
+    block_2831: 
+      material: Metal
+    block_2832: 
+      material: Metal
+    block_2833: 
+      material: Metal
+    block_2834: 
+      material: Metal
+    block_2835: 
+      material: Metal
+    block_2836: 
+      material: Metal
+    block_2837: 
+      material: Metal
+    block_2838: 
+      material: Plastic
+    block_2839: 
+      material: Metal
+    block_2840: 
+      material: Plastic
+    block_2841: 
+      material: Metal
+    block_2842: 
+      material: Metal
+    block_2843: 
+      material: Metal
+    block_2844: 
+      material: Metal
+    block_2845: 
+      material: Metal
+    block_2846: 
+      material: Metal
+    block_2847: 
+      material: Metal
+    block_2848: 
+      material: Plastic
+    block_2849: 
+      material: Metal
+    block_2850: 
+      material: Plastic
+    block_2851: 
+      material: Metal
+    block_2852: 
+      material: Metal
+    block_2853: 
+      material: Metal
+    block_2854: 
+      material: Metal
+    block_2855: 
+      material: Metal
+    block_2856: 
+      material: Metal
+    block_2857: 
+      material: Metal
+    block_2858: 
+      material: Plastic
+    block_2859: 
+      material: Metal
+    block_2860: 
+      material: Plastic
+    block_2861: 
+      material: Metal
+    block_2862: 
+      material: Metal
+    block_2863: 
+      material: Metal
+    block_2864: 
+      material: Metal
+    block_2865: 
+      material: Metal
+    block_2866: 
+      material: Metal
+    block_2867: 
+      material: Metal
+    block_2868: 
+      material: Plastic
+    block_2869: 
+      material: Metal
+    block_2870: 
+      material: Plastic
+    block_2871: 
+      material: Metal
+    block_2872: 
+      material: Metal
+    block_2873: 
+      material: Metal
+    block_2874: 
+      material: Metal
+    block_2875: 
+      material: Metal
+    block_2876: 
+      material: Metal
+    block_2877: 
+      material: Metal
+    block_2878: 
+      material: Plastic
+    block_2879: 
+      material: Metal
+    block_2880: 
+      material: Plastic
+    block_2881: 
+      material: Metal
+    block_2882: 
+      material: Metal
+    block_2883: 
+      material: Metal
+    block_2884: 
+      material: Metal
+    block_2885: 
+      material: Metal
+    block_2886: 
+      material: Metal
+    block_2887: 
+      material: Metal
+    block_2888: 
+      material: Plastic
+    block_2889: 
+      material: Metal
+    block_2890: 
+      material: Plastic
+    block_2891: 
+      material: Metal
+    block_2892: 
+      material: Metal
+    block_2893: 
+      material: Metal
+    block_2894: 
+      material: Metal
+    block_2895: 
+      material: Metal
+    block_2896: 
+      material: Metal
+    block_2897: 
+      material: Metal
+    block_2898: 
+      material: Plastic
+    block_2899: 
+      material: Metal
+    block_2900: 
+      material: Plastic
+    block_2901: 
+      material: Metal
+    block_2902: 
+      material: Metal
+    block_2903: 
+      material: Metal
+    block_2904: 
+      material: Metal
+    block_2905: 
+      material: Metal
+    block_2906: 
+      material: Metal
+    block_2907: 
+      material: Metal
+    block_2908: 
+      material: Plastic
+    block_2909: 
+      material: Metal
+    block_2910: 
+      material: Plastic
+    block_2911: 
+      material: Metal
+    block_2912: 
+      material: Metal
+    block_2913: 
+      material: Metal
+    block_2914: 
+      material: Metal
+    block_2915: 
+      material: Metal
+    block_2916: 
+      material: Metal
+    block_2917: 
+      material: Metal
+    block_2918: 
+      material: Plastic
+    block_2919: 
+      material: Metal
+    block_2920: 
+      material: Plastic
+    block_2921: 
+      material: Metal
+    block_2922: 
+      material: Metal
+    block_2923: 
+      material: Metal
+    block_2924: 
+      material: Metal
+    block_2925: 
+      material: Metal
+    block_2926: 
+      material: Metal
+    block_2927: 
+      material: Metal
+    block_2928: 
+      material: Plastic
+    block_2929: 
+      material: Metal
+    block_2930: 
+      material: Plastic
+    block_2931: 
+      material: Metal
+    block_2932: 
+      material: Metal
+    block_2933: 
+      material: Metal
+    block_2934: 
+      material: Metal
+    block_2935: 
+      material: Metal
+    block_2936: 
+      material: Metal
+    block_2937: 
+      material: Metal
+    block_2938: 
+      material: Plastic
+    block_2939: 
+      material: Metal
+    block_2940: 
+      material: Plastic
+    block_2941: 
+      material: Metal
+    block_2942: 
+      material: Metal
+    block_2943: 
+      material: Metal
+    block_2944: 
+      material: Metal
+    block_2945: 
+      material: Metal
+    block_2946: 
+      material: Metal
+    block_2947: 
+      material: Metal
+    block_2948: 
+      material: Plastic
+    block_2949: 
+      material: Metal
+    block_2950: 
+      material: Plastic
+    block_2951: 
+      material: Metal
+    block_2952: 
+      material: Metal
+    block_2953: 
+      material: Metal
+    block_2954: 
+      material: Metal
+    block_2955: 
+      material: Metal
+    block_2956: 
+      material: Metal
+    block_2957: 
+      material: Metal
+    block_2958: 
+      material: Plastic
+    block_2959: 
+      material: Metal
+    block_2960: 
+      material: Plastic
+    block_2961: 
+      material: Metal
+    block_2962: 
+      material: Metal
+    block_2963: 
+      material: Metal
+    block_2964: 
+      material: Metal
+    block_2965: 
+      material: Metal
+    block_2966: 
+      material: Metal
+    block_2967: 
+      material: Metal
+    block_2968: 
+      material: Plastic
+    block_2969: 
+      material: Metal
+    block_2970: 
+      material: Plastic
+    block_2971: 
+      material: Metal
+    block_2972: 
+      material: Metal
+    block_2973: 
+      material: Metal
+    block_2974: 
+      material: Metal
+    block_2975: 
+      material: Metal
+    block_2976: 
+      material: Metal
+    block_2977: 
+      material: Metal
+    block_2978: 
+      material: Plastic
+    block_2979: 
+      material: Metal
+    block_2980: 
+      material: Plastic
+    block_2981: 
+      material: Metal
+    block_2982: 
+      material: Metal
+    block_2983: 
+      material: Metal
+    block_2984: 
+      material: Metal
+    block_2985: 
+      material: Metal
+    block_2986: 
+      material: Metal
+    block_2987: 
+      material: Metal
+    block_2988: 
+      material: Plastic
+    block_2989: 
+      material: Metal
+    block_2990: 
+      material: Plastic
+    block_2991: 
+      material: Metal
+    block_2992: 
+      material: Metal
+    block_2993: 
+      material: Metal
+    block_2994: 
+      material: Metal
+    block_2995: 
+      material: Metal
+    block_2996: 
+      material: Metal
+    block_2997: 
+      material: Metal
+    block_2998: 
+      material: Plastic
+    block_2999: 
+      material: Metal
+    block_3000: 
+      material: Plastic
+    block_3001: 
+      material: Metal
+    block_3002: 
+      material: Metal
+    block_3003: 
+      material: Metal
+    block_3004: 
+      material: Metal
+    block_3005: 
+      material: Metal
+    block_3006: 
+      material: Metal
+    block_3007: 
+      material: Metal
+    block_3008: 
+      material: Plastic
+    block_3009: 
+      material: Metal
+    block_3010: 
+      material: Plastic
+    block_3011: 
+      material: Metal
+    block_3012: 
+      material: Metal
+    block_3013: 
+      material: Metal
+    block_3014: 
+      material: Metal
+    block_3015: 
+      material: Metal
+    block_3016: 
+      material: Metal
+    block_3017: 
+      material: Metal
+    block_3018: 
+      material: Plastic
+    block_3019: 
+      material: Metal
+    block_3020: 
+      material: Plastic
+    block_3021: 
+      material: Metal
+    block_3022: 
+      material: Metal
+    block_3023: 
+      material: Metal
+    block_3024: 
+      material: Metal
+    block_3025: 
+      material: Metal
+    block_3026: 
+      material: Metal
+    block_3027: 
+      material: Metal
+    block_3028: 
+      material: Plastic
+    block_3029: 
+      material: Metal
+    block_3030: 
+      material: Plastic
+    block_3031: 
+      material: Metal
+    block_3032: 
+      material: Metal
+    block_3033: 
+      material: Metal
+    block_3034: 
+      material: Metal
+    block_3035: 
+      material: Metal
+    block_3036: 
+      material: Metal
+    block_3037: 
+      material: Metal
+    block_3038: 
+      material: Plastic
+    block_3039: 
+      material: Metal
+    block_3040: 
+      material: Plastic
+    block_3041: 
+      material: Metal
+    block_3042: 
+      material: Metal
+    block_3043: 
+      material: Metal
+    block_3044: 
+      material: Metal
+    block_3045: 
+      material: Metal
+    block_3046: 
+      material: Metal
+    block_3047: 
+      material: Metal
+    block_3048: 
+      material: Plastic
+    block_3049: 
+      material: Metal
+    block_3050: 
+      material: Plastic
+    block_3051: 
+      material: Metal
+    block_3052: 
+      material: Metal
+    block_3053: 
+      material: Metal
+    block_3054: 
+      material: Metal
+    block_3055: 
+      material: Metal
+    block_3056: 
+      material: Metal
+    block_3057: 
+      material: Metal
+    block_3058: 
+      material: Plastic
+    block_3059: 
+      material: Metal
+    block_3060: 
+      material: Plastic
+    block_3061: 
+      material: Metal
+    block_3062: 
+      material: Metal
+    block_3063: 
+      material: Metal
+    block_3064: 
+      material: Metal
+    block_3065: 
+      material: Metal
+    block_3066: 
+      material: Metal
+    block_3067: 
+      material: Metal
+    block_3068: 
+      material: Plastic
+    block_3069: 
+      material: Metal
+    block_3070: 
+      material: Plastic
+    block_3071: 
+      material: Metal
+    block_3072: 
+      material: Metal
+    block_3073: 
+      material: Metal
+    block_3074: 
+      material: Metal
+    block_3075: 
+      material: Metal
+    block_3076: 
+      material: Metal
+    block_3077: 
+      material: Metal
+    block_3078: 
+      material: Plastic
+    block_3079: 
+      material: Metal
+    block_3080: 
+      material: Plastic
+    block_3081: 
+      material: Metal
+    block_3082: 
+      material: Metal
+    block_3083: 
+      material: Metal
+    block_3084: 
+      material: Metal
+    block_3085: 
+      material: Metal
+    block_3086: 
+      material: Metal
+    block_3087: 
+      material: Metal
+    block_3088: 
+      material: Plastic
+    block_3089: 
+      material: Metal
+    block_3090: 
+      material: Plastic
+    block_3091: 
+      material: Metal
+    block_3092: 
+      material: Metal
+    block_3093: 
+      material: Metal
+    block_3094: 
+      material: Metal
+    block_3095: 
+      material: Metal
+    block_3096: 
+      material: Metal
+    block_3097: 
+      material: Metal
+    block_3098: 
+      material: Plastic
+    block_3099: 
+      material: Metal
+    block_3100: 
+      material: Plastic
+    block_3101: 
+      material: Metal
+    block_3102: 
+      material: Metal
+    block_3103: 
+      material: Metal
+    block_3104: 
+      material: Metal
+    block_3105: 
+      material: Metal
+    block_3106: 
+      material: Metal
+    block_3107: 
+      material: Metal
+    block_3108: 
+      material: Plastic
+    block_3109: 
+      material: Metal
+    block_3110: 
+      material: Plastic
+    block_3111: 
+      material: Metal
+    block_3112: 
+      material: Metal
+    block_3113: 
+      material: Metal
+    block_3114: 
+      material: Metal
+    block_3115: 
+      material: Metal
+    block_3116: 
+      material: Metal
+    block_3117: 
+      material: Metal
+    block_3118: 
+      material: Plastic
+    block_3119: 
+      material: Metal
+    block_3120: 
+      material: Plastic
+    block_3121: 
+      material: Metal
+    block_3122: 
+      material: Metal
+    block_3123: 
+      material: Metal
+    block_3124: 
+      material: Metal
+    block_3125: 
+      material: Metal
+    block_3126: 
+      material: Metal
+    block_3127: 
+      material: Metal
+    block_3128: 
+      material: Plastic
+    block_3129: 
+      material: Metal
+    block_3130: 
+      material: Plastic
+    block_3131: 
+      material: Metal
+    block_3132: 
+      material: Metal
+    block_3133: 
+      material: Metal
+    block_3134: 
+      material: Metal
+    block_3135: 
+      material: Metal
+    block_3136: 
+      material: Metal
+    block_3137: 
+      material: Metal
+    block_3138: 
+      material: Plastic
+    block_3139: 
+      material: Metal
+    block_3140: 
+      material: Plastic
+    block_3141: 
+      material: Metal
+    block_3142: 
+      material: Metal
+    block_3143: 
+      material: Metal
+    block_3144: 
+      material: Metal
+    block_3145: 
+      material: Metal
+    block_3146: 
+      material: Metal
+    block_3147: 
+      material: Metal
+    block_3148: 
+      material: Plastic
+    block_3149: 
+      material: Metal
+    block_3150: 
+      material: Plastic
+    block_3151: 
+      material: Metal
+    block_3152: 
+      material: Metal
+    block_3153: 
+      material: Metal
+    block_3154: 
+      material: Metal
+    block_3155: 
+      material: Metal
+    block_3156: 
+      material: Metal
+    block_3157: 
+      material: Metal
+    block_3158: 
+      material: Plastic
+    block_3159: 
+      material: Metal
+    block_3160: 
+      material: Plastic
+    block_3161: 
+      material: Metal
+    block_3162: 
+      material: Metal
+    block_3163: 
+      material: Metal
+    block_3164: 
+      material: Metal
+    block_3165: 
+      material: Metal
+    block_3166: 
+      material: Metal
+    block_3167: 
+      material: Metal
+    block_3168: 
+      material: Plastic
+    block_3169: 
+      material: Metal
+    block_3170: 
+      material: Plastic
+    block_3171: 
+      material: Metal
+    block_3172: 
+      material: Metal
+    block_3173: 
+      material: Metal
+    block_3174: 
+      material: Metal
+    block_3175: 
+      material: Metal
+    block_3176: 
+      material: Metal
+    block_3177: 
+      material: Metal
+    block_3178: 
+      material: Plastic
+    block_3179: 
+      material: Metal
+    block_3180: 
+      material: Plastic
+    block_3181: 
+      material: Metal
+    block_3182: 
+      material: Metal
+    block_3183: 
+      material: Metal
+    block_3184: 
+      material: Metal
+    block_3185: 
+      material: Metal
+    block_3186: 
+      material: Metal
+    block_3187: 
+      material: Metal
+    block_3188: 
+      material: Plastic
+    block_3189: 
+      material: Metal
+    block_3190: 
+      material: Plastic
+    block_3191: 
+      material: Metal
+    block_3192: 
+      material: Metal
+    block_3193: 
+      material: Metal
+    block_3194: 
+      material: Metal
+    block_3195: 
+      material: Metal
+    block_3196: 
+      material: Metal
+    block_3197: 
+      material: Metal
+    block_3198: 
+      material: Plastic
+    block_3199: 
+      material: Metal
+    block_3200: 
+      material: Plastic
+    block_3201: 
+      material: Metal
+    block_3202: 
+      material: Metal
+    block_3203: 
+      material: Metal
+    block_3204: 
+      material: Metal
+    block_3205: 
+      material: Metal
+    block_3206: 
+      material: Metal
+    block_3207: 
+      material: Metal
+    block_3208: 
+      material: Plastic
+    block_3209: 
+      material: Metal
+    block_3210: 
+      material: Plastic
+    block_3211: 
+      material: Metal
+    block_3212: 
+      material: Metal
+    block_3213: 
+      material: Metal
+    block_3214: 
+      material: Metal
+    block_3215: 
+      material: Metal
+    block_3216: 
+      material: Metal
+    block_3217: 
+      material: Metal
+    block_3218: 
+      material: Plastic
+    block_3219: 
+      material: Metal
+    block_3220: 
+      material: Plastic
+    block_3221: 
+      material: Metal
+    block_3222: 
+      material: Metal
+    block_3223: 
+      material: Metal
+    block_3224: 
+      material: Metal
+    block_3225: 
+      material: Metal
+    block_3226: 
+      material: Metal
+    block_3227: 
+      material: Metal
+    block_3228: 
+      material: Plastic
+    block_3229: 
+      material: Metal
+    block_3230: 
+      material: Plastic
+    block_3231: 
+      material: Metal
+    block_3232: 
+      material: Metal
+    block_3233: 
+      material: Metal
+    block_3234: 
+      material: Metal
+    block_3235: 
+      material: Metal
+    block_3236: 
+      material: Metal
+    block_3237: 
+      material: Metal
+    block_3238: 
+      material: Plastic
+    block_3239: 
+      material: Metal
+    block_3240: 
+      material: Plastic
+    block_3241: 
+      material: Metal
+    block_3242: 
+      material: Metal
+    block_3243: 
+      material: Metal
+    block_3244: 
+      material: Metal
+    block_3245: 
+      material: Metal
+    block_3246: 
+      material: Metal
+    block_3247: 
+      material: Metal
+    block_3248: 
+      material: Plastic
+    block_3249: 
+      material: Metal
+    block_3250: 
+      material: Plastic
+    block_3251: 
+      material: Metal
+    block_3252: 
+      material: Metal
+    block_3253: 
+      material: Metal
+    block_3254: 
+      material: Metal
+    block_3255: 
+      material: Metal
+    block_3256: 
+      material: Metal
+    block_3257: 
+      material: Metal
+    block_3258: 
+      material: Plastic
+    block_3259: 
+      material: Metal
+    block_3260: 
+      material: Plastic
+    block_3261: 
+      material: Metal
+    block_3262: 
+      material: Metal
+    block_3263: 
+      material: Metal
+    block_3264: 
+      material: Metal
+    block_3265: 
+      material: Metal
+    block_3266: 
+      material: Metal
+    block_3267: 
+      material: Metal
+    block_3268: 
+      material: Plastic
+    block_3269: 
+      material: Metal
+    block_3270: 
+      material: Plastic
+    block_3271: 
+      material: Metal
+    block_3272: 
+      material: Metal
+    block_3273: 
+      material: Metal
+    block_3274: 
+      material: Metal
+    block_3275: 
+      material: Metal
+    block_3276: 
+      material: Metal
+    block_3277: 
+      material: Metal
+    block_3278: 
+      material: Plastic
+    block_3279: 
+      material: Metal
+    block_3280: 
+      material: Plastic
+    block_3281: 
+      material: Metal
+    block_3282: 
+      material: Metal
+    block_3283: 
+      material: Metal
+    block_3284: 
+      material: Metal
+    block_3285: 
+      material: Metal
+    block_3286: 
+      material: Metal
+    block_3287: 
+      material: Metal
+    block_3288: 
+      material: Plastic
+    block_3289: 
+      material: Metal
+    block_3290: 
+      material: Plastic
+    block_3291: 
+      material: Metal
+    block_3292: 
+      material: Metal
+    block_3293: 
+      material: Metal
+    block_3294: 
+      material: Metal
+    block_3295: 
+      material: Metal
+    block_3296: 
+      material: Metal
+    block_3297: 
+      material: Metal
+    block_3298: 
+      material: Plastic
+    block_3299: 
+      material: Metal
+    block_3300: 
+      material: Plastic
+    block_3301: 
+      material: Metal
+    block_3302: 
+      material: Metal
+    block_3303: 
+      material: Metal
+    block_3304: 
+      material: Metal
+    block_3305: 
+      material: Metal
+    block_3306: 
+      material: Metal
+    block_3307: 
+      material: Metal
+    block_3308: 
+      material: Plastic
+    block_3309: 
+      material: Metal
+    block_3310: 
+      material: Plastic
+    block_3311: 
+      material: Metal
+    block_3312: 
+      material: Metal
+    block_3313: 
+      material: Metal
+    block_3314: 
+      material: Metal
+    block_3315: 
+      material: Metal
+    block_3316: 
+      material: Metal
+    block_3317: 
+      material: Metal
+    block_3318: 
+      material: Plastic
+    block_3319: 
+      material: Metal
+    block_3320: 
+      material: Plastic
+    block_3321: 
+      material: Metal
+    block_3322: 
+      material: Metal
+    block_3323: 
+      material: Metal
+    block_3324: 
+      material: Metal
+    block_3325: 
+      material: Metal
+    block_3326: 
+      material: Metal
+    block_3327: 
+      material: Metal
+    block_3328: 
+      material: Plastic
+    block_3329: 
+      material: Metal
+    block_3330: 
+      material: Plastic
+    block_3331: 
+      material: Metal
+    block_3332: 
+      material: Metal
+    block_3333: 
+      material: Metal
+    block_3334: 
+      material: Metal
+    block_3335: 
+      material: Metal
+    block_3336: 
+      material: Metal
+    block_3337: 
+      material: Metal
+    block_3338: 
+      material: Plastic
+    block_3339: 
+      material: Metal
+    block_3340: 
+      material: Plastic
+    block_3341: 
+      material: Metal
+    block_3342: 
+      material: Metal
+    block_3343: 
+      material: Metal
+    block_3344: 
+      material: Metal
+    block_3345: 
+      material: Metal
+    block_3346: 
+      material: Metal
+    block_3347: 
+      material: Metal
+    block_3348: 
+      material: Plastic
+    block_3349: 
+      material: Metal
+    block_3350: 
+      material: Plastic
+    block_3351: 
+      material: Metal
+    block_3352: 
+      material: Metal
+    block_3353: 
+      material: Metal
+    block_3354: 
+      material: Metal
+    block_3355: 
+      material: Metal
+    block_3356: 
+      material: Metal
+    block_3357: 
+      material: Metal
+    block_3358: 
+      material: Plastic
+    block_3359: 
+      material: Metal
+    block_3360: 
+      material: Plastic
+    block_3361: 
+      material: Metal
+    block_3362: 
+      material: Metal
+    block_3363: 
+      material: Metal
+    block_3364: 
+      material: Metal
+    block_3365: 
+      material: Metal
+    block_3366: 
+      material: Metal
+    block_3367: 
+      material: Metal
+    block_3368: 
+      material: Plastic
+    block_3369: 
+      material: Metal
+    block_3370: 
+      material: Plastic
+    block_3371: 
+      material: Metal
+    block_3372: 
+      material: Metal
+    block_3373: 
+      material: Metal
+    block_3374: 
+      material: Metal
+    block_3375: 
+      material: Metal
+    block_3376: 
+      material: Metal
+    block_3377: 
+      material: Metal
+    block_3378: 
+      material: Plastic
+    block_3379: 
+      material: Metal
+    block_3380: 
+      material: Plastic
+    block_3381: 
+      material: Metal
+    block_3382: 
+      material: Metal
+    block_3383: 
+      material: Metal
+    block_3384: 
+      material: Metal
+    block_3385: 
+      material: Metal
+    block_3386: 
+      material: Metal
+    block_3387: 
+      material: Metal
+    block_3388: 
+      material: Plastic
+    block_3389: 
+      material: Metal
+    block_3390: 
+      material: Plastic
+    block_3391: 
+      material: Metal
+    block_3392: 
+      material: Metal
+    block_3393: 
+      material: Metal
+    block_3394: 
+      material: Metal
+    block_3395: 
+      material: Metal
+    block_3396: 
+      material: Metal
+    block_3397: 
+      material: Metal
+    block_3398: 
+      material: Plastic
+    block_3399: 
+      material: Metal
+    block_3400: 
+      material: Plastic
+    block_3401: 
+      material: Metal
+    block_3402: 
+      material: Metal
+    block_3403: 
+      material: Metal
+    block_3404: 
+      material: Metal
+    block_3405: 
+      material: Metal
+    block_3406: 
+      material: Metal
+    block_3407: 
+      material: Metal
+    block_3408: 
+      material: Plastic
+    block_3409: 
+      material: Metal
+    block_3410: 
+      material: Plastic
+    block_3411: 
+      material: Metal
+    block_3412: 
+      material: Metal
+    block_3413: 
+      material: Metal
+    block_3414: 
+      material: Metal
+    block_3415: 
+      material: Metal
+    block_3416: 
+      material: Metal
+    block_3417: 
+      material: Metal
+    block_3418: 
+      material: Plastic
+    block_3419: 
+      material: Metal
+    block_3420: 
+      material: Plastic
+    block_3421: 
+      material: Metal
+    block_3422: 
+      material: Metal
+    block_3423: 
+      material: Metal
+    block_3424: 
+      material: Metal
+    block_3425: 
+      material: Metal
+    block_3426: 
+      material: Metal
+    block_3427: 
+      material: Metal
+    block_3428: 
+      material: Plastic
+    block_3429: 
+      material: Metal
+    block_3430: 
+      material: Plastic
+    block_3431: 
+      material: Metal
+    block_3432: 
+      material: Metal
+    block_3433: 
+      material: Metal
+    block_3434: 
+      material: Metal
+    block_3435: 
+      material: Metal
+    block_3436: 
+      material: Metal
+    block_3437: 
+      material: Metal
+    block_3438: 
+      material: Plastic
+    block_3439: 
+      material: Metal
+    block_3440: 
+      material: Plastic
+    block_3441: 
+      material: Metal
+    block_3442: 
+      material: Metal
+    block_3443: 
+      material: Metal
+    block_3444: 
+      material: Metal
+    block_3445: 
+      material: Metal
+    block_3446: 
+      material: Metal
+    block_3447: 
+      material: Metal
+    block_3448: 
+      material: Plastic
+    block_3449: 
+      material: Metal
+    block_3450: 
+      material: Plastic
+    block_3451: 
+      material: Metal
+    block_3452: 
+      material: Metal
+    block_3453: 
+      material: Metal
+    block_3454: 
+      material: Metal
+    block_3455: 
+      material: Metal
+    block_3456: 
+      material: Metal
+    block_3457: 
+      material: Metal
+    block_3458: 
+      material: Plastic
+    block_3459: 
+      material: Metal
+    block_3460: 
+      material: Plastic
+    block_3461: 
+      material: Metal
+    block_3462: 
+      material: Metal
+    block_3463: 
+      material: Metal
+    block_3464: 
+      material: Metal
+    block_3465: 
+      material: Metal
+    block_3466: 
+      material: Metal
+    block_3467: 
+      material: Metal
+    block_3468: 
+      material: Plastic
+    block_3469: 
+      material: Metal
+    block_3470: 
+      material: Plastic
+    block_3471: 
+      material: Metal
+    block_3472: 
+      material: Metal
+    block_3473: 
+      material: Metal
+    block_3474: 
+      material: Metal
+    block_3475: 
+      material: Metal
+    block_3476: 
+      material: Metal
+    block_3477: 
+      material: Metal
+    block_3478: 
+      material: Plastic
+    block_3479: 
+      material: Metal
+    block_3480: 
+      material: Plastic
+    block_3481: 
+      material: Metal
+    block_3482: 
+      material: Metal
+    block_3483: 
+      material: Metal
+    block_3484: 
+      material: Metal
+    block_3485: 
+      material: Metal
+    block_3486: 
+      material: Metal
+    block_3487: 
+      material: Metal
+    block_3488: 
+      material: Plastic
+    block_3489: 
+      material: Metal
+    block_3490: 
+      material: Plastic
+    block_3491: 
+      material: Metal
+    block_3492: 
+      material: Metal
+    block_3493: 
+      material: Metal
+    block_3494: 
+      material: Metal
+    block_3495: 
+      material: Metal
+    block_3496: 
+      material: Metal
+    block_3497: 
+      material: Metal
+    block_3498: 
+      material: Plastic
+    block_3499: 
+      material: Metal
+    block_3500: 
+      material: Plastic
+    block_3501: 
+      material: Metal
+    block_3502: 
+      material: Metal
+    block_3503: 
+      material: Metal
+    block_3504: 
+      material: Metal
+    block_3505: 
+      material: Metal
+    block_3506: 
+      material: Metal
+    block_3507: 
+      material: Metal
+    block_3508: 
+      material: Plastic
+    block_3509: 
+      material: Metal
+    block_3510: 
+      material: Plastic
+    block_3511: 
+      material: Metal
+    block_3512: 
+      material: Metal
+    block_3513: 
+      material: Metal
+    block_3514: 
+      material: Metal
+    block_3515: 
+      material: Metal
+    block_3516: 
+      material: Metal
+    block_3517: 
+      material: Metal
+    block_3518: 
+      material: Plastic
+    block_3519: 
+      material: Metal
+    block_3520: 
+      material: Plastic
+    block_3521: 
+      material: Metal
+    block_3522: 
+      material: Metal
+    block_3523: 
+      material: Metal
+    block_3524: 
+      material: Metal
+    block_3525: 
+      material: Metal
+    block_3526: 
+      material: Metal
+    block_3527: 
+      material: Metal
+    block_3528: 
+      material: Plastic
+    block_3529: 
+      material: Metal
+    block_3530: 
+      material: Plastic
+    block_3531: 
+      material: Metal
+    block_3532: 
+      material: Metal
+    block_3533: 
+      material: Metal
+    block_3534: 
+      material: Metal
+    block_3535: 
+      material: Metal
+    block_3536: 
+      material: Metal
+    block_3537: 
+      material: Metal
+    block_3538: 
+      material: Plastic
+    block_3539: 
+      material: Metal
+    block_3540: 
+      material: Plastic
+    block_3541: 
+      material: Metal
+    block_3542: 
+      material: Metal
+    block_3543: 
+      material: Metal
+    block_3544: 
+      material: Metal
+    block_3545: 
+      material: Metal
+    block_3546: 
+      material: Metal
+    block_3547: 
+      material: Metal
+    block_3548: 
+      material: Plastic
+    block_3549: 
+      material: Metal
+    block_3550: 
+      material: Plastic
+    block_3551: 
+      material: Metal
+    block_3552: 
+      material: Metal
+    block_3553: 
+      material: Metal
+    block_3554: 
+      material: Metal
+    block_3555: 
+      material: Metal
+    block_3556: 
+      material: Metal
+    block_3557: 
+      material: Metal
+    block_3558: 
+      material: Plastic
+    block_3559: 
+      material: Metal
+    block_3560: 
+      material: Plastic
+    block_3561: 
+      material: Metal
+    block_3562: 
+      material: Metal
+    block_3563: 
+      material: Metal
+    block_3564: 
+      material: Metal
+    block_3565: 
+      material: Metal
+    block_3566: 
+      material: Metal
+    block_3567: 
+      material: Metal
+    block_3568: 
+      material: Plastic
+    block_3569: 
+      material: Metal
+    block_3570: 
+      material: Plastic
+    block_3571: 
+      material: Metal
+    block_3572: 
+      material: Metal
+    block_3573: 
+      material: Metal
+    block_3574: 
+      material: Metal
+    block_3575: 
+      material: Metal
+    block_3576: 
+      material: Metal
+    block_3577: 
+      material: Metal
+    block_3578: 
+      material: Plastic
+    block_3579: 
+      material: Metal
+    block_3580: 
+      material: Plastic
+    block_3581: 
+      material: Metal
+    block_3582: 
+      material: Metal
+    block_3583: 
+      material: Metal
+    block_3584: 
+      material: Metal
+    block_3585: 
+      material: Metal
+    block_3586: 
+      material: Metal
+    block_3587: 
+      material: Metal
+    block_3588: 
+      material: Plastic
+    block_3589: 
+      material: Metal
+    block_3590: 
+      material: Plastic
+    block_3591: 
+      material: Metal
+    block_3592: 
+      material: Metal
+    block_3593: 
+      material: Metal
+    block_3594: 
+      material: Metal
+    block_3595: 
+      material: Metal
+    block_3596: 
+      material: Metal
+    block_3597: 
+      material: Metal
+    block_3598: 
+      material: Plastic
+    block_3599: 
+      material: Metal
+    block_3600: 
+      material: Plastic
+    block_3601: 
+      material: Metal
+    block_3602: 
+      material: Metal
+    block_3603: 
+      material: Metal
+    block_3604: 
+      material: Metal
+    block_3605: 
+      material: Metal
+    block_3606: 
+      material: Metal
+    block_3607: 
+      material: Metal
+    block_3608: 
+      material: Plastic
+    block_3609: 
+      material: Metal
+    block_3610: 
+      material: Plastic
+    block_3611: 
+      material: Metal
+    block_3612: 
+      material: Metal
+    block_3613: 
+      material: Metal
+    block_3614: 
+      material: Metal
+    block_3615: 
+      material: Metal
+    block_3616: 
+      material: Metal
+    block_3617: 
+      material: Metal
+    block_3618: 
+      material: Plastic
+    block_3619: 
+      material: Metal
+    block_3620: 
+      material: Plastic
+    block_3621: 
+      material: Metal
+    block_3622: 
+      material: Metal
+    block_3623: 
+      material: Metal
+    block_3624: 
+      material: Metal
+    block_3625: 
+      material: Metal
+    block_3626: 
+      material: Metal
+    block_3627: 
+      material: Metal
+    block_3628: 
+      material: Plastic
+    block_3629: 
+      material: Metal
+    block_3630: 
+      material: Plastic
+    block_3631: 
+      material: Metal
+    block_3632: 
+      material: Metal
+    block_3633: 
+      material: Metal
+    block_3634: 
+      material: Metal
+    block_3635: 
+      material: Metal
+    block_3636: 
+      material: Metal
+    block_3637: 
+      material: Metal
+    block_3638: 
+      material: Plastic
+    block_3639: 
+      material: Metal
+    block_3640: 
+      material: Plastic
+    block_3641: 
+      material: Metal
+    block_3642: 
+      material: Metal
+    block_3643: 
+      material: Metal
+    block_3644: 
+      material: Metal
+    block_3645: 
+      material: Metal
+    block_3646: 
+      material: Metal
+    block_3647: 
+      material: Metal
+    block_3648: 
+      material: Plastic
+    block_3649: 
+      material: Metal
+    block_3650: 
+      material: Plastic
+    block_3651: 
+      material: Metal
+    block_3652: 
+      material: Metal
+    block_3653: 
+      material: Metal
+    block_3654: 
+      material: Metal
+    block_3655: 
+      material: Metal
+    block_3656: 
+      material: Metal
+    block_3657: 
+      material: Metal
+    block_3658: 
+      material: Plastic
+    block_3659: 
+      material: Metal
+    block_3660: 
+      material: Plastic
+    block_3661: 
+      material: Metal
+    block_3662: 
+      material: Metal
+    block_3663: 
+      material: Metal
+    block_3664: 
+      material: Metal
+    block_3665: 
+      material: Metal
+    block_3666: 
+      material: Metal
+    block_3667: 
+      material: Metal
+    block_3668: 
+      material: Plastic
+    block_3669: 
+      material: Metal
+    block_3670: 
+      material: Plastic
+    block_3671: 
+      material: Metal
+    block_3672: 
+      material: Metal
+    block_3673: 
+      material: Metal
+    block_3674: 
+      material: Metal
+    block_3675: 
+      material: Metal
+    block_3676: 
+      material: Metal
+    block_3677: 
+      material: Metal
+    block_3678: 
+      material: Plastic
+    block_3679: 
+      material: Metal
+    block_3680: 
+      material: Plastic
+    block_3681: 
+      material: Metal
+    block_3682: 
+      material: Metal
+    block_3683: 
+      material: Metal
+    block_3684: 
+      material: Metal
+    block_3685: 
+      material: Metal
+    block_3686: 
+      material: Metal
+    block_3687: 
+      material: Metal
+    block_3688: 
+      material: Plastic
+    block_3689: 
+      material: Metal
+    block_3690: 
+      material: Plastic
+    block_3691: 
+      material: Metal
+    block_3692: 
+      material: Metal
+    block_3693: 
+      material: Metal
+    block_3694: 
+      material: Metal
+    block_3695: 
+      material: Metal
+    block_3696: 
+      material: Metal
+    block_3697: 
+      material: Metal
+    block_3698: 
+      material: Plastic
+    block_3699: 
+      material: Metal
+    block_3700: 
+      material: Plastic
+    block_3701: 
+      material: Metal
+    block_3702: 
+      material: Metal
+    block_3703: 
+      material: Metal
+    block_3704: 
+      material: Metal
+    block_3705: 
+      material: Metal
+    block_3706: 
+      material: Metal
+    block_3707: 
+      material: Metal
+    block_3708: 
+      material: Plastic
+    block_3709: 
+      material: Metal
+    block_3710: 
+      material: Plastic
+    block_3711: 
+      material: Metal
+    block_3712: 
+      material: Metal
+    block_3713: 
+      material: Metal
+    block_3714: 
+      material: Metal
+    block_3715: 
+      material: Metal
+    block_3716: 
+      material: Metal
+    block_3717: 
+      material: Metal
+    block_3718: 
+      material: Plastic
+    block_3719: 
+      material: Metal
+    block_3720: 
+      material: Plastic
+    block_3721: 
+      material: Metal
+    block_3722: 
+      material: Metal
+    block_3723: 
+      material: Metal
+    block_3724: 
+      material: Metal
+    block_3725: 
+      material: Metal
+    block_3726: 
+      material: Metal
+    block_3727: 
+      material: Metal
+    block_3728: 
+      material: Plastic
+    block_3729: 
+      material: Metal
+    block_3730: 
+      material: Plastic
+    block_3731: 
+      material: Metal
+    block_3732: 
+      material: Metal
+    block_3733: 
+      material: Metal
+    block_3734: 
+      material: Metal
+    block_3735: 
+      material: Metal
+    block_3736: 
+      material: Metal
+    block_3737: 
+      material: Metal
+    block_3738: 
+      material: Plastic
+    block_3739: 
+      material: Metal
+    block_3740: 
+      material: Plastic
+    block_3741: 
+      material: Metal
+    block_3742: 
+      material: Metal
+    block_3743: 
+      material: Metal
+    block_3744: 
+      material: Metal
+    block_3745: 
+      material: Metal
+    block_3746: 
+      material: Metal
+    block_3747: 
+      material: Metal
+    block_3748: 
+      material: Plastic
+    block_3749: 
+      material: Metal
+    block_3750: 
+      material: Plastic
+    block_3751: 
+      material: Metal
+    block_3752: 
+      material: Metal
+    block_3753: 
+      material: Metal
+    block_3754: 
+      material: Metal
+    block_3755: 
+      material: Metal
+    block_3756: 
+      material: Metal
+    block_3757: 
+      material: Metal
+    block_3758: 
+      material: Plastic
+    block_3759: 
+      material: Metal
+    block_3760: 
+      material: Plastic
+    block_3761: 
+      material: Metal
+    block_3762: 
+      material: Metal
+    block_3763: 
+      material: Metal
+    block_3764: 
+      material: Metal
+    block_3765: 
+      material: Metal
+    block_3766: 
+      material: Metal
+    block_3767: 
+      material: Metal
+    block_3768: 
+      material: Plastic
+    block_3769: 
+      material: Metal
+    block_3770: 
+      material: Plastic
+    block_3771: 
+      material: Metal
+    block_3772: 
+      material: Metal
+    block_3773: 
+      material: Metal
+    block_3774: 
+      material: Metal
+    block_3775: 
+      material: Metal
+    block_3776: 
+      material: Metal
+    block_3777: 
+      material: Metal
+    block_3778: 
+      material: Plastic
+    block_3779: 
+      material: Metal
+    block_3780: 
+      material: Plastic
+    block_3781: 
+      material: Metal
+    block_3782: 
+      material: Metal
+    block_3783: 
+      material: Metal
+    block_3784: 
+      material: Metal
+    block_3785: 
+      material: Metal
+    block_3786: 
+      material: Metal
+    block_3787: 
+      material: Metal
+    block_3788: 
+      material: Plastic
+    block_3789: 
+      material: Metal
+    block_3790: 
+      material: Plastic
+    block_3791: 
+      material: Metal
+    block_3792: 
+      material: Metal
+    block_3793: 
+      material: Metal
+    block_3794: 
+      material: Metal
+    block_3795: 
+      material: Metal
+    block_3796: 
+      material: Metal
+    block_3797: 
+      material: Metal
+    block_3798: 
+      material: Plastic
+    block_3799: 
+      material: Metal
+    block_3800: 
+      material: Plastic
+    block_3801: 
+      material: Metal
+    block_3802: 
+      material: Metal
+    block_3803: 
+      material: Metal
+    block_3804: 
+      material: Metal
+    block_3805: 
+      material: Metal
+    block_3806: 
+      material: Metal
+    block_3807: 
+      material: Metal
+    block_3808: 
+      material: Plastic
+    block_3809: 
+      material: Metal
+    block_3810: 
+      material: Plastic
+    block_3811: 
+      material: Metal
+    block_3812: 
+      material: Metal
+    block_3813: 
+      material: Metal
+    block_3814: 
+      material: Metal
+    block_3815: 
+      material: Metal
+    block_3816: 
+      material: Metal
+    block_3817: 
+      material: Metal
+    block_3818: 
+      material: Plastic
+    block_3819: 
+      material: Metal
+    block_3820: 
+      material: Plastic
+    block_3821: 
+      material: Metal
+    block_3822: 
+      material: Metal
+    block_3823: 
+      material: Metal
+    block_3824: 
+      material: Metal
+    block_3825: 
+      material: Metal
+    block_3826: 
+      material: Metal
+    block_3827: 
+      material: Metal
+    block_3828: 
+      material: Plastic
+    block_3829: 
+      material: Metal
+    block_3830: 
+      material: Plastic
+    block_3831: 
+      material: Metal
+    block_3832: 
+      material: Metal
+    block_3833: 
+      material: Metal
+    block_3834: 
+      material: Metal
+    block_3835: 
+      material: Metal
+    block_3836: 
+      material: Metal
+    block_3837: 
+      material: Metal
+    block_3838: 
+      material: Plastic
+    block_3839: 
+      material: Metal
+    block_3840: 
+      material: Plastic
+    block_3841: 
+      material: Metal
+    block_3842: 
+      material: Metal
+    block_3843: 
+      material: Metal
+    block_3844: 
+      material: Metal
+    block_3845: 
+      material: Metal
+    block_3846: 
+      material: Metal
+    block_3847: 
+      material: Metal
+    block_3848: 
+      material: Plastic
+    block_3849: 
+      material: Metal
+    block_3850: 
+      material: Plastic
+    block_3851: 
+      material: Metal
+    block_3852: 
+      material: Metal
+    block_3853: 
+      material: Metal
+    block_3854: 
+      material: Metal
+    block_3855: 
+      material: Metal
+    block_3856: 
+      material: Metal
+    block_3857: 
+      material: Metal
+    block_3858: 
+      material: Plastic
+    block_3859: 
+      material: Metal
+    block_3860: 
+      material: Plastic
+    block_3861: 
+      material: Metal
+    block_3862: 
+      material: Metal
+    block_3863: 
+      material: Metal
+    block_3864: 
+      material: Metal
+    block_3865: 
+      material: Metal
+    block_3866: 
+      material: Metal
+    block_3867: 
+      material: Metal
+    block_3868: 
+      material: Plastic
+    block_3869: 
+      material: Metal
+    block_3870: 
+      material: Plastic
+    block_3871: 
+      material: Metal
+    block_3872: 
+      material: Metal
+    block_3873: 
+      material: Metal
+    block_3874: 
+      material: Metal
+    block_3875: 
+      material: Metal
+    block_3876: 
+      material: Metal
+    block_3877: 
+      material: Metal
+    block_3878: 
+      material: Plastic
+    block_3879: 
+      material: Metal
+    block_3880: 
+      material: Plastic
+    block_3881: 
+      material: Metal
+    block_3882: 
+      material: Metal
+    block_3883: 
+      material: Metal
+    block_3884: 
+      material: Metal
+    block_3885: 
+      material: Metal
+    block_3886: 
+      material: Metal
+    block_3887: 
+      material: Metal
+    block_3888: 
+      material: Plastic
+    block_3889: 
+      material: Metal
+    block_3890: 
+      material: Plastic
+    block_3891: 
+      material: Metal
+    block_3892: 
+      material: Metal
+    block_3893: 
+      material: Metal
+    block_3894: 
+      material: Metal
+    block_3895: 
+      material: Metal
+    block_3896: 
+      material: Metal
+    block_3897: 
+      material: Metal
+    block_3898: 
+      material: Plastic
+    block_3899: 
+      material: Metal
+    block_3900: 
+      material: Plastic
+    block_3901: 
+      material: Metal
+    block_3902: 
+      material: Metal
+    block_3903: 
+      material: Metal
+    block_3904: 
+      material: Metal
+    block_3905: 
+      material: Metal
+    block_3906: 
+      material: Metal
+    block_3907: 
+      material: Metal
+    block_3908: 
+      material: Plastic
+    block_3909: 
+      material: Metal
+    block_3910: 
+      material: Plastic
+    block_3911: 
+      material: Metal
+    block_3912: 
+      material: Metal
+    block_3913: 
+      material: Metal
+    block_3914: 
+      material: Metal
+    block_3915: 
+      material: Metal
+    block_3916: 
+      material: Metal
+    block_3917: 
+      material: Metal
+    block_3918: 
+      material: Plastic
+    block_3919: 
+      material: Metal
+    block_3920: 
+      material: Plastic
+    block_3921: 
+      material: Metal
+    block_3922: 
+      material: Metal
+    block_3923: 
+      material: Metal
+    block_3924: 
+      material: Metal
+    block_3925: 
+      material: Metal
+    block_3926: 
+      material: Metal
+    block_3927: 
+      material: Metal
+    block_3928: 
+      material: Plastic
+    block_3929: 
+      material: Metal
+    block_3930: 
+      material: Plastic
+    block_3931: 
+      material: Metal
+    block_3932: 
+      material: Metal
+    block_3933: 
+      material: Metal
+    block_3934: 
+      material: Metal
+    block_3935: 
+      material: Metal
+    block_3936: 
+      material: Metal
+    block_3937: 
+      material: Metal
+    block_3938: 
+      material: Plastic
+    block_3939: 
+      material: Metal
+    block_3940: 
+      material: Plastic
+    block_3941: 
+      material: Metal
+    block_3942: 
+      material: Metal
+    block_3943: 
+      material: Metal
+    block_3944: 
+      material: Metal
+    block_3945: 
+      material: Metal
+    block_3946: 
+      material: Metal
+    block_3947: 
+      material: Metal
+    block_3948: 
+      material: Plastic
+    block_3949: 
+      material: Metal
+    block_3950: 
+      material: Plastic
+    block_3951: 
+      material: Metal
+    block_3952: 
+      material: Metal
+    block_3953: 
+      material: Metal
+    block_3954: 
+      material: Metal
+    block_3955: 
+      material: Metal
+    block_3956: 
+      material: Metal
+    block_3957: 
+      material: Metal
+    block_3958: 
+      material: Plastic
+    block_3959: 
+      material: Metal
+    block_3960: 
+      material: Plastic
+    block_3961: 
+      material: Metal
+    block_3962: 
+      material: Metal
+    block_3963: 
+      material: Metal
+    block_3964: 
+      material: Metal
+    block_3965: 
+      material: Metal
+    block_3966: 
+      material: Metal
+    block_3967: 
+      material: Metal
+    block_3968: 
+      material: Plastic
+    block_3969: 
+      material: Metal
+    block_3970: 
+      material: Plastic
+    block_3971: 
+      material: Metal
+    block_3972: 
+      material: Metal
+    block_3973: 
+      material: Metal
+    block_3974: 
+      material: Metal
+    block_3975: 
+      material: Metal
+    block_3976: 
+      material: Metal
+    block_3977: 
+      material: Metal
+    block_3978: 
+      material: Plastic
+    block_3979: 
+      material: Metal
+    block_3980: 
+      material: Plastic
+    block_3981: 
+      material: Metal
+    block_3982: 
+      material: Metal
+    block_3983: 
+      material: Metal
+    block_3984: 
+      material: Metal
+    block_3985: 
+      material: Metal
+    block_3986: 
+      material: Metal
+    block_3987: 
+      material: Metal
+    block_3988: 
+      material: Plastic
+    block_3989: 
+      material: Metal
+    block_3990: 
+      material: Plastic
+    block_3991: 
+      material: Metal
+    block_3992: 
+      material: Metal
+    block_3993: 
+      material: Metal
+    block_3994: 
+      material: Metal
+    block_3995: 
+      material: Metal
+    block_3996: 
+      material: Metal
+    block_3997: 
+      material: Metal
+    block_3998: 
+      material: Plastic
+    block_3999: 
+      material: Metal
+    block_4000: 
+      material: Plastic
+  Materials: 
+    Plastic: 
+      Lame Material Model: Elastic
+      Lame Material Parameters: 
+        Youngs Modulus: 1.0000000
+        Poissons Ratio: 0.25000000
+    Metal: 
+      Lame Material Model: Elastic
+      Lame Material Parameters: 
+        Youngs Modulus: 2.00000000
+        Poissons Ratio: 0.25000000
+...

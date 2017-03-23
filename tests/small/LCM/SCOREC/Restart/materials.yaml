@@ -1,0 +1,66 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    eb_1: 
+      material: Mat_1
+      Weighted Volume Average J: false
+      Average J Stabilization Parameter: 0.00000000e+00
+      Volume Average Pressure: false
+      Use Composite Tet 10: false
+    eb_2: 
+      material: Mat_2
+      Weighted Volume Average J: false
+      Average J Stabilization Parameter: 0.00000000e+00
+      Volume Average Pressure: false
+      Use Composite Tet 10: false
+  Materials: 
+    Mat_1: 
+      Material Model: 
+        Model Name: Creep
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1000.00000000
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.30000000
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 100.00000000
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 10.00000000
+      Reference Temperature: 400.00000000
+      Initial Temperature: 400.00000000
+      Thermal Expansion Coefficient: 1.00000000e-06
+      Strain Rate Exponent: 9.70000000
+      Relaxation Parameter of Material_A: 117000.00000000
+      Activation Parameter of Material_Q/R: 18000.00000000
+      Output Cauchy Stress: true
+      Output eqps: true
+      Output Fp: true
+    Mat_2: 
+      Material Model: 
+        Model Name: Creep
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 100.00000000
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.25000000
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 100.00000000
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 1.00000000e-05
+      Reference Temperature: 400.00000000
+      Initial Temperature: 400.00000000
+      Thermal Expansion Coefficient: 1.00000000e-05
+      Strain Rate Exponent: 9.70000000
+      Relaxation Parameter of Material_A: 1.17000000e+07
+      Activation Parameter of Material_Q/R: 3776.80000000
+      Output Cauchy Stress: true
+      Output eqps: true
+      Output Fp: true
+...

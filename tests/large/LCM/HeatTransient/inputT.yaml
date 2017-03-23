@@ -1,0 +1,108 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Mechanics 3D
+    Solution Method: Transient
+    MaterialDB Filename: materials.yaml
+    Second Order: Trapezoid Rule
+    Temperature: 
+      Variable Type: DOF
+    Displacement: 
+      Variable Type: None
+    Dirichlet BCs: 
+      DBC on NS xmin for DOF T: 0.00000000e+00
+      DBC on NS xmax for DOF T: 0.00000000e+00
+    Initial Condition: 
+      Function: Constant
+      Function Data: [1.00000000]
+    Initial Condition Dot: 
+      Function: Constant
+      Function Data: [0.00000000e+00]
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    Method: Sim
+    Workset Size: 50
+    Sim Model Input File Name: mesh/cube.smd
+    Sim Input File Name: mesh/cube.sms
+    Sim Output File Name: out.vtk
+    Element Block Associations: [[95], [cube]]
+    Node Set Associations: [[85, 81], [xmin, xmax]]
+    Cubature Degree: 1
+    Separate Evaluators by Element Block: false
+    QP Temperature from Nodes: false
+    Number Of Time Derivatives: 2
+  Piro: 
+    Trapezoid Rule: 
+      Num Time Steps: 100
+      Final Time: 0.05000000
+      Initial Time: 0.00000000e+00
+      NOX: 
+        Printing: 
+          Output Information: 
+            Error: true
+            Warning: true
+            Outer Iteration: true
+            Parameters: false
+            Details: false
+            Linear Solver Details: true
+            Stepper Iteration: true
+            Stepper Details: true
+            Stepper Parameters: false
+          Output Precision: 3
+          Output Processor: 0
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Linear Solver: 
+            Tolerance: 1.00000000e-06
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-12
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 400
+                      Num Blocks: 200
+                      Flexible Gmres: true
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 2
+                  Prec Type: RILUK
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+      Nonlinear Solver: Line Search Based
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 0.00100000
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 20
+...

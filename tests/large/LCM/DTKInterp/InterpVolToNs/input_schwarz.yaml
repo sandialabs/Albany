@@ -1,0 +1,28 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Source Mesh Input File: '../Meshes/notched-cylinder-0.exo'
+  Source Mesh Snapshot Number: 11
+  Target Mesh Input File: '../Meshes/notched-cylinder-1.exo'
+  Target Mesh Output File: 'target_notched-cylinder-1_out.exo'
+  Target Mesh Part: nodelist_3
+  Target Mesh Snapshot Number: 11
+  Source Field Name: disp
+  Target Field Name: disp
+  Field Type: Node Vector
+  Number of Iterations: 10
+  DataTransferKit: 
+    Map Type: Consistent Interpolation
+    L2 Projection: 
+      Integration Order: 2
+    Consistent Interpolation: { }
+    Point Cloud: 
+      Map Type: Moving Least Square Reconstruction
+      Basis Type: Wu
+      Basis Order: 4
+      Spatial Dimension: 3
+      RBF Radius: 1.0000000
+    Search: 
+      Track Missed Range Entities: true
+      Point Inclusion Tolerance: 0.10000000
+...

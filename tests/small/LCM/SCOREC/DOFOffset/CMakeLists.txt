@@ -6,12 +6,12 @@
 
 
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputIfpack2.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputIfpack2.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMueLu.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputMueLu.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputIfpack2.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputIfpack2.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMueLu.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputMueLu.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assoc.txt
                ${CMAKE_CURRENT_BINARY_DIR}/assoc.txt COPYONLY)
 
@@ -23,9 +23,9 @@ set(testName "SCOREC_${testRoot}")
 # Only run tests in 64 bit mode (they should fail everywhere else ??)
 IF (ALBANY_64BIT_INT AND NOT ALBANY_EPETRA)
   IF(ALBANY_IFPACK2)
-    add_test(NAME ${testName}_Ifpack2_Tpetra COMMAND ${AlbanyT.exe} inputIfpack2.xml)
+    add_test(NAME ${testName}_Ifpack2_Tpetra COMMAND ${AlbanyT.exe} inputIfpack2.yaml)
   ENDIF()
   IF(ALBANY_MUELU_EXAMPLES)
-    add_test(NAME ${testName}_MueLu_Tpetra COMMAND ${SerialAlbanyT.exe} inputMueLu.xml)
+    add_test(NAME ${testName}_MueLu_Tpetra COMMAND ${SerialAlbanyT.exe} inputMueLu.yaml)
   ENDIF()
 ENDIF()

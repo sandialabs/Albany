@@ -8,17 +8,17 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipPowerLawDrag.g
                ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipPowerLawDrag.g COPYONLY)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipPowerLawDrag_NumericalDrag.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipPowerLawDrag_NumericalDrag.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipPowerLawDrag_NumericalDrag.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipPowerLawDrag_NumericalDrag.yaml COPYONLY)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipPowerLawDrag_ActiveDrag.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipPowerLawDrag_ActiveDrag.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipPowerLawDrag_ActiveDrag.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipPowerLawDrag_ActiveDrag.yaml COPYONLY)
 	     
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipPowerLawDrag_NumericalDrag_Material.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipPowerLawDrag_NumericalDrag_Material.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipPowerLawDrag_NumericalDrag_Material.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipPowerLawDrag_NumericalDrag_Material.yaml COPYONLY)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipPowerLawDrag_ActiveDrag_Material.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipPowerLawDrag_ActiveDrag_Material.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipPowerLawDrag_ActiveDrag_Material.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipPowerLawDrag_ActiveDrag_Material.yaml COPYONLY)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipPowerLawDrag_NumericalDrag.gold.exo
                ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipPowerLawDrag_NumericalDrag.gold.exo COPYONLY)
@@ -35,6 +35,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipPowerLawDrag_ActiveDrag.exo
 
 # Add the tests
 #if(ALBANY_IFPACK2)
-add_test(CrystalPlasticity_SingleSlipPowerLawDrag_NumericalDrag python ../../run_exodiff_test.py "${SerialAlbanyT.exe}" SingleSlipPowerLawDrag_NumericalDrag.xml)
-add_test(CrystalPlasticity_SingleSlipPowerLawDrag_ActiveDrag python ../../run_exodiff_test.py "${SerialAlbanyT.exe}" SingleSlipPowerLawDrag_ActiveDrag.xml)
+add_test(CrystalPlasticity_SingleSlipPowerLawDrag_NumericalDrag python ../../run_exodiff_test.py "${SerialAlbanyT.exe}" SingleSlipPowerLawDrag_NumericalDrag.yaml)
+add_test(CrystalPlasticity_SingleSlipPowerLawDrag_ActiveDrag python ../../run_exodiff_test.py "${SerialAlbanyT.exe}" SingleSlipPowerLawDrag_ActiveDrag.yaml)
 #endif()

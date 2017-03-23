@@ -8,10 +8,10 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipOffKilterLoading.g
                ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipOffKilterLoading.g COPYONLY)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipOffKilterLoading.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipOffKilterLoading.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipOffKilterLoading_Material.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipOffKilterLoading_Material.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipOffKilterLoading.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipOffKilterLoading.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipOffKilterLoading_Material.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipOffKilterLoading_Material.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipOffKilterLoading.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipOffKilterLoading.exodiff COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipOffKilterLoading.gold.exo
@@ -19,6 +19,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipOffKilterLoading.gold.exo
 
 # Add the tests
 if(ALBANY_IFPACK2)
-add_test(CrystalPlasticity_SingleSlipOffKilterLoading_Tpetra python ../../run_exodiff_test.py "${SerialAlbanyT.exe}" SingleSlipOffKilterLoading.xml)
+add_test(CrystalPlasticity_SingleSlipOffKilterLoading_Tpetra python ../../run_exodiff_test.py "${SerialAlbanyT.exe}" SingleSlipOffKilterLoading.yaml)
 endif()
 

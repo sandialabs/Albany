@@ -5,10 +5,10 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${SEACAS_EPU} ${CMAKE
 
 # Copy Input files from source to binary dir
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPS.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPDPS.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPSMaterials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPDPSMaterials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPS.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPDPS.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPSMaterials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPDPSMaterials.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPS.g
                ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPDPS.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPS.g.4.0
@@ -32,6 +32,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/linear_solution.txt
 
 # Add the tests
 if(ALBANY_IFPACK2)
-add_test(PeridigmCoupling_TensileBarPDPS_np1_Epetra python ../run_exodiff_test.py "${SerialAlbany.exe}" TensileBarPDPS.xml)
-#add_test(PeridigmCoupling_TensileBarPDPS_np4_Epetra python ../run_exodiff_test.py "${Albany.exe}" TensileBarPDPS.xml)
+add_test(PeridigmCoupling_TensileBarPDPS_np1_Epetra python ../run_exodiff_test.py "${SerialAlbany.exe}" TensileBarPDPS.yaml)
+#add_test(PeridigmCoupling_TensileBarPDPS_np4_Epetra python ../run_exodiff_test.py "${Albany.exe}" TensileBarPDPS.yaml)
 endif()

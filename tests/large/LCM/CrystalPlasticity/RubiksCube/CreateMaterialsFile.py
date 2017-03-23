@@ -332,7 +332,7 @@ if __name__ == "__main__":
     rotations = []
     ParseRotationMatricesFile(rotations_file_name, rotations)
 
-    materials_file_name = "Materials.xml"
+    materials_file_name = "Materials.yaml"
     WriteMaterialsFile(materials_file_name, mat_params, rotations, num_blocks)
 
     print "\nComplete.\n"

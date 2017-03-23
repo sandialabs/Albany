@@ -1,0 +1,39 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: TestMat
+    block_2: 
+      material: TestMat
+    block_3: 
+      material: TestCohesive
+      Surface Element: true
+      Cohesive Element: true
+  Materials: 
+    TestMat: 
+      Material Model: 
+        Model Name: Neohookean
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1000.0000
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.30000000
+      Output Cauchy Stress: true
+    TestCohesive: 
+      Material Model: 
+        Model Name: Tvergaard Hutchinson
+      delta_1: 0.01600000
+      delta_2: 0.01600000
+      delta_c: 0.16000000
+      sigma_c: 500.00000000
+      beta_0: 0.00000000e+00
+      beta_1: 0.00000000e+00
+      beta_2: 1.00000000
+      Output Cohesive Traction: true
+      Output Normal Traction: true
+      Output Shear Traction: true
+      Output Normal Jump: true
+      Output Shear Jump: true
+...

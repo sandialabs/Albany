@@ -5,20 +5,20 @@
 ##*****************************************************************//
 
 # Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialLaserWeldGauge.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materialLaserWeldGauge.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialLaserWeldHolder0.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materialLaserWeldHolder0.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialLaserWeldHolder1.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materialLaserWeldHolder1.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/modelLaserWeldGauge.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/modelLaserWeldGauge.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/modelLaserWeldHolder0.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/modelLaserWeldHolder0.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/modelLaserWeldHolder1.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/modelLaserWeldHolder1.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialLaserWeldGauge.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materialLaserWeldGauge.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialLaserWeldHolder0.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materialLaserWeldHolder0.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialLaserWeldHolder1.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materialLaserWeldHolder1.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/modelLaserWeldGauge.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/modelLaserWeldGauge.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/modelLaserWeldHolder0.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/modelLaserWeldHolder0.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/modelLaserWeldHolder1.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/modelLaserWeldHolder1.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/specimenLaserWeldGauge.g
                ${CMAKE_CURRENT_BINARY_DIR}/specimenLaserWeldGauge.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/specimenLaserWeldHolder0.g

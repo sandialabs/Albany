@@ -3,10 +3,10 @@
 IF((NOT ALBANY_PARALLEL_ONLY) AND SEACAS_EPU AND SEACAS_EXODIFF)
 
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
 
 # 2. Copy mesh files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/hole.exo
@@ -59,11 +59,11 @@ endif()
 
 if (ALBANY_IFPACK2)
 if (ALBANY_DTK)
-add_test(NAME ${testName}_Tpetra COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe};inputT.xml"
+add_test(NAME ${testName}_Tpetra COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe};inputT.yaml"
   -DTEST_NAME=${testName}_Tpetra -DMPIMNP=${MPIMNP} -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} -DOUTFILE_SUFFIX=_tpetra
   -P runtest_dtk.cmake)
 else() 
-add_test(NAME ${testName}_Tpetra COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe};inputT.xml"
+add_test(NAME ${testName}_Tpetra COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe};inputT.yaml"
   -DTEST_NAME=${testName}_Tpetra -DMPIMNP=${MPIMNP} -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} -DOUTFILE_SUFFIX=_tpetra
   -P runtest.cmake)
 endif()

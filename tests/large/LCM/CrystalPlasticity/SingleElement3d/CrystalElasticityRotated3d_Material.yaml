@@ -1,0 +1,22 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: Metal
+  Materials: 
+    Metal: 
+      Material Model: 
+        Model Name: CrystalPlasticity
+      Crystal Elasticity: 
+        C11: 168.40000
+        C12: 121.40000000
+        C44: 75.40000000
+        Basis Vector 1: [0.92107588, 0.38929489, 0.00828943]
+        Basis Vector 2: [-3.89366574e-01, 0.92063166, 0.02882734]
+        Basis Vector 3: [0.00359083, -2.97797916e-02, 0.99955003]
+      Output Cauchy Stress: true
+      Output Fp: true
+      Output L: true
+      Output Mechanical Source: true
+...

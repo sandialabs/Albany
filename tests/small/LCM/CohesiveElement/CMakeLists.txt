@@ -20,16 +20,16 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 endif()
 
 # input files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputCohesive.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputCohesive.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputCohesive.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputCohesive.yaml COPYONLY)
 if (ALBANY_IFPACK2)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputCohesiveT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputCohesiveT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputCohesiveT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputCohesiveT.yaml COPYONLY)
 endif()
 
 # material files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/1materialCohesive.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/1materialCohesive.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/1materialCohesive.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/1materialCohesive.yaml COPYONLY)
 
 # mesh file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface1ElemMeshRev.g

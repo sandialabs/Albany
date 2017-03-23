@@ -1,0 +1,73 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: Metal
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000e+00
+      Volume Average Pressure: true
+      Output Trapped_Concentration: true
+      Output Total_Concentration: true
+      Output He_Concentration: true
+      Output Total_Bubble_Density: true
+      Output Bubble_Volume_Fraction: true
+  Materials: 
+    Metal: 
+      Material Model: 
+        Model Name: J2
+      Stabilization Parameter: 2.00000000
+      Initial Concentration: 0.00056000
+      Transport Coefficients: 
+        Partial Molar Volume: 2.00000000
+        Ideal Gas Constant: 0.00831400
+        'Pre-exponential Factor': 540000.00000000
+        Diffusion Activation Enthalpy: 53.90000000
+        Trap Binding Energy: 9.65000000
+        Number of Lattice Sites: 0.14052839
+        Reference Total Concentration: 0.00056000
+        Lattice Strain Flag: false
+        A Constant: 8.60000000
+        B Constant: 1.50000000
+        C Constant: 6.96000000
+        Avogadro's Number: 6.02214130e+11
+      Tritium Coefficients: 
+        Tritium Decay Constant: 1.79000000e-09
+        Helium Radius: 0.00025000
+        Atoms Per Cluster: 10.00000000
+        Evaluate HeliumODEs: true
+      Molar Volume: 
+        Type: Constant
+        Value: 7.11600000
+      Shear Modulus: 
+        Shear Modulus Type: Constant
+        Value: 75.38461538
+        dmudT Value: 0.00000000e+00
+      Bulk Modulus: 
+        Bulk Modulus Type: Constant
+        Value: 163.33333333
+        dKdT Value: 0.00000000e+00
+      Thermal Conductivity: 
+        Thermal Conductivity Type: Constant
+        Value: 0.00000000e+00
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 0.71400000
+        dYdT Value: 0.00000000e+00
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 0.00000000e+00
+        dHdT Value: 0.00000000e+00
+      Reference Temperature: 300.00000000
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 196.00000000
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.30000000
+      Saturation Modulus: 2.07000000
+      Saturation Exponent: 1.00000000
+      Output Cauchy Stress: true
+      Output Total Concentration: true
+      Output eqps: true
+...

@@ -1,16 +1,18 @@
+%YAML 1.1
+---
 ANONYMOUS:
-  ElementBlocks:
-    fine:
+  ElementBlocks: 
+    fine: 
       material: Fine
-  Materials:
-    Fine:
-      Material Model:
+  Materials: 
+    Fine: 
+      Material Model: 
         Model Name: Neohookean
-      Elastic Modulus:
+      Elastic Modulus: 
         Elastic Modulus Type: Constant
-        Value: 1440.0
-      Poissons Ratio:
+        Value: 1440.0000
+      Poissons Ratio: 
         Poissons Ratio Type: Constant
-        Value: 0.25
+        Value: 0.25000000
       Output Cauchy Stress: true
-      
+...

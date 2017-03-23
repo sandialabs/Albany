@@ -1,8 +1,8 @@
 # 1. Run the program and generate the exodus output
 
-message("running: " ${ALBANY} ${TESTNAME}T.xml)
+message("running: " ${ALBANY} ${TESTNAME}T.yaml)
 
-EXECUTE_PROCESS(COMMAND ${ALBANY} ${TESTNAME}T.xml
+EXECUTE_PROCESS(COMMAND ${ALBANY} ${TESTNAME}T.yaml
     OUTPUT_FILE "Albany.out"
     ERROR_FILE "Albany.err"
     OUTPUT_VARIABLE ALBANY_OUTPUT

@@ -10,10 +10,10 @@
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${DTK_Interp_and_Error.exe} ${CMAKE_CURRENT_BINARY_DIR}/DTK_Interp_and_Error)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_disp.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_disp.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_cauchy_stress.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input_cauchy_stress.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_disp.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_disp.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_cauchy_stress.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_cauchy_stress.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtest.py COPYONLY)
 

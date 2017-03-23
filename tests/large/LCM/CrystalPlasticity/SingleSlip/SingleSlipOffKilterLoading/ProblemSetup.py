@@ -161,7 +161,7 @@ if __name__ == "__main__":
         print DeformationGradient[i]
 
     print "\nPrescribed displacement boundary conditions\n"
-    bc_xml = ""
+    bc.yaml = ""
     for iNode in range(len(prescribed_displacements)):
         disp_x = []
         disp_y = []
@@ -170,19 +170,19 @@ if __name__ == "__main__":
             disp_x.append(prescribed_displacements[iNode][iTimeStep][0])
             disp_y.append(prescribed_displacements[iNode][iTimeStep][1])
             disp_z.append(prescribed_displacements[iNode][iTimeStep][2])                   
-        bc_xml += bc_string(iNode+1, "X", times, disp_x) + "\n"
-        bc_xml += bc_string(iNode+1, "Y", times, disp_y) + "\n"
-        bc_xml += bc_string(iNode+1, "Z", times, disp_z) + "\n"
+        bc.yaml += bc_string(iNode+1, "X", times, disp_x) + "\n"
+        bc.yaml += bc_string(iNode+1, "Y", times, disp_y) + "\n"
+        bc.yaml += bc_string(iNode+1, "Z", times, disp_z) + "\n"
 
-    template_file = open("SingleSlipOffKilterLoading.template.xml")
+    template_file = open("SingleSlipOffKilterLoading.template.yaml")
     lines = template_file.readlines()
     template_file.close()
-    xml_file = open("SingleSlipOffKilterLoading.xml", 'w')
+   .yaml_file = open("SingleSlipOffKilterLoading.yaml", 'w')
     for line in lines:
         if "PLACEHOLDER" in line:
-            xml_file.write(bc_xml)
+           .yaml_file.write(bc.yaml)
         else:
-            xml_file.write(line)
-    xml_file.close()
+           .yaml_file.write(line)
+   .yaml_file.close()
         
-    print "Input deck written to SingleSlipOffKilterLoading.xml\n"
+    print "Input deck written to SingleSlipOffKilterLoading.yaml\n"

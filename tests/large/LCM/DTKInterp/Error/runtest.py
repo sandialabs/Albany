@@ -23,7 +23,7 @@ tolerance = 1.0e-16;
 relerr = 1.13987e-13;
 
 # run DTK_Interp_and_Error 
-command = ["mpirun", "-np", "4", "DTK_Interp_and_Error", "--xml-in-file=input_disp.xml"]
+command = ["mpirun", "-np", "4", "DTK_Interp_and_Error", "-.yaml-in-file=input_disp.yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:

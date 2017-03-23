@@ -1,0 +1,248 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output: 
+    Write Solution to MatrixMarket: false
+  Problem: 
+    Name: Peridigm Code Coupling
+    MaterialDB Filename: OBC_Mechanics_Crack_ElasticMaterials.yaml
+    Distributed Parameters: 
+      Number of Parameter Vectors: 3
+      Distributed Parameter 0: 
+        Name: dirichlet_control_field_x
+        Mesh Part: nodelist_5
+      Distributed Parameter 1: 
+        Name: dirichlet_control_field_y
+        Mesh Part: nodelist_5
+      Distributed Parameter 2: 
+        Name: dirichlet_control_field_z
+        Mesh Part: nodelist_5
+    Peridigm Parameters: 
+      Optimization Based Coupling: 
+        Functional Scale Factor: 10000.000
+      Discretization: 
+        Type: Albany
+        Bond Filters: 
+          My Bond Filter: 
+            Type: Rectangular_Plane
+            Normal_X: 1.00000000
+            Normal_Y: 0.00000000e+00
+            Normal_Z: 0.00000000e+00
+            Lower_Left_Corner_X: 0.00000000e+00
+            Lower_Left_Corner_Y: 0.05882353
+            Lower_Left_Corner_Z: -1.00000000e+00
+            Bottom_Unit_Vector_X: 0.00000000e+00
+            Bottom_Unit_Vector_Y: 0.00000000e+00
+            Bottom_Unit_Vector_Z: 1.00000000
+            Bottom_Length: 2.00000000
+            Side_Length: 2.00000000
+      Materials: 
+        My Linearized LPS Material: 
+          Material Model: Linear LPS Partial Volume
+          Density: 8.05000000e-09
+          Bulk Modulus: 160000.00000000
+          Poisson's Ratio: 0.25000000
+      Blocks: 
+        My Group of Blocks: 
+          Block Names: block_1
+          Material: My Linearized LPS Material
+          Horizon: 0.11770000
+      Output: 
+        Output Variables: 
+          Displacement: true
+          Radius: true
+          Number_Of_Neighbors: true
+          OBC_Functional: true
+    Solution Method: Steady
+    Phalanx Graph Visualization Detail: 0
+    Dirichlet BCs: 
+      DBC on NS nodelist_1 for DOF X: -1.00000000e-03
+      DBC on NS nodelist_6 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_7 for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_2 for DOF X: 0.00100000
+      DBC on NS nodelist_8 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_9 for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_3 for DOF X prescribe Field: dirichlet_control_field_x
+      DBC on NS nodelist_4 for DOF X prescribe Field: dirichlet_control_field_x
+      DBC on NS nodelist_3 for DOF Y prescribe Field: dirichlet_control_field_y
+      DBC on NS nodelist_4 for DOF Y prescribe Field: dirichlet_control_field_y
+      DBC on NS nodelist_3 for DOF Z prescribe Field: dirichlet_control_field_z
+      DBC on NS nodelist_4 for DOF Z prescribe Field: dirichlet_control_field_z
+    Response Functions: 
+      Number: 1
+      Response 0: OBC Functional
+      ResponseParams 0: 
+        Field Name: Displacement
+  Discretization: 
+    Method: Exodus
+    Exodus Input File Name: OBC_Mechanics_Crack.g
+    Separate Evaluators by Element Block: true
+    Exodus Output File Name: OBC_Mechanics_Crack_Analysis.e
+    Cubature Degree: 2
+    Solution Vector Components: [displacement, V]
+    Residual Vector Components: [force, V]
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [65.14882540]
+    Number of Sensitivity Comparisons: 1
+    Sensitivity Comparisons 0: 
+      Number of Sensitivity Comparisons: 1
+      Sensitivity Test Values 0: [38.52269903]
+  Piro: 
+    Sensitivity Method: Adjoint
+    Analysis: 
+      Analysis Package: ROL
+      ROL: 
+        Number of Parameters: 3
+        Check Gradient: false
+        Gradient Tolerance: 1.00000000e-09
+        Step Tolerance: 1.00000000e-20
+        Max Iterations: 35
+        Print Output: true
+        Parameter Initial Guess Type: From Model Evaluator
+        Uniform Parameter Guess: 0.00000000e+00
+        Min And Max Of Random Parameter Guess: [-5.00000000e-03, 0.00500000]
+        Bound Constrained: false
+        x_lo: -2.00000000e+02
+        x_up: 200.00000000
+        bound_eps: 0.10000000
+        ROL Options: 
+          General: 
+            Variable Objective Function: false
+            Scale for Epsilon Active Sets: 1.00000000
+            Inexact Objective Function: false
+            Inexact Gradient: false
+            'Inexact Hessian-Times-A-Vector': false
+            Projected Gradient Criticality Measure: false
+            Secant: 
+              Type: 'Limited-Memory BFGS'
+              Use as Preconditioner: false
+              Use as Hessian: false
+              Maximum Storage: 50
+              'Barzilai-Borwein Type': 1
+            Krylov: 
+              Type: Conjugate Gradients
+              Absolute Tolerance: 0.00010000
+              Relative Tolerance: 0.01000000
+              Iteration Limit: 100
+          Step: 
+            Line Search: 
+              Function Evaluation Limit: 50
+              Sufficient Decrease Tolerance: 1.00000000e-20
+              Initial Step Size: 1.00000000
+              User Defined Initial Step Size: false
+              Accept Linesearch Minimizer: false
+              Accept Last Alpha: false
+              Descent Method: 
+                Type: 'Quasi-Newton'
+                Nonlinear CG Type: 'Hestenes-Stiefel'
+              Curvature Condition: 
+                Type: Strong Wolfe Conditions
+                General Parameter: 0.90000000
+                Generalized Wolfe Parameter: 0.60000000
+              'Line-Search Method': 
+                Type: Cubic Interpolation
+                Backtracking Rate: 0.50000000
+                Bracketing Tolerance: 1.00000000e-08
+                'Path-Based Target Level': 
+                  Target Relaxation Parameter: 1.00000000
+                  Upper Bound on Path Length: 1.00000000
+            Trust Region: 
+              Subproblem Solver: Truncated CG
+              Initial Radius: 10.00000000
+              Maximum Radius: 5000.00000000
+              Step Acceptance Threshold: 0.05000000
+              Radius Shrinking Threshold: 0.05000000
+              Radius Growing Threshold: 0.90000000
+              Radius Shrinking Rate (Negative rho): 0.06250000
+              Radius Shrinking Rate (Positive rho): 0.25000000
+              Radius Growing Rate: 2.50000000
+              Safeguard Size: 1.00000000e+08
+              Inexact: 
+                Value: 
+                  Tolerance Scaling: 0.10000000
+                  Exponent: 0.90000000
+                  Forcing Sequence Initial Value: 1.00000000
+                  Forcing Sequence Update Frequency: 10
+                  Forcing Sequence Reduction Factor: 0.10000000
+                Gradient: 
+                  Tolerance Scaling: 0.10000000
+                  Relative Tolerance: 2.00000000
+          Status Test: 
+            Gradient Tolerance: 1.00000000e-10
+            Constraint Tolerance: 1.00000000e-10
+            Step Tolerance: 1.00000000e-14
+            Iteration Limit: 1000
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000e-06
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-06
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 1
+                  Prec Type: Amesos
+                  Ifpack Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Method: Backtrack
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 3
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000e-12
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 50
+        Test 2: 
+          Test Type: FiniteValue
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

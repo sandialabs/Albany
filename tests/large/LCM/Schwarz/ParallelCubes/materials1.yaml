@@ -1,0 +1,18 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    coarse: 
+      material: Coarse
+  Materials: 
+    Coarse: 
+      Material Model: 
+        Model Name: Linear Elastic
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 2.00000000e+11
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.30000000
+      Output Cauchy Stress: true
+...

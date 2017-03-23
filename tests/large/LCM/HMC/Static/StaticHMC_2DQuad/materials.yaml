@@ -1,0 +1,24 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    Block_1: 
+      material: Microstructured Material
+  Materials: 
+    Microstructured Material: 
+      Material Model: 
+        Model Name: Linear HMC
+      C11: 1.00000000e+10
+      C33: 1.00000000e+10
+      C12: 6.00000000e+09
+      C23: 6.00000000e+09
+      C44: 4.00000000e+09
+      C66: 4.00000000e+09
+      Additional Scales: 2
+      Microscale 1: 
+        Length Scale: 0.00010000
+        Beta Constant: 0.30000000
+      Microscale 2: 
+        Length Scale: 0.01000000
+        Beta Constant: 0.10000000
+...

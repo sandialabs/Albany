@@ -12,24 +12,24 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
 
 # input files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Mechanics.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/Mechanics.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHydrogen.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHydrogen.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHydrogenV2.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHydrogenV2.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHelium.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHelium.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHeliumV2.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHeliumV2.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Mechanics.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/Mechanics.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHydrogen.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHydrogen.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHydrogenV2.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHydrogenV2.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHelium.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHelium.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsAndHeliumV2.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsAndHeliumV2.yaml COPYONLY)
 
 # material files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialsHe.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materialsHe.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialsHeV2.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materialsHeV2.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialsHe.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materialsHe.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialsHeV2.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materialsHeV2.yaml COPYONLY)
 
 # exodiff files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Mechanics.exodiff

@@ -5,22 +5,22 @@
 ##*****************************************************************//
 
 # Transient Heat test
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsTransientHeat2D.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsTransientHeat2D.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialsTransientHeat2D.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/materialsTransientHeat2D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsTransientHeat2D.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsTransientHeat2D.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialsTransientHeat2D.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/materialsTransientHeat2D.yaml COPYONLY)
 
 if (ALBANY_IFPACK2)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsTransientHeat2DT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsTransientHeat2DT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ThermalExpansionT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/ThermalExpansionT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/LinearThermalExpansionT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/LinearThermalExpansionT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/LinearThermalExpansionMaterials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/LinearThermalExpansionMaterials.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperatureT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsWithTemperatureT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsTransientHeat2DT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsTransientHeat2DT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ThermalExpansionT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/ThermalExpansionT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/LinearThermalExpansionT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/LinearThermalExpansionT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/LinearThermalExpansionMaterials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/LinearThermalExpansionMaterials.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperatureT.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsWithTemperatureT.yaml COPYONLY)
 endif()
 
 # Name the test with the directory name
@@ -28,43 +28,43 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 if (ALBANY_EPETRA) 
-add_test(${testName}TransientHeat2D ${Albany.exe} MechanicsTransientHeat2D.xml)
+add_test(${testName}TransientHeat2D ${Albany.exe} MechanicsTransientHeat2D.yaml)
 endif()
 
 if (ALBANY_IFPACK2) 
-    add_test(${testName}TransientHeat2D_Tpetra ${AlbanyT.exe} MechanicsTransientHeat2DT.xml)
-    add_test(${testName}LinearThermalExpansion_Tpetra ${AlbanyT.exe} LinearThermalExpansionT.xml)
+    add_test(${testName}TransientHeat2D_Tpetra ${AlbanyT.exe} MechanicsTransientHeat2DT.yaml)
+    add_test(${testName}LinearThermalExpansion_Tpetra ${AlbanyT.exe} LinearThermalExpansionT.yaml)
 endif()
 if (ALBANY_MUELU_EXAMPLES)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsTransientHeat2DT_MueLu.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsTransientHeat2DT_MueLu.xml COPYONLY)
-    add_test(${testName}TransientHeat2D_Tpetra_MueLu ${AlbanyT.exe} MechanicsTransientHeat2DT_MueLu.xml)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsTransientHeat2DT_MueLu.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsTransientHeat2DT_MueLu.yaml COPYONLY)
+    add_test(${testName}TransientHeat2D_Tpetra_MueLu ${AlbanyT.exe} MechanicsTransientHeat2DT_MueLu.yaml)
 endif()
 
 # Thermal Expansion test
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ThermalExpansion.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/ThermalExpansion.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ThermalExpansionMaterials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/ThermalExpansionMaterials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ThermalExpansion.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/ThermalExpansion.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ThermalExpansionMaterials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/ThermalExpansionMaterials.yaml COPYONLY)
 
 # Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 if (ALBANY_EPETRA) 
-add_test(${testName}ThermalExpansion ${Albany.exe} ThermalExpansion.xml)
+add_test(${testName}ThermalExpansion ${Albany.exe} ThermalExpansion.yaml)
 endif()
 
 # Coupled Plasticity
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperature.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsWithTemperature.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperatureMaterials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsWithTemperatureMaterials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperature.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsWithTemperature.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperatureMaterials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsWithTemperatureMaterials.yaml COPYONLY)
 
 # Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 if (ALBANY_EPETRA) 
-add_test(${testName} ${Albany.exe} MechanicsWithTemperature.xml)
+add_test(${testName} ${Albany.exe} MechanicsWithTemperature.yaml)
 endif()

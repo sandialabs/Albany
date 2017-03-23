@@ -1,0 +1,63 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    Block_1: 
+      material: '304-tube'
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000e+00
+      Volume Average Pressure: true
+    Block_2: 
+      material: '304-tube'
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000e+00
+      Volume Average Pressure: true
+    Block_4: 
+      material: '304-tube'
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000e+00
+      Volume Average Pressure: true
+    Block_3: 
+      material: '304-lid'
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000e+00
+      Volume Average Pressure: true
+    Block_5: 
+      material: '304-lid'
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000e+00
+      Volume Average Pressure: true
+  Materials: 
+    '304-tube': 
+      Material Model: 
+        Model Name: J2
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1.70300000e+11
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.32000000
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 8.29374000e+07
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 1.08782000e+09
+      Density: 7920.00000000
+    '304-lid': 
+      Material Model: 
+        Model Name: J2
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1.10300000e+11
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.32000000
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 8.80200000e+07
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 2.32800000e+08
+      Density: 7920.00000000
+...
