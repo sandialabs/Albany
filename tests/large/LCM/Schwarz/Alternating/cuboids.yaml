@@ -1,6 +1,10 @@
 ANONYMOUS:
   Alternating System:
     Model Input Files: [cuboid_00.yaml, cuboid_01.yaml]
+    Minimum Iterations: 1
+    Maximum Iterations: 16
+    Relative Tolerance: 1.0e-08
+    Absolute Tolerance: 1.0e-08
   # MODEL DECLARATION, Look in the Problem directory
   Problem:
     # Transient or Steady (Quasi-Static) or Continuation (load steps)

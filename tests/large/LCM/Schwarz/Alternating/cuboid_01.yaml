@@ -33,10 +33,7 @@ ANONYMOUS:
         BC Function: Schwarz
         Coupled Application: cuboid_00.yaml
         Coupled Block: fine
-      Time Dependent DBC on NS nodelist_6 for DOF Z:
-        Number of points: 2
-        Time Values: [0.0, 2.0]
-        BC Values: [0.0, 4.0]
+      DBC on NS nodelist_6 for DOF Z: 2.0
   # MESH, done here, or input from file.
   # If the latter, the domain decomposition 
   # must already be performed for parallel jobs.
