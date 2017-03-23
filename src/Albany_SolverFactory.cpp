@@ -824,12 +824,8 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   }
 
   if (solutionMethod == "Schwarz Alternating") {
-
-    RCP<LCM::SchwarzAlternating> const
-    schwarz_alt_model_and_solver =
+    return
         rcp(new LCM::SchwarzAlternating(appParams, solverComm, initial_guess));
-
-    return schwarz_alt_model_and_solver;
   }
 #endif /* LCM and Schwarz */
 

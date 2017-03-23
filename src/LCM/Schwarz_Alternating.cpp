@@ -19,8 +19,6 @@ SchwarzAlternating(
     Teuchos::RCP<Teuchos::Comm<int> const> const & comm,
     Teuchos::RCP<Tpetra_Vector const> const & initial_guess)
 {
-  comm_ = comm;
-
   Teuchos::ParameterList &
   alt_system_params = app_params->sublist("Alternating System");
 
@@ -29,14 +27,19 @@ SchwarzAlternating(
   model_filenames =
       alt_system_params.get<Teuchos::Array<std::string>>("Model Input Files");
 
+  min_iters_ = alt_system_params.get<int>("Minimum Iterations");
+  max_iters_ = alt_system_params.get<int>("Maximum Iterations");
+  rel_tol_ = alt_system_params.get<ST>("Relative Tolerance");
+  abs_tol_ = alt_system_params.get<ST>("Absolute Tolerance");
+
   //number of models
-  num_models_ = model_filenames.size();
+  num_subdomains_ = model_filenames.size();
 
   // Create application name-index map used for Schwarz BC.
   Teuchos::RCP<std::map<std::string, int>>
   app_name_index_map = Teuchos::rcp(new std::map<std::string, int>);
 
-  for (auto app_index = 0; app_index < num_models_; ++app_index) {
+  for (auto app_index = 0; app_index < num_subdomains_; ++app_index) {
 
     std::string const &
     app_name = model_filenames[app_index];
@@ -64,16 +67,16 @@ SchwarzAlternating(
   bool const
   have_responses = problem_params.isSublist("Response Functions");
 
-  ALBANY_ASSERT(have_responses == false, "No responses allowed.");
+  ALBANY_ASSERT(have_responses == false, "Responses not supported.");
 
   //
   //
   //
-  apps_.resize(num_models_);
-  solvers_.resize(num_models_);
+  apps_.resize(num_subdomains_);
+  solvers_.resize(num_subdomains_);
 
   //Set up each application and model object
-  for (auto m = 0; m < num_models_; ++m) {
+  for (auto m = 0; m < num_subdomains_; ++m) {
 
     //get parameterlist from mth model
     Albany::SolverFactory
@@ -108,6 +111,7 @@ SchwarzAlternating(
   nominal_values_ = this->createInArgsImpl();
   nominal_values_.set_x(Teuchos::null);
   nominal_values_.set_x_dot(Teuchos::null);
+  nominal_values_.set_x_dot_dot(Teuchos::null);
 }
 
 //
@@ -300,8 +304,8 @@ createInArgsImpl() const
   result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_beta, true);
   result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_W_x_dot_dot_coeff, true);
 
-  sub_inargs_.resize(num_models_);
-  for (auto m = 0; m < num_models_; ++m) {
+  sub_inargs_.resize(num_subdomains_);
+  for (auto m = 0; m < num_subdomains_; ++m) {
     sub_inargs_[m] = solvers_[m]->createInArgs();
   }
 
@@ -330,8 +334,8 @@ createOutArgsImpl() const
           Thyra::ModelEvaluatorBase::DERIV_RANK_FULL,
           true));
 
-  sub_outargs_.resize(num_models_);
-  for (auto m = 0; m < num_models_; ++m) {
+  sub_outargs_.resize(num_subdomains_);
+  for (auto m = 0; m < num_subdomains_; ++m) {
     sub_outargs_[m] = solvers_[m]->createOutArgs();
   }
 
@@ -344,16 +348,16 @@ createOutArgsImpl() const
 void
 SchwarzAlternating::
 evalModelImpl(
-    Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
-    Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
+    Thyra::ModelEvaluatorBase::InArgs<ST> const &,
+    Thyra::ModelEvaluatorBase::OutArgs<ST> const &) const
 {
-  SchwarzLoop(in_args, out_args);
+  SchwarzLoop();
   return;
 }
 
 //
-// Validate applicaton parameters of applications not created via a
-// SolverFactory Check usage and whether necessary.
+// Validate application parameters not created via a SolverFactory
+// Check usage and whether necessary.
 //
 Teuchos::RCP<Teuchos::ParameterList const>
 SchwarzAlternating::
@@ -361,10 +365,6 @@ getValidAppParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList>
   list = Teuchos::rcp(new Teuchos::ParameterList("ValidAppParams"));
-
-  list->sublist("Problem", false, "Problem sublist");
-  list->sublist("Debug Output", false, "Debug Output sublist");
-  list->sublist("Alternating System", false, "Alternating system sublist");
 
   return list;
 }
@@ -377,20 +377,7 @@ SchwarzAlternating::
 getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList>
-  list = Teuchos::createParameterList("ValidSchwarzAlternatingProblemParams");
-
-  list->set<std::string>("Name", "", "String to designate Problem Class");
-
-  list->set<int>(
-      "Phalanx Graph Visualization Detail",
-      0,
-      "Phalanx Graph and level of detail");
-
-  //FIXME: anything else to validate?
-  list->set<std::string>(
-      "Solution Method",
-      "Steady",
-      "Steady, Transient, or Continuation");
+  list = Teuchos::createParameterList("ValidProblemParams");
 
   return list;
 }
@@ -400,34 +387,20 @@ getValidProblemParameters() const
 //
 void
 SchwarzAlternating::
-SchwarzLoop(
-    Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
-    Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
+SchwarzLoop() const
 {
-  constexpr ST
-  abs_tol = 1.0e-12;
-
-  constexpr ST
-  rel_tol = 1.0e-12;
+  minitensor::Vector<ST>
+  norms_diff(num_subdomains_, minitensor::ZEROS);
 
   minitensor::Vector<ST>
-  norms_diff(num_models_, minitensor::ZEROS);
-
-  minitensor::Vector<ST>
-  norms_soln(num_models_, minitensor::ZEROS);
-
-  bool
-  converged{false};
+  norms_soln(num_subdomains_, minitensor::ZEROS);
 
   int const
-  max_iter = 64;
+  iter_limit = std::max(min_iters_, max_iters_);
 
-  int
-  num_iter = 0;
+  for (auto n = 0; n < iter_limit; ++n) {
 
-  while (converged == false) {
-
-    for (auto m = 0; m < num_models_; ++m) {
+    for (auto m = 0; m < num_subdomains_; ++m) {
 
       Thyra::ResponseOnlyModelEvaluatorBase<ST> &
       solver = *(solvers_[m]);
@@ -455,10 +428,6 @@ SchwarzLoop(
 
     ST const
     rel_error = norm_soln > 0.0 ? norm_diff / norm_soln : norm_diff;
-
-    ++num_iter;
-
-    converged = num_iter >= max_iter;
   }
 
   return;
