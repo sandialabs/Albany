@@ -29,14 +29,19 @@ SchwarzAlternating(
   model_filenames =
       alt_system_params.get<Teuchos::Array<std::string>>("Model Input Files");
 
+  min_iters_ = alt_system_params.get<int>("Minimum Iterations");
+  max_iters_ = alt_system_params.get<int>("Maximum Iterations");
+  rel_tol_ = alt_system_params.get<ST>("Relative Tolerance");
+  abs_tol_ = alt_system_params.get<ST>("Absolute Tolerance");
+
   //number of models
-  num_models_ = model_filenames.size();
+  num_subdomains_ = model_filenames.size();
 
   // Create application name-index map used for Schwarz BC.
   Teuchos::RCP<std::map<std::string, int>>
   app_name_index_map = Teuchos::rcp(new std::map<std::string, int>);
 
-  for (auto app_index = 0; app_index < num_models_; ++app_index) {
+  for (auto app_index = 0; app_index < num_subdomains_; ++app_index) {
 
     std::string const &
     app_name = model_filenames[app_index];
@@ -69,11 +74,11 @@ SchwarzAlternating(
   //
   //
   //
-  apps_.resize(num_models_);
-  solvers_.resize(num_models_);
+  apps_.resize(num_subdomains_);
+  solvers_.resize(num_subdomains_);
 
   //Set up each application and model object
-  for (auto m = 0; m < num_models_; ++m) {
+  for (auto m = 0; m < num_subdomains_; ++m) {
 
     //get parameterlist from mth model
     Albany::SolverFactory
@@ -300,8 +305,8 @@ createInArgsImpl() const
   result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_beta, true);
   result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_W_x_dot_dot_coeff, true);
 
-  sub_inargs_.resize(num_models_);
-  for (auto m = 0; m < num_models_; ++m) {
+  sub_inargs_.resize(num_subdomains_);
+  for (auto m = 0; m < num_subdomains_; ++m) {
     sub_inargs_[m] = solvers_[m]->createInArgs();
   }
 
@@ -330,8 +335,8 @@ createOutArgsImpl() const
           Thyra::ModelEvaluatorBase::DERIV_RANK_FULL,
           true));
 
-  sub_outargs_.resize(num_models_);
-  for (auto m = 0; m < num_models_; ++m) {
+  sub_outargs_.resize(num_subdomains_);
+  for (auto m = 0; m < num_subdomains_; ++m) {
     sub_outargs_[m] = solvers_[m]->createOutArgs();
   }
 
@@ -402,30 +407,18 @@ void
 SchwarzAlternating::
 SchwarzLoop() const
 {
-  constexpr ST
-  abs_tol = 1.0e-12;
-
-  constexpr ST
-  rel_tol = 1.0e-12;
+  minitensor::Vector<ST>
+  norms_diff(num_subdomains_, minitensor::ZEROS);
 
   minitensor::Vector<ST>
-  norms_diff(num_models_, minitensor::ZEROS);
-
-  minitensor::Vector<ST>
-  norms_soln(num_models_, minitensor::ZEROS);
-
-  bool
-  converged{false};
+  norms_soln(num_subdomains_, minitensor::ZEROS);
 
   int const
-  max_iter = 2;
+  iter_limit = std::max(min_iters_, max_iters_);
 
-  int
-  num_iter = 0;
+  for (auto n = 0; n < iter_limit; ++n) {
 
-  while (converged == false) {
-
-    for (auto m = 0; m < num_models_; ++m) {
+    for (auto m = 0; m < num_subdomains_; ++m) {
 
       Thyra::ResponseOnlyModelEvaluatorBase<ST> &
       solver = *(solvers_[m]);
@@ -453,10 +446,6 @@ SchwarzLoop() const
 
     ST const
     rel_error = norm_soln > 0.0 ? norm_diff / norm_soln : norm_diff;
-
-    ++num_iter;
-
-    converged = num_iter >= max_iter;
   }
 
   return;

@@ -122,14 +122,26 @@ private:
   apps_;
 
   Teuchos::RCP<Teuchos::Comm<int> const>
-  comm_;
+  comm_{Teuchos::null};
 
   /// Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
   Thyra::ModelEvaluatorBase::InArgs<ST>
   nominal_values_;
   
   int
-  num_models_;
+  num_subdomains_{0};
+
+  int
+  min_iters_{0};
+
+  int
+  max_iters_{0};
+
+  ST
+  rel_tol_{0.0};
+
+  ST
+  abs_tol_{0.0};
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST>>
   sub_inargs_;
