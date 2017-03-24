@@ -9,8 +9,8 @@ ANONYMOUS:
     Dirichlet BCs: 
       Time Dependent DBC on NS nodelist_1 for DOF X: 
         Number of points: 3
-        Time Values: [0.00000000e+00, 0.50000000, 1.00000000]
-        BC Values: [0.00000000e+00, 0.05000000, 0.10000000]
+        Time Values: [0.00000000e+00, 0.50000000, 1.10000000]
+        BC Values: [0.00000000e+00, 0.05000000, 0.11000000]
       DBC on NS nodelist_2 for DOF X: 0.00000000e+00
       DBC on NS nodelist_3 for DOF Z: 0.00000000e+00
       DBC on NS nodelist_4 for DOF Y: 0.00000000e+00
@@ -24,7 +24,7 @@ ANONYMOUS:
     Workset Size: 1
     Method: Exodus
     Exodus Input File Name: 2hex.g
-    Exodus Output File Name: 2hex.e
+    Exodus Output File Name: 2hex_tpetra.e
     Cubature Degree: 3
     Separate Evaluators by Element Block: true
   Regression Results: 
@@ -42,10 +42,12 @@ ANONYMOUS:
       Predictor: 
         Method: Tangent
       Stepper: 
+        Continuation Method: Natural
         Initial Value: 0.00000000e+00
         Continuation Parameter: Time
         Max Steps: 10
         Max Value: 1.00000000
+        Return Failed on Reaching Max Steps: false
         Min Value: 0.00000000e+00
         Compute Eigenvalues: false
         Eigensolver: 
@@ -87,12 +89,25 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: Ifpack
+              Preconditioner Type: Teko
               Preconditioner Types: 
-                Ifpack: 
+                Teko: 
+                  Inverse Type: Ifpack2
+                  Write Block Operator: false
+                  Test Block Operator: false
+                  Inverse Factory Library: 
+                    Iterative Preconditioner: 
+                      Type: Ifpack2
+                      Overlap: 2
+                      Prec Type: ILUT
+                      Ifpack2 Settings: 
+                        'fact: drop tolerance': 0.00000000e+00
+                        'fact: ilut level-of-fill': 1.00000000
+                        'fact: level-of-fill': 1
+                Ifpack2: 
                   Overlap: 2
-                  Prec Type: ILU
-                  Ifpack Settings: 
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: ilut level-of-fill': 1.00000000
                     'fact: level-of-fill': 1

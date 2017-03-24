@@ -26,7 +26,7 @@ ANONYMOUS:
     1D Elements: 50
     2D Elements: 50
     Method: STK2D
-    Exodus Output File Name: stel2d.exo
+    Exodus Output File Name: stel2d_tpetra.exo
   Regression Results: 
     Number of Comparisons: 0
     Test Values: [0.12500000]
@@ -77,12 +77,12 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: Ifpack
+              Preconditioner Type: Ifpack2
               Preconditioner Types: 
-                Ifpack: 
+                Ifpack2: 
                   Overlap: 2
-                  Prec Type: ILU
-                  Ifpack Settings: 
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: ilut level-of-fill': 1.00000000
                     'fact: level-of-fill': 0

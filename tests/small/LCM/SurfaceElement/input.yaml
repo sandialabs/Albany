@@ -9,8 +9,8 @@ ANONYMOUS:
     Dirichlet BCs: 
       Time Dependent DBC on NS nodelist_5 for DOF Y: 
         Number of points: 3
-        Time Values: [0.00000000e+00, 0.50000000, 1.00000000]
-        BC Values: [0.00000000e+00, 0.05000000, 0.10000000]
+        Time Values: [0.00000000e+00, 0.50000000, 1.10000000]
+        BC Values: [0.00000000e+00, 0.05000000, 0.11000000]
       DBC on NS nodelist_6 for DOF Y: 0.00000000e+00
       DBC on NS nodelist_1 for DOF X: 0.00000000e+00
       DBC on NS nodelist_4 for DOF Z: 0.00000000e+00
@@ -24,7 +24,7 @@ ANONYMOUS:
     Workset Size: 1
     Method: Exodus
     Exodus Input File Name: surface3ElemMesh.g
-    Exodus Output File Name: out.e
+    Exodus Output File Name: out_tpetra.e
     Cubature Degree: 3
     Separate Evaluators by Element Block: true
     Use Serial Mesh: true
@@ -88,12 +88,12 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: Ifpack
+              Preconditioner Type: Ifpack2
               Preconditioner Types: 
-                Ifpack: 
+                Ifpack2: 
                   Overlap: 2
-                  Prec Type: ILU
-                  Ifpack Settings: 
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: ilut level-of-fill': 1.00000000
                     'fact: level-of-fill': 1

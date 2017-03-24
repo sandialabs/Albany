@@ -80,28 +80,18 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: ML
+              Preconditioner Type: MueLu
               Preconditioner Types: 
-                ML: 
-                  Base Method Defaults: none
-                  ML Settings: 
-                    default values: SA
-                    'smoother: type': Chebyshev
-                    'smoother: pre or post': both
-                    'coarse: type': 'Amesos-KLU'
-                    'coarse: max size': 1000
-                    'repartition: enable': 1
-                    'repartition: partitioner': Zoltan
-                    'repartition: Zoltan dimensions': 3
-                    'repartition: max min ratio': 1.30000000
-                    'repartition: min per proc': 500
-                Ifpack: 
-                  Overlap: 2
-                  Prec Type: ILU
-                  Ifpack Settings: 
-                    'fact: drop tolerance': 0.00000000e+00
-                    'fact: ilut level-of-fill': 1.00000000
-                    'fact: level-of-fill': 1
+                MueLu: 
+                  multigrid algorithm: sa
+                  'smoother: type': Chebyshev
+                  'smoother: pre or post': both
+                  'coarse: type': 'Amesos-KLU'
+                  'coarse: max size': 1000
+                  'repartition: enable': true
+                  'repartition: partitioner': zoltan2
+                  'repartition: max imbalance': 1.30000000
+                  'repartition: min rows per proc': 500
       Line Search: 
         Full Step: 
           Full Step: 1.00000000

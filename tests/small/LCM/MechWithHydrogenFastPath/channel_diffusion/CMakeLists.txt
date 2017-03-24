@@ -1,4 +1,3 @@
-
 # Create a symbolic link for exodiff
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
                 ${SEACAS_EXODIFF} ${CMAKE_CURRENT_BINARY_DIR}/exodiff)

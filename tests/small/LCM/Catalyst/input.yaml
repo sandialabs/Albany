@@ -99,15 +99,14 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: Ifpack
+              Preconditioner Type: Ifpack2
               Preconditioner Types: 
-                Ifpack: 
-                  Overlap: 2
-                  Prec Type: ILU
-                  Ifpack Settings: 
+                Ifpack2: 
+                  Overlap: 1
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: ilut level-of-fill': 1.00000000
-                    'fact: level-of-fill': 1
       Line Search: 
         Full Step: 
           Full Step: 1.00000000

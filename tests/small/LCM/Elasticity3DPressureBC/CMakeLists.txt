@@ -1,12 +1,6 @@
-
-
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTransient.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputTransient.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cyl.exo
                ${CMAKE_CURRENT_BINARY_DIR}/cyl.exo COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cyl.exo.4.0
@@ -23,13 +17,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cyl.exo.4.3
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
-
-if (ALBANY_EPETRA) 
-add_test(${testName} ${Albany.exe})
-endif()
 if (ALBANY_IFPACK2)
   add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.yaml)
 endif ()
-if (ALBANY_EPETRA) 
-add_test(${testName}_Transient ${Albany.exe} inputTransient.yaml)
-endif()

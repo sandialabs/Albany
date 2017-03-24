@@ -35,7 +35,7 @@ ANONYMOUS:
   Discretization: 
     Method: Exodus
     Exodus Input File Name: K_field.g
-    Exodus Output File Name: K_field.e
+    Exodus Output File Name: K_field_tpetra.e
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [0.00001990]
@@ -54,6 +54,8 @@ ANONYMOUS:
         Max Steps: 4
         Max Value: 1.00000000
         Min Value: 0.00000000e+00
+        Return Failed on Reaching Max Steps: false
+        Hit Continuation Bound: false
         Compute Eigenvalues: false
         Eigensolver: 
           Method: Anasazi

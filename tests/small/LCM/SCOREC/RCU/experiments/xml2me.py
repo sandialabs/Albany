@@ -1,8 +1,8 @@
 #!/usr/bin/python
-# Read an Albany.yaml file and output the equivalent me.yaml .cpp file.
+# Read an Albany xml file and output the equivalent me2xml .cpp file.
 
 import sys, re, glob
-import.yaml.etree.ElementTree as et
+import xml.etree.ElementTree as et
 
 def translate (root, fd, indent):
     if root.tag == 'ParameterList':
@@ -42,16 +42,16 @@ def translate (root, fd, indent):
             fd.write('p("{0}", "{1}", "{2}");\n'.format(
                 root.attrib['name'], root.attrib['type'], root.attrib['value']))
          
-def.yaml2me (fn):
+def xml2me (fn):
     print fn
     fd = open(fn + '.cpp', 'a') # Append to be safe.
     fd.write('//bld g++ -g -I ~/code/util {0}.cpp\n\n'.format(fn) +
-             '#include "me.yaml.hpp"\n\n' +
-             'void.yaml () {\n')
-    root = et.parse(fn + '.yaml').getroot()
+             '#include "me2xml.hpp"\n\n' +
+             'void xml () {\n')
+    root = et.parse(fn + '.xml').getroot()
     translate(root, fd, 2)
     fd.write('}\n');
     fd.close()
 
 if __name__ == '__main__':
-    for a in sys.argv[1:]:.yaml2me(a)
+    for a in sys.argv[1:]: xml2me(a)

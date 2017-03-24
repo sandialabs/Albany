@@ -5,8 +5,6 @@ IF((NOT ALBANY_PARALLEL_ONLY) AND SEACAS_EPU AND SEACAS_EXODIFF)
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
 
 # 2. Copy mesh files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/hole.exo
@@ -45,26 +43,14 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 6. Run the "runtest.cmake" file in the CWD
 
-if (ALBANY_EPETRA) 
-if (ALBANY_DTK) 
-add_test(NAME ${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
-  -DTEST_NAME=${testName} -DMPIMNP=${MPIMNP} -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} -P runtest_dtk.cmake)
-else()
-add_test(NAME ${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
-  -DTEST_NAME=${testName} -DMPIMNP=${MPIMNP} -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} -P runtest.cmake)
-endif()
-endif()
-
-# 6i'. Run the "runtest.cmake" file in the CWD
-
 if (ALBANY_IFPACK2)
 if (ALBANY_DTK)
-add_test(NAME ${testName}_Tpetra COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe};inputT.yaml"
-  -DTEST_NAME=${testName}_Tpetra -DMPIMNP=${MPIMNP} -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} -DOUTFILE_SUFFIX=_tpetra
+add_test(NAME ${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe};inputT.yaml"
+  -DTEST_NAME=${testName} -DMPIMNP=${MPIMNP} -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
   -P runtest_dtk.cmake)
 else() 
-add_test(NAME ${testName}_Tpetra COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe};inputT.yaml"
-  -DTEST_NAME=${testName}_Tpetra -DMPIMNP=${MPIMNP} -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} -DOUTFILE_SUFFIX=_tpetra
+add_test(NAME ${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe};inputT.yaml"
+  -DTEST_NAME=${testName} -DMPIMNP=${MPIMNP} -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
   -P runtest.cmake)
 endif()
 endif()

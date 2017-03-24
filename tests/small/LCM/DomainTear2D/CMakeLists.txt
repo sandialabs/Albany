@@ -1,10 +1,6 @@
-
-
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputBase.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/inputBase.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputBaseT.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputBaseT.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputCR.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/inputCR.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTM.yaml
@@ -18,10 +14,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.yaml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
-if (ALBANY_EPETRA) 
-add_test(${testName}_BaseProblem ${Albany.exe} inputBase.yaml)
-endif()
-add_test(${testName}_BaseProblem_Tpetra ${AlbanyT.exe} inputBaseT.yaml)
+add_test(${testName}_BaseProblem_Tpetra ${AlbanyT.exe} inputBase.yaml)
 add_test(${testName}_CopyRemesh_Tpetra ${AlbanyT.exe} inputCR.yaml)
 
 IF (ALBANY_LCM)

@@ -27,7 +27,7 @@ ANONYMOUS:
   Discretization: 
     Method: Ioss
     Exodus Input File Name: boreMesh.exo
-    Exodus Output File Name: boreOut.exo
+    Exodus Output File Name: boreOut_tpetra.exo
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [0.58953013]
@@ -78,14 +78,14 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: Ifpack
+              Preconditioner Type: Ifpack2
               Preconditioner Types: 
-                Ifpack: 
+                Ifpack2: 
                   Overlap: 1
-                  Prec Type: ILU
-                  Ifpack Settings: 
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
                     'fact: drop tolerance': 0.00000000e+00
-                    'fact: level-of-fill': 0
+                    'fact: ilut level-of-fill': 1.00000000
       Line Search: 
         Full Step: 
           Full Step: 1.00000000

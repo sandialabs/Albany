@@ -28,12 +28,12 @@ ANONYMOUS:
     2D Elements: 50
     Method: STK2D
     Cell Topology: Tri
-    Exodus Output File Name: eltri2d.exo
+    Exodus Output File Name: eltri2d_tpetra.exo
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [0.00000000e+00]
     Relative Tolerance: 0.00010000
-    Absolute Tolerance: 1.00000000e-08
+    Absolute Tolerance: 1.00000000e-07
     Number of Sensitivity Comparisons: 1
     Sensitivity Test Values 0: [0.25000000, 0.25000000]
   Piro: 
@@ -78,12 +78,12 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: Ifpack
+              Preconditioner Type: Ifpack2
               Preconditioner Types: 
-                Ifpack: 
+                Ifpack2: 
                   Overlap: 2
-                  Prec Type: ILU
-                  Ifpack Settings: 
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: ilut level-of-fill': 1.00000000
                     'fact: level-of-fill': 2

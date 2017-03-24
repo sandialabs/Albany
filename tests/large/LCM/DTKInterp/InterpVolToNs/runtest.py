@@ -20,7 +20,7 @@ logfile = open(log_file_name, 'w')
 
 
 # run DTK_Interp_and_Error 
-command = ["mpirun", "-np", "4", "DTK_Interp_Volume_to_NS", "-.yaml-in-file=input_schwarz.yaml"]
+command = ["mpirun", "-np", "4", "DTK_Interp_Volume_to_NS", "--xml-in-file=input_schwarz.yaml"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:

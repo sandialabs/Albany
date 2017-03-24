@@ -21,7 +21,7 @@ ANONYMOUS:
     2D Elements: 4
     Workset Size: 300
     Method: STK2D
-    Exodus Output File Name: quad2d.e
+    Exodus Output File Name: quad2d_tpetra.e
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [0.00509341]
@@ -82,12 +82,12 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: Ifpack
+              Preconditioner Type: Ifpack2
               Preconditioner Types: 
-                Ifpack: 
+                Ifpack2: 
                   Overlap: 2
-                  Prec Type: ILU
-                  Ifpack Settings: 
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: ilut level-of-fill': 1.00000000
                     'fact: level-of-fill': 1
