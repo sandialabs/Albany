@@ -33,7 +33,6 @@ ANONYMOUS:
       Method: Topmod
       Remesh Step Number: [5]
       Fracture Stress: 0.02000000
-      Print Relaxation Solution: true
   Discretization: 
     Method: Ioss
     Exodus Input File Name: rip.exo

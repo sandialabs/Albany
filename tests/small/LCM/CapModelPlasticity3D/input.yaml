@@ -52,7 +52,7 @@ ANONYMOUS:
     3D Elements: 2
     Method: STK3D
     Interleaved Ordering: true
-    Exodus Output File Name: stel3d.exo
+    Exodus Output File Name: stel3d_tpetra.exo
   Regression Results: 
     Number of Comparisons: 0
     Test Values: [0.16666667]
@@ -76,6 +76,7 @@ ANONYMOUS:
         Continuation Parameter: DBC on NS NodeSet1 for DOF X
         Max Steps: 80
         Max Value: 0.00000000e+00
+        Return Failed on Reaching Max Steps: false
         Min Value: -4.00000000e-02
         Compute Eigenvalues: false
         Eigensolver: 
@@ -114,12 +115,12 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: Ifpack
+              Preconditioner Type: Ifpack2
               Preconditioner Types: 
-                Ifpack: 
+                Ifpack2: 
                   Overlap: 2
-                  Prec Type: ILU
-                  Ifpack Settings: 
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: ilut level-of-fill': 1.00000000
                     'fact: level-of-fill': 1
