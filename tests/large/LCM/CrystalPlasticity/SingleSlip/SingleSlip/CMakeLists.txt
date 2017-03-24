@@ -5,9 +5,6 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 
 # Copy Input files from source to binary dir
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip.g
-               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip.g COPYONLY)
-
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip_Implicit.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip_Implicit.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip_Implicit_Material.yaml
@@ -25,11 +22,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip_Explicit.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip_Explicit.exodiff COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip_Explicit.gold.exo
                ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip_Explicit.gold.exo COPYONLY)
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/PostProcess.py
-               ${CMAKE_CURRENT_BINARY_DIR}/PostProcess.py COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip.gnuplot
-               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip.gnuplot COPYONLY)
 
 # Add the tests
 if(ALBANY_IFPACK2)
