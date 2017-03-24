@@ -6,7 +6,7 @@
 #             Run on    2015/03/18   10:53:52 PDT
 #  *****************************************************************
 
-#  FILE 1: /home/jwfoulk/LCM/Albany/examples/LCM/SurfaceElementOrtiz/out-tpetra.e.gold
+#  FILE 1: /home/jwfoulk/LCM/Albany/examples/LCM/SurfaceElementOrtiz/out.e.gold
 #   Title: Sierra Output Default Title
 #          Dim = 3, Blocks = 1, Nodes = 8, Elements = 1, Nodesets = 10, Sidesets = 1
 #          Vars: Global = 0, Nodal = 6, Element = 32, Nodeset = 0, Sideset = 0, Times = 151

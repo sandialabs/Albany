@@ -9,8 +9,8 @@ ANONYMOUS:
     Dirichlet BCs: 
       Time Dependent DBC on NS nodelist_6 for DOF Y: 
         Number of points: 3
-        Time Values: [0.00000000e+00, 0.20000000, 0.40000000, 0.60000000, 1.00000000]
-        BC Values: [0.00000000e+00, 0.01000000, -1.00000000e-02, 0.01000000, 0.10100000]
+        Time Values: [0.00000000e+00, 0.20000000, 0.40000000, 0.60000000, 1.00000000, 2.00000000]
+        BC Values: [0.00000000e+00, 0.01000000, -1.00000000e-02, 0.01000000, 0.10000000, 0.15000000]
       DBC on NS nodelist_5 for DOF Y: 0.00000000e+00
       DBC on NS nodelist_1 for DOF X: 0.00000000e+00
       DBC on NS nodelist_2 for DOF Z: 0.00000000e+00
@@ -25,7 +25,7 @@ ANONYMOUS:
   Discretization: 
     Method: Exodus
     Exodus Input File Name: surface1ElemMesh.g
-    Exodus Output File Name: out.e
+    Exodus Output File Name: 'out.e'
     Cubature Degree: 3
     Solution Vector Components: [disp, V]
     Residual Vector Components: [force, V]
@@ -36,12 +36,14 @@ ANONYMOUS:
       Bifurcation: { }
       Constraints: { }
       Predictor: 
-        Method: Tangent
+        Method: Constant
       Stepper: 
+        Continuation Method: Natural
         Initial Value: 0.00000000e+00
         Continuation Parameter: Time
-        Max Steps: 100
-        Max Value: 1.00000000
+        Max Steps: 5000
+        Max Value: 1.50000000
+        Return Failed on Reaching Max Steps: false
         Min Value: 0.00000000e+00
         Compute Eigenvalues: false
         Eigensolver: 
@@ -83,12 +85,12 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: Ifpack
+              Preconditioner Type: Ifpack2
               Preconditioner Types: 
-                Ifpack: 
+                Ifpack2: 
                   Overlap: 2
-                  Prec Type: ILU
-                  Ifpack Settings: 
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: ilut level-of-fill': 1.00000000
                     'fact: level-of-fill': 1

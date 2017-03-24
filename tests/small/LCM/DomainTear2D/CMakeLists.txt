@@ -14,8 +14,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.yaml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
-add_test(${testName}_BaseProblem_Tpetra ${AlbanyT.exe} inputBase.yaml)
-add_test(${testName}_CopyRemesh_Tpetra ${AlbanyT.exe} inputCR.yaml)
+add_test(${testName}_BaseProblem ${AlbanyT.exe} inputBase.yaml)
+add_test(${testName}_CopyRemesh ${AlbanyT.exe} inputCR.yaml)
 
 IF (ALBANY_LCM)
 #add_test(${testName}_TopMod ${Albany.exe} inputTM.yaml)

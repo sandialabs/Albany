@@ -12,8 +12,8 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
 
 # input files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/input.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface1ElemMesh.g
                ${CMAKE_CURRENT_BINARY_DIR}/surface1ElemMesh.g COPYONLY)
 
@@ -22,22 +22,22 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/1material.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/1material.yaml COPYONLY)
 
 # exodiff files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/out-tpetra.exodiff
-               ${CMAKE_CURRENT_BINARY_DIR}/out-tpetra.exodiff COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/out.exodiff
+               ${CMAKE_CURRENT_BINARY_DIR}/out.exodiff COPYONLY)
 
 # gold files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/out-tpetra.e.gold
-               ${CMAKE_CURRENT_BINARY_DIR}/out-tpetra.e.gold COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/out.e.gold
+               ${CMAKE_CURRENT_BINARY_DIR}/out.e.gold COPYONLY)
 
 # python runtest file
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
-               ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
+               ${CMAKE_CURRENT_BINARY_DIR}/runtest.py COPYONLY)
 
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
-  add_test(NAME ${testName} COMMAND "python" "runtestT.py")
+  add_test(NAME ${testName} COMMAND "python" "runtest.py")
 ENDIF()
 endif()
