@@ -108,7 +108,7 @@ computeRateSlip(
   if (ratio_stress > max_tol)
   {
     failed = true;
-    std::cout << "Failed on flow: " << ratio_stress << std::endl;
+    //std::cout << "Failed on flow: " << ratio_stress << std::endl;
     return max_tol;
   }
 

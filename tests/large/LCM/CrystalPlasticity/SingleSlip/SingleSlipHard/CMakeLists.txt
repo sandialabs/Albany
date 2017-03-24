@@ -5,9 +5,6 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 
 # Copy Input files from source to binary dir
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlip.g
-               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlip.g COPYONLY)
-
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipHard_Implicit.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipHard_Implicit.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipHard_Material_Implicit.yaml

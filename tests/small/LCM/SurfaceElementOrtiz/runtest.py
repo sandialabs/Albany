@@ -11,7 +11,7 @@ result = 0
 # Test 1 - HeBubbles
 ######################
 print "test 1 - loading, unloading, and failure"
-name = "inputT"
+name = "input"
 log_file_name = name + ".log"
 if os.path.exists(log_file_name):
     os.remove(log_file_name)
@@ -26,9 +26,9 @@ if return_code != 0:
 
 # run exodiff"
 command = ["./exodiff", "-file", \
-           "out-tpetra.exodiff", \
-           "out-tpetra.e.gold", \
-           "out-tpetra.e"]
+           "out.exodiff", \
+           "out.e.gold", \
+           "out.e"]
 p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:

@@ -29,12 +29,13 @@ ANONYMOUS:
       Response 0: Solution Average
   Discretization: 
     Method: Exodus
-    Exodus Input File Name: SingleSlip.g
+    Exodus Input File Name: ../SingleSlip.g
     Exodus Output File Name: SingleSlipHard_Explicit.exo
     Cubature Degree: 2
     Separate Evaluators by Element Block: true
     Solution Vector Components: [displacement, V]
     Residual Vector Components: [force, V]
+    Exodus Write Interval: 10
   Piro: 
     LOCA: 
       Bifurcation: { }

@@ -38,7 +38,7 @@ ANONYMOUS:
         Slip Normal: [0.00000000e+00, 1.00000000, 0.00000000e+00]
       Output Cauchy Stress: true
       Output Fp: true
-      Output L: true
+      Output Lp: true
       Output gamma_1: true
       Output tau_hard_1: true
       Output tau_1: true
@@ -73,7 +73,7 @@ ANONYMOUS:
         Slip Normal: [0.00000000e+00, 1.00000000, 0.00000000e+00]
       Output Cauchy Stress: true
       Output Fp: true
-      Output L: true
+      Output Lp: true
       Output gamma_1: true
       Output tau_hard_1: true
       Output tau_1: true

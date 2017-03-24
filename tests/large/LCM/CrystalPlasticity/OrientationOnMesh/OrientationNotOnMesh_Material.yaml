@@ -47,7 +47,7 @@ ANONYMOUS:
       Output Cauchy Stress: true
       Output Fp: true
       Output Deformation Gradient: true
-      Output L: true
+      Output Lp: true
       Output CP_Residual: true
       Output CP_Residual_Iter: true
       Output eqps: true
@@ -165,7 +165,7 @@ ANONYMOUS:
       Output Cauchy Stress: true
       Output Fp: true
       Output Deformation Gradient: true
-      Output L: true
+      Output Lp: true
       Output CP_Residual: true
       Output CP_Residual_Iter: true
       Output eqps: true
@@ -283,7 +283,7 @@ ANONYMOUS:
       Output Cauchy Stress: true
       Output Fp: true
       Output Deformation Gradient: true
-      Output L: true
+      Output Lp: true
       Output CP_Residual: true
       Output CP_Residual_Iter: true
       Output eqps: true
@@ -401,7 +401,7 @@ ANONYMOUS:
       Output Cauchy Stress: true
       Output Fp: true
       Output Deformation Gradient: true
-      Output L: true
+      Output Lp: true
       Output CP_Residual: true
       Output CP_Residual_Iter: true
       Output eqps: true
@@ -519,7 +519,7 @@ ANONYMOUS:
       Output Cauchy Stress: true
       Output Fp: true
       Output Deformation Gradient: true
-      Output L: true
+      Output Lp: true
       Output CP_Residual: true
       Output CP_Residual_Iter: true
       Output eqps: true
@@ -637,7 +637,7 @@ ANONYMOUS:
       Output Cauchy Stress: true
       Output Fp: true
       Output Deformation Gradient: true
-      Output L: true
+      Output Lp: true
       Output CP_Residual: true
       Output CP_Residual_Iter: true
       Output eqps: true
@@ -755,7 +755,7 @@ ANONYMOUS:
       Output Cauchy Stress: true
       Output Fp: true
       Output Deformation Gradient: true
-      Output L: true
+      Output Lp: true
       Output CP_Residual: true
       Output CP_Residual_Iter: true
       Output eqps: true
@@ -873,7 +873,7 @@ ANONYMOUS:
       Output Cauchy Stress: true
       Output Fp: true
       Output Deformation Gradient: true
-      Output L: true
+      Output Lp: true
       Output CP_Residual: true
       Output CP_Residual_Iter: true
       Output eqps: true

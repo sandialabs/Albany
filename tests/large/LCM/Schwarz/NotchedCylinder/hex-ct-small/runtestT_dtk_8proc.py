@@ -21,7 +21,7 @@ logfile = open(log_file_name, 'w')
 #specify tolerance to determine test failure / passing
 tolerance = 1.0e-6; 
 #meanvalue = 0.000341851470936; #meanvalue for 10 LOCA steps
-meanvalue = 8.76804336543e-05;
+meanvalue = 2.05743317057e-05;
 
 # run AlbanyT 
 command = ["mpirun", "-np", "8", "./AlbanyT", "notched-cylinder-S-ctest.yaml"]

@@ -3,7 +3,7 @@ import exodus
 import numpy
 import matplotlib.pyplot as plt
 
-file_name = "out-tpetra.e"
+file_name = "out.e"
 exo_file = exodus.exodus(file_name,"r")
 inp_var_name = "Normal_Jump_1"
 dep_var_name = "Normal_Traction_1"

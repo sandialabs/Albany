@@ -29,7 +29,7 @@ ANONYMOUS:
       Response 0: Solution Average
   Discretization: 
     Method: Exodus
-    Exodus Input File Name: SingleSlip.g
+    Exodus Input File Name: ../SingleSlip.g
     Exodus Output File Name: SingleSlipHard_Implicit.exo
     Cubature Degree: 2
     Separate Evaluators by Element Block: true

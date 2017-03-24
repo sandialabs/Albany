@@ -56,6 +56,7 @@ ANONYMOUS:
         Continuation Parameter: Time
         Max Steps: 10
         Max Value: 1.00000000
+        Return Failed on Reaching Max Steps: false
         Min Value: 0.00000000e+00
         Compute Eigenvalues: false
         Eigensolver: 
@@ -97,7 +98,7 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 1000
                       Flexible Gmres: false
-              Preconditioner Type: Ifpack
+              Preconditioner Type: Ifpack2
               Preconditioner Types: 
                 ML: 
                   Base Method Defaults: SA
@@ -106,13 +107,12 @@ ANONYMOUS:
                     'aggregation: local aggregates': 4
                     'aggregation: nodes per aggregate': 27
                     'coarse: max size': 220
-                Ifpack: 
+                Ifpack2: 
                   Overlap: 2
-                  Prec Type: ILU
-                  Ifpack Settings: 
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: ilut level-of-fill': 1.00000000
-                    'fact: level-of-fill': 1
       Line Search: 
         Full Step: 
           Full Step: 1.00000000

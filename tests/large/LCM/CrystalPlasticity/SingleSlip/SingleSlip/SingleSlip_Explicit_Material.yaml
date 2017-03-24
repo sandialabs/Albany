@@ -33,7 +33,7 @@ ANONYMOUS:
         Slip Normal: [0.00000000e+00, 1.00000000, 0.00000000e+00]
       Output Cauchy Stress: true
       Output Fp: true
-      Output L: true
+      Output Lp: true
       Output Mechanical Source: true
       Output CP_Residual: true
     Forty Five Degree Rotated Lattice: 
@@ -62,7 +62,7 @@ ANONYMOUS:
         Slip Normal: [0.00000000e+00, 1.00000000, 0.00000000e+00]
       Output Cauchy Stress: true
       Output Fp: true
-      Output L: true
+      Output Lp: true
       Output Mechanical Source: true
       Output CP_Residual: true
 ...

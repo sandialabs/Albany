@@ -31,7 +31,6 @@ ANONYMOUS:
     Adaptation: 
       Method: Copy Remesh
       Remesh Step Number: [5]
-      Print Relaxation Solution: true
   Discretization: 
     Method: Ioss
     Exodus Input File Name: rip.exo
