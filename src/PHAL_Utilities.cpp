@@ -57,6 +57,9 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
     {
       return 1;
     }
+    if (problemName == "Aeras Shallow Water No AD 3D") {
+      return 1; 
+    }
 #endif
    }
    return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(

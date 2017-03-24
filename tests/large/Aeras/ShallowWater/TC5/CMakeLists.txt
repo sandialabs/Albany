@@ -18,6 +18,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_implicitHV_BE_nu8e15_vort_T.xml
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_implicitHV_BE_nu8e15_novort_T.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_implicitHV_BE_nu8e15_novort_T.xml COPYONLY)  
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_RK4_noAD_T.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_RK4_noAD_T.xml COPYONLY)  
                
 #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_hv_T.xml
 #               ${CMAKE_CURRENT_BINARY_DIR}/input_hv_T.xml COPYONLY)               
@@ -39,6 +41,7 @@ add_test(Aeras_${testName}_explicitHV_nu8e15_vort_BackwardEuler ${AlbanyT.exe} i
 add_test(Aeras_${testName}_explicitHV_nu8e15_novort_BackwardEuler ${AlbanyT.exe} input_explicitHV_BE_nu8e15_novort_T.xml)
 
 add_test(Aeras_${testName}_explicitHV_nu8e15_novort_RungeKutta4 ${AlbanyT.exe} input_explicitHV_RK4_nu8e15_novort_T.xml)
+add_test(Aeras_${testName}_noAD_RungeKutta4 ${AlbanyT.exe} input_RK4_noAD_T.xml)
 
 add_test(Aeras_${testName}_implicitHV_nu8e15_vort_BackwardEuler ${AlbanyT.exe} input_implicitHV_BE_nu8e15_vort_T.xml)
 add_test(Aeras_${testName}_implicitHV_nu8e15_novort_BackwardEuler ${AlbanyT.exe} input_implicitHV_BE_nu8e15_novort_T.xml)
