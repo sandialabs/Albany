@@ -156,6 +156,10 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_FIND_SHARED_LIBS:BOOL=ON \
       -D MPI_EXEC=mpiexec \
       -D Intrepid2_ENABLE_KokkosDynRankView:BOOL=ON \
+\
+      -D TPL_ENABLE_yaml-cpp:BOOL=ON \
+      -D yaml-cpp_INCLUDE_DIRS:PATH="/home/ikalash/Downloads/yaml-cpp/include" \
+      -D yaml-cpp_LIBRARY_DIRS:PATH="/home/ikalash/Install/yaml-cpp" \
        ..
 
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \
