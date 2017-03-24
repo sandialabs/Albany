@@ -15,7 +15,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${testName}.gen.4.3  ${CMAKE_CURRENT_
 
 # Create the test with this name and standard executable
 add_test(NAME HMC:${testName} 
-         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
+         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
          -DTEST_NAME=${testName} -DTEST_ARGS= -DMPIMNP=${MPIMNP} 
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)

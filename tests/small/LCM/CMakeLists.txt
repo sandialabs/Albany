@@ -41,7 +41,8 @@ IF(ALBANY_SEACAS)
 ENDIF(ALBANY_SEACAS)
 ENDIF(ALBANY_HAVE_STK)
 
-add_subdirectory(Catalyst)
+# amota: Deactivating Catalyst as unclear who owns it
+# add_subdirectory(Catalyst)
 add_subdirectory(DomainTear2D)
 add_subdirectory(RandomFracture3D)
 add_subdirectory(CapModelPlasticity3D)
