@@ -9,6 +9,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2hex.g
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
+IF(NOT ALBANY_PARALLEL_ONLY)
+  if (ALBANY_IFPACK2) 
+    add_test(${testName}_SERIAL ${SerialAlbanyT.exe} input.yaml)
+  endif()
+ENDIF() 
+
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputParallel.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/inputParallel.yaml COPYONLY)
