@@ -30,7 +30,7 @@ ANONYMOUS:
         Hit Continuation Bound: false
       Step Size: 
         Method: Adaptive
-        Initial Step Size: 2.00000000
+        Initial Step Size: 1.00000000
         Max Step Size: 2.00000000
         Min Step Size: 0.00100000
         Failed Step Reduction Factor: 0.50000000

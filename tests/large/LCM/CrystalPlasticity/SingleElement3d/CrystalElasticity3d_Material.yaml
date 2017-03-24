@@ -17,6 +17,6 @@ ANONYMOUS:
         Basis Vector 3: [0.00000000e+00, 0.00000000e+00, 1.00000000]
       Output Cauchy Stress: true
       Output Fp: true
-      Output L: true
+      Output Lp: true
       Output Mechanical Source: true
 ...

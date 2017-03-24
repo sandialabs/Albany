@@ -112,7 +112,7 @@ ANONYMOUS:
       Output Cauchy Stress: true
       Output Deformation Gradient: true
       Output Fp: true
-      Output L: true
+      Output Lp: true
       Output eqps: true
       Output gamma_1: true
       Output gamma_2: true

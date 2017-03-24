@@ -36,7 +36,7 @@ ANONYMOUS:
         Slip Family: 0
       Output Cauchy Stress: true
       Output Fp: true
-      Output L: true
+      Output Lp: true
       Output Mechanical Source: true
       Output Deformation Gradient: true
       Output Integration Weights: true

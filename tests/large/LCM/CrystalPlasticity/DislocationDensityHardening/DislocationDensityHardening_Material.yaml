@@ -33,16 +33,20 @@ ANONYMOUS:
         Hardening Law: 
           Type: Dislocation Density
           Geometric Factor: 0.40000000
+#         Units of Initial Hardening State must be consistent with
+#           units of Burgers Vector Magnitude
+#           1/m^2: 8e13, 1/mm^2: 8e7, 1/um^2: 8e1
           Initial Hardening State: 80.00000000
           Generation Factor: 5000.00000000
           Annihilation Factor: 500.00000000
+#         Units of Shear Modulus must be consistent with units of
+#           elastic constants C11, C12, C44
+#           N/mm^2 (MPa): 7.07e+04
           Shear Modulus: 70700.00000000
+#         Units of Burgers Vector Magnitude must be consistent with
+#           units of Initial Hardening State
+#           m:  2.87e-10, mm: 2.87e-7, um: 2.87e-4
           Burgers Vector Magnitude: 0.00028700
-      Exponential Hardening: 
-        Type: Exponential
-        Hardening: 355.00000000
-        Hardening Exponent: 2.90000000
-        Tau Critical: 122.00000000
       Number of Slip Systems: 12
       Slip System 1: 
         Slip Direction: [-1.00000000e+00, 1.00000000, 0.00000000e+00]
@@ -83,7 +87,7 @@ ANONYMOUS:
       Output Cauchy Stress: true
       Output Deformation Gradient: true
       Output Fp: true
-      Output L: true
+      Output Lp: true
       Output eqps: true
       Output gamma_1: true
       Output gamma_2: true
