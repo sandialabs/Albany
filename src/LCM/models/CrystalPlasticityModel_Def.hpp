@@ -483,6 +483,9 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   utility::StaticAllocator 
   allocator(1024 * 1024);
 
+  // Resest status message for model failure test
+  nox_status_test_->status_message_ = "";
+
   //
   // Known quantities
   //
