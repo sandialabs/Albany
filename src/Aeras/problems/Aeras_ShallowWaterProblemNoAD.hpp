@@ -123,8 +123,8 @@ Aeras::ShallowWaterProblemNoAD::constructEvaluators(
   using std::map;
   using PHAL::AlbanyTraits;
   
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+//  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+//  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   
   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
     intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);

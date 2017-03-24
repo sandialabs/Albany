@@ -35,7 +35,8 @@ ShallowWaterProblemNoAD( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   bool usePrescribedVelocity = params_->sublist("Shallow Water Problem").get<bool>("Use Prescribed Velocity", false); 
   bool plotVorticity = params_->sublist("Shallow Water Problem").get<bool>("Plot Vorticity", false); 
 
-  TEUCHOS_TEST_FOR_EXCEPTION( useExplHyperviscosity && useImplHyperviscosity ,std::logic_error,"Use only explicit or implicit hyperviscosity, not both.");
+  TEUCHOS_TEST_FOR_EXCEPTION( useExplHyperviscosity || useImplHyperviscosity ,std::logic_error,"Shallow Water No AD 3D problem " <<
+                              "does not work with hyperviscosity!\n");
 
 
   if (useImplHyperviscosity) {
@@ -149,8 +150,8 @@ ShallowWaterProblemNoAD::constructEvaluators<PHAL::AlbanyTraits::Jacobian>(
   using PHAL::AlbanyTraits;
   typedef PHAL::AlbanyTraits::Jacobian EvalT; 
   
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-  *out << "Aeras::ShallowWaterProblemNoAD Jacobian specialization of constructEvaluators" << std::endl;
+//  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+//  *out << "Aeras::ShallowWaterProblemNoAD Jacobian specialization of constructEvaluators" << std::endl;
   
   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
     intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);

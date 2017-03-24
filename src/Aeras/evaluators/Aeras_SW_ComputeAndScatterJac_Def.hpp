@@ -27,14 +27,11 @@ SW_ComputeAndScatterJacBase(const Teuchos::ParameterList& p,
   worksetSize(dl->node_scalar             ->dimension(0)),
   numNodes   (dl->node_scalar             ->dimension(1)),
   numDims    (dl->node_qp_gradient        ->dimension(3)),
-  numFields  (0), numNodeVar(0)
+  numFields  (0), numNodeVar(3)
 {
   //std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-  std::cout << "IKT SW_ComputeAndScatterJacBase constructor! \n";
+  //std::cout << "IKT SW_ComputeAndScatterJacBase constructor! \n";
 
-  const Teuchos::ArrayRCP<std::string> node_names         = p.get< Teuchos::ArrayRCP<std::string> >("Node Residual Names");
-
-  numNodeVar   = 3; //node_names  .size();
   numFields = numNodeVar;
 
   const std::string fieldName = p.get<std::string>("Scatter Field Name");
@@ -45,10 +42,11 @@ SW_ComputeAndScatterJacBase(const Teuchos::ParameterList& p,
   
   this->addDependentField(BF);
   this->addDependentField(wBF);
-  this->addDependentField(GradBF);
-  this->addDependentField(wGradBF);
-  this->addDependentField(lambda_nodal);
-  this->addDependentField(theta_nodal);
+  //IKT - the following would only be needed if we were computing the Laplace operator here.
+  //this->addDependentField(GradBF);
+  //this->addDependentField(wGradBF);
+  //this->addDependentField(lambda_nodal);
+  //this->addDependentField(theta_nodal);
 
   this->addEvaluatedField(*scatter_operation);
 
@@ -65,10 +63,10 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(wBF,fm);
-  this->utils.setFieldData(GradBF,fm);
-  this->utils.setFieldData(wGradBF,fm);
-  this->utils.setFieldData(lambda_nodal,fm);
-  this->utils.setFieldData(theta_nodal,fm);
+  //this->utils.setFieldData(GradBF,fm);
+  //this->utils.setFieldData(wGradBF,fm);
+  //this->utils.setFieldData(lambda_nodal,fm);
+  //this->utils.setFieldData(theta_nodal,fm);
 }
 
 
@@ -88,7 +86,7 @@ void SW_ComputeAndScatterJac<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-std::cout << "IKT in evaluateFields!" << std::endl; 
+//std::cout << "IKT in evaluateFields!" << std::endl; 
 //First, we need to compute the local mass and laplacian matrices 
 //(checking the n_coeff flag for whether the laplacian is needed) as follows: 
 //Mass:
@@ -127,8 +125,6 @@ std::cout << "IKT in evaluateFields!" << std::endl;
 
   bool buildMass = true; // ( ( workset.j_coeff == 0.0 )&&( workset.m_coeff != 0.0 )&&( workset.n_coeff == 0.0 ) );
 
-  std::cout << "buildMass = " << buildMass << "\n";
-
   int numcells_ = workset.numCells,
 	  numnodes_ = this->numNodes;
   //for mass we do not really need even this
@@ -147,7 +143,6 @@ std::cout << "IKT in evaluateFields!" << std::endl;
       for (int node = 0; node < this->numNodes; ++node) {
         const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
         int n = 0, eq = 0;
-        std::cout << "IKT numNodeVar = " << this->numNodeVar << std::endl; 
         for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
           rowT = eqID[n];
           RealType val2 = mc * this -> wBF(cell, node, node);

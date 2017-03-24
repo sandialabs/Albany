@@ -2,13 +2,9 @@
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Aeras Shallow Water No AD 3D"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
-    <Parameter name="Solution Method" type="string" value="Aeras Hyperviscosity"/>
+    <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="Shallow Water Problem">
       <Parameter name="Use Prescribed Velocity" type="bool" value="false"/>
-      <Parameter name="Use Explicit Hyperviscosity" type="bool" value="false"/>
-      <Parameter name="Hyperviscosity Type" type="string" value="Constant"/>
-      <Parameter name="Hyperviscosity Tau" type="double" value="8e15"/>
-      <Parameter name="Plot Vorticity" type="bool" value="false"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
     </ParameterList>
