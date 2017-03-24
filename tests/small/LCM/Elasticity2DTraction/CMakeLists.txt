@@ -1,4 +1,3 @@
-
 # This test is not setup to run on the BGQ as it sits...
 IF((NOT ALBANY_PARALLEL_ONLY) AND SEACAS_EPU AND SEACAS_EXODIFF)
 
@@ -45,11 +44,11 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 if (ALBANY_IFPACK2)
 if (ALBANY_DTK)
-add_test(NAME ${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe};inputT.yaml"
+add_test(NAME ${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe};input.yaml"
   -DTEST_NAME=${testName} -DMPIMNP=${MPIMNP} -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
   -P runtest_dtk.cmake)
 else() 
-add_test(NAME ${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe};inputT.yaml"
+add_test(NAME ${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe};input.yaml"
   -DTEST_NAME=${testName} -DMPIMNP=${MPIMNP} -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
   -P runtest.cmake)
 endif()
