@@ -35,6 +35,7 @@ ANONYMOUS:
     Separate Evaluators by Element Block: true
     Solution Vector Components: [displacement, V]
     Residual Vector Components: [force, V]
+    Exodus Write Interval: 10
   Piro: 
     LOCA: 
       Bifurcation: { }

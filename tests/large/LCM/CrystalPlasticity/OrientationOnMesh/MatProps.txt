@@ -14,12 +14,12 @@ nonlinear_solver_step_type Newton
 implicit_integration_relative_tolerance 1.0e-35
 implicit_integration_absolute_tolerance 1.0e-12
 implicit_integration_max_iterations 100
-tau true
+tau false
 tau_hard true
 gamma true
-gamma_dot true
-cp_residual true
-cp_residual_iter true
+gamma_dot false
+cp_residual false
+cp_residual_iter false
 Fp true
-L true
+L false
 eqps true
