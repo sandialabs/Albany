@@ -18,7 +18,7 @@ TINY = std::numeric_limits<RealType>::min();
 static constexpr RealType
 HUGE_ = std::numeric_limits<RealType>::max();
 
-static constexpr RealType
+static const RealType
 LOG_HUGE = std::log(HUGE_);
 
 static constexpr minitensor::Index 
