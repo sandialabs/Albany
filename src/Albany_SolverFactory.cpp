@@ -363,10 +363,8 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 #endif /* ALBANY_QCAD */
   }
 #if defined(ALBANY_LCM)
-  bool const
-  is_schwarz =
-      solutionMethod == "Coupled Schwarz" ||
-      solutionMethod == "Alternating Schwarz";
+  bool const is_schwarz = solutionMethod == "Coupled Schwarz" ||
+                          solutionMethod == "Alternating Schwarz";
   ALBANY_ASSERT(is_schwarz == false, "Schwarz methods require AlbanyT");
 #endif
   if (solutionMethod == "ATO Problem") {
@@ -777,10 +775,8 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif
 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
-  bool const
-  is_schwarz =
-      solutionMethod == "Coupled Schwarz" ||
-      solutionMethod == "Schwarz Alternating";
+  bool const is_schwarz = solutionMethod == "Coupled Schwarz" ||
+                          solutionMethod == "Schwarz Alternating";
 
   if (is_schwarz == true) {
 #if !defined(ALBANY_DTK)
@@ -824,8 +820,8 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   }
 
   if (solutionMethod == "Schwarz Alternating") {
-    return
-        rcp(new LCM::SchwarzAlternating(appParams, solverComm, initial_guess));
+    return rcp(
+        new LCM::SchwarzAlternating(appParams, solverComm, initial_guess));
   }
 #endif /* LCM and Schwarz */
 
@@ -1072,8 +1068,10 @@ Albany::SolverFactory::checkSolveTestResultsT(
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double>> dgdpv =
         dgdp->get2dView();
     for (int j = 0; j < dgdp->getNumVectors(); j++) {
-      auto s = std::string("Sensitivity Test ") + std::to_string(i) + "," + std::to_string(j);
-      failures += scaledCompare(dgdpv[j][i], testSensValues[j], relTol, absTol, s);
+      auto s = std::string("Sensitivity Test ") + std::to_string(i) + "," +
+               std::to_string(j);
+      failures +=
+          scaledCompare(dgdpv[j][i], testSensValues[j], relTol, absTol, s);
       comparisons++;
     }
   }
@@ -1157,7 +1155,8 @@ Albany::SolverFactory::checkSolveTestResults(
             << testSensValues.size() << " != number of sensitivity vectors ("
             << dgdp->NumVectors() << ") !");
     for (int j = 0; j < dgdp->NumVectors(); j++) {
-      auto s = std::string("Sensitivity Test ") + std::to_string(i) + "," + std::to_string(j);
+      auto s = std::string("Sensitivity Test ") + std::to_string(i) + "," +
+               std::to_string(j);
       failures +=
           scaledCompare((*dgdp)[j][i], testSensValues[j], relTol, absTol, s);
       comparisons++;
@@ -1184,9 +1183,10 @@ Albany::SolverFactory::checkDakotaTestResults(
   const int numDakotaTests =
       testParams->get<int>("Number of Dakota Comparisons");
   if (numDakotaTests > 0 && drdv != NULL) {
-    ALBANY_ASSERT(numDakotaTests <= drdv->length(),
+    ALBANY_ASSERT(
+        numDakotaTests <= drdv->length(),
         "more Dakota Tests (" << numDakotaTests << ") than derivatives ("
-        << drdv->length() << ") !\n");
+                              << drdv->length() << ") !\n");
     // Read accepted test results
     Teuchos::Array<double> testValues =
         testParams->get<Teuchos::Array<double>>("Dakota Test Values");
@@ -1221,9 +1221,10 @@ Albany::SolverFactory::checkAnalysisTestResults(
     // Create indexable thyra vector
     ::Thyra::DetachedVectorView<double> p(tvec);
 
-    ALBANY_ASSERT(numPiroTests <= p.subDim(),
-        "more Piro Analysis Comparisons (" << numPiroTests
-        << ") than values (" << p.subDim() << ") !\n");
+    ALBANY_ASSERT(
+        numPiroTests <= p.subDim(), "more Piro Analysis Comparisons ("
+                                        << numPiroTests << ") than values ("
+                                        << p.subDim() << ") !\n");
     // Read accepted test results
     Teuchos::Array<double> testValues =
         testParams->get<Teuchos::Array<double>>("Piro Analysis Test Values");
@@ -1258,16 +1259,19 @@ Albany::SolverFactory::checkSGTestResults(
   int numSGTests =
       testParams->get<int>("Number of Stochastic Galerkin Comparisons", 0);
   if (numSGTests > 0 && g_sg != Teuchos::null) {
-    ALBANY_ASSERT(numSGTests <= (*g_sg)[0].MyLength(),
-        "more Stochastic Galerkin Comparisons (" << numSGTests
-        << ") than values (" << (*g_sg)[0].MyLength() << ") !\n");
+    ALBANY_ASSERT(
+        numSGTests <= (*g_sg)[0].MyLength(),
+        "more Stochastic Galerkin Comparisons ("
+            << numSGTests << ") than values (" << (*g_sg)[0].MyLength()
+            << ") !\n");
     for (int i = 0; i < numSGTests; i++) {
       Teuchos::Array<double> testSGValues =
           testParams->get<Teuchos::Array<double>>(
               Albany::strint("Stochastic Galerkin Expansion Test Values", i));
       TEUCHOS_TEST_FOR_EXCEPT(g_sg->size() != testSGValues.size());
       for (int j = 0; j < g_sg->size(); j++) {
-        auto s = std::string("SG Expansion Test ") + std::to_string(i) + "," + std::to_string(j);
+        auto s = std::string("SG Expansion Test ") + std::to_string(i) + "," +
+                 std::to_string(j);
         failures +=
             scaledCompare((*g_sg)[j][i], testSGValues[j], relTol, absTol, s);
         comparisons++;
@@ -1279,14 +1283,17 @@ Albany::SolverFactory::checkSGTestResults(
   int numMeanResponseTests =
       testParams->get<int>("Number of Stochastic Galerkin Mean Comparisons", 0);
   if (numMeanResponseTests > 0) {
-    ALBANY_ASSERT(g_mean != nullptr,
-        "Stochastic Galerkin Mean Comparisons: vector of mean value is null !\n");
-    ALBANY_ASSERT(numMeanResponseTests <= g_mean->MyLength(),
-        "more Stochastic Galerkin Mean Comparisons (" << numMeanResponseTests
-        << ") than values (" << g_mean->MyLength() << ") !\n");
-    Teuchos::Array<double> testValues =
-        testParams->get<Teuchos::Array<double>>(
-            "Stochastic Galerkin Mean Test Values");
+    ALBANY_ASSERT(
+        g_mean != nullptr,
+        "Stochastic Galerkin Mean Comparisons: vector of mean value is null "
+        "!\n");
+    ALBANY_ASSERT(
+        numMeanResponseTests <= g_mean->MyLength(),
+        "more Stochastic Galerkin Mean Comparisons ("
+            << numMeanResponseTests << ") than values (" << g_mean->MyLength()
+            << ") !\n");
+    Teuchos::Array<double> testValues = testParams->get<Teuchos::Array<double>>(
+        "Stochastic Galerkin Mean Test Values");
 
     TEUCHOS_TEST_FOR_EXCEPT(numMeanResponseTests != testValues.size());
     for (int i = 0; i < testValues.size(); i++) {
@@ -1300,14 +1307,17 @@ Albany::SolverFactory::checkSGTestResults(
   int numSDResponseTests = testParams->get<int>(
       "Number of Stochastic Galerkin Standard Deviation Comparisons", 0);
   if (numSDResponseTests > 0) {
-    ALBANY_ASSERT(g_std_dev != nullptr,
-        "Stochastic Galerkin Standard Deviation Comparisons: vector is null !\n");
-    ALBANY_ASSERT(numSDResponseTests <= g_std_dev->MyLength(),
-        "more Stochastic Galerkin Standard Deviation Comparisons (" << numSDResponseTests
-        << ") than values (" << g_std_dev->MyLength() << ") !\n");
-    Teuchos::Array<double> testValues =
-        testParams->get<Teuchos::Array<double>>(
-            "Stochastic Galerkin Standard Deviation Test Values");
+    ALBANY_ASSERT(
+        g_std_dev != nullptr,
+        "Stochastic Galerkin Standard Deviation Comparisons: vector is null "
+        "!\n");
+    ALBANY_ASSERT(
+        numSDResponseTests <= g_std_dev->MyLength(),
+        "more Stochastic Galerkin Standard Deviation Comparisons ("
+            << numSDResponseTests << ") than values (" << g_std_dev->MyLength()
+            << ") !\n");
+    Teuchos::Array<double> testValues = testParams->get<Teuchos::Array<double>>(
+        "Stochastic Galerkin Standard Deviation Test Values");
 
     TEUCHOS_TEST_FOR_EXCEPT(numSDResponseTests != testValues.size());
     for (int i = 0; i < testValues.size(); i++) {
@@ -1358,14 +1368,16 @@ Albany::SolverFactory::storeTestResults(
 
 bool
 Albany::SolverFactory::scaledCompare(
-    double x1, double x2, double relTol, double absTol, std::string const& name) const {
+    double x1, double x2, double relTol, double absTol,
+    std::string const& name) const {
   auto d = fabs(x1 - x2);
   auto avg_mag = (0.5 * (fabs(x1) + fabs(x2)));
   auto rel_ok = (d <= (avg_mag * relTol));
   auto abs_ok = (d <= fabs(absTol));
   auto ok = rel_ok || abs_ok;
   if (!ok) {
-    *out << name << ": " << x1 << " != " << x2 << " (rel " << relTol << " abs " << absTol << ")\n";
+    *out << name << ": " << x1 << " != " << x2 << " (rel " << relTol << " abs "
+         << absTol << ")\n";
   }
   return !ok;
 }
