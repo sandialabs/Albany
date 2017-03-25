@@ -66,10 +66,12 @@ CrystalPlasticityKernel(
   slip_systems_.resize(num_slip_);
 
   // Store an RCP to the NOX status test, if available
-  if (p->isParameter("NOX Status Test")) {
+  if (p->isParameter("NOX Status Test") == true) {
     nox_status_test_ = 
         p->get<Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>>(
             "NOX Status Test");
+  } else {
+    nox_status_test_ = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag);
   }
 
   Teuchos::ParameterList
