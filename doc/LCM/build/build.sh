@@ -100,7 +100,6 @@ case "$SCRIPT_NAME" in
 	cd "$BUILD_DIR"
         # Add DTK fragment to Trilinos config script and disable ETI as
         # it is not supported for DTK due to incompatible Global Index types.
-        # Also add tempus fragment if needed.
 	case "$PACKAGE" in
 	    trilinos)
                 # First build extra repos string
@@ -112,18 +111,6 @@ case "$SCRIPT_NAME" in
                         ER="$ER,DataTransferKit"
                     fi
                 fi
-                #
-                # Disable this temporarily because for now Tempus
-                # is considered part of Trilinos as a hack while it
-                # gets copyright.
-                #
-	        #if [ -e "$PACKAGE_DIR/tempus" ]; then
-                #    if [ -z $ER ]; then
-                #        ER="tempus"
-                #    else
-                #        ER="$ER,tempus"
-                #    fi
-                #fi
                 if [ ! -z $ER ]; then
                     TER=" -D Trilinos_EXTRA_REPOSITORIES:STRING=\"$ER\" \\"
                     sed -i -e "/lcm_package_dir/d" "$CONFIG_FILE"
@@ -139,12 +126,6 @@ case "$SCRIPT_NAME" in
                     mv "$TMP_FILE" "$CONFIG_FILE"
                     chmod 0755 "$CONFIG_FILE"
                     sed -i -e "s|$ETION|$ETIOFF|g;" "$CONFIG_FILE"
-	        fi
-	        if [ -e "$PACKAGE_DIR/tempus" ]; then
-                    TMP_FILE="/tmp/_TMP_FILE_"
-                    cat "$CONFIG_FILE" "$TEMPUS_FRAG" > "$TMP_FILE"
-                    mv "$TMP_FILE" "$CONFIG_FILE"
-                    chmod 0755 "$CONFIG_FILE"
 	        fi
                 if [ ! -z $ER ]; then
                     echo "lcm_package_dir" >> "$CONFIG_FILE"

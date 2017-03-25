@@ -28,6 +28,13 @@ for PACKAGE in $PACKAGES; do
     git clone -v "$REPO" "$PACKAGE_NAME" &> "$CHECKOUT_LOG"
 done
 
+# For now assume that if there is a DTK directory in the main LCM
+# directory, it contains a DTK version that we can use for
+# Trilinos.
+if [ -e DataTransferKit ]; then
+    cp -p -r DataTransferKit Trilinos
+fi
+
 # Clone wiki too to update info for latest known good commits.
 if [ -d "Albany.wiki" ]; then
     rm "Albany.wiki" -rf
