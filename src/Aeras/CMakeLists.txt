@@ -15,6 +15,7 @@
        evaluators/Aeras_SurfaceHeight.cpp
        evaluators/Aeras_VorticityLevels.cpp
        problems/Aeras_ShallowWaterProblem.cpp
+       problems/Aeras_ShallowWaterProblemNoAD.cpp
        evaluators/Aeras_XZScalarAdvectionResid.cpp
        problems/Aeras_XZScalarAdvectionProblem.cpp
        evaluators/Aeras_XScalarAdvectionResid.cpp
@@ -44,6 +45,7 @@
        evaluators/Aeras_GatherSolution.cpp
        evaluators/Aeras_ScatterResidual.cpp
        evaluators/Aeras_ComputeAndScatterJac.cpp
+       evaluators/Aeras_SW_ComputeAndScatterJac.cpp
        evaluators/Aeras_DOFInterpolation.cpp
        evaluators/Aeras_DOFInterpolationLevels.cpp
        evaluators/Aeras_DOFVecInterpolationLevels.cpp
@@ -83,6 +85,7 @@
        evaluators/Aeras_XZHydrostatic_Velocity_Def.hpp
        evaluators/Aeras_XZHydrostatic_Velocity.hpp
        problems/Aeras_ShallowWaterProblem.hpp
+       problems/Aeras_ShallowWaterProblemNoAD.hpp
        evaluators/Aeras_XZScalarAdvectionResid_Def.hpp
        evaluators/Aeras_XZScalarAdvectionResid.hpp
        problems/Aeras_XZScalarAdvectionProblem.hpp
@@ -143,6 +146,8 @@
        evaluators/Aeras_ScatterResidual_Def.hpp
        evaluators/Aeras_ComputeAndScatterJac.hpp
        evaluators/Aeras_ComputeAndScatterJac_Def.hpp
+       evaluators/Aeras_SW_ComputeAndScatterJac.hpp
+       evaluators/Aeras_SW_ComputeAndScatterJac_Def.hpp
        evaluators/Aeras_DOFInterpolation.hpp
        evaluators/Aeras_DOFInterpolation_Def.hpp
        evaluators/Aeras_DOFInterpolationLevels.hpp
