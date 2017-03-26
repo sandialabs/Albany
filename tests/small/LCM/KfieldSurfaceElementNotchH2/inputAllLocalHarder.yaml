@@ -42,7 +42,7 @@ ANONYMOUS:
   Discretization: 
     Method: Exodus
     Exodus Input File Name: BluntCrackRatio2d_in_m_rev5_reflect_microns_3d_cse.exo
-    Exodus Output File Name: K_field_all_scaled_Harder.e
+    Exodus Output File Name: K_field_all_scaled_HarderT.e
     Cubature Degree: 3
     Separate Evaluators by Element Block: true
     Solution Vector Components: [disp, V, CL, S, tauH, S]
@@ -58,11 +58,11 @@ ANONYMOUS:
       Bifurcation: { }
       Constraints: { }
       Predictor: 
-        Method: Tangent
+        Method: Constant
       Stepper: 
         Initial Value: 0.00000000e+00
         Continuation Parameter: Time
-        Max Steps: 1000
+        Max Steps: 3
         Max Value: 10800.00000000
         Min Value: 0.00000000e+00
         Compute Eigenvalues: false
@@ -81,6 +81,8 @@ ANONYMOUS:
       Direction: 
         Method: Newton
         Newton: 
+          Linear Solver: 
+            Tolerance: 1.00000000e-10
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
           Stratimikos Linear Solver: 
@@ -103,7 +105,6 @@ ANONYMOUS:
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
-                      Convergence Tolerance: 1.00000000e-10
                       Output Frequency: 10
                       Output Style: 1
                       Verbosity: 33
@@ -111,12 +112,12 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 1000
                       Flexible Gmres: false
-              Preconditioner Type: Ifpack
+              Preconditioner Type: Ifpack2
               Preconditioner Types: 
-                Ifpack: 
+                Ifpack2: 
                   Overlap: 2
-                  Prec Type: ILU
-                  Ifpack Settings: 
+                  Prec Type: RILUK
+                  Ifpack2 Settings: 
                     'fact: drop tolerance': 0.00000000e+00
                     'fact: ilut level-of-fill': 1.00000000
                     'fact: level-of-fill': 1

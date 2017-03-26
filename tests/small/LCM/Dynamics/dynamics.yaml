@@ -27,11 +27,11 @@ ANONYMOUS:
     2D Elements: 8
     2D Scale: 0.20000000
     Method: STK2D
-    Exodus Output File Name: quad2d.e
+    Exodus Output File Name: quad2d_tpetra.e
     Number Of Time Derivatives: 2
   Regression Results: 
     Number of Comparisons: 1
-    Test Values: [-5.28631000e-03]
+    Test Values: [-5.28632687e-03]
     Relative Tolerance: 1.00000000e-06
     Number of Sensitivity Comparisons: 0
     Sensitivity Test Values 0: [0.16666666, 0.16666666, 0.33333333, 0.33333333]
@@ -65,11 +65,12 @@ ANONYMOUS:
                         Num Blocks: 100
                 Preconditioner Type: None
                 Preconditioner Types: 
-                  Ifpack: 
+                  Ifpack2: 
                     Overlap: 1
-                    Prec Type: ILU
-                    Ifpack Settings: 
-                      'fact: level-of-fill': 1
+                    Prec Type: ILUT
+                    Ifpack2 Settings: 
+                      'fact: ilut level-of-fill': 1.00000000
+                      'fact: drop tolerance': 0.00000000e+00
         Line Search: 
           Method: Full Step
         Nonlinear Solver: Line Search Based
@@ -109,13 +110,14 @@ ANONYMOUS:
                 Block Size: 1
                 Num Blocks: 100
                 Flexible Gmres: false
-        Preconditioner Type: Ifpack
+        Preconditioner Type: Ifpack2
         Preconditioner Types: 
-          Ifpack: 
-            Prec Type: ILU
+          Ifpack2: 
             Overlap: 1
-            Ifpack Settings: 
-              'fact: level-of-fill': 1
+            Prec Type: ILUT
+            Ifpack2 Settings: 
+              'fact: ilut level-of-fill': 1.00000000
+              'fact: drop tolerance': 0.00000000e+00
     LOCA: 
       Bifurcation: { }
       Constraints: { }
@@ -167,15 +169,14 @@ ANONYMOUS:
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: Ifpack
+              Preconditioner Type: Ifpack2
               Preconditioner Types: 
-                Ifpack: 
-                  Overlap: 2
-                  Prec Type: ILU
-                  Ifpack Settings: 
-                    'fact: drop tolerance': 0.00000000e+00
+                Ifpack2: 
+                  Overlap: 1
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
                     'fact: ilut level-of-fill': 1.00000000
-                    'fact: level-of-fill': 1
+                    'fact: drop tolerance': 0.00000000e+00
       Line Search: 
         Full Step: 
           Full Step: 1.00000000
