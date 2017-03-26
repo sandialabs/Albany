@@ -21,8 +21,21 @@ ANONYMOUS:
       Number: 1
       Parameter 0: Time
     Response Functions: 
-      Number: 1
+      Number: 3
       Response 0: Solution Average
+      Response 1: IP to Nodal Field
+      Response 2: Project IP to Nodal Field
+      ResponseParams 1: 
+        Number of Fields: 1
+        IP Field Name 0: Cauchy_Stress
+        IP Field Layout 0: Tensor
+        Output to File: true
+      ResponseParams 2: 
+        Number of Fields: 1
+        IP Field Name 0: Cauchy_Stress
+        IP Field Layout 0: Tensor
+        Output to File: true
+        Mass Matrix Type: Full
   Discretization: 
     Method: Exodus
     Exodus Input File Name: brick_model_2.g
@@ -75,6 +88,8 @@ ANONYMOUS:
       Direction: 
         Method: Newton
         Newton: 
+          Linear Solver: 
+            Tolerance: 1.00000000e-08
           Forcing Term Method: Constant
           Rescue Bad Newton Solve: true
           Stratimikos Linear Solver: 
@@ -92,44 +107,34 @@ ANONYMOUS:
                     Max Iterations: 360
                     Tolerance: 1.00000000e-05
                 Belos: 
+                  VerboseObject: 
+                    Verbosity Level: low
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
                       Convergence Tolerance: 1.00000000e-08
-                      Output Frequency: 10
+                      Maximum Iterations: 200
+                      Output Frequency: 20
                       Output Style: 1
                       Verbosity: 33
-                      Maximum Iterations: 200
                       Block Size: 1
                       Num Blocks: 200
                       Flexible Gmres: false
-              Preconditioner Type: ML
+              Preconditioner Type: MueLu
               Preconditioner Types: 
-                ML: 
-                  Base Method Defaults: none
-                  ML Settings: 
-                    ML output: 0
-                    default values: SA
-                    prec type: MGV
-                    max levels: 10
-                    'repartition: enable': 1
-                    'repartition: Zoltan dimensions': 3
-                    'repartition: min per proc': 1000
-                    'smoother: type': 'ML symmetric Gauss-Seidel'
-                    'smoother: damping factor': 0.50000000
-                    'smoother: sweeps': 3
-                    'smoother: pre or post': both
-                    'coarse: max size': 500
-                    'coarse: type': 'Amesos-KLU'
-                    analyze memory: true
-                    'aggregation: type': MIS
-                Ifpack: 
-                  Overlap: 2
-                  Prec Type: ILU
-                  Ifpack Settings: 
-                    'fact: drop tolerance': 0.00000000e+00
-                    'fact: ilut level-of-fill': 1.00000000
-                    'fact: level-of-fill': 1
+                MueLu: 
+                  verbosity: none
+                  max levels: 10
+                  'repartition: enable': true
+                  'repartition: min rows per proc': 1000
+                  'sa: damping factor': 0.50000000
+                  'smoother: pre or post': both
+                  'coarse: max size': 500
+                  'coarse: type': KLU
+                  'aggregation: type': uncoupled
+                  'smoother: type': RELAXATION
+                  'smoother: params': 
+                    'relaxation: type': 'Symmetric Gauss-Seidel'
       Line Search: 
         Full Step: 
           Full Step: 1.00000000
@@ -145,7 +150,7 @@ ANONYMOUS:
           Linear Solver Details: false
           Stepper Iteration: true
           Stepper Details: true
-          Stepper Parameters: true
+          Stepper Parameters: false
         Output Precision: 3
         Output Processor: 0
       Solver Options: 
