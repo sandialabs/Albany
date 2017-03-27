@@ -1,6 +1,7 @@
 #include <Teuchos_XMLParameterListCoreHelpers.hpp>
 #include <Teuchos_YamlParameterListCoreHelpers.hpp>
 #include <cassert>
+#include <fstream>
 
 static bool ends_with(std::string const& s, std::string const& suffix) {
   if (s.length() < suffix.length()) return false;
@@ -14,6 +15,9 @@ int main(int argc, char** argv) {
     auto params = Teuchos::getParametersFromXmlFile(xmlFileName);
     auto baseName = xmlFileName.substr(0, xmlFileName.length() - 4);
     auto yamlFileName = baseName + ".yaml";
-    Teuchos::writeParameterListToYamlFile(*params, yamlFileName);
+    std::ofstream yamlStream(yamlFileName.c_str());
+    assert(yamlStream.is_open());
+    yamlStream << std::scientific << std::setprecision(17);
+    Teuchos::writeParameterListToYamlOStream(*params, yamlStream);
   }
 }
