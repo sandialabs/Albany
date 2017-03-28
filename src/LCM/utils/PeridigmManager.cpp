@@ -21,6 +21,8 @@
 #include "Phalanx_KokkosViewFactory.hpp"
 #include "Phalanx_MDField.hpp"
 
+//#define HARD_CODED_BODY_FORCE_PERIDIGM_MANAGER
+
 const Teuchos::RCP<LCM::PeridigmManager>& LCM::PeridigmManager::self() {
   static Teuchos::RCP<PeridigmManager> peridigmManager;
   return peridigmManager;
@@ -1132,7 +1134,7 @@ bool LCM::PeridigmManager::copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(
 
     std::vector<RealType> albanyValues(peridigmNumEntries);
     for(int i=0 ; i<peridigmNumEntries ; i++){
-      albanyValues[i] = static_cast<RealType>(peridigmValues[i]);
+      albanyValues[i] = -1.0 * static_cast<RealType>(peridigmValues[i]);
     }
     Teuchos::ArrayView<RealType> albanyValuesView(&albanyValues[0], peridigmNumEntries);
 
@@ -1173,7 +1175,14 @@ double LCM::PeridigmManager::getForce(int globalAlbanyNodeId, int dof)
     Epetra_Vector& peridigmForce = *(peridigm->getForce());
     int peridigmLocalId = peridigmForce.Map().LID(globalAlbanyNodeId);
     TEUCHOS_TEST_FOR_EXCEPT_MSG(peridigmLocalId == -1, "\n\n**** Error in PeridigmManager::getForce(), invalid global id.\n\n");
-    force = peridigmForce[3*peridigmLocalId + dof];
+    force = -1.0 * peridigmForce[3*peridigmLocalId + dof];
+
+#ifdef HARD_CODED_BODY_FORCE_PERIDIGM_MANAGER
+    if(dof == 0){
+      Epetra_Vector& peridigmVolume = *(peridigm->getVolume());
+      force += peridigmVolume[peridigmLocalId] * 5.1732283464566922;
+    }
+#endif
   }
   return force;
 }
@@ -1447,7 +1456,7 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
           double* coord = stk::mesh::field_data(*stkDisc->getSTKMeshStruct()->getCoordinatesField(), node);
           double* dirichletData = stk::mesh::field_data(*dirichletField, node);
           //set dirichletData as any function of the coordinates;
-          dirichletData[0]= 0.000005*coord[0]*coord[0];
+          dirichletData[0]= 0.00001*coord[0]*coord[0];
         }
       }
     }
