@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 TESTDIR=/home/lcm/LCM/nightlyCDash 
 
