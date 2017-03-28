@@ -8,7 +8,7 @@ ANONYMOUS:
     Phalanx Graph Visualization Detail: 0
     MaterialDB Filename: 'materials-single.yaml'
     Solution Method: Transient
-    Second Order: Trapezoid Rule
+    Second Order: Newmark
     Initial Condition: 
       Function: Constant
       Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00]
@@ -26,14 +26,14 @@ ANONYMOUS:
   Discretization: 
     Method: Ioss
     Exodus Input File Name: 'cube-single.g'
-    Exodus Output File Name: 'cube-single.e'
+    Exodus Output File Name: 'cube-single-nb.e'
     Exodus Solution Name: disp
     Exodus Residual Name: resid
     Separate Evaluators by Element Block: true
     Number Of Time Derivatives: 2
     Exodus Write Interval: 100
   Piro: 
-    Trapezoid Rule: 
+    Newmark: 
       Num Time Steps: 10000
       Final Time: 10.00000000
       Initial Time: 0.00000000e+00
@@ -58,13 +58,13 @@ ANONYMOUS:
                         Verbosity: 33
                         Maximum Iterations: 100
                         Num Blocks: 100
-                Preconditioner Type: None
+                Preconditioner Type: Ifpack
                 Preconditioner Types: 
-                  Ifpack2: 
+                  Ifpack: 
                     Overlap: 1
-                    Prec Type: ILUT
-                    Ifpack2 Settings: 
-                      'fact: ilut level-of-fill': 1.00000000
+                    Prec Type: ILU
+                    Ifpack Settings: 
+                      'fact: level-of-fill': 1
                       'fact: drop tolerance': 0.00000000e+00
         Line Search: 
           Method: Full Step
