@@ -517,6 +517,10 @@ if (BUILD_TRILINOS)
     "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
     "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
 #
+    "-DTPL_ENABLE_yaml-cpp:BOOL=ON"
+    "-Dyaml-cpp_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+    "-Dyaml-cpp_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+#
     "-DTPL_ENABLE_ParMETIS:BOOL=ON"
     "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
     "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
@@ -654,6 +658,10 @@ if (BUILD_TRILINOSCLANG)
   "-DTPL_ENABLE_Zlib:BOOL=ON"
   "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang-3.7/include"
   "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang-3.7/lib"
+  #
+  "-DTPL_ENABLE_yaml-cpp:BOOL=ON"
+  "-Dyaml-cpp_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang-3.7/include"
+  "-Dyaml-cpp_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang-3.7/lib"
   #
   "-DTPL_ENABLE_ParMETIS:BOOL=ON"
   "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang-3.7/include"

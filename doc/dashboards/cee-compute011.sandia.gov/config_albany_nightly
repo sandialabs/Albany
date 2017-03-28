@@ -1,0 +1,40 @@
+#!/bin/sh
+
+TRILINOS_DIR=/projects/AppComp/nightly_gahanse/cee-compute011/build
+USE_LAME=OFF
+LAME_INC_DIR=/projects/sierra/linux_rh6/install/master/lame/include\;/projects/sierra/linux_rh6/install/master/Sierra/sierra_util/include\;/projects/sierra/linux_rh6/install/master/stk/stk_expreval/include\;/projects/sierra/linux_rh6/install/master/utility/include\;/projects/sierra/linux_rh6/install/master/Sierra/include
+LAME_LIB_DIR=/projects/sierra/linux_rh6/install/master/lame/lib\;/projects/sierra/linux_rh6/install/master/Sierra/sierra_util/lib\;/projects/sierra/linux_rh6/install/master/stk/stk_expreval/lib\;/projects/sierra/linux_rh6/install/master/utility/lib\;/projects/sierra/linux_rh6/install/master/Sierra/lib
+LAME_LIBRARIES=sierra_util_diag\;sierra_util_events\;sierra_util_user_input_function\;sierra_util_domain\;sierra_util_sctl\;stk_expreval\;utility\;sierra\;dataManager\;audit\;sierraparser
+MATH_TOOLKIT_INC_DIR=/projects/sierra/linux_rh6/install/master/math_toolkit/include
+MATH_TOOLKIT_LIB_DIR=/projects/sierra/linux_rh6/install/master/math_toolkit/lib
+
+
+
+cmake \
+    -DALBANY_TRILINOS_DIR:PATH=${TRILINOS_DIR}/TrilinosIntelInstall \
+    -DENABLE_LCM:BOOL=ON \
+    -DENABLE_MOR:BOOL=ON \
+    -DENABLE_FELIX:BOOL=ON \
+    -DENABLE_HYDRIDE:BOOL=ON \
+    -DENABLE_BGL:BOOL=OFF \
+    -DENABLE_AMP:BOOL=OFF \
+    -DENABLE_ATO:BOOL=ON \
+    -DENABLE_QCAD:BOOL=ON \
+    -DENABLE_ENSEMBLE:BOOL=OFF \
+    -DENABLE_SG:BOOL=OFF \
+    -DENABLE_ASCR:BOOL=OFF \
+    -DENABLE_AERAS:BOOL=ON \
+    -DENABLE_64BIT_INT:BOOL=OFF \
+    -DENABLE_DEMO_PDES:BOOL=ON \
+    -DENABLE_CHECK_FPE:BOOL=ON \
+    -DENABLE_LAME:BOOL=${USE_LAME} \
+    -DLAME_INCLUDE_DIR:PATH=${LAME_INC_DIR} \
+    -DLAME_LIBRARY_DIR:PATH=${LAME_LIB_DIR} \
+    -DLAME_LIBRARIES:PATH=${LAME_LIBRARIES} \
+    -DMATH_TOOLKIT_INCLUDE_DIR:PATH=${MATH_TOOLKIT_INC_DIR} \
+    -DMATH_TOOLKIT_LIBRARY_DIR:PATH=${MATH_TOOLKIT_LIB_DIR} \
+    -DENABLE_SCOREC:BOOL=ON \
+    -DENABLE_GOAL:BOOL=ON \
+..
+
+exit 0

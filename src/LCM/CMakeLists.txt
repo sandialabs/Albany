@@ -391,18 +391,9 @@ IF (LCM_TEST_EXES AND ALBANY_DTK)
   add_executable(DTK_Interp_Volume_to_NS utils/dtk_interp_and_error/interpolation_volume_to_ns.cpp)
 ENDIF()
 
-IF (LCM_TEST_EXES)
-  add_executable(utMiniSolvers test/unit_tests/utMiniSolvers.cc)
-
-  IF (ALBANY_ROL)
-    add_executable(utMiniSolversROL test/unit_tests/utMiniSolversROL.cc)
-  ENDIF()
-  
+IF (LCM_TEST_EXES AND ALBANY_BGL) 
   add_executable(BifurcationTest test/utils/BifurcationTest.cc)
   add_executable(MaterialPointSimulator test/utils/MaterialPointSimulator.cc)
-ENDIF()
- 
-IF (LCM_TEST_EXES AND ALBANY_BGL) 
   add_executable(BoundarySurfaceOutput test/utils/BoundarySurfaceOutput.cc)
   add_executable(MeshComponents test/utils/MeshComponents.cc)
   add_executable(MinSurfaceMPS test/utils/MinSurfaceMPS.cc)
@@ -435,6 +426,13 @@ IF (LCM_TEST_EXES AND ALBANY_BGL)
   IF(NOT BUILD_SHARED_LIBS)
     add_executable(utStaticAllocator test/unit_tests/utStaticAllocator.cpp)
   ENDIF()
+
+  add_executable(utMiniSolvers test/unit_tests/utMiniSolvers.cc)
+
+  IF (ALBANY_ROL)
+    add_executable(utMiniSolversROL test/unit_tests/utMiniSolversROL.cc)
+  ENDIF()
+
 ENDIF()
 
 IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
