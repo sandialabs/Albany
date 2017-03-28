@@ -158,8 +158,8 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Intrepid2_ENABLE_KokkosDynRankView:BOOL=ON \
 \
       -D TPL_ENABLE_yaml-cpp:BOOL=ON \
-      -D yaml-cpp_INCLUDE_DIRS:PATH="/home/ikalash/Downloads/yaml-cpp/include" \
-      -D yaml-cpp_LIBRARY_DIRS:PATH="/home/ikalash/Install/yaml-cpp" \
+      -D yaml-cpp_INCLUDE_DIRS:PATH=/usr/include \
+      -D yaml-cpp_LIBRARY_DIRS:PATH=/usr/lib64/ \
        ..
 
 #      -D Trios_ENABLE_XDMF:BOOL=OFF \
