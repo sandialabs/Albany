@@ -60,6 +60,7 @@
 
 #ifdef ALBANY_AMP
 #include "AMP/problems/PhaseProblem.hpp"
+#include "AMP/problems/AMPThermoMechanics.hpp"
 #endif
 
 #ifdef ALBANY_ANISO
@@ -305,6 +306,15 @@ Albany::ProblemFactory::create()
   }
   else if (method == "Phase 3D") {
     strategy = rcp(new Albany::PhaseProblem(problemParams, paramLib, 3, commT));
+  }
+  else if (method == "AMPThermoMechanics 1D") {
+    strategy = rcp(new Albany::AMPThermoMechanics(problemParams, paramLib, 1, commT));
+  }
+  else if (method == "AMPThermoMechanics 2D") {
+    strategy = rcp(new Albany::AMPThermoMechanics(problemParams, paramLib, 2, commT));
+  }
+  else if (method == "AMPThermoMechanics 3D") {
+    strategy = rcp(new Albany::AMPThermoMechanics(problemParams, paramLib, 3, commT));
   }
 #endif
 #ifdef ALBANY_ANISO
