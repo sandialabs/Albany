@@ -132,7 +132,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_Shards:BOOL=ON \
       -D Trilinos_ENABLE_Stokhos:BOOL=ON \
       -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
-      -D Trilinos_ENABLE_TriKota:BOOL=ON \
+      -D Trilinos_ENABLE_TriKota:BOOL=OFF \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \
       -D Trilinos_ENABLE_Teko:BOOL=ON \
       -D Trilinos_ENABLE_Teuchos:BOOL=ON \
@@ -149,8 +149,8 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Tempus_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
 \
       -D TPL_ENABLE_yaml-cpp:BOOL=ON \
-      -D yaml-cpp_INCLUDE_DIRS:PATH="/home/ikalash/Downloads/yaml-cpp/include" \
-      -D yaml-cpp_LIBRARY_DIRS:PATH="/home/ikalash/Install/yaml-cpp" \
+      -D yaml-cpp_INCLUDE_DIRS:PATH=/usr/include \
+      -D yaml-cpp_LIBRARY_DIRS:PATH=/usr/lib64/ \
 \
        ..
 
