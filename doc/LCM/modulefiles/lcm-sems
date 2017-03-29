@@ -1,8 +1,5 @@
-# see:
-# Trilinos/cmake/load_ci_sems_dev_env.sh
-# Trilinos/cmake/load_sems_dev_env.sh
-# Trilinos/cmake/std/sems/get_default_modules.sh
-module purge
+#%Module 1.0
+module-whatis "LCM SEMS modules"
 module load sems-env
 module load sems-python/2.7.9
 module load sems-cmake/3.5.2
