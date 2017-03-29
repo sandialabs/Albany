@@ -32,6 +32,7 @@ set( CTEST_BINARY_NAME          build)
 
 SET(PREFIX_DIR /users/ghansen)
 SET(BOOST_DIR /users/mperego/TPL/boost_1_60_0/install)
+SET(YAML_DIR /users/mperego/TPL/yaml/build/install)
 
 SET (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 SET (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
@@ -395,6 +396,10 @@ SET(COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_STKTransfer:BOOL=ON"
   "-DTrilinos_ENABLE_STKUnit_tests:BOOL=OFF"
   "-DTrilinos_ENABLE_STKDoc_tests:BOOL=OFF"
+  #
+  "-DTPL_ENABLE_yaml-cpp:BOOL=ON"
+  "-Dyaml-cpp_INCLUDE_DIRS:PATH=${YAML_DIR}/include"
+  "-Dyaml-cpp_LIBRARY_DIRS:PATH=${YAML_DIR}/lib"
   )
 
 IF(BUILD_TRILINOS)
