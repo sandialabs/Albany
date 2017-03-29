@@ -36,18 +36,18 @@ ANONYMOUS:
             Bottom_Unit_Vector_Z: 1.00000000
             Bottom_Length: 2.00000000
             Side_Length: 2.00000000
-      Materials: 
-        My Linearized LPS Material: 
-          Material Model: Linear LPS Partial Volume
+      Materials:
+        My Elastic Material:
+          Material Model: Elastic
           Density: 8.05000000e-09
           Bulk Modulus: 160000.00000000
           Poisson's Ratio: 0.25000000
       Blocks: 
-        My Group of Blocks: 
+        My Group of Blocks:
           Block Names: block_1
-          Material: My Linearized LPS Material
+          Material: My Elastic Material
           Horizon: 0.11770000
-      Output: 
+      Output:
         Output Variables: 
           Displacement: true
           Radius: true

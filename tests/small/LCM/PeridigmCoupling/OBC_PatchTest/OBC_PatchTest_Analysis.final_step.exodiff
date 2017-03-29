@@ -42,7 +42,7 @@ ELEMENT VARIABLES relative 1.e-6 floor 0.0
 	PERIDIGM_DISPLACEMENT_2       absolute 0.000000000000e+00    # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 	PERIDIGM_DISPLACEMENT_3       absolute 0.000000000000e+00    # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 	PERIDIGM_NUMBER_OF_NEIGHBORS  absolute 3.100000000000e-05    # min:               0 @ t1,b2,e513	max:              31 @ t1,b1,e249
-	PERIDIGM_OBC_FUNCTIONAL_1     absolute 1.0e-9
+	PERIDIGM_OBC_FUNCTIONAL_1     absolute 1.0e-8
 	PERIDIGM_OBC_FUNCTIONAL_2     absolute 0.000000000000e+00    # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 	PERIDIGM_OBC_FUNCTIONAL_3     absolute 0.000000000000e+00    # min:               0 @ t1,b1,e1	max:               0 @ t1,b1,e1
 	PERIDIGM_RADIUS               absolute 3.877190600000e-08    # min:               0 @ t1,b2,e513	max:     0.038771906 @ t1,b1,e247

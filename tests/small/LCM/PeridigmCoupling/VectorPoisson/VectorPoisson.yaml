@@ -26,12 +26,12 @@ ANONYMOUS:
     Solution Method: Steady
     Phalanx Graph Visualization Detail: 0
     Dirichlet BCs: 
-      DBC on NS nodelist_1 for DOF X: 0.00000000e+00
-      DBC on NS nodelist_1 for DOF Y: 0.01000000
-      DBC on NS nodelist_1 for DOF Z: 0.00000000e+00
-      DBC on NS nodelist_2 for DOF X: 0.01000000
-      DBC on NS nodelist_2 for DOF Y: 0.00000000e+00
-      DBC on NS nodelist_2 for DOF Z: 0.03000000
+      DBC on NS nodelist_1 for DOF X: 0.0000000000000000
+      DBC on NS nodelist_1 for DOF Y: 0.0100000000000000
+      DBC on NS nodelist_1 for DOF Z: 0.0000000000000000
+      DBC on NS nodelist_2 for DOF X: 0.0100000000000000
+      DBC on NS nodelist_2 for DOF Y: 0.0000000000000000
+      DBC on NS nodelist_2 for DOF Z: 0.0300000000000000
   Discretization: 
     Method: Exodus
     Exodus Input File Name: VectorPoisson.g
@@ -74,7 +74,7 @@ ANONYMOUS:
                   Solver Type: Block GMRES
                   Solver Types: 
                     Block GMRES: 
-                      Convergence Tolerance: 1.00000000e-06
+                      Convergence Tolerance: 1.0000000000000000e-06
                       Output Frequency: 10
                       Output Style: 1
                       Verbosity: 33
@@ -88,7 +88,7 @@ ANONYMOUS:
                   Overlap: 1
                   Prec Type: ILU
                   Ifpack Settings: 
-                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: drop tolerance': 0.0000000000000000
                     'fact: level-of-fill': 1
       Line Search: 
         Method: Full Step
@@ -105,7 +105,7 @@ ANONYMOUS:
           Test Type: NormF
           Norm Type: Two Norm
           Scale Type: Scaled
-          Tolerance: 1.00000000e-10
+          Tolerance: 1.0000000000000000e-10
         Test 1: 
           Test Type: MaxIters
           Maximum Iterations: 15

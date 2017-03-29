@@ -12,18 +12,18 @@ import glob
 import re
 from subprocess import Popen, PIPE
 
-def runtest(albany_command, xml_file_name, final_step_only):
+def runtest(albany_command, yaml_file_name, final_step_only):
 
     # When run as part of ctest, the albany_command string is a set of commands
     # separated by semicolons.  This will not be the case if this script
     # is run outside ctest.
 
     result = 0
-    base_name = xml_file_name[:-4]
+    base_name = yaml_file_name[:-5]
 
-    # parse the Albany command and append the xml file name
+    # parse the Albany command and append the yaml file name
     command = string.splitfields(albany_command, ";")
-    command.append(xml_file_name)
+    command.append(yaml_file_name)
 
     # determine the number of processors
     num_processors = 1
@@ -133,12 +133,12 @@ if __name__ == "__main__":
         sys.exit(1)
 
     executable = sys.argv[1]
-    xml_file_name = sys.argv[2]
+    yaml_file_name = sys.argv[2]
 
     final_step_only = False
     if "final_step_only" in sys.argv[-1]:
         final_step_only = True
 
-    result = runtest(executable, xml_file_name, final_step_only)
+    result = runtest(executable, yaml_file_name, final_step_only)
 
     sys.exit(result)
