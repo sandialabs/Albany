@@ -23,59 +23,61 @@
 
 \author{The \albany{}/\lcm{} team\thanks{Original version by Juli\'an
     R\'imoli}} \title{Installing \albany{}/\lcm{} and
-  \trilinos{} on Fedora 22/23}
+  \trilinos{} on Fedora 25}
+
 \begin{document}
 
 \maketitle
 
 \section{Introduction}
-This document describes the necessary steps to install
-\albany{}/\lcm{} and \trilinos{} on a machine with Fedora Linux. The
-procedures described herein were tested using Fedora 22 and Fedora 23.
-If you want a shortcut obtain the script \verb+install_albany.sh+
-(stored in \verb+Albany/doc/LCM/install+) and then try
+This document describes the necessary steps to install \albany{}/\lcm{} and
+\trilinos{} on a machine with Fedora Linux. The procedures described herein were
+tested using Fedora 25.  If you want a shortcut, obtain the script
+\verb+install_albany.sh+ (stored in \verb+Albany/doc/LCM/install+) and then try
 \begin{verbatim}
 ./install_albany
 \end{verbatim}
-This will install and build \trilinos{} and \albany{} in the current
-directory.  If the script does not complete it will tell you why and
-with help from this document you will be able to complete the install.
+This will install and build \trilinos{} and \albany{} in the current directory.
+If the script does not complete it will tell you why and with help from this
+document you will be able to complete the install.
 
 \section{Required Packages}
 The following packages should be installed using the {\tt dnf} command
 \begin{verbatim}
 blas
 blas-devel
-lapack
-lapack-devel
-openmpi
-openmpi-devel
-netcdf
-netcdf-devel
-netcdf-static
-netcdf-openmpi
-netcdf-openmpi-devel
-hdf5
-hdf5-devel
-hdf5-static
-hdf5-openmpi
-hdf5-openmpi-devel
 boost
 boost-devel
-boost-static
 boost-openmpi
 boost-openmpi-devel
+boost-static
+cmake
+hdf5
+hdf5-devel
+hdf5-openmpi
+hdf5-openmpi-devel
+hdf5-static
+lapack
+lapack-devel
 matio
 matio-devel
-cmake
+netcdf
+netcdf-devel
+netcdf-openmpi
+netcdf-openmpi-devel
+netcdf-static
+openmpi
+openmpi-devel
+yaml-cpp
+yaml-cpp-devel
 \end{verbatim}
 
 \begin{verbatim}
+environment-modules
 gcc-c++
 git
-hwloc-libs
 hwloc-devel
-environment-modules
+hwloc-libs
 \end{verbatim}
 
 For example, to install the first package you should type
@@ -152,9 +154,9 @@ top-level \verb+LCM+ directory.
 
 \section{Installation Scripts}
 Create symbolic links to the installation scripts inside the directory
-\verb+LCM/Albany/doc/LCM/build+ to the top-level \verb+LCM+
-directory. If you intend to modify these scripts, it is better to copy
-them. The necessary scripts are:
+\verb+LCM/Albany/doc/LCM/build+ to the top-level \verb+LCM+ directory. If you
+intend to modify these scripts, it is better to copy them instead of creating
+symbolic links. The necessary scripts are:
 \begin{verbatim}
 albany-config.sh
 build-all.sh
@@ -175,27 +177,25 @@ cd ~/LCM
 chmod 0555 *.sh
 \end{verbatim}
 
-The \verb+build.sh+ and \verb+build-all.sh+ scripts perform different
-actions according to the name with which they are invoked. This is
-accomplshed by creating symlinks to build.sh and using them to run
-it. For example:
+The \verb+build.sh+ and \verb+build-all.sh+ scripts perform different actions
+according to the name with which they are invoked. This is accomplshed by
+creating symlinks to \verb+build.sh+ and using them to run it. For example:
 \begin{itemize}
-\item clean.sh will delete all traces of the corresponding build and
-  will create a new configuration script based on the corresponding
-  template.
+\item \verb+clean.sh+ will delete all traces of the corresponding build and will
+  create a new configuration script based on the corresponding template.
 
-\item config.sh will attempt to reconfigure the build.
+\item \verb+config.sh+ will attempt to configure the build.
 
-\item build.sh (original name) will build using cmake.
+\item \verb+build.sh+ (original name) will build using cmake.
 
-\item test.sh will run the cmake tests.
+\item \verb+test.sh+ will run the cmake tests.
 
-\item mail.sh will mail the results of the ctest to the email address
-  configured in env-single.sh.
+\item \verb+mail.sh+ will mail the results of the ctest to the email address
+  configured in \verb+env-single.sh+.
 
 \item symlinks with combinations of the above
-  (e.g. clean-config-build.sh) will perform the specified actions in
-  sequence. See build.sh for valid sequences.
+  (e.g. \verb+clean-config-build.sh+) will perform the specified actions in
+  sequence. See \verb+build.sh+ for valid sequences.
 \end{itemize}
 For example, the following symbolic links will create separate
 commands for clean up, configuring and testing:
@@ -214,30 +214,37 @@ ln -s build.sh config-build-test.sh
 \end{verbatim}
 There is also a script
 \verb+LCM/Albany/doc/LCM/install/albany-lcm-symlinks.sh+
-that will create the appropriate symbolic links. 
+that will create the appropriate symbolic links.
 
-It is recommended that at least the *-config.sh be made read and
-execute only, as erroneous modifications to the build.sh script may
-result in their being overwritten.
+There are two template scripts called \verb+trilinos-config.sh+ and
+\verb+albany-config.sh+. The configuration scripts for a specfic build are
+created using these two as templates. It is therefore recommended that these two
+template scripts be made read and execute only, as erroneous modifications to
+the \verb+build.sh+ script may result in their being overwritten.
 
 \section{Parallel Schwarz and DTK}
 \label{sec:dtk}
 
-This section applies only if using the alternating Schwarz coupling
-method in parallel by means of the Data Transfer Kit (\verb+DTK+).
-Otherwise it can be safely ignored.
+This section applies only if using the Schwarz alternating method in parallel by
+means of the Data Transfer Kit (\verb+DTK+).  Otherwise it can be safely
+ignored.
 
-The current parallel implementation of the Schwarz method requires
-\verb+DTK+, which is tightly integrated to \trilinos{}, specifically
-\verb+STK+. Go to the the top-level \verb+LCM+ directory and create a
-symbolic link to the \verb+DTK+ CMake fragment that resides in
-\verb+LCM/Albany/doc/LCM/build+, then clone the \verb+DTK+ repository
-inside the \trilinos{} directory:
+The current parallel implementation of the Schwarz method requires \verb+DTK+,
+which is tightly integrated to \trilinos{}, specifically \verb+STK+. Go to the
+the top-level \verb+LCM+ directory and create a symbolic link to the \verb+DTK+
+CMake fragment that resides in \verb+LCM/Albany/doc/LCM/build+, then download
+the \verb+DTK+ package from:
+
+\verb+https://github.com/ORNL-CEES/DataTransferKit/archive/2.0.0.tar.gz+.
+
+Expand the package inside the \trilinos{} directory and rename it:
 \begin{verbatim}
 cd ~/LCM
 ln -s Albany/doc/LCM/build/dtk-frag.sh .
 cd Trilinos
-git clone git@github.com:ORNL-CEES/DataTransferKit.git
+curl -L https://github.com/ORNL-CEES/DataTransferKit/archive/2.0.0.tar.gz -O
+tar zxf 2.0.0.tar.gz
+mv DataTransferKit-2.0.0 DataTransferKit
 \end{verbatim}
 The configuration scripts will detect the presence of \verb+DTK+ and
 configure it appropriately. Also, parallel Schwarz will be enabled when
@@ -367,7 +374,10 @@ such, vibrant development of new and exciting capabilities is strongly
 encouraged. For these reasons, don't be afraid to commit changes to
 the master git repository. We only ask that you don't break
 compilation or testing. So please make sure that the tests pass before
-you commit changes.
+you commit changes. Also, follow the development discussion here:
+\begin{verbatim}
+https://github.com/gahansen/Albany/issues
+\end{verbatim}
 
 In addition, within \lcm{} we strongly encourage you to follow the C++
 Google style guide that can be found at
@@ -377,5 +387,13 @@ of \albany{}, but we believe that the Google style is better in that
 it advocates more style differentiation between the different
 syntactic elements of C++. This in turn makes reading code easier and
 helps to avoid coding errors.
+
+The \verb+clang-format+ tool can be used for this. There is a
+\verb+.clang-format+ file in the \verb+Albany/src/LCM+ directory that conforms
+to the C++ Google conding standard. Thus, all that is needed to reformat a
+source file in place is the command:
+\begin{verbatim}
+clang-format -i [source file name]
+\end{verbatim}
 
 \end{document}
