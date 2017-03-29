@@ -429,6 +429,13 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::update(
   LCM::MiniSolver<Minimizer, StepType, NonlinearSolver, EvalT, CP::NlsDim<NumSlipT>::value>
   mini_solver(minimizer_, *pstep, nls, x);
 
+  if (true == minimizer_.failed)
+  {
+    this->forceGlobalLoadStepReduction(minimizer_.failure_message);
+    return false;
+  }
+
+
   // Write slip back out from x
   for (int i = 0; i < this->num_slip_; ++i) {
     state_internal_.slip_np1_(i) = x(i);
@@ -517,6 +524,12 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update(
   
   LCM::MiniSolver<Minimizer, StepType, NonlinearSolver, EvalT, CP::NlsDim<NumSlipT>::value>
   mini_solver(minimizer_, *pstep, nls, x);
+
+  if (true == minimizer_.failed)
+  {
+    this->forceGlobalLoadStepReduction(minimizer_.failure_message);
+    return false;
+  }
 
   for(int i=0; i<this->num_slip_; ++i) {
     state_internal_.slip_np1_[i] = x[i];

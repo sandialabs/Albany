@@ -182,8 +182,8 @@ private:
   CP::ResidualType
   residual_type_;
 
-  bool
-  apply_slip_predictor_;
+  CP::PredictorSlip
+  predictor_slip_;
   
   minitensor::StepType
   step_type_;

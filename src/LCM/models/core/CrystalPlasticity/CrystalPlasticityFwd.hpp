@@ -53,6 +53,14 @@ enum class ResidualType
   SLIP_HARDNESS = 2
 };
 
+enum class PredictorSlip
+{
+  UNDEFINED = 0,
+  NONE = 1,
+  RATE = 2,
+  SOLVE = 3
+};
+
 struct FlowParameterBase;
 
 template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
@@ -63,6 +71,6 @@ struct SlipSystem;
 
 template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 struct SlipFamily;
-}
+} //namespace CP
 
 #endif

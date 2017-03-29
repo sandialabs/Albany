@@ -5,6 +5,10 @@
 //*****************************************************************//
 
 #include "Teuchos_TestForException.hpp"
+/*
+#include "Teuchos_LAPACK.hpp"
+#include <Tsqr_Matrix.hpp>
+//*/
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Utils.hpp"
 
@@ -112,8 +116,7 @@ CrystalPlasticityKernel(
   residual_type_ = preader.getResidualType();
 	step_type_ = preader.getStepType();
 	minimizer_ = preader.getMinimizer();
-
-  apply_slip_predictor_ = p->get<bool>("Apply Slip Predictor", true);
+  predictor_slip_ = preader.getPredictorSlip();
 
   verbosity_ = p->get<int>("Verbosity", 0);
 
@@ -472,6 +475,10 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(
   previous_defgrad_ = (*workset.stateArrayPtr)[F_string_ + "_old"];
   
   dt_ = Sacado::ScalarValue<ScalarT>::eval(delta_time_(0));
+
+  // Resest status and status message for model failure test
+  nox_status_test_->status_message_ = "";
+  nox_status_test_->status_ = NOX::StatusTest::Unevaluated;
 }
 
 
@@ -485,8 +492,10 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   utility::StaticAllocator 
   allocator(1024 * 1024);
 
-  // Resest status message for model failure test
-  nox_status_test_->status_message_ = "";
+  if (nox_status_test_->status_ == NOX::StatusTest::Failed)
+  {
+    return;
+  }
 
   //
   // Known quantities
@@ -635,18 +644,166 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
     }
   }
 
-  for (int s(0); s < num_slip_; ++s) {
+  // Bring in internal state from previous step
+  for (int s(0); s < num_slip_; ++s)
+  {
     slip_n[s] = (*(previous_slips_[s]))(cell, pt);
-    //
-    // initialize state n+1 with either (a) zero slip increment or (b) a 
-    // predictor
-    //
     slip_np1[s] = slip_n[s];
-    if (apply_slip_predictor_ == true) {
-      slip_dot_n[s] = (*(previous_slip_rates_[s]))(cell, pt);
-      slip_np1[s] += dt_ * slip_dot_n[s];
-    }
+    slip_dot_n[s] = (*(previous_slip_rates_[s]))(cell, pt);
     state_hardening_n[s] = (*(previous_hards_[s]))(cell, pt);
+  }
+
+  //
+  // Set up slip predictor to assign isochoric part of F_increment to Fp_increment
+  //
+  if (dt_ > 0.0)
+  {
+    switch (predictor_slip_)
+    {
+      case CP::PredictorSlip::RATE:
+      {
+        for (int s(0); s < num_slip_; ++s)
+        {
+          slip_np1[s] += dt_ * slip_dot_n[s];
+        }
+      } break;
+
+      case CP::PredictorSlip::SOLVE:
+      {
+        auto const
+        size_problem = std::max(num_slip_, num_dims_ * num_dims_);
+
+        minitensor::Tensor<RealType, CP::MAX_SLIP>
+        dyad_matrix(size_problem);
+
+        dyad_matrix.fill(minitensor::ZEROS);
+
+        for (int s = 0; s < num_slip_; ++s)
+        {
+          for (int d(0); d < num_dims_ * num_dims_; ++d)
+          {
+            dyad_matrix(d, s) = element_slip_systems.at(s).projector_[d];
+          }
+        }
+
+        minitensor::Tensor<RealType, CP::MAX_SLIP>
+        A(size_problem);
+        minitensor::Tensor<RealType, CP::MAX_SLIP>
+        B(size_problem);
+        minitensor::Tensor<RealType, CP::MAX_SLIP>
+        C(size_problem);
+
+        boost::tie(A, B, C) = minitensor::svd(dyad_matrix);
+
+        for (int s(0); s < num_slip_; ++s)
+        {
+          B(s, s) = B(s, s) > 1.0e-12 ? 1.0 / B(s,s) : 0.0;
+        }
+
+        minitensor::Tensor<RealType, CP::MAX_SLIP>
+        Pinv(num_slip_);
+
+        // Pinv = C * B * minitensor::transpose(A);
+        Pinv = C * B * B * minitensor::transpose(C);
+
+        minitensor::Tensor<RealType, CP::MAX_DIM> const
+        inv_F = minitensor::inverse(F_n);
+
+        minitensor::Tensor<RealType, CP::MAX_DIM> const
+        eye = minitensor::identity<RealType, CP::MAX_DIM>(num_dims_);
+
+        minitensor::Tensor<ScalarT, CP::MAX_DIM>
+        L(num_dims_);
+
+        L = 1.0 / dt_ * (F_np1 * inv_F - eye);
+
+        minitensor::Vector<RealType, CP::MAX_SLIP>
+        L_vec(size_problem);
+
+        L_vec.fill(minitensor::ZEROS);
+
+        RealType
+        portion_L = 0.5;
+
+        for (int i = 0; i < num_dims_; ++i)
+        {
+          for (int j = 0; j < num_dims_; ++j)
+          {
+            L_vec(i * num_dims_ + j) = portion_L * Sacado::ScalarValue<ScalarT>::eval(L(i, j));
+          }
+        }
+
+        minitensor::Vector<RealType, CP::MAX_SLIP>
+        dm_lv = minitensor::transpose(dyad_matrix) * L_vec;
+
+        minitensor::Vector<RealType, CP::MAX_SLIP>
+        rates_slip_trial = Pinv * dm_lv;
+
+        for (int s(0); s < num_slip_; ++s)
+        {
+          slip_np1[s] = slip_n[s] + dt_ * rates_slip_trial[s];
+        }
+
+        if (verbosity_ > 4)
+        {
+          std::cout << "P^T * L" << std::endl;
+          std::cout << std::setprecision(4) << dm_lv << std::endl;
+
+          std::cout << "Trial slip rates" << std::endl;
+          std::cout << std::setprecision(4) << rates_slip_trial << std::endl;
+
+          std::cout << "F_n" << std::endl;
+          std::cout << std::setprecision(4) << F_n << std::endl;
+          std::cout << "F_np1" << std::endl;
+          std::cout << std::setprecision(4) << F_np1 << std::endl;
+          std::cout << "dF" << std::endl;
+          std::cout << std::setprecision(4) << F_np1 * inv_F << std::endl;
+          std::cout << "L_vec" << std::endl;
+          std::cout << std::setprecision(4) << L_vec << std::endl;
+          std::cout << "Pinv" << std::endl;
+          std::cout << std::setprecision(4) << Pinv << std::endl;
+          std::cout << "exp(L * dt_) * F_n" << std::endl;
+          std::cout << std::setprecision(4) << minitensor::exp(dt_ * L) * F_n << std::endl;
+        }
+
+        minitensor::Tensor<ScalarT, CP::MAX_DIM>
+        Lp_trial(num_dims_);
+        Lp_trial.fill(minitensor::ZEROS);
+        // for (int s(0); s < num_slip_; ++s)
+        // {
+        //   Lp_trial += rates_slip_trial[s] * element_slip_systems.at(s).projector_;
+        // }
+
+        minitensor::Vector<RealType, CP::MAX_SLIP>
+        Lp_vec = dyad_matrix * rates_slip_trial;
+
+        for (int i = 0; i < num_dims_; ++i)
+        {
+          for (int j = 0; j < num_dims_; ++j)
+          {
+            Lp_trial(i, j) = Lp_vec(i * num_dims_ + j);
+          }
+        }
+
+        if (verbosity_ > 4)
+        {
+          std::cout << "L" << std::endl;
+          std::cout << std::setprecision(4) << L << std::endl;
+
+          std::cout << "Lp_trial" << std::endl;
+          std::cout << std::setprecision(4) << Lp_trial << std::endl;
+
+          std::cout << "exp(Lp * dt_)" << std::endl;
+          std::cout << std::setprecision(4) << minitensor::exp(dt_ * Lp_trial)<< std::endl;
+        }
+
+      } break;
+
+      default:
+      {
+        
+      } break;
+    }
   }
 
   if(verbosity_ > 2) {
