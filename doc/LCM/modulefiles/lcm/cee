@@ -1,7 +1,7 @@
 #%Module 1.0
 module-whatis "LCM CEE base environment"
-module load lcm-common
-module load lcm-sems
+module load lcm/common
+module load lcm/sems
 set                     boost_inc       $env(SEMS_BOOST_INCLUDE_PATH)
 set                     boost_lib       $env(SEMS_BOOST_LIBRARY_PATH)
 set                     mpi_root        $env(SEMS_MPI_ROOT)

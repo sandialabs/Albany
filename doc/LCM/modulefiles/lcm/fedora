@@ -1,6 +1,6 @@
 #%Module 1.0
 module-whatis "LCM Fedora base environment"
-module load lcm-common
+module load lcm/common
 
 if { ![ file exists /etc/fedora-release ] } {
   puts stderr "lcm-fedora can only be loaded on Fedora systems !"
