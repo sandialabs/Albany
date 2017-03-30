@@ -87,6 +87,7 @@ machinetype="serial"
 #buildtype="debug"
 buildtype="release"
 
+module load lcm/fedora
 module load $machinetype-$toolchain-$buildtype
 
 for target in trilinos albany; do
