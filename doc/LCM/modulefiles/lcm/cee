@@ -8,6 +8,8 @@ set                     mpi_root        $env(SEMS_MPI_ROOT)
 set                     netcdf_root     $env(SEMS_NETCDF_ROOT)
 set                     netcdf_inc      $env(SEMS_NETCDF_INCLUDE_PATH)
 set                     netcdf_lib      $env(SEMS_NETCDF_LIBRARY_PATH)
+set                     yaml_cpp_inc    $env(SEMS_YAML_CPP_INCLUDE_PATH)
+set                     yaml_cpp_lib    $env(SEMS_YAML_CPP_LIBRARY_PATH)
 setenv                  BOOST_INC       $boost_inc
 setenv                  BOOST_LIB       $boost_lib
 setenv                  BOOSTLIB_INC    $boost_inc
@@ -18,6 +20,8 @@ setenv                  MPI_BIN         $mpi_root/bin
 setenv                  NETCDF          $netcdf_root
 setenv                  NETCDF_INC      $netcdf_inc
 setenv                  NETCDF_LIB      $netcdf_lib
+setenv                  YAML_CPP_INC    $yaml_cpp_inc
+setenv                  YAML_CPP_LIB    $yaml_cpp_lib
 prepend-path            LD_LIBRARY_PATH $mpi_root/lib
 prepend-path            LD_LIBRARY_PATH $netcdf_lib
 prepend-path            PATH            $mpi_root/bin

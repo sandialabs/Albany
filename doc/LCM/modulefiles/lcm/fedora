@@ -17,6 +17,8 @@ setenv                  MPI_BIN         /usr/lib64/openmpi/bin
 setenv                  NETCDF          /usr/local/netcdf
 setenv                  NETCDF_INC      /usr/local/netcdf/include
 setenv                  NETCDF_LIB      /usr/local/netcdf/lib
+setenv                  YAML_CPP_INC    /usr/include
+setenv                  YAML_CPP_LIB    /usr/lib64
 prepend-path            LD_LIBRARY_PATH /usr/lib64/openmpi/lib
 prepend-path            LD_LIBRARY_PATH /usr/local/netcdf/lib
 prepend-path            PATH            /usr/lib64/openmpi/bin
