@@ -3,26 +3,10 @@
 #  Environment for compiling and running Albany/LCM.
 #
 
-module load lcm/fedora-cuda
+module load lcm/cuda
+module load lcm/gcc
+module load lcm/profile
+module load lcm/tpls
+module load lcm/finalize
 
-set     arch            cuda
-set     tool_chain      gcc
-set     build_type      profile
-set     build           $arch-$tool_chain-$build_type
-set     lcm_dir         $env(LCM_DIR)
-set     module_dir      $env(MODULEPATH)
-set     install_dir     $lcm_dir/trilinos-install-$build
-set     alb_exe_dir     $lcm_dir/albany-build-$build/src
-
-setenv                  ARCH            $arch
-setenv                  TOOL_CHAIN      $tool_chain
-setenv                  BUILD_TYPE      $build_type
-setenv                  BUILD           $build
-setenv                  INSTALL_DIR     $install_dir
-
-prepend-path            LD_LIBRARY_PATH $install_dir/lib
-prepend-path            PATH            $alb_exe_dir
-prepend-path            PATH            $alb_exe_dir/LCM
-prepend-path            PATH            $install_dir/bin
-prepend-path            PYTHONPATH      $install_dir/lib
-conflict                $module_dir
+conflict $env(MODULEPATH)
