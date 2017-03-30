@@ -23,17 +23,17 @@ export OMPI_FC=lcm_ompi_fc
 cmake \
  -D BUILD_SHARED_LIBS:BOOL=ON \
  -D CMAKE_BUILD_TYPE:STRING="lcm_build_type" \
- -D CMAKE_CXX_COMPILER:FILEPATH="/usr/lib64/openmpi/bin/mpicxx" \
- -D CMAKE_C_COMPILER:FILEPATH="/usr/lib64/openmpi/bin/mpicc" \
- -D CMAKE_Fortran_COMPILER:FILEPATH="/usr/lib64/openmpi/bin/mpif90" \
+ -D CMAKE_CXX_COMPILER:FILEPATH="$MPI_BIN/mpicxx" \
+ -D CMAKE_C_COMPILER:FILEPATH="$MPI_BIN/mpicc" \
+ -D CMAKE_Fortran_COMPILER:FILEPATH="$MPI_BIN/mpif90" \
  -D CMAKE_INSTALL_PREFIX:PATH=lcm_install_dir \
  -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 \
  -D TPL_ENABLE_MPI:BOOL=ON \
  -D TPL_ENABLE_BinUtils:BOOL=OFF \
- -D TPL_MPI_INCLUDE_DIRS:FILEPATH="/usr/include/openmpi-x86_64" \
- -D TPL_MPI_LIBRARY_DIRS:FILEPATH="/usr/lib64/openmpi/lib" \
- -D MPI_BIN_DIR:FILEPATH="/usr/lib64/openmpi/bin" \
+ -D TPL_MPI_INCLUDE_DIRS:FILEPATH="$MPI_INC" \
+ -D TPL_MPI_LIBRARY_DIRS:FILEPATH="$MPI_LIB" \
+ -D MPI_BIN_DIR:FILEPATH="$MPI_BIN" \
 \
  -D TPL_ENABLE_Boost:BOOL=ON \
  -D TPL_ENABLE_BoostLib:BOOL=ON \
