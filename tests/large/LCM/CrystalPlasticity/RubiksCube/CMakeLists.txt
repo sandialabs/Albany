@@ -44,6 +44,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CreateMaterialsFile.py
 
 # Add the tests
 if(ALBANY_IFPACK2)
-#add_test(CrystalPlasticity_RubiksCube_np1_Tpetra python ../run_exodiff_test.py "${SerialAlbanyT.exe}" RubiksCube.yaml)
-#add_test(CrystalPlasticity_RubiksCube_np4_Tpetra python ../run_exodiff_test.py "${AlbanyT.exe}" RubiksCube.yaml)
+#add_test(CrystalPlasticity_RubiksCube_np1 python ../run_exodiff_test.py "${SerialAlbanyT.exe}" RubiksCube.yaml)
+#add_test(CrystalPlasticity_RubiksCube_np4 python ../run_exodiff_test.py "${AlbanyT.exe}" RubiksCube.yaml)
 endif()

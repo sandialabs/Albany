@@ -17,6 +17,6 @@ if (ALBANY_CONTACT)
    # time integrator needs to be converted to tpetra.
 
    if (ALBANY_IFPACK2)
-   #add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.yaml)
+   #add_test(${testName} ${AlbanyT.exe} inputT.yaml)
    endif ()
 endif()

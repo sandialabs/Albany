@@ -47,8 +47,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/OrientationNotOnMesh.gold.exo
 
 # Add the tests
 if(ALBANY_IFPACK2)
-add_test(CrystalPlasticity_OrientationOnMesh_Tpetra python ../run_exodiff_test.py "${SerialAlbanyT.exe}" OrientationOnMesh.yaml)
-add_test(CrystalPlasticity_OrientationOnMesh_np4_Tpetra python ../run_exodiff_test.py "${AlbanyT.exe}" OrientationOnMesh.yaml)
-add_test(CrystalPlasticity_OrientationNotOnMesh_Tpetra python ../run_exodiff_test.py "${SerialAlbanyT.exe}" OrientationNotOnMesh.yaml)
-add_test(CrystalPlasticity_OrientationNotOnMesh_np4_Tpetra python ../run_exodiff_test.py "${AlbanyT.exe}" OrientationNotOnMesh.yaml)
+add_test(CrystalPlasticity_OrientationOnMesh python ../run_exodiff_test.py "${SerialAlbanyT.exe}" OrientationOnMesh.yaml)
+add_test(CrystalPlasticity_OrientationOnMesh_np4 python ../run_exodiff_test.py "${AlbanyT.exe}" OrientationOnMesh.yaml)
+add_test(CrystalPlasticity_OrientationNotOnMesh python ../run_exodiff_test.py "${SerialAlbanyT.exe}" OrientationNotOnMesh.yaml)
+add_test(CrystalPlasticity_OrientationNotOnMesh_np4 python ../run_exodiff_test.py "${AlbanyT.exe}" OrientationNotOnMesh.yaml)
 endif()

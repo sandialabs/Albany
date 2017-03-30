@@ -11,6 +11,6 @@ if (ALBANY_64BIT_INT)
                ${CMAKE_CURRENT_BINARY_DIR}/materials.yaml COPYONLY)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/turbine.e
                ${CMAKE_CURRENT_BINARY_DIR}/turbine.e COPYONLY)
-    add_test(${testName}_Tpetra_64 ${AlbanyT.exe})
+    add_test(${testName}_64 ${AlbanyT.exe})
   endif ()
 endif ()

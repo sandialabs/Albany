@@ -13,7 +13,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 #add_test(${testName} ${Albany.exe})
 #endif()
 if (ALBANY_IFPACK2) 
-add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.yaml)
+add_test(${testName} ${AlbanyT.exe} inputT.yaml)
 endif()
 
 # 4. Repeat process for SG problems if "inputSG.yaml" exists

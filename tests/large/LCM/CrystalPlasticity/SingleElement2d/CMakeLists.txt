@@ -25,6 +25,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/PlasticShear2d.gold.exo
 
 # Add the tests
 if(ALBANY_IFPACK2)
-add_test(CrystalPlasticity_ElasticShear2d_Tpetra python ../run_exodiff_test.py "${SerialAlbanyT.exe}" ElasticShear2d.yaml)
-add_test(CrystalPlasticity_PlasticShear2d_Tpetra python ../run_exodiff_test.py "${SerialAlbanyT.exe}" PlasticShear2d.yaml)
+add_test(CrystalPlasticity_ElasticShear2d python ../run_exodiff_test.py "${SerialAlbanyT.exe}" ElasticShear2d.yaml)
+add_test(CrystalPlasticity_PlasticShear2d python ../run_exodiff_test.py "${SerialAlbanyT.exe}" PlasticShear2d.yaml)
 endif()

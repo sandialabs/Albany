@@ -16,21 +16,21 @@ get_filename_component(testDirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 if (ALBANY_IFPACK2) 
   set(testName ${testDirName})
-  add_test(NAME LaplaceBeltrami:${testName}_Tpetra 
+  add_test(NAME LaplaceBeltrami:${testName} 
          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
          -DTEST_NAME=${testName} -DTEST_ARGS= -DMPIMNP=${MPIMNP} 
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
 
   set(testName ${testDirName}_TPS)
-  add_test(NAME LaplaceBeltrami:${testName}_Tpetra 
+  add_test(NAME LaplaceBeltrami:${testName} 
          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
          -DTEST_NAME=${testName} -DTEST_ARGS=inputTPS.yaml -DMPIMNP=${MPIMNP} 
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
 
   set(testName ${testDirName}_LB)
-  add_test(NAME LaplaceBeltrami:${testName}_Tpetra 
+  add_test(NAME LaplaceBeltrami:${testName} 
          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
          -DTEST_NAME=${testName} -DTEST_ARGS=inputLB.yaml -DMPIMNP=${MPIMNP} 
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
@@ -38,42 +38,42 @@ if (ALBANY_IFPACK2)
 endif()
 #if (ALBANY_MUELU_EXAMPLES) 
 #    set(testName ${testDirName})
-#    add_test(NAME LaplaceBeltrami:${testName}_Tpetra_MueLu_64 
+#    add_test(NAME LaplaceBeltrami:${testName}_MueLu_64 
 #         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
 #         -DTEST_NAME=${testName} -DTEST_ARGS=input_MueLu_64.yaml -DMPIMNP=${MPIMNP} 
 #         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
 #         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
 #
 #    set(testName ${testDirName}_TPS)
-#    add_test(NAME LaplaceBeltrami:${testName}_Tpetra_MueLu_64 
+#    add_test(NAME LaplaceBeltrami:${testName}_MueLu_64 
 #         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
 #         -DTEST_NAME=${testName} -DTEST_ARGS=inputTPS_MueLu_64.yaml -DMPIMNP=${MPIMNP} 
 #         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
 #         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
 #
 #    set(testName ${testDirName}_LB)
-#    add_test(NAME LaplaceBeltrami:${testName}_Tpetra_MueLu_64 
+#    add_test(NAME LaplaceBeltrami:${testName}_MueLu_64 
 #         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
 #         -DTEST_NAME=${testName} -DTEST_ARGS=inputLB_MueLu_64.yaml -DMPIMNP=${MPIMNP} 
 #         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
 #         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
 #  else()
 #    set(testName ${testDirName})
-#    add_test(NAME LaplaceBeltrami:${testName}_Tpetra_MueLu 
+#    add_test(NAME LaplaceBeltrami:${testName}_MueLu 
 #         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
 #         -DTEST_NAME=${testName} -DTEST_ARGS=input_MueLu.yaml -DMPIMNP=${MPIMNP} 
 #         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
 #         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
 #
 #    set(testName ${testDirName}_TPS)
-#    add_test(NAME LaplaceBeltrami:${testName}_Tpetra_MueLu 
+#    add_test(NAME LaplaceBeltrami:${testName}_MueLu 
 #         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
 #         -DTEST_NAME=${testName} -DTEST_ARGS=inputTPS_MueLu.yaml -DMPIMNP=${MPIMNP} 
 #         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
 #         -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
 #
 #    set(testName ${testDirName}_LB)
-#    add_test(NAME LaplaceBeltrami:${testName}_Tpetra_MueLu 
+#    add_test(NAME LaplaceBeltrami:${testName}_MueLu 
 #         COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
 #         -DTEST_NAME=${testName} -DTEST_ARGS=inputLB_MueLu.yaml -DMPIMNP=${MPIMNP} 
 #         -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 

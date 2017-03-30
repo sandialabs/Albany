@@ -14,8 +14,8 @@ if (ALBANY_EPETRA)
 add_test(${testName}_MatrixFree ${Albany.exe} inputMatrixFree.yaml)
 add_test(${testName}_ProbeLame ${Albany.exe} inputProbeLame.yaml)
 endif()
-add_test(${testName}_MatrixFree_Tpetra ${AlbanyT.exe} inputMatrixFree.yaml)
-add_test(${testName}_ProbeLame_Tpetra ${AlbanyT.exe} inputProbeLameT.yaml)
+add_test(${testName}_MatrixFree ${AlbanyT.exe} inputMatrixFree.yaml)
+add_test(${testName}_ProbeLame ${AlbanyT.exe} inputProbeLameT.yaml)
 
 # 4. Repeat process for SG problems if "inputSG.yaml" exists
 if (ALBANY_STOKHOS)

@@ -32,13 +32,13 @@ add_test(${testName}TransientHeat2D ${Albany.exe} MechanicsTransientHeat2D.yaml)
 endif()
 
 if (ALBANY_IFPACK2) 
-    add_test(${testName}TransientHeat2D_Tpetra ${AlbanyT.exe} MechanicsTransientHeat2DT.yaml)
-    add_test(${testName}LinearThermalExpansion_Tpetra ${AlbanyT.exe} LinearThermalExpansionT.yaml)
+    add_test(${testName}TransientHeat2D ${AlbanyT.exe} MechanicsTransientHeat2DT.yaml)
+    add_test(${testName}LinearThermalExpansion ${AlbanyT.exe} LinearThermalExpansionT.yaml)
 endif()
 if (ALBANY_MUELU_EXAMPLES)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsTransientHeat2DT_MueLu.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/MechanicsTransientHeat2DT_MueLu.yaml COPYONLY)
-    add_test(${testName}TransientHeat2D_Tpetra_MueLu ${AlbanyT.exe} MechanicsTransientHeat2DT_MueLu.yaml)
+    add_test(${testName}TransientHeat2D_MueLu ${AlbanyT.exe} MechanicsTransientHeat2DT_MueLu.yaml)
 endif()
 
 # Thermal Expansion test

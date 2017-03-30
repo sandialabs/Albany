@@ -25,6 +25,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipHard_Explicit.gold.exo
 
 # Add the tests
 if(ALBANY_IFPACK2)
-add_test(CrystalPlasticity_SingleSlipHard_Explicit_Tpetra python ../../run_exodiff_test.py "${SerialAlbanyT.exe}" SingleSlipHard_Explicit.yaml)
-add_test(CrystalPlasticity_SingleSlipHard_Implicit_Tpetra python ../../run_exodiff_test.py "${SerialAlbanyT.exe}" SingleSlipHard_Implicit.yaml)
+add_test(CrystalPlasticity_SingleSlipHard_Explicit python ../../run_exodiff_test.py "${SerialAlbanyT.exe}" SingleSlipHard_Explicit.yaml)
+add_test(CrystalPlasticity_SingleSlipHard_Implicit python ../../run_exodiff_test.py "${SerialAlbanyT.exe}" SingleSlipHard_Implicit.yaml)
 endif()

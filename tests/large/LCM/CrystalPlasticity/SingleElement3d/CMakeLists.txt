@@ -32,6 +32,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AnalyticSolution.py
 
 # Add the tests
 if(ALBANY_IFPACK2)
-add_test(CrystalPlasticity_ElasticShear3d_Tpetra python ../run_exodiff_test.py "${SerialAlbanyT.exe}" ElasticShear3d.yaml)
-add_test(CrystalPlasticity_ElasticShearRotated3d_Tpetra python ../run_exodiff_test.py "${SerialAlbanyT.exe}" ElasticShearRotated3d.yaml)
+add_test(CrystalPlasticity_ElasticShear3d python ../run_exodiff_test.py "${SerialAlbanyT.exe}" ElasticShear3d.yaml)
+add_test(CrystalPlasticity_ElasticShearRotated3d python ../run_exodiff_test.py "${SerialAlbanyT.exe}" ElasticShearRotated3d.yaml)
 endif()

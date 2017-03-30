@@ -23,6 +23,6 @@ IF(ALBANY_SEACAS)
   if (ALBANY_MUELU_EXAMPLES)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/NotchedTensileTet10T.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/NotchedTensileTet10T.yaml COPYONLY)
-    add_test(${testName}_STK_Tpetra ${AlbanyT.exe} NotchedTensileTet10T.yaml)
+    add_test(${testName}_STK ${AlbanyT.exe} NotchedTensileTet10T.yaml)
   endif()
 ENDIF()

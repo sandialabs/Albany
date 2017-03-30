@@ -17,8 +17,8 @@ add_test(${testName} ${Albany.exe})
 add_test(${testName}_SplitOutput ${Albany.exe} inputSplitSolution.yaml)
 endif()
 if (ALBANY_IFPACK2)
-add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.yaml)
-add_test(${testName}_SplitOutput_Tpetra ${AlbanyT.exe} inputSplitSolutionT.yaml)
+add_test(${testName} ${AlbanyT.exe} inputT.yaml)
+add_test(${testName}_SplitOutput ${AlbanyT.exe} inputSplitSolutionT.yaml)
 endif ()
 
 # 4. Repeat process for SG problems if "inputSG.yaml" exists

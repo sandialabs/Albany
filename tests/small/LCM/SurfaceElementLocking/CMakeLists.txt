@@ -10,15 +10,12 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${SEACAS_EXODIFF} ${CMAKE_CURRENT_BINARY_DIR}/exodiff)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${SEACAS_ALGEBRA} ${CMAKE_CURRENT_BINARY_DIR}/algebra)
-if (ALBANY_EPETRA)
-execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
-endif()
 if (ALBANY_IFPACK2)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
 endif()
 
+if (ALBANY_IFPACK2)
 # input files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNoVolJ.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/inputNoVolJ.yaml COPYONLY)
@@ -26,13 +23,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputVolJ.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/inputVolJ.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAveragePressure.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/inputAveragePressure.yaml COPYONLY)
-if (ALBANY_IFPACK2)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNoVolJT.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputNoVolJT.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputVolJT.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputVolJT.yaml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAveragePressureT.yaml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputAveragePressureT.yaml COPYONLY)
 endif()
 
 # material files
@@ -67,12 +57,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/outVolJ.alg.gold.e
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/outAveragePressure.alg.gold.e
                ${CMAKE_CURRENT_BINARY_DIR}/outAveragePressure.alg.gold.e COPYONLY)
 
+if (ALBANY_IFPACK2)
 # python runtest file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtest.py COPYONLY)
-if (ALBANY_IFPACK2)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
-               ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
 endif()
 
 # 2. Name the test with the directory name
@@ -80,11 +68,8 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
-  if (ALBANY_EPETRA) 
-    add_test(NAME ${testName} COMMAND "python" "runtest.py")
-  endif()
   if (ALBANY_IFPACK2)
-    add_test(NAME ${testName}_Tpetra COMMAND "python" "runtestT.py")
+    add_test(NAME ${testName} COMMAND "python" "runtest.py")
   endif()
 ENDIF()
 endif(SEACAS_EXODIFF AND SEACAS_ALGEBRA)

@@ -35,10 +35,10 @@ add_test(${testName}_MultiMaterial_10_SERIAL ${SerialAlbany.exe} inputMultiMat_1
 add_test(${testName}_MultiMaterial_100_SERIAL ${SerialAlbany.exe} inputMultiMat_100.yaml)
 endif()
 
-add_test(${testName}_SingleMaterial_SERIAL_Tpetra ${SerialAlbanyT.exe} inputSingleMaterial.yaml)
+add_test(${testName}_SingleMaterial_SERIAL ${SerialAlbanyT.exe} inputSingleMaterial.yaml)
 
-add_test(${testName}_MultiMaterial_10_SERIAL_Tpetra ${SerialAlbanyT.exe} inputMultiMat_10.yaml)
+add_test(${testName}_MultiMaterial_10_SERIAL ${SerialAlbanyT.exe} inputMultiMat_10.yaml)
 
-add_test(${testName}_MultiMaterial_100_SERIAL_Tpetra ${SerialAlbanyT.exe}
+add_test(${testName}_MultiMaterial_100_SERIAL ${SerialAlbanyT.exe}
 inputMultiMat_100T.yaml)
 

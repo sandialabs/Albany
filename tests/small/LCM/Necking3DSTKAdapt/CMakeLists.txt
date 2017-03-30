@@ -20,10 +20,10 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
 if (ALBANY_IFPACK2 AND SEACAS_EPU AND SEACAS_EXODIFF)
-add_test(${testName}_ElasticML_Tpetra ${AlbanyT.exe} inputElastAdaptT.yaml)
-add_test(${testName}_Tpetra ${AlbanyT.exe} mechanicsT.yaml)
+add_test(${testName}_ElasticML ${AlbanyT.exe} inputElastAdaptT.yaml)
+add_test(${testName} ${AlbanyT.exe} mechanicsT.yaml)
 
-add_test(NAME ${testName}_NodeSizeField_Tpetra
+add_test(NAME ${testName}_NodeSizeField
          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
          -DFILE_NAME=tet4_node_size_field_test_output_1 -DTEST_ARGS=mechNodeSizeFieldT.yaml -DMPIMNP=${MPIMNP}
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF}
