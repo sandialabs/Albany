@@ -37,6 +37,7 @@
 rm -rf CMake*
 
 BUILD_DIR=`pwd`
+NETCDFDIR=/usr/local/netcdf
 
 cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
@@ -87,15 +88,13 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_HWLOC_LIBRARIES:PATHNAME=${HWLOC_PATH}/lib/libhwloc.so \
       -D TPL_HWLOC_INCLUDE_DIRS:PATHNAME=${HWLOC_PATH}/include \
 \
-      -D TPL_ENABLE_HDF5:BOOL=ON \
+      -D TPL_ENABLE_HDF5:BOOL=OFF \
       -D TPL_ENABLE_Matio:BOOL=OFF \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
       -D TPL_Netcdf_PARALLEL:BOOL=ON \
       -D TPL_ENABLE_X11:BOOL=OFF \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/usr/include/openmpi-x86_64 \
-      -D Netcdf_LIBRARY_DIRS:PATH=/usr/lib64 \
-      -D HDF5_INCLUDE_DIRS:PATH=/usr/include \
-      -D HDF5_LIBRARY_DIRS:PATH=/usr/lib64 \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=$NETCDFDIR/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=$NETCDFDIR/lib \
 \
       -D Trilinos_ENABLE_Amesos2:BOOL=ON \
       -D Trilinos_ENABLE_Amesos:BOOL=ON \

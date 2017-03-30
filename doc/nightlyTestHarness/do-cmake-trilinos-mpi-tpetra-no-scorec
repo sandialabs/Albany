@@ -33,7 +33,7 @@ rm -rf CMakeFiles
 
 
 BUILD_DIR=`pwd`
-
+NETCDFDIR=/usr/local/netcdf
 
 cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
@@ -43,12 +43,10 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_ENABLE_MPI:BOOL=ON \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=/usr/include/openmpi-x86_64 \
-      -D Netcdf_LIBRARY_DIRS:PATH=/usr/lib64 \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=$NETCDFDIR/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=$NETCDFDIR/lib \
 \
-      -D TPL_ENABLE_HDF5:BOOL=ON \
-      -D HDF5_INCLUDE_DIRS:PATH=/usr/include \
-      -D HDF5_LIBRARY_DIRS:PATH=/usr/lib64 \
+      -D TPL_ENABLE_HDF5:BOOL=OFF \
 \
       -D Amesos2_ENABLE_KLU2:BOOL=ON \
 \
@@ -154,6 +152,8 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
 \
       -D Trilinos_ENABLE_CXX11:BOOL=ON \
       -D TPL_FIND_SHARED_LIBS:BOOL=ON \
+      -D BUILD_SHARED_LIBS:BOOL=ON \
+      -D Trilinos_LINK_SEARCH_START_STATIC:BOOL=OFF \
       -D MPI_EXEC=mpiexec \
       -D Intrepid2_ENABLE_KokkosDynRankView:BOOL=ON \
 \

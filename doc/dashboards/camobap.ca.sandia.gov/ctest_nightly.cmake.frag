@@ -885,7 +885,7 @@ if (BUILD_CISM_PISCEES)
   set_property (GLOBAL PROPERTY Label IKTCismAlbany)
 
   set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
-  set (NETCDF_DIR /home/ikalash/Install/netcdf-4.2-fortran) 
+  set (NETCDF_DIR /usr/local/netcdf-fortran-4.4.1) 
 
   set (CONFIGURE_OPTIONS
     "-DCISM_USE_TRILINOS:BOOL=ON"
@@ -898,6 +898,7 @@ if (BUILD_CISM_PISCEES)
     "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitNoEpetraInstall"
     "-DCISM_NETCDF_DIR=${NETCDF_DIR}"
     "-DCISM_NETCDF_LIBS='netcdff'"
+    "-DBUILD_SHARED_LIBS:BOOL=ON"
     "-DCMAKE_Fortran_FLAGS='-O2 -ffree-line-length-none -fPIC -fno-range-check'"
     "-DCMAKE_VERBOSE_MAKEFILE=OFF"
   )
@@ -998,7 +999,7 @@ if (BUILD_CISM_PISCEES_EPETRA)
   set_property (GLOBAL PROPERTY Label IKTCismAlbanyEpetra)
 
   set (TRILINSTALLDIR "/home/ikalash/nightlyAlbanyTests/Results/Trilinos/build/install")
-  set (NETCDF_DIR /home/ikalash/Install/netcdf-4.2-fortran) 
+  set (NETCDF_DIR /usr/local/netcdf-fortran-4.4.1) 
 
   set (CONFIGURE_OPTIONS
     "-DCISM_USE_TRILINOS:BOOL=ON"
@@ -1010,6 +1011,7 @@ if (BUILD_CISM_PISCEES_EPETRA)
     "-DALBANY_FELIX_CTEST:BOOL=ON"
     "-DCISM_ALBANY_DIR=${CTEST_BINARY_DIRECTORY}/IKTAlbany32BitInstall"
     "-DCISM_NETCDF_DIR=${NETCDF_DIR}"
+    "-DBUILD_SHARED_LIBS:BOOL=ON"
     "-DCISM_NETCDF_LIBS='netcdff'"
     "-DCMAKE_Fortran_FLAGS='-O2 -ffree-line-length-none -fPIC -fno-range-check'"
     "-DCMAKE_VERBOSE_MAKEFILE=OFF"
