@@ -1,0 +1,8 @@
+#%Module 1.0
+
+module-whatis "LCM Intel compiler"
+
+if { [is-loaded lcm/sems] } {
+  module load sems-intel/17.0.1
+}
+

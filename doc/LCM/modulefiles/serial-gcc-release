@@ -2,6 +2,10 @@
 #
 #  Environment for compiling and running Albany/LCM.
 #
+
+module load lcm/gcc
+module load lcm/tpls
+
 set     arch            serial
 set     tool_chain      gcc
 set     build_type      release

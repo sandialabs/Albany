@@ -1,0 +1,8 @@
+#%Module 1.0
+
+module-whatis "LCM Clang compiler"
+
+if { [is-loaded lcm/sems] } {
+  module load sems-clang/3.9.0
+}
+

@@ -1,0 +1,7 @@
+#%Module 1.0
+
+module-whatis "LCM GCC compiler"
+
+if { [is-loaded lcm/sems] } {
+  module load sems-gcc/6.1.0
+}
