@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include <Albany_STKNodeSharing.hpp>
-#include <stk_util/parallel/ParallelComm.hpp>
+#include <stk_util/parallel/CommSparse.hpp>
 #include "Teuchos_TimeMonitor.hpp"
 
 //----------------------------------------------------------------------
@@ -17,7 +17,7 @@ void Albany::fix_node_sharing(stk::mesh::BulkData& bulk_data) {
 
     TEUCHOS_FUNC_TIME_MONITOR("> Albany Setup: fix_node_sharing");
 
-    stk::CommAll comm(bulk_data.parallel());
+    stk::CommSparse comm(bulk_data.parallel());
 
     for (int phase=0;phase<2;++phase)
     {
@@ -43,7 +43,7 @@ void Albany::fix_node_sharing(stk::mesh::BulkData& bulk_data) {
 
         if (phase == 0 )
         {
-            comm.allocate_buffers( bulk_data.parallel_size()/4 );
+            comm.allocate_buffers();
         }
         else
         {
