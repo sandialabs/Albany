@@ -160,7 +160,6 @@ if (BUILD_TRILINOS_LCM_RELEASE)
     "-DBoostLib_LIBRARY_DIRS:FILEPATH=/usr/lib64"
     "-DBoost_INCLUDE_DIRS:FILEPATH=/usr/include/boost"
     #
-    "-DTrilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES=ON"
     "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
     "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
     "-DTrilinos_ENABLE_CXX11:BOOL=ON"
@@ -169,7 +168,7 @@ if (BUILD_TRILINOS_LCM_RELEASE)
     "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
     "-DTrilinos_WARNINGS_AS_ERRORS_FLAGS:STRING=''"
     #
-    "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
+    "-DTeuchosCore_ENABLE_yaml-cpp:BOOL=ON"
     "-DKokkos_ENABLE_CXX11:BOOL=ON"
     "-DKokkos_ENABLE_Cuda_UVM:BOOL=OFF"
     "-DKokkos_ENABLE_EXAMPLES:BOOL=OFF"
@@ -182,15 +181,12 @@ if (BUILD_TRILINOS_LCM_RELEASE)
     #
     "-DAmesos2_ENABLE_KLU2:BOOL=ON"
     "-DEpetraExt_USING_HDF5:BOOL=OFF"
-    "-DIntrepid2_ENABLE_TESTS:BOOL=OFF"
     "-DIntrepid2_ENABLE_KokkosDynRankView:BOOL=ON"
     "-DMiniTensor_ENABLE_TESTS:BOOL=ON"
     "-DROL_ENABLE_TESTS:BOOL=OFF"
     "-DPhalanx_INDEX_SIZE_TYPE:STRING='INT'"
     "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING='SERIAL'"
     "-DPhalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
-    "-DSacado_ENABLE_COMPLEX:BOOL=ON"
-    "-DTeuchos_ENABLE_COMPLEX:BOOL=ON"
     "-DTpetra_ENABLE_Kokkos_Refactor:BOOL=ON"
     "-DTpetra_INST_PTHREAD:BOOL=OFF"
     #
@@ -240,6 +236,7 @@ if (BUILD_TRILINOS_LCM_RELEASE)
     "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
     "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
     "-DTrilinos_ENABLE_Teko:BOOL=ON"
+    "-DTrilinos_ENABLE_Tempus:BOOL=ON"
     "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
     "-DTrilinos_ENABLE_ThreadPool:BOOL=ON"
     "-DTrilinos_ENABLE_Thyra:BOOL=ON"
