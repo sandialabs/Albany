@@ -120,6 +120,7 @@ cmake \
  -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
  -D Trilinos_ENABLE_TESTS:BOOL=OFF \
  -D Trilinos_ENABLE_Teko:BOOL=ON \
+ -D Trilinos_ENABLE_Tempus:BOOL=ON \
  -D Trilinos_ENABLE_Teuchos:BOOL=ON \
  -D Trilinos_ENABLE_ThreadPool:BOOL=ON \
  -D Trilinos_ENABLE_Thyra:BOOL=ON \
