@@ -1,6 +1,12 @@
 #%Module 1.0
 module-whatis "LCM Fedora base environment"
 module load lcm-common
+
+if { ![ file exists /etc/fedora-release ] } {
+  puts stderr "lcm-fedora can only be loaded on Fedora systems !"
+  exit 1
+}
+
 setenv                  BOOST_INC       /usr/include/boost
 setenv                  BOOST_LIB       /usr/lib64
 setenv                  BOOSTLIB_INC    /usr/include/boost
