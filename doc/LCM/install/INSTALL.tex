@@ -263,17 +263,28 @@ module avail
 This results in something like:
 \begin{verbatim}
 ------------------ /home/amota/LCM/Albany/doc/LCM/modulefiles ------------------
-debug                pthreads-gcc-mixed   serial-clang-small
-mixed                pthreads-gcc-profile serial-gcc-debug
-openmp-gcc-debug     pthreads-gcc-release serial-gcc-mixed
-openmp-gcc-mixed     pthreads-gcc-small   serial-gcc-profile
-openmp-gcc-profile   release              serial-gcc-release
-openmp-gcc-release   serial-clang-debug   serial-gcc-small
-openmp-gcc-small     serial-clang-mixed   small
-profile              serial-clang-profile
-pthreads-gcc-debug   serial-clang-release
+cuda-gcc-debug       lcm/sems             pthreads-gcc-small
+cuda-gcc-mixed       lcm/serial           release
+cuda-gcc-profile     lcm/small            serial-clang-debug
+cuda-gcc-release     lcm/tpls             serial-clang-mixed
+cuda-gcc-small       mixed                serial-clang-profile
+debug                openmp-gcc-debug     serial-clang-release
+lcm/cee              openmp-gcc-mixed     serial-clang-small
+lcm/clang            openmp-gcc-profile   serial-gcc-debug
+lcm/common           openmp-gcc-release   serial-gcc-mixed
+lcm/cuda             openmp-gcc-small     serial-gcc-profile
+lcm/debug            openmp-intel-debug   serial-gcc-release
+lcm/fedora           openmp-intel-mixed   serial-gcc-small
+lcm/finalize         openmp-intel-profile serial-intel-debug
+lcm/gcc              openmp-intel-release serial-intel-mixed
+lcm/intel            openmp-intel-small   serial-intel-profile
+lcm/mixed            profile              serial-intel-release
+lcm/openmp           pthreads-gcc-debug   serial-intel-small
+lcm/profile          pthreads-gcc-mixed   small
+lcm/pthreads         pthreads-gcc-profile
+lcm/release          pthreads-gcc-release
 \end{verbatim}
-The naming convention for the modules follows the pattern
+The naming convention for the \verb+*-*-*+ modules follows the pattern
 \begin{verbatim}
 [thread model]-[toolchain]-[build type]
 \end{verbatim}
@@ -317,6 +328,7 @@ Assuming that we want to compile with a \verb+serial+ thread model
 using the \verb+gcc+ tool chain in \verb+debug+ mode, load the
 appropriate module:
 \begin{verbatim}
+module load lcm/fedora
 module load serial-gcc-debug
 \end{verbatim}
 Now first configure and compile \trilinos{}. Within the top-level

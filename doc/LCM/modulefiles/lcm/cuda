@@ -1,0 +1,12 @@
+#%Module 1.0
+
+module-whatis "LCM CUDA config"
+
+if { [is-loaded lcm/fedora] } {
+  prepend-path            LD_LIBRARY_PATH /usr/local/cuda/lib64
+  prepend-path            PATH            /usr/local/cuda/bin
+}
+
+setenv CUDA_LAUNCH_BLOCKING    1
+setenv CUDA_VISIBLE_DEVICES    0
+setenv ARCH cuda

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-source ./env-single.sh
-
 cd "$LCM_DIR"
+
+source ./env-single.sh
 
 if [ -f "$STATUS_LOG" ]; then
     rm "$STATUS_LOG" -f
@@ -285,7 +285,7 @@ case "$SCRIPT_NAME" in
 			echo "*** MAKE INSTALL COMMAND FAILED ***"
 			exit 1
 		    fi
-                    NETCDF_SYSLIB=/usr/lib64/openmpi/lib/libnetcdf.so
+                    NETCDF_SYSLIB=$NETCDF_LIB/libnetcdf.so
                     NETCDF_LCMLIB="$INSTALL_DIR/lib/libnetcdf.so"
                     ln -sf "$INSTALL_DIR/include" "$INSTALL_DIR/inc"
                     ln -sf "$NETCDF_SYSLIB" "$NETCDF_LCMLIB"
