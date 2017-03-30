@@ -26,6 +26,7 @@ LAMELIBDIR=/home/ikalash/Install/lame-4.24.1/lame/build_mockba
 PARMETISDIR=/home/ikalash/Install/parmetis-4.0.3
 CISMDIR=/home/ikalash/cism-piscees
 HWLOC_PATH=/home/ikalash/Install/hwloc-1.10.1
+NETCDFDIR=/usr/local/netcdf
 #set this correctly, to software.sandia.gov user name
 SSGUSER=ikalash
 
@@ -33,8 +34,12 @@ SSGUSER=ikalash
 TRILDIR=$NIGHTLYDIR/Trilinos
 TRIBUILDDIR=$NIGHTLYDIR/Trilinos/build/
 TRILINSTALLDIR=$TRIBUILDDIR/install
+TRIBUILDDIRKDV=$NIGHTLYDIR/Trilinos/build-kdv/
+TRILINSTALLDIRKDV=$TRIBUILDDIRKDV/install
 TRIBUILDDIROPENMP=$NIGHTLYDIR/Trilinos/build-openmp/
 TRILINSTALLDIROPENMP=$TRIBUILDDIROPENMP/install
+TRIBUILDDIROPENMPKDV=$NIGHTLYDIR/Trilinos/build-openmp-kdv/
+TRILINSTALLDIROPENMPKDV=$TRIBUILDDIROPENMPKDV/install
 ALBDIR=$NIGHTLYDIR/Albany
 TRIKOTADIR=$TRILDIR/packages/TriKota
 
@@ -44,7 +49,8 @@ ALBOUTDIR=$NIGHTLYDIR/Albany_out
 DAKOUTDIR=$NIGHTLYDIR/Dakota_out
 
 # Must be set
-TRILINOS_BRANCH=master
+TRILINOS_BRANCH=develop
 ALBANY_BRANCH=master
+ALBANY_BRANCH_KDV=DynRankViewIntrepid2Refactor
 
 

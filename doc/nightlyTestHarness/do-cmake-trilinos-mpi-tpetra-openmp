@@ -37,7 +37,6 @@
 rm -rf CMake*
 
 BUILD_DIR=`pwd`
-NETCDFDIR=/usr/local/netcdf
 
 cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
@@ -93,8 +92,8 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
       -D TPL_Netcdf_PARALLEL:BOOL=ON \
       -D TPL_ENABLE_X11:BOOL=OFF \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH=$NETCDFDIR/include \
-      -D Netcdf_LIBRARY_DIRS:PATH=$NETCDFDIR/lib \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH=${NETCDFDIR}/include \
+      -D Netcdf_LIBRARY_DIRS:PATH=${NETCDFDIR}/lib \
 \
       -D Trilinos_ENABLE_Amesos2:BOOL=ON \
       -D Trilinos_ENABLE_Amesos:BOOL=ON \
