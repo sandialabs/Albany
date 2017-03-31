@@ -217,7 +217,6 @@ ENDIF()
 ## Check for some required Trilinos package dependencies (Piro, Phalanx) ##
 MESSAGE("\nChecking Trilinos build for required and optional packages:")
 
-## Could check for them all, just starting with two non-standard ones ##
 LIST(FIND Trilinos_PACKAGE_LIST Piro Piro_List_ID)
 IF (Piro_List_ID GREATER -1)
   MESSAGE("-- Found Piro,    a required Trilinos package for Albany.")
@@ -225,6 +224,7 @@ ELSE()
   MESSAGE("-- FATAL ERROR: Did not find Piro package in Trilinos Installation.")
   MESSAGE(FATAL_ERROR "-- Configure Trilinos with guidance from trilinos-cmake script in doc directory.")
 ENDIF()
+
 LIST(FIND Trilinos_PACKAGE_LIST Phalanx Phalanx_List_ID)
 IF (Phalanx_List_ID GREATER -1)
   MESSAGE("-- Found Phalanx, a required Trilinos package for Albany.")
@@ -368,11 +368,21 @@ IF (MueLu_List_ID GREATER -1)
   ELSE()
     MESSAGE("---- MueLu tests NOT enabled. Ifpack2 and Amesos2 compiled with an operational solver are required.")
     SET(ALBANY_MUELU_EXAMPLES FALSE)
-ENDIF()
+  ENDIF()
 ELSE()
   MESSAGE("-- Looking for MueLu:              NOT found.")
   SET(ALBANY_MUELU FALSE)
   SET(ALBANY_MUELU_EXAMPLES FALSE)
+ENDIF()
+
+LIST(FIND Trilinos_PACKAGE_LIST Rythmos Rythmos_List_ID)
+IF (Rythmos_List_ID GREATER -1)
+  MESSAGE("-- Looking for Rythmos:            Found, compiling with -DALBANY_RYTHMOS")
+  ADD_DEFINITIONS(-DALBANY_RYTHMOS)
+  SET(ALBANY_RYTHMOS TRUE)
+ELSE()
+  MESSAGE("-- Looking for Rythmos:            NOT found.")
+  SET(ALBANY_RYTHMOS FALSE)
 ENDIF()
 
 # Set optional build of only Albany (Epetra) executable.

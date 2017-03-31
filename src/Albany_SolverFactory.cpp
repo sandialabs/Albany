@@ -77,7 +77,9 @@
 #endif  // ALBANY_YAML
 #include "Teuchos_TestForException.hpp"
 
+#if defined(ALBANY_RYTHMOS)
 #include "Rythmos_IntegrationObserverBase.hpp"
+#endif
 
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
@@ -125,6 +127,7 @@ class NOXStatelessObserverConstructor
   Teuchos::RCP<NOX::Epetra::Observer> instance_;
 };
 
+#if defined(ALBANY_RYTHMOS)
 class RythmosObserverConstructor
     : public Piro::ProviderBase<Rythmos::IntegrationObserverBase<double>> {
  public:
@@ -145,6 +148,7 @@ RythmosObserverConstructor::getInstance(
   if (Teuchos::is_null(instance_)) { instance_ = factory_.createInstance(); }
   return instance_;
 }
+#endif
 
 class SaveEigenDataConstructor
     : public Piro::ProviderBase<LOCA::SaveEigenData::AbstractStrategy> {
@@ -407,11 +411,13 @@ Albany::SolverFactory::createAndGetAlbanyApp(
   // Create and setup the Piro solver factory
   Piro::Epetra::SolverFactory piroEpetraFactory;
   {
+#ifdef ALBANY_RYTHMOS
     // Observers for output from time-stepper
     const RCP<Piro::ProviderBase<Rythmos::IntegrationObserverBase<double>>>
         rythmosObserverProvider = rcp(new RythmosObserverConstructor(app));
     piroEpetraFactory.setSource<Rythmos::IntegrationObserverBase<double>>(
         rythmosObserverProvider);
+#endif
 
     const RCP<Piro::ProviderBase<NOX::Epetra::Observer>> noxObserverProvider =
         rcp(new NOXObserverConstructor(app));
@@ -960,11 +966,8 @@ Albany::SolverFactory::createAlbanyAppAndModelT(
   if (!piroParams->getPtr<std::string>("Solver Type")) {
     const std::string solutionMethod =
         problemParams->get("Solution Method", "Steady");
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        solutionMethod != "Steady" && solutionMethod != "Transient",
-        std::logic_error, "Solution Method must be Steady or Transient, not : "
-                              << solutionMethod << "\n");
 
+    /* TODO: this should be a boolean, not a string ! */
     const std::string secondOrder = problemParams->get("Second Order", "No");
     TEUCHOS_TEST_FOR_EXCEPTION(
         secondOrder != "No", std::logic_error, "Second Order is not supported"
@@ -975,14 +978,21 @@ Albany::SolverFactory::createAlbanyAppAndModelT(
     std::string piroSolverToken;
     if (solutionMethod == "Steady") {
       piroSolverToken = "NOX";
+#ifdef ALBANY_RYTHMOS
     } else if (solutionMethod == "Transient") {
       piroSolverToken = "Rythmos";
+#endif
+#ifdef ALBANY_TEMPUS
     } else if (solutionMethod == "Transient Tempus") {
       piroSolverToken = "Tempus";
+#endif
     } else {
       // Piro cannot handle the corresponding problem
       piroSolverToken = "Unsupported";
     }
+
+    ALBANY_ASSERT(piroSolverToken != "Unsupported",
+        "Unsupported Solution Method: " << solutionMethod);
 
     piroParams->set("Solver Type", piroSolverToken);
   }
