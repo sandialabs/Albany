@@ -1,0 +1,5 @@
+#%Module 1.0
+
+module-whatis "LCM release build type"
+
+setenv BUILD_TYPE release

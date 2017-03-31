@@ -1,0 +1,55 @@
+#%Module 1.0
+
+module-whatis "LCM TPLs for Trilinos/Albany"
+
+if { [is-loaded lcm/fedora] } {
+  setenv                  BOOST_INC       /usr/include/boost
+  setenv                  BOOST_LIB       /usr/lib64
+  setenv                  BOOSTLIB_INC    /usr/include/boost
+  setenv                  BOOSTLIB_LIB    /usr/lib64
+  setenv                  MPI_INC         /usr/include/openmpi-x86_64
+  setenv                  MPI_LIB         /usr/lib64/openmpi/lib
+  setenv                  MPI_BIN         /usr/lib64/openmpi/bin
+  setenv                  NETCDF          /usr/local/netcdf
+  setenv                  NETCDF_INC      /usr/local/netcdf/include
+  setenv                  NETCDF_LIB      /usr/local/netcdf/lib
+  setenv                  YAML_CPP_INC    /usr/include
+  setenv                  YAML_CPP_LIB    /usr/lib64
+  prepend-path            LD_LIBRARY_PATH /usr/lib64/openmpi/lib
+  prepend-path            LD_LIBRARY_PATH /usr/local/netcdf/lib
+  prepend-path            PATH            /usr/lib64/openmpi/bin
+}
+
+if { [is-loaded lcm/sems] } {
+  module load sems-openmpi/1.8.7
+  module load sems-boost/1.63.0/base
+  module load sems-zlib/1.2.8/base
+  module load sems-hdf5/1.8.12/parallel
+  module load sems-netcdf/4.3.2/parallel
+  module load sems-parmetis/4.0.3/parallel
+  module load sems-superlu/4.3/base
+  module load sems-yaml_cpp/0.5.3/base
+  set                     boost_inc       $env(SEMS_BOOST_INCLUDE_PATH)
+  set                     boost_lib       $env(SEMS_BOOST_LIBRARY_PATH)
+  set                     mpi_root        $env(SEMS_MPI_ROOT)
+  set                     netcdf_root     $env(SEMS_NETCDF_ROOT)
+  set                     netcdf_inc      $env(SEMS_NETCDF_INCLUDE_PATH)
+  set                     netcdf_lib      $env(SEMS_NETCDF_LIBRARY_PATH)
+  set                     yaml_cpp_inc    $env(SEMS_YAML_CPP_INCLUDE_PATH)
+  set                     yaml_cpp_lib    $env(SEMS_YAML_CPP_LIBRARY_PATH)
+  setenv                  BOOST_INC       $boost_inc
+  setenv                  BOOST_LIB       $boost_lib
+  setenv                  BOOSTLIB_INC    $boost_inc
+  setenv                  BOOSTLIB_LIB    $boost_lib
+  setenv                  MPI_INC         $mpi_root/include
+  setenv                  MPI_LIB         $mpi_root/lib
+  setenv                  MPI_BIN         $mpi_root/bin
+  setenv                  NETCDF          $netcdf_root
+  setenv                  NETCDF_INC      $netcdf_inc
+  setenv                  NETCDF_LIB      $netcdf_lib
+  setenv                  YAML_CPP_INC    $yaml_cpp_inc
+  setenv                  YAML_CPP_LIB    $yaml_cpp_lib
+  prepend-path            LD_LIBRARY_PATH $mpi_root/lib
+  prepend-path            LD_LIBRARY_PATH $netcdf_lib
+  prepend-path            PATH            $mpi_root/bin
+}

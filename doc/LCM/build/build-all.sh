@@ -73,13 +73,14 @@ WIKI_TEMPLATE="LCM-Status:-Last-known-commits-that-work.md"
 
 # Use different variable names for loop counters so they do not
 # conflict with the variables defined by the module command.
-module purge
 for P in $PACKAGES; do
     for A in $ARCHES; do
         for TC in $TOOL_CHAINS; do
             for BT in $BUILD_TYPES; do
                 MODULE="$A"-"$TC"-"$BT"
                 echo "MODULE: $MODULE"
+                module purge
+                module load lcm/fedora
                 module load "$MODULE"
                 "$COMMAND" "$P" "$NUM_PROCS"
                 # Update wiki after compiling Albany with gcc release only.
@@ -110,7 +111,6 @@ for P in $PACKAGES; do
                     *)
 	                ;;
                 esac
-                module purge
             done
         done
     done
