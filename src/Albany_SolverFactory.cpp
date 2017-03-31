@@ -77,7 +77,7 @@
 #endif  // ALBANY_YAML
 #include "Teuchos_TestForException.hpp"
 
-#if defined(ALBANY_RYTHMOS)
+#if defined(ALBANY_EPETRA) && defined(ALBANY_RYTHMOS)
 #include "Rythmos_IntegrationObserverBase.hpp"
 #endif
 
@@ -127,7 +127,7 @@ class NOXStatelessObserverConstructor
   Teuchos::RCP<NOX::Epetra::Observer> instance_;
 };
 
-#if defined(ALBANY_RYTHMOS)
+#if defined(ALBANY_EPETRA) && defined(ALBANY_RYTHMOS)
 class RythmosObserverConstructor
     : public Piro::ProviderBase<Rythmos::IntegrationObserverBase<double>> {
  public:
@@ -411,7 +411,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
   // Create and setup the Piro solver factory
   Piro::Epetra::SolverFactory piroEpetraFactory;
   {
-#ifdef ALBANY_RYTHMOS
+#if defined(ALBANY_EPETRA) && defined(ALBANY_RYTHMOS)
     // Observers for output from time-stepper
     const RCP<Piro::ProviderBase<Rythmos::IntegrationObserverBase<double>>>
         rythmosObserverProvider = rcp(new RythmosObserverConstructor(app));

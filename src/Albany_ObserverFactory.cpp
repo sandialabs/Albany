@@ -7,7 +7,9 @@
 
 #include "Albany_NOXObserver.hpp"
 #include "Albany_NOXStatelessObserver.hpp"
+#if defined(ALBANY_EPETRA) && defined(ALBANY_RYTHMOS)
 #include "Albany_RythmosObserver.hpp"
+#endif
 
 #ifdef ALBANY_MOR
 #if defined(ALBANY_EPETRA)
@@ -60,6 +62,7 @@ NOXStatelessObserverFactory::createInstance () {
   return result;
 }
 
+#ifdef ALBANY_RYTHMOS
 RythmosObserverFactory::RythmosObserverFactory(const Teuchos::RCP<Application> &app) :
   app_(app)
 {}
@@ -78,5 +81,6 @@ RythmosObserverFactory::createInstance()
 #endif
   return result;
 }
+#endif
 
 } // namespace Albany
