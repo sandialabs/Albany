@@ -298,16 +298,18 @@ Albany::ModelEvaluatorT::allocateVectors() {
 
   // Have xdotdot
   if (xMV->getNumVectors() > 2) {
-    // Set xdotdot in parent class to pass to time integrator as it is not
-    // supported in Thyra
+    // Set xdotdot in parent class to pass to time integrator 
 
     // GAH set x_dotdot for transient simulations. Note that xDotDot is a member
-    // of
-    // Piro::TransientDecorator<ST, LO, GO, KokkosNode>
+    // of Piro::TransientDecorator<ST, LO, GO, KokkosNode>
     const Teuchos::RCP<const Tpetra_Vector> x_dotdotT_init = xMV->getVector(2);
     const Teuchos::RCP<Tpetra_Vector> x_dotdotT_init_nonconst =
         Teuchos::rcp(new Tpetra_Vector(*x_dotdotT_init));
+    //IKT, 3/30/17: set x_dotdot in nominalValues for Tempus, now that 
+    //it is available in Thyra::ModelEvaluator
     this->xDotDot = Thyra::createVector(x_dotdotT_init_nonconst, xT_space);
+    nominalValues.set_x_dot_dot( 
+        Thyra::createVector(x_dotdotT_init_nonconst, xT_space));
   } else
     this->xDotDot = Teuchos::null;
 }
@@ -612,15 +614,29 @@ Albany::ModelEvaluatorT::evalModelImpl(
           ? ConverterT::getConstTpetraVector(inArgsT.get_x_dot())
           : Teuchos::null;
 
-  const Teuchos::RCP<const Tpetra_Vector> x_dotdotT =
-      (supports_xdotdot && Teuchos::nonnull(this->get_x_dotdot()))
-          ? ConverterT::getConstTpetraVector(this->get_x_dotdot())
-          : Teuchos::null;
+  //IKT, 3/30/17: the following logic is meant to support both the Thyra time-integrators in Piro 
+  //(e.g., trapezoidal rule) and the second order time-integrators in Tempus.
+  Teuchos::RCP<Tpetra_Vector> x_dotdotT;
+  double omega; 
+  if (supports_xdotdot == true) {
+    if (Teuchos::nonnull(this->get_x_dotdot())) {
+      x_dotdotT = ConverterT::getTpetraVector(this->get_x_dotdot());
+      omega = this->get_omega(); 
+    }
+    else if (Teuchos::nonnull(inArgsT.get_x_dot_dot())) {
+      Teuchos::RCP<const Tpetra_Vector> x_dotdotT_temp = ConverterT::getConstTpetraVector(inArgsT.get_x_dot_dot());
+      x_dotdotT = Teuchos::rcp(new Tpetra_Vector(*x_dotdotT_temp)); 
+      omega = inArgsT.get_W_x_dot_dot_coeff(); 
+    }
+    else {
+      x_dotdotT = Teuchos::null;
+      omega = 0.0; 
+    }
+  }
 
   const double alpha = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT))
                            ? inArgsT.get_alpha()
                            : 0.0;
-  const double omega = Teuchos::nonnull(x_dotdotT) ? this->get_omega() : 0.0;
   const double beta = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT))
                           ? inArgsT.get_beta()
                           : 1.0;
