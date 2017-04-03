@@ -83,7 +83,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Sacado_ENABLE_COMPLEX:BOOL=ON \
       -D Teuchos_ENABLE_COMPLEX:BOOL=ON \
       -D Tpetra_ENABLE_Kokkos_Refactor:BOOL=ON \
-      -D TPL_ENABLE_HWLOC:STRING=ON \
+      -D TPL_ENABLE_HWLOC:STRING=OFF \
       -D TPL_HWLOC_LIBRARIES:PATHNAME=${HWLOC_PATH}/lib/libhwloc.so \
       -D TPL_HWLOC_INCLUDE_DIRS:PATHNAME=${HWLOC_PATH}/include \
 \
