@@ -90,9 +90,6 @@ case "$SCRIPT_NAME" in
 	        if [ -e "$PACKAGE_DIR/DataTransferKit" ]; then
                     cp -p "$DTK_FRAG" "$BUILD_DIR"
 	        fi
-	        if [ -e "$PACKAGE_DIR/tempus" ]; then
-                    cp -p "$TEMPUS_FRAG" "$BUILD_DIR"
-	        fi
 		;;
 	    *)
 		;;
