@@ -14,8 +14,6 @@ setenv                  BUILD           $build
 setenv                  INSTALL_DIR     $install_dir
 
 prepend-path            LD_LIBRARY_PATH $install_dir/lib
-prepend-path            LD_LIBRARY_PATH /usr/lib64/openmpi/lib
-prepend-path            LD_LIBRARY_PATH /usr/local/netcdf/lib
 prepend-path            PATH            $alb_exe_dir
 prepend-path            PATH            $alb_exe_dir/LCM
 prepend-path            PATH            $install_dir/bin
