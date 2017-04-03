@@ -10,160 +10,520 @@ SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)
 # LCM problems
 
 # Glob source files for problems
-file (GLOB problem-sources
-  "${LCM_DIR}/problems/*.cpp"
+set(problem-sources
+  "${LCM_DIR}/problems/ConstitutiveDriverProblem.cpp"
+  "${LCM_DIR}/problems/ElasticityProblem.cpp"
+  "${LCM_DIR}/problems/ElectroMechanicsProblem.cpp"
+  "${LCM_DIR}/problems/FieldNameMap.cpp"
+  "${LCM_DIR}/problems/HMCProblem.cpp"
+  "${LCM_DIR}/problems/MechanicsProblem.cpp"
+  "${LCM_DIR}/problems/PeridigmProblem.cpp"
+  "${LCM_DIR}/problems/ThermoElasticityProblem.cpp"
 )
 
 # Glob header files for problems
-file (GLOB problem-headers
-  "${LCM_DIR}/problems/*.hpp"
+set(problem-headers
+  "${LCM_DIR}/problems/ConstitutiveDriverProblem.hpp"
+  "${LCM_DIR}/problems/ElasticityProblem.hpp"
+  "${LCM_DIR}/problems/ElectroMechanicsProblem.hpp"
+  "${LCM_DIR}/problems/FieldNameMap.hpp"
+  "${LCM_DIR}/problems/HMCProblem.hpp"
+  "${LCM_DIR}/problems/MechanicsProblem.hpp"
+  "${LCM_DIR}/problems/PeridigmProblem.hpp"
+  "${LCM_DIR}/problems/ThermoElasticityProblem.hpp"
 )
 
 SET(SOURCES )
 SET(HEADERS )
 
 # LCM evaluators
-file (GLOB evaluator-sources
-  "${LCM_DIR}/evaluators/*.cpp"
-  "${LCM_DIR}/parallel_evaluators/*.cpp"
+set(evaluator-sources
+  "${LCM_DIR}/evaluators/BifurcationCheck.cpp"
+  "${LCM_DIR}/evaluators/Density.cpp"
+  "${LCM_DIR}/evaluators/NodePointVecInterpolation.cpp"
+  "${LCM_DIR}/evaluators/SetField.cpp"
+  "${LCM_DIR}/evaluators/Time.cpp"
+  "${LCM_DIR}/parallel_evaluators/ParallelSetField.cpp"
 )
-file (GLOB evaluator-headers
-  "${LCM_DIR}/evaluators/*.hpp"
-  "${LCM_DIR}/parallel_evaluators/*.hpp"
+set(evaluator-headers
+  "${LCM_DIR}/evaluators/BifurcationCheck_Def.hpp"
+  "${LCM_DIR}/evaluators/BifurcationCheck.hpp"
+  "${LCM_DIR}/evaluators/Density_Def.hpp"
+  "${LCM_DIR}/evaluators/Density.hpp"
+  "${LCM_DIR}/evaluators/NodePointVecInterpolation_Def.hpp"
+  "${LCM_DIR}/evaluators/NodePointVecInterpolation.hpp"
+  "${LCM_DIR}/evaluators/SetField_Def.hpp"
+  "${LCM_DIR}/evaluators/SetField.hpp"
+  "${LCM_DIR}/evaluators/Time_Def.hpp"
+  "${LCM_DIR}/evaluators/Time.hpp"
+  "${LCM_DIR}/parallel_evaluators/ParallelSetField_Def.hpp"
+  "${LCM_DIR}/parallel_evaluators/ParallelSetField.hpp"
 )
 
 #LCM model evaluators 
-file (GLOB model-eval-sources
-  "${LCM_DIR}/*.cpp"
+set(model-eval-sources
+  "${LCM_DIR}/Schwarz_Alternating.cpp"
+  "${LCM_DIR}/Schwarz_BoundaryJacobian.cpp"
+  "${LCM_DIR}/Schwarz_Coupled.cpp"
+  "${LCM_DIR}/Schwarz_CoupledJacobian.cpp"
+  "${LCM_DIR}/Schwarz_ObserverImpl.cpp"
+  "${LCM_DIR}/Schwarz_PiroObserver.cpp"
+  "${LCM_DIR}/Schwarz_StatelessObserverImpl.cpp"
 )
-file (GLOB model-eval-headers
-  "${LCM_DIR}/*.hpp"
+set(model-eval-headers
+  "${LCM_DIR}/Schwarz_Alternating.hpp"
+  "${LCM_DIR}/Schwarz_BoundaryJacobian.hpp"
+  "${LCM_DIR}/Schwarz_Coupled.hpp"
+  "${LCM_DIR}/Schwarz_CoupledJacobian.hpp"
+  "${LCM_DIR}/Schwarz_ObserverImpl.hpp"
+  "${LCM_DIR}/Schwarz_PiroObserver.hpp"
+  "${LCM_DIR}/Schwarz_StatelessObserverImpl.hpp"
 )
 
 # LCM special boundary conditions
-file (GLOB bc-sources
-  "${LCM_DIR}/evaluators/bc/*.cpp"
+set(bc-sources
+  "${LCM_DIR}/evaluators/bc/EquilibriumConcentrationBC.cpp"
+  "${LCM_DIR}/evaluators/bc/KfieldBC.cpp"
+  "${LCM_DIR}/evaluators/bc/PDNeighborFitBC.cpp"
+  "${LCM_DIR}/evaluators/bc/RigidContactBC.cpp"
+  "${LCM_DIR}/evaluators/bc/SchwarzBC.cpp"
+  "${LCM_DIR}/evaluators/bc/TimeDepBC.cpp"
+  "${LCM_DIR}/evaluators/bc/TimeTracBC.cpp"
+  "${LCM_DIR}/evaluators/bc/TorsionBC.cpp"
 )
-file (GLOB bc-headers
-  "${LCM_DIR}/evaluators/bc/*.hpp"
+set(bc-headers
+  "${LCM_DIR}/evaluators/bc/EquilibriumConcentrationBC_Def.hpp"
+  "${LCM_DIR}/evaluators/bc/EquilibriumConcentrationBC.hpp"
+  "${LCM_DIR}/evaluators/bc/KfieldBC_Def.hpp"
+  "${LCM_DIR}/evaluators/bc/KfieldBC.hpp"
+  "${LCM_DIR}/evaluators/bc/PDNeighborFitBC_Def.hpp"
+  "${LCM_DIR}/evaluators/bc/PDNeighborFitBC.hpp"
+  "${LCM_DIR}/evaluators/bc/RigidContactBC_Def.hpp"
+  "${LCM_DIR}/evaluators/bc/RigidContactBC.hpp"
+  "${LCM_DIR}/evaluators/bc/SchwarzBC_Def.hpp"
+  "${LCM_DIR}/evaluators/bc/SchwarzBC.hpp"
+  "${LCM_DIR}/evaluators/bc/TimeDepBC_Def.hpp"
+  "${LCM_DIR}/evaluators/bc/TimeDepBC.hpp"
+  "${LCM_DIR}/evaluators/bc/TimeTracBC_Def.hpp"
+  "${LCM_DIR}/evaluators/bc/TimeTracBC.hpp"
+  "${LCM_DIR}/evaluators/bc/TorsionBC_Def.hpp"
+  "${LCM_DIR}/evaluators/bc/TorsionBC.hpp"
 )
 
 # LCM contact
-file (GLOB contact-sources
-  "${LCM_DIR}/evaluators/contact/*.cpp"
+set(contact-sources
+  "${LCM_DIR}/evaluators/contact/MortarContactConstraints.cpp"
+  "${LCM_DIR}/evaluators/contact/MortarContactResidual.cpp"
 )
-file (GLOB contact-headers
-  "${LCM_DIR}/evaluators/contact/*.hpp"
+set(contact-headers
+  "${LCM_DIR}/evaluators/contact/MortarContactConstraints_Def.hpp"
+  "${LCM_DIR}/evaluators/contact/MortarContactConstraints.hpp"
+  "${LCM_DIR}/evaluators/contact/MortarContactResidual_Def.hpp"
+  "${LCM_DIR}/evaluators/contact/MortarContactResidual.hpp"
 )
 
 # LCM HMC evaluators
-file (GLOB hmc-sources
-  "${LCM_DIR}/evaluators/HMC/*.cpp"
+set(hmc-sources
+  "${LCM_DIR}/evaluators/HMC/HMC_MicroResidual.cpp"
+  "${LCM_DIR}/evaluators/HMC/HMC_StrainDifference.cpp"
+  "${LCM_DIR}/evaluators/HMC/HMC_Stresses.cpp"
+  "${LCM_DIR}/evaluators/HMC/HMC_TotalStress.cpp"
+  "${LCM_DIR}/evaluators/HMC/UpdateField.cpp"
 )
-file (GLOB hmc-headers
-  "${LCM_DIR}/evaluators/HMC/*.hpp"
+set(hmc-headers
+  "${LCM_DIR}/evaluators/HMC/HMC_MicroResidual_Def.hpp"
+  "${LCM_DIR}/evaluators/HMC/HMC_MicroResidual.hpp"
+  "${LCM_DIR}/evaluators/HMC/HMC_StrainDifference_Def.hpp"
+  "${LCM_DIR}/evaluators/HMC/HMC_StrainDifference.hpp"
+  "${LCM_DIR}/evaluators/HMC/HMC_Stresses_Def.hpp"
+  "${LCM_DIR}/evaluators/HMC/HMC_Stresses.hpp"
+  "${LCM_DIR}/evaluators/HMC/HMC_TotalStress_Def.hpp"
+  "${LCM_DIR}/evaluators/HMC/HMC_TotalStress.hpp"
+  "${LCM_DIR}/evaluators/HMC/UpdateField_Def.hpp"
+  "${LCM_DIR}/evaluators/HMC/UpdateField.hpp"
 )
 
 # LCM kinematics evaluators
-file (GLOB kin-sources
-  "${LCM_DIR}/evaluators/kinematics/*.cpp"
+set(kin-sources
+  "${LCM_DIR}/evaluators/kinematics/CurrentCoords.cpp"
+  "${LCM_DIR}/evaluators/kinematics/DefGrad.cpp"
+  "${LCM_DIR}/evaluators/kinematics/FirstPK.cpp"
+  "${LCM_DIR}/evaluators/kinematics/Kinematics.cpp"
+  "${LCM_DIR}/evaluators/kinematics/LatticeDefGrad.cpp"
 )
-file (GLOB kin-headers
+set(kin-headers
   "${LCM_DIR}/evaluators/knematics/*.hpp"
+  "${LCM_DIR}/evaluators/kinematics/CurrentCoords_Def.hpp"
+  "${LCM_DIR}/evaluators/kinematics/CurrentCoords.hpp"
+  "${LCM_DIR}/evaluators/kinematics/DefGrad_Def.hpp"
+  "${LCM_DIR}/evaluators/kinematics/DefGrad.hpp"
+  "${LCM_DIR}/evaluators/kinematics/FirstPK_Def.hpp"
+  "${LCM_DIR}/evaluators/kinematics/FirstPK.hpp"
+  "${LCM_DIR}/evaluators/kinematics/Kinematics_Def.hpp"
+  "${LCM_DIR}/evaluators/kinematics/Kinematics.hpp"
+  "${LCM_DIR}/evaluators/kinematics/LatticeDefGrad_Def.hpp"
+  "${LCM_DIR}/evaluators/kinematics/LatticeDefGrad.hpp"
 )
 
 # LCM linear elasticity evaluators
-file (GLOB lin-sources
-  "${LCM_DIR}/evaluators/linear-elasticity/*.cpp"
+set(lin-sources
+  "${LCM_DIR}/evaluators/linear-elasticity/ElasticModulus.cpp"
+  "${LCM_DIR}/evaluators/linear-elasticity/PoissonsRatio.cpp"
+  "${LCM_DIR}/evaluators/linear-elasticity/Strain.cpp"
+  "${LCM_DIR}/evaluators/linear-elasticity/Stress.cpp"
 )
-file (GLOB lin-headers
-  "${LCM_DIR}/evaluators/linear-elasticity/*.hpp"
+set(lin-headers
+  "${LCM_DIR}/evaluators/linear-elasticity/ElasticModulus_Def.hpp"
+  "${LCM_DIR}/evaluators/linear-elasticity/ElasticModulus.hpp"
+  "${LCM_DIR}/evaluators/linear-elasticity/PoissonsRatio_Def.hpp"
+  "${LCM_DIR}/evaluators/linear-elasticity/PoissonsRatio.hpp"
+  "${LCM_DIR}/evaluators/linear-elasticity/Strain_Def.hpp"
+  "${LCM_DIR}/evaluators/linear-elasticity/Strain.hpp"
+  "${LCM_DIR}/evaluators/linear-elasticity/Stress_Def.hpp"
+  "${LCM_DIR}/evaluators/linear-elasticity/Stress.hpp"
 )
 
 # LCM poro evaluators
-file (GLOB poro-sources
-  "${LCM_DIR}/evaluators/poro/*.cpp"
+set(poro-sources
+  "${LCM_DIR}/evaluators/poro/BiotCoefficient.cpp"
+  "${LCM_DIR}/evaluators/poro/BiotModulus.cpp"
+  "${LCM_DIR}/evaluators/poro/KCPermeability.cpp"
+  "${LCM_DIR}/evaluators/poro/MixtureSpecificHeat.cpp"
+  "${LCM_DIR}/evaluators/poro/MixtureThermalExpansion.cpp"
+  "${LCM_DIR}/evaluators/poro/Porosity.cpp"
+  "${LCM_DIR}/evaluators/poro/ThermoPoroPlasticityResidEnergy.cpp"
+  "${LCM_DIR}/evaluators/poro/ThermoPoroPlasticityResidMass.cpp"
+  "${LCM_DIR}/evaluators/poro/TLPoroPlasticityResidMass.cpp"
+  "${LCM_DIR}/evaluators/poro/TLPoroPlasticityResidMomentum.cpp"
+  "${LCM_DIR}/evaluators/poro/TLPoroStress.cpp"
 )
-file (GLOB poro-headers
-  "${LCM_DIR}/evaluators/poro/*.hpp"
+set(poro-headers
+  "${LCM_DIR}/evaluators/poro/BiotCoefficient_Def.hpp"
+  "${LCM_DIR}/evaluators/poro/BiotCoefficient.hpp"
+  "${LCM_DIR}/evaluators/poro/BiotModulus_Def.hpp"
+  "${LCM_DIR}/evaluators/poro/BiotModulus.hpp"
+  "${LCM_DIR}/evaluators/poro/KCPermeability_Def.hpp"
+  "${LCM_DIR}/evaluators/poro/KCPermeability.hpp"
+  "${LCM_DIR}/evaluators/poro/MixtureSpecificHeat_Def.hpp"
+  "${LCM_DIR}/evaluators/poro/MixtureSpecificHeat.hpp"
+  "${LCM_DIR}/evaluators/poro/MixtureThermalExpansion_Def.hpp"
+  "${LCM_DIR}/evaluators/poro/MixtureThermalExpansion.hpp"
+  "${LCM_DIR}/evaluators/poro/Porosity_Def.hpp"
+  "${LCM_DIR}/evaluators/poro/Porosity.hpp"
+  "${LCM_DIR}/evaluators/poro/ThermoPoroPlasticityResidEnergy_Def.hpp"
+  "${LCM_DIR}/evaluators/poro/ThermoPoroPlasticityResidEnergy.hpp"
+  "${LCM_DIR}/evaluators/poro/ThermoPoroPlasticityResidMass_Def.hpp"
+  "${LCM_DIR}/evaluators/poro/ThermoPoroPlasticityResidMass.hpp"
+  "${LCM_DIR}/evaluators/poro/TLPoroPlasticityResidMass_Def.hpp"
+  "${LCM_DIR}/evaluators/poro/TLPoroPlasticityResidMass.hpp"
+  "${LCM_DIR}/evaluators/poro/TLPoroPlasticityResidMomentum_Def.hpp"
+  "${LCM_DIR}/evaluators/poro/TLPoroPlasticityResidMomentum.hpp"
+  "${LCM_DIR}/evaluators/poro/TLPoroStress_Def.hpp"
+  "${LCM_DIR}/evaluators/poro/TLPoroStress.hpp"
 )
 
 # LCM peridigm evaluators
-file (GLOB pd-sources
-  "${LCM_DIR}/evaluators/peridigm/*.cpp"
+set(pd-sources
+  "${LCM_DIR}/evaluators/peridigm/AlbanyPeridigmOBCFunctional.cpp"
+  "${LCM_DIR}/evaluators/peridigm/GatherSphereVolume.cpp"
+  "${LCM_DIR}/evaluators/peridigm/PeridigmForce.cpp"
+  "${LCM_DIR}/evaluators/peridigm/PeridigmPartialStress.cpp"
 )
-file (GLOB pd-headers
-  "${LCM_DIR}/evaluators/peridigm/*.hpp"
+set(pd-headers
+  "${LCM_DIR}/evaluators/peridigm/AlbanyPeridigmOBCFunctional.hpp"
+  "${LCM_DIR}/evaluators/peridigm/GatherSphereVolume_Def.hpp"
+  "${LCM_DIR}/evaluators/peridigm/GatherSphereVolume.hpp"
+  "${LCM_DIR}/evaluators/peridigm/PeridigmForce_Def.hpp"
+  "${LCM_DIR}/evaluators/peridigm/PeridigmForce.hpp"
+  "${LCM_DIR}/evaluators/peridigm/PeridigmPartialStress_Def.hpp"
+  "${LCM_DIR}/evaluators/peridigm/PeridigmPartialStress.hpp"
 )
 
 # LCM projection evaluators
-file (GLOB proj-sources
-  "${LCM_DIR}/evaluators/projection/*.cpp"
+set(proj-sources
+  "${LCM_DIR}/evaluators/projection/ScalarL2ProjectionResidual.cpp"
 )
-file (GLOB proj-headers
-  "${LCM_DIR}/evaluators/projection/*.hpp"
+set(proj-headers
+  "${LCM_DIR}/evaluators/projection/ScalarL2ProjectionResidual_Def.hpp"
+  "${LCM_DIR}/evaluators/projection/ScalarL2ProjectionResidual.hpp"
 )
 
 # LCM residual evaluators
-file (GLOB residual-sources
-  "${LCM_DIR}/evaluators/residuals/*.cpp"
+set(residual-sources
+  "${LCM_DIR}/evaluators/residuals/ElasticityResid.cpp"
+  "${LCM_DIR}/evaluators/residuals/ElectrostaticResidual.cpp"
+  "${LCM_DIR}/evaluators/residuals/HDiffusionDeformationMatterResidual.cpp"
+  "${LCM_DIR}/evaluators/residuals/MechanicsResidual.cpp"
+  "${LCM_DIR}/evaluators/residuals/StabilizedPressureResidual.cpp"
+  "${LCM_DIR}/evaluators/residuals/TLElasResid.cpp"
 )
-file (GLOB residual-headers
-  "${LCM_DIR}/evaluators/residuals/*.hpp"
+set(residual-headers
+  "${LCM_DIR}/evaluators/residuals/ElasticityResid_Def.hpp"
+  "${LCM_DIR}/evaluators/residuals/ElasticityResid.hpp"
+  "${LCM_DIR}/evaluators/residuals/ElectrostaticResidual_Def.hpp"
+  "${LCM_DIR}/evaluators/residuals/ElectrostaticResidual.hpp"
+  "${LCM_DIR}/evaluators/residuals/HDiffusionDeformationMatterResidual_Def.hpp"
+  "${LCM_DIR}/evaluators/residuals/HDiffusionDeformationMatterResidual.hpp"
+  "${LCM_DIR}/evaluators/residuals/MechanicsResidual_Def.hpp"
+  "${LCM_DIR}/evaluators/residuals/MechanicsResidual.hpp"
+  "${LCM_DIR}/evaluators/residuals/StabilizedPressureResidual_Def.hpp"
+  "${LCM_DIR}/evaluators/residuals/StabilizedPressureResidual.hpp"
+  "${LCM_DIR}/evaluators/residuals/TLElasResid_Def.hpp"
+  "${LCM_DIR}/evaluators/residuals/TLElasResid.hpp"
 )
 
 # LCM response evaluators
-file (GLOB response-sources
-  "${LCM_DIR}/evaluators/responses/*.cpp"
+set(response-sources
+  "${LCM_DIR}/evaluators/responses/IPtoNodalField.cpp"
+  "${LCM_DIR}/evaluators/responses/ProjectIPtoNodalField.cpp"
 )
-file (GLOB response-headers
-  "${LCM_DIR}/evaluators/responses/*.hpp"
+set(response-headers
+  "${LCM_DIR}/evaluators/responses/IPtoNodalField_Def.hpp"
+  "${LCM_DIR}/evaluators/responses/IPtoNodalField.hpp"
+  "${LCM_DIR}/evaluators/responses/ProjectIPtoNodalField_Def.hpp"
+  "${LCM_DIR}/evaluators/responses/ProjectIPtoNodalField.hpp"
 )
 
 # LCM mesh size field evaluators
-file (GLOB sf-sources
-  "${LCM_DIR}/evaluators/size-field/*.cpp"
+set(sf-sources
+  "${LCM_DIR}/evaluators/size-field/MeshSizeField.cpp"
 )
-file (GLOB sf-headers
-  "${LCM_DIR}/evaluators/size-field/*.hpp"
+set(sf-headers
+  "${LCM_DIR}/evaluators/size-field/MeshSizeField_Def.hpp"
+  "${LCM_DIR}/evaluators/size-field/MeshSizeField.hpp"
 )
 
 # LCM surface element evaluators
-file (GLOB surface-element-sources
-  "${LCM_DIR}/evaluators/surface-element/*.cpp"
+set(surface-element-sources
+  "${LCM_DIR}/evaluators/surface-element/SurfaceBasis.cpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceCohesiveResidual.cpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceDiffusionResidual.cpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceHDiffusionDefResidual.cpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceL2ProjectionResidual.cpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceScalarGradient.cpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceScalarGradientOperator.cpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceScalarJump.cpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceTLPoroMassResidual.cpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceVectorGradient.cpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceVectorJump.cpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceVectorResidual.cpp"
 )
-file (GLOB surface-element-headers
-  "${LCM_DIR}/evaluators/surface-element/*.hpp"
+set(surface-element-headers
+  "${LCM_DIR}/evaluators/surface-element/SurfaceBasis_Def.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceBasis.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceCohesiveResidual_Def.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceCohesiveResidual.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceDiffusionResidual_Def.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceDiffusionResidual.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceHDiffusionDefResidual_Def.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceHDiffusionDefResidual.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceL2ProjectionResidual_Def.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceL2ProjectionResidual.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceScalarGradient_Def.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceScalarGradient.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceScalarGradientOperator_Def.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceScalarGradientOperator.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceScalarJump_Def.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceScalarJump.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceTLPoroMassResidual_Def.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceTLPoroMassResidual.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceVectorGradient_Def.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceVectorGradient.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceVectorJump_Def.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceVectorJump.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceVectorResidual_Def.hpp"
+  "${LCM_DIR}/evaluators/surface-element/SurfaceVectorResidual.hpp"
 )
 
 # LCM transport evaluators
-file (GLOB transport-sources
-  "${LCM_DIR}/evaluators/transport/*.cpp"
+set(transport-sources
+  "${LCM_DIR}/evaluators/transport/DamageCoefficients.cpp"
+  "${LCM_DIR}/evaluators/transport/GradientElementLength.cpp"
+  "${LCM_DIR}/evaluators/transport/HeliumODEs.cpp"
+  "${LCM_DIR}/evaluators/transport/ThermoMechanicalCoefficients.cpp"
+  "${LCM_DIR}/evaluators/transport/TransportCoefficients.cpp"
+  "${LCM_DIR}/evaluators/transport/TransportResidual.cpp"
 )
-file (GLOB transport-headers
-  "${LCM_DIR}/evaluators/transport/*.hpp"
+set(transport-headers
+  "${LCM_DIR}/evaluators/transport/DamageCoefficients_Def.hpp"
+  "${LCM_DIR}/evaluators/transport/DamageCoefficients.hpp"
+  "${LCM_DIR}/evaluators/transport/GradientElementLength_Def.hpp"
+  "${LCM_DIR}/evaluators/transport/GradientElementLength.hpp"
+  "${LCM_DIR}/evaluators/transport/HeliumODEs_Def.hpp"
+  "${LCM_DIR}/evaluators/transport/HeliumODEs.hpp"
+  "${LCM_DIR}/evaluators/transport/ThermoMechanicalCoefficients_Def.hpp"
+  "${LCM_DIR}/evaluators/transport/ThermoMechanicalCoefficients.hpp"
+  "${LCM_DIR}/evaluators/transport/TransportCoefficients_Def.hpp"
+  "${LCM_DIR}/evaluators/transport/TransportCoefficients.hpp"
+  "${LCM_DIR}/evaluators/transport/TransportResidual_Def.hpp"
+  "${LCM_DIR}/evaluators/transport/TransportResidual.hpp"
 )
 
 #LCM models
-file (GLOB models-sources
-  "${LCM_DIR}/models/*.cpp"
-  "${LCM_DIR}/parallel_models/*.cpp"
+set(models-sources
+  "${LCM_DIR}/models/AAAModel.cpp"
+  "${LCM_DIR}/models/AbstractModel.cpp"
+  "${LCM_DIR}/models/AnisotropicDamageModel.cpp"
+  "${LCM_DIR}/models/AnisotropicHyperelasticDamageModel.cpp"
+  "${LCM_DIR}/models/AnisotropicViscoplasticModel.cpp"
+  "${LCM_DIR}/models/CapExplicitModel.cpp"
+  "${LCM_DIR}/models/CapImplicitModel.cpp"
+  "${LCM_DIR}/models/ConstitutiveModel.cpp"
+  "${LCM_DIR}/models/ConstitutiveModelDriver.cpp"
+  "${LCM_DIR}/models/ConstitutiveModelDriverPre.cpp"
+  "${LCM_DIR}/models/ConstitutiveModelInterface.cpp"
+  "${LCM_DIR}/models/ConstitutiveModelParameters.cpp"
+  "${LCM_DIR}/models/CreepModel.cpp"
+  "${LCM_DIR}/models/CrystalPlasticityModel.cpp"
+  "${LCM_DIR}/models/DruckerPragerModel.cpp"
+  "${LCM_DIR}/models/ElasticCrystalModel.cpp"
+  "${LCM_DIR}/models/ElasticDamageModel.cpp"
+  "${LCM_DIR}/models/ElastoViscoplasticModel.cpp"
+  "${LCM_DIR}/models/FerroicCore.cpp"
+  "${LCM_DIR}/models/FM_AlbanyInterface.cpp"
+  "${LCM_DIR}/models/GursonHMRModel.cpp"
+  "${LCM_DIR}/models/GursonModel.cpp"
+  "${LCM_DIR}/models/HyperelasticDamageModel.cpp"
+  "${LCM_DIR}/models/J2FiberModel.cpp"
+  "${LCM_DIR}/models/J2HMCModel.cpp"
+  "${LCM_DIR}/models/J2MiniSolver.cpp"
+  "${LCM_DIR}/models/J2Model.cpp"
+  "${LCM_DIR}/models/LinearElasticModel.cpp"
+  "${LCM_DIR}/models/LinearHMCModel.cpp"
+  "${LCM_DIR}/models/LinearPiezoModel.cpp"
+  "${LCM_DIR}/models/MooneyRivlinModel.cpp"
+  "${LCM_DIR}/models/NeohookeanModel.cpp"
+  "${LCM_DIR}/models/NewtonianFluidModel.cpp"
+  "${LCM_DIR}/models/OrtizPandolfiModel.cpp"
+  "${LCM_DIR}/models/RIHMRModel.cpp"
+  "${LCM_DIR}/models/StVenantKirchhoffModel.cpp"
+  "${LCM_DIR}/models/TvergaardHutchinsonModel.cpp"
+  "${LCM_DIR}/models/ViscoElasticModel.cpp"
+  "${LCM_DIR}/parallel_models/ParallelNeohookeanModel.cpp"
 )
-file (GLOB models-headers
-  "${LCM_DIR}/models/*.hpp"
-  "${LCM_DIR}/models/core/CrystalPlasticity/*.hpp"
+set(models-headers
+  "${LCM_DIR}/models/AAAModel_Def.hpp"
+  "${LCM_DIR}/models/AAAModel.hpp"
+  "${LCM_DIR}/models/AbstractModel.hpp"
+  "${LCM_DIR}/models/AnisotropicDamageModel_Def.hpp"
+  "${LCM_DIR}/models/AnisotropicDamageModel.hpp"
+  "${LCM_DIR}/models/AnisotropicHyperelasticDamageModel_Def.hpp"
+  "${LCM_DIR}/models/AnisotropicHyperelasticDamageModel.hpp"
+  "${LCM_DIR}/models/AnisotropicViscoplasticModel_Def.hpp"
+  "${LCM_DIR}/models/AnisotropicViscoplasticModel.hpp"
+  "${LCM_DIR}/models/CapExplicitModel_Def.hpp"
+  "${LCM_DIR}/models/CapExplicitModel.hpp"
+  "${LCM_DIR}/models/CapImplicitModel_Def.hpp"
+  "${LCM_DIR}/models/CapImplicitModel.hpp"
+  "${LCM_DIR}/models/ConstitutiveModel_Def.hpp"
+  "${LCM_DIR}/models/ConstitutiveModelDriver_Def.hpp"
+  "${LCM_DIR}/models/ConstitutiveModelDriver.hpp"
+  "${LCM_DIR}/models/ConstitutiveModelDriverPre_Def.hpp"
+  "${LCM_DIR}/models/ConstitutiveModelDriverPre.hpp"
+  "${LCM_DIR}/models/ConstitutiveModel.hpp"
+  "${LCM_DIR}/models/ConstitutiveModelInterface_Def.hpp"
+  "${LCM_DIR}/models/ConstitutiveModelInterface.hpp"
+  "${LCM_DIR}/models/ConstitutiveModelParameters_Def.hpp"
+  "${LCM_DIR}/models/ConstitutiveModelParameters.hpp"
+  "${LCM_DIR}/models/CreepModel_Def.hpp"
+  "${LCM_DIR}/models/CreepModel.hpp"
+  "${LCM_DIR}/models/CrystalPlasticityModel_Def.hpp"
+  "${LCM_DIR}/models/CrystalPlasticityModel.hpp"
+  "${LCM_DIR}/models/DruckerPragerModel_Def.hpp"
+  "${LCM_DIR}/models/DruckerPragerModel.hpp"
+  "${LCM_DIR}/models/ElasticCrystalModel_Def.hpp"
+  "${LCM_DIR}/models/ElasticCrystalModel.hpp"
+  "${LCM_DIR}/models/ElasticDamageModel_Def.hpp"
+  "${LCM_DIR}/models/ElasticDamageModel.hpp"
+  "${LCM_DIR}/models/ElastoViscoplasticCore_Def.hpp"
+  "${LCM_DIR}/models/ElastoViscoplasticCore.hpp"
+  "${LCM_DIR}/models/ElastoViscoplasticModel_Def.hpp"
+  "${LCM_DIR}/models/ElastoViscoplasticModel.hpp"
+  "${LCM_DIR}/models/FerroicCore_Def.hpp"
+  "${LCM_DIR}/models/FerroicCore.hpp"
+  "${LCM_DIR}/models/FerroicModel_Def.hpp"
+  "${LCM_DIR}/models/FerroicModel.hpp"
+  "${LCM_DIR}/models/FM_AlbanyInterface_Def.hpp"
+  "${LCM_DIR}/models/FM_AlbanyInterface.hpp"
+  "${LCM_DIR}/models/GursonHMRModel_Def.hpp"
+  "${LCM_DIR}/models/GursonHMRModel.hpp"
+  "${LCM_DIR}/models/GursonModel_Def.hpp"
+  "${LCM_DIR}/models/GursonModel.hpp"
+  "${LCM_DIR}/models/HyperelasticDamageModel_Def.hpp"
+  "${LCM_DIR}/models/HyperelasticDamageModel.hpp"
+  "${LCM_DIR}/models/J2FiberModel_Def.hpp"
+  "${LCM_DIR}/models/J2FiberModel.hpp"
+  "${LCM_DIR}/models/J2HMCModel_Def.hpp"
+  "${LCM_DIR}/models/J2HMCModel.hpp"
+  "${LCM_DIR}/models/J2MiniSolver_Def.hpp"
+  "${LCM_DIR}/models/J2MiniSolver.hpp"
+  "${LCM_DIR}/models/J2Model_Def.hpp"
+  "${LCM_DIR}/models/J2Model.hpp"
+  "${LCM_DIR}/models/LinearElasticModel_Def.hpp"
+  "${LCM_DIR}/models/LinearElasticModel.hpp"
+  "${LCM_DIR}/models/LinearHMCModel_Def.hpp"
+  "${LCM_DIR}/models/LinearHMCModel.hpp"
+  "${LCM_DIR}/models/LinearPiezoModel_Def.hpp"
+  "${LCM_DIR}/models/LinearPiezoModel.hpp"
+  "${LCM_DIR}/models/MooneyRivlinModel_Def.hpp"
+  "${LCM_DIR}/models/MooneyRivlinModel.hpp"
+  "${LCM_DIR}/models/NeohookeanModel_Def.hpp"
+  "${LCM_DIR}/models/NeohookeanModel.hpp"
+  "${LCM_DIR}/models/NewtonianFluidModel_Def.hpp"
+  "${LCM_DIR}/models/NewtonianFluidModel.hpp"
+  "${LCM_DIR}/models/OrtizPandolfiModel_Def.hpp"
+  "${LCM_DIR}/models/OrtizPandolfiModel.hpp"
+  "${LCM_DIR}/models/RIHMRModel_Def.hpp"
+  "${LCM_DIR}/models/RIHMRModel.hpp"
+  "${LCM_DIR}/models/StVenantKirchhoffModel_Def.hpp"
+  "${LCM_DIR}/models/StVenantKirchhoffModel.hpp"
+  "${LCM_DIR}/models/TvergaardHutchinsonModel_Def.hpp"
+  "${LCM_DIR}/models/TvergaardHutchinsonModel.hpp"
+  "${LCM_DIR}/models/ViscoElasticModel_Def.hpp"
+  "${LCM_DIR}/models/ViscoElasticModel.hpp"
+  "${LCM_DIR}/models/core/CrystalPlasticity/CrystalPlasticityCore_Def.hpp"
+  "${LCM_DIR}/models/core/CrystalPlasticity/CrystalPlasticityCore.hpp"
+  "${LCM_DIR}/models/core/CrystalPlasticity/CrystalPlasticityFwd.hpp"
+  "${LCM_DIR}/models/core/CrystalPlasticity/FlowRule_Def.hpp"
+  "${LCM_DIR}/models/core/CrystalPlasticity/FlowRule.hpp"
+  "${LCM_DIR}/models/core/CrystalPlasticity/HardeningLaw_Def.hpp"
+  "${LCM_DIR}/models/core/CrystalPlasticity/HardeningLaw.hpp"
+  "${LCM_DIR}/models/core/CrystalPlasticity/Integrator_Def.hpp"
+  "${LCM_DIR}/models/core/CrystalPlasticity/Integrator.hpp"
+  "${LCM_DIR}/models/core/CrystalPlasticity/NonlinearSolver_Def.hpp"
+  "${LCM_DIR}/models/core/CrystalPlasticity/NonlinearSolver.hpp"
+  "${LCM_DIR}/models/core/CrystalPlasticity/ParameterReader_Def.hpp"
+  "${LCM_DIR}/models/core/CrystalPlasticity/ParameterReader.hpp"
   "${LCM_DIR}/parallel_models/*.hpp"
 )
 
 IF(ALBANY_HAVE_STK)
 #LCM utils
-file (GLOB utils-sources
-  "${LCM_DIR}/utils/*.cpp"
-  "${LCM_DIR}/utils/*.cc"
+set(utils-sources
+  "${LCM_DIR}/utils/LocalNonlinearSolver.cpp"
+  "${LCM_DIR}/utils/PeridigmManager.cpp"
+  "${LCM_DIR}/utils/Projection.cpp"
+  "${LCM_DIR}/utils/LCMPartition.cc"
+  "${LCM_DIR}/utils/MaterialDatabase.cc"
+  "${LCM_DIR}/utils/MiniLinearSolver.cc"
+  "${LCM_DIR}/utils/MiniNonlinearSolver.cc"
+  "${LCM_DIR}/utils/NOXSolverPrePostOperator.cc"
+  "${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.cc"
 )
-file (GLOB utils-headers
-  "${LCM_DIR}/utils/*.hpp"
-  "${LCM_DIR}/utils/*.h"
+set(utils-headers
+  "${LCM_DIR}/utils/LocalNonlinearSolver_Def.hpp"
+  "${LCM_DIR}/utils/LocalNonlinearSolver.hpp"
+  "${LCM_DIR}/utils/PeridigmManager.hpp"
+  "${LCM_DIR}/utils/Projection.hpp"
+  "${LCM_DIR}/utils/LCMPartition.h"
+  "${LCM_DIR}/utils/MaterialDatabase.h"
+  "${LCM_DIR}/utils/MiniLinearSolver.h"
+  "${LCM_DIR}/utils/MiniLinearSolver.t.h"
+  "${LCM_DIR}/utils/MiniNonlinearSolver.h"
+  "${LCM_DIR}/utils/MiniNonlinearSolver.t.h"
+  "${LCM_DIR}/utils/MiniSolvers.h"
+  "${LCM_DIR}/utils/NOXSolverPrePostOperator.h"
+  "${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.h"
 )
 
 #LCM utils/topology
