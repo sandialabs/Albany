@@ -169,7 +169,6 @@ set(kin-sources
   "${LCM_DIR}/evaluators/kinematics/LatticeDefGrad.cpp"
 )
 set(kin-headers
-  "${LCM_DIR}/evaluators/knematics/*.hpp"
   "${LCM_DIR}/evaluators/kinematics/CurrentCoords_Def.hpp"
   "${LCM_DIR}/evaluators/kinematics/CurrentCoords.hpp"
   "${LCM_DIR}/evaluators/kinematics/DefGrad_Def.hpp"
@@ -496,7 +495,10 @@ set(models-headers
   "${LCM_DIR}/models/core/CrystalPlasticity/NonlinearSolver.hpp"
   "${LCM_DIR}/models/core/CrystalPlasticity/ParameterReader_Def.hpp"
   "${LCM_DIR}/models/core/CrystalPlasticity/ParameterReader.hpp"
-  "${LCM_DIR}/parallel_models/*.hpp"
+  "${LCM_DIR}/parallel_models/ParallelConstitutiveModel_Def.hpp"
+  "${LCM_DIR}/parallel_models/ParallelConstitutiveModel.hpp"
+  "${LCM_DIR}/parallel_models/ParallelNeohookeanModel_Def.hpp"
+  "${LCM_DIR}/parallel_models/ParallelNeohookeanModel.hpp"
 )
 IF (NOT Kokkos_ENABLE_Cuda)
 set(models-sources ${models-sources}
