@@ -9,7 +9,6 @@ SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)
 
 # LCM problems
 
-# Glob source files for problems
 set(problem-sources
   "${LCM_DIR}/problems/ConstitutiveDriverProblem.cpp"
   "${LCM_DIR}/problems/ElasticityProblem.cpp"
@@ -17,11 +16,8 @@ set(problem-sources
   "${LCM_DIR}/problems/FieldNameMap.cpp"
   "${LCM_DIR}/problems/HMCProblem.cpp"
   "${LCM_DIR}/problems/MechanicsProblem.cpp"
-  "${LCM_DIR}/problems/PeridigmProblem.cpp"
   "${LCM_DIR}/problems/ThermoElasticityProblem.cpp"
 )
-
-# Glob header files for problems
 set(problem-headers
   "${LCM_DIR}/problems/ConstitutiveDriverProblem.hpp"
   "${LCM_DIR}/problems/ElasticityProblem.hpp"
@@ -29,9 +25,16 @@ set(problem-headers
   "${LCM_DIR}/problems/FieldNameMap.hpp"
   "${LCM_DIR}/problems/HMCProblem.hpp"
   "${LCM_DIR}/problems/MechanicsProblem.hpp"
-  "${LCM_DIR}/problems/PeridigmProblem.hpp"
   "${LCM_DIR}/problems/ThermoElasticityProblem.hpp"
 )
+IF (ALBANY_PERIDIGM AND ALBANY_EPETRA)
+  set(problem-sources ${problem-sources}
+    "${LCM_DIR}/problems/PeridigmProblem.cpp"
+  )
+  set(problem-headers ${problem-headers}
+    "${LCM_DIR}/problems/PeridigmProblem.hpp"
+  )
+ENDIF()
 
 SET(SOURCES )
 SET(HEADERS )
@@ -63,30 +66,34 @@ set(evaluator-headers
 #LCM model evaluators 
 set(model-eval-sources
   "${LCM_DIR}/Schwarz_Alternating.cpp"
-  "${LCM_DIR}/Schwarz_BoundaryJacobian.cpp"
-  "${LCM_DIR}/Schwarz_Coupled.cpp"
-  "${LCM_DIR}/Schwarz_CoupledJacobian.cpp"
   "${LCM_DIR}/Schwarz_ObserverImpl.cpp"
   "${LCM_DIR}/Schwarz_PiroObserver.cpp"
   "${LCM_DIR}/Schwarz_StatelessObserverImpl.cpp"
 )
 set(model-eval-headers
   "${LCM_DIR}/Schwarz_Alternating.hpp"
-  "${LCM_DIR}/Schwarz_BoundaryJacobian.hpp"
-  "${LCM_DIR}/Schwarz_Coupled.hpp"
-  "${LCM_DIR}/Schwarz_CoupledJacobian.hpp"
   "${LCM_DIR}/Schwarz_ObserverImpl.hpp"
   "${LCM_DIR}/Schwarz_PiroObserver.hpp"
   "${LCM_DIR}/Schwarz_StatelessObserverImpl.hpp"
 )
+IF (ALBANY_HAVE_STK)
+  set(model-eval-sources ${model-eval-sources}
+    "${LCM_DIR}/Schwarz_BoundaryJacobian.cpp"
+    "${LCM_DIR}/Schwarz_CoupledJacobian.cpp"
+    "${LCM_DIR}/Schwarz_Coupled.cpp"
+  )
+  set(model-eval-headers ${model-eval-headers}
+    "${LCM_DIR}/Schwarz_BoundaryJacobian.hpp"
+    "${LCM_DIR}/Schwarz_CoupledJacobian.hpp"
+    "${LCM_DIR}/Schwarz_Coupled.hpp"
+  )
+ENDIF(ALBANY_HAVE_STK)
 
 # LCM special boundary conditions
 set(bc-sources
   "${LCM_DIR}/evaluators/bc/EquilibriumConcentrationBC.cpp"
   "${LCM_DIR}/evaluators/bc/KfieldBC.cpp"
-  "${LCM_DIR}/evaluators/bc/PDNeighborFitBC.cpp"
   "${LCM_DIR}/evaluators/bc/RigidContactBC.cpp"
-  "${LCM_DIR}/evaluators/bc/SchwarzBC.cpp"
   "${LCM_DIR}/evaluators/bc/TimeDepBC.cpp"
   "${LCM_DIR}/evaluators/bc/TimeTracBC.cpp"
   "${LCM_DIR}/evaluators/bc/TorsionBC.cpp"
@@ -96,12 +103,8 @@ set(bc-headers
   "${LCM_DIR}/evaluators/bc/EquilibriumConcentrationBC.hpp"
   "${LCM_DIR}/evaluators/bc/KfieldBC_Def.hpp"
   "${LCM_DIR}/evaluators/bc/KfieldBC.hpp"
-  "${LCM_DIR}/evaluators/bc/PDNeighborFitBC_Def.hpp"
-  "${LCM_DIR}/evaluators/bc/PDNeighborFitBC.hpp"
   "${LCM_DIR}/evaluators/bc/RigidContactBC_Def.hpp"
   "${LCM_DIR}/evaluators/bc/RigidContactBC.hpp"
-  "${LCM_DIR}/evaluators/bc/SchwarzBC_Def.hpp"
-  "${LCM_DIR}/evaluators/bc/SchwarzBC.hpp"
   "${LCM_DIR}/evaluators/bc/TimeDepBC_Def.hpp"
   "${LCM_DIR}/evaluators/bc/TimeDepBC.hpp"
   "${LCM_DIR}/evaluators/bc/TimeTracBC_Def.hpp"
@@ -109,18 +112,32 @@ set(bc-headers
   "${LCM_DIR}/evaluators/bc/TorsionBC_Def.hpp"
   "${LCM_DIR}/evaluators/bc/TorsionBC.hpp"
 )
+IF (ALBANY_HAVE_STK)
+  set(bc-sources ${bc-sources}
+    "${LCM_DIR}/evaluators/bc/SchwarzBC.cpp"
+    "${LCM_DIR}/evaluators/bc/PDNeighborFitBC.cpp"
+  )
+  set(bc-headers ${bc-headers}
+    "${LCM_DIR}/evaluators/bc/SchwarzBC_Def.hpp"
+    "${LCM_DIR}/evaluators/bc/SchwarzBC.hpp"
+    "${LCM_DIR}/evaluators/bc/PDNeighborFitBC_Def.hpp"
+    "${LCM_DIR}/evaluators/bc/PDNeighborFitBC.hpp"
+  )
+ENDIF (ALBANY_HAVE_STK)
 
 # LCM contact
-set(contact-sources
-  "${LCM_DIR}/evaluators/contact/MortarContactConstraints.cpp"
-  "${LCM_DIR}/evaluators/contact/MortarContactResidual.cpp"
-)
-set(contact-headers
-  "${LCM_DIR}/evaluators/contact/MortarContactConstraints_Def.hpp"
-  "${LCM_DIR}/evaluators/contact/MortarContactConstraints.hpp"
-  "${LCM_DIR}/evaluators/contact/MortarContactResidual_Def.hpp"
-  "${LCM_DIR}/evaluators/contact/MortarContactResidual.hpp"
-)
+IF (ALBANY_CONTACT)
+  set(contact-sources
+    "${LCM_DIR}/evaluators/contact/MortarContactConstraints.cpp"
+    "${LCM_DIR}/evaluators/contact/MortarContactResidual.cpp"
+  )
+  set(contact-headers
+    "${LCM_DIR}/evaluators/contact/MortarContactConstraints_Def.hpp"
+    "${LCM_DIR}/evaluators/contact/MortarContactConstraints.hpp"
+    "${LCM_DIR}/evaluators/contact/MortarContactResidual_Def.hpp"
+    "${LCM_DIR}/evaluators/contact/MortarContactResidual.hpp"
+  )
+ENDIF (ALBANY_CONTACT)
 
 # LCM HMC evaluators
 set(hmc-sources
@@ -223,21 +240,23 @@ set(poro-headers
 )
 
 # LCM peridigm evaluators
-set(pd-sources
-  "${LCM_DIR}/evaluators/peridigm/AlbanyPeridigmOBCFunctional.cpp"
-  "${LCM_DIR}/evaluators/peridigm/GatherSphereVolume.cpp"
-  "${LCM_DIR}/evaluators/peridigm/PeridigmForce.cpp"
-  "${LCM_DIR}/evaluators/peridigm/PeridigmPartialStress.cpp"
-)
-set(pd-headers
-  "${LCM_DIR}/evaluators/peridigm/AlbanyPeridigmOBCFunctional.hpp"
-  "${LCM_DIR}/evaluators/peridigm/GatherSphereVolume_Def.hpp"
-  "${LCM_DIR}/evaluators/peridigm/GatherSphereVolume.hpp"
-  "${LCM_DIR}/evaluators/peridigm/PeridigmForce_Def.hpp"
-  "${LCM_DIR}/evaluators/peridigm/PeridigmForce.hpp"
-  "${LCM_DIR}/evaluators/peridigm/PeridigmPartialStress_Def.hpp"
-  "${LCM_DIR}/evaluators/peridigm/PeridigmPartialStress.hpp"
-)
+IF (ALBANY_PERIDIGM AND ALBANY_EPETRA)
+  set(pd-sources
+    "${LCM_DIR}/evaluators/peridigm/AlbanyPeridigmOBCFunctional.cpp"
+    "${LCM_DIR}/evaluators/peridigm/GatherSphereVolume.cpp"
+    "${LCM_DIR}/evaluators/peridigm/PeridigmForce.cpp"
+    "${LCM_DIR}/evaluators/peridigm/PeridigmPartialStress.cpp"
+  )
+  set(pd-headers
+    "${LCM_DIR}/evaluators/peridigm/AlbanyPeridigmOBCFunctional.hpp"
+    "${LCM_DIR}/evaluators/peridigm/GatherSphereVolume_Def.hpp"
+    "${LCM_DIR}/evaluators/peridigm/GatherSphereVolume.hpp"
+    "${LCM_DIR}/evaluators/peridigm/PeridigmForce_Def.hpp"
+    "${LCM_DIR}/evaluators/peridigm/PeridigmForce.hpp"
+    "${LCM_DIR}/evaluators/peridigm/PeridigmPartialStress_Def.hpp"
+    "${LCM_DIR}/evaluators/peridigm/PeridigmPartialStress.hpp"
+  )
+ENDIF (ALBANY_PERIDIGM AND ALBANY_EPETRA)
 
 # LCM projection evaluators
 set(proj-sources
@@ -374,15 +393,10 @@ set(models-sources
   "${LCM_DIR}/models/ConstitutiveModelInterface.cpp"
   "${LCM_DIR}/models/ConstitutiveModelParameters.cpp"
   "${LCM_DIR}/models/CreepModel.cpp"
-  "${LCM_DIR}/models/CrystalPlasticityModel.cpp"
   "${LCM_DIR}/models/DruckerPragerModel.cpp"
   "${LCM_DIR}/models/ElasticCrystalModel.cpp"
   "${LCM_DIR}/models/ElasticDamageModel.cpp"
   "${LCM_DIR}/models/ElastoViscoplasticModel.cpp"
-  "${LCM_DIR}/models/FerroicCore.cpp"
-  "${LCM_DIR}/models/FM_AlbanyInterface.cpp"
-  "${LCM_DIR}/models/GursonHMRModel.cpp"
-  "${LCM_DIR}/models/GursonModel.cpp"
   "${LCM_DIR}/models/HyperelasticDamageModel.cpp"
   "${LCM_DIR}/models/J2FiberModel.cpp"
   "${LCM_DIR}/models/J2HMCModel.cpp"
@@ -427,8 +441,6 @@ set(models-headers
   "${LCM_DIR}/models/ConstitutiveModelParameters.hpp"
   "${LCM_DIR}/models/CreepModel_Def.hpp"
   "${LCM_DIR}/models/CreepModel.hpp"
-  "${LCM_DIR}/models/CrystalPlasticityModel_Def.hpp"
-  "${LCM_DIR}/models/CrystalPlasticityModel.hpp"
   "${LCM_DIR}/models/DruckerPragerModel_Def.hpp"
   "${LCM_DIR}/models/DruckerPragerModel.hpp"
   "${LCM_DIR}/models/ElasticCrystalModel_Def.hpp"
@@ -439,16 +451,6 @@ set(models-headers
   "${LCM_DIR}/models/ElastoViscoplasticCore.hpp"
   "${LCM_DIR}/models/ElastoViscoplasticModel_Def.hpp"
   "${LCM_DIR}/models/ElastoViscoplasticModel.hpp"
-  "${LCM_DIR}/models/FerroicCore_Def.hpp"
-  "${LCM_DIR}/models/FerroicCore.hpp"
-  "${LCM_DIR}/models/FerroicModel_Def.hpp"
-  "${LCM_DIR}/models/FerroicModel.hpp"
-  "${LCM_DIR}/models/FM_AlbanyInterface_Def.hpp"
-  "${LCM_DIR}/models/FM_AlbanyInterface.hpp"
-  "${LCM_DIR}/models/GursonHMRModel_Def.hpp"
-  "${LCM_DIR}/models/GursonHMRModel.hpp"
-  "${LCM_DIR}/models/GursonModel_Def.hpp"
-  "${LCM_DIR}/models/GursonModel.hpp"
   "${LCM_DIR}/models/HyperelasticDamageModel_Def.hpp"
   "${LCM_DIR}/models/HyperelasticDamageModel.hpp"
   "${LCM_DIR}/models/J2FiberModel_Def.hpp"
@@ -496,61 +498,86 @@ set(models-headers
   "${LCM_DIR}/models/core/CrystalPlasticity/ParameterReader.hpp"
   "${LCM_DIR}/parallel_models/*.hpp"
 )
+IF (NOT Kokkos_ENABLE_Cuda)
+set(models-sources ${models-sources}
+  "${LCM_DIR}/models/GursonHMRModel.cpp"
+  "${LCM_DIR}/models/GursonModel.cpp"
+  "${LCM_DIR}/models/FM_AlbanyInterface.cpp"
+  "${LCM_DIR}/models/FerroicCore.cpp"
+  "${LCM_DIR}/models/CrystalPlasticityModel.cpp"
+)
+set(models-headers ${models-headers}
+  "${LCM_DIR}/models/GursonHMRModel_Def.hpp"
+  "${LCM_DIR}/models/GursonHMRModel.hpp"
+  "${LCM_DIR}/models/GursonModel_Def.hpp"
+  "${LCM_DIR}/models/GursonModel.hpp"
+  "${LCM_DIR}/models/FM_AlbanyInterface_Def.hpp"
+  "${LCM_DIR}/models/FM_AlbanyInterface.hpp"
+  "${LCM_DIR}/models/FerroicCore_Def.hpp"
+  "${LCM_DIR}/models/FerroicCore.hpp"
+  "${LCM_DIR}/models/FerroicModel_Def.hpp"
+  "${LCM_DIR}/models/FerroicModel.hpp"
+  "${LCM_DIR}/models/CrystalPlasticityModel_Def.hpp"
+  "${LCM_DIR}/models/CrystalPlasticityModel.hpp"
+)
+ENDIF (NOT Kokkos_ENABLE_Cuda)
 
-IF(ALBANY_HAVE_STK)
 #LCM utils
 set(utils-sources
-  "${LCM_DIR}/utils/LocalNonlinearSolver.cpp"
-  "${LCM_DIR}/utils/PeridigmManager.cpp"
   "${LCM_DIR}/utils/Projection.cpp"
-  "${LCM_DIR}/utils/LCMPartition.cc"
-  "${LCM_DIR}/utils/MaterialDatabase.cc"
-  "${LCM_DIR}/utils/MiniLinearSolver.cc"
-  "${LCM_DIR}/utils/MiniNonlinearSolver.cc"
+  "${LCM_DIR}/utils/LocalNonlinearSolver.cpp"
   "${LCM_DIR}/utils/NOXSolverPrePostOperator.cc"
   "${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.cc"
+  "${LCM_DIR}/utils/MaterialDatabase.cc"
 )
 set(utils-headers
-  "${LCM_DIR}/utils/LocalNonlinearSolver_Def.hpp"
-  "${LCM_DIR}/utils/LocalNonlinearSolver.hpp"
-  "${LCM_DIR}/utils/PeridigmManager.hpp"
   "${LCM_DIR}/utils/Projection.hpp"
-  "${LCM_DIR}/utils/LCMPartition.h"
-  "${LCM_DIR}/utils/MaterialDatabase.h"
-  "${LCM_DIR}/utils/MiniLinearSolver.h"
-  "${LCM_DIR}/utils/MiniLinearSolver.t.h"
-  "${LCM_DIR}/utils/MiniNonlinearSolver.h"
-  "${LCM_DIR}/utils/MiniNonlinearSolver.t.h"
-  "${LCM_DIR}/utils/MiniSolvers.h"
+  "${LCM_DIR}/utils/LocalNonlinearSolver.hpp"
+  "${LCM_DIR}/utils/LocalNonlinearSolver_Def.hpp"
   "${LCM_DIR}/utils/NOXSolverPrePostOperator.h"
   "${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.h"
+  "${LCM_DIR}/utils/MaterialDatabase.h"
 )
+IF(ALBANY_HAVE_STK)
+  set(utils-sources ${utils-sources}
+    "${LCM_DIR}/utils/LCMPartition.cc"
+    "${LCM_DIR}/utils/MiniLinearSolver.cc"
+    "${LCM_DIR}/utils/MiniNonlinearSolver.cc"
+  )
+  set(utils-headers ${utils-headers}
+    "${LCM_DIR}/utils/LCMPartition.h"
+    "${LCM_DIR}/utils/MiniLinearSolver.h"
+    "${LCM_DIR}/utils/MiniLinearSolver.t.h"
+    "${LCM_DIR}/utils/MiniNonlinearSolver.h"
+    "${LCM_DIR}/utils/MiniNonlinearSolver.t.h"
+    "${LCM_DIR}/utils/MiniSolvers.h"
+  )
+  IF (ALBANY_PERIDIGM AND ALBANY_EPETRA)
+    set(utils-sources ${utils-sources}
+      "${LCM_DIR}/utils/PeridigmManager.cpp"
+    )
+    set(utils-headers ${utils-headers}
+      "${LCM_DIR}/utils/PeridigmManager.hpp"
+    )
+  ENDIF(ALBANY_PERIDIGM AND ALBANY_EPETRA)
+ENDIF(ALBANY_HAVE_STK)
 
 #LCM utils/topology
-  IF(ALBANY_BGL)
-  file (GLOB topology-sources
-    "${LCM_DIR}/utils/topology/*.cc"
+IF(ALBANY_HAVE_STK AND ALBANY_BGL)
+  set(topology-sources
+    "${LCM_DIR}/utils/topology/BarycentricSubdivision.cc"
+    "${LCM_DIR}/utils/topology/MinimumSurface.cc"
+    "${LCM_DIR}/utils/topology/Subgraph.cc"
+    "${LCM_DIR}/utils/topology/Topology.cc"
+    "${LCM_DIR}/utils/topology/Topology_FractureCriterion.cc"
+    "${LCM_DIR}/utils/topology/Topology_Utils.cc"
   )
-  file (GLOB topology-headers
-    "${LCM_DIR}/utils/topology/*.h"
-  )
-  ENDIF(ALBANY_BGL)
-
-ELSE()
-  set(utils-headers ${utils-headers}
-    ${LCM_DIR}/utils/Projection.hpp
-    ${LCM_DIR}/utils/LocalNonlinearSolver.hpp
-    ${LCM_DIR}/utils/LocalNonlinearSolver_Def.hpp
-    ${LCM_DIR}/utils/NOXSolverPrePostOperator.h
-    ${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.h
-    ${LCM_DIR}/utils/MaterialDatabase.h
-  )
-  set(utils-sources ${utils-sources}
-    ${LCM_DIR}/utils/Projection.cpp
-    ${LCM_DIR}/utils/LocalNonlinearSolver.cpp
-    ${LCM_DIR}/utils/NOXSolverPrePostOperator.cc
-    ${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.cc
-    ${LCM_DIR}/utils/MaterialDatabase.cc
+  set(topology-headers
+    "${LCM_DIR}/utils/topology/Subgraph.h"
+    "${LCM_DIR}/utils/topology/Topology_FractureCriterion.h"
+    "${LCM_DIR}/utils/topology/Topology.h"
+    "${LCM_DIR}/utils/topology/Topology_Types.h"
+    "${LCM_DIR}/utils/topology/Topology_Utils.h"
   )
 ENDIF()
 
@@ -596,69 +623,6 @@ set(HEADERS ${HEADERS}
   ${kin-headers}
   ${sf-headers}
  )
-
-IF(NOT ALBANY_PERIDIGM OR NOT ALBANY_EPETRA)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/problems/PeridigmProblem.cpp)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/utils/PeridigmManager.cpp)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/peridigm/PeridigmForce.cpp)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/peridigm/PeridigmPartialStress.cpp)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/peridigm/AlbanyPeridigmOBCFunctional.cpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/problems/PeridigmProblem.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/utils/PeridigmManager.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/peridigm/PeridigmForce_Def.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/peridigm/PeridigmForce.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/peridigm/PeridigmPartialStress_Def.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/peridigm/PeridigmPartialStress.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/peridigm/AlbanyPeridigmOBCFunctional_Def.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/peridigm/AlbanyPeridigmOBCFunctional.hpp)
-ENDIF()
-
-IF(NOT ALBANY_CONTACT)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/contact/MortarContactResidual.cpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/contact/MortarContactResidual.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/contact/MortarContactResidual_Def.hpp)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/contact/MortarContactConstraints.cpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/contact/MortarContactConstraints.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/contact/MortarContactConstraints_Def.hpp)
-ENDIF()
-
-IF(NOT ALBANY_HAVE_STK)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/Schwarz_BoundaryJacobian.cpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/Schwarz_BoundaryJacobian.hpp)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/Schwarz_CoupledJacobian.cpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/Schwarz_CoupledJacobian.hpp)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/SchwarzCoupled.cpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/SchwarzCoupled.hpp)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/bc/SchwarzBC.cpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/bc/SchwarzBC_Def.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/bc/SchwarzBC.hpp)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/bc/PDNeighborFitBC.cpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/bc/PDNeighborFitBC_Def.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/bc/PDNeighborFitBC.hpp)
-ENDIF()
-
-IF(Kokkos_ENABLE_Cuda)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/GursonModel.cpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/GursonModel.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/GursonModel_Def.hpp)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/GursonHMRModel.cpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/GursonHMRModel.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/GursonHMRModel_Def.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FM_AlbanyInterface.hpp)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/FM_AlbanyInterface.cpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FM_AlbanyInterface_Def.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicCore.cpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicCore.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicCore_Def.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicModel.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/FerroicModel_Def.hpp)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/CrystalPlasticityCore.cpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/CrystalPlasticityCore.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/CrystalPlasticityCore_Def.hpp)
-  list(REMOVE_ITEM SOURCES ${LCM_DIR}/models/CrystalPlasticityModel.cpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/CrystalPlasticityModel.hpp)
-  list(REMOVE_ITEM HEADERS ${LCM_DIR}/models/CrystalPlasticityModel_Def.hpp)
-ENDIF()
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)
   SET(SOURCES ${SOURCES}
