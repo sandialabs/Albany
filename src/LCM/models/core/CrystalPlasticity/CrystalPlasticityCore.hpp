@@ -125,9 +125,11 @@ struct StateInternal
   using VectorType = minitensor::Vector<ScalarT, NumSlipT>;
   using InputVectorType = minitensor::Vector<RealType, NumSlipT>;
 
-  StateInternal(int num_slip, InputVectorType const & hardening_n,
+  StateInternal(int cell, int pt, int num_slip, InputVectorType const & hardening_n,
       InputVectorType const & slip_n)
-    : num_slip_(num_slip),
+    : cell_(cell),
+      pt_(pt),
+      num_slip_(num_slip),
       hardening_n_(hardening_n),
       slip_n_(slip_n),
       rate_slip_(num_slip),
@@ -137,6 +139,12 @@ struct StateInternal
       resistance_(num_slip)
   {}
 
+  int
+  cell_;
+
+  int
+  pt_;
+  
   int
   num_slip_;
 

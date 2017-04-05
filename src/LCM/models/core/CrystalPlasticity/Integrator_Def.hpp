@@ -289,6 +289,17 @@ template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
 bool
 CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState(RealType & residual_norm) const
 {
+
+  std::ofstream outfile;
+  std::stringstream ss;
+  ss << "slips_" << state_internal_.cell_
+     << "_" << state_internal_.pt_ <<  ".out";
+  std::string file = ss.str();
+  
+  if (state_internal_.cell_ != -1) {
+    outfile.open(file, std::fstream::app);    
+  }  
+
   // cases in which the model is subject to divergence
   // more work to do in the nonlinear systems
   if(minimizer_.failed){
@@ -297,6 +308,10 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState(RealType & res
       std::cout << "\n**** CrystalPlasticityModel computeState() ";
       std::cout << "exited due to failure criteria.\n" << std::endl;
     }*/
+    if (state_internal_.cell_ != -1) {
+      outfile << "minimizer failed" << "\n";
+      outfile.close();
+    }    
     this->forceGlobalLoadStepReduction(minimizer_.failure_message);
     return false;
   }
@@ -308,9 +323,13 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState(RealType & res
       std::cout << " failed to converge.\n" << std::endl;
       minimizer_.printReport(std::cout);
     }*/
+    if (state_internal_.cell_ != -1) {
+      outfile << "minimizer not converged" << "\n";
+      outfile.close();
+    }    
     this->forceGlobalLoadStepReduction("Minisolver not converged");
     return false;
-  }
+  }  
 
   // We now have the solution for slip_np1, including sensitivities 
   // (if any). Re-evaluate all the other state variables based on slip_np1.
@@ -340,6 +359,17 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState(RealType & res
     return false;
   }
 
+  if (state_internal_.cell_ != -1) {
+    RealType
+    max_shear{0.0};
+  
+    max_shear = Sacado::ScalarValue<ScalarT>::eval(
+	      minitensor::norm_infinity(state_internal_.shear_np1_));  
+
+    outfile << max_shear << "\n";
+    outfile.close();
+  }
+  
   if (dt_ > 0.0) {
     state_internal_.rate_slip_ = 
       (state_internal_.slip_np1_ - state_internal_.slip_n_) / dt_;
@@ -514,6 +544,16 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update(
   std::unique_ptr<StepType>
   pstep = minitensor::stepFactory<NonlinearSolver, ValueT, CP::NlsDim<NumSlipT>::value>(step_type_);
 
+  std::ofstream outfile;
+  std::stringstream ss;
+  ss << "slips_" << state_internal_.cell_
+     << "_" << state_internal_.pt_ <<  ".out";
+  std::string file = ss.str();  
+
+  if (state_internal_.cell_ != -1) {
+    outfile.open(file, std::fstream::app);    
+  }
+  
   for (int i = 0; i < this->num_slip_; ++i) {
     // initial guess for x(0:this->num_slip_-1) from predictor
     x(i) = Sacado::ScalarValue<ScalarT>::eval(state_internal_.slip_np1_(i));
@@ -521,12 +561,32 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update(
     x(i + this->num_slip_) = 
     Sacado::ScalarValue<ScalarT>::eval(state_internal_.hardening_n_(i));
   }
+
+  if (state_internal_.cell_ != -1) {
+    RealType
+    max_slip{0.0};
+
+    RealType
+    tot_slip{0.0};
+
+    max_slip = Sacado::ScalarValue<ScalarT>::eval(
+	     minitensor::norm_infinity(state_internal_.slip_np1_));
+
+    tot_slip = Sacado::ScalarValue<ScalarT>::eval(
+	     minitensor::norm_1(state_internal_.slip_np1_));  
+  
+    outfile  << dt_ << ", " << max_slip << ", " << tot_slip << ", ";
+  }
   
   LCM::MiniSolver<Minimizer, StepType, NonlinearSolver, EvalT, CP::NlsDim<NumSlipT>::value>
   mini_solver(minimizer_, *pstep, nls, x);
 
   if (true == minimizer_.failed)
   {
+    if (state_internal_.cell_ != -1) {
+      outfile << "minimizer failed" << "\n";
+      outfile.close();
+    }     
     this->forceGlobalLoadStepReduction(minimizer_.failure_message);
     return false;
   }
@@ -535,6 +595,23 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update(
     state_internal_.slip_np1_[i] = x[i];
     state_internal_.hardening_np1_[i] = x[i + this->num_slip_];
   }
+
+  if (state_internal_.cell_ != -1) {
+    RealType
+    max_slip{0.0};
+
+    RealType
+    tot_slip{0.0};    
+
+    max_slip = Sacado::ScalarValue<ScalarT>::eval(
+             minitensor::norm_infinity(state_internal_.slip_np1_));
+
+    tot_slip = Sacado::ScalarValue<ScalarT>::eval(
+             minitensor::norm_1(state_internal_.slip_np1_));
+  
+    outfile << max_slip << ", " << tot_slip << ", ";
+  }
+
 
   minitensor::Vector<ScalarT, NumSlipT>
   slip_rate(this->num_slip_);
@@ -553,6 +630,18 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update(
       state_internal_.hardening_n_,
       state_internal_.hardening_np1_,
       state_internal_.resistance_);
+
+  if (state_internal_.cell_ != -1) {
+    RealType
+    max_hard{0.0};
+
+    max_hard = Sacado::ScalarValue<ScalarT>::eval(
+	     minitensor::norm_infinity(state_internal_.hardening_np1_));
+
+    outfile << max_hard << ", ";
+    outfile.close();
+  }
+  
 
   return this->reevaluateState(residual_norm);
 }

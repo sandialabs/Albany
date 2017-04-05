@@ -153,6 +153,10 @@ private:
   int
   num_slip_;
 
+  // Index in global element numbering
+  int
+  index_element_;
+
   /// Unrotated elasticity tensor
   minitensor::Tensor4<ScalarT, CP::MAX_DIM>
   C_unrotated_;

@@ -415,6 +415,13 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(
     FieldMap<const ScalarT> & dep_fields,
     FieldMap<ScalarT> & eval_fields)
 {
+  if(verbosity_ == 99) {
+    index_element_ = workset.wsIndex;
+  }
+  else{
+    index_element_ = -1;
+  }
+  
   if(verbosity_ > 2) {
     std::cout << ">>> in cp initialize compute state\n";
   }
@@ -825,7 +832,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   state_mechanical(num_dims_, Fp_n);
 
   CP::StateInternal<ScalarT, CP::MAX_SLIP>
-  state_internal(num_slip_, state_hardening_n, slip_n);
+  state_internal(index_element_, pt, num_slip_, state_hardening_n, slip_n);
 
   if (dt_ > 0.0) {
     state_internal.rate_slip_ = (slip_np1 - slip_n) / dt_;
@@ -838,7 +845,20 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   bool
   failed{false};
-
+  
+  if (dt_ == 0.0)
+  {
+    if (verbosity_ == 99) {
+      std::ofstream outfile;
+      std::stringstream ss;
+      ss << "slips_" << index_element_
+	 << "_" << pt <<  ".out";
+      std::string file = ss.str();
+      outfile.open(file);
+      outfile.close();
+    }
+        
+  }  
   auto
   integratorFactory = CP::IntegratorFactory<EvalT, CP::MAX_DIM, CP::MAX_SLIP>(
     allocator,
