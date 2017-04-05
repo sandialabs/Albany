@@ -316,10 +316,14 @@ case "$SCRIPT_NAME" in
 		    echo "to create."
 		    exit 1
 		fi
+	        cp -p "$PROJECT_XML_FILE" "$BUILD_DIR"
+	        cp -p "$CTEST_FILE" "$BUILD_DIR"
 		cd "$BUILD_DIR"
+                sed -i -e "s|lcm_subproject|$SUBPROJECT|g;" "$PROJECT_XML_FILE"
 		echo "TESTING $PACKAGE_STRING ..."
 		echo "$LINE"
-		ctest --timeout 600 . | tee "$TEST_LOG"
+                CTF="$BUILD_DIR/$CTEST_FILE"
+		eval "env BIN_DIR=$BUILD_DIR SRC_DIR=$PACKAGE_DIR LBL=$SUBPROJECT XML=$PROJECT_XML_FILE HST=`hostname` BLD=$BUILD ctest -VV --timeout 90 -S $CTF" . | tee "$TEST_LOG"
 		;;
 	    *)
 		echo "Unrecognized package option in test: $PACKAGE"

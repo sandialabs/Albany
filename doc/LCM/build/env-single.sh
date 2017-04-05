@@ -227,3 +227,6 @@ TEST_LOG="$LCM_DIR/$PREFIX-test.log"
 HOST=`hostname`
 FROM=`whoami`"@sandia.gov"
 TO="albany-regression@software.sandia.gov"
+PROJECT_XML_FILE="Project.xml"
+SUBPROJECT="LCM-$HOST-$BUILD"
+CTEST_FILE="ctest_nightly.cmake"
