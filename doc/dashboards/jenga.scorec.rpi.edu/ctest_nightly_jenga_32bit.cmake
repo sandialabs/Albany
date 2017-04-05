@@ -393,6 +393,7 @@ SET(COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_STKExp:BOOL=OFF"
   "-DTrilinos_ENABLE_STKTransfer:BOOL=ON"
   "-DTrilinos_ENABLE_STKSearch:BOOL=ON"
+  "-DTrilinos_ENABLE_STKSearchUtil:BOOL=ON"
   "-DTrilinos_ENABLE_STKUnit_tests:BOOL=OFF"
   "-DTrilinos_ENABLE_STKDoc_tests:BOOL=OFF"
   #
