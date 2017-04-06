@@ -21,7 +21,7 @@ HUGE_ = std::numeric_limits<RealType>::max();
 static const RealType
 LOG_HUGE = std::log(HUGE_);
 
-static constexpr minitensor::Index 
+static constexpr minitensor::Index
 MAX_DIM = 3;
 
 static constexpr minitensor::Index

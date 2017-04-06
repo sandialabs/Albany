@@ -78,7 +78,7 @@ CP::ParameterReader<EvalT, Traits>::getMinimizer() const
 {
   // TODO: This code works differently from the previous. Is this preferable?
   Minimizer
-    min;
+  min;
 
   min.rel_tol = p_->get<RealType>("Implicit Integration Relative Tolerance", 1.0e-6);
   min.abs_tol = p_->get<RealType>("Implicit Integration Absolute Tolerance", 1.0e-10);
@@ -93,14 +93,14 @@ CP::SlipFamily<CP::MAX_DIM, CP::MAX_SLIP>
 CP::ParameterReader<EvalT, Traits>::getSlipFamily(int index)
 {
   SlipFamily<MAX_DIM, MAX_SLIP>
-    slip_family;
+  slip_family;
 
   auto
-    family_plist = p_->sublist(Albany::strint("Slip System Family", index));
+  family_plist = p_->sublist(Albany::strint("Slip System Family", index));
 
   // Get flow rule parameters
   auto
-    f_list = family_plist.sublist("Flow Rule");
+  f_list = family_plist.sublist("Flow Rule");
 
   static utility::ParameterEnum<CP::FlowRuleType> const fmap(
     "Type", CP::FlowRuleType::UNDEFINED,
@@ -128,7 +128,7 @@ CP::ParameterReader<EvalT, Traits>::getSlipFamily(int index)
   // Obtain hardening law parameters
   Teuchos::ParameterList 
   h_list = family_plist.sublist("Hardening Law");
-    
+
   static utility::ParameterEnum<CP::HardeningLawType> const hmap(
     "Type", CP::HardeningLawType::UNDEFINED,
     {

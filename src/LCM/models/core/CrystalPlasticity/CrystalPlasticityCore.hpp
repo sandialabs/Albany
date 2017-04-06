@@ -118,14 +118,13 @@ struct StateMechanical
   S_np1_;
 };
 
-
 template<typename ScalarT, minitensor::Index NumSlipT>
 struct StateInternal
 {
   using VectorType = minitensor::Vector<ScalarT, NumSlipT>;
   using InputVectorType = minitensor::Vector<RealType, NumSlipT>;
 
-  StateInternal(int cell, int pt, int num_slip, InputVectorType const & hardening_n,
+StateInternal(int cell, int pt, int num_slip, InputVectorType const & hardening_n,
       InputVectorType const & slip_n)
     : cell_(cell),
       pt_(pt),
@@ -144,7 +143,7 @@ struct StateInternal
 
   int
   pt_;
-  
+
   int
   num_slip_;
 
@@ -178,7 +177,7 @@ void
 expectFiniteTensor(
                    minitensor::Tensor<T, N> const & A,
                    std::string const & msg);
-  
+
 //
 //! Compute Lp_np1 and Fp_np1 based on computed slip increment.
 //
@@ -226,8 +225,6 @@ updateSlip(
     minitensor::Vector<ArgT, NumSlipT> & slip_np1,
     bool & failed);
 
-
-
 //
 //! Compute stress.
 //
@@ -242,8 +239,6 @@ computeStress(
     minitensor::Tensor<ArgT, NumDimT> & S,
     minitensor::Vector<ArgT, NumSlipT> & shear,
     bool & failed);
-
-
 
 //
 //! Construct elasticity tensor

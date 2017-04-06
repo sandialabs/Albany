@@ -99,10 +99,10 @@ struct PowerLawFlowParameters final : public FlowParameterBase
   void
   setTolerance()
   {
-    min_tol_ = 
+    min_tol_ =
       std::pow(2.0 * TINY, 0.5 / flow_params_(EXPONENT_RATE));
 
-    max_tol_ = 
+    max_tol_ =
       std::pow(0.5 * HUGE_, 0.5 / flow_params_(EXPONENT_RATE));
   }
 };
@@ -173,7 +173,7 @@ struct PowerLawDragFlowParameters final : public FlowParameterBase
     min_tol_ =
       std::pow(2.0 * TINY, 0.5 / flow_params_(EXPONENT_RATE));
 
-    max_tol_ = 
+    max_tol_ =
       std::pow(0.5 * HUGE_, 0.5 / flow_params_(EXPONENT_RATE));
   }
 };

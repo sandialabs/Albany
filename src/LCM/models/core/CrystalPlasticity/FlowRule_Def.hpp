@@ -192,7 +192,7 @@ computeRateSlip(
   ArgT const & shear,
   ArgT const & slip_resistance,
   bool & failed)
-{     
+{
   using Params = PowerLawDragFlowParameters;
 
   // Material properties
@@ -254,7 +254,7 @@ computeRateSlip(
 
   bool const
   vd_active = pl_vd_ratio > CP::MACHINE_EPS;
-      
+
   // Low stress regime:
   //
   // Initialize effective to power_law, because in the low stress regime, the 

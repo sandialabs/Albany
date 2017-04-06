@@ -113,7 +113,7 @@ CP::updateHardness(
     minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
     minitensor::Vector<ArgT, NumSlipT> & slip_resistance)
 {
-  for (int sf_index(0); sf_index < slip_families.size(); ++ sf_index)
+  for (unsigned int sf_index(0); sf_index < slip_families.size(); ++ sf_index)
   {
     auto const &
     slip_family = slip_families[sf_index];
@@ -155,7 +155,7 @@ CP::updateSlip(
     minitensor::Vector<ArgT, NumSlipT> & slip_np1,
     bool & failed)
 {
-  for (int ss_index(0); ss_index < slip_systems.size(); ++ ss_index)
+  for (unsigned int ss_index(0); ss_index < slip_systems.size(); ++ ss_index)
   {
     auto const &
     slip_family = slip_families[slip_systems.at(ss_index).slip_family_index_];
@@ -169,7 +169,7 @@ CP::updateSlip(
     auto
     pflow = flow_rule_factory.template createFlowRule<ArgT>(type_flow_rule);
 
-    ArgT //const
+    ArgT
     rate_slip = pflow->computeRateSlip(
         slip_family.pflow_parameters_,
         shear[ss_index],
@@ -249,7 +249,7 @@ CP::computeStress(
       "Cauchy stress in ResidualSlipNLS::computeStress()");
 
   // Compute resolved shear stresses
-  for (int s(0); s < num_slip; ++s) {
+  for (minitensor::Index s(0); s < num_slip; ++s) {
     shear[s] = 
       minitensor::dotdot(slip_systems.at(s).projector_, deformation_elastic * S);
   }

@@ -49,7 +49,7 @@ class Integrator
 
     void forceGlobalLoadStepReduction(
       std::string const & message) const;
-    
+
     int getNumIters() const { return num_iters_; }
 
   protected:
@@ -113,7 +113,7 @@ class IntegratorFactory
 
     CP::StateMechanical<ScalarT, NumDimT> & state_mechanical_;
     CP::StateInternal<ScalarT, NumSlipT> & state_internal_;
-    
+
     minitensor::Tensor4<ScalarT, NumDimT> const & C_;
     minitensor::Tensor<RealType, NumDimT> const & F_n_;
     minitensor::Tensor<ScalarT, NumDimT> const & F_np1_;

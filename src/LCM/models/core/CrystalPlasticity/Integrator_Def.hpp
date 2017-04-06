@@ -171,18 +171,18 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
   minitensor::Tensor<ScalarT, NumDimT>
   Fp_n_FAD(state_mechanical_.Fp_n_.get_dimension());
 
-  for (auto i = 0; i < state_mechanical_.Fp_n_.get_number_components(); ++i) {
+  for (minitensor::Index i = 0; i < state_mechanical_.Fp_n_.get_number_components(); ++i) {
     Fp_n_FAD[i] = state_mechanical_.Fp_n_[i];
   }
 
   // compute sigma_np1, S_np1, and shear_np1 using Fp_n
   CP::computeStress<NumDimT, NumSlipT, ScalarT>(
-    slip_systems_, 
-    C_, 
-    F_np1_, 
-    Fp_n_FAD, 
-    state_mechanical_.sigma_np1_, 
-    state_mechanical_.S_np1_, 
+    slip_systems_,
+    C_,
+    F_np1_,
+    Fp_n_FAD,
+    state_mechanical_.sigma_np1_,
+    state_mechanical_.S_np1_,
     state_internal_.shear_np1_,
     failed_);
 
@@ -295,10 +295,10 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState(RealType & res
   ss << "slips_" << state_internal_.cell_
      << "_" << state_internal_.pt_ <<  ".out";
   std::string file = ss.str();
-  
+
   if (state_internal_.cell_ != -1) {
-    outfile.open(file, std::fstream::app);    
-  }  
+    outfile.open(file, std::fstream::app);
+  }
 
   // cases in which the model is subject to divergence
   // more work to do in the nonlinear systems
@@ -311,7 +311,7 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState(RealType & res
     if (state_internal_.cell_ != -1) {
       outfile << "minimizer failed" << "\n";
       outfile.close();
-    }    
+    }
     this->forceGlobalLoadStepReduction(minimizer_.failure_message);
     return false;
   }
@@ -326,10 +326,10 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState(RealType & res
     if (state_internal_.cell_ != -1) {
       outfile << "minimizer not converged" << "\n";
       outfile.close();
-    }    
+    }
     this->forceGlobalLoadStepReduction("Minisolver not converged");
     return false;
-  }  
+  }
 
   // We now have the solution for slip_np1, including sensitivities 
   // (if any). Re-evaluate all the other state variables based on slip_np1.
@@ -362,14 +362,14 @@ CP::ImplicitIntegrator<EvalT, NumDimT, NumSlipT>::reevaluateState(RealType & res
   if (state_internal_.cell_ != -1) {
     RealType
     max_shear{0.0};
-  
+
     max_shear = Sacado::ScalarValue<ScalarT>::eval(
-	      minitensor::norm_infinity(state_internal_.shear_np1_));  
+	      minitensor::norm_infinity(state_internal_.shear_np1_));
 
     outfile << max_shear << "\n";
     outfile.close();
   }
-  
+
   if (dt_ > 0.0) {
     state_internal_.rate_slip_ = 
       (state_internal_.slip_np1_ - state_internal_.slip_n_) / dt_;
@@ -423,7 +423,7 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::update(
   minitensor::Vector<ScalarT, CP::NlsDim<NumSlipT>::value>
   x(this->num_slip_);
 
-  using NonlinearSolver = CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>; 
+  using NonlinearSolver = CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>;
 
   NonlinearSolver
   nls(
@@ -464,7 +464,6 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::update(
     this->forceGlobalLoadStepReduction(minimizer_.failure_message);
     return false;
   }
-
 
   // Write slip back out from x
   for (int i = 0; i < this->num_slip_; ++i) {
@@ -551,9 +550,9 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update(
   std::string file = ss.str();  
 
   if (state_internal_.cell_ != -1) {
-    outfile.open(file, std::fstream::app);    
+    outfile.open(file, std::fstream::app);
   }
-  
+
   for (int i = 0; i < this->num_slip_; ++i) {
     // initial guess for x(0:this->num_slip_-1) from predictor
     x(i) = Sacado::ScalarValue<ScalarT>::eval(state_internal_.slip_np1_(i));
@@ -574,10 +573,10 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update(
 
     tot_slip = Sacado::ScalarValue<ScalarT>::eval(
 	     minitensor::norm_1(state_internal_.slip_np1_));  
-  
+
     outfile  << dt_ << ", " << max_slip << ", " << tot_slip << ", ";
   }
-  
+
   LCM::MiniSolver<Minimizer, StepType, NonlinearSolver, EvalT, CP::NlsDim<NumSlipT>::value>
   mini_solver(minimizer_, *pstep, nls, x);
 
@@ -586,7 +585,7 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update(
     if (state_internal_.cell_ != -1) {
       outfile << "minimizer failed" << "\n";
       outfile.close();
-    }     
+    }
     this->forceGlobalLoadStepReduction(minimizer_.failure_message);
     return false;
   }
@@ -611,7 +610,6 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update(
   
     outfile << max_slip << ", " << tot_slip << ", ";
   }
-
 
   minitensor::Vector<ScalarT, NumSlipT>
   slip_rate(this->num_slip_);
@@ -641,7 +639,6 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update(
     outfile << max_hard << ", ";
     outfile.close();
   }
-  
 
   return this->reevaluateState(residual_norm);
 }

@@ -19,14 +19,14 @@ namespace CP
   class ParameterReader
   {
   public:
-    
+
     using ScalarT = typename EvalT::ScalarT;
     using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
     using Minimizer = minitensor::Minimizer<ValueT, CP::NLS_DIM>;
 
     ParameterReader(Teuchos::ParameterList* p);
-    
+
     IntegrationScheme
     getIntegrationScheme() const;
 
