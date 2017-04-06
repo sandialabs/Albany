@@ -1,15 +1,12 @@
 cmake_minimum_required (VERSION 2.8)
 set (CTEST_DO_SUBMIT ON)
-set (CTEST_TEST_TYPE Nightly)
+set (CTEST_TEST_TYPE lcm_test_type)
 
-set_property (GLOBAL PROPERTY SubProject "LCM")
-set_property (GLOBAL PROPERTY Label "$ENV{LBL}")
-
-set (CTEST_SITE "$ENV{HST}")
-set (CTEST_SOURCE_NAME "$ENV{SRC_DIR}")
-set (CTEST_BINARY_NAME "$ENV{BIN_DIR}")
-set (CTEST_SUBPROJECT "$ENV{XML}")
-set (CTEST_BUILD_NAME "$ENV{BLD}")
+set (CTEST_SITE "lcm_test_site")
+set (CTEST_SOURCE_NAME "lcm_source_dir")
+set (CTEST_BINARY_NAME "lcm_build_dir")
+set (CTEST_SUBPROJECT "lcm_project_xml")
+set (CTEST_BUILD_NAME "lcm_build_name")
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_SOURCE_NAME}")
 set (CTEST_BINARY_DIRECTORY "${CTEST_BINARY_NAME}")

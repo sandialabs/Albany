@@ -320,10 +320,15 @@ case "$SCRIPT_NAME" in
 	        cp -p "$CTEST_FILE" "$BUILD_DIR"
 		cd "$BUILD_DIR"
                 sed -i -e "s|lcm_subproject|$SUBPROJECT|g;" "$PROJECT_XML_FILE"
+                sed -i -e "s|lcm_test_type|$CTEST_TYPE|g;" "$CTEST_FILE"
+                sed -i -e "s|lcm_test_site|$HOST|g;" "$CTEST_FILE"
+                sed -i -e "s|lcm_source_dir|$PACKAGE_DIR|g;" "$CTEST_FILE"
+                sed -i -e "s|lcm_build_dir|$BUILD_DIR|g;" "$CTEST_FILE"
+                sed -i -e "s|lcm_project_xml|$PROJECT_XML_FILE|g;" "$CTEST_FILE"
+                sed -i -e "s|lcm_build_name|$BUILD|g;" "$CTEST_FILE"
 		echo "TESTING $PACKAGE_STRING ..."
 		echo "$LINE"
-                CTF="$BUILD_DIR/$CTEST_FILE"
-		eval "env BIN_DIR=$BUILD_DIR SRC_DIR=$PACKAGE_DIR LBL=$SUBPROJECT XML=$PROJECT_XML_FILE HST=`hostname` BLD=$BUILD ctest -VV --timeout 90 -S $CTF" . | tee "$TEST_LOG"
+		ctest -VV --timeout 90 -S "$CTEST_FILE" . | tee "$TEST_LOG"
 		;;
 	    *)
 		echo "Unrecognized package option in test: $PACKAGE"
