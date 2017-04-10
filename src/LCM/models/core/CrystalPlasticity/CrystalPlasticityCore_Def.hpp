@@ -42,13 +42,13 @@ CP::expectFiniteTensor(
     minitensor::Tensor<T, N> const & A,
     std::string const & msg)
 {
-  auto const
+  minitensor::Index const
   dim = A.get_dimension();
 
-  auto const
+  minitensor::Index const
   num_components = dim * dim;
 
-  for (auto i = 0; i < num_components; ++i) {
+  for (minitensor::Index i = 0; i < num_components; ++i) {
     ALBANY_EXPECT(boost::math::isfinite(Sacado::ScalarValue<T>::eval(A[i])) == true);
   }
 }
@@ -83,7 +83,7 @@ CP::applySlipIncrement(
   Lp_np1 = 0. * Lp_np1;
 
   if(dt > 0){
-    for (int s(0); s < num_slip; ++s) {
+    for (minitensor::Index s(0); s < num_slip; ++s) {
       Lp_np1 += (slip_np1[s] - slip_n[s])/dt * slip_systems.at(s).projector_;
     }
   }

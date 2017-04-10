@@ -136,9 +136,6 @@ harden(
   auto const &
   phardening_params = slip_family.phardening_parameters_;
 
-  auto const &
-  param_map = phardening_params->param_map_;
-
   auto const
   modulus_recovery = phardening_params->getParameter(Params::MODULUS_RECOVERY);
 
@@ -396,7 +393,7 @@ harden(
   // Compute the effective dislocation density at step n
   //
   bool dd_negative = false;
-  for (int ss_index_i(0); ss_index_i < num_slip_sys; ++ss_index_i)
+  for (minitensor::Index ss_index_i(0); ss_index_i < num_slip_sys; ++ss_index_i)
   {
     if (state_hardening_np1[ss_index_i] < 0.0)
     {
@@ -479,7 +476,7 @@ harden(
   minitensor::Vector<ArgT, NumSlipT> const
   densities_parallel = aux_matrix * state_hardening_np1;
 
-  for (int ss_index(0); ss_index < num_slip_sys; ++ss_index)
+  for (minitensor::Index ss_index(0); ss_index < num_slip_sys; ++ss_index)
   {
 
     auto const
