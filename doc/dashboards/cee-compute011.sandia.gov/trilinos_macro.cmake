@@ -1,4 +1,4 @@
-macro(do_trilinos CONFIGURE_OPTIONS BTYPE)
+macro(do_trilinos CONFIGURE_OPTIONS BTYPE ILOC)
 
   message ("ctest state: BUILD_${BTYPE}")
 
@@ -8,6 +8,13 @@ macro(do_trilinos CONFIGURE_OPTIONS BTYPE)
 
   set_property (GLOBAL PROPERTY SubProject ${BTYPE})
   set_property (GLOBAL PROPERTY Label ${BTYPE})
+
+# Clean up build area
+  IF (CLEAN_BUILD)
+    IF(EXISTS "${CTEST_BINARY_DIRECTORY}/${BTYPE}" )
+      FILE(REMOVE_RECURSE "${CTEST_BINARY_DIRECTORY}/${BTYPE}")
+    ENDIF()
+  ENDIF()
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/${BTYPE}")
     file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/${BTYPE})
@@ -89,8 +96,16 @@ macro(do_trilinos CONFIGURE_OPTIONS BTYPE)
 
   set_property (GLOBAL PROPERTY SubProject ${BTYPE})
   set_property (GLOBAL PROPERTY Label ${BTYPE})
+
   #set (CTEST_BUILD_TARGET all)
   set (CTEST_BUILD_TARGET install)
+
+# Clean up Install area
+  IF (CLEAN_BUILD)
+    IF(EXISTS "${ILOC}" )
+      FILE(REMOVE_RECURSE "${ILOC}")
+    ENDIF()
+  ENDIF()
 
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
@@ -120,4 +135,4 @@ macro(do_trilinos CONFIGURE_OPTIONS BTYPE)
     message ("Encountered build errors in Trilinos build. Exiting!")
   endif (BUILD_LIBS_NUM_ERRORS GREATER 0)
 
-endmacro(do_trilinos CONFIGURE_OPTIONS BTYPE)
+endmacro(do_trilinos CONFIGURE_OPTIONS BTYPE ILOC)

@@ -7,9 +7,21 @@ macro(do_albany CONFIGURE_OPTIONS BTYPE)
   set_property (GLOBAL PROPERTY SubProject ${BTYPE})
   set_property (GLOBAL PROPERTY Label ${BTYPE})
 
+# Clean up build area
+  IF (CLEAN_BUILD)
+    IF(EXISTS "${CTEST_BINARY_DIRECTORY}/${BTYPE}" )
+      FILE(REMOVE_RECURSE "${CTEST_BINARY_DIRECTORY}/${BTYPE}")
+    ENDIF()
+  ENDIF()
+
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/${BTYPE}")
     file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/${BTYPE})
   endif (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/${BTYPE}")
+
+# We might eventually want to install albany on an nfs mounted filesystep
+#   set (CONFIGURE_OPTIONS
+#      "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_INSTALL_DIRECTORY}/${BTYPE}"
+#      "${CONFIGURE_OPTIONS}")
 
   #
   # The build 
@@ -51,6 +63,15 @@ macro(do_albany CONFIGURE_OPTIONS BTYPE)
   SET(BUILD_SUCCESS FALSE)
 
   set (CTEST_BUILD_TARGET all)
+
+# We might eventually want to install albany on an nfs mounted filesystep
+#  set (CTEST_BUILD_TARGET install)
+# Clean up build area
+#  IF (CLEAN_BUILD)
+#    IF(EXISTS "${CTEST_INSTALL_DIRECTORY}/${BTYPE}" )
+#      FILE(REMOVE_RECURSE "${CTEST_INSTALL_DIRECTORY}/${BTYPE}")
+#    ENDIF()
+#  ENDIF()
 
   MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 

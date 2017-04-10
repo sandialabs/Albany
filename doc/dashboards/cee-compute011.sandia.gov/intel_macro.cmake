@@ -52,17 +52,20 @@ macro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)
     "-DMPI_EXEC:FILEPATH=${INTEL_MPI_DIR}/bin64/mpiexec.hydra"
     "-DCMAKE_CXX_COMPILER:STRING=${INTEL_MPI_DIR}/bin64/mpiicpc"
 #    "-DCMAKE_CXX_FLAGS:STRING='-axAVX -O3 -DNDEBUG -diag-disable=cpu-dispatch -mkl=sequential ${extra_cxx_flags}'"
-    "-DCMAKE_CXX_FLAGS:STRING='-O1 -DNDEBUG -diag-disable=cpu-dispatch -mkl=sequential ${extra_cxx_flags}'"
+#    "-DCMAKE_CXX_FLAGS:STRING='-O1 -DNDEBUG -diag-disable=cpu-dispatch -mkl=sequential ${extra_cxx_flags}'"
+    "-DCMAKE_CXX_FLAGS:STRING='-O0 -g -diag-disable=cpu-dispatch -mkl=sequential ${extra_cxx_flags}'"
     "-DCMAKE_C_COMPILER:STRING=${INTEL_MPI_DIR}/bin64/mpiicc"
 #    "-DCMAKE_C_FLAGS:STRING='-axAVX -O3 -diag-disable=cpu-dispatch -DNDEBUG -mkl=sequential'"
-    "-DCMAKE_C_FLAGS:STRING='-O1 -diag-disable=cpu-dispatch -DNDEBUG -mkl=sequential'"
+#    "-DCMAKE_C_FLAGS:STRING='-O1 -diag-disable=cpu-dispatch -DNDEBUG -mkl=sequential'"
+    "-DCMAKE_C_FLAGS:STRING='-O0 -g -diag-disable=cpu-dispatch -mkl=sequential'"
     "-DCMAKE_Fortran_COMPILER:STRING=${INTEL_MPI_DIR}/bin64/mpiifort"
 #    "-DCMAKE_Fortran_FLAGS:STRING='-axAVX -O3 -DNDEBUG -diag-disable=cpu-dispatch -mkl=sequential'"
-    "-DCMAKE_Fortran_FLAGS:STRING='-O1 -DNDEBUG -diag-disable=cpu-dispatch -mkl=sequential'"
+#    "-DCMAKE_Fortran_FLAGS:STRING='-O1 -DNDEBUG -diag-disable=cpu-dispatch -mkl=sequential'"
+    "-DCMAKE_Fortran_FLAGS:STRING='-O0 -g -diag-disable=cpu-dispatch -mkl=sequential'"
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${INTEL_PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lifcore -lz -Wl,-rpath,${INTEL_PREFIX_DIR}/lib:${INTEL_DIR}/lib/intel64'"
-    "-DCMAKE_AR:FILEPATH=${INTEL_DIR}/bin/intel64/xiar"
-    "-DCMAKE_LINKER:FILEPATH=${INTEL_DIR}/linux/bin/intel64/xild"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosIntelInstall"
+#    "-DCMAKE_AR:FILEPATH=${INTEL_DIR}/bin/intel64/xiar"
+#    "-DCMAKE_LINKER:FILEPATH=${INTEL_DIR}/linux/bin/intel64/xild"
+    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosIntelInstall"
     "-DTPL_BLAS_LIBRARIES:STRING=${LABLAS_LIBRARIES}"
     "-DTPL_LAPACK_LIBRARIES:STRING=${LABLAS_LIBRARIES}"
 #    "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"
@@ -78,6 +81,13 @@ macro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)
       "-DZoltan_ENABLE_ULONG_IDS:Bool=ON"
       "${CONFIGURE_OPTIONS}")
   endif (BUILD_SCOREC)
+
+# Clean up build area
+  IF (CLEAN_BUILD)
+    IF(EXISTS "${CTEST_BINARY_DIRECTORY}/${BTYPE}" )
+      FILE(REMOVE_RECURSE "${CTEST_BINARY_DIRECTORY}/${BTYPE}")
+    ENDIF()
+  ENDIF()
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/${BTYPE}")
     file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/${BTYPE})
@@ -104,7 +114,15 @@ macro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)
   endif (HAD_ERROR)
 
   if (BUILD_INTEL_TRILINOS)
+
     set (CTEST_BUILD_TARGET install)
+
+# Clean up install area
+    IF (CLEAN_BUILD)
+      IF(EXISTS "${CTEST_INSTALL_DIRECTORY}/TrilinosIntelInstall" )
+        FILE(REMOVE_RECURSE "${CTEST_INSTALL_DIRECTORY}/TrilinosIntelInstall")
+      ENDIF()
+    ENDIF()
 
     message ("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
@@ -149,7 +167,8 @@ if (BUILD_INTEL_ALBANY)
 #    ${INTEL_DIR}/compilers_and_libraries/linux/lib/intel64:${INTEL_MPI_DIR}/lib:${INITIAL_LD_LIBRARY_PATH})
 
   set (CONFIGURE_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosIntelInstall"
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosIntelInstall"
+    "-DENABLE_CONTACT:BOOL=ON"
     "-DENABLE_LCM:BOOL=ON"
     "-DENABLE_MOR:BOOL=ON"
     "-DENABLE_FELIX:BOOL=ON"
@@ -176,6 +195,13 @@ if (BUILD_INTEL_ALBANY)
       "-DENABLE_SCOREC:BOOL=ON"
       "-DENABLE_GOAL:BOOL=ON")
   endif (BUILD_SCOREC)
+
+# Clean up build area
+   IF (CLEAN_BUILD)
+     IF(EXISTS "${CTEST_BINARY_DIRECTORY}/AlbanyIntel" )
+       FILE(REMOVE_RECURSE "${CTEST_BINARY_DIRECTORY}/AlbanyIntel")
+     ENDIF()
+   ENDIF()
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbanyIntel")
     file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbanyIntel)

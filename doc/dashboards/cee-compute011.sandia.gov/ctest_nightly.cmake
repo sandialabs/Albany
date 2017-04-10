@@ -74,8 +74,9 @@ set (extra_cxx_flags "")
 
 # Begin User inputs:
 set (CTEST_SITE "cee-compute011.sandia.gov" ) # generally the output of hostname
-set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
-set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
+set (CTEST_DASHBOARD_ROOT "$ENV{INSTALL_DIRECTORY}" ) # writable path
+set (CTEST_SCRATCH_ROOT "$ENV{SCRATCH_DIRECTORY}" ) # writable path
+set (CTEST_SCRIPT_ROOT "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
 set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
 
@@ -83,11 +84,12 @@ set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
 set (CTEST_BUILD_NAME "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
 set (CTEST_BINARY_NAME build)
+set (CTEST_INSTALL_NAME test)
 
 set (PREFIX_DIR /projects/albany)
 set (INTEL_PREFIX_DIR ${PREFIX_DIR}/intel5.0)
 set (GCC_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.8.8-gcc-5.2.0-RHEL6)
-set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2017.1.132/compilers_and_libraries/linux)
+set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2017.2.174/compilers_and_libraries/linux)
 
 #set (BOOST_ROOT /projects/albany/nightly)
 set (BOOST_ROOT /projects/albany)
@@ -107,19 +109,19 @@ set (MATH_TOOLKIT_LIB_DIR
   "/projects/sierra/linux_rh6/install/master/math_toolkit/lib")
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
-set (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
-
-IF (CLEAN_BUILD)
-  IF(EXISTS "${CTEST_BINARY_DIRECTORY}" )
-    FILE(REMOVE_RECURSE "${CTEST_BINARY_DIRECTORY}")
-  ENDIF()
-ENDIF()
+# Build all results in a scratch space
+set (CTEST_BINARY_DIRECTORY "${CTEST_SCRATCH_ROOT}/${CTEST_BINARY_NAME}")
+# Trilinos, etc installed here
+set (CTEST_INSTALL_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_INSTALL_NAME}")
 
 if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}")
   file (MAKE_DIRECTORY "${CTEST_SOURCE_DIRECTORY}")
 endif ()
 if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}")
   file (MAKE_DIRECTORY "${CTEST_BINARY_DIRECTORY}")
+endif ()
+if (NOT EXISTS "${CTEST_INSTALL_DIRECTORY}")
+  file (MAKE_DIRECTORY "${CTEST_INSTALL_DIRECTORY}")
 endif ()
 
 configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
@@ -481,6 +483,8 @@ INCLUDE(${CTEST_SCRIPT_DIRECTORY}/trilinos_macro.cmake)
 
 if (BUILD_TRILINOS)
 
+  set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosInstall")
+
   set (CONF_OPTS
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${GCC_MPI_DIR}"
@@ -492,7 +496,7 @@ if (BUILD_TRILINOS)
     "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
 #
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/lib'"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
     "-DBoost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
     "-DBoost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
     "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
@@ -542,7 +546,7 @@ if (BUILD_TRILINOS)
     endif (BUILD_SCOREC)
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
-  do_trilinos("${CONF_OPTS}" "Trilinos")
+  do_trilinos("${CONF_OPTS}" "Trilinos" "${INSTALL_LOCATION}")
 
 endif (BUILD_TRILINOS)
 
@@ -556,7 +560,7 @@ INCLUDE(${CTEST_SCRIPT_DIRECTORY}/albany_macro.cmake)
 if (BUILD_ALB32)
 
   set (CONF_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstall"
     "-DENABLE_LCM:BOOL=ON"
     "-DENABLE_CONTACT:BOOL=ON"
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
@@ -578,7 +582,7 @@ if (BUILD_ALB32)
   if (BUILD_PERIDIGM)
     set (CONF_OPTIONS ${CONF_OPTIONS}
       "-DENABLE_PERIDIGM:BOOL=ON"
-      "-DPeridigm_DIR:PATH=${CTEST_BINARY_DIRECTORY}/PeridigmInstall/lib/Peridigm/cmake")
+      "-DPeridigm_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/PeridigmInstall/lib/Peridigm/cmake")
   endif (BUILD_PERIDIGM)
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
@@ -593,7 +597,7 @@ endif (BUILD_ALB32)
 if (BUILD_ALB64)
 
   set (CONF_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstall"
     "-DENABLE_64BIT_INT:BOOL=ON"
     "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
     "-DENABLE_LCM:BOOL=ON"
@@ -616,6 +620,8 @@ endif (BUILD_ALB64)
 
 if (BUILD_TRILINOSCLANG)
 
+  set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11")
+
   set (CONFIGURE_OPTIONS
     "${COMMON_CONFIGURE_OPTIONS}"
     "-DTPL_ENABLE_MPI:BOOL=ON"
@@ -631,7 +637,7 @@ if (BUILD_TRILINOSCLANG)
     "-DMDS_ID_TYPE:STRING='long long int'"
     "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/clang-3.7/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/clang-3.7/lib'"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallC11"
+    "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
     "-DBUILD_SHARED_LIBS:BOOL=OFF"
     "-DTPL_ENABLE_SuperLU:BOOL=OFF"
     "-DAmesos2_ENABLE_KLU2:BOOL=ON"
@@ -675,7 +681,7 @@ if (BUILD_TRILINOSCLANG)
 )
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
-  do_trilinos("${CONFIGURE_OPTIONS}" "TrilinosClang")
+  do_trilinos("${CONFIGURE_OPTIONS}" "TrilinosClang" "${INSTALL_LOCATION}")
 
 endif (BUILD_TRILINOSCLANG)
 
@@ -686,7 +692,7 @@ endif (BUILD_TRILINOSCLANG)
 if (BUILD_ALB64CLANG)
 
   set (CONF_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallC11"
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11"
     "-DENABLE_64BIT_INT:BOOL=ON"
     "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
     "-DENABLE_LCM:BOOL=ON"
@@ -712,7 +718,7 @@ endif (BUILD_ALB64CLANG)
 if (BUILD_ALBFUNCTOR)
 
   set (CONF_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstall"
     "-DENABLE_LCM:BOOL=ON"
     "-DENABLE_MOR:BOOL=ON"
     "-DENABLE_FELIX:BOOL=ON"
