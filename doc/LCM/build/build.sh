@@ -19,6 +19,8 @@ case "$SCRIPT_NAME" in
 	;;
     mail.sh)
 	;;
+    dash.sh)
+	;;
     clean-config.sh)
 	;;
     clean-config-build.sh)
@@ -316,19 +318,10 @@ case "$SCRIPT_NAME" in
 		    echo "to create."
 		    exit 1
 		fi
-	        cp -p "$PROJECT_XML_FILE" "$BUILD_DIR"
-	        cp -p "$CTEST_FILE" "$BUILD_DIR"
 		cd "$BUILD_DIR"
-                sed -i -e "s|lcm_subproject|$SUBPROJECT|g;" "$PROJECT_XML_FILE"
-                sed -i -e "s|lcm_test_type|$CTEST_TYPE|g;" "$CTEST_FILE"
-                sed -i -e "s|lcm_test_site|$HOST|g;" "$CTEST_FILE"
-                sed -i -e "s|lcm_source_dir|$PACKAGE_DIR|g;" "$CTEST_FILE"
-                sed -i -e "s|lcm_build_dir|$BUILD_DIR|g;" "$CTEST_FILE"
-                sed -i -e "s|lcm_project_xml|$PROJECT_XML_FILE|g;" "$CTEST_FILE"
-                sed -i -e "s|lcm_build_name|$BUILD|g;" "$CTEST_FILE"
 		echo "TESTING $PACKAGE_STRING ..."
 		echo "$LINE"
-		ctest -VV --timeout 90 -S "$CTEST_FILE" . | tee "$TEST_LOG"
+		ctest --timeout 600 . | tee "$TEST_LOG"
 		;;
 	    *)
 		echo "Unrecognized package option in test: $PACKAGE"
@@ -348,6 +341,38 @@ case "$SCRIPT_NAME" in
 		exit 1
 	    fi
 	fi
+	;;&
+    *dash*)
+	#No Trilinos testing
+	case "$PACKAGE" in
+	    trilinos)
+		;;
+	    albany)
+		if [ ! -d "$BUILD_DIR" ]; then
+		    echo "Build directory does not exist. Run:"
+		    echo "  [clean-]config-build.sh $1 $2 $3 $4"
+		    echo "to create."
+		    exit 1
+		fi
+	        cp -p "$PROJECT_XML_FILE" "$BUILD_DIR"
+	        cp -p "$CTEST_FILE" "$BUILD_DIR"
+		cd "$BUILD_DIR"
+                sed -i -e "s|lcm_subproject|$SUBPROJECT|g;" "$PROJECT_XML_FILE"
+                sed -i -e "s|lcm_test_type|$CTEST_TYPE|g;" "$CTEST_FILE"
+                sed -i -e "s|lcm_test_site|$HOST|g;" "$CTEST_FILE"
+                sed -i -e "s|lcm_source_dir|$PACKAGE_DIR|g;" "$CTEST_FILE"
+                sed -i -e "s|lcm_build_dir|$BUILD_DIR|g;" "$CTEST_FILE"
+                sed -i -e "s|lcm_project_xml|$PROJECT_XML_FILE|g;" "$CTEST_FILE"
+                sed -i -e "s|lcm_build_name|$BUILD|g;" "$CTEST_FILE"
+		echo "TESTING $PACKAGE_STRING ..."
+		echo "$LINE"
+		ctest -VV --timeout 90 -S "$CTEST_FILE" . | tee "$TEST_LOG"
+		;;
+	    *)
+		echo "Unrecognized package option in test: $PACKAGE"
+		exit 1
+		;;
+	esac
 	;;&
 esac
 
