@@ -6,7 +6,7 @@
 
 add_subdirectory(Cubes)
 if(ALBANY_DTK)
-add_subdirectory(ParallelCubes)
+  add_subdirectory(ParallelCubes)
 endif()
 #
 # These are big examples. Any problems in the Schwarz implementation
