@@ -6,3 +6,4 @@ if { [is-loaded lcm/sems] } {
   module load sems-clang/3.9.0
 }
 
+setenv TOOL_CHAIN clang
