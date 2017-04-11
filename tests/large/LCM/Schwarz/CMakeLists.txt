@@ -5,7 +5,6 @@
 ##*****************************************************************//
 
 add_subdirectory(Cubes)
-add_subdirectory(CuboidsDebug)
 if(ALBANY_DTK)
 add_subdirectory(ParallelCubes)
 endif()
@@ -13,6 +12,7 @@ endif()
 # These are big examples. Any problems in the Schwarz implementation
 # will be caught by the cubes problem above, so we disable them.
 # 
+#add_subdirectory(Overlap)
 #add_subdirectory(NotchedCylinder)
 #add_subdirectory(LaserWeld)
 
