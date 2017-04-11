@@ -58,6 +58,9 @@
 #endif
 #endif
 
+//#include <cuda_profiler_api.h>
+//#include "nvToolsExt.h"
+
 //#define WRITE_TO_MATRIX_MARKET
 
 using Teuchos::ArrayRCP;
@@ -1132,6 +1135,8 @@ computeGlobalResidualImplT(
     const Teuchos::Array<ParamVec>& p,
     const Teuchos::RCP<Tpetra_Vector>& fT)
 {
+  //cudaProfilerStart();
+  //nvtxRangePushA("computeGlobalResidual");
 
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
   postRegSetup("Residual");
@@ -1193,6 +1198,8 @@ computeGlobalResidualImplT(
 #endif
 
   // Set data in Workset struct, and perform fill via field manager
+  //cudaProfilerStart();
+  //nvtxRangePushA("ResidualFill");
   {
     if (Teuchos::nonnull(rc_mgr)) rc_mgr->init_x_if_not(xT->getMap());
 
@@ -1209,12 +1216,16 @@ computeGlobalResidualImplT(
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
 
       // FillType template argument used to specialize Sacado
+      //nvtxRangePushA("EvaluateFields");
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
       if (nfm!=Teuchos::null)
          deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+      //nvtxRangePop();
     }
   // workset.wsElNodeEqID_kokkos =Kokkos:: View<int****, PHX::Device ("wsElNodeEqID_kokkos",workset. wsElNodeEqID.size(), workset. wsElNodeEqID[0].size(), workset. wsElNodeEqID[0][0].size());
   }
+  //nvtxRangePop();
+  //cudaProfilerStop();
 
   // Assemble the residual into a non-overlapping vector
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
@@ -1280,7 +1291,10 @@ computeGlobalResidualImplT(
 
   //scale residual by scaleVec_ if scaleBCdofs is on 
   if (scaleBCdofs == true) 
-    fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0); 
+    fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
+
+  //nvtxRangePop();
+  //cudaProfilerStop();
 }
 
 #if defined(ALBANY_EPETRA)

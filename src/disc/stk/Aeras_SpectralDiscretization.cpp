@@ -305,6 +305,12 @@ Aeras::SpectralDiscretization::getWsElNodeEqID() const
   return wsElNodeEqID;
 }
 
+const Kokkos::vector<Kokkos::View<LO***, PHX::Device>>&
+Aeras::SpectralDiscretization::getWsElNodeEqIDKokkos() const
+{
+  return wsElNodeEqID_kokkos;
+}
+
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
 Aeras::SpectralDiscretization::getWsElNodeID() const
 {
@@ -2412,6 +2418,20 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
           wsElNodeEqID[b][i][j][eq] = getOverlapDOF(node_lid,eq);
       }
     }
+  }
+
+  // Copy workset data to Kokkos Views
+  // Note: Does not support variable nodes per element
+  wsElNodeEqID_kokkos.resize(numBuckets);
+  for (int b = 0; b < numBuckets; b++) {
+    const int buckSize = wsElNodeEqID[b].size();
+    const int nodes_per_element = wsElNodeEqID[b][0].size();
+
+    wsElNodeEqID_kokkos[b] = Kokkos::View<LO***, PHX::Device>("wsElNodeEqID_kokkos", buckSize, nodes_per_element, neq);
+    for (int i = 0; i < buckSize; i++)
+      for (int j = 0; j < nodes_per_element; j++)
+        for (int eq = 0; eq < neq; eq++)
+          wsElNodeEqID_kokkos[b](i, j, eq) = wsElNodeEqID[b][i][j][eq];
   }
 
   //The following is for periodic BCs.  This will only be relevant for the x-z hydrostatic equations.
