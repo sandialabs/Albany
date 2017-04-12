@@ -326,6 +326,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   physParamList.set("Gravity Acceleration", physParamList.get("Gravity Acceleration", MPAS_gravity));
   physParamList.set("Ice Density", rho_ice = physParamList.get("Ice Density", MPAS_rho_ice));
   physParamList.set("Water Density", rho_seawater = physParamList.get("Water Density", MPAS_rho_seawater));
+  physParamList.set("Clausius-Clapeyron coefficient", physParamList.get("Clausius-Clapeyron coefficient", 9.7546e-8));
   
   paramList->sublist("Problem").set("Name", paramList->sublist("Problem").get("Name", "FELIX Stokes First Order 3D"));
 
