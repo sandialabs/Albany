@@ -859,7 +859,8 @@ template<typename EvalT, typename Traits, typename ScalarT>
 Teuchos::RCP< PHX::Evaluator<Traits> >
 Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructQuadPointsToCellInterpolationEvaluator(
   const std::string& dof_name,
-  bool isVectorField) const
+  const Teuchos::RCP<PHX::DataLayout> qp_layout,
+  const Teuchos::RCP<PHX::DataLayout> cell_layout) const
 {
   Teuchos::RCP<Teuchos::ParameterList> p;
   p = Teuchos::rcp(new Teuchos::ParameterList("DOF QuadPoint to Cell Interpolation "+dof_name));
@@ -867,12 +868,14 @@ Albany::EvaluatorUtilsBase<EvalT,Traits,ScalarT>::constructQuadPointsToCellInter
   // Input
   p->set<std::string>("Field QP Name", dof_name);
   p->set<std::string>("Weighted Measure Name", "Weights");
-  p->set<bool>("Is Vector Field", isVectorField);
 
   // Output
   p->set<std::string>("Field Cell Name", dof_name);
 
-  return Teuchos::rcp(new PHAL::QuadPointsToCellInterpolationBase<EvalT,Traits,ScalarT>(*p,dl));
+  if((qp_layout == Teuchos::null)&&(cell_layout == Teuchos::null))
+    return Teuchos::rcp(new PHAL::QuadPointsToCellInterpolationBase<EvalT,Traits,ScalarT>(*p,dl, dl->qp_scalar, dl->cell_scalar2));
+  else
+    return Teuchos::rcp(new PHAL::QuadPointsToCellInterpolationBase<EvalT,Traits,ScalarT>(*p,dl, qp_layout, cell_layout));
 }
 
 template<typename EvalT, typename Traits, typename ScalarT>

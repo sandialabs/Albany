@@ -1507,7 +1507,7 @@ if (basalSideName!="INVALID")
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructQuadPointsToCellInterpolationEvaluator("FELIX Dissipation",false));
+    fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructQuadPointsToCellInterpolationEvaluator("FELIX Dissipation"));
 
     // Saving the dissipation heat in the output mesh
     {

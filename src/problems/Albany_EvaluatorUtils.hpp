@@ -282,7 +282,8 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> >
     constructQuadPointsToCellInterpolationEvaluator(
       const std::string& dof_name,
-      bool isVectorField = false) const;
+      const Teuchos::RCP<PHX::DataLayout> qp_layout = Teuchos::null,
+      const Teuchos::RCP<PHX::DataLayout> cell_layout= Teuchos::null) const;
 
     //! Function to create evaluator QuadPointsToCellInterpolation
     Teuchos::RCP< PHX::Evaluator<Traits> >
