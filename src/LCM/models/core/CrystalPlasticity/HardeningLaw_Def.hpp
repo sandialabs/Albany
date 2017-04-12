@@ -236,6 +236,7 @@ harden(
 
   minitensor::Vector<ArgT, NumSlipT>
   rate_slip_abs(num_slip_sys);
+  rate_slip_abs.fill(minitensor::ZEROS);
 
   for (minitensor::Index ss_index(0); ss_index < num_slip_sys; ++ss_index)
   {

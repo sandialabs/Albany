@@ -467,7 +467,8 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::update(
 
   // Write slip back out from x
   for (int i = 0; i < this->num_slip_; ++i) {
-    state_internal_.slip_np1_(i) = x(i);
+    state_internal_.slip_np1_[i] = x[i];
+    state_internal_.hardening_np1_[i] = state_internal_.hardening_n_[i];
   }
 
   minitensor::Vector<ScalarT, NumSlipT>

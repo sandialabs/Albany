@@ -102,6 +102,7 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
 
   for (int i = 0; i< num_slip_; ++i){
     slip_np1[i] = x[i];
+    state_hardening_np1[i] = state_hardening_n_[i];
   }
 
   if(dt_ > 0.0){
