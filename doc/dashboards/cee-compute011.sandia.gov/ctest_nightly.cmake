@@ -87,13 +87,13 @@ set (CTEST_BINARY_NAME build)
 set (CTEST_INSTALL_NAME test)
 
 set (PREFIX_DIR /projects/albany)
-set (INTEL_PREFIX_DIR ${PREFIX_DIR}/intel5.0)
+set (INTEL_PREFIX_DIR ${PREFIX_DIR}/intel5.1)
 set (GCC_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.8.8-gcc-5.2.0-RHEL6)
 set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2017.2.174/compilers_and_libraries/linux)
 
 #set (BOOST_ROOT /projects/albany/nightly)
 set (BOOST_ROOT /projects/albany)
-set (INTEL_BOOST_ROOT ${BOOST_ROOT}/intel5.0/boost-1.60.0)
+set (INTEL_BOOST_ROOT ${BOOST_ROOT}/intel5.1)
 set (CLANG_BOOST_ROOT ${BOOST_ROOT}/clang-3.7)
 
 set (INTEL_MPI_DIR ${INTEL_DIR}/mpi)
