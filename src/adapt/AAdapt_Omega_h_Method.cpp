@@ -17,10 +17,9 @@ namespace AAdapt {
 
 Omega_h_Method::Omega_h_Method(const Teuchos::RCP<Albany::APFDiscretization>& disc):
   MeshAdaptMethod(disc),
-  should_target_count(false),
-  should_target_error(false),
   library_osh(nullptr, nullptr),
-  mesh_osh(&library_osh) {
+  mesh_osh(&library_osh),
+  adapt_opts(disc->getNumDim()) {
   mesh_apf = mesh_struct->getMesh();
 }
 
@@ -28,7 +27,7 @@ Omega_h_Method::~Omega_h_Method() {
 }
 
 void Omega_h_Method::setParams(const Teuchos::RCP<Teuchos::ParameterList>& p) {
-  auto& omega_h_pl = p.sublist("Omega_h");
+  auto& omega_h_pl = p->sublist("Omega_h");
   Omega_h::update_adapt_opts(&adapt_opts, omega_h_pl);
   auto& metric_pl = omega_h_pl.sublist("Metric");
   Omega_h::update_metric_input(&metric_opts, metric_pl);
