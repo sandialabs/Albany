@@ -178,8 +178,8 @@ evaluateFields(typename Traits::EvalData workset)
         minitensor::Vector<MeshScalarT> N(3, ref_normal_, cell, pt, 0);
 
         // compute dFdx_plus_or_minus
-        f_plus.fill(minitensor::ZEROS);
-        f_minus.fill(minitensor::ZEROS);
+        f_plus.fill(minitensor::Filler::ZEROS);
+        f_minus.fill(minitensor::Filler::ZEROS);
 
         // h * P * dFperpdx --> +/- \lambda * P * N
         if (use_cohesive_traction_) {

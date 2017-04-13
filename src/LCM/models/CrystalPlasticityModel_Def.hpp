@@ -683,7 +683,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
         minitensor::Tensor<RealType, CP::MAX_SLIP>
         dyad_matrix(size_problem);
 
-        dyad_matrix.fill(minitensor::ZEROS);
+        dyad_matrix.fill(minitensor::Filler::ZEROS);
 
         for (int s = 0; s < num_slip_; ++s)
         {
@@ -727,7 +727,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
         minitensor::Vector<RealType, CP::MAX_SLIP>
         L_vec(size_problem);
 
-        L_vec.fill(minitensor::ZEROS);
+        L_vec.fill(minitensor::Filler::ZEROS);
 
         RealType
         portion_L = 0.5;
@@ -775,7 +775,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
         minitensor::Tensor<ScalarT, CP::MAX_DIM>
         Lp_trial(num_dims_);
-        Lp_trial.fill(minitensor::ZEROS);
+        Lp_trial.fill(minitensor::Filler::ZEROS);
         // for (int s(0); s < num_slip_; ++s)
         // {
         //   Lp_trial += rates_slip_trial[s] * element_slip_systems.at(s).projector_;
@@ -838,7 +838,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
     state_internal.rate_slip_ = (slip_np1 - slip_n) / dt_;
   }
   else {
-    state_internal.rate_slip_.fill(minitensor::ZEROS);
+    state_internal.rate_slip_.fill(minitensor::Filler::ZEROS);
   }
 
   state_internal.slip_np1_ = slip_np1;

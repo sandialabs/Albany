@@ -113,7 +113,7 @@ struct LinearMinusRecoveryHardeningParameters final :
     this->param_map_["Recovery Modulus"] = MODULUS_RECOVERY;
     this->param_map_["Initial Hardening State"] = STATE_HARDENING_INITIAL;
     this->hardening_params_.set_dimension(NUM_PARAMS);
-    this->hardening_params_.fill(minitensor::ZEROS);
+    this->hardening_params_.fill(minitensor::Filler::ZEROS);
   }
 
   virtual
@@ -164,7 +164,7 @@ struct SaturationHardeningParameters final :
     this->param_map_["Reference Slip Rate"] = RATE_SLIP_REFERENCE;
     this->param_map_["Initial Hardening State"] = STATE_HARDENING_INITIAL;
     this->hardening_params_.set_dimension(NUM_PARAMS);
-    this->hardening_params_.fill(minitensor::ZEROS);
+    this->hardening_params_.fill(minitensor::Filler::ZEROS);
   }
 
   virtual
@@ -218,7 +218,7 @@ struct DislocationDensityHardeningParameters final :
     this->param_map_["Burgers Vector Magnitude"] = MAGNITUDE_BURGERS;
     this->param_map_["Initial Hardening State"] = STATE_HARDENING_INITIAL;
     this->hardening_params_.set_dimension(NUM_PARAMS);
-    this->hardening_params_.fill(minitensor::ZEROS);
+    this->hardening_params_.fill(minitensor::Filler::ZEROS);
   }
 
   virtual

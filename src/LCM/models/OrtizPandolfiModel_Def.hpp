@@ -223,7 +223,7 @@ computeState(typename Traits::EvalData workset,
 
       // Normal traction, default to zero.
       minitensor::Vector<ScalarT>
-      traction_normal(3, minitensor::ZEROS);
+      traction_normal(3, minitensor::Filler::ZEROS);
 
       if (jump_n >= 0.0) {
 
@@ -249,7 +249,7 @@ computeState(typename Traits::EvalData workset,
 
       // Shear traction, default to zero.
       minitensor::Vector<ScalarT>
-      traction_shear(3, minitensor::ZEROS);
+      traction_shear(3, minitensor::Filler::ZEROS);
 
       if (jump_eff > 0.0) {
         traction_shear = t_eff / jump_eff * beta * beta * vec_jump_s;

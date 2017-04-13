@@ -65,7 +65,7 @@ class Integrator
 
   struct MiniPoly {
     MiniPoly(){}
-    MiniPoly(int n){points.resize(n,Vector3D(minitensor::ZEROS));mapToBase.resize(n);}
+    MiniPoly(int n){points.resize(n,Vector3D(minitensor::Filler::ZEROS));mapToBase.resize(n);}
     std::vector<Vector3D> points;
     std::vector<int> mapToBase;
   };
@@ -147,7 +147,7 @@ class SubIntegrator
   template <typename V, typename P>
   struct Simplex {
     Simplex(){}
-    Simplex(int n){points.resize(n,typename Vector3D<P>::Type(minitensor::ZEROS));fieldvals.resize(n);}
+    Simplex(int n){points.resize(n,typename Vector3D<P>::Type(minitensor::Filler::ZEROS));fieldvals.resize(n);}
     std::vector<minitensor::Vector<P,3> > points;
     std::vector<V> fieldvals;
   };

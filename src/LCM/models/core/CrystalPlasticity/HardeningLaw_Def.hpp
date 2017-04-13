@@ -94,7 +94,7 @@ createLatentMatrix(
   std::vector<CP::SlipSystem<NumDimT>> const & slip_systems)
 {
   slip_family.latent_matrix_.set_dimension(slip_family.num_slip_sys_);
-  slip_family.latent_matrix_.fill(minitensor::ONES);
+  slip_family.latent_matrix_.fill(minitensor::Filler::ONES);
 
   return;
 }
@@ -192,7 +192,7 @@ createLatentMatrix(
   std::vector<CP::SlipSystem<NumDimT>> const & slip_systems)
 {
   slip_family.latent_matrix_.set_dimension(slip_family.num_slip_sys_);
-  slip_family.latent_matrix_.fill(minitensor::ZEROS);
+  slip_family.latent_matrix_.fill(minitensor::Filler::ZEROS);
 
   for (minitensor::Index ss_index_i(0); ss_index_i < slip_family.num_slip_sys_; ++ss_index_i) {
 
@@ -236,7 +236,7 @@ harden(
 
   minitensor::Vector<ArgT, NumSlipT>
   rate_slip_abs(num_slip_sys);
-  rate_slip_abs.fill(minitensor::ZEROS);
+  rate_slip_abs.fill(minitensor::Filler::ZEROS);
 
   for (minitensor::Index ss_index(0); ss_index < num_slip_sys; ++ss_index)
   {
@@ -336,7 +336,7 @@ createLatentMatrix(
   num_dim = slip_systems[0].s_.get_dimension();
 
   slip_family.latent_matrix_.set_dimension(slip_family.num_slip_sys_);
-  slip_family.latent_matrix_.fill(minitensor::ZEROS);
+  slip_family.latent_matrix_.fill(minitensor::Filler::ZEROS);
 
   for (minitensor::Index ss_index_i(0); ss_index_i < slip_family.num_slip_sys_; ++ss_index_i)
   {
@@ -501,7 +501,7 @@ createLatentMatrix(
   std::vector<CP::SlipSystem<NumDimT>> const & slip_systems)
 {
   slip_family.latent_matrix_.set_dimension(slip_family.num_slip_sys_);
-  slip_family.latent_matrix_.fill(minitensor::ZEROS);
+  slip_family.latent_matrix_.fill(minitensor::Filler::ZEROS);
 
   return;
 }

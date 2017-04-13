@@ -123,7 +123,7 @@ computeState(typename Traits::EvalData workset,
       t_1 = cross(n,t_0);
 
       //construct transformation matrix Q (2nd order tensor)
-      minitensor::Tensor<ScalarT> Q(3, minitensor::ZEROS);
+      minitensor::Tensor<ScalarT> Q(3, minitensor::Filler::ZEROS);
       // manually fill Q = [t_0; t_1; n];
       Q(0,0) = t_0(0); Q(1,0) = t_0(1);  Q(2,0) = t_0(2);
       Q(0,1) = t_1(0); Q(1,1) = t_1(1);  Q(2,1) = t_1(2);
@@ -146,7 +146,7 @@ computeState(typename Traits::EvalData workset,
         JumpShear = 0.0;
 
       // matrix beta that controls relative effect of shear and normal opening
-      minitensor::Tensor<ScalarT> beta(3, minitensor::ZEROS);
+      minitensor::Tensor<ScalarT> beta(3, minitensor::Filler::ZEROS);
       beta(0,0) = beta_0; beta(1,1) = beta_1; beta(2,2) = beta_2;
 
       // compute scalar effective jump

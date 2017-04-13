@@ -390,10 +390,10 @@ SchwarzAlternating::
 SchwarzLoop() const
 {
   minitensor::Vector<ST>
-  norms_diff(num_subdomains_, minitensor::ZEROS);
+  norms_diff(num_subdomains_, minitensor::Filler::ZEROS);
 
   minitensor::Vector<ST>
-  norms_soln(num_subdomains_, minitensor::ZEROS);
+  norms_soln(num_subdomains_, minitensor::Filler::ZEROS);
 
   int const
   iter_limit = std::max(min_iters_, max_iters_);

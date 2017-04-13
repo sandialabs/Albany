@@ -1477,7 +1477,7 @@ namespace LCM {
     r = sqrt(parameters[0] * parameters[0] + parameters[1] * parameters[1]);
 
     minitensor::Vector<D2FadType, 3>
-    normal(3, minitensor::ZEROS);
+    normal(3, minitensor::Filler::ZEROS);
 
      if ( (r.val()).val() > 0.0 ) {
       normal[0] = parameters[0] * sin(r) / r;

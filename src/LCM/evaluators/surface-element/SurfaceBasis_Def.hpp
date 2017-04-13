@@ -215,8 +215,8 @@ computeBasisVectors(Kokkos::DynRankView<ST, PHX::Device> const & midplane_coords
 
     //compute the base vectors
     for (int pt(0); pt < num_qps_; ++pt) {
-      g_0.fill(minitensor::ZEROS);
-      g_1.fill(minitensor::ZEROS);
+      g_0.fill(minitensor::Filler::ZEROS);
+      g_1.fill(minitensor::Filler::ZEROS);
       for (int node(0); node < num_surf_nodes_; ++node) {
         g_0 += ref_grads_(node, pt, 0) * midplane_nodes[node];
         g_1 += ref_grads_(node, pt, 1) * midplane_nodes[node];

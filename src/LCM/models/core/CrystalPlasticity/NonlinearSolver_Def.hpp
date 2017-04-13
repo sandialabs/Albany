@@ -90,7 +90,7 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
 
   // Return immediately if something failed catastrophically.
   if (this->get_failed() == true) {
-    residual.fill(minitensor::ZEROS);
+    residual.fill(minitensor::Filler::ZEROS);
     return residual;
   }
 
@@ -109,7 +109,7 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
     rate_slip = (slip_np1 - slip_n_) / dt_;
   }
   else{
-    rate_slip.fill(minitensor::ZEROS);
+    rate_slip.fill(minitensor::Filler::ZEROS);
   }
 
    // Ensure that the slip increment will not cause overflow
@@ -241,13 +241,13 @@ CP::Dissipation<NumDimT, NumSlipT, EvalT>::value(
     minitensor::Vector<T, N> const & x)
 {
   minitensor::Vector<T, NumSlipT> const
-  rate_slip_in{minitensor::ZEROS};
+  rate_slip_in{minitensor::Filler::ZEROS};
 
   minitensor::Vector<T, NumSlipT>
-  state_hardening_np1{minitensor::ZEROS};
+  state_hardening_np1{minitensor::Filler::ZEROS};
 
   minitensor::Vector<T, NumSlipT>
-  slip_resistance{minitensor::ZEROS};
+  slip_resistance{minitensor::Filler::ZEROS};
 
   for (int sf_index(0); sf_index < slip_families_.size(); ++sf_index)
   {
@@ -415,7 +415,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
 
   // Return immediately if something failed catastrophically.
   if (this->get_failed() == true) {
-    residual.fill(minitensor::ZEROS);
+    residual.fill(minitensor::Filler::ZEROS);
     return residual;
   }
 
@@ -434,7 +434,7 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
     rate_slip = (slip_np1 - slip_n_) / dt_;
   }
   else{
-    rate_slip.fill(minitensor::ZEROS);
+    rate_slip.fill(minitensor::Filler::ZEROS);
   }
 
   // Ensure that the slip increment is bounded

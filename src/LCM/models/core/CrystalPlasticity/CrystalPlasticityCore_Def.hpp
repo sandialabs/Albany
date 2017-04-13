@@ -79,7 +79,7 @@ CP::applySlipIncrement(
   minitensor::Tensor<ArgT, NumDimT>
   exp_L_dt(num_dim);
 
-  Lp_np1.fill(minitensor::ZEROS);
+  Lp_np1.fill(minitensor::Filler::ZEROS);
   Lp_np1 = 0. * Lp_np1;
 
   if(dt > 0){
@@ -274,7 +274,7 @@ CP::computeElasticityTensor(
   minitensor::Index const
   num_dim = C.get_dimension();
 
-  C.fill(minitensor::ZEROS);
+  C.fill(minitensor::Filler::ZEROS);
 
   if (num_dim >= 2) {
     C(0, 0, 0, 0) = c11;

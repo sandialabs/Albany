@@ -474,7 +474,7 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::update(
   minitensor::Vector<ScalarT, NumSlipT>
   slip_rate(state_internal_.rate_slip_.get_dimension());
 
-  slip_rate.fill(minitensor::ZEROS);
+  slip_rate.fill(minitensor::Filler::ZEROS);
   if (dt_ > 0.0) {
     slip_rate = (state_internal_.slip_np1_ - state_internal_.slip_n_) / dt_;
   }
@@ -615,7 +615,7 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update(
   minitensor::Vector<ScalarT, NumSlipT>
   slip_rate(this->num_slip_);
 
-  slip_rate.fill(minitensor::ZEROS);
+  slip_rate.fill(minitensor::Filler::ZEROS);
   if (dt_ > 0.0) {
     slip_rate = (state_internal_.slip_np1_ - state_internal_.slip_n_) / dt_;
   }
