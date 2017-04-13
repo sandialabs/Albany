@@ -521,6 +521,8 @@ Albany::StateManager::registerSideSetStateVariable(const std::string& sideSetNam
 
   // insert
   stateRef.nameMap[stateName] = ebName;
+
+  return p;
 }
 
 Teuchos::RCP<Albany::StateInfoStruct>
