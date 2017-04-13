@@ -58,8 +58,25 @@
 #endif
 #endif
 
-//#include <cuda_profiler_api.h>
-//#include "nvToolsExt.h"
+/*
+#include <cuda_profiler_api.h>
+#include "nvToolsExt.h"
+const uint32_t colors[] = { 0x0000ff00, 0x000000ff, 0x00ffff00, 0x00ff00ff, 0x0000ffff, 0x00ff0000, 0x00ffffff };
+const int num_colors = sizeof(colors)/sizeof(uint32_t);
+#define PUSH_RANGE(name,cid) { \
+    int color_id = cid; \
+    color_id = color_id%num_colors;\
+    nvtxEventAttributes_t eventAttrib = {0}; \
+    eventAttrib.version = NVTX_VERSION; \
+    eventAttrib.size = NVTX_EVENT_ATTRIB_STRUCT_SIZE; \
+    eventAttrib.colorType = NVTX_COLOR_ARGB; \
+    eventAttrib.color = colors[color_id]; \
+    eventAttrib.messageType = NVTX_MESSAGE_TYPE_ASCII; \
+    eventAttrib.message.ascii = name; \
+    nvtxRangePushEx(&eventAttrib); \
+}
+#define POP_RANGE nvtxRangePop();
+*/
 
 //#define WRITE_TO_MATRIX_MARKET
 
@@ -1136,7 +1153,7 @@ computeGlobalResidualImplT(
     const Teuchos::RCP<Tpetra_Vector>& fT)
 {
   //cudaProfilerStart();
-  //nvtxRangePushA("computeGlobalResidual");
+  //PUSH_RANGE("computeGlobalResidual",0);
 
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
   postRegSetup("Residual");
@@ -1156,7 +1173,9 @@ computeGlobalResidualImplT(
   const Teuchos::RCP<Tpetra_Import> importerT = solMgrT->get_importerT();
 
   // Scatter x and xdot to the overlapped distrbution
+  //PUSH_RANGE("scatterXT",1);
   solMgrT->scatterXT(*xT, xdotT.get(), xdotdotT.get());
+  //POP_RANGE;
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -1183,8 +1202,10 @@ computeGlobalResidualImplT(
 #endif
 
   // Zero out overlapped residual - Tpetra
+  //PUSH_RANGE("Zero Out Residual",2);
   overlapped_fT->putScalar(0.0);
   fT->putScalar(0.0);
+  //POP_RANGE;
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
@@ -1198,8 +1219,6 @@ computeGlobalResidualImplT(
 #endif
 
   // Set data in Workset struct, and perform fill via field manager
-  //cudaProfilerStart();
-  //nvtxRangePushA("ResidualFill");
   {
     if (Teuchos::nonnull(rc_mgr)) rc_mgr->init_x_if_not(xT->getMap());
 
@@ -1216,19 +1235,22 @@ computeGlobalResidualImplT(
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
 
       // FillType template argument used to specialize Sacado
-      //nvtxRangePushA("EvaluateFields");
+      //PUSH_RANGE("evaluateFields",3);
+      RCP<Teuchos::Time> evalTime =
+      Teuchos::TimeMonitor::getNewTimer("Albany: evaluateFields<Residual>");
+      Teuchos::TimeMonitor evalTimer(*evalTime); //start timer
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+      evalTimer.~TimeMonitor();
+      //POP_RANGE;
       if (nfm!=Teuchos::null)
          deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-      //nvtxRangePop();
     }
-  // workset.wsElNodeEqID_kokkos =Kokkos:: View<int****, PHX::Device ("wsElNodeEqID_kokkos",workset. wsElNodeEqID.size(), workset. wsElNodeEqID[0].size(), workset. wsElNodeEqID[0][0].size());
   }
-  //nvtxRangePop();
-  //cudaProfilerStop();
 
   // Assemble the residual into a non-overlapping vector
+  //PUSH_RANGE("Assemble Residual",4);
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
+  //POP_RANGE;
 
   //Allocate scaleVec_
   if (scaleVec_ == Teuchos::null && scale != 1.0) {
@@ -1257,7 +1279,6 @@ computeGlobalResidualImplT(
 #endif
 
   // Apply Dirichlet conditions using dfm (Dirchelt Field Manager)
-
   if (dfm!=Teuchos::null) {
     PHAL::Workset workset;
 
@@ -1293,7 +1314,7 @@ computeGlobalResidualImplT(
   if (scaleBCdofs == true) 
     fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
 
-  //nvtxRangePop();
+  //POP_RANGE;
   //cudaProfilerStop();
 }
 
