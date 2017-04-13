@@ -1263,9 +1263,12 @@ computeGlobalResidualImplT(
 #if defined(ALBANY_LCM)
   // Store pointers to solution and time derivatives.
   // Needed for Schwarz coupling.
-  x_ = xT;
-  xdot_ = xdotT;
-  xdotdot_ = xdotdotT;
+  if (xT != Teuchos::null) x_ = Teuchos::rcp(new Tpetra_Vector(*xT));
+  else x_ = Teuchos::null;
+  if (xdotT != Teuchos::null) xdot_ = Teuchos::rcp(new Tpetra_Vector(*xdotT));
+  else xdot_ = Teuchos::null; 
+  if (xdotdotT != Teuchos::null) xdotdot_ = Teuchos::rcp(new Tpetra_Vector(*xdotdotT));
+  else xdotdot_ = Teuchos::null; 
 #endif
 
   // Mesh motion needs to occur here on the global mesh befor
