@@ -88,21 +88,30 @@ namespace LCM {
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int pt=0; pt < numQPs; ++pt) {
 
-        minitensor::Vector<MeshScalarT> G_0(3, refDualBasis, cell, pt, 0, 0);
-        minitensor::Vector<MeshScalarT> G_1(3, refDualBasis, cell, pt, 1, 0);
-        minitensor::Vector<MeshScalarT> G_2(3, refDualBasis, cell, pt, 2, 0);
-        minitensor::Vector<MeshScalarT> N(3, refNormal,cell, pt, 0);
+        minitensor::Vector<MeshScalarT>
+        G_0(minitensor::Source::ARRAY, 3, refDualBasis, cell, pt, 0, 0);
+
+        minitensor::Vector<MeshScalarT>
+        G_1(minitensor::Source::ARRAY, 3, refDualBasis, cell, pt, 1, 0);
+
+        minitensor::Vector<MeshScalarT>
+        G_2(minitensor::Source::ARRAY, 3, refDualBasis, cell, pt, 2, 0);
+
+        minitensor::Vector<MeshScalarT>
+        N(minitensor::Source::ARRAY, 3, refNormal, cell, pt, 0);
 
         minitensor::Vector<ScalarT> scalarGradPerpendicular(0, 0, 0);
         minitensor::Vector<ScalarT> scalarGradParallel(0, 0, 0);
 
        // Need to inverse basis [G_0 ; G_1; G_2] and none of them should be normalized
-        minitensor::Tensor<MeshScalarT> gBasis(3, refDualBasis,cell, pt, 0, 0);
+        minitensor::Tensor<MeshScalarT>
+        gBasis(minitensor::Source::ARRAY, 3, refDualBasis,cell, pt, 0, 0);
+
         minitensor::Tensor<MeshScalarT> invRefDualBasis(3);
 
         // This map the position vector from parent to current configuration in R^3
         gBasis = minitensor::transpose(gBasis);
-       invRefDualBasis = minitensor::inverse(gBasis);
+        invRefDualBasis = minitensor::inverse(gBasis);
 
         minitensor::Vector<MeshScalarT> invG_0(3, &invRefDualBasis( 0, 0));
         minitensor::Vector<MeshScalarT> invG_1(3, &invRefDualBasis( 1, 0));

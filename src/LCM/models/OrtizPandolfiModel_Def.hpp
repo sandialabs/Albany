@@ -142,12 +142,18 @@ computeState(typename Traits::EvalData workset,
     for (int pt(0); pt < num_pts_; ++pt) {
 
       //current basis vector
-      minitensor::Vector<ScalarT> g_0(3, mdf_basis, cell, pt, 0, 0);
-      minitensor::Vector<ScalarT> g_1(3, mdf_basis, cell, pt, 1, 0);
-      minitensor::Vector<ScalarT> n(3, mdf_basis, cell, pt, 2, 0);
+      minitensor::Vector<ScalarT>
+      g_0(minitensor::Source::ARRAY, 3, mdf_basis, cell, pt, 0, 0);
+
+      minitensor::Vector<ScalarT>
+      g_1(minitensor::Source::ARRAY, 3, mdf_basis, cell, pt, 1, 0);
+
+      minitensor::Vector<ScalarT>
+      n(minitensor::Source::ARRAY, 3, mdf_basis, cell, pt, 2, 0);
 
       //current jump vector - move PHX::MDField into minitensor::Vector
-      minitensor::Vector<ScalarT> jump_pt(3, mdf_jump, cell, pt, 0);
+      minitensor::Vector<ScalarT>
+      jump_pt(minitensor::Source::ARRAY, 3, mdf_jump, cell, pt, 0);
 
       //construct Identity tensor (2nd order) and tensor product of normal
       minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(3));
