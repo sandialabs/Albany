@@ -33,7 +33,7 @@ FluxDiv (const Teuchos::ParameterList& p,
 
   // Get Dimensions
   std::vector<PHX::DataLayout::size_type> dims;
-  dl_basal->qp_gradient->dimensions(dims);
+  dl_basal->qp_vector->dimensions(dims);
   numSideQPs = dims[2];
   numSideDims  = dims[3];
 
