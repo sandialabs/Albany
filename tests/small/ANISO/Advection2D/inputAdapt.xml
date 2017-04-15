@@ -51,6 +51,7 @@
         <Parameter name="Max Value" type="double" value="6.0"/>
         <Parameter name="Min Value" type="double" value="0"/>
         <Parameter name="Compute Eigenvalues" type="bool" value="0"/>
+        <Parameter  name="Return Failed on Reaching Max Steps" type="bool" value="false"/>
       </ParameterList>
       <ParameterList name="Step Size">
         <Parameter name="Initial Step Size" type="double" value="1.0"/>
