@@ -5,8 +5,8 @@
 //*****************************************************************//
 
 
-#ifndef AADAPT_OMEGA_H_METHOD_HPP
-#define AADAPT_OMEGA_H_METHOD_HPP
+#ifndef AADAPT_MESHADAPT_OMEGA_H_HPP
+#define AADAPT_MESHADAPT_OMEGA_H_HPP
 
 #include "AAdapt_MeshAdaptMethod.hpp"
 

@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "AAdapt_Omega_h_Method.hpp"
+#include "AAdapt_MeshAdapt_Omega_h.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
 #include "AAdapt_SPRSizeField.hpp"
 #include "AAdapt_ConstantSizeField.hpp"
