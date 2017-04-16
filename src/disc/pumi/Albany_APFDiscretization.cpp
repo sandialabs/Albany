@@ -330,6 +330,7 @@ void Albany::APFDiscretization::setField(
 {
   apf::Mesh* m = meshStruct->getMesh();
   apf::Field* f = m->findField(name);
+  ALBANY_ASSERT(f, "\nExpected field " << name << " doesn't exist!\n");
 
   const int problem_dim = meshStruct->problemDim;
   double data_buf[9] = {0};
@@ -378,6 +379,7 @@ void Albany::APFDiscretization::getField(
 {
   apf::Mesh* m = meshStruct->getMesh();
   apf::Field* f = m->findField(name);
+  ALBANY_ASSERT(f, "\nExpected field " << name << " doesn't exist!\n");
   const int problem_dim = meshStruct->problemDim;
   const int pumi_value_type = apf::getValueType(f);
   const int albany_nc = albanyCountComponents(problem_dim, pumi_value_type);
