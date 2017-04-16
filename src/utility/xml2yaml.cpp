@@ -2,6 +2,8 @@
 #include <Teuchos_YamlParameterListCoreHelpers.hpp>
 #include <cassert>
 #include <fstream>
+#include <sstream>
+#include <regex>
 
 static bool ends_with(std::string const& s, std::string const& suffix) {
   if (s.length() < suffix.length()) return false;
@@ -15,9 +17,15 @@ int main(int argc, char** argv) {
     auto params = Teuchos::getParametersFromXmlFile(xmlFileName);
     auto baseName = xmlFileName.substr(0, xmlFileName.length() - 4);
     auto yamlFileName = baseName + ".yaml";
-    std::ofstream yamlStream(yamlFileName.c_str());
-    assert(yamlStream.is_open());
-    yamlStream << std::scientific << std::setprecision(17);
-    Teuchos::writeParameterListToYamlOStream(*params, yamlStream);
+    std::ostringstream yamlStringStream;
+    yamlStringStream << std::scientific << std::setprecision(17);
+    Teuchos::writeParameterListToYamlOStream(*params, yamlStringStream);
+    auto yamlString = yamlStringStream.str();
+    /* replace references to other XML files with the YAML extension
+       (e.g. material data files) */
+    yamlString = std::regex_replace(yamlString, std::regex("\\.xml"), ".yaml");
+    std::ofstream yamlFileStream(yamlFileName.c_str());
+    assert(yamlFileStream.is_open());
+    yamlFileStream << yamlString;
   }
 }
