@@ -20,7 +20,7 @@
 #include "PHAL_AlbanyTraits.hpp"
 
 #include "AAdapt_RC_Manager.hpp"
-#include "MaterialDatabase.h"
+#include "Albany_MaterialDatabase.hpp"
 
 static int dir_count = 0; //counter for registration of dirichlet_field 
  
@@ -333,7 +333,7 @@ protected:
   ///
   /// RCP to matDB object
   ///
-  Teuchos::RCP<LCM::MaterialDatabase> material_db_;
+  Teuchos::RCP<Albany::MaterialDatabase> material_db_;
 
   ///
   /// old state data

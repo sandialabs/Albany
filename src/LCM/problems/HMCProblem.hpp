@@ -12,7 +12,7 @@
 
 #include "Albany_AbstractProblem.hpp"
 #include "ConstitutiveModelInterface.hpp"
-#include "MaterialDatabase.h"
+#include "Albany_MaterialDatabase.hpp"
 
 #ifdef ALBANY_ATO
 #include "ATO_OptimizationProblem.hpp"
@@ -98,7 +98,7 @@ namespace Albany {
     void parseMaterialModel(Teuchos::RCP<Teuchos::ParameterList>& p,
                        const Teuchos::RCP<Teuchos::ParameterList>& params) const;
 
-    Teuchos::RCP<LCM::MaterialDatabase> material_db_;
+    Teuchos::RCP<Albany::MaterialDatabase> material_db_;
 
 
   public:

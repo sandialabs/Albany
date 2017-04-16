@@ -8,7 +8,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Intrepid2_FunctionSpaceTools.hpp"
-#include "MaterialDatabase.h"
+#include "Albany_MaterialDatabase.hpp"
 
 namespace LCM {
 
@@ -54,7 +54,7 @@ LameStressBase(Teuchos::ParameterList& p) :
 
     // If so, overwrite material model and data from database file
     if (dataFromDatabase) {
-       Teuchos::RCP<MaterialDatabase> materialDB = p.get< Teuchos::RCP<MaterialDatabase>>("MaterialDB");
+       Teuchos::RCP<Albany::MaterialDatabase> materialDB = p.get< Teuchos::RCP<Albany::MaterialDatabase>>("MaterialDB");
 
        lameMaterialModelName = materialDB->getElementBlockParam<std::string>(ebName, "Lame Material Model");
        lameMaterialParameters = materialDB->getElementBlockSublist(ebName, "Lame Material Parameters");

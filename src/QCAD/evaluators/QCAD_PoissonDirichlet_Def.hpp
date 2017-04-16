@@ -19,7 +19,7 @@ PoissonDirichlet(Teuchos::ParameterList& p) :
 {
   // get parameters from ParameterList
   user_value = p.get<RealType>("Dirichlet Value");
-  materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+  materialDB = p.get< Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB");
   energy_unit_in_eV = p.get<double>("Energy unit in eV");
 
   Teuchos::ParameterList* psList = p.get<Teuchos::ParameterList*>("Poisson Source Parameter List");

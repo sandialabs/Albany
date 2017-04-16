@@ -21,7 +21,7 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 
 namespace QCAD {
@@ -73,7 +73,7 @@ protected:
   double temperature, V0;
   std::vector<double> prefactors;
   std::vector<ScalarT> phiOffsets;
-  Teuchos::RCP<MaterialDatabase> materialDB;
+  Teuchos::RCP<Albany::MaterialDatabase> materialDB;
 
   bool responseOnly; //flag for evaluator being called in response field manager
 

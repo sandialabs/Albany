@@ -18,11 +18,7 @@
 #include "Phalanx.hpp"
 #include "PHAL_FactoryTraits.hpp"
 
-#if defined(ALBANY_LCM)
-#include "MaterialDatabase.h"
-#else
-#include "QCAD_MaterialDatabase.hpp"
-#endif // ALBANY_LCM
+#include "Albany_MaterialDatabase.hpp"
 
 namespace Albany {
 
@@ -149,7 +145,7 @@ class BCUtils {
       const Teuchos::RCP<Albany::Layouts>& dl,
       Teuchos::RCP<Teuchos::ParameterList> params,
       Teuchos::RCP<ParamLib> paramLib,
-      const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB = Teuchos::null);
+      const Teuchos::RCP<Albany::MaterialDatabase>& materialDB = Teuchos::null);
 
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
     constructBCEvaluators(
@@ -164,7 +160,7 @@ class BCUtils {
       Teuchos::RCP<Teuchos::ParameterList> params,
       Teuchos::RCP<ParamLib> paramLib,
       const std::vector<Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > >& extra_evaluators,
-      const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB = Teuchos::null);
+      const Teuchos::RCP<Albany::MaterialDatabase>& materialDB = Teuchos::null);
 
   private:
 
@@ -190,7 +186,7 @@ class BCUtils {
       const Teuchos::RCP<Albany::Layouts>& dl,
       Teuchos::RCP<Teuchos::ParameterList> params,
       Teuchos::RCP<ParamLib> paramLib,
-      const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB = Teuchos::null);
+      const Teuchos::RCP<Albany::MaterialDatabase>& materialDB = Teuchos::null);
 
     //! Generic implementation of Field Manager construction function
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
@@ -229,7 +225,7 @@ BCUtils<NeumannTraits>::constructBCEvaluators(
   const Teuchos::RCP<Albany::Layouts>& dl,
   Teuchos::RCP<Teuchos::ParameterList> params,
   Teuchos::RCP<ParamLib> paramLib,
-  const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB);
+  const Teuchos::RCP<Albany::MaterialDatabase>& materialDB);
 
 template<>
 Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >
@@ -245,7 +241,7 @@ BCUtils<NeumannTraits>::constructBCEvaluators(
   Teuchos::RCP<Teuchos::ParameterList> params,
   Teuchos::RCP<ParamLib> paramLib,
   const std::vector<Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > >& extra_evaluators,
-  const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB);
+  const Teuchos::RCP<Albany::MaterialDatabase>& materialDB);
 
 template<>
 void  BCUtils<DirichletTraits>::buildEvaluatorsList (
@@ -269,7 +265,7 @@ void  BCUtils<NeumannTraits>::buildEvaluatorsList (
   const Teuchos::RCP<Albany::Layouts>& dl,
   Teuchos::RCP<Teuchos::ParameterList> params,
   Teuchos::RCP<ParamLib> paramLib,
-  const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB);
+  const Teuchos::RCP<Albany::MaterialDatabase>& materialDB);
 
 }
 

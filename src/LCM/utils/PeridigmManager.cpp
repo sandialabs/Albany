@@ -12,7 +12,7 @@
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/FieldBase.hpp>
 #include "Phalanx_DataLayout.hpp"
-#include "MaterialDatabase.h"
+#include "Albany_MaterialDatabase.hpp"
 #include "PHAL_Dimension.hpp"
 #include <boost/math/special_functions/fpclassify.hpp>
 #include <Teuchos_LAPACK.hpp>
@@ -64,7 +64,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   }
 
   // Read the material data base file, if any
-  Teuchos::RCP<MaterialDatabase> materialDataBase;
+  Teuchos::RCP<Albany::MaterialDatabase> materialDataBase;
   if(problemParams.isType<std::string>("MaterialDB Filename")){
     std::string filename = problemParams.get<std::string>("MaterialDB Filename");
     materialDataBase = Teuchos::rcp(new MaterialDatabase(filename, teuchosComm));

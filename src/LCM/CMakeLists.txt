@@ -530,7 +530,6 @@ set(utils-sources
   "${LCM_DIR}/utils/LocalNonlinearSolver.cpp"
   "${LCM_DIR}/utils/NOXSolverPrePostOperator.cc"
   "${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.cc"
-  "${LCM_DIR}/utils/MaterialDatabase.cc"
 )
 set(utils-headers
   "${LCM_DIR}/utils/Projection.hpp"
@@ -538,7 +537,6 @@ set(utils-headers
   "${LCM_DIR}/utils/LocalNonlinearSolver_Def.hpp"
   "${LCM_DIR}/utils/NOXSolverPrePostOperator.h"
   "${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.h"
-  "${LCM_DIR}/utils/MaterialDatabase.h"
 )
 IF(ALBANY_HAVE_STK)
   set(utils-sources ${utils-sources}

@@ -48,8 +48,8 @@ JThermConductivity(Teuchos::ParameterList& p,
   {
     // We have a multiple material problem and need to map element blocks to material data
 
-    if(p.isType<Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB")){
-       materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+    if(p.isType<Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB")){
+       materialDB = p.get< Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB");
     }
     else {
        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,

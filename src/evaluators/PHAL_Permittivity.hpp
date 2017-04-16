@@ -19,7 +19,7 @@
 #endif
 #include "Teuchos_Array.hpp"
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 namespace PHAL {
 /** 
@@ -100,7 +100,7 @@ private:
   Teuchos::Array<ScalarT> rv;
 
   //! Material database - holds permittivity among other quantities
-  Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+  Teuchos::RCP<Albany::MaterialDatabase> materialDB;
 
   //! Convenience function to initialize constant permittivity
   void init_constant(ScalarT value, Teuchos::ParameterList& p);

@@ -29,7 +29,7 @@ PeridigmProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // Read the material data base file, if any
   if(params->isType<std::string>("MaterialDB Filename")){
     std::string filename = params->get<std::string>("MaterialDB Filename");
-    materialDataBase = Teuchos::rcp(new LCM::MaterialDatabase(filename, commT));
+    materialDataBase = Teuchos::rcp(new Albany::MaterialDatabase(filename, commT));
   }
 
   // Determine if transient analyses should be supported

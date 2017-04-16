@@ -1838,7 +1838,7 @@ FindSaddlePoint_LevelSetT(std::vector<double>& allFieldVals,
 
 
 double QCAD::SaddleValueResponseFunction::getCurrent
-  (const double& lattTemp, const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB) const
+  (const double& lattTemp, const Teuchos::RCP<Albany::MaterialDatabase>& materialDB) const
 {
   const double kB = 8.617332e-5;  // eV/K
   double Temp = lattTemp;   // K

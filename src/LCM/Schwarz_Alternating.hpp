@@ -11,7 +11,7 @@
 #include "Albany_DataTypes.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
-#include "MaterialDatabase.h"
+#include "Albany_MaterialDatabase.hpp"
 
 namespace LCM {
 

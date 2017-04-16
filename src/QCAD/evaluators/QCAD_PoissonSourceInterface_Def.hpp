@@ -33,10 +33,10 @@ PoissonSourceInterfaceBase(const Teuchos::ParameterList& p) :
   // number of DOFs we will set each call
   numDOFsSet = offset.size();  // always 1 for Poisson problems
 
-  TEUCHOS_ASSERT(p.isType<Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB") );
+  TEUCHOS_ASSERT(p.isType<Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB") );
 
   //! Material database - holds the scaling we need
-  materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+  materialDB = p.get< Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB");
 
   //! Energy unit of phi in eV
   energy_unit_in_eV = p.get<double>("Energy unit in eV");

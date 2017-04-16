@@ -21,7 +21,7 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 
 namespace QCAD {
@@ -77,7 +77,7 @@ protected:
   std::vector<std::string> trapSpectrum, trapType; 
 
   Teuchos::Array<int> offset;
-  Teuchos::RCP<MaterialDatabase> materialDB;
+  Teuchos::RCP<Albany::MaterialDatabase> materialDB;
 
   bool responseOnly; //flag for evaluator being called in response field manager
   

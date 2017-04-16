@@ -12,7 +12,7 @@
 #include "ConstitutiveModelInterface.hpp"
 #include "ConstitutiveModelParameters.hpp"
 #include "Kinematics.hpp"
-#include "MaterialDatabase.h"
+#include "Albany_MaterialDatabase.hpp"
 #include "MechanicsResidual.hpp"
 #include "NOXSolverPrePostOperator.h"
 #include "PHAL_NSMaterialProperty.hpp"
@@ -95,7 +95,7 @@ SolidMechanics(
       0,
       null_space_dim);
 
-  material_db_ = LCM::createMaterialDatabase(params, comm);
+  material_db_ = Albany::createMaterialDatabase(params, comm);
 }
 
 //

@@ -21,7 +21,7 @@
 #include "Albany_Utils.hpp"
 #include "Piro_Epetra_StokhosNOXObserver.hpp"
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 #include "Petra_Converters.hpp"
 
 // Utility functions
@@ -124,7 +124,7 @@ namespace QCAD {
     double offset_to_CB; // conduction band = offset_to_CB - poisson_solution
 
     //! Material database
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+    Teuchos::RCP<Albany::MaterialDatabase> materialDB;
 
     //! Miscellaneous
     int numDims;

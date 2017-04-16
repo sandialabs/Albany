@@ -35,7 +35,7 @@ PoissonSource(Teuchos::ParameterList& p,
   bRealEigenvectors(false)
 {
   // Material database
-  materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+  materialDB = p.get< Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB");
 
   Teuchos::ParameterList* psList = p.get<Teuchos::ParameterList*>("Parameter List");
 

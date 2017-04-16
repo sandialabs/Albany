@@ -17,7 +17,7 @@
 
 #include "Albany_Layouts.hpp"
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 namespace PHAL {
 /** 
@@ -63,7 +63,7 @@ private:
   ScalarT Vbar;
 
   //! Material database - holds thermal conductivity among other quantities
-  Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+  Teuchos::RCP<Albany::MaterialDatabase> materialDB;
 
   //! storing the DataLayouts
   const Teuchos::RCP<Albany::Layouts>& dl_;

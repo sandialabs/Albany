@@ -23,7 +23,7 @@ LinearElasticityModalProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_
    number_of_time_deriv = 3;
    params->set<int>("Number Of Time Derivatives", number_of_time_deriv);
 
-//  material_db_ = LCM::createMaterialDatabase(params, comm);
+//  material_db_ = Albany::createMaterialDatabase(params, comm);
 
 // the following function returns the problem information required 
 // for setting the rigid body modes (RBMs) for elasticity problems

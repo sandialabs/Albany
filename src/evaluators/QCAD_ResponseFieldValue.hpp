@@ -10,7 +10,7 @@
 #define QCAD_RESPONSEFIELDVALUE_HPP
 
 #include "QCAD_MeshRegion.hpp"
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 #include "PHAL_ScatterScalarResponse.hpp"
 
 namespace QCAD {
@@ -266,7 +266,7 @@ namespace QCAD {
     Teuchos::Array<double> initVals;
 
     //! Material database
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+    Teuchos::RCP<Albany::MaterialDatabase> materialDB;
   };
 
 }

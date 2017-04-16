@@ -52,11 +52,11 @@ NeumannBase(const Teuchos::ParameterList& p) :
   int position;
 
   if((inputConditions == "scaled jump" || inputConditions == "robin") &&
-     p.isType<Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB")){
+     p.isType<Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB")){
 
     //! Material database - holds the scaling we need
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB =
-      p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+    Teuchos::RCP<Albany::MaterialDatabase> materialDB =
+      p.get< Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB");
 
      // User has specified conditions on sideset normal
     if(inputConditions == "scaled jump") {

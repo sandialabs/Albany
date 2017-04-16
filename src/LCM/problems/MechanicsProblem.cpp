@@ -6,7 +6,7 @@
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"
-#include "MaterialDatabase.h"
+#include "Albany_MaterialDatabase.hpp"
 #include "MechanicsProblem.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "NOXSolverPrePostOperator.h"
@@ -171,7 +171,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
       << variableTypeToString(stab_pressure_type_)
       << '\n';
 
-  material_db_ = LCM::createMaterialDatabase(params, commT);
+  material_db_ = Albany::createMaterialDatabase(params, commT);
 
   // Determine the Thermal source 
   //   - the "Source Functions" list must be present in the input file,

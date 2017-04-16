@@ -14,7 +14,7 @@
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
-#include "MaterialDatabase.h"
+#include "Albany_MaterialDatabase.hpp"
 
 // Interface to Peridigm peridynamics code
 #include "PeridigmManager.hpp"
@@ -85,7 +85,7 @@ namespace Albany {
     bool haveMatDB;
     bool supportsTransient;
     std::string mtrlDbFilename;
-    Teuchos::RCP<LCM::MaterialDatabase> materialDataBase;
+    Teuchos::RCP<Albany::MaterialDatabase> materialDataBase;
     Teuchos::RCP<Teuchos::ParameterList> peridigmParams;
     std::set<std::string> registered_distributedFields;
   };

@@ -29,7 +29,7 @@ Permittivity(Teuchos::ParameterList& p,
   numDims = dims[2];
 
   // Material database
-  materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+  materialDB = p.get< Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB");
 
   // Permittivity type
   typ = perm_list->get("Permittivity Type", "Constant");

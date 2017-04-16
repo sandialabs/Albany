@@ -147,7 +147,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators (const Teuchos::RC
                                                                const Teuchos::RCP<Albany::Layouts>& dl,
                                                                Teuchos::RCP<Teuchos::ParameterList> params,
                                                                Teuchos::RCP<ParamLib> paramLib,
-                                                               const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB)
+                                                               const Teuchos::RCP<Albany::MaterialDatabase>& materialDB)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -194,7 +194,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators (
   Teuchos::RCP<Teuchos::ParameterList> params,
   Teuchos::RCP<ParamLib> paramLib,
   const std::vector<Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > >& extra_evaluators,
-  const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB) {
+  const Teuchos::RCP<Albany::MaterialDatabase>& materialDB) {
 
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -695,7 +695,7 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (
   const Teuchos::RCP<Albany::Layouts>& dl,
   Teuchos::RCP<Teuchos::ParameterList> params,
   Teuchos::RCP<ParamLib> paramLib,
-  const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB) {
+  const Teuchos::RCP<Albany::MaterialDatabase>& materialDB) {
   
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -829,7 +829,7 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (
           {
             TEUCHOS_TEST_FOR_EXCEPTION (materialDB == Teuchos::null, Teuchos::Exceptions::InvalidParameter, "This BC needs a material database specified");
 
-            p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+            p->set< RCP<Albany::MaterialDatabase> >("MaterialDB", materialDB);
           }
 
           // Inputs: X, Y at nodes, Cubature, and Basis
@@ -928,7 +928,7 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (
           {
             TEUCHOS_TEST_FOR_EXCEPTION (materialDB == Teuchos::null, Teuchos::Exceptions::InvalidParameter, "This BC needs a material database specified");
 
-            p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+            p->set< RCP<Albany::MaterialDatabase> >("MaterialDB", materialDB);
           }
 
           evaluators_to_build[evaluatorsToBuildName(ss)] = p;

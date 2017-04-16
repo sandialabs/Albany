@@ -322,7 +322,7 @@ ResponseFieldValue(Teuchos::ParameterList& p,
 
     // Material database (if given)
   if(paramsFromProblem != Teuchos::null)
-    materialDB = paramsFromProblem->get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+    materialDB = paramsFromProblem->get< Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB");
   else materialDB = Teuchos::null;
 
   // number of quad points per cell and dimension of space

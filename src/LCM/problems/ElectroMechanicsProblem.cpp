@@ -6,7 +6,7 @@
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"
-#include "MaterialDatabase.h"
+#include "Albany_MaterialDatabase.hpp"
 #include "ElectroMechanicsProblem.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
@@ -28,7 +28,7 @@ ElectroMechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   int num_eq = num_dims_ + 1;
   this->setNumEquations(num_eq);
 
-  material_db_ = LCM::createMaterialDatabase(params, commT);
+  material_db_ = Albany::createMaterialDatabase(params, commT);
 
   //the following function returns the problem information required for
   //setting the rigid body modes (RBMs) for elasticity problems (in

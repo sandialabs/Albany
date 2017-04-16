@@ -37,14 +37,14 @@ PoissonSourceNeumannBase(const Teuchos::ParameterList& p) :
 
   // Set up values as parameters for parameter library
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> > ("Parameter Library");
-  TEUCHOS_ASSERT( p.isType<Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB") );
+  TEUCHOS_ASSERT( p.isType<Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB") );
 
   responseOnly = p.get< bool >("Response Only"); 
     //when true, just compute output fields and don't try to change the workset's residual
     // vector (as per a usual Neumann BC) since this memory hasn't been allocated.
 
   //! Material database - holds the scaling we need
-  materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+  materialDB = p.get< Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB");
 
   //! Energy unit of phi in eV
   energy_unit_in_eV = p.get<double>("Energy unit in eV");

@@ -4,13 +4,13 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(LCM_MaterialDatabase_h)
-#define LCM_MaterialDatabase_h
+#ifndef ALBANY_MATERIALDATABASE_HPP
+#define ALBANY_MATERIALDATABASE_HPP
 
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_Utils.hpp"
 
-namespace LCM {
+namespace Albany {
 
 /*!
  * \brief Centralized collection of material parameters
@@ -70,6 +70,24 @@ public:
   template<typename T>
   std::vector<T> getAllMatchingParams(std::string const& param_name);
 
+  //! Get a parameter for a particular node set
+  bool isNodeSetParam(std::string const& material_name, std::string const& param_name);
+
+  template<typename T>
+  T getNodeSetParam(std::string const& material_name, std::string const& param_name);
+
+  template<typename T>
+  T getNodeSetParam(std::string const& material_name, std::string const& param_name, T def_val);
+
+  //! Get a parameter for a particular side set
+  bool isSideSetParam(std::string const& material_name, std::string const& param_name);
+
+  template<typename T>
+  T getSideSetParam(std::string const& material_name, std::string const& param_name);
+
+  template<typename T>
+  T getSideSetParam(std::string const& material_name, std::string const& param_name, T def_val);
+
 private:
   template<typename T>
   void getAllMatchingParams_helper(std::string const& param_name,
@@ -83,13 +101,58 @@ private:
   Teuchos::ParameterList data_{"Material Parameters"};
   Teuchos::ParameterList* p_materials_list_{nullptr};
   Teuchos::ParameterList* p_eb_list_{nullptr};
+  Teuchos::ParameterList* p_ns_list_{nullptr};
+  Teuchos::ParameterList* p_ss_list_{nullptr};
 };
 
-Teuchos::RCP<MaterialDatabase>
+Teuchos::RCP<Albany::MaterialDatabase>
 createMaterialDatabase(
     Teuchos::RCP<Teuchos::ParameterList> const& params,
     Teuchos::RCP<Teuchos_Comm const>& commT);
 
-}  // namespace LCM
+}  // namespace Albany
+
+// Explicit instantiation declarations of functions above
+#define ALBANY_INST_DECL(T) \
+extern template T \
+Albany::MaterialDatabase:: \
+getParam<T>(std::string const& param_name); \
+extern template T \
+Albany::MaterialDatabase:: \
+getParam<T>(std::string const& param_name, T def_val); \
+extern template T \
+Albany::MaterialDatabase:: \
+getMaterialParam<T>(std::string const& material_name, std::string const& param_name); \
+extern template T \
+Albany::MaterialDatabase:: \
+getMaterialParam<T>(std::string const& material_name, std::string const& param_name, T def_val); \
+extern template T \
+Albany::MaterialDatabase:: \
+getElementBlockParam<T>(std::string const& material_name, std::string const& param_name); \
+extern template T \
+Albany::MaterialDatabase:: \
+getElementBlockParam<T>(std::string const& material_name, std::string const& param_name, T def_val); \
+extern template T \
+Albany::MaterialDatabase:: \
+getNodeSetParam<T>(std::string const& ns_name, std::string const& param_name); \
+extern template T \
+Albany::MaterialDatabase:: \
+getNodeSetParam<T>(std::string const& ns_name, std::string const& param_name, T def_val); \
+extern template T \
+Albany::MaterialDatabase:: \
+getSideSetParam<T>(std::string const& ss_name, std::string const& param_name); \
+extern template T \
+Albany::MaterialDatabase:: \
+getSideSetParam<T>(std::string const& ss_name, std::string const& param_name, T def_val); \
+extern template std::vector<T> \
+Albany::MaterialDatabase:: \
+getAllMatchingParams<T>(std::string const& param_name);
+
+ALBANY_INST_DECL(double)
+ALBANY_INST_DECL(int)
+ALBANY_INST_DECL(bool)
+ALBANY_INST_DECL(std::string)
+
+#undef ALBANY_INST_DECL
 
 #endif

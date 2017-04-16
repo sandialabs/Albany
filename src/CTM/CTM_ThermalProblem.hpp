@@ -4,7 +4,7 @@
 #include <Albany_ProblemUtils.hpp>
 #include <Albany_AbstractProblem.hpp>
 #include <PHAL_AlbanyTraits.hpp>
-#include <MaterialDatabase.h>
+#include <Albany::MaterialDatabase.h>
 #include <Phalanx.hpp>
 
 namespace CTM {
@@ -63,7 +63,7 @@ class ThermalProblem : public Albany::AbstractProblem {
 
     int num_dims;
     RCP<Albany::Layouts> dl;
-    RCP<LCM::MaterialDatabase> material_db_;
+    RCP<Albany::MaterialDatabase> material_db_;
     std::string materialFileName_;
     RCP<const Teuchos::Comm<int>> comm_;
 

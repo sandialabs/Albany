@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "QCAD_SchrodingerProblem.hpp"
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"

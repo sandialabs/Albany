@@ -11,7 +11,7 @@ template<typename EvalT, typename Traits>
 QCAD::MeshRegion<EvalT, Traits>::
 MeshRegion(std::string coordVecName, std::string weightsName,
 	   Teuchos::ParameterList& p, 
-	   const Teuchos::RCP<QCAD::MaterialDatabase> matDB,
+	   const Teuchos::RCP<Albany::MaterialDatabase> matDB,
 	   const Teuchos::RCP<Albany::Layouts>& dl_ )
 {
   materialDB = matDB;

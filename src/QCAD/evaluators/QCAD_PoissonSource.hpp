@@ -21,7 +21,7 @@
 
 #include "Albany_Layouts.hpp"
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 #include "QCAD_MeshRegion.hpp"
 #include "QCAD_EvaluatorTools.hpp"
 
@@ -244,7 +244,7 @@ namespace QCAD {
     std::vector< PHX::MDField<const ScalarT,Cell,QuadPoint> > eigenvector_Im;
     
     //! Material database
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+    Teuchos::RCP<Albany::MaterialDatabase> materialDB;
 
     //! Material database parameter values
     std::map<std::string, ScalarT > materialParams;
