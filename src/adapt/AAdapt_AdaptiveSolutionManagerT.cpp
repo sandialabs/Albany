@@ -249,9 +249,9 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
         std::endl << *adaptParams_);
   }
 
-  Teuchos::RCP<const Teuchos::ParameterList> valid_params =
-    adapter_->getValidAdapterParameters();
-  adaptParams_->validateParameters(*valid_params);
+//Teuchos::RCP<const Teuchos::ParameterList> valid_params =
+//  adapter_->getValidAdapterParameters();
+//adaptParams_->validateParameters(*valid_params);
 
   *out << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
       << " Mesh adapter has been initialized:\n"
