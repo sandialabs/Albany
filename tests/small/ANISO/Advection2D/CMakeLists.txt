@@ -5,14 +5,14 @@
 #*****************************************************************//
 
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAdapt.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputAdapt.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAdapt.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputAdapt.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/lshape.dmg
                ${CMAKE_CURRENT_BINARY_DIR}/lshape.dmg COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/lshape-serial0.smb
                ${CMAKE_CURRENT_BINARY_DIR}/lshape-serial0.smb COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/lshape-materials.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/lshape-materials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/lshape-materials.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/lshape-materials.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/lshape-assoc.txt
                ${CMAKE_CURRENT_BINARY_DIR}/lshape-assoc.txt COPYONLY)
 
@@ -22,5 +22,5 @@ set(testName "ANISO_${testRoot}")
 
 # 3. Create the test with this name and standard executable
 IF(ALBANY_IFPACK2)
-  add_test(NAME ${testName}_Lshape COMMAND ${SerialAlbanyT.exe} inputAdapt.xml)
+  add_test(NAME ${testName}_Lshape COMMAND ${SerialAlbanyT.exe} inputAdapt.yaml)
 ENDIF()
