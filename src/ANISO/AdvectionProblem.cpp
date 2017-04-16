@@ -21,7 +21,7 @@ Albany::AdvectionProblem::AdvectionProblem(
   num_dims_(num_dims) {
 
     std::string fname = params->get<std::string>("MaterialDB Filename");
-    material_db_ = Teuchos::rcp(new QCAD::MaterialDatabase(fname, commT));
+    material_db_ = Teuchos::rcp(new LCM::MaterialDatabase(fname, commT));
     this->setNumEquations(1);
     ANISO::expression_init();
 }
