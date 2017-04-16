@@ -14,14 +14,31 @@ ANONYMOUS:
     Response Functions: 
       Number: 0
     Adaptation: 
+      Equilibrate: false
       Remesh Strategy: Continuous
       Method: RPI Omega_h
-      Size Method: Hessian
-      Error Bound: 1.09999999999999994e-02
-      Maximum Size: 9.00000000000000022e-01
-      Overshoot Allowance: 2.79999999999999982e+00
-      Gradation Rate Limit: 1.00000000000000000e+00
-      Equilibrate: false
+      Omega_h:
+        Verbosity: Extra Stats
+        Max Length Allowed: 2.8
+        Metric:
+          Sources:
+            Only Source:
+              Type: Hessian
+              Tag Name: Solution
+              Knob: 1.1e-02
+          Limit Lenths: true
+          Max Length: 0.9
+          Limit Gradation: true
+          Max Gradation Rate: 0.5
+        Transfer:
+          Fields:
+            # despite this being a steady-state problem,
+            # both solution and residual have to be transferred
+            # just so they exist as APF field objects afterwards
+            Solution:
+              Type: Linear Interp
+            residual:
+              Type: Linear Interp
   Discretization: 
     Method: PUMI
     Workset Size: 10000
