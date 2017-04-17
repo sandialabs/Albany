@@ -2,11 +2,11 @@
 ---
 ANONYMOUS:
   Scaling: 
-    Scale: 1.0000000
+    Scale: 1.0000000e11
   Problem: 
     Name: Mechanics 3D
     Phalanx Graph Visualization Detail: 0
-    MaterialDB Filename: 'materials-single.yaml'
+    MaterialDB Filename: 'materials-single-steel.yaml'
     Solution Method: Transient Tempus
     Initial Condition: 
       Function: Constant
@@ -25,7 +25,7 @@ ANONYMOUS:
   Discretization: 
     Method: Ioss
     Exodus Input File Name: 'cube-single.g'
-    Exodus Output File Name: 'cube-single-tempus-nb.e'
+    Exodus Output File Name: 'cube-single-tempus-nb-steel.e'
     Exodus Solution Name: disp
     Exodus Residual Name: resid
     Separate Evaluators by Element Block: true
@@ -71,7 +71,7 @@ ANONYMOUS:
                 Forcing Term Method: Constant
                 Rescue Bad Newton Solve: true
                 Linear Solver:
-                  Tolerance: 1.0e-2
+                  Tolerance: 1.0e-5
             Line Search:
               Method: Full Step
               Full Step:
@@ -113,14 +113,14 @@ ANONYMOUS:
                 Aztec Solver: GMRES
                 Convergence Test: r0
                 Size of Krylov Subspace: 200
-                Output Frequency: 1
+                Output Frequency: 10
               Max Iterations: 100
-              Tolerance: 1e-2
+              Tolerance: 1e-5
           Belos:
             Solver Type: Block GMRES
             Solver Types:
               Block GMRES:
-                Convergence Tolerance: 1e-2
+                Convergence Tolerance: 1e-5
                 Output Frequency: 10
                 Output Style: 1
                 Verbosity: 33

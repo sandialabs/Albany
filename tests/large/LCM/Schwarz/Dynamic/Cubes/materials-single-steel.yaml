@@ -1,0 +1,19 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    fine: 
+      material: Fine
+  Materials: 
+    Fine: 
+      Material Model: 
+        Model Name: Linear Elastic
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 2.0e11
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.3000000
+      Density: 7800.00000000
+      Output Cauchy Stress: true
+...
