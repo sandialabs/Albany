@@ -83,9 +83,9 @@ ANONYMOUS:
               Output Information:
                 Error: true
                 Warning: true
-                Outer Iteration: false
+                Outer Iteration: true
                 Parameters: true
-                Details: false
+                Details: true
                 Linear Solver Details: true
                 Stepper Iteration: true
                 Stepper Details: true
