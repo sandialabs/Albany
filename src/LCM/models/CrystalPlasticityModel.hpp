@@ -43,7 +43,7 @@ public:
   using BaseKernel::ref_temperature_;
   using BaseKernel::heat_capacity_;
   using BaseKernel::density_;
-  using BaseKernel::temperature_;
+  // using BaseKernel::temperature_;
   
   using BaseKernel::setDependentField;
   using BaseKernel::setEvaluatedField;
@@ -221,6 +221,9 @@ private:
   ConstScalarField
   delta_time_;
 
+  ConstScalarField
+  temperature_;
+
   ///
   /// Evaluated MDFields
   ///
@@ -313,6 +316,9 @@ private:
 
   std::string const
   dt_string_ = "Delta Time";
+
+  std::string const
+  temperature_string_ = "Temperature";
 
   ///
   /// State Variables

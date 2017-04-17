@@ -118,11 +118,11 @@ CrystalPlasticityKernel(
 	minimizer_ = preader.getMinimizer();
   predictor_slip_ = preader.getPredictorSlip();
 
-  verbosity_ = p->get<int>("Verbosity", 0);
+  verbosity_ = preader.getVerbosity();
 
   write_data_file_ = p->get<bool>("Write Data File", false);
 
-  if (verbosity_ > 2) {
+  if (verbosity_ >= CP::Verbosity::HIGH) {
     std::cout << ">>> in cp constructor\n";
     std::cout << ">>> parameter list:\n" << *p << std::endl;
   }
@@ -138,8 +138,8 @@ CrystalPlasticityKernel(
   c44_ = e_list.get<RealType>("C44");
   c11_temperature_coeff_ = e_list.get<RealType>("M11", NAN);
   c12_temperature_coeff_ = e_list.get<RealType>("M12", NAN);
-  c12_temperature_coeff_ = e_list.get<RealType>("M13", NAN);
-  c12_temperature_coeff_ = e_list.get<RealType>("M33", NAN);
+  c13_temperature_coeff_ = e_list.get<RealType>("M13", c12_temperature_coeff_);
+  c33_temperature_coeff_ = e_list.get<RealType>("M33", c11_temperature_coeff_);
   c44_temperature_coeff_ = e_list.get<RealType>("M44", NAN);
   reference_temperature_ = e_list.get<RealType>("Reference Temperature", NAN);
 
@@ -155,7 +155,7 @@ CrystalPlasticityKernel(
 
   CP::computeElasticityTensor(c11_, c12_, c13_, c33_, c44_, c66_, C_unrotated_);
 
-  if (verbosity_ > 2) {
+  if (verbosity_ >= CP::Verbosity::HIGH) {
     // print elasticity tensor
     std::cout << ">>> Unrotated C :" << std::endl << C_unrotated_ << std::endl;
   }
@@ -249,13 +249,13 @@ CrystalPlasticityKernel(
     slip_family.phardening_parameters_->createLatentMatrix(
       slip_family, slip_systems_); 
 
-    if (verbosity_ > 2) {
+    if (verbosity_ >= CP::Verbosity::HIGH) {
       std::cout << slip_family.latent_matrix_ << std::endl;
     }
 
     slip_family.slip_system_indices_.set_dimension(slip_family.num_slip_sys_);
 
-    if (verbosity_ > 2) {
+    if (verbosity_ >= CP::Verbosity::HIGH) {
       std::cout << "slip system indices";
       std::cout << slip_family.slip_system_indices_ << std::endl;
     }
@@ -284,7 +284,10 @@ CrystalPlasticityKernel(
   setEvaluatedField(residual_string_, dl->qp_scalar);
   setEvaluatedField(residual_iter_string_, dl->qp_scalar);
 
+  std::cout << "have_temperature_: " << have_temperature_; 
+
   if (have_temperature_) {
+    setDependentField(temperature_string_, dl->qp_scalar);
     setEvaluatedField(source_string_, dl->qp_scalar);
   }
 
@@ -422,7 +425,7 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(
     index_element_ = -1;
   }
   
-  if(verbosity_ > 2) {
+  if(verbosity_ >= CP::Verbosity::HIGH) {
     std::cout << ">>> in cp initialize compute state\n";
   }
 
@@ -444,6 +447,9 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(
     time_ = *dep_fields[time_string_];
   }
   delta_time_ = *dep_fields[dt_string_];
+  if (have_temperature_) {
+    temperature_ = *dep_fields[temperature_string_];
+  }
 
   //
   // extract evaluated MDFields
@@ -607,7 +613,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
     CP::computeElasticityTensor(c11, c12, c13, c33, c44, c66, C_unrotated);
 
-    if (verbosity_ > 2) {
+    if (verbosity_ >= CP::Verbosity::HIGH) {
       std::cout << "tlocal: " << tlocal << std::endl;
       std::cout << "c11, c12, c44: " << c11 << c12 << c44 << std::endl;
     }
@@ -694,24 +700,23 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
         }
 
         minitensor::Tensor<RealType, CP::MAX_SLIP>
-        A(size_problem);
+        U_svd(size_problem);
         minitensor::Tensor<RealType, CP::MAX_SLIP>
-        B(size_problem);
+        S_svd(size_problem);
         minitensor::Tensor<RealType, CP::MAX_SLIP>
-        C(size_problem);
+        V_svd(size_problem);
 
-        boost::tie(A, B, C) = minitensor::svd(dyad_matrix);
+        boost::tie(U_svd, S_svd, V_svd) = minitensor::svd(dyad_matrix);
 
         for (int s(0); s < num_slip_; ++s)
         {
-          B(s, s) = B(s, s) > 1.0e-12 ? 1.0 / B(s,s) : 0.0;
+          S_svd(s, s) = S_svd(s, s) > 1.0e-12 ? 1.0 / S_svd(s,s) : 0.0;
         }
 
         minitensor::Tensor<RealType, CP::MAX_SLIP>
         Pinv(num_slip_);
 
-        // Pinv = C * B * minitensor::transpose(A);
-        Pinv = C * B * B * minitensor::transpose(C);
+        Pinv = V_svd * S_svd * S_svd * minitensor::transpose(V_svd);
 
         minitensor::Tensor<RealType, CP::MAX_DIM> const
         inv_F = minitensor::inverse(F_n);
@@ -729,81 +734,152 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
         L_vec.fill(minitensor::Filler::ZEROS);
 
+        int const
+        num_p = 100;
+
+        RealType const
+        inc_portion = 1.0 / num_p;
+
+        minitensor::Vector<ScalarT, CP::MAX_SLIP>
+        slip_np1_old(num_slip_);
+
+        slip_np1_old.fill(minitensor::ZEROS);
+
         RealType
-        portion_L = 0.5;
+        max_power = 0.0;
 
-        for (int i = 0; i < num_dims_; ++i)
+        for (int p = 1; p < num_p; ++p)
         {
-          for (int j = 0; j < num_dims_; ++j)
+
+          RealType const
+          portion_L = p * inc_portion;
+
+          for (int i = 0; i < num_dims_; ++i)
           {
-            L_vec(i * num_dims_ + j) = portion_L * Sacado::ScalarValue<ScalarT>::eval(L(i, j));
+            for (int j = 0; j < num_dims_; ++j)
+            {
+              L_vec(i * num_dims_ + j) = portion_L * Sacado::ScalarValue<ScalarT>::eval(L(i, j));
+            }
+          }
+
+          minitensor::Vector<RealType, CP::MAX_SLIP>
+          dm_lv = minitensor::transpose(dyad_matrix) * L_vec;
+
+          minitensor::Vector<RealType, CP::MAX_SLIP>
+          rates_slip_trial = Pinv * dm_lv;
+
+          for (int s(0); s < num_slip_; ++s)
+          {
+            slip_np1[s] = slip_n[s] + dt_ * rates_slip_trial[s];
+          }
+
+          if (verbosity_ == CP::Verbosity::DEBUG)
+          {
+            std::cout << "P^T * L" << std::endl;
+            std::cout << std::setprecision(4) << dm_lv << std::endl;
+
+            std::cout << "Trial slip rates" << std::endl;
+            std::cout << std::setprecision(4) << rates_slip_trial << std::endl;
+
+            std::cout << "F_n" << std::endl;
+            std::cout << std::setprecision(4) << F_n << std::endl;
+            std::cout << "F_np1" << std::endl;
+            std::cout << std::setprecision(4) << F_np1 << std::endl;
+            std::cout << "dF" << std::endl;
+            std::cout << std::setprecision(4) << F_np1 * inv_F << std::endl;
+            std::cout << "L_vec" << std::endl;
+            std::cout << std::setprecision(4) << L_vec << std::endl;
+            std::cout << "Pinv" << std::endl;
+            std::cout << std::setprecision(4) << Pinv << std::endl;
+            std::cout << "exp(L * dt_) * F_n" << std::endl;
+            std::cout << std::setprecision(4) << minitensor::exp(dt_ * L) * F_n << std::endl;
+          }
+
+          minitensor::Tensor<ScalarT, CP::MAX_DIM>
+          Lp_trial(num_dims_);
+          Lp_trial.fill(minitensor::ZEROS);
+
+          minitensor::Vector<RealType, CP::MAX_SLIP>
+          Lp_vec = dyad_matrix * rates_slip_trial;
+
+          for (int i = 0; i < num_dims_; ++i)
+          {
+            for (int j = 0; j < num_dims_; ++j)
+            {
+              Lp_trial(i, j) = Lp_vec(i * num_dims_ + j);
+            }
+          }
+
+          if (verbosity_ == CP::Verbosity::DEBUG)
+          {
+            std::cout << "L" << std::endl;
+            std::cout << std::setprecision(4) << L << std::endl;
+
+            std::cout << "Lp_trial" << std::endl;
+            std::cout << std::setprecision(4) << Lp_trial << std::endl;
+
+            std::cout << "exp(Lp * dt_)" << std::endl;
+            std::cout << std::setprecision(4) << minitensor::exp(dt_ * Lp_trial)<< std::endl;
+          }
+
+          // Compute Lp_np1, and Fp_np1
+          CP::applySlipIncrement<CP::MAX_DIM, CP::MAX_SLIP, ScalarT>(
+              element_slip_systems,
+              dt_,
+              slip_n,
+              slip_np1,
+              Fp_n,
+              Lp_trial,
+              Fp_np1);
+         
+          bool
+          failed{false};
+
+          minitensor::Tensor<ScalarT, CP::MAX_DIM>
+          sigma_np1(num_dims_);
+
+          minitensor::Tensor<ScalarT, CP::MAX_DIM>
+          S_np1(num_dims_);
+
+          // Compute sigma_np1, S_np1, and shear_np1
+          CP::computeStress<CP::MAX_DIM, CP::MAX_SLIP, ScalarT>(
+              element_slip_systems,
+              C,
+              F_np1,
+              Fp_np1,
+              sigma_np1,
+              S_np1,
+              shear_np1,
+              failed);
+
+          // Ensure that the stress was calculated properly
+          if (failed == true) {
+            nox_status_test_->status_ = NOX::StatusTest::Failed;
+            nox_status_test_->status_message_ = "Failed on initial guess";
+            return;
+          }
+
+          minitensor::Tensor<ScalarT, CP::MAX_DIM> const
+          stress_intermediate = S_np1; //FIXME: push S_np1 forward to intermediate configuration
+
+          RealType const
+          power_plastic = Sacado::ScalarValue<ScalarT>::eval(
+              minitensor::dotdot(Lp_trial, stress_intermediate));
+
+          if (!(power_plastic > max_power))
+          {
+            slip_np1 = slip_np1_old;
+          } else
+          {
+            slip_np1_old = slip_np1;
+            max_power = power_plastic;
+          }
+
+          if (verbosity_ == CP::Verbosity::DEBUG)
+          {
+            std::cout << portion_L << " " << power_plastic <<std::endl;
           }
         }
-
-        minitensor::Vector<RealType, CP::MAX_SLIP>
-        dm_lv = minitensor::transpose(dyad_matrix) * L_vec;
-
-        minitensor::Vector<RealType, CP::MAX_SLIP>
-        rates_slip_trial = Pinv * dm_lv;
-
-        for (int s(0); s < num_slip_; ++s)
-        {
-          slip_np1[s] = slip_n[s] + dt_ * rates_slip_trial[s];
-        }
-
-        if (verbosity_ > 4)
-        {
-          std::cout << "P^T * L" << std::endl;
-          std::cout << std::setprecision(4) << dm_lv << std::endl;
-
-          std::cout << "Trial slip rates" << std::endl;
-          std::cout << std::setprecision(4) << rates_slip_trial << std::endl;
-
-          std::cout << "F_n" << std::endl;
-          std::cout << std::setprecision(4) << F_n << std::endl;
-          std::cout << "F_np1" << std::endl;
-          std::cout << std::setprecision(4) << F_np1 << std::endl;
-          std::cout << "dF" << std::endl;
-          std::cout << std::setprecision(4) << F_np1 * inv_F << std::endl;
-          std::cout << "L_vec" << std::endl;
-          std::cout << std::setprecision(4) << L_vec << std::endl;
-          std::cout << "Pinv" << std::endl;
-          std::cout << std::setprecision(4) << Pinv << std::endl;
-          std::cout << "exp(L * dt_) * F_n" << std::endl;
-          std::cout << std::setprecision(4) << minitensor::exp(dt_ * L) * F_n << std::endl;
-        }
-
-        minitensor::Tensor<ScalarT, CP::MAX_DIM>
-        Lp_trial(num_dims_);
-        Lp_trial.fill(minitensor::Filler::ZEROS);
-        // for (int s(0); s < num_slip_; ++s)
-        // {
-        //   Lp_trial += rates_slip_trial[s] * element_slip_systems.at(s).projector_;
-        // }
-
-        minitensor::Vector<RealType, CP::MAX_SLIP>
-        Lp_vec = dyad_matrix * rates_slip_trial;
-
-        for (int i = 0; i < num_dims_; ++i)
-        {
-          for (int j = 0; j < num_dims_; ++j)
-          {
-            Lp_trial(i, j) = Lp_vec(i * num_dims_ + j);
-          }
-        }
-
-        if (verbosity_ > 4)
-        {
-          std::cout << "L" << std::endl;
-          std::cout << std::setprecision(4) << L << std::endl;
-
-          std::cout << "Lp_trial" << std::endl;
-          std::cout << std::setprecision(4) << Lp_trial << std::endl;
-
-          std::cout << "exp(Lp * dt_)" << std::endl;
-          std::cout << std::setprecision(4) << minitensor::exp(dt_ * Lp_trial)<< std::endl;
-        }
-
       } break;
 
       default:
@@ -813,7 +889,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
     }
   }
 
-  if(verbosity_ > 2) {
+  if(verbosity_ >= CP::Verbosity::HIGH) {
     for (int s(0); s < num_slip_; ++s) {
       std::cout << "Slip on system " << s << " before predictor: ";
       std::cout << slip_n[s] << std::endl;
