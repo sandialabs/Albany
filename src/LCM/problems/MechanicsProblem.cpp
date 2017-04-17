@@ -78,6 +78,14 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   std::string& method = params->get("Name", "Mechanics ");
   *out << "Problem Name = " << method << '\n';
 
+  std::string& sol_method = params->get("Solution Method", "Steady"); 
+  *out << "Solution Method = " << sol_method << '\n';
+
+  if (sol_method == "Transient Tempus") 
+    dynamic_tempus_ = true;
+  else
+    dynamic_tempus_ = false; 
+ 
   // Are any source functions specified?
   have_source_ = params->isSublist("Source Functions");
 
