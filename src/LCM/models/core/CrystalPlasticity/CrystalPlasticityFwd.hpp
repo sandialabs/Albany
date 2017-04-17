@@ -68,7 +68,8 @@ enum class Verbosity
     LOW = 2,
     MEDIUM = 3,
     HIGH = 4,
-    DEBUG = 5
+    DEBUG = 5,
+    EXTREME = 6
 };
 
 struct FlowParameterBase;

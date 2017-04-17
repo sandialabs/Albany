@@ -203,7 +203,7 @@ private:
   ///
   /// Output options 
   ///
-  int 
+  CP::Verbosity 
   verbosity_;
 
   bool

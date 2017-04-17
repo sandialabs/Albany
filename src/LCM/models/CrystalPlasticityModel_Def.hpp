@@ -418,7 +418,7 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(
     FieldMap<const ScalarT> & dep_fields,
     FieldMap<ScalarT> & eval_fields)
 {
-  if(verbosity_ == 99) {
+  if(verbosity_ == CP::Verbosity::EXTREME) {
     index_element_ = workset.wsIndex;
   }
   else{
@@ -743,7 +743,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
         minitensor::Vector<ScalarT, CP::MAX_SLIP>
         slip_np1_old(num_slip_);
 
-        slip_np1_old.fill(minitensor::ZEROS);
+        slip_np1_old.fill(minitensor::Filler::ZEROS);
 
         RealType
         max_power = 0.0;
@@ -797,7 +797,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
           minitensor::Tensor<ScalarT, CP::MAX_DIM>
           Lp_trial(num_dims_);
-          Lp_trial.fill(minitensor::ZEROS);
+          Lp_trial.fill(minitensor::Filler::ZEROS);
 
           minitensor::Vector<RealType, CP::MAX_SLIP>
           Lp_vec = dyad_matrix * rates_slip_trial;
@@ -924,7 +924,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   
   if (dt_ == 0.0)
   {
-    if (verbosity_ == 99) {
+    if (verbosity_ == CP::Verbosity::EXTREME) {
       std::ofstream outfile;
       std::stringstream ss;
       ss << "slips_" << index_element_
