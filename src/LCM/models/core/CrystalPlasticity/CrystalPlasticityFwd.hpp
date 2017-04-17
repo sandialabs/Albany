@@ -61,6 +61,16 @@ enum class PredictorSlip
   SOLVE = 3
 };
 
+enum class Verbosity
+{
+    UNDEFINED = 0,
+    NONE = 1,
+    LOW = 2,
+    MEDIUM = 3,
+    HIGH = 4,
+    DEBUG = 5
+};
+
 struct FlowParameterBase;
 
 template<minitensor::Index NumDimT, minitensor::Index NumSlipT>

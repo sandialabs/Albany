@@ -45,6 +45,9 @@ namespace CP
     SlipFamily<CP::MAX_DIM, CP::MAX_SLIP>
     getSlipFamily(int index);
 
+    Verbosity
+    getVerbosity() const;
+
   private:
 
     Teuchos::ParameterList* p_;

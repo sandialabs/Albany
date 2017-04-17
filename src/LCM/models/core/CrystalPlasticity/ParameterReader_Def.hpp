@@ -13,6 +13,23 @@ CP::ParameterReader<EvalT, Traits>::ParameterReader(Teuchos::ParameterList *p)
 }
 
 template<typename EvalT, typename Traits>
+CP::Verbosity
+CP::ParameterReader<EvalT, Traits>::getVerbosity() const
+{
+  static utility::ParameterEnum<CP::Verbosity> const vmap(
+    "Verbosity", CP::Verbosity::NONE,
+    {
+      {"None", CP::Verbosity::NONE},
+      {"Low", CP::Verbosity::LOW},
+      {"Medium", CP::Verbosity::MEDIUM},
+      {"High", CP::Verbosity::HIGH},
+      {"Debug", CP::Verbosity::DEBUG},
+    });
+  
+  return vmap.get(p_);
+}
+
+template<typename EvalT, typename Traits>
 CP::IntegrationScheme
 CP::ParameterReader<EvalT, Traits>::getIntegrationScheme() const
 {
