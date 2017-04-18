@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
 //
 // Factory returning a pointer to a hardening paremeter object
 //
@@ -112,7 +111,8 @@ harden(
   minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
   minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
   minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
-  minitensor::Vector<ArgT, NumSlipT> & slip_resistance)
+  minitensor::Vector<ArgT, NumSlipT> & slip_resistance,
+  bool & failed)
 {
   using Params = LinearMinusRecoveryHardeningParameters<NumDimT, NumSlipT>;
 
@@ -227,7 +227,8 @@ harden(
   minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
   minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
   minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
-  minitensor::Vector<ArgT, NumSlipT> & slip_resistance)
+  minitensor::Vector<ArgT, NumSlipT> & slip_resistance,
+  bool & failed)
 {
   using Params = SaturationHardeningParameters<NumDimT, NumSlipT>;
 
@@ -367,6 +368,18 @@ createLatentMatrix(
     }
   }
 
+  slip_family.aux_matrix_.set_dimension(slip_family.num_slip_sys_);
+  slip_family.aux_matrix_.fill(minitensor::Filler::ZEROS);
+
+  for (minitensor::Index ss_index_i(0); ss_index_i < slip_family.num_slip_sys_; ++ss_index_i)
+  {
+    for (minitensor::Index ss_index_j(0); ss_index_j < slip_family.num_slip_sys_; ++ss_index_j)
+    {
+      slip_family.aux_matrix_(ss_index_i, ss_index_j) =
+	std::sqrt(1.0 - std::pow(slip_family.latent_matrix_(ss_index_i, ss_index_j), 2));
+    }
+  }
+
   return;
 }
 
@@ -383,7 +396,8 @@ harden(
   minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
   minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
   minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
-  minitensor::Vector<ArgT, NumSlipT> & slip_resistance)
+  minitensor::Vector<ArgT, NumSlipT> & slip_resistance,
+  bool & failed)
 {
   using Params = DislocationDensityHardeningParameters<NumDimT, NumSlipT>;
 
@@ -409,18 +423,6 @@ harden(
 
   minitensor::Vector<ArgT, NumSlipT>
   densities_forest = slip_family.latent_matrix_ * state_hardening_np1;
-
-  minitensor::Tensor<RealType, NumSlipT>
-  aux_matrix(num_slip_sys);
-
-  for (minitensor::Index ss_index_i(0); ss_index_i < num_slip_sys; ++ss_index_i)
-  {
-    for (minitensor::Index ss_index_j(0); ss_index_j < num_slip_sys; ++ss_index_j)
-    {
-      aux_matrix(ss_index_i, ss_index_j) =
-          std::sqrt(1.0 - std::pow(slip_family.latent_matrix_(ss_index_i, ss_index_j), 2));
-    }
-  }
 
   //
   // Update dislocation densities
@@ -452,6 +454,11 @@ harden(
     auto const
     ss_index_global = slip_family.slip_system_indices_[ss_index];
 
+    if (densities_forest[ss_index] < 0.0) {
+      failed = true;
+      return;
+    }
+
     ArgT const
     generation = factor_generation * std::sqrt(densities_forest[ss_index]);
 
@@ -467,6 +474,7 @@ harden(
     }
     else
     {
+      // DJL this probably causes problems with AD types, sets derivative information to zero
       driver_hardening = 0.0;
     }
 
@@ -475,13 +483,18 @@ harden(
   }
 
   minitensor::Vector<ArgT, NumSlipT> const
-  densities_parallel = aux_matrix * state_hardening_np1;
+  densities_parallel = slip_family.aux_matrix_ * state_hardening_np1;
 
   for (minitensor::Index ss_index(0); ss_index < num_slip_sys; ++ss_index)
   {
 
     auto const
     ss_index_global = slip_family.slip_system_indices_[ss_index];
+
+    if (densities_parallel[ss_index] < 0.0) {
+      failed = true;
+      return;
+    }
 
     // Compute the slip resistance
     slip_resistance[ss_index_global] = 
@@ -519,7 +532,8 @@ harden(
   minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
   minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
   minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
-  minitensor::Vector<ArgT, NumSlipT> & slip_resistance)
+  minitensor::Vector<ArgT, NumSlipT> & slip_resistance,
+  bool & failed)
 {
   minitensor::Index const
   num_slip_sys = slip_family.num_slip_sys_;

@@ -111,7 +111,8 @@ CP::updateHardness(
     minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
     minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
     minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    minitensor::Vector<ArgT, NumSlipT> & slip_resistance)
+    minitensor::Vector<ArgT, NumSlipT> & slip_resistance,
+    bool & failed)
 {
   for (unsigned int sf_index(0); sf_index < slip_families.size(); ++ sf_index)
   {
@@ -133,7 +134,8 @@ CP::updateHardness(
       rate_slip, 
       state_hardening_n, 
       state_hardening_np1, 
-      slip_resistance);
+      slip_resistance,
+      failed);
   }
 
   return;
