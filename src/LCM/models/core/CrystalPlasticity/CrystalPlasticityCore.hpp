@@ -74,6 +74,9 @@ public:
   minitensor::Tensor<RealType, NumSlipT>
   latent_matrix_;
 
+  minitensor::Tensor<RealType, NumSlipT>
+  aux_matrix_;
+
 private:
 
   HardeningLawType
@@ -212,7 +215,8 @@ updateHardness(
     minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
     minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
     minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    minitensor::Vector<ArgT, NumSlipT> & slip_resistance);
+    minitensor::Vector<ArgT, NumSlipT> & slip_resistance,
+    bool & failed);
 
 
 

@@ -157,7 +157,14 @@ CP::ResidualSlipNLS<NumDimT, NumSlipT, EvalT>::gradient(
       rate_slip,
       state_hardening_n_,
       state_hardening_np1,
-      slip_resistance);
+      slip_resistance,
+      failed);
+
+  // Ensure that the hardening law was calculated properly
+  if (failed == true) {
+    this->set_failed("Failed on hardness");
+    return residual;
+  }
 
   // Compute slips
   CP::updateSlip<NumDimT, NumSlipT, T>(
@@ -483,7 +490,14 @@ CP::ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(
       rate_slip,
       state_hardening_n_,
       state_hardening_computed,
-      slip_resistance);
+      slip_resistance,
+      failed);
+
+  // Ensure that the hardening law was calculated properly
+  if (failed == true) {
+    this->set_failed("Failed on hardness");
+    return residual;
+  }
 
   // Compute slips
   CP::updateSlip<NumDimT, NumSlipT, T>(
