@@ -1438,12 +1438,6 @@ computeGlobalResidual(const double current_time,
     const Teuchos::Array<ParamVec>& p,
     Epetra_Vector& f)
 {
-  if (scale != 1.0) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,
-        Teuchos::Exceptions::InvalidParameter,
-        "Error: Jacobian/Residual Scaling does not work with Albany executable! "
-        << "To use scaling, please re-run with AlbanyT executable. \n");
-  }
   // Scatter x and xdot to the overlapped distribution
   solMgr->scatterX(x, xdot, xdotdot);
 
@@ -1839,12 +1833,6 @@ computeGlobalJacobian(const double alpha,
     Epetra_Vector* f,
     Epetra_CrsMatrix& jac)
 {
-  if (scale != 1.0) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,
-        Teuchos::Exceptions::InvalidParameter,
-        "Error: Jacobian/Residual Scaling does not work with Albany executable! "
-        << "To use scaling, please re-run with AlbanyT executable. \n");
-  }
   // Scatter x and xdot to the overlapped distribution
   solMgr->scatterX(x, xdot, xdotdot);
 
