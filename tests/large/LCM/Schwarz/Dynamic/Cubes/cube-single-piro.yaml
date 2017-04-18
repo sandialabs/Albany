@@ -2,7 +2,7 @@
 ---
 ANONYMOUS:
   Scaling: 
-    Scale: 1.0000000
+    Scale: 1.0000000e11
   Problem: 
     Name: Mechanics 3D
     Phalanx Graph Visualization Detail: 0
@@ -26,15 +26,15 @@ ANONYMOUS:
   Discretization: 
     Method: Ioss
     Exodus Input File Name: 'cube-single.g'
-    Exodus Output File Name: 'cube-single-nb.e'
+    Exodus Output File Name: 'cube-single-piro.e'
     Exodus Solution Name: disp
     Exodus Residual Name: resid
     Separate Evaluators by Element Block: true
     Number Of Time Derivatives: 2
-    Exodus Write Interval: 100
+    Exodus Write Interval: 10
   Piro: 
     Newmark: 
-      Num Time Steps: 10000
+      Num Time Steps: 1000
       Final Time: 10.00000000
       Initial Time: 0.00000000e+00
       NOX: 
@@ -141,7 +141,7 @@ ANONYMOUS:
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
-              Linear Solver Type: Belos
+              Linear Solver Type: AztecOO
               Linear Solver Types: 
                 AztecOO: 
                   Forward Solve: 

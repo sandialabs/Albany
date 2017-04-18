@@ -6,7 +6,7 @@ ANONYMOUS:
   Problem: 
     Name: Mechanics 3D
     Phalanx Graph Visualization Detail: 0
-    MaterialDB Filename: 'materials-single-steel.yaml'
+    MaterialDB Filename: 'materials-single.yaml'
     Solution Method: Transient Tempus
     Initial Condition: 
       Function: Constant
@@ -25,7 +25,7 @@ ANONYMOUS:
   Discretization: 
     Method: Ioss
     Exodus Input File Name: 'cube-single.g'
-    Exodus Output File Name: 'cube-single-tempus-nb-steel.e'
+    Exodus Output File Name: 'cube-single-tempus.e'
     Exodus Solution Name: disp
     Exodus Residual Name: resid
     Separate Evaluators by Element Block: true
@@ -47,7 +47,7 @@ ANONYMOUS:
           Final Time: 10.0
           Initial Time Index: 0
           Final Time Index: 1000000
-          Initial Time Step: 0.001
+          Initial Time Step: 0.01
           Maximum Absolute Error: 1.0e-8
           Maximum Relative Error: 1.0e-8
           Integrator Step Type: Constant
@@ -58,9 +58,10 @@ ANONYMOUS:
           Maximum Number of Stepper Failures: 10
           Maximum Number of Consecutive Stepper Failures: 5
       Tempus Stepper:
-        Stepper Type: 'HHT-Alpha'
-        HHT-Alpha Parameters:
-          Scheme Name: Newmark Beta Average Acceleration
+        Stepper Type: 'Newmark Beta'
+        Newmark Beta Parameters:
+          Beta: 0.25
+          Gamma: 0.50
         Predictor Name: 'None'
         Solver Name: Demo Solver
         Demo Solver:
