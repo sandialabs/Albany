@@ -2575,9 +2575,10 @@ Albany::MechanicsProblem::constructEvaluators(
   }
 
   // Transport of the temperature field
-  if (have_temperature_eq_ && !surface_element) {
-    Teuchos::RCP<Teuchos::ParameterList> p =
-        Teuchos::rcp(new Teuchos::ParameterList("Temperature Residual"));
+  if (have_temperature_eq_ && !surface_element)
+  {
+    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+        new Teuchos::ParameterList("Temperature Residual"));
 
     // Input
     p->set<std::string>("Scalar Variable Name", "Temperature");
@@ -2610,7 +2611,8 @@ Albany::MechanicsProblem::constructEvaluators(
     p->set<std::string>("Diffusivity Name", "Thermal Diffusivity");
 
     // Source
-    if ((have_mech_ || have_mech_eq_) && material_model_name == "J2") {
+    // TODO: Make this more general
+    if ((have_mech_ || have_mech_eq_) && (material_model_name == "J2" || material_model_name == "CrystalPlasticity")) {
       p->set<bool>("Have Source", true);
       p->set<std::string>("Source Name", mech_source);
     }
