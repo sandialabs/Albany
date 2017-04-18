@@ -25,7 +25,7 @@ public:
 
   using ScalarT = typename EvalT::ScalarT;
 	using ValueT = typename Sacado::ValueType<ScalarT>::type;
-	
+
   using BaseKernel = ParallelKernel<EvalT, Traits>;
   using ScalarField = typename BaseKernel::ScalarField;
   using ConstScalarField = typename BaseKernel::ConstScalarField;
@@ -49,6 +49,8 @@ public:
   using BaseKernel::setEvaluatedField;
   using BaseKernel::addStateVariable;
   using BaseKernel::extractEvaluatedFieldArray;
+
+  using SSV = Sacado::ScalarValue<ScalarT>;
 
   ///
   /// Constructor
