@@ -1317,6 +1317,20 @@ IF (NOT ALBANY_YAML)
   MESSAGE("-- Looking for YAML in Teuchos: NOT found.")
 ENDIF()
 
+# Check for the presence of MiniTensor for LCM, SCOREC, and ATO builds.
+# Lets catch this missing option at Albany configure time and not during the compile.
+#
+SET(ALBANY_MINITENSOR FALSE)
+IF (EXISTS "${Trilinos_INCLUDE_DIRS}/MiniTensor.h")
+    MESSAGE("-- Looking for MiniTensor package in Trilinos: Found ...")
+    SET(ALBANY_MINITENSOR TRUE)
+ENDIF()
+IF (NOT ALBANY_MINITENSOR)
+  IF (ENABLE_LCM OR ENABLE_ATO OR ENABLE_SCOREC)
+    MESSAGE(FATAL_ERROR "Trilinos was not built with MiniTensor enabled - it is required for LCM, SCOREC, and ATO.")
+  ENDIF()
+ENDIF()
+
 ## End of CMake options to Albany
 
 add_subdirectory(src)

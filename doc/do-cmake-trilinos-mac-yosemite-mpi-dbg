@@ -20,10 +20,10 @@ cmake \
     -D SCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON \
     -D CMAKE_BUILD_TYPE:STRING=DEBUG \
     -D Trilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
-    -D CMAKE_CXX_FLAGS:STRING="-g -O0 -DNDEBUG  -Wno-inconsistent-missing-override" \
-    -D Trilinos_CXX11_FLAGS:STRING="-std=c++11 -DNDEBUG" \
-    -D CMAKE_C_FLAGS:STRING="-g -O0 -DNDEBUG" \
-    -D CMAKE_Fortran_FLAGS:STRING="-g -O0 -Wa,-q -DNDEBUG" \
+    -D CMAKE_CXX_FLAGS:STRING="-g -O0 -Wno-inconsistent-missing-override" \
+    -D Trilinos_CXX11_FLAGS:STRING="-std=c++11" \
+    -D CMAKE_C_FLAGS:STRING="-g -O0 " \
+    -D CMAKE_Fortran_FLAGS:STRING="-g -O0 -Wa,-q" \
     -D Rythmos_ENABLE_DEBUG:BOOL=ON \
     -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
     -D Tpetra_INST_INT_LONG_LONG:BOOL=ON \
@@ -68,13 +68,13 @@ cmake \
 	-D BoostAlbLib_INCLUDE_DIRS:PATH=$BOOST_DIR/include \
 	-D BoostAlbLib_LIBRARY_DIRS:PATH=$BOOST_DIR/lib \
 \
-    -D CMAKE_MACOSX_RPATH:BOOL=ON \
-    -D CMAKE_INSTALL_RPATH:PATH=${MPI_BASE_DIR}/lib \
-\
     -D TPL_Netcdf_PARALLEL:BOOL=ON \
     -D TPL_ENABLE_Netcdf:STRING=ON \
 	-D Netcdf_INCLUDE_DIRS:PATH=$NETCDF/include \
 	-D Netcdf_LIBRARY_DIRS:PATH=$NETCDF/lib \
+	-D TPL_ENABLE_Pnetcdf:BOOL=ON \
+	-D Pnetcdf_INCLUDE_DIRS:PATH=$NETCDF/include \
+	-D Pnetcdf_LIBRARY_DIRS=$NETCDF/lib \
 \
     -D TPL_ENABLE_HDF5:STRING=ON \
     -D HDF5_INCLUDE_DIRS:PATH="${HDFDIR}/include" \
@@ -83,6 +83,10 @@ cmake \
     -D TPL_ENABLE_Zlib:STRING=ON \
     -D Zlib_INCLUDE_DIRS:PATH=$LIB_DIR/include \
     -D TPL_Zlib_LIBRARY_DIRS:PATH="$LIB_DIR/lib" \
+\
+	-D TPL_ENABLE_yaml-cpp:BOOL=ON \
+	-D yaml-cpp_INCLUDE_DIRS:PATH=$LIB_DIR/include \
+	-D yaml-cpp_LIBRARY_DIRS:PATH=$LIB_DIR/lib \
 \
     -D TPL_ENABLE_SuperLU:STRING=ON \
     -D SuperLU_INCLUDE_DIRS:STRING="${SUPERLUDIR}/include" \
@@ -99,10 +103,13 @@ cmake \
     -D ParMETIS_INCLUDE_DIRS:PATH="${PARMETISDIR}/include" \
     -D ParMETIS_LIBRARY_DIRS:PATH="${PARMETISDIR}/lib" \
 \
-	-D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR \
-    -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L${HDFDIR}/lib -L${LIB_DIR}/lib -lnetcdf -lhdf5_hl -lhdf5 -lz" \
+    -D CMAKE_MACOSX_RPATH:BOOL=ON \
+    -D CMAKE_INSTALL_RPATH:PATH=${MPI_BASE_DIR}/lib \
 \
-    -D Trilinos_ENABLE_Moertel:BOOL=OFF \
+	-D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR \
+    -D Trilinos_EXTRA_LINK_FLAGS:STRING="-L${LIB_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -Wl,-rpath,${LIB_DIR}/lib" \
+\
+    -D Trilinos_ENABLE_Moertel:BOOL=ON \
     -D Moertel_ENABLE_EXAMPLES:BOOL=OFF \
     -D Moertel_ENABLE_Morkon:BOOL=OFF \
     -D Trilinos_ENABLE_TriKota:BOOL=OFF \
@@ -110,6 +117,8 @@ cmake \
     -D Trilinos_ENABLE_SECONDARY_TESTED_CODE=OFF \
     -D Trilinos_ENABLE_Amesos2:BOOL=ON \
     -D Amesos2_ENABLE_KLU2:BOOL=ON \
+    -D Trilinos_ENABLE_STKSearch:BOOL=ON \
+    -D Trilinos_ENABLE_MiniTensor:BOOL=ON \
 \
 $EXTRA_ARGS \
 ${TRILINOS_HOME}
