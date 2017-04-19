@@ -135,6 +135,75 @@ struct MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::DistParamDeriv, N>
       minitensor::Vector<PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln);
 };
 
+//
+// Class for dealing with Albany traits. ROL implementation with bound
+// constraints.
+//
+template<
+typename MIN, typename FN, typename BC, typename EvalT, minitensor::Index N>
+struct MiniSolverBoundsROL
+{
+  MiniSolverBoundsROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      FN & function,
+      BC & bounds,
+      minitensor::Vector<typename EvalT::ScalarT, N> & soln);
+};
+
+//
+// MiniSolver class specializations for Albany traits. ROL implementation.
+//
+
+template<typename MIN, typename FN, typename BC, minitensor::Index N>
+struct MiniSolverBoundsROL<MIN, FN, BC, PHAL::AlbanyTraits::Residual, N>
+{
+  MiniSolverBoundsROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      FN & function,
+      BC & bounds,
+      minitensor::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln);
+};
+
+template<typename MIN, typename FN, typename BC, minitensor::Index N>
+struct MiniSolverBoundsROL<MIN, FN, BC, PHAL::AlbanyTraits::Jacobian, N>
+{
+  MiniSolverBoundsROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      FN & function,
+      BC & bounds,
+      minitensor::Vector<PHAL::AlbanyTraits::Jacobian::ScalarT, N> & soln);
+};
+
+template<typename MIN, typename FN, typename BC, minitensor::Index N>
+struct MiniSolverBoundsROL<MIN, FN, BC, PHAL::AlbanyTraits::Tangent, N>
+{
+  MiniSolverBoundsROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      FN & function,
+      BC & bounds,
+      minitensor::Vector<PHAL::AlbanyTraits::Tangent::ScalarT, N> & soln);
+};
+
+template<typename MIN, typename FN, typename BC, minitensor::Index N>
+struct MiniSolverBoundsROL<MIN, FN, BC, PHAL::AlbanyTraits::DistParamDeriv, N>
+{
+  MiniSolverBoundsROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      BC & bounds,
+      FN & function,
+      minitensor::Vector<PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln);
+};
+
 ///
 /// Deal with derivative information for all the mini solvers.
 /// Call this when a converged solution is obtained on a system that is

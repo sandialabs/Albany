@@ -278,6 +278,24 @@ MiniSolverROL(
 }
 
 //
+// MiniSolver through ROL with bound constraints.
+//
+template<
+typename MIN, typename FN, typename BC, typename EvalT, minitensor::Index N>
+MiniSolverBoundsROL<MIN, FN, BC, EvalT, N>::
+MiniSolverBoundsROL(
+    MIN & minimizer,
+    std::string const & algoname,
+    Teuchos::ParameterList & params,
+    FN & function,
+    BC & bounds,
+    minitensor::Vector<typename EvalT::ScalarT, N> & soln)
+{
+  MT_ERROR_EXIT("Missing specialization for MiniSolverBoundsROL class.");
+  return;
+}
+
+//
 //
 //
 template<typename T, typename S, minitensor::Index N>
