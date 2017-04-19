@@ -13,11 +13,11 @@ ANONYMOUS:
     Source Functions: 
       Thermal Source: 
         Thermal Source Type: Block Dependent
-#    Contact: 
-#      Constrained Field Names: [Displacement]
-#      Master Side Sets: [surface_1]
-#      Slave Side Sets: [surface_2]
-#      Contact Side Set Pair: [surface_1, surface_2]
+    Contact: 
+      Constrained Field Names: [Displacement]
+      Master Side Sets: [surface_1]
+      Slave Side Sets: [surface_2]
+      Contact Side Set Pair: [surface_1, surface_2]
     Parameters: 
       Number: 1
       Parameter 0: Time
