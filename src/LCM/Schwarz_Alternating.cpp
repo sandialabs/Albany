@@ -199,11 +199,34 @@ SchwarzAlternating(
     params.set("Application Name Index Map", app_name_index_map);
 
     // Add NOX pre-post-operator for Schwarz loop convergence criterion.
+    bool const
+    have_piro = params.isSublist("Piro");
+
+    ALBANY_ASSERT(have_piro == true);
+
+    Teuchos::ParameterList &
+    piro_params = params.sublist("Piro");
+
+    bool const
+    have_nox = piro_params.isSublist("NOX");
+
+    ALBANY_ASSERT(have_nox == true);
+
+    Teuchos::ParameterList &
+    nox_params = piro_params.sublist("NOX");
+
+    bool const
+    have_solver_opts = nox_params.isSublist("Solver Options");
+
+    ALBANY_ASSERT(have_solver_opts == true);
+
+    Teuchos::ParameterList &
+    solver_opts = nox_params.sublist("Solver Options");
+
     Teuchos::RCP<SchwarzConvergenceCriterion>
     scc = Teuchos::rcp(new SchwarzConvergenceCriterion);
 
-    params.sublist("NOX").sublist("Solver Options").
-        set<Teuchos::RCP<NOX::Abstract::PrePostOperator>>
+    solver_opts.set<Teuchos::RCP<NOX::Abstract::PrePostOperator>>
         ("User Defined Pre/Post Operator", scc);
 
     Teuchos::RCP<Albany::Application>
