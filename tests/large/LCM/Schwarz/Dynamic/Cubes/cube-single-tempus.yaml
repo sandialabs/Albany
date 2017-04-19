@@ -2,7 +2,7 @@
 ---
 ANONYMOUS:
   Scaling: 
-    Scale: 1.0000000e11
+    Scale: 1.0000000
   Problem: 
     Name: Mechanics 3D
     Phalanx Graph Visualization Detail: 0
@@ -77,7 +77,8 @@ ANONYMOUS:
               Method: Full Step
               Full Step:
                 Full Step: 1.0
-            Nonlinear Solver: Line Search Based
+            #Nonlinear Solver: Line Search Based
+            Nonlinear Solver: Single Step
             Printing:
               Output Precision: 3
               Output Processor: 0

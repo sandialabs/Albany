@@ -2,7 +2,7 @@
 ---
 ANONYMOUS:
   Scaling: 
-    Scale: 1.0000000e11
+    Scale: 1.0000000
   Problem: 
     Name: Mechanics 3D
     Phalanx Graph Visualization Detail: 0
@@ -68,7 +68,8 @@ ANONYMOUS:
                       'fact: drop tolerance': 0.00000000e+00
         Line Search: 
           Method: Full Step
-        Nonlinear Solver: Line Search Based
+        #Nonlinear Solver: Line Search Based
+        Nonlinear Solver: Single Step
         Printing: 
           Output Information: 103
           Output Precision: 3
