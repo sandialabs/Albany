@@ -285,7 +285,6 @@ struct MiniSolverEqIneqROL<MIN, FN, EIC, PHAL::AlbanyTraits::DistParamDeriv, N, 
       minitensor::Vector<typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT, NC> & cv);
 };
 
-
 ///
 /// Deal with derivative information for all the mini solvers.
 /// Call this when a converged solution is obtained on a system that is
