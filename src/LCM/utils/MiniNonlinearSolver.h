@@ -457,7 +457,7 @@ struct peel<MPJE, AD<N>, N>
 
 // M: number of derivatives
 // N: vector/tensor dimension
-template<typename EvalT, typename T, int M, int N>
+template<typename EvalT, typename T, int M, minitensor::Index N>
 struct peel_vector
 {
   using S = typename EvalT::ScalarT;
@@ -482,7 +482,7 @@ struct peel_vector
   }
 };
 
-template<typename EvalT, typename T, int M, int N>
+template<typename EvalT, typename T, int M, minitensor::Index N>
 struct peel_tensor
 {
   using S = typename EvalT::ScalarT;
@@ -507,7 +507,7 @@ struct peel_tensor
   }
 };
 
-template<typename EvalT, typename T, int M, int N>
+template<typename EvalT, typename T, int M, minitensor::Index N>
 struct peel_tensor3
 {
   using S = typename EvalT::ScalarT;
@@ -532,7 +532,7 @@ struct peel_tensor3
   }
 };
 
-template<typename EvalT, typename T, int M, int N>
+template<typename EvalT, typename T, int M, minitensor::Index N>
 struct peel_tensor4
 {
   using S = typename EvalT::ScalarT;
