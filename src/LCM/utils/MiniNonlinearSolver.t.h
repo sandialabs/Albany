@@ -358,6 +358,68 @@ MiniSolverBoundsROL(
   return;
 }
 
+template<typename MIN, typename FN, typename BC, minitensor::Index N>
+MiniSolverBoundsROL<MIN, FN, BC, PHAL::AlbanyTraits::Tangent, N>::
+MiniSolverBoundsROL(
+    MIN & minimizer,
+    std::string const & algoname,
+    Teuchos::ParameterList & params,
+    FN & function,
+    BC & bounds,
+    minitensor::Vector<PHAL::AlbanyTraits::Tangent::ScalarT, N> & soln)
+{
+  // Make sure that if Albany is compiled with a static FAD type
+  // there won't be confusion with MiniSolver's FAD.
+  using AD = minitensor::FAD<RealType, N>;
+
+  using T = PHAL::AlbanyTraits::Tangent::ScalarT;
+
+  static_assert(
+      std::is_same<T, AD>::value == false,
+      "Albany and MiniSolver Fad types not allowed to be equal.");
+
+  using ValueT = typename Sacado::ValueType<T>::type;
+
+  minitensor::Vector<ValueT, N>
+  soln_val = Sacado::Value<minitensor::Vector<T, N>>::eval(soln);
+
+  minimizer.solve(algoname, params, function, bounds, soln_val);
+
+  auto const
+  dimension = soln.get_dimension();
+
+  // Put values back in solution vector
+  for (auto i = 0; i < dimension; ++i) {
+    soln(i).val() = soln_val(i);
+  }
+
+  // Get the Hessian evaluated at the solution.
+  minitensor::Tensor<ValueT, N>
+  DrDx = function.hessian(soln_val);
+
+  // Now compute gradient with solution that has Albany sensitivities.
+  minitensor::Vector<T, N>
+  resi = function.gradient(soln);
+
+  // Solve for solution sensitivities.
+  computeFADInfo(resi, DrDx, soln);
+
+  return;
+}
+
+template<typename MIN, typename FN, typename BC, minitensor::Index N>
+MiniSolverBoundsROL<MIN, FN, BC, PHAL::AlbanyTraits::DistParamDeriv, N>::
+MiniSolverBoundsROL(
+    MIN & minimizer,
+    std::string const & algoname,
+    Teuchos::ParameterList & params,
+    FN & function,
+    BC & bounds,
+    minitensor::Vector<PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln)
+{
+  return;
+}
+
 //
 //
 //

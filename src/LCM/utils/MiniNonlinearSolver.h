@@ -199,8 +199,8 @@ struct MiniSolverBoundsROL<MIN, FN, BC, PHAL::AlbanyTraits::DistParamDeriv, N>
       MIN & minimizer,
       std::string const & algoname,
       Teuchos::ParameterList & params,
-      BC & bounds,
       FN & function,
+      BC & bounds,
       minitensor::Vector<PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln);
 };
 
