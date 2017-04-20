@@ -219,3 +219,78 @@ TEST(PlainROL, Paraboloid)
 
   ASSERT_EQ(minimizer.converged, true);
 }
+
+TEST(BoundsROL, Paraboloid)
+{
+  bool const
+  print_output = ::testing::GTEST_FLAG(print_time);
+
+  // outputs nothing
+  Teuchos::oblackholestream
+  bhs;
+
+  std::ostream &
+  os = (print_output == true) ? std::cout : bhs;
+
+  using EvalT = PHAL::AlbanyTraits::Residual;
+  using ScalarT = typename EvalT::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+
+  constexpr
+  minitensor::Index
+  DIM{2};
+
+  using FN = LCM::Paraboloid_Traits<EvalT>;
+  using MIN = ROL::MiniTensor_Minimizer<ValueT, DIM>;
+  using BC = minitensor::Bounds<ValueT, DIM>;
+
+  ValueT const
+  a = 0.0;
+
+  ValueT const
+  b = 0.0;
+
+  FN
+  fn(a, b);
+
+  MIN
+  minimizer;
+
+  minitensor::Vector<ValueT, DIM>
+  lo(1.0, -10.0);
+
+  minitensor::Vector<ValueT, DIM>
+  hi(10.0, 10.0);
+
+  // Constraint that defines the feasible region
+  BC
+  bounds(lo, hi);
+
+  // Define algorithm.
+  std::string const
+  algoname{"Line Search"};
+
+  // Set parameters.
+  Teuchos::ParameterList
+  params;
+
+  params.sublist("Step").sublist("Line Search").sublist("Descent Method").
+    set("Type", "Newton-Krylov");
+
+  params.sublist("Status Test").set("Gradient Tolerance", 1.0e-16);
+  params.sublist("Status Test").set("Step Tolerance", 1.0e-16);
+  params.sublist("Status Test").set("Iteration Limit", 128);
+
+  minitensor::Vector<ScalarT, DIM>
+  x;
+
+  x(0) = 10.0 * minitensor::random<ValueT>();
+  x(1) = 10.0 * minitensor::random<ValueT>();
+
+  LCM::MiniSolverBoundsROL<MIN, FN, BC, EvalT, DIM>
+  mini_solver(minimizer, algoname, params, fn, bounds, x);
+
+  minimizer.printReport(os);
+
+  ASSERT_EQ(minimizer.converged, true);
+}
