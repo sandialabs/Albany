@@ -13,7 +13,7 @@ ANONYMOUS:
       Function: Constant
       Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00]
     Initial Condition Dot: 
-      Function: Linear Y
+      Function: About Z
       Function Data: [1.00000000]
     Response Functions: 
       Number: 1

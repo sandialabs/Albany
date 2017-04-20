@@ -7,7 +7,7 @@ ANONYMOUS:
   Materials: 
     Fine: 
       Material Model: 
-        Model Name: Linear Elastic
+        Model Name: Neohookean
       Elastic Modulus: 
         Elastic Modulus Type: Constant
         Value: 2.0e11
