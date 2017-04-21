@@ -31,7 +31,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 6. Create the test (actually the data for the test) with this name and standard executable
 
-add_executable(CylHeatProfile CylHeatProfile.C)
+add_executable(CylHeatProfile CylHeatProfile.cpp)
 
 #add_test(${testName}_Prep CylHeatProfile)
 

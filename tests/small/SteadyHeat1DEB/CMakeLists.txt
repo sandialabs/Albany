@@ -15,7 +15,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 5. Create the test (actually the data for the test) with this name and standard executable
 
-add_executable(HeatProfile HeatProfile.C)
+add_executable(HeatProfile HeatProfile.cpp)
 
 #add_test(${testName}_Prep "${ALBANY_PRETEST_EXEC} ${CMAKE_CURRENT_BINARY_DIR}/HeatProfile")
 
