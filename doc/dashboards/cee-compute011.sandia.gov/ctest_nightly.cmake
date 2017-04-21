@@ -7,14 +7,13 @@ SET(CTEST_BUILD_OPTION "$ENV{BUILD_OPTION}")
 if (1)
   # What to build and test
   IF(CTEST_BUILD_OPTION MATCHES "base")
-    # Only download repos and cleanout in the base nightly test run (start it an hour earlier)
-    set (CLEAN_BUILD TRUE)
+    # Only download repos in the base nightly test run (start it an hour earlier)
     set (DOWNLOAD TRUE)
   ELSE()
-    set (CLEAN_BUILD FALSE)
     set (DOWNLOAD FALSE)
   ENDIF()
 
+  set (CLEAN_BUILD TRUE)
   set (BUILD_SCOREC TRUE)
   set (BUILD_TRILINOS TRUE)
   set (BUILD_PERIDIGM TRUE)
@@ -150,19 +149,19 @@ set (SCOREC_REPOSITORY_LOCATION git@github.com:SCOREC/core.git)
 set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 set (Peridigm_REPOSITORY_LOCATION git@github.com:peridigm/peridigm) #ssh://software.sandia.gov/git/peridigm)
 
-if (CLEAN_BUILD)
-  # Initial cache info
-  set (CACHE_CONTENTS "
-  SITE:STRING=${CTEST_SITE}
-  CMAKE_BUILD_TYPE:STRING=Release
-  CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
-  BUILD_TESTING:BOOL=OFF
-  PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
-  " )
-
-#  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
-  file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
-endif ()
+#if (CLEAN_BUILD)
+#  # Initial cache info
+#  set (CACHE_CONTENTS "
+#  SITE:STRING=${CTEST_SITE}
+#  CMAKE_BUILD_TYPE:STRING=Release
+#  CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
+#  BUILD_TESTING:BOOL=OFF
+#  PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
+#  " )
+#
+##  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
+#  file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
+#endif ()
 
 if (DOWNLOAD)
   #
