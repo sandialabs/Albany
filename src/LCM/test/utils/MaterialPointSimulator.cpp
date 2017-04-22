@@ -313,7 +313,7 @@ int main(int ac, char* av[])
   //---------------------------------------------------------------------------
   // Time step
   Teuchos::ArrayRCP<ScalarT> delta_time(1);
-  delta_time[0] = step_size;;
+  delta_time[0] = step_size;
   Teuchos::ParameterList setDTP("SetFieldTimeStep");
   setDTP.set<std::string>("Evaluated Field Name", "Delta Time");
   setDTP.set<Teuchos::RCP<PHX::DataLayout>>("Evaluated Field Data Layout",

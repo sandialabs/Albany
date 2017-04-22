@@ -346,7 +346,7 @@ paraboloidEquality()
 
   // Constraint that defines the feasible region
   EIC
-  eq_constr(r, a, b);;
+  eq_constr(r, a, b);
 
   // Define algorithm.
   std::string const
