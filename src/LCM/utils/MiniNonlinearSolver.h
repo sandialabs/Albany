@@ -331,18 +331,6 @@ using JE = PHAL::AlbanyTraits::Jacobian;
 using TE = PHAL::AlbanyTraits::Tangent;
 using DE = PHAL::AlbanyTraits::DistParamDeriv;
 
-#ifdef ALBANY_SG
-using SGRE = PHAL::AlbanyTraits::SGResidual;
-using SGJE = PHAL::AlbanyTraits::SGJacobian;
-using SGTE = PHAL::AlbanyTraits::SGTangent;
-#endif // ALBANY_SG
-
-#ifdef ALBANY_ENSEMBLE
-using MPRE = PHAL::AlbanyTraits::MPResidual;
-using MPJE = PHAL::AlbanyTraits::MPJacobian;
-using MPTE = PHAL::AlbanyTraits::MPTangent;
-#endif // ALBANY_ENSEMBLE
-
 template<int N>
 using AD = minitensor::FAD<RealType, N>;
 
@@ -451,90 +439,6 @@ struct peel<DE, AD<N>, N>
     return t;
   }
 };
-
-#ifdef ALBANY_SG
-template<int N>
-struct peel<SGRE, RealType, N>
-{
-  RealType
-  operator()(SGRE::ScalarT const &)
-  {
-    return 0.0;
-  }
-};
-
-template<int N>
-struct peel<SGJE, RealType, N>
-{
-  RealType
-  operator()(SGJE::ScalarT const &)
-  {
-    return 0.0;
-  }
-};
-
-template<int N>
-struct peel<SGRE, AD<N>, N>
-{
-  RealType
-  operator()(SGRE::ScalarT const &)
-  {
-    return 0.0;
-  }
-};
-
-template<int N>
-struct peel<SGJE, AD<N>, N>
-{
-  RealType
-  operator()(SGJE::ScalarT const &)
-  {
-    return 0.0;
-  }
-};
-#endif // ALBANY_SG
-
-#ifdef ALBANY_ENSEMBLE
-template<int N>
-struct peel<MPRE, RealType, N>
-{
-  RealType
-  operator()(MPRE::ScalarT const &)
-  {
-    return 0.0;
-  }
-};
-
-template<int N>
-struct peel<MPJE, RealType, N>
-{
-  RealType
-  operator()(MPJE::ScalarT const &)
-  {
-    return 0.0;
-  }
-};
-
-template<int N>
-struct peel<MPRE, AD<N>, N>
-{
-  RealType
-  operator()(MPRE::ScalarT const &)
-  {
-    return 0.0;
-  }
-};
-
-template<int N>
-struct peel<MPJE, AD<N>, N>
-{
-  RealType
-  operator()(MPJE::ScalarT const &)
-  {
-    return 0.0;
-  }
-};
-#endif // ALBANY_ENSEMBLE
 
 // M: number of derivatives
 // N: vector/tensor dimension
