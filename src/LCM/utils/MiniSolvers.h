@@ -175,10 +175,10 @@ public:
     yc = peel<EvalT, T, N>()(yc_);
 
     T const
-    a = (x(0) - xc);
+    a = x(0) - xc;
 
     T const
-    b = (x(1) - yc);
+    b = x(1) - yc;
 
     return a * a + b * b;
   }

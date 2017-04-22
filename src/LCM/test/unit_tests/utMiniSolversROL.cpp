@@ -4,8 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "gtest/gtest.h"
-#include "MiniSolvers.h"
 #include "MiniNonlinearSolver.h"
+#include "MiniSolvers.h"
+#include "MiniTensor_FunctionSet.h"
 #include "ROL_MiniTensor_MiniSolver.hpp"
 
 int
@@ -60,6 +61,7 @@ bananaRosenbrock()
   ValueT const
   b = 100.0;
 
+  // Function to optimize
   FN
   fn(a, b);
 
@@ -145,6 +147,7 @@ paraboloid()
   ValueT const
   b = 0.0;
 
+  // Function to optimize
   FN
   fn(a, b);
 
@@ -231,6 +234,7 @@ paraboloidBounds()
   ValueT const
   b = 0.0;
 
+  // Function to optimize
   FN
   fn(a, b);
 
@@ -293,3 +297,205 @@ TEST(Paraboloid, BoundsROLJacobian)
 
   ASSERT_EQ(converged, true);
 }
+
+namespace {
+
+template<typename EvalT>
+bool
+paraboloidEquality()
+{
+  bool const
+  print_output = ::testing::GTEST_FLAG(print_time);
+
+  // outputs nothing
+  Teuchos::oblackholestream
+  bhs;
+
+  std::ostream &
+  os = (print_output == true) ? std::cout : bhs;
+
+  using ScalarT = typename EvalT::ScalarT;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
+
+  constexpr
+  minitensor::Index
+  NUM_VAR{2};
+
+  constexpr minitensor::Index
+  NUM_CONSTR{1};
+
+  using FN = LCM::Paraboloid_Traits<EvalT>;
+  using MIN = ROL::MiniTensor_Minimizer<ValueT, NUM_VAR>;
+  using EIC = minitensor::Circumference<ValueT, NUM_CONSTR, NUM_VAR>;
+
+  ValueT const
+  a = 2.0;
+
+  ValueT const
+  b = 0.0;
+
+  ValueT const
+  r = 1.0;
+
+  // Function to optimize
+  FN
+  fn(a, b);
+
+  MIN
+  minimizer;
+
+  // Constraint that defines the feasible region
+  EIC
+  eq_constr(r, a, b);;
+
+  // Define algorithm.
+  std::string const
+  algoname{"Composite Step"};
+
+  // Set parameters.
+  Teuchos::ParameterList
+  params;
+
+  params.sublist("Step").sublist(algoname).
+      sublist("Optimality System Solver").set(
+      "Nominal Relative Tolerance",
+      1.e-8);
+
+  params.sublist("Step").sublist(algoname).
+      sublist("Optimality System Solver").set("Fix Tolerance", true);
+
+  params.sublist("Step").sublist(algoname).
+      sublist("Tangential Subproblem Solver").set("Iteration Limit", 128);
+
+  params.sublist("Step").sublist(algoname).
+      sublist("Tangential Subproblem Solver").set("Relative Tolerance", 1e-6);
+
+  params.sublist("Step").sublist(algoname).set("Output Level", 0);
+  params.sublist("Status Test").set("Gradient Tolerance", 1.0e-12);
+  params.sublist("Status Test").set("Constraint Tolerance", 1.0e-12);
+  params.sublist("Status Test").set("Step Tolerance", 1.0e-18);
+  params.sublist("Status Test").set("Iteration Limit", 128);
+
+  // Set initial guess
+  minitensor::Vector<ScalarT, NUM_VAR>
+  x(minitensor::Filler::ONES);
+
+  // Set constraint vector
+  minitensor::Vector<ScalarT, NUM_CONSTR>
+  c(minitensor::Filler::ZEROS);
+
+  LCM::MiniSolverEqIneqROL<MIN, FN, EIC, EvalT, NUM_VAR, NUM_CONSTR>
+  mini_solver(minimizer, algoname, params, fn, eq_constr, x, c);
+
+  minimizer.printReport(os);
+
+  return minimizer.converged;
+}
+
+TEST(Paraboloid, EqualityROLResidual)
+{
+  bool const
+  converged = paraboloidEquality<PHAL::AlbanyTraits::Residual>();
+
+  ASSERT_EQ(converged, true);
+}
+
+TEST(Paraboloid, EqualityROLJacobian)
+{
+  bool const
+  converged = paraboloidEquality<PHAL::AlbanyTraits::Jacobian>();
+
+  ASSERT_EQ(converged, true);
+}
+
+TEST(MiniTensor_ROL, Paraboloid_EqualityConstraint)
+{
+  bool const
+  print_output = ::testing::GTEST_FLAG(print_time);
+
+  // outputs nothing
+  Teuchos::oblackholestream
+  bhs;
+
+  std::ostream &
+  os = (print_output == true) ? std::cout : bhs;
+
+  constexpr minitensor::Index
+  NUM_VAR{2};
+
+  constexpr minitensor::Index
+  NUM_CONSTR{1};
+
+  double const
+  a = 2.0;
+
+  double const
+  b = 0.0;
+
+  double const
+  r = 1.0;
+
+  // Function to optimize
+  minitensor::Paraboloid<double, NUM_VAR>
+  fn;
+
+  // Constraint that defines the feasible region
+  minitensor::Circumference<double, NUM_CONSTR, NUM_VAR>
+  eq_constr(r, a, b);
+
+  // Define algorithm.
+  std::string const
+  algoname{"Composite Step"};
+
+  // Set parameters.
+  Teuchos::ParameterList
+  params;
+
+  params.sublist("Step").sublist(algoname).
+      sublist("Optimality System Solver").set(
+      "Nominal Relative Tolerance",
+      1.e-8);
+
+  params.sublist("Step").sublist(algoname).
+      sublist("Optimality System Solver").set("Fix Tolerance", true);
+
+  params.sublist("Step").sublist(algoname).
+      sublist("Tangential Subproblem Solver").set("Iteration Limit", 128);
+
+  params.sublist("Step").sublist(algoname).
+      sublist("Tangential Subproblem Solver").set("Relative Tolerance", 1e-6);
+
+  params.sublist("Step").sublist(algoname).set("Output Level", 0);
+  params.sublist("Status Test").set("Gradient Tolerance", 1.0e-12);
+  params.sublist("Status Test").set("Constraint Tolerance", 1.0e-12);
+  params.sublist("Status Test").set("Step Tolerance", 1.0e-18);
+  params.sublist("Status Test").set("Iteration Limit", 128);
+
+  // Set initial guess
+  minitensor::Vector<double, NUM_VAR>
+  x(minitensor::Filler::ONES);
+
+  // Set constraint vector
+  minitensor::Vector<double, NUM_CONSTR>
+  c(minitensor::Filler::ZEROS);
+
+  ROL::MiniTensor_Minimizer<double, NUM_VAR>
+  minimizer;
+
+  minimizer.solve(algoname, params, fn, eq_constr, x, c);
+
+  minimizer.printReport(os);
+
+  double const
+  tol{1.0e-14};
+
+  minitensor::Vector<double, NUM_VAR>
+  soln(1.0, 0.0);
+
+  double const
+  error = minitensor::norm(soln - x);
+
+  ASSERT_LE(error, tol);
+}
+
+} // anonymous namespace
