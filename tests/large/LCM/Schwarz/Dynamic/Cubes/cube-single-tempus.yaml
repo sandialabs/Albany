@@ -41,7 +41,7 @@ ANONYMOUS:
         Stepper Name: Tempus Stepper
         Solution History:
           Storage Type: Unlimited
-          Storage Limit: 20
+          Storage Limit: 2000
         Time Step Control:
           Initial Time: 0.0
           Final Time: 10.0
@@ -53,10 +53,10 @@ ANONYMOUS:
           Integrator Step Type: Constant
           Output Time List: ''
           Output Index List: ''
-          Output Time Interval: 1.0
-          Output Index Interval: 1000
-          Maximum Number of Stepper Failures: 10
-          Maximum Number of Consecutive Stepper Failures: 5
+          #Output Time Interval: 1.0
+          #Output Index Interval: 1000
+          #Maximum Number of Stepper Failures: 10
+          #Maximum Number of Consecutive Stepper Failures: 5
       Tempus Stepper:
         Stepper Type: 'Newmark Beta'
         Newmark Beta Parameters:
