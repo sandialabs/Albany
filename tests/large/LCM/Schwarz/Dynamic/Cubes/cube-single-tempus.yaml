@@ -2,7 +2,7 @@
 ---
 ANONYMOUS:
   Scaling: 
-    Scale: 1.0000000
+    Scale: 1.0000000e11
   Problem: 
     Name: Mechanics 3D
     Phalanx Graph Visualization Detail: 0
@@ -30,7 +30,7 @@ ANONYMOUS:
     Exodus Residual Name: resid
     Separate Evaluators by Element Block: true
     Number Of Time Derivatives: 2
-    Exodus Write Interval: 100
+    Exodus Write Interval: 10
   Piro:
     Analysis:
       Compute Sensitivities: false
@@ -77,8 +77,8 @@ ANONYMOUS:
               Method: Full Step
               Full Step:
                 Full Step: 1.0
-            #Nonlinear Solver: Line Search Based
-            Nonlinear Solver: Single Step
+            Nonlinear Solver: Line Search Based
+            #Nonlinear Solver: Single Step
             Printing:
               Output Precision: 3
               Output Processor: 0
@@ -115,7 +115,7 @@ ANONYMOUS:
                 Aztec Solver: GMRES
                 Convergence Test: r0
                 Size of Krylov Subspace: 200
-                Output Frequency: 10
+                Output Frequency: 1
               Max Iterations: 100
               Tolerance: 1e-5
           Belos:
