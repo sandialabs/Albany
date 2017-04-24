@@ -391,10 +391,10 @@ struct peel<DE, RealType, N>
 template<int N>
 struct peel<RE, AD<N>, N>
 {
-  RealType
+  AD<N>
   operator()(typename RE::ScalarT const & s)
   {
-    RealType const
+    AD<N> const
     t = s;
 
     return t;
@@ -404,10 +404,10 @@ struct peel<RE, AD<N>, N>
 template<int N>
 struct peel<JE, AD<N>, N>
 {
-  RealType
+  AD<N>
   operator()(JE::ScalarT const & s)
   {
-    RealType const
+    AD<N> const
     t = Sacado::Value<typename JE::ScalarT>::eval(s);
 
     return t;
