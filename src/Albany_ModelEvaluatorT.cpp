@@ -619,14 +619,16 @@ Albany::ModelEvaluatorT::evalModelImpl(
   Teuchos::RCP<Tpetra_Vector> x_dotdotT;
   double omega; 
   if (supports_xdotdot == true) {
+    omega = inArgsT.get_W_x_dot_dot_coeff();
+    if (abs(omega) < 1.0e-14) { 
+      omega = this->get_omega(); 
+    }
     if (Teuchos::nonnull(this->get_x_dotdot())) {
       x_dotdotT = ConverterT::getTpetraVector(this->get_x_dotdot());
-      omega = this->get_omega(); 
     }
     else if (Teuchos::nonnull(inArgsT.get_x_dot_dot())) {
       Teuchos::RCP<const Tpetra_Vector> x_dotdotT_temp = ConverterT::getConstTpetraVector(inArgsT.get_x_dot_dot());
       x_dotdotT = Teuchos::rcp(new Tpetra_Vector(*x_dotdotT_temp)); 
-      omega = inArgsT.get_W_x_dot_dot_coeff(); 
     }
     else {
       x_dotdotT = Teuchos::null;
