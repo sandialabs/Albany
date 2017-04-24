@@ -620,19 +620,27 @@ Albany::ModelEvaluatorT::evalModelImpl(
   double omega; 
   if (supports_xdotdot == true) {
     omega = inArgsT.get_W_x_dot_dot_coeff();
+    //The following case is to support second order time-integrators in Piro
     if (abs(omega) < 1.0e-14) { 
-      omega = this->get_omega(); 
+      if (Teuchos::nonnull(this->get_x_dotdot())) {
+        x_dotdotT = ConverterT::getTpetraVector(this->get_x_dotdot());
+        omega = this->get_omega(); 
+      }
+      else {
+        x_dotdotT = Teuchos::null;
+        omega = 0.0; 
+      }
     }
-    if (Teuchos::nonnull(this->get_x_dotdot())) {
-      x_dotdotT = ConverterT::getTpetraVector(this->get_x_dotdot());
-    }
-    else if (Teuchos::nonnull(inArgsT.get_x_dot_dot())) {
-      Teuchos::RCP<const Tpetra_Vector> x_dotdotT_temp = ConverterT::getConstTpetraVector(inArgsT.get_x_dot_dot());
-      x_dotdotT = Teuchos::rcp(new Tpetra_Vector(*x_dotdotT_temp)); 
-    }
+    //The following case is for second-order time-integrators in Tempus
     else {
-      x_dotdotT = Teuchos::null;
-      omega = 0.0; 
+      if (Teuchos::nonnull(inArgsT.get_x_dot_dot())) {
+        Teuchos::RCP<const Tpetra_Vector> x_dotdotT_temp = ConverterT::getConstTpetraVector(inArgsT.get_x_dot_dot());
+        x_dotdotT = Teuchos::rcp(new Tpetra_Vector(*x_dotdotT_temp)); 
+      }
+      else {
+        x_dotdotT = Teuchos::null;
+        omega = 0.0; 
+      }
     }
   }
 
