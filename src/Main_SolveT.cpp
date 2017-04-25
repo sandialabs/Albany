@@ -44,6 +44,7 @@
 #include "Phalanx.hpp"
 
 #include "Kokkos_Core.hpp"
+//#include <cuda_profiler_api.h>
 
 #ifdef ALBANY_APF
 #include "Albany_APFMeshStruct.hpp"
@@ -307,7 +308,9 @@ int main(int argc, char *argv[]) {
 
     Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST> > > thyraResponses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<ST> > > > thyraSensitivities;
+    //cudaProfilerStart();
     Piro::PerformSolve(*solver, solveParams, thyraResponses, thyraSensitivities);
+    //cudaProfilerStop();
 
     Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > responses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Tpetra_MultiVector> > > sensitivities;

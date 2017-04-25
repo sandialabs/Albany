@@ -10,6 +10,25 @@
 #include "Teuchos_VerboseObject.hpp"
 #include <sstream>
 
+/*
+#include "nvToolsExt.h"
+const uint32_t colors[] = { 0x0000ff00, 0x000000ff, 0x00ffff00, 0x00ff00ff, 0x0000ffff, 0x00ff0000, 0x00ffffff };
+const int num_colors = sizeof(colors)/sizeof(uint32_t);
+#define PUSH_RANGE(name,cid) { \
+    int color_id = cid; \
+    color_id = color_id%num_colors;\
+    nvtxEventAttributes_t eventAttrib = {0}; \
+    eventAttrib.version = NVTX_VERSION; \
+    eventAttrib.size = NVTX_EVENT_ATTRIB_STRUCT_SIZE; \
+    eventAttrib.colorType = NVTX_COLOR_ARGB; \
+    eventAttrib.color = colors[color_id]; \
+    eventAttrib.messageType = NVTX_MESSAGE_TYPE_ASCII; \
+    eventAttrib.message.ascii = name; \
+    nvtxRangePushEx(&eventAttrib); \
+}
+#define POP_RANGE nvtxRangePop();
+*/
+
 //uncomment the following to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET_TO_MM_FILE
 
@@ -402,15 +421,21 @@ Aeras::HVDecorator::evalModelImpl(
         NULL, f_derivT, dummy_derivT, dummy_derivT, dummy_derivT);
   } else {
     if (Teuchos::nonnull(fT_out) && !f_already_computed) {
+      //PUSH_RANGE("computeGlobalResidualT",0);
       app->computeGlobalResidualT(
           curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
           sacado_param_vec, *fT_out);
+      //POP_RANGE;
     }
   }
 
+  //PUSH_RANGE("Copy xtildeT",1);
   Teuchos::RCP<Tpetra_Vector> xtildeT = Teuchos::rcp(new Tpetra_Vector(xT->getMap())); 
+  //POP_RANGE;
   //compute xtildeT 
+  //PUSH_RANGE("compute xtildeT",2);
   applyLinvML(xT, xtildeT); 
+  //POP_RANGE;
 
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   //writing to MatrixMarket for debug
@@ -422,12 +447,14 @@ Aeras::HVDecorator::evalModelImpl(
   mm_counter++; 
 #endif  
 
+  //PUSH_RANGE("Update fT_out with xtildeT",4);
   if(Teuchos::nonnull(inArgsT.get_x_dot()) && Teuchos::nonnull(fT_out)){
 #ifdef OUTPUT_TO_SCREEN
 	  std::cout <<"in the if-statement for the update" <<std::endl;
 #endif
 	  fT_out->update(1.0, *xtildeT, 1.0);
   }
+  //POP_RANGE;
 
   // Response functions
   for (int j = 0; j < outArgsT.Ng(); ++j) {

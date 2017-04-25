@@ -59,7 +59,6 @@
 #endif
 
 /*
-#include <cuda_profiler_api.h>
 #include "nvToolsExt.h"
 const uint32_t colors[] = { 0x0000ff00, 0x000000ff, 0x00ffff00, 0x00ff00ff, 0x0000ffff, 0x00ff0000, 0x00ffffff };
 const int num_colors = sizeof(colors)/sizeof(uint32_t);
@@ -1152,8 +1151,6 @@ computeGlobalResidualImplT(
     const Teuchos::Array<ParamVec>& p,
     const Teuchos::RCP<Tpetra_Vector>& fT)
 {
-  //cudaProfilerStart();
-  //PUSH_RANGE("computeGlobalResidual",0);
 
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
   postRegSetup("Residual");
@@ -1222,6 +1219,7 @@ computeGlobalResidualImplT(
   {
     if (Teuchos::nonnull(rc_mgr)) rc_mgr->init_x_if_not(xT->getMap());
 
+    //PUSH_RANGE("Load Workset",5);
     PHAL::Workset workset;
 
     if (!paramLib->isParameter("Time"))
@@ -1233,6 +1231,7 @@ computeGlobalResidualImplT(
 
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
+      //POP_RANGE;
 
       // FillType template argument used to specialize Sacado
       //PUSH_RANGE("evaluateFields",3);
@@ -1314,8 +1313,6 @@ computeGlobalResidualImplT(
   if (scaleBCdofs == true) 
     fT->elementWiseMultiply(1.0, *scaleVec_, *fT, 0.0);
 
-  //POP_RANGE;
-  //cudaProfilerStop();
 }
 
 #if defined(ALBANY_EPETRA)

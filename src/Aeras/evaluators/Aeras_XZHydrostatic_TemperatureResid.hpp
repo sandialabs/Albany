@@ -51,7 +51,7 @@ private:
   PHX::MDField<ScalarT,Cell,Node,Level>     temperature;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> temperatureGrad;
   PHX::MDField<ScalarT,Cell,Node,Level>     temperatureDot;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     temperatureSrc;
+  //PHX::MDField<ScalarT,Cell,QuadPoint,Level>     temperatureSrc;
   PHX::MDField<ScalarT,Cell,Node,Level,Dim> velocity;
   PHX::MDField<ScalarT,Cell,Node,Level>     omega;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>     etadotdT;
