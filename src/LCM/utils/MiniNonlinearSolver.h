@@ -311,13 +311,15 @@ struct peel
 
   // This ugly return type is to avoid matching Tensor types.
   // If it does not match then it just becomes T.
-  using RET = typename
+  using TS = typename
       minitensor::disable_if_c<minitensor::order_1234<T>::value, T>::type;
 
-  RET
+  TS
   operator()(S const & s)
   {
-    T const
+    //TS const
+    //t = Sacado::ScalarValue<S>::eval(s);
+    TS const
     t = s;
 
     return t;
@@ -333,6 +335,12 @@ using DE = PHAL::AlbanyTraits::DistParamDeriv;
 
 template<int N>
 using AD = minitensor::FAD<RealType, N>;
+
+template<int N>
+using ADAD = minitensor::FAD<AD<N>, N>;
+
+template<int N>
+using ADJE = minitensor::FAD<JE, N>;
 
 } // anonymous namespace
 
@@ -417,10 +425,10 @@ struct peel<JE, AD<N>, N>
 template<int N>
 struct peel<TE, AD<N>, N>
 {
-  RealType
+  AD<N>
   operator()(TE::ScalarT const & s)
   {
-    RealType const
+    AD<N> const
     t = Sacado::Value<typename TE::ScalarT>::eval(s);
 
     return t;
@@ -430,10 +438,114 @@ struct peel<TE, AD<N>, N>
 template<int N>
 struct peel<DE, AD<N>, N>
 {
-  RealType
+  AD<N>
   operator()(DE::ScalarT const & s)
   {
-    RealType const
+    AD<N> const
+    t = Sacado::Value<typename DE::ScalarT>::eval(s);
+
+    return t;
+  }
+};
+
+template<int N>
+struct peel<RE, ADAD<N>, N>
+{
+  ADAD<N>
+  operator()(typename RE::ScalarT const & s)
+  {
+    ADAD<N> const
+    t = s;
+
+    return t;
+  }
+};
+
+template<int N>
+struct peel<JE, ADAD<N>, N>
+{
+  ADAD<N>
+  operator()(JE::ScalarT const & s)
+  {
+    ADAD<N> const
+    t = Sacado::Value<typename JE::ScalarT>::eval(s);
+
+    return t;
+  }
+};
+
+template<int N>
+struct peel<TE, ADAD<N>, N>
+{
+  ADAD<N>
+  operator()(TE::ScalarT const & s)
+  {
+    ADAD<N> const
+    t = Sacado::Value<typename TE::ScalarT>::eval(s);
+
+    return t;
+  }
+};
+
+template<int N>
+struct peel<DE, ADAD<N>, N>
+{
+  ADAD<N>
+  operator()(DE::ScalarT const & s)
+  {
+    ADAD<N> const
+    t = Sacado::Value<typename DE::ScalarT>::eval(s);
+
+    return t;
+  }
+};
+
+template<int N>
+struct peel<RE, ADJE<N>, N>
+{
+  ADJE<N>
+  operator()(typename RE::ScalarT const & s)
+  {
+    ADJE<N> const
+    t = s;
+
+    return t;
+  }
+};
+
+template<int N>
+struct peel<JE, ADJE<N>, N>
+{
+  ADJE<N>
+  operator()(JE::ScalarT const & s)
+  {
+    ADJE<N> const
+    t = Sacado::Value<typename JE::ScalarT>::eval(s);
+
+    return t;
+  }
+};
+
+template<int N>
+struct peel<TE, ADJE<N>, N>
+{
+  ADJE<N>
+  operator()(TE::ScalarT const & s)
+  {
+    ADJE<N> const
+    t = Sacado::Value<typename TE::ScalarT>::eval(s);
+
+    return t;
+  }
+};
+
+template<int N>
+struct peel<DE, ADJE<N>, N>
+{
+  ADJE<N>
+  operator()(DE::ScalarT const & s)
+  {
+    ADJE<N> const
     t = Sacado::Value<typename DE::ScalarT>::eval(s);
 
     return t;
