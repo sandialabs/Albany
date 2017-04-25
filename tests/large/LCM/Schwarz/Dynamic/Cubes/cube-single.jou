@@ -7,8 +7,8 @@
 ## -warning = On
 ## -information = On
 undo on
-create brick x 1.0 y 1.0 z 1.5
-volume 1 size 0.05
+create brick x 1.0 y 1.0 z 1.0
+volume 1 size 1.0
 mesh volume 1
 block 1 volume 1
 block 1 name "fine"
@@ -19,4 +19,4 @@ nodeset 4 surface 5
 nodeset 5 surface 2
 nodeset 6 surface 1
 set large exodus file off
-export mesh "cube-single.e" overwrite
+export mesh "cube-single.g" overwrite

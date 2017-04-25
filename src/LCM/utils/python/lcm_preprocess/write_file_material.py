@@ -53,6 +53,7 @@ def create_mat_params_default():
     mat_params["implicit_integration_relative_tolerance"] = "unspecified"
     mat_params["implicit_integration_absolute_tolerance"] = "unspecified"
     mat_params["implicit_integration_max_iterations"] = "unspecified"
+    mat_params["predictor_slip"] = "unspecified"
 
     return mat_params
 
@@ -257,6 +258,8 @@ def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, names_bloc
             WriteParameter("Implicit Integration Max Iterations", "int", mat_params["implicit_integration_max_iterations"], mat_file, indent)
             if mat_params["type_residual"] == "Slip Hardness":
                 WriteParameter("Residual Type", "string", mat_params["type_residual"], mat_file, indent)
+            if mat_params["predictor_slip"] != "unspecified":
+                WriteParameter("Slip Predictor", "string", mat_params["predictor_slip"], mat_file, indent)
 
         # Specify output to exodus
         WriteParameter("Output Cauchy Stress", "bool", vars_output["cauchy_stress"], mat_file, indent)

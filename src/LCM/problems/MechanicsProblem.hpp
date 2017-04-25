@@ -290,6 +290,12 @@ protected:
   bool have_temperature_eq_;
 
   ///
+  /// Dynamic tempus solution method
+  ///
+  ///
+  bool dynamic_tempus_; 
+
+  ///
   /// Have pore pressure equation
   ///
   bool have_pore_pressure_eq_;
@@ -1153,7 +1159,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     offset++; // for hydrostatic stress
   }
 
-  { // Time
+  //IKT, 4/17/17: do not add Time if running a dynamic problem
+  //with Tempus, as this messes up the output to Exodus.  I am still
+  //trying to understand the purpose of the Time evaluator, but it seems
+  //it is for continuation, which is not required w.r.t. time when 
+  //running a dynamic problem using a Tempus time-integrator.
+
+  if (dynamic_tempus_ == false)  { // Time
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
         new Teuchos::ParameterList("Time"));
     p->set<std::string>("Time Name", "Time");
@@ -1174,7 +1186,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         true);
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-    }
+  } 
     
   bool reg_dir_field = true; 
   if (params->isParameter("Register dirichlet_field")){

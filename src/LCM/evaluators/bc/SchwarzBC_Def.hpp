@@ -209,10 +209,10 @@ computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
         minitensor::find_type(coupled_dimension, coupled_vertex_count);
 
   minitensor::Vector<double>
-  lo(parametric_dimension, minitensor::ONES);
+  lo(parametric_dimension, minitensor::Filler::ONES);
 
   minitensor::Vector<double>
-  hi(parametric_dimension, minitensor::ONES);
+  hi(parametric_dimension, minitensor::Filler::ONES);
 
   hi = hi * (1.0 + tolerance);
 
@@ -390,7 +390,7 @@ computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val)
   // Evaluate solution at parametric point using values of shape
   // functions just computed.
   minitensor::Vector<double>
-  value(coupled_dimension, minitensor::ZEROS);
+  value(coupled_dimension, minitensor::Filler::ZEROS);
 
   for (auto i = 0; i < coupled_node_count; ++i) {
     value += basis_values(i, 0) * coupled_element_solution[i];

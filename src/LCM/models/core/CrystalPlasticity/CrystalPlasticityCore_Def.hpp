@@ -79,7 +79,7 @@ CP::applySlipIncrement(
   minitensor::Tensor<ArgT, NumDimT>
   exp_L_dt(num_dim);
 
-  Lp_np1.fill(minitensor::ZEROS);
+  Lp_np1.fill(minitensor::Filler::ZEROS);
   Lp_np1 = 0. * Lp_np1;
 
   if(dt > 0){
@@ -111,7 +111,8 @@ CP::updateHardness(
     minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
     minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
     minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    minitensor::Vector<ArgT, NumSlipT> & slip_resistance)
+    minitensor::Vector<ArgT, NumSlipT> & slip_resistance,
+    bool & failed)
 {
   for (unsigned int sf_index(0); sf_index < slip_families.size(); ++ sf_index)
   {
@@ -133,7 +134,8 @@ CP::updateHardness(
       rate_slip, 
       state_hardening_n, 
       state_hardening_np1, 
-      slip_resistance);
+      slip_resistance,
+      failed);
   }
 
   return;
@@ -274,7 +276,7 @@ CP::computeElasticityTensor(
   minitensor::Index const
   num_dim = C.get_dimension();
 
-  C.fill(minitensor::ZEROS);
+  C.fill(minitensor::Filler::ZEROS);
 
   if (num_dim >= 2) {
     C(0, 0, 0, 0) = c11;

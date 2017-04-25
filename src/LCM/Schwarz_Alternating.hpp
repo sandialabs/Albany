@@ -7,13 +7,59 @@
 #if !defined(LCM_SchwarzAlternating_hpp)
 #define LCM_SchwarzAlternating_hpp
 
-#include "Albany_ModelEvaluatorT.hpp"
 #include "Albany_DataTypes.hpp"
+#include "Albany_ModelEvaluatorT.hpp"
+#include "NOX_Abstract_PrePostOperator.H"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
 #include "Albany_MaterialDatabase.hpp"
 
 namespace LCM {
+
+///
+/// NOX PrePostOperator used for Schwarz loop convergence criterion.
+///
+class SchwarzConvergenceCriterion : public NOX::Abstract::PrePostOperator {
+
+public:
+
+  SchwarzConvergenceCriterion();
+
+  void
+  runPreIterate(NOX::Solver::Generic const & solver);
+
+  void
+  runPostIterate(NOX::Solver::Generic const & solver);
+
+  void
+  runPreSolve(NOX::Solver::Generic const & solver);
+
+  void
+  runPostSolve(NOX::Solver::Generic const & solver);
+
+  ST
+  getInitialNorm();
+
+  ST
+  getFinalNorm();
+
+  ST
+  getDifferenceNorm();
+
+private:
+
+  Teuchos::RCP<NOX::Abstract::Vector>
+  soln_init_{Teuchos::null};
+
+  ST
+  norm_init_{0.0};
+
+  ST
+  norm_final_{0.0};
+
+  ST
+  norm_diff_{0.0};
+};
 
 ///
 /// SchwarzAlternating coupling class

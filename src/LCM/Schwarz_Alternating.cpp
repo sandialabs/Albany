@@ -13,6 +13,110 @@ namespace LCM {
 //
 //
 //
+SchwarzConvergenceCriterion::
+SchwarzConvergenceCriterion()
+{
+  return;
+}
+
+//
+//
+//
+void
+SchwarzConvergenceCriterion::
+runPreIterate(NOX::Solver::Generic const &)
+{
+  return;
+}
+
+//
+//
+//
+void
+SchwarzConvergenceCriterion::
+runPostIterate(NOX::Solver::Generic const &)
+{
+  return;
+}
+
+//
+//
+//
+void
+SchwarzConvergenceCriterion::
+runPreSolve(NOX::Solver::Generic const & solver)
+{
+  NOX::Abstract::Vector const &
+  x = solver.getSolutionGroup().getX();
+
+  norm_init_ = x.norm();
+
+  soln_init_ = x.clone();
+
+  return;
+}
+
+//
+//
+//
+void
+SchwarzConvergenceCriterion::
+runPostSolve(NOX::Solver::Generic const & solver)
+{
+  NOX::Abstract::Vector const &
+  y = solver.getSolutionGroup().getX();
+
+  norm_final_ = y.norm();
+
+  NOX::Abstract::Vector const &
+  x = *(soln_init_);
+
+  Teuchos::RCP<NOX::Abstract::Vector>
+  soln_diff = x.clone();
+
+  NOX::Abstract::Vector &
+  dx = *(soln_diff);
+
+  dx.update(1.0, y, -1.0, x, 0.0);
+
+  norm_diff_ = dx.norm();
+
+  return;
+}
+
+//
+//
+//
+ST
+SchwarzConvergenceCriterion::
+getInitialNorm()
+{
+  return norm_init_;
+}
+
+//
+//
+//
+ST
+SchwarzConvergenceCriterion::
+getFinalNorm()
+{
+  return norm_final_;
+}
+
+//
+//
+//
+ST
+SchwarzConvergenceCriterion::
+getDifferenceNorm()
+{
+  return norm_diff_;
+}
+
+//
+//
+//
 SchwarzAlternating::
 SchwarzAlternating(
     Teuchos::RCP<Teuchos::ParameterList> const & app_params,
@@ -83,16 +187,47 @@ SchwarzAlternating(
     solver_factory(model_filenames[m], comm);
 
     Teuchos::ParameterList &
-    solver_factory_params = solver_factory.getParameters();
+    params = solver_factory.getParameters();
 
     // Add application array for later use in Schwarz BC.
-    solver_factory_params.set("Application Array", apps_);
+    params.set("Application Array", apps_);
 
     // See application index for use with Schwarz BC.
-    solver_factory_params.set("Application Index", m);
+    params.set("Application Index", m);
 
     // App application name-index map for later use in Schwarz BC.
-    solver_factory_params.set("Application Name Index Map", app_name_index_map);
+    params.set("Application Name Index Map", app_name_index_map);
+
+    // Add NOX pre-post-operator for Schwarz loop convergence criterion.
+    bool const
+    have_piro = params.isSublist("Piro");
+
+    ALBANY_ASSERT(have_piro == true);
+
+    Teuchos::ParameterList &
+    piro_params = params.sublist("Piro");
+
+    bool const
+    have_nox = piro_params.isSublist("NOX");
+
+    ALBANY_ASSERT(have_nox == true);
+
+    Teuchos::ParameterList &
+    nox_params = piro_params.sublist("NOX");
+
+    bool const
+    have_solver_opts = nox_params.isSublist("Solver Options");
+
+    ALBANY_ASSERT(have_solver_opts == true);
+
+    Teuchos::ParameterList &
+    solver_opts = nox_params.sublist("Solver Options");
+
+    Teuchos::RCP<SchwarzConvergenceCriterion>
+    scc = Teuchos::rcp(new SchwarzConvergenceCriterion);
+
+    solver_opts.set<Teuchos::RCP<NOX::Abstract::PrePostOperator>>
+        ("User Defined Pre/Post Operator", scc);
 
     Teuchos::RCP<Albany::Application>
     app;
@@ -390,10 +525,10 @@ SchwarzAlternating::
 SchwarzLoop() const
 {
   minitensor::Vector<ST>
-  norms_diff(num_subdomains_, minitensor::ZEROS);
+  norms_diff(num_subdomains_, minitensor::Filler::ZEROS);
 
   minitensor::Vector<ST>
-  norms_soln(num_subdomains_, minitensor::ZEROS);
+  norms_soln(num_subdomains_, minitensor::Filler::ZEROS);
 
   int const
   iter_limit = std::max(min_iters_, max_iters_);

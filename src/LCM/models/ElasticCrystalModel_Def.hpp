@@ -62,7 +62,7 @@ namespace LCM
 
     // Initialize rotation matrix
     minitensor::Matrix<double, IndexM, IndexN> rl;
-    rl.fill(minitensor::ZEROS);
+    rl.fill(minitensor::Filler::ZEROS);
 
     // Compute rotation matrix
     rl(0,0) = cos(phi1_)*cos(phi2_) - sin(phi1_)*cos(Phi_)*sin(phi2_);
@@ -79,7 +79,7 @@ namespace LCM
     minitensor::Tensor4<RealType, EC::MAX_DIM> C;
     C.set_dimension(num_dims_);
     // Initialize with zeros
-    C.fill(minitensor::ZEROS);
+    C.fill(minitensor::Filler::ZEROS);
     // fill tensor
     C(0,0,0,0) = c11_;
     C(1,1,1,1) = c22_;

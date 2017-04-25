@@ -51,26 +51,11 @@ StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
   gradBF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];
-  int numCells = dims[0] ;
+  numCells = dims[0] ;
 
   dl_full->node_vector->dimensions(dims);
   numVecDims  =dims[2];
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT  
-  std::vector<PHX::index_size_type> ddims_;
-  //IKT, 5/31/16: A better thing to do than the code below would be the following 
-  //int deriv_dims = PHAL::getDerivativeDimensionsFromView(dH.get_view());
-  //ddims_.push_back(deriv_dims).  
-  //The issue is getDerivativeDimensionsFromView returns 0 for this problem causing the code 
-  //to crash.  Should be looked into. 
-#ifdef  ALBANY_FAST_FELIX
-  ddims_.push_back(ALBANY_SLFAD_SIZE);
-#else
-  ddims_.push_back(95);
-#endif
-  Res=decltype(Res)("Res",Teuchos::rcp(new PHX::MDALayout<Cell,Node,Dim>(numCells,numNodes,2)));
-  Res.setFieldData(ViewFactory::buildView(Res.fieldTag(),ddims_));
-#endif
 #ifdef OUTPUT_TO_SCREEN
 *out << " in FELIX StokesFOImplicitThicknessUpdate residual! " << std::endl;
 *out << " numQPs = " << numQPs << std::endl;
@@ -90,6 +75,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(InputResidual,fm);
   this->utils.setFieldData(Residual,fm);
 
+  Res = createDynRankView(Residual.get_view(), "Residual", numCells, numNodes,2);
 }
 //**********************************************************************
 //Kokkos functors

@@ -87,13 +87,13 @@ set (CTEST_BINARY_NAME build)
 set (CTEST_INSTALL_NAME test)
 
 set (PREFIX_DIR /projects/albany)
-set (INTEL_PREFIX_DIR ${PREFIX_DIR}/intel5.0)
+set (INTEL_PREFIX_DIR ${PREFIX_DIR}/intel5.1)
 set (GCC_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.8.8-gcc-5.2.0-RHEL6)
 set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2017.2.174/compilers_and_libraries/linux)
 
 #set (BOOST_ROOT /projects/albany/nightly)
 set (BOOST_ROOT /projects/albany)
-set (INTEL_BOOST_ROOT ${BOOST_ROOT}/intel5.0/boost-1.60.0)
+set (INTEL_BOOST_ROOT ${BOOST_ROOT}/intel5.1)
 set (CLANG_BOOST_ROOT ${BOOST_ROOT}/clang-3.7)
 
 set (INTEL_MPI_DIR ${INTEL_DIR}/mpi)
@@ -369,7 +369,6 @@ endif ()
 
 set (COMMON_CONFIGURE_OPTIONS
   "-Wno-dev"
-  "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
   #
   "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
   "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
@@ -377,6 +376,7 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
   "-DTrilinos_ENABLE_MueLu:BOOL=ON"
 #
+  "-DTrilinos_WARNINGS_AS_ERRORS_FLAGS:BOOL=OFF"
   "-DTrilinos_ENABLE_STRONG_C_COMPILE_WARNINGS:BOOL=OFF"
   "-DTrilinos_ENABLE_STRONG_CXX_COMPILE_WARNINGS:BOOL=OFF"
   #
@@ -535,6 +535,7 @@ if (BUILD_TRILINOS)
 #
     "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"
     "-DCMAKE_INSTALL_RPATH:STRING=${PREFIX_DIR}/lib"
+    "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     "${COMMON_CONFIGURE_OPTIONS}"
   )
 
@@ -624,6 +625,7 @@ if (BUILD_TRILINOSCLANG)
 
   set (CONFIGURE_OPTIONS
     "${COMMON_CONFIGURE_OPTIONS}"
+    "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/clang-3.7"
     #

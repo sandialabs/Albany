@@ -50,6 +50,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Linear Y")
     F = Teuchos::rcp(new AAdapt::LinearY(neq, numDim, data));
   
+  else if(name == "About Z")
+    F = Teuchos::rcp(new AAdapt::AboutZ(neq, numDim, data));
+
   else if(name == "Circle")
     F = Teuchos::rcp(new AAdapt::Circle(neq, numDim, data));
 
@@ -520,6 +523,20 @@ AAdapt::LinearY::LinearY(int neq_, int numDim_, Teuchos::Array<double> data_)
 void AAdapt::LinearY::compute(double* x, const double* X) {
   x[0] = 0.0;
   x[1] = data[0] * X[0];
+
+  if(numDim > 2) x[2] = 0.0;
+}
+//*****************************************************************************
+AAdapt::AboutZ::AboutZ(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((neq < 2) || (numDim < 2) || (data.size() != 1),
+                             std::logic_error,
+                             "Error! Invalid call of AboutZ with " << neq
+                             << " " << numDim << "  " << data.size() << std::endl);
+}
+void AAdapt::AboutZ::compute(double* x, const double* X) {
+  x[0] = -data[0] * X[1];
+  x[1] =  data[0] * X[0];
 
   if(numDim > 2) x[2] = 0.0;
 }

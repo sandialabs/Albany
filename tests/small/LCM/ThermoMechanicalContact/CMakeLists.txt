@@ -6,6 +6,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/elastic.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/elastic.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cyl.g
                ${CMAKE_CURRENT_BINARY_DIR}/cyl.g COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2dsmall.e
+               ${CMAKE_CURRENT_BINARY_DIR}/2dsmall.e COPYONLY)
 
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
@@ -17,6 +19,6 @@ if (ALBANY_CONTACT)
    # time integrator needs to be converted to tpetra.
 
    if (ALBANY_IFPACK2)
-   #add_test(${testName} ${AlbanyT.exe} inputT.yaml)
+   #add_test(${testName} ${AlbanyT.exe} input.yaml)
    endif ()
 endif()

@@ -528,8 +528,8 @@ ENDIF (NOT Kokkos_ENABLE_Cuda)
 set(utils-sources
   "${LCM_DIR}/utils/Projection.cpp"
   "${LCM_DIR}/utils/LocalNonlinearSolver.cpp"
-  "${LCM_DIR}/utils/NOXSolverPrePostOperator.cc"
-  "${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.cc"
+  "${LCM_DIR}/utils/NOXSolverPrePostOperator.cpp"
+  "${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.cpp"
 )
 set(utils-headers
   "${LCM_DIR}/utils/Projection.hpp"
@@ -540,9 +540,9 @@ set(utils-headers
 )
 IF(ALBANY_HAVE_STK)
   set(utils-sources ${utils-sources}
-    "${LCM_DIR}/utils/LCMPartition.cc"
-    "${LCM_DIR}/utils/MiniLinearSolver.cc"
-    "${LCM_DIR}/utils/MiniNonlinearSolver.cc"
+    "${LCM_DIR}/utils/LCMPartition.cpp"
+    "${LCM_DIR}/utils/MiniLinearSolver.cpp"
+    "${LCM_DIR}/utils/MiniNonlinearSolver.cpp"
   )
   set(utils-headers ${utils-headers}
     "${LCM_DIR}/utils/LCMPartition.h"
@@ -565,12 +565,12 @@ ENDIF(ALBANY_HAVE_STK)
 #LCM utils/topology
 IF(ALBANY_HAVE_STK AND ALBANY_BGL)
   set(topology-sources
-    "${LCM_DIR}/utils/topology/BarycentricSubdivision.cc"
-    "${LCM_DIR}/utils/topology/MinimumSurface.cc"
-    "${LCM_DIR}/utils/topology/Subgraph.cc"
-    "${LCM_DIR}/utils/topology/Topology.cc"
-    "${LCM_DIR}/utils/topology/Topology_FractureCriterion.cc"
-    "${LCM_DIR}/utils/topology/Topology_Utils.cc"
+    "${LCM_DIR}/utils/topology/BarycentricSubdivision.cpp"
+    "${LCM_DIR}/utils/topology/MinimumSurface.cpp"
+    "${LCM_DIR}/utils/topology/Subgraph.cpp"
+    "${LCM_DIR}/utils/topology/Topology.cpp"
+    "${LCM_DIR}/utils/topology/Topology_FractureCriterion.cpp"
+    "${LCM_DIR}/utils/topology/Topology_Utils.cpp"
   )
   set(topology-headers
     "${LCM_DIR}/utils/topology/Subgraph.h"
@@ -716,18 +716,18 @@ IF (LCM_TEST_EXES AND ALBANY_DTK)
 ENDIF()
 
 IF (LCM_TEST_EXES AND ALBANY_BGL) 
-  add_executable(BifurcationTest test/utils/BifurcationTest.cc)
-  add_executable(MaterialPointSimulator test/utils/MaterialPointSimulator.cc)
-  add_executable(BoundarySurfaceOutput test/utils/BoundarySurfaceOutput.cc)
-  add_executable(MeshComponents test/utils/MeshComponents.cc)
-  add_executable(MinSurfaceMPS test/utils/MinSurfaceMPS.cc)
-  add_executable(MinSurfaceOutput test/utils/MinSurfaceOutput.cc)
-  add_executable(NodeUpdate test/utils/NodeUpdate.cc)
-  add_executable(PartitionTest test/utils/PartitionTest.cc)
-  add_executable(Subdivision test/utils/Subdivision.cc)
-  add_executable(Test1_Subdivision test/utils/Test1_Subdivision.cc)
-  add_executable(Test2_Subdivision test/utils/Test2_Subdivision.cc)
-  add_executable(TopologyBase test/utils/TopologyBase.cc)
+  add_executable(BifurcationTest test/utils/BifurcationTest.cpp)
+  add_executable(MaterialPointSimulator test/utils/MaterialPointSimulator.cpp)
+  add_executable(BoundarySurfaceOutput test/utils/BoundarySurfaceOutput.cpp)
+  add_executable(MeshComponents test/utils/MeshComponents.cpp)
+  add_executable(MinSurfaceMPS test/utils/MinSurfaceMPS.cpp)
+  add_executable(MinSurfaceOutput test/utils/MinSurfaceOutput.cpp)
+  add_executable(NodeUpdate test/utils/NodeUpdate.cpp)
+  add_executable(PartitionTest test/utils/PartitionTest.cpp)
+  add_executable(Subdivision test/utils/Subdivision.cpp)
+  add_executable(Test1_Subdivision test/utils/Test1_Subdivision.cpp)
+  add_executable(Test2_Subdivision test/utils/Test2_Subdivision.cpp)
+  add_executable(TopologyBase test/utils/TopologyBase.cpp)
 
   add_executable(
     utLocalNonlinearSolver
@@ -751,10 +751,10 @@ IF (LCM_TEST_EXES AND ALBANY_BGL)
     add_executable(utStaticAllocator test/unit_tests/utStaticAllocator.cpp)
   ENDIF()
 
-  add_executable(utMiniSolvers test/unit_tests/utMiniSolvers.cc)
+  add_executable(utMiniSolvers test/unit_tests/utMiniSolvers.cpp)
 
   IF (ALBANY_ROL)
-    add_executable(utMiniSolversROL test/unit_tests/utMiniSolversROL.cc)
+    add_executable(utMiniSolversROL test/unit_tests/utMiniSolversROL.cpp)
   ENDIF()
 
 ENDIF()
@@ -776,7 +776,7 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeSharing.cpp
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
-    	${Albany_SOURCE_DIR}/src/LCM/utils/MaterialDatabase.cc
+    	${Albany_SOURCE_DIR}/src/LCM/utils/MaterialDatabase.cpp
     	utils/lame/LameUtils.cpp
     	evaluators/lame/LameStress.cpp
     	evaluators/SetField.cpp
@@ -797,7 +797,7 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeSharing.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
-    	  ${Albany_SOURCE_DIR}/src/LCM/utils/MaterialDatabase.cc
+    	  ${Albany_SOURCE_DIR}/src/LCM/utils/MaterialDatabase.cpp
     	  utils/lame/LameUtils.cpp
     	  evaluators/lame/LameStress.cpp
     	  evaluators/SetField.cpp
@@ -821,7 +821,7 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeSharing.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
-    	  ${Albany_SOURCE_DIR}/src/LCM/utils/MaterialDatabase.cc
+    	  ${Albany_SOURCE_DIR}/src/LCM/utils/MaterialDatabase.cpp
     	  utils/lame/LameUtils.cpp
     	  evaluators/lame/LameStress.cpp
     	  evaluators/SetField.cpp
@@ -842,7 +842,7 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeSharing.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
-    	  ${Albany_SOURCE_DIR}/src/LCM/utils/MaterialDatabase.cc
+    	  ${Albany_SOURCE_DIR}/src/LCM/utils/MaterialDatabase.cpp
     	  utils/lame/LameUtils.cpp
     	  evaluators/lame/LameStress.cpp
     	  evaluators/SetField.cpp

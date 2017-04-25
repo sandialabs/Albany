@@ -14,9 +14,9 @@
 
 namespace LCM{
 
-//
-// Class for dealing with Albany traits. Native implementation.
-//
+///
+/// Class for dealing with Albany traits. Native implementation.
+///
 template<
 typename MIN, typename STEP, typename FN, typename EvalT, minitensor::Index N>
 struct MiniSolver
@@ -28,10 +28,9 @@ struct MiniSolver
       minitensor::Vector<typename EvalT::ScalarT, N> & soln);
 };
 
-//
-// MiniSolver class specializations for Albany traits. Native implementation.
-//
-
+///
+/// MiniSolver class specializations for Albany traits. Native implementation.
+///
 template<typename MIN, typename STEP, typename FN, minitensor::Index N>
 struct MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::Residual, N>
 {
@@ -72,9 +71,9 @@ struct MiniSolver<MIN, STEP, FN, PHAL::AlbanyTraits::DistParamDeriv, N>
       minitensor::Vector<PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln);
 };
 
-//
-// Class for dealing with Albany traits. ROL implementation.
-//
+///
+/// Class for dealing with Albany traits. ROL implementation.
+///
 template<
 typename MIN, typename FN, typename EvalT, minitensor::Index N>
 struct MiniSolverROL
@@ -87,10 +86,9 @@ struct MiniSolverROL
       minitensor::Vector<typename EvalT::ScalarT, N> & soln);
 };
 
-//
-// MiniSolver class specializations for Albany traits. ROL implementation.
-//
-
+///
+/// MiniSolver class specializations for Albany traits. ROL implementation.
+///
 template<typename MIN, typename FN, minitensor::Index N>
 struct MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::Residual, N>
 {
@@ -133,6 +131,158 @@ struct MiniSolverROL<MIN, FN, PHAL::AlbanyTraits::DistParamDeriv, N>
       Teuchos::ParameterList & params,
       FN & function,
       minitensor::Vector<PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln);
+};
+
+///
+/// Class for dealing with Albany traits. ROL implementation with bound
+/// constraints.
+///
+template<
+typename MIN, typename FN, typename BC, typename EvalT, minitensor::Index N>
+struct MiniSolverBoundsROL
+{
+  MiniSolverBoundsROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      FN & function,
+      BC & bounds,
+      minitensor::Vector<typename EvalT::ScalarT, N> & soln);
+};
+
+///
+/// MiniSolver class specializations for Albany traits.
+/// Bound constraint ROL implementation.
+///
+template<typename MIN, typename FN, typename BC, minitensor::Index N>
+struct MiniSolverBoundsROL<MIN, FN, BC, PHAL::AlbanyTraits::Residual, N>
+{
+  MiniSolverBoundsROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      FN & function,
+      BC & bounds,
+      minitensor::Vector<PHAL::AlbanyTraits::Residual::ScalarT, N> & soln);
+};
+
+template<typename MIN, typename FN, typename BC, minitensor::Index N>
+struct MiniSolverBoundsROL<MIN, FN, BC, PHAL::AlbanyTraits::Jacobian, N>
+{
+  MiniSolverBoundsROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      FN & function,
+      BC & bounds,
+      minitensor::Vector<PHAL::AlbanyTraits::Jacobian::ScalarT, N> & soln);
+};
+
+template<typename MIN, typename FN, typename BC, minitensor::Index N>
+struct MiniSolverBoundsROL<MIN, FN, BC, PHAL::AlbanyTraits::Tangent, N>
+{
+  MiniSolverBoundsROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      FN & function,
+      BC & bounds,
+      minitensor::Vector<PHAL::AlbanyTraits::Tangent::ScalarT, N> & soln);
+};
+
+template<typename MIN, typename FN, typename BC, minitensor::Index N>
+struct MiniSolverBoundsROL<MIN, FN, BC, PHAL::AlbanyTraits::DistParamDeriv, N>
+{
+  MiniSolverBoundsROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      FN & function,
+      BC & bounds,
+      minitensor::Vector<PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln);
+};
+
+///
+/// Class for dealing with Albany traits. ROL implementation with equality
+/// and inequality constraints.
+///
+template<
+typename MIN, typename FN, typename EIC, typename EvalT,
+minitensor::Index N, minitensor::Index NC>
+struct MiniSolverEqIneqROL
+{
+  MiniSolverEqIneqROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      FN & function,
+      EIC & eqineq,
+      minitensor::Vector<typename EvalT::ScalarT, N> & soln,
+      minitensor::Vector<typename EvalT::ScalarT, NC> & cv);
+};
+
+///
+/// MiniSolver class specializations for Albany traits.
+/// Equality and inequality constraint ROL implementation.
+///
+template<
+typename MIN, typename FN, typename EIC,
+minitensor::Index N, minitensor::Index NC>
+struct MiniSolverEqIneqROL<MIN, FN, EIC, PHAL::AlbanyTraits::Residual, N, NC>
+{
+  MiniSolverEqIneqROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      FN & function,
+      EIC & eqineq,
+      minitensor::Vector<typename PHAL::AlbanyTraits::Residual::ScalarT, N> & soln,
+      minitensor::Vector<typename PHAL::AlbanyTraits::Residual::ScalarT, NC> & cv);
+};
+
+template<
+typename MIN, typename FN, typename EIC,
+minitensor::Index N, minitensor::Index NC>
+struct MiniSolverEqIneqROL<MIN, FN, EIC, PHAL::AlbanyTraits::Jacobian, N, NC>
+{
+  MiniSolverEqIneqROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      FN & function,
+      EIC & eqineq,
+      minitensor::Vector<typename PHAL::AlbanyTraits::Jacobian::ScalarT, N> & soln,
+      minitensor::Vector<typename PHAL::AlbanyTraits::Jacobian::ScalarT, NC> & cv);
+};
+
+template<
+typename MIN, typename FN, typename EIC,
+minitensor::Index N, minitensor::Index NC>
+struct MiniSolverEqIneqROL<MIN, FN, EIC, PHAL::AlbanyTraits::Tangent, N, NC>
+{
+  MiniSolverEqIneqROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      FN & function,
+      EIC & eqineq,
+      minitensor::Vector<typename PHAL::AlbanyTraits::Tangent::ScalarT, N> & soln,
+      minitensor::Vector<typename PHAL::AlbanyTraits::Tangent::ScalarT, NC> & cv);
+};
+
+template<
+typename MIN, typename FN, typename EIC,
+minitensor::Index N, minitensor::Index NC>
+struct MiniSolverEqIneqROL<MIN, FN, EIC, PHAL::AlbanyTraits::DistParamDeriv, N, NC>
+{
+  MiniSolverEqIneqROL(
+      MIN & minimizer,
+      std::string const & algoname,
+      Teuchos::ParameterList & params,
+      FN & function,
+      EIC & eqineq,
+      minitensor::Vector<typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT, N> & soln,
+      minitensor::Vector<typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT, NC> & cv);
 };
 
 ///
@@ -388,7 +538,7 @@ struct peel<MPJE, AD<N>, N>
 
 // M: number of derivatives
 // N: vector/tensor dimension
-template<typename EvalT, typename T, int M, int N>
+template<typename EvalT, typename T, int M, minitensor::Index N>
 struct peel_vector
 {
   using S = typename EvalT::ScalarT;
@@ -413,7 +563,7 @@ struct peel_vector
   }
 };
 
-template<typename EvalT, typename T, int M, int N>
+template<typename EvalT, typename T, int M, minitensor::Index N>
 struct peel_tensor
 {
   using S = typename EvalT::ScalarT;
@@ -438,7 +588,7 @@ struct peel_tensor
   }
 };
 
-template<typename EvalT, typename T, int M, int N>
+template<typename EvalT, typename T, int M, minitensor::Index N>
 struct peel_tensor3
 {
   using S = typename EvalT::ScalarT;
@@ -463,7 +613,7 @@ struct peel_tensor3
   }
 };
 
-template<typename EvalT, typename T, int M, int N>
+template<typename EvalT, typename T, int M, minitensor::Index N>
 struct peel_tensor4
 {
   using S = typename EvalT::ScalarT;

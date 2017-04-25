@@ -187,6 +187,7 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
     failed_);
 
   // compute state_hardening_np1 using slip_n
+  bool hardness_failed = false;
   CP::updateHardness<NumDimT, NumSlipT, ScalarT>(
     slip_systems_,
     slip_families_,
@@ -194,7 +195,8 @@ CP::ExplicitIntegrator<EvalT, NumDimT, NumSlipT>::update(
     state_internal_.rate_slip_,
     state_internal_.hardening_n_, 
     state_internal_.hardening_np1_,
-    state_internal_.resistance_);
+    state_internal_.resistance_,
+    hardness_failed);
 
   // compute slip_np1
   CP::updateSlip<NumDimT, NumSlipT, ScalarT>(
@@ -474,12 +476,13 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::update(
   minitensor::Vector<ScalarT, NumSlipT>
   slip_rate(state_internal_.rate_slip_.get_dimension());
 
-  slip_rate.fill(minitensor::ZEROS);
+  slip_rate.fill(minitensor::Filler::ZEROS);
   if (dt_ > 0.0) {
     slip_rate = (state_internal_.slip_np1_ - state_internal_.slip_n_) / dt_;
   }
 
   // Update hardness
+  bool hardness_failed = false;
   CP::updateHardness<NumDimT, NumSlipT, ScalarT>(
       slip_systems_,
       slip_families_,
@@ -487,7 +490,12 @@ CP::ImplicitSlipIntegrator<EvalT, NumDimT, NumSlipT>::update(
       slip_rate,
       state_internal_.hardening_n_,
       state_internal_.hardening_np1_,
-      state_internal_.resistance_);
+      state_internal_.resistance_,
+      hardness_failed);
+
+  if (hardness_failed) {
+    return hardness_failed;
+  }
 
   return this->reevaluateState(residual_norm);
 }
@@ -615,12 +623,13 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update(
   minitensor::Vector<ScalarT, NumSlipT>
   slip_rate(this->num_slip_);
 
-  slip_rate.fill(minitensor::ZEROS);
+  slip_rate.fill(minitensor::Filler::ZEROS);
   if (dt_ > 0.0) {
     slip_rate = (state_internal_.slip_np1_ - state_internal_.slip_n_) / dt_;
   }
 
   // Update hardness
+  bool hardness_failed = false;
   CP::updateHardness<NumDimT, NumSlipT, ScalarT>(
       slip_systems_,
       slip_families_,
@@ -628,7 +637,12 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update(
       slip_rate,
       state_internal_.hardening_n_,
       state_internal_.hardening_np1_,
-      state_internal_.resistance_);
+      state_internal_.resistance_,
+      hardness_failed);
+
+  if (hardness_failed) {
+    return hardness_failed;
+  }
 
   if (state_internal_.cell_ != -1) {
     RealType

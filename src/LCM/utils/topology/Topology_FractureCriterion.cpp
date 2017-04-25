@@ -77,10 +77,10 @@ FractureCriterionTraction::check(
   number_nodes = nodes.size();
 
   minitensor::Tensor<double>
-  stress(get_space_dimension(), minitensor::ZEROS);
+  stress(get_space_dimension(), minitensor::Filler::ZEROS);
 
   minitensor::Tensor<double>
-  nodal_stress(get_space_dimension(), minitensor::ZEROS);
+  nodal_stress(get_space_dimension(), minitensor::Filler::ZEROS);
 
   // The traction is evaluated at centroid of face, so a simple
   // average yields the value.

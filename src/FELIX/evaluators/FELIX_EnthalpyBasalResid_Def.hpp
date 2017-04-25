@@ -175,7 +175,7 @@ namespace FELIX
         for (int qp = 0; qp < numSideQPs; ++qp)
         {
          // isThereWater =(beta(cell,side,qp)<1.0);
-          ScalarT diffEnthalpy = enthalpy(cell,side,node,qp)-enthalpyHs(cell,side,node,qp);
+          ScalarT diffEnthalpy = enthalpy(cell,side,qp)-enthalpyHs(cell,side,qp);
          // ScalarT scale = - atan(alpha * std::max(0.,diffEnthalpy)+
             //                     alpha * double(!isThereWater)* std::min(0.,diffEnthalpy))/pi + 0.5;
           ScalarT F = geoFlux(cell,side,qp);
@@ -219,11 +219,11 @@ namespace FELIX
           {
             ScalarT wSUPG = 0.001 / scyr * // [km^2 s^{-1}]
                 (velocity(cell,side,qp,0)*GradBF(cell,side,node,qp,0) + velocity(cell,side,qp,1)*GradBF(cell,side,node,qp,1)+verticalVel(cell,side,qp) * GradBF(cell,side,node,qp,2))*w_measure(cell,side,qp);
-            //     ScalarT scale = - atan(alpha * (enthalpy(cell,side,node,qp)-enthalpyHs(cell,side,node,qp)))/pi + 0.5;
+            //     ScalarT scale = - atan(alpha * (enthalpy(cell,side,qp)-enthalpyHs(cell,side,qp)))/pi + 0.5;
 
 
             ScalarT resid_tmp = - geoFlux(cell,side,qp)*scale;
-            resid_tmp += robin_coeff*std::fabs(basal_dTdz(cell,side,qp))*std::max(0.,enthalpy(cell,side,node,qp)-enthalpyHs(cell,side,node,qp));
+            resid_tmp += robin_coeff*std::fabs(basal_dTdz(cell,side,qp))*std::max(0.,enthalpy(cell,side,qp)-enthalpyHs(cell,side,qp));
             for (int dim = 0; dim < vecDimFO; ++dim)
               resid_tmp -= 1000/scyr * beta(cell,side,qp) * std::pow(velocity(cell,side,qp,dim),2) *scale;
 

@@ -13,7 +13,7 @@ ANONYMOUS:
       Function: Constant
       Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00]
     Initial Condition Dot: 
-      Function: Linear Y
+      Function: About Z
       Function Data: [1.00000000]
     Response Functions: 
       Number: 1
@@ -26,15 +26,15 @@ ANONYMOUS:
   Discretization: 
     Method: Ioss
     Exodus Input File Name: 'cube-single.g'
-    Exodus Output File Name: 'cube-single-nb.e'
+    Exodus Output File Name: 'cube-single-piro.e'
     Exodus Solution Name: disp
     Exodus Residual Name: resid
     Separate Evaluators by Element Block: true
     Number Of Time Derivatives: 2
-    Exodus Write Interval: 100
+    Exodus Write Interval: 10
   Piro: 
     Newmark: 
-      Num Time Steps: 10000
+      Num Time Steps: 1000
       Final Time: 10.00000000
       Initial Time: 0.00000000e+00
       NOX: 
@@ -68,7 +68,8 @@ ANONYMOUS:
                       'fact: drop tolerance': 0.00000000e+00
         Line Search: 
           Method: Full Step
-        Nonlinear Solver: Line Search Based
+        #Nonlinear Solver: Line Search Based
+        Nonlinear Solver: Single Step
         Printing: 
           Output Information: 103
           Output Precision: 3
@@ -141,7 +142,7 @@ ANONYMOUS:
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
-              Linear Solver Type: Belos
+              Linear Solver Type: AztecOO
               Linear Solver Types: 
                 AztecOO: 
                   Forward Solve: 

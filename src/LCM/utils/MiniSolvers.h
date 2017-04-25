@@ -86,7 +86,7 @@ public:
 
   static constexpr
   char const * const
-  NAME{"Banana_Traits' Function 2D"};
+  NAME{"Banana_Traits Function 2D"};
 
   using Base =
     minitensor::Function_Base<Banana_Traits<EvalT, M>, typename EvalT::ScalarT, M>;
@@ -136,6 +136,75 @@ private:
 
   S
   b_{100.0};
+};
+
+//
+//
+//
+template<typename EvalT, minitensor::Index M = 2>
+class Paraboloid_Traits : public
+minitensor::Function_Base<Paraboloid_Traits<EvalT, M>, typename EvalT::ScalarT, M>
+{
+  using S = typename EvalT::ScalarT;
+
+public:
+
+  Paraboloid_Traits(S xc = 0.0, S yc = 0.0) : xc_(xc), yc_(yc)
+  {
+  }
+
+  static constexpr
+  char const * const
+  NAME{"Paraboloid_Traits Function 2D"};
+
+  using Base =
+    minitensor::Function_Base<Paraboloid_Traits<EvalT, M>, typename EvalT::ScalarT, M>;
+
+  // Explicit value.
+  template<typename T, minitensor::Index N>
+  T
+  value(minitensor::Vector<T, N> const & x)
+  {
+    // Variables that potentially have Albany::Traits sensitivity
+    // information need to be handled by the peel functor so that
+    // proper conversions take place.
+    T const
+    xc = peel<EvalT, T, N>()(xc_);
+
+    T const
+    yc = peel<EvalT, T, N>()(yc_);
+
+    T const
+    a = (x(0) - xc);
+
+    T const
+    b = (x(1) - yc);
+
+    return a * a + b * b;
+  }
+
+  // Default AD gradient.
+  template<typename T, minitensor::Index N>
+  minitensor::Vector<T, N>
+  gradient(minitensor::Vector<T, N> const & x)
+  {
+    return Base::gradient(*this, x);
+  }
+
+  // Default AD hessian.
+  template<typename T, minitensor::Index N>
+  minitensor::Tensor<T, N>
+  hessian(minitensor::Vector<T, N> const & x)
+  {
+    return Base::hessian(*this, x);
+  }
+
+private:
+  S
+  xc_{0.0};
+
+  S
+  yc_{0.0};
 };
 
 } // namespace LCM
