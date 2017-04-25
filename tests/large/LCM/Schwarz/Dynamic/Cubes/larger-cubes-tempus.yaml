@@ -27,18 +27,18 @@ ANONYMOUS:
       Response 3: Solution Min Value
   Discretization: 
     Method: Ioss
-    Exodus Input File Name: 'cube-single.g'
-    Exodus Output File Name: 'cube-single-tempus.e'
+    Exodus Input File Name: 'larger-cubes.g'
+    Exodus Output File Name: 'larger-cubes-tempus.e'
     Exodus Solution Name: disp
     Exodus Residual Name: resid
     Separate Evaluators by Element Block: true
     Number Of Time Derivatives: 2
-    Exodus Write Interval: 10
+    Exodus Write Interval: 50
   Regression Results: 
     Number of Comparisons: 4
-    Test Values: [0.0, 0.0,  1.10326665348, -1.10326665348]
-    Relative Tolerance: 1.0e-7
-    Absolute Tolerance: 1.0e-7
+    Test Values: [0.0, 0.0, 1.1628, -1.1628]
+    Relative Tolerance: 1.0e-4
+    Absolute Tolerance: 1.0e-4
   Piro:
     Analysis:
       Compute Sensitivities: false
@@ -52,10 +52,10 @@ ANONYMOUS:
           Storage Limit: 2000
         Time Step Control:
           Initial Time: 0.0
-          Final Time: 10.0
+          Final Time: 2.0
           Initial Time Index: 0
           Final Time Index: 1000000
-          Initial Time Step: 0.01
+          Initial Time Step: 0.005
           Maximum Absolute Error: 1.0e-8
           Maximum Relative Error: 1.0e-8
           Integrator Step Type: Constant
@@ -123,7 +123,7 @@ ANONYMOUS:
                 Aztec Solver: GMRES
                 Convergence Test: r0
                 Size of Krylov Subspace: 200
-                Output Frequency: 1
+                Output Frequency: 10
               Max Iterations: 100
               Tolerance: 1e-5
           Belos:
