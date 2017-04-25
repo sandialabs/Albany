@@ -105,10 +105,8 @@ operator() (const XZHydrostatic_TemperatureResid_Tag& tag, const int& cell) cons
                                   +  etadotdT(cell,node,level)                                   *wBF(cell,node,node)
                                   +  temperatureDot(cell,node,level)                             *wBF(cell,node,node);
 
-      for (int qp=0; qp < numQPs; ++qp) {
-        for (int dim=0; dim < numDims; ++dim) {
-          Residual(cell,node,level) += velocity(cell,qp,level,dim)*temperatureGrad(cell,qp,level,dim)*wBF(cell,node,qp);
-        }
+      for (int dim=0; dim < numDims; ++dim) {
+        Residual(cell,node,level) += velocity(cell,node,level,dim)*temperatureGrad(cell,node,level,dim)*wBF(cell,node,node);
       }
     }
 //     for (int level = 0; level < 2; ++level){
@@ -162,10 +160,8 @@ evaluateFields(typename Traits::EvalData workset)
       for (int cell=0; cell < workset.numCells; ++cell) {
         for (int node=0; node < numNodes; ++node) {
           for (int level=0; level < numLevels; ++level) {
-            for (int qp=0; qp < numQPs; ++qp) {
-              for (int dim=0; dim < numDims; ++dim) {
-                Residual(cell,node,level) += velocity(cell,qp,level,dim)*temperatureGrad(cell,qp,level,dim)*wBF(cell,node,qp);
-              }
+            for (int dim=0; dim < numDims; ++dim) {
+              Residual(cell,node,level) += velocity(cell,node,level,dim)*temperatureGrad(cell,node,level,dim)*wBF(cell,node,node);
             }
           }
 // 		  for (int level = 0; level < 2; ++level) {
@@ -177,13 +173,12 @@ evaluateFields(typename Traits::EvalData workset)
 //         }
         }
 
-        for (int qp=0; qp < numQPs; ++qp) {
-          int node = qp;
+        for (int node=0; node < numNodes; ++node) {
           for (int level=0; level < numLevels; ++level) {
-            Residual(cell,node,level)   += temperatureSrc(cell,qp,level)                             *wBF(cell,node,qp)
-                                        -  omega(cell,qp,level)                                      *wBF(cell,node,qp)
-                                        +  etadotdT(cell,qp,level)                                   *wBF(cell,node,qp)
-                                        +  temperatureDot(cell,qp,level)                             *wBF(cell,node,qp);
+            Residual(cell,node,level)   += temperatureSrc(cell,node,level)                             *wBF(cell,node,node)
+                                        -  omega(cell,node,level)                                      *wBF(cell,node,node)
+                                        +  etadotdT(cell,node,level)                                   *wBF(cell,node,node)
+                                        +  temperatureDot(cell,node,level)                             *wBF(cell,node,node);
           }
         }
       }

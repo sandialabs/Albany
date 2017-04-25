@@ -22,7 +22,6 @@ DOFInterpolation(Teuchos::ParameterList& p,
   val_qp      (p.get<std::string>   ("Variable Name"), 
                p.get<Teuchos::RCP<PHX::DataLayout> >("Quadpoint Variable Layout", dl->qp_scalar_level)),
   numNodes   (dl->node_scalar             ->dimension(1)),
-  numQPs     (dl->node_qp_scalar          ->dimension(2)),
   numLevels  (dl->node_scalar_level       ->dimension(2)),
   numRank    (val_node.fieldTag().dataLayout().rank())
 {
@@ -54,11 +53,9 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void DOFInterpolation<EvalT, Traits>::
 operator() (const DOFInterpolation_numRank2_Tag& tag, const int& cell) const{
-  for (int qp=0; qp < numQPs; ++qp) {
-    typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,qp) = 0;
-    for (int node=0; node < numNodes; ++node) {
-      vqp += val_node(cell, node) * BF(cell, node, qp);
-    }
+  for (int node=0; node < numNodes; ++node) {
+    typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,node) = 0.0;
+    vqp += val_node(cell, node) * BF(cell, node, node);
   }
 }
 
@@ -66,12 +63,10 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void DOFInterpolation<EvalT, Traits>::
 operator() (const DOFInterpolation_Tag& tag, const int& cell) const{
-  for (int qp=0; qp < numQPs; ++qp) {
+  for (int node=0; node < numNodes; ++node) {
     for (int level=0; level < numLevels; ++level) {
-      typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,qp,level) = 0;
-      for (int node=0; node < numNodes; ++node) {
-        vqp += val_node(cell, node, level) * BF(cell, node, qp);
-      }
+      typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,node,level) = 0.0;
+      vqp += val_node(cell, node, level) * BF(cell, node, node);
     }
   }
 }
@@ -90,21 +85,17 @@ evaluateFields(typename Traits::EvalData workset)
   
   if (numRank == 2) {
     for (int cell=0; cell < workset.numCells; ++cell) {
-      for (int qp=0; qp < numQPs; ++qp) {
-        typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,qp) = 0;
-        for (int node=0; node < numNodes; ++node) {
-          vqp += val_node(cell, node) * BF(cell, node, qp);
-        }
+      for (int node=0; node < numNodes; ++node) {
+        typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,node) = 0.0;
+        vqp += val_node(cell, node) * BF(cell, node, node);
       }
     }
   } else {
     for (int cell=0; cell < workset.numCells; ++cell) {
-      for (int qp=0; qp < numQPs; ++qp) {
+      for (int node=0; node < numNodes; ++node) {
         for (int level=0; level < numLevels; ++level) {
-          typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,qp,level) = 0;
-          for (int node=0; node < numNodes; ++node) {
-            vqp += val_node(cell, node, level) * BF(cell, node, qp);
-          }
+          typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,node,level) = 0.0;
+          vqp += val_node(cell, node, level) * BF(cell, node, node);
         }
       }
     }

@@ -50,7 +50,6 @@ private:
 
   const int numNodes;
   const int numDims;
-  const int numQPs;
   const int numLevels;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
