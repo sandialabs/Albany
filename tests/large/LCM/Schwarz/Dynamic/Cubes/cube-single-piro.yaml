@@ -16,13 +16,16 @@ ANONYMOUS:
       Function: About Z
       Function Data: [1.00000000]
     Response Functions: 
-      Number: 1
+      Number: 4
       Response 0: Project IP to Nodal Field
       ResponseParams 0: 
         Number of Fields: 1
         IP Field Name 0: Cauchy_Stress
         IP Field Layout 0: Tensor
         Output to File: true
+      Response 1: Solution Average
+      Response 2: Solution Max Value
+      Response 3: Solution Min Value
   Discretization: 
     Method: Ioss
     Exodus Input File Name: 'cube-single.g'
@@ -32,6 +35,11 @@ ANONYMOUS:
     Separate Evaluators by Element Block: true
     Number Of Time Derivatives: 2
     Exodus Write Interval: 10
+  Regression Results: 
+    Number of Comparisons: 4
+    Test Values: [0.0, 0.0,  1.10326665348, -1.10326665348]
+    Relative Tolerance: 1.0e-7
+    Absolute Tolerance: 1.0e-7
   Piro: 
     Newmark: 
       Num Time Steps: 1000
