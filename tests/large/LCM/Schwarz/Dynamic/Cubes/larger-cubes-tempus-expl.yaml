@@ -1,0 +1,147 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Scaling: 
+    Scale: 1.0000000e11
+  Problem: 
+    Name: Mechanics 3D
+    Phalanx Graph Visualization Detail: 0
+    MaterialDB Filename: 'materials-cubes.yaml'
+    Solution Method: Transient Tempus
+    Initial Condition: 
+      Function: Constant
+      Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00]
+    Initial Condition Dot: 
+      Function: About Z
+      Function Data: [1.00000000]
+    Response Functions: 
+      Number: 4
+      Response 0: Project IP to Nodal Field
+      ResponseParams 0: 
+        Number of Fields: 1
+        IP Field Name 0: Cauchy_Stress
+        IP Field Layout 0: Tensor
+        Output to File: true
+      Response 1: Solution Average
+      Response 2: Solution Max Value
+      Response 3: Solution Min Value
+  Discretization: 
+    Method: Ioss
+    Exodus Input File Name: 'larger-cubes.g'
+    Exodus Output File Name: 'larger-cubes-tempus-expl.e'
+    Exodus Solution Name: disp
+    Exodus Residual Name: resid
+    Separate Evaluators by Element Block: true
+    Number Of Time Derivatives: 2
+    Exodus Write Interval: 10000
+  Regression Results: 
+    Number of Comparisons: 0
+    Test Values: [0.0, 0.0, 1.1628, -1.1628]
+    Relative Tolerance: 1.0e-4
+    Absolute Tolerance: 1.0e-4
+  Piro:
+    Analysis:
+      Compute Sensitivities: false
+    Tempus: 
+      Integrator Name: Tempus Integrator
+      Tempus Integrator:
+        Integrator Type: Integrator Basic
+        Stepper Name: Tempus Stepper
+        Solution History:
+          Storage Type: Unlimited
+          Storage Limit: 2000
+        Time Step Control:
+          Initial Time: 0.0
+          Final Time: 10.0
+          Initial Time Index: 0
+          Final Time Index: 1000000
+          Initial Time Step: 1.0e-5
+          Maximum Absolute Error: 1.0e-8
+          Maximum Relative Error: 1.0e-8
+          Integrator Step Type: Constant
+          Output Time List: ''
+          Output Index List: ''
+          #Output Time Interval: 1.0
+          #Output Index Interval: 1000
+          #Maximum Number of Stepper Failures: 10
+          #Maximum Number of Consecutive Stepper Failures: 5
+      Tempus Stepper:
+        Stepper Type: 'Newmark Beta'
+        Newmark Beta Parameters:
+          Beta: 0.0
+          Gamma: 0.50
+        Predictor Name: 'None'
+        Solver Name: Demo Solver
+        Demo Solver:
+          NOX:
+            Direction:
+              Method: Newton
+              Newton:
+                Forcing Term Method: Constant
+                Rescue Bad Newton Solve: true
+                Linear Solver:
+                  Tolerance: 1.0e-5
+            Line Search:
+              Method: Full Step
+              Full Step:
+                Full Step: 1.0
+            Nonlinear Solver: Line Search Based
+            #Nonlinear Solver: Single Step
+            Printing:
+              Output Precision: 3
+              Output Processor: 0
+              Output Information:
+                Error: true
+                Warning: true
+                Outer Iteration: true
+                Parameters: true
+                Details: true
+                Linear Solver Details: true
+                Stepper Iteration: true
+                Stepper Details: true
+                Stepper Parameters: true
+            Solver Options:
+              Status Test Check Type: Minimal
+            Status Tests:
+              Test Type: Combo
+              Combo Type: OR
+              Number of Tests: 2
+              Test 0:
+                Test Type: NormF
+                Norm Type: Two Norm
+                Scale Type: Scaled
+                Tolerance: 1.00000000e-08
+              Test 1:
+                Test Type: MaxIters
+                Maximum Iterations: 128
+      Stratimikos:
+        Linear Solver Type: AztecOO
+        Linear Solver Types:
+          AztecOO:
+            Forward Solve:
+              AztecOO Settings:
+                Aztec Solver: GMRES
+                Convergence Test: r0
+                Size of Krylov Subspace: 200
+                Output Frequency: 10
+              Max Iterations: 100
+              Tolerance: 1e-5
+          Belos:
+            Solver Type: Block GMRES
+            Solver Types:
+              Block GMRES:
+                Convergence Tolerance: 1e-5
+                Output Frequency: 10
+                Output Style: 1
+                Verbosity: 33
+                Maximum Iterations: 3
+                Block Size: 1
+                Num Blocks: 100
+                Flexible Gmres: 0
+        Preconditioner Type: Ifpack2
+        Preconditioner Types:
+          Ifpack2:
+            Prec Type: ILUT
+            Overlap: 1
+            Ifpack2 Settings:
+              'fact: ilut level-of-fill': 1.0
