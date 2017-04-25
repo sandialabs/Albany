@@ -68,6 +68,8 @@ bananaRosenbrock()
   MIN
   minimizer;
 
+  minimizer.verbose = print_output;
+
   // Define algorithm.
   std::string const
   algoname{"Line Search"};
@@ -153,6 +155,8 @@ paraboloid()
 
   MIN
   minimizer;
+
+  minimizer.verbose = print_output;
 
   // Define algorithm.
   std::string const
@@ -240,6 +244,8 @@ paraboloidBounds()
 
   MIN
   minimizer;
+
+  minimizer.verbose = print_output;
 
   minitensor::Vector<ValueT, DIM>
   lo(1.0, -10.0);
@@ -343,6 +349,8 @@ paraboloidEquality()
 
   MIN
   minimizer;
+
+  minimizer.verbose = print_output;
 
   // Constraint that defines the feasible region
   EIC
@@ -481,6 +489,8 @@ TEST(MiniTensor_ROL, Paraboloid_EqualityConstraint)
 
   ROL::MiniTensor_Minimizer<double, NUM_VAR>
   minimizer;
+
+  minimizer.verbose = print_output;
 
   minimizer.solve(algoname, params, fn, eq_constr, x, c);
 
