@@ -247,11 +247,13 @@ paraboloidBounds()
 
   minimizer.verbose = print_output;
 
+  // (1, -\infty)
   minitensor::Vector<ValueT, DIM>
-  lo(1.0, -10.0);
+  lo(1.0, ROL::ROL_NINF<ValueT>());
 
+  // 10, +\infty)
   minitensor::Vector<ValueT, DIM>
-  hi(10.0, 10.0);
+  hi(10.0, ROL::ROL_INF<ValueT>());
 
   // Constraint that defines the feasible region
   BC
