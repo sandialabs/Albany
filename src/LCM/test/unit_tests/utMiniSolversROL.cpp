@@ -345,7 +345,7 @@ paraboloidEquality()
 
   // Function to optimize
   FN
-  fn(a, b);
+  fn;
 
   MIN
   minimizer;
