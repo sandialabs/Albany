@@ -11,8 +11,8 @@ if { [is-loaded lcm/fedora] } {
   setenv                  MPI_LIB         /usr/lib64/openmpi/lib
   setenv                  MPI_BIN         /usr/lib64/openmpi/bin
   setenv                  NETCDF          /usr/local/netcdf
-  setenv                  NETCDF_INC      /usr/local/netcdf/include
-  setenv                  NETCDF_LIB      /usr/local/netcdf/lib
+  setenv                  NETCDF_INC      /usr/include/openmpi-x86_64
+  setenv                  NETCDF_LIB      /usr/lib64/openmpi/lib
   setenv                  YAML_CPP_INC    /usr/include
   setenv                  YAML_CPP_LIB    /usr/lib64
   prepend-path            LD_LIBRARY_PATH /usr/lib64/openmpi/lib
