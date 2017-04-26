@@ -547,6 +547,11 @@ CP::ImplicitSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update(
                       state_internal_.hardening_n_, state_internal_.slip_n_,
                       F_np1_, dt_);
 
+
+  // CP::ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT> fn(C_, slip_systems_, slip_families_, state_mechanical_.Fp_n_,
+  // 							  state_internal_.hardening_n_, state_internal_.slip_n_,
+  // 							  F_np1_, dt_);
+
   using StepType = minitensor::StepBase<NonlinearSolver, ValueT, CP::NlsDim<NumSlipT>::value>;
 
   std::unique_ptr<StepType>
