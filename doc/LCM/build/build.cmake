@@ -1,5 +1,3 @@
-set(LINE "------------------------------------------------------------")
-
 function(do_config PKG_IN SOURCE_IN BUILD_IN OPTS_IN RETVAR)
   set(${RETVAR} FALSE PARENT_SCOPE)
   if (EXISTS "${BUILD_IN}/CMakeCache.txt")
@@ -29,6 +27,7 @@ function(do_config PKG_IN SOURCE_IN BUILD_IN OPTS_IN RETVAR)
 endfunction(do_config)
 
 function(do_build PKG_IN BUILD_IN NPROCS_IN TARGET_IN RETVAR)
+  set(LINE "------------------------------------------------------------")
   set(${RETVAR} FALSE PARENT_SCOPE)
   message("BUILDING ${PKG_IN} ...")
   message("${LINE}")
@@ -56,6 +55,7 @@ function(do_build PKG_IN BUILD_IN NPROCS_IN TARGET_IN RETVAR)
 endfunction(do_build)
 
 function(do_test BUILD_IN RETVAR)
+  set(LINE "------------------------------------------------------------")
   set(${RETVAR} FALSE PARENT_SCOPE)
   if (NOT EXISTS "${BUILD_IN}")
     message("Build directory does not exist. Run:")
@@ -77,3 +77,112 @@ function(do_test BUILD_IN RETVAR)
     endif()
   endif()
 endfunction(do_test)
+
+function(lcm_do_config)
+  if (${LCM_PACKAGE} STREQUAL "trilinos")
+    set(OPTS
+      "-DBUILD_SHARED_LIBS:BOOL=ON"
+      "-DCMAKE_BUILD_TYPE:STRING=\"$ENV{BUILD_TYPE}\""
+      "-DCMAKE_CXX_COMPILER:FILEPATH=\"$ENV{MPI_BIN}/mpicxx\""
+      "-DCMAKE_C_COMPILER:FILEPATH=\"$ENV{MPI_BIN}/mpicc\""
+      "-DCMAKE_Fortran_COMPILER:FILEPATH=\"$ENV{MPI_BIN}/mpif90\""
+      "-DCMAKE_INSTALL_PREFIX:PATH=${lcm_install_dir"
+      "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
+      "-DTPL_ENABLE_MPI:BOOL=ON"
+      "-DTPL_ENABLE_BinUtils:BOOL=OFF"
+      "-DTPL_MPI_INCLUDE_DIRS:STRING=\"$ENV{MPI_INC}\""
+      "-DTPL_MPI_LIBRARY_DIRS:STRING=\"$ENV{MPI_LIB}\""
+      "-DMPI_BIN_DIR:PATH=\"$ENV{MPI_BIN}\""
+      "-DTPL_ENABLE_Boost:BOOL=ON"
+      "-DTPL_ENABLE_BoostLib:BOOL=ON"
+      "-DBoost_INCLUDE_DIRS:STRING=\"$ENV{BOOST_INC}\""
+      "-DBoost_LIBRARY_DIRS:STRING=\"$ENV{BOOST_LIB}\""
+      "-DBoostLib_INCLUDE_DIRS:STRING=\"$ENV{BOOSTLIB_INC}\""
+      "-DBoostLib_LIBRARY_DIRS:STRING=\"$ENV{BOOSTLIB_LIB}\""
+      "-DTPL_ENABLE_yaml-cpp:BOOL=ON"
+      "-Dyaml-cpp_INCLUDE_DIRS:STRING=\"${YAML_CPP_INC}\""
+      "-Dyaml-cpp_LIBRARY_DIRS:STRING=\"${YAML_CPP_LIB}\""
+      "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
+      "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
+      "-DTrilinos_ENABLE_CXX11:BOOL=ON"
+      "-DTrilinos_ENABLE_EXAMPLES:BOOL=OFF"
+      "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
+      "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
+      "-DTrilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="""
+      "-DTeuchos_ENABLE_STACKTRACE:BOOL=OFF"
+      "-DTeuchos_ENABLE_DEFAULT_STACKTRACE:BOOL=OFF"
+      "-DKokkos_ENABLE_CXX11:BOOL=ON"
+      "-DKokkos_ENABLE_Cuda_UVM:BOOL=${lcm_enable_uvm}"
+      "-DKokkos_ENABLE_EXAMPLES:BOOL=${lcm_enable_kokkos_examples}"
+      "-DKokkos_ENABLE_OpenMP:BOOL=${lcm_enable_openmp}"
+      "-DKokkos_ENABLE_Pthread:BOOL=${lcm_enable_pthreads}"
+      "-DKokkos_ENABLE_Serial:BOOL=ON"
+      "-DKokkos_ENABLE_TESTS:BOOL=OFF"
+      "-DTPL_ENABLE_CUDA:STRING=${lcm_enable_cuda}"
+      "-DTPL_ENABLE_CUSPARSE:BOOL=${lcm_enable_cusparse}"
+      "-DAmesos2_ENABLE_KLU2:BOOL=ON"
+      "-DEpetraExt_USING_HDF5:BOOL=OFF"
+      "-DIntrepid2_ENABLE_KokkosDynRankView:BOOL=ON"
+      "-DMiniTensor_ENABLE_TESTS:BOOL=ON"
+      "-DROL_ENABLE_TESTS:BOOL=OFF"
+      "-DPhalanx_INDEX_SIZE_TYPE:STRING=\"${lcm_phalanx_index_type}\""
+      "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING=\"${lcm_kokkos_device}\""
+      "-DPhalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
+      "-DTpetra_ENABLE_Kokkos_Refactor:BOOL=ON"
+      "-DTpetra_INST_PTHREAD:BOOL=${lcm_tpetra_inst_pthread}"
+      "-DTPL_ENABLE_HDF5:BOOL=OFF"
+      "-DTPL_ENABLE_HWLOC:STRING=${lcm_enable_hwloc}"
+      "-DTPL_ENABLE_Matio:BOOL=OFF"
+      "-DTPL_ENABLE_Netcdf:BOOL=ON"
+      "-DTPL_ENABLE_X11:BOOL=OFF"
+      "-DTPL_Netcdf_INCLUDE_DIRS:STRING=\"${lcm_netcdf_inc}\""
+      "-DTPL_Netcdf_LIBRARY_DIRS:STRING=\"${lcm_netcdf_lib}\""
+      "-DTPL_Netcdf_LIBRARIES:STRING=\"${lcm_netcdf_lib}/libnetcdf.so\""
+      "-DTPL_Netcdf_PARALLEL:BOOL=ON"
+      "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
+      "-DTrilinos_ENABLE_Amesos:BOOL=ON"
+      "-DTrilinos_ENABLE_Anasazi:BOOL=ON"
+      "-DTrilinos_ENABLE_AztecOO:BOOL=ON"
+      "-DTrilinos_ENABLE_Belos:BOOL=ON"
+      "-DTrilinos_ENABLE_EXAMPLES:BOOL=OFF"
+      "-DTrilinos_ENABLE_Epetra:BOOL=ON"
+      "-DTrilinos_ENABLE_EpetraExt:BOOL=ON"
+      "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
+      "-DTrilinos_ENABLE_Ifpack:BOOL=ON"
+      "-DTrilinos_ENABLE_Intrepid2:BOOL=ON"
+      "-DTrilinos_ENABLE_Kokkos:BOOL=ON"
+      "-DTrilinos_ENABLE_KokkosAlgorithms:BOOL=ON"
+      "-DTrilinos_ENABLE_KokkosContainers:BOOL=ON"
+      "-DTrilinos_ENABLE_KokkosCore:BOOL=ON"
+      "-DTrilinos_ENABLE_KokkosExample:BOOL=OFF"
+      "-DTrilinos_ENABLE_MiniTensor:BOOL=ON"
+      "-DTrilinos_ENABLE_ML:BOOL=ON"
+      "-DTrilinos_ENABLE_MueLu:BOOL=ON"
+      "-DTrilinos_ENABLE_NOX:BOOL=ON"
+      "-DTrilinos_ENABLE_OpenMP:BOOL=${lcm_enable_openmp}"
+      "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
+      "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
+      "-DTrilinos_ENABLE_Piro:BOOL=ON"
+      "-DTrilinos_ENABLE_ROL:BOOL=ON"
+      "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
+      "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
+      "-DTrilinos_ENABLE_STKClassic:BOOL=OFF"
+      "-DTrilinos_ENABLE_STKIO:BOOL=ON"
+      "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
+      "-DTrilinos_ENABLE_Sacado:BOOL=ON"
+      "-DTrilinos_ENABLE_Shards:BOOL=ON"
+      "-DTrilinos_ENABLE_Stokhos:BOOL=ON"
+      "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
+      "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
+      "-DTrilinos_ENABLE_Teko:BOOL=ON"
+      "-DTrilinos_ENABLE_Tempus:BOOL=ON"
+      "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
+      "-DTrilinos_ENABLE_ThreadPool:BOOL=ON"
+      "-DTrilinos_ENABLE_Thyra:BOOL=ON"
+      "-DTrilinos_ENABLE_Tpetra:BOOL=ON"
+      "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
+      "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
+    )
+  elseif (${LCM_PACKAGE} STREQUAL "albany")
+  endif()
+endfunction(lcm_do_config)
