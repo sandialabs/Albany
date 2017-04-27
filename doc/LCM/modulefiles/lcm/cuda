@@ -10,3 +10,5 @@ if { [is-loaded lcm/fedora] } {
 setenv CUDA_LAUNCH_BLOCKING    1
 setenv CUDA_VISIBLE_DEVICES    0
 setenv ARCH cuda
+setenv ARCH_STRING CUDA
+setenv ARCH_NAME Cuda

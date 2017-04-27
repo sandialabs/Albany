@@ -3,3 +3,5 @@
 module-whatis "LCM serial (within MPI rank) arch"
 
 setenv ARCH serial
+setenv ARCH_STRING SERIAL
+setenv ARCH_NAME Serial

@@ -3,3 +3,5 @@
 module-whatis "LCM OpenMP arch"
 
 setenv ARCH openmp
+setenv ARCH_STRING OPENMP
+setenv ARCH_NAME "Open MP"

@@ -7,3 +7,13 @@ if { [is-loaded lcm/sems] } {
 }
 
 setenv TOOL_CHAIN gcc
+
+setenv CC [exec which gcc]
+
+if { [is-loaded lcm/cuda] } {
+  setenv CXX [exec which g++]
+} else {
+  setenv CXX $lcm_dir/Trilinos/packages/kokkos/config/nvcc_wrapper
+}
+
+setenv FC [exec which gfortran]

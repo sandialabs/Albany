@@ -7,3 +7,7 @@ if { [is-loaded lcm/sems] } {
 }
 
 setenv TOOL_CHAIN clang
+
+setenv CC [exec which clang]
+setenv CXX [exec which clang++]
+setenv FC [exec which gfortran]
