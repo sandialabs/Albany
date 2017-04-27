@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.0.1)
+
 function(do_config PKG_IN SOURCE_IN BUILD_IN OPTS_IN RETVAR)
   set(${RETVAR} FALSE PARENT_SCOPE)
   if (EXISTS "${BUILD_IN}/CMakeCache.txt")
@@ -214,19 +216,20 @@ function(lcm_env_single SCRIPT_NAME PACKAGE NUM_PROCS)
     set(PACKAGE_NAME "Albany")
   endif()
 
-  set(NVCC_WRAPPER "$ENV{LCM_DIR}/Trilinos/packages/kokkos/config/nvcc_wrapper")
-
-  if (ENV{TOOL_CHAIN} STREQUAL "gcc")
-    if (NOT ENV{CC}) execute_process(COMMAND which gcc OUTPUT_VARIABLE ENV{CC}) endif()
-    if (ENV{ARCH} STREQUAL "cuda")
-      set(ENV{CXX} "${NVCC_WRAPPER}")
-    else()
-      if (NOT ENV{CXX}) execute_process(COMMAND which g++ OUTPUT_VARIABLE ENV{CXX}) endif()
-    endif()
-    if (NOT ENV{FC}) execute_process(COMMAND which gfortran OUTPUT_VARIABLE ENV{FC}) endif()
-  elseif (ENV{TOOL_CHAIN} STREQUAL "clang")
-    if (NOT ENV{CC}) execute_process(COMMAND which clang OUTPUT_VARIABLE ENV{CC}) endif()
-    if (NOT ENV{CXX}) execute_process(COMMAND which clang++ OUTPUT_VARIABLE ENV{CXX}) endif()
-    if (NOT ENV{FC}) execute_process(COMMAND which gfortran OUTPUT_VARIABLE ENV{FC}) endif()
-  endif()
+  set(CONFIG_FILE "$ENV{PACKAGE}-config.sh")
+  set(PACKAGE_DIR "$ENV{LCM_DIR}/${PACKAGE_NAME}")
+  set(INSTALL_DIR "$ENV{LCM_DIR}/trilinos-install-$ENV{BUILD}")
+  set(BUILD_DIR "$ENV{LCM_DIR}/${PACKAGE}-build-$ENV{BUILD}")
+  set(PREFIX "$PACKAGE-$ENV{BUILD}")
+  execute_process(COMMAND hostname OUTPUT_VARIABLE HOST)
+  
+  set(PACKAGE_STRING ${PACKAGE_STRING} PARENT_SCOPE)
+  set(PACKAGE_NAME ${PACKAGE_NAME} PARENT_SCOPE)
+  set(PACKAGE_DIR ${PACKAGE_DIR} PARENT_SCOPE)
+  set(INSTALL_DIR ${INSTALL_DIR} PARENT_SCOPE)
+  set(BUILD_DIR ${BUILD_DIR} PARENT_SCOPE)
 endfunction(lcm_env_single)
+
+# START OF MAIN CODE
+
+SET(CTEST_TEST_TYPE Nightly)
