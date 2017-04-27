@@ -223,11 +223,13 @@ SchwarzAlternating(
     Teuchos::ParameterList &
     solver_opts = nox_params.sublist("Solver Options");
 
-    Teuchos::RCP<SchwarzConvergenceCriterion>
-    scc = Teuchos::rcp(new SchwarzConvergenceCriterion);
+    Teuchos::RCP<NOX::Abstract::PrePostOperator>
+    ppo = Teuchos::rcp(new SchwarzConvergenceCriterion);
 
-    solver_opts.set<Teuchos::RCP<NOX::Abstract::PrePostOperator>>
-        ("User Defined Pre/Post Operator", scc);
+    Teuchos::RCP<SchwarzConvergenceCriterion>
+    scc = Teuchos::rcp_dynamic_cast<SchwarzConvergenceCriterion>(ppo);
+
+    solver_opts.set("User Defined Pre/Post Operator", ppo);
 
     Teuchos::RCP<Albany::Application>
     app;

@@ -25,16 +25,16 @@ public:
 
   SchwarzConvergenceCriterion();
 
-  void
+  virtual void
   runPreIterate(NOX::Solver::Generic const & solver);
 
-  void
+  virtual void
   runPostIterate(NOX::Solver::Generic const & solver);
 
-  void
+  virtual void
   runPreSolve(NOX::Solver::Generic const & solver);
 
-  void
+  virtual void
   runPostSolve(NOX::Solver::Generic const & solver);
 
   ST

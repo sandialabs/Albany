@@ -4,42 +4,71 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef NOXSOLVERPREPOSTOPERATOR_H
+#if !defined(NOXSOLVERPREPOSTOPERATOR_H)
 #define NOXSOLVERPREPOSTOPERATOR_H
 
-#include <NOX_Abstract_PrePostOperator.H>
-#include <Teuchos_RCP.hpp>
+#include "Albany_DataTypes.hpp"
+#include "NOX_Abstract_PrePostOperator.H"
+#include "NOX_Abstract_Vector.H"
 #include "NOX_StatusTest_ModelEvaluatorFlag.h"
 
-//! Observer that is called at various point in the NOX nonlinear solve process
+///
+/// Observer that is called at various points in the NOX nonlinear solver
+///
 class NOXSolverPrePostOperator : public NOX::Abstract::PrePostOperator {
 
 public:
 
-  //! Constructor.
-  NOXSolverPrePostOperator() {}
+  /// Constructor.
+  NOXSolverPrePostOperator();
 
-  //! Destructor.
-  virtual ~NOXSolverPrePostOperator() {}
+  /// Destructor.
+  virtual
+  ~NOXSolverPrePostOperator();
 
-  //! Set the status test
-  void setStatusTest(Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> status_test) { status_test_ = status_test; }
+  /// Set the status test
+  void
+  setStatusTest(Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> status_test);
 
-  //! User defined method that will be executed at the start of a call to NOX::Solver::Generic::iterate().
-  //virtual void runPreIterate(const NOX::Solver::Generic& solver);
+  virtual void
+  runPreIterate(NOX::Solver::Generic const & solver);
 
-  //! User defined method that will be executed at the end of a call to NOX::Solver::Generic::iterate().
-  //virtual void runPostIterate(const NOX::Solver::Generic& solver);
+  virtual void
+  runPostIterate(NOX::Solver::Generic const & solver);
 
-  //! User defined method that will be executed at the start of a call to NOX::Solver::Generic::solve().
-  virtual void runPreSolve(const NOX::Solver::Generic& solver);
+  virtual void
+  runPreSolve(NOX::Solver::Generic const & solver);
 
-  //! User defined method that will be executed at the end of a call to NOX::Solver::Generic::solve().
-  //virtual void runPostSolve(const NOX::Solver::Generic& solver);
+  virtual void
+  runPostSolve(NOX::Solver::Generic const & solver);
 
-protected:
+  ST
+  getInitialNorm();
 
-  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> status_test_;
+  ST
+  getFinalNorm();
+
+  ST
+  getDifferenceNorm();
+
+private:
+
+  // For step reduction
+  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
+  status_test_{Teuchos::null};
+
+  // For Schwarz coupling
+  Teuchos::RCP<NOX::Abstract::Vector>
+  soln_init_{Teuchos::null};
+
+  ST
+  norm_init_{0.0};
+
+  ST
+  norm_final_{0.0};
+
+  ST
+  norm_diff_{0.0};
 };
 
-#endif
+#endif // NOXSOLVERPREPOSTOPERATOR_H
