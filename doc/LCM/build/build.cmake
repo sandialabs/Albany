@@ -80,15 +80,15 @@ function(do_test BUILD_IN RETVAR)
   endif()
 endfunction(do_test)
 
-function(lcm_do_config)
-  if (${LCM_PACKAGE} STREQUAL "trilinos")
+function(lcm_do_config PACKAGE PACKAGE_DIR INSTALL_DIR)
+  if (${PACKAGE} STREQUAL "trilinos")
     set(OPTS
       "-DBUILD_SHARED_LIBS:BOOL=ON"
-      "-DCMAKE_BUILD_TYPE:STRING=\"$ENV{BUILD_TYPE}\""
+      "-DCMAKE_BUILD_TYPE:STRING=\"$ENV{BUILD_STRING}\""
       "-DCMAKE_CXX_COMPILER:FILEPATH=\"$ENV{MPI_BIN}/mpicxx\""
       "-DCMAKE_C_COMPILER:FILEPATH=\"$ENV{MPI_BIN}/mpicc\""
       "-DCMAKE_Fortran_COMPILER:FILEPATH=\"$ENV{MPI_BIN}/mpif90\""
-      "-DCMAKE_INSTALL_PREFIX:PATH=${lcm_install_dir"
+      "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_DIR}"
       "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
       "-DTPL_ENABLE_MPI:BOOL=ON"
       "-DTPL_ENABLE_BinUtils:BOOL=OFF"
@@ -102,8 +102,8 @@ function(lcm_do_config)
       "-DBoostLib_INCLUDE_DIRS:STRING=\"$ENV{BOOSTLIB_INC}\""
       "-DBoostLib_LIBRARY_DIRS:STRING=\"$ENV{BOOSTLIB_LIB}\""
       "-DTPL_ENABLE_yaml-cpp:BOOL=ON"
-      "-Dyaml-cpp_INCLUDE_DIRS:STRING=\"${YAML_CPP_INC}\""
-      "-Dyaml-cpp_LIBRARY_DIRS:STRING=\"${YAML_CPP_LIB}\""
+      "-Dyaml-cpp_INCLUDE_DIRS:STRING=\"$ENV{YAML_CPP_INC}\""
+      "-Dyaml-cpp_LIBRARY_DIRS:STRING=\"$ENV{YAML_CPP_LIB}\""
       "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
       "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
       "-DTrilinos_ENABLE_CXX11:BOOL=ON"
@@ -114,32 +114,32 @@ function(lcm_do_config)
       "-DTeuchos_ENABLE_STACKTRACE:BOOL=OFF"
       "-DTeuchos_ENABLE_DEFAULT_STACKTRACE:BOOL=OFF"
       "-DKokkos_ENABLE_CXX11:BOOL=ON"
-      "-DKokkos_ENABLE_Cuda_UVM:BOOL=${lcm_enable_uvm}"
-      "-DKokkos_ENABLE_EXAMPLES:BOOL=${lcm_enable_kokkos_examples}"
-      "-DKokkos_ENABLE_OpenMP:BOOL=${lcm_enable_openmp}"
-      "-DKokkos_ENABLE_Pthread:BOOL=${lcm_enable_pthreads}"
+      "-DKokkos_ENABLE_Cuda_UVM:BOOL=$ENV{LCM_ENABLE_UVM}"
+      "-DKokkos_ENABLE_EXAMPLES:BOOL=$ENV{LCM_ENABLE_KOKKOS_EXAMPLES}"
+      "-DKokkos_ENABLE_OpenMP:BOOL=$ENV{LCM_ENABLE_OPENMP}"
+      "-DKokkos_ENABLE_Pthread:BOOL=$ENV{LCM_ENABLE_PTHREADS}"
       "-DKokkos_ENABLE_Serial:BOOL=ON"
       "-DKokkos_ENABLE_TESTS:BOOL=OFF"
-      "-DTPL_ENABLE_CUDA:STRING=${lcm_enable_cuda}"
-      "-DTPL_ENABLE_CUSPARSE:BOOL=${lcm_enable_cusparse}"
+      "-DTPL_ENABLE_CUDA:STRING=$ENV{LCM_ENABLE_CUDA}"
+      "-DTPL_ENABLE_CUSPARSE:BOOL=$ENV{LCM_ENABLE_CUSPARSE}"
       "-DAmesos2_ENABLE_KLU2:BOOL=ON"
       "-DEpetraExt_USING_HDF5:BOOL=OFF"
       "-DIntrepid2_ENABLE_KokkosDynRankView:BOOL=ON"
       "-DMiniTensor_ENABLE_TESTS:BOOL=ON"
       "-DROL_ENABLE_TESTS:BOOL=OFF"
-      "-DPhalanx_INDEX_SIZE_TYPE:STRING=\"${lcm_phalanx_index_type}\""
-      "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING=\"${lcm_kokkos_device}\""
+      "-DPhalanx_INDEX_SIZE_TYPE:STRING=\"$ENV{LCM_PHALANX_INDEX_TYPE}\""
+      "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING=\"$ENV{LCM_KOKKOS_DEVICE}\""
       "-DPhalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
       "-DTpetra_ENABLE_Kokkos_Refactor:BOOL=ON"
-      "-DTpetra_INST_PTHREAD:BOOL=${lcm_tpetra_inst_pthread}"
+      "-DTpetra_INST_PTHREAD:BOOL=$ENV{LCM_TPETRA_INST_PTHREAD}"
       "-DTPL_ENABLE_HDF5:BOOL=OFF"
-      "-DTPL_ENABLE_HWLOC:STRING=${lcm_enable_hwloc}"
+      "-DTPL_ENABLE_HWLOC:STRING=$ENV{LCM_ENABLE_HWLOC}"
       "-DTPL_ENABLE_Matio:BOOL=OFF"
       "-DTPL_ENABLE_Netcdf:BOOL=ON"
       "-DTPL_ENABLE_X11:BOOL=OFF"
-      "-DTPL_Netcdf_INCLUDE_DIRS:STRING=\"${lcm_netcdf_inc}\""
-      "-DTPL_Netcdf_LIBRARY_DIRS:STRING=\"${lcm_netcdf_lib}\""
-      "-DTPL_Netcdf_LIBRARIES:STRING=\"${lcm_netcdf_lib}/libnetcdf.so\""
+      "-DTPL_Netcdf_INCLUDE_DIRS:STRING=\"$ENV{LCM_NETCDF_INC}\""
+      "-DTPL_Netcdf_LIBRARY_DIRS:STRING=\"$ENV{LCM_NETCDF_LIB}\""
+      "-DTPL_Netcdf_LIBRARIES:STRING=\"$ENV{LCM_NETCDF_LIB}/libnetcdf.so\""
       "-DTPL_Netcdf_PARALLEL:BOOL=ON"
       "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
       "-DTrilinos_ENABLE_Amesos:BOOL=ON"
@@ -161,7 +161,7 @@ function(lcm_do_config)
       "-DTrilinos_ENABLE_ML:BOOL=ON"
       "-DTrilinos_ENABLE_MueLu:BOOL=ON"
       "-DTrilinos_ENABLE_NOX:BOOL=ON"
-      "-DTrilinos_ENABLE_OpenMP:BOOL=${lcm_enable_openmp}"
+      "-DTrilinos_ENABLE_OpenMP:BOOL=$ENV{LCM_ENABLE_OPENMP}"
       "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
       "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
       "-DTrilinos_ENABLE_Piro:BOOL=ON"
@@ -185,6 +185,28 @@ function(lcm_do_config)
       "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
       "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
     )
+    if (ENV{LCM_SLFAD_SIZE})
+      set(OPTS ${OPTS} $ENV{LCM_SLFAD_SIZE})
+    endif()
+    set(EXTRA_REPOS)
+    if (EXISTS "${PACKAGE_DIR}/DataTransferKit")
+      set(EXTRA_REPOS ${EXTRA_REPOS} DataTransferKit)
+      set(OPTS ${OPTS}
+        "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=OFF"
+        "-DTrilinos_ENABLE_DataTransferKit:BOOL=ON"
+        "-DDataTransferKit_ENABLE_DBC:BOOL=ON"
+        "-DDataTransferKit_ENABLE_TESTS:BOOL=OFF"
+        "-DDataTransferKit_ENABLE_EXAMPLES:BOOL=OFF"
+        "-DTPL_ENABLE_MOAB:BOOL=OFF"
+        "-DTPL_ENABLE_Libmesh:BOOL=OFF"
+        )
+    else()
+      set(OPTS ${OPTS} "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
+    endif()
+    if (EXTRA_REPOS)
+      string(REPLACE ";" "," EXTRA_REPOS "${EXTRA_REPOS}")
+      set(OPTS ${OPTS} "-DTrilinos_EXTRA_REPOSITORIES:STRING=\"${EXTRA_REPOS}\"")
+    endif()
   elseif (${LCM_PACKAGE} STREQUAL "albany")
   endif()
 endfunction(lcm_do_config)
