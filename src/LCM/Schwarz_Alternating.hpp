@@ -17,51 +17,6 @@
 namespace LCM {
 
 ///
-/// NOX PrePostOperator used for Schwarz loop convergence criterion.
-///
-class SchwarzConvergenceCriterion : public NOX::Abstract::PrePostOperator {
-
-public:
-
-  SchwarzConvergenceCriterion();
-
-  virtual void
-  runPreIterate(NOX::Solver::Generic const & solver);
-
-  virtual void
-  runPostIterate(NOX::Solver::Generic const & solver);
-
-  virtual void
-  runPreSolve(NOX::Solver::Generic const & solver);
-
-  virtual void
-  runPostSolve(NOX::Solver::Generic const & solver);
-
-  ST
-  getInitialNorm();
-
-  ST
-  getFinalNorm();
-
-  ST
-  getDifferenceNorm();
-
-private:
-
-  Teuchos::RCP<NOX::Abstract::Vector>
-  soln_init_{Teuchos::null};
-
-  ST
-  norm_init_{0.0};
-
-  ST
-  norm_final_{0.0};
-
-  ST
-  norm_diff_{0.0};
-};
-
-///
 /// SchwarzAlternating coupling class
 ///
 class SchwarzAlternating: public Thyra::ResponseOnlyModelEvaluatorBase<ST> {
