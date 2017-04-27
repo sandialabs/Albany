@@ -6,6 +6,7 @@
 #include "Albany_ModelFactory.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "MiniTensor.h"
+#include "NOXSolverPrePostOperator.h"
 #include "Schwarz_Alternating.hpp"
 
 namespace LCM {
@@ -223,13 +224,17 @@ SchwarzAlternating(
     Teuchos::ParameterList &
     solver_opts = nox_params.sublist("Solver Options");
 
-    Teuchos::RCP<NOX::Abstract::PrePostOperator>
-    ppo = Teuchos::rcp(new SchwarzConvergenceCriterion);
+    bool const
+    have_prepost = solver_opts.isSublist("User Defined Pre/Post Operator");
 
-    Teuchos::RCP<SchwarzConvergenceCriterion>
-    scc = Teuchos::rcp_dynamic_cast<SchwarzConvergenceCriterion>(ppo);
+    if (have_prepost == false) {
 
-    solver_opts.set("User Defined Pre/Post Operator", ppo);
+      Teuchos::RCP<NOX::Abstract::PrePostOperator>
+      ppo = Teuchos::rcp(new NOXSolverPrePostOperator);
+
+      solver_opts.set("User Defined Pre/Post Operator", ppo);
+
+    }
 
     Teuchos::RCP<Albany::Application>
     app;
