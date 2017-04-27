@@ -144,11 +144,11 @@ SchwarzCoupled(
   nox_status_test = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag);
 
   Teuchos::RCP<NOX::Abstract::PrePostOperator>
-  pre_post_operator = Teuchos::rcp(new NOXSolverPrePostOperator);
+  pre_post_operator = Teuchos::rcp(new LCM::NOXSolverPrePostOperator);
 
-  Teuchos::RCP<NOXSolverPrePostOperator>
+  Teuchos::RCP<LCM::NOXSolverPrePostOperator>
   nox_solver_pre_post_operator =
-      Teuchos::rcp_dynamic_cast<NOXSolverPrePostOperator>(pre_post_operator);
+      Teuchos::rcp_dynamic_cast<LCM::NOXSolverPrePostOperator>(pre_post_operator);
 
   Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
   status_test =

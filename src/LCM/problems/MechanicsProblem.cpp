@@ -476,9 +476,10 @@ Albany::MechanicsProblem::applyProblemSpecificSolverSettings(
     // Create a NOX observer that will reset the status flag at the beginning of
     // a nonlinear solve
     Teuchos::RCP<NOX::Abstract::PrePostOperator> pre_post_operator =
-        Teuchos::rcp(new NOXSolverPrePostOperator);
-    Teuchos::RCP<NOXSolverPrePostOperator> nox_solver_pre_post_operator =
-        Teuchos::rcp_dynamic_cast<NOXSolverPrePostOperator>(pre_post_operator);
+        Teuchos::rcp(new LCM::NOXSolverPrePostOperator);
+    Teuchos::RCP<LCM::NOXSolverPrePostOperator> nox_solver_pre_post_operator =
+        Teuchos::rcp_dynamic_cast<LCM::NOXSolverPrePostOperator>(
+            pre_post_operator);
     Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> statusTest =
         Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(
             nox_status_test_);

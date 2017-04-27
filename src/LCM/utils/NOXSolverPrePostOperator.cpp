@@ -8,6 +8,8 @@
 #include "NOX_Solver_Generic.H"
 #include "NOXSolverPrePostOperator.h"
 
+namespace LCM {
+
 //
 //
 //
@@ -135,3 +137,5 @@ getDifferenceNorm()
 {
   return norm_diff_;
 }
+
+} // namespace LCM
