@@ -6,6 +6,7 @@
 #include "Albany_ModelFactory.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "MiniTensor.h"
+#include "Teuchos_FancyOStream.hpp"
 #include "Schwarz_Alternating.hpp"
 
 namespace LCM {
@@ -446,14 +447,30 @@ SchwarzLoop() const
   minitensor::Vector<ST>
   norms_diff(num_subdomains_, minitensor::Filler::ZEROS);
 
+  minitensor::Vector<int> const
+  sequence(num_subdomains_, minitensor::Filler::SEQUENCE);
+
   int const
   iter_limit = std::max(min_iters_, max_iters_);
 
+  std::string const
+  delim(72, '=');
+
+  Teuchos::RCP<Teuchos::FancyOStream>
+  out(Teuchos::VerboseObjectBase::getDefaultOStream());
+
+  *out << delim << '\n';
+  *out << "Schwarz Alternating Method with " << num_subdomains_;
+  *out << " subdomains\n";
+
   for (auto n = 0; n < iter_limit; ++n) {
 
-    std::cout << "\nSchwarz iteration :" << n << '\n';
-
     for (auto m = 0; m < num_subdomains_; ++m) {
+
+      *out << delim << '\n';
+      *out << "Schwarz iteration         :" << n << '\n';
+      *out << "Subdomain                 :" << m << '\n';
+      *out << delim << '\n';
 
       Thyra::ResponseOnlyModelEvaluatorBase<ST> &
       solver = *(solvers_[m]);
@@ -474,9 +491,6 @@ SchwarzLoop() const
       norms_diff(m) = convergence_op->getDifferenceNorm();
     }
 
-    std::cout << "Initial norms    :" << norms_init << '\n';
-    std::cout << "Final norms      :" << norms_final << '\n';
-    std::cout << "Difference norms :" << norms_diff << '\n';
 
     ST const
     norm_final = minitensor::norm(norms_final);
@@ -490,13 +504,21 @@ SchwarzLoop() const
     ST const
     rel_error = norm_final > 0.0 ? norm_diff / norm_final : norm_diff;
 
-    std::cout << "Absolute error     :" << abs_error << '\n';
-    std::cout << "Absolute tolerance :" << abs_tol_ << '\n';
-    std::cout << "Relative error     :" << rel_error << '\n';
-    std::cout << "Relative tolerance :" << rel_tol_ << '\n';
+    *out << delim << '\n';
+    *out << "Schwarz iteration         :" << n << '\n';
+    *out << "Subdomain                 :" << sequence << '\n';
+    *out << "Initial norms |X0|        :" << norms_init << '\n';
+    *out << "Final norms   |Xf|        :" << norms_final << '\n';
+    *out << "Diff norms |Xf-X0||       :" << norms_diff << '\n';
+    *out << "Abs error ||Xf-X0||       :" << std::setw(24) << abs_error << '\n';
+    *out << "Abs tolerance             :" << std::setw(24) << abs_tol_ << '\n';
+    *out << "Rel error ||Xf-X0||/||Xf||:" << std::setw(24) << rel_error << '\n';
+    *out << "Rel tolerance             :" << std::setw(24) << rel_tol_ << '\n';
+    *out << delim << '\n';
 
     if (abs_error < abs_tol_ || rel_error < rel_tol_) {
-      std::cout << "Schwarz loop converged.\n";
+      *out << "Schwarz loop converged.\n";
+      *out << delim << '\n';
       break;
     }
   }
