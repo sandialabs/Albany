@@ -80,7 +80,7 @@ function(do_test BUILD_IN RETVAR)
   endif()
 endfunction(do_test)
 
-function(lcm_do_config PACKAGE PACKAGE_DIR INSTALL_DIR)
+function(lcm_do_config PACKAGE SOURCE_DIR BUILD_DIR INSTALL_DIR)
   if (${PACKAGE} STREQUAL "trilinos")
     set(OPTS
       "-DBUILD_SHARED_LIBS:BOOL=ON"
@@ -208,6 +208,33 @@ function(lcm_do_config PACKAGE PACKAGE_DIR INSTALL_DIR)
       set(OPTS ${OPTS} "-DTrilinos_EXTRA_REPOSITORIES:STRING=\"${EXTRA_REPOS}\"")
     endif()
   elseif (${LCM_PACKAGE} STREQUAL "albany")
+    set(OPTS
+      "-DALBANY_CTEST_TIMEOUT:INTEGER=60"
+      "-DALBANY_TRILINOS_DIR:FILEPATH=lcm_install_dir"
+      "-DCMAKE_CXX_FLAGS:STRING="lcm_cxx_flags""
+      "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
+      "-DENABLE_LCM:BOOL=ON"
+      "-DENABLE_ATO:BOOL=OFF"
+      "-DENABLE_QCAD:BOOL=OFF"
+      "-DENABLE_MOR:BOOL=OFF"
+      "-DENABLE_SG:BOOL=OFF"
+      "-DENABLE_ENSEMBLE:BOOL=OFF"
+      "-DENABLE_FELIX:BOOL=OFF"
+      "-DENABLE_LAME:BOOL=OFF"
+      "-DENABLE_LAMENT:BOOL=OFF"
+      "-DENABLE_CHECK_FPE:BOOL=lcm_fpe_switch"
+      "-DENABLE_FLUSH_DENORMALS:BOOL=lcm_denormal_switch"
+      "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=lcm_enable_kokkos_devel"
+      "-DALBANY_ENABLE_FORTRAN:BOOL=OFF"
+      "-DENABLE_SLFAD:BOOL=lcm_enable_slfad"
+      )
+    if (ENV{LCM_SLFAD_SIZE})
+      set(OPTS ${OPTS} "-DSLFAD_SIZE=$ENV{LCM_SLFAD_SIZE}")
+    endif()
+  endif()
+  do_config("${PACKAGE}" "${SOURCE_DIR}" "${BUILD_DIR}" "${OPTS}" CONFIG_OK)
+  if (NOT CONFIG_OK)
+    message(FATAL_ERROR "Failed to configure ${PACKAGE}")
   endif()
 endfunction(lcm_do_config)
 
@@ -277,7 +304,7 @@ function(lcm_main SCRIPT_NAME PACKAGE NUM_PROCS)
   message("${PACKAGE_NAME} directory\t: ${PACKAGE_DIR}")
   message("Install directory \t: ${INSTALL_DIR}")
   message("Build directory\t\t: ${BUILD_DIR}")
-  message("${LINE}"
+  message("${LINE}")
 endfunction()
 
 lcm_main("${SCRIPT_NAME}" "${PACKAGE}" "${NUM_PROCS}")
