@@ -6,113 +6,10 @@
 #include "Albany_ModelFactory.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "MiniTensor.h"
+#include "Teuchos_FancyOStream.hpp"
 #include "Schwarz_Alternating.hpp"
 
 namespace LCM {
-
-//
-//
-//
-SchwarzConvergenceCriterion::
-SchwarzConvergenceCriterion()
-{
-  return;
-}
-
-//
-//
-//
-void
-SchwarzConvergenceCriterion::
-runPreIterate(NOX::Solver::Generic const &)
-{
-  return;
-}
-
-//
-//
-//
-void
-SchwarzConvergenceCriterion::
-runPostIterate(NOX::Solver::Generic const &)
-{
-  return;
-}
-
-//
-//
-//
-void
-SchwarzConvergenceCriterion::
-runPreSolve(NOX::Solver::Generic const & solver)
-{
-  NOX::Abstract::Vector const &
-  x = solver.getSolutionGroup().getX();
-
-  norm_init_ = x.norm();
-
-  soln_init_ = x.clone();
-
-  return;
-}
-
-//
-//
-//
-void
-SchwarzConvergenceCriterion::
-runPostSolve(NOX::Solver::Generic const & solver)
-{
-  NOX::Abstract::Vector const &
-  y = solver.getSolutionGroup().getX();
-
-  norm_final_ = y.norm();
-
-  NOX::Abstract::Vector const &
-  x = *(soln_init_);
-
-  Teuchos::RCP<NOX::Abstract::Vector>
-  soln_diff = x.clone();
-
-  NOX::Abstract::Vector &
-  dx = *(soln_diff);
-
-  dx.update(1.0, y, -1.0, x, 0.0);
-
-  norm_diff_ = dx.norm();
-
-  return;
-}
-
-//
-//
-//
-ST
-SchwarzConvergenceCriterion::
-getInitialNorm()
-{
-  return norm_init_;
-}
-
-//
-//
-//
-ST
-SchwarzConvergenceCriterion::
-getFinalNorm()
-{
-  return norm_final_;
-}
-
-//
-//
-//
-ST
-SchwarzConvergenceCriterion::
-getDifferenceNorm()
-{
-  return norm_diff_;
-}
 
 //
 //
@@ -178,6 +75,7 @@ SchwarzAlternating(
   //
   apps_.resize(num_subdomains_);
   solvers_.resize(num_subdomains_);
+  convergence_ops_.resize(num_subdomains_);
 
   //Set up each application and model object
   for (auto m = 0; m < num_subdomains_; ++m) {
@@ -223,16 +121,30 @@ SchwarzAlternating(
     Teuchos::ParameterList &
     solver_opts = nox_params.sublist("Solver Options");
 
+    std::string const
+    ppo_str{"User Defined Pre/Post Operator"};
+
+    bool const
+    have_ppo = solver_opts.isParameter(ppo_str);
+
     Teuchos::RCP<NOX::Abstract::PrePostOperator>
-    ppo = Teuchos::rcp(new SchwarzConvergenceCriterion);
+    ppo{Teuchos::null};
 
-    Teuchos::RCP<SchwarzConvergenceCriterion>
-    scc = Teuchos::rcp_dynamic_cast<SchwarzConvergenceCriterion>(ppo);
+    if (have_ppo == true) {
+      ppo = solver_opts.get<decltype(ppo)>(ppo_str);
+    } else {
+      ppo = Teuchos::rcp(new NOXSolverPrePostOperator);
+      solver_opts.set(ppo_str, ppo);
+      ALBANY_ASSERT(solver_opts.isParameter(ppo_str) == true);
+    }
 
-    solver_opts.set("User Defined Pre/Post Operator", ppo);
+    Teuchos::RCP<NOXSolverPrePostOperator>
+    convergence_op = Teuchos::rcp_dynamic_cast<NOXSolverPrePostOperator>(ppo);
+
+    convergence_ops_[m] = convergence_op;
 
     Teuchos::RCP<Albany::Application>
-    app;
+    app{Teuchos::null};
 
     Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
     solver = solver_factory.createAndGetAlbanyAppT(app, comm, comm);
@@ -527,17 +439,38 @@ SchwarzAlternating::
 SchwarzLoop() const
 {
   minitensor::Vector<ST>
-  norms_diff(num_subdomains_, minitensor::Filler::ZEROS);
+  norms_init(num_subdomains_, minitensor::Filler::ZEROS);
 
   minitensor::Vector<ST>
-  norms_soln(num_subdomains_, minitensor::Filler::ZEROS);
+  norms_final(num_subdomains_, minitensor::Filler::ZEROS);
+
+  minitensor::Vector<ST>
+  norms_diff(num_subdomains_, minitensor::Filler::ZEROS);
+
+  minitensor::Vector<int> const
+  sequence(num_subdomains_, minitensor::Filler::SEQUENCE);
 
   int const
   iter_limit = std::max(min_iters_, max_iters_);
 
+  std::string const
+  delim(72, '=');
+
+  Teuchos::RCP<Teuchos::FancyOStream>
+  out(Teuchos::VerboseObjectBase::getDefaultOStream());
+
+  *out << delim << '\n';
+  *out << "Schwarz Alternating Method with " << num_subdomains_;
+  *out << " subdomains\n";
+
   for (auto n = 0; n < iter_limit; ++n) {
 
     for (auto m = 0; m < num_subdomains_; ++m) {
+
+      *out << delim << '\n';
+      *out << "Schwarz iteration         :" << n << '\n';
+      *out << "Subdomain                 :" << m << '\n';
+      *out << delim << '\n';
 
       Thyra::ResponseOnlyModelEvaluatorBase<ST> &
       solver = *(solvers_[m]);
@@ -550,12 +483,17 @@ SchwarzLoop() const
 
       solver.evalModel(in_args, out_args);
 
-      norms_soln(m) = 0.0;
-      norms_diff(m) = 0.0;
+      Teuchos::RCP<NOXSolverPrePostOperator>
+      convergence_op = convergence_ops_[m];
+
+      norms_init(m) = convergence_op->getInitialNorm();
+      norms_final(m) = convergence_op->getFinalNorm();
+      norms_diff(m) = convergence_op->getDifferenceNorm();
     }
 
+
     ST const
-    norm_soln = minitensor::norm(norms_soln);
+    norm_final = minitensor::norm(norms_final);
 
     ST const
     norm_diff = minitensor::norm(norms_diff);
@@ -564,7 +502,25 @@ SchwarzLoop() const
     abs_error = norm_diff;
 
     ST const
-    rel_error = norm_soln > 0.0 ? norm_diff / norm_soln : norm_diff;
+    rel_error = norm_final > 0.0 ? norm_diff / norm_final : norm_diff;
+
+    *out << delim << '\n';
+    *out << "Schwarz iteration         :" << n << '\n';
+    *out << "Subdomain                 :" << sequence << '\n';
+    *out << "Initial norms |X0|        :" << norms_init << '\n';
+    *out << "Final norms   |Xf|        :" << norms_final << '\n';
+    *out << "Diff norms |Xf-X0||       :" << norms_diff << '\n';
+    *out << "Abs error ||Xf-X0||       :" << std::setw(24) << abs_error << '\n';
+    *out << "Abs tolerance             :" << std::setw(24) << abs_tol_ << '\n';
+    *out << "Rel error ||Xf-X0||/||Xf||:" << std::setw(24) << rel_error << '\n';
+    *out << "Rel tolerance             :" << std::setw(24) << rel_tol_ << '\n';
+    *out << delim << '\n';
+
+    if (abs_error < abs_tol_ || rel_error < rel_tol_) {
+      *out << "Schwarz loop converged.\n";
+      *out << delim << '\n';
+      break;
+    }
   }
 
   return;

@@ -10,56 +10,11 @@
 #include "Albany_DataTypes.hpp"
 #include "Albany_ModelEvaluatorT.hpp"
 #include "MaterialDatabase.h"
-#include "NOX_Abstract_PrePostOperator.H"
+#include "NOXSolverPrePostOperator.h"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
 
 namespace LCM {
-
-///
-/// NOX PrePostOperator used for Schwarz loop convergence criterion.
-///
-class SchwarzConvergenceCriterion : public NOX::Abstract::PrePostOperator {
-
-public:
-
-  SchwarzConvergenceCriterion();
-
-  virtual void
-  runPreIterate(NOX::Solver::Generic const & solver);
-
-  virtual void
-  runPostIterate(NOX::Solver::Generic const & solver);
-
-  virtual void
-  runPreSolve(NOX::Solver::Generic const & solver);
-
-  virtual void
-  runPostSolve(NOX::Solver::Generic const & solver);
-
-  ST
-  getInitialNorm();
-
-  ST
-  getFinalNorm();
-
-  ST
-  getDifferenceNorm();
-
-private:
-
-  Teuchos::RCP<NOX::Abstract::Vector>
-  soln_init_{Teuchos::null};
-
-  ST
-  norm_init_{0.0};
-
-  ST
-  norm_final_{0.0};
-
-  ST
-  norm_diff_{0.0};
-};
 
 ///
 /// SchwarzAlternating coupling class
@@ -166,6 +121,9 @@ private:
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   apps_;
+
+  Teuchos::Array<Teuchos::RCP<NOXSolverPrePostOperator>>
+  convergence_ops_;
 
   /// Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
   Thyra::ModelEvaluatorBase::InArgs<ST>

@@ -438,52 +438,86 @@ Albany::MechanicsProblem::getAllocatedStates(
 //------------------------------------------------------------------------------
 void
 Albany::MechanicsProblem::applyProblemSpecificSolverSettings(
-    Teuchos::RCP<Teuchos::ParameterList> params) {
+    Teuchos::RCP<Teuchos::ParameterList> params)
+{
   // Acquire the NOX "Solver Options" and "Status Tests" parameter lists
-  Teuchos::RCP<Teuchos::ParameterList> solverOptionsParameterList;
-  Teuchos::RCP<Teuchos::ParameterList> statusTestsParameterList;
+  Teuchos::RCP<Teuchos::ParameterList>
+  solver_opts_params;
+
+  Teuchos::RCP<Teuchos::ParameterList>
+  status_tests_params;
+
+  bool
+  have_solver_opts{false};
+
+  bool
+  have_status_test{false};
+
   if (params->isSublist("Piro")) {
     if (params->sublist("Piro").isSublist("NOX")) {
       if (params->sublist("Piro").sublist("NOX").isSublist("Solver Options")) {
-        solverOptionsParameterList = Teuchos::rcpFromRef(
-            params->sublist("Piro").sublist("NOX").sublist("Solver Options"));
+        have_solver_opts = true;
       }
       if (params->sublist("Piro").sublist("NOX").isSublist("Status Tests")) {
-        statusTestsParameterList = Teuchos::rcpFromRef(
-            params->sublist("Piro").sublist("NOX").sublist("Status Tests"));
+        have_status_test = true;
       }
     }
   }
 
-  if (!solverOptionsParameterList.is_null() &&
-      !statusTestsParameterList.is_null()) {
+  if (have_solver_opts && have_status_test) {
     // Add the model evaulator flag as a status test.
-    Teuchos::ParameterList originalStatusTestParameterList =
-        *statusTestsParameterList;
-    Teuchos::ParameterList newStatusTestParameterList;
-    newStatusTestParameterList.set<std::string>("Test Type", "Combo");
-    newStatusTestParameterList.set<std::string>("Combo Type", "OR");
-    newStatusTestParameterList.set<int>("Number of Tests", 2);
-    newStatusTestParameterList.sublist("Test 0");
-    newStatusTestParameterList.sublist("Test 0").set(
-        "Test Type", "User Defined");
-    newStatusTestParameterList.sublist("Test 0").set(
-        "User Status Test", nox_status_test_);
-    newStatusTestParameterList.sublist("Test 1") =
-        originalStatusTestParameterList;
-    *statusTestsParameterList = newStatusTestParameterList;
+    Teuchos::ParameterList &
+    solver_opts_params =
+        params->sublist("Piro").sublist("NOX").sublist("Solver Options");
+
+    Teuchos::ParameterList &
+    status_tests_params =
+        params->sublist("Piro").sublist("NOX").sublist("Status Tests");
+
+    Teuchos::ParameterList
+    old_params = status_tests_params;
+
+    Teuchos::ParameterList
+    new_params;
+
+    new_params.set<std::string>("Test Type", "Combo");
+    new_params.set<std::string>("Combo Type", "OR");
+    new_params.set<int>("Number of Tests", 2);
+    new_params.sublist("Test 0");
+    new_params.sublist("Test 0").set("Test Type", "User Defined");
+    new_params.sublist("Test 0").set("User Status Test", nox_status_test_);
+    new_params.sublist("Test 1") = old_params;
+
+    status_tests_params = new_params;
 
     // Create a NOX observer that will reset the status flag at the beginning of
-    // a nonlinear solve
-    Teuchos::RCP<NOX::Abstract::PrePostOperator> pre_post_operator =
-        Teuchos::rcp(new NOXSolverPrePostOperator);
-    Teuchos::RCP<NOXSolverPrePostOperator> nox_solver_pre_post_operator =
-        Teuchos::rcp_dynamic_cast<NOXSolverPrePostOperator>(pre_post_operator);
-    Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> statusTest =
+    // a nonlinear solve if one does not exist already
+    std::string const
+    ppo_str{"User Defined Pre/Post Operator"};
+
+    bool const
+    have_ppo = solver_opts_params.isParameter(ppo_str);
+
+    Teuchos::RCP<NOX::Abstract::PrePostOperator>
+    ppo{Teuchos::null};
+
+    if (have_ppo == true) {
+      ppo = solver_opts_params.get<decltype(ppo)>(ppo_str);
+    } else {
+      ppo = Teuchos::rcp(new LCM::NOXSolverPrePostOperator);
+      solver_opts_params.set(ppo_str, ppo);
+      ALBANY_ASSERT(solver_opts_params.isParameter(ppo_str) == true);
+    }
+
+    Teuchos::RCP<LCM::NOXSolverPrePostOperator>
+    status_test_op =
+        Teuchos::rcp_dynamic_cast<LCM::NOXSolverPrePostOperator>(ppo);
+
+    Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
+    status_test =
         Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(
             nox_status_test_);
-    nox_solver_pre_post_operator->setStatusTest(statusTest);
-    solverOptionsParameterList->set(
-        "User Defined Pre/Post Operator", pre_post_operator);
+
+    status_test_op->setStatusTest(status_test);
   }
 }

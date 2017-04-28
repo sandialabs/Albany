@@ -12,6 +12,8 @@
 #include "NOX_Abstract_Vector.H"
 #include "NOX_StatusTest_ModelEvaluatorFlag.h"
 
+namespace LCM {
+
 ///
 /// Observer that is called at various points in the NOX nonlinear solver
 ///
@@ -62,13 +64,15 @@ private:
   soln_init_{Teuchos::null};
 
   ST
-  norm_init_{0.0};
+  norm_init_{3.0};
 
   ST
-  norm_final_{0.0};
+  norm_final_{5.0};
 
   ST
-  norm_diff_{0.0};
+  norm_diff_{7.0};
 };
+
+} // namespace LCM
 
 #endif // NOXSOLVERPREPOSTOPERATOR_H
