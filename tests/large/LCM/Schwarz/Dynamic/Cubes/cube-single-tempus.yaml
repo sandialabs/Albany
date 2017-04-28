@@ -115,7 +115,7 @@ ANONYMOUS:
                 Test Type: MaxIters
                 Maximum Iterations: 128
       Stratimikos:
-        Linear Solver Type: AztecOO
+        Linear Solver Type: Belos
         Linear Solver Types:
           AztecOO:
             Forward Solve:
@@ -129,15 +129,13 @@ ANONYMOUS:
           Belos:
             Solver Type: Block GMRES
             Solver Types:
-              Block GMRES:
-                Convergence Tolerance: 1e-5
-                Output Frequency: 10
+              Block GMRES: 
+                Convergence Tolerance: 1.00000000e-05
+                Output Frequency: 1
                 Output Style: 1
                 Verbosity: 33
-                Maximum Iterations: 3
-                Block Size: 1
+                Maximum Iterations: 100
                 Num Blocks: 100
-                Flexible Gmres: 0
         Preconditioner Type: Ifpack2
         Preconditioner Types:
           Ifpack2:
