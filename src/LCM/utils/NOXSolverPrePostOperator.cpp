@@ -62,11 +62,11 @@ runPreSolve(NOX::Solver::Generic const & solver)
 
   // This is needed for Schwarz coupling
   NOX::Abstract::Vector const &
-  x = solver.getSolutionGroup().getX();
+  x = solver.getPreviousSolutionGroup().getX();
 
   norm_init_ = x.norm();
 
-  soln_init_ = x.clone();
+  soln_init_ = x.clone(NOX::DeepCopy);
 
   return;
 }

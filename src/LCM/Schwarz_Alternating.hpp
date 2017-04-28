@@ -10,7 +10,7 @@
 #include "Albany_DataTypes.hpp"
 #include "Albany_ModelEvaluatorT.hpp"
 #include "MaterialDatabase.h"
-#include "NOX_Abstract_PrePostOperator.H"
+#include "NOXSolverPrePostOperator.h"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
 
@@ -121,6 +121,9 @@ private:
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   apps_;
+
+  Teuchos::Array<Teuchos::RCP<NOXSolverPrePostOperator>>
+  convergence_ops_;
 
   /// Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
   Thyra::ModelEvaluatorBase::InArgs<ST>

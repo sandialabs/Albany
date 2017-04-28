@@ -6,7 +6,6 @@
 #include "Albany_ModelFactory.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "MiniTensor.h"
-#include "NOXSolverPrePostOperator.h"
 #include "Schwarz_Alternating.hpp"
 
 namespace LCM {
@@ -75,6 +74,7 @@ SchwarzAlternating(
   //
   apps_.resize(num_subdomains_);
   solvers_.resize(num_subdomains_);
+  convergence_ops_.resize(num_subdomains_);
 
   //Set up each application and model object
   for (auto m = 0; m < num_subdomains_; ++m) {
@@ -120,20 +120,30 @@ SchwarzAlternating(
     Teuchos::ParameterList &
     solver_opts = nox_params.sublist("Solver Options");
 
+    std::string const
+    ppo_str{"User Defined Pre/Post Operator"};
+
     bool const
-    have_prepost = solver_opts.isSublist("User Defined Pre/Post Operator");
+    have_ppo = solver_opts.isParameter(ppo_str);
 
-    if (have_prepost == false) {
+    Teuchos::RCP<NOX::Abstract::PrePostOperator>
+    ppo{Teuchos::null};
 
-      Teuchos::RCP<NOX::Abstract::PrePostOperator>
+    if (have_ppo == true) {
+      ppo = solver_opts.get<decltype(ppo)>(ppo_str);
+    } else {
       ppo = Teuchos::rcp(new NOXSolverPrePostOperator);
-
-      solver_opts.set("User Defined Pre/Post Operator", ppo);
-
+      solver_opts.set(ppo_str, ppo);
+      ALBANY_ASSERT(solver_opts.isParameter(ppo_str) == true);
     }
 
+    Teuchos::RCP<NOXSolverPrePostOperator>
+    convergence_op = Teuchos::rcp_dynamic_cast<NOXSolverPrePostOperator>(ppo);
+
+    convergence_ops_[m] = convergence_op;
+
     Teuchos::RCP<Albany::Application>
-    app;
+    app{Teuchos::null};
 
     Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
     solver = solver_factory.createAndGetAlbanyAppT(app, comm, comm);
@@ -428,15 +438,20 @@ SchwarzAlternating::
 SchwarzLoop() const
 {
   minitensor::Vector<ST>
-  norms_diff(num_subdomains_, minitensor::Filler::ZEROS);
+  norms_init(num_subdomains_, minitensor::Filler::ZEROS);
 
   minitensor::Vector<ST>
-  norms_soln(num_subdomains_, minitensor::Filler::ZEROS);
+  norms_final(num_subdomains_, minitensor::Filler::ZEROS);
+
+  minitensor::Vector<ST>
+  norms_diff(num_subdomains_, minitensor::Filler::ZEROS);
 
   int const
   iter_limit = std::max(min_iters_, max_iters_);
 
   for (auto n = 0; n < iter_limit; ++n) {
+
+    std::cout << "\nSchwarz iteration :" << n << '\n';
 
     for (auto m = 0; m < num_subdomains_; ++m) {
 
@@ -451,12 +466,20 @@ SchwarzLoop() const
 
       solver.evalModel(in_args, out_args);
 
-      norms_soln(m) = 0.0;
-      norms_diff(m) = 0.0;
+      Teuchos::RCP<NOXSolverPrePostOperator>
+      convergence_op = convergence_ops_[m];
+
+      norms_init(m) = convergence_op->getInitialNorm();
+      norms_final(m) = convergence_op->getFinalNorm();
+      norms_diff(m) = convergence_op->getDifferenceNorm();
     }
 
+    std::cout << "Initial norms    :" << norms_init << '\n';
+    std::cout << "Final norms      :" << norms_final << '\n';
+    std::cout << "Difference norms :" << norms_diff << '\n';
+
     ST const
-    norm_soln = minitensor::norm(norms_soln);
+    norm_final = minitensor::norm(norms_final);
 
     ST const
     norm_diff = minitensor::norm(norms_diff);
@@ -465,7 +488,17 @@ SchwarzLoop() const
     abs_error = norm_diff;
 
     ST const
-    rel_error = norm_soln > 0.0 ? norm_diff / norm_soln : norm_diff;
+    rel_error = norm_final > 0.0 ? norm_diff / norm_final : norm_diff;
+
+    std::cout << "Absolute error     :" << abs_error << '\n';
+    std::cout << "Absolute tolerance :" << abs_tol_ << '\n';
+    std::cout << "Relative error     :" << rel_error << '\n';
+    std::cout << "Relative tolerance :" << rel_tol_ << '\n';
+
+    if (abs_error < abs_tol_ || rel_error < rel_tol_) {
+      std::cout << "Schwarz loop converged.\n";
+      break;
+    }
   }
 
   return;
