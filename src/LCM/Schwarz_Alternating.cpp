@@ -431,6 +431,32 @@ getValidProblemParameters() const
   return list;
 }
 
+namespace {
+
+std::string
+centered(std::string const & str, int width)
+{
+  assert(width >= 0);
+
+  int const
+  length = static_cast<int>(str.size());
+
+  int const
+  padding = width - length;
+
+  if (padding <= 0) return str;
+
+  int const
+  left = padding / 2;
+
+  int const
+  right = padding - left;
+
+  return std::string(left, ' ') + str + std::string(right, ' ');
+}
+
+} // anonymous
+
 //
 // Schwarz Alternating loop
 //
@@ -447,9 +473,6 @@ SchwarzLoop() const
   minitensor::Vector<ST>
   norms_diff(num_subdomains_, minitensor::Filler::ZEROS);
 
-  minitensor::Vector<int> const
-  sequence(num_subdomains_, minitensor::Filler::SEQUENCE);
-
   int const
   iter_limit = std::max(min_iters_, max_iters_);
 
@@ -462,14 +485,15 @@ SchwarzLoop() const
   *out << delim << '\n';
   *out << "Schwarz Alternating Method with " << num_subdomains_;
   *out << " subdomains\n";
+  *out << std::scientific << std::setprecision(17);
 
   for (auto n = 0; n < iter_limit; ++n) {
 
     for (auto m = 0; m < num_subdomains_; ++m) {
 
       *out << delim << '\n';
-      *out << "Schwarz iteration         :" << n << '\n';
-      *out << "Subdomain                 :" << m << '\n';
+      *out << "Schwarz iteration  :" << n << '\n';
+      *out << "Subdomain          :" << m << '\n';
       *out << delim << '\n';
 
       Thyra::ResponseOnlyModelEvaluatorBase<ST> &
@@ -493,6 +517,9 @@ SchwarzLoop() const
 
 
     ST const
+    norm_init = minitensor::norm(norms_init);
+
+    ST const
     norm_final = minitensor::norm(norms_final);
 
     ST const
@@ -506,14 +533,48 @@ SchwarzLoop() const
 
     *out << delim << '\n';
     *out << "Schwarz iteration         :" << n << '\n';
-    *out << "Subdomain                 :" << sequence << '\n';
-    *out << "Initial norms |X0|        :" << norms_init << '\n';
-    *out << "Final norms   |Xf|        :" << norms_final << '\n';
-    *out << "Diff norms |Xf-X0||       :" << norms_diff << '\n';
-    *out << "Abs error ||Xf-X0||       :" << std::setw(24) << abs_error << '\n';
-    *out << "Abs tolerance             :" << std::setw(24) << abs_tol_ << '\n';
-    *out << "Rel error ||Xf-X0||/||Xf||:" << std::setw(24) << rel_error << '\n';
-    *out << "Rel tolerance             :" << std::setw(24) << rel_tol_ << '\n';
+
+    std::string const
+    line(72, '-');
+
+    *out << line << '\n';
+
+    *out << centered("Sub", 4);
+    *out << centered("Initial norm", 24);
+    *out << centered("Final norm", 24);
+    *out << centered("Difference norm", 24);
+    *out << '\n';
+
+    *out << centered("dom", 4);
+    *out << centered("||X0||", 24);
+    *out << centered("||Xf||", 24);
+    *out << centered("||Xf-X0||", 24);
+    *out << '\n';
+
+    *out << line << '\n';
+
+    for (auto m = 0; m < num_subdomains_; ++m) {
+      *out << std::setw(4) << m;
+      *out << std::setw(24) << norms_init(m);
+      *out << std::setw(24) << norms_final(m);
+      *out << std::setw(24) << norms_diff(m);
+      *out << '\n';
+    }
+
+    *out << line << '\n';
+
+    *out << centered("Norm", 4);
+    *out << std::setw(24) << norm_init;
+    *out << std::setw(24) << norm_final;
+    *out << std::setw(24) << norm_diff;
+    *out << '\n';
+
+    *out << line << '\n';
+
+    *out << "Absolute error     :" << abs_error << '\n';
+    *out << "Absolute tolerance :" << abs_tol_ << '\n';
+    *out << "Relative error     :" << rel_error << '\n';
+    *out << "Relative tolerance :" << rel_tol_ << '\n';
     *out << delim << '\n';
 
     if (abs_error < abs_tol_ || rel_error < rel_tol_) {
