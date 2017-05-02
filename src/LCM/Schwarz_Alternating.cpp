@@ -28,10 +28,11 @@ SchwarzAlternating(
   model_filenames =
       alt_system_params.get<Teuchos::Array<std::string>>("Model Input Files");
 
-  min_iters_ = alt_system_params.get<int>("Minimum Iterations");
-  max_iters_ = alt_system_params.get<int>("Maximum Iterations");
-  rel_tol_ = alt_system_params.get<ST>("Relative Tolerance");
-  abs_tol_ = alt_system_params.get<ST>("Absolute Tolerance");
+  min_iters_ = alt_system_params.get<int>("Minimum Iterations", 1);
+  max_iters_ = alt_system_params.get<int>("Maximum Iterations", 1024);
+  rel_tol_ = alt_system_params.get<ST>("Relative Tolerance", 1.0e-08);
+  abs_tol_ = alt_system_params.get<ST>("Absolute Tolerance", 1.0e-08);
+  output_interval_ = alt_system_params.get<int>("Exodus Write Interval", 1);
 
   //number of models
   num_subdomains_ = model_filenames.size();
