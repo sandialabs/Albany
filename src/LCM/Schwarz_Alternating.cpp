@@ -42,13 +42,6 @@ SchwarzAlternating(
   Teuchos::RCP<std::map<std::string, int>>
   app_name_index_map = Teuchos::rcp(new std::map<std::string, int>);
 
-  // Arrays to cache useful info for each subdomain for later use
-  apps_.resize(num_subdomains_);
-  solvers_.resize(num_subdomains_);
-  convergence_ops_.resize(num_subdomains_);
-  stk_mesh_structs_.resize(num_subdomains_);
-
-  //Set up each application and model object
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
     std::string const &
@@ -59,7 +52,18 @@ SchwarzAlternating(
 
     app_name_index_map->insert(app_name_index);
 
-    //get parameterlist from each model
+  }
+
+  // Arrays to cache useful info for each subdomain for later use
+  apps_.resize(num_subdomains_);
+  solvers_.resize(num_subdomains_);
+  convergence_ops_.resize(num_subdomains_);
+  stk_mesh_structs_.resize(num_subdomains_);
+
+  // Initialization
+  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+
+    // Get parameters for each subdomain
     Albany::SolverFactory
     solver_factory(model_filenames[subdomain], comm);
 
@@ -72,7 +76,7 @@ SchwarzAlternating(
     // See application index for use with Schwarz BC.
     params.set("Application Index", subdomain);
 
-    // App application name-index map for later use in Schwarz BC.
+    // Add application name-index map for later use in Schwarz BC.
     params.set("Application Name Index Map", app_name_index_map);
 
     // Add NOX pre-post-operator for Schwarz loop convergence criterion.
@@ -353,24 +357,24 @@ SchwarzAlternating::
 createInArgsImpl() const
 {
   Thyra::ModelEvaluatorBase::InArgsSetup<ST>
-  result;
+  ias;
 
-  result.setModelEvalDescription(this->description());
+  ias.setModelEvalDescription(this->description());
 
-  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_x, true);
-  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_x_dot, true);
-  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_x_dot_dot, true);
-  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_t, true);
-  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_alpha, true);
-  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_beta, true);
-  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_W_x_dot_dot_coeff, true);
+  ias.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_x, true);
+  ias.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_x_dot, true);
+  ias.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_x_dot_dot, true);
+  ias.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_t, true);
+  ias.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_alpha, true);
+  ias.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_beta, true);
+  ias.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_W_x_dot_dot_coeff, true);
 
   sub_inargs_.resize(num_subdomains_);
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
     sub_inargs_[subdomain] = solvers_[subdomain]->createInArgs();
   }
 
-  return result;
+  return ias;
 }
 
 //
@@ -381,15 +385,15 @@ SchwarzAlternating::
 createOutArgsImpl() const
 {
   Thyra::ModelEvaluatorBase::OutArgsSetup<ST>
-  result;
+  oas;
 
-  result.setModelEvalDescription(this->description());
+  oas.setModelEvalDescription(this->description());
 
-  result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f, true);
-  result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_op, true);
-  result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_prec, false);
+  oas.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f, true);
+  oas.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_op, true);
+  oas.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_prec, false);
 
-  result.set_W_properties(
+  oas.set_W_properties(
       Thyra::ModelEvaluatorBase::DerivativeProperties(
           Thyra::ModelEvaluatorBase::DERIV_LINEARITY_UNKNOWN,
           Thyra::ModelEvaluatorBase::DERIV_RANK_FULL,
@@ -400,7 +404,7 @@ createOutArgsImpl() const
     sub_outargs_[subdomain] = solvers_[subdomain]->createOutArgs();
   }
 
-  return result;
+  return oas;
 }
 
 //
@@ -481,6 +485,16 @@ SchwarzLoop() const
       fos << "Subdomain          :" << subdomain << '\n';
       fos << delim << '\n';
 
+      // Output handling
+      Albany::AbstractSTKMeshStruct &
+      ams = *stk_mesh_structs_[subdomain];
+
+      ams.exoOutputInterval = 1;
+
+      ams.exoOutput = output_interval_ > 0 ?
+          (iter + 1) % output_interval_ == 0 : false;
+
+      // Solve for each subdomain
       Thyra::ResponseOnlyModelEvaluatorBase<ST> &
       solver = *(solvers_[subdomain]);
 
@@ -498,21 +512,6 @@ SchwarzLoop() const
       norms_init(subdomain) = convergence_op->getInitialNorm();
       norms_final(subdomain) = convergence_op->getFinalNorm();
       norms_diff(subdomain) = convergence_op->getDifferenceNorm();
-
-      // Ouput handling
-      Albany::Application const &
-      app = *apps_[subdomain];
-
-      Teuchos::RCP<Albany::AbstractDiscretization>
-      disc = app.getDiscretization();
-
-      Albany::STKDiscretization &
-      stk_disc = *static_cast<Albany::STKDiscretization *>(disc.get());
-
-      Albany::AbstractSTKMeshStruct &
-      ams = *stk_disc.getSTKMeshStruct();
-
-      ams.exoOutput = false;
    }
 
 
