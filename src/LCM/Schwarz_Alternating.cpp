@@ -579,6 +579,11 @@ SchwarzLoop() const
 
     if (abs_error < abs_tol_ || rel_error < rel_tol_) {
       *out << "Schwarz loop converged.\n";
+      *out << "Total iterations   :" << n + 1 << '\n';
+      *out << "Last absolute error:" << abs_error << '\n';
+      *out << "Absolute tolerance :" << abs_tol_ << '\n';
+      *out << "Last relative error:" << rel_error << '\n';
+      *out << "Relative tolerance :" << rel_tol_ << '\n';
       *out << delim << '\n';
       break;
     }
