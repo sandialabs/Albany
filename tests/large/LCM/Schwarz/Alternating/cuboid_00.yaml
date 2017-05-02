@@ -102,7 +102,7 @@ ANONYMOUS:
         Number of Tests: 3
         Test 0:
           Test Type: NormUpdate
-          Tolerance: 1.0e-13
+          Tolerance: 1.0e-15
         Test 1:
           Test Type: MaxIters
           Maximum Iterations: 256
