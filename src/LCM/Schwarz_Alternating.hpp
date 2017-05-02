@@ -81,7 +81,7 @@ public:
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   getApps() const;
 
-protected:
+private:
 
   /// Create operator form of dg/dx for distributed responses
   Teuchos::RCP<Thyra::LinearOpBase<ST>>
@@ -101,14 +101,6 @@ protected:
       Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
       Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
   
-private:
-
-  Teuchos::RCP<Teuchos::ParameterList const>
-  getValidAppParameters() const;
-
-  Teuchos::RCP<Teuchos::ParameterList const>
-  getValidProblemParameters() const;
-
   Thyra::ModelEvaluatorBase::InArgs<ST>
   createInArgsImpl() const;
 
@@ -137,6 +129,9 @@ private:
 
   int
   max_iters_{0};
+
+  int
+  output_interval_{1};
 
   ST
   rel_tol_{0.0};

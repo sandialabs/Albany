@@ -404,33 +404,6 @@ evalModelImpl(
   return;
 }
 
-//
-// Validate application parameters not created via a SolverFactory
-// Check usage and whether necessary.
-//
-Teuchos::RCP<Teuchos::ParameterList const>
-SchwarzAlternating::
-getValidAppParameters() const
-{
-  Teuchos::RCP<Teuchos::ParameterList>
-  list = Teuchos::rcp(new Teuchos::ParameterList("ValidAppParams"));
-
-  return list;
-}
-
-//
-// Check usage and whether necessary.
-//
-Teuchos::RCP<Teuchos::ParameterList const>
-SchwarzAlternating::
-getValidProblemParameters() const
-{
-  Teuchos::RCP<Teuchos::ParameterList>
-  list = Teuchos::createParameterList("ValidProblemParams");
-
-  return list;
-}
-
 namespace {
 
 std::string
