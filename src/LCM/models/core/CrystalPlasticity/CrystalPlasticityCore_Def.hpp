@@ -215,8 +215,26 @@ CP::computeStress(
   minitensor::Tensor<ArgT, NumDimT>
   deformation_elastic(num_dim);
 
+  // max tolerance for Fp
+  RealType
+  max_tol{1.0e100};
+
+  ArgT
+  max_fp = Sacado::ScalarValue<ArgT>::eval(
+         minitensor::norm_infinity(Fp));
+
+  if (max_fp > max_tol) {
+    std::cout << "Large plastic deformation gradient" << std::endl;
+    std::cout << std::setprecision(4) << Fp << std::endl;
+    failed = true;
+    return;
+  }
+  
+  ArgT
+  det_fp = minitensor::det(Fp);  
+
   // Saint Venant–Kirchhoff model
-  if (minitensor::det(Fp) == 0.0)
+  if (det_fp == 0.0)
   {
     std::cout << "Singular plastic deformation gradient" << std::endl;
     std::cout << std::setprecision(4) << Fp << std::endl;

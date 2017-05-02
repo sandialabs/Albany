@@ -240,7 +240,7 @@ computeRateSlip(
   // denormalized numbers into subsequent computations. Additionally, such a
   // large stress value indicates that we are in the viscous drag-dominated 
   // regime, so return the slip rate computed by the drag constitutive relation
-  if (ratio_stress > max_tol)
+  if (std::fabs(ratio_stress) > max_tol)
   {
     return g0 * viscous_drag;
   }
@@ -253,7 +253,7 @@ computeRateSlip(
   pl_vd_ratio = coefficient_drag * pow_ratio_stress;
 
   bool const
-  vd_active = pl_vd_ratio > CP::MACHINE_EPS;
+  vd_active = std::fabs(pl_vd_ratio) > CP::MACHINE_EPS;
 
   // Low stress regime:
   //

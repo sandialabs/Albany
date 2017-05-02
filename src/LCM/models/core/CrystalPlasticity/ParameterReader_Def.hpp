@@ -24,6 +24,7 @@ CP::ParameterReader<EvalT, Traits>::getVerbosity() const
       {"Medium", CP::Verbosity::MEDIUM},
       {"High", CP::Verbosity::HIGH},
       {"Debug", CP::Verbosity::DEBUG},
+      {"Extreme", CP::Verbosity::EXTREME}
     });
   
   return vmap.get(p_);
