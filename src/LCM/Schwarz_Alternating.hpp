@@ -7,9 +7,9 @@
 #if !defined(LCM_SchwarzAlternating_hpp)
 #define LCM_SchwarzAlternating_hpp
 
+#include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Albany_ModelEvaluatorT.hpp"
-#include "MaterialDatabase.h"
 #include "NOXSolverPrePostOperator.h"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
@@ -116,6 +116,9 @@ private:
 
   Teuchos::Array<Teuchos::RCP<NOXSolverPrePostOperator>>
   convergence_ops_;
+
+  Teuchos::Array<Teuchos::RCP<Albany::AbstractSTKMeshStruct>>
+  stk_mesh_structs_;
 
   /// Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
   Thyra::ModelEvaluatorBase::InArgs<ST>

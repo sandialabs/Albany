@@ -5,6 +5,7 @@
 //*****************************************************************//
 #include "Albany_ModelFactory.hpp"
 #include "Albany_SolverFactory.hpp"
+#include "Albany_STKDiscretization.hpp"
 #include "MiniTensor.h"
 #include "Teuchos_FancyOStream.hpp"
 #include "Schwarz_Alternating.hpp"
@@ -41,13 +42,13 @@ SchwarzAlternating(
   Teuchos::RCP<std::map<std::string, int>>
   app_name_index_map = Teuchos::rcp(new std::map<std::string, int>);
 
-  for (auto app_index = 0; app_index < num_subdomains_; ++app_index) {
+  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
     std::string const &
-    app_name = model_filenames[app_index];
+    app_name = model_filenames[subdomain];
 
     std::pair<std::string, int>
-    app_name_index = std::make_pair(app_name, app_index);
+    app_name_index = std::make_pair(app_name, subdomain);
 
     app_name_index_map->insert(app_name_index);
   }
@@ -77,13 +78,14 @@ SchwarzAlternating(
   apps_.resize(num_subdomains_);
   solvers_.resize(num_subdomains_);
   convergence_ops_.resize(num_subdomains_);
+  stk_mesh_structs_.resize(num_subdomains_);
 
   //Set up each application and model object
-  for (auto m = 0; m < num_subdomains_; ++m) {
+  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
     //get parameterlist from mth model
     Albany::SolverFactory
-    solver_factory(model_filenames[m], comm);
+    solver_factory(model_filenames[subdomain], comm);
 
     Teuchos::ParameterList &
     params = solver_factory.getParameters();
@@ -92,7 +94,7 @@ SchwarzAlternating(
     params.set("Application Array", apps_);
 
     // See application index for use with Schwarz BC.
-    params.set("Application Index", m);
+    params.set("Application Index", subdomain);
 
     // App application name-index map for later use in Schwarz BC.
     params.set("Application Name Index Map", app_name_index_map);
@@ -142,7 +144,7 @@ SchwarzAlternating(
     Teuchos::RCP<NOXSolverPrePostOperator>
     convergence_op = Teuchos::rcp_dynamic_cast<NOXSolverPrePostOperator>(ppo);
 
-    convergence_ops_[m] = convergence_op;
+    convergence_ops_[subdomain] = convergence_op;
 
     Teuchos::RCP<Albany::Application>
     app{Teuchos::null};
@@ -150,9 +152,21 @@ SchwarzAlternating(
     Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>
     solver = solver_factory.createAndGetAlbanyAppT(app, comm, comm);
 
-    solvers_[m] = solver;
+    solvers_[subdomain] = solver;
 
-    apps_[m] = app;
+    apps_[subdomain] = app;
+
+    // Get STK mesh structs to control Exodus output interval
+    Teuchos::RCP<Albany::AbstractDiscretization>
+    disc = app->getDiscretization();
+
+    Albany::STKDiscretization &
+    stk_disc = *static_cast<Albany::STKDiscretization *>(disc.get());
+
+    Teuchos::RCP<Albany::AbstractSTKMeshStruct>
+    ams = stk_disc.getSTKMeshStruct();
+
+    stk_mesh_structs_[subdomain] = ams;
   }
 
   //
@@ -355,8 +369,8 @@ createInArgsImpl() const
   result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_W_x_dot_dot_coeff, true);
 
   sub_inargs_.resize(num_subdomains_);
-  for (auto m = 0; m < num_subdomains_; ++m) {
-    sub_inargs_[m] = solvers_[m]->createInArgs();
+  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+    sub_inargs_[subdomain] = solvers_[subdomain]->createInArgs();
   }
 
   return result;
@@ -385,8 +399,8 @@ createOutArgsImpl() const
           true));
 
   sub_outargs_.resize(num_subdomains_);
-  for (auto m = 0; m < num_subdomains_; ++m) {
-    sub_outargs_[m] = solvers_[m]->createOutArgs();
+  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
+    sub_outargs_[subdomain] = solvers_[subdomain]->createOutArgs();
   }
 
   return result;
@@ -453,41 +467,56 @@ SchwarzLoop() const
   std::string const
   delim(72, '=');
 
-  Teuchos::RCP<Teuchos::FancyOStream>
-  out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  Teuchos::FancyOStream &
+  fos{*Teuchos::VerboseObjectBase::getDefaultOStream()};
 
-  *out << delim << '\n';
-  *out << "Schwarz Alternating Method with " << num_subdomains_;
-  *out << " subdomains\n";
-  *out << std::scientific << std::setprecision(17);
+  fos << delim << '\n';
+  fos << "Schwarz Alternating Method with " << num_subdomains_;
+  fos << " subdomains\n";
+  fos << std::scientific << std::setprecision(17);
 
-  for (auto n = 0; n < iter_limit; ++n) {
+  for (auto iter = 0; iter < iter_limit; ++iter) {
 
-    for (auto m = 0; m < num_subdomains_; ++m) {
+    for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
-      *out << delim << '\n';
-      *out << "Schwarz iteration  :" << n << '\n';
-      *out << "Subdomain          :" << m << '\n';
-      *out << delim << '\n';
+      fos << delim << '\n';
+      fos << "Schwarz iteration  :" << iter << '\n';
+      fos << "Subdomain          :" << subdomain << '\n';
+      fos << delim << '\n';
 
       Thyra::ResponseOnlyModelEvaluatorBase<ST> &
-      solver = *(solvers_[m]);
+      solver = *(solvers_[subdomain]);
 
       Thyra::ModelEvaluatorBase::InArgs<ST> &
-      in_args = sub_inargs_[m];
+      in_args = sub_inargs_[subdomain];
 
       Thyra::ModelEvaluatorBase::OutArgs<ST> &
-      out_args = sub_outargs_[m];
+      out_args = sub_outargs_[subdomain];
 
       solver.evalModel(in_args, out_args);
 
       Teuchos::RCP<NOXSolverPrePostOperator>
-      convergence_op = convergence_ops_[m];
+      convergence_op = convergence_ops_[subdomain];
 
-      norms_init(m) = convergence_op->getInitialNorm();
-      norms_final(m) = convergence_op->getFinalNorm();
-      norms_diff(m) = convergence_op->getDifferenceNorm();
-    }
+      norms_init(subdomain) = convergence_op->getInitialNorm();
+      norms_final(subdomain) = convergence_op->getFinalNorm();
+      norms_diff(subdomain) = convergence_op->getDifferenceNorm();
+
+      // Ouput handling
+      Albany::Application const &
+      app = *apps_[subdomain];
+
+      Teuchos::RCP<Albany::AbstractDiscretization>
+      disc = app.getDiscretization();
+
+      Albany::STKDiscretization &
+      stk_disc = *static_cast<Albany::STKDiscretization *>(disc.get());
+
+      Albany::AbstractSTKMeshStruct &
+      ams = *stk_disc.getSTKMeshStruct();
+
+      ams.exoOutput = false;
+   }
 
 
     ST const
@@ -505,60 +534,60 @@ SchwarzLoop() const
     ST const
     rel_error = norm_final > 0.0 ? norm_diff / norm_final : norm_diff;
 
-    *out << delim << '\n';
-    *out << "Schwarz iteration         :" << n << '\n';
+    fos << delim << '\n';
+    fos << "Schwarz iteration         :" << iter << '\n';
 
     std::string const
     line(72, '-');
 
-    *out << line << '\n';
+    fos << line << '\n';
 
-    *out << centered("Sub", 4);
-    *out << centered("Initial norm", 24);
-    *out << centered("Final norm", 24);
-    *out << centered("Difference norm", 24);
-    *out << '\n';
+    fos << centered("Sub", 4);
+    fos << centered("Initial norm", 24);
+    fos << centered("Final norm", 24);
+    fos << centered("Difference norm", 24);
+    fos << '\n';
 
-    *out << centered("dom", 4);
-    *out << centered("||X0||", 24);
-    *out << centered("||Xf||", 24);
-    *out << centered("||Xf-X0||", 24);
-    *out << '\n';
+    fos << centered("dom", 4);
+    fos << centered("||X0||", 24);
+    fos << centered("||Xf||", 24);
+    fos << centered("||Xf-X0||", 24);
+    fos << '\n';
 
-    *out << line << '\n';
+    fos << line << '\n';
 
     for (auto m = 0; m < num_subdomains_; ++m) {
-      *out << std::setw(4) << m;
-      *out << std::setw(24) << norms_init(m);
-      *out << std::setw(24) << norms_final(m);
-      *out << std::setw(24) << norms_diff(m);
-      *out << '\n';
+      fos << std::setw(4) << m;
+      fos << std::setw(24) << norms_init(m);
+      fos << std::setw(24) << norms_final(m);
+      fos << std::setw(24) << norms_diff(m);
+      fos << '\n';
     }
 
-    *out << line << '\n';
+    fos << line << '\n';
 
-    *out << centered("Norm", 4);
-    *out << std::setw(24) << norm_init;
-    *out << std::setw(24) << norm_final;
-    *out << std::setw(24) << norm_diff;
-    *out << '\n';
+    fos << centered("Norm", 4);
+    fos << std::setw(24) << norm_init;
+    fos << std::setw(24) << norm_final;
+    fos << std::setw(24) << norm_diff;
+    fos << '\n';
 
-    *out << line << '\n';
+    fos << line << '\n';
 
-    *out << "Absolute error     :" << abs_error << '\n';
-    *out << "Absolute tolerance :" << abs_tol_ << '\n';
-    *out << "Relative error     :" << rel_error << '\n';
-    *out << "Relative tolerance :" << rel_tol_ << '\n';
-    *out << delim << '\n';
+    fos << "Absolute error     :" << abs_error << '\n';
+    fos << "Absolute tolerance :" << abs_tol_ << '\n';
+    fos << "Relative error     :" << rel_error << '\n';
+    fos << "Relative tolerance :" << rel_tol_ << '\n';
+    fos << delim << '\n';
 
     if (abs_error < abs_tol_ || rel_error < rel_tol_) {
-      *out << "Schwarz loop converged.\n";
-      *out << "Total iterations   :" << n + 1 << '\n';
-      *out << "Last absolute error:" << abs_error << '\n';
-      *out << "Absolute tolerance :" << abs_tol_ << '\n';
-      *out << "Last relative error:" << rel_error << '\n';
-      *out << "Relative tolerance :" << rel_tol_ << '\n';
-      *out << delim << '\n';
+      fos << "Schwarz loop converged.\n";
+      fos << "Total iterations   :" << iter + 1 << '\n';
+      fos << "Last absolute error:" << abs_error << '\n';
+      fos << "Absolute tolerance :" << abs_tol_ << '\n';
+      fos << "Last relative error:" << rel_error << '\n';
+      fos << "Relative tolerance :" << rel_tol_ << '\n';
+      fos << delim << '\n';
       break;
     }
   }
