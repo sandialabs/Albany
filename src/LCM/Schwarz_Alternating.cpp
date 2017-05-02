@@ -42,6 +42,13 @@ SchwarzAlternating(
   Teuchos::RCP<std::map<std::string, int>>
   app_name_index_map = Teuchos::rcp(new std::map<std::string, int>);
 
+  // Arrays to cache useful info for each subdomain for later use
+  apps_.resize(num_subdomains_);
+  solvers_.resize(num_subdomains_);
+  convergence_ops_.resize(num_subdomains_);
+  stk_mesh_structs_.resize(num_subdomains_);
+
+  //Set up each application and model object
   for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
     std::string const &
@@ -51,39 +58,8 @@ SchwarzAlternating(
     app_name_index = std::make_pair(app_name, subdomain);
 
     app_name_index_map->insert(app_name_index);
-  }
 
-  //
-  // Parameters
-  //
-  Teuchos::ParameterList &
-  problem_params = app_params->sublist("Problem");
-
-  bool const
-  have_parameters = problem_params.isSublist("Parameters");
-
-  ALBANY_ASSERT(have_parameters == false, "Parameters not supported.");
-
-  //
-  // Responses
-  //
-  bool const
-  have_responses = problem_params.isSublist("Response Functions");
-
-  ALBANY_ASSERT(have_responses == false, "Responses not supported.");
-
-  //
-  //
-  //
-  apps_.resize(num_subdomains_);
-  solvers_.resize(num_subdomains_);
-  convergence_ops_.resize(num_subdomains_);
-  stk_mesh_structs_.resize(num_subdomains_);
-
-  //Set up each application and model object
-  for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
-
-    //get parameterlist from mth model
+    //get parameterlist from each model
     Albany::SolverFactory
     solver_factory(model_filenames[subdomain], comm);
 
@@ -176,6 +152,27 @@ SchwarzAlternating(
   nominal_values_.set_x(Teuchos::null);
   nominal_values_.set_x_dot(Teuchos::null);
   nominal_values_.set_x_dot_dot(Teuchos::null);
+
+  //
+  // Parameters
+  //
+  Teuchos::ParameterList &
+  problem_params = app_params->sublist("Problem");
+
+  bool const
+  have_parameters = problem_params.isSublist("Parameters");
+
+  ALBANY_ASSERT(have_parameters == false, "Parameters not supported.");
+
+  //
+  // Responses
+  //
+  bool const
+  have_responses = problem_params.isSublist("Response Functions");
+
+  ALBANY_ASSERT(have_responses == false, "Responses not supported.");
+
+  return;
 }
 
 //
