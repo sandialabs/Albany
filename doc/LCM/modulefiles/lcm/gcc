@@ -2,6 +2,8 @@
 
 module-whatis "LCM GCC compiler"
 
+set lcm_dir $env(LCM_DIR)
+
 if { [is-loaded lcm/sems] } {
   module load sems-gcc/6.1.0
 }
@@ -11,9 +13,9 @@ setenv TOOL_CHAIN gcc
 setenv CC [exec which gcc]
 
 if { [is-loaded lcm/cuda] } {
-  setenv CXX [exec which g++]
-} else {
   setenv CXX $lcm_dir/Trilinos/packages/kokkos/config/nvcc_wrapper
+} else {
+  setenv CXX [exec which g++]
 }
 
 setenv FC [exec which gfortran]
