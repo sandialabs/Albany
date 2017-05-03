@@ -243,10 +243,10 @@ get_p_names(int) const
 //
 Teuchos::ArrayView<const std::string>
 SchwarzAlternating::
-get_g_names(int l) const
+get_g_names(int) const
 {
   ALBANY_ASSERT(false, "not implemented");
-  return Teuchos::ArrayView<const std::string>();
+  return Teuchos::ArrayView<const std::string>(Teuchos::null);
 }
 
 //
@@ -506,14 +506,14 @@ SchwarzLoop() const
 
       solver.evalModel(in_args, out_args);
 
+      // After solve, get info to check convergence
       Teuchos::RCP<NOXSolverPrePostOperator>
       convergence_op = convergence_ops_[subdomain];
 
       norms_init(subdomain) = convergence_op->getInitialNorm();
       norms_final(subdomain) = convergence_op->getFinalNorm();
       norms_diff(subdomain) = convergence_op->getDifferenceNorm();
-   }
-
+    }
 
     ST const
     norm_init = minitensor::norm(norms_init);

@@ -5,6 +5,7 @@ ANONYMOUS:
     Maximum Iterations: 32
     Relative Tolerance: 1.0e-15
     Absolute Tolerance: 1.0e-15
+    Exodus Write Interval: 1
   # MODEL DECLARATION, Look in the Problem directory
   Problem:
     # Transient or Steady (Quasi-Static) or Continuation (load steps)
