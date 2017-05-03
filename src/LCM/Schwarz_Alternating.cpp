@@ -469,7 +469,7 @@ SchwarzLoop() const
   delim(72, '=');
 
   Teuchos::FancyOStream &
-  fos{*Teuchos::VerboseObjectBase::getDefaultOStream()};
+  fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
 
   fos << delim << '\n';
   fos << "Schwarz Alternating Method with " << num_subdomains_;
