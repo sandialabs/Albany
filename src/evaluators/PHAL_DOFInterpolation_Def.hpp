@@ -63,7 +63,8 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
-/*
+
+#if 0 // This whole block is commented out
 //**********************************************************************
 template<typename Traits>
 DOFInterpolationBase<PHAL::AlbanyTraits::Jacobian, Traits, typename PHAL::AlbanyTraits::Jacobian::ScalarT>::
@@ -126,7 +127,8 @@ std::cout << "  val_qp(" << cell << "," << qp << ") = " << val_qp(cell,qp) << "\
     }
   }
 }
-*/
+#endif
+
 #ifdef ALBANY_SG
 //**********************************************************************
 template<typename Traits>

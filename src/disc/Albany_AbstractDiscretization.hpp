@@ -9,11 +9,7 @@
 #ifndef ALBANY_ABSTRACTDISCRETIZATION_HPP
 #define ALBANY_ABSTRACTDISCRETIZATION_HPP
 
-#include <vector>
-#include <string>
-
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ArrayRCP.hpp"
+#include "Albany_DiscretizationUtils.hpp"
 
 #if defined(ALBANY_EPETRA)
 #include "Epetra_Map.h"
@@ -27,43 +23,11 @@
 #include "Albany_NodalDOFManager.hpp"
 #include "Albany_AbstractMeshStruct.hpp"
 
-namespace AAdapt { namespace rc { class Manager; } }
+#ifdef ALBANY_CONTACT
+#include "Albany_ContactManager.hpp"
+#endif
 
 namespace Albany {
-
-typedef std::map<std::string, std::vector<std::vector<int> > > NodeSetList;
-typedef std::map<std::string, std::vector<GO> > NodeSetGIDsList;
-typedef std::map<std::string, std::vector<double*> > NodeSetCoordList;
-
-class SideStruct {
-
-  public:
-
-    GO side_GID; // the global id of the side in the mesh
-    GO elem_GID; // the global id of the element containing the side
-    int elem_LID; // the local id of the element containing the side
-    int elem_ebIndex; // The index of the element block that contains the element
-    unsigned side_local_id; // The local id of the side relative to the owning element
-
-};
-
-typedef std::map<std::string, std::vector<SideStruct> > SideSetList;
-
-class wsLid {
-
-  public:
-
-    int ws; // the workset of the element containing the side
-    int LID; // the local id of the element containing the side
-
-};
-
-typedef std::map<GO, wsLid > WsLIDList;
-
-template <typename T>
-struct WorksetArray {
-   typedef Teuchos::ArrayRCP<T> type;
-};
 
 class AbstractDiscretization {
   public:
@@ -180,6 +144,11 @@ class AbstractDiscretization {
     //! configuration. This is only relevant, and also only optional, in the
     //! case of mesh adaptation.
     virtual void setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm) = 0;
+
+#ifdef ALBANY_CONTACT
+    //! Get the contact manager
+    virtual Teuchos::RCP<const Albany::ContactManager> getContactManager() const = 0;
+#endif
 
     virtual const WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const = 0;
 

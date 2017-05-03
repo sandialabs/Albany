@@ -257,6 +257,7 @@ SET(HEADERS ${HEADERS}
   disc/Adapt_NodalDataBase.hpp
   disc/Adapt_NodalDataVector.hpp
   disc/Adapt_NodalFieldUtils.hpp
+  disc/Albany_DiscretizationUtils.hpp
   disc/Albany_AbstractDiscretization.hpp
   disc/Albany_AbstractFieldContainer.hpp
   disc/Albany_AbstractMeshStruct.hpp
@@ -264,6 +265,16 @@ SET(HEADERS ${HEADERS}
   disc/Albany_DiscretizationFactory.hpp
   disc/Albany_NodalDOFManager.hpp
   )
+
+IF (ALBANY_CONTACT)
+
+  SET(SOURCES ${SOURCES}
+    disc/Albany_ContactManager.cpp
+  )
+  SET(HEADERS ${HEADERS}
+    disc/Albany_ContactManager.hpp
+  )
+ENDIF ()
 
 #evaluators
 SET(SOURCES ${SOURCES}

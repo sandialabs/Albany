@@ -65,13 +65,16 @@ const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size
 // #define OUTPUT_TO_SCREEN
 
 Albany::STKDiscretization::
-STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
+STKDiscretization(
+                  const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
+                  Teuchos::RCP<Albany::AbstractSTKMeshStruct>& stkMeshStruct_,
                   const Teuchos::RCP<const Teuchos_Comm>& commT_,
                   const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_,
                   const std::map<int,std::vector<std::string> >& sideSetEquations_) :
 
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
+  discParams(discParams_),
   metaData(*stkMeshStruct_->metaData),
   bulkData(*stkMeshStruct_->bulkData),
   commT(commT_),
@@ -271,6 +274,13 @@ Albany::STKDiscretization::getCoords() const
 {
   return coords;
 }
+
+#ifdef ALBANY_CONTACT
+Teuchos::RCP<const Albany::ContactManager> Albany::STKDiscretization::getContactManager() const
+{
+  return contactManager;
+}
+#endif
 
 const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
 Albany::STKDiscretization::getSphereVolume() const
@@ -1971,6 +1981,10 @@ void Albany::STKDiscretization::computeSideSets(){
   for(int i = 0; i < sideSets.size(); i++)
     sideSets[i].clear(); // empty the ith map
 
+#ifdef ALBANY_CONTACT
+  contactManager = Teuchos::rcp(new Albany::ContactManager(discParams));
+#endif
+
   const stk::mesh::EntityRank element_rank = stk::topology::ELEMENT_RANK;
 
   // iterator over all side_rank parts found in the mesh
@@ -2052,6 +2066,11 @@ void Albany::STKDiscretization::computeSideSets(){
 
     ss++;
   }
+
+#ifdef ALBANY_CONTACT
+  contactManager->initializeContactSurfaces(sideSets, getCoordinates(), 
+        overlap_node_mapT, wsElNodeID, stkMeshStruct->getMeshSpecs());
+#endif
 }
 
 unsigned
@@ -3039,7 +3058,7 @@ Albany::STKDiscretization::updateMesh()
   {
     for (auto it : stkMeshStruct->sideSetMeshStructs)
     {
-      Teuchos::RCP<STKDiscretization> side_disc = Teuchos::rcp(new STKDiscretization(it.second,commT));
+      Teuchos::RCP<STKDiscretization> side_disc = Teuchos::rcp(new STKDiscretization(discParams,it.second,commT));
       side_disc->updateMesh();
       sideSetDiscretizations.insert(std::make_pair(it.first,side_disc));
       sideSetDiscretizationsSTK.insert(std::make_pair(it.first,side_disc));

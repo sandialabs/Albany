@@ -20,6 +20,8 @@ struct MeshAdaptMethod {
 
   MeshAdaptMethod(const Teuchos::RCP<Albany::APFDiscretization>& disc);
 
+  virtual ~MeshAdaptMethod(){}
+
   virtual void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p) = 0;
 
   virtual void preProcessOriginalMesh() = 0;

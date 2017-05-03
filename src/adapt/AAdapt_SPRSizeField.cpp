@@ -98,6 +98,7 @@ AAdapt::SPRSizeField::runSPR(apf::Field* elem_fld) {
   } else {
     sprIsoFunc.field = spr::getTargetSPRSizeField(elem_fld, target_count);
   }
+  return sprIsoFunc.field;
 }
 
 void

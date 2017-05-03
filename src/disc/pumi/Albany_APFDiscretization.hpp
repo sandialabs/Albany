@@ -104,6 +104,11 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void setCoordinates(const Teuchos::ArrayRCP<const double>& c);
     void setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm);
 
+#ifdef ALBANY_CONTACT
+//! Get the contact manager
+    virtual Teuchos::RCP<const Albany::ContactManager> getContactManager() const;
+#endif
+
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const;
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const;
@@ -467,6 +472,10 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
     Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type latticeOrientation;
+
+#ifdef ALBANY_CONTACT
+    Teuchos::RCP<const Albany::ContactManager> contactManager;
+#endif
 
     //! Connectivity map from elementGID to workset and LID in workset
     Albany::WsLIDList  elemGIDws;

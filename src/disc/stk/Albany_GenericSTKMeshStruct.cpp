@@ -1639,6 +1639,8 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
 
   validPL->sublist("Required Fields Info", false, "Info for the creation of the required fields in the STK mesh");
 
+  validPL->sublist("Contact", false, "Sublist used to specify contact parameters");
+
   // Uniform percept adaptation of input mesh prior to simulation
 
   validPL->set<std::string>("STK Initial Refine", "", "stk::percept refinement option to apply after the mesh is input");

@@ -23,7 +23,8 @@ namespace Albany {
 
     //! Constructor
     STKDiscretizationStokesH(
-       Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
+       const Teuchos::RCP<Teuchos::ParameterList>& discParams,
+       Teuchos::RCP<Albany::AbstractSTKMeshStruct>& stkMeshStruct,
        const Teuchos::RCP<const Teuchos_Comm>& commT,
        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
 

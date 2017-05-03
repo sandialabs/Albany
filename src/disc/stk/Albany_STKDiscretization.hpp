@@ -11,10 +11,6 @@
 #include <vector>
 #include <utility>
 
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_VerboseObject.hpp"
-
-
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_DataTypes.hpp"
@@ -78,7 +74,8 @@ namespace Albany {
 
     //! Constructor
     STKDiscretization(
-       Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
+       const Teuchos::RCP<Teuchos::ParameterList>& discParams,
+       Teuchos::RCP<Albany::AbstractSTKMeshStruct>& stkMeshStruct,
        const Teuchos::RCP<const Teuchos_Comm>& commT,
        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null,
        const std::map<int,std::vector<std::string> >& sideSetEquations = std::map<int,std::vector<std::string> >());
@@ -186,6 +183,11 @@ namespace Albany {
     const Teuchos::ArrayRCP<double>& getCoordinates() const;
     void setCoordinates(const Teuchos::ArrayRCP<const double>& c);
     void setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm);
+
+#ifdef ALBANY_CONTACT
+    //! Get the contact manager
+    virtual Teuchos::RCP<const Albany::ContactManager> getContactManager() const;
+#endif
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const;
@@ -460,6 +462,10 @@ namespace Albany {
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
     Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type latticeOrientation;
 
+#ifdef ALBANY_CONTACT
+    Teuchos::RCP<Albany::ContactManager> contactManager;
+#endif
+
     //! Connectivity map from elementGID to workset and LID in workset
     WsLIDList  elemGIDws;
 
@@ -491,6 +497,8 @@ namespace Albany {
     std::vector<double*>  toDelete;
 
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct;
+
+    Teuchos::RCP<Teuchos::ParameterList> discParams;
 
     // Sideset discretizations
     std::map<std::string,Teuchos::RCP<Albany::AbstractDiscretization> > sideSetDiscretizations;

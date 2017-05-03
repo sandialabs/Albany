@@ -257,6 +257,13 @@ void Albany::APFDiscretization::
 setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& ircm)
 { rcm = ircm; }
 
+#ifdef ALBANY_CONTACT
+Teuchos::RCP<const Albany::ContactManager> Albany::APFDiscretization::getContactManager() const
+{
+  return contactManager;
+}
+#endif
+
 const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
 Albany::APFDiscretization::getSphereVolume() const
 {

@@ -318,6 +318,13 @@ Aeras::SpectralDiscretization::getCoords() const
   return coords;
 }
 
+#ifdef ALBANY_CONTACT
+Teuchos::RCP<const Albany::ContactManager> Aeras::SpectralDiscretization::getContactManager() const
+{
+  return contactManager;
+}
+#endif
+
 const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
 Aeras::SpectralDiscretization::getSphereVolume() const
 {
