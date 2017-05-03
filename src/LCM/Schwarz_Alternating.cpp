@@ -330,6 +330,39 @@ getApps() const
 }
 
 //
+//
+//
+void
+SchwarzAlternating::
+set_failed(char const * msg)
+{
+  failed_ = true;
+  failure_message_ = msg;
+  return;
+}
+
+//
+//
+//
+void
+SchwarzAlternating::
+clear_failed()
+{
+  failed_ = false;
+  return;
+}
+
+//
+//
+//
+bool
+SchwarzAlternating::
+get_failed() const
+{
+  return failed_;
+}
+
+//
 // Create operator form of dg/dx for distributed responses
 //
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
@@ -447,6 +480,89 @@ centered(std::string const & str, int width)
 } // anonymous
 
 //
+//
+//
+void
+SchwarzAlternating::
+updateConvergenceCriterion() const
+{
+  abs_error_ = norm_diff_;
+  rel_error_ = norm_final_ > 0.0 ? norm_diff_ / norm_final_ : norm_diff_;
+
+  bool const
+  converged_absolute = abs_error_ <= abs_tol_;
+
+  bool const
+  converged_relative = rel_error_ <= rel_tol_;
+
+  converged_ = converged_absolute || converged_relative;
+
+  return;
+}
+
+//
+//
+//
+bool
+SchwarzAlternating::
+continueSolve() const
+{
+  ++num_iter_;
+
+  // If failure has occurred, stop immediately.
+  if (failed_ == true) return false;
+
+  // Regardless of other criteria, if error is zero stop solving.
+  bool const
+  zero_error = ((abs_error_ > 0.0) == false);
+
+  if (zero_error == true) return false;
+
+  // Minimum iterations takes precedence over maximum iterations and
+  // convergence. Continue solving if not exceeded.
+  bool const
+  exceeds_min_iter = num_iter_ >= min_iters_;
+
+  if (exceeds_min_iter == false) return true;
+
+  // Maximum iterations takes precedence over convergence.
+  // Stop solving if exceeded.
+  bool const
+  exceeds_max_iter = num_iter_ >= max_iters_;
+
+  if (exceeds_max_iter == true) return false;
+
+  // Lastly check for convergence.
+  bool const
+  continue_solve = (converged_ == false);
+
+  return continue_solve;
+}
+
+//
+//
+//
+void
+SchwarzAlternating::
+reportFinals(std::ostream & os) const
+{
+  std::string const
+  conv_str = converged_ == true ? "YES" : "NO";
+
+  os << '\n';
+  os << "Schwarz Alternating Method converged: " << conv_str << '\n';
+  os << "Minimum iterations :" << min_iters_ << '\n';
+  os << "Maximum iterations :" << max_iters_ << '\n';
+  os << "Total iterations   :" << num_iter_ << '\n';
+  os << "Last absolute error:" << abs_error_ << '\n';
+  os << "Absolute tolerance :" << abs_tol_ << '\n';
+  os << "Last relative error:" << rel_error_ << '\n';
+  os << "Relative tolerance :" << rel_tol_ << '\n';
+  os << '\n';
+  return;
+}
+
+//
 // Schwarz Alternating loop
 //
 void
@@ -462,9 +578,6 @@ SchwarzLoop() const
   minitensor::Vector<ST>
   norms_diff(num_subdomains_, minitensor::Filler::ZEROS);
 
-  int const
-  iter_limit = std::max(min_iters_, max_iters_);
-
   std::string const
   delim(72, '=');
 
@@ -476,12 +589,12 @@ SchwarzLoop() const
   fos << " subdomains\n";
   fos << std::scientific << std::setprecision(17);
 
-  for (auto iter = 0; iter < iter_limit; ++iter) {
+  do {
 
     for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
 
       fos << delim << '\n';
-      fos << "Schwarz iteration  :" << iter << '\n';
+      fos << "Schwarz iteration  :" << num_iter_ << '\n';
       fos << "Subdomain          :" << subdomain << '\n';
       fos << delim << '\n';
 
@@ -492,7 +605,7 @@ SchwarzLoop() const
       ams.exoOutputInterval = 1;
 
       ams.exoOutput = output_interval_ > 0 ?
-          (iter + 1) % output_interval_ == 0 : false;
+          (num_iter_ + 1) % output_interval_ == 0 : false;
 
       // Solve for each subdomain
       Thyra::ResponseOnlyModelEvaluatorBase<ST> &
@@ -515,23 +628,16 @@ SchwarzLoop() const
       norms_diff(subdomain) = convergence_op->getDifferenceNorm();
     }
 
-    ST const
-    norm_init = minitensor::norm(norms_init);
+    norm_init_ = minitensor::norm(norms_init);
 
-    ST const
-    norm_final = minitensor::norm(norms_final);
+    norm_final_ = minitensor::norm(norms_final);
 
-    ST const
-    norm_diff = minitensor::norm(norms_diff);
+    norm_diff_ = minitensor::norm(norms_diff);
 
-    ST const
-    abs_error = norm_diff;
-
-    ST const
-    rel_error = norm_final > 0.0 ? norm_diff / norm_final : norm_diff;
+    updateConvergenceCriterion();
 
     fos << delim << '\n';
-    fos << "Schwarz iteration         :" << iter << '\n';
+    fos << "Schwarz iteration         :" << num_iter_ << '\n';
 
     std::string const
     line(72, '-');
@@ -563,30 +669,22 @@ SchwarzLoop() const
     fos << line << '\n';
 
     fos << centered("Norm", 4);
-    fos << std::setw(24) << norm_init;
-    fos << std::setw(24) << norm_final;
-    fos << std::setw(24) << norm_diff;
+    fos << std::setw(24) << norm_init_;
+    fos << std::setw(24) << norm_final_;
+    fos << std::setw(24) << norm_diff_;
     fos << '\n';
 
     fos << line << '\n';
 
-    fos << "Absolute error     :" << abs_error << '\n';
+    fos << "Absolute error     :" << abs_error_ << '\n';
     fos << "Absolute tolerance :" << abs_tol_ << '\n';
-    fos << "Relative error     :" << rel_error << '\n';
+    fos << "Relative error     :" << rel_error_ << '\n';
     fos << "Relative tolerance :" << rel_tol_ << '\n';
     fos << delim << '\n';
 
-    if (abs_error < abs_tol_ || rel_error < rel_tol_) {
-      fos << "Schwarz loop converged.\n";
-      fos << "Total iterations   :" << iter + 1 << '\n';
-      fos << "Last absolute error:" << abs_error << '\n';
-      fos << "Absolute tolerance :" << abs_tol_ << '\n';
-      fos << "Last relative error:" << rel_error << '\n';
-      fos << "Relative tolerance :" << rel_tol_ << '\n';
-      fos << delim << '\n';
-      break;
-    }
-  }
+  }  while (continueSolve() == true);
+
+  reportFinals(fos);
 
   return;
 }

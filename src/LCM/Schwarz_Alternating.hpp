@@ -81,6 +81,15 @@ public:
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   getApps() const;
 
+  void
+  set_failed(char const * msg);
+
+  void
+  clear_failed();
+
+  bool
+  get_failed() const;
+
 private:
 
   /// Create operator form of dg/dx for distributed responses
@@ -108,6 +117,15 @@ private:
   void
   SchwarzLoop() const;
 
+  void
+  updateConvergenceCriterion() const;
+
+  bool
+  continueSolve() const;
+
+  void
+  reportFinals(std::ostream & os) const;
+
   Teuchos::Array<Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>>
   solvers_;
 
@@ -124,6 +142,9 @@ private:
   Thyra::ModelEvaluatorBase::InArgs<ST>
   nominal_values_;
   
+  char const *
+  failure_message_{"No failure detected"};
+
   int
   num_subdomains_{0};
 
@@ -141,6 +162,30 @@ private:
 
   ST
   abs_tol_{0.0};
+
+  mutable bool
+  failed_{false};
+
+  mutable bool
+  converged_{false};
+
+  mutable int
+  num_iter_{0};
+
+  mutable ST
+  rel_error_{0.0};
+
+  mutable ST
+  abs_error_{0.0};
+
+  mutable ST
+  norm_init_{0.0};
+
+  mutable ST
+  norm_final_{0.0};
+
+  mutable ST
+  norm_diff_{0.0};
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST>>
   sub_inargs_;
