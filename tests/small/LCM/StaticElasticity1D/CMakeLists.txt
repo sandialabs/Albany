@@ -11,7 +11,7 @@ add_test(${testName} ${AlbanyT.exe} input.yaml)
 endif()
 
 # Repeat process for Analysis problems if "inputAnalysis.yaml" exists
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml AND ALBANY_IFPACK2)
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml AND ALBANY_IFPACK2 AND ALBANY_DAKOTA)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.yaml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis.yaml COPYONLY)
 
