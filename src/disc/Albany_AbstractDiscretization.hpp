@@ -219,6 +219,8 @@ class AbstractDiscretization {
 #if defined(ALBANY_EPETRA)
     //! Write the solution to the output file
     virtual void writeSolution(const Epetra_Vector& solution, const double time, const bool overlapped = false) = 0;
+    virtual void writeSolution(const Epetra_Vector& solution, const Epetra_Vector& solution_dot, 
+                               const double time, const bool overlapped = false) = 0;
 #endif
 
     //! Write the solution to the output file - Tpetra version. Calls next two together.

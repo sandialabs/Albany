@@ -252,6 +252,7 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     }
     virtual Teuchos::RCP<Epetra_Vector> getSolutionField(bool overlapped=false) const;
     virtual void writeSolution(const Epetra_Vector&, const double, const bool);
+    virtual void writeSolution(const Epetra_Vector&, const Epetra_Vector&, const double, const bool);
 #endif
 
     //! Get field DOF map

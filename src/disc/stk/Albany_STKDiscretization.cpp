@@ -653,11 +653,21 @@ Albany::STKDiscretization::getWsPhysIndex() const
 }
 
 #if defined(ALBANY_EPETRA)
-void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped){
-
+void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped)
+{
   Teuchos::RCP<const Tpetra_Vector> solnT =
      Petra::EpetraVector_To_TpetraVectorConst(soln, commT);
   writeSolutionT(*solnT, time, overlapped);
+}
+
+void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const Epetra_Vector& soln_dot, 
+                                              const double time, const bool overlapped)
+{
+  Teuchos::RCP<const Tpetra_Vector> solnT =
+     Petra::EpetraVector_To_TpetraVectorConst(soln, commT);
+  Teuchos::RCP<const Tpetra_Vector> soln_dotT =
+     Petra::EpetraVector_To_TpetraVectorConst(soln_dot, commT);
+  writeSolutionT(*solnT, *soln_dotT, time, overlapped);
 }
 #endif
 

@@ -707,6 +707,21 @@ Aeras::SpectralDiscretization::writeSolution(
 #endif
 #endif
 }
+
+void
+Aeras::SpectralDiscretization::writeSolution(
+    const Epetra_Vector& soln, const Epetra_Vector &soln_dot, 
+    const double time, const bool overlapped)
+{
+#if 1
+  Teuchos::RCP<const Tpetra_Vector> solnT =
+     Petra::EpetraVector_To_TpetraVectorConst(soln, commT);
+  Teuchos::RCP<const Tpetra_Vector> soln_dotT =
+     Petra::EpetraVector_To_TpetraVectorConst(soln_dot, commT);
+  writeSolutionT(*solnT, *soln_dotT, time, overlapped);
+#endif
+}
+
 #endif
 
 void

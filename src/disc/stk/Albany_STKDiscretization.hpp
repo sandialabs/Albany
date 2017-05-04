@@ -211,6 +211,8 @@ namespace Albany {
 
 #if defined(ALBANY_EPETRA)
     void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
+    void writeSolution(const Epetra_Vector& soln, const Epetra_Vector& soln_dot, 
+                       const double time, const bool overlapped = false);
 #endif
 
    void writeSolutionT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);

@@ -509,6 +509,18 @@ void Albany::APFDiscretization::writeSolution(const Epetra_Vector& soln, const d
   writeAnySolutionToFile(time_value);
 #endif
 }
+
+void Albany::APFDiscretization::writeSolution(const Epetra_Vector& soln, const Epetra_Vector& soln_dot, 
+      const double time_value, const bool overlapped)
+{
+#if 1
+  Teuchos::RCP<const Tpetra_Vector> solnT =
+     Petra::EpetraVector_To_TpetraVectorConst(soln, commT);
+  Teuchos::RCP<const Tpetra_Vector> soln_dotT =
+     Petra::EpetraVector_To_TpetraVectorConst(soln_dot, commT);
+  writeSolutionT(*solnT, *soln_dotT, time_value, overlapped);
+#endif
+}
 #endif
 
 static void saveOldTemperature(Teuchos::RCP<Albany::APFMeshStruct> meshStruct)
