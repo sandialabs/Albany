@@ -50,6 +50,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Linear Y")
     F = Teuchos::rcp(new AAdapt::LinearY(neq, numDim, data));
   
+  else if(name == "Linear Z")
+    F = Teuchos::rcp(new AAdapt::LinearZ(neq, numDim, data));
+
   else if(name == "About Z")
     F = Teuchos::rcp(new AAdapt::AboutZ(neq, numDim, data));
 
@@ -525,6 +528,26 @@ void AAdapt::LinearY::compute(double* x, const double* X) {
   x[1] = data[0] * X[0];
 
   if(numDim > 2) x[2] = 0.0;
+}
+//*****************************************************************************
+AAdapt::LinearZ::LinearZ(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((neq < 3) || (numDim < 3) || (data.size() != 3),
+                             std::logic_error,
+                             "Error! Invalid call of LinearZ with " << neq
+                             << " " << numDim << "  " << data.size() << std::endl);
+}
+void AAdapt::LinearZ::compute(double* x, const double* X) {
+
+
+  x[0] = 0.0;
+  x[1] = 0.0;
+
+  double const & a = data[0];
+  double const & b = data[1];
+  double const & c = data[2];
+
+  x[2] = a * X[0] + b * X[1] + c * X[2];
 }
 //*****************************************************************************
 AAdapt::AboutZ::AboutZ(int neq_, int numDim_, Teuchos::Array<double> data_)
