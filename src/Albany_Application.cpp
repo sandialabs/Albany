@@ -58,25 +58,6 @@
 #endif
 #endif
 
-/*
-#include "nvToolsExt.h"
-const uint32_t colors[] = { 0x0000ff00, 0x000000ff, 0x00ffff00, 0x00ff00ff, 0x0000ffff, 0x00ff0000, 0x00ffffff };
-const int num_colors = sizeof(colors)/sizeof(uint32_t);
-#define PUSH_RANGE(name,cid) { \
-    int color_id = cid; \
-    color_id = color_id%num_colors;\
-    nvtxEventAttributes_t eventAttrib = {0}; \
-    eventAttrib.version = NVTX_VERSION; \
-    eventAttrib.size = NVTX_EVENT_ATTRIB_STRUCT_SIZE; \
-    eventAttrib.colorType = NVTX_COLOR_ARGB; \
-    eventAttrib.color = colors[color_id]; \
-    eventAttrib.messageType = NVTX_MESSAGE_TYPE_ASCII; \
-    eventAttrib.message.ascii = name; \
-    nvtxRangePushEx(&eventAttrib); \
-}
-#define POP_RANGE nvtxRangePop();
-*/
-
 //#define WRITE_TO_MATRIX_MARKET
 
 using Teuchos::ArrayRCP;
@@ -1170,9 +1151,9 @@ computeGlobalResidualImplT(
   const Teuchos::RCP<Tpetra_Import> importerT = solMgrT->get_importerT();
 
   // Scatter x and xdot to the overlapped distrbution
-  //PUSH_RANGE("scatterXT",1);
+  PUSH_RANGE("scatterXT",1);
   solMgrT->scatterXT(*xT, xdotT.get(), xdotdotT.get());
-  //POP_RANGE;
+  POP_RANGE;
 
   // Scatter distributed parameters
   distParamLib->scatter();
@@ -1199,10 +1180,10 @@ computeGlobalResidualImplT(
 #endif
 
   // Zero out overlapped residual - Tpetra
-  //PUSH_RANGE("Zero Out Residual",2);
+  PUSH_RANGE("Zero Out Residual",2);
   overlapped_fT->putScalar(0.0);
   fT->putScalar(0.0);
-  //POP_RANGE;
+  POP_RANGE;
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
@@ -1219,7 +1200,7 @@ computeGlobalResidualImplT(
   {
     if (Teuchos::nonnull(rc_mgr)) rc_mgr->init_x_if_not(xT->getMap());
 
-    //PUSH_RANGE("Load Workset",5);
+    PUSH_RANGE("Load Workset",5);
     PHAL::Workset workset;
 
     if (!paramLib->isParameter("Time"))
@@ -1231,25 +1212,25 @@ computeGlobalResidualImplT(
 
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
-      //POP_RANGE;
+      POP_RANGE;
 
       // FillType template argument used to specialize Sacado
-      //PUSH_RANGE("evaluateFields",3);
+      PUSH_RANGE("evaluateFields",3);
       RCP<Teuchos::Time> evalTime =
       Teuchos::TimeMonitor::getNewTimer("Albany: evaluateFields<Residual>");
       Teuchos::TimeMonitor evalTimer(*evalTime); //start timer
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
       evalTimer.~TimeMonitor();
-      //POP_RANGE;
+      POP_RANGE;
       if (nfm!=Teuchos::null)
          deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     }
   }
 
   // Assemble the residual into a non-overlapping vector
-  //PUSH_RANGE("Assemble Residual",4);
+  PUSH_RANGE("Assemble Residual",4);
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
-  //POP_RANGE;
+  POP_RANGE;
 
   //Allocate scaleVec_
   if (scaleVec_ == Teuchos::null && scale != 1.0) {
