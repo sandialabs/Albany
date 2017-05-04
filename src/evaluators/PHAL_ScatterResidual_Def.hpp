@@ -125,13 +125,9 @@ operator()(const ScatterRank0_Tag& tag, const int& cell) const
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
-operator()(const ScatterRank1_Tag& tag, const int& cell) const
+operator()(const ScatterRank1_Tag& tag, const int& cell, const int& node, const int& eq) const
 {
-  for (std::size_t node = 0; node < this->numNodes; ++node){
-    for (std::size_t eq = 0; eq < numFields; eq++){
-      Kokkos::atomic_fetch_add(&f_nonconstView(Index(cell,node,this->offset + eq)), (this->valVec)(cell,node,eq));
-    }
-  }
+  Kokkos::atomic_fetch_add(&f_nonconstView(Index(cell,node,this->offset + eq)), (this->valVec)(cell,node,eq));
 }
 
 template<typename Traits>
@@ -202,7 +198,9 @@ evaluateFields(typename Traits::EvalData workset)
     Kokkos::parallel_for(ScatterRank0_Policy(0,workset.numCells),*this);
   }
   else if (this->tensorRank == 1) {
-    Kokkos::parallel_for(ScatterRank1_Policy(0,workset.numCells),*this);
+    Kokkos::Experimental::md_parallel_for(ScatterRank1_Policy(
+      {0,0,0},{(int)workset.numCells, (int)this->numNodes, (int)numFields},
+      ScatterRank1_TileSize),*this);
   }
   else if (this->tensorRank == 2) {
     Kokkos::parallel_for(ScatterRank2_Policy(0,workset.numCells),*this);

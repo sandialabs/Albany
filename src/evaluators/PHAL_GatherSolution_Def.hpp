@@ -205,13 +205,14 @@ GatherSolution(const Teuchos::ParameterList& p) :
 }
 // ********************************************************************
 //Kokkos functors for Residual
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const tensorRank_1Tag& tag, const int& i) const{
-  for (int node = 0; node < this->numNodes; ++node) 
-    for (int eq = 0; eq < numFields; eq++) 
-      (this->valVec)(i,node,eq)= xT_constView(wsID_kokkos(i, node,this->offset+eq));
+  for (int node = 0; node < this->numNodes; ++node)
+    for (int eq = 0; eq < numFields; eq++)
+      (this->valVec)(i, node, eq)= xT_constView(wsID_kokkos(i, node, this->offset+eq));
 }
 
 template<typename Traits>
@@ -220,8 +221,24 @@ void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 operator() (const tensorRank_1_enableTransientTag& tag, const int& i) const{
   for (int node = 0; node < this->numNodes; ++node)
     for (int eq = 0; eq < numFields; eq++)
-      (this->valVec_dot)(i,node,eq)= xdotT_constView(wsID_kokkos(i, node, this->offset+eq));
+      (this->valVec_dot)(i, node, eq)= xdotT_constView(wsID_kokkos(i, node, this->offset+eq));
 }
+
+/*
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
+operator() (const tensorRank_1Tag& tag, const int& cell, const int& node, const int& eq) const{
+  (this->valVec)(cell, node, eq)= xT_constView(wsID_kokkos(cell, node, this->offset+eq));
+}
+
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
+operator() (const tensorRank_1_enableTransientTag& tag, const int& cell, const int& node, const int& eq) const{
+  (this->valVec_dot)(cell, node, eq)= xdotT_constView(wsID_kokkos(cell, node, this->offset+eq));
+}
+*/
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
@@ -286,7 +303,7 @@ operator() (const tensorRank_0_enableAccelerationTag& tag, const int& i) const{
     for (int eq = 0; eq < numFields; eq++)
       (d_val_dotdot[eq](i,node))= xdotdotT_constView(wsID_kokkos(i, node, this->offset+eq));
 }
-
+#endif
 
 // **********************************************************************
 template<typename Traits>
@@ -395,8 +412,19 @@ evaluateFields(typename Traits::EvalData workset)
   else if (this->tensorRank == 1){
     Kokkos::parallel_for(tensorRank_1Policy(0,workset.numCells),*this);
 
-    if (workset.transientTerms && this->enableTransient)
+    if (workset.transientTerms && this->enableTransient) 
       Kokkos::parallel_for(tensorRank_1_enableTransientPolicy(0,workset.numCells),*this);
+
+    /*
+    Kokkos::Experimental::md_parallel_for(tensorRank_1Policy(
+      {0,0,0},{(int)workset.numCells, (int)this->numNodes, (int)numFields},
+      tensorRank_1TileSize),*this);
+
+    if (workset.transientTerms && this->enableTransient)
+      Kokkos::Experimental::md_parallel_for(tensorRank_1_enableTransientPolicy(
+        {0,0,0},{(int)workset.numCells, (int)this->numNodes, (int)numFields},
+        tensorRank_1_enableTransientTileSize),*this);
+    */
 
     if (workset.accelerationTerms && this->enableAcceleration)
       Kokkos::parallel_for(tensorRank_1_enableAccelerationPolicy(0,workset.numCells),*this);

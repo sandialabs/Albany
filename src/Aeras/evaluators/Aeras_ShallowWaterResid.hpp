@@ -72,7 +72,7 @@ private:
 	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian;
 	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
 	PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det;
-	Kokkos::DynRankView<RealType, PHX::Device>    grad_at_cub_points;
+	Kokkos::DynRankView<RealType, PHX::Device> grad_at_cub_points;
   /*
 	PHX::MDField<ScalarT,Cell,Node,VecDim> hyperviscosity;
   */
@@ -148,7 +148,6 @@ public:
 	//OG why is everything here public?
 	//this will stay
 	Kokkos::DynRankView<MeshScalarT, PHX::Device> refWeights_Kokkos;
-	Kokkos::DynRankView<MeshScalarT, PHX::Device> grad_at_cub_points_Kokkos;
 	Kokkos::DynRankView<MeshScalarT, PHX::Device> refPoints_kokkos;
 
 	typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;

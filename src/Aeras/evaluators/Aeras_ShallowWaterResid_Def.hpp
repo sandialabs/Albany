@@ -262,8 +262,8 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   this->utils.setFieldData(Residual,fm);
 
-  refWeights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs);
-  grad_at_cub_points = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numNodes, numQPs, 2);
+  refWeights = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs); 
+  grad_at_cub_points = Kokkos::createDynRankView(wBF.get_view(), "grad_at_cub_points", numNodes, numQPs, 2);
   refPoints = Kokkos::DynRankView<RealType, PHX::Device>("XXX", numQPs, 2);
 
   cubature->getCubature(refPoints, refWeights);
@@ -278,15 +278,12 @@ postRegistrationSetup(typename Traits::SetupData d,
 #else
   //Allocationg additional data for Kokkos functors
   refWeights_Kokkos=Kokkos::createDynRankView(wBF.get_view(),"refWeights_Kokkos",numQPs);
-  grad_at_cub_points_Kokkos=Kokkos::createDynRankView(wBF.get_view(),"grad_at_cub_points_Kokkos",numNodes,numQPs,2);
   refPoints_kokkos=Kokkos::createDynRankView(wBF.get_view(),"refPoints_Kokkos",numQPs,2);
 
   for (int i=0; i<numQPs; i++) {
     refWeights_Kokkos(i)=refWeights(i);
     for (int j=0; j<2; j++) {
       refPoints_kokkos(i,j)=refPoints(i,j);
-      for (int k=0; k<numNodes; k++)
-        grad_at_cub_points_Kokkos(k,i,j)=grad_at_cub_points(k,i,j);
     }
   }
 
@@ -335,18 +332,18 @@ postRegistrationSetup(typename Traits::SetupData d,
 template< typename ScalarT, typename ArrayT1,typename ArrayT2, typename ArrayJac, typename ArrayGrad>
 KOKKOS_INLINE_FUNCTION
 void gradient(const ArrayT1  & fieldAtNodes, const int &cell, ArrayT2  & gradField, 
-              ArrayJac &jacobian_inv, ArrayGrad &grad_at_cub_points_Kokkos) 
+              ArrayJac &jacobian_inv, ArrayGrad &grad_at_cub_points) 
 {
 #ifdef AERAS_OUTPUT
   std::cout << "ShallowWaterResid::gradient (kokkos)" << std::endl;
 #endif
-  for (int qp=0; qp < grad_at_cub_points_Kokkos.dimension(1); ++qp) {
+  for (int qp=0; qp < grad_at_cub_points.dimension(1); ++qp) {
     ScalarT gx = 0;
     ScalarT gy = 0;
-    for (int node=0; node < grad_at_cub_points_Kokkos.dimension(0); ++node) {
+    for (int node=0; node < grad_at_cub_points.dimension(0); ++node) {
       const typename PHAL::Ref<const ScalarT>::type field = fieldAtNodes(node);
-      gx +=   field*grad_at_cub_points_Kokkos(node, qp,0);
-      gy +=   field*grad_at_cub_points_Kokkos(node, qp,1);
+      gx +=   field*grad_at_cub_points(node, qp,0);
+      gy +=   field*grad_at_cub_points(node, qp,1);
     }
     gradField(qp, 0) = jacobian_inv(cell, qp, 0, 0)*gx + jacobian_inv(cell, qp, 1, 0)*gy;
     gradField(qp, 1) = jacobian_inv(cell, qp, 0, 1)*gx + jacobian_inv(cell, qp, 1, 1)*gy;
@@ -380,11 +377,11 @@ void ShallowWaterResid<EvalT,Traits>::divergence4(const Kokkos::DynRankView<Scal
     div_(cell, qp) = 0.0;
     for (int node=0; node < numNodes; ++node) {
       //OG What is this commented code?
-      //ScalarT tempAdd =vcontra(node, 0)*grad_at_cub_points_Kokkos(node, qp,0)
-      //                + vcontra(node, 1)*grad_at_cub_points_Kokkos(node, qp,1);
+      //ScalarT tempAdd =vcontra(node, 0)*grad_at_cub_points(node, qp,0)
+      //                + vcontra(node, 1)*grad_at_cub_points(node, qp,1);
       //     Kokkos::atomic_fetch_add(&div_hU(qp), tempAdd);
-      div_(cell, qp) += tempnodalvec1(cell, node, 0)*grad_at_cub_points_Kokkos(node, qp, 0)
-                     +  tempnodalvec1(cell, node, 1)*grad_at_cub_points_Kokkos(node, qp, 1);
+      div_(cell, qp) += tempnodalvec1(cell, node, 0)*grad_at_cub_points(node, qp, 0)
+                     +  tempnodalvec1(cell, node, 1)*grad_at_cub_points(node, qp, 1);
     }
   }
 
@@ -412,8 +409,8 @@ gradient4(const Kokkos::DynRankView<ScalarT, PHX::Device>  & field,
     for (std::size_t node=0; node < numNodes; ++node) {
       //const typename PHAL::Ref<const ScalarT>::type
       const ScalarT field_ = field(cell,node);
-      gx += field_*grad_at_cub_points_Kokkos(node, qp,0);
-      gy += field_*grad_at_cub_points_Kokkos(node, qp,1);
+      gx += field_*grad_at_cub_points(node, qp,0);
+      gy += field_*grad_at_cub_points(node, qp,1);
     }
 
     gradient_(cell,qp, 0) = jacobian_inv(cell, qp, 0, 0)*gx + jacobian_inv(cell, qp, 1, 0)*gy;
@@ -447,8 +444,8 @@ void ShallowWaterResid<EvalT,Traits>::curl4(
   for (int qp=0; qp < numQPs; ++qp) {
     curl_(cell, qp) = 0.0;
     for (int node=0; node < numNodes; ++node) {
-      curl_(cell, qp) += tempnodalvec2(cell, node, 1)*grad_at_cub_points_Kokkos(node, qp, 0)
-      		      -  tempnodalvec2(cell, node, 0)*grad_at_cub_points_Kokkos(node, qp, 1);
+      curl_(cell, qp) += tempnodalvec2(cell, node, 1)*grad_at_cub_points(node, qp, 0)
+      		      -  tempnodalvec2(cell, node, 0)*grad_at_cub_points(node, qp, 1);
     }
     curl_(cell, qp) = curl_(cell, qp)/jacobian_det(cell, qp);
   }
@@ -1148,24 +1145,24 @@ operator() (const ShallowWaterResid_Residual_Tag& tag, const int& cell, const in
   // Compute divergence of contravariant velocity
   ScalarT div = 0;
   for (int node=0; node < numNodes; ++node) {
-    div += tempnodalvec1(cell, node, 0)*grad_at_cub_points_Kokkos(node, qp, 0)
-        +  tempnodalvec1(cell, node, 1)*grad_at_cub_points_Kokkos(node, qp, 1);
+    div += tempnodalvec1(cell, node, 0)*grad_at_cub_points(node, qp, 0)
+        +  tempnodalvec1(cell, node, 1)*grad_at_cub_points(node, qp, 1);
   }
   div /= jacobian_det(cell, qp);
 
   // Compute curl of covariant vector
   ScalarT curl = 0;
   for (int node=0; node < numNodes; ++node) {
-    curl += tempnodalvec2(cell, node, 1)*grad_at_cub_points_Kokkos(node, qp, 0)
-         -  tempnodalvec2(cell, node, 0)*grad_at_cub_points_Kokkos(node, qp, 1);
+    curl += tempnodalvec2(cell, node, 1)*grad_at_cub_points(node, qp, 0)
+         -  tempnodalvec2(cell, node, 0)*grad_at_cub_points(node, qp, 1);
   }
   curl /= jacobian_det(cell, qp);
 
   // Compute gradient of kinetic energy
   ScalarT gradKE[2] = {0};
   for (int node=0; node < numNodes; ++node) {
-    gradKE[0] += ckineticEnergy(cell, node)*grad_at_cub_points_Kokkos(node, qp, 0);
-    gradKE[1] += ckineticEnergy(cell, node)*grad_at_cub_points_Kokkos(node, qp, 1);
+    gradKE[0] += ckineticEnergy(cell, node)*grad_at_cub_points(node, qp, 0);
+    gradKE[1] += ckineticEnergy(cell, node)*grad_at_cub_points(node, qp, 1);
   }
   ScalarT gradKEtemp = gradKE[0];
   gradKE[0] = jacobian_inv(cell, qp, 0, 0)*gradKE[0]  + jacobian_inv(cell, qp, 1, 0)*gradKE[1];
@@ -1174,8 +1171,8 @@ operator() (const ShallowWaterResid_Residual_Tag& tag, const int& cell, const in
   // Compute gradient of potential energy
   ScalarT gradPE[2] = {0};
   for (int node=0; node < numNodes; ++node) {
-    gradPE[0] += cpotentialEnergy(cell, node)*grad_at_cub_points_Kokkos(node, qp, 0);
-    gradPE[1] += cpotentialEnergy(cell, node)*grad_at_cub_points_Kokkos(node, qp, 1);
+    gradPE[0] += cpotentialEnergy(cell, node)*grad_at_cub_points(node, qp, 0);
+    gradPE[1] += cpotentialEnergy(cell, node)*grad_at_cub_points(node, qp, 1);
   }
   ScalarT gradPEtemp = gradPE[0];
   gradPE[0] = jacobian_inv(cell, qp, 0, 0)*gradPE[0]  + jacobian_inv(cell, qp, 1, 0)*gradPE[1];

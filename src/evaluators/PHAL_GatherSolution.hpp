@@ -105,7 +105,17 @@ public:
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 
-  //Kokkos:
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  /*
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
+  */
+
   struct tensorRank_2Tag{};
   struct tensorRank_2_enableTransientTag{};
   struct tensorRank_2_enableAccelerationTag{};
@@ -118,7 +128,26 @@ public:
   struct tensorRank_0_enableTransientTag{};
   struct tensorRank_0_enableAccelerationTag{};
 
-  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  /*
+  using tensorRank_1Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, tensorRank_1Tag>;
+  using tensorRank_1_enableTransientPolicy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, tensorRank_1_enableTransientTag>;
+
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename tensorRank_1Policy::tile_type 
+    tensorRank_1TileSize{{256,1,1}};
+  typename tensorRank_1_enableTransientPolicy::tile_type 
+    tensorRank_1_enableTransientTileSize{{256,1,1}};
+#else
+  typename tensorRank_1Policy::tile_type 
+    tensorRank_1TileSize{};
+  typename tensorRank_1_enableTransientPolicy::tile_type 
+    tensorRank_1_enableTransientTileSize{};
+#endif
+  */
 
   typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2Tag> tensorRank_2Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2_enableTransientTag> tensorRank_2_enableTransientPolicy;
@@ -141,6 +170,12 @@ public:
   void operator() (const tensorRank_1Tag& tag, const int& i) const;
   KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_1_enableTransientTag& tag, const int& i) const;
+  /*
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const tensorRank_1Tag& tag, const int& cell, const int& node, const int& eq) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const tensorRank_1_enableTransientTag& tag, const int& cell, const int& node, const int& eq) const;
+  */
   KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_1_enableAccelerationTag& tag, const int& i) const;
 
@@ -150,6 +185,7 @@ public:
   void operator() (const tensorRank_0_enableTransientTag& tag, const int& i) const;
   KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_0_enableAccelerationTag& tag, const int& i) const;
+#endif
 
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;

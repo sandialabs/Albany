@@ -117,27 +117,43 @@ protected:
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
 
-//Kokkos
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
   Kokkos::View<int***, PHX::Device> Index;
   Kokkos::View<ST*, PHX::Device> f_nonconstView;
 
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using Iterate = Kokkos::Experimental::Iterate;
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  static constexpr Iterate IterateDirection = Iterate::Left;
+#else
+  static constexpr Iterate IterateDirection = Iterate::Right;
+#endif
+
   struct ScatterRank0_Tag{};
   struct ScatterRank1_Tag{};
   struct ScatterRank2_Tag{};
 
-  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  using ScatterRank1_Policy = Kokkos::Experimental::MDRangePolicy<
+        Kokkos::Experimental::Rank<3, IterateDirection, IterateDirection>,
+        Kokkos::IndexType<int>, ScatterRank1_Tag>;
+
+#if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
+  typename ScatterRank1_Policy::tile_type 
+    ScatterRank1_TileSize{{256,1,1}};
+#else
+  typename ScatterRank1_Policy::tile_type 
+    ScatterRank1_TileSize{};
+#endif
 
   typedef Kokkos::RangePolicy<ExecutionSpace, ScatterRank0_Tag> ScatterRank0_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace, ScatterRank1_Tag> ScatterRank1_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, ScatterRank2_Tag> ScatterRank2_Policy;
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const ScatterRank0_Tag& tag, const int& i) const;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const ScatterRank1_Tag& tag, const int& i) const;
+  void operator() (const ScatterRank1_Tag& tag, const int& cell, const int& node, const int& eq) const;
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const ScatterRank2_Tag& tag, const int& i) const;
