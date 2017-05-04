@@ -404,6 +404,12 @@ namespace Aeras
    void writeSolutionT(const Tpetra_Vector& solnT,
                        const double time,
                        const bool overlapped = false);
+
+   void writeSolutionT(const Tpetra_Vector& solnT,
+                       const Tpetra_Vector& soln_dotT,
+                       const double time,
+                       const bool overlapped = false);
+
    void writeSolutionMV(const Tpetra_MultiVector& solnT,
                        const double time,
                        const bool overlapped = false);
@@ -411,6 +417,12 @@ namespace Aeras
    void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT,
                                      const double time,
                                      const bool overlapped = false);
+
+   void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT,
+                                     const Tpetra_Vector &solution_dotT, 
+                                     const double time,
+                                     const bool overlapped = false);
+
    void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector &solutionT,
                                      const double time,
                                      const bool overlapped = false);
@@ -567,11 +579,13 @@ namespace Aeras
 
     //Tpetra version of above
     void setSolutionFieldT(const Tpetra_Vector& solnT);
+    void setSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT);
     void setSolutionFieldMV(const Tpetra_MultiVector& solnT);
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local + neighbor (overlapped) solution
     void setOvlpSolutionFieldT(const Tpetra_Vector& solnT);
+    void setOvlpSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT);
     void setOvlpSolutionFieldMV(const Tpetra_MultiVector& solnT);
 
     int nonzeroesPerRow(const int neq) const;

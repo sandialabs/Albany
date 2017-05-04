@@ -214,8 +214,11 @@ namespace Albany {
 #endif
 
    void writeSolutionT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);
+   void writeSolutionT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, const double time, const bool overlapped = false);
    void writeSolutionMV(const Tpetra_MultiVector& solnT, const double time, const bool overlapped = false);
    void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false);
+   void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const Tpetra_Vector &solution_dotT, 
+                                     const double time, const bool overlapped = false);
    void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false);
    void writeSolutionToFileT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);
    void writeSolutionMVToFile(const Tpetra_MultiVector& solnT, const double time, const bool overlapped = false);
@@ -334,11 +337,13 @@ namespace Albany {
 
     //Tpetra version of above
     void setSolutionFieldT(const Tpetra_Vector& solnT);
+    void setSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT);
     void setSolutionFieldMV(const Tpetra_MultiVector& solnT);
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local + neighbor (overlapped) solution
     void setOvlpSolutionFieldT(const Tpetra_Vector& solnT);
+    void setOvlpSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT);
     void setOvlpSolutionFieldMV(const Tpetra_MultiVector& solnT);
 
     double monotonicTimeLabel(const double time);

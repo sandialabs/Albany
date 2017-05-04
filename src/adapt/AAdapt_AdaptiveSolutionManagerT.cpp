@@ -351,6 +351,14 @@ AAdapt::AdaptiveSolutionManagerT::updateAndReturnOverlapSolutionT(
   return overlapped_soln->getVectorNonConst(0);
 }
 
+Teuchos::RCP<Tpetra_Vector>
+AAdapt::AdaptiveSolutionManagerT::updateAndReturnOverlapSolutionDotT(
+    const Tpetra_Vector& solution_dotT /* not overlapped */)
+{
+  overlapped_soln->getVectorNonConst(1)->doImport(solution_dotT, *importerT, Tpetra::INSERT);
+  return overlapped_soln->getVectorNonConst(1);
+}
+
 Teuchos::RCP<const Tpetra_MultiVector>
 AAdapt::AdaptiveSolutionManagerT::updateAndReturnOverlapSolutionMV(
     const Tpetra_MultiVector& solutionT /* not overlapped */)

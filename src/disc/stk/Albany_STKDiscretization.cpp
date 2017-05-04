@@ -668,6 +668,14 @@ void Albany::STKDiscretization::writeSolutionT(
   writeSolutionToFileT(solnT, time, overlapped);
 }
 
+void Albany::STKDiscretization::writeSolutionT(
+  const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, const double time, const bool overlapped)
+{
+  writeSolutionToMeshDatabaseT(solnT, soln_dotT, time, overlapped);
+  //IKT, FIXME? extend writeSolutionToFileT to take in soln_dotT? 
+  writeSolutionToFileT(solnT, time, overlapped);
+}
+
 void Albany::STKDiscretization::writeSolutionMV(
   const Tpetra_MultiVector& solnT, const double time, const bool overlapped)
 {
@@ -678,12 +686,23 @@ void Albany::STKDiscretization::writeSolutionMV(
 void Albany::STKDiscretization::writeSolutionToMeshDatabaseT(
   const Tpetra_Vector& solnT, const double time, const bool overlapped)
 {
-  // Put solution as Epetra_Vector into STK Mesh
+  // Put solution as Tpetra_Vector into STK Mesh
   if (!overlapped)
     setSolutionFieldT(solnT);
   // soln coming in is overlapped
   else
     setOvlpSolutionFieldT(solnT);
+}
+
+void Albany::STKDiscretization::writeSolutionToMeshDatabaseT(
+  const Tpetra_Vector& solnT, const Tpetra_Vector &soln_dotT, const double time, const bool overlapped)
+{
+  // Put solution as Tpetra_Vector into STK Mesh
+  if (!overlapped)
+    setSolutionFieldT(solnT, soln_dotT);
+  // soln coming in is overlapped
+  else
+    setOvlpSolutionFieldT(solnT, soln_dotT);
 }
 
 void Albany::STKDiscretization::writeSolutionMVToMeshDatabase(
@@ -1106,6 +1125,22 @@ Albany::STKDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT)
 }
 
 void
+Albany::STKDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT)
+{
+
+  // Copy soln and soln_dot vectors into solution field, one node at a time
+  // Note that soln and soln_dot coming in is the local (non overlapped) soln and soln_dot
+
+  Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
+
+  // Iterate over the on-processor nodes
+  stk::mesh::Selector locally_owned = metaData.locally_owned_part();
+
+  container->saveSolnVectorT(solnT, soln_dotT, locally_owned, node_mapT);
+}
+
+
+void
 Albany::STKDiscretization::setSolutionFieldMV(const Tpetra_MultiVector& solnT)
 {
 
@@ -1133,6 +1168,21 @@ Albany::STKDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT)
 
   container->saveSolnVectorT(solnT, select_owned_or_shared, overlap_node_mapT);
 }
+
+void
+Albany::STKDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT)
+{
+  // Copy soln and soln_dot vectors into solution field, one node at a time
+  // Note that soln and soln_dot coming in is the local+ghost (overlapped) soln and soln_dot
+
+  Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
+
+  // Iterate over the processor-visible nodes
+  stk::mesh::Selector select_owned_or_shared = metaData.locally_owned_part() | metaData.globally_shared_part();
+
+  container->saveSolnVectorT(solnT, soln_dotT, select_owned_or_shared, overlap_node_mapT);
+}
+
 
 void
 Albany::STKDiscretization::setOvlpSolutionFieldMV(const Tpetra_MultiVector& solnT)

@@ -722,6 +722,20 @@ Aeras::SpectralDiscretization::writeSolutionT(const Tpetra_Vector& solnT,
 }
 
 void
+Aeras::SpectralDiscretization::writeSolutionT(const Tpetra_Vector& solnT,
+                                              const Tpetra_Vector& soln_dotT, 
+                                              const double time,
+                                              const bool overlapped)
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
+#endif
+  writeSolutionToMeshDatabaseT(solnT, soln_dotT, time, overlapped);
+  //IKT, FIXME? extend writeSolutionToFileT to take in soln_dotT? 
+  writeSolutionToFileT(solnT, time, overlapped);
+}
+
+void
 Aeras::SpectralDiscretization::writeSolutionMV(const Tpetra_MultiVector& solnT,
                                               const double time,
                                               const bool overlapped)
@@ -741,14 +755,32 @@ Aeras::SpectralDiscretization::writeSolutionToMeshDatabaseT(
 {
 #ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
-   Tpetra_MatrixMarket_Writer::writeDenseFile("solnT.mm", solnT);
+  Tpetra_MatrixMarket_Writer::writeDenseFile("solnT.mm", solnT);
 #endif
-  // Put solution as Epetra_Vector into STK Mesh
+  // Put solution as Tpetra_Vector into STK Mesh
   if (!overlapped)
     setSolutionFieldT(solnT);
   // soln coming in is overlapped
   else
     setOvlpSolutionFieldT(solnT);
+}
+
+void
+Aeras::SpectralDiscretization::writeSolutionToMeshDatabaseT(
+    const Tpetra_Vector& solnT,
+    const Tpetra_Vector& soln_dotT, 
+    const double time,
+    const bool overlapped)
+{
+#ifdef WRITE_TO_MATRIX_MARKET_TO_MM_FILE
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
+#endif
+  // Put solution as Tpetra_Vector into STK Mesh
+  if (!overlapped)
+    setSolutionFieldT(solnT, soln_dotT);
+  // soln coming in is overlapped
+  else
+    setOvlpSolutionFieldT(solnT, soln_dotT);
 }
 
 void
@@ -1042,6 +1074,27 @@ Aeras::SpectralDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT)
 }
 
 void
+Aeras::SpectralDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT)
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
+#endif
+
+  // Copy soln and soln_dot vector into solution field, one node at a time
+  // Note that soln and soln_dot coming in is the local (non overlapped) soln and soln_dot
+
+  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container =
+    outputStkMeshStruct->getFieldContainer();
+
+  // Iterate over the on-processor nodes
+  stk::mesh::Selector locally_owned =
+    outputStkMeshStruct->metaData->locally_owned_part();
+
+  container->saveSolnVectorT(solnT, soln_dotT, locally_owned, node_mapT);
+
+}
+
+void
 Aeras::SpectralDiscretization::setFieldT(const Tpetra_Vector &result,
                                         const std::string& name,
                                         bool overlapped)
@@ -1088,6 +1141,26 @@ Aeras::SpectralDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT)
     outputStkMeshStruct->metaData->globally_shared_part();
 
   container->saveSolnVectorT(solnT, select_owned_or_shared, overlap_node_mapT);
+}
+
+void
+Aeras::SpectralDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT)
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << std::endl;
+#endif
+  // Copy soln and soln_dot vector into solution field, one node at a time
+  // Note that soln and soln_dot coming in is the local+ghost (overlapped) soln and soln_dot
+
+  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container =
+    outputStkMeshStruct->getFieldContainer();
+
+  // Iterate over the processor-visible nodes
+  stk::mesh::Selector select_owned_or_shared =
+    outputStkMeshStruct->metaData->locally_owned_part() |
+    outputStkMeshStruct->metaData->globally_shared_part();
+
+  container->saveSolnVectorT(solnT, soln_dotT, select_owned_or_shared, overlap_node_mapT);
 }
 
 void
