@@ -775,6 +775,7 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (
             p->set<string>("Beta Field Name", "basal_friction");
             p->set<string>("thickness Field Name", "thickness");
             p->set<string>("BedTopo Field Name", "bed_topography");
+            p->set<bool>("Use GLP", physics_list.get("Use GLP", false)); // Do not use GLP (Grounding line parametrization) unless actively enabled
 
             p->set<double> ("L", L);
             p->set<string> ("DOF Name", dof_names[0]);

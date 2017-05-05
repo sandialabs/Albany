@@ -30,6 +30,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
   sideSetID      (p.get<std::string>("Side Set ID")),
   coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector)
 {
+  useGLP = false;
   // the input.xml string "NBC on SS sidelist_12 for DOF T set dudn" (or something like it)
   name = p.get< std::string >("Neumann Input String");
 
@@ -147,6 +148,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
   else if(inputConditions == "basal"){ // Basal boundary condition for FELIX
       rho = p.get<double>("Ice Density");
       rho_w = p.get<double>("Water Density");
+      useGLP = p.get<bool>("Use GLP");
       stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
       useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
       if(useStereographicMap)
@@ -207,8 +209,6 @@ NeumannBase(const Teuchos::ParameterList& p) :
         beta_type = EXP_SCALAR_FIELD;
       else if (betaName == "Power Law Scalar Field")
         beta_type = POWERLAW_SCALAR_FIELD;
-      else if (betaName == "GLP Scalar Field")
-        beta_type = GLP_SCALAR_FIELD;
       else if (betaName == "Exponent Of Scalar Field Times Thickness")
         beta_type = EXP_SCALAR_FIELD_THK;
       else if (betaName == "FELIX XZ MMS") 
@@ -712,6 +712,15 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
         }
       }
 
+      // Check if we should apply GLP - if so, modify betaOnSide to be 0 where ice is floating
+      if (useGLP) { // evaluate floating criterion at each quadrature point
+        for (std::size_t iCell=0; iCell < numCells_; ++iCell) {
+          for (std::size_t qp=0; qp < numQPsSide; ++qp) {
+            betaOnSide(iCell, qp) *= (thicknessOnSide(iCell, qp) * rho > - bedTopoOnSide(iCell, qp) * rho_w);
+          }
+        }
+      }
+
       // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
       //Intrepid2::FunctionSpaceTools<PHX::Device>::
         //evaluate(dofSide, dofCell, trans_basis_refPointsSide);
@@ -1188,7 +1197,7 @@ calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
               MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
               MeshScalarT h2 = h*h;
               ScalarT vel=0;
-              const ScalarT beta = basalFriction_side(cell, pt);//*(thickness_side(cell, pt)*rho > -bedTopography_side(cell,pt)*rho_w);
+              const ScalarT beta = basalFriction_side(cell, pt);
               for(int dim = 0; dim < numDOFsSet; dim++)
                 vel += dof_side(cell, pt,dim)*dof_side(cell, pt,dim);
               for(int dim = 0; dim < numDOFsSet; dim++) {
@@ -1201,7 +1210,7 @@ calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
           for(int cell = 0; cell < numCells; cell++) {
             for(int pt = 0; pt < numPoints; pt++) {
               ScalarT vel=0;
-              const ScalarT beta = basalFriction_side(cell, pt);//*(thickness_side(cell, pt)*rho > -bedTopography_side(cell,pt)*rho_w);
+              const ScalarT beta = basalFriction_side(cell, pt);
               for(int dim = 0; dim < numDOFsSet; dim++)
                 vel += dof_side(cell, pt,dim)*dof_side(cell, pt,dim);
               for(int dim = 0; dim < numDOFsSet; dim++) {
@@ -1211,43 +1220,6 @@ calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
           }
         }
     }
-  if (beta_type == GLP_SCALAR_FIELD) {//basal (robin) condition indepenent of space
-      betaXY = 1;
-
-      if(useStereographicMap)
-      {
-        double R = stereographicMapList->get<double>("Earth Radius", 6371);
-        double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
-        double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
-        double R2 = std::pow(R,2);
-
-        for(int cell = 0; cell < numCells; cell++) {
-          for(int pt = 0; pt < numPoints; pt++) {
-            MeshScalarT x = physPointsSide(cell,pt,0) - x_0;
-            MeshScalarT y = physPointsSide(cell,pt,1) - y_0;
-            MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
-            MeshScalarT h2 = h*h;
-            const ScalarT beta = basalFriction_side(cell, pt)*(thickness_side(cell, pt)*rho > - bedTopography_side(cell,pt)*rho_w);
-            for(int dim = 0; dim < numDOFsSet; dim++) {
-              qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim)*h2; // d(stress)/dn = beta*u + alpha
-            }
-          }
-        }
-      }
-      else {
-        for(int cell = 0; cell < numCells; cell++) {
-          for(int pt = 0; pt < numPoints; pt++) {
-            ScalarT vel=0;
-            const ScalarT beta = basalFriction_side(cell, pt)*(thickness_side(cell, pt)*rho > - bedTopography_side(cell,pt)*rho_w);
-            for(int dim = 0; dim < numDOFsSet; dim++)
-              vel += dof_side(cell, pt,dim)*dof_side(cell, pt,dim);
-            for(int dim = 0; dim < numDOFsSet; dim++) {
-              qp_data_returned(cell, pt, dim) = betaXY*beta*std::pow(vel+1e-6, (1./3.-1.)/2.)*dof_side(cell, pt,dim); // d(stress)/dn = beta*u + alpha
-            }
-          }
-        }
-      }
-  }
   else if (beta_type == EXP_SCALAR_FIELD_THK) {//basal (robin) condition indepenent of space
       betaXY = 1.0;
 

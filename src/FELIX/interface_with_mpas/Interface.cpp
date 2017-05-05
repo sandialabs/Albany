@@ -327,6 +327,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   physParamList.set("Ice Density", rho_ice = physParamList.get("Ice Density", MPAS_rho_ice));
   physParamList.set("Water Density", rho_seawater = physParamList.get("Water Density", MPAS_rho_seawater));
   physParamList.set("Clausius-Clapeyron coefficient", physParamList.get("Clausius-Clapeyron coefficient", 9.7546e-8));
+  physParamList.set<bool>("Use GLP", physParamList.get("Use GLP", true)); //use GLP (Grounding line parametrization) unless actively disabled
   
   paramList->sublist("Problem").set("Name", paramList->sublist("Problem").get("Name", "FELIX Stokes First Order 3D"));
 
@@ -339,8 +340,9 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
 
   if(!paramList->sublist("Problem").isSublist("Neumann BCs")) {
     paramList->sublist("Problem").sublist("Neumann BCs").set("Cubature Degree", 3);
-    Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (1, 1.0));
-    paramList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS basalside for DOF all set basal_scalar_field", *inputArrayBasal);
+    Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (5, 0.0));
+    paramList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS basalside for DOF all set basal", *inputArrayBasal);
+    paramList->sublist("Problem").sublist("Neumann BCs").set("BetaXY",  "Scalar Field");
     //Lateral floating ice BCs
     Teuchos::RCP<Teuchos::Array<double> >inputArrayLateral = Teuchos::rcp(new Teuchos::Array<double> (1, rho_ice/rho_seawater));
     paramList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS floatinglateralside for DOF all set lateral", *inputArrayLateral);
