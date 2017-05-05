@@ -163,9 +163,9 @@ class LinearY : public AnalyticFunction {
     Teuchos::Array<double> data;
 };
 
-class LinearZ : public AnalyticFunction {
+class Linear : public AnalyticFunction {
   public:
-    LinearZ(int neq_, int numDim_, Teuchos::Array<double> data_);
+    Linear(int neq_, int numDim_, Teuchos::Array<double> data_);
     void compute(double* x, const double* X);
   private:
     int numDim; // size of coordinate vector X
