@@ -65,6 +65,7 @@ private:
   Kokkos::DynRankView<RealType, PHX::Device>    grad_at_cub_points;
   Kokkos::DynRankView<ScalarT, PHX::Device>     vcontra;
 
+  const int numCells;
   const int numNodes;
   const int numDims;
   const int numQPs;

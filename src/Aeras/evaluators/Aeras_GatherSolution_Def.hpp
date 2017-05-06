@@ -157,12 +157,13 @@ GatherSolution(const Teuchos::ParameterList& p,
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
-operator() (const int cell, const int node) const
+operator() (const GatherSolution_Tag& tag, const int &cell) const
 {
-   int n = 0, eq = 0;
-   for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-     (this->d_val    [j])(cell,node) = xT_constView(wsID_kokkos(cell, node,n));
-     (this->d_val_dot[j])(cell,node) = xdotT_constView(wsID_kokkos(cell, node,n));
+  for (int node = 0; node < this->numNodes; ++node) {
+    int n = 0, eq = 0;
+    for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
+      (this->d_val    [j])(cell,node) = xT_constView(wsID_kokkos(cell, node,n));
+      (this->d_val_dot[j])(cell,node) = xdotT_constView(wsID_kokkos(cell, node,n));
     }
     eq += this->numNodeVar;
     for (int level = 0; level < this->numLevels; level++) {
@@ -172,8 +173,7 @@ operator() (const int cell, const int node) const
           (this->d_val_dot[j])(cell,node,level,dim) = xdotT_constView(wsID_kokkos(cell, node,n));
         }
       }
-      for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) 
-      {
+      for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
         (this->d_val    [j])(cell,node,level) = xT_constView   (wsID_kokkos(cell, node,n));
         (this->d_val_dot[j])(cell,node,level) = xdotT_constView(wsID_kokkos(cell, node,n));
       }
@@ -186,7 +186,43 @@ operator() (const int cell, const int node) const
       }
     }
     eq += this->numTracerVar;
+  }
 }
+
+/*
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
+operator() (const GatherSolution_Tag& tag, const int& cell, const int& node) const
+{
+  int n = 0, eq = 0;
+  for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
+    (this->d_val    [j])(cell,node) = xT_constView(wsID_kokkos(cell, node,n));
+    (this->d_val_dot[j])(cell,node) = xdotT_constView(wsID_kokkos(cell, node,n));
+  }
+  eq += this->numNodeVar;
+  for (int level = 0; level < this->numLevels; level++) {
+    for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
+      for (int dim = 0; dim < this->numDims; ++dim, ++n) {
+        (this->d_val    [j])(cell,node,level,dim) = xT_constView   (wsID_kokkos(cell, node,n));
+        (this->d_val_dot[j])(cell,node,level,dim) = xdotT_constView(wsID_kokkos(cell, node,n));
+      }
+    }
+    for (int j = eq+this->numVectorLevelVar; j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
+      (this->d_val    [j])(cell,node,level) = xT_constView   (wsID_kokkos(cell, node,n));
+      (this->d_val_dot[j])(cell,node,level) = xdotT_constView(wsID_kokkos(cell, node,n));
+    }
+  }
+  eq += this->numScalarLevelVar + this->numVectorLevelVar;
+  for (int level = 0; level < this->numLevels; ++level) {
+    for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
+      (this->d_val    [j])(cell,node,level) = xT_constView(wsID_kokkos(cell, node,n));
+      (this->d_val_dot[j])(cell,node,level) = xdotT_constView(wsID_kokkos(cell, node,n));
+    }
+  }
+  eq += this->numTracerVar;
+}
+*/
 #endif
 
 // ***********************************************************************
@@ -253,10 +289,12 @@ evaluateFields(typename Traits::EvalData workset)
   d_val = val_kokkosvec.template view<executionSpace>(); 
   d_val_dot = val_dot_kokkosvec.template view<executionSpace>(); 
 
-
-  GatherSolution_Policy range(
-      {0,0}, {(int)workset.numCells,(int)this->numNodes}, GatherSolution_TileSize);
-  Kokkos::Experimental::md_parallel_for(range,*this);
+  Kokkos::parallel_for(GatherSolution_Policy(0,workset.numCells),*this);
+  /*
+  Kokkos::Experimental::md_parallel_for(GatherSolution_Policy(
+    {0,0},{(int)workset.numCells,(int)this->numNodes}, 
+    GatherSolution_TileSize),*this);
+  */
   cudaCheckError();
 
 #endif

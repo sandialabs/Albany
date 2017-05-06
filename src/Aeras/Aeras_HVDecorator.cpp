@@ -117,6 +117,8 @@ Aeras::HVDecorator::HVDecorator(
   // operator.
   laplace_ = getOnlyNonzeros(laplace);
 
+  xtildeT = Teuchos::rcp(new Tpetra_Vector(mass->getRowMap())); 
+
 //OG In case of a parallel run by some reason laplace.mm file contains indices
 //out of range with non-trivial entries. I haven't debugged this yet. AB suggested to
 //compare the product L*x (L is the Laplace, x is an arbitrary vector)
@@ -411,11 +413,8 @@ Aeras::HVDecorator::evalModelImpl(
     }
   }
 
-  PUSH_RANGE("Copy xtildeT",1);
-  Teuchos::RCP<Tpetra_Vector> xtildeT = Teuchos::rcp(new Tpetra_Vector(xT->getMap())); 
-  POP_RANGE;
   //compute xtildeT 
-  PUSH_RANGE("compute xtildeT",2);
+  PUSH_RANGE("compute xtildeT",1);
   applyLinvML(xT, xtildeT); 
   POP_RANGE;
 
@@ -429,7 +428,7 @@ Aeras::HVDecorator::evalModelImpl(
   mm_counter++; 
 #endif  
 
-  PUSH_RANGE("Update fT_out with xtildeT",4);
+  PUSH_RANGE("Update fT_out with xtildeT",2);
   if(Teuchos::nonnull(inArgsT.get_x_dot()) && Teuchos::nonnull(fT_out)){
 #ifdef OUTPUT_TO_SCREEN
 	  std::cout <<"in the if-statement for the update" <<std::endl;

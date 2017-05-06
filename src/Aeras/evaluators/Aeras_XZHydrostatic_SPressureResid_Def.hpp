@@ -73,12 +73,11 @@ postRegistrationSetup(typename Traits::SetupData d,
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_SPressureResid<EvalT, Traits>::
-operator() (const int cell, const int qp) const{
-    ScalarT sum = 0;
-    for (int level=0; level<numLevels; ++level)
-	sum += divpivelx(cell,qp,level) * delta(level);
-   int node = qp;
-   Residual(cell,node) += (spDot(cell,qp) + sum)*wBF(cell,node,qp);
+operator() (const int cell, const int node) const{
+  ScalarT sum = 0;
+  for (int level=0; level<numLevels; ++level)
+    sum += divpivelx(cell,node,level) * delta(level);
+  Residual(cell,node) = (spDot(cell,node) + sum)*wBF(cell,node,node);
 }
 
 template<typename EvalT, typename Traits>
@@ -86,7 +85,7 @@ KOKKOS_INLINE_FUNCTION
 void XZHydrostatic_SPressureResid<EvalT, Traits>::
 operator() (const XZHydrostatic_SPressureResid_pureAdvection_Tag& tag, const int& cell) const{
   for (int node=0; node < numNodes; ++node)
-    Residual(cell,node) += spDot(cell,node)*wBF(cell,node,node);
+    Residual(cell,node) = spDot(cell,node)*wBF(cell,node,node);
 }
 #endif
 
@@ -95,16 +94,13 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_SPressureResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
   double j_coeff = workset.j_coeff;
   double n_coeff = workset.n_coeff;
   obtainLaplaceOp = ((n_coeff == 22.0)&&(j_coeff == 1.0)) ? true : false;
-
-  PHAL::set(Residual, 0.0);
-
 //  std::cout <<"In surf pressure resid: Laplace = " << obtainLaplaceOp << "\n";
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  PHAL::set(Residual, 0.0);
   if( !obtainLaplaceOp ) {
     if( !pureAdvection ){
       for (int cell=0; cell < workset.numCells; ++cell) {
@@ -144,7 +140,7 @@ evaluateFields(typename Traits::EvalData workset)
   if( !obtainLaplaceOp ) {
     if( !pureAdvection ) {
       XZHydrostatic_SPressureResid_Policy range(          
-	{0,0}, {(int)workset.numCells,(int)numQPs}, XZHydrostatic_SPressureResid_TileSize);
+        {0,0}, {(int)workset.numCells,(int)numQPs}, XZHydrostatic_SPressureResid_TileSize);
       Kokkos::Experimental::md_parallel_for(range,*this);
       cudaCheckError();
     }
@@ -157,6 +153,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   else {
     //no Laplace for surface pressure, zero block instead
+    PHAL::set(Residual, 0.0);
   }
 
 #endif

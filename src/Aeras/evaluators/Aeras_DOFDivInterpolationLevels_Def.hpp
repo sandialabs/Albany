@@ -25,6 +25,7 @@ DOFDivInterpolationLevels(Teuchos::ParameterList& p,
   intrepidBasis (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > > ("Intrepid2 Basis") ),
   cubature      (p.get<Teuchos::RCP <Intrepid2::Cubature<PHX::Device> > >("Cubature")),
   div_val_qp (p.get<std::string>   ("Divergence Variable Name"), dl->qp_scalar_level),
+  numCells   (dl->node_scalar             ->dimension(0)),
   numNodes   (dl->node_scalar             ->dimension(1)),
   numDims    (dl->node_qp_gradient        ->dimension(3)),
   numQPs     (dl->node_qp_scalar          ->dimension(2)),
@@ -68,9 +69,13 @@ postRegistrationSetup(typename Traits::SetupData d,
   cubature->getCubature(refPoints, refWeights);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
 
+  if ( !originalDiv ) {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  vcontra = Kokkos::createDynRankView(val_node.get_view(), "XXX", numNodes, 2);
+    vcontra = Kokkos::createDynRankView(val_node.get_view(), "XXX", numNodes, 2);
+#else
+    vcontra = Kokkos::createDynRankView(val_node.get_view(), "vcontra", numCells, numNodes, numLevels, 2);
 #endif
+  }
 }
 
 //**********************************************************************
@@ -172,7 +177,6 @@ evaluateFields(typename Traits::EvalData workset)
     cudaCheckError();
   }
   else {
-    vcontra = createDynRankView(div_val_qp.get_view(), "vcontra", workset.numCells, numNodes, numLevels, 2);
     Kokkos::Experimental::md_parallel_for(DOFDivInterpolationLevels_vcontra_Policy(
       {0,0,0},{(int)workset.numCells,(int)numNodes,(int)numLevels},
       DOFDivInterpolationLevels_vcontra_TileSize),*this);

@@ -46,7 +46,7 @@ protected:
 private: 
   //Mass and Laplace operators
   Teuchos::RCP<Tpetra_CrsMatrix> laplace_; 
-  Teuchos::RCP<Tpetra_Vector> inv_mass_diag_, wrk_;
+  Teuchos::RCP<Tpetra_Vector> inv_mass_diag_, wrk_, xtildeT;
 };
 
 }
