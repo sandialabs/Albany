@@ -62,22 +62,29 @@ class ContactManager {
 
   public:
 
-    ContactManager(const Teuchos::RCP<Teuchos::ParameterList>& params);
+    ContactManager(const Teuchos::RCP<Teuchos::ParameterList>& params,
+				const Teuchos::RCP<const Teuchos_Comm >& comm,
+				const std::vector<Albany::SideSetList>& ssListVec,
+				const Teuchos::ArrayRCP<double>& coordArray,
+				const Teuchos::RCP<const Tpetra_Map>& node_map,
+				const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID,
+				const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type& wsElNodeEqID,
+				const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& meshSpecs);
 
     //! Destructor
     virtual ~ContactManager() {}
-
-    void initializeContactSurfaces(const std::vector<Albany::SideSetList>& ssListVec,
-				const Teuchos::ArrayRCP<double>& coordArray,
-				const Teuchos::RCP<const Tpetra_Map>& overlap_node_mapT,
-				const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID,
-				const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& meshSpecs);
 
   private:
 
     ContactManager();
 
+    void processSS(const std::vector<Albany::SideStruct>& sideSet, int workset, std::ofstream& stream );
+
     Teuchos::RCP<Teuchos::ParameterList> params;
+
+    //! Tpetra communicator
+    Teuchos::RCP<const Teuchos_Comm> comm;
+
 
     // Is this a contact problem?
     bool have_contact;
@@ -86,8 +93,13 @@ class ContactManager {
     Teuchos::Array<std::string> slaveSideNames;    // slave (mortar) side names
     Teuchos::Array<std::string> sideSetIDs;        // sideset ids
     Teuchos::Array<std::string> constrainedFields; // names of fields to be constrained
-    Albany::MeshSpecsStruct* meshSpecs;
-    Teuchos::Array<int> offset;
+
+    const std::vector<Albany::SideSetList>& ssListVec;
+    const Teuchos::ArrayRCP<double>& coordArray;
+    const Teuchos::RCP<const Tpetra_Map>& node_map;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type& wsElNodeEqID;
+    const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& meshSpecs;
 
 
     // Moertel-specific library data
