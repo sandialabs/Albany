@@ -2041,9 +2041,6 @@ void Albany::STKDiscretization::computeSideSets(){
   for(int i = 0; i < sideSets.size(); i++)
     sideSets[i].clear(); // empty the ith map
 
-#ifdef ALBANY_CONTACT
-  contactManager = Teuchos::rcp(new Albany::ContactManager(discParams));
-#endif
 
   const stk::mesh::EntityRank element_rank = stk::topology::ELEMENT_RANK;
 
@@ -2128,8 +2125,8 @@ void Albany::STKDiscretization::computeSideSets(){
   }
 
 #ifdef ALBANY_CONTACT
-  contactManager->initializeContactSurfaces(sideSets, getCoordinates(), 
-        overlap_node_mapT, wsElNodeID, stkMeshStruct->getMeshSpecs());
+  contactManager = Teuchos::rcp(new Albany::ContactManager(discParams, commT, sideSets, getCoordinates(), 
+        node_mapT, wsElNodeID, wsElNodeEqID, stkMeshStruct->getMeshSpecs()));
 #endif
 }
 

@@ -115,6 +115,7 @@ Aeras::HVDecorator::HVDecorator(
   // 3. Remove the structural nonzeros, numerical zeros, from the Laplace
   // operator.
   laplace_ = getOnlyNonzeros(laplace);
+  xtildeT = Teuchos::rcp(new Tpetra_Vector(mass->getRowMap())); 
 
 //OG In case of a parallel run by some reason laplace.mm file contains indices
 //out of range with non-trivial entries. I haven't debugged this yet. AB suggested to
@@ -408,7 +409,6 @@ Aeras::HVDecorator::evalModelImpl(
     }
   }
 
-  Teuchos::RCP<Tpetra_Vector> xtildeT = Teuchos::rcp(new Tpetra_Vector(xT->getMap())); 
   //compute xtildeT 
   applyLinvML(xT, xtildeT); 
 
@@ -422,11 +422,11 @@ Aeras::HVDecorator::evalModelImpl(
   mm_counter++; 
 #endif  
 
-  if(Teuchos::nonnull(inArgsT.get_x_dot()) && Teuchos::nonnull(fT_out)){
+  if (Teuchos::nonnull(inArgsT.get_x_dot()) && Teuchos::nonnull(fT_out)){
 #ifdef OUTPUT_TO_SCREEN
-	  std::cout <<"in the if-statement for the update" <<std::endl;
+    std::cout <<"in the if-statement for the update" <<std::endl;
 #endif
-	  fT_out->update(1.0, *xtildeT, 1.0);
+    fT_out->update(1.0, *xtildeT, 1.0);
   }
 
   // Response functions

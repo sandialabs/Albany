@@ -13,13 +13,6 @@
 
 typedef stk::mesh::Entity Entity;
 
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/io.hpp>
-#include <boost/numeric/ublas/matrix_proxy.hpp>
-#include <boost/numeric/ublas/vector.hpp>
-#include <boost/numeric/ublas/matrix_sparse.hpp>
-
-
 // \brief Function that helps creating text files with different names
 std::string itoa(int num);
 
