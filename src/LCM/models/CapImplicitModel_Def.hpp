@@ -185,9 +185,9 @@ namespace LCM
               
         // previous state
         minitensor::Tensor<ScalarT>
-        sigmaN(3, minitensor::ZEROS),
-        alphaN(3, minitensor::ZEROS),
-        strainN(3, minitensor::ZEROS);
+        sigmaN(3, minitensor::Filler::ZEROS),
+        alphaN(3, minitensor::Filler::ZEROS),
+        strainN(3, minitensor::Filler::ZEROS);
               
         // incremental strain tensor
         minitensor::Tensor<ScalarT> depsilon(3);
@@ -200,7 +200,7 @@ namespace LCM
               
         // trial state
         minitensor::Tensor<ScalarT> sigmaVal = minitensor::dotdot(Celastic, depsilon);
-        minitensor::Tensor<ScalarT> alphaVal(3, minitensor::ZEROS);
+        minitensor::Tensor<ScalarT> alphaVal(3, minitensor::Filler::ZEROS);
               
         for (int i = 0; i < num_dims_; ++i) {
           for (int j = 0; j < num_dims_; ++j) {
@@ -218,7 +218,7 @@ namespace LCM
         ScalarT Htan(0.0);
               
         // define plastic strain increment, its two invariants: dev, and vol
-        minitensor::Tensor<ScalarT> deps_plastic(3, minitensor::ZEROS);
+        minitensor::Tensor<ScalarT> deps_plastic(3, minitensor::Filler::ZEROS);
         ScalarT deqps(0.0), devolps(0.0);
               
         // define temporary trial stress, used in computing plastic strain

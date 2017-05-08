@@ -74,6 +74,9 @@ public:
   minitensor::Tensor<RealType, NumSlipT>
   latent_matrix_;
 
+  minitensor::Tensor<RealType, NumSlipT>
+  aux_matrix_;
+
 private:
 
   HardeningLawType
@@ -137,11 +140,11 @@ StateInternal(int cell, int pt, int num_slip, InputVectorType const & hardening_
       shear_np1_(num_slip),
       resistance_(num_slip)
   {
-    rate_slip_.fill(minitensor::ZEROS);
-    hardening_np1_.fill(minitensor::ZEROS);
-    slip_np1_.fill(minitensor::ZEROS);
-    shear_np1_.fill(minitensor::ZEROS);
-    resistance_.fill(minitensor::ZEROS);
+    rate_slip_.fill(minitensor::Filler::ZEROS);
+    hardening_np1_.fill(minitensor::Filler::ZEROS);
+    slip_np1_.fill(minitensor::Filler::ZEROS);
+    shear_np1_.fill(minitensor::Filler::ZEROS);
+    resistance_.fill(minitensor::Filler::ZEROS);
   }
 
   int
@@ -212,7 +215,8 @@ updateHardness(
     minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
     minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
     minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    minitensor::Vector<ArgT, NumSlipT> & slip_resistance);
+    minitensor::Vector<ArgT, NumSlipT> & slip_resistance,
+    bool & failed);
 
 
 

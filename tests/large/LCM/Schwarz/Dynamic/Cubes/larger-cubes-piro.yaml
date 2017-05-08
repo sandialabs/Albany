@@ -2,40 +2,48 @@
 ---
 ANONYMOUS:
   Scaling: 
-    Scale: 1.0000000
+    Scale: 1.0000000e11
   Problem: 
     Name: Mechanics 3D
     Phalanx Graph Visualization Detail: 0
-    MaterialDB Filename: 'materials-single.yaml'
+    MaterialDB Filename: 'materials-cubes.yaml'
     Solution Method: Transient
-    Second Order: Trapezoid Rule
+    Second Order: Newmark
     Initial Condition: 
       Function: Constant
       Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00]
     Initial Condition Dot: 
-      Function: Linear Y
+      Function: About Z
       Function Data: [1.00000000]
     Response Functions: 
-      Number: 1
+      Number: 4
       Response 0: Project IP to Nodal Field
       ResponseParams 0: 
         Number of Fields: 1
         IP Field Name 0: Cauchy_Stress
         IP Field Layout 0: Tensor
         Output to File: true
+      Response 1: Solution Average
+      Response 2: Solution Max Value
+      Response 3: Solution Min Value
   Discretization: 
     Method: Ioss
-    Exodus Input File Name: 'cube-single.g'
-    Exodus Output File Name: 'cube-single-tr.e'
+    Exodus Input File Name: 'larger-cubes.g'
+    Exodus Output File Name: 'larger-cubes-piro.e'
     Exodus Solution Name: disp
     Exodus Residual Name: resid
     Separate Evaluators by Element Block: true
     Number Of Time Derivatives: 2
-    Exodus Write Interval: 100
+    Exodus Write Interval: 50
+  Regression Results: 
+    Number of Comparisons: 4
+    Test Values: [0.0, 0.0, 1.1633, -1.1633]
+    Relative Tolerance: 1.0e-4
+    Absolute Tolerance: 1.0e-4
   Piro: 
-    Trapezoid Rule: 
-      Num Time Steps: 10000
-      Final Time: 10.00000000
+    Newmark: 
+      Num Time Steps: 400
+      Final Time: 2.00000000
       Initial Time: 0.00000000e+00
       NOX: 
         Direction: 
@@ -58,6 +66,15 @@ ANONYMOUS:
                         Verbosity: 33
                         Maximum Iterations: 100
                         Num Blocks: 100
+                  AztecOO:
+                    Forward Solve:
+                      AztecOO Settings:
+                        Aztec Solver: GMRES
+                        Convergence Test: r0
+                        Size of Krylov Subspace: 200
+                        Output Frequency: 10
+                      Max Iterations: 100
+                      Tolerance: 1e-5
                 Preconditioner Type: Ifpack
                 Preconditioner Types: 
                   Ifpack: 
@@ -69,6 +86,7 @@ ANONYMOUS:
         Line Search: 
           Method: Full Step
         Nonlinear Solver: Line Search Based
+        #Nonlinear Solver: Single Step
         Printing: 
           Output Information: 103
           Output Precision: 3
@@ -141,7 +159,7 @@ ANONYMOUS:
           Stratimikos Linear Solver: 
             NOX Stratimikos Options: { }
             Stratimikos: 
-              Linear Solver Type: Belos
+              Linear Solver Type: AztecOO
               Linear Solver Types: 
                 AztecOO: 
                   Forward Solve: 

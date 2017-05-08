@@ -180,7 +180,7 @@ namespace Albany {
   void safe_fgets(char* str, int size, FILE* stream);
   void safe_system(char const* str);
 
-[[noreturn]] void assert_fail(std::string const& msg);
+void assert_fail(std::string const& msg) __attribute__((noreturn));
 
 } // end namespace Albany
 

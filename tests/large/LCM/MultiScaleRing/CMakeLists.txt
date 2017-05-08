@@ -19,7 +19,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 4. Create the MPALE_dummy executable, for Albany to start up. The dummy executable just echos
 #    back the stress values at the QPs.
 
-add_executable(MPALE_dummy MPALE_dummy.C)
+add_executable(MPALE_dummy MPALE_dummy.cpp)
 
 # 7. Run the Albany test
 

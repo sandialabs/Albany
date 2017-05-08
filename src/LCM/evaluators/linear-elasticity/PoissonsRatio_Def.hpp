@@ -128,7 +128,7 @@ evaluateFields(typename Traits::EvalData workset)
   if (isThermoElastic) {
     for (int cell=0; cell < numCells; ++cell) {
       for (int qp=0; qp < numQPs; ++qp) {
-        poissonsRatio(cell,qp) += dnudT_value * (Temperature(cell,qp) - refTemp);;
+        poissonsRatio(cell,qp) += dnudT_value * (Temperature(cell,qp) - refTemp);
       }
     }
   }

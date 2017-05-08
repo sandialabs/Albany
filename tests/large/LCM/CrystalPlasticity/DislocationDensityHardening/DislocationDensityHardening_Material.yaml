@@ -24,7 +24,7 @@ ANONYMOUS:
       Implicit Integration Absolute Tolerance: 1.00000000e-10
       Implicit Integration Max Iterations: 100
       Output CP_Residual: true
-      Verbosity: 0
+      Verbosity: None
       Slip System Family 0: 
         Flow Rule: 
           Type: Power Law

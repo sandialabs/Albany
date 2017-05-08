@@ -10,7 +10,7 @@ ANONYMOUS:
     FCC: 
       Material Model: 
         Model Name: CrystalPlasticity
-      Verbosity: 3
+      Verbosity: High
       Crystal Elasticity: 
         C11: 204600.00
         C12: 137700.00000000

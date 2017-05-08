@@ -25,7 +25,7 @@ public:
 
   using ScalarT = typename EvalT::ScalarT;
 	using ValueT = typename Sacado::ValueType<ScalarT>::type;
-	
+
   using BaseKernel = ParallelKernel<EvalT, Traits>;
   using ScalarField = typename BaseKernel::ScalarField;
   using ConstScalarField = typename BaseKernel::ConstScalarField;
@@ -43,12 +43,14 @@ public:
   using BaseKernel::ref_temperature_;
   using BaseKernel::heat_capacity_;
   using BaseKernel::density_;
-  using BaseKernel::temperature_;
+  // using BaseKernel::temperature_;
   
   using BaseKernel::setDependentField;
   using BaseKernel::setEvaluatedField;
   using BaseKernel::addStateVariable;
   using BaseKernel::extractEvaluatedFieldArray;
+
+  using SSV = Sacado::ScalarValue<ScalarT>;
 
   ///
   /// Constructor
@@ -203,7 +205,7 @@ private:
   ///
   /// Output options 
   ///
-  int 
+  CP::Verbosity 
   verbosity_;
 
   bool
@@ -220,6 +222,9 @@ private:
 
   ConstScalarField
   delta_time_;
+
+  ConstScalarField
+  temperature_;
 
   ///
   /// Evaluated MDFields
@@ -313,6 +318,9 @@ private:
 
   std::string const
   dt_string_ = "Delta Time";
+
+  std::string const
+  temperature_string_ = "Temperature";
 
   ///
   /// State Variables

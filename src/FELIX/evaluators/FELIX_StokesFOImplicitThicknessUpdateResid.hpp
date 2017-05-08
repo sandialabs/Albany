@@ -54,8 +54,11 @@ private:
   std::size_t numNodes;
   std::size_t numQPs;
   std::size_t numVecDims;
+  std::size_t numCells;
 
   double rho, g;
+
+  Kokkos::DynRankView<ScalarT, PHX::Device> Res;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
@@ -66,10 +69,6 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const StokesFOImplicitThicknessUpdateResid_Tag& tag, const int& cell) const;
-
-  typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
-  PHX::MDField<ScalarT, Cell, Node, Dim> Res;
-
 #endif
 
 };

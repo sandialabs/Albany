@@ -93,9 +93,11 @@ namespace LCM {
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int pt=0; pt < numQPs; ++pt) {
 
-        minitensor::Tensor<MeshScalarT> gBasis(3, refDualBasis,cell, pt,0,0);
+        minitensor::Tensor<MeshScalarT>
+        gBasis(minitensor::Source::ARRAY, 3, refDualBasis,cell, pt,0,0);
 
-        minitensor::Vector<MeshScalarT> N(3, refNormal,cell, pt,0);
+        minitensor::Vector<MeshScalarT>
+        N(minitensor::Source::ARRAY, 3, refNormal,cell, pt,0);
 
         gBasis = minitensor::transpose(gBasis);
 

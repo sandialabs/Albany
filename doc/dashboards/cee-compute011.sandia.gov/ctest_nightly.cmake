@@ -7,14 +7,13 @@ SET(CTEST_BUILD_OPTION "$ENV{BUILD_OPTION}")
 if (1)
   # What to build and test
   IF(CTEST_BUILD_OPTION MATCHES "base")
-    # Only download repos and cleanout in the base nightly test run (start it an hour earlier)
-    set (CLEAN_BUILD TRUE)
+    # Only download repos in the base nightly test run (start it an hour earlier)
     set (DOWNLOAD TRUE)
   ELSE()
-    set (CLEAN_BUILD FALSE)
     set (DOWNLOAD FALSE)
   ENDIF()
 
+  set (CLEAN_BUILD TRUE)
   set (BUILD_SCOREC TRUE)
   set (BUILD_TRILINOS TRUE)
   set (BUILD_PERIDIGM TRUE)
@@ -87,13 +86,13 @@ set (CTEST_BINARY_NAME build)
 set (CTEST_INSTALL_NAME test)
 
 set (PREFIX_DIR /projects/albany)
-set (INTEL_PREFIX_DIR ${PREFIX_DIR}/intel5.0)
+set (INTEL_PREFIX_DIR ${PREFIX_DIR}/intel5.1)
 set (GCC_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.8.8-gcc-5.2.0-RHEL6)
 set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2017.2.174/compilers_and_libraries/linux)
 
 #set (BOOST_ROOT /projects/albany/nightly)
 set (BOOST_ROOT /projects/albany)
-set (INTEL_BOOST_ROOT ${BOOST_ROOT}/intel5.0/boost-1.60.0)
+set (INTEL_BOOST_ROOT ${BOOST_ROOT}/intel5.1)
 set (CLANG_BOOST_ROOT ${BOOST_ROOT}/clang-3.7)
 
 set (INTEL_MPI_DIR ${INTEL_DIR}/mpi)
@@ -150,19 +149,19 @@ set (SCOREC_REPOSITORY_LOCATION git@github.com:SCOREC/core.git)
 set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 set (Peridigm_REPOSITORY_LOCATION git@github.com:peridigm/peridigm) #ssh://software.sandia.gov/git/peridigm)
 
-if (CLEAN_BUILD)
-  # Initial cache info
-  set (CACHE_CONTENTS "
-  SITE:STRING=${CTEST_SITE}
-  CMAKE_BUILD_TYPE:STRING=Release
-  CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
-  BUILD_TESTING:BOOL=OFF
-  PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
-  " )
-
-#  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
-  file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
-endif ()
+#if (CLEAN_BUILD)
+#  # Initial cache info
+#  set (CACHE_CONTENTS "
+#  SITE:STRING=${CTEST_SITE}
+#  CMAKE_BUILD_TYPE:STRING=Release
+#  CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
+#  BUILD_TESTING:BOOL=OFF
+#  PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
+#  " )
+#
+##  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
+#  file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
+#endif ()
 
 if (DOWNLOAD)
   #
@@ -369,7 +368,6 @@ endif ()
 
 set (COMMON_CONFIGURE_OPTIONS
   "-Wno-dev"
-  "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
   #
   "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
   "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
@@ -377,6 +375,7 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
   "-DTrilinos_ENABLE_MueLu:BOOL=ON"
 #
+  "-DTrilinos_WARNINGS_AS_ERRORS_FLAGS:BOOL=OFF"
   "-DTrilinos_ENABLE_STRONG_C_COMPILE_WARNINGS:BOOL=OFF"
   "-DTrilinos_ENABLE_STRONG_CXX_COMPILE_WARNINGS:BOOL=OFF"
   #
@@ -535,6 +534,7 @@ if (BUILD_TRILINOS)
 #
     "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"
     "-DCMAKE_INSTALL_RPATH:STRING=${PREFIX_DIR}/lib"
+    "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     "${COMMON_CONFIGURE_OPTIONS}"
   )
 
@@ -624,6 +624,7 @@ if (BUILD_TRILINOSCLANG)
 
   set (CONFIGURE_OPTIONS
     "${COMMON_CONFIGURE_OPTIONS}"
+    "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/clang-3.7"
     #

@@ -1263,9 +1263,12 @@ computeGlobalResidualImplT(
 #if defined(ALBANY_LCM)
   // Store pointers to solution and time derivatives.
   // Needed for Schwarz coupling.
-  x_ = xT;
-  xdot_ = xdotT;
-  xdotdot_ = xdotdotT;
+  if (xT != Teuchos::null) x_ = Teuchos::rcp(new Tpetra_Vector(*xT));
+  else x_ = Teuchos::null;
+  if (xdotT != Teuchos::null) xdot_ = Teuchos::rcp(new Tpetra_Vector(*xdotT));
+  else xdot_ = Teuchos::null; 
+  if (xdotdotT != Teuchos::null) xdotdot_ = Teuchos::rcp(new Tpetra_Vector(*xdotdotT));
+  else xdotdot_ = Teuchos::null; 
 #endif
 
   // Mesh motion needs to occur here on the global mesh befor
@@ -1435,12 +1438,6 @@ computeGlobalResidual(const double current_time,
     const Teuchos::Array<ParamVec>& p,
     Epetra_Vector& f)
 {
-  if (scale != 1.0) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,
-        Teuchos::Exceptions::InvalidParameter,
-        "Error: Jacobian/Residual Scaling does not work with Albany executable! "
-        << "To use scaling, please re-run with AlbanyT executable. \n");
-  }
   // Scatter x and xdot to the overlapped distribution
   solMgr->scatterX(x, xdot, xdotdot);
 
@@ -1836,12 +1833,6 @@ computeGlobalJacobian(const double alpha,
     Epetra_Vector* f,
     Epetra_CrsMatrix& jac)
 {
-  if (scale != 1.0) {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,
-        Teuchos::Exceptions::InvalidParameter,
-        "Error: Jacobian/Residual Scaling does not work with Albany executable! "
-        << "To use scaling, please re-run with AlbanyT executable. \n");
-  }
   // Scatter x and xdot to the overlapped distribution
   solMgr->scatterX(x, xdot, xdotdot);
 

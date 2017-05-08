@@ -35,7 +35,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/exodiff_commands
                ${CMAKE_CURRENT_BINARY_DIR}/exodiff_commands COPYONLY)
 
 # 4. Build the test executable to read the ncdump file
-#add_executable(TestNcdumpValues TestNcdumpValues.C)
+#add_executable(TestNcdumpValues TestNcdumpValues.cpp)
 
 # 5. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)

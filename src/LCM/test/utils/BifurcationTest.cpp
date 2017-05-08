@@ -450,7 +450,7 @@ tangent_get_normal(minitensor::Vector<D2FadType, 2> & parameters)
   r = sqrt(parameters[0] * parameters[0] + parameters[1] * parameters[1]);
 
   minitensor::Vector<D2FadType, 3>
-  normal(3, minitensor::ZEROS);
+  normal(3, minitensor::Filler::ZEROS);
 
    if ( (r.val()).val() > 0.0 ) {
     normal[0] = parameters[0] * sin(r) / r;
@@ -1097,15 +1097,15 @@ int main(int ac, char* av[])
 
   minitensor::Tensor4<double, 3> const
   I1 = minitensor::identity_1<double, 3>() +
-    0.1 * minitensor::Tensor4<double, 3>(minitensor::RANDOM_NORMAL);
+    0.1 * minitensor::Tensor4<double, 3>(minitensor::Filler::RANDOM_NORMAL);
 
   minitensor::Tensor4<double, 3> const
   I2 = minitensor::identity_2<double, 3>() +
-    0.1 * minitensor::Tensor4<double, 3>(minitensor::RANDOM_NORMAL);
+    0.1 * minitensor::Tensor4<double, 3>(minitensor::Filler::RANDOM_NORMAL);
 
   minitensor::Tensor4<double, 3> const
   I3 = minitensor::identity_3<double, 3>() +
-    0.1 * minitensor::Tensor4<double, 3>(minitensor::RANDOM_NORMAL);
+    0.1 * minitensor::Tensor4<double, 3>(minitensor::Filler::RANDOM_NORMAL);
 
   tangent = lambda * I3 + mu * (I1 + I2);
  

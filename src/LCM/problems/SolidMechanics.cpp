@@ -5,6 +5,7 @@
 //*****************************************************************//
 #if 0
 
+#include "SolidMechanics.h"
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
@@ -18,43 +19,42 @@
 #include "PHAL_NSMaterialProperty.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "PHAL_Source.hpp"
-#include "SolidMechanics.h"
 #include "Time.hpp"
 
 // Helper functions
 namespace {
 
-int
-computeNumRigidBodyModes(int const space_dimension)
-{
   int
-  num_rigid_modes{0};
+  computeNumRigidBodyModes(int const space_dimension)
+  {
+    int
+    num_rigid_modes {0};
 
-  switch (space_dimension) {
+    switch (space_dimension) {
 
-  default:
-    TEUCHOS_TEST_FOR_EXCEPTION(
-        true,
-        std::logic_error,
-        '\n' << "ERROR: " << __PRETTY_FUNCTION__ <<
-        ": wrong number of dimensions." << '\n');
-    break;
+      default:
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::logic_error,
+          '\n' << "ERROR: " << __PRETTY_FUNCTION__ <<
+          ": wrong number of dimensions." << '\n');
+      break;
 
-  case 1:
-    num_rigid_modes = 1;
-    break;
+      case 1:
+      num_rigid_modes = 1;
+      break;
 
-  case 2:
-    num_rigid_modes = 3;
-    break;
+      case 2:
+      num_rigid_modes = 3;
+      break;
 
-  case 3:
-    num_rigid_modes = 6;
-    break;
+      case 3:
+      num_rigid_modes = 6;
+      break;
+    }
+
+    return num_rigid_modes;
   }
-
-  return num_rigid_modes;
-}
 
 } // anonymous namespace
 
@@ -67,8 +67,8 @@ SolidMechanics(
     Teuchos::RCP<ParamLib> const & param_lib,
     int const num_dims,
     Teuchos::RCP<Teuchos::Comm<int> const> & comm) :
-    Albany::AbstractProblem(params, param_lib),
-    num_dims_(num_dims), neq(num_dims)
+Albany::AbstractProblem(params, param_lib),
+num_dims_(num_dims), neq(num_dims)
 {
 
   std::string const &
@@ -80,9 +80,9 @@ SolidMechanics(
 
   // Print out a summary of the problem
   *out << "Mechanics problem:" << '\n'
-      << "\tSpatial dimension             : " << num_dims_ << '\n'
-      << "\tMechanics variables           : "
-      << '\n';
+  << "\tSpatial dimension             : " << num_dims_ << '\n'
+  << "\tMechanics variables           : "
+  << '\n';
 
   // Need numPDEs should be num_dims_ + nDOF for other governing equations  -SS
 
@@ -275,7 +275,7 @@ constructNeumannEvaluators(
   // Should only specify flux vector components (dudx, dudy, dudz),
   // or dudn, not both
   std::vector<std::string>
-  cond_names(3); //dudx, dudy, dudz, dudn, P
+  cond_names(3);//dudx, dudy, dudz, dudn, P
 
   Teuchos::ArrayRCP<std::string>
   dof_names(1);
@@ -284,18 +284,18 @@ constructNeumannEvaluators(
 
   // Note that sidesets are only supported for two and 3D currently
   switch (num_dims_) {
-  default:
+    default:
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
         Teuchos::Exceptions::InvalidParameter,
         '\n' << "Error: Sidesets only supported in 2 and 3D." << '\n');
     break;
 
-  case 2:
+    case 2:
     cond_names[0] = "(t_x, t_y)";
     break;
 
-  case 3:
+    case 3:
     cond_names[0] = "(t_x, t_y, t_z)";
     break;
 
@@ -328,7 +328,7 @@ Albany::SolidMechanics::
 getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-      this->getGenericProblemParams("ValidSolidMechanicsParams");
+  this->getGenericProblemParams("ValidSolidMechanicsParams");
 
   validPL->set<std::string>("MaterialDB Filename",
       "materials.xml",
@@ -343,13 +343,13 @@ void
 Albany::SolidMechanics::
 getAllocatedStates(
     Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>>
+    Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>>
     old_state,
     Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>>
+    Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device>>>>
     new_state
-    ) const
-    {
+) const
+{
   old_state = old_state_;
   new_state = new_state_;
 }
@@ -363,18 +363,18 @@ applyProblemSpecificSolverSettings(
   // Acquire the NOX "Solver Options" and "Status Tests" parameter lists
   Teuchos::RCP<Teuchos::ParameterList> solverOptionsParameterList;
   Teuchos::RCP<Teuchos::ParameterList> statusTestsParameterList;
-  if(params->isSublist("Piro")){
-    if(params->sublist("Piro").isSublist("NOX")){
-      if(params->sublist("Piro").sublist("NOX").isSublist("Solver Options")){
-	solverOptionsParameterList = Teuchos::rcpFromRef( params->sublist("Piro").sublist("NOX").sublist("Solver Options") );
+  if(params->isSublist("Piro")) {
+    if(params->sublist("Piro").isSublist("NOX")) {
+      if(params->sublist("Piro").sublist("NOX").isSublist("Solver Options")) {
+        solverOptionsParameterList = Teuchos::rcpFromRef( params->sublist("Piro").sublist("NOX").sublist("Solver Options") );
       }
-      if(params->sublist("Piro").sublist("NOX").isSublist("Status Tests")){
-	statusTestsParameterList = Teuchos::rcpFromRef( params->sublist("Piro").sublist("NOX").sublist("Status Tests") );
+      if(params->sublist("Piro").sublist("NOX").isSublist("Status Tests")) {
+        statusTestsParameterList = Teuchos::rcpFromRef( params->sublist("Piro").sublist("NOX").sublist("Status Tests") );
       }
     }
   }
 
-  if(!solverOptionsParameterList.is_null() && !statusTestsParameterList.is_null()){
+  if(!solverOptionsParameterList.is_null() && !statusTestsParameterList.is_null()) {
 
     // Add the model evaulator flag as a status test.
     Teuchos::ParameterList originalStatusTestParameterList = *statusTestsParameterList;
@@ -389,11 +389,11 @@ applyProblemSpecificSolverSettings(
     *statusTestsParameterList = newStatusTestParameterList;
 
     // Create a NOX observer that will reset the status flag at the beginning of a nonlinear solve
-    Teuchos::RCP<NOX::Abstract::PrePostOperator> pre_post_operator = Teuchos::rcp(new NOXSolverPrePostOperator);
-    Teuchos::RCP<NOXSolverPrePostOperator> nox_solver_pre_post_operator =
-      Teuchos::rcp_dynamic_cast<NOXSolverPrePostOperator>(pre_post_operator);
+    Teuchos::RCP<NOX::Abstract::PrePostOperator> pre_post_operator = Teuchos::rcp(new LCM::NOXSolverPrePostOperator);
+    Teuchos::RCP<LCM::NOXSolverPrePostOperator> nox_solver_pre_post_operator =
+    Teuchos::rcp_dynamic_cast<LCM::NOXSolverPrePostOperator>(pre_post_operator);
     Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> statusTest =
-      Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(nox_status_test_);
+    Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(nox_status_test_);
     nox_solver_pre_post_operator->setStatusTest(statusTest);
     solverOptionsParameterList->set("User Defined Pre/Post Operator", pre_post_operator);
   }

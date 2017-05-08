@@ -642,19 +642,27 @@ private:
 Teuchos::RCP<Manager> Manager::
 create (const Teuchos::RCP<Albany::StateManager>& state_mgr,
         Teuchos::ParameterList& problem_params) {
+
   if ( ! problem_params.isSublist("Adaptation")) return Teuchos::null;
+
   Teuchos::ParameterList&
     adapt_params = problem_params.sublist("Adaptation", true);
+
   if (adapt_params.isType<bool>("Reference Configuration: Update")) {
+
     if (adapt_params.get<bool>("Reference Configuration: Update")) {
       const bool use_projection = adapt_params.get<bool>(
           "Reference Configuration: Project", false);
       const bool do_transform = adapt_params.get<bool>(
           "Reference Configuration: Transform", false);
-      return Teuchos::rcp(new Manager(state_mgr, use_projection, do_transform));
+      return 
+		Teuchos::rcp(new Manager(state_mgr, use_projection, do_transform));
     }
+
   }
-  else return Teuchos::null;
+  
+  return Teuchos::null;
+
 }
 
 void Manager::setSolutionManager(

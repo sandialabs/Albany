@@ -341,6 +341,11 @@ namespace Aeras
     void
     setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm);
 
+#ifdef ALBANY_CONTACT
+//! Get the contact manager
+    virtual Teuchos::RCP<const Albany::ContactManager> getContactManager() const;
+#endif
+
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
     getCoords() const;
 
@@ -394,11 +399,21 @@ namespace Aeras
     void writeSolution(const Epetra_Vector& soln,
                        const double time,
                        const bool overlapped = false);
+    void writeSolution(const Epetra_Vector& soln,
+                       const Epetra_Vector& soln_dot, 
+                       const double time,
+                       const bool overlapped = false);
 #endif
 
    void writeSolutionT(const Tpetra_Vector& solnT,
                        const double time,
                        const bool overlapped = false);
+
+   void writeSolutionT(const Tpetra_Vector& solnT,
+                       const Tpetra_Vector& soln_dotT,
+                       const double time,
+                       const bool overlapped = false);
+
    void writeSolutionMV(const Tpetra_MultiVector& solnT,
                        const double time,
                        const bool overlapped = false);
@@ -406,6 +421,12 @@ namespace Aeras
    void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT,
                                      const double time,
                                      const bool overlapped = false);
+
+   void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT,
+                                     const Tpetra_Vector &solution_dotT, 
+                                     const double time,
+                                     const bool overlapped = false);
+
    void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector &solutionT,
                                      const double time,
                                      const bool overlapped = false);
@@ -562,11 +583,13 @@ namespace Aeras
 
     //Tpetra version of above
     void setSolutionFieldT(const Tpetra_Vector& solnT);
+    void setSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT);
     void setSolutionFieldMV(const Tpetra_MultiVector& solnT);
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local + neighbor (overlapped) solution
     void setOvlpSolutionFieldT(const Tpetra_Vector& solnT);
+    void setOvlpSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT);
     void setOvlpSolutionFieldMV(const Tpetra_MultiVector& solnT);
 
     int nonzeroesPerRow(const int neq) const;
@@ -739,6 +762,10 @@ namespace Aeras
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
     Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type latticeOrientation;
+
+#ifdef ALBANY_CONTACT
+    Teuchos::RCP<const Albany::ContactManager> contactManager;
+#endif
 
     //! Connectivity map from elementGID to workset and LID in workset
     Albany::WsLIDList  elemGIDws;

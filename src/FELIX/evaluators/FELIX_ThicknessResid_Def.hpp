@@ -124,7 +124,6 @@ evaluateFields(typename Traits::EvalData workset)
     Kokkos::DynRankView<RealType, PHX::Device> basis_refPointsSide;
     Kokkos::DynRankView<RealType, PHX::Device> basisGrad_refPointsSide;
 
-    Kokkos::DynRankView<MeshScalarT, PHX::Device> physPointsSide;
     Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobianSide;
     Kokkos::DynRankView<MeshScalarT, PHX::Device> invJacobianSide;
     Kokkos::DynRankView<MeshScalarT, PHX::Device> jacobianSide_det;
@@ -227,9 +226,6 @@ evaluateFields(typename Traits::EvalData workset)
 
       // Multiply with weighted measure
       FST::multiplyMeasure(weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
-
-      // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
-      Intrepid2::CellTools<PHX::Device>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, intrepidBasis);
 
       // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
       dH_Cell = createDynRankView(Residual.get_view(), "xxx", numNodes);

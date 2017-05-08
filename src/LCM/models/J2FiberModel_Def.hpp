@@ -365,8 +365,10 @@ computeState(typename Traits::EvalData workset,
       if (local_coord_flag_) {
         // compute fiber orientation based on local coordinates
         // special case of plane strain M1(3) = 0; M2(3) = 0;
-        minitensor::Vector<ScalarT> gpt(gpt_location(cell, pt, 0),
-            gpt_location(cell, pt, 1), gpt_location(cell, pt, 2));
+        minitensor::Vector<ScalarT>
+        gpt(ScalarT(gpt_location(cell, pt, 0)),
+            ScalarT(gpt_location(cell, pt, 1)),
+            ScalarT(gpt_location(cell, pt, 2)));
         minitensor::Vector<ScalarT> OA(gpt(0) - ring_center_[0],
             gpt(1) - ring_center_[1], 0);
 

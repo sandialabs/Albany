@@ -7,11 +7,12 @@
 #if !defined(LCM_SchwarzAlternating_hpp)
 #define LCM_SchwarzAlternating_hpp
 
-#include "Albany_ModelEvaluatorT.hpp"
+#include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_DataTypes.hpp"
+#include "Albany_ModelEvaluatorT.hpp"
+#include "NOXSolverPrePostOperator.h"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
-#include "MaterialDatabase.h"
 
 namespace LCM {
 
@@ -80,7 +81,16 @@ public:
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   getApps() const;
 
-protected:
+  void
+  set_failed(char const * msg);
+
+  void
+  clear_failed();
+
+  bool
+  get_failed() const;
+
+private:
 
   /// Create operator form of dg/dx for distributed responses
   Teuchos::RCP<Thyra::LinearOpBase<ST>>
@@ -100,14 +110,6 @@ protected:
       Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
       Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
   
-private:
-
-  Teuchos::RCP<Teuchos::ParameterList const>
-  getValidAppParameters() const;
-
-  Teuchos::RCP<Teuchos::ParameterList const>
-  getValidProblemParameters() const;
-
   Thyra::ModelEvaluatorBase::InArgs<ST>
   createInArgsImpl() const;
 
@@ -115,16 +117,34 @@ private:
   void
   SchwarzLoop() const;
 
+  void
+  updateConvergenceCriterion() const;
+
+  bool
+  continueSolve() const;
+
+  void
+  reportFinals(std::ostream & os) const;
+
   Teuchos::Array<Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>>
   solvers_;
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   apps_;
 
+  Teuchos::Array<Teuchos::RCP<NOXSolverPrePostOperator>>
+  convergence_ops_;
+
+  Teuchos::Array<Teuchos::RCP<Albany::AbstractSTKMeshStruct>>
+  stk_mesh_structs_;
+
   /// Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
   Thyra::ModelEvaluatorBase::InArgs<ST>
   nominal_values_;
   
+  char const *
+  failure_message_{"No failure detected"};
+
   int
   num_subdomains_{0};
 
@@ -134,11 +154,38 @@ private:
   int
   max_iters_{0};
 
+  int
+  output_interval_{1};
+
   ST
   rel_tol_{0.0};
 
   ST
   abs_tol_{0.0};
+
+  mutable bool
+  failed_{false};
+
+  mutable bool
+  converged_{false};
+
+  mutable int
+  num_iter_{0};
+
+  mutable ST
+  rel_error_{0.0};
+
+  mutable ST
+  abs_error_{0.0};
+
+  mutable ST
+  norm_init_{0.0};
+
+  mutable ST
+  norm_final_{0.0};
+
+  mutable ST
+  norm_diff_{0.0};
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST>>
   sub_inargs_;

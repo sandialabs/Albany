@@ -32,7 +32,7 @@
     <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD4/uniform_10_quad4.g"/>
     <Parameter name="Element Degree" type="int" value="2"/>
     <Parameter name="Workset Size" type="int" value="-1"/>
-    <Parameter name="Exodus Output File Name" type="string" value="spectral_uniform_10_out.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="spectral_uniform_10_rythmos_out.exo"/>
     <Parameter name="Exodus Write Interval" type="int" value="1"/>
     <!--Parameter name="NetCDF Write Interval" type="int" value="10"/>
     <Parameter name="NetCDF Output Number of Latitudes" type="int"  value="128"/>

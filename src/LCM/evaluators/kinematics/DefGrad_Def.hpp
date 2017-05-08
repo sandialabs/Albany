@@ -147,9 +147,9 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 #else
-  std::cout <<"inside DefGrad" <<std::endl;
+  //std::cout <<"inside DefGrad" <<std::endl;
   Kokkos::parallel_for(DefGrad_Policy(0,workset.numCells), *this);
-  std::cout <<"inside DefGrad" <<std::endl;
+  //std::cout <<"inside DefGrad" <<std::endl;
 
  /*
   for (int cell=0; cell < workset.numCells; ++cell)

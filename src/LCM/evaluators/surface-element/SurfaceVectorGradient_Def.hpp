@@ -78,14 +78,29 @@ namespace LCM {
   {
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int pt=0; pt < numQPs; ++pt) {
-        minitensor::Vector<ScalarT> g_0(3, currentBasis,cell, pt, 0, 0);
-        minitensor::Vector<ScalarT> g_1(3, currentBasis,cell, pt, 1, 0);
-        minitensor::Vector<ScalarT> g_2(3, currentBasis,cell, pt, 2, 0);
-        minitensor::Vector<MeshScalarT> G_2(3, refNormal,cell, pt, 0);
-        minitensor::Vector<ScalarT> d(3, jump,cell, pt, 0);
-        minitensor::Vector<MeshScalarT> G0(3, refDualBasis,cell, pt, 0, 0);
-        minitensor::Vector<MeshScalarT> G1(3, refDualBasis,cell, pt, 1, 0);
-        minitensor::Vector<MeshScalarT> G2(3, refDualBasis,cell, pt, 2, 0);
+        minitensor::Vector<ScalarT>
+        g_0(minitensor::Source::ARRAY, 3, currentBasis,cell, pt, 0, 0);
+
+        minitensor::Vector<ScalarT>
+        g_1(minitensor::Source::ARRAY, 3, currentBasis,cell, pt, 1, 0);
+
+        minitensor::Vector<ScalarT>
+        g_2(minitensor::Source::ARRAY, 3, currentBasis,cell, pt, 2, 0);
+
+        minitensor::Vector<MeshScalarT>
+        G_2(minitensor::Source::ARRAY, 3, refNormal,cell, pt, 0);
+
+        minitensor::Vector<ScalarT>
+        d(minitensor::Source::ARRAY, 3, jump,cell, pt, 0);
+
+        minitensor::Vector<MeshScalarT>
+        G0(minitensor::Source::ARRAY, 3, refDualBasis,cell, pt, 0, 0);
+
+        minitensor::Vector<MeshScalarT>
+        G1(minitensor::Source::ARRAY, 3, refDualBasis,cell, pt, 1, 0);
+
+        minitensor::Vector<MeshScalarT>
+        G2(minitensor::Source::ARRAY, 3, refDualBasis,cell, pt, 2, 0);
 
         minitensor::Tensor<ScalarT>
         Fpar(minitensor::bun(g_0, G0) +
