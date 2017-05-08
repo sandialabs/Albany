@@ -36,7 +36,7 @@ ANONYMOUS:
         Coupled Application: CoupledSchwarz_Cubes_StudyOverlap_Cube1_Model.yaml
         Coupled Block: coarse
   Discretization: 
-    Number Of Time Derivatives: 1
+    Number Of Time Derivatives: 0
     Method: Ioss
     Exodus Input File Name: ../CoupledSchwarz_Cubes_StudyOverlap_Cube0.g
     Exodus Output File Name: CoupledSchwarz_Cubes_StudyOverlap_Cube0.e

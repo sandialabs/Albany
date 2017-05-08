@@ -200,7 +200,9 @@ private:
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST>>
   solver_outargs_;
 
-  bool w_prec_supports_; 
+  bool w_prec_supports_;
+  
+  bool supports_xdot_;  
     
   enum MF_PREC_TYPE {NONE, JACOBI, ABS_ROW_SUM, ID}; 
     
