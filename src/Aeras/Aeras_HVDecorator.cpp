@@ -415,6 +415,9 @@ Aeras::HVDecorator::evalModelImpl(
 
   //compute xtildeT 
   PUSH_RANGE("compute xtildeT",1);
+  Teuchos::RCP<Teuchos::Time> evalTime =
+  Teuchos::TimeMonitor::getNewTimer("Albany: Aeras::HVDecorator: xtildeT");
+  Teuchos::TimeMonitor evalTimer(*evalTime); //start timer
   applyLinvML(xT, xtildeT); 
   POP_RANGE;
 
@@ -435,6 +438,7 @@ Aeras::HVDecorator::evalModelImpl(
 #endif
 	  fT_out->update(1.0, *xtildeT, 1.0);
   }
+  evalTimer.~TimeMonitor();
   POP_RANGE;
 
   // Response functions
