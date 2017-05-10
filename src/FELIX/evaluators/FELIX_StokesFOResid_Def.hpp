@@ -143,7 +143,6 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 //**********************************************************************
 //Kokkos functors
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void StokesFOResid<EvalT, Traits>::
@@ -449,7 +448,6 @@ class StokesFOResid_3D_FELIX  {
  }
 };
 
-#endif
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void StokesFOResid<EvalT, Traits>::
@@ -463,169 +461,6 @@ evaluateFields(typename Traits::EvalData workset)
   output->setProcRankAndSize (procRank, numProcs);
   output->setOutputToRootOnly (0);
 #endif
-
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-
-  // Initialize residual to 0.0
-
-//  Kokkos::deep_copy(Residual.get_view(), ScalarT(0.0));
-
-  if (needsBasalResidual)
-  {
-    for (int cell=0; cell<workset.numCells; ++cell)
-    {
-      for (int node=0; node<numNodes; ++node)
-      {
-        Residual(cell,node,0)=basalRes(cell,node,0);
-        Residual(cell,node,1)=basalRes(cell,node,1);
-      }
-    }
-  }
-  else
-  {
-    for (int cell=0; cell<workset.numCells; ++cell)
-    {
-      for (int node=0; node<numNodes; ++node)
-      {
-        Residual(cell,node,0)=0.;
-        Residual(cell,node,1)=0.;
-      }
-    }
-  }
-
-
-//  Residual.deep_copy(ScalarT(0.0));
-  if (numDims == 3) { //3D case
-    if (eqn_type == FELIX) {
-      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-
-        if(useStereographicMap) {
-          double R = stereographicMapList->get<double>("Earth Radius", 6371);
-          double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
-          double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
-          double R2 = std::pow(R,2);
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-            //evaluate non-linear viscosity, given by Glen's law, at quadrature points
-            ScalarT mu = muFELIX(cell,qp);
-            MeshScalarT x = coordVec(cell,qp,0)-x_0;
-            MeshScalarT y = coordVec(cell,qp,1)-y_0;
-            MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
-            MeshScalarT h2 = h*h;
-            MeshScalarT invh_x = x/2.0/R2;
-            MeshScalarT invh_y = y/2.0/R2;
-
-            ScalarT strs00 = 2*mu*(Ugrad(cell,qp,0,0)/h-invh_y*U(cell,qp,1)); //epsilon_xx
-            ScalarT strs01 = mu*(Ugrad(cell,qp,0,1)/h+invh_x*U(cell,qp,0)+Ugrad(cell,qp,1,0)/h+invh_y*U(cell,qp,1)); //epsilon_xy
-            ScalarT strs02 = mu*Ugrad(cell,qp,0,2); //epsilon_xz
-            ScalarT strs11 = 2*mu*(Ugrad(cell,qp,1,1)/h-invh_x*U(cell,qp,0)); //epsilon_yy
-            ScalarT strs12 = mu*Ugrad(cell,qp,1,2); //epsilon_yz
-
-            for (std::size_t node=0; node < numNodes; ++node) {
-              ScalarT epsb00 = wGradBF(cell,node,qp,0)/h; //epsilon_xx
-              ScalarT epsb01 = (wGradBF(cell,node,qp,1)/h+invh_x*wBF(cell,node,qp))/2.0; //epsilon_xy
-              ScalarT epsb02 = wGradBF(cell,node,qp,2)/2.0; //epsilon_xz
-              ScalarT epsb11 = -invh_x*wBF(cell,node,qp); //epsilon_yy
-              ScalarT epsb12 = 0;
-              Residual(cell,node,0) +=  strs00*epsb00*h2 +
-                                        strs11 * epsb11*h2 +
-                                        2*strs01*epsb01*h2 +
-                                        2*strs02*epsb02*h2 +
-                                        2*strs12 * epsb12*h2 +
-                                        (strs00+strs11)*(epsb00+epsb11)*h2;
-
-              epsb00 = -invh_y*wBF(cell,node,qp); //epsilon_xx
-              epsb01 = (wGradBF(cell,node,qp,0)/h+invh_y*wBF(cell,node,qp))/2.0; //epsilon_xy
-              epsb02 = 0;
-              epsb11 = wGradBF(cell,node,qp,1)/h; //epsilon_yy
-              epsb12 = wGradBF(cell,node,qp,2)/2.0; //epsilon_yz
-
-              Residual(cell,node,1) +=  strs00*epsb00*h2 +
-                                        strs11 * epsb11*h2 +
-                                        2*strs01*epsb01*h2 +
-                                        2*strs02*epsb02*h2 +
-                                        2*strs12 * epsb12*h2 +
-                                        (strs00+strs11)*(epsb00+epsb11)*h2;
-            }
-          }
-        }
-        else {
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-            ScalarT mu = muFELIX(cell,qp);
-            ScalarT strs00 = 2.0*mu*(2.0*Ugrad(cell,qp,0,0) + Ugrad(cell,qp,1,1));
-            ScalarT strs11 = 2.0*mu*(2.0*Ugrad(cell,qp,1,1) + Ugrad(cell,qp,0,0));
-            ScalarT strs01 = mu*(Ugrad(cell,qp,1,0)+ Ugrad(cell,qp,0,1));
-            ScalarT strs02 = mu*Ugrad(cell,qp,0,2);
-            ScalarT strs12 = mu*Ugrad(cell,qp,1,2);
-            for (std::size_t node=0; node < numNodes; ++node) {
-                 Residual(cell,node,0) += strs00*wGradBF(cell,node,qp,0) +
-                                          strs01*wGradBF(cell,node,qp,1) +
-                                          strs02*wGradBF(cell,node,qp,2);
-                 Residual(cell,node,1) += strs01*wGradBF(cell,node,qp,0) +
-                                          strs11*wGradBF(cell,node,qp,1) +
-                                          strs12*wGradBF(cell,node,qp,2);
-            }
-          }
-        }
-
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
-          ScalarT frc0 = force(cell,qp,0);
-          ScalarT frc1 = force(cell,qp,1);
-          for (std::size_t node=0; node < numNodes; ++node) {
-               Residual(cell,node,0) += frc0*wBF(cell,node,qp);
-               Residual(cell,node,1) += frc1*wBF(cell,node,qp);
-          }
-        }
-      }
-    }
-    else if (eqn_type == POISSON) { //Laplace (Poisson) operator
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-             Residual(cell,node,0) += Ugrad(cell,qp,0,0)*wGradBF(cell,node,qp,0) +
-                                      Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1) +
-                                      Ugrad(cell,qp,0,2)*wGradBF(cell,node,qp,2) +
-                                      force(cell,qp,0)*wBF(cell,node,qp);
-              }
-
-    } } }
-   }
-   else { //2D case
-   if (eqn_type == FELIX) {
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-             Residual(cell,node,0) += 2.0*muFELIX(cell,qp)*((2.0*Ugrad(cell,qp,0,0) + Ugrad(cell,qp,1,1))*wGradBF(cell,node,qp,0) +
-                                      0.5*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*wGradBF(cell,node,qp,1)) +
-                                      force(cell,qp,0)*wBF(cell,node,qp);
-             Residual(cell,node,1) += 2.0*muFELIX(cell,qp)*(0.5*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*wGradBF(cell,node,qp,0) +
-                                      (Ugrad(cell,qp,0,0) + 2.0*Ugrad(cell,qp,1,1))*wGradBF(cell,node,qp,1)) + force(cell,qp,1)*wBF(cell,node,qp);
-              }
-
-    } } }
-    else if (eqn_type == FELIX_XZ) {
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-             //z dimension is treated as 2nd dimension
-             //PDEs is: -d/dx(4*mu*du/dx) - d/dz(mu*du/dz) - f1 0
-             Residual(cell,node,0) += 4.0*muFELIX(cell,qp)*Ugrad(cell,qp,0,0)*wGradBF(cell,node,qp,0)
-                                   + muFELIX(cell,qp)*Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1)+force(cell,qp,0)*wBF(cell,node,qp);
-          }
-       }
-     }
-    }
-    else if (eqn_type == POISSON) { //Laplace (Poisson) operator
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-             Residual(cell,node,0) += Ugrad(cell,qp,0,0)*wGradBF(cell,node,qp,0) +
-                                      Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1) +
-                                      force(cell,qp,0)*wBF(cell,node,qp);
-              }
-
-    } } }
-   }
-#else
   if (numDims == 3) { //3D case
     if (eqn_type == FELIX) {
      Kokkos::parallel_for(FELIX_3D_Policy(0,workset.numCells), *this);
@@ -645,10 +480,6 @@ evaluateFields(typename Traits::EvalData workset)
     Kokkos::parallel_for(POISSON_2D_Policy(0,workset.numCells), *this);
    }
   }
-#endif
-
-
-
 }
 
 //**********************************************************************

@@ -66,8 +66,6 @@ private:
   bool useStereographicMap;
   bool needsBasalResidual;
 
-//KOKKOS:
- #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
@@ -94,9 +92,8 @@ private:
   void operator() (const FELIX_XZ_2D_Tag& tag, const int& cell) const;
   KOKKOS_INLINE_FUNCTION
   void operator() (const POISSON_2D_Tag& tag, const int& cell) const;
-
-#endif
 };
+
 }
 
 #endif
