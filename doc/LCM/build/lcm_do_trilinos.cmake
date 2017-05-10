@@ -54,7 +54,7 @@ function(lcm_do_trilinos)
       "-DTrilinos_ENABLE_EXAMPLES:BOOL=OFF"
       "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
       "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
-      "-DTrilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="""
+      "-DTrilinos_WARNINGS_AS_ERRORS_FLAGS:STRING=\"\""
       "-DTeuchos_ENABLE_STACKTRACE:BOOL=OFF"
       "-DTeuchos_ENABLE_DEFAULT_STACKTRACE:BOOL=OFF"
       "-DKokkos_ENABLE_CXX11:BOOL=ON"
@@ -146,7 +146,7 @@ function(lcm_do_trilinos)
       )
   else()
     set(CONFIG_OPTS ${CONFIG_OPTS}
-        "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
+      "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON")
   endif()
   if (EXTRA_REPOS)
     string(REPLACE ";" "," EXTRA_REPOS "${EXTRA_REPOS}")

@@ -35,7 +35,6 @@ function(lcm_do_package)
     endif()
   endforeach()
   set(PASS_ARGS ${ARG_BOOL_OPTS}
-      PACKAGE "${ARG_PACKAGE}"
       BUILD_THREADS "${ARG_BUILD_THREADS}"
       RESULT_VARIABLE "PACKAGE_ERR"
       CDASH_SUFFIX "${ARG_CDASH_SUFFIX}"
