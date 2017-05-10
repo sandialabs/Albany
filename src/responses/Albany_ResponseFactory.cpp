@@ -145,8 +145,10 @@ createResponseFunction(
      name == "Element Size Field" ||
      name == "Save Nodal Fields" ||
      name == "Stiffness Objective" ||
+     name == "Interface Energy" ||
      name == "Internal Energy Objective" ||
      name == "Tensor PNorm Objective" ||
+     name == "Tensor Average Response" ||
      name == "Homogenized Constants Response" ||
      name == "Modal Objective" ||
            name == "PHAL Field Integral" ||

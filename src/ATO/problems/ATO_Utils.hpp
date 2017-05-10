@@ -51,6 +51,14 @@ namespace ATO {
        std::string stressName, std::string strainName);
 
     void 
+    constructFluxEvaluators(
+       const Teuchos::RCP<Teuchos::ParameterList>& params,
+       PHX::FieldManager<Traits>& fm0,
+       Albany::StateManager& stateMgr,
+       const std::string &elementBlockName, 
+       std::string fluxName, std::string gradName);
+
+    void 
     constructBodyForceEvaluators(
        const Teuchos::RCP<Teuchos::ParameterList>& params,
        PHX::FieldManager<Traits>& fm0,
@@ -71,8 +79,18 @@ namespace ATO {
        const Teuchos::ParameterList& params,
        PHX::FieldManager<Traits>& fm0,
        Albany::StateManager& stateMgr,
-       const std::string &elementBlockName, 
+       const std::string &boundaryName, 
        std::string boundaryForceName);
+
+    void
+    constructWeightedFieldEvaluators(
+       const Teuchos::RCP<Teuchos::ParameterList>& params,
+       PHX::FieldManager<Traits>& fm0,
+       Albany::StateManager& stateMgr,
+       const std::string &elementBlockName, 
+//       Teuchos::RCP<PHX::DataLayout> layout,
+       std::string layoutName,
+       std::string& inputFieldName);
 
   private:
 

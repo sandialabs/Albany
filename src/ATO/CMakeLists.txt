@@ -6,9 +6,11 @@
 
 SET(SOURCES
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_StiffnessObjective.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_InterfaceEnergy.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ModalObjective.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_InternalEnergyResponse.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TensorPNormResponse.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TensorAverageResponse.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_HomogenizedConstantsResponse.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_VectorResidual.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ResidualStrain.cpp
@@ -77,12 +79,16 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/ATO_Types.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_StiffnessObjective_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_StiffnessObjective.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_InterfaceEnergy.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_InterfaceEnergy_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ModalObjective_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ModalObjective.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_InternalEnergyResponse_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_InternalEnergyResponse.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TensorPNormResponse_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TensorPNormResponse.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TensorAverageResponse_Def.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TensorAverageResponse.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_HomogenizedConstantsResponse_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_HomogenizedConstantsResponse.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_VectorResidual_Def.hpp

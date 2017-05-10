@@ -21,7 +21,7 @@ AggregatorFactory::create(const Teuchos::ParameterList& aggregatorParams, std::s
 
   if( entityType == "State Variable" ){
     std::string weightingType = aggregatorParams.get<std::string>("Weighting");
-    if( weightingType == "Scaled"  )  
+    if( weightingType == "Scaled" || weightingType == "Fixed" )  
       return Teuchos::rcp(new Aggregator_Scaled(aggregatorParams, nTopos));
     else
     if( weightingType == "Maximum"  )  
@@ -34,6 +34,9 @@ AggregatorFactory::create(const Teuchos::ParameterList& aggregatorParams, std::s
   } else
   if( entityType == "Distributed Parameter" ){
     std::string weightingType = aggregatorParams.get<std::string>("Weighting");
+    if( weightingType == "Homogenized"  )  
+      return Teuchos::rcp(new Aggregator_Homogenized(aggregatorParams, nTopos));
+    else
     if( weightingType == "Scaled"  )  
       return Teuchos::rcp(new Aggregator_DistScaled(aggregatorParams, nTopos));
     else
@@ -332,11 +335,15 @@ Aggregator_StateVarBased()
   double weight = 1.0/nAgg;
   weights.resize(nAgg);
   for(int i=0; i<nAgg; i++) weights[i] = weight;
+
+  normalizeMethod = "Scaled";
+
 }
 
 
 //**********************************************************************
 Aggregator_DistUniform::Aggregator_DistUniform(const Teuchos::ParameterList& aggregatorParams, int nTopos) :
+Aggregator_DistParamBased(aggregatorParams, nTopos),
 Aggregator(aggregatorParams, nTopos)
 //**********************************************************************
 { 
@@ -364,6 +371,19 @@ Aggregator(aggregatorParams, nTopos)
     weights.size() != aggregatedDerivativesNames.size(),
     Teuchos::Exceptions::InvalidParameter, std::endl 
     << "Scaled aggregator: Number of weights != number of values or derivatives." << std::endl );
+  
+  normalizeMethod = aggregatorParams.get<std::string>("Weighting");
+  if( normalizeMethod == "Fixed" ) weights[0] = 1.0;
+
+  iteration=0;
+  if(aggregatorParams.isType<int>("Ramp Interval")){
+    rampInterval = aggregatorParams.get<int>("Ramp Interval");
+  }
+
+  maxScale = 1e6;
+  if(aggregatorParams.isType<double>("Maximum Scale Factor")){
+    maxScale = aggregatorParams.get<double>("Maximum Scale Factor");
+  }
 }
 
 //**********************************************************************
@@ -380,10 +400,22 @@ Aggregator(aggregatorParams, nTopos)
 }
 
 //**********************************************************************
+Aggregator_DistParamBased::Aggregator_DistParamBased(const Teuchos::ParameterList& aggregatorParams, int nTopos)
+//**********************************************************************
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    nTopos > 1,
+    Teuchos::Exceptions::InvalidParameter, std::endl 
+    << "Distributed parameter based aggregator only supports one topology." << std::endl );
+}
+
+//**********************************************************************
 Aggregator_DistScaled::Aggregator_DistScaled(const Teuchos::ParameterList& aggregatorParams, int nTopos) :
+Aggregator_DistParamBased(aggregatorParams, nTopos),
 Aggregator(aggregatorParams, nTopos)
 //**********************************************************************
 { 
+
   TEUCHOS_TEST_FOR_EXCEPTION(
     !aggregatorParams.isType<Teuchos::Array<double> >("Weights"),
     Teuchos::Exceptions::InvalidParameter, std::endl 
@@ -399,8 +431,44 @@ Aggregator(aggregatorParams, nTopos)
 }
 
 //**********************************************************************
+Aggregator_Homogenized::Aggregator_Homogenized(const Teuchos::ParameterList& aggregatorParams, int nTopos) :
+Aggregator_DistParamBased(aggregatorParams, nTopos),
+Aggregator(aggregatorParams, nTopos)
+//**********************************************************************
+{ 
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !aggregatorParams.isSublist("Homogenization"),
+    Teuchos::Exceptions::InvalidParameter, std::endl 
+    << "'Homogenized' aggregator requires 'Homogenization' ParameterList." << std::endl );
+
+  const Teuchos::ParameterList& homogParams = aggregatorParams.sublist("Homogenization");
+
+  // TODO: parse
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !homogParams.isType<Teuchos::Array<double> >("Assumed State"),
+    Teuchos::Exceptions::InvalidParameter, std::endl 
+    << "'Homogenized' aggregator requires 'Assumed State' array.  None given." << std::endl );
+
+  m_assumedState = homogParams.get<Teuchos::Array<double> >("Assumed State");
+
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    m_assumedState.size() != aggregatedValuesNames.size() &&
+    m_assumedState.size() != aggregatedDerivativesNames.size(),
+    Teuchos::Exceptions::InvalidParameter, std::endl 
+    << "'Homogenized' aggregator: Length of 'Assumed State' array != number of values or derivatives." << std::endl );
+
+  if( homogParams.isType<bool>("Return Reciprocal") ){
+    m_reciprocate = homogParams.get<bool>("Return Reciprocal");
+  } else 
+    m_reciprocate = false;
+
+  m_initialValue = 0.0;
+}
+
+//**********************************************************************
 template <typename C>
 Aggregator_DistExtremum<C>::Aggregator_DistExtremum(const Teuchos::ParameterList& aggregatorParams, int nTopos) :
+Aggregator_DistParamBased(aggregatorParams, nTopos),
 Aggregator(aggregatorParams, nTopos)
 //**********************************************************************
 {
@@ -421,8 +489,34 @@ Aggregator_Scaled::EvaluateT()
 
   *valueAggregated=shiftValueAggregated;
 
-  if(normalize.size() == 0){
+  if( normalizeMethod == "Scaled" ){
+
+    if(normalize.size() == 0){
+      normalize.resize(numValues);
+      for(int i=0; i<numValues; i++){
+        Albany::StateArrayVec& src = valuesT[i].app->getStateMgr().getStateArrays().elemStateArrays;
+        Albany::MDArray& valSrc = src[0][valuesT[i].name];
+        double val = valSrc(0);
+        double globalVal = val;
+        if( comm != Teuchos::null )
+          Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, /*numvals=*/ 1, &val, &globalVal);
+        normalize[i] = (globalVal != 0.0) ? 1.0/fabs(globalVal) : 1.0;
+      }
+      if( comm != Teuchos::null ){
+        if( comm->getRank()==0 ){
+          std::cout << "************************************************************************" << std::endl;
+          std::cout << "  Normalizing:" << std::endl;
+          for(int i=0; i<numValues; i++){
+            std::cout << "   " << valuesT[i].name << " init = " << normalize[i] << std::endl;
+          }
+          std::cout << "************************************************************************" << std::endl;
+        }
+      }
+    }
+  } else 
+  if( normalizeMethod == "Fixed" ){
     normalize.resize(numValues);
+    std::vector<double> F(numValues);
     for(int i=0; i<numValues; i++){
       Albany::StateArrayVec& src = valuesT[i].app->getStateMgr().getStateArrays().elemStateArrays;
       Albany::MDArray& valSrc = src[0][valuesT[i].name];
@@ -430,8 +524,28 @@ Aggregator_Scaled::EvaluateT()
       double globalVal = val;
       if( comm != Teuchos::null )
         Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, /*numvals=*/ 1, &val, &globalVal);
-      normalize[i] = (globalVal != 0.0) ? 1.0/fabs(globalVal) : 1.0;
+      F[i] = globalVal;
     }
+    Teuchos::Array<double> mu(weights);
+    if(rampInterval && iteration <= rampInterval){
+      double increment = 1.0/rampInterval;
+      for(int i=1; i<numValues; i++){
+        mu[i]*=(iteration*increment);
+      }
+      iteration++;
+    }
+    double etaSum=0.0;
+    for(int i=1; i<numValues; i++){
+      etaSum+=mu[i];
+    }
+    normalize[0]=1.0;
+    for(int i=1; i<numValues; i++){
+      normalize[i] = F[0]*mu[i]/(F[i]*(1.0-etaSum));
+    }
+    for(int i=1; i<numValues; i++){
+      if(normalize[i] > maxScale) normalize[i] = maxScale;
+    }
+    
     if( comm != Teuchos::null ){
       if( comm->getRank()==0 ){
         std::cout << "************************************************************************" << std::endl;
@@ -442,7 +556,12 @@ Aggregator_Scaled::EvaluateT()
         std::cout << "************************************************************************" << std::endl;
       }
     }
+    // The weights are still applied below.  Divide by 'weights' so 'normalize' act as coefficients.
+    for(int i=1; i<numValues; i++){
+      normalize[i]/=weights[i];
+    }
   }
+
   for(int sv=0; sv<numValues; sv++){
     Albany::StateArrayVec& src = valuesT[sv].app->getStateMgr().getStateArrays().elemStateArrays;
     Albany::MDArray& valSrc = src[0][valuesT[sv].name];
@@ -496,7 +615,6 @@ Aggregator_Scaled::EvaluateT()
       }
     }
   }
-
 }
 
 //**********************************************************************
@@ -860,6 +978,169 @@ void Aggregator_DistExtremum<C>::Evaluate()
       int nLocalVals = deriv.MyLength();
       for(int lid=0; lid<nLocalVals; lid++)
         derDest[lid] += srcView[lid];
+    }
+  }
+}
+//**********************************************************************
+void
+Aggregator_Homogenized::EvaluateT()
+//**********************************************************************
+{
+
+  double localValue = 0.0;
+
+  int nValues = valuesT.size();
+  for(int i=0; i<nValues; i++){
+    SubValueT& value = valuesT[i];
+
+    Teuchos::ArrayRCP<const double> valView = value.value->get1dView();
+    int voigtLength = value.value->getLocalLength();
+    double rowProd = 0.0;
+    for( int j=0; j<voigtLength; j++){
+      rowProd += valView[j]*m_assumedState[j];
+    }
+    localValue += rowProd*m_assumedState[i];
+  }
+
+  double globalValue;
+  if( comm != Teuchos::null ){
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, /*numvals=*/ 1, &localValue, &globalValue);
+  } else {
+    globalValue = localValue;
+  }
+
+  if(m_initialValue == 0.0) m_initialValue = globalValue;
+
+  globalValue /= m_initialValue;
+
+  if(m_reciprocate) *valueAggregated = 1.0/globalValue;
+
+  *valueAggregated += shiftValueAggregated;
+  *valueAggregated *= scaleValueAggregated;
+
+  if( comm != Teuchos::null ){
+    if( comm->getRank()==0 ){
+      std::cout << "************************************************************************" << std::endl;
+      std::cout << "  Homigenized Aggregator: Output " << std::endl;
+      std::cout << "   Value = " << *valueAggregated << std::endl;
+      std::cout << "************************************************************************" << std::endl;
+    }
+  }
+
+  Tpetra_Vector& derivT = *(derivAggregatedT[0]);
+
+  derivT.putScalar(0.0);
+  Teuchos::ArrayRCP<double> derDest = derivT.get1dViewNonConst();
+  int nLocalVals = derivT.getLocalLength();
+
+
+  int voigtSize = derivativesT.size();
+  std::vector< Teuchos::ArrayRCP<const double> > C(voigtSize*voigtSize);
+
+  for(int i=0; i<voigtSize; i++){
+    SubDerivativeT& derivative = derivativesT[i];
+    for( int j=0; j<voigtSize; j++)
+      C[i*voigtSize+j] = derivative.value->getData(j);
+  }
+
+  for(int lid=0; lid<nLocalVals; lid++){
+    double scalarProd = 0.0;
+    for(int i=0; i<voigtSize; i++){
+      double rowProd = 0.0;
+      for( int j=0; j<voigtSize; j++)
+        rowProd += C[i*voigtSize+j][lid]*m_assumedState[j];
+  
+      scalarProd += rowProd*m_assumedState[i];
+    }
+    derDest[lid] += scalarProd/m_initialValue*scaleValueAggregated;
+  }
+
+  if(m_reciprocate){
+    double coef = -1.0/(globalValue*globalValue);
+    for(int lid=0; lid<nLocalVals; lid++){
+      derDest[lid] *= coef;
+    }
+  }
+}
+
+//**********************************************************************
+void
+Aggregator_Homogenized::Evaluate()
+//**********************************************************************
+{
+
+  double localValue = 0.0;
+
+  int nValues = values.size();
+  for(int i=0; i<nValues; i++){
+    SubValue& value = values[i];
+
+    double* valView; value.value->ExtractView(&valView);
+    int voigtLength = value.value->MyLength();
+    double rowProd = 0.0;
+    for( int j=0; j<voigtLength; j++){
+      rowProd += valView[j]*m_assumedState[j];
+    }
+    localValue += rowProd*m_assumedState[i];
+  }
+
+  double globalValue;
+  if( comm != Teuchos::null ){
+    Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, /*numvals=*/ 1, &localValue, &globalValue);
+  } else {
+    globalValue = localValue;
+  }
+
+  if(m_initialValue == 0.0) m_initialValue = globalValue;
+
+  globalValue /= m_initialValue;
+
+  if(m_reciprocate) *valueAggregated = 1.0/globalValue;
+
+  *valueAggregated += shiftValueAggregated;
+  *valueAggregated *= scaleValueAggregated;
+
+  if( comm != Teuchos::null ){
+    if( comm->getRank()==0 ){
+      std::cout << "************************************************************************" << std::endl;
+      std::cout << "  Homigenized Aggregator: Output " << std::endl;
+      std::cout << "   Value = " << *valueAggregated << std::endl;
+      std::cout << "************************************************************************" << std::endl;
+    }
+  }
+
+  Epetra_Vector& deriv = *(derivAggregated[0]);
+
+  deriv.PutScalar(0.0);
+  double *derDest; deriv.ExtractView(&derDest);
+  int nLocalVals = deriv.MyLength();
+
+
+  int voigtSize = derivatives.size();
+  std::vector<double*> C(voigtSize*voigtSize);
+
+  for(int i=0; i<voigtSize; i++){
+    SubDerivative& derivative = derivatives[i];
+    for( int j=0; j<voigtSize; j++)
+      (*derivative.value)(j)->ExtractView(&(C[i*voigtSize+j]));
+  }
+
+  for(int lid=0; lid<nLocalVals; lid++){
+    double scalarProd = 0.0;
+    for(int i=0; i<voigtSize; i++){
+      double rowProd = 0.0;
+      for( int j=0; j<voigtSize; j++)
+        rowProd += C[i*voigtSize+j][lid]*m_assumedState[j];
+  
+      scalarProd += rowProd*m_assumedState[i];
+    }
+    derDest[lid] += scalarProd/m_initialValue*scaleValueAggregated;
+  }
+
+  if(m_reciprocate){
+    double coef = -1.0/(globalValue*globalValue);
+    for(int lid=0; lid<nLocalVals; lid++){
+      derDest[lid] *= coef;
     }
   }
 }

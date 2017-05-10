@@ -87,79 +87,89 @@
             <Parameter name="Poissons Ratio" type="double" value="0.33"/>
           </ParameterList>
           <ParameterList name="Geometry Construction">
-            <Parameter name="Geometry Type" type="string" value="Body"/>
-            <Parameter name="Model Type" type="string" value="Non-parameterized"/>
             <Parameter name="Error Checking" type="int" value="0"/>
             <Parameter name="Projection Order" type="int" value="2"/>
             <Parameter name="Uniform Quadrature" type="bool" value="true"/>
-            <Parameter name="Number of Subdomains" type="int" value="4"/>
-            <Parameter name="Level Set Names" type="Array(string)" value="{LS0_SURF0, LS0_SURF1, LS0_SURF2, LS0_SURF3, LS0_SURF4, LS0_SURF5, LS1_SURF0, LS2_SURF0, LS3_SURF0}"/>
-            <ParameterList name="Subdomain 0">
-              <Parameter name="Operation" type="string" value="Add"/>
-              <Parameter name="Level Set Indices" type="Array(int)" value="{0,1,2,3,4,5}"/>
-            </ParameterList>
-            <ParameterList name="Subdomain 1">
-              <Parameter name="Operation" type="string" value="Subtract"/>
-              <Parameter name="Level Set Indices" type="Array(int)" value="{6,4,5}"/>
-            </ParameterList>
-            <ParameterList name="Subdomain 2">
-              <Parameter name="Operation" type="string" value="Subtract"/>
-              <Parameter name="Level Set Indices" type="Array(int)" value="{7,4,5}"/>
-            </ParameterList>
-            <ParameterList name="Subdomain 3">
-              <Parameter name="Operation" type="string" value="Subtract"/>
-              <Parameter name="Level Set Indices" type="Array(int)" value="{8,4,5}"/>
+            <ParameterList name="Body">
+              <Parameter name="Model Type" type="string" value="Non-parameterized"/>
+              <Parameter name="Number of Subdomains" type="int" value="4"/>
+              <Parameter name="Level Set Names" type="Array(string)" value="{LS0_SURF0, LS0_SURF1, LS0_SURF2, LS0_SURF3, LS0_SURF4, LS0_SURF5, LS1_SURF0, LS2_SURF0, LS3_SURF0}"/>
+              <ParameterList name="Subdomain 0">
+                <Parameter name="Operation" type="string" value="Add"/>
+                <Parameter name="Level Set Indices" type="Array(int)" value="{0,1,2,3,4,5}"/>
+              </ParameterList>
+              <ParameterList name="Subdomain 1">
+                <Parameter name="Operation" type="string" value="Subtract"/>
+                <Parameter name="Level Set Indices" type="Array(int)" value="{6,4,5}"/>
+              </ParameterList>
+              <ParameterList name="Subdomain 2">
+                <Parameter name="Operation" type="string" value="Subtract"/>
+                <Parameter name="Level Set Indices" type="Array(int)" value="{7,4,5}"/>
+              </ParameterList>
+              <ParameterList name="Subdomain 3">
+                <Parameter name="Operation" type="string" value="Subtract"/>
+                <Parameter name="Level Set Indices" type="Array(int)" value="{8,4,5}"/>
+              </ParameterList>
             </ParameterList>
           </ParameterList>
         </ParameterList>
         <ParameterList name="Element Block 1">
           <Parameter name="Name" type="string" value="block_100"/>
           <ParameterList name="Geometry Construction">
-            <Parameter name="Geometry Type" type="string" value="Boundary"/>
-            <Parameter name="Model Type" type="string" value="Non-parameterized"/>
             <Parameter name="Error Checking" type="int" value="0"/>
             <Parameter name="Projection Order" type="int" value="2"/>
             <Parameter name="Uniform Quadrature" type="bool" value="true"/>
-            <Parameter name="Number of Subdomains" type="int" value="1"/>
-            <Parameter name="Level Set Names" type="Array(string)" value="{LS1_SURF0, LS1_SURF1, LS1_SURF2}"/>
-            <Parameter name="Surface Level Set Index" type="int" value="0"/>
-            <ParameterList name="Subdomain 0">
-              <Parameter name="Operation" type="string" value="Add"/>
-              <Parameter name="Level Set Indices" type="Array(int)" value="{0,1,2}"/>
+            <Parameter name="Number of Boundaries" type="int" value="1"/>
+            <ParameterList name="Boundary 0">
+              <Parameter name="Model Type" type="string" value="Non-parameterized"/>
+              <Parameter name="Boundary Name" type="string" value="Bolt Hole 0"/>
+              <Parameter name="Number of Subdomains" type="int" value="1"/>
+              <Parameter name="Level Set Names" type="Array(string)" value="{LS1_SURF0, LS1_SURF1, LS1_SURF2}"/>
+              <Parameter name="Surface Level Set Index" type="int" value="0"/>
+              <ParameterList name="Subdomain 0">
+                <Parameter name="Operation" type="string" value="Add"/>
+                <Parameter name="Level Set Indices" type="Array(int)" value="{0,1,2}"/>
+              </ParameterList>
             </ParameterList>
           </ParameterList>
         </ParameterList>
         <ParameterList name="Element Block 2">
           <Parameter name="Name" type="string" value="block_200"/>
           <ParameterList name="Geometry Construction">
-            <Parameter name="Geometry Type" type="string" value="Boundary"/>
-            <Parameter name="Model Type" type="string" value="Non-parameterized"/>
             <Parameter name="Error Checking" type="int" value="0"/>
             <Parameter name="Projection Order" type="int" value="2"/>
             <Parameter name="Uniform Quadrature" type="bool" value="true"/>
-            <Parameter name="Number of Subdomains" type="int" value="1"/>
-            <Parameter name="Level Set Names" type="Array(string)" value="{LS2_SURF0, LS2_SURF1, LS2_SURF2}"/>
-            <Parameter name="Surface Level Set Index" type="int" value="0"/>
-            <ParameterList name="Subdomain 0">
-              <Parameter name="Operation" type="string" value="Add"/>
-              <Parameter name="Level Set Indices" type="Array(int)" value="{0,1,2}"/>
+            <Parameter name="Number of Boundaries" type="int" value="1"/>
+            <ParameterList name="Boundary 0">
+              <Parameter name="Model Type" type="string" value="Non-parameterized"/>
+              <Parameter name="Boundary Name" type="string" value="Bolt Hole 1"/>
+              <Parameter name="Number of Subdomains" type="int" value="1"/>
+              <Parameter name="Level Set Names" type="Array(string)" value="{LS2_SURF0, LS2_SURF1, LS2_SURF2}"/>
+              <Parameter name="Surface Level Set Index" type="int" value="0"/>
+              <ParameterList name="Subdomain 0">
+                <Parameter name="Operation" type="string" value="Add"/>
+                <Parameter name="Level Set Indices" type="Array(int)" value="{0,1,2}"/>
+              </ParameterList>
             </ParameterList>
           </ParameterList>
         </ParameterList>
         <ParameterList name="Element Block 3">
           <Parameter name="Name" type="string" value="block_300"/>
           <ParameterList name="Geometry Construction">
+            <Parameter name="Error Checking" type="int" value="0"/>
             <Parameter name="Projection Order" type="int" value="2"/>
             <Parameter name="Uniform Quadrature" type="bool" value="true"/>
-            <Parameter name="Geometry Type" type="string" value="Boundary"/>
-            <Parameter name="Model Type" type="string" value="Non-parameterized"/>
-            <Parameter name="Error Checking" type="int" value="0"/>
-            <Parameter name="Level Set Names" type="Array(string)" value="{LS3_SURF0, LS3_SURF1, LS3_SURF2}"/>
-            <Parameter name="Surface Level Set Index" type="int" value="0"/>
-            <Parameter name="Number of Subdomains" type="int" value="1"/>
-            <ParameterList name="Subdomain 0">
-              <Parameter name="Operation" type="string" value="Add"/>
-              <Parameter name="Level Set Indices" type="Array(int)" value="{0,1,2}"/>
+            <Parameter name="Number of Boundaries" type="int" value="1"/>
+            <ParameterList name="Boundary 0">
+              <Parameter name="Model Type" type="string" value="Non-parameterized"/>
+              <Parameter name="Boundary Name" type="string" value="Bolt Hole 2"/>
+              <Parameter name="Level Set Names" type="Array(string)" value="{LS3_SURF0, LS3_SURF1, LS3_SURF2}"/>
+              <Parameter name="Surface Level Set Index" type="int" value="0"/>
+              <Parameter name="Number of Subdomains" type="int" value="1"/>
+              <ParameterList name="Subdomain 0">
+                <Parameter name="Operation" type="string" value="Add"/>
+                <Parameter name="Level Set Indices" type="Array(int)" value="{0,1,2}"/>
+              </ParameterList>
             </ParameterList>
           </ParameterList>
         </ParameterList>
@@ -184,7 +194,7 @@
       <ParameterList name="Implicit Boundary Conditions">
         <Parameter name="Number of Dirichlet BCs" type="int" value="2"/>
         <ParameterList name="Dirichlet BC 0">
-          <Parameter name="Block" type="string" value="block_100"/>
+          <Parameter name="Boundary" type="string" value="Bolt Hole 0"/>
           <Parameter name="Variable Name" type="string" value="Displacement"/>
           <Parameter name="Layout" type="string" value="QP Vector"/>
           <Parameter name="X" type="double" value="0.0"/>
@@ -193,7 +203,7 @@
           <Parameter name="Penalty Coefficient" type="double" value="1.0e7"/>
         </ParameterList>
         <ParameterList name="Dirichlet BC 1">
-          <Parameter name="Block" type="string" value="block_200"/>
+          <Parameter name="Boundary" type="string" value="Bolt Hole 1"/>
           <Parameter name="Variable Name" type="string" value="Displacement"/>
           <Parameter name="Layout" type="string" value="QP Vector"/>
           <Parameter name="X" type="double" value="0.0"/>
@@ -203,7 +213,7 @@
         </ParameterList>
         <Parameter name="Number of Neumann BCs" type="int" value="1"/>
         <ParameterList name="Neumann BC 0">
-          <Parameter name="Block" type="string" value="block_300"/>
+          <Parameter name="Boundary" type="string" value="Bolt Hole 2"/>
           <Parameter name="Layout" type="string" value="QP Vector"/>
           <Parameter name="Vector" type="Array(double)" value="{0.0, -4.5e5, 0.0}"/>
         </ParameterList>

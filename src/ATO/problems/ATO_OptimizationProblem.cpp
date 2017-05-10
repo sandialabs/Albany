@@ -74,7 +74,7 @@ ComputeMeasure(std::string measureType, double& measure)
     for(int ws=0; ws<numWorksets; ws++){
       Albany::StateArray& 
       stateArrayRef = stateMgr->getStateArray(Albany::StateManager::ELEM, ws);
-      Albany::MDArray savedWeights = stateArrayRef["Gauss Weights"];
+      Albany::MDArray savedWeights = stateArrayRef["Weights"];
       int numCells  = weighted_measure[ws].dimension(0);
       int numQPs    = weighted_measure[ws].dimension(1);
       for(int cell=0; cell<numCells; cell++)
@@ -156,7 +156,7 @@ computeMeasure(std::string measureType,
     for(int ws=0; ws<numWorksets; ws++){
       Albany::StateArray& 
       stateArrayRef = stateMgr->getStateArray(Albany::StateManager::ELEM, ws);
-      Albany::MDArray savedWeights = stateArrayRef["Gauss Weights"];
+      Albany::MDArray savedWeights = stateArrayRef["Weights"];
       int numCells  = weighted_measure[ws].dimension(0);
       int numQPs    = weighted_measure[ws].dimension(1);
       for(int cell=0; cell<numCells; cell++)
@@ -510,7 +510,7 @@ ComputeVolume(double* p, const double* dfdp,
     for(int ws=0; ws<numWorksets; ws++){
       Albany::StateArray& 
       stateArrayRef = stateMgr->getStateArray(Albany::StateManager::ELEM, ws);
-      Albany::MDArray savedWeights = stateArrayRef["Gauss Weights"];
+      Albany::MDArray savedWeights = stateArrayRef["Weights"];
       int numCells  = weighted_measure[ws].dimension(0);
       int numQPs    = weighted_measure[ws].dimension(1);
       for(int cell=0; cell<numCells; cell++)
@@ -687,7 +687,7 @@ ATO::OptimizationProblem::InitTopOpt()
     for(int ws=0; ws<numWorksets; ws++){
       Albany::StateArray& 
       stateArrayRef = stateMgr->getStateArray(Albany::StateManager::ELEM, ws);
-      Albany::MDArray savedWeights = stateArrayRef["Gauss Weights"];
+      Albany::MDArray savedWeights = stateArrayRef["Weights"];
 
       int physIndex = wsPhysIndex[ws];
       int numCells  = wsElNodeEqID[ws].size();
@@ -1125,7 +1125,7 @@ computeMeasureT(std::string measureType,
     for(int ws=0; ws<numWorksets; ws++){
       Albany::StateArray&
       stateArrayRef = stateMgr->getStateArray(Albany::StateManager::ELEM, ws);
-      Albany::MDArray savedWeights = stateArrayRef["Gauss Weights"];
+      Albany::MDArray savedWeights = stateArrayRef["Weights"];
       int numCells  = weighted_measure[ws].dimension(0);
       int numQPs    = weighted_measure[ws].dimension(1);
       for(int cell=0; cell<numCells; cell++)

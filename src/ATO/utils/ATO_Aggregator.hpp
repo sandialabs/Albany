@@ -76,6 +76,11 @@ protected:
 
   int numTopologies;
 
+  std::string normalizeMethod;
+  double maxScale;
+  int iteration;
+  int rampInterval;
+
 };
 
 /******************************************************************************/
@@ -102,6 +107,7 @@ class Aggregator_StateVarBased : public virtual Aggregator {
 class Aggregator_DistParamBased : public virtual Aggregator {
  public:
   Aggregator_DistParamBased(){}
+  Aggregator_DistParamBased(const Teuchos::ParameterList& aggregatorParams, int nTopos);
   void SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
                          const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > valueMap,
                          const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > derivMap);
@@ -166,6 +172,21 @@ class Aggregator_DistScaled : public virtual Aggregator,
   void EvaluateT();
  protected:
   Teuchos::Array<double> weights;
+};
+/******************************************************************************/
+
+/******************************************************************************/
+class Aggregator_Homogenized : public virtual Aggregator,
+                               public virtual Aggregator_DistParamBased {
+ public:
+  Aggregator_Homogenized(){}
+  Aggregator_Homogenized(const Teuchos::ParameterList& aggregatorParams, int nTopos);
+  void Evaluate();
+  void EvaluateT();
+ protected:
+  Teuchos::Array<double> m_assumedState;
+  bool m_reciprocate;
+  double m_initialValue;
 };
 /******************************************************************************/
 

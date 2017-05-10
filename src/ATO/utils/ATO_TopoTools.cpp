@@ -16,7 +16,12 @@ Topology::Topology(const Teuchos::ParameterList& topoParams, int global_index)
 {
   globalIndex = global_index;
   name      = topoParams.get<std::string>("Topology Name");
-  initValue = topoParams.get<double>("Initial Value");
+
+  if(topoParams.isType<double>("Initial Value")){
+    initValue = topoParams.get<double>("Initial Value");
+  } else {
+    initValue = 0.0;
+  }
 
   if( topoParams.isType<Teuchos::Array<std::string> >("Fixed Blocks") ){
     fixedBlocks = topoParams.get<Teuchos::Array<std::string> >("Fixed Blocks");
