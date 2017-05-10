@@ -6,7 +6,14 @@ set(LCM_DO_TRILINOS_CMAKE true)
 include(${CMAKE_CURRENT_LIST_DIR}/snl_helpers.cmake)
 
 function(lcm_do_trilinos)
-  set(BOOL_OPTS "CLEAN_SOURCE" "CLEAN_BUILD" "CLEAN_INSTALL")
+  set(BOOL_OPTS
+      "CLEAN_BUILD"
+      "CLEAN_INSTALL"
+      "DO_UPDATE"
+      "DO_CONFIG"
+      "DO_BUILD"
+      "DO_TEST"
+     )
   set(UNARY_OPTS
       "BUILD_THREADS"
       "RESULT_VARIABLE"
@@ -25,7 +32,7 @@ function(lcm_do_trilinos)
       "-DCMAKE_CXX_COMPILER:FILEPATH=\"$ENV{MPI_BIN}/mpicxx\""
       "-DCMAKE_C_COMPILER:FILEPATH=\"$ENV{MPI_BIN}/mpicc\""
       "-DCMAKE_Fortran_COMPILER:FILEPATH=\"$ENV{MPI_BIN}/mpif90\""
-      "-DCMAKE_INSTALL_PREFIX:PATH=${ARG_INSTALL_DIR}"
+      "-DCMAKE_INSTALL_PREFIX:PATH=$$ENV{LCM_DIR}/trilinos-install-${ARG_BUILD_STRING}"
       "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
       "-DTPL_ENABLE_MPI:BOOL=ON"
       "-DTPL_ENABLE_BinUtils:BOOL=OFF"
@@ -149,16 +156,15 @@ function(lcm_do_trilinos)
   set(ARG_BOOL_OPTS)
   foreach (BOOL_OPT IN LISTS BOOL_OPTS)
     if (ARG_${BOOL_OPT})
-      set(ARG_BOOL_OPTS ${ARG_BOOL_OPTS} ${BOOL_OPT})
+      if ("${BOOL_OPT}" STREQUAL "DO_BUILD")
+        set(ARG_BOOL_OPTS ${ARG_BOOL_OPTS} "DO_INSTALL")
+      else()
+        set(ARG_BOOL_OPTS ${ARG_BOOL_OPTS} ${BOOL_OPT})
+      endif()
     endif()
   endforeach()
   snl_do_subproject(${ARG_BOOL_OPTS}
-      DO_UPDATE
-      DO_CONFIG
-      DO_INSTALL
       SUBPROJECT Trilinos${ARG_CDASH_SUFFIX}
-      REPO_URL "git@github.com:trilinos/Trilinos.git"
-      BRANCH "master"
       SOURCE_DIR "$ENV{LCM_DIR}/Trilinos"
       BUILD_DIR "$ENV{LCM_DIR}/Trilinos-build-${ARG_BUILD_STRING}"
       INSTALL_DIR "$ENV{LCM_DIR}/trilinos-install-${ARG_BUILD_STRING}"
