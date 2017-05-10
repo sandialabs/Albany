@@ -38,7 +38,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 #add_test(Aeras_${testName}_HV_Tpetra ${AlbanyT.exe} input_hv_T.xml)
 
 
-IF(ALBANY_CHECK_FPE)
+IF(NOT ALBANY_CHECK_FPE)
 add_test(Aeras_${testName}_explicitHV_nu8e15_vort_BackwardEuler ${AlbanyT.exe} input_explicitHV_BE_nu8e15_vort_T.xml)
 ENDIF()
 add_test(Aeras_${testName}_explicitHV_nu8e15_novort_BackwardEuler ${AlbanyT.exe} input_explicitHV_BE_nu8e15_novort_T.xml)
