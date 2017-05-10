@@ -11,9 +11,7 @@ function(lcm_do_trilinos)
       "BUILD_THREADS"
       "RESULT_VARIABLE"
       "CDASH_SUFFIX"
-      "SOURCE_DIR"
-      "BUILD_DIR"
-      "INSTALL_DIR"
+      "BUILD_STRING"
     )
   message("lcm_do_trilinos(${ARGN})")
   cmake_parse_arguments(ARG "${BOOL_OPTS}" "${UNARY_OPTS}" "" ${ARGN}) 
@@ -161,9 +159,9 @@ function(lcm_do_trilinos)
       SUBPROJECT Trilinos${ARG_CDASH_SUFFIX}
       REPO_URL "git@github.com:trilinos/Trilinos.git"
       BRANCH "master"
-      SOURCE_DIR "${ARG_SOURCE_DIR}"
-      BUILD_DIR "${ARG_BUILD_DIR}"
-      INSTALL_DIR "${ARG_INSTALL_DIR}"
+      SOURCE_DIR "$ENV{LCM_DIR}/Trilinos"
+      BUILD_DIR "$ENV{LCM_DIR}/Trilinos-build-${ARG_BUILD_STRING}"
+      INSTALL_DIR "$ENV{LCM_DIR}/trilinos-install-${ARG_BUILD_STRING}"
       CONFIG_OPTS "${CONFIG_OPTS}"
       BUILD_THREADS "${ARG_BUILD_THREADS}"
       RESULT_VARIABLE SUBPROJECT_ERR
