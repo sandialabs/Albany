@@ -281,7 +281,6 @@ CrystalPlasticityKernel(
   setEvaluatedField(Fp_string_, dl->qp_tensor);
   setEvaluatedField(L_string_, dl->qp_tensor);
   setEvaluatedField(Lp_string_, dl->qp_tensor);
-  setEvaluatedField(source_string_, dl->qp_scalar);
   setEvaluatedField(residual_string_, dl->qp_scalar);
   setEvaluatedField(residual_iter_string_, dl->qp_scalar);
 
@@ -448,6 +447,7 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(
   delta_time_ = *dep_fields[dt_string_];
   if (have_temperature_) {
     temperature_ = *dep_fields[temperature_string_];
+    source_ = *eval_fields[source_string_];
   }
 
   //
@@ -461,10 +461,6 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(
   velocity_gradient_plastic_ = *eval_fields[Lp_string_];
   cp_residual_ = *eval_fields[residual_string_];
   cp_residual_iter_ = *eval_fields[residual_iter_string_];
-  
-  if (have_temperature_) {
-    source_ = *eval_fields[source_string_];
-  }
 
   // extract slip on each slip system
   extractEvaluatedFieldArray("gamma", num_slip_, slips_, previous_slips_,
@@ -553,12 +549,6 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   minitensor::Vector<ScalarT, CP::MAX_SLIP>
   state_hardening_np1(num_slip_);
 
-  minitensor::Vector<ScalarT, CP::MAX_SLIP>
-  slip_resistance(num_slip_);
-
-  minitensor::Vector<ScalarT, CP::MAX_SLIP>
-  slip_computed(num_slip_);
-
   ///
   /// Elasticity tensor
   ///
@@ -570,15 +560,6 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
   RealType
   norm_slip_residual;
-
-  RealType
-  residual_iter;
-
-  RealType
-  equivalent_plastic_strain;
-
-  bool
-  update_state_successful{true};
 
   minitensor::Tensor<RealType, CP::MAX_DIM>
   orientation_matrix(num_dims_);
@@ -643,8 +624,6 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
     slip_system.n_ = orientation_matrix * slip_systems_.at(num_ss).n_;
     slip_system.projector_ = minitensor::dyad(slip_system.s_, slip_system.n_);
   }
-
-  equivalent_plastic_strain = SSV::eval(eqps_(cell, pt));
 
   // Copy data from Albany fields into local data structures
   for (int i(0); i < num_dims_; ++i) {
@@ -887,7 +866,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   }
 
   CP::StateMechanical<ScalarT, CP::MAX_DIM>
-  state_mechanical(num_dims_, Fp_n);
+  state_mechanical(num_dims_, F_n, Fp_n, F_np1);
 
   CP::StateInternal<ScalarT, CP::MAX_SLIP>
   state_internal(index_element_, pt, num_slip_, state_hardening_n, slip_n);
@@ -900,9 +879,6 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   }
 
   state_internal.slip_np1_ = slip_np1;
-
-  bool
-  failed{false};
   
   if (dt_ == 0.0)
   {
@@ -936,117 +912,25 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
     state_mechanical,
     state_internal,
     C,
-    F_n,
-    F_np1,
-    dt_,
-    failed);
+    dt_);
 
-  auto
+  utility::StaticPointer<CP::Integrator<EvalT, CP::MAX_DIM, CP::MAX_SLIP>>
   integrator = integratorFactory(integration_scheme_, residual_type_);
 
-  update_state_successful = integrator->update(norm_slip_residual);
+  integrator->update();
   
-  residual_iter = integrator->getNumIters();
-
-  Fp_np1 = state_mechanical.Fp_np1_;
-  Lp_np1 = state_mechanical.Lp_np1_;
-  sigma_np1 = state_mechanical.sigma_np1_;
-  S_np1 = state_mechanical.S_np1_;
-
-  state_hardening_np1 = state_internal.hardening_np1_;
-  slip_resistance = state_internal.resistance_;
-  slip_np1 = state_internal.slip_np1_;
-  shear_np1 = state_internal.shear_np1_;
-
   // Exit early if update state is not successful
-  if(!update_state_successful) {
+  if(integrator->getStatus() == NOX::StatusTest::Failed) {
+    // forceGlobalLoadStepReduction(integrator->getMessage());
     return;
   }
 
-  // Compute the equivalent plastic strain from the plastic velocity gradient:
-  //  eqps_dot = sqrt[2/3* sym(Lp) : sym(Lp)]
-  minitensor::Tensor<ScalarT, CP::MAX_DIM> const
-  Dp = minitensor::sym(Lp_np1);
-
-  RealType const
-  delta_eqps = dt_ * std::sqrt(2.0 / 3.0 * SSV::eval(minitensor::dotdot(Dp,Dp)));
-
-  equivalent_plastic_strain += delta_eqps;
-
-  eqps_(cell, pt) = equivalent_plastic_strain;
-
-  // The xtal rotation from the polar decomp of Fe.
-  minitensor::Tensor<ScalarT, CP::MAX_DIM>
-  Fe(num_dims_);
-
-  minitensor::Tensor<ScalarT, CP::MAX_DIM>
-  Re_np1(num_dims_);
-
-  // Multiplicatively decompose F to get Fe
-  Fe = F_np1 * minitensor::inverse(Fp_np1);
-
-  // Compute polar rotation to get Re
-  Re_np1 = minitensor::polar_rotation(Fe);
-
-  ///
-  /// Copy data from local data structures back into Albany fields
-  ///
-
-  // mechanical heat source
-  if (have_temperature_)
-  {
-    source_(cell, pt) = 0.0;
-
-    if (dt_ > 0.0)
-    {
-      RealType
-      plastic_dissipation(0.0);
-
-      for (int slip_system(0); slip_system < num_slip_; ++slip_system)
-      {
-        plastic_dissipation += SSV::eval(
-          state_internal.rate_slip_[slip_system] * shear_np1[slip_system]);
-      }
-      source_(cell, pt) = 0.9 / (density_ * heat_capacity_) * plastic_dissipation;
-    }
-  }
-
-  // residual norm
-  cp_residual_(cell, pt) = norm_slip_residual;
-  cp_residual_iter_(cell,pt) = residual_iter;
-
-  minitensor::Tensor<RealType, CP::MAX_DIM> const
-  inv_F = minitensor::inverse(F_n);
-
-  minitensor::Tensor<RealType, CP::MAX_DIM> const
-  eye = minitensor::identity<RealType, CP::MAX_DIM>(num_dims_);
-
-
-  minitensor::Tensor<ScalarT, CP::MAX_DIM>
-  L(num_dims_);
-
-  if (dt_ > 0.0) {
-    L = 1.0 / dt_ * (F_np1 * inv_F - eye);
-  }
-
-  // num_dims_ x num_dims_ dimensional array variables
-  for (int i(0); i < num_dims_; ++i) {
-    for (int j(0); j < num_dims_; ++j) {
-      xtal_rotation_(cell, pt, i, j) = Re_np1(i, j);
-      plastic_deformation_(cell, pt, i, j) = Fp_np1(i, j);
-      stress_(cell, pt, i, j) = sigma_np1(i, j);
-      velocity_gradient_(cell, pt, i, j) = L(i, j);
-      velocity_gradient_plastic_(cell, pt, i, j) = Lp_np1(i, j);
-    }
-  }
-
-  // num_slip_ dimensional array variables
-  for (int s(0); s < num_slip_; ++s) {
-    (*(slips_[s]))(cell, pt) = slip_np1[s];
-    (*(hards_[s]))(cell, pt) = state_hardening_np1[s];
-    (*(shears_[s]))(cell, pt) = shear_np1[s];
-    (*(slip_rates_[s]))(cell, pt) = state_internal.rate_slip_[s];
-  }
+  finalize(
+    state_mechanical,
+    state_internal,
+    integrator,
+    cell,
+    pt);
 
   if(write_data_file_) {
     if (cell == 0 && pt == 0)
@@ -1116,5 +1000,129 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
     }
   } // end data file output
 } // computeState
+
+
+///
+/// Return calculated quantities to Albany
+///
+template<typename EvalT, typename Traits>
+void
+CrystalPlasticityKernel<EvalT, Traits>::finalize(
+    CP::StateMechanical<ScalarT, CP::MAX_DIM> const & state_mechanical,
+    CP::StateInternal<ScalarT, CP::MAX_SLIP> const & state_internal,
+    utility::StaticPointer<CP::Integrator<EvalT, CP::MAX_DIM, CP::MAX_SLIP>> const & integrator,
+    int const cell,
+    int const pt) const
+{
+  ///
+  /// Mechanical state
+  ///
+  minitensor::Tensor<RealType, CP::MAX_DIM> const
+  F_n = state_mechanical.F_n_;
+
+  minitensor::Tensor<ScalarT, CP::MAX_DIM> const
+  F_np1 = state_mechanical.F_np1_;
+
+  minitensor::Tensor<ScalarT, CP::MAX_DIM> const
+  Fp_np1 = state_mechanical.Fp_np1_;
+
+  minitensor::Tensor<ScalarT, CP::MAX_DIM> const
+  Lp_np1 = state_mechanical.Lp_np1_;
+
+  minitensor::Tensor<ScalarT, CP::MAX_DIM> const
+  sigma_np1 = state_mechanical.sigma_np1_;
+
+  ///
+  /// Internal state
+  ///
+  minitensor::Vector<ScalarT, CP::MAX_SLIP> const
+  state_hardening_np1 = state_internal.hardening_np1_;
+
+  minitensor::Vector<ScalarT, CP::MAX_SLIP> const
+  slip_np1 = state_internal.slip_np1_;
+
+  minitensor::Vector<ScalarT, CP::MAX_SLIP> const
+  shear_np1 = state_internal.shear_np1_;
+
+  minitensor::Vector<ScalarT, CP::MAX_SLIP> const
+  rate_slip = state_internal.rate_slip_;
+
+  ///
+  /// Mechanical heat source
+  ///
+  if (have_temperature_ == true)
+  {
+    ScalarT const
+    plastic_dissipation = minitensor::dot(rate_slip, shear_np1);
+
+    source_(cell, pt) = 0.9 / (density_ * heat_capacity_) * plastic_dissipation;
+  }
+
+  ///
+  /// Compute the equivalent plastic strain from the plastic velocity gradient:
+  ///  eqps_dot = sqrt[2/3* sym(Lp) : sym(Lp)]
+  ///
+  minitensor::Tensor<ScalarT, CP::MAX_DIM> const
+  Dp = minitensor::sym(Lp_np1);
+
+  eqps_(cell, pt) += dt_ * std::sqrt(2.0 / 3.0 * SSV::eval(minitensor::dotdot(Dp,Dp)));
+
+
+// The xtal rotation from the polar decomp of Fe.
+  minitensor::Tensor<ScalarT, CP::MAX_DIM>
+  Fe(num_dims_);
+
+  minitensor::Tensor<ScalarT, CP::MAX_DIM>
+  Re_np1(num_dims_);
+
+  // Multiplicatively decompose F to get Fe
+  Fe = F_np1 * minitensor::inverse(Fp_np1);
+
+  // Compute polar rotation to get Re
+  Re_np1 = minitensor::polar_rotation(Fe);
+
+  ///
+  /// Copy data from local data structures back into Albany fields
+  ///
+
+  // residual norm
+  cp_residual_(cell, pt) = integrator->getNormResidual();
+  cp_residual_iter_(cell,pt) = integrator->getNumIters();
+
+  minitensor::Tensor<RealType, CP::MAX_DIM> const
+  inv_F = minitensor::inverse(F_n);
+
+  minitensor::Tensor<RealType, CP::MAX_DIM> const
+  eye = minitensor::identity<RealType, CP::MAX_DIM>(num_dims_);
+
+
+  minitensor::Tensor<ScalarT, CP::MAX_DIM>
+  L(num_dims_, minitensor::Filler::ZEROS);
+
+  if (dt_ > 0.0) {
+    L = 1.0 / dt_ * (F_np1 * inv_F - eye);
+  }
+
+  // num_dims_ x num_dims_ dimensional array variables
+  for (int i(0); i < num_dims_; ++i) {
+    for (int j(0); j < num_dims_; ++j) {
+      xtal_rotation_(cell, pt, i, j) = Re_np1(i, j);
+      plastic_deformation_(cell, pt, i, j) = Fp_np1(i, j);
+      stress_(cell, pt, i, j) = sigma_np1(i, j);
+      velocity_gradient_(cell, pt, i, j) = L(i, j);
+      velocity_gradient_plastic_(cell, pt, i, j) = Lp_np1(i, j);
+    }
+  }
+
+  // num_slip_ dimensional array variables
+  for (int s(0); s < num_slip_; ++s) {
+    (*(slips_[s]))(cell, pt) = slip_np1[s];
+    (*(hards_[s]))(cell, pt) = state_hardening_np1[s];
+    (*(shears_[s]))(cell, pt) = shear_np1[s];
+    (*(slip_rates_[s]))(cell, pt) = state_internal.rate_slip_[s];
+  }
+
+  return;
+} // void finalize
 
 } // namespace LCM

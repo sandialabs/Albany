@@ -105,7 +105,7 @@ computeRateSlip(
   ArgT const
   ratio_stress = shear / slip_resistance;
 
-  if (ratio_stress > max_tol)
+  if (std::fabs(ratio_stress) > max_tol)
   {
     failed = true;
     //std::cout << "Failed on flow: " << ratio_stress << std::endl;

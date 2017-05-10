@@ -53,6 +53,9 @@ struct J2MiniKernel : public ParallelKernel<EvalT, Traits>
   using BaseKernel::setDependentField;
   using BaseKernel::setEvaluatedField;
   using BaseKernel::addStateVariable;
+
+  /// Pointer to NOX status test, allows the material model to force a global load step reduction
+  using BaseKernel::nox_status_test_;
   
   // Dependent MDFields
   ConstScalarField def_grad;

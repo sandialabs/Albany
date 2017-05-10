@@ -247,9 +247,13 @@ CP::computeStress(
   ArgT
   det_fe = minitensor::det(defgrad_elastic);
 
-  if (0.0 == det_fe) {
+  if (det_fe == 0.0) {
     std::cout << "Singular elastic deformation gradient" << std::endl;
     std::cout << std::setprecision(4) << defgrad_elastic << std::endl;
+    failed = true;
+    return;
+  } else if (std::abs(det_fe) < CP::SQRT_TINY) {
+    // Downstream calculation of derivatives of 1/det_fe will fail
     failed = true;
     return;
   }
