@@ -252,7 +252,7 @@ CP::computeStress(
     std::cout << std::setprecision(4) << defgrad_elastic << std::endl;
     failed = true;
     return;
-  } else if (std::abs(det_fe) < CP::SQRT_TINY) {
+  } else if (std::abs(det_fe) < std::sqrt(CP::TINY)) {
     // Downstream calculation of derivatives of 1/det_fe will fail
     failed = true;
     return;

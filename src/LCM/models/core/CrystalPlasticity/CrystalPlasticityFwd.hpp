@@ -16,9 +16,6 @@ static constexpr RealType
 TINY = std::numeric_limits<RealType>::min();
 
 static constexpr RealType
-SQRT_TINY = std::sqrt(TINY);
-
-static constexpr RealType
 HUGE_ = std::numeric_limits<RealType>::max();
 
 static const RealType
