@@ -492,18 +492,18 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
 CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 {
+  // If a previous constitutive calculation has failed, exit immediately.
+  if (nox_status_test_->status_ == NOX::StatusTest::Failed) {
+    if (verbosity_ == CP::Verbosity::DEBUG) {
+      std::cout << "  ****Returning on failed****" << std::endl;
+    }
+    return;
+  }
   // TODO: In the future for CUDA this should be moved out of the kernel because
   // it uses dynamic allocation for the buffer. It should also be modified to use 
   // cudaMalloc.
   utility::StaticAllocator 
   allocator(1024 * 1024);
-
-  if (nox_status_test_->status_ == NOX::StatusTest::Failed) {
-    //if (verbosity_ == CP::Verbosity::DEBUG) {
-      std::cout << "  ****Returning on failed****" << std::endl;
-    //}
-    return;
-  }
 
   //
   // Known quantities
@@ -918,10 +918,12 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   integrator = integratorFactory(integration_scheme_, residual_type_);
 
   integrator->update();
-  
+
+  // Check to make sure there is only one status test
+  ALBANY_ASSERT(integrator->getStatus() == nox_status_test_->status_);
+
   // Exit early if update state is not successful
-  if(integrator->getStatus() == NOX::StatusTest::Failed) {
-    // forceGlobalLoadStepReduction(integrator->getMessage());
+  if(nox_status_test_->status_ == NOX::StatusTest::Failed) {
     return;
   }
 
