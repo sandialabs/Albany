@@ -643,6 +643,10 @@ Albany::ModelEvaluatorT::evalModelImpl(
       }
     }
   }
+  else {
+    x_dotdotT = Teuchos::null;
+    omega = 0.0; 
+  }
 
   const double alpha = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT))
                            ? inArgsT.get_alpha()
