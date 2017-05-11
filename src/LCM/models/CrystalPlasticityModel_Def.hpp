@@ -431,12 +431,8 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(
   if (read_orientations_from_mesh_)
   {
     rotation_matrix_transpose_ = workset.wsLatticeOrientation;
-
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      rotation_matrix_transpose_.is_null(),
-      std::logic_error,
-      "\n**** Error in CrystalPlasticityModel: \
-         rotation matrix not found on genesis mesh.\n");
+    ALBANY_ASSERT(rotation_matrix_transpose_.is_null() == false,
+        "Rotation matrix not found on genesis mesh");
   }
 
   //
@@ -503,6 +499,9 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   allocator(1024 * 1024);
 
   if (nox_status_test_->status_ == NOX::StatusTest::Failed) {
+    //if (verbosity_ == CP::Verbosity::DEBUG) {
+      std::cout << "  ****Returning on failed****" << std::endl;
+    //}
     return;
   }
 
