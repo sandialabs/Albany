@@ -219,27 +219,38 @@ public:
         Kokkos::Experimental::Rank<2, IterateDirection, IterateDirection>,
         Kokkos::IndexType<int>, ShallowWaterResid_TempNodalVec_Tag>;
 
+  typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_Residual_Tag> ShallowWaterResid_Residual_Policy;
+  /*
   using ShallowWaterResid_Residual_Policy = Kokkos::Experimental::MDRangePolicy<
         Kokkos::Experimental::Rank<2, IterateDirection, IterateDirection>,
         Kokkos::IndexType<int>, ShallowWaterResid_Residual_Tag>;
+  */
 
 #if defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
   typename ShallowWaterResid_TempNodalVec_Policy::tile_type 
     ShallowWaterResid_TempNodalVec_TileSize{{256,1}};
+  /*
   typename ShallowWaterResid_Residual_Policy::tile_type 
     ShallowWaterResid_Residual_TileSize{{256,1}};
+  */
 #else
   typename ShallowWaterResid_TempNodalVec_Policy::tile_type 
     ShallowWaterResid_TempNodalVec_TileSize{};
+  /*
   typename ShallowWaterResid_Residual_Policy::tile_type 
     ShallowWaterResid_Residual_TileSize{};
+  */
 #endif
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const ShallowWaterResid_TempNodalVec_Tag& tag, const int& cell, const int& node) const;
 
   KOKKOS_INLINE_FUNCTION
+  void operator() (const ShallowWaterResid_Residual_Tag& tag, const int& cell) const;
+  /*
+  KOKKOS_INLINE_FUNCTION
   void operator() (const ShallowWaterResid_Residual_Tag& tag, const int& cell, const int& qp) const;
+  */
 
 /*
 	struct ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag{};

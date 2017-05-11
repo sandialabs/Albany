@@ -1136,6 +1136,62 @@ operator() (const ShallowWaterResid_TempNodalVec_Tag& tag, const int& cell, cons
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
+operator() (const ShallowWaterResid_Residual_Tag& tag, const int& cell) const{
+  for (int qp=0; qp < numQPs; ++qp) {
+    // Compute Coriolis
+    const MeshScalarT lambda = sphere_coord(cell, qp, 0);
+    const MeshScalarT theta = sphere_coord(cell, qp, 1);
+    ScalarT cor = 2*Omega*( -cos(lambda)*cos(theta)*sin(AlphaAngle) + sin(theta)*cos(AlphaAngle));
+
+    // Compute divergence of contravariant velocity
+    ScalarT div = 0;
+    for (int node=0; node < numNodes; ++node) {
+      div += tempnodalvec1(cell, node, 0)*grad_at_cub_points(node, qp, 0)
+          +  tempnodalvec1(cell, node, 1)*grad_at_cub_points(node, qp, 1);
+    }
+    div /= jacobian_det(cell, qp);
+
+    // Compute curl of covariant vector
+    ScalarT curl = 0;
+    for (int node=0; node < numNodes; ++node) {
+      curl += tempnodalvec2(cell, node, 1)*grad_at_cub_points(node, qp, 0)
+           -  tempnodalvec2(cell, node, 0)*grad_at_cub_points(node, qp, 1);
+    }
+    curl /= jacobian_det(cell, qp);
+
+    // Compute gradient of kinetic energy
+    ScalarT gradKE[2] = {0};
+    for (int node=0; node < numNodes; ++node) {
+      gradKE[0] += ckineticEnergy(cell, node)*grad_at_cub_points(node, qp, 0);
+      gradKE[1] += ckineticEnergy(cell, node)*grad_at_cub_points(node, qp, 1);
+    }
+    ScalarT gradKEtemp = gradKE[0];
+    gradKE[0] = jacobian_inv(cell, qp, 0, 0)*gradKE[0]  + jacobian_inv(cell, qp, 1, 0)*gradKE[1];
+    gradKE[1] = jacobian_inv(cell, qp, 0, 1)*gradKEtemp + jacobian_inv(cell, qp, 1, 1)*gradKE[1];
+
+    // Compute gradient of potential energy
+    ScalarT gradPE[2] = {0};
+    for (int node=0; node < numNodes; ++node) {
+      gradPE[0] += cpotentialEnergy(cell, node)*grad_at_cub_points(node, qp, 0);
+      gradPE[1] += cpotentialEnergy(cell, node)*grad_at_cub_points(node, qp, 1);
+    }
+    ScalarT gradPEtemp = gradPE[0];
+    gradPE[0] = jacobian_inv(cell, qp, 0, 0)*gradPE[0]  + jacobian_inv(cell, qp, 1, 0)*gradPE[1];
+    gradPE[1] = jacobian_inv(cell, qp, 0, 1)*gradPEtemp + jacobian_inv(cell, qp, 1, 1)*gradPE[1];
+
+    // Compute Residual
+    Residual(cell, qp, 0) = (UDot(cell, qp, 0) + div)*wBF(cell, qp, qp);
+    Residual(cell, qp, 1) = (UDot(cell, qp, 1) + gradKE[0] + gradPE[0] 
+                          - (cor + curl) * U(cell, qp, 2)) * wBF(cell, qp, qp);
+    Residual(cell, qp, 2) = (UDot(cell, qp, 2) + gradKE[1] + gradPE[1]
+                          + (cor + curl) * U(cell, qp, 1)) * wBF(cell, qp, qp);
+  }
+}
+
+/*
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_Residual_Tag& tag, const int& cell, const int& qp) const{
   // Compute Coriolis
   const MeshScalarT lambda = sphere_coord(cell, qp, 0);
@@ -1185,6 +1241,7 @@ operator() (const ShallowWaterResid_Residual_Tag& tag, const int& cell, const in
   Residual(cell, qp, 2) = (UDot(cell, qp, 2) + gradKE[1] + gradPE[1]
                         + (cor + curl) * U(cell, qp, 1)) * wBF(cell, qp, qp);
 }
+*/
 
 #endif
 //**********************************************************************
@@ -1696,8 +1753,9 @@ evaluateFields(typename Traits::EvalData workset)
 */
           Kokkos::Experimental::md_parallel_for(ShallowWaterResid_TempNodalVec_Policy(
             {0,0},{(int)workset.numCells,(int)numNodes},ShallowWaterResid_TempNodalVec_TileSize),*this);
-          Kokkos::Experimental::md_parallel_for(ShallowWaterResid_Residual_Policy(
-            {0,0},{(int)workset.numCells,(int)numQPs},ShallowWaterResid_Residual_TileSize),*this);
+          Kokkos::parallel_for(ShallowWaterResid_Residual_Policy(0,workset.numCells),*this);
+          //Kokkos::Experimental::md_parallel_for(ShallowWaterResid_Residual_Policy(
+          //  {0,0},{(int)workset.numCells,(int)numQPs},ShallowWaterResid_Residual_TileSize),*this);
           //Kokkos::parallel_for(ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
 /*
         }
