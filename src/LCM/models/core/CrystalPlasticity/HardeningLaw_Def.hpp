@@ -256,11 +256,17 @@ harden(
   ArgT
   effective_slip_rate{minitensor::norm_1(rate_slip_abs)};
 
-  if (effective_slip_rate < CP::TINY) {
-    for (minitensor::Index ss_index(0); ss_index < num_slip_sys; ++ss_index) {
-      state_hardening_np1[ss_index] = state_hardening_n[ss_index]
+  if (effective_slip_rate < CP::TINY)
+  {
+    for (minitensor::Index ss_index(0); ss_index < num_slip_sys; ++ss_index)
+    {
+      auto const &
+      ss_index_global = slip_family.slip_system_indices_[ss_index];
+
+      state_hardening_np1[ss_index_global] = state_hardening_n[ss_index_global]
           + dt * driver_hardening[ss_index];
-      slip_resistance[ss_index] = state_hardening_np1[ss_index];
+          
+      slip_resistance[ss_index_global] = state_hardening_np1[ss_index_global];
     }
     return;
   }
