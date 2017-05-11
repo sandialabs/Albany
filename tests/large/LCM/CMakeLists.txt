@@ -10,10 +10,10 @@ ENDIF()
 
 IF(ALBANY_HAVE_STK)
   IF(ALBANY_SEACAS)
-    add_subdirectory(MechanicsWithHydrogenBar)
     add_subdirectory(CrystalPlasticity)
     # amota: disabled because enters infinite loop
     # add_subdirectory(HMC)
     add_subdirectory(Schwarz)
+    add_subdirectory(MechanicsWithHydrogenBar)
   ENDIF()
 ENDIF()
