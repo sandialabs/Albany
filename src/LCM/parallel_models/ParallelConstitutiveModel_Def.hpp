@@ -92,10 +92,10 @@ computeState(
       for (int pt = 0; pt < num_pts_; ++pt) {
         (*kernel_ptr)(cell, pt);
         all_ok = all_ok && (failed == false);
-        // std::cout << "parallel_for diagnostics:" << std::endl;
-        // std::cout << workset.wsIndex << cell << pt << std::endl;
-        // std::cout << kernel_ptr->nox_status_test_->status_ << std::endl;
-        // std::cout << kernel_ptr->nox_status_test_->status_message_ << std::endl;
+        std::cout << "parallel_for diagnostics:" << std::endl;
+        std::cout << workset.wsIndex << cell << pt << std::endl;
+        std::cout << kernel_ptr->nox_status_test_->status_ << std::endl;
+        std::cout << kernel_ptr->nox_status_test_->status_message_ << std::endl;
         // if (kernel_ptr->nox_status_test_->status_ == NOX::StatusTest::Failed) {
         //   break;
         // }

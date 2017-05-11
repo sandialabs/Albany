@@ -256,6 +256,13 @@ harden(
   ArgT
   effective_slip_rate{minitensor::norm_1(rate_slip_abs)};
 
+  if (effective_slip_rate < CP::TINY) {
+    for (minitensor::Index ss_index(0); ss_index < num_slip_sys; ++ss_index) {
+      state_hardening_np1[ss_index] = driver_hardening[ss_index];
+    }
+    return;
+  }
+
   auto const
   phardening_params = slip_family.phardening_parameters_;
 
@@ -289,9 +296,17 @@ harden(
     ArgT
     stress_saturation{stress_saturation_initial};
 
+    ArgT const
+    ratio_rate = effective_slip_rate / rate_slip_reference;
+
+    if (ratio_rate > CP::LOG_HUGE) {
+      failed = true;
+      return;
+    }
+
     if (exponent_saturation > 0.0) {
       stress_saturation = stress_saturation_initial * std::pow(
-        effective_slip_rate / rate_slip_reference, exponent_saturation);
+        ratio_rate, exponent_saturation);
     }
 
     ArgT &

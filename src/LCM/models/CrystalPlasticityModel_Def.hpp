@@ -76,6 +76,8 @@ CrystalPlasticityKernel(
             "NOX Status Test");
   } else {
     nox_status_test_ = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag);
+    p->set<Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>>(
+        "NOX Status Test", nox_status_test_);
   }
 
   Teuchos::ParameterList
@@ -485,8 +487,8 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(
   dt_ = SSV::eval(delta_time_(0));
 
   // Resest status and status message for model failure test
-  nox_status_test_->status_message_ = "";
-  nox_status_test_->status_ = NOX::StatusTest::Unevaluated;
+  //nox_status_test_->status_message_ = "";
+  //nox_status_test_->status_ = NOX::StatusTest::Unevaluated;
 }
 
 
@@ -819,8 +821,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
           // Ensure that the stress was calculated properly
           if (failed == true) {
-            nox_status_test_->status_ = NOX::StatusTest::Failed;
-            nox_status_test_->status_message_ = "Failed on initial guess";
+            forceGlobalLoadStepReduction("Failed on initial guess");
             return;
           }
 
