@@ -1,6 +1,6 @@
 #!/bin/sh
 
-TRILINOS_DIR=/projects/AppComp/nightly_gahanse/cee-compute011/build
+TRILINOS_DIR=/projects/AppComp/nightly_gahanse/cee-compute011/test
 USE_LAME=OFF
 LAME_INC_DIR=/projects/sierra/linux_rh6/install/master/lame/include\;/projects/sierra/linux_rh6/install/master/Sierra/sierra_util/include\;/projects/sierra/linux_rh6/install/master/stk/stk_expreval/include\;/projects/sierra/linux_rh6/install/master/utility/include\;/projects/sierra/linux_rh6/install/master/Sierra/include
 LAME_LIB_DIR=/projects/sierra/linux_rh6/install/master/lame/lib\;/projects/sierra/linux_rh6/install/master/Sierra/sierra_util/lib\;/projects/sierra/linux_rh6/install/master/stk/stk_expreval/lib\;/projects/sierra/linux_rh6/install/master/utility/lib\;/projects/sierra/linux_rh6/install/master/Sierra/lib

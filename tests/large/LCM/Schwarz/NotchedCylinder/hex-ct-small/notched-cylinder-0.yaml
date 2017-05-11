@@ -31,7 +31,7 @@ ANONYMOUS:
       DBC on NS nodelist_5 for DOF X: 0.00000000e+00
       DBC on NS nodelist_6 for DOF Y: 0.00000000e+00
   Discretization: 
-    Number Of Time Derivatives: 1
+    Number Of Time Derivatives: 0
     Method: Ioss
     Exodus Input File Name: 'notched-cylinder-0.g'
     Exodus Output File Name: 'notched-cylinder-0.e'

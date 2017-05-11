@@ -4,7 +4,9 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
+add_subdirectory(Alternating)
 add_subdirectory(Cubes)
+add_subdirectory(Dynamic)
 if(ALBANY_DTK)
   add_subdirectory(ParallelCubes)
 endif()

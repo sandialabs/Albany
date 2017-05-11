@@ -41,9 +41,7 @@ public:
 
 private:
   template<typename TemperatureT>
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   KOKKOS_INLINE_FUNCTION
-#endif
   TemperatureT flowRate(const TemperatureT& T) const;
 
   const double pi, actenh, actenl, gascon, switchingT;
@@ -86,7 +84,6 @@ private:
   VISCTYPE visc_type;
   FLOWRATETYPE flowRate_type;
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
   typedef typename PHX::Device execution_space;
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
@@ -145,8 +142,6 @@ public:
   void glenslaw_xz (const TemprT &flowFactorVec, const int& cell) const;
 
   double R, x_0, y_0, R2;
-
-#endif
 
 };
 

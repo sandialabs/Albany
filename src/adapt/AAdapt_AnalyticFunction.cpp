@@ -50,6 +50,12 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Linear Y")
     F = Teuchos::rcp(new AAdapt::LinearY(neq, numDim, data));
   
+  else if(name == "Linear")
+    F = Teuchos::rcp(new AAdapt::Linear(neq, numDim, data));
+
+  else if(name == "Constant Box")
+    F = Teuchos::rcp(new AAdapt::ConstantBox(neq, numDim, data));
+
   else if(name == "About Z")
     F = Teuchos::rcp(new AAdapt::AboutZ(neq, numDim, data));
 
@@ -525,6 +531,47 @@ void AAdapt::LinearY::compute(double* x, const double* X) {
   x[1] = data[0] * X[0];
 
   if(numDim > 2) x[2] = 0.0;
+}
+//*****************************************************************************
+AAdapt::Linear::Linear(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((data.size() != neq * numDim),
+                             std::logic_error,
+                             "Error! Invalid call of Linear with " << neq
+                             << " " << numDim << "  " << data.size() << std::endl);
+}
+void AAdapt::Linear::compute(double* x, const double* X) {
+
+  for (auto eq = 0; eq < neq; ++eq) {
+    double s{0.0};
+    for (auto dim = 0; dim < numDim; ++dim) {
+      s += data[eq * numDim + dim] * X[dim];
+    }
+    x[eq] = s;
+  }
+}
+//*****************************************************************************
+AAdapt::ConstantBox::ConstantBox(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((data.size() != 2 * numDim + neq),
+                             std::logic_error,
+                             "Error! Invalid call of Linear with " << neq
+                             << " " << numDim << "  " << data.size() << std::endl);
+}
+void AAdapt::ConstantBox::compute(double* x, const double* X) {
+
+  bool in_box{true};
+  for (auto dim = 0; dim < numDim; ++dim) {
+    double const & lo = data[dim];
+    double const & hi = data[dim + numDim];
+    in_box = in_box && lo <= X[dim] && X[dim] <= hi;
+  }
+
+  if (in_box == true) {
+    for (auto eq = 0; eq < neq; ++eq) {
+      x[eq] = data[2 * numDim + eq];
+    }
+  }
 }
 //*****************************************************************************
 AAdapt::AboutZ::AboutZ(int neq_, int numDim_, Teuchos::Array<double> data_)

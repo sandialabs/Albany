@@ -45,6 +45,8 @@ struct NeohookeanKernel : public ParallelKernel<EvalT, Traits>
   using BaseKernel::setDependentField;
   using BaseKernel::setEvaluatedField;
   using BaseKernel::addStateVariable;
+
+  using BaseKernel::nox_status_test_;
   
   // Dependent MDFields
   ConstScalarField def_grad;
@@ -56,7 +58,7 @@ struct NeohookeanKernel : public ParallelKernel<EvalT, Traits>
   ScalarField stress;
   ScalarField energy;
   ScalarField tangent;
-  
+
   void init(Workset &workset,
        FieldMap<const ScalarT> &dep_fields,
        FieldMap<ScalarT> &eval_fields);

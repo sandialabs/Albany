@@ -18,6 +18,8 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
+#include "Teuchos_VerboseObject.hpp" 
+
 static const char *sol_tag_name[3] = {
       "Exodus Solution Name",
       "Exodus SolutionDot Name",
@@ -564,9 +566,8 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveVector(const Epetra_Vector
 //Tpetra version of above
 template<bool Interleaved>
 void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_Vector& solnT,
-    stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) {
-
-
+    stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) 
+{
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
 
@@ -578,31 +579,57 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_V
   // This is either numOwnedNodes or numOverlapNodes, depending on
   // which map is passed in
 
-   for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
-
+  for (stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
     const stk::mesh::Bucket& bucket = **it;
-
     int offset = 0;
-
     for(int k = 0; k < sol_index[0].size(); k++) {
-
       if(sol_index[0][k] == 1) { // Scalar
-
         SFT* field = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, sol_vector_name[0][k]);
         this->saveVectorHelperT(solnT, field, node_mapT, bucket, offset);
-
       }
-
       else {
         VFT* field = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, sol_vector_name[0][k]);
         this->saveVectorHelperT(solnT, field, node_mapT, bucket, offset);
-
       }
-
       offset += sol_index[0][k];
-
     }
+  }
+}
 
+template<bool Interleaved>
+void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_Vector& solnT,
+    const Tpetra_Vector& soln_dotT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) 
+{
+  typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
+  typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
+  Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream(); 
+  *out << "IKT WARNING: calling Albany::MultiSTKFieldContainer::saveSolnVectorT with soln_dotT, but " 
+       << "this function has not been extended to write soln_dotT properly to the Exodus file.  Exodus " 
+       << "file will contain only soln, not soln_dot.\n"; 
+
+  // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
+  stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, sel);
+
+
+  this->numNodes = node_mapT->getNodeNumElements(); // Needed for the getDOF function to work correctly
+  // This is either numOwnedNodes or numOverlapNodes, depending on
+  // which map is passed in
+
+  for (stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+    const stk::mesh::Bucket& bucket = **it;
+    int offset = 0;
+    for(int k = 0; k < sol_index[0].size(); k++) {
+      if(sol_index[0][k] == 1) { // Scalar
+        SFT* field = this->metaData->template get_field<SFT>(stk::topology::NODE_RANK, sol_vector_name[0][k]);
+        this->saveVectorHelperT(solnT, field, node_mapT, bucket, offset);
+      }
+      else {
+        VFT* field = this->metaData->template get_field<VFT>(stk::topology::NODE_RANK, sol_vector_name[0][k]);
+        //IKT, FIXME: saveVectorHelperT should be extended to take in soln_dotT! 
+        this->saveVectorHelperT(solnT, field, node_mapT, bucket, offset);
+      }
+      offset += sol_index[0][k];
+    }
   }
 }
 

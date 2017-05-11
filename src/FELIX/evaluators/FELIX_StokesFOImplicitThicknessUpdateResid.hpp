@@ -60,7 +60,6 @@ private:
 
   Kokkos::DynRankView<ScalarT, PHX::Device> Res;
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
@@ -69,7 +68,6 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const StokesFOImplicitThicknessUpdateResid_Tag& tag, const int& cell) const;
-#endif
 
 };
 }

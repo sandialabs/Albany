@@ -25,7 +25,7 @@ public:
 
   using ScalarT = typename EvalT::ScalarT;
 	using ValueT = typename Sacado::ValueType<ScalarT>::type;
-	
+
   using BaseKernel = ParallelKernel<EvalT, Traits>;
   using ScalarField = typename BaseKernel::ScalarField;
   using ConstScalarField = typename BaseKernel::ConstScalarField;
@@ -44,11 +44,16 @@ public:
   using BaseKernel::heat_capacity_;
   using BaseKernel::density_;
   // using BaseKernel::temperature_;
+
+  /// Pointer to NOX status test, allows the material model to force a global load step reduction
+  using BaseKernel::nox_status_test_;
   
   using BaseKernel::setDependentField;
   using BaseKernel::setEvaluatedField;
   using BaseKernel::addStateVariable;
   using BaseKernel::extractEvaluatedFieldArray;
+
+  using SSV = Sacado::ScalarValue<ScalarT>;
 
   ///
   /// Constructor
@@ -81,13 +86,20 @@ public:
   KOKKOS_INLINE_FUNCTION
   void operator() (int cell, int pt) const;
 
+  void finalize(
+      CP::StateMechanical<ScalarT, CP::MAX_DIM> const & state_mechanical,
+      CP::StateInternal<ScalarT, CP::MAX_SLIP> const & state_internal,
+      utility::StaticPointer<CP::Integrator<EvalT, CP::MAX_DIM, CP::MAX_SLIP>> const & integrator,
+      int const cell,
+      int const pt) const;
+
   ///
   ///  Set a NOX status test to Failed, which will trigger Piro to cut the global
   ///  load step, assuming the load-step-reduction feature is active.
   /// FIXME: This needs to be done outside of the material point loop
   /// (it's a race condition)
   void
-  forceGlobalLoadStepReduction()
+  forceGlobalLoadStepReduction(std::string const & message)
   {
     TEUCHOS_TEST_FOR_EXCEPTION(
         nox_status_test_.is_null(),
@@ -96,6 +108,7 @@ public:
             error accessing NOX status test.");
 
     nox_status_test_->status_ = NOX::StatusTest::Failed;
+    nox_status_test_->status_message_ = message;
   }
 
 private:
@@ -141,6 +154,12 @@ private:
 
   RealType
   reference_temperature_;
+
+  RealType
+  norm_slip_residual_;
+
+  int
+  num_iter_residual_;
   
   minitensor::Tensor<RealType, CP::MAX_DIM>
   element_block_orientation_;
@@ -173,10 +192,6 @@ private:
   bool
   read_orientations_from_mesh_;
 
-  /// Flag indicating failure in model calculation
-  bool
-  failed_;
-
   ///
   /// Solution options
   ///
@@ -195,10 +210,6 @@ private:
   /// Minisolver Minimizer
   minitensor::Minimizer<ValueT, CP::NLS_DIM>
   minimizer_;
-
-  /// Pointer to NOX status test, allows the material model to force a global load step reduction
-  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
-  nox_status_test_;
 
   ///
   /// Output options 
@@ -246,13 +257,13 @@ private:
   velocity_gradient_plastic_;
   
   ScalarField
-  source_;
-  
-  ScalarField
   cp_residual_;
   
   ScalarField
   cp_residual_iter_;
+
+  ScalarField
+  source_;
 
   std::vector<Teuchos::RCP<ScalarField>>
   slips_;

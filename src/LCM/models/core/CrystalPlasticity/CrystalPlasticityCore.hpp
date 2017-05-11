@@ -93,9 +93,15 @@ struct StateMechanical
   using TensorType = minitensor::Tensor<ScalarT, NumDimT>;
   using InputTensorType = minitensor::Tensor<RealType, NumDimT>;
 
-  StateMechanical(int num_dim, InputTensorType const & Fp_n)
+  StateMechanical(
+    int num_dim,
+    InputTensorType const & F_n,
+    InputTensorType const & Fp_n,
+    TensorType const & F_np1)
     : num_dim_(num_dim),
+      F_n_(F_n),
       Fp_n_(Fp_n),
+      F_np1_(F_np1),
       Fp_np1_(num_dim),
       Lp_np1_(num_dim),
       sigma_np1_(num_dim),
@@ -106,7 +112,13 @@ struct StateMechanical
   num_dim_;
 
   InputTensorType const
+  F_n_;
+
+  InputTensorType const
   Fp_n_;
+
+  TensorType const
+  F_np1_;
 
   TensorType
   Fp_np1_;

@@ -49,6 +49,7 @@ public:
    Teuchos::RCP<const Tpetra_MultiVector> getOverlappedSolution() const { return overlapped_soln; }
 
    Teuchos::RCP<Tpetra_Vector> updateAndReturnOverlapSolutionT(const Tpetra_Vector& solutionT /*not overlapped*/);
+   Teuchos::RCP<Tpetra_Vector> updateAndReturnOverlapSolutionDotT(const Tpetra_Vector& solution_dotT /*not overlapped*/);
    Teuchos::RCP<const Tpetra_MultiVector> updateAndReturnOverlapSolutionMV(const Tpetra_MultiVector& solutionT /*not overlapped*/);
 
    Teuchos::RCP<Tpetra_Vector> get_overlapped_fT() {return overlapped_fT;}

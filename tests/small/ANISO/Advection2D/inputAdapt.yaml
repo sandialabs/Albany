@@ -23,7 +23,7 @@ ANONYMOUS:
         Metric:
           Sources:
             Only Source:
-              Type: Hessian
+              Type: Variation
               Tag Name: Solution
               Knob: 1.1e-02
           Limit Lenths: true

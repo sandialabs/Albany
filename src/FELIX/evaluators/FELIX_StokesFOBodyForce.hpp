@@ -74,7 +74,6 @@ private:
   Teuchos::ParameterList* stereographicMapList;
   bool useStereographicMap;
 
-  #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
@@ -129,8 +128,6 @@ private:
   double R, x_0, y_0, R2;
 
   double rho_g_kernel;
-
-  #endif
 
 };
 }

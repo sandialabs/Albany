@@ -407,8 +407,7 @@ static void add_next_layer(
   // perform migration
   double t0 = PCU_Time();
   pMesh mesh = PM_mesh(sim_pm, 0);
-  pMigrator mig = Migrator_new(sim_pm, 0);
-  Migrator_reset(mig, 3);
+  pMigrator mig = Migrator_new(sim_pm, 3, 0);
   std::set<pRegion> doneRs;
   int rank = PMU_rank();
   if (rank != 0) {

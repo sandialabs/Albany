@@ -82,6 +82,7 @@ void ObserverImpl::observeSolutionT(
   const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT,
   const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotDotT)
 {
+  //IKT, 5/11/17, FIXME: pass nonOverlappedSolutionDotDotT to the following function
   app_->evaluateStateFieldManagerT(stamp, nonOverlappedSolutionDotT,
                                    Teuchos::null, nonOverlappedSolutionT);
   app_->getStateMgr().updateStates();

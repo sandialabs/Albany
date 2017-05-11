@@ -65,13 +65,16 @@ const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size
 // #define OUTPUT_TO_SCREEN
 
 Albany::STKDiscretization::
-STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
+STKDiscretization(
+                  const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
+                  Teuchos::RCP<Albany::AbstractSTKMeshStruct>& stkMeshStruct_,
                   const Teuchos::RCP<const Teuchos_Comm>& commT_,
                   const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_,
                   const std::map<int,std::vector<std::string> >& sideSetEquations_) :
 
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
+  discParams(discParams_),
   metaData(*stkMeshStruct_->metaData),
   bulkData(*stkMeshStruct_->bulkData),
   commT(commT_),
@@ -271,6 +274,13 @@ Albany::STKDiscretization::getCoords() const
 {
   return coords;
 }
+
+#ifdef ALBANY_CONTACT
+Teuchos::RCP<const Albany::ContactManager> Albany::STKDiscretization::getContactManager() const
+{
+  return contactManager;
+}
+#endif
 
 const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
 Albany::STKDiscretization::getSphereVolume() const
@@ -643,11 +653,21 @@ Albany::STKDiscretization::getWsPhysIndex() const
 }
 
 #if defined(ALBANY_EPETRA)
-void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped){
-
+void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped)
+{
   Teuchos::RCP<const Tpetra_Vector> solnT =
      Petra::EpetraVector_To_TpetraVectorConst(soln, commT);
   writeSolutionT(*solnT, time, overlapped);
+}
+
+void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const Epetra_Vector& soln_dot, 
+                                              const double time, const bool overlapped)
+{
+  Teuchos::RCP<const Tpetra_Vector> solnT =
+     Petra::EpetraVector_To_TpetraVectorConst(soln, commT);
+  Teuchos::RCP<const Tpetra_Vector> soln_dotT =
+     Petra::EpetraVector_To_TpetraVectorConst(soln_dot, commT);
+  writeSolutionT(*solnT, *soln_dotT, time, overlapped);
 }
 #endif
 
@@ -655,6 +675,14 @@ void Albany::STKDiscretization::writeSolutionT(
   const Tpetra_Vector& solnT, const double time, const bool overlapped)
 {
   writeSolutionToMeshDatabaseT(solnT, time, overlapped);
+  writeSolutionToFileT(solnT, time, overlapped);
+}
+
+void Albany::STKDiscretization::writeSolutionT(
+  const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, const double time, const bool overlapped)
+{
+  writeSolutionToMeshDatabaseT(solnT, soln_dotT, time, overlapped);
+  //IKT, FIXME? extend writeSolutionToFileT to take in soln_dotT? 
   writeSolutionToFileT(solnT, time, overlapped);
 }
 
@@ -668,12 +696,23 @@ void Albany::STKDiscretization::writeSolutionMV(
 void Albany::STKDiscretization::writeSolutionToMeshDatabaseT(
   const Tpetra_Vector& solnT, const double time, const bool overlapped)
 {
-  // Put solution as Epetra_Vector into STK Mesh
+  // Put solution as Tpetra_Vector into STK Mesh
   if (!overlapped)
     setSolutionFieldT(solnT);
   // soln coming in is overlapped
   else
     setOvlpSolutionFieldT(solnT);
+}
+
+void Albany::STKDiscretization::writeSolutionToMeshDatabaseT(
+  const Tpetra_Vector& solnT, const Tpetra_Vector &soln_dotT, const double time, const bool overlapped)
+{
+  // Put solution as Tpetra_Vector into STK Mesh
+  if (!overlapped)
+    setSolutionFieldT(solnT, soln_dotT);
+  // soln coming in is overlapped
+  else
+    setOvlpSolutionFieldT(solnT, soln_dotT);
 }
 
 void Albany::STKDiscretization::writeSolutionMVToMeshDatabase(
@@ -1096,6 +1135,22 @@ Albany::STKDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT)
 }
 
 void
+Albany::STKDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT)
+{
+
+  // Copy soln and soln_dot vectors into solution field, one node at a time
+  // Note that soln and soln_dot coming in is the local (non overlapped) soln and soln_dot
+
+  Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
+
+  // Iterate over the on-processor nodes
+  stk::mesh::Selector locally_owned = metaData.locally_owned_part();
+
+  container->saveSolnVectorT(solnT, soln_dotT, locally_owned, node_mapT);
+}
+
+
+void
 Albany::STKDiscretization::setSolutionFieldMV(const Tpetra_MultiVector& solnT)
 {
 
@@ -1123,6 +1178,21 @@ Albany::STKDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT)
 
   container->saveSolnVectorT(solnT, select_owned_or_shared, overlap_node_mapT);
 }
+
+void
+Albany::STKDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT)
+{
+  // Copy soln and soln_dot vectors into solution field, one node at a time
+  // Note that soln and soln_dot coming in is the local+ghost (overlapped) soln and soln_dot
+
+  Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
+
+  // Iterate over the processor-visible nodes
+  stk::mesh::Selector select_owned_or_shared = metaData.locally_owned_part() | metaData.globally_shared_part();
+
+  container->saveSolnVectorT(solnT, soln_dotT, select_owned_or_shared, overlap_node_mapT);
+}
+
 
 void
 Albany::STKDiscretization::setOvlpSolutionFieldMV(const Tpetra_MultiVector& solnT)
@@ -1971,6 +2041,7 @@ void Albany::STKDiscretization::computeSideSets(){
   for(int i = 0; i < sideSets.size(); i++)
     sideSets[i].clear(); // empty the ith map
 
+
   const stk::mesh::EntityRank element_rank = stk::topology::ELEMENT_RANK;
 
   // iterator over all side_rank parts found in the mesh
@@ -2052,6 +2123,11 @@ void Albany::STKDiscretization::computeSideSets(){
 
     ss++;
   }
+
+#ifdef ALBANY_CONTACT
+  contactManager = Teuchos::rcp(new Albany::ContactManager(discParams, commT, sideSets, getCoordinates(), 
+        node_mapT, wsElNodeID, wsElNodeEqID, stkMeshStruct->getMeshSpecs()));
+#endif
 }
 
 unsigned
@@ -3039,7 +3115,7 @@ Albany::STKDiscretization::updateMesh()
   {
     for (auto it : stkMeshStruct->sideSetMeshStructs)
     {
-      Teuchos::RCP<STKDiscretization> side_disc = Teuchos::rcp(new STKDiscretization(it.second,commT));
+      Teuchos::RCP<STKDiscretization> side_disc = Teuchos::rcp(new STKDiscretization(discParams,it.second,commT));
       side_disc->updateMesh();
       sideSetDiscretizations.insert(std::make_pair(it.first,side_disc));
       sideSetDiscretizationsSTK.insert(std::make_pair(it.first,side_disc));

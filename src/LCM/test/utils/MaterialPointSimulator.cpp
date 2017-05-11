@@ -313,7 +313,7 @@ int main(int ac, char* av[])
   //---------------------------------------------------------------------------
   // Time step
   Teuchos::ArrayRCP<ScalarT> delta_time(1);
-  delta_time[0] = step_size;;
+  delta_time[0] = step_size;
   Teuchos::ParameterList setDTP("SetFieldTimeStep");
   setDTP.set<std::string>("Evaluated Field Name", "Delta Time");
   setDTP.set<Teuchos::RCP<PHX::DataLayout>>("Evaluated Field Data Layout",
@@ -547,7 +547,7 @@ int main(int ac, char* av[])
   int numberOfEquations = 3;
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
 
-  Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct = Teuchos::rcp(
+  Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct = Teuchos::rcp(
       new Albany::TmplSTKMeshStruct<3>(
           discretizationParameterList,
           Teuchos::null,
@@ -561,7 +561,7 @@ int main(int ac, char* av[])
       stkMeshStruct->getMeshSpecs()[0]->worksetSize);
 
   Teuchos::RCP<Albany::AbstractDiscretization> discretization = Teuchos::rcp(
-      new Albany::STKDiscretization(stkMeshStruct, commT));
+      new Albany::STKDiscretization(discretizationParameterList, stkMeshStruct, commT));
 
   //---------------------------------------------------------------------------
   // Associate the discretization with the StateManager

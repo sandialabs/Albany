@@ -8,6 +8,7 @@
 #define LCM_ParallelConstitutiveModel_hpp
 
 #include "ConstitutiveModel.hpp"
+#include "NOX_StatusTest_ModelEvaluatorFlag.h"
 #include <functional>
 #include <memory>
 
@@ -191,6 +192,10 @@ protected:
 
   RealType
   density_;
+
+  /// Flag indicating failure in model calculation
+  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
+  nox_status_test_;
 };
  
 template<typename EvalT, typename Traits, typename Kernel>

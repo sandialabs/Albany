@@ -377,8 +377,8 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::saveVectorT(const Tpetra_Ve
 
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_Vector& solnT,
-    stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) {
-
+    stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) 
+{
 
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
 
@@ -388,12 +388,31 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetr
   // This is either numOwnedNodes or numOverlapNodes, depending on
   // which map is passed in
 
-   for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
-
+  for (stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
     const stk::mesh::Bucket& bucket = **it;
-
     this->saveVectorHelperT(solnT, solution_field[0], node_mapT, bucket, 0);
+  }
 
+}
+
+template<bool Interleaved>
+void Albany::OrdinarySTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_Vector& solnT,
+    const Tpetra_Vector& soln_dotT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) 
+{
+  //IKT, FIXME? throw exception if num_time_deriv == 0 and we are calling this function?
+  
+  typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
+
+  // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
+  stk::mesh::BucketVector const& all_elements = this->bulkData->get_buckets(stk::topology::NODE_RANK, sel);
+  this->numNodes = node_mapT->getNodeNumElements(); // Needed for the getDOF function to work correctly
+  // This is either numOwnedNodes or numOverlapNodes, depending on
+  // which map is passed in
+
+  for (stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+    const stk::mesh::Bucket& bucket = **it;
+    this->saveVectorHelperT(solnT, solution_field[0], node_mapT, bucket, 0);
+    this->saveVectorHelperT(soln_dotT, solution_field[1], node_mapT, bucket, 0);
   }
 
 }

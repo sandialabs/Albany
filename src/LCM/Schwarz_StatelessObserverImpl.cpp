@@ -66,9 +66,16 @@ observeSolutionT(
     Teuchos::RCP<Tpetra_Vector const> const
     overlapped_solution = apps_[m]->getAdaptSolMgrT()->
       updateAndReturnOverlapSolutionT(*non_overlapped_solution[m]);
-
-    apps_[m]->getDiscretization()->
-      writeSolutionT(*overlapped_solution, stamp, true);
+    if (Teuchos::rcpFromRef(*non_overlapped_solution_dot[m]) != Teuchos::null) {
+      const Teuchos::RCP<const Tpetra_Vector> overlapped_solution_dot =
+        apps_[m]->getAdaptSolMgrT()->updateAndReturnOverlapSolutionDotT(*non_overlapped_solution_dot[m]);
+      apps_[m]->getDiscretization()->writeSolutionT(
+        *overlapped_solution, *overlapped_solution_dot, stamp, /*overlapped =*/ true);
+    }
+    else {
+      apps_[m]->getDiscretization()->
+        writeSolutionT(*overlapped_solution, stamp, true);
+    }
   }
   return;
 }
