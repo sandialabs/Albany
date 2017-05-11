@@ -62,43 +62,11 @@ computeState(
   auto
   kernel_ptr = kernel_.get();
 
-#if 0
-  NOX::StatusTest::StatusType
-  status{NOX::StatusTest::Unevaluated};
-
-  std::string
-  message{""};
-
   Kokkos::parallel_for(
     Kokkos::RangePolicy<Kokkos::Schedule<Kokkos::Dynamic>>(0, workset.numCells),
     [=](int cell) { 
       for (int pt = 0; pt < num_pts_; ++pt) {
         (*kernel_ptr)(cell, pt);
-        if (kernel_ptr->nox_status_test_->status_ == NOX::StatusTest::Failed) {
-          status = kernel_ptr->nox_status_test_->status_;
-          message = kernel_ptr->nox_status_test_->status_message_;
-        }
-      }
-      kernel_ptr->nox_status_test_->status_ = status;
-      kernel_ptr->nox_status_test_->status_message_ = message;
-    });
-#endif
-
-  Kokkos::parallel_for(
-    Kokkos::RangePolicy<Kokkos::Schedule<Kokkos::Dynamic>>(0, workset.numCells),
-    [=](int cell) { 
-      bool failed{false};
-      bool all_ok{true};
-      for (int pt = 0; pt < num_pts_; ++pt) {
-        (*kernel_ptr)(cell, pt);
-        all_ok = all_ok && (failed == false);
-        // std::cout << "parallel_for diagnostics:" << std::endl;
-        // std::cout << workset.wsIndex << cell << pt << std::endl;
-        // std::cout << kernel_ptr->nox_status_test_->status_ << std::endl;
-        // std::cout << kernel_ptr->nox_status_test_->status_message_ << std::endl;
-        // if (kernel_ptr->nox_status_test_->status_ == NOX::StatusTest::Failed) {
-        //   break;
-        // }
       }
     });
 

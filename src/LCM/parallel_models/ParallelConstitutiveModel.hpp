@@ -195,7 +195,7 @@ protected:
 
   /// Flag indicating failure in model calculation
   Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
-  nox_status_test_;
+  nox_status_test_{Teuchos::null};
 };
  
 template<typename EvalT, typename Traits, typename Kernel>

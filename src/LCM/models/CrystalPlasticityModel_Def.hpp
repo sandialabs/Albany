@@ -76,6 +76,8 @@ CrystalPlasticityKernel(
             "NOX Status Test");
   } else {
     nox_status_test_ = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag);
+    p->set<Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>>(
+        "NOX Status Test", nox_status_test_);
   }
 
   Teuchos::ParameterList
@@ -429,12 +431,8 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(
   if (read_orientations_from_mesh_)
   {
     rotation_matrix_transpose_ = workset.wsLatticeOrientation;
-
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      rotation_matrix_transpose_.is_null(),
-      std::logic_error,
-      "\n**** Error in CrystalPlasticityModel: \
-         rotation matrix not found on genesis mesh.\n");
+    ALBANY_ASSERT(rotation_matrix_transpose_.is_null() == false,
+        "Rotation matrix not found on genesis mesh");
   }
 
   //
@@ -485,8 +483,8 @@ void CrystalPlasticityKernel<EvalT, Traits>::init(
   dt_ = SSV::eval(delta_time_(0));
 
   // Resest status and status message for model failure test
-  nox_status_test_->status_message_ = "";
-  nox_status_test_->status_ = NOX::StatusTest::Unevaluated;
+  //nox_status_test_->status_message_ = "";
+  //nox_status_test_->status_ = NOX::StatusTest::Unevaluated;
 }
 
 
@@ -494,15 +492,18 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION void
 CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 {
+  // If a previous constitutive calculation has failed, exit immediately.
+  if (nox_status_test_->status_ == NOX::StatusTest::Failed) {
+    if (verbosity_ == CP::Verbosity::DEBUG) {
+      std::cout << "  ****Returning on failed****" << std::endl;
+    }
+    return;
+  }
   // TODO: In the future for CUDA this should be moved out of the kernel because
   // it uses dynamic allocation for the buffer. It should also be modified to use 
   // cudaMalloc.
   utility::StaticAllocator 
   allocator(1024 * 1024);
-
-  if (nox_status_test_->status_ == NOX::StatusTest::Failed) {
-    return;
-  }
 
   //
   // Known quantities
@@ -819,8 +820,7 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
 
           // Ensure that the stress was calculated properly
           if (failed == true) {
-            nox_status_test_->status_ = NOX::StatusTest::Failed;
-            nox_status_test_->status_message_ = "Failed on initial guess";
+            forceGlobalLoadStepReduction("Failed on initial guess");
             return;
           }
 
@@ -918,10 +918,12 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   integrator = integratorFactory(integration_scheme_, residual_type_);
 
   integrator->update();
-  
+
+  // Check to make sure there is only one status test
+  ALBANY_ASSERT(integrator->getStatus() == nox_status_test_->status_);
+
   // Exit early if update state is not successful
-  if(integrator->getStatus() == NOX::StatusTest::Failed) {
-    // forceGlobalLoadStepReduction(integrator->getMessage());
+  if(nox_status_test_->status_ == NOX::StatusTest::Failed) {
     return;
   }
 

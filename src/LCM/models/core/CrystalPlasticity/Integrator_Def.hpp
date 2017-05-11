@@ -9,12 +9,7 @@ void
 CP::Integrator<EvalT, NumDimT, NumSlipT>::forceGlobalLoadStepReduction(
   std::string const & message) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      nox_status_test_.is_null(),
-      std::logic_error,
-      "\n**** Error in CrystalPlasticityModel: \
-          error accessing NOX status test.");
-
+  ALBANY_ASSERT(nox_status_test_.is_null() == false, "Invalid NOX status test");
   nox_status_test_->status_ = NOX::StatusTest::Failed;
   nox_status_test_->status_message_ = message;
 }

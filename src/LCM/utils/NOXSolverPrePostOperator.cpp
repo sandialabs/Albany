@@ -58,6 +58,7 @@ runPreSolve(NOX::Solver::Generic const & solver)
   // This is needed for step reduction if numerics fails.
   if(status_test_.is_null() == false){
     status_test_->status_ = NOX::StatusTest::Unevaluated;
+    status_test_->status_message_ = "";
   }
 
   // This is needed for Schwarz coupling
