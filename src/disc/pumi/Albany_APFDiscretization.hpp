@@ -158,9 +158,14 @@ class APFDiscretization : public Albany::AbstractDiscretization {
     void writeAnySolutionToFile(const double time);
     void writeSolutionT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
     void writeSolutionT(const Tpetra_Vector& soln, const Tpetra_Vector &soln_dot, const double time, const bool overlapped = false);
+    void writeSolutionT(const Tpetra_Vector& soln, const Tpetra_Vector &soln_dot, 
+                        const Tpetra_Vector& soln_dotdot, const double time, const bool overlapped = false);
     void writeSolutionMV(const Tpetra_MultiVector& soln, const double time, const bool overlapped = false);
     void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
     void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const Tpetra_Vector &soln_dot, 
+                                      const double time, const bool overlapped = false);
+    void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const Tpetra_Vector &soln_dot, 
+                                      const Tpetra_Vector& soln_dotdot, 
                                       const double time, const bool overlapped = false);
     void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector& soln, const double time, const bool overlapped = false);
     void writeSolutionToFileT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);

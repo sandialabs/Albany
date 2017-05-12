@@ -217,9 +217,14 @@ namespace Albany {
 
    void writeSolutionT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);
    void writeSolutionT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, const double time, const bool overlapped = false);
+   void writeSolutionT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
+                       const Tpetra_Vector& soln_dotdotT, const double time, const bool overlapped = false);
    void writeSolutionMV(const Tpetra_MultiVector& solnT, const double time, const bool overlapped = false);
    void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false);
    void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const Tpetra_Vector &solution_dotT, 
+                                     const double time, const bool overlapped = false);
+   void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const Tpetra_Vector &solution_dotT, 
+                                     const Tpetra_Vector &solution_dotdotT, 
                                      const double time, const bool overlapped = false);
    void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false);
    void writeSolutionToFileT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);

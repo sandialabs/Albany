@@ -227,10 +227,18 @@ class AbstractDiscretization {
     virtual void writeSolutionT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
     virtual void writeSolutionT(const Tpetra_Vector &solutionT, const Tpetra_Vector &solution_dotT, 
                                 const double time, const bool overlapped = false) = 0;
+    virtual void writeSolutionT(const Tpetra_Vector &solutionT, const Tpetra_Vector &solution_dotT, 
+                                const Tpetra_Vector &solution_dotdotT, 
+                                const double time, const bool overlapped = false) = 0;
     virtual void writeSolutionMV(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false) = 0;
     //! Write the solution to the mesh database.
     virtual void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
-    virtual void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const Tpetra_Vector &solution_dotT, 
+    virtual void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, 
+                                              const Tpetra_Vector &solution_dotT, 
+                                              const double time, const bool overlapped = false) = 0;
+    virtual void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, 
+                                              const Tpetra_Vector &solution_dotT, 
+                                              const Tpetra_Vector &solution_dotdotT, 
                                               const double time, const bool overlapped = false) = 0;
     virtual void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false) = 0;
     //! Write the solution to file. Must call writeSolutionT first.

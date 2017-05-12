@@ -97,10 +97,9 @@ void StatelessObserverImpl::observeSolutionT (
     if (nonOverlappedSolutionDotDotT != Teuchos::null) {
       const Teuchos::RCP<const Tpetra_Vector> overlappedSolutionDotDotT =
         app_->getAdaptSolMgrT()->updateAndReturnOverlapSolutionDotDotT(*nonOverlappedSolutionDotDotT);
-      //IKT, 5/12/17, FIXME: add DotDot to writeSolutionT and change the following line
-      //to pass in this argument 
       app_->getDiscretization()->writeSolutionT(
-        *overlappedSolutionT, *overlappedSolutionDotT, stamp, /*overlapped =*/ true);
+        *overlappedSolutionT, *overlappedSolutionDotT, *overlappedSolutionDotDotT, 
+        stamp, /*overlapped =*/ true);
     }
     else {
       app_->getDiscretization()->writeSolutionT(

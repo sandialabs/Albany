@@ -686,6 +686,15 @@ void Albany::STKDiscretization::writeSolutionT(
   writeSolutionToFileT(solnT, time, overlapped);
 }
 
+void Albany::STKDiscretization::writeSolutionT(
+  const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
+  const Tpetra_Vector& soln_dotdotT, const double time, const bool overlapped)
+{
+  writeSolutionToMeshDatabaseT(solnT, soln_dotT, soln_dotdotT, time, overlapped);
+  //IKT, FIXME? extend writeSolutionToFileT to take in soln_dotT and soln_dotdotT? 
+  writeSolutionToFileT(solnT, time, overlapped);
+}
+
 void Albany::STKDiscretization::writeSolutionMV(
   const Tpetra_MultiVector& solnT, const double time, const bool overlapped)
 {
@@ -715,6 +724,19 @@ void Albany::STKDiscretization::writeSolutionToMeshDatabaseT(
     setOvlpSolutionFieldT(solnT, soln_dotT);
 }
 
+void Albany::STKDiscretization::writeSolutionToMeshDatabaseT(
+  const Tpetra_Vector& solnT, const Tpetra_Vector &soln_dotT, 
+  const Tpetra_Vector& soln_dotdotT, const double time, const bool overlapped)
+{
+  //IKT, FIXME, 5/12/17: extend setSolutionFieldT and setOvlpSolutionFieldT 
+  //to take in soln_dotdotT!  
+  // Put solution as Tpetra_Vector into STK Mesh
+  if (!overlapped)
+    setSolutionFieldT(solnT, soln_dotT);
+  // soln coming in is overlapped
+  else
+    setOvlpSolutionFieldT(solnT, soln_dotT);
+}
 void Albany::STKDiscretization::writeSolutionMVToMeshDatabase(
   const Tpetra_MultiVector& solnT, const double time, const bool overlapped)
 {
