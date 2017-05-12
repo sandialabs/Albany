@@ -138,7 +138,11 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
                             const Teuchos::RCP<const Tpetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) = 0;
     virtual void saveSolnVectorT(const Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
     virtual void saveSolnVectorT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
-                                 stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
+                                 stk::mesh::Selector& sel, 
+                                 const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
+    virtual void saveSolnVectorT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
+                                 const Tpetra_Vector& soln_dotdotT, stk::mesh::Selector& sel, 
+                                 const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
     virtual void saveResVectorT(const Tpetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_map) = 0;
     virtual void saveSolnMultiVector(const Tpetra_MultiVector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
 

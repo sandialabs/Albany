@@ -345,12 +345,16 @@ namespace Albany {
     //Tpetra version of above
     void setSolutionFieldT(const Tpetra_Vector& solnT);
     void setSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT);
+    void setSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
+                           const Tpetra_Vector& soln_dotdotT);
     void setSolutionFieldMV(const Tpetra_MultiVector& solnT);
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local + neighbor (overlapped) solution
     void setOvlpSolutionFieldT(const Tpetra_Vector& solnT);
     void setOvlpSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT);
+    void setOvlpSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
+                               const Tpetra_Vector& soln_dotdotT);
     void setOvlpSolutionFieldMV(const Tpetra_MultiVector& solnT);
 
     double monotonicTimeLabel(const double time);

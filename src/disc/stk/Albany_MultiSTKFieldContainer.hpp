@@ -50,6 +50,9 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
     void saveSolnVectorT(const Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
     void saveSolnVectorT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
                          stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+    void saveSolnVectorT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
+                         const Tpetra_Vector& soln_dotdotT, 
+                         stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
 
     void saveSolnMultiVector(const Tpetra_MultiVector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
 
