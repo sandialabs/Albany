@@ -87,7 +87,7 @@ void ObserverImpl::observeSolutionT(
   app_->getStateMgr().updateStates();
 
   StatelessObserverImpl::observeSolutionT(stamp, nonOverlappedSolutionT,
-                                          nonOverlappedSolutionDotT);
+                                          nonOverlappedSolutionDotT, nonOverlappedSolutionDotDotT);
 }
 
 void ObserverImpl::observeSolutionT(

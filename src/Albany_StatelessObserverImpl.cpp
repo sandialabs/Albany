@@ -84,6 +84,37 @@ void StatelessObserverImpl::observeSolutionT (
 }
 
 void StatelessObserverImpl::observeSolutionT (
+  double stamp, const Tpetra_Vector &nonOverlappedSolutionT,
+  const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT,
+  const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotDotT)
+{
+  Teuchos::TimeMonitor timer(*solOutTime_);
+  const Teuchos::RCP<const Tpetra_Vector> overlappedSolutionT =
+    app_->getAdaptSolMgrT()->updateAndReturnOverlapSolutionT(nonOverlappedSolutionT);
+  if (nonOverlappedSolutionDotT != Teuchos::null) {
+    const Teuchos::RCP<const Tpetra_Vector> overlappedSolutionDotT =
+      app_->getAdaptSolMgrT()->updateAndReturnOverlapSolutionDotT(*nonOverlappedSolutionDotT);
+    if (nonOverlappedSolutionDotDotT != Teuchos::null) {
+      const Teuchos::RCP<const Tpetra_Vector> overlappedSolutionDotDotT =
+        app_->getAdaptSolMgrT()->updateAndReturnOverlapSolutionDotDotT(*nonOverlappedSolutionDotDotT);
+      //IKT, 5/12/17, FIXME: add DotDot to writeSolutionT and change the following line
+      //to pass in this argument 
+      app_->getDiscretization()->writeSolutionT(
+        *overlappedSolutionT, *overlappedSolutionDotT, stamp, /*overlapped =*/ true);
+    }
+    else {
+      app_->getDiscretization()->writeSolutionT(
+        *overlappedSolutionT, *overlappedSolutionDotT, stamp, /*overlapped =*/ true);
+   }
+  }
+  else {
+    app_->getDiscretization()->writeSolutionT(
+      *overlappedSolutionT, stamp, /*overlapped =*/ true);
+  }
+}
+
+
+void StatelessObserverImpl::observeSolutionT (
   double stamp, const Tpetra_MultiVector &nonOverlappedSolutionT)
 {
   Teuchos::TimeMonitor timer(*solOutTime_);
