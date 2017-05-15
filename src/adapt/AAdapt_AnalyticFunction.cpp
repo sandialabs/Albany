@@ -59,6 +59,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "About Z")
     F = Teuchos::rcp(new AAdapt::AboutZ(neq, numDim, data));
 
+  else if(name == "Gaussian Z")
+    F = Teuchos::rcp(new AAdapt::GaussianZ(neq, numDim, data));
+
   else if(name == "Circle")
     F = Teuchos::rcp(new AAdapt::Circle(neq, numDim, data));
 
@@ -586,6 +589,25 @@ void AAdapt::AboutZ::compute(double* x, const double* X) {
   x[1] =  data[0] * X[0];
 
   if(numDim > 2) x[2] = 0.0;
+}
+//*****************************************************************************
+AAdapt::GaussianZ::GaussianZ(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((neq < 2) || (numDim < 2) || (data.size() != 3),
+                             std::logic_error,
+                             "Error! Invalid call of GaussianZ with " << neq
+                             << " " << numDim << "  " << data.size() << std::endl);
+}
+void AAdapt::GaussianZ::compute(double* x, const double* X) {
+
+  double const a = data[0];
+  double const b = data[1];
+  double const c = data[2];
+  double const d = X[2] - b;
+
+  x[0] = 0.0;
+  x[1] = 0.0;
+  x[2] =  a * std::exp(- d * d / c / c / 2.0);
 }
 //*****************************************************************************
 AAdapt::Circle::Circle(int neq_, int numDim_, Teuchos::Array<double> data_)
