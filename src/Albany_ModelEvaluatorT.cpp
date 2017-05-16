@@ -621,7 +621,7 @@ Albany::ModelEvaluatorT::evalModelImpl(
   if (supports_xdotdot == true) {
     omega = inArgsT.get_W_x_dot_dot_coeff();
     //The following case is to support second order time-integrators in Piro
-    if (abs(omega) < 1.0e-14) { 
+    if (std::abs(omega) < 1.0e-14) { 
       if (Teuchos::nonnull(this->get_x_dotdot())) {
         x_dotdotT = ConverterT::getTpetraVector(this->get_x_dotdot());
         omega = this->get_omega(); 
