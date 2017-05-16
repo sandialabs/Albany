@@ -2,7 +2,7 @@
 ---
 ANONYMOUS:
   Scaling: 
-    Scale: 1.0e-01
+    Scale: 1.0e0
   Problem: 
     Name: Mechanics 3D
     Phalanx Graph Visualization Detail: 0
@@ -10,7 +10,7 @@ ANONYMOUS:
     Solution Method: Transient Tempus
     Initial Condition: 
       Function: Gaussian Z
-      Function Data: [0.01, 0.0, 0.02]
+      Function Data: [0.01, 0.5, 0.02]
     Initial Condition Dot: 
       Function: Constant
       Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00]
