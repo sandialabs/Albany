@@ -71,17 +71,29 @@ endif ()
 
 set (extra_cxx_flags "")
 
+find_program(UNAME NAMES uname)
+macro(getuname name flag)
+  exec_program("${UNAME}" ARGS "${flag}" OUTPUT_VARIABLE "${name}")
+endmacro(getuname)
+
+getuname(osname -s)
+getuname(osrel  -r)
+getuname(cpu    -m)
+
 # Begin User inputs:
-set (CTEST_SITE "cee-compute011.sandia.gov" ) # generally the output of hostname
+#set (CTEST_SITE "cee-compute011.sandia.gov" ) # generally the output of hostname
+SITE_NAME(CTEST_SITE) # directly set CTEST_SITE to the output of `hostname`
 set (CTEST_DASHBOARD_ROOT "$ENV{INSTALL_DIRECTORY}" ) # writable path
 set (CTEST_SCRATCH_ROOT "$ENV{SCRATCH_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_ROOT "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
 set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
+#set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
+#set (CTEST_BUILD_NAME "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
+set (CTEST_BUILD_NAME "${osname}-${osrel}-${CTEST_BUILD_OPTION}-${CTEST_BUILD_CONFIGURATION}")
 set (CTEST_BINARY_NAME build)
 set (CTEST_INSTALL_NAME test)
 
