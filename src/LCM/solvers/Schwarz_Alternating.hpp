@@ -10,7 +10,7 @@
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Albany_ModelEvaluatorT.hpp"
-#include "NOXSolverPrePostOperator.h"
+#include "NOX_PrePostOperator_Vector.H"
 #include "Schwarz_SolutionSniffer.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
@@ -133,7 +133,7 @@ private:
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   apps_;
 
-  Teuchos::Array<Teuchos::RCP<NOXSolverPrePostOperator>>
+  Teuchos::Array<Teuchos::RCP<SolutionSniffer>>
   convergence_ops_;
 
   Teuchos::Array<Teuchos::RCP<Albany::AbstractSTKMeshStruct>>

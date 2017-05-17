@@ -116,13 +116,22 @@ SchwarzAlternating(
     if (have_ppo == true) {
       ppo = solver_opts.get<decltype(ppo)>(ppo_str);
     } else {
-      ppo = Teuchos::rcp(new NOXSolverPrePostOperator);
+      ppo = Teuchos::rcp(new NOX::PrePostOperatorVector);
       solver_opts.set(ppo_str, ppo);
       ALBANY_ASSERT(solver_opts.isParameter(ppo_str) == true);
     }
 
-    Teuchos::RCP<NOXSolverPrePostOperator>
-    convergence_op = Teuchos::rcp_dynamic_cast<NOXSolverPrePostOperator>(ppo);
+    constexpr bool
+    throw_on_fail{true};
+
+    Teuchos::RCP<NOX::PrePostOperatorVector>
+    ppo_vector = Teuchos::rcp_dynamic_cast<NOX::PrePostOperatorVector>
+    (ppo, throw_on_fail);
+
+    Teuchos::RCP<SolutionSniffer>
+    convergence_op = Teuchos::rcp(new SolutionSniffer);
+
+    ppo_vector->pushBack(convergence_op);
 
     convergence_ops_[subdomain] = convergence_op;
 
@@ -620,7 +629,7 @@ SchwarzLoop() const
       solver.evalModel(in_args, out_args);
 
       // After solve, get info to check convergence
-      Teuchos::RCP<NOXSolverPrePostOperator>
+      Teuchos::RCP<SolutionSniffer>
       convergence_op = convergence_ops_[subdomain];
 
       norms_init(subdomain) = convergence_op->getInitialNorm();
