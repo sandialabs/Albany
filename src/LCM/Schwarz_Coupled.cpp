@@ -1131,7 +1131,7 @@ evalModelImpl(
             jacs_[m]->getLocalRowCopy(i, Indices(), Values(), NumEntries);
             //Compute abs row rum 
             for (auto j = 0; j < NumEntries; j++)
-              absrowsum_nonconstView[i] += abs(Values[j]);
+              absrowsum_nonconstView[i] += std::abs(Values[j]);
           }
           //Invert absrowsum 
           Teuchos::RCP<Tpetra_Vector> invabsrowsum = Teuchos::rcp(
