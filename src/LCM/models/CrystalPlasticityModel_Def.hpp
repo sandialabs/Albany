@@ -650,6 +650,10 @@ CrystalPlasticityKernel<EvalT, Traits>::operator()(int cell, int pt) const
   {
     switch (predictor_slip_)
     {
+      case CP::PredictorSlip::NONE:
+      {
+      } break;
+
       case CP::PredictorSlip::RATE:
       {
         for (int s(0); s < num_slip_; ++s) {
