@@ -65,27 +65,27 @@ set(evaluator-headers
 
 #LCM model evaluators 
 set(model-eval-sources
-  "${LCM_DIR}/Schwarz_Alternating.cpp"
-  "${LCM_DIR}/Schwarz_ObserverImpl.cpp"
-  "${LCM_DIR}/Schwarz_PiroObserver.cpp"
-  "${LCM_DIR}/Schwarz_StatelessObserverImpl.cpp"
+  "${LCM_DIR}/solvers/Schwarz_Alternating.cpp"
+  "${LCM_DIR}/solvers/Schwarz_ObserverImpl.cpp"
+  "${LCM_DIR}/solvers/Schwarz_PiroObserver.cpp"
+  "${LCM_DIR}/solvers/Schwarz_StatelessObserverImpl.cpp"
 )
 set(model-eval-headers
-  "${LCM_DIR}/Schwarz_Alternating.hpp"
-  "${LCM_DIR}/Schwarz_ObserverImpl.hpp"
-  "${LCM_DIR}/Schwarz_PiroObserver.hpp"
-  "${LCM_DIR}/Schwarz_StatelessObserverImpl.hpp"
+  "${LCM_DIR}/solvers/Schwarz_Alternating.hpp"
+  "${LCM_DIR}/solvers/Schwarz_ObserverImpl.hpp"
+  "${LCM_DIR}/solvers/Schwarz_PiroObserver.hpp"
+  "${LCM_DIR}/solvers/Schwarz_StatelessObserverImpl.hpp"
 )
 IF (ALBANY_HAVE_STK)
   set(model-eval-sources ${model-eval-sources}
-    "${LCM_DIR}/Schwarz_BoundaryJacobian.cpp"
-    "${LCM_DIR}/Schwarz_CoupledJacobian.cpp"
-    "${LCM_DIR}/Schwarz_Coupled.cpp"
+    "${LCM_DIR}/solvers/Schwarz_BoundaryJacobian.cpp"
+    "${LCM_DIR}/solvers/Schwarz_CoupledJacobian.cpp"
+    "${LCM_DIR}/solvers/Schwarz_Coupled.cpp"
   )
   set(model-eval-headers ${model-eval-headers}
-    "${LCM_DIR}/Schwarz_BoundaryJacobian.hpp"
-    "${LCM_DIR}/Schwarz_CoupledJacobian.hpp"
-    "${LCM_DIR}/Schwarz_Coupled.hpp"
+    "${LCM_DIR}/solvers/Schwarz_BoundaryJacobian.hpp"
+    "${LCM_DIR}/solvers/Schwarz_CoupledJacobian.hpp"
+    "${LCM_DIR}/solvers/Schwarz_Coupled.hpp"
   )
 ENDIF(ALBANY_HAVE_STK)
 
