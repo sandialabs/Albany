@@ -109,6 +109,7 @@ setStatusTest(Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> status_test)
 {
   status_test_ = status_test;
 }
+
 //
 //
 //

@@ -11,6 +11,7 @@
 #include "Albany_DataTypes.hpp"
 #include "Albany_ModelEvaluatorT.hpp"
 #include "NOXSolverPrePostOperator.h"
+#include "Schwarz_SolutionSniffer.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
 
