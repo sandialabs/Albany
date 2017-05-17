@@ -88,8 +88,9 @@ def runtest(albany_command,yaml_file_name):
 
     if return_code != 0:
         result = return_code
-        with open(log_file_name, 'r') as log_file:
-            print log_file.read()
+
+    with open(log_file_name, 'r') as log_file:
+        print log_file.read()
         
     return result
 
