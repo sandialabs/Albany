@@ -7,11 +7,11 @@
 #if !defined(LCM_SchwarzAlternating_hpp)
 #define LCM_SchwarzAlternating_hpp
 
+#include "../utils/SolutionSniffer.hpp"
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Albany_ModelEvaluatorT.hpp"
 #include "NOX_PrePostOperator_Vector.H"
-#include "Schwarz_SolutionSniffer.hpp"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
 

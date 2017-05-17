@@ -15,10 +15,10 @@
 #include "Kinematics.hpp"
 #include "MaterialDatabase.h"
 #include "MechanicsResidual.hpp"
-#include "NOXSolverPrePostOperator.h"
 #include "PHAL_NSMaterialProperty.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "PHAL_Source.hpp"
+#include "SolutionSniffer.hpp"
 #include "Time.hpp"
 
 // Helper functions
@@ -389,9 +389,9 @@ applyProblemSpecificSolverSettings(
     *statusTestsParameterList = newStatusTestParameterList;
 
     // Create a NOX observer that will reset the status flag at the beginning of a nonlinear solve
-    Teuchos::RCP<NOX::Abstract::PrePostOperator> pre_post_operator = Teuchos::rcp(new LCM::NOXSolverPrePostOperator);
-    Teuchos::RCP<LCM::NOXSolverPrePostOperator> nox_solver_pre_post_operator =
-    Teuchos::rcp_dynamic_cast<LCM::NOXSolverPrePostOperator>(pre_post_operator);
+    Teuchos::RCP<NOX::Abstract::PrePostOperator> pre_post_operator = Teuchos::rcp(new LCM::SolutionSniffer);
+    Teuchos::RCP<LCM::SolutionSniffer> nox_solver_pre_post_operator =
+    Teuchos::rcp_dynamic_cast<LCM::SolutionSniffer>(pre_post_operator);
     Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> statusTest =
     Teuchos::rcp_dynamic_cast<NOX::StatusTest::ModelEvaluatorFlag>(nox_status_test_);
     nox_solver_pre_post_operator->setStatusTest(statusTest);
