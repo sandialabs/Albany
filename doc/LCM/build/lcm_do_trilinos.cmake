@@ -132,6 +132,12 @@ function(lcm_do_trilinos)
   if (ENV{LCM_SLFAD_SIZE})
     set(CONFIG_OPTS ${CONFIG_OPTS} $ENV{LCM_SLFAD_SIZE})
   endif()
+  if (ENV{LCM_LINK_FLAGS})
+    set(CONFIG_OPTS ${CONFIG_OPTS}
+        "-DCMAKE_EXE_LINKER_FLAGS:STRING=$ENV{LCM_LINK_FLAGS}"
+        "-DCMAKE_SHARED_LINKER_FLAGS:STRING=$ENV{LCM_LINK_FLAGS}"
+       )
+  endif()
   set(EXTRA_REPOS)
   if (EXISTS "${PACKAGE_DIR}/DataTransferKit")
     set(EXTRA_REPOS ${EXTRA_REPOS} DataTransferKit)

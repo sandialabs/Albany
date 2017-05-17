@@ -49,6 +49,12 @@ function(lcm_do_albany)
   if (ENV{LCM_SLFAD_SIZE})
     set(CONFIG_OPTS ${CONFIG_OPTS} "-DSLFAD_SIZE=$ENV{LCM_SLFAD_SIZE}")
   endif()
+  if (ENV{LCM_LINK_FLAGS})
+    set(CONFIG_OPTS ${CONFIG_OPTS}
+        "-DCMAKE_EXE_LINKER_FLAGS:STRING=$ENV{LCM_LINK_FLAGS}"
+        "-DCMAKE_SHARED_LINKER_FLAGS:STRING=$ENV{LCM_LINK_FLAGS}"
+       )
+  endif()
   set(ARG_BOOL_OPTS)
   foreach (BOOL_OPT IN LISTS BOOL_OPTS)
     if (ARG_${BOOL_OPT})

@@ -49,6 +49,7 @@ if { [is-loaded lcm/sems] } {
   setenv                  NETCDF_LIB      $netcdf_lib
   setenv                  YAML_CPP_INC    $yaml_cpp_inc
   setenv                  YAML_CPP_LIB    $yaml_cpp_lib
+  setenv                  LCM_LINK_FLAGS  -L$boost_lib
   prepend-path            LD_LIBRARY_PATH $mpi_root/lib
   prepend-path            LD_LIBRARY_PATH $netcdf_lib
   prepend-path            PATH            $mpi_root/bin
