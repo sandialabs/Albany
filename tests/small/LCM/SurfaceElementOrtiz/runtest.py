@@ -39,4 +39,8 @@ if result != 0:
     print "%s test has failed" % name
     sys.exit(result)
 
+with open(log_file_name, 'r') as log_file:
+    print log_file.read() 
+
+
 sys.exit(result)
