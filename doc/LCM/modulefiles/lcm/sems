@@ -2,6 +2,8 @@
 
 module-whatis "LCM SEMS base environment"
 
+setenv LCM_ENV_TYPE SEMS
+
 module load lcm/common
 
 module load sems-env

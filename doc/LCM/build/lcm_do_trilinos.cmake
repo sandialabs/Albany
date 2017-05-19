@@ -17,7 +17,7 @@ function(lcm_do_trilinos)
   set(UNARY_OPTS
       "BUILD_THREADS"
       "RESULT_VARIABLE"
-      "CDASH_SUFFIX"
+      "CDASH_SUBPROJECT"
       "BUILD_STRING"
     )
   message("lcm_do_trilinos(${ARGN})")
@@ -170,7 +170,7 @@ function(lcm_do_trilinos)
     endif()
   endforeach()
   snl_do_subproject(${ARG_BOOL_OPTS}
-      SUBPROJECT Trilinos${ARG_CDASH_SUFFIX}
+      SUBPROJECT ${ARG_CDASH_SUBPROJECT}
       SOURCE_DIR "$ENV{LCM_DIR}/Trilinos"
       BUILD_DIR "$ENV{LCM_DIR}/Trilinos-build-${ARG_BUILD_STRING}"
       INSTALL_DIR "$ENV{LCM_DIR}/trilinos-install-${ARG_BUILD_STRING}"

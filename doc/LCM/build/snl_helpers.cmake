@@ -202,3 +202,32 @@ function(snl_do_subproject)
     set(${SNL_RESULT_VARIABLE} 0 PARENT_SCOPE)
   endif()
 endfunction(snl_do_subproject)
+
+function(snl_submit_subprojects)
+  set(ONE_VALUE_OPTS
+      "PROJECT"
+    )
+  set(MULTI_VALUE_OPTS
+      "SUBPROJECTS"
+    )
+  cmake_parse_arguments(SNL "" "${ONE_VALUE_OPTS}" "${MULTI_VALUE_OPTS}" ${ARGN})
+  if (SNL_UNPARSED_ARGUMENTS)
+    message(FATAL_ERROR "snl_create_subprojects called with unrecognized arguments \"${SNL_UNPARSED_ARGUMENTS}\", all arguments were \"${ARGN}\"")
+  endif()
+  set(CONTENT "<Project name=\"${SNL_PROJECT}\">")
+  foreach(SUBPROJECT IN LISTS SNL_SUBPROJECTS)
+    set(CONTENT "${CONTENT}
+  <SubProject name=\"${SUBPROJECT}\">
+  </SubProject>")
+  endforeach()
+  set(CONTENT "${CONTENT}
+</Project>")
+  file(WRITE "${CTEST_BINARY_DIRECTORY}/Project.xml" "${CONTENT}") 
+  if(CTEST_DO_SUBMIT)
+    ctest_submit(FILES "${CTEST_BINARY_DIRECTORY}/Project.xml"
+                 RETURN_VALUE SUBMIT_ERR)
+    if(SUBMIT_ERR)
+      message(WARNING "Cannot submit ${CTEST_BINARY_DIRECTORY}/Project.xml!")
+    endif()
+  endif()
+endfunction(snl_submit_subprojects)

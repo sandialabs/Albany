@@ -17,7 +17,7 @@ function(lcm_do_albany)
   set(UNARY_OPTS
       "BUILD_THREADS"
       "RESULT_VARIABLE"
-      "CDASH_SUFFIX"
+      "CDASH_SUBPROJECT"
       "BUILD_STRING"
     )
   message("lcm_do_albany(${ARGN})")
@@ -62,7 +62,7 @@ function(lcm_do_albany)
     endif()
   endforeach()
   snl_do_subproject(${ARG_BOOL_OPTS}
-      SUBPROJECT Albany${ARG_CDASH_SUFFIX}
+      SUBPROJECT ${ARG_CDASH_SUBPROJECT}
       SOURCE_DIR "$ENV{LCM_DIR}/Albany"
       BUILD_DIR "$ENV{LCM_DIR}/Albany-build-${ARG_BUILD_STRING}"
       CONFIG_OPTS "${CONFIG_OPTS}"
