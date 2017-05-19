@@ -296,6 +296,12 @@ harden(
   resistance_slip_initial = phardening_params->getParameter(
       Params::STATE_HARDENING_INITIAL);
 
+  RealType const
+  min_tol = phardening_params->min_tol_;
+
+  RealType const
+  max_tol = phardening_params->max_tol_;
+
   for (minitensor::Index ss_index(0); ss_index < num_slip_sys; ++ss_index)
   {
     auto const &
@@ -309,7 +315,7 @@ harden(
 
     if (exponent_saturation > 0.0) {
 
-      if (ratio_rate > CP::LOG_HUGE / exponent_saturation) {
+      if (ratio_rate > max_tol) {
         failed = true;
         return;
       }

@@ -10,9 +10,9 @@
 #include "Albany_ModelFactory.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Schwarz_CoupledJacobian.hpp"
+#include "SolutionSniffer.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
-#include "NOXSolverPrePostOperator.h"
 
 //uncomment the following to write stuff out to matrix market to debug
 //define WRITE_TO_MATRIX_MARKET
@@ -144,11 +144,11 @@ SchwarzCoupled(
   nox_status_test = Teuchos::rcp(new NOX::StatusTest::ModelEvaluatorFlag);
 
   Teuchos::RCP<NOX::Abstract::PrePostOperator>
-  pre_post_operator = Teuchos::rcp(new LCM::NOXSolverPrePostOperator);
+  pre_post_operator = Teuchos::rcp(new LCM::SolutionSniffer);
 
-  Teuchos::RCP<LCM::NOXSolverPrePostOperator>
+  Teuchos::RCP<LCM::SolutionSniffer>
   nox_solver_pre_post_operator =
-      Teuchos::rcp_dynamic_cast<LCM::NOXSolverPrePostOperator>(pre_post_operator);
+      Teuchos::rcp_dynamic_cast<LCM::SolutionSniffer>(pre_post_operator);
 
   Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
   status_test =

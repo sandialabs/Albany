@@ -47,6 +47,10 @@ if result != 0:
     print "%s test has failed" % name
     sys.exit(result)
 
+with open(log_file_name, 'r') as log_file:
+    print log_file.read() 
+
+
 ######################
 # Test 2 - VolJ
 ######################
@@ -80,11 +84,13 @@ p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:
     result = return_code
-
 if result != 0:
     print "result is %s" % result
     print "%s test has failed" % name
     sys.exit(result)
+with open(log_file_name, 'r') as log_file:
+    print log_file.read() 
+
 
 ######################
 # Test 3 - Average Pressure
@@ -119,11 +125,13 @@ p = Popen(command, stdout=logfile, stderr=logfile)
 return_code = p.wait()
 if return_code != 0:
     result = return_code
-
 if result != 0:
     print "result is %s" % result
     print "%s test has failed" % name
     sys.exit(result)
+with open(log_file_name, 'r') as log_file:
+    print log_file.read() 
+
 
 ######################
 # Test 4 - Membrane Forces

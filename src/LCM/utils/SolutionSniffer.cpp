@@ -4,17 +4,18 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "../utils/SolutionSniffer.hpp"
+
 #include "NOX_Abstract_Group.H"
 #include "NOX_Solver_Generic.H"
-#include "NOXSolverPrePostOperator.h"
 
 namespace LCM {
 
 //
 //
 //
-NOXSolverPrePostOperator::
-NOXSolverPrePostOperator()
+SolutionSniffer::
+SolutionSniffer()
 {
   return;
 }
@@ -22,8 +23,8 @@ NOXSolverPrePostOperator()
 //
 //
 //
-NOXSolverPrePostOperator::
-~NOXSolverPrePostOperator()
+SolutionSniffer::
+~SolutionSniffer()
 {
   return;
 }
@@ -32,7 +33,7 @@ NOXSolverPrePostOperator::
 //
 //
 void
-NOXSolverPrePostOperator::
+SolutionSniffer::
 runPreIterate(NOX::Solver::Generic const &)
 {
   return;
@@ -42,7 +43,7 @@ runPreIterate(NOX::Solver::Generic const &)
 //
 //
 void
-NOXSolverPrePostOperator::
+SolutionSniffer::
 runPostIterate(NOX::Solver::Generic const &)
 {
   return;
@@ -52,16 +53,14 @@ runPostIterate(NOX::Solver::Generic const &)
 //
 //
 void
-NOXSolverPrePostOperator::
+SolutionSniffer::
 runPreSolve(NOX::Solver::Generic const & solver)
 {
-  // This is needed for step reduction if numerics fails.
   if(status_test_.is_null() == false){
     status_test_->status_ = NOX::StatusTest::Unevaluated;
     status_test_->status_message_ = "";
   }
 
-  // This is needed for Schwarz coupling
   NOX::Abstract::Vector const &
   x = solver.getPreviousSolutionGroup().getX();
 
@@ -76,7 +75,7 @@ runPreSolve(NOX::Solver::Generic const & solver)
 //
 //
 void
-NOXSolverPrePostOperator::
+SolutionSniffer::
 runPostSolve(NOX::Solver::Generic const & solver)
 {
   NOX::Abstract::Vector const &
@@ -104,7 +103,7 @@ runPostSolve(NOX::Solver::Generic const & solver)
 //
 //
 void
-NOXSolverPrePostOperator::
+SolutionSniffer::
 setStatusTest(Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> status_test)
 {
   status_test_ = status_test;
@@ -114,7 +113,7 @@ setStatusTest(Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> status_test)
 //
 //
 ST
-NOXSolverPrePostOperator::
+SolutionSniffer::
 getInitialNorm()
 {
   return norm_init_;
@@ -124,7 +123,7 @@ getInitialNorm()
 //
 //
 ST
-NOXSolverPrePostOperator::
+SolutionSniffer::
 getFinalNorm()
 {
   return norm_final_;
@@ -134,7 +133,7 @@ getFinalNorm()
 //
 //
 ST
-NOXSolverPrePostOperator::
+SolutionSniffer::
 getDifferenceNorm()
 {
   return norm_diff_;

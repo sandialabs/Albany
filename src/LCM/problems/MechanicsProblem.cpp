@@ -4,11 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "MechanicsProblem.hpp"
+
+#include "../utils/SolutionSniffer.hpp"
 #include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_Utils.hpp"
 #include "MaterialDatabase.h"
-#include "NOXSolverPrePostOperator.h"
 #include "PHAL_AlbanyTraits.hpp"
 
 void
@@ -504,14 +505,17 @@ Albany::MechanicsProblem::applyProblemSpecificSolverSettings(
     if (have_ppo == true) {
       ppo = solver_opts_params.get<decltype(ppo)>(ppo_str);
     } else {
-      ppo = Teuchos::rcp(new LCM::NOXSolverPrePostOperator);
+      ppo = Teuchos::rcp(new LCM::SolutionSniffer);
       solver_opts_params.set(ppo_str, ppo);
       ALBANY_ASSERT(solver_opts_params.isParameter(ppo_str) == true);
     }
 
-    Teuchos::RCP<LCM::NOXSolverPrePostOperator>
-    status_test_op =
-        Teuchos::rcp_dynamic_cast<LCM::NOXSolverPrePostOperator>(ppo);
+    constexpr bool
+    throw_on_fail{true};
+
+    Teuchos::RCP<LCM::SolutionSniffer>
+    status_test_op =Teuchos::rcp_dynamic_cast<LCM::SolutionSniffer>
+    (ppo, throw_on_fail);
 
     Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
     status_test =

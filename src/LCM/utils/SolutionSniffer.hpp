@@ -4,12 +4,13 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(LCM_SchwarzSolutionSniffer_hpp)
-#define LCM_SchwarzSolutionSniffer_hpp
+#if !defined(LCM_SolutionSniffer_hpp)
+#define LCM_SolutionSniffer_hpp
 
 #include "Albany_DataTypes.hpp"
 #include "NOX_Abstract_PrePostOperator.H"
 #include "NOX_Abstract_Vector.H"
+#include "NOX_StatusTest_ModelEvaluatorFlag.h"
 
 namespace LCM {
 
@@ -39,6 +40,10 @@ public:
   virtual void
   runPostSolve(NOX::Solver::Generic const & solver);
 
+  /// Set the status test
+  void
+  setStatusTest(Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> status_test);
+
   ST
   getInitialNorm();
 
@@ -50,19 +55,22 @@ public:
 
 private:
 
+  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
+  status_test_{Teuchos::null};
+
   Teuchos::RCP<NOX::Abstract::Vector>
   soln_init_{Teuchos::null};
 
   ST
-  norm_init_{3.0};
+  norm_init_{0.0};
 
   ST
-  norm_final_{5.0};
+  norm_final_{0.0};
 
   ST
-  norm_diff_{7.0};
+  norm_diff_{0.0};
 };
 
 } // namespace LCM
 
-#endif // LCM_SchwarzSolutionSniffer_hpp
+#endif // LCM_SolutionSniffer_hpp

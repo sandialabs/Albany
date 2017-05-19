@@ -87,6 +87,10 @@ def runtest(albany_command, yaml_file_name):
         result = return_code
 
     logfile.close()
+
+    with open(log_file_name, 'r') as log_file:
+        print log_file.read() 
+
         
     return result
 

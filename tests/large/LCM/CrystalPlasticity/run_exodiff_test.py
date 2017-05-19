@@ -9,7 +9,7 @@ import sys
 import os
 import string
 import glob
-from subprocess import Popen
+import subprocess
 
 def runtest(albany_command,yaml_file_name):
 
@@ -61,7 +61,7 @@ def runtest(albany_command,yaml_file_name):
         os.remove(file)
 
     # run Albany    
-    p = Popen(command, stdout=logfile, stderr=logfile)
+    p = subprocess.Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
         result = return_code
@@ -69,7 +69,7 @@ def runtest(albany_command,yaml_file_name):
     # run epu
     if num_processors > 1:
         command = ["./epu", "-extension", "exo", "-output_extension", exodus_extension, "-p", str(num_processors), base_name]
-        p = Popen(command, stdout=logfile, stderr=logfile)
+        p = subprocess.Popen(command, stdout=logfile, stderr=logfile)
         return_code = p.wait()
         if return_code != 0:
             result = return_code
@@ -81,12 +81,16 @@ def runtest(albany_command,yaml_file_name):
                    base_name+".exodiff", \
                    base_name+".gold.exo", \
                    base_name+exodus_extension]
-    p = Popen(command, stdout=logfile, stderr=logfile)
+    p = subprocess.Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
+
+    logfile.close()
+
     if return_code != 0:
         result = return_code
 
-    logfile.close()
+    with open(log_file_name, 'r') as log_file:
+        print log_file.read()
         
     return result
 
