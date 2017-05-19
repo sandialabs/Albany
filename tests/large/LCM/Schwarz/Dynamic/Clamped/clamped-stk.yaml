@@ -45,10 +45,10 @@ ANONYMOUS:
     Number Of Time Derivatives: 2
     Exodus Write Interval: 10
   Regression Results: 
-    Number of Comparisons: 0
-    Test Values: [0.0, 0.0, 0.0, 0.0]
-    Relative Tolerance: 0.0
-    Absolute Tolerance: 0.0
+    Number of Comparisons: 4
+    Test Values: [0.000000000000e+00, -1.442043556017e-05, 3.715203484204e-04, -3.715203339250e-04]
+    Relative Tolerance: 1.0e-7
+    Absolute Tolerance: 1.0e-7
   Piro:
     Analysis:
       Compute Sensitivities: false
@@ -62,7 +62,7 @@ ANONYMOUS:
           Storage Limit: 2000
         Time Step Control:
           Initial Time: 0.0
-          Final Time: 0.15
+          Final Time: 0.05
           Initial Time Index: 0
           Final Time Index: 1000000
           Initial Time Step: 1.0e-04
