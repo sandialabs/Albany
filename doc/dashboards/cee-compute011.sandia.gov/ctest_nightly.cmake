@@ -20,6 +20,8 @@ if (1)
   set (BUILD_ALB32 TRUE)
   set (BUILD_ALB64 TRUE)
   set (BUILD_ALBFUNCTOR TRUE)
+  set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
+#  set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
   IF(CTEST_BUILD_OPTION MATCHES "clang")
     set (BUILD_TRILINOS FALSE)
     set (BUILD_PERIDIGM FALSE)
@@ -30,6 +32,8 @@ if (1)
     set (BUILD_ALBFUNCTOR FALSE)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
+    set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
+#    set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
   ELSE()
     set (BUILD_TRILINOSCLANG FALSE)
     set (BUILD_ALB64CLANG FALSE)
@@ -44,6 +48,8 @@ if (1)
     set (BUILD_ALBFUNCTOR FALSE)
     set (BUILD_INTEL_TRILINOS TRUE)
     set (BUILD_INTEL_ALBANY TRUE)
+#    set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
+    set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
   ELSE()
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
@@ -67,6 +73,8 @@ else ()
   set (BUILD_ALBFUNCTOR FALSE)
   set (BUILD_INTEL_TRILINOS TRUE)
   set (BUILD_INTEL_ALBANY TRUE)
+#  set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
+  set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
 endif ()
 
 set (extra_cxx_flags "")
@@ -87,8 +95,6 @@ set (CTEST_DASHBOARD_ROOT "$ENV{INSTALL_DIRECTORY}" ) # writable path
 set (CTEST_SCRATCH_ROOT "$ENV{SCRATCH_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_ROOT "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
-set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
-#set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
