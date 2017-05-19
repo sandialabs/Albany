@@ -62,6 +62,8 @@ function(lcm_do_albany)
     endif()
   endforeach()
   snl_do_subproject(${ARG_BOOL_OPTS}
+      DO_PROJECT
+      "PROJECT" "Albany"
       SUBPROJECT ${ARG_CDASH_SUBPROJECT}
       SOURCE_DIR "$ENV{LCM_DIR}/Albany"
       BUILD_DIR "$ENV{LCM_DIR}/Albany-build-${ARG_BUILD_STRING}"

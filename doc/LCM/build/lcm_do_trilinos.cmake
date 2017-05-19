@@ -170,6 +170,8 @@ function(lcm_do_trilinos)
     endif()
   endforeach()
   snl_do_subproject(${ARG_BOOL_OPTS}
+      DO_PROJECT
+      "PROJECT" "Albany"
       SUBPROJECT ${ARG_CDASH_SUBPROJECT}
       SOURCE_DIR "$ENV{LCM_DIR}/Trilinos"
       BUILD_DIR "$ENV{LCM_DIR}/Trilinos-build-${ARG_BUILD_STRING}"

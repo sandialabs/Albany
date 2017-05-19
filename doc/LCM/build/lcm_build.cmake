@@ -67,11 +67,6 @@ set(PASS_ARGS ${PASS_ARGS} "CDASH_SUBPROJECT" "${CDASH_SUBPROJECT}")
 
 ctest_start(${CTEST_TEST_TYPE})
 
-snl_submit_subprojects(
-    "PROJECT" "Albany"
-    "SUBPROJECTS" "${CDASH_SUBPROJECT}"
-    )
-
 lcm_do_package(${PASS_ARGS})
 
 if (PACKAGE_ERR)
