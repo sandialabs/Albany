@@ -32,7 +32,7 @@ void ATO::Integrator::getMeasure(
     // if there are topoVals that are exactly equal to or very near zeroVal, 
     // there will be all sorts of special cases.  If necessary, nudge values
     // away from zeroVal.  
-    Kokkos::DynRankView<RealType, PHX::Device> vals("ZZZ", topoVals);
+    Kokkos::DynRankView<RealType, PHX::Device> vals(topoVals);
 
     int nvals = vals.dimension(0);
     for(int i=0; i<nvals; i++){

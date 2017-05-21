@@ -51,14 +51,14 @@ void StatelessObserverImpl::observeSolution (
   const Teuchos::Ptr<const Epetra_Vector> overlappedSolution(
     app_->getAdaptSolMgr()->getOverlapSolution(nonOverlappedSolution));
   
-  if (Teuchos::rcpFromRef(*nonOverlappedSolutionDot) != Teuchos::null) {
-    const Teuchos::Ptr<const Epetra_Vector> overlappedSolutionDot(
-      app_->getAdaptSolMgr()->getOverlapSolution(*nonOverlappedSolutionDot));
-    app_->getDiscretization()->writeSolution(*overlappedSolution, *overlappedSolutionDot, stamp,
+  if (nonOverlappedSolutionDot.is_null()) {
+    app_->getDiscretization()->writeSolution(*overlappedSolution, stamp,
                                              /*overlapped =*/ true);
   }
   else {  
-    app_->getDiscretization()->writeSolution(*overlappedSolution, stamp,
+    const Teuchos::Ptr<const Epetra_Vector> overlappedSolutionDot(
+      app_->getAdaptSolMgr()->getOverlapSolution(*nonOverlappedSolutionDot));
+    app_->getDiscretization()->writeSolution(*overlappedSolution, *overlappedSolutionDot, stamp,
                                              /*overlapped =*/ true);
   }
 }
