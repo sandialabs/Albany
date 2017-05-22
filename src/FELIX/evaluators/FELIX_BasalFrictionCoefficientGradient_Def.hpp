@@ -215,7 +215,9 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
               grad_beta(cell,side,qp,dim) += f_u * (U(cell,side,qp,comp)/u_val)*gradU(cell,side,qp,vecDim,dim);
           }
         }
-
+      default:
+        TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+            std::endl << "Error in FELIX::BasalFrictionCoefficientGradient: cannot compute the gradient of this type of beta.");
     }
 
     // Correct the value if we are using a stereographic map

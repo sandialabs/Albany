@@ -450,6 +450,14 @@ evaluateFields (typename Traits::EvalData workset)
           }
       break;
 
+    case EXP_GIVEN_FIELD:
+      for (int cell=0; cell<workset.numCells; ++cell)
+        for (int qp=0; qp<numQPs; ++qp)
+          {
+            beta(cell,qp) = std::exp(beta_given_field(cell,qp));
+          }
+      break;
+
     case GAL_PROJ_EXP_GIVEN_FIELD:
       for (int cell=0; cell<workset.numCells; ++cell)
         for (int qp=0; qp<numQPs; ++qp)
