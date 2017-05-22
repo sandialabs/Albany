@@ -72,6 +72,9 @@ postRegistrationSetup(typename Traits::SetupData d,
       break;
     case GIVEN_FIELD:
       this->utils.setFieldData(given_flow_rate,fm);
+      break;
+    default:
+      ; //nothing to do
   }
 
   this->utils.setFieldData(flowRate,fm);

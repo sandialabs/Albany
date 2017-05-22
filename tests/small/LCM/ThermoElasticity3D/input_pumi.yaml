@@ -45,6 +45,7 @@ ANONYMOUS:
     Method: PUMI
     Hexahedral: true
     PUMI Output File Name: thel3d_pumi.exo
+    Solution Vector Components: [displacement, V, temperature, S]
   Regression Results: 
     Number of Comparisons: 1
     Test Values: [1.31329857]

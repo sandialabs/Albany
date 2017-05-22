@@ -76,6 +76,16 @@ struct HardeningParameterBase
   void
   setAsymptoticValue() = 0;
 
+  virtual
+  void
+  setTolerance() = 0;
+
+  RealType
+  min_tol_{TINY};
+
+  RealType
+  max_tol_{HUGE_};
+
   std::map<std::string, ParamIndex>
   param_map_;
 
@@ -118,13 +128,21 @@ struct LinearMinusRecoveryHardeningParameters final :
 
   virtual
   void
+  setTolerance() override
+  {
+    return;
+  }
+
+
+  virtual
+  void
   createLatentMatrix(
     SlipFamily<NumDimT, NumSlipT> & slip_family, 
     std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
 
   virtual
   void
-  setAsymptoticValue()
+  setAsymptoticValue() override
   {
     this->asymptotic_value_ = this->hardening_params_(MODULUS_HARDENING) / this->hardening_params_(MODULUS_RECOVERY);
   }
@@ -169,13 +187,25 @@ struct SaturationHardeningParameters final :
 
   virtual
   void
+  setTolerance() override
+  {
+    RealType const
+    exponent_saturation = this->hardening_params_(EXPONENT_SATURATION);
+
+    this->min_tol_ = std::pow(2.0 * TINY, 0.5 / exponent_saturation);
+
+    this->max_tol_ = std::pow(0.5 * HUGE_, 0.5 / exponent_saturation);
+  }
+
+  virtual
+  void
   createLatentMatrix(
     SlipFamily<NumDimT, NumSlipT> & slip_family, 
     std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
 
   virtual
   void
-  setAsymptoticValue()
+  setAsymptoticValue() override
   {
     // For this model, the asymptotic value depends on the slip rate
     return;
@@ -223,13 +253,20 @@ struct DislocationDensityHardeningParameters final :
 
   virtual
   void
+  setTolerance() override
+  {
+    return;
+  }
+
+  virtual
+  void
   createLatentMatrix(
     SlipFamily<NumDimT, NumSlipT> & slip_family, 
     std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
 
   virtual
   void
-  setAsymptoticValue()
+  setAsymptoticValue() override
   {
     // Need to get transformation of state variable \rho -> \rho_F
     return;
@@ -257,13 +294,20 @@ struct NoHardeningParameters final :
 
   virtual
   void
+  setTolerance() override
+  {
+    return;
+  }
+
+  virtual
+  void
   createLatentMatrix(
     SlipFamily<NumDimT, NumSlipT> & slip_family, 
     std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
 
   virtual
   void
-  setAsymptoticValue()
+  setAsymptoticValue() override
   {
     return;
   }

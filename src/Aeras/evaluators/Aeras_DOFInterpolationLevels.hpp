@@ -49,7 +49,6 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Level> val_qp;
 
   const int numNodes;
-  const int numQPs;
   const int numLevels;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT

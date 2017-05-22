@@ -8,6 +8,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cyl.g
                ${CMAKE_CURRENT_BINARY_DIR}/cyl.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2dsmall.e
                ${CMAKE_CURRENT_BINARY_DIR}/2dsmall.e COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2dsmall.e.2.0
+               ${CMAKE_CURRENT_BINARY_DIR}/2dsmall.e.2.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2dsmall.e.2.1
+               ${CMAKE_CURRENT_BINARY_DIR}/2dsmall.e.2.1 COPYONLY)
 
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)

@@ -4,78 +4,35 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(LCM_SchwarzAlternating_hpp)
-#define LCM_SchwarzAlternating_hpp
+#if !defined(LCM_SchwarzCoupled_hpp)
+#define LCM_SchwarzCoupled_hpp
 
-#include "Albany_DataTypes.hpp"
 #include "Albany_ModelEvaluatorT.hpp"
-#include "MaterialDatabase.h"
-#include "NOX_Abstract_PrePostOperator.H"
+#include "Albany_DataTypes.hpp"
+#include "Schwarz_BoundaryJacobian.hpp" 
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
+#include "MaterialDatabase.h"
 
 namespace LCM {
 
 ///
-/// NOX PrePostOperator used for Schwarz loop convergence criterion.
+/// SchwarzCoupled coupling class
 ///
-class SchwarzConvergenceCriterion : public NOX::Abstract::PrePostOperator {
-
-public:
-
-  SchwarzConvergenceCriterion();
-
-  void
-  runPreIterate(NOX::Solver::Generic const & solver);
-
-  void
-  runPostIterate(NOX::Solver::Generic const & solver);
-
-  void
-  runPreSolve(NOX::Solver::Generic const & solver);
-
-  void
-  runPostSolve(NOX::Solver::Generic const & solver);
-
-  ST
-  getInitialNorm();
-
-  ST
-  getFinalNorm();
-
-  ST
-  getDifferenceNorm();
-
-private:
-
-  Teuchos::RCP<NOX::Abstract::Vector>
-  soln_init_{Teuchos::null};
-
-  ST
-  norm_init_{0.0};
-
-  ST
-  norm_final_{0.0};
-
-  ST
-  norm_diff_{0.0};
-};
-
-///
-/// SchwarzAlternating coupling class
-///
-class SchwarzAlternating: public Thyra::ResponseOnlyModelEvaluatorBase<ST> {
+class SchwarzCoupled: public Thyra::ModelEvaluatorDefaultBase<ST> {
 
 public:
 
   /// Constructor
-  SchwarzAlternating(
+  SchwarzCoupled(
       Teuchos::RCP<Teuchos::ParameterList> const & app_params,
       Teuchos::RCP<Teuchos::Comm<int> const> const & comm,
-      Teuchos::RCP<Tpetra_Vector const> const & initial_guess);
+      Teuchos::RCP<Tpetra_Vector const> const & initial_guessT,
+      Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const &
+      lowsfb);
 
   /// Destructor
-  ~SchwarzAlternating();
+  ~SchwarzCoupled();
 
   /// Return solution vector map
   Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
@@ -123,10 +80,30 @@ public:
   Thyra::ModelEvaluatorBase::InArgs<ST>
   createInArgs() const;
 
+  void
+  reportFinalPoint(
+      Thyra::ModelEvaluatorBase::InArgs<ST> const & final_point,
+      bool const was_solved);
+
+  void
+  allocateVectors();
+
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
+  getThyraRangeSpace() const;
+  
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
+  getThyraDomainSpace() const;
+  
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
-  getApps() const;
+  getApps() const {return apps_;}  
 
 protected:
+
+  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
+  range_space_;
+  
+  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST>>
+  domain_space_;
 
   /// Create operator form of dg/dx for distributed responses
   Teuchos::RCP<Thyra::LinearOpBase<ST>>
@@ -146,6 +123,7 @@ protected:
       Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
       Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
   
+
 private:
 
   Teuchos::RCP<Teuchos::ParameterList const>
@@ -157,42 +135,80 @@ private:
   Thyra::ModelEvaluatorBase::InArgs<ST>
   createInArgsImpl() const;
 
-  /// Schwarz Alternating loop
-  void
-  SchwarzLoop() const;
+  /// List of free parameter names
+  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>
+  param_names_;
+  
+  /// RCP to matDB object
+  Teuchos::Array<Teuchos::RCP<LCM::MaterialDatabase>>
+  material_dbs_;
 
-  Teuchos::Array<Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST>>>
-  solvers_;
+  Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST>>>
+  models_;
+
+  /// Own the application parameters.
+  Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>>
+  model_app_params_;
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   apps_;
+
+  Teuchos::RCP<Teuchos::Comm<int> const>
+  comm_;
 
   /// Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
   Thyra::ModelEvaluatorBase::InArgs<ST>
   nominal_values_;
   
-  int
-  num_subdomains_{0};
+  Teuchos::Array<Teuchos::RCP<Tpetra_Map const>>
+  disc_maps_;
+
+  /// Teuchos array holding main diagonal jacobians (non-coupled models)
+  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
+  jacs_;
+  
+  /// Teuchos array holding main diagonal preconditioners (non-coupled models)
+  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
+  precs_;
 
   int
-  min_iters_{0};
+  num_models_;
 
+  /// Like num_param_vecs
   int
-  max_iters_{0};
+  num_params_total_;
 
-  ST
-  rel_tol_{0.0};
+  /// Like dist_param_vecs
+  int
+  num_dist_params_total_;
 
-  ST
-  abs_tol_{0.0};
+  /// Like num_response_vecs
+  int
+  num_responses_total_;
+
+  /// For setting get_W_factory()
+  Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>
+  lowsfb_;
+    
+  /// Array of Sacado parameter vectors
+  mutable Teuchos::Array<Teuchos::Array<ParamVec>>
+  sacado_param_vecs_;
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST>>
-  sub_inargs_;
+  solver_inargs_;
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST>>
-  sub_outargs_;
+  solver_outargs_;
+
+  bool w_prec_supports_;
+  
+  bool supports_xdot_;  
+    
+  enum MF_PREC_TYPE {NONE, JACOBI, ABS_ROW_SUM, ID}; 
+    
+  MF_PREC_TYPE mf_prec_type_; 
 };
 
 } // namespace LCM
 
-#endif // LCM_SchwarzAlternating_hpp
+#endif // LCM_SchwarzCoupled_hpp

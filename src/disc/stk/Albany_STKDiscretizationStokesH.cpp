@@ -32,10 +32,12 @@
 #include <stk_mesh/base/FEMHelpers.hpp>
 
 Albany::STKDiscretizationStokesH::
-STKDiscretizationStokesH(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
+STKDiscretizationStokesH(
+                  const Teuchos::RCP<Teuchos::ParameterList>& discParams,
+                  Teuchos::RCP<Albany::AbstractSTKMeshStruct>& stkMeshStruct_,
                   const Teuchos::RCP<const Teuchos_Comm>& commT_,
                   const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_) :
-   Albany::STKDiscretization(stkMeshStruct_,  commT_, rigidBodyModes_)
+   Albany::STKDiscretization(discParams, stkMeshStruct_,  commT_, rigidBodyModes_)
 {}
 
 Albany::STKDiscretizationStokesH::~STKDiscretizationStokesH() {}

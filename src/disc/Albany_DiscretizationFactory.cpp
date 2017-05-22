@@ -393,14 +393,14 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
                 "Error: Discretization method " << method
                 << " requested, but not compiled in" << std::endl);
 #endif
-    } else {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
+    } 
+
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
                 "Error!  Unknown discretization method in DiscretizationFactory: " << method <<
                 "!" << std::endl << "Supplied parameter list is " << std::endl << *disc_params <<
                 "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss, Ioss Aeras," <<
                 " Exodus, Exodus Aeras, Cubit, PUMI, PUMI Hierarchic, Sim, Ascii," <<
                 " Ascii2D, Extruded" << std::endl);
-    }
 }
 
 Teuchos::RCP<Albany::AbstractDiscretization>
@@ -500,10 +500,10 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
                 Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
 #ifdef ALBANY_FELIX
                 if (method == "Extruded")
-                    return Teuchos::rcp(new Albany::STKDiscretizationStokesH(ms, commT, rigidBodyModes));
+                    return Teuchos::rcp(new Albany::STKDiscretizationStokesH(discParams, ms, commT, rigidBodyModes));
                 else
 #endif
-                    return Teuchos::rcp(new Albany::STKDiscretization(ms, commT, rigidBodyModes, sideSetEquations));
+                    return Teuchos::rcp(new Albany::STKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
             }
                 break;
 #endif

@@ -41,7 +41,7 @@ ANONYMOUS:
         IP Field Layout 0: Tensor
         Output to File: true
   Discretization: 
-    Number Of Time Derivatives: 1
+    Number Of Time Derivatives: 0
     Method: Ioss
     Exodus Input File Name: specimenLaserWeldGauge.g
     Exodus Output File Name: outputLaserWeldGauge.e

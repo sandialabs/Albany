@@ -35,6 +35,12 @@ public:
       const Thyra::VectorBase<ST> &solution,
       const Thyra::VectorBase<ST> &solution_dot,
       const ST stamp);
+  
+  virtual void observeSolution(
+      const Thyra::VectorBase<ST> &solution,
+      const Thyra::VectorBase<ST> &solution_dot,
+      const Thyra::VectorBase<ST> &solution_dotdot,
+      const ST stamp);
 
   virtual void observeSolution(
       const Thyra::MultiVectorBase<ST> &solution,
@@ -49,6 +55,12 @@ private:
       const Thyra::VectorBase<ST> &solution,
       const Thyra::VectorBase<ST> &solution_dot,
       const ST defaultStamp);
+  
+  void observeSolutionImpl(
+      const Thyra::VectorBase<ST> &solution,
+      const Thyra::VectorBase<ST> &solution_dot,
+      const Thyra::VectorBase<ST> &solution_dotdot,
+      const ST defaultStamp);
 
   void observeSolutionImpl(
       const Thyra::MultiVectorBase<ST> &solution,
@@ -57,6 +69,7 @@ private:
   void observeTpetraSolutionImpl(
       const Tpetra_Vector &solution,
       Teuchos::Ptr<const Tpetra_Vector> solution_dot,
+      Teuchos::Ptr<const Tpetra_Vector> solution_dotdot,
       const ST defaultStamp);
 
   // The following function is for calculating / printing responses every step.
@@ -65,7 +78,8 @@ private:
   void observeResponse(
       const ST defaultStamp,  
       Teuchos::RCP<const Thyra::VectorBase<ST>> solution,
-      Teuchos::RCP<const Thyra::VectorBase<ST>> solution_dot = Teuchos::null); 
+      Teuchos::RCP<const Thyra::VectorBase<ST>> solution_dot = Teuchos::null, 
+      Teuchos::RCP<const Thyra::VectorBase<ST>> solution_dotdot = Teuchos::null); 
 
   ObserverImpl impl_;
 

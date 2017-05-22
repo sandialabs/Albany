@@ -159,7 +159,7 @@ operator() (const ShallowWaterSource_Tag& tag, const int& cell) const{
      //ts[22]= DKDM  
      ts[22]  = ts[19] *ts[13];
      //ts[23]= DLDKDM  
-     ts[23]== ts[19] *(ts[17]  + 2.0*ts[14] *ts[13] *ts[20] );
+     ts[23]  = ts[19] *(ts[17]  + 2.0*ts[14] *ts[13] *ts[20] );
      //ts[24]= UT, ts[25]=VT, ts[26]=DUTDL, ts[27]=DVTDL, ts[28]=DUTDM, ts[29]=DVTDM
      ts[24]     = ts[5] - ts[4]*ts[22] *ts[1];
      ts[25]     = (ts[19] *ts[14]) *ts[1];

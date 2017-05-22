@@ -257,6 +257,13 @@ void Albany::APFDiscretization::
 setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& ircm)
 { rcm = ircm; }
 
+#ifdef ALBANY_CONTACT
+Teuchos::RCP<const Albany::ContactManager> Albany::APFDiscretization::getContactManager() const
+{
+  return contactManager;
+}
+#endif
+
 const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
 Albany::APFDiscretization::getSphereVolume() const
 {
@@ -421,6 +428,29 @@ void Albany::APFDiscretization::writeSolutionT(
   writeAnySolutionToFile(time_value);
 }
 
+void Albany::APFDiscretization::writeSolutionT(
+  const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, const double time_value, const bool overlapped)
+{
+  Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
+  Teuchos::ArrayRCP<const ST> data_dot = soln_dotT.get1dView();
+  writeAnySolutionToMeshDatabase(&(data[0]), 0, overlapped);
+  writeAnySolutionToMeshDatabase(&(data_dot[0]), 0, overlapped);
+  writeAnySolutionToFile(time_value);
+}
+
+void Albany::APFDiscretization::writeSolutionT(
+  const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
+  const Tpetra_Vector& soln_dotdotT, const double time_value, const bool overlapped)
+{
+  Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
+  Teuchos::ArrayRCP<const ST> data_dot = soln_dotT.get1dView();
+  Teuchos::ArrayRCP<const ST> data_dotdot = soln_dotdotT.get1dView();
+  writeAnySolutionToMeshDatabase(&(data[0]), 0, overlapped);
+  writeAnySolutionToMeshDatabase(&(data_dot[0]), 0, overlapped);
+  writeAnySolutionToMeshDatabase(&(data_dotdot[0]), 0, overlapped);
+  writeAnySolutionToFile(time_value);
+}
+
 void Albany::APFDiscretization::writeSolutionMV(
   const Tpetra_MultiVector& solnT, const double time_value, const bool overlapped)
 {
@@ -440,6 +470,27 @@ void Albany::APFDiscretization::writeSolutionToMeshDatabaseT(
 {
   Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
   writeAnySolutionToMeshDatabase(&(data[0]), 0, overlapped);
+}
+
+void Albany::APFDiscretization::writeSolutionToMeshDatabaseT(
+  const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, const double time_value, const bool overlapped)
+{
+  Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
+  Teuchos::ArrayRCP<const ST> data_dot = soln_dotT.get1dView();
+  writeAnySolutionToMeshDatabase(&(data[0]), 0, overlapped);
+  writeAnySolutionToMeshDatabase(&(data_dot[0]), 0, overlapped);
+}
+
+void Albany::APFDiscretization::writeSolutionToMeshDatabaseT(
+  const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
+  const Tpetra_Vector& soln_dotdotT, const double time_value, const bool overlapped)
+{
+  Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
+  Teuchos::ArrayRCP<const ST> data_dot = soln_dotT.get1dView();
+  Teuchos::ArrayRCP<const ST> data_dotdot = soln_dotdotT.get1dView();
+  writeAnySolutionToMeshDatabase(&(data[0]), 0, overlapped);
+  writeAnySolutionToMeshDatabase(&(data_dot[0]), 0, overlapped);
+  writeAnySolutionToMeshDatabase(&(data_dotdot[0]), 0, overlapped);
 }
 
 void Albany::APFDiscretization::writeSolutionMVToMeshDatabase(
@@ -481,6 +532,18 @@ void Albany::APFDiscretization::writeSolution(const Epetra_Vector& soln, const d
 #else
   writeAnySolutionToMeshDatabase(&(soln[0]), 0, overlapped);
   writeAnySolutionToFile(time_value);
+#endif
+}
+
+void Albany::APFDiscretization::writeSolution(const Epetra_Vector& soln, const Epetra_Vector& soln_dot, 
+      const double time_value, const bool overlapped)
+{
+#if 1
+  Teuchos::RCP<const Tpetra_Vector> solnT =
+     Petra::EpetraVector_To_TpetraVectorConst(soln, commT);
+  Teuchos::RCP<const Tpetra_Vector> soln_dotT =
+     Petra::EpetraVector_To_TpetraVectorConst(soln_dot, commT);
+  writeSolutionT(*solnT, *soln_dotT, time_value, overlapped);
 #endif
 }
 #endif

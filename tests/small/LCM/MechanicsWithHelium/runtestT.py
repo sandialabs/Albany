@@ -39,6 +39,9 @@ if result != 0:
     print "%s test has failed" % name
     sys.exit(result)
 
+with open(log_file_name, 'r') as log_file:
+    print log_file.read() 
+
 ######################
 # Test 2 - Mechanics And Hydrogen
 ######################
@@ -71,6 +74,9 @@ if result != 0:
     print "%s test has failed" % name
     sys.exit(result)
 
+with open(log_file_name, 'r') as log_file:
+    print log_file.read() 
+
 ######################
 # Test 3 - Mechanics And Hydrogen version 2
 ######################
@@ -102,6 +108,8 @@ if result != 0:
     print "result is %s" % result
     print "%s test has failed" % name
     sys.exit(result)
+with open(log_file_name, 'r') as log_file:
+    print log_file.read() 
 
 ######################
 # Test 4 - Mechanics And Helium
@@ -134,6 +142,8 @@ if result != 0:
     print "result is %s" % result
     print "%s test has failed" % name
     sys.exit(result)
+with open(log_file_name, 'r') as log_file:
+    print log_file.read() 
 
 ######################
 # Test 5 - Mechanics And Helium version 2
@@ -166,5 +176,8 @@ if result != 0:
     print "result is %s" % result
     print "%s test has failed" % name
     sys.exit(result)
+
+with open(log_file_name, 'r') as log_file:
+    print log_file.read() 
 
 sys.exit(result)

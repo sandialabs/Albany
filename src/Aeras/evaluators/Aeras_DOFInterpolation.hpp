@@ -48,7 +48,6 @@ private:
   PHX::MDField<ScalarT> val_qp;
 
   const int numNodes;
-  const int numQPs;
   const int numLevels;
   const int numRank;
 

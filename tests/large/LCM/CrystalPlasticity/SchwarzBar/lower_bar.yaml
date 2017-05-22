@@ -42,5 +42,5 @@ ANONYMOUS:
     Exodus Solution Name: displacement
     Exodus Residual Name: resid
     Separate Evaluators by Element Block: true
-    Number Of Time Derivatives: 1
+    Number Of Time Derivatives: 0
 ...

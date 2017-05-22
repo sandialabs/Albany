@@ -68,6 +68,12 @@ public:
     double stamp, const Epetra_Vector& nonOverlappedSolution,
     const Teuchos::Ptr<const Epetra_Vector>& nonOverlappedSolutionDot);
 #endif
+  
+  virtual void observeSolutionT(
+    double stamp, const Tpetra_Vector& nonOverlappedSolutionT,
+    const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT,
+    const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotDotT);
+
 
   virtual void observeSolutionT(
     double stamp, const Tpetra_Vector& nonOverlappedSolutionT,

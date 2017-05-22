@@ -87,6 +87,9 @@ def runtest(albany_command, yaml_file_name):
         result = return_code
 
     logfile.close()
+    
+    with open(log_file_name, 'r') as log_file:
+        print log_file.read() 
         
     return result
 
@@ -100,5 +103,6 @@ if __name__ == "__main__":
     yaml_file_name = sys.argv[2]
 
     result = runtest(executable, yaml_file_name)
+
 
     sys.exit(result)

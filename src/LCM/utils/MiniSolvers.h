@@ -168,17 +168,23 @@ public:
     // Variables that potentially have Albany::Traits sensitivity
     // information need to be handled by the peel functor so that
     // proper conversions take place.
-    T const
-    xc = peel<EvalT, T, N>()(xc_);
+    //T const
+    //xc = peel<EvalT, T, N>()(xc_);
+
+    //T const
+    //yc = peel<EvalT, T, N>()(yc_);
+
+    typename Sacado::ScalarType<S>::type const
+    xc = Sacado::ScalarValue<S>::eval(xc_);
+
+    typename Sacado::ScalarType<S>::type const
+    yc = Sacado::ScalarValue<S>::eval(yc_);
 
     T const
-    yc = peel<EvalT, T, N>()(yc_);
+    a = x(0) - xc;
 
     T const
-    a = (x(0) - xc);
-
-    T const
-    b = (x(1) - yc);
+    b = x(1) - yc;
 
     return a * a + b * b;
   }

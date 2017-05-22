@@ -11,10 +11,6 @@
 #include <vector>
 #include <utility>
 
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_VerboseObject.hpp"
-
-
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_DataTypes.hpp"
@@ -78,7 +74,8 @@ namespace Albany {
 
     //! Constructor
     STKDiscretization(
-       Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
+       const Teuchos::RCP<Teuchos::ParameterList>& discParams,
+       Teuchos::RCP<Albany::AbstractSTKMeshStruct>& stkMeshStruct,
        const Teuchos::RCP<const Teuchos_Comm>& commT,
        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null,
        const std::map<int,std::vector<std::string> >& sideSetEquations = std::map<int,std::vector<std::string> >());
@@ -187,6 +184,11 @@ namespace Albany {
     void setCoordinates(const Teuchos::ArrayRCP<const double>& c);
     void setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm);
 
+#ifdef ALBANY_CONTACT
+    //! Get the contact manager
+    virtual Teuchos::RCP<const Albany::ContactManager> getContactManager() const;
+#endif
+
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type& getLatticeOrientation() const;
@@ -209,11 +211,21 @@ namespace Albany {
 
 #if defined(ALBANY_EPETRA)
     void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
+    void writeSolution(const Epetra_Vector& soln, const Epetra_Vector& soln_dot, 
+                       const double time, const bool overlapped = false);
 #endif
 
    void writeSolutionT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);
+   void writeSolutionT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, const double time, const bool overlapped = false);
+   void writeSolutionT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
+                       const Tpetra_Vector& soln_dotdotT, const double time, const bool overlapped = false);
    void writeSolutionMV(const Tpetra_MultiVector& solnT, const double time, const bool overlapped = false);
    void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false);
+   void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const Tpetra_Vector &solution_dotT, 
+                                     const double time, const bool overlapped = false);
+   void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const Tpetra_Vector &solution_dotT, 
+                                     const Tpetra_Vector &solution_dotdotT, 
+                                     const double time, const bool overlapped = false);
    void writeSolutionMVToMeshDatabase(const Tpetra_MultiVector &solutionT, const double time, const bool overlapped = false);
    void writeSolutionToFileT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);
    void writeSolutionMVToFile(const Tpetra_MultiVector& solnT, const double time, const bool overlapped = false);
@@ -332,11 +344,17 @@ namespace Albany {
 
     //Tpetra version of above
     void setSolutionFieldT(const Tpetra_Vector& solnT);
+    void setSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT);
+    void setSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
+                           const Tpetra_Vector& soln_dotdotT);
     void setSolutionFieldMV(const Tpetra_MultiVector& solnT);
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local + neighbor (overlapped) solution
     void setOvlpSolutionFieldT(const Tpetra_Vector& solnT);
+    void setOvlpSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT);
+    void setOvlpSolutionFieldT(const Tpetra_Vector& solnT, const Tpetra_Vector& soln_dotT, 
+                               const Tpetra_Vector& soln_dotdotT);
     void setOvlpSolutionFieldMV(const Tpetra_MultiVector& solnT);
 
     double monotonicTimeLabel(const double time);
@@ -460,6 +478,10 @@ namespace Albany {
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
     Albany::WorksetArray<Teuchos::ArrayRCP<double*> >::type latticeOrientation;
 
+#ifdef ALBANY_CONTACT
+    Teuchos::RCP<Albany::ContactManager> contactManager;
+#endif
+
     //! Connectivity map from elementGID to workset and LID in workset
     WsLIDList  elemGIDws;
 
@@ -491,6 +513,8 @@ namespace Albany {
     std::vector<double*>  toDelete;
 
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct;
+
+    Teuchos::RCP<Teuchos::ParameterList> discParams;
 
     // Sideset discretizations
     std::map<std::string,Teuchos::RCP<Albany::AbstractDiscretization> > sideSetDiscretizations;

@@ -65,27 +65,27 @@ set(evaluator-headers
 
 #LCM model evaluators 
 set(model-eval-sources
-  "${LCM_DIR}/Schwarz_Alternating.cpp"
-  "${LCM_DIR}/Schwarz_ObserverImpl.cpp"
-  "${LCM_DIR}/Schwarz_PiroObserver.cpp"
-  "${LCM_DIR}/Schwarz_StatelessObserverImpl.cpp"
+  "${LCM_DIR}/solvers/Schwarz_Alternating.cpp"
+  "${LCM_DIR}/solvers/Schwarz_ObserverImpl.cpp"
+  "${LCM_DIR}/solvers/Schwarz_PiroObserver.cpp"
+  "${LCM_DIR}/solvers/Schwarz_StatelessObserverImpl.cpp"
 )
 set(model-eval-headers
-  "${LCM_DIR}/Schwarz_Alternating.hpp"
-  "${LCM_DIR}/Schwarz_ObserverImpl.hpp"
-  "${LCM_DIR}/Schwarz_PiroObserver.hpp"
-  "${LCM_DIR}/Schwarz_StatelessObserverImpl.hpp"
+  "${LCM_DIR}/solvers/Schwarz_Alternating.hpp"
+  "${LCM_DIR}/solvers/Schwarz_ObserverImpl.hpp"
+  "${LCM_DIR}/solvers/Schwarz_PiroObserver.hpp"
+  "${LCM_DIR}/solvers/Schwarz_StatelessObserverImpl.hpp"
 )
 IF (ALBANY_HAVE_STK)
   set(model-eval-sources ${model-eval-sources}
-    "${LCM_DIR}/Schwarz_BoundaryJacobian.cpp"
-    "${LCM_DIR}/Schwarz_CoupledJacobian.cpp"
-    "${LCM_DIR}/Schwarz_Coupled.cpp"
+    "${LCM_DIR}/solvers/Schwarz_BoundaryJacobian.cpp"
+    "${LCM_DIR}/solvers/Schwarz_CoupledJacobian.cpp"
+    "${LCM_DIR}/solvers/Schwarz_Coupled.cpp"
   )
   set(model-eval-headers ${model-eval-headers}
-    "${LCM_DIR}/Schwarz_BoundaryJacobian.hpp"
-    "${LCM_DIR}/Schwarz_CoupledJacobian.hpp"
-    "${LCM_DIR}/Schwarz_Coupled.hpp"
+    "${LCM_DIR}/solvers/Schwarz_BoundaryJacobian.hpp"
+    "${LCM_DIR}/solvers/Schwarz_CoupledJacobian.hpp"
+    "${LCM_DIR}/solvers/Schwarz_Coupled.hpp"
   )
 ENDIF(ALBANY_HAVE_STK)
 
@@ -114,14 +114,14 @@ set(bc-headers
 )
 IF (ALBANY_HAVE_STK)
   set(bc-sources ${bc-sources}
-    "${LCM_DIR}/evaluators/bc/SchwarzBC.cpp"
     "${LCM_DIR}/evaluators/bc/PDNeighborFitBC.cpp"
+    "${LCM_DIR}/evaluators/bc/SchwarzBC.cpp"
   )
   set(bc-headers ${bc-headers}
-    "${LCM_DIR}/evaluators/bc/SchwarzBC_Def.hpp"
-    "${LCM_DIR}/evaluators/bc/SchwarzBC.hpp"
-    "${LCM_DIR}/evaluators/bc/PDNeighborFitBC_Def.hpp"
     "${LCM_DIR}/evaluators/bc/PDNeighborFitBC.hpp"
+    "${LCM_DIR}/evaluators/bc/PDNeighborFitBC_Def.hpp"
+    "${LCM_DIR}/evaluators/bc/SchwarzBC.hpp"
+    "${LCM_DIR}/evaluators/bc/SchwarzBC_Def.hpp"
   )
 ENDIF (ALBANY_HAVE_STK)
 
@@ -502,43 +502,43 @@ set(models-headers
 )
 IF (NOT Kokkos_ENABLE_Cuda)
 set(models-sources ${models-sources}
-  "${LCM_DIR}/models/GursonHMRModel.cpp"
-  "${LCM_DIR}/models/GursonModel.cpp"
+  "${LCM_DIR}/models/CrystalPlasticityModel.cpp"
   "${LCM_DIR}/models/FM_AlbanyInterface.cpp"
   "${LCM_DIR}/models/FerroicCore.cpp"
-  "${LCM_DIR}/models/CrystalPlasticityModel.cpp"
+  "${LCM_DIR}/models/GursonHMRModel.cpp"
+  "${LCM_DIR}/models/GursonModel.cpp"
 )
 set(models-headers ${models-headers}
-  "${LCM_DIR}/models/GursonHMRModel_Def.hpp"
-  "${LCM_DIR}/models/GursonHMRModel.hpp"
-  "${LCM_DIR}/models/GursonModel_Def.hpp"
-  "${LCM_DIR}/models/GursonModel.hpp"
-  "${LCM_DIR}/models/FM_AlbanyInterface_Def.hpp"
-  "${LCM_DIR}/models/FM_AlbanyInterface.hpp"
-  "${LCM_DIR}/models/FerroicCore_Def.hpp"
-  "${LCM_DIR}/models/FerroicCore.hpp"
-  "${LCM_DIR}/models/FerroicModel_Def.hpp"
-  "${LCM_DIR}/models/FerroicModel.hpp"
-  "${LCM_DIR}/models/CrystalPlasticityModel_Def.hpp"
   "${LCM_DIR}/models/CrystalPlasticityModel.hpp"
+  "${LCM_DIR}/models/CrystalPlasticityModel_Def.hpp"
+  "${LCM_DIR}/models/FM_AlbanyInterface.hpp"
+  "${LCM_DIR}/models/FM_AlbanyInterface_Def.hpp"
+  "${LCM_DIR}/models/FerroicCore.hpp"
+  "${LCM_DIR}/models/FerroicCore_Def.hpp"
+  "${LCM_DIR}/models/FerroicModel.hpp"
+  "${LCM_DIR}/models/FerroicModel_Def.hpp"
+  "${LCM_DIR}/models/GursonHMRModel.hpp"
+  "${LCM_DIR}/models/GursonHMRModel_Def.hpp"
+  "${LCM_DIR}/models/GursonModel.hpp"
+  "${LCM_DIR}/models/GursonModel_Def.hpp"
 )
 ENDIF (NOT Kokkos_ENABLE_Cuda)
 
 #LCM utils
 set(utils-sources
-  "${LCM_DIR}/utils/Projection.cpp"
   "${LCM_DIR}/utils/LocalNonlinearSolver.cpp"
-  "${LCM_DIR}/utils/NOXSolverPrePostOperator.cpp"
-  "${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.cpp"
   "${LCM_DIR}/utils/MaterialDatabase.cpp"
+  "${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.cpp"
+  "${LCM_DIR}/utils/Projection.cpp"
+  "${LCM_DIR}/utils/SolutionSniffer.cpp"
 )
 set(utils-headers
-  "${LCM_DIR}/utils/Projection.hpp"
   "${LCM_DIR}/utils/LocalNonlinearSolver.hpp"
   "${LCM_DIR}/utils/LocalNonlinearSolver_Def.hpp"
-  "${LCM_DIR}/utils/NOXSolverPrePostOperator.h"
-  "${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.h"
   "${LCM_DIR}/utils/MaterialDatabase.h"
+  "${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.h"
+  "${LCM_DIR}/utils/Projection.hpp"
+  "${LCM_DIR}/utils/SolutionSniffer.hpp"
 )
 IF(ALBANY_HAVE_STK)
   set(utils-sources ${utils-sources}

@@ -7,20 +7,21 @@ SET(CTEST_BUILD_OPTION "$ENV{BUILD_OPTION}")
 if (1)
   # What to build and test
   IF(CTEST_BUILD_OPTION MATCHES "base")
-    # Only download repos and cleanout in the base nightly test run (start it an hour earlier)
-    set (CLEAN_BUILD TRUE)
+    # Only download repos in the base nightly test run (start it an hour earlier)
     set (DOWNLOAD TRUE)
   ELSE()
-    set (CLEAN_BUILD FALSE)
     set (DOWNLOAD FALSE)
   ENDIF()
 
+  set (CLEAN_BUILD TRUE)
   set (BUILD_SCOREC TRUE)
   set (BUILD_TRILINOS TRUE)
   set (BUILD_PERIDIGM TRUE)
   set (BUILD_ALB32 TRUE)
   set (BUILD_ALB64 TRUE)
   set (BUILD_ALBFUNCTOR TRUE)
+  set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
+#  set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
   IF(CTEST_BUILD_OPTION MATCHES "clang")
     set (BUILD_TRILINOS FALSE)
     set (BUILD_PERIDIGM FALSE)
@@ -31,6 +32,8 @@ if (1)
     set (BUILD_ALBFUNCTOR FALSE)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
+    set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
+#    set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
   ELSE()
     set (BUILD_TRILINOSCLANG FALSE)
     set (BUILD_ALB64CLANG FALSE)
@@ -45,6 +48,8 @@ if (1)
     set (BUILD_ALBFUNCTOR FALSE)
     set (BUILD_INTEL_TRILINOS TRUE)
     set (BUILD_INTEL_ALBANY TRUE)
+#    set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
+    set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
   ELSE()
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
@@ -68,21 +73,33 @@ else ()
   set (BUILD_ALBFUNCTOR FALSE)
   set (BUILD_INTEL_TRILINOS TRUE)
   set (BUILD_INTEL_ALBANY TRUE)
+#  set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
+  set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
 endif ()
 
 set (extra_cxx_flags "")
 
+find_program(UNAME NAMES uname)
+macro(getuname name flag)
+  exec_program("${UNAME}" ARGS "${flag}" OUTPUT_VARIABLE "${name}")
+endmacro(getuname)
+
+getuname(osname -s)
+getuname(osrel  -r)
+getuname(cpu    -m)
+
 # Begin User inputs:
-set (CTEST_SITE "cee-compute011.sandia.gov" ) # generally the output of hostname
+#set (CTEST_SITE "cee-compute011.sandia.gov" ) # generally the output of hostname
+SITE_NAME(CTEST_SITE) # directly set CTEST_SITE to the output of `hostname`
 set (CTEST_DASHBOARD_ROOT "$ENV{INSTALL_DIRECTORY}" ) # writable path
 set (CTEST_SCRATCH_ROOT "$ENV{SCRATCH_DIRECTORY}" ) # writable path
 set (CTEST_SCRIPT_ROOT "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
-set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
+#set (CTEST_BUILD_NAME "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
+set (CTEST_BUILD_NAME "${osname}-${osrel}-${CTEST_BUILD_OPTION}-${CTEST_BUILD_CONFIGURATION}")
 set (CTEST_BINARY_NAME build)
 set (CTEST_INSTALL_NAME test)
 
@@ -150,19 +167,19 @@ set (SCOREC_REPOSITORY_LOCATION git@github.com:SCOREC/core.git)
 set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 set (Peridigm_REPOSITORY_LOCATION git@github.com:peridigm/peridigm) #ssh://software.sandia.gov/git/peridigm)
 
-if (CLEAN_BUILD)
-  # Initial cache info
-  set (CACHE_CONTENTS "
-  SITE:STRING=${CTEST_SITE}
-  CMAKE_BUILD_TYPE:STRING=Release
-  CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
-  BUILD_TESTING:BOOL=OFF
-  PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
-  " )
-
-#  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
-  file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
-endif ()
+#if (CLEAN_BUILD)
+#  # Initial cache info
+#  set (CACHE_CONTENTS "
+#  SITE:STRING=${CTEST_SITE}
+#  CMAKE_BUILD_TYPE:STRING=Release
+#  CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
+#  BUILD_TESTING:BOOL=OFF
+#  PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
+#  " )
+#
+##  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
+#  file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
+#endif ()
 
 if (DOWNLOAD)
   #
