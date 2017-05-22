@@ -66,7 +66,7 @@ function(lcm_do_albany)
       "PROJECT" "Albany"
       SUBPROJECT ${ARG_CDASH_SUBPROJECT}
       SOURCE_DIR "$ENV{LCM_DIR}/Albany"
-      BUILD_DIR "$ENV{LCM_DIR}/Albany-build-${ARG_BUILD_STRING}"
+      BUILD_DIR "$ENV{LCM_DIR}/albany-build-${ARG_BUILD_STRING}"
       CONFIG_OPTS "${CONFIG_OPTS}"
       BUILD_THREADS "${ARG_BUILD_THREADS}"
       RESULT_VARIABLE SUBPROJECT_ERR

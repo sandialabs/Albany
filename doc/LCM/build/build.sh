@@ -11,4 +11,4 @@ ctest -VV -S $LCM_DIR/Albany/doc/LCM/build/lcm_build.cmake \
 -DSCRIPT_NAME:STRING=`basename $0` \
 -DPACKAGE:STRING=$PACKAGE \
 -DBUILD_THREADS:STRING=$2 \
-&> $LOG_FILE
+tee $LOG_FILE

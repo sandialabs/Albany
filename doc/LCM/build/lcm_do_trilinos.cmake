@@ -174,7 +174,7 @@ function(lcm_do_trilinos)
       "PROJECT" "Albany"
       SUBPROJECT ${ARG_CDASH_SUBPROJECT}
       SOURCE_DIR "$ENV{LCM_DIR}/Trilinos"
-      BUILD_DIR "$ENV{LCM_DIR}/Trilinos-build-${ARG_BUILD_STRING}"
+      BUILD_DIR "$ENV{LCM_DIR}/trilinos-build-${ARG_BUILD_STRING}"
       INSTALL_DIR "$ENV{LCM_DIR}/trilinos-install-${ARG_BUILD_STRING}"
       CONFIG_OPTS "${CONFIG_OPTS}"
       BUILD_THREADS "${ARG_BUILD_THREADS}"
