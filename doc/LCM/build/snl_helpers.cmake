@@ -89,6 +89,9 @@ function(snl_config SOURCE_DIR BUILD_DIR CONFIG_OPTS ERR)
 endfunction(snl_config)
 
 function(snl_build BUILD_DIR NUM_THREADS TARGET ERR)
+  #TODO: the following call may not be appropriate when
+  #this script is used by others besides LCM
+  ctest_read_custom_files("${CTEST_BINARY_DIRECTORY}")
   ctest_build(
     BUILD "${BUILD_DIR}"
     APPEND
