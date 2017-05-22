@@ -9,6 +9,7 @@ ln -s build.sh clean-config-build-test-dash.sh
 ln -s build.sh clean-config-build-test.sh
 ln -s build.sh config-build-test.sh
 ln -s build.sh build-test.sh
+ln -s build.sh test-dash.sh
 ln -s build.sh test.sh
 ln -s build.sh clean-config-build-dash.sh
 ln -s build.sh clean-config-build.sh
