@@ -12,4 +12,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plot_vort.ncl
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
+IF(NOT ALBANY_CHECK_FPE)
 add_test(Aeras_${testName}_RungeKutta4 ${AlbanyT.exe} inputT.xml)
+ENDIF()
