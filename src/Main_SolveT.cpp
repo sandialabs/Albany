@@ -256,9 +256,12 @@ main(int argc, char *argv[]) {
 #endif
 
 #ifdef ALBANY_CHECK_FPE
-  //	_mm_setcsr(_MM_MASK_MASK &~
-  //		(_MM_MASK_OVERFLOW | _MM_MASK_INVALID | _MM_MASK_DIV_ZERO) );
-  _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK() & ~_MM_MASK_INVALID);
+  _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK()
+      & ~( _MM_MASK_INVALID |
+           _MM_MASK_DIV_ZERO |
+           _MM_MASK_OVERFLOW |
+           _MM_MASK_UNDERFLOW )
+      );
 #endif
 
 #ifdef ALBANY_64BIT_INT
