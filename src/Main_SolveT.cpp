@@ -250,12 +250,15 @@ main(int argc, char *argv[]) {
   Teuchos::GlobalMPISession mpiSession(&argc, &argv);
   Kokkos::initialize(argc, argv);
 
-#ifdef ALBANY_FLUSH_DENORMALS
+#if defined(ALBANY_FLUSH_DENORMALS)
   _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
   _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
 #endif
 
-#ifdef ALBANY_CHECK_FPE
+#if defined(ALBANY_CHECK_FPE)
+#if defined(ALBANY_LCM)
+  _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK() & ~ _MM_MASK_INVALID);
+#else
   _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK()
       & ~( _MM_MASK_INVALID |
            _MM_MASK_DIV_ZERO |
@@ -263,15 +266,16 @@ main(int argc, char *argv[]) {
            _MM_MASK_UNDERFLOW )
       );
 #endif
+#endif
 
-#ifdef ALBANY_64BIT_INT
+#if defined(ALBANY_64BIT_INT)
   static_assert(
       sizeof(long) == 8,
       "Error: The 64 bit build of Albany assumes that sizeof(long) == 64 "
       "bits.");
 #endif
 
-#ifdef ALBANY_APF
+#ifdef defined(ALBANY_APF)
   Albany::APFMeshStruct::initialize_libraries(&argc, &argv);
 #endif
 
