@@ -59,7 +59,7 @@ else
   (cd Albany; git pull)
 fi
 
-ln -sf Albany/doc/LCM/build/*.sh .
+ln -sf Albany/doc/LCM/build/build.sh .
 ln -sf build.sh clean.sh
 ln -sf build.sh config.sh
 ln -sf build.sh test.sh
@@ -68,8 +68,6 @@ ln -sf build.sh clean-config-build.sh
 ln -sf build.sh clean-config-build-test.sh
 ln -sf build.sh config-build.sh
 ln -sf build.sh config-build-test.sh
-
-echo "NOTE for testing: change FROM & TO email addresses in env-single.sh"
 
 if [[ -z $LCM_DIR ]]; then
   echo "ERROR: Top level LCM directory not defined."
@@ -84,7 +82,6 @@ fi
 NP=`nproc`
 toolchain="gcc"
 machinetype="serial"
-#buildtype="debug"
 buildtype="release"
 
 module load lcm/fedora
