@@ -17,7 +17,7 @@
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 
 //! Code Base for Quantum Device Simulation Tools LDRD
@@ -101,7 +101,7 @@ namespace QCAD {
     double length_unit_in_m;
     double energy_unit_in_eV;
     double temperature;
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+    Teuchos::RCP<Albany::MaterialDatabase> materialDB;
     Teuchos::RCP<Albany::Layouts> dl;
 
     //! Parameters for coupling to Schrodinger
@@ -118,7 +118,7 @@ namespace QCAD {
 
 }
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 
@@ -241,7 +241,7 @@ QCAD::PoissonProblem::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Permittivity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+    p->set< RCP<Albany::MaterialDatabase> >("MaterialDB", materialDB);
 
     ev = rcp(new QCAD::Permittivity<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -287,7 +287,7 @@ QCAD::PoissonProblem::constructEvaluators(
     //Global Problem Parameters
     p->set<double>("Length unit in m", length_unit_in_m);
     p->set<string>("Temperature Name", "Temperature");
-    p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+    p->set< RCP<Albany::MaterialDatabase> >("MaterialDB", materialDB);
 
     // Schrodinger coupling
     p->set<string>("Eigenvector field name root", "Evec");
@@ -379,7 +379,7 @@ QCAD::PoissonProblem::constructEvaluators(
     RCP<ParameterList> pFromProb = rcp(new ParameterList("Response Parameters from Problem"));
     pFromProb->set<double>("Length unit in m", length_unit_in_m);
     pFromProb->set<double>("Temperature", temperature); 
-    pFromProb->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+    pFromProb->set< RCP<Albany::MaterialDatabase> >("MaterialDB", materialDB);
 
     //Add Poisson Source Neumann evaluator so that output fields can be processed in responses
     //Albany::MeshSpecsStruct meshSpecsCopy = meshSpecs; //copy so we can get a non-const ptr to make into an RCP below

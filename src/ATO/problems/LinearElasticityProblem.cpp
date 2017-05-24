@@ -19,7 +19,7 @@ LinearElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   std::string& method = params->get("Name", "Linear Elasticity ");
   *out << "Problem Name = " << method << std::endl;
 
-//  material_db_ = LCM::createMaterialDatabase(params, comm);
+//  material_db_ = Albany::createMaterialDatabase(params, comm);
 
 // the following function returns the problem information required 
 // for setting the rigid body modes (RBMs) for elasticity problems

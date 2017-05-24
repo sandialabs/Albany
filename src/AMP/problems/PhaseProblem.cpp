@@ -22,7 +22,7 @@ PhaseProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 {
   // Read the "MaterialDB Filename" parameter from the input deck and create the MaterialDatabase
   std::string filename = params->get<std::string>("MaterialDB Filename");
-  material_db_ = Teuchos::rcp(new QCAD::MaterialDatabase(filename, commT));
+  material_db_ = Teuchos::rcp(new Albany::MaterialDatabase(filename, commT));
 
   // get consolidation flag from material input deck. If not specified then assign true.
   hasConsolidation_ = material_db_->getParam<bool>("Compute Consolidation",true);

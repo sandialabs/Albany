@@ -27,7 +27,7 @@ ResponseSaddleValue(Teuchos::ParameterList& p,
   RCP<Teuchos::ParameterList> probList = 
     p.get< RCP<Teuchos::ParameterList> >("Parameters From Problem");
   lattTemp = probList->get<double>("Temperature");
-  materialDB = probList->get< RCP<QCAD::MaterialDatabase> >("MaterialDB");
+  materialDB = probList->get< RCP<Albany::MaterialDatabase> >("MaterialDB");
   
   //! get and validate Response parameter list
   Teuchos::ParameterList* plist = 

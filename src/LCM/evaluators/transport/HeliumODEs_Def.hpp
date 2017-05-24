@@ -7,7 +7,7 @@
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
 #include <MiniTensor.h>
-#include "MaterialDatabase.h"
+#include "Albany_MaterialDatabase.hpp"
 
 namespace LCM
 {

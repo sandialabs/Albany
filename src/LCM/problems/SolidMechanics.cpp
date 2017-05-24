@@ -13,7 +13,7 @@
 #include "ConstitutiveModelInterface.hpp"
 #include "ConstitutiveModelParameters.hpp"
 #include "Kinematics.hpp"
-#include "MaterialDatabase.h"
+#include "Albany_MaterialDatabase.hpp"
 #include "MechanicsResidual.hpp"
 #include "PHAL_NSMaterialProperty.hpp"
 #include "PHAL_SaveStateField.hpp"
@@ -95,7 +95,7 @@ num_dims_(num_dims), neq(num_dims)
       0,
       null_space_dim);
 
-  material_db_ = LCM::createMaterialDatabase(params, comm);
+  material_db_ = Albany::createMaterialDatabase(params, comm);
 }
 
 //

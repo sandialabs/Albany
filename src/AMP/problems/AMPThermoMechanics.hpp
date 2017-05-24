@@ -18,7 +18,7 @@
 #include "PHAL_Dimension.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_StateManager.hpp"
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 namespace Albany {
 
@@ -88,7 +88,7 @@ protected:
 
   int num_dims_;
 
-  Teuchos::RCP<QCAD::MaterialDatabase> material_db_;
+  Teuchos::RCP<Albany::MaterialDatabase> material_db_;
   
   // this variable is used to specify if we want to include consolidation
   // or not in the model. It may be removed in the future.

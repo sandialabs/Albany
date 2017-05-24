@@ -1,0 +1,118 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: ANISO Advection 2D
+    Solution Method: Continuation
+    MaterialDB Filename: 'lshape-materials.yaml'
+    Dirichlet BCs: 
+      DBC on NS left for DOF Phi: 1.00000000000000000e+00
+      DBC on NS homogeneous for DOF Phi: 0.00000000000000000e+00
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+    Response Functions: 
+      Number: 0
+  Discretization: 
+    Method: PUMI
+    Workset Size: 10000
+    Mesh Model Input File Name: lshape.dmg
+    PUMI Input File Name: 'lshape-serial.smb'
+    PUMI Output File Name: out_advection.vtk
+    Model Associations File Name: 'lshape-assoc.txt'
+    Cubature Degree: 1
+    Separate Evaluators by Element Block: false
+  Regression Results: 
+    Number of Comparisons: 0
+  Piro: 
+    LOCA: 
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Continuation Method: Natural
+        Initial Value: 0.00000000000000000e+00
+        Continuation Parameter: Time
+        Max Steps: 6
+        Max Value: 6.00000000000000000e+00
+        Min Value: 0.00000000000000000e+00
+        Compute Eigenvalues: false
+        Return Failed on Reaching Max Steps: false
+      Step Size: 
+        Initial Step Size: 1.00000000000000000e+00
+        Method: Constant
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Linear Solver: 
+            Tolerance: 9.99999999999999955e-07
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: none
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 9.99999999999999955e-07
+                      Output Frequency: 1
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Num Blocks: 200
+                      Block Size: 1
+                      Orthogonalization: DGKS
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Prec Type: RILUK
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000000000000e+00
+                    'fact: iluk level-of-fill': 0
+                    'fact: ilut level-of-fill': 0.00000000000000000e+00
+                    'schwarz: filter singletons': true
+                    'schwarz: use reordering': true
+                    'schwarz: overlap level': 0
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000000000000e+00
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: false
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Complete
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 4
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Unscaled
+          Tolerance: 9.99999999999999955e-07
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 100
+        Test 2: 
+          Test Type: FiniteValue
+        Test 3: 
+          Test Type: NormUpdate
+          Scale Type: Unscaled
+          Tolerance: 9.99999999999999939e-12
+...

@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "QCAD_PoissonProblem.hpp"
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"
 
@@ -47,7 +47,7 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   std::string mtrlDbFilename = "materials.xml";
   if(params->isType<std::string>("MaterialDB Filename"))
     mtrlDbFilename = params->get<std::string>("MaterialDB Filename");
-  materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, commT));
+  materialDB = Teuchos::rcp(new Albany::MaterialDatabase(mtrlDbFilename, commT));
 
   //Pull number of eigenvectors from poisson params list
   nEigenvectors = 0;
@@ -184,7 +184,7 @@ QCAD::PoissonProblem::constructDirichletEvaluators(
          //p->set<string>("Temperature Name", "Temperature");  //to add if use shared param for DBC
          p->set<double>("Temperature", temperature);
          
-         p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+         p->set< RCP<Albany::MaterialDatabase> >("MaterialDB", materialDB);
          p->set<double>("Energy unit in eV", energy_unit_in_eV);
          
          // check if the nodeset is a Schottky contact
@@ -382,7 +382,7 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
 	   Teuchos::ParameterList& paramList = params->sublist("Poisson Source");
 	   p->set<Teuchos::ParameterList*>("Poisson Source Parameter List", &paramList);
 	   p->set<double>("Temperature", temperature);
-	   p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+	   p->set< RCP<Albany::MaterialDatabase> >("MaterialDB", materialDB);
 	   p->set<double>("Energy unit in eV", energy_unit_in_eV);
 	   p->set<double>("Length unit in meters", length_unit_in_m);
 
@@ -434,7 +434,7 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
                 Teuchos::Exceptions::InvalidParameter, 
                 "This BC needs a material database specified");
 
-              p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+              p->set< RCP<Albany::MaterialDatabase> >("MaterialDB", materialDB);
 
            }
 
@@ -696,7 +696,7 @@ QCAD::PoissonProblem::getPoissonSourceNeumannEvaluatorParams(const Teuchos::RCP<
      Teuchos::ParameterList& paramList = params->sublist("Poisson Source");
      p->set<Teuchos::ParameterList*>("Poisson Source Parameter List", &paramList);
      p->set<double>("Temperature", temperature);
-     p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+     p->set< RCP<Albany::MaterialDatabase> >("MaterialDB", materialDB);
      p->set<double>("Energy unit in eV", energy_unit_in_eV);
      p->set<double>("Length unit in meters", length_unit_in_m);
 
@@ -724,7 +724,7 @@ QCAD::PoissonProblem::getPoissonSourceNeumannEvaluatorParams(const Teuchos::RCP<
 				Teuchos::Exceptions::InvalidParameter, 
 				"To use the Poisson Source Neumann BC, a material database must be specified");
 
-     p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+     p->set< RCP<Albany::MaterialDatabase> >("MaterialDB", materialDB);
      return p;
    }
    return Teuchos::null;
@@ -804,7 +804,7 @@ QCAD::PoissonProblem::getPoissonSourceInterfaceEvaluatorParams(const Teuchos::RC
    {
      RCP<ParameterList> p = rcp(new ParameterList);
      p->set<double> ("Temperature", temperature);
-     p->set< RCP<QCAD::MaterialDatabase> > ("MaterialDB", materialDB);
+     p->set< RCP<Albany::MaterialDatabase> > ("MaterialDB", materialDB);
      p->set<double> ("Energy unit in eV", energy_unit_in_eV);
      p->set<double> ("Length unit in meters", length_unit_in_m);
 
@@ -832,7 +832,7 @@ QCAD::PoissonProblem::getPoissonSourceInterfaceEvaluatorParams(const Teuchos::RC
 				Teuchos::Exceptions::InvalidParameter, 
 				"To use the Poisson Source Neumann BC, a material database must be specified");
 
-     p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+     p->set< RCP<Albany::MaterialDatabase> >("MaterialDB", materialDB);
 
      // Add the "Interface Traps" parameterlist for all "interface trap" sidesets
      ParameterList& trapsPList= params->sublist("Interface Traps"); 

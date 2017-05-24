@@ -17,7 +17,7 @@
 #include "Albany_Layouts.hpp"
 
 #include "QCAD_MathVector.hpp"
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 namespace QCAD {
 
@@ -35,7 +35,7 @@ namespace QCAD {
 
     MeshRegion(std::string coordVecName, std::string weightsName,
 	       Teuchos::ParameterList& p, 
-	       const Teuchos::RCP<QCAD::MaterialDatabase> matDB,
+	       const Teuchos::RCP<Albany::MaterialDatabase> matDB,
 	       const Teuchos::RCP<Albany::Layouts>& dl_ );
     ~MeshRegion() { }
 
@@ -72,7 +72,7 @@ namespace QCAD {
     PHX::MDField<const ScalarT> levelSetField;    
 
     //! Material database
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+    Teuchos::RCP<Albany::MaterialDatabase> materialDB;
 
     //! Evaluator utils to hide templating
     PHX::EvaluatorUtilities<EvalT,Traits> utils;

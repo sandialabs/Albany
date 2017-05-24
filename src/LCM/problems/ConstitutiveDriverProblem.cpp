@@ -5,7 +5,7 @@
 //*****************************************************************//
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_Utils.hpp"
-#include "MaterialDatabase.h"
+#include "Albany_MaterialDatabase.hpp"
 #include "ConstitutiveDriverProblem.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
@@ -27,7 +27,7 @@ ConstitutiveDriverProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   int num_eq = num_dims_ * num_dims_;
   this->setNumEquations(num_eq);
 
-  material_db_ = LCM::createMaterialDatabase(params, commT);
+  material_db_ = Albany::createMaterialDatabase(params, commT);
 
   int num_PDEs = neq;
   int num_elasticity_dim = 0;

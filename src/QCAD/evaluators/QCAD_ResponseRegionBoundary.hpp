@@ -13,7 +13,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_ProblemUtils.hpp"
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 #include "QCAD_EvaluatorTools.hpp"
 #include "QCAD_MeshRegion.hpp"
 
@@ -70,7 +70,7 @@ namespace QCAD {
 
 
     //! Material database
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+    Teuchos::RCP<Albany::MaterialDatabase> materialDB;
 
     Teuchos::RCP< PHX::Tag<ScalarT> > response_field_tag;
   };

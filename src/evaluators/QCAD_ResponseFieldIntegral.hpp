@@ -8,7 +8,7 @@
 #define QCAD_RESPONSEFIELDINTEGRAL_HPP
 
 #include "QCAD_MeshRegion.hpp"
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 
 namespace QCAD {
@@ -64,7 +64,7 @@ namespace QCAD {
     Teuchos::RCP< MeshRegion<EvalT, Traits> > opRegion;
 
     //! Material database
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+    Teuchos::RCP<Albany::MaterialDatabase> materialDB;
   };
 	
 }

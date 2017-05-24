@@ -439,7 +439,7 @@ SchwarzCoupled(
     std::string const &
     matdb_file = problem_params_m->get<std::string>("MaterialDB Filename");
 
-    material_dbs_[m] = Teuchos::rcp(new MaterialDatabase(matdb_file, comm_));
+    material_dbs_[m] = Teuchos::rcp(new Albany::MaterialDatabase(matdb_file, comm_));
 
     std::cout << "Materials #" << m << ": " << matdb_file << '\n';
 

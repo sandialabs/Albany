@@ -141,7 +141,7 @@ SET(SOURCES ${SOURCES}
   problems/Albany_ProblemFactory.cpp
   problems/Albany_ProblemUtils.cpp
   problems/Albany_ResponseUtilities.cpp
-  problems/QCAD_MaterialDatabase.cpp
+  problems/Albany_MaterialDatabase.cpp
   )
 SET(PDE_SRCS
   problems/Albany_AdvDiffProblem.cpp
@@ -166,7 +166,7 @@ SET(HEADERS ${HEADERS}
   problems/Albany_ProblemUtils.hpp
   problems/Albany_ResponseUtilities.hpp
   problems/Albany_ResponseUtilities_Def.hpp
-  problems/QCAD_MaterialDatabase.hpp
+  problems/Albany_MaterialDatabase.hpp
   )
 SET(PDE_HDRS
   problems/Albany_AdvDiffProblem.hpp

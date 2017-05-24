@@ -23,7 +23,7 @@
 #include "AAdapt_SPRSizeField.hpp"
 #include "AAdapt_ExtrudedAdapt.hpp"
 #ifdef ALBANY_OMEGA_H
-#include "AAdapt_Omega_h_Method.hpp"
+#include "AAdapt_MeshAdapt_Omega_h.hpp"
 #endif
 
 #include "AAdapt_RC_Manager.hpp"

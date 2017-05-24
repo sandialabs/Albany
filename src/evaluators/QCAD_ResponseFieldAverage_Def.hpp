@@ -35,11 +35,11 @@ ResponseFieldAverage(Teuchos::ParameterList& p,
   numDims = dims[2];
 
   //! Get material DB from parameters passed down from problem (if given)
-  Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+  Teuchos::RCP<Albany::MaterialDatabase> materialDB;
   Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem = 
     p.get< Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
   if(paramsFromProblem != Teuchos::null)
-    materialDB = paramsFromProblem->get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+    materialDB = paramsFromProblem->get< Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB");
   else materialDB = Teuchos::null;
   
   // User-specified parameters

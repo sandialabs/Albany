@@ -21,7 +21,7 @@ ThermalProblem::ThermalProblem(
   *out << "Problem name = Thermal Problem \n";
   this->setNumEquations(1);
 
-  material_db_ = LCM::createMaterialDatabase(params, comm);
+  material_db_ = Albany::createMaterialDatabase(params, comm);
   materialFileName_ = params->get<std::string>("MaterialDB Filename");
 
   have_source_ = params->isSublist("Source Functions");
@@ -127,8 +127,8 @@ void ThermalProblem::constructNeumannEvaluators(
   condNames[2] = "scaled jump";
   condNames[3] = "robin";
 
-  Teuchos::RCP<QCAD::MaterialDatabase> materialDB
-    = Teuchos::rcp(new QCAD::MaterialDatabase(materialFileName_, comm_));
+  Teuchos::RCP<Albany::MaterialDatabase> materialDB
+    = Teuchos::rcp(new Albany::MaterialDatabase(materialFileName_, comm_));
   nfm.resize(1);
   nfm[0] = bcUtils.constructBCEvaluators(mesh_specs, bcNames, dof_names, false, 0,
       condNames, offsets, dl, this->params, Teuchos::null, materialDB);

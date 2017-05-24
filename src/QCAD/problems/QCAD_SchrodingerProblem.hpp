@@ -93,7 +93,7 @@ namespace QCAD {
 
 }
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
@@ -196,7 +196,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
   }
 
    // Create Material Database
-   RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename, commT));
+   RCP<Albany::MaterialDatabase> materialDB = rcp(new Albany::MaterialDatabase(mtrlDbFilename, commT));
 
   if (havePotential) { // If a "Potential" sublist is specified in the input, add a potential energy term
 
@@ -278,7 +278,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
     p->set<double>("Energy unit in eV", energy_unit_in_eV);
     p->set<double>("Length unit in m", length_unit_in_m);
     p->set<bool>("Only solve in quantum blocks", bOnlySolveInQuantumBlocks);
-    p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+    p->set< RCP<Albany::MaterialDatabase> >("MaterialDB", materialDB);
 
     //Pass the Potential parameter list to test Finite Wall with different effective mass
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
@@ -301,7 +301,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
     // Parameters to be sent to all response constructors (whether they use them or not).
     RCP<ParameterList> pFromProb = rcp(new ParameterList("Response Parameters from Problem"));
     pFromProb->set<double>("Length unit in m", length_unit_in_m);
-    pFromProb->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+    pFromProb->set< RCP<Albany::MaterialDatabase> >("MaterialDB", materialDB);
 
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, pFromProb, stateMgr);

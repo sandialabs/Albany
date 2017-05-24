@@ -14,7 +14,7 @@
 
 #include "Albany_Layouts.hpp"
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 namespace QCAD {
 
@@ -71,7 +71,7 @@ private:
   double energy_unit_in_eV, length_unit_in_m;
   
   //! Material database
-  Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+  Teuchos::RCP<Albany::MaterialDatabase> materialDB;
   
   //! Parameters for Finite Wall potential
   std::string potentialType;

@@ -17,7 +17,7 @@
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "Albany_ProblemUtils.hpp"
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 namespace Albany {
 
@@ -75,7 +75,7 @@ class AdvectionProblem : public AbstractProblem {
 
     int num_dims_;
 
-    Teuchos::RCP<QCAD::MaterialDatabase> material_db_;
+    Teuchos::RCP<Albany::MaterialDatabase> material_db_;
 
     Teuchos::RCP<Albany::Layouts> dl_;
 

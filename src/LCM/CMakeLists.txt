@@ -527,7 +527,6 @@ ENDIF (NOT Kokkos_ENABLE_Cuda)
 #LCM utils
 set(utils-sources
   "${LCM_DIR}/utils/LocalNonlinearSolver.cpp"
-  "${LCM_DIR}/utils/MaterialDatabase.cpp"
   "${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.cpp"
   "${LCM_DIR}/utils/Projection.cpp"
   "${LCM_DIR}/utils/SolutionSniffer.cpp"
@@ -535,7 +534,6 @@ set(utils-sources
 set(utils-headers
   "${LCM_DIR}/utils/LocalNonlinearSolver.hpp"
   "${LCM_DIR}/utils/LocalNonlinearSolver_Def.hpp"
-  "${LCM_DIR}/utils/MaterialDatabase.h"
   "${LCM_DIR}/utils/NOX_StatusTest_ModelEvaluatorFlag.h"
   "${LCM_DIR}/utils/Projection.hpp"
   "${LCM_DIR}/utils/SolutionSniffer.hpp"

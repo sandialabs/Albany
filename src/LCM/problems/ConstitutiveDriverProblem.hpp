@@ -170,7 +170,7 @@ protected:
   ///
   /// RCP to matDB object
   ///
-  Teuchos::RCP<LCM::MaterialDatabase> material_db_;
+  Teuchos::RCP<Albany::MaterialDatabase> material_db_;
 
   ///
   /// old state data

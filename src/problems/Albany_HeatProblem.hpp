@@ -18,7 +18,7 @@
 #include "Albany_ProblemUtils.hpp"
 
 #include "PHAL_ConvertFieldType.hpp"
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 namespace Albany {
 
@@ -94,7 +94,7 @@ namespace Albany {
     std::string meshPartDirichlet;
     int numDim;
 
-   Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+   Teuchos::RCP<Albany::MaterialDatabase> materialDB;
    Teuchos::RCP<const Teuchos::Comm<int> > commT; 
 
    Teuchos::RCP<Albany::Layouts> dl;
@@ -227,7 +227,7 @@ Albany::HeatProblem::constructEvaluators(
     p->set<string>("Element Block Name", meshSpecs.ebName);
 
     if(materialDB != Teuchos::null)
-      p->set< RCP<QCAD::MaterialDatabase> >("MaterialDB", materialDB);
+      p->set< RCP<Albany::MaterialDatabase> >("MaterialDB", materialDB);
 
     ev = rcp(new PHAL::ThermalConductivity<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);

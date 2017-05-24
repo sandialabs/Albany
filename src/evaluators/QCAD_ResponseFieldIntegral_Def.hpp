@@ -32,7 +32,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   if(paramsFromProblem != Teuchos::null) {
 
     // Material database 
-    materialDB = paramsFromProblem->get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+    materialDB = paramsFromProblem->get< Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB");
 
     // Length unit in meters
     length_unit_in_m = paramsFromProblem->get<double>("Length unit in m");

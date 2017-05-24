@@ -49,7 +49,7 @@ SchrodingerResid(const Teuchos::ParameterList& p,
   hbar2_over_2m0 = 0.5*pow(hbar,2)*evPerJ /(emass *energy_unit_in_eV *pow(length_unit_in_m,2));
 
   // Material database
-  materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+  materialDB = p.get< Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB");
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_gradient->dimensions(dims);

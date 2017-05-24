@@ -21,7 +21,7 @@
 
 #include "Albany_Layouts.hpp"
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 namespace QCAD {
 /** 
@@ -70,7 +70,7 @@ namespace QCAD {
   	ScalarT factor;			// for temperature-dependent permittivity
 
 	  //! Material database - holds permittivity among other quantities
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+    Teuchos::RCP<Albany::MaterialDatabase> materialDB;
     
     //! specific parameters for 1D MOSCapacitor
     double oxideWidth;

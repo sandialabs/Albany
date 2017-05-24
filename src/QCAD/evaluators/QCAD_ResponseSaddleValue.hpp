@@ -10,7 +10,7 @@
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 #include "QCAD_EvaluatorTools.hpp"
 #include "QCAD_SaddleValueResponseFunction.hpp"
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 
 /** 
@@ -73,7 +73,7 @@ namespace QCAD
     double scaling, gradScaling, retScaling;
     double lattTemp; 
     
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+    Teuchos::RCP<Albany::MaterialDatabase> materialDB;
 
   };
 	

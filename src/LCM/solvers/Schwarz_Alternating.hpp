@@ -14,6 +14,7 @@
 #include "NOX_PrePostOperator_Vector.H"
 #include "Thyra_DefaultProductVector.hpp"
 #include "Thyra_DefaultProductVectorSpace.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 namespace LCM {
 

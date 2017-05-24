@@ -16,7 +16,7 @@ MechanicsProblem::MechanicsProblem(
 
   *out << "Problem name = Mechanics Problem \n";
   this->setNumEquations(num_dims);
-  material_db_ = LCM::createMaterialDatabase(params, comm);
+  material_db_ = Albany::createMaterialDatabase(params, comm);
   materialFileName_ = params->get<std::string>("MaterialDB Filename");
 }
 
