@@ -278,7 +278,7 @@ main(int argc, char *argv[]) {
       "bits.");
 #endif
 
-#ifdef defined(ALBANY_APF)
+#if defined(ALBANY_APF)
   Albany::APFMeshStruct::initialize_libraries(&argc, &argv);
 #endif
 
