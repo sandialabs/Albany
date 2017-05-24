@@ -21,9 +21,11 @@
 \def\endverbatim
 {\oldendv\egroup\fboxsep0pt \noindent\colorbox[gray]{0.95}{\usebox0}\par}
 
+\title{Installing and compiling \albany{}/\lcm{} and
+  \trilinos{} on Fedora or SEMS/CEE}
+
 \author{The \albany{}/\lcm{} team\thanks{Original version by Juli\'an
-    R\'imoli}} \title{Installing \albany{}/\lcm{} and
-  \trilinos{} on Fedora 25}
+    R\'imoli}}
 
 \begin{document}
 
@@ -31,9 +33,9 @@
 
 \section{Introduction}
 This document describes the necessary steps to install \albany{}/\lcm{} and
-\trilinos{} on a machine with Fedora Linux. The procedures described herein were
-tested using Fedora 25.  If you want a shortcut, obtain the script
-\verb+install_albany.sh+ (stored in \verb+Albany/doc/LCM/install+) and then try
+\trilinos{} on a machine with Fedora Linux or the Linux CEE/SEMS environment. If
+you want a shortcut, obtain the script \verb+install_albany.sh+ (stored in
+\verb+Albany/doc/LCM/install+) and then try
 \begin{verbatim}
 ./install_albany
 \end{verbatim}
@@ -68,16 +70,14 @@ netcdf-openmpi-devel
 netcdf-static
 openmpi
 openmpi-devel
-yaml-cpp
-yaml-cpp-devel
 \end{verbatim}
 
 \begin{verbatim}
+yaml-cpp
+yaml-cpp-devel
 environment-modules
 gcc-c++
 git
-hwloc-devel
-hwloc-libs
 \end{verbatim}
 
 For example, to install the first package you should type
@@ -152,34 +152,19 @@ export MODULEPATH=$LCM_DIR/Albany/doc/LCM/modulefiles
 The \verb+LCM_DIR+ variable should contain the location of the
 top-level \verb+LCM+ directory.
 
-\section{Installation Scripts}
-Create symbolic links to the installation scripts inside the directory
-\verb+LCM/Albany/doc/LCM/build+ to the top-level \verb+LCM+ directory. If you
-intend to modify these scripts, it is better to copy them instead of creating
-symbolic links. The necessary scripts are:
-\begin{verbatim}
-albany-config.sh
-build-all.sh
-build.sh
-env-all.sh
-env-single.sh
-trilinos-config.sh
-\end{verbatim}
-
-Once this is done, go to the top-level \verb+LCM+ directory, open the
-\verb+env-all.sh+ and \verb+env-single.sh+ scripts and make sure they
-match your environment. If you do not want to tinker with any of this,
-just change the email addresses for tests reports at the end of
-\verb+env-single.sh+ and make sure all the scripts are executable and
+\section{Build Script}
+Create a symbolic link to the build script
+\verb+LCM/Albany/doc/LCM/build/build.sh+ to the top-level \verb+LCM+
+directory. Make sure that the build script is executable and
 read only:
 \begin{verbatim}
 cd ~/LCM
-chmod 0555 *.sh
+chmod 0555 build.sh
 \end{verbatim}
 
-The \verb+build.sh+ and \verb+build-all.sh+ scripts perform different actions
-according to the name with which they are invoked. This is accomplshed by
-creating symlinks to \verb+build.sh+ and using them to run it. For example:
+The \verb+build.sh+ script performs different actions according to the name with
+which it is invoked. This is accomplshed by creating symlinks to \verb+build.sh+
+and using them to run it. For example:
 \begin{itemize}
 \item \verb+clean.sh+ will delete all traces of the corresponding build and will
   create a new configuration script based on the corresponding template.
@@ -190,8 +175,10 @@ creating symlinks to \verb+build.sh+ and using them to run it. For example:
 
 \item \verb+test.sh+ will run the cmake tests.
 
-\item \verb+mail.sh+ will mail the results of the ctest to the email address
-  configured in \verb+env-single.sh+.
+\item \verb+update.sh+ will execute git pull in the package repository, and if
+  combined with dash below, it will send a report of changed files to CDash.
+
+\item \verb+dash.sh+ will post the results of ctest to configured CDash site.
 
 \item symlinks with combinations of the above
   (e.g. \verb+clean-config-build.sh+) will perform the specified actions in
@@ -215,12 +202,6 @@ ln -s build.sh config-build-test.sh
 There is also a script
 \verb+LCM/Albany/doc/LCM/install/albany-lcm-symlinks.sh+
 that will create the appropriate symbolic links.
-
-There are two template scripts called \verb+trilinos-config.sh+ and
-\verb+albany-config.sh+. The configuration scripts for a specfic build are
-created using these two as templates. It is therefore recommended that these two
-template scripts be made read and execute only, as erroneous modifications to
-the \verb+build.sh+ script may result in their being overwritten.
 
 \section{Parallel Schwarz and DTK}
 \label{sec:dtk}
@@ -329,6 +310,11 @@ using the \verb+gcc+ tool chain in \verb+debug+ mode, load the
 appropriate module:
 \begin{verbatim}
 module load lcm/fedora
+module load serial-gcc-debug
+\end{verbatim}
+For the SEMS/CEE environment, this would be:
+\begin{verbatim}
+module load lcm/sems
 module load serial-gcc-debug
 \end{verbatim}
 Now first configure and compile \trilinos{}. Within the top-level
