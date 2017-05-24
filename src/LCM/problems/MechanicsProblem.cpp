@@ -9,7 +9,7 @@
 #include "Albany_BCUtils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_Utils.hpp"
-#include "MaterialDatabase.h"
+#include "Albany_MaterialDatabase.hpp"
 #include "Albany_MaterialDatabase.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
