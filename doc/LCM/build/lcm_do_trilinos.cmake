@@ -18,7 +18,7 @@ function(lcm_do_trilinos)
       "BUILD_THREADS"
       "RESULT_VARIABLE"
       "CDASH_SUBPROJECT"
-      "BUILD_STRING"
+      "BUILD_ID_STRING"
     )
   message("lcm_do_trilinos(${ARGN})")
   cmake_parse_arguments(ARG "${BOOL_OPTS}" "${UNARY_OPTS}" "" ${ARGN}) 
@@ -28,11 +28,11 @@ function(lcm_do_trilinos)
   endif()
   set(CONFIG_OPTS
       "-DBUILD_SHARED_LIBS:BOOL=ON"
-      "-DCMAKE_BUILD_TYPE:STRING=$ENV{PACKAGE_BUILD_STRING}"
+      "-DCMAKE_BUILD_TYPE:STRING=$ENV{BUILD_STRING}"
       "-DCMAKE_CXX_COMPILER:FILEPATH=$ENV{MPI_BIN}/mpicxx"
       "-DCMAKE_C_COMPILER:FILEPATH=$ENV{MPI_BIN}/mpicc"
       "-DCMAKE_Fortran_COMPILER:FILEPATH=$ENV{MPI_BIN}/mpif90"
-      "-DCMAKE_INSTALL_PREFIX:PATH=$ENV{LCM_DIR}/trilinos-install-${ARG_BUILD_STRING}"
+      "-DCMAKE_INSTALL_PREFIX:PATH=$ENV{LCM_DIR}/trilinos-install-${ARG_BUILD_ID_STRING}"
       "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
       "-DTPL_ENABLE_MPI:BOOL=ON"
       "-DTPL_ENABLE_BinUtils:BOOL=OFF"
@@ -174,8 +174,8 @@ function(lcm_do_trilinos)
       "PROJECT" "Albany"
       SUBPROJECT ${ARG_CDASH_SUBPROJECT}
       SOURCE_DIR "$ENV{LCM_DIR}/Trilinos"
-      BUILD_DIR "$ENV{LCM_DIR}/trilinos-build-${ARG_BUILD_STRING}"
-      INSTALL_DIR "$ENV{LCM_DIR}/trilinos-install-${ARG_BUILD_STRING}"
+      BUILD_DIR "$ENV{LCM_DIR}/trilinos-build-${ARG_BUILD_ID_STRING}"
+      INSTALL_DIR "$ENV{LCM_DIR}/trilinos-install-${ARG_BUILD_ID_STRING}"
       CONFIG_OPTS "${CONFIG_OPTS}"
       BUILD_THREADS "${ARG_BUILD_THREADS}"
       RESULT_VARIABLE SUBPROJECT_ERR

@@ -18,7 +18,7 @@ function(lcm_do_albany)
       "BUILD_THREADS"
       "RESULT_VARIABLE"
       "CDASH_SUBPROJECT"
-      "BUILD_STRING"
+      "BUILD_ID_STRING"
     )
   message("lcm_do_albany(${ARGN})")
   cmake_parse_arguments(ARG "${BOOL_OPTS}" "${UNARY_OPTS}" "" ${ARGN}) 
@@ -28,7 +28,7 @@ function(lcm_do_albany)
   endif()
   set(CONFIG_OPTS
     "-DALBANY_CTEST_TIMEOUT:INTEGER=60"
-    "-DALBANY_TRILINOS_DIR:FILEPATH=$ENV{LCM_DIR}/Albany-build-${ARG_BUILD_STRING}"
+    "-DALBANY_TRILINOS_DIR:FILEPATH=$ENV{LCM_DIR}/albany-build-${ARG_BUILD_ID_STRING}"
     "-DCMAKE_CXX_FLAGS:STRING=$ENV{LCM_CXX_FLAGS}"
     "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
     "-DENABLE_LCM:BOOL=ON"
@@ -66,7 +66,7 @@ function(lcm_do_albany)
       "PROJECT" "Albany"
       SUBPROJECT ${ARG_CDASH_SUBPROJECT}
       SOURCE_DIR "$ENV{LCM_DIR}/Albany"
-      BUILD_DIR "$ENV{LCM_DIR}/albany-build-${ARG_BUILD_STRING}"
+      BUILD_DIR "$ENV{LCM_DIR}/albany-build-${ARG_BUILD_ID_STRING}"
       CONFIG_OPTS "${CONFIG_OPTS}"
       BUILD_THREADS "${ARG_BUILD_THREADS}"
       RESULT_VARIABLE SUBPROJECT_ERR

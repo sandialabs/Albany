@@ -20,7 +20,7 @@ function(lcm_do_package)
       "BUILD_THREADS"
       "RESULT_VARIABLE"
       "CDASH_SUBPROJECT"
-      "BUILD_STRING"
+      "BUILD_ID_STRING"
     )
   message("lcm_do_package(${ARGN})")
   cmake_parse_arguments(ARG "${BOOL_OPTS}" "${UNARY_OPTS}" "" ${ARGN}) 
@@ -38,7 +38,7 @@ function(lcm_do_package)
       BUILD_THREADS "${ARG_BUILD_THREADS}"
       RESULT_VARIABLE "PACKAGE_ERR"
       CDASH_SUBPROJECT "${ARG_CDASH_SUBPROJECT}"
-      BUILD_STRING "${ARG_BUILD_STRING}"
+      BUILD_ID_STRING "${ARG_BUILD_ID_STRING}"
      )
   # all other arguments passed to do_trilinos or do_albany
   if ("${ARG_PACKAGE}" STREQUAL "trilinos")
