@@ -1131,7 +1131,7 @@ ELSE()
 ENDIF()
 
 # Add option to check for hardware floating point exceptions using SSE, defaults to disabled
-OPTION(ENABLE_CHECK_FPE "Flag to turn on floating point exception handling" OFF)
+OPTION(ENABLE_CHECK_FPE "Flag to turn on floating point exception (NAN) checking" OFF)
 IF (ENABLE_CHECK_FPE)
   ADD_DEFINITIONS(-DALBANY_CHECK_FPE)
   MESSAGE("-- FPE checking              is Enabled, compiling with -DALBANY_CHECK_FPE")
@@ -1139,6 +1139,16 @@ IF (ENABLE_CHECK_FPE)
 ELSE()
   MESSAGE("-- FPE checking              is NOT Enabled.")
   SET(ALBANY_CHECK_FPE FALSE)
+ENDIF()
+
+OPTION(ENABLE_STRONG_FPE_CHECK "Flag to turn on strong checking for floating point exceptions" OFF)
+IF (ENABLE_STRONG_FPE_CHECK)
+  ADD_DEFINITIONS(-DALBANY_STRONG_FPE_CHECK)
+  MESSAGE("-- Strong FPE checking       is Enabled, compiling with -DALBANY_STRONG_FPE_CHECK")
+  SET(ALBANY_STRONG_FPE_CHECK TRUE)
+ELSE()
+  MESSAGE("-- Strong FPE checking       is NOT Enabled.")
+  SET(ALBANY_STRONG_FPE_CHECK FALSE)
 ENDIF()
 
 # Add option to set FTZ and DAZ
