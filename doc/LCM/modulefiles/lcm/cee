@@ -1,5 +1,0 @@
-#%Module 1.0
-
-module-whatis "LCM CEE (SEMS) base environment"
-
-module load lcm/sems

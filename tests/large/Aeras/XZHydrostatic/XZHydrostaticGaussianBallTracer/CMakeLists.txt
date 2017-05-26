@@ -16,8 +16,10 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 
 add_test(Aeras_${testName}_Spectral_np2_RungeKutta4 ${AlbanyT.exe} input_spectralT.xml)
-IF(NOT ALBANY_CHECK_FPE) 
+IF(NOT ALBANY_CHECK_FPE)
+IF(NOT ALBANY_STRONG_FPE_CHECK)  
 add_test(Aeras_${testName}_Spectral_np4_BackwardEuler ${AlbanyT8.exe} input_spectral_np4_BE_T.xml) 
+ENDIF()
 ENDIF()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists

@@ -12,6 +12,9 @@ set     alb_exe_dir     $lcm_dir/albany-build-$build/src
 
 setenv                  BUILD           $build
 setenv                  INSTALL_DIR     $install_dir
+setenv                  OMPI_CC         $env(CC)
+setenv                  OMPI_CXX        $env(CXX)
+setenv                  OMPI_FC         $env(FC)
 
 prepend-path            LD_LIBRARY_PATH $install_dir/lib
 prepend-path            PATH            $alb_exe_dir
