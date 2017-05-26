@@ -3,6 +3,8 @@ if(SNL_HELPERS_CMAKE)
 endif()
 set(SNL_HELPERS_CMAKE true)
 
+include(CMakeParseArguments)
+
 function(snl_move_xml PART)
   message("expecting files to be in \"${CTEST_DROP_LOCATION}\"")
   file(GLOB MATCHING_FILES "${CTEST_DROP_LOCATION}/*___XML___${PART}.xml")
