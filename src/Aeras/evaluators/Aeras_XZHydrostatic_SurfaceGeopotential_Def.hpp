@@ -183,7 +183,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   else if (topoType == MOUNTAIN1) {
     Kokkos::Experimental::md_parallel_for(XZHydrostatic_SurfaceGeopotential_MOUNTAIN1_Policy(
-      {0,0},{(int)workset.numCells,(int)numNodes}),*this);
+      {{0,0}},{{(int)workset.numCells,(int)numNodes}}),*this);
     cudaCheckError();
   }
 

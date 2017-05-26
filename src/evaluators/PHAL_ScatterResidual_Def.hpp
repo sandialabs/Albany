@@ -199,8 +199,8 @@ evaluateFields(typename Traits::EvalData workset)
   }
   else if (this->tensorRank == 1) {
     Kokkos::Experimental::md_parallel_for(ScatterRank1_Policy(
-      {0,0,0},{(int)workset.numCells, (int)this->numNodes, (int)numFields},
-      ScatterRank1_TileSize),*this);
+      {{0,0,0}},{{(int)workset.numCells, (int)this->numNodes, (int)numFields}},
+      {ScatterRank1_TileSize}),*this);
   }
   else if (this->tensorRank == 2) {
     Kokkos::parallel_for(ScatterRank2_Policy(0,workset.numCells),*this);

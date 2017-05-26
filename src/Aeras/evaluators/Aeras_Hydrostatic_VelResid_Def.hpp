@@ -219,15 +219,15 @@ evaluateFields(typename Traits::EvalData workset)
   if ( !obtainLaplaceOp ) {
     if (!pureAdvection ) {
       Kokkos::Experimental::md_parallel_for(Hydrostatic_VelResid_Policy(
-        {0,0,0},{(int)workset.numCells,(int)numNodes,(int)numLevels},
-        Hydrostatic_VelResid_TileSize),*this);
+        {{0,0,0}},{{(int)workset.numCells,(int)numNodes,(int)numLevels}},
+        {Hydrostatic_VelResid_TileSize}),*this);
       cudaCheckError();
     }
 
     else {
       Kokkos::Experimental::md_parallel_for(Hydrostatic_VelResid_pureAdvection_Policy(
-        {0,0,0},{(int)workset.numCells,(int)numNodes,(int)numLevels},
-        Hydrostatic_VelResid_pureAdvection_TileSize),*this);
+        {{0,0,0}},{{(int)workset.numCells,(int)numNodes,(int)numLevels}},
+        {Hydrostatic_VelResid_pureAdvection_TileSize}),*this);
       cudaCheckError();
     }
   }

@@ -417,13 +417,13 @@ evaluateFields(typename Traits::EvalData workset)
 
     /*
     Kokkos::Experimental::md_parallel_for(tensorRank_1Policy(
-      {0,0,0},{(int)workset.numCells, (int)this->numNodes, (int)numFields},
-      tensorRank_1TileSize),*this);
+      {{0,0,0}},{{(int)workset.numCells, (int)this->numNodes, (int)numFields}},
+      {tensorRank_1TileSize}),*this);
 
     if (workset.transientTerms && this->enableTransient)
       Kokkos::Experimental::md_parallel_for(tensorRank_1_enableTransientPolicy(
-        {0,0,0},{(int)workset.numCells, (int)this->numNodes, (int)numFields},
-        tensorRank_1_enableTransientTileSize),*this);
+        {{0,0,0}},{{(int)workset.numCells, (int)this->numNodes, (int)numFields}},
+        {tensorRank_1_enableTransientTileSize}),*this);
     */
 
     if (workset.accelerationTerms && this->enableAcceleration)

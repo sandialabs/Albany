@@ -337,14 +337,14 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (!pureAdvection) {
     Kokkos::Experimental::md_parallel_for(XZHydrostatic_EtaDotPi_Policy(
-      {0,0,0},{(int)workset.numCells,(int)numQPs,(int)numLevels},
-      XZHydrostatic_EtaDotPi_TileSize),*this);
+      {{0,0,0}},{{(int)workset.numCells,(int)numQPs,(int)numLevels}},
+      {XZHydrostatic_EtaDotPi_TileSize}),*this);
     cudaCheckError();
   }
   else {
     Kokkos::Experimental::md_parallel_for(XZHydrostatic_EtaDotPi_pureAdvection_Policy(
-      {0,0,0},{(int)workset.numCells,(int)numQPs,(int)numLevels},
-      XZHydrostatic_EtaDotPi_pureAdvection_TileSize),*this);
+      {{0,0,0}},{{(int)workset.numCells,(int)numQPs,(int)numLevels}},
+      {XZHydrostatic_EtaDotPi_pureAdvection_TileSize}),*this);
     cudaCheckError();
   }
 

@@ -151,14 +151,14 @@ evaluateFields(typename Traits::EvalData workset)
    switch (hs_type) {
     case NONE:
       Kokkos::Experimental::md_parallel_for(SurfaceHeight_Policy(
-        {0,0},{(int)workset.numCells,(int)numQPs},
-        SurfaceHeight_TileSize),*this);
+        {{0,0}},{{(int)workset.numCells,(int)numQPs}},
+        {SurfaceHeight_TileSize}),*this);
       cudaCheckError();
     break;
     case  MOUNTAIN:
       Kokkos::Experimental::md_parallel_for(SurfaceHeight_MOUNTAIN_Policy(
-        {0,0},{(int)workset.numCells,(int)numQPs},
-        SurfaceHeight_MOUNTAIN_TileSize),*this);
+        {{0,0}},{{(int)workset.numCells,(int)numQPs}},
+        {SurfaceHeight_MOUNTAIN_TileSize}),*this);
       cudaCheckError();
     break;
    }

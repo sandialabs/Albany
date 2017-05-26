@@ -292,8 +292,8 @@ evaluateFields(typename Traits::EvalData workset)
   Kokkos::parallel_for(GatherSolution_Policy(0,workset.numCells),*this);
   /*
   Kokkos::Experimental::md_parallel_for(GatherSolution_Policy(
-    {0,0},{(int)workset.numCells,(int)this->numNodes}, 
-    GatherSolution_TileSize),*this);
+    {{0,0}},{{(int)workset.numCells,(int)this->numNodes}}, 
+    {GatherSolution_TileSize}),*this);
   */
   cudaCheckError();
 

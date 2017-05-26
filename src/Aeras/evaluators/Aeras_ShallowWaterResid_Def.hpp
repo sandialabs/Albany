@@ -1133,6 +1133,7 @@ operator() (const ShallowWaterResid_TempNodalVec_Tag& tag, const int& cell, cons
   cpotentialEnergy(cell, node) = gravity*(UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap_Kokkos[node]));
 }
 
+/*
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
@@ -1187,8 +1188,8 @@ operator() (const ShallowWaterResid_Residual_Tag& tag, const int& cell) const{
                           + (cor + curl) * U(cell, qp, 1)) * wBF(cell, qp, qp);
   }
 }
+*/
 
-/*
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
@@ -1241,7 +1242,6 @@ operator() (const ShallowWaterResid_Residual_Tag& tag, const int& cell, const in
   Residual(cell, qp, 2) = (UDot(cell, qp, 2) + gradKE[1] + gradPE[1]
                         + (cor + curl) * U(cell, qp, 1)) * wBF(cell, qp, qp);
 }
-*/
 
 #endif
 //**********************************************************************
@@ -1752,10 +1752,10 @@ evaluateFields(typename Traits::EvalData workset)
         else {
 */
           Kokkos::Experimental::md_parallel_for(ShallowWaterResid_TempNodalVec_Policy(
-            {0,0},{(int)workset.numCells,(int)numNodes},ShallowWaterResid_TempNodalVec_TileSize),*this);
-          Kokkos::parallel_for(ShallowWaterResid_Residual_Policy(0,workset.numCells),*this);
-          //Kokkos::Experimental::md_parallel_for(ShallowWaterResid_Residual_Policy(
-          //  {0,0},{(int)workset.numCells,(int)numQPs},ShallowWaterResid_Residual_TileSize),*this);
+            {{0,0}},{{(int)workset.numCells,(int)numNodes}},{ShallowWaterResid_TempNodalVec_TileSize}),*this);
+          //Kokkos::parallel_for(ShallowWaterResid_Residual_Policy(0,workset.numCells),*this);
+          Kokkos::Experimental::md_parallel_for(ShallowWaterResid_Residual_Policy(
+            {{0,0}},{{(int)workset.numCells,(int)numQPs}},{ShallowWaterResid_Residual_TileSize}),*this);
           //Kokkos::parallel_for(ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
 /*
         }

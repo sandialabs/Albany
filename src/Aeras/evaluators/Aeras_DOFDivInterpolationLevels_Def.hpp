@@ -172,19 +172,19 @@ evaluateFields(typename Traits::EvalData workset)
 #else
   if ( originalDiv ) {
     Kokkos::Experimental::md_parallel_for(DOFDivInterpolationLevels_originalDiv_Policy(
-      {0,0,0},{(int)workset.numCells,(int)numQPs,(int)numLevels},
-      DOFDivInterpolationLevels_originalDiv_TileSize),*this);
+      {{0,0,0}},{{(int)workset.numCells,(int)numQPs,(int)numLevels}},
+      {DOFDivInterpolationLevels_originalDiv_TileSize}),*this);
     cudaCheckError();
   }
   else {
     Kokkos::Experimental::md_parallel_for(DOFDivInterpolationLevels_vcontra_Policy(
-      {0,0,0},{(int)workset.numCells,(int)numNodes,(int)numLevels},
-      DOFDivInterpolationLevels_vcontra_TileSize),*this);
+      {{0,0,0}},{{(int)workset.numCells,(int)numNodes,(int)numLevels}},
+      {DOFDivInterpolationLevels_vcontra_TileSize}),*this);
     cudaCheckError();
 
     Kokkos::Experimental::md_parallel_for(DOFDivInterpolationLevels_Policy(
-      {0,0,0},{(int)workset.numCells,(int)numQPs,(int)numLevels},
-      DOFDivInterpolationLevels_TileSize),*this);
+      {{0,0,0}},{{(int)workset.numCells,(int)numQPs,(int)numLevels}},
+      {DOFDivInterpolationLevels_TileSize}),*this);
     cudaCheckError();
   }
 

@@ -134,8 +134,8 @@ evaluateFields(typename Traits::EvalData workset)
 
 #else
   Kokkos::Experimental::md_parallel_for(DOFGradInterpolationLevels_Policy(
-    {0,0,0},{(int)workset.numCells,(int)numQPs,(int)numLevels}, 
-    DOFGradInterpolationLevels_TileSize),*this);
+    {{0,0,0}},{{(int)workset.numCells,(int)numQPs,(int)numLevels}}, 
+    {DOFGradInterpolationLevels_TileSize}),*this);
   cudaCheckError();
 #endif
 }
@@ -228,8 +228,8 @@ evaluateFields(typename Traits::EvalData workset)
 
 #else
   Kokkos::Experimental::md_parallel_for(DOFGradInterpolationLevels_noDeriv_Policy(
-    {0,0,0},{(int)workset.numCells,(int)numQPs,(int)numLevels}, 
-    DOFGradInterpolationLevels_noDeriv_TileSize),*this);
+    {{0,0,0}},{{(int)workset.numCells,(int)numQPs,(int)numLevels}}, 
+    {DOFGradInterpolationLevels_noDeriv_TileSize}),*this);
   cudaCheckError();
 #endif
 }
