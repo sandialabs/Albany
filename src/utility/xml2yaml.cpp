@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     auto yamlString = yamlStringStream.str();
     /* replace references to other XML files with the YAML extension
        (e.g. material data files) */
-    yamlString = std::regex_replace(yamlString, std::regex("\\.xml"), ".yaml");
+    yamlString = std::regex_replace(yamlString, std::regex("\\.xml"), std::string(".yaml"));
     std::ofstream yamlFileStream(yamlFileName.c_str());
     assert(yamlFileStream.is_open());
     yamlFileStream << yamlString;
