@@ -11,4 +11,4 @@ module load sems-python/2.7.9
 module load sems-cmake/3.5.2
 module load sems-git/2.10.1
 
-conflict lcm/fedora
+conflict lcm/fedora lcm/cluster

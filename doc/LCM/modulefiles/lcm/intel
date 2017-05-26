@@ -6,6 +6,10 @@ if { [is-loaded lcm/sems] } {
   module load sems-intel/17.0.1
 }
 
+if { [is-loaded lcm/cluster] } {
+  module load sierra-compiler/intel/17.0.2
+}
+
 setenv TOOL_CHAIN intel
 
 setenv CC [exec which icc]
