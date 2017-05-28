@@ -54,3 +54,29 @@ if { [is-loaded lcm/sems] } {
   prepend-path            LD_LIBRARY_PATH $netcdf_lib
   prepend-path            PATH            $mpi_root/bin
 }
+
+if { [is-loaded lcm/cluster] } {
+  module load sierra-mpi/openmpi/1.10
+  set                     boost_inc       /ascldap/users/daibane/LCM/TPL/install/boost/include
+  set                     boost_lib       /ascldap/users/daibane/LCM/TPL/install/boost/lib
+  set                     mpi_root        $env(MPI_ROOT)
+  set                     netcdf_root     /ascldap/users/daibane/LCM/TPL/install/netcdf
+  set                     netcdf_inc      $netcdf_root/include
+  set                     netcdf_lib      $netcdf_root/lib
+  set                     yaml_cpp_inc    /ascldap/users/daibane/LCM/TPL/install/yaml-cpp/include
+  set                     yaml_cpp_lib    /ascldap/users/daibane/LCM/TPL/install/yaml-cpp/lib
+  setenv                  BOOST_INC       $boost_inc
+  setenv                  BOOST_LIB       $boost_lib
+  setenv                  BOOSTLIB_INC    $boost_inc
+  setenv                  BOOSTLIB_LIB    $boost_lib
+  setenv                  MPI_INC         $mpi_root/include
+  setenv                  MPI_LIB         $mpi_root/lib
+  setenv                  MPI_BIN         $mpi_root/bin
+  setenv                  NETCDF          $netcdf_root
+  setenv                  NETCDF_INC      $netcdf_inc
+  setenv                  NETCDF_LIB      $netcdf_lib
+  setenv                  YAML_CPP_INC    $yaml_cpp_inc
+  setenv                  YAML_CPP_LIB    $yaml_cpp_lib
+# PATHs for MPI are set by the modules
+  prepend-path            LD_LIBRARY_PATH $netcdf_lib
+}
