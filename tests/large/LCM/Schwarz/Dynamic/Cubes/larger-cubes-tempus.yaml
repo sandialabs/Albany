@@ -70,7 +70,6 @@ ANONYMOUS:
         Newmark Beta Parameters:
           Beta: 0.25
           Gamma: 0.50
-        Predictor Name: 'None'
         Solver Name: Demo Solver
         Demo Solver:
           NOX:
