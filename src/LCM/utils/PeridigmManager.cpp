@@ -67,7 +67,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   Teuchos::RCP<Albany::MaterialDatabase> materialDataBase;
   if(problemParams.isType<std::string>("MaterialDB Filename")){
     std::string filename = problemParams.get<std::string>("MaterialDB Filename");
-    materialDataBase = Teuchos::rcp(new MaterialDatabase(filename, teuchosComm));
+    materialDataBase = Teuchos::rcp(new Albany::MaterialDatabase(filename, teuchosComm));
   }
 
   stkDisc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc);
