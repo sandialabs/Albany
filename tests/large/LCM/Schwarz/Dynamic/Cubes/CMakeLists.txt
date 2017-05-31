@@ -48,6 +48,7 @@ if (ALBANY_TEMPUS)
 if (ALBANY_IFPACK2) 
 add_test(Serial_Dynamic_${testName}_NewmarkBeta_Tempus ${SerialAlbanyT.exe} cube-single-tempus.yaml)
 add_test(Parallel_Dynamic_${testName}_NewmarkBeta_Tempus ${AlbanyT8.exe} larger-cubes-tempus.yaml)
+add_test(Parallel_Dynamic_${testName}_NewmarkBeta_Explicit_LumpedMass_Tempus ${AlbanyT8.exe} larger-cubes-tempus-expl.yaml)
 endif()
 endif()
 
