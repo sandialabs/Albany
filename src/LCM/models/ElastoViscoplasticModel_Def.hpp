@@ -581,8 +581,14 @@ computeState(typename Traits::EvalData workset,
             // compute yield stress and rate terms
             //
             Fad eqps_rateF = 0.0;
-            if (delta_time(0) > 0) eqps_rateF = sq23 * dgamF / delta_time(0);
-            Fad rate_termF = 1.0 + std::asinh( std::pow(eqps_rateF / f, n));
+            Fad rate_termF;
+            if (delta_time(0) > 0 && dgamF > 0.0){
+				 eqps_rateF = sq23 * dgamF / delta_time(0);
+                 rate_termF = 1.0 + std::asinh( std::pow(eqps_rateF / f, n));
+			}
+            else {
+                 rate_termF = 1.0;
+			}
             Fad kappaF = two_mubarF * eps_ssF;
             Fad YbarF = Je * (Y + kappaF) * rate_termF;
 

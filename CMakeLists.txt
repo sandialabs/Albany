@@ -207,13 +207,14 @@ endif()
 
 MESSAGE("-- Using ${Trilinos_CXX_COMPILER_ID} Compiler.")
 
-IF(${Trilinos_CXX_COMPILER_ID} MATCHES "Intel")
-  SET(USING_INTEL TRUE)
+# No longer needed but keep for now as this shows how to silence specific warnings on Intel compiler
+#IF(${Trilinos_CXX_COMPILER_ID} MATCHES "Intel")
+#  SET(USING_INTEL TRUE)
 # On Intel, turn of interprocedural optimization at linking to keep linker from hanging
 # This could possibly be removed with further study (GAH)
 #  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-ip")
-   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd2536,2196,858,488,161,47")
-ENDIF()
+#   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd2536,2196,858,488,161,47")
+#ENDIF()
 
 ## Check for some required Trilinos package dependencies (Piro, Phalanx) ##
 MESSAGE("\nChecking Trilinos build for required and optional packages:")
