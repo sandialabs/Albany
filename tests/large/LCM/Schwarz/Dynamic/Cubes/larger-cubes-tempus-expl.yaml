@@ -70,7 +70,8 @@ ANONYMOUS:
           #Maximum Number of Consecutive Stepper Failures: 5
       Tempus Stepper:
         Stepper Type: 'Newmark Beta Explicit'
-        Gamma: 0.50
+        Newmark Beta Explicit Parameters:
+          Gamma: 0.50
       Stratimikos:
         Linear Solver Type: AztecOO
         Linear Solver Types:
