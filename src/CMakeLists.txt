@@ -784,6 +784,16 @@ ELSE()
   set(Cogent_LIB )
 ENDIF()
 
+IF ( ENABLE_MPMD )
+  include_directories (${PlatoEngine_INSTALL_DIR}/include)
+  link_directories (${PlatoEngine_INSTALL_DIR}/lib)
+  link_directories (${LibConfuse_INSTALL_DIR}/lib)
+  set(PlatoEngine_LIB PlatoDataLayer PlatoInterface PlatoAnalyze PlatoParser PlatoExceptions confuse)
+  ADD_DEFINITIONS(-DCODE_MP)
+ELSE()
+  set(PlatoEngine_LIB )
+ENDIF()
+
 IF ( ENABLE_DOTK )
   include_directories (${DOTK_INCLUDE_DIR})
   link_directories (${DOTK_LIBRARY_DIR})
@@ -867,6 +877,12 @@ IF (ALBANY_TEMPUS)
   SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyTempus )
 ENDIF()
 
+IF (ALBANY_MPMD) 
+  add_executable(AlbanyMPMD Main_SolveT_MPMD.cpp) 
+  SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyMPMD )
+ENDIF() 
+
+
 if (ALBANY_STOKHOS AND ALBANY_EPETRA)
 add_executable(AlbanySG Main_SGSolve.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanySG )
@@ -925,6 +941,8 @@ ENDIF (NOT ALBANY_LIBRARIES_ONLY)
 set(ALL_LIBRARIES
   ${Peridigm_LIBRARIES}
   ${ALBANY_CI_LIB}
+  ${PlatoEngine_LIB}
+  ${PlatoEngine_LIB}
   ${ALB_TRILINOS_LIBS}
   ${ALB_CUBIT_LIBS}
   ${LAME_LIB}

@@ -56,9 +56,10 @@ StiffnessObjectiveBase(Teuchos::ParameterList& p,
   this->pStateMgr->registerStateVariable(FName, dl->workset_scalar, dl->dummy, 
                                          "all", "scalar", 0.0, false, false);
   for(int itopo=0; itopo<nTopos; itopo++){
-    this->pStateMgr->registerStateVariable(dFdpNames[itopo], 
-                                           dl->node_scalar, dl->dummy, 
+    this->pStateMgr->registerStateVariable(dFdpNames[itopo], dl->node_scalar, dl->dummy, 
                                            "all", "scalar", 0.0, false, false);
+    this->pStateMgr->registerStateVariable(dFdpNames[itopo]+"_node", dl->node_node_scalar, dl->dummy, 
+                                           "all", "scalar", 0.0, false, true);
   }
 
   this->addDependentField(qp_weights);

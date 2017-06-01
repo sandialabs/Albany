@@ -492,6 +492,12 @@ IF (ROL_List_ID GREATER -1)
     SET(ALBANY_ROL FALSE)
 ENDIF()
 
+# set optional dependency on MPMD, defaults to Disabled
+OPTION(ENABLE_MPMD "Flag to turn on MPMD source code" OFF)
+IF (ENABLE_MPMD)
+  SET(ALBANY_MPMD TRUE)
+ENDIF()
+
 # set optional dependency on ATO, defaults to Disabled
 OPTION(ENABLE_ATO "Flag to turn on ATO source code" OFF)
 OPTION(ENABLE_ATO_SOLVER_EPETRA "Flag to turn on ATO::SolverEpetra code" OFF)

@@ -572,10 +572,6 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
   if(configSpec.isType<bool>("Nonconformal"))
     isNonconformal = configSpec.get<bool>("Nonconformal");
 
-  Teuchos::ParameterList& aggParams = params->get<Teuchos::ParameterList>("Objective Aggregator");
-  std::string derName = aggParams.get<std::string>("Output Derivative Name");
-  std::string objName = aggParams.get<std::string>("Output Value Name");
-
 
   int numPhysSets = meshSpecs.size();
 
@@ -641,20 +637,25 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
 //      strIntegrationMethod = topology->getIntegrationMethod();
     }
     
-    //tpetra-conversion If registerOldState is ever made true, the code will
-    // likely break.
-    stateMgr->registerStateVariable(objName, dl->workset_scalar, meshSpecs[i]->ebName, 
-                                   "scalar", 0.0, /*registerOldState=*/ false, true);
+    if(params->isSublist("Objective Aggregator")){
+      Teuchos::ParameterList& aggParams = params->get<Teuchos::ParameterList>("Objective Aggregator");
+      std::string derName = aggParams.get<std::string>("Output Derivative Name");
+      std::string objName = aggParams.get<std::string>("Output Value Name");
 
-    stateMgr->registerStateVariable(derName, dl->node_scalar, meshSpecs[i]->ebName, 
-                                   "scalar", 0.0, /*registerOldState=*/ false, false);
-
-    int nTopos = topologyArray->size();
-    for(int itopo=0; itopo<nTopos; itopo++){
-      stateMgr->registerStateVariable(Albany::strint(derName+"_node",itopo), dl->node_node_scalar, "all",
+      //tpetra-conversion If registerOldState is ever made true, the code will
+      // likely break.
+      stateMgr->registerStateVariable(objName, dl->workset_scalar, meshSpecs[i]->ebName, 
                                      "scalar", 0.0, /*registerOldState=*/ false, true);
+  
+      stateMgr->registerStateVariable(derName, dl->node_scalar, meshSpecs[i]->ebName, 
+                                     "scalar", 0.0, /*registerOldState=*/ false, false);
+  
+      int nTopos = topologyArray->size();
+      for(int itopo=0; itopo<nTopos; itopo++){
+        stateMgr->registerStateVariable(Albany::strint(derName+"_node",itopo), dl->node_node_scalar, "all",
+                                       "scalar", 0.0, /*registerOldState=*/ false, true);
+      }
     }
-
   }
 }
 
