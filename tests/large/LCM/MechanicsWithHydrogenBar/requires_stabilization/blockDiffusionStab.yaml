@@ -40,6 +40,7 @@ ANONYMOUS:
     Exodus Output File Name: blockDiffusionStab.e
     Solution Vector Components: [disp, V, CL, S, tauH, S]
     Residual Vector Components: [force, V, CLresid, S, tauHresid, S]
+    Use Serial Mesh: true
   Piro: 
     LOCA: 
       Bifurcation: { }

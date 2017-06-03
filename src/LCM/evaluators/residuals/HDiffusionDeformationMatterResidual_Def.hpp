@@ -199,16 +199,19 @@ HDiffusionDeformationMatterResidual<EvalT, Traits>::evaluateFields(
       } else {
         temp = elementLength(cell, qp) * elementLength(cell, qp) / 6.0 *
                Dstar(cell, qp) / DL(cell, qp) / dt;
-        if( ((temp - 1) / DL(cell, qp)) < 10.0)
+        ScalarT temp2 = ((temp - 1) / DL(cell, qp));
+        if( temp2 < 10.0 && temp2 > -10.0)
           artificalDL(cell, qp) =
             stab_param_ *
             //  (temp) // temp - DL is closer to the limit ...if lumped mass is
             //  preferred..
             std::abs(temp)  // should be 1 but use 0.5 for safety
-            * (0.5 + 0.5 * std::tanh((temp - 1) / DL(cell, qp))) * DL(cell, qp);
-        else
+            * (0.5 + 0.5 * std::tanh(temp2)) * DL(cell, qp);
+        else if ( temp2 >= 10.0)
           artificalDL(cell, qp) =
             stab_param_ * std::abs(temp) * DL(cell, qp);
+        else
+          artificalDL(cell, qp) = 0.0;
       }
       stabilizedDL(cell, qp) =
           artificalDL(cell, qp) / (DL(cell, qp) + artificalDL(cell, qp));
