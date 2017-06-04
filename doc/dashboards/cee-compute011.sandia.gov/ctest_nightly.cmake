@@ -103,6 +103,11 @@ set (CTEST_BUILD_NAME "${osname}-${osrel}-${CTEST_BUILD_OPTION}-${CTEST_BUILD_CO
 set (CTEST_BINARY_NAME build)
 set (CTEST_INSTALL_NAME test)
 
+if (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
+# Runs tests longer if in debug mode
+   set (CTEST_TEST_TIMEOUT 1200)
+endif ()
+
 set (PREFIX_DIR /projects/albany)
 set (INTEL_PREFIX_DIR ${PREFIX_DIR}/intel5.1)
 set (GCC_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.8.8-gcc-5.2.0-RHEL6)
@@ -140,6 +145,13 @@ endif ()
 if (NOT EXISTS "${CTEST_INSTALL_DIRECTORY}")
   file (MAKE_DIRECTORY "${CTEST_INSTALL_DIRECTORY}")
 endif ()
+
+# Clean up storage area for nightly testing results
+IF (CLEAN_BUILD)
+  IF(EXISTS "${CTEST_BINARY_DIRECTORY}/Testing" )
+    FILE(REMOVE_RECURSE "${CTEST_BINARY_DIRECTORY}/Testing")
+  ENDIF()
+ENDIF()
 
 configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
   ${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake COPYONLY)
@@ -421,7 +433,6 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTPL_BLAS_LIBRARIES:STRING='-L${MKL_PATH}/mkl/lib/intel64 -lmkl_intel_lp64 -lmkl_blas95_lp64 -lmkl_core -lmkl_sequential'"
   "-DTPL_LAPACK_LIBRARIES:STRING='-L${MKL_PATH}/mkl/lib/intel64 -lmkl_lapack95_lp64'"
   #
-  "-DDART_TESTING_TIMEOUT:STRING=600"
   "-DTrilinos_ENABLE_ThreadPool:BOOL=ON"
   #
   "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
@@ -495,6 +506,16 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
   "-DKokkos_ENABLE_Pthread:BOOL=OFF"
   )
+
+if (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
+   set (COMMON_CONFIGURE_OPTIONS ${COMMON_CONFIGURE_OPTIONS}
+     "-DDART_TESTING_TIMEOUT:STRING=1200"
+   )
+else ()
+   set (COMMON_CONFIGURE_OPTIONS ${COMMON_CONFIGURE_OPTIONS}
+     "-DDART_TESTING_TIMEOUT:STRING=600"
+   )
+endif ()
 
 INCLUDE(${CTEST_SCRIPT_DIRECTORY}/trilinos_macro.cmake)
 

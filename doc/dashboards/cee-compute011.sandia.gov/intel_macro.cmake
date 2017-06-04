@@ -76,9 +76,11 @@ macro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)
   if (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
 #   Set -g to enable retaining symbols
     set (CONFIGURE_OPTIONS
-    "-DCMAKE_CXX_FLAGS:STRING='-g -O3 -DNDEBUG -diag-disable=cpu-dispatch -mkl=sequential ${extra_cxx_flags}'"
-    "-DCMAKE_C_FLAGS:STRING='-g -O3 -diag-disable=cpu-dispatch -DNDEBUG -mkl=sequential'"
-    "-DCMAKE_Fortran_FLAGS:STRING='-g -O3 -DNDEBUG -diag-disable=cpu-dispatch -mkl=sequential'"
+    "-DCMAKE_CXX_FLAGS:STRING='-g -O0 -mkl=sequential ${extra_cxx_flags}'"
+    "-DCMAKE_C_FLAGS:STRING='-g -O0 -mkl=sequential'"
+    "-DCMAKE_Fortran_FLAGS:STRING='-g -O0 -mkl=sequential'"
+    "-DCTEST_TEST_TIMEOUT:STRING=1200"
+    "-DDART_TESTING_TIMEOUT:STRING=1200"
       "${CONFIGURE_OPTIONS}")
   else (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
 
@@ -86,6 +88,8 @@ macro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)
     "-DCMAKE_CXX_FLAGS:STRING='-O3 -DNDEBUG -diag-disable=cpu-dispatch -mkl=sequential ${extra_cxx_flags}'"
     "-DCMAKE_C_FLAGS:STRING='-O3 -diag-disable=cpu-dispatch -DNDEBUG -mkl=sequential'"
     "-DCMAKE_Fortran_FLAGS:STRING='-O3 -DNDEBUG -diag-disable=cpu-dispatch -mkl=sequential'"
+    "-DCTEST_TEST_TIMEOUT:STRING=1200"
+    "-DDART_TESTING_TIMEOUT:STRING=600"
       "${CONFIGURE_OPTIONS}")
 
 #    "-DCMAKE_CXX_FLAGS:STRING='-axAVX -O3 -DNDEBUG -diag-disable=cpu-dispatch -mkl=sequential ${extra_cxx_flags}'"
