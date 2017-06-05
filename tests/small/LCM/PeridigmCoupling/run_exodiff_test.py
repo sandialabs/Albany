@@ -124,6 +124,11 @@ def runtest(albany_command, yaml_file_name, final_step_only):
 
     logfile.close()
 
+    logfile = open(log_file_name, 'r')
+    content = logfile.read()
+    logfile.close()
+    print content
+
     return result
 
 if __name__ == "__main__":
