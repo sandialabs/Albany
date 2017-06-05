@@ -195,10 +195,19 @@ SurfaceHDiffusionDefResidual<EvalT, Traits>::evaluateFields(
       } else {
         temp = thickness * thickness / 6.0 * eff_diff_(cell, pt) /
                dL_(cell, pt) / dt;
-        artificalDL(cell, pt) =
+
+        ScalarT temp2 = ((temp - 1.0) / dL_(cell, pt));
+
+        if( temp2 < 10.0 && temp2 > -10.0)
+          artificalDL(cell, pt) =
             stab_param_ * temp *
-            (0.5 + 0.5 * std::tanh((temp - 1.0) / dL_(cell, pt))) *
+            (0.5 + 0.5 * std::tanh(temp2)) *
             dL_(cell, pt);
+        else if(temp2 >= 10.0)
+          artificalDL(cell, pt) =
+            stab_param_ * temp * dL_(cell, pt);
+        else
+          artificalDL(cell, pt) = 0.0;
       }
       stabilizedDL(cell, pt) =
           artificalDL(cell, pt) / (dL_(cell, pt) + artificalDL(cell, pt));

@@ -298,23 +298,45 @@ namespace LCM {
           //if ((temp > 0) & stabParameter(cell,qp) > 0) {
           if ((temp > 0) && (stab_param_ > 0)) {
 
-            TResidual(cell,node) -=
-              ( porePressure(cell,qp)-porePressureold(cell, qp) )
-              //* stabParameter(cell, qp)
-              * stab_param_
-              * std::abs(temp) // should be 1 but use 0.5 for safety
-              * (0.5 + 0.5*std::tanh( (temp-1)/kcPermeability(cell,qp)  ))
-              / biotModulus(cell, qp)
-              * ( wBF(cell, node, qp)
-                // -tpterm(cell,node,qp)
-                );
-            TResidual(cell,node) += pterm(cell,qp)
-              //* stabParameter(cell, qp)
-              * stab_param_
-              * std::abs(temp) // should be 1 but use 0.5 for safety
-              * (0.5 + 0.5*std::tanh( (temp-1)/kcPermeability(cell,qp)  ))
-              / biotModulus(cell, qp)
-              * ( wBF(cell, node, qp) );
+            ScalarT temp2 = ((temp - 1) / kcPermeability(cell, qp));
+
+            if( temp2 < 10.0 && temp2 > -10.0){
+
+              TResidual(cell,node) -=
+                ( porePressure(cell,qp)-porePressureold(cell, qp) )
+                //* stabParameter(cell, qp)
+                * stab_param_
+                * std::abs(temp) // should be 1 but use 0.5 for safety
+                * (0.5 + 0.5*std::tanh( temp2 ))
+                / biotModulus(cell, qp)
+                * ( wBF(cell, node, qp)
+                  // -tpterm(cell,node,qp)
+                  );
+              TResidual(cell,node) += pterm(cell,qp)
+                //* stabParameter(cell, qp)
+                * stab_param_
+                * std::abs(temp) // should be 1 but use 0.5 for safety
+                * (0.5 + 0.5*std::tanh( temp2 ))
+                / biotModulus(cell, qp)
+                * ( wBF(cell, node, qp) );
+            }
+            else if(temp2 >= 10.0){
+              TResidual(cell,node) -=
+                ( porePressure(cell,qp)-porePressureold(cell, qp) )
+                //* stabParameter(cell, qp)
+                * stab_param_
+                * std::abs(temp) // should be 1 but use 0.5 for safety
+                / biotModulus(cell, qp)
+                * ( wBF(cell, node, qp)
+                  // -tpterm(cell,node,qp)
+                  );
+              TResidual(cell,node) += pterm(cell,qp)
+                //* stabParameter(cell, qp)
+                * stab_param_
+                * std::abs(temp) // should be 1 but use 0.5 for safety
+                / biotModulus(cell, qp)
+                * ( wBF(cell, node, qp) );
+            }
           }
         }
       }

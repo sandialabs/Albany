@@ -13,10 +13,16 @@ ENDIF()
 # 1'. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTP.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputTP.xml COPYONLY)
 # 2'. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Tpetra NAME)
 # 3'. Create the test with this name and standard executable
-add_test(${testName}_SERIAL_Tpetra ${SerialAlbanyT.exe} inputT.xml)
+if (NOT (ALBANY_CHECK_FPE OR ALBANY_STRONG_FPE_CHECK))
+# Fails with FPE if FPE checking is enabled
+  add_test(${testName}_SERIAL_Tpetra ${SerialAlbanyT.exe} inputT.xml)
+endif ()
+add_test(${testName}_SERIAL_Tpetra_Ifpack2 ${SerialAlbanyT.exe} inputTP.xml)
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_STOKHOS)
