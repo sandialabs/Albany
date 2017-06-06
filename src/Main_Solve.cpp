@@ -25,9 +25,6 @@
 #include "EpetraExt_MultiVectorOut.h"
 #include "EpetraExt_BlockMapOut.h"
 
-#include "Phalanx_config.hpp"
-#include "Phalanx.hpp"
-
 #include "Kokkos_Core.hpp"
 
 #ifdef ALBANY_PERIDIGM
