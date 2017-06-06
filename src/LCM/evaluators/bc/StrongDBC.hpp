@@ -7,25 +7,14 @@
 #if !defined(LCM_StrongDBC_hpp)
 #define LCM_StrongDBC_hpp
 
-#include "Phalanx_config.hpp"
-#include "Phalanx_Evaluator_WithBaseImpl.hpp"
-#include "Phalanx_Evaluator_Derived.hpp"
-#include "Phalanx_MDField.hpp"
-
-#include "Teuchos_ParameterList.hpp"
-#if defined(ALBANY_EPETRA)
-#include "Epetra_Vector.h"
-#endif
-
-#include "Sacado_ParameterAccessor.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dirichlet.hpp"
-
-#if defined(ALBANY_DTK)
-#include "DTK_STKMeshHelpers.hpp"
-#include "DTK_STKMeshManager.hpp"
-#include "DTK_MapOperatorFactory.hpp"
-#endif
+#include "Phalanx_config.hpp"
+#include "Phalanx_Evaluator_Derived.hpp"
+#include "Phalanx_Evaluator_WithBaseImpl.hpp"
+#include "Phalanx_MDField.hpp"
+#include "Sacado_ParameterAccessor.hpp"
+#include "Teuchos_ParameterList.hpp"
 
 namespace LCM {
 
@@ -45,9 +34,6 @@ public:
 
   StrongDBC_Base(Teuchos::ParameterList & p);
 
-  template<typename T>
-  void
-  computeBCs(size_t const ns_node, T & x_val, T & y_val, T & z_val);
 };
 
 //
