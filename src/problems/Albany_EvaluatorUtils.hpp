@@ -13,7 +13,6 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
-#include "Phalanx.hpp"
 #include "Albany_DataTypes.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
@@ -25,6 +24,7 @@
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 
+#include <Phalanx_Evaluator.hpp>
 
 namespace Albany {
   /*!

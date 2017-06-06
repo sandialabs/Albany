@@ -21,7 +21,6 @@
 #include "Albany_StateManager.hpp"
 
 #include "Albany_DataTypes.hpp"
-#include "Phalanx.hpp"
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dimension.hpp"
