@@ -10,12 +10,13 @@
 #include <vector>
 #include <string>
 
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
+#include <Teuchos_RCP.hpp>
+#include <Teuchos_ParameterList.hpp>
+
+#include <Phalanx_Evaluator_TemplateManager.hpp>
 
 #include "Albany_DataTypes.hpp"
 #include "PHAL_AlbanyTraits.hpp"
-#include "Phalanx.hpp"
 #include "PHAL_FactoryTraits.hpp"
 
 #include "Albany_MaterialDatabase.hpp"

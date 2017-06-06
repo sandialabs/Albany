@@ -6,6 +6,8 @@
 
 #include "Albany_BCUtils.hpp"
 
+#include <Phalanx_Evaluator_Factory.hpp>
+
 namespace {
 const char decorator[] = "Evaluator for ";
 
