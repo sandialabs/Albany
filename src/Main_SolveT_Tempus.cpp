@@ -44,7 +44,6 @@
 #include "Albany_DataTypes.hpp"
 
 #include "Phalanx_config.hpp"
-#include "Phalanx.hpp"
 
 #include "Kokkos_Core.hpp"
 

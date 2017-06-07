@@ -5,6 +5,9 @@
 //*****************************************************************//
 
 #include "QCAD_PoissonProblem.hpp"
+
+#include <Phalanx_Evaluator_Factory.hpp>
+
 #include "Albany_MaterialDatabase.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_BCUtils.hpp"

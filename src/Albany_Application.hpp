@@ -46,7 +46,6 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Workset.hpp"
-#include "Phalanx.hpp"
 
 #if defined(ALBANY_STOKHOS)
 #include "Stokhos_OrthogPolyExpansion.hpp"

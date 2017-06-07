@@ -13,7 +13,6 @@
 #include "Albany_StateManager.hpp"
 #include "Albany_StateInfoStruct.hpp" // contains MeshSpecsStuct
 #include "PHAL_AlbanyTraits.hpp"
-#include "Phalanx.hpp"
 
 namespace Albany {
 

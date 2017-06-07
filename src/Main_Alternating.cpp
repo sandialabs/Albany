@@ -23,7 +23,6 @@
 #include "Albany_Utils.hpp"
 #include "Kokkos_Core.hpp"
 #include "Phalanx_config.hpp"
-#include "Phalanx.hpp"
 #include "Piro_PerformSolve.hpp"
 #include "Teuchos_FancyOStream.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
