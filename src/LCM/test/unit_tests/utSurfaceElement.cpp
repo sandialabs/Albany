@@ -8,7 +8,6 @@
 #ifdef ALBANY_EPETRA
 #include <Epetra_MpiComm.h>
 #endif
-#include <Phalanx.hpp>
 #include <MiniTensor.h>
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "PHAL_AlbanyTraits.hpp"

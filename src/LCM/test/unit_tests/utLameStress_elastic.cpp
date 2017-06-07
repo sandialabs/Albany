@@ -6,7 +6,6 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_MpiComm.h>
-#include <Phalanx.hpp>
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_StateManager.hpp"

@@ -12,7 +12,6 @@
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_Workset.hpp"
-#include "Phalanx.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 

@@ -17,7 +17,6 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_TestForException.hpp>
 #include <Teuchos_as.hpp>
-#include <Phalanx.hpp>
 
 #include <PHAL_AlbanyTraits.hpp>
 #include <PHAL_SaveStateField.hpp>
