@@ -17,7 +17,6 @@
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_Workset.hpp"
-#include "Phalanx.hpp"
 
 #include "AAdapt_RC_Manager.hpp"
 #include "Albany_MaterialDatabase.hpp"

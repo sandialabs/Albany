@@ -12,7 +12,6 @@
 
 #include "Albany_AbstractProblem.hpp"
 
-#include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "Albany_ProblemUtils.hpp"
@@ -102,7 +101,6 @@ namespace Albany {
 
 #include "Albany_AbstractProblem.hpp"
 
-#include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "Albany_ProblemUtils.hpp"

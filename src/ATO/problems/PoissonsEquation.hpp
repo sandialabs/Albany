@@ -16,7 +16,6 @@
 #include "ATO_Mixture.hpp"
 #include "ATO_Utils.hpp"
 
-#include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
