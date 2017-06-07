@@ -7,7 +7,6 @@
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_CommHelpers.hpp"
-#include "Phalanx.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "PHAL_Utilities.hpp"
 

@@ -14,7 +14,6 @@
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
 
-#include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "Albany_MaterialDatabase.hpp"

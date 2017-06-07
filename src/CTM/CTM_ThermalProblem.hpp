@@ -5,7 +5,6 @@
 #include <Albany_AbstractProblem.hpp>
 #include <PHAL_AlbanyTraits.hpp>
 #include <Albany::MaterialDatabase.h>
-#include <Phalanx.hpp>
 
 namespace CTM {
 
