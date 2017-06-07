@@ -511,6 +511,33 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
   }
 
   ///
+  /// Strongly enforced DBC
+  ///
+  for(std::size_t i = 0; i < nodeSetIDs.size(); i++) {
+    for(std::size_t j = 0; j < bcNames.size(); j++) {
+      string ss = traits_type::constructStrongDBCName(nodeSetIDs[i], bcNames[j]);
+
+
+      if(BCparams.isParameter(ss)) {
+        RCP<ParameterList> p = rcp(new ParameterList);
+        p->set<int>("Type", traits_type::type);
+
+        p->set< RCP<DataLayout> >("Data Layout", dummy);
+        p->set< string > ("Dirichlet Name", ss);
+        p->set< RealType >("Dirichlet Value", BCparams.get<double>(ss));
+        p->set< string > ("Node Set ID", nodeSetIDs[i]);
+        p->set< int > ("Equation Offset", j);
+        offsets_[i].push_back(j);
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
+        evaluators_to_build[evaluatorsToBuildName(ss)] = p;
+
+        bcs->push_back(ss);
+      }
+    }
+  }
+
+  ///
   /// Schwarz BC specific
   ///
   for (auto i = 0; i < nodeSetIDs.size(); ++i) {
@@ -1227,6 +1254,15 @@ Albany::DirichletTraits::constructBCName(const std::string& ns, const std::strin
 
   std::stringstream ss;
   ss << "DBC on NS " << ns << " for DOF " << dof;
+
+  return ss.str();
+}
+
+std::string
+Albany::DirichletTraits::constructStrongDBCName(const std::string& ns, const std::string& dof) {
+
+  std::stringstream ss;
+  ss << "SDBC on NS " << ns << " for DOF " << dof;
 
   return ss.str();
 }
