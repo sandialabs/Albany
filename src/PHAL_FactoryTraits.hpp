@@ -14,6 +14,7 @@
 #if defined(ALBANY_LCM)
 #include "LCM/evaluators/bc/KfieldBC.hpp"
 #include "LCM/evaluators/bc/TimeDepBC.hpp"
+#include "LCM/evaluators/bc/StrongDBC.hpp"
 #include "LCM/evaluators/bc/TimeTracBC.hpp"
 #include "LCM/evaluators/bc/EquilibriumConcentrationBC.hpp"
 #include "LCM/evaluators/Time.hpp"
@@ -72,8 +73,9 @@ namespace PHAL {
     static const int id_timedep_bc                     =  8; // Only for LCM probs
     static const int id_time                           =  9; // Only for LCM probs
     static const int id_torsion_bc                     = 10; // Only for LCM probs
-    static const int id_schwarz_bc                     = 11; // Only for LCM probs
-    static const int id_pd_neigh_fit_bc                = 12; // Only for LCM-Peridigm coupling
+    static const int id_strong_dbc                     = 11; // Only for LCM probs
+    static const int id_schwarz_bc                     = 12; // Only for LCM probs
+    static const int id_pd_neigh_fit_bc                = 13; // Only for LCM-Peridigm coupling
 
     typedef Sacado::mpl::vector<
         PHAL::Dirichlet<_,Traits>,                //  0
@@ -92,12 +94,13 @@ namespace PHAL {
         LCM::EquilibriumConcentrationBC<_,Traits>, // 7
         LCM::TimeDepBC<_, Traits>,                //  8
         LCM::Time<_, Traits>,                     //  9
-        LCM::TorsionBC<_, Traits>                 // 10
+        LCM::TorsionBC<_, Traits>,                // 10
+        LCM::StrongDBC<_, Traits>                 // 11
 #endif
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
         ,
-        LCM::SchwarzBC<_, Traits>,                 // 11
-        LCM::PDNeighborFitBC<_, Traits>           //  12
+        LCM::SchwarzBC<_, Traits>,                 // 12
+        LCM::PDNeighborFitBC<_, Traits>           //  13
 #endif
         > EvaluatorTypes;
 };
