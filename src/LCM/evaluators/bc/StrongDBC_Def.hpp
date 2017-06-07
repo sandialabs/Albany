@@ -89,6 +89,72 @@ template<typename Traits>
 void StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
+  Teuchos::RCP<Tpetra_Vector>
+  f = dirichlet_workset.fT;
+
+  Teuchos::RCP<Tpetra_CrsMatrix>
+  J = dirichlet_workset.JacT;
+
+  RealType const
+  j_coeff = dirichlet_workset.j_coeff;
+
+  std::vector<std::vector<int>> const &
+  ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
+
+  bool
+  fill_residual = f != Teuchos::null;
+
+  Teuchos::ArrayRCP<ST>
+  f_view = fill_residual == true ? f->get1dViewNonConst() : Teuchos::null;
+
+  Teuchos::Array<LO>
+  index(1);
+
+  Teuchos::Array<ST>
+  entry(1);
+
+  Teuchos::Array<ST>
+  entries;
+
+  Teuchos::Array<LO>
+  indices;
+
+  for (size_t node = 0; node < ns_nodes.size(); node++) {
+
+      int const
+      dof = ns_nodes[node][this->offset];
+
+      if (fill_residual == true) f_view[dof] = 0.0;
+
+      size_t const
+      num_rows = J->getNodeNumRows();
+
+      for (size_t row = 0; row < num_rows; ++row) {
+
+        size_t
+        num_cols = J->getNumEntriesInLocalRow(row);
+
+        entries.resize(num_cols);
+        indices.resize(num_cols);
+
+        index[0] = row;
+        entry[0] = 0.0;
+
+        J->getLocalRowCopy(row, indices(), entries(), num_cols);
+
+        if (row == dof) {
+          // Set entries other than the diagonal to zero
+          for (size_t col = 0; col < num_cols; ++col) {
+            if (col != dof) entries[col] = 0.0;
+          }
+          J->replaceLocalValues(dof, indices(), entries());
+        } else {
+          J->replaceLocalValues(dof, index(), entry());
+        }
+
+      }
+
+  }
   return;
 }
 
