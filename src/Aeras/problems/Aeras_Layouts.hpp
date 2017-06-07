@@ -12,7 +12,6 @@
 
 #include "Teuchos_RCP.hpp"
 
-#include "Phalanx.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Albany_Layouts.hpp"
 
