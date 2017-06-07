@@ -10,7 +10,6 @@
 #include <type_traits>
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Phalanx.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
