@@ -14,15 +14,17 @@
 #ifndef AERAS_RESPONSEUTILITIES_HPP_
 #define AERAS_RESPONSEUTILITIES_HPP_
 
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
+#include <Teuchos_RCP.hpp>
+#include <Teuchos_ParameterList.hpp>
+
+#include <Phalanx_FieldTag.hpp>
+#include <Phalanx_FieldManager.hpp>
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_StateManager.hpp"
 #include "Aeras/problems/Aeras_Layouts.hpp"
 
-#include "Phalanx.hpp"
 #include "Aeras_Layouts.hpp"
 
 namespace Aeras {
