@@ -18,7 +18,6 @@
 #include "Albany_STKDiscretizationStokesH.hpp"
 #endif
 
-#include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 

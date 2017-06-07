@@ -14,7 +14,6 @@
 #include "Albany_PUMIMeshStruct.hpp"
 #include "Albany_PUMIDiscretization.hpp"
 
-#include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 

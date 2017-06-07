@@ -9,7 +9,6 @@
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_ParameterList.hpp>
 
-#include <Phalanx.hpp>
 #include <PHAL_Workset.hpp>
 #include <PHAL_Dimension.hpp>
 
