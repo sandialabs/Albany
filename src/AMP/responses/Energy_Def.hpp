@@ -9,7 +9,6 @@
 #include "PHAL_Utilities.hpp"
 #include "Intrepid2_FunctionSpaceTools.hpp"
 #include "Teuchos_CommHelpers.hpp"
-#include "Phalanx.hpp"
 
 namespace AMP {
  template<typename EvalT, typename Traits>
