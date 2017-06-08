@@ -91,6 +91,10 @@ Topology::PenaltyFunction::PenaltyFunction(const Teuchos::ParameterList& fParams
     h2 = Teuchos::rcp(new H2(fParams));
     pType = HTWO;
   } else
+  if( penalty == "Poly" ){
+    poly = Teuchos::rcp(new Poly(fParams));
+    pType = POLY;
+  } else 
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter, std::endl 
       << "Error!  Function type " << penalty << " Unknown!" << std::endl );
@@ -134,6 +138,13 @@ H2::H2(const Teuchos::ParameterList& fParams)
   if(fParams.isType<double>("Minimum")){
     minValue = fParams.get<double>("Minimum");
   } else minValue = 0.0;
+}
+
+//**********************************************************************
+Poly::Poly(const Teuchos::ParameterList& fParams)
+//**********************************************************************
+{
+  coefficients = fParams.get<Teuchos::Array<double> >("Coefficients");
 }
 
 } // end ATO namespace

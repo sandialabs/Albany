@@ -6,7 +6,9 @@
 #include "ATO_Utils.hpp"
 #include "ATO_Stress.hpp"
 #include "ATO_Mixture.hpp"
+#include "ATO_Mixture_DistParam.hpp"
 #include "ATO_BodyForce.hpp"
+#include "ATO_FixedFieldTerm.hpp"
 #include "ATO_NeumannTerm.hpp"
 #include "ATO_DirichletTerm.hpp"
 #include "ATO_ResidualStrain.hpp"
@@ -269,7 +271,15 @@ void ATO::Utils<EvalT,Traits>::constructFluxEvaluators(
               // basis functions
               p->set<std::string>("BF Name", "BF");
     
-              ev = rcp(new ATO::Mixture<EvalT,Traits>(*p,dl));
+              TEUCHOS_TEST_FOR_EXCEPTION(topologyArray->size() == 0, std::logic_error, std::endl <<
+                                        "Mixture requested with no topologies defined!" << std::endl);
+              Teuchos::RCP<ATO::Topology> topology = (*topologyArray)[0];
+     
+              if( topology->getEntityType() == "Distributed Parameter" ){
+                ev = rcp(new ATO::Mixture_DistParam<EvalT,Traits>(*p,dl));
+              } else {
+                ev = rcp(new ATO::Mixture<EvalT,Traits>(*p,dl));
+              }
               fm0.template registerEvaluator<EvalT>(ev);
             }
           }
@@ -461,9 +471,17 @@ void ATO::Utils<EvalT,Traits>::constructStressEvaluators(
 
               // basis functions
               p->set<std::string>("BF Name", "BF");
+
+             TEUCHOS_TEST_FOR_EXCEPTION(topologyArray->size() == 0, std::logic_error, std::endl <<
+                                       "Mixture requested with no topologies defined!" << std::endl);
+             Teuchos::RCP<ATO::Topology> topology = (*topologyArray)[0];
     
-              ev = rcp(new ATO::Mixture<EvalT,Traits>(*p,dl));
-              fm0.template registerEvaluator<EvalT>(ev);
+             if( topology->getEntityType() == "Distributed Parameter" ){
+               ev = rcp(new ATO::Mixture_DistParam<EvalT,Traits>(*p,dl));
+             } else {
+               ev = rcp(new ATO::Mixture<EvalT,Traits>(*p,dl));
+             }
+             fm0.template registerEvaluator<EvalT>(ev);
             }
           }
         } else
@@ -580,6 +598,38 @@ void ATO::Utils<EvalT,Traits>::constructBoundaryConditionEvaluators(
           "'Layout' in Neumann BCs ParameterList can be 'QP Vector' or 'QP Scalar'"  << std::endl);
       fm0.template registerEvaluator<EvalT>(ev);
     }
+}
+
+template<typename EvalT, typename Traits>
+void ATO::Utils<EvalT,Traits>::constructFixedFieldTermEvaluators(
+       const Teuchos::RCP<Teuchos::ParameterList>& params,
+       PHX::FieldManager<Traits>& fm0,
+       Albany::StateManager& stateMgr,
+       const std::string &elementBlockName, 
+       std::string dof_name,
+       std::string fixedFieldTermName)
+{
+    if( ! params->isSublist("Fixed Field") ) return;
+
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+
+    Teuchos::RCP<PHX::Evaluator<Traits> > ev;
+
+    Teuchos::RCP<ParameterList> p = rcp(new ParameterList(fixedFieldTermName));
+
+    p->set<std::string>("Output Name", fixedFieldTermName);
+    p->set<std::string>("Field Name", dof_name);
+    p->set< RCP<PHX::DataLayout> >("Data Layout", dl->qp_scalar);
+  
+    Teuchos::ParameterList& ffParams = params->sublist("Fixed Field",false);
+
+    p->set<double>("Penalty Coefficient", ffParams.get<double>("Penalty Coefficient"));
+    p->set<double>("Fixed Value", ffParams.get<double>("Fixed Value"));
+
+    ev = rcp(new ATO::FixedFieldTerm<EvalT,Traits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
 }
 
 template<typename EvalT, typename Traits>
@@ -703,7 +753,15 @@ void ATO::Utils<EvalT,Traits>::constructBodyForceEvaluators(
               // basis functions
               p->set<std::string>("BF Name", "BF");
     
-              ev = rcp(new ATO::Mixture<EvalT,Traits>(*p,dl));
+              TEUCHOS_TEST_FOR_EXCEPTION(topologyArray->size() == 0, std::logic_error, std::endl <<
+                                        "Mixture requested with no topologies defined!" << std::endl);
+              Teuchos::RCP<ATO::Topology> topology = (*topologyArray)[0];
+     
+              if( topology->getEntityType() == "Distributed Parameter" ){
+                ev = rcp(new ATO::Mixture_DistParam<EvalT,Traits>(*p,dl));
+              } else {
+                ev = rcp(new ATO::Mixture<EvalT,Traits>(*p,dl));
+              }
               fm0.template registerEvaluator<EvalT>(ev);
             }
           }

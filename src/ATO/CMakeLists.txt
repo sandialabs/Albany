@@ -17,6 +17,7 @@ SET(SOURCES
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Stress.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ScaleVector.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_BodyForce.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_FixedFieldTerm.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_NeumannTerm.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_DirichletTerm.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_CreateField.cpp
@@ -24,6 +25,7 @@ SET(SOURCES
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TopologyWeighting.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TopologyFieldWeighting.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Mixture.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Mixture_DistParam.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/LinearElasticityProblem.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/LinearElasticityModalProblem.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/PoissonsEquation.cpp
@@ -101,6 +103,8 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ScaleVector.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_BodyForce_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_BodyForce.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_FixedFieldTerm_Def.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_FixedFieldTerm.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_NeumannTerm_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_NeumannTerm.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_DirichletTerm_Def.hpp
@@ -115,6 +119,8 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TopologyFieldWeighting.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Mixture_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Mixture.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Mixture_DistParam_Def.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Mixture_DistParam.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/ATO_Utils.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/ATO_Utils_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/LinearElasticityProblem.hpp

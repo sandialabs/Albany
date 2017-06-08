@@ -372,7 +372,29 @@ Albany::PoissonsEquationProblem::constructEvaluators(
       ev = rcp(new ATO::VectorResidual<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
+    if( params->isSublist("Fixed Field") )
+    {
+      std::string fixedFieldName("Fixed Field");
 
+      atoUtils.constructFixedFieldTermEvaluators( params, fm0, stateMgr, elementBlockName, dof_names[0], fixedFieldName);
+
+      atoUtils.constructWeightedFieldEvaluators( params, fm0, stateMgr, elementBlockName, "QP Scalar", fixedFieldName );
+      atoUtils.SaveCellStateField(fm0, stateMgr, fixedFieldName, elementBlockName, dl->qp_scalar);
+
+  
+      RCP<ParameterList> p = rcp(new ParameterList(fixedFieldName));
+      p->set<std::string>("Scalar Name", fixedFieldName);
+      p->set< RCP<DataLayout> >("Scalar Data Layout", dl->qp_scalar);
+      p->set<std::string>("Weighted BF Name", "wBF");
+      p->set< RCP<DataLayout> >("Weighted BF Data Layout", dl->node_qp_scalar);
+      p->set<std::string>("In Residual Name", resid_names[0]);
+      p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+      resid_names[0] += " with " + fixedFieldName;
+      p->set<std::string>("Out Residual Name", resid_names[0]);
+//      p->set<bool>("Negative",true);
+      ev = rcp(new ATO::AddScalar<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
   }
 
   if( numBoundaries )

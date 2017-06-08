@@ -818,7 +818,7 @@ Optimizer_OC::computeUpdatedTopology()
     std::cout << "Measure enforcement: Bounds found.  Switching to Newton search." << std::endl;
   }
 
-  int newtonMaxIters = niters + 10;
+  int newtonMaxIters = niters + 20;
   double lambda = (residRatio*v2 - v1)/(residRatio-1.0);
   double epsilon = lambda*1e-5;
   if( lambda > 0.0 ) do {

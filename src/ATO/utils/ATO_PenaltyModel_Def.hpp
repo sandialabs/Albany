@@ -91,8 +91,13 @@ PenaltyMixture(Teuchos::ParameterList& blockParams,
     
   }
 
-  topologyIndex = responseParams->get<int>("Topology Index");
-  functionIndex = responseParams->get<int>("Function Index");
+  if( responseParams->isType<int>("Topology Index") ){
+    topologyIndex = responseParams->get<int>("Topology Index");
+  } else topologyIndex = -1;
+
+  if( responseParams->isType<int>("Function Index") ){
+    functionIndex = responseParams->get<int>("Function Index");
+  } else functionIndex = -1;
   
 }
 
@@ -184,8 +189,12 @@ PenaltyMaterial(Teuchos::ParameterList& blockParams,
   PHX::MDField<const N> _workConj(responseParams->get<std::string>("Work Conjugate Name"), layout);
   workConj = _workConj;
 
-  topologyIndex = responseParams->get<int>("Topology Index");
-  functionIndex = responseParams->get<int>("Function Index");
+  if( responseParams->isType<int>("Topology Index") ){
+    topologyIndex = responseParams->get<int>("Topology Index");
+  } else topologyIndex = -1;
+  if( responseParams->isType<int>("Function Index") ){
+    functionIndex = responseParams->get<int>("Function Index");
+  } else functionIndex = -1;
   
 }
 
@@ -227,7 +236,12 @@ Evaluate(Teuchos::Array<N>& topoVals, Teuchos::RCP<TopologyArray>& topologies,
       }
     }
   }
-  N topoP = (*topologies)[topologyIndex]->Penalize(functionIndex, topoVals[topologyIndex]);
+  N topoP, topodP;
+  if(topologyIndex >= 0){
+   topoP = (*topologies)[topologyIndex]->Penalize(functionIndex, topoVals[topologyIndex]);
+   topodP = (*topologies)[topologyIndex]->dPenalize(functionIndex, topoVals[topologyIndex]);
+  }
+  else topoP = 1.0;
   for(int imat=0; imat<nMats; imat++){
     int matIdx = materialIndices[imat];
     int topoIdx = mixtureTopologyIndices[imat];
@@ -262,11 +276,10 @@ Evaluate(Teuchos::Array<N>& topoVals, Teuchos::RCP<TopologyArray>& topologies,
   }
 
   response += unityRemainder*lastMatdw;
-
-  dResponse[topologyIndex] = 
-    response * (*topologies)[topologyIndex]->dPenalize(functionIndex, topoVals[topologyIndex]);
-
-  response *= (*topologies)[topologyIndex]->Penalize(functionIndex,topoVals[topologyIndex]);
+  if(topologyIndex >= 0){
+    dResponse[topologyIndex] = response * topodP;
+    response *= topoP;
+  }
 
 }
 
@@ -295,10 +308,11 @@ Evaluate(Teuchos::Array<N>& topoVals, Teuchos::RCP<TopologyArray>& topologies,
           response += gradX(cell,qp,i,j,k)*workConj(cell,qp,i,j,k)/2.0;
   }
   
-  dResponse[topologyIndex] = 
-    response * (*topologies)[topologyIndex]->dPenalize(functionIndex, topoVals[topologyIndex]);
-
-  response *= (*topologies)[topologyIndex]->Penalize(functionIndex,topoVals[topologyIndex]);
+  if(topologyIndex >= 0){
+    dResponse[topologyIndex] = 
+      response * (*topologies)[topologyIndex]->dPenalize(functionIndex, topoVals[topologyIndex]);
+    response *= (*topologies)[topologyIndex]->Penalize(functionIndex,topoVals[topologyIndex]);
+  }
 }
 
 

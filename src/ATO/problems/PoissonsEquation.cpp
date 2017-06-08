@@ -154,6 +154,7 @@ Albany::PoissonsEquationProblem::getValidProblemParameters() const
   validPL->sublist("Objective Aggregator", false, "");
   validPL->sublist("Apply Topology Weight Functions", false, "");
   validPL->sublist("Implicit Boundary Conditions", false, "");
+  validPL->sublist("Fixed Field", false, "");
 
   return validPL;
 }

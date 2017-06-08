@@ -59,6 +59,15 @@ namespace ATO {
        std::string fluxName, std::string gradName);
 
     void 
+    constructFixedFieldTermEvaluators(
+       const Teuchos::RCP<Teuchos::ParameterList>& params,
+       PHX::FieldManager<Traits>& fm0,
+       Albany::StateManager& stateMgr,
+       const std::string &elementBlockName, 
+       std::string dof_name,
+       std::string fixedFieldTermName);
+
+    void 
     constructBodyForceEvaluators(
        const Teuchos::RCP<Teuchos::ParameterList>& params,
        PHX::FieldManager<Traits>& fm0,

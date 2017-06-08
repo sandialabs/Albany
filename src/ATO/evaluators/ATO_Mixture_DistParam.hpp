@@ -1,11 +1,11 @@
 //*****************************************************************//
-//    Albany 3.0:  Copyright 2016 Sandia Corporation               //
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef ATO_TOPOLOGYFIELDWEIGHTING_HPP
-#define ATO_TOPOLOGYFIELDWEIGHTING_HPP
+#ifndef ATO_MIXTURE_DISTPARAM_HPP
+#define ATO_MIXTURE_DISTPARAM_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -17,18 +17,18 @@
 namespace ATO {
 /** \brief Computes stress
 
-    This evaluator computes stress from strain assuming linear isotropic response.
+    This evaluator computes topology weighted mixtures
 
 */
 
 template<typename EvalT, typename Traits>
-class TopologyFieldWeighting : public PHX::EvaluatorWithBaseImpl<Traits>,
-		               public PHX::EvaluatorDerived<EvalT, Traits>  {
+class Mixture_DistParam : public PHX::EvaluatorWithBaseImpl<Traits>,
+                          public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  TopologyFieldWeighting(const Teuchos::ParameterList& p, 
-                         const Teuchos::RCP<Albany::Layouts>& dl);
+  Mixture_DistParam(const Teuchos::ParameterList& p, 
+                    const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm);
@@ -42,21 +42,20 @@ private:
   typedef typename EvalT::ParamScalarT ParamScalarT;
 
   // Input:
-  PHX::MDField<const ParamScalarT,Cell,Node> topo;
-  PHX::MDField<const ScalarT> unWeightedVar;
+  std::vector<PHX::MDField<const ScalarT> > constituentVar;
   PHX::MDField<const RealType,Cell,Node,QuadPoint> BF;
+  Teuchos::Array<PHX::MDField<const ParamScalarT,Cell,Node> > topos;
 
-  // Output:
-  PHX::MDField<ScalarT> weightedVar;
 
-  unsigned int numCells;
   unsigned int numQPs;
   unsigned int numDims;
   std::string topoName;
-  std::string topoCentering;;
 
-  Teuchos::RCP<Topology> topology;
-  int functionIndex;
+  // Output:
+  PHX::MDField<ScalarT> mixtureVar;
+
+  Teuchos::RCP<TopologyArray> topologies;
+  Teuchos::Array<int> functionIndices;
 };
 }
 
