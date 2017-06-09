@@ -517,10 +517,6 @@ Albany::MechanicsProblem::constructEvaluators(
     small_strain = true;
   }
 
-  //  if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
-  //    small_strain = true;
-  //  }
-
   // Surface element checking
   bool surface_element = false;
   bool cohesive_element = false;
