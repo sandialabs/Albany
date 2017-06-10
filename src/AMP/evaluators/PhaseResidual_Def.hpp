@@ -152,8 +152,8 @@ namespace AMP {
 	for (int qp = 0; qp < num_qps_; ++qp) {
 	  for (int node = 0; node < num_nodes_; ++node) {
 	    //Use if consolidation and expansion is considered
-	    //porosity_function1 = pow(	((1.0 - porosity_(cell, qp)) / ((1+Coeff_volExp*(T_(cell,qp) -Ini_temp))*(1.0 - Initial_porosity))), 2);
-	    //porosity_function2 = (1+Coeff_volExp*(T_(cell,qp) -Ini_temp))*(1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
+	    //  porosity_function1 = pow(	((1.0 - porosity_(cell, qp)) / ((1+Coeff_volExp*(T_(cell,qp) -Ini_temp))*(1.0 - Initial_porosity))), 2);
+	    //  porosity_function2 = (1+Coeff_volExp*(T_(cell,qp) -Ini_temp))*(1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
 	                    
 	    //Use if only consolidation is considered
 	    porosity_function1 = pow(	((1.0 - porosity_(cell, qp)) / (1.0 - Initial_porosity)), 2);
@@ -174,7 +174,7 @@ namespace AMP {
 	for (int qp = 0; qp < num_qps_; ++qp) {
 	  for (int node = 0; node < num_nodes_; ++node) {
 	    //Use if consolidation and expansion is considered
-	    //porosity_function2 = (1+Coeff_volExp*(T_(cell,qp) -Ini_temp))*(1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
+	    //  porosity_function2 = (1+Coeff_volExp*(T_(cell,qp) -Ini_temp))*(1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
 						
 	    //Use if only consolidation is considered
 	    porosity_function2 = (1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
@@ -189,7 +189,7 @@ namespace AMP {
 	for (int qp = 0; qp < num_qps_; ++qp) {
 	  for (int node = 0; node < num_nodes_; ++node) {
 	    //Use if consolidation and expansion is considered
-	    //porosity_function2 = (1+Coeff_volExp*(T_(cell,qp) -Ini_temp))*(1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
+	    //  porosity_function2 = (1+Coeff_volExp*(T_(cell,qp) -Ini_temp))*(1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
 						
 	    //Use if only consolidation is considered
 	    porosity_function2 = (1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
@@ -204,7 +204,7 @@ namespace AMP {
 	for (int qp = 0; qp < num_qps_; ++qp) {
 	  for (int node = 0; node < num_nodes_; ++node) {
 	    //Use if consolidation and expansion is considered
-	    //porosity_function2 = (1+Coeff_volExp*(T_(cell,qp) -Ini_temp))*(1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
+	    //  porosity_function2 = (1+Coeff_volExp*(T_(cell,qp) -Ini_temp))*(1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
 						
 	    //Use if only consolidation is considered
 	    porosity_function2 = (1.0 - Initial_porosity) / (1.0 - porosity_(cell, qp));
