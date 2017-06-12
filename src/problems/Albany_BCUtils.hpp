@@ -62,6 +62,9 @@ struct DirichletTraits {
   constructBCNameField(const std::string& ns, const std::string& dof);
 
   static std::string
+  constructStrongDBCNameField(const std::string& ns, const std::string& dof);
+
+  static std::string
   constructTimeDepBCName(const std::string& ns, const std::string& dof);
 
   static std::string

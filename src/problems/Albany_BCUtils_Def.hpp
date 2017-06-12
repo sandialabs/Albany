@@ -265,21 +265,20 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
 
   for(std::size_t i = 0; i < nodeSetIDs.size(); i++) {
     for(std::size_t j = 0; j < bcNames.size(); j++) {
+
       string ss = traits_type::constructBCName(nodeSetIDs[i], bcNames[j]);
-
-
       if(BCparams.isParameter(ss)) {
         RCP<ParameterList> p = rcp(new ParameterList);
-        p->set<int>("Type", traits_type::type);
 
-        p->set< RCP<DataLayout> >("Data Layout", dummy);
-        p->set< string > ("Dirichlet Name", ss);
-        p->set< RealType >("Dirichlet Value", BCparams.get<double>(ss));
-        p->set< string > ("Node Set ID", nodeSetIDs[i]);
+        p->set<int>("Type", traits_type::type);
+        p->set<RCP<DataLayout>>("Data Layout", dummy);
+        p->set<string>("Dirichlet Name", ss);
+        p->set<RealType>("Dirichlet Value", BCparams.get<double>(ss));
+        p->set<string>("Node Set ID", nodeSetIDs[i]);
         // p->set< int >     ("Number of Equations", dirichletNames.size());
-        p->set< int > ("Equation Offset", j);
+        p->set<int>("Equation Offset", j);
         offsets_[i].push_back(j); 
-        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        p->set<RCP<ParamLib>>("Parameter Library", paramLib);
 
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
@@ -290,8 +289,7 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
 
   ///
   /// Apply a function based on a coordinate value to the boundary
-  ////
-
+  ///
   for(std::size_t i = 0; i < nodeSetIDs.size(); i++) {
     string ss = traits_type::constructBCName(nodeSetIDs[i], "CoordFunc");
 
@@ -516,19 +514,17 @@ void Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList (
   for(std::size_t i = 0; i < nodeSetIDs.size(); i++) {
     for(std::size_t j = 0; j < bcNames.size(); j++) {
       string ss = traits_type::constructStrongDBCName(nodeSetIDs[i], bcNames[j]);
-
-
       if(BCparams.isParameter(ss)) {
         RCP<ParameterList> p = rcp(new ParameterList);
-        p->set<int>("Type", traits_type::type);
 
-        p->set< RCP<DataLayout> >("Data Layout", dummy);
-        p->set< string > ("Dirichlet Name", ss);
-        p->set< RealType >("Dirichlet Value", BCparams.get<double>(ss));
-        p->set< string > ("Node Set ID", nodeSetIDs[i]);
-        p->set< int > ("Equation Offset", j);
+        p->set<int>("Type", traits_type::typeSt);
+        p->set<RCP<DataLayout>>("Data Layout", dummy);
+        p->set<string>("Dirichlet Name", ss);
+        p->set<RealType>("Dirichlet Value", BCparams.get<double>(ss));
+        p->set<string>("Node Set ID", nodeSetIDs[i]);
+        p->set<int>("Equation Offset", j);
         offsets_[i].push_back(j);
-        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        p->set<RCP<ParamLib>>("Parameter Library", paramLib);
 
         evaluators_to_build[evaluatorsToBuildName(ss)] = p;
 
@@ -1182,11 +1178,15 @@ Albany::DirichletTraits::getValidBCParameters(
       std::string ss = Albany::DirichletTraits::constructBCName(nodeSetIDs[i], bcNames[j]);
       std::string tt = Albany::DirichletTraits::constructTimeDepBCName(nodeSetIDs[i], bcNames[j]);
       std::string pp = Albany::DirichletTraits::constructPressureDepBCName(nodeSetIDs[i], bcNames[j]);
+      std::string st = Albany::DirichletTraits::constructStrongDBCName(nodeSetIDs[i], bcNames[j]);
       validPL->set<double>(ss, 0.0, "Value of BC corresponding to nodeSetID and dofName");
+      validPL->set<double>(st, 0.0, "Value of SDBC corresponding to nodeSetID and dofName");
       validPL->sublist(tt, false, "SubList of BC corresponding to nodeSetID and dofName");
       validPL->sublist(pp, false, "SubList of BC corresponding to nodeSetID and dofName");
       ss = Albany::DirichletTraits::constructBCNameField(nodeSetIDs[i], bcNames[j]);
+      st = Albany::DirichletTraits::constructStrongDBCNameField(nodeSetIDs[i], bcNames[j]);
       validPL->set<std::string>(ss, "dirichlet field", "Field used to prescribe Dirichlet BCs");
+      validPL->set<std::string>(st, "dirichlet field", "Field used to prescribe Strong DBCs");
       std::string onsbc = Albany::DirichletTraits::constructBCNameOffNodeSet(nodeSetIDs[i], bcNames[j]);
       validPL->set<double>(onsbc, 0.0, "Value of BC to prescribe off the given nodeset (use multiple entries for multiple nodesets)");
     }
@@ -1272,6 +1272,15 @@ Albany::DirichletTraits::constructBCNameField(const std::string& ns, const std::
 
   std::stringstream ss;
   ss << "DBC on NS " << ns << " for DOF " << dof << " prescribe Field";
+
+  return ss.str();
+}
+
+std::string
+Albany::DirichletTraits::constructStrongDBCNameField(const std::string& ns, const std::string& dof) {
+
+  std::stringstream ss;
+  ss << "SDBC on NS " << ns << " for DOF " << dof << " prescribe Field";
 
   return ss.str();
 }

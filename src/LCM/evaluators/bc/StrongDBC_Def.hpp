@@ -47,8 +47,14 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Teuchos::RCP<Tpetra_Vector>
   f = dirichlet_workset.fT;
 
+  Teuchos::RCP<Tpetra_Vector>
+  x = Teuchos::rcpFromRef(const_cast<Tpetra_Vector &>(*dirichlet_workset.xT));
+
   Teuchos::ArrayRCP<ST>
   f_view = f->get1dViewNonConst();
+
+  Teuchos::ArrayRCP<ST>
+  x_view = x->get1dViewNonConst();
 
   // Grab the vector of node GIDs for this Node Set ID
   std::vector<std::vector<int>> const &
@@ -60,6 +66,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     dof = ns_nodes[node][this->offset];
 
     f_view[dof] = 0.0;
+    x_view[dof] = this->value;
 
 #if defined(ALBANY_LCM)
     // Record DOFs to avoid setting Schwarz BCs on them.
@@ -92,11 +99,11 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Teuchos::RCP<Tpetra_Vector>
   f = dirichlet_workset.fT;
 
+  Teuchos::RCP<Tpetra_Vector>
+  x = Teuchos::rcpFromRef(const_cast<Tpetra_Vector &>(*dirichlet_workset.xT));
+
   Teuchos::RCP<Tpetra_CrsMatrix>
   J = dirichlet_workset.JacT;
-
-  RealType const
-  j_coeff = dirichlet_workset.j_coeff;
 
   std::vector<std::vector<int>> const &
   ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
@@ -106,6 +113,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   Teuchos::ArrayRCP<ST>
   f_view = fill_residual == true ? f->get1dViewNonConst() : Teuchos::null;
+
+  Teuchos::ArrayRCP<ST>
+  x_view = fill_residual == true ? x->get1dViewNonConst() : Teuchos::null;
 
   Teuchos::Array<LO>
   index(1);
@@ -124,7 +134,10 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       int const
       dof = ns_nodes[node][this->offset];
 
-      if (fill_residual == true) f_view[dof] = 0.0;
+      if (fill_residual == true) {
+        f_view[dof] = 0.0;
+        x_view[dof] = this->value.val();
+      }
 
       size_t const
       num_rows = J->getNodeNumRows();
@@ -137,7 +150,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         entries.resize(num_cols);
         indices.resize(num_cols);
 
-        index[0] = row;
+        index[0] = dof;
         entry[0] = 0.0;
 
         J->getLocalRowCopy(row, indices(), entries(), num_cols);
@@ -149,7 +162,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
           }
           J->replaceLocalValues(dof, indices(), entries());
         } else {
-          J->replaceLocalValues(dof, index(), entry());
+          J->replaceLocalValues(row, index(), entry());
         }
 
       }
