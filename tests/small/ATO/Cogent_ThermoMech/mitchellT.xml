@@ -381,7 +381,7 @@
                       <Parameter name="Output Frequency" type="int" value="100"/>
                     </ParameterList>
                     <Parameter name="Max Iterations" type="int" value="2000"/>
-                    <Parameter name="Tolerance" type="double" value="1e-9"/>
+                    <Parameter name="Tolerance" type="double" value="1e-10"/>
                   </ParameterList>
                 </ParameterList>
                 <ParameterList name="Belos">
