@@ -11,6 +11,7 @@
       <Parameter name="Derivatives" type="Array(string)" value="{dR0dTopo,dR1dTopo}"/>
       <Parameter name="Weighting" type="string" value="Scaled"/>
       <Parameter name="Weights" type="Array(double)" value="{0.25,0.75}"/>
+      <Parameter name="Normalize" type="string" value="False" />
     </ParameterList>
 
     <ParameterList name="Spatial Filters">
