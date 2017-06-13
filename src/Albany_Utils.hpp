@@ -13,34 +13,38 @@
 #include <sstream>
 
 #ifdef ALBANY_MPI
-  #define Albany_MPI_Comm MPI_Comm
-  #define Albany_MPI_COMM_WORLD MPI_COMM_WORLD
-  #define Albany_MPI_COMM_NULL MPI_COMM_NULL
-  //IKT, FIXME: remove || defined(ALBANY_ATO) below 
-  #if defined(ALBANY_EPETRA) || defined(ALBANY_ATO) 
-    #include "Epetra_MpiComm.h"
-  #endif
-  #include "Teuchos_DefaultMpiComm.hpp"
-#else
-  #define Albany_MPI_Comm int
-  #define Albany_MPI_COMM_WORLD 0  // This is compatible with Dakota
-  #define Albany_MPI_COMM_NULL 99
-  //IKT, FIXME: remove || defined(ALBANY_ATO) below 
-  #if defined(ALBANY_EPETRA) || defined(ALBANY_ATO) 
-    #include "Epetra_SerialComm.h"
-  #endif
-  #include "Teuchos_DefaultSerialComm.hpp"
+#define Albany_MPI_Comm MPI_Comm
+#define Albany_MPI_COMM_WORLD MPI_COMM_WORLD
+#define Albany_MPI_COMM_NULL MPI_COMM_NULL
+// IKT, FIXME: remove || defined(ALBANY_ATO) below
+#if defined(ALBANY_EPETRA) || defined(ALBANY_ATO)
+#include "Epetra_MpiComm.h"
 #endif
-#include "Teuchos_RCP.hpp"
+#include "Teuchos_DefaultMpiComm.hpp"
+#else
+#define Albany_MPI_Comm int
+#define Albany_MPI_COMM_WORLD 0  // This is compatible with Dakota
+#define Albany_MPI_COMM_NULL 99
+// IKT, FIXME: remove || defined(ALBANY_ATO) below
+#if defined(ALBANY_EPETRA) || defined(ALBANY_ATO)
+#include "Epetra_SerialComm.h"
+#endif
+#include "Teuchos_DefaultSerialComm.hpp"
+#endif
 #include "Albany_DataTypes.hpp"
+#include "Teuchos_RCP.hpp"
 
 // Checks if the previous Kokkos::Cuda kernel has failed
-#define cudaCheckError() { cudaError(__FILE__, __LINE__); }
-inline void cudaError(const char *file, int line) {
+#define cudaCheckError() \
+  { cudaError(__FILE__, __LINE__); }
+inline void
+cudaError(const char* file, int line) {
 #if defined(KOKKOS_HAVE_CUDA) && defined(ALBANY_CUDA_ERROR_CHECK)
   cudaError_t err = cudaGetLastError();
   if (err != cudaSuccess) {
-    fprintf(stderr,"CUDA Error: %s before %s:%d\n", cudaGetErrorString(err), file, line);
+    fprintf(
+        stderr, "CUDA Error: %s before %s:%d\n", cudaGetErrorString(err), file,
+        line);
     throw std::runtime_error(cudaGetErrorString(err));
   }
 #endif
@@ -48,154 +52,197 @@ inline void cudaError(const char *file, int line) {
 
 namespace Albany {
 
-  //Helper function which replaces the diagonal of a matrix 
-  void
-  ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
-                         const Teuchos::RCP<Tpetra_Vector>& diag);
+// Helper function which replaces the diagonal of a matrix
+void
+ReplaceDiagonalEntries(
+    const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
+    const Teuchos::RCP<Tpetra_Vector>& diag);
 
-  //Helper function which computes absolute values of the rowsum
-  //of a matrix, and puts it in a vector. 
-  void InvRowSum(Teuchos::RCP<Tpetra_Vector>& rowSumsTpetra, const Teuchos::RCP<Tpetra_CrsMatrix> matrix); 
+// Helper function which computes absolute values of the rowsum
+// of a matrix, and puts it in a vector.
+void
+InvRowSum(
+    Teuchos::RCP<Tpetra_Vector>& rowSumsTpetra,
+    const Teuchos::RCP<Tpetra_CrsMatrix> matrix);
 
-//IKT, FIXME: ultimately get ride of || defined (ALBANY_ATO) below 
-#if defined(ALBANY_EPETRA) || defined (ALBANY_ATO)
+// IKT, FIXME: ultimately get ride of || defined (ALBANY_ATO) below
+#if defined(ALBANY_EPETRA) || defined(ALBANY_ATO)
 
-  Albany_MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec);
+Albany_MPI_Comm
+getMpiCommFromEpetraComm(const Epetra_Comm& ec);
 
-  Albany_MPI_Comm getMpiCommFromEpetraComm(Epetra_Comm& ec);
-  Teuchos::RCP<Epetra_Comm> createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc);
-  Teuchos::RCP<Epetra_Comm> createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc);
-  Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec);
-  Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromEpetraComm(const Epetra_Comm& ec);
+Albany_MPI_Comm
+getMpiCommFromEpetraComm(Epetra_Comm& ec);
+Teuchos::RCP<Epetra_Comm>
+createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc);
+Teuchos::RCP<Epetra_Comm>
+createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc);
+Teuchos::RCP<Teuchos_Comm>
+createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec);
+Teuchos::RCP<Teuchos_Comm>
+createTeuchosCommFromEpetraComm(const Epetra_Comm& ec);
 
 #endif
-  
-  //Helper function which replaces the diagonal of a matrix 
-  void ReplaceDiagonalEntries(const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
-                              const Teuchos::RCP<Tpetra_Vector>& diag);
 
-  //Helper function which creates diagonal vector with entries equal to the 
-  //absolute value of the rowsum of a matrix.
+// Helper function which replaces the diagonal of a matrix
+void
+ReplaceDiagonalEntries(
+    const Teuchos::RCP<Tpetra_CrsMatrix>& matrix,
+    const Teuchos::RCP<Tpetra_Vector>& diag);
 
-  Albany_MPI_Comm getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc);
+// Helper function which creates diagonal vector with entries equal to the
+// absolute value of the rowsum of a matrix.
 
-  Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc);
+Albany_MPI_Comm
+getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc);
 
-  //! Utility to make a string out of a string + int with a delimiter: strint("dog",2,' ') = "dog 2"
-  //! The default delimiter is ' '. Potential delimiters include '_' - "dog_2"
-  std::string strint(const std::string s, const int i, const char delim = ' ');
+Teuchos::RCP<Teuchos_Comm>
+createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc);
 
-  //! Returns true of the given string is a valid initialization string of the format "initial value 1.54"
-  bool isValidInitString(const std::string& initString);
+//! Utility to make a string out of a string + int with a delimiter:
+//! strint("dog",2,' ') = "dog 2"
+//! The default delimiter is ' '. Potential delimiters include '_' - "dog_2"
+std::string
+strint(const std::string s, const int i, const char delim = ' ');
 
-  //! Converts a double to an initialization string:  doubleToInitString(1.54) = "initial value 1.54"
-  std::string doubleToInitString(double val);
+//! Returns true of the given string is a valid initialization string of the
+//! format "initial value 1.54"
+bool
+isValidInitString(const std::string& initString);
 
-  //! Converts an init string to a double:  initStringToDouble("initial value 1.54") = 1.54
-  double initStringToDouble(const std::string& initString);
+//! Converts a double to an initialization string:  doubleToInitString(1.54) =
+//! "initial value 1.54"
+std::string
+doubleToInitString(double val);
 
-  //! Splits a std::string on a delimiter
-  void splitStringOnDelim(const std::string &s, char delim, std::vector<std::string> &elems);
+//! Converts an init string to a double:  initStringToDouble("initial value
+//! 1.54") = 1.54
+double
+initStringToDouble(const std::string& initString);
 
-  /// Get file name extension
-  std::string getFileExtension(std::string const & filename);
+//! Splits a std::string on a delimiter
+void
+splitStringOnDelim(
+    const std::string& s, char delim, std::vector<std::string>& elems);
 
-  //! Nicely prints out a Tpetra Vector
-  void printTpetraVector(std::ostream &os, const Teuchos::RCP<const Tpetra_Vector>& vec);
-  void printTpetraVector(std::ostream &os, const Teuchos::Array<std::string>& names,
-         const Teuchos::RCP<const Tpetra_Vector>& vec);
+/// Get file name extension
+std::string
+getFileExtension(std::string const& filename);
 
-  //! Nicely prints out a Tpetra MultiVector
-  void printTpetraVector(std::ostream &os, const Teuchos::RCP<const Tpetra_MultiVector>& vec);
-  void printTpetraVector(std::ostream &os, const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > >& names,
-         const Teuchos::RCP<const Tpetra_MultiVector>& vec);
+//! Nicely prints out a Tpetra Vector
+void
+printTpetraVector(
+    std::ostream& os, const Teuchos::RCP<const Tpetra_Vector>& vec);
+void
+printTpetraVector(
+    std::ostream& os, const Teuchos::Array<std::string>& names,
+    const Teuchos::RCP<const Tpetra_Vector>& vec);
 
-  /// Write to matrix market format
-  void writeMatrixMarket(
-      Teuchos::RCP<Tpetra_Vector const> const & x,
-      std::string const & prefix,
-      int const counter = -1);
+//! Nicely prints out a Tpetra MultiVector
+void
+printTpetraVector(
+    std::ostream& os, const Teuchos::RCP<const Tpetra_MultiVector>& vec);
+void
+printTpetraVector(
+    std::ostream& os,
+    const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>& names,
+    const Teuchos::RCP<const Tpetra_MultiVector>& vec);
 
-  void writeMatrixMarket(
-      Teuchos::RCP<Tpetra_CrsMatrix const> const & A,
-      std::string const & prefix,
-      int const counter = -1);
+/// Write to matrix market format
+void
+writeMatrixMarket(
+    Teuchos::RCP<Tpetra_Vector const> const& x, std::string const& prefix,
+    int const counter = -1);
 
-  void writeMatrixMarket(
-      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> const & x,
-      std::string const & prefix,
-      int const counter = -1);
+void
+writeMatrixMarket(
+    Teuchos::RCP<Tpetra_CrsMatrix const> const& A, std::string const& prefix,
+    int const counter = -1);
 
-  void writeMatrixMarket(
-      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix const>> const & A,
-      std::string const & prefix,
-      int const counter = -1);
+void
+writeMatrixMarket(
+    Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> const& x,
+    std::string const& prefix, int const counter = -1);
 
-  void writeMatrixMarket(
-      Teuchos::RCP<Tpetra_Vector> const & x,
-      std::string const & prefix,
-      int const counter = -1);
+void
+writeMatrixMarket(
+    Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix const>> const& A,
+    std::string const& prefix, int const counter = -1);
 
-  void writeMatrixMarket(
-      Teuchos::RCP<Tpetra_CrsMatrix> const & A,
-      std::string const & prefix,
-      int const counter = -1);
+void
+writeMatrixMarket(
+    Teuchos::RCP<Tpetra_Vector> const& x, std::string const& prefix,
+    int const counter = -1);
 
-  void writeMatrixMarket(
-      Teuchos::Array<Teuchos::RCP<Tpetra_Vector>> const & x,
-      std::string const & prefix,
-      int const counter = -1);
+void
+writeMatrixMarket(
+    Teuchos::RCP<Tpetra_CrsMatrix> const& A, std::string const& prefix,
+    int const counter = -1);
 
-  void writeMatrixMarket(
-      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> const & A,
-      std::string const & prefix,
-      int const counter = -1);
+void
+writeMatrixMarket(
+    Teuchos::Array<Teuchos::RCP<Tpetra_Vector>> const& x,
+    std::string const& prefix, int const counter = -1);
 
-  // Parses and stores command-line arguments
-  struct CmdLineArgs {
-    std::string xml_filename;
-    std::string xml_filename2;
-    std::string xml_filename3;
-    bool has_first_xml_file;
-    bool has_second_xml_file;
-    bool has_third_xml_file;
-    bool vtune;
+void
+writeMatrixMarket(
+    Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> const& A,
+    std::string const& prefix, int const counter = -1);
 
-    CmdLineArgs(const std::string& default_xml_filename = "input.xml",
-                const std::string& default_xml_filename2 = "",
-                const std::string& default_xml_filename3 = "");
-    void parse_cmdline(int argc , char ** argv, std::ostream& os);
-  };
+// Parses and stores command-line arguments
+struct CmdLineArgs {
+  std::string xml_filename;
+  std::string xml_filename2;
+  std::string xml_filename3;
+  bool has_first_xml_file;
+  bool has_second_xml_file;
+  bool has_third_xml_file;
+  bool vtune;
 
-  // Connect executable to vtune for profiling
-  void connect_vtune(const int p_rank);
+  CmdLineArgs(
+      const std::string& default_xml_filename = "input.xml",
+      const std::string& default_xml_filename2 = "",
+      const std::string& default_xml_filename3 = "");
+  void
+  parse_cmdline(int argc, char** argv, std::ostream& os);
+};
 
-  // Do a nice stack trace for debugging
-  void do_stack_trace();
+// Connect executable to vtune for profiling
+void
+connect_vtune(const int p_rank);
 
-  // Check returns codes and throw Teuchos exceptions
-  // Useful for silencing compiler warnings about unused return codes
-  void safe_fscanf(int nitems, FILE* file, const char* format, ...);
-  void safe_sscanf(int nitems, const char* str, const char* format, ...);
-  void safe_fgets(char* str, int size, FILE* stream);
-  void safe_system(char const* str);
+// Do a nice stack trace for debugging
+void
+do_stack_trace();
 
-void assert_fail(std::string const& msg) __attribute__((noreturn));
+// Check returns codes and throw Teuchos exceptions
+// Useful for silencing compiler warnings about unused return codes
+void
+safe_fscanf(int nitems, FILE* file, const char* format, ...);
+void
+safe_sscanf(int nitems, const char* str, const char* format, ...);
+void
+safe_fgets(char* str, int size, FILE* stream);
+void
+safe_system(char const* str);
 
-} // end namespace Albany
+void
+assert_fail(std::string const& msg) __attribute__((noreturn));
+
+}  // end namespace Albany
 
 #ifdef __CUDA_ARCH__
 #define ALBANY_ASSERT_IMPL(cond, ...) assert(cond)
 #else
-#define ALBANY_ASSERT_IMPL(cond, msg, ...) \
-  do { \
-    if (!(cond)) { \
-      std::ostringstream omsg; \
-      omsg << #cond " failed at "; \
+#define ALBANY_ASSERT_IMPL(cond, msg, ...)          \
+  do {                                              \
+    if (!(cond)) {                                  \
+      std::ostringstream omsg;                      \
+      omsg << #cond " failed at ";                  \
       omsg << __FILE__ << " +" << __LINE__ << '\n'; \
-      omsg << msg << '\n'; \
-      Albany::assert_fail(omsg.str()); \
-    } \
+      omsg << msg << '\n';                          \
+      Albany::assert_fail(omsg.str());              \
+    }                                               \
   } while (0)
 #endif
 
@@ -212,4 +259,4 @@ void assert_fail(std::string const& msg) __attribute__((noreturn));
 #define ALBANY_DEBUG_ASSERT(cond) ALBANY_EXPECT(cond)
 #define ALBANY_DEBUG_ASSERT_VERBOSE(cond, msg) ALBANY_EXPECT(cond, msg)
 
-#endif //ALBANY_UTILS
+#endif  // ALBANY_UTILS
