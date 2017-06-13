@@ -96,6 +96,7 @@ set(bc-sources
   "${LCM_DIR}/evaluators/bc/RigidContactBC.cpp"
   "${LCM_DIR}/evaluators/bc/StrongDBC.cpp"
   "${LCM_DIR}/evaluators/bc/TimeDepBC.cpp"
+  "${LCM_DIR}/evaluators/bc/TimeDepSDBC.cpp"
   "${LCM_DIR}/evaluators/bc/TimeTracBC.cpp"
   "${LCM_DIR}/evaluators/bc/TorsionBC.cpp"
 )
@@ -110,6 +111,8 @@ set(bc-headers
   "${LCM_DIR}/evaluators/bc/StrongDBC.hpp"
   "${LCM_DIR}/evaluators/bc/TimeDepBC_Def.hpp"
   "${LCM_DIR}/evaluators/bc/TimeDepBC.hpp"
+  "${LCM_DIR}/evaluators/bc/TimeDepSDBC_Def.hpp"
+  "${LCM_DIR}/evaluators/bc/TimeDepSDBC.hpp"
   "${LCM_DIR}/evaluators/bc/TimeTracBC_Def.hpp"
   "${LCM_DIR}/evaluators/bc/TimeTracBC.hpp"
   "${LCM_DIR}/evaluators/bc/TorsionBC_Def.hpp"

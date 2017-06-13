@@ -8,10 +8,6 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
 
-//
-// Generic Template Code for Constructor and PostRegistrationSetup
-//
-
 namespace LCM {
 
 //

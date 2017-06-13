@@ -27,8 +27,9 @@ namespace LCM {
 //
 template<typename EvalT, typename Traits> class StrongDBC;
 
-template <typename EvalT, typename Traits>
-class StrongDBC_Base : public PHAL::DirichletBase<EvalT, Traits> {
+template<typename EvalT, typename Traits>
+class StrongDBC_Base: public PHAL::DirichletBase<EvalT, Traits>
+{
 public:
   typedef typename EvalT::ScalarT ScalarT;
 
@@ -40,8 +41,9 @@ public:
 // Residual
 //
 template<typename Traits>
-class StrongDBC<PHAL::AlbanyTraits::Residual,Traits>
-  : public StrongDBC_Base<PHAL::AlbanyTraits::Residual, Traits> {
+class StrongDBC<PHAL::AlbanyTraits::Residual, Traits>
+: public StrongDBC_Base<PHAL::AlbanyTraits::Residual, Traits>
+{
 public:
   StrongDBC(Teuchos::ParameterList & p);
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
@@ -52,8 +54,9 @@ public:
 // Jacobian
 //
 template<typename Traits>
-class StrongDBC<PHAL::AlbanyTraits::Jacobian,Traits>
-   : public StrongDBC_Base<PHAL::AlbanyTraits::Jacobian, Traits> {
+class StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>
+: public StrongDBC_Base<PHAL::AlbanyTraits::Jacobian, Traits>
+{
 public:
   StrongDBC(Teuchos::ParameterList & p);
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
@@ -64,8 +67,9 @@ public:
 // Tangent
 //
 template<typename Traits>
-class StrongDBC<PHAL::AlbanyTraits::Tangent,Traits>
-   : public StrongDBC_Base<PHAL::AlbanyTraits::Tangent, Traits> {
+class StrongDBC<PHAL::AlbanyTraits::Tangent, Traits>
+: public StrongDBC_Base<PHAL::AlbanyTraits::Tangent, Traits>
+{
 public:
   StrongDBC(Teuchos::ParameterList & p);
   typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
@@ -76,8 +80,9 @@ public:
 // Distributed Parameter Derivative
 //
 template<typename Traits>
-class StrongDBC<PHAL::AlbanyTraits::DistParamDeriv,Traits>
-   : public StrongDBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits> {
+class StrongDBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>
+: public StrongDBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>
+{
 public:
   StrongDBC(Teuchos::ParameterList & p);
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
