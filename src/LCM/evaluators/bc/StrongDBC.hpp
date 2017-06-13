@@ -18,23 +18,24 @@
 
 namespace LCM {
 
-//
-// \brief Schwarz for models BC Dirichlet evaluator
-//
-
-//
-// Specialization of the DirichletBase class
-//
-template<typename EvalT, typename Traits> class StrongDBC;
-
+///
+/// Strong Dirichlet boundary condition evaluator
+///
 template<typename EvalT, typename Traits>
 class StrongDBC_Base: public PHAL::DirichletBase<EvalT, Traits>
 {
 public:
-  typedef typename EvalT::ScalarT ScalarT;
+  using ScalarT = typename EvalT::ScalarT;
 
   StrongDBC_Base(Teuchos::ParameterList & p);
+};
 
+//
+// Specialization of the DirichletBase class
+//
+template<typename EvalT, typename Traits>
+class StrongDBC
+{
 };
 
 //
@@ -45,9 +46,12 @@ class StrongDBC<PHAL::AlbanyTraits::Residual, Traits>
 : public StrongDBC_Base<PHAL::AlbanyTraits::Residual, Traits>
 {
 public:
+  using ScalarT =  typename PHAL::AlbanyTraits::Residual::ScalarT;
+
   StrongDBC(Teuchos::ParameterList & p);
-  typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
+
+  void
+  evaluateFields(typename Traits::EvalData d);
 };
 
 //
@@ -58,9 +62,12 @@ class StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>
 : public StrongDBC_Base<PHAL::AlbanyTraits::Jacobian, Traits>
 {
 public:
+  using ScalarT = typename PHAL::AlbanyTraits::Jacobian::ScalarT;
+
   StrongDBC(Teuchos::ParameterList & p);
-  typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
+
+  void
+  evaluateFields(typename Traits::EvalData d);
 };
 
 //
@@ -71,9 +78,12 @@ class StrongDBC<PHAL::AlbanyTraits::Tangent, Traits>
 : public StrongDBC_Base<PHAL::AlbanyTraits::Tangent, Traits>
 {
 public:
+  using ScalarT = typename PHAL::AlbanyTraits::Tangent::ScalarT;
+
   StrongDBC(Teuchos::ParameterList & p);
-  typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
+
+  void
+  evaluateFields(typename Traits::EvalData d);
 };
 
 //
@@ -84,9 +94,12 @@ class StrongDBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>
 : public StrongDBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>
 {
 public:
+  using ScalarT = typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT;
+
   StrongDBC(Teuchos::ParameterList & p);
-  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
-  void evaluateFields(typename Traits::EvalData d);
+
+  void
+  evaluateFields(typename Traits::EvalData d);
 };
 
 } // namespace LCM

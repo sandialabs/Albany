@@ -68,7 +68,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     // Record DOFs to avoid setting Schwarz BCs on them.
     dirichlet_workset.fixed_dofs_.insert(dof);
 #endif
-
   }
 
   return;
