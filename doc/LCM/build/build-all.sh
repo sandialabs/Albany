@@ -41,7 +41,7 @@ case "$SCRIPT_NAME" in
 	;&
     test-all.sh)
 	;&
-    mail-all.sh)
+    dash-all.sh)
 	;&
     clean-config-all.sh)
 	;&
@@ -49,19 +49,19 @@ case "$SCRIPT_NAME" in
 	;&
     clean-config-build-test-all.sh)
 	;&
-    clean-config-build-test-mail-all.sh)
+    clean-config-build-test-dash-all.sh)
 	;&
     config-build-all.sh)
 	;&
     config-build-test-all.sh)
 	;&
-    config-build-test-mail-all.sh)
+    config-build-test-dash-all.sh)
 	;&
     build-test-all.sh)
 	;&
-    build-test-mail-all.sh)
+    build-test-dash-all.sh)
 	;&
-    test-mail-all.sh)
+    test-dash-all.sh)
 	COMMAND="$LCM_DIR/${SCRIPT_NAME%-*}.sh"
 	;;
     *)

@@ -41,6 +41,6 @@ if [ -d "Albany.wiki" ]; then
 fi
 git clone git@github.com:gahansen/Albany.wiki.git
 
-./clean-config-build-test-mail-all.sh
+./clean-config-build-test-dash-all.sh
 
 cd "$LCM_DIR"
