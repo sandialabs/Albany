@@ -27,6 +27,10 @@ class StrongDBC
 };
 
 //
+// Specializations for different Albany Traits.
+//
+
+//
 // Residual
 //
 template<typename Traits>

@@ -21,7 +21,7 @@ TimeDepSDBC_Base(Teuchos::ParameterList & p)
   values_ = p.get<Teuchos::Array<RealType>>("BC Values").toVector();
 
   ALBANY_ASSERT(times_.size() == values_.size(),
-      "Number of times and values must match");
+      "Number of times and number of values must match");
 }
 
 //
@@ -44,9 +44,8 @@ TimeDepSDBC_Base<EvalT, Traits>::computeVal(RealType time)
   }
   else {
     RealType const
-    slope =
-        (values_[index] - values_[index - 1]) /
-        (times_[index] - times_[index - 1]);
+    slope = (values_[index] - values_[index - 1]) /
+            (times_[index] - times_[index - 1]);
 
     value = values_[index - 1] + slope * (time - times_[index - 1]);
   }

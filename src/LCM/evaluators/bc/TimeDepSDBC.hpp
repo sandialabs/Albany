@@ -25,7 +25,9 @@ private:
 
 public:
   TimeDepSDBC_Base(Teuchos::ParameterList & p);
-  ScalarT computeVal(RealType time);
+
+  ScalarT
+  computeVal(RealType time);
 
 protected:
   int const
