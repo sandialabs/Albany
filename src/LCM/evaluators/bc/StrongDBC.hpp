@@ -22,18 +22,6 @@ namespace LCM {
 /// Strong Dirichlet boundary condition evaluator
 ///
 template<typename EvalT, typename Traits>
-class StrongDBC_Base: public PHAL::DirichletBase<EvalT, Traits>
-{
-public:
-  using ScalarT = typename EvalT::ScalarT;
-
-  StrongDBC_Base(Teuchos::ParameterList & p);
-};
-
-//
-// Specialization of the DirichletBase class
-//
-template<typename EvalT, typename Traits>
 class StrongDBC
 {
 };
@@ -43,7 +31,7 @@ class StrongDBC
 //
 template<typename Traits>
 class StrongDBC<PHAL::AlbanyTraits::Residual, Traits>
-: public StrongDBC_Base<PHAL::AlbanyTraits::Residual, Traits>
+: public PHAL::DirichletBase<PHAL::AlbanyTraits::Residual, Traits>
 {
 public:
   using ScalarT =  typename PHAL::AlbanyTraits::Residual::ScalarT;
@@ -59,7 +47,7 @@ public:
 //
 template<typename Traits>
 class StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>
-: public StrongDBC_Base<PHAL::AlbanyTraits::Jacobian, Traits>
+: public PHAL::DirichletBase<PHAL::AlbanyTraits::Jacobian, Traits>
 {
 public:
   using ScalarT = typename PHAL::AlbanyTraits::Jacobian::ScalarT;
@@ -75,7 +63,7 @@ public:
 //
 template<typename Traits>
 class StrongDBC<PHAL::AlbanyTraits::Tangent, Traits>
-: public StrongDBC_Base<PHAL::AlbanyTraits::Tangent, Traits>
+: public PHAL::DirichletBase<PHAL::AlbanyTraits::Tangent, Traits>
 {
 public:
   using ScalarT = typename PHAL::AlbanyTraits::Tangent::ScalarT;
@@ -91,7 +79,7 @@ public:
 //
 template<typename Traits>
 class StrongDBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>
-: public StrongDBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>
+: public PHAL::DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>
 {
 public:
   using ScalarT = typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT;

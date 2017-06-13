@@ -11,23 +11,12 @@
 namespace LCM {
 
 //
-//
-//
-template<typename EvalT, typename Traits>
-StrongDBC_Base<EvalT, Traits>::
-StrongDBC_Base(Teuchos::ParameterList & p) :
-    PHAL::DirichletBase<EvalT, Traits>(p)
-{
-  return;
-}
-
-//
 // Specialization: Residual
 //
 template<typename Traits>
 StrongDBC<PHAL::AlbanyTraits::Residual, Traits>::
 StrongDBC(Teuchos::ParameterList & p) :
-    StrongDBC_Base<PHAL::AlbanyTraits::Residual, Traits>(p)
+PHAL::DirichletBase<PHAL::AlbanyTraits::Residual, Traits>(p)
 {
   return;
 }
@@ -79,7 +68,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 template<typename Traits>
 StrongDBC<PHAL::AlbanyTraits::Jacobian, Traits>::
 StrongDBC(Teuchos::ParameterList & p) :
-    StrongDBC_Base<PHAL::AlbanyTraits::Jacobian, Traits>(p)
+PHAL::DirichletBase<PHAL::AlbanyTraits::Jacobian, Traits>(p)
 {
   return;
 }
@@ -172,7 +161,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 template<typename Traits>
 StrongDBC<PHAL::AlbanyTraits::Tangent, Traits>::
 StrongDBC(Teuchos::ParameterList & p) :
-    StrongDBC_Base<PHAL::AlbanyTraits::Tangent, Traits>(p)
+PHAL::DirichletBase<PHAL::AlbanyTraits::Tangent, Traits>(p)
 {
   return;
 }
@@ -193,7 +182,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 template<typename Traits>
 StrongDBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 StrongDBC(Teuchos::ParameterList & p) :
-    StrongDBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
+PHAL::DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
 {
   return;
 }
