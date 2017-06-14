@@ -71,6 +71,20 @@ case "$SCRIPT_NAME" in
 esac
 WIKI_TEMPLATE="LCM-Status:-Last-known-commits-that-work.md"
 
+KERNEL_VERSION=`uname -r`
+PLATFORM="unknown"
+if [[ ${KERNEL_VERSION} == *"fc"* ]]; then
+    PLATFORM="fedora"
+elif [[ ${KERNEL_VERSION} == *"el"* ]]; then
+    PLATFORM="sems"
+elif [[ ${KERNEL_VERSION} == *"chaos"* ]]; then
+    PLATFORM="cluster"
+else
+    echo "Unrecongnized platform. Valid platforms: fc, el, chaos"
+    uname -r
+    exit 1
+fi
+
 # Use different variable names for loop counters so they do not
 # conflict with the variables defined by the module command.
 for P in $PACKAGES; do
@@ -80,7 +94,7 @@ for P in $PACKAGES; do
                 MODULE="$A"-"$TC"-"$BT"
                 echo "MODULE: $MODULE"
                 module purge
-                module load lcm/fedora
+                module load lcm/"$PLATFORM"
                 module load "$MODULE"
                 "$COMMAND" "$P" "$NUM_PROCS"
                 # Update wiki after compiling Albany with gcc release only.
