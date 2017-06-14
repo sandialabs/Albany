@@ -84,7 +84,7 @@ function(lcm_do_trilinos)
       "-DTPL_Netcdf_INCLUDE_DIRS:STRING=$ENV{NETCDF_INC}"
       "-DTPL_Netcdf_LIBRARY_DIRS:STRING=$ENV{NETCDF_LIB}"
       "-DTPL_Netcdf_LIBRARIES:STRING=$ENV{NETCDF_LIB}/libnetcdf.so"
-      "-DTPL_Netcdf_PARALLEL:BOOL=ON"
+      "-DTPL_Netcdf_PARALLEL:BOOL=$ENV{LCM_NETCDF_PARALLEL}"
       "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
       "-DTrilinos_ENABLE_Amesos:BOOL=ON"
       "-DTrilinos_ENABLE_Anasazi:BOOL=ON"

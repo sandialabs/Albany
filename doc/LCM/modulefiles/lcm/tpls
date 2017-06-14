@@ -13,6 +13,7 @@ if { [is-loaded lcm/fedora] } {
   setenv                  NETCDF          /usr/local/netcdf
   setenv                  NETCDF_INC      /usr/include/openmpi-x86_64
   setenv                  NETCDF_LIB      /usr/lib64/openmpi/lib
+  setenv                  LCM_NETCDF_PARALLEL OFF
   setenv                  YAML_CPP_INC    /usr/include
   setenv                  YAML_CPP_LIB    /usr/lib64
   prepend-path            LD_LIBRARY_PATH /usr/lib64/openmpi/lib
@@ -47,6 +48,7 @@ if { [is-loaded lcm/sems] } {
   setenv                  NETCDF          $netcdf_root
   setenv                  NETCDF_INC      $netcdf_inc
   setenv                  NETCDF_LIB      $netcdf_lib
+  setenv                  LCM_NETCDF_PARALLEL ON
   setenv                  YAML_CPP_INC    $yaml_cpp_inc
   setenv                  YAML_CPP_LIB    $yaml_cpp_lib
   setenv                  LCM_LINK_FLAGS  -L$boost_lib
@@ -75,6 +77,7 @@ if { [is-loaded lcm/cluster] } {
   setenv                  NETCDF          $netcdf_root
   setenv                  NETCDF_INC      $netcdf_inc
   setenv                  NETCDF_LIB      $netcdf_lib
+  setenv                  LCM_NETCDF_PARALLEL ON
   setenv                  YAML_CPP_INC    $yaml_cpp_inc
   setenv                  YAML_CPP_LIB    $yaml_cpp_lib
 # PATHs for MPI are set by the modules
