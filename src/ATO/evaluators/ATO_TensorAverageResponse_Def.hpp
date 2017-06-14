@@ -67,15 +67,13 @@ TensorAverageResponse(Teuchos::ParameterList& p,
       "Invalid field type " << fieldType << ".  Support values are " << 
       "Scalar, Vector, and Tensor." << std::endl);
   }
-  field = PHX::MDField<ScalarT>(field_name, field_layout);
+  field = decltype(field)(field_name, field_layout);
 
   int field_rank = field_layout->rank();
   tensorRank = field_rank - 2; //first 2 dimensions are cell and qp.
 
-  std::vector<int> dims;
-  field.dimensions(dims);
-  int numCells = dims[0];
-  int numQPs   = dims[1];
+  int numCells = field_layout->dimension(0);
+  int numQPs   = field_layout->dimension(1);
 
   Teuchos::RCP<PHX::DataLayout> local_response_layout;
   Teuchos::RCP<PHX::DataLayout> global_response_layout;
@@ -84,12 +82,12 @@ TensorAverageResponse(Teuchos::ParameterList& p,
     global_response_layout = dl->workset_scalar;
   } else
   if(fieldType == "Vector"){
-    int numDims = dims[2];
+    int numDims = field_layout->dimension(2);
     local_response_layout = Teuchos::rcp(new PHX::MDALayout<Cell,Dim>(numCells,numDims));
     global_response_layout = Teuchos::rcp(new PHX::MDALayout<Dim>(numDims));
   } else
   if(fieldType == "Tensor"){
-    int numDims = dims[2];
+    int numDims = field_layout->dimension(2);
     int nVoigt = 0;
     for(int i=1; i<=numDims; i++) nVoigt += i;
     local_response_layout = Teuchos::rcp(new PHX::MDALayout<Cell,Dim>(numCells,nVoigt));

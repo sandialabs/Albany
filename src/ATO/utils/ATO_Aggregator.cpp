@@ -1002,6 +1002,21 @@ Aggregator_Homogenized::EvaluateT()
     localValue += rowProd*m_assumedState[i];
   }
 
+  if( comm->getRank()==0 ){
+    std::cout << "************************************************************************" << std::endl;
+    std::cout << "  Homogenized Constants " << std::endl;
+    for(int i=0; i<nValues; i++){
+      SubValueT& value = valuesT[i];
+      Teuchos::ArrayRCP<const double> valView = value.value->get1dView();
+      int voigtLength = value.value->getLocalLength();
+      for( int j=0; j<voigtLength; j++){
+        std::cout << " " << valView[j];
+      }
+      std::cout << std::endl;
+    }
+    std::cout << "************************************************************************" << std::endl;
+  }
+
   double globalValue;
   if( comm != Teuchos::null ){
     Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, /*numvals=*/ 1, &localValue, &globalValue);
@@ -1021,7 +1036,7 @@ Aggregator_Homogenized::EvaluateT()
   if( comm != Teuchos::null ){
     if( comm->getRank()==0 ){
       std::cout << "************************************************************************" << std::endl;
-      std::cout << "  Homigenized Aggregator: Output " << std::endl;
+      std::cout << "  Homogenized Aggregator: Output " << std::endl;
       std::cout << "   Value = " << *valueAggregated << std::endl;
       std::cout << "************************************************************************" << std::endl;
     }
@@ -1084,6 +1099,21 @@ Aggregator_Homogenized::Evaluate()
     localValue += rowProd*m_assumedState[i];
   }
 
+  if( comm->getRank()==0 ){
+    std::cout << "************************************************************************" << std::endl;
+    std::cout << "  Homogenized Constants " << std::endl;
+    for(int i=0; i<nValues; i++){
+      SubValue& value = values[i];
+      double* valView; value.value->ExtractView(&valView);
+      int voigtLength = value.value->MyLength();
+      for( int j=0; j<voigtLength; j++){
+        std::cout << " " << valView[j];
+      }
+      std::cout << std::endl;
+    }
+    std::cout << "************************************************************************" << std::endl;
+  }
+
   double globalValue;
   if( comm != Teuchos::null ){
     Teuchos::reduceAll(*comm, Teuchos::REDUCE_SUM, /*numvals=*/ 1, &localValue, &globalValue);
@@ -1103,7 +1133,7 @@ Aggregator_Homogenized::Evaluate()
   if( comm != Teuchos::null ){
     if( comm->getRank()==0 ){
       std::cout << "************************************************************************" << std::endl;
-      std::cout << "  Homigenized Aggregator: Output " << std::endl;
+      std::cout << "  Homogenized Aggregator: Output " << std::endl;
       std::cout << "   Value = " << *valueAggregated << std::endl;
       std::cout << "************************************************************************" << std::endl;
     }
