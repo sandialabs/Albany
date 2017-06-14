@@ -1,3 +1,5 @@
+if (ALBANY_IOPX)
+
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputBase.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/inputBase.yaml COPYONLY)
@@ -20,3 +22,5 @@ add_test(${testName}_CopyRemesh ${AlbanyT.exe} inputCR.yaml)
 IF (ALBANY_LCM)
 #add_test(${testName}_TopMod ${Albany.exe} inputTM.yaml)
 ENDIF()
+
+endif(ALBANY_IOPX)

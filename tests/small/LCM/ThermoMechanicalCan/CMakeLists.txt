@@ -4,6 +4,8 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
+if (ALBANY_IOPX)
+
 # Mechanics
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Mechanics.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/Mechanics.yaml COPYONLY)
@@ -25,3 +27,5 @@ IF (ALBANY_MUELU_EXAMPLES)
   add_test (${testName}_thermomech ${AlbanyT.exe} MechanicsWithTemperature.yaml)
   set_tests_properties(${testName}_thermomech PROPERTIES LABELS CUDA_TEST)
 ENDIF ()
+
+endif(ALBANY_IOPX)

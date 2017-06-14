@@ -22,7 +22,9 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 ###add_test(${testName} ${Albany.exe})
 if (ALBANY_EPETRA) 
 add_test(${testName} ${Albany.exe})
+if (ALBANY_IOPX)
 add_test(${testName}_SerialInput ${Albany.exe} input_Serial.xml)
+endif()
 endif()
 
 if (ALBANY_IFPACK2)
@@ -37,7 +39,9 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3'. Create the test with this name and standard executable
 add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+if (ALBANY_IOPX)
 add_test(${testName}_SerialInput_Tpetra ${AlbanyT.exe} inputT_Serial.xml)
+endif()
 endif ()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists

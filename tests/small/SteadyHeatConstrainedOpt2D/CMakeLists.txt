@@ -30,6 +30,7 @@ if (ALBANY_EPETRA)
 add_test(${testName} ${Albany.exe} input_conductivity_dist_param.xml)
 endif()
 
+if (ALBANY_IOPX)
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_conductivity_dist_param_restart.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_conductivity_dist_param_restart.xml COPYONLY)
@@ -40,4 +41,5 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Conductivity_Dist_Pa
 # 3. Create the test with this name and standard executable
 if (ALBANY_EPETRA) 
 add_test(${testName} ${Albany.exe} input_conductivity_dist_param_restart.xml)
+endif()
 endif()

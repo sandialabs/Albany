@@ -1,4 +1,4 @@
-
+if (ALBANY_IOPX)
 
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
@@ -27,3 +27,4 @@ endif()
 # 2. Copy mesh files from source to binary dir
 endif()
 
+endif(ALBANY_IOPX)
