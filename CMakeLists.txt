@@ -248,7 +248,6 @@ ENDIF()
 # MPI check -- defaults to TRUE
 # MESSAGE("-- Checking if MPI is enabled in Trilinos:")
 
-
 ADD_DEFINITIONS(-DPIRO_HAS_TPETRA)
 
 LIST(FIND Trilinos_TPL_LIST MPI MPI_List_ID)
@@ -260,8 +259,6 @@ ELSE()
   MESSAGE("-- Looking for MPI in Trilinos:    NOT found, MPI NOT ENABLED!")
   SET(ALBANY_MPI FALSE)
 ENDIF()
-
-
 
 # set optional dependency on stk
 LIST(FIND Trilinos_PACKAGE_LIST STK have_stk_List_ID)
@@ -277,6 +274,14 @@ IF (have_stk_List_ID GREATER -1)
     ADD_DEFINITIONS(-DALBANY_SEACAS)
     MESSAGE("---- Looking for SEACASIoss:         Found, compiling with -DALBANY_SEACAS")
     SET(ALBANY_SEACAS TRUE)
+    LIST(FIND SEACASIoss_LIBRARIES Iopx Iopx_List_ID)
+    IF (Iopx_List_ID GREATER -1)
+      MESSAGE("---- Looking for Iopx:               Found")
+      SET(ALBANY_IOPX TRUE)
+    ELSE()
+      MESSAGE("---- Looking for Iopx:               NOT found.")
+      SET(ALBANY_IOPX FALSE)
+    ENDIF()
   ELSE()
     MESSAGE("---- Looking for SEACASIoss:         NOT found.")
     SET(ALBANY_SEACAS FALSE)
