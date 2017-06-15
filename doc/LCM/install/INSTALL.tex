@@ -147,7 +147,7 @@ LCM
 In \verb+~/.bashrc+, the following variables are needed:
 \begin{verbatim}
 export LCM_DIR=~/LCM
-export MODULEPATH=$LCM_DIR/Albany/doc/LCM/modulefiles
+export MODULEPATH=$LCM_DIR/Albany/doc/LCM/modulefiles:$MODULEPATH
 \end{verbatim}
 The \verb+LCM_DIR+ variable should contain the location of the
 top-level \verb+LCM+ directory.
@@ -237,6 +237,14 @@ compiling Albany.
 
 \section{Modules}
 \label{sec:modules}
+
+In \verb+~/.bashrc+, the following variables are needed:
+\begin{verbatim}
+export LCM_DIR=~/LCM
+export MODULEPATH=$LCM_DIR/Albany/doc/LCM/modulefiles:$MODULEPATH
+\end{verbatim}
+The \verb+LCM_DIR+ variable should contain the location of the
+top-level \verb+LCM+ directory.
 
 Modules are used to create different environments for the
 configuration and compilation of both \albany{} and \trilinos{}. To
