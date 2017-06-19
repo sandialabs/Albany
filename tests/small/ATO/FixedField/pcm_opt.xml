@@ -281,7 +281,6 @@
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name" type="string" value="pcm_opt.gen"/>
     <Parameter name="Exodus Output File Name" type="string" value="pcm_opt.exo"/>
-    <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Workset Size" type="int" value="50"/>
   </ParameterList>
 

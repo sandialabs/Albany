@@ -97,13 +97,12 @@ evaluateFields(typename Traits::EvalData workset)
   gradX.dimensions(dims);
   int size = dims.size();
 
-  int numCells = dims[0];
   int numQPs = dims[1];
   int numDims = dims[2];
   int numNodes = topo.dimension(1);
 
   if( size == 4 ){
-    for(int cell=0; cell<numCells; cell++){
+    for(int cell=0; cell<workset.numCells; cell++){
       double dE = 0.0;
       double dmass_term = 0.;
       double dstiffness_term = 0.;
@@ -133,7 +132,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 /*
   if( size == 3 ){
-    for(int cell=0; cell<numCells; cell++){
+    for(int cell=0; cell<workset.numCells; cell++){
       double dE = 0.0;
       double P = topology->Penalize(topo(cell));
       for(int qp=0; qp<numQPs; qp++) {

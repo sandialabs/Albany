@@ -124,7 +124,6 @@
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name" type="string" value="coupon.gen"/>
     <Parameter name="Exodus Output File Name" type="string" value="couponT.exo"/>
-    <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Restart Index" type="int" value="1"/>
   </ParameterList>
 

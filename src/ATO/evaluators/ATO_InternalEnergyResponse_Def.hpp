@@ -25,10 +25,8 @@ InternalEnergyResponse(Teuchos::ParameterList& p,
 {
   using Teuchos::RCP;
 
-  elementBlockName = meshSpecs->ebName;
-
   ATO::PenaltyModelFactory<ScalarT> penaltyFactory;
-  penaltyModel = penaltyFactory.create(p, dl, elementBlockName);
+  penaltyModel = penaltyFactory.create(p, dl, meshSpecs->ebName);
 
   Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem =
     p.get< Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
@@ -36,39 +34,6 @@ InternalEnergyResponse(Teuchos::ParameterList& p,
   topologies = paramsFromProblem->get<Teuchos::RCP<TopologyArray> >("Topologies");
 
   Teuchos::ParameterList* responseParams = p.get<Teuchos::ParameterList*>("Parameter List");
-//  std::string gfLayout = responseParams->get<std::string>("Gradient Field Layout");
-//  std::string wcLayout = responseParams->get<std::string>("Work Conjugate Layout");
-
-//  Teuchos::RCP<PHX::DataLayout> layout;
-//  if(gfLayout == "QP Tensor3") layout = dl->qp_tensor3;
-//  else
-//  if(gfLayout == "QP Tensor") layout = dl->qp_tensor;
-//  else
-//  if(gfLayout == "QP Vector") layout = dl->qp_vector;
-//  else
-//    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-//                               std::endl <<
-//                               "Error!  Unknown Gradient Field Layout " << gfLayout <<
-//                               "!" << std::endl << "Options are (QP Tensor3, QP Tensor, QP Vector)" <<
-//                               std::endl);
-//
-//  PHX::MDField<ScalarT> _gradX(responseParams->get<std::string>("Gradient Field Name"), layout);
-//  gradX = _gradX;
-//
-//  if(wcLayout == "QP Tensor3") layout = dl->qp_tensor3;
-//  else
-//  if(wcLayout == "QP Tensor") layout = dl->qp_tensor;
-//  else
-//  if(wcLayout == "QP Vector") layout = dl->qp_vector;
-//  else
-//    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-//                               std::endl <<
-//                               "Error!  Unknown Work Conjugate Layout " << wcLayout <<
-//                               "!" << std::endl << "Options are (QP Tensor3, QP Tensor, QP Vector)" <<
-//                               std::endl);
-//
-//  PHX::MDField<ScalarT> _workConj(responseParams->get<std::string>("Work Conjugate Name"), layout);
-//  workConj = _workConj;
 
   int nTopos = topologies->size();
   topos.resize(nTopos);
@@ -81,10 +46,6 @@ InternalEnergyResponse(Teuchos::ParameterList& p,
     topos[itopo] = PHX::MDField<const ParamScalarT,Cell,Node>((*topologies)[itopo]->getName(),dl->node_scalar);
     this->addDependentField(topos[itopo]);
   }
-
-//  if(responseParams->isType<int>("Penalty Function")){
-//    functionIndex = responseParams->get<int>("Penalty Function");
-//  } else functionIndex = 0;
 
   this->addDependentField(qp_weights);
   this->addDependentField(BF);
@@ -167,8 +128,6 @@ void ATO::InternalEnergyResponse<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-  if( elementBlockName != workset.EBName ) return;
-
   // Zero out local response
   PHAL::set(this->local_response_eval, 0.0);
 
@@ -178,7 +137,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   ScalarT internalEnergy=0.0;
 
-  int numCells = dims[0];
   int numQPs   = dims[1];
   int numDims  = dims[2];
   int numNodes = topos[0].dimension(1);
@@ -187,7 +145,7 @@ evaluateFields(typename Traits::EvalData workset)
   int nTopos = topos.size();
   Teuchos::Array<ScalarT> topoVals(nTopos), dResponse(nTopos);
   
-  for(int cell=0; cell<numCells; cell++){
+  for(int cell=0; cell<workset.numCells; cell++){
 
     for(int qp=0; qp<numQPs; qp++){
 
@@ -202,6 +160,7 @@ evaluateFields(typename Traits::EvalData workset)
 
       ScalarT dE = response*qp_weights(cell,qp);
       internalEnergy += dE;
+
       this->local_response_eval(cell,0) += dE;
 
     }
