@@ -70,18 +70,15 @@ buildProblem(
   /* Construct All Phalanx Evaluators */
   int physSets = meshSpecs.size();
   fm.resize(physSets);
-  bool haveSidesets = false;
 
   for (int ps=0; ps<physSets; ps++) {
     fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
     buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM, Teuchos::null);
-    if (meshSpecs[ps]->ssNames.size() > 0) haveSidesets = true;
+    if (meshSpecs[ps]->ssNames.size() > 0) {
+      constructNeumannEvaluators(meshSpecs[ps]);
+    }
   }
   constructDirichletEvaluators(*meshSpecs[0]);
-
-  if (haveSidesets) {
-    constructNeumannEvaluators(meshSpecs[0]);
-  }
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag>>
@@ -179,31 +176,37 @@ Albany::PeridigmProblem::constructNeumannEvaluators(
   condNames[1] = "dudn";
   condNames[2] = "P";
 
-  nfm.resize(1); // Hard-code one element block?
-
   // DJL jump through hoops because we don't have a stored data layout
   Teuchos::RCP<shards::CellTopology> cellType = Teuchos::rcp(new shards::CellTopology (&meshSpecs->ctd));
-  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>> intrepidBasis = Albany::getIntrepid2Basis(meshSpecs->ctd);
-  const int numNodes = intrepidBasis->getCardinality();
-  const int worksetSize = meshSpecs->worksetSize;
-  Intrepid2::DefaultCubatureFactory cubFactory;
-  Teuchos::RCP <Intrepid2::Cubature<PHX::Device>  > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs->cubatureDegree);
-  const int numDim = cubature->getDimension();
-  const int numQPts = cubature->getNumPoints();
-  const int numVertices = cellType->getNodeCount();
-  Teuchos::RCP<Albany::Layouts> dataLayout = Teuchos::rcp(new Albany::Layouts(worksetSize, numVertices, numNodes, numQPts, numDim));
 
-  nfm[0] = neuUtils.constructBCEvaluators(
-      meshSpecs,
-      neumannNames,
-      dof_names,
-      true,        // isVectorField
-      0,           // offsetToFirstDOF
-      condNames,
-      offsets,
-      dataLayout,
-      this->params,
-      this->paramLib);
+  // The datalayout will be invalid for particle/sphere elements
+  if (cellType->getNodeCount() != 1){
+
+    nfm.resize(1); // Albany has issues with NBC ... currently hard-coded to one block?
+                   // I could see this failing if there are multiple element blocks with different element types
+
+    Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>> intrepidBasis = Albany::getIntrepid2Basis(meshSpecs->ctd);
+    const int numNodes = intrepidBasis->getCardinality();
+    const int worksetSize = meshSpecs->worksetSize;
+    Intrepid2::DefaultCubatureFactory cubFactory;
+    Teuchos::RCP <Intrepid2::Cubature<PHX::Device>  > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs->cubatureDegree);
+    const int numDim = cubature->getDimension();
+    const int numQPts = cubature->getNumPoints();
+    const int numVertices = cellType->getNodeCount();
+    Teuchos::RCP<Albany::Layouts> dataLayout = Teuchos::rcp(new Albany::Layouts(worksetSize, numVertices, numNodes, numQPts, numDim));
+
+    nfm[0] = neuUtils.constructBCEvaluators(
+        meshSpecs,
+        neumannNames,
+        dof_names,
+        true,        // isVectorField
+        0,           // offsetToFirstDOF
+        condNames,
+        offsets,
+        dataLayout,
+        this->params,
+        this->paramLib);
+    }
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

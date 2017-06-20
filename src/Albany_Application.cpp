@@ -1328,8 +1328,24 @@ computeGlobalResidualImplT(
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(
           workset);
       if (nfm != Teuchos::null) {
+#ifdef ALBANY_PERIDIGM
+	// DJL this is a hack to avoid running a block with sphere elements
+	// through a Neumann field manager that was constructed for a non-sphere
+	// element topology.  The root cause is that Albany currently supports only
+	// a single Neumann field manager.  The history on that is murky.
+	// The single field manager is created for a specific element topology,
+	// and it fails if applied to worksets with a different element topology.
+	// The Peridigm use case is a discretization that contains blocks with
+	// sphere elements and blocks with standard FEM solid elements, and we
+	// want to apply Neumann BC to the standard solid elements.
+	if (workset.sideSets->size() != 0) {
+	  deref_nfm(nfm, wsPhysIndex, ws)
+              ->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+	}
+#else
         deref_nfm(nfm, wsPhysIndex, ws)
             ->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+#endif
       }
     }
     // workset.wsElNodeEqID_kokkos =Kokkos:: View<int****,
@@ -1686,8 +1702,17 @@ computeGlobalJacobianImplT(const double alpha,
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(
           workset);
       if (Teuchos::nonnull(nfm))
+#ifdef ALBANY_PERIDIGM
+	// DJL avoid passing a sphere mesh through a nfm that was
+	// created for non-sphere topology.
+	if (workset.sideSets->size() != 0) {
+	  deref_nfm(nfm, wsPhysIndex, ws)
+              ->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+	}
+#else
         deref_nfm(nfm, wsPhysIndex, ws)
             ->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+#endif
     }
   }
 
@@ -2668,8 +2693,17 @@ applyGlobalDistParamDerivImplT(const double current_time,
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::DistParamDeriv>(
           workset);
       if (nfm != Teuchos::null)
+#ifdef ALBANY_PERIDIGM
+	// DJL avoid passing a sphere mesh through a nfm that was
+	// created for non-sphere topology.
+	if (workset.sideSets->size() != 0) {
+	  deref_nfm(nfm, wsPhysIndex, ws)
+              ->evaluateFields<PHAL::AlbanyTraits::DistParamDeriv>(workset);
+	}
+#else
         deref_nfm(nfm, wsPhysIndex, ws)
             ->evaluateFields<PHAL::AlbanyTraits::DistParamDeriv>(workset);
+#endif
     }
   }
 
