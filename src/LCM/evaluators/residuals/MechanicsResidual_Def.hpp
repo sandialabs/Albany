@@ -27,7 +27,7 @@ MechanicsResidual(Teuchos::ParameterList& p,
              dl->node_qp_vector),
   w_bf_(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
   residual_(p.get<std::string>("Residual Name"), dl->node_vector),
-  have_body_force_(false),
+  have_body_force_(p.isType<bool>("Has Body Force")),
   density_(p.get<RealType>("Density", 1.0))
 {
   this->addDependentField(stress_);
@@ -49,7 +49,6 @@ MechanicsResidual(Teuchos::ParameterList& p,
   this->setName("MechanicsResidual" + PHX::typeAsString<EvalT>());
 
   if (have_body_force_) {
-    // grab the pore pressure
     body_force_ = decltype(body_force_)
        (p.get<std::string>("Body Force Name"), dl->qp_vector);
     this->addDependentField(body_force_);

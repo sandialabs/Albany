@@ -42,6 +42,7 @@ SET(HEADERS )
 # LCM evaluators
 set(evaluator-sources
   "${LCM_DIR}/evaluators/BifurcationCheck.cpp"
+  "${LCM_DIR}/evaluators/BodyForce.cpp"
   "${LCM_DIR}/evaluators/Density.cpp"
   "${LCM_DIR}/evaluators/NodePointVecInterpolation.cpp"
   "${LCM_DIR}/evaluators/SetField.cpp"
@@ -51,6 +52,8 @@ set(evaluator-sources
 set(evaluator-headers
   "${LCM_DIR}/evaluators/BifurcationCheck_Def.hpp"
   "${LCM_DIR}/evaluators/BifurcationCheck.hpp"
+  "${LCM_DIR}/evaluators/BodyForce_Def.hpp"
+  "${LCM_DIR}/evaluators/BodyForce.hpp"
   "${LCM_DIR}/evaluators/Density_Def.hpp"
   "${LCM_DIR}/evaluators/Density.hpp"
   "${LCM_DIR}/evaluators/NodePointVecInterpolation_Def.hpp"

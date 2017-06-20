@@ -366,6 +366,7 @@ class MechanicsProblem : public Albany::AbstractProblem {
 
 #include "FieldNameMap.hpp"
 
+#include "BodyForce.hpp"
 #include "CurrentCoords.hpp"
 #include "MechanicsResidual.hpp"
 #include "SurfaceBasis.hpp"
@@ -1892,6 +1893,7 @@ Albany::MechanicsProblem::constructEvaluators(
       p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
       p->set<std::string>("Weighted BF Name", "wBF");
       p->set<std::string>("Acceleration Name", "Acceleration");
+      p->set<std::string>("Body Force Name", "Body Force");
       if (Teuchos::nonnull(rc_mgr_)) {
         p->set<std::string>("DefGrad Name", defgrad);
         rc_mgr_->registerField(
@@ -1905,6 +1907,20 @@ Albany::MechanicsProblem::constructEvaluators(
         RealType density =
             material_db_->getElementBlockParam<RealType>(eb_name, "Density");
         p->set<RealType>("Density", density);
+      }
+
+      // Optional body force
+      if (material_db_->isElementBlockSublist(eb_name, "Body Force")) {
+
+        p->set<bool>("Has Body Force", true);
+
+        Teuchos::ParameterList &
+        eb_param = material_db_->getElementBlockSublist(eb_name, "Body Force");
+
+        ev = Teuchos::rcp(
+            new LCM::BodyForce<EvalT, PHAL::AlbanyTraits>(eb_param, dl_));
+
+        fm0.template registerEvaluator<EvalT>(ev);
       }
 
       p->set<Teuchos::RCP<ParamLib>>("Parameter Library", paramLib);

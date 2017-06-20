@@ -152,6 +152,7 @@ ALBANY_INST_DECL(double)
 ALBANY_INST_DECL(int)
 ALBANY_INST_DECL(bool)
 ALBANY_INST_DECL(std::string)
+ALBANY_INST_DECL(Teuchos::Array<double>)
 
 #undef ALBANY_INST_DECL
 

@@ -515,5 +515,6 @@ ALBANY_INST(double)
 ALBANY_INST(int)
 ALBANY_INST(bool)
 ALBANY_INST(std::string)
+ALBANY_INST(Teuchos::Array<double>)
 
 #undef ALBANY_INST
