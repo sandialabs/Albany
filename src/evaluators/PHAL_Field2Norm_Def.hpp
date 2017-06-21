@@ -159,7 +159,7 @@ Field2NormBase (const Teuchos::ParameterList& p,
 
   numDims = dims.size();
 
-  this->setName("Field2NormBase"+PHX::typeAsString<EvalT>());
+  this->setName("Field2NormBase(" + fieldNormName + ")" + PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
