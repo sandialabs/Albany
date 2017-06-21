@@ -10,4 +10,5 @@
 #include "MortarContactConstraints_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MortarContact)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MortarContactBase)
 

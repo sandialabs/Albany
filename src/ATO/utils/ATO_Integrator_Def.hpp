@@ -32,7 +32,7 @@ void ATO::Integrator::getMeasure(
     // if there are topoVals that are exactly equal to or very near zeroVal, 
     // there will be all sorts of special cases.  If necessary, nudge values
     // away from zeroVal.  
-    Kokkos::DynRankView<RealType, PHX::Device> vals("ZZZ", topoVals);
+    Kokkos::DynRankView<RealType, PHX::Device> vals(topoVals);
 
     int nvals = vals.dimension(0);
     for(int i=0; i<nvals; i++){
@@ -739,7 +739,7 @@ void ATO::Integrator::getSurfaceTris(
     for(uint edge=0; edge<nEdges; edge++){
       uint i = cellData.edge[edge].node[0], j = cellData.edge[edge].node[1];
       if((topoVals(i)-zeroVal)*(topoVals(j)-zeroVal) < 0.0){
-        Vector3D newpoint(minitensor::ZEROS);
+        Vector3D newpoint(minitensor::Filler::ZEROS);
         RealType factor = fabs(topoVals(i)-zeroVal)/(fabs(topoVals(i)-zeroVal)+fabs(topoVals(j)-zeroVal));
         for(int k=0; k<nDims; k++) newpoint(k) = (1.0-factor)*coordCon(i,k) + factor*coordCon(j,k);
         std::pair<int,int> newIntx(i,j);

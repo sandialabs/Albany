@@ -16,7 +16,7 @@
 #include "Albany_Utils.hpp"
 #include "Albany_DataTypes.hpp"
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 #include "Petra_Converters.hpp"
 
 #include "Thyra_DefaultProductVector.hpp"
@@ -153,7 +153,7 @@ namespace QCADT {
     double offset_to_CB; // conduction band = offset_to_CB - poisson_solution
 
     //! Material database
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+    Teuchos::RCP<Albany::MaterialDatabase> materialDB;
 
     //! Miscellaneous
     int numDims;

@@ -70,6 +70,33 @@ T H2::dPenalize(T phi) {
 }
 
 template<typename T> 
+T Poly::Penalize(T rho) { 
+  int nTerms = coefficients.size();
+  T retVal(0.0);
+  T mono(1.0);
+  for(int iTerm=0; iTerm<nTerms; iTerm++){
+    retVal += coefficients[iTerm]*mono;
+    mono *= rho;
+  }
+  return retVal;
+}
+
+template<typename T> 
+T Poly::dPenalize(T rho) { 
+  int nTerms = coefficients.size();
+  T retVal(0.0);
+  T mono(1.0);
+  T factor(1.0);
+  for(int iTerm=1; iTerm<nTerms; iTerm++){
+    retVal += factor*coefficients[iTerm]*mono;
+    mono *= rho;
+    factor += 1.0;
+  }
+  return retVal;
+}
+
+
+template<typename T> 
 T Topology::Penalize(int functionIndex, T rho)
 {
   PenaltyFunction& pfunc = penaltyFunctions[functionIndex];
@@ -80,6 +107,8 @@ T Topology::Penalize(int functionIndex, T rho)
   if(pfunc.pType == HONE) return pfunc.h1->Penalize<T>(rho);
   else
   if(pfunc.pType == HTWO) return pfunc.h2->Penalize<T>(rho);
+  else
+  if(pfunc.pType == POLY) return pfunc.poly->Penalize<T>(rho);
 }
  
 template<typename T>
@@ -93,6 +122,8 @@ T Topology::dPenalize(int functionIndex, T rho)
   if(pfunc.pType == HONE) return pfunc.h1->dPenalize<T>(rho);
   else
   if(pfunc.pType == HTWO) return pfunc.h2->dPenalize<T>(rho);
+  else
+  if(pfunc.pType == POLY) return pfunc.poly->dPenalize<T>(rho);
 }
 
   

@@ -39,9 +39,9 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   // Input:
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim> Velocity;
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim> PiVelx;
-  PHX::MDField<ScalarT,Cell,Node,Level>     Tracer;
+  PHX::MDField<const ScalarT,Cell,Node,Level,Dim> Velocity;
+  PHX::MDField<const ScalarT,Cell,Node,Level,Dim> PiVelx;
+  PHX::MDField<const ScalarT,Cell,Node,Level>     Tracer;
   
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Level,Dim> UTracer;

@@ -21,61 +21,63 @@
 \def\endverbatim
 {\oldendv\egroup\fboxsep0pt \noindent\colorbox[gray]{0.95}{\usebox0}\par}
 
+\title{Installing and compiling \albany{}/\lcm{} and
+  \trilinos{} on Fedora or SEMS/CEE}
+
 \author{The \albany{}/\lcm{} team\thanks{Original version by Juli\'an
-    R\'imoli}} \title{Installing \albany{}/\lcm{} and
-  \trilinos{} on Fedora 22/23}
+    R\'imoli}}
+
 \begin{document}
 
 \maketitle
 
 \section{Introduction}
-This document describes the necessary steps to install
-\albany{}/\lcm{} and \trilinos{} on a machine with Fedora Linux. The
-procedures described herein were tested using Fedora 22 and Fedora 23.
-If you want a shortcut obtain the script \verb+install_albany.sh+
-(stored in \verb+Albany/doc/LCM/install+) and then try
+This document describes the necessary steps to install \albany{}/\lcm{} and
+\trilinos{} on a machine with Fedora Linux or the Linux CEE/SEMS environment. If
+you want a shortcut, obtain the script \verb+install_albany.sh+ (stored in
+\verb+Albany/doc/LCM/install+) and then try
 \begin{verbatim}
 ./install_albany
 \end{verbatim}
-This will install and build \trilinos{} and \albany{} in the current
-directory.  If the script does not complete it will tell you why and
-with help from this document you will be able to complete the install.
+This will install and build \trilinos{} and \albany{} in the current directory.
+If the script does not complete it will tell you why and with help from this
+document you will be able to complete the install.
 
 \section{Required Packages}
 The following packages should be installed using the {\tt dnf} command
 \begin{verbatim}
 blas
 blas-devel
-lapack
-lapack-devel
-openmpi
-openmpi-devel
-netcdf
-netcdf-devel
-netcdf-static
-netcdf-openmpi
-netcdf-openmpi-devel
-hdf5
-hdf5-devel
-hdf5-static
-hdf5-openmpi
-hdf5-openmpi-devel
 boost
 boost-devel
-boost-static
 boost-openmpi
 boost-openmpi-devel
+boost-static
+cmake
+hdf5
+hdf5-devel
+hdf5-openmpi
+hdf5-openmpi-devel
+hdf5-static
+lapack
+lapack-devel
 matio
 matio-devel
-cmake
+netcdf
+netcdf-devel
+netcdf-openmpi
+netcdf-openmpi-devel
+netcdf-static
+openmpi
+openmpi-devel
 \end{verbatim}
 
 \begin{verbatim}
+yaml-cpp
+yaml-cpp-devel
+environment-modules
 gcc-c++
 git
-hwloc-libs
-hwloc-devel
-environment-modules
 \end{verbatim}
 
 For example, to install the first package you should type
@@ -145,57 +147,42 @@ LCM
 In \verb+~/.bashrc+, the following variables are needed:
 \begin{verbatim}
 export LCM_DIR=~/LCM
-export MODULEPATH=$LCM_DIR/Albany/doc/LCM/modulefiles
+export MODULEPATH=$LCM_DIR/Albany/doc/LCM/modulefiles:$MODULEPATH
 \end{verbatim}
 The \verb+LCM_DIR+ variable should contain the location of the
 top-level \verb+LCM+ directory.
 
-\section{Installation Scripts}
-Create symbolic links to the installation scripts inside the directory
-\verb+LCM/Albany/doc/LCM/build+ to the top-level \verb+LCM+
-directory. If you intend to modify these scripts, it is better to copy
-them. The necessary scripts are:
-\begin{verbatim}
-albany-config.sh
-build-all.sh
-build.sh
-env-all.sh
-env-single.sh
-trilinos-config.sh
-\end{verbatim}
-
-Once this is done, go to the top-level \verb+LCM+ directory, open the
-\verb+env-all.sh+ and \verb+env-single.sh+ scripts and make sure they
-match your environment. If you do not want to tinker with any of this,
-just change the email addresses for tests reports at the end of
-\verb+env-single.sh+ and make sure all the scripts are executable and
+\section{Build Script}
+Create a symbolic link to the build script
+\verb+LCM/Albany/doc/LCM/build/build.sh+ to the top-level \verb+LCM+
+directory. Make sure that the build script is executable and
 read only:
 \begin{verbatim}
 cd ~/LCM
-chmod 0555 *.sh
+chmod 0555 build.sh
 \end{verbatim}
 
-The \verb+build.sh+ and \verb+build-all.sh+ scripts perform different
-actions according to the name with which they are invoked. This is
-accomplshed by creating symlinks to build.sh and using them to run
-it. For example:
+The \verb+build.sh+ script performs different actions according to the name with
+which it is invoked. This is accomplshed by creating symlinks to \verb+build.sh+
+and using them to run it. For example:
 \begin{itemize}
-\item clean.sh will delete all traces of the corresponding build and
-  will create a new configuration script based on the corresponding
-  template.
+\item \verb+clean.sh+ will delete all traces of the corresponding build and will
+  create a new configuration script based on the corresponding template.
 
-\item config.sh will attempt to reconfigure the build.
+\item \verb+config.sh+ will attempt to configure the build.
 
-\item build.sh (original name) will build using cmake.
+\item \verb+build.sh+ (original name) will build using cmake.
 
-\item test.sh will run the cmake tests.
+\item \verb+test.sh+ will run the cmake tests.
 
-\item mail.sh will mail the results of the ctest to the email address
-  configured in env-single.sh.
+\item \verb+update.sh+ will execute git pull in the package repository, and if
+  combined with dash below, it will send a report of changed files to CDash.
+
+\item \verb+dash.sh+ will post the results of ctest to configured CDash site.
 
 \item symlinks with combinations of the above
-  (e.g. clean-config-build.sh) will perform the specified actions in
-  sequence. See build.sh for valid sequences.
+  (e.g. \verb+clean-config-build.sh+) will perform the specified actions in
+  sequence. See \verb+build.sh+ for valid sequences.
 \end{itemize}
 For example, the following symbolic links will create separate
 commands for clean up, configuring and testing:
@@ -214,30 +201,35 @@ ln -s build.sh config-build-test.sh
 \end{verbatim}
 There is also a script
 \verb+LCM/Albany/doc/LCM/install/albany-lcm-symlinks.sh+
-that will create the appropriate symbolic links. 
+that will create the appropriate symbolic links.
 
-It is recommended that at least the *-config.sh be made read and
-execute only, as erroneous modifications to the build.sh script may
-result in their being overwritten.
+The build system is based on CMake. Thus the ouput verbosity level can be
+controlled by passing \verb+-V+ or \verb+-VV+ as a final option to
+\verb+build.sh+ or its aliases.
 
 \section{Parallel Schwarz and DTK}
 \label{sec:dtk}
 
-This section applies only if using the alternating Schwarz coupling
-method in parallel by means of the Data Transfer Kit (\verb+DTK+).
-Otherwise it can be safely ignored.
+This section applies only if using the Schwarz alternating method in parallel by
+means of the Data Transfer Kit (\verb+DTK+).  Otherwise it can be safely
+ignored.
 
-The current parallel implementation of the Schwarz method requires
-\verb+DTK+, which is tightly integrated to \trilinos{}, specifically
-\verb+STK+. Go to the the top-level \verb+LCM+ directory and create a
-symbolic link to the \verb+DTK+ CMake fragment that resides in
-\verb+LCM/Albany/doc/LCM/build+, then clone the \verb+DTK+ repository
-inside the \trilinos{} directory:
+The current parallel implementation of the Schwarz method requires \verb+DTK+,
+which is tightly integrated to \trilinos{}, specifically \verb+STK+. Go to the
+the top-level \verb+LCM+ directory and create a symbolic link to the \verb+DTK+
+CMake fragment that resides in \verb+LCM/Albany/doc/LCM/build+, then download
+the \verb+DTK+ package from:
+
+\verb+https://github.com/ORNL-CEES/DataTransferKit/archive/2.0.0.tar.gz+.
+
+Expand the package inside the \trilinos{} directory and rename it:
 \begin{verbatim}
 cd ~/LCM
 ln -s Albany/doc/LCM/build/dtk-frag.sh .
 cd Trilinos
-git clone git@github.com:ORNL-CEES/DataTransferKit.git
+curl -L https://github.com/ORNL-CEES/DataTransferKit/archive/2.0.0.tar.gz -O
+tar zxf 2.0.0.tar.gz
+mv DataTransferKit-2.0.0 DataTransferKit
 \end{verbatim}
 The configuration scripts will detect the presence of \verb+DTK+ and
 configure it appropriately. Also, parallel Schwarz will be enabled when
@@ -245,6 +237,14 @@ compiling Albany.
 
 \section{Modules}
 \label{sec:modules}
+
+In \verb+~/.bashrc+, the following variables are needed:
+\begin{verbatim}
+export LCM_DIR=~/LCM
+export MODULEPATH=$LCM_DIR/Albany/doc/LCM/modulefiles:$MODULEPATH
+\end{verbatim}
+The \verb+LCM_DIR+ variable should contain the location of the
+top-level \verb+LCM+ directory.
 
 Modules are used to create different environments for the
 configuration and compilation of both \albany{} and \trilinos{}. To
@@ -256,17 +256,28 @@ module avail
 This results in something like:
 \begin{verbatim}
 ------------------ /home/amota/LCM/Albany/doc/LCM/modulefiles ------------------
-debug                pthreads-gcc-mixed   serial-clang-small
-mixed                pthreads-gcc-profile serial-gcc-debug
-openmp-gcc-debug     pthreads-gcc-release serial-gcc-mixed
-openmp-gcc-mixed     pthreads-gcc-small   serial-gcc-profile
-openmp-gcc-profile   release              serial-gcc-release
-openmp-gcc-release   serial-clang-debug   serial-gcc-small
-openmp-gcc-small     serial-clang-mixed   small
-profile              serial-clang-profile
-pthreads-gcc-debug   serial-clang-release
+cuda-gcc-debug       lcm/sems             pthreads-gcc-small
+cuda-gcc-mixed       lcm/serial           release
+cuda-gcc-profile     lcm/small            serial-clang-debug
+cuda-gcc-release     lcm/tpls             serial-clang-mixed
+cuda-gcc-small       mixed                serial-clang-profile
+debug                openmp-gcc-debug     serial-clang-release
+lcm/cee              openmp-gcc-mixed     serial-clang-small
+lcm/clang            openmp-gcc-profile   serial-gcc-debug
+lcm/common           openmp-gcc-release   serial-gcc-mixed
+lcm/cuda             openmp-gcc-small     serial-gcc-profile
+lcm/debug            openmp-intel-debug   serial-gcc-release
+lcm/fedora           openmp-intel-mixed   serial-gcc-small
+lcm/finalize         openmp-intel-profile serial-intel-debug
+lcm/gcc              openmp-intel-release serial-intel-mixed
+lcm/intel            openmp-intel-small   serial-intel-profile
+lcm/mixed            profile              serial-intel-release
+lcm/openmp           pthreads-gcc-debug   serial-intel-small
+lcm/profile          pthreads-gcc-mixed   small
+lcm/pthreads         pthreads-gcc-profile
+lcm/release          pthreads-gcc-release
 \end{verbatim}
-The naming convention for the modules follows the pattern
+The naming convention for the \verb+*-*-*+ modules follows the pattern
 \begin{verbatim}
 [thread model]-[toolchain]-[build type]
 \end{verbatim}
@@ -310,6 +321,12 @@ Assuming that we want to compile with a \verb+serial+ thread model
 using the \verb+gcc+ tool chain in \verb+debug+ mode, load the
 appropriate module:
 \begin{verbatim}
+module load lcm/fedora
+module load serial-gcc-debug
+\end{verbatim}
+For the SEMS/CEE environment, this would be:
+\begin{verbatim}
+module load lcm/sems
 module load serial-gcc-debug
 \end{verbatim}
 Now first configure and compile \trilinos{}. Within the top-level
@@ -367,7 +384,10 @@ such, vibrant development of new and exciting capabilities is strongly
 encouraged. For these reasons, don't be afraid to commit changes to
 the master git repository. We only ask that you don't break
 compilation or testing. So please make sure that the tests pass before
-you commit changes.
+you commit changes. Also, follow the development discussion here:
+\begin{verbatim}
+https://github.com/gahansen/Albany/issues
+\end{verbatim}
 
 In addition, within \lcm{} we strongly encourage you to follow the C++
 Google style guide that can be found at
@@ -377,5 +397,13 @@ of \albany{}, but we believe that the Google style is better in that
 it advocates more style differentiation between the different
 syntactic elements of C++. This in turn makes reading code easier and
 helps to avoid coding errors.
+
+The \verb+clang-format+ tool can be used for this. There is a
+\verb+.clang-format+ file in the \verb+Albany/src/LCM+ directory that conforms
+to the C++ Google conding standard. Thus, all that is needed to reformat a
+source file in place is the command:
+\begin{verbatim}
+clang-format -i [source file name]
+\end{verbatim}
 
 \end{document}

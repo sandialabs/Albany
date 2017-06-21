@@ -9,7 +9,6 @@
 #define FELIX_ENTHALPY_PROBLEM_HPP
 
 #include "Intrepid2_DefaultCubatureFactory.hpp"
-#include "Phalanx.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -20,7 +19,6 @@
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
 
-#include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"

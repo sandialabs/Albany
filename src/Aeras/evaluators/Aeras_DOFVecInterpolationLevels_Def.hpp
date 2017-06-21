@@ -22,7 +22,6 @@ DOFVecInterpolationLevels(Teuchos::ParameterList& p,
   val_qp      (p.get<std::string>   ("Variable Name"), dl->qp_vector_level),
   numNodes   (dl->node_scalar             ->dimension(1)),
   numDims    (dl->node_qp_gradient        ->dimension(3)),
-  numQPs     (dl->node_qp_scalar          ->dimension(2)),
   numLevels  (dl->node_scalar_level       ->dimension(2))
 {
   this->addDependentField(val_node);
@@ -50,13 +49,17 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void DOFVecInterpolationLevels<EvalT, Traits>::
 operator() (const DOFVecInterpolationLevels_Tag& tag, const int& cell) const{
-  for (int qp=0; qp < numQPs; ++qp) {
+  for (int node=0; node < numNodes; ++node) {
     for (int level=0; level < numLevels; ++level) {
       for (int dim=0; dim < numDims; ++dim) {
-        val_qp(cell,qp,level,dim) = 0;
-        for (int node=0; node < numNodes; ++node) {
-          val_qp(cell,qp,level,dim) += val_node(cell,node,level,dim) * BF(cell,node,qp);
-        }
+        val_qp(cell,node,level,dim) = 0.0;
+      }
+    }
+  }
+  for (int node=0; node < numNodes; ++node) {
+    for (int level=0; level < numLevels; ++level) {
+      for (int dim=0; dim < numDims; ++dim) {
+        val_qp(cell,node,level,dim) += val_node(cell,node,level,dim) * BF(cell,node,node);
       }
     }
   }
@@ -71,13 +74,19 @@ evaluateFields(typename Traits::EvalData workset)
 {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int qp=0; qp < numQPs; ++qp) {
+    for (int node=0; node < numNodes; ++node) {
       for (int level=0; level < numLevels; ++level) {
         for (int dim=0; dim < numDims; ++dim) {
-          val_qp(cell,qp,level,dim) = 0;
-          for (int node=0; node < numNodes; ++node) {
-            val_qp(cell,qp,level,dim) += val_node(cell,node,level,dim) * BF(cell,node,qp);
-          }
+          val_qp(cell,node,level,dim) = 0.0;
+        }
+      }
+    }
+  }
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int node=0; node < numNodes; ++node) {
+      for (int level=0; level < numLevels; ++level) {
+        for (int dim=0; dim < numDims; ++dim) {
+          val_qp(cell,node,level,dim) += val_node(cell,node,level,dim) * BF(cell,node,node);
         }
       }
     }

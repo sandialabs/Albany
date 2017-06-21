@@ -21,18 +21,18 @@ SideQuadPointsToSideInterpolationBase (const Teuchos::ParameterList& p,
   sideSetName = p.get<std::string>("Side Set Name");
   if (fieldDim==0)
   {
-    field_qp   = PHX::MDField<ScalarT> (p.get<std::string> ("Field QP Name"), dl_side->qp_scalar);
-    field_side = PHX::MDField<ScalarT> (p.get<std::string> ("Field Side Name"), dl_side->cell_scalar2);
+    field_qp   = decltype(field_qp)(p.get<std::string> ("Field QP Name"), dl_side->qp_scalar);
+    field_side = decltype(field_side)(p.get<std::string> ("Field Side Name"), dl_side->cell_scalar2);
   }
   else if (fieldDim==1)
   {
-    field_qp   = PHX::MDField<ScalarT> (p.get<std::string> ("Field QP Name"), dl_side->qp_vector);
-    field_side = PHX::MDField<ScalarT> (p.get<std::string> ("Field Side Name"), dl_side->cell_vector);
+    field_qp   = decltype(field_qp)(p.get<std::string> ("Field QP Name"), dl_side->qp_vector);
+    field_side = decltype(field_side)(p.get<std::string> ("Field Side Name"), dl_side->cell_vector);
   }
   else if (fieldDim==2)
   {
-    field_qp   = PHX::MDField<ScalarT> (p.get<std::string> ("Field QP Name"), dl_side->qp_tensor);
-    field_side = PHX::MDField<ScalarT> (p.get<std::string> ("Field Side Name"), dl_side->cell_tensor);
+    field_qp   = decltype(field_qp)(p.get<std::string> ("Field QP Name"), dl_side->qp_tensor);
+    field_side = decltype(field_side)(p.get<std::string> ("Field Side Name"), dl_side->cell_tensor);
   }
   else
   {

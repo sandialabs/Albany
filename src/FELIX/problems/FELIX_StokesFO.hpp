@@ -9,7 +9,6 @@
 
 #include <type_traits>
 
-#include "Phalanx.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -54,6 +53,7 @@
 #include "FELIX_Dissipation.hpp"
 #include "FELIX_UpdateZCoordinate.hpp"
 #include "FELIX_GatherVerticallyAveragedVelocity.hpp"
+#include "FELIX_PressureCorrectedTemperature.hpp"
 #include "FELIX_Time.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
@@ -215,12 +215,12 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     bool nodal_state;
     for (int ifield=0; ifield<num_fields; ++ifield)
     {
-      const Teuchos::ParameterList& thisFieldList =  req_fields_info.sublist(Albany::strint("Field", ifield));
+      Teuchos::ParameterList& thisFieldList = req_fields_info.sublist(Albany::strint("Field", ifield));
 
       // Get current state specs
       stateName  = fieldName = thisFieldList.get<std::string>("Field Name");
       fieldType  = thisFieldList.get<std::string>("Field Type");
-      fieldUsage = thisFieldList.get<std::string>("Field Usage");
+      fieldUsage = thisFieldList.get<std::string>("Field Usage","Input");
 
       if (fieldUsage == "Unused")
         continue;
@@ -1347,6 +1347,31 @@ if (basalSideName!="INVALID")
   ptr_homotopy->setNominalValue(params->sublist("Parameters"),params->sublist("FELIX Viscosity").get<double>(param_name,-1.0));
   fm0.template registerEvaluator<EvalT>(ptr_homotopy);
 
+  fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructQuadPointsToCellInterpolationEvaluator("surface_height"));
+  fm0.template registerEvaluator<EvalT> (evalUtils.getMSTUtils().constructQuadPointsToCellInterpolationEvaluator("Coord Vec",dl->qp_gradient, dl->cell_gradient));
+
+
+  // --- FELIX pressure-melting temperature
+  {
+    p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Pressure Corrected Temperature"));
+
+    //Input
+    p->set<std::string>("Surface Height Variable Name", "surface_height");
+    p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
+
+    p->set<Teuchos::ParameterList*>("FELIX Physical Parameters", &params->sublist("FELIX Physical Parameters"));
+
+    p->set<std::string>("Temperature Variable Name", "temperature");
+
+    //Output
+    p->set<std::string>("Corrected Temperature Variable Name", "corrected temperature");
+
+    ev = Teuchos::rcp(new FELIX::PressureCorrectedTemperature<EvalT,PHAL::AlbanyTraits,typename EvalT::ParamScalarT>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+
+
   //--- FELIX viscosity ---//
   p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Viscosity"));
 
@@ -1354,7 +1379,7 @@ if (basalSideName!="INVALID")
   p->set<std::string>("Coordinate Vector Variable Name", "Coord Vec");
   p->set<std::string>("Velocity QP Variable Name", "Velocity");
   p->set<std::string>("Velocity Gradient QP Variable Name", "Velocity Gradient");
-  p->set<std::string>("Temperature Variable Name", "temperature");
+  p->set<std::string>("Temperature Variable Name", "corrected temperature");
   p->set<std::string>("Flow Factor Variable Name", "flow_factor");
   p->set<std::string>("Stiffening Factor QP Name", "stiffening_factor");
   p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
@@ -1386,7 +1411,7 @@ if (basalSideName!="INVALID")
     fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructQuadPointsToCellInterpolationEvaluator("FELIX Dissipation",false));
+    fm0.template registerEvaluator<EvalT> (evalUtils.getPSTUtils().constructQuadPointsToCellInterpolationEvaluator("FELIX Dissipation"));
 
     // Saving the dissipation heat in the output mesh
     {
@@ -1418,10 +1443,10 @@ if (basalSideName!="INVALID")
   {
     {
       std::string stateName = "Stress Tensor";
-      p = stateMgr.registerStateVariable(stateName, dl->qp_tensor, dl->dummy, elementBlockName, "tensor", 0.0, /* save state = */ false, /* write output = */ true);
+      p = stateMgr.registerStateVariable(stateName, dl->cell_tensor, dl->dummy, elementBlockName, "tensor", 0.0, /* save state = */ false, /* write output = */ true);
       p->set<std::string>("Field Name", "Stress Tensor");
       p->set< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
-      ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
+      ev = Teuchos::rcp(new PHAL::SaveCellStateField<EvalT,PHAL::AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
     }
     if (fieldManagerChoice == Albany::BUILD_RESID_FM)

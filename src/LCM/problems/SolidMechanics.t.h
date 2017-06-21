@@ -328,7 +328,7 @@ constructEvaluators(
     Teuchos::ParameterList& param_list =
         material_db_->getElementBlockSublist(eb_name, matName);
 
-    param_list.set<Teuchos::RCP<std::map<std::string, std::string>> >(
+    param_list.set<Teuchos::RCP<std::map<std::string, std::string>>>(
         "Name Map",
         fnm);
     p->set<Teuchos::ParameterList*>("Material Parameters", &param_list);

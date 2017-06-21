@@ -32,6 +32,7 @@ struct NeohookeanKernel : public ParallelKernel<EvalT, Traits>
   using ScalarT = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
   using ScalarField = PHX::MDField<ScalarT>;
+  using ConstScalarField = PHX::MDField<const ScalarT>;
   using BaseKernel = ParallelKernel<EvalT, Traits>;
   using Workset = typename BaseKernel::Workset;
 
@@ -44,20 +45,22 @@ struct NeohookeanKernel : public ParallelKernel<EvalT, Traits>
   using BaseKernel::setDependentField;
   using BaseKernel::setEvaluatedField;
   using BaseKernel::addStateVariable;
+
+  using BaseKernel::nox_status_test_;
   
   // Dependent MDFields
-  ScalarField def_grad;
-  ScalarField J;
-  ScalarField poissons_ratio;
-  ScalarField elastic_modulus;
+  ConstScalarField def_grad;
+  ConstScalarField J;
+  ConstScalarField poissons_ratio;
+  ConstScalarField elastic_modulus;
   
   // Evaluated MDFields
   ScalarField stress;
   ScalarField energy;
   ScalarField tangent;
-  
+
   void init(Workset &workset,
-       FieldMap<ScalarT> &dep_fields,
+       FieldMap<const ScalarT> &dep_fields,
        FieldMap<ScalarT> &eval_fields);
   
   KOKKOS_INLINE_FUNCTION
@@ -74,11 +77,11 @@ public:
 #if 0
 //! \brief Parallel Neohookean Model
 template<typename EvalT, typename Traits>
-class ParallelNeohookeanModel: public LCM::ParallelConstitutiveModel<EvalT, Traits, detail::NeohookeanKernel<EvalT, Traits> >
+class ParallelNeohookeanModel: public LCM::ParallelConstitutiveModel<EvalT, Traits, detail::NeohookeanKernel<EvalT, Traits>>
 {
 public:
 
-  using Parent = ParallelConstitutiveModel<EvalT, Traits, detail::NeohookeanKernel<EvalT, Traits> >;
+  using Parent = ParallelConstitutiveModel<EvalT, Traits, detail::NeohookeanKernel<EvalT, Traits>>;
   using ScalarT = typename EvalT::ScalarT;
   using MeshScalarT = typename EvalT::MeshScalarT;
 

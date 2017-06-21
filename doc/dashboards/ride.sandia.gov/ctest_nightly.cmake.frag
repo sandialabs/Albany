@@ -48,7 +48,7 @@ find_program (CTEST_GIT_COMMAND NAMES git)
 set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 set (Trilinos_REPOSITORY_LOCATION git@github.com:trilinos/Trilinos.git)
 
-set (NVCC_WRAPPER "/home/ikalash/nightlyHOMMEXXCDash/repos/Trilinos/packages/kokkos/config/nvcc_wrapper")
+set (NVCC_WRAPPER "$ENV{jenkins_trilinos_dir}/packages/kokkos/config/nvcc_wrapper")
 set (CUDA_MANAGED_FORCE_DEVICE_ALLOC 1)
 set( CUDA_LAUNCH_BLOCKING 1)
 
@@ -84,7 +84,7 @@ if (DOWNLOAD_TRILINOS)
   
   if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Trilinos")
     execute_process (COMMAND "${CTEST_GIT_COMMAND}" 
-      clone ${Trilinos_REPOSITORY_LOCATION} -b master ${CTEST_SOURCE_DIRECTORY}/Trilinos
+      clone ${Trilinos_REPOSITORY_LOCATION} -b develop ${CTEST_SOURCE_DIRECTORY}/Trilinos
       OUTPUT_VARIABLE _out
       ERROR_VARIABLE _err
       RESULT_VARIABLE HAD_ERROR)
@@ -291,7 +291,7 @@ if (BUILD_TRILINOS)
 
   CTEST_CONFIGURE(
     BUILD "${CTEST_BINARY_DIRECTORY}/TriBuild"
-    SOURCE "/home/ikalash/nightlyHOMMEXXCDash/repos/Trilinos"
+    SOURCE "$ENV{jenkins_trilinos_dir}"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     )
@@ -373,6 +373,8 @@ if (BUILD_ALBANY)
     "-DALBANY_LIBRARIES_ONLY=OFF"
     "-DENABLE_INSTALL:BOOL=OFF"
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
+    "-DENABLE_SLFAD:BOOL=ON"
+    "-DSLFAD_SIZE=310"
     )
   
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbBuild")
@@ -381,7 +383,7 @@ if (BUILD_ALBANY)
 
   CTEST_CONFIGURE(
     BUILD "${CTEST_BINARY_DIRECTORY}/AlbBuild"
-    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
+    SOURCE "$ENV{jenkins_albany_dir}"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
     )

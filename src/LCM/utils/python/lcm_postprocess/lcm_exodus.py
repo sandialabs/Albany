@@ -2,7 +2,7 @@ import ctypes
 import exodus
 import numpy as np
 import os
-# from lcm_postprocess._core import stdout_redirected
+from ._core import stdout_redirected
 import lcm_postprocess
 
 
@@ -108,7 +108,12 @@ def get_num_elements_block(instance_exodus, block_id):
 #
 # Return the values of a given variable in the specified block at the specified timestep
 #
-def get_element_variable_values(instance_exodus, block_id, num_elements_block, index_variable, step):
+def get_element_variable_values(
+    instance_exodus,
+    block_id,
+    num_elements_block,
+    index_variable,
+    step):
 
     if EXODUS_LIB.ex_int64_status(instance_exodus.fileId) & exodus.EX_BULK_INT64_API:
         num_elem_this_blk  = ctypes.c_longlong(num_elements_block)

@@ -41,16 +41,15 @@ public:
 private:
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>     wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint>     wBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> piTracerGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level,Dim> piTracerGrad;
 
-  PHX::MDField<ScalarT,Cell,Node,Level>     TracerDot;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     TracerSrc;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     UTracerDiv;
-  //PHX::MDField<ScalarT,Cell,QuadPoint,Level>     etadotdTracer;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     dedotpiTracerde;
+  PHX::MDField<const ScalarT,Cell,Node,Level>     TracerDot;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level>     TracerSrc;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level>     UTracerDiv;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level>     dedotpiTracerde;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Level>          Residual;

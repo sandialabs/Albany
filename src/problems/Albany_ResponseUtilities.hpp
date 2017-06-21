@@ -7,14 +7,13 @@
 #ifndef ALBANY_RESPONSEUTILITIES_HPP
 #define ALBANY_RESPONSEUTILITIES_HPP
 
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
+#include <Teuchos_RCP.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Phalanx_FieldTag.hpp>
+#include <Phalanx_FieldManager.hpp>
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "Albany_ProblemUtils.hpp"
-
-#include "Phalanx.hpp"
-
 
 //! Code Base for Quantum Device Simulation Tools LDRD
 namespace Albany {

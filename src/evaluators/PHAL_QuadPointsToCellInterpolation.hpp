@@ -29,7 +29,9 @@ class QuadPointsToCellInterpolationBase : public PHX::EvaluatorWithBaseImpl<Trai
 public:
 
   QuadPointsToCellInterpolationBase (const Teuchos::ParameterList& p,
-                                     const Teuchos::RCP<Albany::Layouts>& dl);
+                                     const Teuchos::RCP<Albany::Layouts>& dl,
+                                     const Teuchos::RCP<PHX::DataLayout>& qp_layout,
+                                     const Teuchos::RCP<PHX::DataLayout>& cell_layout);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
@@ -40,14 +42,11 @@ private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  int numQPs;
-  int vecDim;
-
-  bool isVectorField;
+  std::vector<PHX::DataLayout::size_type> qp_dims;
 
   // Input:
-  PHX::MDField<ScalarT>                    field_qp;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint> w_measure;
+  PHX::MDField<const ScalarT>                    field_qp;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint> w_measure;
 
   // Output:
   PHX::MDField<ScalarT>     field_cell;

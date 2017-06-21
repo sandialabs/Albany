@@ -1,0 +1,51 @@
+<ParameterList>
+  <ParameterList name="Time">
+    <Parameter name="Initial Time" type="double" value="0.0"/>
+    <Parameter name="Step Size" type="double" value="1.0"/>
+    <Parameter name="Number of Steps" type="int" value="5"/>
+  </ParameterList>
+  <ParameterList name="Temperature Problem">
+    <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
+    <ParameterList name="Dirichlet BCs">
+      <ParameterList name="Time Dependent DBC on NS face_2 for DOF T">
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 430.0 }"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 70.0, 500.0 }"/>
+      </ParameterList>
+    </ParameterList>
+    <ParameterList name="Initial Condition">
+      <Parameter name="Function" type="string" value="Constant"/>
+      <Parameter name="Function Data" type="Array(double)" value="{70.0}"/>
+    </ParameterList>
+  </ParameterList>
+  <ParameterList name="Mechanics Problem">
+    <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
+    <ParameterList name="Dirichlet BCs">
+      <Parameter name="DBC on NS face_424 for DOF Y" type="double" value=" 0.0"/>
+      <Parameter name="DBC on NS face_243 for DOF X" type="double" value=" 0.0"/>
+      <Parameter name="DBC on NS face_15 for DOF Z" type="double" value=" 0.0"/>
+      <Parameter name="DBC on NS face_9 for DOF Z" type="double" value=" 0.0"/>
+    </ParameterList>
+    <ParameterList name="Initial Condition">
+      <Parameter name="Function" type="string" value="Constant"/>
+      <Parameter name="Function Data" type="Array(double)" value="{0.0,0.0,0.0}"/>
+    </ParameterList>
+  </ParameterList>
+  <ParameterList name="Discretization">
+    <Parameter name="Solution Vector Components" type="Array(string)" value="{Temp,S}"/>
+    <Parameter name="Cubature Degree" type="int" value="1"/>
+    <Parameter name="Method" type="string" value="Sim"/>
+    <Parameter name="Sim Input File Name" type="string" value="wedge_4parts.sms"/>
+    <Parameter name="Sim Model Input File Name" type="string" value="wedge.smd"/>
+    <Parameter name="Sim Output File Name" type="string" value="out.vtk"/>
+    <Parameter name="Model Associations File Name" type="string" value="assoc.txt"/>
+    <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
+  </ParameterList>
+  <ParameterList name="Extra Discretization">
+    <Parameter name="Solution Vector Components" type="Array(string)" value="{Disp,V}"/>
+  </ParameterList>
+  <ParameterList name="Linear Algebra">
+    <Parameter name="Linear Tolerance" type="double" value="1.0e-10"/>
+    <Parameter name="Linear Max Iterations" type="int" value="200"/>
+    <Parameter name="Linear Krylov Size" type="int" value="200"/>
+  </ParameterList>
+</ParameterList>

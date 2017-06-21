@@ -59,8 +59,8 @@ namespace QCAD {
     std::size_t numQPs;
     std::size_t numDims;
     
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
-    PHX::MDField<ScalarT> field;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
+    PHX::MDField<const ScalarT> field;
 
     bool outputToExodus;
     bool outputCellAverage;

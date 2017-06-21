@@ -72,11 +72,28 @@ struct HardeningParameterBase
   virtual
   ~HardeningParameterBase() {}
 
+  virtual
+  void
+  setAsymptoticValue() = 0;
+
+  virtual
+  void
+  setTolerance() = 0;
+
+  RealType
+  min_tol_{TINY};
+
+  RealType
+  max_tol_{HUGE_};
+
   std::map<std::string, ParamIndex>
   param_map_;
 
   minitensor::Vector<RealType>
   hardening_params_;
+
+  RealType
+  asymptotic_value_{HUGE_};
 };
 
 
@@ -106,14 +123,29 @@ struct LinearMinusRecoveryHardeningParameters final :
     this->param_map_["Recovery Modulus"] = MODULUS_RECOVERY;
     this->param_map_["Initial Hardening State"] = STATE_HARDENING_INITIAL;
     this->hardening_params_.set_dimension(NUM_PARAMS);
-    this->hardening_params_.fill(minitensor::ZEROS);
+    this->hardening_params_.fill(minitensor::Filler::ZEROS);
   }
+
+  virtual
+  void
+  setTolerance() override
+  {
+    return;
+  }
+
 
   virtual
   void
   createLatentMatrix(
     SlipFamily<NumDimT, NumSlipT> & slip_family, 
     std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
+
+  virtual
+  void
+  setAsymptoticValue() override
+  {
+    this->asymptotic_value_ = this->hardening_params_(MODULUS_HARDENING) / this->hardening_params_(MODULUS_RECOVERY);
+  }
 
   virtual
   ~LinearMinusRecoveryHardeningParameters() {}
@@ -150,7 +182,19 @@ struct SaturationHardeningParameters final :
     this->param_map_["Reference Slip Rate"] = RATE_SLIP_REFERENCE;
     this->param_map_["Initial Hardening State"] = STATE_HARDENING_INITIAL;
     this->hardening_params_.set_dimension(NUM_PARAMS);
-    this->hardening_params_.fill(minitensor::ZEROS);
+    this->hardening_params_.fill(minitensor::Filler::ZEROS);
+  }
+
+  virtual
+  void
+  setTolerance() override
+  {
+    RealType const
+    exponent_saturation = this->hardening_params_(EXPONENT_SATURATION);
+
+    this->min_tol_ = std::pow(2.0 * TINY, 0.5 / exponent_saturation);
+
+    this->max_tol_ = std::pow(0.5 * HUGE_, 0.5 / exponent_saturation);
   }
 
   virtual
@@ -158,6 +202,14 @@ struct SaturationHardeningParameters final :
   createLatentMatrix(
     SlipFamily<NumDimT, NumSlipT> & slip_family, 
     std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
+
+  virtual
+  void
+  setAsymptoticValue() override
+  {
+    // For this model, the asymptotic value depends on the slip rate
+    return;
+  }
 
   virtual
   ~SaturationHardeningParameters() {}
@@ -196,7 +248,14 @@ struct DislocationDensityHardeningParameters final :
     this->param_map_["Burgers Vector Magnitude"] = MAGNITUDE_BURGERS;
     this->param_map_["Initial Hardening State"] = STATE_HARDENING_INITIAL;
     this->hardening_params_.set_dimension(NUM_PARAMS);
-    this->hardening_params_.fill(minitensor::ZEROS);
+    this->hardening_params_.fill(minitensor::Filler::ZEROS);
+  }
+
+  virtual
+  void
+  setTolerance() override
+  {
+    return;
   }
 
   virtual
@@ -204,6 +263,14 @@ struct DislocationDensityHardeningParameters final :
   createLatentMatrix(
     SlipFamily<NumDimT, NumSlipT> & slip_family, 
     std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
+
+  virtual
+  void
+  setAsymptoticValue() override
+  {
+    // Need to get transformation of state variable \rho -> \rho_F
+    return;
+  }
 
   virtual
   ~DislocationDensityHardeningParameters() {}
@@ -227,9 +294,23 @@ struct NoHardeningParameters final :
 
   virtual
   void
+  setTolerance() override
+  {
+    return;
+  }
+
+  virtual
+  void
   createLatentMatrix(
     SlipFamily<NumDimT, NumSlipT> & slip_family, 
     std::vector<SlipSystem<NumDimT>> const & slip_systems) override;
+
+  virtual
+  void
+  setAsymptoticValue() override
+  {
+    return;
+  }
 
   virtual
   ~NoHardeningParameters() {}
@@ -257,7 +338,8 @@ struct HardeningLawBase
     minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
     minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
     minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    minitensor::Vector<ArgT, NumSlipT> & slip_resistance) = 0;
+    minitensor::Vector<ArgT, NumSlipT> & slip_resistance,
+    bool & failed) = 0;
 
   virtual
   ~HardeningLawBase() {}
@@ -304,7 +386,8 @@ struct LinearMinusRecoveryHardeningLaw final : public HardeningLawBase<NumDimT, 
     minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
     minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
     minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    minitensor::Vector<ArgT, NumSlipT> & slip_resistance);
+    minitensor::Vector<ArgT, NumSlipT> & slip_resistance,
+    bool & failed);
 
   virtual
   ~LinearMinusRecoveryHardeningLaw() {}
@@ -330,7 +413,8 @@ struct SaturationHardeningLaw final : public HardeningLawBase<NumDimT, NumSlipT,
     minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
     minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
     minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    minitensor::Vector<ArgT, NumSlipT> & slip_resistance);
+    minitensor::Vector<ArgT, NumSlipT> & slip_resistance,
+    bool & failed);
 
   virtual
   ~SaturationHardeningLaw() {}
@@ -356,7 +440,8 @@ struct DislocationDensityHardeningLaw final : public HardeningLawBase<NumDimT, N
     minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
     minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
     minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    minitensor::Vector<ArgT, NumSlipT> & slip_resistance);
+    minitensor::Vector<ArgT, NumSlipT> & slip_resistance,
+    bool & failed);
 
   virtual
   ~DislocationDensityHardeningLaw() {}
@@ -382,7 +467,8 @@ struct NoHardeningLaw final : public HardeningLawBase<NumDimT, NumSlipT, ArgT>
     minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
     minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
     minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    minitensor::Vector<ArgT, NumSlipT> & slip_resistance);
+    minitensor::Vector<ArgT, NumSlipT> & slip_resistance,
+    bool & failed);
 
   virtual
   ~NoHardeningLaw() {}

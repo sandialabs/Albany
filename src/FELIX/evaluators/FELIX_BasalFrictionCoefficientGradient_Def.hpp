@@ -53,8 +53,8 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
     beta_given = PHX::MDField<ParamScalarT,Cell,Side,Node>(beta_list.get<std::string> ("Beta Given Variable Name"), dl->node_scalar);
     GradBF     = PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Variable Name"), dl->node_qp_gradient);
 
-    this->addDependentField (beta_given.fieldTag());
-    this->addDependentField (GradBF.fieldTag());
+    this->addDependentField (beta_given);
+    this->addDependentField (GradBF);
 
     numSideNodes = dl->node_qp_gradient->dimension(2);
   }
@@ -75,15 +75,15 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
     lambdaParam    = PHX::MDField<ScalarT,Dim>("Bed Roughness", dl->shared_param);
     powerParam     = PHX::MDField<ScalarT,Dim>("Power Exponent", dl->shared_param);
 
-    this->addDependentField (N.fieldTag());
-    this->addDependentField (U.fieldTag());
-    this->addDependentField (gradN.fieldTag());
-    this->addDependentField (gradU.fieldTag());
-    this->addDependentField (u_norm.fieldTag());
+    this->addDependentField (N);
+    this->addDependentField (U);
+    this->addDependentField (gradN);
+    this->addDependentField (gradU);
+    this->addDependentField (u_norm);
 
-    this->addDependentField (muParam.fieldTag());
-    this->addDependentField (lambdaParam.fieldTag());
-    this->addDependentField (powerParam.fieldTag());
+    this->addDependentField (muParam);
+    this->addDependentField (lambdaParam);
+    this->addDependentField (powerParam);
 
     vecDim = dl->qp_vecgradient->dimension(3);
 
@@ -104,14 +104,14 @@ BasalFrictionCoefficientGradient (const Teuchos::ParameterList& p,
   use_stereographic_map = stereographicMapList->get("Use Stereographic Map", false);
   if(use_stereographic_map)
   {
-    coordVec = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_coords);
+    coordVec = PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim>(p.get<std::string>("Coordinate Vector Variable Name"), dl->qp_coords);
 
     double R = stereographicMapList->get<double>("Earth Radius", 6371);
     x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
     y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
     R2 = std::pow(R,2);
 
-    this->addDependentField(coordVec.fieldTag());
+    this->addDependentField(coordVec);
   }
 
   this->setName("BasalFrictionCoefficientGradient"+PHX::typeAsString<EvalT>());
@@ -215,7 +215,9 @@ void BasalFrictionCoefficientGradient<EvalT, Traits>::evaluateFields (typename T
               grad_beta(cell,side,qp,dim) += f_u * (U(cell,side,qp,comp)/u_val)*gradU(cell,side,qp,vecDim,dim);
           }
         }
-
+      default:
+        TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
+            std::endl << "Error in FELIX::BasalFrictionCoefficientGradient: cannot compute the gradient of this type of beta.");
     }
 
     // Correct the value if we are using a stereographic map

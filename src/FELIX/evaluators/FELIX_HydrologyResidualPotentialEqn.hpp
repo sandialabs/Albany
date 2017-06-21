@@ -45,15 +45,15 @@ public:
 private:
 
   // Input:
-  PHX::MDField<RealType>      BF;
-  PHX::MDField<RealType>      GradBF;
-  PHX::MDField<MeshScalarT>   w_measure;
-  PHX::MDField<ScalarT>       N;
-  PHX::MDField<ScalarT>       q;
-  PHX::MDField<hScalarT>      h;
-  PHX::MDField<ScalarT>       m;
-  PHX::MDField<ParamScalarT>  omega;
-  PHX::MDField<uScalarT>      u_b;
+  PHX::MDField<const RealType>      BF;
+  PHX::MDField<const RealType>      GradBF;
+  PHX::MDField<const MeshScalarT>   w_measure;
+  PHX::MDField<const ScalarT>       N;
+  PHX::MDField<const ScalarT>       q;
+  PHX::MDField<const hScalarT>      h;
+  PHX::MDField<const ScalarT>       m;
+  PHX::MDField<const ParamScalarT>  omega;
+  PHX::MDField<const uScalarT>      u_b;
 
   // Output:
   PHX::MDField<ScalarT>       residual;

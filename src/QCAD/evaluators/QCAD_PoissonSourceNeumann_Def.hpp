@@ -37,14 +37,14 @@ PoissonSourceNeumannBase(const Teuchos::ParameterList& p) :
 
   // Set up values as parameters for parameter library
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> > ("Parameter Library");
-  TEUCHOS_ASSERT( p.isType<Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB") );
+  TEUCHOS_ASSERT( p.isType<Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB") );
 
   responseOnly = p.get< bool >("Response Only"); 
     //when true, just compute output fields and don't try to change the workset's residual
     // vector (as per a usual Neumann BC) since this memory hasn't been allocated.
 
   //! Material database - holds the scaling we need
-  materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+  materialDB = p.get< Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB");
 
   //! Energy unit of phi in eV
   energy_unit_in_eV = p.get<double>("Energy unit in eV");
@@ -105,9 +105,8 @@ PoissonSourceNeumannBase(const Teuchos::ParameterList& p) :
                              std::endl << "Error: PoissonSource Neumann boundary conditions "
                              << "only supported when the DOF is not a vector" << std::endl);
 
-  PHX::MDField<ScalarT,Cell,Node> tmp(p.get<std::string>("DOF Name"),
+  dof = decltype(dof)(p.get<std::string>("DOF Name"),
 				      p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
-  dof = tmp;
   this->addDependentField(dof);
   this->addDependentField(coordVec);
 

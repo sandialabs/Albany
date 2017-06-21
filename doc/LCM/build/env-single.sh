@@ -214,7 +214,6 @@ esac
 # Setup flags with the info gathered above.
 CONFIG_FILE="$PACKAGE-config.sh"
 DTK_FRAG="dtk-frag.sh"
-TEMPUS_FRAG="tempus-frag.sh"
 BUILD=$ARCH-$TOOL_CHAIN-$BUILD_TYPE
 PACKAGE_DIR="$LCM_DIR/$PACKAGE_NAME"
 # Install directory for trilinos only
@@ -228,3 +227,7 @@ TEST_LOG="$LCM_DIR/$PREFIX-test.log"
 HOST=`hostname`
 FROM=`whoami`"@sandia.gov"
 TO="albany-regression@software.sandia.gov"
+PROJECT_XML_FILE="Project.xml"
+SUBPROJECT="LCM-$HOST-$BUILD"
+CTEST_FILE="ctest.cmake"
+CTEST_TYPE="Nightly"

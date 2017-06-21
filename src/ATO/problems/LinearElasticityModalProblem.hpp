@@ -14,7 +14,6 @@
 #include "ATO_OptimizationProblem.hpp"
 #include "Albany_BCUtils.hpp"
 
-#include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
@@ -97,7 +96,7 @@ namespace Albany {
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device> > > > oldState;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Kokkos::DynRankView<RealType, PHX::Device> > > > newState;
 
-//    Teuchos::RCP<QCAD::MaterialDatabase> material_db_;
+//    Teuchos::RCP<Albany::MaterialDatabase> material_db_;
 
   };
 

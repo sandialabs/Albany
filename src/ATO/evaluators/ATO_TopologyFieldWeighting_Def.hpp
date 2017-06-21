@@ -28,7 +28,7 @@ BF(p.get<std::string> ("BF Name"), dl->node_qp_scalar)
     Teuchos::Exceptions::InvalidParameter, std::endl
     << "Error!  TopologyFieldWeighting requires 'Distributed Parameter' based topology" << std::endl);
 
-  topo = PHX::MDField<ParamScalarT,Cell,Node>(topology->getName(),dl->node_scalar);
+  topo = decltype(topo)(topology->getName(),dl->node_scalar);
 
 
   std::string strLayout = p.get<std::string>("Variable Layout");
@@ -40,23 +40,25 @@ BF(p.get<std::string> ("BF Name"), dl->node_qp_scalar)
   else
   if(strLayout == "QP Vector") layout = dl->qp_vector;
   else
+  if(strLayout == "QP Scalar") layout = dl->qp_scalar;
+  else
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                std::endl <<
                                "Error!  Unknown variable layout " << strLayout <<
-                               "!" << std::endl << "Options are (QP Tensor3, QP Tensor, QP Vector)" <<
+                               "!" << std::endl << "Options are (QP Tensor3, QP Tensor, QP Vector, QP Scalar)" <<
                                std::endl);
 
-  PHX::MDField<ScalarT> _unWeightedVar(p.get<std::string>("Unweighted Variable Name"), layout);
-  unWeightedVar = _unWeightedVar;
-  PHX::MDField<ScalarT> _weightedVar(p.get<std::string>("Weighted Variable Name"), layout);
-  weightedVar = _weightedVar;
+  unWeightedVar = decltype(unWeightedVar)(p.get<std::string>("Unweighted Variable Name"), layout);
+  weightedVar = decltype(weightedVar)(p.get<std::string>("Weighted Variable Name"), layout);
 
 
   // Pull out numQPs and numDims from a Layout
   std::vector<PHX::Device::size_type> dims;
   layout->dimensions(dims);
   numQPs  = dims[1];
-  numDims = dims[2];
+  numDims = 0;
+  if(dims.size() >= 3 ) 
+    numDims = dims[2];
 
   this->addDependentField(unWeightedVar);
   this->addDependentField(BF);
@@ -89,11 +91,25 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 
-  int numCells = dims[0];
-  int numQPs   = dims[1];
-  int numDims  = dims[2];
+  numCells = dims[0];
+  numQPs   = dims[1];
+  numDims  = 0;
+  if(dims.size() >= 3 ) 
+    numDims = dims[2];
+
   int numNodes = topo.dimension(1);
 
+  if( size == 2 ){
+    for(int cell=0; cell<numCells; cell++){
+      for(int qp=0; qp<numQPs; qp++){
+        ScalarT topoVal = 0.0;
+        for(int node=0; node<numNodes; node++)
+          topoVal += topo(cell,node)*BF(cell,node,qp);
+        ScalarT P = topology->Penalize(functionIndex,topoVal);
+        weightedVar(cell,qp) = P*unWeightedVar(cell,qp);
+      }
+    }
+  } else
   if( size == 3 ){
     for(int cell=0; cell<numCells; cell++){
       for(int qp=0; qp<numQPs; qp++){

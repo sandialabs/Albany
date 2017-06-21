@@ -13,7 +13,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_ProblemUtils.hpp"
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 #include "QCAD_EvaluatorTools.hpp"
 #include "QCAD_MeshRegion.hpp"
 
@@ -60,8 +60,8 @@ namespace QCAD {
     std::size_t numQPs;
     std::size_t numDims;
 
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
     
     //Region boundary: for now just min/max along each coordinate direction
     //  * just MeshScalarTs - no derivative information for region boundaries yet, as
@@ -70,7 +70,7 @@ namespace QCAD {
 
 
     //! Material database
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+    Teuchos::RCP<Albany::MaterialDatabase> materialDB;
 
     Teuchos::RCP< PHX::Tag<ScalarT> > response_field_tag;
   };

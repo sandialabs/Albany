@@ -1,4 +1,0 @@
-\
- -D Trilinos_ENABLE_Tempus:BOOL=ON \
- -D Tempus_ENABLE_TESTS:BOOL=ON \
- -D Tempus_ENABLE_EXAMPLES:BOOL=ON \

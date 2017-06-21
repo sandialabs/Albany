@@ -10,7 +10,7 @@
 #define QCAD_RESPONSEFIELDVALUE_HPP
 
 #include "QCAD_MeshRegion.hpp"
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 #include "PHAL_ScatterScalarResponse.hpp"
 
 namespace QCAD {
@@ -245,10 +245,10 @@ namespace QCAD {
     std::size_t numQPs;
     std::size_t numDims;
 
-    PHX::MDField<ScalarT> opField;
-    PHX::MDField<ScalarT> retField;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
+    PHX::MDField<const ScalarT> opField;
+    PHX::MDField<const ScalarT> retField;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > max_nodeID;
     //Teuchos::Array<int> field_components;
 
@@ -266,7 +266,7 @@ namespace QCAD {
     Teuchos::Array<double> initVals;
 
     //! Material database
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+    Teuchos::RCP<Albany::MaterialDatabase> materialDB;
   };
 
 }

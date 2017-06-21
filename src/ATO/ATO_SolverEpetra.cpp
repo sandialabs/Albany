@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "ATO_Solver.hpp"
+#include "ATO_SolverEpetra.hpp"
 #include "ATO_OptimizationProblem.hpp"
 #include "ATO_TopoTools.hpp"
 #include "ATO_Types.hpp"

@@ -48,11 +48,9 @@ namespace ATO
     std::string elementBlockName;
     static const std::string className;
 
-//    PHX::MDField<ScalarT> gradX;
-//    PHX::MDField<ScalarT> workConj;
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> qp_weights;
-    PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
-    Teuchos::Array<PHX::MDField<ParamScalarT,Cell,Node> > topos;
+    PHX::MDField<const MeshScalarT,Cell,QuadPoint> qp_weights;
+    PHX::MDField<const RealType,Cell,Node,QuadPoint> BF;
+    Teuchos::Array<PHX::MDField<const ParamScalarT,Cell,Node> > topos;
 
 
     Teuchos::RCP< PHX::Tag<ScalarT> > stiffness_objective_tag;

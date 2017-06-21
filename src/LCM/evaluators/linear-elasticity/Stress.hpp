@@ -38,9 +38,9 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain;
-  PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
-  PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> strain;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> elasticModulus;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> poissonsRatio;
 
   unsigned int numQPs;
   unsigned int numDims;

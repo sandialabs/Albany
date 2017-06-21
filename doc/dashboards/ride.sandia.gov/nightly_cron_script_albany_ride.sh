@@ -1,6 +1,6 @@
 #!/bin/csh
 
-BASE_DIR=/home/ikalash/nightlyCDash
+BASE_DIR=/home/projects/albany
 cd $BASE_DIR
 
 unset http_proxy

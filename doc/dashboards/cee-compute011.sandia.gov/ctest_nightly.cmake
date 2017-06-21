@@ -7,20 +7,21 @@ SET(CTEST_BUILD_OPTION "$ENV{BUILD_OPTION}")
 if (1)
   # What to build and test
   IF(CTEST_BUILD_OPTION MATCHES "base")
-    # Only download repos and cleanout in the base nightly test run (start it an hour earlier)
-    set (CLEAN_BUILD TRUE)
+    # Only download repos in the base nightly test run (start it an hour earlier)
     set (DOWNLOAD TRUE)
   ELSE()
-    set (CLEAN_BUILD FALSE)
     set (DOWNLOAD FALSE)
   ENDIF()
 
+  set (CLEAN_BUILD TRUE)
   set (BUILD_SCOREC TRUE)
   set (BUILD_TRILINOS TRUE)
   set (BUILD_PERIDIGM TRUE)
   set (BUILD_ALB32 TRUE)
   set (BUILD_ALB64 TRUE)
   set (BUILD_ALBFUNCTOR TRUE)
+  set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
+#  set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
   IF(CTEST_BUILD_OPTION MATCHES "clang")
     set (BUILD_TRILINOS FALSE)
     set (BUILD_PERIDIGM FALSE)
@@ -31,6 +32,8 @@ if (1)
     set (BUILD_ALBFUNCTOR FALSE)
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
+    set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
+#    set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
   ELSE()
     set (BUILD_TRILINOSCLANG FALSE)
     set (BUILD_ALB64CLANG FALSE)
@@ -45,6 +48,8 @@ if (1)
     set (BUILD_ALBFUNCTOR FALSE)
     set (BUILD_INTEL_TRILINOS TRUE)
     set (BUILD_INTEL_ALBANY TRUE)
+#    set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
+    set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
   ELSE()
     set (BUILD_INTEL_TRILINOS FALSE)
     set (BUILD_INTEL_ALBANY FALSE)
@@ -54,11 +59,11 @@ else ()
   # around with the settings in this block.
 
   # What to build and test
-  set (DOWNLOAD TRUE)
+  set (DOWNLOAD FALSE)
   # See if we can get away with this for speed, at least until we get onto a
   # machine that can support a lengthy nightly.
-  set (CLEAN_BUILD TRUE)
-  set (BUILD_SCOREC TRUE)
+  set (CLEAN_BUILD FALSE)
+  set (BUILD_SCOREC FALSE)
   set (BUILD_TRILINOS FALSE)
   set (BUILD_PERIDIGM FALSE)
   set (BUILD_ALB32 FALSE)
@@ -68,30 +73,49 @@ else ()
   set (BUILD_ALBFUNCTOR FALSE)
   set (BUILD_INTEL_TRILINOS TRUE)
   set (BUILD_INTEL_ALBANY TRUE)
+#  set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
+  set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
 endif ()
 
 set (extra_cxx_flags "")
 
+find_program(UNAME NAMES uname)
+macro(getuname name flag)
+  exec_program("${UNAME}" ARGS "${flag}" OUTPUT_VARIABLE "${name}")
+endmacro(getuname)
+
+getuname(osname -s)
+getuname(osrel  -r)
+getuname(cpu    -m)
+
 # Begin User inputs:
-set (CTEST_SITE "cee-compute011.sandia.gov" ) # generally the output of hostname
-set (CTEST_DASHBOARD_ROOT "$ENV{TEST_DIRECTORY}" ) # writable path
-set (CTEST_SCRIPT_DIRECTORY "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
+#set (CTEST_SITE "cee-compute011.sandia.gov" ) # generally the output of hostname
+SITE_NAME(CTEST_SITE) # directly set CTEST_SITE to the output of `hostname`
+set (CTEST_DASHBOARD_ROOT "$ENV{INSTALL_DIRECTORY}" ) # writable path
+set (CTEST_SCRATCH_ROOT "$ENV{SCRATCH_DIRECTORY}" ) # writable path
+set (CTEST_SCRIPT_ROOT "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set (CTEST_CMAKE_GENERATOR "Unix Makefiles" ) # What is your compilation apps ?
-set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
 
 set (CTEST_PROJECT_NAME "Albany" )
 set (CTEST_SOURCE_NAME repos)
-set (CTEST_BUILD_NAME "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
+#set (CTEST_BUILD_NAME "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
+set (CTEST_BUILD_NAME "${osname}-${osrel}-${CTEST_BUILD_OPTION}-${CTEST_BUILD_CONFIGURATION}")
 set (CTEST_BINARY_NAME build)
+set (CTEST_INSTALL_NAME test)
+
+if (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
+# Runs tests longer if in debug mode
+   set (CTEST_TEST_TIMEOUT 1200)
+endif ()
 
 set (PREFIX_DIR /projects/albany)
-set (INTEL_PREFIX_DIR ${PREFIX_DIR}/intel5.0)
+set (INTEL_PREFIX_DIR ${PREFIX_DIR}/intel5.1)
 set (GCC_MPI_DIR /sierra/sntools/SDK/mpi/openmpi/1.8.8-gcc-5.2.0-RHEL6)
-set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2017.1.132/compilers_and_libraries/linux)
+set (INTEL_DIR /sierra/sntools/SDK/compilers/intel/composer_xe_2017.2.174/compilers_and_libraries/linux)
 
 #set (BOOST_ROOT /projects/albany/nightly)
 set (BOOST_ROOT /projects/albany)
-set (INTEL_BOOST_ROOT ${BOOST_ROOT}/intel5.0/boost-1.60.0)
+set (INTEL_BOOST_ROOT ${BOOST_ROOT}/intel5.1)
 set (CLANG_BOOST_ROOT ${BOOST_ROOT}/clang-3.7)
 
 set (INTEL_MPI_DIR ${INTEL_DIR}/mpi)
@@ -107,13 +131,10 @@ set (MATH_TOOLKIT_LIB_DIR
   "/projects/sierra/linux_rh6/install/master/math_toolkit/lib")
 
 set (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
-set (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
-
-IF (CLEAN_BUILD)
-  IF(EXISTS "${CTEST_BINARY_DIRECTORY}" )
-    FILE(REMOVE_RECURSE "${CTEST_BINARY_DIRECTORY}")
-  ENDIF()
-ENDIF()
+# Build all results in a scratch space
+set (CTEST_BINARY_DIRECTORY "${CTEST_SCRATCH_ROOT}/${CTEST_BINARY_NAME}")
+# Trilinos, etc installed here
+set (CTEST_INSTALL_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_INSTALL_NAME}")
 
 if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}")
   file (MAKE_DIRECTORY "${CTEST_SOURCE_DIRECTORY}")
@@ -121,6 +142,16 @@ endif ()
 if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}")
   file (MAKE_DIRECTORY "${CTEST_BINARY_DIRECTORY}")
 endif ()
+if (NOT EXISTS "${CTEST_INSTALL_DIRECTORY}")
+  file (MAKE_DIRECTORY "${CTEST_INSTALL_DIRECTORY}")
+endif ()
+
+# Clean up storage area for nightly testing results
+IF (CLEAN_BUILD)
+  IF(EXISTS "${CTEST_BINARY_DIRECTORY}/Testing" )
+    FILE(REMOVE_RECURSE "${CTEST_BINARY_DIRECTORY}/Testing")
+  ENDIF()
+ENDIF()
 
 configure_file (${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
   ${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake COPYONLY)
@@ -148,19 +179,19 @@ set (SCOREC_REPOSITORY_LOCATION git@github.com:SCOREC/core.git)
 set (Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 set (Peridigm_REPOSITORY_LOCATION git@github.com:peridigm/peridigm) #ssh://software.sandia.gov/git/peridigm)
 
-if (CLEAN_BUILD)
-  # Initial cache info
-  set (CACHE_CONTENTS "
-  SITE:STRING=${CTEST_SITE}
-  CMAKE_BUILD_TYPE:STRING=Release
-  CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
-  BUILD_TESTING:BOOL=OFF
-  PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
-  " )
-
-#  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
-  file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
-endif ()
+#if (CLEAN_BUILD)
+#  # Initial cache info
+#  set (CACHE_CONTENTS "
+#  SITE:STRING=${CTEST_SITE}
+#  CMAKE_BUILD_TYPE:STRING=Release
+#  CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
+#  BUILD_TESTING:BOOL=OFF
+#  PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
+#  " )
+#
+##  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
+#  file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
+#endif ()
 
 if (DOWNLOAD)
   #
@@ -367,13 +398,16 @@ endif ()
 
 set (COMMON_CONFIGURE_OPTIONS
   "-Wno-dev"
-  "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
   #
   "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
   "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
   "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
   "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
   "-DTrilinos_ENABLE_MueLu:BOOL=ON"
+#
+  "-DTrilinos_WARNINGS_AS_ERRORS_FLAGS:BOOL=OFF"
+  "-DTrilinos_ENABLE_STRONG_C_COMPILE_WARNINGS:BOOL=OFF"
+  "-DTrilinos_ENABLE_STRONG_CXX_COMPILE_WARNINGS:BOOL=OFF"
   #
   "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
   "-DMDS_ID_TYPE:STRING='long int'"
@@ -399,7 +433,6 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTPL_BLAS_LIBRARIES:STRING='-L${MKL_PATH}/mkl/lib/intel64 -lmkl_intel_lp64 -lmkl_blas95_lp64 -lmkl_core -lmkl_sequential'"
   "-DTPL_LAPACK_LIBRARIES:STRING='-L${MKL_PATH}/mkl/lib/intel64 -lmkl_lapack95_lp64'"
   #
-  "-DDART_TESTING_TIMEOUT:STRING=600"
   "-DTrilinos_ENABLE_ThreadPool:BOOL=ON"
   #
   "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
@@ -458,8 +491,8 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
   "-DTrilinos_ENABLE_STKIO:BOOL=ON"
   "-DTrilinos_ENABLE_STKExp:BOOL=OFF"
-  "-DTrilinos_ENABLE_STKSearch:BOOL=OFF"
-  "-DTrilinos_ENABLE_STKSearchUtil:BOOL=OFF"
+  "-DTrilinos_ENABLE_STKSearch:BOOL=ON"
+  "-DTrilinos_ENABLE_STKSearchUtil:BOOL=ON"
   "-DTrilinos_ENABLE_STKTransfer:BOOL=ON"
   "-DTrilinos_ENABLE_STKUnit_tests:BOOL=OFF"
   "-DTrilinos_ENABLE_STKDoc_tests:BOOL=OFF"
@@ -474,22 +507,34 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DKokkos_ENABLE_Pthread:BOOL=OFF"
   )
 
+if (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
+   set (COMMON_CONFIGURE_OPTIONS ${COMMON_CONFIGURE_OPTIONS}
+     "-DDART_TESTING_TIMEOUT:STRING=1200"
+   )
+else ()
+   set (COMMON_CONFIGURE_OPTIONS ${COMMON_CONFIGURE_OPTIONS}
+     "-DDART_TESTING_TIMEOUT:STRING=600"
+   )
+endif ()
+
 INCLUDE(${CTEST_SCRIPT_DIRECTORY}/trilinos_macro.cmake)
 
 if (BUILD_TRILINOS)
+
+  set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosInstall")
 
   set (CONF_OPTS
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${GCC_MPI_DIR}"
     "-DCMAKE_CXX_COMPILER:STRING=${GCC_MPI_DIR}/bin/mpicxx"
-    "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -w -DNDEBUG ${extra_cxx_flags}'"
+    "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -DNDEBUG ${extra_cxx_flags}'"
     "-DCMAKE_C_COMPILER:STRING=${GCC_MPI_DIR}/bin/mpicc"
-    "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
+    "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
     "-DCMAKE_Fortran_COMPILER:STRING=${GCC_MPI_DIR}/bin/mpifort"
-    "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
+    "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -DNDEBUG'"
 #
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/lib'"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
     "-DBoost_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
     "-DBoost_LIBRARY_DIRS:PATH=${BOOST_ROOT}/lib"
     "-DBoostLib_INCLUDE_DIRS:PATH=${BOOST_ROOT}/include"
@@ -514,6 +559,10 @@ if (BUILD_TRILINOS)
     "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
     "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
 #
+    "-DTPL_ENABLE_yaml-cpp:BOOL=ON"
+    "-Dyaml-cpp_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+    "-Dyaml-cpp_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+#
     "-DTPL_ENABLE_ParMETIS:BOOL=ON"
     "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
     "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
@@ -524,6 +573,7 @@ if (BUILD_TRILINOS)
 #
     "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON"
     "-DCMAKE_INSTALL_RPATH:STRING=${PREFIX_DIR}/lib"
+    "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     "${COMMON_CONFIGURE_OPTIONS}"
   )
 
@@ -535,7 +585,7 @@ if (BUILD_TRILINOS)
     endif (BUILD_SCOREC)
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
-  do_trilinos("${CONF_OPTS}" "Trilinos")
+  do_trilinos("${CONF_OPTS}" "Trilinos" "${INSTALL_LOCATION}")
 
 endif (BUILD_TRILINOS)
 
@@ -549,7 +599,7 @@ INCLUDE(${CTEST_SCRIPT_DIRECTORY}/albany_macro.cmake)
 if (BUILD_ALB32)
 
   set (CONF_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstall"
     "-DENABLE_LCM:BOOL=ON"
     "-DENABLE_CONTACT:BOOL=ON"
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
@@ -566,13 +616,12 @@ if (BUILD_ALB32)
     "-DENABLE_CHECK_FPE:BOOL=ON")
   if (BUILD_SCOREC)
     set (CONF_OPTIONS ${CONF_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON"
-      "-DENABLE_GOAL:BOOL=ON")
+      "-DENABLE_SCOREC:BOOL=ON")
   endif (BUILD_SCOREC)
   if (BUILD_PERIDIGM)
     set (CONF_OPTIONS ${CONF_OPTIONS}
       "-DENABLE_PERIDIGM:BOOL=ON"
-      "-DPeridigm_DIR:PATH=${CTEST_BINARY_DIRECTORY}/PeridigmInstall/lib/Peridigm/cmake")
+      "-DPeridigm_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/PeridigmInstall/lib/Peridigm/cmake")
   endif (BUILD_PERIDIGM)
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
@@ -587,7 +636,7 @@ endif (BUILD_ALB32)
 if (BUILD_ALB64)
 
   set (CONF_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstall"
     "-DENABLE_64BIT_INT:BOOL=ON"
     "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
     "-DENABLE_LCM:BOOL=ON"
@@ -600,8 +649,7 @@ if (BUILD_ALB64)
     "-DENABLE_CHECK_FPE:BOOL=ON")
   if (BUILD_SCOREC)
     set (CONF_OPTIONS ${CONF_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON"
-      "-DENABLE_GOAL:BOOL=ON")
+      "-DENABLE_SCOREC:BOOL=ON")
   endif (BUILD_SCOREC)
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
@@ -611,22 +659,25 @@ endif (BUILD_ALB64)
 
 if (BUILD_TRILINOSCLANG)
 
+  set(INSTALL_LOCATION "${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11")
+
   set (CONFIGURE_OPTIONS
     "${COMMON_CONFIGURE_OPTIONS}"
+    "-DCMAKE_BUILD_TYPE:STRING=RELEASE"
     "-DTPL_ENABLE_MPI:BOOL=ON"
     "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/clang-3.7"
     #
     "-DCMAKE_CXX_COMPILER:STRING=/projects/albany/clang-3.7/bin/mpicxx"
-    "-DCMAKE_CXX_FLAGS:STRING='-Os -w -DNDEBUG ${extra_cxx_flags}'"
+    "-DCMAKE_CXX_FLAGS:STRING='-Os -DNDEBUG ${extra_cxx_flags}'"
     "-DCMAKE_C_COMPILER:STRING=/projects/albany/clang-3.7/bin/mpicc"
-    "-DCMAKE_C_FLAGS:STRING='-Os -w -DNDEBUG'"
+    "-DCMAKE_C_FLAGS:STRING='-Os -DNDEBUG'"
     "-DCMAKE_Fortran_COMPILER:STRING=/projects/albany/clang-3.7/bin/mpifort"
-    "-DCMAKE_Fortran_FLAGS:STRING='-Os -w -DNDEBUG'"
+    "-DCMAKE_Fortran_FLAGS:STRING='-Os -DNDEBUG'"
     "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
     "-DMDS_ID_TYPE:STRING='long long int'"
     "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/clang-3.7/lib -lnetcdf -lpnetcdf -lhdf5_hl -lhdf5 -lz -lm -Wl,-rpath,${PREFIX_DIR}/clang-3.7/lib'"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallC11"
+    "-DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_LOCATION}"
     "-DBUILD_SHARED_LIBS:BOOL=OFF"
     "-DTPL_ENABLE_SuperLU:BOOL=OFF"
     "-DAmesos2_ENABLE_KLU2:BOOL=ON"
@@ -654,6 +705,10 @@ if (BUILD_TRILINOSCLANG)
   "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang-3.7/include"
   "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang-3.7/lib"
   #
+  "-DTPL_ENABLE_yaml-cpp:BOOL=ON"
+  "-Dyaml-cpp_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang-3.7/include"
+  "-Dyaml-cpp_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang-3.7/lib"
+  #
   "-DTPL_ENABLE_ParMETIS:BOOL=ON"
   "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/clang-3.7/include"
   "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/clang-3.7/lib"
@@ -666,7 +721,7 @@ if (BUILD_TRILINOSCLANG)
 )
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
-  do_trilinos("${CONFIGURE_OPTIONS}" "TrilinosClang")
+  do_trilinos("${CONFIGURE_OPTIONS}" "TrilinosClang" "${INSTALL_LOCATION}")
 
 endif (BUILD_TRILINOSCLANG)
 
@@ -677,7 +732,7 @@ endif (BUILD_TRILINOSCLANG)
 if (BUILD_ALB64CLANG)
 
   set (CONF_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallC11"
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstallC11"
     "-DENABLE_64BIT_INT:BOOL=ON"
     "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
     "-DENABLE_LCM:BOOL=ON"
@@ -692,8 +747,7 @@ if (BUILD_ALB64CLANG)
     )
   if (BUILD_SCOREC)
     set (CONF_OPTIONS ${CONF_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON"
-      "-DENABLE_GOAL:BOOL=ON")
+      "-DENABLE_SCOREC:BOOL=ON")
   endif (BUILD_SCOREC)
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)
@@ -704,7 +758,7 @@ endif (BUILD_ALB64CLANG)
 if (BUILD_ALBFUNCTOR)
 
   set (CONF_OPTIONS
-    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstall"
     "-DENABLE_LCM:BOOL=ON"
     "-DENABLE_MOR:BOOL=ON"
     "-DENABLE_FELIX:BOOL=ON"
@@ -722,8 +776,7 @@ if (BUILD_ALBFUNCTOR)
     "-DENABLE_CHECK_FPE:BOOL=ON")
   if (BUILD_SCOREC)
     set (CONF_OPTIONS ${CONF_OPTIONS}
-      "-DENABLE_SCOREC:BOOL=ON"
-      "-DENABLE_GOAL:BOOL=ON")
+      "-DENABLE_SCOREC:BOOL=ON")
   endif (BUILD_SCOREC)
 
   # First argument is the string of the configure options, second is the dashboard target (a name in a string)

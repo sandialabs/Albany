@@ -39,9 +39,11 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
+  // Input:
+  PHX::MDField<const ScalarT,Cell,Node,Level>     pi;
+  PHX::MDField<const ScalarT,Cell,Node,Level,Dim> velocity;
+
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,Level>     pi;
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim> velocity;
   PHX::MDField<ScalarT,Cell,Node,Level,Dim> pivelx;
 
   const int numNodes;

@@ -21,7 +21,7 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 
 namespace QCAD {
@@ -77,7 +77,7 @@ protected:
   std::vector<std::string> trapSpectrum, trapType; 
 
   Teuchos::Array<int> offset;
-  Teuchos::RCP<MaterialDatabase> materialDB;
+  Teuchos::RCP<Albany::MaterialDatabase> materialDB;
 
   bool responseOnly; //flag for evaluator being called in response field manager
   
@@ -105,8 +105,8 @@ protected:
 
   // Input:
   //! Coordinate vector at vertices
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
-  PHX::MDField<ScalarT,Cell,Node> dof;
+  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
+  PHX::MDField<const ScalarT,Cell,Node> dof;
 
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::ArrayRCP<Teuchos::RCP<shards::CellTopology> > sideType;

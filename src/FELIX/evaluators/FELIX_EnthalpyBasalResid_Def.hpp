@@ -24,16 +24,16 @@ namespace FELIX
 
     Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
-    BF         = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
-    w_measure  = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint> (p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
-    velocity   = PHX::MDField<Type,Cell,Side,QuadPoint,VecDim>(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
-    beta       = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl_basal->qp_scalar);
-    basal_dTdz = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Basal dTdz Side QP Variable Name"), dl_basal->qp_scalar);
-    enthalpy   = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Enthalpy Side QP Variable Name"), dl_basal->qp_scalar);
-    enthalpyHs = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Enthalpy Hs QP Variable Name"), dl_basal->qp_scalar);
-    diffEnth   = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar);
+    BF         = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
+    w_measure  = decltype(w_measure)(p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
+    velocity   = decltype(velocity)(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
+    beta       = decltype(beta)(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"), dl_basal->qp_scalar);
+    basal_dTdz = decltype(basal_dTdz)(p.get<std::string> ("Basal dTdz Side QP Variable Name"), dl_basal->qp_scalar);
+    enthalpy   = decltype(enthalpy)(p.get<std::string> ("Enthalpy Side QP Variable Name"), dl_basal->qp_scalar);
+    enthalpyHs = decltype(enthalpyHs)(p.get<std::string> ("Enthalpy Hs QP Variable Name"), dl_basal->qp_scalar);
+    diffEnth   = decltype(diffEnth)(p.get<std::string> ("Diff Enthalpy Variable Name"), dl->node_scalar);
 
-    geoFlux   = PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Geothermal Flux Side QP Variable Name"), dl_basal->qp_scalar);
+    geoFlux   = decltype(geoFlux)(p.get<std::string> ("Geothermal Flux Side QP Variable Name"), dl_basal->qp_scalar);
 
     haveSUPG = p.isParameter("FELIX Enthalpy Stabilization") ? (p.get<Teuchos::ParameterList*>("FELIX Enthalpy Stabilization")->get<std::string>("Type") == "SUPG") : false;
 
@@ -53,9 +53,9 @@ namespace FELIX
 
     if (haveSUPG)
     {
-      enthalpyBasalResidSUPG  = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Enthalpy Basal Residual SUPG Variable Name"), dl->node_scalar);
-      GradBF    		 = PHX::MDField<RealType,Cell,Side,Node,QuadPoint,Dim>(p.get<std::string> ("Gradient BF Side Name"), dl_basal->node_qp_gradient);
-      verticalVel		 = PHX::MDField<ScalarT,Cell,Side,QuadPoint>(p.get<std::string>("Vertical Velocity Side QP Variable Name"), dl_basal->qp_scalar);
+      enthalpyBasalResidSUPG  = decltype(enthalpyBasalResidSUPG)(p.get<std::string> ("Enthalpy Basal Residual SUPG Variable Name"), dl->node_scalar);
+      GradBF    		 = decltype(GradBF)(p.get<std::string> ("Gradient BF Side Name"), dl_basal->node_qp_gradient);
+      verticalVel		 = decltype(verticalVel)(p.get<std::string>("Vertical Velocity Side QP Variable Name"), dl_basal->qp_scalar);
 
       this->addDependentField(velocity.fieldTag());
       this->addDependentField(verticalVel.fieldTag());
@@ -175,7 +175,7 @@ namespace FELIX
         for (int qp = 0; qp < numSideQPs; ++qp)
         {
          // isThereWater =(beta(cell,side,qp)<1.0);
-          ScalarT diffEnthalpy = enthalpy(cell,side,node,qp)-enthalpyHs(cell,side,node,qp);
+          ScalarT diffEnthalpy = enthalpy(cell,side,qp)-enthalpyHs(cell,side,qp);
          // ScalarT scale = - atan(alpha * std::max(0.,diffEnthalpy)+
             //                     alpha * double(!isThereWater)* std::min(0.,diffEnthalpy))/pi + 0.5;
           ScalarT F = geoFlux(cell,side,qp);
@@ -219,11 +219,11 @@ namespace FELIX
           {
             ScalarT wSUPG = 0.001 / scyr * // [km^2 s^{-1}]
                 (velocity(cell,side,qp,0)*GradBF(cell,side,node,qp,0) + velocity(cell,side,qp,1)*GradBF(cell,side,node,qp,1)+verticalVel(cell,side,qp) * GradBF(cell,side,node,qp,2))*w_measure(cell,side,qp);
-            //     ScalarT scale = - atan(alpha * (enthalpy(cell,side,node,qp)-enthalpyHs(cell,side,node,qp)))/pi + 0.5;
+            //     ScalarT scale = - atan(alpha * (enthalpy(cell,side,qp)-enthalpyHs(cell,side,qp)))/pi + 0.5;
 
 
             ScalarT resid_tmp = - geoFlux(cell,side,qp)*scale;
-            resid_tmp += robin_coeff*std::fabs(basal_dTdz(cell,side,qp))*std::max(0.,enthalpy(cell,side,node,qp)-enthalpyHs(cell,side,node,qp));
+            resid_tmp += robin_coeff*std::fabs(basal_dTdz(cell,side,qp))*std::max(0.,enthalpy(cell,side,qp)-enthalpyHs(cell,side,qp));
             for (int dim = 0; dim < vecDimFO; ++dim)
               resid_tmp -= 1000/scyr * beta(cell,side,qp) * std::pow(velocity(cell,side,qp,dim),2) *scale;
 

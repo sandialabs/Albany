@@ -1,0 +1,76 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Elasticity 2D
+    Phalanx Graph Visualization Detail: 1
+    Solution Method: Transient
+    Second Order: Velocity Verlet
+    Perturb Dirichlet: 1.00000000e-06
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF X: 0.00000000e+00
+      DBC on NS NodeSet0 for DOF Y: 0.00000000e+00
+    Initial Condition: 
+      Function: Constant
+      Function Data: [0.00000000e+00, 0.00000000e+00]
+    Initial Condition Dot: 
+      Function: Linear Y
+      Function Data: [0.02000000]
+    Density: 
+      Value: 1.00000000
+    Elastic Modulus: 
+      Elastic Modulus Type: Constant
+      Value: 1.00000000
+    Poissons Ratio: 
+      Poissons Ratio Type: Constant
+      Value: 0.25000000
+    Parameters: 
+      Number: 0
+      Parameter 0: DBC on NS NodeSet0 for DOF X
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    1D Elements: 30
+    2D Elements: 8
+    2D Scale: 0.20000000
+    Method: STK2D
+    Exodus Output File Name: trel2d.exo
+    Number Of Time Derivatives: 2
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [0.00202292]
+    Relative Tolerance: 0.00010000
+    Number of Sensitivity Comparisons: 0
+    Sensitivity Test Values 0: [0.33333300, 0.16666600, 0.50000000]
+    Number of Dakota Comparisons: 0
+    Dakota Test Values: [1.00000000, 1.00000000]
+  Piro: 
+    Velocity Verlet: 
+      Num Time Steps: 40
+      Final Time: 0.40000000
+      Initial Time: 0.00000000e+00
+      Invert Mass Matrix: true
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Linear Solver Types: 
+          Belos: 
+            Solver Type: Block GMRES
+            Solver Types: 
+              Block GMRES: 
+                Convergence Tolerance: 1.00000000e-05
+                Output Frequency: 10
+                Output Style: 1
+                Verbosity: 33
+                Maximum Iterations: 100
+                Block Size: 1
+                Num Blocks: 100
+                Flexible Gmres: false
+        Preconditioner Type: Ifpack
+        Preconditioner Types: 
+          Ifpack: 
+            Prec Type: ILU
+            Overlap: 1
+            Ifpack Settings: 
+              'fact: level-of-fill': 1
+...

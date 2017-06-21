@@ -20,13 +20,11 @@
 #ifdef ALBANY_SEACAS
 #include "Albany_IossSTKMeshStruct.hpp"
 #endif
-#if defined(ALBANY_EPETRA)
 #include "Albany_AsciiSTKMeshStruct.hpp"
 #include "Albany_AsciiSTKMesh2D.hpp"
 #include "Albany_GmshSTKMeshStruct.hpp"
 #ifdef ALBANY_FELIX
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
-#endif
 #endif
 #ifdef ALBANY_FELIX
 #include "Albany_STKDiscretizationStokesH.hpp"
@@ -317,7 +315,6 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
                 << " requested, but not compiled in" << std::endl);
 #endif // ALBANY_SEACAS
     }
-#if defined(ALBANY_EPETRA)
     else if (method == "Ascii") {
         return Teuchos::rcp(new Albany::AsciiSTKMeshStruct(disc_params, comm));
     } else if (method == "Ascii2D") {
@@ -353,7 +350,7 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
         }
         if (disc_params->isSublist("Side Set Discretizations") && disc_params->sublist("Side Set Discretizations").isSublist("basalside")) {
             basal_params = Teuchos::rcp(new Teuchos::ParameterList(disc_params->sublist("Side Set Discretizations").sublist("basalside")));
-            if(!basal_params->isParameter("Workset Size"))
+            if(!disc_params->sublist("Side Set Discretizations").isParameter("Workset Size"))
               basal_params->set("Workset Size", basal_ws_size);
         } else {
             // Backward compatibility: Ioss, with parameters mixed with the extruded mesh ones
@@ -362,12 +359,10 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
             basal_params->set("Exodus Input File Name", disc_params->get("Exodus Input File Name", "basalmesh.exo"));
             basal_params->set("Workset Size", basal_ws_size);
         }
-
         basalMesh = createMeshStruct(basal_params, Teuchos::null, comm);
         return Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(disc_params, comm, basalMesh));
     }
 #endif // ALBANY_FELIX
-#endif // ALBANY_EPETRA
     else if (method == "Cubit") {
 #ifdef ALBANY_CUTR
         // AGS"need to inherit from Generic"
@@ -398,14 +393,14 @@ Albany::DiscretizationFactory::createMeshStruct(Teuchos::RCP<Teuchos::ParameterL
                 "Error: Discretization method " << method
                 << " requested, but not compiled in" << std::endl);
 #endif
-    } else {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
+    } 
+
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
                 "Error!  Unknown discretization method in DiscretizationFactory: " << method <<
                 "!" << std::endl << "Supplied parameter list is " << std::endl << *disc_params <<
                 "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss, Ioss Aeras," <<
                 " Exodus, Exodus Aeras, Cubit, PUMI, PUMI Hierarchic, Sim, Ascii," <<
                 " Ascii2D, Extruded" << std::endl);
-    }
 }
 
 Teuchos::RCP<Albany::AbstractDiscretization>
@@ -505,10 +500,10 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
                 Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
 #ifdef ALBANY_FELIX
                 if (method == "Extruded")
-                    return Teuchos::rcp(new Albany::STKDiscretizationStokesH(ms, commT, rigidBodyModes));
+                    return Teuchos::rcp(new Albany::STKDiscretizationStokesH(discParams, ms, commT, rigidBodyModes));
                 else
 #endif
-                    return Teuchos::rcp(new Albany::STKDiscretization(ms, commT, rigidBodyModes, sideSetEquations));
+                    return Teuchos::rcp(new Albany::STKDiscretization(discParams, ms, commT, rigidBodyModes, sideSetEquations));
             }
                 break;
 #endif

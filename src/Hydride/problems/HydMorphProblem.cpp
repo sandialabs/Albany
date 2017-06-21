@@ -29,7 +29,7 @@ HydMorphProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
     std::string mtrlDbFilename = params->get<std::string>("MaterialDB Filename");
  // Create Material Database
-    materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, commT));
+    materialDB = Teuchos::rcp(new Albany::MaterialDatabase(mtrlDbFilename, commT));
 
   }
 }

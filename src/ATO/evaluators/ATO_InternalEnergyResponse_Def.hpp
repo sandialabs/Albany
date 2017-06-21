@@ -78,7 +78,7 @@ InternalEnergyResponse(Teuchos::ParameterList& p,
       (*topologies)[itopo]->getEntityType() != "Distributed Parameter", 
       Teuchos::Exceptions::InvalidParameter, std::endl
       << "Error!  InternalEnergyResponse requires 'Distributed Parameter' based topology" << std::endl);
-    topos[itopo] = PHX::MDField<ParamScalarT,Cell,Node>((*topologies)[itopo]->getName(),dl->node_scalar);
+    topos[itopo] = PHX::MDField<const ParamScalarT,Cell,Node>((*topologies)[itopo]->getName(),dl->node_scalar);
     this->addDependentField(topos[itopo]);
   }
 
@@ -89,7 +89,7 @@ InternalEnergyResponse(Teuchos::ParameterList& p,
   this->addDependentField(qp_weights);
   this->addDependentField(BF);
 
-  Teuchos::Array< PHX::MDField<ScalarT> > depFields;
+  Teuchos::Array< PHX::MDField<const ScalarT> > depFields;
   penaltyModel->getDependentFields(depFields);
 
   int nFields = depFields.size();
@@ -135,7 +135,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(qp_weights,fm);
   this->utils.setFieldData(BF,fm);
 
-  Teuchos::Array<PHX::MDField<ScalarT>* > depFields;
+  Teuchos::Array<PHX::MDField<const ScalarT>* > depFields;
   penaltyModel->getDependentFields(depFields);
 
   int nFields = depFields.size();
@@ -154,7 +154,7 @@ template<typename EvalT, typename Traits>
 void ATO::InternalEnergyResponse<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  PHAL::set(this->global_response, 0.0);
+  PHAL::set(this->global_response_eval, 0.0);
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -170,7 +170,7 @@ evaluateFields(typename Traits::EvalData workset)
   if( elementBlockName != workset.EBName ) return;
 
   // Zero out local response
-  PHAL::set(this->local_response, 0.0);
+  PHAL::set(this->local_response_eval, 0.0);
 
   std::vector<int> dims;
   penaltyModel->getFieldDimensions(dims);
@@ -202,12 +202,12 @@ evaluateFields(typename Traits::EvalData workset)
 
       ScalarT dE = response*qp_weights(cell,qp);
       internalEnergy += dE;
-      this->local_response(cell,0) += dE;
+      this->local_response_eval(cell,0) += dE;
 
     }
   }
 
-  PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+  PHAL::MDFieldIterator<ScalarT> gr(this->global_response_eval);
   *gr += internalEnergy;
 
   // Do any local-scattering necessary
@@ -220,7 +220,7 @@ void ATO::InternalEnergyResponse<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
     PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
-                             this->global_response);
+                             this->global_response_eval);
 
     // Do global scattering
     PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);

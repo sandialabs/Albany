@@ -148,7 +148,7 @@ void FELIX::StokesFO::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshS
     numBasalSideQPs      = basalCubature->getNumPoints();
 
     dl_basal = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,
-                                       numBasalSideQPs,numDim-1,numDim,numCellSides,neq));
+                                       numBasalSideQPs,numDim-1,numDim,numCellSides,vecDimFO));
     dl_side_scalar = rcp(new Albany::Layouts(worksetSize,numBasalSideVertices,numBasalSideNodes,
                                               numBasalSideQPs,numDim-1,numDim,numCellSides,1));
     dl->side_layouts[basalSideName] = dl_basal;

@@ -32,6 +32,7 @@
        evaluators/FELIX_Integral1Dw_Z.cpp
        evaluators/FELIX_LiquidWaterFraction.cpp
        evaluators/FELIX_PressureMeltingTemperature.cpp
+       evaluators/FELIX_PressureCorrectedTemperature.cpp
        evaluators/FELIX_PressureMeltingEnthalpy.cpp
        evaluators/FELIX_ProlongateVector.cpp
        evaluators/FELIX_L2ProjectedBoundaryLaplacianResidual.cpp
@@ -151,6 +152,8 @@ ENDIF()
        evaluators/FELIX_Integral1Dw_Z_Def.hpp
        evaluators/FELIX_LiquidWaterFraction.hpp
        evaluators/FELIX_LiquidWaterFraction_Def.hpp
+       evaluators/FELIX_PressureCorrectedTemperature.hpp
+       evaluators/FELIX_PressureCorrectedTemperature_Def.hpp
        evaluators/FELIX_PressureMeltingTemperature.hpp
        evaluators/FELIX_PressureMeltingTemperature_Def.hpp
        evaluators/FELIX_PressureMeltingEnthalpy.hpp

@@ -45,16 +45,16 @@ public:
 private:
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>         wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint>         wBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
-  PHX::MDField<ScalarT,Cell,Node,Level>     temperature;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> temperatureGrad;
-  PHX::MDField<ScalarT,Cell,Node,Level>     temperatureDot;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     temperatureSrc;
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim> velocity;
-  PHX::MDField<ScalarT,Cell,Node,Level>     omega;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     etadotdT;
+  PHX::MDField<const ScalarT,Cell,Node,Level>     temperature;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level,Dim> temperatureGrad;
+  PHX::MDField<const ScalarT,Cell,Node,Level>     temperatureDot;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level>     temperatureSrc;
+  PHX::MDField<const ScalarT,Cell,Node,Level,Dim> velocity;
+  PHX::MDField<const ScalarT,Cell,Node,Level>     omega;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level>     etadotdT;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Level> Residual;

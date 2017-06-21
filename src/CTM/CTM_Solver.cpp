@@ -1,333 +1,273 @@
 #include "CTM_Solver.hpp"
-#include "CTM_Application.hpp"
 #include "CTM_ThermalProblem.hpp"
 #include "CTM_MechanicsProblem.hpp"
-#include <Albany_DiscretizationFactory.hpp>
-#include "Albany_APFDiscretization.hpp"
-#include <Albany_AbstractDiscretization.hpp>
 #include "CTM_SolutionInfo.hpp"
-#include "linear_solver.hpp"
+#include "CTM_LinearSolver.hpp"
+#include "CTM_Assembler.hpp"
+#include "CTM_Adapter.hpp"
 
-#ifdef ALBANY_AMP
-#include "AMP/problems/PhaseProblem.hpp"
-#endif
+#include <Albany_DiscretizationFactory.hpp>
+#include <Albany_AbstractDiscretization.hpp>
+#include <Albany_APFDiscretization.hpp>
 
 namespace CTM {
 
-    static RCP<ParameterList> get_valid_params() {
-        auto p = rcp(new ParameterList);
-        p->sublist("Temperature Problem");
-        p->sublist("Temperature Problem").sublist("Thermal Discretization");
-        p->sublist("Mechanics Problem");
-        p->sublist("Mechanics Problem").sublist("Mechanics Discretization");
-        p->sublist("Linear Algebra");
-        p->sublist("Time");
-    }
+using Teuchos::rcp_dynamic_cast;
 
-    static void validate_params(RCP<const ParameterList> p) {
-        assert(p->isSublist("Temperature Problem"));
-        assert(p->isSublist("Mechanics Problem"));
-        assert(p->isSublist("Thermal Discretization"));
-        assert(p->isSublist("Mechanics Discretization"));
-        assert(p->isSublist("Linear Algebra"));
-        assert(p->isSublist("Time"));
-        //
-        const Teuchos::ParameterList &time_list = p->sublist("Time");
-        assert(time_list.isType<double>("Initial Time"));
-        assert(time_list.isType<double>("Step Size"));
-        assert(time_list.isType<int>("Number of Steps"));
-        //
-        const Teuchos::ParameterList &la_list = p->sublist("Linear Algebra");
-        // check if solver was specified
-        assert((la_list.isSublist("GMRES Solver")) ||
-                (la_list.isType<std::string>("Solver")));
-        // Get GMRES solver
-        if (la_list.isSublist("GMRES Solver")) {
-            const Teuchos::ParameterList &params = la_list.sublist("GMRES Solver");
-            assert(params.isType<double>("Linear Tolerance"));
-            assert(params.isType<int>("Linear Max. Iterations"));
-            assert(params.isType<int>("Linear Krylov Size"));
-        } else {
-            assert(la_list.get<std::string>("Solver") == "SuperLU_DIST");
-        }
-        assert(la_list.isType<double>("Nonlinear Tolerance"));
-        assert(la_list.isType<int>("Nonlinear Max. Iterations"));
-    }
-
-    Solver::Solver(
-            RCP<const Teuchos_Comm> c,
-            RCP<ParameterList> p) :
-    comm(c),
-    out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-    params(p) {
-
-        validate_params(params);
-        temp_params = rcpFromRef(params->sublist("Temperature Problem", true));
-        //
-        mech_params = rcpFromRef(params->sublist("Mechanics Problem", true));
-        //
-        Teuchos::ParameterList &time_list = params->sublist("Time");
-        t_old = time_list.get<double>("Initial Time");
-        dt = time_list.get<double>("Step Size");
-        num_steps = time_list.get<int>("Number of Steps");
-        //
-        t_current = t_old + dt;
-
-        initial_setup();
-    }
-
-    void Solver::initial_setup() {
-
-        // create parameter libraries
-        // note: we never intend to use these objects, we create them because they
-        // are inputs to constructors for various other objects.
-        param_lib = rcp(new ParamLib);
-        dist_param_lib = rcp(new DistParamLib);
-
-        // create the mesh specs struct
-        // We use the thermal discretization parameter list to load the model
-        // and mesh. Later we will build a mechanics discretization using same
-        // discretization factory. The purpose is to reuse mesh structure.
-        Teuchos::RCP<Teuchos::ParameterList> disc_t_params = Teuchos::rcp(new Teuchos::ParameterList);
-        disc_t_params = rcpFromRef(params->sublist("Thermal Discretization"));
-        disc_factory = rcp(new Albany::DiscretizationFactory(disc_t_params, comm, false));
-        mesh_specs = disc_factory->createMeshSpecs();
-
-        // create the problem objects
-        auto dim = mesh_specs[0]->numDim;
-
-        std::string& method = temp_params->get("Name", "Thermal");
-        if (method == "Thermal") {
-            t_problem = rcp(new ThermalProblem(temp_params, param_lib, dim, comm));
-        }
-#ifdef ALBANY_AMP
-        else if (method == "Phase3D") {
-            t_problem = rcp(new Albany::PhaseProblem(temp_params, param_lib, 3, comm));
-        }
-#endif
-        else {
-            TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-                    std::endl <<
-                    "Error!  Unknown problem " << method <<
-                    "!" << std::endl << "Supplied parameter list is " <<
-                    std::endl << *temp_params);
-        }
-        
-        temp_params->validateParameters(*(t_problem->getValidProblemParameters()), 0);
-        t_problem->buildProblem(mesh_specs, t_state_mgr);
-
-
-        // Mechanics problem
-        Teuchos::RCP<Teuchos::ParameterList> disc_m_params = Teuchos::rcp(new Teuchos::ParameterList);
-        disc_m_params = rcpFromRef(params->sublist("Mechanics Discretization").sublist("Discretization"));
-        //
-        m_problem = rcp(new CTM::MechanicsProblem(mech_params, param_lib, dim, comm));
-        mech_params->validateParameters(*(m_problem->getValidProblemParameters()), 0);
-        m_problem->buildProblem(mesh_specs, m_state_mgr);
-
-        // create the initial discretization object
-        auto neq = t_problem->numEquations();
-        t_disc = disc_factory->createDiscretization(
-                neq,
-                t_problem->getSideSetEquations(),
-                t_state_mgr.getStateInfoStruct(),
-                t_state_mgr.getSideSetStateInfoStruct(),
-                t_problem->getFieldRequirements(),
-                t_problem->getSideSetFieldRequirements(),
-                t_problem->getNullSpace());
-
-        t_sol_info = Teuchos::rcp(new SolutionInfo());
-        //
-        t_sol_info->resize(t_disc, true);
-
-        // create the initial discretization object
-        neq = m_problem->numEquations();
-        // set new discretization parameter list
-        disc_factory->setDiscretizationParameters(disc_m_params);
-        m_disc = disc_factory->createDiscretization(
-                neq,
-                m_problem->getSideSetEquations(),
-                m_state_mgr.getStateInfoStruct(),
-                m_state_mgr.getSideSetStateInfoStruct(),
-                m_problem->getFieldRequirements(),
-                m_problem->getSideSetFieldRequirements(),
-                m_problem->getNullSpace());
-
-        m_sol_info = Teuchos::rcp(new SolutionInfo());
-        //
-        m_sol_info->resize(m_disc, false);
-
-
-    }
-
-    void Solver::solve() {
-        // get some information
-        Teuchos::RCP<const Teuchos::ParameterList> p = Teuchos::rcpFromRef(params->sublist("Linear Algebra"));
-        int max_iter = p->get<int>("Nonlinear Max. Iterations");
-        double tolerance = p->get<double>("Nonlinear Tolerance");
-
-
-        ///////////////////
-        // get the solution information for thermal problem
-        ///////////////////
-        Teuchos::RCP<Tpetra_Vector> u_t = t_sol_info->getOwnedMV()->getVectorNonConst(0);
-        //
-        Teuchos::RCP<Tpetra_Vector> v_t = (t_sol_info->getOwnedMV()->getNumVectors() > 1) ? t_sol_info->getOwnedMV()->getVectorNonConst(1) : Teuchos::null;
-        //
-        Teuchos::RCP<Tpetra_Vector> xdotdot_t = (t_sol_info->getOwnedMV()->getNumVectors() > 2) ? t_sol_info->getOwnedMV()->getVectorNonConst(2) : Teuchos::null;
-        // get residual
-        Teuchos::RCP<Tpetra_Vector> r_t = t_sol_info->getOwnedResidual();
-        // get Jacobian
-        Teuchos::RCP<Tpetra_CrsMatrix> J_t = t_sol_info->getOwnedJacobian();
-
-        // create new vectors
-        Teuchos::RCP<const Tpetra_Map> t_map_owned = t_disc->getMapT();
-        Teuchos::RCP<Tpetra_Vector> u_v_t = Teuchos::rcp(new Tpetra_Vector(t_map_owned));
-        // incremental solution
-        Teuchos::RCP<Tpetra_Vector> du_t = Teuchos::rcp(new Tpetra_Vector(t_map_owned));
-        ///////////////////
-
-
-        ///////////////////
-        // get the solution information for mechanics problem
-        ///////////////////
-        Teuchos::RCP<Tpetra_Vector> u_m = m_sol_info->getOwnedMV()->getVectorNonConst(0);
-        //
-        Teuchos::RCP<Tpetra_Vector> v_m = (m_sol_info->getOwnedMV()->getNumVectors() > 1) ? m_sol_info->getOwnedMV()->getVectorNonConst(1) : Teuchos::null;
-        //
-        Teuchos::RCP<Tpetra_Vector> xdotdot_m = (m_sol_info->getOwnedMV()->getNumVectors() > 2) ? m_sol_info->getOwnedMV()->getVectorNonConst(2) : Teuchos::null;
-        // get residual
-        Teuchos::RCP<Tpetra_Vector> r_m = m_sol_info->getOwnedResidual();
-        // get Jacobian
-        Teuchos::RCP<Tpetra_CrsMatrix> J_m = m_sol_info->getOwnedJacobian();
-
-        // create new vectors
-        Teuchos::RCP<const Tpetra_Map> m_map_owned = m_disc->getMapT();
-        Teuchos::RCP<Tpetra_Vector> u_v_m = Teuchos::rcp(new Tpetra_Vector(m_map_owned));
-        // incremental solution
-        Teuchos::RCP<Tpetra_Vector> du_m = Teuchos::rcp(new Tpetra_Vector(m_map_owned));
-        ///////////////////
-
-        // Set thermal application
-        Teuchos::RCP<CTM::Application> t_application =
-                Teuchos::rcp(new CTM::Application(params, comm, t_sol_info, t_problem, t_disc, t_state_mgr, m_state_mgr, true));
-
-
-        // Set mechanics application
-        Teuchos::RCP<CTM::Application> m_application =
-                Teuchos::rcp(new CTM::Application(params, comm, m_sol_info, m_problem, m_disc, t_state_mgr, m_state_mgr, false));
-
-        // Get thermal discretization
-        Teuchos::RCP<Albany::APFDiscretization> apf_t_disc =
-                Teuchos::rcp_dynamic_cast<Albany::APFDiscretization>(t_disc);
-
-        t_state_mgr.setStateArrays(t_disc);
-
-        // Get mechanics discretization
-        Teuchos::RCP<Albany::APFDiscretization> apf_m_disc =
-                Teuchos::rcp_dynamic_cast<Albany::APFDiscretization>(m_disc);
-
-        m_state_mgr.setStateArrays(m_disc);
-
-        apf_t_disc->initTemperatureHack();
-
-        // time loop
-        double norm;
-        *out << std::endl;
-        for (int step = 1; step <= num_steps; ++step) {
-            *out << "*** Time Step: " << step << std::endl;
-            *out << "*** from time: " << t_old << std::endl;
-            *out << "*** to time: " << t_current << std::endl;
-
-            // compute fad coefficients
-            double omega = 0.0;
-            double beta = 1.0; // (j_coeff in workset)
-            double alpha = 1.0 / dt; // (m_coeff in workset)
-
-            // predictor phase
-            u_v_t->assign(*u_t);
-            //
-            int iter = 1;
-            bool converged = false;
-            // start newton loop
-            v_t->update(alpha, *u_t, -alpha, *u_v_t, 0.0);
-            *out << "Solving thermal problem" << std::endl;
-            while ((iter <= max_iter) && (!converged)) {
-                *out << "  " << iter << " newton iteration" << std::endl;
-                // compute residual
-                t_application->computeGlobalResidualT(t_current, t_old, v_t.get(),
-                        xdotdot_t.get(), *u_t, *r_t);
-                // compute Jacobian
-                t_application->computeGlobalJacobianT(alpha, beta, omega,
-                        t_current, t_old, v_t.get(), xdotdot_t.get(), *u_t, r_t.get(), *J_t);
-                // scale residual
-                r_t->scale(-1.0);
-                //
-                du_t->putScalar(0.0);
-                // solve the linear system of equations
-                solve_linear_system(p, J_t, du_t, r_t);
-                // update solution
-                u_t->update(1.0, *du_t, 1.0);
-                v_t->update(alpha, *u_t, -alpha, *u_v_t, 0.0);
-                // compute residual
-                t_application->computeGlobalResidualT(t_current, t_old, v_t.get(),
-                        xdotdot_t.get(), *u_t, *r_t);
-                // compute norm
-                norm = r_t->norm2();
-                *out << "  ||r|| = " << norm << std::endl;
-                if (norm < tolerance) converged = true;
-                iter++;
-                // 
-            } // end newton loop
-            TEUCHOS_TEST_FOR_EXCEPTION((iter > max_iter) && (!converged), std::out_of_range,
-                    "\nnewton's method failed in " << max_iter << " iterations" << std::endl);
-            // predictor
-            u_v_m->assign(*u_m);
-            // update thermal states
-            t_application->evaluateStateFieldManagerT(t_current, t_old, *(t_sol_info->getOwnedMV()));
-            //
-            t_state_mgr.updateStates();
-            apf_t_disc->writeSolutionToMeshDatabaseT(*(t_sol_info->getGhostMV()->getVector(0)), t_current, true);
-            iter = 1;
-            converged = false;
-            *out << "Solving mechanics problem" << std::endl;
-            //            apf_t_disc->initTemperatureHack();
-            while ((iter <= max_iter) && (!converged)) {
-                *out << "  " << iter << " newton iteration" << std::endl;
-                // compute residual
-                m_application->computeGlobalResidualT(t_current, t_old, v_m.get(),
-                        xdotdot_m.get(), *u_m, *r_m);
-                // compute Jacobian
-                m_application->computeGlobalJacobianT(alpha, beta, omega,
-                        t_current, t_old, v_m.get(), xdotdot_m.get(), *u_m, r_m.get(), *J_m);
-                // scale residual
-                r_m->scale(-1.0);
-                //
-                du_m->putScalar(0.0);
-                // solve the linear system of equations
-                solve_linear_system(p, J_m, du_m, r_m);
-                // update solution
-                u_m->update(1.0, *du_m, 1.0);
-                // compute residual
-                m_application->computeGlobalResidualT(t_current, t_old, v_m.get(),
-                        xdotdot_m.get(), *u_m, *r_m);
-                // compute norm
-                norm = r_m->norm2();
-                *out << "  ||r|| = " << norm << std::endl;
-                if (norm < tolerance) converged = true;
-                iter++;
-                // 
-            } // end newton loop
-            m_application->evaluateStateFieldManagerT(t_current, t_old, *(m_sol_info->getOwnedMV()));
-            //
-            m_state_mgr.updateStates();
-            apf_m_disc->writeSolutionT(*(m_sol_info->getGhostMV()->getVector(0)), t_current, true);
-            TEUCHOS_TEST_FOR_EXCEPTION((iter > max_iter) && (!converged), std::out_of_range,
-                    "\nnewton's method failed in " << max_iter << " iterations" << std::endl);
-
-            // updates
-            t_old = t_current;
-            t_current = t_current + dt;
-        }
-    }
+static RCP<ParameterList> get_valid_params() {
+  auto p = rcp(new ParameterList);
+  p->sublist("Time");
+  p->sublist("Temperature Problem");
+  p->sublist("Mechanics Problem");
+  p->sublist("Discretization");
+  p->sublist("Extra Discretization");
+  p->sublist("Adaptation");
+  p->sublist("Linear Algebra");
 }
+
+static void validate_params(RCP<const ParameterList> p) {
+  assert(p->isSublist("Temperature Problem"));
+  assert(p->isSublist("Mechanics Problem"));
+  assert(p->isSublist("Discretization"));
+  assert(p->isSublist("Extra Discretization"));
+  assert(p->isSublist("Temp Linear Algebra"));
+  assert(p->isSublist("Mech Linear Algebra"));
+  assert(p->isSublist("Time"));
+
+  auto time_params = p->sublist("Time");
+  assert(time_params.isType<double>("Initial Time"));
+  assert(time_params.isType<double>("Step Size"));
+  assert(time_params.isType<int>("Number of Steps"));
+
+  auto tla_params = p->sublist("Temp Linear Algebra");
+  assert(tla_params.isType<double>("Linear Tolerance"));
+  assert(tla_params.isType<int>("Linear Max Iterations"));
+  assert(tla_params.isType<int>("Linear Krylov Size"));
+  assert(tla_params.isSublist("Preconditioner"));
+
+  auto mla_params = p->sublist("Mech Linear Algebra");
+  assert(mla_params.isType<double>("Linear Tolerance"));
+  assert(mla_params.isType<int>("Linear Max Iterations"));
+  assert(mla_params.isType<int>("Linear Krylov Size"));
+  assert(mla_params.isSublist("Preconditioner"));
+}
+
+Solver::Solver(RCP<const Teuchos_Comm> c, RCP<ParameterList> p) {
+  comm = c;
+  set_params(p);
+  initial_setup();
+}
+
+void Solver::set_params(RCP<ParameterList> p) {
+  params = p;
+  validate_params(p);
+  t_params = rcpFromRef(params->sublist("Temperature Problem", true));
+  m_params = rcpFromRef(params->sublist("Mechanics Problem", true));
+  auto tp = params->sublist("Time");
+  num_steps = tp.get<int>("Number of Steps");
+  dt = tp.get<double>("Step Size");
+  t_old = tp.get<double>("Initial Time");
+  t_current = t_old + dt;
+  if (params->isSublist("Adaptation"))
+    adapt_params = rcpFromRef(params->sublist("Adaptation", true));
+}
+
+void Solver::initial_setup() {
+
+  // initializations
+  out = Teuchos::VerboseObjectBase::getDefaultOStream();
+  param_lib = rcp(new ParamLib);
+  dist_param_lib = rcp(new DistParamLib);
+  t_state_mgr = rcp(new Albany::StateManager);
+  m_state_mgr = rcp(new Albany::StateManager);
+  t_sol_info = rcp(new SolutionInfo);
+  m_sol_info = rcp(new SolutionInfo);
+
+  // build the initial mesh specs
+  auto disc_factory = rcp(new Albany::DiscretizationFactory(params, comm, false));
+  mesh_specs = disc_factory->createMeshSpecs();
+  int num_dims = mesh_specs[0]->numDim;
+
+  // build the temperature problem
+  t_problem = rcp(new ThermalProblem(t_params, param_lib, num_dims, comm));
+  t_params->validateParameters(*(t_problem->getValidProblemParameters()), 0);
+  t_problem->buildProblem(mesh_specs, *t_state_mgr);
+  *out << std::endl;
+
+  // build the mechanics problem
+  m_problem = rcp(new CTM::MechanicsProblem(m_params, param_lib, num_dims, comm));
+  m_params->validateParameters(*(m_problem->getValidProblemParameters()), 0);
+  m_problem->buildProblem(mesh_specs, *m_state_mgr);
+  *out << std::endl;
+
+  // create the temperature discretization
+  int neq = t_problem->numEquations();
+  t_disc = disc_factory->createDiscretization(
+      neq,
+      t_problem->getSideSetEquations(),
+      t_state_mgr->getStateInfoStruct(),
+      t_state_mgr->getSideSetStateInfoStruct(),
+      t_problem->getFieldRequirements(),
+      t_problem->getSideSetFieldRequirements(),
+      t_problem->getNullSpace());
+
+  // create the mechanics discretization
+  auto m_disc_params = rcpFromRef(params->sublist("Extra Discretization"));
+  disc_factory->setDiscretizationParameters(m_disc_params);
+  neq = m_problem->numEquations();
+  m_disc = disc_factory->createDiscretization(
+      neq,
+      m_problem->getSideSetEquations(),
+      m_state_mgr->getStateInfoStruct(),
+      m_state_mgr->getSideSetStateInfoStruct(),
+      m_problem->getFieldRequirements(),
+      m_problem->getSideSetFieldRequirements(),
+      m_problem->getNullSpace());
+
+  // create the solution information
+  t_sol_info->resize(t_disc, true);
+  m_sol_info->resize(m_disc, false);
+
+  // build the assembler
+  t_assembler = rcp(new Assembler(
+        t_params, t_sol_info, t_problem, t_disc, t_state_mgr));
+  m_assembler = rcp(new Assembler(
+        m_params, m_sol_info, m_problem, m_disc, m_state_mgr));
+
+  // set the state arrays
+  *out << std::endl;
+  t_state_mgr->setStateArrays(t_disc);
+  m_state_mgr->setStateArrays(m_disc);
+
+  // write the initial conditions for visualization
+  auto apf_disc = rcp_dynamic_cast<Albany::APFDiscretization>(m_disc);
+  apf_disc->writeAnySolutionToFile(0);
+
+  // create the adapter if it is needed
+  if (adapt_params != Teuchos::null)
+    adapter = rcp(new Adapter(adapt_params, param_lib, t_state_mgr, m_state_mgr));
+
+}
+
+void Solver::solve_temp() {
+
+  *out << "Solving thermal physics" << std::endl;
+
+  // get linear solve parameters
+  auto la_params = rcpFromRef(params->sublist("Temp Linear Algebra"));
+
+  // get the thermal solution info
+  auto T = t_sol_info->owned->x;
+  auto dTdt = t_sol_info->owned->x_dot;
+  auto f = t_sol_info->owned->f;
+  auto J = t_sol_info->owned->J;
+
+  // create old vector + incremetal solution vector
+  auto owned_map = t_disc->getMapT();
+  auto T_old = rcp(new Tpetra_Vector(owned_map));
+  auto delta_T = rcp(new Tpetra_Vector(owned_map));
+
+  // compute fad coefficients
+  double alpha = 1.0 / dt;
+  double beta = 1.0;
+  double omega = 0.0;
+
+  // solve the linear system
+  T_old->assign(*T);
+  dTdt->update(alpha, *T, -alpha, *T_old, 0.0);
+  t_assembler->assemble_system(alpha, beta, omega, t_current, t_old);
+  f->scale(-1.0);
+  delta_T->putScalar(0.0);
+  solve_linear_system(la_params, J, delta_T, f);
+
+  // perform updates
+  T->update(1.0, *delta_T, 1.0);
+  dTdt->update(alpha, *T, -alpha, *T_old, 0.0);
+  t_assembler->assemble_state(t_current, t_old);
+  t_state_mgr->updateStates();
+
+  // save the solution to the mesh databse
+  auto apf_disc = rcp_dynamic_cast<Albany::APFDiscretization>(t_disc);
+  apf_disc->writeSolutionToMeshDatabaseT(*T, t_current, false);
+
+}
+
+void Solver::solve_mech() {
+
+  *out << "Solving mechanics physics" << std::endl;
+
+  // get linear solve parameters
+  auto la_params = rcpFromRef(params->sublist("Mech Linear Algebra"));
+
+  // get the mechanics solution
+  auto u = m_sol_info->owned->x;
+  auto f = m_sol_info->owned->f;
+  auto J = m_sol_info->owned->J;
+
+  // compute the fad coefficients
+  double alpha = 0.0;
+  double beta = 1.0;
+  double omega = 0.0;
+
+  // solve the linear system
+  u->putScalar(0.0);
+  m_assembler->assemble_system(alpha, beta, omega, t_current, t_old);
+  f->scale(-1.0);
+  solve_linear_system(la_params, J, u, f, m_disc);
+
+  // perform updates
+  m_assembler->assemble_state(t_current, t_old);
+  m_state_mgr->updateStates();
+
+  // save the solution to the mesh database
+  auto apf_disc = rcp_dynamic_cast<Albany::APFDiscretization>(m_disc);
+  apf_disc->writeSolutionToMeshDatabaseT(*u, t_current, false);
+
+}
+
+void Solver::adapt_mesh() {
+  *out << "beginning mesh adaptation: " << std::endl;
+  adapter->adapt(t_current);
+  t_sol_info->resize(t_disc, true);
+  m_sol_info->resize(m_disc, false);
+  t_sol_info->owned->x = t_disc->getSolutionFieldT();
+  m_sol_info->owned->x = m_disc->getSolutionFieldT();
+  t_sol_info->scatter_x();
+  m_sol_info->scatter_x();
+}
+
+void Solver::solve() {
+  *out << std::endl;
+  for (int step = 1; step <= num_steps; ++step) {
+
+    *out << "*** Time Step: " << step << std::endl;
+    *out << "*** from time: " << t_old << std::endl;
+    *out << "*** to time: " << t_current << std::endl;
+
+    // perform the heat analysis analysis
+    solve_temp();
+
+    // if we should adapt
+    if (adapter != Teuchos::null) {
+      if (adapter->should_adapt(t_current)) {
+
+        // first solve the mechanical analysis
+        solve_mech();
+
+        // save the solution to file
+        auto apf_disc = rcp_dynamic_cast<Albany::APFDiscretization>(m_disc);
+        apf_disc->writeAnySolutionToFile(t_current);
+
+        // then adapt
+        adapt_mesh();
+
+      }
+    }
+
+    // update the time information
+    t_old = t_current;
+    t_current += dt;
+  }
+}
+
+} // namespace CTM

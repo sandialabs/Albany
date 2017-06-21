@@ -42,13 +42,13 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> pGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V_Dot;
-  PHX::MDField<ScalarT,Cell,QuadPoint> T;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;  
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> pGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> V;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> V_Dot;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> T;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> force;  
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> coordVec;
   
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> Rm;

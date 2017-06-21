@@ -1188,7 +1188,6 @@ void Albany::GenericSTKMeshStruct::loadRequiredInputFields (const AbstractFieldC
     {
       *out << "  - Skipping field '" << fname << "' since it's listed as output. Make sure there's an evaluator set to save it!\n";
       continue;
-
     }
     else if (fusage == "Unused")
     {
@@ -1693,7 +1692,7 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
     "The discretization method, parsed in the Discretization Factory");
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid2");
   validPL->set<std::string>("Cubature Rule", "", "Integration rule sent to Intrepid2: GAUSS, GAUSS_RADAU_LEFT, GAUSS_RADAU_RIGHT, GAUSS_LOBATTO");
-  validPL->set<int>("Workset Size", 50, "Upper bound on workset (bucket) size");
+  validPL->set<int>("Workset Size", DEFAULT_WORKSET_SIZE, "Upper bound on workset (bucket) size");
   validPL->set<bool>("Use Automatic Aura", false, "Use automatic aura with BulkData");
   validPL->set<bool>("Interleaved Ordering", true, "Flag for interleaved or blocked unknown ordering");
   validPL->set<bool>("Separate Evaluators by Element Block", false,
@@ -1729,6 +1728,7 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->sublist("Required Fields Info", false, "Info for the creation of the required fields in the STK mesh");
 
   validPL->set<bool>("Ignore Side Maps", true, "If true, we ignore possible side maps already imported from the exodus file");
+  validPL->sublist("Contact", false, "Sublist used to specify contact parameters");
 
   // Uniform percept adaptation of input mesh prior to simulation
 

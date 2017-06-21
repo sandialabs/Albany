@@ -44,12 +44,12 @@ public:
 private:
 
   // Input:
-  PHX::MDField<IceScalarT>    u_b;
-  PHX::MDField<ScalarT>       beta;
-  PHX::MDField<ParamScalarT>  G;
+  PHX::MDField<const IceScalarT>    u_b;
+  PHX::MDField<const ScalarT>       beta;
+  PHX::MDField<const ParamScalarT>  G;
 
   // Output:
-  PHX::MDField<ScalarT>       m;
+  PHX::MDField<ScalarT>             m;
 
   int               numQPs;
   double            L;

@@ -40,19 +40,19 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint>       surfaceHeight;
+  PHX::MDField<const ScalarT,Cell,QuadPoint>       surfaceHeight;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim>   Ugrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim>   Ugrad;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim>   U;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim>   U;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint>              muFELIX;
+  PHX::MDField<const ScalarT,Cell,QuadPoint>              muFELIX;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim>     Stress;
-
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>      coordVec;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim>      coordVec;
 
   // Output:
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim>     Stress;
+
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
   std::size_t numNodes;

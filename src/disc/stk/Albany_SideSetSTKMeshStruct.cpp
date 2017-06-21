@@ -72,7 +72,7 @@ SideSetSTKMeshStruct::SideSetSTKMeshStruct (const MeshSpecsStruct& inputMeshSpec
 
   std::vector<std::string> ssNames; // Empty
   int cub = params->get("Cubature Degree", 3);
-  int worksetSizeMax = params->get("Workset Size", 50);
+  int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
   int worksetSize = this->computeWorksetSize(worksetSizeMax,inputMeshSpecs.worksetSize);
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 

@@ -43,17 +43,17 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> J;
-  PHX::MDField<ScalarT,Cell,QuadPoint> JH;
-  PHX::MDField<ScalarT,Cell,QuadPoint> VH; // partial molar volume
-  PHX::MDField<ScalarT,Cell,QuadPoint> VM; // molar volume of Fe
-  PHX::MDField<ScalarT,Cell,QuadPoint> CtotalRef; // stress free concentration
-  PHX::MDField<ScalarT,Cell,QuadPoint> Ctotal; // current total concentration
-  PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> defgrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> J;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> VH; // partial molar volume
+  PHX::MDField<const ScalarT,Cell,QuadPoint> VM; // molar volume of Fe
+  PHX::MDField<const ScalarT,Cell,QuadPoint> CtotalRef; // stress free concentration
+  PHX::MDField<const ScalarT,Cell,QuadPoint> Ctotal; // current total concentration
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> latticeDefGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint> JH;
 
 
   unsigned int numQPs;

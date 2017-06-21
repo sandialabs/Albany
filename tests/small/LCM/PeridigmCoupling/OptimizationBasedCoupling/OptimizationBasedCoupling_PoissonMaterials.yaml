@@ -1,0 +1,22 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: Peridynamics
+    block_2: 
+      material: My Elastic Material
+  Materials: 
+    Peridynamics: 
+      Material Model: 
+        Model Name: Peridynamics
+    My Elastic Material: 
+      Material Model: 
+        Model Name: Classic Vector Poisson
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 2.00000000e+11
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.25000000
+...

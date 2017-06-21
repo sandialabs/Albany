@@ -17,6 +17,7 @@ fi
 # Trilinos configuration script
 
 cmake \
+ -D ALBANY_CTEST_TIMEOUT:INTEGER=60 \
  -D ALBANY_TRILINOS_DIR:FILEPATH=lcm_install_dir \
  -D CMAKE_CXX_FLAGS:STRING="lcm_cxx_flags" \
  -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \

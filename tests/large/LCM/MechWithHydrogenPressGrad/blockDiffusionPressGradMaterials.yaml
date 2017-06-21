@@ -1,0 +1,73 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: Metal
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.00000000e+00
+      Volume Average Pressure: true
+  Materials: 
+    Metal: 
+      Material Model: 
+        Model Name: J2
+      Stabilization Parameter: 2.00000000
+      Initial Concentration: 0.00005000
+      Transport Coefficients: 
+        Partial Molar Volume: 2.00000000
+        Ideal Gas Constant: 0.00831400
+        'Pre-exponential Factor': 540000.00000000
+        Diffusion Activation Enthalpy: 53.90000000
+        Trap Binding Energy: 9.65000000
+        Number of Lattice Sites: 0.14052839
+        Reference Total Concentration: 0.00056000
+        Lattice Strain Flag: false
+        A Constant: 8.60000000
+        B Constant: 1.50000000
+        C Constant: 6.96000000
+        Avogadro's Number: 6.02214130e+11
+      Molar Volume: 
+        Type: Constant
+        Value: 7.11600000
+      Shear Modulus: 
+        Shear Modulus Type: Constant
+        Value: 75.38461538
+        dmudT Value: 0.00000000e+00
+      Bulk Modulus: 
+        Bulk Modulus Type: Constant
+        Value: 163.33333333
+        dKdT Value: 0.00000000e+00
+      Thermal Conductivity: 
+        Thermal Conductivity Type: Constant
+        Value: 0.00000000e+00
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 50000.00000000
+        dYdT Value: 0.00000000e+00
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 0.00000000e+00
+        dHdT Value: 0.00000000e+00
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.30000000
+      Reference Temperature: 300.00000000
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 196.00000000
+      Saturation Modulus: 2.07000000
+      Saturation Exponent: 1.00000000
+      Output Cauchy Stress: true
+      Output Deformation Gradient: true
+      Output Total Concentration: true
+      Output eqps: true
+    NeoHook: 
+      Material Model: 
+        Model Name: Neohookean
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 19600.00000000
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.48000000
+...

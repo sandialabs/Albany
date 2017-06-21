@@ -1,0 +1,26 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    Region_5: 
+      material: Mat_1
+  Materials: 
+    Mat_1: 
+      Material Model: 
+        Model Name: Linear Elastic
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 3.00000000e+07
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.30000000
+      Thermal Conductivity: 
+        Thermal Conductivity Type: Constant
+        Value: 0.00062500
+      Thermal Expansion Coefficient: 8.40000000e-06
+      Thermal Transient Coefficient: 1.00000000
+      Reference Temperature: 70.00000000
+      Density: 0.28400000
+      Heat Capacity: 0.10000000
+      Initial Temperature: 70.00000000
+...

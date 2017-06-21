@@ -1,0 +1,310 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Mechanics 3D
+    Solution Method: Continuation
+    Phalanx Graph Visualization Detail: 1
+    MaterialDB Filename: blockDiffusionPressGradMaterials.yaml
+    Transport: 
+      Variable Type: DOF
+    HydroStress: 
+      Variable Type: DOF
+    Temperature: 
+      Variable Type: Constant
+      Value: 300.00000
+    Initial Condition: 
+      Function: Constant
+      Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00, 0.00005000, 0.00000000e+00]
+    Dirichlet BCs: 
+      Time Dependent DBC on NS nodelist_1 for DOF C: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00005000, 0.00100000, 0.00100000]
+      DBC on NS nodelist_2 for DOF C: 0.00005000
+      DBC on NS nodelist_5 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_6 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_5 for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_6 for DOF Z: 0.00000000e+00
+      Time Dependent DBC on NS nodelist_7 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00]
+      Time Dependent DBC on NS nodelist_8 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00011016, 0.00011016]
+      Time Dependent DBC on NS nodelist_9 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00024125, 0.00024125]
+      Time Dependent DBC on NS nodelist_10 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00039422, 0.00039422]
+      Time Dependent DBC on NS nodelist_11 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00057000, 0.00057000]
+      Time Dependent DBC on NS nodelist_12 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00076953, 0.00076953]
+      Time Dependent DBC on NS nodelist_13 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00099375, 0.00099375]
+      Time Dependent DBC on NS nodelist_14 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00124359, 0.00124359]
+      Time Dependent DBC on NS nodelist_15 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00152000, 0.00152000]
+      Time Dependent DBC on NS nodelist_16 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00182391, 0.00182391]
+      Time Dependent DBC on NS nodelist_17 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00215625, 0.00215625]
+      Time Dependent DBC on NS nodelist_18 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00251797, 0.00251797]
+      Time Dependent DBC on NS nodelist_19 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00291000, 0.00291000]
+      Time Dependent DBC on NS nodelist_20 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00333328, 0.00333328]
+      Time Dependent DBC on NS nodelist_21 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00378875, 0.00378875]
+      Time Dependent DBC on NS nodelist_22 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00427734, 0.00427734]
+      Time Dependent DBC on NS nodelist_23 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00480000, 0.00480000]
+      Time Dependent DBC on NS nodelist_24 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00535766, 0.00535766]
+      Time Dependent DBC on NS nodelist_25 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00595125, 0.00595125]
+      Time Dependent DBC on NS nodelist_26 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00658172, 0.00658172]
+      Time Dependent DBC on NS nodelist_27 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00725000, 0.00725000]
+      Time Dependent DBC on NS nodelist_28 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00795703, 0.00795703]
+      Time Dependent DBC on NS nodelist_29 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00870375, 0.00870375]
+      Time Dependent DBC on NS nodelist_30 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.00949109, 0.00949109]
+      Time Dependent DBC on NS nodelist_31 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.01032000, 0.01032000]
+      Time Dependent DBC on NS nodelist_32 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.01119141, 0.01119141]
+      Time Dependent DBC on NS nodelist_33 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.01210625, 0.01210625]
+      Time Dependent DBC on NS nodelist_34 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.01306547, 0.01306547]
+      Time Dependent DBC on NS nodelist_35 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.01407000, 0.01407000]
+      Time Dependent DBC on NS nodelist_36 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.01512078, 0.01512078]
+      Time Dependent DBC on NS nodelist_37 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.01621875, 0.01621875]
+      Time Dependent DBC on NS nodelist_38 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.01736484, 0.01736484]
+      Time Dependent DBC on NS nodelist_39 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.01856000, 0.01856000]
+      Time Dependent DBC on NS nodelist_40 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.01980516, 0.01980516]
+      Time Dependent DBC on NS nodelist_41 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.02110125, 0.02110125]
+      Time Dependent DBC on NS nodelist_42 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.02244922, 0.02244922]
+      Time Dependent DBC on NS nodelist_43 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.02385000, 0.02385000]
+      Time Dependent DBC on NS nodelist_44 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.02530453, 0.02530453]
+      Time Dependent DBC on NS nodelist_45 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.02681375, 0.02681375]
+      Time Dependent DBC on NS nodelist_46 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.02837859, 0.02837859]
+      Time Dependent DBC on NS nodelist_47 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1000.00000000, 2000.00000000]
+        BC Values: [0.00000000e+00, 0.03000000, 0.03000000]
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    Method: Exodus
+    Exodus Input File Name: blockDiffusionPressGrad.g
+    Exodus Output File Name: blockDiffusionPressGrad.e
+    Solution Vector Components: [disp, V, CL, S, tauH, S]
+    Residual Vector Components: [force, V, CLresid, S, tauHresid, S]
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: Time
+        Max Steps: 10000
+        Max Value: 1000.00000000
+        Min Value: 0.00000000e+00
+        Compute Eigenvalues: false
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Jacobian Inverse
+          Num Eigenvalues: 0
+      Step Size: 
+        Method: Constant
+        Initial Step Size: 25.00000000
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 1000
+                      Output Frequency: 10
+                    Max Iterations: 500
+                    Tolerance: 1.00000000e-06
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: medium
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-06
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 500
+                      Block Size: 1
+                      Num Blocks: 1000
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 2
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: level-of-fill': 1
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    'aggregation: damping factor': 0.00000000e+00
+                    'coarse: type': 'Amesos-KLU'
+                    PDE equations: 3
+                    'smoother: type': ILU
+                    'coarse: max size': 1000
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Complete
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 4
+        Test 0: 
+          Test Type: RelativeNormF
+          Tolerance: 1.00000000e-10
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 15
+        Test 2: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NStep
+            Number of Nonlinear Iterations: 3
+          Test 1: 
+            Test Type: NormF
+            Tolerance: 1.00000000e-10
+        Test 3: 
+          Test Type: FiniteValue
+...

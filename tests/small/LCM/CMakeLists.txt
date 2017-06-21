@@ -1,0 +1,82 @@
+##*****************************************************************//
+##    Albany 3.0:  Copyright 2016 Sandia Corporation               //
+##    This Software is released under the BSD license detailed     //
+##    in the file "license.txt" in the top-level Albany directory  //
+##*****************************************************************//
+
+add_subdirectory(CapModelPlasticity3D)
+add_subdirectory(DomainTear2D)
+add_subdirectory(Elasticity2DTriangles)
+add_subdirectory(Elasticity3DPressureBC)
+add_subdirectory(RandomFracture3D)
+add_subdirectory(StaticElasticity1D)
+add_subdirectory(StaticElasticity2D)
+add_subdirectory(StaticElasticity3D)
+add_subdirectory(ThermoElasticity2D)
+add_subdirectory(ThermoElasticity3D)
+add_subdirectory(ThermoMechanicalCan)
+add_subdirectory(TransientElasticity2D)
+add_subdirectory(UnitTests)
+# amota: Deactivating Catalyst as unclear who owns it
+# add_subdirectory(Catalyst)
+
+IF(ALBANY_HAVE_STK)
+  IF(ALBANY_SEACAS)
+    add_subdirectory(BoreDemo)
+    add_subdirectory(CohesiveElement)
+    add_subdirectory(Dynamics)
+    add_subdirectory(Elasticity2DTraction)
+    add_subdirectory(EquilibriumConcentrationBC)
+    add_subdirectory(HeliumODEs)
+    add_subdirectory(HydrogenKfieldBC)
+    add_subdirectory(KfieldBC)
+    add_subdirectory(KfieldSurfaceElementNotchH2)
+    add_subdirectory(MaterialPointSimulator)
+    add_subdirectory(MechWithHydrogenFastPath)
+    add_subdirectory(Mechanics)
+    add_subdirectory(MechanicsPorePressure)
+    add_subdirectory(MechanicsRigidBody)
+    add_subdirectory(MechanicsWithHelium)
+    add_subdirectory(MechanicsWithHydrogen)
+    add_subdirectory(MechanicsWithTemperature)
+    add_subdirectory(Partition)
+    add_subdirectory(QuasiStaticElasticityMM3D)
+    add_subdirectory(RigidBody)
+    add_subdirectory(StabilizedTet4)
+    add_subdirectory(StrongDBC)
+    add_subdirectory(SurfaceElement)
+    add_subdirectory(SurfaceElementLocking)
+    add_subdirectory(SurfaceElementOrtiz)
+    add_subdirectory(ThermoMechanicalContact)
+    add_subdirectory(TimeDependentSDBC)
+    add_subdirectory(TorsionBC)
+    # JTO 8/1/2015
+    # deactivating HeliumDamage until model robustness issues are resolved  
+    # add_subdirectory(HeliumDamage)
+    IF(ALBANY_EPETRA AND ALBANY_PERIDIGM)
+      add_subdirectory(PeridigmCoupling)
+    ENDIF()
+  ENDIF(ALBANY_SEACAS)
+ENDIF(ALBANY_HAVE_STK)
+
+IF(ALBANY_LAME)
+    add_subdirectory(LameStaticElasticity3D)
+    add_subdirectory(LameMultiMaterials)
+ENDIF()
+
+IF(ALBANY_LAMENT)
+  add_subdirectory(LamentStaticElasticity3D)
+ENDIF()
+
+IF(ALBANY_SEACAS OR ALBANY_SCOREC)
+  add_subdirectory(MechanicsTensileTet10)
+ENDIF()
+
+IF(ALBANY_SCOREC)
+  add_subdirectory(SCOREC)
+ENDIF()
+
+IF(ALBANY_STK_PERCEPT)
+  add_subdirectory(Heat2DSTKAdapt)
+  add_subdirectory(Necking3DSTKAdapt)
+ENDIF()

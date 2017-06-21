@@ -41,17 +41,17 @@ StVenantKirchhoffModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void StVenantKirchhoffModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
+    DepFieldMap dep_fields,
+    FieldMap eval_fields)
 {
   // extract dependent MDFields
-  PHX::MDField<ScalarT> def_grad = *dep_fields["F"];
-  PHX::MDField<ScalarT> J = *dep_fields["J"];
-  PHX::MDField<ScalarT> poissons_ratio = *dep_fields["Poissons Ratio"];
-  PHX::MDField<ScalarT> elastic_modulus = *dep_fields["Elastic Modulus"];
+  auto def_grad = *dep_fields["F"];
+  auto J = *dep_fields["J"];
+  auto poissons_ratio = *dep_fields["Poissons Ratio"];
+  auto elastic_modulus = *dep_fields["Elastic Modulus"];
   // extract evaluated MDFields
   std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
-  PHX::MDField<ScalarT> stress = *eval_fields[cauchy];
+  auto stress = *eval_fields[cauchy];
   ScalarT lambda;
   ScalarT mu;
 

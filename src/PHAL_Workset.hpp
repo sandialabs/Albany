@@ -190,6 +190,9 @@ struct Workset {
 
   Teuchos::RCP<Albany::Application>
   current_app_;
+
+  std::set<int>
+  fixed_dofs_;
 #endif
 
   Albany::StateArray* stateArrayPtr;
@@ -221,10 +224,7 @@ struct Workset {
   Teuchos::RCP<const Epetra_Import> x_importer;
 #endif
   Teuchos::RCP<const Tpetra_Import> x_importerT;
-#if defined(ALBANY_EPETRA)
-  Teuchos::RCP<Epetra_Vector> g;
-#endif
-  //Tpetra analog of g
+  //Tpetra version of response vector g
   Teuchos::RCP<Tpetra_Vector> gT;
 #if defined(ALBANY_EPETRA)
   Teuchos::RCP<Epetra_MultiVector> dgdx;
@@ -244,13 +244,10 @@ struct Workset {
   Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxT;
   Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxdotT;
   Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxdotdotT;
-#if defined(ALBANY_EPETRA)
-  Teuchos::RCP<Epetra_MultiVector> dgdp;
-  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdp;
-#endif
+
   //Tpetra analog of dgdp
   Teuchos::RCP<Tpetra_MultiVector> dgdpT;
-  //dp-convert Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT;
+  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT;
 
 #if defined(ALBANY_STOKHOS) and defined(ALBANY_EPETRA)
 #ifdef ALBANY_SG

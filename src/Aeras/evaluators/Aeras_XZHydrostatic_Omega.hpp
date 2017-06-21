@@ -41,11 +41,11 @@ public:
 
 private:
   // Input:
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim> Velocity;
-  PHX::MDField<ScalarT,Cell,Node,Level>     density;
-  PHX::MDField<ScalarT,Cell,Node,Level>     Cpstar;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> gradp;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     divpivelx;
+  PHX::MDField<const ScalarT,Cell,Node,Level,Dim> Velocity;
+  PHX::MDField<const ScalarT,Cell,Node,Level>     density;
+  PHX::MDField<const ScalarT,Cell,Node,Level>     Cpstar;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level,Dim> gradp;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level>     divpivelx;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Level>      omega;

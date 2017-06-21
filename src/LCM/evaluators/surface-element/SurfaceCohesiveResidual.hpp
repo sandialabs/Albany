@@ -47,15 +47,15 @@ private:
   cubature_;
 
   // Finite element basis for the midplane
-  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
   intrepid_basis_;
 
   // Reference area
-  PHX::MDField<ScalarT, Cell, QuadPoint>
+  PHX::MDField<const ScalarT, Cell, QuadPoint>
   ref_area_;
 
   // Traction vector based on cohesive-separation law
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim>
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim>
   cohesive_traction_;
 
   // Reference Cell Views

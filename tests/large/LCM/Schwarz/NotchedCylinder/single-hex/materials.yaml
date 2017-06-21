@@ -1,0 +1,20 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    fine: 
+      material: Fine
+      Weighted Volume Average J: false
+      Use Composite Tet 10: false
+  Materials: 
+    Fine: 
+      Material Model: 
+        Model Name: Saint Venant Kirchhoff
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1440.0000
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.25000000
+      Output Cauchy Stress: true
+...

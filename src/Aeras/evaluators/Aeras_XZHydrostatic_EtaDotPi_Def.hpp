@@ -60,7 +60,7 @@ XZHydrostatic_EtaDotPi(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Pidot);
 
   for (int i = 0; i < tracerNames.size(); ++i) {
-    PHX::MDField<ScalarT,Cell,QuadPoint,Level> in   (tracerNames[i],          dl->qp_scalar_level);
+    PHX::MDField<const ScalarT,Cell,QuadPoint,Level> in(tracerNames[i], dl->qp_scalar_level);
     //PHX::MDField<ScalarT,Cell,QuadPoint,Level> out  (etadotdtracerNames[i],   dl->qp_scalar_level);
     PHX::MDField<ScalarT,Cell,QuadPoint,Level> out  (dedotpitracerdeNames[i],   dl->qp_scalar_level);
     Tracer[tracerNames[i]]         = in;

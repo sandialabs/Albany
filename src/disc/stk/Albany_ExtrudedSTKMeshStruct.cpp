@@ -142,10 +142,13 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   }
 
   numDim = 3;
+  numLayers = params->get<int>("NumLayers");
+  Ordering = params->get("Columnwise Ordering", false) ? LayeredMeshOrdering::COLUMN : LayeredMeshOrdering::LAYER;
+
   int cub = params->get("Cubature Degree", 3);
   int basalWorksetSize = basalMeshStruct->getMeshSpecs()[0]->worksetSize;
-  int worksetSizeMax = params->get("Workset Size", 50);
-  int numElemsInColumn = params->get<int>("NumLayers")*((ElemShape==Tetrahedron) ? 3 : 1);
+  int worksetSizeMax = params->get<int>("Workset Size", DEFAULT_WORKSET_SIZE);
+  int numElemsInColumn = numLayers*((ElemShape==Tetrahedron) ? 3 : 1);
   int worksetSize = this->computeWorksetSize(worksetSizeMax, basalWorksetSize*numElemsInColumn);
 
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
@@ -214,10 +217,8 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   LayeredMeshOrdering LAYER  = LayeredMeshOrdering::LAYER;
   LayeredMeshOrdering COLUMN = LayeredMeshOrdering::COLUMN;
 
-  numLayers = params->get("NumLayers", 10);
   bool useGlimmerSpacing = params->get("Use Glimmer Spacing", false);
   GO numGlobalVertices2D = 0;
-  Ordering = params->get("Columnwise Ordering", false) ? COLUMN : LAYER;
   bool isTetra = true;
 
   stk::mesh::BulkData& bulkData2D = *basalMeshStruct->bulkData;
@@ -969,16 +970,18 @@ void Albany::ExtrudedSTKMeshStruct::interpolateBasalLayeredFields (const std::ve
       for (int il=0; il<numLayers; ++il)
       {
         // Retrieving the id of the 3d cells
-        stk::mesh::EntityId prismId = Ordering==COLUMN ? numLayers*cell2dId + il + 1 : maxGlobalCells2dId*il + cell2dId + 1;
+        stk::mesh::EntityId prismId = Ordering==COLUMN ? numLayers*cell2dId + il : maxGlobalCells2dId*il + cell2dId;
         std::vector<stk::mesh::Entity> cells3d;
         switch (ElemShape)
         {
           case Tetrahedron:
-            cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+2));
-            cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+1));
+            cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, 3*prismId+1));
+            cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, 3*prismId+2));
+            cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, 3*prismId+3));
+            break;
           case Wedge:
           case Hexahedron:
-            cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId));
+            cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+1));
         }
 
         // Since the
@@ -1210,16 +1213,18 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
           for (int il=0; il<numLayers; ++il)
           {
             // Retrieving the id of the 3d cells
-            stk::mesh::EntityId prismId = Ordering==COLUMN ? numLayers*cell2dId + il + 1 : maxGlobalCells2dId*il + cell2dId + 1;
+            stk::mesh::EntityId prismId = Ordering==COLUMN ? numLayers*cell2dId + il : maxGlobalCells2dId*il + cell2dId;
             std::vector<stk::mesh::Entity> cells3d;
             switch (ElemShape)
             {
               case Tetrahedron:
-                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+2));
-                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+1));
+                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, 3*prismId+1));
+                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, 3*prismId+2));
+                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, 3*prismId+3));
+                break;
               case Wedge:
               case Hexahedron:
-                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId));
+                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+1));
             }
 
             // Stuffing the 3d fields

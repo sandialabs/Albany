@@ -47,6 +47,8 @@ private:
   int numCells, numVertices, numDims, numNodes, numQPs, numTopos;
 
   std::string elementBlockName;
+  std::string gaussWeightsName;
+  std::string isSetName;
   Teuchos::Array<std::string> topoNames;
 
   // Input:
@@ -54,7 +56,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
   Teuchos::RCP<Cogent::Integrator> cubature;
 
-  Kokkos::DynRankView<RealType, PHX::Device> topoVals;
+  Kokkos::DynRankView<RealType, PHX::Device> geomVals;
   Kokkos::DynRankView<RealType, PHX::Device> coordVals;
   Kokkos::DynRankView<RealType, PHX::Device> val_at_cub_points;
   Kokkos::DynRankView<RealType, PHX::Device> grad_at_cub_points;

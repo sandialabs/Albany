@@ -47,10 +47,10 @@ echo; echo "   Starting Dakota checkout..."
 cd $TRILDIR/packages/TriKota
 export https_proxy="https://wwwproxy.ca.sandia.gov:80"
 export http_proxy="http://wwwproxy.ca.sandia.gov:80"
-wget -nv --no-check-certificate https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-6.2-public.src.tar.gz -v
-tar -zxvf dakota-6.2-public.src.tar.gz 
-rm -rf dakota-6.2-public.src.tar.gz 
-mv dakota-6.2.0.src Dakota
+wget -nv --no-check-certificate https://dakota.sandia.gov/sites/default/files/distributions/public/dakota-6.5-public.src.tar.gz -v
+tar -zxvf dakota-6.5-public.src.tar.gz 
+rm -rf dakota-6.5-public.src.tar.gz 
+mv dakota-6.5.0.src Dakota
 echo; echo "   ...finished Dakota checkout."
 
 echo; echo "   Copying DTK directory into Trilinos..."
@@ -60,10 +60,6 @@ cp -r /home/ikalash/nightlyAlbanyTests/DataTransferKit-2.0.0 DataTransferKit
 #cd DataTransferKit
 #git clone git@github.com:ORNL-CEES/DTKData.git
 echo; echo "   ...finished DTK copy into Trilinos."
-echo; echo "   Starting tempus checkout..." 
-cd $TRILDIR 
-git clone software.sandia.gov:/git/tempus
-echo; echo "   ...finished tempus checkout."
 
 
 

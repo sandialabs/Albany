@@ -9,8 +9,8 @@ macro(do_peridigm)
     "-DCMAKE_FIND_PREFIX_PATH:PATH=/projects/albany"
     "-DCMAKE_BUILD_TYPE:STRING=Release"
     "-DENABLE_INSTALL:BOOL=ON"
-    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/PeridigmInstall"
-    "-DTRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_INSTALL_DIRECTORY}/PeridigmInstall"
+    "-DTRILINOS_DIR:PATH=${CTEST_INSTALL_DIRECTORY}/TrilinosInstall"
     "-DCMAKE_C_COMPILER:STRING=mpicc"
     "-DCMAKE_CXX_COMPILER:STRING=mpicxx"
     "-DBOOST_ROOT=${BOOST_ROOT}"
@@ -19,6 +19,13 @@ macro(do_peridigm)
     "-DUSE_PALS:BOOL=OFF"
     "-DCMAKE_CXX_FLAGS:STRING='-O2 -std=c++11 -Wall -pedantic -Wno-long-long -ftrapv -Wno-deprecated'"
     "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF")
+
+# Clean up build area
+  IF (CLEAN_BUILD)
+    IF(EXISTS "${CTEST_BINARY_DIRECTORY}/PeridigmBuild" )
+      FILE(REMOVE_RECURSE "${CTEST_BINARY_DIRECTORY}/PeridigmBuild")
+    ENDIF()
+  ENDIF()
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/PeridigmBuild")
     file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/PeridigmBuild)
@@ -45,8 +52,18 @@ macro(do_peridigm)
   endif (HAD_ERROR)
 
   if (BUILD_PERIDIGM)
+
     set (CTEST_BUILD_TARGET install)
+
+# Clean up install area
+    IF (CLEAN_BUILD)
+        IF(EXISTS "${CTEST_INSTALL_DIRECTORY}/PeridigmInstall" )
+          FILE(REMOVE_RECURSE "${CTEST_INSTALL_DIRECTORY}/PeridigmInstall")
+        ENDIF()
+    ENDIF()
+
     message ("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+
     ctest_build (
       BUILD "${CTEST_BINARY_DIRECTORY}/PeridigmBuild"
       RETURN_VALUE HAD_ERROR

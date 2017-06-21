@@ -87,7 +87,7 @@ template<typename EvalT, typename Traits>
 void Aeras::ShallowWaterResponseL2Norm<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  PHAL::set(this->global_response, 0.0);
+  PHAL::set(this->global_response_eval, 0.0);
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
 }
@@ -98,7 +98,7 @@ void Aeras::ShallowWaterResponseL2Norm<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {  
   // Zero out local response
-  PHAL::set(this->local_response, 0.0);
+  PHAL::set(this->local_response_eval, 0.0);
 
   //Calculate L2 norm squared of each component of solution.  We do not need to do 
   //an interpolation from the nodes to the QPs of the solution since nodes = QPs for Aeras
@@ -108,8 +108,8 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       wm = weighted_measure(cell,qp);
       for (std::size_t dim=0; dim<nPrimaryDOFs; ++dim) {
-        this->local_response(cell,dim) += wm*flow_state_field(cell,qp,dim)*flow_state_field(cell,qp,dim);
-        this->global_response(dim) += wm*flow_state_field(cell,qp,dim)*flow_state_field(cell,qp,dim);
+        this->local_response_eval(cell,dim) += wm*flow_state_field(cell,qp,dim)*flow_state_field(cell,qp,dim);
+        this->global_response_eval(dim) += wm*flow_state_field(cell,qp,dim)*flow_state_field(cell,qp,dim);
       }
     }
   }
@@ -147,7 +147,7 @@ postEvaluate(typename Traits::PostEvalData workset)
       &this->global_response[0]);
 #else
   //amb reduceAll workaround
-  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
+  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response_eval);
 #endif
   
 #if 0
@@ -158,7 +158,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   this-> global_response[2] = sqrt(abs_err_sq/norm_ref_sq); //relative error in solution w.r.t. reference solution.
 #else
   //amb op[] bracket workaround
-  PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+  PHAL::MDFieldIterator<ScalarT> gr(this->global_response_eval);
   ScalarT h_norm_sq = *gr;
   *gr = sqrt(h_norm_sq); 
   ++gr;

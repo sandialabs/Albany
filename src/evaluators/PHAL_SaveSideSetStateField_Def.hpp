@@ -53,8 +53,7 @@ SaveSideSetStateField (const Teuchos::ParameterList& p,
   fieldName = p.get<std::string>("Field Name");
   stateName = p.get<std::string>("State Name");
 
-  PHX::MDField<ScalarT> f(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("Field Layout") );
-  field = f;
+  field = decltype(field)(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("Field Layout") );
 
   nodalState = p.isParameter("Nodal State") ? p.get<bool>("Nodal State") : false;
 
@@ -65,9 +64,9 @@ SaveSideSetStateField (const Teuchos::ParameterList& p,
 
   if (nodalState)
   {
-    TEUCHOS_TEST_FOR_EXCEPTION (f.fieldTag().dataLayout().size()<3, Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(field.fieldTag().dataLayout().size()<3, Teuchos::Exceptions::InvalidParameter,
                                 "Error! To save a side-set nodal state, pass the cell-side-based version of it (<Cell,Side,Node,...>).\n");
-    TEUCHOS_TEST_FOR_EXCEPTION (f.fieldTag().dataLayout().name(2)!="Node", Teuchos::Exceptions::InvalidParameter,
+    TEUCHOS_TEST_FOR_EXCEPTION(field.fieldTag().dataLayout().name(2)!="Node", Teuchos::Exceptions::InvalidParameter,
                                 "Error! To save a side-set nodal state, the third tag of the layout MUST be 'Node'.\n");
 
     Teuchos::RCP<shards::CellTopology> cellType;

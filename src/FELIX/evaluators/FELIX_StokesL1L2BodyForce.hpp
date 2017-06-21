@@ -42,8 +42,8 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:  
-  PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> muFELIX;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> coordVec;
   Teuchos::Array<double> gravity;
   
   // Output:

@@ -16,7 +16,6 @@ HydrologyResidualThicknessEqn (const Teuchos::ParameterList& p,
   BF        (p.get<std::string> ("BF Name"), dl->node_qp_scalar),
   w_measure (p.get<std::string> ("Weighted Measure Name"), dl->qp_scalar),
   h         (p.get<std::string> ("Water Thickness QP Variable Name"), dl->qp_scalar),
-  h_dot     (p.get<std::string> ("Water Thickness Dot QP Variable Name"), dl->qp_scalar),
   N         (p.get<std::string> ("Effective Pressure QP Variable Name"), dl->qp_scalar),
   m         (p.get<std::string> ("Melting Rate QP Variable Name"), dl->qp_scalar),
   u_b       (p.get<std::string> ("Sliding Velocity QP Variable Name"), dl->qp_scalar),
@@ -41,18 +40,19 @@ HydrologyResidualThicknessEqn (const Teuchos::ParameterList& p,
     numQPs   = dl->qp_scalar->dimension(1);
   }
 
-  this->addDependentField(BF.fieldTag());
-  this->addDependentField(w_measure.fieldTag());
-  this->addDependentField(h.fieldTag());
-  this->addDependentField(N.fieldTag());
-  this->addDependentField(m.fieldTag());
-  this->addDependentField(u_b.fieldTag());
+  this->addDependentField(BF);
+  this->addDependentField(w_measure);
+  this->addDependentField(h);
+  this->addDependentField(N);
+  this->addDependentField(m);
+  this->addDependentField(u_b);
 
   unsteady = p.get<bool>("Unsteady");
   if (unsteady)
-    this->addDependentField(h_dot.fieldTag());
-  else
-    this->addEvaluatedField(h_dot); // Will be set to zero
+  {
+    h_dot = decltype(h_dot) (p.get<std::string> ("Water Thickness Dot QP Variable Name"), dl->qp_scalar);
+    this->addDependentField(h_dot);
+  }
 
   this->addEvaluatedField(residual);
 
@@ -89,15 +89,13 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(w_measure,fm);
   this->utils.setFieldData(h,fm);
-  this->utils.setFieldData(h_dot,fm);
+  if (unsteady)
+    this->utils.setFieldData(h_dot,fm);
   this->utils.setFieldData(N,fm);
   this->utils.setFieldData(m,fm);
   this->utils.setFieldData(u_b,fm);
 
   this->utils.setFieldData(residual,fm);
-
-  if (!unsteady)
-    h_dot.deep_copy(ScalarT(0.0));
 }
 
 template<typename EvalT, typename Traits, bool IsStokes>
@@ -106,7 +104,7 @@ evaluateFields (typename Traits::EvalData workset)
 {
   // h' = W_O - W_C = (m/rho_i + u_b*(h_b-h)/l_b) - AhN^n
 
-  ScalarT res_node, res_qp;
+  ScalarT res_node, res_qp, zero(0.0);
 
   if (IsStokes)
   {
@@ -129,7 +127,7 @@ evaluateFields (typename Traits::EvalData workset)
         for (int qp=0; qp < numQPs; ++qp)
         {
           res_qp = rho_i_inv*m(cell,side,qp) - (h_r - use_eff_cav*h(cell,side,qp))*u_b(cell,side,qp)/l_r
-                 + h(cell,side,qp)*A*std::pow(N(cell,side,qp),3) - h_dot(cell,side,qp);
+                 + h(cell,side,qp)*A*std::pow(N(cell,side,qp),3) - (unsteady ? h_dot(cell,side,qp) : zero);
 
           res_node += res_qp * BF(cell,side,node,qp) * w_measure(cell,side,qp);
         }
@@ -148,7 +146,7 @@ evaluateFields (typename Traits::EvalData workset)
         for (int qp=0; qp < numQPs; ++qp)
         {
           res_qp = rho_i_inv*m(cell,qp) + (h_r - use_eff_cav*h(cell,qp))*u_b(cell,qp)/l_r
-                 - h(cell,qp)*A*std::pow(N(cell,qp),3) - h_dot(cell,qp);
+                 - h(cell,qp)*A*std::pow(N(cell,qp),3) - (unsteady ? h_dot(cell,qp) : zero);
 
           res_node += res_qp * BF(cell,node,qp) * w_measure(cell,qp);
         }

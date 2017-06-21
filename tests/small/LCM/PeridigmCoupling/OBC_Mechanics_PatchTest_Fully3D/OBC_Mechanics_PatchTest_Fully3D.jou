@@ -1,0 +1,64 @@
+
+reset
+
+#{SCALE_FACTOR=1.230769}
+#{HORIZON=0.0625*SCALE_FACTOR}
+
+#{BAR_LENGTH=16*HORIZON}
+#{BAR_HEIGHT=8*HORIZON}
+#{BAR_DEPTH=8*HORIZON}
+
+#{PD_ELEM_SIZE=0.5*HORIZON}
+#{FEM_ELEM_SIZE=HORIZON}
+
+#{OVERLAP=6*HORIZON}
+
+#{EPSILON=0.1*FEM_ELEM_SIZE}
+
+create brick x {BAR_LENGTH} y {BAR_HEIGHT} z {BAR_DEPTH}
+webcut volume 1 with plane xplane offset {-0.5*BAR_LENGTH + 2.0*HORIZON} imprint merge
+webcut volume 1 with plane xplane offset { 0.5*BAR_LENGTH - 2.0*HORIZON} imprint merge
+webcut volume 1 2 3 with plane yplane offset {-0.5*BAR_HEIGHT + 2.0*HORIZON} imprint merge
+webcut volume 4 5 6 with plane yplane offset { 0.5*BAR_HEIGHT - 2.0*HORIZON} imprint merge
+webcut volume 1 2 3 4 5 6 7 8 9 with plane zplane offset {-0.5*BAR_DEPTH + 2.0*HORIZON} imprint merge
+webcut volume 1 2 3 4 5 6 7 8 9 with plane zplane offset { 0.5*BAR_DEPTH - 2.0*HORIZON} imprint merge
+volume 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 move x {-0.5*BAR_LENGTH + 0.5*OVERLAP} y 0.0 z 0.0
+
+create brick x {BAR_LENGTH} y {BAR_HEIGHT} z {BAR_DEPTH}
+volume 28 move x {0.5*BAR_LENGTH - 0.5*OVERLAP} y 0.0 z 0.0
+
+volume 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 size {PD_ELEM_SIZE}
+volume 28 size {FEM_ELEM_SIZE}
+mesh volume all
+
+block 1 volume 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
+block 2 volume 28
+
+# dirichlet
+nodeset 1 volume 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 23 25 26 27 surface 267 268 269 271 272
+
+# control
+volume 28 move x {2.0*BAR_LENGTH} y 0.0 z 0.0
+nodeset 2 volume 22 node with x_coord < {2.0*BAR_LENGTH - 0.5*OVERLAP + EPSILON} and x_coord > {2.0*BAR_LENGTH - 0.5*OVERLAP - EPSILON} and y_coord > {-0.5*BAR_HEIGHT + EPSILON} and y_coord < {0.5*BAR_HEIGHT - EPSILON} and z_coord > {-0.5*BAR_HEIGHT + EPSILON} and z_coord < {0.5*BAR_HEIGHT - EPSILON}
+volume 28 move x {-2.0*BAR_LENGTH} y 0.0 z 0.0
+
+export genesis 'OBC_Mechanics_PatchTest_Fully3D_AllHex.g' overwrite
+
+# spheregen.py --ignore-blocks 2 -o OBC_Mechanics_PatchTest_Fully3D.g OBC_Mechanics_PatchTest_Fully3D_AllHex.g
+
+
+
+
+
+
+
+
+
+# PD volume constraint
+# nodeset 2 volume 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 23 25 26 27
+
+# PD control
+# nodeset 3 volume 22
+
+# FEM boundary condition
+# nodeset 4 surface 267 268 269 271 272

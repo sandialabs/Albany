@@ -41,9 +41,11 @@ private:
   std::vector<std::vector<int> >  sideNodes;
   std::vector<int>                dims;
 
+  Teuchos::RCP<shards::CellTopology> cellType;
+
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT> val_cell;
+  PHX::MDField<const ScalarT> val_cell;
 
   // Output:
   //! Values on side

@@ -1,0 +1,148 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Elasticity 3D
+    Solution Method: Continuation
+    Phalanx Graph Visualization Detail: 0
+    Dirichlet BCs: 
+      DBC on NS top for DOF X: 0.00000000e+00
+      DBC on NS top for DOF Y: 0.00000000e+00
+      DBC on NS top for DOF Z: 0.00000000e+00
+      DBC on NS bottom for DOF X: 0.00000000e+00
+      DBC on NS bottom for DOF Y: 0.00000000e+00
+      DBC on NS bottom for DOF Z: 0.00000000e+00
+    Neumann BCs: 
+      Time Dependent NBC on SS cyl_outside for DOF all set P: 
+        Time Values: [0.00000000e+00, 1.00000000, 2.00000000]
+        BC Values: [[0.00000000e+00], [10.00000000], [20.00000000]]
+    Elastic Modulus: 
+      Elastic Modulus Type: Constant
+      Value: 100.00000000
+    Poissons Ratio: 
+      Poissons Ratio Type: Constant
+      Value: 0.29000000
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+    Response Functions: 
+      Number: 2
+      Response 0: Solution Average
+      Response 1: Solution Max Value
+    Adaptation: 
+      Method: RPI Scaled Size
+      Remesh Step Number: [1]
+      Max Number of Mesh Adapt Iterations: 5
+      Mesh Size Scaling: 0.60000000
+  Discretization: 
+    Method: PUMI
+    Workset Size: 50
+    Mesh Model Input File Name: ../meshes/cylinder/2ndOrderCyl.dmg
+    PUMI Input File Name: ../meshes/cylinder/2ndOrderCyl_p.smb
+    PUMI Output File Name: cyl_out.vtk
+    Element Block Associations: [[1], [cylinder]]
+    Side Set Associations: [[3], [cyl_outside]]
+    Node Set Associations: [[1, 2], [top, bottom]]
+    2nd Order Mesh: true
+    Cubature Degree: 2
+  Regression Results: 
+    Number of Comparisons: 2
+    Test Values: [0.01000000, 0.22000000]
+    Absolute Tolerance: 0.10000000
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: Time
+        Max Steps: 3
+        Max Value: 2.00000000
+        Min Value: 0.00000000e+00
+        Compute Eigenvalues: false
+        Skip Parameter Derivative: true
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Jacobian Inverse
+          Num Eigenvalues: 0
+      Step Size: 
+        Initial Step Size: 0.10000000
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  VerboseObject: 
+                    Verbosity Level: none
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000e-10
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: low
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-06
+                      Output Frequency: 0
+                      Output Style: 0
+                      Verbosity: 0
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: { }
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options: 
+        Status Test Check Type: Complete
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 4
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000e-10
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 15
+        Test 2: 
+          Test Type: NormF
+          Scale Type: Unscaled
+          Tolerance: 1.00000000e-07
+        Test 3: 
+          Test Type: FiniteValue
+...

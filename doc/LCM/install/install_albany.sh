@@ -3,12 +3,37 @@
 echo ">>> checking dnf packages <<<"
 error="NONE"
 for pkg in \
-blas blas-devel lapack lapack-devel openmpi openmpi-devel \
-netcdf netcdf-devel netcdf-static netcdf-openmpi netcdf-openmpi-devel \
-hdf5 hdf5-devel hdf5-static hdf5-openmpi hdf5-openmpi-devel \
-boost boost-devel boost-static boost-openmpi boost-openmpi-devel \
-matio matio-devel cmake gcc-c++ git hwloc-libs hwloc-devel \
-environment-modules; do
+blas \
+blas-devel \
+boost \
+boost-devel \
+boost-openmpi \
+boost-openmpi-devel \
+boost-static \
+cmake \
+environment-modules \
+gcc-c++ \
+git \
+hdf5 \
+hdf5-devel \
+hdf5-openmpi \
+hdf5-openmpi-devel \
+hdf5-static \
+hwloc-devel \
+hwloc-libs \
+lapack \
+lapack-devel \
+matio \
+matio-devel \
+netcdf \
+netcdf-devel \
+netcdf-openmpi \
+netcdf-openmpi-devel \
+netcdf-static \
+openmpi \
+openmpi-devel \
+yaml-cpp \
+yaml-cpp-devel; do
   query=`dnf list $pkg |& tail -n1`
   if [ ${query:0:5} == "Error" ]; then
     echo "MISSING $pkg"
@@ -22,7 +47,7 @@ if [ ! $error == "NONE" ]; then
 fi
 
 if [ ! -d Trilinos ]; then
-  git clone https://github.com/trilinos/Trilinos.git Trilinos
+  git clone git@github.com:trilinos/Trilinos.git Trilinos
 else
   echo ">>> Trilinos exists, freshening it <<<"
   (cd Trilinos; git pull)
@@ -34,7 +59,7 @@ else
   (cd Albany; git pull)
 fi
 
-ln -sf Albany/doc/LCM/build/*.sh .
+ln -sf Albany/doc/LCM/build/build.sh .
 ln -sf build.sh clean.sh
 ln -sf build.sh config.sh
 ln -sf build.sh test.sh
@@ -43,8 +68,6 @@ ln -sf build.sh clean-config-build.sh
 ln -sf build.sh clean-config-build-test.sh
 ln -sf build.sh config-build.sh
 ln -sf build.sh config-build-test.sh
-
-echo "NOTE for testing: change FROM & TO email addresses in env-single.sh"
 
 if [[ -z $LCM_DIR ]]; then
   echo "ERROR: Top level LCM directory not defined."
@@ -59,9 +82,9 @@ fi
 NP=`nproc`
 toolchain="gcc"
 machinetype="serial"
-#buildtype="debug"
 buildtype="release"
 
+module load lcm/fedora
 module load $machinetype-$toolchain-$buildtype
 
 for target in trilinos albany; do

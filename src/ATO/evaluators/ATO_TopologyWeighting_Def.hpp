@@ -40,10 +40,8 @@ BF(p.get<std::string> ("BF Name"), dl->node_qp_scalar)
       std::endl << "Options are (QP Tensor3, QP Tensor, QP Vector, QP Scalar)" <<
       std::endl);
 
-  PHX::MDField<ScalarT> _unWeightedVar(p.get<std::string>("Unweighted Variable Name"), layout);
-  unWeightedVar = _unWeightedVar;
-  PHX::MDField<ScalarT> _weightedVar(p.get<std::string>("Weighted Variable Name"), layout);
-  weightedVar = _weightedVar;
+  unWeightedVar = decltype(unWeightedVar)(p.get<std::string>("Unweighted Variable Name"), layout);
+  weightedVar = decltype(weightedVar)(p.get<std::string>("Weighted Variable Name"), layout);
 
   this->addDependentField(unWeightedVar);
   this->addDependentField(BF);

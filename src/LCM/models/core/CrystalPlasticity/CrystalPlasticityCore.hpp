@@ -74,6 +74,9 @@ public:
   minitensor::Tensor<RealType, NumSlipT>
   latent_matrix_;
 
+  minitensor::Tensor<RealType, NumSlipT>
+  aux_matrix_;
+
 private:
 
   HardeningLawType
@@ -90,9 +93,15 @@ struct StateMechanical
   using TensorType = minitensor::Tensor<ScalarT, NumDimT>;
   using InputTensorType = minitensor::Tensor<RealType, NumDimT>;
 
-  StateMechanical(int num_dim, InputTensorType const & Fp_n)
+  StateMechanical(
+    int num_dim,
+    InputTensorType const & F_n,
+    InputTensorType const & Fp_n,
+    TensorType const & F_np1)
     : num_dim_(num_dim),
+      F_n_(F_n),
       Fp_n_(Fp_n),
+      F_np1_(F_np1),
       Fp_np1_(num_dim),
       Lp_np1_(num_dim),
       sigma_np1_(num_dim),
@@ -103,7 +112,13 @@ struct StateMechanical
   num_dim_;
 
   InputTensorType const
+  F_n_;
+
+  InputTensorType const
   Fp_n_;
+
+  TensorType const
+  F_np1_;
 
   TensorType
   Fp_np1_;
@@ -118,16 +133,17 @@ struct StateMechanical
   S_np1_;
 };
 
-
 template<typename ScalarT, minitensor::Index NumSlipT>
 struct StateInternal
 {
   using VectorType = minitensor::Vector<ScalarT, NumSlipT>;
   using InputVectorType = minitensor::Vector<RealType, NumSlipT>;
 
-  StateInternal(int num_slip, InputVectorType const & hardening_n,
+StateInternal(int cell, int pt, int num_slip, InputVectorType const & hardening_n,
       InputVectorType const & slip_n)
-    : num_slip_(num_slip),
+    : cell_(cell),
+      pt_(pt),
+      num_slip_(num_slip),
       hardening_n_(hardening_n),
       slip_n_(slip_n),
       rate_slip_(num_slip),
@@ -135,7 +151,19 @@ struct StateInternal
       slip_np1_(num_slip),
       shear_np1_(num_slip),
       resistance_(num_slip)
-  {}
+  {
+    rate_slip_.fill(minitensor::Filler::ZEROS);
+    hardening_np1_.fill(minitensor::Filler::ZEROS);
+    slip_np1_.fill(minitensor::Filler::ZEROS);
+    shear_np1_.fill(minitensor::Filler::ZEROS);
+    resistance_.fill(minitensor::Filler::ZEROS);
+  }
+
+  int
+  cell_;
+
+  int
+  pt_;
 
   int
   num_slip_;
@@ -162,15 +190,14 @@ struct StateInternal
   resistance_;
 };
 
-//
-//! Check tensor for NaN and inf values.
-//
-template<minitensor::Index NumDimT, typename ArgT>
+///
+/// Verify that constitutive update has preserved finite values
+///
+template<typename T, minitensor::Index N>
 void
-confirmTensorSanity(
-    minitensor::Tensor<ArgT, NumDimT> const & input,
-    std::string const & message);
-
+expectFiniteTensor(
+                   minitensor::Tensor<T, N> const & A,
+                   std::string const & msg);
 
 //
 //! Compute Lp_np1 and Fp_np1 based on computed slip increment.
@@ -200,7 +227,8 @@ updateHardness(
     minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
     minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
     minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    minitensor::Vector<ArgT, NumSlipT> & slip_resistance);
+    minitensor::Vector<ArgT, NumSlipT> & slip_resistance,
+    bool & failed);
 
 
 
@@ -219,8 +247,6 @@ updateSlip(
     minitensor::Vector<ArgT, NumSlipT> & slip_np1,
     bool & failed);
 
-
-
 //
 //! Compute stress.
 //
@@ -233,9 +259,8 @@ computeStress(
     minitensor::Tensor<ArgT, NumDimT> const & Fp,
     minitensor::Tensor<ArgT, NumDimT> & sigma,
     minitensor::Tensor<ArgT, NumDimT> & S,
-    minitensor::Vector<ArgT, NumSlipT> & shear);
-
-
+    minitensor::Vector<ArgT, NumSlipT> & shear,
+    bool & failed);
 
 //
 //! Construct elasticity tensor

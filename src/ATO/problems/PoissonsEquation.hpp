@@ -16,7 +16,6 @@
 #include "ATO_Mixture.hpp"
 #include "ATO_Utils.hpp"
 
-#include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
@@ -159,7 +158,8 @@ Albany::PoissonsEquationProblem::constructEvaluators(
 
    int cubatureDegree = meshSpecs.cubatureDegree;
 
-   std::string blockType = "Body";
+   bool blockHasBody = true;
+   int numBoundaries = 0;
 
 #ifdef ATO_USES_COGENT
    bool isNonconformal = false;
@@ -168,34 +168,55 @@ Albany::PoissonsEquationProblem::constructEvaluators(
      if(params->sublist("Configuration").isType<bool>("Nonconformal"))
        isNonconformal = params->sublist("Configuration").get<bool>("Nonconformal");
    }
-   RCP<Cogent::Integrator> projector;
+   RCP<Cogent::Integrator> bodyProjector;
    if(isNonconformal){
      // find geom spec
      Teuchos::ParameterList& blocksParams = params->sublist("Configuration").sublist("Element Blocks");
      int nBlocks = blocksParams.get<int>("Number of Element Blocks");
-     std::string specName;
+     bool foundBlockSpec = false;
      for(int i=0; i<nBlocks; i++){
        std::string specName_i = Albany::strint("Element Block", i);
        blockSpec = blocksParams.sublist(specName_i);
        if( blockSpec.get<std::string>("Name") == elementBlockName ){
+         foundBlockSpec = true;
          geomSpec = blockSpec.sublist("Geometry Construction");
-         if( geomSpec.get<bool>("Uniform Quadrature") ){
-           specName = specName_i;
-           break;
-         } else {
-           TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                                    "Nonconformal method requires 'Uniform Quadrature'");
-         }
+         TEUCHOS_TEST_FOR_EXCEPTION(!(geomSpec.get<bool>("Uniform Quadrature")), std::logic_error,
+                                  "Nonconformal method requires 'Uniform Quadrature'");
        }
      }
-     Cogent::IntegratorFactory integratorFactory;
-     projector = integratorFactory.create(cellType, intrepidBasis, geomSpec);
 
+     TEUCHOS_TEST_FOR_EXCEPTION(!foundBlockSpec, std::logic_error,
+                               "Configuration: Element block definition not found for " << elementBlockName);
+
+     // 'Projection Order' and 'Uniform Quadrature' are specified below the 
+     // 'Geometry Construction' block.  Set the values in the 'Body' and 'Boundary X' 
+     // sublists for later parsing in Cogent.
      int projectionOrder = geomSpec.get<int>("Projection Order");
+     int errorChecking = geomSpec.get("Error Checking",0);
      cubatureDegree = 2*projectionOrder;
+     bool uniformQuadrature = geomSpec.get<bool>("Uniform Quadrature");
 
-     blockType = geomSpec.get<std::string>("Geometry Type");
+     // create body projector
+     blockHasBody = geomSpec.isSublist("Body");
+     if(blockHasBody){
+       Teuchos::ParameterList& bodySpec = geomSpec.sublist("Body");
+       bodySpec.set("Projection Order", projectionOrder);
+       bodySpec.set("Uniform Quadrature", uniformQuadrature);
+       bodySpec.set("Error Checking", errorChecking);
+       bodySpec.set("Geometry Type", "Body");
+       Cogent::IntegratorFactory integratorFactory;
+       bodyProjector = integratorFactory.create(cellType, intrepidBasis, bodySpec);
+     }
 
+     if( geomSpec.isType<int>("Number of Boundaries") )
+       numBoundaries = geomSpec.get<int>("Number of Boundaries");
+     for(int iBoundary=0; iBoundary<numBoundaries; iBoundary++){
+       Teuchos::ParameterList& boundarySpec = geomSpec.sublist(Albany::strint("Boundary", iBoundary));
+       boundarySpec.set("Projection Order", projectionOrder);
+       boundarySpec.set("Uniform Quadrature", uniformQuadrature);
+       boundarySpec.set("Error Checking", errorChecking);
+       boundarySpec.set("Geometry Type", "Boundary");
+     }
    }
 #endif
 
@@ -223,27 +244,37 @@ Albany::PoissonsEquationProblem::constructEvaluators(
    Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
 
 #ifdef ATO_USES_COGENT
-   if( isNonconformal ){
-     Teuchos::Array<std::string> topoNames = geomSpec.get<Teuchos::Array<std::string> >("Level Set Names");
-     int numNames = topoNames.size();
-     for(int i=0; i<numNames; i++){
-       RCP<ParameterList> p = rcp(new ParameterList);
-       Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDataToElemNode;
-       p = stateMgr.registerStateVariable(topoNames[i], dl->node_scalar, "all", true, &entity);
-     }
-   }
+  if( isNonconformal ){
+    if( blockHasBody && geomSpec.sublist("Body").isType<Teuchos::Array<std::string> >("Level Set Names") ){
+      Teuchos::Array<std::string> 
+        topoNames = geomSpec.sublist("Body").get<Teuchos::Array<std::string> >("Level Set Names");
+      int numNames = topoNames.size();
+      for(int i=0; i<numNames; i++){
+        RCP<ParameterList> p = rcp(new ParameterList);
+        Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDataToElemNode;
+        p = stateMgr.registerStateVariable(topoNames[i], dl->node_scalar, "all", true, &entity);
+      }
+    }
+    for(int iBoundary=0; iBoundary<numBoundaries; iBoundary++){
+      Teuchos::ParameterList boundarySpec = geomSpec.sublist(Albany::strint("Boundary", iBoundary));
+      if(boundarySpec.isType<Teuchos::Array<std::string> >("Level Set Names")){
+        Teuchos::Array<std::string> topoNames = boundarySpec.get<Teuchos::Array<std::string> >("Level Set Names");
+        int numNames = topoNames.size();
+        for(int i=0; i<numNames; i++){
+          RCP<ParameterList> p = rcp(new ParameterList);
+          Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDataToElemNode;
+          p = stateMgr.registerStateVariable(topoNames[i], dl->node_scalar, "all", true, &entity);
+        }
+      }
+    }
+  }
 #endif
-
-   std::string boundaryTermName("Boundary Value");
 
    Teuchos::ArrayRCP<std::string> dof_names(1);
    dof_names[0] = "Phi";
    Teuchos::ArrayRCP<std::string> resid_names(1);
-   resid_names[0] = dof_names[0]+" Residual";
+   resid_names[0] = "Not Set";
 
-
-   std::string kinVarName("kinVar");
-   std::string gradPhiName(dof_names[0]+" Gradient");
 
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructDOFInterpolationEvaluator(dof_names[0]));
@@ -262,14 +293,14 @@ Albany::PoissonsEquationProblem::constructEvaluators(
      (evalUtils.constructMapToPhysicalFrameEvaluator(cellType, cubature));
 
 #ifdef ATO_USES_COGENT
-   if( isNonconformal ){
-     RCP<ParameterList> p = rcp(new ParameterList("Compute Basis Functions"));
+   if( isNonconformal && blockHasBody ){
+     RCP<ParameterList> p = rcp(new ParameterList("Cogent:  Compute Basis Functions"));
 
      //Input
      p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
      p->set<bool>("Static Topology", true);
 
-     p->set< RCP<Cogent::Integrator> >("Cubature",     projector);
+     p->set< RCP<Cogent::Integrator> >("Cubature",     bodyProjector);
      p->set<std::string>("Coordinate Vector Name",   "Coord Vec");
      p->set<std::string>("Weights Name",               "Weights");
      p->set<std::string>("Jacobian Det Name",     "Jacobian Det");
@@ -312,318 +343,130 @@ Albany::PoissonsEquationProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if( blockType == "Body" )
-  { // Linear isotropic material response
-    RCP<ParameterList> p = rcp(new ParameterList(kinVarName));
+  if( blockHasBody )
+  { 
+    std::string kinVarName("kinVar");
+    std::string gradPhiName(dof_names[0]+" Gradient");
 
-    //Input
-    p->set<std::string>("Input Vector Name", gradPhiName);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+    // Linear flux
+    atoUtils.constructFluxEvaluators( params, fm0, stateMgr, elementBlockName, kinVarName, gradPhiName );
 
+    // Apply user defined weighting 
+    atoUtils.constructWeightedFieldEvaluators( params, fm0, stateMgr, elementBlockName, "QP Vector", kinVarName );
+    atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName, elementBlockName, dl->qp_vector);
 
-    // check for multiple element block specs
-    Teuchos::ParameterList& configParams = params->sublist("Configuration");
+    {
+      RCP<ParameterList> p = rcp(new ParameterList("Residual"));
 
-    if( configParams.isSublist("Element Blocks") ){
-      Teuchos::ParameterList& blocksParams = configParams.sublist("Element Blocks");
-      int nblocks = blocksParams.get<int>("Number of Element Blocks");
-      bool blockFound = false;
-      for(int ib=0; ib<nblocks; ib++){
-        Teuchos::ParameterList& blockParams = blocksParams.sublist(Albany::strint("Element Block", ib));
-        std::string blockName = blockParams.get<std::string>("Name");
-        if( blockName != elementBlockName ) continue;
-        blockFound = true;
-
-        // user can specify a material or a mixture
-        if( blockParams.isSublist("Material") ){
-          // parse material
-          Teuchos::ParameterList& materialParams = blockParams.sublist("Material",false);
-          if( materialParams.isSublist("Homogenized Constants") ){
-            Teuchos::ParameterList& homogParams = p->sublist("Homogenized Constants",false);
-            homogParams.setParameters(materialParams.sublist("Homogenized Constants",true));
-            p->set<Albany::StateManager*>("State Manager", &stateMgr);
-            p->set<Teuchos::RCP<Albany::Layouts> >("Data Layout", dl);
-          } else {
-            p->set<double>("Coefficient", materialParams.get<double>("Isotropic Modulus"));
-          }
-          //Output
-          p->set<std::string>("Output Vector Name", kinVarName);
-  
-          ev = rcp(new ATO::ScaleVector<EvalT,AlbanyTraits>(*p));
-          fm0.template registerEvaluator<EvalT>(ev);
-      
-          // state the strain in the state manager so for ATO
-          p = stateMgr.registerStateVariable(kinVarName,dl->qp_vector, dl->dummy, 
-                                             elementBlockName, "scalar", 0.0, false, false);
-          ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-          fm0.template registerEvaluator<EvalT>(ev);
-      
-          //if(some input stuff)
-          atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName, elementBlockName, dl->qp_vector);
-
-        } else
-        if( blockParams.isSublist("Mixture") ){
-          // parse mixture
-          Teuchos::ParameterList& mixtureParams = blockParams.sublist("Mixture",false);
-          int nmats = mixtureParams.get<int>("Number of Materials");
-
-          //-- create individual materials --//
-          for(int imat=0; imat<nmats; imat++){
-            RCP<ParameterList> pmat = rcp(new ParameterList(*p));
-            Teuchos::ParameterList& materialParams = mixtureParams.sublist(Albany::strint("Material", imat));
-            if( materialParams.isSublist("Homogenized Constants") ){
-              Teuchos::ParameterList& homogParams = pmat->sublist("Homogenized Constants",false);
-              homogParams.setParameters(materialParams.sublist("Homogenized Constants",true));
-              pmat->set<Albany::StateManager*>("State Manager", &stateMgr);
-              pmat->set<Teuchos::RCP<Albany::Layouts> >("Data Layout", dl);
-            } else {
-              pmat->set<double>("Coefficient", materialParams.get<double>("Isotropic Modulus"));
-            }
-            //Output
-            std::string outName = Albany::strint(kinVarName, imat);
-            pmat->set<std::string>("Output Vector Name", outName);
-  
-            ev = rcp(new ATO::ScaleVector<EvalT,AlbanyTraits>(*pmat));
-            fm0.template registerEvaluator<EvalT>(ev);
-        
-            // state the strain in the state manager so for ATO
-            pmat = stateMgr.registerStateVariable(outName,dl->qp_vector, dl->dummy, 
-                                                  elementBlockName, "scalar", 0.0, false, false);
-            ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*pmat));
-            fm0.template registerEvaluator<EvalT>(ev);
-        
-            //if(some input stuff)
-            atoUtils.SaveCellStateField(fm0, stateMgr, outName, elementBlockName, dl->qp_vector);
-          }
-
-          //-- create mixture --//
-          TEUCHOS_TEST_FOR_EXCEPTION( !mixtureParams.isSublist("Mixed Fields"), std::logic_error,
-                                  "'Mixture' requested but no 'Fields' defined"  << std::endl <<
-                                  "Add 'Fields' list");
-          {
-            Teuchos::ParameterList& fieldsParams = mixtureParams.sublist("Mixed Fields",false);
-            int nfields = fieldsParams.get<int>("Number of Mixed Fields");
-
-
-            //-- create individual mixture field evaluators --//
-            for(int ifield=0; ifield<nfields; ifield++){
-              Teuchos::ParameterList& fieldParams = fieldsParams.sublist(Albany::strint("Mixed Field", ifield));
-              std::string fieldName = fieldParams.get<std::string>("Field Name");
-
-              RCP<ParameterList> p = rcp(new ParameterList(fieldName + " Mixed Field"));
-
-              std::string fieldLayout = fieldParams.get<std::string>("Field Layout");
-              p->set<std::string>("Field Layout", fieldLayout);
-
-              std::string mixtureRule = fieldParams.get<std::string>("Rule Type");
-
-              // currently only SIMP-type mixture is implemented
-              Teuchos::ParameterList& simpParams = fieldParams.sublist(mixtureRule);
- 
-              Teuchos::RCP<ATO::TopologyArray> 
-                topologyArray = params->get<Teuchos::RCP<ATO::TopologyArray> >("Topologies");
-              p->set<Teuchos::RCP<ATO::TopologyArray> > ("Topologies", topologyArray);
-
-              // topology and function indices
-              p->set<Teuchos::Array<int> >("Topology Indices", 
-                                           simpParams.get<Teuchos::Array<int> >("Topology Indices"));
-              p->set<Teuchos::Array<int> >("Function Indices", 
-                                           simpParams.get<Teuchos::Array<int> >("Function Indices"));
-
-              // constituent var names
-              Teuchos::Array<int> matIndices = simpParams.get<Teuchos::Array<int> >("Material Indices");
-              int nMats = matIndices.size();
-              Teuchos::Array<int> topoIndices = simpParams.get<Teuchos::Array<int> >("Topology Indices");
-              int nTopos = topoIndices.size();
-              TEUCHOS_TEST_FOR_EXCEPTION(nMats != nTopos+1, std::logic_error, std::endl <<
-                                        "For SIMP Mixture, 'Materials' list must be 1 longer than 'Topologies' list"
-                                        << std::endl);
-              Teuchos::Array<std::string> constituentNames(nMats);
-              for(int imat=0; imat<nmats; imat++){
-                std::string constituentName = Albany::strint(fieldName, matIndices[imat]);
-                constituentNames[imat] = constituentName;
-              }
-              p->set<Teuchos::Array<std::string> >("Constituent Variable Names", constituentNames);
-              
-              // mixture var name
-              p->set<std::string>("Mixture Variable Name",fieldName);
-
-              // basis functions
-              p->set<std::string>("BF Name", "BF");
-    
-              ev = rcp(new ATO::Mixture<EvalT,AlbanyTraits>(*p,dl));
-              fm0.template registerEvaluator<EvalT>(ev);
-            }
-          }
-        } else
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                                  "'Material' or 'Mixture' not specified for '" 
-                                  << elementBlockName << "'");
-      }
-      TEUCHOS_TEST_FOR_EXCEPTION(!blockFound, std::logic_error,
-                                 "Material definition for block named '" << elementBlockName << "' not found");
-    } else {
-
-
-
-
-
-   
-      if( params->isType<int>("Add Cell Problem Forcing") )
-        p->set<int>("Cell Forcing Column", params->get<int>("Add Cell Problem Forcing") );
-  
-      if( params->isSublist("Homogenized Constants") ){
-        Teuchos::ParameterList& homogParams = p->sublist("Homogenized Constants",false);
-        homogParams.setParameters(params->sublist("Homogenized Constants",true));
-        p->set<Albany::StateManager*>("State Manager", &stateMgr);
-        p->set<Teuchos::RCP<Albany::Layouts> >("Data Layout", dl);
-      } else {
-        p->set<double>("Coefficient", params->get<double>("Isotropic Modulus"));
-      }
+      p->set<bool>("Disable Transient", true);
+      p->set<std::string>("Vector Name", kinVarName);
+      p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+      p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+      p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
   
       //Output
-      p->set<std::string>("Output Vector Name", kinVarName);
+      resid_names[0] = dof_names[0]+" Residual";
+      p->set<std::string>("Residual Name", resid_names[0]);
+      p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
   
-      ev = rcp(new ATO::ScaleVector<EvalT,AlbanyTraits>(*p));
+      ev = rcp(new ATO::VectorResidual<EvalT,AlbanyTraits>(*p));
       fm0.template registerEvaluator<EvalT>(ev);
-  
-      // state the kinetic variable in the state manager for ATO
-      p = stateMgr.registerStateVariable(kinVarName,dl->qp_vector, dl->dummy, 
-                                         elementBlockName, "scalar", 0.0, false, false);
-      ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-      fm0.template registerEvaluator<EvalT>(ev);
-    
-      //if(some input stuff)
-      atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName, elementBlockName, dl->qp_vector);
     }
-  } else
-  if( blockType == "Boundary" )
+    if( params->isSublist("Fixed Field") )
+    {
+      std::string fixedFieldName("Fixed Field");
+
+      atoUtils.constructFixedFieldTermEvaluators( params, fm0, stateMgr, elementBlockName, dof_names[0], fixedFieldName);
+
+      atoUtils.constructWeightedFieldEvaluators( params, fm0, stateMgr, elementBlockName, "QP Scalar", fixedFieldName );
+      atoUtils.SaveCellStateField(fm0, stateMgr, fixedFieldName, elementBlockName, dl->qp_scalar);
+
+  
+      RCP<ParameterList> p = rcp(new ParameterList(fixedFieldName));
+      p->set<std::string>("Scalar Name", fixedFieldName);
+      p->set< RCP<DataLayout> >("Scalar Data Layout", dl->qp_scalar);
+      p->set<std::string>("Weighted BF Name", "wBF");
+      p->set< RCP<DataLayout> >("Weighted BF Data Layout", dl->node_qp_scalar);
+      p->set<std::string>("In Residual Name", resid_names[0]);
+      p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+      resid_names[0] += " with " + fixedFieldName;
+      p->set<std::string>("Out Residual Name", resid_names[0]);
+//      p->set<bool>("Negative",true);
+      ev = rcp(new ATO::AddScalar<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+  }
+
+  if( numBoundaries )
 #ifdef ATO_USES_COGENT
   {
-    // Boundary forces
-    //
-    if(params->isSublist("Implicit Boundary Conditions")){
-      Teuchos::ParameterList& bcSpec = params->sublist("Implicit Boundary Conditions");
-      atoUtils.constructBoundaryConditionEvaluators( bcSpec, fm0, stateMgr, elementBlockName, boundaryTermName );
-    }
-  }
-#else
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                               "Cogent not enabled. 'Boundary' block type not available.");
-  }
-#endif
+    Cogent::IntegratorFactory integratorFactory;
+    
+    for(int iBoundary=0; iBoundary<numBoundaries; iBoundary++){
 
-  /*******************************************************************************/
-  /** Begin topology weighting ***************************************************/
-  /*******************************************************************************/
-  if(params->isType<Teuchos::RCP<ATO::TopologyArray> >("Topologies"))
-  {
-    Teuchos::RCP<ATO::TopologyArray>
-      topologyArray = params->get<Teuchos::RCP<ATO::TopologyArray> >("Topologies");
+      // Create Boundary integrating quadrature
+      Teuchos::ParameterList boundarySpec = geomSpec.sublist(Albany::strint("Boundary", iBoundary));
+      RCP<Cogent::Integrator>
+        boundaryProjector = integratorFactory.create(cellType, intrepidBasis, boundarySpec);
+      std::string boundaryName = boundarySpec.get<std::string>("Boundary Name");
 
-    Teuchos::ParameterList& wfParams = params->sublist("Apply Topology Weight Functions");
-    int nfields = wfParams.get<int>("Number of Fields");
-    for(int ifield=0; ifield<nfields; ifield++){
-      Teuchos::ParameterList& fieldParams = wfParams.sublist(Albany::strint("Field", ifield));
+      RCP<ParameterList> p = rcp(new ParameterList("Cogent: Compute Basis Functions"));
+      p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
+      p->set<bool>("Static Topology", true);
 
-      int topoIndex  = fieldParams.get<int>("Topology Index");
-      std::string fieldName  = fieldParams.get<std::string>("Name");
-      std::string layoutName = fieldParams.get<std::string>("Layout");
-      int functionIndex      = fieldParams.get<int>("Function Index");
+      std::string weightsName = Albany::strint("Weight", iBoundary);
+      std::string wBFName = Albany::strint("wBF", iBoundary);
+ 
+      p->set< RCP<Cogent::Integrator> >("Cubature", boundaryProjector);
+      p->set<std::string>("Coordinate Vector Name",   "Coord Vec");
+      p->set<std::string>("Weights Name",              weightsName);
+      p->set<std::string>("Jacobian Det Name",         Albany::strint("Jacobian Det", iBoundary));
+      p->set<std::string>("Jacobian Name",             Albany::strint("Jacobian",     iBoundary));
+      p->set<std::string>("Jacobian Inv Name",         Albany::strint("Jacobian Inv", iBoundary));
+      p->set<std::string>("BF Name",                   Albany::strint("BF",           iBoundary));
+      p->set<std::string>("Weighted BF Name",          wBFName);
+      p->set<std::string>("Gradient BF Name",          Albany::strint("Grad BF",      iBoundary));
+      p->set<std::string>("Weighted Gradient BF Name", Albany::strint("wGrad BF",     iBoundary));
+  
+      ev = rcp(new ATO::ComputeBasisFunctions<EvalT,AlbanyTraits>(*p,dl,&meshSpecs));
+      fm0.template registerEvaluator<EvalT>(ev);
+ 
+      atoUtils.SaveCellStateField(fm0, stateMgr, weightsName, elementBlockName, dl->qp_scalar);
+    
+      // Compute boundary forces
+      std::string boundaryTermName = Albany::strint("Boundary Flux", iBoundary);
+      if(params->isSublist("Implicit Boundary Conditions")){
+        Teuchos::ParameterList& bcSpec = params->sublist("Implicit Boundary Conditions");
+        atoUtils.constructBoundaryConditionEvaluators( bcSpec, fm0, stateMgr, boundaryName, boundaryTermName );
+      }
 
-      std::string reqBlockType;
-      if( fieldParams.isType<std::string>("Type") )
-        reqBlockType = fieldParams.get<std::string>("Type");
-      else
-        reqBlockType = "Body";
+      // Apply user defined weighting
+      atoUtils.constructWeightedFieldEvaluators( params, fm0, stateMgr, elementBlockName, "QP Scalar", boundaryTermName );
+      atoUtils.SaveCellStateField(fm0, stateMgr, boundaryTermName, elementBlockName, dl->qp_scalar);
 
-      if( reqBlockType != blockType ) continue;
+      {
+        RCP<ParameterList> p = rcp(new ParameterList("Boundary Fluxes"));
 
-      Teuchos::RCP<PHX::DataLayout> layout;
-      if( layoutName == "QP Scalar" ) layout = dl->qp_scalar;
-      else
-      if( layoutName == "QP Vector" ) layout = dl->qp_vector;
-      else
-      if( layoutName == "QP Tensor" ) layout = dl->qp_tensor;
+        if(resid_names[0] == "Not Set"){
+          // Create residual
+          resid_names[0] = boundaryTermName;
+        } else {
+          // Add to residual
+          p->set<std::string>("In Residual Name", resid_names[0]);
+          resid_names[0] += " with " + boundaryTermName;
+        }
 
-      Teuchos::RCP<ATO::Topology> topology = (*topologyArray)[topoIndex];
-
-      // Get distributed parameter
-      if( topology->getEntityType() == "Distributed Parameter" ){
-        RCP<ParameterList> p = rcp(new ParameterList("Distributed Parameter"));
-        p->set<std::string>("Parameter Name", topology->getName());
-        ev = rcp(new PHAL::GatherScalarNodalParameter<EvalT,AlbanyTraits>(*p, dl) );
+        p->set<std::string>("Scalar Name", boundaryTermName);
+        p->set<std::string>("Weighted BF Name", wBFName);
+        p->set<std::string>("Out Residual Name", resid_names[0]);
+        p->set< RCP<DataLayout> >("Scalar Data Layout", dl->qp_scalar);
+        p->set< RCP<DataLayout> >("Weighted BF Data Layout", dl->node_qp_scalar);
+        p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
+        p->set<bool>("Negative",true);
+        ev = rcp(new ATO::AddScalar<EvalT,AlbanyTraits>(*p));
         fm0.template registerEvaluator<EvalT>(ev);
       }
-  
-      RCP<ParameterList> p = rcp(new ParameterList("TopologyWeighting"));
-
-      p->set<Teuchos::RCP<ATO::Topology> >("Topology",topology);
-
-      p->set<std::string>("BF Name", "BF");
-      p->set<std::string>("Unweighted Variable Name", fieldName);
-      p->set<std::string>("Weighted Variable Name", fieldName+"_Weighted");
-      p->set<std::string>("Variable Layout", layoutName);
-      p->set<int>("Function Index", functionIndex);
-
-      if( topology->getEntityType() == "Distributed Parameter" )
-        ev = rcp(new ATO::TopologyFieldWeighting<EvalT,AlbanyTraits>(*p,dl));
-      else
-        ev = rcp(new ATO::TopologyWeighting<EvalT,AlbanyTraits>(*p,dl));
-  
-      fm0.template registerEvaluator<EvalT>(ev);
-
-      //if(some input stuff)
-      atoUtils.SaveCellStateField(fm0, stateMgr, fieldName+"_Weighted", 
-                                  elementBlockName, layout);
     }
-  }
-  /*******************************************************************************/
-  /** End topology weighting *****************************************************/
-  /*******************************************************************************/
-
-  if( blockType == "Body" )
-  { // Residual
-    RCP<ParameterList> p = rcp(new ParameterList("Residual"));
-
-    p->set<bool>("Disable Transient", true);
-
-    //Input
-    if( params->isType<Teuchos::RCP<ATO::TopologyArray> >("Topologies") )
-      p->set<std::string>("Vector Name", kinVarName+"_Weighted");
-    else
-      p->set<std::string>("Vector Name", kinVarName);
-    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
-
-    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set< RCP<DataLayout> >("Node QP Vector Data Layout", dl->node_qp_vector);
-
-    //Output
-    p->set<std::string>("Residual Name", resid_names[0]);
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
-
-    ev = rcp(new ATO::VectorResidual<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  } else
-  if( blockType == "Boundary" )
-#ifdef ATO_USES_COGENT
-  {
-    RCP<ParameterList> p = rcp(new ParameterList("Boundary Values"));
-    if( params->isType<Teuchos::RCP<ATO::TopologyArray> > ("Topologies") )
-      p->set<std::string>("Scalar Name", boundaryTermName+"_Weighted");
-    else 
-    p->set<std::string>("Scalar Name", boundaryTermName);
-    p->set<std::string>("Weighted BF Name", "wBF");
-    resid_names[0] = boundaryTermName;
-    p->set<std::string>("Out Residual Name", resid_names[0]);
-    p->set< RCP<DataLayout> >("Scalar Data Layout", dl->qp_scalar);
-    p->set< RCP<DataLayout> >("Weighted BF Data Layout", dl->node_qp_scalar);
-    p->set< RCP<DataLayout> >("Node Scalar Data Layout", dl->node_scalar);
-    p->set<bool>("Negative",true);
-    ev = rcp(new ATO::AddScalar<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-  
   }
 #else
   {

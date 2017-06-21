@@ -12,14 +12,13 @@
 
 #include "Albany_AbstractProblem.hpp"
 #include "ConstitutiveModelInterface.hpp"
-#include "MaterialDatabase.h"
+#include "Albany_MaterialDatabase.hpp"
 
 #ifdef ALBANY_ATO
 #include "ATO_OptimizationProblem.hpp"
 #include "ATO_Utils.hpp"
 #endif 
 
-#include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
@@ -98,7 +97,7 @@ namespace Albany {
     void parseMaterialModel(Teuchos::RCP<Teuchos::ParameterList>& p,
                        const Teuchos::RCP<Teuchos::ParameterList>& params) const;
 
-    Teuchos::RCP<LCM::MaterialDatabase> material_db_;
+    Teuchos::RCP<Albany::MaterialDatabase> material_db_;
 
 
   public:
@@ -204,7 +203,7 @@ Albany::HMCProblem::constructEvaluators(
 #endif
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
+   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
      intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
 
    const int numNodes = intrepidBasis->getCardinality();

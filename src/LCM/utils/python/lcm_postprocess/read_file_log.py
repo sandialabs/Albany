@@ -229,7 +229,10 @@ if __name__ == '__main__':
 
     match = re.search('(.+)_Log.out', name_file_input)
     if type(match) != type(None):
-        name_file_base = match.group(1)
+        parts_path = match.group(1).split('/')
+        name_file_base = parts_path[-1]
+        match = re.search('(.*)' + name_file_base, name_file_input)
+        path_file = match.group(1)
 
     if len(sys.argv) == 2:
 

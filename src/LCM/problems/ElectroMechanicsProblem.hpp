@@ -13,7 +13,6 @@
 #include "Albany_AbstractProblem.hpp"
 #include "ConstitutiveModelInterface.hpp"
 
-#include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
@@ -167,7 +166,7 @@ protected:
   ///
   /// RCP to matDB object
   ///
-  Teuchos::RCP<LCM::MaterialDatabase> material_db_;
+  Teuchos::RCP<Albany::MaterialDatabase> material_db_;
 
   ///
   /// old state data
@@ -222,7 +221,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   typedef Teuchos::RCP<
-      Intrepid2::Basis<PHX::Device, RealType, RealType> >
+      Intrepid2::Basis<PHX::Device, RealType, RealType>>
   Intrepid2Basis;
 
   // Collect problem-specific response parameters
@@ -276,7 +275,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // get the intrepid basis for the given cell topology
   Intrepid2Basis intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
   Intrepid2::DefaultCubatureFactory cubFactory;
-  Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature =
+  Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature =
       cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
 
   // Note that these are the volume element quantities

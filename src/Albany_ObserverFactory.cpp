@@ -5,9 +5,13 @@
 //*****************************************************************//
 #include "Albany_ObserverFactory.hpp"
 
+#if defined(ALBANY_EPETRA)
 #include "Albany_NOXObserver.hpp"
 #include "Albany_NOXStatelessObserver.hpp"
+#endif
+#if defined(ALBANY_EPETRA) && defined(ALBANY_RYTHMOS)
 #include "Albany_RythmosObserver.hpp"
+#endif
 
 #ifdef ALBANY_MOR
 #if defined(ALBANY_EPETRA)
@@ -25,17 +29,16 @@ NOXObserverFactory::NOXObserverFactory(const Teuchos::RCP<Application> &app) :
   app_(app)
 {}
 
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<NOX::Epetra::Observer>
 NOXObserverFactory::createInstance()
 {
   Teuchos::RCP<NOX::Epetra::Observer> result(new Albany_NOXObserver(app_));
 #ifdef ALBANY_MOR
-#if defined(ALBANY_EPETRA)
   if(app_->getDiscretization()->supportsMOR()){
     const Teuchos::RCP<MOR::ObserverFactory> morObserverFactory = app_->getMorFacade()->observerFactory();
     result = morObserverFactory->create(result);
   }
-#endif
 #endif
   return result;
 }
@@ -49,17 +52,17 @@ Teuchos::RCP<NOX::Epetra::Observer>
 NOXStatelessObserverFactory::createInstance () {
   Teuchos::RCP<NOX::Epetra::Observer> result(new NOXStatelessObserver(app_));
 #ifdef ALBANY_MOR
-#if defined(ALBANY_EPETRA)
   if (app_->getDiscretization()->supportsMOR()) {
     const Teuchos::RCP<MOR::ObserverFactory>
       morObserverFactory = app_->getMorFacade()->observerFactory();
     result = morObserverFactory->create(result);
   }
 #endif
-#endif
   return result;
 }
+#endif
 
+#if defined(ALBANY_EPETRA) && defined(ALBANY_RYTHMOS)
 RythmosObserverFactory::RythmosObserverFactory(const Teuchos::RCP<Application> &app) :
   app_(app)
 {}
@@ -69,14 +72,13 @@ RythmosObserverFactory::createInstance()
 {
   Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > result(new Albany_RythmosObserver(app_));
 #ifdef ALBANY_MOR
-#if defined(ALBANY_EPETRA)
   if(app_->getDiscretization()->supportsMOR()){
     const Teuchos::RCP<MOR::ObserverFactory> morObserverFactory = app_->getMorFacade()->observerFactory();
     result = morObserverFactory->create(result);
   }
 #endif
-#endif
   return result;
 }
+#endif
 
 } // namespace Albany

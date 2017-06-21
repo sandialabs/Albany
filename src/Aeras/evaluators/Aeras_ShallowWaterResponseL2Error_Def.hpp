@@ -122,7 +122,7 @@ template<typename EvalT, typename Traits>
 void Aeras::ShallowWaterResponseL2Error<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  PHAL::set(this->global_response, 0.0);
+  PHAL::set(this->global_response_eval, 0.0);
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
 }
@@ -133,7 +133,7 @@ void Aeras::ShallowWaterResponseL2Error<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {   
   // Zero out local response
-  PHAL::set(this->local_response, 0.0);
+  PHAL::set(this->local_response_eval, 0.0);
 
   Kokkos::DynRankView<ScalarT, PHX::Device> flow_state_field_ref
     = Kokkos::createDynRankView(flow_state_field.get_view(), "FSF", workset.numCells, numQPs, vecDim); //flow_state_field_ref (exact solution) at quad points
@@ -293,19 +293,19 @@ evaluateFields(typename Traits::EvalData workset)
    ScalarT norm_ref_sq = 0.0;
    ScalarT wm; //weighted measure
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-     this->local_response(cell,2) = 0.0;  
-     this->global_response(2) = 0.0; 
+     this->local_response_eval(cell,2) = 0.0;  
+     this->global_response_eval(2) = 0.0; 
      for (std::size_t qp=0; qp < numQPs; ++qp) {
        wm = weighted_measure(cell,qp); 
        for (std::size_t dim=0; dim < vecDim; ++dim) {
          //L^2 error squared w.r.t. flow_state_field_ref -- first component of global_response
          err_sq = err(cell,qp,dim)*err(cell,qp,dim);
-         this->local_response(cell,0) += err_sq*wm;
-         this->global_response(0) += err_sq*wm;
+         this->local_response_eval(cell,0) += err_sq*wm;
+         this->global_response_eval(0) += err_sq*wm;
          //L^2 norm squared of flow_state_field_ref, the exact solution  -- second component of global_response
          norm_ref_sq = flow_state_field_ref(cell,qp,dim)*flow_state_field_ref(cell,qp,dim);
-         this->local_response(cell,1) += norm_ref_sq*wm;
-         this->global_response(1) += norm_ref_sq*wm;
+         this->local_response_eval(cell,1) += norm_ref_sq*wm;
+         this->global_response_eval(1) += norm_ref_sq*wm;
        }
      }
    }
@@ -394,7 +394,7 @@ postEvaluate(typename Traits::PostEvalData workset)
       &this->global_response[0]);
 #else
   //amb reduceAll workaround
-  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
+  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response_eval);
 #endif
   
 #if 0
@@ -405,7 +405,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   this-> global_response[2] = sqrt(abs_err_sq/norm_ref_sq); //relative error in solution w.r.t. reference solution.
 #else
   //amb op[] bracket workaround
-  PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+  PHAL::MDFieldIterator<ScalarT> gr(this->global_response_eval);
   ScalarT abs_err_sq = *gr;
   *gr = sqrt(abs_err_sq); //absolute error in solution w.r.t. reference solution.
   ++gr;

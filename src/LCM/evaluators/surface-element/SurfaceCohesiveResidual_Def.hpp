@@ -89,7 +89,7 @@ evaluateFields(typename Traits::EvalData workset)
       int top_node = bottom_node + num_surf_nodes_;
 
       // initialize force vector
-      f_plus.fill(minitensor::ZEROS);
+      f_plus.fill(minitensor::Filler::ZEROS);
 
       for (int pt(0); pt < num_qps_; ++pt) {
 

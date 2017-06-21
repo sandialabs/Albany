@@ -19,7 +19,7 @@
 #endif
 #include "Teuchos_Array.hpp"
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 namespace PHAL {
 /** 
@@ -79,7 +79,7 @@ private:
 
   std::size_t numQPs;
   std::size_t numDims;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint> thermalCond;
 
   //! Conductivity type
@@ -90,14 +90,14 @@ private:
 
 #ifdef ALBANY_STOKHOS
   //! Exponential random field
-  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
+  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType> > exp_rf_kl;
 #endif
 
   //! Values of the random variables
   Teuchos::Array<ScalarT> rv;
 
   //! Material database - holds thermal conductivity among other quantities
-  Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+  Teuchos::RCP<Albany::MaterialDatabase> materialDB;
 
   //! Convenience function to initialize constant thermal conductivity
   void init_constant(ScalarT value, Teuchos::ParameterList& p);

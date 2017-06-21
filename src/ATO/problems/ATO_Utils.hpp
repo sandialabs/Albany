@@ -10,10 +10,11 @@
 #include <vector>
 #include <string>
 
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_ParameterList.hpp"
+#include <Teuchos_RCP.hpp>
+#include <Teuchos_ParameterList.hpp>
 
-#include "Phalanx.hpp"
+#include <Phalanx_FieldManager.hpp>
+
 #include "Albany_DataTypes.hpp"
 #include "Albany_Layouts.hpp"
 #include "Albany_StateManager.hpp"
@@ -50,6 +51,23 @@ namespace ATO {
        std::string stressName, std::string strainName);
 
     void 
+    constructFluxEvaluators(
+       const Teuchos::RCP<Teuchos::ParameterList>& params,
+       PHX::FieldManager<Traits>& fm0,
+       Albany::StateManager& stateMgr,
+       const std::string &elementBlockName, 
+       std::string fluxName, std::string gradName);
+
+    void 
+    constructFixedFieldTermEvaluators(
+       const Teuchos::RCP<Teuchos::ParameterList>& params,
+       PHX::FieldManager<Traits>& fm0,
+       Albany::StateManager& stateMgr,
+       const std::string &elementBlockName, 
+       std::string dof_name,
+       std::string fixedFieldTermName);
+
+    void 
     constructBodyForceEvaluators(
        const Teuchos::RCP<Teuchos::ParameterList>& params,
        PHX::FieldManager<Traits>& fm0,
@@ -70,8 +88,18 @@ namespace ATO {
        const Teuchos::ParameterList& params,
        PHX::FieldManager<Traits>& fm0,
        Albany::StateManager& stateMgr,
-       const std::string &elementBlockName, 
+       const std::string &boundaryName, 
        std::string boundaryForceName);
+
+    void
+    constructWeightedFieldEvaluators(
+       const Teuchos::RCP<Teuchos::ParameterList>& params,
+       PHX::FieldManager<Traits>& fm0,
+       Albany::StateManager& stateMgr,
+       const std::string &elementBlockName, 
+//       Teuchos::RCP<PHX::DataLayout> layout,
+       std::string layoutName,
+       std::string& inputFieldName);
 
   private:
 

@@ -1,0 +1,129 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output: 
+    Write Jacobian to Standard Output: 0
+    Write Residual to Standard Output: 0
+  Problem: 
+    Name: Mechanics 2D
+    Solution Method: Continuation
+    Phalanx Graph Visualization Detail: 2
+    MaterialDB Filename: SimpleMaterials.yaml
+    Transport: 
+      Variable Type: DOF
+    HydroStress: 
+      Variable Type: DOF
+    Temperature: 
+      Variable Type: Constant
+      Value: 300.00000
+    Initial Condition: 
+      Function: Constant
+      Function Data: [0.00000000e+00, 0.00000000e+00, 0.00056000, 0.00000000e+00]
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF X: 0.00000000e+00
+      DBC on NS NodeSet2 for DOF Y: 0.00000000e+00
+      Time Dependent DBC on NS NodeSet1 for DOF X: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 1.00000000, 2.00000000]
+        BC Values: [0.00000000e+00, 0.01000000, 0.01000000]
+      Pressure Dependent DBC on NS NodeSet0 for DOF C: 
+        BC Function: Equilibrium Concentration
+        Applied Concentration: 0.00056000
+        Pressure Factor: 0.80186032
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    Method: STK2D
+    1D Elements: 10
+    2D Elements: 10
+    Exodus Output File Name: EqConcentrationBC.e
+    Solution Vector Components: [disp, V, CL, S, tauH, S]
+    Residual Vector Components: [force, V, CLresid, S, tauHresid, S]
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [0.25844891]
+    Absolute Tolerance: 1.00000000e-06
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: Time
+        Max Steps: 100
+        Max Value: 1.00000000
+        Return Failed on Reaching Max Steps: false
+        Min Value: 0.00000000e+00
+        Compute Eigenvalues: false
+      Step Size: 
+        Initial Step Size: 0.10000000
+        Method: Constant
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Linear Solver: 
+            Tolerance: 1.00000000e-12
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Output Frequency: 10
+                      Output Style: 0
+                      Verbosity: 1
+                      Maximum Iterations: 500
+                      Block Size: 1
+                      Num Blocks: 1000
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 2
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+        Output Precision: 3
+        Output Processor: 0
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: NormF
+          Tolerance: 1.00000000e-10
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 15
+      Solver Options: 
+        Status Test Check Type: Complete
+...

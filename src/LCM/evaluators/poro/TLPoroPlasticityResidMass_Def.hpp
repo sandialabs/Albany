@@ -81,7 +81,7 @@ namespace LCM {
     this->addDependentField(wGradBF);
     if (haveSource) this->addDependentField(Source);
     if (haveAbsorption) {
-      Absorption = PHX::MDField<ScalarT,Cell,QuadPoint>
+      Absorption = decltype(Absorption)
         (p.get<std::string>("Absorption Name"),
          p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"));
       this->addDependentField(Absorption);
@@ -95,14 +95,10 @@ namespace LCM {
 
       haveMechanics = true;
 
-      PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim>
-        tf(p.get<std::string>("DefGrad Name"), tensor_dl);
-      defgrad = tf;
+      defgrad = decltype(defgrad)(p.get<std::string>("DefGrad Name"), tensor_dl);
       this->addDependentField(defgrad);
 
-      PHX::MDField<ScalarT,Cell,QuadPoint>
-        tj(p.get<std::string>("DetDefGrad Name"), scalar_dl);
-      J = tj;
+      J = decltype(J)(p.get<std::string>("DetDefGrad Name"), scalar_dl);
       this->addDependentField(J);
     }
 
@@ -134,10 +130,8 @@ namespace LCM {
       if (p.isType<bool>("Have Rho Cp"))
         haverhoCp = p.get<bool>("Have Rho Cp");
       if (haverhoCp) {
-        PHX::MDField<ScalarT,Cell,QuadPoint>
-          tmp(p.get<std::string>("Rho Cp Name"),
+        rhoCp = decltype(rhoCp)(p.get<std::string>("Rho Cp Name"),
               p.get<Teuchos::RCP<PHX::DataLayout>>("QP Scalar Data Layout"));
-        rhoCp = tmp;
         this->addDependentField(rhoCp);
       }
     }
@@ -304,23 +298,45 @@ namespace LCM {
           //if ((temp > 0) & stabParameter(cell,qp) > 0) {
           if ((temp > 0) && (stab_param_ > 0)) {
 
-            TResidual(cell,node) -=
-              ( porePressure(cell,qp)-porePressureold(cell, qp) )
-              //* stabParameter(cell, qp)
-              * stab_param_
-              * std::abs(temp) // should be 1 but use 0.5 for safety
-              * (0.5 + 0.5*std::tanh( (temp-1)/kcPermeability(cell,qp)  ))
-              / biotModulus(cell, qp)
-              * ( wBF(cell, node, qp)
-                // -tpterm(cell,node,qp)
-                );
-            TResidual(cell,node) += pterm(cell,qp)
-              //* stabParameter(cell, qp)
-              * stab_param_
-              * std::abs(temp) // should be 1 but use 0.5 for safety
-              * (0.5 + 0.5*std::tanh( (temp-1)/kcPermeability(cell,qp)  ))
-              / biotModulus(cell, qp)
-              * ( wBF(cell, node, qp) );
+            ScalarT temp2 = ((temp - 1) / kcPermeability(cell, qp));
+
+            if( temp2 < 10.0 && temp2 > -10.0){
+
+              TResidual(cell,node) -=
+                ( porePressure(cell,qp)-porePressureold(cell, qp) )
+                //* stabParameter(cell, qp)
+                * stab_param_
+                * std::abs(temp) // should be 1 but use 0.5 for safety
+                * (0.5 + 0.5*std::tanh( temp2 ))
+                / biotModulus(cell, qp)
+                * ( wBF(cell, node, qp)
+                  // -tpterm(cell,node,qp)
+                  );
+              TResidual(cell,node) += pterm(cell,qp)
+                //* stabParameter(cell, qp)
+                * stab_param_
+                * std::abs(temp) // should be 1 but use 0.5 for safety
+                * (0.5 + 0.5*std::tanh( temp2 ))
+                / biotModulus(cell, qp)
+                * ( wBF(cell, node, qp) );
+            }
+            else if(temp2 >= 10.0){
+              TResidual(cell,node) -=
+                ( porePressure(cell,qp)-porePressureold(cell, qp) )
+                //* stabParameter(cell, qp)
+                * stab_param_
+                * std::abs(temp) // should be 1 but use 0.5 for safety
+                / biotModulus(cell, qp)
+                * ( wBF(cell, node, qp)
+                  // -tpterm(cell,node,qp)
+                  );
+              TResidual(cell,node) += pterm(cell,qp)
+                //* stabParameter(cell, qp)
+                * stab_param_
+                * std::abs(temp) // should be 1 but use 0.5 for safety
+                / biotModulus(cell, qp)
+                * ( wBF(cell, node, qp) );
+            }
           }
         }
       }

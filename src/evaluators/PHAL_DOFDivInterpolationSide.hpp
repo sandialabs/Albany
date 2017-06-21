@@ -43,9 +43,9 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT,Cell,Side,Node, Dim> val_node;
+  PHX::MDField<const ScalarT,Cell,Side,Node, Dim> val_node;
   //! Basis Functions
-  PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim> gradBF;
+  PHX::MDField<const MeshScalarT,Cell,Side,Node,QuadPoint,Dim> gradBF;
 
   // Output:
   //! Values at quadrature points

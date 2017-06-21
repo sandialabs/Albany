@@ -1,0 +1,11 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: My Peridynamics Material
+  Materials: 
+    My Peridynamics Material: 
+      Material Model: 
+        Model Name: Peridynamics
+...

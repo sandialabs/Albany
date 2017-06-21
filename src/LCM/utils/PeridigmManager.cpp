@@ -12,7 +12,7 @@
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/FieldBase.hpp>
 #include "Phalanx_DataLayout.hpp"
-#include "MaterialDatabase.h"
+#include "Albany_MaterialDatabase.hpp"
 #include "PHAL_Dimension.hpp"
 #include <boost/math/special_functions/fpclassify.hpp>
 #include <Teuchos_LAPACK.hpp>
@@ -20,6 +20,8 @@
 #include <Epetra_Export.h>
 #include "Phalanx_KokkosViewFactory.hpp"
 #include "Phalanx_MDField.hpp"
+
+//#define HARD_CODED_BODY_FORCE_PERIDIGM_MANAGER
 
 const Teuchos::RCP<LCM::PeridigmManager>& LCM::PeridigmManager::self() {
   static Teuchos::RCP<PeridigmManager> peridigmManager;
@@ -62,10 +64,10 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   }
 
   // Read the material data base file, if any
-  Teuchos::RCP<MaterialDatabase> materialDataBase;
+  Teuchos::RCP<Albany::MaterialDatabase> materialDataBase;
   if(problemParams.isType<std::string>("MaterialDB Filename")){
     std::string filename = problemParams.get<std::string>("MaterialDB Filename");
-    materialDataBase = Teuchos::rcp(new MaterialDatabase(filename, teuchosComm));
+    materialDataBase = Teuchos::rcp(new Albany::MaterialDatabase(filename, teuchosComm));
   }
 
   stkDisc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc);
@@ -174,7 +176,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       CellTopologyData& cellTopologyData = partCellTopologyData[blockName];
       shards::CellTopology cellTopology(&cellTopologyData);
       Intrepid2::DefaultCubatureFactory cubFactory;
-      Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopology, cubatureDegree);
+      Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopology, cubatureDegree);
       const int numQPts = cubature->getNumPoints();
       numPartialStressIds += numQPts * elementsInElementBlock.size();
     }
@@ -332,7 +334,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       CellTopologyData& cellTopologyData = partCellTopologyData[blockName];
       shards::CellTopology cellTopology(&cellTopologyData);
       Intrepid2::DefaultCubatureFactory cubFactory;
-      Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopology, cubatureDegree);
+      Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopology, cubatureDegree);
       const int numDim = cubature->getDimension();
       const int numQuadPoints = cubature->getNumPoints();
       const int numNodes = cellTopology.getNodeCount();
@@ -895,7 +897,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalD
       for(int dof=0 ; dof<3 ; dof++)
         refPoint(0, dof) = refPoints(0, 0, dof);
 
-      Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > refBasis = Albany::getIntrepid2Basis((*obcDataPoints)[iEvalPt].cellTopologyData);
+      Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>> refBasis = Albany::getIntrepid2Basis((*obcDataPoints)[iEvalPt].cellTopologyData);
       Kokkos::DynRankView<RealType, PHX::Device> basisOnRefPoint("PPP", numNodes, 1);
       refBasis->getValues(basisOnRefPoint, refPoint, Intrepid2::OPERATOR_VALUE);
 
@@ -1011,7 +1013,7 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
 
       shards::CellTopology cellTopology(&it->cellTopologyData);
       Intrepid2::DefaultCubatureFactory cubFactory;
-      Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopology, cubatureDegree);
+      Teuchos::RCP<Intrepid2::Cubature<PHX::Device>> cubature = cubFactory.create<PHX::Device, RealType, RealType>(cellTopology, cubatureDegree);
       const int numDim = cubature->getDimension();
       const int numQuadPoints = cubature->getNumPoints();
       const int numNodes = cellTopology.getNodeCount();
@@ -1132,7 +1134,7 @@ bool LCM::PeridigmManager::copyPeridigmTangentStiffnessMatrixIntoAlbanyJacobian(
 
     std::vector<RealType> albanyValues(peridigmNumEntries);
     for(int i=0 ; i<peridigmNumEntries ; i++){
-      albanyValues[i] = static_cast<RealType>(peridigmValues[i]);
+      albanyValues[i] = -1.0 * static_cast<RealType>(peridigmValues[i]);
     }
     Teuchos::ArrayView<RealType> albanyValuesView(&albanyValues[0], peridigmNumEntries);
 
@@ -1173,7 +1175,14 @@ double LCM::PeridigmManager::getForce(int globalAlbanyNodeId, int dof)
     Epetra_Vector& peridigmForce = *(peridigm->getForce());
     int peridigmLocalId = peridigmForce.Map().LID(globalAlbanyNodeId);
     TEUCHOS_TEST_FOR_EXCEPT_MSG(peridigmLocalId == -1, "\n\n**** Error in PeridigmManager::getForce(), invalid global id.\n\n");
-    force = peridigmForce[3*peridigmLocalId + dof];
+    force = -1.0 * peridigmForce[3*peridigmLocalId + dof];
+
+#ifdef HARD_CODED_BODY_FORCE_PERIDIGM_MANAGER
+    if(dof == 0){
+      Epetra_Vector& peridigmVolume = *(peridigm->getVolume());
+      force += peridigmVolume[peridigmLocalId] * 5.1732283464566922;
+    }
+#endif
   }
   return force;
 }
@@ -1433,6 +1442,21 @@ void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscr
           double* dirichletData = stk::mesh::field_data(*dirichletField, node);
           //set dirichletData as any function of the coordinates;
           dirichletData[0]= 0.001*coord[0];
+        }
+      }
+    }
+    {
+      const std::string& meshPart = "nodelist_10"; //TODO: make this general
+      Albany::NodeSetGIDsList::const_iterator it= disc->getNodeSetGIDs().find(meshPart);
+      if(it != disc->getNodeSetGIDs().end()) {
+        const std::vector<GO>& nsNodesGIDs = it->second;
+        for(int i=0; i<nsNodesGIDs.size(); ++i) {
+          GO gId = nsNodesGIDs[i];
+          stk::mesh::Entity node = stkDisc->getSTKBulkData().get_entity(stk::topology::NODE_RANK, gId + 1);
+          double* coord = stk::mesh::field_data(*stkDisc->getSTKMeshStruct()->getCoordinatesField(), node);
+          double* dirichletData = stk::mesh::field_data(*dirichletField, node);
+          //set dirichletData as any function of the coordinates;
+          dirichletData[0]= 0.00001*coord[0]*coord[0];
         }
       }
     }

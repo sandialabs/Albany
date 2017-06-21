@@ -23,7 +23,7 @@ namespace LCM {
                             const Teuchos::RCP<Albany::Layouts>& dl) :
     thickness      (p.get<double>("thickness")),
     cubature       (p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")),
-    intrepidBasis  (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >>("Intrepid2 Basis")),
+    intrepidBasis  (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>("Intrepid2 Basis")),
     surface_Grad_BF     (p.get<std::string>("Surface Scalar Gradient Operator Name"),dl->node_qp_gradient),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),

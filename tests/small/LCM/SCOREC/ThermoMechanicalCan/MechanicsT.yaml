@@ -1,0 +1,167 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Mechanics 3D
+    Solution Method: Continuation
+    Phalanx Graph Visualization Detail: 0
+    MaterialDB Filename: MechanicsWithTemperatureMaterials.yaml
+    Dirichlet BCs: 
+      DBC on NS nodelist_1 for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_1a for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_1b for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_1c for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_1d for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_2 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_2a for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_2b for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_2c for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_2d for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_3 for DOF X: 0.00000000e+00
+    Neumann BCs: 
+      Time Dependent NBC on SS surface_1 for DOF all set P: 
+        Time Values: [0.00000000e+00, 200.00000000, 3600.00000000]
+        BC Values: [[0.00000000e+00], [7.15248332e+06], [2.61357490e+07]]
+      Time Dependent NBC on SS surface_1a for DOF all set P: 
+        Time Values: [0.00000000e+00, 200.00000000, 3600.00000000]
+        BC Values: [[0.00000000e+00], [7.15248332e+06], [2.61357490e+07]]
+      Time Dependent NBC on SS surface_1b for DOF all set P: 
+        Time Values: [0.00000000e+00, 200.00000000, 3600.00000000]
+        BC Values: [[0.00000000e+00], [7.15248332e+06], [2.61357490e+07]]
+      Time Dependent NBC on SS surface_1c for DOF all set P: 
+        Time Values: [0.00000000e+00, 200.00000000, 3600.00000000]
+        BC Values: [[0.00000000e+00], [7.15248332e+06], [2.61357490e+07]]
+      Time Dependent NBC on SS surface_1d for DOF all set P: 
+        Time Values: [0.00000000e+00, 200.00000000, 3600.00000000]
+        BC Values: [[0.00000000e+00], [7.15248332e+06], [2.61357490e+07]]
+    Initial Condition: 
+      Function: Constant
+      Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00]
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    Method: PUMI
+    Workset Size: 50
+    Mesh Model Input File Name: ../meshes/tm_bar/bar.dmg
+    PUMI Input File Name: ../meshes/tm_bar/bar_p.smb
+    PUMI Output File Name: bar_out.vtk
+    Solution Vector Components: [disp_, V]
+    Element Block Associations: [[1, 3, 4, 5, 2], [Block_1, Block_2, Block_3, Block_4, Block_5]]
+    Side Set Associations: [[2, 8, 15, 18, 25], [surface_1, surface_1a, surface_1b, surface_1c, surface_1d]]
+    Node Set Associations: [[1, 7, 16, 17, 26, 4, 10, 13, 20, 23, 24], [nodelist_1, nodelist_1a, nodelist_1b, nodelist_1c, nodelist_1d, nodelist_2, nodelist_2a, nodelist_2b, nodelist_2c, nodelist_2d, nodelist_3]]
+    2nd Order Mesh: true
+    Cubature Degree: 2
+    Separate Evaluators by Element Block: true
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [2.58636694e-07]
+    Relative Tolerance: 0.00010000
+    Absolute Tolerance: 0.00010000
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Continuation Method: Natural
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: Time
+        Max Steps: 6
+        Max Value: 600.00000000
+        Min Value: 0.00000000e+00
+        Compute Eigenvalues: false
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Jacobian Inverse
+          Num Eigenvalues: 1
+      Step Size: 
+        Initial Step Size: 10.00000000
+        Method: Constant
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Linear Solver: 
+            Tolerance: 1.00000000e-06
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 360
+                    Tolerance: 1.00000000e-05
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: low
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-06
+                      Maximum Iterations: 200
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: MueLu
+              Preconditioner Types: 
+                MueLu: 
+                  verbosity: none
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Complete
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 5
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000e-06
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 100
+        Test 2: 
+          Test Type: NormF
+          Scale Type: Unscaled
+          Tolerance: 1.00000000e-06
+        Test 3: 
+          Test Type: NormUpdate
+          Scale Type: Unscaled
+          Tolerance: 1.00000000e-06
+        Test 4: 
+          Test Type: FiniteValue
+...

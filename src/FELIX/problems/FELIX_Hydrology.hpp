@@ -7,7 +7,7 @@
 #ifndef FELIX_HYDROLOGY_PROBLEM_HPP
 #define FELIX_HYDROLOGY_PROBLEM_HPP 1
 
-#include "Phalanx.hpp"
+#include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -211,6 +211,26 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<const std::string>("Field Name","Geothermal Flux");
   ev = rcp(new PHAL::LoadStateField<EvalT,PHAL::AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
+
+  // Basal gravitational water potential
+  if (std::find(this->requirements.begin(),this->requirements.end(),"basal_gravitational_water_potential")!=this->requirements.end())
+  {
+    entity = Albany::StateStruct::NodalDataToElemNode;
+    p = stateMgr.registerStateVariable("basal_gravitational_water_potential", dl->node_scalar, elementBlockName, true, &entity);
+    p->set<bool>("Is Vector Field", false);
+    p->set<Teuchos::RCP<PHX::DataLayout>>("Dummy Data Layout",dl->dummy);
+    ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT,PHAL::AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+    if (fieldManagerChoice == Albany::BUILD_RESID_FM)
+    {
+      // Only PHAL::AlbanyTraits::Residual evaluates something
+      if (ev->evaluatedFields().size()>0)
+      {
+        // Require save potential
+        fm0.template requireField<EvalT>(*ev->evaluatedFields()[0]);
+      }
+    }
+  }
 
   if (!has_h_equation)
   {

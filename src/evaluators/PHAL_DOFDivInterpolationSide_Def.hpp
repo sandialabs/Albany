@@ -29,7 +29,7 @@ DOFDivInterpolationSideBase(const Teuchos::ParameterList& p,
 
   numSideNodes = dl_side->node_qp_gradient->dimension(2);
   numSideQPs   = dl_side->node_qp_gradient->dimension(3);
-  numDims      = dl_side->node_qp_gradient->dimension(4);
+  numDims      = dl_side->node_qp_vector->dimension(4);
 }
 
 //**********************************************************************

@@ -48,7 +48,7 @@ private:
 
   int numQPs;
   int numDims;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint> poissonsRatio;
 
   //! Is conductivity constant, or random field
@@ -58,7 +58,7 @@ private:
   ScalarT constant_value;
 
   //! Optional dependence on Temperature (nu = nu_0 + dnudT * T)
-  PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> Temperature;
   bool isThermoElastic;
   ScalarT dnudT_value;
   RealType refTemp;

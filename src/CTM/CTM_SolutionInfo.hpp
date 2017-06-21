@@ -1,78 +1,54 @@
 #ifndef CTM_SOLUTION_INFO_HPP
 #define CTM_SOLUTION_INFO_HPP
 
-#include "CTM_Teuchos.hpp"
 #include <Albany_DataTypes.hpp>
 
 namespace Albany {
-    class AbstractDiscretization;
+class AbstractDiscretization;
 }
 
 namespace CTM {
 
-    class SolutionInfo {
-    public:
+using Teuchos::RCP;
 
-        // constructor
-        SolutionInfo();
-        // do not use copy constructor
-        SolutionInfo(const SolutionInfo&) = delete;
-        // do not use assignment operator
-        SolutionInfo& operator=(const SolutionInfo&) = delete;
+struct LinearObj {
+  RCP<Tpetra_Vector> x;
+  RCP<Tpetra_Vector> x_dot;
+  RCP<Tpetra_Vector> f;
+  RCP<Tpetra_CrsMatrix> J;
+};
 
-        // get solution vectors
-        Teuchos::RCP<Tpetra_MultiVector> getOwnedMV();
-        //
-        Teuchos::RCP<Tpetra_MultiVector> getGhostMV();
+class SolutionInfo {
 
-        // get exporter
-        Teuchos::RCP<Tpetra_Export> getExporter();
-        // get importer
-        Teuchos::RCP<Tpetra_Import> getImporter();
+  public:
 
-        // scatter
-        void scatter_x(
-                const Tpetra_Vector& xT, /* note that none are overlapped */
-                const Tpetra_Vector* x_dotT,
-                const Tpetra_Vector* x_dotdotT);
+    SolutionInfo();
 
-        // get residual vectors
-        Teuchos::RCP<Tpetra_Vector> getOwnedResidual();
-        //
-        Teuchos::RCP<Tpetra_Vector> getGhostResidual();
+    SolutionInfo(const SolutionInfo&) = delete;
+    SolutionInfo& operator=(const SolutionInfo&) = delete;
 
-        // get Jacobian
-        Teuchos::RCP<Tpetra_CrsMatrix> getOwnedJacobian();
-        //
-        Teuchos::RCP<Tpetra_CrsMatrix> getGhostJacobian();
+    void gather_x();
+    void gather_x_dot();
+    void gather_f();
+    void gather_J();
 
-        void gather_x();
-        void scatter_x();
+    void scatter_x();
+    void scatter_x_dot();
+    void scatter_f();
+    void scatter_J();
 
-        void gather_f();
-        void scatter_f();
+    void resize(RCP<Albany::AbstractDiscretization> disc, bool have_x_dot);
 
-        void gather_J();
-        void scatter_J();
+    RCP<LinearObj> owned;
+    RCP<LinearObj> ghost;
 
-        void resize(RCP<Albany::AbstractDiscretization> disc, bool have_x_dot);
-    private:
-        // solution multi vector. First column corresponds to main variable.
-        // second column to time derivative of main variable.
-        RCP<Tpetra_MultiVector> owned_x;
-        RCP<Tpetra_MultiVector> ghost_x;
-        // Residual vector.
-        RCP<Tpetra_Vector> owned_f;
-        RCP<Tpetra_Vector> ghost_f;
-        // Jacobians
-        RCP<Tpetra_CrsMatrix> owned_J;
-        RCP<Tpetra_CrsMatrix> ghost_J;
+  private:
+    
+    RCP<Tpetra_Export> exporter;
+    RCP<Tpetra_Import> importer;
 
-        RCP<Tpetra_Export> exporter;
-        RCP<Tpetra_Import> importer;
+};
 
-    };
-
-}
+} // namespace CTM
 
 #endif

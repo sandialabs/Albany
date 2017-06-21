@@ -29,7 +29,7 @@ PeridigmProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // Read the material data base file, if any
   if(params->isType<std::string>("MaterialDB Filename")){
     std::string filename = params->get<std::string>("MaterialDB Filename");
-    materialDataBase = Teuchos::rcp(new LCM::MaterialDatabase(filename, commT));
+    materialDataBase = Teuchos::rcp(new Albany::MaterialDatabase(filename, commT));
   }
 
   // Determine if transient analyses should be supported
@@ -74,6 +74,9 @@ buildProblem(
   for (int ps=0; ps<physSets; ps++) {
     fm[ps]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
     buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM, Teuchos::null);
+    if (meshSpecs[ps]->ssNames.size() > 0) {
+      constructNeumannEvaluators(meshSpecs[ps]);
+    }
   }
   constructDirichletEvaluators(*meshSpecs[0]);
 }
@@ -106,6 +109,104 @@ Albany::PeridigmProblem::constructDirichletEvaluators(
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
    offsets_ = dirUtils.getOffsets(); 
+}
+
+void
+Albany::PeridigmProblem::constructNeumannEvaluators(
+    const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+{
+  Albany::BCUtils<Albany::NeumannTraits> neuUtils;
+
+  // Check to make sure that Neumann BCs are given in the input file
+  if (!neuUtils.haveBCSpecified(this->params)) {
+    return;
+  }
+
+  // Construct BC evaluators for all side sets and names
+  // Note that the string index sets up the equation offset,
+  // so ordering is important
+
+  std::vector<std::string> neumannNames(neq + 1);
+  Teuchos::Array<Teuchos::Array<int>> offsets;
+  offsets.resize(neq + 1);
+
+  int index = 0;
+
+  neumannNames[index] = "sig_x";
+  offsets[index].resize(1);
+  offsets[index++][0] = 0;
+
+  // The Neumann BC code uses offsets[neq].size() as num dim, so use numDim
+  // here rather than neq.
+  offsets[neq].resize(numDim);
+  offsets[neq][0] = 0;
+
+  if (numDim > 1) {
+    neumannNames[index] = "sig_y";
+    offsets[index].resize(1);
+    offsets[index++][0] = 1;
+    offsets[neq][1] = 1;
+  }
+
+  if (numDim > 2) {
+    neumannNames[index] = "sig_z";
+    offsets[index].resize(1);
+    offsets[index++][0] = 2;
+    offsets[neq][2] = 2;
+  }
+
+  neumannNames[neq] = "all";
+
+  // Construct BC evaluators for all possible names of conditions
+  // Should only specify flux vector components (dudx, dudy, dudz),
+  // or dudn, not both
+  std::vector<std::string> condNames(3); //dudx, dudy, dudz, dudn, P
+  Teuchos::ArrayRCP<std::string> dof_names(1);
+  dof_names[0] = "Displacement";
+
+  // Note that sidesets are only supported for two and 3D currently
+  if (numDim == 2)
+    condNames[0] = "(t_x, t_y)";
+  else if (numDim == 3)
+    condNames[0] = "(t_x, t_y, t_z)";
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+        '\n' << "Error: Sidesets only supported in 2 and 3D." << '\n');
+
+  condNames[1] = "dudn";
+  condNames[2] = "P";
+
+  // DJL jump through hoops because we don't have a stored data layout
+  Teuchos::RCP<shards::CellTopology> cellType = Teuchos::rcp(new shards::CellTopology (&meshSpecs->ctd));
+
+  // The datalayout will be invalid for particle/sphere elements
+  if (cellType->getNodeCount() != 1){
+
+    nfm.resize(1); // Albany has issues with NBC ... currently hard-coded to one block?
+                   // I could see this failing if there are multiple element blocks with different element types
+
+    Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>> intrepidBasis = Albany::getIntrepid2Basis(meshSpecs->ctd);
+    const int numNodes = intrepidBasis->getCardinality();
+    const int worksetSize = meshSpecs->worksetSize;
+    Intrepid2::DefaultCubatureFactory cubFactory;
+    Teuchos::RCP <Intrepid2::Cubature<PHX::Device>  > cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs->cubatureDegree);
+    const int numDim = cubature->getDimension();
+    const int numQPts = cubature->getNumPoints();
+    const int numVertices = cellType->getNodeCount();
+    Teuchos::RCP<Albany::Layouts> dataLayout = Teuchos::rcp(new Albany::Layouts(worksetSize, numVertices, numNodes, numQPts, numDim));
+
+    nfm[0] = neuUtils.constructBCEvaluators(
+        meshSpecs,
+        neumannNames,
+        dof_names,
+        true,        // isVectorField
+        0,           // offsetToFirstDOF
+        condNames,
+        offsets,
+        dataLayout,
+        this->params,
+        this->paramLib);
+    }
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>

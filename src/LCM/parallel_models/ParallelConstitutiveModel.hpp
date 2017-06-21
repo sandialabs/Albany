@@ -8,6 +8,7 @@
 #define LCM_ParallelConstitutiveModel_hpp
 
 #include "ConstitutiveModel.hpp"
+#include "NOX_StatusTest_ModelEvaluatorFlag.h"
 #include <functional>
 #include <memory>
 
@@ -27,6 +28,7 @@ struct ParallelKernel
   using MeshScalarT = typename EvalT::MeshScalarT;
   using Workset = typename Traits::EvalData;
   using ScalarField = PHX::MDField<ScalarT>;
+  using ConstScalarField = PHX::MDField<const ScalarT>;
   
 protected:
   
@@ -100,7 +102,8 @@ protected:
                                   std::vector<Teuchos::RCP<ScalarField>> & state,
                                   FieldMap<ScalarT> & eval_fields);
   
-  ConstitutiveModel<EvalT, Traits> &model_;
+  ConstitutiveModel<EvalT, Traits> &
+  model_;
   
   ///
   /// Map of field names
@@ -114,31 +117,85 @@ protected:
   DataLayoutMap &
   eval_field_map_;
   
-  int num_dims_;
-  int num_pts_;
-  
-  bool need_integration_pt_locations_; ///< flag for integration point locations
-  bool compute_energy_; ///< flag that the energy needs to be computed
-  bool compute_tangent_;  ///< flag that the tangent needs to be computed
-  bool have_temperature_; ///< Bool for temperature
-  bool have_damage_;  ///< Bool for damage
-  bool have_total_concentration_; ///< Bool for total concentration
-  bool have_total_bubble_density_;  ///< Bool for total bubble density
-  bool have_bubble_volume_fraction_; ///< Bool for bubble_volume_fraction
+  int
+  num_dims_;
 
-  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> coord_vec_; ///< optional integration point locations field
-  PHX::MDField<ScalarT, Cell, QuadPoint> temperature_; ///< optional temperature field
-  PHX::MDField<ScalarT,Cell,QuadPoint> total_concentration_; ///< Optional total concentration field
-  PHX::MDField<ScalarT,Cell,QuadPoint> total_bubble_density_;  ///< Optional total (He) bubble density field
-  PHX::MDField<ScalarT,Cell,QuadPoint> bubble_volume_fraction_;  ///< Optional bubble volume fraction field
-  PHX::MDField<ScalarT, Cell, QuadPoint> damage_;  ///< optional damage field
-  PHX::MDField<MeshScalarT, Cell, QuadPoint> weights_; ///< optional weights field
-  PHX::MDField<ScalarT, Cell, QuadPoint> j_; ///< optional J field
+  int
+  num_pts_;
   
-  RealType expansion_coeff_; ///< Thermal Expansion Coefficient
-  RealType ref_temperature_; ///< Reference Temperature
-  RealType heat_capacity_; ///< Heat Capacity
-  RealType density_; ///< Density
+  bool
+  need_integration_pt_locations_;
+  
+  bool
+  compute_energy_;
+  
+  bool
+  compute_tangent_;
+  
+  bool
+  have_temperature_;
+  
+  bool
+  have_damage_;
+  
+  bool
+  have_total_concentration_;
+  
+  bool
+  have_total_bubble_density_;
+  
+  bool
+  have_bubble_volume_fraction_;
+
+  /// optional integration point locations field
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim>
+  coord_vec_;
+
+  /// optional temperature field
+  PHX::MDField<const ScalarT, Cell, QuadPoint>
+  temperature_;
+
+  /// Optional total concentration field
+  PHX::MDField<const ScalarT,Cell,QuadPoint>
+  total_concentration_;
+  
+  /// Optional total (He) bubble density field
+  PHX::MDField<const ScalarT,Cell,QuadPoint>
+  total_bubble_density_;  
+  
+  /// Optional (He) bubble volume fraction field
+  PHX::MDField<const ScalarT,Cell,QuadPoint>
+  bubble_volume_fraction_;
+  
+  /// optional scalar damage field
+  PHX::MDField<const ScalarT, Cell, QuadPoint>
+  damage_;
+  
+  /// optional integration weights field
+  PHX::MDField<const MeshScalarT, Cell, QuadPoint>
+  weights_;
+  
+  ///< optional J field
+  PHX::MDField<const ScalarT, Cell, QuadPoint>
+  j_;
+  
+  ///< Thermal Expansion Coefficient
+  RealType
+  expansion_coeff_;
+
+  ///< Reference Temperature
+  RealType
+  ref_temperature_;
+
+  RealType
+  heat_capacity_;
+
+  RealType
+  density_;
+
+  /// Flag indicating failure in model calculation
+  Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
+  nox_status_test_{Teuchos::null};
 };
  
 template<typename EvalT, typename Traits, typename Kernel>
@@ -161,13 +218,13 @@ public:
   void
   computeState(
       typename Traits::EvalData workset,
-      FieldMap<ScalarT> dep_fields,
+      FieldMap<const ScalarT> dep_fields,
       FieldMap<ScalarT> eval_fields) final;
   
   virtual
   void
   computeStateParallel(typename Traits::EvalData workset,
-      FieldMap<ScalarT> dep_fields,
+      FieldMap<const ScalarT> dep_fields,
       FieldMap<ScalarT> eval_fields) override {
          TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
   }

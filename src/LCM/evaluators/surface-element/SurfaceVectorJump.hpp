@@ -48,11 +48,11 @@ private:
   cubature_;
 
   //! Finite element basis for the midplane
-  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
+  Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
   intrepid_basis_;
 
   //! Vector to take the jump of
-  PHX::MDField<ScalarT, Cell, Vertex, Dim>
+  PHX::MDField<const ScalarT, Cell, Vertex, Dim>
   vector_;
 
   // Reference Cell Views

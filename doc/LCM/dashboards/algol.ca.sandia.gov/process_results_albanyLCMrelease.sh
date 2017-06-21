@@ -1,4 +1,4 @@
-
+#!/bin/bash
 cd /home/lcm/LCM/nightlyCDash
 grep "Test   #" nightly_log_albany_LCM_release.txt >& results0
 grep "Test  #" nightly_log_albany_LCM_release.txt >& results1 

@@ -19,7 +19,7 @@ namespace LCM {
                                 const Teuchos::RCP<Albany::Layouts>& dl) :
     thickness      (p.get<double>("thickness")), 
     cubature       (p.get<Teuchos::RCP<Intrepid2::Cubature<PHX::Device>>>("Cubature")), 
-    intrepidBasis  (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >>("Intrepid2 Basis")),
+    intrepidBasis  (p.get<Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>>("Intrepid2 Basis")),
     refDualBasis   (p.get<std::string>("Reference Dual Basis Name"),dl->qp_tensor),
     refNormal      (p.get<std::string>("Reference Normal Name"),dl->qp_vector),
     val_node   (p.get<std::string>("Nodal Scalar Name"),dl->node_scalar),
@@ -93,9 +93,11 @@ namespace LCM {
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int pt=0; pt < numQPs; ++pt) {
 
-        minitensor::Tensor<MeshScalarT> gBasis(3, refDualBasis,cell, pt,0,0);
+        minitensor::Tensor<MeshScalarT>
+        gBasis(minitensor::Source::ARRAY, 3, refDualBasis,cell, pt,0,0);
 
-        minitensor::Vector<MeshScalarT> N(3, refNormal,cell, pt,0);
+        minitensor::Vector<MeshScalarT>
+        N(minitensor::Source::ARRAY, 3, refNormal,cell, pt,0);
 
         gBasis = minitensor::transpose(gBasis);
 

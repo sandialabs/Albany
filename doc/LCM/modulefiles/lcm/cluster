@@ -1,0 +1,19 @@
+#%Module 1.0
+
+module-whatis "LCM cluster base environment"
+
+setenv LCM_ENV_TYPE cluster
+
+module purge
+
+# 1) sntools/master                           4) intel/intel-17.0.2.174                   7) openmpi-intel/1.10
+# 2) sierra-python/2.7.4                      5) sierra-mkl/17.0.2                        8) sierra-mpi/openmpi/1.10
+# 3) sierra-git/2.6.1                         6) sierra-compiler/intel/17.0.2             9) sierra-devel/intel-17.0.2-openmpi-1.10
+
+module load sntools/master
+module load sierra-python/2.7.4
+module load sierra-git/2.6.1
+module load cmake/3.4.3
+
+conflict lcm/fedora lcm/sems
+

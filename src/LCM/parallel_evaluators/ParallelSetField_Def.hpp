@@ -18,11 +18,11 @@ template<typename EvalT, typename Traits>
 ParallelSetField<EvalT, Traits>::
 ParallelSetField(const Teuchos::ParameterList& p) :
   evaluatedFieldName( p.get<std::string>("Evaluated Field Name") ),
-  evaluatedField( p.get<std::string>("Evaluated Field Name"), p.get<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout") ),
-  fieldValues( p.get<Teuchos::ArrayRCP<ScalarT> >("Field Values"))
+  evaluatedField( p.get<std::string>("Evaluated Field Name"), p.get<Teuchos::RCP<PHX::DataLayout>>("Evaluated Field Data Layout") ),
+  fieldValues( p.get<Teuchos::ArrayRCP<ScalarT>>("Field Values"))
 {
   // Get the dimensions of the data layout for the field that is to be set
-  p.get<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout")->dimensions(evaluatedFieldDimensions);
+  p.get<Teuchos::RCP<PHX::DataLayout>>("Evaluated Field Data Layout")->dimensions(evaluatedFieldDimensions);
 
   // Register the field to be set as an evaluated field
   this->addEvaluatedField(evaluatedField);

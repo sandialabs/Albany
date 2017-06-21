@@ -11,7 +11,7 @@ template<typename EvalT, typename Traits>
 QCAD::MeshRegion<EvalT, Traits>::
 MeshRegion(std::string coordVecName, std::string weightsName,
 	   Teuchos::ParameterList& p, 
-	   const Teuchos::RCP<QCAD::MaterialDatabase> matDB,
+	   const Teuchos::RCP<Albany::MaterialDatabase> matDB,
 	   const Teuchos::RCP<Albany::Layouts>& dl_ )
 {
   materialDB = matDB;
@@ -83,18 +83,15 @@ template<typename EvalT, typename Traits>
 void QCAD::MeshRegion<EvalT, Traits>::
 addDependentFields(PHX::EvaluatorWithBaseImpl<Traits>* evaluator)
 {
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> f(coordVecFieldname, dl->qp_vector); 
-  coordVec = f;
-  evaluator->addDependentField(coordVec.fieldTag());
+  coordVec = decltype(coordVec)(coordVecFieldname, dl->qp_vector); 
+  evaluator->addDependentField(coordVec);
 
   if(bRestrictToLevelSet) {
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> g(weightsFieldname, dl->qp_scalar); 
-    weights = g;
-    evaluator->addDependentField(weights.fieldTag());
+    weights = decltype(weights)(weightsFieldname, dl->qp_scalar); 
+    evaluator->addDependentField(weights);
 
-    PHX::MDField<ScalarT> h(levelSetFieldname, dl->qp_scalar); 
-    levelSetField = h;
-    evaluator->addDependentField(levelSetField.fieldTag());
+    levelSetField = decltype(levelSetField)(levelSetFieldname, dl->qp_scalar); 
+    evaluator->addDependentField(levelSetField);
   }
 }
 

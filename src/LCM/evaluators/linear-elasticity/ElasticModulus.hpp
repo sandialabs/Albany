@@ -48,7 +48,7 @@ private:
 
   int numQPs;
   int numDims;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint> elasticModulus;
 
   //! Is Young's modulus constant, or random field
@@ -59,13 +59,13 @@ private:
   ScalarT constant_value;
 
   //! Optional dependence on Temperature (E = E_const + dEdT * T)
-  PHX::MDField<ScalarT,Cell,QuadPoint> Temperature;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> Temperature;
   bool isThermoElastic;
   ScalarT dEdT_value;
   RealType refTemp;
 
   // ! Optional dependence on porosity (E = E_const *(sqrt(1- porosity))
-  PHX::MDField<ScalarT,Cell,QuadPoint> porosity;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> porosity;
   bool isPoroElastic;
 
 

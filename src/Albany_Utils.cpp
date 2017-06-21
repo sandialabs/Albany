@@ -48,24 +48,20 @@
   void 
   Albany::InvRowSum(Teuchos::RCP<Tpetra_Vector>& rowSumsTpetra, const Teuchos::RCP<Tpetra_CrsMatrix> matrix) {
     //Check that rowSumsTpetra and matrix have same map 
-    if (rowSumsTpetra->getMap()->isSameAs(*(matrix->getRowMap()))) {
-      rowSumsTpetra->putScalar(0.0);
-      Teuchos::ArrayRCP<double> rowSumsTpetra_nonconstView = rowSumsTpetra->get1dViewNonConst(); 
-      for (auto row=0; row<rowSumsTpetra->getLocalLength(); row++) {
-        auto numEntriesRow = matrix->getNumEntriesInLocalRow(row); 
-        Teuchos::Array<LO> indices(numEntriesRow); 
-        Teuchos::Array<ST> values(numEntriesRow); 
-        matrix->getLocalRowCopy(row, indices(), values(), numEntriesRow);
-        ST scale = 0.0; 
-        for (auto j=0; j < numEntriesRow; j++) scale += std::abs(values[j]);
-        if (scale < 1.0e-16) rowSumsTpetra_nonconstView[row] = 0.0; 
-        else rowSumsTpetra_nonconstView[row] = 1.0/scale; 
-      }
-    }
-    else {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl
-				 << "Error in Albany::InvRowSum!  "
-				 << "Input vector must have same map as row map of input matrix!" << std::endl);
+    ALBANY_ASSERT(rowSumsTpetra->getMap()->isSameAs(*(matrix->getRowMap())), 
+			 "Error in Albany::InvRowSum!  "
+			 "Input vector must have same map as row map of input matrix!");
+    rowSumsTpetra->putScalar(0.0);
+    Teuchos::ArrayRCP<double> rowSumsTpetra_nonconstView = rowSumsTpetra->get1dViewNonConst(); 
+    for (auto row=0; row<rowSumsTpetra->getLocalLength(); row++) {
+      auto numEntriesRow = matrix->getNumEntriesInLocalRow(row); 
+      Teuchos::Array<LO> indices(numEntriesRow); 
+      Teuchos::Array<ST> values(numEntriesRow); 
+      matrix->getLocalRowCopy(row, indices(), values(), numEntriesRow);
+      ST scale = 0.0; 
+      for (auto j=0; j < numEntriesRow; j++) scale += std::abs(values[j]);
+      if (scale < 1.0e-16) rowSumsTpetra_nonconstView[row] = 0.0; 
+      else rowSumsTpetra_nonconstView[row] = 1.0/scale; 
     }
   }
 
@@ -181,8 +177,8 @@
   }
 
   double Albany::initStringToDouble(const std::string& initString) {
-    TEUCHOS_TEST_FOR_EXCEPTION(!Albany::isValidInitString(initString), std::range_error,
-			       " initStringToDouble() called with invalid initialization string: " + initString + "\n");
+    ALBANY_ASSERT(isValidInitString(initString),
+			       " initStringToDouble() called with invalid initialization string: " << initString);
     std::string verbiage("initial value ");
     std::string valueString = initString.substr(verbiage.size(), initString.size() - verbiage.size());
     return std::atof(valueString.c_str());
@@ -194,6 +190,13 @@
     while(std::getline(ss, item, delim)) {
         elems.push_back(item);
     }
+  }
+
+  std::string
+  Albany::getFileExtension(std::string const & filename)
+  {
+    auto const pos = filename.find_last_of(".");
+    return filename.substr(pos + 1);
   }
 
   void Albany::printTpetraVector(std::ostream &os, const Teuchos::RCP<const Tpetra_Vector>& vec){
@@ -254,6 +257,212 @@
 
   }
 
+  //
+  //
+  //
+  void
+  Albany::writeMatrixMarket(
+      Teuchos::RCP<Tpetra_Vector const> const & x,
+      std::string const & prefix,
+      int const counter)
+  {
+    if (x == Teuchos::null) return;
+
+    std::ostringstream
+    oss;
+
+    oss << prefix;
+
+    if (counter >= 0) {
+      oss << '-' << std::setfill('0') << std::setw(3) << counter;
+    }
+
+    oss << ".mm";
+
+    std::string const &
+    filename = oss.str();
+
+    Tpetra_MatrixMarket_Writer::writeDenseFile(filename, x);
+
+    return;
+  }
+
+  //
+  //
+  //
+  void
+  Albany::writeMatrixMarket(
+      Teuchos::RCP<Tpetra_CrsMatrix const> const & A,
+      std::string const & prefix,
+      int const counter)
+  {
+    if (A == Teuchos::null) return;
+
+    std::ostringstream
+    oss;
+
+    oss << prefix;
+
+    if (counter >= 0) {
+      oss << '-' << std::setfill('0') << std::setw(3) << counter;
+    }
+
+    oss << ".mm";
+
+    std::string const &
+    filename = oss.str();
+
+    Tpetra_MatrixMarket_Writer::writeSparseFile(filename, A);
+
+    return;
+  }
+
+  //
+  //
+  //
+  void
+  Albany::writeMatrixMarket(
+      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> const & x,
+      std::string const & prefix,
+      int const counter)
+  {
+    for (auto i = 0; i < x.size(); ++i) {
+      std::ostringstream
+      oss;
+
+      oss << prefix;
+
+      oss << '-' << std::setfill('0') << std::setw(2) << i;
+
+      std::string const &
+      new_prefix = oss.str();
+
+      writeMatrixMarket(x[i], new_prefix, counter);
+    }
+
+    return;
+  }
+
+  //
+  //
+  //
+  void
+  Albany::writeMatrixMarket(
+      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix const>> const & A,
+      std::string const & prefix,
+      int counter)
+  {
+    for (auto i = 0; i < A.size(); ++i) {
+      std::ostringstream
+      oss;
+
+      oss << prefix;
+
+      oss << '-' << std::setfill('0') << std::setw(2) << i;
+
+      std::string const &
+      new_prefix = oss.str();
+
+      writeMatrixMarket(A[i], new_prefix, counter);
+    }
+
+    return;
+  }
+
+  //
+  //
+  //
+  void
+  Albany::writeMatrixMarket(
+      Teuchos::RCP<Tpetra_Vector> const & x,
+      std::string const & prefix,
+      int const counter)
+  {
+    Teuchos::RCP<Tpetra_Vector const> const &
+    y = static_cast<Teuchos::RCP<Tpetra_Vector const> const &>(x);
+
+    writeMatrixMarket(y, prefix, counter);
+
+    return;
+  }
+
+  //
+  //
+  //
+  void
+  Albany::writeMatrixMarket(
+      Teuchos::RCP<Tpetra_CrsMatrix> const & A,
+      std::string const & prefix,
+      int const counter)
+  {
+    Teuchos::RCP<Tpetra_CrsMatrix const> const &
+    B = static_cast<Teuchos::RCP<Tpetra_CrsMatrix const> const &>(A);
+
+    writeMatrixMarket(B, prefix, counter);
+
+    return;
+  }
+
+  //
+  //
+  //
+  void
+  Albany::writeMatrixMarket(
+      Teuchos::Array<Teuchos::RCP<Tpetra_Vector>> const & x,
+      std::string const & prefix,
+      int const counter)
+  {
+    for (auto i = 0; i < x.size(); ++i) {
+
+      Teuchos::RCP<Tpetra_Vector const> const &
+      y = static_cast<Teuchos::RCP<Tpetra_Vector const> const &>(x[i]);
+
+      std::ostringstream
+      oss;
+
+      oss << prefix;
+
+      oss << '-' << std::setfill('0') << std::setw(2) << i;
+
+      std::string const &
+      new_prefix = oss.str();
+
+      writeMatrixMarket(y, new_prefix, counter);
+    }
+
+    return;
+  }
+
+  //
+  //
+  //
+  void
+  Albany::writeMatrixMarket(
+      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> const & A,
+      std::string const & prefix,
+      int counter)
+  {
+    for (auto i = 0; i < A.size(); ++i) {
+
+      Teuchos::RCP<Tpetra_CrsMatrix const> const &
+      B = static_cast<Teuchos::RCP<Tpetra_CrsMatrix const> const &>(A[i]);
+
+      std::ostringstream
+      oss;
+
+      oss << prefix;
+
+      oss << '-' << std::setfill('0') << std::setw(2) << i;
+
+      std::string const &
+      new_prefix = oss.str();
+
+      writeMatrixMarket(B, new_prefix, counter);
+    }
+
+    return;
+  }
+
   Albany::CmdLineArgs::CmdLineArgs(const std::string& default_xml_filename,
                                    const std::string& default_xml_filename2,
                                    const std::string& default_xml_filename3) :
@@ -306,8 +515,8 @@
         << " -target-pid " << my_os_pid << " &";
     if (p_rank == 0)
       std::cout << cmd.str() << std::endl;
-    system(cmd.str().c_str());
-    system("sleep 10");
+    safe_system(cmd.str().c_str());
+    safe_system("sleep 10");
   }
 
   void Albany::do_stack_trace() {
@@ -326,8 +535,8 @@ void Albany::safe_fscanf(int nitems, FILE* file, const char* format, ...) {
   va_start(ap, format);
   int ret = vfscanf(file, format, ap);
   va_end(ap);
-  TEUCHOS_TEST_FOR_EXCEPTION(ret != nitems, std::runtime_error,
-		  ret << "=safe_fscanf(" << nitems << ", " << file << ", \"" << format << "\")\n");
+  ALBANY_ASSERT(ret == nitems,
+      ret<<"=safe_fscanf("<<nitems<<", "<<file<<", \""<<format<<"\")");
 }
 
 void Albany::safe_sscanf(int nitems, const char* str, const char* format, ...) {
@@ -335,20 +544,23 @@ void Albany::safe_sscanf(int nitems, const char* str, const char* format, ...) {
   va_start(ap, format);
   int ret = vsscanf(str, format, ap);
   va_end(ap);
-  TEUCHOS_TEST_FOR_EXCEPTION(ret != nitems, std::runtime_error,
-		  ret << "=safe_sscanf(" << nitems << ", \"" << str << "\", \"" << format << "\")\n");
+  ALBANY_ASSERT(ret == nitems,
+      ret<<"=safe_sscanf("<<nitems<<", \""<<str<<"\", \""<<format<<"\")");
 }
 
 void Albany::safe_fgets(char* str, int size, FILE* stream) {
   char* ret = fgets(str, size, stream);
-  TEUCHOS_TEST_FOR_EXCEPTION(ret != str, std::runtime_error,
-		  ret << "=safe_fgets(" << static_cast<void*>(str) << ", " << size << ", " << stream << ")\n");
+  ALBANY_ASSERT(ret == str,
+      ret<<"=safe_fgets("<<static_cast<void*>(str)<<", "<<size<<", "<<stream<<")");
 }
 
 void Albany::safe_system(char const* str) {
-  TEUCHOS_TEST_FOR_EXCEPTION(!str, std::runtime_error,
-		  "safe_system called with null command string\n");
+  ALBANY_ASSERT(str, "safe_system called with null command string\n");
   int ret = system(str);
-  TEUCHOS_TEST_FOR_EXCEPTION(ret != 0, std::runtime_error,
-		  ret << "=safe_system(\"" << str << "\")\n");
+  ALBANY_ASSERT(str, ret<<"=safe_system(\""<<str<<"\")");
+}
+
+void Albany::assert_fail(std::string const& msg) {
+  std::cerr << msg;
+  abort();
 }

@@ -8,31 +8,30 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_CommHelpers.hpp"
 #include "Albany_Utils.hpp"
-#include "Phalanx.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "PHAL_Utilities.hpp"
 
 template<typename EvalT, typename Traits>
 QCAD::ResponseFieldIntegral<EvalT, Traits>::
 ResponseFieldIntegral(Teuchos::ParameterList& p,
-          const Teuchos::RCP<Albany::Layouts>& dl) :
+		      const Teuchos::RCP<Albany::Layouts>& dl) :
   coordVec("Coord Vec", dl->qp_vector),
   weights("Weights", dl->qp_scalar)
 {
   //! get and validate Response parameter list
-  Teuchos::ParameterList* plist =
+  Teuchos::ParameterList* plist = 
     p.get<Teuchos::ParameterList*>("Parameter List");
-  Teuchos::RCP<const Teuchos::ParameterList> reflist =
+  Teuchos::RCP<const Teuchos::ParameterList> reflist = 
     this->getValidResponseParameters();
   plist->validateParameters(*reflist,0);
 
   //! parameters passed down from problem
-  Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem =
+  Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem = 
     p.get< Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
   if(paramsFromProblem != Teuchos::null) {
 
-    // Material database
-    materialDB = paramsFromProblem->get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+    // Material database 
+    materialDB = paramsFromProblem->get< Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB");
 
     // Length unit in meters
     length_unit_in_m = paramsFromProblem->get<double>("Length unit in m");
@@ -99,31 +98,27 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
 
   double X0 = length_unit_in_m / integrand_length_unit_in_m; // length scaling to get to integrand's lenght unit
 
-  if (numDims == 1)       scaling = X0;
-  else if (numDims == 2)  scaling = X0*X0;
-  else if (numDims == 3)  scaling = X0*X0*X0;
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl
-        << "Error! Invalid number of dimensions: " << numDims << std::endl);
+  if (numDims == 1)       scaling = X0; 
+  else if (numDims == 2)  scaling = X0*X0; 
+  else if (numDims == 3)  scaling = X0*X0*X0; 
+  else 
+    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
+				<< "Error! Invalid number of dimensions: " << numDims << std::endl);
 
 
   //! add dependent fields (all fields assumed scalar qp)
-  std::vector<std::string>::const_iterator it;
-  //for(it = fieldNames.begin(); it != fieldNames.end(); ++it) {
   for(std::size_t i=0; i<fieldNames.size(); i++) {
-    PHX::MDField<ScalarT,Cell,QuadPoint> f(fieldNames[i], scalar_dl);
-    fields.push_back(f);
-    this->addDependentField(f.fieldTag());
+    PHX::MDField<const ScalarT,Cell,QuadPoint> f(fieldNames[i], scalar_dl);
+    fields.push_back(f); this->addDependentField(f.fieldTag());
 
-    PHX::MDField<ScalarT,Cell,QuadPoint> fi(fieldNames_Imag[i], scalar_dl);
+    PHX::MDField<const ScalarT,Cell,QuadPoint> fi(fieldNames_Imag[i], scalar_dl);
     fields_Imag.push_back(fi);
 
-    if(fieldIsComplex[i])
-      this->addDependentField(fi.fieldTag());
+    if(fieldIsComplex[i]) this->addDependentField(fi.fieldTag());
   }
 
-  this->addDependentField(coordVec.fieldTag());
-  this->addDependentField(weights.fieldTag());
+  this->addDependentField(coordVec);
+  this->addDependentField(weights);
   opRegion->addDependentFields(this);
 
   //TODO: make name unique? Is this needed for anything?
@@ -133,9 +128,9 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
-  std::string local_response_name =
+  std::string local_response_name = 
     fieldName + " Local Response Field Integral";
-  std::string global_response_name =
+  std::string global_response_name = 
     fieldName + " Global Response Field Integral";
 
   int worksetSize = dl->qp_scalar->dimension(0);
@@ -143,10 +138,10 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(new MDALayout<Cell, Dim>(worksetSize, responseSize));
   Teuchos::RCP<PHX::DataLayout> global_response_layout = Teuchos::rcp(new MDALayout<Dim>(responseSize));
 
-  PHX::Tag<ScalarT> local_response_tag(local_response_name,
-               local_response_layout); //dl->cell_scalar);
-  PHX::Tag<ScalarT> global_response_tag(global_response_name,
-          global_response_layout);
+  PHX::Tag<ScalarT> local_response_tag(local_response_name, 
+				       local_response_layout); //dl->cell_scalar);
+  PHX::Tag<ScalarT> global_response_tag(global_response_name, 
+					global_response_layout);
   p.set("Local Response Field Tag", local_response_tag);
   p.set("Global Response Field Tag", global_response_tag);
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::setup(p,dl);
@@ -158,8 +153,6 @@ void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  typename std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> >::iterator it;
-  //for(it = fields.begin(); it != fields.end(); ++it)
   for(std::size_t i=0; i<fields.size(); i++) {
     this->utils.setFieldData(fields[i],fm);
     if(fieldIsComplex[i]) this->utils.setFieldData(fields_Imag[i],fm);
@@ -177,7 +170,7 @@ void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
   // Zero out global response
-  PHAL::set(this->global_response, 0.0);
+  PHAL::set(this->global_response_eval, 0.0);  
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -189,9 +182,7 @@ void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
-  PHAL::set(this->local_response, 0.0);
-
-  typename std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> >::const_iterator it;
+  PHAL::set(this->local_response_eval, 0.0);
 
   if(opRegion->elementBlockIsInRegion(workset.EBName)) {
 
@@ -207,72 +198,71 @@ evaluateFields(typename Traits::EvalData workset)
       if(!opRegion->cellIsInRegion(cell)) continue;
 
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-  val = 0.0;
+	val = 0.0;
 
-  //Loop over all possible combinations of Re/Im parts which form product terms and
-  // add the relevant ones (depending on whether we're returning the overall real or
-  // imaginary part of the integral) to get the integrand value for this (cell,qp).
-  // We do this by mapping the Re/Im choice onto a string of N bits, where N is the
-  // number of fields being multiplied together. (0 = RePart, 1 = ImPart)
+	//Loop over all possible combinations of Re/Im parts which form product terms and 
+	// add the relevant ones (depending on whether we're returning the overall real or
+	// imaginary part of the integral) to get the integrand value for this (cell,qp).
+	// We do this by mapping the Re/Im choice onto a string of N bits, where N is the 
+	// number of fields being multiplied together. (0 = RePart, 1 = ImPart)
 
-  //nContrib1++; //DEBUG
+	//nContrib1++; //DEBUG
 
-  //for(it = fields.begin(); it != fields.end(); ++it)
-  max = (std::size_t)std::pow(2.,(int)nBits);
-//  max = pow(2.0,static_cast<int>(nBits));
-  for(std::size_t i=0; i<max; i++) {
+	max = (std::size_t)std::pow(2.,(int)nBits);
+//	max = pow(2.0,static_cast<int>(nBits));
+	for(std::size_t i=0; i<max; i++) {
 
-    // Count the number of 1 bits, and exit early if
-    //  there's a 1 bit for a field that is not complex
-    nOneBits = nExtraMinuses = 0;
-    for(n=0; n<nBits; n++) {
-      if( (0x1 << n) & i ) { // if n-th bit of i is set (use Im part of n-th field)
-        if(!fieldIsComplex[n]) break;
-        if(conjugateFieldFlag[n]) nExtraMinuses++;
-        nOneBits++;
-      }
-    }
-    if(n < nBits) continue;  // we exited early, signaling this product can't contribute
+	  // Count the number of 1 bits, and exit early if 
+	  //  there's a 1 bit for a field that is not complex
+	  nOneBits = nExtraMinuses = 0;
+	  for(n=0; n<nBits; n++) {
+	    if( (0x1 << n) & i ) { // if n-th bit of i is set (use Im part of n-th field)
+	      if(!fieldIsComplex[n]) break;
+	      if(conjugateFieldFlag[n]) nExtraMinuses++;
+	      nOneBits++;
+	    }	
+	  }
+	  if(n < nBits) continue;  // we exited early, signaling this product can't contribute
 
-    //check if this combination of Re/Im parts contributes to the overall Re or Im part we return
-    if( (bReturnImagPart && nOneBits % 2) || (!bReturnImagPart && nOneBits % 2 == 0)) {
-      term = (nOneBits % 4 >= 2) ? -1.0 : 1.0; //apply minus sign if nOneBits % 4 == 2 (-1) or == 3 (-i)
-      if(nExtraMinuses % 2) term *= -1.0;      //apply minus sign due to conjugations
-      //nContrib2++;
+	  //check if this combination of Re/Im parts contributes to the overall Re or Im part we return
+	  if( (bReturnImagPart && nOneBits % 2) || (!bReturnImagPart && nOneBits % 2 == 0)) {
+	    term = (nOneBits % 4 >= 2) ? -1.0 : 1.0; //apply minus sign if nOneBits % 4 == 2 (-1) or == 3 (-i)
+	    if(nExtraMinuses % 2) term *= -1.0;      //apply minus sign due to conjugations
+	    //nContrib2++;
 
-      //multiply fields together
-      for(std::size_t m=0; m<nBits; m++) {
-        if( (0x1 << m) & i ) {
-    term *= fields_Imag[m](cell,qp);
-    //if( abs(fields_Imag[m](cell,qp)) > dbMaxIm[m]) dbMaxIm[m] = abs(fields_Imag[m](cell,qp));
-        }
-        else {
-    term *= fields[m](cell,qp);
-    //if( abs(fields[m](cell,qp)) > dbMaxRe[m]) dbMaxRe[m] = abs(fields[m](cell,qp));
-        }
-      }
+	    //multiply fields together
+	    for(std::size_t m=0; m<nBits; m++) { 
+	      if( (0x1 << m) & i ) {
+		term *= fields_Imag[m](cell,qp);
+		//if( abs(fields_Imag[m](cell,qp)) > dbMaxIm[m]) dbMaxIm[m] = abs(fields_Imag[m](cell,qp));
+	      }	
+	      else {
+		term *= fields[m](cell,qp);
+		//if( abs(fields[m](cell,qp)) > dbMaxRe[m]) dbMaxRe[m] = abs(fields[m](cell,qp));
+	      }
+	    }
 
-      val += term;  //add term to overall integrand
-    }
-  }
-  val *= weights(cell,qp) * scaling; //multiply integrand by volume
+	    val += term;  //add term to overall integrand
+	  }
+	}
+	val *= weights(cell,qp) * scaling; //multiply integrand by volume
 
-  //dbI += val; //DEBUG
-  //std::cout << "local response size = " << this->local_response.size() << std::endl;
-  //std::cout << "cell = " << cell << std::endl;
-  //std::cout << "workset size = " << workset.numCells << std::endl;
-        this->local_response(cell,0) += val;
-  this->global_response(0) += val;
+	//dbI += val; //DEBUG
+	//std::cout << "local response size = " << this->local_response.size() << std::endl;
+	//std::cout << "cell = " << cell << std::endl;
+	//std::cout << "workset size = " << workset.numCells << std::endl;
+        this->local_response_eval(cell,0) += val;
+	this->global_response_eval(0) += val;
       }
     }
 
     //DEBUG
     /*if(fieldNames.size() > 1) {
       std::cout << "DB: " << (bReturnImagPart == true ? "Im" : "Re") << " Field Integral - int(";
-      for(std::size_t i=0; i<fieldNames.size(); i++)
-  std::cout << fieldNames[i] << "," << (conjugateFieldFlag[i] ? "-" : "") << (fieldIsComplex[i] ? fieldNames_Imag[i] : "X") << " * ";
-      std::cout << " dV) -- I += " << dbI << "  (ebName = " << workset.EBName <<
-  " contrib1=" << nContrib1 << " contrib2=" << nContrib2 << ")" << std::endl;
+      for(std::size_t i=0; i<fieldNames.size(); i++) 
+	std::cout << fieldNames[i] << "," << (conjugateFieldFlag[i] ? "-" : "") << (fieldIsComplex[i] ? fieldNames_Imag[i] : "X") << " * ";
+      std::cout << " dV) -- I += " << dbI << "  (ebName = " << workset.EBName << 
+	" contrib1=" << nContrib1 << " contrib2=" << nContrib2 << ")" << std::endl;
       std::cout << "DB MAX of Fields Re: " << dbMaxRe[0] << "," << dbMaxRe[1] << "," << dbMaxRe[2] << "," << dbMaxRe[3] << std::endl;
       std::cout << "DB MAX of Fields Im: " << dbMaxIm[0] << "," << dbMaxIm[1] << "," << dbMaxIm[2] << "," << dbMaxIm[3] << std::endl;
       }*/
@@ -287,10 +277,10 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
+  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response_eval);
 
-  if (bPositiveOnly && this->global_response(0) < 1e-6) {
-    this->global_response(0) = 1e+100;
+  if (bPositiveOnly && this->global_response_eval(0) < 1e-6) {
+    this->global_response_eval(0) = 1e+100;
   }
 
   // Do global scattering
@@ -303,7 +293,7 @@ Teuchos::RCP<const Teuchos::ParameterList>
 QCAD::ResponseFieldIntegral<EvalT,Traits>::getValidResponseParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-      rcp(new Teuchos::ParameterList("Valid ResponseFieldIntegral Params"));;
+     	rcp(new Teuchos::ParameterList("Valid ResponseFieldIntegral Params"));;
   Teuchos::RCP<const Teuchos::ParameterList> baseValidPL =
     PHAL::SeparableScatterScalarResponse<EvalT,Traits>::getValidResponseParameters();
   validPL->setParameters(*baseValidPL);

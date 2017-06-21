@@ -1,0 +1,165 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Elasticity 3D
+    Solution Method: Continuation
+    Phalanx Graph Visualization Detail: 0
+    Dirichlet BCs: 
+      DBC on NS nodelist_1 for DOF X: 0.00000000e+00
+      DBC on NS nodelist_1 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_1 for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_2 for DOF X: 0.00000000e+00
+      DBC on NS nodelist_2 for DOF Z: 0.00000000e+00
+      Time Dependent DBC on NS nodelist_2 for DOF Y: 
+        Number of points: 3
+        Time Values: [0.00000000e+00, 0.01000000]
+        BC Values: [0.00000000e+00, 0.00030000]
+    Initial Condition: 
+      Function: Constant
+      Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00]
+    Elastic Modulus: 
+      Elastic Modulus Type: Constant
+      Value: 1.00000000
+    Poissons Ratio: 
+      Poissons Ratio Type: Constant
+      Value: 0.25000000
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    Method: Ioss
+    Exodus Input File Name: ring.exo
+    Exodus Output File Name: ring_out_nobridge.exo
+  Regression Results: 
+    Number of Comparisons: 0
+    Test Values: [79.67236107]
+    Relative Tolerance: 0.00010000
+    Absolute Tolerance: 0.00010000
+  Piro: 
+    Rythmos: 
+      Num Time Steps: 100
+      Final Time: 1.00000000
+      Max State Error: 0.00010000
+      Alpha: 0.00000000e+00
+      Rythmos Stepper: 
+        VerboseObject: 
+          Verbosity Level: low
+      Rythmos Integration Control: { }
+      Rythmos Integrator: 
+        VerboseObject: 
+          Verbosity Level: none
+      Stratimikos: { }
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Tangent
+      Stepper: 
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: Time
+        Max Steps: 20
+        Max Value: 0.01000000
+        Min Value: 0.00000000e+00
+        Compute Eigenvalues: false
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Jacobian Inverse
+          Num Eigenvalues: 1
+      Step Size: 
+        Initial Step Size: 0.00010000
+        Method: Constant
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000e-09
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-10
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                ML: 
+                  Base Method Defaults: SA
+                  ML Settings: 
+                    'aggregation: damping factor': 1.33300000
+                    'aggregation: local aggregates': 4
+                    'aggregation: nodes per aggregate': 27
+                    'coarse: max size': 220
+                Ifpack: 
+                  Overlap: 2
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Complete
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 5
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000e-10
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 10
+        Test 2: 
+          Test Type: NormF
+          Scale Type: Unscaled
+          Tolerance: 1.00000000e-07
+        Test 3: 
+          Test Type: NormUpdate
+          Scale Type: Unscaled
+          Tolerance: 1.00000000e-12
+        Test 4: 
+          Test Type: FiniteValue
+...

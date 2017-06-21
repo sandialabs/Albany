@@ -14,7 +14,7 @@
 
 #include "Albany_Layouts.hpp"
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 namespace QCAD {
 
@@ -38,7 +38,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   //! Helper function to compute inverse effective mass
-  double getInvEffMassFiniteWall( const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> & coord,
+  double getInvEffMassFiniteWall( const PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> & coord,
                                   const int cell, const int qp );
   double getInvEffMass1DMosCap(const MeshScalarT coord0);
   
@@ -47,13 +47,13 @@ private:
   std::size_t numQPs;
   std::size_t numDims;
 
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint> psi;
-  PHX::MDField<ScalarT,Cell,QuadPoint> psiDot;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> psiGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> V;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> psi;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> psiDot;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> psiGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> V;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   
   bool enableTransient;
   bool havePotential;
@@ -71,7 +71,7 @@ private:
   double energy_unit_in_eV, length_unit_in_m;
   
   //! Material database
-  Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+  Teuchos::RCP<Albany::MaterialDatabase> materialDB;
   
   //! Parameters for Finite Wall potential
   std::string potentialType;

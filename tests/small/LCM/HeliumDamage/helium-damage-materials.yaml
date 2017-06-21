@@ -1,0 +1,106 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    Block0: 
+      material: '21-6-9'
+      Weighted Volume Average J: true
+      Volume Average Pressure: true
+      Output Trapped_Concentration: true
+      Output Total_Concentration: true
+      Output He_Concentration: true
+      Output Total_Bubble_Density: true
+      Output Bubble_Volume_Fraction: true
+  Materials: 
+    '21-6-9': 
+      Output Convergence: false
+      Material Model: 
+        Model Name: Elasto Viscoplastic
+      Stabilization Parameter: 2.0000000
+      Initial Concentration: 0.00056000
+      Transport Coefficients: 
+        Partial Molar Volume: 2.00000000
+        Ideal Gas Constant: 0.00831400
+        'Pre-exponential Factor': 540000.00000000
+        Diffusion Activation Enthalpy: 53.90000000
+        Trap Binding Energy: 9.65000000
+        Number of Lattice Sites: 0.14052839
+        Reference Total Concentration: 0.00056000
+        Lattice Strain Flag: false
+        A Constant: 8.60000000
+        B Constant: 1.50000000
+        C Constant: 6.96000000
+        Avogadro's Number: 6.02214130e+11
+      Tritium Coefficients: 
+        Tritium Decay Constant: 1.79000000e-09
+        Helium Radius: 0.00025000
+        Atoms Per Cluster: 10.00000000
+        Evaluate HeliumODEs: true
+      Molar Volume: 
+        Type: Constant
+        Value: 7.11600000
+      Thermal Conductivity: 
+        Thermal Conductivity Type: Constant
+        Value: 0.00000000e+00
+      Reference Temperature: 300.00000000
+      Initial Temperature: 300.00000000
+      Thermal Transient Coefficient: 1.00000000
+      Thermal Expansion Coefficient: 0.00000000e+00
+      Density: 7.80600000e-18
+      Heat Capacity: 1.00000000
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 196.00000000
+        Reference Temperature: 300.00000000
+        Linear Temperature Coefficient: -0.00000000e+00
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.30000000
+        Reference Temperature: 300.00000000
+        Linear Temperature Coefficient: -0.00000000e+00
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 0.71400000
+        Reference Temperature: 300.00000000
+        Linear Temperature Coefficient: -0.00000000e+00
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 0.01570000
+        Temperature Dependence Type: Arrhenius
+        Pre Exponential: 0.01570000
+        Exponential Parameter: 0.00000000e+00
+      Recovery Modulus: 
+        Recovery Modulus Type: Constant
+        Value: 1.96000000
+        Temperature Dependence Type: Arrhenius
+        Pre Exponential: 1.96000000
+        Exponential Parameter: 0.00000000e+00
+      Flow Rule Coefficient: 
+        Flow Rule Coefficient Type: Constant
+        Value: 100.00000000
+      Flow Rule Exponent: 
+        Flow Rule Exponent Type: Constant
+        Value: 1.00000000
+      Initial Void Volume: 0.00100000
+      Shear Damage Parameter: 0.00000000e+00
+      Void Nucleation Parameter fN: 0.00000000e+00
+      Void Nucleation Parameter sN: 0.10000000
+      Void Nucleation Parameter eN: 0.30000000
+      Critical Void Volume: 0.15000000
+      Failure Void Volume: 0.25000000
+      Yield Parameter q1: 1.50000000
+      Yield Parameter q2: 1.00000000
+      Yield Parameter q3: 2.25000000
+      Hydrogen Yield Parameter: 63.95350000
+      Helium Yield Parameter: 4.50000000
+      Hydrogen Mean Strain Nucleation Parameter: 0.00500000
+      Mean Strain Hydrogen Linear Coefficient: -1.00000000e+01
+      Hydrogen Nucleation Standard Deviation: 0.10000000
+      Void Volume Fraction Nucleation Parameter: 0.01000000
+      Void Volume Fraction He Linear Coefficient: 1000.00000000
+      Output Cauchy Stress: true
+      Output eqps: true
+      Output eps_ss: true
+      Output kappa: true
+      Output void volume fraction: true
+...

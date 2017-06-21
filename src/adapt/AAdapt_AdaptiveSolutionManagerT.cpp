@@ -249,9 +249,9 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
         std::endl << *adaptParams_);
   }
 
-  Teuchos::RCP<const Teuchos::ParameterList> valid_params =
-    adapter_->getValidAdapterParameters();
-  adaptParams_->validateParameters(*valid_params);
+//Teuchos::RCP<const Teuchos::ParameterList> valid_params =
+//  adapter_->getValidAdapterParameters();
+//adaptParams_->validateParameters(*valid_params);
 
   *out << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
       << " Mesh adapter has been initialized:\n"
@@ -349,6 +349,22 @@ AAdapt::AdaptiveSolutionManagerT::updateAndReturnOverlapSolutionT(
 {
   overlapped_soln->getVectorNonConst(0)->doImport(solutionT, *importerT, Tpetra::INSERT);
   return overlapped_soln->getVectorNonConst(0);
+}
+
+Teuchos::RCP<Tpetra_Vector>
+AAdapt::AdaptiveSolutionManagerT::updateAndReturnOverlapSolutionDotT(
+    const Tpetra_Vector& solution_dotT /* not overlapped */)
+{
+  overlapped_soln->getVectorNonConst(1)->doImport(solution_dotT, *importerT, Tpetra::INSERT);
+  return overlapped_soln->getVectorNonConst(1);
+}
+
+Teuchos::RCP<Tpetra_Vector>
+AAdapt::AdaptiveSolutionManagerT::updateAndReturnOverlapSolutionDotDotT(
+    const Tpetra_Vector& solution_dotdotT /* not overlapped */)
+{
+  overlapped_soln->getVectorNonConst(2)->doImport(solution_dotdotT, *importerT, Tpetra::INSERT);
+  return overlapped_soln->getVectorNonConst(2);
 }
 
 Teuchos::RCP<const Tpetra_MultiVector>

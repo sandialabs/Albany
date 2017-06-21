@@ -83,8 +83,8 @@ void SurfaceVectorJump<EvalT, Traits>::evaluateFields(
 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int pt = 0; pt < num_qps_; ++pt) {
-      vecA.fill(minitensor::ZEROS);
-      vecB.fill(minitensor::ZEROS);
+      vecA.fill(minitensor::Filler::ZEROS);
+      vecB.fill(minitensor::Filler::ZEROS);
       for (int node = 0; node < num_plane_nodes_; ++node) {
         int topNode = node + num_plane_nodes_;
         vecA += minitensor::Vector<ScalarT>(

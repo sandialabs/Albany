@@ -7,16 +7,15 @@
 #if !defined(LCM_Mechanics_Residual_hpp)
 #define LCM_Mechanics_Residual_hpp
 
-#include <Phalanx_config.hpp>
-#include <Phalanx_Evaluator_WithBaseImpl.hpp>
 #include <Phalanx_Evaluator_Derived.hpp>
+#include <Phalanx_Evaluator_WithBaseImpl.hpp>
 #include <Phalanx_MDField.hpp>
+#include <Phalanx_config.hpp>
 #include <Sacado_ParameterAccessor.hpp>
-#include "Albany_Layouts.hpp"
 #include "AAdapt_RC_Field.hpp"
+#include "Albany_Layouts.hpp"
 
-namespace LCM
-{
+namespace LCM {
 ///
 /// \brief Mechanics Residual
 ///
@@ -24,29 +23,25 @@ namespace LCM
 /// of linear momentum for infinitesimal and finite deformation,
 /// with or without dynamics
 ///
-template<typename EvalT, typename Traits>
-class MechanicsResidual:
-    public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<EvalT, Traits>
-{
-
-public:
-
+template <typename EvalT, typename Traits>
+class MechanicsResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
+                          public PHX::EvaluatorDerived<EvalT, Traits> {
+ public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   ///
   /// Constructor
   ///
-  MechanicsResidual(Teuchos::ParameterList& p,
-      const Teuchos::RCP<Albany::Layouts>& dl);
+  MechanicsResidual(
+      Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
 
   ///
   /// Phalanx method to allocate space
   ///
   void
-  postRegistrationSetup(typename Traits::SetupData d,
-      PHX::FieldManager<Traits>& vm);
+  postRegistrationSetup(
+      typename Traits::SetupData d, PHX::FieldManager<Traits>& vm);
 
   ///
   /// Implementation of physics
@@ -54,32 +49,31 @@ public:
   void
   evaluateFields(typename Traits::EvalData d);
 
-private:
-
+ private:
   ///
   /// Input: Cauchy Stress
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim, Dim> stress_;
 
   ///
   /// Input: Weighted Basis Function Gradients
   ///
-  PHX::MDField<MeshScalarT, Cell, Node, QuadPoint, Dim> w_grad_bf_;
+  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> w_grad_bf_;
 
   ///
   /// Input: Weighted Basis Functions
   ///
-  PHX::MDField<MeshScalarT, Cell, Node, QuadPoint> w_bf_;
+  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint> w_bf_;
 
   ///
   /// Input: body force vector
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim> body_force_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim> body_force_;
 
   ///
   /// Input: acceleration
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim> acceleration_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim> acceleration_;
 
   ///
   /// Output: Residual Forces
@@ -121,36 +115,46 @@ private:
   ///
   AAdapt::rc::Field<2> def_grad_rc_;
 
-public: // Kokkos
-
-  struct residual_Tag{};
-  struct residual_haveBodyForce_Tag{};
-  struct residual_haveBodyForce_and_dynamic_Tag{};
-  struct residual_have_dynamic_Tag{};
+ public:  // Kokkos
+  struct residual_Tag {};
+  struct residual_haveBodyForce_Tag {};
+  struct residual_haveBodyForce_and_dynamic_Tag {};
+  struct residual_have_dynamic_Tag {};
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
-  typedef Kokkos::RangePolicy<ExecutionSpace,residual_Tag> residual_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,residual_haveBodyForce_Tag> residual_haveBodyForce_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,residual_haveBodyForce_and_dynamic_Tag> residual_haveBodyForce_and_dynamic_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,residual_have_dynamic_Tag> residual_have_dynamic_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, residual_Tag> residual_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, residual_haveBodyForce_Tag>
+      residual_haveBodyForce_Policy;
+  typedef Kokkos::RangePolicy<
+      ExecutionSpace, residual_haveBodyForce_and_dynamic_Tag>
+      residual_haveBodyForce_and_dynamic_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, residual_have_dynamic_Tag>
+      residual_have_dynamic_Policy;
 
   KOKKOS_INLINE_FUNCTION
-  void operator() (const residual_Tag& tag, const int& i) const;
+  void
+  operator()(const residual_Tag& tag, const int& i) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const residual_haveBodyForce_Tag& tag, const int& i) const;
+  void
+  operator()(const residual_haveBodyForce_Tag& tag, const int& i) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const residual_haveBodyForce_and_dynamic_Tag& tag, const int& i) const;
+  void
+  operator()(
+      const residual_haveBodyForce_and_dynamic_Tag& tag, const int& i) const;
   KOKKOS_INLINE_FUNCTION
-  void operator() (const residual_have_dynamic_Tag& tag, const int& i) const;
+  void
+  operator()(const residual_have_dynamic_Tag& tag, const int& i) const;
 
   KOKKOS_INLINE_FUNCTION
-  void compute_Stress(const int cell) const;
+  void
+  compute_Stress(const int cell) const;
   KOKKOS_INLINE_FUNCTION
-  void compute_BodyForce(const int cell) const;
+  void
+  compute_BodyForce(const int cell) const;
   KOKKOS_INLINE_FUNCTION
-  void compute_Acceleration(const int cell) const;
-
+  void
+  compute_Acceleration(const int cell) const;
 };
 }
 

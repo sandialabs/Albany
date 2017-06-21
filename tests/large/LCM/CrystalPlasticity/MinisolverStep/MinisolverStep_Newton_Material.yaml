@@ -1,0 +1,125 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_2: 
+      material: FCC
+      Weighted Volume Average J: true
+      Volume Average Pressure: true
+  Materials: 
+    FCC: 
+      Material Model: 
+        Model Name: CrystalPlasticity
+      Crystal Elasticity: 
+        C11: 204600.00
+        C12: 137700.00000000
+        C44: 126200.00000000
+        Basis Vector 1: [1.00000000, 0.00000000e+00, 0.00000000e+00]
+        Basis Vector 2: [0.00000000e+00, 1.00000000, 0.00000000e+00]
+        Basis Vector 3: [0.00000000e+00, 0.00000000e+00, 1.00000000]
+      Integration Scheme: Implicit
+      Nonlinear Solver Step Type: Newton
+      Implicit Integration Relative Tolerance: 1.00000000e-35
+      Implicit Integration Absolute Tolerance: 1.00000000e-12
+      Implicit Integration Max Iterations: 100
+      Output CP_Residual: true
+      Slip System Family 0: 
+        Flow Rule: 
+          Type: Power Law
+          Reference Slip Rate: 1.00000000
+          Rate Exponent: 20.00000000
+        Hardening Law: 
+          Type: Linear Minus Recovery
+          Hardening Modulus: 355.00000000
+          Recovery Modulus: 2.90000000
+          Initial Hardening State: 122.00000000
+      Number of Slip Systems: 12
+      Slip System 1: 
+        Slip Direction: [-1.00000000e+00, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 2: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 3: 
+        Slip Direction: [1.00000000, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, 1.00000000, 1.00000000]
+      Slip System 4: 
+        Slip Direction: [-1.00000000e+00, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 5: 
+        Slip Direction: [1.00000000, 0.00000000e+00, 1.00000000]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 6: 
+        Slip Direction: [0.00000000e+00, 1.00000000, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, 1.00000000, 1.00000000]
+      Slip System 7: 
+        Slip Direction: [1.00000000, -1.00000000e+00, 0.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 8: 
+        Slip Direction: [0.00000000e+00, 1.00000000, 1.00000000]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 9: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, -1.00000000e+00]
+        Slip Normal: [-1.00000000e+00, -1.00000000e+00, 1.00000000]
+      Slip System 10: 
+        Slip Direction: [1.00000000, 1.00000000, 0.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Slip System 11: 
+        Slip Direction: [-1.00000000e+00, 0.00000000e+00, 1.00000000]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Slip System 12: 
+        Slip Direction: [0.00000000e+00, -1.00000000e+00, -1.00000000e+00]
+        Slip Normal: [1.00000000, -1.00000000e+00, 1.00000000]
+      Output Cauchy Stress: true
+      Output Fp: false
+      Output L: false
+      Output eqps: true
+      Output gamma_1: true
+      Output gamma_2: true
+      Output gamma_3: true
+      Output gamma_4: true
+      Output gamma_5: true
+      Output gamma_6: true
+      Output gamma_7: true
+      Output gamma_8: true
+      Output gamma_9: true
+      Output gamma_10: true
+      Output gamma_11: true
+      Output gamma_12: true
+      Output gamma_dot_1: true
+      Output gamma_dot_2: true
+      Output gamma_dot_3: true
+      Output gamma_dot_4: true
+      Output gamma_dot_5: true
+      Output gamma_dot_6: true
+      Output gamma_dot_7: true
+      Output gamma_dot_8: true
+      Output gamma_dot_9: true
+      Output gamma_dot_10: true
+      Output gamma_dot_11: true
+      Output gamma_dot_12: true
+      Output tau_hard_1: true
+      Output tau_hard_2: true
+      Output tau_hard_3: true
+      Output tau_hard_4: true
+      Output tau_hard_5: true
+      Output tau_hard_6: true
+      Output tau_hard_7: true
+      Output tau_hard_8: true
+      Output tau_hard_9: true
+      Output tau_hard_10: true
+      Output tau_hard_11: true
+      Output tau_hard_12: true
+      Output tau_1: true
+      Output tau_2: true
+      Output tau_3: true
+      Output tau_4: true
+      Output tau_5: true
+      Output tau_6: true
+      Output tau_7: true
+      Output tau_8: true
+      Output tau_9: true
+      Output tau_10: true
+      Output tau_11: true
+      Output tau_12: true
+...

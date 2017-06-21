@@ -1,0 +1,42 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    Block0: 
+      material: 6061Aluminum
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.050000000
+  Materials: 
+    6061Aluminum: 
+      Material Model: 
+        Model Name: Gurson
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 67559.00000000
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.32990000
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 30.40000000
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 303.30000000
+      Saturation Modulus: 73.60000000
+      Saturation Exponent: 12.40000000
+      Initial Void Volume: 0.00200000
+      Shear Damage Parameter: 1.00000000
+      Void Nucleation Parameter fN: 0.00000000e+00
+      Void Nucleation Parameter sN: 0.10000000
+      Void Nucleation Parameter eN: 0.30000000
+      Critical Void Volume: 1.00000000
+      Failure Void Volume: 1.00000000
+      Yield Parameter q1: 1.00000000
+      Yield Parameter q2: 1.00000000
+      Yield Parameter q3: 1.00000000
+      Material Point Simulator: 
+        Loading Case Name: 'simple-shear'
+        Number of Steps: 20
+        Step Size: 0.05000000
+        Output File Name: 'Gurson-shear.exo'
+...

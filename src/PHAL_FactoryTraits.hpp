@@ -12,37 +12,43 @@
 // User Defined Evaluator Types
 
 #if defined(ALBANY_LCM)
-#include "LCM/evaluators/bc/KfieldBC.hpp"
-#include "LCM/evaluators/bc/TimeDepBC.hpp"
-#include "LCM/evaluators/bc/TimeTracBC.hpp"
 #include "LCM/evaluators/bc/EquilibriumConcentrationBC.hpp"
+#include "LCM/evaluators/bc/KfieldBC.hpp"
+#include "LCM/evaluators/bc/PDNeighborFitBC.hpp"
+#include "LCM/evaluators/bc/StrongDBC.hpp"
+#include "LCM/evaluators/bc/TimeDepBC.hpp"
+#include "LCM/evaluators/bc/TimeDepSDBC.hpp"
+#include "LCM/evaluators/bc/TimeTracBC.hpp"
+#include "LCM/evaluators/bc/TorsionBC.hpp"
 #include "LCM/evaluators/Time.hpp"
 #if defined(HAVE_STK)
 #include "LCM/evaluators/bc/SchwarzBC.hpp"
-#endif
-#include "LCM/evaluators/bc/TorsionBC.hpp"
-#include "LCM/evaluators/bc/PDNeighborFitBC.hpp"
-#endif
+#endif // HAVE_STK
+#endif // ALBANY_LCM
+
 #ifdef ALBANY_QCAD
 #include "QCAD_PoissonDirichlet.hpp"
 #include "QCAD_PoissonNeumann.hpp"
 #include "QCAD_PoissonSourceNeumann.hpp"
 #include "QCAD_PoissonSourceInterface.hpp"
-#endif
+#endif // ALBANY_QCAD
+
 #include "PHAL_Dirichlet.hpp"
-#include "PHAL_Neumann.hpp"
-#include "PHAL_GatherCoordinateVector.hpp"
-#include "PHAL_GatherSolution.hpp"
-#if defined(ALBANY_EPETRA)
-#include "PHAL_GatherAuxData.hpp"
-#endif
-#include "PHAL_LoadStateField.hpp"
-#include "PHAL_GatherScalarNodalParameter.hpp"
 #include "PHAL_DirichletCoordinateFunction.hpp"
 #include "PHAL_DirichletField.hpp"
 #include "PHAL_DirichletOffNodeSet.hpp"
+#include "PHAL_GatherCoordinateVector.hpp"
+#include "PHAL_GatherScalarNodalParameter.hpp"
+#include "PHAL_GatherSolution.hpp"
+#include "PHAL_LoadStateField.hpp"
+#include "PHAL_Neumann.hpp"
+
+#if defined(ALBANY_EPETRA)
+#include "PHAL_GatherAuxData.hpp"
+#endif
 
 #include "Sacado_mpl_placeholders.hpp"
+
 // \cond  Have doxygern ignore this namespace
 using namespace Sacado::mpl::placeholders;
 // \endcond
@@ -72,8 +78,10 @@ namespace PHAL {
     static const int id_timedep_bc                     =  8; // Only for LCM probs
     static const int id_time                           =  9; // Only for LCM probs
     static const int id_torsion_bc                     = 10; // Only for LCM probs
-    static const int id_schwarz_bc                     = 11; // Only for LCM probs
-    static const int id_pd_neigh_fit_bc                = 12; // Only for LCM-Peridigm coupling
+    static const int id_strong_dbc                     = 11; // Only for LCM probs
+    static const int id_timedep_sdbc                   = 12; // Only for LCM probs
+    static const int id_schwarz_bc                     = 13; // Only for LCM probs
+    static const int id_pd_neigh_fit_bc                = 14; // Only for LCM-Peridigm coupling
 
     typedef Sacado::mpl::vector<
         PHAL::Dirichlet<_,Traits>,                //  0
@@ -92,12 +100,14 @@ namespace PHAL {
         LCM::EquilibriumConcentrationBC<_,Traits>, // 7
         LCM::TimeDepBC<_, Traits>,                //  8
         LCM::Time<_, Traits>,                     //  9
-        LCM::TorsionBC<_, Traits>                 // 10
+        LCM::TorsionBC<_, Traits>,                // 10
+        LCM::StrongDBC<_, Traits>,                // 11
+        LCM::TimeDepSDBC<_, Traits>               // 12
 #endif
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
         ,
-        LCM::SchwarzBC<_, Traits>,                 // 11
-        LCM::PDNeighborFitBC<_, Traits>           //  12
+        LCM::SchwarzBC<_, Traits>,                 // 13
+        LCM::PDNeighborFitBC<_, Traits>           //  14
 #endif
         > EvaluatorTypes;
 };

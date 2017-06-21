@@ -1,0 +1,108 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: LaplaceBeltrami 3D
+    Method: TPSLaplace
+    Dirichlet BCs: 
+      DBC on NS nodelist_111 for DOF CoordFunc: 
+        BC Function: Identity
+    Initial Condition: 
+      Function: Coordinates
+    Parameters: 
+      Number: 0
+    Response Functions: 
+      Number: 2
+      Response 0: Solution Average
+      Response 1: Solution Two Norm
+  Discretization: 
+    Method: Ioss
+    Exodus Input File Name: 3d_cgrid_small.e
+    Exodus Output File Name: 3DHex_Cgrid_TPS.exo
+    Transfer Solution to Coordinates: true
+    Use Serial Mesh: true
+  Regression Results: 
+    Number of Comparisons: 2
+    Test Values: [4.2917575, 978.60164909]
+    Relative Tolerance: 1.00000000e-06
+    Number of Sensitivity Comparisons: 0
+    Number of Dakota Comparisons: 0
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000e-05
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: none
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-06
+                      Output Frequency: 1
+                      Output Style: 1
+                      Verbosity: 34
+                      Maximum Iterations: 100
+                      Block Size: 1
+                      Num Blocks: 50
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 1
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: level-of-fill': 1
+                MueLu: 
+                  multigrid algorithm: sa
+                  'smoother: pre or post': both
+                  'coarse: type': 'Amesos-KLU'
+                  number of equations: 3
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

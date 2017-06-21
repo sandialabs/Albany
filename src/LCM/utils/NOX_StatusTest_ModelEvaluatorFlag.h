@@ -36,6 +36,9 @@ public:
 
   //! Current status
   NOX::StatusTest::StatusType status_;
+
+  std::string
+  status_message_;
 };
 
 } // namespace StatusTest

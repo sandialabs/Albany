@@ -26,41 +26,71 @@ class Integrator
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt)
       : nox_status_test_(nox_status_test),
         num_slip_(state_internal.slip_n_.get_dimension()),
         num_dims_(state_mechanical.Fp_n_.get_dimension()),
         num_iters_(0),
+        norm_residual_(0.0),
         slip_systems_(slip_systems),
         slip_families_(slip_families),
         state_mechanical_(state_mechanical),
         state_internal_(state_internal),
         C_(C),
-        F_np1_(F_np1),
         dt_(dt)
     {}
 
-    virtual bool update(RealType & residual_norm) const = 0;
+    virtual void update() const = 0;
 
-    void forceGlobalLoadStepReduction() const;
-    int getNumIters() const { return num_iters_; }
+    void forceGlobalLoadStepReduction(
+      std::string const & message) const;
+
+    int
+    getNumIters() const { return num_iters_; }
+
+    RealType
+    getNormResidual() const { return norm_residual_; }
+
+    NOX::StatusTest::StatusType
+    getStatus() const { return nox_status_test_->status_; }
+
+    std::string
+    getMessage() const { return nox_status_test_->status_message_; }
 
   protected:
 
-    Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test_;
+    Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
+    nox_status_test_;
  
-    int num_slip_;
-    int num_dims_;
-    mutable int num_iters_;
+    int
+    num_slip_;
 
-    std::vector<SlipSystem<NumDimT>> const & slip_systems_;
-    std::vector<SlipFamily<NumDimT, NumSlipT>> const & slip_families_;
-    StateMechanical<ScalarT, NumDimT> & state_mechanical_;
-    StateInternal<ScalarT, NumSlipT> & state_internal_;
-    minitensor::Tensor4<ScalarT, NumDimT> const & C_;
-    minitensor::Tensor<ScalarT, NumDimT> const & F_np1_;
-    RealType dt_;
+    int
+    num_dims_;
+
+    mutable int
+    num_iters_;
+
+    mutable RealType
+    norm_residual_;
+
+    std::vector<SlipSystem<NumDimT>> const &
+    slip_systems_;
+
+    std::vector<SlipFamily<NumDimT, NumSlipT>> const &
+    slip_families_;
+
+    StateMechanical<ScalarT, NumDimT> &
+    state_mechanical_;
+
+    StateInternal<ScalarT, NumSlipT> &
+    state_internal_;
+
+    minitensor::Tensor4<ScalarT, NumDimT> const &
+    C_;
+
+    RealType
+    dt_;
 };
 
 
@@ -83,7 +113,6 @@ class IntegratorFactory
       CP::StateMechanical<ScalarT, NumDimT> & state_mechanical,
       CP::StateInternal<ScalarT, NumSlipT> & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt);
 
     utility::StaticPointer<IntegratorBase>
@@ -92,21 +121,35 @@ class IntegratorFactory
 
   private:
 
-    utility::StaticAllocator & allocator_;
+    utility::StaticAllocator &
+    allocator_;
 
-    const Minimizer & minimizer_;
-    minitensor::StepType step_type_;
-    Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag> nox_status_test_;
+    const Minimizer &
+    minimizer_;
 
-    std::vector<CP::SlipSystem<NumDimT>> const & slip_systems_;
-    std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const & slip_families_;
+    minitensor::StepType
+    step_type_;
 
-    CP::StateMechanical<ScalarT, NumDimT> & state_mechanical_;
-    CP::StateInternal<ScalarT, NumSlipT> & state_internal_;
+    Teuchos::RCP<NOX::StatusTest::ModelEvaluatorFlag>
+    nox_status_test_;
+
+    std::vector<CP::SlipSystem<NumDimT>> const &
+    slip_systems_;
     
-    minitensor::Tensor4<ScalarT, NumDimT> const & C_;
-    minitensor::Tensor<ScalarT, NumDimT> const & F_np1_;
-    RealType dt_;
+    std::vector<CP::SlipFamily<NumDimT, NumSlipT>> const &
+    slip_families_;
+
+    CP::StateMechanical<ScalarT, NumDimT> &
+    state_mechanical_;
+
+    CP::StateInternal<ScalarT, NumSlipT> &
+    state_internal_;
+
+    minitensor::Tensor4<ScalarT, NumDimT> const &
+    C_;
+
+    RealType
+    dt_;
 };
 
 template<typename EvalT, minitensor::Index NumDimT, minitensor::Index NumSlipT>
@@ -124,10 +167,10 @@ class ExplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt);
 
-    virtual bool update(RealType & residual_norm) const override;
+    virtual void
+    update() const override;
 
   protected:
 
@@ -136,7 +179,6 @@ class ExplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
     using Base::state_mechanical_;
     using Base::state_internal_;
     using Base::C_;
-    using Base::F_np1_;
     using Base::dt_;
 };
 
@@ -159,10 +201,10 @@ class ImplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt);
     
-    bool reevaluateState(RealType & residual_norm) const;
+    void
+    reevaluateState() const;
 
   protected:
 
@@ -171,11 +213,13 @@ class ImplicitIntegrator : public Integrator<EvalT, NumDimT, NumSlipT>
     using Base::state_mechanical_;
     using Base::state_internal_;
     using Base::C_;
-    using Base::F_np1_;
     using Base::dt_;
 
-    mutable Minimizer minimizer_;
-    minitensor::StepType step_type_;
+    mutable Minimizer
+    minimizer_;
+    
+    minitensor::StepType
+    step_type_;
 };
 
 
@@ -198,10 +242,10 @@ class ImplicitSlipIntegrator : public ImplicitIntegrator<EvalT, NumDimT, NumSlip
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt);
 
-    virtual bool update(RealType & residual_norm) const override;
+    virtual void 
+    update() const override;
 
   protected:
 
@@ -210,7 +254,6 @@ class ImplicitSlipIntegrator : public ImplicitIntegrator<EvalT, NumDimT, NumSlip
     using Base::state_mechanical_;
     using Base::state_internal_;
     using Base::C_;
-    using Base::F_np1_;
     using Base::dt_;
     using Base::minimizer_;
     using Base::step_type_;
@@ -236,10 +279,10 @@ class ImplicitSlipHardnessIntegrator : public ImplicitIntegrator<EvalT, NumDimT,
       StateMechanical<ScalarT, NumDimT> & state_mechanical,
       StateInternal<ScalarT, NumSlipT > & state_internal,
       minitensor::Tensor4<ScalarT, NumDimT> const & C,
-      minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
       RealType dt);
 
-    virtual bool update(RealType & residual_norm) const override;
+    virtual void
+    update() const override;
 
   protected:
 
@@ -248,7 +291,6 @@ class ImplicitSlipHardnessIntegrator : public ImplicitIntegrator<EvalT, NumDimT,
     using Base::state_mechanical_;
     using Base::state_internal_;
     using Base::C_;
-    using Base::F_np1_;
     using Base::dt_;
     using Base::minimizer_;
     using Base::step_type_;

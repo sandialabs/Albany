@@ -14,17 +14,22 @@
 #include "Albany_Layouts.hpp"
 #include "ConstitutiveModel.hpp"
 
-namespace LCM
-{
+namespace LCM {
 
-//! \brief Neohookean Model
+///
+/// \brief Neohookean Model
+//
 template<typename EvalT, typename Traits>
 class NeohookeanModel: public LCM::ConstitutiveModel<EvalT, Traits>
 {
 public:
 
-  typedef typename EvalT::ScalarT ScalarT;
-  typedef typename EvalT::MeshScalarT MeshScalarT;
+  using Base = LCM::ConstitutiveModel<EvalT, Traits>;
+  using DepFieldMap = typename Base::DepFieldMap;
+  using FieldMap = typename Base::FieldMap;
+
+  using ScalarT = typename EvalT::ScalarT;
+  using MeshScalarT = typename EvalT::MeshScalarT;
 
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
   using ConstitutiveModel<EvalT, Traits>::num_pts_;
@@ -43,8 +48,9 @@ public:
   ///
   /// Constructor
   ///
-  NeohookeanModel(Teuchos::ParameterList* p,
-      const Teuchos::RCP<Albany::Layouts>& dl);
+  NeohookeanModel(
+      Teuchos::ParameterList * p,
+      Teuchos::RCP<Albany::Layouts> const & dl);
 
   ///
   /// Virtual Destructor
@@ -58,31 +64,26 @@ public:
   ///
   virtual
   void
-  computeState(typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields);
+  computeState(
+      typename Traits::EvalData workset,
+      DepFieldMap dep_fields,
+      FieldMap eval_fields);
 
   virtual
   void
-  computeStateParallel(typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields){
-         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
- }
+  computeStateParallel(
+      typename Traits::EvalData workset,
+      DepFieldMap dep_fields,
+      FieldMap eval_fields)
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
+  }
 
-private:
-
-  ///
-  /// Private to prohibit copying
-  ///
-  NeohookeanModel(const NeohookeanModel&);
-
-  ///
-  /// Private to prohibit copying
-  ///
-  NeohookeanModel& operator=(const NeohookeanModel&);
+  // No copy constructor or copy assignment.
+  NeohookeanModel(NeohookeanModel const &) = delete;
+  NeohookeanModel & operator=(NeohookeanModel const &) = delete;
 
 };
-}
 
+} // namespace LCM
 #endif

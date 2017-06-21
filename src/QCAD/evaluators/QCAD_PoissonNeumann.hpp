@@ -18,7 +18,7 @@
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_Neumann.hpp"
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 namespace QCAD {
 
@@ -85,7 +85,7 @@ private:
   double energy_unit_in_eV; // to convert eV -> unit of solution (Phi)
   
   //! Material database
-  Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+  Teuchos::RCP<Albany::MaterialDatabase> materialDB;
 };
 
 }

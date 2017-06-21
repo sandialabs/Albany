@@ -112,6 +112,7 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
     double wy = params->get<double>("2D Scale", 1);
     double wz = params->get<double>("3D Scale", 1);
     bool is = ! params->get<bool>("Hexahedral", true);
+    std::cerr << "building box\n";
     buildBoxMesh(nex, ney, nez, wx, wy, wz, is);
   }
 

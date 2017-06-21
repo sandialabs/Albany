@@ -44,13 +44,13 @@ public:
 private:
 
   // Input:
-  PHX::MDField<RealType>      BF;
-  PHX::MDField<MeshScalarT>   w_measure;
-  PHX::MDField<ScalarT>       h;
-  PHX::MDField<ScalarT>       h_dot;
-  PHX::MDField<ScalarT>       N;
-  PHX::MDField<ScalarT>       m;
-  PHX::MDField<IceScalarT>    u_b;
+  PHX::MDField<const RealType>      BF;
+  PHX::MDField<const MeshScalarT>   w_measure;
+  PHX::MDField<const ScalarT>       h;
+  PHX::MDField<const ScalarT>       h_dot;
+  PHX::MDField<const ScalarT>       N;
+  PHX::MDField<const ScalarT>       m;
+  PHX::MDField<const IceScalarT>    u_b;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node>   residual;

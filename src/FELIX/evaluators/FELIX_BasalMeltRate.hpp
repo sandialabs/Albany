@@ -35,18 +35,17 @@ namespace FELIX
     typedef typename EvalT::ParamScalarT ParamScalarT;
 
     // Input:
-    PHX::MDField<ScalarT,Cell,Side,Node> 				phi;  // []
-    PHX::MDField<ParamScalarT,Cell,Side,Node>    		beta;  // [kPa yr/m]
-    PHX::MDField<VelocityType,Cell,Side,Node,VecDim>	velocity; // [m/yr]
-    PHX::MDField<ParamScalarT,Cell,Side,Node> 			geoFluxHeat; // [W m^{-2}] = [Pa m s^{-1}]
-    PHX::MDField<ScalarT,Cell,Side,Node> 				Enthalpy; //[MW s m^{-3}]
-    PHX::MDField<ScalarT,Cell,Side,Node>                basal_dTdz; // [K km^{-1}]
-    PHX::MDField<ParamScalarT,Cell,Side,Node> 			EnthalpyHs; ////[MW s m^{-3}]
+    PHX::MDField<const ScalarT,Cell,Side,Node> 				phi;  // []
+    PHX::MDField<const ParamScalarT,Cell,Side,Node>    		beta;  // [kPa yr/m]
+    PHX::MDField<const VelocityType,Cell,Side,Node,VecDim>	velocity; // [m/yr]
+    PHX::MDField<const ParamScalarT,Cell,Side,Node> 			geoFluxHeat; // [W m^{-2}] = [Pa m s^{-1}]
+    PHX::MDField<const ScalarT,Cell,Side,Node> 				Enthalpy; //[MW s m^{-3}]
+    PHX::MDField<const ScalarT,Cell,Side,Node>                basal_dTdz; // [K km^{-1}]
+    PHX::MDField<const ParamScalarT,Cell,Side,Node> 			EnthalpyHs; ////[MW s m^{-3}]
+    PHX::MDField<const ScalarT,Dim> homotopy;
 
     // Output:
     PHX::MDField<ScalarT,Cell,Side,Node> basalMeltRate; // [m/yr]
-
-    PHX::MDField<ScalarT,Dim> homotopy;
 
     std::vector<std::vector<int> >  sideNodes;
     std::string                     basalSideName;

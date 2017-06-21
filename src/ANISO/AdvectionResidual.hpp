@@ -42,14 +42,13 @@ class AdvectionResidual :
     int num_qps;
     int num_dims;
 
-    PHX::MDField<MeshScalarT, Cell, Node, QuadPoint> w_bf;
-    PHX::MDField<MeshScalarT, Cell, Node, QuadPoint, Dim> w_grad_bf;
-    PHX::MDField<ScalarT, Cell, QuadPoint> kappa;
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim> alpha;
-    PHX::MDField<ScalarT, Cell, QuadPoint> phi;
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim> grad_phi;
-    PHX::MDField<ScalarT, Cell, QuadPoint> tau;
-    PHX::MDField<ScalarT, Cell, QuadPoint> source;
+    PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint> w_bf;
+    PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> w_grad_bf;
+    PHX::MDField<const ScalarT, Cell, QuadPoint> kappa;
+    PHX::MDField<const ScalarT, Cell, QuadPoint, Dim> alpha;
+    PHX::MDField<const ScalarT, Cell, QuadPoint> phi;
+    PHX::MDField<const ScalarT, Cell, QuadPoint, Dim> grad_phi;
+    PHX::MDField<const ScalarT, Cell, QuadPoint> tau;
     PHX::MDField<ScalarT, Cell, Node> residual;
 
 };

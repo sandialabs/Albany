@@ -10,6 +10,7 @@
 #include "utility/TimeGuard.hpp"
 #include "utility/Memory.hpp"
 #include "Albany_Utils.hpp"
+#include "NOX_StatusTest_ModelEvaluatorFlag.h"
 
 namespace LCM
 {
@@ -31,27 +32,44 @@ inline void
 ParallelConstitutiveModel<EvalT, Traits, Kernel>::
 computeState(
     typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+    FieldMap<const ScalarT> dep_fields,
+    FieldMap<ScalarT> eval_fields)
 {
-  util::TimeMonitor &tmonitor = util::PerformanceContext::instance().timeMonitor();
-  Teuchos::RCP<Teuchos::Time> kernel_time = tmonitor["Constitutive Model: Kernel Time"];
-  Teuchos::RCP<Teuchos::Time> transfer_time = tmonitor["Constitutive Model: Transfer Time"];
+  util::TimeMonitor &
+  tmonitor = util::PerformanceContext::instance().timeMonitor();
+  
+  Teuchos::RCP<Teuchos::Time>
+  kernel_time = tmonitor["Constitutive Model: Kernel Time"];
+
+  Teuchos::RCP<Teuchos::Time>
+  transfer_time = tmonitor["Constitutive Model: Transfer Time"];
+
   kernel_->init(workset, dep_fields, eval_fields);
   
   // Data may be set using CUDA UVM so we need to synchronize
   //transfer_time->start();
   Kokkos::fence();
-  util::TimeGuard total_time_guard( kernel_time );
+
+  util::TimeGuard
+  total_time_guard( kernel_time );
+
   //transfer_time->stop();
   //Kokkos::parallel_for(workset.numCells, kern);
 
   //create a local copy of the kernel_ pointer.
   //this may avoid internal compiler errors for GCC 4.7.2,
   //which is buggy but is the only available compiler on Blue Gene/Q supercomputers
-  auto kernel_ptr = kernel_.get();
-  Kokkos::parallel_for(Kokkos::RangePolicy<Kokkos::Schedule<Kokkos::Dynamic>>(0,workset.numCells),
-                        [=]( int cell ){ for (int pt = 0; pt < num_pts_; ++pt) {(*kernel_ptr)(cell,pt);}});
+  auto
+  kernel_ptr = kernel_.get();
+
+  Kokkos::parallel_for(
+    Kokkos::RangePolicy<Kokkos::Schedule<Kokkos::Dynamic>>(0, workset.numCells),
+    [=](int cell) { 
+      for (int pt = 0; pt < num_pts_; ++pt) {
+        (*kernel_ptr)(cell, pt);
+      }
+    });
+
   Kokkos::fence();
 }
 

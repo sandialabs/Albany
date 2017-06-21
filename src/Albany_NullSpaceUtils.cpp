@@ -260,16 +260,22 @@ setCoordinates(const Teuchos::RCP<Tpetra_MultiVector> &coordMV_)
 
   if (isMLUsed()) { // ML here
 
+    //MP: Even when a processor has no nodes, ML requires a nonnull pointer of coordinates.
+    const double emptyCoords[3] ={0.0, 0.0, 0.0};
+
     const double *x = coordMV->getData(0).get();
+    if (x==NULL) x = &emptyCoords[0];
     plist->set<double*>("x-coordinates", const_cast<double*>(x));
     if(numSpaceDim > 1){
       const double *y = coordMV->getData(1).get();
+      if (y==NULL) y = &emptyCoords[1];
       plist->set<double*>("y-coordinates", const_cast<double*>(y));
     }
     else
       plist->set<double*>("y-coordinates", NULL);
     if(numSpaceDim > 2){
       const double *z = coordMV->getData(2).get();
+      if (z==NULL) z = &emptyCoords[2];
       plist->set<double*>("z-coordinates", const_cast<double*>(z));
     }
     else
@@ -278,8 +284,16 @@ setCoordinates(const Teuchos::RCP<Tpetra_MultiVector> &coordMV_)
     plist->set("PDE equations", numPDEs);
 
   } else {  // MueLu here
-    plist->set("Coordinates", coordMV);
-    plist->set("number of equations", numPDEs);
+    if (plist->isSublist("Factories") == true) {
+      // use verbose input deck
+      Teuchos::ParameterList& matrixList = plist->sublist("Matrix");
+      matrixList.set("PDE equations", numPDEs);
+      plist->set("Coordinates", coordMV);
+    } else {
+      // use simplified input deck
+      plist->set("Coordinates", coordMV);
+      plist->set("number of equations", numPDEs);
+    }
   }
 }
 

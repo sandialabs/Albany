@@ -40,9 +40,9 @@ public:
 private:
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT,Cell,Node,Level,Dim> val_node;
+  PHX::MDField<const ScalarT,Cell,Node,Level,Dim> val_node;
   //! Basis Functions
-  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
+  PHX::MDField<const RealType,Cell,Node,QuadPoint> BF;
 
   // Output:
   //! Values at quadrature points
@@ -50,7 +50,6 @@ private:
 
   const int numNodes;
   const int numDims;
-  const int numQPs;
   const int numLevels;
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT

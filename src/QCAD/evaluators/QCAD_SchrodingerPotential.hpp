@@ -53,20 +53,20 @@ namespace QCAD {
     		getValidSchrodingerPotentialParameters() const;
 
   	ScalarT parabolicPotentialValue( const int numDim,
-                                         const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> & coord,
+                                         const PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> & coord,
                                          const int cell, const int qp );
   	ScalarT finiteWallPotential( const int numDim,
-                                     const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> & coord,
+                                     const PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> & coord,
                                      const int cell, const int qp );
 	ScalarT stringFormulaPotential( const int numDim,
-                                        const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> & coord,
+                                        const PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> & coord,
                                         const int cell, const int qp );
 
   	//! input
   	std::size_t numQPs;
   	std::size_t numDims;
-  	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-    PHX::MDField<ScalarT,Cell,QuadPoint> psi;  //wavefunction
+  	PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+    PHX::MDField<const ScalarT,Cell,QuadPoint> psi;  //wavefunction
 
   	//! output
     PHX::MDField<ScalarT,Cell,QuadPoint> V; //potential 

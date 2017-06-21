@@ -34,6 +34,8 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(local_response,fm);
+  if (!this->stand_alone)
+    this->utils.setFieldData(local_response_eval,fm);
 }
 
 template<typename EvalT, typename Traits>
@@ -41,16 +43,18 @@ void
 SeparableScatterScalarResponseBase<EvalT, Traits>::
 setup(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
 {
-  bool stand_alone = p.get<bool>("Stand-alone Evaluator");
+  this->stand_alone = p.get<bool>("Stand-alone Evaluator");
 
   // Setup fields we require
-  PHX::Tag<ScalarT> local_response_tag =
+  auto local_response_tag =
     p.get<PHX::Tag<ScalarT> >("Local Response Field Tag");
-  local_response = PHX::MDField<ScalarT>(local_response_tag);
-  if (stand_alone)
-    this->addDependentField(local_response.fieldTag());
-  else
-    this->addEvaluatedField(local_response);
+  local_response = decltype(local_response)(local_response_tag);
+  if (this->stand_alone) {
+    this->addDependentField(local_response);
+  } else {
+    local_response_eval = decltype(local_response_eval)(local_response_tag);
+    this->addEvaluatedField(local_response_eval);
+  }
 }
 
 // **********************************************************************
@@ -107,7 +111,7 @@ evaluateFields(typename Traits::EvalData workset)
     // Loop over responses
 
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
-      typename PHAL::Ref<ScalarT>::type val = this->local_response(cell, res);
+      auto val = this->local_response(cell, res);
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
@@ -170,7 +174,7 @@ evaluate2DFieldsDerivativesDueToExtrudedSolution(typename Traits::EvalData works
 
       const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[elem_LID];
       for (std::size_t res = 0; res < this->global_response.size(); res++) {
-        typename PHAL::Ref<ScalarT>::type val = this->local_response(elem_LID, res);
+        auto val = this->local_response(elem_LID, res);
         LO base_id, ilayer;
         for (int i = 0; i < numSideNodes; ++i) {
           std::size_t node = side.node[i];
@@ -198,7 +202,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Tpetra_Vector> gT = workset.gT;
   if (gT != Teuchos::null) {
     Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
-    for (PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+    for (PHAL::MDFieldIterator<const ScalarT> gr(this->global_response);
          ! gr.done(); ++gr)
       gT_nonconstView[gr.idx()] = gr.ref().val();
   }
@@ -231,26 +235,25 @@ template<typename Traits>
 void SeparableScatterScalarResponse<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-#if defined(ALBANY_EPETRA)
-  // Initialize derivatives
-  Teuchos::RCP<Epetra_MultiVector> dgdp = workset.dgdp;
-  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdp = workset.overlapped_dgdp;
-  if (dgdp != Teuchos::null) {
-    dgdp->PutScalar(0.0);
-    overlapped_dgdp->PutScalar(0.0);
-  }
-#endif
+  //IKT, FIXME, 1/24/17: replace workset.dgdp below with workset.dgdpT 
+  //once ATO:Constraint_2D_adj test passes with this change.  Remove ifdef guards 
+  //when this is done. 
+  Teuchos::RCP<Tpetra_MultiVector> dgdpT = workset.dgdpT;
+  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT = workset.overlapped_dgdpT;
+  if (dgdpT != Teuchos::null)
+    dgdpT->putScalar(0.0);
+  if (overlapped_dgdpT != Teuchos::null)
+    overlapped_dgdpT->putScalar(0.0);
 }
 
 template<typename Traits>
 void SeparableScatterScalarResponse<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#if defined(ALBANY_EPETRA)
   // Here we scatter the *local* response derivative
-  Teuchos::RCP<Epetra_MultiVector> dgdp = workset.overlapped_dgdp;
+  Teuchos::RCP<Tpetra_MultiVector> dgdpT = workset.overlapped_dgdpT;
 
-  if (dgdp == Teuchos::null)
+  if (dgdpT == Teuchos::null)
     return;
 
   int num_deriv = numNodes;
@@ -270,33 +273,32 @@ evaluateFields(typename Traits::EvalData workset)
 
           // Set dg/dp
         if(row >=0){
-          dgdp->SumIntoMyValue(row, res, (this->local_response(cell, res)).dx(deriv));
+          dgdpT->sumIntoLocalValue(row, res, (this->local_response(cell, res)).dx(deriv));
           }
 
       } // deriv
     } // response
   } // cell
-#endif
 }
 
 template<typename Traits>
 void SeparableScatterScalarResponse<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-#if defined(ALBANY_EPETRA)
-  // Here we scatter the *global* response and its derivatives
-  Teuchos::RCP<Epetra_Vector> g = workset.g;
-  Teuchos::RCP<Epetra_MultiVector> dgdp = workset.dgdp;
-  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdp = workset.overlapped_dgdp;
-  if (g != Teuchos::null)
-     for (std::size_t res = 0; res < this->global_response.size(); res++) {
-       (*g)[res] = this->global_response[res].val();
-   }
-  if (dgdp != Teuchos::null) {
-    Epetra_Export exporter(overlapped_dgdp->Map(), dgdp->Map());
-    dgdp->Export(*overlapped_dgdp, exporter, Add);
+  Teuchos::RCP<Tpetra_Vector> gT = workset.gT;
+  if (gT != Teuchos::null) {
+    Teuchos::ArrayRCP<double> gT_nonconstView = gT->get1dViewNonConst(); 
+    for (std::size_t res = 0; res < this->global_response.size(); res++) {
+      gT_nonconstView[res] = this->global_response[res].val();
+    }
   }
-#endif
+
+  Teuchos::RCP<Tpetra_MultiVector> dgdpT = workset.dgdpT;
+  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT = workset.overlapped_dgdpT;
+  if ((dgdpT != Teuchos::null)&&(overlapped_dgdpT != Teuchos::null)) {
+    Tpetra_Export exporterT(overlapped_dgdpT->getMap(), dgdpT->getMap());
+    dgdpT->doExport(*overlapped_dgdpT, exporterT, Tpetra::ADD);
+  }
 }
 
 // **********************************************************************

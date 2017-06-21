@@ -25,15 +25,15 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
 
   Teuchos::RCP<Albany::Layouts> dl_basal = dl->side_layouts.at(basalSideName);
 
-  u         = PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
-  beta      = PHX::MDField<BetaScalarT,Cell,Side,QuadPoint>(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"),dl_basal->qp_scalar);
-  BF        = PHX::MDField<RealType,Cell,Side,Node,QuadPoint>(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
-  w_measure = PHX::MDField<MeshScalarT,Cell,Side,QuadPoint> (p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
+  u         = decltype(u)(p.get<std::string> ("Velocity Side QP Variable Name"), dl_basal->qp_vector);
+  beta      = decltype(beta)(p.get<std::string> ("Basal Friction Coefficient Side QP Variable Name"),dl_basal->qp_scalar);
+  BF        = decltype(BF)(p.get<std::string> ("BF Side Name"), dl_basal->node_qp_scalar);
+  w_measure = decltype(w_measure)(p.get<std::string> ("Weighted Measure Name"), dl_basal->qp_scalar);
 
-  this->addDependentField(u.fieldTag());
-  this->addDependentField(beta.fieldTag());
-  this->addDependentField(BF.fieldTag());
-  this->addDependentField(w_measure.fieldTag());
+  this->addDependentField(u);
+  this->addDependentField(beta);
+  this->addDependentField(BF);
+  this->addDependentField(w_measure);
 
   this->addEvaluatedField(basalResid);
 
@@ -52,8 +52,9 @@ StokesFOBasalResid<EvalT, Traits, BetaScalarT>::StokesFOBasalResid (const Teucho
   regularized = p.get<Teuchos::ParameterList*>("Parameter List")->get("Regularize With Continuation",false);
   if (regularized)
   {
-    homotopyParam = PHX::MDField<ScalarT,Dim>("Glen's Law Homotopy Parameter", dl->shared_param);
-    this->addDependentField(homotopyParam.fieldTag());
+    homotopyParam = decltype(homotopyParam)(
+        "Glen's Law Homotopy Parameter", dl->shared_param);
+    this->addDependentField(homotopyParam);
   }
 
   // Index of the nodes on the sides in the numeration of the cell

@@ -41,7 +41,7 @@ case "$SCRIPT_NAME" in
 	;&
     test-all.sh)
 	;&
-    mail-all.sh)
+    dash-all.sh)
 	;&
     clean-config-all.sh)
 	;&
@@ -49,19 +49,19 @@ case "$SCRIPT_NAME" in
 	;&
     clean-config-build-test-all.sh)
 	;&
-    clean-config-build-test-mail-all.sh)
+    clean-config-build-test-dash-all.sh)
 	;&
     config-build-all.sh)
 	;&
     config-build-test-all.sh)
 	;&
-    config-build-test-mail-all.sh)
+    config-build-test-dash-all.sh)
 	;&
     build-test-all.sh)
 	;&
-    build-test-mail-all.sh)
+    build-test-dash-all.sh)
 	;&
-    test-mail-all.sh)
+    test-dash-all.sh)
 	COMMAND="$LCM_DIR/${SCRIPT_NAME%-*}.sh"
 	;;
     *)
@@ -71,15 +71,31 @@ case "$SCRIPT_NAME" in
 esac
 WIKI_TEMPLATE="LCM-Status:-Last-known-commits-that-work.md"
 
+KERNEL_VERSION=`uname -r`
+PLATFORM="unknown"
+if [[ ${KERNEL_VERSION} == *"fc"* ]]; then
+    PLATFORM="fedora"
+elif [[ ${KERNEL_VERSION} == *"el"* ]]; then
+    PLATFORM="sems"
+elif [[ ${KERNEL_VERSION} == *"chaos"* ]]; then
+    PLATFORM="cluster"
+else
+    echo "Unrecongnized platform. Valid platforms: fc, el, chaos"
+    uname -r
+    exit 1
+fi
+
 # Use different variable names for loop counters so they do not
 # conflict with the variables defined by the module command.
-module purge
 for P in $PACKAGES; do
     for A in $ARCHES; do
         for TC in $TOOL_CHAINS; do
             for BT in $BUILD_TYPES; do
                 MODULE="$A"-"$TC"-"$BT"
                 echo "MODULE: $MODULE"
+		echo "PLATFORM: $PLATFORM"
+                module purge
+                module load lcm/"$PLATFORM"
                 module load "$MODULE"
                 "$COMMAND" "$P" "$NUM_PROCS"
                 # Update wiki after compiling Albany with gcc release only.
@@ -110,7 +126,6 @@ for P in $PACKAGES; do
                     *)
 	                ;;
                 esac
-                module purge
             done
         done
     done

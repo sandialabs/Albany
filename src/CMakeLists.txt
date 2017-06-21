@@ -46,9 +46,11 @@ IF(ALBANY_EPETRA)
     Albany_NOXObserver.cpp
     Albany_NOXStatelessObserver.cpp
     Albany_PiroObserver.cpp
-    Albany_RythmosObserver.cpp
     Albany_SaveEigenData.cpp
   )
+  IF(ALBANY_RYTHMOS)
+    SET(SOURCES ${SOURCES} Albany_RythmosObserver.cpp)
+  ENDIF()
 ENDIF()
 
 SET(HEADERS
@@ -88,9 +90,11 @@ IF(ALBANY_EPETRA)
     Albany_NOXStatelessObserver.hpp
     Albany_ObserverFactory.hpp
     Albany_PiroObserver.hpp
-    Albany_RythmosObserver.hpp
     Petra_Converters.hpp
   )
+  IF(ALBANY_RYTHMOS)
+    SET(SOURCES ${SOURCES} Albany_RythmosObserver.hpp)
+  ENDIF()
 ENDIF()
 
 #utility
@@ -120,6 +124,13 @@ SET(HEADERS ${HEADERS}
   utility/math/TensorImpl.hpp
   )
 
+IF(ALBANY_YAML)
+  add_executable(xml2yaml utility/xml2yaml.cpp)
+  add_executable(yaml2xml utility/yaml2xml.cpp)
+  target_link_libraries(xml2yaml teuchosparameterlist)
+  target_link_libraries(yaml2xml teuchosparameterlist)
+ENDIF()
+
 #problems
 SET(SOURCES ${SOURCES}
   problems/Albany_AbstractProblem.cpp
@@ -131,7 +142,7 @@ SET(SOURCES ${SOURCES}
   problems/Albany_ProblemUtils.cpp
   problems/Albany_ResponseUtilities.cpp
   problems/Albany_SideLaplacianProblem.cpp
-  problems/QCAD_MaterialDatabase.cpp
+  problems/Albany_MaterialDatabase.cpp
   )
 SET(PDE_SRCS
   problems/Albany_AdvDiffProblem.cpp
@@ -157,7 +168,7 @@ SET(HEADERS ${HEADERS}
   problems/Albany_ResponseUtilities.hpp
   problems/Albany_ResponseUtilities_Def.hpp
   problems/Albany_SideLaplacianProblem.hpp
-  problems/QCAD_MaterialDatabase.hpp
+  problems/Albany_MaterialDatabase.hpp
   )
 SET(PDE_HDRS
   problems/Albany_AdvDiffProblem.hpp
@@ -248,6 +259,7 @@ SET(HEADERS ${HEADERS}
   disc/Adapt_NodalDataBase.hpp
   disc/Adapt_NodalDataVector.hpp
   disc/Adapt_NodalFieldUtils.hpp
+  disc/Albany_DiscretizationUtils.hpp
   disc/Albany_AbstractDiscretization.hpp
   disc/Albany_AbstractFieldContainer.hpp
   disc/Albany_AbstractMeshStruct.hpp
@@ -255,6 +267,16 @@ SET(HEADERS ${HEADERS}
   disc/Albany_DiscretizationFactory.hpp
   disc/Albany_NodalDOFManager.hpp
   )
+
+IF (ALBANY_CONTACT)
+
+  SET(SOURCES ${SOURCES}
+    disc/Albany_ContactManager.cpp
+  )
+  SET(HEADERS ${HEADERS}
+    disc/Albany_ContactManager.hpp
+  )
+ENDIF ()
 
 #evaluators
 SET(SOURCES ${SOURCES}
@@ -719,6 +741,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./LCM/evaluators/transport
                      ./LCM/evaluators/HMC
                      ./LCM/models
+                     ./LCM/solvers
                      ./LCM/utils
                      ./LCM/utils/topology
                      ./FELIX/problems
@@ -767,6 +790,16 @@ IF ( ENABLE_Cogent )
   set(Cogent_LIB Cogent)
 ELSE()
   set(Cogent_LIB )
+ENDIF()
+
+IF ( ENABLE_MPMD )
+  include_directories (${PlatoEngine_INSTALL_DIR}/include)
+  link_directories (${PlatoEngine_INSTALL_DIR}/lib)
+  link_directories (${LibConfuse_INSTALL_DIR}/lib)
+  set(PlatoEngine_LIB PlatoDataLayer PlatoInterface PlatoAnalyze PlatoParser PlatoExceptions confuse)
+  ADD_DEFINITIONS(-DCODE_MP)
+ELSE()
+  set(PlatoEngine_LIB )
 ENDIF()
 
 IF ( ENABLE_DOTK )
@@ -852,6 +885,12 @@ IF (ALBANY_TEMPUS)
   SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyTempus )
 ENDIF()
 
+IF (ALBANY_MPMD)
+  add_executable(AlbanyMPMD Main_SolveT_MPMD.cpp)
+  SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyMPMD )
+ENDIF()
+
+
 if (ALBANY_STOKHOS AND ALBANY_EPETRA)
 add_executable(AlbanySG Main_SGSolve.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanySG )
@@ -910,6 +949,8 @@ ENDIF (NOT ALBANY_LIBRARIES_ONLY)
 set(ALL_LIBRARIES
   ${Peridigm_LIBRARIES}
   ${ALBANY_CI_LIB}
+  ${PlatoEngine_LIB}
+  ${PlatoEngine_LIB}
   ${ALB_TRILINOS_LIBS}
   ${ALB_CUBIT_LIBS}
   ${LAME_LIB}
@@ -1011,6 +1052,8 @@ ENDIF()
 IF (ALBANY_LCM)
   add_subdirectory(LCM)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} LCM)
+  add_executable(SchwarzAlternating Main_Alternating.cpp)
+  SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} SchwarzAlternating)
 ENDIF()
 
 # Can remove this once rebalance is in Trilnos again
@@ -1021,11 +1064,7 @@ endif()
 # Repeat libraries twice to catch circular dependencies
 SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
 
-# this needs to come after the definition of ALBANY_LIBRARIES
 IF (ALBANY_CTM)
-  # CTM is inteded to be a demonstration of using Albany as a library, not
-  # adding a library to Albany. Thus, we do not set an additional library in
-  # the ALBANY_LIBRARIES list here.
   add_subdirectory(CTM)
 ENDIF()
 

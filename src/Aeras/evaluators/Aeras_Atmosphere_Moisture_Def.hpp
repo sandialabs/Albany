@@ -76,7 +76,7 @@ Atmosphere_Moisture(Teuchos::ParameterList& p,
 
   for (int i = 0; i < tracerNames.size(); ++i) {
     namesToSrc[tracerNames[i]] = tracerSrcNames[i];
-    PHX::MDField<ScalarT,Cell,QuadPoint,Level> in   (tracerNames[i],   dl->qp_scalar_level);
+    PHX::MDField<const ScalarT,Cell,QuadPoint,Level> in(tracerNames[i],   dl->qp_scalar_level);
     PHX::MDField<ScalarT,Cell,QuadPoint,Level> src(tracerSrcNames[i],  dl->qp_scalar_level);
     TracerIn[tracerNames[i]]     = in;
     TracerSrc[tracerSrcNames[i]] = src;

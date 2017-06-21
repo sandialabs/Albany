@@ -38,7 +38,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   PHX::MDField<ScalarT> field_Nplus1;
-  PHX::MDField<ScalarT> field_Inc;
+  PHX::MDField<const ScalarT> field_Inc;
 
   std::string name_N;
 };

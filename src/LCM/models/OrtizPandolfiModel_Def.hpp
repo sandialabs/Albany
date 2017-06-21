@@ -3,10 +3,10 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-
-#include <MiniTensor.h>
-#include <Teuchos_TestForException.hpp>
-#include <Phalanx_DataLayout.hpp>
+#include "Albany_Utils.hpp"
+#include "MiniTensor.h"
+#include "Phalanx_DataLayout.hpp"
+#include "Teuchos_TestForException.hpp"
 
 //#define PRINT_DEBUG
 
@@ -111,21 +111,21 @@ OrtizPandolfiModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void OrtizPandolfiModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
+    DepFieldMap dep_fields,
+    FieldMap eval_fields)
 {
 
   // extract dependent MDFields
-  PHX::MDField<ScalarT> mdf_jump = *dep_fields["Vector Jump"];
-  PHX::MDField<ScalarT> mdf_basis = *dep_fields["Current Basis"];
+  auto mdf_jump = *dep_fields["Vector Jump"];
+  auto mdf_basis = *dep_fields["Current Basis"];
 
   // extract evaluated MDFields
-  PHX::MDField<ScalarT> mdf_traction = *eval_fields["Cohesive_Traction"];
-  PHX::MDField<ScalarT> mdf_traction_normal = *eval_fields["Normal_Traction"];
-  PHX::MDField<ScalarT> mdf_traction_shear = *eval_fields["Shear_Traction"];
-  PHX::MDField<ScalarT> mdf_jump_normal = *eval_fields["Normal_Jump"];
-  PHX::MDField<ScalarT> mdf_jump_shear = *eval_fields["Shear_Jump"];
-  PHX::MDField<ScalarT> mdf_jump_max = *eval_fields["Max_Jump"];
+  auto mdf_traction = *eval_fields["Cohesive_Traction"];
+  auto mdf_traction_normal = *eval_fields["Normal_Traction"];
+  auto mdf_traction_shear = *eval_fields["Shear_Traction"];
+  auto mdf_jump_normal = *eval_fields["Normal_Jump"];
+  auto mdf_jump_shear = *eval_fields["Shear_Jump"];
+  auto mdf_jump_max = *eval_fields["Max_Jump"];
 
   // get state variable
   Albany::MDArray jump_max_old = (*workset.stateArrayPtr)["Max_Jump_old"];
@@ -142,12 +142,18 @@ computeState(typename Traits::EvalData workset,
     for (int pt(0); pt < num_pts_; ++pt) {
 
       //current basis vector
-      minitensor::Vector<ScalarT> g_0(3, mdf_basis, cell, pt, 0, 0);
-      minitensor::Vector<ScalarT> g_1(3, mdf_basis, cell, pt, 1, 0);
-      minitensor::Vector<ScalarT> n(3, mdf_basis, cell, pt, 2, 0);
+      minitensor::Vector<ScalarT>
+      g_0(minitensor::Source::ARRAY, 3, mdf_basis, cell, pt, 0, 0);
+
+      minitensor::Vector<ScalarT>
+      g_1(minitensor::Source::ARRAY, 3, mdf_basis, cell, pt, 1, 0);
+
+      minitensor::Vector<ScalarT>
+      n(minitensor::Source::ARRAY, 3, mdf_basis, cell, pt, 2, 0);
 
       //current jump vector - move PHX::MDField into minitensor::Vector
-      minitensor::Vector<ScalarT> jump_pt(3, mdf_jump, cell, pt, 0);
+      minitensor::Vector<ScalarT>
+      jump_pt(minitensor::Source::ARRAY, 3, mdf_jump, cell, pt, 0);
 
       //construct Identity tensor (2nd order) and tensor product of normal
       minitensor::Tensor<ScalarT> I(minitensor::eye<ScalarT>(3));
@@ -223,14 +229,14 @@ computeState(typename Traits::EvalData workset,
 
       // Normal traction, default to zero.
       minitensor::Vector<ScalarT>
-      traction_normal(3, minitensor::ZEROS);
+      traction_normal(3, minitensor::Filler::ZEROS);
 
       if (jump_n >= 0.0) {
 
-        assert(jump_eff >= 0.0);
+        ALBANY_EXPECT(jump_eff >= 0.0);
 
         if (jump_n > 0.0) {
-          assert(jump_eff > 0.0);
+          ALBANY_EXPECT(jump_eff > 0.0);
           traction_normal = t_eff / jump_eff * jump_n * n;
         } else {
           // FIXME: Assume that if there is no jump whatever (initial state)
@@ -249,7 +255,7 @@ computeState(typename Traits::EvalData workset,
 
       // Shear traction, default to zero.
       minitensor::Vector<ScalarT>
-      traction_shear(3, minitensor::ZEROS);
+      traction_shear(3, minitensor::Filler::ZEROS);
 
       if (jump_eff > 0.0) {
         traction_shear = t_eff / jump_eff * beta * beta * vec_jump_s;

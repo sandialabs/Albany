@@ -30,6 +30,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
   sideSetID      (p.get<std::string>("Side Set ID")),
   coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector)
 {
+  useGLP = false;
   // the input.xml string "NBC on SS sidelist_12 for DOF T set dudn" (or something like it)
   name = p.get< std::string >("Neumann Input String");
 
@@ -52,11 +53,11 @@ NeumannBase(const Teuchos::ParameterList& p) :
   int position;
 
   if((inputConditions == "scaled jump" || inputConditions == "robin") &&
-     p.isType<Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB")){
+     p.isType<Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB")){
 
     //! Material database - holds the scaling we need
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB =
-      p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+    Teuchos::RCP<Albany::MaterialDatabase> materialDB =
+      p.get< Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB");
 
      // User has specified conditions on sideset normal
     if(inputConditions == "scaled jump") {
@@ -107,10 +108,9 @@ NeumannBase(const Teuchos::ParameterList& p) :
                              std::endl << "Error: \"Robin\" Neumann boundary conditions "
                              << "only supported when the DOF is not a vector" << std::endl);
 
-       PHX::MDField<ScalarT,Cell,Node> tmp(p.get<std::string>("DOF Name"),
+       dof = decltype(dof)(p.get<std::string>("DOF Name"),
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
-       dof = tmp;
-       this->addDependentField(dof.fieldTag());
+       this->addDependentField(dof);
      }
   }
 
@@ -148,10 +148,11 @@ NeumannBase(const Teuchos::ParameterList& p) :
   else if(inputConditions == "basal"){ // Basal boundary condition for FELIX
       rho = p.get<double>("Ice Density");
       rho_w = p.get<double>("Water Density");
+      useGLP = p.get<bool>("Use GLP");
       stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
       useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
       if(useStereographicMap)
-        this->addDependentField(coordVec.fieldTag());
+        this->addDependentField(coordVec);
       // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha or d(flux)/dn = (alpha + beta1*x + beta2*y + beta3*sqrt(x*x+y*y))*u
       bc_type = BASAL;
       int numInputs = inputValues.size(); //number of arguments user entered at command line.
@@ -171,15 +172,14 @@ NeumannBase(const Teuchos::ParameterList& p) :
         std::stringstream ss; ss << name << "[" << i << "]";
         this->registerSacadoParameter(ss.str(), paramLib);
       }
-       PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
+       dofVec = decltype(dofVec)(p.get<std::string>("DOF Name"),
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
-       dofVec = tmp;
 #ifdef ALBANY_FELIX
-      beta_field = PHX::MDField<ParamScalarT,Cell,Node>(
+      beta_field = decltype(beta_field)(
         p.get<std::string>("Beta Field Name"), dl->node_scalar);
-      thickness_field = PHX::MDField<ParamScalarT,Cell,Node>(
+      thickness_field = decltype(thickness_field)(
         p.get<std::string>("thickness Field Name"), dl->node_scalar);
-      bedTopo_field = PHX::MDField<ParamScalarT,Cell,Node>(
+      bedTopo_field = decltype(bedTopo_field)(
         p.get<std::string>("BedTopo Field Name"), dl->node_scalar);
 #endif
 
@@ -209,8 +209,6 @@ NeumannBase(const Teuchos::ParameterList& p) :
         beta_type = EXP_SCALAR_FIELD;
       else if (betaName == "Power Law Scalar Field")
         beta_type = POWERLAW_SCALAR_FIELD;
-      else if (betaName == "GLP Scalar Field")
-        beta_type = GLP_SCALAR_FIELD;
       else if (betaName == "Exponent Of Scalar Field Times Thickness")
         beta_type = EXP_SCALAR_FIELD_THK;
       else if (betaName == "FELIX XZ MMS")
@@ -218,11 +216,11 @@ NeumannBase(const Teuchos::ParameterList& p) :
       else TEUCHOS_TEST_FOR_EXCEPTION(true,Teuchos::Exceptions::InvalidParameter,
         std::endl << "The BetaXY name: \"" << betaName << "\" is not a valid name" << std::endl);
 
-      this->addDependentField(dofVec.fieldTag());
+      this->addDependentField(dofVec);
 #ifdef ALBANY_FELIX
-      this->addDependentField(beta_field.fieldTag());
-      this->addDependentField(thickness_field.fieldTag());
-      this->addDependentField(bedTopo_field.fieldTag());
+      this->addDependentField(beta_field);
+      this->addDependentField(thickness_field);
+      this->addDependentField(bedTopo_field);
 #endif
   }
   else if(inputConditions == "basal_scalar_field"){ // Basal boundary condition for FELIX, where the basal sliding coefficient is a scalar field
@@ -230,7 +228,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
       useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
 
       if(useStereographicMap)
-        this->addDependentField(coordVec.fieldTag());
+        this->addDependentField(coordVec);
 
       // User has specified scale to set BC d(flux)/dn = scale*beta*u, where beta is a scalar field
       bc_type = BASAL_SCALAR_FIELD;
@@ -240,21 +238,20 @@ NeumannBase(const Teuchos::ParameterList& p) :
         std::stringstream ss; ss << name << "[" << i << "]";
         this->registerSacadoParameter(ss.str(), paramLib);
       }
-      PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
+      dofVec = decltype(dofVec)(p.get<std::string>("DOF Name"),
           p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
-      dofVec = tmp;
-      this->addDependentField(dofVec.fieldTag());
+      this->addDependentField(dofVec);
 #ifdef ALBANY_FELIX
-      beta_field = PHX::MDField<ParamScalarT,Cell,Node>(
+      beta_field = decltype(beta_field)(
                     p.get<std::string>("Beta Field Name"), dl->node_scalar);
-      this->addDependentField(beta_field.fieldTag());
+      this->addDependentField(beta_field);
 #endif
   }
   else if(inputConditions == "lateral"){ // Basal boundary condition for FELIX
        stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
        useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
        if(useStereographicMap)
-         this->addDependentField(coordVec.fieldTag());
+         this->addDependentField(coordVec);
         // User has specified alpha and beta to set BC d(flux)/dn = beta*u + alpha or d(flux)/dn = (alpha + beta1*x + beta2*y + beta3*sqrt(x*x+y*y))*u
         bc_type = LATERAL;
         beta_type = LATERAL_BACKPRESSURE;
@@ -270,8 +267,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
       int numInputs = inputValues.size(); //number of arguments user entered at command line.
 
-      //The following is for backward compatibility: the lateral BC used to have 5 inputs, now really it has 1.
-      for (int i = numInputs; i < 5; i++)
+      //The following is for backward compatibility: the lateral BC used to have 5 inputs, now really it has 1. 
+      for (int i = numInputs; i < 5; i++) 
         robin_vals[i] = 0.0;
 
       //The following should really go to 1 but above backward compatibility line keeps this at length 5.
@@ -279,18 +276,17 @@ NeumannBase(const Teuchos::ParameterList& p) :
         std::stringstream ss; ss << name << "[" << i << "]";
         this->registerSacadoParameter(ss.str(), paramLib);
       }
-        PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
+        dofVec = decltype(dofVec)(p.get<std::string>("DOF Name"),
              p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
-        dofVec = tmp;
-        this->addDependentField(dofVec.fieldTag());
+        this->addDependentField(dofVec);
 #ifdef ALBANY_FELIX
-        thickness_field = PHX::MDField<ParamScalarT,Cell,Node>(
-                           p.get<std::string>("thickness Field Name"), dl->node_scalar);
-        elevation_field = PHX::MDField<ParamScalarT,Cell,Node>(
-                           p.get<std::string>("Elevation Field Name"), dl->node_scalar);
+        thickness_field = decltype(thickness_field)(
+          p.get<std::string>("thickness Field Name"), dl->node_scalar);
+        elevation_field = decltype(elevation_field)(
+          p.get<std::string>("Elevation Field Name"), dl->node_scalar);
 
-        this->addDependentField(thickness_field.fieldTag());
-        this->addDependentField(elevation_field.fieldTag());
+        this->addDependentField(thickness_field);
+        this->addDependentField(elevation_field);
 #endif
     }
 
@@ -303,7 +299,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   }
 
-  this->addDependentField(coordVec.fieldTag());
+  this->addDependentField(coordVec);
 
   PHX::Tag<ScalarT> fieldTag(name, dl->dummy);
 
@@ -716,6 +712,15 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
         }
       }
 
+      // Check if we should apply GLP - if so, modify betaOnSide to be 0 where ice is floating
+      if (useGLP) { // evaluate floating criterion at each quadrature point
+        for (std::size_t iCell=0; iCell < numCells_; ++iCell) {
+          for (std::size_t qp=0; qp < numQPsSide; ++qp) {
+            betaOnSide(iCell, qp) *= (thicknessOnSide(iCell, qp) * rho > - bedTopoOnSide(iCell, qp) * rho_w);
+          }
+        }
+      }
+
       // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
       //Intrepid2::FunctionSpaceTools<PHX::Device>::
         //evaluate(dofSide, dofCell, trans_basis_refPointsSide);
@@ -1084,8 +1089,10 @@ calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
   const ScalarT& beta2 = robin_vals[3];
   const ScalarT& beta3 = robin_vals[4];
 
-  Kokkos::DynRankView<MeshScalarT, PHX::Device> side_normals("BBB", numCells, numPoints, cellDims);
-  Kokkos::DynRankView<MeshScalarT, PHX::Device> normal_lengths("BBB", numCells, numPoints);
+
+  using DynRankViewMeshScalarT = Kokkos::DynRankView<MeshScalarT, PHX::Device>;
+  DynRankViewMeshScalarT side_normals = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells, numPoints, cellDims);
+  DynRankViewMeshScalarT normal_lengths = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(normal_lengths_buffer, normal_lengths_buffer.data(), numCells, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
   Intrepid2::CellTools<PHX::Device>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
@@ -1190,7 +1197,7 @@ calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
               MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
               MeshScalarT h2 = h*h;
               ScalarT vel=0;
-              const ScalarT beta = basalFriction_side(cell, pt);//*(thickness_side(cell, pt)*rho > -bedTopography_side(cell,pt)*rho_w);
+              const ScalarT beta = basalFriction_side(cell, pt);
               for(int dim = 0; dim < numDOFsSet; dim++)
                 vel += dof_side(cell, pt,dim)*dof_side(cell, pt,dim);
               for(int dim = 0; dim < numDOFsSet; dim++) {
@@ -1203,7 +1210,7 @@ calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
           for(int cell = 0; cell < numCells; cell++) {
             for(int pt = 0; pt < numPoints; pt++) {
               ScalarT vel=0;
-              const ScalarT beta = basalFriction_side(cell, pt);//*(thickness_side(cell, pt)*rho > -bedTopography_side(cell,pt)*rho_w);
+              const ScalarT beta = basalFriction_side(cell, pt);
               for(int dim = 0; dim < numDOFsSet; dim++)
                 vel += dof_side(cell, pt,dim)*dof_side(cell, pt,dim);
               for(int dim = 0; dim < numDOFsSet; dim++) {
@@ -1213,43 +1220,6 @@ calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
           }
         }
     }
-  if (beta_type == GLP_SCALAR_FIELD) {//basal (robin) condition indepenent of space
-      betaXY = 1;
-
-      if(useStereographicMap)
-      {
-        double R = stereographicMapList->get<double>("Earth Radius", 6371);
-        double x_0 = stereographicMapList->get<double>("X_0", 0);//-136);
-        double y_0 = stereographicMapList->get<double>("Y_0", 0);//-2040);
-        double R2 = std::pow(R,2);
-
-        for(int cell = 0; cell < numCells; cell++) {
-          for(int pt = 0; pt < numPoints; pt++) {
-            MeshScalarT x = physPointsSide(cell,pt,0) - x_0;
-            MeshScalarT y = physPointsSide(cell,pt,1) - y_0;
-            MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
-            MeshScalarT h2 = h*h;
-            const ScalarT beta = basalFriction_side(cell, pt)*(thickness_side(cell, pt)*rho > - bedTopography_side(cell,pt)*rho_w);
-            for(int dim = 0; dim < numDOFsSet; dim++) {
-              qp_data_returned(cell, pt, dim) = betaXY*beta*dof_side(cell, pt,dim)*h2; // d(stress)/dn = beta*u + alpha
-            }
-          }
-        }
-      }
-      else {
-        for(int cell = 0; cell < numCells; cell++) {
-          for(int pt = 0; pt < numPoints; pt++) {
-            ScalarT vel=0;
-            const ScalarT beta = basalFriction_side(cell, pt)*(thickness_side(cell, pt)*rho > - bedTopography_side(cell,pt)*rho_w);
-            for(int dim = 0; dim < numDOFsSet; dim++)
-              vel += dof_side(cell, pt,dim)*dof_side(cell, pt,dim);
-            for(int dim = 0; dim < numDOFsSet; dim++) {
-              qp_data_returned(cell, pt, dim) = betaXY*beta*std::pow(vel+1e-6, (1./3.-1.)/2.)*dof_side(cell, pt,dim); // d(stress)/dn = beta*u + alpha
-            }
-          }
-        }
-      }
-  }
   else if (beta_type == EXP_SCALAR_FIELD_THK) {//basal (robin) condition indepenent of space
       betaXY = 1.0;
 
@@ -1367,10 +1337,10 @@ calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
  //Robin/Neumann bc for FELIX FO XZ MMS test case
  else if (beta_type == FELIX_XZ_MMS) {
     //parameter values are hard-coded here...
-    MeshScalarT H = 1.0;
-    double alpha0 = 4.0e-5;
+    MeshScalarT H = 1.0; 
+    double alpha0 = 4.0e-5; 
     double beta0 = 1;
-    double rho_g = 910.0*9.8;
+    double rho_g = 910.0*9.8; 
     double s0 = 2.0;
     double A = 1e-4; //CAREFUL! A is hard-coded here, needs to match input file!!
     for(int cell = 0; cell < numCells; cell++) {
@@ -1381,17 +1351,17 @@ calc_dudn_basal(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
           MeshScalarT s = s0 - alpha0*x*x;  //s = s0-alpha*x^2
           MeshScalarT phi1 = z - s; //phi1 = z-s
           //phi2 = 4*A*alpha^3*rho^3*g^3*x
-          MeshScalarT phi2 = 4.0*A*pow(alpha0*rho_g, 3)*x;
+          MeshScalarT phi2 = 4.0*A*pow(alpha0*rho_g, 3)*x;  
           //phi3 = 4*x^3*phi1^5*phi2^2
-          MeshScalarT phi3 = 4.0*x*x*x*pow(phi1,5)*phi2*phi2;
+          MeshScalarT phi3 = 4.0*x*x*x*pow(phi1,5)*phi2*phi2; 
           //phi4 = 8*alpha*x^3*phi1^3*phi2 - (2*H*alpha*rho*g)/beta + 3*x*phi2*(phi1^4-H^4)
           MeshScalarT phi4 = 8.0*alpha0*pow(x,3)*pow(phi1,3)*phi2 - 2.0*H*alpha0*rho_g/beta0 + 3.0*x*phi2*(pow(phi1,4) - pow(H,4));
           //phi5 = 56*alpha*x^2*phi1^3*phi2 + 48*alpha^2*x^4*phi1^2*phi2 + 6*phi2*(phi1^4-H^4
-          MeshScalarT phi5 = 56.0*alpha0*x*x*pow(phi1,3)*phi2 + 48.0*alpha0*alpha0*pow(x,4)*phi1*phi1*phi2
-                           + 6.0*phi2*(pow(phi1,4) - pow(H,4));
+          MeshScalarT phi5 = 56.0*alpha0*x*x*pow(phi1,3)*phi2 + 48.0*alpha0*alpha0*pow(x,4)*phi1*phi1*phi2 
+                           + 6.0*phi2*(pow(phi1,4) - pow(H,4)); 
           //mu = 1/2*(A*phi4^2 + A*x*phi1*phi3)^(-1/3) -- this is mu but with A factored out
-           MeshScalarT mu = 0.5*pow(A*phi4*phi4 + A*x*phi1*phi3, -1.0/3.0);
-           // d(stress)/dn = beta0*u + 4*phi4*mutilde*beta1*nx - 4*phi2*x^2*phi1^3*mutilde*beta2*ny
+           MeshScalarT mu = 0.5*pow(A*phi4*phi4 + A*x*phi1*phi3, -1.0/3.0); 
+           // d(stress)/dn = beta0*u + 4*phi4*mutilde*beta1*nx - 4*phi2*x^2*phi1^3*mutilde*beta2*ny 
            //              + (2*H*alpha*rho*g*x - beta0*x^2*phi2*(phi1^4 - H^4)*alpha;
           qp_data_returned(cell, pt, dim) = beta*dof_side(cell,pt,dim)
                                            + 4.0*phi4*mu*alpha*side_normals(cell,pt,0)
@@ -1422,8 +1392,9 @@ calc_dudn_basal_scalar_field(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data
 
   const ScalarT& scale = robin_vals[0];
 
-  Kokkos::DynRankView<MeshScalarT, PHX::Device> side_normals("side_normals", numCells, numPoints, cellDims);
-  Kokkos::DynRankView<MeshScalarT, PHX::Device> normal_lengths("normal_lengths", numCells, numPoints);
+  using DynRankViewMeshScalarT = Kokkos::DynRankView<MeshScalarT, PHX::Device>;
+  DynRankViewMeshScalarT side_normals = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(side_normals_buffer, side_normals_buffer.data(), numCells, numPoints, cellDims);
+  DynRankViewMeshScalarT normal_lengths = Kokkos::createDynRankViewWithType<DynRankViewMeshScalarT>(normal_lengths_buffer, normal_lengths_buffer.data(), numCells, numPoints);
 
   // for this side in the reference cell, get the components of the normal direction vector
   Intrepid2::CellTools<PHX::Device>::getPhysicalSideNormals(side_normals, jacobian_side_refcell,
@@ -1508,7 +1479,7 @@ calc_dudn_lateral(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
           MeshScalarT y = physPointsSide(cell,pt,1) -y_0;
           MeshScalarT h = 4.0*R2/(4.0*R2 + x*x + y*y);
           for(int dim = 0; dim < numDOFsSet; dim++)
-            qp_data_returned(cell, pt, dim) *= h;
+            qp_data_returned(cell, pt, dim) *= h; 
         }
       }
     }
@@ -1617,11 +1588,11 @@ template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-//IKT, 5/31/16: I commented out the KOKKOS_UNDER_DEVELOPMENT
+//IKT, 5/31/16: I commented out the KOKKOS_UNDER_DEVELOPMENT 
 //code b/c it does not execute correctly on an OpenMP KokkosNode.
 //This problem shows up for some FELIX cases.
-//It is somewhat of a mystery why this is the case b/c the Jacobian
-//matrices dumped to matrix market _are_ correct.  This problem needs
+//It is somewhat of a mystery why this is the case b/c the Jacobian 
+//matrices dumped to matrix market _are_ correct.  This problem needs 
 //to be looked into.
 //
 //#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
@@ -1629,7 +1600,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   //Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
   Teuchos::ArrayRCP<ST> fT_nonconstView;
-  if (fT != Teuchos::null)
+  if (fT != Teuchos::null) 
     fT_nonconstView = fT->get1dViewNonConst();
   else
     fT_nonconstView = Teuchos::null;
@@ -1670,7 +1641,7 @@ evaluateFields(typename Traits::EvalData workset)
 
             // Global column
             colT[0] =  nodeID[node_col][eq_col];
-            value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);
+            value[0] = this->neumann(cell, node, dim).fastAccessDx(lcol);   
             if (workset.is_adjoint) {
               // Sum Jacobian transposed
               JacT->sumIntoLocalValues(colT[0], rowT(), value());
@@ -1688,7 +1659,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   fT = workset.fT;
   //fT_nonconstView = fT->get1dViewNonConst();
-  if (this->fT != Teuchos::null)
+  if (this->fT != Teuchos::null) 
     fT_nonconstView = fT->get1dViewNonConst();
   else
     fT_nonconstView = Teuchos::null;

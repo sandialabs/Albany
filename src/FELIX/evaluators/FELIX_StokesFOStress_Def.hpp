@@ -37,23 +37,23 @@ StokesFOStress(const Teuchos::ParameterList& p,
   output->setOutputToRootOnly (0);
 #endif
 
-  this->addDependentField(Ugrad.fieldTag());
-  this->addDependentField(surfaceHeight.fieldTag());
-  this->addDependentField(muFELIX.fieldTag());
-  this->addDependentField(coordVec.fieldTag());
+  this->addDependentField(Ugrad);
+  this->addDependentField(surfaceHeight);
+  this->addDependentField(muFELIX);
+  this->addDependentField(coordVec);
 
   if(useStereographicMap)
   {
-    U = PHX::MDField<ScalarT,Cell,QuadPoint,VecDim>(p.get<std::string>("Velocity QP Variable Name"), dl->qp_vector);
-    this->addDependentField(U.fieldTag());
+    U = decltype(U)(p.get<std::string>("Velocity QP Variable Name"), dl->qp_vector);
+    this->addDependentField(U);
   }
 
   stereographicMapList = p.get<Teuchos::ParameterList*>("Stereographic Map");
   useStereographicMap = stereographicMapList->get("Use Stereographic Map", false);
   if(useStereographicMap)
   {
-    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
-    this->addDependentField(coordVec.fieldTag());
+    coordVec = decltype(coordVec)(p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
+    this->addDependentField(coordVec);
   }
 
   this->addEvaluatedField(Stress);

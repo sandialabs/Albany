@@ -164,11 +164,8 @@ private:
 //Kokkos
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
-
-  Teuchos::RCP<Tpetra_Vector> fT;
-  Teuchos::RCP<Tpetra_CrsMatrix> JacT;
-
   Kokkos::View<int***, PHX::Device> Index;
+  Kokkos::View<ST*, PHX::Device> f_nonconstView;
   bool loadResid;
   //LO *colT;
   int neq, nunk, numDim;

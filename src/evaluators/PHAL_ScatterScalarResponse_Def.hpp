@@ -29,6 +29,8 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(global_response,fm);
+  if (!stand_alone)
+    this->utils.setFieldData(global_response_eval,fm);
 }
 
 template<typename EvalT, typename Traits>
@@ -36,16 +38,18 @@ void
 ScatterScalarResponseBase<EvalT, Traits>::
 setup(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
 {
-  bool stand_alone = p.get<bool>("Stand-alone Evaluator");
+  stand_alone = p.get<bool>("Stand-alone Evaluator");
 
   // Setup fields we require
-  PHX::Tag<ScalarT> global_response_tag =
+  auto global_response_tag =
     p.get<PHX::Tag<ScalarT> >("Global Response Field Tag");
-  global_response = PHX::MDField<ScalarT>(global_response_tag);
-  if (stand_alone)
-    this->addDependentField(global_response.fieldTag());
-  else
-    this->addEvaluatedField(global_response);
+  global_response = decltype(global_response)(global_response_tag);
+  if (stand_alone) {
+    this->addDependentField(global_response);
+  } else {
+    global_response_eval = decltype(global_response_eval)(global_response_tag);
+    this->addEvaluatedField(global_response_eval);
+  }
 
   // Setup field we evaluate
   std::string fieldName = global_response_tag.name() + " Scatter Response";
@@ -91,14 +95,13 @@ void ScatterScalarResponse<PHAL::AlbanyTraits::Residual, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response
-  //Teuchos::RCP<Epetra_Vector> g = workset.g;
   Teuchos::RCP<Tpetra_Vector> gT = workset.gT; //Tpetra version
   Teuchos::ArrayRCP<ST> gT_nonconstView;
   if (gT != Teuchos::null) {
     gT_nonconstView = gT->get1dViewNonConst();
   }
   if (Teuchos::nonnull(gT))
-    for (PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+    for (PHAL::MDFieldIterator<const ScalarT> gr(this->global_response);
          ! gr.done(); ++gr)
       gT_nonconstView[gr.idx()] = *gr;
 }
@@ -120,15 +123,13 @@ void ScatterScalarResponse<PHAL::AlbanyTraits::Tangent, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response and tangent
-  //Teuchos::RCP<Epetra_Vector> g = workset.g;
   //Teuchos::RCP<Epetra_MultiVector> gx = workset.dgdx;
-  //Teuchos::RCP<Epetra_MultiVector> gp = workset.dgdp;
   Teuchos::RCP<Tpetra_Vector> gT = workset.gT;
   Teuchos::RCP<Tpetra_MultiVector> gxT = workset.dgdxT;
   Teuchos::RCP<Tpetra_MultiVector> gpT = workset.dgdpT;
-  for (PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+  for (PHAL::MDFieldIterator<const ScalarT> gr(this->global_response);
        ! gr.done(); ++gr) {
-    typename PHAL::Ref<ScalarT>::type val = *gr;
+    auto val = *gr;
     const int res = gr.idx();
     if (gT != Teuchos::null){
       Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
@@ -163,7 +164,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Here we scatter the *global* SG response
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > g_sg = workset.sg_g;
   for (std::size_t res = 0; res < this->global_response.size(); res++) {
-    ScalarT& val = this->global_response[res];
+    auto val = this->global_response[res];
     for (int block=0; block<g_sg->size(); block++)
       (*g_sg)[block][res] = val.coeff(block);
   }

@@ -1,0 +1,50 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    Block0: 
+      material: Hydride
+      Weighted Volume Average J: true
+      Average J Stabilization Parameter: 0.050000000
+  Materials: 
+    Hydride: 
+      Material Model: 
+        Model Name: Anisotropic Damage
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 200.00000000
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.25000000
+      Matrix volume fraction: 0.40000000
+      Matrix maximum damage: 1.00000000
+      Matrix damage saturation: 4.00000000
+      Fiber 1 k: 100.00000000
+      Fiber 1 q: 1.00000000
+      Fiber 1 volume fraction: 0.30000000
+      Fiber 1 maximum damage: 1.00000000
+      Fiber 1 damage saturation: 4.00000000
+      Fiber 2 k: 100.00000000
+      Fiber 2 q: 1.00000000
+      Fiber 2 volume fraction: 0.30000000
+      Fiber 2 maximum damage: 1.00000000
+      Fiber 2 damage saturation: 4.00000000
+      Fiber 1 Orientation Vector: [0.80000000, 0.60000000, 0.00000000e+00]
+      Fiber 2 Orientation Vector: [0.80000000, -6.00000000e-01, 0.00000000e+00]
+      Output Cauchy Stress: true
+      Output Matrix Energy: true
+      Output Matrix Damage: true
+      Output Fiber 1 Energy: true
+      Output Fiber 1 Damage: true
+      Output Fiber 2 Energy: true
+      Output Fiber 2 Damage: true
+      Material Point Simulator: 
+        Check Stability: true
+        Parametrization Type: Cartesian
+        Parametrization Interval: 0.05000000
+        Adaptive Step Output File Name: 'Bifurcation-Adaptive.txt'
+        Loading Case Name: 'simple-shear'
+        Number of Steps: 80
+        Step Size: 0.01000000
+        Output File Name: 'AnisotropicDamage-Bifurcation-shear.exo'
+...

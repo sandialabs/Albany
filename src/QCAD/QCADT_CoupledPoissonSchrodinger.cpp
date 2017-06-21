@@ -334,7 +334,7 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   std::string mtrlDbFilename = "materials.xml";
   if(problemParams.isType<std::string>("MaterialDB Filename"))
     mtrlDbFilename = problemParams.get<std::string>("MaterialDB Filename");
-  materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, myComm));
+  materialDB = Teuchos::rcp(new Albany::MaterialDatabase(mtrlDbFilename, myComm));
   
   std::string refMtrlName = materialDB->getParam<std::string>("Reference Material");
   double refmatChi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");

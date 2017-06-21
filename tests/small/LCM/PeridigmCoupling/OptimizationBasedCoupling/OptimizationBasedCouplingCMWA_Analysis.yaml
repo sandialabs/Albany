@@ -1,0 +1,166 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Debug Output: 
+    Write Solution to MatrixMarket: false
+  Problem: 
+    Name: Peridigm Code Coupling
+    MaterialDB Filename: OptimizationBasedCoupling_PoissonMaterials.yaml
+    Distributed Parameters: 
+      Number of Parameter Vectors: 1
+      Distributed Parameter 0: 
+        Name: dirichlet_control_field
+        Mesh Part: nodelist_5
+    Peridigm Parameters: 
+      Optimization Based Coupling: { }
+      Discretization: 
+        Type: Albany
+      Materials: 
+        My Elastic Correspondence Material: 
+          Material Model: Vector Poisson
+      Blocks: 
+        My Group of Blocks: 
+          Block Names: block_1
+          Material: My Elastic Correspondence Material
+          Horizon: 0.25000010
+      Output: 
+        Output Variables: 
+          Displacement: true
+          Radius: true
+          Number_Of_Neighbors: true
+          OBC_Functional: true
+    Solution Method: Steady
+    Phalanx Graph Visualization Detail: 0
+    Dirichlet BCs: 
+      DBC on NS nodelist_1 for DOF X prescribe Field: dirichlet_field
+      DBC on NS nodelist_1 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_1 for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_2 for DOF X prescribe Field: dirichlet_field
+      DBC on NS nodelist_2 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_2 for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_3 for DOF X prescribe Field: dirichlet_control_field
+      DBC on NS nodelist_4 for DOF X prescribe Field: dirichlet_control_field
+    Response Functions: 
+      Number: 1
+      Response 0: OBC Functional
+      ResponseParams 0: 
+        Field Name: Displacement
+  Discretization: 
+    Method: Exodus
+    Exodus Input File Name: CMWA_1.g
+    Separate Evaluators by Element Block: true
+    Exodus Output File Name: OptimizationBasedCouplingCMWA_Analysis.e
+    Cubature Degree: 2
+    Solution Vector Components: [displacement, V]
+    Residual Vector Components: [force, V]
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [0.10587978]
+    Number of Sensitivity Comparisons: 1
+    Sensitivity Comparisons 0: 
+      Number of Sensitivity Comparisons: 1
+      Sensitivity Test Values 0: [0.07258960]
+  Piro: 
+    Sensitivity Method: Adjoint
+    Jacobian Operator: Finite Difference
+    Analysis: 
+      Analysis Package: ROL
+      ROL: 
+        Check Gradient: false
+        Gradient Tolerance: 1.00000000e-07
+        Step Tolerance: 1.00000000e-20
+        Max Iterations: 500
+        Print Output: true
+        Parameter Initial Guess Type: From Model Evaluator
+        Uniform Parameter Guess: 0.00000000e+00
+        Min And Max Of Random Parameter Guess: [-5.00000000e-03, 0.00500000]
+        Bound Constrained: false
+        x_lo: -2.00000000e+02
+        x_up: 200.00000000
+        bound_eps: 0.10000000
+        ROL Options: 
+          Descent Type: 'Quasi-Newton Method'
+          Maximum Secant Storage: 52
+          Secant Type: 'Limited-Memory BFGS'
+          Linesearch Type: Backtracking
+          Linesearch Curvature Condition: Strong Wolfe Conditions
+          'Trust-Region Subproblem Solver Type': Truncated CG
+          Maximum Number of Function Evaluations: 60
+          Sufficient Decrease Parameter: 0.00010000
+          Curvature Conditions Parameter: 0.90000000
+          Backtracking Rate: 0.50000000
+          Initial Linesearch Parameter: 1.00000000
+          User Defined Linesearch Parameter: false
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000e-06
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-06
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 1
+                  Prec Type: Amesos
+                  Ifpack Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Method: Backtrack
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 3
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000e-06
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 20
+        Test 2: 
+          Test Type: FiniteValue
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

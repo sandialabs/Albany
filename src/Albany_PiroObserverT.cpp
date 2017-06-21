@@ -63,6 +63,17 @@ Albany::PiroObserverT::observeSolution(
 
 void
 Albany::PiroObserverT::observeSolution(
+    const Thyra::VectorBase<ST> &solution,
+    const Thyra::VectorBase<ST> &solution_dot,
+    const Thyra::VectorBase<ST> &solution_dotdot,
+    const ST stamp)
+{
+  this->observeSolutionImpl(solution, solution_dot, solution_dotdot, stamp);
+  stepper_counter_++; 
+}
+
+void
+Albany::PiroObserverT::observeSolution(
     const Thyra::MultiVectorBase<ST> &solution,
     const ST stamp)
 {
@@ -107,6 +118,7 @@ Albany::PiroObserverT::observeSolutionImpl(
   this->observeTpetraSolutionImpl(
       *solution_tpetra,
       Teuchos::null,
+      Teuchos::null,
       defaultStamp);
   
   // observe responses 
@@ -130,6 +142,7 @@ Albany::PiroObserverT::observeSolutionImpl(
   this->observeTpetraSolutionImpl(
       *solution_tpetra,
       solution_dot_tpetra.ptr(),
+      Teuchos::null,
       defaultStamp);
 
   // observe responses 
@@ -138,6 +151,35 @@ Albany::PiroObserverT::observeSolutionImpl(
       this->observeResponse(defaultStamp, Teuchos::rcpFromRef(solution), Teuchos::rcpFromRef(solution_dot));
    }
 }
+
+void
+Albany::PiroObserverT::observeSolutionImpl(
+    const Thyra::VectorBase<ST> &solution,
+    const Thyra::VectorBase<ST> &solution_dot,
+    const Thyra::VectorBase<ST> &solution_dotdot,
+    const ST defaultStamp)
+{
+  const Teuchos::RCP<const Tpetra_Vector> solution_tpetra =
+    tpetraFromThyra(solution);
+  const Teuchos::RCP<const Tpetra_Vector> solution_dot_tpetra =
+    tpetraFromThyra(solution_dot);
+  const Teuchos::RCP<const Tpetra_Vector> solution_dotdot_tpetra =
+    tpetraFromThyra(solution_dotdot);
+
+  this->observeTpetraSolutionImpl(
+      *solution_tpetra,
+      solution_dot_tpetra.ptr(),
+      solution_dotdot_tpetra.ptr(), 
+      defaultStamp);
+
+  // observe responses 
+  if (observe_responses_ == true) {
+    if (stepper_counter_ % observe_responses_every_n_steps_ == 0) 
+      this->observeResponse(defaultStamp, Teuchos::rcpFromRef(solution), Teuchos::rcpFromRef(solution_dot), 
+                            Teuchos::rcpFromRef(solution_dotdot));
+   }
+}
+
 
 void
 Albany::PiroObserverT::observeSolutionImpl(
@@ -155,19 +197,26 @@ void
 Albany::PiroObserverT::observeTpetraSolutionImpl(
     const Tpetra_Vector &solution,
     Teuchos::Ptr<const Tpetra_Vector> solution_dot,
+    Teuchos::Ptr<const Tpetra_Vector> solution_dotdot,
     const ST defaultStamp)
 {
   // Determine the stamp associated with the snapshot
   const ST stamp = impl_.getTimeParamValueOrDefault(defaultStamp);
-  impl_.observeSolutionT(stamp, solution, solution_dot);
+  impl_.observeSolutionT(stamp, solution, solution_dot, solution_dotdot);
 }
 
 void 
 Albany::PiroObserverT::observeResponse(
     const ST defaultStamp, 
     Teuchos::RCP<const Thyra::VectorBase<ST>> solution,
-    Teuchos::RCP<const Thyra::VectorBase<ST>> solution_dot)
+    Teuchos::RCP<const Thyra::VectorBase<ST>> solution_dot,
+    Teuchos::RCP<const Thyra::VectorBase<ST>> solution_dotdot)
 {
+
+  //IKT, 5/10/17: note that this function takes solution_dotdot as an input 
+  //argument but does not do anything with it yet.  This can be modified 
+  //if desired.
+
   std::map<int,std::string> m_response_index_to_name;
   
   // build out args and evaluate responses if they exist

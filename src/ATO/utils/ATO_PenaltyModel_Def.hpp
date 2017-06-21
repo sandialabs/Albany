@@ -23,11 +23,11 @@ PenaltyModel(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
                                "!" << std::endl << "Options are (QP Tensor3, QP Tensor, QP Vector)" <<
                                std::endl);
 
-  PHX::MDField<N> _gradX(responseParams->get<std::string>("Gradient Field Name"), layout);
+  PHX::MDField<const N> _gradX(responseParams->get<std::string>("Gradient Field Name"), layout);
   gradX = _gradX;
 
-  std::vector<int> dims;
-  gradX.dimensions(dims);
+  std::vector<PHX::Device::size_type> dims;
+  layout->dimensions(dims);
   numDims = dims[2];
 }
 
@@ -63,7 +63,7 @@ PenaltyMixture(Teuchos::ParameterList& blockParams,
 
   workConj.resize(nMats);
   for(int imat=0; imat<nMats; imat++){
-    PHX::MDField<N> _workConj(Albany::strint(workConjBaseName,imat), layout);
+    PHX::MDField<const N> _workConj(Albany::strint(workConjBaseName,imat), layout);
     workConj[imat] = _workConj;
   }
 
@@ -91,8 +91,13 @@ PenaltyMixture(Teuchos::ParameterList& blockParams,
     
   }
 
-  topologyIndex = responseParams->get<int>("Topology Index");
-  functionIndex = responseParams->get<int>("Function Index");
+  if( responseParams->isType<int>("Topology Index") ){
+    topologyIndex = responseParams->get<int>("Topology Index");
+  } else topologyIndex = -1;
+
+  if( responseParams->isType<int>("Function Index") ){
+    functionIndex = responseParams->get<int>("Function Index");
+  } else functionIndex = -1;
   
 }
 
@@ -108,7 +113,7 @@ getFieldDimensions(std::vector<int>& dims)
 /******************************************************************************/
 template<typename N>
 void ATO::PenaltyMixture<N>::
-getDependentFields(Teuchos::Array<PHX::MDField<N> >& depFields)
+getDependentFields(Teuchos::Array<PHX::MDField<const N> >& depFields)
 /******************************************************************************/
 {
   int nWCs = workConj.size();
@@ -122,7 +127,7 @@ getDependentFields(Teuchos::Array<PHX::MDField<N> >& depFields)
 /******************************************************************************/
 template<typename N>
 void ATO::PenaltyMixture<N>::
-getDependentFields(Teuchos::Array<PHX::MDField<N>* >& depFields)
+getDependentFields(Teuchos::Array<PHX::MDField<const N>* >& depFields)
 /******************************************************************************/
 {
   int nWCs = workConj.size();
@@ -137,7 +142,7 @@ getDependentFields(Teuchos::Array<PHX::MDField<N>* >& depFields)
 /******************************************************************************/
 template<typename N>
 void ATO::PenaltyMaterial<N>::
-getDependentFields(Teuchos::Array<PHX::MDField<N> >& depFields)
+getDependentFields(Teuchos::Array<PHX::MDField<const N> >& depFields)
 /******************************************************************************/
 {
   depFields.resize(2);
@@ -148,7 +153,7 @@ getDependentFields(Teuchos::Array<PHX::MDField<N> >& depFields)
 /******************************************************************************/
 template<typename N>
 void ATO::PenaltyMaterial<N>::
-getDependentFields(Teuchos::Array<PHX::MDField<N>* >& depFields)
+getDependentFields(Teuchos::Array<PHX::MDField<const N>* >& depFields)
 /******************************************************************************/
 {
   depFields.resize(2);
@@ -181,11 +186,15 @@ PenaltyMaterial(Teuchos::ParameterList& blockParams,
                                "!" << std::endl << "Options are (QP Tensor3, QP Tensor, QP Vector)" <<
                                std::endl);
 
-  PHX::MDField<N> _workConj(responseParams->get<std::string>("Work Conjugate Name"), layout);
+  PHX::MDField<const N> _workConj(responseParams->get<std::string>("Work Conjugate Name"), layout);
   workConj = _workConj;
 
-  topologyIndex = responseParams->get<int>("Topology Index");
-  functionIndex = responseParams->get<int>("Function Index");
+  if( responseParams->isType<int>("Topology Index") ){
+    topologyIndex = responseParams->get<int>("Topology Index");
+  } else topologyIndex = -1;
+  if( responseParams->isType<int>("Function Index") ){
+    functionIndex = responseParams->get<int>("Function Index");
+  } else functionIndex = -1;
   
 }
 
@@ -227,7 +236,12 @@ Evaluate(Teuchos::Array<N>& topoVals, Teuchos::RCP<TopologyArray>& topologies,
       }
     }
   }
-  N topoP = (*topologies)[topologyIndex]->Penalize(functionIndex, topoVals[topologyIndex]);
+  N topoP, topodP;
+  if(topologyIndex >= 0){
+   topoP = (*topologies)[topologyIndex]->Penalize(functionIndex, topoVals[topologyIndex]);
+   topodP = (*topologies)[topologyIndex]->dPenalize(functionIndex, topoVals[topologyIndex]);
+  }
+  else topoP = 1.0;
   for(int imat=0; imat<nMats; imat++){
     int matIdx = materialIndices[imat];
     int topoIdx = mixtureTopologyIndices[imat];
@@ -262,11 +276,10 @@ Evaluate(Teuchos::Array<N>& topoVals, Teuchos::RCP<TopologyArray>& topologies,
   }
 
   response += unityRemainder*lastMatdw;
-
-  dResponse[topologyIndex] = 
-    response * (*topologies)[topologyIndex]->dPenalize(functionIndex, topoVals[topologyIndex]);
-
-  response *= (*topologies)[topologyIndex]->Penalize(functionIndex,topoVals[topologyIndex]);
+  if(topologyIndex >= 0){
+    dResponse[topologyIndex] = response * topodP;
+    response *= topoP;
+  }
 
 }
 
@@ -295,10 +308,11 @@ Evaluate(Teuchos::Array<N>& topoVals, Teuchos::RCP<TopologyArray>& topologies,
           response += gradX(cell,qp,i,j,k)*workConj(cell,qp,i,j,k)/2.0;
   }
   
-  dResponse[topologyIndex] = 
-    response * (*topologies)[topologyIndex]->dPenalize(functionIndex, topoVals[topologyIndex]);
-
-  response *= (*topologies)[topologyIndex]->Penalize(functionIndex,topoVals[topologyIndex]);
+  if(topologyIndex >= 0){
+    dResponse[topologyIndex] = 
+      response * (*topologies)[topologyIndex]->dPenalize(functionIndex, topoVals[topologyIndex]);
+    response *= (*topologies)[topologyIndex]->Penalize(functionIndex,topoVals[topologyIndex]);
+  }
 }
 
 

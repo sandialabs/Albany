@@ -47,7 +47,7 @@ private:
   ScalarT homotopyParam;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> epsilonXX;

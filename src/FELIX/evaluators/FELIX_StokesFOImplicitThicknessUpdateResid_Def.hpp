@@ -51,26 +51,11 @@ StokesFOImplicitThicknessUpdateResid(const Teuchos::ParameterList& p,
   gradBF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];
-  int numCells = dims[0] ;
+  numCells = dims[0] ;
 
   dl_full->node_vector->dimensions(dims);
   numVecDims  =dims[2];
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT  
-  std::vector<PHX::index_size_type> ddims_;
-  //IKT, 5/31/16: A better thing to do than the code below would be the following 
-  //int deriv_dims = PHAL::getDerivativeDimensionsFromView(dH.get_view());
-  //ddims_.push_back(deriv_dims).  
-  //The issue is getDerivativeDimensionsFromView returns 0 for this problem causing the code 
-  //to crash.  Should be looked into. 
-#ifdef  ALBANY_FAST_FELIX
-  ddims_.push_back(ALBANY_SLFAD_SIZE);
-#else
-  ddims_.push_back(95);
-#endif
-  Res=PHX::MDField<ScalarT,Cell,Node,Dim>("Res",Teuchos::rcp(new PHX::MDALayout<Cell,Node,Dim>(numCells,numNodes,2)));
-  Res.setFieldData(ViewFactory::buildView(Res.fieldTag(),ddims_));
-#endif
 #ifdef OUTPUT_TO_SCREEN
 *out << " in FELIX StokesFOImplicitThicknessUpdate residual! " << std::endl;
 *out << " numQPs = " << numQPs << std::endl;
@@ -90,10 +75,10 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(InputResidual,fm);
   this->utils.setFieldData(Residual,fm);
 
+  Res = createDynRankView(Residual.get_view(), "Residual", numCells, numNodes,2);
 }
 //**********************************************************************
 //Kokkos functors
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void StokesFOImplicitThicknessUpdateResid<EvalT, Traits>::
@@ -125,48 +110,13 @@ operator() (const StokesFOImplicitThicknessUpdateResid_Tag& tag, const int& cell
       Residual(cell,node,2) = InputResidual(cell,node,2);
   }
 }
-#endif
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void StokesFOImplicitThicknessUpdateResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  // Initialize residual to 0.0
-  Kokkos::DynRankView<ScalarT, PHX::Device> res= createDynRankView(Residual.get_view(), "XXX", numNodes,2);
-
-  double rho_g=rho*g;
-
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t node=0; node < numNodes; ++node) {res(node,0)=0.0; res(node,1)=0.0;}
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      ScalarT dHdiffdx = 0;//Ugrad(cell,qp,2,0);
-      ScalarT dHdiffdy = 0;//Ugrad(cell,qp,2,1);
-      for (std::size_t node=0; node < numNodes; ++node) {
-        dHdiffdx += dH(cell,node) * gradBF(cell,node, qp,0);
-        dHdiffdy += dH(cell,node) * gradBF(cell,node, qp,1);
-      }
-
-      for (std::size_t node=0; node < numNodes; ++node) {
-           res(node,0) += rho_g*dHdiffdx*wBF(cell,node,qp);
-           res(node,1) += rho_g*dHdiffdy*wBF(cell,node,qp);
-      }
-    }
-    for (std::size_t node=0; node < numNodes; ++node) {
-       Residual(cell,node,0) = InputResidual(cell,node,0)+res(node,0);
-       Residual(cell,node,1) = InputResidual(cell,node,1)+res(node,1);
-       if(numVecDims==3)
-         Residual(cell,node,2) = InputResidual(cell,node,2);
-    }
-  }
-
-#else
-
   Kokkos::parallel_for(StokesFOImplicitThicknessUpdateResid_Policy(0,workset.numCells),*this);
-
-
-#endif
 }
 
 //**********************************************************************

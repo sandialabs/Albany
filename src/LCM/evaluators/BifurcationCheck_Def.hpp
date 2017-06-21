@@ -1442,8 +1442,8 @@ namespace LCM {
   BifurcationCheck<EvalT, Traits>::
   projective_get_normal(minitensor::Vector<D2FadType, 3> & parameters)
   {
-    minitensor::Vector<D2FadType, 3>
-    normal(parameters[0], parameters[1], parameters[2]);
+    minitensor::Vector<D2FadType, 3> &
+    normal = parameters;
 
     D2FadType const
     n = minitensor::norm(normal);
@@ -1477,7 +1477,7 @@ namespace LCM {
     r = sqrt(parameters[0] * parameters[0] + parameters[1] * parameters[1]);
 
     minitensor::Vector<D2FadType, 3>
-    normal(3, minitensor::ZEROS);
+    normal(3, minitensor::Filler::ZEROS);
 
      if ( (r.val()).val() > 0.0 ) {
       normal[0] = parameters[0] * sin(r) / r;
@@ -1499,7 +1499,7 @@ namespace LCM {
   cartesian_get_normal1(minitensor::Vector<D2FadType, 2> & parameters)
   {
     minitensor::Vector<D2FadType, 3> 
-    normal(1, parameters[0], parameters[1]);
+    normal(D2FadType(1), parameters[0], parameters[1]);
             
     return normal;
   }
@@ -1510,7 +1510,7 @@ namespace LCM {
   cartesian_get_normal2(minitensor::Vector<D2FadType, 2> & parameters)
   {
     minitensor::Vector<D2FadType, 3> 
-    normal(parameters[0], 1, parameters[1]);
+    normal(parameters[0], D2FadType(1), parameters[1]);
             
     return normal;
   }
@@ -1521,7 +1521,7 @@ namespace LCM {
   cartesian_get_normal3(minitensor::Vector<D2FadType, 2> & parameters)
   {
     minitensor::Vector<D2FadType, 3> 
-    normal(parameters[0], parameters[1], 1);
+    normal(parameters[0], parameters[1], D2FadType(1));
             
     return normal;
   }

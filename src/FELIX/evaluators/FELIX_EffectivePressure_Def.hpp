@@ -35,8 +35,8 @@ EffectivePressure (const Teuchos::ParameterList& p,
 
   if (Surrogate)
   {
-    alphaParam = PHX::MDField<ScalarT,Dim> ("Hydraulic-Over-Hydrostatic Potential Ratio",dl->shared_param);
-    this->addDependentField (alphaParam.fieldTag());
+    alphaParam = PHX::MDField<const ScalarT,Dim> ("Hydraulic-Over-Hydrostatic Potential Ratio",dl->shared_param);
+    this->addDependentField (alphaParam);
 
     Teuchos::ParameterList& plist = *p.get<Teuchos::ParameterList*>("Parameter List");
 
@@ -44,18 +44,18 @@ EffectivePressure (const Teuchos::ParameterList& p,
     printedAlpha = -1.0;
 
     if (regularized)
-      regularizationParam = PHX::MDField<ScalarT,Dim>(plist.get<std::string>("Regularization Parameter Name"),dl->shared_param);
+      regularizationParam = PHX::MDField<const ScalarT,Dim>(plist.get<std::string>("Regularization Parameter Name"),dl->shared_param);
   }
   else
   {
-    z_s  = PHX::MDField<ParamScalarT>(p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar);
-    phi  = PHX::MDField<HydroScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), dl->node_scalar);
+    z_s  = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar);
+    phi  = PHX::MDField<const HydroScalarT>(p.get<std::string> ("Hydraulic Potential Variable Name"), dl->node_scalar);
 
-    this->addDependentField (phi.fieldTag());
-    this->addDependentField (z_s.fieldTag());
+    this->addDependentField (phi);
+    this->addDependentField (z_s);
   }
 
-  this->addDependentField (H.fieldTag());
+  this->addDependentField (H);
   this->addEvaluatedField (N);
 
   // Setting parameters

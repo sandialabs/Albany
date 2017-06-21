@@ -24,36 +24,36 @@ Field2NormBase (const Teuchos::ParameterList& p,
   std::string layout = p.get<std::string>("Field Layout");
   if (layout=="Cell Vector")
   {
-    field      = PHX::MDField<ScalarT> (fieldName, dl->cell_vector);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->cell_scalar2);
+    field      = decltype(field)(fieldName, dl->cell_vector);
+    field_norm = decltype(field_norm)(fieldNormName, dl->cell_scalar2);
 
     dl->cell_vector->dimensions(dims);
   }
   else if (layout=="Cell Gradient")
   {
-    field      = PHX::MDField<ScalarT> (fieldName, dl->cell_gradient);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->cell_scalar2);
+    field      = decltype(field)(fieldName, dl->cell_gradient);
+    field_norm = decltype(field_norm)(fieldNormName, dl->cell_scalar2);
 
     dl->cell_gradient->dimensions(dims);
   }
   else if (layout=="Cell Node Vector")
   {
-    field      = PHX::MDField<ScalarT> (fieldName, dl->node_vector);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->node_scalar);
+    field      = decltype(field)(fieldName, dl->node_vector);
+    field_norm = decltype(field_norm)(fieldNormName, dl->node_scalar);
 
     dl->node_vector->dimensions(dims);
   }
   else if (layout=="Cell QuadPoint Vector")
   {
-    field      = PHX::MDField<ScalarT> (fieldName, dl->qp_vector);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->qp_scalar);
+    field      = decltype(field)(fieldName, dl->qp_vector);
+    field_norm = decltype(field_norm)(fieldNormName, dl->qp_scalar);
 
     dl->qp_vector->dimensions(dims);
   }
   else if (layout=="Cell QuadPoint Gradient")
   {
-    field      = PHX::MDField<ScalarT> (fieldName, dl->qp_gradient);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->qp_scalar);
+    field      = decltype(field)(fieldName, dl->qp_gradient);
+    field_norm = decltype(field_norm)(fieldNormName, dl->qp_scalar);
 
     dl->qp_gradient->dimensions(dims);
   }
@@ -64,8 +64,8 @@ Field2NormBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = PHX::MDField<ScalarT> (fieldName, dl->cell_vector);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->cell_scalar2);
+    field      = decltype(field)(fieldName, dl->cell_vector);
+    field_norm = decltype(field_norm)(fieldNormName, dl->cell_scalar2);
 
     dl->cell_vector->dimensions(dims);
   }
@@ -76,8 +76,8 @@ Field2NormBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = PHX::MDField<ScalarT> (fieldName, dl->cell_gradient);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->cell_scalar2);
+    field      = decltype(field)(fieldName, dl->cell_gradient);
+    field_norm = decltype(field_norm)(fieldNormName, dl->cell_scalar2);
 
     dl->cell_gradient->dimensions(dims);
   }
@@ -88,8 +88,8 @@ Field2NormBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = PHX::MDField<ScalarT> (fieldName, dl->node_vector);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->node_scalar);
+    field      = decltype(field)(fieldName, dl->node_vector);
+    field_norm = decltype(field_norm)(fieldNormName, dl->node_scalar);
 
     dl->node_vector->dimensions(dims);
   }
@@ -100,8 +100,8 @@ Field2NormBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = PHX::MDField<ScalarT> (fieldName, dl->qp_vector);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->qp_scalar);
+    field      = decltype(field)(fieldName, dl->qp_vector);
+    field_norm = decltype(field_norm)(fieldNormName, dl->qp_scalar);
 
     dl->qp_vector->dimensions(dims);
   }
@@ -112,8 +112,8 @@ Field2NormBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (!dl->isSideLayouts, Teuchos::Exceptions::InvalidParameter,
                                 "Error! The layouts structure does not appear to be that of a side set.\n");
 
-    field      = PHX::MDField<ScalarT> (fieldName, dl->qp_gradient);
-    field_norm = PHX::MDField<ScalarT> (fieldNormName, dl->qp_scalar);
+    field      = decltype(field)(fieldName, dl->qp_gradient);
+    field_norm = decltype(field_norm)(fieldNormName, dl->qp_scalar);
 
     dl->qp_gradient->dimensions(dims);
   }
@@ -122,7 +122,7 @@ Field2NormBase (const Teuchos::ParameterList& p,
     TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, "Error! Invalid field layout.\n");
   }
 
-  this->addDependentField(field.fieldTag());
+  this->addDependentField(field);
   this->addEvaluatedField(field_norm);
 
   Teuchos::ParameterList& options = p.get<Teuchos::ParameterList*>("Parameter List")->sublist(fieldNormName);
@@ -141,15 +141,15 @@ Field2NormBase (const Teuchos::ParameterList& p,
   else if (type=="Given Parameter")
   {
     regularization_type = GIVEN_PARAMETER;
-    regularizationParam = PHX::MDField<EScalarT,Dim>(options.get<std::string>("Regularization Parameter Name"),dl->shared_param);
-    this->addDependentField(regularizationParam.fieldTag());
+    regularizationParam = decltype(regularizationParam)(options.get<std::string>("Regularization Parameter Name"),dl->shared_param);
+    this->addDependentField(regularizationParam);
     printedReg = -1.0;
   }
   else if (type=="Parameter Exponential")
   {
     regularization_type = PARAMETER_EXPONENTIAL;
-    regularizationParam = PHX::MDField<EScalarT,Dim>(options.get<std::string>("Regularization Parameter Name"),dl->shared_param);
-    this->addDependentField(regularizationParam.fieldTag());
+    regularizationParam = decltype(regularizationParam)(options.get<std::string>("Regularization Parameter Name"),dl->shared_param);
+    this->addDependentField(regularizationParam);
     printedReg = -1.0;
   }
   else

@@ -1,0 +1,152 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Coupled System: 
+    Model Input Files: ['notched-cylinder-0.yaml', 'notched-cylinder-1.yaml']
+  Problem: 
+    Solution Method: Coupled Schwarz
+    Phalanx Graph Visualization Detail: 0
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+  Piro: 
+    Solver Type: LOCA
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Continuation Method: Natural
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: Time
+        Max Steps: 1000
+        Min Value: 0.00000000e+00
+        Max Value: 1.00000000
+        Return Failed on Reaching Max Steps: false
+        Hit Continuation Bound: false
+      Step Size: 
+        Initial Step Size: 0.01000000
+        Method: Constant
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000e-10
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: high
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-06
+                      Output Frequency: 1
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 1000
+                      Block Size: 1
+                      Num Blocks: 1000
+                      Flexible Gmres: false
+              Preconditioner Type: Teko
+              Preconditioner Types: 
+                Teko: 
+                  Write Block Operator: false
+                  Test Block Operator: false
+                  Inverse Type: Block Jacobi
+                  Inverse Factory Library: 
+                    Block Jacobi: 
+                      Type: Block Jacobi
+                      Use Upper Triangle: false
+                      Inverse Type 1: 'My-Ifpack2-1'
+                      Inverse Type 2: 'My-Ifpack2-2'
+                    'My-MueLu': 
+                      Type: MueLu
+                      multigrid algorithm: sa
+                      max levels: 4
+                      'smoother: type': CHEBYSHEV
+                      'smoother: params': 
+                        'chebyshev: degree': 3
+                        'chebyshev: ratio eigenvalue': 30.00000000
+                      'smoother: pre or post': both
+                      'coarse: max size': 1500
+                    'My-Ifpack2-1': 
+                      Type: Ifpack2
+                      Overlap: 2
+                      Prec Type: ILUT
+                      Ifpack2 Settings: 
+                        'fact: drop tolerance': 0.00000000e+00
+                        'fact: ilut level-of-fill': 1.00000000
+                        'fact: level-of-fill': 1
+                    'My-Ifpack2-2': 
+                      Type: Ifpack2
+                      Overlap: 1
+                      Prec Type: ILUT
+                      Ifpack2 Settings: 
+                        'fact: drop tolerance': 0.00000000e+00
+                        'fact: ilut level-of-fill': 3.00000000
+                        'fact: level-of-fill': 1
+                Ifpack2: 
+                  Overlap: 2
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Precision: 3
+        Output Processor: 0
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: true
+          Details: true
+          Linear Solver Details: true
+          Stepper Iteration: true
+          Stepper Details: true
+          Stepper Parameters: true
+      Solver Options: 
+        Status Test Check Type: Complete
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 4
+        Test 0: 
+          Test Type: RelativeNormF
+          Tolerance: 1.00000000e-10
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 16
+        Test 2: 
+          Test Type: Combo
+          Combo Type: AND
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NStep
+            Number of Nonlinear Iterations: 8
+          Test 1: 
+            Test Type: NormF
+            Tolerance: 1.00000000e-05
+        Test 3: 
+          Test Type: FiniteValue
+...

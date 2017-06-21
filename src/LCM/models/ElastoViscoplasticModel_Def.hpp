@@ -211,7 +211,7 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
 //     minitensor::Index const
 //     dimension = x.get_dimension();
 
-//     assert(dimension == DIMENSION);
+//     ALBANY_EXPECT(dimension == DIMENSION);
 
 //     // Variables that potentially have Albany::Traits sensitivity
 //     // information need to be handled by the peel functor so that
@@ -289,8 +289,8 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
 template<typename EvalT, typename Traits>
 void ElastoViscoplasticModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> dep_fields,
-    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT>>> eval_fields)
+    DepFieldMap dep_fields,
+    FieldMap eval_fields)
 {
   // get strings from field_name_map in order to extract MDFields
   //
@@ -306,25 +306,25 @@ computeState(typename Traits::EvalData workset,
 
   // extract dependent MDFields
   //
-  PHX::MDField<ScalarT> def_grad_field = *dep_fields[F_string];
-  PHX::MDField<ScalarT> J = *dep_fields[J_string];
-  PHX::MDField<ScalarT> poissons_ratio = *dep_fields["Poissons Ratio"];
-  PHX::MDField<ScalarT> elastic_modulus = *dep_fields["Elastic Modulus"];
-  PHX::MDField<ScalarT> yield_strength = *dep_fields["Yield Strength"];
-  PHX::MDField<ScalarT> hardening_modulus = *dep_fields["Hardening Modulus"];
-  PHX::MDField<ScalarT> recovery_modulus = *dep_fields["Recovery Modulus"];
-  PHX::MDField<ScalarT> flow_exp = *dep_fields["Flow Rule Exponent"];
-  PHX::MDField<ScalarT> flow_coeff = *dep_fields["Flow Rule Coefficient"];
-  PHX::MDField<ScalarT> delta_time = *dep_fields["Delta Time"];
+  auto def_grad_field = *dep_fields[F_string];
+  auto J = *dep_fields[J_string];
+  auto poissons_ratio = *dep_fields["Poissons Ratio"];
+  auto elastic_modulus = *dep_fields["Elastic Modulus"];
+  auto yield_strength = *dep_fields["Yield Strength"];
+  auto hardening_modulus = *dep_fields["Hardening Modulus"];
+  auto recovery_modulus = *dep_fields["Recovery Modulus"];
+  auto flow_exp = *dep_fields["Flow Rule Exponent"];
+  auto flow_coeff = *dep_fields["Flow Rule Coefficient"];
+  auto delta_time = *dep_fields["Delta Time"];
 
   // extract evaluated MDFields
   //
-  PHX::MDField<ScalarT> stress_field = *eval_fields[cauchy_string];
-  PHX::MDField<ScalarT> Fp_field = *eval_fields[Fp_string];
-  PHX::MDField<ScalarT> eqps_field = *eval_fields[eqps_string];
-  PHX::MDField<ScalarT> eps_ss_field = *eval_fields[eps_ss_string];
-  PHX::MDField<ScalarT> kappa_field = *eval_fields[kappa_string];
-  PHX::MDField<ScalarT> void_volume_fraction_field = *eval_fields[void_volume_fraction_string];
+  auto stress_field = *eval_fields[cauchy_string];
+  auto Fp_field = *eval_fields[Fp_string];
+  auto eqps_field = *eval_fields[eqps_string];
+  auto eps_ss_field = *eval_fields[eps_ss_string];
+  auto kappa_field = *eval_fields[kappa_string];
+  auto void_volume_fraction_field = *eval_fields[void_volume_fraction_string];
   PHX::MDField<ScalarT> source_field;
   if (have_temperature_) {
     source_field = *eval_fields[source_string];
@@ -581,8 +581,14 @@ computeState(typename Traits::EvalData workset,
             // compute yield stress and rate terms
             //
             Fad eqps_rateF = 0.0;
-            if (delta_time(0) > 0) eqps_rateF = sq23 * dgamF / delta_time(0);
-            Fad rate_termF = 1.0 + std::asinh( std::pow(eqps_rateF / f, n));
+            Fad rate_termF;
+            if (delta_time(0) > 0 && dgamF > 0.0){
+				 eqps_rateF = sq23 * dgamF / delta_time(0);
+                 rate_termF = 1.0 + std::asinh( std::pow(eqps_rateF / f, n));
+			}
+            else {
+                 rate_termF = 1.0;
+			}
             Fad kappaF = two_mubarF * eps_ssF;
             Fad YbarF = Je * (Y + kappaF) * rate_termF;
 

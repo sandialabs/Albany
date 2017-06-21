@@ -57,8 +57,8 @@ public:
   //! \c init has been called.
   operator bool() const;
 
-  typename RTensor<rank>::type& operator() () { return f_; }
-  const typename RTensor<rank>::type& operator() () const { return f_; }
+  typename Tensor<const RealType, rank>::type& operator() () { return f_; }
+  const typename Tensor<const RealType, rank>::type& operator() () const { return f_; }
 
   //! f_incr = f_incr * f_accum. Call as \code f_rc.multiplyInto<typename
   //  EvalT::ScalarT>(f, cell, qp); \endcode inside loops over workset.numCells
@@ -79,14 +79,14 @@ public:
              const std::size_t cell, const std::size_t qp) const;
 
 private:
-  typename RTensor<rank>::type f_;
+  typename Tensor<const RealType, rank>::type f_;
   bool valid_;
 };
 
 //! Transform \c w_grad_bf using F[n-1,0].
 void transformWeightedGradientBF(
   const Field<2>& F, const RealType& det_F,
-  const PHX::MDField<RealType, Cell, Node, QuadPoint, Dim>& w_grad_bf,
+  const PHX::MDField<RealType const, Cell, Node, QuadPoint, Dim>& w_grad_bf,
   const int cell, const int pt, const int node, RealType w[3]);
 
 } // namespace rc

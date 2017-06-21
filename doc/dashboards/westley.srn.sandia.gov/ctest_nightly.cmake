@@ -251,9 +251,9 @@ SET(CONFIGURE_OPTIONS
   -DCMAKE_AR:FILEPATH=/opt/intel/compilers_and_libraries_2016.3.210/linux/bin/intel64_mic/xiar
   -DCMAKE_LINKER:FILEPATH=/opt/intel/compilers_and_libraries_2016.3.210/linux/bin/intel64_mic/xild
   -DTrilinos_SHOW_DEPRECATED_WARNINGS:BOOL=OFF
-  "-DCMAKE_CXX_FLAGS:STRING='-O3 -w -mmic -mkl=sequential -mt_mpi -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX -DPREC_TIMER -restrict -fasm-blocks -DDEVICE=1wq  -fopenmp'"
-  "-DCMAKE_C_FLAGS:STRING='-O3 -w -mmic -mkl=sequential -mt_mpi -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX -DPREC_TIMER -restrict -fasm-blocks -DDEVICE=1wq  -fopenmp'"
-  "-DCMAKE_Fortran_FLAGS:STRING='-O3 -w -mmic -mkl=sequential -mt_mpi -DPREC_TIMER -fopenmp'"
+  "-DCMAKE_CXX_FLAGS:STRING='-O3 -mmic -mkl=sequential -mt_mpi -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX -DPREC_TIMER -restrict -fasm-blocks -DDEVICE=1wq  -fopenmp'"
+  "-DCMAKE_C_FLAGS:STRING='-O3 -mmic -mkl=sequential -mt_mpi -DMPICH_IGNORE_CXX_SEEK -DMPICH_SKIP_MPICXX -DPREC_TIMER -restrict -fasm-blocks -DDEVICE=1wq  -fopenmp'"
+  "-DCMAKE_Fortran_FLAGS:STRING='-O3 -mmic -mkl=sequential -mt_mpi -DPREC_TIMER -fopenmp'"
   -DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON
   -DTpetra_INST_INT_LONG_LONG:BOOL=OFF
   -DTpetra_INST_INT_INT:BOOL=ON

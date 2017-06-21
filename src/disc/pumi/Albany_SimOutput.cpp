@@ -38,7 +38,7 @@ void Albany::SimOutput::writeFile(const double time_value)
     ss << filename << '_' << index << ".sms";
     meshname = ss.str();
   }
-  PM_write(spm, meshname.c_str(), sthreadNone, 0);
+  PM_write(spm, meshname.c_str(), 0);
   for (int i = 0; i < mesh->countFields(); ++i) {
     apf::Field* field = mesh->getField(i);
     /* this is a cheap filter for non-nodal fields */

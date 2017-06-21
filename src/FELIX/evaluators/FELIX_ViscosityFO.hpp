@@ -41,9 +41,7 @@ public:
 
 private:
   template<typename TemperatureT>
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   KOKKOS_INLINE_FUNCTION
-#endif
   TemperatureT flowRate(const TemperatureT& T) const;
 
   const double pi, actenh, actenl, gascon, switchingT;
@@ -62,20 +60,21 @@ private:
   double n;
 
   // Input:
-  PHX::MDField<VelT,Cell,QuadPoint,VecDim,Dim> Ugrad; //[(k yr)^{-1}], k=1000
-  PHX::MDField<VelT,Cell,QuadPoint,VecDim> U; //[m/yr]
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec; // [Km]
-  PHX::MDField<TemprT,Cell> temperature; // [K]
-  PHX::MDField<TemprT,Cell> flowFactorA;  // [k^{-(n+1)} Pa^{-n} yr^{-1} ], k=1000.  This is the coefficient A.
-                                          //To distinguish it from the scalar flowFactor defined in the body of the function, it is called flowFactorA.
-                                          //Probably this should be changed at some point...
+  PHX::MDField<const VelT,Cell,QuadPoint,VecDim,Dim> Ugrad; //[(k yr)^{-1}], k=1000
+  PHX::MDField<const VelT,Cell,QuadPoint,VecDim> U; //[m/yr]
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim> coordVec; // [Km]
+  PHX::MDField<const TemprT,Cell> temperature; // [K]
+  //To distinguish it from the scalar flowFactor defined
+  //in the body of the function, it is called flowFactorA.
+  //Probably this should be changed at some point...
+  PHX::MDField<const TemprT,Cell> flowFactorA;  // [k^{-(n+1)} Pa^{-n} yr^{-1} ], k=1000.  This is the coefficient A.
+  PHX::MDField<const ParamScalarT,Cell,QuadPoint> stiffeningFactor;
+  PHX::MDField<const ScalarT> homotopyParam;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;  // [k^2 Pa yr], k=1000
   PHX::MDField<ScalarT,Cell,QuadPoint> epsilonSq; // [(k yr)^{-2}], k=1000
-  PHX::MDField<ParamScalarT,Cell,QuadPoint> stiffeningFactor;
 
-  PHX::MDField<ScalarT> homotopyParam;
   ScalarT printedFF;
 
   unsigned int numQPs, numDims, numNodes, numCells;
@@ -85,7 +84,6 @@ private:
   VISCTYPE visc_type;
   FLOWRATETYPE flowRate_type;
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
   typedef typename PHX::Device execution_space;
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
@@ -144,8 +142,6 @@ public:
   void glenslaw_xz (const TemprT &flowFactorVec, const int& cell) const;
 
   double R, x_0, y_0, R2;
-
-#endif
 
 };
 

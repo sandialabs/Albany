@@ -25,9 +25,6 @@
 #include "EpetraExt_MultiVectorOut.h"
 #include "EpetraExt_BlockMapOut.h"
 
-#include "Phalanx_config.hpp"
-#include "Phalanx.hpp"
-
 #include "Kokkos_Core.hpp"
 
 #ifdef ALBANY_PERIDIGM
@@ -134,7 +131,7 @@ int main(int argc, char *argv[]) {
   Teuchos::GlobalMPISession mpiSession(&argc, &argv, NULL);
 #endif
 
-  Kokkos::initialize();
+  Kokkos::initialize(argc, argv);
 
 #ifdef ALBANY_FLUSH_DENORMALS
   _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);

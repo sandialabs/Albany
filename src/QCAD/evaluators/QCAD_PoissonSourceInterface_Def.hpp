@@ -33,10 +33,10 @@ PoissonSourceInterfaceBase(const Teuchos::ParameterList& p) :
   // number of DOFs we will set each call
   numDOFsSet = offset.size();  // always 1 for Poisson problems
 
-  TEUCHOS_ASSERT(p.isType<Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB") );
+  TEUCHOS_ASSERT(p.isType<Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB") );
 
   //! Material database - holds the scaling we need
-  materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
+  materialDB = p.get< Teuchos::RCP<Albany::MaterialDatabase> >("MaterialDB");
 
   //! Energy unit of phi in eV
   energy_unit_in_eV = p.get<double>("Energy unit in eV");
@@ -111,11 +111,7 @@ PoissonSourceInterfaceBase(const Teuchos::ParameterList& p) :
                              std::endl << "Error: PoissonSource Interface boundary conditions "
                              << "are only supported when the DOF is not a vector" << std::endl);
 
-  //PHX::MDField<ScalarT,Cell,Node> tmp(p.get<std::string>("DOF Name"),
-  //p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
-  //dof = tmp;
-  
-  dof = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string>("DOF Name"),
+  dof = decltype(dof)(p.get<std::string>("DOF Name"),
 				     p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
   this->addDependentField(dof);
   this->addDependentField(coordVec);

@@ -1,0 +1,124 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Peridigm Code Coupling
+    MaterialDB Filename: TensileBarPSMaterials.yaml
+    Peridigm Parameters: 
+      Discretization: 
+        Type: Albany
+      Materials: 
+        My Elastic Material: 
+          Material Model: Elastic Correspondence
+          Density: 7800.0000
+          Bulk Modulus: 1.30000000e+11
+          Shear Modulus: 7.80000000e+10
+          Hourglass Coefficient: 0.02000000
+      Blocks: 
+        My Group of Blocks: 
+          Block Names: block_1
+          Material: My Elastic Material
+          Horizon: 0.37687500
+      Output: 
+        Output Frequency: 1
+        Output Variables: 
+          Cauchy_Stress: true
+          Partial_Stress: true
+          Radius: true
+          Volume: true
+          Displacement: true
+          Number_Of_Neighbors: true
+    Solution Method: Steady
+    Phalanx Graph Visualization Detail: 0
+    Dirichlet BCs: 
+      DBC on NS nodelist_1 for DOF X: -1.50000000e-02
+      DBC on NS nodelist_2 for DOF X: 0.01500000
+      DBC on NS nodelist_3 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_4 for DOF Z: 0.00000000e+00
+      DBC on NS nodelist_5 for DOF Y: 0.00000000e+00
+      DBC on NS nodelist_6 for DOF Z: 0.00000000e+00
+  Discretization: 
+    Method: Exodus
+    Exodus Input File Name: TensileBarPS.g
+    Exodus Output File Name: TensileBarPS.e
+    Cubature Degree: 2
+    Separate Evaluators by Element Block: true
+    Solution Vector Components: [displacement, V]
+    Residual Vector Components: [force, V]
+  Piro: 
+    Jacobian Operator: 'Matrix-Free'
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000e-05
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-06
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 2000
+                      Block Size: 1
+                      Num Blocks: 1000
+                      Flexible Gmres: false
+              Preconditioner Type: None
+              Preconditioner Types: 
+                Ifpack: 
+                  Overlap: 1
+                  Prec Type: ILU
+                  Ifpack Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Method: Full Step
+        Full Step: 
+          Full Step: 1.00000000
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 3
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000e-05
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 20
+        Test 2: 
+          Test Type: FiniteValue
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

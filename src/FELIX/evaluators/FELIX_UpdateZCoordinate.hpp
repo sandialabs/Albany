@@ -41,10 +41,10 @@ public:
 private:
 
   // Input:
-  PHX::MDField<MeshScalarT, Cell, Node,Dim> coordVecIn;
-  PHX::MDField<MeshScalarT, Cell, Node> dH;
-  PHX::MDField<MeshScalarT, Cell, Node> topSurface;
-  PHX::MDField<MeshScalarT, Cell, Node> H0;
+  PHX::MDField<const MeshScalarT, Cell, Node,Dim> coordVecIn;
+  PHX::MDField<const MeshScalarT, Cell, Node> dH;
+  PHX::MDField<const MeshScalarT, Cell, Node> topSurface;
+  PHX::MDField<const MeshScalarT, Cell, Node> H0;
 
   // Output:
   PHX::MDField<MeshScalarT, Cell, Node, Dim> coordVecOut;
@@ -74,10 +74,10 @@ public:
 private:
 
   // Input:
-  PHX::MDField<MeshScalarT, Cell, Node,Dim> coordVecIn;
-  PHX::MDField<MeshScalarT, Cell, Node> dH;
-  PHX::MDField<MeshScalarT, Cell, Node> topSurface;
-  PHX::MDField<MeshScalarT, Cell, Node> H;
+  PHX::MDField<const MeshScalarT, Cell, Node,Dim> coordVecIn;
+  PHX::MDField<const MeshScalarT, Cell, Node> dH;
+  PHX::MDField<const MeshScalarT, Cell, Node> topSurface;
+  PHX::MDField<const MeshScalarT, Cell, Node> H;
 
   // Output:
   PHX::MDField<MeshScalarT, Cell, Node, Dim> coordVecOut;

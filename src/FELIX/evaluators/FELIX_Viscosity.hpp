@@ -45,9 +45,9 @@ private:
   double n;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-  PHX::MDField<ScalarT,Dim>                    homotopyParam;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> VGrad;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  PHX::MDField<const ScalarT,Dim>                    homotopyParam;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;

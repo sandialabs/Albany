@@ -1,0 +1,152 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Total Lagrangian Plasticity with Projection 3D
+    Solution Method: Steady
+    Phalanx Graph Visualization Detail: 1
+    weighted_Volume_Averaged_J: true
+    Dirichlet BCs: 
+      DBC on NS NodeSet0 for DOF X: 0.00000000e+00
+      DBC on NS NodeSet1 for DOF X: 0.10000000
+    Projection: 
+      Projection Variable: J2
+      Projection Rank: 2
+      Projection Comp: 9
+    Insertion Criteria: 
+      Insertion Criteria: Traction
+      Fracture Limit: 100000.00000000
+    Material Model: 
+      Model Name: J2
+    Elastic Modulus: 
+      Elastic Modulus Type: Constant
+      Value: 1.00000000e+08
+    Poissons Ratio: 
+      Poissons Ratio Type: Constant
+      Value: 0.20000000
+    Yield Strength: 
+      Yield Strength Type: Constant
+      Value: 5.00000000e+08
+    Hardening Modulus: 
+      Hardening Modulus Type: Constant
+      Value: 0.00000000e+00
+    Parameters: 
+      Number: 1
+      Parameter 0: DBC on NS NodeSet1 for DOF X
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Discretization: 
+    1D Elements: 3
+    2D Elements: 3
+    3D Elements: 3
+    Method: STK3D
+    Exodus Output File Name: OneDConsolid_OUTPUT_tpetra.exo
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [-8.76638405e+03]
+    Relative Tolerance: 50.00000000
+    Absolute Tolerance: 50.00000000
+  Piro: 
+    Analysis: 
+      Solve: 
+        Compute Sensitivities: false
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Tangent
+      Stepper: 
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: Time
+        Max Steps: 200
+        Max Value: 0.50000000
+        Min Value: 0.00000000e+00
+        Compute Eigenvalues: false
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Jacobian Inverse
+          Num Eigenvalues: 0
+      Step Size: 
+        Initial Step Size: 0.02500000
+        Method: Constant
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 500
+                      Output Frequency: 10
+                    Max Iterations: 1000
+                    Tolerance: 1.00000000e-14
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 5.00000000e-11
+                      Output Frequency: 0
+                      Output Style: 0
+                      Verbosity: 0
+                      Maximum Iterations: 400
+                      Block Size: 1
+                      Num Blocks: 1850
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                ML: 
+                  Base Method Defaults: none
+                  ML Settings: 
+                    default values: SA
+                    'smoother: type': Chebyshev
+                    'smoother: pre or post': both
+                    'coarse: type': 'Amesos-KLU'
+                    'coarse: max size': 512
+                    'repartition: enable': 1
+                    'repartition: partitioner': Zoltan
+                    'repartition: Zoltan dimensions': 3
+                    'repartition: max min ratio': 1.30000000
+                    'repartition: min per proc': 500
+                Ifpack2: 
+                  Overlap: 2
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 3
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.50000000e-07
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 15
+        Test 2: 
+          Test Type: FiniteValue
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

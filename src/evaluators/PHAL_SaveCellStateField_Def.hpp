@@ -49,8 +49,7 @@ SaveCellStateField(const Teuchos::ParameterList& p) :
 
   fieldName =  p.get<std::string>("Field Name");
   stateName =  p.get<std::string>("State Name");
-  PHX::MDField<ScalarT> f(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("Field Layout") );
-  field = f;
+  field = decltype(field)(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("Field Layout") );
 
   savestate_operation = Teuchos::rcp(new PHX::Tag<ScalarT>
     (stateName, p.get< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout")));

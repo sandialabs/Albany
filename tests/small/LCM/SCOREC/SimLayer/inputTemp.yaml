@@ -1,0 +1,134 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Mechanics 3D
+    Solution Method: Continuation
+    MaterialDB Filename: materials.yaml
+    Temperature: 
+      Variable Type: DOF
+    Displacement: 
+      Variable Type: None
+    Neumann BCs: { }
+    Initial Condition: 
+      Function: Constant
+      Function Data: [2300.0000]
+    Parameters: 
+      Number: 1
+      Parameter 0: Time
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+    Adaptation: 
+      Method: Sim
+      Equilibrate: false
+      Remesh Strategy: Every N Step Number
+      Remesh Every N Step Number: 250000
+      Error Bound: 0.05000000
+      Add Layer: true
+      Uniform Temperature New Layer: 20.00000000
+      Max Size: 1.00000000e+10
+      Min Size: 0.00500000
+      Layer Mesh Size: 0.01500000
+      Gradation: 0.90000000
+  Discretization: 
+    Cubature Degree: 1
+    Method: Sim
+    Sim Input File Name: layerMesh0.sms
+    Workset Size: 500
+    Sim Model Input File Name: sliced_cube.smd
+    Sim Output File Name: out_temp.vtk
+    Separate Evaluators by Element Block: true
+    QP Temperature from Nodes: true
+    Model Associations File Name: associations.txt
+    Solution Vector Components: [temp, S]
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [1041.99350248]
+    Relative Tolerance: 0.00010000
+  Piro: 
+    LOCA: 
+      Predictor: 
+        Method: Constant
+      Stepper: 
+        Continuation Method: Natural
+        Continuation Parameter: Time
+        Initial Value: 0.00000000e+00
+        Max Steps: 12
+        Max Value: 1.00000000e+07
+        Min Value: 0.00000000e+00
+      Step Size: 
+        Initial Step Size: 1.00000000
+        Method: Constant
+    NOX: 
+      Linear Solver: 
+        Tolerance: 1.00000000e-12
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                Belos: 
+                  VerboseObject: 
+                    Verbosity Level: medium
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-08
+                      Output Frequency: 1
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 1200
+                      Block Size: 1
+                      Num Blocks: 1200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 2
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: level-of-fill': 1
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Single Step
+      Printing: 
+        Output Information: 
+          Error: true
+          Warning: true
+          Outer Iteration: true
+          Parameters: false
+          Details: false
+          Linear Solver Details: false
+          Stepper Iteration: true
+          Stepper Details: false
+          Stepper Parameters: false
+        Output Precision: 3
+        Output Processor: 0
+      Status Tests: 
+        Test Type: Combo
+        Combo Type: OR
+        Number of Tests: 2
+        Test 0: 
+          Test Type: NormF
+          Norm Type: Two Norm
+          Scale Type: Scaled
+          Tolerance: 1.00000000e-09
+        Test 1: 
+          Test Type: MaxIters
+          Maximum Iterations: 15
+        Test 2: 
+          Test Type: NormUpdate
+          Tolerance: 1.00000000e-13
+      Solver Options: 
+        Status Test Check Type: Complete
+...

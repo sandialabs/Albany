@@ -1,0 +1,35 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    eb_1: 
+      material: J2_Mat
+      Weighted Volume Average J: false
+      Average J Stabilization Parameter: 0.00000000e+00
+      Volume Average Pressure: true
+  Materials: 
+    J2_Mat: 
+      Output eqps: true
+      Output Cauchy Stress: true
+      Material Model: 
+        Model Name: J2
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 200000.00000000
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.30000000
+      Hardening Modulus: 
+        Hardening Modulus Type: Constant
+        Value: 1000.00000000
+      Yield Strength: 
+        Yield Strength Type: Constant
+        Value: 700.00000000
+      Bulk Modulus: 
+        Bulk Modulus Type: Constant
+        Value: 166667.00000000
+      Shear Modulus: 
+        Shear Modulus Type: Constant
+        Value: 76923.10000000
+      Stabilization Parameter: 1.00000000
+...

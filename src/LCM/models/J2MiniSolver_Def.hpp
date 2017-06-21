@@ -3,6 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#include "Albany_Utils.hpp"
 #include "MiniNonlinearSolver.h"
 #include "J2MiniSolver.hpp"
 
@@ -75,7 +76,7 @@ template<typename EvalT, typename Traits>
 void
 J2MiniKernel<EvalT, Traits>::
 init(Workset &workset,
-     FieldMap<ScalarT> &dep_fields,
+     FieldMap<const ScalarT> &dep_fields,
      FieldMap<ScalarT> &eval_fields)
 {
   std::string cauchy_string = field_name_map_["Cauchy_Stress"];
@@ -161,7 +162,7 @@ public:
     minitensor::Index const
     dimension = x.get_dimension();
 
-    assert(dimension == Base::DIMENSION);
+    ALBANY_EXPECT(dimension == Base::DIMENSION);
 
     // Variables that potentially have Albany::Traits sensitivity
     // information need to be handled by the peel functor so that

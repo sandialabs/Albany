@@ -34,8 +34,8 @@ public:
 
 private:
   // Input:
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>    sphere_coord;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      pressure;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim>    sphere_coord;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level>      pressure;
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      etadot;
 

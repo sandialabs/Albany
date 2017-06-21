@@ -169,8 +169,8 @@ SET(SOURCES ${SOURCES} AAdapt_SPRSizeField.cpp)
 SET(HEADERS ${HEADERS} AAdapt_SPRSizeField.hpp)
 
 IF(ALBANY_OMEGA_H)
-  SET(SOURCES ${SOURCES} AAdapt_Omega_h_Method.cpp)
-  SET(HEADERS ${HEADERS} AAdapt_Omega_h_Method.hpp)
+  SET(SOURCES ${SOURCES} AAdapt_MeshAdapt_Omega_h.cpp)
+  SET(HEADERS ${HEADERS} AAdapt_MeshAdapt_Omega_h.hpp)
 ENDIF()
 
 include_directories(${ALBANY_PUMI_INCLUDE_DIRS} ${PUMI_INCLUDE_DIR})

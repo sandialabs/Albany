@@ -1,0 +1,99 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Problem: 
+    Name: Mechanics 2D
+    Phalanx Graph Visualization Detail: 1
+    MaterialDB Filename: materials.yaml
+    Dirichlet BCs: 
+      DBC on NS nodeset0 for DOF X prescribe Field: dirichlet_field
+      DBC on NS nodeset0 for DOF Y prescribe Field: dirichlet_field
+      DBC on NS nodeset1 for DOF X prescribe Field: dirichlet_field
+      DBC on NS nodeset1 for DOF Y prescribe Field: dirichlet_field
+    Parameters: 
+      Number: 3
+      Parameter 0: DBC on NS nodeset0 for DOF X prescribe Field
+      Parameter 1: DBC on NS nodeset1 for DOF X prescribe Field
+      Parameter 2: DBC on NS nodeset0 for DOF Y prescribe Field
+    Response Functions: 
+      Number: 1
+      Response 0: Solution Average
+  Debug Output: 
+    Write Jacobian to MatrixMarket: -1
+    Write Residual to MatrixMarket: -1
+  Discretization: 
+    Method: Exodus
+    Cell Topology: Tri
+    Interleaved Ordering: false
+    Restart Index: 1
+    Exodus Output File Name: nleltri2d_tpetra_out.exo
+    Exodus Input File Name: nleltri2d_tpetra_in.exo
+  Regression Results: 
+    Number of Comparisons: 1
+    Test Values: [0.32500000]
+    Relative Tolerance: 0.00010000
+    Number of Sensitivity Comparisons: 1
+    Sensitivity Test Values 0: [0.25000000, 0.25000000, 0.25000000]
+  Piro: 
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        First Step Predictor: { }
+        Last Step Predictor: { }
+      Step Size: { }
+      Stepper: 
+        Eigensolver: { }
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: Belos
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000e-05
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-12
+                      Output Frequency: 10
+                      Output Style: 1
+                      Verbosity: 33
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 2
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: drop tolerance': 0.00000000e+00
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: level-of-fill': 2
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

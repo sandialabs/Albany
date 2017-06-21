@@ -21,7 +21,7 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 
 namespace QCAD {
@@ -73,7 +73,7 @@ protected:
   double temperature, V0;
   std::vector<double> prefactors;
   std::vector<ScalarT> phiOffsets;
-  Teuchos::RCP<MaterialDatabase> materialDB;
+  Teuchos::RCP<Albany::MaterialDatabase> materialDB;
 
   bool responseOnly; //flag for evaluator being called in response field manager
 
@@ -108,12 +108,12 @@ protected:
 
   // Input:
   //! Coordinate vector at vertices
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
-  PHX::MDField<ScalarT,Cell,Node> dof;
-  PHX::MDField<ScalarT,Cell,Node,VecDim> dofVec;
-  PHX::MDField<ScalarT,Cell,Node> beta_field;
-  PHX::MDField<ScalarT,Cell,Node> thickness_field;
-  PHX::MDField<ScalarT,Cell,Node> elevation_field;
+  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
+  PHX::MDField<const ScalarT,Cell,Node> dof;
+  PHX::MDField<const ScalarT,Cell,Node,VecDim> dofVec;
+  PHX::MDField<const ScalarT,Cell,Node> beta_field;
+  PHX::MDField<const ScalarT,Cell,Node> thickness_field;
+  PHX::MDField<const ScalarT,Cell,Node> elevation_field;
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::ArrayRCP<Teuchos::RCP<shards::CellTopology> > sideType;
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureCell;

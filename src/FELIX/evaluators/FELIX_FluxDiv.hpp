@@ -45,11 +45,11 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ScalarT> field;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>       averaged_velocity;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>              div_averaged_velocity;
-  PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>         thickness;
-  PHX::MDField<ParamScalarT,Cell,Side,QuadPoint,Dim>     grad_thickness;
+  PHX::MDField<const ScalarT> field;
+  PHX::MDField<const ScalarT,Cell,Side,QuadPoint,VecDim>       averaged_velocity;
+  PHX::MDField<const ScalarT,Cell,Side,QuadPoint>              div_averaged_velocity;
+  PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>         thickness;
+  PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint,Dim>     grad_thickness;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Side,QuadPoint>              flux_div;

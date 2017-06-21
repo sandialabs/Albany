@@ -44,13 +44,13 @@ public:
 private:
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint> rho;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> rhoGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> rhoDot;
-  PHX::MDField<MeshScalarT,Cell,Point,Dim> coordVec;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> rho;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> rhoGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> rhoDot;
+  PHX::MDField<const MeshScalarT,Cell,Point,Dim> coordVec;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual;

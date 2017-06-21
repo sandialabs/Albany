@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include <boost/math/special_functions/fpclassify.hpp>
+#include "Albany_Utils.hpp"
 
 template<minitensor::Index NumDimT, minitensor::Index NumSlipT>
 CP::SlipFamily<NumDimT, NumSlipT>::SlipFamily()
@@ -32,36 +33,25 @@ CP::SlipFamily<NumDimT, NumSlipT>::setFlowRuleType(CP::FlowRuleType rule)
 }
 
 
-///
-/// Verify that constitutive update has preserved finite values
-///
-template<minitensor::Index NumDimT, typename ArgT>
+//
+// Verify that constitutive update has preserved finite values
+//
+template<typename T, minitensor::Index N>
 void
-CP::confirmTensorSanity(
-    minitensor::Tensor<ArgT, NumDimT> const & input,
-    std::string const & message)
+CP::expectFiniteTensor(
+    minitensor::Tensor<T, N> const & A,
+    std::string const & msg)
 {
-  int dim = input.get_dimension();
-  for (int i = 0; i < dim; i++) {
-    for (int j = 0; j < dim; j++) {
-      assert(boost::math::isfinite(Sacado::ScalarValue<ArgT>::eval(input(i, j)))==true);
-      // Disabling this capability for release.
-      // We will revisit this option when we can cut the time step from the constitutive model.
-      /* if (!boost::math::isfinite(
-          Sacado::ScalarValue<ArgT>::eval(input(i, j)))) {
-        std::string msg =
-            "**** Invalid data detected in CP::confirmTensorSanity(): "
-                + message;
-        TEUCHOS_TEST_FOR_EXCEPTION(
-            !boost::math::isfinite(
-                Sacado::ScalarValue<ArgT>::eval(input(i, j))),
-            std::logic_error,
-            msg);
-      } */
-    }
+  minitensor::Index const
+  dim = A.get_dimension();
+
+  minitensor::Index const
+  num_components = dim * dim;
+
+  for (minitensor::Index i = 0; i < num_components; ++i) {
+    ALBANY_EXPECT(boost::math::isfinite(Sacado::ScalarValue<T>::eval(A[i])) == true);
   }
 }
-
 
 ///
 /// Update the plastic quantities
@@ -89,23 +79,23 @@ CP::applySlipIncrement(
   minitensor::Tensor<ArgT, NumDimT>
   exp_L_dt(num_dim);
 
-  Lp_np1.fill(minitensor::ZEROS);
+  Lp_np1.fill(minitensor::Filler::ZEROS);
   Lp_np1 = 0. * Lp_np1;
 
   if(dt > 0){
-    for (int s(0); s < num_slip; ++s) {
+    for (minitensor::Index s(0); s < num_slip; ++s) {
       Lp_np1 += (slip_np1[s] - slip_n[s])/dt * slip_systems.at(s).projector_;
     }
   }
 
-  CP::confirmTensorSanity<NumDimT>(Lp_np1, "Lp_np1 in applySlipIncrement().");
+  CP::expectFiniteTensor(Lp_np1, "Lp_np1 in applySlipIncrement().");
 
   // update plastic deformation gradient
   // F^{p}_{n+1} = exp(L_{n+1} * delta t) F^{p}_{n}
   exp_L_dt = minitensor::exp(Lp_np1 * dt);
   Fp_np1 = exp_L_dt * Fp_n;
 
-  CP::confirmTensorSanity<NumDimT>(Fp_np1, "Fp_np1 in applySlipIncrement()");
+  CP::expectFiniteTensor(Fp_np1, "Fp_np1 in applySlipIncrement()");
 }
 
 
@@ -121,9 +111,10 @@ CP::updateHardness(
     minitensor::Vector<ArgT, NumSlipT> const & rate_slip,
     minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
     minitensor::Vector<ArgT, NumSlipT> & state_hardening_np1,
-    minitensor::Vector<ArgT, NumSlipT> & slip_resistance)
+    minitensor::Vector<ArgT, NumSlipT> & slip_resistance,
+    bool & failed)
 {
-  for (int sf_index(0); sf_index < slip_families.size(); ++ sf_index)
+  for (unsigned int sf_index(0); sf_index < slip_families.size(); ++ sf_index)
   {
     auto const &
     slip_family = slip_families[sf_index];
@@ -143,7 +134,8 @@ CP::updateHardness(
       rate_slip, 
       state_hardening_n, 
       state_hardening_np1, 
-      slip_resistance);
+      slip_resistance,
+      failed);
   }
 
   return;
@@ -165,7 +157,7 @@ CP::updateSlip(
     minitensor::Vector<ArgT, NumSlipT> & slip_np1,
     bool & failed)
 {
-  for (int ss_index(0); ss_index < slip_systems.size(); ++ ss_index)
+  for (unsigned int ss_index(0); ss_index < slip_systems.size(); ++ ss_index)
   {
     auto const &
     slip_family = slip_families[slip_systems.at(ss_index).slip_family_index_];
@@ -179,7 +171,7 @@ CP::updateSlip(
     auto
     pflow = flow_rule_factory.template createFlowRule<ArgT>(type_flow_rule);
 
-    ArgT const
+    ArgT
     rate_slip = pflow->computeRateSlip(
         slip_family.pflow_parameters_,
         shear[ss_index],
@@ -205,7 +197,8 @@ CP::computeStress(
     minitensor::Tensor<ArgT, NumDimT> const & Fp,
     minitensor::Tensor<ArgT, NumDimT> & sigma,
     minitensor::Tensor<ArgT, NumDimT> & S,
-    minitensor::Vector<ArgT, NumSlipT> & shear)
+    minitensor::Vector<ArgT, NumSlipT> & shear,
+    bool & failed)
 {
   minitensor::Index const
   num_dim = F.get_dimension();
@@ -222,14 +215,48 @@ CP::computeStress(
   minitensor::Tensor<ArgT, NumDimT>
   deformation_elastic(num_dim);
 
+  // max tolerance for Fp
+  RealType
+  max_tol{1.0e100};
+
+  ArgT
+  max_fp = Sacado::ScalarValue<ArgT>::eval(
+         minitensor::norm_infinity(Fp));
+
+  if (max_fp > max_tol) {
+    std::cout << "Large plastic deformation gradient" << std::endl;
+    std::cout << std::setprecision(4) << Fp << std::endl;
+    failed = true;
+    return;
+  }
+  
+  ArgT
+  det_fp = minitensor::det(Fp);  
+
   // Saint Venant–Kirchhoff model
-  if (minitensor::det(Fp) == 0.0)
+  if (det_fp == 0.0)
   {
     std::cout << "Singular plastic deformation gradient" << std::endl;
     std::cout << std::setprecision(4) << Fp << std::endl;
+    failed = true;
+    return;
   }
 
   defgrad_elastic = F * minitensor::inverse(Fp);
+
+  ArgT
+  det_fe = minitensor::det(defgrad_elastic);
+
+  if (det_fe == 0.0) {
+    std::cout << "Singular elastic deformation gradient" << std::endl;
+    std::cout << std::setprecision(4) << defgrad_elastic << std::endl;
+    failed = true;
+    return;
+  } else if (std::abs(det_fe) < std::sqrt(CP::TINY)) {
+    // Downstream calculation of derivatives of 1/det_fe will fail
+    failed = true;
+    return;
+  }
 
   deformation_elastic = minitensor::transpose(defgrad_elastic) * defgrad_elastic;
 
@@ -238,15 +265,15 @@ CP::computeStress(
 
   S = minitensor::dotdot(C, strain_elastic);
 
-  sigma = 1.0 / minitensor::det(defgrad_elastic) * 
+  sigma = 1.0 / det_fe * 
     defgrad_elastic * S * minitensor::transpose(defgrad_elastic);
 
-  CP::confirmTensorSanity<NumDimT>(
+  CP::expectFiniteTensor(
       sigma,
       "Cauchy stress in ResidualSlipNLS::computeStress()");
 
   // Compute resolved shear stresses
-  for (int s(0); s < num_slip; ++s) {
+  for (minitensor::Index s(0); s < num_slip; ++s) {
     shear[s] = 
       minitensor::dotdot(slip_systems.at(s).projector_, deformation_elastic * S);
   }
@@ -271,7 +298,7 @@ CP::computeElasticityTensor(
   minitensor::Index const
   num_dim = C.get_dimension();
 
-  C.fill(minitensor::ZEROS);
+  C.fill(minitensor::Filler::ZEROS);
 
   if (num_dim >= 2) {
     C(0, 0, 0, 0) = c11;

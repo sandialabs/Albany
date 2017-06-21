@@ -253,7 +253,6 @@ operator() (const ComputeAndScatterJac_buildLaplace_Tag<numn>& tag, const int& c
               const int col2_ = Index(cell, m, n+1);
               val = this->sqrtHVcoef * KTGRKK[node*2][m*2+1];
               jacobian.sumIntoValues(rowT, &col2_, 1, &val, false, true);
-              JacT->sumIntoLocalValues(rowT, Teuchos::arrayView(&col2_,1), Teuchos::arrayView(&val,1));
             }
 
             //filling v values
@@ -596,9 +595,7 @@ evaluateFields(typename Traits::EvalData workset)
   }//end of if buildLaplace
 
 #else
-  fT = workset.fT;
-  JacT = workset.JacT;
-  jacobian = JacT->getLocalMatrix();
+  jacobian = workset.JacT->getLocalMatrix();
   mc = workset.m_coeff;
   neq = workset.wsElNodeEqID[0][0].size();
   Index = workset.wsElNodeEqID_kokkos;

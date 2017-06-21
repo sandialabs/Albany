@@ -1,0 +1,18 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_3: 
+      material: Plastic
+      Surface Element: true
+  Materials: 
+    Plastic: 
+      Material Model: 
+        Model Name: Neohookean
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 100000.00
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.45000000
+...

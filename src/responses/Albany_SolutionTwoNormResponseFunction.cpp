@@ -169,20 +169,18 @@ evaluateGradientT(const double current_time,
   
 }
 
-#if defined(ALBANY_EPETRA)
 //! Evaluate distributed parameter derivative dg/dp
 void
 Albany::SolutionTwoNormResponseFunction::
-evaluateDistParamDeriv(
+evaluateDistParamDerivT(
     const double current_time,
-    const Epetra_Vector* xdot,
-    const Epetra_Vector* xdotdot,
-    const Epetra_Vector& x,
+    const Tpetra_Vector* xdotT,
+    const Tpetra_Vector* xdotdotT,
+    const Tpetra_Vector& xT,
     const Teuchos::Array<ParamVec>& param_array,
     const std::string& dist_param_name,
-    Epetra_MultiVector* dg_dp)
+    Tpetra_MultiVector* dg_dpT)
 {
-  if (dg_dp != NULL)
-    dg_dp->PutScalar(0.0);
+  if (dg_dpT != NULL)
+    dg_dpT->putScalar(0.0);
 }
-#endif // ALBANY_EPETRA

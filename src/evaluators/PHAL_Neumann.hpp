@@ -21,7 +21,7 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 
 namespace PHAL {
@@ -68,13 +68,14 @@ protected:
   std::string betaName; //name of function betaXY to be used
   double L;           //length scale for ISMIP-HOM Test cases 
   MeshScalarT betaXY; //function of x and y to multiply scalar values of beta read from input file
-  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD, EXP_SCALAR_FIELD, POWERLAW_SCALAR_FIELD, EXP_SCALAR_FIELD_THK, GLP_SCALAR_FIELD, LATERAL_BACKPRESSURE, FELIX_XZ_MMS};
+  enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD, EXP_SCALAR_FIELD, POWERLAW_SCALAR_FIELD, EXP_SCALAR_FIELD_THK, LATERAL_BACKPRESSURE, FELIX_XZ_MMS};
   BETAXY_NAME beta_type;
  
   //The following are for the lateral BC 
   double g; 
   double rho; 
   double rho_w;
+  bool useGLP;
   Teuchos::ParameterList* stereographicMapList;
   bool useStereographicMap;
 
@@ -161,14 +162,14 @@ protected:
 
   // Input:
   //! Coordinate vector at vertices
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
-  PHX::MDField<ScalarT,Cell,Node> dof;
-  PHX::MDField<ScalarT,Cell,Node,VecDim> dofVec;
-  PHX::MDField<ParamScalarT,Cell,Node> beta_field;
-  PHX::MDField<ParamScalarT,Cell,Node> roughness_field;
-  PHX::MDField<ParamScalarT,Cell,Node> thickness_field;
-  PHX::MDField<ParamScalarT,Cell,Node> elevation_field;
-  PHX::MDField<ParamScalarT,Cell,Node> bedTopo_field;
+  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
+  PHX::MDField<const ScalarT,Cell,Node> dof;
+  PHX::MDField<const ScalarT,Cell,Node,VecDim> dofVec;
+  PHX::MDField<const ParamScalarT,Cell,Node> beta_field;
+  PHX::MDField<const ParamScalarT,Cell,Node> roughness_field;
+  PHX::MDField<const ParamScalarT,Cell,Node> thickness_field;
+  PHX::MDField<const ParamScalarT,Cell,Node> elevation_field;
+  PHX::MDField<const ParamScalarT,Cell,Node> bedTopo_field;
   Teuchos::RCP<shards::CellTopology> cellType;
   Teuchos::ArrayRCP<Teuchos::RCP<shards::CellTopology> > sideType;
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubatureCell;
@@ -275,7 +276,7 @@ public:
  Teuchos::ArrayRCP<ST> fT_nonconstView;
  Teuchos::RCP<Tpetra_CrsMatrix> JacT;
 
- typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
+ typedef typename Tpetra_CrsMatrix::local_matrix_type  LocalMatrixType;
  LocalMatrixType jacobian;
  Kokkos::View<int***, PHX::Device> Index;
  bool is_adjoint;

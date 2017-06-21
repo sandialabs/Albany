@@ -45,9 +45,9 @@ private:
   void evaluateFieldsCell (typename Traits::EvalData workset);
 
   // Input:
-  PHX::MDField<ParamScalarT>  H;
-  PHX::MDField<ParamScalarT>  z_s;
-  PHX::MDField<HydroScalarT>  phi;
+  PHX::MDField<const ParamScalarT>  H;
+  PHX::MDField<const ParamScalarT>  z_s;
+  PHX::MDField<const HydroScalarT>  phi;
 
   // Output:
   PHX::MDField<HydroScalarT>  N;
@@ -62,8 +62,8 @@ private:
 
   // Parameters needed for Stokes alone case
   bool   regularized;
-  PHX::MDField<ScalarT,Dim> alphaParam;
-  PHX::MDField<ScalarT,Dim> regularizationParam;
+  PHX::MDField<const ScalarT,Dim> alphaParam;
+  PHX::MDField<const ScalarT,Dim> regularizationParam;
   ScalarT printedAlpha;
 };
 

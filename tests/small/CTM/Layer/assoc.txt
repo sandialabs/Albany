@@ -1,0 +1,17 @@
+element block base-plate 1
+3 123
+element block first-layer 1
+3 119
+element block additional-layers 10
+3 116
+3 117
+3 118
+3 120
+3 121
+3 122
+3 124
+3 125
+3 126
+3 127
+node set face_197 1
+2 197

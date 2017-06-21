@@ -46,7 +46,7 @@ public:
   
 protected:
   Teuchos::RCP<PHX::FieldTag> scatter_operation;
-  std::vector< PHX::MDField<ScalarT> > val;
+  std::vector< PHX::MDField<const ScalarT> > val;
   const int numNodes;
   const int numDims;
   const int numLevels;
@@ -96,9 +96,9 @@ public:
 
 private:
   typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
-  Kokkos::vector< Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device > val_kokkos;
+  Kokkos::vector< Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device > val_kokkos;
 
-  typename Kokkos::vector< Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device >::t_dev d_val;
+  typename Kokkos::vector< Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device >::t_dev d_val;
 
 #endif
 };
@@ -119,7 +119,7 @@ public:
 public:
   Teuchos::RCP<Tpetra_Vector> fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT;
-  typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
+  typedef typename Tpetra_CrsMatrix::local_matrix_type  LocalMatrixType;
   LocalMatrixType jacobian;
   bool loadResid;
   int neq, nunk;
@@ -144,9 +144,9 @@ private:
   Kokkos::DynRankView<LO, PHX::Device> colT;
 
   typedef typename Kokkos::View<double*,PHX::Device>::execution_space executionSpace;
-  Kokkos::vector< Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device > val_kokkosjac;
+  Kokkos::vector< Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device > val_kokkosjac;
 
-  typename Kokkos::vector< Kokkos::DynRankView<ScalarT, PHX::Device>, PHX::Device >::t_dev d_val;
+  typename Kokkos::vector< Kokkos::DynRankView<const ScalarT, PHX::Device>, PHX::Device >::t_dev d_val;
 
 #endif
 };

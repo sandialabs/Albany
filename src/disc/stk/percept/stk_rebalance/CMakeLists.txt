@@ -1,9 +1,6 @@
 
-SET(SOURCES "")
-SET(HEADERS "")
-
-FILE(GLOB SOURCES *.cpp)
-FILE(GLOB HEADERS *.hpp)
+SET(SOURCES GeomDecomp.cpp Partition.cpp Rebalance.cpp RebalanceUtils.cpp ZoltanPartition.cpp)
+SET(HEADERS GeomDecomp.hpp Partition.hpp Rebalance.hpp RebalanceUtils.hpp ZoltanPartition.hpp)
 
 add_library(albanySTKRebalance ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 target_link_libraries(albanySTKRebalance ${Trilinos_LIBRARIES})

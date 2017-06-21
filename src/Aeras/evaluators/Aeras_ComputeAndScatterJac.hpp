@@ -60,12 +60,12 @@ protected:
 
 protected:
 
-  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<MeshScalarT,Cell,Node> lambda_nodal;
-  PHX::MDField<MeshScalarT,Cell,Node> theta_nodal;
+  PHX::MDField<const RealType,Cell,Node,QuadPoint> BF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<const MeshScalarT,Cell,Node> lambda_nodal;
+  PHX::MDField<const MeshScalarT,Cell,Node> theta_nodal;
 
 protected:
   double sqrtHVcoef;
@@ -93,9 +93,7 @@ public:
   void evaluateFields(typename Traits::EvalData d); 
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  Teuchos::RCP<Tpetra_Vector> fT;
-  Teuchos::RCP<Tpetra_CrsMatrix> JacT;
-  typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
+  typedef typename Tpetra_CrsMatrix::local_matrix_type  LocalMatrixType;
   LocalMatrixType jacobian;
   RealType mc;
   int neq;

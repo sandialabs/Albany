@@ -1,0 +1,18 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    top: 
+      material: top fluid
+    bottom: 
+      material: bottom fluid
+  Materials: 
+    top fluid: 
+      Material Model: 
+        Model Name: Newtonian Fluid
+      Shear Viscosity: 1.0000000
+    bottom fluid: 
+      Material Model: 
+        Model Name: Newtonian Fluid
+      Shear Viscosity: 1.00000000
+...

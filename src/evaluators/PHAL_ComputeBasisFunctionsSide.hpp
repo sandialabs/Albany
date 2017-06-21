@@ -48,8 +48,8 @@ private:
 
   // Input:
   //! Coordinate vector at side's vertices
-  PHX::MDField<MeshScalarT,Cell,Side,Vertex,Dim> sideCoordVec;
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
+  PHX::MDField<const MeshScalarT,Cell,Side,Vertex,Dim> sideCoordVec;
+  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
 
   // Temporary Kokkos Views
   Kokkos::DynRankView<RealType, PHX::Device> val_at_cub_points;

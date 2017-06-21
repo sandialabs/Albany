@@ -1,0 +1,206 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  Scaling: 
+    Scale: 1.0000000e11
+  Problem: 
+    Name: Mechanics 3D
+    Phalanx Graph Visualization Detail: 0
+    MaterialDB Filename: 'materials-cubes.yaml'
+    Solution Method: Transient
+    Second Order: Newmark
+    Initial Condition: 
+      Function: Constant
+      Function Data: [0.00000000e+00, 0.00000000e+00, 0.00000000e+00]
+    Initial Condition Dot: 
+      Function: About Z
+      Function Data: [1.00000000]
+    Response Functions: 
+      Number: 4
+      Response 0: Project IP to Nodal Field
+      ResponseParams 0: 
+        Number of Fields: 1
+        IP Field Name 0: Cauchy_Stress
+        IP Field Layout 0: Tensor
+        Output to File: true
+      Response 1: Solution Average
+      Response 2: Solution Max Value
+      Response 3: Solution Min Value
+  Discretization: 
+    Method: Ioss
+    Exodus Input File Name: 'cube-single.g'
+    Exodus Output File Name: 'cube-single-piro-expl.e'
+    Exodus Solution Name: disp
+    Exodus Residual Name: resid
+    Separate Evaluators by Element Block: true
+    Number Of Time Derivatives: 2
+    Exodus Write Interval: 10000
+  Regression Results: 
+    Number of Comparisons: 0
+    Test Values: [0.0, 0.0,  1.10326665348, -1.10326665348]
+    Relative Tolerance: 1.0e-7
+    Absolute Tolerance: 1.0e-7
+  Piro: 
+    Newmark: 
+      Num Time Steps: 142857 #this number of time steps corresponds to dt~7e-7 
+      Final Time: 10.00000000
+      Initial Time: 0.00000000e+00
+      Beta: 0.0
+      Gamma: 0.5
+      NOX: 
+        Direction: 
+          Method: Newton
+          Newton: 
+            Forcing Term Method: Constant
+            Rescue Bad Newton Solve: true
+            Stratimikos Linear Solver: 
+              NOX Stratimikos Options: { }
+              Stratimikos: 
+                Linear Solver Type: AztecOO
+                Linear Solver Types: 
+                  Belos: 
+                    Solver Type: Block GMRES
+                    Solver Types: 
+                      Block GMRES: 
+                        Convergence Tolerance: 1.00000000e-05
+                        Output Frequency: 10
+                        Output Style: 1
+                        Verbosity: 33
+                        Maximum Iterations: 100
+                        Num Blocks: 100
+                  AztecOO:
+                    Forward Solve:
+                      AztecOO Settings:
+                        Aztec Solver: GMRES
+                        Convergence Test: r0
+                        Size of Krylov Subspace: 200
+                        Output Frequency: 1
+                      Max Iterations: 100
+                      Tolerance: 1e-5
+                Preconditioner Type: Ifpack
+                Preconditioner Types: 
+                  Ifpack: 
+                    Overlap: 1
+                    Prec Type: ILU
+                    Ifpack Settings: 
+                      'fact: level-of-fill': 1
+                      'fact: drop tolerance': 0.00000000e+00
+        Line Search: 
+          Method: Full Step
+        Nonlinear Solver: Line Search Based
+        #Nonlinear Solver: Single Step
+        Printing: 
+          Output Information: 103
+          Output Precision: 3
+          Output Processor: 0
+        Status Tests: 
+          Test Type: Combo
+          Combo Type: OR
+          Number of Tests: 2
+          Test 0: 
+            Test Type: NormF
+            Norm Type: Two Norm
+            Scale Type: Scaled
+            Tolerance: 1.00000000e-08
+          Test 1: 
+            Test Type: MaxIters
+            Maximum Iterations: 128
+    Velocity Verlet: 
+      Num Time Steps: 100
+      Final Time: 0.01000000
+      Initial Time: 0.00000000e+00
+      Invert Mass Matrix: true
+      Stratimikos: 
+        Linear Solver Type: Belos
+        Linear Solver Types: 
+          Belos: 
+            Solver Type: Block GMRES
+            Solver Types: 
+              Block GMRES: 
+                Convergence Tolerance: 1.00000000e-05
+                Output Frequency: 10
+                Output Style: 1
+                Verbosity: 33
+                Maximum Iterations: 100
+                Block Size: 1
+                Num Blocks: 100
+                Flexible Gmres: false
+        Preconditioner Type: Ifpack2
+        Preconditioner Types: 
+          Ifpack2: 
+            Overlap: 1
+            Prec Type: ILUT
+            Ifpack2 Settings: 
+              'fact: ilut level-of-fill': 1.00000000
+              'fact: drop tolerance': 0.00000000e+00
+    LOCA: 
+      Bifurcation: { }
+      Constraints: { }
+      Predictor: 
+        Method: Tangent
+      Stepper: 
+        Initial Value: 0.00000000e+00
+        Continuation Parameter: DBC on NS NodeSet1 for DOF X
+        Max Steps: 10
+        Max Value: 0.10000000
+        Min Value: 0.00000000e+00
+        Compute Eigenvalues: false
+        Eigensolver: 
+          Method: Anasazi
+          Operator: Jacobian Inverse
+          Num Eigenvalues: 0
+      Step Size: 
+        Initial Step Size: 0.01000000
+        Method: Constant
+    NOX: 
+      Direction: 
+        Method: Newton
+        Newton: 
+          Forcing Term Method: Constant
+          Rescue Bad Newton Solve: true
+          Stratimikos Linear Solver: 
+            NOX Stratimikos Options: { }
+            Stratimikos: 
+              Linear Solver Type: AztecOO
+              Linear Solver Types: 
+                AztecOO: 
+                  Forward Solve: 
+                    AztecOO Settings: 
+                      Aztec Solver: GMRES
+                      Convergence Test: r0
+                      Size of Krylov Subspace: 200
+                      Output Frequency: 10
+                    Max Iterations: 200
+                    Tolerance: 1.00000000e-05
+                Belos: 
+                  Solver Type: Block GMRES
+                  Solver Types: 
+                    Block GMRES: 
+                      Convergence Tolerance: 1.00000000e-10
+                      Output Frequency: 0
+                      Output Style: 0
+                      Verbosity: 0
+                      Maximum Iterations: 200
+                      Block Size: 1
+                      Num Blocks: 200
+                      Flexible Gmres: false
+              Preconditioner Type: Ifpack2
+              Preconditioner Types: 
+                Ifpack2: 
+                  Overlap: 1
+                  Prec Type: ILUT
+                  Ifpack2 Settings: 
+                    'fact: ilut level-of-fill': 1.00000000
+                    'fact: drop tolerance': 0.00000000e+00
+      Line Search: 
+        Full Step: 
+          Full Step: 1.00000000
+        Method: Full Step
+      Nonlinear Solver: Line Search Based
+      Printing: 
+        Output Information: 103
+        Output Precision: 3
+        Output Processor: 0
+      Solver Options: 
+        Status Test Check Type: Minimal
+...

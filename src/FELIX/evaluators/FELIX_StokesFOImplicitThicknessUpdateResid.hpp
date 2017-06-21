@@ -42,11 +42,11 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> gradBF;
-  PHX::MDField<ScalarT,Cell,Node> dH;
-  PHX::MDField<ScalarT,Cell,Node> H0;
-  PHX::MDField<ScalarT,Cell,Node,VecDim> InputResidual;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> gradBF;
+  PHX::MDField<const ScalarT,Cell,Node> dH;
+  PHX::MDField<const ScalarT,Cell,Node> H0;
+  PHX::MDField<const ScalarT,Cell,Node,VecDim> InputResidual;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
@@ -54,10 +54,12 @@ private:
   std::size_t numNodes;
   std::size_t numQPs;
   std::size_t numVecDims;
+  std::size_t numCells;
 
   double rho, g;
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  Kokkos::DynRankView<ScalarT, PHX::Device> Res;
+
 public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
@@ -66,11 +68,6 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const StokesFOImplicitThicknessUpdateResid_Tag& tag, const int& cell) const;
-
-  typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
-  PHX::MDField<ScalarT, Cell, Node, Dim> Res;
-
-#endif
 
 };
 }

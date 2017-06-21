@@ -38,10 +38,10 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input: 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> Gc;
-  PHX::MDField<ScalarT,Cell,QuadPoint> rho;
-  PHX::MDField<ScalarT,Cell,QuadPoint> mu;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> V;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim,Dim> Gc;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> rho;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> mu;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TauM;

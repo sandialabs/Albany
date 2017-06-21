@@ -15,29 +15,43 @@
 
 namespace CP
 {
-	template<typename EvalT, typename Traits>
-	class ParameterReader
-	{
-	public:
-		
-		using ScalarT = typename EvalT::ScalarT;
-		using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  template<typename EvalT, typename Traits>
+  class ParameterReader
+  {
+  public:
 
-		using Minimizer = minitensor::Minimizer<ValueT, CP::NLS_DIM>;
+    using ScalarT = typename EvalT::ScalarT;
+    using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
-		ParameterReader(Teuchos::ParameterList* p);
-		
-		IntegrationScheme	getIntegrationScheme() const;
-		ResidualType getResidualType() const;
-		minitensor::StepType getStepType() const;
-		Minimizer getMinimizer() const;
+    using Minimizer = minitensor::Minimizer<ValueT, CP::NLS_DIM>;
 
-		SlipFamily<CP::MAX_DIM, CP::MAX_SLIP> getSlipFamily(int index);
+    ParameterReader(Teuchos::ParameterList* p);
 
-	private:
+    IntegrationScheme
+    getIntegrationScheme() const;
 
-		Teuchos::ParameterList* p_;
-	};
+    ResidualType
+    getResidualType() const;
+
+    PredictorSlip
+    getPredictorSlip() const;
+
+    minitensor::StepType
+    getStepType() const;
+
+    Minimizer
+    getMinimizer() const;
+
+    SlipFamily<CP::MAX_DIM, CP::MAX_SLIP>
+    getSlipFamily(int index);
+
+    Verbosity
+    getVerbosity() const;
+
+  private:
+
+    Teuchos::ParameterList* p_;
+  };
 }
 
 #include "ParameterReader_Def.hpp"

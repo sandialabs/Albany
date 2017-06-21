@@ -42,7 +42,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> outVector;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> dirVector;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> dirVector;
 
 };
 
@@ -73,7 +73,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> outValue;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint> dirValue;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> dirValue;
 
 };
 }

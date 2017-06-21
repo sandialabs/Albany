@@ -41,8 +41,8 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT> unWeightedVar;
-  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
+  PHX::MDField<const ScalarT> unWeightedVar;
+  PHX::MDField<const RealType,Cell,Node,QuadPoint> BF;
 
 
   unsigned int numQPs;

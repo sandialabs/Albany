@@ -38,10 +38,10 @@ public:
 
 private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
-  PHX::MDField<ScalarT,Cell,QuadPoint> T_;
-  PHX::MDField<ScalarT,Cell,QuadPoint> phi_;
-  PHX::MDField<ScalarT,Cell,QuadPoint> rho_Cp_;
-  PHX::MDField<ScalarT,Cell,QuadPoint> laser_source_;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> T_;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> phi_;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> rho_Cp_;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> laser_source_;
 
   unsigned int num_qps_;
   unsigned int num_dims_;

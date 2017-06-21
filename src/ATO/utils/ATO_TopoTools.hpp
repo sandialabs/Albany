@@ -16,6 +16,7 @@ class Simp;
 class Ramp;
 class H1;
 class H2;
+class Poly;
 /** \brief Topology support utilities
 
     This class provides basic support for various penalization approaches.
@@ -23,7 +24,7 @@ class H2;
 */
 class Topology 
 {
-  enum PenaltyType {SIMP, RAMP, HONE, HTWO};
+  enum PenaltyType {SIMP, RAMP, HONE, HTWO, POLY};
 
 public:
   Topology(const Teuchos::ParameterList& topoParams, int global_index);
@@ -57,6 +58,7 @@ private:
     Teuchos::RCP<Ramp> ramp; 
     Teuchos::RCP<H1> h1;
     Teuchos::RCP<H2> h2;
+    Teuchos::RCP<Poly> poly; 
   } PenaltyFunction;
   Teuchos::Array<PenaltyFunction> penaltyFunctions;
 
@@ -107,6 +109,13 @@ class H2 {
   template<typename T> T dPenalize(T rho);
   double regLength;
   double minValue;
+};
+class Poly {
+ public:
+  Poly(const Teuchos::ParameterList& topoParams);
+  template<typename T> T Penalize(T rho);
+  template<typename T> T dPenalize(T rho);
+  Teuchos::Array<double> coefficients;
 };
 
 }

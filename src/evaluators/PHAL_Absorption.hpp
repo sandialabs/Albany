@@ -51,7 +51,7 @@ private:
 
   std::size_t numQPs;
   std::size_t numDims;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint> absorption;
 
  

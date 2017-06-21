@@ -105,7 +105,7 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT porosity = 0.652;
   ScalarT particle_dia = 20.0e-6;
   ScalarT powder_hemispherical_reflectivity = 0.70;
-  ScalarT lambda =2.0;
+  //ScalarT lambda =2.0;
   ScalarT pi = 3.1415926535897932;
 
   ScalarT LaserFlux_Max;
@@ -120,6 +120,13 @@ evaluateFields(typename Traits::EvalData workset)
     }
 
   ScalarT beta = 1.5*(1.0 - porosity)/(porosity*particle_dia);
+  
+  //  Parameters for the depth profile of the laser heat source:
+  //Depth of powder bed (Needs to be changed as per the model)
+  ScalarT PB_depth = 50e-6;
+  ScalarT lambda = PB_depth*beta;
+  
+  
   // Few parameters:
   ScalarT a = sqrt(1.0 - powder_hemispherical_reflectivity);
   ScalarT A = (1.0 - pow(powder_hemispherical_reflectivity,2))*exp(-lambda);
@@ -129,6 +136,12 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT c1 = b2 - powder_hemispherical_reflectivity*b1;
   ScalarT c2 = b1 - powder_hemispherical_reflectivity*b2;
   ScalarT C = b1*c2*exp(-2*a*lambda) - b2*c1*exp(2*a*lambda);
+  
+  //  Following are few factors defined by the coder to be included while defining the depth profile
+  ScalarT f1 = 1.0/(3.0 - 4.0*powder_hemispherical_reflectivity);
+  ScalarT f2 = 2*powder_hemispherical_reflectivity*a*a/C;
+  ScalarT f3 = 3.0*(1.0 - powder_hemispherical_reflectivity);
+  
   
   //  Code for heat into substrate
   ScalarT Substrate_Top = 0.00005;
@@ -167,6 +180,10 @@ evaluateFields(typename Traits::EvalData workset)
         MeshScalarT X = coord_(cell,qp,0);
         MeshScalarT Y = coord_(cell,qp,1);
         MeshScalarT Z = coord_(cell,qp,2);
+		
+		//Value of depth profile at z = lambda
+		ScalarT depth_profile_lambda = f1*(f2*(A*(b2*exp(2.0*a*lambda)-b1*exp(-2.0*a*lambda)) - B*(c2*exp(-2.0*a*(lambda - lambda))-c1*exp(2.0*a*(lambda-lambda)))) + f3*(exp(-lambda)+powder_hemispherical_reflectivity*exp(lambda - 2.0*lambda)));
+  
                            
         ScalarT radius = sqrt((X - Laser_center_x)*(X - Laser_center_x) + (Y - Laser_center_y)*(Y - Laser_center_y));
         /*
@@ -174,9 +191,17 @@ evaluateFields(typename Traits::EvalData workset)
               source_(cell,qp) = beta*LaserFlux_Max*pow((1.0-(radius*radius)/(laser_beam_radius*laser_beam_radius)),2)*(Absorptivity_PowderSurface - I_value);
         else  source_(cell,qp) =0.0;
 		*/
+		
+		//This formula is valid only at the substrate when no melting happens
+		/*
 		if (radius < laser_beam_radius && Z >= Substrate_Top)
               source_(cell,qp) = beta*(Absorptivity_PowderSurface - I_value)*LaserFlux_Max*pow((1.0-(radius*radius)/(laser_beam_radius*laser_beam_radius)),2)*exp(-beta*(Z-Substrate_Top));
-		else  source_(cell,qp) =0.0;		        
+		else  source_(cell,qp) =0.0;		
+		*/
+		
+		if (radius < laser_beam_radius && Z >= Substrate_Top)
+              source_(cell,qp) = beta*depth_profile_lambda*LaserFlux_Max*pow((1.0-(radius*radius)/(laser_beam_radius*laser_beam_radius)),2)*exp(-beta*(Z-Substrate_Top));
+		else  source_(cell,qp) =0.0;
     }
   }
 }

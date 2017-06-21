@@ -62,7 +62,7 @@ namespace LCM
 
     // Initialize rotation matrix
     minitensor::Matrix<double, IndexM, IndexN> rl;
-    rl.fill(minitensor::ZEROS);
+    rl.fill(minitensor::Filler::ZEROS);
 
     // Compute rotation matrix
     rl(0,0) = cos(phi1_)*cos(phi2_) - sin(phi1_)*cos(Phi_)*sin(phi2_);
@@ -79,7 +79,7 @@ namespace LCM
     minitensor::Tensor4<RealType, EC::MAX_DIM> C;
     C.set_dimension(num_dims_);
     // Initialize with zeros
-    C.fill(minitensor::ZEROS);
+    C.fill(minitensor::Filler::ZEROS);
     // fill tensor
     C(0,0,0,0) = c11_;
     C(1,1,1,1) = c22_;
@@ -176,18 +176,18 @@ namespace LCM
   template<typename EvalT, typename Traits>
   void ElasticCrystalModel< EvalT, Traits > ::
   computeState( typename Traits::EvalData workset,
-		std::map< std::string, Teuchos::RCP< PHX::MDField< ScalarT > > > dep_fields,
-		std::map< std::string, Teuchos::RCP< PHX::MDField< ScalarT > > > eval_fields )
+		DepFieldMap dep_fields,
+		FieldMap eval_fields )
   {
     std::string F_string = (*field_name_map_)["F"];
     std::string J_string = (*field_name_map_)["J"];
     std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
 
     // extract dependent MDFields
-    PHX::MDField< ScalarT > def_grad = *dep_fields[F_string];
-    PHX::MDField< ScalarT > J = *dep_fields[J_string];
+    auto def_grad = *dep_fields[F_string];
+    auto J = *dep_fields[J_string];
     // extract evaluated MDFields
-    PHX::MDField< ScalarT > stress = *eval_fields[cauchy];
+    auto stress = *eval_fields[cauchy];
 
     // deformation gradient
     minitensor::Tensor<ScalarT> F(num_dims_);

@@ -199,7 +199,7 @@ QCAD::SchrodingerPotential<EvalT,Traits>::getValidSchrodingerPotentialParameters
 template<typename EvalT,typename Traits>
 typename QCAD::SchrodingerPotential<EvalT,Traits>::ScalarT
 QCAD::SchrodingerPotential<EvalT,Traits>::parabolicPotentialValue(
-   const int numDim, const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> & coord,
+   const int numDim, const PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> & coord,
    const int cell, const int qp )
 {
   ScalarT val;
@@ -232,7 +232,7 @@ QCAD::SchrodingerPotential<EvalT,Traits>::parabolicPotentialValue(
 template<typename EvalT,typename Traits>
 typename QCAD::SchrodingerPotential<EvalT,Traits>::ScalarT
 QCAD::SchrodingerPotential<EvalT,Traits>::finiteWallPotential(
-   const int numDim, const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> & coord,
+   const int numDim, const PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> & coord,
    const int cell, const int qp )
 {
   ScalarT val;
@@ -294,7 +294,7 @@ QCAD::SchrodingerPotential<EvalT,Traits>::finiteWallPotential(
 template<typename EvalT,typename Traits>
 typename QCAD::SchrodingerPotential<EvalT,Traits>::ScalarT
 QCAD::SchrodingerPotential<EvalT,Traits>::stringFormulaPotential(
-   const int numDim, const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> & coord,
+   const int numDim, const PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> & coord,
    const int cell, const int qp )
 {
   ScalarT val;

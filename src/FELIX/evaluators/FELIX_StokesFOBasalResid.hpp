@@ -43,13 +43,13 @@ private:
   ScalarT printedFF;
 
   // Input:
-  PHX::MDField<BetaScalarT,Cell,Side,QuadPoint>     beta;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint,VecDim>  u;
-  PHX::MDField<RealType,Cell,Side,Node,QuadPoint>   BF;
-  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint>     w_measure;
-  PHX::MDField<ScalarT,Dim>                         homotopyParam;
+  PHX::MDField<const BetaScalarT,Cell,Side,QuadPoint>     beta;
+  PHX::MDField<const ScalarT,Cell,Side,QuadPoint,VecDim>  u;
+  PHX::MDField<const RealType,Cell,Side,Node,QuadPoint>   BF;
+  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint>     w_measure;
+  PHX::MDField<const ScalarT,Dim>                         homotopyParam;
 
-  PHX::MDField<ScalarT,Dim> homotopy;
+  PHX::MDField<const ScalarT,Dim> homotopy;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim>            basalResid;

@@ -49,7 +49,7 @@ public:
   Teuchos::Array<RealType>&
   getInitialBinFractions() { return initialBinFractions; }
 
-  Teuchos::Array<Teuchos::RCP<FM::CrystalPhase> >&
+  Teuchos::Array<Teuchos::RCP<FM::CrystalPhase>>&
   getCrystalPhases() { return crystalPhases; }
 
   Teuchos::Array<FM::CrystalVariant>&
@@ -78,7 +78,7 @@ private:
   // parameters
   //
   minitensor::Tensor<RealType, FM::THREE_D>        R;
-  Teuchos::Array<Teuchos::RCP<FM::CrystalPhase> > crystalPhases;
+  Teuchos::Array<Teuchos::RCP<FM::CrystalPhase>> crystalPhases;
   Teuchos::Array<FM::CrystalVariant>              crystalVariants;
   Teuchos::Array<FM::Transition>                  transitions;
   Teuchos::Array<RealType>                        tBarriers;

@@ -1,0 +1,17 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: elastic
+  Materials: 
+    elastic: 
+      Material Model: 
+        Model Name: Neohookean
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 2.80000000e+07
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.27000000
+...

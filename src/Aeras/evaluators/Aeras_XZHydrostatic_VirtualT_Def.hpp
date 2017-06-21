@@ -47,7 +47,7 @@ XZHydrostatic_VirtualT(const Teuchos::ParameterList& p,
   }
 
   if (vapor) {
-    qv = PHX::MDField<ScalarT,Cell,Node,Level> ("Vapor",   dl->node_scalar_level);
+    qv = decltype(qv)("Vapor",   dl->node_scalar_level);
     this->addDependentField(qv);
   }
 

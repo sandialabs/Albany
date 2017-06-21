@@ -54,12 +54,12 @@ private:
   ///
   /// Input: Electric Displacement
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim> edisp_;
+  PHX::MDField<const ScalarT, Cell, QuadPoint, Dim> edisp_;
 
   ///
   /// Input: Weighted Basis Function Gradients
   ///
-  PHX::MDField<MeshScalarT, Cell, Node, QuadPoint, Dim> w_grad_bf_;
+  PHX::MDField<const MeshScalarT, Cell, Node, QuadPoint, Dim> w_grad_bf_;
 
   ///
   /// Output: Residual Charges

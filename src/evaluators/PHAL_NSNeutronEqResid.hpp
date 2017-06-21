@@ -38,16 +38,16 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Neutron;
-  PHX::MDField<ScalarT,Cell,QuadPoint> NeutronDiff;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> NGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Absorp;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Fission;  
-  PHX::MDField<ScalarT,Cell,QuadPoint> nu;  
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> Neutron;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> NeutronDiff;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> NGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> Absorp;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> Fission;  
+  PHX::MDField<const ScalarT,Cell,QuadPoint> nu;  
   
-  PHX::MDField<ScalarT,Cell,QuadPoint> Source;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> Source;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> NResidual;

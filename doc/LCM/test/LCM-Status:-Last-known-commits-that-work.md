@@ -1,4 +1,4 @@
-On Fedora 24 using setup described in Albany/doc/LCM/build/INSTALL.pdf
+On Fedora 25 using setup described in Albany/doc/LCM/build/INSTALL.pdf
 
 Trilinos:
 

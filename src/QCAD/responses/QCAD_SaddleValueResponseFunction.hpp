@@ -8,7 +8,7 @@
 #define QCAD_SADDLEVALUERESPONSEFUNCTION_HPP
 
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 #include "QCAD_MathVector.hpp"
 
 #define MAX_DIMENSIONS 3
@@ -184,7 +184,7 @@ namespace QCAD {
     double getSaddlePointWeight(const double* p) const;
     double getTotalSaddlePointWeight() const;
     const double* getSaddlePointPosition() const;
-    double getCurrent(const double& lattTemp, const Teuchos::RCP<QCAD::MaterialDatabase>& materialDB) const;
+    double getCurrent(const double& lattTemp, const Teuchos::RCP<Albany::MaterialDatabase>& materialDB) const;
     
   private:
 

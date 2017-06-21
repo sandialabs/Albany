@@ -30,23 +30,20 @@ ResponseSquaredL2DifferenceBase(Teuchos::ParameterList& p, const Teuchos::RCP<Al
   fieldDim = getLayout(dl,rank,layout);
   layout->dimensions(dims);
 
-  sourceField = PHX::MDField<SourceScalarT>(fname,layout);
-  targetField   = PHX::MDField<TargetScalarT>(target_fname,layout);
-  w_measure     = PHX::MDField<RealType,Cell,QuadPoint>("Weights",dl->qp_scalar);
-  scaling       = plist->get("Scaling",1.0);
+  sourceField = decltype(sourceField)(fname,layout);
+  targetField = decltype(targetField)(target_fname,layout);
+  w_measure   = decltype(w_measure)("Weights",dl->qp_scalar);
+  scaling     = plist->get("Scaling",1.0);
 
-  this->addDependentField(sourceField.fieldTag());
-  if (target_fname=="ZERO")
-  {
+  this->addDependentField(sourceField);
+  if (target_fname=="ZERO") {
     target_zero = true;
-    this->addEvaluatedField(targetField);
+    targetFieldEval = decltype(targetFieldEval)(target_fname,layout);
+    this->addEvaluatedField(targetFieldEval);
+  } else {
+    this->addDependentField(targetField);
   }
-  else
-  {
-    target_zero = false;
-    this->addDependentField(targetField.fieldTag());
-  }
-  this->addDependentField(w_measure.fieldTag());
+  this->addDependentField(w_measure);
 
   this->setName("Response Squared L2 Error " + PHX::typeAsString<EvalT>());
 
@@ -74,10 +71,9 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
   this->utils.setFieldData(targetField,fm);
   this->utils.setFieldData(w_measure,fm);
 
-  if (target_zero)
-  {
-    targetField.deep_copy(TargetScalarT(0.0));
-    //PHAL::set(targetField, 0.0);
+  if (target_zero) {
+    this->utils.setFieldData(targetFieldEval,fm);
+    PHAL::set(targetFieldEval, 0.0);
   }
 
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postRegistrationSetup(d, fm);
@@ -87,8 +83,7 @@ postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& f
 template<typename EvalT, typename Traits, typename SourceScalarT, typename TargetScalarT>
 void PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetScalarT>::preEvaluate(typename Traits::PreEvalData workset)
 {
-  //PHAL::set(this->global_response, 0.0);
-  this->global_response.deep_copy(ScalarT(0.0));
+  PHAL::set(this->global_response_eval, 0.0);
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::preEvaluate(workset);
@@ -99,9 +94,8 @@ template<typename EvalT, typename Traits, typename SourceScalarT, typename Targe
 void PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetScalarT>::evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
-//  PHAL::set(this->local_response, 0.0);
+  PHAL::set(this->local_response_eval, 0.0);
 
-  this->local_response.deep_copy(ScalarT(0.0));
   for (int cell=0; cell<workset.numCells; ++cell)
   {
     ScalarT sum = 0;
@@ -126,8 +120,9 @@ void PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetS
       }
       sum += sq * w_measure(cell,qp);
     }
-    this->local_response(cell, 0) = sum*scaling;
-    this->global_response(0) += sum*scaling;
+
+    this->local_response_eval(cell, 0) = sum*scaling;
+    this->global_response_eval(0) += sum*scaling;
   }
 
   // Do any local-scattering necessary
@@ -138,10 +133,10 @@ void PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetS
 template<typename EvalT, typename Traits, typename SourceScalarT, typename TargetScalarT>
 void PHAL::ResponseSquaredL2DifferenceBase<EvalT, Traits, SourceScalarT, TargetScalarT>::postEvaluate(typename Traits::PostEvalData workset)
 {
-  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
+  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->global_response_eval);
 
   if(workset.comm->getRank()==0)
-    std::cout << "resp" << PHX::typeAsString<EvalT>() << ": " << this->global_response(0) << "\n" << std::flush;
+    std::cout << "resp" << PHX::typeAsString<EvalT>() << ": " << this->global_response_eval(0) << "\n" << std::flush;
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postEvaluate(workset);

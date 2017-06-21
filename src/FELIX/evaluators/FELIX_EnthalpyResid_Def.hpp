@@ -68,49 +68,49 @@ namespace FELIX
     needsDiss = p.get<bool>("Needs Dissipation");
     needsBasFric = p.get<bool>("Needs Basal Friction");
 
-    this->addDependentField(Enthalpy.fieldTag());
-    this->addDependentField(EnthalpyGrad.fieldTag());
-    this->addDependentField(EnthalpyHs.fieldTag());
-    this->addDependentField(diffEnth.fieldTag());
-    this->addDependentField(wBF.fieldTag());
-    this->addDependentField(wGradBF.fieldTag());
-    this->addDependentField(Velocity.fieldTag());
-    this->addDependentField(velGrad.fieldTag());
-    this->addDependentField(verticalVel.fieldTag());
-    this->addDependentField(coordVec.fieldTag());
-    this->addDependentField(meltTempGrad.fieldTag());
-    this->addDependentField(phi.fieldTag());
-    this->addDependentField(phiGrad.fieldTag());
-    this->addDependentField(homotopy.fieldTag());
-    this->addDependentField(basalResid.fieldTag());
+    this->addDependentField(Enthalpy);
+    this->addDependentField(EnthalpyGrad);
+    this->addDependentField(EnthalpyHs);
+    this->addDependentField(diffEnth);
+    this->addDependentField(wBF);
+    this->addDependentField(wGradBF);
+    this->addDependentField(Velocity);
+    this->addDependentField(velGrad);
+    this->addDependentField(verticalVel);
+    this->addDependentField(coordVec);
+    this->addDependentField(meltTempGrad);
+    this->addDependentField(phi);
+    this->addDependentField(phiGrad);
+    this->addDependentField(homotopy);
+    this->addDependentField(basalResid);
 
     if (needsDiss)
     {
-      diss = PHX::MDField<ScalarT,Cell,QuadPoint>(p.get<std::string> ("Dissipation QP Variable Name"),dl->qp_scalar);
-      this->addDependentField(diss.fieldTag());
+      diss = decltype(diss)(p.get<std::string> ("Dissipation QP Variable Name"),dl->qp_scalar);
+      this->addDependentField(diss);
     }
 
     if (needsBasFric)
     {
-      basalFricHeat = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Basal Friction Heat QP Variable Name"),dl->node_scalar);
-      //this->addDependentField(basalFricHeat.fieldTag());
+      basalFricHeat = decltype(basalFricHeat)(p.get<std::string> ("Basal Friction Heat QP Variable Name"),dl->node_scalar);
+      //this->addDependentField(basalFricHeat);
 
       if(haveSUPG)
       {
-        basalFricHeatSUPG = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Basal Friction Heat QP SUPG Variable Name"),dl->node_scalar);
-        //this->addDependentField(basalFricHeatSUPG.fieldTag());
+        basalFricHeatSUPG = decltype(basalFricHeatSUPG)(p.get<std::string> ("Basal Friction Heat QP SUPG Variable Name"),dl->node_scalar);
+        //this->addDependentField(basalFricHeatSUPG);
       }
     }
 
-    geoFluxHeat = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Geothermal Flux Heat QP Variable Name"),dl->node_scalar);
-    //this->addDependentField(geoFluxHeat.fieldTag());
+    geoFluxHeat = decltype(geoFluxHeat)(p.get<std::string> ("Geothermal Flux Heat QP Variable Name"),dl->node_scalar);
+    //this->addDependentField(geoFluxHeat);
 
     if(haveSUPG)
     {
-      geoFluxHeatSUPG = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Geothermal Flux Heat QP SUPG Variable Name"),dl->node_scalar);
-      basalResidSUPG = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Enthalpy Basal Residual SUPG Variable Name"),dl->node_scalar);
-      //this->addDependentField(geoFluxHeatSUPG.fieldTag());
-      this->addDependentField(basalFricHeatSUPG.fieldTag());
+      geoFluxHeatSUPG = decltype(geoFluxHeatSUPG)(p.get<std::string> ("Geothermal Flux Heat QP SUPG Variable Name"),dl->node_scalar);
+      basalResidSUPG = decltype(basalResidSUPG)(p.get<std::string> ("Enthalpy Basal Residual SUPG Variable Name"),dl->node_scalar);
+      //this->addDependentField(geoFluxHeatSUPG);
+      this->addDependentField(basalFricHeatSUPG);
     }
 
     this->addEvaluatedField(Residual);
@@ -250,7 +250,7 @@ namespace FELIX
     {
       ScalarT vmax =  1e-3; //min velocity to avoid divide by zero.
       ScalarT vmax_z =  1e-5; //min velocity to avoid divide by zero.
-      ParamScalarT diam = 0.0, diam_z;
+      ParamScalarT diam = 0.0, diam_z = 0.0;
       for (std::size_t qp = 0; qp < numQPs; ++qp)
       {
         ScalarT scale = - atan(alpha * (Enthalpy(cell,qp) - EnthalpyHs(cell,qp)))/pi + 0.5;

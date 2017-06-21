@@ -21,8 +21,6 @@ public:
   //                        const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution);
   virtual bool adaptMesh();
   virtual Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters() const;
-private:
-  double errorBound;
 };
 
 }

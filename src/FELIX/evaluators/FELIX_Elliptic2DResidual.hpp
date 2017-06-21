@@ -38,14 +38,14 @@ private:
   typedef typename EvalT::MeshScalarT                   MeshScalarT;
 
   // Input:
-  PHX::MDField<RealType>                                BF;
-  PHX::MDField<RealType>                                GradBF;
-  PHX::MDField<RealType>                                w_measure;
-  PHX::MDField<RealType,Cell,Side,QuadPoint,Dim,Dim>    inv_metric; // Only used in 2D, so we know the layout
+  PHX::MDField<const RealType>                                BF;
+  PHX::MDField<const RealType>                                GradBF;
+  PHX::MDField<const RealType>                                w_measure;
+  PHX::MDField<const RealType,Cell,Side,QuadPoint,Dim,Dim>    inv_metric; // Only used in 2D, so we know the layout
 
-  PHX::MDField<ScalarT>                                 u;
-  PHX::MDField<ScalarT>                                 grad_u;
-  PHX::MDField<MeshScalarT>                             coords;
+  PHX::MDField<const ScalarT>                                 u;
+  PHX::MDField<const ScalarT>                                 grad_u;
+  PHX::MDField<const MeshScalarT>                             coords;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node>                       residual; // Always a 3D residual, so we know the layout

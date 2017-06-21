@@ -7,7 +7,6 @@
 #ifndef ALBANY_SIDE_LAPLACIAN_HPP
 #define ALBANY_SIDE_LAPLACIAN_HPP 1
 
-#include "Phalanx.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"

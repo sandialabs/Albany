@@ -15,6 +15,7 @@
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
+#include "Teuchos_StandardCatchMacros.hpp"
 #include <stk_mesh/base/FieldBase.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
 #include "Piro_PerformSolve.hpp"
@@ -36,7 +37,9 @@ Teuchos::RCP<Albany::SolverFactory> slvrfctry;
 Teuchos::RCP<double> MPAS_dt;
 
 double MPAS_gravity(9.8), MPAS_rho_ice(910.0), MPAS_rho_seawater(1028.0), MPAS_sea_level(0),
-       MPAS_flowParamA(1e-4), MPAS_enhancementFactor(1.0), MPAS_flowLawExponent(3), MPAS_dynamic_thickness(1e-2);
+       MPAS_flowParamA(1e-4), MPAS_enhancementFactor(1.0), MPAS_flowLawExponent(3), MPAS_dynamic_thickness(1e-2),
+       MPAS_ClausiusClapeyoronCoeff(9.7546e-8);
+bool MPAS_useGLP(true);
 
 #ifdef MPAS_USE_EPETRA
   Teuchos::RCP<Thyra::ModelEvaluator<double> > solver;
@@ -70,6 +73,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     const std::vector<double>& temperatureOnTetra,
     std::vector<double>& dissipationHeatOnTetra,
     std::vector<double>& velocityOnVertices,
+    int& error,
     const double& deltat) {
 
   int numVertices3D = (nLayers + 1) * indexToVertexID.size();
@@ -190,6 +194,10 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     stk_disc->updateMesh();
   }
 
+  bool success = true;
+  Teuchos::ArrayRCP<const ST> solution_constView;
+  Teuchos::RCP<const Tpetra_Map> overlapMap;
+  try {
 #ifdef MPAS_USE_EPETRA
   solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiCommT, mpiCommT, Teuchos::null, false);
 #else
@@ -205,11 +213,15 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
   Piro::PerformSolveBase(*solver, solveParams, thyraResponses,
       thyraSensitivities);
 
-  Teuchos::RCP<const Tpetra_Map> overlapMap = albanyApp->getDiscretization()->getOverlapMapT();
+  overlapMap = albanyApp->getDiscretization()->getOverlapMapT();
   Teuchos::RCP<Tpetra_Import> import = Teuchos::rcp(new Tpetra_Import(albanyApp->getDiscretization()->getMapT(), overlapMap));
   Teuchos::RCP<Tpetra_Vector> solution = Teuchos::rcp(new Tpetra_Vector(overlapMap));
   solution->doImport(*albanyApp->getDiscretization()->getSolutionFieldT(), *import, Tpetra::INSERT);
-  Teuchos::ArrayRCP<const ST> solution_constView = solution->get1dView();
+  solution_constView = solution->get1dView();
+  }
+  TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
+
+  error = !success;
 
 
   for (UInt j = 0; j < numVertices3D; ++j) {
@@ -281,7 +293,7 @@ void velocity_solver_compute_2d_grid(MPI_Comm reducedComm) {
 }
 
 void velocity_solver_set_physical_parameters(double const& gravity, double const& ice_density, double const& ocean_density, double const& sea_level, double const& flowParamA,
-                                             double const& enhancementFactor, double const& flowLawExponent, double const& dynamic_thickness) {
+                                             double const& enhancementFactor, double const& flowLawExponent, double const& dynamic_thickness, bool const& use_GLP, double const& clausiusClapeyoronCoeff) {
   MPAS_gravity=gravity;
   MPAS_rho_ice = ice_density;
   MPAS_rho_seawater = ocean_density;
@@ -290,6 +302,8 @@ void velocity_solver_set_physical_parameters(double const& gravity, double const
   MPAS_enhancementFactor = enhancementFactor;
   MPAS_flowLawExponent = flowLawExponent;
   MPAS_dynamic_thickness = dynamic_thickness;
+  MPAS_useGLP = use_GLP;
+  MPAS_ClausiusClapeyoronCoeff = clausiusClapeyoronCoeff;
 }
 
 void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
@@ -326,6 +340,8 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   physParamList.set("Gravity Acceleration", physParamList.get("Gravity Acceleration", MPAS_gravity));
   physParamList.set("Ice Density", rho_ice = physParamList.get("Ice Density", MPAS_rho_ice));
   physParamList.set("Water Density", rho_seawater = physParamList.get("Water Density", MPAS_rho_seawater));
+  physParamList.set("Clausius-Clapeyron coefficient", physParamList.get("Clausius-Clapeyron coefficient", MPAS_ClausiusClapeyoronCoeff));
+  physParamList.set<bool>("Use GLP", physParamList.get("Use GLP", MPAS_useGLP)); //use GLP (Grounding line parametrization) unless actively disabled
   
   paramList->sublist("Problem").set("Name", paramList->sublist("Problem").get("Name", "FELIX Stokes First Order 3D"));
 
@@ -336,16 +352,25 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
     paramList->sublist("Problem").set("Time Step Ptr", MPAS_dt); //if it is not there set it to zero.
   }
 
-  if(!paramList->sublist("Problem").isSublist("Neumann BCs")) {
-    paramList->sublist("Problem").sublist("Neumann BCs").set("Cubature Degree", 3);
-    Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (1, 1.0));
-    paramList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS basalside for DOF all set basal_scalar_field", *inputArrayBasal);
+  Teuchos::ParameterList& neumannBcList = paramList->sublist("Problem").sublist("Neumann BCs");
+  std::string neumannStr = neumannBcList.currentParametersString();
+  int cub_degree = physParamList.get<bool>("Use GLP") ? 8 : 3;
+  if(neumannBcList.isParameter("Cubature Degree"))
+    std::cout<<"\nWARNING: Using Cubature Degeree of Neumann BCs provided in Albany input file. In order to use boundary conditions provided by MPAS, remove \"Neumann BCs\" sublist from Albany input file.\n"<<std::endl;
+
+  neumannBcList.set("Cubature Degree", neumannBcList.get("Cubature Degree", cub_degree));
+
+  if (neumannStr.find("NBC on SS") == std::string::npos) {
+    Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (5, 0.0));
+    neumannBcList.set("NBC on SS basalside for DOF all set basal", neumannBcList.get("NBC on SS basalside for DOF all set basal", *inputArrayBasal));
+    neumannBcList.set("BetaXY", neumannBcList.get("BetaXY", "Scalar Field"));
+
     //Lateral floating ice BCs
     Teuchos::RCP<Teuchos::Array<double> >inputArrayLateral = Teuchos::rcp(new Teuchos::Array<double> (1, rho_ice/rho_seawater));
-    paramList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS floatinglateralside for DOF all set lateral", *inputArrayLateral);
+    neumannBcList.set("NBC on SS floatinglateralside for DOF all set lateral", neumannBcList.get("NBC on SS floatinglateralside for DOF all set lateral", *inputArrayLateral));
   }
   else {
-    std::cout<<"\nWARNING: Using Neumann BCs options provided in Albany input file. In order to use boundary conditions provided by MPAS, remove \"Neumann BCs\" sublist from Albany input file.\n"<<std::endl;
+    std::cout<<"\nWARNING: Using basal and floating Neumann BCs options provided in Albany input file. In order to use boundary conditions provided by MPAS, remove \"Neumann BCs\" sublist from Albany input file.\n"<<std::endl;
   }
 
   //Dirichlet BCs

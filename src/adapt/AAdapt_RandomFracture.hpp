@@ -11,7 +11,6 @@
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_ParameterList.hpp>
 
-#include <Phalanx.hpp>
 #include <PHAL_Workset.hpp>
 #include <PHAL_Dimension.hpp>
 
@@ -153,4 +152,4 @@ class RandomFracture : public AbstractAdapter {
 
 }
 
-#endif //ALBANY_RANDOM_HPP
+#endif //ALBANY_Filler::RANDOM_HPP

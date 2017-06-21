@@ -641,11 +641,10 @@ ATO::Solver::ComputeObjective(double* p, double& g, double* dgdp)
   // See if the user specified a new design frequency.
   GO new_frequency = -1;
   if( _solverComm->getRank() == 0){
-    FILE *fp = fopen("update_frequency.txt", "r");
-    if(fp)
+    std::ifstream file("update_frequency.txt");
+    if(file.is_open())
     {
-      fscanf(fp, "%d", &new_frequency);
-      fclose(fp);
+      file >> new_frequency;
     }
   }
   Teuchos::broadcast(*_solverComm, 0, 1, &new_frequency);

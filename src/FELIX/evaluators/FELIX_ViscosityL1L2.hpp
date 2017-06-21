@@ -52,9 +52,9 @@ private:
   std::string surfType; //type of surface, e.g., Test A
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
-  PHX::MDField<ScalarT,Cell,QuadPoint>         epsilonB;
-  PHX::MDField<ScalarT,Dim>                    homotopyParam;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  PHX::MDField<const ScalarT,Cell,QuadPoint>         epsilonB;
+  PHX::MDField<const ScalarT,Dim>                    homotopyParam;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;

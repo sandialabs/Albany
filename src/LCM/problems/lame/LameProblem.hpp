@@ -12,7 +12,6 @@
 
 #include "Albany_AbstractProblem.hpp"
 
-#include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
@@ -85,7 +84,7 @@ namespace Albany {
     int numDim;
     bool haveMatDB;
     std::string mtrlDbFilename;
-    Teuchos::RCP<MaterialDatabase> materialDB;
+    Teuchos::RCP<Albany::MaterialDatabase> materialDB;
 
   };
 
@@ -139,7 +138,7 @@ Albany::LameProblem::constructEvaluators(
    const int worksetSize = meshSpecs.worksetSize;
 
    Intrepid2::DefaultCubatureFactory cubFactory;
-   RCP <Intrepid2::Cubature<PHX::Device> >> cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
+   RCP <Intrepid2::Cubature<PHX::Device>>> cubature = cubFactory.create<PHX::Device, RealType, RealType>(*cellType, meshSpecs.cubatureDegree);
 
    numDim = cubature->getDimension();
    const int numQPts = cubature->getNumPoints();
@@ -267,7 +266,7 @@ Albany::LameProblem::constructEvaluators(
         p->set<string>("Element Block Name", meshSpecs.ebName);
 
     if(haveMatDB)
-      p->set< RCP<MaterialDatabase>>("MaterialDB", materialDB);
+      p->set< RCP<Albany::MaterialDatabase>>("MaterialDB", materialDB);
 
     // Materials specification
     Teuchos::ParameterList& lameMaterialParametersList = p->sublist("Lame Material Parameters");

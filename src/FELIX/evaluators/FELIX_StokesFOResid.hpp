@@ -40,16 +40,16 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>     wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim>       force;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint>     wBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim>       force;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim>       U;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim>   Ugrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint>              muFELIX;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim>       U;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim>   Ugrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint>              muFELIX;
 
-  PHX::MDField<ScalarT,Cell,Node,VecDim>            basalRes;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim>     coordVec;
+  PHX::MDField<const ScalarT,Cell,Node,VecDim>            basalRes;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint, Dim>     coordVec;
 
   enum EQNTYPE {FELIX, POISSON, FELIX_XZ};
   EQNTYPE eqn_type;
@@ -66,8 +66,6 @@ private:
   bool useStereographicMap;
   bool needsBasalResidual;
 
-//KOKKOS:
- #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   public:
 
   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
@@ -94,9 +92,8 @@ private:
   void operator() (const FELIX_XZ_2D_Tag& tag, const int& cell) const;
   KOKKOS_INLINE_FUNCTION
   void operator() (const POISSON_2D_Tag& tag, const int& cell) const;
-
-#endif
 };
+
 }
 
 #endif

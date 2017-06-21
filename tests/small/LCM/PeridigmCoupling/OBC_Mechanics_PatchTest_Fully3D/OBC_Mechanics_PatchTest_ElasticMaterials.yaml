@@ -1,0 +1,20 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: Peridynamics
+    block_2: 
+      material: My Elastic Material
+  Materials: 
+    Peridynamics: 
+      Material Model: 
+        Model Name: Peridynamics
+    My Elastic Material: 
+      Material Model: 
+        Model Name: Elastic
+      Elastic Modulus: 
+        Value: 192000.00
+      Poissons Ratio: 
+        Value: 0.25000000
+...

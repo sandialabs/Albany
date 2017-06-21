@@ -41,16 +41,12 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  //PHX::MDField<ScalarT,Cell,QuadPoint> Potential;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PotentialGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Concentration;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Concentration_dot;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> ConcentrationGrad;
-  //PHX::MDField<ScalarT,Cell,QuadPoint> Permittivity;
-  //PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PhiGrad;
-  //PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PhiFlux;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> PotentialGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> Concentration;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> Concentration_dot;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim,Dim> ConcentrationGrad;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> ConcentrationResidual;

@@ -13,10 +13,13 @@ export LD_LIBRARY_PATH=/users/ghansen/lib:/users/ghansen/lib64:/users/ghansen/om
 cd /users/mperego/nightly
 
 LOG_FILE=/users/mperego/nightly/nightly_log.txt
+LOG_FILE2=/users/mperego/nightly/nightly_log2.txt
 if [ -f $LOG_FILE ]; then
   rm $LOG_FILE
 fi
 
 eval "env  TEST_DIRECTORY=/users/mperego/nightly SCRIPT_DIRECTORY=/users/mperego ctest -VV -S /users/mperego/nightly-tests-scripts/ctest_nightly_jenga.cmake" >> $LOG_FILE 2>&1
+
+eval "env  TEST_DIRECTORY=/users/mperego/nightly SCRIPT_DIRECTORY=/users/mperego ctest -VV -S /users/mperego/nightly-tests-scripts/ctest_nightly_jenga_FADmesh.cmake" >> $LOG_FILE2 2>&1
 
 

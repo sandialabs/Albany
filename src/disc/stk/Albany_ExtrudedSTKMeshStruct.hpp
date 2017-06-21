@@ -74,9 +74,6 @@ namespace Albany {
     LayeredMeshOrdering Ordering;
     int numLayers;
     int NumBaseElemeNodes;
-    int NumNodes; //number of nodes
-    int NumEles; //number of elements
-    int NumBdEdges; //number of faces on basal boundary
   }; // Class ExtrudedSTKMeshStruct
 
 

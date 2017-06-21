@@ -8,7 +8,6 @@
 #ifdef ALBANY_EPETRA
 #include <Epetra_MpiComm.h>
 #endif
-#include <Phalanx.hpp>
 #include <MiniTensor.h>
 #include "Intrepid2_DefaultCubatureFactory.hpp"
 #include "PHAL_AlbanyTraits.hpp"
@@ -270,7 +269,7 @@ using minitensor::eye;
   int numberOfEquations = 3;
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
 
-  Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct = Teuchos::rcp(
+  Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct = Teuchos::rcp(
       new Albany::TmplSTKMeshStruct<3>(
           discretizationParameterList,
           Teuchos::null,
@@ -284,7 +283,7 @@ using minitensor::eye;
       stkMeshStruct->getMeshSpecs()[0]->worksetSize);
 
   Teuchos::RCP<Albany::AbstractDiscretization> discretization = Teuchos::rcp(
-      new Albany::STKDiscretization(stkMeshStruct, commT));
+      new Albany::STKDiscretization( discretizationParameterList, stkMeshStruct, commT));
 
   //---------------------------------------------------------------------------
   // Associate the discretization with the StateManager

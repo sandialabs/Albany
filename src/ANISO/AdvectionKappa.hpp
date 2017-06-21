@@ -42,7 +42,7 @@ class AdvectionKappa :
     int num_dims;
     std::string kappa_val;
 
-    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> coord;
+    PHX::MDField<const MeshScalarT, Cell, QuadPoint, Dim> coord;
     PHX::MDField<ScalarT, Cell, QuadPoint> kappa;
 
 };

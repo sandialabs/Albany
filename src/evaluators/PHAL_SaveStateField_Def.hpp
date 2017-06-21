@@ -46,8 +46,7 @@ SaveStateField(const Teuchos::ParameterList& p)
 {
   fieldName =  p.get<std::string>("Field Name");
   stateName =  p.get<std::string>("State Name");
-  PHX::MDField<ScalarT> f(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("State Field Layout") );
-  field = f;
+  field = decltype(field)(fieldName, p.get<Teuchos::RCP<PHX::DataLayout> >("State Field Layout") );
 
   nodalState = p.isParameter("Nodal State") ? p.get<bool>("Nodal State") : false;
 
@@ -56,14 +55,6 @@ SaveStateField(const Teuchos::ParameterList& p)
 
   this->addDependentField(field.fieldTag());
   this->addEvaluatedField(*savestate_operation);
-
-  if (nodalState)
-  {
-    TEUCHOS_TEST_FOR_EXCEPTION (f.fieldTag().dataLayout().size()<2, Teuchos::Exceptions::InvalidParameter,
-                                "Error! To save a nodal state, pass the cell-based version of it (<Cell,Node,...>).\n");
-    TEUCHOS_TEST_FOR_EXCEPTION (f.fieldTag().dataLayout().name(1)!="Node", Teuchos::Exceptions::InvalidParameter,
-                                "Error! To save a nodal state, the second tag of the layout MUST be 'Node'.\n");
-  }
 
   this->setName("Save Field " + fieldName +" to State " + stateName
                 + "Residual");
@@ -76,6 +67,14 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(field,fm);
+
+  if (nodalState)
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION (field.fieldTag().dataLayout().size()<2, Teuchos::Exceptions::InvalidParameter,
+                                "Error! To save a nodal state, pass the cell-based version of it (<Cell,Node,...>).\n");
+    TEUCHOS_TEST_FOR_EXCEPTION (field.fieldTag().dataLayout().name(1)!="Node", Teuchos::Exceptions::InvalidParameter,
+                                "Error! To save a nodal state, the second tag of the layout MUST be 'Node'.\n");
+  }
 }
 // **********************************************************************
 template<typename Traits>

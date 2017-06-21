@@ -12,7 +12,6 @@
 
 #include "Albany_AbstractProblem.hpp"
 
-#include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
@@ -170,7 +169,7 @@ protected:
   ///
   /// RCP to matDB object
   ///
-  Teuchos::RCP<LCM::MaterialDatabase> material_db_;
+  Teuchos::RCP<Albany::MaterialDatabase> material_db_;
 
   ///
   /// old state data

@@ -61,16 +61,16 @@ void kessler(const int Km, const double dt_in,
              double &rainnc,  double &rainncv,
              const std::vector<double> &z);
 
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,VecDim> Velx;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Temp;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Density;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> GeoPotential;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Pressure;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Pi;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> PiDot;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Level,VecDim> Velx;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> Temp;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> Density;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> GeoPotential;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> Pressure;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> Pi;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,VecDim> PiDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> TempSrc;
 
-  std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > TracerIn;
+  std::map<std::string, PHX::MDField<const ScalarT,Cell,QuadPoint,Level> > TracerIn;
   std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > TracerSrc;
 
 

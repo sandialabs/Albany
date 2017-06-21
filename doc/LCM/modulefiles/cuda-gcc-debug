@@ -2,37 +2,11 @@
 #
 #  Environment for compiling and running Albany/LCM.
 #
-set     arch            cuda
-set     tool_chain      gcc
-set     build_type      debug
-set     build           $arch-$tool_chain-$build_type
-set     lcm_dir         $env(LCM_DIR)
-set     module_dir      $env(MODULEPATH)
-set     install_dir     $lcm_dir/trilinos-install-$build
-set     alb_exe_dir     $lcm_dir/albany-build-$build/src
-set     alb_src_dir     $lcm_dir/Albany/src
-set     py_utils_dir    $alb_src_dir/LCM/utils/python
 
-setenv                  ARCH            $arch
-setenv                  TOOL_CHAIN      $tool_chain
-setenv                  BUILD_TYPE      $build_type
-setenv                  BUILD           $build
-setenv                  INSTALL_DIR     $install_dir
-setenv                  BOOST_INC       /usr/include/boost
-setenv                  BOOST_LIB       /usr/lib64
-setenv                  BOOSTLIB_INC    /usr/include/boost
-setenv                  BOOSTLIB_LIB    /usr/lib64
-setenv                  CUDA_LAUNCH_BLOCKING    1
-setenv                  CUDA_VISIBLE_DEVICES    0
+module load lcm/cuda
+module load lcm/gcc
+module load lcm/debug
+module load lcm/tpls
+module load lcm/finalize
 
-prepend-path            LD_LIBRARY_PATH $install_dir/lib
-prepend-path            LD_LIBRARY_PATH /usr/lib64/openmpi/lib
-prepend-path            LD_LIBRARY_PATH /usr/local/netcdf/lib
-prepend-path            LD_LIBRARY_PATH /usr/local/cuda/lib64
-prepend-path            PATH            $alb_exe_dir
-prepend-path            PATH            $alb_exe_dir/LCM
-prepend-path            PATH            $install_dir/bin
-prepend-path            PATH            /usr/lib64/openmpi/bin
-prepend-path            PATH            /usr/local/cuda/bin
-prepend-path            PYTHONPATH      $install_dir/lib:$py_utils_dir
-conflict                $module_dir
+conflict $env(MODULEPATH)

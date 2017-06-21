@@ -18,128 +18,98 @@ from lcm_postprocess.lcm_exodus import get_element_variable_values
 #
 # @profile
 def read_file_output_exodus(
-    filename,
-    names_variable = [
-        'num_dims', 
-        'num_elements',
-        'num_nodes',
-        'times', 
-        'elem_var_names', 
-        'names_variable_element',
-        'names_variable_node',
-        'block_ids', 
-        'num_points']):
+    filename = None,
+    names_variable_read = [
+        'Cauchy_Stress',
+        'F'],
+    build_domain = True):
 
     with lcm_postprocess.stdout_redirected():
         file_input = exodus(filename,'r')
 
-    dict_variables = {}
+    # get number of dimensions
+    num_dims = file_input.num_dimensions()
 
-    for name in names_variable:
+    # Get number of elements
+    num_elements = dict([(id,file_input.num_elems_in_blk(id)) for id in file_input.get_elem_blk_ids()])
+    element_ids = file_input.get_elem_id_map()
+    lookup_index_id = dict([(element_ids[index],index) for index in range(len(element_ids))])
 
-        # get number of dimensions
-        if name == 'num_dims':
-            num_dims = file_input.num_dimensions()
+    # Get number of nodes
+    num_nodes = file_input.num_nodes()
+    node_ids = file_input.get_node_id_map()
 
-        # Get number of elements
-        elif name == 'num_elements': 
-            num_elements = dict([(id,file_input.num_elems_in_blk(id)) for id in file_input.get_elem_blk_ids()])
-            element_ids = file_input.get_elem_id_map()
-            lookup_index_id = dict([(element_ids[index],index) for index in range(len(element_ids))])
+    # Get output times
+    times = file_input.get_times()
 
-        # Get number of nodes
-        elif name == 'num_nodes': 
-            num_nodes = file_input.num_nodes()
-            node_ids = file_input.get_node_id_map()
+    # Get list of nodal variables
+    node_var_names = file_input.get_node_variable_names()
 
-        # Get output times
-        elif name == 'times':
-            times = file_input.get_times()
+    # Get the unique nodal variable names
+    names_variable_node = dict()
 
-        # Get list of nodal variables
-        elif name == 'node_var_names':
-            node_var_names = file_input.get_node_variable_names()
+    for name_node_variable in file_input.get_node_variable_names():
 
-        # Get the unique nodal variable names
-        elif name == 'names_variable_node':
-           
-            names_variable_node = dict()
+        match = re.search('(.+)_([x-z]+)', name_node_variable)
+        
+        if match != None:
 
-            for name_node_variable in file_input.get_node_variable_names():
+            name_base = match.group(1)
 
-                match = re.search('(.+)_([x-z]+)', name_node_variable)
-                
-                if match != None:
+            name_index = match.group(2)
+        
+            if name_base not in names_variable_node:
 
-                    name_base = match.group(1)
+                names_variable_node[name_base] = [name_index]
 
-                    name_index = match.group(2)
-                
-                    if name_base not in names_variable_node:
+            else:
 
-                        names_variable_node[name_base] = [name_index]
+                names_variable_node[name_base].append(name_index)
 
-                    else:
+    # Get the unique variable names (deal with integration points and arrays)
+    names_variable_element = dict()
 
-                        names_variable_node[name_base].append(name_index)
+    for name_element_variable in file_input.get_element_variable_names():
 
-        # Get list of element variables
-        elif name == 'elem_var_names':
-            elem_var_names = file_input.get_element_variable_names()
-            
+        match = re.search('(.+)_([0-9]+)', name_element_variable)
+        
+        if match != None:
 
-        # Get the unique variable names (deal with integration points and arrays)
-        elif name == 'names_variable_element':
-           
-            names_variable_element = dict()
+            name_base = match.group(1)
 
-            for name_element_variable in file_input.get_element_variable_names():
+            name_index = match.group(2)
+        
+        if name_base not in names_variable_element:
 
-                match = re.search('(.+)_([0-9]+)', name_element_variable)
-                
-                if match != None:
+            names_variable_element[name_base] = [name_index]
 
-                    name_base = match.group(1)
+        else:
 
-                    name_index = match.group(2)
-                
-                if name_base not in names_variable_element:
+            names_variable_element[name_base].append(name_index)
 
-                    names_variable_element[name_base] = [name_index]
+    # Get number of element blocks and block ids
+    block_ids = file_input.get_elem_blk_ids()
 
-                else:
+    num_blocks = file_input.num_blks()
 
-                    names_variable_element[name_base].append(name_index)
+    # Calculate number of integration points
+    num_points = len(names_variable_element['Weights'])
 
-        # Get number of element blocks and block ids
-        elif name == 'block_ids':
-            block_ids = file_input.get_elem_blk_ids()
-
-        elif name == 'num_blocks':
-            num_blocks = file_input.num_blks()
-
-        # Calculate number of integration points
-        elif name == 'num_points':
-            num_points = 0
-            for name_element_variable in file_input.get_element_variable_names():
-              if (name_element_variable.startswith("Weights_")):
-                  num_points += 1
-
-            # Check that "Weights" exist as an element variable
-            if (num_points == 0):
-              raise Exception("The weights field is not available...try again.")
-
+    # Check that "Weights" exist as an element variable
+    if (num_points == 0):
+      raise Exception("The weights field is not available...try again.")
 
     #
     # Create and populate the domain object
     #
-    domain = lcm_postprocess.ObjDomain(
-        num_dims = num_dims,
-        num_elements = np.sum(num_elements.values()),
-        num_nodes = num_nodes,
-        times = [x for x in times],
-        names_variable_node = names_variable_node,
-        names_variable_element = names_variable_element)
+    if build_domain is True:
+        domain = lcm_postprocess.ObjDomain(
+            num_dims = num_dims,
+            num_elements = np.sum(num_elements.values()),
+            num_nodes = num_nodes,
+            times = [x for x in times],
+            names_variable_node = names_variable_node,
+            names_variable_element = names_variable_element)
 
     coords = file_input.get_coords()
 
@@ -232,7 +202,6 @@ def read_file_output_exodus(
 
                 element.points[index_point] = lcm_postprocess.ObjPoint()
 
-
         for index_point in range(block.num_points):
 
             key_weight = 'Weights_' + str(index_point + 1)
@@ -244,7 +213,8 @@ def read_file_output_exodus(
 
             for key_element in block.elements:
 
-                block.elements[key_element].points[index_point].weight = values_weights[block.map_element_ids[key_element]]
+                block.elements[key_element].points[index_point].weight = \
+                    values_weights[block.map_element_ids[key_element]]
 
         for key_element in block.elements:
 

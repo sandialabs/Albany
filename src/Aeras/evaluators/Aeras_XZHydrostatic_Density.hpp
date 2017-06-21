@@ -39,10 +39,12 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
+  // Input:
+  PHX::MDField<const ScalarT,Cell,Node,Level> pressure;
+  PHX::MDField<const ScalarT,Cell,Node,Level> virtT;
+
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Level> density;
-  PHX::MDField<ScalarT,Cell,Node,Level> pressure;
-  PHX::MDField<ScalarT,Cell,Node,Level> virtT;
 
   const int numNodes;
   const int numLevels;

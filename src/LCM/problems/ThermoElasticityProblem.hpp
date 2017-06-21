@@ -12,7 +12,6 @@
 
 #include "Albany_AbstractProblem.hpp"
 
-#include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "Albany_ProblemUtils.hpp"
@@ -102,7 +101,6 @@ namespace Albany {
 
 #include "Albany_AbstractProblem.hpp"
 
-#include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
 #include "Albany_ProblemUtils.hpp"
@@ -144,7 +142,7 @@ Albany::ThermoElasticityProblem::constructEvaluators(
   std::string elementBlockName = meshSpecs.ebName;
 
    RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> >
+   RCP<Intrepid2::Basis<PHX::Device, RealType, RealType>>
      intrepidBasis = Albany::getIntrepid2Basis(meshSpecs.ctd);
 
    const int numNodes = intrepidBasis->getCardinality();

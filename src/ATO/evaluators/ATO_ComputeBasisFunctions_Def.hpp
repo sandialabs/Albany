@@ -32,7 +32,9 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
 
   if(m_isStatic){
     Albany::StateManager* stateMgr = p.get<Albany::StateManager*>("State Manager Ptr");
-    stateMgr->registerStateVariable("Gauss Weights", dl->qp_scalar, dl->dummy, 
+    gaussWeightsName = p.get<std::string>("Weights Name");
+    isSetName = gaussWeightsName + " is set";
+    stateMgr->registerStateVariable(gaussWeightsName, dl->qp_scalar, dl->dummy, 
                                     "all", "scalar", 0.0, false, false);
 
     // this should be registered as a workset_scalar, but the workset stateArrays all
@@ -40,7 +42,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
     // After some snooping around in Albany_StateManager, I can't figure out how to
     // register workset_scalars so that they actually store a separate value for each
     // workset, not a single value for all worksets.  
-    stateMgr->registerStateVariable("isSet", dl->cell_scalar, dl->dummy, 
+    stateMgr->registerStateVariable(isSetName, dl->cell_scalar, dl->dummy, 
                                     "all", "scalar", 0.0, false, false);
   }
 
@@ -66,9 +68,12 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   dl->vertices_vector->dimensions(dims);
   numVertices = dims[1];
 
-  topoNames = cubature->getFieldNames();
-  numTopos = topoNames.size();
-  topoVals = Kokkos::DynRankView<RealType, PHX::Device>("XXX",numNodes,numTopos);
+  if(cubature->isParameterized() == false){
+    topoNames = cubature->getFieldNames();
+    numTopos = topoNames.size();
+    geomVals = Kokkos::DynRankView<RealType, PHX::Device>("XXX",numNodes,numTopos);
+  }
+
   coordVals = Kokkos::DynRankView<RealType, PHX::Device>("XXX",numNodes,numDims);
 
   // Allocate Temporary FieldContainers
@@ -84,7 +89,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   cubature->getBasis()->getValues(val_at_cub_points, refPoints, Intrepid2::OPERATOR_VALUE);
   cubature->getBasis()->getValues(grad_at_cub_points, refPoints, Intrepid2::OPERATOR_GRAD);
 
-  this->setName("ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
+  this->setName("Cogent:ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -128,8 +133,8 @@ evaluateFields(typename Traits::EvalData workset)
   bool isSet = false;
   Albany::MDArray savedWeights;
   if(m_isStatic){
-    savedWeights = (*workset.stateArrayPtr)["Gauss Weights"];
-    Albany::MDArray wsSet = (*workset.stateArrayPtr)["isSet"];
+    savedWeights = (*workset.stateArrayPtr)[gaussWeightsName];
+    Albany::MDArray wsSet = (*workset.stateArrayPtr)[isSetName];
     isSet = (wsSet(0,0) == 0) ? false : true;
   }
 
@@ -145,16 +150,19 @@ evaluateFields(typename Traits::EvalData workset)
         for(int dim=0; dim<numDims; dim++)
           coordVals(node,dim) = coordVec(cell,node,dim);
   
-      Teuchos::Array<Albany::MDArray> topo(numTopos);
-      for(int itopo=0; itopo<numTopos; itopo++){
-        topo[itopo] = (*workset.stateArrayPtr)[topoNames[itopo]];
+      if(cubature->isParameterized()){
+        cubature->getCubatureWeights(weights, coordVals);
+      } else {
+        Teuchos::Array<Albany::MDArray> topo(numTopos);
+        for(int itopo=0; itopo<numTopos; itopo++){
+          topo[itopo] = (*workset.stateArrayPtr)[topoNames[itopo]];
+        }
+        for(int itopo=0; itopo<numTopos; itopo++)
+          for(int node=0; node<numNodes; node++)
+            geomVals(node,itopo) = topo[itopo](cell,node);
+        const auto& gVals = geomVals;
+        cubature->getCubatureWeights(weights, gVals, coordVals);
       }
-  
-      for(int itopo=0; itopo<numTopos; itopo++)
-        for(int node=0; node<numNodes; node++)
-          topoVals(node,itopo) = topo[itopo](cell,node);
-  
-      cubature->getCubatureWeights(weights, topoVals, coordVals);
 
       for(int qp=0; qp<numQPs; qp++)
         weighted_measure(cell, qp) = weights(qp);
@@ -164,7 +172,7 @@ evaluateFields(typename Traits::EvalData workset)
           savedWeights(cell,qp) = weighted_measure(cell, qp);
       }
     }
-    (*workset.stateArrayPtr)["isSet"](0,0) = 1;
+    (*workset.stateArrayPtr)[isSetName](0,0) = 1;
   }
 
   IFST::HGRADtransformVALUE(BF.get_view(), val_at_cub_points);

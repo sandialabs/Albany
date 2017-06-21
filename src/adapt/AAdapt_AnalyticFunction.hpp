@@ -163,6 +163,66 @@ class LinearY : public AnalyticFunction {
     Teuchos::Array<double> data;
 };
 
+class Linear : public AnalyticFunction {
+  public:
+    Linear(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
+class ConstantBox : public AnalyticFunction {
+  public:
+  ConstantBox(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
+class AboutZ : public AnalyticFunction {
+  public:
+    AboutZ(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
+class RadialZ : public AnalyticFunction {
+  public:
+    RadialZ(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
+class AboutLinearZ : public AnalyticFunction {
+  public:
+    AboutLinearZ(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
+class GaussianZ : public AnalyticFunction {
+  public:
+  GaussianZ(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
 class Circle : public AnalyticFunction {
   public:
     Circle(int neq_, int numDim_, Teuchos::Array<double> data_);

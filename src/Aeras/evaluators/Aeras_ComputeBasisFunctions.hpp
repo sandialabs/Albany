@@ -53,7 +53,7 @@ private:
 
   // Input:
   //! Coordinate vector at vertices
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
+  PHX::MDField<const MeshScalarT,Cell,Vertex,Dim> coordVec;
   Teuchos::RCP<Intrepid2::Cubature<PHX::Device> > cubature;
   Teuchos::RCP<Intrepid2::Basis<PHX::Device, RealType, RealType> > intrepidBasis;
   Teuchos::RCP<shards::CellTopology> cellType;

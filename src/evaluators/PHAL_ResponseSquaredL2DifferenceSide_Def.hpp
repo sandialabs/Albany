@@ -35,21 +35,22 @@ ResponseSquaredL2DifferenceSideBase(Teuchos::ParameterList& p, const Teuchos::RC
   target_fname = plist->get<std::string>("Target Field Name");
 
   fieldDim = getLayout(dl_side,rank,layout);
+  layout->dimensions(dims);
 
-  sourceField = PHX::MDField<SourceScalarT>(fname,layout);
-  targetField   = PHX::MDField<TargetScalarT>(target_fname,layout);
-  w_measure     = PHX::MDField<RealType,Cell,Side,QuadPoint>("Weighted Measure " + sideSetName, dl_side->qp_scalar);
-  scaling       = plist->get("Scaling",1.0);
+  sourceField = decltype(sourceField)(fname,layout);
+  w_measure   = decltype(w_measure)("Weighted Measure " + sideSetName, dl_side->qp_scalar);
+  scaling     = plist->get("Scaling",1.0);
 
-  this->addDependentField(sourceField.fieldTag());
-  if (target_fname=="ZERO")
-  {
+  this->addDependentField(sourceField);
+  if (target_fname=="ZERO") {
     target_zero = true;
-    this->addEvaluatedField(targetField);
+    targetFieldEval = decltype(targetFieldEval)(target_fname,layout);
+    this->addEvaluatedField(targetFieldEval);
+  } else {
+    targetField = decltype(targetField)(target_fname,layout);
+    this->addDependentField(targetField);
   }
-  else
-    this->addDependentField(targetField.fieldTag());
-  this->addDependentField(w_measure.fieldTag());
+  this->addDependentField(w_measure);
 
   this->setName("Response Squared L2 Error Side" + PHX::typeAsString<EvalT>());
 
@@ -74,12 +75,13 @@ void PHAL::ResponseSquaredL2DifferenceSideBase<EvalT, Traits, SourceScalarT, Tar
 postRegistrationSetup(typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(sourceField,fm);
-  this->utils.setFieldData(targetField,fm);
   this->utils.setFieldData(w_measure,fm);
 
-  if (target_zero)
-  {
-    PHAL::set(targetField, 0.0);
+  if (target_zero) {
+    this->utils.setFieldData(targetFieldEval,fm);
+    PHAL::set(targetFieldEval, 0.0);
+  } else {
+    this->utils.setFieldData(targetField,fm);
   }
 
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postRegistrationSetup(d, fm);
@@ -90,7 +92,7 @@ template<typename EvalT, typename Traits, typename SourceScalarT, typename Targe
 void PHAL::ResponseSquaredL2DifferenceSideBase<EvalT, Traits, SourceScalarT, TargetScalarT>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  PHAL::set(this->global_response, 0.0);
+  PHAL::set(this->global_response_eval, 0.0);
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::preEvaluate(workset);
@@ -105,7 +107,7 @@ evaluateFields(typename Traits::EvalData workset)
                               "Side sets defined in input file but not properly specified on the mesh" << std::endl);
 
   // Zero out local response
-  PHAL::set(this->local_response, 0.0);
+  PHAL::set(this->local_response_eval, 0.0);
 
   if (workset.sideSets->find(sideSetName) != workset.sideSets->end())
   {
@@ -121,21 +123,26 @@ evaluateFields(typename Traits::EvalData workset)
       {
         ScalarT sq = 0;
         // Computing squared difference at qp
-        if (fieldDim==0)
-          sq += std::pow(sourceField(cell,side,qp)-targetField(cell,side,qp),2);
-        else if (fieldDim==1)
-          for (int j=0; j<sourceField.fieldTag().dataLayout().dimension(3); ++j)
-            sq += std::pow(sourceField(cell,side,qp,j)-targetField(cell,side,qp,j),2);
-        else
-          for (int j=0; j<sourceField.fieldTag().dataLayout().dimension(3); ++j)
-            for (int k=0; k<sourceField.fieldTag().dataLayout().dimension(4); ++k)
-              sq += std::pow(sourceField(cell,side,qp,j,k)-targetField(cell,side,qp,j,k),2);
-
+        switch (fieldDim)
+        {
+          case 0:
+            sq += std::pow(sourceField(cell,side,qp)-targetField(cell,side,qp),2);
+            break;
+          case 1:
+            for (int j=0; j<dims[3]; ++j)
+              sq += std::pow(sourceField(cell,side,qp,j)-targetField(cell,side,qp,j),2);
+            break;
+          case 2:
+            for (int j=0; j<dims[3]; ++j)
+              for (int k=0; k<dims[4]; ++k)
+                sq += std::pow(sourceField(cell,side,qp,j,k)-targetField(cell,side,qp,j,k),2);
+            break;
+        }
         sum += sq * w_measure(cell,side,qp);
       }
 
-      this->local_response(cell, 0) += sum*scaling;
-      this->global_response(0) += sum*scaling;
+      this->local_response_eval(cell, 0) = sum*scaling;
+      this->global_response_eval(0) += sum*scaling;
     }
   }
 
@@ -148,10 +155,10 @@ template<typename EvalT, typename Traits, typename SourceScalarT, typename Targe
 void PHAL::ResponseSquaredL2DifferenceSideBase<EvalT, Traits, SourceScalarT, TargetScalarT>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
+  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->global_response_eval);
 
   if(workset.comm->getRank()==0)
-    std::cout << "resp" << PHX::typeAsString<EvalT>() << ": " << this->global_response(0) << "\n" << std::flush;
+    std::cout << "resp" << PHX::typeAsString<EvalT>() << ": " << this->global_response_eval(0) << "\n" << std::flush;
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postEvaluate(workset);

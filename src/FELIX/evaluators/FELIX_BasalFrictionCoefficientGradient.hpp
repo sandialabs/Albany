@@ -49,18 +49,18 @@ private:
   typedef typename EvalT::ParamScalarT  ParamScalarT;
 
   // Input:
-  PHX::MDField<ParamScalarT,Cell,Side,Node>               beta_given;
-  PHX::MDField<MeshScalarT,Cell,Side,Node,QuadPoint,Dim>  GradBF;
-  PHX::MDField<ParamScalarT,Cell,Side,QuadPoint>          N;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>           U;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>           gradN;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim,Dim>       gradU;
-  PHX::MDField<ScalarT,Cell,Side,QuadPoint>               u_norm;
-  PHX::MDField<MeshScalarT,Cell,Side,QuadPoint,Dim>       coordVec;
+  PHX::MDField<const ParamScalarT,Cell,Side,Node>               beta_given;
+  PHX::MDField<const MeshScalarT,Cell,Side,Node,QuadPoint,Dim>  GradBF;
+  PHX::MDField<const ParamScalarT,Cell,Side,QuadPoint>          N;
+  PHX::MDField<const ScalarT,Cell,Side,QuadPoint,Dim>           U;
+  PHX::MDField<const ScalarT,Cell,Side,QuadPoint,Dim>           gradN;
+  PHX::MDField<const ScalarT,Cell,Side,QuadPoint,Dim,Dim>       gradU;
+  PHX::MDField<const ScalarT,Cell,Side,QuadPoint>               u_norm;
+  PHX::MDField<const MeshScalarT,Cell,Side,QuadPoint,Dim>       coordVec;
 
-  PHX::MDField<ScalarT,Dim>                               lambdaParam;
-  PHX::MDField<ScalarT,Dim>                               muParam;
-  PHX::MDField<ScalarT,Dim>                               powerParam;
+  PHX::MDField<const ScalarT,Dim>                               lambdaParam;
+  PHX::MDField<const ScalarT,Dim>                               muParam;
+  PHX::MDField<const ScalarT,Dim>                               powerParam;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Side,QuadPoint,Dim>           grad_beta;

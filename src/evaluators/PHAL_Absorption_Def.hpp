@@ -44,10 +44,9 @@ Absorption(Teuchos::ParameterList& p) :
     is_constant = false;
     Teuchos::RCP<PHX::DataLayout> scalar_dl =
       p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>
-      fx(p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
-    coordVec = fx;
-    this->addDependentField(coordVec.fieldTag());
+    coordVec = decltype(coordVec)(
+        p.get<std::string>("QP Coordinate Vector Name"), vector_dl);
+    this->addDependentField(coordVec);
 
     exp_rf_kl = 
       Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(*cond_list));

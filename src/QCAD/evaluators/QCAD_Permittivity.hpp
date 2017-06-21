@@ -21,7 +21,7 @@
 
 #include "Albany_Layouts.hpp"
 
-#include "QCAD_MaterialDatabase.hpp"
+#include "Albany_MaterialDatabase.hpp"
 
 namespace QCAD {
 /** 
@@ -57,8 +57,8 @@ namespace QCAD {
   	std::size_t numQPs;
   	std::size_t numDims;
   	PHX::MDField<ScalarT,Cell,QuadPoint> permittivity;
-  	PHX::MDField<ScalarT,Cell,QuadPoint> Temp;
-  	PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
+  	PHX::MDField<const ScalarT,Cell,QuadPoint> Temp;
+  	PHX::MDField<const MeshScalarT,Cell,QuadPoint,Dim> coordVec;
 
   	//! Define boolean variables to categorize 
 	  std::string typ;		// permittivity type
@@ -70,7 +70,7 @@ namespace QCAD {
   	ScalarT factor;			// for temperature-dependent permittivity
 
 	  //! Material database - holds permittivity among other quantities
-    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
+    Teuchos::RCP<Albany::MaterialDatabase> materialDB;
     
     //! specific parameters for 1D MOSCapacitor
     double oxideWidth;

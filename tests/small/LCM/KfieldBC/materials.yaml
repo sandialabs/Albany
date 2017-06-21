@@ -1,0 +1,21 @@
+%YAML 1.1
+---
+ANONYMOUS:
+  ElementBlocks: 
+    block_1: 
+      material: TestMat
+      Weighted Volume Average J: false
+  Materials: 
+    TestMat: 
+      Material Model: 
+        Model Name: Neohookean
+      Elastic Modulus: 
+        Elastic Modulus Type: Constant
+        Value: 1000.0000
+      ShearModulus: 
+        Shear Modulus Type: Constant
+        Value: 400.00000000
+      Poissons Ratio: 
+        Poissons Ratio Type: Constant
+        Value: 0.25000000
+...

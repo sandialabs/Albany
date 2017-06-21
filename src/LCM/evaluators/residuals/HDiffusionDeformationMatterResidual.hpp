@@ -43,34 +43,33 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,QuadPoint> weights;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
-  //PHX::MDField<ScalarT,Cell,QuadPoint> Source;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> DefGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> elementLength;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Dstar;
-  PHX::MDField<ScalarT,Cell,QuadPoint> DL;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Clattice;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> CLGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> stressGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> stabParameter;
+  PHX::MDField<const MeshScalarT,Cell,QuadPoint> weights;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+  PHX::MDField<const MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim, Dim> DefGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> elementLength;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> Dstar;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> DL;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> Clattice;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> CLGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim> stressGrad;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> stabParameter;
 
   // Input for the strain rate effect
-  PHX::MDField<ScalarT,Cell,QuadPoint> Ctrapped;
-  PHX::MDField<ScalarT,Cell,QuadPoint> Ntrapped;
-  PHX::MDField<ScalarT,Cell,QuadPoint> eqps;
-  PHX::MDField<ScalarT,Cell,QuadPoint> eqpsFactor;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> Ctrapped;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> Ntrapped;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> eqps;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> eqpsFactor;
   std::string eqpsName;
 
 
   // Input for hydro-static stress effect
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> Pstress;
-  PHX::MDField<ScalarT,Cell,QuadPoint> tauFactor;
+  PHX::MDField<const ScalarT,Cell,QuadPoint,Dim,Dim> Pstress;
+  PHX::MDField<const ScalarT,Cell,QuadPoint> tauFactor;
 
   // Time
-  PHX::MDField<ScalarT,Dummy> deltaTime;
+  PHX::MDField<const ScalarT,Dummy> deltaTime;
 
   //Data from previous time step
   std::string ClatticeName;
