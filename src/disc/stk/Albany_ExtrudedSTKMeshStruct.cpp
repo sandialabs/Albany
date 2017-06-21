@@ -957,16 +957,18 @@ void Albany::ExtrudedSTKMeshStruct::interpolateBasalLayeredFields (const std::ve
       for (int il=0; il<numLayers; ++il)
       {
         // Retrieving the id of the 3d cells
-        stk::mesh::EntityId prismId = Ordering==COLUMN ? numLayers*cell2dId + il + 1 : maxGlobalCells2dId*il + cell2dId + 1;
+        stk::mesh::EntityId prismId = Ordering==COLUMN ? numLayers*cell2dId + il : maxGlobalCells2dId*il + cell2dId;
         std::vector<stk::mesh::Entity> cells3d;
         switch (ElemShape)
         {
           case Tetrahedron:
-            cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId));
-            cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+1));
+            cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, 3*prismId+1));
+            cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, 3*prismId+2));
+            cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, 3*prismId+3));
+            break;
           case Wedge:
           case Hexahedron:
-            cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId));
+            cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+1));
         }
 
         // Since the
@@ -1177,16 +1179,18 @@ void Albany::ExtrudedSTKMeshStruct::extrudeBasalFields (const std::vector<stk::m
           for (int il=0; il<numLayers; ++il)
           {
             // Retrieving the id of the 3d cells
-            stk::mesh::EntityId prismId = Ordering==COLUMN ? numLayers*cell2dId + il + 1 : maxGlobalCells2dId*il + cell2dId + 1;
+            stk::mesh::EntityId prismId = Ordering==COLUMN ? numLayers*cell2dId + il : maxGlobalCells2dId*il + cell2dId;
             std::vector<stk::mesh::Entity> cells3d;
             switch (ElemShape)
             {
               case Tetrahedron:
-                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+2));
-                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+1));
+                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, 3*prismId+1));
+                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, 3*prismId+2));
+                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, 3*prismId+3));
+                break;
               case Wedge:
               case Hexahedron:
-                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId));
+                cells3d.push_back (bulkData->get_entity(stk::topology::ELEMENT_RANK, prismId+1));
             }
 
             // Stuffing the 3d fields
