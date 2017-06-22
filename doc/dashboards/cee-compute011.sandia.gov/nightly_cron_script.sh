@@ -40,11 +40,17 @@ export LM_LICENSE_FILE=7500@sitelicense.sandia.gov
 if [ "$BUILD_OPT" = "intel" ]; then
    . /sierra/sntools/SDK/compilers/intel/composer_xe_2017.2.174/compilers_and_libraries/linux/bin/compilervars.sh intel64
 
+elif [ "$BUILD_OPT" = "clang" ]; then
+
+export PATH=/projects/albany/bin:/projects/albany/trilinos/MPI_REL/bin:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/bin:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/bin:/projects/sierra/linux_rh6/install/git/2.6.1/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/sbin
+
+export LD_LIBRARY_PATH=/projects/sierra/linux_rh6/SDK/compilers/intel/composer_xe_2017.2.174/compilers_and_libraries/linux/mkl/lib/intel64:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/lib:/projects/sierra/linux_rh6/SDK/hwloc/lib:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/lib64:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/lib
+
 else
 
-export PATH=/projects/albany/bin:/projects/albany/trilinos/MPI_REL/bin:/sierra/sntools/SDK/compilers/clang/3.7-RHEL6/bin:/sierra/sntools/SDK/mpi/openmpi/1.8.8-gcc-5.2.0-RHEL6/bin:/sierra/sntools/SDK/compilers/gcc/5.2.0-RHEL6/bin:/projects/sierra/linux_rh6/install/git/2.6.1/bin:/projects/sierra/linux_rh6/install/git/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/sbin
+export PATH=/projects/albany/bin:/projects/albany/trilinos/MPI_REL/bin:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/bin:/projects/sierra/linux_rh6/SDK/mpi/openmpi/1.10.2-gcc-5.4.0-RHEL6/bin:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/bin:/projects/sierra/linux_rh6/install/git/2.6.1/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/sbin
 
-export LD_LIBRARY_PATH=/sierra/sntools/SDK/compilers/intel/composer_xe_2017.2.174/compilers_and_libraries/linux/mkl/lib/intel64:/sierra/sntools/SDK/compilers/clang/3.7-RHEL6/lib:/sierra/sntools/SDK/hwloc/lib:/sierra/sntools/SDK/mpi/openmpi/1.8.8-gcc-5.2.0-RHEL6/lib:/sierra/sntools/SDK/compilers/gcc/5.2.0-RHEL6/lib64:/sierra/sntools/SDK/compilers/gcc/5.2.0-RHEL6/lib:/projects/albany/lib
+export LD_LIBRARY_PATH=/projects/sierra/linux_rh6/SDK/compilers/intel/composer_xe_2017.2.174/compilers_and_libraries/linux/mkl/lib/intel64:/projects/sierra/linux_rh6/SDK/compilers/clang/4.0-RHEL6/lib:/projects/sierra/linux_rh6/SDK/hwloc/lib:/projects/sierra/linux_rh6/SDK/mpi/openmpi/1.10.2-gcc-5.4.0-RHEL6/lib:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/lib64:/projects/sierra/linux_rh6/SDK/compilers/gcc/5.4.0-RHEL6/lib
 fi
 
 

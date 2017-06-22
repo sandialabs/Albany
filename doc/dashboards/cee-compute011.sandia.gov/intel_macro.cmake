@@ -5,7 +5,7 @@ macro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)
   set_property (GLOBAL PROPERTY SubProject ${BTYPE})
   set_property (GLOBAL PROPERTY Label ${BTYPE})
 
-  set (LABLAS_LIBRARIES "-L${MKL_PATH}/mkl/lib/intel64 -Wl,--start-group ${MKL_PATH}/mkl/lib/intel64/libmkl_intel_lp64.a ${MKL_PATH}/mkl/lib/intel64/libmkl_core.a ${MKL_PATH}/mkl/lib/intel64/libmkl_sequential.a -Wl,--end-group")
+  set (LABLAS_LIBRARIES "-L${MKL_PATH} -Wl,--start-group ${MKL_PATH}/libmkl_intel_lp64.a ${MKL_PATH}/libmkl_core.a ${MKL_PATH}/libmkl_sequential.a -Wl,--end-group")
 
   set (CONFIGURE_OPTIONS
     "${COMMON_CONFIGURE_OPTIONS}"
@@ -51,7 +51,6 @@ macro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)
   "-DMPI_BASE_DIR:PATH=${INTEL_MPI_DIR}"
   "-DMPI_BIN_DIR:PATH=${INTEL_MPI_DIR}/bin64"
   "-DMPI_EXEC:FILEPATH=${INTEL_MPI_DIR}/bin64/mpiexec.hydra"
-  "-DTrilinos_CXX11_FLAGS:STRING='-std=c++11'"
   "-DCMAKE_CXX_COMPILER:STRING=${INTEL_MPI_DIR}/bin64/mpiicpc"
   "-DCMAKE_C_COMPILER:STRING=${INTEL_MPI_DIR}/bin64/mpiicc"
   "-DCMAKE_Fortran_COMPILER:STRING=${INTEL_MPI_DIR}/bin64/mpiifort"
@@ -79,16 +78,14 @@ macro(do_intel COMMON_CONFIGURE_OPTIONS BTYPE)
     "-DCMAKE_CXX_FLAGS:STRING='-g -O0 -mkl=sequential ${extra_cxx_flags}'"
     "-DCMAKE_C_FLAGS:STRING='-g -O0 -mkl=sequential'"
     "-DCMAKE_Fortran_FLAGS:STRING='-g -O0 -mkl=sequential'"
-    "-DCTEST_TEST_TIMEOUT:STRING=1200"
     "-DDART_TESTING_TIMEOUT:STRING=1200"
       "${CONFIGURE_OPTIONS}")
   else (CTEST_BUILD_CONFIGURATION MATCHES "Debug")
 
     set (CONFIGURE_OPTIONS
-    "-DCMAKE_CXX_FLAGS:STRING='-O3 -DNDEBUG -diag-disable=cpu-dispatch -mkl=sequential ${extra_cxx_flags}'"
-    "-DCMAKE_C_FLAGS:STRING='-O3 -diag-disable=cpu-dispatch -DNDEBUG -mkl=sequential'"
-    "-DCMAKE_Fortran_FLAGS:STRING='-O3 -DNDEBUG -diag-disable=cpu-dispatch -mkl=sequential'"
-    "-DCTEST_TEST_TIMEOUT:STRING=1200"
+    "-DCMAKE_CXX_FLAGS:STRING='-xHost -O3 -fp-speculation=safe -DNDEBUG -mkl=sequential ${extra_cxx_flags}'"
+    "-DCMAKE_C_FLAGS:STRING='-xHost -O3 -DNDEBUG -mkl=sequential'"
+    "-DCMAKE_Fortran_FLAGS:STRING='-xHost -O3 -DNDEBUG -mkl=sequential'"
     "-DDART_TESTING_TIMEOUT:STRING=600"
       "${CONFIGURE_OPTIONS}")
 
