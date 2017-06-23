@@ -206,6 +206,10 @@ private:
   minitensor::Minimizer<ValueT, CP::NLS_DIM>
   minimizer_;
 
+  /// ROL Minimizer
+  ROL::MiniTensor_Minimizer<ValueT, CP::NLS_DIM>
+  rol_minimizer_;
+
   ///
   /// Output options 
   ///

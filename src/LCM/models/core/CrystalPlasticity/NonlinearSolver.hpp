@@ -125,6 +125,8 @@ namespace CP
         Dissipation<NumDimT, NumSlipT, EvalT>,
         typename EvalT::ScalarT, NumSlipT>;
 
+
+
     //! Default implementation of value.
     template<typename T, minitensor::Index N = minitensor::DYNAMIC>
     T
@@ -269,6 +271,18 @@ namespace CP
         ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>,
         typename EvalT::ScalarT, NumSlipT>;
 
+    // Need to implement get_failed due to multiple inheritance snafus
+    bool
+    get_failed() {
+      return Base::get_failed();
+    }
+
+    // Need to implement get_failure_message due to multiple inheritance snafus
+    char const *
+    get_failure_message() {
+      return Base::get_failure_message();
+    }
+
     //! Constructor.
     ResidualSlipHardnessFN(
         minitensor::Tensor4<ScalarT, NumDimT> const & C,
@@ -281,12 +295,15 @@ namespace CP
         RealType dt) : ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>(C, slip_systems, slip_families, Fp_n, state_hardening_n, slip_n, F_np1, dt)
     {}
 
+    static constexpr char const * const
+    NAME{"Crystal Plasticity Function"};
+
     //!
     template<typename T, minitensor::Index N = minitensor::DYNAMIC>
     T
     value(minitensor::Vector<T, N> const & x) {
       minitensor::Vector<T, N> grad = ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(x);
-      T function_value = 0.5 * minitensor::dot<T, N>(grad, grad);
+      T function_value = 0.5 * minitensor::dot(grad, grad);
       return function_value;
     }
 

@@ -52,7 +52,8 @@ CP::ParameterReader<EvalT, Traits>::getResidualType() const
     "Residual Type", CP::ResidualType::SLIP,
     {
       {"Slip", CP::ResidualType::SLIP},
-      {"Slip Hardness", CP::ResidualType::SLIP_HARDNESS}
+      {"Slip Hardness", CP::ResidualType::SLIP_HARDNESS},
+      {"Constrained Slip Hardness", CP::ResidualType::CONSTRAINED_SLIP_HARDNESS}
     });
   
   return rmap.get(p_);
@@ -102,6 +103,16 @@ CP::ParameterReader<EvalT, Traits>::getMinimizer() const
   min.abs_tol = p_->get<RealType>("Implicit Integration Absolute Tolerance", 1.0e-10);
   min.max_num_iter = p_->get<int>("Implicit Integration Max Iterations", 100);
   min.min_num_iter = p_->get<int>("Implicit Integration Min Iterations", 2);
+
+  return min;
+}
+
+template<typename EvalT, typename Traits>
+typename CP::ParameterReader<EvalT, Traits>::RolMinimizer
+CP::ParameterReader<EvalT, Traits>::getRolMinimizer() const
+{
+  RolMinimizer
+  min;
 
   return min;
 }

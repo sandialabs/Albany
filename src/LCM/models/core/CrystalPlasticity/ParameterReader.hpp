@@ -22,8 +22,8 @@ namespace CP
 
     using ScalarT = typename EvalT::ScalarT;
     using ValueT = typename Sacado::ValueType<ScalarT>::type;
-
     using Minimizer = minitensor::Minimizer<ValueT, CP::NLS_DIM>;
+    using RolMinimizer = ROL::MiniTensor_Minimizer<ValueT, CP::NLS_DIM>;
 
     ParameterReader(Teuchos::ParameterList* p);
 
@@ -41,6 +41,9 @@ namespace CP
 
     Minimizer
     getMinimizer() const;
+
+    RolMinimizer
+    getRolMinimizer() const;
 
     SlipFamily<CP::MAX_DIM, CP::MAX_SLIP>
     getSlipFamily(int index);
