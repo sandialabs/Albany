@@ -199,6 +199,8 @@ ENDIF()
 # presence or absence of -NDEBUG (which can affect linking for complicated
 # reasons) and -std=c++11.
 SET(CMAKE_CXX_FLAGS "${Trilinos_CXX_COMPILER_FLAGS} ${CMAKE_CXX_FLAGS}")
+# GAH - temporarily set Albany flags for clang debugging
+#SET(CMAKE_CXX_FLAGS "-ggdb -std=c++11 -O2 -march=native -DNDEBUG")
 
 if (SET_COMPILERS_AUTOMATICALLY)
   SET(CMAKE_AR ${Trilinos_AR})
