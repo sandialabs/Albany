@@ -749,6 +749,8 @@ CP::ImplicitConstrainedSlipHardnessIntegrator<EvalT, NumDimT, NumSlipT>::update(
   using BC = minitensor::Bounds<ValueT, CP::NlsDim<NumSlipT>::value>;
 
   minitensor::Vector<ValueT, CP::NlsDim<NumSlipT>::value> lo, hi;
+  lo.set_dimension(this->num_slip_ * 2);
+  hi.set_dimension(this->num_slip_ * 2);
   for(int i=0; i<this->num_slip_; ++i) {
     lo[i] = -1.0e50;
     hi[i] = 1.0e50;

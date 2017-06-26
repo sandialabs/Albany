@@ -260,7 +260,7 @@ namespace CP
   class ResidualSlipHardnessFN:
     public minitensor::Function_Base<
       ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>,
-      typename EvalT::ScalarT, NumSlipT>,
+      typename EvalT::ScalarT, CP::NlsDim<NumSlipT>::value>,
     ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>
   {
     using ScalarT = typename EvalT::ScalarT;
@@ -269,7 +269,7 @@ namespace CP
 
     using Base = minitensor::Function_Base<
         ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>,
-        typename EvalT::ScalarT, NumSlipT>;
+        typename EvalT::ScalarT, CP::NlsDim<NumSlipT>::value>;
 
     // Need to implement get_failed due to multiple inheritance snafus
     bool
@@ -298,7 +298,6 @@ namespace CP
     static constexpr char const * const
     NAME{"Crystal Plasticity Function"};
 
-    //!
     template<typename T, minitensor::Index N = minitensor::DYNAMIC>
     T
     value(minitensor::Vector<T, N> const & x) {
@@ -307,14 +306,12 @@ namespace CP
       return function_value;
     }
 
-    //! Default implementation of hessian.
     template<typename T, minitensor::Index N = minitensor::DYNAMIC>
     minitensor::Vector<T, N>
     gradient(minitensor::Vector<T, N> const & x) {
       return Base::gradient(*this, x);
     }
 
-    //! Default implementation of hessian.
     template<typename T, minitensor::Index N = minitensor::DYNAMIC>
     minitensor::Tensor<T, N>
     hessian(minitensor::Vector<T, N> const & x) {
