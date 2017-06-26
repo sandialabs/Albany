@@ -2,7 +2,6 @@
 
 from ._core import InputError
 import cPickle as pickle
-import matplotlib.pyplot as plt
 from matplotlib import rcParams
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -45,7 +44,9 @@ def extract_steps(**kwargs):
 
 def setup_plot(**kwargs):
 
-    plt.rc('font', family = 'serif', size = 22)
+    # rcParams['text.usetex'] = True
+    rcParams['font.family'] = 'serif'
+    rcParams['font.size'] = 22
     # rcParams['axes.titlesize'] = 18
     # rcParams['text.latex.preamble'] = [r'\usepackage{boldtensors}']
 

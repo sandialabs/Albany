@@ -1,7 +1,8 @@
 #!/usr/bin/python
 
-import matplotlib.pyplot as plt
 from matplotlib import rcParams
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
 import numpy as np
 
 # Plot inverse pole figures for simulations with defined local orientations
@@ -89,55 +90,51 @@ def plot_inverse_pole_figure(**kwargs):
     #
     # Create figures  
     #
-    # plt.rc('text', usetex = True)
-    plt.rc('font', family = 'serif', size = 22)
+    # rcParams['text.usetex'] = True
+    rcParams['font.family'] = 'serif'
+    rcParams['font.size'] = 22
 
-    fig = plt.figure(figsize = (15,4))
+    fig = Figure()
+    fig.set_size_inches(15,4)
 
     ax1 = fig.add_subplot(131)
     ax2 = fig.add_subplot(132)
     ax3 = fig.add_subplot(133)
 
-    fig.suptitle('Inverse pole figures', fontsize = 14, fontweight = 'bold')
-
-    plt.subplot(1, 3, 1)
-    plt.plot(X_RD, Y_RD, 'ro')
-    plt.plot(XX, YY, 'k', linewidth = 1)
-    plt.gca().set_aspect('equal', adjustable = 'box')
-    plt.axis('off')
+    ax1.plot(X_RD, Y_RD, 'ro')
+    ax1.plot(XX, YY, 'k', linewidth = 1)
+    ax1.set_aspect('equal', adjustable = 'box')
+    ax1.axis('off')
     ax1.text(0.2, -0.05, 'RD', fontsize = 16)
     ax1.text(-0.03, -0.03, r'$[001]$', fontsize = 15)
     ax1.text(0.38, -0.03, r'$[011]$', fontsize = 15)
     ax1.text(0.34, 0.375, r'$[\bar111]$', fontsize = 15)
-    # plt.xlim([-0.01, 0.5])
-    # plt.ylim([-0.01, 0.5])
 
-    plt.subplot(1, 3, 2)
-    plt.plot(X_TD, Y_TD, 'bo')
-    plt.plot(XX, YY, 'k', linewidth = 1)
-    plt.gca().set_aspect('equal', adjustable = 'box')
-    plt.axis('off')
+    ax2.plot(X_TD, Y_TD, 'bo')
+    ax2.plot(XX, YY, 'k', linewidth = 1)
+    ax2.set_aspect('equal', adjustable = 'box')
+    ax2.axis('off')
     ax2.text(0.2, -0.05, 'TD', fontsize = 16)
     ax2.text(-0.03, -0.03, r'$[001]$', fontsize = 15)
     ax2.text(0.38, -0.03, r'$[011]$', fontsize = 15)
     ax2.text(0.34, 0.375, r'$[\bar111]$', fontsize = 15)
-    # plt.xlim([-0.01, 0.5])
-    # plt.ylim([-0.01, 0.5])
 
-    plt.subplot(1, 3, 3)
-    plt.plot(X_ND, Y_ND, 'go')
-    plt.plot(XX, YY, 'k', linewidth = 1)
-    plt.gca().set_aspect('equal', adjustable = 'box')
-    plt.axis('off')
+    ax3.plot(X_ND, Y_ND, 'go')
+    ax3.plot(XX, YY, 'k', linewidth = 1)
+    ax3.set_aspect('equal', adjustable = 'box')
+    ax3.axis('off')
     ax3.text(0.2, -0.05, 'ND', fontsize = 16)
     ax3.text(-0.03, -0.03, r'$[001]$', fontsize = 15)
     ax3.text(0.38, -0.03, r'$[011]$', fontsize = 15)
     ax3.text(0.34, 0.375, r'$[\bar111]$', fontsize = 15)
-    # plt.xlim([-0.01, 0.5])
-    # plt.ylim([-0.01, 0.5])
 
-    plt.savefig(name_file_base + '_IPF.' + fmt)
-    plt.close(fig)
+    title = fig.suptitle('Inverse pole figures', fontsize = 14, fontweight = 'bold')
+    canvas = FigureCanvas(fig)
+
+    canvas.print_figure(
+        name_file_base + '_IPF.' + fmt,
+        bbox_extra_artists = [title],
+        bbox_inches = 'tight')
 
 # end plot_inverse_pole_figure(**kwargs):
 
