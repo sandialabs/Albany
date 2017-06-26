@@ -23,6 +23,15 @@ def create_mat_params_default():
     mat_params["C33"] = "unspecified"
     mat_params["C44"] = "unspecified"
 
+    mat_params["M11"] = "unspecified"
+    mat_params["M12"] = "unspecified"
+    mat_params["M13"] = "unspecified"
+    mat_params["M33"] = "unspecified"
+    mat_params["M44"] = "unspecified"
+
+    mat_params["temperature_initial"] = "unspecified"
+    mat_params["temperature_reference"] = "unspecified"    
+
     # Flow rule parameters
     mat_params["flow_rule"] = "unspecified"                    # "Flow Rule" POWER_LAW, THERMAL_ACTIVATION, or POWER_LAW_DRAG
     mat_params["rate_slip_reference"] = "unspecified"          # "Reference Slip Rate" power_law  power_law_drag  thermal_activation  and saturation hardening law
@@ -285,6 +294,24 @@ def WriteMaterialsFile(file_name, mat_params, vars_output, rotations, names_bloc
         WriteParameter("C11", "double", mat_params["C11"], mat_file, indent)
         WriteParameter("C12", "double", mat_params["C12"], mat_file, indent)
         WriteParameter("C44", "double", mat_params["C44"], mat_file, indent)
+
+        # Temperature-dependence properties
+        M11 = mat_params.get("M11", None)
+        if M11 != None:
+            WriteParameter("M11", "double", M11, mat_file, indent)
+        M12 = mat_params.get("M12", None)
+        if M12 != None:
+            WriteParameter("M12", "double", M12, mat_file, indent)
+        M44 = mat_params.get("M44", None)
+        if M44 != None:
+            WriteParameter("M44", "double", M44, mat_file, indent)
+        temperature_initial = mat_params.get("temperature_initial", None)
+        if temperature_initial != None:
+            WriteParameter("Initial Temperature", "double", temperature_initial, mat_file, indent)
+        temperature_reference = mat_params.get("temperature_reference", None)
+        if temperature_reference != None:
+            WriteParameter("Reference Temperature", "double", temperature_reference, mat_file, indent)
+
         WriteParameter("Basis Vector 1", "Array(double)", VectorToString(vec1), mat_file, indent)
         WriteParameter("Basis Vector 2", "Array(double)", VectorToString(vec2), mat_file, indent)
         WriteParameter("Basis Vector 3", "Array(double)", VectorToString(vec3), mat_file, indent)
@@ -397,6 +424,17 @@ if __name__ == "__main__":
             name_file_exodus = name_base + '.g'
         else:
             raise InputError('Inconsistently named or missing mesh file. ' + name_base + '.g must exist to use assumed names.')
+
+    elif len(sys.argv) is 2:
+
+        name_base = sys.argv[1]
+        mat_params_file_name = name_base + '_MatProps.txt'
+        rotations_file_name = name_base + '_Rotations.txt'
+        name_file_exodus = name_base + '.g'
+
+        assert os.path.isfile(mat_params_file_name)
+        assert os.path.isfile(rotations_file_name)
+        assert os.path.isfile(name_file_exodus)
 
     elif len(sys.argv) != 4:
         print "\nUsage: python -m lcm_preprocess.write_file_material <mat_props.txt> <rotation_matrices.txt> <mesh_filename>\n"
