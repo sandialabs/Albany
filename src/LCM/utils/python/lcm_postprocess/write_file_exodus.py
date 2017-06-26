@@ -51,7 +51,7 @@ def write_file_exodus(domain = None, name_file_input = None, name_file_output = 
     #
 
     names_var_output_tensor = ['Cauchy_Stress', 'F', 'Log_Strain']
-    names_var_output_scalar = ['Mises_Stress', 'eqps', 'Misorientation']
+    names_var_output_scalar = ['Mises_Stress', 'eqps', 'Misorientation', 'Strain_Energy']
 
     names_var_avail_tensor = [name for name in names_var_output_tensor if name in domain.variables]
     names_var_avail_scalar = [name for name in names_var_output_scalar if name in domain.variables]

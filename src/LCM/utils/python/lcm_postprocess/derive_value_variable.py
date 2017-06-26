@@ -39,6 +39,16 @@ def compute_strain_logarithmic(defgrad):
 
 
 
+# Compute the stored strain energy density
+# @profile
+def compute_strain_energy(stress_cauchy, strain_logarithmic):
+
+    return 0.5 * np.sum(np.tensordot(stress_cauchy, strain_logarithmic))
+
+# end def compute_strain_energy(stress_cauchy, strain_logarithmic):
+
+
+
 # Compute deformed orientations
 # @profile
 def compute_orientations(domain):
@@ -108,6 +118,13 @@ def _derive_values_scalar(name_variable, domain):
             domain.variables[name_variable][key_step] = \
                 compute_stress_mises(domain.variables['Cauchy_Stress'][key_step])
 
+        elif name_variable == 'Strain_Energy':
+
+            domain.variables[name_variable][key_step] = \
+                compute_strain_energy(
+                    domain.variables['Cauchy_Stress'][key_step],
+                    domain.variables['Log_Strain'][key_step])
+
     for block in domain.blocks.values():
 
         # block = domain.blocks[key_block]
@@ -124,6 +141,13 @@ def _derive_values_scalar(name_variable, domain):
                 block.variables[name_variable][key_step] = \
                     compute_stress_mises(block.variables['Cauchy_Stress'][key_step])
 
+            elif name_variable == 'Strain_Energy':
+
+                block.variables[name_variable][key_step] = \
+                    compute_strain_energy(
+                        block.variables['Cauchy_Stress'][key_step],
+                        block.variables['Log_Strain'][key_step])
+
         for element in block.elements.values():
 
             # element = block.elements[key_element]
@@ -135,6 +159,12 @@ def _derive_values_scalar(name_variable, domain):
                 if name_variable == 'Mises_Stress':
 
                     value_variable = compute_stress_mises(element.variables['Cauchy_Stress'][key_step])
+
+                elif name_variable == 'Strain_Energy':
+
+                    value_variable = compute_strain_energy(
+                        element.variables['Cauchy_Stress'][key_step],
+                        element.variables['Log_Strain'][key_step])
 
                 elif name_variable == 'Misorientation':
 
@@ -157,6 +187,12 @@ def _derive_values_scalar(name_variable, domain):
                     if name_variable == 'Mises_Stress':
 
                         value_variable = compute_stress_mises(point.variables['Cauchy_Stress'][key_step])
+
+                    if name_variable == 'Strain_Energy':
+
+                        value_variable = compute_strain_energy(
+                            point.variables['Cauchy_Stress'][key_step],
+                            point.variables['Log_Strain'][key_step])
 
                     elif name_variable == 'Misorientation':
 
@@ -244,6 +280,7 @@ def derive_value_variable(
     names_variable = [
         'Log_Strain',
         'Mises_Stress',
+        'Strain_Energy',
         'Misorientation']):
 
     names_tensor = [
@@ -251,6 +288,7 @@ def derive_value_variable(
 
     names_scalar = [
         'Mises_Stress',
+        'Strain_Energy',
         'Misorientation']
 
     for name_variable in names_variable:
