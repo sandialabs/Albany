@@ -182,7 +182,7 @@ namespace CP
   class ResidualSlipHardnessNLS:
       public minitensor::Function_Base<
       ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>,
-      typename EvalT::ScalarT, NumSlipT>
+      typename EvalT::ScalarT, CP::NlsDim<NumSlipT>::value>
   {
     using ScalarT = typename EvalT::ScalarT;
 
@@ -204,7 +204,7 @@ namespace CP
 
     using Base = minitensor::Function_Base<
         ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>,
-        typename EvalT::ScalarT, NumSlipT>;
+        typename EvalT::ScalarT, CP::NlsDim<NumSlipT>::value>;
 
     //! Default implementation of value.
     template<typename T, minitensor::Index N = minitensor::DYNAMIC>
