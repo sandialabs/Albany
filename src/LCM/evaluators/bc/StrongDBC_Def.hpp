@@ -8,7 +8,7 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
 
-#define DEBUG
+//#define DEBUG
 
 namespace LCM {
 

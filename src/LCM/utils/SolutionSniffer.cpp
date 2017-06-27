@@ -9,7 +9,7 @@
 #include "SolutionSniffer.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
-#define DEBUG
+//#define DEBUG
 
 namespace LCM {
 

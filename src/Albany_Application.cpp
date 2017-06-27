@@ -3,7 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#define DEBUG
+//#define DEBUG
 
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
