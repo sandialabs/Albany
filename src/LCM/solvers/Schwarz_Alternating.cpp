@@ -7,7 +7,6 @@
 #include "Albany_SolverFactory.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "MiniTensor.h"
-#include "Teuchos_FancyOStream.hpp"
 #include "Schwarz_Alternating.hpp"
 
 namespace LCM {

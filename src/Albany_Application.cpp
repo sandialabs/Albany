@@ -3,6 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#define DEBUG
 
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
@@ -59,6 +60,10 @@
 #if defined(ALBANY_EPETRA)
 #include "AztecOO_ConditionNumber.h"
 #endif
+
+#if defined(ALBANY_LCM)
+#include "SolutionSniffer.hpp"
+#endif // ALBANY_LCM
 
 //#define WRITE_TO_MATRIX_MARKET
 
@@ -249,6 +254,79 @@ void Albany::Application::initialSetUp(
   else if (solutionMethod == "Transient Tempus" || "Transient Tempus No Piro") {
 #ifdef ALBANY_TEMPUS
     solMethod = TransientTempus;
+
+#if defined(DEBUG)
+
+      // Add NOX pre-post-operator for debugging.
+      bool const
+      have_piro = params->isSublist("Piro");
+
+      ALBANY_ASSERT(have_piro == true);
+
+      Teuchos::ParameterList &
+      piro_params = params->sublist("Piro");
+
+      bool const
+      have_tempus = piro_params.isSublist("Tempus");
+
+      ALBANY_ASSERT(have_tempus == true);
+
+      Teuchos::ParameterList &
+      tempus_params = piro_params.sublist("Tempus");
+
+      bool const
+      have_tempus_stepper = tempus_params.isSublist("Tempus Stepper");
+
+      ALBANY_ASSERT(have_tempus_stepper == true);
+
+      Teuchos::ParameterList &
+      tempus_stepper_params = tempus_params.sublist("Tempus Stepper");
+
+      bool const
+      have_solver_name = tempus_stepper_params.isType<std::string>("Solver Name");
+
+      ALBANY_ASSERT(have_solver_name == true);
+
+      std::string const
+      solver_name = tempus_stepper_params.get<std::string>("Solver Name");
+
+      Teuchos::ParameterList &
+      solver_name_params = tempus_stepper_params.sublist(solver_name);
+
+      bool const
+      have_nox = solver_name_params.isSublist("NOX");
+
+      ALBANY_ASSERT(have_nox == true);
+
+      Teuchos::ParameterList &
+      nox_params = solver_name_params.sublist("NOX");
+
+      bool const
+      have_solver_opts = nox_params.isSublist("Solver Options");
+
+      ALBANY_ASSERT(have_solver_opts == true);
+
+      Teuchos::ParameterList &
+      solver_opts = nox_params.sublist("Solver Options");
+
+      std::string const
+      ppo_str{"User Defined Pre/Post Operator"};
+
+      bool const
+      have_ppo = solver_opts.isParameter(ppo_str);
+
+      Teuchos::RCP<NOX::Abstract::PrePostOperator>
+      ppo{Teuchos::null};
+
+      if (have_ppo == true) {
+        ppo = solver_opts.get<decltype(ppo)>(ppo_str);
+      } else {
+        ppo = Teuchos::rcp(new LCM::SolutionSniffer);
+        solver_opts.set(ppo_str, ppo);
+        ALBANY_ASSERT(solver_opts.isParameter(ppo_str) == true);
+      }
+#endif // DEBUG
+
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,

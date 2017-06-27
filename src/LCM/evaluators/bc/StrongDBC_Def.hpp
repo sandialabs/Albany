@@ -8,6 +8,8 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
 
+#define DEBUG
+
 namespace LCM {
 
 //
@@ -59,6 +61,16 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 #endif
   }
 
+#if defined(DEBUG)
+  Teuchos::FancyOStream &
+  fos = *Teuchos::VerboseObjectBase::getDefaultOStream();
+  fos << "\n*** RESIDUAL ***\n";
+  f->describe(fos, Teuchos::VERB_EXTREME);
+  fos << "\n*** RESIDUAL ***\n";
+  fos << "\n*** SOLUTION ***\n";
+  x->describe(fos, Teuchos::VERB_EXTREME);
+  fos << "\n*** SOLUTION ***\n";
+#endif //DEBUG
   return;
 }
 
