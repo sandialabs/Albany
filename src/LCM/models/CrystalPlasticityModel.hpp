@@ -24,7 +24,7 @@ class CrystalPlasticityKernel: public ParallelKernel<EvalT, Traits>
 public:
 
   using ScalarT = typename EvalT::ScalarT;
-	using ValueT = typename Sacado::ValueType<ScalarT>::type;
+  using ValueT = typename Sacado::ValueType<ScalarT>::type;
 
   using BaseKernel = ParallelKernel<EvalT, Traits>;
   using ScalarField = typename BaseKernel::ScalarField;

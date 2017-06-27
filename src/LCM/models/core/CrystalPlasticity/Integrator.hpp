@@ -41,6 +41,8 @@ class Integrator
         dt_(dt)
     {}
 
+    virtual ~Integrator(){}
+
     virtual void update() const = 0;
 
     void forceGlobalLoadStepReduction(
