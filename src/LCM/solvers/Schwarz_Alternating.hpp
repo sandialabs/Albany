@@ -156,14 +156,26 @@ private:
   int
   max_iters_{0};
 
-  int
-  output_interval_{1};
-
   ST
   rel_tol_{0.0};
 
   ST
   abs_tol_{0.0};
+
+  int
+  maximum_steps_{0};
+
+  ST
+  initial_time_{0.0};
+
+  ST
+  final_time_{0.0};
+
+  ST
+  initial_time_step_{0.0};
+
+  int
+  output_interval_{1};
 
   mutable bool
   failed_{false};
