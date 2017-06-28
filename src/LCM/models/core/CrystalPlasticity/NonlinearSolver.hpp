@@ -260,30 +260,16 @@ namespace CP
   class ResidualSlipHardnessFN:
     public minitensor::Function_Base<
       ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>,
-      typename EvalT::ScalarT, CP::NlsDim<NumSlipT>::value>,
-    ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>
+      typename EvalT::ScalarT, CP::NlsDim<NumSlipT>::value>
   {
-    using ScalarT = typename EvalT::ScalarT;
-
   public:
 
     using Base = minitensor::Function_Base<
         ResidualSlipHardnessFN<NumDimT, NumSlipT, EvalT>,
-        typename EvalT::ScalarT, CP::NlsDim<NumSlipT>::value>;
+         typename EvalT::ScalarT, CP::NlsDim<NumSlipT>::value>;
 
-    // Need to implement get_failed due to multiple inheritance snafus
-    bool
-    get_failed() {
-      return Base::get_failed();
-    }
+    using ScalarT = typename EvalT::ScalarT;
 
-    // Need to implement get_failure_message due to multiple inheritance snafus
-    char const *
-    get_failure_message() {
-      return Base::get_failure_message();
-    }
-
-    //! Constructor.
     ResidualSlipHardnessFN(
         minitensor::Tensor4<ScalarT, NumDimT> const & C,
         std::vector<SlipSystem<NumDimT>> const & slip_systems,
@@ -292,19 +278,14 @@ namespace CP
         minitensor::Vector<RealType, NumSlipT> const & state_hardening_n,
         minitensor::Vector<RealType, NumSlipT> const & slip_n,
         minitensor::Tensor<ScalarT, NumDimT> const & F_np1,
-        RealType dt) : ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>(C, slip_systems, slip_families, Fp_n, state_hardening_n, slip_n, F_np1, dt)
-    {}
+        RealType dt);
 
     static constexpr char const * const
     NAME{"Crystal Plasticity Function"};
 
     template<typename T, minitensor::Index N = minitensor::DYNAMIC>
     T
-    value(minitensor::Vector<T, N> const & x) {
-      minitensor::Vector<T, N> grad = ResidualSlipHardnessNLS<NumDimT, NumSlipT, EvalT>::gradient(x);
-      T function_value = 0.5 * minitensor::dot(grad, grad);
-      return function_value;
-    }
+    value(minitensor::Vector<T, N> const & x);
 
     template<typename T, minitensor::Index N = minitensor::DYNAMIC>
     minitensor::Vector<T, N>
@@ -317,6 +298,38 @@ namespace CP
     hessian(minitensor::Vector<T, N> const & x) {
       return Base::hessian(*this, x);
     }
+
+  private:
+
+    RealType
+    num_dim_;
+
+    RealType
+    num_slip_;
+
+    minitensor::Tensor4<ScalarT, NumDimT> const &
+    C_;
+
+    std::vector<SlipSystem<NumDimT>> const &
+    slip_systems_;
+
+    std::vector<SlipFamily<NumDimT, NumSlipT>> const &
+    slip_families_;
+
+    minitensor::Tensor<RealType, NumDimT> const &
+    Fp_n_;
+
+    minitensor::Vector<RealType, NumSlipT> const &
+    state_hardening_n_;
+
+    minitensor::Vector<RealType, NumSlipT> const &
+    slip_n_;
+
+    minitensor::Tensor<ScalarT, NumDimT> const &
+    F_np1_;
+
+    RealType
+    dt_;
   };
 
 }
