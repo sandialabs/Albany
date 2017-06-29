@@ -557,11 +557,11 @@ main(int argc, char* argv[]) {
       Teuchos::DefaultComm<int>::getComm();
 
   // Read in command line options.
-  std::string xml_input_filename;
+  std::string yaml_input_filename;
   Teuchos::CommandLineProcessor clp(false);
 
   clp.setOption(
-      "xml-in-file", &xml_input_filename,
+      "yaml-in-file", &yaml_input_filename,
       "The XML file to read into a parameter list");
 
   clp.parse(argc, argv);
@@ -569,22 +569,22 @@ main(int argc, char* argv[]) {
   Teuchos::RCP<Teuchos::FancyOStream> out =
       Teuchos::fancyOStream(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-  // Build the parameter list from the xml input.
+  // Build the parameter list from the yaml input.
   Teuchos::RCP<Teuchos::ParameterList> plist =
       Teuchos::rcp(new Teuchos::ParameterList());
 
 #if defined(ALBANY_YAML)
-  std::string const input_extension = getFileExtension(xml_input_filename);
+  std::string const input_extension = getFileExtension(yaml_input_filename);
   if (input_extension == "yaml") {
     Teuchos::updateParametersFromYamlFile(
-        xml_input_filename, Teuchos::inoutArg(*plist));
+        yaml_input_filename, Teuchos::inoutArg(*plist));
   } else {
     Teuchos::updateParametersFromXmlFile(
-        xml_input_filename, Teuchos::inoutArg(*plist));
+        yaml_input_filename, Teuchos::inoutArg(*plist));
   }
 #else
   Teuchos::updateParametersFromXmlFile(
-      xml_input_filename, Teuchos::inoutArg(*plist));
+      yaml_input_filename, Teuchos::inoutArg(*plist));
 #endif  // ALBANY_YAML
 
   std::string field_type = plist->get<std::string>("Field Type", "Node Vector");
