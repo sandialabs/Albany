@@ -32,7 +32,7 @@ MapToPhysicalFrame(const Teuchos::ParameterList& p,
   numQPs = dims[1];
   numDim = dims[2];
 
-  this->setName("MapToPhysicalFrame" );
+  this->setName("MapToPhysicalFrame"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

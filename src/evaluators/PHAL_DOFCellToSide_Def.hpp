@@ -95,7 +95,7 @@ DOFCellToSideBase(const Teuchos::ParameterList& p,
   this->addDependentField(val_cell);
   this->addEvaluatedField(val_side);
 
-  this->setName("DOFCellToSide");
+  this->setName("DOFCellToSide"+PHX::typeAsString<EvalT>());
 
 }
 

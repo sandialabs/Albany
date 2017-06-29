@@ -354,7 +354,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
   cellDims = dim[2];
 
 
-  this->setName(name);
+  this->setName(name+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -2186,7 +2186,7 @@ NeumannAggregator(const Teuchos::ParameterList& p)
   PHX::Tag<ScalarT> fieldTag(p.get<std::string>("NBC Aggregator Name"), dl);
   this->addEvaluatedField(fieldTag);
 
-  this->setName("Neumann Aggregator" );
+  this->setName("Neumann Aggregator"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

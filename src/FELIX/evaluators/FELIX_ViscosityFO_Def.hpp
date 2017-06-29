@@ -165,7 +165,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
   numDims = dims[2];
   numCells = dims[0] ;
 
-  this->setName("ViscosityFO");
+  this->setName("ViscosityFO"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

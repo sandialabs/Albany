@@ -127,8 +127,6 @@ struct AbstractMeshStruct {
                   const std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> >& side_set_sis = {},
                   const std::map<std::string,AbstractFieldContainer::FieldContainerRequirements>& side_set_req = {}) = 0;
 
-;
-
     virtual Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() = 0;
     virtual const Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs() const = 0;
 

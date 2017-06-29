@@ -26,7 +26,7 @@ PressureCorrectedTemperature(const Teuchos::ParameterList& p, const Teuchos::RCP
 	this->addDependentField(temp);
 	this->addEvaluatedField(correctedTemp);
 
-	this->setName("Pressure Corrected Temperature");
+	this->setName("Pressure Corrected Temperature"+PHX::typeAsString<EvalT>());
 
 	// Setting parameters
 	Teuchos::ParameterList& physics = *p.get<Teuchos::ParameterList*>("FELIX Physical Parameters");

@@ -28,7 +28,7 @@ DOFVecInterpolationSideBase(const Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("DOFVecInterpolationSide" );
+  this->setName("DOFVecInterpolationSide"+PHX::typeAsString<EvalT>());
 
   numSideNodes = dl_side->node_qp_scalar->dimension(2);
   numSideQPs   = dl_side->node_qp_scalar->dimension(3);

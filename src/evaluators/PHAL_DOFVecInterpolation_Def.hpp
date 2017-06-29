@@ -26,7 +26,7 @@ DOFVecInterpolationBase(const Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("DOFVecInterpolationBase" );
+  this->setName("DOFVecInterpolationBase"+PHX::typeAsString<EvalT>());
   std::vector<PHX::DataLayout::size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
