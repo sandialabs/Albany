@@ -8,6 +8,7 @@
 #endif
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Albany_Utils.hpp"
 
 // **********************************************************************
 // Base Class Generic Implemtation
@@ -47,7 +48,6 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
   // vector
   else
   if (tensorRank == 1 ) {
-//    valVec.resize(1);
     PHX::MDField<ScalarT const,Cell,Node,Dim> mdf(names[0],dl->node_vector);
     valVec= mdf;
     this->addDependentField(valVec);
@@ -56,12 +56,16 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
   // tensor
   else
   if (tensorRank == 2 ) {
-    valTensor.resize(1);
     PHX::MDField<ScalarT const,Cell,Node,Dim,Dim> mdf(names[0],dl->node_tensor);
-    valTensor[0] = mdf;
-    this->addDependentField(valTensor[0]);
+    valTensor = mdf;
+    this->addDependentField(valTensor);
     numFieldsBase = (dl->node_tensor->dimension(2))*(dl->node_tensor->dimension(3));
   }
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  if (tensorRank == 0)
+    val_kokkos.resize(numFieldsBase);
+#endif
 
   if (p.isType<int>("Offset of First DOF"))
     offset = p.get<int>("Offset of First DOF");
@@ -90,8 +94,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
   else 
   if (tensorRank == 2) {
-    this->utils.setFieldData(valTensor[0],fm);
-    numNodes = valTensor[0].dimension(1);
+    this->utils.setFieldData(valTensor,fm);
+    numNodes = valTensor.dimension(1);
   }
 }
 
@@ -103,49 +107,47 @@ ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
 ScatterResidual(const Teuchos::ParameterList& p,
                        const Teuchos::RCP<Albany::Layouts>& dl)
   : ScatterResidualBase<PHAL::AlbanyTraits::Residual,Traits>(p,dl),
-  numFields(ScatterResidualBase<PHAL::AlbanyTraits::Residual,Traits>::numFieldsBase)
+  numFields(ScatterResidualBase<PHAL::AlbanyTraits::Residual,Traits>::numFieldsBase) {}
 
-{
-}
 // **********************************************************************
-//Kokkos kernels:
+// Kokkos kernels
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
-operator()(const ScatterRank0_Tag& tag, const int& cell) const
+operator() (const PHAL_ScatterResRank0_Tag&, const int& cell) const
 {
-  for (std::size_t node = 0; node < this->numNodes; ++node){
-    for (std::size_t eq = 0; eq < numFields; eq++){
-      Kokkos::atomic_fetch_add(&f_nonconstView(Index(cell,node,this->offset + eq)), (this->val[eq])(cell,node));
+  for (std::size_t node = 0; node < this->numNodes; node++)
+    for (std::size_t eq = 0; eq < numFields; eq++) {
+      const LO id = ElNodeEqID_kokkos(cell,node,this->offset + eq);
+      Kokkos::atomic_fetch_add(&fT_kokkos(id), val_kokkos[eq](cell,node));
     }
-  }
 }
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
-operator()(const ScatterRank1_Tag& tag, const int& cell) const
+operator() (const PHAL_ScatterResRank1_Tag&, const int& cell) const
 {
-  for (std::size_t node = 0; node < this->numNodes; ++node){
-    for (std::size_t eq = 0; eq < numFields; eq++){
-      Kokkos::atomic_fetch_add(&f_nonconstView(Index(cell,node,this->offset + eq)), (this->valVec)(cell,node,eq));
+  for (std::size_t node = 0; node < this->numNodes; node++)
+    for (std::size_t eq = 0; eq < numFields; eq++) {
+      const LO id = ElNodeEqID_kokkos(cell,node,this->offset + eq);
+      Kokkos::atomic_fetch_add(&fT_kokkos(id), this->valVec(cell,node,eq));
     }
-  }
 }
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
-operator()(const ScatterRank2_Tag& tag, const int& cell) const
+operator() (const PHAL_ScatterResRank2_Tag&, const int& cell) const
 {
-  const int numDims = this->valTensor[0].dimension(2);
-  for (std::size_t node = 0; node < this->numNodes; ++node)
+  for (std::size_t node = 0; node < this->numNodes; node++)
     for (std::size_t i = 0; i < numDims; i++)
-      for (std::size_t j = 0; j < numDims; j++)
-        Kokkos::atomic_fetch_add(&f_nonconstView(Index(cell,node,this->offset + i*numDims + j)), (this->valTensor[0])(cell,node,i,j)); 
+      for (std::size_t j = 0; j < numDims; j++) {
+        const LO id = ElNodeEqID_kokkos(cell,node,this->offset + i*numDims + j);
+        Kokkos::atomic_fetch_add(&fT_kokkos(id), this->valTensor(cell,node,i,j)); 
+      }
 }
-
 #endif
 
 // **********************************************************************
@@ -176,13 +178,13 @@ evaluateFields(typename Traits::EvalData workset)
     }
   } else
   if (this->tensorRank == 2) {
-    int numDims = this->valTensor[0].dimension(2);
+    int numDims = this->valTensor.dimension(2);
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t i = 0; i < numDims; i++)
           for (std::size_t j = 0; j < numDims; j++)
-            f_nonconstView[nodeID[node][this->offset + i*numDims + j]] += (this->valTensor[0])(cell,node,i,j);
+            f_nonconstView[nodeID[node][this->offset + i*numDims + j]] += (this->valTensor)(cell,node,i,j);
   
     }
   }
@@ -192,20 +194,29 @@ evaluateFields(typename Traits::EvalData workset)
   auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-  Index = workset.wsElNodeEqID_kokkos;
+  // Get map for local data structures
+  ElNodeEqID_kokkos = workset.wsElNodeEqID_kokkos;
 
-  // Tpetra getLocalView is needed to obtain a Kokkos View from a specific device
+  // Get Tpetra vector view from a specific device
   auto fT_2d = workset.fT->template getLocalView<PHX::Device>();
-  f_nonconstView = Kokkos::subview(fT_2d, Kokkos::ALL(), 0);
+  fT_kokkos = Kokkos::subview(fT_2d, Kokkos::ALL(), 0);
 
   if (this->tensorRank == 0) {
-    Kokkos::parallel_for(ScatterRank0_Policy(0,workset.numCells),*this);
+    // Get MDField views from std::vector
+    for (int i = 0; i < numFields; i++)
+      val_kokkos[i] = this->val[i].get_view();
+
+    Kokkos::parallel_for(PHAL_ScatterResRank0_Policy(0,workset.numCells),*this);
+    cudaCheckError();
   }
   else if (this->tensorRank == 1) {
-    Kokkos::parallel_for(ScatterRank1_Policy(0,workset.numCells),*this);
+    Kokkos::parallel_for(PHAL_ScatterResRank1_Policy(0,workset.numCells),*this);
+    cudaCheckError();
   }
   else if (this->tensorRank == 2) {
-    Kokkos::parallel_for(ScatterRank2_Policy(0,workset.numCells),*this);
+    numDims = this->valTensor.dimension(2);
+    Kokkos::parallel_for(PHAL_ScatterResRank2_Policy(0,workset.numCells),*this);
+    cudaCheckError();
   }
 
 #ifdef ALBANY_TIMER
@@ -227,15 +238,27 @@ ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 ScatterResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl)
   : ScatterResidualBase<PHAL::AlbanyTraits::Jacobian,Traits>(p,dl),
-  numFields(ScatterResidualBase<PHAL::AlbanyTraits::Jacobian,Traits>::numFieldsBase)
-{
-}
+  numFields(ScatterResidualBase<PHAL::AlbanyTraits::Jacobian,Traits>::numFieldsBase) {}
+
 // **********************************************************************
+// Kokkos kernels
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
-operator()(const ScatterRank0_is_adjoint_Tag& tag, const int& cell) const
+operator() (const PHAL_ScatterResRank0_Tag&, const int& cell) const
+{
+  for (std::size_t node = 0; node < this->numNodes; node++)
+    for (std::size_t eq = 0; eq < numFields; eq++) {
+      const LO id = ElNodeEqID_kokkos(cell,node,this->offset + eq);
+      Kokkos::atomic_fetch_add(&fT_kokkos(id), (val_kokkos[eq](cell,node)).val());
+    }
+}
+
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
+operator() (const PHAL_ScatterJacRank0_Adjoint_Tag&, const int& cell) const
 {
   //const int neq = workset.wsElNodeEqID[0][0].size();
   //const int nunk = neq*this->numNodes;
@@ -249,22 +272,18 @@ operator()(const ScatterRank0_is_adjoint_Tag& tag, const int& cell) const
 
   for (int node_col=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
-      colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
+      colT[neq * node_col + eq_col] =  ElNodeEqID_kokkos(cell,node_col,eq_col);
     }
   }
 
   for (int node = 0; node < this->numNodes; ++node) {
     for (int eq = 0; eq < numFields; eq++) {
-      rowT = Index(cell,node,this->offset + eq);
-      if (loadResid) 
-        Kokkos::atomic_fetch_add(&f_nonconstView(rowT), ((this->val[eq])(cell,node)).val());
-
-      if (((this->val[eq])(cell,node)).hasFastAccess()) {  
-        for (int lunk=0; lunk<nunk; lunk++){
-          ST val = ((this->val[eq])(cell,node)).fastAccessDx(lunk);
-          jacobian.sumIntoValues(colT[lunk], &rowT, 1, &val, false, true); 
-        }
-      }//has fast access
+      rowT = ElNodeEqID_kokkos(cell,node,this->offset + eq);
+      auto valptr = val_kokkos[eq](cell,node);
+      for (int lunk=0; lunk<nunk; lunk++) {
+        ST val = valptr.fastAccessDx(lunk);
+        JacT_kokkos.sumIntoValues(colT[lunk], &rowT, 1, &val, false, true); 
+      }
     }
   }
 }
@@ -272,7 +291,7 @@ operator()(const ScatterRank0_is_adjoint_Tag& tag, const int& cell) const
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
-operator()(const ScatterRank0_no_adjoint_Tag& tag, const int& cell) const
+operator() (const PHAL_ScatterJacRank0_Tag&, const int& cell) const
 {
   //const int neq = workset.wsElNodeEqID[0][0].size();
   //const int nunk = neq*this->numNodes;
@@ -288,20 +307,16 @@ operator()(const ScatterRank0_no_adjoint_Tag& tag, const int& cell) const
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
-      colT[neq * node_col + eq_col] = Index(cell,node_col,eq_col);
+      colT[neq * node_col + eq_col] = ElNodeEqID_kokkos(cell,node_col,eq_col);
     }
   }
 
   for (int node = 0; node < this->numNodes; ++node) {
     for (int eq = 0; eq < numFields; eq++) {
-      rowT = Index(cell,node,this->offset + eq);
-      if (loadResid)
-        Kokkos::atomic_fetch_add(&f_nonconstView(rowT), ((this->val[eq])(cell,node)).val());
-
-      if (((this->val[eq])(cell,node)).hasFastAccess()) {
-        for (int i = 0; i < nunk; ++i) vals[i] = this->val[eq](cell,node).fastAccessDx(i);
-        jacobian.sumIntoValues(rowT, colT, nunk, vals, false, true);
-      }
+      rowT = ElNodeEqID_kokkos(cell,node,this->offset + eq);
+      auto valptr = val_kokkos[eq](cell,node);
+      for (int i = 0; i < nunk; ++i) vals[i] = valptr.fastAccessDx(i);
+      JacT_kokkos.sumIntoValues(rowT, colT, nunk, vals, false, true);
     }
   }
 }
@@ -309,7 +324,19 @@ operator()(const ScatterRank0_no_adjoint_Tag& tag, const int& cell) const
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
-operator()(const ScatterRank1_is_adjoint_Tag& tag, const int& cell) const
+operator() (const PHAL_ScatterResRank1_Tag&, const int& cell) const
+{
+  for (std::size_t node = 0; node < this->numNodes; node++)
+    for (std::size_t eq = 0; eq < numFields; eq++) {
+      const LO id = ElNodeEqID_kokkos(cell,node,this->offset + eq);
+      Kokkos::atomic_fetch_add(&fT_kokkos(id), (this->valVec(cell,node,eq)).val());
+    }
+}
+
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
+operator() (const PHAL_ScatterJacRank1_Adjoint_Tag&, const int& cell) const
 {
   //const int neq = workset.wsElNodeEqID[0][0].size();
   //const int nunk = neq*this->numNodes;
@@ -325,20 +352,17 @@ operator()(const ScatterRank1_is_adjoint_Tag& tag, const int& cell) const
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
-      colT[neq * node_col + eq_col] = Index(cell,node_col,eq_col);
+      colT[neq * node_col + eq_col] = ElNodeEqID_kokkos(cell,node_col,eq_col);
     }
   }
 
   for (int node = 0; node < this->numNodes; ++node) {
     for (int eq = 0; eq < numFields; eq++) {
-      rowT = Index(cell,node,this->offset + eq);
-      if (loadResid)
-        Kokkos::atomic_fetch_add(&f_nonconstView(rowT), ((this->valVec)(cell,node,eq)).val());
-
+      rowT = ElNodeEqID_kokkos(cell,node,this->offset + eq);
       if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
         for (int lunk=0; lunk<nunk; lunk++){
           ST val = ((this->valVec)(cell,node,eq)).fastAccessDx(lunk);
-          jacobian.sumIntoValues(colT[lunk], &rowT, 1, &val, false, true);
+          JacT_kokkos.sumIntoValues(colT[lunk], &rowT, 1, &val, false, true);
         }
       }//has fast access
     }
@@ -348,7 +372,7 @@ operator()(const ScatterRank1_is_adjoint_Tag& tag, const int& cell) const
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
-operator()(const ScatterRank1_no_adjoint_Tag& tag, const int& cell) const
+operator() (const PHAL_ScatterJacRank1_Tag&, const int& cell) const
 {
   //const int neq = workset.wsElNodeEqID[0][0].size();
   //const int nunk = neq*this->numNodes;
@@ -364,19 +388,16 @@ operator()(const ScatterRank1_no_adjoint_Tag& tag, const int& cell) const
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
-      colT[neq * node_col + eq_col] = Index(cell,node_col,eq_col);
+      colT[neq * node_col + eq_col] = ElNodeEqID_kokkos(cell,node_col,eq_col);
     }
   }
 
   for (int node = 0; node < this->numNodes; ++node) {
     for (int eq = 0; eq < numFields; eq++) {
-      rowT = Index(cell,node,this->offset + eq);
-      if (loadResid)
-        Kokkos::atomic_fetch_add(&f_nonconstView(rowT), ((this->valVec)(cell,node,eq)).val());
-
+      rowT = ElNodeEqID_kokkos(cell,node,this->offset + eq);
       if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
         for (int i = 0; i < nunk; ++i) vals[i] = (this->valVec)(cell,node,eq).fastAccessDx(i);
-        jacobian.sumIntoValues(rowT, colT, nunk, vals, false, true);
+        JacT_kokkos.sumIntoValues(rowT, colT, nunk, vals, false, true);
       }
     }
   }
@@ -385,7 +406,20 @@ operator()(const ScatterRank1_no_adjoint_Tag& tag, const int& cell) const
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
-operator()(const ScatterRank2_is_adjoint_Tag& tag, const int& cell) const
+operator() (const PHAL_ScatterResRank2_Tag&, const int& cell) const
+{
+  for (std::size_t node = 0; node < this->numNodes; node++)
+    for (std::size_t i = 0; i < numDims; i++)
+      for (std::size_t j = 0; j < numDims; j++) {
+        const LO id = ElNodeEqID_kokkos(cell,node,this->offset + i*numDims + j);
+        Kokkos::atomic_fetch_add(&fT_kokkos(id), (this->valTensor(cell,node,i,j)).val()); 
+      }
+}
+
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
+operator() (const PHAL_ScatterJacRank2_Adjoint_Tag&, const int& cell) const
 {
   //const int neq = workset.wsElNodeEqID[0][0].size();
   //const int nunk = neq*this->numNodes;
@@ -399,20 +433,17 @@ operator()(const ScatterRank2_is_adjoint_Tag& tag, const int& cell) const
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
-      colT[neq * node_col + eq_col] = Index(cell,node_col,eq_col);
+      colT[neq * node_col + eq_col] = ElNodeEqID_kokkos(cell,node_col,eq_col);
     }
   }
 
   for (int node = 0; node < this->numNodes; ++node) {
     for (int eq = 0; eq < numFields; eq++) {
-      rowT = Index(cell,node,this->offset + eq);
-      if (loadResid)
-        Kokkos::atomic_fetch_add(&f_nonconstView(rowT), ((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).val());
-
-      if (((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).hasFastAccess()) {
+      rowT = ElNodeEqID_kokkos(cell,node,this->offset + eq);
+      if (((this->valTensor)(cell,node, eq/numDims, eq%numDims)).hasFastAccess()) {
         for (int lunk=0; lunk<nunk; lunk++) {
-          ST val = ((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).fastAccessDx(lunk);
-          jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val, false, true);
+          ST val = ((this->valTensor)(cell,node, eq/numDims, eq%numDims)).fastAccessDx(lunk);
+          JacT_kokkos.sumIntoValues (colT[lunk], &rowT, 1, &val, false, true);
         }
       }//has fast access
     }
@@ -422,7 +453,7 @@ operator()(const ScatterRank2_is_adjoint_Tag& tag, const int& cell) const
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
-operator()(const ScatterRank2_no_adjoint_Tag& tag, const int& cell) const
+operator() (const PHAL_ScatterJacRank2_Tag&, const int& cell) const
 {
   //const int neq = workset.wsElNodeEqID[0][0].size();
   //const int nunk = neq*this->numNodes;
@@ -438,24 +469,22 @@ operator()(const ScatterRank2_no_adjoint_Tag& tag, const int& cell) const
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++) {
     for (int eq_col=0; eq_col<neq; eq_col++) {
-      colT[neq * node_col + eq_col] = Index(cell,node_col,eq_col);
+      colT[neq * node_col + eq_col] = ElNodeEqID_kokkos(cell,node_col,eq_col);
     }
   }
 
   for (int node = 0; node < this->numNodes; ++node) {
     for (int eq = 0; eq < numFields; eq++) {
-      rowT = Index(cell,node,this->offset + eq);
-      if (loadResid)
-        Kokkos::atomic_fetch_add(&f_nonconstView(rowT), ((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).val());
-
-      if (((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).hasFastAccess()) {
-        for (int i = 0; i < nunk; ++i) vals[i] = (this->valTensor[0])(cell,node, eq/numDim, eq%numDim).fastAccessDx(i);
-        jacobian.sumIntoValues(rowT, colT, nunk,  vals, false, true);
+      rowT = ElNodeEqID_kokkos(cell,node,this->offset + eq);
+      if (((this->valTensor)(cell,node, eq/numDims, eq%numDims)).hasFastAccess()) {
+        for (int i = 0; i < nunk; ++i) vals[i] = (this->valTensor)(cell,node, eq/numDims, eq%numDims).fastAccessDx(i);
+        JacT_kokkos.sumIntoValues(rowT, colT, nunk,  vals, false, true);
       }
     }
   }
 }
 #endif
+
 // **********************************************************************
 template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
@@ -469,8 +498,8 @@ evaluateFields(typename Traits::EvalData workset)
   const int neq = workset.wsElNodeEqID[0][0].size();
   const int nunk = neq*this->numNodes;
   colT.resize(nunk);
-  int numDim = 0;
-  if (this->tensorRank==2) numDim = this->valTensor[0].dimension(2);
+  int numDims = 0;
+  if (this->tensorRank==2) numDims = this->valTensor.dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
@@ -485,7 +514,7 @@ evaluateFields(typename Traits::EvalData workset)
         typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
-                    this->valTensor[0](cell,node, eq/numDim, eq%numDim));
+                    this->valTensor(cell,node, eq/numDims, eq%numDims));
         const LO rowT = nodeID[node][this->offset + eq];
         if (loadResid)
           fT->sumIntoLocalValue(rowT, valptr.val());
@@ -507,42 +536,75 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+
 #else
 #ifdef ALBANY_TIMER
   auto start = std::chrono::high_resolution_clock::now();
 #endif
-
-  // Tpetra getLocalView is needed to obtain a Kokkos View from a specific device
-  loadResid = Teuchos::nonnull(workset.fT);
-  if (loadResid) {
-    auto fT_2d = workset.fT->template getLocalView<PHX::Device>();
-    f_nonconstView = Kokkos::subview(fT_2d, Kokkos::ALL(), 0);
-  }
-  jacobian = workset.JacT->getLocalMatrix();
-
-  Index = workset.wsElNodeEqID_kokkos;
+  // Get dimensions
   neq = workset.wsElNodeEqID[0][0].size();
   nunk = neq*this->numNodes;
-  numDim = 0;
-  if (this->tensorRank==2) numDim = this->valTensor[0].dimension(2);
+
+  // Get map for local data structures
+  ElNodeEqID_kokkos = workset.wsElNodeEqID_kokkos;
+
+  // Get Tpetra vector view and local matrix
+  const bool loadResid = Teuchos::nonnull(workset.fT);
+  if (loadResid) {
+    auto fT_2d = workset.fT->template getLocalView<PHX::Device>();
+    fT_kokkos = Kokkos::subview(fT_2d, Kokkos::ALL(), 0);
+  }
+  JacT_kokkos = workset.JacT->getLocalMatrix();
 
   if (this->tensorRank == 0) {
-    if (workset.is_adjoint) 
-      Kokkos::parallel_for(ScatterRank0_is_adjoint_Policy(0,workset.numCells),*this);  
-    else
-      Kokkos::parallel_for(ScatterRank0_no_adjoint_Policy(0,workset.numCells),*this);
+    // Get MDField views from std::vector
+    for (int i = 0; i < numFields; i++)
+      val_kokkos[i] = this->val[i].get_view();
+
+    if (loadResid) {
+      Kokkos::parallel_for(PHAL_ScatterResRank0_Policy(0,workset.numCells),*this);
+      cudaCheckError();
+    }
+
+    if (workset.is_adjoint) {
+      Kokkos::parallel_for(PHAL_ScatterJacRank0_Adjoint_Policy(0,workset.numCells),*this);  
+      cudaCheckError();
+    }
+    else {
+      Kokkos::parallel_for(PHAL_ScatterJacRank0_Policy(0,workset.numCells),*this);
+      cudaCheckError();
+    }
   }
   else  if (this->tensorRank == 1) {
-    if (workset.is_adjoint) 
-      Kokkos::parallel_for(ScatterRank1_is_adjoint_Policy(0,workset.numCells),*this);
-    else
-      Kokkos::parallel_for(ScatterRank1_no_adjoint_Policy(0,workset.numCells),*this);
+    if (loadResid) {
+      Kokkos::parallel_for(PHAL_ScatterResRank1_Policy(0,workset.numCells),*this);
+      cudaCheckError();
+    }
+
+    if (workset.is_adjoint) {
+      Kokkos::parallel_for(PHAL_ScatterJacRank1_Adjoint_Policy(0,workset.numCells),*this);
+      cudaCheckError();
+    }
+    else {
+      Kokkos::parallel_for(PHAL_ScatterJacRank1_Policy(0,workset.numCells),*this);
+      cudaCheckError();
+    }
   }
   else if (this->tensorRank == 2) {
-    if (workset.is_adjoint) 
-      Kokkos::parallel_for(ScatterRank2_is_adjoint_Policy(0,workset.numCells),*this);
-    else
-      Kokkos::parallel_for(ScatterRank2_no_adjoint_Policy(0,workset.numCells),*this);
+    numDims = this->valTensor.dimension(2);
+
+    if (loadResid) {
+      Kokkos::parallel_for(PHAL_ScatterResRank2_Policy(0,workset.numCells),*this);
+      cudaCheckError();
+    }
+
+    if (workset.is_adjoint) {
+      Kokkos::parallel_for(PHAL_ScatterJacRank2_Adjoint_Policy(0,workset.numCells),*this);
+    }
+    else {
+      Kokkos::parallel_for(PHAL_ScatterJacRank2_Policy(0,workset.numCells),*this);
+      cudaCheckError();
+    }
   }
 
 #ifdef ALBANY_TIMER
@@ -577,8 +639,8 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
   Teuchos::RCP<Tpetra_MultiVector> fpT = workset.fpT;
 
-  int numDim = 0;
-  if (this->tensorRank == 2) numDim = this->valTensor[0].dimension(2);
+  int numDims = 0;
+  if (this->tensorRank == 2) numDims = this->valTensor.dimension(2);
 
   for (std::size_t cell = 0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> >&
@@ -589,7 +651,7 @@ evaluateFields(typename Traits::EvalData workset)
         typename PHAL::Ref<ScalarT const>::type valref = (
             this->tensorRank == 0 ? this->val[eq] (cell, node) :
             this->tensorRank == 1 ? this->valVec (cell, node, eq) :
-            this->valTensor[0] (cell, node, eq / numDim, eq % numDim));
+            this->valTensor (cell, node, eq / numDims, eq % numDims));
 
         const LO row = nodeID[node][this->offset + eq];
 
@@ -632,7 +694,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   if(workset.local_Vp[0].size() == 0) return; //In case the parameter has not been gathered, e.g. parameter is used only in Dirichlet conditions.
 
-  int numDim= (this->tensorRank==2) ? this->valTensor[0].dimension(2) : 0;
+  int numDims= (this->tensorRank==2) ? this->valTensor.dimension(2) : 0;
 
   if (trans) {
     const int neq = workset.wsElNodeEqID[0][0].size(); 
@@ -649,7 +711,7 @@ evaluateFields(typename Traits::EvalData workset)
               typename PHAL::Ref<ScalarT const>::type
                         valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                                   this->tensorRank == 1 ? this->valVec(cell,node,eq) :
-                                  this->valTensor[0](cell,node, eq/numDim, eq%numDim));
+                                  this->valTensor(cell,node, eq/numDims, eq%numDims));
               val += valref.dx(i)*local_Vp[node*neq+eq+this->offset][col];  //numField can be less then neq
             }
           }
@@ -673,7 +735,7 @@ evaluateFields(typename Traits::EvalData workset)
           typename PHAL::Ref<ScalarT const>::type
                     valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                               this->tensorRank == 1 ? this->valVec(cell,node,eq) :
-                              this->valTensor[0](cell,node, eq/numDim, eq%numDim));
+                              this->valTensor(cell,node, eq/numDims, eq%numDims));
           const int row = nodeID[node][this->offset + eq];
           for (int col=0; col<num_cols; col++) {
             double val = 0.0;
@@ -706,7 +768,7 @@ evaluateFields(typename Traits::EvalData workset)
   bool trans = workset.transpose_dist_param_deriv;
   int num_cols = workset.VpT->getNumVectors();
 
-  int numDim= (this->tensorRank==2) ? this->valTensor[0].dimension(2) : 0;
+  int numDims= (this->tensorRank==2) ? this->valTensor.dimension(2) : 0;
 
   if (trans) {
     const int neq = workset.wsElNodeEqID[0][0].size();
@@ -735,7 +797,7 @@ evaluateFields(typename Traits::EvalData workset)
               typename PHAL::Ref<ScalarT const>::type
                         valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                                   this->tensorRank == 1 ? this->valVec(cell,node,eq) :
-                                  this->valTensor[0](cell,node, eq/numDim, eq%numDim));
+                                  this->valTensor(cell,node, eq/numDims, eq%numDims));
               val += valref.dx(i)*local_Vp[node*neq+eq+this->offset][col];  //numField can be less then neq
             }
           }
@@ -759,7 +821,7 @@ evaluateFields(typename Traits::EvalData workset)
           typename PHAL::Ref<ScalarT const>::type
                     valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                               this->tensorRank == 1 ? this->valVec(cell,node,eq) :
-                              this->valTensor[0](cell,node, eq/numDim, eq%numDim));
+                              this->valTensor(cell,node, eq/numDims, eq%numDims));
           const int row = nodeID[node][this->offset + eq];
           for (int col=0; col<num_cols; col++) {
             double val = 0.0;
@@ -794,9 +856,9 @@ evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
 
-  int numDim=0;
+  int numDims=0;
   if(this->tensorRank==2)
-    numDim = this->valTensor[0].dimension(2);
+    numDims = this->valTensor.dimension(2);
 
   int nblock = f->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -808,7 +870,7 @@ evaluateFields(typename Traits::EvalData workset)
         typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
-                    this->valTensor[0](cell,node, eq/numDim, eq%numDim));
+                    this->valTensor(cell,node, eq/numDims, eq%numDims));
 
         for (int block=0; block<nblock; block++)
           (*f)[block][nodeID[node][this->offset + eq]] += valptr.coeff(block);
@@ -846,9 +908,9 @@ evaluateFields(typename Traits::EvalData workset)
   int nblock_jac = Jac->size();
   double c; // use double since it goes into CrsMatrix
 
-  int numDim=0;
+  int numDims=0;
   if(this->tensorRank==2)
-    numDim = this->valTensor[0].dimension(2);
+    numDims = this->valTensor.dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -859,7 +921,7 @@ evaluateFields(typename Traits::EvalData workset)
         typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
-                    this->valTensor[0](cell,node, eq/numDim, eq%numDim));
+                    this->valTensor(cell,node, eq/numDims, eq%numDims));
 
         row = nodeID[node][this->offset + eq];
         int neq = nodeID[node].size();
@@ -934,9 +996,9 @@ evaluateFields(typename Traits::EvalData workset)
                        "One of sg_f, sg_JV, or sg_fp must be non-null! " <<
                        std::endl);
 
-  int numDim=0;
+  int numDims=0;
   if(this->tensorRank==2)
-    numDim = this->valTensor[0].dimension(2);
+    numDims = this->valTensor.dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -946,7 +1008,7 @@ evaluateFields(typename Traits::EvalData workset)
         typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
-                    this->valTensor[0](cell,node, eq/numDim, eq%numDim));
+                    this->valTensor(cell,node, eq/numDims, eq%numDims));
 
         int row = nodeID[node][this->offset + eq];
 
@@ -990,9 +1052,9 @@ evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
 
-  int numDim=0;
+  int numDims=0;
   if(this->tensorRank==2)
-    numDim = this->valTensor[0].dimension(2);
+    numDims = this->valTensor.dimension(2);
 
   int nblock = f->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -1004,7 +1066,7 @@ evaluateFields(typename Traits::EvalData workset)
         typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
-                    this->valTensor[0](cell,node, eq/numDim, eq%numDim));
+                    this->valTensor(cell,node, eq/numDims, eq%numDims));
         for (int block=0; block<nblock; block++)
           (*f)[block][nodeID[node][this->offset + eq]] += valptr.coeff(block);
       }
@@ -1044,9 +1106,9 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::Array<double> val(nunk); // use double since it goes into CrsMatrix
   Teuchos::Array<int> col(nunk);
 
-  int numDim=0;
+  int numDims=0;
   if(this->tensorRank==2)
-    numDim = this->valTensor[0].dimension(2);
+    numDims = this->valTensor.dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -1057,7 +1119,7 @@ evaluateFields(typename Traits::EvalData workset)
         typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
-                    this->valTensor[0](cell,node, eq/numDim, eq%numDim));
+                    this->valTensor(cell,node, eq/numDims, eq%numDims));
 
         row = nodeID[node][this->offset + eq];
 
@@ -1140,9 +1202,9 @@ evaluateFields(typename Traits::EvalData workset)
                        "One of mp_f, mp_JV, or mp_fp must be non-null! " <<
                        std::endl);
 
-  int numDim=0;
+  int numDims=0;
   if(this->tensorRank==2)
-    numDim = this->valTensor[0].dimension(2);
+    numDims = this->valTensor.dimension(2);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -1152,7 +1214,7 @@ evaluateFields(typename Traits::EvalData workset)
         typename PHAL::Ref<ScalarT const>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
-                    this->valTensor[0](cell,node, eq/numDim, eq%numDim));
+                    this->valTensor(cell,node, eq/numDims, eq%numDims));
 
         int row = nodeID[node][this->offset + eq];
 
