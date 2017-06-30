@@ -193,7 +193,9 @@ Albany::PiroObserverT::observeSolutionImpl(
       this->observeResponse(defaultStamp, Teuchos::rcpFromRef(solution), Teuchos::rcpFromRef(solution_dot), 
                             Teuchos::rcpFromRef(solution_dotdot));
    }
+#ifdef DEBUG_OUTPUT
   ah++; 
+#endif
 }
 
 
