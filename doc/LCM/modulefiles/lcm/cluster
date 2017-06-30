@@ -4,7 +4,7 @@ module-whatis "LCM cluster base environment"
 
 setenv LCM_ENV_TYPE cluster
 
-module purge
+#module purge
 
 # 1) sntools/master                           4) intel/intel-17.0.2.174                   7) openmpi-intel/1.10
 # 2) sierra-python/2.7.4                      5) sierra-mkl/17.0.2                        8) sierra-mpi/openmpi/1.10
