@@ -13,6 +13,11 @@
 
 #include <cstddef>
 
+//#define DEBUG_OUTPUT
+#ifdef DEBUG_OUTPUT
+int ah; 
+#endif
+
 Albany::PiroObserverT::PiroObserverT(
     const Teuchos::RCP<Albany::Application> &app, 
     Teuchos::RCP<const Thyra::ModelEvaluator<double>> model) :
@@ -20,6 +25,7 @@ Albany::PiroObserverT::PiroObserverT(
   model_(model), 
   out(Teuchos::VerboseObjectBase::getDefaultOStream())
   {
+    ah = 0; 
     observe_responses_ = false; 
     if ((app->observeResponses() == true) && (model_ != Teuchos::null)) 
       observe_responses_ = true;
@@ -165,7 +171,14 @@ Albany::PiroObserverT::observeSolutionImpl(
     tpetraFromThyra(solution_dot);
   const Teuchos::RCP<const Tpetra_Vector> solution_dotdot_tpetra =
     tpetraFromThyra(solution_dotdot);
-
+#ifdef DEBUG_OUTPUT
+  std::cout << "IKT observing solution time = " << defaultStamp << std::endl; 
+  char name[100];  //create string for file name
+  sprintf(name, "solution%i.mm", ah);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, solution_tpetra);
+  sprintf(name, "solution_dot%i.mm", ah);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, solution_dot_tpetra);
+#endif
   this->observeTpetraSolutionImpl(
       *solution_tpetra,
       solution_dot_tpetra.ptr(),
@@ -178,6 +191,7 @@ Albany::PiroObserverT::observeSolutionImpl(
       this->observeResponse(defaultStamp, Teuchos::rcpFromRef(solution), Teuchos::rcpFromRef(solution_dot), 
                             Teuchos::rcpFromRef(solution_dotdot));
    }
+  ah++; 
 }
 
 
