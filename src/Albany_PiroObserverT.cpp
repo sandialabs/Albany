@@ -25,7 +25,9 @@ Albany::PiroObserverT::PiroObserverT(
   model_(model), 
   out(Teuchos::VerboseObjectBase::getDefaultOStream())
   {
+#ifdef DEBUG_OUTPUT
     ah = 0; 
+#endif
     observe_responses_ = false; 
     if ((app->observeResponses() == true) && (model_ != Teuchos::null)) 
       observe_responses_ = true;
