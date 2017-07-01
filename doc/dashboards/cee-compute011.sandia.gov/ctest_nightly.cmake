@@ -67,16 +67,16 @@ else ()
   set (CLEAN_BUILD FALSE)
   set (BUILD_SCOREC FALSE)
   set (BUILD_TRILINOS FALSE)
-  set (BUILD_PERIDIGM FALSE)
+  set (BUILD_PERIDIGM TRUE)
   set (BUILD_ALB32 FALSE)
   set (BUILD_ALB64 FALSE)
   set (BUILD_TRILINOSCLANG FALSE)
   set (BUILD_ALB64CLANG FALSE)
   set (BUILD_ALBFUNCTOR FALSE)
-  set (BUILD_INTEL_TRILINOS TRUE)
-  set (BUILD_INTEL_ALBANY TRUE)
-#  set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
-  set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
+  set (BUILD_INTEL_TRILINOS FALSE)
+  set (BUILD_INTEL_ALBANY FALSE)
+  set (CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
+#  set (CTEST_BUILD_CONFIGURATION  Debug) # What type of build do you want ?
 endif ()
 
 set (extra_cxx_flags "")
