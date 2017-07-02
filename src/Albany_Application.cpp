@@ -1603,8 +1603,10 @@ computeGlobalResidualT(
   // Create non-owning RCPs to Tpetra objects
   // to be passed to the implementation
   // IKT, 6/30/17: modified the following line; 
-  // uncomment to try Tempus + SDBCs.  WIP.  
+  // uncomment to try Tempus + SDBCs.  WIP. 
+#ifdef ALBANY_LCM 
   //this->computeGlobalResidualTempusSDBCsImplT( 
+#endif
   this->computeGlobalResidualImplT(
       current_time,
       Teuchos::rcp(xdotT, false),
