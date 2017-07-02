@@ -66,8 +66,8 @@ ANONYMOUS:
           #Maximum Number of Stepper Failures: 10
           #Maximum Number of Consecutive Stepper Failures: 5
       Tempus Stepper:
-        Stepper Type: 'Newmark Beta'
-        Newmark Beta Parameters:
+        Stepper Type: 'Newmark Implicit a-Form'
+        Newmark Parameters:
           Beta: 0.25
           Gamma: 0.50
         Solver Name: Demo Solver
