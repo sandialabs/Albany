@@ -641,10 +641,17 @@ SchwarzLoop() const
         Thyra::ModelEvaluatorBase::InArgs<ST> &
         in_args = sub_inargs_[subdomain];
 
+        // Propagate previous solution if this is not the first step
+        if (stop > 0) {
+          in_args.set_x(solutions_[subdomain]);
+        }
+
         Thyra::ModelEvaluatorBase::OutArgs<ST> &
         out_args = sub_outargs_[subdomain];
 
         solver.evalModel(in_args, out_args);
+
+        solutions_[subdomain] = in_args.get_x();
 
         // After solve, get info to check convergence
         Teuchos::RCP<SolutionSniffer>
