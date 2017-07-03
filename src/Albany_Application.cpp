@@ -66,6 +66,7 @@
 #endif // ALBANY_LCM
 
 //#define WRITE_TO_MATRIX_MARKET
+//#define DEBUG_OUTPUT
 
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
@@ -78,6 +79,7 @@ using Teuchos::rcpFromRef;
 int countJac; //counter which counts instances of Jacobian (for debug output)
 int countRes; //counter which counts instances of residual (for debug output)
 int countScale;
+double previous_time; 
 
 extern bool TpetraBuild;
 
@@ -102,6 +104,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   buildProblem();
   createDiscretization();
   finalSetUp(params, initial_guess);
+  previous_time = 0.0; 
 }
 
 Albany::Application::
@@ -117,6 +120,7 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
 #endif
+  previous_time = 0.0; 
 }
 
 namespace {
@@ -548,9 +552,7 @@ void Albany::Application::initialSetUp(
         std::endl << "Error in Albany::Application constructor:  " <<
         "Invalid Parameter Compute Jacobian Condition Number.  Acceptable values are -1, 0, 1, 2, ... " << std::endl);
   }
-  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0
-      || computeJacCondNum != 0)
-    countJac = 0; //initiate counter that counts instances of Jacobian matrix to 0
+  countJac = 0; //initiate counter that counts instances of Jacobian matrix to 0
   countRes = 0; //initiate counter that counts instances of residual vector to 0
 
   //FIXME: call setScaleBCDofs only on first step rather than at every Newton step.
@@ -1764,6 +1766,11 @@ computeGlobalJacobianImplT(const double alpha,
       loadBasicWorksetInfoT(workset,
           paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
     }
+   
+#ifdef DEBUG_OUTPUT 
+    *out << "IKT countJac = " << countJac << ", computeGlobalJacobian workset.xT = \n"; 
+    (workset.xT)->describe(*out, Teuchos::VERB_EXTREME); 
+#endif
 
     workset.fT = overlapped_fT;
     workset.JacT = overlapped_jacT;
@@ -5862,6 +5869,8 @@ computeGlobalResidualTempusSDBCsImplT(
   postRegSetup("Residual");
 
   //IKT, FIXME, 6/30/17: add error throwing if scale != 1.0 
+  
+  bool begin_time_step = false; 
 
   // Load connectivity map and coordinates
   WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int>>>>::type const &
@@ -5949,8 +5958,7 @@ computeGlobalResidualTempusSDBCsImplT(
   {
     if (Teuchos::nonnull(rc_mgr)) rc_mgr->init_x_if_not(xT->getMap());
 
-    PHAL::Workset
-    workset;
+    PHAL::Workset workset;
 
     if (!paramLib->isParameter("Time")) {
       loadBasicWorksetInfoT(workset, current_time);
@@ -5959,11 +5967,23 @@ computeGlobalResidualTempusSDBCsImplT(
       loadBasicWorksetInfoT(workset,
           paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
     }
+ 
+#ifdef DEBUG_OUTPUT 
+    *out << "IKT previous_time, current_time = " << previous_time << ", " << current_time << "\n"; 
+#endif
+    //Check if previous_time is same as current_time.  If not, we are at the start 
+    //of a new time step, so we set boolean parameter to true. 
+    if (previous_time != current_time) begin_time_step = true;  
 
     workset.fT = overlapped_fT;
 
     for (int ws = 0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
+     
+#ifdef DEBUG_OUTPUT 
+      *out << "IKT countRes = " << countRes << ", computeGlobalResid workset.xT = \n "; 
+      (workset.xT)->describe(*out, Teuchos::VERB_EXTREME); 
+#endif
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(
@@ -5989,6 +6009,7 @@ computeGlobalResidualTempusSDBCsImplT(
 #endif
       }
     }
+    previous_time = current_time; 
     // workset.wsElNodeEqID_kokkos =Kokkos:: View<int****,
     // PHX::Device ("wsElNodeEqID_kokkos",workset. wsElNodeEqID.size(),
     // workset. wsElNodeEqID[0].size(), workset. wsElNodeEqID[0][0].size());
@@ -6036,18 +6057,11 @@ computeGlobalResidualTempusSDBCsImplT(
 #endif
 
     // FillType template argument used to specialize Sacado
-    //std::cout << "IKT before dfm workset.xT = " << std::endl; 
-    //(workset.xT)->describe(*out, Teuchos::VERB_EXTREME); 
-    //std::cout << "IKT before dfm workset.fT = " << std::endl; 
-    //(workset.fT)->describe(*out, Teuchos::VERB_EXTREME); 
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     xT_post_SDBCs = Teuchos::rcp(new Tpetra_Vector(*workset.xT)); 
-    //std::cout << "IKT after dfm workset.xT = " << std::endl; 
-    //(workset.xT)->describe(*out, Teuchos::VERB_EXTREME); 
-    //std::cout << "IKT after dfm workset.fT = " << std::endl; 
-    //(workset.fT)->describe(*out, Teuchos::VERB_EXTREME); 
   }
 
+  //if (begin_time_step == true) {
   if (countRes == 0) {
     // Zero out overlapped residual - Tpetra
     overlapped_fT->putScalar(0.0);
@@ -6066,11 +6080,12 @@ computeGlobalResidualTempusSDBCsImplT(
 
     for (int ws = 0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
-      //std::cout << "IKT xT_post_SDBCs = " << std::endl; 
-      //xT_post_SDBCs->describe(*out, Teuchos::VERB_EXTREME);
       workset.xT = xT_post_SDBCs;  
-      //std::cout << "IKT workset.xT MechanicsResid second eval" << std::endl; 
-      //(workset.xT)->describe(*out, Teuchos::VERB_EXTREME);
+   
+#ifdef DEBUG_OUTPUT 
+      *out << "IKT countRes = " << countRes << ", computeGlobalResid workset.xT = \n "; 
+      (workset.xT)->describe(*out, Teuchos::VERB_EXTREME); 
+#endif
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(
