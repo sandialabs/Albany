@@ -12,5 +12,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/material.yaml
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cube.yaml COPYONLY)
 
-#get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
+if (ALBANY_TEMPUS)
+if (ALBANY_IFPACK2) 
+add_test(Serial_Dynamic_${testName}_NewmarkImplicitDForm_Tempus ${SerialAlbanyT.exe} cube.yaml)
+endif()
+endif()

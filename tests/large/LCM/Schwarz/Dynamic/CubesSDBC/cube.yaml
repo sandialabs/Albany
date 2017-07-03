@@ -4,15 +4,15 @@ ANONYMOUS:
   Scaling: 
     Scale: 1.0000000
   Debug Output: 
-    Write Jacobian to MatrixMarket: -1
-    Write Jacobian to Standard Output: 0
-    Write Residual to MatrixMarket: -1
-    Write Residual to Standard Output: -1
-    Write Solution to MatrixMarket: true
+    #Write Jacobian to MatrixMarket: -1
+    #Write Jacobian to Standard Output: 0
+    #Write Residual to MatrixMarket: -1
+    #Write Residual to Standard Output: -1
+    #Write Solution to MatrixMarket: true
     Write Solution to Standard Output: false
   Problem:
     Name: Mechanics 3D
-    Phalanx Graph Visualization Detail: 1
+    Phalanx Graph Visualization Detail: 0
     MaterialDB Filename: 'material.yaml'
     Solution Method: Transient Tempus
 #    Initial Condition: 
@@ -55,6 +55,11 @@ ANONYMOUS:
     Separate Evaluators by Element Block: true
     Number Of Time Derivatives: 2
     Exodus Write Interval: 1
+  Regression Results: 
+    Number of Comparisons: 3
+    Test Values: [1.149174105616e-01, 0.000000000000e+00, -1.552477683152e-01]
+    Relative Tolerance: 1.0e-7
+    Absolute Tolerance: 1.0e-7
   Piro:
     Tempus: 
       Integrator Name: Tempus Integrator
@@ -92,7 +97,6 @@ ANONYMOUS:
               Method: Full Step
               Full Step:
                 Full Step: 1.0
-            #Nonlinear Solver: Single Step
             Nonlinear Solver: Line Search Based
             Printing:
               Output Precision: 3

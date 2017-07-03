@@ -1066,7 +1066,9 @@ namespace Albany {
 #endif //ALBANY_LCM
 
   protected:
-   
+  
+    bool tempus_newmark_sdbcs_; 
+ 
 #if defined(ALBANY_EPETRA)
     //! Communicator
     Teuchos::RCP<const Epetra_Comm> comm;

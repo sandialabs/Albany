@@ -94,7 +94,8 @@ Application(const RCP<const Teuchos_Comm>& comm_,
     morphFromInit(true), perturbBetaForDirichlets(0.0),
     phxGraphVisDetail(0),
     stateGraphVisDetail(0),
-    params_(params)
+    params_(params), 
+    tempus_newmark_sdbcs_(false)  
 {
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
@@ -115,7 +116,8 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
     shapeParamsHaveBeenReset(false),
     morphFromInit(true), perturbBetaForDirichlets(0.0),
     phxGraphVisDetail(0),
-    stateGraphVisDetail(0)
+    stateGraphVisDetail(0),
+    tempus_newmark_sdbcs_(false) 
 {
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
@@ -259,32 +261,38 @@ void Albany::Application::initialSetUp(
 #ifdef ALBANY_TEMPUS
     solMethod = TransientTempus;
 
-#if defined(DEBUG)
+    // Add NOX pre-post-operator for debugging.
+    bool const
+    have_piro = params->isSublist("Piro");
 
-      // Add NOX pre-post-operator for debugging.
-      bool const
-      have_piro = params->isSublist("Piro");
+    ALBANY_ASSERT(have_piro == true);
 
-      ALBANY_ASSERT(have_piro == true);
+    Teuchos::ParameterList &
+    piro_params = params->sublist("Piro");
 
-      Teuchos::ParameterList &
-      piro_params = params->sublist("Piro");
+    bool const
+    have_tempus = piro_params.isSublist("Tempus");
 
-      bool const
-      have_tempus = piro_params.isSublist("Tempus");
+    ALBANY_ASSERT(have_tempus == true);
 
-      ALBANY_ASSERT(have_tempus == true);
+    Teuchos::ParameterList &
+    tempus_params = piro_params.sublist("Tempus");
 
-      Teuchos::ParameterList &
-      tempus_params = piro_params.sublist("Tempus");
+    bool const
+    have_tempus_stepper = tempus_params.isSublist("Tempus Stepper");
 
-      bool const
-      have_tempus_stepper = tempus_params.isSublist("Tempus Stepper");
+    ALBANY_ASSERT(have_tempus_stepper == true);
 
-      ALBANY_ASSERT(have_tempus_stepper == true);
+    Teuchos::ParameterList &
+    tempus_stepper_params = tempus_params.sublist("Tempus Stepper");
 
-      Teuchos::ParameterList &
-      tempus_stepper_params = tempus_params.sublist("Tempus Stepper");
+    std::string stepper_type = tempus_stepper_params.get<std::string>("Stepper Type");
+    
+    Teuchos::ParameterList nox_params;
+
+    if ((stepper_type == "Newmark Implicit d-Form") || 
+        (stepper_type == "Newmark Implicit a-Form")) 
+    {
 
       bool const
       have_solver_name = tempus_stepper_params.isType<std::string>("Solver Name");
@@ -293,7 +301,7 @@ void Albany::Application::initialSetUp(
 
       std::string const
       solver_name = tempus_stepper_params.get<std::string>("Solver Name");
-
+ 
       Teuchos::ParameterList &
       solver_name_params = tempus_stepper_params.sublist(solver_name);
 
@@ -302,9 +310,31 @@ void Albany::Application::initialSetUp(
 
       ALBANY_ASSERT(have_nox == true);
 
-      Teuchos::ParameterList &
       nox_params = solver_name_params.sublist("NOX");
 
+      std::string nonlinear_solver = nox_params.get<std::string>("Nonlinear Solver");
+ 
+      //Set flag marking that we are running with Tempus + d-Form Newmark + SDBCs.
+      //NOTE: this may need to be extended for other Newmark schemes meant to work with the SDBCs.
+      //This may also need to be extended for LOCA + SDBCs, if misalignment of Jacobian and residual 
+      //is encountered there. 
+      //IKT, 7/3/17, FIXME?  put in logic to check that we are running SDBCs?  That may fit better
+      //elsewhere in the code.
+      if (stepper_type == "Newmark Implicit d-Form") {
+        if (nonlinear_solver == "Line Search Based") {
+          tempus_newmark_sdbcs_ = true;
+        }
+        else {
+          TEUCHOS_TEST_FOR_EXCEPTION(
+              true,
+              std::logic_error,
+              "Newmark Implicit d-Form Stepper Type will not work correctly with 'Nonlinear Solver' = " 
+               << nonlinear_solver << "!  The valid Nonlinear Solver for this scheme is 'Line Search Based'."); 
+        }
+      }
+    }
+
+#if defined(DEBUG)
       bool const
       have_solver_opts = nox_params.isSublist("Solver Options");
 
@@ -499,7 +529,7 @@ void Albany::Application::initialSetUp(
           true,
           Teuchos::Exceptions::InvalidParameter,
           std::endl << "Error in Albany::Application: " <<
-          "Scale BC dofs does not work for QCAD Poisson or Schrodiner problems. " << std::endl);
+          "Scale BC dofs does not work for QCAD Poisson or Schrodinger problems. " << std::endl);
     }
   }
 
@@ -1605,17 +1635,27 @@ computeGlobalResidualT(
   // Create non-owning RCPs to Tpetra objects
   // to be passed to the implementation
   // IKT, 6/30/17: modified the following line; 
-  // uncomment to try Tempus + SDBCs.  WIP. 
-#ifdef ALBANY_LCM 
-  //this->computeGlobalResidualTempusSDBCsImplT( 
+  // uncomment to try Tempus + SDBCs.  WIP.
+  if (tempus_newmark_sdbcs_ == true) { 
+#ifdef ALBANY_LCM
+    this->computeGlobalResidualTempusSDBCsImplT( 
+        current_time,
+        Teuchos::rcp(xdotT, false),
+        Teuchos::rcp(xdotdotT, false),
+        Teuchos::rcpFromRef(xT),
+        p,
+        Teuchos::rcpFromRef(fT));
+  }
 #endif
-  this->computeGlobalResidualImplT(
-      current_time,
-      Teuchos::rcp(xdotT, false),
-      Teuchos::rcp(xdotdotT, false),
-      Teuchos::rcpFromRef(xT),
-      p,
-      Teuchos::rcpFromRef(fT));
+  else {
+    this->computeGlobalResidualImplT(
+        current_time,
+        Teuchos::rcp(xdotT, false),
+        Teuchos::rcp(xdotdotT, false),
+        Teuchos::rcpFromRef(xT),
+        p,
+        Teuchos::rcpFromRef(fT));
+  }
 
   //Debut output
   if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
@@ -5868,8 +5908,12 @@ computeGlobalResidualTempusSDBCsImplT(
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
   postRegSetup("Residual");
 
-  //IKT, FIXME, 6/30/17: add error throwing if scale != 1.0 
-  
+  if (scale != 1.0) {
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+        std::logic_error, "Scaling cannot be used with computeGlobalResidualTempusSDBCsImplT routine!  "
+        << "Please re-run without scaling.");
+  } 
+ 
   bool begin_time_step = false; 
 
   // Load connectivity map and coordinates
@@ -6133,8 +6177,6 @@ computeGlobalResidualTempusSDBCsImplT(
 
       loadWorksetNodesetInfo(workset);
 
-      //IKT, 6/30/17, Question: can StrongDirichletBC evaluator modify xdotT and xdotdotT?
-      //If so, the following needs to change.
       dfm_set(workset, xT_post_SDBCs, xdotT, xdotdotT, rc_mgr);
 
       if (paramLib->isParameter("Time")) {
