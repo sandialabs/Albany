@@ -1433,6 +1433,11 @@ computeGlobalResidualImplT(
     for (int ws = 0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
 
+#ifdef DEBUG_OUTPUT 
+      *out << "IKT countRes = " << countRes << ", computeGlobalResid workset.xT = \n "; 
+      (workset.xT)->describe(*out, Teuchos::VERB_EXTREME); 
+#endif
+
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(
           workset);
