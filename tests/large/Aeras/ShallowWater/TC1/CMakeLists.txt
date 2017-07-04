@@ -53,5 +53,7 @@ add_test(Aeras_${testName}_SlotCyl_explicitHV_nu0_BackwardEuler ${AlbanyT.exe} i
 add_test(Aeras_${testName}_SlotCyl_explicitHV_nu1e17_BackwardEuler ${AlbanyT.exe} input_slotcyl_explHV_nu1e17_BEuler_T.xml)
 
 add_test(Aeras_${testName}_SlotCyl_explicitHV_nu0_RungeKutta4 ${AlbanyT.exe} input_slotcyl_explHV_nu0_RK4_T.xml)
-add_test(Aeras_${testName}_SlotCyl_explicitHV_nu1e17_RungeKutta4 ${AlbanyT.exe} input_slotcyl_explHV_nu1e17_RK4_T.xml)
 
+if (ALBANY_EPETRA)
+add_test(Aeras_${testName}_SlotCyl_explicitHV_nu1e17_RungeKutta4 ${AlbanyT.exe} input_slotcyl_explHV_nu1e17_RK4_T.xml)
+endif() 
