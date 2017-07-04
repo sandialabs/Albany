@@ -34,6 +34,8 @@ class AdvectionProblem : public AbstractProblem {
 
     int spatialDimension() const { return num_dims_; }
 
+    bool useSDBCs() const {return false; }
+
     void buildProblem(
         Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
         StateManager& stateMgr);

@@ -95,7 +95,9 @@ Application(const RCP<const Teuchos_Comm>& comm_,
     phxGraphVisDetail(0),
     stateGraphVisDetail(0),
     params_(params), 
-    tempus_newmark_sdbcs_(false)  
+    tempus_newmark_sdbcs_(false), 
+    requires_sdbcs_(false), 
+    requires_orig_dbcs_(false) 
 {
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
@@ -117,7 +119,9 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
     morphFromInit(true), perturbBetaForDirichlets(0.0),
     phxGraphVisDetail(0),
     stateGraphVisDetail(0),
-    tempus_newmark_sdbcs_(false) 
+    tempus_newmark_sdbcs_(false), 
+    requires_sdbcs_(false), 
+    requires_orig_dbcs_(false) 
 {
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
@@ -321,6 +325,7 @@ void Albany::Application::initialSetUp(
       //IKT, 7/3/17, FIXME?  put in logic to check that we are running SDBCs?  That may fit better
       //elsewhere in the code.
       if (stepper_type == "Newmark Implicit d-Form") {
+        requires_sdbcs_ = true;
         if (nonlinear_solver == "Line Search Based") {
           tempus_newmark_sdbcs_ = true;
         }
@@ -332,6 +337,12 @@ void Albany::Application::initialSetUp(
                << nonlinear_solver << "!  The valid Nonlinear Solver for this scheme is 'Line Search Based'."); 
         }
       }
+      if (stepper_type == "Newmark Implicit a-Form") {
+        requires_orig_dbcs_ = true; 
+      }
+    }
+    else if (stepper_type == "Newmark Explicit a-Form") {
+      requires_orig_dbcs_ = true; 
     }
 
 #if defined(DEBUG)
@@ -659,6 +670,21 @@ void Albany::Application::buildProblem()
 #endif //ALBANY_LCM
 
   problem->buildProblem(meshSpecs, stateMgr);
+
+  if ((requires_sdbcs_ == true) && (problem->useSDBCs() == false)) 
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::logic_error,
+        "Error in Albany::Application: you are using a solver that requires SDBCs yet you are not using SDBCs!\n"); 
+  }
+  if ((requires_orig_dbcs_ == true) && (problem->useSDBCs() == true)) 
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::logic_error,
+        "Error in Albany::Application: you are using a solver that with SDBCs that does not work correctly with them!\n"); 
+  }
 
   neq = problem->numEquations();
   spatial_dimension = problem->spatialDimension();
@@ -1432,6 +1458,11 @@ computeGlobalResidualImplT(
 
     for (int ws = 0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
+
+#ifdef DEBUG_OUTPUT 
+      *out << "IKT countRes = " << countRes << ", computeGlobalResid workset.xT = \n "; 
+      (workset.xT)->describe(*out, Teuchos::VERB_EXTREME); 
+#endif
 
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(

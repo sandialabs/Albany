@@ -1067,7 +1067,11 @@ namespace Albany {
 
   protected:
   
-    bool tempus_newmark_sdbcs_; 
+    bool tempus_newmark_sdbcs_;
+
+    bool requires_sdbcs_;  
+    
+    bool requires_orig_dbcs_;  
  
 #if defined(ALBANY_EPETRA)
     //! Communicator

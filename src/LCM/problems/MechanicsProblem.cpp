@@ -68,6 +68,7 @@ Albany::MechanicsProblem::MechanicsProblem(
       have_peridynamics_(false),
       have_topmod_adaptation_(false),
       have_sizefield_adaptation_(false),
+      use_sdbcs_(false), 
       rc_mgr_(rc_mgr) {
   std::string& method = params->get("Name", "Mechanics ");
   *out << "Problem Name = " << method << '\n';
@@ -311,6 +312,7 @@ Albany::MechanicsProblem::constructDirichletEvaluators(
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(
       meshSpecs.nsNames, dirichletNames, this->params, this->paramLib);
+  use_sdbcs_ = dirUtils.useSDBCs(); 
   offsets_ = dirUtils.getOffsets();
 }
 //------------------------------------------------------------------------------

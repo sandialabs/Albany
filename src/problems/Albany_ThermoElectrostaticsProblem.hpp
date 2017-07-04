@@ -33,6 +33,9 @@ namespace Albany {
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
 
+    //! Get boolean telling code if SDBCs are utilized  
+    virtual bool useSDBCs() const {return false; }
+
     //! Destructor
     ~ThermoElectrostaticsProblem();
 

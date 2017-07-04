@@ -29,6 +29,8 @@ class ThermalProblem : public Albany::AbstractProblem {
     ~ThermalProblem();
 
     int spatialDimension() const { return num_dims; }
+    
+    bool useSDBCs() const {return false; }
 
     void buildProblem(
         ArrayRCP<RCP<Albany::MeshSpecsStruct> > mesh_specs,

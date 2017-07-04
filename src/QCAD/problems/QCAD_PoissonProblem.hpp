@@ -42,6 +42,9 @@ namespace QCAD {
     //! Return number of spatial dimensions
     virtual int spatialDimension() const { return numDim; }
 
+    //! Get boolean telling code if SDBCs are utilized  
+    virtual bool useSDBCs() const {return false; }
+
     //! Build the PDE instantiations, boundary conditions, and initial solution
     virtual void buildProblem(
       Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,

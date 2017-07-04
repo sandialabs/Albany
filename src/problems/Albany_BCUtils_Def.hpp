@@ -28,6 +28,7 @@ plName(const std::string& name) {
   return name.substr(pos + sizeof(decorator) - 1);
 }
 
+
 // DBCs do not depend on each other. However, BCs are not always compatible at
 // corners, and so order of evaluation can matter. Establish an order here. The
 // order is the order the BC is listed in the XML input file.
@@ -114,6 +115,8 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
   using PHX::DataLayout;
   using PHX::MDALayout;
   using PHAL::AlbanyTraits;
+
+  use_sdbcs_ = false; 
 
   if (!haveBCSpecified(
           params)) {  // If the BC sublist is not in the input file,
@@ -268,6 +271,8 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
   using PHX::MDALayout;
   using PHAL::AlbanyTraits;
   using std::string;
+  
+  use_sdbcs_ = false; 
 
   ParameterList BCparams = params->sublist(traits_type::bcParamsPl);
   BCparams.validateParameters(
@@ -428,13 +433,15 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
           traits_type::constructTimeDepStrongDBCName(nodeSetIDs[i], bcNames[j]);
 
       if (BCparams.isSublist(ss)) {
+
+        use_sdbcs_ = true; 
         // grab the sublist
         ParameterList& sub_list = BCparams.sublist(ss);
 
         RCP<ParameterList> p = rcp(new ParameterList);
 
         p->set<int>("Type", traits_type::typeTs);
-
+        
         // Extract the time values into a vector
         p->set<Teuchos::Array<RealType>>(
             "Time Values",
@@ -604,7 +611,7 @@ Albany::BCUtils<Albany::DirichletTraits>::buildEvaluatorsList(
           traits_type::constructStrongDBCName(nodeSetIDs[i], bcNames[j]);
       if (BCparams.isParameter(ss)) {
         RCP<ParameterList> p = rcp(new ParameterList);
-
+        use_sdbcs_ = true; 
         p->set<int>("Type", traits_type::typeSt);
         p->set<RCP<DataLayout>>("Data Layout", dummy);
         p->set<string>("Dirichlet Name", ss);
