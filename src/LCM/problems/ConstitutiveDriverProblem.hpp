@@ -62,7 +62,7 @@ public:
   ///
   virtual bool
   useSDBCs() const {
-    return false; 
+    return use_sdbcs_; 
   }
 
 
@@ -144,6 +144,10 @@ public:
 
   //----------------------------------------------------------------------------
 protected:
+
+  ///
+  ///Boolean marking whether SDBCs are used 
+  bool use_sdbcs_; 
 
   ///
   /// num of dimensions

@@ -16,6 +16,7 @@ ThermoElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 			const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_ + 1),
   haveSource(false),
+  use_sdbcs_(false), 
   numDim(numDim_)
 {
  
@@ -99,6 +100,7 @@ Albany::ThermoElasticityProblem::constructDirichletEvaluators(
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                        this->params, this->paramLib);
+  use_sdbcs_ = dirUtils.useSDBCs(); 
   offsets_ = dirUtils.getOffsets(); 
 }
 

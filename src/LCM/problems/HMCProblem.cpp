@@ -22,6 +22,7 @@ HMCProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 #endif
   Albany::AbstractProblem(params_, paramLib_, numDim_+params_->get("Additional Scales",1)*numDim_*numDim_),
   haveSource(false),
+  use_sdbcs_(false), 
   numDim(numDim_),
   numMicroScales(params_->get("Additional Scales",1))
 {
@@ -121,6 +122,7 @@ Albany::HMCProblem::constructDirichletEvaluators(
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                        this->params, this->paramLib);
+  use_sdbcs_ = dirUtils.useSDBCs(); 
   offsets_ = dirUtils.getOffsets(); 
 }
 
