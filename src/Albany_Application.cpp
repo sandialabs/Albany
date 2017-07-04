@@ -1667,8 +1667,17 @@ computeGlobalResidualT(
   // to be passed to the implementation
   // IKT, 6/30/17: modified the following line; 
   // uncomment to try Tempus + SDBCs.  WIP.
-  if (tempus_newmark_sdbcs_ == true) { 
+  if (tempus_newmark_sdbcs_ == false) {
+    this->computeGlobalResidualImplT(
+        current_time,
+        Teuchos::rcp(xdotT, false),
+        Teuchos::rcp(xdotdotT, false),
+        Teuchos::rcpFromRef(xT),
+        p,
+        Teuchos::rcpFromRef(fT));
+  }
 #ifdef ALBANY_LCM
+  else { 
     this->computeGlobalResidualTempusSDBCsImplT( 
         current_time,
         Teuchos::rcp(xdotT, false),
@@ -1678,15 +1687,6 @@ computeGlobalResidualT(
         Teuchos::rcpFromRef(fT));
   }
 #endif
-  else {
-    this->computeGlobalResidualImplT(
-        current_time,
-        Teuchos::rcp(xdotT, false),
-        Teuchos::rcp(xdotdotT, false),
-        Teuchos::rcpFromRef(xT),
-        p,
-        Teuchos::rcpFromRef(fT));
-  }
 
   //Debut output
   if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
