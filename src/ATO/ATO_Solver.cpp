@@ -1031,10 +1031,10 @@ ATO::Solver::copyObjectiveFromStateMgr( double& g, double* dgdp )
         //    filtered_ObjectiveGradientVecT); exit(1); 
       }
       Teuchos::ArrayRCP<const double> lvec = filtered_ObjectiveGradientVecT->get1dView(); 
-      for (int i=0; i< numLocalNodes; i++) 
+//      for (int i=0; i< numLocalNodes; i++) 
       std::memcpy((void*)(dgdp+ivec*numLocalNodes), lvec.getRawPtr(), numLocalNodes*sizeof(double));
     } else {
-      for (int i=0; i< numLocalNodes; i++) 
+//      for (int i=0; i< numLocalNodes; i++) 
       std::memcpy((void*)(dgdp+ivec*numLocalNodes), lvec.getRawPtr(), numLocalNodes*sizeof(double));
     }
 
@@ -1253,9 +1253,20 @@ ATO::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPara
   if( problemParams.isType<Teuchos::ParameterList>("Parameters") )
     numParameters = problemParams.sublist("Parameters").get<int>("Number of Parameter Vectors");
 
-  int numResponses = 0;
+  int numResponseSpecs = 0;
   if( problemParams.isType<Teuchos::ParameterList>("Response Functions") )
-    numResponses = problemParams.sublist("Response Functions").get<int>("Number of Response Vectors");
+    numResponseSpecs = problemParams.sublist("Response Functions").get<int>("Number of Response Vectors");
+
+  bool separateByBlock=false;
+  Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
+  if(discParams.isType<bool>("Separate Evaluators by Element Block")){
+    separateByBlock = discParams.get<bool>("Separate Evaluators by Element Block");
+  }
+  int numBlocks=1;
+  if(separateByBlock){
+    numBlocks = 
+      problemParams.sublist("Configuration").sublist("Element Blocks").get<int>("Number of Element Blocks");
+  }
 
   ret.params_in = rcp(new EpetraExt::ModelEvaluator::InArgs);
   ret.responses_out = rcp(new EpetraExt::ModelEvaluator::OutArgs);
@@ -1282,29 +1293,41 @@ ATO::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPara
     ret.params_in->set_p(ip,p1);
   }
 
-  for(int ig=0; ig<numResponses; ig++){
+  for(int iResponseSpec=0; iResponseSpec<numResponseSpecs; iResponseSpec++){
     if(ss_num_p > numParameters){
       int ip = ss_num_p-1;
       Teuchos::ParameterList& resParams = 
-        problemParams.sublist("Response Functions").sublist(Albany::strint("Response Vector",ig));
+        problemParams.sublist("Response Functions").sublist(Albany::strint("Response Vector",iResponseSpec));
       std::string gName = resParams.get<std::string>("Response Name");
       std::string dgdpName = resParams.get<std::string>("Response Derivative Name");
-      if(!ret.responses_out->supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, ig, ip).none()){
-        RCP<const Epetra_Vector> p = ret.params_in->get_p(ip);
-        RCP<const Epetra_Vector> g = ret.responses_out->get_g(ig);
-        RCP<Epetra_MultiVector> dgdp = rcp(new Epetra_MultiVector(p->Map(), g->GlobalLength() ));
-        if(ret.responses_out->supports(OUT_ARG_DgDp,ig,ip).supports(DERIV_TRANS_MV_BY_ROW)){
-          Derivative dgdp_out(dgdp, DERIV_TRANS_MV_BY_ROW);
-          ret.responses_out->set_DgDp(ig,ip,dgdp_out);
-        } else 
-          ret.responses_out->set_DgDp(ig,ip,dgdp);
-        responseMap.insert(std::pair<std::string,RCP<const Epetra_Vector> >(gName,g));
-        RCP<const Tpetra_Vector> gT = Petra::EpetraVector_To_TpetraVectorConst(*g, _solverComm); 
-        responseMapT.insert(std::pair<std::string,RCP<const Tpetra_Vector> >(gName, gT));
-        responseDerivMap.insert(std::pair<std::string,RCP<Epetra_MultiVector> >(dgdpName,dgdp));
-        RCP<Tpetra_MultiVector> dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp, _solverComm); 
-        responseDerivMapT.insert(std::pair<std::string,RCP<Tpetra_MultiVector> >(dgdpName, dgdpT));
+ 
+      std::vector<RCP<const Epetra_Vector>> gVector(numBlocks);
+      std::vector<RCP<Epetra_MultiVector>> dgdpVector(numBlocks);
+      std::vector<RCP<const Tpetra_Vector>> gVectorT(numBlocks);
+      std::vector<RCP<Tpetra_MultiVector>> dgdpVectorT(numBlocks);
+      for(int iBlock=0; iBlock<numBlocks; iBlock++){
+        int ig = iResponseSpec*numBlocks + iBlock;
+        if(!ret.responses_out->supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, ig, ip).none()){
+          RCP<const Epetra_Vector> p = ret.params_in->get_p(ip);
+          gVector[iBlock]  = ret.responses_out->get_g(ig);
+          gVectorT[iBlock] = Petra::EpetraVector_To_TpetraVectorConst(*gVector[iBlock], _solverComm); 
+
+          dgdpVector[iBlock]  = rcp(new Epetra_MultiVector(p->Map(), gVector[iBlock]->GlobalLength() ));
+          dgdpVectorT[iBlock] = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdpVector[iBlock], _solverComm); 
+
+          if(ret.responses_out->supports(OUT_ARG_DgDp,ig,ip).supports(DERIV_TRANS_MV_BY_ROW)){
+            Derivative dgdp_out(dgdpVector[iBlock], DERIV_TRANS_MV_BY_ROW);
+            ret.responses_out->set_DgDp(ig,ip,dgdp_out);
+          } else {
+            ret.responses_out->set_DgDp(ig,ip,dgdpVector[iBlock]);
+          }
+        }
       }
+      responseMap.insert(std::pair<std::string,std::vector<RCP<const Epetra_Vector>>>(gName,gVector));
+      responseMapT.insert(std::pair<std::string,std::vector<RCP<const Tpetra_Vector>>>(gName, gVectorT));
+
+      responseDerivMap.insert(std::pair<std::string,std::vector<RCP<Epetra_MultiVector>>>(dgdpName,dgdpVector));
+      responseDerivMapT.insert(std::pair<std::string,std::vector<RCP<Tpetra_MultiVector>>>(dgdpName, dgdpVectorT));
     }
   }
 
@@ -1320,20 +1343,30 @@ void
 ATO::Solver::updateTpetraResponseMaps()
 /******************************************************************************/
 {
-  std::map<std::string, Teuchos::RCP<const Epetra_Vector> >::const_iterator git;
+  std::map<std::string, std::vector<Teuchos::RCP<const Epetra_Vector>>>::const_iterator git;
   git = responseMap.cbegin();  
   for (int i = 0; i<responseMap.size(); i++) {
     std::string gName = git->first;
-    Teuchos::RCP<const Tpetra_Vector> gT = Petra::EpetraVector_To_TpetraVectorConst(*(git->second), _solverComm); 
-    responseMapT[gName] = gT;
+    std::vector<Teuchos::RCP<const Epetra_Vector>> gVector = git->second;
+    int numVectors = gVector.size();
+    for(int iVector=0; iVector<numVectors; iVector++){
+      Teuchos::RCP<const Tpetra_Vector> 
+        gT = Petra::EpetraVector_To_TpetraVectorConst(*gVector[iVector], _solverComm); 
+      responseMapT[gName][iVector] = gT;
+    }
     git++; 
   }
-  std::map<std::string, Teuchos::RCP<Epetra_MultiVector> >::const_iterator git2;
+  std::map<std::string, std::vector<Teuchos::RCP<Epetra_MultiVector>>>::const_iterator git2;
   git2 = responseDerivMap.cbegin();  
   for (int i = 0; i<responseDerivMap.size(); i++) {
     std::string gName = git2->first; 
-    Teuchos::RCP<Tpetra_MultiVector> dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*(git2->second), _solverComm); 
-    responseDerivMapT[gName] = dgdpT;
+    std::vector<Teuchos::RCP<Epetra_MultiVector>> dgdpVector = git2->second;
+    int numVectors = dgdpVector.size();
+    for(int iVector=0; iVector<numVectors; iVector++){
+      Teuchos::RCP<Tpetra_MultiVector> 
+        dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdpVector[iVector], _solverComm); 
+      responseDerivMapT[gName][iVector] = dgdpT;
+    }
     git2++; 
   }
 }

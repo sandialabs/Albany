@@ -28,6 +28,8 @@ InternalEnergyResponse(Teuchos::ParameterList& p,
   ATO::PenaltyModelFactory<ScalarT> penaltyFactory;
   penaltyModel = penaltyFactory.create(p, dl, meshSpecs->ebName);
 
+  elementBlockName = meshSpecs->ebName;
+
   Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem =
     p.get< Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
 
@@ -127,9 +129,10 @@ template<typename EvalT, typename Traits>
 void ATO::InternalEnergyResponse<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
   // Zero out local response
   PHAL::set(this->local_response_eval, 0.0);
+
+  if(elementBlockName != workset.EBName) return;
 
   std::vector<int> dims;
   penaltyModel->getFieldDimensions(dims);

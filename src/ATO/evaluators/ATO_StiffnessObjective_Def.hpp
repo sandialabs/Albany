@@ -125,6 +125,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
 
   if(m_excludeBlock) return;
+  if(elementBlockName != workset.EBName) return;
 
   int nTopos = topologies->size();
 

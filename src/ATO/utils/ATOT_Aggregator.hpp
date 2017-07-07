@@ -41,8 +41,8 @@ public:
 
   virtual void SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems){};
   virtual void SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,
-                                 const std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > valueMap,
-                                 const std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > derivMap){};
+                                 const std::map<std::string, std::vector<Teuchos::RCP<const Tpetra_Vector>>> valueMap,
+                                 const std::map<std::string, std::vector<Teuchos::RCP<Tpetra_MultiVector>>> derivMap){};
   void SetCommunicator(const Teuchos::RCP<const Teuchos_Comm>& _comm){comm = _comm;}
   void SetOutputVariablesT(Teuchos::RCP<double> g, Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > derivT)
          {valueAggregated = g; derivAggregatedT = derivT;}
@@ -90,14 +90,16 @@ class Aggregator_DistParamBased : public virtual Aggregator {
  public:
   Aggregator_DistParamBased(){}
   void SetInputVariablesT(const std::vector<SolverSubSolver>& subProblems,
-                          const std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > valueMap,
-                          const std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > derivMap);
+                          const std::map<std::string, std::vector<Teuchos::RCP<const Tpetra_Vector>>> valueMap,
+                          const std::map<std::string, std::vector<Teuchos::RCP<Tpetra_MultiVector>>> derivMap);
  protected:
-  typedef struct { std::string name; Teuchos::RCP<const Tpetra_Vector> value; } SubValueT;
-  typedef struct { std::string name; Teuchos::RCP<Tpetra_MultiVector> value; } SubDerivativeT;
+  typedef struct { std::string name; std::vector<Teuchos::RCP<const Tpetra_Vector>> value; } SubValueT;
+  typedef struct { std::string name; std::vector<Teuchos::RCP<Tpetra_MultiVector>> value; } SubDerivativeT;
 
   std::vector<SubValueT> valuesT;
   std::vector<SubDerivativeT> derivativesT;
+
+  double sum(std::vector<Teuchos::RCP<const Tpetra_Vector>> valVector, int index);
 };
 /******************************************************************************/
 

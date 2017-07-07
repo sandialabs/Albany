@@ -227,8 +227,8 @@ Teuchos::RCP<double> constraintValue;
 Teuchos::RCP<Tpetra_Import> importerT;
 Teuchos::RCP<Tpetra_Export> exporterT;
 
-std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > responseMapT;
-std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > responseDerivMapT;
+std::map<std::string, std::vector<Teuchos::RCP<const Tpetra_Vector>>> responseMapT;
+std::map<std::string, std::vector<Teuchos::RCP<Tpetra_MultiVector>>> responseDerivMapT;
 
 
 // methods

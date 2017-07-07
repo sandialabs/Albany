@@ -1504,10 +1504,8 @@ ATOT::Solver::copyObjectiveFromStateMgr( double& g, double* dgdp )
         //    filtered_ObjectiveGradientVecT); exit(1); 
       }
       Teuchos::ArrayRCP<const double> lvec = filtered_ObjectiveGradientVecT->get1dView(); 
-      for (int i=0; i< numLocalNodes; i++) 
       std::memcpy((void*)(dgdp+ivec*numLocalNodes), lvec.getRawPtr(), numLocalNodes*sizeof(double));
     } else {
-      for (int i=0; i< numLocalNodes; i++) 
       std::memcpy((void*)(dgdp+ivec*numLocalNodes), lvec.getRawPtr(), numLocalNodes*sizeof(double));
     }
     
@@ -1719,9 +1717,20 @@ ATOT::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPar
   if( problemParams.isType<Teuchos::ParameterList>("Parameters") )
     numParameters = problemParams.sublist("Parameters").get<int>("Number of Parameter Vectors");
 
-  int numResponses = 0;
+  int numResponseSpecs = 0;
   if( problemParams.isType<Teuchos::ParameterList>("Response Functions") )
-    numResponses = problemParams.sublist("Response Functions").get<int>("Number of Response Vectors");
+    numResponseSpecs = problemParams.sublist("Response Functions").get<int>("Number of Response Vectors");
+
+  bool separateByBlock=false;
+  Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
+  if(discParams.isType<bool>("Separate Evaluators by Element Block")){
+    separateByBlock = discParams.get<bool>("Separate Evaluators by Element Block");
+  }
+  int numBlocks=1;
+  if(separateByBlock){
+    numBlocks =
+      problemParams.sublist("Configuration").sublist("Element Blocks").get<int>("Number of Element Blocks");
+  }
 
   ret.params_inT = rcp(new Thyra::ModelEvaluatorBase::InArgs<ST>);
   ret.responses_outT = rcp(new Thyra::ModelEvaluatorBase::OutArgs<ST>);
@@ -1747,31 +1756,38 @@ ATOT::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPar
     ret.params_inT->set_p(ip,p1);
   }
   
-  for(int ig=0; ig<numResponses; ig++){
+  for(int iResponseSpec=0; iResponseSpec<numResponseSpecs; iResponseSpec++){
     if(ss_num_p > numParameters){
       int ip = ss_num_p-1;
       Teuchos::ParameterList& resParams = 
-        problemParams.sublist("Response Functions").sublist(Albany::strint("Response Vector",ig));
+        problemParams.sublist("Response Functions").sublist(Albany::strint("Response Vector",iResponseSpec));
       std::string gName = resParams.get<std::string>("Response Name");
       std::string dgdpName = resParams.get<std::string>("Response Derivative Name");
-      if (!ret.responses_outT->supports(Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, ig, ip).none()){
-        RCP<const Thyra::VectorBase<ST>> g = ret.responses_outT->get_g(ig);
-        //IKT, FIXME? conversions from Thyra to Tpetra should not be necessary, but there does 
-        //not appear to be a routine in Thyra to get the space of a Thyra vector or the vector's 
-        //global length. 
-        RCP<const Tpetra_Vector> g_tpetra = ConverterT::getConstTpetraVector(g); 
-        Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > p_space = ret.modelT->get_p_space(ip); 
-        RCP<Thyra::MultiVectorBase<ST>> dgdp = Thyra::createMembers(p_space, g_tpetra->getGlobalLength()); 
-        if(ret.responses_outT->supports(OUT_ARG_DgDp,ig,ip).supports(DERIV_TRANS_MV_BY_ROW)){
-          Derivative<ST> dgdp_out(dgdp, DERIV_TRANS_MV_BY_ROW);
-          ret.responses_outT->set_DgDp(ig,ip,dgdp_out);
-        } 
-        else 
-          ret.responses_outT->set_DgDp(ig,ip,dgdp);
-        RCP<const Tpetra_Vector> gT = ConverterT::getConstTpetraVector(g);
-        responseMapT.insert(std::pair<std::string,RCP<const Tpetra_Vector> >(gName, gT));
-        RCP<Tpetra_MultiVector> dgdpT = ConverterT::getTpetraMultiVector(dgdp);
-        responseDerivMapT.insert(std::pair<std::string,RCP<Tpetra_MultiVector> >(dgdpName, dgdpT)); 
+
+      std::vector<RCP<const Tpetra_Vector>> gVectorT(numBlocks);
+      std::vector<RCP<Tpetra_MultiVector>> dgdpVectorT(numBlocks);
+      for(int iBlock=0; iBlock<numBlocks; iBlock++){
+        int ig = iResponseSpec*numBlocks + iBlock;
+        if (!ret.responses_outT->supports(Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, ig, ip).none()){
+          RCP<const Thyra::VectorBase<ST>> g = ret.responses_outT->get_g(ig);
+          //IKT, FIXME? conversions from Thyra to Tpetra should not be necessary, but there does 
+          //not appear to be a routine in Thyra to get the space of a Thyra vector or the vector's 
+          //global length. 
+          RCP<const Tpetra_Vector> g_tpetra = ConverterT::getConstTpetraVector(g); 
+          Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > p_space = ret.modelT->get_p_space(ip); 
+          RCP<Thyra::MultiVectorBase<ST>> dgdp = Thyra::createMembers(p_space, g_tpetra->getGlobalLength()); 
+          if(ret.responses_outT->supports(OUT_ARG_DgDp,ig,ip).supports(DERIV_TRANS_MV_BY_ROW)){
+            Derivative<ST> dgdp_out(dgdp, DERIV_TRANS_MV_BY_ROW);
+            ret.responses_outT->set_DgDp(ig,ip,dgdp_out);
+          } 
+          else 
+            ret.responses_outT->set_DgDp(ig,ip,dgdp);
+
+          gVectorT[iBlock] = ConverterT::getConstTpetraVector(g);
+          dgdpVectorT[iBlock] = ConverterT::getTpetraMultiVector(dgdp);
+        }
+        responseMapT.insert(std::pair<std::string,std::vector<RCP<const Tpetra_Vector>>>(gName, gVectorT));
+        responseDerivMapT.insert(std::pair<std::string,std::vector<RCP<Tpetra_MultiVector>>>(dgdpName, dgdpVectorT)); 
       }
     }
   }

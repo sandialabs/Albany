@@ -220,10 +220,10 @@ namespace ATO {
     Teuchos::RCP<Tpetra_Import> importerT;
     Teuchos::RCP<Tpetra_Export> exporterT;
 
-    std::map<std::string, Teuchos::RCP<const Epetra_Vector> > responseMap;
-    std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > responseDerivMap;
-    std::map<std::string, Teuchos::RCP<const Tpetra_Vector> > responseMapT;
-    std::map<std::string, Teuchos::RCP<Tpetra_MultiVector> > responseDerivMapT;
+    std::map<std::string, std::vector<Teuchos::RCP<const Epetra_Vector>>> responseMap;
+    std::map<std::string, std::vector<Teuchos::RCP<Epetra_MultiVector>>> responseDerivMap;
+    std::map<std::string, std::vector<Teuchos::RCP<const Tpetra_Vector>>> responseMapT;
+    std::map<std::string, std::vector<Teuchos::RCP<Tpetra_MultiVector>>> responseDerivMapT;
 
 
     // methods
