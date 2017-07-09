@@ -7,6 +7,10 @@
 # Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/cube.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube-loca-time-dept-bc-sdbcs.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/cube-loca-time-dept-bc-sdbcs.yaml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube-loca-time-dept-bc-dbcs.yaml
+               ${CMAKE_CURRENT_BINARY_DIR}/cube-loca-time-dept-bc-dbcs.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/material.yaml
                ${CMAKE_CURRENT_BINARY_DIR}/material.yaml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
