@@ -6034,21 +6034,23 @@ computeGlobalResidualTempusSDBCsImplT(
     if (Teuchos::nonnull(rc_mgr)) rc_mgr->init_x_if_not(xT->getMap());
 
     PHAL::Workset workset;
-
+    double this_time; 
     if (!paramLib->isParameter("Time")) {
       loadBasicWorksetInfoT(workset, current_time);
+      this_time = current_time; 
     }
     else {
       loadBasicWorksetInfoT(workset,
           paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"));
+      this_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time"); 
     }
  
 #ifdef DEBUG_OUTPUT 
-    *out << "IKT previous_time, current_time = " << previous_time << ", " << current_time << "\n"; 
+    *out << "IKT previous_time, this_time = " << previous_time << ", " << this_time << "\n"; 
 #endif
-    //Check if previous_time is same as current_time.  If not, we are at the start 
+    //Check if previous_time is same as current time.  If not, we are at the start 
     //of a new time step, so we set boolean parameter to true. 
-    if (previous_time != current_time) begin_time_step = true;  
+    if (previous_time != this_time) begin_time_step = true;  
 
     workset.fT = overlapped_fT;
 
@@ -6136,8 +6138,8 @@ computeGlobalResidualTempusSDBCsImplT(
     xT_post_SDBCs = Teuchos::rcp(new Tpetra_Vector(*workset.xT)); 
   }
 
-  //if (begin_time_step == true) {
-  if (countRes == 0) {
+  if (begin_time_step == true) {
+  //if (countRes == 0) {
     // Zero out overlapped residual - Tpetra
     overlapped_fT->putScalar(0.0);
     fT->putScalar(0.0);
