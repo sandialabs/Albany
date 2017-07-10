@@ -95,7 +95,6 @@ Application(const RCP<const Teuchos_Comm>& comm_,
     phxGraphVisDetail(0),
     stateGraphVisDetail(0),
     params_(params), 
-    tempus_newmark_sdbcs_(false), 
     requires_sdbcs_(false), 
     requires_orig_dbcs_(false) 
 {
@@ -119,7 +118,6 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
     morphFromInit(true), perturbBetaForDirichlets(0.0),
     phxGraphVisDetail(0),
     stateGraphVisDetail(0),
-    tempus_newmark_sdbcs_(false), 
     requires_sdbcs_(false), 
     requires_orig_dbcs_(false) 
 {
@@ -319,17 +317,9 @@ void Albany::Application::initialSetUp(
       std::string nonlinear_solver = nox_params.get<std::string>("Nonlinear Solver");
  
       //Set flag marking that we are running with Tempus + d-Form Newmark + SDBCs.
-      //NOTE: this may need to be extended for other Newmark schemes meant to work with the SDBCs.
-      //This may also need to be extended for LOCA + SDBCs, if misalignment of Jacobian and residual 
-      //is encountered there. 
-      //IKT, 7/3/17, FIXME?  put in logic to check that we are running SDBCs?  That may fit better
-      //elsewhere in the code.
       if (stepper_type == "Newmark Implicit d-Form") {
         requires_sdbcs_ = true;
-        if (nonlinear_solver == "Line Search Based") {
-          tempus_newmark_sdbcs_ = true;
-        }
-        else {
+        if (nonlinear_solver != "Line Search Based") {
           TEUCHOS_TEST_FOR_EXCEPTION(
               true,
               std::logic_error,
