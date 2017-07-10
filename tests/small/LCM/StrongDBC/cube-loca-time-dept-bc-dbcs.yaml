@@ -38,6 +38,11 @@ ANONYMOUS:
       Response 1: Solution Average
       Response 2: Solution Max Value
       Response 3: Solution Min Value
+  Regression Results: 
+    Number of Comparisons: 4
+    Test Values: [0.000000000000e+00, 1.149197794509e-01, 0.000000000000e+00, -1.552406616474e-01]
+    Relative Tolerance: 1.0e-7
+    Absolute Tolerance: 1.0e-7
   Discretization:
     Method: Ioss
     Exodus Input File Name: 'cube.g'
