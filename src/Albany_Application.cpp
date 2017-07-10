@@ -1665,9 +1665,7 @@ computeGlobalResidualT(
 {
   // Create non-owning RCPs to Tpetra objects
   // to be passed to the implementation
-  // IKT, 6/30/17: modified the following line; 
-  // uncomment to try Tempus + SDBCs.  WIP.
-  if (tempus_newmark_sdbcs_ == false) {
+  if (problem->useSDBCs() == false) {
     this->computeGlobalResidualImplT(
         current_time,
         Teuchos::rcp(xdotT, false),
@@ -1678,7 +1676,7 @@ computeGlobalResidualT(
   }
 #ifdef ALBANY_LCM
   else { 
-    this->computeGlobalResidualTempusSDBCsImplT( 
+    this->computeGlobalResidualSDBCsImplT( 
         current_time,
         Teuchos::rcp(xdotT, false),
         Teuchos::rcp(xdotdotT, false),
@@ -5928,7 +5926,7 @@ setCoupledAppBlockNodeset(
 
 void
 Albany::Application::
-computeGlobalResidualTempusSDBCsImplT(
+computeGlobalResidualSDBCsImplT(
     double const current_time,
     Teuchos::RCP<Tpetra_Vector const> const & xdotT,
     Teuchos::RCP<Tpetra_Vector const> const & xdotdotT,

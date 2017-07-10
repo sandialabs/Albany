@@ -230,7 +230,7 @@ namespace Albany {
                                      const Teuchos::RCP<Tpetra_Vector>& fT);
     
 #if defined(ALBANY_LCM) 
-     void computeGlobalResidualTempusSDBCsImplT(const double current_time,
+     void computeGlobalResidualSDBCsImplT(const double current_time,
                                                 const Teuchos::RCP<const Tpetra_Vector>& xdotT,
                                                 const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
                                                 const Teuchos::RCP<const Tpetra_Vector>& xT,
