@@ -96,7 +96,8 @@ Application(const RCP<const Teuchos_Comm>& comm_,
     stateGraphVisDetail(0),
     params_(params), 
     requires_sdbcs_(false), 
-    requires_orig_dbcs_(false) 
+    requires_orig_dbcs_(false),
+    loca_sdbcs_valid_nonlin_solver_(true) 
 {
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
@@ -119,7 +120,8 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
     phxGraphVisDetail(0),
     stateGraphVisDetail(0),
     requires_sdbcs_(false), 
-    requires_orig_dbcs_(false) 
+    loca_sdbcs_valid_nonlin_solver_(true), 
+    requires_orig_dbcs_(false)
 {
 #if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_);
@@ -249,6 +251,24 @@ void Albany::Application::initialSetUp(
   }
   else if (solutionMethod == "Continuation") {
     solMethod = Continuation;
+    bool const
+    have_piro = params->isSublist("Piro");
+
+    ALBANY_ASSERT(have_piro == true);
+
+    Teuchos::ParameterList &
+    piro_params = params->sublist("Piro");
+
+    bool const
+    have_nox = piro_params.isSublist("NOX");
+      
+    if (have_nox) {
+      Teuchos::ParameterList 
+      nox_params = piro_params.sublist("NOX");
+      std::string nonlinear_solver = nox_params.get<std::string>("Nonlinear Solver");
+      if (nonlinear_solver != "Line Search Based") 
+        loca_sdbcs_valid_nonlin_solver_ = false;
+    }
   }
   else if (solutionMethod == "Transient") {
     solMethod = Transient;
@@ -660,6 +680,14 @@ void Albany::Application::buildProblem()
 #endif //ALBANY_LCM
 
   problem->buildProblem(meshSpecs, stateMgr);
+
+  if ((problem->useSDBCs() == true) && (loca_sdbcs_valid_nonlin_solver_ == false))
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::logic_error,
+        "Error in Albany::Application: you are using a Nonlinear Solver other than 'Line Search Based' with SDBCs, which is not supported!  Please re-run with Nonlinear Solver = Line Search Based.\n"); 
+  }
 
   if ((requires_sdbcs_ == true) && (problem->useSDBCs() == false)) 
   {
