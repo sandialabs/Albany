@@ -23,5 +23,5 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 if (ALBANY_IFPACK2) 
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 add_test(NAME ${testName} COMMAND "python" "runtest.py")
-add_test(${testName}_TimeDeptBC ${SerialAlbanyT.exe} cube-local-time-dept-bc-sdbcs.yaml)
+add_test(${testName}_TimeDeptBC ${SerialAlbanyT.exe} cube-loca-time-dept-bc-sdbcs.yaml)
 endif()
